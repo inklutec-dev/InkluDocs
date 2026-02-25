@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InkluDocs</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1><span class="brand">Inklu</span>Docs</h1>
+        <div class="header-actions">
+            <button id="adminBtn" class="header-btn" style="display:none" aria-label="Benutzerverwaltung">Benutzer</button>
+            <button id="settingsBtn" class="header-btn" aria-label="Einstellungen">Einstellungen</button>
+            <button id="logoutBtn" class="header-btn" aria-label="Abmelden">Abmelden</button>
+        </div>
+    </header>
+
+    <main id="mainContent" class="main-content"></main>
+
+    <div id="liveRegion" class="sr-only" aria-live="polite" role="status"></div>
+
+    <script>
+    const main = document.getElementById('mainContent');
+    const liveRegion = document.getElementById('liveRegion');
+    let currentUser = null;
+    let pollInterval = null;
+
+    function announce(msg) {
+        liveRegion.textContent = '';
+        setTimeout(() => { liveRegion.textContent = msg; }, 100);
+    }
+
+    // ─── Init ────────────────────────────────────────
+    async function init() {
+        const res = await fetch('/api/me');
+        if (res.status === 401) { window.location.href = '/'; return; }
+        currentUser = (await res.json()).user;
+        if (currentUser.is_admin) {
+            document.getElementById('adminBtn').style.display = '';
+        }
+        showDashboard();
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/';
+    });
+    document.getElementById('adminBtn').addEventListener('click', () => showAdmin());
+    document.getElementById('settingsBtn').addEventListener('click', () => showSettings());
+
+    // ─── Dashboard ───────────────────────────────────
+    async function showDashboard() {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        highlightNav(null);
+        const res = await fetch('/api/projects');
+        if (res.status === 401) { window.location.href = '/'; return; }
+        const data = await res.json();
+
+        main.innerHTML = `
+            <div class="upload-area" role="region" aria-label="PDF hochladen">
+                <h2>PDF-Dokument hochladen</h2>
+                <p>Laden Sie ein PDF hoch, um Alt-Texte fuer alle enthaltenen Grafiken zu generieren.</p>
+                <label class="upload-btn" for="fileInput" role="button" tabindex="0">PDF auswaehlen</label>
+                <input type="file" id="fileInput" accept=".pdf" aria-label="PDF-Datei auswaehlen">
+                <p id="uploadStatus" aria-live="polite" style="margin-top:1rem;"></p>
+            </div>
+            <h2 class="section-title">Meine Projekte</h2>
+            <div id="projectList"></div>
+        `;
+
+        document.getElementById('fileInput').addEventListener('change', handleUpload);
+        renderProjectList(data.projects);
+    }
+
+    async function handleUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const status = document.getElementById('uploadStatus');
+        status.textContent = 'Wird hochgeladen...';
+        announce('PDF wird hochgeladen');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (res.ok) {
+                announce(data.total_images + ' Bilder gefunden.');
+                showProject(data.project_id);
+            } else {
+                status.textContent = 'Fehler: ' + (data.detail || 'Upload fehlgeschlagen');
+            }
+        } catch (err) {
+            status.textContent = 'Verbindungsfehler';
+        }
+    }
+
+    function renderProjectList(projects) {
+        const list = document.getElementById('projectList');
+        if (!projects.length) {
+            list.innerHTML = '<div class="empty-state"><p>Noch keine Projekte. Laden Sie ein PDF hoch.</p></div>';
+            return;
+        }
+        const statusLabels = { uploaded:'Hochgeladen', extracting:'Extrahiere...', extracted:'Bereit', processing:'Verarbeite...', done:'Fertig', error:'Fehler' };
+        const statusClass = s => s === 'done' ? 'badge-done' : s === 'processing' ? 'badge-processing' : s === 'extracted' ? 'badge-ready' : 'badge-error';
+
+        list.innerHTML = projects.map(p => {
+            const progress = p.total_images > 0 ? Math.round((p.processed_images / p.total_images) * 100) : 0;
+            return `
+            <div class="card" role="article" aria-label="Projekt ${p.filename}">
+                <div class="card-header">
+                    <span class="card-name">${p.filename}</span>
+                    <span class="badge ${statusClass(p.status)}">${statusLabels[p.status] || p.status}</span>
+                </div>
+                <div class="card-info">${p.total_images} Bilder | ${p.processed_images} verarbeitet | ${new Date(p.created_at).toLocaleDateString('de-DE')}</div>
+                ${p.status === 'processing' ? `<div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:${progress}%"></div></div>` : ''}
+                <div class="card-actions">
+                    <button class="btn btn-primary" onclick="showProject(${p.id})">Oeffnen</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteProject(${p.id}, '${p.filename}')">Loeschen</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function deleteProject(id, name) {
+        if (!confirm('Projekt "' + name + '" und alle Daten wirklich loeschen?')) return;
+        await fetch('/api/projects/' + id, { method: 'DELETE' });
+        announce('Projekt geloescht');
+        showDashboard();
+    }
+
+    // ─── Project Detail ──────────────────────────────
+    async function showProject(projectId) {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        highlightNav(null);
+
+        const res = await fetch('/api/projects/' + projectId);
+        if (res.status === 401) { window.location.href = '/'; return; }
+        const data = await res.json();
+        const project = data.project;
+        const images = data.images;
+
+        const statusLabels = { extracted:'Bereit zur Verarbeitung', processing:'Alt-Texte werden generiert...', done:'Fertig', error:'Fehler' };
+        const statusClass = project.status === 'done' ? 'badge-done' : project.status === 'processing' ? 'badge-processing' : 'badge-ready';
+        const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
+
+        main.innerHTML = `
+            <button class="back-btn" onclick="showDashboard()">Zurueck zur Uebersicht</button>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-name">${project.filename}</span>
+                    <span class="badge ${statusClass}">${statusLabels[project.status] || project.status}</span>
+                </div>
+                <div class="card-info">${project.total_images} Bilder | ${project.processed_images} verarbeitet</div>
+                ${project.status === 'processing' ? `
+                    <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Fortschritt: ${progress} Prozent">
+                        <div class="progress-fill" style="width:${progress}%"></div>
+                    </div>
+                    <p id="processingInfo" aria-live="polite">Bild ${project.processed_images} von ${project.total_images} wird verarbeitet. Dies kann einige Minuten pro Bild dauern.</p>
+                ` : ''}
+                <div class="card-actions">
+                    ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alt-Texte generieren</button>' : ''}
+                    ${project.status === 'done' ? '<button class="btn btn-primary" onclick="exportPdf(' + project.id + ',\'' + project.filename + '\')">PDF exportieren</button>' : ''}
+                </div>
+            </div>
+            <h2 class="section-title" style="margin-top:1.5rem">Bilder (${images.length})</h2>
+            <div id="imageList"></div>
+        `;
+
+        renderImages(images);
+
+        if (project.status === 'processing') {
+            pollInterval = setInterval(async () => {
+                const sRes = await fetch('/api/projects/' + projectId + '/status');
+                const sData = await sRes.json();
+                if (sData.status === 'done' || sData.status === 'error') {
+                    clearInterval(pollInterval); pollInterval = null;
+                    announce(sData.status === 'done' ? 'Alle Alt-Texte wurden generiert.' : 'Fehler bei der Verarbeitung.');
+                    showProject(projectId);
+                } else if (sData.processed_images > project.processed_images) {
+                    showProject(projectId);
+                } else {
+                    const bar = document.querySelector('.progress-fill');
+                    const info = document.getElementById('processingInfo');
+                    const newP = Math.round((sData.processed_images / sData.total_images) * 100);
+                    if (bar) bar.style.width = newP + '%';
+                    if (info) info.textContent = 'Bild ' + sData.processed_images + ' von ' + sData.total_images + ' wird verarbeitet. Dies kann einige Minuten pro Bild dauern.';
+                }
+            }, 10000);
+        }
+    }
+
+    function renderImages(images) {
+        const list = document.getElementById('imageList');
+        if (!images.length) {
+            list.innerHTML = '<div class="empty-state"><p>Keine Bilder in diesem PDF gefunden.</p></div>';
+            return;
+        }
+        list.innerHTML = images.map(img => `
+            <div class="image-review" role="region" aria-label="Bild auf Seite ${img.page_number}">
+                <div class="image-review-header">
+                    <span class="image-meta">Seite ${img.page_number}, Bild ${img.image_index} (${img.width}x${img.height}px)</span>
+                    ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
+                    ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
+                </div>
+                <img src="/api/images/${img.id}/file" alt="Extrahiertes Bild von Seite ${img.page_number}" class="image-preview" loading="lazy">
+                <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
+                    Alt-Text
+                    <span class="save-indicator" id="saved_${img.id}">Gespeichert</span>
+                </label>
+                <textarea class="alt-text-field" id="alttext_${img.id}" data-image-id="${img.id}"
+                    placeholder="${img.status === 'done' ? '' : 'Alt-Text wird generiert...'}"
+                    ${img.status !== 'done' && !img.alt_text ? 'disabled' : ''}
+                >${img.alt_text_edited || img.alt_text || ''}</textarea>
+            </div>
+        `).join('');
+
+        document.querySelectorAll('.alt-text-field').forEach(ta => {
+            let timeout;
+            ta.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(async () => {
+                    const id = ta.dataset.imageId;
+                    await fetch('/api/images/' + id + '/alt-text', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ alt_text: ta.value }),
+                    });
+                    const ind = document.getElementById('saved_' + id);
+                    if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
+                }, 800);
+            });
+        });
+    }
+
+    async function startGeneration(projectId) {
+        const btn = document.getElementById('generateBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Wird gestartet...'; }
+        announce('Alt-Text-Generierung wird gestartet.');
+        const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST' });
+        if (res.ok) { showProject(projectId); }
+        else { const d = await res.json(); announce('Fehler: ' + (d.detail || '')); }
+    }
+
+    async function exportPdf(projectId, filename) {
+        announce('PDF wird exportiert...');
+        const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST' });
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'inkludocs_' + filename; a.click();
+            URL.revokeObjectURL(url);
+            announce('PDF wurde heruntergeladen.');
+        } else { announce('Fehler beim Export.'); }
+    }
+
+    // ─── Settings ────────────────────────────────────
+    function showSettings() {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        highlightNav('settingsBtn');
+        main.innerHTML = `
+            <button class="back-btn" onclick="showDashboard()">Zurueck</button>
+            <h2 class="section-title">Einstellungen</h2>
+            <div class="card">
+                <h3 style="margin-bottom:1rem;">Passwort aendern</h3>
+                <form id="changePwForm" novalidate>
+                    <div class="form-group">
+                        <label for="old_password">Aktuelles Passwort</label>
+                        <input type="password" id="old_password" required autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password">Neues Passwort (mind. 8 Zeichen)</label>
+                        <input type="password" id="new_password" required minlength="8" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password2">Neues Passwort wiederholen</label>
+                        <input type="password" id="new_password2" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Passwort aendern</button>
+                    <span id="pwMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
+                </form>
+            </div>
+            <div class="card" style="margin-top:1rem;">
+                <h3>Kontoinformationen</h3>
+                <p style="margin-top:0.5rem;color:var(--text-muted);">E-Mail: ${currentUser.email}<br>Name: ${currentUser.display_name}</p>
+            </div>
+        `;
+
+        document.getElementById('changePwForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('pwMsg');
+            msg.textContent = '';
+            msg.style.color = '';
+
+            const old_password = document.getElementById('old_password').value;
+            const new_password = document.getElementById('new_password').value;
+            const new_password2 = document.getElementById('new_password2').value;
+
+            if (new_password.length < 8) { msg.textContent = 'Mind. 8 Zeichen'; msg.style.color = 'var(--error)'; return; }
+            if (new_password !== new_password2) { msg.textContent = 'Passwoerter stimmen nicht ueberein'; msg.style.color = 'var(--error)'; return; }
+
+            const res = await fetch('/api/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_password, new_password }),
+            });
+            if (res.ok) {
+                msg.textContent = 'Passwort geaendert!';
+                msg.style.color = 'var(--success)';
+                announce('Passwort wurde geaendert');
+            } else {
+                const d = await res.json();
+                msg.textContent = d.detail || 'Fehler';
+                msg.style.color = 'var(--error)';
+            }
+        });
+    }
+
+    // ─── Admin ───────────────────────────────────────
+    async function showAdmin() {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        highlightNav('adminBtn');
+        const res = await fetch('/api/admin/users');
+        if (!res.ok) { announce('Kein Zugriff'); showDashboard(); return; }
+        const data = await res.json();
+
+        main.innerHTML = `
+            <button class="back-btn" onclick="showDashboard()">Zurueck</button>
+            <h2 class="section-title">Benutzerverwaltung (${data.users.length} Benutzer)</h2>
+            <table class="admin-table" role="table" aria-label="Benutzerliste">
+                <thead>
+                    <tr><th>Name</th><th>E-Mail</th><th>Projekte</th><th>Status</th><th>Aktionen</th></tr>
+                </thead>
+                <tbody>
+                    ${data.users.map(u => `
+                    <tr>
+                        <td>${u.display_name} ${u.is_admin ? '<span class="badge badge-admin">Admin</span>' : ''}</td>
+                        <td>${u.email}</td>
+                        <td>${u.project_count}</td>
+                        <td><span class="badge ${u.is_active ? 'badge-done' : 'badge-inactive'}">${u.is_active ? 'Aktiv' : 'Gesperrt'}</span></td>
+                        <td style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                            ${u.id !== currentUser.id ? `
+                                <button class="btn btn-secondary btn-small" onclick="toggleUser(${u.id})">${u.is_active ? 'Sperren' : 'Entsperren'}</button>
+                                <button class="btn btn-secondary btn-small" onclick="resetUserPw(${u.id}, '${u.email}')">Passwort</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteUser(${u.id}, '${u.email}')">Loeschen</button>
+                            ` : '<span style="color:var(--text-muted);font-size:0.85rem;">Sie selbst</span>'}
+                        </td>
+                    </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    async function toggleUser(id) {
+        await fetch('/api/admin/users/' + id + '/toggle-active', { method: 'POST' });
+        showAdmin();
+    }
+
+    async function resetUserPw(id, email) {
+        const pw = prompt('Neues Passwort fuer ' + email + ' (mind. 8 Zeichen):');
+        if (!pw || pw.length < 8) { alert('Passwort muss mindestens 8 Zeichen haben.'); return; }
+        const res = await fetch('/api/admin/users/' + id + '/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_password: pw }),
+        });
+        if (res.ok) { announce('Passwort zurueckgesetzt'); alert('Passwort wurde zurueckgesetzt.'); }
+        else { alert('Fehler beim Zuruecksetzen.'); }
+    }
+
+    async function deleteUser(id, email) {
+        if (!confirm('User "' + email + '" und ALLE Daten unwiderruflich loeschen? (DSGVO-Loeschung)')) return;
+        const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+        if (res.ok) { announce('User geloescht'); showAdmin(); }
+        else { alert('Fehler beim Loeschen.'); }
+    }
+
+    // ─── Helpers ─────────────────────────────────────
+    function highlightNav(id) {
+        document.querySelectorAll('.header-btn').forEach(b => b.classList.remove('active'));
+        if (id) document.getElementById(id)?.classList.add('active');
+    }
+
+    init();
+    </script>
+</body>
+</html>

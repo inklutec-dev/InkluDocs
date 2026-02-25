@@ -1,0 +1,25 @@
+services:
+  inkludocs:
+    build: .
+    container_name: inkludocs
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - inkludocs_data:/app/data
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-inkludocs-production-key-2025}
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=qwen3-vl:8b
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - inklucut_default
+
+volumes:
+  inkludocs_data:
+
+networks:
+  inklucut_default:
+    external: true

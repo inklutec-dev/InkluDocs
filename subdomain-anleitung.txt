@@ -1,0 +1,56 @@
+ANLEITUNG: Subdomain inkludocs.inklutec.de einrichten
+=====================================================
+Anbieter: All-Inkl (KAS - Technische Verwaltung)
+Datum: 25. Februar 2026
+
+ZIEL:
+Die Subdomain inkludocs.inklutec.de soll auf den Hetzner-Server
+46.225.58.82 zeigen, auf dem InkluDocs laeuft.
+
+SCHRITTE:
+
+1. Einloggen im KAS (Technische Verwaltung) von All-Inkl
+   URL: https://kas.all-inkl.com
+
+2. Im Menue links auf "Subdomain" klicken
+
+3. Auf "Neue Subdomain anlegen" klicken
+
+4. Folgende Daten eingeben:
+   - Subdomain: inkludocs
+   - Domain: inklutec.de  (aus Dropdown auswaehlen)
+
+5. Bei "Aktion" bzw. "Weiterleitung" den Typ waehlen:
+   - WICHTIG: NICHT "Weiterleitung" waehlen!
+   - Stattdessen: "Extern (A-Record)" oder "DNS-Einstellungen"
+
+6. Falls All-Inkl direkt nach einer IP fragt:
+   - IP-Adresse eingeben: 46.225.58.82
+
+7. Falls All-Inkl nur DNS-Verwaltung anbietet:
+   - Im Menue auf "DNS-Einstellungen" oder "Tools > DNS-Einstellungen" gehen
+   - Domain inklutec.de auswaehlen
+   - Neuen DNS-Eintrag erstellen:
+     Typ:   A
+     Name:  inkludocs
+     Wert:  46.225.58.82
+     TTL:   300 (oder Standard belassen)
+
+8. Speichern und warten (kann bis zu 30 Minuten dauern,
+   meistens geht es bei All-Inkl aber in 5-10 Minuten)
+
+WICHTIG:
+- Keinen CNAME-Eintrag verwenden, sondern einen A-Record
+- Keine Weiterleitung (Redirect) einrichten
+- Die Subdomain muss direkt auf die IP 46.225.58.82 zeigen
+- SSL/HTTPS wird automatisch auf dem Server eingerichtet
+  (ueber Let's Encrypt im Nginx Proxy Manager)
+
+NACH DER EINRICHTUNG:
+Mir Bescheid geben, dann richte ich den Proxy mit SSL
+auf dem Server ein. Danach ist InkluDocs unter
+https://inkludocs.inklutec.de erreichbar.
+
+ZUM TESTEN OB ES FUNKTIONIERT HAT:
+Im Browser aufrufen: http://inkludocs.inklutec.de:8001
+Wenn die Login-Seite erscheint, hat der DNS-Eintrag funktioniert.

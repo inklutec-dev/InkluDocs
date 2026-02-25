@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InkluDocs - Passwort vergessen</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <main>
+        <div class="auth-container" role="region" aria-label="Passwort zuruecksetzen">
+            <h1><span class="brand">Inklu</span>Docs</h1>
+            <p class="subtitle">Passwort zuruecksetzen</p>
+            <form id="forgotForm" novalidate>
+                <div class="form-group">
+                    <label for="email">E-Mail-Adresse</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" autofocus>
+                </div>
+                <button type="submit" class="btn-full">Reset-Link anfordern</button>
+                <div id="errorMsg" class="error-message" role="alert" aria-live="polite"></div>
+                <div id="successMsg" class="success-message" role="status" aria-live="polite"></div>
+                <div id="resetLink" style="margin-top:1rem;display:none;">
+                    <label for="resetUrl">Reset-Link (bitte kopieren und im Browser oeffnen):</label>
+                    <input type="text" id="resetUrl" readonly style="margin-top:0.5rem;background:#f1f5f9;">
+                </div>
+            </form>
+            <div class="auth-links center">
+                <a href="/">Zurueck zur Anmeldung</a>
+            </div>
+        </div>
+    </main>
+    <script>
+        const form = document.getElementById('forgotForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.textContent = '';
+            successMsg.textContent = '';
+            document.getElementById('resetLink').style.display = 'none';
+
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                errorMsg.textContent = 'Bitte E-Mail-Adresse eingeben.';
+                return;
+            }
+            try {
+                const res = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    if (data.reset_url) {
+                        successMsg.textContent = 'Reset-Link wurde erstellt.';
+                        document.getElementById('resetLink').style.display = 'block';
+                        document.getElementById('resetUrl').value = data.reset_url;
+                    } else {
+                        successMsg.textContent = data.message || 'Falls ein Konto existiert, wurde ein Reset-Link erstellt.';
+                    }
+                } else {
+                    errorMsg.textContent = data.detail || 'Fehler aufgetreten.';
+                }
+            } catch (err) {
+                errorMsg.textContent = 'Verbindungsfehler.';
+            }
+        });
+    </script>
+</body>
+</html>
