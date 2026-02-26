@@ -9,7 +9,7 @@ services:
       - inkludocs_data:/app/data
     environment:
       - SECRET_KEY=${SECRET_KEY:-inkludocs-production-key-2025}
-      - OLLAMA_URL=http://host.docker.internal:11434
+      - OLLAMA_URL=http://10.100.0.1:11434
       - OLLAMA_MODEL=qwen3-vl:8b
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -2,6 +2,9 @@ import os
 import shutil
 import json
 import asyncio
+import secrets
+import time
+from collections import defaultdict
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 
@@ -18,12 +21,32 @@ from database import (
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "inkludocs-dev-key-change-in-production")
+# Generate a persistent SECRET_KEY if not set
+SECRET_KEY_FILE = "/app/data/.secret_key"
+def _get_secret_key():
+    env_key = os.environ.get("SECRET_KEY", "")
+    if env_key and env_key != "inkludocs-production-key-2025":
+        return env_key
+    if os.path.exists(SECRET_KEY_FILE):
+        return open(SECRET_KEY_FILE).read().strip()
+    key = secrets.token_hex(32)
+    os.makedirs(os.path.dirname(SECRET_KEY_FILE), exist_ok=True)
+    with open(SECRET_KEY_FILE, "w") as f:
+        f.write(key)
+    return key
+
+SECRET_KEY = _get_secret_key()
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 24
 UPLOAD_DIR = "/app/data/uploads"
 RESULTS_DIR = "/app/data/results"
 BASE_URL = os.environ.get("BASE_URL", "https://inkludocs.inklutec.de")
+MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
+
+# Rate limiting for login
+_login_attempts = defaultdict(list)
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_WINDOW_SECONDS = 300  # 5 minutes
 
 
 @asynccontextmanager
@@ -33,7 +56,7 @@ async def lifespan(app: FastAPI):
     os.makedirs(RESULTS_DIR, exist_ok=True)
     # Create default admin user if not exists
     try:
-        create_user("admin@inklutec.de", "inkludocs2025", "Administrator", is_admin=1)
+        create_user("kontakt@inklutec.de", "inkludocs2025", "Administrator", is_admin=1)
         print("Default admin user created")
     except Exception:
         pass
@@ -43,9 +66,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="InkluDocs", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["https://inkludocs.inklutec.de"],
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type"],
+    allow_credentials=True,
 )
 
 # Mount static files
@@ -82,11 +106,19 @@ def require_admin(request: Request) -> dict:
 
 @app.post("/api/login")
 async def login(request: Request):
+    # Rate limiting
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    _login_attempts[client_ip] = [t for t in _login_attempts[client_ip] if now - t < LOGIN_WINDOW_SECONDS]
+    if len(_login_attempts[client_ip]) >= MAX_LOGIN_ATTEMPTS:
+        raise HTTPException(status_code=429, detail="Zu viele Anmeldeversuche. Bitte 5 Minuten warten.")
+
     data = await request.json()
     email = data.get("email", "").strip()
     password = data.get("password", "")
     user = verify_user(email, password)
     if not user:
+        _login_attempts[client_ip].append(now)
         raise HTTPException(status_code=401, detail="E-Mail oder Passwort falsch")
     # Update last_login
     conn = get_db()
@@ -294,16 +326,20 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Nur PDF-Dateien erlaubt")
 
+    # Read and check file size
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail=f"Datei zu gross. Maximum: {MAX_UPLOAD_SIZE // (1024*1024)} MB")
+
     # Create user directory
     user_dir = os.path.join(UPLOAD_DIR, str(user["id"]))
     os.makedirs(user_dir, exist_ok=True)
 
-    # Save file
+    # Save file with sanitized name
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_name = f"{timestamp}_{file.filename}"
+    safe_name = f"{timestamp}_{os.path.basename(file.filename)}"
     file_path = os.path.join(user_dir, safe_name)
     with open(file_path, "wb") as f:
-        content = await file.read()
         f.write(content)
 
     # Create project in DB
@@ -522,7 +558,7 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
     alt_texts = {}
     for img in images:
         alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
-        if alt_text and img["xref"]:
+        if alt_text is not None and img["xref"]:
             alt_texts[img["xref"]] = alt_text
 
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
@@ -530,10 +566,8 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
     output_path = os.path.join(output_dir, f"inkludocs_{project['filename']}")
 
     try:
-        import fitz
-        doc = fitz.open(project["original_path"])
-        doc.save(output_path)
-        doc.close()
+        from pdf_processor import write_alt_texts_to_pdf
+        write_alt_texts_to_pdf(project["original_path"], output_path, alt_texts)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
 

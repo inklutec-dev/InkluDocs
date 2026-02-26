@@ -162,7 +162,21 @@
                 ` : ''}
                 <div class="card-actions">
                     ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alt-Texte generieren</button>' : ''}
-                    ${project.status === 'done' ? '<button class="btn btn-primary" onclick="exportPdf(' + project.id + ',\'' + project.filename + '\')">PDF exportieren</button>' : ''}
+                    ${project.status === 'done' ? `
+                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id}, '${project.filename}')">PDF exportieren</button>
+                        <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg-card,#fff);" role="region" aria-label="Export-Optionen">
+                            <div class="form-group" style="margin-bottom:0.8rem;">
+                                <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">Dateiname</label>
+                                <input type="text" id="exportFilename" aria-describedby="exportHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
+                                <small id="exportHint" style="color:var(--text-muted);display:block;margin-top:0.3rem;">Sie koennen den Dateinamen vor dem Download aendern.</small>
+                            </div>
+                            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                                <button class="btn btn-primary" id="downloadBtn" onclick="exportPdf(${project.id})">Herunterladen</button>
+                                <button class="btn btn-secondary" onclick="closeExportPanel()">Abbrechen</button>
+                                <span id="exportStatus" role="status" aria-live="polite"></span>
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
             <h2 class="section-title" style="margin-top:1.5rem">Bilder (${images.length})</h2>
@@ -244,17 +258,62 @@
         else { const d = await res.json(); announce('Fehler: ' + (d.detail || '')); }
     }
 
-    async function exportPdf(projectId, filename) {
+    function openExportPanel(projectId, filename) {
+        const panel = document.getElementById('exportPanel');
+        const btn = document.getElementById('exportOpenBtn');
+        const input = document.getElementById('exportFilename');
+        if (panel && input) {
+            input.value = 'inkludocs_' + filename;
+            panel.style.display = 'block';
+            btn.style.display = 'none';
+            input.focus();
+            input.select();
+            announce('Export-Optionen geoeffnet. Dateiname kann geaendert werden.');
+        }
+    }
+
+    function closeExportPanel() {
+        const panel = document.getElementById('exportPanel');
+        const btn = document.getElementById('exportOpenBtn');
+        if (panel) panel.style.display = 'none';
+        if (btn) { btn.style.display = ''; btn.focus(); }
+        announce('Export abgebrochen.');
+    }
+
+    async function exportPdf(projectId) {
+        const filenameInput = document.getElementById('exportFilename');
+        let filename = filenameInput ? filenameInput.value.trim() : 'export.pdf';
+        if (!filename.toLowerCase().endsWith('.pdf')) { filename += '.pdf'; }
+
+        const statusEl = document.getElementById('exportStatus');
+        if (statusEl) statusEl.textContent = 'Wird exportiert...';
         announce('PDF wird exportiert...');
-        const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST' });
-        if (res.ok) {
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'inkludocs_' + filename; a.click();
-            URL.revokeObjectURL(url);
-            announce('PDF wurde heruntergeladen.');
-        } else { announce('Fehler beim Export.'); }
+
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST' });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 1000);
+                if (statusEl) statusEl.textContent = 'Heruntergeladen!';
+                announce('PDF wurde als ' + filename + ' heruntergeladen.');
+            } else {
+                if (statusEl) statusEl.textContent = 'Fehler beim Export.';
+                announce('Fehler beim Export.');
+            }
+        } catch (err) {
+            if (statusEl) statusEl.textContent = 'Verbindungsfehler.';
+            announce('Verbindungsfehler beim Export.');
+        }
     }
 
     // ─── Settings ────────────────────────────────────
