@@ -34,18 +34,84 @@ Allgemein:
 Kontext aus dem Dokument: {context}"""
 
 
+def _cluster_drawings(drawings, page_rect, gap=50, min_size=50):
+    """Group nearby vector drawings into clusters, return significant bounding boxes."""
+    if not drawings:
+        return []
+
+    rects = []
+    for d in drawings:
+        r = fitz.Rect(d["rect"])
+        if r.is_empty or r.is_infinite:
+            continue
+        # Skip full-width lines (decorative separators)
+        if r.height < 5 and r.width > page_rect.width * 0.4:
+            continue
+        if r.width < 5 and r.height > page_rect.height * 0.4:
+            continue
+        rects.append(r)
+
+    if not rects:
+        return []
+
+    # Simple clustering: merge overlapping/nearby rectangles
+    clusters = []
+    used = set()
+
+    for i, r1 in enumerate(rects):
+        if i in used:
+            continue
+        cluster_rect = fitz.Rect(r1)
+        cluster = {i}
+        changed = True
+        while changed:
+            changed = False
+            expanded = fitz.Rect(cluster_rect.x0 - gap, cluster_rect.y0 - gap,
+                                  cluster_rect.x1 + gap, cluster_rect.y1 + gap)
+            for j, r2 in enumerate(rects):
+                if j in cluster or j in used:
+                    continue
+                if expanded.intersects(r2):
+                    cluster.add(j)
+                    cluster_rect = cluster_rect | r2
+                    changed = True
+        used.update(cluster)
+
+        # Skip clusters with only 1 drawing (likely decorative line/box)
+        if len(cluster) < 2:
+            continue
+
+        # Only keep clusters that are significant
+        if cluster_rect.width >= min_size and cluster_rect.height >= min_size:
+            # Add generous padding to capture axis labels, legends, titles
+            pad = 60
+            padded = fitz.Rect(cluster_rect.x0 - pad, cluster_rect.y0 - pad,
+                               cluster_rect.x1 + pad, cluster_rect.y1 + pad)
+            padded = padded & page_rect  # clip to page
+            clusters.append(padded)
+
+    return clusters
+
+
 def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> list:
-    """Extract all images from a PDF with their context text."""
+    """Extract all images from a PDF, including vector graphics rendered as images."""
     doc = fitz.open(pdf_path)
     images = []
+    vector_xref_counter = 900000  # High xref range for vector graphics
 
     for page_num in range(len(doc)):
         page = doc[page_num]
         page_text = page.get_text()
         image_list = page.get_images(full=True)
 
-        for img_idx, img_info in enumerate(image_list):
+        # Track bounding boxes of raster images to avoid duplicating
+        raster_areas = []
+        img_idx = 0
+
+        # 1. Extract raster images (as before)
+        for img_info in image_list:
             xref = img_info[0]
+            img_idx += 1
 
             try:
                 base_image = doc.extract_image(xref)
@@ -60,7 +126,7 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                 if width < 20 or height < 20:
                     continue
 
-                img_filename = f"p{page_num + 1}_img{img_idx + 1}.{image_ext}"
+                img_filename = f"p{page_num + 1}_img{img_idx}.{image_ext}"
                 img_path = os.path.join(output_dir, img_filename)
                 with open(img_path, "wb") as f:
                     f.write(image_bytes)
@@ -69,7 +135,7 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
 
                 images.append({
                     "page_number": page_num + 1,
-                    "image_index": img_idx + 1,
+                    "image_index": img_idx,
                     "image_path": img_path,
                     "image_filename": img_filename,
                     "width": width,
@@ -78,9 +144,66 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                     "context_text": context,
                     "ext": image_ext,
                 })
+
+                # Record where this raster image is on the page
+                for img_rect in page.get_image_rects(xref):
+                    raster_areas.append(img_rect)
+
             except Exception as e:
                 print(f"Error extracting image {xref} from page {page_num + 1}: {e}")
                 continue
+
+        # 2. Detect and render vector graphics (charts, diagrams, icons)
+        try:
+            drawings = page.get_drawings()
+        except Exception:
+            drawings = []
+
+        if drawings:
+            clusters = _cluster_drawings(drawings, page.rect)
+
+            for cluster_rect in clusters:
+                # Skip if this area overlaps significantly with a raster image
+                overlaps_raster = False
+                for ra in raster_areas:
+                    intersection = cluster_rect & ra
+                    if not intersection.is_empty:
+                        overlap_area = intersection.width * intersection.height
+                        cluster_area = cluster_rect.width * cluster_rect.height
+                        if cluster_area > 0 and overlap_area / cluster_area > 0.5:
+                            overlaps_raster = True
+                            break
+                if overlaps_raster:
+                    continue
+
+                # Render this region as a PNG image
+                img_idx += 1
+                try:
+                    # Render at 2x resolution for clarity
+                    mat = fitz.Matrix(2, 2)
+                    pixmap = page.get_pixmap(matrix=mat, clip=cluster_rect)
+                    img_filename = f"p{page_num + 1}_vec{img_idx}.png"
+                    img_path = os.path.join(output_dir, img_filename)
+                    pixmap.save(img_path)
+
+                    vector_xref_counter += 1
+                    context = page_text[:500] if page_text else "Kein Textkontext verfuegbar."
+
+                    images.append({
+                        "page_number": page_num + 1,
+                        "image_index": img_idx,
+                        "image_path": img_path,
+                        "image_filename": img_filename,
+                        "width": int(cluster_rect.width),
+                        "height": int(cluster_rect.height),
+                        "xref": vector_xref_counter,
+                        "context_text": context,
+                        "ext": "png",
+                    })
+                    print(f"Vector graphic on page {page_num + 1}: {int(cluster_rect.width)}x{int(cluster_rect.height)}px")
+                except Exception as e:
+                    print(f"Error rendering vector graphic on page {page_num + 1}: {e}")
+                    continue
 
     doc.close()
     return images
@@ -120,7 +243,7 @@ def generate_alt_text(image_path: str, context: str = "") -> dict:
                 "options": {
                     "temperature": 0.3,
                     "num_ctx": 4096,
-                    "num_predict": 1000,
+                    "num_predict": 2000,
                 },
             },
             timeout=300.0,
@@ -138,22 +261,49 @@ def generate_alt_text(image_path: str, context: str = "") -> dict:
 
         # If response is empty but thinking has content, extract alt-text from thinking
         if not response_text and thinking_text:
+            # Patterns ordered from most specific (JSON) to least specific (natural language)
             alt_patterns = [
+                # JSON format: "alt_text": "..."
                 r'"alt_text":\s*"([^"]+)"',
+                # Key-value: alt_text: "..." or Alt-Text: "..."
                 r'[Aa]lt[_-]?[Tt]ext:\s*"([^"]+)"',
+                # Natural language: alt_text should/would/could be "..."
+                r'[Aa]lt[_-]?[Tt]ext\s+(?:should|would|could|is|shall)\s+be\s*"([^"]+)"',
+                # Natural language: the alt_text is "..." or alt text: "..."
+                r'the\s+alt[_-]?\s*text\s+(?:is|should be|would be)\s*"([^"]+)"',
+                # German: Alt-Text waere/ist/lautet "..."
+                r'[Aa]lt[_-]?[Tt]ext\s+(?:waere|ist|lautet|sollte sein)\s*"([^"]+)"',
+                # Last quoted string after "alt" mention (catches most remaining cases)
+                r'[Aa]lt[_-]?[Tt]ext[^"]*"([^"]{15,})"',
+                # Key-value without quotes: alt_text: some text here
                 r'[Aa]lt[_-]?[Tt]ext:\s*(.+?)(?:\n|$)',
             ]
             found_alt = None
             for pat in alt_patterns:
                 m = re.search(pat, thinking_text)
-                if m and len(m.group(1)) > 10:
-                    found_alt = m.group(1).strip().strip('"')
+                if m and len(m.group(1).strip()) > 10:
+                    found_alt = m.group(1).strip().strip('"').strip('.')
+                    # Skip if it looks like code/reasoning, not actual alt-text
+                    if any(kw in found_alt.lower() for kw in ['should be', 'would be', 'the user', 'according to', 'the rules say']):
+                        found_alt = None
+                        continue
                     break
 
             bildtyp = "unbekannt"
             typ_match = re.search(r'"bildtyp":\s*"([^"]+)"', thinking_text)
             if not typ_match:
                 typ_match = re.search(r'[Bb]ildtyp[:\s]+["\']?(\w+)', thinking_text)
+            if not typ_match:
+                # Detect type from natural language in thinking
+                typ_map = {'logo': 'logo', 'foto': 'foto', 'photo': 'foto',
+                           'diagramm': 'diagramm', 'chart': 'diagramm', 'graph': 'diagramm',
+                           'tabelle': 'tabelle', 'table': 'tabelle',
+                           'screenshot': 'screenshot', 'banner': 'screenshot',
+                           'icon': 'icon', 'dekorativ': 'dekorativ', 'decorative': 'dekorativ'}
+                for keyword, typ in typ_map.items():
+                    if keyword in thinking_text.lower():
+                        bildtyp = typ
+                        break
             if typ_match:
                 bildtyp = typ_match.group(1).strip()
 
@@ -161,7 +311,7 @@ def generate_alt_text(image_path: str, context: str = "") -> dict:
                 return {
                     "bildtyp": bildtyp,
                     "alt_text": found_alt,
-                    "ist_dekorativ": "dekorativ" in found_alt.lower(),
+                    "ist_dekorativ": "dekorativ" in found_alt.lower() or bildtyp == "dekorativ",
                     "raw_response": thinking_text,
                 }
 
