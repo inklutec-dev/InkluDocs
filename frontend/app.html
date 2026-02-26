@@ -217,6 +217,8 @@
                 <div class="image-review-header">
                     <span class="image-meta">Seite ${img.page_number}, Bild ${img.image_index} (${img.width}x${img.height}px)</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
+                    ${img.ist_dekorativ || (!img.alt_text && !img.alt_text_edited && img.status === 'done') ? '<span class="badge badge-decorative" style="background:#999;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Dekorativ</span>' : ''}
+                    ${img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;" title="KI-Konfidenz: ' + img.konfidenz + '">Konfidenz: ' + img.konfidenz + '</span>' : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
                 </div>
                 <img src="/api/images/${img.id}/file" alt="Extrahiertes Bild von Seite ${img.page_number}" class="image-preview" loading="lazy">

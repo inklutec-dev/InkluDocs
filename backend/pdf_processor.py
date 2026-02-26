@@ -11,27 +11,27 @@ from io import BytesIO
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
 MODEL_NAME = os.environ.get("OLLAMA_MODEL", "qwen3-vl:8b")
 
-ALT_TEXT_PROMPT = """Du bist ein Experte fuer barrierefreie Alt-Texte nach WCAG 2.2.
-Dein Ziel: Blinde Menschen sollen durch deinen Alt-Text die GLEICHE Information erhalten wie sehende Menschen.
+ALT_TEXT_PROMPT = """/no_think
+Analysiere das BILD (nicht den Kontext) und antworte NUR mit JSON:
+{{"bildtyp": "foto|diagramm|tabelle|screenshot|icon|logo|karte|dekorativ", "alt_text": "...", "ist_dekorativ": true/false, "konfidenz": "hoch|mittel|niedrig"}}
 
-Analysiere dieses Bild und antworte NUR mit diesem JSON:
-{{"bildtyp": "foto|diagramm|tabelle|screenshot|icon|logo|dekorativ", "alt_text": "...", "ist_dekorativ": true/false}}
+Bildtyp-Regeln:
+- Diagramm/Chart: Titel, Werte, Trend, Kernaussage. Lies Zahlen direkt aus dem Bild.
+- Tabelle: Wichtigste Zeilen/Spalten, Extremwerte.
+- Foto: Was ist zu sehen, warum relevant.
+- Logo: Firmenname und Slogan.
+- Screenshot/Banner: Jeden sichtbaren Text vorlesen.
+- Karte: Gezeigter Bereich, markierte Standorte, Beschriftungen.
+- Dekorativ: ist_dekorativ=true, alt_text=""
 
-Regeln je nach Bildtyp:
-- Diagramm/Chart: Nenne den Titel, die dargestellten Werte, den Trend und die Kernaussage. Beispiel: "Balkendiagramm zeigt Umsatz 2020-2025. Anstieg von 1,2 auf 3,4 Mio EUR, staerkster Zuwachs 2024."
-- Tabelle: Fasse die wichtigsten Zeilen und Spalten zusammen, nenne Extremwerte.
-- Foto: Beschreibe was zu sehen ist und warum es im Kontext relevant ist.
-- Logo: Nenne den Firmennamen und ggf. Slogan.
-- Screenshot/Banner: Lies jeden sichtbaren Text vor und beschreibe das Layout.
-- Dekorativ (Linien, Hintergruende, Schmuckelemente): ist_dekorativ=true, alt_text=""
+Regeln:
+- Maximal 3 Saetze, Deutsch
+- NUR beschreiben was im BILD sichtbar ist, NICHT den Kontext kopieren
+- Erfinde KEINE Details. Wenn unleserlich: "nicht lesbar"
+- konfidenz: hoch/mittel/niedrig je nach Sicherheit
+- SOFORT das JSON ausgeben, keine Erklaerungen
 
-Allgemein:
-- Maximal 3 Saetze, auf Deutsch
-- Vermittle die INFORMATION, nicht nur das Aussehen
-- Lies jeden sichtbaren Text im Bild vor
-- Keine Erklaerung, keine Begruendung, NUR das JSON
-
-Kontext aus dem Dokument: {context}"""
+Kontext: {context}"""
 
 
 def _cluster_drawings(drawings, page_rect, gap=50, min_size=50):
@@ -39,7 +39,7 @@ def _cluster_drawings(drawings, page_rect, gap=50, min_size=50):
     if not drawings:
         return []
 
-    rects = []
+    drawing_data = []  # (rect, item_count)
     for d in drawings:
         r = fitz.Rect(d["rect"])
         if r.is_empty or r.is_infinite:
@@ -49,7 +49,10 @@ def _cluster_drawings(drawings, page_rect, gap=50, min_size=50):
             continue
         if r.width < 5 and r.height > page_rect.height * 0.4:
             continue
-        rects.append(r)
+        item_count = len(d.get("items", []))
+        drawing_data.append((r, item_count))
+
+    rects = [dd[0] for dd in drawing_data]
 
     if not rects:
         return []
@@ -80,6 +83,11 @@ def _cluster_drawings(drawings, page_rect, gap=50, min_size=50):
         # Skip clusters with only 1 drawing (likely decorative line/box)
         if len(cluster) < 2:
             continue
+
+        # Count total path segments in cluster - simple shapes (boxes, lines) have very few
+        total_items = sum(drawing_data[idx][1] for idx in cluster)
+        if total_items < 5:
+            continue  # Simple rectangles/lines, not a real graphic
 
         # Only keep clusters that are significant
         if cluster_rect.width >= min_size and cluster_rect.height >= min_size:
@@ -243,7 +251,7 @@ def generate_alt_text(image_path: str, context: str = "") -> dict:
                 "options": {
                     "temperature": 0.3,
                     "num_ctx": 4096,
-                    "num_predict": 2000,
+                    "num_predict": 4000,
                 },
             },
             timeout=300.0,
@@ -324,17 +332,19 @@ def generate_alt_text(image_path: str, context: str = "") -> dict:
                     "bildtyp": parsed.get("bildtyp", "unbekannt"),
                     "alt_text": parsed.get("alt_text", ""),
                     "ist_dekorativ": parsed.get("ist_dekorativ", False),
+                    "konfidenz": parsed.get("konfidenz", "mittel"),
                     "raw_response": text,
                 }
             start = clean_text.find("{")
             end = clean_text.rfind("}") + 1
             if start >= 0 and end > start:
                 parsed = json.loads(clean_text[start:end])
-                if parsed.get("alt_text"):
+                if parsed.get("alt_text") is not None:
                     return {
                         "bildtyp": parsed.get("bildtyp", "unbekannt"),
                         "alt_text": parsed.get("alt_text", ""),
                         "ist_dekorativ": parsed.get("ist_dekorativ", False),
+                        "konfidenz": parsed.get("konfidenz", "mittel"),
                         "raw_response": text,
                     }
         except (json.JSONDecodeError, AttributeError):

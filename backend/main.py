@@ -486,8 +486,8 @@ async def _process_project(project_id: int, user_id: int):
         )
 
         conn.execute(
-            """UPDATE images SET alt_text = ?, image_type = ?, status = 'done' WHERE id = ?""",
-            (result["alt_text"], result["bildtyp"], img["id"])
+            """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, status = 'done' WHERE id = ?""",
+            (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), img["id"])
         )
         processed += 1
         conn.execute(
