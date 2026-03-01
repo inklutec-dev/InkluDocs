@@ -10,7 +10,7 @@ services:
     environment:
       - SECRET_KEY=${SECRET_KEY:-inkludocs-production-key-2025}
       - OLLAMA_URL=http://10.100.0.1:11434
-      - OLLAMA_MODEL=qwen3-vl:8b
+      - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

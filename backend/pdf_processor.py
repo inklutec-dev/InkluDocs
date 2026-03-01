@@ -12,24 +12,42 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
 MODEL_NAME = os.environ.get("OLLAMA_MODEL", "qwen3-vl:8b")
 
 ALT_TEXT_PROMPT = """/no_think
-Analysiere das BILD (nicht den Kontext) und antworte NUR mit JSON:
+Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
+ZIEL: Blinde Nutzer erhalten die GLEICHE INFORMATION wie Sehende.
+
+Antworte NUR mit diesem JSON:
 {{"bildtyp": "foto|diagramm|tabelle|screenshot|icon|logo|karte|dekorativ", "alt_text": "...", "ist_dekorativ": true/false, "konfidenz": "hoch|mittel|niedrig"}}
 
-Bildtyp-Regeln:
-- Diagramm/Chart: Titel, Werte, Trend, Kernaussage. Lies Zahlen direkt aus dem Bild.
-- Tabelle: Wichtigste Zeilen/Spalten, Extremwerte.
-- Foto: Was ist zu sehen, warum relevant.
-- Logo: Firmenname und Slogan.
-- Screenshot/Banner: Jeden sichtbaren Text vorlesen.
-- Karte: Gezeigter Bereich, markierte Standorte, Beschriftungen.
-- Dekorativ: ist_dekorativ=true, alt_text=""
+FORMAT: Beginne mit dem Bildtyp als kurzes Praefix, dann Bindestrich, dann die Kernaussage.
+So weiss der Screenreader-Nutzer sofort, WAS fuer ein Bild kommt, und dann den Inhalt.
 
-Regeln:
-- Maximal 3 Saetze, Deutsch
-- NUR beschreiben was im BILD sichtbar ist, NICHT den Kontext kopieren
-- Erfinde KEINE Details. Wenn unleserlich: "nicht lesbar"
-- konfidenz: hoch/mittel/niedrig je nach Sicherheit
-- SOFORT das JSON ausgeben, keine Erklaerungen
+LAENGE: 2-4 Saetze (150-350 Zeichen). Kernaussage + wichtigste Zahlen. Nicht jedes Detail.
+
+BEISPIELE PERFEKTER ALT-TEXTE:
+
+"Logo Nationaler Normenkontrollrat"
+
+"Kreisdiagramm – Die groesste Buerokratie-Entlastung bringt das Wachstumschancengesetz (BMF) mit 39%, gefolgt von der Schwellenwert-Anhebung (BMJ) mit 18%. Groesster Kostentreiber ist die EU-CSRD-Richtlinie (BMJ) mit 39%, gefolgt vom Waermeplanungsgesetz mit 20%."
+
+"Balkendiagramm – Die 'One in one out'-Bilanz ergibt eine Nettoentlastung von 1,5 Milliarden Euro. Der Umstellungsaufwand stieg von unter 5 Milliarden (2011-2019) auf rund 23 Milliarden Euro in 2022/23, getragen vor allem von der Wirtschaft."
+
+"Balkendiagramm – Aufmerksamkeit und Energie empfinden 90,2% der Befragten als sehr hohe Buerokratiebelastung, den Zeitaufwand 83,3% und den Kostenaufwand 66,4% (IfM Bonn, 2023)."
+
+"Foto – Drei Personen am Rednerpult bei einer Pressekonferenz des Normenkontrollrats."
+
+"QR-Code zur NKR-Stellungnahme 'Vereinfachung von Sozialleistungen'."
+
+Dekorativ (abstrakte Formen, Hintergruende, kleine Icons): ist_dekorativ=true, alt_text=""
+
+REGELN:
+- Deutsch, professionell, wie ein Nachrichtensprecher
+- WISSEN vermitteln, nicht Aussehen beschreiben
+- Bei Zeitreihen: IMMER den Trend benennen (gestiegen/gefallen/stabil/schwankend) und Anfangs- und Endwert nennen
+- Bei Vergleichen: IMMER benennen wer fuehrt und wer abgeschlagen ist
+- Keine Farben (ausser informationstragend)
+- Erfinde NICHTS. Wenn unleserlich: "teilweise nicht lesbar"
+- konfidenz: hoch = klar lesbar, mittel = manches unsicher, niedrig = vieles unklar
+- SOFORT JSON ausgeben
 
 Kontext: {context}"""
 
@@ -187,8 +205,13 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                 # Render this region as a PNG image
                 img_idx += 1
                 try:
-                    # Render at 2x resolution for clarity
-                    mat = fitz.Matrix(2, 2)
+                    # Scale factor: 2x for normal graphics, lower for very large ones
+                    cw, ch = cluster_rect.width, cluster_rect.height
+                    scale = 2.0
+                    if cw * scale > MAX_IMAGE_DIM or ch * scale > MAX_IMAGE_DIM:
+                        scale = min(MAX_IMAGE_DIM / cw, MAX_IMAGE_DIM / ch)
+                        scale = max(scale, 1.0)  # at least 1x
+                    mat = fitz.Matrix(scale, scale)
                     pixmap = page.get_pixmap(matrix=mat, clip=cluster_rect)
                     img_filename = f"p{page_num + 1}_vec{img_idx}.png"
                     img_path = os.path.join(output_dir, img_filename)
@@ -217,18 +240,47 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
     return images
 
 
-MAX_IMAGE_WIDTH = 800
-MAX_IMAGE_HEIGHT = 800
+MAX_IMAGE_DIM = 1024
+MAX_IMAGE_BYTES = 4 * 1024 * 1024  # 4 MB max for Ollama
+
+
+MAX_ALT_TEXT_LENGTH = 400  # Characters - enough for key info, not overwhelming for screen readers
+
+
+def _combine_alt_text(alt_text: str, langbeschreibung: str) -> str:
+    """Combine short alt-text with long description, respecting max length."""
+    if not alt_text:
+        return ""
+    if not langbeschreibung:
+        text = alt_text.strip()
+    elif langbeschreibung.strip().startswith(alt_text.strip()[:30]):
+        text = langbeschreibung.strip()
+    else:
+        text = alt_text.rstrip(". ") + ". " + langbeschreibung.strip()
+    # Trim to max length at sentence boundary
+    if len(text) > MAX_ALT_TEXT_LENGTH:
+        cut = text[:MAX_ALT_TEXT_LENGTH]
+        last_end = max(cut.rfind(". "), cut.rfind("! "), cut.rfind("? "))
+        if last_end > 80:
+            text = cut[:last_end + 1]
+    return text
 
 
 def _resize_image_for_model(image_path: str) -> str:
-    """Resize image if too large, return base64 encoded string."""
+    """Resize image if too large for the model, return base64 encoded string."""
     img = Image.open(image_path)
-    if img.width > MAX_IMAGE_WIDTH or img.height > MAX_IMAGE_HEIGHT:
-        img.thumbnail((MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT), Image.LANCZOS)
+    # Resize if dimensions exceed limit
+    if img.width > MAX_IMAGE_DIM or img.height > MAX_IMAGE_DIM:
+        img.thumbnail((MAX_IMAGE_DIM, MAX_IMAGE_DIM), Image.LANCZOS)
         buf = BytesIO()
         fmt = "JPEG" if image_path.lower().endswith((".jpg", ".jpeg")) else "PNG"
         img.save(buf, format=fmt, quality=85)
+        return base64.b64encode(buf.getvalue()).decode()
+    # Check file size - large PNGs from vector rendering can be huge
+    file_size = os.path.getsize(image_path)
+    if file_size > MAX_IMAGE_BYTES:
+        buf = BytesIO()
+        img.save(buf, format="JPEG", quality=80)
         return base64.b64encode(buf.getvalue()).decode()
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
@@ -328,9 +380,10 @@ def generate_alt_text(image_path: str, context: str = "") -> dict:
             json_matches = list(re.finditer(r'\{[^{}]*"alt_text"[^{}]*\}', clean_text))
             if json_matches:
                 parsed = json.loads(json_matches[-1].group())
+                alt = _combine_alt_text(parsed.get("alt_text", ""), parsed.get("langbeschreibung", ""))
                 return {
                     "bildtyp": parsed.get("bildtyp", "unbekannt"),
-                    "alt_text": parsed.get("alt_text", ""),
+                    "alt_text": alt,
                     "ist_dekorativ": parsed.get("ist_dekorativ", False),
                     "konfidenz": parsed.get("konfidenz", "mittel"),
                     "raw_response": text,
@@ -340,9 +393,10 @@ def generate_alt_text(image_path: str, context: str = "") -> dict:
             if start >= 0 and end > start:
                 parsed = json.loads(clean_text[start:end])
                 if parsed.get("alt_text") is not None:
+                    alt = _combine_alt_text(parsed.get("alt_text", ""), parsed.get("langbeschreibung", ""))
                     return {
                         "bildtyp": parsed.get("bildtyp", "unbekannt"),
-                        "alt_text": parsed.get("alt_text", ""),
+                        "alt_text": alt,
                         "ist_dekorativ": parsed.get("ist_dekorativ", False),
                         "konfidenz": parsed.get("konfidenz", "mittel"),
                         "raw_response": text,
