@@ -52,6 +52,27 @@ LOGIN_WINDOW_SECONDS = 300  # 5 minutes
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    
+    # Migration: Add bounding box and is_vector columns if missing
+    conn = get_db()
+    try:
+        # Check if columns exist by trying to select them
+        conn.execute("SELECT bbox_x0 FROM images LIMIT 1")
+    except Exception:
+        # Columns don't exist, add them
+        print("Migrating database: Adding vector graphics support columns...")
+        try:
+            conn.execute("ALTER TABLE images ADD COLUMN bbox_x0 REAL")
+            conn.execute("ALTER TABLE images ADD COLUMN bbox_y0 REAL")
+            conn.execute("ALTER TABLE images ADD COLUMN bbox_x1 REAL")
+            conn.execute("ALTER TABLE images ADD COLUMN bbox_y1 REAL")
+            conn.execute("ALTER TABLE images ADD COLUMN is_vector INTEGER DEFAULT 0")
+            conn.commit()
+            print("Database migration complete: Vector graphics support added")
+        except Exception as e:
+            print(f"Migration warning: {e}")
+    conn.close()
+    
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(RESULTS_DIR, exist_ok=True)
     # Create default admin user if not exists
@@ -70,6 +91,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type"],
     allow_credentials=True,
+    expose_headers=["X-Export-Warnings", "X-Export-Tagged", "X-Export-Total"],
 )
 
 # Mount static files
@@ -363,13 +385,22 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
         conn.close()
         raise HTTPException(status_code=500, detail=f"PDF-Verarbeitung fehlgeschlagen: {str(e)}")
 
-    # Store images in DB
+    # Store images in DB (including bounding box for vector graphics support)
     for img in images:
+        bbox = img.get("bbox")
+        bbox_x0 = bbox[0] if bbox else None
+        bbox_y0 = bbox[1] if bbox else None
+        bbox_x1 = bbox[2] if bbox else None
+        bbox_y1 = bbox[3] if bbox else None
+        is_vector = 1 if img.get("is_vector") else 0
+        
         conn.execute(
-            """INSERT INTO images (project_id, page_number, image_index, image_path, context_text, width, height, xref)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO images (project_id, page_number, image_index, image_path, context_text, 
+               width, height, xref, bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (project_id, img["page_number"], img["image_index"], img["image_path"],
-             img["context_text"], img["width"], img["height"], img["xref"])
+             img["context_text"], img["width"], img["height"], img["xref"],
+             bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector)
         )
 
     conn.execute(
@@ -556,10 +587,26 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
     conn.close()
 
     alt_texts = {}
+    image_metadata = []
+    
     for img in images:
         alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
         if alt_text is not None and img["xref"]:
             alt_texts[img["xref"]] = alt_text
+        
+        # Build metadata for vector graphics support
+        bbox = None
+        if img["bbox_x0"] is not None:
+            bbox = (img["bbox_x0"], img["bbox_y0"], img["bbox_x1"], img["bbox_y1"])
+        
+        image_metadata.append({
+            "xref": img["xref"],
+            "page_number": img["page_number"],
+            "is_vector": bool(img["is_vector"]) if img["is_vector"] is not None else False,
+            "bbox": bbox,
+            "alt_text": alt_text,
+            "image_path": img["image_path"],
+        })
 
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
     os.makedirs(output_dir, exist_ok=True)
@@ -567,14 +614,28 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
 
     try:
         from pdf_processor import write_alt_texts_to_pdf
-        write_alt_texts_to_pdf(project["original_path"], output_path, alt_texts)
+        result = write_alt_texts_to_pdf(project["original_path"], output_path, alt_texts, image_metadata)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
+
+    # Build response with export warnings in headers
+    headers = {}
+    export_warnings = []
+    if isinstance(result, dict):
+        export_warnings = result.get("warnings", [])
+        tagged_count = result.get("tagged_count", 0)
+        total_count = len(alt_texts)
+        headers["X-Export-Tagged"] = str(tagged_count)
+        headers["X-Export-Total"] = str(total_count)
+        if export_warnings:
+            import json
+            headers["X-Export-Warnings"] = json.dumps(export_warnings, ensure_ascii=False)
 
     return FileResponse(
         output_path,
         filename=f"inkludocs_{project['filename']}",
-        media_type="application/pdf"
+        media_type="application/pdf",
+        headers=headers
     )
 
 

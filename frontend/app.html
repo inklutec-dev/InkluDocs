@@ -294,6 +294,11 @@
         try {
             const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST' });
             if (res.ok) {
+                // Check for export warnings in response headers
+                const warningsHeader = res.headers.get('X-Export-Warnings');
+                const taggedCount = res.headers.get('X-Export-Tagged');
+                const totalCount = res.headers.get('X-Export-Total');
+
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -306,8 +311,28 @@
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                 }, 1000);
-                if (statusEl) statusEl.textContent = 'Heruntergeladen!';
-                announce('PDF wurde als ' + filename + ' heruntergeladen.');
+
+                // Show warnings if any
+                if (warningsHeader) {
+                    try {
+                        const warnings = JSON.parse(warningsHeader);
+                        if (warnings.length > 0) {
+                            let msg = 'Heruntergeladen mit Hinweisen: ' + warnings.length + ' Grafik(en) konnten nicht vollstaendig getaggt werden.';
+                            if (statusEl) {
+                                statusEl.innerHTML = '<span style="color:var(--warning,#b45309);">' + msg + '</span>';
+                            }
+                            announce(msg + ' ' + warnings.join(' '));
+                            return;
+                        }
+                    } catch(e) {}
+                }
+
+                let successMsg = 'Heruntergeladen!';
+                if (taggedCount && totalCount) {
+                    successMsg = taggedCount + ' von ' + totalCount + ' Alt-Texten erfolgreich exportiert.';
+                }
+                if (statusEl) statusEl.textContent = successMsg;
+                announce('PDF wurde als ' + filename + ' heruntergeladen. ' + successMsg);
             } else {
                 if (statusEl) statusEl.textContent = 'Fehler beim Export.';
                 announce('Fehler beim Export.');
