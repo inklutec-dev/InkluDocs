@@ -50,7 +50,7 @@ BASE_URL = os.environ.get("BASE_URL", "https://inkludocs.inklutec.de")
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
 
 # Allowed image extensions for direct upload
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".heic", ".heif", ".bmp", ".tiff", ".tif"}
 
 # Rate limiting for login
 _login_attempts = defaultdict(list)
@@ -382,7 +382,7 @@ async def upload_file(file: UploadFile = File(...), user: dict = Depends(get_cur
     if not is_pdf and not is_image:
         raise HTTPException(
             status_code=400,
-            detail="Nur PDF- und Bilddateien erlaubt (PDF, JPG, PNG, GIF, SVG, WebP)"
+            detail="Nur PDF- und Bilddateien erlaubt (PDF, JPG, PNG, GIF, SVG, WebP, HEIC, BMP, TIFF)"
         )
 
     # Read and check file size
@@ -469,6 +469,11 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict) -> dict:
 async def _handle_image_upload(file_path: str, filename: str, user: dict, content: bytes, ext: str) -> dict:
     """Process a direct image upload."""
     from PIL import Image as PILImage
+    try:
+        from pillow_heif import register_heif_opener
+        register_heif_opener()
+    except ImportError:
+        pass
 
     conn = get_db()
     cursor = conn.execute(
@@ -478,11 +483,26 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
     project_id = cursor.lastrowid
     conn.commit()
 
-    # Create project image directory and copy the image
+    # Create project image directory
     img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
     os.makedirs(img_dir, exist_ok=True)
-    img_path = os.path.join(img_dir, f"img_1{ext}")
-    shutil.copy2(file_path, img_path)
+
+    # Convert HEIC/HEIF/BMP/TIFF to JPEG for model compatibility
+    needs_conversion = ext in {".heic", ".heif", ".bmp", ".tiff", ".tif"}
+    if needs_conversion:
+        img_path = os.path.join(img_dir, "img_1.jpg")
+        try:
+            with PILImage.open(file_path) as img:
+                rgb_img = img.convert("RGB")
+                rgb_img.save(img_path, format="JPEG", quality=90)
+        except Exception as e:
+            conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
+            conn.commit()
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"Bildformat konnte nicht konvertiert werden: {str(e)}")
+    else:
+        img_path = os.path.join(img_dir, f"img_1{ext}")
+        shutil.copy2(file_path, img_path)
 
     # Get image dimensions
     width, height = 0, 0
