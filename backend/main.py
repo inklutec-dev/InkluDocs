@@ -596,8 +596,17 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
             # Get original alt text
             original_alt = img_tag.get("alt", "")
 
+            # Detect intentionally hidden/decorative images from HTML attributes
+            is_hidden = (
+                img_tag.get("aria-hidden") == "true"
+                or img_tag.get("role") in ("presentation", "none")
+                or (img_tag.has_attr("alt") and img_tag["alt"] == "")
+            )
+
             # Get context: parent text, figcaption, title attribute
             context_parts = []
+            if is_hidden:
+                context_parts.append("[HTML-Attribut] Dieses Bild ist im Quellcode als dekorativ/versteckt markiert (aria-hidden oder leerer alt-Text).")
             if img_tag.get("title"):
                 context_parts.append(f"[title] {img_tag['title']}")
             if original_alt:
@@ -1097,21 +1106,24 @@ async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
         alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
         langbeschreibung = img["langbeschreibung"] or ""
 
-        # Insert image if file exists
+        # Image filename for screenreaders + embedded image for sighted users
         img_path = img["image_path"]
+        img_filename = os.path.basename(img_path) if img_path else "unbekannt"
+        ws[f"A{row}"] = img_filename
+        ws[f"A{row}"].alignment = Alignment(vertical="top")
+
         if os.path.exists(img_path):
             try:
                 xl_img = XlImage(img_path)
-                # Scale to fit: max 150px wide, keep aspect ratio
                 max_w = 150
-                if xl_img.width > max_w:
-                    ratio = max_w / xl_img.width
-                    xl_img.width = max_w
-                    xl_img.height = int(xl_img.height * ratio)
-                ws.row_dimensions[row].height = max(xl_img.height * 0.75, 80)
+                max_h = 120
+                ratio = min(max_w / xl_img.width, max_h / xl_img.height, 1.0)
+                xl_img.width = int(xl_img.width * ratio)
+                xl_img.height = int(xl_img.height * ratio)
+                ws.row_dimensions[row].height = max(xl_img.height * 0.75, 60)
                 ws.add_image(xl_img, f"A{row}")
             except Exception:
-                ws[f"A{row}"] = "(Bild nicht verfuegbar)"
+                pass
 
         ws[f"B{row}"] = alt_text or ""
         ws[f"B{row}"].alignment = Alignment(wrap_text=True, vertical="top")
