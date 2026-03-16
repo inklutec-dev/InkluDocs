@@ -35,9 +35,10 @@ BEISPIELE PERFEKTER ALT-TEXTE:
 
 "QR-Code zur NKR-Stellungnahme 'Vereinfachung von Sozialleistungen'."
 
-Dekorativ (abstrakte Formen, Hintergruende, kleine Icons): ist_dekorativ=true, alt_text=""
+Dekorativ (NUR rein abstrakte Formen, Hintergruende ohne Text, einfarbige Flaechen, kleine Icons unter 30px): ist_dekorativ=true, alt_text=""
 
 REGELN:
+- WICHTIG: Wenn Text im Bild LESBAR ist, ist es NIEMALS dekorativ. Lies den Text und beschreibe ihn.
 - Deutsch, professionell, wie ein Nachrichtensprecher
 - WISSEN vermitteln, nicht Aussehen beschreiben
 - Bei Zeitreihen: IMMER den Trend benennen (gestiegen/gefallen/stabil/schwankend) und Anfangs- und Endwert nennen

@@ -432,8 +432,8 @@
             if (res.ok) {
                 const blob = await res.blob();
                 downloadBlob(blob, filename);
-                if (statusEl) statusEl.textContent = 'Heruntergeladen!';
                 announce(filename + ' wurde heruntergeladen.');
+                closeExportPanel();
             } else {
                 if (statusEl) statusEl.textContent = 'Fehler beim Export.';
                 announce('Fehler beim Export.');
