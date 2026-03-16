@@ -116,6 +116,130 @@ input:focus {
 .auth-links a:focus { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
 .auth-links.center { justify-content: center; }
 
+/* Legal pages */
+body:has(.legal-container) {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+.legal-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 700px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+.legal-container h1 {
+    font-size: 1.75rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+.legal-container h2 {
+    font-size: 1.2rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    color: var(--primary);
+}
+.legal-container h3 {
+    font-size: 1.05rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+.legal-container p {
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+.legal-container ul {
+    margin: 0.5rem 0 1rem 1.5rem;
+    line-height: 1.6;
+}
+.legal-container li {
+    margin-bottom: 0.4rem;
+}
+.legal-container a {
+    color: var(--accent);
+    text-decoration: underline;
+}
+.legal-container a:hover {
+    color: var(--accent-hover);
+}
+.legal-container a:focus {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+.legal-container code {
+    background: var(--bg);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+.legal-date {
+    margin-top: 2rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Legal footer on auth and app pages */
+.legal-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.legal-footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+    margin: 0 0.5rem;
+}
+.legal-footer a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+.legal-footer a:focus {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Checkbox group for registration */
+.checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+}
+.checkbox-group label {
+    font-weight: 400;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 0;
+}
+.checkbox-group a {
+    color: var(--accent);
+    text-decoration: underline;
+}
+.checkbox-group a:hover {
+    color: var(--accent-hover);
+}
+.checkbox-group a:focus {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
 /* App layout */
 header {
     background: var(--primary);

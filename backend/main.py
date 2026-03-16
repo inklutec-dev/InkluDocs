@@ -1230,3 +1230,15 @@ async def app_page(request: Request):
     except JWTError:
         return RedirectResponse("/")
     return open("/app/frontend/app.html").read()
+
+@app.get("/impressum", response_class=HTMLResponse)
+async def impressum_page():
+    return open("/app/frontend/impressum.html").read()
+
+@app.get("/datenschutz", response_class=HTMLResponse)
+async def datenschutz_page():
+    return open("/app/frontend/datenschutz.html").read()
+
+@app.get("/nutzungsbedingungen", response_class=HTMLResponse)
+async def nutzungsbedingungen_page():
+    return open("/app/frontend/nutzungsbedingungen.html").read()
