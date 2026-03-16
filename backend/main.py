@@ -1001,28 +1001,17 @@ async def export_json(project_id: int, user: dict = Depends(get_current_user)):
 
     export_data = {
         "projekt": project["filename"],
-        "erstellt": datetime.now().isoformat(),
-        "quelle": dict(project).get("source_url", ""),
         "bilder": [],
     }
 
     for img in images:
         alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
         entry = {
-            "id": img["id"],
-            "seite": img["page_number"],
-            "index": img["image_index"],
-            "bildtyp": img["image_type"],
             "alt_text": alt_text or "",
-            "breite": img["width"],
-            "hoehe": img["height"],
         }
         langbeschreibung = img["langbeschreibung"] if img["langbeschreibung"] else ""
         if langbeschreibung:
             entry["langbeschreibung"] = langbeschreibung
-        original_alt = img["original_alt"] if img["original_alt"] else ""
-        if original_alt:
-            entry["original_alt"] = original_alt
         export_data["bilder"].append(entry)
 
     json_bytes = json.dumps(export_data, ensure_ascii=False, indent=2).encode("utf-8")
@@ -1051,20 +1040,13 @@ async def export_csv(project_id: int, user: dict = Depends(get_current_user)):
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=";")
-    writer.writerow(["ID", "Seite", "Index", "Bildtyp", "Alt-Text", "Langbeschreibung", "Original-Alt", "Breite", "Hoehe"])
+    writer.writerow(["Alt-Text", "Langbeschreibung"])
 
     for img in images:
         alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
         writer.writerow([
-            img["id"],
-            img["page_number"],
-            img["image_index"],
-            img["image_type"],
             alt_text or "",
             img["langbeschreibung"] or "",
-            img["original_alt"] or "",
-            img["width"],
-            img["height"],
         ])
 
     csv_bytes = output.getvalue().encode("utf-8-sig")  # BOM for Excel compatibility

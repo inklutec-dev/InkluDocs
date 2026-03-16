@@ -229,21 +229,19 @@
                 <div class="card-actions">
                     ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alt-Texte generieren</button>' : ''}
                     ${project.status === 'done' ? `
-                        <div class="export-buttons" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                            <button class="btn btn-primary" onclick="exportData(${project.id}, 'json')">JSON exportieren</button>
-                            <button class="btn btn-primary" onclick="exportData(${project.id}, 'csv')">CSV exportieren</button>
-                            <button class="btn btn-secondary" onclick="openPdfExport(${project.id}, '${project.filename}')">PDF exportieren (Beta)</button>
-                        </div>
-                        <div id="pdfExportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-label="PDF-Export-Optionen">
+                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id}, '${project.filename}')">Exportieren</button>
+                        <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-label="Export-Optionen">
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">Dateiname</label>
                                 <input type="text" id="exportFilename" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
                             </div>
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                                <button class="btn btn-primary" onclick="exportPdf(${project.id})">Herunterladen</button>
-                                <button class="btn btn-secondary" onclick="closePdfExport()">Abbrechen</button>
-                                <span id="exportStatus" role="status" aria-live="polite"></span>
+                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">Als JSON</button>
+                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'csv')">Als CSV</button>
+                                <button class="btn btn-secondary" onclick="doExport(${project.id}, 'pdf')">Als PDF (Beta)</button>
+                                <button class="btn btn-secondary" onclick="closeExportPanel()">Abbrechen</button>
                             </div>
+                            <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
                         </div>
                     ` : ''}
                 </div>
@@ -392,83 +390,53 @@
     }
 
     // ─── Export ──────────────────────────────────────
-    async function exportData(projectId, format) {
-        announce(format.toUpperCase() + ' wird exportiert...');
-        try {
-            const res = await fetch('/api/projects/' + projectId + '/export/' + format, { method: 'POST' });
-            if (res.ok) {
-                const blob = await res.blob();
-                const cd = res.headers.get('Content-Disposition') || '';
-                const fnMatch = cd.match(/filename="?([^"]+)"?/);
-                const filename = fnMatch ? fnMatch[1] : 'inkludocs_export.' + format;
-                downloadBlob(blob, filename);
-                announce(format.toUpperCase() + ' wurde heruntergeladen.');
-            } else {
-                announce('Fehler beim Export.');
-            }
-        } catch (err) {
-            announce('Verbindungsfehler beim Export.');
-        }
-    }
-
-    function openPdfExport(projectId, filename) {
-        const panel = document.getElementById('pdfExportPanel');
+    function openExportPanel(projectId, filename) {
+        const panel = document.getElementById('exportPanel');
+        const btn = document.getElementById('exportOpenBtn');
         const input = document.getElementById('exportFilename');
         if (panel && input) {
-            input.value = 'inkludocs_' + filename;
+            input.value = filename.replace(/\.[^.]+$/, '');
             panel.style.display = 'block';
+            if (btn) btn.style.display = 'none';
             input.focus();
             input.select();
-            announce('PDF-Export-Optionen geoeffnet.');
+            announce('Export-Optionen geoeffnet. Dateiname kann geaendert werden.');
         }
     }
 
-    function closePdfExport() {
-        const panel = document.getElementById('pdfExportPanel');
+    function closeExportPanel() {
+        const panel = document.getElementById('exportPanel');
+        const btn = document.getElementById('exportOpenBtn');
         if (panel) panel.style.display = 'none';
-        announce('PDF-Export abgebrochen.');
+        if (btn) { btn.style.display = ''; btn.focus(); }
+        announce('Export abgebrochen.');
     }
 
-    async function exportPdf(projectId) {
+    async function doExport(projectId, format) {
         const filenameInput = document.getElementById('exportFilename');
-        let filename = filenameInput ? filenameInput.value.trim() : 'export.pdf';
-        if (!filename.toLowerCase().endsWith('.pdf')) { filename += '.pdf'; }
-
         const statusEl = document.getElementById('exportStatus');
+        let baseName = filenameInput ? filenameInput.value.trim() : 'export';
+        baseName = baseName.replace(/\.[^.]+$/, '');
+
+        const ext = format === 'pdf' ? '.pdf' : format === 'csv' ? '.csv' : '.json';
+        const filename = baseName + ext;
+
         if (statusEl) statusEl.textContent = 'Wird exportiert...';
-        announce('PDF wird exportiert...');
+        announce(format.toUpperCase() + ' wird exportiert...');
 
         try {
-            const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST' });
+            const url = format === 'pdf'
+                ? '/api/projects/' + projectId + '/export'
+                : '/api/projects/' + projectId + '/export/' + format;
+            const res = await fetch(url, { method: 'POST' });
             if (res.ok) {
-                const warningsHeader = res.headers.get('X-Export-Warnings');
-                const taggedCount = res.headers.get('X-Export-Tagged');
-                const totalCount = res.headers.get('X-Export-Total');
-
                 const blob = await res.blob();
                 downloadBlob(blob, filename);
-
-                if (warningsHeader) {
-                    try {
-                        const warnings = JSON.parse(warningsHeader);
-                        if (warnings.length > 0) {
-                            let msg = taggedCount + ' von ' + totalCount + ' getaggt. ' + warnings.length + ' Hinweise.';
-                            if (statusEl) statusEl.textContent = msg;
-                            announce(msg);
-                            return;
-                        }
-                    } catch(e) {}
-                }
-
-                let successMsg = 'Heruntergeladen!';
-                if (taggedCount && totalCount) {
-                    successMsg = taggedCount + ' von ' + totalCount + ' Alt-Texten exportiert.';
-                }
-                if (statusEl) statusEl.textContent = successMsg;
-                announce('PDF wurde heruntergeladen. ' + successMsg);
+                if (statusEl) statusEl.textContent = 'Heruntergeladen!';
+                announce(filename + ' wurde heruntergeladen.');
             } else {
                 if (statusEl) statusEl.textContent = 'Fehler beim Export.';
-                announce('Fehler beim PDF-Export.');
+                announce('Fehler beim Export.');
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = 'Verbindungsfehler.';
