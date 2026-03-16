@@ -1,7 +1,8 @@
 import sqlite3
 import os
-import bcrypt
+import hashlib
 import secrets
+import bcrypt
 from datetime import datetime, timedelta
 
 DB_PATH = os.environ.get("INKLUDOCS_DB", "/app/data/inkludocs.db")
@@ -70,11 +71,57 @@ def init_db():
             FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
         );
 
+        CREATE TABLE IF NOT EXISTS api_keys (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            key_hash TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            last_used TEXT,
+            is_active INTEGER DEFAULT 1,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
         CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id);
         CREATE INDEX IF NOT EXISTS idx_images_project ON images(project_id);
+        CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
     """)
     conn.commit()
+
+    # Backward-compatible migrations using ALTER TABLE with try/except
+    _migrate_columns(conn)
+
     conn.close()
+
+
+def _migrate_columns(conn):
+    """Add new columns to existing tables. Uses try/except for idempotency."""
+    migrations = [
+        # Vector graphics support (from earlier migration)
+        ("images", "bbox_x0", "ALTER TABLE images ADD COLUMN bbox_x0 REAL"),
+        ("images", "bbox_y0", "ALTER TABLE images ADD COLUMN bbox_y0 REAL"),
+        ("images", "bbox_x1", "ALTER TABLE images ADD COLUMN bbox_x1 REAL"),
+        ("images", "bbox_y1", "ALTER TABLE images ADD COLUMN bbox_y1 REAL"),
+        ("images", "is_vector", "ALTER TABLE images ADD COLUMN is_vector INTEGER DEFAULT 0"),
+        ("images", "konfidenz", "ALTER TABLE images ADD COLUMN konfidenz TEXT DEFAULT 'mittel'"),
+        # New columns for this refactoring
+        ("projects", "project_type", "ALTER TABLE projects ADD COLUMN project_type TEXT DEFAULT 'pdf'"),
+        ("projects", "source_url", "ALTER TABLE projects ADD COLUMN source_url TEXT"),
+        ("images", "langbeschreibung", "ALTER TABLE images ADD COLUMN langbeschreibung TEXT DEFAULT ''"),
+        ("images", "original_alt", "ALTER TABLE images ADD COLUMN original_alt TEXT DEFAULT ''"),
+    ]
+
+    for table, column, sql in migrations:
+        try:
+            conn.execute(f"SELECT {column} FROM {table} LIMIT 1")
+        except Exception:
+            try:
+                conn.execute(sql)
+                print(f"Migration: Added {table}.{column}")
+            except Exception as e:
+                print(f"Migration warning ({table}.{column}): {e}")
+
+    conn.commit()
 
 
 def create_user(email: str, password: str, display_name: str, is_admin: int = 0) -> int:
@@ -182,6 +229,7 @@ def delete_user_data(user_id: int):
         conn.execute("DELETE FROM images WHERE project_id = ?", (p["id"],))
     conn.execute("DELETE FROM projects WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM api_keys WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
@@ -193,3 +241,93 @@ def admin_reset_password(user_id: int, new_password: str):
     conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
     conn.commit()
     conn.close()
+
+
+# ─── API Key Management ──────────────────────────────────────
+
+def _hash_api_key(key: str) -> str:
+    """SHA-256 hash of an API key for storage."""
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+def create_api_key(user_id: int, name: str) -> tuple[int, str]:
+    """Create a new API key for a user.
+
+    Returns:
+        Tuple of (key_id, raw_key). The raw key is only returned once.
+    """
+    raw_key = f"idocs_{secrets.token_urlsafe(32)}"
+    key_hash = _hash_api_key(raw_key)
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "INSERT INTO api_keys (user_id, key_hash, name) VALUES (?, ?, ?)",
+            (user_id, key_hash, name.strip())
+        )
+        conn.commit()
+        key_id = cursor.lastrowid
+    finally:
+        conn.close()
+    return key_id, raw_key
+
+
+def verify_api_key(raw_key: str) -> dict | None:
+    """Verify an API key and return the associated user info.
+
+    Also updates last_used timestamp.
+
+    Returns:
+        Dict with id, user_id, name, or None if invalid/inactive.
+    """
+    key_hash = _hash_api_key(raw_key)
+    conn = get_db()
+    row = conn.execute(
+        """SELECT ak.id, ak.user_id, ak.name, u.email, u.is_active as user_active
+           FROM api_keys ak
+           JOIN users u ON ak.user_id = u.id
+           WHERE ak.key_hash = ? AND ak.is_active = 1""",
+        (key_hash,)
+    ).fetchone()
+    if not row:
+        conn.close()
+        return None
+    if not row["user_active"]:
+        conn.close()
+        return None
+    # Update last_used
+    conn.execute(
+        "UPDATE api_keys SET last_used = datetime('now') WHERE id = ?",
+        (row["id"],)
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "id": row["id"],
+        "user_id": row["user_id"],
+        "name": row["name"],
+        "email": row["email"],
+    }
+
+
+def list_api_keys(user_id: int) -> list[dict]:
+    """List all API keys for a user (without the actual key hash)."""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, name, created_at, last_used, is_active FROM api_keys WHERE user_id = ? ORDER BY created_at DESC",
+        (user_id,)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def delete_api_key(user_id: int, key_id: int) -> bool:
+    """Delete an API key. Returns True if deleted, False if not found."""
+    conn = get_db()
+    cursor = conn.execute(
+        "DELETE FROM api_keys WHERE id = ? AND user_id = ?",
+        (key_id, user_id)
+    )
+    conn.commit()
+    deleted = cursor.rowcount > 0
+    conn.close()
+    return deleted

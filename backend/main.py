@@ -1,15 +1,20 @@
 import os
 import shutil
 import json
+import csv
 import asyncio
 import secrets
 import time
+import io
 from collections import defaultdict
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
+from urllib.parse import urljoin, urlparse
 
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
+import httpx
+from bs4 import BeautifulSoup
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Form
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt, JWTError
@@ -18,8 +23,9 @@ from database import (
     init_db, get_db, create_user, verify_user, get_user_by_email, get_user_by_id,
     create_password_reset_token, verify_reset_token, reset_password,
     list_all_users, update_user_active, delete_user_data, admin_reset_password,
+    create_api_key, verify_api_key, list_api_keys, delete_api_key,
 )
-from pdf_processor import extract_images_from_pdf, generate_alt_text
+from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image
 
 # Generate a persistent SECRET_KEY if not set
 SECRET_KEY_FILE = "/app/data/.secret_key"
@@ -43,6 +49,9 @@ RESULTS_DIR = "/app/data/results"
 BASE_URL = os.environ.get("BASE_URL", "https://inkludocs.inklutec.de")
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
 
+# Allowed image extensions for direct upload
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp"}
+
 # Rate limiting for login
 _login_attempts = defaultdict(list)
 MAX_LOGIN_ATTEMPTS = 5
@@ -52,27 +61,6 @@ LOGIN_WINDOW_SECONDS = 300  # 5 minutes
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    
-    # Migration: Add bounding box and is_vector columns if missing
-    conn = get_db()
-    try:
-        # Check if columns exist by trying to select them
-        conn.execute("SELECT bbox_x0 FROM images LIMIT 1")
-    except Exception:
-        # Columns don't exist, add them
-        print("Migrating database: Adding vector graphics support columns...")
-        try:
-            conn.execute("ALTER TABLE images ADD COLUMN bbox_x0 REAL")
-            conn.execute("ALTER TABLE images ADD COLUMN bbox_y0 REAL")
-            conn.execute("ALTER TABLE images ADD COLUMN bbox_x1 REAL")
-            conn.execute("ALTER TABLE images ADD COLUMN bbox_y1 REAL")
-            conn.execute("ALTER TABLE images ADD COLUMN is_vector INTEGER DEFAULT 0")
-            conn.commit()
-            print("Database migration complete: Vector graphics support added")
-        except Exception as e:
-            print(f"Migration warning: {e}")
-    conn.close()
-    
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(RESULTS_DIR, exist_ok=True)
     # Create default admin user if not exists
@@ -89,7 +77,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://inkludocs.inklutec.de"],
     allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-API-Key"],
     allow_credentials=True,
     expose_headers=["X-Export-Warnings", "X-Export-Tagged", "X-Export-Total"],
 )
@@ -122,6 +110,17 @@ def require_admin(request: Request) -> dict:
     if not user.get("is_admin"):
         raise HTTPException(status_code=403, detail="Nur fuer Administratoren")
     return user
+
+
+def get_api_user(request: Request) -> dict:
+    """Authenticate via X-API-Key header for public API endpoints."""
+    api_key = request.headers.get("X-API-Key", "")
+    if not api_key:
+        raise HTTPException(status_code=401, detail="API-Key fehlt. Bitte X-API-Key Header setzen.")
+    key_info = verify_api_key(api_key)
+    if not key_info:
+        raise HTTPException(status_code=401, detail="API-Key ungueltig oder deaktiviert.")
+    return {"id": key_info["user_id"], "email": key_info["email"], "is_admin": 0}
 
 
 # ─── Auth Routes ─────────────────────────────────────────────
@@ -248,8 +247,6 @@ async def forgot_password(request: Request):
     token = create_password_reset_token(user["id"])
     reset_url = f"{BASE_URL}/reset?token={token}"
 
-    # Since we don't have email sending yet, return the link directly
-    # In production, this would send an email
     return {
         "ok": True,
         "message": "Reset-Link wurde erstellt.",
@@ -331,6 +328,36 @@ async def admin_delete_user(user_id: int, user: dict = Depends(require_admin)):
     return {"ok": True, "message": f"User {target['email']} und alle Daten wurden geloescht"}
 
 
+# ─── API Key Management ─────────────────────────────────────
+
+@app.get("/api/api-keys")
+async def api_list_keys(user: dict = Depends(get_current_user)):
+    keys = list_api_keys(user["id"])
+    return {"api_keys": keys}
+
+
+@app.post("/api/api-keys")
+async def api_create_key(request: Request, user: dict = Depends(get_current_user)):
+    data = await request.json()
+    name = data.get("name", "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Bitte einen Namen fuer den API-Key eingeben")
+    key_id, raw_key = create_api_key(user["id"], name)
+    return {
+        "ok": True,
+        "key_id": key_id,
+        "api_key": raw_key,
+        "hinweis": "Dieser API-Key wird nur einmal angezeigt. Bitte sicher speichern.",
+    }
+
+
+@app.delete("/api/api-keys/{key_id}")
+async def api_delete_key(key_id: int, user: dict = Depends(get_current_user)):
+    if not delete_api_key(user["id"], key_id):
+        raise HTTPException(status_code=404, detail="API-Key nicht gefunden")
+    return {"ok": True}
+
+
 # ─── Project Routes ──────────────────────────────────────────
 
 @app.get("/api/projects")
@@ -344,14 +371,27 @@ async def list_projects(user: dict = Depends(get_current_user)):
 
 
 @app.post("/api/upload")
-async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Nur PDF-Dateien erlaubt")
+async def upload_file(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload a PDF or image file(s). Accepts PDF, JPG, JPEG, PNG, GIF, SVG, WEBP."""
+    filename = file.filename or "unknown"
+    ext = os.path.splitext(filename)[1].lower()
+
+    is_pdf = ext == ".pdf"
+    is_image = ext in IMAGE_EXTENSIONS
+
+    if not is_pdf and not is_image:
+        raise HTTPException(
+            status_code=400,
+            detail="Nur PDF- und Bilddateien erlaubt (PDF, JPG, PNG, GIF, SVG, WebP)"
+        )
 
     # Read and check file size
     content = await file.read()
     if len(content) > MAX_UPLOAD_SIZE:
-        raise HTTPException(status_code=413, detail=f"Datei zu gross. Maximum: {MAX_UPLOAD_SIZE // (1024*1024)} MB")
+        raise HTTPException(
+            status_code=413,
+            detail=f"Datei zu gross. Maximum: {MAX_UPLOAD_SIZE // (1024*1024)} MB"
+        )
 
     # Create user directory
     user_dir = os.path.join(UPLOAD_DIR, str(user["id"]))
@@ -359,16 +399,23 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
 
     # Save file with sanitized name
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_name = f"{timestamp}_{os.path.basename(file.filename)}"
+    safe_name = f"{timestamp}_{os.path.basename(filename)}"
     file_path = os.path.join(user_dir, safe_name)
     with open(file_path, "wb") as f:
         f.write(content)
 
-    # Create project in DB
+    if is_pdf:
+        return await _handle_pdf_upload(file_path, filename, user)
+    else:
+        return await _handle_image_upload(file_path, filename, user, content, ext)
+
+
+async def _handle_pdf_upload(file_path: str, filename: str, user: dict) -> dict:
+    """Process a PDF upload (existing behavior)."""
     conn = get_db()
     cursor = conn.execute(
-        "INSERT INTO projects (user_id, filename, original_path, status) VALUES (?, ?, ?, 'extracting')",
-        (user["id"], file.filename, file_path)
+        "INSERT INTO projects (user_id, filename, original_path, status, project_type) VALUES (?, ?, ?, 'extracting', 'pdf')",
+        (user["id"], filename, file_path)
     )
     project_id = cursor.lastrowid
     conn.commit()
@@ -393,9 +440,9 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
         bbox_x1 = bbox[2] if bbox else None
         bbox_y1 = bbox[3] if bbox else None
         is_vector = 1 if img.get("is_vector") else 0
-        
+
         conn.execute(
-            """INSERT INTO images (project_id, page_number, image_index, image_path, context_text, 
+            """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
                width, height, xref, bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (project_id, img["page_number"], img["image_index"], img["image_path"],
@@ -413,9 +460,227 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
     return {
         "ok": True,
         "project_id": project_id,
-        "filename": file.filename,
+        "filename": filename,
         "total_images": len(images),
+        "project_type": "pdf",
     }
+
+
+async def _handle_image_upload(file_path: str, filename: str, user: dict, content: bytes, ext: str) -> dict:
+    """Process a direct image upload."""
+    from PIL import Image as PILImage
+
+    conn = get_db()
+    cursor = conn.execute(
+        "INSERT INTO projects (user_id, filename, original_path, status, project_type) VALUES (?, ?, ?, 'extracted', 'images')",
+        (user["id"], filename, file_path)
+    )
+    project_id = cursor.lastrowid
+    conn.commit()
+
+    # Create project image directory and copy the image
+    img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
+    os.makedirs(img_dir, exist_ok=True)
+    img_path = os.path.join(img_dir, f"img_1{ext}")
+    shutil.copy2(file_path, img_path)
+
+    # Get image dimensions
+    width, height = 0, 0
+    try:
+        with PILImage.open(img_path) as img:
+            width, height = img.size
+    except Exception:
+        pass
+
+    conn.execute(
+        """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
+           width, height, xref)
+           VALUES (?, 1, 1, ?, '', ?, ?, 0)""",
+        (project_id, img_path, width, height)
+    )
+    conn.execute(
+        "UPDATE projects SET total_images = 1 WHERE id = ?",
+        (project_id,)
+    )
+    conn.commit()
+    conn.close()
+
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "filename": filename,
+        "total_images": 1,
+        "project_type": "images",
+    }
+
+
+# ─── URL Scanner ─────────────────────────────────────────────
+
+@app.post("/api/scan-url")
+async def scan_url(request: Request, user: dict = Depends(get_current_user)):
+    """Scan a URL for images and create a project."""
+    data = await request.json()
+    url = data.get("url", "").strip()
+
+    if not url:
+        raise HTTPException(status_code=400, detail="Bitte eine URL eingeben")
+
+    # Validate URL
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="Nur HTTP/HTTPS-URLs werden unterstuetzt")
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            response = await client.get(url, headers={
+                "User-Agent": "InkluDocs/1.0 (Barrierefreiheits-Scanner; kontakt@inklutec.de)"
+            })
+            response.raise_for_status()
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Zeitueberschreitung beim Laden der Seite")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"Seite nicht erreichbar: HTTP {e.response.status_code}")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Fehler beim Laden der Seite: {str(e)}")
+
+    # Parse HTML
+    soup = BeautifulSoup(response.text, "html.parser")
+    img_tags = soup.find_all("img")
+
+    if not img_tags:
+        raise HTTPException(status_code=404, detail="Keine Bilder auf dieser Seite gefunden")
+
+    # Create project
+    conn = get_db()
+    page_title = soup.title.string.strip() if soup.title and soup.title.string else parsed.netloc
+    cursor = conn.execute(
+        "INSERT INTO projects (user_id, filename, original_path, status, project_type, source_url) VALUES (?, ?, '', 'extracting', 'url', ?)",
+        (user["id"], f"Website: {page_title[:80]}", url)
+    )
+    project_id = cursor.lastrowid
+    conn.commit()
+
+    img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
+    os.makedirs(img_dir, exist_ok=True)
+
+    downloaded = 0
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+        for idx, img_tag in enumerate(img_tags, 1):
+            src = img_tag.get("src", "")
+            if not src:
+                continue
+
+            # Resolve relative URLs
+            img_url = urljoin(url, src)
+
+            # Get original alt text
+            original_alt = img_tag.get("alt", "")
+
+            # Get context: parent text, figcaption, title attribute
+            context_parts = []
+            if img_tag.get("title"):
+                context_parts.append(f"[title] {img_tag['title']}")
+            if original_alt:
+                context_parts.append(f"[Original alt] {original_alt}")
+            # figcaption
+            parent_figure = img_tag.find_parent("figure")
+            if parent_figure:
+                figcaption = parent_figure.find("figcaption")
+                if figcaption:
+                    context_parts.append(f"[Bildunterschrift] {figcaption.get_text(strip=True)}")
+            # Surrounding text (parent element)
+            parent = img_tag.parent
+            if parent and parent.name not in ("html", "body", "head"):
+                parent_text = parent.get_text(strip=True)[:200]
+                if parent_text and parent_text != original_alt:
+                    context_parts.append(f"[Umgebungstext] {parent_text}")
+            context_text = "\n".join(context_parts) if context_parts else ""
+
+            # Download image
+            try:
+                img_response = await client.get(img_url)
+                img_response.raise_for_status()
+                img_content = img_response.content
+
+                # Determine extension from content type or URL
+                content_type = img_response.headers.get("content-type", "")
+                ext = _ext_from_content_type(content_type) or _ext_from_url(img_url)
+                if not ext:
+                    continue  # Skip unknown formats
+
+                img_filename = f"web_{idx}{ext}"
+                img_path = os.path.join(img_dir, img_filename)
+                with open(img_path, "wb") as f:
+                    f.write(img_content)
+
+                # Get dimensions
+                width, height = 0, 0
+                try:
+                    from PIL import Image as PILImage
+                    with PILImage.open(img_path) as pimg:
+                        width, height = pimg.size
+                except Exception:
+                    pass
+
+                # Skip tiny images (likely tracking pixels or icons)
+                if width > 0 and height > 0 and (width < 20 or height < 20):
+                    os.remove(img_path)
+                    continue
+
+                conn.execute(
+                    """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
+                       width, height, xref, original_alt)
+                       VALUES (?, 1, ?, ?, ?, ?, ?, 0, ?)""",
+                    (project_id, idx, img_path, context_text, width, height, original_alt)
+                )
+                downloaded += 1
+
+            except Exception as e:
+                print(f"Fehler beim Download von {img_url}: {e}")
+                continue
+
+    if downloaded == 0:
+        conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
+        conn.commit()
+        conn.close()
+        raise HTTPException(status_code=404, detail="Keine Bilder konnten heruntergeladen werden")
+
+    conn.execute(
+        "UPDATE projects SET status = 'extracted', total_images = ? WHERE id = ?",
+        (downloaded, project_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "total_images": downloaded,
+        "source_url": url,
+        "project_type": "url",
+    }
+
+
+def _ext_from_content_type(ct: str) -> str:
+    """Map content type to file extension."""
+    ct = ct.lower().split(";")[0].strip()
+    mapping = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/gif": ".gif",
+        "image/webp": ".webp",
+        "image/svg+xml": ".svg",
+    }
+    return mapping.get(ct, "")
+
+
+def _ext_from_url(url: str) -> str:
+    """Extract file extension from URL path."""
+    path = urlparse(url).path.lower()
+    for ext in IMAGE_EXTENSIONS:
+        if path.endswith(ext):
+            return ext
+    return ""
 
 
 @app.get("/api/projects/{project_id}")
@@ -453,7 +718,7 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
     project_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
     if os.path.exists(project_dir):
         shutil.rmtree(project_dir)
-    if os.path.exists(project["original_path"]):
+    if project["original_path"] and os.path.exists(project["original_path"]):
         os.remove(project["original_path"])
 
     conn.execute("DELETE FROM images WHERE project_id = ?", (project_id,))
@@ -513,12 +778,13 @@ async def _process_project(project_id: int, user_id: int):
         conn.commit()
 
         result = await asyncio.get_event_loop().run_in_executor(
-            None, generate_alt_text, img["image_path"], img["context_text"]
+            None, generate_alt_text, img["image_path"], img["context_text"], None
         )
 
+        langbeschreibung = result.get("langbeschreibung", "")
         conn.execute(
-            """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, status = 'done' WHERE id = ?""",
-            (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), img["id"])
+            """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?, status = 'done' WHERE id = ?""",
+            (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung, img["id"])
         )
         processed += 1
         conn.execute(
@@ -566,10 +832,69 @@ async def update_alt_text(image_id: int, request: Request, user: dict = Depends(
         "UPDATE images SET alt_text_edited = ? WHERE id = ?",
         (data.get("alt_text", ""), image_id)
     )
+    # Also update langbeschreibung if provided
+    if "langbeschreibung" in data:
+        conn.execute(
+            "UPDATE images SET langbeschreibung = ? WHERE id = ?",
+            (data.get("langbeschreibung", ""), image_id)
+        )
     conn.commit()
     conn.close()
     return {"ok": True}
 
+
+# ─── Regenerate Single Image ────────────────────────────────
+
+@app.post("/api/projects/{project_id}/regenerate/{image_id}")
+async def regenerate_image(project_id: int, image_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Regenerate alt-text for a single image with optional specialized prompt."""
+    data = await request.json()
+    image_type = data.get("image_type")  # Optional: foto, diagramm, karte, etc.
+
+    conn = get_db()
+    img = conn.execute(
+        """SELECT i.* FROM images i
+           JOIN projects p ON i.project_id = p.id
+           WHERE i.id = ? AND i.project_id = ? AND p.user_id = ?""",
+        (image_id, project_id, user["id"])
+    ).fetchone()
+    if not img:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+
+    conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (image_id,))
+    conn.commit()
+
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, generate_alt_text, img["image_path"], img["context_text"], image_type
+        )
+
+        langbeschreibung = result.get("langbeschreibung", "")
+        conn.execute(
+            """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?,
+               langbeschreibung = ?, alt_text_edited = NULL, status = 'done' WHERE id = ?""",
+            (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"),
+             langbeschreibung, image_id)
+        )
+        conn.commit()
+        conn.close()
+
+        return {
+            "ok": True,
+            "alt_text": result["alt_text"],
+            "bildtyp": result["bildtyp"],
+            "konfidenz": result.get("konfidenz", "mittel"),
+            "langbeschreibung": langbeschreibung,
+        }
+    except Exception as e:
+        conn.execute("UPDATE images SET status = 'done' WHERE id = ?", (image_id,))
+        conn.commit()
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Fehler bei der Neugenerierung: {str(e)}")
+
+
+# ─── Export Routes ───────────────────────────────────────────
 
 @app.post("/api/projects/{project_id}/export")
 async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
@@ -588,17 +913,17 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
 
     alt_texts = {}
     image_metadata = []
-    
+
     for img in images:
         alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
         if alt_text is not None and img["xref"]:
             alt_texts[img["xref"]] = alt_text
-        
+
         # Build metadata for vector graphics support
         bbox = None
         if img["bbox_x0"] is not None:
             bbox = (img["bbox_x0"], img["bbox_y0"], img["bbox_x1"], img["bbox_y1"])
-        
+
         image_metadata.append({
             "xref": img["xref"],
             "page_number": img["page_number"],
@@ -613,7 +938,7 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
     output_path = os.path.join(output_dir, f"inkludocs_{project['filename']}")
 
     try:
-        from pdf_processor import write_alt_texts_to_pdf
+        from pdf_export import write_alt_texts_to_pdf
         result = write_alt_texts_to_pdf(project["original_path"], output_path, alt_texts, image_metadata)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
@@ -628,7 +953,6 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
         headers["X-Export-Tagged"] = str(tagged_count)
         headers["X-Export-Total"] = str(total_count)
         if export_warnings:
-            import json
             headers["X-Export-Warnings"] = json.dumps(export_warnings, ensure_ascii=False)
 
     return FileResponse(
@@ -637,6 +961,153 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
         media_type="application/pdf",
         headers=headers
     )
+
+
+@app.post("/api/projects/{project_id}/export/json")
+async def export_json(project_id: int, user: dict = Depends(get_current_user)):
+    """Export all alt-texts as JSON."""
+    conn = get_db()
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+
+    images = conn.execute(
+        "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index", (project_id,)
+    ).fetchall()
+    conn.close()
+
+    export_data = {
+        "projekt": project["filename"],
+        "erstellt": datetime.now().isoformat(),
+        "quelle": dict(project).get("source_url", ""),
+        "bilder": [],
+    }
+
+    for img in images:
+        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+        entry = {
+            "id": img["id"],
+            "seite": img["page_number"],
+            "index": img["image_index"],
+            "bildtyp": img["image_type"],
+            "alt_text": alt_text or "",
+            "breite": img["width"],
+            "hoehe": img["height"],
+        }
+        langbeschreibung = img["langbeschreibung"] if img["langbeschreibung"] else ""
+        if langbeschreibung:
+            entry["langbeschreibung"] = langbeschreibung
+        original_alt = img["original_alt"] if img["original_alt"] else ""
+        if original_alt:
+            entry["original_alt"] = original_alt
+        export_data["bilder"].append(entry)
+
+    json_bytes = json.dumps(export_data, ensure_ascii=False, indent=2).encode("utf-8")
+    return StreamingResponse(
+        io.BytesIO(json_bytes),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="inkludocs_{project["filename"]}.json"'}
+    )
+
+
+@app.post("/api/projects/{project_id}/export/csv")
+async def export_csv(project_id: int, user: dict = Depends(get_current_user)):
+    """Export all alt-texts as CSV."""
+    conn = get_db()
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+
+    images = conn.execute(
+        "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index", (project_id,)
+    ).fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow(["ID", "Seite", "Index", "Bildtyp", "Alt-Text", "Langbeschreibung", "Original-Alt", "Breite", "Hoehe"])
+
+    for img in images:
+        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+        writer.writerow([
+            img["id"],
+            img["page_number"],
+            img["image_index"],
+            img["image_type"],
+            alt_text or "",
+            img["langbeschreibung"] or "",
+            img["original_alt"] or "",
+            img["width"],
+            img["height"],
+        ])
+
+    csv_bytes = output.getvalue().encode("utf-8-sig")  # BOM for Excel compatibility
+    return StreamingResponse(
+        io.BytesIO(csv_bytes),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="inkludocs_{project["filename"]}.csv"'}
+    )
+
+
+# ─── Public API ──────────────────────────────────────────────
+
+@app.post("/v1/alt-text")
+async def api_generate_alt_text(request: Request):
+    """Public API endpoint for alt-text generation. Requires X-API-Key header."""
+    api_user = get_api_user(request)
+
+    # Parse multipart form data
+    form = await request.form()
+    file = form.get("file")
+    if not file:
+        raise HTTPException(status_code=400, detail="Bitte eine Bilddatei als 'file' hochladen")
+
+    context_text = form.get("context", "")
+    image_type = form.get("image_type")
+
+    # Validate file
+    filename = file.filename or "image.jpg"
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail="Nur Bilddateien erlaubt (JPG, PNG, GIF, SVG, WebP)"
+        )
+
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail="Datei zu gross")
+
+    # Save temporarily
+    tmp_dir = os.path.join(UPLOAD_DIR, "api_tmp")
+    os.makedirs(tmp_dir, exist_ok=True)
+    tmp_path = os.path.join(tmp_dir, f"{secrets.token_hex(8)}{ext}")
+    with open(tmp_path, "wb") as f:
+        f.write(content)
+
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, generate_alt_text_for_image, tmp_path, context_text, image_type
+        )
+        return {
+            "alt_text": result.get("alt_text", ""),
+            "bildtyp": result.get("bildtyp", "unbekannt"),
+            "konfidenz": result.get("konfidenz", "mittel"),
+            "langbeschreibung": result.get("langbeschreibung", ""),
+            "ist_dekorativ": result.get("ist_dekorativ", False),
+        }
+    finally:
+        # Clean up temporary file
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
 
 
 # ─── Frontend Routes ─────────────────────────────────────────

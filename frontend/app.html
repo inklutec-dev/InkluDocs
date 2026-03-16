@@ -58,60 +58,126 @@
         const data = await res.json();
 
         main.innerHTML = `
-            <div class="upload-area" role="region" aria-label="PDF hochladen">
-                <h2>PDF-Dokument hochladen</h2>
-                <p>Laden Sie ein PDF hoch, um Alt-Texte fuer alle enthaltenen Grafiken zu generieren.</p>
-                <label class="upload-btn" for="fileInput" role="button" tabindex="0">PDF auswaehlen</label>
-                <input type="file" id="fileInput" accept=".pdf" aria-label="PDF-Datei auswaehlen">
+            <div class="upload-area" role="region" aria-label="Dateien hochladen oder Website scannen">
+                <h2>Alt-Texte generieren</h2>
+                <p>Laden Sie PDFs oder Bilder hoch, um Alt-Texte fuer alle enthaltenen Grafiken zu generieren.</p>
+                <label class="upload-btn" for="fileInput" role="button" tabindex="0">Dateien auswaehlen</label>
+                <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.svg,.webp" multiple aria-label="PDF oder Bilddateien auswaehlen">
                 <p id="uploadStatus" aria-live="polite" style="margin-top:1rem;"></p>
+                <div class="url-scan-area" style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border,#ddd);">
+                    <label for="urlInput" style="display:block;font-weight:600;margin-bottom:0.5rem;">Oder Website-URL eingeben</label>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <input type="url" id="urlInput" placeholder="https://example.com" style="flex:1;min-width:200px;padding:0.6rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:1rem;" aria-describedby="urlHint">
+                        <button class="btn btn-primary" id="scanBtn" onclick="scanUrl()" style="min-width:120px;">Website scannen</button>
+                    </div>
+                    <small id="urlHint" style="color:var(--text-muted,#666);display:block;margin-top:0.3rem;">Die Seite wird analysiert und alle Bilder ohne oder mit fehlenden Alt-Texten werden gefunden.</small>
+                </div>
             </div>
             <h2 class="section-title">Meine Projekte</h2>
             <div id="projectList"></div>
         `;
 
         document.getElementById('fileInput').addEventListener('change', handleUpload);
+        document.getElementById('urlInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); scanUrl(); }
+        });
         renderProjectList(data.projects);
     }
 
     async function handleUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
         const status = document.getElementById('uploadStatus');
-        status.textContent = 'Wird hochgeladen...';
-        announce('PDF wird hochgeladen');
 
-        const formData = new FormData();
-        formData.append('file', file);
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            status.textContent = files.length > 1
+                ? 'Datei ' + (i + 1) + ' von ' + files.length + ' wird hochgeladen...'
+                : 'Wird hochgeladen...';
+            announce(file.name + ' wird hochgeladen');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    if (i === files.length - 1) {
+                        announce(data.total_images + ' Bilder gefunden.');
+                        showProject(data.project_id);
+                    }
+                } else {
+                    status.textContent = 'Fehler: ' + (data.detail || 'Upload fehlgeschlagen');
+                    announce('Fehler beim Upload von ' + file.name);
+                    return;
+                }
+            } catch (err) {
+                status.textContent = 'Verbindungsfehler';
+                return;
+            }
+        }
+    }
+
+    async function scanUrl() {
+        const input = document.getElementById('urlInput');
+        const btn = document.getElementById('scanBtn');
+        const status = document.getElementById('uploadStatus');
+        const url = input.value.trim();
+
+        if (!url) { input.focus(); return; }
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            status.textContent = 'Bitte eine vollstaendige URL eingeben (mit https://)';
+            announce('Bitte eine vollstaendige URL eingeben');
+            input.focus();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Wird gescannt...';
+        status.textContent = 'Website wird analysiert...';
+        announce('Website wird gescannt: ' + url);
 
         try {
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const res = await fetch('/api/scan-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url }),
+            });
             const data = await res.json();
             if (res.ok) {
-                announce(data.total_images + ' Bilder gefunden.');
+                announce(data.total_images + ' Bilder auf der Seite gefunden.');
                 showProject(data.project_id);
             } else {
-                status.textContent = 'Fehler: ' + (data.detail || 'Upload fehlgeschlagen');
+                status.textContent = 'Fehler: ' + (data.detail || 'Scan fehlgeschlagen');
+                announce('Fehler beim Scannen der Website');
             }
         } catch (err) {
             status.textContent = 'Verbindungsfehler';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Website scannen';
         }
     }
 
     function renderProjectList(projects) {
         const list = document.getElementById('projectList');
         if (!projects.length) {
-            list.innerHTML = '<div class="empty-state"><p>Noch keine Projekte. Laden Sie ein PDF hoch.</p></div>';
+            list.innerHTML = '<div class="empty-state"><p>Noch keine Projekte. Laden Sie Dateien hoch oder scannen Sie eine Website.</p></div>';
             return;
         }
         const statusLabels = { uploaded:'Hochgeladen', extracting:'Extrahiere...', extracted:'Bereit', processing:'Verarbeite...', done:'Fertig', error:'Fehler' };
         const statusClass = s => s === 'done' ? 'badge-done' : s === 'processing' ? 'badge-processing' : s === 'extracted' ? 'badge-ready' : 'badge-error';
+        const typeLabels = { pdf:'PDF', images:'Bilder', url:'Website' };
 
         list.innerHTML = projects.map(p => {
             const progress = p.total_images > 0 ? Math.round((p.processed_images / p.total_images) * 100) : 0;
+            const typeLabel = typeLabels[p.project_type] || 'PDF';
             return `
             <div class="card" role="article" aria-label="Projekt ${p.filename}">
                 <div class="card-header">
                     <span class="card-name">${p.filename}</span>
+                    <span class="badge" style="background:var(--text-muted,#888);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">${typeLabel}</span>
                     <span class="badge ${statusClass(p.status)}">${statusLabels[p.status] || p.status}</span>
                 </div>
                 <div class="card-info">${p.total_images} Bilder | ${p.processed_images} verarbeitet | ${new Date(p.created_at).toLocaleDateString('de-DE')}</div>
@@ -158,21 +224,24 @@
                     <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Fortschritt: ${progress} Prozent">
                         <div class="progress-fill" style="width:${progress}%"></div>
                     </div>
-                    <p id="processingInfo" aria-live="polite">Bild ${project.processed_images} von ${project.total_images} wird verarbeitet. Dies kann einige Minuten pro Bild dauern.</p>
+                    <p id="processingInfo" aria-live="polite">Bild ${project.processed_images} von ${project.total_images} wird verarbeitet.</p>
                 ` : ''}
                 <div class="card-actions">
                     ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alt-Texte generieren</button>' : ''}
                     ${project.status === 'done' ? `
-                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id}, '${project.filename}')">PDF exportieren</button>
-                        <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg-card,#fff);" role="region" aria-label="Export-Optionen">
+                        <div class="export-buttons" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <button class="btn btn-primary" onclick="exportData(${project.id}, 'json')">JSON exportieren</button>
+                            <button class="btn btn-primary" onclick="exportData(${project.id}, 'csv')">CSV exportieren</button>
+                            <button class="btn btn-secondary" onclick="openPdfExport(${project.id}, '${project.filename}')">PDF exportieren (Beta)</button>
+                        </div>
+                        <div id="pdfExportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-label="PDF-Export-Optionen">
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">Dateiname</label>
-                                <input type="text" id="exportFilename" aria-describedby="exportHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
-                                <small id="exportHint" style="color:var(--text-muted);display:block;margin-top:0.3rem;">Sie koennen den Dateinamen vor dem Download aendern.</small>
+                                <input type="text" id="exportFilename" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
                             </div>
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                                <button class="btn btn-primary" id="downloadBtn" onclick="exportPdf(${project.id})">Herunterladen</button>
-                                <button class="btn btn-secondary" onclick="closeExportPanel()">Abbrechen</button>
+                                <button class="btn btn-primary" onclick="exportPdf(${project.id})">Herunterladen</button>
+                                <button class="btn btn-secondary" onclick="closePdfExport()">Abbrechen</button>
                                 <span id="exportStatus" role="status" aria-live="polite"></span>
                             </div>
                         </div>
@@ -183,7 +252,7 @@
             <div id="imageList"></div>
         `;
 
-        renderImages(images);
+        renderImages(images, projectId);
 
         if (project.status === 'processing') {
             pollInterval = setInterval(async () => {
@@ -200,28 +269,32 @@
                     const info = document.getElementById('processingInfo');
                     const newP = Math.round((sData.processed_images / sData.total_images) * 100);
                     if (bar) bar.style.width = newP + '%';
-                    if (info) info.textContent = 'Bild ' + sData.processed_images + ' von ' + sData.total_images + ' wird verarbeitet. Dies kann einige Minuten pro Bild dauern.';
+                    if (info) info.textContent = 'Bild ' + sData.processed_images + ' von ' + sData.total_images + ' wird verarbeitet.';
                 }
             }, 10000);
         }
     }
 
-    function renderImages(images) {
+    function renderImages(images, projectId) {
         const list = document.getElementById('imageList');
         if (!images.length) {
-            list.innerHTML = '<div class="empty-state"><p>Keine Bilder in diesem PDF gefunden.</p></div>';
+            list.innerHTML = '<div class="empty-state"><p>Keine Bilder gefunden.</p></div>';
             return;
         }
-        list.innerHTML = images.map(img => `
-            <div class="image-review" role="region" aria-label="Bild auf Seite ${img.page_number}">
+        const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','dekorativ'];
+
+        list.innerHTML = images.map(img => {
+            const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
+            return `
+            <div class="image-review" role="region" aria-label="Bild ${img.image_index}${img.page_number > 0 ? ', Seite ' + img.page_number : ''}">
                 <div class="image-review-header">
-                    <span class="image-meta">Seite ${img.page_number}, Bild ${img.image_index} (${img.width}x${img.height}px)</span>
+                    <span class="image-meta">${img.page_number > 0 ? 'Seite ' + img.page_number + ', ' : ''}Bild ${img.image_index} (${img.width}x${img.height}px)</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
-                    ${img.ist_dekorativ || (!img.alt_text && !img.alt_text_edited && img.status === 'done') ? '<span class="badge badge-decorative" style="background:#999;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Dekorativ</span>' : ''}
-                    ${img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;" title="KI-Konfidenz: ' + img.konfidenz + '">Konfidenz: ' + img.konfidenz + '</span>' : ''}
+                    ${img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Konfidenz: ' + img.konfidenz + '</span>' : ''}
+                    ${img.original_alt ? '<span class="badge" style="background:#666;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;" title="Originaler Alt-Text: ' + img.original_alt.replace(/"/g, '&quot;') + '">Original vorhanden</span>' : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
                 </div>
-                <img src="/api/images/${img.id}/file" alt="Extrahiertes Bild von Seite ${img.page_number}" class="image-preview" loading="lazy">
+                <img src="/api/images/${img.id}/file" alt="Extrahiertes Bild${img.page_number > 0 ? ' von Seite ' + img.page_number : ''}" class="image-preview" loading="lazy">
                 <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
                     Alt-Text
                     <span class="save-indicator" id="saved_${img.id}">Gespeichert</span>
@@ -230,10 +303,26 @@
                     placeholder="${img.status === 'done' ? '' : 'Alt-Text wird generiert...'}"
                     ${img.status !== 'done' && !img.alt_text ? 'disabled' : ''}
                 >${img.alt_text_edited || img.alt_text || ''}</textarea>
-            </div>
-        `).join('');
+                ${hasLang ? `
+                    <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung (fuer komplexe Grafiken)</label>
+                    <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;" readonly>${img.langbeschreibung}</textarea>
+                ` : ''}
+                ${img.status === 'done' ? `
+                    <div class="regen-area" style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                        <label for="regen_type_${img.id}" class="sr-only">Bildtyp fuer Neugenerierung</label>
+                        <select id="regen_type_${img.id}" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
+                            <option value="">Automatisch</option>
+                            ${imageTypes.map(t => '<option value="' + t + '"' + (img.image_type === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('')}
+                        </select>
+                        <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}">Neu generieren</button>
+                        <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                    </div>
+                ` : ''}
+            </div>`;
+        }).join('');
 
-        document.querySelectorAll('.alt-text-field').forEach(ta => {
+        // Auto-save alt-text on edit
+        document.querySelectorAll('.alt-text-field:not(.langtext-field)').forEach(ta => {
             let timeout;
             ta.addEventListener('input', () => {
                 clearTimeout(timeout);
@@ -251,6 +340,48 @@
         });
     }
 
+    async function regenerateImage(projectId, imageId) {
+        const typeSelect = document.getElementById('regen_type_' + imageId);
+        const btn = document.getElementById('regen_btn_' + imageId);
+        const statusEl = document.getElementById('regen_status_' + imageId);
+        const imageType = typeSelect ? typeSelect.value : '';
+
+        btn.disabled = true;
+        btn.textContent = 'Generiere...';
+        if (statusEl) statusEl.textContent = '';
+        announce('Alt-Text wird neu generiert');
+
+        try {
+            const body = {};
+            if (imageType) body.image_type = imageType;
+
+            const res = await fetch('/api/projects/' + projectId + '/regenerate/' + imageId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                const ta = document.getElementById('alttext_' + imageId);
+                if (ta) ta.value = data.alt_text || '';
+                if (data.langbeschreibung) {
+                    const lt = document.getElementById('langtext_' + imageId);
+                    if (lt) lt.value = data.langbeschreibung;
+                }
+                if (statusEl) statusEl.textContent = 'Neu generiert (' + (data.konfidenz || 'mittel') + ')';
+                announce('Alt-Text wurde neu generiert');
+            } else {
+                if (statusEl) statusEl.textContent = 'Fehler';
+                announce('Fehler bei der Neugenerierung');
+            }
+        } catch (err) {
+            if (statusEl) statusEl.textContent = 'Verbindungsfehler';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Neu generieren';
+        }
+    }
+
     async function startGeneration(projectId) {
         const btn = document.getElementById('generateBtn');
         if (btn) { btn.disabled = true; btn.textContent = 'Wird gestartet...'; }
@@ -260,26 +391,42 @@
         else { const d = await res.json(); announce('Fehler: ' + (d.detail || '')); }
     }
 
-    function openExportPanel(projectId, filename) {
-        const panel = document.getElementById('exportPanel');
-        const btn = document.getElementById('exportOpenBtn');
+    // ─── Export ──────────────────────────────────────
+    async function exportData(projectId, format) {
+        announce(format.toUpperCase() + ' wird exportiert...');
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/export/' + format, { method: 'POST' });
+            if (res.ok) {
+                const blob = await res.blob();
+                const cd = res.headers.get('Content-Disposition') || '';
+                const fnMatch = cd.match(/filename="?([^"]+)"?/);
+                const filename = fnMatch ? fnMatch[1] : 'inkludocs_export.' + format;
+                downloadBlob(blob, filename);
+                announce(format.toUpperCase() + ' wurde heruntergeladen.');
+            } else {
+                announce('Fehler beim Export.');
+            }
+        } catch (err) {
+            announce('Verbindungsfehler beim Export.');
+        }
+    }
+
+    function openPdfExport(projectId, filename) {
+        const panel = document.getElementById('pdfExportPanel');
         const input = document.getElementById('exportFilename');
         if (panel && input) {
             input.value = 'inkludocs_' + filename;
             panel.style.display = 'block';
-            btn.style.display = 'none';
             input.focus();
             input.select();
-            announce('Export-Optionen geoeffnet. Dateiname kann geaendert werden.');
+            announce('PDF-Export-Optionen geoeffnet.');
         }
     }
 
-    function closeExportPanel() {
-        const panel = document.getElementById('exportPanel');
-        const btn = document.getElementById('exportOpenBtn');
+    function closePdfExport() {
+        const panel = document.getElementById('pdfExportPanel');
         if (panel) panel.style.display = 'none';
-        if (btn) { btn.style.display = ''; btn.focus(); }
-        announce('Export abgebrochen.');
+        announce('PDF-Export abgebrochen.');
     }
 
     async function exportPdf(projectId) {
@@ -294,34 +441,20 @@
         try {
             const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST' });
             if (res.ok) {
-                // Check for export warnings in response headers
                 const warningsHeader = res.headers.get('X-Export-Warnings');
                 const taggedCount = res.headers.get('X-Export-Tagged');
                 const totalCount = res.headers.get('X-Export-Total');
 
                 const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 1000);
+                downloadBlob(blob, filename);
 
-                // Show warnings if any
                 if (warningsHeader) {
                     try {
                         const warnings = JSON.parse(warningsHeader);
                         if (warnings.length > 0) {
-                            let msg = 'Heruntergeladen mit Hinweisen: ' + warnings.length + ' Grafik(en) konnten nicht vollstaendig getaggt werden.';
-                            if (statusEl) {
-                                statusEl.innerHTML = '<span style="color:var(--warning,#b45309);">' + msg + '</span>';
-                            }
-                            announce(msg + ' ' + warnings.join(' '));
+                            let msg = taggedCount + ' von ' + totalCount + ' getaggt. ' + warnings.length + ' Hinweise.';
+                            if (statusEl) statusEl.textContent = msg;
+                            announce(msg);
                             return;
                         }
                     } catch(e) {}
@@ -329,18 +462,28 @@
 
                 let successMsg = 'Heruntergeladen!';
                 if (taggedCount && totalCount) {
-                    successMsg = taggedCount + ' von ' + totalCount + ' Alt-Texten erfolgreich exportiert.';
+                    successMsg = taggedCount + ' von ' + totalCount + ' Alt-Texten exportiert.';
                 }
                 if (statusEl) statusEl.textContent = successMsg;
-                announce('PDF wurde als ' + filename + ' heruntergeladen. ' + successMsg);
+                announce('PDF wurde heruntergeladen. ' + successMsg);
             } else {
                 if (statusEl) statusEl.textContent = 'Fehler beim Export.';
-                announce('Fehler beim Export.');
+                announce('Fehler beim PDF-Export.');
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = 'Verbindungsfehler.';
-            announce('Verbindungsfehler beim Export.');
         }
+    }
+
+    function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     }
 
     // ─── Settings ────────────────────────────────────
@@ -371,7 +514,18 @@
             </div>
             <div class="card" style="margin-top:1rem;">
                 <h3>Kontoinformationen</h3>
-                <p style="margin-top:0.5rem;color:var(--text-muted);">E-Mail: ${currentUser.email}<br>Name: ${currentUser.display_name}</p>
+                <p style="margin-top:0.5rem;color:var(--text-muted);">Angemeldet als: ${currentUser.display_name} (${currentUser.email})</p>
+            </div>
+            <div class="card" style="margin-top:1rem;">
+                <h3 style="margin-bottom:1rem;">API-Schluessel</h3>
+                <p style="margin-bottom:1rem;color:var(--text-muted);">Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren.</p>
+                <div id="apiKeyList" aria-live="polite"></div>
+                <div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                    <label for="newKeyName" class="sr-only">Name fuer neuen API-Schluessel</label>
+                    <input type="text" id="newKeyName" placeholder="Name (z.B. Meine App)" style="padding:0.5rem;border:1px solid var(--border);border-radius:4px;flex:1;min-width:150px;">
+                    <button class="btn btn-primary" onclick="createApiKey()">Erstellen</button>
+                </div>
+                <div id="newKeyResult" role="status" aria-live="polite" style="margin-top:0.5rem;"></div>
             </div>
         `;
 
@@ -403,6 +557,59 @@
                 msg.style.color = 'var(--error)';
             }
         });
+
+        loadApiKeys();
+    }
+
+    async function loadApiKeys() {
+        const list = document.getElementById('apiKeyList');
+        if (!list) return;
+        const res = await fetch('/api/api-keys');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.keys || data.keys.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-muted);">Keine API-Schluessel vorhanden.</p>';
+            return;
+        }
+        list.innerHTML = data.keys.map(k => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border,#eee);">
+                <div>
+                    <strong>${k.name}</strong>
+                    <span style="color:var(--text-muted);font-size:0.85rem;margin-left:0.5rem;">Erstellt: ${new Date(k.created_at).toLocaleDateString('de-DE')}</span>
+                    ${k.last_used ? '<span style="color:var(--text-muted);font-size:0.85rem;margin-left:0.5rem;">Zuletzt: ' + new Date(k.last_used).toLocaleDateString('de-DE') + '</span>' : ''}
+                </div>
+                <button class="btn btn-danger btn-small" onclick="deleteApiKey(${k.id})">Loeschen</button>
+            </div>
+        `).join('');
+    }
+
+    async function createApiKey() {
+        const nameInput = document.getElementById('newKeyName');
+        const result = document.getElementById('newKeyResult');
+        const name = nameInput.value.trim();
+        if (!name) { nameInput.focus(); return; }
+
+        const res = await fetch('/api/api-keys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name }),
+        });
+        if (res.ok) {
+            const data = await res.json();
+            result.innerHTML = '<div style="padding:0.8rem;background:var(--bg-card,#f9f9f9);border:1px solid var(--border);border-radius:4px;"><strong>Neuer Schluessel (nur einmal sichtbar!):</strong><br><code style="word-break:break-all;font-size:0.9rem;">' + data.key + '</code></div>';
+            nameInput.value = '';
+            announce('API-Schluessel erstellt. Bitte jetzt kopieren.');
+            loadApiKeys();
+        } else {
+            result.textContent = 'Fehler beim Erstellen.';
+        }
+    }
+
+    async function deleteApiKey(id) {
+        if (!confirm('API-Schluessel wirklich loeschen?')) return;
+        await fetch('/api/api-keys/' + id, { method: 'DELETE' });
+        announce('API-Schluessel geloescht');
+        loadApiKeys();
     }
 
     // ─── Admin ───────────────────────────────────────
