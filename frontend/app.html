@@ -236,8 +236,9 @@
                                 <input type="text" id="exportFilename" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
                             </div>
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'xlsx')">Als Excel</button>
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">Als JSON</button>
-                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'csv')">Als CSV</button>
+                                <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">Als CSV</button>
                                 <button class="btn btn-secondary" onclick="doExport(${project.id}, 'pdf')">Als PDF (Beta)</button>
                                 <button class="btn btn-secondary" onclick="closeExportPanel()">Abbrechen</button>
                             </div>
@@ -418,7 +419,7 @@
         let baseName = filenameInput ? filenameInput.value.trim() : 'export';
         baseName = baseName.replace(/\.[^.]+$/, '');
 
-        const ext = format === 'pdf' ? '.pdf' : format === 'csv' ? '.csv' : '.json';
+        const ext = format === 'pdf' ? '.pdf' : format === 'xlsx' ? '.xlsx' : format === 'csv' ? '.csv' : '.json';
         const filename = baseName + ext;
 
         if (statusEl) statusEl.textContent = 'Wird exportiert...';

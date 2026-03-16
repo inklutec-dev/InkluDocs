@@ -1057,6 +1057,78 @@ async def export_csv(project_id: int, user: dict = Depends(get_current_user)):
     )
 
 
+@app.post("/api/projects/{project_id}/export/xlsx")
+async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
+    """Export alt-texts as Excel with embedded images."""
+    from openpyxl import Workbook
+    from openpyxl.drawing.image import Image as XlImage
+    from openpyxl.styles import Font, Alignment
+    from openpyxl.utils.units import pixels_to_EMU
+
+    conn = get_db()
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+
+    images = conn.execute(
+        "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index", (project_id,)
+    ).fetchall()
+    conn.close()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Alt-Texte"
+
+    # Header row
+    ws["A1"] = "Bild"
+    ws["B1"] = "Alt-Text"
+    ws["C1"] = "Langbeschreibung"
+    for cell in [ws["A1"], ws["B1"], ws["C1"]]:
+        cell.font = Font(bold=True, size=12)
+    ws.column_dimensions["A"].width = 25
+    ws.column_dimensions["B"].width = 60
+    ws.column_dimensions["C"].width = 60
+
+    for i, img in enumerate(images):
+        row = i + 2
+        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+        langbeschreibung = img["langbeschreibung"] or ""
+
+        # Insert image if file exists
+        img_path = img["image_path"]
+        if os.path.exists(img_path):
+            try:
+                xl_img = XlImage(img_path)
+                # Scale to fit: max 150px wide, keep aspect ratio
+                max_w = 150
+                if xl_img.width > max_w:
+                    ratio = max_w / xl_img.width
+                    xl_img.width = max_w
+                    xl_img.height = int(xl_img.height * ratio)
+                ws.row_dimensions[row].height = max(xl_img.height * 0.75, 80)
+                ws.add_image(xl_img, f"A{row}")
+            except Exception:
+                ws[f"A{row}"] = "(Bild nicht verfuegbar)"
+
+        ws[f"B{row}"] = alt_text or ""
+        ws[f"B{row}"].alignment = Alignment(wrap_text=True, vertical="top")
+        ws[f"C{row}"] = langbeschreibung
+        ws[f"C{row}"].alignment = Alignment(wrap_text=True, vertical="top")
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="inkludocs_{project["filename"]}.xlsx"'}
+    )
+
+
 # ─── Public API ──────────────────────────────────────────────
 
 @app.post("/v1/alt-text")
