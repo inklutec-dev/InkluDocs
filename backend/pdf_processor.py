@@ -298,22 +298,10 @@ MAX_ALT_TEXT_LENGTH = 400  # Characters - enough for key info, not overwhelming 
 
 
 def _combine_alt_text(alt_text: str, langbeschreibung: str) -> str:
-    """Combine short alt-text with long description, respecting max length."""
+    """Return only the short alt-text. Langbeschreibung is kept as separate field."""
     if not alt_text:
         return ""
-    if not langbeschreibung:
-        text = alt_text.strip()
-    elif langbeschreibung.strip().startswith(alt_text.strip()[:30]):
-        text = langbeschreibung.strip()
-    else:
-        text = alt_text.rstrip(". ") + ". " + langbeschreibung.strip()
-    # Trim to max length at sentence boundary
-    if len(text) > MAX_ALT_TEXT_LENGTH:
-        cut = text[:MAX_ALT_TEXT_LENGTH]
-        last_end = max(cut.rfind(". "), cut.rfind("! "), cut.rfind("? "))
-        if last_end > 80:
-            text = cut[:last_end + 1]
-    return text
+    return alt_text.strip()
 
 
 def _resize_image_for_model(image_path: str) -> str:
