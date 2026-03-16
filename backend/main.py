@@ -879,6 +879,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
     """Regenerate alt-text for a single image with optional specialized prompt."""
     data = await request.json()
     image_type = data.get("image_type")  # Optional: foto, diagramm, karte, etc.
+    want_long_desc = data.get("long_description", False)
 
     conn = get_db()
     img = conn.execute(
@@ -895,8 +896,13 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
     conn.commit()
 
     try:
+        # If long description requested and no explicit type, use the detected type
+        effective_type = image_type
+        if want_long_desc and not effective_type:
+            effective_type = img["image_type"] if img["image_type"] != "unknown" else None
+
         result = await asyncio.get_event_loop().run_in_executor(
-            None, generate_alt_text, img["image_path"], img["context_text"], image_type
+            None, generate_alt_text, img["image_path"], img["context_text"], effective_type
         )
 
         langbeschreibung = result.get("langbeschreibung", "")

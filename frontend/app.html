@@ -281,6 +281,7 @@
             return;
         }
         const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','dekorativ'];
+        const complexTypes = ['diagramm','karte','tabelle','infografik'];
 
         list.innerHTML = images.map(img => {
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
@@ -303,10 +304,12 @@
                     placeholder="${img.status === 'done' ? '' : 'Alt-Text wird generiert...'}"
                     ${img.status !== 'done' && !img.alt_text ? 'disabled' : ''}
                 >${img.alt_text_edited || img.alt_text || ''}</textarea>
+                <div id="langcontainer_${img.id}">
                 ${hasLang ? `
-                    <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung (fuer komplexe Grafiken)</label>
-                    <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;" readonly>${img.langbeschreibung}</textarea>
+                    <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung</label>
+                    <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;">${img.langbeschreibung}</textarea>
                 ` : ''}
+                </div>
                 ${img.status === 'done' ? `
                     <div class="regen-area" style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                         <label for="regen_type_${img.id}" class="sr-only">Bildtyp fuer Neugenerierung</label>
@@ -315,6 +318,7 @@
                             ${imageTypes.map(t => '<option value="' + t + '"' + (img.image_type === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('')}
                         </select>
                         <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}">Neu generieren</button>
+                        ${complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">Langbeschreibung (optional)</button>' : ''}
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
@@ -379,6 +383,48 @@
         } finally {
             btn.disabled = false;
             btn.textContent = 'Neu generieren';
+        }
+    }
+
+    async function generateLongDesc(projectId, imageId) {
+        const btn = document.getElementById('longdesc_btn_' + imageId);
+        const statusEl = document.getElementById('regen_status_' + imageId);
+        const typeSelect = document.getElementById('regen_type_' + imageId);
+        const imageType = typeSelect ? typeSelect.value : '';
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Generiere...'; }
+        if (statusEl) statusEl.textContent = '';
+        announce('Langbeschreibung wird generiert');
+
+        try {
+            const body = { image_type: imageType || undefined, long_description: true };
+            const res = await fetch('/api/projects/' + projectId + '/regenerate/' + imageId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (res.ok && data.langbeschreibung) {
+                const container = document.getElementById('langcontainer_' + imageId);
+                if (container) {
+                    container.innerHTML = '<label for="langtext_' + imageId + '" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung</label><textarea class="alt-text-field langtext-field" id="langtext_' + imageId + '" style="min-height:80px;">' + (data.langbeschreibung || '') + '</textarea>';
+                }
+                // Also update alt-text if improved
+                if (data.alt_text) {
+                    const ta = document.getElementById('alttext_' + imageId);
+                    if (ta) ta.value = data.alt_text;
+                }
+                if (btn) btn.style.display = 'none';
+                if (statusEl) statusEl.textContent = 'Langbeschreibung generiert';
+                announce('Langbeschreibung wurde generiert');
+            } else {
+                if (statusEl) statusEl.textContent = 'Keine Langbeschreibung verfuegbar';
+                announce('Keine Langbeschreibung verfuegbar');
+            }
+        } catch (err) {
+            if (statusEl) statusEl.textContent = 'Verbindungsfehler';
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Langbeschreibung (optional)'; }
         }
     }
 
