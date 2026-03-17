@@ -74,7 +74,6 @@
                 <p>Laden Sie PDFs oder Bilder hoch, um Alt-Texte fuer alle enthaltenen Grafiken zu generieren.</p>
                 <label class="upload-btn" for="fileInput" role="button" tabindex="0">Dateien auswaehlen</label>
                 <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-label="PDF oder Bilddateien auswaehlen">
-                <p id="uploadStatus" aria-live="polite" style="margin-top:1rem;"></p>
                 <div class="url-scan-area" style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border,#ddd);">
                     <label for="urlInput" style="display:block;font-weight:600;margin-bottom:0.5rem;">Oder Website-URL eingeben</label>
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
@@ -83,6 +82,7 @@
                     </div>
                     <small id="urlHint" style="color:var(--text-muted,#666);display:block;margin-top:0.3rem;">Die Seite wird analysiert und alle Bilder ohne oder mit fehlenden Alt-Texten werden gefunden.</small>
                 </div>
+                <p id="uploadStatus" aria-live="polite" style="margin-top:1rem;padding:0.75rem;font-weight:600;text-align:center;"></p>
             </div>
             <h2 class="section-title">Meine Projekte</h2>
             <div id="projectList"></div>
@@ -329,8 +329,9 @@
                     <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;">${img.langbeschreibung}</textarea>
                     <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                         <span style="font-size:0.85rem;color:var(--text-muted);">Langbeschreibung bewerten:</span>
-                        <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="Langbeschreibung gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128077;</button>
-                        <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="Langbeschreibung schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128078;</button>
+                        <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'good', this, 'lang')" aria-label="Langbeschreibung gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128077;</button>
+                        <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'bad', this, 'lang')" aria-label="Langbeschreibung schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128078;</button>
+                        <span id="feedback_lang_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
                 </div>
@@ -368,7 +369,7 @@
         });
     }
 
-    async function sendFeedback(imageId, feedback, btn) {
+    async function sendFeedback(imageId, feedback, btn, type) {
         try {
             var res = await fetch('/api/images/' + imageId + '/feedback', {
                 method: 'POST',
@@ -376,19 +377,21 @@
                 body: JSON.stringify({ feedback: feedback }),
             });
             if (res.ok) {
-                var statusEl = document.getElementById('feedback_status_' + imageId);
+                var statusId = type === 'lang' ? 'feedback_lang_status_' + imageId : 'feedback_status_' + imageId;
+                var statusEl = document.getElementById(statusId);
+                var label = type === 'lang' ? 'Langbeschreibung' : 'Alt-Text';
                 if (feedback === 'good') {
                     btn.style.background = 'var(--success)';
                     btn.style.color = 'white';
                     btn.style.borderColor = 'var(--success)';
                     if (statusEl) statusEl.textContent = 'Danke!';
-                    announce('Feedback: Alt-Text als gut bewertet');
+                    announce('Feedback: ' + label + ' als gut bewertet');
                 } else {
                     btn.style.background = 'var(--error)';
                     btn.style.color = 'white';
                     btn.style.borderColor = 'var(--error)';
                     if (statusEl) statusEl.textContent = 'Danke – wird geprueft';
-                    announce('Feedback: Alt-Text als verbesserungswuerdig bewertet');
+                    announce('Feedback: ' + label + ' als verbesserungswuerdig bewertet');
                 }
             }
         } catch (err) {}

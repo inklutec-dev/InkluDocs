@@ -727,7 +727,14 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     downloaded = 0
     async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
         for idx, img_tag in enumerate(img_tags, 1):
-            src = img_tag.get("src", "")
+            # Support lazy-loaded images: check data-src, data-lazy-src first
+            src = img_tag.get("data-src") or img_tag.get("data-lazy-src") or img_tag.get("src", "")
+            if not src or src.startswith("data:"):
+                srcset = img_tag.get("srcset") or img_tag.get("data-srcset") or ""
+                if srcset:
+                    src = srcset.split(",")[0].strip().split(" ")[0]
+                else:
+                    continue
             if not src:
                 continue
 

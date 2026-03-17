@@ -16,8 +16,7 @@ ZIEL: Blinde Nutzer erhalten die GLEICHE INFORMATION wie Sehende.
 Antworte NUR mit diesem JSON:
 {{"bildtyp": "foto|diagramm|tabelle|screenshot|icon|logo|karte|dekorativ", "alt_text": "...", "ist_dekorativ": true/false, "konfidenz": "hoch|mittel|niedrig"}}
 
-FORMAT: Beginne mit dem Bildtyp als kurzes Praefix, dann Bindestrich, dann die Kernaussage.
-So weiss der Screenreader-Nutzer sofort, WAS fuer ein Bild kommt, und dann den Inhalt.
+FORMAT: Bei Diagrammen, Karten, Tabellen, Infografiken und Strukturformeln: Beginne mit dem Typ als Praefix (z.B. "Balkendiagramm – ..."). Bei Fotos, Screenshots und Logos: KEIN Praefix, direkt die Beschreibung.
 
 LAENGE: 2-4 Saetze (150-350 Zeichen). Kernaussage + wichtigste Zahlen. Nicht jedes Detail.
 
@@ -31,7 +30,7 @@ BEISPIELE PERFEKTER ALT-TEXTE:
 
 "Balkendiagramm – Aufmerksamkeit und Energie empfinden 90,2% der Befragten als sehr hohe Buerokratiebelastung, den Zeitaufwand 83,3% und den Kostenaufwand 66,4% (IfM Bonn, 2023)."
 
-"Foto – Drei Personen am Rednerpult bei einer Pressekonferenz des Normenkontrollrats."
+"Drei Personen am Rednerpult bei einer Pressekonferenz des Normenkontrollrats."
 
 "QR-Code zur NKR-Stellungnahme 'Vereinfachung von Sozialleistungen'."
 
@@ -60,7 +59,7 @@ Antworte NUR mit diesem JSON:
 {{"bildtyp": "foto", "alt_text": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
 
 REGELN FUER FOTOS:
-- Beginne mit "Foto – " gefolgt von der Kernaussage
+- KEIN Praefix wie "Foto – ". Direkt die Beschreibung beginnen
 - Wer ist zu sehen? Was tun die Personen? Wo befinden sie sich?
 - Bei Portraits: Rolle/Funktion der Person nennen, NICHT das Aussehen beschreiben
 - Bei Gruppenfotos: Anzahl der Personen, Anlass, Setting
@@ -154,7 +153,7 @@ Antworte NUR mit diesem JSON:
 {{"bildtyp": "screenshot", "alt_text": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
 
 REGELN FUER SCREENSHOTS:
-- Beginne mit "Screenshot – " + welche Anwendung/Website + was ist zu sehen
+- KEIN Praefix wie "Screenshot – ". Direkt beschreiben welche Anwendung/Website und was zu sehen ist
 - Welche Inhalte sind sichtbar? (Menuepunkte, Formulare, Texte)
 - Was ist der Zweck des Screenshots im Kontext?
 - KEINE Farben oder visuelle Details
