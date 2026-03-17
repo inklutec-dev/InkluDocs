@@ -109,6 +109,7 @@ def _migrate_columns(conn):
         ("projects", "source_url", "ALTER TABLE projects ADD COLUMN source_url TEXT"),
         ("images", "langbeschreibung", "ALTER TABLE images ADD COLUMN langbeschreibung TEXT DEFAULT ''"),
         ("images", "original_alt", "ALTER TABLE images ADD COLUMN original_alt TEXT DEFAULT ''"),
+        ("images", "feedback", "ALTER TABLE images ADD COLUMN feedback TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:

@@ -974,6 +974,48 @@ async def update_alt_text(image_id: int, request: Request, user: dict = Depends(
     return {"ok": True}
 
 
+@app.post("/api/images/{image_id}/feedback")
+async def submit_feedback(image_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Submit feedback (good/bad) for a generated alt-text."""
+    data = await request.json()
+    feedback = data.get("feedback", "")
+    if feedback not in ("good", "bad"):
+        raise HTTPException(status_code=400, detail="Feedback muss 'good' oder 'bad' sein")
+
+    conn = get_db()
+    img = conn.execute(
+        """SELECT i.*, p.filename as project_name FROM images i
+           JOIN projects p ON i.project_id = p.id
+           WHERE i.id = ? AND p.user_id = ?""",
+        (image_id, user["id"])
+    ).fetchone()
+    if not img:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+
+    conn.execute("UPDATE images SET feedback = ? WHERE id = ?", (feedback, image_id))
+    conn.commit()
+    conn.close()
+
+    # Send email notification for negative feedback
+    if feedback == "bad":
+        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+        email_body = f"""<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
+<h2 style="color:#dc2626;">Alt-Text als schlecht bewertet</h2>
+<p><strong>Benutzer:</strong> {user['email']}</p>
+<p><strong>Projekt:</strong> {img['project_name']}</p>
+<p><strong>Bild:</strong> Seite {img['page_number']}, Bild {img['image_index']} ({img['width']}x{img['height']}px)</p>
+<p><strong>Bildtyp:</strong> {img['image_type']}</p>
+<p><strong>Alt-Text:</strong></p>
+<blockquote style="border-left:3px solid #dc2626;padding-left:1rem;color:#333;">{alt_text}</blockquote>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs Beta-Feedback</p>
+</body></html>"""
+        send_email(SMTP_FROM, "InkluDocs: Alt-Text negativ bewertet", email_body)
+
+    return {"ok": True}
+
+
 # ─── Regenerate Single Image ────────────────────────────────
 
 @app.post("/api/projects/{project_id}/regenerate/{image_id}")

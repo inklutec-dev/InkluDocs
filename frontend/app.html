@@ -315,6 +315,14 @@
                     placeholder="${img.status === 'done' ? '' : 'Alt-Text wird generiert...'}"
                     ${img.status !== 'done' && !img.alt_text ? 'disabled' : ''}
                 >${img.alt_text_edited || img.alt_text || ''}</textarea>
+                ${img.status === 'done' ? `
+                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
+                        <span style="font-size:0.85rem;color:var(--text-muted);">Alt-Text bewerten:</span>
+                        <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="Alt-Text gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'good' ? 'background:var(--success);color:white;border-color:var(--success);' : ''}">&#128077;</button>
+                        <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="Alt-Text schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'bad' ? 'background:var(--error);color:white;border-color:var(--error);' : ''}">&#128078;</button>
+                        <span id="feedback_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                    </div>
+                ` : ''}
                 <div id="langcontainer_${img.id}">
                 ${hasLang ? `
                     <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung</label>
@@ -353,6 +361,32 @@
                 }, 800);
             });
         });
+    }
+
+    async function sendFeedback(imageId, feedback, btn) {
+        try {
+            var res = await fetch('/api/images/' + imageId + '/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ feedback: feedback }),
+            });
+            if (res.ok) {
+                var statusEl = document.getElementById('feedback_status_' + imageId);
+                if (feedback === 'good') {
+                    btn.style.background = 'var(--success)';
+                    btn.style.color = 'white';
+                    btn.style.borderColor = 'var(--success)';
+                    if (statusEl) statusEl.textContent = 'Danke!';
+                    announce('Feedback: Alt-Text als gut bewertet');
+                } else {
+                    btn.style.background = 'var(--error)';
+                    btn.style.color = 'white';
+                    btn.style.borderColor = 'var(--error)';
+                    if (statusEl) statusEl.textContent = 'Danke – wird geprueft';
+                    announce('Feedback: Alt-Text als verbesserungswuerdig bewertet');
+                }
+            }
+        } catch (err) {}
     }
 
     async function regenerateImage(projectId, imageId) {
