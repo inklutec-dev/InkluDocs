@@ -159,6 +159,9 @@ async def login(request: Request):
 
 @app.post("/api/register")
 async def register(request: Request):
+    # Registration can be disabled via environment variable
+    if os.getenv("REGISTRATION_ENABLED", "true").lower() in ("false", "0", "no"):
+        raise HTTPException(status_code=403, detail="Die Registrierung ist derzeit geschlossen. Bitte wende dich an kontakt@inklutec.de, um einen Testzugang zu erhalten.")
     data = await request.json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
@@ -307,6 +310,33 @@ async def admin_reset_user_password(user_id: int, request: Request, user: dict =
         raise HTTPException(status_code=404, detail="User nicht gefunden")
     admin_reset_password(user_id, new_password)
     return {"ok": True, "message": f"Passwort fuer {target['email']} wurde zurueckgesetzt"}
+
+
+@app.post("/api/admin/users/create")
+async def admin_create_user(request: Request, user: dict = Depends(require_admin)):
+    """Admin: Create a new user account."""
+    data = await request.json()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    display_name = data.get("display_name", "").strip()
+
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Passwort muss mindestens 8 Zeichen lang sein")
+    if not display_name:
+        raise HTTPException(status_code=400, detail="Bitte einen Namen eingeben")
+
+    existing = get_user_by_email(email)
+    if existing:
+        raise HTTPException(status_code=409, detail="Diese E-Mail-Adresse ist bereits registriert")
+
+    try:
+        user_id = create_user(email, password, display_name)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Benutzer konnte nicht erstellt werden")
+
+    return {"ok": True, "message": f"Benutzer {display_name} ({email}) wurde erstellt", "user_id": user_id}
 
 
 @app.delete("/api/admin/users/{user_id}")
@@ -1206,10 +1236,22 @@ async def api_generate_alt_text(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    return open("/app/frontend/index.html").read()
+    html = open("/app/frontend/index.html").read()
+    if os.getenv("REGISTRATION_ENABLED", "true").lower() in ("false", "0", "no"):
+        html = html.replace('<a href="/register">Konto erstellen</a>', '')
+    return html
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page():
+    if os.getenv("REGISTRATION_ENABLED", "true").lower() in ("false", "0", "no"):
+        return """<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs - Registrierung geschlossen</title>
+        <link rel="stylesheet" href="/static/style.css"></head><body>
+        <div class="auth-wrapper"><div class="auth-container" role="main" aria-label="Registrierung geschlossen">
+        <h1><span class="brand">Inklu</span>Docs</h1>
+        <p style="margin:2rem 0;font-size:1.1rem;">Die Registrierung ist derzeit geschlossen.</p>
+        <p>InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten moechtest, schreib bitte eine E-Mail an <strong>kontakt@inklutec.de</strong>.</p>
+        <p style="margin-top:2rem;"><a href="/">Zurueck zur Anmeldung</a></p>
+        </div></div></body></html>"""
     return open("/app/frontend/register.html").read()
 
 @app.get("/forgot", response_class=HTMLResponse)
