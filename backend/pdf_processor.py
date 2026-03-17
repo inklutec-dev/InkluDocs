@@ -312,6 +312,22 @@ def _combine_alt_text(alt_text: str, langbeschreibung: str) -> str:
     return text
 
 
+def _ocr_extract_text(image_path: str) -> str:
+    """Extract text from an image using Tesseract OCR.
+    Returns extracted text or empty string if OCR fails or finds nothing."""
+    try:
+        import pytesseract
+        img = Image.open(image_path)
+        text = pytesseract.image_to_string(img, lang="deu+eng", config="--psm 6")
+        text = text.strip()
+        if len(text) < 3:
+            return ""
+        return text[:1000]
+    except Exception as e:
+        print(f"OCR failed for {image_path}: {e}")
+        return ""
+
+
 def _resize_image_for_model(image_path: str) -> str:
     """Resize image if too large for the model, return base64 encoded string."""
     img = Image.open(image_path)
@@ -466,13 +482,22 @@ def _call_ollama(image_path: str, prompt: str) -> dict:
 def generate_alt_text(image_path: str, context: str = "", image_type: str = None) -> dict:
     """Generate alt-text for a single image using Qwen3-VL via Ollama.
 
+    Uses OCR to extract text from the image first, then provides both
+    the image and the extracted text to the vision model.
+
     Args:
         image_path: Path to the image file.
         context: Surrounding text context from the document.
         image_type: Optional specific image type for specialized prompt.
                     If None, uses the general prompt (first pass).
     """
-    prompt = get_prompt(image_type=image_type, context_text=context)
+    # OCR: Extract text from the image to help the model read numbers/labels
+    ocr_text = _ocr_extract_text(image_path)
+    enriched_context = context
+    if ocr_text:
+        enriched_context = f"[OCR-Text im Bild] {ocr_text}\n{context}"
+
+    prompt = get_prompt(image_type=image_type, context_text=enriched_context)
     return _call_ollama(image_path, prompt)
 
 
@@ -495,5 +520,11 @@ def generate_alt_text_for_image(image_path: str, context_text: str = "", image_t
     if not effective_type and context_text:
         effective_type = detect_type_from_context(context_text)
 
-    prompt = get_prompt(image_type=effective_type, context_text=context_text)
+    # OCR: Extract text from the image
+    ocr_text = _ocr_extract_text(image_path)
+    enriched_context = context_text
+    if ocr_text:
+        enriched_context = f"[OCR-Text im Bild] {ocr_text}\n{context_text}"
+
+    prompt = get_prompt(image_type=effective_type, context_text=enriched_context)
     return _call_ollama(image_path, prompt)
