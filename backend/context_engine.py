@@ -68,7 +68,7 @@ REGELN FUER FOTOS:
 - Bei Naturfotos: Ort und wesentliche Merkmale
 - KEINE Farben (ausser informationstragend)
 - KEINE Vermutungen ueber Identitaet unbekannter Personen
-- 2-3 Saetze, 100-250 Zeichen
+- 2-4 Saetze, 150-350 Zeichen
 - Deutsch, professionell
 
 Kontext: {context}""",
