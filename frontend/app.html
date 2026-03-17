@@ -291,8 +291,8 @@
             list.innerHTML = '<div class="empty-state"><p>Keine Bilder gefunden.</p></div>';
             return;
         }
-        const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','dekorativ'];
-        const complexTypes = ['diagramm','karte','tabelle','infografik'];
+        const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','strukturformel','dekorativ'];
+        const complexTypes = ['diagramm','karte','tabelle','infografik','strukturformel'];
 
         list.innerHTML = images.map(img => {
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();

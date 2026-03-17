@@ -194,10 +194,29 @@ REGELN:
 - Im Zweifel: ist_dekorativ=false (lieber zu viel beschreiben als zu wenig)
 
 Kontext: {context}""",
+
+    "strukturformel": """/no_think
+Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
+Dieses Bild zeigt eine CHEMISCHE STRUKTURFORMEL oder ein Molekuelmodell.
+
+Antworte NUR mit diesem JSON:
+{{"bildtyp": "strukturformel", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
+
+REGELN FUER STRUKTURFORMELN:
+- alt_text: "Strukturformel – " + Name der Verbindung (IUPAC oder Trivialname) + Summenformel wenn erkennbar (max 200 Zeichen)
+- langbeschreibung: Alle sichtbaren Atome, Bindungen (Einfach-, Doppel-, Dreifachbindung), funktionelle Gruppen, Ladungen, Stereochemie wenn erkennbar. Bis 800 Zeichen.
+- Wenn der Name der Verbindung lesbar ist: IMMER nennen
+- Bindungstypen benennen (kovalent, ionisch, Wasserstoffbruecke)
+- Funktionelle Gruppen identifizieren (Hydroxyl, Carbonyl, Amino, Carboxyl etc.)
+- Bei Reaktionsgleichungen: Edukte, Produkte und Reaktionsbedingungen nennen
+- Erfinde NICHTS. Wenn nicht eindeutig: "Struktur nicht eindeutig identifizierbar"
+- Deutsch, fachlich korrekt
+
+Kontext: {context}""",
 }
 
 # Complex types that should include langbeschreibung
-COMPLEX_TYPES = {"diagramm", "karte", "tabelle", "infografik"}
+COMPLEX_TYPES = {"diagramm", "karte", "tabelle", "infografik", "strukturformel"}
 
 # Patterns for detecting image types from surrounding text
 _TYPE_PATTERNS = {
@@ -227,6 +246,12 @@ _TYPE_PATTERNS = {
     ],
     "dekorativ": [
         r"(?i)\b(?:Schmuckbild|Dekoration|Zierbild|Hintergrundbild|Titelbild)\b",
+    ],
+    "strukturformel": [
+        r"(?i)\b(?:Strukturformel|Molekuel|Summenformel|Reaktionsgleichung|Bindung|Atom|IUPAC)\b",
+        r"(?i)\b(?:Abb(?:ildung)?\.?\s*\d+\s*:\s*.*(?:Struktur|Formel|Molekuel|Verbindung))",
+        r"(?i)\b(?:Methanol|Ethanol|Iodmethan|Kohlenwasserstoff|Wasserstoff|Sauerstoff|Stickstoff)\b",
+        r"(?i)\b(?:organisch|anorganisch|Synthese|Hydrolyse|Oxidation|Reduktion)\b",
     ],
 }
 

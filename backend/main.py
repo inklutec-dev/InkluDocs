@@ -928,11 +928,27 @@ async def _process_project(project_id: int, user_id: int):
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
 
+        # First pass: general prompt for type detection + alt-text
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text, img["image_path"], img["context_text"], None
         )
 
+        # Second pass: if complex type detected, re-generate with specialized prompt
+        # to get langbeschreibung automatically
+        from context_engine import is_complex_type
+        detected_type = result.get("bildtyp", "")
         langbeschreibung = result.get("langbeschreibung", "")
+
+        if is_complex_type(detected_type) and not langbeschreibung:
+            specialized_result = await asyncio.get_event_loop().run_in_executor(
+                None, generate_alt_text, img["image_path"], img["context_text"], detected_type
+            )
+            if specialized_result.get("langbeschreibung"):
+                langbeschreibung = specialized_result["langbeschreibung"]
+            # Use the specialized alt-text if it's better (has content)
+            if specialized_result.get("alt_text") and len(specialized_result["alt_text"]) > 10:
+                result["alt_text"] = specialized_result["alt_text"]
+                result["konfidenz"] = specialized_result.get("konfidenz", result.get("konfidenz", "mittel"))
         conn.execute(
             """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?, status = 'done' WHERE id = ?""",
             (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung, img["id"])
