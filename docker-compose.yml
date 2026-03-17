@@ -12,11 +12,11 @@ services:
       - OLLAMA_URL=http://10.100.0.1:11434
       - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
       - REGISTRATION_ENABLED=false
-      - SMTP_SERVER=w01ccfc3.kasserver.com
-      - SMTP_PORT=587
-      - SMTP_USER=kontakt@inklutec.de
-      - SMTP_PASS=Ewigkeit-2023
-      - SMTP_FROM=kontakt@inklutec.de
+      - SMTP_SERVER=${SMTP_SERVER}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

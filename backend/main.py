@@ -102,12 +102,16 @@ async def lifespan(app: FastAPI):
     init_db()
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    # Create default admin user if not exists
-    try:
-        create_user("kontakt@inklutec.de", "inkludocs2025", "Administrator", is_admin=1)
-        print("Default admin user created")
-    except Exception:
-        pass
+    # Create default admin user only if NO users exist at all (fresh install)
+    conn = get_db()
+    user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    conn.close()
+    if user_count == 0:
+        try:
+            create_user("kontakt@inklutec.de", "inkludocs2025", "Administrator", is_admin=1)
+            print("Default admin user created (fresh install)")
+        except Exception:
+            pass
     yield
 
 
@@ -289,11 +293,22 @@ async def forgot_password(request: Request):
     token = create_password_reset_token(user["id"])
     reset_url = f"{BASE_URL}/reset?token={token}"
 
+    # Send reset link via email (never expose in API response)
+    email_body = f"""<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
+<h1 style="color:#1b2a4a;">Passwort zuruecksetzen</h1>
+<p>Hallo {user['display_name']},</p>
+<p>du hast eine Passwort-Zuruecksetzung fuer dein InkluDocs-Konto angefordert.</p>
+<p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Passwort jetzt zuruecksetzen</a></p>
+<p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {reset_url}</p>
+<p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gueltig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
+</body></html>"""
+    send_email(email, "InkluDocs: Passwort zuruecksetzen", email_body)
+
     return {
         "ok": True,
-        "message": "Reset-Link wurde erstellt.",
-        "reset_url": reset_url,
-        "hinweis": "Da kein E-Mail-Versand konfiguriert ist, wird der Link hier direkt angezeigt. Als Admin koennen Sie auch Passwoerter direkt zuruecksetzen.",
+        "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link per E-Mail gesendet.",
     }
 
 
