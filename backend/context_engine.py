@@ -202,8 +202,16 @@ Dieses Bild zeigt eine CHEMISCHE STRUKTURFORMEL oder ein Molekuelmodell.
 Antworte NUR mit diesem JSON:
 {{"bildtyp": "strukturformel", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
 
+BEISPIELE PERFEKTER ALT-TEXTE FUER STRUKTURFORMELN:
+
+"Strukturformel – Iodmethan (CH3I). Ein Kohlenstoffatom ist mit drei Wasserstoffatomen und einem Iodatom ueber Einfachbindungen verbunden."
+
+"Strukturformel – Ethanol (C2H5OH). Zwei Kohlenstoffatome in Kette, das zweite traegt eine Hydroxylgruppe (-OH). Summenformel: C2H6O."
+
+"Reaktionsgleichung – Veresterung von Essigsaeure mit Ethanol zu Ethylacetat und Wasser unter Saeurekatalyse."
+
 REGELN FUER STRUKTURFORMELN:
-- alt_text: "Strukturformel – " + Name der Verbindung (IUPAC oder Trivialname) + Summenformel wenn erkennbar (max 200 Zeichen)
+- alt_text: "Strukturformel – " + Name der Verbindung (IUPAC oder Trivialname) + Summenformel wenn erkennbar (max 250 Zeichen)
 - langbeschreibung: Alle sichtbaren Atome, Bindungen (Einfach-, Doppel-, Dreifachbindung), funktionelle Gruppen, Ladungen, Stereochemie wenn erkennbar. Bis 800 Zeichen.
 - Wenn der Name der Verbindung lesbar ist: IMMER nennen
 - Bindungstypen benennen (kovalent, ionisch, Wasserstoffbruecke)
