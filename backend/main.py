@@ -60,8 +60,13 @@ SMTP_PASS = os.environ.get("SMTP_PASS", "")
 SMTP_FROM = os.environ.get("SMTP_FROM", "kontakt@inklutec.de")
 
 
-def send_email(to_email: str, subject: str, html_body: str) -> bool:
-    """Send an email via SMTP. Returns True on success, False on failure."""
+def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = True) -> bool:
+    """Send an email via SMTP. Returns True on success, False on failure.
+
+    Args:
+        bcc_admin: If True, send BCC copy to admin. Set False for
+                   sensitive emails like password resets.
+    """
     if not SMTP_PASS:
         print(f"E-Mail nicht gesendet (kein SMTP-Passwort konfiguriert): {subject} an {to_email}")
         return False
@@ -76,7 +81,7 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
         server.starttls()
         server.login(SMTP_USER, SMTP_PASS)
         recipients = [to_email]
-        if to_email != SMTP_FROM:
+        if bcc_admin and to_email != SMTP_FROM:
             msg["Bcc"] = SMTP_FROM
             recipients.append(SMTP_FROM)
         server.sendmail(SMTP_FROM, recipients, msg.as_string())
@@ -304,7 +309,7 @@ async def forgot_password(request: Request):
 <p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gueltig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.</p>
 <p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
 </body></html>"""
-    send_email(email, "InkluDocs: Passwort zuruecksetzen", email_body)
+    send_email(email, "InkluDocs: Passwort zuruecksetzen", email_body, bcc_admin=False)
 
     return {
         "ok": True,
