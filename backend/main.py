@@ -60,22 +60,41 @@ SMTP_PASS = os.environ.get("SMTP_PASS", "")
 SMTP_FROM = os.environ.get("SMTP_FROM", "kontakt@inklutec.de")
 
 
-def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = True) -> bool:
-    """Send an email via SMTP. Returns True on success, False on failure.
+def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = True, attachment_path: str = None) -> bool:
+    """Send an email via SMTP with optional file attachment.
 
     Args:
         bcc_admin: If True, send BCC copy to admin. Set False for
                    sensitive emails like password resets.
+        attachment_path: Optional path to a file to attach (e.g. image).
     """
     if not SMTP_PASS:
         print(f"E-Mail nicht gesendet (kein SMTP-Passwort konfiguriert): {subject} an {to_email}")
         return False
     try:
-        msg = MIMEMultipart("alternative")
+        from email.mime.base import MIMEBase
+        from email import encoders
+
+        msg = MIMEMultipart("mixed")
         msg["Subject"] = subject
         msg["From"] = f"InkluDocs <{SMTP_FROM}>"
         msg["To"] = to_email
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        html_part = MIMEMultipart("alternative")
+        html_part.attach(MIMEText(html_body, "html", "utf-8"))
+        msg.attach(html_part)
+
+        if attachment_path and os.path.exists(attachment_path):
+            try:
+                with open(attachment_path, "rb") as f:
+                    part = MIMEBase("application", "octet-stream")
+                    part.set_payload(f.read())
+                encoders.encode_base64(part)
+                filename = os.path.basename(attachment_path)
+                part.add_header("Content-Disposition", f"attachment; filename={filename}")
+                msg.attach(part)
+            except Exception as e:
+                print(f"Anhang konnte nicht hinzugefügt werden: {e}")
 
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=15)
         server.starttls()
@@ -1020,7 +1039,8 @@ async def submit_feedback(image_id: int, request: Request, user: dict = Depends(
 
     conn = get_db()
     img = conn.execute(
-        """SELECT i.*, p.filename as project_name FROM images i
+        """SELECT i.*, p.filename as project_name, p.project_type, p.source_url
+           FROM images i
            JOIN projects p ON i.project_id = p.id
            WHERE i.id = ? AND p.user_id = ?""",
         (image_id, user["id"])
@@ -1033,21 +1053,47 @@ async def submit_feedback(image_id: int, request: Request, user: dict = Depends(
     conn.commit()
     conn.close()
 
-    # Send email notification for negative feedback
-    if feedback == "bad":
-        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
-        email_body = f"""<!DOCTYPE html>
+    # Send email notification for ALL feedback (positive + negative)
+    alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+    is_good = feedback == "good"
+    color = "#16a34a" if is_good else "#dc2626"
+    label = "positiv" if is_good else "negativ"
+    emoji = "👍" if is_good else "👎"
+
+    # Build source info based on project type
+    project_type = img["project_type"] if "project_type" in img.keys() else "pdf"
+    if project_type == "url":
+        source_info = f'<p><strong>Quelle:</strong> <a href="{img["source_url"]}">{img["source_url"]}</a></p>'
+    elif project_type == "pdf":
+        source_info = f'<p><strong>Quelle:</strong> PDF "{img["project_name"]}", Seite {img["page_number"]}, Bild {img["image_index"]}</p>'
+    else:
+        source_info = f'<p><strong>Quelle:</strong> Einzelbild "{img["project_name"]}"</p>'
+
+    langtext = img["langbeschreibung"] if img["langbeschreibung"] else ""
+    lang_section = ""
+    if langtext:
+        lang_section = f'<p><strong>Langbeschreibung:</strong></p><blockquote style="border-left:3px solid #666;padding-left:1rem;color:#333;">{langtext}</blockquote>'
+
+    email_body = f"""<!DOCTYPE html>
 <html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h2 style="color:#dc2626;">Alt-Text als schlecht bewertet</h2>
+<h2 style="color:{color};">{emoji} Alt-Text {label} bewertet</h2>
 <p><strong>Benutzer:</strong> {user['email']}</p>
 <p><strong>Projekt:</strong> {img['project_name']}</p>
-<p><strong>Bild:</strong> Seite {img['page_number']}, Bild {img['image_index']} ({img['width']}x{img['height']}px)</p>
-<p><strong>Bildtyp:</strong> {img['image_type']}</p>
+{source_info}
+<p><strong>Bildtyp:</strong> {img['image_type']} | <strong>Konfidenz:</strong> {img.get('konfidenz', 'mittel')}</p>
+<p><strong>Bildgröße:</strong> {img['width']}x{img['height']}px</p>
 <p><strong>Alt-Text:</strong></p>
-<blockquote style="border-left:3px solid #dc2626;padding-left:1rem;color:#333;">{alt_text}</blockquote>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs Beta-Feedback</p>
+<blockquote style="border-left:3px solid {color};padding-left:1rem;color:#333;">{alt_text}</blockquote>
+{lang_section}
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs Beta-Feedback | Das bewertete Bild ist als Anhang beigefügt.</p>
 </body></html>"""
-        send_email(SMTP_FROM, "InkluDocs: Alt-Text negativ bewertet", email_body)
+
+    send_email(
+        SMTP_FROM,
+        f"InkluDocs: Alt-Text {label} bewertet",
+        email_body,
+        attachment_path=img["image_path"]
+    )
 
     return {"ok": True}
 
