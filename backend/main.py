@@ -75,7 +75,11 @@ def send_email(to_email: str, subject: str, html_body: str) -> bool:
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=15)
         server.starttls()
         server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SMTP_FROM, to_email, msg.as_string())
+        recipients = [to_email]
+        if to_email != SMTP_FROM:
+            msg["Bcc"] = SMTP_FROM
+            recipients.append(SMTP_FROM)
+        server.sendmail(SMTP_FROM, recipients, msg.as_string())
         server.quit()
         print(f"E-Mail gesendet an {to_email}: {subject}")
         return True
