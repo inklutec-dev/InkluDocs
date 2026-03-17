@@ -10,6 +10,9 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from urllib.parse import urljoin, urlparse
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 import httpx
 from bs4 import BeautifulSoup
@@ -48,6 +51,38 @@ UPLOAD_DIR = "/app/data/uploads"
 RESULTS_DIR = "/app/data/results"
 BASE_URL = os.environ.get("BASE_URL", "https://inkludocs.inklutec.de")
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
+
+# SMTP configuration for email sending
+SMTP_SERVER = os.environ.get("SMTP_SERVER", "w01ccfc3.kasserver.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "kontakt@inklutec.de")
+SMTP_PASS = os.environ.get("SMTP_PASS", "")
+SMTP_FROM = os.environ.get("SMTP_FROM", "kontakt@inklutec.de")
+
+
+def send_email(to_email: str, subject: str, html_body: str) -> bool:
+    """Send an email via SMTP. Returns True on success, False on failure."""
+    if not SMTP_PASS:
+        print(f"E-Mail nicht gesendet (kein SMTP-Passwort konfiguriert): {subject} an {to_email}")
+        return False
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"InkluDocs <{SMTP_FROM}>"
+        msg["To"] = to_email
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=15)
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_FROM, to_email, msg.as_string())
+        server.quit()
+        print(f"E-Mail gesendet an {to_email}: {subject}")
+        return True
+    except Exception as e:
+        print(f"E-Mail-Fehler ({to_email}): {e}")
+        return False
+
 
 # Allowed image extensions for direct upload
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".heic", ".heif", ".bmp", ".tiff", ".tif"}
@@ -336,7 +371,40 @@ async def admin_create_user(request: Request, user: dict = Depends(require_admin
     except Exception:
         raise HTTPException(status_code=500, detail="Benutzer konnte nicht erstellt werden")
 
-    return {"ok": True, "message": f"Benutzer {display_name} ({email}) wurde erstellt", "user_id": user_id}
+    # Send welcome email with credentials
+    send_welcome = data.get("send_email", True)
+    email_sent = False
+    if send_welcome:
+        email_body = f"""<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
+<h1 style="color:#1b2a4a;">Willkommen bei InkluDocs</h1>
+<p>Hallo {display_name},</p>
+<p>dein Zugang zu InkluDocs wurde erstellt. InkluDocs ist ein KI-gestuetzter Alt-Text-Generator fuer barrierefreie Dokumente und Bilder.</p>
+<h2 style="color:#e87722;font-size:1.1rem;">Deine Zugangsdaten</h2>
+<p><strong>Login-Seite:</strong> <a href="{BASE_URL}">{BASE_URL}</a></p>
+<p><strong>E-Mail:</strong> {email}</p>
+<p><strong>Passwort:</strong> {password}</p>
+<p style="background:#fff7ed;padding:1rem;border-left:3px solid #e87722;border-radius:0 4px 4px 0;">
+Bitte aendere dein Passwort nach dem ersten Login unter <strong>Einstellungen</strong>.</p>
+<h2 style="color:#e87722;font-size:1.1rem;">So funktioniert es</h2>
+<ol>
+<li>Melde dich auf <a href="{BASE_URL}">{BASE_URL}</a> an</li>
+<li>Lade ein PDF, Bilder hoch oder gib eine Website-URL ein</li>
+<li>Klicke auf "Alt-Texte generieren"</li>
+<li>Bearbeite die Alt-Texte bei Bedarf und exportiere sie</li>
+</ol>
+<p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
+</body></html>"""
+        email_sent = send_email(email, f"Dein InkluDocs-Zugang", email_body)
+
+    msg = f"Benutzer {display_name} ({email}) wurde erstellt"
+    if email_sent:
+        msg += " – Zugangsdaten per E-Mail gesendet"
+    else:
+        msg += " – Zugangsdaten bitte manuell weitergeben"
+
+    return {"ok": True, "message": msg, "user_id": user_id, "email_sent": email_sent}
 
 
 @app.delete("/api/admin/users/{user_id}")
