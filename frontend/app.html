@@ -250,7 +250,7 @@
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'xlsx')">Als Excel</button>
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">Als JSON</button>
                                 <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">Als CSV</button>
-                                <button class="btn btn-secondary" onclick="doExport(${project.id}, 'pdf')">Als PDF (Beta)</button>
+                                ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">Als PDF (Beta)</button>' : ''}
                                 <button class="btn btn-secondary" onclick="closeExportPanel()">Abbrechen</button>
                             </div>
                             <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>

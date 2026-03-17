@@ -1105,6 +1105,12 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
         conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
 
+    # PDF export only works for PDF projects
+    project_type = project["project_type"] if "project_type" in project.keys() else "pdf"
+    if project_type != "pdf":
+        conn.close()
+        raise HTTPException(status_code=400, detail="PDF-Export ist nur fuer PDF-Projekte verfuegbar")
+
     images = conn.execute(
         "SELECT * FROM images WHERE project_id = ?", (project_id,)
     ).fetchall()
