@@ -327,6 +327,11 @@
                 ${hasLang ? `
                     <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung</label>
                     <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;">${img.langbeschreibung}</textarea>
+                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
+                        <span style="font-size:0.85rem;color:var(--text-muted);">Langbeschreibung bewerten:</span>
+                        <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="Langbeschreibung gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128077;</button>
+                        <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="Langbeschreibung schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128078;</button>
+                    </div>
                 ` : ''}
                 </div>
                 ${img.status === 'done' ? `
