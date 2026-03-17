@@ -301,15 +301,15 @@ async def forgot_password(request: Request):
     # Send reset link via email (never expose in API response)
     email_body = f"""<!DOCTYPE html>
 <html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h1 style="color:#1b2a4a;">Passwort zuruecksetzen</h1>
+<h1 style="color:#1b2a4a;">Passwort zurücksetzen</h1>
 <p>Hallo {user['display_name']},</p>
-<p>du hast eine Passwort-Zuruecksetzung fuer dein InkluDocs-Konto angefordert.</p>
-<p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Passwort jetzt zuruecksetzen</a></p>
+<p>du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert.</p>
+<p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Passwort jetzt zurücksetzen</a></p>
 <p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {reset_url}</p>
 <p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gueltig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.</p>
 <p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
 </body></html>"""
-    send_email(email, "InkluDocs: Passwort zuruecksetzen", email_body, bcc_admin=False)
+    send_email(email, "InkluDocs: Passwort zurücksetzen", email_body, bcc_admin=False)
 
     return {
         "ok": True,
@@ -403,13 +403,13 @@ async def admin_create_user(request: Request, user: dict = Depends(require_admin
 <html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
 <h1 style="color:#1b2a4a;">Willkommen bei InkluDocs</h1>
 <p>Hallo {display_name},</p>
-<p>dein Zugang zu InkluDocs wurde erstellt. InkluDocs ist ein KI-gestuetzter Alt-Text-Generator fuer barrierefreie Dokumente und Bilder.</p>
+<p>dein Zugang zu InkluDocs wurde erstellt. InkluDocs ist ein KI-gestützter Alt-Text-Generator für barrierefreie Dokumente und Bilder.</p>
 <h2 style="color:#e87722;font-size:1.1rem;">Deine Zugangsdaten</h2>
 <p><strong>Login-Seite:</strong> <a href="{BASE_URL}">{BASE_URL}</a></p>
 <p><strong>E-Mail:</strong> {email}</p>
 <p><strong>Passwort:</strong> {password}</p>
 <p style="background:#fff7ed;padding:1rem;border-left:3px solid #e87722;border-radius:0 4px 4px 0;">
-Bitte aendere dein Passwort nach dem ersten Login unter <strong>Einstellungen</strong>.</p>
+Bitte ändere dein Passwort nach dem ersten Login unter <strong>Einstellungen</strong>.</p>
 <h2 style="color:#e87722;font-size:1.1rem;">So funktioniert es</h2>
 <ol>
 <li>Melde dich auf <a href="{BASE_URL}">{BASE_URL}</a> an</li>
