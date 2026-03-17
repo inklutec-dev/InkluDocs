@@ -582,7 +582,7 @@
                 <h3>Kontoinformationen</h3>
                 <p style="margin-top:0.5rem;color:var(--text-muted);">Angemeldet als: ${currentUser.display_name} (${currentUser.email})</p>
             </div>
-            <div class="card" style="margin-top:1rem;">
+            ${currentUser.is_admin ? `<div class="card" style="margin-top:1rem;">
                 <h3 style="margin-bottom:1rem;">API-Schluessel</h3>
                 <p style="margin-bottom:1rem;color:var(--text-muted);">Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren.</p>
                 <div id="apiKeyList" aria-live="polite"></div>
@@ -592,7 +592,7 @@
                     <button class="btn btn-primary" onclick="createApiKey()">Erstellen</button>
                 </div>
                 <div id="newKeyResult" role="status" aria-live="polite" style="margin-top:0.5rem;"></div>
-            </div>
+            </div>` : ''}
         `;
 
         document.getElementById('changePwForm').addEventListener('submit', async (e) => {
