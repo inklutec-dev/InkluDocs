@@ -331,6 +331,9 @@ def _ocr_extract_text(image_path: str) -> str:
 def _resize_image_for_model(image_path: str) -> str:
     """Resize image if too large for the model, return base64 encoded string."""
     img = Image.open(image_path)
+    # Convert palette/RGBA/LA modes to RGB for JPEG compatibility
+    if img.mode not in ("RGB", "L"):
+        img = img.convert("RGB")
     # Resize if dimensions exceed limit
     if img.width > MAX_IMAGE_DIM or img.height > MAX_IMAGE_DIM:
         img.thumbnail((MAX_IMAGE_DIM, MAX_IMAGE_DIM), Image.LANCZOS)

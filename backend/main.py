@@ -113,7 +113,8 @@ def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = Tr
 
 
 # Allowed image extensions for direct upload
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".heic", ".heif", ".bmp", ".tiff", ".tif"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".bmp", ".tiff", ".tif"}
+# Note: SVG intentionally excluded – PIL/Pillow cannot open SVGs, causes processing crash
 
 # Rate limiting for login
 _login_attempts = defaultdict(list)
@@ -785,10 +786,23 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 if not ext:
                     continue  # Skip unknown formats
 
-                img_filename = f"web_{idx}{ext}"
-                img_path = os.path.join(img_dir, img_filename)
-                with open(img_path, "wb") as f:
-                    f.write(img_content)
+                # Convert SVGs to PNG
+                if ext == ".svg" or "svg" in content_type:
+                    try:
+                        import cairosvg
+                        png_path = os.path.join(img_dir, f"web_{idx}.png")
+                        cairosvg.svg2png(bytestring=img_content, write_to=png_path, output_width=1200)
+                        img_path = png_path
+                        ext = ".png"
+                        img_filename = f"web_{idx}.png"
+                    except Exception as e:
+                        print(f"SVG-Konvertierung fehlgeschlagen fuer {img_url}: {e}")
+                        continue
+                else:
+                    img_filename = f"web_{idx}{ext}"
+                    img_path = os.path.join(img_dir, img_filename)
+                    with open(img_path, "wb") as f:
+                        f.write(img_content)
 
                 # Get dimensions
                 width, height = 0, 0
@@ -846,7 +860,7 @@ def _ext_from_content_type(ct: str) -> str:
         "image/png": ".png",
         "image/gif": ".gif",
         "image/webp": ".webp",
-        "image/svg+xml": ".svg",
+        # SVG excluded – PIL cannot process it, causes UnidentifiedImageError
     }
     return mapping.get(ct, "")
 
@@ -1087,7 +1101,7 @@ async def submit_feedback(image_id: int, request: Request, user: dict = Depends(
 <p><strong>Benutzer:</strong> {user['email']}</p>
 <p><strong>Projekt:</strong> {img['project_name']}</p>
 {source_info}
-<p><strong>Bildtyp:</strong> {img['image_type']} | <strong>Konfidenz:</strong> {img.get('konfidenz', 'mittel')}</p>
+<p><strong>Bildtyp:</strong> {img['image_type']} | <strong>Konfidenz:</strong> {img['konfidenz'] if img['konfidenz'] else 'mittel'}</p>
 <p><strong>Bildgröße:</strong> {img['width']}x{img['height']}px</p>
 <p><strong>Alt-Text:</strong></p>
 <blockquote style="border-left:3px solid {color};padding-left:1rem;color:#333;">{alt_text}</blockquote>
