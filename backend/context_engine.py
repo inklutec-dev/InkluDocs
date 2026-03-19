@@ -34,7 +34,7 @@ HARTE REGELN:
 2. TRENNUNG VON BILD UND KONTEXT: Der unten angegebene 'Kontext' ist der Text, der im Dokument NEBEN dem Bild steht. Beschreibe NUR das, was physisch IM BILD zu sehen ist.
 3. DEKORATIV-PRUEFUNG: Wenn Text im Bild LESBAR ist, ist es NIEMALS dekorativ.
 4. FAKTEN-TREUE: Erfinde NICHTS. Wenn Text/Zahlen unleserlich sind, schreibe: "teilweise nicht lesbar".
-5. FARB-VERBOT: Nenne NIEMALS Farben bei Fotos und Logos. Bei Diagrammen nur wenn informationstragend.
+5. FARBEN: Nenne Farben NUR, wenn sie eine zwingende Information tragen (z.B. bei Diagrammen, Warnschildern, signalisierenden Elementen). Beschreibe KEINE rein optischen Farben wie 'blauer Himmel', 'gruenes Gras' oder die Farbe von Kleidung.
 6. ANTI-REDUNDANZ: Wiederhole NICHTS was im Kontext bereits steht. Der Alt-Text ergaenzt den Kontext, wiederholt ihn nicht.
 7. DATEN-ANALYSE: Bei Zeitreihen immer den Trend benennen. Bei Vergleichen benennen, wer fuehrt.
 8. LOGO-REGEL: Logos nur mit Namen beschreiben. NIEMALS visuelle Formen, Wappen oder Figuren in Logos interpretieren.
@@ -58,7 +58,7 @@ REGELN FUER FOTOS:
 • PORTRAITS & PERSONEN: Nenne die Rolle/Funktion der Person NUR, wenn sie aus dem Kontext eindeutig hervorgeht. Keine Berufe erfinden! Ansonsten neutral beschreiben (z.B. "Eine Person...").
 • GRUPPEN: Anzahl der Personen (grob), Anlass, Setting beschreiben.
 • GEBAEUDE/NATUR: Name, Funktion, Ort und wesentliche Merkmale nennen.
-• FARB-VERBOT: Nenne NIEMALS Farben bei Fotos. Keine Ausnahmen.
+• FARBEN: Nenne Farben NUR wenn sie zwingende Information tragen (z.B. Warnschilder, signalisierende Elemente). Keine rein optischen Farben wie Himmel, Gras oder Kleidung.
 • DETAILS: Keine Vermutungen ueber Identitaeten unbekannter Personen anstellen.
 • COLLAGEN: Falls das Bild eine Collage aus mehreren Motiven ist, beschreibe die Elemente getrennt.
 • SPRACHE & STIL: Die Antwort MUSS auf Deutsch sein (100-250 Zeichen, 1-3 Saetze). Bitte auf HTML-Entities verzichten.
