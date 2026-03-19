@@ -161,6 +161,52 @@ def _get_nearby_text(page, bbox, max_chars=600):
     return "\n".join(context_parts) if context_parts else "Kein Textkontext verfuegbar."
 
 
+def _merge_nearby_images(page, image_list, doc, gap=20):
+    """Merge raster images that are spatially close on the same page.
+    Returns list of (merged_rect, [xrefs]) tuples for groups, plus individual images."""
+    if len(image_list) <= 1:
+        return None  # No merging needed
+
+    # Collect bounding boxes for all images
+    img_rects = []
+    for img_info in image_list:
+        xref = img_info[0]
+        for rect in page.get_image_rects(xref):
+            img_rects.append((rect, xref))
+
+    if len(img_rects) <= 1:
+        return None
+
+    # Cluster nearby images (same logic as _cluster_drawings but for raster images)
+    used = set()
+    groups = []
+    for i, (r1, x1) in enumerate(img_rects):
+        if i in used:
+            continue
+        group_rect = fitz.Rect(r1)
+        group_xrefs = [x1]
+        group_indices = {i}
+        changed = True
+        while changed:
+            changed = False
+            expanded = fitz.Rect(group_rect.x0 - gap, group_rect.y0 - gap,
+                                  group_rect.x1 + gap, group_rect.y1 + gap)
+            for j, (r2, x2) in enumerate(img_rects):
+                if j in group_indices or j in used:
+                    continue
+                if expanded.intersects(r2):
+                    group_indices.add(j)
+                    group_xrefs.append(x2)
+                    group_rect = group_rect | r2
+                    changed = True
+        used.update(group_indices)
+        groups.append((group_rect, group_xrefs))
+
+    # Only return if we actually merged (at least one group with >1 images)
+    has_merged = any(len(xrefs) > 1 for _, xrefs in groups)
+    return groups if has_merged else None
+
+
 def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> list:
     """Extract all images from a PDF, including vector graphics rendered as images."""
     doc = fitz.open(pdf_path)
@@ -176,9 +222,54 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
         raster_areas = []
         img_idx = 0
 
-        # 1. Extract raster images (as before)
+        # Check if images should be merged (e.g. split chemical formulas)
+        merged_groups = _merge_nearby_images(page, image_list, doc)
+        if merged_groups:
+            for group_rect, group_xrefs in merged_groups:
+                if len(group_xrefs) > 1:
+                    # Render merged region as single image
+                    img_idx += 1
+                    pad = 10
+                    clip = fitz.Rect(group_rect.x0 - pad, group_rect.y0 - pad,
+                                     group_rect.x1 + pad, group_rect.y1 + pad) & page.rect
+                    mat = fitz.Matrix(2, 2)
+                    pix = page.get_pixmap(matrix=mat, clip=clip)
+                    img_filename = f"p{page_num + 1}_merged{img_idx}.png"
+                    img_path = os.path.join(output_dir, img_filename)
+                    pix.save(img_path)
+
+                    raster_areas.append(group_rect)
+                    context = _get_nearby_text(page, (group_rect.x0, group_rect.y0, group_rect.x1, group_rect.y1))
+
+                    images.append({
+                        "page_number": page_num + 1,
+                        "image_index": img_idx,
+                        "image_path": img_path,
+                        "image_filename": img_filename,
+                        "width": int(group_rect.width * 2),
+                        "height": int(group_rect.height * 2),
+                        "xref": group_xrefs[0],
+                        "context_text": context,
+                        "ext": "png",
+                        "bbox": (group_rect.x0, group_rect.y0, group_rect.x1, group_rect.y1),
+                        "is_vector": False,
+                    })
+                    continue
+
+                # Single image in group – process normally below
+
+        # Collect xrefs that were already merged
+        merged_xrefs = set()
+        if merged_groups:
+            for _, group_xrefs in merged_groups:
+                if len(group_xrefs) > 1:
+                    merged_xrefs.update(group_xrefs)
+
+        # 1. Extract raster images (skip if already merged)
         for img_info in image_list:
             xref = img_info[0]
+            if xref in merged_xrefs:
+                continue  # Already processed as merged image
             img_idx += 1
 
             try:
@@ -351,8 +442,24 @@ def _resize_image_for_model(image_path: str) -> str:
         return base64.b64encode(f.read()).decode()
 
 
+MIN_IMAGE_SIZE = 50  # Minimum dimension in pixels for KI analysis
+
+
 def _call_ollama(image_path: str, prompt: str) -> dict:
     """Send an image + prompt to Ollama and return the parsed result dict."""
+    # Skip tiny images that crash Ollama (tracking pixels, spacers)
+    try:
+        with Image.open(image_path) as check_img:
+            if check_img.width < MIN_IMAGE_SIZE or check_img.height < MIN_IMAGE_SIZE:
+                return {
+                    "bildtyp": "dekorativ",
+                    "alt_text": "",
+                    "ist_dekorativ": True,
+                    "konfidenz": "hoch",
+                }
+    except Exception:
+        pass
+
     img_b64 = _resize_image_for_model(image_path)
 
     try:
@@ -501,7 +608,72 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
         enriched_context = f"[OCR-Text im Bild] {ocr_text}\n{context}"
 
     prompt = get_prompt(image_type=image_type, context_text=enriched_context)
-    return _call_ollama(image_path, prompt)
+    result = _call_ollama(image_path, prompt)
+
+    # Invisible Mistral routing: if Qwen confidence is low, escalate
+    if _should_escalate_to_mistral(result):
+        mistral_result = _call_mistral(image_path, enriched_context, image_type)
+        if mistral_result:
+            return mistral_result
+
+    return result
+
+
+def _should_escalate_to_mistral(result: dict) -> bool:
+    """Decide if we should escalate to Mistral API based on Qwen result quality."""
+    MISTRAL_ENABLED = os.environ.get("MISTRAL_ENABLED", "false").lower() in ("true", "1")
+    if not MISTRAL_ENABLED:
+        return False
+
+    konfidenz = result.get("konfidenz", "mittel")
+    bildtyp = result.get("bildtyp", "")
+    alt_text = result.get("alt_text", "")
+
+    # Escalate if: low confidence, or structural formula (error-prone), or very short text
+    if konfidenz == "niedrig":
+        return True
+    if bildtyp == "strukturformel" and len(alt_text) < 30:
+        return True
+    if "nicht lesbar" in alt_text or "nicht erkennbar" in alt_text:
+        return True
+
+    return False
+
+
+def _call_mistral(image_path: str, context: str, image_type: str = None) -> dict | None:
+    """Call Mistral Pixtral API as fallback for difficult images.
+    Returns result dict or None if Mistral is not configured/fails."""
+    api_key = os.environ.get("MISTRAL_API_KEY", "")
+    if not api_key:
+        return None
+
+    try:
+        img_b64 = _resize_image_for_model(image_path)
+        prompt = get_prompt(image_type=image_type, context_text=context)
+
+        response = httpx.post(
+            "https://api.mistral.ai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": "pixtral-large-latest",
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
+                    ]
+                }],
+                "max_tokens": 500,
+                "temperature": 0.2,
+            },
+            timeout=30.0
+        )
+        response.raise_for_status()
+        text = response.json()["choices"][0]["message"]["content"]
+        return _parse_response(text)
+    except Exception as e:
+        print(f"Mistral API Fehler: {e}")
+        return None
 
 
 def generate_alt_text_for_image(image_path: str, context_text: str = "", image_type: str = None) -> dict:

@@ -19,7 +19,7 @@ Antworte NUR mit diesem exakten JSON-Format:
 FORMAT-REGELN:
 • Bei Diagrammen, Karten, Tabellen, Infografiken und Strukturformeln: Beginne mit dem Typ als Praefix (z.B. "Balkendiagramm – ...").
 • Bei Fotos, Screenshots und Logos: KEIN Praefix, starte direkt mit der Beschreibung.
-• LAENGE: 2-4 Saetze (150-350 Zeichen). Kernaussage + wichtigste Details.
+• LAENGE: 1-3 Saetze (100-250 Zeichen). Nur die Kernaussage. Keine ueberfluessigen Details.
 
 BEISPIELE:
 "Logo Nationaler Normenkontrollrat"
@@ -33,8 +33,11 @@ HARTE REGELN:
 1. SPRACHZWANG: Deine Antwort MUSS zwingend auf Deutsch sein. Verwende natuerliches deutsches Vokabular.
 2. TRENNUNG VON BILD UND KONTEXT: Der unten angegebene 'Kontext' ist der Text, der im Dokument NEBEN dem Bild steht. Beschreibe NUR das, was physisch IM BILD zu sehen ist.
 3. DEKORATIV-PRUEFUNG: Wenn Text im Bild LESBAR ist, ist es NIEMALS dekorativ.
-4. FAKTEN-TREUE: Erfinde NICHTS. Beschreibe keine Farben (ausser bei Diagrammen). Wenn Text/Zahlen unleserlich sind, schreibe: "teilweise nicht lesbar".
-5. DATEN-ANALYSE: Bei Zeitreihen immer den Trend benennen. Bei Vergleichen benennen, wer fuehrt.
+4. FAKTEN-TREUE: Erfinde NICHTS. Wenn Text/Zahlen unleserlich sind, schreibe: "teilweise nicht lesbar".
+5. FARB-VERBOT: Nenne NIEMALS Farben bei Fotos und Logos. Bei Diagrammen nur wenn informationstragend.
+6. ANTI-REDUNDANZ: Wiederhole NICHTS was im Kontext bereits steht. Der Alt-Text ergaenzt den Kontext, wiederholt ihn nicht.
+7. DATEN-ANALYSE: Bei Zeitreihen immer den Trend benennen. Bei Vergleichen benennen, wer fuehrt.
+8. LOGO-REGEL: Logos nur mit Namen beschreiben. NIEMALS visuelle Formen, Wappen oder Figuren in Logos interpretieren.
 
 Kontext (Umgebender Text aus dem Dokument): {context}"""
 
@@ -55,9 +58,10 @@ REGELN FUER FOTOS:
 • PORTRAITS & PERSONEN: Nenne die Rolle/Funktion der Person NUR, wenn sie aus dem Kontext eindeutig hervorgeht. Keine Berufe erfinden! Ansonsten neutral beschreiben (z.B. "Eine Person...").
 • GRUPPEN: Anzahl der Personen (grob), Anlass, Setting beschreiben.
 • GEBAEUDE/NATUR: Name, Funktion, Ort und wesentliche Merkmale nennen.
-• DETAILS: Keine Farben beschreiben (ausser sie tragen zwingend Informationen). Keine Vermutungen ueber Identitaeten unbekannter Personen anstellen.
+• FARB-VERBOT: Nenne NIEMALS Farben bei Fotos. Keine Ausnahmen.
+• DETAILS: Keine Vermutungen ueber Identitaeten unbekannter Personen anstellen.
 • COLLAGEN: Falls das Bild eine Collage aus mehreren Motiven ist, beschreibe die Elemente getrennt.
-• SPRACHE & STIL: Die Antwort MUSS auf Deutsch sein (150-350 Zeichen, 2-4 Saetze). Bitte auf HTML-Entities verzichten (nutze "und" statt kaufmaennischem Und-Zeichen als Code).
+• SPRACHE & STIL: Die Antwort MUSS auf Deutsch sein (100-250 Zeichen, 1-3 Saetze). Bitte auf HTML-Entities verzichten.
 • KONTEXT-GRENZE: Nutze den 'Kontext' fuer Hintergrundwissen, aber beschreibe NUR das, was im Foto physisch sichtbar ist!
 
 Kontext (Umgebender Text aus dem Dokument): {context}""",
@@ -112,7 +116,7 @@ Antworte NUR mit diesem exakten JSON:
 REGELN FUER LOGOS:
 • STRUKTUR: Beginne zwingend mit "Logo " gefolgt vom Namen der Organisation/Marke. Beispiel: "Logo Nationaler Normenkontrollrat".
 • OCR-NUTZUNG (WICHTIG): Wenn [OCR-Text im Bild] vorhanden ist, MUSS dieser als primaere Quelle fuer den Namen und eventuelle Slogans genutzt werden.
-• KEINE OPTIK: Beschreibe NIEMALS das Aussehen des Logos (keine Wappen, Kreise, Tiere, Farben oder Formen).
+• KEINE OPTIK: Beschreibe NIEMALS das Aussehen des Logos. Keine Wappen, Kreise, Tiere, Farben, Formen, Dreiecke oder abstrakte Figuren. Interpretiere NICHTS visuell hinein. NUR der Name zaehlt.
 • SLOGANS: Zusaetzliche Texte (Claim/Slogan) nur anhaengen, wenn sie klar im Bild lesbar sind.
 • GRENZEN: Maximal 1 Satz, 30-80 Zeichen. Wenn der Name im Bild absolut nicht lesbar ist: "Logo – Text nicht lesbar".
 • SPRACHE: Antwort auf Deutsch. Eigennamen und originale Slogans bleiben im Original.

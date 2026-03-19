@@ -758,8 +758,8 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 context_parts.append("[HTML-Attribut] Dieses Bild ist im Quellcode als dekorativ/versteckt markiert (aria-hidden oder leerer alt-Text).")
             if img_tag.get("title"):
                 context_parts.append(f"[title] {img_tag['title']}")
-            if original_alt:
-                context_parts.append(f"[Original alt] {original_alt}")
+            # Original alt-text is stored for display but NOT sent to the model
+            # to prevent the "discussion bug" (model commenting on existing alt-text)
             # figcaption
             parent_figure = img_tag.find_parent("figure")
             if parent_figure:
