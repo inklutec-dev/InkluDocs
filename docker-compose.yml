@@ -17,6 +17,8 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - MISTRAL_ENABLED=${MISTRAL_ENABLED:-false}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

@@ -610,9 +610,9 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
     prompt = get_prompt(image_type=image_type, context_text=enriched_context)
     result = _call_ollama(image_path, prompt)
 
-    # Invisible Mistral routing: if Qwen confidence is low, escalate
+    # Invisible Mistral routing: if Qwen confidence is low, escalate with Qwen's analysis
     if _should_escalate_to_mistral(result):
-        mistral_result = _call_mistral(image_path, enriched_context, image_type)
+        mistral_result = _call_mistral(image_path, enriched_context, image_type, qwen_result=result)
         if mistral_result:
             return mistral_result
 
@@ -629,19 +629,24 @@ def _should_escalate_to_mistral(result: dict) -> bool:
     bildtyp = result.get("bildtyp", "")
     alt_text = result.get("alt_text", "")
 
-    # Escalate if: low confidence, or structural formula (error-prone), or very short text
+    # Escalate if quality indicators suggest Qwen struggled
     if konfidenz == "niedrig":
         return True
-    if bildtyp == "strukturformel" and len(alt_text) < 30:
+    if konfidenz == "mittel" and bildtyp in ("strukturformel", "karte", "infografik"):
+        return True
+    if bildtyp == "strukturformel":
         return True
     if "nicht lesbar" in alt_text or "nicht erkennbar" in alt_text:
+        return True
+    if len(alt_text) < 20 and bildtyp not in ("logo", "dekorativ"):
         return True
 
     return False
 
 
-def _call_mistral(image_path: str, context: str, image_type: str = None) -> dict | None:
-    """Call Mistral Pixtral API as fallback for difficult images.
+def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_result: dict = None) -> dict | None:
+    """Call Mistral Pixtral API as intelligent fallback.
+    Uses Qwen's pre-analysis as context for better results.
     Returns result dict or None if Mistral is not configured/fails."""
     api_key = os.environ.get("MISTRAL_API_KEY", "")
     if not api_key:
@@ -649,7 +654,18 @@ def _call_mistral(image_path: str, context: str, image_type: str = None) -> dict
 
     try:
         img_b64 = _resize_image_for_model(image_path)
-        prompt = get_prompt(image_type=image_type, context_text=context)
+
+        # Build enriched context with Qwen's pre-analysis
+        mistral_context = context
+        if qwen_result:
+            qwen_info = (
+                f"[Voranalyse lokales Modell] Bildtyp: {qwen_result.get('bildtyp', 'unbekannt')}, "
+                f"Konfidenz: {qwen_result.get('konfidenz', 'unbekannt')}, "
+                f"Vorlaeufiger Alt-Text: {qwen_result.get('alt_text', '')[:200]}"
+            )
+            mistral_context = f"{qwen_info}\n{context}"
+
+        prompt = get_prompt(image_type=image_type or qwen_result.get("bildtyp"), context_text=mistral_context)
 
         response = httpx.post(
             "https://api.mistral.ai/v1/chat/completions",
