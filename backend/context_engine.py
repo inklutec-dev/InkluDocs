@@ -31,7 +31,7 @@ Dekorativ (NUR rein abstrakte Formen, reine Hintergruende, winzige Icons): ist_d
 
 HARTE REGELN:
 1. SPRACHZWANG: Deine Antwort MUSS zwingend auf Deutsch sein. Verwende natuerliches deutsches Vokabular.
-2. TRENNUNG VON BILD UND KONTEXT: Der unten angegebene 'Kontext' ist der Text, der im Dokument NEBEN dem Bild steht. Beschreibe NUR das, was physisch IM BILD zu sehen ist.
+2. BILD UND KONTEXT ZUSAMMEN NUTZEN: Beschreibe was im Bild zu sehen ist, aber nutze den Kontext um das Gezeigte zu IDENTIFIZIEREN. Wenn der Kontext verraet wer/was im Bild ist, nenne diese Information. Erfinde aber NICHTS was weder im Bild noch im Kontext steht.
 3. DEKORATIV-PRUEFUNG: Wenn Text im Bild LESBAR ist, ist es NIEMALS dekorativ.
 4. FAKTEN-TREUE: Erfinde NICHTS. Wenn Text/Zahlen unleserlich sind, schreibe: "teilweise nicht lesbar".
 5. FARBEN: Nenne Farben NUR, wenn sie eine zwingende Information tragen (z.B. bei Diagrammen, Warnschildern, signalisierenden Elementen). Beschreibe KEINE rein optischen Farben wie 'blauer Himmel', 'gruenes Gras' oder die Farbe von Kleidung.
