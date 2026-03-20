@@ -590,33 +590,125 @@ def _call_ollama(image_path: str, prompt: str) -> dict:
 
 
 def generate_alt_text(image_path: str, context: str = "", image_type: str = None) -> dict:
-    """Generate alt-text for a single image using Qwen3-VL via Ollama.
+    """Generate alt-text using the dual-model pipeline.
 
-    Uses OCR to extract text from the image first, then provides both
-    the image and the extracted text to the vision model.
-
-    Args:
-        image_path: Path to the image file.
-        context: Surrounding text context from the document.
-        image_type: Optional specific image type for specialized prompt.
-                    If None, uses the general prompt (first pass).
+    Pipeline v3:
+      1. OCR extracts text from image
+      2. Qwen classifies the image (Stufe 1)
+      3. Based on pipeline mode: Mistral or Qwen generates alt-text (Stufe 2)
+      4. Fallback to Qwen if Mistral fails
     """
-    # OCR: Extract text from the image to help the model read numbers/labels
+    from context_engine import (
+        get_classification_prompt, get_generation_prompt, get_prompt,
+        should_use_mistral, PIPELINE_MODE
+    )
+
+    # OCR: Extract text from the image
     ocr_text = _ocr_extract_text(image_path)
     enriched_context = context
     if ocr_text:
         enriched_context = f"[OCR-Text im Bild] {ocr_text}\n{context}"
 
-    prompt = get_prompt(image_type=image_type, context_text=enriched_context)
-    result = _call_ollama(image_path, prompt)
+    # ─── Stufe 1: Qwen classifies ───
+    classification_prompt = get_classification_prompt(enriched_context)
+    classification = _call_ollama(image_path, classification_prompt)
 
-    # Invisible Mistral routing: if Qwen confidence is low, escalate with Qwen's analysis
-    if _should_escalate_to_mistral(result):
-        mistral_result = _call_mistral(image_path, enriched_context, image_type, qwen_result=result)
+    bildtyp = classification.get("bildtyp", image_type or "foto")
+    konfidenz = classification.get("konfidenz", "mittel")
+    ist_dekorativ = classification.get("ist_dekorativ", False)
+
+    # Decorative bypass: skip generation entirely
+    if ist_dekorativ:
+        return {
+            "bildtyp": "dekorativ",
+            "alt_text": "",
+            "langbeschreibung": "",
+            "ist_dekorativ": True,
+            "konfidenz": konfidenz,
+        }
+
+    # ─── Stufe 2: Generate alt-text ───
+    if should_use_mistral(bildtyp, konfidenz):
+        # Mistral generates
+        mistral_result = _call_mistral_generate(image_path, bildtyp, enriched_context)
         if mistral_result:
+            mistral_result["bildtyp"] = bildtyp
+            mistral_result["konfidenz"] = konfidenz
+            mistral_result["ist_dekorativ"] = False
             return mistral_result
+        # Fallback to Qwen if Mistral fails
+        print(f"Mistral fehlgeschlagen, Fallback auf Qwen fuer {image_path}")
 
+    # Qwen generates (qwen_only mode, hybrid for simple images, or Mistral fallback)
+    qwen_prompt = get_prompt(image_type=bildtyp, context_text=enriched_context)
+    result = _call_ollama(image_path, qwen_prompt)
+    # Ensure bildtyp from classification is used
+    if result.get("bildtyp") in ("unbekannt", "fehler", None):
+        result["bildtyp"] = bildtyp
     return result
+
+
+def _call_mistral_generate(image_path: str, bildtyp: str, context: str) -> dict | None:
+    """Call Mistral Pixtral API for Insight-First alt-text generation (Stufe 2)."""
+    from context_engine import get_generation_prompt
+
+    api_key = os.environ.get("MISTRAL_API_KEY", "")
+    if not api_key:
+        return None
+
+    try:
+        img_b64 = _resize_image_for_model(image_path)
+        prompt = get_generation_prompt(bildtyp=bildtyp, context_text=context)
+
+        response = httpx.post(
+            "https://api.mistral.ai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": os.environ.get("MISTRAL_MODEL", "pixtral-large-latest"),
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
+                    ]
+                }],
+                "max_tokens": 800,
+                "temperature": 0.2,
+            },
+            timeout=30.0
+        )
+        response.raise_for_status()
+        text = response.json()["choices"][0]["message"]["content"]
+
+        # Parse Mistral response (expects {"alt_text": "...", "langbeschreibung": "..."})
+        clean = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+        clean = re.sub(r'```json\s*', '', clean)
+        clean = re.sub(r'\s*```', '', clean)
+
+        start = clean.find("{")
+        end = clean.rfind("}") + 1
+        if start >= 0 and end > start:
+            parsed = json.loads(clean[start:end])
+            alt_text = parsed.get("alt_text", "").strip()
+            if alt_text and len(alt_text) > 5:
+                return {
+                    "alt_text": _combine_alt_text(alt_text, ""),
+                    "langbeschreibung": parsed.get("langbeschreibung", ""),
+                    "ist_dekorativ": False,
+                }
+
+        # If JSON parsing fails, use the raw text
+        if len(clean) > 10:
+            return {
+                "alt_text": _combine_alt_text(clean, ""),
+                "langbeschreibung": "",
+                "ist_dekorativ": False,
+            }
+
+        return None
+    except Exception as e:
+        print(f"Mistral API Fehler: {e}")
+        return None
 
 
 def _should_escalate_to_mistral(result: dict) -> bool:
@@ -694,29 +786,5 @@ def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_re
 
 
 def generate_alt_text_for_image(image_path: str, context_text: str = "", image_type: str = None) -> dict:
-    """Generate alt-text for a standalone image (not from PDF).
-
-    Works with uploaded images or images downloaded from URLs.
-    Uses context_engine for prompt selection.
-
-    Args:
-        image_path: Path to the image file on disk.
-        context_text: Optional context text (e.g. from the web page).
-        image_type: Optional specific image type for specialized prompt.
-
-    Returns:
-        Dict with bildtyp, alt_text, langbeschreibung, ist_dekorativ, konfidenz.
-    """
-    # If no explicit type given, try to detect from context
-    effective_type = image_type
-    if not effective_type and context_text:
-        effective_type = detect_type_from_context(context_text)
-
-    # OCR: Extract text from the image
-    ocr_text = _ocr_extract_text(image_path)
-    enriched_context = context_text
-    if ocr_text:
-        enriched_context = f"[OCR-Text im Bild] {ocr_text}\n{context_text}"
-
-    prompt = get_prompt(image_type=effective_type, context_text=enriched_context)
-    return _call_ollama(image_path, prompt)
+    """Generate alt-text for a standalone image. Uses the same dual-model pipeline."""
+    return generate_alt_text(image_path, context=context_text, image_type=image_type)

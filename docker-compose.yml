@@ -19,6 +19,7 @@ services:
       - SMTP_FROM=${SMTP_FROM}
       - MISTRAL_ENABLED=${MISTRAL_ENABLED:-false}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - PIPELINE_MODE=${PIPELINE_MODE:-mistral_primary}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

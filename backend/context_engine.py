@@ -1,14 +1,66 @@
 """
 Context Engine for InkluDocs Alt-Text Generation.
+Version 3.0 – Dual-Model Pipeline (20.03.2026)
 
-Provides specialized prompts per image type and context-based type detection.
-The GENERAL prompt is the default first-pass prompt. Specialized prompts are
-used for re-generation when the user selects a specific image type.
+Pipeline:
+  Stufe 1 (Qwen, lokal): Klassifikation (Bildtyp + dekorativ + konfidenz)
+  Stufe 2 (Mistral, API): Alt-Text-Generierung mit Insight-First-Prompt
+  Fallback: Qwen generiert wenn Mistral fehlschlaegt
+
+Modi (PIPELINE_MODE Umgebungsvariable):
+  mistral_primary: Qwen klassifiziert, Mistral generiert (Default, beste Qualitaet)
+  hybrid: Qwen macht einfache Bilder, Mistral die komplexen (spart Kosten)
+  qwen_only: Alles ueber Qwen (Fallback, niedrigste Kosten)
 """
 
+import os
 import re
 
-# The general/default prompt (originally ALT_TEXT_PROMPT from pdf_processor.py)
+PIPELINE_MODE = os.environ.get("PIPELINE_MODE", "mistral_primary")
+
+# ─── Klassifikations-Prompt (Stufe 1, Qwen) ──────────────────
+CLASSIFICATION_PROMPT = """/no_think
+Klassifiziere dieses Bild. Antworte NUR mit diesem JSON:
+{{"bildtyp": "foto|diagramm|tabelle|strukturformel|logo|icon|karte|screenshot|infografik|dekorativ", "ist_dekorativ": true|false, "konfidenz": "hoch|mittel|niedrig"}}
+
+Regeln:
+- dekorativ = rein abstrakte Formen, Farbverlaeufe, Trennlinien, winzige Icons
+- Wenn Text, Personen, Daten oder Inhalte sichtbar sind: NICHT dekorativ
+- konfidenz: Wie sicher bist du bei der Klassifikation?
+
+Kontext: {context}"""
+
+# ─── Generierungs-Prompt (Stufe 2, Mistral oder Qwen-Fallback) ─
+GENERATION_PROMPT = """Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2.
+Das Bild wurde als Typ "{bildtyp}" klassifiziert.
+
+INSIGHT-FIRST METHODE:
+- Liefere sofort die ERKENNTNIS: Was vermittelt dieses Bild? Was ist die Kernaussage?
+- Nenne ALLE lesbaren Zahlen, Texte, Beschriftungen
+- Bei Diagrammen: Trend und Muster zuerst, dann Details
+- Bei Tabellen: Alle Spalten, Zeilen und Werte strukturiert auflisten
+- Bei Formeln: Vollstaendige Notation und Name der Verbindung
+- Bei Fotos: Kontext und Bedeutung, bekannte Gebaeude/Personen benennen
+- Bei Logos: NUR den Namen, KEINE visuelle Beschreibung
+- Erfinde NICHTS was du nicht klar erkennen kannst
+- Antwort MUSS auf Deutsch sein
+
+ZUSATZREGELN:
+- KEIN ALTER: Nenne Name und Funktion, aber KEINE biografischen Daten wie Alter
+- VERLINKTE BILDER: Wenn der Kontext ein [Link-Ziel] enthaelt, beschreibe die FUNKTION des Links
+- ANTI-REDUNDANZ: Wiederhole NICHTS was im Kontext steht
+- FARBEN: Nur informationstragende Farben (Warnschilder, Diagramme). Keine optischen Farben
+- WISSENSTRANSFER: Nutze den Kontext um das Gezeigte zu IDENTIFIZIEREN
+
+Antworte NUR mit diesem JSON:
+{{"alt_text": "...", "langbeschreibung": "..."}}
+
+alt_text: Max 250 Zeichen, Insight-First. Bei Logos max 80 Zeichen.
+langbeschreibung: Alle Details, max 1000 Zeichen. Leer wenn nicht noetig.
+
+Kontext (Umgebender Text und Seiteninfo): {context}"""
+
+# ─── Legacy General-Prompt (fuer qwen_only Modus und Fallback) ─
 GENERAL_PROMPT = """/no_think
 Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
 ZIEL: Blinde Nutzer erhalten die GLEICHE INFORMATION wie Sehende.
@@ -17,217 +69,23 @@ Antworte NUR mit diesem exakten JSON-Format:
 {{"bildtyp": "foto|diagramm|tabelle|screenshot|icon|logo|karte|dekorativ|strukturformel", "alt_text": "...", "ist_dekorativ": true/false, "konfidenz": "hoch|mittel|niedrig"}}
 
 FORMAT-REGELN:
-• Bei Diagrammen, Karten, Tabellen, Infografiken und Strukturformeln: Beginne mit dem Typ als Praefix (z.B. "Balkendiagramm – ...").
-• Bei Fotos, Screenshots und Logos: KEIN Praefix, starte direkt mit der Beschreibung.
-• LAENGE: 1-3 Saetze (100-250 Zeichen). Nur die Kernaussage. Keine ueberfluessigen Details.
-
-BEISPIELE:
-"Logo Nationaler Normenkontrollrat"
-"Kreisdiagramm – Die groesste Buerokratie-Entlastung bringt das Wachstumschancengesetz mit 39%, gefolgt von der Schwellenwert-Anhebung mit 18%."
-"Screenshot – Startseite des Ministeriums mit geoeffnetem Hauptmenue und Fokus auf das Suchfeld."
-"Drei Personen am Rednerpult bei einer Pressekonferenz des Normenkontrollrats."
-
-Dekorativ (NUR rein abstrakte Formen, reine Hintergruende, winzige Icons): ist_dekorativ=true, alt_text=""
+- Bei Diagrammen, Karten, Tabellen, Infografiken und Strukturformeln: Beginne mit dem Typ als Praefix.
+- Bei Fotos, Screenshots und Logos: KEIN Praefix, starte direkt mit der Beschreibung.
+- LAENGE: 1-3 Saetze (100-250 Zeichen). Nur die Kernaussage.
 
 HARTE REGELN:
-1. SPRACHZWANG: Deine Antwort MUSS zwingend auf Deutsch sein. Verwende natuerliches deutsches Vokabular.
-2. BILD UND KONTEXT ZUSAMMEN NUTZEN: Beschreibe was im Bild zu sehen ist, aber nutze den Kontext um das Gezeigte zu IDENTIFIZIEREN. Wenn der Kontext verraet wer/was im Bild ist, nenne diese Information. Erfinde aber NICHTS was weder im Bild noch im Kontext steht.
-3. DEKORATIV-PRUEFUNG: Wenn Text im Bild LESBAR ist, ist es NIEMALS dekorativ.
-4. FAKTEN-TREUE: Erfinde NICHTS. Wenn Text/Zahlen unleserlich sind, schreibe: "teilweise nicht lesbar".
-5. FARBEN: Nenne Farben NUR, wenn sie eine zwingende Information tragen (z.B. bei Diagrammen, Warnschildern, signalisierenden Elementen). Beschreibe KEINE rein optischen Farben wie 'blauer Himmel', 'gruenes Gras' oder die Farbe von Kleidung.
-6. ANTI-REDUNDANZ: Wiederhole NICHTS was im Kontext bereits steht. Der Alt-Text ergaenzt den Kontext, wiederholt ihn nicht.
-7. DATEN-ANALYSE: Bei Zeitreihen immer den Trend benennen. Bei Vergleichen benennen, wer fuehrt.
-8. LOGO-REGEL: Logos nur mit Namen beschreiben. NIEMALS visuelle Formen, Wappen oder Figuren in Logos interpretieren.
-9. WISSENSTRANSFER: Deine Hauptaufgabe ist NICHT das Aufzaehlen generischer Pixel (z.B. "Ein Mann sitzt am Tisch"), sondern die Vermittlung von Bedeutung! Wenn der Kontext verraet WER oder WAS auf dem Bild ist (z.B. Name einer Person, ein bekanntes Gebaeude, ein konkretes Produkt), dann MUSST du diese Identitaet nennen. Schlussfolgere logisch aus dem Kontext, aber halluziniere KEINE Fakten die nicht im Kontext stehen.
-10. VERLINKTE BILDER: Wenn das Bild ein Link ist (Kontext enthaelt [Link-Ziel]), beschreibe wohin der Link fuehrt, NICHT was das Bild zeigt. Beispiel: Bild ist Link zu /kontakt → "Zum Kontaktformular".
+1. Antwort MUSS auf Deutsch sein.
+2. Beschreibe was im Bild ist, nutze den Kontext um es zu IDENTIFIZIEREN. Erfinde NICHTS.
+3. Wenn Text im Bild LESBAR ist, ist es NIEMALS dekorativ.
+4. Nur informationstragende Farben. Keine optischen Farben.
+5. Wiederhole NICHTS was im Kontext steht.
+6. Identitaet aus Kontext nennen. Kein Alter nennen.
+7. Bei [Link-Ziel] die Link-Funktion beschreiben.
 
-Kontext (Umgebender Text aus dem Dokument): {context}"""
+Kontext: {context}"""
 
-# Specialized prompts per image type, used for re-generation
-SPECIALIZED_PROMPTS = {
-    "foto": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Dieses Bild ist ein FOTO. Erstelle einen praezisen Alt-Text.
-
-INNOVATIONS-ZIEL: Beschreibe nicht einfach nur Pixel, sondern vermittle die Kernaussage und Stimmung des Fotos! Was ist das entscheidende Ereignis, die Hauptaktion oder die wesentliche Atmosphaere? Genau das muss der blinde Nutzer erfahren.
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "foto", "alt_text": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
-
-REGELN FUER FOTOS:
-• STRUKTUR: KEIN Praefix wie "Foto – ". Beginne direkt mit der Beschreibung der Hauptaktion.
-• FOKUS: Wer ist zu sehen? Was tun die Personen? Wo befinden sie sich?
-• PORTRAITS & PERSONEN: Nenne die Rolle/Funktion der Person NUR, wenn sie aus dem Kontext eindeutig hervorgeht. Keine Berufe erfinden! Ansonsten neutral beschreiben (z.B. "Eine Person...").
-• GRUPPEN: Anzahl der Personen (grob), Anlass, Setting beschreiben.
-• GEBAEUDE/NATUR: Name, Funktion, Ort und wesentliche Merkmale nennen.
-• FARBEN: Nenne Farben NUR wenn sie zwingende Information tragen (z.B. Warnschilder, signalisierende Elemente). Keine rein optischen Farben wie Himmel, Gras oder Kleidung.
-• DETAILS: Keine Vermutungen ueber Identitaeten unbekannter Personen anstellen.
-• COLLAGEN: Falls das Bild eine Collage aus mehreren Motiven ist, beschreibe die Elemente getrennt.
-• SPRACHE & STIL: Die Antwort MUSS auf Deutsch sein (100-250 Zeichen, 1-3 Saetze). Bitte auf HTML-Entities verzichten.
-• WISSENSTRANSFER: Wenn der Kontext verraet WER die Person ist (Name, Rolle) oder WAS das Gebaeude/Objekt ist, MUSST du diese Identitaet nennen! "Steve Weidel, Gruender von INKLUTEC" statt "Ein Mann im schwarzen Hemd". Aber halluziniere KEINE Namen die nicht im Kontext stehen.
-• VERLINKTE BILDER: Wenn [Link-Ziel] im Kontext steht, beschreibe wohin der Link fuehrt, NICHT was das Bild zeigt.
-
-Kontext (Umgebender Text aus dem Dokument): {context}""",
-
-    "diagramm": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Dieses Bild ist ein DIAGRAMM (Balken-, Kreis-, Liniendiagramm o.ae.).
-
-INNOVATIONS-ZIEL: Liefere keinen stumpfen Daten-Dump, sondern vermittle echtes Wissen! Was ist die Kernaussage und der Trend des Diagramms? Genau diese Erkenntnis muss der blinde Nutzer erfahren.
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "diagramm", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
-
-REGELN FUER DIAGRAMME:
-• OCR-DATEN (ABSOLUTE PRIORITAET): Wenn [OCR-Text im Bild] bereitgestellt wird, nutze diesen ZWINGEND als primaere Quelle fuer Zahlen, Beschriftungen und Legenden. Ignoriere diese Daten auf keinen Fall!
-• STRUKTUR alt_text: Diagrammtyp + Bindestrich + Kernaussage/Haupttrend (2-3 Saetze, max 350 Zeichen). Beispiel: "Balkendiagramm - Die Tarifbindung sank zwischen 2010 und 2023."
-• STRUKTUR langbeschreibung: Liste alle sicher lesbaren Datenpunkte, Achsenbeschriftungen und Legenden auf. Nutze eine strukturierte Text-Liste (z.B. "Kategorie A: 15%, Kategorie B: 10%"). KEINE Markdown-Tabellen! Max 1000 Zeichen.
-• INHALTLICHER FOKUS: Bei Zeitreihen Anfangswert, Endwert und Trend nennen. Bei Vergleichen den hoechsten und niedrigsten Wert mit exakten Zahlen nennen.
-• ANTI-HALLUZINATION: Erfinde NIEMALS Werte, Zahlen oder Trends, die du nicht glasklar im Bild oder im OCR-Text lesen kannst. Bei Unleserlichkeit schreibe: "Werte teilweise nicht lesbar".
-• SPRACHZWANG: Antwort MUSS zwingend auf Deutsch formuliert sein.
-
-Kontext (Text aus dem Dokument zur Orientierung): {context}""",
-
-    "karte": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Dieses Bild ist eine KARTE (Landkarte, Stadtplan, Lageplan o.ae.).
-
-INNOVATIONS-ZIEL: Vermittle das geografische Wissen. Blinde Nutzer sollen verstehen, welche raeumliche Verteilung oder welche konkreten Standorte die Karte zeigt, ohne sich in unwichtigen visuellen Hintergrunddetails zu verlieren.
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "karte", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
-
-REGELN FUER KARTEN:
-• STRUKTUR alt_text: Beginne mit "Karte – " gefolgt vom Gebiet und dem Hauptthema (z.B. "Karte – Deutschland – Verteilung der Windkraftanlagen"). 2-3 Saetze, max 350 Zeichen.
-• STRUKTUR langbeschreibung: Erstelle eine strukturierte Zusammenfassung der WICHTIGSTEN Informationen. Versuche NICHT, jeden einzelnen unwichtigen Hintergrund-Ort aufzulisten! ABER: Wenn spezifische Standorte (z.B. hervorgehobene Filialen, markierte Projekt-Staedte) das Hauptthema der Karte sind, liste diese explizit und vollstaendig auf!
-• OCR-NUTZUNG: Wenn [OCR-Text im Bild] vorhanden ist, nutze diese Daten ZWINGEND als primaere Quelle fuer Ortsnamen, Legenden und Beschriftungen.
-• INHALT: Welches Gebiet ist dargestellt? Was zeigen die spezifischen Markierungen?
-• ANTI-HALLUZINATION: Erfinde NIEMALS Orte oder Routen. Wenn die Karte extrem detailreich oder verschwommen ist, nenne nur das Hauptthema und fuege hinzu: "Details teilweise nicht lesbar".
-• SPRACHE: Antwort auf Deutsch. Originale Ortsnamen (z.B. auf Englisch) bleiben im Original.
-
-Kontext (Text aus dem Dokument zur Orientierung): {context}""",
-
-    "logo": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Dieses Bild ist ein LOGO. Beschreibe es kurz und praegnant.
-
-INNOVATIONS-ZIEL: Der blinde Nutzer muss sofort wissen, um welchen Absender oder welche Marke es geht. Ignoriere visuelle Spielereien und konzentriere dich zu 100% auf die Identitaet und Kernbotschaft (Markenname und Slogan).
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "logo", "alt_text": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
-
-REGELN FUER LOGOS:
-• STRUKTUR: Beginne zwingend mit "Logo " gefolgt vom Namen der Organisation/Marke. Beispiel: "Logo Nationaler Normenkontrollrat".
-• OCR-NUTZUNG (WICHTIG): Wenn [OCR-Text im Bild] vorhanden ist, MUSS dieser als primaere Quelle fuer den Namen und eventuelle Slogans genutzt werden.
-• KEINE OPTIK: Beschreibe NIEMALS das Aussehen des Logos. Keine Wappen, Kreise, Tiere, Farben, Formen, Dreiecke oder abstrakte Figuren. Interpretiere NICHTS visuell hinein. NUR der Name zaehlt.
-• SLOGANS: Zusaetzliche Texte (Claim/Slogan) nur anhaengen, wenn sie klar im Bild lesbar sind.
-• GRENZEN: Maximal 1 Satz, 30-80 Zeichen. Wenn der Name im Bild absolut nicht lesbar ist: "Logo – Text nicht lesbar".
-• SPRACHE: Antwort auf Deutsch. Eigennamen und originale Slogans bleiben im Original.
-• KONTEXT-WARNUNG: Der 'Kontext' dient nur zur Orientierung.
-
-Kontext (Text aus dem Dokument zur Orientierung): {context}""",
-
-    "tabelle": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Dieses Bild zeigt eine TABELLE als Grafik.
-
-INNOVATIONS-ZIEL: Liefere keinen stumpfen Daten-Dump, sondern vermittle echtes Wissen! Was ist die Kernaussage der Tabelle? Welche Erkenntnis zieht ein Sehender daraus? Genau das muss der blinde Nutzer erfahren.
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "tabelle", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
-
-REGELN FUER TABELLEN:
-• STRUKTUR alt_text: "Tabelle – " + Thema + EINE klare Kernaussage/Erkenntnis (z.B. "Tabelle - Umsatzzahlen 2023 - Produkt A generiert mit 40% den hoechsten Umsatz"). Max 250 Zeichen.
-• STRUKTUR langbeschreibung: KEINE Markdown-Tabellen generieren (zerstoert das JSON-Format)! Nenne zuerst die Spaltenkoepfe. Fasse dann die wichtigsten Datenpunkte in klarem Fliesstext oder als strukturierte Liste zusammen. Nenne Spitzenwerte, Tiefstwerte und auffaellige Abweichungen. Nur bei sehr kleinen Tabellen alle Werte geordnet auflisten. Max 1500 Zeichen.
-• OCR-NUTZUNG (WICHTIG): Wenn [OCR-Text im Bild] vorhanden ist, nutze diese Daten als primaere Quelle fuer Zellinhalte, Spaltenkoepfe und exakte Zahlen.
-• DETAILTREUE: Achte penibel auf Einheiten (%, EUR, etc.).
-• ANTI-HALLUZINATION: Erfinde KEINE Werte oder Trends, die nicht durch Zahlen belegt sind. Wenn Zahlen unleserlich sind, schreibe: "Werte teilweise nicht lesbar".
-• SPRACHE: Antwort MUSS professionell auf Deutsch sein, auch wenn der Kontext oder OCR-Text englisch ist.
-• KONTEXT-WARNUNG: Der 'Kontext' ist Text NEBEN dem Bild. Er ist nicht Teil der Tabelle!
-
-Kontext (Text aus dem Dokument zur Orientierung): {context}""",
-
-    "screenshot": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Dieses Bild ist ein SCREENSHOT einer Software, App oder Website.
-
-INNOVATIONS-ZIEL: Ein Screenshot zeigt einen digitalen Zustand. Was ist die wichtigste Information oder Funktion, die dem sehenden Nutzer hier praesentiert wird? Uebersetze diesen digitalen Zustand in klares Wissen, ohne dich in unwichtigen Menue-Leisten zu verlieren.
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "screenshot", "alt_text": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
-
-REGELN FUER SCREENSHOTS:
-• STRUKTUR: KEIN Praefix wie "Screenshot – ". Beginne direkt damit, welche Art von Anwendung/Website zu sehen ist und was der Hauptfokus ist.
-• OCR-NUTZUNG (ABSOLUTE PRIORITAET): Wenn [OCR-Text im Bild] vorhanden ist, nutze diesen zwingend, um sichtbare Menuepunkte, Ueberschriften oder Meldungen wortwoertlich zu benennen.
-• FOKUS: Beschreibe den zentralen, wichtigsten Bereich (z.B. ein Formular, einen Artikel). Versuche NICHT, jedes winzige Menue-Icon am Rand aufzulisten.
-• ANTI-HALLUZINATION: Beschreibe NUR, was physisch und faktisch auf dem Bildschirm zu sehen ist. Erfinde keine Nutzeraktionen (NICHT "der Nutzer klickt gerade auf...").
-• FORMVORGABEN: 2-4 Saetze, 150-350 Zeichen. Keine Farben oder reines Design (wie Schatten) beschreiben.
-• SPRACHE: Antwort auf Deutsch. Originale UI-Begriffe duerfen im Original zitiert werden.
-• KONTEXT-WARNUNG: Nutze den 'Kontext' zur Orientierung, aber behaupte nicht, der Dokument-Text stuende im Screenshot!
-
-Kontext (Text aus dem Dokument zur Orientierung): {context}""",
-
-    "infografik": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Dieses Bild ist eine INFOGRAFIK. Deine Aufgabe: Uebersetze die visuell dargestellten Informationen und Zusammenhaenge in klares, verstaendliches Wissen.
-
-INNOVATIONS-ZIEL: Blinde Nutzer sollen nicht erfahren, wie die Grafik aussieht (Pfeile, Layout), sondern was sie inhaltlich erklaert (z.B. einen Prozess, eine Hierarchie oder Fakten).
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "infografik", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
-
-REGELN FUER INFOGRAFIKEN:
-• STRUKTUR alt_text: Beginne mit "Infografik – " + Hauptthema + EINE zentrale Kernaussage (Was lernt man aus dem Bild?). 2-3 Saetze, max 350 Zeichen.
-• STRUKTUR langbeschreibung: Fasse die inhaltlichen Stationen (z.B. Schritt 1, Schritt 2) oder Fakten in einem klaren Fliesstext oder einer einfachen Text-Liste zusammen. Beschreibe NICHT das visuelle Layout ("oben links", "ein Pfeil zeigt auf"), sondern die logische Beziehung ("A fuehrt zu B", "Kategorie X umfasst..."). Max 1500 Zeichen. Keine JSON-brechenden Formatierungen!
-• OCR-NUTZUNG (WICHTIG): Wenn [OCR-Text im Bild] vorhanden ist, MUSS dieser als Hauptquelle fuer alle Fakten, Prozesse und Begriffe in der Grafik dienen.
-• ANTI-HALLUZINATION: Erfinde KEINE Zusammenhaenge, Schritte oder Zahlen, die nicht ausdruecklich im Bild stehen oder unleserlich sind.
-• SPRACHE: Antwort zwingend auf Deutsch. Fachbegriffe aus dem Bild exakt uebernehmen.
-• KONTEXT-WARNUNG: Der 'Kontext' ist der Text NEBEN der Infografik. Nutze ihn als Hintergrundwissen, aber beschreibe NUR den Inhalt der Grafik selbst!
-
-Kontext (Text aus dem Dokument zur Orientierung): {context}""",
-
-    "dekorativ": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Deine Aufgabe: Pruefe final, ob dieses Bild wirklich rein DEKORATIV ist (also null Information traegt) oder ob es inhaltliche Relevanz hat.
-
-INNOVATIONS-ZIEL: Radikale Reduktion von "digitalem Muell"! Blinde Nutzer verlieren extrem viel Zeit durch bedeutungslose Schmuckgrafiken. Deine Aufgabe ist es, diesen visuellen Laerm rigoros herauszufiltern (ist_dekorativ=true), aber echte Informationen messerscharf zu erkennen und zu schuetzen.
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "dekorativ", "alt_text": "...", "ist_dekorativ": true/false, "konfidenz": "hoch|mittel|niedrig"}}
-
-REGELN ZUR PRUEFUNG:
-• WAS IST DEKORATIV? Rein abstrakte Muster, einfarbige Hintergruende, simple Trennlinien oder rein optische Schmuckelemente ohne Bedeutung.
-• AKTION DEKORATIV: Wenn es dekorativ ist, setze zwingend ist_dekorativ=true und lasse den alt_text komplett LEER (alt_text: "").
-• DAS SICHERHEITSNETZ (FALLBACK): Wenn das Bild DOCH konkrete Objekte, Personen oder Daten zeigt, setze ist_dekorativ=false und schreibe eine kurze, praezise Beschreibung (1-2 Saetze) in den alt_text.
-• HARTE TEXT-REGEL: Wenn im Bild Text lesbar ist (oder [OCR-Text im Bild] uebergeben wurde), ist das Bild NIEMALS dekorativ! Beschreibe dann den Text.
-• ANTI-HALLUZINATION: Erfinde keine Bedeutungen in abstrakte Formen hinein. Ein blauer Strich ist ein blauer Strich (dekorativ), kein "blauer Fluss".
-• KONTEXT-WARNUNG: Nur weil der Kontext-Text lang ist, macht das ein rein optisches Hintergrundbild nicht ploetzlich informativ!
-
-Kontext (Text aus dem Dokument zur Orientierung): {context}""",
-
-    "strukturformel": """/no_think
-Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2 und BITV.
-Dieses Bild zeigt eine CHEMISCHE STRUKTURFORMEL, ein Molekuelmodell oder eine Reaktionsgleichung.
-
-INNOVATIONS-ZIEL: Chemie erfordert 100%ige Exaktheit. Liefere blinden Nutzern chemisch korrekte, strukturierte Fakten. Rate NIEMALS chemische Namen, wenn du dir nicht absolut sicher bist!
-
-Antworte NUR mit diesem exakten JSON:
-{{"bildtyp": "strukturformel", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
-
-BEISPIELE:
-• "Strukturformel – Iodmethan (CH3I). Ein Kohlenstoffatom ist mit drei Wasserstoffatomen und einem Iodatom ueber Einfachbindungen verbunden."
-• "Reaktionsgleichung – Veresterung von Essigsaeure mit Ethanol zu Ethylacetat und Wasser."
-
-REGELN FUER STRUKTURFORMELN:
-• STRUKTUR alt_text: "Strukturformel – " (oder "Reaktionsgleichung - ") + Name der Verbindung/Reaktion + Summenformel (WENN sicher erkennbar). Max 250 Zeichen.
-• STRUKTUR langbeschreibung: Beschreibe das Grundgeruest (z.B. aromatischer Ring, Kohlenstoffkette), erkennbare Atome, wichtige Bindungen und funktionelle Gruppen (z.B. Hydroxyl, Carboxyl). Bei Reaktionen: Nenne Edukte, Pfeil/Bedingungen, Produkte. Max 800 Zeichen in klarem Fliesstext.
-• OCR-NUTZUNG (WICHTIG): Wenn [OCR-Text im Bild] vorhanden ist (z.B. Labels unter dem Molekuel), nutze diese zwingend als primaere Quelle fuer den Namen und die Formel!
-• ANTI-HALLUZINATION (KRITISCH): Erfinde KEINE Atome, Stereochemie oder IUPAC-Namen. Wenn der Name nicht im Bild steht und das Molekuel nicht eindeutig ist, beschreibe nur visuell ("Strukturformel eines Molekuels mit einem Benzolring und...") oder setze "Struktur nicht eindeutig identifizierbar".
-• SPRACHE: Fachlich korrektes Deutsch.
-• KONTEXT-WARNUNG: Der 'Kontext' ist der Dokument-Text NEBEN dem Bild. Schliesse nicht blind vom Kontext auf das abgebildete Molekuel, wenn das Bild etwas anderes zeigt!
-
-Kontext (Text aus dem Dokument zur Orientierung): {context}""",
-}
+# ─── Types that Mistral should always handle in hybrid mode ───
+MISTRAL_TYPES = {"diagramm", "tabelle", "karte", "strukturformel", "infografik"}
 
 # Complex types that should include langbeschreibung
 COMPLEX_TYPES = {"diagramm", "karte", "tabelle", "infografik", "strukturformel"}
@@ -240,7 +98,6 @@ _TYPE_PATTERNS = {
     ],
     "karte": [
         r"(?i)\b(?:Karte|Landkarte|Stadtplan|Lageplan|Map|Uebersichtskarte|Standortkarte)\b",
-        r"(?i)\b(?:Abb(?:ildung)?\.?\s*\d+\s*:\s*.*(?:Karte|Standort|Region|Gebiet))",
     ],
     "tabelle": [
         r"(?i)\b(?:Tabelle|Tab\.?\s*\d|Uebersicht\s*\d)\b",
@@ -250,7 +107,6 @@ _TYPE_PATTERNS = {
     ],
     "foto": [
         r"(?i)\b(?:Foto|Bild|Aufnahme|Portrait|Gruppenbild)\b",
-        r"(?i)\b(?:Abb(?:ildung)?\.?\s*\d+\s*:\s*.*(?:Foto|zeigt|abgebildet))",
     ],
     "logo": [
         r"(?i)\b(?:Logo|Wortmarke|Bildmarke|Firmenzeichen|Markenzeichen)\b",
@@ -263,48 +119,47 @@ _TYPE_PATTERNS = {
     ],
     "strukturformel": [
         r"(?i)\b(?:Strukturformel|Molekuel|Summenformel|Reaktionsgleichung|Bindung|Atom|IUPAC)\b",
-        r"(?i)\b(?:Abb(?:ildung)?\.?\s*\d+\s*:\s*.*(?:Struktur|Formel|Molekuel|Verbindung))",
         r"(?i)\b(?:Methanol|Ethanol|Iodmethan|Kohlenwasserstoff|Wasserstoff|Sauerstoff|Stickstoff)\b",
-        r"(?i)\b(?:organisch|anorganisch|Synthese|Hydrolyse|Oxidation|Reduktion)\b",
     ],
 }
 
 
+def get_classification_prompt(context_text: str = "") -> str:
+    """Return the classification prompt for Qwen (Stufe 1)."""
+    context = context_text[:400] if context_text else "Kein Kontext."
+    return CLASSIFICATION_PROMPT.format(context=context)
+
+
+def get_generation_prompt(bildtyp: str, context_text: str = "") -> str:
+    """Return the Insight-First generation prompt for Mistral (Stufe 2)."""
+    context = context_text[:1000] if context_text else "Kein Kontext."
+    return GENERATION_PROMPT.format(bildtyp=bildtyp, context=context)
+
+
 def get_prompt(image_type: str = None, context_text: str = "") -> str:
-    """Return the appropriate prompt for the given image type.
-
-    Args:
-        image_type: One of foto, diagramm, karte, logo, tabelle, screenshot,
-                    infografik, dekorativ. None for the general/default prompt.
-        context_text: Surrounding text from the document for context injection.
-
-    Returns:
-        The formatted prompt string with context inserted.
-    """
+    """Legacy: Return prompt for Qwen-only/fallback mode."""
     context = context_text[:800] if context_text else "Kein Kontext."
-
-    if image_type and image_type in SPECIALIZED_PROMPTS:
-        return SPECIALIZED_PROMPTS[image_type].format(context=context)
-
     return GENERAL_PROMPT.format(context=context)
 
 
+def should_use_mistral(bildtyp: str, konfidenz: str) -> bool:
+    """Decide if Mistral should generate the alt-text based on pipeline mode."""
+    if PIPELINE_MODE == "qwen_only":
+        return False
+    if PIPELINE_MODE == "mistral_primary":
+        return True
+    # hybrid mode
+    if bildtyp in MISTRAL_TYPES:
+        return True
+    if konfidenz in ("niedrig", "mittel"):
+        return True
+    return False
+
+
 def detect_type_from_context(context_text: str) -> str | None:
-    """Analyze surrounding text for clues about the image type.
-
-    Looks for keywords like 'Abbildung', 'Diagramm', 'Karte', 'Tabelle' etc.
-    in the context text and returns a suggested image_type.
-
-    Args:
-        context_text: Surrounding text extracted from the document.
-
-    Returns:
-        A suggested image type string, or None if no clear match.
-    """
+    """Analyze surrounding text for clues about the image type."""
     if not context_text:
         return None
-
-    # Count matches per type for scoring
     scores = {}
     for img_type, patterns in _TYPE_PATTERNS.items():
         score = 0
@@ -313,14 +168,30 @@ def detect_type_from_context(context_text: str) -> str | None:
             score += len(matches)
         if score > 0:
             scores[img_type] = score
-
     if not scores:
         return None
-
-    # Return the type with the highest score
     return max(scores, key=scores.get)
 
 
 def is_complex_type(image_type: str) -> bool:
     """Check if an image type should include a langbeschreibung field."""
     return image_type in COMPLEX_TYPES
+
+
+def extract_page_profile(soup) -> str:
+    """Extract a page profile from BeautifulSoup HTML for better context."""
+    parts = []
+    if soup.title and soup.title.string:
+        parts.append(f"[Seitentitel] {soup.title.string.strip()}")
+    meta_desc = soup.find("meta", attrs={"name": "description"})
+    if meta_desc and meta_desc.get("content"):
+        parts.append(f"[Meta-Beschreibung] {meta_desc['content'][:200]}")
+    headings = []
+    for tag in ["h1", "h2", "h3"]:
+        for h in soup.find_all(tag):
+            text = h.get_text(strip=True)
+            if text:
+                headings.append(f"{tag.upper()}: {text}")
+    if headings:
+        parts.append(f"[Ueberschriften] {' | '.join(headings[:10])}")
+    return "\n".join(parts) if parts else ""
