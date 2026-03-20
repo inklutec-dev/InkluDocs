@@ -675,7 +675,7 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str) -> dict 
                 "max_tokens": 800,
                 "temperature": 0.2,
             },
-            timeout=30.0
+            timeout=60.0
         )
         response.raise_for_status()
         text = response.json()["choices"][0]["message"]["content"]
@@ -775,7 +775,7 @@ def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_re
                 "max_tokens": 500,
                 "temperature": 0.2,
             },
-            timeout=30.0
+            timeout=60.0
         )
         response.raise_for_status()
         text = response.json()["choices"][0]["message"]["content"]
