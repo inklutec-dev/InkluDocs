@@ -232,7 +232,7 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                     pad = 10
                     clip = fitz.Rect(group_rect.x0 - pad, group_rect.y0 - pad,
                                      group_rect.x1 + pad, group_rect.y1 + pad) & page.rect
-                    mat = fitz.Matrix(2, 2)
+                    mat = fitz.Matrix(3, 3)
                     pix = page.get_pixmap(matrix=mat, clip=clip)
                     img_filename = f"p{page_num + 1}_merged{img_idx}.png"
                     img_path = os.path.join(output_dir, img_filename)
@@ -343,9 +343,9 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                 # Render this region as a PNG image
                 img_idx += 1
                 try:
-                    # Scale factor: 2x for normal graphics, lower for very large ones
+                    # Scale factor: 3x for HD rendering, lower for very large ones
                     cw, ch = cluster_rect.width, cluster_rect.height
-                    scale = 2.0
+                    scale = 3.0
                     if cw * scale > MAX_IMAGE_DIM or ch * scale > MAX_IMAGE_DIM:
                         scale = min(MAX_IMAGE_DIM / cw, MAX_IMAGE_DIM / ch)
                         scale = max(scale, 1.0)  # at least 1x
@@ -632,9 +632,9 @@ def _should_escalate_to_mistral(result: dict) -> bool:
     # Escalate if quality indicators suggest Qwen struggled
     if konfidenz == "niedrig":
         return True
-    if konfidenz == "mittel" and bildtyp in ("strukturformel", "karte", "infografik"):
+    if konfidenz == "mittel" and bildtyp in ("strukturformel", "karte", "infografik", "diagramm"):
         return True
-    if bildtyp == "strukturformel":
+    if bildtyp in ("strukturformel", "diagramm"):
         return True
     if "nicht lesbar" in alt_text or "nicht erkennbar" in alt_text:
         return True
@@ -660,8 +660,9 @@ def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_re
         if qwen_result:
             qwen_info = (
                 f"[Voranalyse lokales Modell] Bildtyp: {qwen_result.get('bildtyp', 'unbekannt')}, "
-                f"Konfidenz: {qwen_result.get('konfidenz', 'unbekannt')}, "
-                f"Vorlaeufiger Alt-Text: {qwen_result.get('alt_text', '')[:200]}"
+                f"Vorlaeufiger Alt-Text: {qwen_result.get('alt_text', '')[:200]}. "
+                f"WICHTIG: Pruefe das Bild vollstaendig selbst. Wenn im vorlaeufigen Alt-Text 'nicht lesbar' oder 'nicht erkennbar' steht, "
+                f"versuche es trotzdem selbst zu lesen. Lies alle Texte, Zahlen und Beschriftungen direkt aus dem Bild."
             )
             mistral_context = f"{qwen_info}\n{context}"
 

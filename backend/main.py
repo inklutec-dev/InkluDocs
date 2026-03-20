@@ -752,10 +752,19 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 or (img_tag.has_attr("alt") and img_tag["alt"] == "")
             )
 
+            # Hard bypass: decorative/hidden images skip KI entirely
+            if is_hidden:
+                conn.execute(
+                    """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
+                       width, height, xref, original_alt, status, image_type, alt_text)
+                       VALUES (?, 1, ?, '', '', 0, 0, 0, ?, 'done', 'dekorativ', '')""",
+                    (project_id, idx, original_alt)
+                )
+                downloaded += 1
+                continue
+
             # Get context: parent text, figcaption, title attribute
             context_parts = []
-            if is_hidden:
-                context_parts.append("[HTML-Attribut] Dieses Bild ist im Quellcode als dekorativ/versteckt markiert (aria-hidden oder leerer alt-Text).")
             if img_tag.get("title"):
                 context_parts.append(f"[title] {img_tag['title']}")
             # Original alt-text is stored for display but NOT sent to the model
@@ -766,12 +775,36 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 figcaption = parent_figure.find("figcaption")
                 if figcaption:
                     context_parts.append(f"[Bildunterschrift] {figcaption.get_text(strip=True)}")
-            # Surrounding text (parent element)
-            parent = img_tag.parent
-            if parent and parent.name not in ("html", "body", "head"):
-                parent_text = parent.get_text(strip=True)[:200]
+            # Check if image is a link (for linked image alt-text)
+            parent_link = img_tag.find_parent("a")
+            if parent_link:
+                link_href = parent_link.get("href", "")
+                link_label = parent_link.get("aria-label", "") or parent_link.get("title", "")
+                if link_href:
+                    context_parts.append(f"[Link-Ziel] {link_href}")
+                if link_label:
+                    context_parts.append(f"[Link-Beschriftung] {link_label}")
+
+            # Improved context search: go beyond direct parent
+            # 1. Nearest heading before the image
+            prev_heading = img_tag.find_previous(["h1", "h2", "h3", "h4"])
+            if prev_heading:
+                context_parts.append(f"[Ueberschrift] {prev_heading.get_text(strip=True)[:150]}")
+
+            # 2. Parent article/section (WordPress wrappers)
+            content_parent = img_tag.find_parent(["article", "section"]) or img_tag.find_parent("div", class_=True)
+            if content_parent and content_parent.name not in ("html", "body", "head"):
+                parent_text = content_parent.get_text(strip=True)[:300]
                 if parent_text and parent_text != original_alt:
                     context_parts.append(f"[Umgebungstext] {parent_text}")
+
+            # 3. Text after the image (WordPress captions often below)
+            next_sib = img_tag.find_next_sibling(["p", "span", "figcaption", "div"])
+            if next_sib:
+                next_text = next_sib.get_text(strip=True)[:150]
+                if next_text:
+                    context_parts.append(f"[Text danach] {next_text}")
+
             context_text = "\n".join(context_parts) if context_parts else ""
 
             # Download image

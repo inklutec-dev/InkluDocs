@@ -38,6 +38,8 @@ HARTE REGELN:
 6. ANTI-REDUNDANZ: Wiederhole NICHTS was im Kontext bereits steht. Der Alt-Text ergaenzt den Kontext, wiederholt ihn nicht.
 7. DATEN-ANALYSE: Bei Zeitreihen immer den Trend benennen. Bei Vergleichen benennen, wer fuehrt.
 8. LOGO-REGEL: Logos nur mit Namen beschreiben. NIEMALS visuelle Formen, Wappen oder Figuren in Logos interpretieren.
+9. WISSENSTRANSFER: Deine Hauptaufgabe ist NICHT das Aufzaehlen generischer Pixel (z.B. "Ein Mann sitzt am Tisch"), sondern die Vermittlung von Bedeutung! Wenn der Kontext verraet WER oder WAS auf dem Bild ist (z.B. Name einer Person, ein bekanntes Gebaeude, ein konkretes Produkt), dann MUSST du diese Identitaet nennen. Schlussfolgere logisch aus dem Kontext, aber halluziniere KEINE Fakten die nicht im Kontext stehen.
+10. VERLINKTE BILDER: Wenn das Bild ein Link ist (Kontext enthaelt [Link-Ziel]), beschreibe wohin der Link fuehrt, NICHT was das Bild zeigt. Beispiel: Bild ist Link zu /kontakt → "Zum Kontaktformular".
 
 Kontext (Umgebender Text aus dem Dokument): {context}"""
 
@@ -62,7 +64,8 @@ REGELN FUER FOTOS:
 • DETAILS: Keine Vermutungen ueber Identitaeten unbekannter Personen anstellen.
 • COLLAGEN: Falls das Bild eine Collage aus mehreren Motiven ist, beschreibe die Elemente getrennt.
 • SPRACHE & STIL: Die Antwort MUSS auf Deutsch sein (100-250 Zeichen, 1-3 Saetze). Bitte auf HTML-Entities verzichten.
-• KONTEXT-GRENZE: Nutze den 'Kontext' fuer Hintergrundwissen, aber beschreibe NUR das, was im Foto physisch sichtbar ist!
+• WISSENSTRANSFER: Wenn der Kontext verraet WER die Person ist (Name, Rolle) oder WAS das Gebaeude/Objekt ist, MUSST du diese Identitaet nennen! "Steve Weidel, Gruender von INKLUTEC" statt "Ein Mann im schwarzen Hemd". Aber halluziniere KEINE Namen die nicht im Kontext stehen.
+• VERLINKTE BILDER: Wenn [Link-Ziel] im Kontext steht, beschreibe wohin der Link fuehrt, NICHT was das Bild zeigt.
 
 Kontext (Umgebender Text aus dem Dokument): {context}""",
 
