@@ -712,6 +712,10 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     if not img_tags:
         raise HTTPException(status_code=404, detail="Keine Bilder auf dieser Seite gefunden")
 
+    # Extract page profile for better context (Seitenprofil)
+    from context_engine import extract_page_profile
+    page_profile = extract_page_profile(soup)
+
     # Create project
     conn = get_db()
     page_title = soup.title.string.strip() if soup.title and soup.title.string else parsed.netloc
@@ -805,7 +809,12 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 if next_text:
                     context_parts.append(f"[Text danach] {next_text}")
 
-            context_text = "\n".join(context_parts) if context_parts else ""
+            # Prepend page profile to image-specific context
+            all_context = []
+            if page_profile:
+                all_context.append(page_profile)
+            all_context.extend(context_parts)
+            context_text = "\n".join(all_context) if all_context else ""
 
             # Download image
             try:

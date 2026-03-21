@@ -599,8 +599,8 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
       4. Fallback to Qwen if Mistral fails
     """
     from context_engine import (
-        get_classification_prompt, get_generation_prompt, get_prompt,
-        should_use_mistral, PIPELINE_MODE
+        get_classification_prompt, get_generation_prompt, get_fallback_prompt,
+        get_prompt, should_use_mistral, PIPELINE_MODE
     )
 
     # OCR: Extract text from the image
@@ -639,8 +639,8 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
         # Fallback to Qwen if Mistral fails
         print(f"Mistral fehlgeschlagen, Fallback auf Qwen fuer {image_path}")
 
-    # Qwen generates (qwen_only mode, hybrid for simple images, or Mistral fallback)
-    qwen_prompt = get_prompt(image_type=bildtyp, context_text=enriched_context)
+    # Qwen generates with specialized fallback prompt
+    qwen_prompt = get_fallback_prompt(bildtyp=bildtyp, context_text=enriched_context)
     result = _call_ollama(image_path, qwen_prompt)
     # Ensure bildtyp from classification is used
     if result.get("bildtyp") in ("unbekannt", "fehler", None):
