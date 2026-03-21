@@ -51,7 +51,8 @@ REGELN:
 - Gebaeude/Orte: Benennen wenn Evidenz vorhanden (Schild, Inschrift, Kontext). Sonst allgemein.
 - Gruppen: Ungefaehre Anzahl, Anlass, Setting – was PASSIERT hier?
 - Verlinkte Bilder: Wenn [Link-Ziel] im Kontext → beschreibe die FUNKTION des Links, nicht das Bild.
-- ANTI-REDUNDANZ: Wiederhole NICHTS was der Kontext bereits sagt. Ergaenze, was nur das Bild zeigt.
+- KONTEXT-IDENTIFIKATION (WICHTIG): Wenn der Kontext den NAMEN oder die FUNKTION einer Person nennt, MUSS dieser Name im Alt-Text stehen! Der Alt-Text muss allein verstaendlich sein – der Nutzer sieht den Kontext nicht.
+- ANTI-REDUNDANZ: Wiederhole keine BESCHREIBENDEN Details die der Kontext bereits nennt. Aber Namen, Funktionen und Identitaeten IMMER nennen – sie sind die Kerninfo.
 - Farben NUR wenn sie Information tragen (Warnschilder, Signalfarben). Keine optischen Farben.
 - Sprache: Natuerliches Deutsch. Kein Aufzaehlungsstil. Wie ein Mensch es einem anderen erzaehlen wuerde.
 
@@ -290,7 +291,7 @@ EVIDENZ-REGELN:
 - Lesbarer Text + Allgemeinwissen = sichere Identifikation → benennen (z.B. "EQUAL JUSTICE UNDER LAW" → Supreme Court)
 - Kein Text, kein Logo → allgemein beschreiben ("ein Gebaeude", "eine Person")
 - Personen namentlich NUR aus Kontext oder lesbarem Namensschild. Kein Alter.
-- ANTI-REDUNDANZ: Wiederhole NICHTS aus dem Kontext.
+- ANTI-REDUNDANZ: Wiederhole keine beschreibenden Details aus dem Kontext. Aber Namen und Identitaeten IMMER nennen.
 - Farben NUR wenn informationstragend.
 
 alt_text: Max 250 Zeichen, Kernaussage. KEIN Praefix "Foto – ".
@@ -474,7 +475,7 @@ WEITERE REGELN:
 2. Kontext nutzen um das Gezeigte zu IDENTIFIZIEREN. Nichts erfinden was weder im Bild noch im Kontext steht.
 3. Text im Bild lesbar → NIEMALS dekorativ.
 4. Farben NUR wenn informationstragend.
-5. ANTI-REDUNDANZ: Nichts wiederholen was der Kontext bereits sagt.
+5. ANTI-REDUNDANZ: Beschreibende Details nicht wiederholen. Aber Namen, Funktionen und Identitaeten aus dem Kontext IMMER im Alt-Text nennen.
 6. Personen: Name/Funktion NUR aus Kontext oder lesbarem Schild. KEIN Alter.
 7. Verlinkte Bilder mit [Link-Ziel] → Link-FUNKTION beschreiben.
 8. Diagramme/Tabellen: INSIGHT FIRST – Trend und Kernaussage zuerst, dann Details.

@@ -553,6 +553,16 @@ def _call_ollama(image_path: str, prompt: str) -> dict:
             end = clean_text.rfind("}") + 1
             if start >= 0 and end > start:
                 parsed = json.loads(clean_text[start:end])
+                # Classification response (has bildtyp but no alt_text)
+                if parsed.get("bildtyp") and parsed.get("alt_text") is None:
+                    return {
+                        "bildtyp": parsed["bildtyp"],
+                        "alt_text": "",
+                        "ist_dekorativ": parsed.get("ist_dekorativ", False),
+                        "konfidenz": parsed.get("konfidenz", "mittel"),
+                        "raw_response": text,
+                    }
+                # Generation response (has alt_text)
                 if parsed.get("alt_text") is not None:
                     alt = _combine_alt_text(parsed.get("alt_text", ""), parsed.get("langbeschreibung", ""))
                     return {
