@@ -1,6 +1,6 @@
 """
 Context Engine for InkluDocs Alt-Text Generation.
-Version 3.0 – Dual-Model Pipeline (20.03.2026)
+Version 3.1 – Anti-Halluzination Update (21.03.2026)
 
 Pipeline:
   Stufe 1 (Qwen, lokal): Klassifikation (Bildtyp + dekorativ + konfidenz)
@@ -40,17 +40,25 @@ INSIGHT-FIRST METHODE:
 - Bei Diagrammen: Trend und Muster zuerst, dann Details
 - Bei Tabellen: Alle Spalten, Zeilen und Werte strukturiert auflisten
 - Bei Formeln: Vollstaendige Notation und Name der Verbindung
-- Bei Fotos: Kontext und Bedeutung, bekannte Gebaeude/Personen benennen
+- Bei Fotos: Kontext und Bedeutung beschreiben
 - Bei Logos: NUR den Namen, KEINE visuelle Beschreibung
-- Erfinde NICHTS was du nicht klar erkennen kannst
 - Antwort MUSS auf Deutsch sein
+
+ANTI-HALLUZINATION (WICHTIG – bei Verstoessen ist der Alt-Text FALSCH):
+- Marken, Hersteller, Modellnamen NUR nennen wenn Logo oder Schriftzug im Bild KLAR LESBAR ist
+- Kennzeichen, Nummernschilder NUR transkribieren wenn Text VOLLSTAENDIG UND EINDEUTIG lesbar ist
+- Personen NUR namentlich benennen wenn der Kontext den Namen enthaelt oder ein Namensschild lesbar ist
+- Gebaeude NUR benennen wenn ein Schild lesbar ist oder der Kontext es eindeutig sagt
+- Bei JEDER Unsicherheit: allgemein beschreiben statt raten ("ein Auto" statt "ein VW Golf")
+- Erfinde NICHTS was du nicht klar erkennen oder aus dem Kontext belegen kannst
+- Lieber zu wenig Details als FALSCHE Details
 
 ZUSATZREGELN:
 - KEIN ALTER: Nenne Name und Funktion, aber KEINE biografischen Daten wie Alter
 - VERLINKTE BILDER: Wenn der Kontext ein [Link-Ziel] enthaelt, beschreibe die FUNKTION des Links
 - ANTI-REDUNDANZ: Wiederhole NICHTS was im Kontext steht
 - FARBEN: Nur informationstragende Farben (Warnschilder, Diagramme). Keine optischen Farben
-- WISSENSTRANSFER: Nutze den Kontext um das Gezeigte zu IDENTIFIZIEREN
+- WISSENSTRANSFER: Nutze den Kontext um das Gezeigte zu IDENTIFIZIEREN – aber halluziniere KEINE Fakten
 
 Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": "..."}}
@@ -76,11 +84,12 @@ FORMAT-REGELN:
 HARTE REGELN:
 1. Antwort MUSS auf Deutsch sein.
 2. Beschreibe was im Bild ist, nutze den Kontext um es zu IDENTIFIZIEREN. Erfinde NICHTS.
-3. Wenn Text im Bild LESBAR ist, ist es NIEMALS dekorativ.
-4. Nur informationstragende Farben. Keine optischen Farben.
-5. Wiederhole NICHTS was im Kontext steht.
-6. Identitaet aus Kontext nennen. Kein Alter nennen.
-7. Bei [Link-Ziel] die Link-Funktion beschreiben.
+3. ANTI-HALLUZINATION: Marken/Modelle NUR nennen wenn Logo/Schriftzug KLAR LESBAR. Kennzeichen NUR wenn VOLLSTAENDIG lesbar. Bei Unsicherheit allgemein beschreiben.
+4. Wenn Text im Bild LESBAR ist, ist es NIEMALS dekorativ.
+5. Nur informationstragende Farben. Keine optischen Farben.
+6. Wiederhole NICHTS was im Kontext steht.
+7. Identitaet aus Kontext nennen. Kein Alter nennen.
+8. Bei [Link-Ziel] die Link-Funktion beschreiben.
 
 Kontext: {context}"""
 
