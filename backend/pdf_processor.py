@@ -688,17 +688,32 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str) -> dict 
             timeout=60.0
         )
         response.raise_for_status()
-        text = response.json()["choices"][0]["message"]["content"]
+
+        # Parse Mistral API response – handle control chars
+        try:
+            resp_data = response.json()
+        except Exception:
+            raw = response.text
+            raw = raw.replace('\r\n', '\n').replace('\r', '\n')
+            raw = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', raw)
+            resp_data = json.loads(raw)
+
+        text = resp_data["choices"][0]["message"]["content"]
 
         # Parse Mistral response (expects {"alt_text": "...", "langbeschreibung": "..."})
         clean = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
         clean = re.sub(r'```json\s*', '', clean)
         clean = re.sub(r'\s*```', '', clean)
+        # Remove control characters that break json.loads
+        clean = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', clean)
 
         start = clean.find("{")
         end = clean.rfind("}") + 1
         if start >= 0 and end > start:
-            parsed = json.loads(clean[start:end])
+            try:
+                parsed = json.loads(clean[start:end])
+            except json.JSONDecodeError:
+                parsed = json.loads(clean[start:end].replace('\n', ' ').replace('\t', ' '))
             alt_text = parsed.get("alt_text", "").strip()
             if alt_text and len(alt_text) > 5:
                 return {
@@ -717,7 +732,9 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str) -> dict 
 
         return None
     except Exception as e:
-        print(f"Mistral API Fehler: {e}")
+        print(f"Mistral API Fehler fuer {image_path}: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
