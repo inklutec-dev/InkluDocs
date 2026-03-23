@@ -69,21 +69,41 @@ Dieses Bild ist ein DIAGRAMM.
 
 DEIN AUFTRAG – INSIGHT FIRST: Ein Sehender schaut auf ein Diagramm und erkennt sofort den TREND, das MUSTER, die KERNAUSSAGE. Genau DAS muss dein erster Satz sein. Nicht die Achsenbeschriftung. Nicht der Diagrammtyp. Sondern: Was sagt uns dieses Diagramm?
 
+ABER ZUERST – INVENTAR-PFLICHT (KRITISCH):
+Bevor du auch nur einen Trend formulierst, erfasse VOLLSTAENDIG:
+1. Diagrammtitel (wenn vorhanden, IMMER nennen)
+2. ALLE Kategorien auf der X-Achse – zaehle sie durch
+3. ALLE Eintraege in der Legende – zaehle sie durch
+4. Y-Achse: Einheit und Skalierung
+5. Anzahl der Balken/Linien/Segmente pro Kategorie
+
+Wenn du z.B. 4 Kategorien auf der X-Achse siehst (Software, Hardware, Services, Mobile), dann muessen ALLE VIER in alt_text und langbeschreibung vorkommen. Wenn du nur 2 von 4 erwaeehnst, ist die Beschreibung FALSCH und UNVOLLSTAENDIG.
+
+TREND-VALIDIERUNG (KRITISCH):
+- Beschreibe Trends NUR nach paarweisem Vergleich ALLER Datenpunkte.
+- VERBOTEN: Woerter wie "kontinuierlich", "stetig", "durchgehend" ohne JEDEN Datenpunkt geprueft zu haben.
+- RICHTIG: "Von 2021 zu 2022 steigt der Wert, von 2022 zu 2023 faellt er wieder" statt "kontinuierlicher Anstieg".
+- Wenn 3 Jahre dargestellt sind, vergleiche: 2021→2022, 2022→2023, UND 2021→2023. Erst dann darfst du einen Gesamttrend formulieren.
+- Pruefe bei JEDER Kategorie separat. Nicht von einer Kategorie auf eine andere schliessen.
+
+ANTI-ERFINDUNG (KRITISCH):
+- Behaupte NIEMALS, dass Werte "unleserlich", "ueberlappend" oder "nicht erkennbar" sind, es sei denn sie sind es TATSAECHLICH.
+- Wenn die Y-Achse klar skaliert ist (z.B. 0-6), dann SAGE das. Erfinde keine Lesbarkeitsprobleme.
+- Wenn du einen Wert nicht exakt ablesen kannst, formuliere: "liegt bei circa X" – NICHT "ist unleserlich".
+
 BEISPIELE FUER GUTE INSIGHTS:
-- "Balkendiagramm – Der Umsatz im Bereich Services hat sich seit 2021 verdoppelt, waehrend Hardware ruecklaeufig ist – eine gegenlaeufige Entwicklung."
+- "Balkendiagramm – Umsatzentwicklung in Deutschland: Hardware erreicht 2022 den Hoechstwert und faellt 2023 deutlich, waehrend Mobile 2023 den staerksten Zuwachs aller vier Kategorien zeigt."
 - "Kreisdiagramm – Fast die Haelfte der Buerokratie-Entlastung entfaellt auf ein einziges Gesetz, das Wachstumschancengesetz mit 39%."
-- "Liniendiagramm – Nach stetigem Wachstum bis 2022 bricht der Trend 2023 abrupt ein."
 
 EVIDENZ-BASIERTE IDENTIFIKATION:
 - Nenne NUR Zahlen, Beschriftungen und Legenden die du KLAR LESEN kannst.
-- Wenn Werte wegen verschluesselter Schrift oder niedriger Aufloesung nicht lesbar sind: "Werte teilweise nicht lesbar" – aber beschreibe trotzdem den SICHTBAREN Trend (steigend, fallend, gleichbleibend).
 - Wenn OCR-Text bereitgestellt wird ([OCR-Text im Bild]), nutze diesen als primaere Datenquelle.
 
 REGELN:
-- alt_text: Diagrammtyp + Bindestrich + Kernaussage/Trend. 2-3 Saetze, max 350 Zeichen.
-- langbeschreibung: Alle lesbaren Datenpunkte strukturiert auflisten. Achsenbeschriftungen, Legendenwerte, Anfangs-/Endwerte bei Zeitreihen. Hoechst- und Tiefstwerte benennen. Fliesstext oder strukturierte Liste, KEINE Markdown-Tabellen. Max 1500 Zeichen.
+- alt_text: Diagrammtyp + Bindestrich + Titel (wenn vorhanden) + Kernaussage/Trend ueber ALLE Kategorien. 2-3 Saetze, max 350 Zeichen.
+- langbeschreibung: ALLE Kategorien und ALLE Legendeneintraege benennen. Dann pro Kategorie die lesbaren Datenpunkte auflisten. Achsenbeschriftungen, Legendenwerte, Anfangs-/Endwerte bei Zeitreihen. Hoechst- und Tiefstwerte benennen. Fliesstext oder strukturierte Liste, KEINE Markdown-Tabellen. Max 1500 Zeichen.
 - Sprache: Deutsch. Insight zuerst, Details danach.
-- ANTI-HALLUZINATION: Erfinde KEINE Zahlen. Wenn du einen Wert nicht sicher lesen kannst, lass ihn weg.
+- ANTI-HALLUZINATION: Erfinde KEINE Zahlen. Erfinde KEINE visuellen Maengel. Lass keine Kategorien weg.
 
 Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": "..."}}
@@ -95,13 +115,27 @@ Dieses Bild zeigt eine TABELLE als Grafik.
 
 DEIN AUFTRAG – INSIGHT FIRST: Was ist die ERKENNTNIS dieser Tabelle? Welchen Schluss zieht ein Sehender auf den ersten Blick? Fuehre damit. Dann die Daten.
 
-BEISPIEL:
-- SCHLECHT: "Tabelle mit 4 Spalten und 6 Zeilen zu Umsatzzahlen."
-- GUT: "Tabelle – Produkt A dominiert mit 40% den Gesamtumsatz 2023, waehrend Produkt D unter 5% liegt."
+ABER ZUERST – SPALTEN-ZUORDNUNG (KRITISCH):
+1. Lies ZUERST alle Spaltenkoepfe von links nach rechts und notiere sie.
+2. Lies DANN jede Zeile und ordne JEDEN Wert seiner EXAKTEN Spalte zu.
+3. Verwechsle NIEMALS Zwischenwerte (z.B. Zugaenge, Abschreibungen, Veraenderungen) mit Bestands- oder Endwerten.
+4. Wenn eine Zeile Werte in der Spalte "01.01." UND "31.12." hat, sind das VERSCHIEDENE Werte – nenne BEIDE mit Spaltenzuordnung.
+5. Bei Buchhaltungstabellen: Anfangsbestand und Endbestand sind die entscheidenden Werte, NICHT die Bewegungen dazwischen.
+
+BEISPIEL FUER KORREKTE ZUORDNUNG:
+- Spalten: "Aktiva | 01.01. | Zugaenge | Abschreibungen | 31.12.2023"
+- Zeile: "Ausstattung | 1,00 | 39.891.626,46 | 39.891.626,46 | 1,00"
+- RICHTIG: "Betriebs- und Geschaeftsausstattung: Anfangsbestand 1,00 EUR, Zugaenge und Abschreibungen jeweils 39,9 Mio. EUR, Endbestand 1,00 EUR."
+- FALSCH: "Betriebs- und Geschaeftsausstattung stabil bei 39,9 Mio. EUR." (verwechselt Zugaenge mit Bestand!)
+
+VOLLSTAENDIGKEIT (KRITISCH):
+- Erfasse ALLE Zeilen der Tabelle, nicht nur die auffaelligsten.
+- Wenn die Tabelle Zwischensummen und eine Gesamtsumme hat, nenne BEIDE.
+- Fehlende Zeilen = fehlerhafte Beschreibung.
 
 REGELN:
-- alt_text: "Tabelle – " + Thema + Kernaussage. Max 250 Zeichen.
-- langbeschreibung: Spaltenkoepfe zuerst. Dann die wichtigsten Datenpunkte in Fliesstext. Spitzenwerte, Tiefstwerte, auffaellige Muster. Nur bei sehr kleinen Tabellen (max 4x4) alle Werte auflisten. KEINE Markdown-Tabellen im JSON! Max 1500 Zeichen.
+- alt_text: "Tabelle – " + Thema + Kernaussage (basierend auf den RICHTIGEN Endwerten). Max 250 Zeichen.
+- langbeschreibung: Spaltenkoepfe zuerst. Dann ALLE Zeilen mit korrekter Spaltenzuordnung. Spitzenwerte, Tiefstwerte, auffaellige Muster. Nur bei sehr kleinen Tabellen (max 4x4) alle Werte auflisten. KEINE Markdown-Tabellen im JSON! Max 1500 Zeichen.
 - OCR-Text ([OCR-Text im Bild]) ist primaere Quelle fuer Zellinhalte und Zahlen.
 - Einheiten (%, EUR, Mio.) penibel uebernehmen.
 - ANTI-HALLUZINATION: Keine Werte erfinden. Bei unleserlichen Zellen: "Werte teilweise nicht lesbar".
@@ -307,14 +341,24 @@ Dieses Bild ist ein DIAGRAMM. Vermittle die ERKENNTNIS – den Trend, das Muster
 Antworte NUR mit diesem JSON:
 {{"bildtyp": "diagramm", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
 
-INSIGHT-FIRST:
-- Erster Satz = Diagrammtyp + Kernaussage/Trend.
-- BEISPIEL: "Balkendiagramm – Der Umsatz stieg von 2021 bis 2023 um 40%, mit dem staerksten Wachstum in 2022."
-- Nenne NUR Zahlen die du KLAR LESEN kannst. Keine Werte erfinden.
-- Bei unleserlichen Werten: "Werte teilweise nicht lesbar" – aber den sichtbaren Trend beschreiben.
+INVENTAR-PFLICHT – VOR jeder Interpretation:
+- Zaehle ALLE Kategorien auf der X-Achse. Wenn du 4 siehst, muessen alle 4 in die Beschreibung.
+- Zaehle ALLE Legendeneintraege. Alle muessen erwaehnt werden.
+- Nenne den Diagrammtitel wenn vorhanden.
 
-alt_text: Diagrammtyp + Kernaussage, max 350 Zeichen.
-langbeschreibung: Alle lesbaren Datenpunkte, Achsen, Legenden. Max 1500 Zeichen. Keine Markdown-Tabellen.
+TREND-VALIDIERUNG:
+- Vergleiche JEDEN Datenpunkt paarweise: Jahr1→Jahr2, Jahr2→Jahr3, Jahr1→Jahr3.
+- VERBOTEN: "kontinuierlich steigend" ohne alle Punkte geprueft zu haben.
+- Pruefe jede Kategorie EINZELN. Nicht von einer auf andere schliessen.
+- ERFINDE KEINE visuellen Maengel ("unleserlich", "ueberlappend") – wenn die Y-Achse lesbar ist, sag das.
+
+INSIGHT-FIRST:
+- Erster Satz = Diagrammtyp + Titel + Kernaussage/Trend.
+- BEISPIEL: "Balkendiagramm – Umsatzentwicklung in Deutschland: Vier Kategorien (Software, Hardware, Services, Mobile) im Vergleich 2021-2023. Hardware erreicht 2022 den Hoechstwert und faellt 2023 zurueck."
+- Nenne NUR Zahlen die du KLAR LESEN kannst. Keine Werte erfinden.
+
+alt_text: Diagrammtyp + Titel + Kernaussage ueber ALLE Kategorien, max 350 Zeichen.
+langbeschreibung: ALLE Kategorien und Legendeneintraege. Pro Kategorie die lesbaren Werte. Achsen, Hoechst-/Tiefstwerte. Max 1500 Zeichen. Keine Markdown-Tabellen.
 Sprache: Deutsch.
 
 Kontext: {context}""",
@@ -326,9 +370,16 @@ Dieses Bild zeigt eine TABELLE. Vermittle die KERNAUSSAGE, nicht nur die Struktu
 Antworte NUR mit diesem JSON:
 {{"bildtyp": "tabelle", "alt_text": "...", "langbeschreibung": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
 
+SPALTEN-ZUORDNUNG (KRITISCH):
+- Lies ZUERST alle Spaltenkoepfe. Ordne JEDEN Wert seiner Spalte zu.
+- Verwechsle NIEMALS Zugaenge/Abschreibungen/Veraenderungen mit Anfangs- oder Endbestaenden.
+- Bei Buchhaltungstabellen: Anfangs- und Endbestand sind die entscheidenden Werte.
+- Erfasse ALLE Zeilen, nicht nur die groessten Werte. Fehlende Zeilen = fehlerhafte Beschreibung.
+- Nenne Zwischensummen UND Gesamtsumme wenn vorhanden.
+
 REGELN:
-- alt_text: "Tabelle – " + Thema + eine klare Erkenntnis. Max 250 Zeichen.
-- langbeschreibung: Spaltenkoepfe → wichtigste Datenpunkte → Spitzen-/Tiefstwerte. Fliesstext, max 1500 Zeichen. KEINE Markdown-Tabellen.
+- alt_text: "Tabelle – " + Thema + Kernaussage (basierend auf RICHTIGEN Endwerten). Max 250 Zeichen.
+- langbeschreibung: Spaltenkoepfe → ALLE Zeilen mit korrekter Zuordnung → Spitzen-/Tiefstwerte. Fliesstext, max 1500 Zeichen. KEINE Markdown-Tabellen.
 - Einheiten exakt uebernehmen.
 - Keine Werte erfinden. Bei unleserlichen Zellen: "teilweise nicht lesbar".
 - Sprache: Deutsch.
@@ -470,6 +521,17 @@ EVIDENZ-BASIERTE IDENTIFIKATION:
 - Lesbarer Text + Allgemeinwissen = sichere Identifikation → benennen. (Inschrift → Gebaeude identifizieren. Logo → Marke benennen. Eindeutige Molekuelstruktur → chemischen Namen nennen.)
 - Kein Text, kein Logo, nur visueller Eindruck → allgemein beschreiben. NIEMALS Marken, Namen oder Orte raten.
 
+DIAGRAMM-SPEZIFISCH:
+- ZUERST: Zaehle ALLE Kategorien und Legendeneintraege. Alle muessen erwaehnt werden.
+- Diagrammtitel IMMER nennen wenn vorhanden.
+- Trends NUR nach paarweisem Vergleich aller Datenpunkte. KEIN "kontinuierlich" ohne Pruefung.
+- Erfinde KEINE visuellen Maengel.
+
+TABELLEN-SPEZIFISCH:
+- ZUERST: Lies alle Spaltenkoepfe. Ordne JEDEN Wert seiner Spalte zu.
+- Verwechsle NIEMALS Zugaenge/Abschreibungen mit Bestands-/Endwerten.
+- Erfasse ALLE Zeilen. Nenne Zwischen- und Gesamtsummen.
+
 WEITERE REGELN:
 1. Sprache: Deutsch. Natuerlich formuliert, nicht roboterhaft.
 2. Kontext nutzen um das Gezeigte zu IDENTIFIZIEREN. Nichts erfinden was weder im Bild noch im Kontext steht.
@@ -478,9 +540,8 @@ WEITERE REGELN:
 5. ANTI-REDUNDANZ: Beschreibende Details nicht wiederholen. Aber Namen, Funktionen und Identitaeten aus dem Kontext IMMER im Alt-Text nennen.
 6. Personen: Name/Funktion NUR aus Kontext oder lesbarem Schild. KEIN Alter.
 7. Verlinkte Bilder mit [Link-Ziel] → Link-FUNKTION beschreiben.
-8. Diagramme/Tabellen: INSIGHT FIRST – Trend und Kernaussage zuerst, dann Details.
-9. Logos: NUR den Namen. Keine visuelle Beschreibung.
-10. Bei unleserlichen Werten: "teilweise nicht lesbar".
+8. Logos: NUR den Namen. Keine visuelle Beschreibung.
+9. Bei unleserlichen Werten: "teilweise nicht lesbar". Erfinde KEINE Zahlen.
 
 Kontext: {context}"""
 

@@ -14,7 +14,7 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
 MODEL_NAME = os.environ.get("OLLAMA_MODEL", "qwen3-vl:8b")
 
 
-def _cluster_drawings(drawings, page_rect, gap=50, min_size=50):
+def _cluster_drawings(drawings, page_rect, gap=100, min_size=50):
     """Group nearby vector drawings into clusters, return significant bounding boxes."""
     if not drawings:
         return []
@@ -66,7 +66,7 @@ def _cluster_drawings(drawings, page_rect, gap=50, min_size=50):
 
         # Count total path segments in cluster - simple shapes (boxes, lines) have very few
         total_items = sum(drawing_data[idx][1] for idx in cluster)
-        if total_items < 5:
+        if total_items < 3:
             continue  # Simple rectangles/lines, not a real graphic
 
         # Only keep clusters that are significant
