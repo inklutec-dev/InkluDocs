@@ -93,20 +93,30 @@ def _is_caption(text):
     return False
 
 
-def _get_nearby_text(page, bbox, max_chars=600):
-    """Extract text near an image bounding box - text BEFORE and AFTER the image.
-    Prioritizes captions and headings over generic paragraphs.
-    This gives the model context like captions, headings, and surrounding paragraphs.
-    Inspired by Michael Karbe's suggestion (2026-03-10)."""
+def _get_nearby_text(page, bbox, max_chars=1200):
+    """Extract text context for an image on a PDF page.
+    
+    Strategy: Use FULL page text as context (truncated to max_chars).
+    This ensures that text at the page bottom (e.g. printed names under signatures,
+    footnotes, captions far from the image) is included. The model decides what's relevant.
+    
+    For pages with bbox: Prioritizes captions and nearby text, then fills up with
+    remaining page text until max_chars is reached.
+    
+    Updated 2026-03-24: Changed from radius-based to full-page context (Claude suggestion).
+    """
+    page_text = page.get_text()
+    if not page_text or not page_text.strip():
+        return "Kein Textkontext verfuegbar."
+
     if not bbox:
-        page_text = page.get_text()
-        return page_text[:max_chars] if page_text else "Kein Textkontext verfuegbar."
+        return f"[Seitentext] {page_text[:max_chars]}"
 
     img_rect = fitz.Rect(bbox)
     # Get all text blocks with positions: (x0, y0, x1, y1, text, block_no, block_type)
     blocks = page.get_text("blocks")
     if not blocks:
-        return "Kein Textkontext verfuegbar."
+        return f"[Seitentext] {page_text[:max_chars]}"
 
     text_blocks = []
     for b in blocks:
@@ -118,31 +128,27 @@ def _get_nearby_text(page, bbox, max_chars=600):
             continue
         # Calculate vertical distance to image
         if block_rect.y1 <= img_rect.y0:
-            # Block is ABOVE image
             distance = img_rect.y0 - block_rect.y1
             position = "before"
         elif block_rect.y0 >= img_rect.y1:
-            # Block is BELOW image
             distance = block_rect.y0 - img_rect.y1
             position = "after"
         else:
-            # Block overlaps with image vertically
             distance = 0
             position = "overlap"
 
-        # Detect captions - they get priority (distance bonus)
         is_cap = _is_caption(block_text)
-        # Captions get a sort bonus: treated as distance 0 (closest)
         sort_distance = 0 if is_cap else distance
-
         text_blocks.append((sort_distance, distance, position, block_text, is_cap))
 
     # Sort by sort_distance (captions first), then by actual distance
     text_blocks.sort(key=lambda x: (x[0], x[1]))
 
-    # Build context: captions and closest blocks first
+    # Build context: captions and closest blocks first, then remaining page text
     context_parts = []
     chars_used = 0
+    used_texts = set()
+    
     for sort_dist, distance, position, text, is_cap in text_blocks:
         if chars_used >= max_chars:
             break
@@ -156,7 +162,16 @@ def _get_nearby_text(page, bbox, max_chars=600):
             context_parts.append(f"[Text danach] {snippet}")
         else:
             context_parts.append(f"[Ueberlappend] {snippet}")
-        chars_used += len(snippet) + 20  # account for label
+        chars_used += len(snippet) + 20
+        used_texts.add(text[:50])  # Track what we already included
+
+    # Fill remaining budget with full page text (catches text far from image)
+    if chars_used < max_chars:
+        remaining = max_chars - chars_used
+        # Add page text that wasn't already included via blocks
+        extra = page_text[:remaining]
+        if extra.strip():
+            context_parts.append(f"[Weiterer Seitentext] {extra}")
 
     return "\n".join(context_parts) if context_parts else "Kein Textkontext verfuegbar."
 
@@ -471,7 +486,7 @@ def _call_ollama(image_path: str, prompt: str) -> dict:
                 "images": [img_b64],
                 "stream": False,
                 "options": {
-                    "temperature": 0.3,
+                    "temperature": 0,
                     "num_ctx": 4096,
                     "num_predict": 4000,
                 },
@@ -683,7 +698,7 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str) -> dict 
                     ]
                 }],
                 "max_tokens": 1200,
-                "temperature": 0.2,
+                "temperature": 0,
             },
             timeout=60.0
         )
@@ -819,7 +834,7 @@ def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_re
                     ]
                 }],
                 "max_tokens": 1200,
-                "temperature": 0.2,
+                "temperature": 0,
             },
             timeout=60.0
         )
