@@ -144,15 +144,20 @@ def _get_nearby_text(page, bbox, max_chars=1200):
     # Sort by sort_distance (captions first), then by actual distance
     text_blocks.sort(key=lambda x: (x[0], x[1]))
 
-    # Build context: captions and closest blocks first, then remaining page text
+    # Reserve 400 chars specifically for page-end text (signatures, names, dates, footnotes).
+    # This ensures text at the bottom of the page always gets into context, even if
+    # overlapping blocks fill up the budget from the top.
+    PAGE_END_RESERVE = 400
+    block_budget = max_chars - PAGE_END_RESERVE
+
+    # Build context: captions and closest blocks first
     context_parts = []
     chars_used = 0
-    used_texts = set()
-    
+
     for sort_dist, distance, position, text, is_cap in text_blocks:
-        if chars_used >= max_chars:
+        if chars_used >= block_budget:
             break
-        remaining = max_chars - chars_used
+        remaining = block_budget - chars_used
         snippet = text[:remaining]
         if is_cap:
             context_parts.append(f"[Bildunterschrift] {snippet}")
@@ -163,15 +168,12 @@ def _get_nearby_text(page, bbox, max_chars=1200):
         else:
             context_parts.append(f"[Ueberlappend] {snippet}")
         chars_used += len(snippet) + 20
-        used_texts.add(text[:50])  # Track what we already included
 
-    # Fill remaining budget with page text from the END of the page
+    # Always append the last PAGE_END_RESERVE chars of the page
     # (catches signatures, printed names, footnotes, dates at page bottom)
-    if chars_used < max_chars:
-        remaining = max_chars - chars_used
-        extra = page_text[-remaining:] if len(page_text) > remaining else page_text
-        if extra.strip():
-            context_parts.append(f"[Text am Seitenende] {extra.strip()}")
+    page_end = page_text[-PAGE_END_RESERVE:].strip() if len(page_text) > PAGE_END_RESERVE else page_text.strip()
+    if page_end:
+        context_parts.append(f"[Text am Seitenende] {page_end}")
 
     return "\n".join(context_parts) if context_parts else "Kein Textkontext verfuegbar."
 
