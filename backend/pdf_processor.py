@@ -165,13 +165,13 @@ def _get_nearby_text(page, bbox, max_chars=1200):
         chars_used += len(snippet) + 20
         used_texts.add(text[:50])  # Track what we already included
 
-    # Fill remaining budget with full page text (catches text far from image)
+    # Fill remaining budget with page text from the END of the page
+    # (catches signatures, printed names, footnotes, dates at page bottom)
     if chars_used < max_chars:
         remaining = max_chars - chars_used
-        # Add page text that wasn't already included via blocks
-        extra = page_text[:remaining]
+        extra = page_text[-remaining:] if len(page_text) > remaining else page_text
         if extra.strip():
-            context_parts.append(f"[Weiterer Seitentext] {extra}")
+            context_parts.append(f"[Text am Seitenende] {extra.strip()}")
 
     return "\n".join(context_parts) if context_parts else "Kein Textkontext verfuegbar."
 
