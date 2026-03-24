@@ -682,7 +682,7 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str) -> dict 
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
                     ]
                 }],
-                "max_tokens": 800,
+                "max_tokens": 1200,
                 "temperature": 0.2,
             },
             timeout=60.0
@@ -713,7 +713,23 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str) -> dict 
             try:
                 parsed = json.loads(clean[start:end])
             except json.JSONDecodeError:
-                parsed = json.loads(clean[start:end].replace('\n', ' ').replace('\t', ' '))
+                try:
+                    parsed = json.loads(clean[start:end].replace('\n', ' ').replace('\t', ' '))
+                except json.JSONDecodeError:
+                    # Bei abgeschnittenem/kaputtem JSON: Text bereinigen statt rohen JSON ausgeben
+                    fallback_text = clean[start:end]
+                    fallback_text = re.sub(r'[{}\[\]"\\]', '', fallback_text)
+                    fallback_text = re.sub(r'(alt_text|langbeschreibung)\s*:', '', fallback_text)
+                    fallback_text = re.sub(r',\s*$', '', fallback_text).strip()
+                    fallback_text = re.sub(r'\s+', ' ', fallback_text)
+                    if len(fallback_text) > 10:
+                        print(f"WARNUNG: JSON-Parse fehlgeschlagen, verwende bereinigten Fallback-Text")
+                        return {
+                            "alt_text": _combine_alt_text(fallback_text[:350], ""),
+                            "langbeschreibung": "",
+                            "ist_dekorativ": False,
+                        }
+                    parsed = {}
             alt_text = parsed.get("alt_text", "").strip()
             if alt_text and len(alt_text) > 5:
                 return {
@@ -722,10 +738,13 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str) -> dict 
                     "ist_dekorativ": False,
                 }
 
-        # If JSON parsing fails, use the raw text
+        # If JSON parsing fails, use the raw text – clean up JSON artifacts
         if len(clean) > 10:
+            cleaned_fallback = re.sub(r'[{}\[\]"\\]', '', clean)
+            cleaned_fallback = re.sub(r'(alt_text|langbeschreibung)\s*:', '', cleaned_fallback)
+            cleaned_fallback = re.sub(r'\s+', ' ', cleaned_fallback).strip()
             return {
-                "alt_text": _combine_alt_text(clean, ""),
+                "alt_text": _combine_alt_text(cleaned_fallback[:350], ""),
                 "langbeschreibung": "",
                 "ist_dekorativ": False,
             }
@@ -799,7 +818,7 @@ def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_re
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
                     ]
                 }],
-                "max_tokens": 500,
+                "max_tokens": 1200,
                 "temperature": 0.2,
             },
             timeout=60.0

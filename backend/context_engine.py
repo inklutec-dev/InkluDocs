@@ -53,6 +53,7 @@ REGELN:
 - Verlinkte Bilder: Wenn [Link-Ziel] im Kontext → beschreibe die FUNKTION des Links, nicht das Bild.
 - KONTEXT-IDENTIFIKATION (WICHTIG): Wenn der Kontext den NAMEN oder die FUNKTION einer Person nennt, MUSS dieser Name im Alt-Text stehen! Der Alt-Text muss allein verstaendlich sein – der Nutzer sieht den Kontext nicht.
 - ANTI-REDUNDANZ: Wiederhole keine BESCHREIBENDEN Details die der Kontext bereits nennt. Aber Namen, Funktionen und Identitaeten IMMER nennen – sie sind die Kerninfo.
+- Unterschriften: Verwende den GEDRUCKTEN Namen neben oder unter der Unterschrift. Versuche NIEMALS die Handschrift selbst zu entziffern oder einen Namen daraus abzulesen. Handschriftliche Unterschriften sind per Definition nicht maschinenlesbar.
 - Farben NUR wenn sie Information tragen (Warnschilder, Signalfarben). Keine optischen Farben.
 - Sprache: Natuerliches Deutsch. Kein Aufzaehlungsstil. Wie ein Mensch es einem anderen erzaehlen wuerde.
 
@@ -135,7 +136,8 @@ VOLLSTAENDIGKEIT (KRITISCH):
 
 REGELN:
 - alt_text: "Tabelle – " + Thema + Kernaussage (basierend auf den RICHTIGEN Endwerten). Max 250 Zeichen.
-- langbeschreibung: Spaltenkoepfe zuerst. Dann ALLE Zeilen mit korrekter Spaltenzuordnung. Spitzenwerte, Tiefstwerte, auffaellige Muster. Nur bei sehr kleinen Tabellen (max 4x4) alle Werte auflisten. KEINE Markdown-Tabellen im JSON! Max 1500 Zeichen.
+- GESAMTSUMME ZUERST: Wenn die Tabelle eine Bilanzsumme, Gesamtsumme oder Endsumme hat, nenne sie ZUERST im alt_text und am ANFANG der langbeschreibung. Sie ist die wichtigste Zahl und darf NICHT durch Token-Limits abgeschnitten werden.
+- langbeschreibung: Gesamtsumme → Spaltenkoepfe → ALLE Zeilen mit korrekter Spaltenzuordnung → Spitzenwerte, Tiefstwerte, auffaellige Muster. Nur bei sehr kleinen Tabellen (max 4x4) alle Werte auflisten. KEINE Markdown-Tabellen im JSON! Max 1500 Zeichen.
 - OCR-Text ([OCR-Text im Bild]) ist primaere Quelle fuer Zellinhalte und Zahlen.
 - Einheiten (%, EUR, Mio.) penibel uebernehmen.
 - ANTI-HALLUZINATION: Keine Werte erfinden. Bei unleserlichen Zellen: "Werte teilweise nicht lesbar".
@@ -326,6 +328,7 @@ EVIDENZ-REGELN:
 - Kein Text, kein Logo → allgemein beschreiben ("ein Gebaeude", "eine Person")
 - Personen namentlich NUR aus Kontext oder lesbarem Namensschild. Kein Alter.
 - ANTI-REDUNDANZ: Wiederhole keine beschreibenden Details aus dem Kontext. Aber Namen und Identitaeten IMMER nennen.
+- Unterschriften: Verwende den GEDRUCKTEN Namen neben/unter der Unterschrift. NIEMALS Handschrift entziffern.
 - Farben NUR wenn informationstragend.
 
 alt_text: Max 250 Zeichen, Kernaussage. KEIN Praefix "Foto – ".
@@ -379,7 +382,8 @@ SPALTEN-ZUORDNUNG (KRITISCH):
 
 REGELN:
 - alt_text: "Tabelle – " + Thema + Kernaussage (basierend auf RICHTIGEN Endwerten). Max 250 Zeichen.
-- langbeschreibung: Spaltenkoepfe → ALLE Zeilen mit korrekter Zuordnung → Spitzen-/Tiefstwerte. Fliesstext, max 1500 Zeichen. KEINE Markdown-Tabellen.
+- GESAMTSUMME ZUERST: Bilanzsumme/Gesamtsumme/Endsumme ZUERST im alt_text und am Anfang der langbeschreibung nennen. Sie darf nicht abgeschnitten werden.
+- langbeschreibung: Gesamtsumme → Spaltenkoepfe → ALLE Zeilen mit korrekter Zuordnung → Spitzen-/Tiefstwerte. Fliesstext, max 1500 Zeichen. KEINE Markdown-Tabellen.
 - Einheiten exakt uebernehmen.
 - Keine Werte erfinden. Bei unleserlichen Zellen: "teilweise nicht lesbar".
 - Sprache: Deutsch.
@@ -539,7 +543,8 @@ WEITERE REGELN:
 4. Farben NUR wenn informationstragend.
 5. ANTI-REDUNDANZ: Beschreibende Details nicht wiederholen. Aber Namen, Funktionen und Identitaeten aus dem Kontext IMMER im Alt-Text nennen.
 6. Personen: Name/Funktion NUR aus Kontext oder lesbarem Schild. KEIN Alter.
-7. Verlinkte Bilder mit [Link-Ziel] → Link-FUNKTION beschreiben.
+7. Unterschriften: Verwende den GEDRUCKTEN Namen neben/unter der Unterschrift. NIEMALS Handschrift entziffern.
+8. Verlinkte Bilder mit [Link-Ziel] → Link-FUNKTION beschreiben.
 8. Logos: NUR den Namen. Keine visuelle Beschreibung.
 9. Bei unleserlichen Werten: "teilweise nicht lesbar". Erfinde KEINE Zahlen.
 
