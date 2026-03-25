@@ -695,7 +695,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     try:
         async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             response = await client.get(url, headers={
-                "User-Agent": "InkluDocs/1.0 (Barrierefreiheits-Scanner; kontakt@inklutec.de)"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
             })
             response.raise_for_status()
     except httpx.TimeoutException:
@@ -730,7 +730,15 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     os.makedirs(img_dir, exist_ok=True)
 
     downloaded = 0
-    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+    # Browser-like headers for image downloads: many WordPress sites block requests
+    # without Referer header (hotlink protection / bot detection). Fix for 403 errors
+    # on sites like dc-tischlermeister.de. Reported by Stephan Raithel, 25.03.2026.
+    img_download_headers = {
+        "Referer": url,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    }
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=img_download_headers) as client:
         for idx, img_tag in enumerate(img_tags, 1):
             # Support lazy-loaded images: check data-src, data-lazy-src first
             src = img_tag.get("data-src") or img_tag.get("data-lazy-src") or img_tag.get("src", "")
@@ -750,13 +758,15 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
             original_alt = img_tag.get("alt", "")
 
             # Detect intentionally hidden/decorative images from HTML attributes
+            # NOTE: alt="" is NOT treated as hidden – many sites leave alt empty
+            # instead of writing proper alt texts. The KI will classify these.
             is_hidden = (
                 img_tag.get("aria-hidden") == "true"
                 or img_tag.get("role") in ("presentation", "none")
-                or (img_tag.has_attr("alt") and img_tag["alt"] == "")
             )
+            has_empty_alt = img_tag.has_attr("alt") and img_tag["alt"] == ""
 
-            # Hard bypass: decorative/hidden images skip KI entirely
+            # Hard bypass: only aria-hidden and role=presentation skip KI
             if is_hidden:
                 conn.execute(
                     """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
@@ -769,6 +779,8 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
 
             # Get context: parent text, figcaption, title attribute
             context_parts = []
+            if has_empty_alt:
+                context_parts.append("[HTML-Hinweis] Bild hat alt=\"\" im Quellcode – prüfe ob wirklich dekorativ oder ob Alt-Text fehlt")
             if img_tag.get("title"):
                 context_parts.append(f"[title] {img_tag['title']}")
             # Original alt-text is stored for display but NOT sent to the model
