@@ -23,10 +23,23 @@
     <main id="mainContent" class="main-content"></main>
 
     <footer class="legal-footer" role="contentinfo" style="padding-bottom:2rem;">
-        <a href="/impressum">Impressum</a> |
-        <a href="/datenschutz">Datenschutz</a> |
-        <a href="/nutzungsbedingungen">Nutzungsbedingungen</a>
+        <button id="newsBtn" class="news-btn" type="button">Ihr seid auf dem aktuellen Stand</button>
+        <div style="margin-top:0.75rem;">
+            <a href="/impressum">Impressum</a> |
+            <a href="/datenschutz">Datenschutz</a> |
+            <a href="/nutzungsbedingungen">Nutzungsbedingungen</a>
+        </div>
     </footer>
+
+    <div id="newsPanel" class="news-panel" role="dialog" aria-label="Neuigkeiten" hidden>
+        <div class="news-panel-content">
+            <div class="news-panel-header">
+                <h2>Neuigkeiten</h2>
+                <button id="newsClose" type="button">Schliessen</button>
+            </div>
+            <div id="newsList" class="news-list"></div>
+        </div>
+    </div>
 
     <div id="liveRegion" class="sr-only" aria-live="polite" role="status"></div>
 
@@ -807,6 +820,127 @@
         if (id) document.getElementById(id)?.classList.add('active');
     }
 
+    // ─── Drag & Drop ────────────────────────────────
+    function setupDragDrop() {
+        const uploadArea = document.querySelector('.upload-area');
+        if (!uploadArea) return;
+
+        ['dragenter', 'dragover'].forEach(evt => {
+            uploadArea.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('drag-over');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(evt => {
+            uploadArea.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('drag-over');
+            });
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (!files || files.length === 0) return;
+            const fileInput = document.getElementById('fileInput');
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change'));
+        });
+    }
+
+    // ─── Neuigkeiten ────────────────────────────────
+    let _allNews = [];
+
+    async function loadNews() {
+        const btn = document.getElementById('newsBtn');
+        try {
+            const res = await fetch('/api/news');
+            if (!res.ok) return;
+            const data = await res.json();
+            _allNews = data.news || [];
+
+            const lastRead = localStorage.getItem('inkludocs_news_read');
+            const unread = lastRead
+                ? _allNews.filter(n => n.datum > lastRead).length
+                : _allNews.length;
+
+            if (unread > 0) {
+                btn.textContent = 'Neuigkeiten (' + unread + ')';
+            } else {
+                btn.textContent = 'Ihr seid auf dem aktuellen Stand';
+            }
+
+            const list = document.getElementById('newsList');
+            list.innerHTML = _allNews.map(item =>
+                '<div class="news-item"><span class="news-date">' + item.datum + '</span> ' + item.text + '</div>'
+            ).join('');
+        } catch (e) {
+            // silently ignore
+        }
+    }
+
+    function markNewsRead() {
+        if (_allNews.length > 0) {
+            localStorage.setItem('inkludocs_news_read', _allNews[0].datum);
+        }
+        document.getElementById('newsBtn').textContent = 'Ihr seid auf dem aktuellen Stand';
+    }
+
+    document.getElementById('newsBtn').addEventListener('click', () => {
+        const panel = document.getElementById('newsPanel');
+        const lastRead = localStorage.getItem('inkludocs_news_read');
+        const visible = _allNews.slice(0, 10);
+        const unread = lastRead ? visible.filter(n => n.datum > lastRead) : visible;
+        const older = lastRead ? visible.filter(n => n.datum <= lastRead) : [];
+
+        const list = document.getElementById('newsList');
+        let html = '';
+
+        if (unread.length > 0) {
+            html += unread.map(item =>
+                '<div class="news-item"><span class="news-date">' + item.datum + '</span> ' + item.text + '</div>'
+            ).join('');
+        } else {
+            html += '<div class="news-item" style="text-align:center;color:var(--text-muted);">Keine neuen Updates</div>';
+        }
+
+        if (older.length > 0) {
+            html += '<div class="news-divider">Fruehere Updates</div>';
+            html += older.map(item =>
+                '<div class="news-item news-item-read"><span class="news-date">' + item.datum + '</span> ' + item.text + '</div>'
+            ).join('');
+        }
+
+        list.innerHTML = html;
+        panel.hidden = false;
+        document.getElementById('newsClose').focus();
+    });
+
+    document.getElementById('newsClose').addEventListener('click', () => {
+        const panel = document.getElementById('newsPanel');
+        panel.hidden = true;
+        markNewsRead();
+        document.getElementById('newsBtn').focus();
+    });
+
+    document.getElementById('newsPanel').addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.getElementById('newsPanel').hidden = true;
+            markNewsRead();
+            document.getElementById('newsBtn').focus();
+        }
+    });
+
+    // Patch showDashboard to add drag & drop after render
+    const _origShowDashboard = showDashboard;
+    showDashboard = async function() {
+        await _origShowDashboard();
+        setupDragDrop();
+    };
+
+    loadNews();
     init();
     </script>
 </body>

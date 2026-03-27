@@ -1509,6 +1509,22 @@ async def api_generate_alt_text(request: Request):
             pass
 
 
+
+# ─── News / Neuigkeiten ─────────────────────────────────────
+
+NEUIGKEITEN = [
+    {"datum": "27.03.2026", "text": "Staging-Umgebung eingerichtet – neue Features werden jetzt sicher getestet"},
+    {"datum": "27.03.2026", "text": "Farbdesign ueberarbeitet – besserer Kontrast fuer Buttons und Texte"},
+    {"datum": "25.03.2026", "text": "Website-Scanner verbessert – mehr Websites werden jetzt unterstuetzt"},
+    {"datum": "25.03.2026", "text": "Bilder ohne Alt-Text werden nicht mehr uebersprungen"},
+    {"datum": "24.03.2026", "text": "Verbesserte Texterkennung bei Tabellen und Unterschriften"},
+]
+
+@app.get("/api/news")
+async def get_news():
+    """Return changelog entries for the Neuigkeiten panel."""
+    return {"news": NEUIGKEITEN}
+
 # ─── Frontend Routes ─────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)

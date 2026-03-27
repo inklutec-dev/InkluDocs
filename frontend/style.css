@@ -6,7 +6,7 @@
     --bg: #f5f7fa;
     --card-bg: #ffffff;
     --text: #1e293b;
-    --text-muted: #64748b;
+    --text-muted: #2d4a7a;
     --border: #e2e8f0;
     --error: #dc2626;
     --success: #16a34a;
@@ -70,6 +70,7 @@ input:focus {
     border-color: var(--focus);
     box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.25);
 }
+/* Buttons: Navy statt Orange für WCAG AA Kontrast (weiß auf navy = 14.22:1) */
 .btn-full {
     width: 100%;
     padding: 0.85rem;
@@ -297,7 +298,7 @@ header h1 { font-size: 1.3rem; color: white; }
 .upload-area p { color: var(--text-muted); margin-bottom: 1rem; }
 .upload-btn {
     display: inline-block;
-    background: var(--accent);
+    background: var(--primary);
     color: white;
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
@@ -306,8 +307,8 @@ header h1 { font-size: 1.3rem; color: white; }
     cursor: pointer;
     border: none;
 }
-.upload-btn:hover { background: var(--accent-hover); }
-.upload-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.4); }
+.upload-btn:hover { background: var(--primary-hover); }
+.upload-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
 input[type="file"] {
     position: absolute;
     width: 1px;
@@ -370,8 +371,8 @@ input[type="file"] {
 }
 .btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.3); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
 .btn-secondary { background: var(--bg); border: 2px solid var(--border); color: var(--text); }
 .btn-secondary:hover:not(:disabled) { border-color: var(--text-muted); }
 .btn-danger { background: var(--error); color: white; }
@@ -525,4 +526,98 @@ input[type="file"] {
         transition: none !important;
         animation: none !important;
     }
+}
+
+
+/* Drag & Drop */
+.upload-area.drag-over {
+    border-color: var(--primary);
+    background: #f0f4ff;
+    box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.2);
+}
+
+/* Neuigkeiten Button */
+.news-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.news-btn:hover { background: var(--primary-hover); }
+.news-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
+
+/* Neuigkeiten Panel */
+.news-panel {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+.news-panel[hidden] { display: none; }
+.news-panel-content {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 550px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.news-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border);
+}
+.news-panel-header h2 { font-size: 1.2rem; margin: 0; }
+.news-panel-header button {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text);
+}
+.news-panel-header button:hover { border-color: var(--text-muted); }
+.news-panel-header button:focus { outline: none; box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.3); }
+.news-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+.news-item:last-child { border-bottom: none; }
+.news-date {
+    font-weight: 700;
+    color: var(--primary);
+    margin-right: 0.25rem;
+}
+
+/* Neuigkeiten: gelesene Eintraege */
+.news-item-read {
+    color: var(--text-muted);
+    opacity: 0.65;
+}
+.news-divider {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 0 0.25rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--border);
 }
