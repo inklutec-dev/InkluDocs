@@ -101,6 +101,17 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_api_usage_key ON api_usage(api_key_id);
         CREATE INDEX IF NOT EXISTS idx_api_usage_timestamp ON api_usage(timestamp);
         CREATE INDEX IF NOT EXISTS idx_api_usage_user ON api_usage(user_id);
+
+        CREATE TABLE IF NOT EXISTS email_changes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            new_email TEXT NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expires_at TEXT NOT NULL,
+            used INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
     """)
     conn.commit()
 
@@ -258,6 +269,57 @@ def admin_reset_password(user_id: int, new_password: str):
     conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
     conn.commit()
     conn.close()
+
+
+# ─── Email Change Verification ────────────────────────────────
+
+def create_email_change_token(user_id: int, new_email: str) -> str:
+    """Create a token for email change verification. Returns the raw token."""
+    conn = get_db()
+    token = secrets.token_urlsafe(32)
+    expires = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+    # Invalidate old pending changes for this user
+    conn.execute("UPDATE email_changes SET used = 1 WHERE user_id = ? AND used = 0", (user_id,))
+    conn.execute(
+        "INSERT INTO email_changes (user_id, new_email, token, expires_at) VALUES (?, ?, ?, ?)",
+        (user_id, new_email, token, expires)
+    )
+    conn.commit()
+    conn.close()
+    return token
+
+
+def verify_email_change_token(token: str) -> dict | None:
+    """Verify an email change token. Returns dict with user_id and new_email, or None."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM email_changes WHERE token = ? AND used = 0", (token,)
+    ).fetchone()
+    conn.close()
+    if not row:
+        return None
+    if datetime.fromisoformat(row["expires_at"]) < datetime.utcnow():
+        return None
+    return dict(row)
+
+
+def confirm_email_change(token: str) -> dict | None:
+    """Confirm the email change: update user email and mark token as used.
+    Returns dict with user_id and new_email on success, None on failure."""
+    change = verify_email_change_token(token)
+    if not change:
+        return None
+    conn = get_db()
+    # Check new email is still available
+    existing = conn.execute("SELECT id FROM users WHERE email = ?", (change["new_email"],)).fetchone()
+    if existing:
+        conn.close()
+        return None
+    conn.execute("UPDATE users SET email = ? WHERE id = ?", (change["new_email"], change["user_id"]))
+    conn.execute("UPDATE email_changes SET used = 1 WHERE id = ?", (change["id"],))
+    conn.commit()
+    conn.close()
+    return {"user_id": change["user_id"], "new_email": change["new_email"]}
 
 
 # ─── API Key Management ──────────────────────────────────────

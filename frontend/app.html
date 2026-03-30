@@ -700,9 +700,8 @@
             });
             if (res.ok) {
                 const d = await res.json();
-                currentUser.email = d.email;
-                msg.textContent = 'E-Mail geaendert!'; msg.style.color = 'var(--success)';
-                announce('E-Mail-Adresse wurde geaendert');
+                msg.textContent = d.message || 'Bestaetigungslink gesendet!'; msg.style.color = 'var(--success)';
+                announce('Bestaetigungslink wurde an die neue E-Mail-Adresse gesendet');
             } else {
                 const d = await res.json();
                 msg.textContent = d.detail || 'Fehler'; msg.style.color = 'var(--error)';
@@ -826,12 +825,40 @@
         });
         if (res.ok) {
             const data = await res.json();
-            result.innerHTML = '<div style="padding:0.8rem;background:var(--bg-card,#f9f9f9);border:1px solid var(--border);border-radius:4px;"><strong>Neuer Schluessel (nur einmal sichtbar!):</strong><br><code style="word-break:break-all;font-size:0.9rem;">' + data.api_key + '</code></div>';
+            const key = data.api_key;
+            result.innerHTML = `<div style="padding:0.8rem;background:var(--bg-card,#f9f9f9);border:1px solid var(--border);border-radius:4px;">
+                <strong>Neuer Schluessel (nur einmal sichtbar!):</strong><br>
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
+                    <code id="newKeyValue" style="word-break:break-all;font-size:0.9rem;flex:1;">${key}</code>
+                    <button class="btn btn-primary btn-small" onclick="copyApiKey()" aria-label="API-Schluessel in Zwischenablage kopieren" style="white-space:nowrap;">Kopieren</button>
+                </div>
+                <span id="copyMsg" role="status" aria-live="assertive" style="font-size:0.85rem;"></span>
+            </div>`;
             nameInput.value = '';
             announce('API-Schluessel erstellt. Bitte jetzt kopieren.');
             loadApiKeys();
         } else {
             result.textContent = 'Fehler beim Erstellen.';
+        }
+    }
+
+    async function copyApiKey() {
+        const keyEl = document.getElementById('newKeyValue');
+        const msg = document.getElementById('copyMsg');
+        if (!keyEl) return;
+        try {
+            await navigator.clipboard.writeText(keyEl.textContent.trim());
+            msg.textContent = 'Kopiert!'; msg.style.color = 'var(--success)';
+            announce('API-Schluessel wurde in die Zwischenablage kopiert');
+        } catch(e) {
+            // Fallback: select the text
+            const range = document.createRange();
+            range.selectNodeContents(keyEl);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            msg.textContent = 'Bitte manuell kopieren (Cmd+C / Strg+C)'; msg.style.color = 'var(--accent)';
+            announce('Schluessel markiert. Bitte manuell kopieren.');
         }
     }
 

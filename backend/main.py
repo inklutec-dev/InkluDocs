@@ -28,6 +28,7 @@ from database import (
     list_all_users, update_user_active, delete_user_data, admin_reset_password,
     create_api_key, verify_api_key, list_api_keys, delete_api_key,
     log_api_usage, get_api_usage_stats,
+    create_email_change_token, confirm_email_change,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image
 
@@ -355,6 +356,7 @@ async def change_password(request: Request, user: dict = Depends(get_current_use
 
 @app.post("/api/change-email")
 async def change_email(request: Request, user: dict = Depends(get_current_user)):
+    """Request email change – sends confirmation link to new address."""
     data = await request.json()
     new_email = data.get("new_email", "").strip().lower()
 
@@ -368,17 +370,53 @@ async def change_email(request: Request, user: dict = Depends(get_current_user))
     if existing:
         raise HTTPException(status_code=409, detail="Diese E-Mail-Adresse ist bereits vergeben")
 
-    conn = get_db()
-    conn.execute("UPDATE users SET email = ? WHERE id = ?", (new_email, user["id"]))
-    conn.commit()
-    conn.close()
-
-    # Issue new token with updated email
     db_user = get_user_by_id(user["id"])
-    token = create_token(user["id"], new_email, db_user["is_admin"])
-    response = JSONResponse({"ok": True, "message": "E-Mail-Adresse wurde geaendert", "email": new_email})
-    response.set_cookie("token", token, httponly=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
-    return response
+    token = create_email_change_token(user["id"], new_email)
+    confirm_url = f"{BASE_URL}/api/confirm-email?token={token}"
+
+    email_body = f"""<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
+<h1 style="color:#1b2a4a;">E-Mail-Adresse bestaetigen</h1>
+<p>Hallo {db_user['display_name']},</p>
+<p>du hast angefordert, deine InkluDocs E-Mail-Adresse auf <strong>{new_email}</strong> zu aendern.</p>
+<p><a href="{confirm_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">E-Mail-Adresse bestaetigen</a></p>
+<p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {confirm_url}</p>
+<p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gueltig. Falls du diese Aenderung nicht angefordert hast, ignoriere diese E-Mail.</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
+</body></html>"""
+
+    sent = send_email(new_email, "InkluDocs: E-Mail-Adresse bestaetigen", email_body, bcc_admin=False)
+    if not sent:
+        raise HTTPException(status_code=500, detail="Bestaetigungsmail konnte nicht gesendet werden. Bitte spaeter erneut versuchen.")
+
+    return {"ok": True, "message": f"Bestaetigungslink wurde an {new_email} gesendet. Bitte pruefe dein Postfach."}
+
+
+@app.get("/api/confirm-email")
+async def confirm_email(token: str = ""):
+    """Confirm email change via link from confirmation email."""
+    if not token:
+        raise HTTPException(status_code=400, detail="Token fehlt")
+
+    result = confirm_email_change(token)
+    if not result:
+        return HTMLResponse("""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs</title>
+<link rel="stylesheet" href="/static/style.css"></head><body>
+<div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail-Bestaetigung fehlgeschlagen">
+<h1><span class="brand">Inklu</span>Docs</h1>
+<p style="margin:2rem 0;color:var(--error,#dc2626);font-weight:600;">Der Bestaetigungslink ist ungueltig oder abgelaufen.</p>
+<p>Bitte fordere in den <a href="/app">Einstellungen</a> einen neuen Link an.</p>
+</div></div></body></html>""", status_code=400)
+
+    # Success – show confirmation page and auto-redirect
+    db_user = get_user_by_id(result["user_id"])
+    return HTMLResponse(f"""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs</title>
+<link rel="stylesheet" href="/static/style.css"><meta http-equiv="refresh" content="3;url=/app"></head><body>
+<div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail-Adresse bestaetigt">
+<h1><span class="brand">Inklu</span>Docs</h1>
+<p style="margin:2rem 0;color:var(--success,#16a34a);font-weight:600;">Deine E-Mail-Adresse wurde erfolgreich auf {result['new_email']} geaendert.</p>
+<p>Du wirst in 3 Sekunden weitergeleitet. <a href="/app">Jetzt zur App</a></p>
+</div></div></body></html>""")
 
 
 @app.post("/api/change-displayname")
