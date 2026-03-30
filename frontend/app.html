@@ -569,85 +569,196 @@
     }
 
     // ─── Settings ────────────────────────────────────
-    function showSettings() {
+    let _settingsTab = 'account';
+
+    function showSettings(tab) {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         highlightNav('settingsBtn');
+        if (tab) _settingsTab = tab;
+
         main.innerHTML = `
             <button class="back-btn" onclick="showDashboard()">Zurueck</button>
             <h2 class="section-title">Einstellungen</h2>
-            <div class="card">
-                <h3 style="margin-bottom:1rem;">Passwort aendern</h3>
-                <form id="changePwForm" novalidate>
-                    <div class="form-group">
-                        <label for="old_password">Aktuelles Passwort</label>
-                        <input type="password" id="old_password" required autocomplete="current-password">
-                    </div>
-                    <div class="form-group">
-                        <label for="new_password">Neues Passwort (mind. 8 Zeichen)</label>
-                        <input type="password" id="new_password" required minlength="8" autocomplete="new-password">
-                    </div>
-                    <div class="form-group">
-                        <label for="new_password2">Neues Passwort wiederholen</label>
-                        <input type="password" id="new_password2" required autocomplete="new-password">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Passwort aendern</button>
-                    <span id="pwMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
-                </form>
+            <div role="tablist" aria-label="Einstellungsbereiche" style="display:flex;gap:0;margin-bottom:1.5rem;border-bottom:2px solid var(--border,#e2e8f0);">
+                <button role="tab" id="tabAccount" aria-selected="${_settingsTab === 'account'}" aria-controls="panelAccount" onclick="switchSettingsTab('account')" style="padding:0.75rem 1.5rem;border:none;background:${_settingsTab === 'account' ? 'var(--primary,#1b2a4a)' : 'transparent'};color:${_settingsTab === 'account' ? 'white' : 'var(--text,#1e293b)'};font-weight:600;font-size:1rem;cursor:pointer;border-radius:8px 8px 0 0;border-bottom:3px solid ${_settingsTab === 'account' ? 'var(--accent,#e87722)' : 'transparent'};">Konto &amp; Sicherheit</button>
+                <button role="tab" id="tabApi" aria-selected="${_settingsTab === 'api'}" aria-controls="panelApi" onclick="switchSettingsTab('api')" style="padding:0.75rem 1.5rem;border:none;background:${_settingsTab === 'api' ? 'var(--primary,#1b2a4a)' : 'transparent'};color:${_settingsTab === 'api' ? 'white' : 'var(--text,#1e293b)'};font-weight:600;font-size:1rem;cursor:pointer;border-radius:8px 8px 0 0;border-bottom:3px solid ${_settingsTab === 'api' ? 'var(--accent,#e87722)' : 'transparent'};">API</button>
             </div>
-            <div class="card" style="margin-top:1rem;">
-                <h3>Kontoinformationen</h3>
-                <p style="margin-top:0.5rem;color:var(--text-muted);">Angemeldet als: ${currentUser.display_name} (${currentUser.email})</p>
-            </div>
-            <div class="card" style="margin-top:1rem;">
-                <h3 style="margin-bottom:1rem;">API-Schluessel</h3>
-                <p style="margin-bottom:1rem;color:var(--text-muted);">Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren. <a href="/api/v1/docs" target="_blank">API-Dokumentation</a></p>
-                <div id="apiKeyList" aria-live="polite"></div>
-                <div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                    <label for="newKeyName" class="sr-only">Name fuer neuen API-Schluessel</label>
-                    <input type="text" id="newKeyName" placeholder="Name (z.B. Meine App)" style="padding:0.5rem;border:1px solid var(--border);border-radius:4px;flex:1;min-width:150px;">
-                    <button class="btn btn-primary" onclick="createApiKey()">Erstellen</button>
+
+            <div id="panelAccount" role="tabpanel" aria-labelledby="tabAccount" ${_settingsTab !== 'account' ? 'hidden' : ''}>
+                <div class="card">
+                    <h3 style="margin-bottom:1rem;">Anzeigename</h3>
+                    <form id="changeNameForm" novalidate>
+                        <div class="form-group">
+                            <label for="edit_displayname">Name</label>
+                            <input type="text" id="edit_displayname" value="${currentUser.display_name}" required maxlength="100" autocomplete="name">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Name aendern</button>
+                        <span id="nameMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
+                    </form>
                 </div>
-                <div id="newKeyResult" role="status" aria-live="polite" style="margin-top:0.5rem;"></div>
+                <div class="card" style="margin-top:1rem;">
+                    <h3 style="margin-bottom:1rem;">E-Mail-Adresse</h3>
+                    <form id="changeEmailForm" novalidate>
+                        <div class="form-group">
+                            <label for="edit_email">E-Mail-Adresse</label>
+                            <input type="email" id="edit_email" value="${currentUser.email}" required autocomplete="email">
+                        </div>
+                        <button type="submit" class="btn btn-primary">E-Mail aendern</button>
+                        <span id="emailMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
+                    </form>
+                </div>
+                <div class="card" style="margin-top:1rem;">
+                    <h3 style="margin-bottom:1rem;">Passwort aendern</h3>
+                    <form id="changePwForm" novalidate>
+                        <div class="form-group">
+                            <label for="old_password">Aktuelles Passwort</label>
+                            <input type="password" id="old_password" required autocomplete="current-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_password">Neues Passwort (mind. 8 Zeichen)</label>
+                            <input type="password" id="new_password" required minlength="8" autocomplete="new-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_password2">Neues Passwort wiederholen</label>
+                            <input type="password" id="new_password2" required autocomplete="new-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Passwort aendern</button>
+                        <span id="pwMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
+                    </form>
+                </div>
             </div>
-            <div class="card" style="margin-top:1rem;">
-                <h3 style="margin-bottom:1rem;">API-Nutzung</h3>
-                <div id="apiUsageStats" aria-live="polite">
-                    <p style="color:var(--text-muted);">Statistik wird geladen...</p>
+
+            <div id="panelApi" role="tabpanel" aria-labelledby="tabApi" ${_settingsTab !== 'api' ? 'hidden' : ''}>
+                <div class="card">
+                    <h3 style="margin-bottom:1rem;">API-Schluessel</h3>
+                    <p style="margin-bottom:1rem;color:var(--text-muted);">Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren. <a href="/api/v1/docs" target="_blank">API-Dokumentation ansehen</a></p>
+                    <div id="apiKeyList" aria-live="polite"></div>
+                    <div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                        <label for="newKeyName" class="sr-only">Name fuer neuen API-Schluessel</label>
+                        <input type="text" id="newKeyName" placeholder="Name (z.B. Meine App)" style="padding:0.5rem;border:1px solid var(--border);border-radius:4px;flex:1;min-width:150px;">
+                        <button class="btn btn-primary" onclick="createApiKey()">Erstellen</button>
+                    </div>
+                    <div id="newKeyResult" role="status" aria-live="polite" style="margin-top:0.5rem;"></div>
+                </div>
+                <div class="card" style="margin-top:1rem;">
+                    <h3 style="margin-bottom:1rem;">API-Nutzung</h3>
+                    <div id="apiUsageStats" aria-live="polite">
+                        <p style="color:var(--text-muted);">Statistik wird geladen...</p>
+                    </div>
                 </div>
             </div>
         `;
 
+        // Tab keyboard navigation (arrow keys)
+        const tabs = main.querySelectorAll('[role="tab"]');
+        tabs.forEach(tab => {
+            tab.addEventListener('keydown', (e) => {
+                const tabArr = Array.from(tabs);
+                const idx = tabArr.indexOf(e.target);
+                let newIdx = idx;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { newIdx = (idx + 1) % tabArr.length; e.preventDefault(); }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { newIdx = (idx - 1 + tabArr.length) % tabArr.length; e.preventDefault(); }
+                if (e.key === 'Home') { newIdx = 0; e.preventDefault(); }
+                if (e.key === 'End') { newIdx = tabArr.length - 1; e.preventDefault(); }
+                if (newIdx !== idx) { tabArr[newIdx].click(); tabArr[newIdx].focus(); }
+            });
+        });
+
+        // Change name form
+        document.getElementById('changeNameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('nameMsg');
+            msg.textContent = ''; msg.style.color = '';
+            const display_name = document.getElementById('edit_displayname').value.trim();
+            if (!display_name) { msg.textContent = 'Bitte einen Namen eingeben'; msg.style.color = 'var(--error)'; return; }
+            const res = await fetch('/api/change-displayname', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ display_name }),
+            });
+            if (res.ok) {
+                const d = await res.json();
+                currentUser.display_name = d.display_name;
+                document.getElementById('userGreeting').textContent = 'Hallo, ' + d.display_name;
+                msg.textContent = 'Name geaendert!'; msg.style.color = 'var(--success)';
+                announce('Name wurde geaendert');
+            } else {
+                const d = await res.json();
+                msg.textContent = d.detail || 'Fehler'; msg.style.color = 'var(--error)';
+            }
+        });
+
+        // Change email form
+        document.getElementById('changeEmailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('emailMsg');
+            msg.textContent = ''; msg.style.color = '';
+            const new_email = document.getElementById('edit_email').value.trim();
+            if (!new_email || !new_email.includes('@')) { msg.textContent = 'Bitte eine gueltige E-Mail eingeben'; msg.style.color = 'var(--error)'; return; }
+            const res = await fetch('/api/change-email', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_email }),
+            });
+            if (res.ok) {
+                const d = await res.json();
+                currentUser.email = d.email;
+                msg.textContent = 'E-Mail geaendert!'; msg.style.color = 'var(--success)';
+                announce('E-Mail-Adresse wurde geaendert');
+            } else {
+                const d = await res.json();
+                msg.textContent = d.detail || 'Fehler'; msg.style.color = 'var(--error)';
+            }
+        });
+
+        // Change password form
         document.getElementById('changePwForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const msg = document.getElementById('pwMsg');
-            msg.textContent = '';
-            msg.style.color = '';
-
+            msg.textContent = ''; msg.style.color = '';
             const old_password = document.getElementById('old_password').value;
             const new_password = document.getElementById('new_password').value;
             const new_password2 = document.getElementById('new_password2').value;
-
             if (new_password.length < 8) { msg.textContent = 'Mind. 8 Zeichen'; msg.style.color = 'var(--error)'; return; }
             if (new_password !== new_password2) { msg.textContent = 'Passwoerter stimmen nicht ueberein'; msg.style.color = 'var(--error)'; return; }
-
             const res = await fetch('/api/change-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ old_password, new_password }),
             });
             if (res.ok) {
-                msg.textContent = 'Passwort geaendert!';
-                msg.style.color = 'var(--success)';
+                msg.textContent = 'Passwort geaendert!'; msg.style.color = 'var(--success)';
                 announce('Passwort wurde geaendert');
             } else {
                 const d = await res.json();
-                msg.textContent = d.detail || 'Fehler';
-                msg.style.color = 'var(--error)';
+                msg.textContent = d.detail || 'Fehler'; msg.style.color = 'var(--error)';
             }
         });
 
         loadApiKeys();
         loadApiUsageStats();
+    }
+
+    function switchSettingsTab(tab) {
+        _settingsTab = tab;
+        const panelAccount = document.getElementById('panelAccount');
+        const panelApi = document.getElementById('panelApi');
+        const tabAccount = document.getElementById('tabAccount');
+        const tabApi = document.getElementById('tabApi');
+
+        if (tab === 'account') {
+            panelAccount.hidden = false; panelApi.hidden = true;
+            tabAccount.setAttribute('aria-selected', 'true'); tabApi.setAttribute('aria-selected', 'false');
+            tabAccount.style.background = 'var(--primary,#1b2a4a)'; tabAccount.style.color = 'white';
+            tabAccount.style.borderBottom = '3px solid var(--accent,#e87722)';
+            tabApi.style.background = 'transparent'; tabApi.style.color = 'var(--text,#1e293b)';
+            tabApi.style.borderBottom = '3px solid transparent';
+        } else {
+            panelApi.hidden = false; panelAccount.hidden = true;
+            tabApi.setAttribute('aria-selected', 'true'); tabAccount.setAttribute('aria-selected', 'false');
+            tabApi.style.background = 'var(--primary,#1b2a4a)'; tabApi.style.color = 'white';
+            tabApi.style.borderBottom = '3px solid var(--accent,#e87722)';
+            tabAccount.style.background = 'transparent'; tabAccount.style.color = 'var(--text,#1e293b)';
+            tabAccount.style.borderBottom = '3px solid transparent';
+        }
+        announce(tab === 'account' ? 'Konto und Sicherheit' : 'API');
     }
 
     async function loadApiUsageStats() {

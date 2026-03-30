@@ -353,6 +353,51 @@ async def change_password(request: Request, user: dict = Depends(get_current_use
     return {"ok": True, "message": "Passwort wurde geaendert"}
 
 
+@app.post("/api/change-email")
+async def change_email(request: Request, user: dict = Depends(get_current_user)):
+    data = await request.json()
+    new_email = data.get("new_email", "").strip().lower()
+
+    if not new_email or "@" not in new_email:
+        raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
+
+    if new_email == user["email"]:
+        raise HTTPException(status_code=400, detail="Das ist bereits deine aktuelle E-Mail-Adresse")
+
+    existing = get_user_by_email(new_email)
+    if existing:
+        raise HTTPException(status_code=409, detail="Diese E-Mail-Adresse ist bereits vergeben")
+
+    conn = get_db()
+    conn.execute("UPDATE users SET email = ? WHERE id = ?", (new_email, user["id"]))
+    conn.commit()
+    conn.close()
+
+    # Issue new token with updated email
+    db_user = get_user_by_id(user["id"])
+    token = create_token(user["id"], new_email, db_user["is_admin"])
+    response = JSONResponse({"ok": True, "message": "E-Mail-Adresse wurde geaendert", "email": new_email})
+    response.set_cookie("token", token, httponly=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
+    return response
+
+
+@app.post("/api/change-displayname")
+async def change_displayname(request: Request, user: dict = Depends(get_current_user)):
+    data = await request.json()
+    new_name = data.get("display_name", "").strip()
+
+    if not new_name:
+        raise HTTPException(status_code=400, detail="Bitte einen Namen eingeben")
+    if len(new_name) > 100:
+        raise HTTPException(status_code=400, detail="Name darf maximal 100 Zeichen lang sein")
+
+    conn = get_db()
+    conn.execute("UPDATE users SET display_name = ? WHERE id = ?", (new_name, user["id"]))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "message": "Name wurde geaendert", "display_name": new_name}
+
+
 # ─── Password Reset ──────────────────────────────────────────
 
 @app.post("/api/forgot-password")
