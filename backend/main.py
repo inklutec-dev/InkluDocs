@@ -29,6 +29,7 @@ from database import (
     create_api_key, verify_api_key, list_api_keys, delete_api_key,
     log_api_usage, get_api_usage_stats,
     create_email_change_token, confirm_email_change,
+    create_api_result, get_api_result, update_api_result,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image
 
@@ -163,7 +164,7 @@ app = FastAPI(title="InkluDocs", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://inkludocs.inklutec.de", "https://staging.inkludocs.inklutec.de"],
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "X-API-Key"],
     allow_credentials=True,
     expose_headers=["X-Export-Warnings", "X-Export-Tagged", "X-Export-Total",
@@ -1704,7 +1705,24 @@ async def api_generate_alt_text(request: Request):
                       model_used=model_used,
                       image_size_bytes=image_size, success=True)
 
+        # result_id generieren und Ergebnis speichern
+        result_id = secrets.token_urlsafe(16)
+        create_api_result(
+            result_id=result_id,
+            user_id=api_user["id"],
+            api_key_id=api_key_id,
+            alt_text=result.get("alt_text", ""),
+            langbeschreibung=result.get("langbeschreibung", ""),
+            bildtyp=result.get("bildtyp", "unbekannt"),
+            konfidenz=result.get("konfidenz", "mittel"),
+            model_used=model_used,
+            processing_time_ms=processing_time_ms,
+            language=language,
+            context_text=context_text,
+        )
+
         response_data = {
+            "result_id": result_id,
             "alt_text": result.get("alt_text", ""),
             "langbeschreibung": result.get("langbeschreibung", ""),
             "bildtyp": result.get("bildtyp", "unbekannt"),
@@ -1733,6 +1751,72 @@ async def api_generate_alt_text(request: Request):
             os.remove(tmp_path)
         except Exception:
             pass
+
+
+@app.get("/api/v1/alt-text/{result_id}")
+async def api_get_alt_text(result_id: str, request: Request):
+    """Ruft ein gespeichertes API-Ergebnis ab. Erfordert X-API-Key Header."""
+    api_user = get_api_user(request)
+
+    result = get_api_result(result_id, api_user["id"])
+    if not result:
+        raise HTTPException(status_code=404, detail="Ergebnis nicht gefunden")
+
+    return JSONResponse(content={
+        "result_id": result["id"],
+        "alt_text": result["alt_text"],
+        "langbeschreibung": result["langbeschreibung"],
+        "bildtyp": result["bildtyp"],
+        "konfidenz": result["konfidenz"],
+        "model_used": result["model_used"],
+        "created_at": result["created_at"],
+        "updated_at": result["updated_at"],
+    })
+
+
+@app.patch("/api/v1/alt-text/{result_id}")
+async def api_update_alt_text(result_id: str, request: Request):
+    """Aktualisiert den Alt-Text und/oder die Langbeschreibung eines API-Ergebnisses.
+    Erfordert X-API-Key Header. Nur der Besitzer kann sein Ergebnis aendern."""
+    api_user = get_api_user(request)
+
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Ungueltiges JSON")
+
+    alt_text = data.get("alt_text")
+    langbeschreibung = data.get("langbeschreibung")
+
+    if alt_text is None and langbeschreibung is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Mindestens 'alt_text' oder 'langbeschreibung' muss angegeben werden"
+        )
+
+    if alt_text is not None and not isinstance(alt_text, str):
+        raise HTTPException(status_code=400, detail="'alt_text' muss ein String sein")
+    if langbeschreibung is not None and not isinstance(langbeschreibung, str):
+        raise HTTPException(status_code=400, detail="'langbeschreibung' muss ein String sein")
+
+    success = update_api_result(
+        result_id=result_id,
+        user_id=api_user["id"],
+        alt_text=alt_text,
+        langbeschreibung=langbeschreibung,
+    )
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Ergebnis nicht gefunden")
+
+    updated = get_api_result(result_id, api_user["id"])
+    return JSONResponse(content={
+        "result_id": updated["id"],
+        "alt_text": updated["alt_text"],
+        "langbeschreibung": updated["langbeschreibung"],
+        "bildtyp": updated["bildtyp"],
+        "updated_at": updated["updated_at"],
+    })
 
 
 @app.get("/api/api-usage-stats")
@@ -1798,6 +1882,8 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <li><a href="#endpoint">Endpoint</a></li>
 <li><a href="#request">Request</a></li>
 <li><a href="#response">Response</a></li>
+<li><a href="#get-result">Ergebnis abrufen (GET)</a></li>
+<li><a href="#patch-result">Ergebnis bearbeiten (PATCH)</a></li>
 <li><a href="#errors">Fehler-Codes</a></li>
 <li><a href="#ratelimit">Rate-Limits</a></li>
 <li><a href="#examples">Beispiele</a></li>
@@ -1845,6 +1931,7 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <h2 id="response">Response</h2>
 <p>Content-Type: <code>application/json</code></p>
 <pre><code>{
+  "result_id": "abc123xyz",
   "alt_text": "Beschreibung des Bildes",
   "langbeschreibung": "Ausfuehrliche Beschreibung...",
   "bildtyp": "foto",
@@ -1857,6 +1944,7 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <caption class="sr-only">Response-Felder</caption>
 <thead><tr><th scope="col">Feld</th><th scope="col">Beschreibung</th></tr></thead>
 <tbody>
+<tr><td><code>result_id</code></td><td>Eindeutige ID dieses Ergebnisses – fuer GET und PATCH</td></tr>
 <tr><td><code>alt_text</code></td><td>Der generierte Alt-Text (kurz, fuer das alt-Attribut)</td></tr>
 <tr><td><code>langbeschreibung</code></td><td>Ausfuehrliche Beschreibung (fuer aria-describedby oder Langtext)</td></tr>
 <tr><td><code>bildtyp</code></td><td>Erkannter Bildtyp (foto, diagramm, logo, etc.)</td></tr>
@@ -1866,13 +1954,37 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 </tbody>
 </table>
 
+<h2 id="get-result">Ergebnis abrufen</h2>
+<p><span class="badge badge-get">GET</span> <code>/api/v1/alt-text/{result_id}</code></p>
+<p>Ruft ein gespeichertes Ergebnis anhand seiner <code>result_id</code> ab. Erfordert denselben <code>X-API-Key</code> wie beim Erstellen.</p>
+<pre><code>curl %%BASE_URL%%/api/v1/alt-text/abc123xyz \\
+  -H "X-API-Key: idocs_deinSchluessel"</code></pre>
+<p>Response-Felder: <code>result_id</code>, <code>alt_text</code>, <code>langbeschreibung</code>, <code>bildtyp</code>, <code>konfidenz</code>, <code>model_used</code>, <code>created_at</code>, <code>updated_at</code></p>
+
+<h2 id="patch-result">Ergebnis bearbeiten</h2>
+<p><span class="badge" style="background:#7c3aed;color:white;">PATCH</span> <code>/api/v1/alt-text/{result_id}</code></p>
+<p>Aendert den Alt-Text und/oder die Langbeschreibung eines gespeicherten Ergebnisses. Mindestens eines der Felder muss angegeben werden.</p>
+<pre><code>curl -X PATCH %%BASE_URL%%/api/v1/alt-text/abc123xyz \\
+  -H "X-API-Key: idocs_deinSchluessel" \\
+  -H "Content-Type: application/json" \\
+  -d '{"alt_text": "Mein korrigierter Alt-Text"}'</code></pre>
+<table>
+<caption class="sr-only">PATCH Request-Felder</caption>
+<thead><tr><th scope="col">Feld</th><th scope="col">Typ</th><th scope="col">Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>alt_text</code></td><td>String</td><td>Neuer Alt-Text (optional, aber mindestens eines der beiden Felder)</td></tr>
+<tr><td><code>langbeschreibung</code></td><td>String</td><td>Neue Langbeschreibung (optional)</td></tr>
+</tbody>
+</table>
+
 <h2 id="errors">Fehler-Codes</h2>
 <table>
 <caption class="sr-only">HTTP-Fehler-Codes</caption>
 <thead><tr><th scope="col">Code</th><th scope="col">Bedeutung</th></tr></thead>
 <tbody>
-<tr><td><code>400</code></td><td>Kein Bild mitgeschickt oder ungueltiges Format</td></tr>
+<tr><td><code>400</code></td><td>Kein Bild mitgeschickt, ungueltiges Format oder fehlendes JSON-Feld</td></tr>
 <tr><td><code>401</code></td><td>Ungueltiger oder fehlender API-Key</td></tr>
+<tr><td><code>404</code></td><td>Ergebnis nicht gefunden (falsche result_id oder falscher API-Key)</td></tr>
 <tr><td><code>413</code></td><td>Bild zu gross (max. 10 MB)</td></tr>
 <tr><td><code>429</code></td><td>Rate-Limit ueberschritten</td></tr>
 <tr><td><code>500</code></td><td>Interner Serverfehler</td></tr>

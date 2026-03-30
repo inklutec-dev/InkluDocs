@@ -102,6 +102,26 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_api_usage_timestamp ON api_usage(timestamp);
         CREATE INDEX IF NOT EXISTS idx_api_usage_user ON api_usage(user_id);
 
+        CREATE TABLE IF NOT EXISTS api_results (
+            id TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            api_key_id INTEGER NOT NULL,
+            alt_text TEXT NOT NULL DEFAULT '',
+            langbeschreibung TEXT NOT NULL DEFAULT '',
+            bildtyp TEXT DEFAULT 'unbekannt',
+            konfidenz TEXT DEFAULT 'mittel',
+            model_used TEXT,
+            processing_time_ms INTEGER,
+            language TEXT DEFAULT 'de',
+            context_text TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (api_key_id) REFERENCES api_keys(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_api_results_user ON api_results(user_id);
+        CREATE INDEX IF NOT EXISTS idx_api_results_apikey ON api_results(api_key_id);
+
         CREATE TABLE IF NOT EXISTS email_changes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -468,3 +488,74 @@ def get_api_usage_stats(user_id: int) -> dict:
         "last_call": last_call,
         "success_rate": round(success_count / total * 100, 1) if total > 0 else 0,
     }
+
+
+def create_api_result(result_id: str, user_id: int, api_key_id: int,
+                      alt_text: str, langbeschreibung: str, bildtyp: str = "unbekannt",
+                      konfidenz: str = "mittel", model_used: str = "",
+                      processing_time_ms: int = 0, language: str = "de",
+                      context_text: str = "") -> str:
+    """Speichert ein API-Ergebnis und gibt die result_id zurueck."""
+    conn = get_db()
+    try:
+        conn.execute(
+            """INSERT INTO api_results
+               (id, user_id, api_key_id, alt_text, langbeschreibung, bildtyp,
+                konfidenz, model_used, processing_time_ms, language, context_text)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (result_id, user_id, api_key_id, alt_text, langbeschreibung, bildtyp,
+             konfidenz, model_used, processing_time_ms, language, context_text)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return result_id
+
+
+def get_api_result(result_id: str, user_id: int):
+    """Holt ein API-Ergebnis. Prueft dass es dem User gehoert."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM api_results WHERE id = ? AND user_id = ?",
+        (result_id, user_id)
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_api_result(result_id: str, user_id: int,
+                      alt_text=None,
+                      langbeschreibung=None) -> bool:
+    """Aktualisiert Alt-Text und/oder Langbeschreibung eines API-Ergebnisses."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT id FROM api_results WHERE id = ? AND user_id = ?",
+        (result_id, user_id)
+    ).fetchone()
+    if not row:
+        conn.close()
+        return False
+
+    updates = []
+    params = []
+    if alt_text is not None:
+        updates.append("alt_text = ?")
+        params.append(alt_text)
+    if langbeschreibung is not None:
+        updates.append("langbeschreibung = ?")
+        params.append(langbeschreibung)
+
+    if not updates:
+        conn.close()
+        return True  # Nichts zu aendern
+
+    updates.append("updated_at = datetime('now')")
+    params.extend([result_id, user_id])
+
+    conn.execute(
+        f"UPDATE api_results SET {', '.join(updates)} WHERE id = ? AND user_id = ?",
+        params
+    )
+    conn.commit()
+    conn.close()
+    return True
