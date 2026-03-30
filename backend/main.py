@@ -135,6 +135,17 @@ async def lifespan(app: FastAPI):
     init_db()
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(RESULTS_DIR, exist_ok=True)
+    # Clean up stale API temp files from previous runs/crashes
+    api_tmp = os.path.join(UPLOAD_DIR, "api_tmp")
+    if os.path.exists(api_tmp):
+        cutoff = time.time() - 3600
+        for f in os.listdir(api_tmp):
+            fp = os.path.join(api_tmp, f)
+            try:
+                if os.path.isfile(fp) and os.path.getmtime(fp) < cutoff:
+                    os.remove(fp)
+            except Exception:
+                pass
     # Create default admin user only if NO users exist at all (fresh install)
     conn = get_db()
     user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
@@ -1590,39 +1601,82 @@ async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
 # ─── Public API ──────────────────────────────────────────────
 
 @app.post("/api/v1/alt-text")
-@app.post("/v1/alt-text")
 async def api_generate_alt_text(request: Request):
-    """Public API endpoint for alt-text generation. Requires X-API-Key header."""
+    """Public API endpoint for alt-text generation. Requires X-API-Key header.
+    Accepts multipart/form-data (file upload) or application/json (base64 image)."""
+    import base64 as b64module
+
     api_user = get_api_user(request)
     api_key_id = api_user["api_key_id"]
 
     # Rate limiting
     rate_info = check_api_rate_limit(api_key_id)
 
-    # Parse multipart form data
-    form = await request.form()
-    file = form.get("file") or form.get("image")
-    if not file:
-        log_api_usage(api_key_id, api_user["id"], success=False,
-                      error_message="Kein Bild mitgeschickt")
-        raise HTTPException(status_code=400, detail="Bitte eine Bilddatei als 'file' oder 'image' hochladen")
+    content_type = request.headers.get("content-type", "")
+    context_text = ""
+    language = "de"
+    image_type = None
+    content = None
+    ext = ".jpg"
 
-    context_text = form.get("context", "")
-    language = form.get("language", "de")
-    image_type = form.get("image_type")
+    if "application/json" in content_type:
+        # JSON mode: base64-encoded image
+        try:
+            data = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="Ungueltiges JSON")
 
-    # Validate file
-    filename = file.filename or "image.jpg"
-    ext = os.path.splitext(filename)[1].lower()
-    if ext not in IMAGE_EXTENSIONS:
-        log_api_usage(api_key_id, api_user["id"], success=False,
-                      error_message=f"Ungueltiges Format: {ext}")
-        raise HTTPException(
-            status_code=400,
-            detail="Nur Bilddateien erlaubt (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC)"
-        )
+        image_b64 = data.get("image_base64", "")
+        if not image_b64:
+            log_api_usage(api_key_id, api_user["id"], success=False,
+                          error_message="Kein Bild (Base64)")
+            raise HTTPException(status_code=400, detail="Feld 'image_base64' fehlt oder ist leer")
 
-    content = await file.read()
+        context_text = data.get("context", "")
+        language = data.get("language", "de")
+        image_type = data.get("image_type")
+
+        # Strip data URI prefix if present (e.g. "data:image/png;base64,...")
+        if "," in image_b64 and image_b64.startswith("data:"):
+            mime_part = image_b64.split(",")[0]  # "data:image/png;base64"
+            image_b64 = image_b64.split(",", 1)[1]
+            # Detect extension from MIME
+            if "png" in mime_part: ext = ".png"
+            elif "gif" in mime_part: ext = ".gif"
+            elif "webp" in mime_part: ext = ".webp"
+            else: ext = ".jpg"
+
+        try:
+            content = b64module.b64decode(image_b64)
+        except Exception:
+            log_api_usage(api_key_id, api_user["id"], success=False,
+                          error_message="Base64 ungueltig")
+            raise HTTPException(status_code=400, detail="Base64-Daten konnten nicht dekodiert werden")
+
+    else:
+        # Multipart mode: file upload
+        form = await request.form()
+        file = form.get("file") or form.get("image")
+        if not file:
+            log_api_usage(api_key_id, api_user["id"], success=False,
+                          error_message="Kein Bild mitgeschickt")
+            raise HTTPException(status_code=400, detail="Bitte eine Bilddatei als 'file' oder 'image' hochladen")
+
+        context_text = form.get("context", "")
+        language = form.get("language", "de")
+        image_type = form.get("image_type")
+
+        filename = file.filename or "image.jpg"
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in IMAGE_EXTENSIONS:
+            log_api_usage(api_key_id, api_user["id"], success=False,
+                          error_message=f"Ungueltiges Format: {ext}")
+            raise HTTPException(
+                status_code=400,
+                detail="Nur Bilddateien erlaubt (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC)"
+            )
+        content = await file.read()
+
     image_size = len(content)
     if image_size > 10 * 1024 * 1024:  # 10 MB limit for API
         log_api_usage(api_key_id, api_user["id"], image_size_bytes=image_size,
@@ -1693,6 +1747,7 @@ async def api_usage_stats(user: dict = Depends(get_current_user)):
 @app.get("/api/v1/docs", response_class=HTMLResponse)
 async def api_docs():
     """Accessible API documentation page (WCAG 2.2 AA)."""
+    base = BASE_URL.rstrip("/")
     return """<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -1722,6 +1777,7 @@ th { background: var(--primary); color: white; font-weight: 600; }
 tr:nth-child(even) { background: rgba(0,0,0,0.02); }
 .note { padding: 1rem; background: #fff7ed; border-left: 4px solid var(--accent); border-radius: 0 4px 4px 0; margin: 1rem 0; }
 footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 @media (prefers-color-scheme: dark) {
     :root { --bg: #0f172a; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; --code-bg: #1e293b; }
     p code, li code { background: #334155; color: #e2e8f0; }
@@ -1751,23 +1807,38 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <h2 id="auth">Authentifizierung</h2>
 <p>Alle API-Anfragen erfordern einen gueltigen API-Schluessel im <code>X-API-Key</code> Header.</p>
 <p>API-Schluessel kannst du in der <a href="/app">InkluDocs-App</a> unter <strong>Einstellungen</strong> erstellen.</p>
-<pre><code>X-API-Key: idocs_deinSchluesselHier...</code></pre>
+<pre><code>X-API-Key: idocs_deinSchluesselHier</code></pre>
 
 <h2 id="endpoint">Endpoint</h2>
 <p><span class="badge badge-post">POST</span> <code>/api/v1/alt-text</code></p>
 <p>Generiert einen barrierefreien Alt-Text fuer ein hochgeladenes Bild.</p>
 
 <h2 id="request">Request</h2>
-<p>Content-Type: <code>multipart/form-data</code></p>
+<p>Der Endpoint akzeptiert zwei Formate:</p>
 
+<h3>Option A: Datei-Upload (Multipart)</h3>
+<p>Content-Type: <code>multipart/form-data</code></p>
 <table>
-<caption class="sr-only">Request-Parameter</caption>
+<caption class="sr-only">Request-Parameter Multipart</caption>
 <thead><tr><th scope="col">Parameter</th><th scope="col">Typ</th><th scope="col">Pflicht</th><th scope="col">Beschreibung</th></tr></thead>
 <tbody>
 <tr><td><code>file</code></td><td>Datei</td><td>Ja</td><td>Bilddatei (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC). Max. 10 MB.</td></tr>
 <tr><td><code>context</code></td><td>Text</td><td>Nein</td><td>Umgebungstext fuer bessere Beschreibung (z.B. Bildunterschrift, Seitentitel).</td></tr>
 <tr><td><code>language</code></td><td>Text</td><td>Nein</td><td>Sprache des Alt-Texts. Standard: <code>de</code></td></tr>
 <tr><td><code>image_type</code></td><td>Text</td><td>Nein</td><td>Hinweis auf Bildtyp: <code>foto</code>, <code>diagramm</code>, <code>logo</code>, <code>icon</code>, <code>karte</code>, <code>screenshot</code>, <code>infografik</code>, <code>tabelle</code></td></tr>
+</tbody>
+</table>
+
+<h3>Option B: Base64 (JSON)</h3>
+<p>Content-Type: <code>application/json</code></p>
+<table>
+<caption class="sr-only">Request-Parameter JSON</caption>
+<thead><tr><th scope="col">Parameter</th><th scope="col">Typ</th><th scope="col">Pflicht</th><th scope="col">Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>image_base64</code></td><td>String</td><td>Ja</td><td>Bild als Base64-String. Data-URI-Prefix optional (z.B. <code>data:image/png;base64,...</code>).</td></tr>
+<tr><td><code>context</code></td><td>String</td><td>Nein</td><td>Umgebungstext fuer bessere Beschreibung.</td></tr>
+<tr><td><code>language</code></td><td>String</td><td>Nein</td><td>Sprache des Alt-Texts. Standard: <code>de</code></td></tr>
+<tr><td><code>image_type</code></td><td>String</td><td>Nein</td><td>Hinweis auf Bildtyp.</td></tr>
 </tbody>
 </table>
 
@@ -1822,12 +1893,12 @@ X-RateLimit-Remaining-Day: 997</code></pre>
 <h2 id="examples">Beispiele</h2>
 
 <h3>Einfacher Aufruf mit curl</h3>
-<pre><code>curl -X POST https://inkludocs.inklutec.de/api/v1/alt-text \\
+<pre><code>curl -X POST %%BASE_URL%%/api/v1/alt-text \\
   -H "X-API-Key: idocs_deinSchluessel" \\
   -F "file=@foto.jpg"</code></pre>
 
 <h3>Mit Kontext fuer bessere Ergebnisse</h3>
-<pre><code>curl -X POST https://inkludocs.inklutec.de/api/v1/alt-text \\
+<pre><code>curl -X POST %%BASE_URL%%/api/v1/alt-text \\
   -H "X-API-Key: idocs_deinSchluessel" \\
   -F "file=@diagramm.png" \\
   -F "context=Jahresbericht 2025, Kapitel Umsatzentwicklung" \\
@@ -1837,7 +1908,7 @@ X-RateLimit-Remaining-Day: 997</code></pre>
 <pre><code>import requests
 
 response = requests.post(
-    "https://inkludocs.inklutec.de/api/v1/alt-text",
+    "%%BASE_URL%%/api/v1/alt-text",
     headers={"X-API-Key": "idocs_deinSchluessel"},
     files={"file": open("bild.jpg", "rb")},
     data={"context": "Produktseite eines Online-Shops"},
@@ -1851,7 +1922,7 @@ print(data["alt_text"])</code></pre>
 form.append('file', fs.createReadStream('bild.jpg'));
 form.append('context', 'Blog-Artikel ueber Barrierefreiheit');
 
-const res = await fetch('https://inkludocs.inklutec.de/api/v1/alt-text', {
+const res = await fetch('%%BASE_URL%%/api/v1/alt-text', {
     method: 'POST',
     headers: { 'X-API-Key': 'idocs_deinSchluessel' },
     body: form,
@@ -1859,6 +1930,12 @@ const res = await fetch('https://inkludocs.inklutec.de/api/v1/alt-text', {
 
 const data = await res.json();
 console.log(data.alt_text);</code></pre>
+
+<h3>Base64-Beispiel (JSON)</h3>
+<pre><code>curl -X POST %%BASE_URL%%/api/v1/alt-text \\
+  -H "X-API-Key: idocs_deinSchluessel" \\
+  -H "Content-Type: application/json" \\
+  -d '{"image_base64": "data:image/jpeg;base64,/9j/4AAQ...", "context": "Startseite"}'</code></pre>
 
 <div class="note" role="note">
 <p><strong>Hinweis:</strong> Die API generiert Alt-Texte mit der gleichen KI-Pipeline wie die Web-App. Fuer beste Ergebnisse sende moeglichst viel Kontext im <code>context</code>-Feld mit (z.B. Seitentitel, umgebender Text, Bildunterschrift).</p>
@@ -1869,7 +1946,7 @@ console.log(data.alt_text);</code></pre>
 </footer>
 </main>
 </body>
-</html>"""
+</html>""".replace("%%BASE_URL%%", base)
 
 
 # ─── News / Neuigkeiten ─────────────────────────────────────
