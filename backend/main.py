@@ -27,6 +27,7 @@ from database import (
     create_password_reset_token, verify_reset_token, reset_password,
     list_all_users, update_user_active, delete_user_data, admin_reset_password,
     create_api_key, verify_api_key, list_api_keys, delete_api_key,
+    log_api_usage, get_api_usage_stats,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image
 
@@ -121,6 +122,12 @@ _login_attempts = defaultdict(list)
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_WINDOW_SECONDS = 300  # 5 minutes
 
+# Rate limiting for API (per API key)
+_api_rate_minute = defaultdict(list)  # key_id -> [timestamps]
+_api_rate_day = defaultdict(list)     # key_id -> [timestamps]
+API_RATE_LIMIT_MINUTE = 60
+API_RATE_LIMIT_DAY = 1000
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -143,11 +150,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="InkluDocs", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://inkludocs.inklutec.de"],
+    allow_origins=["https://inkludocs.inklutec.de", "https://staging.inkludocs.inklutec.de"],
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "X-API-Key"],
     allow_credentials=True,
-    expose_headers=["X-Export-Warnings", "X-Export-Tagged", "X-Export-Total"],
+    expose_headers=["X-Export-Warnings", "X-Export-Tagged", "X-Export-Total",
+                    "X-RateLimit-Remaining-Minute", "X-RateLimit-Remaining-Day",
+                    "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"],
 )
 
 # Mount static files
@@ -188,7 +197,48 @@ def get_api_user(request: Request) -> dict:
     key_info = verify_api_key(api_key)
     if not key_info:
         raise HTTPException(status_code=401, detail="API-Key ungueltig oder deaktiviert.")
-    return {"id": key_info["user_id"], "email": key_info["email"], "is_admin": 0}
+    return {"id": key_info["user_id"], "email": key_info["email"], "is_admin": 0, "api_key_id": key_info["id"]}
+
+
+def check_api_rate_limit(api_key_id: int):
+    """Check and enforce rate limits for an API key. Raises 429 if exceeded."""
+    now = time.time()
+
+    # Clean old entries and check minute limit
+    _api_rate_minute[api_key_id] = [t for t in _api_rate_minute[api_key_id] if now - t < 60]
+    if len(_api_rate_minute[api_key_id]) >= API_RATE_LIMIT_MINUTE:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate-Limit ueberschritten: max. {API_RATE_LIMIT_MINUTE} Anfragen pro Minute.",
+            headers={
+                "X-RateLimit-Limit": str(API_RATE_LIMIT_MINUTE),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": str(int(min(_api_rate_minute[api_key_id]) + 60)),
+                "Retry-After": "60",
+            }
+        )
+
+    # Clean old entries and check daily limit
+    _api_rate_day[api_key_id] = [t for t in _api_rate_day[api_key_id] if now - t < 86400]
+    if len(_api_rate_day[api_key_id]) >= API_RATE_LIMIT_DAY:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Tageslimit ueberschritten: max. {API_RATE_LIMIT_DAY} Anfragen pro Tag.",
+            headers={
+                "X-RateLimit-Limit": str(API_RATE_LIMIT_DAY),
+                "X-RateLimit-Remaining": "0",
+                "Retry-After": "3600",
+            }
+        )
+
+    # Record this request
+    _api_rate_minute[api_key_id].append(now)
+    _api_rate_day[api_key_id].append(now)
+
+    return {
+        "minute_remaining": API_RATE_LIMIT_MINUTE - len(_api_rate_minute[api_key_id]),
+        "day_remaining": API_RATE_LIMIT_DAY - len(_api_rate_day[api_key_id]),
+    }
 
 
 # ─── Auth Routes ─────────────────────────────────────────────
@@ -1456,32 +1506,45 @@ async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
 
 # ─── Public API ──────────────────────────────────────────────
 
+@app.post("/api/v1/alt-text")
 @app.post("/v1/alt-text")
 async def api_generate_alt_text(request: Request):
     """Public API endpoint for alt-text generation. Requires X-API-Key header."""
     api_user = get_api_user(request)
+    api_key_id = api_user["api_key_id"]
+
+    # Rate limiting
+    rate_info = check_api_rate_limit(api_key_id)
 
     # Parse multipart form data
     form = await request.form()
-    file = form.get("file")
+    file = form.get("file") or form.get("image")
     if not file:
-        raise HTTPException(status_code=400, detail="Bitte eine Bilddatei als 'file' hochladen")
+        log_api_usage(api_key_id, api_user["id"], success=False,
+                      error_message="Kein Bild mitgeschickt")
+        raise HTTPException(status_code=400, detail="Bitte eine Bilddatei als 'file' oder 'image' hochladen")
 
     context_text = form.get("context", "")
+    language = form.get("language", "de")
     image_type = form.get("image_type")
 
     # Validate file
     filename = file.filename or "image.jpg"
     ext = os.path.splitext(filename)[1].lower()
     if ext not in IMAGE_EXTENSIONS:
+        log_api_usage(api_key_id, api_user["id"], success=False,
+                      error_message=f"Ungueltiges Format: {ext}")
         raise HTTPException(
             status_code=400,
-            detail="Nur Bilddateien erlaubt (JPG, PNG, GIF, SVG, WebP)"
+            detail="Nur Bilddateien erlaubt (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC)"
         )
 
     content = await file.read()
-    if len(content) > MAX_UPLOAD_SIZE:
-        raise HTTPException(status_code=413, detail="Datei zu gross")
+    image_size = len(content)
+    if image_size > 10 * 1024 * 1024:  # 10 MB limit for API
+        log_api_usage(api_key_id, api_user["id"], image_size_bytes=image_size,
+                      success=False, error_message="Bild zu gross")
+        raise HTTPException(status_code=413, detail="Bild zu gross. Maximum: 10 MB")
 
     # Save temporarily
     tmp_dir = os.path.join(UPLOAD_DIR, "api_tmp")
@@ -1490,34 +1553,248 @@ async def api_generate_alt_text(request: Request):
     with open(tmp_path, "wb") as f:
         f.write(content)
 
+    start_time = time.time()
     try:
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text_for_image, tmp_path, context_text, image_type
         )
-        return {
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        model_used = result.get("model_used", "mistral-small")
+
+        # Log successful usage
+        log_api_usage(api_key_id, api_user["id"],
+                      processing_time_ms=processing_time_ms,
+                      model_used=model_used,
+                      image_size_bytes=image_size, success=True)
+
+        response_data = {
             "alt_text": result.get("alt_text", ""),
+            "langbeschreibung": result.get("langbeschreibung", ""),
             "bildtyp": result.get("bildtyp", "unbekannt"),
             "konfidenz": result.get("konfidenz", "mittel"),
-            "langbeschreibung": result.get("langbeschreibung", ""),
-            "ist_dekorativ": result.get("ist_dekorativ", False),
+            "model_used": model_used,
+            "processing_time_ms": processing_time_ms,
         }
+        return JSONResponse(
+            content=response_data,
+            headers={
+                "X-RateLimit-Remaining-Minute": str(rate_info["minute_remaining"]),
+                "X-RateLimit-Remaining-Day": str(rate_info["day_remaining"]),
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        log_api_usage(api_key_id, api_user["id"],
+                      processing_time_ms=processing_time_ms,
+                      image_size_bytes=image_size, success=False,
+                      error_message=str(e)[:500])
+        raise HTTPException(status_code=500, detail="Interner Fehler bei der Alt-Text-Generierung")
     finally:
-        # Clean up temporary file
         try:
             os.remove(tmp_path)
         except Exception:
             pass
 
 
+@app.get("/api/api-usage-stats")
+async def api_usage_stats(user: dict = Depends(get_current_user)):
+    """Get API usage statistics for the current user."""
+    stats = get_api_usage_stats(user["id"])
+    return stats
+
+
+# ─── API Documentation ──────────────────────────────────────
+
+@app.get("/api/v1/docs", response_class=HTMLResponse)
+async def api_docs():
+    """Accessible API documentation page (WCAG 2.2 AA)."""
+    return """<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs API – Dokumentation</title>
+<style>
+:root { --primary: #1b2a4a; --accent: #e87722; --bg: #f8f9fa; --text: #1e293b; --muted: #64748b; --border: #e2e8f0; --code-bg: #1e293b; --code-text: #e2e8f0; }
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg); margin: 0; padding: 0; line-height: 1.6; }
+a { color: var(--accent); }
+a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.container { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+h1 { color: var(--primary); font-size: 1.8rem; margin-bottom: 0.5rem; }
+h1 span { color: var(--accent); }
+h2 { color: var(--primary); font-size: 1.3rem; margin-top: 2.5rem; padding-bottom: 0.3rem; border-bottom: 2px solid var(--accent); }
+h3 { color: var(--primary); font-size: 1.1rem; margin-top: 1.5rem; }
+.badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; }
+.badge-post { background: #16a34a; color: white; }
+.badge-get { background: #2563eb; color: white; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 1.2rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem; line-height: 1.5; }
+code { font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace; }
+p code, li code { background: #e2e8f0; color: var(--primary); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+th { background: var(--primary); color: white; font-weight: 600; }
+tr:nth-child(even) { background: rgba(0,0,0,0.02); }
+.note { padding: 1rem; background: #fff7ed; border-left: 4px solid var(--accent); border-radius: 0 4px 4px 0; margin: 1rem 0; }
+footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+@media (prefers-color-scheme: dark) {
+    :root { --bg: #0f172a; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; --code-bg: #1e293b; }
+    p code, li code { background: #334155; color: #e2e8f0; }
+    tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+    .note { background: #1c1917; }
+}
+</style>
+</head>
+<body>
+<main class="container" role="main">
+<h1><span>Inklu</span>Docs API</h1>
+<p style="color:var(--muted);">Version 1.0 &ndash; Alt-Text-Generierung fuer Bilder</p>
+
+<nav aria-label="Inhaltsverzeichnis">
+<h2 id="nav">Inhalt</h2>
+<ul>
+<li><a href="#auth">Authentifizierung</a></li>
+<li><a href="#endpoint">Endpoint</a></li>
+<li><a href="#request">Request</a></li>
+<li><a href="#response">Response</a></li>
+<li><a href="#errors">Fehler-Codes</a></li>
+<li><a href="#ratelimit">Rate-Limits</a></li>
+<li><a href="#examples">Beispiele</a></li>
+</ul>
+</nav>
+
+<h2 id="auth">Authentifizierung</h2>
+<p>Alle API-Anfragen erfordern einen gueltigen API-Schluessel im <code>X-API-Key</code> Header.</p>
+<p>API-Schluessel kannst du in der <a href="/app">InkluDocs-App</a> unter <strong>Einstellungen</strong> erstellen.</p>
+<pre><code>X-API-Key: idocs_deinSchluesselHier...</code></pre>
+
+<h2 id="endpoint">Endpoint</h2>
+<p><span class="badge badge-post">POST</span> <code>/api/v1/alt-text</code></p>
+<p>Generiert einen barrierefreien Alt-Text fuer ein hochgeladenes Bild.</p>
+
+<h2 id="request">Request</h2>
+<p>Content-Type: <code>multipart/form-data</code></p>
+
+<table>
+<caption class="sr-only">Request-Parameter</caption>
+<thead><tr><th scope="col">Parameter</th><th scope="col">Typ</th><th scope="col">Pflicht</th><th scope="col">Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>file</code></td><td>Datei</td><td>Ja</td><td>Bilddatei (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC). Max. 10 MB.</td></tr>
+<tr><td><code>context</code></td><td>Text</td><td>Nein</td><td>Umgebungstext fuer bessere Beschreibung (z.B. Bildunterschrift, Seitentitel).</td></tr>
+<tr><td><code>language</code></td><td>Text</td><td>Nein</td><td>Sprache des Alt-Texts. Standard: <code>de</code></td></tr>
+<tr><td><code>image_type</code></td><td>Text</td><td>Nein</td><td>Hinweis auf Bildtyp: <code>foto</code>, <code>diagramm</code>, <code>logo</code>, <code>icon</code>, <code>karte</code>, <code>screenshot</code>, <code>infografik</code>, <code>tabelle</code></td></tr>
+</tbody>
+</table>
+
+<h2 id="response">Response</h2>
+<p>Content-Type: <code>application/json</code></p>
+<pre><code>{
+  "alt_text": "Beschreibung des Bildes",
+  "langbeschreibung": "Ausfuehrliche Beschreibung...",
+  "bildtyp": "foto",
+  "konfidenz": "hoch",
+  "model_used": "mistral-small",
+  "processing_time_ms": 1234
+}</code></pre>
+
+<table>
+<caption class="sr-only">Response-Felder</caption>
+<thead><tr><th scope="col">Feld</th><th scope="col">Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>alt_text</code></td><td>Der generierte Alt-Text (kurz, fuer das alt-Attribut)</td></tr>
+<tr><td><code>langbeschreibung</code></td><td>Ausfuehrliche Beschreibung (fuer aria-describedby oder Langtext)</td></tr>
+<tr><td><code>bildtyp</code></td><td>Erkannter Bildtyp (foto, diagramm, logo, etc.)</td></tr>
+<tr><td><code>konfidenz</code></td><td>Vertrauen in die Erkennung: hoch, mittel, niedrig</td></tr>
+<tr><td><code>model_used</code></td><td>Verwendetes KI-Modell</td></tr>
+<tr><td><code>processing_time_ms</code></td><td>Verarbeitungszeit in Millisekunden</td></tr>
+</tbody>
+</table>
+
+<h2 id="errors">Fehler-Codes</h2>
+<table>
+<caption class="sr-only">HTTP-Fehler-Codes</caption>
+<thead><tr><th scope="col">Code</th><th scope="col">Bedeutung</th></tr></thead>
+<tbody>
+<tr><td><code>400</code></td><td>Kein Bild mitgeschickt oder ungueltiges Format</td></tr>
+<tr><td><code>401</code></td><td>Ungueltiger oder fehlender API-Key</td></tr>
+<tr><td><code>413</code></td><td>Bild zu gross (max. 10 MB)</td></tr>
+<tr><td><code>429</code></td><td>Rate-Limit ueberschritten</td></tr>
+<tr><td><code>500</code></td><td>Interner Serverfehler</td></tr>
+</tbody>
+</table>
+
+<h2 id="ratelimit">Rate-Limits</h2>
+<p>Pro API-Schluessel gelten folgende Limits:</p>
+<ul>
+<li><strong>60 Anfragen pro Minute</strong></li>
+<li><strong>1.000 Anfragen pro Tag</strong></li>
+</ul>
+<p>Die verbleibenden Anfragen werden in Response-Headern mitgeteilt:</p>
+<pre><code>X-RateLimit-Remaining-Minute: 58
+X-RateLimit-Remaining-Day: 997</code></pre>
+<p>Bei Ueberschreitung erhaeltst du HTTP <code>429</code> mit einem <code>Retry-After</code> Header.</p>
+
+<h2 id="examples">Beispiele</h2>
+
+<h3>Einfacher Aufruf mit curl</h3>
+<pre><code>curl -X POST https://inkludocs.inklutec.de/api/v1/alt-text \\
+  -H "X-API-Key: idocs_deinSchluessel" \\
+  -F "file=@foto.jpg"</code></pre>
+
+<h3>Mit Kontext fuer bessere Ergebnisse</h3>
+<pre><code>curl -X POST https://inkludocs.inklutec.de/api/v1/alt-text \\
+  -H "X-API-Key: idocs_deinSchluessel" \\
+  -F "file=@diagramm.png" \\
+  -F "context=Jahresbericht 2025, Kapitel Umsatzentwicklung" \\
+  -F "image_type=diagramm"</code></pre>
+
+<h3>Python-Beispiel</h3>
+<pre><code>import requests
+
+response = requests.post(
+    "https://inkludocs.inklutec.de/api/v1/alt-text",
+    headers={"X-API-Key": "idocs_deinSchluessel"},
+    files={"file": open("bild.jpg", "rb")},
+    data={"context": "Produktseite eines Online-Shops"},
+)
+
+data = response.json()
+print(data["alt_text"])</code></pre>
+
+<h3>JavaScript/Node.js-Beispiel</h3>
+<pre><code>const form = new FormData();
+form.append('file', fs.createReadStream('bild.jpg'));
+form.append('context', 'Blog-Artikel ueber Barrierefreiheit');
+
+const res = await fetch('https://inkludocs.inklutec.de/api/v1/alt-text', {
+    method: 'POST',
+    headers: { 'X-API-Key': 'idocs_deinSchluessel' },
+    body: form,
+});
+
+const data = await res.json();
+console.log(data.alt_text);</code></pre>
+
+<div class="note" role="note">
+<p><strong>Hinweis:</strong> Die API generiert Alt-Texte mit der gleichen KI-Pipeline wie die Web-App. Fuer beste Ergebnisse sende moeglichst viel Kontext im <code>context</code>-Feld mit (z.B. Seitentitel, umgebender Text, Bildunterschrift).</p>
+</div>
+
+<footer>
+<p>InkluDocs API v1.0 &ndash; <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a> &ndash; <a href="/">Zurueck zu InkluDocs</a></p>
+</footer>
+</main>
+</body>
+</html>"""
+
 
 # ─── News / Neuigkeiten ─────────────────────────────────────
 
 NEUIGKEITEN = [
-    {"datum": "27.03.2026", "text": "Staging-Umgebung eingerichtet – neue Features werden jetzt sicher getestet"},
+    {"datum": "27.03.2026", "text": "Neu: Dateien koennen jetzt per Drag and Drop hochgeladen werden"},
+    {"datum": "27.03.2026", "text": "Neu: Neuigkeiten-Bereich eingefuehrt – hier informieren wir ueber Updates"},
     {"datum": "27.03.2026", "text": "Farbdesign ueberarbeitet – besserer Kontrast fuer Buttons und Texte"},
-    {"datum": "25.03.2026", "text": "Website-Scanner verbessert – mehr Websites werden jetzt unterstuetzt"},
-    {"datum": "25.03.2026", "text": "Bilder ohne Alt-Text werden nicht mehr uebersprungen"},
-    {"datum": "24.03.2026", "text": "Verbesserte Texterkennung bei Tabellen und Unterschriften"},
 ]
 
 @app.get("/api/news")

@@ -31,11 +31,11 @@
         </div>
     </footer>
 
-    <div id="newsPanel" class="news-panel" role="dialog" aria-label="Neuigkeiten" hidden>
+    <div id="newsPanel" class="news-panel" role="dialog" aria-label="Neuigkeiten" aria-modal="true" hidden>
         <div class="news-panel-content">
             <div class="news-panel-header">
                 <h2>Neuigkeiten</h2>
-                <button id="newsClose" type="button">Schliessen</button>
+                <button id="newsClose" type="button">Neuigkeiten schliessen</button>
             </div>
             <div id="newsList" class="news-list"></div>
         </div>
@@ -598,9 +598,9 @@
                 <h3>Kontoinformationen</h3>
                 <p style="margin-top:0.5rem;color:var(--text-muted);">Angemeldet als: ${currentUser.display_name} (${currentUser.email})</p>
             </div>
-            ${currentUser.is_admin ? `<div class="card" style="margin-top:1rem;">
+            <div class="card" style="margin-top:1rem;">
                 <h3 style="margin-bottom:1rem;">API-Schluessel</h3>
-                <p style="margin-bottom:1rem;color:var(--text-muted);">Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren.</p>
+                <p style="margin-bottom:1rem;color:var(--text-muted);">Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren. <a href="/api/v1/docs" target="_blank">API-Dokumentation</a></p>
                 <div id="apiKeyList" aria-live="polite"></div>
                 <div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                     <label for="newKeyName" class="sr-only">Name fuer neuen API-Schluessel</label>
@@ -608,7 +608,13 @@
                     <button class="btn btn-primary" onclick="createApiKey()">Erstellen</button>
                 </div>
                 <div id="newKeyResult" role="status" aria-live="polite" style="margin-top:0.5rem;"></div>
-            </div>` : ''}
+            </div>
+            <div class="card" style="margin-top:1rem;">
+                <h3 style="margin-bottom:1rem;">API-Nutzung</h3>
+                <div id="apiUsageStats" aria-live="polite">
+                    <p style="color:var(--text-muted);">Statistik wird geladen...</p>
+                </div>
+            </div>
         `;
 
         document.getElementById('changePwForm').addEventListener('submit', async (e) => {
@@ -641,6 +647,37 @@
         });
 
         loadApiKeys();
+        loadApiUsageStats();
+    }
+
+    async function loadApiUsageStats() {
+        const el = document.getElementById('apiUsageStats');
+        if (!el) return;
+        try {
+            const res = await fetch('/api/api-usage-stats');
+            if (!res.ok) { el.innerHTML = '<p style="color:var(--text-muted);">Keine Statistik verfuegbar.</p>'; return; }
+            const s = await res.json();
+            el.innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;">
+                    <div style="text-align:center;padding:0.8rem;background:var(--bg-card,#f5f5f5);border-radius:8px;">
+                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary,#1b2a4a);">${s.total_calls}</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);">Gesamt</div>
+                    </div>
+                    <div style="text-align:center;padding:0.8rem;background:var(--bg-card,#f5f5f5);border-radius:8px;">
+                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary,#1b2a4a);">${s.calls_this_week}</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);">Diese Woche</div>
+                    </div>
+                    <div style="text-align:center;padding:0.8rem;background:var(--bg-card,#f5f5f5);border-radius:8px;">
+                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary,#1b2a4a);">${s.calls_this_month}</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);">Dieser Monat</div>
+                    </div>
+                    <div style="text-align:center;padding:0.8rem;background:var(--bg-card,#f5f5f5);border-radius:8px;">
+                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary,#1b2a4a);">${s.last_call ? new Date(s.last_call).toLocaleDateString('de-DE') : '–'}</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);">Letzter Aufruf</div>
+                    </div>
+                </div>
+            `;
+        } catch(e) { el.innerHTML = '<p style="color:var(--text-muted);">Statistik konnte nicht geladen werden.</p>'; }
     }
 
     async function loadApiKeys() {
@@ -649,11 +686,11 @@
         const res = await fetch('/api/api-keys');
         if (!res.ok) return;
         const data = await res.json();
-        if (!data.keys || data.keys.length === 0) {
+        if (!data.api_keys || data.api_keys.length === 0) {
             list.innerHTML = '<p style="color:var(--text-muted);">Keine API-Schluessel vorhanden.</p>';
             return;
         }
-        list.innerHTML = data.keys.map(k => `
+        list.innerHTML = data.api_keys.map(k => `
             <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border,#eee);">
                 <div>
                     <strong>${k.name}</strong>
@@ -678,7 +715,7 @@
         });
         if (res.ok) {
             const data = await res.json();
-            result.innerHTML = '<div style="padding:0.8rem;background:var(--bg-card,#f9f9f9);border:1px solid var(--border);border-radius:4px;"><strong>Neuer Schluessel (nur einmal sichtbar!):</strong><br><code style="word-break:break-all;font-size:0.9rem;">' + data.key + '</code></div>';
+            result.innerHTML = '<div style="padding:0.8rem;background:var(--bg-card,#f9f9f9);border:1px solid var(--border);border-radius:4px;"><strong>Neuer Schluessel (nur einmal sichtbar!):</strong><br><code style="word-break:break-all;font-size:0.9rem;">' + data.api_key + '</code></div>';
             nameInput.value = '';
             announce('API-Schluessel erstellt. Bitte jetzt kopieren.');
             loadApiKeys();

@@ -85,6 +85,22 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id);
         CREATE INDEX IF NOT EXISTS idx_images_project ON images(project_id);
         CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
+        CREATE TABLE IF NOT EXISTS api_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            api_key_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            timestamp TEXT DEFAULT (datetime('now')),
+            processing_time_ms INTEGER,
+            model_used TEXT,
+            image_size_bytes INTEGER,
+            success INTEGER DEFAULT 1,
+            error_message TEXT,
+            FOREIGN KEY (api_key_id) REFERENCES api_keys(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_api_usage_key ON api_usage(api_key_id);
+        CREATE INDEX IF NOT EXISTS idx_api_usage_timestamp ON api_usage(timestamp);
+        CREATE INDEX IF NOT EXISTS idx_api_usage_user ON api_usage(user_id);
     """)
     conn.commit()
 
@@ -332,3 +348,61 @@ def delete_api_key(user_id: int, key_id: int) -> bool:
     deleted = cursor.rowcount > 0
     conn.close()
     return deleted
+
+
+# ─── API Usage Tracking ──────────────────────────────────────
+
+def log_api_usage(api_key_id: int, user_id: int, processing_time_ms: int = 0,
+                  model_used: str = "", image_size_bytes: int = 0,
+                  success: bool = True, error_message: str = ""):
+    """Log a single API call for usage tracking."""
+    conn = get_db()
+    conn.execute(
+        """INSERT INTO api_usage (api_key_id, user_id, processing_time_ms, model_used,
+           image_size_bytes, success, error_message)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (api_key_id, user_id, processing_time_ms, model_used, image_size_bytes,
+         1 if success else 0, error_message)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_api_usage_stats(user_id: int) -> dict:
+    """Get usage statistics for a user across all their API keys."""
+    conn = get_db()
+
+    total = conn.execute(
+        "SELECT COUNT(*) FROM api_usage WHERE user_id = ?", (user_id,)
+    ).fetchone()[0]
+
+    week = conn.execute(
+        """SELECT COUNT(*) FROM api_usage
+           WHERE user_id = ? AND timestamp >= date('now', 'weekday 1', '-7 days')""",
+        (user_id,)
+    ).fetchone()[0]
+
+    month = conn.execute(
+        """SELECT COUNT(*) FROM api_usage
+           WHERE user_id = ? AND timestamp >= date('now', 'start of month')""",
+        (user_id,)
+    ).fetchone()[0]
+
+    last_row = conn.execute(
+        "SELECT timestamp FROM api_usage WHERE user_id = ? ORDER BY timestamp DESC LIMIT 1",
+        (user_id,)
+    ).fetchone()
+    last_call = last_row[0] if last_row else None
+
+    success_count = conn.execute(
+        "SELECT COUNT(*) FROM api_usage WHERE user_id = ? AND success = 1", (user_id,)
+    ).fetchone()[0]
+
+    conn.close()
+    return {
+        "total_calls": total,
+        "calls_this_week": week,
+        "calls_this_month": month,
+        "last_call": last_call,
+        "success_rate": round(success_count / total * 100, 1) if total > 0 else 0,
+    }
