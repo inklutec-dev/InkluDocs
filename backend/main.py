@@ -26,7 +26,7 @@ from database import (
     init_db, get_db, create_user, verify_user, get_user_by_email, get_user_by_id,
     create_password_reset_token, verify_reset_token, reset_password,
     list_all_users, update_user_active, delete_user_data, admin_reset_password,
-    create_api_key, verify_api_key, list_api_keys, delete_api_key,
+    create_api_key, verify_api_key, list_api_keys, delete_api_key, rename_api_key,
     log_api_usage, get_api_usage_stats,
     create_email_change_token, confirm_email_change,
     create_api_result, get_api_result, update_api_result,
@@ -638,6 +638,17 @@ async def api_create_key(request: Request, user: dict = Depends(get_current_user
     }
 
 
+@app.put("/api/api-keys/{key_id}")
+async def api_rename_key(key_id: int, request: Request, user: dict = Depends(get_current_user)):
+    data = await request.json()
+    new_name = data.get("name", "").strip()
+    if not new_name:
+        raise HTTPException(status_code=400, detail="Bitte einen Namen eingeben")
+    if not rename_api_key(user["id"], key_id, new_name):
+        raise HTTPException(status_code=404, detail="API-Key nicht gefunden")
+    return {"ok": True}
+
+
 @app.delete("/api/api-keys/{key_id}")
 async def api_delete_key(key_id: int, user: dict = Depends(get_current_user)):
     if not delete_api_key(user["id"], key_id):
@@ -1167,9 +1178,15 @@ async def _process_project(project_id: int, user_id: int):
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
 
+        # v2.2: Pass width, height, original_alt to pipeline
+        img_width = img["width"] if img["width"] else 0
+        img_height = img["height"] if img["height"] else 0
+        img_original_alt = img["original_alt"] if img["original_alt"] else ""
+
         # First pass: general prompt for type detection + alt-text
         result = await asyncio.get_event_loop().run_in_executor(
-            None, generate_alt_text, img["image_path"], img["context_text"], None
+            None, generate_alt_text, img["image_path"], img["context_text"], None,
+            img_width, img_height, img_original_alt
         )
 
         # Second pass: if complex type detected, re-generate with specialized prompt
@@ -1180,7 +1197,8 @@ async def _process_project(project_id: int, user_id: int):
 
         if is_complex_type(detected_type) and not langbeschreibung:
             specialized_result = await asyncio.get_event_loop().run_in_executor(
-                None, generate_alt_text, img["image_path"], img["context_text"], detected_type
+                None, generate_alt_text, img["image_path"], img["context_text"], detected_type,
+                img_width, img_height, img_original_alt
             )
             if specialized_result.get("langbeschreibung"):
                 langbeschreibung = specialized_result["langbeschreibung"]
@@ -1347,8 +1365,14 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         if want_long_desc and not effective_type:
             effective_type = img["image_type"] if img["image_type"] != "unknown" else None
 
+        # v2.2: Pass dimensions and original alt
+        regen_width = img["width"] if img["width"] else 0
+        regen_height = img["height"] if img["height"] else 0
+        regen_original_alt = img["original_alt"] if img["original_alt"] else ""
+
         result = await asyncio.get_event_loop().run_in_executor(
-            None, generate_alt_text, img["image_path"], img["context_text"], effective_type
+            None, generate_alt_text, img["image_path"], img["context_text"], effective_type,
+            regen_width, regen_height, regen_original_alt
         )
 
         langbeschreibung = result.get("langbeschreibung", "")
@@ -1693,8 +1717,17 @@ async def api_generate_alt_text(request: Request):
 
     start_time = time.time()
     try:
+        # v2.2: Get image dimensions for thumbnail guard
+        try:
+            from PIL import Image as PILImage
+            with PILImage.open(tmp_path) as _pil_img:
+                api_img_width, api_img_height = _pil_img.size
+        except Exception:
+            api_img_width, api_img_height = 0, 0
+
         result = await asyncio.get_event_loop().run_in_executor(
-            None, generate_alt_text_for_image, tmp_path, context_text, image_type
+            None, generate_alt_text_for_image, tmp_path, context_text, image_type,
+            api_img_width, api_img_height, ""
         )
         processing_time_ms = int((time.time() - start_time) * 1000)
         model_used = result.get("model_used", "mistral-small")
@@ -2064,6 +2097,8 @@ console.log(data.alt_text);</code></pre>
 # ─── News / Neuigkeiten ─────────────────────────────────────
 
 NEUIGKEITEN = [
+    {"datum": "30.03.2026", "text": "Neu: API-Schluessel koennen jetzt in den Einstellungen erstellt und verwaltet werden (Testphase)"},
+    {"datum": "30.03.2026", "text": "Alternativtext-Generierung optimiert – verbesserte Erkennung von Logos, funktionalen Elementen und verlinkten Bildern"},
     {"datum": "27.03.2026", "text": "Neu: Dateien koennen jetzt per Drag and Drop hochgeladen werden"},
     {"datum": "27.03.2026", "text": "Neu: Neuigkeiten-Bereich eingefuehrt – hier informieren wir ueber Updates"},
     {"datum": "27.03.2026", "text": "Farbdesign ueberarbeitet – besserer Kontrast fuer Buttons und Texte"},

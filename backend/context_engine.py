@@ -1,9 +1,9 @@
 """
 Context Engine for InkluDocs Alt-Text Generation.
-Version 2.0 – Evidenz-Stufenmodell (21.03.2026)
+Version 2.2 – Anti-Halluzination + Funktional + Thumbnail-Guard (30.03.2026)
 
 Pipeline:
-  Stufe 1 (Qwen, lokal): Klassifikation (Bildtyp + dekorativ + konfidenz)
+  Stufe 1 (Qwen, lokal): Klassifikation (Bildtyp + dekorativ + konfidenz + original_alt_brauchbar)
   Stufe 2 (Mistral, API): Alt-Text-Generierung mit spezialisierten Prompts
   Fallback: Qwen generiert wenn Mistral fehlschlaegt
 
@@ -11,6 +11,13 @@ Modi (PIPELINE_MODE Umgebungsvariable):
   mistral_primary: Qwen klassifiziert, Mistral generiert (Default, beste Qualitaet)
   hybrid: Qwen macht einfache Bilder, Mistral die komplexen (spart Kosten)
   qwen_only: Alles ueber Qwen (Fallback, niedrigste Kosten)
+
+v2.2 Changes:
+  - New category "funktional" for navigation/UI elements
+  - Thumbnail guard: images < 200px get simplified prompts
+  - Improvement mode: good original alt-texts are preserved/improved, not replaced
+  - Anti-hallucination: stricter rules for context usage
+  - Dekorativ validation: safety net to catch misclassified functional elements
 """
 
 import os
@@ -18,15 +25,25 @@ import re
 
 PIPELINE_MODE = os.environ.get("PIPELINE_MODE", "mistral_primary")
 
-# ─── Klassifikations-Prompt (Stufe 1, Qwen) ──────────────────
+# ─── Thumbnail-Schwellwerte ────────────────────────────────────
+MIN_DETAIL_WIDTH = 200
+MIN_DETAIL_HEIGHT = 200
+
+# ─── Klassifikations-Prompt (Stufe 1, Qwen) v2.2 ─────────────
 CLASSIFICATION_PROMPT = """/no_think
 Klassifiziere dieses Bild. Antworte NUR mit diesem JSON:
-{{"bildtyp": "foto|diagramm|tabelle|strukturformel|logo|icon|karte|screenshot|infografik|dekorativ", "ist_dekorativ": true|false, "konfidenz": "hoch|mittel|niedrig"}}
+{{"bildtyp": "foto|diagramm|tabelle|strukturformel|logo|icon|funktional|karte|screenshot|infografik|dekorativ", "ist_dekorativ": true|false, "konfidenz": "hoch|mittel|niedrig", "original_alt_brauchbar": true|false}}
+
+Bildgroesse: {width}x{height} Pixel
+Originaler Alt-Text: {original_alt}
 
 Regeln:
 - dekorativ = rein abstrakte Formen, Farbverlaeufe, Trennlinien, Schmuckelemente ohne jede Information
 - Wenn Text, Personen, Daten, Diagramme oder konkrete Objekte sichtbar sind: NICHT dekorativ
-- icon = einzelnes kleines Symbol mit funktionaler Bedeutung (Lupe, Hamburger-Menue, Pfeil, Warenkorb)
+- icon = einzelnes kleines Symbol mit funktionaler Bedeutung (Lupe, Hamburger-Menue, Warenkorb)
+- funktional = Navigationselemente mit Zustandsinformation: Paginierungspfeile, Vor/Zurueck-Buttons, Fortschrittsanzeigen, Breadcrumbs. Diese sind NICHT dekorativ, auch wenn sie einfache Grafiken sind. Hinweis: Wenn der originale Alt-Text eine Funktion beschreibt ("Keine vorherige Seite", "Naechste Seite", "Zurueck"), ist es fast immer funktional.
+- logo = erkennbare Marken-, Organisations- oder Lizenzlogos (auch Creative Commons, Zertifizierungssiegel, Guetesiegel)
+- original_alt_brauchbar = true wenn der originale Alt-Text bereits eine sinnvolle, spezifische Beschreibung enthaelt (NICHT nur "Bild", "Foto", "Grafik" oder leer). Ein brauchbarer Alt-Text beschreibt konkret was zu sehen ist oder welche Funktion das Element hat.
 - konfidenz: hoch = eindeutig, mittel = wahrscheinlich, niedrig = unklar
 
 Kontext: {context}"""
@@ -37,6 +54,10 @@ SPECIALIZED_GENERATION_PROMPTS = {
 
     "foto": """Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2.
 Dieses Bild ist ein FOTO.
+Bildgroesse: {width}x{height} Pixel
+
+{thumbnail_block}
+{verbesserung_block}
 
 DEIN AUFTRAG: Vermittle nicht was das Bild ZEIGT, sondern was es BEDEUTET. Was wuerde ein Sehender sofort denken und wissen? Genau das muss der blinde Nutzer erfahren.
 
@@ -45,12 +66,21 @@ EVIDENZ-BASIERTE IDENTIFIKATION:
 - STUFE 2 (ERLAUBT): Lesbarer Text oder eindeutiges Logo + Allgemeinwissen → benennen. Beispiel: Inschrift "EQUAL JUSTICE UNDER LAW" → "Supreme Court der USA". Mercedes-Stern sichtbar → "Mercedes-Benz". Aber Fahrzeugmodell NUR wenn als Text lesbar oder aus Kontext eindeutig.
 - STUFE 3 (VERBOTEN): Kein Text, kein Logo, nur visueller Eindruck → allgemein beschreiben. "Ein industrielles Steuerungsmodul", NICHT "Siemens". "Eine Person", NICHT einen Namen raten.
 
+ANTI-HALLUZINATION – KONTEXTNUTZUNG:
+- Der Seitenkontext (Titel, Ueberschriften, Meta-Beschreibung) hilft dir, das THEMA zu verstehen.
+- Der Kontext erlaubt dir NICHT, Details ins Bild hineinzuinterpretieren die du nicht siehst.
+- VERBOTEN: Aus dem Kontext "Bundesanstalt fuer Landwirtschaft" zu schliessen, dass ein unscharfes Bild "nachhaltige Landwirtschaft symbolisiert".
+- ERLAUBT: Aus dem Kontext zu verstehen, dass ein Feld auf einer Landwirtschaftsseite thematisch zur Seite gehoert.
+- FAUSTREGEL: Wenn du einen Bildinhalt nur wegen des Kontexts beschreibst, aber nicht weil du ihn SIEHST – lass ihn weg.
+
+VERBOTENE FORMULIERUNGEN: Verwende NICHT 'symbolisiert', 'steht symbolisch fuer', 'repraesentiert', 'steht fuer', 'thematisch passend zu', 'im Kontext von', 'vermutlich im Zusammenhang mit'. Wenn du zu diesen Formulierungen greifst, beschreibst du den Kontext statt das Bild – formuliere um und beschreibe was du SIEHST.
+
 REGELN:
 - KEIN Praefix "Foto – ". Starte direkt mit der Erkenntnis.
 - Personen: Name und Funktion NUR aus dem Kontext oder von lesbaren Namensschildern. KEIN Alter nennen.
 - Gebaeude/Orte: Benennen wenn Evidenz vorhanden (Schild, Inschrift, Kontext). Sonst allgemein.
 - Gruppen: Ungefaehre Anzahl, Anlass, Setting – was PASSIERT hier?
-- Verlinkte Bilder: Wenn [Link-Ziel] im Kontext → beschreibe die FUNKTION des Links, nicht das Bild.
+- VERLINKTE BILDER: Wenn [Link-Ziel] im Kontext steht → der Alt-Text MUSS das Link-Ziel als Information enthalten. Format: "Beschreibung (verweist auf: Link-Ziel)". Das ist fuer Screenreader-Nutzer essentiell zur Navigation.
 - KONTEXT-IDENTIFIKATION (WICHTIG): Wenn der Kontext den NAMEN oder die FUNKTION einer Person nennt, MUSS dieser Name im Alt-Text stehen! Der Alt-Text muss allein verstaendlich sein – der Nutzer sieht den Kontext nicht.
 - ANTI-REDUNDANZ: Wiederhole keine BESCHREIBENDEN Details die der Kontext bereits nennt. Aber Namen, Funktionen und Identitaeten IMMER nennen – sie sind die Kerninfo.
 - Unterschriften: Verwende den GEDRUCKTEN Namen neben oder unter der Unterschrift. Versuche NIEMALS die Handschrift selbst zu entziffern oder einen Namen daraus abzulesen. Handschriftliche Unterschriften sind per Definition nicht maschinenlesbar.
@@ -61,7 +91,7 @@ Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": "..."}}
 
 alt_text: Max 250 Zeichen. Die Kernaussage – was ein Sehender sofort erkennt und denkt.
-langbeschreibung: Ergaenzende Details die fuer tieferes Verstaendnis wichtig sind, max 1000 Zeichen. Leer lassen wenn der alt_text bereits alles Wesentliche enthaelt.
+langbeschreibung: Ergaenzende Details die den Alt-Text vertiefen. Max 800 Zeichen. LEER LASSEN wenn der Alt-Text bereits alles Wesentliche sagt oder wenn das Bild zu klein fuer weitere Details ist.
 
 Kontext: {context}""",
 
@@ -181,6 +211,11 @@ EVIDENZ-BASIERTE IDENTIFIKATION:
 - STUFE 2: Logo ist ein weltweit eindeutiges Symbol (z.B. Apfel mit Biss = Apple, Stern im Kreis = Mercedes-Benz) UND der Kontext stuetzt die Identifikation → benennen.
 - STUFE 3: Logo nicht identifizierbar → "Logo – Text nicht lesbar" oder "Logo eines nicht identifizierbaren Unternehmens".
 
+LIZENZ- UND ZERTIFIZIERUNGSLOGOS:
+- Creative Commons Logos: Exakt benennen mit Lizenztyp. Z.B. "Logo Creative Commons BY-ND" oder "Logo Creative Commons BY-SA 4.0".
+- Zertifizierungssiegel (Bio, Fair Trade, TUeV etc.): Name des Siegels + ggf. Standard.
+- Diese sind NICHT dekorativ – sie tragen rechtliche oder qualitaetsbezogene Information.
+
 REGELN:
 - Format: "Logo " + Name. Optional + Slogan wenn lesbar. NICHTS weiter.
 - KEINE visuelle Beschreibung. Keine Wappen, Tiere, Formen, Farben.
@@ -219,6 +254,9 @@ Kontext: {context}""",
 
     "infografik": """Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2.
 Dieses Bild ist eine INFOGRAFIK.
+Bildgroesse: {width}x{height} Pixel
+
+{thumbnail_block_infografik}
 
 DEIN AUFTRAG: Uebersetze die visuell dargestellte WISSENSSTRUKTUR in Text. Was erklaert diese Infografik? Welcher Prozess, welche Hierarchie, welche Fakten werden vermittelt? Beschreibe die LOGIK, nicht das Layout.
 
@@ -230,7 +268,7 @@ REGELN:
 - alt_text: "Infografik – " + Hauptthema + zentrale Kernaussage. Max 350 Zeichen.
 - langbeschreibung: Die inhaltlichen Stationen oder Fakten in logischer Reihenfolge. Beschreibe Beziehungen ("A fuehrt zu B", "X umfasst Y"), NICHT visuelles Layout ("oben links steht", "ein Pfeil zeigt auf"). Fliesstext, max 1500 Zeichen.
 - OCR-Text als primaere Quelle nutzen.
-- ANTI-HALLUZINATION: Keine Zusammenhaenge erfinden die nicht im Bild stehen.
+- ANTI-HALLUZINATION VERSCHAERFT: Beschreibe NUR Inhalte die du im Bild LESEN oder ERKENNEN kannst. Der Seitenkontext verraet dir das Themenfeld, aber NICHT die konkreten Inhalte der Infografik. Wenn du Zahlen, Begriffe oder Zusammenhaenge nicht im Bild siehst, nenne sie NICHT.
 - Sprache: Deutsch. Fachbegriffe aus dem Bild exakt uebernehmen.
 
 Antworte NUR mit diesem JSON:
@@ -287,6 +325,24 @@ Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": ""}}
 
 Kontext: {context}""",
+
+    "funktional": """Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2.
+Dieses Bild ist ein FUNKTIONALES UI-ELEMENT (Navigation, Paginierung, Button o.ae.).
+
+DEIN AUFTRAG: Beschreibe die FUNKTION, nicht das Aussehen. Ein Screenreader-Nutzer muss wissen: Was passiert wenn ich dieses Element aktiviere? Was ist der aktuelle Zustand?
+
+REGELN:
+- Beschreibe die Funktion: "Naechste Seite", "Zurueck zur Uebersicht", "Menue oeffnen"
+- Wenn ein Zustand sichtbar ist: "Keine vorherige Seite" (ausgegraut/deaktiviert), "Seite 3 von 5"
+- KEIN visuelles Design beschreiben ("grauer Pfeil nach links")
+- KURZ: Funktionale Alt-Texte sind typischerweise 2-6 Woerter
+- langbeschreibung ist bei funktionalen Elementen IMMER leer
+
+Bestehender Alt-Text: {original_alt}
+Kontext: {context}
+
+Antworte NUR mit diesem JSON:
+{{"alt_text": "...", "langbeschreibung": ""}}""",
 
     "dekorativ": """Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2.
 Dieses Bild wurde als DEKORATIV vorklassifiziert. Deine Aufgabe: FINALE PRUEFUNG.
@@ -490,6 +546,21 @@ REGELN:
 
 Kontext: {context}""",
 
+    "funktional": """/no_think
+Dieses Bild ist ein FUNKTIONALES UI-ELEMENT (Navigation, Paginierung, Button).
+
+Antworte NUR mit diesem JSON:
+{{"bildtyp": "funktional", "alt_text": "...", "ist_dekorativ": false, "konfidenz": "hoch|mittel|niedrig"}}
+
+REGELN:
+- Beschreibe NUR die FUNKTION: "Naechste Seite", "Zurueck", "Menue oeffnen".
+- Wenn ein Zustand sichtbar ist: "Keine vorherige Seite" (deaktiviert).
+- KEIN visuelles Design ("grauer Pfeil").
+- KURZ: 2-6 Woerter.
+- Bestehender Alt-Text: {original_alt}
+
+Kontext: {context}""",
+
     "dekorativ": """/no_think
 Dieses Bild wurde als DEKORATIV vorklassifiziert. Pruefe FINAL:
 
@@ -556,6 +627,48 @@ MISTRAL_TYPES = {"diagramm", "tabelle", "karte", "strukturformel", "infografik"}
 # Complex types that should include langbeschreibung
 COMPLEX_TYPES = {"diagramm", "karte", "tabelle", "infografik", "strukturformel", "screenshot"}
 
+
+def is_thumbnail(width: int, height: int) -> bool:
+    """Check if an image is too small for detailed analysis."""
+    return (width > 0 and height > 0 and
+            (width < MIN_DETAIL_WIDTH or height < MIN_DETAIL_HEIGHT))
+
+
+def validate_dekorativ(classification: dict, original_alt: str = "", width: int = 0, height: int = 0) -> str:
+    """Safety net: Verify that 'dekorativ' classification is correct.
+    Returns corrected bildtyp if misclassified.
+
+    v2.2: Catches functional elements and license logos that Qwen misclassifies as decorative.
+    """
+    if classification.get("bildtyp") != "dekorativ":
+        return classification["bildtyp"]
+
+    alt_lower = (original_alt or "").strip().lower()
+
+    # Check 1: Functional original alt-text → not decorative
+    funktionale_keywords = [
+        "seite", "navigation", "nächste", "naechste", "vorherige",
+        "zurück", "zurueck", "weiter", "menü", "menue",
+        "öffnen", "oeffnen", "schließen", "schliessen",
+        "suche", "filter", "sortier"
+    ]
+    if any(kw in alt_lower for kw in funktionale_keywords):
+        return "funktional"
+
+    # Check 2: License/certification keywords → logo
+    lizenz_keywords = [
+        "creative commons", "cc by", "cc-by", "lizenz", "license",
+        "copyright", "zertifizier", "siegel", "gütesiegel", "guetesiegel"
+    ]
+    if any(kw in alt_lower for kw in lizenz_keywords):
+        return "logo"
+
+    # Check 3: Low confidence → safer to treat as icon than empty alt
+    if classification.get("konfidenz") == "niedrig":
+        return "icon"
+
+    return "dekorativ"
+
 # Patterns for detecting image types from surrounding text
 _TYPE_PATTERNS = {
     "diagramm": [
@@ -594,28 +707,152 @@ _TYPE_PATTERNS = {
 }
 
 
-def get_classification_prompt(context_text: str = "") -> str:
-    """Return the classification prompt for Qwen (Stufe 1)."""
+def get_classification_prompt(context_text: str = "", width: int = 0, height: int = 0, original_alt: str = "") -> str:
+    """Return the classification prompt for Qwen (Stufe 1).
+    v2.2: Now includes image dimensions and original alt-text for better classification.
+    """
     context = context_text[:400] if context_text else "Kein Kontext."
-    return CLASSIFICATION_PROMPT.format(context=context)
+    alt = original_alt.strip() if original_alt else "(kein Alt-Text vorhanden)"
+    return CLASSIFICATION_PROMPT.format(
+        context=context,
+        width=width or "unbekannt",
+        height=height or "unbekannt",
+        original_alt=alt
+    )
 
 
-def get_generation_prompt(bildtyp: str, context_text: str = "") -> str:
+# v2.2.1: Postfilter – removes context interpretations from alt-texts
+KONTEXT_PHRASEN = [
+    r',?\s*symbolisiert\s+.*$',
+    r',?\s*steht symbolisch für\s+.*$',
+    r',?\s*repräsentiert\s+.*$',
+    r',?\s*thematisch passend zu\s+.*$',
+    r',?\s*(?:vermutlich\s+)?im Kontext (?:von|der|des)\s+.*$',
+    r',?\s*(?:vermutlich\s+)?im Zusammenhang mit\s+.*$',
+    r',?\s*passend zu den (?:Themen|Inhalten)\s+.*$',
+    r',?\s*was auf .* hindeutet\.?$',
+    r',?\s*typisch für\s+.*$',
+]
+
+def clean_alt_text(alt_text: str) -> str:
+    """Entfernt Kontextinterpretationen am Satzende.
+    Laeuft NACH jeder Alt-Text-Generierung, unabhaengig vom Pfad."""
+    if not alt_text:
+        return alt_text
+    cleaned = alt_text
+    for pattern in KONTEXT_PHRASEN:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+    cleaned = cleaned.rstrip(' ,.')
+    if cleaned and not cleaned.endswith(')'):
+        cleaned += '.'
+    return cleaned if cleaned else alt_text
+
+
+def extract_link_target(original_alt: str) -> str:
+    """Extract link target from original alt-text if present.
+    Returns the link target string or empty string.
+    Patterns: '(verweist auf: ...)', '(Link: ...)', '(Link zu: ...)'
+    """
+    if not original_alt:
+        return ""
+    match = re.search(r'\(verweist auf:\s*(.+?)\)$', original_alt.strip())
+    if match:
+        return match.group(1).strip()
+    match = re.search(r'\(Link(?:\s+zu)?:\s*(.+?)\)$', original_alt.strip())
+    if match:
+        return match.group(1).strip()
+    return ""
+
+
+def _get_thumbnail_block(width: int, height: int) -> str:
+    """Return thumbnail warning block if image is too small for detail."""
+    is_thumbnail = (width > 0 and height > 0 and
+                    (width < MIN_DETAIL_WIDTH or height < MIN_DETAIL_HEIGHT))
+    if not is_thumbnail:
+        return ""
+    return f"""ACHTUNG – THUMBNAIL-MODUS:
+Dieses Bild ist nur {width}x{height} Pixel gross. Bei dieser Aufloesung kannst du KEINE feinen Details erkennen.
+- Beschreibe NUR das grobe Motiv (z.B. "Landschaftsaufnahme", "Personengruppe", "Nahaufnahme von Lebensmitteln").
+- Erfinde KEINE Details die bei dieser Groesse nicht erkennbar sind.
+- KEINE Langbeschreibung generieren – setze langbeschreibung auf "".
+- Wenn du nicht sicher bist was das Bild zeigt: Sag es ehrlich. "Kleines Vorschaubild, Motiv nicht eindeutig erkennbar" ist besser als eine erfundene Beschreibung."""
+
+
+def _get_thumbnail_block_infografik(width: int, height: int) -> str:
+    """Return thumbnail warning block for infographics."""
+    is_thumbnail = (width > 0 and height > 0 and
+                    (width < MIN_DETAIL_WIDTH or height < MIN_DETAIL_HEIGHT))
+    if not is_thumbnail:
+        return ""
+    return f"""ACHTUNG – THUMBNAIL-MODUS:
+Dieses Bild ist nur {width}x{height} Pixel gross. Bei dieser Aufloesung sind Details einer Infografik NICHT lesbar.
+- Beschreibe NUR das erkennbare Gesamtlayout (z.B. "Kleine Vorschau einer Infografik").
+- ERFINDE KEINE Inhalte die du nicht lesen kannst.
+- Wenn OCR-Text vorhanden ist, nutze diesen. Wenn nicht: Ehrlich sagen dass Details nicht erkennbar sind.
+- langbeschreibung auf "" setzen."""
+
+
+def _get_verbesserung_block(original_alt: str, original_alt_brauchbar: bool) -> str:
+    """Return improvement mode block if original alt-text is usable."""
+    if not original_alt_brauchbar or not original_alt or not original_alt.strip():
+        return ""
+    alt = original_alt.strip()
+    return f"""VERBESSERUNGSMODUS:
+Fuer dieses Bild existiert bereits ein Alt-Text: "{alt}"
+- Pruefe ob dieser Alt-Text korrekt und ausreichend ist.
+- Wenn ja: Uebernimm ihn woertlich oder mit minimaler Verbesserung.
+- Wenn nein: Verbessere ihn, aber behalte korrekte Informationen bei (besonders Link-Ziele und Funktionsbeschreibungen).
+- VERSCHLECHTERE niemals einen guten bestehenden Alt-Text."""
+
+
+def get_generation_prompt(bildtyp: str, context_text: str = "", width: int = 0, height: int = 0,
+                          original_alt: str = "", original_alt_brauchbar: bool = False) -> str:
     """Return the specialized generation prompt for Mistral (Stufe 2).
 
+    v2.2: Supports thumbnail mode, improvement mode, and functional elements.
+    v2.2.1: Extracts link targets from original alt and adds as explicit context field.
     Falls back to GENERAL_PROMPT if the bildtyp has no specialized prompt.
     Context limit: 1200 chars for Mistral.
     """
     context = context_text[:1200] if context_text else "Kein Kontext."
+
+    # v2.2.1: Extract link target and add as explicit context field + append to context end
+    link_target = extract_link_target(original_alt)
+    if link_target:
+        context = f"[Link-Ziel dieses Bildes]: {link_target}\n{context}\n[WICHTIG – PFLICHT]: Dieses Bild ist ein Link. Der Alt-Text MUSS enden mit: (verweist auf: {link_target})"
     prompt_template = SPECIALIZED_GENERATION_PROMPTS.get(bildtyp)
     if prompt_template is None:
         return GENERAL_PROMPT.format(context=context)
-    return prompt_template.format(context=context)
+
+    # Build format kwargs based on what the template expects
+    fmt = {"context": context}
+
+    # All prompts that have {width}/{height}
+    if "{width}" in prompt_template:
+        fmt["width"] = width or "unbekannt"
+        fmt["height"] = height or "unbekannt"
+
+    # Foto prompt: thumbnail + verbesserung blocks
+    if "{thumbnail_block}" in prompt_template:
+        fmt["thumbnail_block"] = _get_thumbnail_block(width, height)
+    if "{verbesserung_block}" in prompt_template:
+        fmt["verbesserung_block"] = _get_verbesserung_block(original_alt, original_alt_brauchbar)
+
+    # Infografik prompt: thumbnail block
+    if "{thumbnail_block_infografik}" in prompt_template:
+        fmt["thumbnail_block_infografik"] = _get_thumbnail_block_infografik(width, height)
+
+    # Funktional prompt: original_alt
+    if "{original_alt}" in prompt_template:
+        fmt["original_alt"] = original_alt.strip() if original_alt else "(kein Alt-Text vorhanden)"
+
+    return prompt_template.format(**fmt)
 
 
-def get_fallback_prompt(bildtyp: str, context_text: str = "") -> str:
+def get_fallback_prompt(bildtyp: str, context_text: str = "", original_alt: str = "") -> str:
     """Return the specialized Qwen fallback prompt.
 
+    v2.2: Supports original_alt for funktional prompts.
     Falls back to GENERAL_PROMPT if the bildtyp has no specialized fallback prompt.
     Context limit: 800 chars for Qwen.
     """
@@ -623,7 +860,10 @@ def get_fallback_prompt(bildtyp: str, context_text: str = "") -> str:
     prompt_template = SPECIALIZED_FALLBACK_PROMPTS.get(bildtyp)
     if prompt_template is None:
         return GENERAL_PROMPT.format(context=context)
-    return prompt_template.format(context=context)
+    fmt = {"context": context}
+    if "{original_alt}" in prompt_template:
+        fmt["original_alt"] = original_alt.strip() if original_alt else "(kein Alt-Text vorhanden)"
+    return prompt_template.format(**fmt)
 
 
 def get_prompt(image_type: str = None, context_text: str = "") -> str:

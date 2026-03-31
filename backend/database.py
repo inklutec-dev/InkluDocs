@@ -432,6 +432,23 @@ def delete_api_key(user_id: int, key_id: int) -> bool:
     return deleted
 
 
+def rename_api_key(user_id: int, key_id: int, new_name: str) -> bool:
+    """Rename an API key. Returns True if successful."""
+    new_name = new_name.strip()
+    if not new_name:
+        return False
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "UPDATE api_keys SET name = ? WHERE id = ? AND user_id = ?",
+            (new_name, key_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
 # ─── API Usage Tracking ──────────────────────────────────────
 
 def log_api_usage(api_key_id: int, user_id: int, processing_time_ms: int = 0,

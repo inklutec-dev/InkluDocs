@@ -23,6 +23,10 @@
     <main id="mainContent" class="main-content"></main>
 
     <footer class="legal-footer" role="contentinfo" style="padding-bottom:2rem;">
+        <div style="margin-bottom:0.5rem;">
+            <button class="dsgvo-badge" type="button" aria-expanded="false" aria-controls="dsgvo-info" onclick="var d=document.getElementById('dsgvo-info');var open=d.classList.toggle('open');this.setAttribute('aria-expanded',open);"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.83-3.23 9.36-7 10.58-3.77-1.22-7-5.75-7-10.58V6.3l7-3.12zM11 7v2h2V7h-2zm0 4v6h2v-6h-2z"/></svg>DSGVO-konform – Verarbeitung in der EU</button>
+            <div id="dsgvo-info" class="dsgvo-detail" role="region">Server in Deutschland (Hetzner, Falkenstein und centron, Bayern) und Frankreich (Mistral AI, Paris). Kein Datentransfer in die USA.</div>
+        </div>
         <button id="newsBtn" class="news-btn" type="button">Ihr seid auf dem aktuellen Stand</button>
         <div style="margin-top:0.75rem;">
             <a href="/impressum">Impressum</a> |
@@ -569,247 +573,166 @@
     }
 
     // ─── Settings ────────────────────────────────────
-    let _settingsTab = 'account';
-
-    function showSettings(tab) {
+    function showSettings() {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         highlightNav('settingsBtn');
-        if (tab) _settingsTab = tab;
-
         main.innerHTML = `
             <button class="back-btn" onclick="showDashboard()">Zurueck</button>
             <h2 class="section-title">Einstellungen</h2>
-            <div role="tablist" aria-label="Einstellungsbereiche" style="display:flex;gap:0;margin-bottom:1.5rem;border-bottom:2px solid var(--border,#e2e8f0);">
-                <button role="tab" id="tabAccount" aria-selected="${_settingsTab === 'account'}" aria-controls="panelAccount" onclick="switchSettingsTab('account')" style="padding:0.75rem 1.5rem;border:none;background:${_settingsTab === 'account' ? 'var(--primary,#1b2a4a)' : 'transparent'};color:${_settingsTab === 'account' ? 'white' : 'var(--text,#1e293b)'};font-weight:600;font-size:1rem;cursor:pointer;border-radius:8px 8px 0 0;border-bottom:3px solid ${_settingsTab === 'account' ? 'var(--accent,#e87722)' : 'transparent'};">Konto &amp; Sicherheit</button>
-                <button role="tab" id="tabApi" aria-selected="${_settingsTab === 'api'}" aria-controls="panelApi" onclick="switchSettingsTab('api')" style="padding:0.75rem 1.5rem;border:none;background:${_settingsTab === 'api' ? 'var(--primary,#1b2a4a)' : 'transparent'};color:${_settingsTab === 'api' ? 'white' : 'var(--text,#1e293b)'};font-weight:600;font-size:1rem;cursor:pointer;border-radius:8px 8px 0 0;border-bottom:3px solid ${_settingsTab === 'api' ? 'var(--accent,#e87722)' : 'transparent'};">API</button>
+            <div class="card">
+                <h3 style="margin-bottom:1rem;">Passwort aendern</h3>
+                <form id="changePwForm" novalidate>
+                    <div class="form-group">
+                        <label for="old_password">Aktuelles Passwort</label>
+                        <input type="password" id="old_password" required autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password">Neues Passwort (mind. 8 Zeichen)</label>
+                        <input type="password" id="new_password" required minlength="8" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password2">Neues Passwort wiederholen</label>
+                        <input type="password" id="new_password2" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Passwort aendern</button>
+                    <span id="pwMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
+                </form>
+            </div>
+            <div class="card" style="margin-top:1rem;">
+                <h3>Kontoinformationen</h3>
+                <p style="margin-top:0.5rem;color:var(--text-muted);">Angemeldet als: ${currentUser.display_name} (${currentUser.email})</p>
             </div>
 
-            <div id="panelAccount" role="tabpanel" aria-labelledby="tabAccount" ${_settingsTab !== 'account' ? 'hidden' : ''}>
-                <div class="card">
-                    <h3 style="margin-bottom:1rem;">Anzeigename</h3>
-                    <form id="changeNameForm" novalidate>
-                        <div class="form-group">
-                            <label for="edit_displayname">Name</label>
-                            <input type="text" id="edit_displayname" value="${currentUser.display_name}" required maxlength="100" autocomplete="name">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Name aendern</button>
-                        <span id="nameMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
-                    </form>
-                </div>
-                <div class="card" style="margin-top:1rem;">
-                    <h3 style="margin-bottom:1rem;">E-Mail-Adresse</h3>
-                    <form id="changeEmailForm" novalidate>
-                        <div class="form-group">
-                            <label for="edit_email">E-Mail-Adresse</label>
-                            <input type="email" id="edit_email" value="${currentUser.email}" required autocomplete="email">
-                        </div>
-                        <button type="submit" class="btn btn-primary">E-Mail aendern</button>
-                        <span id="emailMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
-                    </form>
-                </div>
-                <div class="card" style="margin-top:1rem;">
-                    <h3 style="margin-bottom:1rem;">Passwort aendern</h3>
-                    <form id="changePwForm" novalidate>
-                        <div class="form-group">
-                            <label for="old_password">Aktuelles Passwort</label>
-                            <input type="password" id="old_password" required autocomplete="current-password">
-                        </div>
-                        <div class="form-group">
-                            <label for="new_password">Neues Passwort (mind. 8 Zeichen)</label>
-                            <input type="password" id="new_password" required minlength="8" autocomplete="new-password">
-                        </div>
-                        <div class="form-group">
-                            <label for="new_password2">Neues Passwort wiederholen</label>
-                            <input type="password" id="new_password2" required autocomplete="new-password">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Passwort aendern</button>
-                        <span id="pwMsg" role="status" aria-live="polite" style="margin-left:1rem;"></span>
-                    </form>
-                </div>
-            </div>
+            <div class="card" style="margin-top:1rem;">
+                <h3 id="apiKeysHeading">API-Schluessel</h3>
+                <p style="margin-top:0.5rem;margin-bottom:1rem;color:var(--text-muted);">Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren.</p>
 
-            <div id="panelApi" role="tabpanel" aria-labelledby="tabApi" ${_settingsTab !== 'api' ? 'hidden' : ''}>
-                <div class="card">
-                    <h3 style="margin-bottom:1rem;">API-Schluessel</h3>
-                    <p style="margin-bottom:1rem;color:var(--text-muted);">Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren. <a href="/api/v1/docs" target="_blank">API-Dokumentation ansehen</a></p>
-                    <div id="apiKeyList" aria-live="polite"></div>
-                    <div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                <div id="apiKeyCreateSection">
+                    <h4>Neuen Schluessel erstellen</h4>
+                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                         <label for="newKeyName" class="sr-only">Name fuer neuen API-Schluessel</label>
-                        <input type="text" id="newKeyName" placeholder="Name (z.B. Meine App)" style="padding:0.5rem;border:1px solid var(--border);border-radius:4px;flex:1;min-width:150px;">
+                        <input type="text" id="newKeyName" placeholder="Name (z.B. Meine App)" style="padding:0.5rem;border:1px solid var(--border);border-radius:4px;flex:1;min-width:150px;" aria-describedby="newKeyHint">
                         <button class="btn btn-primary" onclick="createApiKey()">Erstellen</button>
                     </div>
+                    <p id="newKeyHint" class="sr-only">Geben Sie einen Namen ein um den Schluessel spaeter zuordnen zu koennen.</p>
                     <div id="newKeyResult" role="status" aria-live="polite" style="margin-top:0.5rem;"></div>
                 </div>
-                <div class="card" style="margin-top:1rem;">
-                    <h3 style="margin-bottom:1rem;">API-Nutzung</h3>
-                    <div id="apiUsageStats" aria-live="polite">
-                        <p style="color:var(--text-muted);">Statistik wird geladen...</p>
-                    </div>
+
+                <div style="margin-top:1.5rem;">
+                    <h4 id="myKeysHeading">Meine API-Schluessel <span id="apiKeyCount" style="color:var(--text-muted);font-weight:normal;"></span></h4>
+                    <div id="apiKeyList" aria-live="polite" aria-labelledby="myKeysHeading" role="region" style="margin-top:0.5rem;"></div>
+                </div>
+
+                <div id="apiKeyEditOverlay" style="display:none;margin-top:1rem;" role="dialog" aria-label="API-Schluessel bearbeiten">
                 </div>
             </div>
         `;
 
-        // Tab keyboard navigation (arrow keys)
-        const tabs = main.querySelectorAll('[role="tab"]');
-        tabs.forEach(tab => {
-            tab.addEventListener('keydown', (e) => {
-                const tabArr = Array.from(tabs);
-                const idx = tabArr.indexOf(e.target);
-                let newIdx = idx;
-                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { newIdx = (idx + 1) % tabArr.length; e.preventDefault(); }
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { newIdx = (idx - 1 + tabArr.length) % tabArr.length; e.preventDefault(); }
-                if (e.key === 'Home') { newIdx = 0; e.preventDefault(); }
-                if (e.key === 'End') { newIdx = tabArr.length - 1; e.preventDefault(); }
-                if (newIdx !== idx) { tabArr[newIdx].click(); tabArr[newIdx].focus(); }
-            });
-        });
-
-        // Change name form
-        document.getElementById('changeNameForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const msg = document.getElementById('nameMsg');
-            msg.textContent = ''; msg.style.color = '';
-            const display_name = document.getElementById('edit_displayname').value.trim();
-            if (!display_name) { msg.textContent = 'Bitte einen Namen eingeben'; msg.style.color = 'var(--error)'; return; }
-            const res = await fetch('/api/change-displayname', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ display_name }),
-            });
-            if (res.ok) {
-                const d = await res.json();
-                currentUser.display_name = d.display_name;
-                document.getElementById('userGreeting').textContent = 'Hallo, ' + d.display_name;
-                msg.textContent = 'Name geaendert!'; msg.style.color = 'var(--success)';
-                announce('Name wurde geaendert');
-            } else {
-                const d = await res.json();
-                msg.textContent = d.detail || 'Fehler'; msg.style.color = 'var(--error)';
-            }
-        });
-
-        // Change email form
-        document.getElementById('changeEmailForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const msg = document.getElementById('emailMsg');
-            msg.textContent = ''; msg.style.color = '';
-            const new_email = document.getElementById('edit_email').value.trim();
-            if (!new_email || !new_email.includes('@')) { msg.textContent = 'Bitte eine gueltige E-Mail eingeben'; msg.style.color = 'var(--error)'; return; }
-            const res = await fetch('/api/change-email', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ new_email }),
-            });
-            if (res.ok) {
-                const d = await res.json();
-                msg.textContent = d.message || 'Bestaetigungslink gesendet!'; msg.style.color = 'var(--success)';
-                announce('Bestaetigungslink wurde an die neue E-Mail-Adresse gesendet');
-            } else {
-                const d = await res.json();
-                msg.textContent = d.detail || 'Fehler'; msg.style.color = 'var(--error)';
-            }
-        });
-
-        // Change password form
         document.getElementById('changePwForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const msg = document.getElementById('pwMsg');
-            msg.textContent = ''; msg.style.color = '';
+            msg.textContent = '';
+            msg.style.color = '';
+
             const old_password = document.getElementById('old_password').value;
             const new_password = document.getElementById('new_password').value;
             const new_password2 = document.getElementById('new_password2').value;
+
             if (new_password.length < 8) { msg.textContent = 'Mind. 8 Zeichen'; msg.style.color = 'var(--error)'; return; }
             if (new_password !== new_password2) { msg.textContent = 'Passwoerter stimmen nicht ueberein'; msg.style.color = 'var(--error)'; return; }
+
             const res = await fetch('/api/change-password', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ old_password, new_password }),
             });
             if (res.ok) {
-                msg.textContent = 'Passwort geaendert!'; msg.style.color = 'var(--success)';
+                msg.textContent = 'Passwort geaendert!';
+                msg.style.color = 'var(--success)';
                 announce('Passwort wurde geaendert');
             } else {
                 const d = await res.json();
-                msg.textContent = d.detail || 'Fehler'; msg.style.color = 'var(--error)';
+                msg.textContent = d.detail || 'Fehler';
+                msg.style.color = 'var(--error)';
             }
         });
 
         loadApiKeys();
-        loadApiUsageStats();
-    }
-
-    function switchSettingsTab(tab) {
-        _settingsTab = tab;
-        const panelAccount = document.getElementById('panelAccount');
-        const panelApi = document.getElementById('panelApi');
-        const tabAccount = document.getElementById('tabAccount');
-        const tabApi = document.getElementById('tabApi');
-
-        if (tab === 'account') {
-            panelAccount.hidden = false; panelApi.hidden = true;
-            tabAccount.setAttribute('aria-selected', 'true'); tabApi.setAttribute('aria-selected', 'false');
-            tabAccount.style.background = 'var(--primary,#1b2a4a)'; tabAccount.style.color = 'white';
-            tabAccount.style.borderBottom = '3px solid var(--accent,#e87722)';
-            tabApi.style.background = 'transparent'; tabApi.style.color = 'var(--text,#1e293b)';
-            tabApi.style.borderBottom = '3px solid transparent';
-        } else {
-            panelApi.hidden = false; panelAccount.hidden = true;
-            tabApi.setAttribute('aria-selected', 'true'); tabAccount.setAttribute('aria-selected', 'false');
-            tabApi.style.background = 'var(--primary,#1b2a4a)'; tabApi.style.color = 'white';
-            tabApi.style.borderBottom = '3px solid var(--accent,#e87722)';
-            tabAccount.style.background = 'transparent'; tabAccount.style.color = 'var(--text,#1e293b)';
-            tabAccount.style.borderBottom = '3px solid transparent';
-        }
-        announce(tab === 'account' ? 'Konto und Sicherheit' : 'API');
-    }
-
-    async function loadApiUsageStats() {
-        const el = document.getElementById('apiUsageStats');
-        if (!el) return;
-        try {
-            const res = await fetch('/api/api-usage-stats');
-            if (!res.ok) { el.innerHTML = '<p style="color:var(--text-muted);">Keine Statistik verfuegbar.</p>'; return; }
-            const s = await res.json();
-            el.innerHTML = `
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;">
-                    <div style="text-align:center;padding:0.8rem;background:var(--bg-card,#f5f5f5);border-radius:8px;">
-                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary,#1b2a4a);">${s.total_calls}</div>
-                        <div style="font-size:0.85rem;color:var(--text-muted);">Gesamt</div>
-                    </div>
-                    <div style="text-align:center;padding:0.8rem;background:var(--bg-card,#f5f5f5);border-radius:8px;">
-                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary,#1b2a4a);">${s.calls_this_week}</div>
-                        <div style="font-size:0.85rem;color:var(--text-muted);">Diese Woche</div>
-                    </div>
-                    <div style="text-align:center;padding:0.8rem;background:var(--bg-card,#f5f5f5);border-radius:8px;">
-                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary,#1b2a4a);">${s.calls_this_month}</div>
-                        <div style="font-size:0.85rem;color:var(--text-muted);">Dieser Monat</div>
-                    </div>
-                    <div style="text-align:center;padding:0.8rem;background:var(--bg-card,#f5f5f5);border-radius:8px;">
-                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary,#1b2a4a);">${s.last_call ? new Date(s.last_call).toLocaleDateString('de-DE') : '–'}</div>
-                        <div style="font-size:0.85rem;color:var(--text-muted);">Letzter Aufruf</div>
-                    </div>
-                </div>
-            `;
-        } catch(e) { el.innerHTML = '<p style="color:var(--text-muted);">Statistik konnte nicht geladen werden.</p>'; }
     }
 
     async function loadApiKeys() {
         const list = document.getElementById('apiKeyList');
+        const countEl = document.getElementById('apiKeyCount');
         if (!list) return;
         const res = await fetch('/api/api-keys');
         if (!res.ok) return;
         const data = await res.json();
-        if (!data.api_keys || data.api_keys.length === 0) {
-            list.innerHTML = '<p style="color:var(--text-muted);">Keine API-Schluessel vorhanden.</p>';
+        const keys = data.api_keys || [];
+
+        if (countEl) countEl.textContent = '(' + keys.length + ')';
+
+        if (keys.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-muted);">Noch keine API-Schluessel vorhanden.</p>';
             return;
         }
-        list.innerHTML = data.api_keys.map(k => `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border,#eee);">
+        list.innerHTML = '<ul role="list" style="list-style:none;padding:0;margin:0;">' + keys.map(k => `
+            <li id="apikey-row-${k.id}" style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid var(--border,#eee);">
                 <div>
-                    <strong>${k.name}</strong>
+                    <strong id="apikey-name-${k.id}">${k.name}</strong>
                     <span style="color:var(--text-muted);font-size:0.85rem;margin-left:0.5rem;">Erstellt: ${new Date(k.created_at).toLocaleDateString('de-DE')}</span>
-                    ${k.last_used ? '<span style="color:var(--text-muted);font-size:0.85rem;margin-left:0.5rem;">Zuletzt: ' + new Date(k.last_used).toLocaleDateString('de-DE') + '</span>' : ''}
+                    ${k.last_used ? '<span style="color:var(--text-muted);font-size:0.85rem;margin-left:0.5rem;">Zuletzt verwendet: ' + new Date(k.last_used).toLocaleDateString('de-DE') + '</span>' : ''}
                 </div>
-                <button class="btn btn-danger btn-small" onclick="deleteApiKey(${k.id})">Loeschen</button>
-            </div>
-        `).join('');
+                <button class="btn btn-small" onclick="showEditApiKey(${k.id}, '${k.name.replace(/'/g, "\\'")}')">Bearbeiten</button>
+            </li>
+        `).join('') + '</ul>';
+    }
+
+    function showEditApiKey(id, currentName) {
+        const overlay = document.getElementById('apiKeyEditOverlay');
+        overlay.style.display = 'block';
+        overlay.innerHTML = '<div class="card" style="border:2px solid var(--primary);padding:1rem;">' +
+            '<h4>Schluessel bearbeiten: ' + currentName + '</h4>' +
+            '<div class="form-group" style="margin-top:0.5rem;">' +
+            '<label for="editKeyName">Name</label>' +
+            '<input type="text" id="editKeyName" value="' + currentName + '" style="padding:0.5rem;border:1px solid var(--border);border-radius:4px;width:100%;max-width:300px;">' +
+            '</div>' +
+            '<div style="display:flex;gap:0.5rem;margin-top:0.8rem;flex-wrap:wrap;">' +
+            '<button class="btn btn-primary" onclick="saveApiKeyName(' + id + ')">Name speichern</button>' +
+            '<button class="btn btn-danger" onclick="deleteApiKey(' + id + ', \'' + currentName.replace(/'/g, "\\'") + '\')">Schluessel loeschen</button>' +
+            '<button class="btn" onclick="closeEditApiKey()">Abbrechen</button>' +
+            '</div>' +
+            '<div id="editKeyMsg" role="status" aria-live="polite" style="margin-top:0.5rem;"></div>' +
+            '</div>';
+        document.getElementById('editKeyName').focus();
+        announce('Bearbeitung fuer ' + currentName + ' geoeffnet.');
+    }
+
+    function closeEditApiKey() {
+        const overlay = document.getElementById('apiKeyEditOverlay');
+        overlay.style.display = 'none';
+        overlay.innerHTML = '';
+        announce('Bearbeitung geschlossen.');
+    }
+
+    async function saveApiKeyName(id) {
+        const nameInput = document.getElementById('editKeyName');
+        const msg = document.getElementById('editKeyMsg');
+        const newName = nameInput.value.trim();
+        if (!newName) { nameInput.focus(); return; }
+
+        const res = await fetch('/api/api-keys/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName }),
+        });
+        if (res.ok) {
+            announce('Name geaendert zu: ' + newName);
+            closeEditApiKey();
+            loadApiKeys();
+        } else {
+            const d = await res.json();
+            if (msg) { msg.textContent = d.detail || 'Fehler beim Speichern.'; msg.style.color = 'var(--error)'; }
+        }
     }
 
     async function createApiKey() {
@@ -825,48 +748,53 @@
         });
         if (res.ok) {
             const data = await res.json();
-            const key = data.api_key;
-            result.innerHTML = `<div style="padding:0.8rem;background:var(--bg-card,#f9f9f9);border:1px solid var(--border);border-radius:4px;">
-                <strong>Neuer Schluessel (nur einmal sichtbar!):</strong><br>
-                <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
-                    <code id="newKeyValue" style="word-break:break-all;font-size:0.9rem;flex:1;">${key}</code>
-                    <button class="btn btn-primary btn-small" onclick="copyApiKey()" aria-label="API-Schluessel in Zwischenablage kopieren" style="white-space:nowrap;">Kopieren</button>
-                </div>
-                <span id="copyMsg" role="status" aria-live="assertive" style="font-size:0.85rem;"></span>
-            </div>`;
+            result.innerHTML = '<div role="alert" style="padding:1rem;background:var(--bg-card,#f9f9f9);border:2px solid var(--primary);border-radius:4px;">' +
+                '<h4>Neuer Schluessel erstellt</h4>' +
+                '<p style="margin:0.5rem 0;color:var(--text-muted);">Dieser Schluessel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern.</p>' +
+                '<code id="apiKeyValue" style="word-break:break-all;font-size:0.9rem;user-select:all;display:block;margin:0.5rem 0;padding:0.5rem;background:#fff;border:1px solid var(--border);border-radius:4px;" aria-label="API-Schluessel">' + data.api_key + '</code>' +
+                '<div style="display:flex;gap:0.5rem;margin-top:0.8rem;">' +
+                '<button class="btn btn-primary" onclick="copyApiKey()">Schluessel kopieren</button>' +
+                '<button class="btn" onclick="closeNewKeyResult()">Zurueck zur Uebersicht</button>' +
+                '</div></div>';
             nameInput.value = '';
-            announce('API-Schluessel erstellt. Bitte jetzt kopieren.');
+            announce('Neuer API-Schluessel erstellt. Bitte jetzt kopieren.');
             loadApiKeys();
         } else {
             result.textContent = 'Fehler beim Erstellen.';
         }
     }
 
-    async function copyApiKey() {
-        const keyEl = document.getElementById('newKeyValue');
-        const msg = document.getElementById('copyMsg');
-        if (!keyEl) return;
-        try {
-            await navigator.clipboard.writeText(keyEl.textContent.trim());
-            msg.textContent = 'Kopiert!'; msg.style.color = 'var(--success)';
-            announce('API-Schluessel wurde in die Zwischenablage kopiert');
-        } catch(e) {
-            // Fallback: select the text
-            const range = document.createRange();
-            range.selectNodeContents(keyEl);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            msg.textContent = 'Bitte manuell kopieren (Cmd+C / Strg+C)'; msg.style.color = 'var(--accent)';
-            announce('Schluessel markiert. Bitte manuell kopieren.');
-        }
+    function closeNewKeyResult() {
+        document.getElementById('newKeyResult').innerHTML = '';
+        announce('Schluessel-Anzeige geschlossen.');
+        document.getElementById('newKeyName').focus();
     }
 
-    async function deleteApiKey(id) {
-        if (!confirm('API-Schluessel wirklich loeschen?')) return;
-        await fetch('/api/api-keys/' + id, { method: 'DELETE' });
-        announce('API-Schluessel geloescht');
-        loadApiKeys();
+    function copyApiKey() {
+        var key = document.getElementById('apiKeyValue');
+        if (!key) return;
+        navigator.clipboard.writeText(key.textContent).then(function() {
+            announce('API-Schluessel wurde in die Zwischenablage kopiert.');
+        }).catch(function() {
+            var range = document.createRange();
+            range.selectNodeContents(key);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            announce('Schluessel markiert. Bitte mit Befehl-C kopieren.');
+        });
+    }
+
+    async function deleteApiKey(id, keyName) {
+        var msg = 'API-Schluessel "' + (keyName || 'Unbenannt') + '" wirklich loeschen? Anwendungen die diesen Schluessel verwenden verlieren sofort den Zugriff.';
+        if (!confirm(msg)) return;
+        const res = await fetch('/api/api-keys/' + id, { method: 'DELETE' });
+        if (res.ok) {
+            announce('API-Schluessel geloescht.');
+            closeEditApiKey();
+            loadApiKeys();
+        } else {
+            announce('Fehler beim Loeschen.');
+        }
     }
 
     // ─── Admin ───────────────────────────────────────
