@@ -115,12 +115,20 @@ TREND-VALIDIERUNG (KRITISCH):
 - VERBOTEN: Woerter wie "kontinuierlich", "stetig", "durchgehend" ohne JEDEN Datenpunkt geprueft zu haben.
 - RICHTIG: "Von 2021 zu 2022 steigt der Wert, von 2022 zu 2023 faellt er wieder" statt "kontinuierlicher Anstieg".
 - Wenn 3 Jahre dargestellt sind, vergleiche: 2021→2022, 2022→2023, UND 2021→2023. Erst dann darfst du einen Gesamttrend formulieren.
+- GESAMTTREND = Vergleich ERSTER Wert mit LETZTEM Wert. Wenn 2021=4 und 2023=2, ist der Gesamttrend ABWAERTS, auch wenn 2022 dazwischen anders lag.
 - Pruefe bei JEDER Kategorie separat. Nicht von einer Kategorie auf eine andere schliessen.
 
 ANTI-ERFINDUNG (KRITISCH):
 - Behaupte NIEMALS, dass Werte "unleserlich", "ueberlappend" oder "nicht erkennbar" sind, es sei denn sie sind es TATSAECHLICH.
 - Wenn die Y-Achse klar skaliert ist (z.B. 0-6), dann SAGE das. Erfinde keine Lesbarkeitsprobleme.
 - Wenn du einen Wert nicht exakt ablesen kannst, formuliere: "liegt bei circa X" – NICHT "ist unleserlich".
+
+KONSISTENZ-PFLICHT (KRITISCH):
+- Analysiere ZUERST alle Datenpunkte pro Kategorie und notiere die Trends.
+- Formuliere den alt_text DANACH basierend auf dieser Analyse.
+- PRUEFE BEVOR DU ANTWORTEST: Stimmen die Trends im alt_text mit den Zahlen in der langbeschreibung ueberein? Wenn der alt_text "Zuwachs" oder "Anstieg" fuer eine Kategorie behauptet, muessen die Zahlen in der langbeschreibung das bestaetigen. Wenn nicht: alt_text KORRIGIEREN.
+- VERBOTEN: Fuer eine Kategorie im alt_text "steigt" oder "Zuwachs" sagen, wenn die Werte von 2021 zu 2023 insgesamt SINKEN (auch wenn es zwischendurch schwankt).
+- BEISPIEL FUER FEHLER: alt_text sagt "Software zeigt 2023 Zuwaechse" aber Zahlen zeigen 4.0 → 2.5 → 2.0 = Rueckgang. Das ist ein WIDERSPRUCH und VERBOTEN.
 
 BEISPIELE FUER GUTE INSIGHTS:
 - "Balkendiagramm – Umsatzentwicklung in Deutschland: Hardware erreicht 2022 den Hoechstwert und faellt 2023 deutlich, waehrend Mobile 2023 den staerksten Zuwachs aller vier Kategorien zeigt."
@@ -163,6 +171,16 @@ VOLLSTAENDIGKEIT (KRITISCH):
 - Erfasse ALLE Zeilen der Tabelle, nicht nur die auffaelligsten.
 - Wenn die Tabelle Zwischensummen und eine Gesamtsumme hat, nenne BEIDE.
 - Fehlende Zeilen = fehlerhafte Beschreibung.
+
+BILANZ-WARNUNG (KRITISCH bei Finanztabellen):
+- Unterscheide IMMER zwischen ABSCHNITTS-Zwischensummen und der GESAMT-Summe.
+- "Anlagevermoegen" und "Umlaufvermoegen" sind ABSCHNITTE (Zwischensummen).
+- "Bilanzsumme", "Bilanzsumme Aktiva", "Bilanzsumme Passiva", "Gesamtsumme" oder "Summe Aktiva/Passiva" ist das GESAMTERGEBNIS.
+- Die LETZTE Summenzeile der Tabelle ist fast immer die Bilanzsumme, NICHT ein Abschnittsname.
+- FALSCH: "Gesamtsumme des Umlaufvermoegens betraegt X EUR" wenn X die Bilanzsumme ist.
+- RICHTIG: "Bilanzsumme Aktiva betraegt X EUR" oder "Gesamtsumme Aktiva betraegt X EUR".
+- Wenn die Tabelle NUR Umlaufvermoegen zeigt (kein Anlagevermoegen-Abschnitt), dann ist "Umlaufvermoegen" korrekt.
+- Wenn BEIDE Abschnitte vorhanden sind, ist die letzte Summe die Bilanzsumme.
 
 REGELN:
 - alt_text: "Tabelle – " + Thema + Kernaussage (basierend auf den RICHTIGEN Endwerten). Max 250 Zeichen.

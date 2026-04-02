@@ -308,10 +308,41 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                 if width < 20 or height < 20:
                     continue
 
-                img_filename = f"p{page_num + 1}_img{img_idx}.{image_ext}"
-                img_path = os.path.join(output_dir, img_filename)
-                with open(img_path, "wb") as f:
-                    f.write(image_bytes)
+                # Convert JPX/JP2 (JPEG 2000) and other exotic formats to PNG
+                if image_ext in ("jpx", "jp2", "jbig2", "j2k"):
+                    try:
+                        tmp_path = os.path.join(output_dir, f"_tmp_{xref}.{image_ext}")
+                        with open(tmp_path, "wb") as f:
+                            f.write(image_bytes)
+                        with Image.open(tmp_path) as pil_img:
+                            png_path = os.path.join(output_dir, f"p{page_num + 1}_img{img_idx}.png")
+                            pil_img.convert("RGB").save(png_path, format="PNG")
+                        os.remove(tmp_path)
+                        image_ext = "png"
+                        img_filename = f"p{page_num + 1}_img{img_idx}.png"
+                        img_path = png_path
+                        print(f"Converted JPX/JP2 image (xref {xref}) to PNG")
+                    except Exception as e:
+                        print(f"JPX/JP2 conversion failed (xref {xref}): {e} – rendering from page instead")
+                        # Fallback: render the image area from the page as pixmap
+                        try:
+                            for img_rect in page.get_image_rects(xref):
+                                mat = fitz.Matrix(3, 3)
+                                pix = page.get_pixmap(matrix=mat, clip=img_rect)
+                                png_path = os.path.join(output_dir, f"p{page_num + 1}_img{img_idx}.png")
+                                pix.save(png_path)
+                                image_ext = "png"
+                                img_filename = f"p{page_num + 1}_img{img_idx}.png"
+                                img_path = png_path
+                                break
+                        except Exception as e2:
+                            print(f"Page render fallback also failed (xref {xref}): {e2}")
+                            continue
+                else:
+                    img_filename = f"p{page_num + 1}_img{img_idx}.{image_ext}"
+                    img_path = os.path.join(output_dir, img_filename)
+                    with open(img_path, "wb") as f:
+                        f.write(image_bytes)
 
                 # Get bounding box for this raster image
                 img_bbox = None
@@ -444,7 +475,20 @@ def _ocr_extract_text(image_path: str) -> str:
 
 def _resize_image_for_model(image_path: str) -> str:
     """Resize image if too large for the model, return base64 encoded string."""
-    img = Image.open(image_path)
+    try:
+        img = Image.open(image_path)
+    except Exception as e:
+        # If image can't be opened (corrupted, unsupported format), try converting via fitz
+        print(f"PIL cannot open {image_path}: {e} – attempting fitz render")
+        try:
+            import fitz as fitz_fallback
+            pix = fitz_fallback.Pixmap(image_path)
+            if pix.n > 4:
+                pix = fitz_fallback.Pixmap(fitz_fallback.csRGB, pix)
+            png_data = pix.tobytes("png")
+            return base64.b64encode(png_data).decode()
+        except Exception:
+            raise ValueError(f"Bild konnte nicht geladen werden: {image_path}")
     # Convert palette/RGBA/LA modes to RGB for JPEG compatibility
     if img.mode not in ("RGB", "L"):
         img = img.convert("RGB")
@@ -787,7 +831,7 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str,
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
                     ]
                 }],
-                "max_tokens": 1200,
+                "max_tokens": 1500,
                 "temperature": 0,
             },
             timeout=60.0
@@ -923,7 +967,7 @@ def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_re
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
                     ]
                 }],
-                "max_tokens": 1200,
+                "max_tokens": 1500,
                 "temperature": 0,
             },
             timeout=60.0
