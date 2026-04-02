@@ -31,7 +31,7 @@ from database import (
     create_email_change_token, confirm_email_change,
     create_api_result, get_api_result, update_api_result,
 )
-from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image
+from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
 
 # Generate a persistent SECRET_KEY if not set
 SECRET_KEY_FILE = "/app/data/.secret_key"
@@ -898,12 +898,37 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         for idx, img_tag in enumerate(img_tags, 1):
             # Support lazy-loaded images: check data-src, data-lazy-src first
             src = img_tag.get("data-src") or img_tag.get("data-lazy-src") or img_tag.get("src", "")
+
+            # v2.2.3: Always check srcset for higher-resolution version
+            srcset = img_tag.get("srcset") or img_tag.get("data-srcset") or ""
+            if srcset:
+                # Parse srcset entries and pick the largest by width descriptor
+                best_url = ""
+                best_width = 0
+                for entry in srcset.split(","):
+                    parts = entry.strip().split()
+                    if len(parts) >= 1:
+                        candidate_url = parts[0]
+                        w = 0
+                        if len(parts) >= 2 and parts[1].endswith("w"):
+                            try:
+                                w = int(parts[1][:-1])
+                            except ValueError:
+                                w = 0
+                        elif len(parts) >= 2 and parts[1].endswith("x"):
+                            try:
+                                w = int(float(parts[1][:-1]) * 1000)  # treat 2x as 2000w
+                            except ValueError:
+                                w = 0
+                        if w > best_width:
+                            best_width = w
+                            best_url = candidate_url
+                # Use srcset version if it's larger than the src
+                if best_url and best_width > 200:
+                    src = best_url
+
             if not src or src.startswith("data:"):
-                srcset = img_tag.get("srcset") or img_tag.get("data-srcset") or ""
-                if srcset:
-                    src = srcset.split(",")[0].strip().split(" ")[0]
-                else:
-                    continue
+                continue
             if not src:
                 continue
 
@@ -949,13 +974,27 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                     context_parts.append(f"[Bildunterschrift] {figcaption.get_text(strip=True)}")
             # Check if image is a link (for linked image alt-text)
             parent_link = img_tag.find_parent("a")
+            link_display_text = ""
             if parent_link:
                 link_href = parent_link.get("href", "")
+                # v2.2.3: Prefer human-readable link text over raw URL
                 link_label = parent_link.get("aria-label", "") or parent_link.get("title", "")
-                if link_href:
-                    context_parts.append(f"[Link-Ziel] {link_href}")
+                # Also check the visible text content of the link (excluding the image alt)
+                link_text = parent_link.get_text(strip=True)
+                if link_text and link_text.lower() not in {"", "bild", "grafik", "image", "img"}:
+                    if not link_label:
+                        link_label = link_text[:150]
                 if link_label:
                     context_parts.append(f"[Link-Beschriftung] {link_label}")
+                    link_display_text = link_label
+                if link_href:
+                    # Only add raw URL if no readable label available
+                    if not link_label:
+                        context_parts.append(f"[Link-Ziel] {link_href}")
+                        link_display_text = link_href
+                    else:
+                        # Still store href but label takes priority in context
+                        context_parts.append(f"[Link-URL] {link_href}")
 
             # Improved context search: go beyond direct parent
             # 1. Nearest heading before the image
@@ -977,11 +1016,11 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 if next_text:
                     context_parts.append(f"[Text danach] {next_text}")
 
-            # Prepend page profile to image-specific context
+            # Image-specific context FIRST, page profile as supplement
             all_context = []
+            all_context.extend(context_parts)  # Bildspezifisch ZUERST
             if page_profile:
-                all_context.append(page_profile)
-            all_context.extend(context_parts)
+                all_context.append(page_profile)  # Seitenprofil als Ergaenzung
             context_text = "\n".join(all_context) if all_context else ""
 
             # Download image
@@ -1028,6 +1067,42 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                     os.remove(img_path)
                     continue
 
+                # v2.2.3: If image is a small thumbnail, try to find a larger version
+                if width > 0 and height > 0 and width < 250 and height < 250:
+                    larger_urls = _try_larger_image_url(img_url)
+                    for candidate_url in larger_urls:
+                        try:
+                            resolved_url = urljoin(url, candidate_url)
+                            larger_response = await client.get(resolved_url)
+                            if larger_response.status_code == 200:
+                                larger_ct = larger_response.headers.get("content-type", "")
+                                if "image" in larger_ct:
+                                    larger_ext = _ext_from_content_type(larger_ct) or ext
+                                    larger_path = os.path.join(img_dir, f"web_{idx}_large{larger_ext}")
+                                    with open(larger_path, "wb") as lf:
+                                        lf.write(larger_response.content)
+                                    try:
+                                        with PILImage.open(larger_path) as lpimg:
+                                            lw, lh = lpimg.size
+                                        if lw > width and lh > height:
+                                            # Larger version found! Replace the small one
+                                            os.remove(img_path)
+                                            new_filename = f"web_{idx}{larger_ext}"
+                                            new_path = os.path.join(img_dir, new_filename)
+                                            os.rename(larger_path, new_path)
+                                            img_path = new_path
+                                            img_filename = new_filename
+                                            print(f"v2.2.3 Upscale: {width}x{height} -> {lw}x{lh} fuer {img_url[-50:]}")
+                                            width, height = lw, lh
+                                            break
+                                        else:
+                                            os.remove(larger_path)
+                                    except Exception:
+                                        if os.path.exists(larger_path):
+                                            os.remove(larger_path)
+                        except Exception:
+                            pass
+
                 conn.execute(
                     """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
                        width, height, xref, original_alt)
@@ -1060,6 +1135,53 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         "source_url": url,
         "project_type": "url",
     }
+
+
+
+# v2.2.3: Try to find larger versions of thumbnail images via URL rewriting
+def _try_larger_image_url(img_url: str) -> list[str]:
+    """Generate candidate URLs for larger versions of a thumbnail image.
+    Returns a list of alternative URLs to try (most promising first)."""
+    candidates = []
+
+    # Pattern 1: BLE/Government CMS - ?__blob=thumbnail -> normal/wide
+    if "__blob=thumbnail" in img_url:
+        candidates.append(img_url.replace("__blob=thumbnail", "__blob=normal"))
+        candidates.append(img_url.replace("__blob=thumbnail", "__blob=wide"))
+
+    # Pattern 2: WordPress - remove size suffix (-150x150, -300x200, etc.)
+    import re
+    wp_match = re.search(r'-(\d{2,4})x(\d{2,4})\.(\w+)$', img_url)
+    if wp_match:
+        w, h = int(wp_match.group(1)), int(wp_match.group(2))
+        if w <= 300 or h <= 300:
+            original = re.sub(r'-\d{2,4}x\d{2,4}\.(\w+)$', r'.\1', img_url)
+            candidates.append(original)
+
+    # Pattern 3: Common thumbnail patterns
+    replacements = [
+        ("_thumb.", "_large."),
+        ("_small.", "_large."),
+        ("_thumbnail.", "."),
+        ("/thumb/", "/"),
+        ("/thumbnails/", "/images/"),
+        ("/small/", "/large/"),
+        ("_s.", "_l."),
+        ("-thumb.", "."),
+        ("?w=150", "?w=800"),
+        ("?width=150", "?width=800"),
+        ("&w=150", "&w=800"),
+    ]
+    for old, new in replacements:
+        if old in img_url:
+            candidates.append(img_url.replace(old, new))
+
+    # Pattern 4: Shopify CDN
+    shopify_match = re.search(r'_(\d+x\d+)\.', img_url)
+    if shopify_match and "shopify" in img_url.lower():
+        candidates.append(re.sub(r'_\d+x\d+\.', '.', img_url))
+
+    return candidates
 
 
 def _ext_from_content_type(ct: str) -> str:
@@ -1167,6 +1289,8 @@ async def generate_alt_texts(project_id: int, user: dict = Depends(get_current_u
 
 
 async def _process_project(project_id: int, user_id: int):
+    # v2.2.3: Clear duplicate cache for this project
+    clear_project_cache()
     conn = get_db()
     images = conn.execute(
         "SELECT * FROM images WHERE project_id = ? AND status = 'pending' ORDER BY page_number, image_index",

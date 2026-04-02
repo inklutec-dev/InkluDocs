@@ -1,6 +1,7 @@
 import fitz  # PyMuPDF
 import os
 import json
+import hashlib
 import httpx
 import base64
 import time
@@ -8,7 +9,23 @@ import re
 from PIL import Image
 from io import BytesIO
 
-from context_engine import get_prompt, detect_type_from_context, clean_alt_text
+
+# v2.2.3: Innerhalb-Projekt-Cache fuer Duplikate (Hash -> Ergebnis)
+_project_image_cache: dict[str, dict] = {}
+
+def _get_image_hash(image_path: str) -> str:
+    """Berechnet SHA-256 Hash einer Bilddatei."""
+    h = hashlib.sha256()
+    with open(image_path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+def clear_project_cache():
+    """Cache leeren (am Anfang jedes Projekts aufrufen)."""
+    _project_image_cache.clear()
+
+from context_engine import get_prompt, detect_type_from_context, clean_alt_text, remove_hedge_words
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
 MODEL_NAME = os.environ.get("OLLAMA_MODEL", "qwen3-vl:8b")
@@ -685,6 +702,13 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
         validate_dekorativ, is_thumbnail, clean_alt_text
     )
 
+    # v2.2.3: Check project cache for duplicate images
+    img_hash = _get_image_hash(image_path)
+    if img_hash in _project_image_cache:
+        cached = _project_image_cache[img_hash].copy()
+        print(f"v2.2.3 Cache-Hit: {image_path} (Hash {img_hash[:12]}...)")
+        return cached
+
     # OCR: Extract text from the image
     ocr_text = _ocr_extract_text(image_path)
     enriched_context = context
@@ -740,7 +764,7 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
                         "langbeschreibung": "",
                         "ist_dekorativ": False,
                         "konfidenz": "mittel",
-                    })
+                    }, image_hash=img_hash)
                 else:
                     print(f"v2.2.1 Dekorativ-Recheck: {image_path} -> bestaetigt dekorativ")
 
@@ -783,7 +807,7 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
             # v2.2.1: Force empty langbeschreibung for thumbnails
             if is_thumbnail(width, height) and mistral_result.get("langbeschreibung"):
                 mistral_result["langbeschreibung"] = ""
-            return _apply_postfilter(mistral_result)
+            return _apply_postfilter(mistral_result, image_hash=img_hash)
         # Fallback to Qwen if Mistral fails
         print(f"Mistral fehlgeschlagen, Fallback auf Qwen fuer {image_path}")
 
@@ -795,7 +819,7 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
     # Ensure bildtyp from classification is used
     if result.get("bildtyp") in ("unbekannt", "fehler", None):
         result["bildtyp"] = bildtyp
-    return _apply_postfilter(result)
+    return _apply_postfilter(result, image_hash=img_hash)
 
 
 def _call_mistral_generate(image_path: str, bildtyp: str, context: str,
@@ -980,14 +1004,28 @@ def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_re
         return None
 
 
-def _apply_postfilter(result: dict) -> dict:
+def _apply_postfilter(result: dict, image_hash: str = "") -> dict:
     """v2.2.1: Apply postfilter to clean context interpretations from any alt-text.
-    Runs AFTER all generation paths (Mistral, Qwen, Dekorativ-Recheck)."""
+    Runs AFTER all generation paths (Mistral, Qwen, Dekorativ-Recheck).
+    v2.2.3: Also writes to project cache if image_hash is provided."""
     if not result or result.get("ist_dekorativ"):
+        # Cache dekorative Ergebnisse auch
+        if image_hash and result:
+            _project_image_cache[image_hash] = result.copy()
         return result
     alt = result.get("alt_text", "")
     if alt:
         result["alt_text"] = clean_alt_text(alt)
+        # v2.2.3: Hedge-Woerter auch innerhalb des Satzes entfernen
+        result["alt_text"] = remove_hedge_words(result["alt_text"])
+    # v2.2.3: Gleicher Filter auch fuer Langbeschreibung
+    lang = result.get("langbeschreibung", "")
+    if lang:
+        result["langbeschreibung"] = clean_alt_text(lang)
+        result["langbeschreibung"] = remove_hedge_words(result["langbeschreibung"])
+    # v2.2.3: Cache result for duplicate detection
+    if image_hash:
+        _project_image_cache[image_hash] = result.copy()
     return result
 
 

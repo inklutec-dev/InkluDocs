@@ -75,6 +75,13 @@ ANTI-HALLUZINATION – KONTEXTNUTZUNG:
 
 VERBOTENE FORMULIERUNGEN: Verwende NICHT 'symbolisiert', 'steht symbolisch fuer', 'repraesentiert', 'steht fuer', 'thematisch passend zu', 'im Kontext von', 'vermutlich im Zusammenhang mit'. Wenn du zu diesen Formulierungen greifst, beschreibst du den Kontext statt das Bild – formuliere um und beschreibe was du SIEHST.
 
+KEINE VERMUTUNGEN (KRITISCH):
+- VERBOTEN in Alt-Texten: vermutlich, wahrscheinlich, moeglicherweise, koennte, duerfte, scheint, wohl, anscheinend, offenbar.
+- VERBOTEN: Symbol fuer, im Rahmen von, im Rahmen der/des/eines.
+- Alt-Text beschreibt was zu SEHEN ist, nicht was etwas bedeuten KOENNTE.
+- Wenn du unsicher bist was etwas ist, beschreibe das AUSSEHEN: Grosses Gebaeude mit gruenen Pfeilern statt vermutlich eine Sporthalle.
+- Wenn du den Zweck nicht kennst, lass ihn weg: Feld mit gelben Blueten statt Rapsfeld, das nachhaltige Landwirtschaft symbolisiert.
+
 REGELN:
 - KEIN Praefix "Foto – ". Starte direkt mit der Erkenntnis.
 - Personen: Name und Funktion NUR aus dem Kontext oder von lesbaren Namensschildern. KEIN Alter nennen.
@@ -750,6 +757,12 @@ KONTEXT_PHRASEN = [
     r',?\s*passend zu den (?:Themen|Inhalten)\s+.*$',
     r',?\s*was auf .* hindeutet\.?$',
     r',?\s*typisch für\s+.*$',
+    # v2.2.3: Erweiterte Anti-Raten-Regeln
+    r',?\s*vermutlich\b.*$',
+    r',?\s*wahrscheinlich\b.*$',
+    r',?\s*möglicherweise\b.*$',
+    r',?\s*Symbol für\s+.*$',
+    r',?\s*im Rahmen (?:von|der|des|eines)\s+.*$',
 ]
 
 def clean_alt_text(alt_text: str) -> str:
@@ -764,6 +777,48 @@ def clean_alt_text(alt_text: str) -> str:
     if cleaned and not cleaned.endswith(')'):
         cleaned += '.'
     return cleaned if cleaned else alt_text
+
+
+# v2.2.3: Hedge-Woerter auch INNERHALB des Satzes entfernen
+HEDGE_PATTERNS = [
+    (r'\bvermutlich\s+', ''),
+    (r'\bwahrscheinlich\s+', ''),
+    (r'\bmöglicherweise\s+', ''),
+    (r'\boffenbar\s+', ''),
+    (r'\banscheinend\s+', ''),
+    (r'\bwohl\s+', ''),
+]
+
+def remove_hedge_words(alt_text: str) -> str:
+    """Entfernt Unsicherheitswoerter aus Alt-Texten.
+    v2.2.3: Alt-Text beschreibt was zu sehen ist, nicht was vermutet wird."""
+    if not alt_text:
+        return alt_text
+    cleaned = alt_text
+    for pattern, replacement in HEDGE_PATTERNS:
+        cleaned = re.sub(pattern, replacement, cleaned, flags=re.IGNORECASE)
+    # Doppelte Leerzeichen bereinigen
+    cleaned = re.sub(r'  +', ' ', cleaned).strip()
+    return cleaned if cleaned else alt_text
+
+
+def _extract_link_from_context(context: str) -> str:
+    """v2.2.3: Extract link target from scraper context string.
+    Prefers [Link-Beschriftung] over [Link-Ziel] (human-readable)."""
+    if not context:
+        return ""
+    import re as _re
+    # Prefer readable label
+    match = _re.search(r'\[Link-Beschriftung\]\s*(.+)', context)
+    if match:
+        label = match.group(1).strip()
+        if label and len(label) > 2:
+            return label
+    # Fallback to URL
+    match = _re.search(r'\[Link-Ziel\]\s*(.+)', context)
+    if match:
+        return match.group(1).strip()
+    return ""
 
 
 def extract_link_target(original_alt: str) -> str:
@@ -832,10 +887,13 @@ def get_generation_prompt(bildtyp: str, context_text: str = "", width: int = 0, 
     Falls back to GENERAL_PROMPT if the bildtyp has no specialized prompt.
     Context limit: 1200 chars for Mistral.
     """
-    context = context_text[:1200] if context_text else "Kein Kontext."
+    context = context_text[:1500] if context_text else "Kein Kontext."  # v2.2.3: raised from 1200 (page profile now max 300)
 
-    # v2.2.1: Extract link target and add as explicit context field + append to context end
+    # v2.2.3: Extract link target from original alt OR from scraper context
     link_target = extract_link_target(original_alt)
+    if not link_target:
+        # Fallback: extract from context (scraper adds [Link-Beschriftung] or [Link-Ziel])
+        link_target = _extract_link_from_context(context)
     if link_target:
         context = f"[Link-Ziel dieses Bildes]: {link_target}\n{context}\n[WICHTIG – PFLICHT]: Dieses Bild ist ein Link. Der Alt-Text MUSS enden mit: (verweist auf: {link_target})"
     prompt_template = SPECIALIZED_GENERATION_PROMPTS.get(bildtyp)
@@ -927,19 +985,17 @@ def is_complex_type(image_type: str) -> bool:
 
 
 def extract_page_profile(soup) -> str:
-    """Extract a page profile from BeautifulSoup HTML for better context."""
+    """Extract a compact page profile from BeautifulSoup HTML.
+
+    v2.2.3: Only title + meta description, no headings (max 300 chars).
+    Headings come via image-specific context (nearest heading to each image).
+    This prevents the page profile from consuming the context budget."""
     parts = []
     if soup.title and soup.title.string:
-        parts.append(f"[Seitentitel] {soup.title.string.strip()}")
+        parts.append(f"[Seitentitel] {soup.title.string.strip()[:100]}")
     meta_desc = soup.find("meta", attrs={"name": "description"})
     if meta_desc and meta_desc.get("content"):
-        parts.append(f"[Meta-Beschreibung] {meta_desc['content'][:200]}")
-    headings = []
-    for tag in ["h1", "h2", "h3"]:
-        for h in soup.find_all(tag):
-            text = h.get_text(strip=True)
-            if text:
-                headings.append(f"{tag.upper()}: {text}")
-    if headings:
-        parts.append(f"[Ueberschriften] {' | '.join(headings[:10])}")
-    return "\n".join(parts) if parts else ""
+        parts.append(f"[Meta-Beschreibung] {meta_desc['content'][:150]}")
+    profile = "\n".join(parts) if parts else ""
+    return profile[:300]
+
