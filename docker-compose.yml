@@ -11,12 +11,13 @@ services:
       - SECRET_KEY=${SECRET_KEY:-inkludocs-production-key-2025}
       - OLLAMA_URL=http://10.100.0.1:11434
       - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
-      - REGISTRATION_ENABLED=false
+      - REGISTRATION_ENABLED=true
       - SMTP_SERVER=${SMTP_SERVER}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - NOTIFICATION_EMAIL=support@inklutec.de
       - MISTRAL_ENABLED=${MISTRAL_ENABLED:-false}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - PIPELINE_MODE=${PIPELINE_MODE:-mistral_primary}
