@@ -17,6 +17,7 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - NOTIFICATION_EMAIL=support@inklutec.de
       - MISTRAL_ENABLED=${MISTRAL_ENABLED:-false}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - PIPELINE_MODE=${PIPELINE_MODE:-mistral_primary}

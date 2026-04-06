@@ -132,6 +132,17 @@ def init_db():
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS email_verifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            email TEXT NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expires_at TEXT NOT NULL,
+            used INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
     """)
     conn.commit()
 
@@ -157,6 +168,7 @@ def _migrate_columns(conn):
         ("images", "langbeschreibung", "ALTER TABLE images ADD COLUMN langbeschreibung TEXT DEFAULT ''"),
         ("images", "original_alt", "ALTER TABLE images ADD COLUMN original_alt TEXT DEFAULT ''"),
         ("images", "feedback", "ALTER TABLE images ADD COLUMN feedback TEXT DEFAULT ''"),
+        ("users", "email_verified", "ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 1"),
     ]
 
     for table, column, sql in migrations:
@@ -172,13 +184,13 @@ def _migrate_columns(conn):
     conn.commit()
 
 
-def create_user(email: str, password: str, display_name: str, is_admin: int = 0) -> int:
+def create_user(email: str, password: str, display_name: str, is_admin: int = 0, email_verified: int = 1) -> int:
     conn = get_db()
     password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     try:
         cursor = conn.execute(
-            "INSERT INTO users (email, password_hash, display_name, is_admin) VALUES (?, ?, ?, ?)",
-            (email.lower().strip(), password_hash, display_name.strip(), is_admin)
+            "INSERT INTO users (email, password_hash, display_name, is_admin, email_verified) VALUES (?, ?, ?, ?, ?)",
+            (email.lower().strip(), password_hash, display_name.strip(), is_admin, email_verified)
         )
         conn.commit()
         user_id = cursor.lastrowid
@@ -340,6 +352,70 @@ def confirm_email_change(token: str) -> dict | None:
     conn.commit()
     conn.close()
     return {"user_id": change["user_id"], "new_email": change["new_email"]}
+
+
+
+# ─── Email Verification (Registration) ───────────────────────
+
+def create_email_verification_token(user_id: int, email: str) -> str:
+    """Create a token for registration email verification. Returns the raw token."""
+    conn = get_db()
+    token = secrets.token_urlsafe(32)
+    expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+    conn.execute("UPDATE email_verifications SET used = 1 WHERE user_id = ? AND used = 0", (user_id,))
+    conn.execute(
+        "INSERT INTO email_verifications (user_id, email, token, expires_at) VALUES (?, ?, ?, ?)",
+        (user_id, email, token, expires)
+    )
+    conn.commit()
+    conn.close()
+    return token
+
+
+def verify_email_verification_token(token: str):
+    """Verify a registration email token. Returns dict or None."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM email_verifications WHERE token = ? AND used = 0", (token,)
+    ).fetchone()
+    conn.close()
+    if not row:
+        return None
+    if datetime.fromisoformat(row["expires_at"]) < datetime.utcnow():
+        return None
+    return dict(row)
+
+
+def mark_email_verified(token: str):
+    """Confirm email verification: set email_verified=1 and mark token used.
+    Returns dict with user_id and email on success, None on failure."""
+    verification = verify_email_verification_token(token)
+    if not verification:
+        return None
+    conn = get_db()
+    conn.execute("UPDATE users SET email_verified = 1 WHERE id = ?", (verification["user_id"],))
+    conn.execute("UPDATE email_verifications SET used = 1 WHERE id = ?", (verification["id"],))
+    conn.commit()
+    conn.close()
+    return {"user_id": verification["user_id"], "email": verification["email"]}
+
+
+def resend_verification_token(email: str):
+    """Create a new verification token for an unverified user. Returns token or None."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT id, email_verified FROM users WHERE email = ? AND is_active = 1", (email.lower().strip(),)
+    ).fetchone()
+    conn.close()
+    if not row:
+        return None
+    # Already verified
+    try:
+        if row["email_verified"]:
+            return None
+    except (IndexError, KeyError):
+        return None
+    return create_email_verification_token(row["id"], email.lower().strip())
 
 
 # ─── API Key Management ──────────────────────────────────────
