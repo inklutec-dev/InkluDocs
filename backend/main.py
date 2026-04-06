@@ -332,7 +332,7 @@ async def register(request: Request):
 <p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">E-Mail-Adresse bestaetigen</a></p>
 <p style="color:#64748b;font-size:0.9rem;">Oder kopieren Sie diesen Link: {verify_url}</p>
 <p style="color:#64748b;font-size:0.9rem;">Der Link ist 24 Stunden gueltig.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – support@inklutec.de</p>
 </body></html>"""
     send_email(email, "InkluDocs: E-Mail-Adresse bestaetigen", email_body, bcc_admin=False)
 
@@ -388,14 +388,21 @@ async def verify_email_registration(token: str = ""):
 </body></html>"""
     send_email(NOTIFICATION_EMAIL, "InkluDocs: E-Mail bestaetigt", admin_body, bcc_admin=False)
 
-    return HTMLResponse(f"""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <meta http-equiv="refresh" content="3;url=/"></head><body>
-    <div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail bestaetigt">
+    return HTMLResponse(f"""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs – E-Mail bestaetigt</title>
+    <link rel="stylesheet" href="/static/style.css"></head><body>
+    <div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail bestaetigt" style="max-width:600px;">
     <h1><span class="brand">Inklu</span>Docs</h1>
-    <p style="color:#16a34a;font-size:1.2rem;margin:2rem 0;">&#10003; E-Mail-Adresse erfolgreich bestaetigt!</p>
-    <p>Sie koennen sich jetzt <a href="/">anmelden</a>.</p>
-    <p style="color:#64748b;font-size:0.9rem;">Sie werden in 3 Sekunden weitergeleitet...</p>
+    <p style="color:#16a34a;font-size:1.2rem;margin:2rem 0;font-weight:600;">&#10003; E-Mail-Adresse erfolgreich bestaetigt!</p>
+    <p>Ihr Konto ist jetzt aktiv. So funktioniert InkluDocs:</p>
+    <h2 style="color:#e87722;font-size:1.1rem;margin-top:1.5rem;">So funktioniert es</h2>
+    <ol style="text-align:left;line-height:1.8;">
+    <li>Melden Sie sich auf <a href="{BASE_URL}">{BASE_URL}</a> an</li>
+    <li>Laden Sie ein PDF, Bilder hoch oder geben Sie eine Website-URL ein</li>
+    <li>Klicken Sie auf &bdquo;Alt-Texte generieren&ldquo;</li>
+    <li>Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie</li>
+    </ol>
+    <p style="margin-top:1.5rem;"><a href="/" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Jetzt anmelden</a></p>
+    <p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">Bei Fragen wenden Sie sich an <a href="mailto:support@inklutec.de">support@inklutec.de</a></p>
     </div></div></body></html>""")
 
 
@@ -423,7 +430,7 @@ async def resend_verification(request: Request):
 <p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">E-Mail-Adresse bestaetigen</a></p>
 <p style="color:#64748b;font-size:0.9rem;">Oder kopieren Sie diesen Link: {verify_url}</p>
 <p style="color:#64748b;font-size:0.9rem;">Der Link ist 24 Stunden gueltig.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – support@inklutec.de</p>
 </body></html>"""
     send_email(email, "InkluDocs: E-Mail-Adresse bestaetigen", email_body, bcc_admin=False)
 
