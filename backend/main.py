@@ -325,14 +325,28 @@ async def register(request: Request):
     verify_token = create_email_verification_token(user_id, email)
     verify_url = f"{BASE_URL}/api/verify-email?token={verify_token}"
     email_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h2 style="color:#e87722;">Willkommen bei InkluDocs!</h2>
+<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
+<h1 style="color:#1b2a4a;">Willkommen bei InkluDocs</h1>
 <p>Hallo {display_name},</p>
-<p>bitte bestaetigen Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren:</p>
+<p>vielen Dank fuer Ihre Registrierung bei InkluDocs – dem KI-gestuetzten Alt-Text-Generator fuer barrierefreie Dokumente und Bilder.</p>
+
+<h2 style="color:#e87722;font-size:1.1rem;">E-Mail-Adresse bestaetigen</h2>
+<p>Bitte klicken Sie auf den folgenden Link, um Ihr Konto zu aktivieren:</p>
 <p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">E-Mail-Adresse bestaetigen</a></p>
 <p style="color:#64748b;font-size:0.9rem;">Oder kopieren Sie diesen Link: {verify_url}</p>
 <p style="color:#64748b;font-size:0.9rem;">Der Link ist 24 Stunden gueltig.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – support@inklutec.de</p>
+
+<h2 style="color:#e87722;font-size:1.1rem;">So funktioniert InkluDocs</h2>
+<p>Nachdem Sie Ihre E-Mail-Adresse bestaetigt haben:</p>
+<ol style="line-height:1.8;">
+<li>Melden Sie sich auf <a href="{BASE_URL}">{BASE_URL}</a> an</li>
+<li>Laden Sie ein PDF, Bilder hoch oder geben Sie eine Website-URL ein</li>
+<li>Klicken Sie auf &bdquo;Alt-Texte generieren&ldquo;</li>
+<li>Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie</li>
+</ol>
+
+<p>Bei Fragen wenden Sie sich gerne an <a href="mailto:support@inklutec.de">support@inklutec.de</a>.</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de</p>
 </body></html>"""
     send_email(email, "InkluDocs: E-Mail-Adresse bestaetigen", email_body, bcc_admin=False)
 
@@ -390,19 +404,11 @@ async def verify_email_registration(token: str = ""):
 
     return HTMLResponse(f"""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs – E-Mail bestaetigt</title>
     <link rel="stylesheet" href="/static/style.css"></head><body>
-    <div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail bestaetigt" style="max-width:600px;">
+    <div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail bestaetigt">
     <h1><span class="brand">Inklu</span>Docs</h1>
     <p style="color:#16a34a;font-size:1.2rem;margin:2rem 0;font-weight:600;">&#10003; E-Mail-Adresse erfolgreich bestaetigt!</p>
-    <p>Ihr Konto ist jetzt aktiv. So funktioniert InkluDocs:</p>
-    <h2 style="color:#e87722;font-size:1.1rem;margin-top:1.5rem;">So funktioniert es</h2>
-    <ol style="text-align:left;line-height:1.8;">
-    <li>Melden Sie sich auf <a href="{BASE_URL}">{BASE_URL}</a> an</li>
-    <li>Laden Sie ein PDF, Bilder hoch oder geben Sie eine Website-URL ein</li>
-    <li>Klicken Sie auf &bdquo;Alt-Texte generieren&ldquo;</li>
-    <li>Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie</li>
-    </ol>
+    <p>Ihr Konto ist jetzt aktiv. Sie koennen sich jetzt anmelden.</p>
     <p style="margin-top:1.5rem;"><a href="/" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Jetzt anmelden</a></p>
-    <p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">Bei Fragen wenden Sie sich an <a href="mailto:support@inklutec.de">support@inklutec.de</a></p>
     </div></div></body></html>""")
 
 
