@@ -31,6 +31,7 @@ from database import (
     create_email_change_token, confirm_email_change,
     create_api_result, get_api_result, update_api_result,
     create_email_verification_token, mark_email_verified, resend_verification_token,
+    get_daily_image_count, get_daily_api_count,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
 
@@ -63,6 +64,7 @@ SMTP_USER = os.environ.get("SMTP_USER", "kontakt@inklutec.de")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 SMTP_FROM = os.environ.get("SMTP_FROM", "kontakt@inklutec.de")
 NOTIFICATION_EMAIL = os.environ.get("NOTIFICATION_EMAIL", SMTP_FROM)
+DAILY_IMAGE_LIMIT = int(os.environ.get("DAILY_IMAGE_LIMIT", "100"))
 
 
 def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = True, attachment_path: str = None) -> bool:
@@ -448,6 +450,7 @@ async def me(user: dict = Depends(get_current_user)):
     db_user = get_user_by_id(user["id"])
     if not db_user:
         raise HTTPException(status_code=401, detail="User nicht gefunden")
+    daily_used = get_daily_image_count(db_user["id"])
     return {
         "ok": True,
         "user": {
@@ -455,6 +458,11 @@ async def me(user: dict = Depends(get_current_user)):
             "email": db_user["email"],
             "display_name": db_user["display_name"],
             "is_admin": db_user["is_admin"],
+        },
+        "daily_limit": {
+            "used": daily_used,
+            "limit": DAILY_IMAGE_LIMIT,
+            "remaining": max(0, DAILY_IMAGE_LIMIT - daily_used),
         },
     }
 
@@ -1379,6 +1387,12 @@ async def get_image_file(image_id: int, user: dict = Depends(get_current_user)):
 
 @app.post("/api/projects/{project_id}/generate")
 async def generate_alt_texts(project_id: int, user: dict = Depends(get_current_user)):
+    # Check daily limit (admins are exempt)
+    if not user.get("is_admin"):
+        daily_used = get_daily_image_count(user["id"])
+        if daily_used >= DAILY_IMAGE_LIMIT:
+            raise HTTPException(status_code=429, detail=f"Tageslimit erreicht ({DAILY_IMAGE_LIMIT} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.")
+
     conn = get_db()
     project = conn.execute(
         "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
@@ -1869,6 +1883,15 @@ async def api_generate_alt_text(request: Request):
 
     api_user = get_api_user(request)
     api_key_id = api_user["api_key_id"]
+
+    # Daily limit check
+    daily_used = get_daily_api_count(api_user["id"])
+    if daily_used >= DAILY_IMAGE_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Tageslimit erreicht ({DAILY_IMAGE_LIMIT} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.",
+            headers={"X-RateLimit-Limit": str(DAILY_IMAGE_LIMIT), "X-RateLimit-Remaining": "0"},
+        )
 
     # Rate limiting
     rate_info = check_api_rate_limit(api_key_id)

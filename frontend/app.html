@@ -14,6 +14,7 @@
         </div>
         <div class="header-actions">
             <span id="userGreeting" style="color:rgba(255,255,255,0.85);font-size:0.95rem;margin-right:0.75rem;white-space:nowrap;" aria-label="Angemeldeter Benutzer"></span>
+            <span id="dailyLimit" style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-right:0.75rem;white-space:nowrap;" aria-live="polite"></span>
             <button id="adminBtn" class="header-btn" style="display:none" aria-label="Benutzerverwaltung">Benutzer</button>
             <button id="settingsBtn" class="header-btn" aria-label="Einstellungen">Einstellungen</button>
             <button id="logoutBtn" class="header-btn" aria-label="Abmelden">Abmelden</button>
@@ -62,11 +63,14 @@
     async function init() {
         const res = await fetch('/api/me');
         if (res.status === 401) { window.location.href = '/'; return; }
-        currentUser = (await res.json()).user;
+        const meData = await res.json();
+        currentUser = meData.user;
+        if (meData.daily_limit) window._dailyLimit = meData.daily_limit;
         document.getElementById('userGreeting').textContent = 'Hallo, ' + currentUser.display_name;
         if (currentUser.is_admin) {
             document.getElementById('adminBtn').style.display = '';
         }
+        updateLimitDisplay();
         showDashboard();
     }
 
@@ -500,6 +504,12 @@
 
     async function startGeneration(projectId) {
         const btn = document.getElementById('generateBtn');
+        // Pre-check daily limit
+        if (window._dailyLimit && window._dailyLimit.remaining <= 0) {
+            announce('Tageslimit erreicht. Das Limit wird um Mitternacht zurueckgesetzt.');
+            alert('Tageslimit erreicht (' + window._dailyLimit.limit + ' Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.');
+            return;
+        }
         if (btn) { btn.disabled = true; btn.textContent = 'Wird gestartet...'; }
         announce('Alt-Text-Generierung wird gestartet.');
         const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST' });
@@ -1036,10 +1046,64 @@
         }
     });
 
-    // Patch showDashboard to add drag & drop after render
+    // ─── Daily limit display ─────────────────────────────
+    function updateLimitDisplay() {
+        const el = document.getElementById('dailyLimit');
+        const dl = window._dailyLimit;
+        if (!el || !dl) return;
+        const pct = Math.round(dl.used / dl.limit * 100);
+        if (pct >= 100) {
+            el.textContent = 'Tageslimit erreicht';
+            el.style.color = '#fca5a5';
+        } else if (pct >= 80) {
+            el.textContent = 'Noch ' + dl.remaining + ' Bilder heute';
+            el.style.color = '#fde68a';
+        } else {
+            el.textContent = dl.used + '/' + dl.limit + ' Bilder heute';
+        }
+    }
+
+    // Refresh limit after generation
+    async function refreshDailyLimit() {
+        try {
+            const r = await fetch('/api/me');
+            const d = await r.json();
+            if (d.ok && d.daily_limit) {
+                window._dailyLimit = d.daily_limit;
+                updateLimitDisplay();
+            }
+        } catch(e) {}
+    }
+
+    // ─── Donate banner on dashboard ─────────────────────
+    function addDonateBanner() {
+        if (document.getElementById('donateBanner')) return;
+        const projectList = document.getElementById('projectList');
+        if (!projectList) return;
+        const banner = document.createElement('div');
+        banner.id = 'donateBanner';
+        banner.setAttribute('role', 'complementary');
+        banner.setAttribute('aria-label', 'Unterstuetzung');
+        banner.style.cssText = 'margin-top:2rem;padding:1.25rem 1.5rem;background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1px solid #fed7aa;border-radius:8px;text-align:center;';
+        const dl = window._dailyLimit;
+        const limitHint = (dl && dl.remaining <= 0)
+            ? '<p style="color:#dc2626;font-weight:600;margin-bottom:0.5rem;">Tageslimit erreicht – morgen geht es weiter.</p>'
+            : '';
+        banner.innerHTML = limitHint +
+            '<p style="margin:0 0 0.75rem 0;color:#1e293b;font-size:1rem;">InkluDocs ist kostenlos. Wenn es Ihnen hilft, freuen wir uns ueber eine Spende.</p>' +
+            '<a href="https://www.paypal.com/donate?business=steve.weidel%40gmail.com&item_name=InkluDocs+Spende&currency_code=EUR" target="_blank" rel="noopener" ' +
+            'style="display:inline-block;background:#0070ba;color:white;padding:0.6rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;font-size:1rem;" ' +
+            'aria-label="Per PayPal spenden">Per PayPal unterstuetzen</a>' +
+            '<p style="margin:0.5rem 0 0 0;color:#64748b;font-size:0.85rem;">Jeder Betrag hilft, InkluDocs weiterzuentwickeln.</p>';
+        projectList.parentNode.insertBefore(banner, projectList.nextSibling);
+    }
+
+    // ─── Patch showDashboard to add drag & drop after render
     const _origShowDashboard = showDashboard;
     showDashboard = async function() {
         await _origShowDashboard();
+        addDonateBanner();
+        refreshDailyLimit();
         setupDragDrop();
     };
 

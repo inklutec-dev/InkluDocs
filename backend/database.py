@@ -355,6 +355,35 @@ def confirm_email_change(token: str) -> dict | None:
 
 
 
+
+# ─── Daily Usage Limits ──────────────────────────────────────
+
+def get_daily_image_count(user_id: int) -> int:
+    """Count how many images a user has processed today (UTC)."""
+    conn = get_db()
+    row = conn.execute(
+        """SELECT COUNT(*) FROM images i
+           JOIN projects p ON i.project_id = p.id
+           WHERE p.user_id = ? AND i.status IN ('done', 'processing')
+           AND date(i.created_at) = date('now')""",
+        (user_id,)
+    ).fetchone()
+    conn.close()
+    return row[0] if row else 0
+
+
+def get_daily_api_count(user_id: int) -> int:
+    """Count how many API calls a user has made today (UTC)."""
+    conn = get_db()
+    row = conn.execute(
+        """SELECT COUNT(*) FROM api_usage
+           WHERE user_id = ? AND date(timestamp) = date('now')""",
+        (user_id,)
+    ).fetchone()
+    conn.close()
+    return row[0] if row else 0
+
+
 # ─── Email Verification (Registration) ───────────────────────
 
 def create_email_verification_token(user_id: int, email: str) -> str:
