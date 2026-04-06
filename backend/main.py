@@ -1886,6 +1886,7 @@ async def api_generate_alt_text(request: Request):
 
     # Daily limit check
     daily_used = get_daily_api_count(api_user["id"])
+    daily_remaining = max(0, DAILY_IMAGE_LIMIT - daily_used)
     if daily_used >= DAILY_IMAGE_LIMIT:
         raise HTTPException(
             status_code=429,
@@ -2027,6 +2028,9 @@ async def api_generate_alt_text(request: Request):
             headers={
                 "X-RateLimit-Remaining-Minute": str(rate_info["minute_remaining"]),
                 "X-RateLimit-Remaining-Day": str(rate_info["day_remaining"]),
+                "X-DailyLimit-Limit": str(DAILY_IMAGE_LIMIT),
+                "X-DailyLimit-Used": str(daily_used + 1),
+                "X-DailyLimit-Remaining": str(max(0, daily_remaining - 1)),
             }
         )
     except HTTPException:
