@@ -7,6 +7,13 @@ import base64
 import time
 import re
 from PIL import Image
+# Register AVIF and HEIF support via pillow-heif
+try:
+    from pillow_heif import register_avif_opener, register_heif_opener
+    register_avif_opener()
+    register_heif_opener()
+except ImportError:
+    pass
 from io import BytesIO
 
 
@@ -855,7 +862,7 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str,
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
                     ]
                 }],
-                "max_tokens": 1500,
+                "max_tokens": 2500,
                 "temperature": 0,
             },
             timeout=60.0
@@ -991,7 +998,7 @@ def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_re
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
                     ]
                 }],
-                "max_tokens": 1500,
+                "max_tokens": 2500,
                 "temperature": 0,
             },
             timeout=60.0
@@ -1023,6 +1030,16 @@ def _apply_postfilter(result: dict, image_hash: str = "") -> dict:
     if lang:
         result["langbeschreibung"] = clean_alt_text(lang)
         result["langbeschreibung"] = remove_hedge_words(result["langbeschreibung"])
+        # v2.2.4: Truncation-Fix – unvollstaendige Saetze am Ende abschneiden
+        cleaned_lang = result["langbeschreibung"].strip()
+        if cleaned_lang and cleaned_lang[-1] not in '.!?)"”':
+            # Find last complete sentence
+            last_period = cleaned_lang.rfind('.')
+            last_excl = cleaned_lang.rfind('!')
+            last_paren = cleaned_lang.rfind(')')
+            cut_pos = max(last_period, last_excl, last_paren)
+            if cut_pos > len(cleaned_lang) * 0.5:
+                result["langbeschreibung"] = cleaned_lang[:cut_pos + 1]
     # v2.2.3: Cache result for duplicate detection
     if image_hash:
         _project_image_cache[image_hash] = result.copy()

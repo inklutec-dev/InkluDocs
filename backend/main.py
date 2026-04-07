@@ -1311,6 +1311,9 @@ def _ext_from_content_type(ct: str) -> str:
         "image/png": ".png",
         "image/gif": ".gif",
         "image/webp": ".webp",
+        "image/avif": ".avif",
+        "image/heic": ".heic",
+        "image/heif": ".heif",
         # SVG excluded – PIL cannot process it, causes UnidentifiedImageError
     }
     return mapping.get(ct, "")
@@ -1427,38 +1430,44 @@ async def _process_project(project_id: int, user_id: int):
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
 
-        # v2.2: Pass width, height, original_alt to pipeline
-        img_width = img["width"] if img["width"] else 0
-        img_height = img["height"] if img["height"] else 0
-        img_original_alt = img["original_alt"] if img["original_alt"] else ""
+        try:
+            # v2.2: Pass width, height, original_alt to pipeline
+            img_width = img["width"] if img["width"] else 0
+            img_height = img["height"] if img["height"] else 0
+            img_original_alt = img["original_alt"] if img["original_alt"] else ""
 
-        # First pass: general prompt for type detection + alt-text
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, generate_alt_text, img["image_path"], img["context_text"], None,
-            img_width, img_height, img_original_alt
-        )
-
-        # Second pass: if complex type detected, re-generate with specialized prompt
-        # to get langbeschreibung automatically
-        from context_engine import is_complex_type
-        detected_type = result.get("bildtyp", "")
-        langbeschreibung = result.get("langbeschreibung", "")
-
-        if is_complex_type(detected_type) and not langbeschreibung:
-            specialized_result = await asyncio.get_event_loop().run_in_executor(
-                None, generate_alt_text, img["image_path"], img["context_text"], detected_type,
+            # First pass: general prompt for type detection + alt-text
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, generate_alt_text, img["image_path"], img["context_text"], None,
                 img_width, img_height, img_original_alt
             )
-            if specialized_result.get("langbeschreibung"):
-                langbeschreibung = specialized_result["langbeschreibung"]
-            # Use the specialized alt-text if it's better (has content)
-            if specialized_result.get("alt_text") and len(specialized_result["alt_text"]) > 10:
-                result["alt_text"] = specialized_result["alt_text"]
-                result["konfidenz"] = specialized_result.get("konfidenz", result.get("konfidenz", "mittel"))
-        conn.execute(
-            """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?, status = 'done' WHERE id = ?""",
-            (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung, img["id"])
-        )
+
+            # Second pass: if complex type detected, re-generate with specialized prompt
+            # to get langbeschreibung automatically
+            from context_engine import is_complex_type
+            detected_type = result.get("bildtyp", "")
+            langbeschreibung = result.get("langbeschreibung", "")
+
+            if is_complex_type(detected_type) and not langbeschreibung:
+                specialized_result = await asyncio.get_event_loop().run_in_executor(
+                    None, generate_alt_text, img["image_path"], img["context_text"], detected_type,
+                    img_width, img_height, img_original_alt
+                )
+                if specialized_result.get("langbeschreibung"):
+                    langbeschreibung = specialized_result["langbeschreibung"]
+                # Use the specialized alt-text if it's better (has content)
+                if specialized_result.get("alt_text") and len(specialized_result["alt_text"]) > 10:
+                    result["alt_text"] = specialized_result["alt_text"]
+                    result["konfidenz"] = specialized_result.get("konfidenz", result.get("konfidenz", "mittel"))
+            conn.execute(
+                """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?, status = 'done' WHERE id = ?""",
+                (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung, img["id"])
+            )
+        except Exception as e:
+            print(f"Fehler bei Bild {img['id']} ({img.get('image_path', '?')}): {e}")
+            conn.execute("UPDATE images SET status = 'error', alt_text = ? WHERE id = ?",
+                         (f"Fehler bei der Analyse: {str(e)[:200]}", img["id"]))
+
         processed += 1
         conn.execute(
             "UPDATE projects SET processed_images = ? WHERE id = ?",

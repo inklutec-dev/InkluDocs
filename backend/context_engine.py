@@ -804,7 +804,7 @@ def remove_hedge_words(alt_text: str) -> str:
 
 def _extract_link_from_context(context: str) -> str:
     """v2.2.3: Extract link target from scraper context string.
-    Prefers [Link-Beschriftung] over [Link-Ziel] (human-readable)."""
+    Prefers [Link-Beschriftung] over [Link-Ziel] over [Link-URL] (human-readable first)."""
     if not context:
         return ""
     import re as _re
@@ -814,8 +814,12 @@ def _extract_link_from_context(context: str) -> str:
         label = match.group(1).strip()
         if label and len(label) > 2:
             return label
-    # Fallback to URL
+    # Fallback to URL target
     match = _re.search(r'\[Link-Ziel\]\s*(.+)', context)
+    if match:
+        return match.group(1).strip()
+    # v2.2.4: Also check [Link-URL] (set when label exists but _extract missed it)
+    match = _re.search(r'\[Link-URL\]\s*(.+)', context)
     if match:
         return match.group(1).strip()
     return ""
