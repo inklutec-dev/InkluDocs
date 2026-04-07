@@ -42,7 +42,7 @@ Regeln:
 - Wenn Text, Personen, Daten, Diagramme oder konkrete Objekte sichtbar sind: NICHT dekorativ
 - icon = einzelnes kleines Symbol mit funktionaler Bedeutung (Lupe, Hamburger-Menue, Warenkorb)
 - funktional = Navigationselemente mit Zustandsinformation: Paginierungspfeile, Vor/Zurueck-Buttons, Fortschrittsanzeigen, Breadcrumbs. Diese sind NICHT dekorativ, auch wenn sie einfache Grafiken sind. Hinweis: Wenn der originale Alt-Text eine Funktion beschreibt ("Keine vorherige Seite", "Naechste Seite", "Zurueck"), ist es fast immer funktional.
-- logo = erkennbare Marken-, Organisations- oder Lizenzlogos (auch Creative Commons, Zertifizierungssiegel, Guetesiegel)
+- logo = erkennbare Marken-, Organisations- oder Lizenzlogos (auch Creative Commons, Zertifizierungssiegel, Guetesiegel). WICHTIG: Wenn neben dem Markennamen auch Produktmerkmale sichtbar sind (Mengenangaben wie ml/g/kg, Inhaltsstoffe, Naehrwerte, Verpackungsform wie Flasche/Dose/Tuete/Riegel, Barcodes, oder Preisangaben), dann ist es KEIN Logo sondern ein Produktbild → klassifiziere als "foto". Ein Logo steht ALLEIN als Markenzeichen. Ein Produkt hat zusaetzliche Informationen auf der Verpackung.
 - original_alt_brauchbar = true wenn der originale Alt-Text bereits eine sinnvolle, spezifische Beschreibung enthaelt (NICHT nur "Bild", "Foto", "Grafik" oder leer). Ein brauchbarer Alt-Text beschreibt konkret was zu sehen ist oder welche Funktion das Element hat.
 - konfidenz: hoch = eindeutig, mittel = wahrscheinlich, niedrig = unklar
 
@@ -72,6 +72,13 @@ ANTI-HALLUZINATION – KONTEXTNUTZUNG:
 - VERBOTEN: Aus dem Kontext "Bundesanstalt fuer Landwirtschaft" zu schliessen, dass ein unscharfes Bild "nachhaltige Landwirtschaft symbolisiert".
 - ERLAUBT: Aus dem Kontext zu verstehen, dass ein Feld auf einer Landwirtschaftsseite thematisch zur Seite gehoert.
 - FAUSTREGEL: Wenn du einen Bildinhalt nur wegen des Kontexts beschreibst, aber nicht weil du ihn SIEHST – lass ihn weg.
+
+KONTEXT-ANREICHERUNG BEI UNSPEZIFISCHEN BILDERN:
+- Wenn das Bild allein betrachtet keine spezifische Information liefert (z.B. "eine Person in einem Raum", "eine leere Halle"), DANN nutze den Seitenkontext um dem Bild Bedeutung zu geben.
+- Beispiel: Bild zeigt "leere Halle mit sandigem Boden" + Kontext ist Pferdesport → "Reithalle mit sandigem Boden und Hindernissen"
+- Beispiel: Bild zeigt "Person in einem Geschaeft" + Kontext ist budni/Drogeriemarkt → "Kundin im Drogeriemarkt budni beim Einkaufen"
+- WICHTIG: Dies ist KEIN Widerspruch zur Anti-Halluzination. Du darfst den Kontext nutzen um das Thema zuzuordnen ("Reithalle" statt "Halle"), aber du darfst KEINE Details erfinden die du nicht siehst.
+- FAUSTREGEL: Wenn dein Alt-Text kuerzer als 50 Zeichen ist und der Seitenkontext mehr Information liefert, nutze den Kontext zur Anreicherung.
 
 VERBOTENE FORMULIERUNGEN: Verwende NICHT 'symbolisiert', 'steht symbolisch fuer', 'repraesentiert', 'steht fuer', 'thematisch passend zu', 'im Kontext von', 'vermutlich im Zusammenhang mit'. Wenn du zu diesen Formulierungen greifst, beschreibst du den Kontext statt das Bild – formuliere um und beschreibe was du SIEHST.
 
@@ -146,7 +153,7 @@ EVIDENZ-BASIERTE IDENTIFIKATION:
 - Wenn OCR-Text bereitgestellt wird ([OCR-Text im Bild]), nutze diesen als primaere Datenquelle.
 
 REGELN:
-- alt_text: Diagrammtyp + Bindestrich + Titel (wenn vorhanden) + Kernaussage/Trend ueber ALLE Kategorien. 2-3 Saetze, max 350 Zeichen.
+- alt_text: Diagrammtyp + Bindestrich + Titel (wenn vorhanden) + Kernaussage mit den 2-3 WICHTIGSTEN Datenpunkten. Nenne mindestens: Spitzenreiter mit Wert, Schlusslicht mit Wert, und Gesamtspanne oder Trend. Max 400 Zeichen. Beispiel RICHTIG: "Balkendiagramm – Die 10 wichtigsten Handelspartner Deutschlands 2025: China fuehrt mit 251,8 Mrd. Euro, Tschechien bildet mit 115,7 Mrd. Euro das Schlusslicht." Beispiel FALSCH: "Balkendiagramm – China fuehrt, gefolgt von den USA und den Niederlanden." (zu vage, keine Zahlen)
 - langbeschreibung: ALLE Kategorien und ALLE Legendeneintraege benennen. Dann pro Kategorie die lesbaren Datenpunkte auflisten. Achsenbeschriftungen, Legendenwerte, Anfangs-/Endwerte bei Zeitreihen. Hoechst- und Tiefstwerte benennen. Fliesstext oder strukturierte Liste, KEINE Markdown-Tabellen. Max 1500 Zeichen.
 - Sprache: Deutsch. Insight zuerst, Details danach.
 - ANTI-HALLUZINATION: Erfinde KEINE Zahlen. Erfinde KEINE visuellen Maengel. Lass keine Kategorien weg.
@@ -290,7 +297,7 @@ BEISPIEL:
 - GUT: "Infografik – Der Gesetzgebungsprozess in fuenf Schritten: Entwurf, Ausschussberatung, erste Lesung, zweite Lesung, Verkuendung."
 
 REGELN:
-- alt_text: "Infografik – " + Hauptthema + zentrale Kernaussage. Max 350 Zeichen.
+- alt_text: "Infografik – " + Hauptthema + zentrale Kernaussage mit konkreten Datenpunkten wenn vorhanden. Nenne die wichtigsten Zahlen, Fakten oder Stationen. Max 400 Zeichen.
 - langbeschreibung: Die inhaltlichen Stationen oder Fakten in logischer Reihenfolge. Beschreibe Beziehungen ("A fuehrt zu B", "X umfasst Y"), NICHT visuelles Layout ("oben links steht", "ein Pfeil zeigt auf"). Fliesstext, max 1500 Zeichen.
 - OCR-Text als primaere Quelle nutzen.
 - ANTI-HALLUZINATION VERSCHAERFT: Beschreibe NUR Inhalte die du im Bild LESEN oder ERKENNEN kannst. Der Seitenkontext verraet dir das Themenfeld, aber NICHT die konkreten Inhalte der Infografik. Wenn du Zahlen, Begriffe oder Zusammenhaenge nicht im Bild siehst, nenne sie NICHT.
@@ -441,7 +448,7 @@ INSIGHT-FIRST:
 - BEISPIEL: "Balkendiagramm – Umsatzentwicklung in Deutschland: Vier Kategorien (Software, Hardware, Services, Mobile) im Vergleich 2021-2023. Hardware erreicht 2022 den Hoechstwert und faellt 2023 zurueck."
 - Nenne NUR Zahlen die du KLAR LESEN kannst. Keine Werte erfinden.
 
-alt_text: Diagrammtyp + Titel + Kernaussage ueber ALLE Kategorien, max 350 Zeichen.
+alt_text: Diagrammtyp + Titel + Kernaussage mit den 2-3 wichtigsten Datenpunkten (Spitzenreiter, Schlusslicht, Trend), max 400 Zeichen.
 langbeschreibung: ALLE Kategorien und Legendeneintraege. Pro Kategorie die lesbaren Werte. Achsen, Hoechst-/Tiefstwerte. Max 1500 Zeichen. Keine Markdown-Tabellen.
 Sprache: Deutsch.
 
