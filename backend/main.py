@@ -2379,11 +2379,11 @@ console.log(data.alt_text);</code></pre>
 # ─── News / Neuigkeiten ─────────────────────────────────────
 
 NEUIGKEITEN = [
-    {"datum": "30.03.2026", "text": "Neu: API-Schluessel koennen jetzt in den Einstellungen erstellt und verwaltet werden (Testphase)"},
-    {"datum": "30.03.2026", "text": "Alternativtext-Generierung optimiert – verbesserte Erkennung von Logos, funktionalen Elementen und verlinkten Bildern"},
-    {"datum": "27.03.2026", "text": "Neu: Dateien koennen jetzt per Drag and Drop hochgeladen werden"},
-    {"datum": "27.03.2026", "text": "Neu: Neuigkeiten-Bereich eingefuehrt – hier informieren wir ueber Updates"},
-    {"datum": "27.03.2026", "text": "Farbdesign ueberarbeitet – besserer Kontrast fuer Buttons und Texte"},
+    {"datum": "07.04.2026", "text": "Alt-Text-Qualitaet verbessert: Produktbilder, Diagramme und verlinkte Bilder werden besser erkannt"},
+    {"datum": "07.04.2026", "text": "Neue Bildformate: AVIF und HEIC werden jetzt unterstuetzt"},
+    {"datum": "06.04.2026", "text": "Tageslimit: 100 Bilder pro Tag – Anzeige im Header"},
+    {"datum": "06.04.2026", "text": "Registrierung offen: Konto erstellen mit E-Mail-Bestaetigung"},
+    {"datum": "06.04.2026", "text": "InkluDocs unterstuetzen: Freiwillige Beitraege per PayPal moeglich"},
 ]
 
 @app.get("/api/news")
