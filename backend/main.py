@@ -2398,6 +2398,9 @@ async def index():
     html = open("/app/frontend/index.html").read()
     if os.getenv("REGISTRATION_ENABLED", "true").lower() in ("false", "0", "no"):
         html = html.replace('<a href="/register">Konto erstellen</a>', '')
+    if "staging" in BASE_URL:
+        html = html.replace("<title>InkluDocs", "<title>InkluDocs (Testumgebung)")
+        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
     return html
 
 @app.get("/register", response_class=HTMLResponse)
@@ -2411,7 +2414,11 @@ async def register_page():
         <p>InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten moechtest, schreib bitte eine E-Mail an <strong>kontakt@inklutec.de</strong>.</p>
         <p style="margin-top:2rem;"><a href="/">Zurueck zur Anmeldung</a></p>
         </div></div></body></html>"""
-    return open("/app/frontend/register.html").read()
+    html = open("/app/frontend/register.html").read()
+    if "staging" in BASE_URL:
+        html = html.replace("<title>InkluDocs", "<title>InkluDocs (Testumgebung)")
+        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
+    return html
 
 @app.get("/forgot", response_class=HTMLResponse)
 async def forgot_page():
@@ -2430,7 +2437,11 @@ async def app_page(request: Request):
         jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return RedirectResponse("/")
-    return open("/app/frontend/app.html").read()
+    html = open("/app/frontend/app.html").read()
+    if "staging" in BASE_URL:
+        html = html.replace("<title>InkluDocs</title>", "<title>InkluDocs (Testumgebung)</title>")
+        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
+    return html
 
 @app.get("/impressum", response_class=HTMLResponse)
 async def impressum_page():
