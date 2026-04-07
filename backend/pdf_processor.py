@@ -516,6 +516,11 @@ def _resize_image_for_model(image_path: str) -> str:
     # Convert palette/RGBA/LA modes to RGB for JPEG compatibility
     if img.mode not in ("RGB", "L"):
         img = img.convert("RGB")
+    # Force-convert AVIF/HEIC to JPEG (Ollama and other tools cannot read these formats)
+    if image_path.lower().endswith((".avif", ".heic", ".heif")):
+        buf = BytesIO()
+        img.save(buf, format="JPEG", quality=90)
+        return base64.b64encode(buf.getvalue()).decode()
     # Resize if dimensions exceed limit
     if img.width > MAX_IMAGE_DIM or img.height > MAX_IMAGE_DIM:
         img.thumbnail((MAX_IMAGE_DIM, MAX_IMAGE_DIM), Image.LANCZOS)
