@@ -1855,7 +1855,17 @@ async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
 
         if os.path.exists(img_path):
             try:
-                xl_img = XlImage(img_path)
+                # openpyxl cannot handle WebP/AVIF — convert to PNG in memory
+                export_img_path = img_path
+                if img_path.lower().endswith((".webp", ".avif", ".heic", ".heif")):
+                    from PIL import Image as PILImage
+                    pil_img = PILImage.open(img_path)
+                    if pil_img.mode not in ("RGB", "L"):
+                        pil_img = pil_img.convert("RGB")
+                    png_path = img_path.rsplit(".", 1)[0] + "_export.png"
+                    pil_img.save(png_path, format="PNG")
+                    export_img_path = png_path
+                xl_img = XlImage(export_img_path)
                 max_w = 150
                 max_h = 120
                 ratio = min(max_w / xl_img.width, max_h / xl_img.height, 1.0)
