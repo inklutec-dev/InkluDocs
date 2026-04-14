@@ -169,6 +169,10 @@ def _migrate_columns(conn):
         ("images", "original_alt", "ALTER TABLE images ADD COLUMN original_alt TEXT DEFAULT ''"),
         ("images", "feedback", "ALTER TABLE images ADD COLUMN feedback TEXT DEFAULT ''"),
         ("users", "email_verified", "ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 1"),
+        # v3.3 (14.04.2026): Dreistufige Pipeline mit Validator
+        ("images", "needs_review", "ALTER TABLE images ADD COLUMN needs_review INTEGER DEFAULT 0"),
+        ("images", "pipeline_steps", "ALTER TABLE images ADD COLUMN pipeline_steps TEXT DEFAULT ''"),
+        ("images", "validation_result", "ALTER TABLE images ADD COLUMN validation_result TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:

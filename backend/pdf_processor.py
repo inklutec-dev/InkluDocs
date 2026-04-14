@@ -37,6 +37,17 @@ from context_engine import get_prompt, detect_type_from_context, clean_alt_text,
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
 MODEL_NAME = os.environ.get("OLLAMA_MODEL", "qwen3-vl:8b")
 
+# v3.3 (14.04.2026): Dreistufige Mistral-Pipeline
+# Alle drei Modelle ueber Env-Variablen austauschbar, damit wir ohne Code-Aenderung
+# nachsteuern koennen wenn Qualitaetstests andere Ergebnisse zeigen.
+MISTRAL_MODEL_CLASSIFY = os.environ.get("MISTRAL_MODEL_CLASSIFY", "mistral-medium-latest")
+MISTRAL_MODEL_GENERATE = os.environ.get("MISTRAL_MODEL_GENERATE",
+                                         os.environ.get("MISTRAL_MODEL", "pixtral-large-latest"))
+MISTRAL_MODEL_VALIDATE = os.environ.get("MISTRAL_MODEL_VALIDATE", "mistral-large-latest")
+# "correct" = Validator darf ueberschreiben, "flag" = nur needs_review setzen
+VALIDATOR_MODE = os.environ.get("VALIDATOR_MODE", "correct").lower()
+VALIDATOR_ENABLED = os.environ.get("VALIDATOR_ENABLED", "true").lower() in ("true", "1", "yes")
+
 # v2.2.1: Prompt fuer Dekorativ-Recheck (zweiter Qwen-Call bei unsicherer Klassifikation)
 DEKORATIV_RECHECK_PROMPT = """/no_think
 Ist dieses Bild rein dekorativ (abstrakte Form, Trennlinie, Farbverlauf, Schmuckelement) oder enthaelt es inhaltliche Information (Personen, Objekte, Text, Symbole)?
@@ -727,11 +738,11 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
     if ocr_text:
         enriched_context = f"[OCR-Text im Bild] {ocr_text}\n{context}"
 
-    # ─── Stufe 1: Qwen classifies (v2.2: with image dimensions + original alt) ───
+    # ─── Stufe 1: Mistral classifies (v3.3, 14.04.2026: ersetzt Qwen/Ollama) ───
     classification_prompt = get_classification_prompt(
         enriched_context, width=width, height=height, original_alt=original_alt
     )
-    classification = _call_ollama(image_path, classification_prompt)
+    classification = _call_mistral_classify(image_path, classification_prompt)
 
     bildtyp = classification.get("bildtyp", image_type or "foto")
     konfidenz = classification.get("konfidenz", "mittel")
@@ -751,7 +762,8 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
             useless_alts = {"", "bild", "grafik", "foto", "image", "img"}
             clean_orig = (original_alt or "").strip().lower()
             if clean_orig in useless_alts and width > 50 and height > 50:
-                recheck_result = _call_ollama(image_path, DEKORATIV_RECHECK_PROMPT)
+                recheck_result = _call_mistral_json(image_path, DEKORATIV_RECHECK_PROMPT, MISTRAL_MODEL_CLASSIFY, max_tokens=200) or {}
+                recheck_result = {"raw_response": json.dumps(recheck_result), **recheck_result}
 
                 # Parse recheck result directly from raw_response (avoids _call_ollama JSON ambiguity)
                 raw = recheck_result.get("raw_response", "") or recheck_result.get("alt_text", "")
@@ -819,6 +831,8 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
             # v2.2.1: Force empty langbeschreibung for thumbnails
             if is_thumbnail(width, height) and mistral_result.get("langbeschreibung"):
                 mistral_result["langbeschreibung"] = ""
+            # v3.4 Stufe 3: Validator (mit Kontext, damit Link-Verweise nicht entfernt werden)
+            mistral_result = _apply_validator(image_path, mistral_result, context=enriched_context)
             return _apply_postfilter(mistral_result, image_hash=img_hash)
         # Fallback to Qwen if Mistral fails
         print(f"Mistral fehlgeschlagen, Fallback auf Qwen fuer {image_path}")
@@ -832,6 +846,141 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
     if result.get("bildtyp") in ("unbekannt", "fehler", None):
         result["bildtyp"] = bildtyp
     return _apply_postfilter(result, image_hash=img_hash)
+
+
+def _call_mistral_json(image_path: str, prompt: str, model: str, max_tokens: int = 400) -> dict | None:
+    """v3.3: Generic Mistral API call returning parsed JSON dict.
+    Used for Stufe 1 (Klassifikation) and Stufe 3 (Validierung).
+    Returns None on any failure."""
+    api_key = os.environ.get("MISTRAL_API_KEY", "")
+    if not api_key:
+        return None
+
+    # Strip Qwen-specific /no_think directive
+    clean_prompt = prompt.replace("/no_think", "").strip()
+
+    try:
+        img_b64 = _resize_image_for_model(image_path)
+        response = httpx.post(
+            "https://api.mistral.ai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": model,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": clean_prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}},
+                    ],
+                }],
+                "max_tokens": max_tokens,
+                "temperature": 0,
+            },
+            timeout=60.0,
+        )
+        response.raise_for_status()
+        data = response.json()
+        text = data["choices"][0]["message"]["content"]
+        # Strip code fences and control chars
+        clean = re.sub(r"```json\s*", "", text)
+        clean = re.sub(r"\s*```", "", clean)
+        clean = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", clean)
+        start = clean.find("{")
+        end = clean.rfind("}") + 1
+        if start < 0 or end <= start:
+            return None
+        try:
+            return json.loads(clean[start:end])
+        except json.JSONDecodeError:
+            return json.loads(clean[start:end].replace("\n", " ").replace("\t", " "))
+    except Exception as e:
+        print(f"Mistral JSON-Call Fehler ({model}) fuer {image_path}: {type(e).__name__}: {e}")
+        return None
+
+
+def _call_mistral_classify(image_path: str, classification_prompt: str) -> dict:
+    """v3.3 Stufe 1: Klassifikation ueber Mistral API.
+    Fallback-Default bei Fehler: bildtyp='foto' damit die Pipeline weiterlaeuft."""
+    parsed = _call_mistral_json(image_path, classification_prompt, MISTRAL_MODEL_CLASSIFY, max_tokens=200)
+    if not parsed:
+        return {
+            "bildtyp": "foto",
+            "alt_text": "",
+            "ist_dekorativ": False,
+            "konfidenz": "niedrig",
+            "original_alt_brauchbar": False,
+            "_classify_failed": True,
+        }
+    return {
+        "bildtyp": parsed.get("bildtyp", "foto"),
+        "alt_text": "",
+        "ist_dekorativ": bool(parsed.get("ist_dekorativ", False)),
+        "konfidenz": parsed.get("konfidenz", "mittel"),
+        "original_alt_brauchbar": bool(parsed.get("original_alt_brauchbar", False)),
+    }
+
+
+def _call_mistral_validate(image_path: str, alt_text: str, langbeschreibung: str = "", context: str = "") -> dict | None:
+    """v3.4 Stufe 3: Validierung des generierten Alt-Texts.
+    v3.4 (14.04.2026): Bekommt jetzt den gleichen Kontext wie der Generator,
+    damit Link-Verweise ("verweist auf: ...") nicht faelschlicherweise als
+    Halluzinationen markiert werden.
+    Returns dict with validierung_ok/probleme/korrektur_vorschlag, or None on failure."""
+    if not VALIDATOR_ENABLED:
+        return None
+    if not alt_text or len(alt_text.strip()) < 5:
+        return None
+    from context_engine import get_validation_prompt
+    prompt = get_validation_prompt(alt_text, langbeschreibung, context=context)
+    parsed = _call_mistral_json(image_path, prompt, MISTRAL_MODEL_VALIDATE, max_tokens=400)
+    if not parsed:
+        return None
+    return {
+        "validierung_ok": bool(parsed.get("validierung_ok", True)),
+        "probleme": parsed.get("probleme", []) or [],
+        "korrektur_vorschlag": (parsed.get("korrektur_vorschlag", "") or "").strip(),
+    }
+
+
+def _apply_validator(image_path: str, result: dict, context: str = "") -> dict:
+    """v3.4 Stufe 3: Run validator and mutate result dict accordingly.
+    - In VALIDATOR_MODE=correct: Validator may overwrite alt_text if he flags AND provides a correction.
+    - In VALIDATOR_MODE=flag: Validator only sets needs_review, never overwrites.
+    On validator failure: result is returned unchanged, needs_review stays False.
+    Always records pipeline_steps + validation_result on the dict.
+    v3.4 (14.04.2026): context wird an den Validator durchgereicht."""
+    result.setdefault("pipeline_steps", "classified,generated")
+    result.setdefault("needs_review", False)
+    result.setdefault("validation_result", "")
+
+    alt = result.get("alt_text", "") or ""
+    lang = result.get("langbeschreibung", "") or ""
+
+    validation = _call_mistral_validate(image_path, alt, lang, context=context)
+    if validation is None:
+        result["pipeline_steps"] = "classified,generated,validation_failed"
+        return result
+
+    result["pipeline_steps"] = f"classified,generated,validated:{MISTRAL_MODEL_VALIDATE}"
+    try:
+        result["validation_result"] = json.dumps(validation, ensure_ascii=False)[:1500]
+    except Exception:
+        result["validation_result"] = ""
+
+    if validation["validierung_ok"]:
+        return result
+
+    # Probleme gefunden
+    correction = validation.get("korrektur_vorschlag", "").strip()
+    if VALIDATOR_MODE == "correct" and correction and len(correction) > 10:
+        print(f"v3.3 Validator-Korrektur fuer {image_path}: '{alt[:60]}' -> '{correction[:60]}'")
+        result["alt_text"] = correction[:400]
+        result["needs_review"] = True  # Korrektur wurde angewendet, Mensch sollte trotzdem gegenlesen
+    else:
+        print(f"v3.3 Validator-Flag fuer {image_path}: {validation.get('probleme', [])}")
+        result["needs_review"] = True
+
+    return result
 
 
 def _call_mistral_generate(image_path: str, bildtyp: str, context: str,
@@ -859,7 +1008,7 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str,
             "https://api.mistral.ai/v1/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
-                "model": os.environ.get("MISTRAL_MODEL", "pixtral-large-latest"),
+                "model": MISTRAL_MODEL_GENERATE,
                 "messages": [{
                     "role": "user",
                     "content": [

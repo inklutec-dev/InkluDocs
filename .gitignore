@@ -7,3 +7,19 @@ data/
 *.egg-info/
 dist/
 build/
+
+# Lokale Backups / Rollback-Kopien
+_backup_*/
+*.bak
+*.bak-*
+
+# Stray-Kopien im Repo-Root (echte Dateien liegen unter backend/)
+/pdf_processor.py
+/requirements.txt
+/test_*.py
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+

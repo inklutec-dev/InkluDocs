@@ -1460,8 +1460,13 @@ async def _process_project(project_id: int, user_id: int):
                     result["alt_text"] = specialized_result["alt_text"]
                     result["konfidenz"] = specialized_result.get("konfidenz", result.get("konfidenz", "mittel"))
             conn.execute(
-                """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?, status = 'done' WHERE id = ?""",
-                (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung, img["id"])
+                """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?,
+                   needs_review = ?, pipeline_steps = ?, validation_result = ?, status = 'done' WHERE id = ?""",
+                (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
+                 1 if result.get("needs_review") else 0,
+                 result.get("pipeline_steps", ""),
+                 result.get("validation_result", ""),
+                 img["id"])
             )
         except Exception as e:
             print(f"Fehler bei Bild {img['id']} ({img.get('image_path', '?')}): {e}")
@@ -1637,9 +1642,14 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         langbeschreibung = result.get("langbeschreibung", "")
         conn.execute(
             """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?,
-               langbeschreibung = ?, alt_text_edited = NULL, status = 'done' WHERE id = ?""",
+               langbeschreibung = ?, alt_text_edited = NULL,
+               needs_review = ?, pipeline_steps = ?, validation_result = ?, status = 'done' WHERE id = ?""",
             (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"),
-             langbeschreibung, image_id)
+             langbeschreibung,
+             1 if result.get("needs_review") else 0,
+             result.get("pipeline_steps", ""),
+             result.get("validation_result", ""),
+             image_id)
         )
         conn.commit()
         conn.close()
@@ -2379,6 +2389,7 @@ console.log(data.alt_text);</code></pre>
 # ─── News / Neuigkeiten ─────────────────────────────────────
 
 NEUIGKEITEN = [
+    {"datum": "14.04.2026", "text": "Neue dreistufige Pruefpipeline aktiv: Klassifikation, Generierung und automatische Qualitaetspruefung gegen Halluzinationen. Laufende Auswertung zur weiteren Verbesserung."},
     {"datum": "07.04.2026", "text": "Alt-Text-Qualitaet verbessert: Produktbilder, Diagramme und verlinkte Bilder werden besser erkannt"},
     {"datum": "07.04.2026", "text": "Neue Bildformate: AVIF und HEIC werden jetzt unterstuetzt"},
     {"datum": "06.04.2026", "text": "Tageslimit: 100 Bilder pro Tag – Anzeige im Header"},

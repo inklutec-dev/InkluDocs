@@ -101,6 +101,9 @@ REGELN:
 - Farben NUR wenn sie Information tragen (Warnschilder, Signalfarben). Keine optischen Farben.
 - Sprache: Natuerliches Deutsch. Kein Aufzaehlungsstil. Wie ein Mensch es einem anderen erzaehlen wuerde.
 
+KONTAKTDATEN UND LESBARER TEXT (KRITISCH):
+Scanne das Bild AKTIV nach Telefonnummern, E-Mail-Adressen, Postleitzahlen, Hausnummern, Strassennamen, Oeffnungszeiten und URLs. Wenn solche Informationen im Bild LESBAR sind, MUESSEN sie im Alt-Text stehen – vollstaendig und korrekt. Fuer Screenreader-Nutzer sind diese Daten oft der EINZIGE Zugang zu diesen Informationen. Ein Alt-Text der eine gut lesbare Telefonnummer weglaesst ist UNVOLLSTAENDIG, auch wenn er das Bild sonst korrekt beschreibt. Telefonnummern im EXAKTEN Format aus dem Bild uebernehmen, inklusive Trennzeichen und Leerzeichen (z.B. "02 28 / 24 25 26 27", nicht "022824252627").
+
 Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": "..."}}
 
@@ -255,6 +258,9 @@ REGELN:
 - Verlinkte Logos: Wenn [Link-Ziel] im Kontext → "Logo [Name] – Link zur Startseite" o.ae.
 - Sprache: Deutsch. Eigennamen und Slogans im Original.
 
+KONTAKTDATEN UND LESBARER TEXT (KRITISCH):
+Scanne das Bild AKTIV nach Telefonnummern, E-Mail-Adressen, Postleitzahlen, Hausnummern, Strassennamen, Oeffnungszeiten und URLs. Wenn solche Informationen im Bild LESBAR sind, MUESSEN sie im Alt-Text stehen – vollstaendig und korrekt. Fuer Screenreader-Nutzer sind diese Daten oft der EINZIGE Zugang zu diesen Informationen. Ein Alt-Text der eine gut lesbare Telefonnummer weglaesst ist UNVOLLSTAENDIG, auch wenn er das Bild sonst korrekt beschreibt. Telefonnummern im EXAKTEN Format aus dem Bild uebernehmen, inklusive Trennzeichen und Leerzeichen (z.B. "02 28 / 24 25 26 27", nicht "022824252627").
+
 Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": ""}}
 
@@ -275,6 +281,9 @@ REGELN:
 - Beschreibe den ZENTRALEN Bereich – nicht jedes Icon in der Toolbar.
 - ANTI-HALLUZINATION: Beschreibe NUR was auf dem Bildschirm zu sehen ist. Erfinde keine Nutzeraktionen.
 - 2-4 Saetze, natuerliches Deutsch. UI-Begriffe duerfen im Original bleiben.
+
+KONTAKTDATEN UND LESBARER TEXT (KRITISCH):
+Scanne das Bild AKTIV nach Telefonnummern, E-Mail-Adressen, Postleitzahlen, Hausnummern, Strassennamen, Oeffnungszeiten und URLs. Wenn solche Informationen im Bild LESBAR sind, MUESSEN sie im Alt-Text stehen – vollstaendig und korrekt. Fuer Screenreader-Nutzer sind diese Daten oft der EINZIGE Zugang zu diesen Informationen. Ein Alt-Text der eine gut lesbare Telefonnummer weglaesst ist UNVOLLSTAENDIG, auch wenn er das Bild sonst korrekt beschreibt. Telefonnummern im EXAKTEN Format aus dem Bild uebernehmen, inklusive Trennzeichen und Leerzeichen (z.B. "02 28 / 24 25 26 27", nicht "022824252627").
 
 Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": "..."}}
@@ -302,6 +311,9 @@ REGELN:
 - OCR-Text als primaere Quelle nutzen.
 - ANTI-HALLUZINATION VERSCHAERFT: Beschreibe NUR Inhalte die du im Bild LESEN oder ERKENNEN kannst. Der Seitenkontext verraet dir das Themenfeld, aber NICHT die konkreten Inhalte der Infografik. Wenn du Zahlen, Begriffe oder Zusammenhaenge nicht im Bild siehst, nenne sie NICHT.
 - Sprache: Deutsch. Fachbegriffe aus dem Bild exakt uebernehmen.
+
+KONTAKTDATEN UND LESBARER TEXT (KRITISCH):
+Scanne das Bild AKTIV nach Telefonnummern, E-Mail-Adressen, Postleitzahlen, Hausnummern, Strassennamen, Oeffnungszeiten und URLs. Wenn solche Informationen im Bild LESBAR sind, MUESSEN sie im Alt-Text stehen – vollstaendig und korrekt. Fuer Screenreader-Nutzer sind diese Daten oft der EINZIGE Zugang zu diesen Informationen. Ein Alt-Text der eine gut lesbare Telefonnummer weglaesst ist UNVOLLSTAENDIG, auch wenn er das Bild sonst korrekt beschreibt. Telefonnummern im EXAKTEN Format aus dem Bild uebernehmen, inklusive Trennzeichen und Leerzeichen (z.B. "02 28 / 24 25 26 27", nicht "022824252627").
 
 Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": "..."}}
@@ -352,6 +364,9 @@ REGELN:
 - Verlinkte Icons: Wenn [Link-Ziel] im Kontext → beschreibe wohin der Link fuehrt.
 - Sprache: Deutsch. Technische UI-Begriffe sind erlaubt.
 - DEKORATIV-CHECK: Rein dekorative Icons (Schmuckelemente ohne Funktion) → alt_text leer setzen.
+
+KONTAKTDATEN UND LESBARER TEXT (KRITISCH):
+Scanne das Bild AKTIV nach Telefonnummern, E-Mail-Adressen, Postleitzahlen, Hausnummern, Strassennamen, Oeffnungszeiten und URLs. Wenn solche Informationen im Bild LESBAR sind, MUESSEN sie im Alt-Text stehen – vollstaendig und korrekt. Fuer Screenreader-Nutzer sind diese Daten oft der EINZIGE Zugang zu diesen Informationen. Ein Alt-Text der eine gut lesbare Telefonnummer weglaesst ist UNVOLLSTAENDIG, auch wenn er das Bild sonst korrekt beschreibt. Telefonnummern im EXAKTEN Format aus dem Bild uebernehmen, inklusive Trennzeichen und Leerzeichen (z.B. "02 28 / 24 25 26 27", nicht "022824252627").
 
 Antworte NUR mit diesem JSON:
 {{"alt_text": "...", "langbeschreibung": ""}}
@@ -1009,4 +1024,73 @@ def extract_page_profile(soup) -> str:
         parts.append(f"[Meta-Beschreibung] {meta_desc['content'][:150]}")
     profile = "\n".join(parts) if parts else ""
     return profile[:300]
+
+
+# ─── Validierungs-Prompt (Stufe 3, v3.4 14.04.2026) ────────────
+# v3.4: Validator bekommt Kontext + Spezial-Regeln fuer Lizenzen + Eigennamen
+VALIDATION_PROMPT = """Du bist ein Qualitaetspruefer fuer barrierefreie Bildbeschreibungen.
+Du bekommst ein Bild, den dafuer generierten Alt-Text und den Seitenkontext der auch dem Generator bereitgestellt wurde.
+Pruefe ob der Alt-Text zum Bild passt.
+
+Generierter Alt-Text: {alt_text}
+Generierte Langbeschreibung: {langbeschreibung}
+
+Pruefe folgende Punkte:
+1. Stimmen genannte Produktnamen, Markennamen oder Texte mit dem was im Bild LESBAR ist ueberein?
+2. Stimmen genannte Objekte (z.B. "Brezeln", "Flaschen", "Gebaeude") mit dem was im Bild SICHTBAR ist ueberein?
+3. Stimmen genannte Zahlen, Mengenangaben oder Daten mit dem was im Bild steht ueberein?
+4. Wird etwas behauptet das im Bild eindeutig NICHT zu sehen ist?
+
+LINK-VERWEISE (KRITISCH - NICHT ENTFERNEN):
+Wenn der Alt-Text "(verweist auf: ...)" oder einen aehnlichen Navigations-Hinweis enthaelt und das Link-Ziel im unten stehenden Seitenkontext als [Link-Ziel], [Link-Beschriftung] oder [Link-URL] vorkommt, dann ist der Verweis KORREKT und GEWOLLT. Das ist KEIN Fehler. Diese Verweise sind fuer Screenreader-Nutzer essentiell zur Navigation. Entferne sie NIEMALS. Behandle sie als validen Teil des Alt-Textes.
+
+TELEFONNUMMERN UND KONTAKTDATEN:
+Wenn im Bild eine Telefonnummer, E-Mail-Adresse, Postleitzahl oder andere Kontaktdaten LESBAR sind, MUESSEN diese im Alt-Text stehen. Pruefe aktiv ob der Generator lesbare Kontaktdaten uebersehen hat. Wenn ja, markiere den Alt-Text als unvollstaendig und liefere einen korrigierten Alt-Text der die Kontaktdaten enthaelt.
+
+LIZENZ-LOGOS (KRITISCH):
+Bei Creative-Commons-Logos oder anderen Lizenz-Symbolen: Lies JEDES Symbol EINZELN ab und vergleiche es EINZELN mit dem generierten Text. Die Standard-CC-Symbole sind:
+- CC = Creative Commons (Doppel-C im Kreis)
+- BY = Attribution (Personen-Symbol)
+- NC = NonCommercial (Durchgestrichenes Dollarzeichen)
+- SA = ShareAlike (Kreislauf-Pfeil)
+- ND = NoDerivatives (Gleichheitszeichen)
+Verwechsle NIEMALS NC mit SA oder ND mit SA. Zaehle die Symbole im Bild und vergleiche mit dem Text. Wenn der Text "BY-ND" sagt aber im Bild 4 Symbole sichtbar sind (CC, BY, NC, ND), dann fehlt NC und die korrekte Lizenz ist "CC BY-NC-ND".
+
+EIGENNAMEN UND ORTSNAMEN:
+Pruefe Eigennamen, Staedtenamen und Firmennamen besonders sorgfaeltig gegen den sichtbaren Text im Bild. Haeufige OCR-Verwechslungen: TURKU (finnische Stadt) ungleich Turkey (englisch fuer Tuerkei), aehnlich aussehende Buchstaben koennen zu falschen Namen fuehren. Wenn ein Name im Kontext anders steht als im Bild, bevorzuge den im Bild LESBAREN Text.
+
+Seitenkontext (wurde auch dem Generator bereitgestellt):
+{context}
+
+SELBSTCHECK VOR DER ANTWORT (PFLICHT):
+Bevor du validierung_ok auf false setzt, pruefe:
+
+1. Lies deinen eigenen korrektur_vorschlag nochmal durch. Ist er WIRKLICH besser als das Original? Wenn du dir nicht sicher bist, setze validierung_ok auf true.
+
+2. Wenn du behauptest ein Begriff fehle im Alt-Text: Lies den Alt-Text NOCHMAL zeichenweise. Steht der Begriff vielleicht doch drin, nur anders geschrieben? Beispiel: "BY-NC-ND" enthaelt NC - pruefe genau.
+
+3. Wenn du eine Kontext-Anreicherung kritisierst (z.B. "Reithalle" statt "Halle", "Drogeriemarkt budni" statt "Geschaeft"): Pruefe ob das Bild VISUELLE HINWEISE enthaelt die die Anreicherung stuetzen (z.B. Hindernisse fuer Reithalle, Regale mit Produkten fuer Drogeriemarkt, Grafik-Overlays fuer technische Begriffe). Wenn ja: Anreicherung ist KORREKT, nicht kritisieren. Wenn das Bild KEINE visuellen Hinweise bietet und der Begriff NUR aus dem Kontext stammt ohne jede visuelle Stuetzung: Flaggen ist berechtigt.
+
+4. FLAGGEN NUR BEI KONKRETEN FAKTENFEHLERN:
+Unsicherheit allein ist kein Grund zum Flaggen, aber auch kein Grund zum automatischen Durchwinken. Flagge nur wenn du einen konkreten Fakt im Alt-Text gegen einen konkreten Fakt im Bild halten kannst, z.B. "Alt-Text sagt 9:41, im Bild steht 9:01". Bei rein stilistischen oder Geschmacksfragen: validierung_ok = true.
+
+Antworte NUR mit diesem JSON:
+{{"validierung_ok": true, "probleme": [], "korrektur_vorschlag": ""}}
+
+Wenn alles korrekt ist: validierung_ok=true, probleme leer, korrektur_vorschlag leer.
+Wenn Probleme gefunden: validierung_ok=false, probleme als Liste kurzer Strings, korrektur_vorschlag enthaelt einen korrigierten Alt-Text (max 250 Zeichen, ohne Hedge-Woerter wie "vermutlich", "wahrscheinlich", "moeglicherweise"). Behalte dabei vorhandene "(verweist auf: ...)"-Verweise wenn sie durch den Seitenkontext belegt sind.
+Wenn Probleme gefunden aber keine sichere Korrektur moeglich: validierung_ok=false, korrektur_vorschlag leer lassen."""
+
+
+def get_validation_prompt(alt_text: str, langbeschreibung: str = "", context: str = "") -> str:
+    """Return the validation prompt for Stufe 3 (Mistral).
+    v3.4: Context ist der gleiche enriched_context den auch der Generator bekommen hat.
+    Dadurch kann der Validator Link-Verweise nicht mehr faelschlicherweise als
+    Halluzination werten."""
+    return VALIDATION_PROMPT.format(
+        alt_text=(alt_text or "").strip()[:500],
+        langbeschreibung=(langbeschreibung or "").strip()[:1000],
+        context=(context or "").strip()[:1500] or "(kein Kontext bereitgestellt)",
+    )
+
 

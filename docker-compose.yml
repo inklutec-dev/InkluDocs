@@ -18,9 +18,15 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
       - NOTIFICATION_EMAIL=support@inklutec.de
-      - MISTRAL_ENABLED=${MISTRAL_ENABLED:-false}
+      - MISTRAL_ENABLED=${MISTRAL_ENABLED:-true}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - PIPELINE_MODE=${PIPELINE_MODE:-mistral_primary}
+      # v3.6 (14.04.2026): Dreistufige Mistral-Pipeline
+      - MISTRAL_MODEL_CLASSIFY=${MISTRAL_MODEL_CLASSIFY:-mistral-medium-latest}
+      - MISTRAL_MODEL_GENERATE=${MISTRAL_MODEL_GENERATE:-pixtral-large-latest}
+      - MISTRAL_MODEL_VALIDATE=${MISTRAL_MODEL_VALIDATE:-mistral-large-latest}
+      - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-true}
+      - VALIDATOR_MODE=${VALIDATOR_MODE:-flag}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
