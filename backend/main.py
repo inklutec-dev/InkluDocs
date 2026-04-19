@@ -83,6 +83,8 @@ def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = Tr
         from email import encoders
 
         msg = MIMEMultipart("mixed")
+        if "staging" in BASE_URL:
+            subject = f"[STAGING] {subject}"
         msg["Subject"] = subject
         msg["From"] = f"InkluDocs <{SMTP_FROM}>"
         msg["To"] = to_email
