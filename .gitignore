@@ -23,3 +23,6 @@ _backup_*/
 .vscode/
 .idea/
 
+
+# i18n: kompilierte Uebersetzungen werden beim Docker-Build erzeugt
+backend/locales/*/LC_MESSAGES/*.mo

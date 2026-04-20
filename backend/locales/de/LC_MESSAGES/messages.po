@@ -1,0 +1,76 @@
+# German translations for InkluDocs.
+msgid ""
+msgstr ""
+"Project-Id-Version: InkluDocs 1.0\n"
+"Report-Msgid-Bugs-To: kontakt@inklutec.de\n"
+"POT-Creation-Date: 2026-04-20 00:00+0000\n"
+"PO-Revision-Date: 2026-04-20 00:00+0000\n"
+"Language-Team: INKLUTEC\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# UI Login-Seite
+msgid "Anmeldung"
+msgstr "Anmeldung"
+
+msgid "KI-gestuetzter Alt-Text-Generator"
+msgstr "KI-gestützter Alt-Text-Generator"
+
+msgid "E-Mail-Adresse"
+msgstr "E-Mail-Adresse"
+
+msgid "Passwort"
+msgstr "Passwort"
+
+msgid "Anmelden"
+msgstr "Anmelden"
+
+msgid "Konto erstellen"
+msgstr "Konto erstellen"
+
+msgid "Passwort vergessen?"
+msgstr "Passwort vergessen?"
+
+msgid "Impressum"
+msgstr "Impressum"
+
+msgid "Datenschutz"
+msgstr "Datenschutz"
+
+msgid "Nutzungsbedingungen"
+msgstr "Nutzungsbedingungen"
+
+msgid "Testumgebung"
+msgstr "Testumgebung"
+
+# Fehler-/Statusmeldungen (JS)
+msgid "Bitte alle Felder ausfuellen."
+msgstr "Bitte alle Felder ausfüllen."
+
+msgid "Anmeldung fehlgeschlagen."
+msgstr "Anmeldung fehlgeschlagen."
+
+msgid "Neuen Link senden"
+msgstr "Neuen Link senden"
+
+msgid "Wird gesendet..."
+msgstr "Wird gesendet..."
+
+msgid "Neuer Link gesendet!"
+msgstr "Neuer Link gesendet!"
+
+msgid "Fehler"
+msgstr "Fehler"
+
+msgid "Verbindungsfehler. Bitte erneut versuchen."
+msgstr "Verbindungsfehler. Bitte erneut versuchen."
+
+# Sprach-Switcher
+msgid "Sprache"
+msgstr "Sprache"
+
+msgid "Sprache wechseln"
+msgstr "Sprache wechseln"

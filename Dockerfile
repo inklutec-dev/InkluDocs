@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ /app/
 COPY frontend/ /app/frontend/
 
+# Kompiliere gettext-Uebersetzungen (.po -> .mo) waehrend des Builds
+RUN pybabel compile -d /app/locales -f || echo "WARN: pybabel compile failed or no locales"
+
 RUN mkdir -p /app/data/uploads /app/data/results
 
 EXPOSE 8001

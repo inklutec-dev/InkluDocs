@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}InkluDocs{% endblock %}{% if is_staging %} ({{ _('Testumgebung') }}){% endif %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Sprach-Switcher im Footer - minimal, native HTML */
+        .language-footer {
+            margin-top: 2rem;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            border-top: 1px solid #ddd;
+        }
+        .language-footer details.lang-menu {
+            display: inline-block;
+        }
+        .language-footer summary {
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+        }
+        .language-footer summary:focus-visible {
+            outline: 3px solid #e87722;
+            outline-offset: 2px;
+        }
+        .language-footer nav ul {
+            list-style: none;
+            padding: 0.5rem 0 0 0;
+            margin: 0;
+        }
+        .language-footer nav li {
+            padding: 0.25rem 0;
+        }
+        .language-footer nav a {
+            text-decoration: underline;
+        }
+        .language-footer nav a[aria-current="true"] {
+            font-weight: bold;
+            color: #e87722;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    {% block body %}{% endblock %}
+
+    {# Sprachwahl - einzige Stelle, konsistent auf jeder Seite #}
+    <footer class="language-footer">
+        <details class="lang-menu">
+            <summary>{{ _('Sprache') }}: {{ language_labels[current_lang] }}</summary>
+            <nav aria-label="{{ _('Sprache wechseln') }}">
+                <ul>
+                    {% for lang_code in supported_languages %}
+                    <li>
+                        <a href="/set-language/{{ lang_code }}"{% if lang_code == current_lang %} aria-current="true"{% endif %}>
+                            {{ language_labels[lang_code] }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        </details>
+    </footer>
+</body>
+</html>

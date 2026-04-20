@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}InkluDocs - {{ _('Anmeldung') }}{% endblock %}
+
+{% block body %}
+<main>
+    <div class="auth-container" role="region" aria-label="{{ _('Anmeldung') }}">
+        <h1>
+            <span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#e87722;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}
+        </h1>
+        <p class="subtitle">{{ _('KI-gestuetzter Alt-Text-Generator') }}</p>
+        <form id="loginForm" novalidate>
+            <div class="form-group">
+                <label for="email">{{ _('E-Mail-Adresse') }}</label>
+                <input type="email" id="email" name="email" required autocomplete="email" autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password">{{ _('Passwort') }}</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-full">{{ _('Anmelden') }}</button>
+            <div id="errorMsg" class="error-message" role="alert" aria-live="polite"></div>
+        </form>
+        <div class="auth-links">
+            {% if registration_enabled %}<a href="/register">{{ _('Konto erstellen') }}</a>{% endif %}
+            <a href="/forgot">{{ _('Passwort vergessen?') }}</a>
+        </div>
+    </div>
+    <footer class="legal-footer" role="contentinfo">
+        <a href="/impressum">{{ _('Impressum') }}</a> |
+        <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
+        <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a>
+    </footer>
+</main>
+<script>
+    // Uebersetzbare UI-Strings fuer JavaScript (von Jinja2 per Request injiziert)
+    const T = {
+        fillAllFields: {{ _('Bitte alle Felder ausfuellen.')|tojson }},
+        loginFailed: {{ _('Anmeldung fehlgeschlagen.')|tojson }},
+        resendLink: {{ _('Neuen Link senden')|tojson }},
+        sending: {{ _('Wird gesendet...')|tojson }},
+        sent: {{ _('Neuer Link gesendet!')|tojson }},
+        errorGeneric: {{ _('Fehler')|tojson }},
+        connError: {{ _('Verbindungsfehler. Bitte erneut versuchen.')|tojson }},
+    };
+
+    const form = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorMsg.textContent = '';
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            errorMsg.textContent = T.fillAllFields;
+            return;
+        }
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            if (res.ok) {
+                window.location.href = '/app';
+            } else {
+                const data = await res.json();
+                const msg = data.detail || T.loginFailed;
+                // Backend-Protokoll-String (immer auf Deutsch, unabhaengig von UI-Sprache)
+                if (res.status === 403 && msg.includes('nicht bestaetigt')) {
+                    errorMsg.innerHTML = msg + ' <button type="button" id="resendFromLogin" style="background:none;border:none;color:#e87722;text-decoration:underline;cursor:pointer;padding:0;">' + T.resendLink + '</button>';
+                    const btn = document.getElementById('resendFromLogin');
+                    if (btn) {
+                        btn.addEventListener('click', async () => {
+                            btn.disabled = true;
+                            btn.textContent = T.sending;
+                            try {
+                                await fetch('/api/resend-verification', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ email: document.getElementById('email').value.trim() }),
+                                });
+                                btn.textContent = T.sent;
+                            } catch (e) {
+                                btn.textContent = T.errorGeneric;
+                            }
+                        });
+                    }
+                } else {
+                    errorMsg.textContent = msg;
+                }
+            }
+        } catch (err) {
+            errorMsg.textContent = T.connError;
+        }
+    });
+</script>
+{% endblock %}

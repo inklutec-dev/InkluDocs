@@ -12,3 +12,5 @@ beautifulsoup4==4.12.3
 openpyxl==3.1.5
 pytesseract==0.3.13
 cairosvg==2.7.1
+Jinja2>=3.1.4
+Babel>=2.16.0

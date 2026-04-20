@@ -1,0 +1,73 @@
+# Spanish translations for InkluDocs.
+msgid ""
+msgstr ""
+"Project-Id-Version: InkluDocs 1.0\n"
+"Report-Msgid-Bugs-To: kontakt@inklutec.de\n"
+"POT-Creation-Date: 2026-04-20 00:00+0000\n"
+"PO-Revision-Date: 2026-04-20 00:00+0000\n"
+"Language-Team: INKLUTEC\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Anmeldung"
+msgstr "Iniciar sesión"
+
+msgid "KI-gestuetzter Alt-Text-Generator"
+msgstr "Generador de texto alternativo con IA"
+
+msgid "E-Mail-Adresse"
+msgstr "Dirección de correo electrónico"
+
+msgid "Passwort"
+msgstr "Contraseña"
+
+msgid "Anmelden"
+msgstr "Iniciar sesión"
+
+msgid "Konto erstellen"
+msgstr "Crear cuenta"
+
+msgid "Passwort vergessen?"
+msgstr "¿Contraseña olvidada?"
+
+msgid "Impressum"
+msgstr "Aviso legal"
+
+msgid "Datenschutz"
+msgstr "Privacidad"
+
+msgid "Nutzungsbedingungen"
+msgstr "Términos de uso"
+
+msgid "Testumgebung"
+msgstr "Entorno de prueba"
+
+msgid "Bitte alle Felder ausfuellen."
+msgstr "Por favor, complete todos los campos."
+
+msgid "Anmeldung fehlgeschlagen."
+msgstr "Error de inicio de sesión."
+
+msgid "Neuen Link senden"
+msgstr "Enviar nuevo enlace"
+
+msgid "Wird gesendet..."
+msgstr "Enviando..."
+
+msgid "Neuer Link gesendet!"
+msgstr "¡Nuevo enlace enviado!"
+
+msgid "Fehler"
+msgstr "Error"
+
+msgid "Verbindungsfehler. Bitte erneut versuchen."
+msgstr "Error de conexión. Por favor, inténtelo de nuevo."
+
+msgid "Sprache"
+msgstr "Idioma"
+
+msgid "Sprache wechseln"
+msgstr "Cambiar idioma"

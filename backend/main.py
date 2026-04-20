@@ -34,6 +34,7 @@ from database import (
     get_daily_image_count, get_daily_api_count,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
+from i18n import get_templates, detect_language, template_context, SUPPORTED_LANGUAGES
 
 # Generate a persistent SECRET_KEY if not set
 SECRET_KEY_FILE = "/app/data/.secret_key"
@@ -180,6 +181,9 @@ app.add_middleware(
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="/app/frontend"), name="static")
+
+# Jinja2-Templates (fuer i18n-Seiten, inkrementell migriert)
+templates = get_templates()
 
 
 def create_token(user_id: int, email: str, is_admin: int = 0) -> str:
@@ -2407,14 +2411,34 @@ async def get_news():
 # ─── Frontend Routes ─────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
-async def index():
-    html = open("/app/frontend/index.html").read()
-    if os.getenv("REGISTRATION_ENABLED", "true").lower() in ("false", "0", "no"):
-        html = html.replace('<a href="/register">Konto erstellen</a>', '')
-    if "staging" in BASE_URL:
-        html = html.replace("<title>InkluDocs", "<title>InkluDocs (Testumgebung)")
-        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
-    return html
+async def index(request: Request):
+    lang = detect_language(request)
+    registration_enabled = os.getenv("REGISTRATION_ENABLED", "true").lower() not in ("false", "0", "no")
+    is_staging = "staging" in BASE_URL
+    return templates.TemplateResponse(
+        "index.html",
+        template_context(
+            request, lang,
+            registration_enabled=registration_enabled,
+            is_staging=is_staging,
+        ),
+    )
+
+
+@app.get("/set-language/{lang}")
+async def set_language(lang: str, request: Request):
+    """Wechsle UI-Sprache via Session-Cookie (spaeter auch in DB fuer User)."""
+    referer = request.headers.get("referer", "/")
+    # Zielort immer zurueck zum Referer, aber nur wenn same-origin (Sicherheit)
+    if referer and (referer.startswith(BASE_URL) or referer.startswith("/")):
+        redirect_to = referer
+    else:
+        redirect_to = "/"
+    response = RedirectResponse(redirect_to, status_code=303)
+    if lang in SUPPORTED_LANGUAGES:
+        # 1 Jahr gueltig, samesite=lax, nicht HttpOnly (Client koennte lesen)
+        response.set_cookie("lang", lang, max_age=365*24*60*60, samesite="lax")
+    return response
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page():
