@@ -173,6 +173,8 @@ def _migrate_columns(conn):
         ("images", "needs_review", "ALTER TABLE images ADD COLUMN needs_review INTEGER DEFAULT 0"),
         ("images", "pipeline_steps", "ALTER TABLE images ADD COLUMN pipeline_steps TEXT DEFAULT ''"),
         ("images", "validation_result", "ALTER TABLE images ADD COLUMN validation_result TEXT DEFAULT ''"),
+        # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg pro Projekt festhalten
+        ("projects", "extraction_method", "ALTER TABLE projects ADD COLUMN extraction_method TEXT DEFAULT 'fitz'"),
     ]
 
     for table, column, sql in migrations:

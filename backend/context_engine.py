@@ -1065,21 +1065,26 @@ Seitenkontext (wurde auch dem Generator bereitgestellt):
 SELBSTCHECK VOR DER ANTWORT (PFLICHT):
 Bevor du validierung_ok auf false setzt, pruefe:
 
-1. Lies deinen eigenen korrektur_vorschlag nochmal durch. Ist er WIRKLICH besser als das Original? Wenn du dir nicht sicher bist, setze validierung_ok auf true.
+1. Lies deine eigenen Korrekturvorschlaege nochmal durch. Sind sie WIRKLICH besser als das Original? Wenn du dir nicht sicher bist, setze validierung_ok auf true.
 
 2. Wenn du behauptest ein Begriff fehle im Alt-Text: Lies den Alt-Text NOCHMAL zeichenweise. Steht der Begriff vielleicht doch drin, nur anders geschrieben? Beispiel: "BY-NC-ND" enthaelt NC - pruefe genau.
 
 3. Wenn du eine Kontext-Anreicherung kritisierst (z.B. "Reithalle" statt "Halle", "Drogeriemarkt budni" statt "Geschaeft"): Pruefe ob das Bild VISUELLE HINWEISE enthaelt die die Anreicherung stuetzen (z.B. Hindernisse fuer Reithalle, Regale mit Produkten fuer Drogeriemarkt, Grafik-Overlays fuer technische Begriffe). Wenn ja: Anreicherung ist KORREKT, nicht kritisieren. Wenn das Bild KEINE visuellen Hinweise bietet und der Begriff NUR aus dem Kontext stammt ohne jede visuelle Stuetzung: Flaggen ist berechtigt.
 
 4. FLAGGEN NUR BEI KONKRETEN FAKTENFEHLERN:
-Unsicherheit allein ist kein Grund zum Flaggen, aber auch kein Grund zum automatischen Durchwinken. Flagge nur wenn du einen konkreten Fakt im Alt-Text gegen einen konkreten Fakt im Bild halten kannst, z.B. "Alt-Text sagt 9:41, im Bild steht 9:01". Bei rein stilistischen oder Geschmacksfragen: validierung_ok = true.
+Unsicherheit allein ist kein Grund zum Flaggen, aber auch kein Grund zum automatischen Durchwinken. Flagge nur wenn du einen konkreten Fakt im Alt-Text oder in der Langbeschreibung gegen einen konkreten Fakt im Bild halten kannst, z.B. "Alt-Text sagt 9:41, im Bild steht 9:01". Bei rein stilistischen oder Geschmacksfragen: validierung_ok = true.
+
+5. KONSISTENZ ZWISCHEN ALT-TEXT UND LANGBESCHREIBUNG:
+Pruefe ob Alt-Text und Langbeschreibung sich gegenseitig widersprechen (z.B. Alt-Text nennt Zeitraum 2018-2020, Langbeschreibung sagt 2019-2023). Widersprueche sind fuer Screenreader-Nutzer fatal und immer ein Grund zum Flaggen. Wenn du einen Faktenfehler findest, korrigiere beide Felder konsistent.
 
 Antworte NUR mit diesem JSON:
-{{"validierung_ok": true, "probleme": [], "korrektur_vorschlag": ""}}
+{{"validierung_ok": true, "probleme": [], "korrektur_alt_text": "", "korrektur_langbeschreibung": ""}}
 
-Wenn alles korrekt ist: validierung_ok=true, probleme leer, korrektur_vorschlag leer.
-Wenn Probleme gefunden: validierung_ok=false, probleme als Liste kurzer Strings, korrektur_vorschlag enthaelt einen korrigierten Alt-Text (max 250 Zeichen, ohne Hedge-Woerter wie "vermutlich", "wahrscheinlich", "moeglicherweise"). Behalte dabei vorhandene "(verweist auf: ...)"-Verweise wenn sie durch den Seitenkontext belegt sind.
-Wenn Probleme gefunden aber keine sichere Korrektur moeglich: validierung_ok=false, korrektur_vorschlag leer lassen."""
+Wenn alles korrekt ist: validierung_ok=true, probleme leer, beide Korrekturfelder leer.
+Wenn Probleme gefunden: validierung_ok=false, probleme als Liste kurzer Strings. Fuelle BEIDE Korrekturfelder:
+- korrektur_alt_text: korrigierter Alt-Text (max 250 Zeichen, ohne Hedge-Woerter wie "vermutlich", "wahrscheinlich", "moeglicherweise"). Behalte vorhandene "(verweist auf: ...)"-Verweise wenn sie durch den Seitenkontext belegt sind.
+- korrektur_langbeschreibung: korrigierte Langbeschreibung (max 1500 Zeichen). Uebernimm alle Teile der Original-Langbeschreibung die korrekt sind, korrigiere nur die Faktenfehler. Wenn die Original-Langbeschreibung leer war, lass auch die Korrektur leer.
+Wenn Probleme gefunden aber keine sichere Korrektur moeglich: validierung_ok=false, beide Korrekturfelder leer lassen."""
 
 
 def get_validation_prompt(alt_text: str, langbeschreibung: str = "", context: str = "") -> str:

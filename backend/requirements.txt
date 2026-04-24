@@ -14,3 +14,6 @@ pytesseract==0.3.13
 cairosvg==2.7.1
 Jinja2>=3.1.4
 Babel>=2.16.0
+
+# PDFIX-INTEGRATION (24.04.2026): strukturelle Figure-Extraktion fuer getaggte PDFs
+pdfix-sdk==8.7.10

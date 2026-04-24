@@ -28,6 +28,8 @@ services:
       - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-true}
       - VALIDATOR_MODE=${VALIDATOR_MODE:-correct}
       - BASE_URL=https://staging.inkludocs.inklutec.de
+      # PDFIX-INTEGRATION (24.04.2026): Kill-Switch, default OFF. Fuer Staging auf true.
+      - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

@@ -873,9 +873,11 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict) -> dict:
              bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector)
         )
 
+    # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg merken (fitz|pdfix)
+    extraction_method = "pdfix" if images and any(i.get("source") == "pdfix" for i in images) else "fitz"
     conn.execute(
-        "UPDATE projects SET status = 'extracted', total_images = ? WHERE id = ?",
-        (len(images), project_id)
+        "UPDATE projects SET status = 'extracted', total_images = ?, extraction_method = ? WHERE id = ?",
+        (len(images), extraction_method, project_id)
     )
     conn.commit()
     conn.close()
@@ -886,6 +888,7 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict) -> dict:
         "filename": filename,
         "total_images": len(images),
         "project_type": "pdf",
+        "extraction_method": extraction_method,
     }
 
 
@@ -1697,13 +1700,20 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
     ).fetchall()
     conn.close()
 
+    # PDFIX-INTEGRATION (24.04.2026): getaggte PDFs ueber Heines Import-Script,
+    # alle anderen wie bisher ueber write_alt_texts_to_pdf().
+    extraction_method = project["extraction_method"] if "extraction_method" in project.keys() else "fitz"
+
     alt_texts = {}
+    alt_texts_by_lfnr = {}
     image_metadata = []
 
     for img in images:
         alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
         if alt_text is not None and img["xref"]:
             alt_texts[img["xref"]] = alt_text
+        if alt_text is not None and img["image_index"]:
+            alt_texts_by_lfnr[int(img["image_index"])] = alt_text
 
         # Build metadata for vector graphics support
         bbox = None
@@ -1723,23 +1733,39 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f"inkludocs_{project['filename']}")
 
-    try:
-        from pdf_export import write_alt_texts_to_pdf
-        result = write_alt_texts_to_pdf(project["original_path"], output_path, alt_texts, image_metadata)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
-
-    # Build response with export warnings in headers
     headers = {}
-    export_warnings = []
-    if isinstance(result, dict):
-        export_warnings = result.get("warnings", [])
-        tagged_count = result.get("tagged_count", 0)
-        total_count = len(alt_texts)
-        headers["X-Export-Tagged"] = str(tagged_count)
-        headers["X-Export-Total"] = str(total_count)
-        if export_warnings:
-            headers["X-Export-Warnings"] = json.dumps(export_warnings, ensure_ascii=False)
+    result = None
+
+    if extraction_method == "pdfix":
+        # PDFIX-INTEGRATION: Heines Import-Script ueber subprocess
+        try:
+            import pdfix_roundtrip as _pdfix
+            count = _pdfix.import_alt_texts_pdfix(
+                project["original_path"], output_path,
+                alt_texts_by_lfnr, work_dir=output_dir)
+            headers["X-Export-Method"] = "pdfix"
+            headers["X-Export-Tagged"] = str(count)
+            headers["X-Export-Total"] = str(len(alt_texts_by_lfnr))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"PDFix-Export fehlgeschlagen: {str(e)}")
+    else:
+        try:
+            from pdf_export import write_alt_texts_to_pdf
+            result = write_alt_texts_to_pdf(project["original_path"], output_path, alt_texts, image_metadata)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
+
+        # Build response with export warnings in headers
+        export_warnings = []
+        if isinstance(result, dict):
+            export_warnings = result.get("warnings", [])
+            tagged_count = result.get("tagged_count", 0)
+            total_count = len(alt_texts)
+            headers["X-Export-Method"] = "fitz"
+            headers["X-Export-Tagged"] = str(tagged_count)
+            headers["X-Export-Total"] = str(total_count)
+            if export_warnings:
+                headers["X-Export-Warnings"] = json.dumps(export_warnings, ensure_ascii=False)
 
     return FileResponse(
         output_path,

@@ -34,6 +34,12 @@ def clear_project_cache():
 
 from context_engine import get_prompt, detect_type_from_context, clean_alt_text, remove_hedge_words
 
+# PDFIX-INTEGRATION (24.04.2026): strukturelle Figure-Extraktion fuer getaggte PDFs
+import logging as _logging
+import pdfix_roundtrip as _pdfix
+_pdfix_log = _logging.getLogger("inkludocs.pdfix")
+# END PDFIX-INTEGRATION
+
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
 MODEL_NAME = os.environ.get("OLLAMA_MODEL", "qwen3-vl:8b")
 
@@ -265,8 +271,61 @@ def _merge_nearby_images(page, image_list, doc, gap=20):
     return groups if has_merged else None
 
 
+def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
+    """PDFIX-INTEGRATION: Figures via PDFix-SDK extrahieren (Heines Script).
+
+    Mappt das von Heines Export gelieferte Format auf die InkluDocs-Struktur,
+    die die Mistral-Pipeline erwartet. Fuer jede Figure wird ein dict geliefert
+    wie beim fitz-Pfad, damit der Downstream-Code unveraendert bleibt.
+    """
+    figures = _pdfix.extract_figures_pdfix(pdf_path, output_dir)
+    full_text = ""
+    try:
+        _doc = fitz.open(pdf_path)
+        full_text = "\n".join(p.get_text() for p in _doc)
+        _doc.close()
+    except Exception:
+        pass
+    images = []
+    for fig in figures:
+        width, height = 0, 0
+        try:
+            with Image.open(fig["path"]) as _im:
+                width, height = _im.size
+        except Exception:
+            pass
+        images.append({
+            "page_number": 1,
+            "image_index": fig["lfnr"],
+            "image_path": fig["path"],
+            "image_filename": os.path.basename(fig["path"]),
+            "width": width,
+            "height": height,
+            "xref": -fig["lfnr"],
+            "context_text": full_text,
+            "ext": "png",
+            "bbox": (0, 0, width, height),
+            "is_vector": True,
+            "source": "pdfix",
+        })
+    return images
+
+
 def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> list:
     """Extract all images from a PDF, including vector graphics rendered as images."""
+    # PDFIX-INTEGRATION (24.04.2026): bei getaggter PDF ueber PDFix-SDK gehen.
+    # Feature-Flag PDFIX_ENABLED (default false). Fallback auf fitz bei Fehler.
+    if os.getenv("PDFIX_ENABLED", "false").lower() in ("1", "true", "yes"):
+        if _pdfix.is_pdfix_available() and _pdfix.is_tagged_pdf(pdf_path):
+            try:
+                figures = _extract_via_pdfix(pdf_path, output_dir)
+                _pdfix_log.info("PDFix-Pfad: %d Figures aus %s (project_id=%s)",
+                                len(figures), pdf_path, project_id)
+                return figures
+            except Exception as e:
+                _pdfix_log.warning(
+                    "PDFix-Extraktion fehlgeschlagen, Fallback auf fitz: %s", e)
+    # END PDFIX-INTEGRATION
     doc = fitz.open(pdf_path)
     images = []
     vector_xref_counter = 900000  # High xref range for vector graphics
@@ -925,33 +984,52 @@ def _call_mistral_validate(image_path: str, alt_text: str, langbeschreibung: str
     v3.4 (14.04.2026): Bekommt jetzt den gleichen Kontext wie der Generator,
     damit Link-Verweise ("verweist auf: ...") nicht faelschlicherweise als
     Halluzinationen markiert werden.
-    Returns dict with validierung_ok/probleme/korrektur_vorschlag, or None on failure."""
+    v3.7 (24.04.2026): Validator korrigiert jetzt auch die Langbeschreibung
+    (vorher nur Alt-Text). max_tokens auf 2000, damit Platz fuer Lang-Korrektur.
+    Returns dict mit validierung_ok/probleme/korrektur_alt_text/korrektur_langbeschreibung,
+    oder None on failure."""
     if not VALIDATOR_ENABLED:
         return None
     if not alt_text or len(alt_text.strip()) < 5:
         return None
     from context_engine import get_validation_prompt
     prompt = get_validation_prompt(alt_text, langbeschreibung, context=context)
-    parsed = _call_mistral_json(image_path, prompt, MISTRAL_MODEL_VALIDATE, max_tokens=400)
+    parsed = _call_mistral_json(image_path, prompt, MISTRAL_MODEL_VALIDATE, max_tokens=2000)
     if not parsed:
         return None
+    # v3.7: beide Korrekturfelder; Fallback auf alten Schluessel fuer Rueckwaertskompat.
+    korrektur_alt = (parsed.get("korrektur_alt_text")
+                     or parsed.get("korrektur_vorschlag")
+                     or "").strip()
+    korrektur_lang = (parsed.get("korrektur_langbeschreibung") or "").strip()
     return {
         "validierung_ok": bool(parsed.get("validierung_ok", True)),
         "probleme": parsed.get("probleme", []) or [],
-        "korrektur_vorschlag": (parsed.get("korrektur_vorschlag", "") or "").strip(),
+        "korrektur_alt_text": korrektur_alt,
+        "korrektur_langbeschreibung": korrektur_lang,
     }
 
 
 def _apply_validator(image_path: str, result: dict, context: str = "") -> dict:
     """v3.4 Stufe 3: Run validator and mutate result dict accordingly.
-    - In VALIDATOR_MODE=correct: Validator may overwrite alt_text if he flags AND provides a correction.
+    - In VALIDATOR_MODE=correct: Validator may overwrite alt_text AND langbeschreibung if he flags AND provides corrections.
     - In VALIDATOR_MODE=flag: Validator only sets needs_review, never overwrites.
     On validator failure: result is returned unchanged, needs_review stays False.
     Always records pipeline_steps + validation_result on the dict.
-    v3.4 (14.04.2026): context wird an den Validator durchgereicht."""
+    v3.4 (14.04.2026): context wird an den Validator durchgereicht.
+    v3.7 (24.04.2026): Korrektur erstreckt sich jetzt auf alt_text UND langbeschreibung,
+    damit beide Felder konsistent bleiben. Fallback: wenn Validator nur Alt-Text korrigiert,
+    wird langbeschreibung geleert (lieber leer als widerspruechlich zum korrigierten Alt).
+    Plus: bei konfidenz mittel/niedrig immer needs_review=True (Bug #2)."""
     result.setdefault("pipeline_steps", "classified,generated")
     result.setdefault("needs_review", False)
     result.setdefault("validation_result", "")
+
+    # Bug #2 (24.04.2026): mittel/niedrig-Konfidenz immer zur Review markieren,
+    # unabhaengig vom Validator-Ergebnis. Das ist die semantische Bedeutung des Feldes.
+    konfidenz = (result.get("konfidenz") or "").strip().lower()
+    if konfidenz in ("mittel", "niedrig"):
+        result["needs_review"] = True
 
     alt = result.get("alt_text", "") or ""
     lang = result.get("langbeschreibung", "") or ""
@@ -971,13 +1049,21 @@ def _apply_validator(image_path: str, result: dict, context: str = "") -> dict:
         return result
 
     # Probleme gefunden
-    correction = validation.get("korrektur_vorschlag", "").strip()
-    if VALIDATOR_MODE == "correct" and correction and len(correction) > 10:
-        print(f"v3.3 Validator-Korrektur fuer {image_path}: '{alt[:60]}' -> '{correction[:60]}'")
-        result["alt_text"] = correction[:400]
+    correction_alt = validation.get("korrektur_alt_text", "").strip()
+    correction_lang = validation.get("korrektur_langbeschreibung", "").strip()
+    if VALIDATOR_MODE == "correct" and correction_alt and len(correction_alt) > 10:
+        print(f"v3.7 Validator-Korrektur fuer {image_path}:")
+        print(f"  alt: '{alt[:60]}' -> '{correction_alt[:60]}'")
+        if correction_lang:
+            print(f"  lang: '{lang[:60]}' -> '{correction_lang[:60]}'")
+        else:
+            print(f"  lang: '{lang[:60]}' -> (geleert, da Validator keine Lang-Korrektur lieferte)")
+        result["alt_text"] = correction_alt[:400]
+        # v3.7: Langbeschreibung mit korrigieren, leer als sicherer Fallback
+        result["langbeschreibung"] = correction_lang[:1500] if correction_lang else ""
         result["needs_review"] = True  # Korrektur wurde angewendet, Mensch sollte trotzdem gegenlesen
     else:
-        print(f"v3.3 Validator-Flag fuer {image_path}: {validation.get('probleme', [])}")
+        print(f"v3.7 Validator-Flag fuer {image_path}: {validation.get('probleme', [])}")
         result["needs_review"] = True
 
     return result

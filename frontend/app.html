@@ -93,6 +93,7 @@
             <div class="upload-area" role="region" aria-label="Dateien hochladen oder Website scannen">
                 <h2>Alt-Texte generieren</h2>
                 <p>Laden Sie PDFs oder Bilder hoch, um Alt-Texte fuer alle enthaltenen Grafiken zu generieren.</p>
+                <p style="font-size:0.9em;color:#555;margin-top:-0.5rem;">Hinweis: Damit die Grafiken in den PDF sauber erkannt werden koennen, sollte es sich um eine getaggte PDF handeln.</p>
                 <label class="upload-btn" for="fileInput" role="button" tabindex="0">Dateien auswaehlen</label>
                 <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-label="PDF oder Bilddateien auswaehlen">
                 <div class="url-scan-area" style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border,#ddd);">
@@ -202,6 +203,10 @@
         const statusClass = s => s === 'done' ? 'badge-done' : s === 'processing' ? 'badge-processing' : s === 'extracted' ? 'badge-ready' : 'badge-error';
         const typeLabels = { pdf:'PDF', images:'Bilder', url:'Website' };
 
+        const extractionLabel = p => (p.project_type === 'pdf')
+            ? (p.extraction_method === 'pdfix' ? ' | Extraktion: Strukturell (PDFix)' : ' | Extraktion: Heuristisch (PyMuPDF)')
+            : '';
+
         list.innerHTML = projects.map(p => {
             const progress = p.total_images > 0 ? Math.round((p.processed_images / p.total_images) * 100) : 0;
             const typeLabel = typeLabels[p.project_type] || 'PDF';
@@ -212,7 +217,7 @@
                     <span class="badge" style="background:var(--text-muted,#888);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">${typeLabel}</span>
                     <span class="badge ${statusClass(p.status)}">${statusLabels[p.status] || p.status}</span>
                 </div>
-                <div class="card-info">${p.total_images} Bilder | ${p.processed_images} verarbeitet | ${new Date(p.created_at).toLocaleDateString('de-DE')}</div>
+                <div class="card-info">${p.total_images} Bilder | ${p.processed_images} verarbeitet${extractionLabel(p)} | ${new Date(p.created_at).toLocaleDateString('de-DE')}</div>
                 ${p.status === 'processing' ? `<div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:${progress}%"></div></div>` : ''}
                 <div class="card-actions">
                     <button class="btn btn-primary" onclick="showProject(${p.id})">Oeffnen</button>
@@ -243,6 +248,9 @@
         const statusLabels = { extracted:'Bereit zur Verarbeitung', processing:'Alt-Texte werden generiert...', done:'Fertig', error:'Fehler' };
         const statusClass = project.status === 'done' ? 'badge-done' : project.status === 'processing' ? 'badge-processing' : 'badge-ready';
         const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
+        const extractionText = (project.project_type === 'pdf')
+            ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
+            : null;
 
         main.innerHTML = `
             <button class="back-btn" onclick="showDashboard()">Zurueck zur Uebersicht</button>
@@ -251,7 +259,7 @@
                     <span class="card-name">${project.filename}</span>
                     <span class="badge ${statusClass}">${statusLabels[project.status] || project.status}</span>
                 </div>
-                <div class="card-info">${project.total_images} Bilder | ${project.processed_images} verarbeitet</div>
+                <div class="card-info">${project.total_images} Bilder | ${project.processed_images} verarbeitet${extractionText ? ' | Extraktion: ' + extractionText : ''}</div>
                 ${project.status === 'processing' ? `
                     <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Fortschritt: ${progress} Prozent">
                         <div class="progress-fill" style="width:${progress}%"></div>
