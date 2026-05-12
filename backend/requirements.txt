@@ -17,3 +17,6 @@ Babel>=2.16.0
 
 # PDFIX-INTEGRATION (24.04.2026): strukturelle Figure-Extraktion fuer getaggte PDFs
 pdfix-sdk==8.7.10
+
+# AWS BEDROCK (08.05.2026): Anthropic Claude via Frankfurt fuer v4-Pipeline
+boto3==1.35.50

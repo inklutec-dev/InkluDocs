@@ -143,6 +143,20 @@ def init_db():
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            image_refs TEXT,
+            intent TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_project_id
+            ON chat_messages(project_id, created_at);
     """)
     conn.commit()
 
@@ -150,6 +164,11 @@ def init_db():
     _migrate_columns(conn)
 
     conn.close()
+
+    # T6 (03.05.2026, Phase A): Persistente Cache-Tabelle anlegen.
+    # Eigene Connection in cache.init_schema(), idempotent (CREATE TABLE IF NOT EXISTS).
+    from cache import init_schema as _cache_init_schema
+    _cache_init_schema()
 
 
 def _migrate_columns(conn):

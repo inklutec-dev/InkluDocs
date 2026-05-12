@@ -50,6 +50,38 @@ Kontext: {context}"""
 
 # ─── Spezialisierte Generierungs-Prompts (Stufe 2, Mistral) ──
 
+# v3.7 (28.04.2026): Globale Praeambeln (aus Qualitaets-Audit nach negativen Bewertungen 22.-26.04.).
+# SPEZIFITAETS_PFLICHT: erzwingt mindestens eine bild-spezifische Information im ersten Satz,
+#                       statt nur eine Phrasen-Blacklist zu pflegen.
+# ATMOSPHAERE_REGEL:    erlaubt evidenz-gestuetzte Wertungen (Variante B, Steve-Entscheidung) —
+#                       nur fuer foto/screenshot/infografik, nicht fuer Daten-Visualisierungen.
+# Beide werden in get_generation_prompt() vor den Bildtyp-Prompt geschoben.
+
+SPEZIFITAETS_PFLICHT = """SPEZIFITAETS-PFLICHT (KRITISCH):
+Der erste Satz darf NICHT generisch sein. Verboten sind Eroeffnungen die auf 99% aehnlicher Bilder zutreffen wuerden.
+
+Generisch (VERBOTEN): "Gruppe von Personen bei einer Veranstaltung", "Mehrere Personen stehen in einem Raum", "Person vor einem Hintergrund", "Mensch in einem Setting", "auf dem Bild sieht man", "ein Bild von", "zu sehen ist", "das Bild zeigt", "gezeigt wird", "abgebildet ist".
+
+Spezifisch (PFLICHT): Der erste Satz MUSS mindestens EINE konkrete Information liefern, die DIESES Bild von anderen unterscheidet — eine konkrete Aktivitaet, gehaltene Objekte mit Form/Farbe, lesbarer Text, oder eine spezifische Setting-Indikation.
+
+FALSCH:  "Gruppe von Personen bei einer Veranstaltung in einem modernen Raum."
+RICHTIG: "Workshop-Teilnehmer mit orangefarbenen Karten in der Hand verfolgen einen Vortrag in einem Coworking-Raum."
+"""
+
+ATMOSPHAERE_REGEL = """ATMOSPHAERE-REGEL:
+Wertungen wie "wirkt formell", "konzentrierte Stimmung", "festlich gedeckt" sind ERLAUBT, aber nur wenn du die visuelle Evidenz dafuer im selben Satz oder in der Langbeschreibung NENNST.
+
+FALSCH:  "Die Atmosphaere wirkt formell."
+RICHTIG: "Die Anzuege und die aufrechte Stehhaltung lassen die Veranstaltung formell wirken."
+
+Halluzinationsfreie Wertungen sind willkommen — sie vermitteln dem blinden Nutzer das Erlebnis das ein Sehender hat. Aber JEDE Wertung muss aus dem Bild belegbar sein. Nackte Wertungen ohne sichtbaren Beleg sind verboten.
+"""
+
+# Bildtypen die Atmosphaere-/Stimmungs-Beschreibungen sinnvoll zulassen.
+# Daten-Visualisierungen (diagramm, tabelle, karte, strukturformel) und
+# Funktional-Elemente (logo, icon, funktional, dekorativ) sind ausgeschlossen.
+FOTO_FAMILIE_ATMOSPHAERE = frozenset({"foto", "screenshot", "infografik"})
+
 SPECIALIZED_GENERATION_PROMPTS = {
 
     "foto": """Du bist ein Experte fuer barrierefreie Bildbeschreibungen nach WCAG 2.2.
@@ -922,9 +954,14 @@ def get_generation_prompt(bildtyp: str, context_text: str = "", width: int = 0, 
         link_target = _extract_link_from_context(context)
     if link_target:
         context = f"[Link-Ziel dieses Bildes]: {link_target}\n{context}\n[WICHTIG – PFLICHT]: Dieses Bild ist ein Link. Der Alt-Text MUSS enden mit: (verweist auf: {link_target})"
+    # v3.7: Praeambel zusammenbauen — SPEZIFITAETS_PFLICHT global, ATMOSPHAERE_REGEL nur Foto-Familie
+    preamble = SPEZIFITAETS_PFLICHT
+    if bildtyp in FOTO_FAMILIE_ATMOSPHAERE:
+        preamble = preamble + "\n\n" + ATMOSPHAERE_REGEL
+
     prompt_template = SPECIALIZED_GENERATION_PROMPTS.get(bildtyp)
     if prompt_template is None:
-        return GENERAL_PROMPT.format(context=context)
+        return preamble + "\n\n" + GENERAL_PROMPT.format(context=context)
 
     # Build format kwargs based on what the template expects
     fmt = {"context": context}
@@ -948,7 +985,7 @@ def get_generation_prompt(bildtyp: str, context_text: str = "", width: int = 0, 
     if "{original_alt}" in prompt_template:
         fmt["original_alt"] = original_alt.strip() if original_alt else "(kein Alt-Text vorhanden)"
 
-    return prompt_template.format(**fmt)
+    return preamble + "\n\n" + prompt_template.format(**fmt)
 
 
 def get_fallback_prompt(bildtyp: str, context_text: str = "", original_alt: str = "") -> str:
@@ -1035,6 +1072,16 @@ Pruefe ob der Alt-Text zum Bild passt.
 Generierter Alt-Text: {alt_text}
 Generierte Langbeschreibung: {langbeschreibung}
 
+INVENTAR-CHECK (PFLICHT, ZUERST):
+Bevor du den Alt-Text bewertest, schaue intern auf das Bild und liste fuer dich auf was SICHTBAR ist:
+- Anzahl und ungefaehre Position der Personen
+- Was halten sie in den Haenden? (Form, Farbe, vermutete Funktion - oder "unklar" wenn nicht sicher)
+- Welche Texte/Beschriftungen sind lesbar?
+- Welche Setting-Indikatoren? (Moebel, Geraete, Dekoration, Catering, Bildschirme)
+- Welche Farben dominieren?
+
+Vergleiche dann JEDE Aussage im Alt-Text und in der Langbeschreibung mit deinem Inventar. Wenn eine Aussage NICHT durch das Inventar gedeckt ist, ist sie zu flaggen — auch wenn sie "plausibel" klingt fuer das Setting. Halluzinationen ueber gehaltene Objekte sind besonders haeufig: traue keiner Aussage ueber Getraenke, Snacks, Werkzeuge, Bezeichnungen, ohne dass du das Objekt selbst gesehen und benannt hast. "Plausibel fuer ein Eventfoto" ist KEIN Validierungs-Kriterium.
+
 Pruefe folgende Punkte:
 1. Stimmen genannte Produktnamen, Markennamen oder Texte mit dem was im Bild LESBAR ist ueberein?
 2. Stimmen genannte Objekte (z.B. "Brezeln", "Flaschen", "Gebaeude") mit dem was im Bild SICHTBAR ist ueberein?
@@ -1094,7 +1141,7 @@ def get_validation_prompt(alt_text: str, langbeschreibung: str = "", context: st
     Halluzination werten."""
     return VALIDATION_PROMPT.format(
         alt_text=(alt_text or "").strip()[:500],
-        langbeschreibung=(langbeschreibung or "").strip()[:1000],
+        langbeschreibung=(langbeschreibung or "").strip()[:2000],
         context=(context or "").strip()[:1500] or "(kein Kontext bereitgestellt)",
     )
 

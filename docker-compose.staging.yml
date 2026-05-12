@@ -4,7 +4,7 @@ services:
     container_name: inkludocs-staging
     restart: unless-stopped
     ports:
-      - "8002:8001"
+      - "127.0.0.1:8002:8001"
     volumes:
       - inkludocs_staging_data:/app/data
     environment:
@@ -30,6 +30,22 @@ services:
       - BASE_URL=https://staging.inkludocs.inklutec.de
       # PDFIX-INTEGRATION (24.04.2026): Kill-Switch, default OFF. Fuer Staging auf true.
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
+      # v3.7 (28.04.2026): Debug-Logging fuer Generator-Rohausgabe (Truncation-Audit)
+      - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-true}
+      # InkluAgent (Chatbot) — auf Staging default ON
+      - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
+      # AWS Bedrock (08.05.2026): Anthropic Claude über Frankfurt fuer v4
+      - LLM_PROVIDER=${LLM_PROVIDER:-mistral}
+      - AWS_REGION=${AWS_REGION:-eu-central-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - BEDROCK_MODEL_CLASSIFY=${BEDROCK_MODEL_CLASSIFY:-eu.anthropic.claude-haiku-4-5}
+      - BEDROCK_MODEL_INVENTAR=${BEDROCK_MODEL_INVENTAR:-eu.anthropic.claude-sonnet-4-6}
+      - BEDROCK_MODEL_GENERATE=${BEDROCK_MODEL_GENERATE:-eu.anthropic.claude-sonnet-4-6}
+      - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
+      - PIPELINE_VERSION=${PIPELINE_VERSION:-v3_7}
+      - V4_PASS_MODE=${V4_PASS_MODE:-full}
+      - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

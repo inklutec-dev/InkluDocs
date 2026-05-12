@@ -38,6 +38,7 @@ from context_engine import get_prompt, detect_type_from_context, clean_alt_text,
 import logging as _logging
 import pdfix_roundtrip as _pdfix
 _pdfix_log = _logging.getLogger("inkludocs.pdfix")
+_pipeline_log = _logging.getLogger("inkludocs.pipeline")
 # END PDFIX-INTEGRATION
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
@@ -53,6 +54,27 @@ MISTRAL_MODEL_VALIDATE = os.environ.get("MISTRAL_MODEL_VALIDATE", "mistral-large
 # "correct" = Validator darf ueberschreiben, "flag" = nur needs_review setzen
 VALIDATOR_MODE = os.environ.get("VALIDATOR_MODE", "correct").lower()
 VALIDATOR_ENABLED = os.environ.get("VALIDATOR_ENABLED", "true").lower() in ("true", "1", "yes")
+
+# T5 (03.05.2026, Phase A): Pipeline-Version Front-Door-Routing.
+# Default v3_7 = aktuelle dreistufige Mistral-Pipeline. v4 = neue 4-Pass-Architektur (in Bau).
+# Bei PIPELINE_VERSION=v4 muss das v4-Modul beim Container-Start importierbar sein — sonst
+# Fail-Fast (uvicorn startet nicht). Begruendung: stiller Fallback auf v3_7 wuerde Audit-Trail
+# verfaelschen (Behoerden-Compliance), und ein Operator der v4 setzt muss wissen wenn v4 fehlt.
+PIPELINE_VERSION = os.environ.get("PIPELINE_VERSION", "v3_7").lower()
+_KNOWN_PIPELINE_VERSIONS = ("v3_7", "v4")
+if PIPELINE_VERSION not in _KNOWN_PIPELINE_VERSIONS:
+    raise RuntimeError(
+        f"PIPELINE_VERSION={PIPELINE_VERSION!r} unbekannt. "
+        f"Gueltige Werte: {_KNOWN_PIPELINE_VERSIONS}. Container-Start abgebrochen."
+    )
+if PIPELINE_VERSION == "v4":
+    try:
+        from pipelines.v4.orchestrator import generate_alt_text_v4 as _v4_entry
+    except ImportError as e:
+        raise RuntimeError(
+            f"PIPELINE_VERSION=v4 gesetzt, aber pipelines.v4.orchestrator.generate_alt_text_v4 "
+            f"nicht importierbar: {e}. Container-Start abgebrochen."
+        ) from e
 
 # v2.2.1: Prompt fuer Dekorativ-Recheck (zweiter Qwen-Call bei unsicherer Klassifikation)
 DEKORATIV_RECHECK_PROMPT = """/no_think
@@ -529,7 +551,7 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
     return images
 
 
-MAX_IMAGE_DIM = 1024
+MAX_IMAGE_DIM = 1536  # v3.7 (28.04.2026): erhoeht von 1024 (Qwen-Legacy) auf 1536. Mistral Large 3 / Pixtral-Large akzeptieren mehr — bei niedrigerer Aufloesung halluziniert das Modell Details auf kleinen Objekten (z.B. orangefarbene Token werden zu "Getraenken").
 MAX_IMAGE_BYTES = 4 * 1024 * 1024  # 4 MB max for Ollama
 
 
@@ -766,145 +788,47 @@ def _call_ollama(image_path: str, prompt: str) -> dict:
 
 
 def generate_alt_text(image_path: str, context: str = "", image_type: str = None,
-                      width: int = 0, height: int = 0, original_alt: str = "") -> dict:
-    """Generate alt-text using the dual-model pipeline.
+                      width: int = 0, height: int = 0, original_alt: str = "",
+                      force_regenerate: bool = False) -> dict:
+    """Front-Door — Cache-Check + Routing zur konfigurierten Pipeline-Version.
 
-    Pipeline v3.2:
-      1. OCR extracts text from image
-      2. Qwen classifies the image (Stufe 1)
-      3. v2.2: Validate decorative classification (safety net)
-      4. v2.2: Functional elements → keep original alt-text if good
-      5. v2.2: Brauchbar original alt → improvement mode
-      6. Based on pipeline mode: Mistral or Qwen generates alt-text (Stufe 2)
-      7. Fallback to Qwen if Mistral fails
+    T5 (03.05.2026, Phase A): explizites Routing v3_7|v4 ueber PIPELINE_VERSION env.
+    T6 (03.05.2026, Phase A): persistenter Content-Hash-Cache vor Pipeline-Aufruf.
+      - force_regenerate=True: Cache uebersprungen, Pipeline laeuft, Result wird gecacht.
+      - force_regenerate=False: Cache-Hit liefert direkt zurueck (kein Mistral-Call).
+
+    user_hint kommt erst mit v4 (Chatbot-Modus, Sektion 8.1 der Architektur-Doku).
+    Solange v3.7 keinen user_hint kennt, ist er hier None — der Cache-Key bleibt
+    dadurch stabil mit dem zukuenftigen v4-Aufruf-Pattern.
     """
-    from context_engine import (
-        get_classification_prompt, get_generation_prompt, get_fallback_prompt,
-        get_prompt, should_use_mistral, PIPELINE_MODE,
-        validate_dekorativ, is_thumbnail, clean_alt_text
-    )
+    from cache import build_cache_key, get_cached, set_cached
 
-    # v2.2.3: Check project cache for duplicate images
-    img_hash = _get_image_hash(image_path)
-    if img_hash in _project_image_cache:
-        cached = _project_image_cache[img_hash].copy()
-        print(f"v2.2.3 Cache-Hit: {image_path} (Hash {img_hash[:12]}...)")
-        return cached
+    content_hash = _get_image_hash(image_path)
+    cache_key = build_cache_key(content_hash, image_type, None, PIPELINE_VERSION)
 
-    # OCR: Extract text from the image
-    ocr_text = _ocr_extract_text(image_path)
-    enriched_context = context
-    if ocr_text:
-        enriched_context = f"[OCR-Text im Bild] {ocr_text}\n{context}"
+    if not force_regenerate:
+        cached = get_cached(cache_key)
+        if cached is not None:
+            print(f"T6 cache-hit: {image_path} (key={cache_key[:48]}...)")
+            return cached
 
-    # ─── Stufe 1: Mistral classifies (v3.3, 14.04.2026: ersetzt Qwen/Ollama) ───
-    classification_prompt = get_classification_prompt(
-        enriched_context, width=width, height=height, original_alt=original_alt
-    )
-    classification = _call_mistral_classify(image_path, classification_prompt)
-
-    bildtyp = classification.get("bildtyp", image_type or "foto")
-    konfidenz = classification.get("konfidenz", "mittel")
-    ist_dekorativ = classification.get("ist_dekorativ", False)
-    original_alt_brauchbar = classification.get("original_alt_brauchbar", False)
-
-    # ─── v2.2: Validate decorative classification (safety net) ───
-    if ist_dekorativ:
-        corrected_type = validate_dekorativ(classification, original_alt, width, height)
-        if corrected_type != "dekorativ":
-            print(f"v2.2 Dekorativ-Korrektur: {image_path} -> {corrected_type} (war dekorativ)")
-            bildtyp = corrected_type
-            ist_dekorativ = False
-        else:
-            # v2.2.1: If original_alt is useless AND image is >50px, do a Qwen recheck
-            # to catch images like web_19.jpg (visual metaphor classified as decorative)
-            useless_alts = {"", "bild", "grafik", "foto", "image", "img"}
-            clean_orig = (original_alt or "").strip().lower()
-            if clean_orig in useless_alts and width > 50 and height > 50:
-                recheck_result = _call_mistral_json(image_path, DEKORATIV_RECHECK_PROMPT, MISTRAL_MODEL_CLASSIFY, max_tokens=200) or {}
-                recheck_result = {"raw_response": json.dumps(recheck_result), **recheck_result}
-
-                # Parse recheck result directly from raw_response (avoids _call_ollama JSON ambiguity)
-                raw = recheck_result.get("raw_response", "") or recheck_result.get("alt_text", "")
-                recheck_dekorativ = True
-                recheck_alt = ""
-                try:
-                    start = raw.find("{")
-                    end = raw.rfind("}") + 1
-                    if start >= 0 and end > start:
-                        parsed = json.loads(raw[start:end])
-                        recheck_dekorativ = parsed.get("ist_dekorativ", True)
-                        recheck_alt = parsed.get("kurzbeschreibung", "").strip()
-                except Exception:
-                    recheck_dekorativ = recheck_result.get("ist_dekorativ", True)
-
-                if not recheck_dekorativ and recheck_alt and len(str(recheck_alt)) > 5:
-                    clean_alt = str(recheck_alt).strip().strip('"')
-                    print(f"v2.2.1 Dekorativ-Recheck: {image_path} -> NICHT dekorativ: '{clean_alt[:60]}'")
-                    return _apply_postfilter({
-                        "bildtyp": "foto",
-                        "alt_text": clean_alt,
-                        "langbeschreibung": "",
-                        "ist_dekorativ": False,
-                        "konfidenz": "mittel",
-                    }, image_hash=img_hash)
-                else:
-                    print(f"v2.2.1 Dekorativ-Recheck: {image_path} -> bestaetigt dekorativ")
-
-            return {
-                "bildtyp": "dekorativ",
-                "alt_text": "",
-                "langbeschreibung": "",
-                "ist_dekorativ": True,
-                "konfidenz": konfidenz,
-            }
-
-    # ─── v2.2: Functional elements → keep original alt-text ───
-    if bildtyp == "funktional":
-        clean_alt = (original_alt or "").strip()
-        useless_alts = {"", "bild", "grafik", "foto", "image", "img"}
-        if clean_alt and clean_alt.lower() not in useless_alts:
-            print(f"v2.2 Funktional-Bypass: {image_path} -> behalte Original-Alt: '{clean_alt}'")
-            return {
-                "bildtyp": "funktional",
-                "alt_text": clean_alt,
-                "langbeschreibung": "",
-                "ist_dekorativ": False,
-                "konfidenz": konfidenz,
-            }
-        # No good original → let Mistral/Qwen generate functional alt-text
-
-    # ─── Stufe 2: Generate alt-text ───
-    if should_use_mistral(bildtyp, konfidenz):
-        # Mistral generates (v2.2: with thumbnail + improvement mode)
-        mistral_result = _call_mistral_generate(
-            image_path, bildtyp, enriched_context,
-            width=width, height=height,
+    # Cache-Miss oder force_regenerate -> Pipeline rufen
+    if PIPELINE_VERSION == "v4":
+        result = _v4_entry(
+            image_path,
+            enriched_context=context,
+            image_type_override=image_type,
+            width=width,
+            height=height,
             original_alt=original_alt,
-            original_alt_brauchbar=original_alt_brauchbar
         )
-        if mistral_result:
-            mistral_result["bildtyp"] = bildtyp
-            mistral_result["konfidenz"] = konfidenz
-            mistral_result["ist_dekorativ"] = False
-            # v2.2.1: Force empty langbeschreibung for thumbnails
-            if is_thumbnail(width, height) and mistral_result.get("langbeschreibung"):
-                mistral_result["langbeschreibung"] = ""
-            # v3.4 Stufe 3: Validator (mit Kontext, damit Link-Verweise nicht entfernt werden)
-            mistral_result = _apply_validator(image_path, mistral_result, context=enriched_context)
-            return _apply_postfilter(mistral_result, image_hash=img_hash)
-        # Fallback to Qwen if Mistral fails
-        print(f"Mistral fehlgeschlagen, Fallback auf Qwen fuer {image_path}")
+    else:
+        from pipelines.v3_7 import generate_alt_text_v3_7
+        result = generate_alt_text_v3_7(image_path, context, image_type, width, height, original_alt)
 
-    # Qwen generates with specialized fallback prompt
-    qwen_prompt = get_fallback_prompt(
-        bildtyp=bildtyp, context_text=enriched_context, original_alt=original_alt
-    )
-    result = _call_ollama(image_path, qwen_prompt)
-    # Ensure bildtyp from classification is used
-    if result.get("bildtyp") in ("unbekannt", "fehler", None):
-        result["bildtyp"] = bildtyp
-    return _apply_postfilter(result, image_hash=img_hash)
+    # Auch bei force_regenerate: Cache neu befuellen, damit nachfolgende Anfragen Hits werden
+    set_cached(cache_key, content_hash, PIPELINE_VERSION, image_type, None, result)
+    return result
 
 
 def _call_mistral_json(image_path: str, prompt: str, model: str, max_tokens: int = 400) -> dict | None:
@@ -1118,7 +1042,23 @@ def _call_mistral_generate(image_path: str, bildtyp: str, context: str,
             raw = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', raw)
             resp_data = json.loads(raw)
 
-        text = resp_data["choices"][0]["message"]["content"]
+        choice = resp_data["choices"][0]
+        text = choice["message"]["content"]
+
+        # v3.7 Debug-Logging fuer Truncation-Audit (negative Bewertungen 22.-26.04.2026):
+        # finish_reason='length' = Token-Cap-Treffer; 'stop' = Modell entschied selbst.
+        # Zusammen mit completion_tokens und repr(text) klar diagnostizierbar.
+        # print() statt logger.info() weil Custom-Logger nicht konfiguriert ist
+        # und uvicorn die Default-Level auf WARN haelt.
+        if os.getenv("DEBUG_GEN_RAW", "false").lower() == "true":
+            _finish_reason = choice.get("finish_reason", "?")
+            _usage = resp_data.get("usage", {}) or {}
+            print(
+                f"[GEN-RAW] {image_path}: finish_reason={_finish_reason} "
+                f"completion_tokens={_usage.get('completion_tokens', '?')} "
+                f"text_len={len(text)} content={text!r}",
+                flush=True,
+            )
 
         # Parse Mistral response (expects {"alt_text": "...", "langbeschreibung": "..."})
         clean = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()

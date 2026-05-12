@@ -1,0 +1,84 @@
+# Eval-Korpus für die v4-Pipeline.
+#
+# Format pro Eintrag:
+#   id:           Eindeutiger Identifier (snake_case)
+#   image_path:   Server-absoluter Pfad oder relativ zu /app/ im Container
+#   bildtyp_erwartung: Top-Level-Bildtyp den der Klassifikator erkennen soll
+#   sub_typ_erwartung: Sub-Typ den der Inventar-Pass erkennen soll (optional)
+#   enriched_context: Test-Kontext (Web-/PDF-Auszug)
+#   width, height: Bildmaße
+#   original_alt: Original-Alt-Text (leer für die meisten Tests)
+#   checks:
+#     must_contain:     [...] — diese Strings MÜSSEN im Output stehen
+#     must_not_contain: [...] — diese Strings DÜRFEN NICHT im Output stehen
+#     min_alt_length:   N — alt_text muss mindestens N Zeichen haben
+#     max_alt_length:   N — alt_text darf maximal N Zeichen haben
+#     validierung_ok_erwartet: bool — soll der Validator-Pass akzeptieren?
+#
+# Cowork's vollständiger Korpus mit 8 Wikimedia-Bildern + 6 Nano-Banana-
+# TODOs ist separat — kommt durch ihn ergänzt. Dieses Skelett ist die
+# Production-Symptom-Sammlung der bisherigen Tests vom 04.05.2026.
+
+eval_korpus:
+
+  - id: workshop_foto_kersten
+    image_path: /app/data/uploads/1/20260428_102609_03_workshop-foto_kersten.jpeg
+    bildtyp_erwartung: foto
+    sub_typ_erwartung: foto_event
+    enriched_context: Workshop-Foto Kersten Berlin 26.04.2026 — Vor-Ort-Schulung Barrierefreiheit
+    width: 1200
+    height: 800
+    original_alt: 
+    checks:
+      must_not_contain:
+        - Getränke          # Production-Halluzination 26.04.
+        - Snacks
+        - formell, aber entspannt  # Pseudo-Atmosphäre
+        - Gruppe von Personen bei einer Veranstaltung  # Floskel-Eröffnung
+      must_contain:
+        - Workshop           # konkrete Aktivitäts-Indikation Pflicht
+      min_alt_length: 80
+      max_alt_length: 400
+      bildtyp_erwartung_strict: true
+      sub_typ_erwartung_strict: true
+
+  - id: bogart_foto_personen
+    image_path: /app/data/uploads/5/20260429_220912_Bogart.png
+    bildtyp_erwartung: foto
+    sub_typ_erwartung: foto_personen
+    enriched_context: Foto von Humphrey Bogart, US-amerikanischer Schauspieler. Filmpose 1940er.
+    width: 600
+    height: 600
+    original_alt: 
+    checks:
+      must_not_contain:
+        # Keine geratene Identifikation OHNE Kontext-Stützung — aber HIER
+        # IST Kontext-Stützung da, also Bogart sollte erkannt werden:
+        - etwa 30 Jahre     # keine Alters-Schätzung
+        - ein älterer Mann  # keine Geschlechts-/Alters-Attribution
+      must_contain:
+        - Humphrey Bogart   # FINDING #1 betrifft das — aktuell BUG, sollte
+                              # nach KONTEXT_NUTZUNGS_REGELN-Fix grün werden
+      min_alt_length: 20
+      max_alt_length: 400
+
+  - id: keramikschuessel_garagelab
+    image_path: /app/data/uploads/1/20260428_133936_01_keramikschuesselchen_garagelab.jpg
+    bildtyp_erwartung: foto
+    sub_typ_erwartung: foto_objekte
+    enriched_context: GarageLab Keramik-Werkstatt Berlin — handgefertigte Keramikschuesselchen
+    width: 1200
+    height: 900
+    original_alt: 
+    checks:
+      must_not_contain:
+        - Flüssigkeit        # Production-Halluzination 22.04.
+        - Substanz           # FINDING #3 — aktuell noch BUG
+        - gefüllt mit
+        - cremige            # gilt ohne expliziten Inventar-Beleg
+      must_contain:
+        - Keramik            # Material-Charakteristik Pflicht
+      min_alt_length: 80
+      max_alt_length: 400
+      bildtyp_erwartung_strict: true
+      sub_typ_erwartung_strict: true

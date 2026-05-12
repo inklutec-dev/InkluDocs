@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import json
 import csv
@@ -962,6 +963,29 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
 
 # ─── URL Scanner ─────────────────────────────────────────────
 
+_LINK_PREFIX_PATTERNS = [
+    re.compile(r"^(read\s+more|read|more|continue\s+reading)\s*[:\-–—]?\s*", re.IGNORECASE),
+    re.compile(r"^(weiterlesen|weiter\s*lesen|mehr\s+lesen|mehr|weiter)\s*[:\-–—]?\s*", re.IGNORECASE),
+    re.compile(r"^(lese\s+mehr|lesen)\s*[:\-–—]?\s*", re.IGNORECASE),
+]
+_LINK_GENERIC_LABELS = {"", "read", "more", "mehr", "weiter", "weiterlesen", "lesen"}
+
+
+def _clean_link_label(label: str) -> str:
+    """Strip generic 'Read more'-prefixes that WordPress screen-reader-text spans
+    leak into link text (e.g. '<span class=\"screen-reader-text\">Read</span>:
+    DIY Adventskalender' -> 'Read: DIY Adventskalender'). Returns empty string
+    if the remainder is purely generic."""
+    if not label:
+        return ""
+    cleaned = label.strip()
+    for pat in _LINK_PREFIX_PATTERNS:
+        cleaned = pat.sub("", cleaned).strip()
+    if cleaned.lower() in _LINK_GENERIC_LABELS or len(cleaned) < 3:
+        return ""
+    return cleaned
+
+
 @app.post("/api/scan-url")
 async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     """Scan a URL for images and create a project."""
@@ -1106,12 +1130,13 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
             if parent_link:
                 link_href = parent_link.get("href", "")
                 # v2.2.3: Prefer human-readable link text over raw URL
-                link_label = parent_link.get("aria-label", "") or parent_link.get("title", "")
+                # v3.7: Sanitize generic "Read more"-prefixes from screen-reader-text spans
+                link_label = _clean_link_label(parent_link.get("aria-label", "") or parent_link.get("title", ""))
                 # Also check the visible text content of the link (excluding the image alt)
                 link_text = parent_link.get_text(strip=True)
                 if link_text and link_text.lower() not in {"", "bild", "grafik", "image", "img"}:
                     if not link_label:
-                        link_label = link_text[:150]
+                        link_label = _clean_link_label(link_text)[:150]
                 if link_label:
                     context_parts.append(f"[Link-Beschriftung] {link_label}")
                     link_display_text = link_label
@@ -1478,7 +1503,9 @@ async def _process_project(project_id: int, user_id: int):
                  img["id"])
             )
         except Exception as e:
-            print(f"Fehler bei Bild {img['id']} ({img.get('image_path', '?')}): {e}")
+            import traceback
+            print(f"Fehler bei Bild {img['id']} ({img['image_path']}): {e}")
+            print(traceback.format_exc())
             conn.execute("UPDATE images SET status = 'error', alt_text = ? WHERE id = ?",
                          (f"Fehler bei der Analyse: {str(e)[:200]}", img["id"]))
 
@@ -1643,9 +1670,23 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         regen_height = img["height"] if img["height"] else 0
         regen_original_alt = img["original_alt"] if img["original_alt"] else ""
 
+        # T6 (03.05.2026): Cache evictieren BEVOR die Pipeline laeuft. Ein expliziter
+        # Re-Generate-Klick soll alle Cache-Varianten dieses Bildes loeschen (auch andere
+        # image_type_override-Varianten), damit kein Mischzustand entsteht. force_regenerate
+        # springt zusaetzlich am Cache-Lookup vorbei in generate_alt_text.
+        from pdf_processor import _get_image_hash
+        from cache import evict_by_content_hash
+        try:
+            content_hash = _get_image_hash(img["image_path"])
+            evicted = evict_by_content_hash(content_hash)
+            if evicted:
+                print(f"T6 regenerate_image: {evicted} cache-Eintrag(e) fuer {img['image_path']} evictiert")
+        except FileNotFoundError:
+            pass  # Bild physikalisch weg — Pipeline wird das melden
+
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text, img["image_path"], img["context_text"], effective_type,
-            regen_width, regen_height, regen_original_alt
+            regen_width, regen_height, regen_original_alt, True  # force_regenerate=True
         )
 
         langbeschreibung = result.get("langbeschreibung", "")
@@ -2416,6 +2457,77 @@ console.log(data.alt_text);</code></pre>
 </main>
 </body>
 </html>""".replace("%%BASE_URL%%", base)
+
+
+# ─── InkluAgent (Chatbot pro Projekt) ────────────────────────
+
+INKLUAGENT_ENABLED = os.environ.get("INKLUAGENT_ENABLED", "false").lower() in ("true", "1", "yes")
+
+
+def _require_inkluagent():
+    if not INKLUAGENT_ENABLED:
+        raise HTTPException(status_code=404, detail="Nicht aktiviert")
+
+
+def _require_project_owned(project_id: int, user_id: int):
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT id FROM projects WHERE id = ? AND user_id = ?",
+            (project_id, user_id),
+        ).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+
+
+@app.get("/api/projects/{project_id}/chat/history")
+async def chat_get_history(project_id: int, user: dict = Depends(get_current_user)):
+    _require_inkluagent()
+    _require_project_owned(project_id, user["id"])
+    from inkluagent import storage
+    return {"messages": storage.get_history(project_id)}
+
+
+@app.post("/api/projects/{project_id}/chat")
+async def chat_send_message(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    _require_inkluagent()
+    _require_project_owned(project_id, user["id"])
+    data = await request.json()
+    message = (data.get("message") or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
+    if len(message) > 5000:
+        raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 5000 Zeichen)")
+
+    from inkluagent import storage
+    from inkluagent.chat_engine import process_message
+
+    storage.append_message(project_id, "user", message)
+    result = await asyncio.get_event_loop().run_in_executor(
+        None, process_message, project_id, message, user["id"]
+    )
+    storage.append_message(
+        project_id, "assistant", result["reply"],
+        image_refs=result.get("image_refs"),
+        intent=result.get("intent"),
+    )
+    return {
+        "reply": result["reply"],
+        "intent": result.get("intent"),
+        "image_refs": result.get("image_refs"),
+        "actions": result.get("actions", []),
+    }
+
+
+@app.delete("/api/projects/{project_id}/chat")
+async def chat_clear_history(project_id: int, user: dict = Depends(get_current_user)):
+    _require_inkluagent()
+    _require_project_owned(project_id, user["id"])
+    from inkluagent import storage
+    deleted = storage.clear_history(project_id)
+    return {"deleted": deleted}
 
 
 # ─── News / Neuigkeiten ─────────────────────────────────────
