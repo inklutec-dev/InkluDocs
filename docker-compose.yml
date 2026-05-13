@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    build: .
+    image: inkludocs:v4-linkref-20260513
     container_name: inkludocs
     restart: unless-stopped
     ports:
@@ -8,27 +8,52 @@ services:
     volumes:
       - inkludocs_data:/app/data
     environment:
+      # Production-spezifisch
       - SECRET_KEY=${SECRET_KEY:-inkludocs-production-key-2025}
-      - OLLAMA_URL=http://10.100.0.1:11434
-      - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
+      - BASE_URL=https://inkludocs.inklutec.de
       - REGISTRATION_ENABLED=true
+      - NOTIFICATION_EMAIL=support@inklutec.de
+      # SMTP
       - SMTP_SERVER=${SMTP_SERVER}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
-      - NOTIFICATION_EMAIL=support@inklutec.de
+      # Altlast Ollama (Pfad seit 29.04.2026 nicht mehr aktiv)
+      - OLLAMA_URL=http://10.100.0.1:11434
+      - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
+      # Mistral - Fallback-Provider + InkluAgent
       - MISTRAL_ENABLED=${MISTRAL_ENABLED:-true}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - PIPELINE_MODE=${PIPELINE_MODE:-mistral_primary}
-      # v3.6 (14.04.2026): Dreistufige Mistral-Pipeline
       - MISTRAL_MODEL_CLASSIFY=${MISTRAL_MODEL_CLASSIFY:-mistral-medium-latest}
       - MISTRAL_MODEL_GENERATE=${MISTRAL_MODEL_GENERATE:-pixtral-large-latest}
       - MISTRAL_MODEL_VALIDATE=${MISTRAL_MODEL_VALIDATE:-mistral-large-latest}
-      - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-true}
-      - VALIDATOR_MODE=${VALIDATOR_MODE:-flag}
-      # InkluAgent (Chatbot) — auf Production default OFF, bis Staging-Test stabil
-      - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-false}
+      # v4 + Bedrock - Defaults sind Production-Werte (Fail-Safe wenn --env-file vergessen)
+      - PIPELINE_VERSION=${PIPELINE_VERSION:-v4}
+      - V4_PASS_MODE=${V4_PASS_MODE:-lean}
+      - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
+      - AWS_REGION=${AWS_REGION:-eu-central-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - BEDROCK_MODEL_CLASSIFY=${BEDROCK_MODEL_CLASSIFY:-eu.anthropic.claude-sonnet-4-6}
+      - BEDROCK_MODEL_INVENTAR=${BEDROCK_MODEL_INVENTAR:-eu.anthropic.claude-sonnet-4-6}
+      - BEDROCK_MODEL_GENERATE=${BEDROCK_MODEL_GENERATE:-eu.anthropic.claude-sonnet-4-6}
+      - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
+      # Validator
+      - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-false}
+      - VALIDATOR_MODE=${VALIDATOR_MODE:-off}
+      # Features
+      - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
+      - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-true}
+      - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
+      - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
+      - INKLUAGENT_BEDROCK_MODEL_TEXT=${INKLUAGENT_BEDROCK_MODEL_TEXT:-eu.anthropic.claude-sonnet-4-6}
+      - INKLUAGENT_BEDROCK_MODEL_VISION=${INKLUAGENT_BEDROCK_MODEL_VISION:-eu.anthropic.claude-sonnet-4-6}
+      - INKLUAGENT_INTENT_MODEL=${INKLUAGENT_INTENT_MODEL:-eu.anthropic.claude-haiku-4-5-20251001-v1:0}
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+      - INKLUAGENT_AGENTIC=${INKLUAGENT_AGENTIC:-true}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

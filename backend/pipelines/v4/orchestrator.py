@@ -93,6 +93,45 @@ def _original_alt_brauchbar(original_alt: str) -> bool:
     return norm not in _GENERIC_ALT_TEXTE and len(norm) >= 5
 
 
+# foto_subtyp-Werte aus dem ClassificationOutput-Schema. Wenn ein
+# image_type_override einer dieser Werte ist (z.B. weil ein Bild bereits
+# als 'foto_event' in der DB steht), muessen wir korrekt aufdroeseln:
+# bildtyp='foto', foto_subtyp=<wert>. Sonst lehnt Pydantic den Override ab.
+_FOTO_SUBTYP_OVERRIDE_VALUES = {
+    'foto_personen', 'foto_event', 'foto_objekte',
+    'foto_landschaft', 'foto_architektur', 'foto_essen',
+}
+
+
+def _classification_from_override(
+    image_type_override: str,
+    original_alt: str,
+) -> ClassificationOutput:
+    """Baut ein ClassificationOutput aus einem image_type_override-String.
+
+    Splittet automatisch, wenn der Wert ein foto_subtyp ist (z.B. 'foto_event'
+    aus der DB-Spalte image_type) statt eines Top-Level-Bildtyps. Verhindert
+    Pydantic-Validation-Fehler beim 'neu generieren' bereits klassifizierter
+    Foto-Sub-Typen ueber den InkluAgent-Chatbot oder den Neu-Generieren-Button.
+    """
+    if image_type_override in _FOTO_SUBTYP_OVERRIDE_VALUES:
+        return ClassificationOutput(
+            bildtyp='foto',
+            foto_subtyp=image_type_override,
+            konfidenz='hoch',
+            ist_dekorativ=False,
+            original_alt_brauchbar=_original_alt_brauchbar(original_alt),
+            klassifikations_begruendung='Manuelle Uebersteuerung durch Nutzer-Wahl (Sub-Typ aus DB).',
+        )
+    return ClassificationOutput(
+        bildtyp=image_type_override,
+        konfidenz='hoch',
+        ist_dekorativ=False,
+        original_alt_brauchbar=_original_alt_brauchbar(original_alt),
+        klassifikations_begruendung='Manuelle Uebersteuerung durch Nutzer-Wahl.',
+    )
+
+
 def _format_pipeline_steps(
     classification: ClassificationOutput,
     inventar: Optional[InventarOutput],
@@ -145,13 +184,7 @@ def _run_multipass_pipeline(
     # === Pass 1: Klassifikation ===
     if image_type_override:
         # Frontend hat den Typ gewählt — Pass 1 überspringen.
-        classification = ClassificationOutput(
-            bildtyp=image_type_override,
-            konfidenz='hoch',
-            ist_dekorativ=False,
-            original_alt_brauchbar=_original_alt_brauchbar(original_alt),
-            klassifikations_begruendung='Manuelle Übersteuerung durch Nutzer-Wahl.',
-        )
+        classification = _classification_from_override(image_type_override, original_alt)
     else:
         classify_prompt = build_classification_prompt(
             enriched_context=enriched_context,
@@ -504,13 +537,7 @@ def _run_lean_pipeline(
     """
     # === Pass 1: Klassifikation (mit foto_subtyp dank Lean-Builder-Anweisung) ===
     if image_type_override:
-        classification = ClassificationOutput(
-            bildtyp=image_type_override,
-            konfidenz='hoch',
-            ist_dekorativ=False,
-            original_alt_brauchbar=_original_alt_brauchbar(original_alt),
-            klassifikations_begruendung='Manuelle Übersteuerung durch Nutzer-Wahl.',
-        )
+        classification = _classification_from_override(image_type_override, original_alt)
     else:
         classify_prompt = build_classification_prompt(
             enriched_context=enriched_context,

@@ -1,0 +1,53 @@
+services:
+  inkludocs-test:
+    image: inkludocs:v4-20260512
+    container_name: inkludocs-test
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8003:8001"
+    volumes:
+      - inkludocs_test_data:/app/data
+    environment:
+      - SECRET_KEY=inkludocs-test-key-2026
+      - BASE_URL=http://127.0.0.1:8003
+      - REGISTRATION_ENABLED=false
+      - NOTIFICATION_EMAIL=support@inklutec.de
+      # SMTP komplett aus, Test schickt keine Mails
+      - SMTP_SERVER=
+      - SMTP_PORT=587
+      - SMTP_USER=
+      - SMTP_PASS=
+      - SMTP_FROM=
+      # Altlast Ollama
+      - OLLAMA_URL=http://10.100.0.1:11434
+      - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
+      # Mistral
+      - MISTRAL_ENABLED=true
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - PIPELINE_MODE=mistral_primary
+      - MISTRAL_MODEL_CLASSIFY=mistral-medium-latest
+      - MISTRAL_MODEL_GENERATE=pixtral-large-latest
+      - MISTRAL_MODEL_VALIDATE=mistral-large-latest
+      # v4 + Bedrock - gleiche Konfig wie geplante Production
+      - PIPELINE_VERSION=v4
+      - V4_PASS_MODE=lean
+      - V4_PROMPT_MODE=
+      - LLM_PROVIDER=bedrock
+      - AWS_REGION=eu-central-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - BEDROCK_MODEL_CLASSIFY=eu.anthropic.claude-sonnet-4-6
+      - BEDROCK_MODEL_INVENTAR=eu.anthropic.claude-sonnet-4-6
+      - BEDROCK_MODEL_GENERATE=eu.anthropic.claude-sonnet-4-6
+      - BEDROCK_MODEL_VALIDATE=eu.anthropic.claude-sonnet-4-6
+      - VALIDATOR_ENABLED=false
+      - VALIDATOR_MODE=off
+      - PDFIX_ENABLED=true
+      - DEBUG_GEN_RAW=true
+      - INKLUAGENT_ENABLED=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  inkludocs_test_data:
+    external: true

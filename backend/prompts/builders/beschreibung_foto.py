@@ -232,15 +232,19 @@ def build_beschreibung_prompt_foto_event(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder fuer foto_event — Pilot 04.05.2026 abends.
+    """Premium-Builder fuer foto_event — Sonnet-iteriert 13.05.2026.
 
-    Workshop, Meeting, Schulung, Praesentation. Trigger: ≥2 Personen
-    UND mindestens ein Event-Indikator (Buehne, Beamer, Catering etc.).
-
-    Nutzt 6 Helper-Funktionen fuer wiederverwendete Bloecke
-    (Personenregeln, Kontextregeln, Unterschriften, Atmosphaere,
-    Unsicherheit, Final Check). Bildtyp-spezifisch sind: BILDTYP-Header,
-    ZIEL, ALT-TEXT-Aufbau, LANGBESCHREIBUNG-Reihenfolge, EVENT-LOGIK.
+    Neufassung durch ChatGPT + Steve + Claude:
+    - Stil: beobachtend statt interpretierend (Sonnet-tauglich)
+    - Visuelle Struktur explizit als Alt-Text-Pflicht (rotes Sofa,
+      Acer-Logo werden nicht mehr in die Langbeschreibung verschoben)
+    - Logo-Logik umgedreht: relevante Logos DUERFEN rein
+    - Konkretes Zaehlen statt "mindestens N Personen"
+    - Kompakte Personenregeln (rechtliche/ethische Absicherung)
+    - Modernisierte Kontextregeln (Bild gewinnt gegen Kontext)
+    - Inventar-Block sprachlich modernisiert (primaere faktische Grundlage)
+    - Kontext-Quellen-Hinweis (PDF/Web/API)
+    - Kein langer Mistral-Drill — Sonnet versteht das ohne 10-Punkte-Liste
     """
     examples = load_examples('foto_event')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -251,115 +255,225 @@ def build_beschreibung_prompt_foto_event(
 BILDTYP: foto_event
 BILDGROESSE: {width}x{height} Pixel
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung
-fuer ein Foto, das eine Veranstaltung, Situation oder Gruppenszene zeigt
-(z.B. Workshop, Meeting, Schulung, Praesentation).
-
 ZIEL
 
-Der Alternativtext vermittelt in einem Satz die zentrale Szene.
-Die Langbeschreibung erklaert die Situation vollstaendig und
-verstaendlich fuer blinde Nutzer.
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung
+fuer ein Foto, das eine Veranstaltung, Gruppensituation oder soziale Szene
+zeigt (Workshop, Meeting, Schulung, Praesentation, Konferenz).
 
-Der Stil darf natuerlich sein, aber alle Inhalte muessen strikt belegbar
-sein. Locker im Sprachstil, streng in den Fakten.
+Der Stil soll fluessig und lesbar sein, aber beobachtend statt
+interpretierend.
 
-DATENQUELLEN
+Nicht beschreiben, was ein Bild "wirkt wie". Nicht interpretieren.
+Nicht vermuten. Nur sichtbar belegbare Informationen verwenden.
 
-Nutze ausschliesslich:
-- das INVENTAR aus Pass 2 (siehe unten)
-- sichtbaren Text im Bild
-- eindeutig zuordenbaren Kontext (siehe unten)
-- optionalen Nutzerhinweis (siehe unten)
+Der Fokus liegt auf:
+- visueller Orientierung
+- relevanten Details
+- raeumlicher Verstaendlichkeit
+- praegnanter Wissensvermittlung
 
-INVENTAR AUS PASS 2
+Der Alt-Text soll nicht nur benennen WAS zu sehen ist, sondern die
+Szene mental nachvollziehbar machen.
 
-Nutze ausschliesslich diese strukturierten Daten als Grundlage:
+
+INVENTAR (Pass-2-Beobachtungen)
+
+Das Inventar enthaelt die strukturierten Beobachtungen aus dem
+Analyse-Pass. Nutze diese Daten als primaere faktische Grundlage fuer
+Alt-Text und Langbeschreibung. Sichtbare Bildinformationen duerfen
+ergaenzt werden, aber nicht dem Inventar widersprechen.
 
 {inventar_json}
 
-Alles, was weder im Inventar, noch im sichtbaren Bildtext, noch im
-eindeutig zuordenbaren Kontext, noch im Nutzerhinweis enthalten ist,
-darf nicht beschrieben werden.
 
-KONTEXT (zur Anreicherung)
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen.
+Wenn kein oder nur wenig Kontext vorhanden ist, beschreibe
+ausschliesslich sichtbar belegbare Bildinformationen. Fehlender Kontext
+darf nicht durch Vermutungen ersetzt werden.
 
 {enriched_context if enriched_context else '(kein Kontext)'}
 {user_hint_text}
 
+
 ALT-TEXT
 
-Der erste Satz muss konkret sein und enthalten:
-- Art der Szene (z.B. Workshop, Besprechung, Praesentation — nur wenn belegbar)
-- Anzahl der Personen (Iteration 2: bei inventar.inventar_konfidenz_gesamt
-  =mittel/niedrig schreibe "mindestens N Personen" oder "etwa N Personen"
-  statt einer exakten Zahl die das Modell raten muesste)
-- zentrale Handlung oder Situation
-- praegendes visuelles Element (z.B. Tisch, Beamer, Praesentation, Raum)
+Der Alt-Text soll:
+- konkret beginnen
+- die zentrale Szene sofort verstaendlich machen
+- die visuell dominantesten und orientierungsrelevantesten Elemente priorisieren
 
-Vermeide generische Einleitungen wie 'Das Foto zeigt',
-'Auf dem Bild ist zu sehen', 'Eine Gruppe von Personen'.
+Wichtiger als allgemeine Formulierungen sind:
+- auffaellige Farben
+- dominante Moebel oder Raumstrukturen
+- sichtbare Projektionsflaechen
+- raeumliche Anordnung
+- grosse oder klar sichtbare Logos/Marken
+- praegende Objekte oder Materialien
+
+Der Alt-Text beschreibt nicht nur die soziale Situation, sondern auch
+die visuelle Struktur der Szene.
+
+VERMEIDEN:
+- "Das Bild zeigt"
+- "Auf dem Bild"
+- "Eine Szene"
+- "wirkt wie"
+- "im Rahmen einer Veranstaltung"
+- journalistische oder erzaehlerische Sprache
+
+BEVORZUGEN:
+- konkrete Beobachtungen
+- klare Hauptmotive
+- sichtbare Orientierungspunkte
+
+
+PERSONENZAHL
+
+Wenn Personen klar sichtbar sind: systematisch zaehlen statt schaetzen.
+"Mindestens" oder "etwa" nur verwenden, wenn Personen teilweise
+verdeckt, abgeschnitten oder unscharf sind.
+
+
+EVENT-LOGIK
+
+Eine Veranstaltung darf benannt werden, wenn mindestens eines davon
+sichtbar oder im Kontext eindeutig belegt ist:
+- Praesentation
+- Workshop-Setting
+- Schulungssituation
+- Moderationsmaterial
+- Namensschilder
+- Beamer oder Projektionsflaeche
+- Buehne oder Vortragsraum
+- organisierte Gruppenanordnung
+
+Mehrere Personen allein reichen NICHT fuer foto_event.
+
+
+LOGOS UND MARKEN
+
+Sichtbare Logos oder Marken duerfen erwaehnt werden, wenn sie:
+- visuell auffaellig,
+- orientierungsrelevant,
+- oder praegend fuer die Szene sind.
+
+Beispiel: Ein sichtbares Acer-Logo auf einem Beamer in einer
+Schulungssituation kann relevant sein.
+
 
 LANGBESCHREIBUNG
 
 Struktur in dieser Reihenfolge:
-1. Gesamtueberblick der Szene
-2. Personen: Anzahl, Position, Haltung, Interaktion
-3. Raum / Umgebung
-4. Objekte / Materialien
-5. sichtbare Texte oder Kontextinformationen
 
-EVENT-LOGIK
+1. Gesamtueberblick
+2. raeumliche Orientierung
+3. Personen und Interaktion
+4. zentrale Objekte oder Materialien
+5. sichtbare Texte oder Logos
+6. relevante Kontextinformationen
 
-Eine Veranstaltung oder Situation darf benannt werden (z.B. Workshop,
-Schulung), aber nur wenn mindestens einer der folgenden Punkte erfuellt ist:
-- Kontext nennt die Art der Veranstaltung
-- Inventar zeigt klare Indikatoren (z.B. Praesentation, Schulungssituation,
-  Moderation)
-
-Wenn nicht eindeutig: neutral beschreiben (z.B. 'Gruppenszene in einem
-Innenraum').
-
-{_render_personenregeln_block()}
-
-{_render_kontextregeln_block()}
-
-{_render_unterschriften_block()}
-
-{_render_atmosphaere_block()}
+Die Langbeschreibung soll: nachvollziehbar, klar strukturiert, und
+raeumlich verstaendlich sein. Nicht jede Kleinigkeit aufzaehlen —
+lieber relevante Zusammenhaenge vermitteln.
 
 
-LESBARE TEXTE IM BILD
+PERSONENREGELN
 
-Lesbare Texte aus inventar.lesbare_texte differenziert behandeln:
-- Typ kontaktdaten, url, datum, zahl: IMMER wortgetreu im Output uebernehmen
-- Typ beschriftung, ueberschrift: uebernehmen wenn fuer Bildverstaendnis relevant
-- Typ logo (Markenname): nur erwaehnen wenn das Logo fuer das Bildverstaendnis
-  sinnvoll ist (z.B. Mercedes-Logo bei Auto-Foto = relevant; "acer" am
-  Beamer im Workshop-Foto = irrelevant, weglassen)
+Nur sichtbar belegbare Eigenschaften beschreiben.
 
-AUSGABE-SCHEMA
+Keine:
+- Gesichtserkennung
+- Identitaetsvermutung
+- Zuschreibung von Ethnie, Religion oder Gesundheit
+- psychologische Interpretation
+- erfundene Beziehungen oder Emotionen
 
-Fuelle exakt das Schema BeschreibungOutput:
-- alt_text: 20 bis 400 Zeichen, prazise und konkret
-- langbeschreibung: maximal 2000 Zeichen, leer wenn alt_text alles
-  Wesentliche sagt
-- verwendete_inventar_items: Liste der genutzten Inventar-Items
-  (Audit-Trail)
-- nicht_verwendete_inventar_items: Liste der bewusst ausgelassenen
-  Inventar-Items
-- nicht_im_inventar: MUSS LEER SEIN. Wenn doch was drin steht, ist es
-  eine Halluzination die der Validator-Pass faengt.
-- atmosphaere_belege: nur bei belegter Atmosphaere, jede Wertung mit
-  wertung und beleg
+Alter oder Geschlecht nur nennen, wenn eindeutig sichtbar oder durch
+Kontext belegt.
+
+
+KONTEXTREGELN
+
+Kontext darf ergaenzen, aber sichtbare Bildinformationen nicht
+ueberschreiben.
+
+Wenn Bild und Kontext widerspruechlich sind, hat das sichtbare Bild
+Vorrang.
+
+Namen oder Funktionen aus dem Kontext verwenden, wenn sie eindeutig
+einer sichtbaren Person zugeordnet werden koennen.
+
+Oeffentliche Personen nur benennen, wenn die Zuordnung durch Kontext
+oder Beschriftung eindeutig belegt ist — nicht durch Gesichtserkennung.
+
+
+UNTERSCHRIFTEN
+
+Handschriftliche Unterschriften nicht selbst entziffern oder
+interpretieren.
+
+
+HALLUZINATIONSSCHUTZ
+
+Beschreibe nur:
+- sichtbare Inhalte
+- belegbare Kontextinformationen
+- lesbare Texte
+- klar erkennbare raeumliche Strukturen
+
+Wenn etwas unklar ist:
+- neutral beschreiben
+- sichtbare Form/Farbe/Position nennen
+- keine Funktion oder Bedeutung erraten
+
+SCHLECHT: "vermutlich", "wirkt wie", "wahrscheinlich", "eine Art von",
+"moegliche Flyer", "scheint"
+
+GUT: "orangefarbene rechteckige Gegenstaende", "runde Objekte",
+"heller Projektionsbereich", "rotes Sofa im Hintergrund"
+
+
+ATMOSPHAERE
+
+Atmosphaere oder Stimmung nur beschreiben, wenn sichtbare Belege
+vorhanden sind. Keine Emotionen erfinden, keine Motivation
+interpretieren, keine Beziehungen annehmen.
+
+ERLAUBT: "Die Szene wirkt konzentriert: mehrere Personen blicken
+gleichzeitig zur Praesentationsflaeche."
+
+NICHT ERLAUBT: "lockere Stimmung", "motivierte Teilnehmende",
+"entspannte Atmosphaere"
+
+
+SEMANTISCHE OUTPUT-REGELN
+
+- nicht_im_inventar MUSS LEER SEIN. Steht da etwas drin, ist es eine
+  Halluzination.
+- atmosphaere_belege nur bei Wertung gefuellt: jede Wertung im Text
+  braucht einen Eintrag mit wertung und beleg. Keine Atmosphaere ohne
+  Beleg-Eintrag.
+
 
 FEW-SHOT BEISPIELE
 
 {examples.format_for_prompt()}
 
-{_render_unsicherheit_block()}
 
-{_render_final_check_block()}
+FINAL CHECK
+
+1. Jede Aussage sichtbar oder im Inventar belegbar?
+2. Wurde etwas interpretiert statt beobachtet?
+3. Beschreibt der Alt-Text die visuell wichtigsten Elemente zuerst?
+4. Ist die Szene raeumlich verstaendlich?
+5. Fehlt ein auffaelliges oder orientierungsrelevantes Detail?
+6. Enthaelt der Text Vermutungs- oder Interpretationssprache?
+7. Ist der Alt-Text konkret statt generisch?
+
+Wenn ein Punkt nicht erfuellt ist: neu formulieren.
 """
 
 

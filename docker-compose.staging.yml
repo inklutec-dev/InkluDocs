@@ -34,6 +34,13 @@ services:
       - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-true}
       # InkluAgent (Chatbot) — auf Staging default ON
       - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
+      # InkluAgent Provider-Switch (12.05.2026) — Default Mistral, Override per ENV
+      - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-mistral}
+      - INKLUAGENT_BEDROCK_MODEL_TEXT=${INKLUAGENT_BEDROCK_MODEL_TEXT:-eu.anthropic.claude-sonnet-4-6}
+      - INKLUAGENT_BEDROCK_MODEL_VISION=${INKLUAGENT_BEDROCK_MODEL_VISION:-eu.anthropic.claude-sonnet-4-6}
+      - INKLUAGENT_INTENT_MODEL=${INKLUAGENT_INTENT_MODEL:-}
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+      - INKLUAGENT_AGENTIC=${INKLUAGENT_AGENTIC:-false}
       # AWS Bedrock (08.05.2026): Anthropic Claude über Frankfurt fuer v4
       - LLM_PROVIDER=${LLM_PROVIDER:-mistral}
       - AWS_REGION=${AWS_REGION:-eu-central-1}

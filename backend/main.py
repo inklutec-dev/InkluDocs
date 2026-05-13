@@ -1496,7 +1496,7 @@ async def _process_project(project_id: int, user_id: int):
             conn.execute(
                 """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?,
                    needs_review = ?, pipeline_steps = ?, validation_result = ?, status = 'done' WHERE id = ?""",
-                (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
+                (_append_link_reference(result["alt_text"], img["context_text"] or ""), result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
                  1 if result.get("needs_review") else 0,
                  result.get("pipeline_steps", ""),
                  result.get("validation_result", ""),
@@ -1694,7 +1694,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
             """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?,
                langbeschreibung = ?, alt_text_edited = NULL,
                needs_review = ?, pipeline_steps = ?, validation_result = ?, status = 'done' WHERE id = ?""",
-            (result["alt_text"], result["bildtyp"], result.get("konfidenz", "mittel"),
+            (_append_link_reference(result["alt_text"], img["context_text"] or ""), result["bildtyp"], result.get("konfidenz", "mittel"),
              langbeschreibung,
              1 if result.get("needs_review") else 0,
              result.get("pipeline_steps", ""),
@@ -2532,7 +2532,49 @@ async def chat_clear_history(project_id: int, user: dict = Depends(get_current_u
 
 # ─── News / Neuigkeiten ─────────────────────────────────────
 
+
+# === LINK-REFERENCE-POSTPROCESSOR (13.05.2026) ============================
+# WCAG-relevant: Verlinkte Bilder bekommen "(verweist auf: ...)" an den
+# Alt-Text gehaengt, deterministisch nach der LLM-Pipeline. Quelle ist die
+# vom Web-Scraper extrahierte [Link-Beschriftung] im context_text.
+
+_LINK_REF_GENERIC = {
+    "mehr info", "mehr informationen", "weiterlesen", "hier klicken",
+    "klicken", "link", "details", "mehr", "weiter", "mehr erfahren",
+    "lesen sie mehr", "mehr lesen", "weiterlesen...",
+}
+
+def _append_link_reference(alt_text: str, context_text: str) -> str:
+    """Haengt "(verweist auf: <Beschriftung>)" an alt_text, wenn das Bild
+    verlinkt ist und eine sinnvolle Beschriftung im Kontext steht.
+
+    Quellen im context_text (erste Treffer gewinnt):
+    1. [Link-Beschriftung] <text>
+    2. [title] verweist auf: <text>  (Scraper-vorformatiert)
+
+    Skip-Regeln: leerer alt_text, kein Kontext, alt_text enthaelt bereits
+    "verweist auf", Beschriftung generisch (Mehr Info etc.) oder <3 Zeichen.
+    """
+    if not alt_text or not context_text:
+        return alt_text
+    if "verweist auf" in alt_text.lower():
+        return alt_text
+    m = re.search(r"\[Link-Beschriftung\]\s*(.+?)(?:\n|$)", context_text)
+    if m:
+        label = m.group(1).strip()
+        if label and len(label) >= 3 and label.lower() not in _LINK_REF_GENERIC:
+            return f"{alt_text.rstrip()} (verweist auf: {label})"
+    m = re.search(r"\[title\]\s*verweist auf:\s*(.+?)(?:\n|$)", context_text)
+    if m:
+        ref = m.group(1).strip()
+        if ref:
+            return f"{alt_text.rstrip()} (verweist auf: {ref})"
+    return alt_text
+
+
 NEUIGKEITEN = [
+    {"datum": "13.05.2026", "text": "Chat-Assistent neu: Jedes Projekt hat jetzt einen eigenen Chatbot, der Bilder einsieht, Alt-Texte bewertet, Vorschlaege macht und nach Bestaetigung direkt in den Text uebernimmt. Aktuell auf Deutsch."},
+    {"datum": "13.05.2026", "text": "Mehrsprachigkeit in Vorbereitung: Englisch, Franzoesisch und Spanisch werden in den kommenden Wochen nach und nach ausgerollt."},
     {"datum": "14.04.2026", "text": "Neue dreistufige Pruefpipeline aktiv: Klassifikation, Generierung und automatische Qualitaetspruefung gegen Halluzinationen. Laufende Auswertung zur weiteren Verbesserung."},
     {"datum": "07.04.2026", "text": "Alt-Text-Qualitaet verbessert: Produktbilder, Diagramme und verlinkte Bilder werden besser erkannt"},
     {"datum": "07.04.2026", "text": "Neue Bildformate: AVIF und HEIC werden jetzt unterstuetzt"},

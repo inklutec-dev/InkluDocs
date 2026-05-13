@@ -26,3 +26,4 @@ _backup_*/
 
 # i18n: kompilierte Uebersetzungen werden beim Docker-Build erzeugt
 backend/locales/*/LC_MESSAGES/*.mo
+.env.*

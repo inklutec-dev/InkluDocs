@@ -18,6 +18,7 @@ from typing import Optional
 from . import storage
 from .router import classify_intent
 from .providers.mistral import MistralProvider, MistralProviderError
+from .providers.bedrock import BedrockProvider, BedrockProviderError
 from .adapters.inkludocs import (
     get_project_context,
     resolve_image_refs,
@@ -38,7 +39,23 @@ from .sanitize import sanitize_markdown
 
 log = logging.getLogger(__name__)
 
-_provider = MistralProvider()
+_PROVIDER_NAME = os.environ.get("INKLUAGENT_PROVIDER", "mistral").lower().strip()
+if _PROVIDER_NAME == "bedrock":
+    _provider = BedrockProvider()
+    log.info("InkluAgent: BedrockProvider aktiv (Claude via Frankfurt)")
+else:
+    _provider = MistralProvider()
+    log.info("InkluAgent: MistralProvider aktiv")
+
+# Agentic-Modus (Tool-Use-Loop) — Default an wenn Bedrock-Provider, sonst aus.
+# Override via INKLUAGENT_AGENTIC=true|false.
+_AGENTIC_ENABLED = os.environ.get(
+    "INKLUAGENT_AGENTIC",
+    "true" if _PROVIDER_NAME == "bedrock" else "false",
+).lower().strip() == "true"
+if _AGENTIC_ENABLED:
+    log.info("InkluAgent: agentic Tool-Use-Loop aktiviert")
+
 _HISTORY_TURNS = 30  # letzte 30 Nachrichten als Kontext mitgeben (05.05.2026 von 8 erhoeht)
 
 
@@ -55,6 +72,16 @@ def process_message(project_id: int, user_message: str, user_id: int) -> dict:
             "image_refs": None,
             "actions": [],
         }
+
+    # Neuer agentic Pfad: Sonnet entscheidet selbst welche Tools er nutzt.
+    # Klassischer 4-Pfad-Dispatcher bleibt unten als Fallback (z.B. Mistral-Provider).
+    if _AGENTIC_ENABLED and _PROVIDER_NAME == "bedrock":
+        from .agent_loop import run_agent
+        try:
+            return run_agent(project_id, user_id, user_message, project, _provider)
+        except Exception as e:
+            log.exception("agentic run_agent crashte — Fallback auf klassischen Dispatcher")
+            # Fallthrough zum klassischen Pfad statt User-Fehler
 
     intent = classify_intent(user_message, _provider)
     log.info("InkluAgent intent=%s project=%s user=%s", intent, project_id, user_id)
@@ -121,7 +148,7 @@ def _handle_smalltalk(project_id: int, user_message: str, project: dict) -> dict
     )
     try:
         reply = _provider.chat(messages=messages, max_tokens=600, temperature=0.5)
-    except MistralProviderError as e:
+    except (MistralProviderError, BedrockProviderError) as e:
         log.error("Smalltalk-Call fehlgeschlagen: %s", e)
         reply = ("Entschuldige, ich kann gerade nicht antworten. "
                  "Bitte versuch es in einem Moment nochmal.")
@@ -297,7 +324,7 @@ def _modify_one_image(img: dict, user_message: str, project_id: int) -> str:
     try:
         raw = _provider.chat(messages=messages, images=[img_bytes],
                              max_tokens=600, temperature=0.4)
-    except MistralProviderError as e:
+    except (MistralProviderError, BedrockProviderError) as e:
         return f"[Mistral-Fehler: {e}]"
 
     return _parse_modify_response(raw)
