@@ -1,7 +1,7 @@
 # Premium-Builder foto_personen — Prompt-Modus: lean
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:374`
-- **Generiert:** 2026-05-11
+- **Builder:** `prompts/builders/beschreibung_foto.py:522`
+- **Generiert:** 2026-05-15
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
   - `LLM_PROVIDER` = `bedrock`
@@ -36,29 +36,33 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 BILDTYP: foto_personen
 BILDGROESSE: 1280x720 Pixel
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung
-fuer ein Foto, auf dem eine oder mehrere Personen im Mittelpunkt stehen.
-
 ZIEL
 
-Der Alternativtext vermittelt in einem Satz die zentrale Bildaussage.
-Die Langbeschreibung erklaert die Szene vollstaendig und verstaendlich
-fuer blinde Nutzer.
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung
+fuer ein Foto, auf dem eine oder mehrere Personen im Mittelpunkt stehen
+(Portraet, Gruppe, Einzelperson in Situation).
 
-Der Stil darf natuerlich sein, aber alle Inhalte muessen strikt belegbar
-sein. Locker im Sprachstil, streng in den Fakten.
+Der Stil soll fluessig und lesbar sein, aber beobachtend statt
+interpretierend. Nicht beschreiben, was eine Person "wirkt wie".
+Nicht Motivation, Beziehungen oder Emotionen vermuten. Nur sichtbar
+belegbare Informationen verwenden.
 
-DATENQUELLEN
+Der Fokus liegt auf:
+- visueller Charakterisierung der Person(en)
+- Haltung, Blickrichtung, Konstellation
+- praegenden visuellen Markern (Kleidung, Hut, charakteristische Objekte)
+- praegnanter Wissensvermittlung
 
-Nutze ausschliesslich:
-- das INVENTAR aus Pass 2 (siehe unten)
-- sichtbaren Text im Bild
-- eindeutig zuordenbaren Kontext (siehe unten)
-- optionalen Nutzerhinweis (siehe unten)
+Der Alt-Text soll nicht nur benennen WER zu sehen ist, sondern die
+Person und ihre sichtbare Situation mental nachvollziehbar machen.
 
-INVENTAR AUS PASS 2
 
-Nutze ausschliesslich diese strukturierten Daten als Grundlage:
+INVENTAR (Pass-2-Beobachtungen)
+
+Das Inventar enthaelt die strukturierten Beobachtungen aus dem
+Analyse-Pass. Nutze diese Daten als primaere faktische Grundlage fuer
+Alt-Text und Langbeschreibung. Sichtbare Bildinformationen duerfen
+ergaenzt werden, aber nicht dem Inventar widersprechen.
 
 {
   "foto_subtyp": "foto_event",
@@ -144,92 +148,134 @@ Nutze ausschliesslich diese strukturierten Daten als Grundlage:
   "inventar_konfidenz_gesamt": "hoch"
 }
 
-Alles, was hier nicht enthalten ist, darf nicht beschrieben werden.
 
-KONTEXT (zur Anreicherung)
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen.
+Wenn kein oder nur wenig Kontext vorhanden ist, beschreibe
+ausschliesslich sichtbar belegbare Bildinformationen. Fehlender Kontext
+darf nicht durch Vermutungen ersetzt werden.
 
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
 
 
+
 ALT-TEXT
 
-Der erste Satz muss konkret sein und enthalten:
-- Anzahl der Personen
-- zentrale Handlung oder Haltung
-- wichtigstes visuelles Element
-- ggf. Name oder Funktion (wenn eindeutig belegbar)
+Der Alt-Text soll:
+- konkret beginnen
+- die Person(en) und ihre sichtbare Situation sofort verstaendlich machen
+- die visuell dominantesten und orientierungsrelevantesten Elemente priorisieren
 
-Vermeide generische Einleitungen wie 'Auf dem Bild ist zu sehen',
-'Das Foto zeigt', 'Eine Gruppe von Personen', 'Mehrere Menschen'.
+Wichtige Bestandteile (wenn sichtbar oder durch Kontext belegt):
+- Anzahl der Personen
+- zentrale Haltung, Handlung oder Blickrichtung
+- praegende visuelle Marker (Kleidung, Hut, charakteristische Objekte)
+- praegnante Hintergrund- oder Raumelemente
+- Name oder Funktion bei eindeutiger Zuordnung
+
+NAMEN-PFLICHT (Erinnerung):
+Wenn der Kontext eine Person eindeutig benennt (z.B. Bildunterschrift
+"Humphrey Bogart in CASABLANCA, 1942" und nur eine Person sichtbar),
+muss der Name im Alt-Text auftauchen — nicht nur in der Langbeschreibung.
+
+VERMEIDEN:
+- "Das Bild zeigt"
+- "Auf dem Bild"
+- "Eine Gruppe von Personen"
+- "Mehrere Menschen"
+- "wirkt wie"
+- erzaehlerische oder journalistische Einleitungen
+
+BEVORZUGEN:
+- konkrete sichtbare Beobachtungen
+- praezise Charakterisierung
+- visuelle Orientierungspunkte
+
 
 LANGBESCHREIBUNG
 
 Struktur in dieser Reihenfolge:
-1. zentrale Person oder Gruppe
-2. Haltung und Interaktion
-3. Umgebung
-4. Objekte
-5. Text oder Kontext
+
+1. zentrale Person(en): Anzahl, sichtbare Identifikation, Konstellation
+2. Haltung, Blickrichtung, sichtbare Taetigkeit
+3. praegende visuelle Marker (Kleidung, Objekte, Hut)
+4. Umgebung und Raumwirkung
+5. relevante Texte, Logos oder Kontextinformationen
+
+Die Langbeschreibung soll nachvollziehbar und klar strukturiert sein.
+Nicht jede Kleinigkeit aufzaehlen — lieber relevante Zusammenhaenge
+und visuelle Charakteristika vermitteln.
+
 
 PERSONENREGELN
 
-ERLAUBT:
-- Anzahl, Position, Haltung
-- sichtbare Taetigkeit
-- Blickrichtung
-- Interaktion
-- Gegenstaende aus Inventar
-- Kleidungscharakter (formell, sportlich, festlich, leger)
-- Namen/Funktionen bei eindeutiger Zuordnung aus Kontext oder Beschriftung
+Nur sichtbar belegbare Eigenschaften beschreiben.
 
-VERBOTEN:
-- Altersschaetzung
-- Geschlechtszuschreibung ohne Kontext
-- Gesichtserkennung von Personen
-- Ethnie, Religion, Gesundheit
-- erfundene Beziehungen (z.B. Kolleginnen, Familie, Teilnehmer — nur wenn Kontext das belegt)
-- erfundene Emotionen (z.B. gluecklich, begeistert, interessiert)
-- psychologische Interpretationen
+Erlaubt:
+- sichtbare Haltung, Position, Blickrichtung
+- sichtbare Taetigkeit oder Interaktion
+- Kleidungscharakter (formell, sportlich, festlich, leger)
+- Gegenstaende aus Inventar
+- Namen oder Funktionen bei eindeutiger Zuordnung aus Kontext oder Beschriftung
+
+Nicht erlaubt:
+- Gesichtserkennung
+- Identitaetsvermutung
+- Ethnie, Religion oder Gesundheit
+- psychologische Interpretation
+- erfundene Beziehungen (Kolleginnen, Familie, Teilnehmer — nur wenn Kontext das belegt)
+- erfundene Emotionen (gluecklich, begeistert, interessiert)
+
+Alter oder Geschlecht nur nennen, wenn eindeutig sichtbar UND fuer die
+Bildaussage relevant.
+
 
 KONTEXTREGELN
 
-Kontext darf nur verwendet werden, wenn eindeutig zuordenbar.
+Kontext darf ergaenzen, aber sichtbare Bildinformationen nicht
+ueberschreiben.
 
 BILD GEWINNT GEGEN KONTEXT:
-Wenn Widerspruch besteht (z.B. Bild zeigt 2 Personen, Kontext sagt 3),
-gilt das Inventar/Bild.
+Wenn Bild und Kontext widerspruechlich sind, hat das sichtbare Bild
+Vorrang.
 
 NAMEN-PFLICHT:
-Wenn ein Name oder eine Funktion im Kontext eindeutig einer Person im
-Bild zuzuordnen ist (z.B. einzige Person im Bild, oder Bildunterschrift
-nennt sie eindeutig), muss der Name im Output verwendet werden.
+Namen oder Funktionen aus dem Kontext verwenden, wenn sie eindeutig
+einer sichtbaren Person zugeordnet werden koennen.
+
+Beispiel: Wenn die Bildunterschrift "Humphrey Bogart in CASABLANCA (1942)"
+lautet und nur eine Person sichtbar ist, soll der Name verwendet werden.
 
 OEFFENTLICHE PERSONEN:
-Nur benennen bei bestaetigter Zuordnung aus Bildbeschriftung oder
-Kontext, keine Gesichtserkennung.
+Nur benennen, wenn die Zuordnung durch Kontext oder Beschriftung
+eindeutig belegt ist — nicht durch Gesichtserkennung.
+
 
 UNTERSCHRIFTEN
 
-Gedruckte Namen neben handschriftlichen Unterschriften duerfen verwendet
-werden. Handschriftliche Unterschriften duerfen nicht selbst entziffert
-werden.
+Gedruckte Namen oder Beschriftungen duerfen verwendet werden.
+Handschriftliche Unterschriften nicht selbst entziffern oder
+interpretieren.
+
 
 ATMOSPHAERE
 
-Wertungen ueber Atmosphaere (wirkt konzentriert, formell, lebendig)
-sind nur erlaubt, wenn durch konkrete sichtbare Belege gestuetzt, die
-im selben Satz oder in der Langbeschreibung explizit genannt werden.
+Atmosphaerische Aussagen sind erlaubt, wenn sie durch sichtbare Belege
+gestuetzt werden. Der Beleg muss im selben Satz genannt werden UND
+zusaetzlich im Feld atmosphaere_belege gesetzt sein.
 
 GUT (mit Beleg):
-'Die Szene wirkt konzentriert: alle blicken nach vorne, niemand
-spricht miteinander.'
+'Die Szene wirkt konzentriert: alle Personen blicken zur Projektion.'
 
 SCHLECHT (ohne Beleg):
-'Die Atmosphaere wirkt formell, aber entspannt.'
+'Die Atmosphaere wirkt locker und motiviert.'
 'Eine froehliche Stimmung.'
 
-Bei jeder Atmosphaere-Wertung MUSS atmosphaere_belege im Output gesetzt
-werden mit wertung und beleg. Keine Atmosphaere ohne Beleg-Eintrag.
+Keine Emotionen erfinden, keine Motivation interpretieren, keine
+Beziehungen annehmen. Bei jeder Atmosphaere-Wertung MUSS
+atmosphaere_belege im Output gesetzt werden mit wertung und beleg.
+Keine Atmosphaere ohne Beleg-Eintrag.
 
 
 LESBARE TEXTE IM BILD
@@ -237,9 +283,22 @@ LESBARE TEXTE IM BILD
 Lesbare Texte aus inventar.lesbare_texte differenziert behandeln:
 - Typ kontaktdaten, url, datum, zahl: IMMER wortgetreu im Output uebernehmen
 - Typ beschriftung, ueberschrift: uebernehmen wenn fuer Bildverstaendnis relevant
-- Typ logo (Markenname): nur erwaehnen wenn das Logo fuer das Bildverstaendnis
-  sinnvoll ist (z.B. Mercedes-Logo bei Auto-Foto = relevant; "acer" am
-  Beamer im Workshop-Foto = irrelevant, weglassen)
+
+
+LOGOS UND MARKEN
+
+Sichtbare Logos oder Marken duerfen erwaehnt werden, wenn sie:
+- visuell auffaellig
+- orientierungsrelevant
+- oder praegend fuer die Szene sind
+
+Bei foto_personen sind Logos relevant, wenn sie z.B. Beruf oder
+Veranstaltungsort einer Person charakterisieren (Firmen-Polo, Konferenz-
+Lanyard, Beamer-Logo im Hintergrund eines Schulungsfotos).
+
+Nicht relevant: Logos die nur klein und am Rand auftauchen ohne
+szenenpraegende Wirkung.
+
 
 AUSGABE-SCHEMA
 
@@ -264,17 +323,15 @@ FEW-SHOT BEISPIELE
 
 FINAL CHECK (vor der Ausgabe pruefen):
 
-1. Jede Aussage durch Inventar belegbar?
-2. Keine Halluzination (kein Item im Output das nicht im Inventar steht)?
-3. Keine Emotion erfunden (gluecklich, interessiert, engagiert)?
-4. Keine Beziehung erfunden (Kolleginnen, Familie, Teilnehmer)?
-5. Keine Identitaet geraten (Promi-Name ohne Kontext-Beleg)?
-6. Keine pauschalen Vermutungen formulieren wo Beleg fehlt:
-   bei unklaren Objekten lieber sichtbare Form/Farbe/Position
-   beschreiben als eine Funktion zu erraten.
-7. Alt-Text nicht generisch (kein "Gruppe von Personen", "Auf dem Bild")?
+1. Jede Aussage durch Inventar oder sichtbare Bildinformation belegbar?
+2. Keine Halluzination (kein Item im Output das weder im Inventar noch sichtbar belegt ist)?
+3. Keine Emotion oder Beziehung erfunden (gluecklich, motiviert, Kolleginnen, Familie)?
+4. Keine Identitaet geraten ohne Kontext-Beleg?
+5. Bei unklaren Objekten: sichtbare Form/Farbe/Position beschrieben statt Funktion zu erraten?
+6. Alt-Text konkret und visuell charakteristisch — nicht nur Personen- oder Inventar-Aufzaehlung?
+7. Vermeidet generische Einleitungen ("Auf dem Bild", "Eine Gruppe von Personen")?
 8. Schema vollstaendig korrekt (alle Pflichtfelder gefuellt)?
-9. atmosphaere_belege gefuellt wenn Wertung im Text vorkommt?
+9. atmosphaere_belege gefuellt wenn Atmosphaere im Text vorkommt?
 
 Wenn ein Punkt nicht erfuellt: Output neu formulieren.
 

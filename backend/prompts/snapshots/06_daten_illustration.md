@@ -1,7 +1,7 @@
 # Daten-Builder illustration
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:27`
-- **Generiert:** 2026-05-11
+- **Builder:** `prompts/builders/beschreibung_daten.py:41`
+- **Generiert:** 2026-05-15
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**

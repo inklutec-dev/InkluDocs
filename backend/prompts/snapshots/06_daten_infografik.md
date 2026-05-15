@@ -1,7 +1,7 @@
 # Daten-Builder infografik
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:309`
-- **Generiert:** 2026-05-11
+- **Builder:** `prompts/builders/beschreibung_daten.py:616`
+- **Generiert:** 2026-05-15
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**

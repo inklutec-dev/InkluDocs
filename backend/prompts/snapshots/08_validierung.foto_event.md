@@ -1,7 +1,7 @@
 # Validierung (Pass 4) — Bildtyp: foto_event
 
 - **Builder:** `prompts/builders/validierung.py:197`
-- **Generiert:** 2026-05-11
+- **Generiert:** 2026-05-15
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**

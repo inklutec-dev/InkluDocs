@@ -27,3 +27,6 @@ _backup_*/
 # i18n: kompilierte Uebersetzungen werden beim Docker-Build erzeugt
 backend/locales/*/LC_MESSAGES/*.mo
 .env.*
+
+# Temporaere Pre-Refactor-Snapshots (Hilfsdateien fuer Diff-Vergleich)
+backend/prompts/snapshots-pre-*/

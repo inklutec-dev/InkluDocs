@@ -1,7 +1,7 @@
 # Standard-Builder foto_landschaft
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:827`
-- **Generiert:** 2026-05-11
+- **Builder:** `prompts/builders/beschreibung_foto.py:1076`
+- **Generiert:** 2026-05-15
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
