@@ -1593,7 +1593,7 @@ async def submit_feedback(image_id: int, request: Request, user: dict = Depends(
     conn.close()
 
     # Send email notification for ALL feedback (positive + negative)
-    alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+    alt_text = img["alt_text_edited"] or img["alt_text"] or img["original_alt"]
     is_good = feedback == "good"
     color = "#16a34a" if is_good else "#dc2626"
     label = "positiv" if is_good else "negativ"
@@ -1752,7 +1752,7 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
     image_metadata = []
 
     for img in images:
-        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+        alt_text = img["alt_text_edited"] or img["alt_text"] or img["original_alt"]
         if alt_text is not None and img["xref"]:
             alt_texts[img["xref"]] = alt_text
         if alt_text is not None and img["image_index"]:
@@ -1840,7 +1840,7 @@ async def export_json(project_id: int, user: dict = Depends(get_current_user)):
     }
 
     for img in images:
-        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+        alt_text = img["alt_text_edited"] or img["alt_text"] or img["original_alt"]
         entry = {
             "alt_text": alt_text or "",
         }
@@ -1878,7 +1878,7 @@ async def export_csv(project_id: int, user: dict = Depends(get_current_user)):
     writer.writerow(["Alt-Text", "Langbeschreibung"])
 
     for img in images:
-        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+        alt_text = img["alt_text_edited"] or img["alt_text"] or img["original_alt"]
         writer.writerow([
             alt_text or "",
             img["langbeschreibung"] or "",
@@ -1929,7 +1929,7 @@ async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
 
     for i, img in enumerate(images):
         row = i + 2
-        alt_text = img["alt_text_edited"] if img["alt_text_edited"] else img["alt_text"]
+        alt_text = img["alt_text_edited"] or img["alt_text"] or img["original_alt"]
         langbeschreibung = img["langbeschreibung"] or ""
 
         # Image filename for screenreaders + embedded image for sighted users
