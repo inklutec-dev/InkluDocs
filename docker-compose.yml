@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-fotoarch-diagramm-20260515
+    image: inkludocs:v4-bug12-lang500-20260526
     container_name: inkludocs
     restart: unless-stopped
     ports:
