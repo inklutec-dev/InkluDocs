@@ -88,7 +88,17 @@ def update_alt_text(
     if len(text) < 5:
         return {"ok": False, "error": f"Alt-Text zu kurz ({len(text)} Zeichen, mindestens 5)."}
     if len(text) > 500:
-        return {"ok": False, "error": f"Alt-Text zu lang ({len(text)} Zeichen, BITV-Empfehlung max ~500)."}
+        return {
+            "ok": False,
+            "error": (
+                f"Alt-Text zu lang ({len(text)} Zeichen). InkluDocs erlaubt bis 500 "
+                "Zeichen, damit Standard-Alt-Texte kompakt bleiben. Kuerze deinen "
+                "Vorschlag und biete dem User an, fuer die Details eine separate "
+                "Langbeschreibung zu formulieren (Parameter new_langbeschreibung in "
+                "update_alt_text, bis 5000 Zeichen) — frage aber zuerst, ob das "
+                "gewuenscht ist."
+            ),
+        }
 
     lower = text.lower()
     bad_prefixes = ("bild von ", "bild eines ", "bild einer ", "foto von ", "foto eines ", "foto einer ")

@@ -1297,7 +1297,12 @@
                     needsFullReload = true;
                 }
                 const lta = document.getElementById('langtext_' + ra.image_id);
-                if (lta && ra.langbeschreibung != null) lta.value = ra.langbeschreibung;
+                if (lta && ra.langbeschreibung != null) {
+                    lta.value = ra.langbeschreibung;
+                } else if (ra.langbeschreibung) {
+                    // Neue Langbeschreibung gesetzt, aber Feld noch nicht im DOM -> Full-Reload
+                    needsFullReload = true;
+                }
             }
             if (updatedCount > 0) {
                 announce('InkluAgent hat ' + updatedCount + ' Alt-Text' + (updatedCount === 1 ? '' : 'e') + ' aktualisiert.');
