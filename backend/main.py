@@ -868,12 +868,12 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict) -> dict:
         conn.execute(
             """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
                width, height, xref, bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-               original_alt, alt_text)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               original_alt)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (project_id, img["page_number"], img["image_index"], img["image_path"],
              img["context_text"], img["width"], img["height"], img["xref"],
              bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-             img.get("original_alt", ""), img.get("original_alt", ""))
+             img.get("original_alt", ""))
         )
 
     # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg merken (fitz|pdfix)
@@ -1260,9 +1260,9 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
 
                 conn.execute(
                     """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
-                       width, height, xref, original_alt, alt_text)
-                       VALUES (?, 1, ?, ?, ?, ?, ?, 0, ?, ?)""",
-                    (project_id, idx, img_path, context_text, width, height, original_alt, original_alt)
+                       width, height, xref, original_alt)
+                       VALUES (?, 1, ?, ?, ?, ?, ?, 0, ?)""",
+                    (project_id, idx, img_path, context_text, width, height, original_alt)
                 )
                 downloaded += 1
 

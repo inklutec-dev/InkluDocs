@@ -342,8 +342,8 @@
                 </label>
                 <textarea class="alt-text-field" id="alttext_${img.id}" data-image-id="${img.id}"
                     placeholder="${img.status === 'done' ? '' : 'Alt-Text wird generiert...'}"
-                    ${img.status !== 'done' && !img.alt_text ? 'disabled' : ''}
-                >${img.alt_text_edited || img.alt_text || ''}</textarea>
+                    ${img.status !== 'done' && !img.alt_text && !img.original_alt ? 'disabled' : ''}
+                >${img.alt_text_edited || img.alt_text || img.original_alt || ''}</textarea>
                 ${img.status === 'done' ? `
                     <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                         <span style="font-size:0.85rem;color:var(--text-muted);">Alt-Text bewerten:</span>
