@@ -333,11 +333,9 @@
                     <span class="image-meta">${img.page_number > 0 ? 'Seite ' + img.page_number + ', ' : ''}Bild ${img.image_index} (${img.width}x${img.height}px)</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
                     ${img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Konfidenz: ' + img.konfidenz + '</span>' : ''}
-                    ${img.original_alt ? '<span class="badge" style="background:#666;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Original vorhanden</span>' : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
                 </div>
                 <img src="/api/images/${img.id}/file" alt="Extrahiertes Bild${img.page_number > 0 ? ' von Seite ' + img.page_number : ''}" class="image-preview" loading="lazy">
-                ${img.original_alt ? '<div style="margin-bottom:0.8rem;padding:0.6rem;background:var(--bg-card,#f5f5f5);border-left:3px solid #666;border-radius:0 4px 4px 0;"><span style="font-weight:600;font-size:0.85rem;color:var(--text-muted,#666);">Originaler Alt-Text:</span><p style="margin:0.3rem 0 0;font-size:0.95rem;">' + img.original_alt.replace(/</g, '&lt;') + '</p></div>' : ''}
                 <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
                     Alt-Text
                     <span class="save-indicator" id="saved_${img.id}">Gespeichert</span>
