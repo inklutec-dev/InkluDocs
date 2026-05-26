@@ -329,6 +329,7 @@ def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
             "bbox": (0, 0, width, height),
             "is_vector": True,
             "source": "pdfix",
+            "original_alt": fig.get("alt", ""),
         })
     return images
 
