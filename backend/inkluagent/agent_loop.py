@@ -21,6 +21,7 @@ import base64
 import json
 import logging
 import os
+import sqlite3
 from typing import Any, Optional
 
 from . import storage
@@ -178,6 +179,32 @@ def run_agent(
                 "ok": bool(result.get("ok")),
                 "error": result.get("error", "") if not result.get("ok") else "",
             })
+
+            # Refresh-Marker fuer Frontend: nach erfolgreichem DB-Update den
+            # frischen Anzeige-Text mitliefern, damit das Textarea live updaten
+            # kann ohne Liste-Reload. Fallback-Kette gleich wie main._display_alt_text.
+            if name in ("update_alt_text", "revert_alt_text") and result.get("ok"):
+                img_id_raw = args.get("image_id") if isinstance(args, dict) else None
+                if img_id_raw is not None:
+                    try:
+                        img_id_int = int(img_id_raw)
+                        _conn = sqlite3.connect("/app/data/inkludocs.db")
+                        _conn.row_factory = sqlite3.Row
+                        _row = _conn.execute(
+                            "SELECT alt_text_edited, alt_text, original_alt, langbeschreibung "
+                            "FROM images WHERE id = ?",
+                            (img_id_int,),
+                        ).fetchone()
+                        _conn.close()
+                        if _row is not None:
+                            actions_log.append({
+                                "type": "refresh_image",
+                                "image_id": img_id_int,
+                                "alt_text": _row["alt_text_edited"] or _row["alt_text"] or _row["original_alt"] or "",
+                                "langbeschreibung": _row["langbeschreibung"] or "",
+                            })
+                    except Exception:
+                        log.exception("refresh_image-Action nicht angefuegt (img=%s)", img_id_raw)
 
             # image_bytes-Sonderfall (view_image)
             img_bytes = result.pop("image_bytes", None) if isinstance(result, dict) else None

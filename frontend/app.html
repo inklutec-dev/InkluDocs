@@ -1281,9 +1281,28 @@
             inkluagentAppendMessage('assistant', data.reply || '(leere Antwort)');
             log.scrollTop = log.scrollHeight;
             inkluagentSetStatus('', false);
-            const wantsRefresh = (data.actions || []).some(a => a && a.type === 'refresh_image');
-            if (wantsRefresh && typeof showProject === 'function') {
-                announce('InkluAgent hat Alt-Texte aktualisiert. Liste wird neu geladen.');
+            // Refresh-Actions vom Chatbot: pro Bild Textarea-Wert live setzen.
+            // Wenn Bild nicht im DOM (z.B. noch nicht gerendert), Fallback auf Full-Reload.
+            const refreshActions = (data.actions || []).filter(a => a && a.type === 'refresh_image');
+            let needsFullReload = false;
+            let updatedCount = 0;
+            for (const ra of refreshActions) {
+                const ta = document.getElementById('alttext_' + ra.image_id);
+                if (ta && ra.alt_text != null) {
+                    ta.value = ra.alt_text;
+                    updatedCount++;
+                    const ind = document.getElementById('saved_' + ra.image_id);
+                    if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
+                } else if (!ta) {
+                    needsFullReload = true;
+                }
+                const lta = document.getElementById('langtext_' + ra.image_id);
+                if (lta && ra.langbeschreibung != null) lta.value = ra.langbeschreibung;
+            }
+            if (updatedCount > 0) {
+                announce('InkluAgent hat ' + updatedCount + ' Alt-Text' + (updatedCount === 1 ? '' : 'e') + ' aktualisiert.');
+            }
+            if (needsFullReload && typeof showProject === 'function') {
                 setTimeout(() => showProject(projectId), 800);
             }
         } catch (e) {
