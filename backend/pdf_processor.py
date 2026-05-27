@@ -299,12 +299,17 @@ def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
     Mappt das von Heines Export gelieferte Format auf die InkluDocs-Struktur,
     die die Mistral-Pipeline erwartet. Fuer jede Figure wird ein dict geliefert
     wie beim fitz-Pfad, damit der Downstream-Code unveraendert bleibt.
+
+    Erweiterung 27.05.2026: page_view_path + page_text fuer UI-Vorschau.
     """
     figures = _pdfix.extract_figures_pdfix(pdf_path, output_dir)
     full_text = ""
+    page_texts: dict[int, str] = {}
     try:
         _doc = fitz.open(pdf_path)
-        full_text = "\n".join(p.get_text() for p in _doc)
+        for i, p in enumerate(_doc):
+            page_texts[i + 1] = p.get_text()
+        full_text = "\n".join(page_texts.values())
         _doc.close()
     except Exception:
         pass
@@ -316,8 +321,9 @@ def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
                 width, height = _im.size
         except Exception:
             pass
+        page_num = fig.get("page_number", 1)
         images.append({
-            "page_number": 1,
+            "page_number": page_num,
             "image_index": fig["lfnr"],
             "image_path": fig["path"],
             "image_filename": os.path.basename(fig["path"]),
@@ -330,6 +336,8 @@ def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
             "is_vector": True,
             "source": "pdfix",
             "original_alt": fig.get("alt", ""),
+            "page_view_path": fig.get("page_view_path", ""),
+            "page_text": page_texts.get(page_num, ""),
         })
     return images
 
@@ -352,15 +360,26 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
     doc = fitz.open(pdf_path)
     images = []
     vector_xref_counter = 900000  # High xref range for vector graphics
+    img_idx = 0  # Globaler Counter ueber alle Seiten (27.05.2026)
 
     for page_num in range(len(doc)):
         page = doc[page_num]
         page_text = page.get_text()
         image_list = page.get_images(full=True)
 
+        # Seitenansicht-PNG: 1x pro Seite, ~144 DPI (Matrix 2.0) fuer lesbaren Text
+        page_view_filename = f"p{page_num + 1}_seitenansicht.png"
+        page_view_path = os.path.join(output_dir, page_view_filename)
+        if not os.path.exists(page_view_path):
+            try:
+                _pv_pix = page.get_pixmap(matrix=fitz.Matrix(2.0, 2.0))
+                _pv_pix.save(page_view_path)
+            except Exception as _e:
+                print(f"Seitenansicht-Render fehlgeschlagen Seite {page_num + 1}: {_e}")
+                page_view_path = ""
+
         # Track bounding boxes of raster images to avoid duplicating
         raster_areas = []
-        img_idx = 0
 
         # Check if images should be merged (e.g. split chemical formulas)
         merged_groups = _merge_nearby_images(page, image_list, doc)
@@ -393,6 +412,8 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                         "ext": "png",
                         "bbox": (group_rect.x0, group_rect.y0, group_rect.x1, group_rect.y1),
                         "is_vector": False,
+                        "page_view_path": page_view_path,
+                        "page_text": page_text,
                     })
                     continue
 
@@ -482,6 +503,8 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                     "ext": image_ext,
                     "bbox": img_bbox,
                     "is_vector": False,
+                    "page_view_path": page_view_path,
+                    "page_text": page_text,
                 })
 
             except Exception as e:
@@ -542,6 +565,8 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                         "ext": "png",
                         "bbox": (cluster_rect.x0, cluster_rect.y0, cluster_rect.x1, cluster_rect.y1),
                         "is_vector": True,
+                        "page_view_path": page_view_path,
+                        "page_text": page_text,
                     })
                     print(f"Vector graphic on page {page_num + 1}: {int(cluster_rect.width)}x{int(cluster_rect.height)}px")
                 except Exception as e:

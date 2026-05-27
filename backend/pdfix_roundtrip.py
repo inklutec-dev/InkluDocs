@@ -76,14 +76,23 @@ def extract_figures_pdfix(pdf_path: str, out_dir: str) -> list[dict]:
                 continue
             if len(row) >= 6:
                 try:
-                    figures.append({
+                    fig = {
                         "lfnr": int(row[0]),
                         "path": row[1],
                         "title": row[2],
                         "actual_text": row[3],
                         "alt": row[4],
                         "source_pdf": row[5],
-                    })
+                    }
+                    # Erweiterung 27.05.2026: Seitennummer + Seitenansicht-Pfad
+                    if len(row) > 6 and row[6]:
+                        try:
+                            fig["page_number"] = int(row[6])
+                        except ValueError:
+                            pass
+                    if len(row) > 7 and row[7]:
+                        fig["page_view_path"] = row[7]
+                    figures.append(fig)
                 except ValueError:
                     log.warning("PDFix-CSV: Zeile uebersprungen: %s", row)
     log.info("PDFix-Export: %d Figures aus %s", len(figures), pdf_path)

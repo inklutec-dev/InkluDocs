@@ -325,12 +325,29 @@
         const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','strukturformel','dekorativ'];
         const complexTypes = ['diagramm','karte','tabelle','infografik','strukturformel'];
 
-        list.innerHTML = images.map(img => {
+        // HTML-Escape fuer eingebetteten Seitentext (kann <, >, & enthalten)
+        const esc = s => !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+        // Gruppiere Bilder nach page_number (Web-Projekte: page_number 0/null -> Gruppe 0)
+        const groups = new Map();
+        for (const img of images) {
+            const key = img.page_number > 0 ? img.page_number : 0;
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(img);
+        }
+
+        // Eine Image-Card rendern
+        const renderCard = img => {
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
+            const heading = img.page_number > 0
+                ? `Bild ${img.image_index}, Seite ${img.page_number}`
+                : `Bild ${img.image_index}`;
             return `
-            <div class="image-review" role="region" aria-label="Bild ${img.image_index}${img.page_number > 0 ? ', Seite ' + img.page_number : ''}">
+            <section class="image-review" aria-labelledby="img_heading_${img.id}">
+                <h3 id="img_heading_${img.id}" class="image-heading">${heading}</h3>
                 <div class="image-review-header">
-                    <span class="image-meta">${img.page_number > 0 ? 'Seite ' + img.page_number + ', ' : ''}Bild ${img.image_index} (${img.width}x${img.height}px)</span>
+                    <span class="image-meta">${img.width}x${img.height}px</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
                     ${img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Konfidenz: ' + img.konfidenz + '</span>' : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
@@ -376,8 +393,29 @@
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
-            </div>`;
-        }).join('');
+            </section>`;
+        };
+
+        // Eine Seitengruppe rendern: optionaler Vorschau-Block + Cards
+        const renderPageGroup = (pageNum, imgs) => {
+            const first = imgs[0];
+            const hasPageView = pageNum > 0 && (first.page_view_path || first.page_text);
+            const previewBlock = hasPageView ? `
+                <h2 class="page-heading" id="page_heading_${pageNum}">Seite ${pageNum}</h2>
+                <details class="page-preview">
+                    <summary>Vorschau Seite ${pageNum} anzeigen</summary>
+                    ${first.page_view_path ? `<img src="/api/images/${first.id}/page-view" alt="" class="page-view-image">` : ''}
+                    ${first.page_text ? `<h3 class="page-text-heading">Seitentext</h3><div class="page-text-content">${esc(first.page_text)}</div>` : ''}
+                </details>
+            ` : '';
+            return previewBlock + imgs.map(renderCard).join('');
+        };
+
+        // Render aller Gruppen in Reihenfolge der Seitennummer
+        list.innerHTML = Array.from(groups.entries())
+            .sort((a, b) => a[0] - b[0])
+            .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs))
+            .join('');
 
         // Auto-save alt-text on edit
         document.querySelectorAll('.alt-text-field:not(.langtext-field)').forEach(ta => {

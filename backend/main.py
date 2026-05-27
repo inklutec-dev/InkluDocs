@@ -868,12 +868,13 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict) -> dict:
         conn.execute(
             """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
                width, height, xref, bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-               original_alt)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               original_alt, page_view_path, page_text)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (project_id, img["page_number"], img["image_index"], img["image_path"],
              img["context_text"], img["width"], img["height"], img["xref"],
              bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-             img.get("original_alt", ""))
+             img.get("original_alt", ""),
+             img.get("page_view_path", ""), img.get("page_text", ""))
         )
 
     # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg merken (fitz|pdfix)
@@ -1422,6 +1423,22 @@ async def get_image_file(image_id: int, user: dict = Depends(get_current_user)):
     if not img or not os.path.exists(img["image_path"]):
         raise HTTPException(status_code=404, detail="Bild nicht gefunden")
     return FileResponse(img["image_path"])
+
+
+@app.get("/api/images/{image_id}/page-view")
+async def get_image_page_view(image_id: int, user: dict = Depends(get_current_user)):
+    """Liefert die Seitenansicht-PNG (ganze PDF-Seite) zur visuellen Kontext-Anzeige."""
+    conn = get_db()
+    img = conn.execute(
+        """SELECT i.page_view_path FROM images i
+           JOIN projects p ON i.project_id = p.id
+           WHERE i.id = ? AND p.user_id = ?""",
+        (image_id, user["id"])
+    ).fetchone()
+    conn.close()
+    if not img or not img["page_view_path"] or not os.path.exists(img["page_view_path"]):
+        raise HTTPException(status_code=404, detail="Seitenansicht nicht gefunden")
+    return FileResponse(img["page_view_path"])
 
 
 @app.post("/api/projects/{project_id}/generate")

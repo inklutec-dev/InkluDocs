@@ -194,6 +194,9 @@ def _migrate_columns(conn):
         ("images", "validation_result", "ALTER TABLE images ADD COLUMN validation_result TEXT DEFAULT ''"),
         # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg pro Projekt festhalten
         ("projects", "extraction_method", "ALTER TABLE projects ADD COLUMN extraction_method TEXT DEFAULT 'fitz'"),
+        # Seitenansicht-Feature (27.05.2026): PNG der ganzen Seite + Volltext pro Bild
+        ("images", "page_view_path", "ALTER TABLE images ADD COLUMN page_view_path TEXT DEFAULT ''"),
+        ("images", "page_text", "ALTER TABLE images ADD COLUMN page_text TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:
