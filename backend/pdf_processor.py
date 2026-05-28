@@ -304,12 +304,14 @@ def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
     """
     figures = _pdfix.extract_figures_pdfix(pdf_path, output_dir)
     full_text = ""
-    page_texts: dict[int, str] = {}
+    page_texts: dict[int, str] = {}  # sortiert (Lesereihenfolge), nur fuer UI-Vorschau
     try:
         _doc = fitz.open(pdf_path)
+        _ctx_texts = []  # Standard-Reihenfolge: KI-Kontext byte-identisch lassen
         for i, p in enumerate(_doc):
-            page_texts[i + 1] = p.get_text()
-        full_text = "\n".join(page_texts.values())
+            page_texts[i + 1] = p.get_text(sort=True)
+            _ctx_texts.append(p.get_text())
+        full_text = "\n".join(_ctx_texts)
         _doc.close()
     except Exception:
         pass
@@ -364,7 +366,7 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
 
     for page_num in range(len(doc)):
         page = doc[page_num]
-        page_text = page.get_text()
+        page_text = page.get_text(sort=True)  # UI-Vorschau in Lesereihenfolge (28.05.2026)
         image_list = page.get_images(full=True)
 
         # Seitenansicht-PNG: 1x pro Seite, ~144 DPI (Matrix 2.0) fuer lesbaren Text
