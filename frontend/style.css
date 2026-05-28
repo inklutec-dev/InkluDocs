@@ -409,41 +409,64 @@ input[type="file"] {
     margin: 0 0 0.5rem 0;
     color: var(--text, #1a1a1a);
 }
-.page-heading {
-    font-size: 1.4rem;
-    margin: 2rem auto 0.5rem auto;
-    padding-bottom: 0.3rem;
-    border-bottom: 2px solid var(--accent, #e87722);
-    color: var(--text, #1a1a1a);
+/* Seitengruppe: ganze Seite als klappbares <details>, Ueberschrift ist der Schalter */
+.page-section {
     max-width: 800px;
+    margin: 1.5rem auto 0.5rem auto;
 }
-.page-preview {
+.page-section > summary {
+    cursor: pointer;
+    padding: 0.7rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent, #e87722);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+.page-section[open] > summary {
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0.75rem;
+}
+.page-section > summary:focus-visible {
+    outline: 2px solid var(--focus, #e87722);
+    outline-offset: 2px;
+}
+.page-heading {
+    display: inline;
+    font-size: 1.2rem;
+    margin: 0;
+    color: var(--text, #1a1a1a);
+}
+.page-count {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-muted, #666);
+}
+.page-view-image {
+    display: block;
+    max-width: 100%;
+    max-height: 600px;
+    margin: 0.75rem auto;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+/* Seitentext: eigenes inneres Klapp-Element innerhalb der Seitengruppe */
+.page-text-details {
     max-width: 800px;
-    margin: 0.5rem auto 1.5rem auto;
-    padding: 0.75rem 1rem;
+    margin: 0 auto 1rem auto;
+    padding: 0.5rem 1rem;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 8px;
 }
-.page-preview summary {
+.page-text-details > summary {
     cursor: pointer;
     font-weight: 600;
-    padding: 0.4rem 0;
+    padding: 0.3rem 0;
 }
-.page-preview summary:focus {
+.page-text-details > summary:focus-visible {
     outline: 2px solid var(--focus, #e87722);
     outline-offset: 2px;
-}
-.page-view-image {
-    max-width: 100%;
-    max-height: 600px;
-    margin: 0.75rem 0;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-}
-.page-text-heading {
-    font-size: 1rem;
-    margin: 0.75rem 0 0.25rem 0;
 }
 .page-text-content {
     max-height: 220px;

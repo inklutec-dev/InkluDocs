@@ -316,12 +316,18 @@
         }
     }
 
+    // Merkt sich pro Projekt, welche Seiten aufgeklappt sind, damit der Zustand
+    // ueber das Neu-Rendern waehrend der Verarbeitung (Polling) hinweg erhalten bleibt.
+    let openPages = new Set();
+    let openPagesProjectId = null;
+
     function renderImages(images, projectId) {
         const list = document.getElementById('imageList');
         if (!images.length) {
             list.innerHTML = '<div class="empty-state"><p>Keine Bilder gefunden.</p></div>';
             return;
         }
+        if (projectId !== openPagesProjectId) { openPages = new Set(); openPagesProjectId = projectId; }
         const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','strukturformel','dekorativ'];
         const complexTypes = ['diagramm','karte','tabelle','infografik','strukturformel'];
 
@@ -396,19 +402,30 @@
             </section>`;
         };
 
-        // Eine Seitengruppe rendern: optionaler Vorschau-Block + Cards
+        // Eine Seitengruppe rendern.
+        // Web-Projekte (pageNum 0): unveraendert, flache Cards ohne Klappbarkeit.
+        // PDF-Seiten: ganze Seite als klappbares <details>, Ueberschrift ist der Schalter.
         const renderPageGroup = (pageNum, imgs) => {
+            if (pageNum === 0) return imgs.map(renderCard).join('');
             const first = imgs[0];
-            const hasPageView = pageNum > 0 && (first.page_view_path || first.page_text);
-            const previewBlock = hasPageView ? `
-                <h2 class="page-heading" id="page_heading_${pageNum}">Seite ${pageNum}</h2>
-                <details class="page-preview">
-                    <summary>Vorschau Seite ${pageNum} anzeigen</summary>
-                    ${first.page_view_path ? `<img src="/api/images/${first.id}/page-view" alt="" class="page-view-image">` : ''}
-                    ${first.page_text ? `<h3 class="page-text-heading">Seitentext</h3><div class="page-text-content">${esc(first.page_text)}</div>` : ''}
-                </details>
-            ` : '';
-            return previewBlock + imgs.map(renderCard).join('');
+            const isOpen = openPages.has(pageNum) ? ' open' : '';
+            const count = imgs.length === 1 ? '1 Bild' : imgs.length + ' Bilder';
+            const pageView = first.page_view_path
+                ? `<img src="/api/images/${first.id}/page-view" alt="" class="page-view-image">` : '';
+            const pageTextBlock = first.page_text ? `
+                <details class="page-text-details">
+                    <summary>Seitentext anzeigen</summary>
+                    <div class="page-text-content">${esc(first.page_text)}</div>
+                </details>` : '';
+            return `
+                <details class="page-section" data-page="${pageNum}"${isOpen}>
+                    <summary class="page-summary">
+                        <h2 class="page-heading" id="page_heading_${pageNum}">Seite ${pageNum} <span class="page-count">(${count})</span></h2>
+                    </summary>
+                    ${pageView}
+                    ${pageTextBlock}
+                    ${imgs.map(renderCard).join('')}
+                </details>`;
         };
 
         // Render aller Gruppen in Reihenfolge der Seitennummer
@@ -432,6 +449,14 @@
                     const ind = document.getElementById('saved_' + id);
                     if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
                 }, 800);
+            });
+        });
+
+        // Offen/Zu-Zustand der Seiten merken (ueberlebt Neu-Rendern beim Polling)
+        document.querySelectorAll('details.page-section').forEach(d => {
+            d.addEventListener('toggle', () => {
+                const p = Number(d.dataset.page);
+                if (d.open) openPages.add(p); else openPages.delete(p);
             });
         });
     }
