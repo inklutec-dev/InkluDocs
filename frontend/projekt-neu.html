@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+<a href="#main" class="dash-skip">Zum Hauptinhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1>Neues Projekt anlegen</h1>
+      <form id="newProjectForm">
+        <div class="dash-field">
+          <label for="projectName">Projektname</label>
+          <span class="dash-hint" id="projectNameHint">z. B. Geschäftsbericht 2026 oder Mein Projekt</span>
+          <input type="text" id="projectName" class="dash-input" required maxlength="120"
+                 aria-describedby="projectNameHint" autocomplete="off">
+        </div>
+        <div class="dash-field">
+          <label for="toolSelect">Werkzeug</label>
+          <span class="dash-hint" id="toolHint">Bestimmt, womit das Projekt bearbeitet wird.</span>
+          <select id="toolSelect" class="dash-select" aria-describedby="toolHint"></select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="createBtn">Projekt anlegen</button>
+        <span id="createStatus" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+      </form>
+    </main>
+    <footer class="dash-footer">
+      <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
+    </footer>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
+
+<script src="/static/dashboard.js"></script>
+<script>
+  async function loadTools() {
+    const res = await fetch('/api/tools');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    const sel = byId('toolSelect');
+    sel.innerHTML = '';
+    const tools = data.tools || [];
+    tools.forEach((t) => {
+      const opt = document.createElement('option');
+      if (t.is_available) {
+        opt.value = t.key;
+        opt.textContent = t.name;
+      } else {
+        opt.value = '';
+        opt.disabled = true;
+        opt.textContent = `${t.name} (${t.status_label})`;
+      }
+      sel.appendChild(opt);
+    });
+    const firstAvail = tools.find((t) => t.is_available);
+    if (firstAvail) sel.value = firstAvail.key;
+  }
+
+  byId('newProjectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = byId('createStatus');
+    const btn = byId('createBtn');
+    const name = byId('projectName').value.trim();
+    const tool = byId('toolSelect').value;
+    if (!name) { status.style.color = 'var(--error)'; status.textContent = 'Bitte einen Projektnamen eingeben.'; byId('projectName').focus(); return; }
+    if (!tool) { status.style.color = 'var(--error)'; status.textContent = 'Bitte ein Werkzeug auswählen.'; return; }
+    btn.disabled = true;
+    status.style.color = '';
+    status.textContent = 'Projekt wird angelegt …';
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, tool }),
+      });
+      if (res.status === 401) { window.location.href = '/'; return; }
+      const data = await res.json();
+      if (res.ok && data.project_id) {
+        status.style.color = 'var(--success)';
+        status.textContent = 'Angelegt – wird geöffnet …';
+        window.location.href = '/app?projekt=' + encodeURIComponent(data.project_id);
+      } else {
+        btn.disabled = false;
+        status.style.color = 'var(--error)';
+        status.textContent = data.detail || 'Anlegen fehlgeschlagen.';
+      }
+    } catch (err) {
+      btn.disabled = false;
+      status.style.color = 'var(--error)';
+      status.textContent = 'Netzwerkfehler. Bitte erneut versuchen.';
+    }
+  });
+
+  loadTools();
+</script>
+</body>
+</html>

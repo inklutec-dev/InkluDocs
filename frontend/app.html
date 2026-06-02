@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <a href="#mainContent" class="skip-link">Zum Hauptinhalt springen</a>
     <header>
         <div class="header-brand">
             <img src="/static/inklutec-logo.png" alt="INKLUTEC Logo" class="header-logo">
@@ -14,14 +15,14 @@
         </div>
         <div class="header-actions">
             <span id="userGreeting" style="color:rgba(255,255,255,0.85);font-size:0.95rem;margin-right:0.75rem;white-space:nowrap;" aria-label="Angemeldeter Benutzer"></span>
-            <span id="dailyLimit" style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-right:0.75rem;white-space:nowrap;" aria-live="polite"></span>
+            <span id="dailyLimit" style="display:none;color:rgba(255,255,255,0.7);font-size:0.85rem;margin-right:0.75rem;white-space:nowrap;" aria-live="polite"></span>
             <button id="adminBtn" class="header-btn" style="display:none" aria-label="Benutzerverwaltung">Benutzer</button>
-            <button id="settingsBtn" class="header-btn" aria-label="Einstellungen">Einstellungen</button>
+            <button id="settingsBtn" class="header-btn" aria-label="Einstellungen" style="display:none">Einstellungen</button>
             <button id="logoutBtn" class="header-btn" aria-label="Abmelden">Abmelden</button>
         </div>
     </header>
 
-    <main id="mainContent" class="main-content"></main>
+    <main id="mainContent" class="main-content" tabindex="-1"></main>
 
     <footer class="legal-footer" role="contentinfo" style="padding-bottom:2rem;">
         <div style="margin-bottom:0.5rem;">
@@ -67,11 +68,9 @@
         currentUser = meData.user;
         if (meData.daily_limit) window._dailyLimit = meData.daily_limit;
         document.getElementById('userGreeting').textContent = 'Hallo, ' + currentUser.display_name;
-        if (currentUser.is_admin) {
-            document.getElementById('adminBtn').style.display = '';
-        }
         updateLimitDisplay();
-        showDashboard();
+        const _pid = new URLSearchParams(window.location.search).get('projekt');
+        if (_pid) { showProject(_pid); } else { window.location.href = '/dashboard'; }
     }
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -235,6 +234,62 @@
     }
 
     // ─── Project Detail ──────────────────────────────
+    function uploadBlockHtml(project) {
+        const tool = project.tool;
+        if (tool === 'pdf') {
+            if (project.total_images > 0) {
+                return '<section class="card" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Dokument</h2>'
+                    + '<p style="color:var(--text-muted);margin:0;">Pro PDF-Projekt eine Datei. Fuer ein weiteres Dokument bitte ein neues Projekt anlegen.</p></section>';
+            }
+            return '<section class="card" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">PDF hinzufuegen</h2>'
+                + '<label for="projUpload" class="sr-only">PDF-Datei auswaehlen</label>'
+                + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">Waehle ein PDF-Dokument. Daraus werden die Bilder extrahiert.</p>'
+                + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
+        }
+        if (tool === 'grafik') {
+            return '<section class="card" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Bilder hinzufuegen</h2>'
+                + '<label for="projUpload" class="sr-only">Bilddateien auswaehlen</label>'
+                + '<input type="file" id="projUpload" accept=".jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">Du kannst mehrere Bilder auswaehlen und jederzeit weitere hinzufuegen.</p>'
+                + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
+        }
+        return '';
+    }
+
+    async function uploadInProject(e, projectId) {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        const status = document.getElementById('projUploadStatus');
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (status) status.textContent = files.length > 1 ? ('Datei ' + (i + 1) + ' von ' + files.length + ' wird hochgeladen...') : 'Wird hochgeladen...';
+            announce(file.name + ' wird hochgeladen');
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('project_id', projectId);
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!res.ok) {
+                    if (status) status.textContent = 'Fehler: ' + (data.detail || 'Upload fehlgeschlagen');
+                    announce('Fehler beim Upload: ' + (data.detail || ''));
+                    return;
+                }
+                if (i === files.length - 1) {
+                    announce(data.total_images + ' Bilder im Projekt.');
+                    await showProject(projectId);
+                    const h = document.getElementById('bilderHeading');
+                    if (h) h.focus();
+                }
+            } catch (err) {
+                if (status) status.textContent = 'Netzwerkfehler beim Upload.';
+                announce('Netzwerkfehler beim Upload.');
+                return;
+            }
+        }
+    }
+
     async function showProject(projectId) {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         highlightNav(null);
@@ -245,7 +300,7 @@
         const project = data.project;
         const images = data.images;
 
-        const statusLabels = { extracted:'Bereit zur Verarbeitung', processing:'Alt-Texte werden generiert...', done:'Fertig', error:'Fehler' };
+        const statusLabels = { neu:'Neu', extracted:'Bereit zur Verarbeitung', processing:'Alt-Texte werden generiert...', done:'Fertig', error:'Fehler' };
         const statusClass = project.status === 'done' ? 'badge-done' : project.status === 'processing' ? 'badge-processing' : 'badge-ready';
         const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
         const extractionText = (project.project_type === 'pdf')
@@ -253,7 +308,7 @@
             : null;
 
         main.innerHTML = `
-            <button class="back-btn" onclick="showDashboard()">Zurueck zur Uebersicht</button>
+            <button class="back-btn" onclick="window.location.href='/dashboard'">Zurück zum Dashboard</button>
             <div class="card">
                 <div class="card-header">
                     <span class="card-name">${project.filename}</span>
@@ -268,7 +323,7 @@
                 ` : ''}
                 <div class="card-actions">
                     ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alt-Texte generieren</button>' : ''}
-                    ${project.status === 'done' ? `
+                    ${images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id}, '${project.filename}')">Exportieren</button>
                         <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-label="Export-Optionen">
                             <div class="form-group" style="margin-bottom:0.8rem;">
@@ -287,7 +342,8 @@
                     ` : ''}
                 </div>
             </div>
-            <h2 class="section-title" style="margin-top:1.5rem">Bilder (${images.length})</h2>
+            ${uploadBlockHtml(project)}
+            <h2 class="section-title" id="bilderHeading" tabindex="-1" style="margin-top:1.5rem">Bilder (${images.length})</h2>
             <div id="imageList"></div>
             ${inkluagentSectionHtml(projectId)}
         `;
@@ -364,8 +420,8 @@
                     <span class="save-indicator" id="saved_${img.id}">Gespeichert</span>
                 </label>
                 <textarea class="alt-text-field" id="alttext_${img.id}" data-image-id="${img.id}"
-                    placeholder="${img.status === 'done' ? '' : 'Alt-Text wird generiert...'}"
-                    ${img.status !== 'done' && !img.alt_text && !img.original_alt ? 'disabled' : ''}
+                    placeholder="${img.status === 'processing' ? 'Alt-Text wird generiert...' : (img.status === 'done' ? '' : 'Noch kein Alt-Text - hier eingeben oder generieren lassen')}"
+                    ${img.status === 'processing' ? 'disabled' : ''}
                 >${img.alt_text_edited || img.alt_text || img.original_alt || ''}</textarea>
                 ${img.status === 'done' ? `
                     <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">

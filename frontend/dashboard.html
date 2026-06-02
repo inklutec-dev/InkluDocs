@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+<a href="#main" class="dash-skip">Zum Hauptinhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1 class="dash-greeting" id="greeting">Willkommen</h1>
+      <p id="dailyLimitInfo" class="dash-limit"></p>
+      <p class="dash-sub">Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt.</p>
+
+      <section class="dash-section" aria-labelledby="recent-h">
+        <h2 id="recent-h">Zuletzt bearbeitete Projekte</h2>
+        <div id="recentContainer" aria-busy="true">
+          <p class="dash-sub">Wird geladen …</p>
+        </div>
+      </section>
+    </main>
+    <footer class="dash-footer">
+      <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
+    </footer>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
+
+<script src="/static/dashboard.js"></script>
+<script>
+  let toolMap = {};
+
+  async function loadTools() {
+    const res = await fetch('/api/tools');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    (data.tools || []).forEach((t) => { toolMap[t.key] = t.name; });
+  }
+
+  async function loadRecent() {
+    const cont = byId('recentContainer');
+    let data;
+    try {
+      const res = await fetch('/api/projects');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      data = await res.json();
+    } catch (e) {
+      cont.setAttribute('aria-busy', 'false');
+      cont.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = 'Projekte konnten nicht geladen werden. Bitte später erneut versuchen.';
+      cont.appendChild(p);
+      return;
+    }
+    const projects = (data.projects || []).slice(0, 5);  // neueste zuerst (created_at DESC)
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+
+    if (projects.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = 'Noch keine Projekte. Lege links über „Neues Projekt anlegen" dein erstes an.';
+      cont.appendChild(p);
+      return;
+    }
+
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    projects.forEach((pr) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      const a = document.createElement('a');
+      a.href = '/app?projekt=' + encodeURIComponent(pr.id);
+      a.textContent = pr.name || pr.filename || 'Unbenanntes Projekt';
+      h3.appendChild(a);
+      const meta = document.createElement('p');
+      meta.className = 'dash-meta';
+      const toolName = toolMap[pr.tool] || pr.tool || '';
+      const dateStr = formatDate(pr.created_at);
+      meta.textContent = dateStr ? `${toolName} · angelegt am ${dateStr}` : toolName;
+      li.appendChild(h3);
+      li.appendChild(meta);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+
+    const all = document.createElement('p');
+    all.style.marginTop = '1rem';
+    const allLink = document.createElement('a');
+    allLink.href = '/projekte';
+    allLink.textContent = 'Alle Projekte anzeigen';
+    allLink.style.color = '#c75000';
+    allLink.style.fontWeight = '600';
+    all.appendChild(allLink);
+    cont.appendChild(all);
+    announce(`${projects.length} aktuelle Projekte geladen.`);
+  }
+
+  (async function init() {
+    await loadTools();
+    await loadRecent();
+  })();
+</script>
+</body>
+</html>

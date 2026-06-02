@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+<a href="#main" class="dash-skip">Zum Hauptinhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1>Meine Projekte</h1>
+      <div id="projectsContainer" aria-busy="true">
+        <p class="dash-sub">Projekte werden geladen …</p>
+      </div>
+    </main>
+    <footer class="dash-footer">
+      <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
+    </footer>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
+
+<script src="/static/dashboard.js"></script>
+<script>
+  let toolMap = {};
+
+  async function loadTools() {
+    const res = await fetch('/api/tools');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    (data.tools || []).forEach((t) => { toolMap[t.key] = t.name; });
+  }
+
+  async function loadProjects() {
+    const cont = byId('projectsContainer');
+    let data;
+    try {
+      const res = await fetch('/api/projects');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      data = await res.json();
+    } catch (e) {
+      cont.setAttribute('aria-busy', 'false');
+      cont.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = 'Projekte konnten nicht geladen werden. Bitte später erneut versuchen.';
+      cont.appendChild(p);
+      return;
+    }
+    const projects = data.projects || [];
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+
+    if (projects.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = 'Noch keine Projekte. Lege über „Neues Projekt anlegen" dein erstes an.';
+      cont.appendChild(p);
+      return;
+    }
+
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    projects.forEach((pr) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      // Projektname als verlinkte Ueberschrift -> per VoiceOver-Rotor anspringbar.
+      const h2 = document.createElement('h2');
+      const a = document.createElement('a');
+      a.href = '/app?projekt=' + encodeURIComponent(pr.id);
+      a.textContent = pr.name || pr.filename || 'Unbenanntes Projekt';
+      h2.appendChild(a);
+      const meta = document.createElement('p');
+      meta.className = 'dash-meta';
+      const toolName = toolMap[pr.tool] || pr.tool || '';
+      const dateStr = formatDate(pr.created_at);
+      meta.textContent = dateStr ? `${toolName} · angelegt am ${dateStr}` : toolName;
+      const actions = document.createElement('div');
+      actions.className = 'dash-actions';
+      const renameBtn = document.createElement('button');
+      renameBtn.className = 'btn btn-secondary btn-small';
+      renameBtn.textContent = 'Umbenennen';
+      renameBtn.addEventListener('click', () => renameProject(pr.id, pr.name || pr.filename || ''));
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger btn-small';
+      delBtn.textContent = 'Löschen';
+      delBtn.addEventListener('click', () => deleteProject(pr.id, pr.name || pr.filename || ''));
+      actions.appendChild(renameBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(h2);
+      li.appendChild(meta);
+      li.appendChild(actions);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+    announce(`${projects.length} Projekte geladen.`);
+  }
+
+  async function renameProject(id, currentName) {
+    const name = prompt('Neuer Projektname:', currentName);
+    if (name === null) return;            // Abbrechen
+    const trimmed = name.trim();
+    if (!trimmed) { alert('Bitte einen Namen eingeben.'); return; }
+    const res = await fetch('/api/projects/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    if (res.ok) { announce('Projekt umbenannt in ' + trimmed); loadProjects(); }
+    else { const d = await res.json(); alert(d.detail || 'Umbenennen fehlgeschlagen.'); }
+  }
+
+  async function deleteProject(id, name) {
+    if (!confirm('Projekt "' + (name || 'Unbenannt') + '" und alle zugehörigen Daten wirklich löschen?')) return;
+    const res = await fetch('/api/projects/' + id, { method: 'DELETE' });
+    if (res.ok) { announce('Projekt gelöscht'); loadProjects(); }
+    else { alert('Löschen fehlgeschlagen.'); }
+  }
+
+  (async function init() {
+    await loadTools();
+    await loadProjects();
+  })();
+</script>
+</body>
+</html>

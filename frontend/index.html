@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <main>
+    <a href="#main" class="skip-link">Zum Hauptinhalt springen</a>
+    <main id="main" tabindex="-1">
         <div class="auth-container" role="region" aria-label="Anmeldung">
             <h1><span class="brand">Inklu</span>Docs</h1>
             <p class="subtitle">KI-gestützter Alt-Text-Generator</p>
@@ -55,7 +56,7 @@
                     body: JSON.stringify({ email, password }),
                 });
                 if (res.ok) {
-                    window.location.href = '/app';
+                    window.location.href = '/dashboard';
                 } else {
                     const data = await res.json();
                     const msg = data.detail || 'Anmeldung fehlgeschlagen.';

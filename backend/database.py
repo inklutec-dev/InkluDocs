@@ -197,6 +197,9 @@ def _migrate_columns(conn):
         # Seitenansicht-Feature (27.05.2026): PNG der ganzen Seite + Volltext pro Bild
         ("images", "page_view_path", "ALTER TABLE images ADD COLUMN page_view_path TEXT DEFAULT ''"),
         ("images", "page_text", "ALTER TABLE images ADD COLUMN page_text TEXT DEFAULT ''"),
+        # Dashboard (02.06.2026): freier Projektname + Werkzeug-Zuordnung
+        ("projects", "name", "ALTER TABLE projects ADD COLUMN name TEXT DEFAULT ''"),
+        ("projects", "tool", "ALTER TABLE projects ADD COLUMN tool TEXT DEFAULT 'alttext'"),
     ]
 
     for table, column, sql in migrations:
@@ -208,6 +211,22 @@ def _migrate_columns(conn):
                 print(f"Migration: Added {table}.{column}")
             except Exception as e:
                 print(f"Migration warning ({table}.{column}): {e}")
+
+    # Dashboard (02.06.2026): bestehende Projekte bekommen ihren Dateinamen
+    # als Anzeigenamen. Idempotent - setzt nur noch leere Namen.
+    try:
+        conn.execute("UPDATE projects SET name = filename WHERE name IS NULL OR name = ''")
+    except Exception as e:
+        print(f"Migration warning (projects.name backfill): {e}")
+
+    # Service-Trennung (02.06.2026): Werkzeug aus project_type ableiten.
+    # Idempotent - nur Projekte, die noch das Sammel-Werkzeug 'alttext' tragen.
+    try:
+        conn.execute("UPDATE projects SET tool='pdf' WHERE tool='alttext' AND project_type='pdf'")
+        conn.execute("UPDATE projects SET tool='web' WHERE tool='alttext' AND project_type='url'")
+        conn.execute("UPDATE projects SET tool='grafik' WHERE tool='alttext' AND project_type='images'")
+    except Exception as e:
+        print(f"Migration warning (tool backfill): {e}")
 
     conn.commit()
 

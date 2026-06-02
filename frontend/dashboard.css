@@ -1,0 +1,69 @@
+/* Gemeinsame Styles fuer die Dashboard-Seiten (App-Shell mit linker
+   Navigationsleiste + Hauptbereich). Baut auf style.css auf, nutzt aber
+   das kontraststarke #c75000 statt des helleren #e87722 fuer Text/Links. */
+
+.dash-skip { position:absolute; left:-999px; top:auto; background:#fff; color:#1b2a4a; padding:.6rem 1rem; z-index:100; border-radius:0 0 6px 0; font-weight:600; }
+.dash-skip:focus { left:0; top:0; }
+
+/* App-Shell: Navigationsleiste links, Inhalt rechts */
+.app-shell { display:flex; min-height:100vh; }
+.app-sidebar { width:260px; flex-shrink:0; background:var(--primary); color:#fff; display:flex; flex-direction:column; }
+.app-brand { display:block; padding:1.1rem 1.25rem; font-size:1.35rem; font-weight:700; color:#fff; text-decoration:none; border-bottom:1px solid rgba(255,255,255,.15); }
+.app-sidebar nav { display:flex; flex-direction:column; flex:1; }
+.app-nav { list-style:none; padding:.5rem 0; margin:0; flex:1; display:flex; flex-direction:column; }
+.app-nav li { margin:0; }
+.app-nav a { display:block; padding:.7rem 1.25rem; color:#fff; text-decoration:none; border-left:4px solid transparent; }
+.app-nav a:hover { background:rgba(255,255,255,.10); }
+.app-nav a[aria-current="page"] { background:rgba(255,255,255,.16); border-left-color:var(--accent); font-weight:700; }
+.app-nav button { display:block; width:100%; text-align:left; background:transparent; color:#fff; border:none; border-left:4px solid transparent; padding:.7rem 1.25rem; font-size:1rem; font-family:inherit; cursor:pointer; }
+.app-nav button:hover { background:rgba(255,255,255,.10); }
+.app-nav-logout { margin-top:auto; border-top:1px solid rgba(255,255,255,.15); padding-top:.4rem; }
+.app-content { flex:1; min-width:0; }
+
+/* Auf schmalen Bildschirmen: Leiste nach oben, Navigation umbrechend (immer sichtbar) */
+@media (max-width:768px) {
+  .app-shell { flex-direction:column; }
+  .app-sidebar { width:auto; }
+  .app-sidebar nav { flex:none; }
+  .app-nav { flex-direction:row; flex-wrap:wrap; padding:.25rem; }
+  .app-nav a, .app-nav button { border-left:none; border-bottom:4px solid transparent; }
+  .app-nav a[aria-current="page"] { border-left:none; border-bottom-color:var(--accent); }
+  .app-nav-logout { margin-top:0; border-top:none; }
+}
+
+.dash-main { max-width:880px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+.dash-greeting { margin:.5rem 0 .25rem; }
+.dash-sub { color:var(--text-muted); margin:0 0 2rem; }
+.dash-section { margin-bottom:2.5rem; }
+
+/* Karten-Block (Einstellungen) */
+.dash-card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin-bottom:1.25rem; max-width:640px; }
+.dash-card h2 { margin-top:0; }
+
+/* Formularfelder */
+.dash-field { margin-bottom:1.25rem; }
+.dash-field label { display:block; font-weight:600; margin-bottom:.3rem; }
+.dash-hint { display:block; color:var(--text-muted); font-size:.9rem; margin-bottom:.4rem; }
+.dash-input, .dash-select { width:100%; max-width:480px; padding:.6rem; border:1px solid var(--border); border-radius:6px; font-size:1rem; background:#fff; color:var(--text); }
+
+/* Listen (Projekte, Benutzer) */
+.dash-list { list-style:none; padding:0; margin:0; display:grid; gap:.75rem; }
+.dash-item { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; }
+.dash-item h2, .dash-item h3 { margin:0 0 .2rem; font-size:1.1rem; }
+.dash-item a { color:#c75000; text-decoration:underline; }
+.dash-meta { color:var(--text-muted); font-size:.9rem; margin:.2rem 0 0; }
+.dash-actions { margin-top:.7rem; display:flex; gap:.4rem; flex-wrap:wrap; }
+.dash-empty { color:var(--text-muted); background:var(--card-bg); border:1px dashed var(--border); border-radius:8px; padding:1.5rem; }
+
+.dash-limit { margin:.25rem 0 1.25rem; font-weight:600; color:var(--text); background:var(--card-bg); border:1px solid var(--border); border-left:4px solid #c75000; border-radius:6px; padding:.6rem .9rem; max-width:520px; }
+
+.dash-footer { padding:1.5rem; border-top:1px solid var(--border); color:var(--text-muted); }
+.dash-footer a { color:#c75000; }
+.dash-support { margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); max-width:640px; }
+.dash-support-text { margin:0 0 .5rem; font-size:.9rem; }
+.dash-support-link { color:#c75000; font-weight:600; text-decoration:underline; }
+.dash-support-note { margin:.4rem 0 0; font-size:.8rem; color:var(--text-muted); }
+
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #c75000; outline-offset:2px; }
+.app-sidebar a:focus-visible, .app-nav button:focus-visible { outline:3px solid #fff; outline-offset:-3px; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }

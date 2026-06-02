@@ -36,6 +36,7 @@ from database import (
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
 from i18n import get_templates, detect_language, template_context, SUPPORTED_LANGUAGES
+from tools import TOOLS, is_valid_tool_key
 
 # Generate a persistent SECRET_KEY if not set
 SECRET_KEY_FILE = "/app/data/.secret_key"
@@ -794,8 +795,73 @@ async def list_projects(user: dict = Depends(get_current_user)):
     return {"projects": [dict(r) for r in rows]}
 
 
+@app.post("/api/projects")
+async def create_project(request: Request, user: dict = Depends(get_current_user)):
+    """Legt ein leeres Projekt an (Name + Werkzeug). Die Datei(en) werden
+    anschliessend im jeweiligen Werkzeug hochgeladen (siehe Upload-Endpunkte)."""
+    data = await request.json()
+    name = (data.get("name") or "").strip()
+    tool = (data.get("tool") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Bitte einen Projektnamen eingeben")
+    if len(name) > 120:
+        raise HTTPException(status_code=400, detail="Projektname darf maximal 120 Zeichen lang sein")
+    if not is_valid_tool_key(tool):
+        raise HTTPException(status_code=400, detail="Unbekanntes oder nicht verfuegbares Werkzeug")
+    project_type = {"pdf": "pdf", "web": "url", "grafik": "images"}.get(tool)
+    if not project_type:
+        raise HTTPException(status_code=400, detail="Fuer dieses Werkzeug ist das Anlegen noch nicht verfuegbar")
+    conn = get_db()
+    cursor = conn.execute(
+        "INSERT INTO projects (user_id, name, filename, original_path, status, project_type, tool) VALUES (?, ?, ?, '', 'neu', ?, ?)",
+        (user["id"], name, name, project_type, tool)
+    )
+    project_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return {"ok": True, "project_id": project_id, "tool": tool, "project_type": project_type}
+
+
+@app.patch("/api/projects/{project_id}")
+async def rename_project(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Benennt ein Projekt um (freier Anzeigename)."""
+    data = await request.json()
+    name = (data.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Bitte einen Projektnamen eingeben")
+    if len(name) > 120:
+        raise HTTPException(status_code=400, detail="Projektname darf maximal 120 Zeichen lang sein")
+    conn = get_db()
+    cur = conn.execute("UPDATE projects SET name = ? WHERE id = ? AND user_id = ?", (name, project_id, user["id"]))
+    conn.commit()
+    affected = cur.rowcount
+    conn.close()
+    if not affected:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    return {"ok": True, "name": name}
+
+
+@app.get("/api/tools")
+async def list_tools(user: dict = Depends(get_current_user)):
+    """Liefert die im Dashboard angebotenen Werkzeuge (Quelle: tools.py)."""
+    return {
+        "tools": [
+            {
+                "key": t.key,
+                "name": t.name,
+                "description": t.description,
+                "route": t.route,
+                "status": t.status.value,
+                "status_label": t.status_label,
+                "is_available": t.is_available,
+            }
+            for t in TOOLS
+        ]
+    }
+
+
 @app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+async def upload_file(file: UploadFile = File(...), project_id: int = Form(None), user: dict = Depends(get_current_user)):
     """Upload a PDF or image file(s). Accepts PDF, JPG, JPEG, PNG, GIF, SVG, WEBP."""
     filename = file.filename or "unknown"
     ext = os.path.splitext(filename)[1].lower()
@@ -829,20 +895,41 @@ async def upload_file(file: UploadFile = File(...), user: dict = Depends(get_cur
         f.write(content)
 
     if is_pdf:
-        return await _handle_pdf_upload(file_path, filename, user)
+        return await _handle_pdf_upload(file_path, filename, user, project_id)
     else:
-        return await _handle_image_upload(file_path, filename, user, content, ext)
+        return await _handle_image_upload(file_path, filename, user, content, ext, project_id)
 
 
-async def _handle_pdf_upload(file_path: str, filename: str, user: dict) -> dict:
-    """Process a PDF upload (existing behavior)."""
+async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_id: int = None) -> dict:
+    """Legt ein neues PDF-Projekt an ODER fuellt ein leeres bestehendes
+    PDF-Projekt (project_id aus der Anlege-Maske)."""
     conn = get_db()
-    cursor = conn.execute(
-        "INSERT INTO projects (user_id, filename, original_path, status, project_type) VALUES (?, ?, ?, 'extracting', 'pdf')",
-        (user["id"], filename, file_path)
-    )
-    project_id = cursor.lastrowid
-    conn.commit()
+    if project_id is not None:
+        proj = conn.execute(
+            "SELECT id, tool, total_images FROM projects WHERE id = ? AND user_id = ?",
+            (project_id, user["id"])
+        ).fetchone()
+        if not proj:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        if proj["tool"] != "pdf":
+            conn.close()
+            raise HTTPException(status_code=400, detail="Dieses Projekt ist kein PDF-Projekt")
+        if proj["total_images"] and proj["total_images"] > 0:
+            conn.close()
+            raise HTTPException(status_code=409, detail="Pro PDF-Projekt eine Datei. Fuer ein weiteres Dokument bitte ein neues Projekt anlegen.")
+        conn.execute(
+            "UPDATE projects SET filename = ?, original_path = ?, status = 'extracting' WHERE id = ?",
+            (filename, file_path, project_id)
+        )
+        conn.commit()
+    else:
+        cursor = conn.execute(
+            "INSERT INTO projects (user_id, filename, original_path, status, project_type, tool) VALUES (?, ?, ?, 'extracting', 'pdf', 'pdf')",
+            (user["id"], filename, file_path)
+        )
+        project_id = cursor.lastrowid
+        conn.commit()
 
     # Extract images
     img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
@@ -896,7 +983,7 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict) -> dict:
     }
 
 
-async def _handle_image_upload(file_path: str, filename: str, user: dict, content: bytes, ext: str) -> dict:
+async def _handle_image_upload(file_path: str, filename: str, user: dict, content: bytes, ext: str, project_id: int = None) -> dict:
     """Process a direct image upload."""
     from PIL import Image as PILImage
     try:
@@ -906,12 +993,26 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
         pass
 
     conn = get_db()
-    cursor = conn.execute(
-        "INSERT INTO projects (user_id, filename, original_path, status, project_type) VALUES (?, ?, ?, 'extracted', 'images')",
-        (user["id"], filename, file_path)
-    )
-    project_id = cursor.lastrowid
-    conn.commit()
+    if project_id is not None:
+        proj = conn.execute(
+            "SELECT id, tool FROM projects WHERE id = ? AND user_id = ?",
+            (project_id, user["id"])
+        ).fetchone()
+        if not proj:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        if proj["tool"] != "grafik":
+            conn.close()
+            raise HTTPException(status_code=400, detail="Dieses Projekt ist kein Grafik-Projekt")
+    else:
+        cursor = conn.execute(
+            "INSERT INTO projects (user_id, filename, original_path, status, project_type, tool) VALUES (?, ?, ?, 'extracted', 'images', 'grafik')",
+            (user["id"], filename, file_path)
+        )
+        project_id = cursor.lastrowid
+        conn.commit()
+    # Fortlaufende Bild-Nummer (auch beim Anhaengen weiterer Bilder)
+    next_idx = conn.execute("SELECT COALESCE(MAX(image_index), 0) FROM images WHERE project_id = ?", (project_id,)).fetchone()[0] + 1
 
     # Create project image directory
     img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
@@ -920,7 +1021,7 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
     # Convert HEIC/HEIF/BMP/TIFF to JPEG for model compatibility
     needs_conversion = ext in {".heic", ".heif", ".bmp", ".tiff", ".tif"}
     if needs_conversion:
-        img_path = os.path.join(img_dir, "img_1.jpg")
+        img_path = os.path.join(img_dir, f"img_{next_idx}.jpg")
         try:
             with PILImage.open(file_path) as img:
                 rgb_img = img.convert("RGB")
@@ -931,7 +1032,7 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
             conn.close()
             raise HTTPException(status_code=400, detail=f"Bildformat konnte nicht konvertiert werden: {str(e)}")
     else:
-        img_path = os.path.join(img_dir, f"img_1{ext}")
+        img_path = os.path.join(img_dir, f"img_{next_idx}{ext}")
         shutil.copy2(file_path, img_path)
 
     # Get image dimensions
@@ -945,12 +1046,13 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
     conn.execute(
         """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
            width, height, xref)
-           VALUES (?, 1, 1, ?, '', ?, ?, 0)""",
-        (project_id, img_path, width, height)
+           VALUES (?, 1, ?, ?, '', ?, ?, 0)""",
+        (project_id, next_idx, img_path, width, height)
     )
+    total = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)).fetchone()[0]
     conn.execute(
-        "UPDATE projects SET total_images = 1 WHERE id = ?",
-        (project_id,)
+        "UPDATE projects SET total_images = ?, status = 'extracted' WHERE id = ?",
+        (total, project_id)
     )
     conn.commit()
     conn.close()
@@ -959,7 +1061,7 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
         "ok": True,
         "project_id": project_id,
         "filename": filename,
-        "total_images": 1,
+        "total_images": total,
         "project_type": "images",
     }
 
@@ -1031,7 +1133,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     conn = get_db()
     page_title = soup.title.string.strip() if soup.title and soup.title.string else parsed.netloc
     cursor = conn.execute(
-        "INSERT INTO projects (user_id, filename, original_path, status, project_type, source_url) VALUES (?, ?, '', 'extracting', 'url', ?)",
+        "INSERT INTO projects (user_id, filename, original_path, status, project_type, tool, source_url) VALUES (?, ?, '', 'extracting', 'url', 'web', ?)",
         (user["id"], f"Website: {page_title[:80]}", url)
     )
     project_id = cursor.lastrowid
@@ -1478,7 +1580,12 @@ async def _process_project(project_id: int, user_id: int):
         (project_id,)
     ).fetchall()
 
-    processed = 0
+    # Bereits verarbeitete Bilder mitzaehlen (z.B. nach Anhaengen weiterer
+    # Dateien + erneutem Generieren), sonst wuerde processed_images zurueckgesetzt.
+    processed = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE project_id = ? AND status IN ('done', 'error')",
+        (project_id,)
+    ).fetchone()[0]
     for img in images:
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
@@ -2669,6 +2776,48 @@ async def forgot_page():
 @app.get("/reset", response_class=HTMLResponse)
 async def reset_page():
     return open("/app/frontend/reset.html").read()
+
+def _serve_protected_page(request: Request, filename: str):
+    """Liefert eine login-geschuetzte HTML-Seite aus dem frontend-Verzeichnis.
+    Leitet zu / um, wenn kein gueltiges Login-Cookie vorliegt."""
+    token = request.cookies.get("token")
+    if not token:
+        return RedirectResponse("/")
+    try:
+        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return RedirectResponse("/")
+    html = open(f"/app/frontend/{filename}").read()
+    if "staging" in BASE_URL:
+        html = html.replace("<title>InkluDocs</title>", "<title>InkluDocs (Testumgebung)</title>")
+        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#c75000;font-weight:normal;">(Testumgebung)</span>')
+    return html
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page(request: Request):
+    return _serve_protected_page(request, "dashboard.html")
+
+
+@app.get("/projekte", response_class=HTMLResponse)
+async def projects_page(request: Request):
+    return _serve_protected_page(request, "projekte.html")
+
+
+@app.get("/projekt-neu", response_class=HTMLResponse)
+async def new_project_page(request: Request):
+    return _serve_protected_page(request, "projekt-neu.html")
+
+
+@app.get("/einstellungen", response_class=HTMLResponse)
+async def settings_page(request: Request):
+    return _serve_protected_page(request, "einstellungen.html")
+
+
+@app.get("/benutzer", response_class=HTMLResponse)
+async def users_page(request: Request):
+    return _serve_protected_page(request, "benutzer.html")
+
 
 @app.get("/app", response_class=HTMLResponse)
 async def app_page(request: Request):

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+<a href="#main" class="dash-skip">Zum Hauptinhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1>Benutzerverwaltung</h1>
+
+      <section class="dash-section" aria-labelledby="users-h">
+        <h2 id="users-h">Vorhandene Benutzer</h2>
+        <div id="usersContainer" aria-busy="true">
+          <p class="dash-sub">Wird geladen …</p>
+        </div>
+      </section>
+
+      <section class="dash-card" aria-labelledby="newuser-h">
+        <h2 id="newuser-h">Neuen Benutzer anlegen</h2>
+        <form id="createUserForm" novalidate>
+          <div class="dash-field">
+            <label for="newUserName">Name</label>
+            <input type="text" id="newUserName" class="dash-input" required placeholder="Max Mustermann">
+          </div>
+          <div class="dash-field">
+            <label for="newUserEmail">E-Mail</label>
+            <input type="email" id="newUserEmail" class="dash-input" required placeholder="max@beispiel.de">
+          </div>
+          <div class="dash-field">
+            <label for="newUserPw">Passwort (mind. 8 Zeichen)</label>
+            <input type="password" id="newUserPw" class="dash-input" required minlength="8">
+          </div>
+          <div class="dash-field">
+            <label for="newUserPw2">Passwort wiederholen</label>
+            <input type="password" id="newUserPw2" class="dash-input" required minlength="8">
+          </div>
+          <button type="submit" class="btn btn-primary">Anlegen</button>
+          <span id="createUserMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        </form>
+      </section>
+    </main>
+    <footer class="dash-footer">
+      <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
+    </footer>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
+
+<script src="/static/dashboard.js"></script>
+<script>
+  async function loadUsers() {
+    const cont = byId('usersContainer');
+    const res = await fetch('/api/admin/users');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+    if (res.status === 403) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = 'Kein Zugriff – diese Seite ist nur für Administratoren.';
+      cont.appendChild(p);
+      return;
+    }
+    const data = await res.json();
+    const users = data.users || [];
+
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    users.forEach((u) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      h3.textContent = u.display_name + (u.is_admin ? ' (Admin)' : '');
+      const meta = document.createElement('p');
+      meta.className = 'dash-meta';
+      meta.textContent = `${u.email} · ${u.project_count} Projekte · ${u.is_active ? 'Aktiv' : 'Gesperrt'}`;
+      li.appendChild(h3);
+      li.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'dash-actions';
+      if (currentUser && u.id === currentUser.id) {
+        const self = document.createElement('span');
+        self.className = 'dash-meta';
+        self.textContent = 'Das sind Sie selbst.';
+        actions.appendChild(self);
+      } else {
+        const toggle = document.createElement('button');
+        toggle.className = 'btn btn-secondary btn-small';
+        toggle.textContent = u.is_active ? 'Sperren' : 'Entsperren';
+        toggle.addEventListener('click', () => toggleUser(u.id));
+        const reset = document.createElement('button');
+        reset.className = 'btn btn-secondary btn-small';
+        reset.textContent = 'Passwort zurücksetzen';
+        reset.addEventListener('click', () => resetUserPw(u.id, u.email));
+        const del = document.createElement('button');
+        del.className = 'btn btn-danger btn-small';
+        del.textContent = 'Löschen';
+        del.addEventListener('click', () => deleteUser(u.id, u.email));
+        actions.appendChild(toggle);
+        actions.appendChild(reset);
+        actions.appendChild(del);
+      }
+      li.appendChild(actions);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+    byId('users-h').textContent = `Vorhandene Benutzer (${users.length})`;
+    announce(`${users.length} Benutzer geladen.`);
+  }
+
+  async function toggleUser(id) {
+    await fetch('/api/admin/users/' + id + '/toggle-active', { method: 'POST' });
+    loadUsers();
+  }
+
+  async function resetUserPw(id, email) {
+    const pw = prompt('Neues Passwort für ' + email + ' (mind. 8 Zeichen):');
+    if (!pw || pw.length < 8) { alert('Passwort muss mindestens 8 Zeichen haben.'); return; }
+    const pw2 = prompt('Passwort wiederholen:');
+    if (pw !== pw2) { alert('Passwörter stimmen nicht überein.'); return; }
+    const res = await fetch('/api/admin/users/' + id + '/reset-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_password: pw }),
+    });
+    if (res.ok) { announce('Passwort zurückgesetzt'); alert('Passwort wurde zurückgesetzt.'); }
+    else { alert('Fehler beim Zurücksetzen.'); }
+  }
+
+  async function deleteUser(id, email) {
+    if (!confirm('Benutzer "' + email + '" und ALLE Daten unwiderruflich löschen? (DSGVO-Löschung)')) return;
+    const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+    if (res.ok) { announce('Benutzer gelöscht'); loadUsers(); }
+    else { alert('Fehler beim Löschen.'); }
+  }
+
+  byId('createUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = byId('createUserMsg');
+    msg.textContent = ''; msg.style.color = '';
+    const name = byId('newUserName').value.trim();
+    const email = byId('newUserEmail').value.trim();
+    const pw = byId('newUserPw').value;
+    const pw2 = byId('newUserPw2').value;
+    if (!name || !email || !pw) { msg.textContent = 'Bitte alle Felder ausfüllen.'; msg.style.color = 'var(--error)'; return; }
+    if (pw.length < 8) { msg.textContent = 'Passwort muss mindestens 8 Zeichen haben.'; msg.style.color = 'var(--error)'; return; }
+    if (pw !== pw2) { msg.textContent = 'Passwörter stimmen nicht überein.'; msg.style.color = 'var(--error)'; return; }
+    const res = await fetch('/api/admin/users/create', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ display_name: name, email: email, password: pw }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      msg.textContent = data.message; msg.style.color = 'var(--success)';
+      announce('Benutzer erstellt: ' + name);
+      byId('createUserForm').reset();
+      setTimeout(loadUsers, 1200);
+    } else {
+      msg.textContent = data.detail || 'Fehler beim Erstellen.'; msg.style.color = 'var(--error)';
+    }
+  });
+
+  (async function init() {
+    await loadCurrentUser();   // currentUser fuer die "Sie selbst"-Erkennung
+    await loadUsers();
+  })();
+</script>
+</body>
+</html>
