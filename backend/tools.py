@@ -70,7 +70,7 @@ TOOLS: list[Tool] = [
         name="Alt-Texte für Webseiten",
         description="Eine Webseite über ihre Adresse scannen und ihre Bilder mit Alt-Texten versehen.",
         route="/app",
-        status=ToolStatus.IN_VORBEREITUNG,  # temporaer geparkt bis Web-Upload (scan_url) umgebaut ist
+        status=ToolStatus.VERFUEGBAR,  # scharfgeschaltet 04.06.2026: scan_url an Projekte angebunden
     ),
     Tool(
         key="grafik",

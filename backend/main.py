@@ -1096,9 +1096,15 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     """Scan a URL for images and create a project."""
     data = await request.json()
     url = data.get("url", "").strip()
+    project_id = data.get("project_id")  # gesetzt = an bestehendes Web-Projekt anhaengen (sonst neues Projekt)
 
     if not url:
         raise HTTPException(status_code=400, detail="Bitte eine URL eingeben")
+
+    # Schema automatisch ergaenzen: erlaubt Eingaben wie "www.inklutec.de" oder "inklutec.de".
+    # Wer bewusst http:// tippt, behaelt es; nur wenn gar kein Schema vorhanden ist, https:// voranstellen.
+    if not (url.lower().startswith("http://") or url.lower().startswith("https://")):
+        url = "https://" + url
 
     # Validate URL
     parsed = urlparse(url)
@@ -1129,15 +1135,44 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     from context_engine import extract_page_profile
     page_profile = extract_page_profile(soup)
 
-    # Create project
+    # Projekt anlegen ODER an ein bestehendes Web-Projekt anhaengen.
+    # Neuer Flow (seit 04.06.2026): Im Dashboard wird zuerst ein leeres "web"-Projekt
+    # angelegt; dieses Feld scannt dann eine Seite in genau dieses Projekt, und es koennen
+    # nacheinander weitere Seiten angehaengt werden. Ohne project_id (Alt-Flow / direkte API)
+    # wird wie bisher ein neues Projekt erzeugt -> voll rueckwaertskompatibel.
     conn = get_db()
     page_title = soup.title.string.strip() if soup.title and soup.title.string else parsed.netloc
-    cursor = conn.execute(
-        "INSERT INTO projects (user_id, filename, original_path, status, project_type, tool, source_url) VALUES (?, ?, '', 'extracting', 'url', 'web', ?)",
-        (user["id"], f"Website: {page_title[:80]}", url)
-    )
-    project_id = cursor.lastrowid
-    conn.commit()
+    if project_id is not None:
+        proj = conn.execute(
+            "SELECT id, tool, source_url FROM projects WHERE id = ? AND user_id = ?",
+            (project_id, user["id"])
+        ).fetchone()
+        if not proj:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        if proj["tool"] != "web":
+            conn.close()
+            raise HTTPException(status_code=400, detail="Dieses Projekt ist kein Webseiten-Projekt")
+        # Erste gescannte Adresse als Projekt-Quelle merken, falls noch leer (frisch angelegt).
+        if not proj["source_url"]:
+            conn.execute("UPDATE projects SET source_url = ? WHERE id = ?", (url, project_id))
+        conn.execute("UPDATE projects SET status = 'extracting' WHERE id = ?", (project_id,))
+        conn.commit()
+    else:
+        cursor = conn.execute(
+            "INSERT INTO projects (user_id, filename, original_path, status, project_type, tool, source_url) VALUES (?, ?, '', 'extracting', 'url', 'web', ?)",
+            (user["id"], f"Website: {page_title[:80]}", url)
+        )
+        project_id = cursor.lastrowid
+        conn.commit()
+
+    # Fortlaufende Bildnummer: beim Anhaengen weiterer Seiten ab dem bisherigen Maximum
+    # weiterzaehlen. Das haelt image_index eindeutig UND verhindert Dateinamens-Kollisionen
+    # (web_<idx>...), weil schon vergebene Indizes nicht erneut benutzt werden.
+    base_idx = conn.execute(
+        "SELECT COALESCE(MAX(image_index), 0) FROM images WHERE project_id = ?",
+        (project_id,)
+    ).fetchone()[0]
 
     img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
     os.makedirs(img_dir, exist_ok=True)
@@ -1152,7 +1187,9 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
     }
     async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=img_download_headers) as client:
-        for idx, img_tag in enumerate(img_tags, 1):
+        for raw_idx, img_tag in enumerate(img_tags, 1):
+            # Beim Anhaengen weiterer Seiten ab dem bisherigen Maximum weiterzaehlen (siehe base_idx).
+            idx = base_idx + raw_idx
             # Support lazy-loaded images: check data-src, data-lazy-src first
             src = img_tag.get("data-src") or img_tag.get("data-lazy-src") or img_tag.get("src", "")
 
@@ -1373,7 +1410,17 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 print(f"Fehler beim Download von {img_url}: {e}")
                 continue
 
+    # Kumulative Gesamtzahl (beim Anhaengen schon vorhandene Bilder mitzaehlen).
+    total = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)).fetchone()[0]
     if downloaded == 0:
+        # Beim Anhaengen ein bestehendes Projekt NICHT zerstoeren: hat es schon Bilder,
+        # nur freundlich melden und Status zurueck auf 'extracted'. Nur ein wirklich leeres
+        # Projekt (Erst-Scan ohne Treffer) wird als Fehler markiert.
+        if total > 0:
+            conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
+            conn.commit()
+            conn.close()
+            raise HTTPException(status_code=404, detail="Auf dieser Seite wurden keine neuen Bilder gefunden")
         conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
         conn.commit()
         conn.close()
@@ -1381,7 +1428,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
 
     conn.execute(
         "UPDATE projects SET status = 'extracted', total_images = ? WHERE id = ?",
-        (downloaded, project_id)
+        (total, project_id)
     )
     conn.commit()
     conn.close()
@@ -1389,7 +1436,8 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     return {
         "ok": True,
         "project_id": project_id,
-        "total_images": downloaded,
+        "added": downloaded,
+        "total_images": total,
         "source_url": url,
         "project_type": "url",
     }
@@ -1467,6 +1515,20 @@ def _ext_from_url(url: str) -> str:
     return ""
 
 
+def pdf_langbeschreibung_enabled():
+    """Schalter (ENV PDF_LANGBESCHREIBUNG): ob bei PDF-Projekten Langbeschreibungen
+    erzeugt + angezeigt werden. Standard AUS (Karbe-Wunsch 03.06.2026: bei PDF nicht
+    gebraucht, spart den zweiten KI-Pass = Kosten). BILD-Projekte sind NIE betroffen.
+
+    Umschalten OHNE Rebuild: PDF_LANGBESCHREIBUNG=on in .env.staging/.env.prod setzen,
+    dann ./compose-staging.sh (bzw. ./compose-prod.sh) up -d  -> Container-Neustart.
+
+    DAUERHAFT ENTFERNEN/AENDERN: diese Funktion + ihre Aufrufstellen (get_project +
+    _process_project) sowie die Eintraege in den compose-/env-Dateien anpassen.
+    Frontend-Gegenstueck: get_project liefert show_langbeschreibung -> renderImages(showLang)."""
+    return os.getenv("PDF_LANGBESCHREIBUNG", "off").strip().lower() in ("1", "true", "on", "yes")
+
+
 @app.get("/api/projects/{project_id}")
 async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     conn = get_db()
@@ -1482,9 +1544,14 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     ).fetchall()
     conn.close()
 
+    # Schalter PDF_LANGBESCHREIBUNG (Standard aus): Langbeschreibung im Frontend nur zeigen,
+    # wenn kein PDF-Projekt ODER der Schalter an ist (siehe pdf_langbeschreibung_enabled).
+    proj_dict = dict(project)
+    _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
     return {
-        "project": dict(project),
+        "project": proj_dict,
         "images": [dict(img) for img in images],
+        "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
     }
 
 
@@ -1586,6 +1653,11 @@ async def _process_project(project_id: int, user_id: int):
         "SELECT COUNT(*) FROM images WHERE project_id = ? AND status IN ('done', 'error')",
         (project_id,)
     ).fetchone()[0]
+    # PDF-Schalter (pdf_langbeschreibung_enabled): bei PDF + Schalter aus den zweiten KI-Pass
+    # (Langbeschreibung) ueberspringen = Kostenersparnis (Karbe 03.06.2026). Bild-Projekte unberuehrt.
+    _proj = conn.execute("SELECT tool, project_type FROM projects WHERE id = ?", (project_id,)).fetchone()
+    skip_langbeschreibung = bool(_proj and (_proj["tool"] == "pdf" or _proj["project_type"] == "pdf")) and not pdf_langbeschreibung_enabled()
+
     for img in images:
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
@@ -1608,7 +1680,10 @@ async def _process_project(project_id: int, user_id: int):
             detected_type = result.get("bildtyp", "")
             langbeschreibung = result.get("langbeschreibung", "")
 
-            if is_complex_type(detected_type) and not langbeschreibung:
+            if skip_langbeschreibung:
+                # PDF + Schalter aus: zweiten Pass ueberspringen, keine Langbeschreibung speichern.
+                langbeschreibung = ""
+            elif is_complex_type(detected_type) and not langbeschreibung:
                 specialized_result = await asyncio.get_event_loop().run_in_executor(
                     None, generate_alt_text, img["image_path"], img["context_text"], detected_type,
                     img_width, img_height, img_original_alt
@@ -2705,14 +2780,20 @@ def _append_link_reference(alt_text: str, context_text: str) -> str:
 
 
 NEUIGKEITEN = [
-    {"datum": "13.05.2026", "text": "Chat-Assistent neu: Jedes Projekt hat jetzt einen eigenen Chatbot, der Bilder einsieht, Alt-Texte bewertet, Vorschlaege macht und nach Bestaetigung direkt in den Text uebernimmt. Aktuell auf Deutsch."},
-    {"datum": "13.05.2026", "text": "Mehrsprachigkeit in Vorbereitung: Englisch, Franzoesisch und Spanisch werden in den kommenden Wochen nach und nach ausgerollt."},
-    {"datum": "14.04.2026", "text": "Neue dreistufige Pruefpipeline aktiv: Klassifikation, Generierung und automatische Qualitaetspruefung gegen Halluzinationen. Laufende Auswertung zur weiteren Verbesserung."},
-    {"datum": "07.04.2026", "text": "Alt-Text-Qualitaet verbessert: Produktbilder, Diagramme und verlinkte Bilder werden besser erkannt"},
-    {"datum": "07.04.2026", "text": "Neue Bildformate: AVIF und HEIC werden jetzt unterstuetzt"},
-    {"datum": "06.04.2026", "text": "Tageslimit: 100 Bilder pro Tag – Anzeige im Header"},
-    {"datum": "06.04.2026", "text": "Registrierung offen: Konto erstellen mit E-Mail-Bestaetigung"},
-    {"datum": "06.04.2026", "text": "InkluDocs unterstuetzen: Freiwillige Beitraege per PayPal moeglich"},
+    # Neueste zuerst. Nur Eintraege, die fuer Nutzer relevant + auf Production live sind.
+    {"datum": "04.06.2026", "text": "Neu: Alt-Texte für ganze Webseiten. Adresse eingeben, die Bilder der Seite werden geladen – auch mehrere Seiten nacheinander."},
+    {"datum": "02.06.2026", "text": "Neues Dashboard mit fester Seitenleiste: eine übersichtliche Startseite, von der aus du alles erreichst."},
+    {"datum": "02.06.2026", "text": "Getrennte Werkzeuge für PDFs, Webseiten und Grafiken – du legst ein Projekt an und wählst das passende Werkzeug."},
+    {"datum": "02.06.2026", "text": "PDF-Bearbeitung verbessert, mit Seitenvorschau für mehr Überblick."},
+    {"datum": "02.06.2026", "text": "Verbesserte Barrierefreiheit: klarere Struktur, bessere Bedienung mit Screenreader und Tastatur."},
+    {"datum": "13.05.2026", "text": "Chat-Assistent neu: Jedes Projekt hat jetzt einen eigenen Chatbot, der Bilder einsieht, Alt-Texte bewertet, Vorschläge macht und nach Bestätigung direkt in den Text übernimmt. Aktuell auf Deutsch."},
+    {"datum": "13.05.2026", "text": "Mehrsprachigkeit in Vorbereitung: Englisch, Französisch und Spanisch werden in den kommenden Wochen nach und nach ausgerollt."},
+    {"datum": "14.04.2026", "text": "Neue dreistufige Prüfpipeline aktiv: Klassifikation, Generierung und automatische Qualitätsprüfung gegen Halluzinationen. Laufende Auswertung zur weiteren Verbesserung."},
+    {"datum": "07.04.2026", "text": "Alt-Text-Qualität verbessert: Produktbilder, Diagramme und verlinkte Bilder werden besser erkannt"},
+    {"datum": "07.04.2026", "text": "Neue Bildformate: AVIF und HEIC werden jetzt unterstützt"},
+    {"datum": "06.04.2026", "text": "Tageslimit: 100 Bilder pro Tag – Anzeige im Dashboard"},
+    {"datum": "06.04.2026", "text": "Registrierung offen: Konto erstellen mit E-Mail-Bestätigung"},
+    {"datum": "06.04.2026", "text": "InkluDocs unterstützen: Freiwillige Beiträge per PayPal möglich"},
 ]
 
 @app.get("/api/news")

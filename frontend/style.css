@@ -279,7 +279,7 @@ header h1 { font-size: 1.3rem; color: white; }
 /* Main content */
 .main-content {
     max-width: 900px;
-    margin: 2rem auto;
+    margin: 2rem 0;
     padding: 0 1.5rem;
 }
 
@@ -612,91 +612,7 @@ input[type="file"] {
     box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.2);
 }
 
-/* Neuigkeiten Button */
-.news-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 0.5rem 1.25rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.news-btn:hover { background: var(--primary-hover); }
-.news-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
 
-/* Neuigkeiten Panel */
-.news-panel {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-}
-.news-panel[hidden] { display: none; }
-.news-panel-content {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 2rem;
-    width: 100%;
-    max-width: 550px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-}
-.news-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--border);
-}
-.news-panel-header h2 { font-size: 1.2rem; margin: 0; }
-.news-panel-header button {
-    background: var(--bg);
-    border: 2px solid var(--border);
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    font-weight: 600;
-    color: var(--text);
-}
-.news-panel-header button:hover { border-color: var(--text-muted); }
-.news-panel-header button:focus { outline: none; box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.3); }
-.news-item {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.95rem;
-    line-height: 1.5;
-}
-.news-item:last-child { border-bottom: none; }
-.news-date {
-    font-weight: 700;
-    color: var(--primary);
-    margin-right: 0.25rem;
-}
-
-/* Neuigkeiten: gelesene Eintraege */
-.news-item-read {
-    color: var(--text-muted);
-    opacity: 0.65;
-}
-.news-divider {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.75rem 0 0.25rem;
-    margin-top: 0.5rem;
-    border-top: 1px solid var(--border);
-}
 
 /* ─── InkluAgent Chatbot ─────────────────────────────────── */
 .inkluagent-section {
@@ -844,3 +760,15 @@ input[type="file"] {
 /* Sprunglink (Barrierefreiheit) */
 .skip-link { position:absolute; left:-999px; top:auto; background:#fff; color:#1b2a4a; padding:.6rem 1rem; z-index:100; font-weight:600; border-radius:0 0 6px 0; }
 .skip-link:focus { left:0; top:0; }
+
+
+/* Drag-&-Drop-Zone fuer den Projekt-Upload (Ergaenzung zum Datei-Button, 03.06.2026) */
+.proj-dropzone { transition: outline-color 0.15s, background-color 0.15s; }
+.proj-dropzone.drag-over {
+    outline: 3px dashed var(--accent);
+    outline-offset: -6px;
+    background: rgba(232, 119, 34, 0.06);
+}
+
+/* DSGVO-Hinweis in der Fußzeile (04.06.2026: Schild-Icon + kaputter Aufklapp-Knopf entfernt) */
+.dsgvo-note { max-width: 640px; margin: 0 auto 0.5rem; font-size: 0.82rem; line-height: 1.5; }

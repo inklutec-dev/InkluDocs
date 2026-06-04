@@ -8,6 +8,8 @@ services:
     volumes:
       - inkludocs_staging_data:/app/data
     environment:
+      # PDF_LANGBESCHREIBUNG (03.06.2026): Langbeschreibung bei PDF an/aus, Standard off. Siehe .env / backend main.py.
+      - PDF_LANGBESCHREIBUNG=${PDF_LANGBESCHREIBUNG:-off}
       - SECRET_KEY=${SECRET_KEY:-inkludocs-staging-key-2026}
       - OLLAMA_URL=http://10.100.0.1:11434
       - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0

@@ -17,6 +17,8 @@
       <p id="dailyLimitInfo" class="dash-limit"></p>
       <p class="dash-sub">Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt.</p>
 
+      <p><button type="button" id="newsBtn" class="dash-news-btn" aria-haspopup="dialog" hidden>Neuigkeiten</button></p>
+
       <section class="dash-section" aria-labelledby="recent-h">
         <h2 id="recent-h">Zuletzt bearbeitete Projekte</h2>
         <div id="recentContainer" aria-busy="true">
@@ -27,6 +29,16 @@
     <footer class="dash-footer">
       <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
     </footer>
+  </div>
+</div>
+
+<div id="newsPanel" class="dash-news-panel" role="dialog" aria-modal="true" aria-labelledby="newsPanelTitle" hidden>
+  <div class="dash-news-panel-content">
+    <div class="dash-news-panel-header">
+      <h2 id="newsPanelTitle">Neuigkeiten</h2>
+      <button type="button" id="newsClose" class="dash-news-close">Schließen</button>
+    </div>
+    <div id="newsList"></div>
   </div>
 </div>
 
@@ -104,8 +116,132 @@
     announce(`${projects.length} aktuelle Projekte geladen.`);
   }
 
+  // ─── Neuigkeiten (Dialog mit Anzahl) ──────────────────────────────
+  // Kompakter Knopf zeigt die Zahl ungelesener Neuigkeiten. Klick oeffnet einen
+  // barrierefreien Dialog (Fokus wandert hinein, Escape schliesst, Fokus kehrt
+  // zum Knopf zurueck, Fokusfalle haelt Tab im Dialog). Gelesen-Status im
+  // localStorage -> nach dem Lesen verschwindet die Zahl, nichts draengt sich auf.
+  let _newsItems = [];
+
+  // "DD.MM.YYYY" -> sortierbarer Schluessel "YYYYMMDD" (direkter String-Vergleich
+  // von DD.MM.YYYY waere ueber Monats-/Tagesgrenzen falsch).
+  function newsDateKey(s) {
+    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s || '');
+    return m ? (m[3] + m[2] + m[1]) : (s || '');
+  }
+
+  function newsBuildList(items) {
+    const ul = document.createElement('ul');
+    ul.className = 'dash-news-list';
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = 'dash-news-item';
+      const date = document.createElement('span');
+      date.className = 'dash-news-date';
+      date.textContent = item.datum;
+      li.appendChild(date);
+      li.appendChild(document.createTextNode(' ' + item.text));
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  // Fuellt den Dialog: neueste 3 sichtbar, aeltere in einem Aufklapp-Element.
+  function newsRenderPanel() {
+    const list = byId('newsList');
+    list.innerHTML = '';
+    if (_newsItems.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = 'Zurzeit keine Neuigkeiten.';
+      list.appendChild(p);
+      return;
+    }
+    const RECENT = 3;
+    list.appendChild(newsBuildList(_newsItems.slice(0, RECENT)));
+    if (_newsItems.length > RECENT) {
+      const details = document.createElement('details');
+      details.className = 'dash-news-more';
+      const summary = document.createElement('summary');
+      summary.textContent = 'Frühere Neuigkeiten';
+      details.appendChild(summary);
+      details.appendChild(newsBuildList(_newsItems.slice(RECENT)));
+      list.appendChild(details);
+    }
+  }
+
+  function newsUpdateButton() {
+    const btn = byId('newsBtn');
+    let lastRead = localStorage.getItem('inkludocs_news_read');
+    if (!lastRead) {
+      // Erststart (neue Registrierung oder noch nie geoeffnet): bei null anfangen –
+      // alles als gelesen markieren, nur kuenftige Neuigkeiten zaehlen dann. So wird
+      // niemand mit einem Berg alter Eintraege begruesst.
+      lastRead = _newsItems.length > 0 ? newsDateKey(_newsItems[0].datum) : '';
+      if (lastRead) localStorage.setItem('inkludocs_news_read', lastRead);
+    } else if (/^\d{2}\.\d{2}\.\d{4}$/.test(lastRead)) {
+      // Alt-Format aus dem frueheren /app-Panel ("DD.MM.YYYY") auf den Sortier-
+      // schluessel normalisieren, damit bestehende Nutzer nur die seit ihrem letzten
+      // Lesen neuen Eintraege gezaehlt bekommen.
+      lastRead = newsDateKey(lastRead);
+    }
+    const unread = _newsItems.filter((n) => newsDateKey(n.datum) > lastRead).length;
+    if (unread > 0) {
+      btn.textContent = 'Neuigkeiten (' + unread + ')';
+      btn.classList.add('has-unread');
+    } else {
+      btn.textContent = 'Du bist auf dem aktuellen Stand';
+      btn.classList.remove('has-unread');
+    }
+    btn.hidden = false;
+  }
+
+  function newsMarkRead() {
+    if (_newsItems.length > 0) {
+      localStorage.setItem('inkludocs_news_read', newsDateKey(_newsItems[0].datum));
+    }
+    newsUpdateButton();
+  }
+
+  function newsOpen() {
+    newsRenderPanel();
+    byId('newsPanel').hidden = false;
+    byId('newsClose').focus();
+  }
+
+  function newsClosePanel() {
+    byId('newsPanel').hidden = true;
+    newsMarkRead();
+    byId('newsBtn').focus();
+  }
+
+  async function loadNews() {
+    try {
+      const res = await fetch('/api/news');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      const data = await res.json();
+      _newsItems = data.news || [];
+    } catch (e) {
+      _newsItems = [];
+    }
+    newsUpdateButton();
+    byId('newsBtn').addEventListener('click', newsOpen);
+    byId('newsClose').addEventListener('click', newsClosePanel);
+    byId('newsPanel').addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { newsClosePanel(); return; }
+      if (e.key !== 'Tab') return;
+      const panel = byId('newsPanel');
+      const f = panel.querySelectorAll('button, a[href], summary, [tabindex]:not([tabindex="-1"])');
+      if (f.length === 0) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  }
+
   (async function init() {
     await loadTools();
+    loadNews();
     await loadRecent();
   })();
 </script>

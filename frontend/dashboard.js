@@ -116,8 +116,24 @@ function renderSupportFooter() {
   });
 }
 
+// DSGVO-Hinweis in jede Dashboard-Fußzeile (zentral gepflegt, gleicher Text wie auf /app).
+// Idempotent. /app hat .legal-footer (eigener Hinweis) und wird hier nicht getroffen.
+function renderLegalNote() {
+  document.querySelectorAll('.dash-footer').forEach((footer) => {
+    if (footer.querySelector('.dsgvo-note')) return;
+    const p = document.createElement('p');
+    p.className = 'dsgvo-note';
+    const strong = document.createElement('strong');
+    strong.textContent = 'DSGVO-konform – Verarbeitung in der EU.';
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(' Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.'));
+    footer.appendChild(p);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCurrentUser();   // setzt currentUser, Begruessung, Tageslimit
   renderSidebar();
+  renderLegalNote();
   renderSupportFooter();
 });

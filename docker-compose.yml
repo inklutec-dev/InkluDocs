@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-bug12-lang500-20260526
+    image: inkludocs:v4-seitenansicht-20260528
     container_name: inkludocs
     restart: unless-stopped
     ports:
@@ -8,6 +8,8 @@ services:
     volumes:
       - inkludocs_data:/app/data
     environment:
+      # PDF_LANGBESCHREIBUNG (03.06.2026): Langbeschreibung bei PDF an/aus, Standard off. Siehe .env / backend main.py.
+      - PDF_LANGBESCHREIBUNG=${PDF_LANGBESCHREIBUNG:-off}
       # Production-spezifisch
       - SECRET_KEY=${SECRET_KEY:-inkludocs-production-key-2025}
       - BASE_URL=https://inkludocs.inklutec.de
