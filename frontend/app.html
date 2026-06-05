@@ -308,7 +308,14 @@
             groups.get(key).push(img);
         }
 
-        // Eine Image-Card rendern
+        // Eine Image-Card rendern.
+        // Karbe-Feintuning (06.06.2026): Die Bedien-Buttons unter dem Alt-Text
+        // (Daumen-hoch/runter, Kategorie-Auswahl, "Neu generieren") werden nun
+        // immer angezeigt — solange das Bild nicht gerade VERARBEITET wird.
+        // Dadurch kann ein Nutzer auch fuer ein einzelnes, noch nicht generiertes
+        // Bild direkt eine Generierung anstossen, ohne erst die Sammelaktion
+        // laufen lassen zu muessen. Frueher waren die Buttons erst sichtbar,
+        // wenn img.status === 'done' war.
         const renderCard = img => {
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
             const heading = img.page_number > 0
@@ -332,7 +339,7 @@
                     placeholder="${img.status === 'processing' ? 'Alt-Text wird generiert...' : (img.status === 'done' ? '' : 'Noch kein Alt-Text - hier eingeben oder generieren lassen')}"
                     ${img.status === 'processing' ? 'disabled' : ''}
                 >${img.alt_text_edited || img.alt_text || img.original_alt || ''}</textarea>
-                ${img.status === 'done' ? `
+                ${img.status !== 'processing' ? `
                     <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                         <span style="font-size:0.85rem;color:var(--text-muted);">Alt-Text bewerten:</span>
                         <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="Alt-Text gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'good' ? 'background:var(--success);color:white;border-color:var(--success);' : ''}">&#128077;</button>
@@ -352,7 +359,7 @@
                     </div>
                 ` : ''}
                 </div>
-                ${img.status === 'done' ? `
+                ${img.status !== 'processing' ? `
                     <div class="regen-area" style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                         <label for="regen_type_${img.id}" class="sr-only">Bildtyp fuer Neugenerierung</label>
                         <select id="regen_type_${img.id}" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
@@ -660,16 +667,22 @@
 
 
     // ─── InkluAgent (Chatbot pro Projekt) ────────────────────
+    // Karbe-Feintuning (06.06.2026):
+    //  - Button-Beschriftung auf nur "Chatbot" (oeffnen/schliessen wird per
+    //    aria-expanded an Screenreader gemeldet; visuell reicht das Wort).
+    //  - Frueherer H2 "Chatbot zur Alt-Text-Hilfe" entfaellt, weil der Button
+    //    nun selbst die Sektion betitelt (aria-labelledby auf den Button).
+    //  - Der erklaerende Infotext steht jetzt UNTER dem Button — Karbes Wunsch,
+    //    damit der Schalter sofort ins Auge faellt, der Text dient als Hinweis.
     function inkluagentSectionHtml(projectId) {
         return ''
-            + '<section class="inkluagent-section" aria-labelledby="inkluagentTitle" data-project-id="' + projectId + '">'
-            +   '<h2 id="inkluagentTitle">Chatbot zur Alt-Text-Hilfe</h2>'
+            + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '">'
+            +   '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
+            +     'Chatbot'
+            +   '</button>'
             +   '<p class="inkluagent-intro">Bitte den InkluAgent um Hilfe — z.B. einen Alt-Text fuer ein Bild generieren, '
             +   'einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache uebersetzen. '
             +   'Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.</p>'
-            +   '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
-            +     'Chatbot oeffnen'
-            +   '</button>'
             +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
             +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="polite" aria-label="Chat-Verlauf"></div>'
             +     '<form id="inkluagentForm" class="inkluagent-form">'
@@ -721,7 +734,8 @@
         const input = document.getElementById('inkluagentInput');
         if (!toggle || !panel) return;
         toggle.setAttribute('aria-expanded', 'true');
-        toggle.textContent = 'Chatbot schliessen';
+        // Beschriftung bleibt "Chatbot" — Auf/Zu-Status meldet aria-expanded.
+        toggle.textContent = 'Chatbot';
         panel.hidden = false;
         try { localStorage.setItem('inkluagent.panel.' + projectId, 'open'); } catch (e) {}
         await inkluagentLoadHistory(projectId);
@@ -733,7 +747,8 @@
         const panel = document.getElementById('inkluagentPanel');
         if (!toggle || !panel) return;
         toggle.setAttribute('aria-expanded', 'false');
-        toggle.textContent = 'Chatbot oeffnen';
+        // Beschriftung bleibt "Chatbot" — Auf/Zu-Status meldet aria-expanded.
+        toggle.textContent = 'Chatbot';
         panel.hidden = true;
         const projectId = window._inkluagentProjectId;
         if (projectId) {

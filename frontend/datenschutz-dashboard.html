@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!--
+  Datenschutz-Seite im angemeldeten Bereich (Dashboard-Shell).
+
+  Karbe-Wunsch (06.06.2026): Eigener Menuepunkt "Datenschutz" in der
+  Hauptnavigation. Inhalt ist bewusst noch PLATZHALTER — der finale Text
+  wird spaeter geliefert und kann eins zu eins in <main> eingefuegt werden.
+
+  Hinweis: Die oeffentliche, juristische Datenschutzerklaerung liegt
+  unveraendert unter /datenschutz und ist hier als Querverweis verlinkt,
+  damit Nutzer bis zur Bereitstellung des internen Textes nicht ohne
+  Information bleiben.
+
+  Barrierefreiheit: Skip-Link, semantische Ueberschriften, Status-Badge fuer
+  den Platzhalter mit ausreichendem Kontrast, fokussierbarer <main>.
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs – Datenschutz</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+<style>
+  /* Platzhalter-Box: klar erkennbar, ausreichend Kontrast (WCAG 2.2 AA).
+     Wird entfernt, sobald der echte Datenschutz-Text eingepflegt ist. */
+  .ds-placeholder {
+    border: 2px dashed #c75000;
+    background: #fff7ed;
+    color: #2a2a2a;
+    padding: 1rem 1.25rem;
+    border-radius: 6px;
+    margin: 1rem 0 1.5rem;
+  }
+  .ds-placeholder-badge {
+    display: inline-block;
+    background: #c75000;
+    color: #fff;
+    font-weight: 700;
+    padding: 0.15rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="dash-skip">Zum Hauptinhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1>Datenschutz</h1>
+
+      <!--
+        PLATZHALTER START
+        Wenn der finale Text vorliegt, einfach diesen <section>-Block durch
+        die echten Datenschutz-Inhalte ersetzen. Aufbau bevorzugt mit <h2>/<h3>
+        Hierarchie, damit Screenreader die Struktur sauber vorlesen.
+      -->
+      <section class="dash-card" aria-labelledby="ds-placeholder-h">
+        <p class="ds-placeholder-badge" role="note">Platzhalter</p>
+        <h2 id="ds-placeholder-h">Inhalt folgt</h2>
+        <div class="ds-placeholder">
+          <p>An dieser Stelle erscheint demnächst der Datenschutz-Text speziell für die
+          angemeldete Nutzung von InkluDocs. Der Text wird derzeit überarbeitet und hier
+          eingepflegt, sobald er final freigegeben ist.</p>
+        </div>
+        <p>Bis dahin steht die vollständige, rechtlich verbindliche Datenschutzerklärung
+        unverändert öffentlich bereit:</p>
+        <p><a href="/datenschutz" class="dash-link">Zur vollständigen Datenschutzerklärung</a></p>
+      </section>
+      <!-- PLATZHALTER ENDE -->
+
+      <section class="dash-card" aria-labelledby="ds-contact-h">
+        <h2 id="ds-contact-h">Fragen zum Datenschutz?</h2>
+        <p>Bei konkreten Fragen oder zur Ausübung Ihrer Rechte nach DSGVO
+        erreichen Sie uns unter
+        <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
+      </section>
+    </main>
+    <footer class="dash-footer">
+      <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
+    </footer>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
+
+<script src="/static/dashboard.js"></script>
+</body>
+</html>
