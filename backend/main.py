@@ -331,6 +331,16 @@ async def register(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Registrierung fehlgeschlagen")
 
+    # Neue Nutzer starten bei den Neuigkeiten "auf dem aktuellen Stand". Bestandsnutzer
+    # haben news_seen_until NULL und sehen daher beim naechsten Login alles Bisherige.
+    try:
+        _c = get_db()
+        _c.execute("UPDATE users SET news_seen_until = ? WHERE id = ?", (_newest_news_key(), user_id))
+        _c.commit()
+        _c.close()
+    except Exception:
+        pass
+
     # Send verification email
     verify_token = create_email_verification_token(user_id, email)
     verify_url = f"{BASE_URL}/api/verify-email?token={verify_token}"
@@ -2796,10 +2806,34 @@ NEUIGKEITEN = [
     {"datum": "06.04.2026", "text": "InkluDocs unterstützen: Freiwillige Beiträge per PayPal möglich"},
 ]
 
+def _news_date_key(d):
+    """\"DD.MM.YYYY\" -> sortierbarer Schluessel \"YYYYMMDD\"."""
+    import re as _re
+    mm = _re.match(r"^(\d{2})\.(\d{2})\.(\d{4})$", d or "")
+    return (mm.group(3) + mm.group(2) + mm.group(1)) if mm else (d or "")
+
+def _newest_news_key():
+    keys = [_news_date_key(n["datum"]) for n in NEUIGKEITEN]
+    return max(keys) if keys else ""
+
 @app.get("/api/news")
-async def get_news():
-    """Return changelog entries for the Neuigkeiten panel."""
-    return {"news": NEUIGKEITEN}
+async def get_news(user: dict = Depends(get_current_user)):
+    """Changelog-Eintraege + kontobezogener Lese-Stand (news_seen_until, Schluessel YYYYMMDD)."""
+    conn = get_db()
+    row = conn.execute("SELECT news_seen_until FROM users WHERE id = ?", (user["id"],)).fetchone()
+    conn.close()
+    seen = row["news_seen_until"] if row and row["news_seen_until"] else ""
+    return {"news": NEUIGKEITEN, "seen_until": seen}
+
+@app.post("/api/news/seen")
+async def mark_news_seen(user: dict = Depends(get_current_user)):
+    """Markiert alle aktuellen Neuigkeiten als gelesen (news_seen_until = neuester Schluessel)."""
+    key = _newest_news_key()
+    conn = get_db()
+    conn.execute("UPDATE users SET news_seen_until = ? WHERE id = ?", (key, user["id"]))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "seen_until": key}
 
 # ─── Frontend Routes ─────────────────────────────────────────
 

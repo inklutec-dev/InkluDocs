@@ -119,9 +119,10 @@
   // ─── Neuigkeiten (Dialog mit Anzahl) ──────────────────────────────
   // Kompakter Knopf zeigt die Zahl ungelesener Neuigkeiten. Klick oeffnet einen
   // barrierefreien Dialog (Fokus wandert hinein, Escape schliesst, Fokus kehrt
-  // zum Knopf zurueck, Fokusfalle haelt Tab im Dialog). Gelesen-Status im
-  // localStorage -> nach dem Lesen verschwindet die Zahl, nichts draengt sich auf.
+  // zum Knopf zurueck, Fokusfalle haelt Tab im Dialog). Gelesen-Status wird am
+  // Konto (DB-Spalte news_seen_until) gespeichert -> geraeteuebergreifend.
   let _newsItems = [];
+  let _newsSeenUntil = '';  // leer = noch nichts gesehen -> alles ungelesen
 
   // "DD.MM.YYYY" -> sortierbarer Schluessel "YYYYMMDD" (direkter String-Vergleich
   // von DD.MM.YYYY waere ueber Monats-/Tagesgrenzen falsch).
@@ -172,20 +173,8 @@
 
   function newsUpdateButton() {
     const btn = byId('newsBtn');
-    let lastRead = localStorage.getItem('inkludocs_news_read');
-    if (!lastRead) {
-      // Erststart (neue Registrierung oder noch nie geoeffnet): bei null anfangen –
-      // alles als gelesen markieren, nur kuenftige Neuigkeiten zaehlen dann. So wird
-      // niemand mit einem Berg alter Eintraege begruesst.
-      lastRead = _newsItems.length > 0 ? newsDateKey(_newsItems[0].datum) : '';
-      if (lastRead) localStorage.setItem('inkludocs_news_read', lastRead);
-    } else if (/^\d{2}\.\d{2}\.\d{4}$/.test(lastRead)) {
-      // Alt-Format aus dem frueheren /app-Panel ("DD.MM.YYYY") auf den Sortier-
-      // schluessel normalisieren, damit bestehende Nutzer nur die seit ihrem letzten
-      // Lesen neuen Eintraege gezaehlt bekommen.
-      lastRead = newsDateKey(lastRead);
-    }
-    const unread = _newsItems.filter((n) => newsDateKey(n.datum) > lastRead).length;
+    const seen = _newsSeenUntil || '';  // leer = alles ungelesen (Bestandsnutzer)
+    const unread = _newsItems.filter((n) => newsDateKey(n.datum) > seen).length;
     if (unread > 0) {
       btn.textContent = 'Neuigkeiten (' + unread + ')';
       btn.classList.add('has-unread');
@@ -196,9 +185,15 @@
     btn.hidden = false;
   }
 
-  function newsMarkRead() {
-    if (_newsItems.length > 0) {
-      localStorage.setItem('inkludocs_news_read', newsDateKey(_newsItems[0].datum));
+  async function newsMarkRead() {
+    // Lese-Stand am Konto speichern (DB) statt im Browser -> geraeteuebergreifend.
+    const fallback = _newsItems.length > 0 ? newsDateKey(_newsItems[0].datum) : '';
+    try {
+      const res = await fetch('/api/news/seen', { method: 'POST' });
+      const data = await res.json();
+      _newsSeenUntil = (data && data.seen_until) || fallback;
+    } catch (e) {
+      _newsSeenUntil = fallback;
     }
     newsUpdateButton();
   }
@@ -221,8 +216,10 @@
       if (res.status === 401) { window.location.href = '/'; return; }
       const data = await res.json();
       _newsItems = data.news || [];
+      _newsSeenUntil = data.seen_until || '';
     } catch (e) {
       _newsItems = [];
+      _newsSeenUntil = '';
     }
     newsUpdateButton();
     byId('newsBtn').addEventListener('click', newsOpen);
