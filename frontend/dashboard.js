@@ -37,17 +37,17 @@ async function loadCurrentUser() {
 }
 
 // Navigationspunkte. Ein neuer Eintrag hier erscheint auf allen Seiten.
-// Karbe-Wunsch (06.06.2026): Eigener Menuepunkt "Datenschutz" — fuehrt auf
-// die dashboard-interne Datenschutz-Seite (/datenschutz-dashboard). Der
-// finale Text ist dort als Platzhalter markiert und wird spaeter
-// eingepflegt; die oeffentliche Erklaerung unter /datenschutz bleibt
-// unveraendert und ist von dort verlinkt.
+// Karbe-Wunsch (06.06.2026): Eigener Menuepunkt "Datenschutz" in der
+// Hauptnavigation — zeigt direkt auf die bestehende oeffentliche
+// Datenschutzerklaerung (/datenschutz). Eine Quelle der Wahrheit, keine
+// separate Dashboard-Variante: vermeidet inhaltliche Divergenz und
+// erfuellt Karbes Wunsch (ein Datenschutz-Punkt, der den Text oeffnet).
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Startseite' },
   { href: '/projekt-neu', label: 'Neues Projekt anlegen' },
   { href: '/projekte', label: 'Meine Projekte' },
   { href: '/einstellungen', label: 'Einstellungen' },
-  { href: '/datenschutz-dashboard', label: 'Datenschutz' },
+  { href: '/datenschutz', label: 'Datenschutz' },
   { href: '/benutzer', label: 'Benutzerverwaltung', admin: true },
 ];
 

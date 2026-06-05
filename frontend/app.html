@@ -230,7 +230,7 @@
                     <p id="processingInfo" aria-live="polite">Bild ${project.processed_images} von ${project.total_images} wird verarbeitet.</p>
                 ` : ''}
                 <div class="card-actions">
-                    ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alt-Texte generieren</button>' : ''}
+                    ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Bilder generieren</button>' : ''}
                     ${images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id}, '${project.filename}')">Exportieren</button>
                         <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-label="Export-Optionen">
@@ -310,12 +310,23 @@
 
         // Eine Image-Card rendern.
         // Karbe-Feintuning (06.06.2026): Die Bedien-Buttons unter dem Alt-Text
-        // (Daumen-hoch/runter, Kategorie-Auswahl, "Neu generieren") werden nun
+        // (Daumen-hoch/runter, Kategorie-Auswahl, "Generieren") werden nun
         // immer angezeigt — solange das Bild nicht gerade VERARBEITET wird.
         // Dadurch kann ein Nutzer auch fuer ein einzelnes, noch nicht generiertes
         // Bild direkt eine Generierung anstossen, ohne erst die Sammelaktion
         // laufen lassen zu muessen. Frueher waren die Buttons erst sichtbar,
         // wenn img.status === 'done' war.
+        //
+        // Folge-Feintuning (06.06.2026): Button-Beschriftung einheitlich auf
+        // "Generieren" (kein "neu") — sowohl fuer erstmalig erzeugte als auch
+        // fuer ueberschriebene Alt-Texte konsistent.
+        // Barrierefreiheit (Steve, ausdruecklicher Wunsch): Der vom Screen-
+        // reader vorgelesene Button-Name muss EXAKT dem sichtbaren Text
+        // entsprechen — also bewusst KEIN abweichendes aria-label wie
+        // "Bild 3 generieren". Die Zuordnung zum Bild leistet die semantische
+        // Struktur: jede Card ist eine <section> mit eigener <h3>-Ueberschrift
+        // ("Bild 1, Seite 2"), sodass ein Screenreader-Nutzer beim Erreichen
+        // des Buttons im Kontext der jeweiligen Bild-Sektion ist.
         const renderCard = img => {
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
             const heading = img.page_number > 0
@@ -361,12 +372,12 @@
                 </div>
                 ${img.status !== 'processing' ? `
                     <div class="regen-area" style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                        <label for="regen_type_${img.id}" class="sr-only">Bildtyp fuer Neugenerierung</label>
+                        <label for="regen_type_${img.id}" class="sr-only">Bildtyp fuer Generierung</label>
                         <select id="regen_type_${img.id}" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
                             <option value="">Automatisch</option>
                             ${imageTypes.map(t => '<option value="' + t + '"' + (img.image_type === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('')}
                         </select>
-                        <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}">Neu generieren</button>
+                        <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}">Generieren</button>
                         ${showLang && complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">Langbeschreibung (optional)</button>' : ''}
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
@@ -470,7 +481,7 @@
         btn.disabled = true;
         btn.textContent = 'Generiere...';
         if (statusEl) statusEl.textContent = '';
-        announce('Alt-Text wird neu generiert');
+        announce('Alt-Text wird generiert');
 
         try {
             const body = {};
@@ -489,17 +500,17 @@
                     const lt = document.getElementById('langtext_' + imageId);
                     if (lt) lt.value = data.langbeschreibung;
                 }
-                if (statusEl) statusEl.textContent = 'Neu generiert (' + (data.konfidenz || 'mittel') + ')';
-                announce('Alt-Text wurde neu generiert');
+                if (statusEl) statusEl.textContent = 'Generiert (' + (data.konfidenz || 'mittel') + ')';
+                announce('Alt-Text wurde generiert');
             } else {
                 if (statusEl) statusEl.textContent = 'Fehler';
-                announce('Fehler bei der Neugenerierung');
+                announce('Fehler bei der Generierung');
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = 'Verbindungsfehler';
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Neu generieren';
+            btn.textContent = 'Generieren';
         }
     }
 

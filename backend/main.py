@@ -2929,14 +2929,6 @@ async def settings_page(request: Request):
     return _serve_protected_page(request, "einstellungen.html")
 
 
-# Karbe-Wunsch (06.06.2026): Dashboard-interne Datenschutz-Seite.
-# Geschuetzt (Login erforderlich), Inhalt aktuell Platzhalter.
-# Die oeffentliche Datenschutzerklaerung bleibt unter /datenschutz unveraendert.
-@app.get("/datenschutz-dashboard", response_class=HTMLResponse)
-async def datenschutz_dashboard_page(request: Request):
-    return _serve_protected_page(request, "datenschutz-dashboard.html")
-
-
 @app.get("/benutzer", response_class=HTMLResponse)
 async def users_page(request: Request):
     return _serve_protected_page(request, "benutzer.html")
