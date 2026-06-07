@@ -199,6 +199,63 @@
         }
     }
 
+    // Status-Badge im Projekt-Kopf.
+    // Steve-Entscheidung 07.06.2026: Der Badge soll auch bei reiner Einzel-
+    // bild-Generierung mitlaufen — er reflektiert nicht nur project.status
+    // (das bleibt bei Einzel-Klicks auf 'extracted'), sondern den realen
+    // Fortschritt (processed_images / total_images).
+    //  - keine Bilder verarbeitet  → "Bereit zur Verarbeitung" (badge-ready)
+    //  - laufender Sammel-Lauf      → "Alt-Texte werden generiert..." (badge-processing)
+    //  - teilweise verarbeitet      → "Teilweise verarbeitet" (badge-ready)
+    //  - alle verarbeitet           → "Fertig" (badge-done)
+    function computeStatusBadge(project) {
+        const total = project.total_images || 0;
+        const done = project.processed_images || 0;
+        if (project.status === 'processing') return { label: 'Alt-Texte werden generiert...', cls: 'badge-processing' };
+        if (project.status === 'error') return { label: 'Fehler', cls: 'badge-ready' };
+        if (project.status === 'neu') return { label: 'Neu', cls: 'badge-ready' };
+        if (total > 0 && done >= total) return { label: 'Fertig', cls: 'badge-done' };
+        if (done > 0) return { label: 'Teilweise verarbeitet', cls: 'badge-ready' };
+        return { label: 'Bereit zur Verarbeitung', cls: 'badge-ready' };
+    }
+
+    // "X von Y Bildern generiert | Extraktion: …" — Steve-Wunsch 07.06.2026.
+    // Bei leerem Projekt (kein PDF hochgeladen, total_images === 0) zeigen
+    // wir nur den Extraktions-Hinweis bzw. nichts, statt "0 von 0 Bildern".
+    function formatProjectHeadInfo(project, extractionText) {
+        const total = project.total_images || 0;
+        const done = project.processed_images || 0;
+        const ext = extractionText ? ' | Extraktion: ' + extractionText : '';
+        if (total === 0) return ext ? ext.replace(/^ \| /, '') : '';
+        return `${done} von ${total} Bildern generiert${ext}`;
+    }
+
+    // Aktualisiert nur den Projekt-Kopf (Badge + Zaehl-Info) anhand der
+    // aktuellen Server-Daten — ohne den Rest des DOM neu zu rendern.
+    // Wichtig: nach Einzelbild-Generierung darf showProject() NICHT komplett
+    // neu rendern, sonst klappen alle Seiten-<details> wieder zu und der
+    // Nutzer verliert den Scroll-Kontext.
+    async function updateProjectHeader(projectId) {
+        try {
+            const res = await fetch('/api/projects/' + projectId);
+            if (!res.ok) return;
+            const data = await res.json();
+            const project = data.project;
+            const extractionText = (project.project_type === 'pdf')
+                ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
+                : null;
+            const badge = computeStatusBadge(project);
+            const headInfo = formatProjectHeadInfo(project, extractionText);
+            const badgeEl = document.getElementById('projectStatusBadge');
+            const infoEl = document.getElementById('projectHeadInfo');
+            if (badgeEl) {
+                badgeEl.textContent = badge.label;
+                badgeEl.className = 'badge ' + badge.cls;
+            }
+            if (infoEl) infoEl.textContent = headInfo;
+        } catch (err) { /* still — Kopf-Update ist Komfort, kein Show-Stopper */ }
+    }
+
     async function showProject(projectId) {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         highlightNav(null);
@@ -209,20 +266,20 @@
         const project = data.project;
         const images = data.images;
 
-        const statusLabels = { neu:'Neu', extracted:'Bereit zur Verarbeitung', processing:'Alt-Texte werden generiert...', done:'Fertig', error:'Fehler' };
-        const statusClass = project.status === 'done' ? 'badge-done' : project.status === 'processing' ? 'badge-processing' : 'badge-ready';
         const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
         const extractionText = (project.project_type === 'pdf')
             ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
             : null;
+        const badge = computeStatusBadge(project);
+        const headInfo = formatProjectHeadInfo(project, extractionText);
 
         main.innerHTML = `
             <div class="card">
                 <div class="card-header">
                     <span class="card-name">${project.filename}</span>
-                    <span class="badge ${statusClass}">${statusLabels[project.status] || project.status}</span>
+                    <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
-                <div class="card-info">${project.total_images} Bilder | ${project.processed_images} verarbeitet${extractionText ? ' | Extraktion: ' + extractionText : ''}</div>
+                <div class="card-info" id="projectHeadInfo">${headInfo}</div>
                 ${project.status === 'processing' ? `
                     <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Fortschritt: ${progress} Prozent">
                         <div class="progress-fill" style="width:${progress}%"></div>
@@ -230,7 +287,7 @@
                     <p id="processingInfo" aria-live="polite">Bild ${project.processed_images} von ${project.total_images} wird verarbeitet.</p>
                 ` : ''}
                 <div class="card-actions">
-                    ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Bilder generieren</button>' : ''}
+                    ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Alt-Texte generieren</button>' : ''}
                     ${images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id}, '${project.filename}')">Exportieren</button>
                         <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-label="Export-Optionen">
@@ -377,7 +434,7 @@
                             <option value="">Automatisch</option>
                             ${imageTypes.map(t => '<option value="' + t + '"' + (img.image_type === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('')}
                         </select>
-                        <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}">Generieren</button>
+                        <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}" data-status="${img.status === 'done' ? 'done' : 'pending'}">${img.status === 'done' ? 'Neu generieren' : 'Generieren'}</button>
                         ${showLang && complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">Langbeschreibung (optional)</button>' : ''}
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
@@ -472,16 +529,25 @@
         } catch (err) {}
     }
 
+    // Steve-Entscheidung 07.06.2026: Buttontext folgt dem KI-Zustand des Bildes.
+    //  - noch kein KI-Lauf (data-status="pending")  → "Generieren",  Live-Meldung "Alt-Text wird generiert"
+    //  - bereits ein KI-Lauf (data-status="done")    → "Neu generieren", Live-Meldung "Alt-Text wird neu generiert"
+    // Haendisch eingetippter Text aendert nichts an der Beschriftung — der Wechsel
+    // tritt ausschliesslich ein, sobald die KI mindestens einmal erfolgreich gelaufen
+    // ist. Ein vorhandener original_alt aus dem PDF zaehlt nicht als KI-Lauf
+    // (das Bild kommt mit status='pending' aus der Extraktion).
     async function regenerateImage(projectId, imageId) {
         const typeSelect = document.getElementById('regen_type_' + imageId);
         const btn = document.getElementById('regen_btn_' + imageId);
         const statusEl = document.getElementById('regen_status_' + imageId);
         const imageType = typeSelect ? typeSelect.value : '';
+        const wasDone = btn && btn.dataset.status === 'done';
+        const restingLabel = wasDone ? 'Neu generieren' : 'Generieren';
 
         btn.disabled = true;
-        btn.textContent = 'Generiere...';
+        btn.textContent = wasDone ? 'Generiere neu...' : 'Generiere...';
         if (statusEl) statusEl.textContent = '';
-        announce('Alt-Text wird generiert');
+        announce(wasDone ? 'Alt-Text wird neu generiert' : 'Alt-Text wird generiert');
 
         try {
             const body = {};
@@ -500,17 +566,23 @@
                     const lt = document.getElementById('langtext_' + imageId);
                     if (lt) lt.value = data.langbeschreibung;
                 }
-                if (statusEl) statusEl.textContent = 'Generiert (' + (data.konfidenz || 'mittel') + ')';
-                announce('Alt-Text wurde generiert');
+                const verbDone = wasDone ? 'neu generiert' : 'generiert';
+                if (statusEl) statusEl.textContent = (wasDone ? 'Neu generiert' : 'Generiert') + ' (' + (data.konfidenz || 'mittel') + ')';
+                announce('Alt-Text wurde ' + verbDone);
+                // Ab jetzt gilt das Bild als KI-bearbeitet — naechster Klick lautet "Neu generieren".
+                btn.dataset.status = 'done';
+                // Projekt-Kopf (Badge + "X von Y Bildern generiert") live nachziehen.
+                updateProjectHeader(projectId);
             } else {
                 if (statusEl) statusEl.textContent = 'Fehler';
-                announce('Fehler bei der Generierung');
+                announce(wasDone ? 'Fehler bei der Neugenerierung' : 'Fehler bei der Generierung');
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = 'Verbindungsfehler';
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Generieren';
+            // Beschriftung folgt dem neuen data-status (kann durch Erfolg auf "done" gehoben sein).
+            btn.textContent = btn.dataset.status === 'done' ? 'Neu generieren' : restingLabel;
         }
     }
 

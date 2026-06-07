@@ -1918,6 +1918,18 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
              result.get("validation_result", ""),
              image_id)
         )
+        # processed_images aus dem realen Bild-Status ableiten (Steve 07.06.2026):
+        # damit Einzelbild-Generierung den Projekt-Zaehler genauso pflegt wie der
+        # Sammel-Lauf. Wiederholtes Re-Generieren eines bereits 'done' Bildes erhoeht
+        # den Zaehler nicht weiter — ein Bild zaehlt nur einmal.
+        processed_count = conn.execute(
+            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status IN ('done', 'error')",
+            (project_id,)
+        ).fetchone()[0]
+        conn.execute(
+            "UPDATE projects SET processed_images = ? WHERE id = ?",
+            (processed_count, project_id)
+        )
         conn.commit()
         conn.close()
 
