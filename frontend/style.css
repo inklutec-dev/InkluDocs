@@ -117,8 +117,13 @@ input:focus {
 .auth-links a:focus { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
 .auth-links.center { justify-content: center; }
 
-/* Legal pages */
-body:has(.legal-container) {
+/* Legal pages — Standalone (oeffentliche /impressum, /datenschutz, /nutzungsbedingungen).
+   Steve 08.06.2026 (Michael-Befund): der :has(.legal-container)-Body-Selector hat
+   in den In-App-Sichten (datensicherheit.html etc.) den Dashboard-Body mit-zentriert,
+   weil der Container-Inhalt per fetch in den Dashboard-Rahmen geladen wird.
+   Loesung: Body-Zentrierung greift nur, wenn KEINE app-shell vorhanden ist
+   (= Standalone). Die In-App-Variante hat ihre eigenen Regeln weiter unten. */
+body:has(.legal-container):not(:has(.app-shell)) {
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -137,6 +142,28 @@ body:has(.legal-container) {
     font-size: 1.75rem;
     text-align: center;
     margin-bottom: 0.5rem;
+}
+
+/* In-App-Sicht: legal-container ist innerhalb der Dashboard-Hauptflaeche eingebettet.
+   Steve 08.06.2026 (Michael-Befund): Inhalt soll linksbuendig erscheinen — konsistent
+   mit Projekte/Einstellungen. Box-Stil der Standalone-Variante wird zurueckgenommen,
+   weil der Dashboard-Rahmen den Container schon traegt. */
+.dash-main .legal-container {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    max-width: none;
+    width: auto;
+    box-shadow: none;
+}
+.dash-main .legal-container h1,
+.dash-main .legal-container h2,
+.dash-main .legal-container h3,
+.dash-main .legal-container p,
+.dash-main .legal-container .subtitle,
+.dash-main .legal-container .legal-date {
+    text-align: left;
 }
 .legal-container h2 {
     font-size: 1.2rem;
@@ -860,4 +887,33 @@ input[type="file"] {
  * Frueher 'margin: 0 auto 0.5rem' — das hat den 640er-Block bei breitem Container
  * sichtbar nach rechts eingerueckt (~190 px Gap links). Jetzt linksbuendig im Container.
  */
-.dsgvo-note { max-width: 640px; margin: 0 0 0.5rem 0; font-size: 0.82rem; line-height: 1.5; }
+/* DSGVO-Hinweis im Footer.
+   Steve 08.06.2026 (Michael-Befund):
+   - text-align: left explizit setzen, sonst erbt der Text in app.html den
+     'text-align: center' aus .legal-footer und erscheint in Safari mittig.
+     Browser-neutral (kein -webkit-/Safari-Quirk) — Eigenschaft ist Standard
+     und in Firefox+Chromium+WebKit gleich.
+   - In den Dashboard-Footern (dashboard.js renderLegalNote()) wird die
+     dsgvo-note NACH den Footer-Links angehaengt. Damit es nicht gequetscht
+     wirkt, bekommt sie eine dezente Trennlinie und etwas Atemraum nach oben. */
+.dsgvo-note {
+    max-width: 640px;
+    margin: 1rem 0 0.5rem 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    text-align: left;
+}
+.dash-footer .dsgvo-note {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+/* app.html-Footer: hier steht der Links-Block UNTER der dsgvo-note.
+   Steve 08.06.2026: gleiche Trennlinie, aber jetzt am Links-Block, damit
+   die visuelle Logik (Trennlinie zwischen den Bloecken) konsistent bleibt. */
+.legal-footer-links {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    margin-top: 1rem;
+}

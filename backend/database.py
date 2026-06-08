@@ -257,13 +257,21 @@ def _migrate_columns(conn):
     # Hintergrund: Vor diesem Branch hatte jedes PDF-Projekt genau eine Datei; die
     # Dokument-Ebene macht das pro Projekt mehrfach moeglich. Damit Single-PDF-Projekte
     # unveraendert funktionieren, schlagen wir hier den Altbestand auf Dokument 1 um.
+    #
+    # Bugfix 08.06.2026 (Michael-Befund auf Staging): Leere Projekte (kein echtes
+    # PDF hochgeladen) haben im `filename`-Feld nach der name-Backfill den
+    # Projektnamen stehen — der Backfill wuerde sie sonst falsch als Dokument 1
+    # mit 0 Bildern anlegen ("Phantom-Dokument"). Sobald der Nutzer dann seine
+    # erste echte PDF anhaengt, landet sie als Dokument 2 — falsch. Fix: nur
+    # Projekte, die TATSAECHLICH Bilder haben, bekommen ein Dokument.
     try:
         rows = conn.execute(
             """SELECT id, filename, original_path, extraction_method, total_images
                FROM projects
                WHERE (project_type = 'pdf' OR tool = 'pdf')
                  AND id NOT IN (SELECT project_id FROM documents)
-                 AND filename IS NOT NULL AND filename != ''"""
+                 AND filename IS NOT NULL AND filename != ''
+                 AND EXISTS (SELECT 1 FROM images i WHERE i.project_id = projects.id)"""
         ).fetchall()
         for r in rows:
             cur = conn.execute(
@@ -281,6 +289,45 @@ def _migrate_columns(conn):
             )
     except Exception as e:
         print(f"Migration warning (documents backfill): {e}")
+
+    # Phantom-Dokument-Cleanup (08.06.2026 — Michael-Befund auf Staging):
+    # Entfernt Dokument-Zeilen, die KEINEM einzigen Bild zugeordnet sind. Solche
+    # Zeilen sind aus dem fehlerhaften ersten Backfill entstanden, als leere
+    # PDF-Projekte (kein echter Upload) faelschlich ein "Dokument 1 mit 0 Bildern"
+    # bekommen haben — das hat die echte erste PDF, die der Nutzer anschliessend
+    # hochlud, auf doc_index 2 verschoben (siehe Michael, PROJ 93).
+    #
+    # Idempotent: ohne Phantom-Treffer passiert nichts. Nach dem Loeschen werden
+    # die verbliebenen Dokumente pro betroffenem Projekt lueckenlos ab 1 in der
+    # bisherigen Reihenfolge (doc_index, id) neu nummeriert, damit die echte
+    # erste PDF wieder Dokument 1 wird. Keine UNIQUE-Constraint auf
+    # (project_id, doc_index) — Renumber kann direkt aufsteigend laufen.
+    try:
+        phantom_rows = conn.execute(
+            """SELECT d.id, d.project_id FROM documents d
+               WHERE NOT EXISTS (SELECT 1 FROM images i WHERE i.document_id = d.id)"""
+        ).fetchall()
+        if phantom_rows:
+            phantom_ids = [r["id"] for r in phantom_rows]
+            projects_to_renumber = {r["project_id"] for r in phantom_rows}
+            placeholders = ",".join("?" * len(phantom_ids))
+            conn.execute(
+                f"DELETE FROM documents WHERE id IN ({placeholders})",
+                phantom_ids,
+            )
+            for pid in projects_to_renumber:
+                remaining = conn.execute(
+                    "SELECT id FROM documents WHERE project_id = ? ORDER BY doc_index, id",
+                    (pid,),
+                ).fetchall()
+                for new_idx, row in enumerate(remaining, start=1):
+                    conn.execute(
+                        "UPDATE documents SET doc_index = ? WHERE id = ?",
+                        (new_idx, row["id"]),
+                    )
+            print(f"Migration: Phantom-Dokumente entfernt ({len(phantom_ids)} Zeilen, {len(projects_to_renumber)} Projekte renumberiert)")
+    except Exception as e:
+        print(f"Migration warning (phantom document cleanup): {e}")
 
     conn.commit()
 

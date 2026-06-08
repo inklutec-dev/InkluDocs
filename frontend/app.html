@@ -19,11 +19,13 @@
         <div style="margin-bottom:0.5rem;">
             <p class="dsgvo-note"><strong>DSGVO-konform – Verarbeitung in der EU.</strong> Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.</p>
         </div>
-        <div style="margin-top:0.75rem;">
+        <div class="legal-footer-links">
             <!-- Steve 08.06.2026: aus der App heraus werden die rechtlichen Seiten in
                  der In-App-Sicht (Dashboard-Rahmen sichtbar) aufgerufen. Die public
                  Standalone-Seiten bleiben unter /impressum, /datenschutz und
-                 /nutzungsbedingungen fuer externe/rechtliche Verweise erreichbar. -->
+                 /nutzungsbedingungen fuer externe/rechtliche Verweise erreichbar.
+                 Klasse legal-footer-links: dezente Trennlinie + Abstand zum
+                 DSGVO-Hinweis darueber. -->
             <a href="/impressum-app">Impressum</a> |
             <a href="/datensicherheit">Datenschutz</a> |
             <a href="/nutzungsbedingungen-app">Nutzungsbedingungen</a>
@@ -313,10 +315,16 @@
         // (die erste PDF) sonst irreführend. Fallback wie bisher: filename.
         const headTitle = (project.name && project.name.trim()) ? project.name : project.filename;
 
+        // BITV 2.0 / WCAG 2.1/2.2 AA — Steve 08.06.2026 (Michael-Befund):
+        // Projektname ist die H1 der Seite. Genau eine H1 pro Seite. Tabindex=-1
+        // erlaubt programmatischen Fokus (z.B. nach Project-Open), ohne den Tab-
+        // Stop in der natuerlichen Reihenfolge zu stoeren. Saubere Hierarchie:
+        // H1=Projektname, H2=Upload-Section/Dokument/Export-Panel, H3=Seite,
+        // H4=Bild — wird weiter unten konsistent ausgespielt (siehe renderImages).
         main.innerHTML = `
             <div class="card">
                 <div class="card-header">
-                    <span class="card-name">${headTitle}</span>
+                    <h1 id="projectName" class="card-name" tabindex="-1">${headTitle}</h1>
                     <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
                 <div class="card-info" id="projectHeadInfo">${headInfo}</div>
@@ -331,7 +339,7 @@
                     ${images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">Exportieren</button>
                         <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-labelledby="exportPanelHeading">
-                            <h3 id="exportPanelHeading" style="margin:0 0 0.6rem 0;font-size:1.05rem;">Export-Optionen</h3>
+                            <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;font-size:1.05rem;">Export-Optionen</h2>
                             ${renderExportScopeBlock(documents)}
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">Dateiname (optional)</label>
@@ -351,7 +359,21 @@
                 </div>
             </div>
             ${uploadBlockHtml(project)}
-            <h2 class="section-title" id="bilderHeading" tabindex="-1" style="margin-top:1.5rem">Bilder (${images.length})</h2>
+            ${(() => {
+                // Steve 08.06.2026 (Michael-Befund): bei PDF-Projekten sind die Dokument-
+                // Bloecke selbst die H2-Sektionen — eine zusaetzliche H2 "Bilder (N)"
+                // wuerde die Hierarchie zerreissen (H1 -> H2 Bilder -> H2 Dokument).
+                // Bei Web/Grafik-Projekten gibt es keine Dokument-Ebene, da bleibt
+                // "Bilder (N)" als h2 das Section-Heading. In beiden Faellen behalten
+                // wir das tabindex=-1-Element, damit der Fokus nach dem Upload weiter
+                // dorthin springen kann; bei PDF wird es zum visuell unsichtbaren
+                // Anker ohne semantisches Heading.
+                const isPdf = project.tool === 'pdf' || project.project_type === 'pdf';
+                if (isPdf) {
+                    return `<div id="bilderHeading" class="sr-only" tabindex="-1" role="status" aria-live="off">Bilder (${images.length})</div>`;
+                }
+                return `<h2 class="section-title" id="bilderHeading" tabindex="-1" style="margin-top:1.5rem">Bilder (${images.length})</h2>`;
+            })()}
             <div id="imageList"></div>
             ${inkluagentSectionHtml(projectId)}
         `;
