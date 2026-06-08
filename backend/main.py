@@ -911,9 +911,19 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
 
 
 async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_id: int = None) -> dict:
-    """Legt ein neues PDF-Projekt an ODER fuellt ein leeres bestehendes
-    PDF-Projekt (project_id aus der Anlege-Maske)."""
+    """Legt ein neues PDF-Projekt an ODER haengt eine weitere PDF an ein
+    bestehendes PDF-Projekt an.
+
+    Multi-Datei Phase 1 (08.06.2026): Ein PDF-Projekt kann mehrere PDFs
+    enthalten. Jede hochgeladene PDF wird zu einem Dokument
+    (Tabelle documents). Bilder bekommen die document_id und ihre
+    page_number bleibt die PDF-interne Seitennummer — Kollisionen zwischen
+    Dokumenten loest die document_id auf. Sammel-Generierung verarbeitet
+    weiterhin nur status='pending' (siehe _process_project), ueberschreibt
+    also bereits fertige Alt-Texte der vorherigen Dokumente NICHT.
+    """
     conn = get_db()
+    is_append = False  # zeigt an, ob wir an ein bestehendes PDF-Projekt anhaengen
     if project_id is not None:
         proj = conn.execute(
             "SELECT id, tool, total_images FROM projects WHERE id = ? AND user_id = ?",
@@ -925,13 +935,18 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         if proj["tool"] != "pdf":
             conn.close()
             raise HTTPException(status_code=400, detail="Dieses Projekt ist kein PDF-Projekt")
-        if proj["total_images"] and proj["total_images"] > 0:
-            conn.close()
-            raise HTTPException(status_code=409, detail="Pro PDF-Projekt eine Datei. Fuer ein weiteres Dokument bitte ein neues Projekt anlegen.")
-        conn.execute(
-            "UPDATE projects SET filename = ?, original_path = ?, status = 'extracting' WHERE id = ?",
-            (filename, file_path, project_id)
-        )
+        # Multi-Datei: Anhaengen ist ab jetzt erlaubt — kein 409 mehr bei total_images > 0.
+        is_append = bool(proj["total_images"] and proj["total_images"] > 0)
+        # status auf extracting setzen; filename/original_path nur beim ERSTEN
+        # PDF setzen, damit die "Hauptdatei" des Projekts (z.B. fuer den Projektkopf)
+        # erhalten bleibt. Backfill setzt das ohnehin auf das erste Dokument.
+        if is_append:
+            conn.execute("UPDATE projects SET status = 'extracting' WHERE id = ?", (project_id,))
+        else:
+            conn.execute(
+                "UPDATE projects SET filename = ?, original_path = ?, status = 'extracting' WHERE id = ?",
+                (filename, file_path, project_id)
+            )
         conn.commit()
     else:
         cursor = conn.execute(
@@ -941,19 +956,46 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         project_id = cursor.lastrowid
         conn.commit()
 
-    # Extract images
-    img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
+    # Naechsten doc_index ermitteln (1-basiert, fortlaufend pro Projekt).
+    doc_index = (conn.execute(
+        "SELECT COALESCE(MAX(doc_index), 0) FROM documents WHERE project_id = ?",
+        (project_id,)
+    ).fetchone()[0] or 0) + 1
+
+    # Dokument-Eintrag anlegen (extraction_method wird unten nachgetragen).
+    doc_cursor = conn.execute(
+        """INSERT INTO documents
+           (project_id, doc_index, original_filename, original_path, extraction_method, total_images)
+           VALUES (?, ?, ?, ?, ?, 0)""",
+        (project_id, doc_index, filename, file_path, "fitz")
+    )
+    document_id = doc_cursor.lastrowid
+    conn.commit()
+
+    # Extract images — eigener Unterordner pro Dokument, damit sich die
+    # PNG-Dateinamen (p1_img1.png, ...) zwischen Dokumenten nicht ueberschreiben.
+    img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id), f"doc{doc_index}")
     os.makedirs(img_dir, exist_ok=True)
 
     try:
         images = extract_images_from_pdf(file_path, img_dir, project_id)
     except Exception as e:
-        conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
+        # Nur das Dokument als fehlerhaft markieren; das Projekt darf weiterlaufen,
+        # wenn frueher schon Dokumente erfolgreich extrahiert wurden.
+        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+        if not is_append:
+            conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
         conn.commit()
         conn.close()
         raise HTTPException(status_code=500, detail=f"PDF-Verarbeitung fehlgeschlagen: {str(e)}")
 
-    # Store images in DB (including bounding box for vector graphics support)
+    # Naechsten image_index fortlaufen lassen, damit alte Projekte weiter
+    # konsistent durchnummeriert bleiben. Das pro-Dokument-Nummer-Feld leistet
+    # die Anzeige im Frontend (dort einfach Position innerhalb des Dokuments).
+    next_idx = conn.execute(
+        "SELECT COALESCE(MAX(image_index), 0) FROM images WHERE project_id = ?", (project_id,)
+    ).fetchone()[0] or 0
+
     for img in images:
         bbox = img.get("bbox")
         bbox_x0 = bbox[0] if bbox else None
@@ -961,13 +1003,14 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         bbox_x1 = bbox[2] if bbox else None
         bbox_y1 = bbox[3] if bbox else None
         is_vector = 1 if img.get("is_vector") else 0
+        next_idx += 1
 
         conn.execute(
-            """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
+            """INSERT INTO images (project_id, document_id, page_number, image_index, image_path, context_text,
                width, height, xref, bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
                original_alt, page_view_path, page_text)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (project_id, img["page_number"], img["image_index"], img["image_path"],
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (project_id, document_id, img["page_number"], next_idx, img["image_path"],
              img["context_text"], img["width"], img["height"], img["xref"],
              bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
              img.get("original_alt", ""),
@@ -977,19 +1020,39 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
     # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg merken (fitz|pdfix)
     extraction_method = "pdfix" if images and any(i.get("source") == "pdfix" for i in images) else "fitz"
     conn.execute(
-        "UPDATE projects SET status = 'extracted', total_images = ?, extraction_method = ? WHERE id = ?",
-        (len(images), extraction_method, project_id)
+        "UPDATE documents SET extraction_method = ?, total_images = ? WHERE id = ?",
+        (extraction_method, len(images), document_id)
     )
+    # Projekt-Summe = Summe ueber alle Dokumente. extraction_method des Projekts
+    # bleibt der des ersten Dokuments (Anzeige im Kopf) — bei Mischfaellen sind
+    # die Methoden je Dokument im UI sichtbar.
+    total_imgs = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)
+    ).fetchone()[0]
+    if is_append:
+        conn.execute(
+            "UPDATE projects SET status = 'extracted', total_images = ? WHERE id = ?",
+            (total_imgs, project_id)
+        )
+    else:
+        conn.execute(
+            "UPDATE projects SET status = 'extracted', total_images = ?, extraction_method = ? WHERE id = ?",
+            (total_imgs, extraction_method, project_id)
+        )
     conn.commit()
     conn.close()
 
     return {
         "ok": True,
         "project_id": project_id,
+        "document_id": document_id,
+        "doc_index": doc_index,
         "filename": filename,
-        "total_images": len(images),
+        "total_images": total_imgs,
+        "added_images": len(images),
         "project_type": "pdf",
         "extraction_method": extraction_method,
+        "appended": is_append,
     }
 
 
@@ -1549,8 +1612,20 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
         conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
 
+    # Multi-Datei Phase 1 (08.06.2026): Bilder werden weiter geordnet nach
+    # Seite/image_index zurueckgegeben — das Frontend gruppiert sie pro Dokument.
+    # Reihenfolge: doc_index, page_number, image_index (stabil pro Dokument).
     images = conn.execute(
-        "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index", (project_id,)
+        """SELECT i.* FROM images i
+           LEFT JOIN documents d ON d.id = i.document_id
+           WHERE i.project_id = ?
+           ORDER BY COALESCE(d.doc_index, 0), i.page_number, i.image_index""",
+        (project_id,)
+    ).fetchall()
+    documents = conn.execute(
+        """SELECT id, doc_index, original_filename, display_name, extraction_method, total_images, created_at
+           FROM documents WHERE project_id = ? ORDER BY doc_index""",
+        (project_id,)
     ).fetchall()
     conn.close()
 
@@ -1561,8 +1636,40 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     return {
         "project": proj_dict,
         "images": [dict(img) for img in images],
+        "documents": [dict(d) for d in documents],
         "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
     }
+
+
+@app.patch("/api/projects/{project_id}/documents/{document_id}")
+async def rename_document(project_id: int, document_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Multi-Datei (08.06.2026): Anzeigename eines Dokuments setzen (Nice-to-have).
+
+    Lasst der Nutzer das Feld leer, faellt die Anzeige im Frontend wieder auf
+    den original_filename zurueck (display_name wird auf NULL gesetzt).
+    """
+    data = await request.json()
+    name = (data.get("display_name") or "").strip()
+    if len(name) > 200:
+        raise HTTPException(status_code=400, detail="Anzeigename darf maximal 200 Zeichen lang sein")
+    conn = get_db()
+    proj = conn.execute(
+        "SELECT id FROM projects WHERE id = ? AND user_id = ?",
+        (project_id, user["id"])
+    ).fetchone()
+    if not proj:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    cur = conn.execute(
+        "UPDATE documents SET display_name = ? WHERE id = ? AND project_id = ?",
+        (name or None, document_id, project_id)
+    )
+    conn.commit()
+    affected = cur.rowcount
+    conn.close()
+    if not affected:
+        raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+    return {"ok": True, "display_name": name or None}
 
 
 @app.delete("/api/projects/{project_id}")
@@ -1583,6 +1690,8 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
         os.remove(project["original_path"])
 
     conn.execute("DELETE FROM images WHERE project_id = ?", (project_id,))
+    # Multi-Datei (08.06.2026): Dokument-Zeilen mit aufraeumen.
+    conn.execute("DELETE FROM documents WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
     conn.commit()
     conn.close()
@@ -1966,30 +2075,118 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
 
 # ─── Export Routes ───────────────────────────────────────────
 
-@app.post("/api/projects/{project_id}/export")
-async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
+# ─── Multi-Datei Export-Helpers (08.06.2026) ─────────────────
+#
+# Phase 1 dreht jedes "ein PDF pro Projekt" in "mehrere PDFs pro Projekt".
+# Damit der bestehende Export-Code nicht doppelt geschrieben werden muss,
+# kapseln wir die Datei-Erzeugung pro Dokument in kleinen Helfern und rufen
+# diese aus den oeffentlichen Endpunkten heraus. Auswahl-Logik:
+#   - kein document_id Parameter   -> alle Dokumente, gepackt als ZIP
+#   - ein document_id Parameter    -> nur dieses Dokument, direkter Download
+# Der ZIP-Name kann optional ueber den 'filename'-Body-Parameter gesetzt
+# werden (ohne Erweiterung), genauso wie bei Einzelexports.
+
+import zipfile
+from typing import Optional
+
+
+def _safe_filename_component(name: str, fallback: str = "datei") -> str:
+    """Macht aus einem beliebigen Anzeigenamen einen Datei-System-tauglichen
+    Bestandteil (keine Slashes, keine Steuerzeichen, max. 120 Zeichen).
+    Wir bleiben bewusst konservativ, damit ZIP-Innennamen auch unter Windows
+    sauber bleiben."""
+    if not name:
+        return fallback
+    s = re.sub(r"[\\/\x00-\x1f<>:\"|?*]", "_", str(name)).strip(" .")
+    return s[:120] or fallback
+
+
+async def _read_export_options(request: Optional[Request]) -> tuple[Optional[int], Optional[str]]:
+    """Liest optionale Export-Parameter (document_id + filename) aus dem Request-Body.
+    Beide Felder sind optional; fehlt der Body komplett, faellt alles auf None zurueck."""
+    if request is None:
+        return None, None
+    try:
+        body = await request.json()
+    except Exception:
+        return None, None
+    doc_id = body.get("document_id") if isinstance(body, dict) else None
+    if doc_id is not None:
+        try:
+            doc_id = int(doc_id)
+        except (TypeError, ValueError):
+            doc_id = None
+    name = (body.get("filename") if isinstance(body, dict) else None) or None
+    if name:
+        name = str(name).strip()
+        name = re.sub(r"\.[A-Za-z0-9]{1,5}$", "", name)
+        name = _safe_filename_component(name)
+    return doc_id, name
+
+
+def _doc_label(doc: dict) -> str:
+    """Anzeigename eines Dokuments fuer Dateinamen (display_name -> original_filename ohne .pdf)."""
+    raw = (doc.get("display_name") or "").strip() or (doc.get("original_filename") or "").strip()
+    raw = re.sub(r"\.pdf$", "", raw, flags=re.IGNORECASE)
+    return _safe_filename_component(raw, f"dokument_{doc.get('doc_index', 1)}")
+
+
+def _load_pdf_export_units(project: dict, user_id: int, document_id: Optional[int]) -> list[dict]:
+    """Lieferst Liste aus dicts mit doc-Metadaten + alt-Texten + image-Metadaten
+    fuer jedes Dokument, das exportiert werden soll. Phase 1 verarbeitet nur
+    PDF-Werkzeuge — andere Tools liefern eine einzelne synthetische Einheit
+    (alles im Projekt zusammen)."""
     conn = get_db()
-    project = conn.execute(
-        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
-    ).fetchone()
-    if not project:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-
-    # PDF export only works for PDF projects
-    project_type = project["project_type"] if "project_type" in project.keys() else "pdf"
-    if project_type != "pdf":
-        conn.close()
-        raise HTTPException(status_code=400, detail="PDF-Export ist nur fuer PDF-Projekte verfuegbar")
-
-    images = conn.execute(
-        "SELECT * FROM images WHERE project_id = ?", (project_id,)
+    docs = conn.execute(
+        """SELECT * FROM documents WHERE project_id = ? ORDER BY doc_index""",
+        (project["id"],)
     ).fetchall()
+    if document_id is not None:
+        docs = [d for d in docs if d["id"] == document_id]
+        if not docs:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+
+    units = []
+    for d in docs:
+        imgs = conn.execute(
+            "SELECT * FROM images WHERE document_id = ? ORDER BY page_number, image_index",
+            (d["id"],)
+        ).fetchall()
+        units.append({"doc": dict(d), "images": [dict(i) for i in imgs]})
     conn.close()
 
-    # PDFIX-INTEGRATION (24.04.2026): getaggte PDFs ueber Heines Import-Script,
-    # alle anderen wie bisher ueber write_alt_texts_to_pdf().
-    extraction_method = project["extraction_method"] if "extraction_method" in project.keys() else "fitz"
+    # Fallback fuer den Uebergang: ein PDF-Projekt OHNE documents-Eintraege
+    # (z.B. Race-Bedingung beim Erst-Migrate) wird wie ein einzelnes Dokument
+    # behandelt, das auf project.filename/original_path zeigt.
+    if not units:
+        conn = get_db()
+        imgs = conn.execute(
+            "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index",
+            (project["id"],)
+        ).fetchall()
+        conn.close()
+        units.append({
+            "doc": {
+                "id": None,
+                "doc_index": 1,
+                "original_filename": project.get("filename") or "dokument.pdf",
+                "display_name": None,
+                "original_path": project.get("original_path") or "",
+                "extraction_method": project.get("extraction_method") or "fitz",
+            },
+            "images": [dict(i) for i in imgs],
+        })
+    return units
+
+
+def _build_pdf_for_document(unit: dict, output_dir: str) -> tuple[str, dict]:
+    """Erzeugt die exportierte PDF fuer EIN Dokument (alle Alt-Texte
+    eingebettet). Gibt (output_path, header_info) zurueck. Header_info
+    enthaelt die gleichen Metriken wie der Single-Export davor."""
+    doc = unit["doc"]
+    images = unit["images"]
+    extraction_method = doc.get("extraction_method") or "fitz"
 
     alt_texts = {}
     alt_texts_by_lfnr = {}
@@ -1997,74 +2194,61 @@ async def export_pdf(project_id: int, user: dict = Depends(get_current_user)):
 
     for img in images:
         alt_text = _display_alt_text(img)
-        if alt_text is not None and img["xref"]:
+        if alt_text is not None and img.get("xref"):
             alt_texts[img["xref"]] = alt_text
-        if alt_text is not None and img["image_index"]:
+        if alt_text is not None and img.get("image_index"):
             alt_texts_by_lfnr[int(img["image_index"])] = alt_text
-
-        # Build metadata for vector graphics support
         bbox = None
-        if img["bbox_x0"] is not None:
+        if img.get("bbox_x0") is not None:
             bbox = (img["bbox_x0"], img["bbox_y0"], img["bbox_x1"], img["bbox_y1"])
-
         image_metadata.append({
-            "xref": img["xref"],
-            "page_number": img["page_number"],
-            "is_vector": bool(img["is_vector"]) if img["is_vector"] is not None else False,
+            "xref": img.get("xref"),
+            "page_number": img.get("page_number"),
+            "is_vector": bool(img.get("is_vector")) if img.get("is_vector") is not None else False,
             "bbox": bbox,
             "alt_text": alt_text,
-            "image_path": img["image_path"],
+            "image_path": img.get("image_path"),
         })
 
-    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
     os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, f"inkludocs_{project['filename']}")
-
-    headers = {}
-    result = None
+    base = doc.get("original_filename") or f"dokument_{doc.get('doc_index', 1)}.pdf"
+    output_path = os.path.join(output_dir, f"inkludocs_{_safe_filename_component(base, base)}")
+    info: dict = {}
 
     if extraction_method == "pdfix":
-        # PDFIX-INTEGRATION: Heines Import-Script ueber subprocess
         try:
             import pdfix_roundtrip as _pdfix
             count = _pdfix.import_alt_texts_pdfix(
-                project["original_path"], output_path,
+                doc["original_path"], output_path,
                 alt_texts_by_lfnr, work_dir=output_dir)
-            headers["X-Export-Method"] = "pdfix"
-            headers["X-Export-Tagged"] = str(count)
-            headers["X-Export-Total"] = str(len(alt_texts_by_lfnr))
+            info["method"] = "pdfix"
+            info["tagged"] = count
+            info["total"] = len(alt_texts_by_lfnr)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"PDFix-Export fehlgeschlagen: {str(e)}")
     else:
         try:
             from pdf_export import write_alt_texts_to_pdf
-            result = write_alt_texts_to_pdf(project["original_path"], output_path, alt_texts, image_metadata)
+            result = write_alt_texts_to_pdf(doc["original_path"], output_path, alt_texts, image_metadata)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Export fehlgeschlagen: {str(e)}")
-
-        # Build response with export warnings in headers
-        export_warnings = []
         if isinstance(result, dict):
-            export_warnings = result.get("warnings", [])
-            tagged_count = result.get("tagged_count", 0)
-            total_count = len(alt_texts)
-            headers["X-Export-Method"] = "fitz"
-            headers["X-Export-Tagged"] = str(tagged_count)
-            headers["X-Export-Total"] = str(total_count)
-            if export_warnings:
-                headers["X-Export-Warnings"] = json.dumps(export_warnings, ensure_ascii=False)
-
-    return FileResponse(
-        output_path,
-        filename=f"inkludocs_{project['filename']}",
-        media_type="application/pdf",
-        headers=headers
-    )
+            info["method"] = "fitz"
+            info["tagged"] = result.get("tagged_count", 0)
+            info["total"] = len(alt_texts)
+            warnings = result.get("warnings") or []
+            if warnings:
+                info["warnings"] = warnings
+    return output_path, info
 
 
-@app.post("/api/projects/{project_id}/export/json")
-async def export_json(project_id: int, user: dict = Depends(get_current_user)):
-    """Export all alt-texts as JSON."""
+@app.post("/api/projects/{project_id}/export")
+async def export_pdf(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """PDF-Export. Multi-Datei (08.06.2026):
+    - ohne document_id im Body: alle Dokumente als ZIP
+    - mit document_id: nur dieses Dokument, direkter Download
+    """
+    document_id, custom_name = await _read_export_options(request)
     conn = get_db()
     project = conn.execute(
         "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
@@ -2072,96 +2256,152 @@ async def export_json(project_id: int, user: dict = Depends(get_current_user)):
     if not project:
         conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-
-    images = conn.execute(
-        "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index", (project_id,)
-    ).fetchall()
+    project_type = project["project_type"] if "project_type" in project.keys() else "pdf"
+    if project_type != "pdf":
+        conn.close()
+        raise HTTPException(status_code=400, detail="PDF-Export ist nur fuer PDF-Projekte verfuegbar")
+    project = dict(project)
     conn.close()
 
+    units = _load_pdf_export_units(project, user["id"], document_id)
+    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
+    os.makedirs(output_dir, exist_ok=True)
+
+    if document_id is not None or len(units) == 1:
+        # Einzelne Datei zurueckgeben (direkter Download, kein ZIP).
+        unit = units[0]
+        output_path, info = _build_pdf_for_document(unit, output_dir)
+        headers = {}
+        if info.get("method"):
+            headers["X-Export-Method"] = str(info["method"])
+        if "tagged" in info:
+            headers["X-Export-Tagged"] = str(info["tagged"])
+        if "total" in info:
+            headers["X-Export-Total"] = str(info["total"])
+        if info.get("warnings"):
+            headers["X-Export-Warnings"] = json.dumps(info["warnings"], ensure_ascii=False)
+        download_base = custom_name or _doc_label(unit["doc"])
+        return FileResponse(
+            output_path,
+            filename=f"inkludocs_{download_base}.pdf",
+            media_type="application/pdf",
+            headers=headers,
+        )
+
+    # Alle Dokumente -> ZIP.
+    zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
+    zip_path = os.path.join(output_dir, f"{zip_base}_alle_pdfs.zip")
+    aggregated_warnings: list[str] = []
+    total_tagged = 0
+    total_images = 0
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for unit in units:
+            out_path, info = _build_pdf_for_document(unit, output_dir)
+            inner = f"{unit['doc'].get('doc_index', 1):02d}_{_doc_label(unit['doc'])}.pdf"
+            zf.write(out_path, arcname=inner)
+            total_tagged += int(info.get("tagged", 0) or 0)
+            total_images += int(info.get("total", 0) or 0)
+            for w in info.get("warnings", []) or []:
+                aggregated_warnings.append(f"[{inner}] {w}")
+    headers = {
+        "X-Export-Tagged": str(total_tagged),
+        "X-Export-Total": str(total_images),
+    }
+    if aggregated_warnings:
+        headers["X-Export-Warnings"] = json.dumps(aggregated_warnings, ensure_ascii=False)
+    return FileResponse(
+        zip_path,
+        filename=f"{zip_base}_alle_pdfs.zip",
+        media_type="application/zip",
+        headers=headers,
+    )
+
+
+# ─── Multi-Datei Export: JSON / CSV / XLSX (08.06.2026) ────────
+#
+# Diese drei Formate koennen INHALTLICH wahlweise nur ein Dokument
+# oder alle gemeinsam darstellen. Wir gehen den simplen, fuer Nutzer
+# erwartbaren Weg:
+#   - document_id im Body  -> nur dieses Dokument, eine Datei
+#   - sonst                -> alle Dokumente als ZIP (eine Datei pro Doc)
+# Web- und Grafik-Projekte (kein documents-Eintrag) bleiben ein einzelnes
+# logisches Dokument und liefern unveraendert eine flache Einzeldatei.
+
+def _load_export_units_for_table(project: dict, document_id: Optional[int]) -> list[dict]:
+    """Wie _load_pdf_export_units, aber NICHT auf project_type='pdf' beschraenkt.
+    Web/Grafik-Projekte haben kein documents-Eintrag -> Fallback auf ein
+    einziges synthetisches Dokument (alle Bilder zusammen)."""
+    conn = get_db()
+    docs = conn.execute(
+        "SELECT * FROM documents WHERE project_id = ? ORDER BY doc_index",
+        (project["id"],)
+    ).fetchall()
+    if docs:
+        if document_id is not None:
+            docs = [d for d in docs if d["id"] == document_id]
+            if not docs:
+                conn.close()
+                raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+        units = []
+        for d in docs:
+            imgs = conn.execute(
+                "SELECT * FROM images WHERE document_id = ? ORDER BY page_number, image_index",
+                (d["id"],)
+            ).fetchall()
+            units.append({"doc": dict(d), "images": [dict(i) for i in imgs]})
+        conn.close()
+        return units
+    # Kein Dokument-Eintrag (Web/Grafik oder noch nicht migriert).
+    imgs = conn.execute(
+        "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index",
+        (project["id"],)
+    ).fetchall()
+    conn.close()
+    return [{
+        "doc": {
+            "id": None,
+            "doc_index": 1,
+            "original_filename": project.get("filename") or "export",
+            "display_name": None,
+        },
+        "images": [dict(i) for i in imgs],
+    }]
+
+
+def _build_json_bytes(unit: dict, project_name: str) -> bytes:
     export_data = {
-        "projekt": project["filename"],
+        "projekt": project_name,
+        "dokument": _doc_label(unit["doc"]),
         "bilder": [],
     }
-
-    for img in images:
+    for img in unit["images"]:
         alt_text = _display_alt_text(img)
-        entry = {
-            "alt_text": alt_text or "",
-        }
-        langbeschreibung = img["langbeschreibung"] if img["langbeschreibung"] else ""
-        if langbeschreibung:
-            entry["langbeschreibung"] = langbeschreibung
+        entry = {"alt_text": alt_text or ""}
+        lang = img.get("langbeschreibung") or ""
+        if lang:
+            entry["langbeschreibung"] = lang
         export_data["bilder"].append(entry)
-
-    json_bytes = json.dumps(export_data, ensure_ascii=False, indent=2).encode("utf-8")
-    return StreamingResponse(
-        io.BytesIO(json_bytes),
-        media_type="application/json",
-        headers={"Content-Disposition": f'attachment; filename="inkludocs_{project["filename"]}.json"'}
-    )
+    return json.dumps(export_data, ensure_ascii=False, indent=2).encode("utf-8")
 
 
-@app.post("/api/projects/{project_id}/export/csv")
-async def export_csv(project_id: int, user: dict = Depends(get_current_user)):
-    """Export all alt-texts as CSV."""
-    conn = get_db()
-    project = conn.execute(
-        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
-    ).fetchone()
-    if not project:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-
-    images = conn.execute(
-        "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index", (project_id,)
-    ).fetchall()
-    conn.close()
-
+def _build_csv_bytes(unit: dict) -> bytes:
     output = io.StringIO()
     writer = csv.writer(output, delimiter=";")
     writer.writerow(["Alt-Text", "Langbeschreibung"])
-
-    for img in images:
+    for img in unit["images"]:
         alt_text = _display_alt_text(img)
-        writer.writerow([
-            alt_text or "",
-            img["langbeschreibung"] or "",
-        ])
-
-    csv_bytes = output.getvalue().encode("utf-8-sig")  # BOM for Excel compatibility
-    return StreamingResponse(
-        io.BytesIO(csv_bytes),
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="inkludocs_{project["filename"]}.csv"'}
-    )
+        writer.writerow([alt_text or "", img.get("langbeschreibung") or ""])
+    return output.getvalue().encode("utf-8-sig")
 
 
-@app.post("/api/projects/{project_id}/export/xlsx")
-async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
-    """Export alt-texts as Excel with embedded images."""
+def _build_xlsx_bytes(unit: dict) -> bytes:
     from openpyxl import Workbook
     from openpyxl.drawing.image import Image as XlImage
     from openpyxl.styles import Font, Alignment
-    from openpyxl.utils.units import pixels_to_EMU
-
-    conn = get_db()
-    project = conn.execute(
-        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
-    ).fetchone()
-    if not project:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-
-    images = conn.execute(
-        "SELECT * FROM images WHERE project_id = ? ORDER BY page_number, image_index", (project_id,)
-    ).fetchall()
-    conn.close()
 
     wb = Workbook()
     ws = wb.active
     ws.title = "Alt-Texte"
-
-    # Header row
     ws["A1"] = "Bild"
     ws["B1"] = "Alt-Text"
     ws["C1"] = "Langbeschreibung"
@@ -2171,20 +2411,16 @@ async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
     ws.column_dimensions["B"].width = 60
     ws.column_dimensions["C"].width = 60
 
-    for i, img in enumerate(images):
+    for i, img in enumerate(unit["images"]):
         row = i + 2
         alt_text = _display_alt_text(img)
-        langbeschreibung = img["langbeschreibung"] or ""
-
-        # Image filename for screenreaders + embedded image for sighted users
-        img_path = img["image_path"]
+        langbeschreibung = img.get("langbeschreibung") or ""
+        img_path = img.get("image_path") or ""
         img_filename = os.path.basename(img_path) if img_path else "unbekannt"
         ws[f"A{row}"] = img_filename
         ws[f"A{row}"].alignment = Alignment(vertical="top")
-
-        if os.path.exists(img_path):
+        if img_path and os.path.exists(img_path):
             try:
-                # openpyxl cannot handle WebP/AVIF — convert to PNG in memory
                 export_img_path = img_path
                 if img_path.lower().endswith((".webp", ".avif", ".heic", ".heif")):
                     from PIL import Image as PILImage
@@ -2204,21 +2440,90 @@ async def export_xlsx(project_id: int, user: dict = Depends(get_current_user)):
                 ws.add_image(xl_img, f"A{row}")
             except Exception:
                 pass
-
         ws[f"B{row}"] = alt_text or ""
         ws[f"B{row}"].alignment = Alignment(wrap_text=True, vertical="top")
         ws[f"C{row}"] = langbeschreibung
         ws[f"C{row}"].alignment = Alignment(wrap_text=True, vertical="top")
 
-    output = io.BytesIO()
-    wb.save(output)
-    output.seek(0)
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
 
-    return StreamingResponse(
-        output,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="inkludocs_{project["filename"]}.xlsx"'}
+
+async def _table_export_dispatch(project_id: int, request: Request, user: dict, fmt: str):
+    """Gemeinsamer Code fuer JSON/CSV/XLSX-Export."""
+    document_id, custom_name = await _read_export_options(request)
+    conn = get_db()
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    project = dict(project)
+    conn.close()
+
+    units = _load_export_units_for_table(project, document_id)
+    project_name = project.get("name") or project.get("filename") or "Projekt"
+
+    if fmt == "json":
+        media = "application/json"
+        suffix = ".json"
+        single = lambda u: _build_json_bytes(u, project_name)
+    elif fmt == "csv":
+        media = "text/csv"
+        suffix = ".csv"
+        single = lambda u: _build_csv_bytes(u)
+    elif fmt == "xlsx":
+        media = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        suffix = ".xlsx"
+        single = lambda u: _build_xlsx_bytes(u)
+    else:
+        raise HTTPException(status_code=400, detail="Unbekanntes Format")
+
+    if document_id is not None or len(units) == 1:
+        unit = units[0]
+        data = single(unit)
+        base = custom_name or _doc_label(unit["doc"])
+        return StreamingResponse(
+            io.BytesIO(data),
+            media_type=media,
+            headers={"Content-Disposition": f'attachment; filename="inkludocs_{base}{suffix}"'}
+        )
+
+    # Mehrere Dokumente -> ZIP
+    zip_base = custom_name or _safe_filename_component(project_name)
+    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
+    os.makedirs(output_dir, exist_ok=True)
+    zip_path = os.path.join(output_dir, f"{zip_base}_alle_{fmt}.zip")
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for unit in units:
+            inner = f"{unit['doc'].get('doc_index', 1):02d}_{_doc_label(unit['doc'])}{suffix}"
+            zf.writestr(inner, single(unit))
+    return FileResponse(
+        zip_path,
+        filename=f"{zip_base}_alle_{fmt}.zip",
+        media_type="application/zip",
     )
+
+
+@app.post("/api/projects/{project_id}/export/json")
+async def export_json(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Multi-Datei: ohne document_id alle Dokumente als ZIP, sonst Einzeldatei."""
+    return await _table_export_dispatch(project_id, request, user, "json")
+
+
+@app.post("/api/projects/{project_id}/export/csv")
+async def export_csv(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Multi-Datei: ohne document_id alle Dokumente als ZIP, sonst Einzeldatei."""
+    return await _table_export_dispatch(project_id, request, user, "csv")
+
+
+@app.post("/api/projects/{project_id}/export/xlsx")
+async def export_xlsx(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Multi-Datei: ohne document_id alle Dokumente als ZIP, sonst Einzeldatei."""
+    return await _table_export_dispatch(project_id, request, user, "xlsx")
 
 
 # ─── Public API ──────────────────────────────────────────────

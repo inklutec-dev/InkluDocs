@@ -93,14 +93,19 @@
     function uploadBlockHtml(project) {
         const tool = project.tool;
         if (tool === 'pdf') {
-            if (project.total_images > 0) {
-                return '<section class="card" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Dokument</h2>'
-                    + '<p style="color:var(--text-muted);margin:0;">Pro PDF-Projekt eine Datei. Fuer ein weiteres Dokument bitte ein neues Projekt anlegen.</p></section>';
-            }
-            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">PDF hinzufuegen</h2>'
+            // Multi-Datei Phase 1 (08.06.2026, Steve): PDF hinzufuegen-Knopf bleibt
+            // immer sichtbar — analog zum URL-Feld beim Web-Werkzeug. Damit kann der
+            // Nutzer jederzeit eine weitere PDF an das Projekt anhaengen; jede PDF
+            // wird zu einem eigenen Dokument unten in der Liste.
+            const hasExisting = project.total_images > 0;
+            const heading = hasExisting ? 'Weitere PDF hinzufuegen' : 'PDF hinzufuegen';
+            const hint = hasExisting
+                ? 'Du kannst jederzeit eine weitere PDF anhaengen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unveraendert.'
+                : 'Waehle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.';
+            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
                 + '<label for="projUpload" class="sr-only">PDF-Datei auswaehlen</label>'
                 + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
-                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">Waehle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.</p>'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'grafik') {
@@ -186,10 +191,26 @@
                     return;
                 }
                 if (i === files.length - 1) {
-                    announce(data.total_images + ' Bilder im Projekt.');
+                    // Multi-Datei (08.06.2026): Beim Anhaengen einer weiteren PDF auch
+                    // den Doc-Stand mit ansagen, damit Screenreader-Nutzer Bescheid wissen,
+                    // dass ein neues Dokument unten angelegt wurde.
+                    if (data.appended && data.doc_index) {
+                        announce('PDF hinzugefuegt als Dokument ' + data.doc_index + '. ' + data.added_images + ' neue Bilder. Insgesamt ' + data.total_images + ' Bilder im Projekt.');
+                    } else {
+                        announce(data.total_images + ' Bilder im Projekt.');
+                    }
+                    // Fokus beim Append auf das neue Dokument legen (sofern vorhanden),
+                    // sonst weiterhin auf die Bilder-Sammelueberschrift.
                     await showProject(projectId);
-                    const h = document.getElementById('bilderHeading');
-                    if (h) h.focus();
+                    const docHead = data.document_id ? document.getElementById('doc_heading_' + data.document_id) : null;
+                    if (docHead) {
+                        // h2 in summary ist nicht fokussierbar — Fokus auf die summary legen.
+                        const sum = docHead.closest('summary');
+                        if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); }
+                    } else {
+                        const h = document.getElementById('bilderHeading');
+                        if (h) h.focus();
+                    }
                 }
             } catch (err) {
                 if (status) status.textContent = 'Netzwerkfehler beim Upload.';
@@ -274,6 +295,7 @@
         const data = await res.json();
         const project = data.project;
         const images = data.images;
+        const documents = data.documents || [];
 
         const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
         const extractionText = (project.project_type === 'pdf')
@@ -282,10 +304,15 @@
         const badge = computeStatusBadge(project, images);
         const headInfo = formatProjectHeadInfo(project, extractionText, images);
 
+        // Multi-Datei (08.06.2026): Im Projekt-Kopf bevorzugt den vom Nutzer
+        // vergebenen project.name anzeigen — bei Mehrfach-PDFs ist project.filename
+        // (die erste PDF) sonst irrefuehrend. Fallback wie bisher: filename.
+        const headTitle = (project.name && project.name.trim()) ? project.name : project.filename;
+
         main.innerHTML = `
             <div class="card">
                 <div class="card-header">
-                    <span class="card-name">${project.filename}</span>
+                    <span class="card-name">${headTitle}</span>
                     <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
                 <div class="card-info" id="projectHeadInfo">${headInfo}</div>
@@ -298,11 +325,14 @@
                 <div class="card-actions">
                     ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Alt-Texte generieren</button>' : ''}
                     ${images.length > 0 ? `
-                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id}, '${project.filename}')">Exportieren</button>
-                        <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-label="Export-Optionen">
+                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">Exportieren</button>
+                        <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-labelledby="exportPanelHeading">
+                            <h3 id="exportPanelHeading" style="margin:0 0 0.6rem 0;font-size:1.05rem;">Export-Optionen</h3>
+                            ${renderExportScopeBlock(documents)}
                             <div class="form-group" style="margin-bottom:0.8rem;">
-                                <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">Dateiname</label>
-                                <input type="text" id="exportFilename" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
+                                <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">Dateiname (optional)</label>
+                                <input type="text" id="exportFilename" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
+                                <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">Leer lassen, um den Vorgabe-Namen zu uebernehmen. Die Dateiendung wird automatisch angehaengt.</p>
                             </div>
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'xlsx')">Als Excel</button>
@@ -322,7 +352,7 @@
             ${inkluagentSectionHtml(projectId)}
         `;
 
-        renderImages(images, projectId, data.show_langbeschreibung !== false);
+        renderImages(images, projectId, data.show_langbeschreibung !== false, documents, project);
         inkluagentInit(projectId);
         setupProjectDropzone(projectId);
 
@@ -347,18 +377,66 @@
         }
     }
 
+    // Multi-Datei (08.06.2026): Anzeigename eines Dokuments fuer Ueberschriften.
+    // Bevorzugt der vom Nutzer vergebene display_name; fehlt der, nehmen wir
+    // das Original-Dateinamen-Feld. Wir geben den Rohtext zurueck — Escape
+    // erledigt die aufrufende Stelle (esc/textContent).
+    function docDisplayName(doc) {
+        if (!doc) return '';
+        const dn = (doc.display_name || '').trim();
+        if (dn) return dn;
+        return (doc.original_filename || '').trim();
+    }
+
+    // Render-Block fuer die Dokument-Auswahl in der Export-Box.
+    // - Genau eine Auswahl ist immer aktiv (Radio-Gruppe).
+    // - Bei einem einzelnen Dokument zeigen wir die Auswahl nicht (waere redundant).
+    // - "Alle Dokumente" (value=all) ist Default, wenn es mehr als ein Dokument gibt;
+    //   sonst zeigt der Default direkt auf das einzelne Dokument.
+    function renderExportScopeBlock(documents) {
+        const esc = s => !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        if (!documents || documents.length <= 1) return '';
+        // WCAG 2.2 AA target-size (24x24px): Radios werden via .export-scope-radio
+        // CSS-Klasse vergroessert (Default-Browser-Radios sind nur 13x13).
+        // Zusaetzlich genug vertikalen Abstand zwischen den Eintraegen, damit
+        // die "safe clickable area" auch zwischen benachbarten Targets > 24px ist.
+        const items = documents.map((d, idx) => {
+            const label = 'Dokument ' + (d.doc_index || idx + 1) + ': ' + esc(docDisplayName(d));
+            return '<li class="export-scope-item"><label class="export-scope-label">'
+                + '<input class="export-scope-radio" type="radio" name="exportScope" value="doc:' + d.id + '">'
+                + '<span>' + label + '</span></label></li>';
+        }).join('');
+        return ''
+            + '<fieldset class="export-scope-fieldset">'
+            +   '<legend class="export-scope-legend">Was exportieren?</legend>'
+            +   '<ul class="export-scope-list">'
+            +     '<li class="export-scope-item"><label class="export-scope-label">'
+            +       '<input class="export-scope-radio" type="radio" name="exportScope" value="all" checked>'
+            +       '<span>Alle Dokumente (eine ZIP-Datei)</span></label></li>'
+            +     items
+            +   '</ul>'
+            + '</fieldset>';
+    }
+
     // Merkt sich pro Projekt, welche Seiten aufgeklappt sind, damit der Zustand
     // ueber das Neu-Rendern waehrend der Verarbeitung (Polling) hinweg erhalten bleibt.
     let openPages = new Set();
     let openPagesProjectId = null;
+    // Multi-Datei (08.06.2026): zusaetzlich merken wir uns den Auf/Zu-Zustand
+    // der Dokument-<details>, damit ein Anhaengen einer neuen PDF den Stand
+    // der bereits geoeffneten Dokumente nicht zuruecksetzt.
+    let openDocs = new Set();
+    let openDocsProjectId = null;
 
-    function renderImages(images, projectId, showLang) {
+    function renderImages(images, projectId, showLang, documents, project) {
         const list = document.getElementById('imageList');
         if (!images.length) {
             list.innerHTML = '<div class="empty-state"><p>Keine Bilder gefunden.</p></div>';
             return;
         }
         if (projectId !== openPagesProjectId) { openPages = new Set(); openPagesProjectId = projectId; }
+        if (projectId !== openDocsProjectId) { openDocs = new Set(); openDocsProjectId = projectId; }
         const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','strukturformel','dekorativ'];
         const complexTypes = ['diagramm','karte','tabelle','infografik','strukturformel'];
 
@@ -366,13 +444,21 @@
         const esc = s => !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-        // Gruppiere Bilder nach page_number (Web-Projekte: page_number 0/null -> Gruppe 0)
-        const groups = new Map();
+        // Multi-Datei (08.06.2026): Erst nach document_id, dann nach page_number gruppieren.
+        // Bei Web/Grafik-Projekten kommen Bilder ohne document_id -> sammeln unter Key 0.
+        // groupsByDoc: Map(document_id -> Map(page_number -> [images]))
+        const groupsByDoc = new Map();
         for (const img of images) {
-            const key = img.page_number > 0 ? img.page_number : 0;
-            if (!groups.has(key)) groups.set(key, []);
-            groups.get(key).push(img);
+            const docKey = img.document_id || 0;
+            const pageKey = img.page_number > 0 ? img.page_number : 0;
+            if (!groupsByDoc.has(docKey)) groupsByDoc.set(docKey, new Map());
+            const pageMap = groupsByDoc.get(docKey);
+            if (!pageMap.has(pageKey)) pageMap.set(pageKey, []);
+            pageMap.get(pageKey).push(img);
         }
+        // Doc-Reihenfolge: aus documents-Liste; was uebrig bleibt (z.B. Bilder ohne document_id), kommt zum Schluss.
+        const orderedDocs = Array.isArray(documents) ? documents.slice().sort((a, b) => (a.doc_index || 0) - (b.doc_index || 0)) : [];
+        const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf'));
 
         // Eine Image-Card rendern.
         // Karbe-Feintuning (06.06.2026): Die Bedien-Buttons unter dem Alt-Text
@@ -397,14 +483,18 @@
         // Struktur: jede Card ist eine <section> mit eigener <h3>-Ueberschrift
         // ("Bild 1, Seite 2"), sodass ein Screenreader-Nutzer beim Erreichen
         // des Buttons im Kontext der jeweiligen Bild-Sektion ist.
-        const renderCard = img => {
+        // Multi-Datei (08.06.2026): Ueberschriften-Tiefe steuert sich ueber das
+        // Argument 'cardHeadingLevel' — PDF-Projekte gehen Dokument(h2)/Seite(h3)/Bild(h4),
+        // Web/Grafik bleibt bei h3 fuer die Bild-Card (kein Dokument-Wrapper).
+        const renderCard = (img, cardHeadingLevel) => {
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
             const heading = img.page_number > 0
                 ? `Bild ${img.image_index}, Seite ${img.page_number}`
                 : `Bild ${img.image_index}`;
+            const hTag = cardHeadingLevel || 'h3';
             return `
             <section class="image-review" aria-labelledby="img_heading_${img.id}">
-                <h3 id="img_heading_${img.id}" class="image-heading">${heading}</h3>
+                <${hTag} id="img_heading_${img.id}" class="image-heading">${heading}</${hTag}>
                 <div class="image-review-header">
                     <span class="image-meta">${img.width}x${img.height}px</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
@@ -464,10 +554,12 @@
         // Eine Seitengruppe rendern.
         // Web-Projekte (pageNum 0): unveraendert, flache Cards ohne Klappbarkeit.
         // PDF-Seiten: ganze Seite als klappbares <details>, Ueberschrift ist der Schalter.
-        const renderPageGroup = (pageNum, imgs) => {
-            if (pageNum === 0) return imgs.map(renderCard).join('');
+        // Heading-Level (Multi-Datei 08.06.2026): bei PDF h3 Seite + h4 Bild, sonst h3 Bild ohne Seitenwrapper.
+        const renderPageGroup = (pageNum, imgs, pageHeadingLevel, cardHeadingLevel, docKey) => {
+            if (pageNum === 0) return imgs.map(i => renderCard(i, cardHeadingLevel)).join('');
             const first = imgs[0];
-            const isOpen = openPages.has(pageNum) ? ' open' : '';
+            const pageId = `${docKey}_${pageNum}`;
+            const isOpen = openPages.has(pageId) ? ' open' : '';
             const count = imgs.length === 1 ? '1 Bild' : imgs.length + ' Bilder';
             const pageView = first.page_view_path
                 ? `<img src="/api/images/${first.id}/page-view" alt="" class="page-view-image">` : '';
@@ -476,22 +568,69 @@
                     <summary>Seitentext anzeigen</summary>
                     <div class="page-text-content">${esc(first.page_text)}</div>
                 </details>` : '';
+            const pageH = pageHeadingLevel || 'h2';
             return `
-                <details class="page-section" data-page="${pageNum}"${isOpen}>
+                <details class="page-section" data-page="${pageId}"${isOpen}>
                     <summary class="page-summary">
-                        <h2 class="page-heading" id="page_heading_${pageNum}">Seite ${pageNum} <span class="page-count">(${count})</span></h2>
+                        <${pageH} class="page-heading" id="page_heading_${pageId}">Seite ${pageNum} <span class="page-count">(${count})</span></${pageH}>
                     </summary>
                     ${pageView}
                     ${pageTextBlock}
-                    ${imgs.map(renderCard).join('')}
+                    ${imgs.map(i => renderCard(i, cardHeadingLevel)).join('')}
                 </details>`;
         };
 
-        // Render aller Gruppen in Reihenfolge der Seitennummer
-        list.innerHTML = Array.from(groups.entries())
-            .sort((a, b) => a[0] - b[0])
-            .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs))
-            .join('');
+        // Multi-Datei (08.06.2026): bei PDF-Projekten wird jedes Dokument zu einem eigenen
+        // klappbaren Block (h2 in summary). Bei Web/Grafik bleibt die alte flache Struktur.
+        const renderDocBlock = (doc, pageMap) => {
+            const docKey = doc.id || 0;
+            const isOpen = openDocs.size === 0 ? true : openDocs.has(docKey);
+            const totalImgs = Array.from(pageMap.values()).reduce((a, b) => a + b.length, 0);
+            const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)';
+            const labelName = esc(docDisplayName(doc));
+            const pageBlocks = Array.from(pageMap.entries())
+                .sort((a, b) => a[0] - b[0])
+                .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))
+                .join('');
+            return `
+                <details class="doc-section" data-doc="${docKey}"${isOpen ? ' open' : ''}>
+                    <summary class="doc-summary">
+                        <h2 class="doc-heading" id="doc_heading_${docKey}">Dokument ${doc.doc_index || 1}: ${labelName} <span class="page-count">(${totalImgs} ${totalImgs === 1 ? 'Bild' : 'Bilder'}, ${ext})</span></h2>
+                    </summary>
+                    ${pageBlocks}
+                </details>`;
+        };
+
+        let html;
+        if (isPdfProject && orderedDocs.length > 0) {
+            // PDF-Projekt mit Dokument-Ebene
+            html = orderedDocs.map(doc => {
+                const pageMap = groupsByDoc.get(doc.id) || new Map();
+                return renderDocBlock(doc, pageMap);
+            }).join('');
+            // Reste (Bilder ohne document_id, sollte nach Migration nicht vorkommen) -> ans Ende
+            const leftover = groupsByDoc.get(0);
+            if (leftover && leftover.size) {
+                html += Array.from(leftover.entries())
+                    .sort((a, b) => a[0] - b[0])
+                    .map(([pn, imgs]) => renderPageGroup(pn, imgs, 'h3', 'h4', 'leftover')).join('');
+            }
+        } else {
+            // Web/Grafik oder PDF ohne Dokument-Eintraege: flache Seiten-Liste wie bisher.
+            // Reduziere alle pageMaps in eine einzige (es gibt nur Schluessel 0 oder genau eine Doc).
+            const merged = new Map();
+            for (const pageMap of groupsByDoc.values()) {
+                for (const [pn, imgs] of pageMap.entries()) {
+                    if (!merged.has(pn)) merged.set(pn, []);
+                    merged.get(pn).push(...imgs);
+                }
+            }
+            html = Array.from(merged.entries())
+                .sort((a, b) => a[0] - b[0])
+                .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h2', 'h3', 'flat'))
+                .join('');
+        }
+        list.innerHTML = html;
 
         // Auto-save alt-text on edit
         document.querySelectorAll('.alt-text-field:not(.langtext-field)').forEach(ta => {
@@ -511,11 +650,24 @@
             });
         });
 
-        // Offen/Zu-Zustand der Seiten merken (ueberlebt Neu-Rendern beim Polling)
+        // Offen/Zu-Zustand der Seiten merken (ueberlebt Neu-Rendern beim Polling).
+        // Multi-Datei (08.06.2026): page-Key ist jetzt "docKey_pageNum" als String,
+        // weil Seitenzahlen ueber Dokumente hinweg gleich sein koennen.
         document.querySelectorAll('details.page-section').forEach(d => {
             d.addEventListener('toggle', () => {
-                const p = Number(d.dataset.page);
+                const p = d.dataset.page;
                 if (d.open) openPages.add(p); else openPages.delete(p);
+            });
+        });
+        // Multi-Datei: Dokument-Auf/Zu merken — beim Anhaengen einer neuen PDF
+        // soll der bisherige Stand der geoeffneten Dokumente erhalten bleiben.
+        document.querySelectorAll('details.doc-section').forEach(d => {
+            const k = Number(d.dataset.doc);
+            // Initial-Snapshot: aktuell offene Docs eintragen, damit Folge-Renderings
+            // den Zustand beibehalten.
+            if (d.open) openDocs.add(k);
+            d.addEventListener('toggle', () => {
+                if (d.open) openDocs.add(k); else openDocs.delete(k);
             });
         });
     }
@@ -663,17 +815,26 @@
     }
 
     // ─── Export ──────────────────────────────────────
-    function openExportPanel(projectId, filename) {
+    // Multi-Datei (08.06.2026):
+    //  - Export-Panel hat Radio-Auswahl: "Alle Dokumente" (Default, ZIP) oder eines konkret (Einzeldatei).
+    //  - Dateiname ist optional. Leer = Standardname (basierend auf Doc bzw. Projekt) auf Server-Seite.
+    //  - Fuer Web/Grafik-Projekte (kein documents-Block gerendert) verhaelt sich der Export wie bisher.
+    function openExportPanel(projectId) {
         const panel = document.getElementById('exportPanel');
         const btn = document.getElementById('exportOpenBtn');
         const input = document.getElementById('exportFilename');
-        if (panel && input) {
-            input.value = filename.replace(/\.[^.]+$/, '');
+        if (panel) {
             panel.style.display = 'block';
             if (btn) btn.style.display = 'none';
-            input.focus();
-            input.select();
-            announce('Export-Optionen geoeffnet. Dateiname kann geaendert werden.');
+            if (input) {
+                input.value = '';
+                input.focus();
+            } else {
+                // Single-Doc oder Web/Grafik: kein Filename-Input vorhanden? Fokus auf erste Schaltflaeche.
+                const first = panel.querySelector('button');
+                if (first) first.focus();
+            }
+            announce('Export-Optionen geoeffnet.');
         }
     }
 
@@ -685,14 +846,23 @@
         if (!silent) announce('Export abgebrochen.');
     }
 
+    function readExportScope() {
+        // Liefert { document_id?: number, all: boolean }
+        // - "all" -> alle Dokumente (Server liefert ZIP, ausser bei nur einem Dokument)
+        // - "doc:<id>" -> nur dieses Dokument (Einzeldatei)
+        const chosen = document.querySelector('input[name="exportScope"]:checked');
+        if (!chosen) return { all: true };
+        if (chosen.value === 'all') return { all: true };
+        const m = /^doc:(\d+)$/.exec(chosen.value);
+        if (m) return { all: false, document_id: Number(m[1]) };
+        return { all: true };
+    }
+
     async function doExport(projectId, format) {
         const filenameInput = document.getElementById('exportFilename');
         const statusEl = document.getElementById('exportStatus');
-        let baseName = filenameInput ? filenameInput.value.trim() : 'export';
-        baseName = baseName.replace(/\.[^.]+$/, '');
-
-        const ext = format === 'pdf' ? '.pdf' : format === 'xlsx' ? '.xlsx' : format === 'csv' ? '.csv' : '.json';
-        const filename = baseName + ext;
+        const scope = readExportScope();
+        const customName = (filenameInput ? filenameInput.value.trim() : '') || '';
 
         if (statusEl) statusEl.textContent = 'Wird exportiert...';
         announce(format.toUpperCase() + ' wird exportiert...');
@@ -701,11 +871,27 @@
             const url = format === 'pdf'
                 ? '/api/projects/' + projectId + '/export'
                 : '/api/projects/' + projectId + '/export/' + format;
-            const res = await fetch(url, { method: 'POST' });
+            const body = {};
+            if (!scope.all && scope.document_id) body.document_id = scope.document_id;
+            if (customName) body.filename = customName;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
             if (res.ok) {
                 const blob = await res.blob();
-                downloadBlob(blob, filename);
-                announce(filename + ' wurde heruntergeladen.');
+                // Dateiname aus Content-Disposition lesen, sonst Fallback aus Eingabe + Format.
+                const cd = res.headers.get('Content-Disposition') || '';
+                let serverName = null;
+                const m = /filename\*?=(?:UTF-8'')?\"?([^\";]+)\"?/i.exec(cd);
+                if (m) {
+                    try { serverName = decodeURIComponent(m[1]); } catch (e) { serverName = m[1]; }
+                }
+                const ext = format === 'pdf' ? '.pdf' : format === 'xlsx' ? '.xlsx' : format === 'csv' ? '.csv' : '.json';
+                const fallback = (customName || 'export') + (scope.all ? '_alle' : '') + ext;
+                downloadBlob(blob, serverName || fallback);
+                announce((serverName || fallback) + ' wurde heruntergeladen.');
                 closeExportPanel(true);
             } else {
                 if (statusEl) statusEl.textContent = 'Fehler beim Export.';

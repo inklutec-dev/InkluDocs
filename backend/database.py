@@ -157,6 +157,24 @@ def init_db():
 
         CREATE INDEX IF NOT EXISTS idx_chat_messages_project_id
             ON chat_messages(project_id, created_at);
+
+        -- Multi-Datei Phase 1 (08.06.2026): Dokument-Ebene zwischen Projekt und Bild.
+        -- Jede hochgeladene PDF wird zu einem Dokument. So koennen mehrere PDFs in
+        -- einem Projekt liegen, ohne dass sich Seitenzahlen ueberschneiden — die
+        -- Spalte document_id an images traegt die Aufloesung.
+        CREATE TABLE IF NOT EXISTS documents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            doc_index INTEGER NOT NULL,
+            original_filename TEXT NOT NULL,
+            display_name TEXT,
+            original_path TEXT NOT NULL DEFAULT '',
+            extraction_method TEXT DEFAULT 'fitz',
+            total_images INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_documents_project ON documents(project_id, doc_index);
     """)
     conn.commit()
 
@@ -201,6 +219,11 @@ def _migrate_columns(conn):
         # Dashboard (02.06.2026): freier Projektname + Werkzeug-Zuordnung
         ("projects", "name", "ALTER TABLE projects ADD COLUMN name TEXT DEFAULT ''"),
         ("projects", "tool", "ALTER TABLE projects ADD COLUMN tool TEXT DEFAULT 'alttext'"),
+        # Multi-Datei Phase 1 (08.06.2026): Bild -> Dokument-Zuordnung.
+        # NULL-Wert beim ersten Lesen ist normal — der Backfill weiter unten
+        # legt fuer bestehende PDF-Projekte je ein Dokument 1 an und setzt
+        # die Spalte. Neue Uploads tragen den Wert direkt beim INSERT.
+        ("images", "document_id", "ALTER TABLE images ADD COLUMN document_id INTEGER"),
     ]
 
     for table, column, sql in migrations:
@@ -228,6 +251,36 @@ def _migrate_columns(conn):
         conn.execute("UPDATE projects SET tool='grafik' WHERE tool='alttext' AND project_type='images'")
     except Exception as e:
         print(f"Migration warning (tool backfill): {e}")
+
+    # Multi-Datei Phase 1 (08.06.2026): Bestehende PDF-Projekte bekommen ihr bisheriges
+    # PDF als Dokument 1. Idempotent: nur PDF-Projekte ohne documents-Eintrag.
+    # Hintergrund: Vor diesem Branch hatte jedes PDF-Projekt genau eine Datei; die
+    # Dokument-Ebene macht das pro Projekt mehrfach moeglich. Damit Single-PDF-Projekte
+    # unveraendert funktionieren, schlagen wir hier den Altbestand auf Dokument 1 um.
+    try:
+        rows = conn.execute(
+            """SELECT id, filename, original_path, extraction_method, total_images
+               FROM projects
+               WHERE (project_type = 'pdf' OR tool = 'pdf')
+                 AND id NOT IN (SELECT project_id FROM documents)
+                 AND filename IS NOT NULL AND filename != ''"""
+        ).fetchall()
+        for r in rows:
+            cur = conn.execute(
+                """INSERT INTO documents
+                   (project_id, doc_index, original_filename, original_path,
+                    extraction_method, total_images)
+                   VALUES (?, 1, ?, ?, ?, ?)""",
+                (r["id"], r["filename"], r["original_path"] or "",
+                 r["extraction_method"] or "fitz", r["total_images"] or 0)
+            )
+            doc_id = cur.lastrowid
+            conn.execute(
+                "UPDATE images SET document_id = ? WHERE project_id = ? AND document_id IS NULL",
+                (doc_id, r["id"])
+            )
+    except Exception as e:
+        print(f"Migration warning (documents backfill): {e}")
 
     conn.commit()
 
@@ -335,6 +388,8 @@ def delete_user_data(user_id: int):
     projects = conn.execute("SELECT id FROM projects WHERE user_id = ?", (user_id,)).fetchall()
     for p in projects:
         conn.execute("DELETE FROM images WHERE project_id = ?", (p["id"],))
+        # Multi-Datei (08.06.2026): Dokumente eines Projekts mit aufraeumen.
+        conn.execute("DELETE FROM documents WHERE project_id = ?", (p["id"],))
     conn.execute("DELETE FROM projects WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM api_keys WHERE user_id = ?", (user_id,))

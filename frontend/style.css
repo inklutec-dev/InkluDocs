@@ -409,6 +409,91 @@ input[type="file"] {
     margin: 0 0 0.5rem 0;
     color: var(--text, #1a1a1a);
 }
+/* Multi-Datei Phase 1 (08.06.2026): Export-Auswahl als barrierefreie Radio-Liste.
+   WCAG 2.2 AA target-size verlangt 24x24px pro interaktivem Element — Default-
+   Browser-Radios bringen nur 13x13. Wir vergroessern sie hier ohne die
+   visuelle Anordnung zu verbiegen und legen genug Abstand zwischen die
+   Eintraege, damit die "safe clickable area" zwischen Nachbarn ebenfalls
+   ueber 24px bleibt. */
+.export-scope-fieldset {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    margin: 0 0 0.8rem 0;
+}
+.export-scope-legend {
+    font-weight: 600;
+    padding: 0 0.3rem;
+}
+.export-scope-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.export-scope-item {
+    margin: 0;
+}
+.export-scope-label {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    cursor: pointer;
+    /* min-height haelt zusammen mit dem groesseren Radio die 24-px-Marke
+       sicher ein und sorgt fuer Touch-freundlichen Tastatur-/Maus-Treffer. */
+    min-height: 32px;
+    padding: 0.25rem 0.2rem;
+}
+.export-scope-label:focus-within {
+    outline: 2px solid var(--focus, #e87722);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+.export-scope-radio {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    /* native Radio-Erscheinung erhalten — wir vergroessern nur das Target. */
+    margin: 0;
+}
+
+/* Multi-Datei Phase 1 (08.06.2026): Dokument-Ebene zwischen Projekt und Seite.
+   Jede hochgeladene PDF wird zu einem aufklappbaren Dokument-Block. Der Block
+   nutzt die gleiche Aesthetik wie page-section, aber mit etwas mehr Gewicht
+   (kraeftigere Akzentleiste) und einem groesseren Innenabstand fuer die
+   Seitenliste, damit die Hierarchie auch optisch klar ist. */
+.doc-section {
+    max-width: 820px;
+    margin: 1.75rem auto 0.75rem auto;
+}
+.doc-section > summary {
+    cursor: pointer;
+    padding: 0.85rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-left: 6px solid var(--accent, #e87722);
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+}
+.doc-section[open] > summary {
+    border-radius: 10px 10px 0 0;
+}
+.doc-section > summary:focus-visible {
+    outline: 2px solid var(--focus, #e87722);
+    outline-offset: 2px;
+}
+.doc-heading {
+    display: inline;
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--text, #1a1a1a);
+}
+.doc-section .page-section {
+    /* Seiten innerhalb eines Dokuments leicht eingerueckt, damit die
+       Verschachtelung Dokument > Seite > Bild auch visuell erkennbar wird. */
+    margin-left: 0.5rem;
+    max-width: 800px;
+}
+
 /* Seitengruppe: ganze Seite als klappbares <details>, Ueberschrift ist der Schalter */
 .page-section {
     max-width: 800px;
