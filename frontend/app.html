@@ -201,33 +201,41 @@
 
     // Status-Badge im Projekt-Kopf.
     // Steve-Entscheidung 07.06.2026: Der Badge soll auch bei reiner Einzel-
-    // bild-Generierung mitlaufen — er reflektiert nicht nur project.status
-    // (das bleibt bei Einzel-Klicks auf 'extracted'), sondern den realen
-    // Fortschritt (processed_images / total_images).
-    //  - keine Bilder verarbeitet  → "Bereit zur Verarbeitung" (badge-ready)
-    //  - laufender Sammel-Lauf      → "Alt-Texte werden generiert..." (badge-processing)
-    //  - teilweise verarbeitet      → "Teilweise verarbeitet" (badge-ready)
-    //  - alle verarbeitet           → "Fertig" (badge-done)
-    function computeStatusBadge(project) {
+    // bild-Generierung mitlaufen — er reflektiert nicht nur project.status,
+    // sondern den realen Fortschritt aus den Bild-Status.
+    // Erweiterung 08.06.2026 (Steve, regenerate-Bug-Fix): Fehler werden separat
+    // ausgewiesen, "Fertig" nur bei 100% Erfolg. Wenn alle versucht wurden und
+    // es Fehler gab: "Fertig (mit Fehlern)" — der Sonderfall, dass das Projekt
+    // technisch abgeschlossen ist, aber nicht jedes Bild einen Alt-Text hat.
+    function countByStatus(images, st) {
+        return (images || []).filter(i => i.status === st).length;
+    }
+    function computeStatusBadge(project, images) {
         const total = project.total_images || 0;
-        const done = project.processed_images || 0;
+        const done = countByStatus(images, 'done');
+        const failed = countByStatus(images, 'error');
+        const tried = done + failed;
         if (project.status === 'processing') return { label: 'Alt-Texte werden generiert...', cls: 'badge-processing' };
-        if (project.status === 'error') return { label: 'Fehler', cls: 'badge-ready' };
         if (project.status === 'neu') return { label: 'Neu', cls: 'badge-ready' };
         if (total > 0 && done >= total) return { label: 'Fertig', cls: 'badge-done' };
-        if (done > 0) return { label: 'Teilweise verarbeitet', cls: 'badge-ready' };
+        if (total > 0 && tried >= total && failed > 0) return { label: 'Fertig (mit Fehlern)', cls: 'badge-ready' };
+        if (tried > 0) return { label: 'Teilweise verarbeitet', cls: 'badge-ready' };
         return { label: 'Bereit zur Verarbeitung', cls: 'badge-ready' };
     }
 
     // "X von Y Bildern generiert | Extraktion: …" — Steve-Wunsch 07.06.2026.
     // Bei leerem Projekt (kein PDF hochgeladen, total_images === 0) zeigen
     // wir nur den Extraktions-Hinweis bzw. nichts, statt "0 von 0 Bildern".
-    function formatProjectHeadInfo(project, extractionText) {
+    // Erweiterung 08.06.2026: Bei Fehlern wird ", Z Fehler" angehaengt, damit
+    // klar ist, warum der Generiert-Zaehler nicht aufs Total kommt.
+    function formatProjectHeadInfo(project, extractionText, images) {
         const total = project.total_images || 0;
-        const done = project.processed_images || 0;
+        const done = countByStatus(images, 'done');
+        const failed = countByStatus(images, 'error');
         const ext = extractionText ? ' | Extraktion: ' + extractionText : '';
         if (total === 0) return ext ? ext.replace(/^ \| /, '') : '';
-        return `${done} von ${total} Bildern generiert${ext}`;
+        const errPart = failed > 0 ? (', ' + failed + (failed === 1 ? ' Fehler' : ' Fehler')) : '';
+        return `${done} von ${total} Bildern generiert${errPart}${ext}`;
     }
 
     // Aktualisiert nur den Projekt-Kopf (Badge + Zaehl-Info) anhand der
@@ -241,11 +249,12 @@
             if (!res.ok) return;
             const data = await res.json();
             const project = data.project;
+            const images = data.images || [];
             const extractionText = (project.project_type === 'pdf')
                 ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
                 : null;
-            const badge = computeStatusBadge(project);
-            const headInfo = formatProjectHeadInfo(project, extractionText);
+            const badge = computeStatusBadge(project, images);
+            const headInfo = formatProjectHeadInfo(project, extractionText, images);
             const badgeEl = document.getElementById('projectStatusBadge');
             const infoEl = document.getElementById('projectHeadInfo');
             if (badgeEl) {
@@ -270,8 +279,8 @@
         const extractionText = (project.project_type === 'pdf')
             ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
             : null;
-        const badge = computeStatusBadge(project);
-        const headInfo = formatProjectHeadInfo(project, extractionText);
+        const badge = computeStatusBadge(project, images);
+        const headInfo = formatProjectHeadInfo(project, extractionText, images);
 
         main.innerHTML = `
             <div class="card">
@@ -377,6 +386,10 @@
         // Folge-Feintuning (06.06.2026): Button-Beschriftung einheitlich auf
         // "Generieren" (kein "neu") — sowohl fuer erstmalig erzeugte als auch
         // fuer ueberschriebene Alt-Texte konsistent.
+        // 08.06.2026 (Steve, regenerate-Bug-Fix): Bei img.status === 'error' bleibt
+        // der Button auf "Generieren" / data-status='pending'. Ein erneuter Klick
+        // gilt als Erstversuch (Live-Region "Alt-Text wird generiert", nicht "neu"),
+        // weil das vorherige Bild ja keinen Alt-Text geliefert hat.
         // Barrierefreiheit (Steve, ausdruecklicher Wunsch): Der vom Screen-
         // reader vorgelesene Button-Name muss EXAKT dem sichtbaren Text
         // entsprechen — also bewusst KEIN abweichendes aria-label wie
@@ -397,7 +410,12 @@
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
                     ${img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Konfidenz: ' + img.konfidenz + '</span>' : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
+                    ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Fehler</span>' : ''}
                 </div>
+                ${img.status === 'error' ? `
+                    <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
+                        Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.
+                    </p>` : ''}
                 <img src="/api/images/${img.id}/file" alt="Extrahiertes Bild${img.page_number > 0 ? ' von Seite ' + img.page_number : ''}" class="image-preview" loading="lazy">
                 <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
                     Alt-Text
@@ -435,6 +453,7 @@
                             ${imageTypes.map(t => '<option value="' + t + '"' + (img.image_type === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('')}
                         </select>
                         <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}" data-status="${img.status === 'done' ? 'done' : 'pending'}">${img.status === 'done' ? 'Neu generieren' : 'Generieren'}</button>
+
                         ${showLang && complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">Langbeschreibung (optional)</button>' : ''}
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>

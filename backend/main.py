@@ -1657,10 +1657,12 @@ async def _process_project(project_id: int, user_id: int):
         (project_id,)
     ).fetchall()
 
-    # Bereits verarbeitete Bilder mitzaehlen (z.B. nach Anhaengen weiterer
-    # Dateien + erneutem Generieren), sonst wuerde processed_images zurueckgesetzt.
+    # processed_images zaehlt nur echte Erfolge (Steve 08.06.2026 — siehe
+    # auch regenerate_image). Fehler werden separat ueber den Bild-Status
+    # 'error' sichtbar, blaehen aber nicht den "X von Y Bildern generiert"-
+    # Zaehler im UI-Kopf auf.
     processed = conn.execute(
-        "SELECT COUNT(*) FROM images WHERE project_id = ? AND status IN ('done', 'error')",
+        "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
         (project_id,)
     ).fetchone()[0]
     # PDF-Schalter (pdf_langbeschreibung_enabled): bei PDF + Schalter aus den zweiten KI-Pass
@@ -1713,6 +1715,9 @@ async def _process_project(project_id: int, user_id: int):
                  result.get("validation_result", ""),
                  img["id"])
             )
+            # Nur bei Erfolg den Zaehler hochziehen — Fehler werden separat
+            # als status='error' an der Bild-Karte sichtbar.
+            processed += 1
         except Exception as e:
             import traceback
             print(f"Fehler bei Bild {img['id']} ({img['image_path']}): {e}")
@@ -1720,7 +1725,6 @@ async def _process_project(project_id: int, user_id: int):
             conn.execute("UPDATE images SET status = 'error', alt_text = ? WHERE id = ?",
                          (f"Fehler bei der Analyse: {str(e)[:200]}", img["id"]))
 
-        processed += 1
         conn.execute(
             "UPDATE projects SET processed_images = ? WHERE id = ?",
             (processed, project_id)
@@ -1918,12 +1922,12 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
              result.get("validation_result", ""),
              image_id)
         )
-        # processed_images aus dem realen Bild-Status ableiten (Steve 07.06.2026):
-        # damit Einzelbild-Generierung den Projekt-Zaehler genauso pflegt wie der
-        # Sammel-Lauf. Wiederholtes Re-Generieren eines bereits 'done' Bildes erhoeht
-        # den Zaehler nicht weiter — ein Bild zaehlt nur einmal.
+        # processed_images zaehlt nur ECHTE Erfolge (Steve 08.06.2026):
+        # damit "X von Y Bildern generiert" im UI-Kopf nicht mit Fehlern
+        # aufgeblaeht wird. Fehler werden separat ueber die Bild-Karten
+        # sichtbar (status='error').
         processed_count = conn.execute(
-            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status IN ('done', 'error')",
+            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
             (project_id,)
         ).fetchone()[0]
         conn.execute(
@@ -1941,7 +1945,20 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
             "langbeschreibung": langbeschreibung,
         }
     except Exception as e:
-        conn.execute("UPDATE images SET status = 'done' WHERE id = ?", (image_id,))
+        # Fehlerpfad: Bild ehrlich als Fehler markieren (Steve 08.06.2026).
+        # Vorher wurde status='done' gesetzt — das hat die Bild-Karte als
+        # erfolgreich generiert ausgewiesen, obwohl gar nichts produziert
+        # wurde. Jetzt 'error' + Pflege von processed_images (nur Erfolge),
+        # damit der UI-Zaehler korrekt bleibt.
+        conn.execute("UPDATE images SET status = 'error' WHERE id = ?", (image_id,))
+        processed_count = conn.execute(
+            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
+            (project_id,)
+        ).fetchone()[0]
+        conn.execute(
+            "UPDATE projects SET processed_images = ? WHERE id = ?",
+            (processed_count, project_id)
+        )
         conn.commit()
         conn.close()
         raise HTTPException(status_code=500, detail=f"Fehler bei der Neugenerierung: {str(e)}")
