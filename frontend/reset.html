@@ -37,7 +37,7 @@
         const token = new URLSearchParams(window.location.search).get('token');
 
         if (!token) {
-            errorMsg.textContent = 'Ungueltiger Reset-Link. Bitte fordern Sie einen neuen an.';
+            errorMsg.textContent = 'Ungültiger Reset-Link. Bitte fordern Sie einen neuen an.';
             form.querySelector('button').disabled = true;
         }
 
@@ -54,7 +54,7 @@
                 return;
             }
             if (password !== password2) {
-                errorMsg.textContent = 'Passwoerter stimmen nicht ueberein.';
+                errorMsg.textContent = 'Passwörter stimmen nicht überein.';
                 return;
             }
             try {
@@ -65,7 +65,7 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    successMsg.textContent = 'Passwort wurde zurueckgesetzt. Sie werden weitergeleitet...';
+                    successMsg.textContent = 'Passwort wurde zurückgesetzt. Sie werden weitergeleitet...';
                     form.querySelector('button').disabled = true;
                     setTimeout(() => { window.location.href = '/'; }, 2000);
                 } else {

@@ -287,7 +287,10 @@ async def login(request: Request):
 
     # Check email verification
     if not user.get("email_verified", 1):
-        raise HTTPException(status_code=403, detail="E-Mail-Adresse noch nicht bestaetigt. Bitte pruefen Sie Ihr Postfach oder fordern Sie einen neuen Bestaetigungslink an.")
+        # Steve 08.06.2026: echte Umlaute auch im Backend-Detail-String. Das Frontend
+        # erkennt den Fehlerpfad ueber msg.includes('nicht bestätigt') — bleibt damit
+        # synchron mit der Umlaut-Umstellung in frontend/index.html und backend/templates/index.html.
+        raise HTTPException(status_code=403, detail="E-Mail-Adresse noch nicht bestätigt. Bitte prüfen Sie Ihr Postfach oder fordern Sie einen neuen Bestätigungslink an.")
 
     # Update last_login
     conn = get_db()
@@ -377,11 +380,11 @@ async def register(request: Request):
 <p><strong>Name:</strong> {display_name}</p>
 <p><strong>E-Mail:</strong> {email}</p>
 <p><strong>Zeitpunkt:</strong> {datetime.utcnow().strftime("%d.%m.%Y %H:%M")} UTC</p>
-<p style="color:#64748b;font-size:0.9rem;">Die E-Mail-Adresse wurde noch nicht bestaetigt.</p>
+<p style="color:#64748b;font-size:0.9rem;">Die E-Mail-Adresse wurde noch nicht bestätigt.</p>
 </body></html>"""
     send_email(NOTIFICATION_EMAIL, "InkluDocs: Neue Registrierung", admin_body, bcc_admin=False)
 
-    return JSONResponse({"ok": True, "message": "Bestaetigungslink wurde gesendet. Bitte pruefen Sie Ihr Postfach."})
+    return JSONResponse({"ok": True, "message": "Bestätigungslink wurde gesendet. Bitte prüfen Sie Ihr Postfach."})
 
 
 @app.post("/api/logout")
@@ -3274,6 +3277,23 @@ async def datensicherheit_page(request: Request):
     # damit die Sidebar beim Aufruf sichtbar bleibt. Der Inhalt wird im
     # Frontend per fetch aus /datenschutz (Single Source) geladen.
     return _serve_protected_page(request, "datensicherheit.html")
+
+
+@app.get("/impressum-app", response_class=HTMLResponse)
+async def impressum_app_page(request: Request):
+    # Steve 08.06.2026: In-App-Sicht des Impressums (Schwester zu /datensicherheit).
+    # Wird vom Footer der eingeloggten App-Bereiche statt /impressum verlinkt, damit
+    # Dashboard/Sidebar beim Klick sichtbar bleiben. Inhalt kommt per fetch aus
+    # /impressum (Single Source — keine Doppelpflege).
+    return _serve_protected_page(request, "impressum-app.html")
+
+
+@app.get("/nutzungsbedingungen-app", response_class=HTMLResponse)
+async def nutzungsbedingungen_app_page(request: Request):
+    # Steve 08.06.2026: In-App-Sicht der Nutzungsbedingungen. Gleiches Muster
+    # wie /datensicherheit und /impressum-app. Inhalt aus /nutzungsbedingungen
+    # per fetch geladen.
+    return _serve_protected_page(request, "nutzungsbedingungen-app.html")
 
 
 @app.get("/app", response_class=HTMLResponse)

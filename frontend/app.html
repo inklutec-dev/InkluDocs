@@ -20,9 +20,13 @@
             <p class="dsgvo-note"><strong>DSGVO-konform – Verarbeitung in der EU.</strong> Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.</p>
         </div>
         <div style="margin-top:0.75rem;">
-            <a href="/impressum">Impressum</a> |
-            <a href="/datenschutz">Datenschutz</a> |
-            <a href="/nutzungsbedingungen">Nutzungsbedingungen</a>
+            <!-- Steve 08.06.2026: aus der App heraus werden die rechtlichen Seiten in
+                 der In-App-Sicht (Dashboard-Rahmen sichtbar) aufgerufen. Die public
+                 Standalone-Seiten bleiben unter /impressum, /datenschutz und
+                 /nutzungsbedingungen fuer externe/rechtliche Verweise erreichbar. -->
+            <a href="/impressum-app">Impressum</a> |
+            <a href="/datensicherheit">Datenschutz</a> |
+            <a href="/nutzungsbedingungen-app">Nutzungsbedingungen</a>
         </div>
     </footer>
       </div>
@@ -54,7 +58,7 @@
         if (_pid) { showProject(_pid); } else { window.location.href = '/dashboard'; }
     }
 
-    // Abmelden / Benutzerverwaltung / Einstellungen laufen jetzt ueber die gemeinsame Sidebar (dashboard.js).
+    // Abmelden / Benutzerverwaltung / Einstellungen laufen jetzt über die gemeinsame Sidebar (dashboard.js).
 
 
 
@@ -63,8 +67,8 @@
 
     // ─── Project Detail ──────────────────────────────
     // Macht den Upload-Bereich zur Drag-&-Drop-Zone. Wird nach jedem showProject-Render
-    // aufgerufen. Der Datei-Button (#projUpload) bleibt der primaere, barrierefreie Weg;
-    // Drag & Drop ist eine Ergaenzung fuer sehende Nutzer und nutzt denselben Upload-Kern.
+    // aufgerufen. Der Datei-Button (#projUpload) bleibt der primäre, barrierefreie Weg;
+    // Drag & Drop ist eine Ergänzung für sehende Nutzer und nutzt denselben Upload-Kern.
     function setupProjectDropzone(projectId) {
         const zone = document.getElementById('projUploadZone');
         if (!zone) return;
@@ -76,7 +80,7 @@
         }));
         zone.addEventListener('dragleave', (e) => {
             stop(e);
-            // .drag-over nur entfernen, wenn der Zeiger die Zone wirklich verlaesst.
+            // .drag-over nur entfernen, wenn der Zeiger die Zone wirklich verlässt.
             if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
         });
         zone.addEventListener('drop', (e) => {
@@ -93,37 +97,37 @@
     function uploadBlockHtml(project) {
         const tool = project.tool;
         if (tool === 'pdf') {
-            // Multi-Datei Phase 1 (08.06.2026, Steve): PDF hinzufuegen-Knopf bleibt
+            // Multi-Datei Phase 1 (08.06.2026, Steve): PDF hinzufügen-Knopf bleibt
             // immer sichtbar — analog zum URL-Feld beim Web-Werkzeug. Damit kann der
-            // Nutzer jederzeit eine weitere PDF an das Projekt anhaengen; jede PDF
+            // Nutzer jederzeit eine weitere PDF an das Projekt anhängen; jede PDF
             // wird zu einem eigenen Dokument unten in der Liste.
             const hasExisting = project.total_images > 0;
-            const heading = hasExisting ? 'Weitere PDF hinzufuegen' : 'PDF hinzufuegen';
+            const heading = hasExisting ? 'Weitere PDF hinzufügen' : 'PDF hinzufügen';
             const hint = hasExisting
-                ? 'Du kannst jederzeit eine weitere PDF anhaengen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unveraendert.'
-                : 'Waehle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.';
+                ? 'Du kannst jederzeit eine weitere PDF anhängen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unverändert.'
+                : 'Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.';
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
-                + '<label for="projUpload" class="sr-only">PDF-Datei auswaehlen</label>'
+                + '<label for="projUpload" class="sr-only">PDF-Datei auswählen</label>'
                 + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
                 + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'grafik') {
-            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Bilder hinzufuegen</h2>'
-                + '<label for="projUpload" class="sr-only">Bilddateien auswaehlen</label>'
+            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Bilder hinzufügen</h2>'
+                + '<label for="projUpload" class="sr-only">Bilddateien auswählen</label>'
                 + '<input type="file" id="projUpload" accept=".jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
-                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">Du kannst mehrere Bilder auswaehlen oder hierher ziehen und jederzeit weitere hinzufuegen.</p>'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen.</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'web') {
             // Webseiten-Werkzeug: ein dauerhaft sichtbares URL-Feld. Nach jedem Scan werden die
-            // Bilder der Seite unten angehaengt; mehrere Seiten koennen nacheinander gescannt werden.
-            // Bewusst KEINE proj-dropzone/projUploadZone (Drag&Drop ist nur fuer Dateien sinnvoll).
+            // Bilder der Seite unten angehängt; mehrere Seiten können nacheinander gescannt werden.
+            // Bewusst KEINE proj-dropzone/projUploadZone (Drag&Drop ist nur für Dateien sinnvoll).
             // a11y: sichtbares Label + mitgelesener Hilfetext statt Placeholder (VoiceOver).
-            return '<section class="card" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Webseite hinzufuegen</h2>'
+            return '<section class="card" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Webseite hinzufügen</h2>'
                 + '<label for="projScanUrl" style="display:block;font-weight:600;margin-bottom:0.3rem;">Adresse der Webseite</label>'
                 + '<input type="url" id="projScanUrl" aria-describedby="projScanHint" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;">'
-                + '<p id="projScanHint" style="color:var(--text-muted);margin-top:0.4rem;">z. B. www.beispiel.de oder https://www.beispiel.de \u2013 die Bilder dieser Seite werden geladen. Du kannst danach weitere Seiten hinzufuegen.</p>'
+                + '<p id="projScanHint" style="color:var(--text-muted);margin-top:0.4rem;">z. B. www.beispiel.de oder https://www.beispiel.de \u2013 die Bilder dieser Seite werden geladen. Du kannst danach weitere Seiten hinzufügen.</p>'
                 + '<button class="btn btn-primary" id="projScanBtn" style="margin-top:0.6rem;" onclick="scanInProject(' + project.id + ')">Seite scannen</button>'
                 + '<p id="projScanStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
@@ -135,10 +139,10 @@
         await uploadFilesToProject(e.target.files, projectId);
     }
 
-    // Webseiten-Werkzeug: scannt die eingegebene Adresse in DIESES Projekt (haengt Bilder an).
+    // Webseiten-Werkzeug: scannt die eingegebene Adresse in DIESES Projekt (hängt Bilder an).
     // Spiegelt das Verhalten des Datei-Uploads: Button sperren, Status melden, danach Projekt
-    // neu rendern und Fokus auf die Bilder-Ueberschrift. Das Feld leert sich nach Erfolg, damit
-    // direkt die naechste Seite gescannt werden kann.
+    // neu rendern und Fokus auf die Bilder-Überschrift. Das Feld leert sich nach Erfolg, damit
+    // direkt die nächste Seite gescannt werden kann.
     async function scanInProject(projectId) {
         const input = document.getElementById('projScanUrl');
         const btn = document.getElementById('projScanBtn');
@@ -159,7 +163,7 @@
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.detail || 'Die Seite konnte nicht gescannt werden.');
-            if (input) input.value = '';  // Feld leeren fuer die naechste Seite
+            if (input) input.value = '';  // Feld leeren für die nächste Seite
             announce((data.added || 0) + ' Bilder von der Seite geladen.');
             await showProject(projectId);
             const h = document.getElementById('bilderHeading');
@@ -170,7 +174,7 @@
         }
     }
 
-    // Gemeinsamer Upload-Kern fuer Datei-Button UND Drag & Drop (eine Logik, keine Doppelung).
+    // Gemeinsamer Upload-Kern für Datei-Button UND Drag & Drop (eine Logik, keine Doppelung).
     // Erwartet eine FileList/Array von Dateien und die Ziel-Projekt-ID.
     async function uploadFilesToProject(files, projectId) {
         if (!files || files.length === 0) return;
@@ -191,7 +195,7 @@
                     return;
                 }
                 if (i === files.length - 1) {
-                    // Multi-Datei (08.06.2026): Beim Anhaengen einer weiteren PDF auch
+                    // Multi-Datei (08.06.2026): Beim Anhängen einer weiteren PDF auch
                     // den Doc-Stand mit ansagen, damit Screenreader-Nutzer Bescheid wissen,
                     // dass ein neues Dokument unten angelegt wurde.
                     if (data.appended && data.doc_index) {
@@ -200,7 +204,7 @@
                         announce(data.total_images + ' Bilder im Projekt.');
                     }
                     // Fokus beim Append auf das neue Dokument legen (sofern vorhanden),
-                    // sonst weiterhin auf die Bilder-Sammelueberschrift.
+                    // sonst weiterhin auf die Bilder-Sammelüberschrift.
                     await showProject(projectId);
                     const docHead = data.document_id ? document.getElementById('doc_heading_' + data.document_id) : null;
                     if (docHead) {
@@ -247,8 +251,8 @@
     // "X von Y Bildern generiert | Extraktion: …" — Steve-Wunsch 07.06.2026.
     // Bei leerem Projekt (kein PDF hochgeladen, total_images === 0) zeigen
     // wir nur den Extraktions-Hinweis bzw. nichts, statt "0 von 0 Bildern".
-    // Erweiterung 08.06.2026: Bei Fehlern wird ", Z Fehler" angehaengt, damit
-    // klar ist, warum der Generiert-Zaehler nicht aufs Total kommt.
+    // Erweiterung 08.06.2026: Bei Fehlern wird ", Z Fehler" angehängt, damit
+    // klar ist, warum der Generiert-Zähler nicht aufs Total kommt.
     function formatProjectHeadInfo(project, extractionText, images) {
         const total = project.total_images || 0;
         const done = countByStatus(images, 'done');
@@ -259,7 +263,7 @@
         return `${done} von ${total} Bildern generiert${errPart}${ext}`;
     }
 
-    // Aktualisiert nur den Projekt-Kopf (Badge + Zaehl-Info) anhand der
+    // Aktualisiert nur den Projekt-Kopf (Badge + Zähl-Info) anhand der
     // aktuellen Server-Daten — ohne den Rest des DOM neu zu rendern.
     // Wichtig: nach Einzelbild-Generierung darf showProject() NICHT komplett
     // neu rendern, sonst klappen alle Seiten-<details> wieder zu und der
@@ -306,7 +310,7 @@
 
         // Multi-Datei (08.06.2026): Im Projekt-Kopf bevorzugt den vom Nutzer
         // vergebenen project.name anzeigen — bei Mehrfach-PDFs ist project.filename
-        // (die erste PDF) sonst irrefuehrend. Fallback wie bisher: filename.
+        // (die erste PDF) sonst irreführend. Fallback wie bisher: filename.
         const headTitle = (project.name && project.name.trim()) ? project.name : project.filename;
 
         main.innerHTML = `
@@ -332,7 +336,7 @@
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">Dateiname (optional)</label>
                                 <input type="text" id="exportFilename" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
-                                <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">Leer lassen, um den Vorgabe-Namen zu uebernehmen. Die Dateiendung wird automatisch angehaengt.</p>
+                                <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.</p>
                             </div>
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'xlsx')">Als Excel</button>
@@ -377,9 +381,9 @@
         }
     }
 
-    // Multi-Datei (08.06.2026): Anzeigename eines Dokuments fuer Ueberschriften.
+    // Multi-Datei (08.06.2026): Anzeigename eines Dokuments für Überschriften.
     // Bevorzugt der vom Nutzer vergebene display_name; fehlt der, nehmen wir
-    // das Original-Dateinamen-Feld. Wir geben den Rohtext zurueck — Escape
+    // das Original-Dateinamen-Feld. Wir geben den Rohtext zurück — Escape
     // erledigt die aufrufende Stelle (esc/textContent).
     function docDisplayName(doc) {
         if (!doc) return '';
@@ -388,9 +392,9 @@
         return (doc.original_filename || '').trim();
     }
 
-    // Render-Block fuer die Dokument-Auswahl in der Export-Box.
+    // Render-Block für die Dokument-Auswahl in der Export-Box.
     // - Genau eine Auswahl ist immer aktiv (Radio-Gruppe).
-    // - Bei einem einzelnen Dokument zeigen wir die Auswahl nicht (waere redundant).
+    // - Bei einem einzelnen Dokument zeigen wir die Auswahl nicht (wäre redundant).
     // - "Alle Dokumente" (value=all) ist Default, wenn es mehr als ein Dokument gibt;
     //   sonst zeigt der Default direkt auf das einzelne Dokument.
     function renderExportScopeBlock(documents) {
@@ -398,8 +402,8 @@
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         if (!documents || documents.length <= 1) return '';
         // WCAG 2.2 AA target-size (24x24px): Radios werden via .export-scope-radio
-        // CSS-Klasse vergroessert (Default-Browser-Radios sind nur 13x13).
-        // Zusaetzlich genug vertikalen Abstand zwischen den Eintraegen, damit
+        // CSS-Klasse vergrößert (Default-Browser-Radios sind nur 13x13).
+        // Zusätzlich genug vertikalen Abstand zwischen den Einträgen, damit
         // die "safe clickable area" auch zwischen benachbarten Targets > 24px ist.
         const items = documents.map((d, idx) => {
             const label = 'Dokument ' + (d.doc_index || idx + 1) + ': ' + esc(docDisplayName(d));
@@ -420,12 +424,12 @@
     }
 
     // Merkt sich pro Projekt, welche Seiten aufgeklappt sind, damit der Zustand
-    // ueber das Neu-Rendern waehrend der Verarbeitung (Polling) hinweg erhalten bleibt.
+    // über das Neu-Rendern während der Verarbeitung (Polling) hinweg erhalten bleibt.
     let openPages = new Set();
     let openPagesProjectId = null;
-    // Multi-Datei (08.06.2026): zusaetzlich merken wir uns den Auf/Zu-Zustand
-    // der Dokument-<details>, damit ein Anhaengen einer neuen PDF den Stand
-    // der bereits geoeffneten Dokumente nicht zuruecksetzt.
+    // Multi-Datei (08.06.2026): zusätzlich merken wir uns den Auf/Zu-Zustand
+    // der Dokument-<details>, damit ein Anhängen einer neuen PDF den Stand
+    // der bereits geöffneten Dokumente nicht zurücksetzt.
     let openDocs = new Set();
     let openDocsProjectId = null;
 
@@ -440,7 +444,7 @@
         const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','strukturformel','dekorativ'];
         const complexTypes = ['diagramm','karte','tabelle','infografik','strukturformel'];
 
-        // HTML-Escape fuer eingebetteten Seitentext (kann <, >, & enthalten)
+        // HTML-Escape für eingebetteten Seitentext (kann <, >, & enthalten)
         const esc = s => !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -456,7 +460,7 @@
             if (!pageMap.has(pageKey)) pageMap.set(pageKey, []);
             pageMap.get(pageKey).push(img);
         }
-        // Doc-Reihenfolge: aus documents-Liste; was uebrig bleibt (z.B. Bilder ohne document_id), kommt zum Schluss.
+        // Doc-Reihenfolge: aus documents-Liste; was übrig bleibt (z.B. Bilder ohne document_id), kommt zum Schluss.
         const orderedDocs = Array.isArray(documents) ? documents.slice().sort((a, b) => (a.doc_index || 0) - (b.doc_index || 0)) : [];
         const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf'));
 
@@ -464,28 +468,28 @@
         // Karbe-Feintuning (06.06.2026): Die Bedien-Buttons unter dem Alt-Text
         // (Daumen-hoch/runter, Kategorie-Auswahl, "Generieren") werden nun
         // immer angezeigt — solange das Bild nicht gerade VERARBEITET wird.
-        // Dadurch kann ein Nutzer auch fuer ein einzelnes, noch nicht generiertes
+        // Dadurch kann ein Nutzer auch für ein einzelnes, noch nicht generiertes
         // Bild direkt eine Generierung anstossen, ohne erst die Sammelaktion
-        // laufen lassen zu muessen. Frueher waren die Buttons erst sichtbar,
+        // laufen lassen zu müssen. Früher waren die Buttons erst sichtbar,
         // wenn img.status === 'done' war.
         //
         // Folge-Feintuning (06.06.2026): Button-Beschriftung einheitlich auf
-        // "Generieren" (kein "neu") — sowohl fuer erstmalig erzeugte als auch
-        // fuer ueberschriebene Alt-Texte konsistent.
+        // "Generieren" (kein "neu") — sowohl für erstmalig erzeugte als auch
+        // für überschriebene Alt-Texte konsistent.
         // 08.06.2026 (Steve, regenerate-Bug-Fix): Bei img.status === 'error' bleibt
         // der Button auf "Generieren" / data-status='pending'. Ein erneuter Klick
         // gilt als Erstversuch (Live-Region "Alt-Text wird generiert", nicht "neu"),
         // weil das vorherige Bild ja keinen Alt-Text geliefert hat.
-        // Barrierefreiheit (Steve, ausdruecklicher Wunsch): Der vom Screen-
+        // Barrierefreiheit (Steve, ausdrücklicher Wunsch): Der vom Screen-
         // reader vorgelesene Button-Name muss EXAKT dem sichtbaren Text
         // entsprechen — also bewusst KEIN abweichendes aria-label wie
         // "Bild 3 generieren". Die Zuordnung zum Bild leistet die semantische
-        // Struktur: jede Card ist eine <section> mit eigener <h3>-Ueberschrift
+        // Struktur: jede Card ist eine <section> mit eigener <h3>-Überschrift
         // ("Bild 1, Seite 2"), sodass ein Screenreader-Nutzer beim Erreichen
         // des Buttons im Kontext der jeweiligen Bild-Sektion ist.
-        // Multi-Datei (08.06.2026): Ueberschriften-Tiefe steuert sich ueber das
+        // Multi-Datei (08.06.2026): Überschriften-Tiefe steuert sich über das
         // Argument 'cardHeadingLevel' — PDF-Projekte gehen Dokument(h2)/Seite(h3)/Bild(h4),
-        // Web/Grafik bleibt bei h3 fuer die Bild-Card (kein Dokument-Wrapper).
+        // Web/Grafik bleibt bei h3 für die Bild-Card (kein Dokument-Wrapper).
         const renderCard = (img, cardHeadingLevel) => {
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
             const heading = img.page_number > 0
@@ -537,7 +541,7 @@
                 </div>
                 ${img.status !== 'processing' ? `
                     <div class="regen-area" style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                        <label for="regen_type_${img.id}" class="sr-only">Bildtyp fuer Generierung</label>
+                        <label for="regen_type_${img.id}" class="sr-only">Bildtyp für Generierung</label>
                         <select id="regen_type_${img.id}" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
                             <option value="">Automatisch</option>
                             ${imageTypes.map(t => '<option value="' + t + '"' + (img.image_type === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('')}
@@ -552,8 +556,8 @@
         };
 
         // Eine Seitengruppe rendern.
-        // Web-Projekte (pageNum 0): unveraendert, flache Cards ohne Klappbarkeit.
-        // PDF-Seiten: ganze Seite als klappbares <details>, Ueberschrift ist der Schalter.
+        // Web-Projekte (pageNum 0): unverändert, flache Cards ohne Klappbarkeit.
+        // PDF-Seiten: ganze Seite als klappbares <details>, Überschrift ist der Schalter.
         // Heading-Level (Multi-Datei 08.06.2026): bei PDF h3 Seite + h4 Bild, sonst h3 Bild ohne Seitenwrapper.
         const renderPageGroup = (pageNum, imgs, pageHeadingLevel, cardHeadingLevel, docKey) => {
             if (pageNum === 0) return imgs.map(i => renderCard(i, cardHeadingLevel)).join('');
@@ -616,8 +620,8 @@
                     .map(([pn, imgs]) => renderPageGroup(pn, imgs, 'h3', 'h4', 'leftover')).join('');
             }
         } else {
-            // Web/Grafik oder PDF ohne Dokument-Eintraege: flache Seiten-Liste wie bisher.
-            // Reduziere alle pageMaps in eine einzige (es gibt nur Schluessel 0 oder genau eine Doc).
+            // Web/Grafik oder PDF ohne Dokument-Einträge: flache Seiten-Liste wie bisher.
+            // Reduziere alle pageMaps in eine einzige (es gibt nur Schlüssel 0 oder genau eine Doc).
             const merged = new Map();
             for (const pageMap of groupsByDoc.values()) {
                 for (const [pn, imgs] of pageMap.entries()) {
@@ -650,17 +654,17 @@
             });
         });
 
-        // Offen/Zu-Zustand der Seiten merken (ueberlebt Neu-Rendern beim Polling).
+        // Offen/Zu-Zustand der Seiten merken (überlebt Neu-Rendern beim Polling).
         // Multi-Datei (08.06.2026): page-Key ist jetzt "docKey_pageNum" als String,
-        // weil Seitenzahlen ueber Dokumente hinweg gleich sein koennen.
+        // weil Seitenzahlen über Dokumente hinweg gleich sein können.
         document.querySelectorAll('details.page-section').forEach(d => {
             d.addEventListener('toggle', () => {
                 const p = d.dataset.page;
                 if (d.open) openPages.add(p); else openPages.delete(p);
             });
         });
-        // Multi-Datei: Dokument-Auf/Zu merken — beim Anhaengen einer neuen PDF
-        // soll der bisherige Stand der geoeffneten Dokumente erhalten bleiben.
+        // Multi-Datei: Dokument-Auf/Zu merken — beim Anhängen einer neuen PDF
+        // soll der bisherige Stand der geöffneten Dokumente erhalten bleiben.
         document.querySelectorAll('details.doc-section').forEach(d => {
             const k = Number(d.dataset.doc);
             // Initial-Snapshot: aktuell offene Docs eintragen, damit Folge-Renderings
@@ -693,8 +697,8 @@
                     btn.style.background = 'var(--error)';
                     btn.style.color = 'white';
                     btn.style.borderColor = 'var(--error)';
-                    if (statusEl) statusEl.textContent = 'Danke – wird geprueft';
-                    announce('Feedback: ' + label + ' als verbesserungswuerdig bewertet');
+                    if (statusEl) statusEl.textContent = 'Danke – wird geprüft';
+                    announce('Feedback: ' + label + ' als verbesserungswürdig bewertet');
                 }
             }
         } catch (err) {}
@@ -703,9 +707,9 @@
     // Steve-Entscheidung 07.06.2026: Buttontext folgt dem KI-Zustand des Bildes.
     //  - noch kein KI-Lauf (data-status="pending")  → "Generieren",  Live-Meldung "Alt-Text wird generiert"
     //  - bereits ein KI-Lauf (data-status="done")    → "Neu generieren", Live-Meldung "Alt-Text wird neu generiert"
-    // Haendisch eingetippter Text aendert nichts an der Beschriftung — der Wechsel
+    // Händisch eingetippter Text ändert nichts an der Beschriftung — der Wechsel
     // tritt ausschliesslich ein, sobald die KI mindestens einmal erfolgreich gelaufen
-    // ist. Ein vorhandener original_alt aus dem PDF zaehlt nicht als KI-Lauf
+    // ist. Ein vorhandener original_alt aus dem PDF zählt nicht als KI-Lauf
     // (das Bild kommt mit status='pending' aus der Extraktion).
     async function regenerateImage(projectId, imageId) {
         const typeSelect = document.getElementById('regen_type_' + imageId);
@@ -740,7 +744,7 @@
                 const verbDone = wasDone ? 'neu generiert' : 'generiert';
                 if (statusEl) statusEl.textContent = (wasDone ? 'Neu generiert' : 'Generiert') + ' (' + (data.konfidenz || 'mittel') + ')';
                 announce('Alt-Text wurde ' + verbDone);
-                // Ab jetzt gilt das Bild als KI-bearbeitet — naechster Klick lautet "Neu generieren".
+                // Ab jetzt gilt das Bild als KI-bearbeitet — nächster Klick lautet "Neu generieren".
                 btn.dataset.status = 'done';
                 // Projekt-Kopf (Badge + "X von Y Bildern generiert") live nachziehen.
                 updateProjectHeader(projectId);
@@ -789,8 +793,8 @@
                 if (statusEl) statusEl.textContent = 'Langbeschreibung generiert';
                 announce('Langbeschreibung wurde generiert');
             } else {
-                if (statusEl) statusEl.textContent = 'Keine Langbeschreibung verfuegbar';
-                announce('Keine Langbeschreibung verfuegbar');
+                if (statusEl) statusEl.textContent = 'Keine Langbeschreibung verfügbar';
+                announce('Keine Langbeschreibung verfügbar');
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = 'Verbindungsfehler';
@@ -803,8 +807,8 @@
         const btn = document.getElementById('generateBtn');
         // Pre-check daily limit
         if (window._dailyLimit && window._dailyLimit.remaining <= 0) {
-            announce('Tageslimit erreicht. Das Limit wird um Mitternacht zurueckgesetzt.');
-            alert('Tageslimit erreicht (' + window._dailyLimit.limit + ' Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.');
+            announce('Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt.');
+            alert('Tageslimit erreicht (' + window._dailyLimit.limit + ' Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt.');
             return;
         }
         if (btn) { btn.disabled = true; btn.textContent = 'Wird gestartet...'; }
@@ -818,7 +822,7 @@
     // Multi-Datei (08.06.2026):
     //  - Export-Panel hat Radio-Auswahl: "Alle Dokumente" (Default, ZIP) oder eines konkret (Einzeldatei).
     //  - Dateiname ist optional. Leer = Standardname (basierend auf Doc bzw. Projekt) auf Server-Seite.
-    //  - Fuer Web/Grafik-Projekte (kein documents-Block gerendert) verhaelt sich der Export wie bisher.
+    //  - Für Web/Grafik-Projekte (kein documents-Block gerendert) verhält sich der Export wie bisher.
     function openExportPanel(projectId) {
         const panel = document.getElementById('exportPanel');
         const btn = document.getElementById('exportOpenBtn');
@@ -830,11 +834,11 @@
                 input.value = '';
                 input.focus();
             } else {
-                // Single-Doc oder Web/Grafik: kein Filename-Input vorhanden? Fokus auf erste Schaltflaeche.
+                // Single-Doc oder Web/Grafik: kein Filename-Input vorhanden? Fokus auf erste Schaltfläche.
                 const first = panel.querySelector('button');
                 if (first) first.focus();
             }
-            announce('Export-Optionen geoeffnet.');
+            announce('Export-Optionen geöffnet.');
         }
     }
 
@@ -956,27 +960,27 @@
 
     // ─── InkluAgent (Chatbot pro Projekt) ────────────────────
     // Karbe-Feintuning (06.06.2026):
-    //  - Button-Beschriftung auf nur "Chatbot" (oeffnen/schliessen wird per
+    //  - Button-Beschriftung auf nur "Chatbot" (öffnen/schließen wird per
     //    aria-expanded an Screenreader gemeldet; visuell reicht das Wort).
-    //  - Frueherer H2 "Chatbot zur Alt-Text-Hilfe" entfaellt, weil der Button
+    //  - Früherer H2 "Chatbot zur Alt-Text-Hilfe" entfällt, weil der Button
     //    nun selbst die Sektion betitelt (aria-labelledby auf den Button).
-    //  - Der erklaerende Infotext steht jetzt UNTER dem Button — Karbes Wunsch,
-    //    damit der Schalter sofort ins Auge faellt, der Text dient als Hinweis.
+    //  - Der erklärende Infotext steht jetzt UNTER dem Button — Karbes Wunsch,
+    //    damit der Schalter sofort ins Auge fällt, der Text dient als Hinweis.
     function inkluagentSectionHtml(projectId) {
         return ''
             + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '">'
             +   '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
             +     'Chatbot'
             +   '</button>'
-            +   '<p class="inkluagent-intro">Bitte den InkluAgent um Hilfe — z.B. einen Alt-Text fuer ein Bild generieren, '
-            +   'einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache uebersetzen. '
+            +   '<p class="inkluagent-intro">Bitte den InkluAgent um Hilfe — z.B. einen Alt-Text für ein Bild generieren, '
+            +   'einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. '
             +   'Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.</p>'
             +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
             +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="polite" aria-label="Chat-Verlauf"></div>'
             +     '<form id="inkluagentForm" class="inkluagent-form">'
             +       '<label for="inkluagentInput" class="visually-hidden">Nachricht an den InkluAgent</label>'
             +       '<textarea id="inkluagentInput" rows="2" maxlength="5000" '
-            +         'placeholder="z.B. \'Bild 3 in leichter Sprache\' oder \'Generiere Alt-Text fuer Bild 5\'" '
+            +         'placeholder="z.B. \'Bild 3 in leichter Sprache\' oder \'Generiere Alt-Text für Bild 5\'" '
             +         'aria-describedby="inkluagentHint"></textarea>'
             +       '<div id="inkluagentHint" class="inkluagent-hint">Enter sendet, Shift+Enter macht einen Zeilenumbruch. Maximal 5000 Zeichen.</div>'
             +       '<div class="inkluagent-controls">'

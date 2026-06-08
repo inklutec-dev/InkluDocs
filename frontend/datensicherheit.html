@@ -14,14 +14,14 @@
   <div class="app-content">
     <main id="main" class="dash-main" tabindex="-1">
       <h1>Datensicherheit</h1>
-      <p class="dash-sub">Hier finden Sie unsere vollstaendige Datenschutzerklaerung. Inhalt aus
-        <a href="/datenschutz">der oeffentlichen Datenschutzerklaerung</a> — eine Quelle, kein Doppeltext.</p>
-      <div id="datensicherheitContent" aria-busy="true" role="region" aria-label="Datenschutzerklaerung">
+      <p class="dash-sub">Hier finden Sie unsere vollständige Datenschutzerklärung. Inhalt aus
+        <a href="/datenschutz">der öffentlichen Datenschutzerklärung</a> — eine Quelle, kein Doppeltext.</p>
+      <div id="datensicherheitContent" aria-busy="true" role="region" aria-label="Datenschutzerklärung">
         <p class="dash-sub">Inhalt wird geladen …</p>
       </div>
     </main>
     <footer class="dash-footer">
-      <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
+      <a href="/impressum-app">Impressum</a> &nbsp;·&nbsp; <a href="/datensicherheit">Datenschutz</a>
     </footer>
   </div>
 </div>
@@ -30,7 +30,7 @@
 
 <script src="/static/dashboard.js"></script>
 <script>
-  // Single Source of Truth: lade die oeffentliche /datenschutz-Seite, extrahiere
+  // Single Source of Truth: lade die öffentliche /datenschutz-Seite, extrahiere
   // den .legal-container und rendere ihn hier in den Dashboard-Rahmen. So bleibt
   // die Sidebar sichtbar und der Datenschutz-Text wird nicht doppelt gepflegt.
   // Steve/Karbe 08.06.2026: Karbe-Wunsch nach In-App-Ansicht, Steve-Entscheidung
@@ -45,7 +45,7 @@
       const container = doc.querySelector('.legal-container');
       if (!container) throw new Error('Datenschutz-Inhalt nicht gefunden (.legal-container fehlt)');
       // Die public Datenschutz-Seite hat eine eigene H1 "InkluDocs" und einen Subtitle
-      // "Datenschutzerklaerung". Wir haben hier bereits ein H1 "Datensicherheit"; entfernen
+      // "Datenschutzerklärung". Wir haben hier bereits ein H1 "Datensicherheit"; entfernen
       // wir die Markenheading aus der eingebetteten Variante, damit es keine doppelte H1 gibt.
       container.querySelectorAll('h1').forEach((h) => h.remove());
       // Den "rechtliche Seiten"-Subfooter aus der eingebetteten Variante entfernen — die
@@ -57,7 +57,7 @@
     } catch (err) {
       target.innerHTML = '<p style="color:var(--error,#c33);">Datenschutztext konnte nicht geladen werden: '
         + (err && err.message ? err.message : 'Unbekannter Fehler')
-        + '. Bitte stattdessen die <a href="/datenschutz">oeffentliche Datenschutzerklaerung</a> aufrufen.</p>';
+        + '. Bitte stattdessen die <a href="/datenschutz">öffentliche Datenschutzerklärung</a> aufrufen.</p>';
       target.setAttribute('aria-busy', 'false');
     }
   })();

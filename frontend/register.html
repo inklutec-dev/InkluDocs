@@ -60,7 +60,7 @@
             const password2 = document.getElementById('password2').value;
 
             if (!display_name || !email || !password) {
-                errorMsg.textContent = 'Bitte alle Felder ausfuellen.';
+                errorMsg.textContent = 'Bitte alle Felder ausfüllen.';
                 return;
             }
             if (!document.getElementById('acceptTerms').checked) {
@@ -72,7 +72,7 @@
                 return;
             }
             if (password !== password2) {
-                errorMsg.textContent = 'Passwoerter stimmen nicht ueberein.';
+                errorMsg.textContent = 'Passwörter stimmen nicht überein.';
                 return;
             }
             try {
@@ -88,9 +88,9 @@
                         <h1><span class="brand">Inklu</span>Docs</h1>
                         <div role="status" aria-live="polite" style="margin:2rem 0;">
                             <p style="font-size:1.2rem;color:#16a34a;font-weight:600;">Fast geschafft!</p>
-                            <p style="margin:1rem 0;">Wir haben eine Bestaetigungsmail an <strong>${email}</strong> gesendet.</p>
+                            <p style="margin:1rem 0;">Wir haben eine Bestätigungsmail an <strong>${email}</strong> gesendet.</p>
                             <p>Bitte klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren.</p>
-                            <p style="color:#64748b;font-size:0.9rem;margin-top:1.5rem;">Keine E-Mail erhalten? Pruefen Sie Ihren Spam-Ordner oder
+                            <p style="color:#64748b;font-size:0.9rem;margin-top:1.5rem;">Keine E-Mail erhalten? Prüfen Sie Ihren Spam-Ordner oder
                             <button type="button" id="resendBtn" style="background:none;border:none;color:#e87722;text-decoration:underline;cursor:pointer;font-size:0.9rem;padding:0;">fordern Sie einen neuen Link an</button>.</p>
                         </div>
                         <p><a href="/">Zur Anmeldung</a></p>

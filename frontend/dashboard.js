@@ -1,4 +1,4 @@
-// Gemeinsame Logik fuer alle Dashboard-Seiten (App-Shell): Helfer, Login-Status,
+// Gemeinsame Logik für alle Dashboard-Seiten (App-Shell): Helfer, Login-Status,
 // Navigationsleiste (mit aria-current), Tageslimit, Spenden-Footer, Abmelden.
 
 const byId = (id) => document.getElementById(id);
@@ -37,13 +37,13 @@ async function loadCurrentUser() {
 }
 
 // Navigationspunkte. Ein neuer Eintrag hier erscheint auf allen Seiten.
-// Karbe-Wunsch (06.06.2026): Eigener Menuepunkt fuer den Datenschutz-Text.
-// Update 08.06.2026 (Karbe + Steve): Eintrag heisst jetzt "Datensicherheit"
+// Karbe-Wunsch (06.06.2026): Eigener Menüpunkt für den Datenschutz-Text.
+// Update 08.06.2026 (Karbe + Steve): Eintrag heißt jetzt "Datensicherheit"
 // und zeigt auf die In-App-Sicht /datensicherheit — damit die Sidebar beim
 // Klick sichtbar bleibt (wie bei Projekten / Einstellungen). Der Inhalt der
 // Seite wird im Frontend per fetch aus /datenschutz geladen (Single Source).
 // Die rechtlichen Footer-Links Impressum | Datenschutz | Nutzungsbedingungen
-// (juristische Bezeichnung) bleiben unveraendert.
+// (juristische Bezeichnung) bleiben unverändert.
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Startseite' },
   { href: '/projekt-neu', label: 'Neues Projekt anlegen' },
@@ -140,7 +140,7 @@ function renderLegalNote() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadCurrentUser();   // setzt currentUser, Begruessung, Tageslimit
+  await loadCurrentUser();   // setzt currentUser, Begrüßung, Tageslimit
   renderSidebar();
   renderLegalNote();
   renderSupportFooter();

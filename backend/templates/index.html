@@ -8,7 +8,7 @@
         <h1>
             <span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#e87722;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}
         </h1>
-        <p class="subtitle">{{ _('KI-gestuetzter Alt-Text-Generator') }}</p>
+        <p class="subtitle">{{ _('KI-gestützter Alt-Text-Generator') }}</p>
         <form id="loginForm" novalidate>
             <div class="form-group">
                 <label for="email">{{ _('E-Mail-Adresse') }}</label>
@@ -33,9 +33,9 @@
     </footer>
 </main>
 <script>
-    // Uebersetzbare UI-Strings fuer JavaScript (von Jinja2 per Request injiziert)
+    // Übersetzbare UI-Strings für JavaScript (von Jinja2 per Request injiziert)
     const T = {
-        fillAllFields: {{ _('Bitte alle Felder ausfuellen.')|tojson }},
+        fillAllFields: {{ _('Bitte alle Felder ausfüllen.')|tojson }},
         loginFailed: {{ _('Anmeldung fehlgeschlagen.')|tojson }},
         resendLink: {{ _('Neuen Link senden')|tojson }},
         sending: {{ _('Wird gesendet...')|tojson }},
@@ -68,8 +68,8 @@
             } else {
                 const data = await res.json();
                 const msg = data.detail || T.loginFailed;
-                // Backend-Protokoll-String (immer auf Deutsch, unabhaengig von UI-Sprache)
-                if (res.status === 403 && msg.includes('nicht bestaetigt')) {
+                // Backend-Protokoll-String (immer auf Deutsch, unabhängig von UI-Sprache)
+                if (res.status === 403 && msg.includes('nicht bestätigt')) {
                     errorMsg.innerHTML = msg + ' <button type="button" id="resendFromLogin" style="background:none;border:none;color:#e87722;text-decoration:underline;cursor:pointer;padding:0;">' + T.resendLink + '</button>';
                     const btn = document.getElementById('resendFromLogin');
                     if (btn) {

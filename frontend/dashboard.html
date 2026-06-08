@@ -27,7 +27,7 @@
       </section>
     </main>
     <footer class="dash-footer">
-      <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
+      <a href="/impressum-app">Impressum</a> &nbsp;·&nbsp; <a href="/datensicherheit">Datenschutz</a>
     </footer>
   </div>
 </div>
@@ -117,15 +117,15 @@
   }
 
   // ─── Neuigkeiten (Dialog mit Anzahl) ──────────────────────────────
-  // Kompakter Knopf zeigt die Zahl ungelesener Neuigkeiten. Klick oeffnet einen
-  // barrierefreien Dialog (Fokus wandert hinein, Escape schliesst, Fokus kehrt
-  // zum Knopf zurueck, Fokusfalle haelt Tab im Dialog). Gelesen-Status wird am
-  // Konto (DB-Spalte news_seen_until) gespeichert -> geraeteuebergreifend.
+  // Kompakter Knopf zeigt die Zahl ungelesener Neuigkeiten. Klick öffnet einen
+  // barrierefreien Dialog (Fokus wandert hinein, Escape schließt, Fokus kehrt
+  // zum Knopf zurück, Fokusfalle hält Tab im Dialog). Gelesen-Status wird am
+  // Konto (DB-Spalte news_seen_until) gespeichert -> geräteübergreifend.
   let _newsItems = [];
   let _newsSeenUntil = '';  // leer = noch nichts gesehen -> alles ungelesen
 
-  // "DD.MM.YYYY" -> sortierbarer Schluessel "YYYYMMDD" (direkter String-Vergleich
-  // von DD.MM.YYYY waere ueber Monats-/Tagesgrenzen falsch).
+  // "DD.MM.YYYY" -> sortierbarer Schlüssel "YYYYMMDD" (direkter String-Vergleich
+  // von DD.MM.YYYY wäre über Monats-/Tagesgrenzen falsch).
   function newsDateKey(s) {
     const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s || '');
     return m ? (m[3] + m[2] + m[1]) : (s || '');
@@ -147,7 +147,7 @@
     return ul;
   }
 
-  // Fuellt den Dialog: neueste 3 sichtbar, aeltere in einem Aufklapp-Element.
+  // Fuellt den Dialog: neueste 3 sichtbar, ältere in einem Aufklapp-Element.
   function newsRenderPanel() {
     const list = byId('newsList');
     list.innerHTML = '';
@@ -186,7 +186,7 @@
   }
 
   async function newsMarkRead() {
-    // Lese-Stand am Konto speichern (DB) statt im Browser -> geraeteuebergreifend.
+    // Lese-Stand am Konto speichern (DB) statt im Browser -> geräteübergreifend.
     const fallback = _newsItems.length > 0 ? newsDateKey(_newsItems[0].datum) : '';
     try {
       const res = await fetch('/api/news/seen', { method: 'POST' });

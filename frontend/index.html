@@ -46,7 +46,7 @@
             const password = document.getElementById('password').value;
 
             if (!email || !password) {
-                errorMsg.textContent = 'Bitte alle Felder ausfuellen.';
+                errorMsg.textContent = 'Bitte alle Felder ausfüllen.';
                 return;
             }
             try {
@@ -60,7 +60,7 @@
                 } else {
                     const data = await res.json();
                     const msg = data.detail || 'Anmeldung fehlgeschlagen.';
-                    if (res.status === 403 && msg.includes('nicht bestaetigt')) {
+                    if (res.status === 403 && msg.includes('nicht bestätigt')) {
                         errorMsg.innerHTML = msg + ' <button type="button" id="resendFromLogin" style="background:none;border:none;color:#e87722;text-decoration:underline;cursor:pointer;padding:0;">Neuen Link senden</button>';
                         const btn = document.getElementById('resendFromLogin');
                         if (btn) {
