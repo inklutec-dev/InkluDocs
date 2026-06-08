@@ -2963,6 +2963,14 @@ async def users_page(request: Request):
     return _serve_protected_page(request, "benutzer.html")
 
 
+@app.get("/datensicherheit", response_class=HTMLResponse)
+async def datensicherheit_page(request: Request):
+    # Steve/Karbe 08.06.2026: eigene In-App-Sicht der Datenschutzerklaerung,
+    # damit die Sidebar beim Aufruf sichtbar bleibt. Der Inhalt wird im
+    # Frontend per fetch aus /datenschutz (Single Source) geladen.
+    return _serve_protected_page(request, "datensicherheit.html")
+
+
 @app.get("/app", response_class=HTMLResponse)
 async def app_page(request: Request):
     token = request.cookies.get("token")

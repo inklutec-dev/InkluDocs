@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs - Datensicherheit</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+<a href="#main" class="dash-skip">Zum Hauptinhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1>Datensicherheit</h1>
+      <p class="dash-sub">Hier finden Sie unsere vollstaendige Datenschutzerklaerung. Inhalt aus
+        <a href="/datenschutz">der oeffentlichen Datenschutzerklaerung</a> — eine Quelle, kein Doppeltext.</p>
+      <div id="datensicherheitContent" aria-busy="true" role="region" aria-label="Datenschutzerklaerung">
+        <p class="dash-sub">Inhalt wird geladen …</p>
+      </div>
+    </main>
+    <footer class="dash-footer">
+      <a href="/impressum">Impressum</a> &nbsp;·&nbsp; <a href="/datenschutz">Datenschutz</a>
+    </footer>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
+
+<script src="/static/dashboard.js"></script>
+<script>
+  // Single Source of Truth: lade die oeffentliche /datenschutz-Seite, extrahiere
+  // den .legal-container und rendere ihn hier in den Dashboard-Rahmen. So bleibt
+  // die Sidebar sichtbar und der Datenschutz-Text wird nicht doppelt gepflegt.
+  // Steve/Karbe 08.06.2026: Karbe-Wunsch nach In-App-Ansicht, Steve-Entscheidung
+  // dass die rechtliche Footer-Quelle (/datenschutz) die einzige Wahrheit bleibt.
+  (async function loadDatenschutzInline() {
+    const target = document.getElementById('datensicherheitContent');
+    try {
+      const res = await fetch('/datenschutz', { credentials: 'same-origin' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const container = doc.querySelector('.legal-container');
+      if (!container) throw new Error('Datenschutz-Inhalt nicht gefunden (.legal-container fehlt)');
+      // Die public Datenschutz-Seite hat eine eigene H1 "InkluDocs" und einen Subtitle
+      // "Datenschutzerklaerung". Wir haben hier bereits ein H1 "Datensicherheit"; entfernen
+      // wir die Markenheading aus der eingebetteten Variante, damit es keine doppelte H1 gibt.
+      container.querySelectorAll('h1').forEach((h) => h.remove());
+      // Den "rechtliche Seiten"-Subfooter aus der eingebetteten Variante entfernen — die
+      // Dashboard-Footer-Leiste hat schon ihre eigenen Links.
+      container.querySelectorAll('nav.auth-links').forEach((n) => n.remove());
+      target.innerHTML = '';
+      target.appendChild(container);
+      target.setAttribute('aria-busy', 'false');
+    } catch (err) {
+      target.innerHTML = '<p style="color:var(--error,#c33);">Datenschutztext konnte nicht geladen werden: '
+        + (err && err.message ? err.message : 'Unbekannter Fehler')
+        + '. Bitte stattdessen die <a href="/datenschutz">oeffentliche Datenschutzerklaerung</a> aufrufen.</p>';
+      target.setAttribute('aria-busy', 'false');
+    }
+  })();
+</script>
+</body>
+</html>

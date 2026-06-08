@@ -770,5 +770,9 @@ input[type="file"] {
     background: rgba(232, 119, 34, 0.06);
 }
 
-/* DSGVO-Hinweis in der Fußzeile (04.06.2026: Schild-Icon + kaputter Aufklapp-Knopf entfernt) */
-.dsgvo-note { max-width: 640px; margin: 0 auto 0.5rem; font-size: 0.82rem; line-height: 1.5; }
+/* DSGVO-Hinweis in der Fußzeile (04.06.2026: Schild-Icon + kaputter Aufklapp-Knopf entfernt).
+ * Karbe/Steve 08.06.2026: linksbuendig wie der umgebende Footer-Text, nicht mehr zentriert.
+ * Frueher 'margin: 0 auto 0.5rem' — das hat den 640er-Block bei breitem Container
+ * sichtbar nach rechts eingerueckt (~190 px Gap links). Jetzt linksbuendig im Container.
+ */
+.dsgvo-note { max-width: 640px; margin: 0 0 0.5rem 0; font-size: 0.82rem; line-height: 1.5; }

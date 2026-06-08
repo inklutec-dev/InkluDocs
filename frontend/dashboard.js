@@ -37,17 +37,19 @@ async function loadCurrentUser() {
 }
 
 // Navigationspunkte. Ein neuer Eintrag hier erscheint auf allen Seiten.
-// Karbe-Wunsch (06.06.2026): Eigener Menuepunkt "Datenschutz" in der
-// Hauptnavigation — zeigt direkt auf die bestehende oeffentliche
-// Datenschutzerklaerung (/datenschutz). Eine Quelle der Wahrheit, keine
-// separate Dashboard-Variante: vermeidet inhaltliche Divergenz und
-// erfuellt Karbes Wunsch (ein Datenschutz-Punkt, der den Text oeffnet).
+// Karbe-Wunsch (06.06.2026): Eigener Menuepunkt fuer den Datenschutz-Text.
+// Update 08.06.2026 (Karbe + Steve): Eintrag heisst jetzt "Datensicherheit"
+// und zeigt auf die In-App-Sicht /datensicherheit — damit die Sidebar beim
+// Klick sichtbar bleibt (wie bei Projekten / Einstellungen). Der Inhalt der
+// Seite wird im Frontend per fetch aus /datenschutz geladen (Single Source).
+// Die rechtlichen Footer-Links Impressum | Datenschutz | Nutzungsbedingungen
+// (juristische Bezeichnung) bleiben unveraendert.
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Startseite' },
   { href: '/projekt-neu', label: 'Neues Projekt anlegen' },
   { href: '/projekte', label: 'Meine Projekte' },
   { href: '/einstellungen', label: 'Einstellungen' },
-  { href: '/datenschutz', label: 'Datenschutz' },
+  { href: '/datensicherheit', label: 'Datensicherheit' },
   { href: '/benutzer', label: 'Benutzerverwaltung', admin: true },
 ];
 
