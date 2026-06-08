@@ -60,7 +60,14 @@ def _wrong_image_id_hint(image_id: int, project_id: int) -> str:
 
 
 def list_project_images(project_id: int, user_id: int) -> dict[str, Any]:
-    """Gibt alle Bilder im Projekt mit Metadaten zurück."""
+    """Gibt alle Bilder im Projekt mit Metadaten zurück.
+
+    Multi-Datei (08.06.2026): liefert pro Bild zusaetzlich doc_index,
+    doc_position und ui_label, damit Claude die im Frontend pro Dokument
+    nummerierten Bilder eindeutig referenzieren kann ("Dokument 2, Bild 1"
+    statt "Bild 5"). Plus separate documents-Sektion mit der bekannten
+    Reihenfolge (doc_index, original_filename, display_name, Bild-Zahl).
+    """
     if not _check_project_access(project_id, user_id):
         return {"ok": False, "error": "Projekt nicht gefunden oder kein Zugriff."}
 
@@ -75,22 +82,43 @@ def list_project_images(project_id: int, user_id: int) -> dict[str, Any]:
         if not proj_row:
             return {"ok": False, "error": "Projekt nicht gefunden."}
 
+        doc_rows = conn.execute(
+            "SELECT id, doc_index, original_filename, display_name, total_images "
+            "FROM documents WHERE project_id = ? ORDER BY doc_index",
+            (project_id,),
+        ).fetchall()
         img_rows = conn.execute(
-            "SELECT id, page_number, image_index, image_type, alt_text, alt_text_edited, "
-            "langbeschreibung, context_text, width, height, status, konfidenz, "
-            "needs_review, pipeline_steps "
-            "FROM images WHERE project_id = ? ORDER BY id ASC",
+            "SELECT i.id, i.page_number, i.image_index, i.image_type, i.alt_text, "
+            "i.alt_text_edited, i.langbeschreibung, i.context_text, i.width, i.height, "
+            "i.status, i.konfidenz, i.needs_review, i.pipeline_steps, "
+            "i.document_id, d.doc_index AS doc_index "
+            "FROM images i "
+            "LEFT JOIN documents d ON d.id = i.document_id "
+            "WHERE i.project_id = ? "
+            "ORDER BY COALESCE(d.doc_index, 0), i.page_number, i.image_index, i.id ASC",
             (project_id,),
         ).fetchall()
     finally:
         conn.close()
 
+    documents = [dict(d) for d in doc_rows]
+    multi_doc = len(documents) > 1
+
     images = []
+    per_doc_counter: dict[int, int] = {}
     for img in img_rows:
         d = dict(img)
         alt = d.get("alt_text_edited") or d.get("alt_text") or ""
+        di = d.get("doc_index") or 0
+        per_doc_counter[di] = per_doc_counter.get(di, 0) + 1
+        pos = per_doc_counter[di]
+        ui_label = (f"Dokument {di}, Bild {pos}" if multi_doc and di
+                    else f"Bild {pos}")
         images.append({
             "image_id": d["id"],
+            "doc_index": di if di else None,
+            "doc_position": pos,
+            "ui_label": ui_label,
             "page": d.get("page_number"),
             "index_on_page": d.get("image_index"),
             "image_type": d.get("image_type") or "",
@@ -117,7 +145,17 @@ def list_project_images(project_id: int, user_id: int) -> dict[str, Any]:
                 "processed_images": proj.get("processed_images"),
                 "extraction_method": proj.get("extraction_method"),
                 "status": proj.get("status"),
+                "multi_doc": multi_doc,
             },
+            "documents": [
+                {
+                    "doc_index": d["doc_index"],
+                    "original_filename": d["original_filename"],
+                    "display_name": d.get("display_name"),
+                    "total_images": d.get("total_images"),
+                }
+                for d in documents
+            ],
             "image_count": len(images),
             "images": images,
         },

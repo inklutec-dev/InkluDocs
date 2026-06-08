@@ -162,27 +162,34 @@ def _handle_generate_fresh(project: dict, user_message: str, user_id: int) -> di
         return {"reply": error, "intent": "generate_fresh",
                 "image_refs": None, "actions": []}
     if not refs:
+        hint = ("Bitte nenne sie per Nummer, z.B. 'Bild 3' oder 'Bilder 1-5'."
+                if not project.get("multi_doc")
+                else ("Bitte nenne Dokument + Bild, z.B. 'Dokument 2, Bild 3' "
+                      "oder 'alle Bilder in Dokument 1'."))
         return {
-            "reply": ("Welche Bilder soll ich neu generieren? Bitte nenne sie "
-                      "per Nummer, z.B. 'Bild 3' oder 'Bilder 1-5'."),
+            "reply": "Welche Bilder soll ich neu generieren? " + hint,
             "intent": "generate_fresh",
             "image_refs": None,
             "actions": [],
         }
 
+    # Multi-Datei (08.06.2026): ui_label ist die eindeutige Anzeige —
+    # bei Single-Doc 'Bild N', bei Multi-Doc 'Dokument X, Bild N'. So bleibt
+    # die Referenz fuer den User unmissverstaendlich, auch wenn die Anzeige
+    # im Frontend pro Dokument bei 1 anfaengt.
     results = []
     for img in refs:
         try:
             res = run_pipeline_for_image(img["id"], project["id"], user_id)
             if res:
-                results.append((img["nr"], res["alt_text"]))
+                results.append((img["ui_label"], res["alt_text"]))
         except Exception as e:
-            log.exception("Pipeline-Fehler fuer Bild %s: %s", img["nr"], e)
-            results.append((img["nr"], f"[Fehler: {e}]"))
+            log.exception("Pipeline-Fehler fuer Bild %s: %s", img["ui_label"], e)
+            results.append((img["ui_label"], f"[Fehler: {e}]"))
 
     lines = [f"Pipeline ausgefuehrt fuer {len(results)} Bild(er):"]
-    for nr, txt in results:
-        lines.append(f"\nBild {nr}: {txt}")
+    for label, txt in results:
+        lines.append(f"\n{label}: {txt}")
     return {
         "reply": "\n".join(lines),
         "intent": "generate_fresh",
@@ -197,23 +204,28 @@ def _handle_modify_existing(project: dict, user_message: str) -> dict:
         return {"reply": error, "intent": "modify_existing",
                 "image_refs": None, "actions": []}
     if not refs:
+        hint = ("Bitte nenne es per Nummer, z.B. 'Bild 3 in leichter Sprache'."
+                if not project.get("multi_doc")
+                else ("Bitte nenne Dokument + Bild, z.B. 'Dokument 2, Bild 3 "
+                      "in leichter Sprache'."))
         return {
-            "reply": ("Welches Bild soll ich ueberarbeiten? Bitte nenne es "
-                      "per Nummer, z.B. 'Bild 3 in leichter Sprache'."),
+            "reply": "Welches Bild soll ich ueberarbeiten? " + hint,
             "intent": "modify_existing",
             "image_refs": None,
             "actions": [],
         }
 
+    # Multi-Datei (08.06.2026): wir nutzen das eindeutige ui_label statt der
+    # blanken Bild-Nr — verhindert Verwechslung zwischen Dokumenten.
     parts = []
     for img in refs:
         text = _modify_one_image(img, user_message, project["id"])
-        parts.append(f"Bild {img['nr']}:\n{text}")
+        parts.append(f"{img['ui_label']}:\n{text}")
 
     reply = sanitize_markdown("\n\n".join(parts))
     if len(refs) == 1:
-        reply += ("\n\nWenn der Vorschlag passt, sag z.B. 'trag das bei Bild "
-                  f"{refs[0]['nr']} ein'.")
+        reply += ("\n\nWenn der Vorschlag passt, sag z.B. 'trag das bei "
+                  f"{refs[0]['ui_label']} ein'.")
     return {
         "reply": reply,
         "intent": "modify_existing",
@@ -222,8 +234,11 @@ def _handle_modify_existing(project: dict, user_message: str) -> dict:
     }
 
 
+# Multi-Datei (08.06.2026): das Pattern muss BEIDE Reply-Formen abdecken —
+# 'Bild N:\n...' (Single-Doc) und 'Dokument X, Bild N:\n...' (Multi-Doc).
+# Das erste Token am Zeilenanfang ist entweder 'Bild' oder 'Dokument'.
 _RE_PREV_PROPOSAL = re.compile(
-    r"^Bild\s+\d+:\s*\n(.+?)(?:\n\(Begruendung:|\Z)",
+    r"^(?:Dokument|Bild)\s+\d+[^\n]*:\s*\n(.+?)(?:\n\(Begruendung:|\Z)",
     re.DOTALL | re.MULTILINE,
 )
 
@@ -393,9 +408,12 @@ def _handle_set_text(project: dict, user_message: str) -> dict:
         return {"reply": error, "intent": "set_text",
                 "image_refs": None, "actions": []}
     if not refs:
+        hint = ("Bitte nenne es per Nummer, z.B. 'trag das bei Bild 3 ein'."
+                if not project.get("multi_doc")
+                else ("Bitte nenne Dokument + Bild, z.B. 'trag das bei "
+                      "Dokument 2, Bild 3 ein'."))
         return {
-            "reply": ("Bei welchem Bild soll ich den Text eintragen? "
-                      "Bitte nenne es per Nummer, z.B. 'trag das bei Bild 3 ein'."),
+            "reply": "Bei welchem Bild soll ich den Text eintragen? " + hint,
             "intent": "set_text",
             "image_refs": None,
             "actions": [],
@@ -404,7 +422,7 @@ def _handle_set_text(project: dict, user_message: str) -> dict:
     img = refs[0]
     return {
         "reply": (
-            f"Im Feld fuer Bild {img['nr']} steht aktuell: "
+            f"Im Feld fuer {img['ui_label']} steht aktuell: "
             f"\"{img['alt_effective']}\". \n\n"
             f"Das automatische Eintragen folgt in einer naechsten Version. "
             f"Aktuell kannst du den Vorschlag aus meiner letzten Antwort "

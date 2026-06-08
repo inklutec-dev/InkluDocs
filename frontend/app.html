@@ -486,6 +486,27 @@
         const orderedDocs = Array.isArray(documents) ? documents.slice().sort((a, b) => (a.doc_index || 0) - (b.doc_index || 0)) : [];
         const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf'));
 
+        // Steve 08.06.2026: Pro Dokument eine fortlaufende Anzeige-Nummer ab 1 vergeben,
+        // konsistent zur Seitennummerierung (zaehlt auch pro Dokument). Die DB-Spalte
+        // image_index bleibt projektweit, das macht den Frontend-Wert reine Anzeige.
+        // Reihenfolge innerhalb eines Dokuments: nach Seite, dann image_index (so wie
+        // die Bilder auch sortiert ankommen). Web/Grafik (docKey 0) bekommt weiterhin
+        // image_index, weil dort keine Dokument-Ebene existiert.
+        for (const [docKey, pageMap] of groupsByDoc.entries()) {
+            if (docKey === 0) {
+                for (const imgs of pageMap.values()) {
+                    for (const img of imgs) img.display_nr = img.image_index;
+                }
+                continue;
+            }
+            let counter = 0;
+            const sortedPages = Array.from(pageMap.keys()).sort((a, b) => a - b);
+            for (const pn of sortedPages) {
+                const imgs = pageMap.get(pn).slice().sort((a, b) => a.image_index - b.image_index);
+                for (const img of imgs) { counter += 1; img.display_nr = counter; }
+            }
+        }
+
         // Eine Image-Card rendern.
         // Karbe-Feintuning (06.06.2026): Die Bedien-Buttons unter dem Alt-Text
         // (Daumen-hoch/runter, Kategorie-Auswahl, "Generieren") werden nun
@@ -514,9 +535,16 @@
         // Web/Grafik bleibt bei h3 für die Bild-Card (kein Dokument-Wrapper).
         const renderCard = (img, cardHeadingLevel) => {
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
+            // Multi-Datei (08.06.2026): Anzeige-Nummer ist display_nr (pro Dokument
+            // bei 1 startend) — Steve-Wunsch nach Michael-Feedback. Die DB-Spalte
+            // image_index bleibt projektweit unveraendert (eindeutige interne ID);
+            // hier nutzen wir nur die Anzeige, damit Doc 2 wieder bei "Bild 1, ..."
+            // anfaengt. Fallback display_nr -> image_index, falls die Helferspalte
+            // mal nicht vorberechnet ist (z.B. defensive Render-Pfade).
+            const displayNr = (img.display_nr != null) ? img.display_nr : img.image_index;
             const heading = img.page_number > 0
-                ? `Bild ${img.image_index}, Seite ${img.page_number}`
-                : `Bild ${img.image_index}`;
+                ? `Bild ${displayNr}, Seite ${img.page_number}`
+                : `Bild ${displayNr}`;
             const hTag = cardHeadingLevel || 'h3';
             return `
             <section class="image-review" aria-labelledby="img_heading_${img.id}">
