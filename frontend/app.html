@@ -638,7 +638,11 @@
         // klappbaren Block (h2 in summary). Bei Web/Grafik bleibt die alte flache Struktur.
         const renderDocBlock = (doc, pageMap) => {
             const docKey = doc.id || 0;
-            const isOpen = openDocs.size === 0 ? true : openDocs.has(docKey);
+            // Karbe/Steve 09.06.2026: Dokumente standardmaessig ZUGEKLAPPT, damit man
+            // beim Oeffnen eines Projekts direkt die Liste der PDFs sieht und gezielt
+            // eine aufklappen kann. Nur vom Nutzer geoeffnete Dokumente bleiben beim
+            // Neu-Rendern (Polling/Anhaengen) offen (openDocs via toggle-Listener gemerkt).
+            const isOpen = openDocs.has(docKey);
             const totalImgs = Array.from(pageMap.values()).reduce((a, b) => a + b.length, 0);
             const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)';
             const labelName = esc(docDisplayName(doc));
