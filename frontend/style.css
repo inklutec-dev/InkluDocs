@@ -916,4 +916,9 @@ input[type="file"] {
     border-top: 1px solid var(--border);
     padding-top: 1rem;
     margin-top: 1rem;
+    /* Karbe-Befund 09.06.2026: Links-Block linksbuendig + 640px wie die DSGVO-Note
+       darueber, damit Projekt-Footer konsistent zu den Uebersichtsseiten ist
+       (vorher erbte er text-align:center aus .legal-footer -> Links mittig). */
+    max-width: 640px;
+    text-align: left;
 }
