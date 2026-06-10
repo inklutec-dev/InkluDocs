@@ -521,6 +521,132 @@ input[type="file"] {
     max-width: 800px;
 }
 
+/* ── Dokument-Kopf mit Aktionen (Umbenennen/Loeschen), 10.06.2026 ──────────
+   Die Aktionen liegen als Geschwister NEBEN dem <details> (nicht in der
+   <summary>), damit keine interaktiven Elemente ineinander verschachtelt sind
+   (axe: nested-interactive). Der .doc-block traegt Breite/Zentrierung und dient
+   als Positionierungs-Anker; die Aktionsgruppe wird oben rechts auf die
+   Summary-Leiste gesetzt. Das native Aufklapp-Dreieck bleibt dadurch erhalten. */
+.doc-block {
+    position: relative;
+    max-width: 820px;
+    margin: 1.75rem auto 0.75rem auto;
+}
+.doc-block > .doc-section {
+    margin: 0;
+    max-width: none;
+}
+.doc-section > summary.doc-summary {
+    /* Platz am rechten Rand fuer die Aktionsgruppe reservieren, damit lange
+       Dateinamen nicht unter die Buttons laufen. */
+    padding-right: 13rem;
+}
+.doc-actions {
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    display: inline-flex;
+    gap: 0.4rem;
+    z-index: 1;
+}
+.doc-action-btn {
+    /* WCAG 2.2 AA Zielgroesse: mind. 24x24px Trefferflaeche. */
+    min-height: 28px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--border, #ccc);
+    border-radius: 6px;
+    background: var(--card-bg, #fff);
+    color: var(--text, #1a1a1a);
+    cursor: pointer;
+}
+.doc-action-btn:hover { background: #f0f0f0; }
+.doc-action-btn:focus-visible {
+    outline: 2px solid var(--focus, #c75000);
+    outline-offset: 2px;
+}
+.doc-action-danger {
+    border-color: var(--error, #c0392b);
+    color: var(--error, #c0392b);
+}
+.doc-action-danger:hover {
+    background: var(--error, #c0392b);
+    color: #fff;
+}
+
+/* Schmale Geräte (10.06.2026): Die Aktionsgruppe schwebt nicht mehr oben rechts
+   — dort würde sie die Überschrift einquetschen — sondern rutscht in den normalen
+   Fluss direkt unter den Dokument-Kopf. Die Platzreservierung am rechten Rand
+   entfällt, sodass die Überschrift die volle Breite nutzt. Breakpoint passend zum
+   bestehenden Sidebar-Umbruch (768px). */
+@media (max-width: 768px) {
+    .doc-section > summary.doc-summary {
+        padding-right: 1rem;
+    }
+    .doc-actions {
+        position: static;
+        margin: 0.4rem 1rem 0.6rem;
+        justify-content: flex-start;
+    }
+}
+
+/* ── Native Dialoge (<dialog> + showModal), 10.06.2026 ────────────────────
+   Fokusfalle, Escape und Modal-Semantik kommen vom Element selbst — kein ARIA. */
+.app-dialog {
+    border: 1px solid var(--border, #ccc);
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 460px;
+    width: calc(100% - 2rem);
+    color: var(--text, #1a1a1a);
+    background: var(--card-bg, #fff);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+.app-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+}
+.app-dialog h2 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.3rem;
+}
+.app-dialog p {
+    margin: 0 0 1rem 0;
+    line-height: 1.5;
+}
+.app-dialog label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+.app-dialog input[type="text"] {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    font-size: 1rem;
+    border: 1px solid var(--border, #ccc);
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+.dialog-hint {
+    font-size: 0.9rem;
+    color: var(--text-muted, #666);
+}
+.dialog-actions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+}
+.btn-danger {
+    background: var(--error, #c0392b);
+    color: #fff;
+    border: 1px solid var(--error, #c0392b);
+}
+.btn-danger:hover {
+    background: #a33125;
+    border-color: #a33125;
+}
+
 /* Seitengruppe: ganze Seite als klappbares <details>, Ueberschrift ist der Schalter */
 .page-section {
     max-width: 800px;
@@ -909,16 +1035,11 @@ input[type="file"] {
     margin-top: 1rem;
 }
 
-/* app.html-Footer: hier steht der Links-Block UNTER der dsgvo-note.
-   Steve 08.06.2026: gleiche Trennlinie, aber jetzt am Links-Block, damit
-   die visuelle Logik (Trennlinie zwischen den Bloecken) konsistent bleibt. */
-.legal-footer-links {
-    border-top: 1px solid var(--border);
-    padding-top: 1rem;
-    margin-top: 1rem;
-    /* Karbe-Befund 09.06.2026: Links-Block linksbuendig + 640px wie die DSGVO-Note
-       darueber, damit Projekt-Footer konsistent zu den Uebersichtsseiten ist
-       (vorher erbte er text-align:center aus .legal-footer -> Links mittig). */
-    max-width: 640px;
-    text-align: left;
+/* Rechtliche Footer-Links, 10.06.2026 zentral via dashboard.js (renderLegalLinks)
+   in jede .dash-footer gerendert — als erster Block, vor dem DSGVO-Hinweis. Die
+   Links erben Farbe (#c75000) aus „.dash-footer a"; hier nur dezenter Abstand
+   nach unten zum darunterliegenden DSGVO-Hinweis. (Die frühere app.html-eigene
+   Klasse .legal-footer-links ist damit entfallen.) */
+.dash-legal-links {
+    line-height: 1.6;
 }

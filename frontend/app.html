@@ -15,24 +15,40 @@
 
     <main id="mainContent" class="main-content" tabindex="-1"></main>
 
-    <footer class="legal-footer" role="contentinfo" style="padding-bottom:2rem;">
-        <div style="margin-bottom:0.5rem;">
-            <p class="dsgvo-note"><strong>DSGVO-konform – Verarbeitung in der EU.</strong> Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.</p>
-        </div>
-        <div class="legal-footer-links">
-            <!-- Steve 08.06.2026: aus der App heraus werden die rechtlichen Seiten in
-                 der In-App-Sicht (Dashboard-Rahmen sichtbar) aufgerufen. Die public
-                 Standalone-Seiten bleiben unter /impressum, /datenschutz und
-                 /nutzungsbedingungen fuer externe/rechtliche Verweise erreichbar.
-                 Klasse legal-footer-links: dezente Trennlinie + Abstand zum
-                 DSGVO-Hinweis darueber. -->
-            <a href="/impressum-app">Impressum</a> |
-            <a href="/datensicherheit">Datenschutz</a> |
-            <a href="/nutzungsbedingungen-app">Nutzungsbedingungen</a>
-        </div>
-    </footer>
+    <!-- Fußzeile: 10.06.2026 auf die gemeinsame .dash-footer-Mechanik umgestellt
+         (Michael-Wunsch „Fußzeile überall identisch"). Inhalt — rechtliche Links,
+         DSGVO-Hinweis, Unterstützungsblock — wird zentral von dashboard.js
+         gerendert (renderLegalLinks/renderLegalNote/renderSupportFooter), exakt
+         wie auf den Übersichtsseiten. Daher hier bewusst leer. -->
+    <footer class="dash-footer" role="contentinfo"></footer>
       </div>
     </div>
+
+    <!-- Barrierefreie Dialoge fuer Dokument-Aktionen. Basis ist das native
+         <dialog>-Element mit showModal(): Fokusfalle, Escape-zum-Schliessen und
+         Modal-Semantik kommen vom Browser — daher bewusst OHNE role/aria-modal
+         (ARIA nur, wo nativ nichts vorhanden ist). Inhalte werden beim Oeffnen
+         per JS gefuellt (siehe openDocDelete/openDocRename). -->
+    <dialog id="docDeleteDialog" class="app-dialog">
+        <h2>Dokument loeschen?</h2>
+        <p id="docDeleteBody"></p>
+        <div class="dialog-actions">
+            <button type="button" autofocus class="btn btn-secondary" id="docDeleteCancel">Abbrechen</button>
+            <button type="button" class="btn btn-danger" id="docDeleteConfirm">Loeschen</button>
+        </div>
+    </dialog>
+    <dialog id="docRenameDialog" class="app-dialog">
+        <form id="docRenameForm">
+            <h2>Dokument umbenennen</h2>
+            <label for="docRenameInput">Neuer Name des Dokuments</label>
+            <input id="docRenameInput" type="text" maxlength="200" autocomplete="off">
+            <p class="dialog-hint">Leer lassen, um wieder den urspruenglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.</p>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-secondary" id="docRenameCancel">Abbrechen</button>
+                <button type="submit" class="btn btn-primary">Speichern</button>
+            </div>
+        </form>
+    </dialog>
 
     <div id="liveRegion" class="sr-only" aria-live="polite" role="status"></div>
 
@@ -294,6 +310,9 @@
 
     async function showProject(projectId) {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        // Aktuelles Projekt merken, damit die Dokument-Aktionen (Umbenennen/
+        // Loeschen) wissen, gegen welches Projekt sie arbeiten.
+        currentDocProjectId = projectId;
         highlightNav(null);
 
         const res = await fetch('/api/projects/' + projectId);
@@ -428,7 +447,9 @@
         // Zusätzlich genug vertikalen Abstand zwischen den Einträgen, damit
         // die "safe clickable area" auch zwischen benachbarten Targets > 24px ist.
         const items = documents.map((d, idx) => {
-            const label = 'Dokument ' + (d.doc_index || idx + 1) + ': ' + esc(docDisplayName(d));
+            // Anzeige-Position (1..N) statt doc_index — konsistent zur „Dokument N"-
+            // Ueberschrift, die nach Loeschungen Luecken im doc_index vermeidet.
+            const label = 'Dokument ' + (idx + 1) + ': ' + esc(docDisplayName(d));
             return '<li class="export-scope-item"><label class="export-scope-label">'
                 + '<input class="export-scope-radio" type="radio" name="exportScope" value="doc:' + d.id + '">'
                 + '<span>' + label + '</span></label></li>';
@@ -454,6 +475,96 @@
     // der bereits geöffneten Dokumente nicht zurücksetzt.
     let openDocs = new Set();
     let openDocsProjectId = null;
+
+    // ─── Dokument-Aktionen: Umbenennen + Loeschen (10.06.2026) ──────────────
+    // Michael Karbe 09.06.: pro PDF (= Dokument) ein Loeschen-Knopf direkt neben
+    // dem Aufklapp-Schalter; einzelne Seiten/Bilder werden NICHT geloescht, weil
+    // immer die komplette PDF angezeigt wird. Umbenennen sitzt daneben, weil der
+    // Dokumentname auch den Export-Dateinamen bestimmt.
+    //
+    // Beide Dialoge sind native <dialog>-Elemente (showModal) — siehe Markup im
+    // Body. Die Handler sind global, weil sie aus inline-onclick aufgerufen werden.
+    let currentDocProjectId = null;   // welches Projekt gerade offen ist
+    let _docActionId = null;          // Ziel-Dokument der laufenden Aktion
+
+    // Nach Umbenennen/Loeschen den Fokus sinnvoll setzen: bevorzugt auf das
+    // betroffene Dokument (Summary ist fokussierbar via tabindex=-1), sonst auf
+    // die Bilder-Sammelueberschrift. Beim Loeschen ist _docActionId vorher auf
+    // null gesetzt, weil das Ziel nicht mehr existiert.
+    function _moveFocusAfterDocChange() {
+        const head = _docActionId ? document.getElementById('doc_heading_' + _docActionId) : null;
+        const sum = head ? head.closest('summary') : null;
+        if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); return; }
+        const h = document.getElementById('bilderHeading');
+        if (h) h.focus();
+    }
+
+    function openDocRename(event) {
+        event.preventDefault();
+        event.stopPropagation();   // nicht das umgebende <details> auf-/zuklappen
+        const btn = event.currentTarget;
+        _docActionId = parseInt(btn.dataset.docId, 10);
+        const dlg = document.getElementById('docRenameDialog');
+        const input = document.getElementById('docRenameInput');
+        input.value = btn.dataset.docName || '';
+        dlg.showModal();
+        input.focus();
+        input.select();
+    }
+
+    function openDocDelete(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const btn = event.currentTarget;
+        _docActionId = parseInt(btn.dataset.docId, 10);
+        const name = btn.dataset.docName || 'dieses Dokument';
+        const count = parseInt(btn.dataset.docCount, 10) || 0;
+        document.getElementById('docDeleteBody').textContent =
+            'Moechtest du das Dokument „' + name + '" mit ' + count
+            + (count === 1 ? ' Bild' : ' Bildern')
+            + ' wirklich loeschen? Das laesst sich nicht rueckgaengig machen.';
+        document.getElementById('docDeleteDialog').showModal();
+    }
+
+    async function _submitDocRename(ev) {
+        ev.preventDefault();
+        const dlg = document.getElementById('docRenameDialog');
+        const name = document.getElementById('docRenameInput').value.trim();
+        try {
+            const res = await fetch('/api/projects/' + currentDocProjectId + '/documents/' + _docActionId, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ display_name: name }),
+            });
+            if (!res.ok) { announce('Umbenennen fehlgeschlagen.'); return; }
+        } catch (e) { announce('Netzwerkfehler beim Umbenennen.'); return; }
+        dlg.close();
+        await showProject(currentDocProjectId);
+        announce('Dokument umbenannt.');
+        _moveFocusAfterDocChange();
+    }
+
+    async function _confirmDocDelete() {
+        const dlg = document.getElementById('docDeleteDialog');
+        try {
+            const res = await fetch('/api/projects/' + currentDocProjectId + '/documents/' + _docActionId, {
+                method: 'DELETE',
+            });
+            if (!res.ok) { announce('Loeschen fehlgeschlagen.'); return; }
+        } catch (e) { announce('Netzwerkfehler beim Loeschen.'); return; }
+        dlg.close();
+        _docActionId = null;   // Ziel existiert nicht mehr -> Fokus auf Bilder-Ueberschrift
+        await showProject(currentDocProjectId);
+        announce('Dokument geloescht.');
+        _moveFocusAfterDocChange();
+    }
+
+    // Dialog-Buttons einmalig verdrahten. Die <dialog>-Elemente stehen statisch
+    // im Body (vor diesem Script), existieren hier also bereits.
+    document.getElementById('docRenameForm').addEventListener('submit', _submitDocRename);
+    document.getElementById('docRenameCancel').addEventListener('click', () => document.getElementById('docRenameDialog').close());
+    document.getElementById('docDeleteCancel').addEventListener('click', () => document.getElementById('docDeleteDialog').close());
+    document.getElementById('docDeleteConfirm').addEventListener('click', _confirmDocDelete);
 
     function renderImages(images, projectId, showLang, documents, project) {
         const list = document.getElementById('imageList');
@@ -636,7 +747,7 @@
 
         // Multi-Datei (08.06.2026): bei PDF-Projekten wird jedes Dokument zu einem eigenen
         // klappbaren Block (h2 in summary). Bei Web/Grafik bleibt die alte flache Struktur.
-        const renderDocBlock = (doc, pageMap) => {
+        const renderDocBlock = (doc, pageMap, pos) => {
             const docKey = doc.id || 0;
             // Karbe/Steve 09.06.2026: Dokumente standardmaessig ZUGEKLAPPT, damit man
             // beim Oeffnen eines Projekts direkt die Liste der PDFs sieht und gezielt
@@ -650,21 +761,39 @@
                 .sort((a, b) => a[0] - b[0])
                 .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))
                 .join('');
+            // Aktionen (Umbenennen/Loeschen) sitzen IN der <summary>, sind also
+            // erreichbar, ohne das Dokument aufzuklappen (Michael-Wunsch 09.06.).
+            // Eindeutiger Screenreader-Name ueber einen visuell versteckten <span>
+            // mit echtem Text statt aria-label (native-HTML-first). Der Klick wird
+            // in den Handlern per stopPropagation vom Auf-/Zuklappen entkoppelt.
+            // Die Aktionen liegen BEWUSST ausserhalb der <summary>, als Geschwister
+            // neben dem <details>. Ein <button> innerhalb der (interaktiven)
+            // <summary> waere ein verschachteltes Bedienelement (axe:
+            // nested-interactive, schlecht fuer Screenreader). So bleibt die
+            // native Aufklapp-Mechanik inkl. Dreieck erhalten, die Aktionen sind
+            // trotzdem dauerhaft sichtbar (oben rechts per CSS positioniert,
+            // siehe .doc-block/.doc-actions in style.css) und ohne ARIA erreichbar.
             return `
-                <details class="doc-section" data-doc="${docKey}"${isOpen ? ' open' : ''}>
-                    <summary class="doc-summary">
-                        <h2 class="doc-heading" id="doc_heading_${docKey}">Dokument ${doc.doc_index || 1}: ${labelName} <span class="page-count">(${totalImgs} ${totalImgs === 1 ? 'Bild' : 'Bilder'}, ${ext})</span></h2>
-                    </summary>
-                    ${pageBlocks}
-                </details>`;
+                <div class="doc-block">
+                    <details class="doc-section" data-doc="${docKey}"${isOpen ? ' open' : ''}>
+                        <summary class="doc-summary">
+                            <h2 class="doc-heading" id="doc_heading_${docKey}">Dokument ${pos}: ${labelName} <span class="page-count">(${totalImgs} ${totalImgs === 1 ? 'Bild' : 'Bilder'}, ${ext})</span></h2>
+                        </summary>
+                        ${pageBlocks}
+                    </details>
+                    <span class="doc-actions">
+                        <button type="button" class="doc-action-btn" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">Umbenennen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
+                        <button type="button" class="doc-action-btn doc-action-danger" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">Loeschen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
+                    </span>
+                </div>`;
         };
 
         let html;
         if (isPdfProject && orderedDocs.length > 0) {
-            // PDF-Projekt mit Dokument-Ebene
-            html = orderedDocs.map(doc => {
+            // PDF-Projekt mit Dokument-Ebene. pos = Anzeige-Position (1..N).
+            html = orderedDocs.map((doc, i) => {
                 const pageMap = groupsByDoc.get(doc.id) || new Map();
-                return renderDocBlock(doc, pageMap);
+                return renderDocBlock(doc, pageMap, i + 1);
             }).join('');
             // Reste (Bilder ohne document_id, sollte nach Migration nicht vorkommen) -> ans Ende
             const leftover = groupsByDoc.get(0);

@@ -1675,6 +1675,82 @@ async def rename_document(project_id: int, document_id: int, request: Request, u
     return {"ok": True, "display_name": name or None}
 
 
+@app.delete("/api/projects/{project_id}/documents/{document_id}")
+async def delete_document(project_id: int, document_id: int, user: dict = Depends(get_current_user)):
+    """Multi-Datei (10.06.2026): Ein einzelnes Dokument (eine hochgeladene PDF)
+    samt seiner Bilder aus einem Projekt entfernen.
+
+    Hintergrund (Michael Karbe, 09.06.2026): Da im Werkzeug stets die KOMPLETTE
+    PDF angezeigt wird, loeschen wir bewusst nur auf Dokument-Ebene — einzelne
+    Seiten/Bilder einer PDF bleiben unantastbar. (Grafik-/Web-Projekte werden in
+    einem Folgeschritt auf Bild-Ebene loeschbar.)
+
+    WICHTIG zur Nummerierung: doc_index wird NICHT neu vergeben. Er ist der
+    stabile Ordnerschluessel auf der Platte (results/<user>/<projekt>/doc<N>),
+    und neue Uploads leiten ihren Ordner aus MAX(doc_index)+1 ab. Wuerden wir
+    umnummerieren, koennten spaetere Uploads in fremde Ordner schreiben. Die fuer
+    den Nutzer sichtbare Nummer „Dokument 1, 2, 3" ist reine Anzeige-Position und
+    wird im Frontend aus der sortierten Reihenfolge berechnet.
+
+    Mandantensicher: sowohl Projekt- als auch Dokument-Zugriff sind auf den
+    eingeloggten Nutzer eingegrenzt (kein IDOR).
+    """
+    conn = get_db()
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+
+    doc = conn.execute(
+        "SELECT * FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id)
+    ).fetchone()
+    if not doc:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+    doc = dict(doc)
+
+    # Dateien entfernen: der eigene Bild-/Vorschau-Ordner doc<N> und die
+    # hochgeladene Quell-PDF. Best-effort — fehlende Dateien sind kein Fehler.
+    doc_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id), f"doc{doc['doc_index']}")
+    if os.path.isdir(doc_dir):
+        shutil.rmtree(doc_dir, ignore_errors=True)
+    src_pdf = doc.get("original_path") or ""
+    if src_pdf and os.path.exists(src_pdf):
+        try:
+            os.remove(src_pdf)
+        except OSError:
+            pass
+
+    # DB-Zeilen entfernen (Bilder zuerst, dann das Dokument).
+    conn.execute("DELETE FROM images WHERE document_id = ? AND project_id = ?", (document_id, project_id))
+    conn.execute("DELETE FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id))
+
+    # Projekt-Zaehler aus dem Ist-Stand neu berechnen. processed_images zaehlt
+    # weiterhin nur fertige Bilder (status='done'), damit der Fortschritt stimmt.
+    remaining_images = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)
+    ).fetchone()[0]
+    processed = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'", (project_id,)
+    ).fetchone()[0]
+    remaining_docs = conn.execute(
+        "SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)
+    ).fetchone()[0]
+    conn.execute(
+        "UPDATE projects SET total_images = ?, processed_images = ?, updated_at = datetime('now') WHERE id = ?",
+        (remaining_images, processed, project_id)
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "ok": True,
+        "remaining_images": remaining_images,
+        "remaining_documents": remaining_docs,
+    }
+
+
 @app.delete("/api/projects/{project_id}")
 async def delete_project(project_id: int, user: dict = Depends(get_current_user)):
     conn = get_db()
@@ -2298,9 +2374,12 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     total_tagged = 0
     total_images = 0
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for unit in units:
+        # Nummerierung nach Anzeige-Position (1..N), passend zur „Dokument N"-
+        # Anzeige im Frontend — NICHT nach doc_index, der nach Loeschungen Luecken
+        # haben kann.
+        for pos, unit in enumerate(units, start=1):
             out_path, info = _build_pdf_for_document(unit, output_dir)
-            inner = f"{unit['doc'].get('doc_index', 1):02d}_{_doc_label(unit['doc'])}.pdf"
+            inner = f"{pos:02d}_{_doc_label(unit['doc'])}.pdf"
             zf.write(out_path, arcname=inner)
             total_tagged += int(info.get("tagged", 0) or 0)
             total_images += int(info.get("total", 0) or 0)
@@ -2501,8 +2580,9 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
     os.makedirs(output_dir, exist_ok=True)
     zip_path = os.path.join(output_dir, f"{zip_base}_alle_{fmt}.zip")
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for unit in units:
-            inner = f"{unit['doc'].get('doc_index', 1):02d}_{_doc_label(unit['doc'])}{suffix}"
+        # Nummerierung nach Anzeige-Position (1..N), siehe PDF-Export oben.
+        for pos, unit in enumerate(units, start=1):
+            inner = f"{pos:02d}_{_doc_label(unit['doc'])}{suffix}"
             zf.writestr(inner, single(unit))
     return FileResponse(
         zip_path,

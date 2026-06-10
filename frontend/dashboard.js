@@ -98,6 +98,36 @@ function renderSidebar() {
   host.appendChild(nav);
 }
 
+// Rechtliche Footer-Links (Impressum · Datenschutz · Nutzungsbedingungen) zentral
+// in jede Dashboard-Fußzeile rendern (10.06.2026, Michael-Wunsch „Fußzeile überall
+// identisch"). Vorher standen die Links statisch und uneinheitlich in jeder Seite
+// (mal zwei, mal drei) und /app hatte sogar eine ganz andere Fußzeile. Jetzt eine
+// einzige Quelle -> alle eingeloggten Seiten (inkl. /app) zeigen garantiert
+// dieselbe Fußzeile, und sie kann nicht mehr auseinanderdriften.
+// Die Links werden als ERSTES Element der Fußzeile eingesetzt (vor DSGVO-Hinweis
+// und Unterstützungsblock), damit die Reihenfolge der bereits abgenommenen
+// Übersichtsseiten erhalten bleibt: Links -> DSGVO-Hinweis -> Unterstützung.
+const LEGAL_LINKS = [
+  { href: '/impressum-app', label: 'Impressum' },
+  { href: '/datensicherheit', label: 'Datenschutz' },
+  { href: '/nutzungsbedingungen-app', label: 'Nutzungsbedingungen' },
+];
+function renderLegalLinks() {
+  document.querySelectorAll('.dash-footer').forEach((footer) => {
+    if (footer.querySelector('.dash-legal-links')) return;   // idempotent
+    const wrap = document.createElement('div');
+    wrap.className = 'dash-legal-links';
+    LEGAL_LINKS.forEach((it, i) => {
+      if (i > 0) wrap.appendChild(document.createTextNode(' · '));
+      const a = document.createElement('a');
+      a.href = it.href;
+      a.textContent = it.label;
+      wrap.appendChild(a);
+    });
+    footer.insertBefore(wrap, footer.firstChild);
+  });
+}
+
 // Spenden-Hinweis dezent im Fussbereich (auf jeder Dashboard-Seite).
 function renderSupportFooter() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {
@@ -142,6 +172,7 @@ function renderLegalNote() {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCurrentUser();   // setzt currentUser, Begrüßung, Tageslimit
   renderSidebar();
+  renderLegalLinks();
   renderLegalNote();
   renderSupportFooter();
 });
