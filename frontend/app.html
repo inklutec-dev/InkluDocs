@@ -30,11 +30,11 @@
          (ARIA nur, wo nativ nichts vorhanden ist). Inhalte werden beim Oeffnen
          per JS gefuellt (siehe openDocDelete/openDocRename). -->
     <dialog id="docDeleteDialog" class="app-dialog">
-        <h2>Dokument loeschen?</h2>
+        <h2>Dokument löschen?</h2>
         <p id="docDeleteBody"></p>
         <div class="dialog-actions">
             <button type="button" autofocus class="btn btn-secondary" id="docDeleteCancel">Abbrechen</button>
-            <button type="button" class="btn btn-danger" id="docDeleteConfirm">Loeschen</button>
+            <button type="button" class="btn btn-danger" id="docDeleteConfirm">Löschen</button>
         </div>
     </dialog>
     <dialog id="docRenameDialog" class="app-dialog">
@@ -42,7 +42,7 @@
             <h2>Dokument umbenennen</h2>
             <label for="docRenameInput">Neuer Name des Dokuments</label>
             <input id="docRenameInput" type="text" maxlength="200" autocomplete="off">
-            <p class="dialog-hint">Leer lassen, um wieder den urspruenglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.</p>
+            <p class="dialog-hint">Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.</p>
             <div class="dialog-actions">
                 <button type="button" class="btn btn-secondary" id="docRenameCancel">Abbrechen</button>
                 <button type="submit" class="btn btn-primary">Speichern</button>
@@ -311,7 +311,7 @@
     async function showProject(projectId) {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         // Aktuelles Projekt merken, damit die Dokument-Aktionen (Umbenennen/
-        // Loeschen) wissen, gegen welches Projekt sie arbeiten.
+        // Löschen) wissen, gegen welches Projekt sie arbeiten.
         currentDocProjectId = projectId;
         highlightNav(null);
 
@@ -476,9 +476,9 @@
     let openDocs = new Set();
     let openDocsProjectId = null;
 
-    // ─── Dokument-Aktionen: Umbenennen + Loeschen (10.06.2026) ──────────────
-    // Michael Karbe 09.06.: pro PDF (= Dokument) ein Loeschen-Knopf direkt neben
-    // dem Aufklapp-Schalter; einzelne Seiten/Bilder werden NICHT geloescht, weil
+    // ─── Dokument-Aktionen: Umbenennen + Löschen (10.06.2026) ──────────────
+    // Michael Karbe 09.06.: pro PDF (= Dokument) ein Löschen-Knopf direkt neben
+    // dem Aufklapp-Schalter; einzelne Seiten/Bilder werden NICHT gelöscht, weil
     // immer die komplette PDF angezeigt wird. Umbenennen sitzt daneben, weil der
     // Dokumentname auch den Export-Dateinamen bestimmt.
     //
@@ -487,9 +487,9 @@
     let currentDocProjectId = null;   // welches Projekt gerade offen ist
     let _docActionId = null;          // Ziel-Dokument der laufenden Aktion
 
-    // Nach Umbenennen/Loeschen den Fokus sinnvoll setzen: bevorzugt auf das
+    // Nach Umbenennen/Löschen den Fokus sinnvoll setzen: bevorzugt auf das
     // betroffene Dokument (Summary ist fokussierbar via tabindex=-1), sonst auf
-    // die Bilder-Sammelueberschrift. Beim Loeschen ist _docActionId vorher auf
+    // die Bilder-Sammelueberschrift. Beim Löschen ist _docActionId vorher auf
     // null gesetzt, weil das Ziel nicht mehr existiert.
     function _moveFocusAfterDocChange() {
         const head = _docActionId ? document.getElementById('doc_heading_' + _docActionId) : null;
@@ -520,9 +520,9 @@
         const name = btn.dataset.docName || 'dieses Dokument';
         const count = parseInt(btn.dataset.docCount, 10) || 0;
         document.getElementById('docDeleteBody').textContent =
-            'Moechtest du das Dokument „' + name + '" mit ' + count
+            'Möchtest du das Dokument „' + name + '" mit ' + count
             + (count === 1 ? ' Bild' : ' Bildern')
-            + ' wirklich loeschen? Das laesst sich nicht rueckgaengig machen.';
+            + ' wirklich löschen? Das lässt sich nicht rückgängig machen.';
         document.getElementById('docDeleteDialog').showModal();
     }
 
@@ -550,12 +550,12 @@
             const res = await fetch('/api/projects/' + currentDocProjectId + '/documents/' + _docActionId, {
                 method: 'DELETE',
             });
-            if (!res.ok) { announce('Loeschen fehlgeschlagen.'); return; }
-        } catch (e) { announce('Netzwerkfehler beim Loeschen.'); return; }
+            if (!res.ok) { announce('Löschen fehlgeschlagen.'); return; }
+        } catch (e) { announce('Netzwerkfehler beim Löschen.'); return; }
         dlg.close();
         _docActionId = null;   // Ziel existiert nicht mehr -> Fokus auf Bilder-Ueberschrift
         await showProject(currentDocProjectId);
-        announce('Dokument geloescht.');
+        announce('Dokument gelöscht.');
         _moveFocusAfterDocChange();
     }
 
@@ -761,7 +761,7 @@
                 .sort((a, b) => a[0] - b[0])
                 .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))
                 .join('');
-            // Aktionen (Umbenennen/Loeschen) sitzen IN der <summary>, sind also
+            // Aktionen (Umbenennen/Löschen) sitzen IN der <summary>, sind also
             // erreichbar, ohne das Dokument aufzuklappen (Michael-Wunsch 09.06.).
             // Eindeutiger Screenreader-Name ueber einen visuell versteckten <span>
             // mit echtem Text statt aria-label (native-HTML-first). Der Klick wird
@@ -783,7 +783,7 @@
                     </details>
                     <span class="doc-actions">
                         <button type="button" class="doc-action-btn" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">Umbenennen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
-                        <button type="button" class="doc-action-btn doc-action-danger" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">Loeschen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
+                        <button type="button" class="doc-action-btn doc-action-danger" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">Löschen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
                     </span>
                 </div>`;
         };
