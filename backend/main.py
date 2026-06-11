@@ -2726,7 +2726,7 @@ async def api_generate_alt_text(request: Request):
             api_img_width, api_img_height, ""
         )
         processing_time_ms = int((time.time() - start_time) * 1000)
-        model_used = result.get("model_used", "mistral-small")
+        model_used = result.get("model_used", "")
 
         # Log successful usage
         log_api_usage(api_key_id, api_user["id"],
@@ -2756,7 +2756,6 @@ async def api_generate_alt_text(request: Request):
             "langbeschreibung": result.get("langbeschreibung", ""),
             "bildtyp": result.get("bildtyp", "unbekannt"),
             "konfidenz": result.get("konfidenz", "mittel"),
-            "model_used": model_used,
             "processing_time_ms": processing_time_ms,
         }
         return JSONResponse(
@@ -2800,7 +2799,6 @@ async def api_get_alt_text(result_id: str, request: Request):
         "langbeschreibung": result["langbeschreibung"],
         "bildtyp": result["bildtyp"],
         "konfidenz": result["konfidenz"],
-        "model_used": result["model_used"],
         "created_at": result["created_at"],
         "updated_at": result["updated_at"],
     })
@@ -2968,7 +2966,6 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
   "langbeschreibung": "Ausfuehrliche Beschreibung...",
   "bildtyp": "foto",
   "konfidenz": "hoch",
-  "model_used": "mistral-small",
   "processing_time_ms": 1234
 }</code></pre>
 
@@ -2981,7 +2978,6 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <tr><td><code>langbeschreibung</code></td><td>Ausfuehrliche Beschreibung (fuer aria-describedby oder Langtext)</td></tr>
 <tr><td><code>bildtyp</code></td><td>Erkannter Bildtyp (foto, diagramm, logo, etc.)</td></tr>
 <tr><td><code>konfidenz</code></td><td>Vertrauen in die Erkennung: hoch, mittel, niedrig</td></tr>
-<tr><td><code>model_used</code></td><td>Verwendetes KI-Modell</td></tr>
 <tr><td><code>processing_time_ms</code></td><td>Verarbeitungszeit in Millisekunden</td></tr>
 </tbody>
 </table>
@@ -2991,7 +2987,7 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <p>Ruft ein gespeichertes Ergebnis anhand seiner <code>result_id</code> ab. Erfordert denselben <code>X-API-Key</code> wie beim Erstellen.</p>
 <pre><code>curl %%BASE_URL%%/api/v1/alt-text/abc123xyz \\
   -H "X-API-Key: idocs_deinSchluessel"</code></pre>
-<p>Response-Felder: <code>result_id</code>, <code>alt_text</code>, <code>langbeschreibung</code>, <code>bildtyp</code>, <code>konfidenz</code>, <code>model_used</code>, <code>created_at</code>, <code>updated_at</code></p>
+<p>Response-Felder: <code>result_id</code>, <code>alt_text</code>, <code>langbeschreibung</code>, <code>bildtyp</code>, <code>konfidenz</code>, <code>created_at</code>, <code>updated_at</code></p>
 
 <h2 id="patch-result">Ergebnis bearbeiten</h2>
 <p><span class="badge" style="background:#7c3aed;color:white;">PATCH</span> <code>/api/v1/alt-text/{result_id}</code></p>
