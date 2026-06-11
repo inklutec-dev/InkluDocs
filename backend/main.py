@@ -3022,8 +3022,8 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <h2 id="ratelimit">Rate-Limits</h2>
 <p>Pro API-Schluessel gelten folgende Limits:</p>
 <ul>
+<li><strong>100 Bilder pro Tag</strong> (Alt-Text-Generierung, Reset um Mitternacht UTC)</li>
 <li><strong>60 Anfragen pro Minute</strong></li>
-<li><strong>1.000 Anfragen pro Tag</strong></li>
 </ul>
 <p>Die verbleibenden Anfragen werden in Response-Headern mitgeteilt:</p>
 <pre><code>X-RateLimit-Remaining-Minute: 58
