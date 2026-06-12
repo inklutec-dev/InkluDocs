@@ -4,8 +4,13 @@ PDF Export Module for InkluDocs (Beta).
 Contains the PDF/UA-compliant alt-text tagging functionality.
 Moved from pdf_processor.py to keep the main processing flow clean.
 This is the "beta" PDF tagging feature - importable but separated.
+
+Seit 12.06.2026 zusaetzlich: finalize_export_pdf() — gemeinsamer
+Abschluss-Schritt fuer BEIDE Export-Pfade (PDFix und PyMuPDF/fitz).
+Setzt Dokumentsprache + Titel und entfernt verwaiste Alt-Text-Altlasten.
 """
 
+import os
 import re
 import fitz  # PyMuPDF
 
@@ -135,8 +140,17 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
             img_name = img_info[7]
             if xref in alt_texts and alt_texts[xref] is not None:
                 alt_text = alt_texts[xref]
+                # "dekorativ" = Nutzer hat das Bild explizit als dekorativ
+                # markiert -> bewusst leerer Alt-Text. Ein leerer Text OHNE
+                # diese Markierung bedeutet dagegen "noch kein Alt-Text
+                # vorhanden" -> Bild komplett ueberspringen, NICHT mit leerem
+                # /Alt taggen (Befund 12.06.2026: leere /Alt-Eintraege sind
+                # schlechter als keine — Pruefwerkzeuge werten sie als Fehler,
+                # Screenreader uebergehen das Bild stillschweigend).
                 if alt_text == "dekorativ":
                     alt_text = ""
+                elif not alt_text.strip():
+                    continue
                 if page_num not in page_images:
                     page_images[page_num] = []
 
@@ -150,12 +164,10 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
                     "is_vector": False,
                     "bbox": bbox
                 })
-
-                # Set Alt on XObject as fallback
-                try:
-                    doc.xref_set_key(xref, "Alt", _pdf_string(alt_text))
-                except Exception:
-                    pass
+                # Hinweis 12.06.2026: Frueher wurde /Alt hier zusaetzlich
+                # direkt am Bild-XObject gesetzt ("Fallback"). Das ist nicht
+                # standardkonform (/Alt gehoert ans StructElem) und fuehrte zu
+                # doppelten /Alt-Eintraegen in der Datei — entfernt.
 
     # 2. Collect vector graphics (xref >= 900000)
     for xref, alt_text in alt_texts.items():
@@ -178,8 +190,12 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
                 )
                 continue
 
+            # Gleiche Regel wie bei Rasterbildern: "dekorativ" -> bewusst
+            # leer, fehlender Text -> Grafik ueberspringen statt leer taggen.
             if alt_text == "dekorativ":
                 alt_text = ""
+            elif alt_text is None or not alt_text.strip():
+                continue
 
             if page_num not in page_images:
                 page_images[page_num] = []
@@ -439,3 +455,211 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
     doc.save(output_path)
     doc.close()
     return {"path": output_path, "tagged_count": tagged_count, "warnings": warnings}
+
+
+# ─── Abschluss-Schritt fuer beide Export-Pfade (12.06.2026) ──────────────────
+
+_STRUCT_ELEM_RE = re.compile(r"/S\s*/\w+")
+_XREF_REF_RE = re.compile(r"(\d+)\s+0\s+R")
+
+
+def _collect_reachable_struct_elems(doc: fitz.Document, root_xref: int) -> set:
+    """Sammelt alle vom StructTreeRoot aus erreichbaren StructElem-xrefs.
+
+    Folgt rekursiv den /K-Eintraegen (Einzelreferenz, Array oder Dict).
+    MCR-/OBJR-Dicts und Seiten-Objekte sind keine StructElems und werden
+    nicht weiterverfolgt.
+    """
+    reachable = set()
+    stack = [root_xref]
+    while stack:
+        xref = stack.pop()
+        if xref in reachable:
+            continue
+        reachable.add(xref)
+        k_info = doc.xref_get_key(xref, "K")
+        if k_info[0] == "null":
+            continue
+        for ref in _XREF_REF_RE.findall(k_info[1]):
+            child = int(ref)
+            if child in reachable:
+                continue
+            try:
+                obj = doc.xref_object(child, compressed=True)
+            except Exception:
+                continue
+            # Nur echte StructElems weiterverfolgen (erkennbar am /S-Typ).
+            # MCR-/OBJR-Verweise und Seiten-Objekte haben kein /S und fallen
+            # hier automatisch raus. WICHTIG: NICHT per Substring auf "/MCR"
+            # filtern — StructElems mit INLINE-K-Dict (/K << /Type /MCR ... >>)
+            # enthalten den String auch und wuerden faelschlich ausgeschlossen
+            # (haette unsere eigenen Figures als Waisen markiert; von der
+            # Testsuite am 12.06.2026 gefunden).
+            if "/StructElem" in obj or _STRUCT_ELEM_RE.search(obj):
+                stack.append(child)
+    return reachable
+
+
+def _parent_tree_node_xrefs(doc: fitz.Document, root_xref: int) -> list:
+    """Liefert die xrefs aller Knoten des ParentTree (Number-Tree, inkl. /Kids)."""
+    pt_info = doc.xref_get_key(root_xref, "ParentTree")
+    if pt_info[0] != "xref":
+        return []
+    nodes = []
+    stack = [int(pt_info[1].split()[0])]
+    while stack:
+        xref = stack.pop()
+        if xref in nodes:
+            continue
+        nodes.append(xref)
+        kids = doc.xref_get_key(xref, "Kids")
+        if kids[0] != "null":
+            stack.extend(int(r) for r in _XREF_REF_RE.findall(kids[1]))
+    return nodes
+
+
+def remove_orphaned_alt_elems(doc: fitz.Document) -> int:
+    """Entfernt verwaiste StructElems mit /Alt-Eintrag aus der PDF.
+
+    Hintergrund (Befund 12.06.2026, Demo-Infografik): Erstellungsprogramme
+    wie PowerPoint hinterlassen StructElems mit /Alt (z.B. "Bullet", Achsen-
+    Beschriftungen), die NICHT mehr im Tag-Baum haengen — nur noch der
+    ParentTree referenziert sie. Screenreader lesen sie nicht, aber
+    Pruefwerkzeuge und Roh-Inspektion sehen sie: Die Demo-PDF hatte 9
+    /Alt-Eintraege fuer 3 Bilder. Diese Altlasten raeumen wir hier weg.
+
+    Vorgehen (bewusst konservativ):
+    - Erreichbarkeit vom StructTreeRoot aus bestimmen (ueber /K).
+    - NUR unerreichbare StructElems, die ein /Alt tragen, werden entfernt
+      (Objekt durch null ersetzt). Andere unerreichbare Elemente bleiben —
+      sie stoeren niemanden und jeder zusaetzliche Eingriff ist Risiko.
+    - Referenzen in den ParentTree-Knoten werden durch null ersetzt, NICHT
+      geloescht: Die Array-Position im ParentTree entspricht der MCID,
+      Loeschen wuerde alle folgenden Zuordnungen verschieben.
+    - Fail-safe: Wenn der Baum nicht lesbar ist (keine Kinder erreichbar),
+      wird NICHTS entfernt — lieber Altlasten behalten als Tags zerstoeren.
+
+    Gibt die Anzahl entfernter Elemente zurueck. Speichert NICHT selbst.
+    """
+    cat = doc.pdf_catalog()
+    root_info = doc.xref_get_key(cat, "StructTreeRoot")
+    if root_info[0] != "xref":
+        return 0
+    root_xref = int(root_info[1].split()[0])
+
+    reachable = _collect_reachable_struct_elems(doc, root_xref)
+    if len(reachable) <= 1:
+        # Nur die Wurzel erreicht -> Baum unlesbar oder leer. Fail-safe: nichts tun.
+        return 0
+
+    orphans = []
+    for xref in range(1, doc.xref_length()):
+        if xref in reachable:
+            continue
+        try:
+            obj = doc.xref_object(xref, compressed=True)
+        except Exception:
+            continue
+        if "/Alt" not in obj:
+            continue
+        # Nur StructElems anfassen — /Alt kann auch an anderen Objekttypen
+        # vorkommen (z.B. Bild-XObjects aus aelteren Exporten), die lassen
+        # wir bewusst in Ruhe.
+        if "/StructElem" not in obj and not _STRUCT_ELEM_RE.search(obj):
+            continue
+        orphans.append(xref)
+
+    if not orphans:
+        return 0
+
+    for xref in orphans:
+        doc.update_object(xref, "null")
+
+    # ParentTree-Referenzen auf die entfernten Objekte durch null ersetzen.
+    for node_xref in _parent_tree_node_xrefs(doc, root_xref):
+        obj = doc.xref_object(node_xref, compressed=True)
+        new_obj = obj
+        for orphan in orphans:
+            new_obj = re.sub(r"(?<![0-9])%d\s+0\s+R" % orphan, "null", new_obj)
+        if new_obj != obj:
+            doc.update_object(node_xref, new_obj)
+
+    return len(orphans)
+
+
+def finalize_export_pdf(pdf_path: str, title: str = None,
+                        fallback_title: str = None,
+                        lang: str = "de-DE") -> dict:
+    """Gemeinsamer Abschluss-Schritt fuer beide Export-Pfade (PDFix + fitz).
+
+    Erledigt drei Dinge an der fertigen Export-PDF:
+    1. Dokumentsprache setzen (WCAG 3.1.1) — nur wenn die PDF noch KEINE
+       Sprache hat; eine vorhandene Angabe des Autors bleibt erhalten.
+       Aktuell konstant de-DE, da die Pipeline deutsche Texte erzeugt
+       (bei kuenftiger Mehrsprachigkeit hier parametrisieren).
+    2. Dokumenttitel setzen (WCAG 2.4.2) — Prioritaet:
+       a) `title` (vom Nutzer vergebener Name: Export-Name oder Umbenennung),
+       b) vorhandener Titel der Quell-PDF (wird respektiert),
+       c) `fallback_title` (Dateiname ohne Endung).
+       Dazu ViewerPreferences /DisplayDocTitle true (PDF/UA-Anforderung:
+       Anzeigeprogramme sollen den Titel statt des Dateinamens ansagen).
+       Hinweis: Geschrieben wird das Info-Dictionary; ein evtl. vorhandenes
+       XMP-Paket der Quell-PDF wird nicht angefasst (bewusste Begrenzung).
+    3. Verwaiste /Alt-StructElems entfernen (siehe remove_orphaned_alt_elems).
+
+    Der Dokument-INHALT bleibt unangetastet — es geht ausschliesslich um
+    Metadaten ("das Etikett der Datei") und tote Strukturobjekte.
+
+    Gibt ein Info-Dict zurueck: {lang_set, title_set, orphan_alts_removed}.
+    """
+    doc = fitz.open(pdf_path)
+    info = {"lang_set": False, "title_set": False, "orphan_alts_removed": 0}
+    cat = doc.pdf_catalog()
+
+    # 1) Dokumentsprache
+    lang_info = doc.xref_get_key(cat, "Lang")
+    has_lang = lang_info[0] == "string" and lang_info[1].strip("()<> ") != ""
+    if not has_lang and lang:
+        doc.xref_set_key(cat, "Lang", _pdf_string(lang))
+        info["lang_set"] = True
+
+    # 2) Titel + DisplayDocTitle
+    meta = doc.metadata or {}
+    existing_title = (meta.get("title") or "").strip()
+    new_title = None
+    if title and title.strip():
+        new_title = title.strip()
+    elif (not existing_title or existing_title.lower() == "untitled") and fallback_title:
+        new_title = fallback_title.strip()
+    if new_title and new_title != existing_title:
+        meta["title"] = new_title
+        doc.set_metadata(meta)
+        info["title_set"] = True
+
+    vp_info = doc.xref_get_key(cat, "ViewerPreferences")
+    if vp_info[0] == "xref":
+        vp_xref = int(vp_info[1].split()[0])
+        if doc.xref_get_key(vp_xref, "DisplayDocTitle")[1] != "true":
+            doc.xref_set_key(vp_xref, "DisplayDocTitle", "true")
+    elif vp_info[0] == "dict":
+        if "/DisplayDocTitle true" not in vp_info[1]:
+            # Vorhandenes Inline-Dict erweitern bzw. false -> true korrigieren
+            val = vp_info[1]
+            if "/DisplayDocTitle" in val:
+                val = val.replace("/DisplayDocTitle false", "/DisplayDocTitle true")
+            else:
+                val = val.rstrip()[:-2].rstrip() + " /DisplayDocTitle true >>"
+            doc.xref_set_key(cat, "ViewerPreferences", val)
+    else:
+        doc.xref_set_key(cat, "ViewerPreferences", "<< /DisplayDocTitle true >>")
+
+    # 3) Verwaiste Alt-Altlasten
+    info["orphan_alts_removed"] = remove_orphaned_alt_elems(doc)
+
+    # In-place speichern: fitz kann nicht in die geoeffnete Datei schreiben,
+    # daher Tempdatei + atomarer Austausch.
+    tmp_path = pdf_path + ".finalize.tmp"
+    doc.save(tmp_path)
+    doc.close()
+    os.replace(tmp_path, pdf_path)
+    return info

@@ -2259,10 +2259,32 @@ def _load_pdf_export_units(project: dict, user_id: int, document_id: Optional[in
     return units
 
 
-def _build_pdf_for_document(unit: dict, output_dir: str) -> tuple[str, dict]:
+def _exportable_alt_text(img) -> Optional[str]:
+    """Alt-Text eines Bildes fuer den PDF-Export, oder None wenn das Bild
+    NICHT exportiert werden soll.
+
+    Regel (12.06.2026): Nur Bilder mit echtem Text (oder der expliziten
+    Markierung "dekorativ") kommen in den Export. Unbearbeitete Bilder
+    (leerer Text, z.B. status='pending') werden uebersprungen — sie bleiben
+    in der PDF exakt wie im Original, inklusive eines evtl. vorhandenen
+    Original-Alt-Textes. Vorher schrieb der Export leere /Alt-Eintraege in
+    die Datei (Befund 12.06.2026: Export eines teilbearbeiteten Projekts
+    erzeugte 6 leere Alt-Texte, die Pruefwerkzeuge als Fehler werten)."""
+    alt_text = _display_alt_text(img)
+    if alt_text is None:
+        return None
+    if alt_text == "dekorativ" or alt_text.strip():
+        return alt_text
+    return None
+
+
+def _build_pdf_for_document(unit: dict, output_dir: str,
+                            custom_title: Optional[str] = None) -> tuple[str, dict]:
     """Erzeugt die exportierte PDF fuer EIN Dokument (alle Alt-Texte
     eingebettet). Gibt (output_path, header_info) zurueck. Header_info
-    enthaelt die gleichen Metriken wie der Single-Export davor."""
+    enthaelt die gleichen Metriken wie der Single-Export davor.
+    custom_title: vom Nutzer beim Export vergebener Name — wird als
+    PDF-Dokumenttitel uebernommen (siehe finalize_export_pdf)."""
     doc = unit["doc"]
     images = unit["images"]
     extraction_method = doc.get("extraction_method") or "fitz"
@@ -2272,7 +2294,7 @@ def _build_pdf_for_document(unit: dict, output_dir: str) -> tuple[str, dict]:
     image_metadata = []
 
     for img in images:
-        alt_text = _display_alt_text(img)
+        alt_text = _exportable_alt_text(img)
         if alt_text is not None and img.get("xref"):
             alt_texts[img["xref"]] = alt_text
         if alt_text is not None and img.get("image_index"):
@@ -2318,6 +2340,25 @@ def _build_pdf_for_document(unit: dict, output_dir: str) -> tuple[str, dict]:
             warnings = result.get("warnings") or []
             if warnings:
                 info["warnings"] = warnings
+
+    # Gemeinsamer Abschluss fuer BEIDE Pfade (12.06.2026): Dokumentsprache,
+    # Dokumenttitel (WCAG 3.1.1 / 2.4.2) und verwaiste /Alt-Altlasten der
+    # Quell-PDF entfernen. Titel-Prioritaet: Export-Name des Nutzers >
+    # Umbenennung in InkluDocs (display_name) > vorhandener Titel der
+    # Quell-PDF > Dateiname ohne Endung. Der Dokument-Inhalt bleibt unberuehrt.
+    explicit_title = (custom_title or "").strip() or (doc.get("display_name") or "").strip() or None
+    fallback_title = re.sub(r"\.pdf$", "", (doc.get("original_filename") or "").strip(),
+                            flags=re.IGNORECASE) or None
+    try:
+        from pdf_export import finalize_export_pdf
+        info["a11y"] = finalize_export_pdf(output_path, title=explicit_title,
+                                           fallback_title=fallback_title)
+    except Exception as e:
+        # Der Abschluss-Schritt darf den Export nicht scheitern lassen:
+        # Die Alt-Texte sind zu diesem Zeitpunkt bereits korrekt gesetzt,
+        # Sprache/Titel/Aufraeumen sind Zusatznutzen. Fehler aber loggen.
+        print(f"WARNUNG: finalize_export_pdf fehlgeschlagen fuer {output_path}: {e}")
+
     return output_path, info
 
 
@@ -2349,7 +2390,8 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     if document_id is not None or len(units) == 1:
         # Einzelne Datei zurueckgeben (direkter Download, kein ZIP).
         unit = units[0]
-        output_path, info = _build_pdf_for_document(unit, output_dir)
+        output_path, info = _build_pdf_for_document(unit, output_dir,
+                                                    custom_title=custom_name)
         headers = {}
         if info.get("method"):
             headers["X-Export-Method"] = str(info["method"])
