@@ -114,6 +114,7 @@ def run_agent(
     user_message: str,
     project: dict,
     provider: BedrockProvider,
+    system_suffix: str = None,
 ) -> dict[str, Any]:
     """Führt den agentic Loop aus. Returns:
         {"reply": str, "intent": "agentic", "image_refs": [...] or None,
@@ -122,9 +123,14 @@ def run_agent(
     Hinweis zur Persistenz: User-Message + Bot-Reply werden NICHT hier
     gespeichert — das übernimmt main.py:_chat_endpoint vor/nach diesem
     Aufruf zentral.
+
+    system_suffix: optionaler Text, der NUR im Demo-Modus an den System-Prompt
+    angehängt wird (thematische Leitplanke). Default None = normaler Pfad,
+    System-Prompt unverändert.
     """
     executor = ToolExecutor(project_id=project_id, user_id=user_id)
     messages = _build_initial_messages(project_id, user_message, project)
+    system_text = SYSTEM_AGENT if not system_suffix else SYSTEM_AGENT + "\n\n" + system_suffix
 
     actions_log: list[dict] = []
     image_refs_seen: set[int] = set()
@@ -135,7 +141,7 @@ def run_agent(
             payload = provider.invoke_with_tools(
                 anthropic_messages=messages,
                 tools=TOOL_DEFINITIONS,
-                system=SYSTEM_AGENT,
+                system=system_text,
                 max_tokens=_DEFAULT_MAX_TOKENS,
                 temperature=0.3,
             )

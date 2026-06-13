@@ -1,0 +1,105 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# InkluDocs — Demo-Instanz (öffentliche „Kostprobe" ohne Anmeldung)
+# ─────────────────────────────────────────────────────────────────────────────
+# Dritte, vollständig isolierte Instanz neben Production (docker-compose.yml) und
+# Staging (docker-compose.staging.yml). Sie fährt DENSELBEN Code, aber:
+#   • eigene Wegwerf-Datenbank (Volume inkludocs_demo_data) — getrennt von Prod/Staging
+#   • eigener Port 127.0.0.1:8003 (nur lokal; öffentlich erst über NPM, wenn freigegeben)
+#   • DEMO_MODE=on — schaltet den öffentlichen, anmeldefreien Demo-Pfad samt Limits
+#     und der thematischen Bot-Leitplanke frei (Code dazu ab Schritt 2/3).
+#
+# Bedienung über den Wrapper:   ./compose-demo.sh up -d --build
+# Architektur + Hintergrund:    siehe DEMO.md
+#
+# WICHTIG: Diese Datei enthält KEINE Geheimnisse. Secrets (AWS/Bedrock, SMTP, …)
+# kommen ausschließlich aus .env.demo (chmod 600, nicht in Git). Demo-SPEZIFISCHE
+# Schalter (BASE_URL, DEMO_MODE, Limits, Registrierung aus) sind hier hart gesetzt,
+# damit das Verhalten der Demo versioniert und auf einen Blick nachvollziehbar ist.
+#
+# Eigener Compose-PROJEKTNAME (name: inkludocs-demo): Production und Staging teilen
+# den Default-Projektnamen „inkludocs". Die Demo bekommt bewusst einen eigenen —
+# dadurch ist sie ein vollständig getrenntes Compose-Projekt (keine „orphan"-
+# Kopplung; ein versehentliches `--remove-orphans` kann Prod/Staging nicht treffen).
+# ─────────────────────────────────────────────────────────────────────────────
+name: inkludocs-demo
+
+services:
+  inkludocs-demo:
+    build: .
+    container_name: inkludocs-demo
+    restart: unless-stopped
+    ports:
+      # Nur an localhost gebunden — von außen NICHT erreichbar, bis ein
+      # NPM-Proxy-Host für demo.inkludocs.de eingerichtet wird (Schritt 6).
+      - "127.0.0.1:8003:8001"
+    volumes:
+      # Eigene Wegwerf-DB. Bewusst getrennt von inkludocs_data (Prod) und
+      # inkludocs_staging_data (Staging) — anonymer Traffic berührt nie echte Daten.
+      - inkludocs_demo_data:/app/data
+    environment:
+      # ── Demo-spezifische Schalter (hart gesetzt, versioniert) ────────────────
+      # Master-Schalter der Demo. Aktiviert ab Schritt 2/3: öffentlicher
+      # Endpunkt ohne Login, Wegwerf-Projekte, Limits, Bot-Leitplanke.
+      - DEMO_MODE=on
+      # In der Demo registriert sich niemand — der Weg zum Konto führt zur echten App.
+      - REGISTRATION_ENABLED=false
+      # Limits — Werte hier dokumentiert; WIRKSAM ab Schritt 3 (dann liest der Code sie).
+      - DEMO_DAILY_IMAGE_LIMIT=${DEMO_DAILY_IMAGE_LIMIT:-3}      # Generierungen/Tag pro Besucher
+      - DEMO_DAILY_CHAT_LIMIT=${DEMO_DAILY_CHAT_LIMIT:-12}       # Chat-Nachrichten/Tag pro Besucher
+      - DEMO_GLOBAL_DAILY_LIMIT=${DEMO_GLOBAL_DAILY_LIMIT:-300}  # globaler Tagesdeckel (Kostenschutz)
+
+      # ── Ab hier identisch zu Staging: Pipeline-/Agent-Konfiguration ──────────
+      # Werte stammen aus .env.demo (= Kopie von .env.prod), damit Generierung und
+      # Chatbot exakt wie in der Produktion laufen (Bedrock/Claude Sonnet).
+      - PDF_LANGBESCHREIBUNG=${PDF_LANGBESCHREIBUNG:-off}
+      - SECRET_KEY=${SECRET_KEY:-inkludocs-demo-key-2026}
+      - OLLAMA_URL=http://10.100.0.1:11434
+      - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
+      - SMTP_SERVER=${SMTP_SERVER}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      - NOTIFICATION_EMAIL=support@inklutec.de
+      - MISTRAL_ENABLED=${MISTRAL_ENABLED:-true}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - PIPELINE_MODE=${PIPELINE_MODE:-mistral_primary}
+      - MISTRAL_MODEL_CLASSIFY=${MISTRAL_MODEL_CLASSIFY:-mistral-medium-latest}
+      - MISTRAL_MODEL_GENERATE=${MISTRAL_MODEL_GENERATE:-pixtral-large-latest}
+      - MISTRAL_MODEL_VALIDATE=${MISTRAL_MODEL_VALIDATE:-mistral-large-latest}
+      - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-true}
+      - VALIDATOR_MODE=${VALIDATOR_MODE:-correct}
+      # Demo-eigene Basis-URL (hart gesetzt, wie bei Staging).
+      - BASE_URL=https://demo.inkludocs.de
+      - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
+      - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-false}
+      - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
+      - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-mistral}
+      - INKLUAGENT_BEDROCK_MODEL_TEXT=${INKLUAGENT_BEDROCK_MODEL_TEXT:-eu.anthropic.claude-sonnet-4-6}
+      - INKLUAGENT_BEDROCK_MODEL_VISION=${INKLUAGENT_BEDROCK_MODEL_VISION:-eu.anthropic.claude-sonnet-4-6}
+      - INKLUAGENT_INTENT_MODEL=${INKLUAGENT_INTENT_MODEL:-}
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+      - INKLUAGENT_AGENTIC=${INKLUAGENT_AGENTIC:-false}
+      - LLM_PROVIDER=${LLM_PROVIDER:-mistral}
+      - AWS_REGION=${AWS_REGION:-eu-central-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - BEDROCK_MODEL_CLASSIFY=${BEDROCK_MODEL_CLASSIFY:-eu.anthropic.claude-haiku-4-5}
+      - BEDROCK_MODEL_INVENTAR=${BEDROCK_MODEL_INVENTAR:-eu.anthropic.claude-sonnet-4-6}
+      - BEDROCK_MODEL_GENERATE=${BEDROCK_MODEL_GENERATE:-eu.anthropic.claude-sonnet-4-6}
+      - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
+      - PIPELINE_VERSION=${PIPELINE_VERSION:-v3_7}
+      - V4_PASS_MODE=${V4_PASS_MODE:-full}
+      - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - inklucut_default
+
+volumes:
+  inkludocs_demo_data:
+
+networks:
+  inklucut_default:
+    external: true

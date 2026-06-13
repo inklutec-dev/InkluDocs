@@ -1,0 +1,114 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   InkluDocs Demo-Seite — schlanker Rahmen um die WERKZEUG-Maske.
+   Nutzt die Marken-Variablen aus style.css (:root). Layout der Ergebnis-Maske
+   GESTAPELT wie im eingeloggten Werkzeug (Abzeichen, Bild, dann Felder).
+   Farben/Kontraste bewusst barrierefrei: Akzent-Orange nur als Rahmen/Fläche.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.demo-body { background: var(--bg); color: var(--text); }
+
+/* Skip-Link (für Tastatur/Screenreader sichtbar bei Fokus) */
+.demo-skip {
+  position: absolute; left: -999px; top: 0;
+  background: var(--primary); color: #fff; padding: 0.6rem 1rem; z-index: 100;
+}
+.demo-skip:focus { left: 0; }
+
+/* Nur für Screenreader */
+.demo-visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* Kopf: hell, mit Logo links und Anmelde-Knopf rechts */
+.demo-header { background: var(--card-bg); border-bottom: 1px solid var(--border); }
+.demo-header-inner {
+  max-width: 960px; margin: 0 auto; padding: 0.75rem 1.25rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.demo-logo { height: 40px; width: auto; display: block; }
+
+.demo-main { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+.demo-intro h1 { font-size: 1.9rem; color: var(--primary); margin-bottom: 0.5rem; }
+.demo-lead { font-size: 1.1rem; color: var(--text); margin-bottom: 0.75rem; }
+.demo-privacy { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 0.5rem; }
+.demo-quota { font-weight: 600; color: var(--primary); margin-bottom: 0.25rem; }
+
+/* Karten-Abstand (erbt .card aus style.css) */
+.demo-card { margin-top: 1.5rem; padding: 1.5rem; }
+.demo-card h2 { font-size: 1.3rem; color: var(--primary); margin-bottom: 1rem; }
+
+/* Upload-Fläche */
+.demo-dropzone {
+  border: 2px dashed var(--accent); border-radius: 10px;
+  padding: 2rem 1.25rem; text-align: center; transition: background 0.15s, border-color 0.15s;
+}
+.demo-dropzone.dragover { background: #fff7ed; border-color: var(--accent-hover); }
+.demo-upload-label {
+  display: inline-block; cursor: pointer; background: var(--accent); color: #fff;
+  padding: 0.7rem 1.4rem; border-radius: 8px; font-weight: 600; font-size: 1rem;
+}
+.demo-upload-label:hover { background: var(--accent-hover); }
+.demo-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.demo-hint { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.75rem; }
+
+/* Ergebnis-Maske — GESTAPELT wie im Werkzeug */
+.demo-badges { margin: 0 0 0.75rem; min-height: 1.2rem; }
+.demo-badges .badge { margin-right: 0.4rem; }
+.demo-figure { margin: 0 0 1rem; }
+.demo-result-image {
+  max-width: 400px; width: 100%; height: auto;
+  border: 1px solid var(--border); border-radius: 8px; background: #fff;
+}
+#resultSection label {
+  display: block; font-weight: 600; margin: 1rem 0 0.3rem; color: var(--text);
+}
+.demo-langfield { min-height: 120px; }
+.demo-delete { margin-top: 1.5rem; color: var(--error); border-color: var(--error); }
+.demo-delete:hover:not(:disabled) { background: #fef2f2; }
+
+/* Chatbot — Kopfbalken in Navy wie im eingeloggten Werkzeug ("Chatbot"-Bar) */
+.demo-chat { margin-top: 1.75rem; }
+.demo-chat-header {
+  background: var(--primary); color: #fff;
+  padding: 0.7rem 1rem; border-radius: 8px;
+  font-size: 1.05rem; font-weight: 700; margin: 0 0 0.6rem;
+}
+.demo-chatlog {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+  padding: 0.75rem; min-height: 80px; max-height: 320px; overflow-y: auto; margin: 0.5rem 0 0.75rem;
+}
+.demo-chatlog:empty::before { content: "Noch keine Nachrichten."; color: var(--text-muted); }
+.demo-msg { margin: 0 0 0.6rem; padding: 0.5rem 0.7rem; border-radius: 8px; max-width: 90%; }
+.demo-msg-user { background: var(--primary); color: #fff; margin-left: auto; }
+.demo-msg-bot { background: #fff; border: 1px solid var(--border); color: var(--text); }
+.demo-chat-form { display: flex; gap: 0.5rem; }
+.demo-chat-form input {
+  flex: 1; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem;
+}
+
+/* Anmelde-Aufforderung unter dem Ergebnis */
+.demo-cta {
+  margin-top: 1.75rem; padding: 1.25rem; border-radius: 10px;
+  background: #fff7ed; border-left: 4px solid var(--accent);
+}
+.demo-cta p { color: var(--text); margin-bottom: 1rem; }
+
+/* Kontingent-aufgebraucht-Karte */
+.demo-upsell { border-left: 4px solid var(--accent); }
+.demo-upsell p { color: var(--text); margin-bottom: 1rem; }
+
+/* Sichtbarer Fokus überall (Barrierefreiheit) */
+.demo-body a:focus-visible,
+.demo-body button:focus-visible,
+.demo-body input:focus-visible,
+.demo-body textarea:focus-visible,
+.demo-body .demo-upload-label:focus-within {
+  outline: 3px solid var(--focus); outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .demo-intro h1 { font-size: 1.6rem; }
+  .demo-result-image { max-width: 100%; }
+}
