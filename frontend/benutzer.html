@@ -22,7 +22,7 @@
         </div>
       </section>
 
-      <section class="dash-card" aria-labelledby="newuser-h">
+      <section class="dash-card" aria-labelledby="newuser-h" id="newuser-section">
         <h2 id="newuser-h">Neuen Benutzer anlegen</h2>
         <form id="createUserForm" novalidate>
           <div class="dash-field">
@@ -43,6 +43,31 @@
           </div>
           <button type="submit" class="btn btn-primary">Anlegen</button>
           <span id="createUserMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        </form>
+      </section>
+
+      <section class="dash-section" aria-labelledby="admins-h">
+        <h2 id="admins-h">Administratoren</h2>
+        <div id="adminsContainer" aria-busy="true">
+          <p class="dash-sub">Wird geladen …</p>
+        </div>
+      </section>
+
+      <section class="dash-card" aria-labelledby="addadmin-h" id="addAdminSection">
+        <h2 id="addadmin-h">Admin hinzufügen</h2>
+        <p class="dash-sub">Die Person muss bereits ein Konto haben (sonst zuerst oben „Neuen Benutzer anlegen").</p>
+        <form id="addAdminForm" novalidate>
+          <div class="dash-field">
+            <label for="addAdminEmail">E-Mail des bestehenden Kontos</label>
+            <input type="email" id="addAdminEmail" class="dash-input" required placeholder="person@beispiel.de">
+          </div>
+          <fieldset class="dash-field">
+            <legend>Rechte-Stufe</legend>
+            <label><input type="radio" name="adminLevel" value="full" checked> Voll-Admin – alle Rechte</label><br>
+            <label><input type="radio" name="adminLevel" value="view"> Nur-Einsicht – sieht Nutzer, ändert nichts</label>
+          </fieldset>
+          <button type="submit" class="btn btn-primary">Zum Admin machen</button>
+          <span id="addAdminMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
         </form>
       </section>
     </main>
@@ -90,7 +115,7 @@
         self.className = 'dash-meta';
         self.textContent = 'Das sind Sie selbst.';
         actions.appendChild(self);
-      } else {
+      } else if (currentUser && currentUser.admin_level === 'full') {
         const toggle = document.createElement('button');
         toggle.className = 'btn btn-secondary btn-small';
         toggle.textContent = u.is_active ? 'Sperren' : 'Entsperren';
@@ -164,9 +189,118 @@
     }
   });
 
+  async function loadAdmins() {
+    const cont = byId('adminsContainer');
+    const res = await fetch('/api/admin/admins');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+    if (!res.ok) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = 'Administratoren konnten nicht geladen werden.';
+      cont.appendChild(p);
+      return;
+    }
+    const data = await res.json();
+    const admins = data.admins || [];
+    const isFull = currentUser && currentUser.admin_level === 'full';
+
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    admins.forEach((a) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      h3.textContent = a.display_name;
+      const levelLabel = a.admin_level === 'view' ? 'Nur-Einsicht' : 'Voll-Admin';
+      const meta = document.createElement('p');
+      meta.className = 'dash-meta';
+      meta.textContent = `${a.email} · ${levelLabel}${a.is_active ? '' : ' · Gesperrt'}`;
+      li.appendChild(h3);
+      li.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'dash-actions';
+      if (currentUser && a.id === currentUser.id) {
+        const self = document.createElement('span');
+        self.className = 'dash-meta';
+        self.textContent = 'Das sind Sie selbst.';
+        actions.appendChild(self);
+      } else if (isFull) {
+        const lvlBtn = document.createElement('button');
+        lvlBtn.className = 'btn btn-secondary btn-small';
+        if (a.admin_level === 'full') {
+          lvlBtn.textContent = 'Auf Nur-Einsicht setzen';
+          lvlBtn.addEventListener('click', () => setAdminLevel(a.id, 'view'));
+        } else {
+          lvlBtn.textContent = 'Auf Voll-Admin setzen';
+          lvlBtn.addEventListener('click', () => setAdminLevel(a.id, 'full'));
+        }
+        const rev = document.createElement('button');
+        rev.className = 'btn btn-danger btn-small';
+        rev.textContent = 'Admin-Rechte entziehen';
+        rev.addEventListener('click', () => revokeAdmin(a.id, a.display_name));
+        actions.appendChild(lvlBtn);
+        actions.appendChild(rev);
+      }
+      li.appendChild(actions);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+    byId('admins-h').textContent = `Administratoren (${admins.length})`;
+    announce(`${admins.length} Administratoren geladen.`);
+  }
+
+  async function setAdminLevel(id, level) {
+    const res = await fetch('/api/admin/admins/' + id, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) { announce(data.message || 'Rechte-Stufe geändert'); loadAdmins(); loadUsers(); }
+    else { alert(data.detail || 'Fehler beim Ändern der Rechte-Stufe.'); }
+  }
+
+  async function revokeAdmin(id, name) {
+    if (!confirm('Admin-Rechte von "' + name + '" entziehen? Das Konto bleibt als normaler Nutzer bestehen.')) return;
+    const res = await fetch('/api/admin/admins/' + id, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) { announce(data.message || 'Admin-Rechte entzogen'); loadAdmins(); loadUsers(); }
+    else { alert(data.detail || 'Fehler beim Entziehen der Rechte.'); }
+  }
+
+  byId('addAdminForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = byId('addAdminMsg');
+    msg.textContent = ''; msg.style.color = '';
+    const email = byId('addAdminEmail').value.trim();
+    const checked = document.querySelector('input[name="adminLevel"]:checked');
+    const level = checked ? checked.value : 'full';
+    if (!email) { msg.textContent = 'Bitte eine E-Mail eingeben.'; msg.style.color = 'var(--error)'; return; }
+    const res = await fetch('/api/admin/admins', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, level }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      msg.textContent = data.message; msg.style.color = 'var(--success)';
+      announce(data.message);
+      byId('addAdminForm').reset();
+      loadAdmins(); loadUsers();
+    } else {
+      msg.textContent = data.detail || 'Fehler beim Hinzufügen.'; msg.style.color = 'var(--error)';
+    }
+  });
+
   (async function init() {
-    await loadCurrentUser();   // currentUser für die "Sie selbst"-Erkennung
+    await loadCurrentUser();   // currentUser für "Sie selbst"-Erkennung + Rechte-Stufe
+    const isFull = currentUser && currentUser.admin_level === 'full';
+    if (!isFull) {
+      // Nur-Einsicht-Admins: Anlege- und Verwaltungs-Formulare ausblenden.
+      const ns = byId('newuser-section'); if (ns) ns.hidden = true;
+      const aa = byId('addAdminSection'); if (aa) aa.hidden = true;
+    }
     await loadUsers();
+    await loadAdmins();
   })();
 </script>
 </body>

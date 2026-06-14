@@ -207,6 +207,9 @@ def _migrate_columns(conn):
         ("images", "feedback", "ALTER TABLE images ADD COLUMN feedback TEXT DEFAULT ''"),
         ("users", "email_verified", "ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 1"),
         ("users", "news_seen_until", "ALTER TABLE users ADD COLUMN news_seen_until TEXT"),
+        # Admin-Rechte-Stufe (14.06.2026): 'full' = alle Rechte, 'view' = nur Einsicht.
+        # Default 'full', damit bestehende Admins (Steve, Michael) volle Rechte behalten.
+        ("users", "admin_level", "ALTER TABLE users ADD COLUMN admin_level TEXT DEFAULT 'full'"),
         # v3.3 (14.04.2026): Dreistufige Pipeline mit Validator
         ("images", "needs_review", "ALTER TABLE images ADD COLUMN needs_review INTEGER DEFAULT 0"),
         ("images", "pipeline_steps", "ALTER TABLE images ADD COLUMN pipeline_steps TEXT DEFAULT ''"),
@@ -416,7 +419,7 @@ def reset_password(token: str, new_password: str) -> bool:
 def list_all_users():
     conn = get_db()
     rows = conn.execute(
-        "SELECT id, email, display_name, is_admin, is_active, created_at, last_login FROM users ORDER BY created_at DESC"
+        "SELECT id, email, display_name, is_admin, admin_level, is_active, created_at, last_login FROM users ORDER BY created_at DESC"
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
@@ -449,6 +452,53 @@ def admin_reset_password(user_id: int, new_password: str):
     conn = get_db()
     password_hash = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
     conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
+    conn.commit()
+    conn.close()
+
+
+# ─── Administrator-Verwaltung (14.06.2026) ───────────────────────
+# Zwei Rechte-Stufen pro Admin (Spalte users.admin_level):
+#   'full' = Voll-Admin – alle Rechte wie der Gruender-Account
+#            (Nutzer sperren, loeschen, Passwoerter zuruecksetzen,
+#             andere zu Admins machen).
+#   'view' = Nur-Einsicht – sieht die Nutzerliste und wer sich
+#            angemeldet hat, darf aber nichts veraendern.
+
+def list_admins():
+    """Alle Administratoren (is_admin=1) inkl. ihrer Rechte-Stufe."""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, email, display_name, admin_level, is_active "
+        "FROM users WHERE is_admin = 1 ORDER BY created_at"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def count_full_admins():
+    """Anzahl der Voll-Admins – Schutz gegen versehentliches Aussperren."""
+    conn = get_db()
+    n = conn.execute(
+        "SELECT COUNT(*) FROM users WHERE is_admin = 1 AND admin_level = 'full'"
+    ).fetchone()[0]
+    conn.close()
+    return n
+
+
+def set_user_admin(user_id: int, is_admin: int, admin_level: str = "full"):
+    """Admin-Status und Rechte-Stufe eines Nutzers setzen.
+
+    is_admin=0 entfernt die Admin-Rechte (das Konto bleibt als normaler
+    Nutzer bestehen). admin_level wird nur ausgewertet, wenn is_admin=1
+    und ist 'full' oder 'view'.
+    """
+    if admin_level not in ("full", "view"):
+        admin_level = "full"
+    conn = get_db()
+    conn.execute(
+        "UPDATE users SET is_admin = ?, admin_level = ? WHERE id = ?",
+        (1 if is_admin else 0, admin_level, user_id),
+    )
     conn.commit()
     conn.close()
 

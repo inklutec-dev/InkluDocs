@@ -27,6 +27,7 @@ from database import (
     init_db, get_db, create_user, verify_user, get_user_by_email, get_user_by_id,
     create_password_reset_token, verify_reset_token, reset_password,
     list_all_users, update_user_active, delete_user_data, admin_reset_password,
+    list_admins, count_full_admins, set_user_admin,
     create_api_key, verify_api_key, list_api_keys, delete_api_key, rename_api_key,
     log_api_usage, get_api_usage_stats,
     create_email_change_token, confirm_email_change,
@@ -208,9 +209,27 @@ def get_current_user(request: Request) -> dict:
 
 
 def require_admin(request: Request) -> dict:
+    """Jeder Admin (Voll-Admin oder Nur-Einsicht) – lesender Zugriff."""
     user = get_current_user(request)
     if not user.get("is_admin"):
         raise HTTPException(status_code=403, detail="Nur fuer Administratoren")
+    return user
+
+
+def require_full_admin(request: Request) -> dict:
+    """Nur Voll-Admins – fuer veraendernde Aktionen (Nutzer sperren, loeschen,
+    Passwoerter zuruecksetzen, Konten anlegen, Admins verwalten).
+
+    Liest die aktuelle Rechte-Stufe frisch aus der Datenbank, damit ein
+    entzogenes oder herabgestuftes Recht sofort greift – nicht erst nach
+    Ablauf des Login-Tokens.
+    """
+    user = get_current_user(request)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Nur fuer Administratoren")
+    db_user = get_user_by_id(user["id"])
+    if not db_user or not db_user.get("is_admin") or db_user.get("admin_level") != "full":
+        raise HTTPException(status_code=403, detail="Nur fuer Voll-Administratoren")
     return user
 
 
@@ -479,6 +498,7 @@ async def me(user: dict = Depends(get_current_user)):
             "email": db_user["email"],
             "display_name": db_user["display_name"],
             "is_admin": db_user["is_admin"],
+            "admin_level": db_user.get("admin_level", "full"),
         },
         "daily_limit": {
             "used": daily_used,
@@ -652,7 +672,7 @@ async def admin_list_users(user: dict = Depends(require_admin)):
 
 
 @app.post("/api/admin/users/{user_id}/toggle-active")
-async def admin_toggle_active(user_id: int, user: dict = Depends(require_admin)):
+async def admin_toggle_active(user_id: int, user: dict = Depends(require_full_admin)):
     target = get_user_by_id(user_id)
     if not target:
         raise HTTPException(status_code=404, detail="User nicht gefunden")
@@ -664,7 +684,7 @@ async def admin_toggle_active(user_id: int, user: dict = Depends(require_admin))
 
 
 @app.post("/api/admin/users/{user_id}/reset-password")
-async def admin_reset_user_password(user_id: int, request: Request, user: dict = Depends(require_admin)):
+async def admin_reset_user_password(user_id: int, request: Request, user: dict = Depends(require_full_admin)):
     data = await request.json()
     new_password = data.get("new_password", "")
     if len(new_password) < 8:
@@ -677,7 +697,7 @@ async def admin_reset_user_password(user_id: int, request: Request, user: dict =
 
 
 @app.post("/api/admin/users/create")
-async def admin_create_user(request: Request, user: dict = Depends(require_admin)):
+async def admin_create_user(request: Request, user: dict = Depends(require_full_admin)):
     """Admin: Create a new user account."""
     data = await request.json()
     email = data.get("email", "").strip().lower()
@@ -737,7 +757,7 @@ Bitte ändere dein Passwort nach dem ersten Login unter <strong>Einstellungen</s
 
 
 @app.delete("/api/admin/users/{user_id}")
-async def admin_delete_user(user_id: int, user: dict = Depends(require_admin)):
+async def admin_delete_user(user_id: int, user: dict = Depends(require_full_admin)):
     target = get_user_by_id(user_id)
     if not target:
         raise HTTPException(status_code=404, detail="User nicht gefunden")
@@ -753,6 +773,70 @@ async def admin_delete_user(user_id: int, user: dict = Depends(require_admin)):
     # Delete from DB (DSGVO-konform: alle Daten werden geloescht)
     delete_user_data(user_id)
     return {"ok": True, "message": f"User {target['email']} und alle Daten wurden geloescht"}
+
+
+# ─── Administrator-Verwaltung (14.06.2026) ──────────────────
+# Voll-Admins koennen bestehende Konten zu Admins machen und die
+# Rechte-Stufe setzen ('full' = alle Rechte, 'view' = nur Einsicht).
+# Sicherungen: niemand kann sich selbst die Admin-Rechte entziehen,
+# und der letzte Voll-Admin kann weder entfernt noch herabgestuft
+# werden (Schutz gegen Aussperren).
+
+@app.get("/api/admin/admins")
+async def admin_list_admins(user: dict = Depends(require_admin)):
+    """Liste aller Administratoren inkl. Rechte-Stufe (auch fuer Nur-Einsicht lesbar)."""
+    return {"admins": list_admins()}
+
+
+@app.post("/api/admin/admins")
+async def admin_add_admin(request: Request, user: dict = Depends(require_full_admin)):
+    """Ein bestehendes Konto zum Admin machen (per E-Mail) und Stufe setzen."""
+    data = await request.json()
+    email = data.get("email", "").strip().lower()
+    level = data.get("level", "full")
+    if level not in ("full", "view"):
+        raise HTTPException(status_code=400, detail="Ungueltige Rechte-Stufe")
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
+    target = get_user_by_email(email)
+    if not target:
+        raise HTTPException(status_code=404, detail="Kein Konto mit dieser E-Mail. Bitte die Person zuerst unter 'Neuen Benutzer anlegen' anlegen und danach zum Admin machen.")
+    if target["is_admin"]:
+        raise HTTPException(status_code=409, detail=f"{target['display_name']} ist bereits Administrator")
+    set_user_admin(target["id"], 1, level)
+    stufe = "Voll-Admin" if level == "full" else "Nur-Einsicht"
+    return {"ok": True, "message": f"{target['display_name']} ist jetzt Administrator ({stufe})"}
+
+
+@app.put("/api/admin/admins/{user_id}")
+async def admin_set_level(user_id: int, request: Request, user: dict = Depends(require_full_admin)):
+    """Rechte-Stufe eines Admins aendern (full <-> view)."""
+    data = await request.json()
+    level = data.get("level", "")
+    if level not in ("full", "view"):
+        raise HTTPException(status_code=400, detail="Ungueltige Rechte-Stufe")
+    target = get_user_by_id(user_id)
+    if not target or not target["is_admin"]:
+        raise HTTPException(status_code=404, detail="Administrator nicht gefunden")
+    if level == "view" and target["admin_level"] == "full" and count_full_admins() <= 1:
+        raise HTTPException(status_code=400, detail="Der letzte Voll-Admin kann nicht auf 'Nur-Einsicht' gesetzt werden")
+    set_user_admin(user_id, 1, level)
+    stufe = "Voll-Admin" if level == "full" else "Nur-Einsicht"
+    return {"ok": True, "message": f"{target['display_name']} ist jetzt {stufe}", "level": level}
+
+
+@app.delete("/api/admin/admins/{user_id}")
+async def admin_revoke_admin(user_id: int, user: dict = Depends(require_full_admin)):
+    """Admin-Rechte entziehen (das Konto bleibt als normaler Nutzer bestehen)."""
+    target = get_user_by_id(user_id)
+    if not target or not target["is_admin"]:
+        raise HTTPException(status_code=404, detail="Administrator nicht gefunden")
+    if target["id"] == user["id"]:
+        raise HTTPException(status_code=400, detail="Sie koennen sich die Admin-Rechte nicht selbst entziehen")
+    if target["admin_level"] == "full" and count_full_admins() <= 1:
+        raise HTTPException(status_code=400, detail="Der letzte Voll-Admin kann nicht entfernt werden")
+    set_user_admin(user_id, 0)
+    return {"ok": True, "message": f"Admin-Rechte von {target['display_name']} entzogen"}
 
 
 # ─── API Key Management ─────────────────────────────────────
