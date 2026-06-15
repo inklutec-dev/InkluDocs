@@ -1211,8 +1211,8 @@ async def demo_generate(request: Request, file: UploadFile = File(...)):
                 "Die Demo ist heute stark gefragt — das Tageskontingent ist erreicht. "
                 "Bitte morgen wieder probieren oder gleich kostenlos registrieren."))
         raise HTTPException(status_code=429, detail=(
-            f"Deine {demo_mod.daily_image_limit()} kostenlosen Analysen fuer heute sind aufgebraucht. "
-            "Fuer unbegrenzte Bilder, ganze PDFs und den fertig getaggten Export: kostenlos registrieren."))
+            f"Deine {demo_mod.daily_image_limit()} kostenlosen Analysen für heute sind aufgebraucht. "
+            "Für unbegrenzte Bilder, ganze PDFs und den fertig getaggten Export: kostenlos registrieren."))
 
     # Sitzung aus Cookie ableiten oder neu anlegen
     uid = demo_mod.resolve_session_user_id(request.cookies.get(demo_mod.DEMO_COOKIE_NAME))
@@ -1320,8 +1320,8 @@ async def demo_chat(request: Request):
     chk = demo_mod.check_chat(request)
     if not chk["allowed"]:
         raise HTTPException(status_code=429, detail=(
-            f"Du hast die {demo_mod.daily_chat_limit()} kostenlosen Chat-Nachrichten fuer heute genutzt. "
-            "Fuer unbegrenztes Verfeinern: kostenlos registrieren."))
+            f"Du hast die {demo_mod.daily_chat_limit()} kostenlosen Chat-Nachrichten für heute genutzt. "
+            "Für unbegrenztes Verfeinern: kostenlos registrieren."))
 
     conn = get_db()
     proj = conn.execute(
@@ -3572,6 +3572,31 @@ async def index(request: Request):
             is_staging=is_staging,
         ),
     )
+
+
+# 15.06.2026: Rechtsseiten der Demo IM Demo-Rahmen (Sidebar + Footer wie das
+# Werkzeug). Bewusst eigene, NICHT login-geschuetzte Routen — die -app-Varianten
+# des Werkzeugs setzen ein Login voraus und leiten anonyme Besucher zur Wurzel um.
+# Der Rechtstext selbst kommt per fetch aus den oeffentlichen Routen (Single Source).
+@app.get("/demo-impressum", response_class=HTMLResponse)
+async def demo_impressum_page():
+    if demo_mod.demo_enabled():
+        return FileResponse("/app/frontend/demo-impressum.html")
+    return RedirectResponse("/")
+
+
+@app.get("/demo-datenschutz", response_class=HTMLResponse)
+async def demo_datenschutz_page():
+    if demo_mod.demo_enabled():
+        return FileResponse("/app/frontend/demo-datenschutz.html")
+    return RedirectResponse("/")
+
+
+@app.get("/demo-nutzungsbedingungen", response_class=HTMLResponse)
+async def demo_nutzungsbedingungen_page():
+    if demo_mod.demo_enabled():
+        return FileResponse("/app/frontend/demo-nutzungsbedingungen.html")
+    return RedirectResponse("/")
 
 
 @app.get("/set-language/{lang}")

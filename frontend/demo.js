@@ -11,11 +11,14 @@
   const els = {};
   ["srStatus", "quota", "uploadSection", "resultSection", "upsellSection", "upsellText",
    "dropzone", "fileInput", "resultImage", "badges", "altField", "langField", "langWrap",
-   "deleteBtn", "chatLog", "chatForm", "chatInput"].forEach((k) => (els[k] = $(k)));
+   "deleteBtn", "chatLog", "chatForm", "chatInput",
+   "generateArea", "generateBtn", "genStatus", "resultBody",
+   "deleteConfirmDialog", "deleteCancel", "deleteConfirm"].forEach((k) => (els[k] = $(k)));
 
   let pollTimer = null;
   let saveTimer = null;
   let busy = false;
+  let selectedFile = null; // gewaehltes Bild, das auf den Generieren-Klick wartet
 
   function announce(msg) {
     if (!els.srStatus) return;
@@ -37,7 +40,7 @@
 
   function showUpsell(text) {
     if (els.upsellText) els.upsellText.textContent = text ||
-      "Deine kostenlosen Analysen fuer heute sind aufgebraucht.";
+      "Deine kostenlosen Analysen für heute sind aufgebraucht.";
     show(els.upsellSection);
     announce(text || "Kostenloses Kontingent aufgebraucht.");
   }
@@ -54,36 +57,62 @@
     return file && /^image\/(jpeg|png|gif|webp)$/.test(file.type);
   }
 
-  async function handleFile(file) {
+  // Ein Bild wurde gewaehlt: Vorschau zeigen und auf den Generieren-Klick warten.
+  // Bewusst KEIN automatischer Start mehr — der Nutzer loest die Analyse selbst
+  // ueber den Button aus (wie im eingeloggten Werkzeug), damit sichtbar ist,
+  // dass und wann etwas passiert.
+  function handleFile(file) {
     if (busy) return;
     if (!validImage(file)) {
       announce("Bitte ein Bild im Format JPG, PNG, GIF oder WebP waehlen.");
       return;
     }
-    busy = true;
+    selectedFile = file;
     hide(els.upsellSection);
-    // Sofortige Vorschau aus der lokalen Datei (schnell, ohne Serverabruf)
+    // Sofortige lokale Vorschau (ohne Serverabruf)
     els.resultImage.src = URL.createObjectURL(file);
-    els.resultImage.alt = "Dein hochgeladenes Bild wird analysiert …";
+    els.resultImage.alt = "Vorschau deines ausgewaehlten Bildes";
     els.altField.value = "";
     els.langField.value = "";
     els.badges.textContent = "";
+    els.genStatus.textContent = "";
+    // Ergebnis-Inhalte verbergen, Generieren-Bereich zeigen
+    hide(els.resultBody);
+    els.generateBtn.disabled = false;
+    els.generateBtn.textContent = "Alternativtext generieren";
+    show(els.generateArea);
     show(els.resultSection);
-    hide(els.uploadSection); // Upload-Flaeche ausblenden, solange ein Ergebnis sichtbar ist
+    hide(els.uploadSection); // Upload-Flaeche ausblenden, solange ein Bild gewaehlt ist
+    announce("Bild ausgewaehlt. Auf 'Alternativtext generieren' klicken, um die Analyse zu starten.");
+    els.generateBtn.focus();
+  }
+
+  // Startet die Analyse des gewaehlten Bildes. Sichtbarer Status am Button und
+  // im Status-Text plus Live-Meldung — derselbe Ablauf wie der Generieren-Klick
+  // im eingeloggten Werkzeug.
+  async function startGeneration() {
+    if (busy || !selectedFile) return;
+    busy = true;
+    els.generateBtn.disabled = true;
+    els.generateBtn.textContent = "Generiere …";
+    els.genStatus.textContent = "Bild wird analysiert …";
     announce("Bild wird hochgeladen und analysiert. Das dauert ein paar Sekunden.");
 
     const fd = new FormData();
-    fd.append("file", file);
+    fd.append("file", selectedFile);
     const { res, data } = await api("/api/demo/generate", { method: "POST", body: fd });
     if (res.status === 429) {
-      hide(els.resultSection);
       busy = false;
+      hide(els.resultSection);
       showUpsell(data && data.detail);
       return;
     }
     if (!res.ok) {
-      announce((data && data.detail) || "Upload fehlgeschlagen.");
       busy = false;
+      els.generateBtn.disabled = false;
+      els.generateBtn.textContent = "Alternativtext generieren";
+      els.genStatus.textContent = "Es ist ein Fehler aufgetreten. Bitte erneut versuchen.";
+      announce((data && data.detail) || "Upload fehlgeschlagen.");
       return;
     }
     poll();
@@ -99,9 +128,14 @@
       if (!img) { busy = false; return; }
       if (img.status === "done") { fillResult(img); busy = false; return; }
       if (img.status === "error") {
+        busy = false;
         els.resultImage.alt = "Analyse fehlgeschlagen";
+        // Generieren-Button wieder freigeben, damit der Nutzer es erneut versuchen kann
+        els.generateBtn.disabled = false;
+        els.generateBtn.textContent = "Alternativtext generieren";
+        els.genStatus.textContent = "Analyse fehlgeschlagen.";
         announce("Die Analyse ist fehlgeschlagen. Bitte versuche es noch einmal.");
-        busy = false; return;
+        return;
       }
       pollTimer = setTimeout(tick, 2500); // weiter warten (processing)
     };
@@ -128,6 +162,10 @@
       b += badge("Konfidenz: " + img.konfidenz, k);
     }
     els.badges.innerHTML = b;
+    // Generieren-Bereich ausblenden, Ergebnis-Inhalte einblenden
+    els.genStatus.textContent = "";
+    hide(els.generateArea);
+    show(els.resultBody);
     announce("Analyse fertig. Alternativtext und Langbeschreibung stehen bereit.");
     els.altField.focus();
   }
@@ -166,14 +204,27 @@
   els.langField.addEventListener("input", scheduleSave);
 
   // ── Loeschen ────────────────────────────────────────────────────────────────
-  els.deleteBtn.addEventListener("click", async () => {
+  // Der eigentliche Loeschvorgang — wird erst nach Bestaetigung im Dialog ausgefuehrt.
+  async function performDelete() {
     await api("/api/demo/session", { method: "DELETE" });
+    selectedFile = null;
     hide(els.resultSection);
+    hide(els.generateArea);
+    hide(els.resultBody);
     show(els.uploadSection); // Upload-Flaeche wieder zeigen
     els.fileInput.value = "";
     announce("Bild und Ergebnis wurden geloescht. Du kannst ein neues Bild hochladen.");
     refreshQuota();
     els.fileInput.focus();
+  }
+
+  // Loesch-Button oeffnet den barrierefreien Bestaetigungsdialog (natives <dialog>);
+  // geloescht wird erst nach „Loeschen". „Abbrechen"/Escape schliessen ihn folgenlos.
+  els.deleteBtn.addEventListener("click", () => els.deleteConfirmDialog.showModal());
+  els.deleteCancel.addEventListener("click", () => els.deleteConfirmDialog.close());
+  els.deleteConfirm.addEventListener("click", () => {
+    els.deleteConfirmDialog.close();
+    performDelete();
   });
 
   // ── Chat ────────────────────────────────────────────────────────────────────
@@ -227,10 +278,24 @@
       els.resultImage.src = "/api/demo/image?t=" + Date.now();
       show(els.resultSection);
       hide(els.uploadSection);
-      if (data.image.status === "done") fillResult(data.image);
+      if (data.image.status === "done") {
+        fillResult(data.image); // zeigt die Ergebnis-Inhalte, blendet den Generieren-Bereich aus
+      } else {
+        // Analyse laeuft noch (Seite waehrend der Verarbeitung neu geladen):
+        // Status anzeigen und weiter pollen.
+        show(els.generateArea);
+        els.generateBtn.disabled = true;
+        els.generateBtn.textContent = "Generiere …";
+        els.genStatus.textContent = "Bild wird analysiert …";
+        busy = true;
+        poll();
+      }
     }
     if (res.ok && data && data.limits) setQuota(data.limits);
   }
+
+  // Generieren-Button startet die Analyse des gewaehlten Bildes
+  els.generateBtn.addEventListener("click", startGeneration);
 
   // Drag & Drop + Auswahl
   els.fileInput.addEventListener("change", (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });

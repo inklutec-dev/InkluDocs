@@ -6,20 +6,26 @@
 <title>InkluDocs – kostenlos testen</title>
 <!-- Wiederverwendung der echten Werkzeug-Optik (Markenfarben, Maske) + schlanker Demo-Rahmen -->
 <link rel="stylesheet" href="/static/style.css">
+<!-- 15.06.2026: Dashboard-Layout (Sidebar + Inhaltsbereich) für einen
+     einheitlichen Auftritt mit dem eingeloggten Werkzeug. demo.css danach,
+     damit Demo-spezifische Regeln bei Bedarf nachschärfen können. -->
+<link rel="stylesheet" href="/static/dashboard.css">
 <link rel="stylesheet" href="/static/demo.css">
 </head>
 <body class="demo-body">
 <a class="demo-skip" href="#main">Zum Inhalt springen</a>
 
-<header class="demo-header">
-  <div class="demo-header-inner">
-    <img src="/static/inklutec-logo.png" alt="InkluTec" class="demo-logo">
-    <a class="btn btn-primary" href="https://inkludocs.de/">Anmelden oder registrieren</a>
-  </div>
-</header>
+<!-- 15.06.2026: Dashboard-Shell (Sidebar links, Inhalt rechts) — identisch zum
+     eingeloggten Werkzeug. Sidebar UND Fußzeile rendert demo-shell.js (Single
+     Source, von Startseite und Rechtsseiten geteilt). Die Demo ist anonym:
+     keine Projekte/Einstellungen/Abmelden, dafür „Anmelden oder registrieren";
+     Rechts-Links stehen in der Fußzeile, „Datensicherheit" in der Sidebar. -->
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
 
-<main id="main" class="demo-main">
-  <section class="demo-intro">
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <section class="demo-intro">
     <h1>InkluDocs kostenlos testen</h1>
     <p class="demo-lead">Lade ein Bild hoch und erhalte in Sekunden einen barrierefreien Alternativtext
       und eine Langbeschreibung – ganz ohne Anmeldung.</p>
@@ -53,6 +59,19 @@
       <img id="resultImage" alt="" class="demo-result-image">
     </figure>
 
+    <!-- Generieren-Steuerung — bewusst identisch zum eingeloggten Werkzeug
+         (vgl. die regen-area in app.html): nativer Button plus sichtbarer
+         Status-Text. role="status" macht den Status auch fuer Screenreader
+         hoerbar (impliziert aria-live="polite"). Der Bereich ist sichtbar,
+         sobald ein Bild gewaehlt ist, und wird nach erfolgreicher Analyse
+         ausgeblendet (Layout + hidden-Regel siehe demo.css). -->
+    <div id="generateArea" class="demo-generate-area" hidden>
+      <button type="button" id="generateBtn" class="btn btn-primary">Alternativtext generieren</button>
+      <span id="genStatus" class="demo-gen-status" role="status"></span>
+    </div>
+
+    <!-- Ergebnis-Inhalte: erst nach erfolgreicher Analyse sichtbar. -->
+    <div id="resultBody" hidden>
     <label for="altField">Alternativtext</label>
     <textarea id="altField" class="alt-text-field" rows="3"></textarea>
     <button type="button" class="btn btn-secondary btn-small" data-copy="altField" data-copy-label="Alternativtext">Alternativtext kopieren</button>
@@ -82,6 +101,7 @@
       <p>Gefällt dir das Ergebnis? Für ganze Dokumente und den fertig getaggten Export geht es mit einem Konto weiter.</p>
       <a class="btn btn-primary" href="https://inkludocs.de/">Anmelden oder registrieren</a>
     </div>
+    </div><!-- /resultBody -->
 
     <button type="button" id="deleteBtn" class="btn btn-secondary btn-small demo-delete">Bild und Ergebnis löschen</button>
   </section>
@@ -92,8 +112,27 @@
     <p id="upsellText"></p>
     <a class="btn btn-primary" href="https://inkludocs.de/">Anmelden oder registrieren</a>
   </section>
-</main>
+    </main>
+    <!-- Fußzeile rendert demo-shell.js (gleiche Quelle wie die Rechtsseiten). -->
+    <footer class="dash-footer"></footer>
+  </div><!-- /app-content -->
+</div><!-- /app-shell -->
 
+<!-- Barrierefreier Bestaetigungsdialog vor dem Loeschen. Gleiches Muster wie im
+     Werkzeug: natives <dialog> + showModal() liefert Fokusfalle, Escape und
+     Modal-Semantik vom Browser — daher bewusst ohne role/aria-modal. Steht
+     ausserhalb der App-Shell, damit das Modal die gesamte Seite überlagert. -->
+<dialog id="deleteConfirmDialog" class="app-dialog">
+  <h2>Bild und Ergebnis löschen?</h2>
+  <p>Möchtest du das Bild und das Ergebnis wirklich löschen? Das lässt sich nicht rückgängig machen.</p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="deleteCancel">Abbrechen</button>
+    <button type="button" class="btn btn-danger" id="deleteConfirm">Löschen</button>
+  </div>
+</dialog>
+
+<!-- Gemeinsame Hülle (Sidebar + Fußzeile) zuerst, dann die Demo-Logik. -->
+<script src="/static/demo-shell.js"></script>
 <script src="/static/demo.js"></script>
 </body>
 </html>

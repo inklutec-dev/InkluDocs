@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs - Impressum</title>
+<!-- 15.06.2026: Rechtsseite IM Demo-Rahmen (Sidebar + Footer wie das Werkzeug).
+     Der Text kommt per fetch aus der öffentlichen /impressum-Route (Single
+     Source); Hülle und Lader liefert demo-shell.js. -->
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+<link rel="stylesheet" href="/static/demo.css">
+</head>
+<body class="demo-body">
+<a href="#main" class="demo-skip">Zum Inhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1>Impressum</h1>
+      <p class="dash-sub">Inhalt aus <a href="/impressum">dem öffentlichen Impressum</a> &ndash; eine Quelle, kein Doppeltext.</p>
+      <div id="legalContent" aria-busy="true" role="region" aria-label="Impressum">
+        <p class="dash-sub">Inhalt wird geladen &hellip;</p>
+      </div>
+    </main>
+    <footer class="dash-footer"></footer>
+  </div>
+</div>
+<p id="srStatus" class="demo-visually-hidden" role="status"></p>
+<script src="/static/demo-shell.js"></script>
+<script>DemoShell.loadLegalInline('/impressum', 'Impressum');</script>
+</body>
+</html>
