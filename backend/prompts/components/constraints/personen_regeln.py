@@ -1,3 +1,6 @@
+# VERALTET / UNGENUTZT (16.06.2026): aktive Personenregeln stehen in beschreibung_foto.py
+# (_render_personenregeln_block / _render_kontextregeln_block, mode-aware). Diese Konstante
+# wird nur importiert, NICHT in einen Prompt gehaengt. Spaeter loeschbar.
 """Regeln für DSGVO-konforme Personen-Beschreibung.
 
 E5-Korrektur (Steve, 04.05.2026): Geschlechts-Attribution NUR aus expliziter
