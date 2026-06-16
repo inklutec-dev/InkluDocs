@@ -52,6 +52,12 @@ from .helpers import load_examples, user_hint_block
 # Bildtypen vorkommen kann.
 
 
+# GELOCKERT 16.06.2026 (Steve): Personen-Identifikation bewusst entschaerft.
+# Erkennbare Personen (oeffentliches Leben + per Kontext/Schild/Bildunterschrift
+# zuordenbar) duerfen benannt werden; pauschaler Gesichtserkennungs-/
+# Identitaetsvermutungs-Bann entfernt, nur Halluzinationsschutz bleibt.
+# REVERSIBEL: bei Bedarf Privatpersonen-Schutz wieder verschaerfen.
+# Greift in foto_personen + foto_event (Lean=live auf Prod/Staging, Full angeglichen).
 def _render_personenregeln_block() -> str:
     """Personen-Logik Block — wiederverwendet in foto_personen + foto_event + foto_objekte.
 
@@ -61,22 +67,25 @@ def _render_personenregeln_block() -> str:
     if resolve_prompt_mode() == 'lean':
         return """PERSONENREGELN
 
-Nur sichtbar belegbare Eigenschaften beschreiben.
+Personen so vollstaendig und informativ wie moeglich beschreiben.
+Erkennbare Personen duerfen benannt werden.
 
 Erlaubt:
 - sichtbare Haltung, Position, Blickrichtung
 - sichtbare Taetigkeit oder Interaktion
 - Kleidungscharakter (formell, sportlich, festlich, leger)
 - Gegenstaende aus Inventar
-- Namen oder Funktionen bei eindeutiger Zuordnung aus Kontext oder Beschriftung
+- Namen und Funktionen aus Kontext, Beschriftung oder Bildunterschrift
+- erkennbare Personen benennen — Personen des oeffentlichen Lebens
+  (Politiker, Staats- und Regierungschefs, bekannte Sportler/Kuenstler)
+  ebenso wie Personen, die durch Kontext, Namensschild oder Beschriftung
+  zuzuordnen sind
 
-Nicht erlaubt:
-- Gesichtserkennung
-- Identitaetsvermutung
-- Ethnie, Religion oder Gesundheit
+Nicht erfinden (Genauigkeit/Halluzinationsschutz):
+- Namen oder Identitaet raten, wenn KEINERLEI Anhaltspunkt vorliegt — dann "Person"
+- Ethnie, Religion oder Gesundheit (ausser explizit bildrelevant)
 - psychologische Interpretation
-- erfundene Beziehungen (Kolleginnen, Familie, Teilnehmer — nur wenn Kontext das belegt)
-- erfundene Emotionen (gluecklich, begeistert, interessiert)
+- erfundene Beziehungen oder Emotionen
 
 Alter oder Geschlecht nur nennen, wenn eindeutig sichtbar UND fuer die
 Bildaussage relevant."""
@@ -89,12 +98,15 @@ ERLAUBT:
 - Interaktion
 - Gegenstaende aus Inventar
 - Kleidungscharakter (formell, sportlich, festlich, leger)
-- Namen/Funktionen bei eindeutiger Zuordnung aus Kontext oder Beschriftung
+- Namen/Funktionen aus Kontext, Beschriftung oder Bildunterschrift
+- erkennbare Personen benennen — Personen des oeffentlichen Lebens
+  (Politiker, Staats- und Regierungschefs, bekannte Sportler/Kuenstler)
+  ebenso wie durch Kontext/Namensschild/Beschriftung zuordenbare Personen
 
-VERBOTEN:
+NICHT ERFINDEN (Genauigkeit/Halluzinationsschutz):
+- Namen oder Identitaet raten, wenn KEINERLEI Anhaltspunkt vorliegt — dann "Person"
 - Altersschaetzung
 - Geschlechtszuschreibung ohne Kontext
-- Gesichtserkennung von Personen
 - Ethnie, Religion, Gesundheit
 - erfundene Beziehungen (z.B. Kolleginnen, Familie, Teilnehmer — nur wenn Kontext das belegt)
 - erfundene Emotionen (z.B. gluecklich, begeistert, interessiert)
@@ -123,9 +135,11 @@ einer sichtbaren Person zugeordnet werden koennen.
 Beispiel: Wenn die Bildunterschrift "Humphrey Bogart in CASABLANCA (1942)"
 lautet und nur eine Person sichtbar ist, soll der Name verwendet werden.
 
-OEFFENTLICHE PERSONEN:
-Nur benennen, wenn die Zuordnung durch Kontext oder Beschriftung
-eindeutig belegt ist — nicht durch Gesichtserkennung."""
+PERSONEN BENENNEN:
+Erkennbare Personen duerfen benannt werden — Personen des oeffentlichen
+Lebens auch ohne Bildunterschrift. Liegt ein Name aus Kontext, Beschriftung
+oder Bildunterschrift vor, ist er zu verwenden. Nur wenn gar kein
+Anhaltspunkt vorliegt: "Person"."""
     return """KONTEXTREGELN
 
 Kontext darf nur verwendet werden, wenn eindeutig zuordenbar.
@@ -139,9 +153,10 @@ Wenn ein Name oder eine Funktion im Kontext eindeutig einer Person im
 Bild zuzuordnen ist (z.B. einzige Person im Bild, oder Bildunterschrift
 nennt sie eindeutig), muss der Name im Output verwendet werden.
 
-OEFFENTLICHE PERSONEN:
-Nur benennen bei bestaetigter Zuordnung aus Bildbeschriftung oder
-Kontext, keine Gesichtserkennung."""
+PERSONEN BENENNEN:
+Erkennbare Personen duerfen benannt werden — Personen des oeffentlichen
+Lebens auch ohne Bildbeschriftung. Liegt ein Name aus Bildbeschriftung
+oder Kontext vor, ist er zu verwenden. Nur ohne jeden Anhaltspunkt: "Person"."""
 
 
 def _render_unterschriften_block() -> str:
