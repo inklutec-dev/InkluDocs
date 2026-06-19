@@ -324,6 +324,15 @@ def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
         except Exception:
             pass
         page_num = fig.get("page_number", 1)
+        # Kontext-Quelle (19.06.2026, Karbe V1004): bevorzugt der Kapitel-Kontext
+        # (Abschnitt um das Bild), sonst der Seiteninhalt, sonst der bisherige
+        # Ganz-Dokument-Text (full_text). So nie schlechter als zuvor, bei gut
+        # getaggten PDFs deutlich bildgenauer. OB dieser Kontext der KI gegeben
+        # wird, entscheidet SPAETER der Projekt-Schalter use_context (main.py) --
+        # hier wird er nur bereitgestellt und gespeichert.
+        _chapter = fig.get("chapter_context", "")
+        _page_content = fig.get("page_content", "")
+        _ctx = _chapter or _page_content or full_text
         images.append({
             "page_number": page_num,
             "image_index": fig["lfnr"],
@@ -332,14 +341,14 @@ def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
             "width": width,
             "height": height,
             "xref": -fig["lfnr"],
-            "context_text": full_text,
+            "context_text": _ctx,
             "ext": "png",
             "bbox": (0, 0, width, height),
             "is_vector": True,
             "source": "pdfix",
             "original_alt": fig.get("alt", ""),
             "page_view_path": fig.get("page_view_path", ""),
-            "page_text": page_texts.get(page_num, ""),
+            "page_text": _page_content or page_texts.get(page_num, ""),
         })
     return images
 

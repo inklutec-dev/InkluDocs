@@ -93,6 +93,14 @@ def extract_figures_pdfix(pdf_path: str, out_dir: str) -> list[dict]:
                             pass
                     if len(row) > 7 and row[7]:
                         fig["page_view_path"] = row[7]
+                    # Erweiterung 19.06.2026 (Karbe V1004): Spalte 9 = Seiteninhalt
+                    # (Text der Bildseite), Spalte 10 = Kapitel-Kontext (Abschnitt
+                    # um das Bild). Defensiv gelesen -> aeltere 6-/8-Spalten-CSVs
+                    # bleiben gueltig.
+                    if len(row) > 8 and row[8]:
+                        fig["page_content"] = row[8]
+                    if len(row) > 9 and row[9]:
+                        fig["chapter_context"] = row[9]
                     figures.append(fig)
                 except ValueError:
                     log.warning("PDFix-CSV: Zeile uebersprungen: %s", row)

@@ -64,8 +64,24 @@
         setTimeout(() => { liveRegion.textContent = msg; }, 100);
     }
 
+    // Gast-Modus-Helfer (19.06.2026): im Gast-Modus kommen Daten/Bilder vom
+    // token-basierten Freigabe-Endpunkt statt von den login-geschuetzten Routen.
+    function _projectDataUrl(projectId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN) : ('/api/projects/' + projectId);
+    }
+    function imgFileUrl(imageId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/file') : ('/api/images/' + imageId + '/file');
+    }
+    function pageViewUrl(imageId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/page-view') : ('/api/images/' + imageId + '/page-view');
+    }
+    function altTextSaveUrl(imageId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/alttext') : ('/api/images/' + imageId + '/alt-text');
+    }
+
     // ─── Init ────────────────────────────────────────
     async function init() {
+        if (window.GUEST_MODE) { return initGuest(); }   // Gast: E-Mail-Gate statt Login
         const res = await fetch('/api/me');
         if (res.status === 401) { window.location.href = '/'; return; }
         const meData = await res.json();
@@ -74,6 +90,38 @@
         updateLimitDisplay();
         const _pid = new URLSearchParams(window.location.search).get('projekt');
         if (_pid) { showProject(_pid); } else { window.location.href = '/dashboard'; }
+    }
+
+    // ─── Gast-Modus: E-Mail-Gate, dann read-only Projekt-Ansicht ───
+    function initGuest() {
+        main.innerHTML =
+            '<section class="card" aria-labelledby="gateHeading" style="max-width:32rem;margin:1.5rem auto;">'
+            + '<h1 id="gateHeading" class="section-title">Freigabe ansehen</h1>'
+            + '<p>Bitte bestaetigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen.</p>'
+            + '<form id="gateForm" style="margin-top:1rem;">'
+            + '<label for="gateEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">E-Mail-Adresse</label>'
+            + '<input type="email" id="gateEmail" required autocomplete="email" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
+            + '<p id="gateError" role="alert" style="color:var(--error,#c33);min-height:1.2em;margin:0.4rem 0;"></p>'
+            + '<button type="submit" class="btn btn-primary">Bestaetigen</button>'
+            + '</form></section>';
+        const form = document.getElementById('gateForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('gateEmail').value.trim();
+            const errEl = document.getElementById('gateError');
+            errEl.textContent = '';
+            try {
+                const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/confirm', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin', body: JSON.stringify({ email: email })
+                });
+                if (!r.ok) { errEl.textContent = 'Diese E-Mail-Adresse passt nicht zur Einladung.'; announce('E-Mail-Adresse passt nicht zur Einladung.'); return; }
+                announce('Bestaetigt. Die Freigabe wird geladen.');
+                showProject(window.SHARE_TOKEN);
+            } catch (err) {
+                errEl.textContent = 'Netzwerkfehler. Bitte erneut versuchen.';
+            }
+        });
     }
 
     // Abmelden / Benutzerverwaltung / Einstellungen laufen jetzt über die gemeinsame Sidebar (dashboard.js).
@@ -315,8 +363,8 @@
         currentDocProjectId = projectId;
         highlightNav(null);
 
-        const res = await fetch('/api/projects/' + projectId);
-        if (res.status === 401) { window.location.href = '/'; return; }
+        const res = await fetch(_projectDataUrl(projectId));
+        if (res.status === 401) { if (window.GUEST_MODE) { return initGuest(); } window.location.href = '/'; return; }
         const data = await res.json();
         const project = data.project;
         const images = data.images;
@@ -354,8 +402,8 @@
                     <p id="processingInfo" aria-live="polite">Bild ${project.processed_images} von ${project.total_images} wird verarbeitet.</p>
                 ` : ''}
                 <div class="card-actions">
-                    ${project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Alt-Texte generieren</button>' : ''}
-                    ${images.length > 0 ? `
+                    ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Alt-Texte generieren</button>' : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">Exportieren</button>
                         <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;font-size:1.05rem;">Export-Optionen</h2>
@@ -375,9 +423,17 @@
                             <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
                         </div>
                     ` : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? `
+                        <div style="flex-basis:100%;margin-top:0.6rem;">
+                            <label for="useContextToggle" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;">
+                                <input type="checkbox" id="useContextToggle" ${project.use_context ? 'checked' : ''} onchange="setContextSetting(${project.id}, this.checked)" style="width:1.2rem;height:1.2rem;">
+                                <span>KI-Kontext aus dem Dokument verwenden</span>
+                            </label>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
-            ${uploadBlockHtml(project)}
+            ${window.GUEST_MODE ? '' : uploadBlockHtml(project)}
             ${(() => {
                 // Steve 08.06.2026 (Michael-Befund): bei PDF-Projekten sind die Dokument-
                 // Bloecke selbst die H2-Sektionen — eine zusaetzliche H2 "Bilder (N)"
@@ -394,14 +450,15 @@
                 return `<h2 class="section-title" id="bilderHeading" tabindex="-1" style="margin-top:1.5rem">Bilder (${images.length})</h2>`;
             })()}
             <div id="imageList"></div>
-            ${inkluagentSectionHtml(projectId)}
+            ${window.GUEST_MODE ? '' : inkluagentSectionHtml(projectId)}
         `;
 
         renderImages(images, projectId, data.show_langbeschreibung !== false, documents, project);
+        if (window.GUEST_MODE) { document.querySelectorAll('.langtext-field').forEach(function (t) { t.readOnly = true; }); }
         inkluagentInit(projectId);
         setupProjectDropzone(projectId);
 
-        if (project.status === 'processing') {
+        if (!window.GUEST_MODE && project.status === 'processing') {
             pollInterval = setInterval(async () => {
                 const sRes = await fetch('/api/projects/' + projectId + '/status');
                 const sData = await sRes.json();
@@ -566,6 +623,92 @@
     document.getElementById('docDeleteCancel').addEventListener('click', () => document.getElementById('docDeleteDialog').close());
     document.getElementById('docDeleteConfirm').addEventListener('click', _confirmDocDelete);
 
+    // Vorlese-Funktion (Browser SpeechSynthesis): liest Alt-Text + (falls da) Langbeschreibung
+    // des Bildes in deutscher Stimme. Liest den AKTUELLEN Feld-Inhalt (inkl. haendischer Edits).
+    // Start/Stopp ueber denselben Knopf (aria-pressed), Escape stoppt, nur eins gleichzeitig.
+    function speakAltText(imgId, btn) {
+        const synth = window.speechSynthesis;
+        if (!synth) { announce('Sprachausgabe wird in diesem Browser nicht unterstützt.'); return; }
+        if (!window._ttsEscBound) {
+            window._ttsEscBound = true;
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { window.speechSynthesis.cancel(); } });
+        }
+        if (btn.getAttribute('aria-pressed') === 'true') {
+            synth.cancel();
+            btn.setAttribute('aria-pressed', 'false');
+            btn.textContent = 'Anhören';
+            return;
+        }
+        synth.cancel();
+        const altEl = document.getElementById('alttext_' + imgId);
+        const langEl = document.getElementById('langtext_' + imgId);
+        let text = (altEl ? altEl.value : '').trim();
+        const lang = langEl ? langEl.value.trim() : '';
+        if (lang) { text += (text ? '. ' : '') + lang; }
+        if (!text) { announce('Kein Text zum Vorlesen vorhanden.'); return; }
+        document.querySelectorAll('.tts-btn[aria-pressed="true"]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); b.textContent = 'Anhören'; });
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'de-DE';
+        const de = (synth.getVoices() || []).find(function (v) { return v.lang && v.lang.toLowerCase().indexOf('de') === 0; });
+        if (de) { u.voice = de; }
+        btn.setAttribute('aria-pressed', 'true');
+        btn.textContent = 'Stopp';
+        u.onend = function () { btn.setAttribute('aria-pressed', 'false'); btn.textContent = 'Anhören'; };
+        u.onerror = function () { btn.setAttribute('aria-pressed', 'false'); btn.textContent = 'Anhören'; };
+        synth.speak(u);
+        announce('Wird vorgelesen.');
+    }
+
+    // ─── Gast-Review (Etappe 3): Freigeben / Aenderung wuenschen + Kommentar ───
+    async function guestSetReview(imageId, status, comment) {
+        const msgEl = document.getElementById('rev_msg_' + imageId);
+        try {
+            const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/review', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin', body: JSON.stringify({ status: status, comment: comment || '' })
+            });
+            if (!r.ok) { if (msgEl) msgEl.textContent = 'Fehler beim Speichern.'; announce('Fehler beim Speichern.'); return false; }
+        } catch (e) { if (msgEl) msgEl.textContent = 'Netzwerkfehler.'; return false; }
+        const label = status === 'freigegeben' ? 'Freigegeben' : (status === 'zu_ueberarbeiten' ? 'Zu \u00fcberarbeiten' : 'Offen');
+        const st = document.getElementById('rev_status_' + imageId);
+        if (st) st.textContent = label;
+        if (msgEl) msgEl.textContent = 'Gespeichert.';
+        announce('Status gespeichert: ' + label);
+        return true;
+    }
+    function guestApprove(imageId) {
+        const box = document.getElementById('rev_comment_box_' + imageId);
+        if (box) box.style.display = 'none';
+        guestSetReview(imageId, 'freigegeben', '');
+    }
+    function guestRequestChange(imageId) {
+        const box = document.getElementById('rev_comment_box_' + imageId);
+        if (box) box.style.display = '';
+        const t = document.getElementById('rev_comment_' + imageId);
+        if (t) t.focus();
+    }
+    function guestRequestChangeSubmit(imageId) {
+        const t = document.getElementById('rev_comment_' + imageId);
+        guestSetReview(imageId, 'zu_ueberarbeiten', t ? t.value : '');
+    }
+
+    async function setContextSetting(projectId, useContext) {
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/context-setting', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'same-origin',
+                body: JSON.stringify({use_context: useContext})
+            });
+            if (!res.ok) { announce('Umschalten des KI-Kontexts fehlgeschlagen.'); return; }
+            announce(useContext
+                ? 'KI-Kontext eingeschaltet. Neue Generierungen nutzen den Dokument-Kontext.'
+                : 'KI-Kontext ausgeschaltet. Neue Generierungen ohne Kontext.');
+        } catch (e) {
+            announce('Netzwerkfehler beim Umschalten des KI-Kontexts.');
+        }
+    }
+
     function renderImages(images, projectId, showLang, documents, project) {
         const list = document.getElementById('imageList');
         if (!images.length) {
@@ -663,15 +806,18 @@
                 <div class="image-review-header">
                     <span class="image-meta">${img.width}x${img.height}px</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
-                    ${img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Konfidenz: ' + img.konfidenz + '</span>' : ''}
+                    ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Konfidenz: ' + img.konfidenz + '</span>' : ''}
+                    ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#475569;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? 'mit Kontext' : 'ohne Kontext') + '</span>' : ''}
+                    ${!window.GUEST_MODE && img.review_status && img.review_status !== 'offen' ? '<span class="badge" style="background:' + (img.review_status === 'freigegeben' ? 'var(--success,#2a7)' : '#d97706') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.review_status === 'freigegeben' ? 'Freigegeben' : 'Zu \u00fcberarbeiten') + (img.review_note ? ' \u2014 mit Anmerkung' : '') + '</span>' : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
                     ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Fehler</span>' : ''}
                 </div>
+                ${!window.GUEST_MODE && img.review_note ? `<details class="kundenanmerkung" style="margin:0.3rem 0;"><summary>Anmerkung des Kunden anzeigen</summary><div style="padding:0.4rem 0;white-space:pre-wrap;">${esc(img.review_note)}</div></details>` : ''}
                 ${img.status === 'error' ? `
                     <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
                         Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.
                     </p>` : ''}
-                <img src="/api/images/${img.id}/file" alt="Extrahiertes Bild${img.page_number > 0 ? ' von Seite ' + img.page_number : ''}" class="image-preview" loading="lazy">
+                <img src="${imgFileUrl(img.id)}" alt="Extrahiertes Bild${img.page_number > 0 ? ' von Seite ' + img.page_number : ''}" class="image-preview" loading="lazy">
                 <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
                     Alt-Text
                     <span class="save-indicator" id="saved_${img.id}">Gespeichert</span>
@@ -682,9 +828,10 @@
                 >${img.alt_text_edited || img.alt_text || img.original_alt || ''}</textarea>
                 ${img.status !== 'processing' ? `
                     <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
-                        <span style="font-size:0.85rem;color:var(--text-muted);">Alt-Text bewerten:</span>
+                        ${!window.GUEST_MODE ? `<span style="font-size:0.85rem;color:var(--text-muted);">Alt-Text bewerten:</span>
                         <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="Alt-Text gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'good' ? 'background:var(--success);color:white;border-color:var(--success);' : ''}">&#128077;</button>
-                        <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="Alt-Text schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'bad' ? 'background:var(--error);color:white;border-color:var(--error);' : ''}">&#128078;</button>
+                        <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="Alt-Text schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'bad' ? 'background:var(--error);color:white;border-color:var(--error);' : ''}">&#128078;</button>` : ''}
+                        ${(img.alt_text_edited || img.alt_text || img.original_alt) ? '<button class="btn btn-secondary btn-small tts-btn" onclick="speakAltText(' + img.id + ', this)" aria-pressed="false" style="padding:0.3rem 0.7rem;">Anhören</button>' : ''}
                         <span id="feedback_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
@@ -692,15 +839,30 @@
                 ${(showLang && hasLang) ? `
                     <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung</label>
                     <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;">${img.langbeschreibung}</textarea>
-                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
+                    ${!window.GUEST_MODE ? `<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                         <span style="font-size:0.85rem;color:var(--text-muted);">Langbeschreibung bewerten:</span>
                         <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'good', this, 'lang')" aria-label="Langbeschreibung gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128077;</button>
                         <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'bad', this, 'lang')" aria-label="Langbeschreibung schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128078;</button>
                         <span id="feedback_lang_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
-                    </div>
+                    </div>` : ''}
                 ` : ''}
                 </div>
-                ${img.status !== 'processing' ? `
+                ${window.GUEST_MODE && img.status === 'done' ? `
+                    <div class="guest-review" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
+                        <p style="margin:0 0 0.4rem 0;font-weight:600;">Status: <span id="rev_status_${img.id}">${img.review_status === 'freigegeben' ? 'Freigegeben' : (img.review_status === 'zu_ueberarbeiten' ? 'Zu \u00fcberarbeiten' : 'Offen')}</span></p>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="guestApprove(${img.id})">Freigeben</button>
+                            <button type="button" class="btn btn-secondary btn-small" onclick="guestRequestChange(${img.id})">\u00c4nderung w\u00fcnschen</button>
+                            <span id="rev_msg_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                        </div>
+                        <div id="rev_comment_box_${img.id}" style="margin-top:0.5rem;${(img.review_status === 'zu_ueberarbeiten' || img.review_note) ? '' : 'display:none;'}">
+                            <label for="rev_comment_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">Anmerkung (optional)</label>
+                            <textarea id="rev_comment_${img.id}" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">${img.review_note || ''}</textarea>
+                            <button type="button" class="btn btn-secondary btn-small" style="margin-top:0.4rem;" onclick="guestRequestChangeSubmit(${img.id})">\u00c4nderung abschicken</button>
+                        </div>
+                    </div>
+                ` : ''}
+                ${!window.GUEST_MODE && img.status !== 'processing' ? `
                     <div class="regen-area" style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                         <label for="regen_type_${img.id}" class="sr-only">Bildtyp für Generierung</label>
                         <select id="regen_type_${img.id}" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
@@ -727,7 +889,7 @@
             const isOpen = openPages.has(pageId) ? ' open' : '';
             const count = imgs.length === 1 ? '1 Bild' : imgs.length + ' Bilder';
             const pageView = first.page_view_path
-                ? `<img src="/api/images/${first.id}/page-view" alt="" class="page-view-image">` : '';
+                ? `<img src="${pageViewUrl(first.id)}" alt="" class="page-view-image">` : '';
             const pageTextBlock = first.page_text ? `
                 <details class="page-text-details">
                     <summary>Seitentext anzeigen</summary>
@@ -781,10 +943,10 @@
                         </summary>
                         ${pageBlocks}
                     </details>
-                    <span class="doc-actions">
+                    ${!window.GUEST_MODE ? `<span class="doc-actions">
                         <button type="button" class="doc-action-btn" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">Umbenennen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
                         <button type="button" class="doc-action-btn doc-action-danger" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">Löschen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
-                    </span>
+                    </span>` : ''}
                 </div>`;
         };
 
@@ -826,7 +988,7 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(async () => {
                     const id = ta.dataset.imageId;
-                    await fetch('/api/images/' + id + '/alt-text', {
+                    await fetch(altTextSaveUrl(id), {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ alt_text: ta.value }),

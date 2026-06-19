@@ -19,6 +19,7 @@ function formatDate(s) {
 let currentUser = null;
 
 async function loadCurrentUser() {
+  if (window.GUEST_MODE) { currentUser = null; return null; }  // Gast: kein /api/me, keine Weiterleitung
   const res = await fetch('/api/me');
   if (res.status === 401) { window.location.href = '/'; return null; }
   const data = await res.json();
@@ -61,9 +62,16 @@ function renderSidebar() {
 
   const brand = document.createElement('a');
   brand.className = 'app-brand';
-  brand.href = '/dashboard';
+  brand.href = window.GUEST_MODE ? '/' : '/dashboard';
   brand.innerHTML = '<span class="brand">Inklu</span>Docs';
   host.appendChild(brand);
+
+  if (window.GUEST_MODE) {
+    // Gast-Modus: nur das Logo in der Huelle — keine Navigation, keine
+    // "Anmelden/Registrieren"-Liste (konsistent mit Demo/Production, die
+    // keinen solchen Block haben). Das Brand-Logo wurde oben bereits eingefuegt.
+    return;
+  }
 
   const nav = document.createElement('nav');
   nav.setAttribute('aria-label', 'Hauptnavigation');

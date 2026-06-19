@@ -36,6 +36,7 @@ from database import (
     get_daily_image_count, get_daily_api_count,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
+import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, SUPPORTED_LANGUAGES
 from tools import TOOLS, is_valid_tool_key
 
@@ -231,6 +232,34 @@ def require_full_admin(request: Request) -> dict:
     if not db_user or not db_user.get("is_admin") or db_user.get("admin_level") != "full":
         raise HTTPException(status_code=403, detail="Nur fuer Voll-Administratoren")
     return user
+
+
+# --- Gastzugang / Projekt-Freigabe (19.06.2026) ---
+# Gast-Sitzung = eigenes guest_token-Cookie, an GENAU EINEN Freigabe-Token
+# gebunden. Spiegelt das bestehende JWT-Auth-Muster (create_token / get_current_user),
+# kein Eigenbau. Der eingeloggte Pfad bleibt voellig unberuehrt.
+def create_guest_token(share_token, guest_email):
+    """JWT fuer eine bestaetigte Gast-Sitzung (nach erfolgreichem E-Mail-Gate)."""
+    expire = datetime.utcnow() + timedelta(hours=TOKEN_EXPIRE_HOURS)
+    return jwt.encode(
+        {"type": "guest", "share_token": share_token, "guest": guest_email, "exp": expire},
+        SECRET_KEY, algorithm=ALGORITHM,
+    )
+
+
+def get_guest_session(request, share_token):
+    """Liest das guest_token-Cookie und liefert die Gast-Sitzung NUR, wenn sie zu
+    diesem share_token gehoert. Sonst None (kein Zugriff)."""
+    gt = request.cookies.get("guest_token")
+    if not gt:
+        return None
+    try:
+        payload = jwt.decode(gt, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+    if payload.get("type") != "guest" or payload.get("share_token") != share_token:
+        return None
+    return {"guest": payload.get("guest"), "share_token": share_token}
 
 
 def get_api_user(request: Request) -> dict:
@@ -936,6 +965,29 @@ async def rename_project(project_id: int, request: Request, user: dict = Depends
     if not affected:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
     return {"ok": True, "name": name}
+
+
+@app.post("/api/projects/{project_id}/context-setting")
+async def set_context_setting(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Setzt den Projekt-Schalter 'KI-Kontext verwenden' (19.06.2026).
+
+    use_context=1 -> kommende Generierungen geben der KI den Dokument-Kontext
+    (Seiten-/Kapiteltext); =0 -> die KI bekommt keinen Kontext. Wirkt nur auf
+    NEU generierte Bilder; bestehende bleiben, bis man sie neu generiert.
+    """
+    data = await request.json()
+    use_ctx = 1 if data.get("use_context") else 0
+    conn = get_db()
+    cur = conn.execute(
+        "UPDATE projects SET use_context = ? WHERE id = ? AND user_id = ?",
+        (use_ctx, project_id, user["id"])
+    )
+    conn.commit()
+    affected = cur.rowcount
+    conn.close()
+    if not affected:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    return {"ok": True, "use_context": bool(use_ctx)}
 
 
 @app.get("/api/tools")
@@ -1703,7 +1755,7 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     # Seite/image_index zurueckgegeben — das Frontend gruppiert sie pro Dokument.
     # Reihenfolge: doc_index, page_number, image_index (stabil pro Dokument).
     images = conn.execute(
-        """SELECT i.* FROM images i
+        """SELECT i.*, (SELECT body FROM messages m WHERE m.image_id = i.id AND m.msg_type = 'review_note' LIMIT 1) AS review_note FROM images i
            LEFT JOIN documents d ON d.id = i.document_id
            WHERE i.project_id = ?
            ORDER BY COALESCE(d.doc_index, 0), i.page_number, i.image_index""",
@@ -1939,8 +1991,13 @@ async def _process_project(project_id: int, user_id: int):
     ).fetchone()[0]
     # PDF-Schalter (pdf_langbeschreibung_enabled): bei PDF + Schalter aus den zweiten KI-Pass
     # (Langbeschreibung) ueberspringen = Kostenersparnis (Karbe 03.06.2026). Bild-Projekte unberuehrt.
-    _proj = conn.execute("SELECT tool, project_type FROM projects WHERE id = ?", (project_id,)).fetchone()
+    _proj = conn.execute("SELECT tool, project_type, use_context FROM projects WHERE id = ?", (project_id,)).fetchone()
     skip_langbeschreibung = bool(_proj and (_proj["tool"] == "pdf" or _proj["project_type"] == "pdf")) and not pdf_langbeschreibung_enabled()
+    # KI-Kontext-Schalter (19.06.2026): bei "aus" bekommt die KI keinen Dokument-
+    # Kontext (context=""). Default an (Spalte use_context Default 1). Der Vermerk
+    # context_mode wird pro Bild gespeichert (nur Anzeige, NIE exportiert).
+    use_context = True if (_proj is None or _proj["use_context"] is None) else bool(_proj["use_context"])
+    ctx_mode = "mit" if use_context else "ohne"
 
     for img in images:
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
@@ -1952,9 +2009,12 @@ async def _process_project(project_id: int, user_id: int):
             img_height = img["height"] if img["height"] else 0
             img_original_alt = img["original_alt"] if img["original_alt"] else ""
 
+            # KI-Kontext-Schalter: bei "aus" leeren Kontext an die KI geben.
+            effective_context = img["context_text"] if use_context else ""
+
             # First pass: general prompt for type detection + alt-text
             result = await asyncio.get_event_loop().run_in_executor(
-                None, generate_alt_text, img["image_path"], img["context_text"], None,
+                None, generate_alt_text, img["image_path"], effective_context, None,
                 img_width, img_height, img_original_alt
             )
 
@@ -1969,7 +2029,7 @@ async def _process_project(project_id: int, user_id: int):
                 langbeschreibung = ""
             elif is_complex_type(detected_type) and not langbeschreibung:
                 specialized_result = await asyncio.get_event_loop().run_in_executor(
-                    None, generate_alt_text, img["image_path"], img["context_text"], detected_type,
+                    None, generate_alt_text, img["image_path"], effective_context, detected_type,
                     img_width, img_height, img_original_alt
                 )
                 if specialized_result.get("langbeschreibung"):
@@ -1980,11 +2040,12 @@ async def _process_project(project_id: int, user_id: int):
                     result["konfidenz"] = specialized_result.get("konfidenz", result.get("konfidenz", "mittel"))
             conn.execute(
                 """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?,
-                   needs_review = ?, pipeline_steps = ?, validation_result = ?, status = 'done' WHERE id = ?""",
-                (_append_link_reference(result["alt_text"], img["context_text"] or ""), result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
+                   needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, status = 'done' WHERE id = ?""",
+                (_append_link_reference(result["alt_text"], effective_context or ""), result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
                  1 if result.get("needs_review") else 0,
                  result.get("pipeline_steps", ""),
                  result.get("validation_result", ""),
+                 ctx_mode,
                  img["id"])
             )
             # Nur bei Erfolg den Zaehler hochziehen — Fehler werden separat
@@ -2140,7 +2201,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
 
     conn = get_db()
     img = conn.execute(
-        """SELECT i.* FROM images i
+        """SELECT i.*, p.use_context AS use_context FROM images i
            JOIN projects p ON i.project_id = p.id
            WHERE i.id = ? AND i.project_id = ? AND p.user_id = ?""",
         (image_id, project_id, user["id"])
@@ -2163,6 +2224,11 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         regen_height = img["height"] if img["height"] else 0
         regen_original_alt = img["original_alt"] if img["original_alt"] else ""
 
+        # KI-Kontext-Schalter (Projekt-Einstellung): bei "aus" keinen Kontext an die KI.
+        _use_context = True if img["use_context"] is None else bool(img["use_context"])
+        regen_context = img["context_text"] if _use_context else ""
+        regen_ctx_mode = "mit" if _use_context else "ohne"
+
         # T6 (03.05.2026): Cache evictieren BEVOR die Pipeline laeuft. Ein expliziter
         # Re-Generate-Klick soll alle Cache-Varianten dieses Bildes loeschen (auch andere
         # image_type_override-Varianten), damit kein Mischzustand entsteht. force_regenerate
@@ -2178,7 +2244,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
             pass  # Bild physikalisch weg — Pipeline wird das melden
 
         result = await asyncio.get_event_loop().run_in_executor(
-            None, generate_alt_text, img["image_path"], img["context_text"], effective_type,
+            None, generate_alt_text, img["image_path"], regen_context, effective_type,
             regen_width, regen_height, regen_original_alt, True  # force_regenerate=True
         )
 
@@ -2186,12 +2252,13 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         conn.execute(
             """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?,
                langbeschreibung = ?, alt_text_edited = NULL,
-               needs_review = ?, pipeline_steps = ?, validation_result = ?, status = 'done' WHERE id = ?""",
-            (_append_link_reference(result["alt_text"], img["context_text"] or ""), result["bildtyp"], result.get("konfidenz", "mittel"),
+               needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, status = 'done' WHERE id = ?""",
+            (_append_link_reference(result["alt_text"], regen_context or ""), result["bildtyp"], result.get("konfidenz", "mittel"),
              langbeschreibung,
              1 if result.get("needs_review") else 0,
              result.get("pipeline_steps", ""),
              result.get("validation_result", ""),
+             regen_ctx_mode,
              image_id)
         )
         # processed_images zaehlt nur ECHTE Erfolge (Steve 08.06.2026):
@@ -3512,6 +3579,176 @@ async def app_page(request: Request):
         html = html.replace("<title>InkluDocs</title>", "<title>InkluDocs (Testumgebung)</title>")
         html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
     return html
+
+
+# ============================================================
+#  Gastzugang / Projekt-Freigabe — Routen (19.06.2026, Etappe 2a)
+#  Alle additiv. Kein bestehender (Login-)Pfad wird veraendert.
+# ============================================================
+@app.get("/freigabe/{token}", response_class=HTMLResponse)
+async def freigabe_page(token: str, request: Request):
+    """Gast-Eingang: liefert dieselbe app.html im GAST-MODUS (kein Login noetig).
+    Ungueltiger/abgelaufener/widerrufener Token -> neutraler Hinweis (kein Datenleck).
+    Der Datenzugriff ist zusaetzlich durch das E-Mail-Gate geschuetzt."""
+    if not sharing.is_valid_share(token):
+        return HTMLResponse(
+            "<!doctype html><html lang='de'><head><meta charset='utf-8'>"
+            "<title>InkluDocs</title></head>"
+            "<body style='font-family:sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem'>"
+            "<h1>Link ungueltig oder abgelaufen</h1>"
+            "<p>Diese Freigabe ist nicht (mehr) gueltig. Bitte wenden Sie sich an die Person, "
+            "die Ihnen den Link geschickt hat.</p></body></html>",
+            status_code=404,
+        )
+    html = open("/app/frontend/app.html").read()
+    # GAST-MODUS-Flag + Token vor den Skripten einspeisen (Token ist URL-safe).
+    inject = '<script>window.GUEST_MODE=true;window.SHARE_TOKEN="' + token + '";</script>'
+    html = html.replace("</head>", inject + "</head>", 1)
+    if "staging" in BASE_URL:
+        html = html.replace("<title>InkluDocs</title>", "<title>InkluDocs (Testumgebung)</title>")
+        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
+    return html
+
+
+@app.post("/api/freigabe/{token}/confirm")
+async def freigabe_confirm(token: str, request: Request):
+    """E-Mail-Gate: prueft die eingegebene E-Mail gegen die Einladung. Bei Erfolg
+    wird ein guest_token-Cookie gesetzt (an genau diese Freigabe gebunden)."""
+    data = await request.json()
+    email = (data.get("email") or "").strip()
+    if not sharing.confirm_guest_email(token, email):
+        raise HTTPException(status_code=403, detail="E-Mail stimmt nicht mit der Einladung ueberein.")
+    resp = JSONResponse({"ok": True})
+    resp.set_cookie("guest_token", create_guest_token(token, email.lower()),
+                    httponly=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
+    return resp
+
+
+def _require_guest(request, token):
+    """Gemeinsamer Wachposten: gueltige Gast-Sitzung + nutzbare Freigabe -> share,
+    sonst HTTPException(401)."""
+    session = get_guest_session(request, token)
+    share = sharing.get_share(token) if session else None
+    if not session or not share or share["status"] not in ("active", "completed"):
+        raise HTTPException(status_code=401, detail="Bitte zuerst die E-Mail bestaetigen.")
+    return share
+
+
+@app.get("/api/freigabe/{token}")
+async def freigabe_data(token: str, request: Request):
+    """Projektdaten fuer den Gast — nur mit gueltiger Gast-Sitzung, nur das eine
+    Projekt dieser Freigabe. Spiegelt get_project, aber token- statt user-begrenzt."""
+    share = _require_guest(request, token)
+    pid = share["project_id"]
+    conn = get_db()
+    project = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden.")
+    images = conn.execute(
+        """SELECT i.*, (SELECT body FROM messages m WHERE m.image_id = i.id AND m.msg_type = 'review_note' LIMIT 1) AS review_note FROM images i
+           LEFT JOIN documents d ON d.id = i.document_id
+           WHERE i.project_id = ?
+           ORDER BY COALESCE(d.doc_index, 0), i.page_number, i.image_index""",
+        (pid,)
+    ).fetchall()
+    documents = conn.execute(
+        """SELECT id, doc_index, original_filename, display_name, extraction_method, total_images, created_at
+           FROM documents WHERE project_id = ? ORDER BY doc_index""",
+        (pid,)
+    ).fetchall()
+    conn.close()
+    proj_dict = dict(project)
+    _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
+    return {
+        "project": proj_dict,
+        "images": [dict(i) for i in images],
+        "documents": [dict(d) for d in documents],
+        "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
+        "guest": True,
+    }
+
+
+@app.get("/api/freigabe/{token}/images/{image_id}/file")
+async def freigabe_image_file(token: str, image_id: int, request: Request):
+    """Bild-Datei fuer den Gast — gast-begrenzt + nur Bilder DES freigegebenen Projekts."""
+    share = _require_guest(request, token)
+    conn = get_db()
+    img = conn.execute("SELECT * FROM images WHERE id = ? AND project_id = ?",
+                       (image_id, share["project_id"])).fetchone()
+    conn.close()
+    if not img or not os.path.exists(img["image_path"]):
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    return FileResponse(img["image_path"])
+
+
+@app.get("/api/freigabe/{token}/images/{image_id}/page-view")
+async def freigabe_image_page_view(token: str, image_id: int, request: Request):
+    """Seitenansicht-PNG fuer den Gast — gast-begrenzt + projektgebunden."""
+    share = _require_guest(request, token)
+    conn = get_db()
+    img = conn.execute("SELECT page_view_path FROM images WHERE id = ? AND project_id = ?",
+                       (image_id, share["project_id"])).fetchone()
+    conn.close()
+    if not img or not img["page_view_path"] or not os.path.exists(img["page_view_path"]):
+        raise HTTPException(status_code=404, detail="Seitenansicht nicht gefunden")
+    return FileResponse(img["page_view_path"])
+
+
+@app.post("/api/freigabe/{token}/images/{image_id}/alttext")
+async def freigabe_save_alttext(token: str, image_id: int, request: Request):
+    """Gast bearbeitet den Alt-Text haendisch (lesen + editieren erlaubt, KEINE KI).
+    Speichert in alt_text_edited — nur fuer Bilder DES freigegebenen Projekts.
+    Spiegelt update_alt_text (Besitzer), aber token-/gast-begrenzt."""
+    share = _require_guest(request, token)
+    data = await request.json()
+    conn = get_db()
+    img = conn.execute("SELECT id FROM images WHERE id = ? AND project_id = ?",
+                       (image_id, share["project_id"])).fetchone()
+    if not img:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    conn.execute("UPDATE images SET alt_text_edited = ? WHERE id = ?",
+                 (data.get("alt_text", ""), image_id))
+    if "langbeschreibung" in data:
+        conn.execute("UPDATE images SET langbeschreibung = ? WHERE id = ?",
+                     (data.get("langbeschreibung", ""), image_id))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.post("/api/freigabe/{token}/images/{image_id}/review")
+async def freigabe_set_review(token: str, image_id: int, request: Request):
+    """Gast setzt den Pruefstatus eines Bildes (offen/freigegeben/zu_ueberarbeiten)
+    und optional einen Kommentar. Genau EINE review_note pro Bild (in messages);
+    leerer Kommentar loescht sie. Alles gast-/projektbegrenzt."""
+    share = _require_guest(request, token)
+    session = get_guest_session(request, token)
+    data = await request.json()
+    status = data.get("status", "offen")
+    if status not in ("offen", "freigegeben", "zu_ueberarbeiten"):
+        raise HTTPException(status_code=400, detail="Ungueltiger Status.")
+    comment = (data.get("comment") or "").strip()
+    conn = get_db()
+    img = conn.execute("SELECT id FROM images WHERE id = ? AND project_id = ?",
+                       (image_id, share["project_id"])).fetchone()
+    if not img:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    conn.execute("UPDATE images SET review_status = ?, reviewed_at = datetime('now') WHERE id = ?",
+                 (status, image_id))
+    # Genau eine review_note pro Bild: alte ersetzen / bei leerem Kommentar entfernen.
+    conn.execute("DELETE FROM messages WHERE image_id = ? AND msg_type = 'review_note'", (image_id,))
+    if comment:
+        conn.execute(
+            "INSERT INTO messages (project_id, image_id, sender_guest, recipient_user_id, body, msg_type) "
+            "VALUES (?, ?, ?, ?, ?, 'review_note')",
+            (share["project_id"], image_id, (session or {}).get("guest", ""), share["created_by"], comment),
+        )
+    conn.commit()
+    conn.close()
+    return {"ok": True, "review_status": status, "comment": comment}
 
 @app.get("/impressum", response_class=HTMLResponse)
 async def impressum_page():

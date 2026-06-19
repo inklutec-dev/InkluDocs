@@ -1,24 +1,57 @@
-# Linux-Anpassung von Joerg Heines Export-Script (Original: AltTag_Export_CSV_PNG.py)
-# Basis: Karbes V1002 (27.05.2026)
-# Anpassungen:
-#   1. input("...") auskommentiert (Server-Betrieb, kein interaktives stdin)
-#   2. Windows-Pfade C:\... durch CLI-Parameter --data ersetzt
-#   3. Lizenz-Block weggelassen (Karbe: spaeter zum Verkaufsstart, jetzt Wasserzeichen-Modus)
-#   4. NEU 27.05.2026: Seitenansicht-PNG, 1x pro Seite (gecached), nicht pro Figure
-#   5. NEU: CSV-Spalten 7+8 = page_number + page_view_path
-
-# input("Druecke ENTER, um fortzufahren...")  # LINUX: stdin nicht verfuegbar
+# =============================================================================
+#  AltTag_Export_CSV_PNG.py  —  InkluDocs PDFix-Export (getaggte PDFs)
+# =============================================================================
+#  HERKUNFT / PROVENANCE (fuer spaetere Code-Reviews wichtig):
+#
+#  Dieses Skript ist eine ZUSAMMENFUEHRUNG zweier Staende:
+#
+#   (A) BASIS = unsere Linux-Anpassung von Joerg Heines/Michael Karbes Export-
+#       Skript, Stand "Karbe V1002" (27.05.2026). Davon stammt:
+#         - StructTree-Walk + Figure-Erkennung
+#         - Figure-Bild-Rendering (BoundingBox -> PNG)
+#         - die CSV (Spalten 1-8)
+#         - UNSERE Zusatzverbesserung: Seitenansicht-PNG 1x pro Seite gecacht,
+#           in 144 DPI (2.0x), _render_page_view(). Die hat Karbes Vorlage NICHT.
+#         - Linux-Anpassungen: kein input(), Pfade via CLI --data, kein Lizenz-
+#           Block (Trial-/Wasserzeichen-Modus bis Verkaufsstart).
+#
+#   (B) NEU EINGEPFROPFT aus Karbes Version V1004 (Mail 17.06.2026): die tag-
+#       basierte Text-Extraktion. Daraus stammen die zwei NEUEN Ausgaben je Bild:
+#         - "Seiteninhalt": Text DER SEITE, auf der das Bild steht (Lesereihen-
+#           folge aus den Tags rekonstruiert).
+#         - "Kontext":      Text des ganzen ABSCHNITTS um das Bild (von Ueber-
+#           schrift zu Ueberschrift, kann mehrere Seiten umfassen).
+#       Diese zwei Texte landen als CSV-Spalten 9 + 10 und dienen spaeter der
+#       KI als "enriched_context" (qualitativ besser als der bisherige
+#       Ganz-Dokument-Text). Karbes Original-Methode (AcquireWordList +
+#       Wort-BoundingBox-Treffer) ist 1:1 uebernommen.
+#
+#  WICHTIGER VERIFIZIERTER BEFUND (19.06.2026):
+#       Die Text-Extraktion via AcquireWordList liefert AUCH im PDFix-Trial-
+#       Modus (ohne Lizenz) SAUBEREN Text — KEINE '*'-Verstuemmelung. Getestet
+#       an actino-master.pdf und Naturavetal-Katalog.pdf (18 Seiten). Die
+#       1.320-EUR-Lizenz ist fuer diese Funktion NICHT noetig. (Im Gegensatz zur
+#       frueheren PageMap/GetText-Methode, die im Trial verstuemmelt — siehe
+#       Memo project_inkludocs_seitenvorschau, Befund 28.05.2026.)
+#
+#  UNSERE ZUSATZ-OPTIMIERUNG ueber V1004 hinaus: Wort-Liste 1x pro Seite cachen
+#       (_wordlist_cache) statt pro Tag neu zu holen — spart auf grossen PDFs
+#       viel Zeit. Dokumentiert an Ort und Stelle.
+#
+#  Aufruf (unveraendert ggue. V1002-Linux):
+#       python3 AltTag_Export_CSV_PNG.py -i <input.pdf> -o <egal.pdf> -d <outdir>
+# =============================================================================
 
 import os
 import csv
 import time
 import argparse
+import math
 
 start = time.time()
 
 from Utils import inputPath, outputPath
 from pdfixsdk import *
-import uuid
 from pathlib import Path
 
 pdfix = GetPdfix()
@@ -27,8 +60,11 @@ pdfix = GetPdfix()
 # if not pdfix.GetAccountAuthorization().Authorize("Benutzer", "Seriennummer"):
 #     print("PDFix SDK not authorized")
 
-_rendered_pages = {}  # page_num -> page_view_path (1 Seitenansicht pro Seite, nicht pro Figure)
-PAGE_VIEW_SCALE = 2.0  # ~144 DPI fuer lesbare Seitenansicht
+# -----------------------------------------------------------------------------
+#  TEIL A — unveraendert aus unserer V1002-Linux-Basis: Seitenansicht-Cache
+# -----------------------------------------------------------------------------
+_rendered_pages = {}     # page_num -> page_view_path (1 Seitenansicht pro Seite)
+PAGE_VIEW_SCALE = 2.0    # ~144 DPI fuer lesbare Seitenansicht
 
 
 def _render_page_view(page, page_num, crop_box):
@@ -54,22 +90,95 @@ def _render_page_view(page, page_num, crop_box):
     return path
 
 
+# -----------------------------------------------------------------------------
+#  TEIL B — NEU (aus Karbe V1004): tag-basierte Text-Extraktion
+# -----------------------------------------------------------------------------
+# Welche Tag-Typen tragen Text? (aus V1004 uebernommen)
+_TEXT_TAGS = {"P", "H", "H1", "H2", "H3", "H4", "H5", "H6", "LBody", "Lbl"}
+_HEADING_TAGS = {"H", "H1", "H2", "H3", "H4", "H5", "H6"}
+
+_doc = None              # Haupt-Dokumenthandle (in main() gesetzt)
+_page_cache = {}         # page_num -> Page (mehrfach-Acquire vermeiden)
+_wordlist_cache = {}     # page_num -> WordList  (UNSERE Optimierung ggue. V1004)
+
+# tagarray: in DFS-Reihenfolge ein Eintrag pro Struktur-Element:
+#   [tag_typ, page_num, text]   text="" bei Nicht-Text-Tags/Figures.
+# Daraus berechnen wir spaeter Seiteninhalt (= Text der Seite) und Kontext
+# (= Text zwischen den zwei umgebenden Ueberschriften).
+tagarray = []
+# figure_rows: Merker je Figure, um Kontext/Seiteninhalt der CSV-Zeile zuzuordnen.
+figure_rows = []         # [{"lfnr": int, "page_num": int, "tagidx": int}, ...]
+
+
+def _get_page(page_num):
+    p = _page_cache.get(page_num)
+    if p is None:
+        p = _doc.AcquirePage(page_num)
+        _page_cache[page_num] = p
+    return p
+
+
+def _tag_text(elem, page_num):
+    """Rekonstruiert den Text EINES Tags aus den Wort-Positionen.
+
+    Methode 1:1 aus Karbe V1004: hole die Wortliste der Seite (in Lesereihen-
+    folge) und nimm jene Woerter, deren BoundingBox in der BoundingBox des Tags
+    liegt. Die kleinen +1.01/-1.01-Korrekturen sind Karbes Toleranzwerte.
+    Liefert auch im Trial-Modus sauberen Text (verifiziert 19.06.2026).
+    """
+    bbox = elem.GetBBox(page_num)
+    tagl = math.floor(bbox.left)
+    tagu = math.floor(bbox.bottom)
+    tago = math.ceil(bbox.top)
+
+    wl = _wordlist_cache.get(page_num)
+    if wl is None:
+        # UNSERE Optimierung: Wortliste nur 1x pro Seite holen (V1004 holte sie
+        # pro Tag neu -> auf grossen PDFs deutlich langsamer).
+        page = _get_page(page_num)
+        wl = page.AcquireWordList(kWordFinderAlgLatest, 0)
+        _wordlist_cache[page_num] = wl
+
+    treffer = []
+    for k in range(wl.GetNumWords()):
+        w = wl.GetWord(k)
+        wb = w.GetBBox()
+        textl = math.ceil(wb.left + 1.01)
+        textu = math.ceil(wb.bottom + 1.01)
+        texto = math.floor(wb.top - 1.01)
+        if textl >= tagl and textu >= tagu and texto <= tago:
+            treffer.append(w.GetText())
+    return " ".join(treffer).strip()
+
+
+# -----------------------------------------------------------------------------
+#  Struktur-Walk: rendert Figures (Teil A) UND sammelt Tag-Texte (Teil B)
+# -----------------------------------------------------------------------------
 def process_struct_elem(elem: PdsStructElement):
-    alt = elem.GetAlt()
-    id = elem.GetId()
     page_num = -1
     bbox = None
     for i in range(elem.GetNumPages()):
         page_num = elem.GetPageNumber(i)
         bbox = elem.GetBBox(page_num)
 
-    if elem.GetType(True) == "Figure" and page_num >= 0:
+    etype = elem.GetType(True)
+
+    # --- Teil B: einen tagarray-Eintrag je Element anlegen ---
+    if page_num >= 0 and etype in _TEXT_TAGS:
+        tagarray.append([etype, page_num, _tag_text(elem, page_num)])
+    else:
+        # Figures und Nicht-Text-Tags: Platzhalter (Text leer). Figures dienen
+        # als Anker fuer die Kapitel-Suche, deshalb auch sie in den tagarray.
+        tagarray.append([etype, page_num, ""])
+    this_tagidx = len(tagarray) - 1
+
+    # --- Teil A: Figure rendern (unveraendert aus V1002-Linux) ---
+    if etype == "Figure" and page_num >= 0:
         bboxfigure = elem.GetBBox(page_num)
         doc = pdfix.OpenDoc(aaadatei, "")
         page = doc.AcquirePage(page_num)
         crop_box = page.GetCropBox()
 
-        # Figure-Bild rendern (1.0 Skala wie V1000)
         pageView = page.AcquirePageView(1.0, kRotate0)
         devRect = pageView.RectToDevice(bboxfigure)
         devRect.right -= devRect.left
@@ -89,20 +198,48 @@ def process_struct_elem(elem: PdsStructElement):
         imageParams = PdfImageParams()
         psImage.SaveRect(figure_path, imageParams, devRect)
 
-        # Seitenansicht (1x pro Seite, gecached)
         page_view_path = _render_page_view(page, page_num, crop_box)
 
         matrix.append([lfn_counter, figure_path,
                        elem.GetTitle(), elem.GetActualText(), elem.GetAlt(),
                        filename2, page_num + 1, page_view_path])
+        # Merker fuer die spaetere Kontext-Zuordnung (Teil B)
+        figure_rows.append({"lfnr": lfn_counter, "page_num": page_num, "tagidx": this_tagidx})
 
-    # process children
+    # Kinder rekursiv
     for i in range(elem.GetNumChildren()):
         child_type = elem.GetChildType(i)
         if child_type == kPdsStructChildElement:
             obj = elem.GetChildObject(i)
             child_elem = elem.GetStructTree().GetStructElementFromObject(obj)
             process_struct_elem(child_elem)
+
+
+# -----------------------------------------------------------------------------
+#  Teil B: Seiteninhalt + Kontext berechnen (nach dem Walk)
+# -----------------------------------------------------------------------------
+def _page_content(page_num):
+    """Text aller Text-Tags auf einer Seite (Lesereihenfolge = DFS-Reihenfolge)."""
+    parts = [t[2] for t in tagarray if t[1] == page_num and t[2]]
+    return " ".join(parts).strip()
+
+
+def _chapter_context(tagidx):
+    """Text des Abschnitts um den Figure-Tag: von der naechsten Ueberschrift
+    OBERHALB bis zur naechsten Ueberschrift UNTERHALB (exklusive). Logik wie
+    in Karbe V1004 (dort ueber figurearray geloest)."""
+    start = 0
+    for a in range(tagidx, -1, -1):
+        if tagarray[a][0] in _HEADING_TAGS:
+            start = a
+            break
+    end = len(tagarray)
+    for b in range(tagidx + 1, len(tagarray)):
+        if tagarray[b][0] in _HEADING_TAGS:
+            end = b
+            break
+    parts = [tagarray[z][2] for z in range(start, end) if tagarray[z][2]]
+    return " ".join(parts).strip()
 
 
 def main():
@@ -112,30 +249,47 @@ def main():
     parser.add_argument('-d', '--data', required=True, help='LINUX: Output dir for PNGs and CSV')
 
     args = parser.parse_args()
-    global aaadatei, data_dir
+    global aaadatei, data_dir, _doc
     aaadatei = args.input
     data_dir = args.data
     os.makedirs(data_dir, exist_ok=True)
-    doc = pdfix.OpenDoc(args.input, "")
+    _doc = pdfix.OpenDoc(args.input, "")
     path = Path("" + args.input)
     global filename2
     filename2 = path.stem
-    struct_tree = doc.GetStructTree()
+    struct_tree = _doc.GetStructTree()
     for i in range(struct_tree.GetNumChildren()):
         obj = struct_tree.GetChildObject(i)
         elem = struct_tree.GetStructElementFromObject(obj)
         process_struct_elem(elem)
-    print(lfn_counter, " Bilder + ", len(_rendered_pages), " Seitenansichten im Unterordner gespeichert")
+    print(lfn_counter, " Bilder + ", len(_rendered_pages), " Seitenansichten extrahiert")
 
 
 lfn_counter = 0
 matrix = []
+# CSV-Kopf: Spalten 1-8 wie bisher, NEU Spalten 9-10 (Seiteninhalt, Kontext)
 matrix.append(["laufende Nummer", "Pfad mit Dateinamen", "Titel",
                "Echter Text", "Alternativer Text", "Dateiname",
-               "Seitennummer", "Pfad Seitenansicht"])
+               "Seitennummer", "Pfad Seitenansicht",
+               "Seiteninhalt", "Kontext"])
 matrix.append([])
 
 main()
+
+# --- Teil B: Seiteninhalt + Kontext je Figure an die CSV-Zeilen anhaengen ---
+context_by_lfnr = {}
+for fr in figure_rows:
+    si = _page_content(fr["page_num"])
+    ko = _chapter_context(fr["tagidx"])
+    context_by_lfnr[fr["lfnr"]] = (si, ko)
+
+for row in matrix[1:]:
+    if not row:           # die leere Trennzeile unveraendert lassen
+        continue
+    lfnr = row[0]
+    si, ko = context_by_lfnr.get(lfnr, ("", ""))
+    row.append(si)
+    row.append(ko)
 
 pfadcsv = os.path.join(data_dir, "figure_array.csv")
 with open(pfadcsv, mode="w", newline="", encoding="utf-8") as f:

@@ -175,6 +175,46 @@ def init_db():
             FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
         );
         CREATE INDEX IF NOT EXISTS idx_documents_project ON documents(project_id, doc_index);
+
+        -- Gastzugang / Projekt-Freigabe (19.06.2026): pro Einladung ein Token,
+        -- gebunden an EIN Projekt + EINE Gast-E-Mail. Token = Geheimnis, die
+        -- E-Mail-Eingabe des Gastes = Bestaetigung. Datenlogik in sharing.py.
+        CREATE TABLE IF NOT EXISTS shares (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            guest_email TEXT NOT NULL,
+            status TEXT DEFAULT 'active',
+            created_by INTEGER NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            expires_at TEXT,
+            email_confirmed_at TEXT,
+            completed_at TEXT,
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY (created_by) REFERENCES users(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_shares_token ON shares(token);
+        CREATE INDEX IF NOT EXISTS idx_shares_project ON shares(project_id);
+
+        -- Nachrichten (19.06.2026): bewusst ALLGEMEIN gehalten, damit daraus
+        -- spaeter ohne Umbau das volle In-App-Messaging (User<->User, Abteilungen)
+        -- wachsen kann. v1 nutzt nur Gast<->Besitzer, optional an Bild/Projekt.
+        -- sender_user_id ODER sender_guest gesetzt (je nach Absender).
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER,
+            image_id INTEGER,
+            sender_user_id INTEGER,
+            sender_guest TEXT,
+            recipient_user_id INTEGER,
+            body TEXT NOT NULL,
+            msg_type TEXT DEFAULT 'message',
+            read_at TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_messages_project ON messages(project_id);
+        CREATE INDEX IF NOT EXISTS idx_messages_image ON messages(image_id);
     """)
     conn.commit()
 
@@ -219,6 +259,11 @@ def _migrate_columns(conn):
         # Seitenansicht-Feature (27.05.2026): PNG der ganzen Seite + Volltext pro Bild
         ("images", "page_view_path", "ALTER TABLE images ADD COLUMN page_view_path TEXT DEFAULT ''"),
         ("images", "page_text", "ALTER TABLE images ADD COLUMN page_text TEXT DEFAULT ''"),
+        # 19.06.2026: KI-Kontext-Schalter pro Projekt + Vermerk pro Bild.
+        # use_context Default 1 (=an) -> bestehende Projekte behalten ihr Verhalten.
+        # context_mode ('mit'/'ohne'/'') ist NUR Anzeige, wird NIE exportiert.
+        ("projects", "use_context", "ALTER TABLE projects ADD COLUMN use_context INTEGER DEFAULT 1"),
+        ("images", "context_mode", "ALTER TABLE images ADD COLUMN context_mode TEXT DEFAULT ''"),
         # Dashboard (02.06.2026): freier Projektname + Werkzeug-Zuordnung
         ("projects", "name", "ALTER TABLE projects ADD COLUMN name TEXT DEFAULT ''"),
         ("projects", "tool", "ALTER TABLE projects ADD COLUMN tool TEXT DEFAULT 'alttext'"),
@@ -227,6 +272,12 @@ def _migrate_columns(conn):
         # legt fuer bestehende PDF-Projekte je ein Dokument 1 an und setzt
         # die Spalte. Neue Uploads tragen den Wert direkt beim INSERT.
         ("images", "document_id", "ALTER TABLE images ADD COLUMN document_id INTEGER"),
+        # Gastzugang / Review (19.06.2026): Pruefstatus pro Bild. 'offen' = noch nicht
+        # geprueft (Default), 'freigegeben' = ok, 'zu_ueberarbeiten' = Aenderung gewuenscht.
+        # Der eigentliche Kommentar liegt in der messages-Tabelle (msg_type review_note),
+        # nicht hier -> Status bleibt schlank abfragbar fuer Badge + Dashboard-Zaehler.
+        ("images", "review_status", "ALTER TABLE images ADD COLUMN review_status TEXT DEFAULT 'offen'"),
+        ("images", "reviewed_at", "ALTER TABLE images ADD COLUMN reviewed_at TEXT"),
     ]
 
     for table, column, sql in migrations:
