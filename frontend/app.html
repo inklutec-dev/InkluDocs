@@ -369,6 +369,7 @@
         const project = data.project;
         const images = data.images;
         const documents = data.documents || [];
+        window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt
 
         const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
         const extractionText = (project.project_type === 'pdf')
@@ -684,36 +685,23 @@
     }
 
     // ─── Gast-Review (Etappe 3): Freigeben / Aenderung wuenschen + Kommentar ───
-    async function guestSetReview(imageId, status, comment) {
+    async function guestSetReview(imageId, status) {
         const msgEl = document.getElementById('rev_msg_' + imageId);
+        const t = document.getElementById('rev_comment_' + imageId);
+        const comment = t ? t.value : '';
         try {
             const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/review', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin', body: JSON.stringify({ status: status, comment: comment || '' })
+                credentials: 'same-origin', body: JSON.stringify({ status: status, comment: comment })
             });
             if (!r.ok) { if (msgEl) msgEl.textContent = 'Fehler beim Speichern.'; announce('Fehler beim Speichern.'); return false; }
         } catch (e) { if (msgEl) msgEl.textContent = 'Netzwerkfehler.'; return false; }
-        const label = status === 'freigegeben' ? 'Freigegeben' : (status === 'zu_ueberarbeiten' ? 'Zu \u00fcberarbeiten' : 'Offen');
+        const label = status === 'freigegeben' ? 'Freigegeben' : (status === 'zu_ueberarbeiten' ? '\u00c4nderung gew\u00fcnscht' : 'Offen');
         const st = document.getElementById('rev_status_' + imageId);
         if (st) st.textContent = label;
         if (msgEl) msgEl.textContent = 'Gespeichert.';
-        announce('Status gespeichert: ' + label);
+        announce('Gespeichert: ' + label);
         return true;
-    }
-    function guestApprove(imageId) {
-        const box = document.getElementById('rev_comment_box_' + imageId);
-        if (box) box.style.display = 'none';
-        guestSetReview(imageId, 'freigegeben', '');
-    }
-    function guestRequestChange(imageId) {
-        const box = document.getElementById('rev_comment_box_' + imageId);
-        if (box) box.style.display = '';
-        const t = document.getElementById('rev_comment_' + imageId);
-        if (t) t.focus();
-    }
-    function guestRequestChangeSubmit(imageId) {
-        const t = document.getElementById('rev_comment_' + imageId);
-        guestSetReview(imageId, 'zu_ueberarbeiten', t ? t.value : '');
     }
 
     // ─── Etappe 4: Besitzer laedt zur Pruefung ein (mailto) ───
@@ -880,7 +868,7 @@
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
                     ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Konfidenz: ' + img.konfidenz + '</span>' : ''}
                     ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#475569;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? 'mit Kontext' : 'ohne Kontext') + '</span>' : ''}
-                    ${!window.GUEST_MODE && img.review_status && img.review_status !== 'offen' ? '<span class="badge" style="background:' + (img.review_status === 'freigegeben' ? 'var(--success,#2a7)' : '#d97706') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.review_status === 'freigegeben' ? 'Freigegeben' : 'Zu \u00fcberarbeiten') + (img.review_note ? ' \u2014 mit Anmerkung' : '') + '</span>' : ''}
+                    ${!window.GUEST_MODE && window._inReview && img.status === 'done' ? '<span class="badge" style="background:' + (img.review_status === 'freigegeben' ? 'var(--success,#2a7)' : (img.review_status === 'zu_ueberarbeiten' ? '#d97706' : '#64748b')) + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Pr\u00fcfstatus: ' + (img.review_status === 'freigegeben' ? 'Freigegeben' : (img.review_status === 'zu_ueberarbeiten' ? 'Nachbessern' : 'Ausstehend')) + (img.review_note ? ' \u2014 mit Anmerkung' : '') + '</span>' : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
                     ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Fehler</span>' : ''}
                 </div>
@@ -921,16 +909,13 @@
                 </div>
                 ${window.GUEST_MODE && img.status === 'done' ? `
                     <div class="guest-review" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
-                        <p style="margin:0 0 0.4rem 0;font-weight:600;">Status: <span id="rev_status_${img.id}">${img.review_status === 'freigegeben' ? 'Freigegeben' : (img.review_status === 'zu_ueberarbeiten' ? 'Zu \u00fcberarbeiten' : 'Offen')}</span></p>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-                            <button type="button" class="btn btn-secondary btn-small" onclick="guestApprove(${img.id})">Freigeben</button>
-                            <button type="button" class="btn btn-secondary btn-small" onclick="guestRequestChange(${img.id})">\u00c4nderung w\u00fcnschen</button>
+                        <p style="margin:0 0 0.4rem 0;font-weight:600;">Status: <span id="rev_status_${img.id}">${img.review_status === 'freigegeben' ? 'Freigegeben' : (img.review_status === 'zu_ueberarbeiten' ? '\u00c4nderung gew\u00fcnscht' : 'Offen')}</span></p>
+                        <label for="rev_comment_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">Anmerkung (optional)</label>
+                        <textarea id="rev_comment_${img.id}" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">${img.review_note || ''}</textarea>
+                        <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="guestSetReview(${img.id}, 'freigegeben')">Freigeben</button>
+                            <button type="button" class="btn btn-secondary btn-small" onclick="guestSetReview(${img.id}, 'zu_ueberarbeiten')">\u00c4nderung w\u00fcnschen</button>
                             <span id="rev_msg_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
-                        </div>
-                        <div id="rev_comment_box_${img.id}" style="margin-top:0.5rem;${(img.review_status === 'zu_ueberarbeiten' || img.review_note) ? '' : 'display:none;'}">
-                            <label for="rev_comment_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">Anmerkung (optional)</label>
-                            <textarea id="rev_comment_${img.id}" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">${img.review_note || ''}</textarea>
-                            <button type="button" class="btn btn-secondary btn-small" style="margin-top:0.4rem;" onclick="guestRequestChangeSubmit(${img.id})">\u00c4nderung abschicken</button>
                         </div>
                     </div>
                 ` : ''}

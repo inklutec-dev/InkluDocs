@@ -1772,11 +1772,19 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     # wenn kein PDF-Projekt ODER der Schalter an ist (siehe pdf_langbeschreibung_enabled).
     proj_dict = dict(project)
     _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
+    # Review-Status nur zeigen, wenn das Projekt ueberhaupt zur Pruefung freigegeben
+    # wurde (Steve 20.06.) -> Solo-Arbeit ohne Einladung bleibt frei von Pruef-Badges.
+    _rconn = get_db()
+    _in_review = _rconn.execute(
+        "SELECT 1 FROM shares WHERE project_id = ? AND status IN ('active','completed') LIMIT 1",
+        (project_id,)).fetchone() is not None
+    _rconn.close()
     return {
         "project": proj_dict,
         "images": [dict(img) for img in images],
         "documents": [dict(d) for d in documents],
         "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
+        "in_review": _in_review,
     }
 
 
@@ -3838,6 +3846,34 @@ async def freigabe_complete(token: str, request: Request):
     if owner and owner.get("email"):
         send_email(owner["email"], "InkluDocs: Pruefung abgeschlossen (" + pname + ")", body, bcc_admin=False)
     return {"ok": True, "freigegeben": freigegeben, "zu_ueberarbeiten": zu_ueber, "offen": offen}
+
+
+@app.get("/api/review-overview")
+async def review_overview(user: dict = Depends(get_current_user)):
+    """Projekte des Besitzers, die zur Pruefung freigegeben sind, mit Review-Zaehlern
+    fuers Dashboard-Panel (offen / zu ueberarbeiten / freigegeben)."""
+    conn = get_db()
+    rows = conn.execute(
+        """SELECT p.id AS id, p.name AS name, p.filename AS filename,
+                  SUM(CASE WHEN COALESCE(i.review_status,'offen')='offen' THEN 1 ELSE 0 END) AS offen,
+                  SUM(CASE WHEN i.review_status='zu_ueberarbeiten' THEN 1 ELSE 0 END) AS zu_ueberarbeiten,
+                  SUM(CASE WHEN i.review_status='freigegeben' THEN 1 ELSE 0 END) AS freigegeben,
+                  COUNT(i.id) AS total
+           FROM projects p
+           JOIN images i ON i.project_id = p.id
+           WHERE p.user_id = ?
+             AND EXISTS (SELECT 1 FROM shares s WHERE s.project_id = p.id AND s.status IN ('active','completed'))
+           GROUP BY p.id
+           ORDER BY p.updated_at DESC""",
+        (user["id"],)
+    ).fetchall()
+    conn.close()
+    projects = []
+    for r in rows:
+        d = dict(r)
+        d["display_name"] = (d.get("name") or d.get("filename") or ("Projekt " + str(d["id"])))
+        projects.append(d)
+    return {"projects": projects}
 
 @app.get("/impressum", response_class=HTMLResponse)
 async def impressum_page():

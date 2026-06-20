@@ -19,6 +19,11 @@
 
       <p><button type="button" id="newsBtn" class="dash-news-btn" aria-haspopup="dialog" hidden>Neuigkeiten</button></p>
 
+      <section class="dash-section" id="reviewOverviewSection" aria-labelledby="reviewov-h" hidden>
+        <h2 id="reviewov-h">Rückmeldungen vom Kunden</h2>
+        <div id="reviewOverviewContainer"></div>
+      </section>
+
       <section class="dash-section" aria-labelledby="recent-h">
         <h2 id="recent-h">Zuletzt bearbeitete Projekte</h2>
         <div id="recentContainer" aria-busy="true">
@@ -234,9 +239,44 @@
     });
   }
 
+  async function loadReviewOverview() {
+    let data;
+    try {
+      const res = await fetch('/api/review-overview');
+      if (!res.ok) return;
+      data = await res.json();
+    } catch (e) { return; }
+    const projects = data.projects || [];
+    const section = byId('reviewOverviewSection');
+    const cont = byId('reviewOverviewContainer');
+    if (!section || !cont) return;
+    if (projects.length === 0) { section.hidden = true; return; }
+    cont.innerHTML = '';
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    projects.forEach((pr) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      const a = document.createElement('a');
+      a.href = '/app?projekt=' + encodeURIComponent(pr.id);
+      a.textContent = pr.display_name;
+      h3.appendChild(a);
+      li.appendChild(h3);
+      const p = document.createElement('p');
+      p.className = 'dash-sub';
+      p.textContent = 'Zu prüfen: ' + pr.offen + ' · Zu überarbeiten: ' + pr.zu_ueberarbeiten + ' · Freigegeben: ' + pr.freigegeben + ' (von ' + pr.total + ')';
+      li.appendChild(p);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+    section.hidden = false;
+  }
+
   (async function init() {
     await loadTools();
     loadNews();
+    await loadReviewOverview();
     await loadRecent();
   })();
 </script>
