@@ -404,6 +404,30 @@
                 <div class="card-actions">
                     ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Alt-Texte generieren</button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
+                        <button class="btn btn-secondary" id="shareOpenBtn" onclick="openSharePanel(${project.id})">Zur Pr\u00fcfung freigeben</button>
+                        <div id="sharePanel" style="display:none;flex-basis:100%;margin-top:0.6rem;padding:1rem;border:1px solid var(--border);border-radius:8px;">
+                            <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">E-Mail-Adresse des Kunden</label>
+                            <input type="email" id="shareEmail" autocomplete="email" style="width:100%;max-width:24rem;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
+                            <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                <button class="btn btn-primary" onclick="doShare(${project.id})">Einladung erstellen &amp; Mail \u00f6ffnen</button>
+                                <button class="btn btn-secondary" onclick="document.getElementById('sharePanel').style.display='none'">Abbrechen</button>
+                            </div>
+                            <span id="shareStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
+                        </div>
+                    ` : ''}
+                    ${window.GUEST_MODE && images.length > 0 ? `
+                        <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">Pr\u00fcfung abschlie\u00dfen</button>
+                        <div id="guestCompletePanel" style="display:none;flex-basis:100%;margin-top:0.6rem;padding:1rem;border:1px solid var(--border);border-radius:8px;">
+                            <label for="guestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">M\u00f6chten Sie dem Ersteller noch etwas mitteilen? (optional)</label>
+                            <textarea id="guestCompleteMsg" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
+                            <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                <button class="btn btn-primary" onclick="doGuestComplete()">Abschlie\u00dfen &amp; senden</button>
+                                <button class="btn btn-secondary" onclick="document.getElementById('guestCompletePanel').style.display='none'">Abbrechen</button>
+                            </div>
+                            <span id="guestCompleteStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
+                        </div>
+                    ` : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">Exportieren</button>
                         <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;font-size:1.05rem;">Export-Optionen</h2>
@@ -690,6 +714,54 @@
     function guestRequestChangeSubmit(imageId) {
         const t = document.getElementById('rev_comment_' + imageId);
         guestSetReview(imageId, 'zu_ueberarbeiten', t ? t.value : '');
+    }
+
+    // ─── Etappe 4: Besitzer laedt zur Pruefung ein (mailto) ───
+    function openSharePanel(projectId) {
+        const p = document.getElementById('sharePanel');
+        if (p) p.style.display = '';
+        const e = document.getElementById('shareEmail');
+        if (e) e.focus();
+    }
+    async function doShare(projectId) {
+        const emailEl = document.getElementById('shareEmail');
+        const statusEl = document.getElementById('shareStatus');
+        const email = (emailEl ? emailEl.value : '').trim();
+        if (!email || email.indexOf('@') < 0) { if (statusEl) statusEl.textContent = 'Bitte eine g\u00fcltige E-Mail-Adresse eingeben.'; return; }
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/share', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guest_email: email })
+            });
+            const d = await r.json();
+            if (!r.ok) { if (statusEl) statusEl.textContent = (d.detail || 'Fehler beim Erstellen der Freigabe.'); return; }
+            const subject = 'Bitte Alt-Texte pr\u00fcfen';
+            const bodyTxt = 'Hallo,\n\nich m\u00f6chte Sie bitten, die Alt-Texte f\u00fcr dieses Projekt zu pr\u00fcfen. Bitte \u00f6ffnen Sie diesen Link und best\u00e4tigen Sie Ihre E-Mail-Adresse:\n\n' + d.url + '\n\nVielen Dank!';
+            if (statusEl) statusEl.innerHTML = 'Freigabe erstellt. Link: <a href="' + d.url + '">' + d.url + '</a>';
+            window.location.href = 'mailto:' + encodeURIComponent(email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyTxt);
+            announce('Freigabe erstellt, Mail-Client wird ge\u00f6ffnet.');
+        } catch (e) { if (statusEl) statusEl.textContent = 'Netzwerkfehler.'; }
+    }
+
+    // ─── Etappe 5: Gast schliesst die Pruefung ab ───
+    function openGuestComplete() {
+        const p = document.getElementById('guestCompletePanel');
+        if (p) p.style.display = '';
+        const t = document.getElementById('guestCompleteMsg');
+        if (t) t.focus();
+    }
+    async function doGuestComplete() {
+        const msgEl = document.getElementById('guestCompleteMsg');
+        const statusEl = document.getElementById('guestCompleteStatus');
+        try {
+            const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/complete', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin', body: JSON.stringify({ message: msgEl ? msgEl.value : '' })
+            });
+            if (!r.ok) { if (statusEl) statusEl.textContent = 'Fehler beim Abschlie\u00dfen.'; return; }
+            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem auto;"><h1 class="section-title">Vielen Dank!</h1><p>Ihre Pr\u00fcfung wurde an den Ersteller gesendet. Sie k\u00f6nnen dieses Fenster schlie\u00dfen \u2014 oder \u00fcber Ihren Link jederzeit zur\u00fcckkommen und \u00c4nderungen vornehmen.</p></section>';
+            announce('Pr\u00fcfung abgeschlossen und gesendet.');
+        } catch (e) { if (statusEl) statusEl.textContent = 'Netzwerkfehler.'; }
     }
 
     async function setContextSetting(projectId, useContext) {

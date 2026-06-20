@@ -3750,6 +3750,95 @@ async def freigabe_set_review(token: str, image_id: int, request: Request):
     conn.close()
     return {"ok": True, "review_status": status, "comment": comment}
 
+
+def _mail_escape(t):
+    """Minimaler HTML-Schutz fuer Gast-Eingaben in Benachrichtigungs-Mails."""
+    return (t or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+# ─── Etappe 4: Besitzer erstellt/verwaltet Freigaben ───
+@app.post("/api/projects/{project_id}/share")
+async def create_project_share(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Besitzer legt eine Freigabe (Gastzugang) an: gebunden an dieses Projekt +
+    eine Gast-E-Mail. Gibt Token + fertigen Link zurueck (Frontend oeffnet damit
+    den Mail-Client des Besitzers)."""
+    data = await request.json()
+    guest_email = (data.get("guest_email") or "").strip()
+    if not guest_email or "@" not in guest_email:
+        raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse angeben.")
+    conn = get_db()
+    proj = conn.execute("SELECT id FROM projects WHERE id = ? AND user_id = ?",
+                        (project_id, user["id"])).fetchone()
+    conn.close()
+    if not proj:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    token = sharing.create_share(project_id, guest_email, user["id"])
+    return {"ok": True, "token": token, "url": BASE_URL + "/freigabe/" + token, "guest_email": guest_email}
+
+
+@app.get("/api/projects/{project_id}/shares")
+async def list_project_shares(project_id: int, user: dict = Depends(get_current_user)):
+    conn = get_db()
+    proj = conn.execute("SELECT id FROM projects WHERE id = ? AND user_id = ?",
+                        (project_id, user["id"])).fetchone()
+    conn.close()
+    if not proj:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    shares = sharing.list_shares_for_project(project_id, user["id"])
+    for sh in shares:
+        sh["url"] = BASE_URL + "/freigabe/" + sh["token"]
+    return {"shares": shares}
+
+
+@app.post("/api/projects/{project_id}/shares/revoke")
+async def revoke_project_share(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    data = await request.json()
+    if not sharing.revoke_share(data.get("token", ""), user["id"]):
+        raise HTTPException(status_code=404, detail="Freigabe nicht gefunden")
+    return {"ok": True}
+
+
+# ─── Etappe 5: Gast schliesst die Pruefung ab -> Besitzer wird benachrichtigt ───
+@app.post("/api/freigabe/{token}/complete")
+async def freigabe_complete(token: str, request: Request):
+    """Gast schliesst die Pruefung ab: Freigabe -> 'completed', Zusammenfassung +
+    optionale Nachricht per E-Mail an den Besitzer. Bleibt danach weiter lesbar
+    (Gast kann jederzeit zurueckkommen)."""
+    share = _require_guest(request, token)
+    session = get_guest_session(request, token)
+    data = await request.json()
+    message = (data.get("message") or "").strip()
+    pid = share["project_id"]
+    conn = get_db()
+    project = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+    imgs = conn.execute("SELECT review_status FROM images WHERE project_id = ?", (pid,)).fetchall()
+    notes = conn.execute(
+        "SELECT body FROM messages WHERE project_id = ? AND msg_type = 'review_note'", (pid,)
+    ).fetchall()
+    conn.close()
+    freigegeben = sum(1 for i in imgs if i["review_status"] == "freigegeben")
+    zu_ueber = sum(1 for i in imgs if i["review_status"] == "zu_ueberarbeiten")
+    offen = sum(1 for i in imgs if (i["review_status"] or "offen") == "offen")
+    sharing.mark_completed(token)
+    from database import get_user_by_id
+    owner = get_user_by_id(share["created_by"])
+    pname = (project["name"] if project and project["name"] else (project["filename"] if project else "Projekt"))
+    guest = (session or {}).get("guest", share["guest_email"])
+    link = BASE_URL + "/freigabe/" + token
+    notes_html = "".join("<li>" + _mail_escape(n["body"]) + "</li>" for n in notes)
+    body = (
+        "<p>" + _mail_escape(guest) + " hat die Pruefung fuer das Projekt &bdquo;"
+        + _mail_escape(pname) + "&ldquo; abgeschlossen.</p>"
+        + "<p><strong>Ergebnis:</strong> " + str(freigegeben) + " freigegeben, "
+        + str(zu_ueber) + " zu ueberarbeiten, " + str(offen) + " offen.</p>"
+        + (("<p><strong>Nachricht:</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
+        + (("<p><strong>Anmerkungen:</strong></p><ul>" + notes_html + "</ul>") if notes_html else "")
+        + "<p>Im Werkzeug ansehen: <a href='" + link + "'>" + link + "</a></p>"
+    )
+    if owner and owner.get("email"):
+        send_email(owner["email"], "InkluDocs: Pruefung abgeschlossen (" + pname + ")", body, bcc_admin=False)
+    return {"ok": True, "freigegeben": freigegeben, "zu_ueberarbeiten": zu_ueber, "offen": offen}
+
 @app.get("/impressum", response_class=HTMLResponse)
 async def impressum_page():
     return open("/app/frontend/impressum.html").read()
