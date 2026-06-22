@@ -272,6 +272,7 @@ def _migrate_columns(conn):
         # legt fuer bestehende PDF-Projekte je ein Dokument 1 an und setzt
         # die Spalte. Neue Uploads tragen den Wert direkt beim INSERT.
         ("images", "document_id", "ALTER TABLE images ADD COLUMN document_id INTEGER"),
+        ("shares", "guest_name", "ALTER TABLE shares ADD COLUMN guest_name TEXT DEFAULT ''"),
         # Gastzugang / Review (19.06.2026): Pruefstatus pro Bild. 'offen' = noch nicht
         # geprueft (Default), 'freigegeben' = ok, 'zu_ueberarbeiten' = Aenderung gewuenscht.
         # Der eigentliche Kommentar liegt in der messages-Tabelle (msg_type review_note),

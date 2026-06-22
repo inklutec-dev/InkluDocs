@@ -263,6 +263,13 @@
       a.textContent = pr.display_name;
       h3.appendChild(a);
       li.appendChild(h3);
+      // Kunde(n) anzeigen, die zu diesem Projekt eingeladen sind (aus den Freigaben).
+      if (pr.guests) {
+        const pk = document.createElement('p');
+        pk.className = 'dash-sub';
+        pk.textContent = 'Kunde: ' + pr.guests.split(',').join(', ');
+        li.appendChild(pk);
+      }
       const p = document.createElement('p');
       p.className = 'dash-sub';
       p.textContent = 'Zu prüfen: ' + pr.offen + ' · Zu überarbeiten: ' + pr.zu_ueberarbeiten + ' · Freigegeben: ' + pr.freigegeben + ' (von ' + pr.total + ')';

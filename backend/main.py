@@ -72,7 +72,7 @@ NOTIFICATION_EMAIL = os.environ.get("NOTIFICATION_EMAIL", SMTP_FROM)
 DAILY_IMAGE_LIMIT = int(os.environ.get("DAILY_IMAGE_LIMIT", "100"))
 
 
-def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = True, attachment_path: str = None) -> bool:
+def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = True, attachment_path: str = None, reply_to: str = None, from_name: str = None) -> bool:
     """Send an email via SMTP with optional file attachment.
 
     Args:
@@ -91,7 +91,11 @@ def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = Tr
         if "staging" in BASE_URL:
             subject = f"[STAGING] {subject}"
         msg["Subject"] = subject
-        msg["From"] = f"InkluDocs <{SMTP_FROM}>"
+        from email.utils import formataddr
+        # Nur den Anzeigenamen kodieren, Adresse bleibt gueltig (sonst lehnt Gmail mit 550 5.7.1 ab).
+        msg["From"] = formataddr((from_name, SMTP_FROM), charset="utf-8") if from_name else f"InkluDocs <{SMTP_FROM}>"
+        if reply_to:
+            msg["Reply-To"] = reply_to
         msg["To"] = to_email
 
         html_part = MIMEMultipart("alternative")
@@ -3767,21 +3771,51 @@ def _mail_escape(t):
 # ─── Etappe 4: Besitzer erstellt/verwaltet Freigaben ───
 @app.post("/api/projects/{project_id}/share")
 async def create_project_share(project_id: int, request: Request, user: dict = Depends(get_current_user)):
-    """Besitzer legt eine Freigabe (Gastzugang) an: gebunden an dieses Projekt +
-    eine Gast-E-Mail. Gibt Token + fertigen Link zurueck (Frontend oeffnet damit
-    den Mail-Client des Besitzers)."""
+    """Besitzer legt eine Freigabe (Gastzugang) an. Bei notify=true (Standard) verschickt der
+    Server die Einladung serverseitig: From-Anzeigename "<Besitzer> ueber InkluDocs", Reply-To
+    = Besitzer (Antworten gehen an ihn, NICHT an InkluTec). Bei notify=false wird NICHT versendet
+    (Besitzer holt sich nur den Link und mailt selbst). Optionale persoenliche Nachricht ersetzt
+    nur den Einleitungssatz; Link + Bestaetigungs-Hinweis bleiben fest."""
+    import html
     data = await request.json()
     guest_email = (data.get("guest_email") or "").strip()
+    guest_name = (data.get("guest_name") or "").strip()
+    custom_message = (data.get("message") or "").strip()
+    notify = data.get("notify", True)
     if not guest_email or "@" not in guest_email:
         raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse angeben.")
     conn = get_db()
-    proj = conn.execute("SELECT id FROM projects WHERE id = ? AND user_id = ?",
+    proj = conn.execute("SELECT id, name, filename FROM projects WHERE id = ? AND user_id = ?",
                         (project_id, user["id"])).fetchone()
     conn.close()
     if not proj:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    token = sharing.create_share(project_id, guest_email, user["id"])
-    return {"ok": True, "token": token, "url": BASE_URL + "/freigabe/" + token, "guest_email": guest_email}
+    token = sharing.create_share(project_id, guest_email, user["id"], guest_name=guest_name)
+    url = BASE_URL + "/freigabe/" + token
+    sent = False
+    if notify:
+        owner = get_user_by_id(user["id"]) or {}
+        owner_name = (owner.get("display_name") or "").strip() or "Ein InkluDocs-Nutzer"
+        owner_email = owner.get("email") or user["email"]
+        proj_name = (proj["name"] or proj["filename"] or ("Projekt " + str(project_id)))
+        greet = ("Hallo " + guest_name + ",") if guest_name else "Hallo,"
+        if custom_message:
+            intro = html.escape(custom_message).replace("\n", "<br>")
+        else:
+            intro = (html.escape(owner_name) + " möchte Sie bitten, die Alt-Texte für das Projekt „"
+                     + html.escape(proj_name) + "“ zu prüfen.")
+        body = (
+            "<p>" + greet + "</p>"
+            "<p>" + intro + "</p>"
+            "<p>Bitte öffnen Sie diesen Link und bestätigen Sie Ihre E-Mail-Adresse:</p>"
+            "<p><a href='" + url + "'>" + url + "</a></p>"
+            "<p>Eingeladen von: " + html.escape(owner_email) + "</p>"
+            "<p>Vielen Dank!</p>"
+        )
+        subject = "Bitte Alt-Texte prüfen: " + proj_name
+        sent = send_email(guest_email, subject, body, bcc_admin=False,
+                          reply_to=owner_email, from_name=(owner_name + " über InkluDocs"))
+    return {"ok": True, "token": token, "url": url, "guest_email": guest_email, "sent": bool(sent)}
 
 
 @app.get("/api/projects/{project_id}/shares")
@@ -3858,7 +3892,9 @@ async def review_overview(user: dict = Depends(get_current_user)):
                   SUM(CASE WHEN COALESCE(i.review_status,'offen')='offen' THEN 1 ELSE 0 END) AS offen,
                   SUM(CASE WHEN i.review_status='zu_ueberarbeiten' THEN 1 ELSE 0 END) AS zu_ueberarbeiten,
                   SUM(CASE WHEN i.review_status='freigegeben' THEN 1 ELSE 0 END) AS freigegeben,
-                  COUNT(i.id) AS total
+                  COUNT(i.id) AS total,
+                  (SELECT GROUP_CONCAT(DISTINCT COALESCE(NULLIF(g.guest_name,''), g.guest_email)) FROM shares g
+                    WHERE g.project_id = p.id AND g.status IN ('active','completed')) AS guests
            FROM projects p
            JOIN images i ON i.project_id = p.id
            WHERE p.user_id = ?

@@ -6,6 +6,13 @@
     <title>InkluDocs</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/dashboard.css">
+    <style>
+      /* Einladungs-Dialog (natives <dialog>): fuer Zoom/Lupe dimensioniert + starker Fokus */
+      dialog.invite-dialog { max-width: 34rem; width: 92%; max-height: 85vh; overflow: auto;
+        border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
+      dialog.invite-dialog::backdrop { background: rgba(0,0,0,0.5); }
+      dialog.invite-dialog :focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+    </style>
 </head>
 <body>
     <a href="#mainContent" class="skip-link">Zum Hauptinhalt springen</a>
@@ -405,16 +412,42 @@
                 <div class="card-actions">
                     ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Alt-Texte generieren</button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
-                        <button class="btn btn-secondary" id="shareOpenBtn" onclick="openSharePanel(${project.id})">Zur Pr\u00fcfung freigeben</button>
-                        <div id="sharePanel" style="display:none;flex-basis:100%;margin-top:0.6rem;padding:1rem;border:1px solid var(--border);border-radius:8px;">
-                            <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">E-Mail-Adresse des Kunden</label>
-                            <input type="email" id="shareEmail" autocomplete="email" style="width:100%;max-width:24rem;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
-                            <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-                                <button class="btn btn-primary" onclick="doShare(${project.id})">Einladung erstellen &amp; Mail \u00f6ffnen</button>
-                                <button class="btn btn-secondary" onclick="document.getElementById('sharePanel').style.display='none'">Abbrechen</button>
+                        <button type="button" class="btn btn-secondary" id="shareOpenBtn" onclick="openShareDialog(${project.id})">Zur Prüfung freigeben</button>
+                        <dialog id="shareDialog" aria-labelledby="shareHeading" class="invite-dialog">
+                            <div id="shareForm">
+                                <h2 id="shareHeading" style="margin-top:0;">Kunde zur Prüfung einladen</h2>
+                                <p style="font-size:0.9rem;color:var(--text-muted);margin:0 0 0.8rem;">Pflichtfeld ist gekennzeichnet.</p>
+                                <label for="shareName" style="display:block;font-weight:600;margin-bottom:0.3rem;">Name des Kunden (optional)</label>
+                                <input type="text" id="shareName" autocomplete="name" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.8rem;">
+                                <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">E-Mail-Adresse des Kunden (Pflichtfeld)</label>
+                                <input type="email" id="shareEmail" autocomplete="email" aria-required="true" aria-describedby="shareEmailError" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
+                                <p id="shareEmailError" role="alert" style="color:var(--error,#c33);font-weight:600;margin:0.3rem 0 0;"></p>
+                                <label for="shareMessage" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">Persönliche Nachricht (optional)</label>
+                                <textarea id="shareMessage" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
+                                <p style="font-size:0.85rem;color:var(--text-muted);margin:0.3rem 0 0;">Die Nachricht wird nur bei „Einladung per E-Mail senden" mitgeschickt.</p>
+                                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                                    <button type="button" class="btn btn-primary" id="shareSendBtn" onclick="doShare(${project.id})">Einladung per E-Mail senden</button>
+                                    <button type="button" class="btn btn-secondary" id="shareLinkBtn" onclick="doShareLinkOnly(${project.id})">Nur Link erstellen</button>
+                                    <button type="button" class="btn btn-secondary" onclick="closeShareDialog()">Abbrechen</button>
+                                </div>
+                                <output id="shareStatus" style="display:block;margin-top:0.6rem;"></output>
                             </div>
-                            <span id="shareStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
-                        </div>
+                            <div id="shareConfirm" hidden>
+                                <h2 id="shareConfirmHeading" tabindex="-1" style="margin-top:0;">Einladung gesendet</h2>
+                                <p id="shareConfirmText"></p>
+                                <div id="shareConfirmLinkWrap" hidden style="margin:0.6rem 0;">
+                                    <label for="shareConfirmLink" style="display:block;font-weight:600;margin-bottom:0.3rem;">Einladungslink</label>
+                                    <input type="text" id="shareConfirmLink" readonly style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
+                                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                                        <button type="button" class="btn btn-secondary" id="shareCopyBtn" onclick="shareCopyLink()">Link kopieren</button>
+                                        <output id="shareCopyStatus" style="font-size:0.9rem;"></output>
+                                    </div>
+                                </div>
+                                <div style="margin-top:1rem;">
+                                    <button type="button" class="btn btn-primary" onclick="closeShareDialog()">Zurück zum Projekt</button>
+                                </div>
+                            </div>
+                        </dialog>
                     ` : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">Pr\u00fcfung abschlie\u00dfen</button>
@@ -422,10 +455,10 @@
                             <label for="guestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">M\u00f6chten Sie dem Ersteller noch etwas mitteilen? (optional)</label>
                             <textarea id="guestCompleteMsg" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
                             <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-                                <button class="btn btn-primary" onclick="doGuestComplete()">Abschlie\u00dfen &amp; senden</button>
+                                <button class="btn btn-primary" id="guestCompleteSend" onclick="doGuestComplete()">Abschlie\u00dfen &amp; senden</button>
                                 <button class="btn btn-secondary" onclick="document.getElementById('guestCompletePanel').style.display='none'">Abbrechen</button>
                             </div>
-                            <span id="guestCompleteStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
+                            <output id="guestCompleteStatus" style="display:block;margin-top:0.5rem;"></output>
                         </div>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
@@ -704,31 +737,194 @@
         return true;
     }
 
-    // ─── Etappe 4: Besitzer laedt zur Pruefung ein (mailto) ───
-    function openSharePanel(projectId) {
-        const p = document.getElementById('sharePanel');
-        if (p) p.style.display = '';
-        const e = document.getElementById('shareEmail');
-        if (e) e.focus();
+    // --- Gast-Review: optionales Anmerkungsfeld oeffnen / absenden / abbrechen / schliessen ---
+    // guestSetReview (der eigentliche POST) bleibt unveraendert; diese Helfer steuern
+    // nur Aufklappen, Schliessen (Escape/Toggle/Abbrechen) und die Nachlese-Ansicht.
+    function guestOpenReview(imageId, status) {           // Status-Knopf oeffnet / toggelt das optionale Feld
+        const form = document.getElementById('rev_form_' + imageId);
+        if (!form) return;
+        // Gleicher Status-Knopf erneut gedrueckt -> wieder zuklappen (Toggle).
+        if (!form.hidden && form.dataset.status === status) { guestCancelReview(imageId, true); return; }
+        form.hidden = false;                              // natives hidden-Attribut
+        form.dataset.status = status;                     // Zielstatus bis zum Absenden merken
+        const submit = document.getElementById('rev_submit_' + imageId);
+        if (submit) submit.textContent = status === 'freigegeben' ? 'Freigabe absenden' : 'Änderung absenden';
+        const okBtn = document.getElementById('rev_open_freigegeben_' + imageId);
+        const chgBtn = document.getElementById('rev_open_zu_ueberarbeiten_' + imageId);
+        if (okBtn) okBtn.setAttribute('aria-expanded', String(status === 'freigegeben'));
+        if (chgBtn) chgBtn.setAttribute('aria-expanded', String(status === 'zu_ueberarbeiten'));
+        const field = document.getElementById('rev_comment_' + imageId);
+        if (field) field.focus();                         // Fokus springt ins Feld
+        announce(status === 'freigegeben'
+            ? 'Feld zum Freigeben geöffnet. Anmerkung optional. Mit Escape wieder schließen.'
+            : 'Feld für Änderungswunsch geöffnet. Anmerkung optional. Mit Escape wieder schließen.');
     }
-    async function doShare(projectId) {
+
+    function guestCancelReview(imageId, focusBack) {      // Feld zuklappen; optional Fokus zurueck auf den Knopf
+        const form = document.getElementById('rev_form_' + imageId);
+        const status = form ? form.dataset.status : null;
+        if (form) form.hidden = true;
+        ['rev_open_freigegeben_', 'rev_open_zu_ueberarbeiten_'].forEach(function (p) {
+            const b = document.getElementById(p + imageId);
+            if (b) b.setAttribute('aria-expanded', 'false');
+        });
+        if (focusBack) {                                  // Fokus zurueck auf den ausloesenden Status-Knopf
+            const back = document.getElementById('rev_open_' + (status === 'freigegeben' ? 'freigegeben' : 'zu_ueberarbeiten') + '_' + imageId);
+            if (back) back.focus();
+        }
+    }
+
+    function guestFormKeydown(e, imageId) {               // Escape im Feld -> schliessen + Fokus zurueck
+        if (e.key === 'Escape') { e.preventDefault(); guestCancelReview(imageId, true); }
+    }
+
+    async function guestSubmitReview(imageId) {           // Status + optionalen Kommentar senden
+        const form = document.getElementById('rev_form_' + imageId);
+        if (!form) return;
+        const ok = await guestSetReview(imageId, form.dataset.status);  // setzt Status, sagt "Gespeichert"
+        if (!ok) return;
+        const field = document.getElementById('rev_comment_' + imageId);
+        const note = ((field && field.value) || '').trim();
+        const view = document.getElementById('rev_note_view_' + imageId);
+        if (view) view.innerHTML = reviewNoteDetails(note, 'Meine Anmerkung anzeigen');  // Nachlese aktualisieren
+        guestCancelReview(imageId, true);                  // Formular zuklappen + Fokus zurueck
+    }
+
+    // ─── Etappe 4: Besitzer laedt zur Pruefung ein (mailto) ───
+    function openShareDialog(projectId) {
+        const dlg = document.getElementById('shareDialog');
+        if (!dlg) return;
+        const form = document.getElementById('shareForm'); if (form) form.hidden = false;
+        const conf = document.getElementById('shareConfirm'); if (conf) conf.hidden = true;
+        const lw = document.getElementById('shareConfirmLinkWrap'); if (lw) lw.hidden = true;
+        const sendBtn = document.getElementById('shareSendBtn'); if (sendBtn) sendBtn.disabled = false;
+        const linkBtn = document.getElementById('shareLinkBtn'); if (linkBtn) linkBtn.disabled = false;
+        const err = document.getElementById('shareEmailError'); if (err) err.textContent = '';
+        const st = document.getElementById('shareStatus'); if (st) st.textContent = '';
+        const cs = document.getElementById('shareCopyStatus'); if (cs) cs.textContent = '';
+        const em = document.getElementById('shareEmail'); if (em) em.setAttribute('aria-invalid', 'false');
+        ['shareName', 'shareEmail', 'shareMessage'].forEach(function (id) {
+            const el = document.getElementById(id); if (el) el.value = '';
+        });
+        // Natives Modal: Fokus springt rein, Escape schliesst, Fokus kehrt beim Schliessen zurueck.
+        if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+        const nm = document.getElementById('shareName'); if (nm) nm.focus();
+    }
+
+    function closeShareDialog() {
+        const dlg = document.getElementById('shareDialog');
+        if (dlg && typeof dlg.close === 'function') dlg.close(); else if (dlg) dlg.removeAttribute('open');
+    }
+
+    // Pflichtfeld-Pruefung (barrierefrei): liefert getrimmte E-Mail oder null + Fehleransage.
+    function shareValidateEmail() {
         const emailEl = document.getElementById('shareEmail');
-        const statusEl = document.getElementById('shareStatus');
+        const errEl = document.getElementById('shareEmailError');
         const email = (emailEl ? emailEl.value : '').trim();
-        if (!email || email.indexOf('@') < 0) { if (statusEl) statusEl.textContent = 'Bitte eine g\u00fcltige E-Mail-Adresse eingeben.'; return; }
+        if (!email || email.indexOf('@') < 1) {
+            if (errEl) errEl.textContent = 'Bitte eine gültige E-Mail-Adresse eingeben.';
+            if (emailEl) { emailEl.setAttribute('aria-invalid', 'true'); emailEl.focus(); }
+            return null;
+        }
+        if (errEl) errEl.textContent = '';
+        if (emailEl) emailEl.setAttribute('aria-invalid', 'false');
+        return email;
+    }
+
+    // Wechselt von Formular auf Bestaetigung; Fokus auf die Ueberschrift (wird vorgelesen).
+    function shareShowConfirm(headingText, bodyText, showLink) {
+        const form = document.getElementById('shareForm');
+        const conf = document.getElementById('shareConfirm');
+        const head = document.getElementById('shareConfirmHeading');
+        const text = document.getElementById('shareConfirmText');
+        const lw = document.getElementById('shareConfirmLinkWrap');
+        const linkInput = document.getElementById('shareConfirmLink');
+        if (head) head.textContent = headingText;
+        if (text) text.textContent = bodyText;
+        if (linkInput) linkInput.value = window._lastShareUrl || '';
+        if (lw) lw.hidden = !showLink;
+        if (form) form.hidden = true;
+        if (conf) conf.hidden = false;
+        if (head) head.focus();
+    }
+
+    function shareSetBusy(busy) {
+        const sendBtn = document.getElementById('shareSendBtn'); if (sendBtn) sendBtn.disabled = busy;
+        const linkBtn = document.getElementById('shareLinkBtn'); if (linkBtn) linkBtn.disabled = busy;
+    }
+
+    async function doShare(projectId) {
+        const email = shareValidateEmail();
+        if (!email) return;
+        const name = ((document.getElementById('shareName') || {}).value || '').trim();
+        const message = ((document.getElementById('shareMessage') || {}).value || '').trim();
+        const statusEl = document.getElementById('shareStatus');
+        shareSetBusy(true);
+        if (statusEl) statusEl.textContent = 'Einladung wird gesendet …';
+        announce('Einladung wird gesendet …');
         try {
             const r = await fetch('/api/projects/' + projectId + '/share', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ guest_email: email })
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ guest_email: email, guest_name: name, message: message, notify: true })
             });
             const d = await r.json();
-            if (!r.ok) { if (statusEl) statusEl.textContent = (d.detail || 'Fehler beim Erstellen der Freigabe.'); return; }
-            const subject = 'Bitte Alt-Texte pr\u00fcfen';
-            const bodyTxt = 'Hallo,\n\nich m\u00f6chte Sie bitten, die Alt-Texte f\u00fcr dieses Projekt zu pr\u00fcfen. Bitte \u00f6ffnen Sie diesen Link und best\u00e4tigen Sie Ihre E-Mail-Adresse:\n\n' + d.url + '\n\nVielen Dank!';
-            if (statusEl) statusEl.innerHTML = 'Freigabe erstellt. Link: <a href="' + d.url + '">' + d.url + '</a>';
-            window.location.href = 'mailto:' + encodeURIComponent(email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyTxt);
-            announce('Freigabe erstellt, Mail-Client wird ge\u00f6ffnet.');
-        } catch (e) { if (statusEl) statusEl.textContent = 'Netzwerkfehler.'; }
+            if (!r.ok) {
+                if (statusEl) statusEl.textContent = (d.detail || 'Fehler beim Erstellen der Freigabe.');
+                shareSetBusy(false);
+                const em = document.getElementById('shareEmail'); if (em) em.focus();
+                return;
+            }
+            window._lastShareUrl = d.url || '';
+            if (d.sent) {
+                shareShowConfirm('Einladung gesendet', 'Die Einladung wurde an ' + email + ' gesendet.', false);
+                announce('Einladung an ' + email + ' gesendet.');
+            } else {
+                shareShowConfirm('Freigabe erstellt', 'Die E-Mail konnte nicht versendet werden. Bitte kopiere den Einladungslink und sende ihn selbst an ' + email + '.', true);
+                announce('E-Mail-Versand nicht möglich, bitte Link kopieren.');
+            }
+        } catch (e) { if (statusEl) statusEl.textContent = 'Netzwerkfehler.'; shareSetBusy(false); }
+    }
+
+    async function doShareLinkOnly(projectId) {
+        const email = shareValidateEmail();
+        if (!email) return;
+        const name = ((document.getElementById('shareName') || {}).value || '').trim();
+        const statusEl = document.getElementById('shareStatus');
+        shareSetBusy(true);
+        if (statusEl) statusEl.textContent = 'Link wird erstellt …';
+        announce('Link wird erstellt …');
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/share', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ guest_email: email, guest_name: name, notify: false })
+            });
+            const d = await r.json();
+            if (!r.ok) {
+                if (statusEl) statusEl.textContent = (d.detail || 'Fehler beim Erstellen der Freigabe.');
+                shareSetBusy(false);
+                const em = document.getElementById('shareEmail'); if (em) em.focus();
+                return;
+            }
+            window._lastShareUrl = d.url || '';
+            shareShowConfirm('Link erstellt', 'Sie können diesen Einladungslink jetzt selbst an ' + email + ' verschicken. Der Gast muss beim Öffnen genau diese E-Mail-Adresse bestätigen.', true);
+            announce('Einladungslink erstellt.');
+        } catch (e) { if (statusEl) statusEl.textContent = 'Netzwerkfehler.'; shareSetBusy(false); }
+    }
+
+    function shareCopyLink() {
+        const url = window._lastShareUrl || '';
+        const statusEl = document.getElementById('shareCopyStatus');
+        if (!url) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function () {
+                if (statusEl) statusEl.textContent = 'Link kopiert.';
+                announce('Link in die Zwischenablage kopiert.');
+            }).catch(function () {
+                if (statusEl) statusEl.textContent = 'Kopieren nicht möglich – der Link oben ist markierbar.';
+            });
+        } else {
+            if (statusEl) statusEl.textContent = 'Kopieren nicht möglich – der Link oben ist markierbar.';
+        }
     }
 
     // ─── Etappe 5: Gast schliesst die Pruefung ab ───
@@ -741,15 +937,27 @@
     async function doGuestComplete() {
         const msgEl = document.getElementById('guestCompleteMsg');
         const statusEl = document.getElementById('guestCompleteStatus');
+        const sendBtn = document.getElementById('guestCompleteSend');
+        // Sofort-Feedback: Knopf sperren + native Statusmeldung, damit nicht doppelt geklickt wird.
+        if (sendBtn) sendBtn.disabled = true;
+        if (statusEl) statusEl.textContent = 'Wird gesendet…';
+        announce('Prüfung wird gesendet …');
         try {
             const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/complete', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 credentials: 'same-origin', body: JSON.stringify({ message: msgEl ? msgEl.value : '' })
             });
-            if (!r.ok) { if (statusEl) statusEl.textContent = 'Fehler beim Abschlie\u00dfen.'; return; }
-            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem auto;"><h1 class="section-title">Vielen Dank!</h1><p>Ihre Pr\u00fcfung wurde an den Ersteller gesendet. Sie k\u00f6nnen dieses Fenster schlie\u00dfen \u2014 oder \u00fcber Ihren Link jederzeit zur\u00fcckkommen und \u00c4nderungen vornehmen.</p></section>';
-            announce('Pr\u00fcfung abgeschlossen und gesendet.');
-        } catch (e) { if (statusEl) statusEl.textContent = 'Netzwerkfehler.'; }
+            if (!r.ok) {
+                if (statusEl) statusEl.textContent = 'Fehler beim Abschließen. Bitte erneut versuchen.';
+                if (sendBtn) sendBtn.disabled = false;   // wieder freigeben fuer einen zweiten Versuch
+                return;
+            }
+            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem auto;"><h1 class="section-title">Vielen Dank!</h1><p>Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen.</p></section>';
+            announce('Prüfung abgeschlossen und gesendet.');
+        } catch (e) {
+            if (statusEl) statusEl.textContent = 'Netzwerkfehler. Bitte erneut versuchen.';
+            if (sendBtn) sendBtn.disabled = false;
+        }
     }
 
     async function setContextSetting(projectId, useContext) {
@@ -767,6 +975,21 @@
         } catch (e) {
             announce('Netzwerkfehler beim Umschalten des KI-Kontexts.');
         }
+    }
+
+    /**
+     * Rendert eine gespeicherte Pruef-Anmerkung als natives Aufklapp-Element.
+     * Bewusst OHNE ARIA: <details>/<summary> tragen Auf-/Zu-Zustand und Screenreader-Ansage selbst.
+     * Wird identisch von Besitzer- UND Gast-Ansicht genutzt, damit beide Seiten nie auseinanderlaufen.
+     */
+    function reviewNoteDetails(note, summaryLabel) {
+        if (!note) return '';
+        // Eigene HTML-Escape-Funktion: reviewNoteDetails liegt im Modul-Scope und darf
+        // NICHT vom lokalen esc() aus renderImages abhaengen (dort ist es nicht sichtbar).
+        const escHtml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<details class="kundenanmerkung" style="margin:0.3rem 0;"><summary>${summaryLabel}</summary>`
+             + `<div style="padding:0.4rem 0;white-space:pre-wrap;">${escHtml(note)}</div></details>`;
     }
 
     function renderImages(images, projectId, showLang, documents, project) {
@@ -872,7 +1095,7 @@
                     ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
                     ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Fehler</span>' : ''}
                 </div>
-                ${!window.GUEST_MODE && img.review_note ? `<details class="kundenanmerkung" style="margin:0.3rem 0;"><summary>Anmerkung des Kunden anzeigen</summary><div style="padding:0.4rem 0;white-space:pre-wrap;">${esc(img.review_note)}</div></details>` : ''}
+                ${!window.GUEST_MODE ? reviewNoteDetails(img.review_note, 'Anmerkung des Kunden anzeigen') : ''}
                 ${img.status === 'error' ? `
                     <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
                         Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.
@@ -909,14 +1132,26 @@
                 </div>
                 ${window.GUEST_MODE && img.status === 'done' ? `
                     <div class="guest-review" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
-                        <p style="margin:0 0 0.4rem 0;font-weight:600;">Status: <span id="rev_status_${img.id}">${img.review_status === 'freigegeben' ? 'Freigegeben' : (img.review_status === 'zu_ueberarbeiten' ? '\u00c4nderung gew\u00fcnscht' : 'Offen')}</span></p>
-                        <label for="rev_comment_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">Anmerkung (optional)</label>
-                        <textarea id="rev_comment_${img.id}" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">${img.review_note || ''}</textarea>
-                        <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-                            <button type="button" class="btn btn-secondary btn-small" onclick="guestSetReview(${img.id}, 'freigegeben')">Freigeben</button>
-                            <button type="button" class="btn btn-secondary btn-small" onclick="guestSetReview(${img.id}, 'zu_ueberarbeiten')">\u00c4nderung w\u00fcnschen</button>
-                            <span id="rev_msg_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                        <p style="margin:0 0 0.4rem 0;font-weight:600;">Status: <span id="rev_status_${img.id}">${img.review_status === 'freigegeben' ? 'Freigegeben' : (img.review_status === 'zu_ueberarbeiten' ? 'Änderung gewünscht' : 'Offen')}</span></p>
+                        <!-- Status-Knoepfe oeffnen das optionale Anmerkungsfeld (guestOpenReview) und merken sich den Zielstatus. -->
+                        <!-- aria-expanded ist die einzige ARIA-Angabe: ein Button hat - anders als <summary> - nativ keinen Auf-/Zu-Zustand. -->
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <button type="button" class="btn btn-secondary btn-small" id="rev_open_freigegeben_${img.id}" aria-expanded="false" onclick="guestOpenReview(${img.id}, 'freigegeben')">Freigeben</button>
+                            <button type="button" class="btn btn-secondary btn-small" id="rev_open_zu_ueberarbeiten_${img.id}" aria-expanded="false" onclick="guestOpenReview(${img.id}, 'zu_ueberarbeiten')">Änderung wünschen</button>
                         </div>
+                        <!-- Optionales Mini-Formular: bis zum Knopfdruck per nativem hidden-Attribut ausgeblendet. -->
+                        <div id="rev_form_${img.id}" hidden style="margin-top:0.6rem;" onkeydown="guestFormKeydown(event, ${img.id})">
+                            <label for="rev_comment_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">Anmerkung (optional)</label>
+                            <textarea id="rev_comment_${img.id}" aria-describedby="rev_hint_${img.id}" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">${esc(img.review_note || '')}</textarea>
+                            <p id="rev_hint_${img.id}" style="font-size:0.85rem;color:var(--text-muted);margin:0.3rem 0 0.5rem;">Optional. Du kannst auch ohne Anmerkung absenden.</p>
+                            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                                <button type="button" class="btn btn-primary btn-small" id="rev_submit_${img.id}" onclick="guestSubmitReview(${img.id})">Absenden</button>
+                                <button type="button" class="btn btn-secondary btn-small" onclick="guestCancelReview(${img.id}, true)">Abbrechen</button>
+                                <output id="rev_msg_${img.id}" style="font-size:0.85rem;"></output>
+                            </div>
+                        </div>
+                        <!-- Gespeicherte Anmerkung zum Nachlesen - identische Helferfunktion wie die Besitzer-Ansicht. -->
+                        <span id="rev_note_view_${img.id}">${reviewNoteDetails(img.review_note, 'Meine Anmerkung anzeigen')}</span>
                     </div>
                 ` : ''}
                 ${!window.GUEST_MODE && img.status !== 'processing' ? `

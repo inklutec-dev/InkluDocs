@@ -25,9 +25,9 @@ DEFAULT_EXPIRY_DAYS = 30
 _USABLE_STATES = ("active", "completed")
 
 
-def create_share(project_id, guest_email, created_by, expiry_days=DEFAULT_EXPIRY_DAYS):
+def create_share(project_id, guest_email, created_by, expiry_days=DEFAULT_EXPIRY_DAYS, guest_name=""):
     """Legt eine Freigabe an und gibt den geheimen Token zurueck.
-    guest_email wird normalisiert (trim+lowercase) gespeichert."""
+    guest_email wird normalisiert (trim+lowercase) gespeichert; guest_name optional (Klarname)."""
     token = secrets.token_urlsafe(32)
     expires_at = None
     if expiry_days:
@@ -35,9 +35,9 @@ def create_share(project_id, guest_email, created_by, expiry_days=DEFAULT_EXPIRY
     conn = get_db()
     try:
         conn.execute(
-            "INSERT INTO shares (project_id, token, guest_email, created_by, expires_at) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (project_id, token, (guest_email or "").strip().lower(), created_by, expires_at),
+            "INSERT INTO shares (project_id, token, guest_email, created_by, expires_at, guest_name) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (project_id, token, (guest_email or "").strip().lower(), created_by, expires_at, (guest_name or "").strip()),
         )
         conn.commit()
     finally:
