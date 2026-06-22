@@ -32,7 +32,7 @@ async function loadCurrentUser() {
   const limitInfo = byId('dailyLimitInfo');
   const dl = data.daily_limit;
   if (limitInfo && dl) {
-    limitInfo.textContent = `Heute ${dl.used} von ${dl.limit} Alt-Texten generiert – noch ${dl.remaining} übrig.`;
+    limitInfo.textContent = `Heute ${dl.used} von ${dl.limit} Bildern genutzt – noch ${dl.remaining} übrig.`;
   }
   return currentUser;
 }
