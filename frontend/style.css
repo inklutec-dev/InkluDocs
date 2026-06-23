@@ -1043,3 +1043,8 @@ input[type="file"] {
 .dash-legal-links {
     line-height: 1.6;
 }
+
+
+/* Gast-Pruefstatus: aktiver Status-Knopf gefuellt (aria-pressed). Weiss auf #c75000 = 4.59:1 (AA). */
+.guest-review .btn[aria-pressed="true"] { background:#c75000; border-color:#c75000; color:#fff; }
+.guest-review .btn[aria-pressed="true"]:hover:not(:disabled) { border-color:#c75000; }
