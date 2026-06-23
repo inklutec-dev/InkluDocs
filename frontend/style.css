@@ -688,6 +688,26 @@ input[type="file"] {
     border: 1px solid var(--border);
     border-radius: 4px;
 }
+/* Seitenansicht: gerendertes Seitenbild einklappbar (Karbe-Wunsch 23.06.2026),
+   default zu - Nutzer sieht zuerst die Bilder, ganze Seite nur bei Bedarf.
+   Gleiche Optik wie .page-text-details; gilt fuer Ersteller- und Pruefer-Ansicht. */
+.page-view-details {
+    max-width: 800px;
+    margin: 0 auto 1rem auto;
+    padding: 0.5rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.page-view-details > summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0.3rem 0;
+}
+.page-view-details > summary:focus-visible {
+    outline: 2px solid var(--focus, #e87722);
+    outline-offset: 2px;
+}
 /* Seitentext: eigenes inneres Klapp-Element innerhalb der Seitengruppe */
 .page-text-details {
     max-width: 800px;
