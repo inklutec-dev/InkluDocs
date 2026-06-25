@@ -38,6 +38,14 @@
 #       (_wordlist_cache) statt pro Tag neu zu holen — spart auf grossen PDFs
 #       viel Zeit. Dokumentiert an Ort und Stelle.
 #
+#   (C) KARBE V1.05 (Mail Michael Karbe, 24.06.2026): Lesbarkeit des
+#       "Seiteninhalts". Hinter jedem Tag wird ein Zeilenumbruch gesetzt (vorher
+#       ein Fliesstext-Blob mit Leerzeichen), Listen-Label bleiben inline.
+#       Umgesetzt in _join_reading_order(), genutzt von _page_content() (der
+#       ANGEZEIGTE Seitentext). Der KI-Kontext _chapter_context() bleibt bewusst
+#       flach — Begruendung dort. Frontend zeigt es bereits via
+#       white-space:pre-wrap (style.css .page-text-content), kein UI-Eingriff.
+#
 #  Aufruf (unveraendert ggue. V1002-Linux):
 #       python3 AltTag_Export_CSV_PNG.py -i <input.pdf> -o <egal.pdf> -d <outdir>
 # =============================================================================
@@ -218,16 +226,50 @@ def process_struct_elem(elem: PdsStructElement):
 # -----------------------------------------------------------------------------
 #  Teil B: Seiteninhalt + Kontext berechnen (nach dem Walk)
 # -----------------------------------------------------------------------------
+def _join_reading_order(typed_parts):
+    """Fuegt Tag-Texte in Lesereihenfolge zu lesbarem Seitentext zusammen.
+
+    Aenderung Karbe V1.05 (Mail Michael Karbe, 24.06.2026): hinter jedem Tag
+    einen Zeilenumbruch setzen, damit die ANZEIGE des Seiteninhalts strukturiert
+    erscheint und nicht als ein einziger Fliesstext-Blob (vorher " ".join). So
+    bekommt jeder Absatz/jede Ueberschrift/jeder Listeneintrag eine eigene Zeile.
+
+    AUSNAHME (1:1 aus Karbes Vorlage): Listen-Label (Tag-Typ "Lbl") und einzelne
+    Aufzaehlungszeichen (Text aus genau einem Zeichen, z.B. "•") bleiben INLINE,
+    d.h. sie werden mit Leerzeichen statt Umbruch angehaengt. Dadurch klebt das
+    Label "1." / "•" am Anfang seines Listeneintrags, statt allein auf einer
+    Zeile zu stehen.
+
+    typed_parts: Liste von (tag_typ, text) in Lesereihenfolge.
+    """
+    out = []
+    for etype, text in typed_parts:
+        inline = (etype == "Lbl") or (len(text) == 1)
+        out.append(text + (" " if inline else "\n"))
+    return "".join(out).strip()
+
+
 def _page_content(page_num):
-    """Text aller Text-Tags auf einer Seite (Lesereihenfolge = DFS-Reihenfolge)."""
-    parts = [t[2] for t in tagarray if t[1] == page_num and t[2]]
-    return " ".join(parts).strip()
+    """Text aller Text-Tags auf einer Seite (Lesereihenfolge = DFS-Reihenfolge).
+
+    Wird im Werkzeug als "Seitentext" ANGEZEIGT (Weg: CSV-Spalte 9 ->
+    pdf_processor page_text -> Frontend "Seitentext anzeigen", CSS
+    white-space:pre-wrap). Deshalb hier die zeilenweise, lesbare Formatierung
+    nach Karbe V1.05 (siehe _join_reading_order)."""
+    typed = [(t[0], t[2]) for t in tagarray if t[1] == page_num and t[2]]
+    return _join_reading_order(typed)
 
 
 def _chapter_context(tagidx):
     """Text des Abschnitts um den Figure-Tag: von der naechsten Ueberschrift
     OBERHALB bis zur naechsten Ueberschrift UNTERHALB (exklusive). Logik wie
-    in Karbe V1004 (dort ueber figurearray geloest)."""
+    in Karbe V1004 (dort ueber figurearray geloest).
+
+    BEWUSST weiterhin flacher " ".join (NICHT die zeilenweise V1.05-Formatierung):
+    Dieser Text wird NICHT angezeigt, sondern geht als enriched_context an die KI
+    (pdf_processor _ctx). Karbes V1.05 betrifft ausdruecklich nur die ANZEIGE des
+    Seiteninhalts. Eine Whitespace-Umstellung hier wuerde nur die Prompt-Bytes und
+    damit potenziell die Generierung veraendern, ohne sichtbaren Nutzen."""
     start = 0
     for a in range(tagidx, -1, -1):
         if tagarray[a][0] in _HEADING_TAGS:
