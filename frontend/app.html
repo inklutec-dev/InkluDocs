@@ -104,12 +104,12 @@
         main.innerHTML =
             '<section class="card" aria-labelledby="gateHeading" style="max-width:32rem;margin:1.5rem auto;">'
             + '<h1 id="gateHeading" class="section-title">Freigabe ansehen</h1>'
-            + '<p>Bitte bestaetigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen.</p>'
+            + '<p>Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen.</p>'
             + '<form id="gateForm" style="margin-top:1rem;">'
             + '<label for="gateEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">E-Mail-Adresse</label>'
             + '<input type="email" id="gateEmail" required autocomplete="email" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
             + '<p id="gateError" role="alert" style="color:var(--error,#c33);min-height:1.2em;margin:0.4rem 0;"></p>'
-            + '<button type="submit" class="btn btn-primary">Bestaetigen</button>'
+            + '<button type="submit" class="btn btn-primary">Bestätigen</button>'
             + '</form></section>';
         const form = document.getElementById('gateForm');
         form.addEventListener('submit', async (e) => {
@@ -123,7 +123,7 @@
                     credentials: 'same-origin', body: JSON.stringify({ email: email })
                 });
                 if (!r.ok) { errEl.textContent = 'Diese E-Mail-Adresse passt nicht zur Einladung.'; announce('E-Mail-Adresse passt nicht zur Einladung.'); return; }
-                announce('Bestaetigt. Die Freigabe wird geladen.');
+                announce('Bestätigt. Die Freigabe wird geladen.');
                 showProject(window.SHARE_TOKEN);
             } catch (err) {
                 errEl.textContent = 'Netzwerkfehler. Bitte erneut versuchen.';

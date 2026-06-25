@@ -1073,3 +1073,9 @@ input[type="file"] {
 .pw-toggle { display:flex; align-items:center; gap:0.4rem; margin-top:0.4rem; font-size:0.92rem; }
 .pw-toggle input[type="checkbox"] { width:auto; margin:0; }
 .pw-toggle label { margin:0; font-weight:normal; cursor:pointer; }
+
+
+/* Textareas erben Schrift wie die <input>-Felder (sonst Browser-Default = kleiner Monospace).
+   Karbe 25.06.: persoenliche Nachricht + Kommentar bei der Pruefung waren dadurch zu klein.
+   Felder mit eigener Groesse (.alt-text-field, inline rev_comment) behalten ihre. */
+textarea { font-family: inherit; font-size: 1rem; }
