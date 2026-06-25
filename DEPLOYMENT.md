@@ -64,3 +64,22 @@ sed -i s/inkludocs:v4-20260512/inkludocs:rollback-pre-v4-20260512-090603/ docker
 - DB-Snapshots: `/opt/inkludocs-backups/db/` (täglich 03:00)
 - Pre-Migration: `/opt/inkludocs-backups/pre-v4-migration/`
 - ENV-Backups: `.env.bak-*` neben den aktiven Files
+
+## Dritte Instanz: Demo (seit 13.06.2026)
+
+Neben Production und Staging laeuft eine Demo-Instanz als oeffentliche Kostprobe
+ohne Anmeldung. Sie ist vollstaendig isoliert: eigener Container `inkludocs-demo`
+auf `127.0.0.1:8003`, eigene Wegwerf-Datenbank (Volume `inkludocs_demo_data`),
+eigene Geheimnis-Datei `.env.demo` (chmod 600). Gesteuert ueber `DEMO_MODE=on`.
+
+- Compose-Datei: `docker-compose.demo.yml`
+- Env-File: `.env.demo` (generiert aus der laufenden Production-Instanz; nicht in Git)
+- Wrapper: `./compose-demo.sh up -d --build`
+- Oeffentliche Adresse nach Freischaltung: `https://demo.inkludocs.de` (noch nicht verbunden)
+
+Architektur, der DEMO_MODE-Schalter und die Limits sind in `DEMO.md` dokumentiert.
+
+Hinweis (13.06.2026): Im Repo lag bei Einrichtung KEINE `.env.prod` mehr — die
+laufende Production-Instanz traegt ihre Konfiguration im Container. `compose-prod.sh up`
+wuerde daher mangels `.env.prod` fehlschlagen, bis die Datei wiederhergestellt ist.
+(Separat zu pruefen, nicht Teil der Demo.)

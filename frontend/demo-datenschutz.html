@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs - Datenschutz</title>
+<!-- 15.06.2026: Rechtsseite IM Demo-Rahmen. Text per fetch aus der öffentlichen
+     /datenschutz-Route (Single Source); Hülle/Lader: demo-shell.js. -->
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+<link rel="stylesheet" href="/static/demo.css">
+</head>
+<body class="demo-body">
+<a href="#main" class="demo-skip">Zum Inhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1>Datenschutz</h1>
+      <p class="dash-sub">Inhalt aus <a href="/datenschutz">der öffentlichen Datenschutzerklärung</a> &ndash; eine Quelle, kein Doppeltext.</p>
+      <div id="legalContent" aria-busy="true" role="region" aria-label="Datenschutzerklärung">
+        <p class="dash-sub">Inhalt wird geladen &hellip;</p>
+      </div>
+    </main>
+    <footer class="dash-footer"></footer>
+  </div>
+</div>
+<p id="srStatus" class="demo-visually-hidden" role="status"></p>
+<script src="/static/demo-shell.js"></script>
+<script>DemoShell.loadLegalInline('/datenschutz', 'Datenschutzerklärung');</script>
+</body>
+</html>

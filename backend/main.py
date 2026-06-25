@@ -17,6 +17,8 @@ from email.mime.multipart import MIMEMultipart
 
 import httpx
 from bs4 import BeautifulSoup
+
+import demo as demo_mod  # Demo-Modus (oeffentliche Kostprobe ohne Anmeldung) — nur aktiv bei DEMO_MODE=on
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -172,6 +174,26 @@ async def lifespan(app: FastAPI):
             print("Default admin user created (fresh install)")
         except Exception:
             pass
+
+    # ── Demo-Modus: periodischer Aufraeumer fuer abgelaufene Sitzungen ──
+    # Laeuft NUR bei DEMO_MODE=on (eigene Demo-Instanz). Entfernt Wegwerf-Sitzungen
+    # (Nutzer + Projekte + Bilder + Dateien), die laenger als das gleitende TTL
+    # untaetig waren. In Production/Staging wird der Task gar nicht erst gestartet.
+    if demo_mod.demo_enabled():
+        demo_mod.ensure_demo_schema()  # Zaehler-Tabelle der Demo anlegen (idempotent)
+        async def _demo_cleanup_loop():
+            while True:
+                try:
+                    n = await asyncio.get_event_loop().run_in_executor(
+                        None, demo_mod.cleanup_expired_sessions, UPLOAD_DIR, RESULTS_DIR
+                    )
+                    if n:
+                        print(f"[demo] {n} abgelaufene Sitzung(en) aufgeraeumt")
+                except Exception as e:
+                    print(f"[demo] Aufraeum-Fehler: {e}")
+                await asyncio.sleep(600)  # alle 10 Minuten
+        asyncio.create_task(_demo_cleanup_loop())
+
     yield
 
 
@@ -1280,6 +1302,248 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
         "total_images": total,
         "project_type": "images",
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DEMO-MODUS — oeffentliche Kostprobe ohne Anmeldung (nur aktiv bei DEMO_MODE=on)
+# ─────────────────────────────────────────────────────────────────────────────
+# Diese Endpunkte sind funktional nur in der Demo-Instanz vorhanden (eigener
+# Container + eigene Wegwerf-DB, siehe DEMO.md). Bei DEMO_MODE=off liefert der
+# Gate-Check 404 — in Production/Staging sind sie damit unsichtbar/inert.
+# Sitzungs- und Aufraeum-Logik steckt im Modul demo.py; hier nur die HTTP-Schicht,
+# die bewusst die BESTEHENDEN Bausteine (_handle_image_upload, _process_project)
+# wiederverwendet — keine eigene Generierungslogik. Limits + Bot-Leitplanke: Schritt 3.
+
+def _require_demo():
+    """Schaltet die Demo-Endpunkte ab, wenn die Instanz nicht im Demo-Modus laeuft."""
+    if not demo_mod.demo_enabled():
+        raise HTTPException(status_code=404, detail="Not found")
+
+
+def _demo_user_ctx(user_id: int) -> dict:
+    """Minimaler Nutzer-Kontext fuer die wiederverwendeten Helfer (brauchen nur id + is_admin)."""
+    return {"id": user_id, "is_admin": False}
+
+
+@app.post("/api/demo/generate")
+async def demo_generate(request: Request, file: UploadFile = File(...)):
+    """Anonymer Einzelbild-Upload fuer die Demo. Legt bei Bedarf eine fluechtige
+    Demo-Sitzung an (signiertes Cookie), speichert das Bild, startet die normale
+    Generierungs-Pipeline im Hintergrund und gibt die Projekt-ID zurueck. Das
+    Ergebnis wird ueber GET /api/demo/result abgeholt (Polling). Limits: Schritt 3."""
+    _require_demo()
+    filename = file.filename or "upload"
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail="Bitte ein Bild hochladen (JPG, PNG, GIF, WebP …). PDFs gibt es im vollen Werkzeug nach Anmeldung.",
+        )
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail=f"Datei zu gross. Maximum: {MAX_UPLOAD_SIZE // (1024*1024)} MB")
+
+    # Limit pruefen (server-seitig, VOR jeder teuren Generierung — nie vom Bot)
+    chk = demo_mod.check_generation(request)
+    if not chk["allowed"]:
+        if chk["global_reached"]:
+            raise HTTPException(status_code=429, detail=(
+                "Die Demo ist heute stark gefragt — das Tageskontingent ist erreicht. "
+                "Bitte morgen wieder probieren oder gleich kostenlos registrieren."))
+        raise HTTPException(status_code=429, detail=(
+            f"Deine {demo_mod.daily_image_limit()} kostenlosen Analysen für heute sind aufgebraucht. "
+            "Für unbegrenzte Bilder, ganze PDFs und den fertig getaggten Export: kostenlos registrieren."))
+
+    # Sitzung aus Cookie ableiten oder neu anlegen
+    uid = demo_mod.resolve_session_user_id(request.cookies.get(demo_mod.DEMO_COOKIE_NAME))
+    set_cookie = uid is None
+    if uid is None:
+        uid = demo_mod.create_demo_user(create_user)
+
+    # Datei speichern (eigener Sitzungs-Ordner) — wie im normalen Upload-Pfad
+    user_dir = os.path.join(UPLOAD_DIR, str(uid))
+    os.makedirs(user_dir, exist_ok=True)
+    safe_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.path.basename(filename)}"
+    file_path = os.path.join(user_dir, safe_name)
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    # BESTEHENDEN Bild-Upload-Handler wiederverwenden (legt Grafik-Projekt + Bild an)
+    result = await _handle_image_upload(file_path, filename, _demo_user_ctx(uid), content, ext, None)
+    project_id = result["project_id"]
+
+    # Generierung wie im normalen Pfad starten (Hintergrund) — Frontend pollt /result
+    conn = get_db()
+    conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
+    conn.commit()
+    conn.close()
+    asyncio.create_task(_process_project(project_id, uid))
+    demo_mod.record_generation(request)  # Zaehler erst nach dem Start hochziehen
+
+    # Secure-Flag korrekt hinter dem Proxy: https in Produktion (Nginx setzt
+    # X-Forwarded-Proto), http beim lokalen Dunkel-Tunnel — sonst hielte die
+    # Sitzung im Browser ueber den Tunnel nicht.
+    is_https = (request.headers.get("x-forwarded-proto", "").lower() == "https"
+                or request.url.scheme == "https")
+    resp = JSONResponse({"ok": True, "project_id": project_id})
+    if set_cookie:
+        resp.set_cookie(
+            demo_mod.DEMO_COOKIE_NAME, demo_mod.cookie_for(uid),
+            max_age=demo_mod.session_ttl_seconds(), httponly=True, samesite="lax", secure=is_https,
+        )
+    return resp
+
+
+@app.get("/api/demo/result")
+async def demo_result(request: Request):
+    """Status + Ergebnis der aktuellen Demo-Sitzung (Ziel des Frontend-Pollings)."""
+    _require_demo()
+    uid = demo_mod.resolve_session_user_id(request.cookies.get(demo_mod.DEMO_COOKIE_NAME))
+    if uid is None:
+        raise HTTPException(status_code=404, detail="Keine aktive Demo-Sitzung.")
+    demo_mod.touch_session(uid)  # gleitendes TTL: Aktivitaet markieren
+    conn = get_db()
+    proj = conn.execute(
+        "SELECT * FROM projects WHERE user_id = ? ORDER BY id DESC LIMIT 1", (uid,)
+    ).fetchone()
+    if not proj:
+        conn.close()
+        return {"ok": True, "status": "leer", "image": None, "limits": demo_mod.remaining_for(request)}
+    img = conn.execute(
+        "SELECT * FROM images WHERE project_id = ? ORDER BY id DESC LIMIT 1", (proj["id"],)
+    ).fetchone()
+    conn.close()
+    image = None
+    if img:
+        image = {
+            "id": img["id"],
+            "status": img["status"],
+            "alt_text": _display_alt_text(img),
+            "langbeschreibung": img["langbeschreibung"] or "",
+            "image_type": img["image_type"] or "",
+            "konfidenz": img["konfidenz"] or "",
+            "width": img["width"],
+            "height": img["height"],
+        }
+    return {"ok": True, "status": proj["status"], "project_id": proj["id"], "image": image,
+            "limits": demo_mod.remaining_for(request)}
+
+
+@app.delete("/api/demo/session")
+async def demo_delete_session(request: Request):
+    """Manuelles „Loeschen" durch den Besucher: aktuelle Inhalte sofort weg,
+    die Sitzung selbst bleibt bestehen (er kann erneut testen)."""
+    _require_demo()
+    uid = demo_mod.resolve_session_user_id(request.cookies.get(demo_mod.DEMO_COOKIE_NAME))
+    if uid is not None:
+        demo_mod.delete_session_content(uid, UPLOAD_DIR, RESULTS_DIR)
+    return {"ok": True}
+
+
+@app.post("/api/demo/chat")
+async def demo_chat(request: Request):
+    """Anonymer Chat fuer die Demo — derselbe InkluAgent, arbeitet auf dem Bild der
+    aktuellen Sitzung. Zwei Demo-Besonderheiten: ein server-seitiges Tageslimit
+    (vor dem Modell-Aufruf geprueft) und die thematische Leitplanke, die NUR hier
+    an den bestehenden System-Prompt angehaengt wird (siehe demo.DEMO_GUARDRAIL)."""
+    _require_demo()
+    uid = demo_mod.resolve_session_user_id(request.cookies.get(demo_mod.DEMO_COOKIE_NAME))
+    if uid is None:
+        raise HTTPException(status_code=404, detail="Keine aktive Demo-Sitzung.")
+    data = await request.json()
+    message = (data.get("message") or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
+    if len(message) > 2000:
+        raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 2000 Zeichen)")
+
+    chk = demo_mod.check_chat(request)
+    if not chk["allowed"]:
+        raise HTTPException(status_code=429, detail=(
+            f"Du hast die {demo_mod.daily_chat_limit()} kostenlosen Chat-Nachrichten für heute genutzt. "
+            "Für unbegrenztes Verfeinern: kostenlos registrieren."))
+
+    conn = get_db()
+    proj = conn.execute(
+        "SELECT id FROM projects WHERE user_id = ? ORDER BY id DESC LIMIT 1", (uid,)
+    ).fetchone()
+    conn.close()
+    if not proj:
+        raise HTTPException(status_code=400, detail="Bitte zuerst ein Bild hochladen, dann hilft der Assistent.")
+    project_id = proj["id"]
+    demo_mod.touch_session(uid)  # gleitendes TTL
+
+    from inkluagent import storage
+    from inkluagent.chat_engine import process_message
+    storage.append_message(project_id, "user", message)
+    # WICHTIG: system_suffix haengt die Demo-Leitplanke an — der Standard-Prompt
+    # des Agenten bleibt unveraendert (Default None im normalen, eingeloggten Pfad).
+    result = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: process_message(project_id, message, uid, system_suffix=demo_mod.DEMO_GUARDRAIL)
+    )
+    storage.append_message(
+        project_id, "assistant", result["reply"],
+        image_refs=result.get("image_refs"), intent=result.get("intent"),
+    )
+    demo_mod.record_chat(request)
+    return {
+        "reply": result["reply"],
+        "image_refs": result.get("image_refs"),
+        "limits": demo_mod.remaining_for(request),
+    }
+
+
+@app.get("/api/demo/limits")
+async def demo_limits(request: Request):
+    """Aktuelle Rest-Kontingente des Besuchers — auch ohne Sitzung abrufbar
+    (fuer die Anzeige 'noch X von 3' beim Laden der Seite)."""
+    _require_demo()
+    return {"ok": True, "limits": demo_mod.remaining_for(request)}
+
+
+@app.get("/api/demo/image")
+async def demo_image(request: Request):
+    """Liefert die Bilddatei der aktuellen Demo-Sitzung (anonym, sitzungs-bezogen)
+    — fuer die Wiederherstellung der Vorschau beim Neuladen der Seite."""
+    _require_demo()
+    uid = demo_mod.resolve_session_user_id(request.cookies.get(demo_mod.DEMO_COOKIE_NAME))
+    if uid is None:
+        raise HTTPException(status_code=404, detail="Keine aktive Demo-Sitzung.")
+    conn = get_db()
+    row = conn.execute(
+        "SELECT i.image_path FROM images i JOIN projects p ON i.project_id = p.id "
+        "WHERE p.user_id = ? ORDER BY i.id DESC LIMIT 1", (uid,)
+    ).fetchone()
+    conn.close()
+    if not row or not os.path.exists(row["image_path"]):
+        raise HTTPException(status_code=404, detail="Kein Bild vorhanden.")
+    return FileResponse(row["image_path"])
+
+
+@app.post("/api/demo/save")
+async def demo_save(request: Request):
+    """Manuelle Aenderungen an Alt-Text/Langbeschreibung speichern (damit der
+    Chatbot sie sieht und ein Neuladen sie zeigt). Arbeitet auf dem Bild der Sitzung."""
+    _require_demo()
+    uid = demo_mod.resolve_session_user_id(request.cookies.get(demo_mod.DEMO_COOKIE_NAME))
+    if uid is None:
+        raise HTTPException(status_code=404, detail="Keine aktive Demo-Sitzung.")
+    data = await request.json()
+    alt = (data.get("alt_text") or "").strip()
+    lang = (data.get("langbeschreibung") or "").strip()
+    conn = get_db()
+    row = conn.execute(
+        "SELECT i.id FROM images i JOIN projects p ON i.project_id = p.id "
+        "WHERE p.user_id = ? ORDER BY i.id DESC LIMIT 1", (uid,)
+    ).fetchone()
+    if row:
+        conn.execute("UPDATE images SET alt_text_edited = ?, langbeschreibung = ? WHERE id = ?",
+                     (alt, lang, row["id"]))
+        # gleitendes TTL: Aktivitaet markieren (gleiche Verbindung, kein zweiter Connect)
+        conn.execute("UPDATE projects SET updated_at = datetime('now') WHERE user_id = ?", (uid,))
+        conn.commit()
+    conn.close()
+    return {"ok": True}
 
 
 # ─── URL Scanner ─────────────────────────────────────────────
@@ -3457,6 +3721,9 @@ async def mark_news_seen(user: dict = Depends(get_current_user)):
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    # Demo-Instanz: die Wurzel IST die oeffentliche Demo-Seite (statt Login/Dashboard).
+    if demo_mod.demo_enabled():
+        return FileResponse("/app/frontend/demo.html")
     lang = detect_language(request)
     registration_enabled = os.getenv("REGISTRATION_ENABLED", "true").lower() not in ("false", "0", "no")
     is_staging = "staging" in BASE_URL
@@ -3468,6 +3735,31 @@ async def index(request: Request):
             is_staging=is_staging,
         ),
     )
+
+
+# 15.06.2026: Rechtsseiten der Demo IM Demo-Rahmen (Sidebar + Footer wie das
+# Werkzeug). Bewusst eigene, NICHT login-geschuetzte Routen — die -app-Varianten
+# des Werkzeugs setzen ein Login voraus und leiten anonyme Besucher zur Wurzel um.
+# Der Rechtstext selbst kommt per fetch aus den oeffentlichen Routen (Single Source).
+@app.get("/demo-impressum", response_class=HTMLResponse)
+async def demo_impressum_page():
+    if demo_mod.demo_enabled():
+        return FileResponse("/app/frontend/demo-impressum.html")
+    return RedirectResponse("/")
+
+
+@app.get("/demo-datenschutz", response_class=HTMLResponse)
+async def demo_datenschutz_page():
+    if demo_mod.demo_enabled():
+        return FileResponse("/app/frontend/demo-datenschutz.html")
+    return RedirectResponse("/")
+
+
+@app.get("/demo-nutzungsbedingungen", response_class=HTMLResponse)
+async def demo_nutzungsbedingungen_page():
+    if demo_mod.demo_enabled():
+        return FileResponse("/app/frontend/demo-nutzungsbedingungen.html")
+    return RedirectResponse("/")
 
 
 @app.get("/set-language/{lang}")

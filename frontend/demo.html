@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs – kostenlos testen</title>
+<!-- Wiederverwendung der echten Werkzeug-Optik (Markenfarben, Maske) + schlanker Demo-Rahmen -->
+<link rel="stylesheet" href="/static/style.css">
+<!-- 15.06.2026: Dashboard-Layout (Sidebar + Inhaltsbereich) für einen
+     einheitlichen Auftritt mit dem eingeloggten Werkzeug. demo.css danach,
+     damit Demo-spezifische Regeln bei Bedarf nachschärfen können. -->
+<link rel="stylesheet" href="/static/dashboard.css">
+<link rel="stylesheet" href="/static/demo.css">
+</head>
+<body class="demo-body">
+<a class="demo-skip" href="#main">Zum Inhalt springen</a>
+
+<!-- 15.06.2026: Dashboard-Shell (Sidebar links, Inhalt rechts) — identisch zum
+     eingeloggten Werkzeug. Sidebar UND Fußzeile rendert demo-shell.js (Single
+     Source, von Startseite und Rechtsseiten geteilt). Die Demo ist anonym:
+     keine Projekte/Einstellungen/Abmelden, dafür „Anmelden oder registrieren";
+     Rechts-Links stehen in der Fußzeile, „Datensicherheit" in der Sidebar. -->
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <section class="demo-intro">
+    <h1>InkluDocs kostenlos testen</h1>
+    <p class="demo-lead">Lade ein Bild hoch und erhalte in Sekunden einen barrierefreien Alternativtext
+      und eine Langbeschreibung – ganz ohne Anmeldung.</p>
+    <p class="demo-privacy">Dein Bild wird nur für deine Sitzung gespeichert, nicht dauerhaft, und
+      spätestens nach einer Stunde automatisch gelöscht. Mit „Löschen" entfernst du es sofort.</p>
+    <p class="demo-quota" id="quota" aria-live="polite"></p>
+  </section>
+
+  <!-- Statuszeile fuer Screenreader. role="status" ist hier noetig (kein natives
+       Live-Region-Element) und impliziert bereits aria-live="polite". -->
+  <p id="srStatus" class="demo-visually-hidden" role="status"></p>
+
+  <!-- Upload -->
+  <section id="uploadSection" class="card demo-card">
+    <h2>Bild auswählen</h2>
+    <div id="dropzone" class="demo-dropzone">
+      <label for="fileInput" class="demo-upload-label">Bild hierher ziehen oder auswählen</label>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp" class="demo-file-input">
+      <p class="demo-hint">JPG, PNG, GIF oder WebP. PDFs gibt es im vollen Werkzeug nach Anmeldung.</p>
+    </div>
+  </section>
+
+  <!-- Ergebnis-Maske — gestapelt wie im eingeloggten Werkzeug:
+       Abzeichen, dann Bild, dann Alt-Text-Feld, dann Langbeschreibung. -->
+  <section id="resultSection" class="card demo-card" hidden>
+    <h2>Ergebnis</h2>
+
+    <p id="badges" class="demo-badges"></p>
+
+    <figure class="demo-figure">
+      <img id="resultImage" alt="" class="demo-result-image">
+    </figure>
+
+    <!-- Generieren-Steuerung — bewusst identisch zum eingeloggten Werkzeug
+         (vgl. die regen-area in app.html): nativer Button plus sichtbarer
+         Status-Text. role="status" macht den Status auch fuer Screenreader
+         hoerbar (impliziert aria-live="polite"). Der Bereich ist sichtbar,
+         sobald ein Bild gewaehlt ist, und wird nach erfolgreicher Analyse
+         ausgeblendet (Layout + hidden-Regel siehe demo.css). -->
+    <div id="generateArea" class="demo-generate-area" hidden>
+      <button type="button" id="generateBtn" class="btn btn-primary">Alternativtext generieren</button>
+      <span id="genStatus" class="demo-gen-status" role="status"></span>
+    </div>
+
+    <!-- Ergebnis-Inhalte: erst nach erfolgreicher Analyse sichtbar. -->
+    <div id="resultBody" hidden>
+    <label for="altField">Alternativtext</label>
+    <textarea id="altField" class="alt-text-field" rows="3"></textarea>
+    <button type="button" class="btn btn-secondary btn-small" data-copy="altField" data-copy-label="Alternativtext">Alternativtext kopieren</button>
+
+    <div id="langWrap">
+      <label for="langField">Langbeschreibung</label>
+      <textarea id="langField" class="alt-text-field demo-langfield" rows="6"></textarea>
+      <button type="button" class="btn btn-secondary btn-small" data-copy="langField" data-copy-label="Langbeschreibung">Langbeschreibung kopieren</button>
+    </div>
+
+    <!-- Chatbot zum Verfeinern (derselbe InkluAgent). Kopfbalken in Navy wie im Werkzeug. -->
+    <section class="demo-chat">
+      <h3 class="demo-chat-header">Mit dem Assistenten verfeinern</h3>
+      <p class="demo-hint">Bitte zum Beispiel „mach den Text kürzer" oder stelle Fragen zu Barrierefreiheit (BITV/WCAG).</p>
+      <!-- role="log" ist hier noetig (kein natives Element) und impliziert aria-live="polite". -->
+      <div id="chatLog" class="demo-chatlog" role="log" aria-label="Chat-Verlauf"></div>
+      <form id="chatForm" class="demo-chat-form">
+        <label for="chatInput" class="demo-visually-hidden">Nachricht an den Assistenten</label>
+        <input type="text" id="chatInput" maxlength="2000" autocomplete="off"
+               placeholder="Nachricht an den Assistenten …">
+        <button type="submit" class="btn btn-primary">Senden</button>
+      </form>
+    </section>
+
+    <!-- Anmelde-Aufforderung direkt unter dem Ergebnis -->
+    <div class="demo-cta">
+      <p>Gefällt dir das Ergebnis? Für ganze Dokumente und den fertig getaggten Export geht es mit einem Konto weiter.</p>
+      <a class="btn btn-primary" href="https://inkludocs.de/">Anmelden oder registrieren</a>
+    </div>
+    </div><!-- /resultBody -->
+
+    <button type="button" id="deleteBtn" class="btn btn-secondary btn-small demo-delete">Bild und Ergebnis löschen</button>
+  </section>
+
+  <!-- Kontingent aufgebraucht / Anmelde-Aufforderung -->
+  <section id="upsellSection" class="card demo-card demo-upsell" hidden>
+    <h2>Mehr braucht ein Konto</h2>
+    <p id="upsellText"></p>
+    <a class="btn btn-primary" href="https://inkludocs.de/">Anmelden oder registrieren</a>
+  </section>
+    </main>
+    <!-- Fußzeile rendert demo-shell.js (gleiche Quelle wie die Rechtsseiten). -->
+    <footer class="dash-footer"></footer>
+  </div><!-- /app-content -->
+</div><!-- /app-shell -->
+
+<!-- Barrierefreier Bestaetigungsdialog vor dem Loeschen. Gleiches Muster wie im
+     Werkzeug: natives <dialog> + showModal() liefert Fokusfalle, Escape und
+     Modal-Semantik vom Browser — daher bewusst ohne role/aria-modal. Steht
+     ausserhalb der App-Shell, damit das Modal die gesamte Seite überlagert. -->
+<dialog id="deleteConfirmDialog" class="app-dialog">
+  <h2>Bild und Ergebnis löschen?</h2>
+  <p>Möchtest du das Bild und das Ergebnis wirklich löschen? Das lässt sich nicht rückgängig machen.</p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="deleteCancel">Abbrechen</button>
+    <button type="button" class="btn btn-danger" id="deleteConfirm">Löschen</button>
+  </div>
+</dialog>
+
+<!-- Gemeinsame Hülle (Sidebar + Fußzeile) zuerst, dann die Demo-Logik. -->
+<script src="/static/demo-shell.js"></script>
+<script src="/static/demo.js"></script>
+</body>
+</html>
