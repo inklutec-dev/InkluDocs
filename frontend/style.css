@@ -1068,3 +1068,8 @@ input[type="file"] {
 /* Gast-Pruefstatus: aktiver Status-Knopf gefuellt (aria-pressed). Weiss auf #c75000 = 4.59:1 (AA). */
 .guest-review .btn[aria-pressed="true"] { background:#c75000; border-color:#c75000; color:#fff; }
 .guest-review .btn[aria-pressed="true"]:hover:not(:disabled) { border-color:#c75000; }
+
+/* Passwort-anzeigen-Checkbox (pwtoggle.js) */
+.pw-toggle { display:flex; align-items:center; gap:0.4rem; margin-top:0.4rem; font-size:0.92rem; }
+.pw-toggle input[type="checkbox"] { width:auto; margin:0; }
+.pw-toggle label { margin:0; font-weight:normal; cursor:pointer; }
