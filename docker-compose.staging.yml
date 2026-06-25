@@ -1,3 +1,10 @@
+# Eigener Compose-Projektname, damit Staging NICHT mit Production kollidiert.
+# Vorher leiteten beide Compose-Dateien (gleiches Verzeichnis, kein name:) den
+# Default "inkludocs" ab -> Prod-Container erschien als "orphan" bei Staging-
+# Befehlen; ein versehentliches --remove-orphans haette Production geloescht.
+# Production bleibt unveraendert beim Default "inkludocs".
+name: inkludocs-staging
+
 services:
   inkludocs-staging:
     build: .
@@ -63,6 +70,12 @@ services:
 
 volumes:
   inkludocs_staging_data:
+    # Bestehendes Volume aus der Zeit vor der Projekt-Umbenennung weiternutzen.
+    # external: true = Compose referenziert es nur (legt es nicht neu an und
+    # loescht es nie), daher kein neues leeres Volume und keine Projekt-Label-
+    # Warnung. Der reale Volume-Name bleibt inkludocs_inkludocs_staging_data.
+    external: true
+    name: inkludocs_inkludocs_staging_data
 
 networks:
   inklucut_default:
