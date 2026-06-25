@@ -3673,6 +3673,10 @@ def _append_link_reference(alt_text: str, context_text: str) -> str:
 
 NEUIGKEITEN = [
     # Neueste zuerst. Nur Eintraege, die fuer Nutzer relevant + auf Production live sind.
+    {"datum": "25.06.2026", "text": "Passwort anzeigen: Bei Anmeldung, Registrierung und Passwort-Änderung kannst du dein Passwort jetzt per Häkchen sichtbar machen."},
+    {"datum": "22.06.2026", "text": "Gastzugang: Du kannst ein Projekt mit einer Person ohne Konto teilen – sie kann deine Alt-Texte ansehen, kommentieren und freigeben."},
+    {"datum": "19.06.2026", "text": "Seitentext übersichtlicher dargestellt; Alt-Texte und Beschreibungen lassen sich jetzt anhören."},
+    {"datum": "10.06.2026", "text": "Mehrere PDFs in einem Projekt sammeln, einzeln umbenennen und löschen."},
     {"datum": "04.06.2026", "text": "Neu: Alt-Texte für ganze Webseiten. Adresse eingeben, die Bilder der Seite werden geladen – auch mehrere Seiten nacheinander."},
     {"datum": "02.06.2026", "text": "Neues Dashboard mit fester Seitenleiste: eine übersichtliche Startseite, von der aus du alles erreichst."},
     {"datum": "02.06.2026", "text": "Getrennte Werkzeuge für PDFs, Webseiten und Grafiken – du legst ein Projekt an und wählst das passende Werkzeug."},
