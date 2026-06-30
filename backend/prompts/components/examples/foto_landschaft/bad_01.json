@@ -1,0 +1,11 @@
+{
+  "szene": "Bergpanorama: mehrere hohe, teils schneebedeckte Gipfel, im Tal ein Nadelwald und ein schmaler See. Klarer Himmel. Kein Orts- oder Gipfelschild, keine Bildunterschrift, kein Kontext.",
+  "alt_text": "Eine malerische, idyllische Berglandschaft in den Schweizer Alpen im Frühling; im Vordergrund glitzert ein einsamer Bergsee, der zur Ruhe einlädt.",
+  "fehler": [
+    "'in den Schweizer Alpen' rät eine konkrete Region/Land, die weder durch Schild noch Kontext belegt ist (Halluzination eines Orts).",
+    "'im Frühling' erfindet eine Jahreszeit — schneebedeckte Gipfel und Nadelwald belegen keine Jahreszeit.",
+    "'malerische, idyllische' und 'der zur Ruhe einlädt' sind Stimmungs-/Wertungsfloskeln ohne Beleg im Satz.",
+    "'glitzert' und 'einsamer' deuten ohne sichtbaren Beleg; führt nicht klar mit der Landschaftsart, sondern mit Stimmung."
+  ],
+  "besser": "Mit der Landschaftsart und den belegten Elementen führen ('Bergpanorama mit mehreren hohen, teils schneebedeckten Gipfeln, im Tal ein Nadelwald und ein schmaler See'). Keine Region, kein Land und keine Jahreszeit erfinden; eine Atmosphäre-Aussage nur mit konkretem sichtbarem Beleg im selben Satz."
+}

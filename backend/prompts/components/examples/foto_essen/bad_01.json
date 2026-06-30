@@ -1,0 +1,12 @@
+{
+  "szene": "Derselbe weiße Teller mit gebratenem Lachs, grünem Spargel, Zitronenspalte und einer hellen Soße auf einem Holztisch.",
+  "alt_text": "Ein köstliches, appetitlich angerichtetes Lachsfilet, mit frischen Kräutern garniert und von einer hausgemachten Zitronen-Butter-Sauce umgeben — ein Klassiker der mediterranen Küche.",
+  "fehler": [
+    "'köstliches' und 'appetitlich' sind Geschmacks- und Wertungsadjektive ohne visuelle Evidenz (verboten).",
+    "'mit frischen Kräutern garniert' erfindet eine Zutat, die nicht sichtbar belegt ist (Halluzination).",
+    "'hausgemachte Zitronen-Butter-Sauce' erfindet die Rezeptur und Zubereitung der Soße — sichtbar ist nur eine helle Soße.",
+    "'ein Klassiker der mediterranen Küche' erfindet eine Herkunft/Einordnung ohne Kontext-Beleg.",
+    "Nennt weder Spargel noch Servierform und führt nicht klar mit dem Gericht — Wertung verdrängt die Beobachtung."
+  ],
+  "besser": "Mit dem Gericht und der Servierform führen ('gebratenes Lachsfilet auf einem weißen Teller'), nur klar Erkennbares benennen (Lachs, Spargel, Zitrone), die Soße neutral als 'helle Soße' beschreiben, keine Garnierung und keine Herkunft erfinden, keine Geschmackswertung."
+}

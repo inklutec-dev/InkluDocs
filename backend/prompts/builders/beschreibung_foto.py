@@ -811,81 +811,180 @@ def build_beschreibung_prompt_foto_essen(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Speisen, Getränke, Tisch-Anrichtungen, Catering.
+    """Premium-Builder fuer foto_essen — Mistral-Altlast abgespeckt 30.06.2026.
 
-    ATMOSPHAERE_REGEL gilt EINGESCHRÄNKT — Geschmacks-Adjektive
-    ('lecker'/'köstlich') sind subjektive Wertungen ohne visuelle Evidenz
-    und damit verboten. Visuell belegbare Eigenschaften ('knusprige Kruste',
-    'cremige Soße' wenn die Cremigkeit sichtbar ist) sind ok.
+    Vorher Standard-Stand aus der Mistral-Zeit: ROLE_BESCHREIBER im String,
+    starre INSIGHT-FIRST-MUSS-Liste, nummerierte VOLLSTAENDIGKEITS-PFLICHT und
+    widerspruechliche Zeichen-Caps (250/800 vs. Schema 400/2000). Auf das
+    Premium-Muster von foto_objekte gehoben: self-contained, ANTI_HALLUZINATION
+    als geteilte Schicht voran, inline ZIEL/AUSGABE-SCHEMA, Few-Shot. Kategorie-
+    spezifisch behalten: Geschmacks-Adjektiv-Bann (subjektive Wertung ohne
+    visuelle Evidenz) und die Zutaten-Evidenzregel (keine erfundenen Zutaten).
+    Reversibel: Backup .bak-pre-fotofamilie-20260630.
     """
-    schema_doc = render_schema_for_prompt(BeschreibungOutput)
     examples = load_examples('foto_essen')
+    inventar_json = inventar.model_dump_json(indent=2)
+    user_hint_text = user_hint_block(user_hint)
+    halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
+    halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ROLE_BESCHREIBER}
+    return f"""{ANTI_HALLUZINATION_REGELN}
 
-{ANTI_HALLUZINATION_REGELN}
+BILDTYP: foto_essen
+BILDGROESSE: {width}x{height} Pixel
 
-# ATMOSPHAERE_REGEL gilt für foto_essen EINGESCHRÄNKT — die
-# klassischen Geschmacks-Adjektive ('lecker', 'köstlich') sind
-# subjektive Wertungen ohne visuelle Evidenz und damit verboten.
-# Aber: visuell belegbare Eigenschaften sind ok ('knusprige
-# Kruste', 'cremige Soße' wenn die Cremigkeit sichtbar ist).
+ZIEL
 
-BILDTYP: foto_essen (Speisen, Getränke, Tisch-Anrichtungen, Catering)
-BILDGRÖSSE: {width}x{height} Pixel
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung fuer
+ein Foto, auf dem Speisen, Gerichte, Getraenke, Tisch-Anrichtungen oder Catering
+im Mittelpunkt stehen. Ziel ist dichte, faktenbasierte Wissensvermittlung —
+praezise und auf den Punkt, beobachtend statt wertend.
 
-INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
-{inventar.model_dump_json(indent=2)}
+Fuehre mit der Art des Gerichts oder der Speise. Benenne sichtbare Komponenten
+und Zutaten selbstbewusst, WENN sie klar erkennbar sind (z.B. "gebratener Lachs
+mit gruenem Spargel", "Cappuccino mit Milchschaum-Muster"). Was nicht klar
+erkennbar ist, beschreibst du neutral nach Aussehen (z.B. "helle Soße"), statt
+es zu raten. Du erfindest keine nicht sichtbaren Zutaten, keine Zubereitung und
+keine Rezeptur.
 
-KONTEXT:
-{enriched_context}
-{user_hint_block(user_hint)}
+Bei Produkten/Lebensmitteln aus einem Shop: nenne Marke/Hersteller, wenn sie auf
+Verpackung oder Etikett sichtbar oder das Produkt eindeutig erkennbar ist. Farben
+sind oft wichtig — nenne sie. Halte den Text KOMPAKT; nicht jedes Detail
+ausschreiben.
 
-INSIGHT-FIRST FÜR foto_essen:
-Der erste Satz MUSS:
-- Speise / Gericht / Getränk konkret benennen wenn aus visuellem
-  Inventar oder Kontext erkennbar
-- Servierform (Teller, Schüssel, Tasse, Buffet, Catering-Tisch)
-- Maximal 250 Zeichen
 
-ZUTATEN — visuell belegt, nicht geraten:
-- Wenn Inventar Zutaten klar listet (z.B. erkennbare Tomatenscheiben,
-  Käse, Fleisch): in Output übernehmen
-- Wenn Inventar unsicher: ehrliche Unsicherheit ('vermutlich Hühnchen')
-- VERBOTEN: Zutaten erfinden die nicht im Inventar sind ('mit frischen
-  Kräutern garniert' wenn keine Kräuter sichtbar)
+INVENTAR (Pass-2-Beobachtungen)
 
-VOLLSTÄNDIGKEITS-PFLICHT FÜR LANG:
-1. Anrichtung und Geschirr (Material, Farbe wenn relevant)
-2. Erkennbare Beilagen oder Bestandteile
-3. Setting wenn relevant (Restaurant-Tisch, häuslich, Catering-
-   Buffet)
-4. Maximal 800 Zeichen
+Nutze diese strukturierten Beobachtungen als primaere faktische Grundlage.
+Sichtbare Bildinformationen duerfen ergaenzen, dem Inventar aber nicht
+widersprechen.
 
-VERBOTEN — Geschmacks-/Wertungs-Adjektive ohne Evidenz:
-- 'lecker', 'köstlich', 'delikat', 'verführerisch'
-- 'appetitlich' (Wertung)
-- 'frisch zubereitet' (nicht aus Bild ableitbar)
+{inventar_json}
 
-ERLAUBT — visuell belegbare Eigenschaften:
-- 'knusprige Kruste' wenn Bräunung sichtbar
-- 'cremige Konsistenz' wenn glänzend-weiche Oberfläche
-- 'frisch geschnitten' wenn klar erkennbare Schnittflächen
-- 'gedünstet/gebraten/gegrillt' wenn aus Erscheinungsbild ableitbar
 
-KULTUR-/HERKUNFTS-IDENTIFIKATION:
-- Nur wenn aus Beschriftung, Menükarte im Hintergrund oder Kontext
-  belegt
-- 'Italienische Pasta' nur wenn Kontext italienisch
-- 'Sushi' wenn klar erkennbar (Reisbasis + Belag/Rolle)
+HALLUZINATIONS-WARNUNGEN AUS DEM INVENTAR
+(falls vorhanden — beachten, nicht als Tatsache uebernehmen)
 
-FEW-SHOT BEISPIELE:
+{halluzinations_block}
+
+
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
+Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen.
+BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
+
+{enriched_context if enriched_context else '(kein Kontext)'}
+{user_hint_text}
+
+
+ALT-TEXT
+
+Der Alt-Text:
+- beginnt mit der konkretesten belegbaren Benennung des Gerichts/der Speise und
+  der Servierform (Teller, Schuessel, Tasse, Glas, Buffet, Catering-Tisch), nicht
+  mit einer generischen Einleitung
+- benennt die klar erkennbaren Hauptkomponenten und Zutaten selbstbewusst
+- macht die Anrichtung visuell nachvollziehbar
+- nennt Marke/Hersteller, wenn sichtbar oder eindeutig erkennbar
+- uebernimmt lesbaren Text (Menuekarte, Beschriftung) wenn relevant
+- ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze; das Zeichenlimit ist
+  Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
+
+VERMEIDEN: "Das Bild zeigt", "Auf dem Teller befindet sich", blosse
+Inventarlisten, vage Umschreibungen fuer klar Benennbares, sowie mikroskopische
+Details (Poren, Lentizellen, einzelne Maserungen) — die gehoeren nicht in einen
+kompakten Alt-Text.
+
+
+ZUTATEN — BENENNEN STATT VAGE, ABER NICHTS ERFINDEN
+
+Benenne sichtbare Komponenten und Zutaten, wenn Inventar oder klar erkennbares
+Aussehen sie belegen — z.B. Tomatenscheiben, geriebener Kaese, gruener Spargel,
+ein Spiegelei, eine Zitronenspalte. Weiche nur bei echter Unsicherheit auf eine
+rein visuelle Beschreibung aus ("helle Soße", "gruenes Blattgemuese", "eine
+cremige Komponente") — nicht aus Prinzip vage bleiben.
+
+NICHT erfinden:
+- Zutaten, die nicht sichtbar belegt sind (z.B. "mit frischen Kraeutern
+  garniert", wenn keine Kraeuter sichtbar sind)
+- Rezeptur oder Zubereitung einer Komponente, deren Zusammensetzung nicht
+  sichtbar ist (z.B. "hausgemachte Zitronen-Butter-Sauce" — sichtbar ist nur
+  eine helle Soße)
+
+
+GESCHMACK UND WERTUNG
+
+Geschmacks- und Wertungs-Adjektive sind ohne visuelle Evidenz VERBOTEN, weil
+subjektiv und aus dem Bild nicht ableitbar: "lecker", "koestlich", "delikat",
+"verfuehrerisch", "appetitlich", "frisch zubereitet".
+
+ERLAUBT sind visuell belegbare Eigenschaften:
+- "knusprige Kruste", wenn eine Braeunung sichtbar ist
+- "cremige Konsistenz", wenn eine glaenzend-weiche Oberflaeche sichtbar ist
+- "frisch geschnitten", wenn klare Schnittflaechen sichtbar sind
+- "gebraten", "gegrillt", "gedaempft", wenn aus dem Erscheinungsbild ableitbar
+
+
+HERKUNFT UND KULTUR
+
+Eine kulturelle oder geografische Einordnung ("italienische Pasta", "japanisches
+Sushi") nur, wenn sie durch Beschriftung, Menuekarte im Bild oder Kontext belegt
+ist — oder wenn das Gericht visuell zweifelsfrei einer Form entspricht (z.B.
+Sushi an Reisbasis und Rolle/Belag klar erkennbar). Erfinde keine Herkunft, kein
+Restaurant und keinen Anlass, die nicht belegt sind.
+
+
+LANGBESCHREIBUNG
+
+Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
+Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt" oder "Auf dem Teller".
+Sinnvolle Reihenfolge ohne sie als Ueberschriften zu setzen:
+Gericht (konkret benannt), sichtbare Hauptkomponenten und Beilagen, Anrichtung
+und Geschirr (Material/Farbe wenn relevant), Setting wenn relevant (Restaurant-
+Tisch, haeuslich, Catering-Buffet), sichtbare Texte. Vermittle Zusammenhaenge,
+zaehle nicht jede Kleinigkeit auf — keine Poren, keine einzelnen Maserungen;
+konzentriere dich auf das Wesentliche und halte es kompakt.
+
+
+ATMOSPHAERE
+
+Bei Speisefotos normalerweise KEINE Atmosphaere. Nur wenn Bildgestaltung und
+Kontext es eindeutig tragen, eine zurueckhaltende atmosphaerische Aussage — dann
+MUSS atmosphaere_belege mit wertung und beleg gesetzt werden. Geschmacks- und
+Genuss-Wertungen sind hier KEINE zulaessige Atmosphaere.
+
+
+AUSGABE-SCHEMA
+
+Fuelle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, praezise und konkret
+- langbeschreibung: maximal 2000 Zeichen, leer wenn der Alt-Text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS LEER SEIN. Steht dort etwas, ist es eine Halluzination.
+- atmosphaere_belege: bei foto_essen normalerweise leer
+
+
+FEW-SHOT BEISPIELE
 
 {examples.format_for_prompt()}
 
-{schema_doc}
-"""
+FINAL CHECK (vor der Ausgabe pruefen):
 
+1. Fuehrt der Text mit der Art des Gerichts/der Speise und der Servierform —
+   statt mit einer generischen Einleitung?
+2. Sind klar erkennbare Komponenten konkret benannt, Unklares neutral nach
+   Aussehen beschrieben (keine geratene Zutat)?
+3. Keine erfundene Zutat, Garnierung, Rezeptur oder Zubereitung?
+4. Kein Geschmacks-/Wertungsadjektiv ohne visuelle Evidenz?
+5. Keine erfundene Herkunft, kein erfundenes Restaurant, kein erfundener Anlass?
+6. nicht_im_inventar leer, und vorhandene halluzinations_warnung-Eintraege
+   beachtet?
+
+Wenn ein Punkt nicht erfuellt ist: Output neu formulieren.
+"""
 
 def build_beschreibung_prompt_foto_landschaft(
     inventar: InventarOutput,
@@ -893,65 +992,160 @@ def build_beschreibung_prompt_foto_landschaft(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Außenfoto: Natur, Stadt-Skyline, geografische Aufnahmen."""
-    schema_doc = render_schema_for_prompt(BeschreibungOutput)
+    """Premium-Builder fuer foto_landschaft — Mistral-Altlast abgespeckt 30.06.2026.
+
+    Vorher Standard-Stand: ROLE_BESCHREIBER + ATMOSPHAERE_REGEL vorangestellt,
+    starre 'INSIGHT-FIRST … MUSS'-Liste, nummerierte Bausteine-Pflicht und
+    widerspruechliche Zeichen-Caps (250/800 vs. Schema 400/2000). Auf das
+    Premium-Muster von foto_objekte gehoben: self-contained, ANTI_HALLUZINATION
+    als geteilte Schicht voran, inline ZIEL/AUSGABE-SCHEMA, Few-Shot. Kategorie-
+    spezifisch: keine erfundenen Ortsnamen/Regionen/Gipfel — ikonische
+    Sichtmotive (Eiffelturm, Brandenburger Tor) duerfen bei klarer Erkennbarkeit
+    benannt werden. Reversibel: Backup .bak-pre-fotofamilie-20260630.
+    """
     examples = load_examples('foto_landschaft')
+    inventar_json = inventar.model_dump_json(indent=2)
+    user_hint_text = user_hint_block(user_hint)
+    halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
+    halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ROLE_BESCHREIBER}
+    return f"""{ANTI_HALLUZINATION_REGELN}
 
-{ANTI_HALLUZINATION_REGELN}
+BILDTYP: foto_landschaft
+BILDGROESSE: {width}x{height} Pixel
 
-{ATMOSPHAERE_REGEL}
+ZIEL
 
-BILDTYP: foto_landschaft (Außenfoto: Natur, Stadt-Skyline,
-geografische Aufnahmen)
-BILDGRÖSSE: {width}x{height} Pixel
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung fuer
+ein Aussenfoto, auf dem eine Landschaft oder ein geografischer Raum im
+Mittelpunkt steht (Kueste, Gebirge, Wald, Feld, Fluss, Wueste, Stadtpanorama,
+Skyline). Ziel ist dichte, faktenbasierte Wissensvermittlung — praezise,
+beobachtend statt stimmungsmalend, und so KOMPAKT wie moeglich.
 
-INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
-{inventar.model_dump_json(indent=2)}
+Fuehre mit der Art der Landschaft und benenne ihre praegenden Merkmale so
+konkret, wie das Sichtbare und das Inventar sie hergeben (Relief, Gewaesser,
+Vegetation, Bebauung, Licht). Was lesbar ist (Orts- oder Wegschilder), wird
+uebernommen. Erfinde keinen Ortsnamen, keine Region, keinen Berg- oder
+Gewaessernamen und keine Jahreszeit, die nicht belegt sind.
 
-KONTEXT:
-{enriched_context}
-{user_hint_block(user_hint)}
 
-INSIGHT-FIRST FÜR foto_landschaft:
-Der erste Satz MUSS:
-- Geografische Charakteristik (Berge, Küste, Wald, Stadt-Skyline,
-  Wüste, Fluss etc.)
-- Ein konkretes Element (Wetter, Tageszeit, Jahreszeit wenn
-  ableitbar, dominante Farbe, charakteristisches Bauwerk)
-- Maximal 250 Zeichen
+INVENTAR (Pass-2-Beobachtungen)
 
-INHALTLICHE BAUSTEINE FÜR LANG:
-1. Topografie (Höhen, Talsenken, Ebenen, Wasser)
-2. Vegetation (Wald, Weide, kultivierte Flächen, Jahreszeit)
-3. Wetter und Lichtsituation (Sonnenschein, Bewölkung, Nebel,
-   Tageszeit)
-4. Menschliche Eingriffe (Gebäude, Wege, Felder) wenn vorhanden
-5. Maximal 800 Zeichen
+Nutze diese strukturierten Beobachtungen als primaere faktische Grundlage.
+Sichtbare Bildinformationen duerfen ergaenzen, dem Inventar aber nicht
+widersprechen.
 
-ORTSNAMEN — strenge Regel:
-- Wenn Schild oder Beschriftung sichtbar: wortgetreu übernehmen
-- Wenn Kontext den Ort eindeutig benennt (z.B. Bildunterschrift):
-  übernehmen
-- SONST: KEINE Ortsspekulation. 'Bergpanorama in den Alpen' geht
-  nur wenn Kontext es belegt — sonst 'Bergpanorama mit hohen Gipfeln'
-- Ikonische Sichtmotive (Eiffelturm, Brandenburger Tor): erlaubt
-  zu benennen wenn klar erkennbar
+{inventar_json}
 
-ATMOSPHÄRE (evidenzbasiert):
-Bei Landschaftsfotos häufig relevant — aber mit Beleg.
-RICHTIG: 'Die schweren Wolken und das diffuse Licht lassen
-den Strand verlassen wirken.'
-FALSCH: 'Eine melancholische Strandszene.'
 
-FEW-SHOT BEISPIELE:
+HALLUZINATIONS-WARNUNGEN AUS DEM INVENTAR
+(falls vorhanden — beachten, nicht als Tatsache uebernehmen)
+
+{halluzinations_block}
+
+
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
+Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen.
+BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
+
+{enriched_context if enriched_context else '(kein Kontext)'}
+{user_hint_text}
+
+
+ALT-TEXT
+
+Der Alt-Text:
+- beginnt mit der Art der Landschaft (Kueste, Gebirge, Wald, Feld, Skyline usw.)
+  und einem konkreten praegenden Merkmal (dominante Form, Gewaesser, Wetter/
+  Licht wenn klar erkennbar), nicht mit einer generischen Einleitung
+- benennt die belegten geografischen Hauptelemente und ihre Anordnung
+- macht den Raum und die Tiefe der Szene nachvollziehbar
+- uebernimmt lesbaren Text (Orts-/Wegschilder) wenn relevant
+- ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze; das Zeichenlimit ist
+  Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
+
+VERMEIDEN: "Das Bild zeigt", "Auf dem Bild", generische Einleitungen, blosse
+Inventarlisten, vage Umschreibungen fuer klar Benennbares.
+
+
+ORTE UND BENENNUNG — BENENNEN STATT RATEN
+
+Benenne die Landschaftsart und ihre Merkmale, wenn sie visuell belegt sind —
+Kuestenlinie, schneebedeckte Gipfel, dichter Nadelwald, terrassierte Felder,
+Hochhaus-Skyline. Beschreibe Wetter, Tageszeit oder Jahreszeit nur, wenn das
+Erscheinungsbild sie klar traegt (kahle Baeume, Schnee, langer Schattenwurf,
+warmes Abendlicht).
+
+NICHT erfinden — nur bei Schild- oder Kontext-Beleg nennen:
+- konkreter Ortsname, Region oder Land (kein geratenes "die Alpen", "Toskana")
+- Eigenname eines Berges, Sees, Flusses oder einer Stadt
+- eine Jahreszeit, die nicht sichtbar belegt ist
+
+Ikonische Sichtmotive mit eindeutiger Silhouette (Eiffelturm, Brandenburger Tor,
+Golden Gate Bridge) duerfen bei klarer Erkennbarkeit benannt werden. Bei echter
+Unsicherheit auf die reine sichtbare Beschreibung ausweichen ("Bergpanorama mit
+hohen, schneebedeckten Gipfeln" statt "die Alpen") — nicht raten, aber auch nicht
+aus Prinzip vage bleiben, wenn die Landschaftsart klar belegt ist.
+
+
+LANGBESCHREIBUNG
+
+Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
+Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt" oder "Auf dem Bild".
+Folge inhaltlich dieser Reihenfolge, ohne sie als
+Ueberschriften zu setzen: zuerst Landschaftsart und Gesamtraum (Vorder-, Mittel-,
+Hintergrund, Tiefe), dann Topografie (Hoehen, Senken, Ebenen, Gewaesser), dann
+Vegetation und Bodennutzung (Wald, Weide, Felder), dann Wetter und Licht
+(Bewoelkung, Nebel, Tageszeit), dann menschliche Eingriffe (Gebaeude, Wege,
+Bruecken) wenn vorhanden, zuletzt lesbare Beschriftungen und Kontext. Mache den
+Raum mental nachvollziehbar, statt jede Kleinigkeit aufzuzaehlen.
+
+
+ATMOSPHAERE
+
+Bei Landschaftsfotos ist eine atmosphaerische Aussage haeufig relevant — aber
+nur, wenn durch konkrete sichtbare Belege gestuetzt, die im selben Satz genannt
+werden. Bei jeder Atmosphaere-Wertung MUSS atmosphaere_belege mit wertung und
+beleg gesetzt werden.
+GUT (mit Beleg): "Die schweren Wolken und das diffuse Licht lassen den Strand
+verlassen wirken."
+SCHLECHT (ohne Beleg): "Eine melancholische Strandszene."
+
+
+AUSGABE-SCHEMA
+
+Fuelle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, praezise und konkret
+- langbeschreibung: maximal 2000 Zeichen, leer wenn der Alt-Text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS LEER SEIN. Steht dort etwas, ist es eine Halluzination.
+- atmosphaere_belege: nur bei belegter Atmosphaere, jede Wertung mit wertung und
+  beleg
+
+
+FEW-SHOT BEISPIELE
 
 {examples.format_for_prompt()}
 
-{schema_doc}
-"""
+FINAL CHECK (vor der Ausgabe pruefen):
 
+1. Fuehrt der Alt-Text mit der Art der Landschaft und einem konkreten Merkmal —
+   statt generischer Einleitung?
+2. Sind die geografischen Hauptelemente konkret benannt, Unklares neutral nach
+   Aussehen beschrieben?
+3. Kein erfundener Ortsname, keine erfundene Region, kein erfundener Berg-/
+   Gewaessername, keine unbelegte Jahreszeit?
+4. Ist jede Aussage durch Bild oder Inventar belegt (keine Halluzination)?
+5. Atmosphaere nur mit Beleg im selben Satz (atmosphaere_belege gesetzt)?
+6. nicht_im_inventar leer, und vorhandene halluzinations_warnung-Eintraege
+   beachtet?
+
+Wenn ein Punkt nicht erfuellt ist: Output neu formulieren.
+"""
 
 def build_beschreibung_prompt_foto_architektur(
     inventar: InventarOutput,
@@ -959,65 +1153,165 @@ def build_beschreibung_prompt_foto_architektur(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Gebäude, Innenraum, Brücke, Architektur-Detail."""
-    schema_doc = render_schema_for_prompt(BeschreibungOutput)
+    """Premium-Builder fuer foto_architektur — Mistral-Altlast abgespeckt 30.06.2026.
+
+    Vorher Standard-Stand: ROLE_BESCHREIBER + ATMOSPHAERE_REGEL +
+    KONTAKTDATEN_PFLICHT + EVIDENZ_STUFEN_REGELN vorangestellt, dazu ein harter
+    'drei Stufen'-Drill und 'INSIGHT-FIRST … MUSS'-Pflichtsaetze mit
+    widerspruechlichen Zeichen-Caps. Auf das Premium-Muster von foto_objekte
+    gehoben: self-contained, ANTI_HALLUZINATION als geteilte Schicht voran,
+    inline ZIEL/AUSGABE-SCHEMA, Few-Shot. Steve-Vorgabe 30.06.: bekannte
+    Wahrzeichen ausdruecklich BEIM NAMEN nennen (Modellwissen nutzen), bei
+    unbekannten Bauten die FUNKTION erschliessen (Reithalle, Lagerhalle) statt
+    nur 'ein Gebaeude' — kompakt halten. Reversibel: .bak-pre-fotofamilie-20260630.
+    """
     examples = load_examples('foto_architektur')
+    inventar_json = inventar.model_dump_json(indent=2)
+    user_hint_text = user_hint_block(user_hint)
+    halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
+    halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ROLE_BESCHREIBER}
+    return f"""{ANTI_HALLUZINATION_REGELN}
 
-{ANTI_HALLUZINATION_REGELN}
+BILDTYP: foto_architektur
+BILDGROESSE: {width}x{height} Pixel
 
-{ATMOSPHAERE_REGEL}
+ZIEL
 
-{KONTAKTDATEN_PFLICHT}
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung fuer
+ein Foto, auf dem ein Gebaeude, Bauwerk, Innenraum oder Architektur-Detail im
+Mittelpunkt steht (Wohnhaus, Buerogebaeude, Kirche, Bruecke, Hochhaus, Halle,
+Innenraum, Fassaden-Ausschnitt). Ziel ist dichte, faktenbasierte
+Wissensvermittlung — praezise, beobachtend, und so KOMPAKT wie moeglich.
 
-{EVIDENZ_STUFEN_REGELN}
+Fuehre mit dem Namen, wenn das Bauwerk ein bekanntes, eindeutig erkennbares
+Wahrzeichen ist — trau dich, dein Wissen ueber bekannte Architektur zu nutzen
+(z.B. Brandenburger Tor, Koelner Dom, Eiffelturm). Ist kein eindeutiges
+Wahrzeichen erkennbar, schliesse aus dem Sichtbaren auf Bautyp und FUNKTION
+(z.B. Reithalle, Lagerhalle, Bahnhofshalle, Buerogebaeude) — auch ohne Kontext.
+Erfinde nur keine FALSCHE konkrete Identitaet (keinen geratenen Namen fuer ein
+generisches Gebaeude), keinen erfundenen Architekten und kein erfundenes Baujahr.
 
-BILDTYP: foto_architektur (Gebäude, Innenraum, Brücke, Architektur-
-Detail)
-BILDGRÖSSE: {width}x{height} Pixel
 
-INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
-{inventar.model_dump_json(indent=2)}
+INVENTAR (Pass-2-Beobachtungen)
 
-KONTEXT:
-{enriched_context}
-{user_hint_block(user_hint)}
+Nutze diese strukturierten Beobachtungen als primaere faktische Grundlage.
+Sichtbare Bildinformationen duerfen ergaenzen, dem Inventar aber nicht
+widersprechen.
 
-INSIGHT-FIRST FÜR foto_architektur:
-Der erste Satz MUSS:
-- Bautyp (Wohngebäude, Bürogebäude, Kirche, Brücke, Innenraum-Typ)
-- Stilrichtung WENN klar erkennbar (modern, Bauhaus, Gotik etc.)
-  ODER zentrale visuelle Charakteristik (Glasfassade, Sandsteinmauer)
-- Maximal 250 Zeichen
+{inventar_json}
 
-GEBÄUDE-IDENTIFIKATION (drei Stufen wie EVIDENZ_STUFEN_REGELN):
-- Stufe 1: Schild oder Beschriftung lesbar → benennen
-- Stufe 2: Weltweit eindeutig + Kontext (z.B. Eiffelturm-Form,
-  Brandenburger-Tor-Säulen) → benennen
-- Stufe 3: Generisches Gebäude → allgemein beschreiben, NICHT raten
 
-LESBARE BESCHRIFTUNGEN PFLICHT:
-- Hausnummern, Schilder, Inschriften wortgetreu
-- Architekten-/Bauherren-Tafeln
-- Öffnungszeiten an Eingängen
-- KONTAKTDATEN_PFLICHT für Telefonnummern, URLs
+HALLUZINATIONS-WARNUNGEN AUS DEM INVENTAR
+(falls vorhanden — beachten, nicht als Tatsache uebernehmen)
 
-VOLLSTÄNDIGKEITS-PFLICHT FÜR LANG:
-1. Material und Bauweise wenn erkennbar (Beton, Holz, Stahl, Glas)
-2. Markante architektonische Elemente (Bögen, Säulen, Erker, Türme)
-3. Umgebung (Stadtkontext, Park, freistehend)
-4. Lichtsituation wenn relevant für die Beschreibung
-5. Maximal 1000 Zeichen
+{halluzinations_block}
 
-ATMOSPHÄRE (evidenzbasiert):
-Bei Architektur oft relevant für die Wirkung des Bauwerks.
-RICHTIG: 'Die hohen Glasfassaden und der weiße Innenraum lassen
-das Foyer großzügig wirken.'
 
-FEW-SHOT BEISPIELE:
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
+Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen.
+BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
+
+{enriched_context if enriched_context else '(kein Kontext)'}
+{user_hint_text}
+
+
+ALT-TEXT
+
+Der Alt-Text:
+- beginnt mit dem NAMEN, wenn es ein bekanntes Wahrzeichen ist; sonst mit dem
+  Bautyp bzw. der erschlossenen FUNKTION und der zentralen visuellen
+  Charakteristik (z.B. Glasfassade, Backsteinmauer, geschwungenes Dach)
+- benennt knapp die belegten Materialien und die markantesten architektonischen
+  Merkmale — nicht jedes Detail, nur das Charakteristische
+- uebernimmt lesbaren Text und relevante Beschriftungen
+- ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze. Das Zeichenlimit ist eine
+  Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
+
+VERMEIDEN: "Das Bild zeigt", "Auf dem Bild", generische Einleitungen, blosse
+Inventarlisten, das Auslisten jeder Saeule/jedes Fensters.
+
+
+BENENNEN — TRAU DICH, ABER ERFINDE NICHTS FALSCHES
+
+Nenne ein bekanntes Bauwerk BEIM NAMEN, wenn es eindeutig erkennbar ist — nutze
+dafuer dein Wissen ueber bekannte Architektur (Brandenburger Tor, Koelner Dom,
+Eiffelturm, Sydney Opera House, Reichstag usw.). Das ist ausdruecklich erwuenscht
+und fuer blinde Nutzer wertvoll.
+
+Ist kein eindeutiges Wahrzeichen erkennbar, schliesse aus dem Sichtbaren auf den
+Bautyp und die FUNKTION (Reithalle an Sandboden und Bande, Lagerhalle an Toren
+und Stahlbau, Kirche an Turm und Portal, Bahnhof an Bahnsteigen und Hallendach) —
+auch ohne Kontext. Benenne ebenso belegte Materialien und Bauweise; eine Stil-
+Epoche nur, wenn eindeutig belegt.
+
+NICHT erfinden: einen konkreten Eigennamen fuer ein Gebaeude, das du NICHT
+eindeutig erkennst; einen Architekten, ein Baujahr oder eine Stil-Epoche, die
+nicht belegt sind. Der Unterschied: ein eindeutig erkanntes Wahrzeichen benennen
+= richtig und erwuenscht; einem beliebigen Bau einen beruehmten Namen andichten
+= falsch.
+
+
+LESBARE BESCHRIFTUNGEN
+
+Lesbare Texte am Bauwerk wortgetreu uebernehmen, wenn fuer Orientierung oder
+Bildverstaendnis relevant: Hausnummern, Strassennamen, Inschriften, Bau- oder
+Architekten-Tafeln. Telefonnummern, URLs und Adressen (z.B. an einem Ladenlokal)
+immer wortgetreu uebernehmen.
+
+
+LANGBESCHREIBUNG
+
+Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
+Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt" oder "Auf dem Bild".
+Halte auch die Langbeschreibung kompakt: Bauwerkstyp/Name
+und Gesamtform, dann Fassade/Material, dann die markantesten Elemente (Dachform,
+Saeulen, Tuerme), dann die Einbettung in die Umgebung, zuletzt lesbare
+Beschriftungen. Mache die Bauform mental nachvollziehbar, ohne jede Saeule und
+jedes Fenster einzeln aufzuzaehlen.
+
+
+ATMOSPHAERE
+
+Eine atmosphaerische Aussage nur, wenn durch konkrete sichtbare Belege gestuetzt,
+die im selben Satz genannt werden. Bei jeder Atmosphaere-Wertung MUSS
+atmosphaere_belege mit wertung und beleg gesetzt werden.
+GUT (mit Beleg): "Die hohen Glasfassaden und der weisse, stuetzenfreie Innenraum
+lassen das Foyer grosszuegig wirken."
+SCHLECHT (ohne Beleg): "Ein imposantes, ehrwuerdiges Gebaeude."
+
+
+AUSGABE-SCHEMA
+
+Fuelle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, praezise und KOMPAKT (Limit nicht ausreizen)
+- langbeschreibung: maximal 2000 Zeichen, leer wenn der Alt-Text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS LEER SEIN. Steht dort etwas, ist es eine Halluzination.
+- atmosphaere_belege: nur bei belegter Atmosphaere, jede Wertung mit wertung und
+  beleg
+
+
+FEW-SHOT BEISPIELE
 
 {examples.format_for_prompt()}
 
-{schema_doc}
+FINAL CHECK (vor der Ausgabe pruefen):
+
+1. Bekanntes Wahrzeichen beim Namen genannt, falls eindeutig erkennbar?
+2. Bei unbekanntem Bau die FUNKTION erschlossen (z.B. Reithalle, Lagerhalle)
+   statt nur "ein Gebaeude"?
+3. Keine FALSCHE konkrete Identitaet, kein erfundener Architekt, kein erfundenes
+   Baujahr, keine unbelegte Stil-Epoche?
+4. So kompakt wie moeglich — Limit nicht ausgereizt, kein Auslisten jedes
+   Details?
+5. Lesbare Beschriftungen und Kontaktdaten wortgetreu uebernommen?
+6. nicht_im_inventar leer, und vorhandene halluzinations_warnung-Eintraege
+   beachtet?
+
+Wenn ein Punkt nicht erfuellt ist: Output neu formulieren.
 """

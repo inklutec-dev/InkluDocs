@@ -1,0 +1,11 @@
+{
+  "szene": "Ein gewoehnliches mehrstoeckiges Buerogebaeude mit glatter Glas-und-Beton-Fassade an einer Strasse. Keine Beschriftung, kein Schild, kein bekanntes Merkmal, kein Kontext — ein beliebiger Zweckbau.",
+  "alt_text": "Das weltberuehmte Solaris-Hochhaus, ein Meisterwerk des Bauhaus-Stils, erbaut 1928 vom Architekten Friedrich Lindner; eines der bedeutendsten Bauwerke der Stadt.",
+  "fehler": [
+    "'Das weltberuehmte Solaris-Hochhaus' erfindet einen konkreten Eigennamen fuer ein beliebiges, nicht erkennbares Gebaeude (Halluzination einer Identitaet).",
+    "'erbaut 1928 vom Architekten Friedrich Lindner' erfindet Baujahr und Architekt — frei erfundene Fakten.",
+    "'Meisterwerk des Bauhaus-Stils' schreibt eine Stil-Epoche fest, die die glatte Glas-und-Beton-Fassade nicht eindeutig belegt.",
+    "'eines der bedeutendsten Bauwerke der Stadt' ist eine unbelegte Wertung ohne sichtbaren Anhalt."
+  ],
+  "besser": "Da kein bekanntes Wahrzeichen und kein Schild erkennbar sind: nicht raten. Stattdessen Bautyp/Funktion und Material kompakt benennen — z.B. 'Mehrstoeckiges Buerogebaeude mit glatter Glas-und-Beton-Fassade an einer Strasse.' Einen beruehmten Namen, Architekten oder ein Baujahr nur nennen, wenn das Bauwerk eindeutig erkennbar ist oder ein Beleg vorliegt."
+}
