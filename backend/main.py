@@ -42,6 +42,15 @@ import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, SUPPORTED_LANGUAGES
 from tools import TOOLS, is_valid_tool_key
 
+# --- Temperatur-Politik der Alt-Text-Generierung (30.06.2026) ---
+# Standardbetrieb (Bulk / "alle generieren" / erste Generierung): leicht erhoeht
+# fuer etwas lebendigere Formulierung, aber bewusst niedrig, damit das Modell
+# keine Details dazuerfindet. Einzel-"neu generieren": hoeher, weil der Nutzer
+# dort jeden Vorschlag einzeln prueft und Variation ausdruecklich wuenscht.
+# Klassifikation bleibt immer deterministisch (temp 0, im Orchestrator).
+GENERATION_TEMPERATURE = 0.3   # Normalbetrieb; jederzeit verstellbar (0.0-0.5)
+REGENERATE_TEMPERATURE = 0.7   # nur beim Einzel-Neu-Generieren
+
 # Generate a persistent SECRET_KEY if not set
 SECRET_KEY_FILE = "/app/data/.secret_key"
 def _get_secret_key():
@@ -2291,7 +2300,7 @@ async def _process_project(project_id: int, user_id: int):
             # First pass: general prompt for type detection + alt-text
             result = await asyncio.get_event_loop().run_in_executor(
                 None, generate_alt_text, img["image_path"], effective_context, None,
-                img_width, img_height, img_original_alt
+                img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE  # force_regenerate=False; leicht lebendigere Standard-Texte
             )
 
             # Second pass: if complex type detected, re-generate with specialized prompt
@@ -2306,7 +2315,7 @@ async def _process_project(project_id: int, user_id: int):
             elif is_complex_type(detected_type) and not langbeschreibung:
                 specialized_result = await asyncio.get_event_loop().run_in_executor(
                     None, generate_alt_text, img["image_path"], effective_context, detected_type,
-                    img_width, img_height, img_original_alt
+                    img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE
                 )
                 if specialized_result.get("langbeschreibung"):
                     langbeschreibung = specialized_result["langbeschreibung"]
@@ -2521,7 +2530,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
 
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text, img["image_path"], regen_context, effective_type,
-            regen_width, regen_height, regen_original_alt, True  # force_regenerate=True
+            regen_width, regen_height, regen_original_alt, True, REGENERATE_TEMPERATURE  # force_regenerate=True; Variation beim Einzel-Neu-Generieren
         )
 
         langbeschreibung = result.get("langbeschreibung", "")

@@ -46,7 +46,7 @@ else:
     )
 
 
-def call_with_schema(model, prompt, image_path, schema, max_tokens=1500):
+def call_with_schema(model, prompt, image_path, schema, max_tokens=1500, temperature=0.0):
     """Provider-agnostischer LLM-Call mit Strict-JSON-Schema.
 
     Wirft generisch LLMCallError, damit Orchestrator nur einen Exception-Typ
@@ -59,6 +59,7 @@ def call_with_schema(model, prompt, image_path, schema, max_tokens=1500):
             image_path=image_path,
             schema=schema,
             max_tokens=max_tokens,
+            temperature=temperature,
         )
     except _ProviderError as e:
         raise LLMCallError(str(e)) from e

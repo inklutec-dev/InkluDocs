@@ -331,19 +331,17 @@ def build_beschreibung_prompt_foto_event(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder fuer foto_event — Sonnet-iteriert 13.05.2026.
+    """Premium-Builder fuer foto_event — Auf-den-Punkt + Anti-Markdown 30.06.2026.
 
-    Neufassung durch ChatGPT + Steve + Claude:
-    - Stil: beobachtend statt interpretierend (Sonnet-tauglich)
-    - Visuelle Struktur explizit als Alt-Text-Pflicht (rotes Sofa,
-      Acer-Logo werden nicht mehr in die Langbeschreibung verschoben)
-    - Logo-Logik umgedreht: relevante Logos DUERFEN rein
-    - Konkretes Zaehlen statt "mindestens N Personen"
-    - Kompakte Personenregeln (rechtliche/ethische Absicherung)
-    - Modernisierte Kontextregeln (Bild gewinnt gegen Kontext)
-    - Inventar-Block sprachlich modernisiert (primaere faktische Grundlage)
-    - Kontext-Quellen-Hinweis (PDF/Web/API)
-    - Kein langer Mistral-Drill — Sonnet versteht das ohne 10-Punkte-Liste
+    Aenderung gegenueber 13.05.2026-Stand (Befund Querschnitt-Test 30.06.):
+    - LANG erzeugte Markdown-Ueberschriften (**Gesamtueberblick**), weil die
+      Struktur als nummerierte Abschnittsnamen vorgegeben war. Jetzt: gleiche
+      inhaltliche Reihenfolge, aber explizit FLIESSTEXT, keine Ueberschriften.
+    - Alt-Text oeffnete generisch ("Etwa zehn Personen...") und lief zu lang
+      (>400 Zeichen, Schema-Retry). Jetzt: fuehrt mit Szenen-Art + charakter-
+      istischem Element, praegnant, hoechstens 400 Zeichen.
+    - Helfer-Bloecke + ANTI_HALL + alle API-Variablen unveraendert.
+    Reversibel: Builder-Backup .bak-pre-eventfix-20260630.
     """
     examples = load_examples('foto_event')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -356,42 +354,30 @@ BILDGROESSE: {width}x{height} Pixel
 
 ZIEL
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung
-fuer ein Foto, das eine Veranstaltung, Gruppensituation oder soziale Szene
-zeigt (Workshop, Meeting, Schulung, Praesentation, Konferenz).
-
-Der Stil soll fluessig und lesbar sein, aber beobachtend statt
-interpretierend.
-
-Nicht beschreiben, was ein Bild "wirkt wie". Nicht interpretieren.
-Nicht vermuten. Nur sichtbar belegbare Informationen verwenden.
-
-Der Fokus liegt auf:
-- visueller Orientierung
-- relevanten Details
-- raeumlicher Verstaendlichkeit
-- praegnanter Wissensvermittlung
-
-Der Alt-Text soll nicht nur benennen WAS zu sehen ist, sondern die
-Szene mental nachvollziehbar machen.
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung fuer
+ein Foto, das eine Veranstaltung, Gruppensituation oder soziale Szene zeigt
+(Workshop, Meeting, Schulung, Praesentation, Konferenz). Ziel ist dichte,
+faktenbasierte Wissensvermittlung — praezise, auf den Punkt, beobachtend statt
+interpretierend. Nur sichtbar belegbare Informationen; nicht vermuten, nicht
+"wirkt wie". Der Text soll die Szene mental nachvollziehbar machen: Art der
+Veranstaltung, raeumliche Orientierung, praegende visuelle Elemente.
 
 
 INVENTAR (Pass-2-Beobachtungen)
 
-Das Inventar enthaelt die strukturierten Beobachtungen aus dem
-Analyse-Pass. Nutze diese Daten als primaere faktische Grundlage fuer
-Alt-Text und Langbeschreibung. Sichtbare Bildinformationen duerfen
-ergaenzt werden, aber nicht dem Inventar widersprechen.
+Das Inventar enthaelt die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primaere faktische Grundlage. Sichtbare
+Bildinformationen duerfen ergaenzt werden, aber nicht dem Inventar
+widersprechen.
 
 {inventar_json}
 
 
 KONTEXT
 
-Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen.
-Wenn kein oder nur wenig Kontext vorhanden ist, beschreibe
-ausschliesslich sichtbar belegbare Bildinformationen. Fehlender Kontext
-darf nicht durch Vermutungen ersetzt werden.
+Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
+Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen;
+fehlender Kontext wird nicht durch Vermutungen ersetzt.
 
 {enriched_context if enriched_context else '(kein Kontext)'}
 {user_hint_text}
@@ -399,84 +385,52 @@ darf nicht durch Vermutungen ersetzt werden.
 
 ALT-TEXT
 
-Der Alt-Text soll:
-- konkret beginnen
-- die zentrale Szene sofort verstaendlich machen
-- die visuell dominantesten und orientierungsrelevantesten Elemente priorisieren
+Der Alt-Text:
+- beginnt mit der Art der Szene und dem charakteristischsten, orientierungs-
+  relevanten Element, nicht mit einer generischen Personenzaehlung. Beispiel:
+  "Workshop in hellem Seminarraum: rund zehn Personen nebeneinander, einige
+  halten orange-weisse runde Karten; im Hintergrund Catering-Tisch und Acer-Beamer"
+- priorisiert die visuell dominantesten Elemente: auffaellige Farben, praegende
+  Moebel/Raumstrukturen, Projektionsflaechen, klar sichtbare Logos/Marken
+- beschreibt nicht nur die soziale Situation, sondern auch die visuelle Struktur
+- ist praegnant: in der Regel 1-2 Saetze, hoechstens 400 Zeichen
 
-Wichtiger als allgemeine Formulierungen sind:
-- auffaellige Farben
-- dominante Moebel oder Raumstrukturen
-- sichtbare Projektionsflaechen
-- raeumliche Anordnung
-- grosse oder klar sichtbare Logos/Marken
-- praegende Objekte oder Materialien
-
-Der Alt-Text beschreibt nicht nur die soziale Situation, sondern auch
-die visuelle Struktur der Szene.
-
-VERMEIDEN:
-- "Das Bild zeigt"
-- "Auf dem Bild"
-- "Eine Szene"
-- "wirkt wie"
-- "im Rahmen einer Veranstaltung"
-- journalistische oder erzaehlerische Sprache
-
-BEVORZUGEN:
-- konkrete Beobachtungen
-- klare Hauptmotive
-- sichtbare Orientierungspunkte
+VERMEIDEN: "Das Bild zeigt", "Auf dem Bild", "Eine Szene", "wirkt wie",
+"im Rahmen einer Veranstaltung", journalistische/erzaehlerische Sprache.
 
 
 PERSONENZAHL
 
 Wenn Personen klar sichtbar sind: systematisch zaehlen statt schaetzen.
-"Mindestens" oder "etwa" nur verwenden, wenn Personen teilweise
-verdeckt, abgeschnitten oder unscharf sind.
+"Mindestens" oder "etwa" nur, wenn Personen teilweise verdeckt, abgeschnitten
+oder unscharf sind.
 
 
 EVENT-LOGIK
 
-Eine Veranstaltung darf benannt werden, wenn mindestens eines davon
-sichtbar oder im Kontext eindeutig belegt ist:
-- Praesentation
-- Workshop-Setting
-- Schulungssituation
-- Moderationsmaterial
-- Namensschilder
-- Beamer oder Projektionsflaeche
-- Buehne oder Vortragsraum
-- organisierte Gruppenanordnung
-
-Mehrere Personen allein reichen NICHT fuer foto_event.
+Eine Veranstaltung darf benannt werden, wenn mindestens eines sichtbar oder im
+Kontext belegt ist: Praesentation, Workshop-Setting, Schulungssituation,
+Moderationsmaterial, Namensschilder, Beamer/Projektionsflaeche, Buehne/
+Vortragsraum, organisierte Gruppenanordnung. Mehrere Personen allein reichen NICHT.
 
 
 LOGOS UND MARKEN
 
-Sichtbare Logos oder Marken duerfen erwaehnt werden, wenn sie:
-- visuell auffaellig,
-- orientierungsrelevant,
-- oder praegend fuer die Szene sind.
-
-Beispiel: Ein sichtbares Acer-Logo auf einem Beamer in einer
-Schulungssituation kann relevant sein.
+Sichtbare Logos/Marken duerfen erwaehnt werden, wenn sie visuell auffaellig,
+orientierungsrelevant oder praegend fuer die Szene sind (z.B. ein Acer-Logo auf
+einem Beamer in einer Schulung).
 
 
 LANGBESCHREIBUNG
 
-Struktur in dieser Reihenfolge:
-
-1. Gesamtueberblick
-2. raeumliche Orientierung
-3. Personen und Interaktion
-4. zentrale Objekte oder Materialien
-5. sichtbare Texte oder Logos
-6. relevante Kontextinformationen
-
-Die Langbeschreibung soll: nachvollziehbar, klar strukturiert, und
-raeumlich verstaendlich sein. Nicht jede Kleinigkeit aufzaehlen —
-lieber relevante Zusammenhaenge vermitteln.
+Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
+Aufzaehlungszeichen, keine fettgedruckten Abschnittstitel. Folge inhaltlich
+dieser Reihenfolge, ohne sie als Ueberschriften zu setzen: zuerst ein
+Gesamtueberblick, dann die raeumliche Orientierung, dann Personen und
+Interaktion, dann zentrale Objekte/Materialien, dann sichtbare Texte/Logos,
+zuletzt relevante Kontextinformationen. Nachvollziehbar und raeumlich
+verstaendlich — nicht jede Kleinigkeit aufzaehlen, lieber Zusammenhaenge
+vermitteln.
 
 
 {_render_personenregeln_block()}
@@ -490,22 +444,16 @@ lieber relevante Zusammenhaenge vermitteln.
 
 HALLUZINATIONSSCHUTZ
 
-Beschreibe nur:
-- sichtbare Inhalte
-- belegbare Kontextinformationen
-- lesbare Texte
-- klar erkennbare raeumliche Strukturen
+Beschreibe nur sichtbare Inhalte, belegbare Kontextinformationen, lesbare Texte
+und klar erkennbare raeumliche Strukturen. Wende die Zwei-Wege-Regel an: klar
+durch Form UND Setting Getragenes wird benannt, genuin Unklares neutral
+beschrieben (Form/Farbe/Position) — nie hedgen.
 
-Wenn etwas unklar ist:
-- neutral beschreiben
-- sichtbare Form/Farbe/Position nennen
-- keine Funktion oder Bedeutung erraten
-
-SCHLECHT: "vermutlich", "wirkt wie", "wahrscheinlich", "eine Art von",
+SCHLECHT (Hedging): "vermutlich", "wirkt wie", "wahrscheinlich", "eine Art von",
 "moegliche Flyer", "scheint"
-
-GUT: "orangefarbene rechteckige Gegenstaende", "runde Objekte",
-"heller Projektionsbereich", "rotes Sofa im Hintergrund"
+GUT: Klar Getragenes benennen ("orange und weisse Abstimmkarten" im Workshop-
+Setting, "Acer-Logo", "Projektionsflaeche"); genuin Unklares neutral ("runde
+orangefarbene Gegenstaende, Funktion nicht erkennbar", "rotes Sofa im Hintergrund").
 
 
 {_render_atmosphaere_block()}
@@ -513,8 +461,8 @@ GUT: "orangefarbene rechteckige Gegenstaende", "runde Objekte",
 
 SEMANTISCHE OUTPUT-REGELN
 
-nicht_im_inventar MUSS LEER SEIN. Steht da etwas drin, ist es eine
-Halluzination.
+nicht_im_inventar MUSS LEER SEIN. Steht da etwas drin, ist es eine Halluzination.
+Der Alt-Text umfasst hoechstens 400 Zeichen.
 
 
 FEW-SHOT BEISPIELE
@@ -533,7 +481,6 @@ FEW-SHOT BEISPIELE
 # Funktionen werden aufgerufen fuer die wiederverwendeten Bloecke.
 # Inhalt soll identisch zum vor-Refactor-Stand sein (Bogart-Test
 # als Sanity-Check).
-
 def build_beschreibung_prompt_foto_personen(
     inventar: InventarOutput,
     enriched_context: str,
@@ -714,23 +661,18 @@ def build_beschreibung_prompt_foto_objekte(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder fuer foto_objekte — Sonnet-Lean-Iteration 15.05.2026.
+    """Premium-Builder fuer foto_objekte — Mistral-Altlast-Abspeckung 30.06.2026.
 
-    Vorher: Iter-3-Mistral-Stand (04.05.2026) mit langem Drill und 13-Punkte-FC.
-    Neufassung durch ChatGPT + Steve + Claude:
-    - Stil: beobachtend, Wissensvermittlung statt Aufzaehlung
-    - Iter-3-Schuesselchen-Schutz vollstaendig erhalten + Wortliste um
-      "enthaelt" erweitert (BEHAELTER-Wortlisten in HARTE ALT-TEXT-REGEL
-      konsolidiert)
-    - MATERIAL + FUNKTION zu einem Block zusammengefasst
-    - FINAL CHECK reduziert auf 10 Punkte (Hedge-Wort-Drill raus,
-      Behaelter-Punkte bleiben)
-    - KONTEXTREGELN-Helper raus (Bogart-Beispiel passt nicht zu Objekten),
-      stattdessen "BILD GEWINNT GEGEN KONTEXT" + Keramikschuesselchen-Zusatz
-      inline im KONTEXT-Block
-    - {user_hint_text} bleibt drin (API-Vollstaendigkeit, Chat-Bot-Pfad)
-
-    Konformitaet mit premium_prompt_standard.md (Steve+Claude+ChatGPT 15.05.2026).
+    Hintergrund: Die schweren Behaelter-/Material-Klammern stammen aus der
+    Mistral-Zeit (pixtral erfand Schuessel-Inhalte). A/B-Sonde 30.06. mit
+    Sonnet 4.6 belegt: das Modell erfindet keine Inhalte mehr. Daher abgespeckt:
+    - Riesige VERBOTEN-Wortliste -> kurze Evidenz-Regel (Inhalt nur wenn belegt)
+    - MATERIAL-/FUNKTION-Sperre gelockert -> benennen wenn belegt, vage nur bei
+      echter Unsicherheit
+    - NEU: "fuehre mit der konkretesten belegbaren Benennung" (Typ/Modell/Marke/
+      lesbare Bezeichnung) gegen die beobachtete Passivitaet (Flugzeug-Befund 25.06.)
+    - Schema, Inventar-Warnungen, Bild-gewinnt-Kontext, alle API-Variablen erhalten.
+    Reversibel: Builder-Backup .bak-pre-objektelockern-20260630.
     """
     examples = load_examples('foto_objekte')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -745,79 +687,44 @@ BILDGROESSE: {width}x{height} Pixel
 
 ZIEL
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung
-fuer ein Foto, auf dem Gegenstaende, Materialien oder Objektgruppen im
-Mittelpunkt stehen.
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung fuer
+ein Foto, auf dem Gegenstaende, Materialien oder Objektgruppen im Mittelpunkt
+stehen. Ziel ist dichte, faktenbasierte Wissensvermittlung — praezise und auf
+den Punkt, nicht banale Aufzaehlung.
 
-Der Fokus liegt auf sichtbarer Beschaffenheit:
-Form, Oberflaeche, Struktur, Anordnung, Materialwirkung und raeumliche
-Wirkung sollen nachvollziehbar vermittelt werden.
-
-Wissensvermittlung statt reine Objekt-Aufzaehlung:
-Der Text soll helfen, das Objekt mental zu erfassen —
-nicht nur Gegenstaende zu benennen.
-
-Beschreibe nur sichtbar belegbare Eigenschaften.
-Keine Funktions-, Inhalts- oder Materialvermutungen ohne Beleg.
+Benenne das Objekt so konkret, wie es das Sichtbare und das Inventar hergeben:
+Typ, Modell, Marke, Bauart. Was lesbar ist (Schriftzuege, Typenschilder,
+Beschriftungen), wird uebernommen. Wo eine konkrete Benennung belegt ist,
+beginnt der Text damit — nicht mit einer generischen Umschreibung.
 
 
 INVENTAR (Pass-2-Beobachtungen)
 
 Das Inventar enthaelt strukturierte Beobachtungen aus dem Analyse-Pass.
-Nutze diese Daten als primaere faktische Grundlage.
-
-Sichtbare Bildinformationen duerfen ergaenzt werden,
-duerfen dem Inventar aber nicht widersprechen.
+Nutze diese Daten als primaere faktische Grundlage. Sichtbare
+Bildinformationen duerfen ergaenzt werden, duerfen dem Inventar aber nicht
+widersprechen.
 
 {inventar_json}
 
 
 HALLUZINATIONS-WARNUNGEN AUS DEM INVENTAR
-(KRITISCH — aktiv beachten)
+(falls vorhanden — beachten)
 
-Die folgenden Warnungen beschreiben bekannte Fehlinterpretations-Risiken.
-Diese Fehlinterpretationen duerfen NICHT als Tatsache uebernommen werden:
+Die folgenden Warnungen beschreiben bekannte Fehlinterpretations-Risiken fuer
+DIESES Bild. Uebernimm sie nicht als Tatsache:
 
 {halluzinations_block}
-
-Wenn eine Warnung sagt,
-dass eine Oberflaeche oder Innenflaeche als Inhalt fehlinterpretiert werden koennte,
-muss die Beschreibung neutral bleiben.
-
-BEISPIEL:
-
-Warnung:
-'Hellfarbene Glasur koennte als Fluessigkeit fehlinterpretiert werden.'
-
-ERLAUBT:
-- 'helle Innenflaeche'
-- 'sichtbarer Innenraum'
-- 'helle Glasur'
-- 'glaenzende Oberflaeche'
-
-NICHT erlaubt:
-- 'Fluessigkeit'
-- 'Fuellung'
-- 'Substanz'
-- 'cremig'
 
 
 KONTEXT
 
-Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen.
+Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
+Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen;
+fehlender Kontext wird nicht durch Vermutungen ersetzt.
 
-Wenn kein oder nur wenig Kontext vorhanden ist,
-beschreibe ausschliesslich sichtbar belegbare Bildinformationen.
-
-Fehlender Kontext darf niemals durch Vermutungen ersetzt werden.
-
-BILD GEWINNT GEGEN KONTEXT:
-Wenn Bild und Kontext widerspruechlich sind, hat das sichtbare Bild Vorrang.
-
-Wenn der Kontext sagt, dass es sich um ein Keramikschuesselchen handelt,
-darf 'Keramikschuesselchen' verwendet werden, sofern das sichtbare Objekt
-nicht widerspricht. Inhalte duerfen trotzdem nur beschrieben werden,
-wenn sie sichtbar oder im Inventar belegt sind.
+BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen Bild und Kontext hat das
+sichtbare Bild Vorrang.
 
 {enriched_context if enriched_context else '(kein Kontext)'}
 {user_hint_text}
@@ -825,155 +732,54 @@ wenn sie sichtbar oder im Inventar belegt sind.
 
 ALT-TEXT
 
-Der Alt-Text soll:
-- direkt mit dem zentralen Objekt beginnen
-- die sichtbar wichtigsten Eigenschaften priorisieren
-- Form und Beschaffenheit nachvollziehbar machen
-- visuell charakteristische Merkmale enthalten
+Der Alt-Text:
+- beginnt mit der konkretesten belegbaren Benennung des zentralen Objekts
+  (Typ/Modell/Marke/lesbare Bezeichnung), nicht mit einer generischen Umschreibung
+- priorisiert die sichtbar wichtigsten, charakteristischen Eigenschaften
+- macht Form und Beschaffenheit nachvollziehbar
+- uebernimmt lesbaren Text und relevante Beschriftungen
 
-Wichtige Bestandteile:
-- zentrales Objekt oder Objektgruppe
-- Form und Proportion
-- Oberflaeche, Muster oder Struktur
-- raeumliche Anordnung
-- Material nur wenn belegbar
-- sichtbarer Text oder relevante Beschriftungen
-
-VERMEIDEN:
-- generische Einleitungen
-- blosse Inventarlisten
-- Funktionsvermutungen
-- Inhaltsvermutungen
+VERMEIDEN: generische Einleitungen, blosse Inventarlisten, vage Umschreibungen
+fuer eindeutig Benennbares.
 
 
-HARTE ALT-TEXT-REGEL FUER BEHAELTER
-(Schuesselchen-Schutz — verpflichtend)
+BENENNEN STATT VAGE BLEIBEN
 
-Bei Behaeltern wie:
-Schalen, Schuesseln, Tassen, Glaesern, Tellern, Dosen, Flaschen,
-Boxen, Vasen, Toepfen oder Bechern
+Benenne Material, Typ und Bauart, wenn sie visuell oder kontextuell hinreichend
+belegt sind — z.B. Keramik an Glasur und Form, "Boeing 777" am Schriftzug, eine
+Airline an Logo und Lackierung. Weiche nur bei echter Unsicherheit auf eine rein
+visuelle Beschreibung aus ("helles glattes Material", "glaenzende Oberflaeche") —
+nicht aus Prinzip. Vage zu bleiben, obwohl etwas klar belegt ist, ist ein Fehler.
 
-duerfen Inhalte oder Fuellungen NUR erwaehnt werden,
-wenn sie im Inventar ausdruecklich als sichtbarer Inhalt belegt sind.
 
-Wenn der Innenraum sichtbar,
-aber kein Inhalt eindeutig belegt ist:
+INHALTE VON BEHAELTERN (Evidenz-Regel)
 
-Beschreibe nur:
-- Innenraum
-- Innenflaeche
-- Glasur
-- Oberflaeche
-- sichtbaren Boden
-- Spiegelung
-- Farbverlauf
-- Struktur
-- Muster
-
-NICHT verwenden:
-- Fuellung
-- gefuellt
-- Inhalt
-- Fluessigkeit
-- Substanz
-- cremig
-- Creme
-- Paste
-- Pulver
-- Schaum
-- Masse
-- enthaelt
-- Essen
-- Getraenk
-
-GUTE FORMULIERUNGEN:
-- 'helle glaenzende Innenflaeche'
-- 'sichtbarer Innenraum mit heller Glasur'
-- 'der Innenbereich wirkt glatt und hell'
-- 'sichtbarer Boden des Gefaesses'
-
-SCHLECHTE FORMULIERUNGEN:
-- 'mit heller Fluessigkeit gefuellt'
-- 'cremig wirkende Substanz'
-- 'enthaelt eine weisse Masse'
+Bei Behaeltern (Schalen, Tassen, Glaesern, Flaschen, Dosen, Vasen u.ae.):
+Inhalte oder Fuellungen nur nennen, wenn das Inventar sie als sichtbaren Inhalt
+belegt. Ist nur der Innenraum sichtbar, beschreibe Innenflaeche, Glasur,
+Oberflaeche, Boden, Struktur oder Spiegelung — aber erfinde keinen Inhalt
+(keine "Fuellung", "Fluessigkeit", "Substanz" oder "cremige Masse" ohne Beleg).
 
 
 LANGBESCHREIBUNG
 
-Struktur:
-
-1. zentrales Objekt oder Objektgruppe
-2. Form und Proportion
-3. Oberflaeche, Struktur, Muster oder Materialwirkung
-4. raeumliche Anordnung
-5. sichtbare Details oder Oeffnungen
-6. sichtbare Texte oder Beschriftungen
-7. relevanter Kontext
-
-Die Langbeschreibung soll die sichtbare Form mental nachvollziehbar machen —
-nicht bloss Eigenschaften aufzaehlen.
-
-
-OBJEKT-LOGIK
-
-Beschreibe Objekte ueber:
-- sichtbare Form
-- Proportion
-- Oberflaeche
-- Struktur
-- Anordnung
-- sichtbare Bestandteile
-
-Funktion oder Zweck nur nennen,
-wenn eindeutig belegbar.
-
-
-MATERIAL UND FUNKTION
-(KRITISCH — nicht raten)
-
-Material nur nennen,
-wenn sichtbar oder kontextuell eindeutig belegt.
-
-Bei Unsicherheit:
-- 'helles glattes Material'
-- 'glaenzende Oberflaeche'
-- 'strukturierte Oberflaeche'
-
-statt:
-- Keramik
-- Porzellan
-- Glas
-- Metall
-
-Funktion nicht aus Form ableiten.
-
-NICHT:
-- Stimmkarte
-- Flyer
-- Medikamentendose
-- Getraenk
-- Nahrung
-
-SONDERN:
-- flacher rechteckiger Gegenstand
-- kleines rundes Gefaess
-- heller zylindrischer Behaelter
+Sinnvolle Reihenfolge: zentrales Objekt (konkret benannt) -> Form und Proportion
+-> Oberflaeche, Struktur, Material -> raeumliche Anordnung -> sichtbare Details
+und Beschriftungen -> relevanter Kontext. Die Langbeschreibung soll die sichtbare
+Form mental nachvollziehbar machen, nicht bloss Eigenschaften aufzaehlen.
 
 
 ATMOSPHAERE
 
-Bei Objektfotos normalerweise KEINE Atmosphaere beschreiben.
-
-Nur wenn Bildgestaltung und Kontext dies eindeutig tragen,
-darf eine zurueckhaltende atmosphaerische Aussage verwendet werden.
-
-Dann MUSS atmosphaere_belege gesetzt werden.
+Bei Objektfotos normalerweise KEINE Atmosphaere. Nur wenn Bildgestaltung und
+Kontext es eindeutig tragen, eine zurueckhaltende atmosphaerische Aussage —
+dann MUSS atmosphaere_belege gesetzt werden.
 
 
 AUSGABE-SCHEMA
 
 Fuelle exakt das Schema BeschreibungOutput:
-- alt_text: 20 bis 400 Zeichen, prazise und konkret
+- alt_text: 20 bis 400 Zeichen, praezise und konkret
 - langbeschreibung: maximal 2000 Zeichen
 - verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
 - nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
@@ -988,22 +794,15 @@ FEW-SHOT BEISPIELE
 
 FINAL CHECK
 
-1. Jede Aussage belegbar?
-2. Keine Halluzination?
-3. Wurden verbotene Inhalts-/Fuellungsbegriffe verwendet?
-   Falls ja: nur erlaubt wenn sichtbarer Inhalt eindeutig belegt ist.
-4. Wurde ein Behaelter-Inhalt erfunden?
-5. Wurde eine Substanz oder Konsistenz erfunden?
-6. Wurde Material geraten statt belegt?
-7. Wurde Funktion oder Zweck geraten?
-8. Alt-Text konkret und visuell nachvollziehbar?
-9. nicht_im_inventar leer?
-10. Wurden alle halluzinations_warnung-Eintraege respektiert?
+1. Ist das zentrale Objekt so konkret benannt, wie Beleg/Inventar es zulassen
+   (Typ/Modell/Marke/lesbare Bezeichnung) — statt vager Umschreibung?
+2. Ist jede Aussage durch Bild oder Inventar belegt (keine Halluzination)?
+3. Behaelter-Inhalt nur genannt, wenn als sichtbarer Inhalt belegt?
+4. nicht_im_inventar leer?
+5. Wurden vorhandene halluzinations_warnung-Eintraege beachtet?
 
-Wenn ein Punkt nicht erfuellt ist:
-Output neu formulieren.
+Wenn ein Punkt nicht erfuellt ist: Output neu formulieren.
 """
-
 
 
 def build_beschreibung_prompt_foto_essen(

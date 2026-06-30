@@ -70,6 +70,7 @@ def _http_call_mistral(
     prompt: str,
     image_b64: str,
     max_tokens: int,
+    temperature: float = 0.0,
     response_format: dict | None = None,
 ) -> str:
     """HTTP-Call zu Mistral. Gibt rohen content-String zurück.
@@ -93,7 +94,7 @@ def _http_call_mistral(
             ],
         }],
         'max_tokens': max_tokens,
-        'temperature': 0,
+        'temperature': temperature,  # 0 = deterministisch (Default); >0 nur bei explizitem Neu-Generieren
     }
     if response_format is not None:
         payload['response_format'] = response_format
@@ -127,6 +128,7 @@ def call_mistral_with_schema(
     image_path: str,
     schema: Type[T],
     max_tokens: int = 1500,
+    temperature: float = 0.0,
 ) -> T:
     """Mistral-Call mit Strict JSON Schema Mode + Pydantic-Validierung.
 
@@ -163,6 +165,7 @@ def call_mistral_with_schema(
         prompt=prompt,
         image_b64=img_b64,
         max_tokens=max_tokens,
+        temperature=temperature,
         response_format=response_format,
     )
 
@@ -186,6 +189,7 @@ def call_mistral_with_schema(
             prompt=retry_prompt,
             image_b64=img_b64,
             max_tokens=max_tokens,
+            temperature=temperature,
             response_format=response_format,
         )
         try:

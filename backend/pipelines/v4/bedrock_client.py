@@ -96,6 +96,7 @@ def _invoke_bedrock(
     schema_name: str,
     schema_dict: dict,
     max_tokens: int,
+    temperature: float = 0.0,
 ) -> dict:
     """Bedrock-Invoke-Call mit Anthropic-Tool-Use fuer Strict-JSON.
 
@@ -110,7 +111,7 @@ def _invoke_bedrock(
     body = {
         'anthropic_version': 'bedrock-2023-05-31',
         'max_tokens': max_tokens,
-        'temperature': 0,
+        'temperature': temperature,  # 0 = deterministisch (Default); >0 nur bei explizitem Neu-Generieren (Variation)
         'messages': [{
             'role': 'user',
             'content': [
@@ -167,6 +168,7 @@ def call_bedrock_with_schema(
     image_path: str,
     schema: Type[T],
     max_tokens: int = 1500,
+    temperature: float = 0.0,
 ) -> T:
     """Bedrock-Call mit Anthropic-Tool-Use + Pydantic-Validierung.
 
@@ -186,6 +188,7 @@ def call_bedrock_with_schema(
         schema_name=schema_name,
         schema_dict=schema_dict,
         max_tokens=max_tokens,
+        temperature=temperature,
     )
 
     try:
@@ -209,6 +212,7 @@ def call_bedrock_with_schema(
             schema_name=schema_name,
             schema_dict=schema_dict,
             max_tokens=max_tokens,
+            temperature=temperature,
         )
         try:
             return schema.model_validate(retry_raw)

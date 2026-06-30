@@ -423,6 +423,7 @@ def generate_alt_text_v4(
     width: int = 0,
     height: int = 0,
     original_alt: str = '',
+    temperature: float = 0.0,  # 0 = deterministisch (Default/Bulk); >0 nur beim Einzel-Neu-Generieren
 ) -> dict:
     """v4-Eintrittspunkt mit Mode-Dispatcher.
 
@@ -442,6 +443,7 @@ def generate_alt_text_v4(
             width=width,
             height=height,
             original_alt=original_alt,
+            temperature=temperature,
         )
     # Default: Multi-Pass (rueckwaertskompatibel zu Mistral-Setup)
     return _run_multipass_pipeline(
@@ -524,6 +526,7 @@ def _run_lean_pipeline(
     width: int = 0,
     height: int = 0,
     original_alt: str = '',
+    temperature: float = 0.0,
 ) -> dict:
     """Lean-Pipeline: 1 Klassifikations-Aufruf + 1 Combo-Hauptaufruf.
 
@@ -645,6 +648,7 @@ def _run_lean_pipeline(
             image_path=image_path,
             schema=BeschreibungOutput,
             max_tokens=3500,  # Lean: mehr Tokens weil Inventar+Beschreibung
+            temperature=temperature,  # Variation nur beim Neu-Generieren; Klassifikation bleibt deterministisch
         )
 
     # === Self-Check: Halluzinations-Indikator ohne Validator-Pass ===
