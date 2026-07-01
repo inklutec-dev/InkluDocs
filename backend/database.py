@@ -279,6 +279,10 @@ def _migrate_columns(conn):
         # nicht hier -> Status bleibt schlank abfragbar fuer Badge + Dashboard-Zaehler.
         ("images", "review_status", "ALTER TABLE images ADD COLUMN review_status TEXT DEFAULT 'offen'"),
         ("images", "reviewed_at", "ALTER TABLE images ADD COLUMN reviewed_at TEXT"),
+        # UI-Sprache pro User (01.07.2026): ISO-639-1 - 'de'/'en'/'fr'/'es'.
+        # Default 'de', damit bestehende User Deutsch behalten. Steuert NUR die
+        # Oberflaechen-Sprache, NICHT die Alt-Text-Ausgabesprache (separates Feature).
+        ("users", "language", "ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'de'"),
     ]
 
     for table, column, sql in migrations:
