@@ -488,6 +488,19 @@ def update_user_active(user_id: int, is_active: int):
     conn.close()
 
 
+def set_user_language(user_id: int, language: str):
+    """Speichert die UI-Sprach-Praeferenz eines Users (ISO-639-1: de/en/fr/es).
+
+    Wird beim bewussten Sprachwechsel eines eingeloggten Nutzers aufgerufen
+    (siehe set-language-Route). Die Alt-Text-Ausgabesprache bleibt davon
+    unberuehrt - das ist ein separates Feature.
+    """
+    conn = get_db()
+    conn.execute("UPDATE users SET language = ? WHERE id = ?", (language, user_id))
+    conn.commit()
+    conn.close()
+
+
 def delete_user_data(user_id: int):
     """Delete all projects and images for a user (DSGVO)."""
     conn = get_db()

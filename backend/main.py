@@ -36,10 +36,12 @@ from database import (
     create_api_result, get_api_result, update_api_result,
     create_email_verification_token, mark_email_verified, resend_verification_token,
     get_daily_image_count, get_daily_api_count,
+    set_user_language,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, SUPPORTED_LANGUAGES
+from typing import Optional  # frueh, da ab get_optional_user in Typannotationen genutzt
 from tools import TOOLS, is_valid_tool_key
 
 # --- Temperatur-Politik der Alt-Text-Generierung (30.06.2026) ---
@@ -242,6 +244,17 @@ def get_current_user(request: Request) -> dict:
         return {"id": int(payload["sub"]), "email": payload["email"], "is_admin": payload.get("is_admin", 0)}
     except JWTError:
         raise HTTPException(status_code=401, detail="Token ungueltig")
+
+
+def get_optional_user(request: Request) -> Optional[dict]:
+    """Wie get_current_user, aber ohne 401: liefert None statt Fehler, wenn
+    kein (gueltiges) Login vorliegt. Fuer Routen, die fuer Gast UND
+    eingeloggten Nutzer funktionieren muessen (z.B. die Sprachwahl).
+    """
+    try:
+        return get_current_user(request)
+    except HTTPException:
+        return None
 
 
 def require_admin(request: Request) -> dict:
@@ -2602,7 +2615,6 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
 # werden (ohne Erweiterung), genauso wie bei Einzelexports.
 
 import zipfile
-from typing import Optional
 
 
 def _safe_filename_component(name: str, fallback: str = "datei") -> str:
@@ -3786,8 +3798,15 @@ async def set_language(lang: str, request: Request):
         redirect_to = "/"
     response = RedirectResponse(redirect_to, status_code=303)
     if lang in SUPPORTED_LANGUAGES:
-        # 1 Jahr gueltig, samesite=lax, nicht HttpOnly (Client koennte lesen)
+        # 1 Jahr gueltig, samesite=lax, nicht HttpOnly (Client koennte lesen).
+        # Der Cookie deckt Gaeste und die aktuelle Sitzung ab.
         response.set_cookie("lang", lang, max_age=365*24*60*60, samesite="lax")
+        # Eingeloggte Nutzer: Wahl zusaetzlich dauerhaft am Konto speichern,
+        # damit sie ueber Geraete und die Cookie-Lebensdauer hinaus gilt
+        # (Stufe 1 der Sprach-Erkennung in i18n.detect_language).
+        user = get_optional_user(request)
+        if user:
+            set_user_language(user["id"], lang)
     return response
 
 @app.get("/register", response_class=HTMLResponse)
