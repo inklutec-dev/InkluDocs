@@ -23,6 +23,7 @@ Verwendung in FastAPI-Routen:
 
 In Templates: {{ _('Text') }}
 """
+import json
 from pathlib import Path
 from typing import Optional, Callable
 from babel.support import Translations
@@ -90,6 +91,16 @@ def detect_language(request: Request, user_language: Optional[str] = None) -> st
     return DEFAULT_LANGUAGE
 
 
+def _catalog_json(lang: str) -> str:
+    """Uebersetzungstabelle der Sprache als JSON fuer die Client-Seite
+    (window.I18N). Nur echte msgid->Uebersetzung-Paare (Header/Plurale raus).
+    '<' wird zu \\u003c kodiert, damit kein </script> das Skript beendet."""
+    trans = _load_translations(lang)
+    catalog = getattr(trans, "_catalog", {}) or {}
+    data = {k: v for k, v in catalog.items() if isinstance(k, str) and k and v}
+    return json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
+
+
 def template_context(request: Request, lang: str, **extra) -> dict:
     """Standard-Kontext fuer Jinja2-Templates (inkl. gettext und Sprach-Metadaten)."""
     return {
@@ -98,6 +109,7 @@ def template_context(request: Request, lang: str, **extra) -> dict:
         "current_lang": lang,
         "language_labels": LANGUAGE_LABELS,
         "supported_languages": SUPPORTED_LANGUAGES,
+        "i18n_json": _catalog_json(lang),
         **extra,
     }
 

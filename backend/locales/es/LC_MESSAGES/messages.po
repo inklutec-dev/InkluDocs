@@ -133,3 +133,53 @@ msgstr "Mis claves API"
 msgid "API-Schluessel bearbeiten"
 msgstr "Editar clave API"
 
+
+# JS-Chrome / Seitenleiste + Fusszeile (Phase B, 01.07.2026)
+msgid "Startseite"
+msgstr "Inicio"
+
+msgid "Neues Projekt anlegen"
+msgstr "Crear proyecto"
+
+msgid "Meine Projekte"
+msgstr "Mis proyectos"
+
+msgid "Datensicherheit"
+msgstr "Seguridad de datos"
+
+msgid "Benutzerverwaltung"
+msgstr "Gestión de usuarios"
+
+msgid "Abmelden"
+msgstr "Cerrar sesión"
+
+msgid "Hauptnavigation"
+msgstr "Navegación principal"
+
+msgid "Hallo"
+msgstr "Hola"
+
+msgid "Willkommen"
+msgstr "Bienvenido"
+
+msgid "Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig."
+msgstr "Hoy {used} de {limit} imágenes usadas – quedan {remaining}."
+
+msgid "InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+msgstr "InkluDocs es gratuito y se mejora continuamente. Si desea apoyar el proyecto, agradecemos una contribución voluntaria."
+
+msgid "InkluDocs per PayPal unterstützen"
+msgstr "Apoyar InkluDocs con PayPal"
+
+msgid "InkluDocs per PayPal unterstützen, öffnet in neuem Tab"
+msgstr "Apoyar InkluDocs con PayPal, se abre en una pestaña nueva"
+
+msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
+msgstr "Su contribución ayuda a impulsar la accesibilidad en la web."
+
+msgid "DSGVO-konform – Verarbeitung in der EU."
+msgstr "Conforme al RGPD – procesamiento en la UE."
+
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Alojamiento en Hetzner Online (Falkenstein, Alemania). El procesamiento por IA se realiza a través de Amazon Bedrock (modelo Claude de Anthropic) en centros de datos dentro de la UE; Amazon Bedrock no comparte contenido con el proveedor del modelo ni lo utiliza para entrenamiento. Detalles en nuestra política de privacidad."
+

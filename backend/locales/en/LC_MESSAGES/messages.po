@@ -133,3 +133,53 @@ msgstr "My API keys"
 msgid "API-Schluessel bearbeiten"
 msgstr "Edit API key"
 
+
+# JS-Chrome / Seitenleiste + Fusszeile (Phase B, 01.07.2026)
+msgid "Startseite"
+msgstr "Home"
+
+msgid "Neues Projekt anlegen"
+msgstr "Create new project"
+
+msgid "Meine Projekte"
+msgstr "My projects"
+
+msgid "Datensicherheit"
+msgstr "Data security"
+
+msgid "Benutzerverwaltung"
+msgstr "User management"
+
+msgid "Abmelden"
+msgstr "Log out"
+
+msgid "Hauptnavigation"
+msgstr "Main navigation"
+
+msgid "Hallo"
+msgstr "Hello"
+
+msgid "Willkommen"
+msgstr "Welcome"
+
+msgid "Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig."
+msgstr "Today {used} of {limit} images used – {remaining} remaining."
+
+msgid "InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+msgstr "InkluDocs is free and continuously improved. If you would like to support the project, we appreciate a voluntary contribution."
+
+msgid "InkluDocs per PayPal unterstützen"
+msgstr "Support InkluDocs via PayPal"
+
+msgid "InkluDocs per PayPal unterstützen, öffnet in neuem Tab"
+msgstr "Support InkluDocs via PayPal, opens in a new tab"
+
+msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
+msgstr "Your contribution helps advance accessibility on the web."
+
+msgid "DSGVO-konform – Verarbeitung in der EU."
+msgstr "GDPR-compliant – processed in the EU."
+
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Hosted by Hetzner Online (Falkenstein, Germany). AI processing runs via Amazon Bedrock (Claude model by Anthropic) in data centres within the EU; Amazon Bedrock does not share content with the model provider and does not use it for training. Details in our privacy policy."
+

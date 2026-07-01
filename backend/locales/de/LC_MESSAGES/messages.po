@@ -136,3 +136,53 @@ msgstr "Meine API-Schlüssel"
 msgid "API-Schluessel bearbeiten"
 msgstr "API-Schlüssel bearbeiten"
 
+
+# JS-Chrome / Seitenleiste + Fusszeile (Phase B, 01.07.2026)
+msgid "Startseite"
+msgstr "Startseite"
+
+msgid "Neues Projekt anlegen"
+msgstr "Neues Projekt anlegen"
+
+msgid "Meine Projekte"
+msgstr "Meine Projekte"
+
+msgid "Datensicherheit"
+msgstr "Datensicherheit"
+
+msgid "Benutzerverwaltung"
+msgstr "Benutzerverwaltung"
+
+msgid "Abmelden"
+msgstr "Abmelden"
+
+msgid "Hauptnavigation"
+msgstr "Hauptnavigation"
+
+msgid "Hallo"
+msgstr "Hallo"
+
+msgid "Willkommen"
+msgstr "Willkommen"
+
+msgid "Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig."
+msgstr "Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig."
+
+msgid "InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+msgstr "InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+
+msgid "InkluDocs per PayPal unterstützen"
+msgstr "InkluDocs per PayPal unterstützen"
+
+msgid "InkluDocs per PayPal unterstützen, öffnet in neuem Tab"
+msgstr "InkluDocs per PayPal unterstützen, öffnet in neuem Tab"
+
+msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
+msgstr "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
+
+msgid "DSGVO-konform – Verarbeitung in der EU."
+msgstr "DSGVO-konform – Verarbeitung in der EU."
+
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+

@@ -22,6 +22,10 @@
 
 <div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
 
+<script>
+window.LANG = "{{ current_lang }}";
+window.I18N = {{ i18n_json|safe }};
+</script>
 <script src="/static/dashboard.js"></script>
 {% block page_script %}{% endblock %}
 </body>

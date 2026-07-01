@@ -3,6 +3,19 @@
 
 const byId = (id) => document.getElementById(id);
 
+// i18n-Helfer: schlaegt Text in der vom Server gelieferten Uebersetzungstabelle
+// (window.I18N) nach. Ohne Tabelle (z.B. noch nicht migrierte Seite) faellt er
+// auf den deutschen Ausgangstext zurueck. Optionale {platzhalter} werden ersetzt.
+function t(s, params) {
+  var out = (window.I18N && window.I18N[s]) || s;
+  if (params) {
+    Object.keys(params).forEach(function (k) {
+      out = out.replace('{' + k + '}', params[k]);
+    });
+  }
+  return out;
+}
+
 function announce(msg) {
   const el = byId('liveRegion');
   if (el) el.textContent = msg;
@@ -26,13 +39,13 @@ async function loadCurrentUser() {
   currentUser = data.user || null;
   const greeting = byId('greeting');
   if (greeting && currentUser) {
-    greeting.textContent = currentUser.display_name ? `Hallo, ${currentUser.display_name}` : 'Willkommen';
+    greeting.textContent = currentUser.display_name ? (t('Hallo') + ', ' + currentUser.display_name) : t('Willkommen');
   }
   // Tageslimit auf der Startseite anzeigen (falls das Element vorhanden ist)
   const limitInfo = byId('dailyLimitInfo');
   const dl = data.daily_limit;
   if (limitInfo && dl) {
-    limitInfo.textContent = `Heute ${dl.used} von ${dl.limit} Bildern genutzt – noch ${dl.remaining} übrig.`;
+    limitInfo.textContent = t('Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig.', { used: dl.used, limit: dl.limit, remaining: dl.remaining });
   }
   return currentUser;
 }
@@ -46,12 +59,12 @@ async function loadCurrentUser() {
 // Die rechtlichen Footer-Links Impressum | Datenschutz | Nutzungsbedingungen
 // (juristische Bezeichnung) bleiben unverändert.
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Startseite' },
-  { href: '/projekt-neu', label: 'Neues Projekt anlegen' },
-  { href: '/projekte', label: 'Meine Projekte' },
-  { href: '/einstellungen', label: 'Einstellungen' },
-  { href: '/datensicherheit', label: 'Datensicherheit' },
-  { href: '/benutzer', label: 'Benutzerverwaltung', admin: true },
+  { href: '/dashboard', label: t('Startseite') },
+  { href: '/projekt-neu', label: t('Neues Projekt anlegen') },
+  { href: '/projekte', label: t('Meine Projekte') },
+  { href: '/einstellungen', label: t('Einstellungen') },
+  { href: '/datensicherheit', label: t('Datensicherheit') },
+  { href: '/benutzer', label: t('Benutzerverwaltung'), admin: true },
 ];
 
 function renderSidebar() {
@@ -74,7 +87,7 @@ function renderSidebar() {
   }
 
   const nav = document.createElement('nav');
-  nav.setAttribute('aria-label', 'Hauptnavigation');
+  nav.setAttribute('aria-label', t('Hauptnavigation'));
   const ul = document.createElement('ul');
   ul.className = 'app-nav';
   NAV_ITEMS.forEach((it) => {
@@ -94,7 +107,7 @@ function renderSidebar() {
   const btn = document.createElement('button');
   btn.id = 'logoutBtn';
   btn.type = 'button';
-  btn.textContent = 'Abmelden';
+  btn.textContent = t('Abmelden');
   btn.addEventListener('click', async () => {
     await fetch('/api/logout', { method: 'POST' });
     window.location.href = '/';
@@ -116,9 +129,9 @@ function renderSidebar() {
 // und Unterstützungsblock), damit die Reihenfolge der bereits abgenommenen
 // Übersichtsseiten erhalten bleibt: Links -> DSGVO-Hinweis -> Unterstützung.
 const LEGAL_LINKS = [
-  { href: '/impressum-app', label: 'Impressum' },
-  { href: '/datensicherheit', label: 'Datenschutz' },
-  { href: '/nutzungsbedingungen-app', label: 'Nutzungsbedingungen' },
+  { href: '/impressum-app', label: t('Impressum') },
+  { href: '/datensicherheit', label: t('Datenschutz') },
+  { href: '/nutzungsbedingungen-app', label: t('Nutzungsbedingungen') },
 ];
 function renderLegalLinks() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {
@@ -144,17 +157,17 @@ function renderSupportFooter() {
     sec.className = 'dash-support';
     const p = document.createElement('p');
     p.className = 'dash-support-text';
-    p.textContent = 'InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.';
+    p.textContent = t('InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.');
     const a = document.createElement('a');
     a.className = 'dash-support-link';
     a.href = 'https://www.paypal.com/donate?business=steve.weidel%40gmail.com&item_name=InkluDocs+-+Freiwilliger+Beitrag&currency_code=EUR';
     a.target = '_blank';
     a.rel = 'noopener';
-    a.textContent = 'InkluDocs per PayPal unterstützen';
-    a.setAttribute('aria-label', 'InkluDocs per PayPal unterstützen, öffnet in neuem Tab');
+    a.textContent = t('InkluDocs per PayPal unterstützen');
+    a.setAttribute('aria-label', t('InkluDocs per PayPal unterstützen, öffnet in neuem Tab'));
     const note = document.createElement('p');
     note.className = 'dash-support-note';
-    note.textContent = 'Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen.';
+    note.textContent = t('Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen.');
     sec.appendChild(p);
     sec.appendChild(a);
     sec.appendChild(note);
@@ -170,9 +183,9 @@ function renderLegalNote() {
     const p = document.createElement('p');
     p.className = 'dsgvo-note';
     const strong = document.createElement('strong');
-    strong.textContent = 'DSGVO-konform – Verarbeitung in der EU.';
+    strong.textContent = t('DSGVO-konform – Verarbeitung in der EU.');
     p.appendChild(strong);
-    p.appendChild(document.createTextNode(' Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.'));
+    p.appendChild(document.createTextNode(t(' Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.')));
     footer.appendChild(p);
   });
 }
