@@ -74,3 +74,65 @@ msgstr "Sprache"
 
 msgid "Sprache wechseln"
 msgstr "Sprache wechseln"
+
+# Einstellungen-Seite + Sprach-Menue (01.07.2026)
+msgid "Zum Hauptinhalt springen"
+msgstr "Zum Hauptinhalt springen"
+
+msgid "Einstellungen"
+msgstr "Einstellungen"
+
+msgid "Sprache der Oberflaeche"
+msgstr "Sprache der Oberfläche"
+
+msgid "Sprache fuer Menues, Schaltflaechen und Meldungen. Ihre Wahl wird am Konto gespeichert und gilt bei jeder Anmeldung. Die Sprache der generierten Alt-Texte ist davon unabhaengig."
+msgstr "Sprache für Menüs, Schaltflächen und Meldungen. Ihre Wahl wird am Konto gespeichert und gilt bei jeder Anmeldung. Die Sprache der generierten Alt-Texte ist davon unabhängig."
+
+msgid "Sprache waehlen"
+msgstr "Sprache wählen"
+
+msgid "Passwort aendern"
+msgstr "Passwort ändern"
+
+msgid "Aktuelles Passwort"
+msgstr "Aktuelles Passwort"
+
+msgid "Neues Passwort (mind. 8 Zeichen)"
+msgstr "Neues Passwort (mind. 8 Zeichen)"
+
+msgid "Neues Passwort wiederholen"
+msgstr "Neues Passwort wiederholen"
+
+msgid "Kontoinformationen"
+msgstr "Kontoinformationen"
+
+msgid "Wird geladen ..."
+msgstr "Wird geladen …"
+
+msgid "API-Schluessel"
+msgstr "API-Schlüssel"
+
+msgid "Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren."
+msgstr "Mit API-Schlüsseln können externe Anwendungen Alt-Texte generieren."
+
+msgid "Neuen Schluessel erstellen"
+msgstr "Neuen Schlüssel erstellen"
+
+msgid "Erstellen"
+msgstr "Erstellen"
+
+msgid "Name fuer neuen API-Schluessel"
+msgstr "Name für neuen API-Schlüssel"
+
+msgid "Name (z. B. Meine App)"
+msgstr "Name (z. B. Meine App)"
+
+msgid "Geben Sie einen Namen ein, um den Schluessel spaeter zuordnen zu koennen."
+msgstr "Geben Sie einen Namen ein, um den Schlüssel später zuordnen zu können."
+
+msgid "Meine API-Schluessel"
+msgstr "Meine API-Schlüssel"
+
+msgid "API-Schluessel bearbeiten"
+msgstr "API-Schlüssel bearbeiten"
+

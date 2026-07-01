@@ -71,3 +71,65 @@ msgstr "Langue"
 
 msgid "Sprache wechseln"
 msgstr "Changer de langue"
+
+# Einstellungen-Seite + Sprach-Menue (01.07.2026)
+msgid "Zum Hauptinhalt springen"
+msgstr "Aller au contenu principal"
+
+msgid "Einstellungen"
+msgstr "Paramètres"
+
+msgid "Sprache der Oberflaeche"
+msgstr "Langue de l'interface"
+
+msgid "Sprache fuer Menues, Schaltflaechen und Meldungen. Ihre Wahl wird am Konto gespeichert und gilt bei jeder Anmeldung. Die Sprache der generierten Alt-Texte ist davon unabhaengig."
+msgstr "Langue des menus, boutons et messages. Votre choix est enregistré sur votre compte et s'applique à chaque connexion. La langue des textes alternatifs générés en est indépendante."
+
+msgid "Sprache waehlen"
+msgstr "Choisir la langue"
+
+msgid "Passwort aendern"
+msgstr "Changer le mot de passe"
+
+msgid "Aktuelles Passwort"
+msgstr "Mot de passe actuel"
+
+msgid "Neues Passwort (mind. 8 Zeichen)"
+msgstr "Nouveau mot de passe (8 caractères min.)"
+
+msgid "Neues Passwort wiederholen"
+msgstr "Répéter le nouveau mot de passe"
+
+msgid "Kontoinformationen"
+msgstr "Informations du compte"
+
+msgid "Wird geladen ..."
+msgstr "Chargement …"
+
+msgid "API-Schluessel"
+msgstr "Clés API"
+
+msgid "Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren."
+msgstr "Les clés API permettent à des applications externes de générer des textes alternatifs."
+
+msgid "Neuen Schluessel erstellen"
+msgstr "Créer une nouvelle clé"
+
+msgid "Erstellen"
+msgstr "Créer"
+
+msgid "Name fuer neuen API-Schluessel"
+msgstr "Nom de la nouvelle clé API"
+
+msgid "Name (z. B. Meine App)"
+msgstr "Nom (p. ex. Mon appli)"
+
+msgid "Geben Sie einen Namen ein, um den Schluessel spaeter zuordnen zu koennen."
+msgstr "Saisissez un nom pour pouvoir identifier la clé plus tard."
+
+msgid "Meine API-Schluessel"
+msgstr "Mes clés API"
+
+msgid "API-Schluessel bearbeiten"
+msgstr "Modifier la clé API"
+

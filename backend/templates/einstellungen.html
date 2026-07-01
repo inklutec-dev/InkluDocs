@@ -1,0 +1,264 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Einstellungen') }} · InkluDocs{% endblock %}
+{% block main %}
+      <h1>{{ _('Einstellungen') }}</h1>
+
+      <section class="dash-card" aria-labelledby="lang-h">
+        <h2 id="lang-h">{{ _('Sprache der Oberflaeche') }}</h2>
+        <p class="dash-meta">{{ _('Sprache fuer Menues, Schaltflaechen und Meldungen. Ihre Wahl wird am Konto gespeichert und gilt bei jeder Anmeldung. Die Sprache der generierten Alt-Texte ist davon unabhaengig.') }}</p>
+        <nav aria-label="{{ _('Sprache waehlen') }}" class="lang-choice">
+          <ul>
+            {% for code in supported_languages %}
+            <li>
+              <a href="/set-language/{{ code }}"
+                 class="lang-option{% if code == current_lang %} is-current{% endif %}"
+                 {% if code == current_lang %}aria-current="true"{% endif %}>
+                {{ language_labels[code] }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </nav>
+      </section>
+
+      <section class="dash-card" aria-labelledby="pw-h">
+        <h2 id="pw-h">{{ _('Passwort aendern') }}</h2>
+        <form id="changePwForm" novalidate>
+          <div class="dash-field">
+            <label for="old_password">{{ _('Aktuelles Passwort') }}</label>
+            <input type="password" id="old_password" class="dash-input" required autocomplete="current-password">
+          </div>
+          <div class="dash-field">
+            <label for="new_password">{{ _('Neues Passwort (mind. 8 Zeichen)') }}</label>
+            <input type="password" id="new_password" class="dash-input" required minlength="8" autocomplete="new-password">
+          </div>
+          <div class="dash-field">
+            <label for="new_password2">{{ _('Neues Passwort wiederholen') }}</label>
+            <input type="password" id="new_password2" class="dash-input" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn-primary">{{ _('Passwort aendern') }}</button>
+          <span id="pwMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        </form>
+      </section>
+
+      <section class="dash-card" aria-labelledby="konto-h">
+        <h2 id="konto-h">{{ _('Kontoinformationen') }}</h2>
+        <p id="accountInfo" class="dash-meta">{{ _('Wird geladen ...') }}</p>
+      </section>
+
+      <section class="dash-card" aria-labelledby="api-h">
+        <h2 id="api-h">{{ _('API-Schluessel') }}</h2>
+        <p class="dash-meta">{{ _('Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren.') }}</p>
+        <div style="margin-top:1rem;">
+          <h3>{{ _('Neuen Schluessel erstellen') }}</h3>
+          <div style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+            <label for="newKeyName" class="sr-only">{{ _('Name fuer neuen API-Schluessel') }}</label>
+            <input type="text" id="newKeyName" class="dash-input" style="max-width:260px;" placeholder="{{ _('Name (z. B. Meine App)') }}" aria-describedby="newKeyHint">
+            <button type="button" class="btn btn-primary" onclick="createApiKey()">{{ _('Erstellen') }}</button>
+          </div>
+          <p id="newKeyHint" class="sr-only">{{ _('Geben Sie einen Namen ein, um den Schluessel spaeter zuordnen zu koennen.') }}</p>
+          <div id="newKeyResult" role="status" aria-live="polite" style="margin-top:.5rem;"></div>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <h3 id="myKeysHeading">{{ _('Meine API-Schluessel') }} <span id="apiKeyCount" style="color:var(--text-muted);font-weight:normal;"></span></h3>
+          <div id="apiKeyList" aria-live="polite" aria-labelledby="myKeysHeading" role="region" style="margin-top:.5rem;"></div>
+        </div>
+        <div id="apiKeyEditOverlay" style="display:none;margin-top:1rem;" role="dialog" aria-label="{{ _('API-Schluessel bearbeiten') }}"></div>
+      </section>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  (async function loadAccount() {
+    const res = await fetch('/api/me');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    const u = data.user || {};
+    byId('accountInfo').textContent = `Angemeldet als: ${u.display_name || ''} (${u.email || ''})`;
+  })();
+
+  byId('changePwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = byId('pwMsg');
+    msg.textContent = ''; msg.style.color = '';
+    const old_password = byId('old_password').value;
+    const new_password = byId('new_password').value;
+    const new_password2 = byId('new_password2').value;
+    if (new_password.length < 8) { msg.textContent = 'Mindestens 8 Zeichen'; msg.style.color = 'var(--error)'; return; }
+    if (new_password !== new_password2) { msg.textContent = 'Passwörter stimmen nicht überein'; msg.style.color = 'var(--error)'; return; }
+    const res = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old_password, new_password }),
+    });
+    if (res.ok) {
+      msg.textContent = 'Passwort geändert!'; msg.style.color = 'var(--success)';
+      announce('Passwort wurde geändert');
+      byId('changePwForm').reset();
+    } else {
+      const d = await res.json();
+      msg.textContent = d.detail || 'Fehler'; msg.style.color = 'var(--error)';
+    }
+  });
+
+  async function loadApiKeys() {
+    const list = byId('apiKeyList');
+    const countEl = byId('apiKeyCount');
+    if (!list) return;
+    const res = await fetch('/api/api-keys');
+    if (!res.ok) return;
+    const data = await res.json();
+    const keys = data.api_keys || [];
+    if (countEl) countEl.textContent = '(' + keys.length + ')';
+    list.innerHTML = '';
+    if (keys.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-meta';
+      p.textContent = 'Noch keine API-Schlüssel vorhanden.';
+      list.appendChild(p);
+      return;
+    }
+    const ul = document.createElement('ul');
+    ul.setAttribute('role', 'list');
+    ul.style.cssText = 'list-style:none;padding:0;margin:0;';
+    keys.forEach((k) => {
+      const li = document.createElement('li');
+      li.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border);flex-wrap:wrap;';
+      const info = document.createElement('div');
+      const strong = document.createElement('strong');
+      strong.textContent = k.name;
+      info.appendChild(strong);
+      const created = document.createElement('span');
+      created.className = 'dash-meta'; created.style.marginLeft = '.5rem';
+      created.textContent = 'Erstellt: ' + formatDate(k.created_at);
+      info.appendChild(created);
+      if (k.last_used) {
+        const used = document.createElement('span');
+        used.className = 'dash-meta'; used.style.marginLeft = '.5rem';
+        used.textContent = 'Zuletzt verwendet: ' + formatDate(k.last_used);
+        info.appendChild(used);
+      }
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-secondary btn-small';
+      editBtn.textContent = 'Bearbeiten';
+      editBtn.addEventListener('click', () => showEditApiKey(k.id, k.name));
+      li.appendChild(info);
+      li.appendChild(editBtn);
+      ul.appendChild(li);
+    });
+    list.appendChild(ul);
+  }
+
+  function showEditApiKey(id, currentName) {
+    const overlay = byId('apiKeyEditOverlay');
+    overlay.style.display = 'block';
+    overlay.innerHTML = '';
+    const box = document.createElement('div');
+    box.className = 'dash-card'; box.style.border = '2px solid var(--primary)';
+    const h = document.createElement('h3'); h.textContent = 'Schlüssel bearbeiten: ' + currentName;
+    const field = document.createElement('div'); field.className = 'dash-field';
+    const lab = document.createElement('label'); lab.setAttribute('for', 'editKeyName'); lab.textContent = 'Name';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.id = 'editKeyName'; inp.className = 'dash-input'; inp.value = currentName;
+    field.appendChild(lab); field.appendChild(inp);
+    const actions = document.createElement('div'); actions.className = 'dash-actions';
+    const save = document.createElement('button'); save.className = 'btn btn-primary'; save.textContent = 'Name speichern';
+    save.addEventListener('click', () => saveApiKeyName(id));
+    const del = document.createElement('button'); del.className = 'btn btn-danger'; del.textContent = 'Schlüssel löschen';
+    del.addEventListener('click', () => deleteApiKey(id, currentName));
+    const cancel = document.createElement('button'); cancel.className = 'btn btn-secondary'; cancel.textContent = 'Abbrechen';
+    cancel.addEventListener('click', closeEditApiKey);
+    actions.appendChild(save); actions.appendChild(del); actions.appendChild(cancel);
+    const msg = document.createElement('div'); msg.id = 'editKeyMsg'; msg.setAttribute('role', 'status'); msg.setAttribute('aria-live', 'polite'); msg.style.marginTop = '.5rem';
+    box.appendChild(h); box.appendChild(field); box.appendChild(actions); box.appendChild(msg);
+    overlay.appendChild(box);
+    inp.focus();
+    announce('Bearbeitung für ' + currentName + ' geöffnet.');
+  }
+
+  function closeEditApiKey() {
+    const overlay = byId('apiKeyEditOverlay');
+    overlay.style.display = 'none'; overlay.innerHTML = '';
+    announce('Bearbeitung geschlossen.');
+  }
+
+  async function saveApiKeyName(id) {
+    const nameInput = byId('editKeyName');
+    const msg = byId('editKeyMsg');
+    const newName = nameInput.value.trim();
+    if (!newName) { nameInput.focus(); return; }
+    const res = await fetch('/api/api-keys/' + id, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }),
+    });
+    if (res.ok) { announce('Name geändert zu: ' + newName); closeEditApiKey(); loadApiKeys(); }
+    else { const d = await res.json(); if (msg) { msg.textContent = d.detail || 'Fehler beim Speichern.'; msg.style.color = 'var(--error)'; } }
+  }
+
+  async function createApiKey() {
+    const nameInput = byId('newKeyName');
+    const result = byId('newKeyResult');
+    const name = nameInput.value.trim();
+    if (!name) { nameInput.focus(); return; }
+    const res = await fetch('/api/api-keys', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      result.innerHTML = '';
+      const box = document.createElement('div');
+      box.setAttribute('role', 'alert'); box.className = 'dash-card'; box.style.border = '2px solid var(--primary)';
+      const h = document.createElement('h3'); h.textContent = 'Neuer Schlüssel erstellt';
+      const hint = document.createElement('p'); hint.className = 'dash-meta';
+      hint.textContent = 'Dieser Schlüssel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern.';
+      const code = document.createElement('code');
+      code.id = 'apiKeyValue';
+      code.style.cssText = 'word-break:break-all;font-size:.9rem;user-select:all;display:block;margin:.5rem 0;padding:.5rem;background:#fff;border:1px solid var(--border);border-radius:4px;';
+      code.setAttribute('aria-label', 'API-Schlüssel'); code.textContent = data.api_key;
+      const actions = document.createElement('div'); actions.className = 'dash-actions';
+      const copy = document.createElement('button'); copy.className = 'btn btn-primary'; copy.textContent = 'Schlüssel kopieren';
+      copy.addEventListener('click', copyApiKey);
+      const close = document.createElement('button'); close.className = 'btn btn-secondary'; close.textContent = 'Zurück zur Übersicht';
+      close.addEventListener('click', closeNewKeyResult);
+      actions.appendChild(copy); actions.appendChild(close);
+      box.appendChild(h); box.appendChild(hint); box.appendChild(code); box.appendChild(actions);
+      result.appendChild(box);
+      nameInput.value = '';
+      announce('Neuer API-Schlüssel erstellt. Bitte jetzt kopieren.');
+      loadApiKeys();
+    } else {
+      result.textContent = 'Fehler beim Erstellen.';
+    }
+  }
+
+  function closeNewKeyResult() {
+    byId('newKeyResult').innerHTML = '';
+    announce('Schlüssel-Anzeige geschlossen.');
+    byId('newKeyName').focus();
+  }
+
+  function copyApiKey() {
+    const key = byId('apiKeyValue');
+    if (!key) return;
+    navigator.clipboard.writeText(key.textContent).then(() => {
+      announce('API-Schlüssel wurde in die Zwischenablage kopiert.');
+    }).catch(() => {
+      const range = document.createRange();
+      range.selectNodeContents(key);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      announce('Schlüssel markiert. Bitte mit Befehl-C kopieren.');
+    });
+  }
+
+  async function deleteApiKey(id, keyName) {
+    const m = 'API-Schlüssel "' + (keyName || 'Unbenannt') + '" wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff.';
+    if (!confirm(m)) return;
+    const res = await fetch('/api/api-keys/' + id, { method: 'DELETE' });
+    if (res.ok) { announce('API-Schlüssel gelöscht.'); closeEditApiKey(); loadApiKeys(); }
+    else { announce('Fehler beim Löschen.'); }
+  }
+
+  loadApiKeys();
+{% endraw %}
+</script>
+  <script src="/static/pwtoggle.js" defer></script>
+{% endblock %}

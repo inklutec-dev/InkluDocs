@@ -90,3 +90,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .dash-news-more summary { cursor:pointer; color:#c75000; font-weight:600; padding:.3rem 0; }
 .dash-news-more summary:focus-visible { outline:2px solid #c75000; outline-offset:2px; }
 .dash-news-more .dash-news-list { margin-top:.6rem; }
+
+
+/* Sprach-Auswahl in den Einstellungen (01.07.2026) - natives Link-Menue.
+   Aktiver Zustand + Fokus in AA-tauglichem Orange #c75000 (4.59:1 auf Weiss). */
+.lang-choice ul { list-style: none; margin: .75rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.lang-choice li { margin: 0; }
+.lang-option { display: inline-block; padding: .5rem .9rem; border: 2px solid var(--border, #ccc); border-radius: 8px; text-decoration: none; color: var(--text, #1a1a1a); background: #fff; line-height: 1.2; }
+.lang-option:hover { border-color: #c75000; }
+.lang-option:focus-visible { outline: 3px solid #c75000; outline-offset: 2px; }
+.lang-option.is-current { border-color: #c75000; background: #c75000; color: #fff; font-weight: 700; }

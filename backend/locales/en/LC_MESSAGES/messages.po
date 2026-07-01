@@ -71,3 +71,65 @@ msgstr "Language"
 
 msgid "Sprache wechseln"
 msgstr "Change language"
+
+# Einstellungen-Seite + Sprach-Menue (01.07.2026)
+msgid "Zum Hauptinhalt springen"
+msgstr "Skip to main content"
+
+msgid "Einstellungen"
+msgstr "Settings"
+
+msgid "Sprache der Oberflaeche"
+msgstr "Interface language"
+
+msgid "Sprache fuer Menues, Schaltflaechen und Meldungen. Ihre Wahl wird am Konto gespeichert und gilt bei jeder Anmeldung. Die Sprache der generierten Alt-Texte ist davon unabhaengig."
+msgstr "Language for menus, buttons and messages. Your choice is saved to your account and applies every time you sign in. The language of the generated alt texts is independent of this."
+
+msgid "Sprache waehlen"
+msgstr "Choose language"
+
+msgid "Passwort aendern"
+msgstr "Change password"
+
+msgid "Aktuelles Passwort"
+msgstr "Current password"
+
+msgid "Neues Passwort (mind. 8 Zeichen)"
+msgstr "New password (min. 8 characters)"
+
+msgid "Neues Passwort wiederholen"
+msgstr "Repeat new password"
+
+msgid "Kontoinformationen"
+msgstr "Account information"
+
+msgid "Wird geladen ..."
+msgstr "Loading …"
+
+msgid "API-Schluessel"
+msgstr "API keys"
+
+msgid "Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren."
+msgstr "API keys let external applications generate alt texts."
+
+msgid "Neuen Schluessel erstellen"
+msgstr "Create a new key"
+
+msgid "Erstellen"
+msgstr "Create"
+
+msgid "Name fuer neuen API-Schluessel"
+msgstr "Name for the new API key"
+
+msgid "Name (z. B. Meine App)"
+msgstr "Name (e.g. My App)"
+
+msgid "Geben Sie einen Namen ein, um den Schluessel spaeter zuordnen zu koennen."
+msgstr "Enter a name so you can identify the key later."
+
+msgid "Meine API-Schluessel"
+msgstr "My API keys"
+
+msgid "API-Schluessel bearbeiten"
+msgstr "Edit API key"
+

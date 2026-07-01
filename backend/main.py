@@ -3851,6 +3851,38 @@ def _serve_protected_page(request: Request, filename: str):
     return html
 
 
+def resolve_ui_language(request: Request) -> str:
+    """Ermittelt die anzuzeigende UI-Sprache fuer diesen Request.
+
+    Eingeloggte Nutzer: Praeferenz aus users.language (Stufe 1 der Erkennung).
+    Sonst faellt detect_language auf Cookie -> Browser-Header -> Deutsch zurueck.
+    """
+    user = get_optional_user(request)
+    user_lang = None
+    if user:
+        db_user = get_user_by_id(user["id"])
+        if db_user:
+            user_lang = db_user.get("language")
+    return detect_language(request, user_language=user_lang)
+
+
+def _render_protected_template(request: Request, template_name: str, **extra):
+    """Wie _serve_protected_page, aber rendert ein Jinja2-Template mit
+    Sprach-Aufloesung. Fuer bereits auf i18n migrierte, eingeloggte Seiten."""
+    token = request.cookies.get("token")
+    if not token:
+        return RedirectResponse("/")
+    try:
+        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return RedirectResponse("/")
+    lang = resolve_ui_language(request)
+    return templates.TemplateResponse(
+        template_name,
+        template_context(request, lang, is_staging=("staging" in BASE_URL), **extra),
+    )
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
     return _serve_protected_page(request, "dashboard.html")
@@ -3868,7 +3900,7 @@ async def new_project_page(request: Request):
 
 @app.get("/einstellungen", response_class=HTMLResponse)
 async def settings_page(request: Request):
-    return _serve_protected_page(request, "einstellungen.html")
+    return _render_protected_template(request, "einstellungen.html")
 
 
 @app.get("/benutzer", response_class=HTMLResponse)
