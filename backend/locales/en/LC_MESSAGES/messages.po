@@ -183,3 +183,125 @@ msgstr "GDPR-compliant – processed in the EU."
 msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 msgstr " Hosted by Hetzner Online (Falkenstein, Germany). AI processing runs via Amazon Bedrock (Claude model by Anthropic) in data centres within the EU; Amazon Bedrock does not share content with the model provider and does not use it for training. Details in our privacy policy."
 
+
+# Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
+msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
+msgstr "Good to see you. Choose an action on the left or open a project."
+
+msgid "Neuigkeiten"
+msgstr "News"
+
+msgid "Rückmeldungen vom Kunden"
+msgstr "Client feedback"
+
+msgid "Zuletzt bearbeitete Projekte"
+msgstr "Recently edited projects"
+
+msgid "Schließen"
+msgstr "Close"
+
+msgid "Projekte werden geladen …"
+msgstr "Loading projects …"
+
+msgid "Projektname"
+msgstr "Project name"
+
+msgid "z. B. Geschäftsbericht 2026 oder Mein Projekt"
+msgstr "e.g. Annual Report 2026 or My Project"
+
+msgid "Werkzeug"
+msgstr "Tool"
+
+msgid "Bestimmt, womit das Projekt bearbeitet wird."
+msgstr "Determines which tool the project is edited with."
+
+msgid "Projekt anlegen"
+msgstr "Create project"
+
+# Seiten-JS Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
+msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Projects could not be loaded. Please try again later."
+
+msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
+msgstr "No projects yet. Create your first one via “Create new project” on the left."
+
+msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
+msgstr "No projects yet. Create your first one via “Create new project”."
+
+msgid "Unbenanntes Projekt"
+msgstr "Untitled project"
+
+msgid "{tool} · angelegt am {datum}"
+msgstr "{tool} · created on {datum}"
+
+msgid "Alle Projekte anzeigen"
+msgstr "Show all projects"
+
+msgid "{n} aktuelle Projekte geladen."
+msgstr "{n} recent projects loaded."
+
+msgid "Zurzeit keine Neuigkeiten."
+msgstr "No news at the moment."
+
+msgid "Frühere Neuigkeiten"
+msgstr "Earlier news"
+
+msgid "Neuigkeiten ({n})"
+msgstr "News ({n})"
+
+msgid "Du bist auf dem aktuellen Stand"
+msgstr "You are up to date"
+
+msgid "Kunde: {namen}"
+msgstr "Client: {namen}"
+
+msgid "Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})"
+msgstr "To review: {offen} · To revise: {ueberarbeiten} · Approved: {freigegeben} (of {gesamt})"
+
+msgid "Umbenennen"
+msgstr "Rename"
+
+msgid "Löschen"
+msgstr "Delete"
+
+msgid "Neuer Projektname:"
+msgstr "New project name:"
+
+msgid "Bitte einen Namen eingeben."
+msgstr "Please enter a name."
+
+msgid "Projekt umbenannt in {name}"
+msgstr "Project renamed to {name}"
+
+msgid "Umbenennen fehlgeschlagen."
+msgstr "Renaming failed."
+
+msgid "Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?"
+msgstr "Really delete the project “{name}” and all of its data?"
+
+msgid "Projekt gelöscht"
+msgstr "Project deleted"
+
+msgid "Löschen fehlgeschlagen."
+msgstr "Deleting failed."
+
+msgid "{n} Projekte geladen."
+msgstr "{n} projects loaded."
+
+msgid "Bitte einen Projektnamen eingeben."
+msgstr "Please enter a project name."
+
+msgid "Bitte ein Werkzeug auswählen."
+msgstr "Please choose a tool."
+
+msgid "Projekt wird angelegt …"
+msgstr "Creating project …"
+
+msgid "Angelegt – wird geöffnet …"
+msgstr "Created – opening …"
+
+msgid "Anlegen fehlgeschlagen."
+msgstr "Creating the project failed."
+
+msgid "Netzwerkfehler. Bitte erneut versuchen."
+msgstr "Network error. Please try again."

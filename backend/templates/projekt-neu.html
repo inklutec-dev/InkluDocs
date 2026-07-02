@@ -1,0 +1,85 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Neues Projekt anlegen') }} · InkluDocs{% endblock %}
+{% block main %}
+      <h1>{{ _('Neues Projekt anlegen') }}</h1>
+      <form id="newProjectForm">
+        <div class="dash-field">
+          <label for="projectName">{{ _('Projektname') }}</label>
+          <span class="dash-hint" id="projectNameHint">{{ _('z. B. Geschäftsbericht 2026 oder Mein Projekt') }}</span>
+          <input type="text" id="projectName" class="dash-input" required maxlength="120"
+                 aria-describedby="projectNameHint" autocomplete="off">
+        </div>
+        <div class="dash-field">
+          <label for="toolSelect">{{ _('Werkzeug') }}</label>
+          <span class="dash-hint" id="toolHint">{{ _('Bestimmt, womit das Projekt bearbeitet wird.') }}</span>
+          <select id="toolSelect" class="dash-select" aria-describedby="toolHint"></select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="createBtn">{{ _('Projekt anlegen') }}</button>
+        <span id="createStatus" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+      </form>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  async function loadTools() {
+    const res = await fetch('/api/tools');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    const sel = byId('toolSelect');
+    sel.innerHTML = '';
+    const tools = data.tools || [];
+    tools.forEach((tool) => {
+      const opt = document.createElement('option');
+      if (tool.is_available) {
+        opt.value = tool.key;
+        opt.textContent = tool.name;
+      } else {
+        opt.value = '';
+        opt.disabled = true;
+        opt.textContent = `${tool.name} (${tool.status_label})`;
+      }
+      sel.appendChild(opt);
+    });
+    const firstAvail = tools.find((tool) => tool.is_available);
+    if (firstAvail) sel.value = firstAvail.key;
+  }
+
+  byId('newProjectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = byId('createStatus');
+    const btn = byId('createBtn');
+    const name = byId('projectName').value.trim();
+    const tool = byId('toolSelect').value;
+    if (!name) { status.style.color = 'var(--error)'; status.textContent = t('Bitte einen Projektnamen eingeben.'); byId('projectName').focus(); return; }
+    if (!tool) { status.style.color = 'var(--error)'; status.textContent = t('Bitte ein Werkzeug auswählen.'); return; }
+    btn.disabled = true;
+    status.style.color = '';
+    status.textContent = t('Projekt wird angelegt …');
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, tool }),
+      });
+      if (res.status === 401) { window.location.href = '/'; return; }
+      const data = await res.json();
+      if (res.ok && data.project_id) {
+        status.style.color = 'var(--success)';
+        status.textContent = t('Angelegt – wird geöffnet …');
+        window.location.href = '/app?projekt=' + encodeURIComponent(data.project_id);
+      } else {
+        btn.disabled = false;
+        status.style.color = 'var(--error)';
+        status.textContent = data.detail || t('Anlegen fehlgeschlagen.');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      status.style.color = 'var(--error)';
+      status.textContent = t('Netzwerkfehler. Bitte erneut versuchen.');
+    }
+  });
+
+  loadTools();
+{% endraw %}
+</script>
+{% endblock %}

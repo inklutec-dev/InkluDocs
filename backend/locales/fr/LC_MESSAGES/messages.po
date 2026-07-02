@@ -183,3 +183,125 @@ msgstr "Conforme au RGPD – traitement dans l'UE."
 msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 msgstr " Hébergement chez Hetzner Online (Falkenstein, Allemagne). Le traitement par IA s'effectue via Amazon Bedrock (modèle Claude d'Anthropic) dans des centres de données situés dans l'UE ; Amazon Bedrock ne transmet aucun contenu au fournisseur du modèle et ne l'utilise pas pour l'entraînement. Détails dans notre politique de confidentialité."
 
+
+# Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026) — Erst-Uebersetzung, QA durch Muttersprachler offen
+msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
+msgstr "Nous sommes ravis de vous revoir. Choisissez une action à gauche ou ouvrez un projet."
+
+msgid "Neuigkeiten"
+msgstr "Nouveautés"
+
+msgid "Rückmeldungen vom Kunden"
+msgstr "Retours du client"
+
+msgid "Zuletzt bearbeitete Projekte"
+msgstr "Projets modifiés récemment"
+
+msgid "Schließen"
+msgstr "Fermer"
+
+msgid "Projekte werden geladen …"
+msgstr "Chargement des projets …"
+
+msgid "Projektname"
+msgstr "Nom du projet"
+
+msgid "z. B. Geschäftsbericht 2026 oder Mein Projekt"
+msgstr "p. ex. Rapport annuel 2026 ou Mon projet"
+
+msgid "Werkzeug"
+msgstr "Outil"
+
+msgid "Bestimmt, womit das Projekt bearbeitet wird."
+msgstr "Détermine avec quel outil le projet sera traité."
+
+msgid "Projekt anlegen"
+msgstr "Créer le projet"
+
+# Seiten-JS Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
+msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Impossible de charger les projets. Veuillez réessayer plus tard."
+
+msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Aucun projet pour l’instant. Créez votre premier projet via « Créer un projet » à gauche."
+
+msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Aucun projet pour l’instant. Créez votre premier projet via « Créer un projet »."
+
+msgid "Unbenanntes Projekt"
+msgstr "Projet sans titre"
+
+msgid "{tool} · angelegt am {datum}"
+msgstr "{tool} · créé le {datum}"
+
+msgid "Alle Projekte anzeigen"
+msgstr "Afficher tous les projets"
+
+msgid "{n} aktuelle Projekte geladen."
+msgstr "{n} projets récents chargés."
+
+msgid "Zurzeit keine Neuigkeiten."
+msgstr "Aucune nouveauté pour le moment."
+
+msgid "Frühere Neuigkeiten"
+msgstr "Nouveautés précédentes"
+
+msgid "Neuigkeiten ({n})"
+msgstr "Nouveautés ({n})"
+
+msgid "Du bist auf dem aktuellen Stand"
+msgstr "Vous êtes à jour"
+
+msgid "Kunde: {namen}"
+msgstr "Client : {namen}"
+
+msgid "Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})"
+msgstr "À vérifier : {offen} · À retravailler : {ueberarbeiten} · Validés : {freigegeben} (sur {gesamt})"
+
+msgid "Umbenennen"
+msgstr "Renommer"
+
+msgid "Löschen"
+msgstr "Supprimer"
+
+msgid "Neuer Projektname:"
+msgstr "Nouveau nom du projet :"
+
+msgid "Bitte einen Namen eingeben."
+msgstr "Veuillez saisir un nom."
+
+msgid "Projekt umbenannt in {name}"
+msgstr "Projet renommé en {name}"
+
+msgid "Umbenennen fehlgeschlagen."
+msgstr "Échec du renommage."
+
+msgid "Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?"
+msgstr "Supprimer vraiment le projet « {name} » et toutes les données associées ?"
+
+msgid "Projekt gelöscht"
+msgstr "Projet supprimé"
+
+msgid "Löschen fehlgeschlagen."
+msgstr "Échec de la suppression."
+
+msgid "{n} Projekte geladen."
+msgstr "{n} projets chargés."
+
+msgid "Bitte einen Projektnamen eingeben."
+msgstr "Veuillez saisir un nom de projet."
+
+msgid "Bitte ein Werkzeug auswählen."
+msgstr "Veuillez choisir un outil."
+
+msgid "Projekt wird angelegt …"
+msgstr "Création du projet …"
+
+msgid "Angelegt – wird geöffnet …"
+msgstr "Créé – ouverture …"
+
+msgid "Anlegen fehlgeschlagen."
+msgstr "Échec de la création."
+
+msgid "Netzwerkfehler. Bitte erneut versuchen."
+msgstr "Erreur réseau. Veuillez réessayer."

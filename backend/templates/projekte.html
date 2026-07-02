@@ -1,0 +1,114 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Meine Projekte') }} · InkluDocs{% endblock %}
+{% block main %}
+      <h1>{{ _('Meine Projekte') }}</h1>
+      <div id="projectsContainer" aria-busy="true">
+        <p class="dash-sub">{{ _('Projekte werden geladen …') }}</p>
+      </div>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  let toolMap = {};
+
+  async function loadTools() {
+    const res = await fetch('/api/tools');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    (data.tools || []).forEach((tool) => { toolMap[tool.key] = tool.name; });
+  }
+
+  async function loadProjects() {
+    const cont = byId('projectsContainer');
+    let data;
+    try {
+      const res = await fetch('/api/projects');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      data = await res.json();
+    } catch (e) {
+      cont.setAttribute('aria-busy', 'false');
+      cont.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Projekte konnten nicht geladen werden. Bitte später erneut versuchen.');
+      cont.appendChild(p);
+      return;
+    }
+    const projects = data.projects || [];
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+
+    if (projects.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an.');
+      cont.appendChild(p);
+      return;
+    }
+
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    projects.forEach((pr) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      // Projektname als verlinkte Überschrift -> per VoiceOver-Rotor anspringbar.
+      const h2 = document.createElement('h2');
+      const a = document.createElement('a');
+      a.href = '/app?projekt=' + encodeURIComponent(pr.id);
+      a.textContent = pr.name || pr.filename || t('Unbenanntes Projekt');
+      h2.appendChild(a);
+      const meta = document.createElement('p');
+      meta.className = 'dash-meta';
+      const toolName = toolMap[pr.tool] || pr.tool || '';
+      const dateStr = formatDate(pr.created_at);
+      meta.textContent = dateStr ? t('{tool} · angelegt am {datum}', { tool: toolName, datum: dateStr }) : toolName;
+      const actions = document.createElement('div');
+      actions.className = 'dash-actions';
+      const renameBtn = document.createElement('button');
+      renameBtn.className = 'btn btn-secondary btn-small';
+      renameBtn.textContent = t('Umbenennen');
+      renameBtn.addEventListener('click', () => renameProject(pr.id, pr.name || pr.filename || ''));
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger btn-small';
+      delBtn.textContent = t('Löschen');
+      delBtn.addEventListener('click', () => deleteProject(pr.id, pr.name || pr.filename || ''));
+      actions.appendChild(renameBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(h2);
+      li.appendChild(meta);
+      li.appendChild(actions);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+    announce(t('{n} Projekte geladen.', { n: projects.length }));
+  }
+
+  async function renameProject(id, currentName) {
+    const name = prompt(t('Neuer Projektname:'), currentName);
+    if (name === null) return;            // Abbrechen
+    const trimmed = name.trim();
+    if (!trimmed) { alert(t('Bitte einen Namen eingeben.')); return; }
+    const res = await fetch('/api/projects/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    if (res.ok) { announce(t('Projekt umbenannt in {name}', { name: trimmed })); loadProjects(); }
+    else { const d = await res.json(); alert(d.detail || t('Umbenennen fehlgeschlagen.')); }
+  }
+
+  async function deleteProject(id, name) {
+    if (!confirm(t('Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?', { name: name || t('Unbenanntes Projekt') }))) return;
+    const res = await fetch('/api/projects/' + id, { method: 'DELETE' });
+    if (res.ok) { announce(t('Projekt gelöscht')); loadProjects(); }
+    else { alert(t('Löschen fehlgeschlagen.')); }
+  }
+
+  (async function init() {
+    await loadTools();
+    await loadProjects();
+  })();
+{% endraw %}
+</script>
+{% endblock %}

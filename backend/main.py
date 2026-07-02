@@ -3885,17 +3885,17 @@ def _render_protected_template(request: Request, template_name: str, **extra):
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
-    return _serve_protected_page(request, "dashboard.html")
+    return _render_protected_template(request, "dashboard.html")
 
 
 @app.get("/projekte", response_class=HTMLResponse)
 async def projects_page(request: Request):
-    return _serve_protected_page(request, "projekte.html")
+    return _render_protected_template(request, "projekte.html")
 
 
 @app.get("/projekt-neu", response_class=HTMLResponse)
 async def new_project_page(request: Request):
-    return _serve_protected_page(request, "projekt-neu.html")
+    return _render_protected_template(request, "projekt-neu.html")
 
 
 @app.get("/einstellungen", response_class=HTMLResponse)

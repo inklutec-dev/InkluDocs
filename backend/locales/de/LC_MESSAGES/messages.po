@@ -186,3 +186,125 @@ msgstr "DSGVO-konform – Verarbeitung in der EU."
 msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 msgstr " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 
+
+# Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
+msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
+msgstr "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
+
+msgid "Neuigkeiten"
+msgstr "Neuigkeiten"
+
+msgid "Rückmeldungen vom Kunden"
+msgstr "Rückmeldungen vom Kunden"
+
+msgid "Zuletzt bearbeitete Projekte"
+msgstr "Zuletzt bearbeitete Projekte"
+
+msgid "Schließen"
+msgstr "Schließen"
+
+msgid "Projekte werden geladen …"
+msgstr "Projekte werden geladen …"
+
+msgid "Projektname"
+msgstr "Projektname"
+
+msgid "z. B. Geschäftsbericht 2026 oder Mein Projekt"
+msgstr "z. B. Geschäftsbericht 2026 oder Mein Projekt"
+
+msgid "Werkzeug"
+msgstr "Werkzeug"
+
+msgid "Bestimmt, womit das Projekt bearbeitet wird."
+msgstr "Bestimmt, womit das Projekt bearbeitet wird."
+
+msgid "Projekt anlegen"
+msgstr "Projekt anlegen"
+
+# Seiten-JS Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
+msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
+
+msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
+
+msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
+
+msgid "Unbenanntes Projekt"
+msgstr "Unbenanntes Projekt"
+
+msgid "{tool} · angelegt am {datum}"
+msgstr "{tool} · angelegt am {datum}"
+
+msgid "Alle Projekte anzeigen"
+msgstr "Alle Projekte anzeigen"
+
+msgid "{n} aktuelle Projekte geladen."
+msgstr "{n} aktuelle Projekte geladen."
+
+msgid "Zurzeit keine Neuigkeiten."
+msgstr "Zurzeit keine Neuigkeiten."
+
+msgid "Frühere Neuigkeiten"
+msgstr "Frühere Neuigkeiten"
+
+msgid "Neuigkeiten ({n})"
+msgstr "Neuigkeiten ({n})"
+
+msgid "Du bist auf dem aktuellen Stand"
+msgstr "Du bist auf dem aktuellen Stand"
+
+msgid "Kunde: {namen}"
+msgstr "Kunde: {namen}"
+
+msgid "Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})"
+msgstr "Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})"
+
+msgid "Umbenennen"
+msgstr "Umbenennen"
+
+msgid "Löschen"
+msgstr "Löschen"
+
+msgid "Neuer Projektname:"
+msgstr "Neuer Projektname:"
+
+msgid "Bitte einen Namen eingeben."
+msgstr "Bitte einen Namen eingeben."
+
+msgid "Projekt umbenannt in {name}"
+msgstr "Projekt umbenannt in {name}"
+
+msgid "Umbenennen fehlgeschlagen."
+msgstr "Umbenennen fehlgeschlagen."
+
+msgid "Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?"
+msgstr "Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?"
+
+msgid "Projekt gelöscht"
+msgstr "Projekt gelöscht"
+
+msgid "Löschen fehlgeschlagen."
+msgstr "Löschen fehlgeschlagen."
+
+msgid "{n} Projekte geladen."
+msgstr "{n} Projekte geladen."
+
+msgid "Bitte einen Projektnamen eingeben."
+msgstr "Bitte einen Projektnamen eingeben."
+
+msgid "Bitte ein Werkzeug auswählen."
+msgstr "Bitte ein Werkzeug auswählen."
+
+msgid "Projekt wird angelegt …"
+msgstr "Projekt wird angelegt …"
+
+msgid "Angelegt – wird geöffnet …"
+msgstr "Angelegt – wird geöffnet …"
+
+msgid "Anlegen fehlgeschlagen."
+msgstr "Anlegen fehlgeschlagen."
+
+msgid "Netzwerkfehler. Bitte erneut versuchen."
+msgstr "Netzwerkfehler. Bitte erneut versuchen."

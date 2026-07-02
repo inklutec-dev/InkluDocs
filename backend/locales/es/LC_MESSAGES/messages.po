@@ -183,3 +183,125 @@ msgstr "Conforme al RGPD – procesamiento en la UE."
 msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 msgstr " Alojamiento en Hetzner Online (Falkenstein, Alemania). El procesamiento por IA se realiza a través de Amazon Bedrock (modelo Claude de Anthropic) en centros de datos dentro de la UE; Amazon Bedrock no comparte contenido con el proveedor del modelo ni lo utiliza para entrenamiento. Detalles en nuestra política de privacidad."
 
+
+# Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026) — Erst-Uebersetzung, QA durch Muttersprachler offen
+msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
+msgstr "Nos alegra verte de nuevo. Elige una acción a la izquierda o abre un proyecto."
+
+msgid "Neuigkeiten"
+msgstr "Novedades"
+
+msgid "Rückmeldungen vom Kunden"
+msgstr "Comentarios del cliente"
+
+msgid "Zuletzt bearbeitete Projekte"
+msgstr "Proyectos editados recientemente"
+
+msgid "Schließen"
+msgstr "Cerrar"
+
+msgid "Projekte werden geladen …"
+msgstr "Cargando proyectos …"
+
+msgid "Projektname"
+msgstr "Nombre del proyecto"
+
+msgid "z. B. Geschäftsbericht 2026 oder Mein Projekt"
+msgstr "p. ej. Informe anual 2026 o Mi proyecto"
+
+msgid "Werkzeug"
+msgstr "Herramienta"
+
+msgid "Bestimmt, womit das Projekt bearbeitet wird."
+msgstr "Determina con qué herramienta se editará el proyecto."
+
+msgid "Projekt anlegen"
+msgstr "Crear proyecto"
+
+# Seiten-JS Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
+msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
+msgstr "No se pudieron cargar los proyectos. Inténtalo de nuevo más tarde."
+
+msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Aún no hay proyectos. Crea el primero con «Crear proyecto» a la izquierda."
+
+msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Aún no hay proyectos. Crea el primero con «Crear proyecto»."
+
+msgid "Unbenanntes Projekt"
+msgstr "Proyecto sin título"
+
+msgid "{tool} · angelegt am {datum}"
+msgstr "{tool} · creado el {datum}"
+
+msgid "Alle Projekte anzeigen"
+msgstr "Mostrar todos los proyectos"
+
+msgid "{n} aktuelle Projekte geladen."
+msgstr "{n} proyectos recientes cargados."
+
+msgid "Zurzeit keine Neuigkeiten."
+msgstr "No hay novedades por el momento."
+
+msgid "Frühere Neuigkeiten"
+msgstr "Novedades anteriores"
+
+msgid "Neuigkeiten ({n})"
+msgstr "Novedades ({n})"
+
+msgid "Du bist auf dem aktuellen Stand"
+msgstr "Estás al día"
+
+msgid "Kunde: {namen}"
+msgstr "Cliente: {namen}"
+
+msgid "Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})"
+msgstr "Por revisar: {offen} · Por corregir: {ueberarbeiten} · Aprobados: {freigegeben} (de {gesamt})"
+
+msgid "Umbenennen"
+msgstr "Renombrar"
+
+msgid "Löschen"
+msgstr "Eliminar"
+
+msgid "Neuer Projektname:"
+msgstr "Nuevo nombre del proyecto:"
+
+msgid "Bitte einen Namen eingeben."
+msgstr "Introduce un nombre."
+
+msgid "Projekt umbenannt in {name}"
+msgstr "Proyecto renombrado a {name}"
+
+msgid "Umbenennen fehlgeschlagen."
+msgstr "No se pudo renombrar."
+
+msgid "Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?"
+msgstr "¿Seguro que quieres eliminar el proyecto «{name}» y todos los datos asociados?"
+
+msgid "Projekt gelöscht"
+msgstr "Proyecto eliminado"
+
+msgid "Löschen fehlgeschlagen."
+msgstr "No se pudo eliminar."
+
+msgid "{n} Projekte geladen."
+msgstr "{n} proyectos cargados."
+
+msgid "Bitte einen Projektnamen eingeben."
+msgstr "Introduce un nombre de proyecto."
+
+msgid "Bitte ein Werkzeug auswählen."
+msgstr "Selecciona una herramienta."
+
+msgid "Projekt wird angelegt …"
+msgstr "Creando el proyecto …"
+
+msgid "Angelegt – wird geöffnet …"
+msgstr "Creado – abriendo …"
+
+msgid "Anlegen fehlgeschlagen."
+msgstr "No se pudo crear."
+
+msgid "Netzwerkfehler. Bitte erneut versuchen."
+msgstr "Error de red. Inténtalo de nuevo."

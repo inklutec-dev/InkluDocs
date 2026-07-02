@@ -1,0 +1,277 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Startseite') }} · InkluDocs{% endblock %}
+{% block main %}
+      <h1 class="dash-greeting" id="greeting">{{ _('Willkommen') }}</h1>
+      <p id="dailyLimitInfo" class="dash-limit"></p>
+      <p class="dash-sub">{{ _('Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt.') }}</p>
+
+      <p><button type="button" id="newsBtn" class="dash-news-btn" aria-haspopup="dialog" hidden>{{ _('Neuigkeiten') }}</button></p>
+
+      <section class="dash-section" id="reviewOverviewSection" aria-labelledby="reviewov-h" hidden>
+        <h2 id="reviewov-h">{{ _('Rückmeldungen vom Kunden') }}</h2>
+        <div id="reviewOverviewContainer"></div>
+      </section>
+
+      <section class="dash-section" aria-labelledby="recent-h">
+        <h2 id="recent-h">{{ _('Zuletzt bearbeitete Projekte') }}</h2>
+        <div id="recentContainer" aria-busy="true">
+          <p class="dash-sub">{{ _('Wird geladen ...') }}</p>
+        </div>
+      </section>
+{% endblock %}
+{% block dialogs %}
+<div id="newsPanel" class="dash-news-panel" role="dialog" aria-modal="true" aria-labelledby="newsPanelTitle" hidden>
+  <div class="dash-news-panel-content">
+    <div class="dash-news-panel-header">
+      <h2 id="newsPanelTitle">{{ _('Neuigkeiten') }}</h2>
+      <button type="button" id="newsClose" class="dash-news-close">{{ _('Schließen') }}</button>
+    </div>
+    <div id="newsList"></div>
+  </div>
+</div>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  let toolMap = {};
+
+  async function loadTools() {
+    const res = await fetch('/api/tools');
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    (data.tools || []).forEach((tool) => { toolMap[tool.key] = tool.name; });
+  }
+
+  async function loadRecent() {
+    const cont = byId('recentContainer');
+    let data;
+    try {
+      const res = await fetch('/api/projects');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      data = await res.json();
+    } catch (e) {
+      cont.setAttribute('aria-busy', 'false');
+      cont.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Projekte konnten nicht geladen werden. Bitte später erneut versuchen.');
+      cont.appendChild(p);
+      return;
+    }
+    const projects = (data.projects || []).slice(0, 5);  // neueste zuerst (created_at DESC)
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+
+    if (projects.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an.');
+      cont.appendChild(p);
+      return;
+    }
+
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    projects.forEach((pr) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      const a = document.createElement('a');
+      a.href = '/app?projekt=' + encodeURIComponent(pr.id);
+      a.textContent = pr.name || pr.filename || t('Unbenanntes Projekt');
+      h3.appendChild(a);
+      const meta = document.createElement('p');
+      meta.className = 'dash-meta';
+      const toolName = toolMap[pr.tool] || pr.tool || '';
+      const dateStr = formatDate(pr.created_at);
+      meta.textContent = dateStr ? t('{tool} · angelegt am {datum}', { tool: toolName, datum: dateStr }) : toolName;
+      li.appendChild(h3);
+      li.appendChild(meta);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+
+    const all = document.createElement('p');
+    all.style.marginTop = '1rem';
+    const allLink = document.createElement('a');
+    allLink.href = '/projekte';
+    allLink.textContent = t('Alle Projekte anzeigen');
+    allLink.style.color = '#c75000';
+    allLink.style.fontWeight = '600';
+    all.appendChild(allLink);
+    cont.appendChild(all);
+    announce(t('{n} aktuelle Projekte geladen.', { n: projects.length }));
+  }
+
+  // ─── Neuigkeiten (Dialog mit Anzahl) ──────────────────────────────
+  // Kompakter Knopf zeigt die Zahl ungelesener Neuigkeiten. Klick öffnet einen
+  // barrierefreien Dialog (Fokus wandert hinein, Escape schließt, Fokus kehrt
+  // zum Knopf zurück, Fokusfalle hält Tab im Dialog). Gelesen-Status wird am
+  // Konto (DB-Spalte news_seen_until) gespeichert -> geräteübergreifend.
+  let _newsItems = [];
+  let _newsSeenUntil = '';  // leer = noch nichts gesehen -> alles ungelesen
+
+  // "DD.MM.YYYY" -> sortierbarer Schlüssel "YYYYMMDD" (direkter String-Vergleich
+  // von DD.MM.YYYY wäre über Monats-/Tagesgrenzen falsch).
+  function newsDateKey(s) {
+    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s || '');
+    return m ? (m[3] + m[2] + m[1]) : (s || '');
+  }
+
+  function newsBuildList(items) {
+    const ul = document.createElement('ul');
+    ul.className = 'dash-news-list';
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = 'dash-news-item';
+      const date = document.createElement('span');
+      date.className = 'dash-news-date';
+      date.textContent = item.datum;
+      li.appendChild(date);
+      li.appendChild(document.createTextNode(' ' + item.text));
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  // Fuellt den Dialog: neueste 3 sichtbar, ältere in einem Aufklapp-Element.
+  function newsRenderPanel() {
+    const list = byId('newsList');
+    list.innerHTML = '';
+    if (_newsItems.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Zurzeit keine Neuigkeiten.');
+      list.appendChild(p);
+      return;
+    }
+    const RECENT = 3;
+    list.appendChild(newsBuildList(_newsItems.slice(0, RECENT)));
+    if (_newsItems.length > RECENT) {
+      const details = document.createElement('details');
+      details.className = 'dash-news-more';
+      const summary = document.createElement('summary');
+      summary.textContent = t('Frühere Neuigkeiten');
+      details.appendChild(summary);
+      details.appendChild(newsBuildList(_newsItems.slice(RECENT)));
+      list.appendChild(details);
+    }
+  }
+
+  function newsUpdateButton() {
+    const btn = byId('newsBtn');
+    const seen = _newsSeenUntil || '';  // leer = alles ungelesen (Bestandsnutzer)
+    const unread = _newsItems.filter((n) => newsDateKey(n.datum) > seen).length;
+    if (unread > 0) {
+      btn.textContent = t('Neuigkeiten ({n})', { n: unread });
+      btn.classList.add('has-unread');
+    } else {
+      btn.textContent = t('Du bist auf dem aktuellen Stand');
+      btn.classList.remove('has-unread');
+    }
+    btn.hidden = false;
+  }
+
+  async function newsMarkRead() {
+    // Lese-Stand am Konto speichern (DB) statt im Browser -> geräteübergreifend.
+    const fallback = _newsItems.length > 0 ? newsDateKey(_newsItems[0].datum) : '';
+    try {
+      const res = await fetch('/api/news/seen', { method: 'POST' });
+      const data = await res.json();
+      _newsSeenUntil = (data && data.seen_until) || fallback;
+    } catch (e) {
+      _newsSeenUntil = fallback;
+    }
+    newsUpdateButton();
+  }
+
+  function newsOpen() {
+    newsRenderPanel();
+    byId('newsPanel').hidden = false;
+    byId('newsClose').focus();
+  }
+
+  function newsClosePanel() {
+    byId('newsPanel').hidden = true;
+    newsMarkRead();
+    byId('newsBtn').focus();
+  }
+
+  async function loadNews() {
+    try {
+      const res = await fetch('/api/news');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      const data = await res.json();
+      _newsItems = data.news || [];
+      _newsSeenUntil = data.seen_until || '';
+    } catch (e) {
+      _newsItems = [];
+      _newsSeenUntil = '';
+    }
+    newsUpdateButton();
+    byId('newsBtn').addEventListener('click', newsOpen);
+    byId('newsClose').addEventListener('click', newsClosePanel);
+    byId('newsPanel').addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { newsClosePanel(); return; }
+      if (e.key !== 'Tab') return;
+      const panel = byId('newsPanel');
+      const f = panel.querySelectorAll('button, a[href], summary, [tabindex]:not([tabindex="-1"])');
+      if (f.length === 0) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  }
+
+  async function loadReviewOverview() {
+    let data;
+    try {
+      const res = await fetch('/api/review-overview');
+      if (!res.ok) return;
+      data = await res.json();
+    } catch (e) { return; }
+    const projects = data.projects || [];
+    const section = byId('reviewOverviewSection');
+    const cont = byId('reviewOverviewContainer');
+    if (!section || !cont) return;
+    if (projects.length === 0) { section.hidden = true; return; }
+    cont.innerHTML = '';
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    projects.forEach((pr) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      const a = document.createElement('a');
+      a.href = '/app?projekt=' + encodeURIComponent(pr.id);
+      a.textContent = pr.display_name;
+      h3.appendChild(a);
+      li.appendChild(h3);
+      // Kunde(n) anzeigen, die zu diesem Projekt eingeladen sind (aus den Freigaben).
+      if (pr.guests) {
+        const pk = document.createElement('p');
+        pk.className = 'dash-sub';
+        pk.textContent = t('Kunde: {namen}', { namen: pr.guests.split(',').join(', ') });
+        li.appendChild(pk);
+      }
+      const p = document.createElement('p');
+      p.className = 'dash-sub';
+      p.textContent = t('Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})', {
+        offen: pr.offen, ueberarbeiten: pr.zu_ueberarbeiten, freigegeben: pr.freigegeben, gesamt: pr.total,
+      });
+      li.appendChild(p);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+    section.hidden = false;
+  }
+
+  (async function init() {
+    await loadTools();
+    loadNews();
+    await loadReviewOverview();
+    await loadRecent();
+  })();
+{% endraw %}
+</script>
+{% endblock %}

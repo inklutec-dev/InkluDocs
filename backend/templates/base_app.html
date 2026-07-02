@@ -20,6 +20,10 @@
   </div>
 </div>
 
+{# Dialoge/Overlays, die als Geschwister der App-Shell liegen muessen
+   (z. B. Neuigkeiten-Dialog auf der Startseite). Standard: leer. #}
+{% block dialogs %}{% endblock %}
+
 <div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
 
 <script>
