@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}InkluDocs{% endblock %}{% if is_staging %} (Testumgebung){% endif %}</title>
-<link rel="stylesheet" href="/static/style.css">
-<link rel="stylesheet" href="/static/dashboard.css">
+<link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
+<link rel="stylesheet" href="/static/dashboard.css?v={{ asset_version }}">
 {% block head_extra %}{% endblock %}
 </head>
 <body>
@@ -30,7 +30,7 @@
 window.LANG = "{{ current_lang }}";
 window.I18N = {{ i18n_json|safe }};
 </script>
-<script src="/static/dashboard.js"></script>
+<script src="/static/dashboard.js?v={{ asset_version }}"></script>
 {% block page_script %}{% endblock %}
 </body>
 </html>

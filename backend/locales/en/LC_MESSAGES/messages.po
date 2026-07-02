@@ -15,7 +15,7 @@ msgstr ""
 msgid "Anmeldung"
 msgstr "Login"
 
-msgid "KI-gestuetzter Alt-Text-Generator"
+msgid "KI-gestützter Alt-Text-Generator"
 msgstr "AI-powered alt text generator"
 
 msgid "E-Mail-Adresse"
@@ -45,7 +45,7 @@ msgstr "Terms of use"
 msgid "Testumgebung"
 msgstr "Test environment"
 
-msgid "Bitte alle Felder ausfuellen."
+msgid "Bitte alle Felder ausfüllen."
 msgstr "Please fill in all fields."
 
 msgid "Anmeldung fehlgeschlagen."
@@ -305,3 +305,107 @@ msgstr "Creating the project failed."
 
 msgid "Netzwerkfehler. Bitte erneut versuchen."
 msgstr "Network error. Please try again."
+
+# Login-Seite: nachgezogene Strings (Demo-Hinweis, 02.07.2026)
+msgid "Lieber erst ausprobieren?"
+msgstr "Prefer to try it first?"
+
+msgid "InkluDocs ohne Anmeldung testen"
+msgstr "Try InkluDocs without signing up"
+
+# Einstellungen-Seiten-JS (Konto, Passwort, API-Schluessel; 02.07.2026)
+msgid "Angemeldet als: {name} ({email})"
+msgstr "Signed in as: {name} ({email})"
+
+msgid "Mindestens 8 Zeichen"
+msgstr "At least 8 characters"
+
+msgid "Passwörter stimmen nicht überein"
+msgstr "Passwords do not match"
+
+msgid "Passwort geändert!"
+msgstr "Password changed!"
+
+msgid "Passwort wurde geändert"
+msgstr "Password has been changed"
+
+msgid "Noch keine API-Schlüssel vorhanden."
+msgstr "No API keys yet."
+
+msgid "Erstellt: {datum}"
+msgstr "Created: {datum}"
+
+msgid "Zuletzt verwendet: {datum}"
+msgstr "Last used: {datum}"
+
+msgid "Bearbeiten"
+msgstr "Edit"
+
+msgid "Schlüssel bearbeiten: {name}"
+msgstr "Edit key: {name}"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Name speichern"
+msgstr "Save name"
+
+msgid "Schlüssel löschen"
+msgstr "Delete key"
+
+msgid "Abbrechen"
+msgstr "Cancel"
+
+msgid "Bearbeitung für {name} geöffnet."
+msgstr "Editing for {name} opened."
+
+msgid "Bearbeitung geschlossen."
+msgstr "Editing closed."
+
+msgid "Name geändert zu: {name}"
+msgstr "Name changed to: {name}"
+
+msgid "Fehler beim Speichern."
+msgstr "Error while saving."
+
+msgid "Neuer Schlüssel erstellt"
+msgstr "New key created"
+
+msgid "Dieser Schlüssel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern."
+msgstr "This key is shown only once. Please copy it now and store it safely."
+
+msgid "API-Schlüssel"
+msgstr "API key"
+
+msgid "Schlüssel kopieren"
+msgstr "Copy key"
+
+msgid "Zurück zur Übersicht"
+msgstr "Back to the overview"
+
+msgid "Neuer API-Schlüssel erstellt. Bitte jetzt kopieren."
+msgstr "New API key created. Please copy it now."
+
+msgid "Fehler beim Erstellen."
+msgstr "Error while creating."
+
+msgid "Schlüssel-Anzeige geschlossen."
+msgstr "Key display closed."
+
+msgid "API-Schlüssel wurde in die Zwischenablage kopiert."
+msgstr "The API key has been copied to the clipboard."
+
+msgid "Schlüssel markiert. Bitte mit Befehl-C kopieren."
+msgstr "Key selected. Please copy it with Command-C."
+
+msgid "API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff."
+msgstr "Really delete the API key “{name}”? Applications using this key will immediately lose access."
+
+msgid "Unbenannt"
+msgstr "Untitled"
+
+msgid "API-Schlüssel gelöscht."
+msgstr "API key deleted."
+
+msgid "Fehler beim Löschen."
+msgstr "Error while deleting."

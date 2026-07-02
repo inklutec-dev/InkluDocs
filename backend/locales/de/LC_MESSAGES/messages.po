@@ -16,7 +16,7 @@ msgstr ""
 msgid "Anmeldung"
 msgstr "Anmeldung"
 
-msgid "KI-gestuetzter Alt-Text-Generator"
+msgid "KI-gestützter Alt-Text-Generator"
 msgstr "KI-gestützter Alt-Text-Generator"
 
 msgid "E-Mail-Adresse"
@@ -47,7 +47,7 @@ msgid "Testumgebung"
 msgstr "Testumgebung"
 
 # Fehler-/Statusmeldungen (JS)
-msgid "Bitte alle Felder ausfuellen."
+msgid "Bitte alle Felder ausfüllen."
 msgstr "Bitte alle Felder ausfüllen."
 
 msgid "Anmeldung fehlgeschlagen."
@@ -308,3 +308,107 @@ msgstr "Anlegen fehlgeschlagen."
 
 msgid "Netzwerkfehler. Bitte erneut versuchen."
 msgstr "Netzwerkfehler. Bitte erneut versuchen."
+
+# Login-Seite: nachgezogene Strings (Demo-Hinweis, 02.07.2026)
+msgid "Lieber erst ausprobieren?"
+msgstr "Lieber erst ausprobieren?"
+
+msgid "InkluDocs ohne Anmeldung testen"
+msgstr "InkluDocs ohne Anmeldung testen"
+
+# Einstellungen-Seiten-JS (Konto, Passwort, API-Schluessel; 02.07.2026)
+msgid "Angemeldet als: {name} ({email})"
+msgstr "Angemeldet als: {name} ({email})"
+
+msgid "Mindestens 8 Zeichen"
+msgstr "Mindestens 8 Zeichen"
+
+msgid "Passwörter stimmen nicht überein"
+msgstr "Passwörter stimmen nicht überein"
+
+msgid "Passwort geändert!"
+msgstr "Passwort geändert!"
+
+msgid "Passwort wurde geändert"
+msgstr "Passwort wurde geändert"
+
+msgid "Noch keine API-Schlüssel vorhanden."
+msgstr "Noch keine API-Schlüssel vorhanden."
+
+msgid "Erstellt: {datum}"
+msgstr "Erstellt: {datum}"
+
+msgid "Zuletzt verwendet: {datum}"
+msgstr "Zuletzt verwendet: {datum}"
+
+msgid "Bearbeiten"
+msgstr "Bearbeiten"
+
+msgid "Schlüssel bearbeiten: {name}"
+msgstr "Schlüssel bearbeiten: {name}"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Name speichern"
+msgstr "Name speichern"
+
+msgid "Schlüssel löschen"
+msgstr "Schlüssel löschen"
+
+msgid "Abbrechen"
+msgstr "Abbrechen"
+
+msgid "Bearbeitung für {name} geöffnet."
+msgstr "Bearbeitung für {name} geöffnet."
+
+msgid "Bearbeitung geschlossen."
+msgstr "Bearbeitung geschlossen."
+
+msgid "Name geändert zu: {name}"
+msgstr "Name geändert zu: {name}"
+
+msgid "Fehler beim Speichern."
+msgstr "Fehler beim Speichern."
+
+msgid "Neuer Schlüssel erstellt"
+msgstr "Neuer Schlüssel erstellt"
+
+msgid "Dieser Schlüssel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern."
+msgstr "Dieser Schlüssel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern."
+
+msgid "API-Schlüssel"
+msgstr "API-Schlüssel"
+
+msgid "Schlüssel kopieren"
+msgstr "Schlüssel kopieren"
+
+msgid "Zurück zur Übersicht"
+msgstr "Zurück zur Übersicht"
+
+msgid "Neuer API-Schlüssel erstellt. Bitte jetzt kopieren."
+msgstr "Neuer API-Schlüssel erstellt. Bitte jetzt kopieren."
+
+msgid "Fehler beim Erstellen."
+msgstr "Fehler beim Erstellen."
+
+msgid "Schlüssel-Anzeige geschlossen."
+msgstr "Schlüssel-Anzeige geschlossen."
+
+msgid "API-Schlüssel wurde in die Zwischenablage kopiert."
+msgstr "API-Schlüssel wurde in die Zwischenablage kopiert."
+
+msgid "Schlüssel markiert. Bitte mit Befehl-C kopieren."
+msgstr "Schlüssel markiert. Bitte mit Befehl-C kopieren."
+
+msgid "API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff."
+msgstr "API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff."
+
+msgid "Unbenannt"
+msgstr "Unbenannt"
+
+msgid "API-Schlüssel gelöscht."
+msgstr "API-Schlüssel gelöscht."
+
+msgid "Fehler beim Löschen."
+msgstr "Fehler beim Löschen."

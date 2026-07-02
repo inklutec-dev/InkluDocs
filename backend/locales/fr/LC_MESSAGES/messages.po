@@ -15,7 +15,7 @@ msgstr ""
 msgid "Anmeldung"
 msgstr "Connexion"
 
-msgid "KI-gestuetzter Alt-Text-Generator"
+msgid "KI-gestützter Alt-Text-Generator"
 msgstr "Générateur de textes alternatifs par IA"
 
 msgid "E-Mail-Adresse"
@@ -45,7 +45,7 @@ msgstr "Conditions d'utilisation"
 msgid "Testumgebung"
 msgstr "Environnement de test"
 
-msgid "Bitte alle Felder ausfuellen."
+msgid "Bitte alle Felder ausfüllen."
 msgstr "Veuillez remplir tous les champs."
 
 msgid "Anmeldung fehlgeschlagen."
@@ -305,3 +305,107 @@ msgstr "Échec de la création."
 
 msgid "Netzwerkfehler. Bitte erneut versuchen."
 msgstr "Erreur réseau. Veuillez réessayer."
+
+# Login-Seite: nachgezogene Strings (Demo-Hinweis, 02.07.2026) — Erst-Uebersetzung, QA offen
+msgid "Lieber erst ausprobieren?"
+msgstr "Envie d’essayer d’abord ?"
+
+msgid "InkluDocs ohne Anmeldung testen"
+msgstr "Tester InkluDocs sans inscription"
+
+# Einstellungen-Seiten-JS (Konto, Passwort, API-Schluessel; 02.07.2026)
+msgid "Angemeldet als: {name} ({email})"
+msgstr "Connecté en tant que : {name} ({email})"
+
+msgid "Mindestens 8 Zeichen"
+msgstr "Au moins 8 caractères"
+
+msgid "Passwörter stimmen nicht überein"
+msgstr "Les mots de passe ne correspondent pas"
+
+msgid "Passwort geändert!"
+msgstr "Mot de passe modifié !"
+
+msgid "Passwort wurde geändert"
+msgstr "Le mot de passe a été modifié"
+
+msgid "Noch keine API-Schlüssel vorhanden."
+msgstr "Aucune clé API pour l’instant."
+
+msgid "Erstellt: {datum}"
+msgstr "Créée : {datum}"
+
+msgid "Zuletzt verwendet: {datum}"
+msgstr "Dernière utilisation : {datum}"
+
+msgid "Bearbeiten"
+msgstr "Modifier"
+
+msgid "Schlüssel bearbeiten: {name}"
+msgstr "Modifier la clé : {name}"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Name speichern"
+msgstr "Enregistrer le nom"
+
+msgid "Schlüssel löschen"
+msgstr "Supprimer la clé"
+
+msgid "Abbrechen"
+msgstr "Annuler"
+
+msgid "Bearbeitung für {name} geöffnet."
+msgstr "Modification de {name} ouverte."
+
+msgid "Bearbeitung geschlossen."
+msgstr "Modification fermée."
+
+msgid "Name geändert zu: {name}"
+msgstr "Nom modifié en : {name}"
+
+msgid "Fehler beim Speichern."
+msgstr "Erreur lors de l’enregistrement."
+
+msgid "Neuer Schlüssel erstellt"
+msgstr "Nouvelle clé créée"
+
+msgid "Dieser Schlüssel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern."
+msgstr "Cette clé ne s’affiche qu’une seule fois. Copiez-la maintenant et conservez-la en lieu sûr."
+
+msgid "API-Schlüssel"
+msgstr "Clé API"
+
+msgid "Schlüssel kopieren"
+msgstr "Copier la clé"
+
+msgid "Zurück zur Übersicht"
+msgstr "Retour à l’aperçu"
+
+msgid "Neuer API-Schlüssel erstellt. Bitte jetzt kopieren."
+msgstr "Nouvelle clé API créée. Copiez-la maintenant."
+
+msgid "Fehler beim Erstellen."
+msgstr "Erreur lors de la création."
+
+msgid "Schlüssel-Anzeige geschlossen."
+msgstr "Affichage de la clé fermé."
+
+msgid "API-Schlüssel wurde in die Zwischenablage kopiert."
+msgstr "La clé API a été copiée dans le presse-papiers."
+
+msgid "Schlüssel markiert. Bitte mit Befehl-C kopieren."
+msgstr "Clé sélectionnée. Copiez-la avec Commande-C."
+
+msgid "API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff."
+msgstr "Supprimer vraiment la clé API « {name} » ? Les applications qui utilisent cette clé perdront immédiatement l’accès."
+
+msgid "Unbenannt"
+msgstr "Sans nom"
+
+msgid "API-Schlüssel gelöscht."
+msgstr "Clé API supprimée."
+
+msgid "Fehler beim Löschen."
+msgstr "Erreur lors de la suppression."

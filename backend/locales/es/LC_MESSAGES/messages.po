@@ -15,7 +15,7 @@ msgstr ""
 msgid "Anmeldung"
 msgstr "Iniciar sesión"
 
-msgid "KI-gestuetzter Alt-Text-Generator"
+msgid "KI-gestützter Alt-Text-Generator"
 msgstr "Generador de texto alternativo con IA"
 
 msgid "E-Mail-Adresse"
@@ -45,7 +45,7 @@ msgstr "Términos de uso"
 msgid "Testumgebung"
 msgstr "Entorno de prueba"
 
-msgid "Bitte alle Felder ausfuellen."
+msgid "Bitte alle Felder ausfüllen."
 msgstr "Por favor, complete todos los campos."
 
 msgid "Anmeldung fehlgeschlagen."
@@ -305,3 +305,107 @@ msgstr "No se pudo crear."
 
 msgid "Netzwerkfehler. Bitte erneut versuchen."
 msgstr "Error de red. Inténtalo de nuevo."
+
+# Login-Seite: nachgezogene Strings (Demo-Hinweis, 02.07.2026) — Erst-Uebersetzung, QA offen
+msgid "Lieber erst ausprobieren?"
+msgstr "¿Prefieres probarlo primero?"
+
+msgid "InkluDocs ohne Anmeldung testen"
+msgstr "Probar InkluDocs sin registrarse"
+
+# Einstellungen-Seiten-JS (Konto, Passwort, API-Schluessel; 02.07.2026)
+msgid "Angemeldet als: {name} ({email})"
+msgstr "Sesión iniciada como: {name} ({email})"
+
+msgid "Mindestens 8 Zeichen"
+msgstr "Al menos 8 caracteres"
+
+msgid "Passwörter stimmen nicht überein"
+msgstr "Las contraseñas no coinciden"
+
+msgid "Passwort geändert!"
+msgstr "¡Contraseña cambiada!"
+
+msgid "Passwort wurde geändert"
+msgstr "La contraseña se ha cambiado"
+
+msgid "Noch keine API-Schlüssel vorhanden."
+msgstr "Aún no hay claves API."
+
+msgid "Erstellt: {datum}"
+msgstr "Creada: {datum}"
+
+msgid "Zuletzt verwendet: {datum}"
+msgstr "Último uso: {datum}"
+
+msgid "Bearbeiten"
+msgstr "Editar"
+
+msgid "Schlüssel bearbeiten: {name}"
+msgstr "Editar clave: {name}"
+
+msgid "Name"
+msgstr "Nombre"
+
+msgid "Name speichern"
+msgstr "Guardar nombre"
+
+msgid "Schlüssel löschen"
+msgstr "Eliminar clave"
+
+msgid "Abbrechen"
+msgstr "Cancelar"
+
+msgid "Bearbeitung für {name} geöffnet."
+msgstr "Edición de {name} abierta."
+
+msgid "Bearbeitung geschlossen."
+msgstr "Edición cerrada."
+
+msgid "Name geändert zu: {name}"
+msgstr "Nombre cambiado a: {name}"
+
+msgid "Fehler beim Speichern."
+msgstr "Error al guardar."
+
+msgid "Neuer Schlüssel erstellt"
+msgstr "Nueva clave creada"
+
+msgid "Dieser Schlüssel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern."
+msgstr "Esta clave se muestra solo una vez. Cópiala ahora y guárdala en un lugar seguro."
+
+msgid "API-Schlüssel"
+msgstr "Clave API"
+
+msgid "Schlüssel kopieren"
+msgstr "Copiar clave"
+
+msgid "Zurück zur Übersicht"
+msgstr "Volver a la vista general"
+
+msgid "Neuer API-Schlüssel erstellt. Bitte jetzt kopieren."
+msgstr "Nueva clave API creada. Cópiala ahora."
+
+msgid "Fehler beim Erstellen."
+msgstr "Error al crear."
+
+msgid "Schlüssel-Anzeige geschlossen."
+msgstr "Se cerró la vista de la clave."
+
+msgid "API-Schlüssel wurde in die Zwischenablage kopiert."
+msgstr "La clave API se ha copiado al portapapeles."
+
+msgid "Schlüssel markiert. Bitte mit Befehl-C kopieren."
+msgstr "Clave seleccionada. Cópiala con Comando-C."
+
+msgid "API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff."
+msgstr "¿Seguro que quieres eliminar la clave API «{name}»? Las aplicaciones que usan esta clave perderán el acceso de inmediato."
+
+msgid "Unbenannt"
+msgstr "Sin nombre"
+
+msgid "API-Schlüssel gelöscht."
+msgstr "Clave API eliminada."
+
+msgid "Fehler beim Löschen."
+msgstr "Error al eliminar."

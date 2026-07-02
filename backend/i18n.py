@@ -23,6 +23,7 @@ Verwendung in FastAPI-Routen:
 
 In Templates: {{ _('Text') }}
 """
+import hashlib
 import json
 from pathlib import Path
 from typing import Optional, Callable
@@ -32,6 +33,27 @@ from fastapi import Request
 BASE_DIR = Path(__file__).parent
 LOCALES_DIR = BASE_DIR / "locales"
 TEMPLATES_DIR = BASE_DIR / "templates"
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+# Gemeinsame statische Assets der Template-Seiten. Ihr Inhalts-Hash haengt
+# als ?v=... an den CSS/JS-URLs (Cache-Busting): nach einem Deploy mit
+# geaenderten Dateien laden Browser garantiert die neue Version statt der
+# alten aus dem Cache (sonst z.B. gemischte Sprachen durch alte dashboard.js).
+_ASSET_FILES = ("style.css", "dashboard.css", "dashboard.js", "pwtoggle.js")
+
+
+def _compute_asset_version() -> str:
+    """Kurzer, deterministischer Inhalts-Hash der statischen Assets.
+    Aendert sich genau dann, wenn sich eine der Dateien aendert."""
+    h = hashlib.md5()
+    for name in _ASSET_FILES:
+        f = FRONTEND_DIR / name
+        if f.is_file():
+            h.update(f.read_bytes())
+    return h.hexdigest()[:8]
+
+
+ASSET_VERSION = _compute_asset_version()
 
 SUPPORTED_LANGUAGES = ["de", "en", "fr", "es"]
 DEFAULT_LANGUAGE = "de"
@@ -110,6 +132,7 @@ def template_context(request: Request, lang: str, **extra) -> dict:
         "language_labels": LANGUAGE_LABELS,
         "supported_languages": SUPPORTED_LANGUAGES,
         "i18n_json": _catalog_json(lang),
+        "asset_version": ASSET_VERSION,
         **extra,
     }
 
