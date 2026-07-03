@@ -1293,3 +1293,311 @@ msgstr "Enlace no válido o caducado"
 #: main.py Freigabe-404 (03.07.2026)
 msgid "Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
 msgstr "Este enlace compartido no es válido (o ya no lo es). Póngase en contacto con la persona que le envió el enlace."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Registrierung"
+msgstr "Registro"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Neues Konto erstellen"
+msgstr "Crear una cuenta nueva"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort (mind. 8 Zeichen)"
+msgstr "Contraseña (mínimo 8 caracteres)"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort wiederholen"
+msgstr "Repetir la contraseña"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Ich akzeptiere die <a href=\"/nutzungsbedingungen\" target=\"_blank\">Nutzungsbedingungen</a> und die <a href=\"/datenschutz\" target=\"_blank\">Datenschutzerklärung</a>."
+msgstr "Acepto las <a href=\"/nutzungsbedingungen\" target=\"_blank\">condiciones de uso</a> y la <a href=\"/datenschutz\" target=\"_blank\">declaración de privacidad</a>."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bereits ein Konto? Anmelden"
+msgstr "¿Ya tiene una cuenta? Iniciar sesión"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bitte akzeptieren Sie die Nutzungsbedingungen und Datenschutzerklärung."
+msgstr "Acepte las condiciones de uso y la declaración de privacidad."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort muss mindestens 8 Zeichen lang sein."
+msgstr "La contraseña debe tener al menos 8 caracteres."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwörter stimmen nicht überein."
+msgstr "Las contraseñas no coinciden."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fast geschafft!"
+msgstr "¡Casi listo!"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Wir haben eine Bestätigungsmail an {email} gesendet."
+msgstr "Hemos enviado un correo de confirmación a {email}."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bitte klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren."
+msgstr "Haga clic en el enlace del correo para activar su cuenta."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Keine E-Mail erhalten? Prüfen Sie Ihren Spam-Ordner oder"
+msgstr "¿No recibió el correo? Revise su carpeta de spam o"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "fordern Sie einen neuen Link an"
+msgstr "solicite un nuevo enlace"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Zur Anmeldung"
+msgstr "Ir al inicio de sesión"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler – bitte erneut versuchen"
+msgstr "Error – inténtelo de nuevo"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Registrierung fehlgeschlagen."
+msgstr "Error en el registro."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort vergessen"
+msgstr "Contraseña olvidada"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort zurücksetzen"
+msgstr "Restablecer la contraseña"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Reset-Link anfordern"
+msgstr "Solicitar enlace de restablecimiento"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Reset-Link (bitte kopieren und im Browser öffnen):"
+msgstr "Enlace de restablecimiento (cópielo y ábralo en el navegador):"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Zurück zur Anmeldung"
+msgstr "Volver al inicio de sesión"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bitte E-Mail-Adresse eingeben."
+msgstr "Introduzca una dirección de correo electrónico."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Reset-Link wurde erstellt."
+msgstr "Se ha creado el enlace de restablecimiento."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Falls ein Konto existiert, wurde ein Reset-Link erstellt."
+msgstr "Si existe una cuenta, se ha creado un enlace de restablecimiento."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler aufgetreten."
+msgstr "Se ha producido un error."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Neues Passwort setzen"
+msgstr "Establecer una nueva contraseña"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort setzen"
+msgstr "Establecer contraseña"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Ungültiger Reset-Link. Bitte fordern Sie einen neuen an."
+msgstr "Enlace de restablecimiento no válido. Solicite uno nuevo."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort wurde zurückgesetzt. Sie werden weitergeleitet..."
+msgstr "La contraseña se ha restablecido. Está siendo redirigido..."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Reset fehlgeschlagen."
+msgstr "Error al restablecer la contraseña."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Vorhandene Benutzer"
+msgstr "Usuarios existentes"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Wird geladen …"
+msgstr "Cargando …"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Neuen Benutzer anlegen"
+msgstr "Crear nuevo usuario"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "E-Mail"
+msgstr "Correo electrónico"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Anlegen"
+msgstr "Crear"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Administratoren"
+msgstr "Administradores"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Admin hinzufügen"
+msgstr "Añadir administrador"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst oben „Neuen Benutzer anlegen“)."
+msgstr "La persona ya debe tener una cuenta (si no, use primero «Crear nuevo usuario» arriba)."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "E-Mail des bestehenden Kontos"
+msgstr "Correo de la cuenta existente"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Rechte-Stufe"
+msgstr "Nivel de permisos"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Voll-Admin – alle Rechte"
+msgstr "Administrador completo – todos los permisos"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Nur-Einsicht – sieht Nutzer, ändert nichts"
+msgstr "Solo lectura – ve los usuarios, no cambia nada"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Zum Admin machen"
+msgstr "Convertir en administrador"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Kein Zugriff – diese Seite ist nur für Administratoren."
+msgstr "Sin acceso – esta página es solo para administradores."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Projekte"
+msgstr "proyectos"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Aktiv"
+msgstr "Activo"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Gesperrt"
+msgstr "Bloqueado"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Das sind Sie selbst."
+msgstr "Es usted."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Sperren"
+msgstr "Bloquear"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Entsperren"
+msgstr "Desbloquear"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Neues Passwort für {email} (mind. 8 Zeichen):"
+msgstr "Nueva contraseña para {email} (mínimo 8 caracteres):"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort muss mindestens 8 Zeichen haben."
+msgstr "La contraseña debe tener al menos 8 caracteres."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort wiederholen:"
+msgstr "Repetir la contraseña:"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort zurückgesetzt"
+msgstr "Contraseña restablecida"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort wurde zurückgesetzt."
+msgstr "La contraseña se ha restablecido."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler beim Zurücksetzen."
+msgstr "Error al restablecer."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Benutzer \"{email}\" und ALLE Daten unwiderruflich löschen? (DSGVO-Löschung)"
+msgstr "¿Eliminar permanentemente al usuario \"{email}\" y TODOS los datos? (eliminación RGPD)"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Benutzer gelöscht"
+msgstr "Usuario eliminado"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Benutzer erstellt: {name}"
+msgstr "Usuario creado: {name}"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Administratoren konnten nicht geladen werden."
+msgstr "No se pudieron cargar los administradores."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Nur-Einsicht"
+msgstr "Solo lectura"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Voll-Admin"
+msgstr "Administrador completo"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Auf Nur-Einsicht setzen"
+msgstr "Cambiar a solo lectura"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Auf Voll-Admin setzen"
+msgstr "Cambiar a administrador completo"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Admin-Rechte entziehen"
+msgstr "Revocar permisos de administrador"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Rechte-Stufe geändert"
+msgstr "Nivel de permisos cambiado"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler beim Ändern der Rechte-Stufe."
+msgstr "Error al cambiar el nivel de permisos."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Admin-Rechte von \"{name}\" entziehen? Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "¿Revocar los permisos de administrador de \"{name}\"? La cuenta seguirá existiendo como usuario normal."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Admin-Rechte entzogen"
+msgstr "Permisos de administrador revocados"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler beim Entziehen der Rechte."
+msgstr "Error al revocar los permisos."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bitte eine E-Mail eingeben."
+msgstr "Introduzca un correo electrónico."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler beim Hinzufügen."
+msgstr "Error al añadir."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Vorhandene Benutzer ({n})"
+msgstr "Usuarios existentes ({n})"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Administratoren ({n})"
+msgstr "Administradores ({n})"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "{n} Benutzer geladen."
+msgstr "{n} usuarios cargados."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "{n} Administratoren geladen."
+msgstr "{n} administradores cargados."

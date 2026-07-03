@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}InkluDocs - {{ _('Registrierung') }}{% endblock %}
+
+{% block body %}
+    <a href="#main" class="skip-link">{{ _('Zum Hauptinhalt springen') }}</a>
+    <main id="main" tabindex="-1">
+        <div class="auth-container" role="region" aria-label="{{ _('Registrierung') }}">
+            <h1><span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#e87722;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}</h1>
+            <p class="subtitle">{{ _('Neues Konto erstellen') }}</p>
+            <form id="registerForm" novalidate>
+                <div class="form-group">
+                    <label for="display_name">{{ _('Name') }}</label>
+                    <input type="text" id="display_name" name="display_name" required autocomplete="name" autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="email">{{ _('E-Mail-Adresse') }}</label>
+                    <input type="email" id="email" name="email" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">{{ _('Passwort (mind. 8 Zeichen)') }}</label>
+                    <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+                </div>
+                <div class="form-group">
+                    <label for="password2">{{ _('Passwort wiederholen') }}</label>
+                    <input type="password" id="password2" name="password2" required autocomplete="new-password">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="acceptTerms" name="acceptTerms" required>
+                    <label for="acceptTerms">{{ _('Ich akzeptiere die <a href="/nutzungsbedingungen" target="_blank">Nutzungsbedingungen</a> und die <a href="/datenschutz" target="_blank">Datenschutzerklärung</a>.')|safe }}</label>
+                </div>
+                <button type="submit" class="btn-full">{{ _('Konto erstellen') }}</button>
+                <div id="errorMsg" class="error-message" role="alert" aria-live="polite"></div>
+            </form>
+            <div class="auth-links center">
+                <a href="/">{{ _('Bereits ein Konto? Anmelden') }}</a>
+            </div>
+        </div>
+        <footer class="legal-footer" role="contentinfo">
+            <a href="/impressum">{{ _('Impressum') }}</a> |
+            <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
+            <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a>
+        </footer>
+    </main>
+    <script>
+        // Übersetzbare UI-Strings für JavaScript (von Jinja2 per Request injiziert)
+        const T = {
+            fillAllFields: {{ _('Bitte alle Felder ausfüllen.')|tojson }},
+            acceptTerms: {{ _('Bitte akzeptieren Sie die Nutzungsbedingungen und Datenschutzerklärung.')|tojson }},
+            pwTooShort: {{ _('Passwort muss mindestens 8 Zeichen lang sein.')|tojson }},
+            pwMismatch: {{ _('Passwörter stimmen nicht überein.')|tojson }},
+            almostDone: {{ _('Fast geschafft!')|tojson }},
+            mailSentTo: {{ _('Wir haben eine Bestätigungsmail an {email} gesendet.')|tojson }},
+            clickLink: {{ _('Bitte klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren.')|tojson }},
+            noMail: {{ _('Keine E-Mail erhalten? Prüfen Sie Ihren Spam-Ordner oder')|tojson }},
+            resendLink: {{ _('fordern Sie einen neuen Link an')|tojson }},
+            toLogin: {{ _('Zur Anmeldung')|tojson }},
+            sending: {{ _('Wird gesendet...')|tojson }},
+            sent: {{ _('Neuer Link gesendet!')|tojson }},
+            resendError: {{ _('Fehler – bitte erneut versuchen')|tojson }},
+            registerFailed: {{ _('Registrierung fehlgeschlagen.')|tojson }},
+            connError: {{ _('Verbindungsfehler. Bitte erneut versuchen.')|tojson }},
+        };
+
+        const form = document.getElementById('registerForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.textContent = '';
+
+            const display_name = document.getElementById('display_name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const password2 = document.getElementById('password2').value;
+
+            if (!display_name || !email || !password) {
+                errorMsg.textContent = T.fillAllFields;
+                return;
+            }
+            if (!document.getElementById('acceptTerms').checked) {
+                errorMsg.textContent = T.acceptTerms;
+                return;
+            }
+            if (password.length < 8) {
+                errorMsg.textContent = T.pwTooShort;
+                return;
+            }
+            if (password !== password2) {
+                errorMsg.textContent = T.pwMismatch;
+                return;
+            }
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ display_name, email, password }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    // Bestätigungshinweis statt Redirect anzeigen
+                    document.querySelector('.auth-container').innerHTML = '' +
+                        '<h1><span class="brand">Inklu</span>Docs</h1>' +
+                        '<div role="status" aria-live="polite" style="margin:2rem 0;">' +
+                            '<p style="font-size:1.2rem;color:#16a34a;font-weight:600;">' + T.almostDone + '</p>' +
+                            '<p style="margin:1rem 0;">' + T.mailSentTo.replace('{email}', '<strong>' + email + '</strong>') + '</p>' +
+                            '<p>' + T.clickLink + '</p>' +
+                            '<p style="color:#64748b;font-size:0.9rem;margin-top:1.5rem;">' + T.noMail + ' ' +
+                            '<button type="button" id="resendBtn" style="background:none;border:none;color:#e87722;text-decoration:underline;cursor:pointer;font-size:0.9rem;padding:0;">' + T.resendLink + '</button>.</p>' +
+                        '</div>' +
+                        '<p><a href="/">' + T.toLogin + '</a></p>';
+                    const resendBtn = document.getElementById('resendBtn');
+                    if (resendBtn) {
+                        resendBtn.addEventListener('click', async () => {
+                            resendBtn.disabled = true;
+                            resendBtn.textContent = T.sending;
+                            try {
+                                await fetch('/api/resend-verification', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ email }),
+                                });
+                                resendBtn.textContent = T.sent;
+                            } catch (e) {
+                                resendBtn.textContent = T.resendError;
+                                resendBtn.disabled = false;
+                            }
+                        });
+                    }
+                } else {
+                    errorMsg.textContent = data.detail || T.registerFailed;
+                }
+            } catch (err) {
+                errorMsg.textContent = T.connError;
+            }
+        });
+    </script>
+    <script src="/static/pwtoggle.js?v={{ asset_version }}" defer></script>
+{% endblock %}

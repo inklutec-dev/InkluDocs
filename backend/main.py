@@ -3810,7 +3810,7 @@ async def set_language(lang: str, request: Request):
     return response
 
 @app.get("/register", response_class=HTMLResponse)
-async def register_page():
+async def register_page(request: Request):
     if os.getenv("REGISTRATION_ENABLED", "true").lower() in ("false", "0", "no"):
         return """<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs - Registrierung geschlossen</title>
         <link rel="stylesheet" href="/static/style.css"></head><body>
@@ -3820,19 +3820,28 @@ async def register_page():
         <p>InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten moechtest, schreib bitte eine E-Mail an <strong>kontakt@inklutec.de</strong>.</p>
         <p style="margin-top:2rem;"><a href="/">Zurueck zur Anmeldung</a></p>
         </div></div></body></html>"""
-    html = open("/app/frontend/register.html").read()
-    if "staging" in BASE_URL:
-        html = html.replace("<title>InkluDocs", "<title>InkluDocs (Testumgebung)")
-        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
-    return html
+    # Seit 03.07.2026 Jinja2-Template (i18n); Staging-Titel/-Brand kommen aus dem Template.
+    lang = resolve_ui_language(request)
+    return templates.TemplateResponse(
+        "register.html",
+        template_context(request, lang, is_staging=("staging" in BASE_URL)),
+    )
 
 @app.get("/forgot", response_class=HTMLResponse)
-async def forgot_page():
-    return open("/app/frontend/forgot.html").read()
+async def forgot_page(request: Request):
+    lang = resolve_ui_language(request)
+    return templates.TemplateResponse(
+        "forgot.html",
+        template_context(request, lang, is_staging=("staging" in BASE_URL)),
+    )
 
 @app.get("/reset", response_class=HTMLResponse)
-async def reset_page():
-    return open("/app/frontend/reset.html").read()
+async def reset_page(request: Request):
+    lang = resolve_ui_language(request)
+    return templates.TemplateResponse(
+        "reset.html",
+        template_context(request, lang, is_staging=("staging" in BASE_URL)),
+    )
 
 def _serve_protected_page(request: Request, filename: str):
     """Liefert eine login-geschuetzte HTML-Seite aus dem frontend-Verzeichnis.
@@ -3905,7 +3914,7 @@ async def settings_page(request: Request):
 
 @app.get("/benutzer", response_class=HTMLResponse)
 async def users_page(request: Request):
-    return _serve_protected_page(request, "benutzer.html")
+    return _render_protected_template(request, "benutzer.html")
 
 
 @app.get("/datensicherheit", response_class=HTMLResponse)

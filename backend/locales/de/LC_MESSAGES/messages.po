@@ -1296,3 +1296,311 @@ msgstr "Link ungültig oder abgelaufen"
 #: main.py Freigabe-404 (03.07.2026)
 msgid "Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
 msgstr "Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Registrierung"
+msgstr "Registrierung"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Neues Konto erstellen"
+msgstr "Neues Konto erstellen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort (mind. 8 Zeichen)"
+msgstr "Passwort (mind. 8 Zeichen)"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort wiederholen"
+msgstr "Passwort wiederholen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Ich akzeptiere die <a href=\"/nutzungsbedingungen\" target=\"_blank\">Nutzungsbedingungen</a> und die <a href=\"/datenschutz\" target=\"_blank\">Datenschutzerklärung</a>."
+msgstr "Ich akzeptiere die <a href=\"/nutzungsbedingungen\" target=\"_blank\">Nutzungsbedingungen</a> und die <a href=\"/datenschutz\" target=\"_blank\">Datenschutzerklärung</a>."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bereits ein Konto? Anmelden"
+msgstr "Bereits ein Konto? Anmelden"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bitte akzeptieren Sie die Nutzungsbedingungen und Datenschutzerklärung."
+msgstr "Bitte akzeptieren Sie die Nutzungsbedingungen und Datenschutzerklärung."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort muss mindestens 8 Zeichen lang sein."
+msgstr "Passwort muss mindestens 8 Zeichen lang sein."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwörter stimmen nicht überein."
+msgstr "Passwörter stimmen nicht überein."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fast geschafft!"
+msgstr "Fast geschafft!"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Wir haben eine Bestätigungsmail an {email} gesendet."
+msgstr "Wir haben eine Bestätigungsmail an {email} gesendet."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bitte klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren."
+msgstr "Bitte klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Keine E-Mail erhalten? Prüfen Sie Ihren Spam-Ordner oder"
+msgstr "Keine E-Mail erhalten? Prüfen Sie Ihren Spam-Ordner oder"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "fordern Sie einen neuen Link an"
+msgstr "fordern Sie einen neuen Link an"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Zur Anmeldung"
+msgstr "Zur Anmeldung"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler – bitte erneut versuchen"
+msgstr "Fehler – bitte erneut versuchen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Registrierung fehlgeschlagen."
+msgstr "Registrierung fehlgeschlagen."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort vergessen"
+msgstr "Passwort vergessen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort zurücksetzen"
+msgstr "Passwort zurücksetzen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Reset-Link anfordern"
+msgstr "Reset-Link anfordern"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Reset-Link (bitte kopieren und im Browser öffnen):"
+msgstr "Reset-Link (bitte kopieren und im Browser öffnen):"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Zurück zur Anmeldung"
+msgstr "Zurück zur Anmeldung"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bitte E-Mail-Adresse eingeben."
+msgstr "Bitte E-Mail-Adresse eingeben."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Reset-Link wurde erstellt."
+msgstr "Reset-Link wurde erstellt."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Falls ein Konto existiert, wurde ein Reset-Link erstellt."
+msgstr "Falls ein Konto existiert, wurde ein Reset-Link erstellt."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler aufgetreten."
+msgstr "Fehler aufgetreten."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Neues Passwort setzen"
+msgstr "Neues Passwort setzen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort setzen"
+msgstr "Passwort setzen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Ungültiger Reset-Link. Bitte fordern Sie einen neuen an."
+msgstr "Ungültiger Reset-Link. Bitte fordern Sie einen neuen an."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort wurde zurückgesetzt. Sie werden weitergeleitet..."
+msgstr "Passwort wurde zurückgesetzt. Sie werden weitergeleitet..."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Reset fehlgeschlagen."
+msgstr "Reset fehlgeschlagen."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Vorhandene Benutzer"
+msgstr "Vorhandene Benutzer"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Wird geladen …"
+msgstr "Wird geladen …"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Neuen Benutzer anlegen"
+msgstr "Neuen Benutzer anlegen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "E-Mail"
+msgstr "E-Mail"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Anlegen"
+msgstr "Anlegen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Administratoren"
+msgstr "Administratoren"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Admin hinzufügen"
+msgstr "Admin hinzufügen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst oben „Neuen Benutzer anlegen“)."
+msgstr "Die Person muss bereits ein Konto haben (sonst zuerst oben „Neuen Benutzer anlegen“)."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "E-Mail des bestehenden Kontos"
+msgstr "E-Mail des bestehenden Kontos"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Rechte-Stufe"
+msgstr "Rechte-Stufe"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Voll-Admin – alle Rechte"
+msgstr "Voll-Admin – alle Rechte"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Nur-Einsicht – sieht Nutzer, ändert nichts"
+msgstr "Nur-Einsicht – sieht Nutzer, ändert nichts"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Zum Admin machen"
+msgstr "Zum Admin machen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Kein Zugriff – diese Seite ist nur für Administratoren."
+msgstr "Kein Zugriff – diese Seite ist nur für Administratoren."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Projekte"
+msgstr "Projekte"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Aktiv"
+msgstr "Aktiv"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Gesperrt"
+msgstr "Gesperrt"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Das sind Sie selbst."
+msgstr "Das sind Sie selbst."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Sperren"
+msgstr "Sperren"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Entsperren"
+msgstr "Entsperren"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Neues Passwort für {email} (mind. 8 Zeichen):"
+msgstr "Neues Passwort für {email} (mind. 8 Zeichen):"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort muss mindestens 8 Zeichen haben."
+msgstr "Passwort muss mindestens 8 Zeichen haben."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort wiederholen:"
+msgstr "Passwort wiederholen:"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort zurückgesetzt"
+msgstr "Passwort zurückgesetzt"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Passwort wurde zurückgesetzt."
+msgstr "Passwort wurde zurückgesetzt."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler beim Zurücksetzen."
+msgstr "Fehler beim Zurücksetzen."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Benutzer \"{email}\" und ALLE Daten unwiderruflich löschen? (DSGVO-Löschung)"
+msgstr "Benutzer \"{email}\" und ALLE Daten unwiderruflich löschen? (DSGVO-Löschung)"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Benutzer gelöscht"
+msgstr "Benutzer gelöscht"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Benutzer erstellt: {name}"
+msgstr "Benutzer erstellt: {name}"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Administratoren konnten nicht geladen werden."
+msgstr "Administratoren konnten nicht geladen werden."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Nur-Einsicht"
+msgstr "Nur-Einsicht"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Voll-Admin"
+msgstr "Voll-Admin"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Auf Nur-Einsicht setzen"
+msgstr "Auf Nur-Einsicht setzen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Auf Voll-Admin setzen"
+msgstr "Auf Voll-Admin setzen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Admin-Rechte entziehen"
+msgstr "Admin-Rechte entziehen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Rechte-Stufe geändert"
+msgstr "Rechte-Stufe geändert"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler beim Ändern der Rechte-Stufe."
+msgstr "Fehler beim Ändern der Rechte-Stufe."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Admin-Rechte von \"{name}\" entziehen? Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "Admin-Rechte von \"{name}\" entziehen? Das Konto bleibt als normaler Nutzer bestehen."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Admin-Rechte entzogen"
+msgstr "Admin-Rechte entzogen"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler beim Entziehen der Rechte."
+msgstr "Fehler beim Entziehen der Rechte."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Bitte eine E-Mail eingeben."
+msgstr "Bitte eine E-Mail eingeben."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Fehler beim Hinzufügen."
+msgstr "Fehler beim Hinzufügen."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Vorhandene Benutzer ({n})"
+msgstr "Vorhandene Benutzer ({n})"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "Administratoren ({n})"
+msgstr "Administratoren ({n})"
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "{n} Benutzer geladen."
+msgstr "{n} Benutzer geladen."
+
+#: register/forgot/reset/benutzer (03.07.2026)
+msgid "{n} Administratoren geladen."
+msgstr "{n} Administratoren geladen."
