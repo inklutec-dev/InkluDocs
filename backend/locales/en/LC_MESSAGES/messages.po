@@ -1617,3 +1617,155 @@ msgstr "Switching the alt text language failed."
 #: Ausgabesprache (03.07.2026)
 msgid "Netzwerkfehler beim Umstellen der Sprache."
 msgstr "Network error while switching the language."
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs: E-Mail-Adresse bestätigen"
+msgstr "InkluDocs: Confirm your email address"
+
+#: E-Mails (03.07.2026)
+msgid "Willkommen bei InkluDocs"
+msgstr "Welcome to InkluDocs"
+
+#: E-Mails (03.07.2026)
+msgid "vielen Dank für Ihre Registrierung bei InkluDocs – dem KI-gestützten Alt-Text-Generator für barrierefreie Dokumente und Bilder."
+msgstr "thank you for registering with InkluDocs – the AI-powered alt text generator for accessible documents and images."
+
+#: E-Mails (03.07.2026)
+msgid "E-Mail-Adresse bestätigen"
+msgstr "Confirm email address"
+
+#: E-Mails (03.07.2026)
+msgid "Bitte klicken Sie auf den folgenden Link, um Ihr Konto zu aktivieren:"
+msgstr "Please click the following link to activate your account:"
+
+#: E-Mails (03.07.2026)
+msgid "Oder kopieren Sie diesen Link:"
+msgstr "Or copy this link:"
+
+#: E-Mails (03.07.2026)
+msgid "Der Link ist 24 Stunden gültig."
+msgstr "The link is valid for 24 hours."
+
+#: E-Mails (03.07.2026)
+msgid "So funktioniert InkluDocs"
+msgstr "How InkluDocs works"
+
+#: E-Mails (03.07.2026)
+msgid "Nachdem Sie Ihre E-Mail-Adresse bestätigt haben:"
+msgstr "After you have confirmed your email address:"
+
+#: E-Mails (03.07.2026)
+msgid "Melden Sie sich auf {url} an."
+msgstr "Sign in at {url}."
+
+#: E-Mails (03.07.2026)
+msgid "Laden Sie ein PDF oder Bilder hoch oder geben Sie eine Website-Adresse ein."
+msgstr "Upload a PDF or images, or enter a website address."
+
+#: E-Mails (03.07.2026)
+msgid "Klicken Sie auf „Alt-Texte generieren“."
+msgstr "Click “Generate alt texts”."
+
+#: E-Mails (03.07.2026)
+msgid "Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie."
+msgstr "Edit the alt texts if needed and export them."
+
+#: E-Mails (03.07.2026)
+msgid "Bei Fragen wenden Sie sich gerne an {mail}."
+msgstr "If you have any questions, feel free to contact {mail}."
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de"
+msgstr "InkluDocs is a product of INKLUTEC – support@inklutec.de"
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs – E-Mail bestätigen"
+msgstr "InkluDocs – confirm email"
+
+#: E-Mails (03.07.2026)
+msgid "hier ist Ihr neuer Bestätigungslink:"
+msgstr "here is your new confirmation link:"
+
+#: E-Mails (03.07.2026)
+msgid "du hast angefordert, deine InkluDocs E-Mail-Adresse auf {email} zu ändern."
+msgstr "you requested to change your InkluDocs email address to {email}."
+
+#: E-Mails (03.07.2026)
+msgid "Oder kopiere diesen Link:"
+msgstr "Or copy this link:"
+
+#: E-Mails (03.07.2026)
+msgid "Der Link ist 1 Stunde gültig. Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail."
+msgstr "The link is valid for 1 hour. If you did not request this change, please ignore this email."
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs: Passwort zurücksetzen"
+msgstr "InkluDocs: Reset password"
+
+#: E-Mails (03.07.2026)
+msgid "du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert."
+msgstr "you requested a password reset for your InkluDocs account."
+
+#: E-Mails (03.07.2026)
+msgid "Passwort jetzt zurücksetzen"
+msgstr "Reset password now"
+
+#: E-Mails (03.07.2026)
+msgid "Der Link ist 1 Stunde gültig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren."
+msgstr "The link is valid for 1 hour. If you did not make this request, you can ignore this email."
+
+#: E-Mails (03.07.2026)
+msgid "Ein InkluDocs-Nutzer"
+msgstr "An InkluDocs user"
+
+#: E-Mails (03.07.2026)
+msgid "Hallo {name},"
+msgstr "Hello {name},"
+
+#: E-Mails (03.07.2026)
+msgid "Hallo,"
+msgstr "Hello,"
+
+#: E-Mails (03.07.2026)
+msgid "{name} möchte Sie bitten, die Alt-Texte für das Projekt „{projekt}“ zu prüfen."
+msgstr "{name} would like to ask you to review the alt texts for the project “{projekt}”."
+
+#: E-Mails (03.07.2026)
+msgid "Bitte öffnen Sie diesen Link und bestätigen Sie Ihre E-Mail-Adresse:"
+msgstr "Please open this link and confirm your email address:"
+
+#: E-Mails (03.07.2026)
+msgid "Eingeladen von:"
+msgstr "Invited by:"
+
+#: E-Mails (03.07.2026)
+msgid "Bitte Alt-Texte prüfen: {projekt}"
+msgstr "Please review alt texts: {projekt}"
+
+#: E-Mails (03.07.2026)
+msgid "{gast} hat die Prüfung für das Projekt „{projekt}“ abgeschlossen."
+msgstr "{gast} has finished the review for the project “{projekt}”."
+
+#: E-Mails (03.07.2026)
+msgid "Ergebnis:"
+msgstr "Result:"
+
+#: E-Mails (03.07.2026)
+msgid "{f} freigegeben, {z} zu überarbeiten, {o} offen."
+msgstr "{f} approved, {z} to revise, {o} open."
+
+#: E-Mails (03.07.2026)
+msgid "Nachricht:"
+msgstr "Message:"
+
+#: E-Mails (03.07.2026)
+msgid "Anmerkungen:"
+msgstr "Notes:"
+
+#: E-Mails (03.07.2026)
+msgid "Im Werkzeug ansehen:"
+msgstr "View in the tool:"
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
+msgstr "InkluDocs: Review finished ({projekt})"

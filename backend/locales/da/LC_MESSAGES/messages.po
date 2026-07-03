@@ -1308,3 +1308,155 @@ msgstr "Skift af sprog for de alternative tekster mislykkedes."
 #: Ausgabesprache (03.07.2026)
 msgid "Netzwerkfehler beim Umstellen der Sprache."
 msgstr "Netværksfejl ved skift af sprog."
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs: E-Mail-Adresse bestätigen"
+msgstr "InkluDocs: Bekræft din e-mailadresse"
+
+#: E-Mails (03.07.2026)
+msgid "Willkommen bei InkluDocs"
+msgstr "Velkommen til InkluDocs"
+
+#: E-Mails (03.07.2026)
+msgid "vielen Dank für Ihre Registrierung bei InkluDocs – dem KI-gestützten Alt-Text-Generator für barrierefreie Dokumente und Bilder."
+msgstr "tak for din registrering hos InkluDocs – den AI-baserede generator til alternative tekster for tilgængelige dokumenter og billeder."
+
+#: E-Mails (03.07.2026)
+msgid "E-Mail-Adresse bestätigen"
+msgstr "Bekræft e-mailadresse"
+
+#: E-Mails (03.07.2026)
+msgid "Bitte klicken Sie auf den folgenden Link, um Ihr Konto zu aktivieren:"
+msgstr "Klik på følgende link for at aktivere din konto:"
+
+#: E-Mails (03.07.2026)
+msgid "Oder kopieren Sie diesen Link:"
+msgstr "Eller kopiér dette link:"
+
+#: E-Mails (03.07.2026)
+msgid "Der Link ist 24 Stunden gültig."
+msgstr "Linket er gyldigt i 24 timer."
+
+#: E-Mails (03.07.2026)
+msgid "So funktioniert InkluDocs"
+msgstr "Sådan fungerer InkluDocs"
+
+#: E-Mails (03.07.2026)
+msgid "Nachdem Sie Ihre E-Mail-Adresse bestätigt haben:"
+msgstr "Når du har bekræftet din e-mailadresse:"
+
+#: E-Mails (03.07.2026)
+msgid "Melden Sie sich auf {url} an."
+msgstr "Log ind på {url}."
+
+#: E-Mails (03.07.2026)
+msgid "Laden Sie ein PDF oder Bilder hoch oder geben Sie eine Website-Adresse ein."
+msgstr "Upload en PDF eller billeder, eller indtast en webadresse."
+
+#: E-Mails (03.07.2026)
+msgid "Klicken Sie auf „Alt-Texte generieren“."
+msgstr "Klik på ”Generér alternative tekster”."
+
+#: E-Mails (03.07.2026)
+msgid "Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie."
+msgstr "Rediger de alternative tekster efter behov, og eksportér dem."
+
+#: E-Mails (03.07.2026)
+msgid "Bei Fragen wenden Sie sich gerne an {mail}."
+msgstr "Har du spørgsmål, er du velkommen til at kontakte {mail}."
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de"
+msgstr "InkluDocs er et produkt fra INKLUTEC – support@inklutec.de"
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs – E-Mail bestätigen"
+msgstr "InkluDocs – bekræft e-mail"
+
+#: E-Mails (03.07.2026)
+msgid "hier ist Ihr neuer Bestätigungslink:"
+msgstr "her er dit nye bekræftelseslink:"
+
+#: E-Mails (03.07.2026)
+msgid "du hast angefordert, deine InkluDocs E-Mail-Adresse auf {email} zu ändern."
+msgstr "du har anmodet om at ændre din InkluDocs-e-mailadresse til {email}."
+
+#: E-Mails (03.07.2026)
+msgid "Oder kopiere diesen Link:"
+msgstr "Eller kopiér dette link:"
+
+#: E-Mails (03.07.2026)
+msgid "Der Link ist 1 Stunde gültig. Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail."
+msgstr "Linket er gyldigt i 1 time. Hvis du ikke har anmodet om denne ændring, kan du ignorere denne e-mail."
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs: Passwort zurücksetzen"
+msgstr "InkluDocs: Nulstil adgangskode"
+
+#: E-Mails (03.07.2026)
+msgid "du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert."
+msgstr "du har anmodet om nulstilling af adgangskoden til din InkluDocs-konto."
+
+#: E-Mails (03.07.2026)
+msgid "Passwort jetzt zurücksetzen"
+msgstr "Nulstil adgangskoden nu"
+
+#: E-Mails (03.07.2026)
+msgid "Der Link ist 1 Stunde gültig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren."
+msgstr "Linket er gyldigt i 1 time. Hvis du ikke har anmodet om dette, kan du ignorere denne e-mail."
+
+#: E-Mails (03.07.2026)
+msgid "Ein InkluDocs-Nutzer"
+msgstr "En InkluDocs-bruger"
+
+#: E-Mails (03.07.2026)
+msgid "Hallo {name},"
+msgstr "Hej {name},"
+
+#: E-Mails (03.07.2026)
+msgid "Hallo,"
+msgstr "Hej,"
+
+#: E-Mails (03.07.2026)
+msgid "{name} möchte Sie bitten, die Alt-Texte für das Projekt „{projekt}“ zu prüfen."
+msgstr "{name} vil gerne bede dig gennemgå de alternative tekster for projektet ”{projekt}”."
+
+#: E-Mails (03.07.2026)
+msgid "Bitte öffnen Sie diesen Link und bestätigen Sie Ihre E-Mail-Adresse:"
+msgstr "Åbn dette link, og bekræft din e-mailadresse:"
+
+#: E-Mails (03.07.2026)
+msgid "Eingeladen von:"
+msgstr "Inviteret af:"
+
+#: E-Mails (03.07.2026)
+msgid "Bitte Alt-Texte prüfen: {projekt}"
+msgstr "Gennemgå venligst alternative tekster: {projekt}"
+
+#: E-Mails (03.07.2026)
+msgid "{gast} hat die Prüfung für das Projekt „{projekt}“ abgeschlossen."
+msgstr "{gast} har afsluttet gennemsynet af projektet ”{projekt}”."
+
+#: E-Mails (03.07.2026)
+msgid "Ergebnis:"
+msgstr "Resultat:"
+
+#: E-Mails (03.07.2026)
+msgid "{f} freigegeben, {z} zu überarbeiten, {o} offen."
+msgstr "{f} godkendt, {z} til revision, {o} åbne."
+
+#: E-Mails (03.07.2026)
+msgid "Nachricht:"
+msgstr "Besked:"
+
+#: E-Mails (03.07.2026)
+msgid "Anmerkungen:"
+msgstr "Bemærkninger:"
+
+#: E-Mails (03.07.2026)
+msgid "Im Werkzeug ansehen:"
+msgstr "Se i værktøjet:"
+
+#: E-Mails (03.07.2026)
+msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
+msgstr "InkluDocs: Gennemsyn afsluttet ({projekt})"

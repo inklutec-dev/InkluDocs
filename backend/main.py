@@ -440,34 +440,21 @@ async def register(request: Request):
     except Exception:
         pass
 
+    # Browser-Sprache als Konto-Sprache uebernehmen (03.07.2026): ein daenischer
+    # Registrierer bekommt UI und Mails ab der ersten Minute in seiner Sprache.
+    reg_lang = resolve_ui_language(request)
+    if reg_lang not in SUPPORTED_LANGUAGES:
+        reg_lang = "de"
+    try:
+        set_user_language(user_id, reg_lang)
+    except Exception:
+        reg_lang = "de"
+
     # Send verification email
     verify_token = create_email_verification_token(user_id, email)
     verify_url = f"{BASE_URL}/api/verify-email?token={verify_token}"
-    email_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
-<h1 style="color:#1b2a4a;">Willkommen bei InkluDocs</h1>
-<p>Hallo {display_name},</p>
-<p>vielen Dank fuer Ihre Registrierung bei InkluDocs – dem KI-gestuetzten Alt-Text-Generator fuer barrierefreie Dokumente und Bilder.</p>
-
-<h2 style="color:#e87722;font-size:1.1rem;">E-Mail-Adresse bestaetigen</h2>
-<p>Bitte klicken Sie auf den folgenden Link, um Ihr Konto zu aktivieren:</p>
-<p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">E-Mail-Adresse bestaetigen</a></p>
-<p style="color:#64748b;font-size:0.9rem;">Oder kopieren Sie diesen Link: {verify_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">Der Link ist 24 Stunden gueltig.</p>
-
-<h2 style="color:#e87722;font-size:1.1rem;">So funktioniert InkluDocs</h2>
-<p>Nachdem Sie Ihre E-Mail-Adresse bestaetigt haben:</p>
-<ol style="line-height:1.8;">
-<li>Melden Sie sich auf <a href="{BASE_URL}">{BASE_URL}</a> an</li>
-<li>Laden Sie ein PDF, Bilder hoch oder geben Sie eine Website-URL ein</li>
-<li>Klicken Sie auf &bdquo;Alt-Texte generieren&ldquo;</li>
-<li>Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie</li>
-</ol>
-
-<p>Bei Fragen wenden Sie sich gerne an <a href="mailto:support@inklutec.de">support@inklutec.de</a>.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de</p>
-</body></html>"""
-    send_email(email, "InkluDocs: E-Mail-Adresse bestaetigen", email_body, bcc_admin=False)
+    _subj, email_body = _verification_mail_full(reg_lang, display_name, verify_url)
+    send_email(email, _subj, email_body, bcc_admin=False)
 
     # Notify admin about new registration
     admin_body = f"""<!DOCTYPE html>
@@ -547,17 +534,8 @@ async def resend_verification(request: Request):
     user = get_user_by_email(email)
     display_name = user["display_name"] if user else ""
     verify_url = f"{BASE_URL}/api/verify-email?token={token}"
-    email_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h2 style="color:#e87722;">InkluDocs – E-Mail bestaetigen</h2>
-<p>Hallo {display_name},</p>
-<p>hier ist Ihr neuer Bestaetigungslink:</p>
-<p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">E-Mail-Adresse bestaetigen</a></p>
-<p style="color:#64748b;font-size:0.9rem;">Oder kopieren Sie diesen Link: {verify_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">Der Link ist 24 Stunden gueltig.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – support@inklutec.de</p>
-</body></html>"""
-    send_email(email, "InkluDocs: E-Mail-Adresse bestaetigen", email_body, bcc_admin=False)
+    _subj, email_body = _verification_mail_short(_mail_lang(user), display_name, verify_url)
+    send_email(email, _subj, email_body, bcc_admin=False)
 
     return JSONResponse({"ok": True, "message": "Falls ein unverifiziertes Konto existiert, wurde eine neue Bestaetigungsmail gesendet."})
 
@@ -623,18 +601,8 @@ async def change_email(request: Request, user: dict = Depends(get_current_user))
     token = create_email_change_token(user["id"], new_email)
     confirm_url = f"{BASE_URL}/api/confirm-email?token={token}"
 
-    email_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h1 style="color:#1b2a4a;">E-Mail-Adresse bestaetigen</h1>
-<p>Hallo {db_user['display_name']},</p>
-<p>du hast angefordert, deine InkluDocs E-Mail-Adresse auf <strong>{new_email}</strong> zu aendern.</p>
-<p><a href="{confirm_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">E-Mail-Adresse bestaetigen</a></p>
-<p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {confirm_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gueltig. Falls du diese Aenderung nicht angefordert hast, ignoriere diese E-Mail.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
-</body></html>"""
-
-    sent = send_email(new_email, "InkluDocs: E-Mail-Adresse bestaetigen", email_body, bcc_admin=False)
+    _subj, email_body = _email_change_mail(_mail_lang(db_user), db_user['display_name'], new_email, confirm_url)
+    sent = send_email(new_email, _subj, email_body, bcc_admin=False)
     if not sent:
         raise HTTPException(status_code=500, detail="Bestaetigungsmail konnte nicht gesendet werden. Bitte spaeter erneut versuchen.")
 
@@ -701,17 +669,8 @@ async def forgot_password(request: Request):
     reset_url = f"{BASE_URL}/reset?token={token}"
 
     # Send reset link via email (never expose in API response)
-    email_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h1 style="color:#1b2a4a;">Passwort zurücksetzen</h1>
-<p>Hallo {user['display_name']},</p>
-<p>du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert.</p>
-<p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Passwort jetzt zurücksetzen</a></p>
-<p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {reset_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gueltig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
-</body></html>"""
-    send_email(email, "InkluDocs: Passwort zurücksetzen", email_body, bcc_admin=False)
+    _subj, email_body = _reset_mail(_mail_lang(user), user['display_name'], reset_url)
+    send_email(email, _subj, email_body, bcc_admin=False)
 
     return {
         "ok": True,
@@ -1039,6 +998,103 @@ async def set_context_setting(project_id: int, request: Request, user: dict = De
 
 
 ALT_TEXT_LANGUAGES = ("de", "en", "da", "fr", "es")
+
+
+# ── Konto-Mails in Empfaengersprache (03.07.2026) ──────────────────────────
+def _mail_lang(user_row) -> str:
+    """Empfaengersprache einer Mail: users.language mit Deutsch-Fallback."""
+    try:
+        lang = user_row["language"] if user_row else None
+    except (KeyError, IndexError, TypeError):
+        lang = None
+    return lang if lang in SUPPORTED_LANGUAGES else "de"
+
+
+def _verification_mail_full(lang: str, display_name: str, verify_url: str):
+    """Willkommens-/Bestaetigungsmail bei der Registrierung."""
+    _ = get_gettext(lang)
+    subject = _('InkluDocs: E-Mail-Adresse bestätigen')
+    anmelden = _('Melden Sie sich auf {url} an.').format(url=f'<a href="{BASE_URL}">{BASE_URL}</a>')
+    fragen = _('Bei Fragen wenden Sie sich gerne an {mail}.').format(
+        mail='<a href="mailto:support@inklutec.de">support@inklutec.de</a>')
+    body = f"""<!DOCTYPE html>
+<html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
+<h1 style="color:#1b2a4a;">{_('Willkommen bei InkluDocs')}</h1>
+<p>{_('Hallo')} {display_name},</p>
+<p>{_('vielen Dank für Ihre Registrierung bei InkluDocs – dem KI-gestützten Alt-Text-Generator für barrierefreie Dokumente und Bilder.')}</p>
+
+<h2 style="color:#e87722;font-size:1.1rem;">{_('E-Mail-Adresse bestätigen')}</h2>
+<p>{_('Bitte klicken Sie auf den folgenden Link, um Ihr Konto zu aktivieren:')}</p>
+<p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('E-Mail-Adresse bestätigen')}</a></p>
+<p style="color:#64748b;font-size:0.9rem;">{_('Oder kopieren Sie diesen Link:')} {verify_url}</p>
+<p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 24 Stunden gültig.')}</p>
+
+<h2 style="color:#e87722;font-size:1.1rem;">{_('So funktioniert InkluDocs')}</h2>
+<p>{_('Nachdem Sie Ihre E-Mail-Adresse bestätigt haben:')}</p>
+<ol style="line-height:1.8;">
+<li>{anmelden}</li>
+<li>{_('Laden Sie ein PDF oder Bilder hoch oder geben Sie eine Website-Adresse ein.')}</li>
+<li>{_('Klicken Sie auf „Alt-Texte generieren“.')}</li>
+<li>{_('Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie.')}</li>
+</ol>
+
+<p>{fragen}</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">{_('InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de')}</p>
+</body></html>"""
+    return subject, body
+
+
+def _verification_mail_short(lang: str, display_name: str, verify_url: str):
+    """Neuer Bestaetigungslink (Resend)."""
+    _ = get_gettext(lang)
+    subject = _('InkluDocs: E-Mail-Adresse bestätigen')
+    body = f"""<!DOCTYPE html>
+<html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
+<h2 style="color:#e87722;">{_('InkluDocs – E-Mail bestätigen')}</h2>
+<p>{_('Hallo')} {display_name},</p>
+<p>{_('hier ist Ihr neuer Bestätigungslink:')}</p>
+<p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('E-Mail-Adresse bestätigen')}</a></p>
+<p style="color:#64748b;font-size:0.9rem;">{_('Oder kopieren Sie diesen Link:')} {verify_url}</p>
+<p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 24 Stunden gültig.')}</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – support@inklutec.de</p>
+</body></html>"""
+    return subject, body
+
+
+def _email_change_mail(lang: str, display_name: str, new_email: str, confirm_url: str):
+    """Bestaetigung einer E-Mail-Adress-Aenderung (du-Form wie bisher)."""
+    _ = get_gettext(lang)
+    subject = _('InkluDocs: E-Mail-Adresse bestätigen')
+    aendern = _('du hast angefordert, deine InkluDocs E-Mail-Adresse auf {email} zu ändern.').format(
+        email=f'<strong>{new_email}</strong>')
+    body = f"""<!DOCTYPE html>
+<html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
+<h1 style="color:#1b2a4a;">{_('E-Mail-Adresse bestätigen')}</h1>
+<p>{_('Hallo')} {display_name},</p>
+<p>{aendern}</p>
+<p><a href="{confirm_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('E-Mail-Adresse bestätigen')}</a></p>
+<p style="color:#64748b;font-size:0.9rem;">{_('Oder kopiere diesen Link:')} {confirm_url}</p>
+<p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 1 Stunde gültig. Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail.')}</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
+</body></html>"""
+    return subject, body
+
+
+def _reset_mail(lang: str, display_name: str, reset_url: str):
+    """Passwort-Reset-Mail (du-Form wie bisher)."""
+    _ = get_gettext(lang)
+    subject = _('InkluDocs: Passwort zurücksetzen')
+    body = f"""<!DOCTYPE html>
+<html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
+<h1 style="color:#1b2a4a;">{_('Passwort zurücksetzen')}</h1>
+<p>{_('Hallo')} {display_name},</p>
+<p>{_('du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert.')}</p>
+<p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('Passwort jetzt zurücksetzen')}</a></p>
+<p style="color:#64748b;font-size:0.9rem;">{_('Oder kopiere diesen Link:')} {reset_url}</p>
+<p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 1 Stunde gültig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.')}</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
+</body></html>"""
+    return subject, body
 
 
 @app.post("/api/projects/{project_id}/language-setting")
@@ -4200,24 +4256,27 @@ async def create_project_share(project_id: int, request: Request, user: dict = D
     sent = False
     if notify:
         owner = get_user_by_id(user["id"]) or {}
-        owner_name = (owner.get("display_name") or "").strip() or "Ein InkluDocs-Nutzer"
+        # Sprache des Einladenden als beste Annaeherung an die Gast-Sprache
+        # (03.07.2026): wer auf Englisch arbeitet, laedt englischsprachig ein.
+        _ = get_gettext(_mail_lang(owner))
+        owner_name = (owner.get("display_name") or "").strip() or _('Ein InkluDocs-Nutzer')
         owner_email = owner.get("email") or user["email"]
         proj_name = (proj["name"] or proj["filename"] or ("Projekt " + str(project_id)))
-        greet = ("Hallo " + guest_name + ",") if guest_name else "Hallo,"
+        greet = _('Hallo {name},').format(name=html.escape(guest_name)) if guest_name else _('Hallo,')
         if custom_message:
             intro = html.escape(custom_message).replace("\n", "<br>")
         else:
-            intro = (html.escape(owner_name) + " möchte Sie bitten, die Alt-Texte für das Projekt „"
-                     + html.escape(proj_name) + "“ zu prüfen.")
+            intro = _('{name} möchte Sie bitten, die Alt-Texte für das Projekt „{projekt}“ zu prüfen.').format(
+                name=html.escape(owner_name), projekt=html.escape(proj_name))
         body = (
             "<p>" + greet + "</p>"
             "<p>" + intro + "</p>"
-            "<p>Bitte öffnen Sie diesen Link und bestätigen Sie Ihre E-Mail-Adresse:</p>"
+            "<p>" + _('Bitte öffnen Sie diesen Link und bestätigen Sie Ihre E-Mail-Adresse:') + "</p>"
             "<p><a href='" + url + "'>" + url + "</a></p>"
-            "<p>Eingeladen von: " + html.escape(owner_email) + "</p>"
-            "<p>Vielen Dank!</p>"
+            "<p>" + _('Eingeladen von:') + " " + html.escape(owner_email) + "</p>"
+            "<p>" + _('Vielen Dank!') + "</p>"
         )
-        subject = "Bitte Alt-Texte prüfen: " + proj_name
+        subject = _('Bitte Alt-Texte prüfen: {projekt}').format(projekt=proj_name)
         sent = send_email(guest_email, subject, body, bcc_admin=False,
                           reply_to=owner_email, from_name=(owner_name + " über InkluDocs"))
     return {"ok": True, "token": token, "url": url, "guest_email": guest_email, "sent": bool(sent)}
@@ -4273,17 +4332,18 @@ async def freigabe_complete(token: str, request: Request):
     guest = (session or {}).get("guest", share["guest_email"])
     link = BASE_URL + "/freigabe/" + token
     notes_html = "".join("<li>" + _mail_escape(n["body"]) + "</li>" for n in notes)
+    _ = get_gettext(_mail_lang(owner))
     body = (
-        "<p>" + _mail_escape(guest) + " hat die Pruefung fuer das Projekt &bdquo;"
-        + _mail_escape(pname) + "&ldquo; abgeschlossen.</p>"
-        + "<p><strong>Ergebnis:</strong> " + str(freigegeben) + " freigegeben, "
-        + str(zu_ueber) + " zu ueberarbeiten, " + str(offen) + " offen.</p>"
-        + (("<p><strong>Nachricht:</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
-        + (("<p><strong>Anmerkungen:</strong></p><ul>" + notes_html + "</ul>") if notes_html else "")
-        + "<p>Im Werkzeug ansehen: <a href='" + link + "'>" + link + "</a></p>"
+        "<p>" + _('{gast} hat die Prüfung für das Projekt „{projekt}“ abgeschlossen.').format(
+            gast=_mail_escape(guest), projekt=_mail_escape(pname)) + "</p>"
+        + "<p><strong>" + _('Ergebnis:') + "</strong> "
+        + _('{f} freigegeben, {z} zu überarbeiten, {o} offen.').format(f=freigegeben, z=zu_ueber, o=offen) + "</p>"
+        + (("<p><strong>" + _('Nachricht:') + "</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
+        + (("<p><strong>" + _('Anmerkungen:') + "</strong></p><ul>" + notes_html + "</ul>") if notes_html else "")
+        + "<p>" + _('Im Werkzeug ansehen:') + " <a href='" + link + "'>" + link + "</a></p>"
     )
     if owner and owner.get("email"):
-        send_email(owner["email"], "InkluDocs: Pruefung abgeschlossen (" + pname + ")", body, bcc_admin=False)
+        send_email(owner["email"], _('InkluDocs: Prüfung abgeschlossen ({projekt})').format(projekt=pname), body, bcc_admin=False)
     return {"ok": True, "freigegeben": freigegeben, "zu_ueberarbeiten": zu_ueber, "offen": offen}
 
 
