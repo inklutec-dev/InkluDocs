@@ -1,0 +1,1783 @@
+{% extends "base_app.html" %}
+
+{% block head_extra %}
+    <style>
+      /* Einladungs-Dialog (natives <dialog>): fuer Zoom/Lupe dimensioniert + starker Fokus */
+      dialog.invite-dialog { max-width: 34rem; width: 92%; max-height: 85vh; overflow: auto;
+        border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
+      dialog.invite-dialog::backdrop { background: rgba(0,0,0,0.5); }
+      dialog.invite-dialog :focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+    </style>
+{% if guest_mode %}
+{# Gast-Modus (Freigabe-Link): Flags VOR dashboard.js und Seiten-JS setzen.
+   share_token kommt nur nach is_valid_share() hierher; tojson escapt sicher. #}
+<script>window.GUEST_MODE = true; window.SHARE_TOKEN = {{ share_token|tojson }};</script>
+{% endif %}
+{% endblock %}
+
+{% block main %}{% endblock %}
+{# Inhalt von #main baut das Seiten-JS (showProject/initGuest) komplett per JS auf. #}
+
+{% block dialogs %}
+    <!-- Barrierefreie Dialoge fuer Dokument-Aktionen. Basis ist das native
+         <dialog>-Element mit showModal(): Fokusfalle, Escape-zum-Schliessen und
+         Modal-Semantik kommen vom Browser — daher bewusst OHNE role/aria-modal
+         (ARIA nur, wo nativ nichts vorhanden ist). Inhalte werden beim Oeffnen
+         per JS gefuellt (siehe openDocDelete/openDocRename). -->
+    <dialog id="docDeleteDialog" class="app-dialog">
+        <h2>{{ _('Dokument löschen?') }}</h2>
+        <p id="docDeleteBody"></p>
+        <div class="dialog-actions">
+            <button type="button" autofocus class="btn btn-secondary" id="docDeleteCancel">{{ _('Abbrechen') }}</button>
+            <button type="button" class="btn btn-danger" id="docDeleteConfirm">{{ _('Löschen') }}</button>
+        </div>
+    </dialog>
+    <dialog id="docRenameDialog" class="app-dialog">
+        <form id="docRenameForm">
+            <h2>{{ _('Dokument umbenennen') }}</h2>
+            <label for="docRenameInput">{{ _('Neuer Name des Dokuments') }}</label>
+            <input id="docRenameInput" type="text" maxlength="200" autocomplete="off">
+            <p class="dialog-hint">{{ _('Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.') }}</p>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-secondary" id="docRenameCancel">{{ _('Abbrechen') }}</button>
+                <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
+            </div>
+        </form>
+    </dialog>
+{% endblock %}
+
+{% block page_script %}
+<script>
+{% raw %}
+    const main = document.getElementById('main');
+    const liveRegion = document.getElementById('liveRegion');
+    // currentUser wird gemeinsam in dashboard.js deklariert (eine Quelle)
+    let pollInterval = null;
+
+    function announce(msg) {
+        liveRegion.textContent = '';
+        setTimeout(() => { liveRegion.textContent = msg; }, 100);
+    }
+
+    // Gast-Modus-Helfer (19.06.2026): im Gast-Modus kommen Daten/Bilder vom
+    // token-basierten Freigabe-Endpunkt statt von den login-geschuetzten Routen.
+    function _projectDataUrl(projectId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN) : ('/api/projects/' + projectId);
+    }
+    function imgFileUrl(imageId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/file') : ('/api/images/' + imageId + '/file');
+    }
+    function pageViewUrl(imageId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/page-view') : ('/api/images/' + imageId + '/page-view');
+    }
+    function altTextSaveUrl(imageId) {
+        return window.GUEST_MODE ? ('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/alttext') : ('/api/images/' + imageId + '/alt-text');
+    }
+
+    // ─── Init ────────────────────────────────────────
+    async function init() {
+        if (window.GUEST_MODE) { return initGuest(); }   // Gast: E-Mail-Gate statt Login
+        const res = await fetch('/api/me');
+        if (res.status === 401) { window.location.href = '/'; return; }
+        const meData = await res.json();
+        currentUser = meData.user;
+        if (meData.daily_limit) window._dailyLimit = meData.daily_limit;
+        updateLimitDisplay();
+        const _pid = new URLSearchParams(window.location.search).get('projekt');
+        if (_pid) { showProject(_pid); } else { window.location.href = '/dashboard'; }
+    }
+
+    // ─── Gast-Modus: E-Mail-Gate, dann read-only Projekt-Ansicht ───
+    function initGuest() {
+        main.innerHTML =
+            '<section class="card" aria-labelledby="gateHeading" style="max-width:32rem;margin:1.5rem auto;">'
+            + '<h1 id="gateHeading" class="section-title">Freigabe ansehen</h1>'
+            + '<p>Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen.</p>'
+            + '<form id="gateForm" style="margin-top:1rem;">'
+            + '<label for="gateEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">E-Mail-Adresse</label>'
+            + '<input type="email" id="gateEmail" required autocomplete="email" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
+            + '<p id="gateError" role="alert" style="color:var(--error,#c33);min-height:1.2em;margin:0.4rem 0;"></p>'
+            + '<button type="submit" class="btn btn-primary">Bestätigen</button>'
+            + '</form></section>';
+        const form = document.getElementById('gateForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('gateEmail').value.trim();
+            const errEl = document.getElementById('gateError');
+            errEl.textContent = '';
+            try {
+                const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/confirm', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin', body: JSON.stringify({ email: email })
+                });
+                if (!r.ok) { errEl.textContent = 'Diese E-Mail-Adresse passt nicht zur Einladung.'; announce('E-Mail-Adresse passt nicht zur Einladung.'); return; }
+                announce('Bestätigt. Die Freigabe wird geladen.');
+                showProject(window.SHARE_TOKEN);
+            } catch (err) {
+                errEl.textContent = 'Netzwerkfehler. Bitte erneut versuchen.';
+            }
+        });
+    }
+
+    // Abmelden / Benutzerverwaltung / Einstellungen laufen jetzt über die gemeinsame Sidebar (dashboard.js).
+
+
+
+
+
+
+    // ─── Project Detail ──────────────────────────────
+    // Macht den Upload-Bereich zur Drag-&-Drop-Zone. Wird nach jedem showProject-Render
+    // aufgerufen. Der Datei-Button (#projUpload) bleibt der primäre, barrierefreie Weg;
+    // Drag & Drop ist eine Ergänzung für sehende Nutzer und nutzt denselben Upload-Kern.
+    function setupProjectDropzone(projectId) {
+        const zone = document.getElementById('projUploadZone');
+        if (!zone) return;
+        const input = document.getElementById('projUpload');
+        const multiple = !!(input && input.hasAttribute('multiple'));
+        const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+        ['dragenter', 'dragover'].forEach((ev) => zone.addEventListener(ev, (e) => {
+            stop(e); zone.classList.add('drag-over');
+        }));
+        zone.addEventListener('dragleave', (e) => {
+            stop(e);
+            // .drag-over nur entfernen, wenn der Zeiger die Zone wirklich verlässt.
+            if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
+        });
+        zone.addEventListener('drop', (e) => {
+            stop(e);
+            zone.classList.remove('drag-over');
+            const dropped = e.dataTransfer && e.dataTransfer.files;
+            if (!dropped || dropped.length === 0) return;
+            // accept/multiple wie beim Button respektieren: PDF = eine Datei, Grafik = mehrere.
+            const files = multiple ? dropped : [dropped[0]];
+            uploadFilesToProject(files, projectId);
+        });
+    }
+
+    function uploadBlockHtml(project) {
+        const tool = project.tool;
+        if (tool === 'pdf') {
+            // Multi-Datei Phase 1 (08.06.2026, Steve): PDF hinzufügen-Knopf bleibt
+            // immer sichtbar — analog zum URL-Feld beim Web-Werkzeug. Damit kann der
+            // Nutzer jederzeit eine weitere PDF an das Projekt anhängen; jede PDF
+            // wird zu einem eigenen Dokument unten in der Liste.
+            const hasExisting = project.total_images > 0;
+            const heading = hasExisting ? 'Weitere PDF hinzufügen' : 'PDF hinzufügen';
+            const hint = hasExisting
+                ? 'Du kannst jederzeit eine weitere PDF anhängen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unverändert.'
+                : 'Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.';
+            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
+                + '<label for="projUpload" class="sr-only">PDF-Datei auswählen</label>'
+                + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
+                + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
+        }
+        if (tool === 'grafik') {
+            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Bilder hinzufügen</h2>'
+                + '<label for="projUpload" class="sr-only">Bilddateien auswählen</label>'
+                + '<input type="file" id="projUpload" accept=".jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen.</p>'
+                + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
+        }
+        if (tool === 'web') {
+            // Webseiten-Werkzeug: ein dauerhaft sichtbares URL-Feld. Nach jedem Scan werden die
+            // Bilder der Seite unten angehängt; mehrere Seiten können nacheinander gescannt werden.
+            // Bewusst KEINE proj-dropzone/projUploadZone (Drag&Drop ist nur für Dateien sinnvoll).
+            // a11y: sichtbares Label + mitgelesener Hilfetext statt Placeholder (VoiceOver).
+            return '<section class="card" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">Webseite hinzufügen</h2>'
+                + '<label for="projScanUrl" style="display:block;font-weight:600;margin-bottom:0.3rem;">Adresse der Webseite</label>'
+                + '<input type="url" id="projScanUrl" aria-describedby="projScanHint" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;">'
+                + '<p id="projScanHint" style="color:var(--text-muted);margin-top:0.4rem;">z. B. www.beispiel.de oder https://www.beispiel.de \u2013 die Bilder dieser Seite werden geladen. Du kannst danach weitere Seiten hinzufügen.</p>'
+                + '<button class="btn btn-primary" id="projScanBtn" style="margin-top:0.6rem;" onclick="scanInProject(' + project.id + ')">Seite scannen</button>'
+                + '<p id="projScanStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
+        }
+        return '';
+    }
+
+    // Datei-Input (Button): leitet an den gemeinsamen Upload-Kern weiter.
+    async function uploadInProject(e, projectId) {
+        await uploadFilesToProject(e.target.files, projectId);
+    }
+
+    // Webseiten-Werkzeug: scannt die eingegebene Adresse in DIESES Projekt (hängt Bilder an).
+    // Spiegelt das Verhalten des Datei-Uploads: Button sperren, Status melden, danach Projekt
+    // neu rendern und Fokus auf die Bilder-Überschrift. Das Feld leert sich nach Erfolg, damit
+    // direkt die nächste Seite gescannt werden kann.
+    async function scanInProject(projectId) {
+        const input = document.getElementById('projScanUrl');
+        const btn = document.getElementById('projScanBtn');
+        const statusEl = document.getElementById('projScanStatus');
+        const url = ((input && input.value) || '').trim();
+        if (!url) {
+            if (statusEl) statusEl.textContent = 'Bitte eine Adresse eingeben.';
+            if (input) input.focus();
+            return;
+        }
+        if (btn) btn.disabled = true;
+        if (statusEl) statusEl.textContent = 'Seite wird gescannt, bitte warten \u2026';
+        try {
+            const res = await fetch('/api/scan-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url, project_id: projectId })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Die Seite konnte nicht gescannt werden.');
+            if (input) input.value = '';  // Feld leeren für die nächste Seite
+            announce((data.added || 0) + ' Bilder von der Seite geladen.');
+            await showProject(projectId);
+            const h = document.getElementById('bilderHeading');
+            if (h) h.focus();
+        } catch (err) {
+            if (statusEl) statusEl.textContent = 'Fehler: ' + err.message;
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // Gemeinsamer Upload-Kern für Datei-Button UND Drag & Drop (eine Logik, keine Doppelung).
+    // Erwartet eine FileList/Array von Dateien und die Ziel-Projekt-ID.
+    async function uploadFilesToProject(files, projectId) {
+        if (!files || files.length === 0) return;
+        const status = document.getElementById('projUploadStatus');
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (status) status.textContent = files.length > 1 ? ('Datei ' + (i + 1) + ' von ' + files.length + ' wird hochgeladen...') : 'Wird hochgeladen...';
+            announce(file.name + ' wird hochgeladen');
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('project_id', projectId);
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!res.ok) {
+                    if (status) status.textContent = 'Fehler: ' + (data.detail || 'Upload fehlgeschlagen');
+                    announce('Fehler beim Upload: ' + (data.detail || ''));
+                    return;
+                }
+                if (i === files.length - 1) {
+                    // Multi-Datei (08.06.2026): Beim Anhängen einer weiteren PDF auch
+                    // den Doc-Stand mit ansagen, damit Screenreader-Nutzer Bescheid wissen,
+                    // dass ein neues Dokument unten angelegt wurde.
+                    if (data.appended && data.doc_index) {
+                        announce('PDF hinzugefuegt als Dokument ' + data.doc_index + '. ' + data.added_images + ' neue Bilder. Insgesamt ' + data.total_images + ' Bilder im Projekt.');
+                    } else {
+                        announce(data.total_images + ' Bilder im Projekt.');
+                    }
+                    // Fokus beim Append auf das neue Dokument legen (sofern vorhanden),
+                    // sonst weiterhin auf die Bilder-Sammelüberschrift.
+                    await showProject(projectId);
+                    const docHead = data.document_id ? document.getElementById('doc_heading_' + data.document_id) : null;
+                    if (docHead) {
+                        // h2 in summary ist nicht fokussierbar — Fokus auf die summary legen.
+                        const sum = docHead.closest('summary');
+                        if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); }
+                    } else {
+                        const h = document.getElementById('bilderHeading');
+                        if (h) h.focus();
+                    }
+                }
+            } catch (err) {
+                if (status) status.textContent = 'Netzwerkfehler beim Upload.';
+                announce('Netzwerkfehler beim Upload.');
+                return;
+            }
+        }
+    }
+
+    // Status-Badge im Projekt-Kopf.
+    // Steve-Entscheidung 07.06.2026: Der Badge soll auch bei reiner Einzel-
+    // bild-Generierung mitlaufen — er reflektiert nicht nur project.status,
+    // sondern den realen Fortschritt aus den Bild-Status.
+    // Erweiterung 08.06.2026 (Steve, regenerate-Bug-Fix): Fehler werden separat
+    // ausgewiesen, "Fertig" nur bei 100% Erfolg. Wenn alle versucht wurden und
+    // es Fehler gab: "Fertig (mit Fehlern)" — der Sonderfall, dass das Projekt
+    // technisch abgeschlossen ist, aber nicht jedes Bild einen Alt-Text hat.
+    function countByStatus(images, st) {
+        return (images || []).filter(i => i.status === st).length;
+    }
+    function computeStatusBadge(project, images) {
+        const total = project.total_images || 0;
+        const done = countByStatus(images, 'done');
+        const failed = countByStatus(images, 'error');
+        const tried = done + failed;
+        if (project.status === 'processing') return { label: 'Alt-Texte werden generiert...', cls: 'badge-processing' };
+        if (project.status === 'neu') return { label: 'Neu', cls: 'badge-ready' };
+        if (total > 0 && done >= total) return { label: 'Fertig', cls: 'badge-done' };
+        if (total > 0 && tried >= total && failed > 0) return { label: 'Fertig (mit Fehlern)', cls: 'badge-ready' };
+        if (tried > 0) return { label: 'Teilweise verarbeitet', cls: 'badge-ready' };
+        return { label: 'Bereit zur Verarbeitung', cls: 'badge-ready' };
+    }
+
+    // "X von Y Bildern generiert | Extraktion: …" — Steve-Wunsch 07.06.2026.
+    // Bei leerem Projekt (kein PDF hochgeladen, total_images === 0) zeigen
+    // wir nur den Extraktions-Hinweis bzw. nichts, statt "0 von 0 Bildern".
+    // Erweiterung 08.06.2026: Bei Fehlern wird ", Z Fehler" angehängt, damit
+    // klar ist, warum der Generiert-Zähler nicht aufs Total kommt.
+    function formatProjectHeadInfo(project, extractionText, images) {
+        const total = project.total_images || 0;
+        const done = countByStatus(images, 'done');
+        const failed = countByStatus(images, 'error');
+        const ext = extractionText ? ' | Extraktion: ' + extractionText : '';
+        if (total === 0) return ext ? ext.replace(/^ \| /, '') : '';
+        const errPart = failed > 0 ? (', ' + failed + (failed === 1 ? ' Fehler' : ' Fehler')) : '';
+        return `${done} von ${total} Bildern generiert${errPart}${ext}`;
+    }
+
+    // Aktualisiert nur den Projekt-Kopf (Badge + Zähl-Info) anhand der
+    // aktuellen Server-Daten — ohne den Rest des DOM neu zu rendern.
+    // Wichtig: nach Einzelbild-Generierung darf showProject() NICHT komplett
+    // neu rendern, sonst klappen alle Seiten-<details> wieder zu und der
+    // Nutzer verliert den Scroll-Kontext.
+    async function updateProjectHeader(projectId) {
+        try {
+            const res = await fetch('/api/projects/' + projectId);
+            if (!res.ok) return;
+            const data = await res.json();
+            const project = data.project;
+            const images = data.images || [];
+            const extractionText = (project.project_type === 'pdf')
+                ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
+                : null;
+            const badge = computeStatusBadge(project, images);
+            const headInfo = formatProjectHeadInfo(project, extractionText, images);
+            const badgeEl = document.getElementById('projectStatusBadge');
+            const infoEl = document.getElementById('projectHeadInfo');
+            if (badgeEl) {
+                badgeEl.textContent = badge.label;
+                badgeEl.className = 'badge ' + badge.cls;
+            }
+            if (infoEl) infoEl.textContent = headInfo;
+        } catch (err) { /* still — Kopf-Update ist Komfort, kein Show-Stopper */ }
+    }
+
+    async function showProject(projectId) {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        // Aktuelles Projekt merken, damit die Dokument-Aktionen (Umbenennen/
+        // Löschen) wissen, gegen welches Projekt sie arbeiten.
+        currentDocProjectId = projectId;
+        highlightNav(null);
+
+        const res = await fetch(_projectDataUrl(projectId));
+        if (res.status === 401) { if (window.GUEST_MODE) { return initGuest(); } window.location.href = '/'; return; }
+        const data = await res.json();
+        const project = data.project;
+        const images = data.images;
+        const documents = data.documents || [];
+        window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt
+
+        const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
+        const extractionText = (project.project_type === 'pdf')
+            ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
+            : null;
+        const badge = computeStatusBadge(project, images);
+        const headInfo = formatProjectHeadInfo(project, extractionText, images);
+
+        // Multi-Datei (08.06.2026): Im Projekt-Kopf bevorzugt den vom Nutzer
+        // vergebenen project.name anzeigen — bei Mehrfach-PDFs ist project.filename
+        // (die erste PDF) sonst irreführend. Fallback wie bisher: filename.
+        const headTitle = (project.name && project.name.trim()) ? project.name : project.filename;
+
+        // BITV 2.0 / WCAG 2.1/2.2 AA — Steve 08.06.2026 (Michael-Befund):
+        // Projektname ist die H1 der Seite. Genau eine H1 pro Seite. Tabindex=-1
+        // erlaubt programmatischen Fokus (z.B. nach Project-Open), ohne den Tab-
+        // Stop in der natuerlichen Reihenfolge zu stoeren. Saubere Hierarchie:
+        // H1=Projektname, H2=Upload-Section/Dokument/Export-Panel, H3=Seite,
+        // H4=Bild — wird weiter unten konsistent ausgespielt (siehe renderImages).
+        main.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h1 id="projectName" class="card-name" tabindex="-1">${headTitle}</h1>
+                    <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
+                </div>
+                <div class="card-info" id="projectHeadInfo">${headInfo}</div>
+                ${project.status === 'processing' ? `
+                    <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Fortschritt: ${progress} Prozent">
+                        <div class="progress-fill" style="width:${progress}%"></div>
+                    </div>
+                    <p id="processingInfo" aria-live="polite">Bild ${project.processed_images} von ${project.total_images} wird verarbeitet.</p>
+                ` : ''}
+                <div class="card-actions">
+                    ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">Alle Alt-Texte generieren</button>' : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? `
+                        <button type="button" class="btn btn-secondary" id="shareOpenBtn" onclick="openShareDialog(${project.id})">Zur Prüfung freigeben</button>
+                        <dialog id="shareDialog" aria-labelledby="shareHeading" class="invite-dialog">
+                            <div id="shareForm">
+                                <h2 id="shareHeading" style="margin-top:0;">Kunde zur Prüfung einladen</h2>
+                                <p style="font-size:0.9rem;color:var(--text-muted);margin:0 0 0.8rem;">Pflichtfeld ist gekennzeichnet.</p>
+                                <label for="shareName" style="display:block;font-weight:600;margin-bottom:0.3rem;">Name des Kunden (optional)</label>
+                                <input type="text" id="shareName" autocomplete="name" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.8rem;">
+                                <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">E-Mail-Adresse des Kunden (Pflichtfeld)</label>
+                                <input type="email" id="shareEmail" autocomplete="email" aria-required="true" aria-describedby="shareEmailError" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
+                                <p id="shareEmailError" role="alert" style="color:var(--error,#c33);font-weight:600;margin:0.3rem 0 0;"></p>
+                                <label for="shareMessage" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">Persönliche Nachricht (optional)</label>
+                                <textarea id="shareMessage" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
+                                <p style="font-size:0.85rem;color:var(--text-muted);margin:0.3rem 0 0;">Die Nachricht wird nur bei „Einladung per E-Mail senden" mitgeschickt.</p>
+                                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                                    <button type="button" class="btn btn-primary" id="shareSendBtn" onclick="doShare(${project.id})">Einladung per E-Mail senden</button>
+                                    <button type="button" class="btn btn-secondary" id="shareLinkBtn" onclick="doShareLinkOnly(${project.id})">Nur Link erstellen</button>
+                                    <button type="button" class="btn btn-secondary" onclick="closeShareDialog()">Abbrechen</button>
+                                </div>
+                                <output id="shareStatus" style="display:block;margin-top:0.6rem;"></output>
+                            </div>
+                            <div id="shareConfirm" hidden>
+                                <h2 id="shareConfirmHeading" tabindex="-1" style="margin-top:0;">Einladung gesendet</h2>
+                                <p id="shareConfirmText"></p>
+                                <div id="shareConfirmLinkWrap" hidden style="margin:0.6rem 0;">
+                                    <label for="shareConfirmLink" style="display:block;font-weight:600;margin-bottom:0.3rem;">Einladungslink</label>
+                                    <input type="text" id="shareConfirmLink" readonly style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
+                                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                                        <button type="button" class="btn btn-secondary" id="shareCopyBtn" onclick="shareCopyLink()">Link kopieren</button>
+                                        <output id="shareCopyStatus" style="font-size:0.9rem;"></output>
+                                    </div>
+                                </div>
+                                <div style="margin-top:1rem;">
+                                    <button type="button" class="btn btn-primary" onclick="closeShareDialog()">Zurück zum Projekt</button>
+                                </div>
+                            </div>
+                        </dialog>
+                    ` : ''}
+                    ${window.GUEST_MODE && images.length > 0 ? `
+                        <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">Pr\u00fcfung abschlie\u00dfen</button>
+                        <div id="guestCompletePanel" style="display:none;flex-basis:100%;margin-top:0.6rem;padding:1rem;border:1px solid var(--border);border-radius:8px;">
+                            <label for="guestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">M\u00f6chten Sie dem Ersteller noch etwas mitteilen? (optional)</label>
+                            <textarea id="guestCompleteMsg" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
+                            <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                <button class="btn btn-primary" id="guestCompleteSend" onclick="doGuestComplete()">Abschlie\u00dfen &amp; senden</button>
+                                <button class="btn btn-secondary" onclick="document.getElementById('guestCompletePanel').style.display='none'">Abbrechen</button>
+                            </div>
+                            <output id="guestCompleteStatus" style="display:block;margin-top:0.5rem;"></output>
+                        </div>
+                    ` : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? `
+                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">Exportieren</button>
+                        <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-labelledby="exportPanelHeading">
+                            <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;font-size:1.05rem;">Export-Optionen</h2>
+                            ${renderExportScopeBlock(documents)}
+                            <div class="form-group" style="margin-bottom:0.8rem;">
+                                <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">Dateiname (optional)</label>
+                                <input type="text" id="exportFilename" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
+                                <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.</p>
+                            </div>
+                            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'xlsx')">Als Excel</button>
+                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">Als JSON</button>
+                                <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">Als CSV</button>
+                                ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">Als PDF (Beta)</button>' : ''}
+                                <button class="btn btn-secondary" onclick="closeExportPanel()">Abbrechen</button>
+                            </div>
+                            <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
+                        </div>
+                    ` : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? `
+                        <div style="flex-basis:100%;margin-top:0.6rem;">
+                            <label for="useContextToggle" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;">
+                                <input type="checkbox" id="useContextToggle" ${project.use_context ? 'checked' : ''} onchange="setContextSetting(${project.id}, this.checked)" style="width:1.2rem;height:1.2rem;">
+                                <span>KI-Kontext aus dem Dokument verwenden</span>
+                            </label>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            ${window.GUEST_MODE ? '' : uploadBlockHtml(project)}
+            ${(() => {
+                // Steve 08.06.2026 (Michael-Befund): bei PDF-Projekten sind die Dokument-
+                // Bloecke selbst die H2-Sektionen — eine zusaetzliche H2 "Bilder (N)"
+                // wuerde die Hierarchie zerreissen (H1 -> H2 Bilder -> H2 Dokument).
+                // Bei Web/Grafik-Projekten gibt es keine Dokument-Ebene, da bleibt
+                // "Bilder (N)" als h2 das Section-Heading. In beiden Faellen behalten
+                // wir das tabindex=-1-Element, damit der Fokus nach dem Upload weiter
+                // dorthin springen kann; bei PDF wird es zum visuell unsichtbaren
+                // Anker ohne semantisches Heading.
+                const isPdf = project.tool === 'pdf' || project.project_type === 'pdf';
+                if (isPdf) {
+                    return `<div id="bilderHeading" class="sr-only" tabindex="-1" role="status" aria-live="off">Bilder (${images.length})</div>`;
+                }
+                return `<h2 class="section-title" id="bilderHeading" tabindex="-1" style="margin-top:1.5rem">Bilder (${images.length})</h2>`;
+            })()}
+            <div id="imageList"></div>
+            ${window.GUEST_MODE ? '' : inkluagentSectionHtml(projectId)}
+        `;
+
+        renderImages(images, projectId, data.show_langbeschreibung !== false, documents, project);
+        if (window.GUEST_MODE) { document.querySelectorAll('.langtext-field').forEach(function (t) { t.readOnly = true; }); }
+        inkluagentInit(projectId);
+        setupProjectDropzone(projectId);
+
+        if (!window.GUEST_MODE && project.status === 'processing') {
+            pollInterval = setInterval(async () => {
+                const sRes = await fetch('/api/projects/' + projectId + '/status');
+                const sData = await sRes.json();
+                if (sData.status === 'done' || sData.status === 'error') {
+                    clearInterval(pollInterval); pollInterval = null;
+                    announce(sData.status === 'done' ? 'Alle Alt-Texte wurden generiert.' : 'Fehler bei der Verarbeitung.');
+                    showProject(projectId);
+                } else if (sData.processed_images > project.processed_images) {
+                    showProject(projectId);
+                } else {
+                    const bar = document.querySelector('.progress-fill');
+                    const info = document.getElementById('processingInfo');
+                    const newP = Math.round((sData.processed_images / sData.total_images) * 100);
+                    if (bar) bar.style.width = newP + '%';
+                    if (info) info.textContent = 'Bild ' + sData.processed_images + ' von ' + sData.total_images + ' wird verarbeitet.';
+                }
+            }, 10000);
+        }
+    }
+
+    // Multi-Datei (08.06.2026): Anzeigename eines Dokuments für Überschriften.
+    // Bevorzugt der vom Nutzer vergebene display_name; fehlt der, nehmen wir
+    // das Original-Dateinamen-Feld. Wir geben den Rohtext zurück — Escape
+    // erledigt die aufrufende Stelle (esc/textContent).
+    function docDisplayName(doc) {
+        if (!doc) return '';
+        const dn = (doc.display_name || '').trim();
+        if (dn) return dn;
+        return (doc.original_filename || '').trim();
+    }
+
+    // Render-Block für die Dokument-Auswahl in der Export-Box.
+    // - Genau eine Auswahl ist immer aktiv (Radio-Gruppe).
+    // - Bei einem einzelnen Dokument zeigen wir die Auswahl nicht (wäre redundant).
+    // - "Alle Dokumente" (value=all) ist Default, wenn es mehr als ein Dokument gibt;
+    //   sonst zeigt der Default direkt auf das einzelne Dokument.
+    function renderExportScopeBlock(documents) {
+        const esc = s => !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        if (!documents || documents.length <= 1) return '';
+        // WCAG 2.2 AA target-size (24x24px): Radios werden via .export-scope-radio
+        // CSS-Klasse vergrößert (Default-Browser-Radios sind nur 13x13).
+        // Zusätzlich genug vertikalen Abstand zwischen den Einträgen, damit
+        // die "safe clickable area" auch zwischen benachbarten Targets > 24px ist.
+        const items = documents.map((d, idx) => {
+            // Anzeige-Position (1..N) statt doc_index — konsistent zur „Dokument N"-
+            // Ueberschrift, die nach Loeschungen Luecken im doc_index vermeidet.
+            const label = 'Dokument ' + (idx + 1) + ': ' + esc(docDisplayName(d));
+            return '<li class="export-scope-item"><label class="export-scope-label">'
+                + '<input class="export-scope-radio" type="radio" name="exportScope" value="doc:' + d.id + '">'
+                + '<span>' + label + '</span></label></li>';
+        }).join('');
+        return ''
+            + '<fieldset class="export-scope-fieldset">'
+            +   '<legend class="export-scope-legend">Was exportieren?</legend>'
+            +   '<ul class="export-scope-list">'
+            +     '<li class="export-scope-item"><label class="export-scope-label">'
+            +       '<input class="export-scope-radio" type="radio" name="exportScope" value="all" checked>'
+            +       '<span>Alle Dokumente (eine ZIP-Datei)</span></label></li>'
+            +     items
+            +   '</ul>'
+            + '</fieldset>';
+    }
+
+    // Merkt sich pro Projekt, welche Seiten aufgeklappt sind, damit der Zustand
+    // über das Neu-Rendern während der Verarbeitung (Polling) hinweg erhalten bleibt.
+    let openPages = new Set();
+    let openPagesProjectId = null;
+    // Multi-Datei (08.06.2026): zusätzlich merken wir uns den Auf/Zu-Zustand
+    // der Dokument-<details>, damit ein Anhängen einer neuen PDF den Stand
+    // der bereits geöffneten Dokumente nicht zurücksetzt.
+    let openDocs = new Set();
+    let openDocsProjectId = null;
+
+    // ─── Dokument-Aktionen: Umbenennen + Löschen (10.06.2026) ──────────────
+    // Michael Karbe 09.06.: pro PDF (= Dokument) ein Löschen-Knopf direkt neben
+    // dem Aufklapp-Schalter; einzelne Seiten/Bilder werden NICHT gelöscht, weil
+    // immer die komplette PDF angezeigt wird. Umbenennen sitzt daneben, weil der
+    // Dokumentname auch den Export-Dateinamen bestimmt.
+    //
+    // Beide Dialoge sind native <dialog>-Elemente (showModal) — siehe Markup im
+    // Body. Die Handler sind global, weil sie aus inline-onclick aufgerufen werden.
+    let currentDocProjectId = null;   // welches Projekt gerade offen ist
+    let _docActionId = null;          // Ziel-Dokument der laufenden Aktion
+
+    // Nach Umbenennen/Löschen den Fokus sinnvoll setzen: bevorzugt auf das
+    // betroffene Dokument (Summary ist fokussierbar via tabindex=-1), sonst auf
+    // die Bilder-Sammelueberschrift. Beim Löschen ist _docActionId vorher auf
+    // null gesetzt, weil das Ziel nicht mehr existiert.
+    function _moveFocusAfterDocChange() {
+        const head = _docActionId ? document.getElementById('doc_heading_' + _docActionId) : null;
+        const sum = head ? head.closest('summary') : null;
+        if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); return; }
+        const h = document.getElementById('bilderHeading');
+        if (h) h.focus();
+    }
+
+    function openDocRename(event) {
+        event.preventDefault();
+        event.stopPropagation();   // nicht das umgebende <details> auf-/zuklappen
+        const btn = event.currentTarget;
+        _docActionId = parseInt(btn.dataset.docId, 10);
+        const dlg = document.getElementById('docRenameDialog');
+        const input = document.getElementById('docRenameInput');
+        input.value = btn.dataset.docName || '';
+        dlg.showModal();
+        input.focus();
+        input.select();
+    }
+
+    function openDocDelete(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const btn = event.currentTarget;
+        _docActionId = parseInt(btn.dataset.docId, 10);
+        const name = btn.dataset.docName || 'dieses Dokument';
+        const count = parseInt(btn.dataset.docCount, 10) || 0;
+        document.getElementById('docDeleteBody').textContent =
+            'Möchtest du das Dokument „' + name + '" mit ' + count
+            + (count === 1 ? ' Bild' : ' Bildern')
+            + ' wirklich löschen? Das lässt sich nicht rückgängig machen.';
+        document.getElementById('docDeleteDialog').showModal();
+    }
+
+    async function _submitDocRename(ev) {
+        ev.preventDefault();
+        const dlg = document.getElementById('docRenameDialog');
+        const name = document.getElementById('docRenameInput').value.trim();
+        try {
+            const res = await fetch('/api/projects/' + currentDocProjectId + '/documents/' + _docActionId, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ display_name: name }),
+            });
+            if (!res.ok) { announce('Umbenennen fehlgeschlagen.'); return; }
+        } catch (e) { announce('Netzwerkfehler beim Umbenennen.'); return; }
+        dlg.close();
+        await showProject(currentDocProjectId);
+        announce('Dokument umbenannt.');
+        _moveFocusAfterDocChange();
+    }
+
+    async function _confirmDocDelete() {
+        const dlg = document.getElementById('docDeleteDialog');
+        try {
+            const res = await fetch('/api/projects/' + currentDocProjectId + '/documents/' + _docActionId, {
+                method: 'DELETE',
+            });
+            if (!res.ok) { announce('Löschen fehlgeschlagen.'); return; }
+        } catch (e) { announce('Netzwerkfehler beim Löschen.'); return; }
+        dlg.close();
+        _docActionId = null;   // Ziel existiert nicht mehr -> Fokus auf Bilder-Ueberschrift
+        await showProject(currentDocProjectId);
+        announce('Dokument gelöscht.');
+        _moveFocusAfterDocChange();
+    }
+
+    // Dialog-Buttons einmalig verdrahten. Die <dialog>-Elemente stehen statisch
+    // im Body (vor diesem Script), existieren hier also bereits.
+    document.getElementById('docRenameForm').addEventListener('submit', _submitDocRename);
+    document.getElementById('docRenameCancel').addEventListener('click', () => document.getElementById('docRenameDialog').close());
+    document.getElementById('docDeleteCancel').addEventListener('click', () => document.getElementById('docDeleteDialog').close());
+    document.getElementById('docDeleteConfirm').addEventListener('click', _confirmDocDelete);
+
+    // Vorlese-Funktion (Browser SpeechSynthesis): liest Alt-Text + (falls da) Langbeschreibung
+    // des Bildes in deutscher Stimme. Liest den AKTUELLEN Feld-Inhalt (inkl. haendischer Edits).
+    // Start/Stopp ueber denselben Knopf (aria-pressed), Escape stoppt, nur eins gleichzeitig.
+    function speakAltText(imgId, btn) {
+        const synth = window.speechSynthesis;
+        if (!synth) { announce('Sprachausgabe wird in diesem Browser nicht unterstützt.'); return; }
+        if (!window._ttsEscBound) {
+            window._ttsEscBound = true;
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { window.speechSynthesis.cancel(); } });
+        }
+        if (btn.getAttribute('aria-pressed') === 'true') {
+            synth.cancel();
+            btn.setAttribute('aria-pressed', 'false');
+            btn.textContent = 'Anhören';
+            return;
+        }
+        synth.cancel();
+        const altEl = document.getElementById('alttext_' + imgId);
+        const langEl = document.getElementById('langtext_' + imgId);
+        let text = (altEl ? altEl.value : '').trim();
+        const lang = langEl ? langEl.value.trim() : '';
+        if (lang) { text += (text ? '. ' : '') + lang; }
+        if (!text) { announce('Kein Text zum Vorlesen vorhanden.'); return; }
+        document.querySelectorAll('.tts-btn[aria-pressed="true"]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); b.textContent = 'Anhören'; });
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'de-DE';
+        const de = (synth.getVoices() || []).find(function (v) { return v.lang && v.lang.toLowerCase().indexOf('de') === 0; });
+        if (de) { u.voice = de; }
+        btn.setAttribute('aria-pressed', 'true');
+        btn.textContent = 'Stopp';
+        u.onend = function () { btn.setAttribute('aria-pressed', 'false'); btn.textContent = 'Anhören'; };
+        u.onerror = function () { btn.setAttribute('aria-pressed', 'false'); btn.textContent = 'Anhören'; };
+        synth.speak(u);
+        announce('Wird vorgelesen.');
+    }
+
+    // ─── Gast-Review (Etappe 3): Freigeben / Aenderung wuenschen + Kommentar ───
+    // --- Gast-Review: Ein-Klick-Status + optionale, entkoppelte Anmerkung ---
+    // Status wird mit EINEM Klick gesetzt; die Anmerkung ist davon getrennt (natives <details>),
+    // geht bei jedem Status und blockiert das Freigeben nie. Backend haelt eine review_note pro Bild.
+    async function guestReviewPost(imageId, status, comment) {
+        try {
+            const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/review', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin', body: JSON.stringify({ status: status, comment: comment })
+            });
+            return r.ok;
+        } catch (e) { return false; }
+    }
+
+    async function guestSetStatus(imageId, status) {       // ein Klick -> Status sofort gesetzt
+        const field = document.getElementById('rev_comment_' + imageId);
+        const comment = field ? field.value.trim() : '';   // bestehende Anmerkung erhalten
+        const ok = await guestReviewPost(imageId, status, comment);
+        if (!ok) { announce('Fehler beim Speichern.'); return; }
+        const label = status === 'freigegeben' ? 'Freigegeben' : 'Änderung gewünscht';
+        const st = document.getElementById('rev_status_' + imageId);
+        if (st) st.textContent = label;
+        const cont = document.getElementById('guestrev_' + imageId);
+        if (cont) cont.dataset.status = status;
+        const bF = document.getElementById('rev_btn_frei_' + imageId);
+        const bA = document.getElementById('rev_btn_aend_' + imageId);
+        if (bF) bF.setAttribute('aria-pressed', status === 'freigegeben');
+        if (bA) bA.setAttribute('aria-pressed', status === 'zu_ueberarbeiten');
+        announce('Status gesetzt: ' + label);
+    }
+
+    async function guestSaveNote(imageId) {                // optionale Anmerkung speichern; Status bleibt
+        const cont = document.getElementById('guestrev_' + imageId);
+        const status = (cont && cont.dataset.status) || 'offen';
+        const field = document.getElementById('rev_comment_' + imageId);
+        const note = field ? field.value.trim() : '';
+        const msg = document.getElementById('rev_note_msg_' + imageId);
+        const ok = await guestReviewPost(imageId, status, note);
+        if (!ok) { if (msg) msg.textContent = 'Fehler beim Speichern.'; announce('Fehler beim Speichern.'); return; }
+        if (msg) msg.textContent = note ? 'Anmerkung gespeichert.' : 'Anmerkung entfernt.';
+        const sum = document.getElementById('rev_note_summary_' + imageId);
+        if (sum) sum.textContent = note ? 'Anmerkung bearbeiten' : 'Anmerkung hinzufügen';
+        const det = document.getElementById('rev_note_details_' + imageId);
+        if (det) det.open = false;                          // Feld nach dem Speichern zuklappen
+        if (sum) sum.focus();                               // Fokus zurueck auf den Schalter
+        announce(note ? 'Anmerkung gespeichert.' : 'Anmerkung entfernt.');
+    }
+
+    async function guestDeleteNote(imageId) {              // Anmerkung entfernen (Status bleibt)
+        const field = document.getElementById('rev_comment_' + imageId);
+        if (!field || !field.value.trim()) { announce('Keine Anmerkung vorhanden.'); return; }
+        field.value = '';
+        await guestSaveNote(imageId);                      // leeres Speichern -> Backend loescht, Feld klappt zu
+    }
+
+    // ─── Etappe 4: Besitzer laedt zur Pruefung ein (mailto) ───
+    function openShareDialog(projectId) {
+        const dlg = document.getElementById('shareDialog');
+        if (!dlg) return;
+        const form = document.getElementById('shareForm'); if (form) form.hidden = false;
+        const conf = document.getElementById('shareConfirm'); if (conf) conf.hidden = true;
+        const lw = document.getElementById('shareConfirmLinkWrap'); if (lw) lw.hidden = true;
+        const sendBtn = document.getElementById('shareSendBtn'); if (sendBtn) sendBtn.disabled = false;
+        const linkBtn = document.getElementById('shareLinkBtn'); if (linkBtn) linkBtn.disabled = false;
+        const err = document.getElementById('shareEmailError'); if (err) err.textContent = '';
+        const st = document.getElementById('shareStatus'); if (st) st.textContent = '';
+        const cs = document.getElementById('shareCopyStatus'); if (cs) cs.textContent = '';
+        const em = document.getElementById('shareEmail'); if (em) em.setAttribute('aria-invalid', 'false');
+        ['shareName', 'shareEmail', 'shareMessage'].forEach(function (id) {
+            const el = document.getElementById(id); if (el) el.value = '';
+        });
+        // Natives Modal: Fokus springt rein, Escape schliesst, Fokus kehrt beim Schliessen zurueck.
+        if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+        const nm = document.getElementById('shareName'); if (nm) nm.focus();
+    }
+
+    function closeShareDialog() {
+        const dlg = document.getElementById('shareDialog');
+        if (dlg && typeof dlg.close === 'function') dlg.close(); else if (dlg) dlg.removeAttribute('open');
+    }
+
+    // Pflichtfeld-Pruefung (barrierefrei): liefert getrimmte E-Mail oder null + Fehleransage.
+    function shareValidateEmail() {
+        const emailEl = document.getElementById('shareEmail');
+        const errEl = document.getElementById('shareEmailError');
+        const email = (emailEl ? emailEl.value : '').trim();
+        if (!email || email.indexOf('@') < 1) {
+            if (errEl) errEl.textContent = 'Bitte eine gültige E-Mail-Adresse eingeben.';
+            if (emailEl) { emailEl.setAttribute('aria-invalid', 'true'); emailEl.focus(); }
+            return null;
+        }
+        if (errEl) errEl.textContent = '';
+        if (emailEl) emailEl.setAttribute('aria-invalid', 'false');
+        return email;
+    }
+
+    // Wechselt von Formular auf Bestaetigung; Fokus auf die Ueberschrift (wird vorgelesen).
+    function shareShowConfirm(headingText, bodyText, showLink) {
+        const form = document.getElementById('shareForm');
+        const conf = document.getElementById('shareConfirm');
+        const head = document.getElementById('shareConfirmHeading');
+        const text = document.getElementById('shareConfirmText');
+        const lw = document.getElementById('shareConfirmLinkWrap');
+        const linkInput = document.getElementById('shareConfirmLink');
+        if (head) head.textContent = headingText;
+        if (text) text.textContent = bodyText;
+        if (linkInput) linkInput.value = window._lastShareUrl || '';
+        if (lw) lw.hidden = !showLink;
+        if (form) form.hidden = true;
+        if (conf) conf.hidden = false;
+        if (head) head.focus();
+    }
+
+    function shareSetBusy(busy) {
+        const sendBtn = document.getElementById('shareSendBtn'); if (sendBtn) sendBtn.disabled = busy;
+        const linkBtn = document.getElementById('shareLinkBtn'); if (linkBtn) linkBtn.disabled = busy;
+    }
+
+    async function doShare(projectId) {
+        const email = shareValidateEmail();
+        if (!email) return;
+        const name = ((document.getElementById('shareName') || {}).value || '').trim();
+        const message = ((document.getElementById('shareMessage') || {}).value || '').trim();
+        const statusEl = document.getElementById('shareStatus');
+        shareSetBusy(true);
+        if (statusEl) statusEl.textContent = 'Einladung wird gesendet …';
+        announce('Einladung wird gesendet …');
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/share', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ guest_email: email, guest_name: name, message: message, notify: true })
+            });
+            const d = await r.json();
+            if (!r.ok) {
+                if (statusEl) statusEl.textContent = (d.detail || 'Fehler beim Erstellen der Freigabe.');
+                shareSetBusy(false);
+                const em = document.getElementById('shareEmail'); if (em) em.focus();
+                return;
+            }
+            window._lastShareUrl = d.url || '';
+            if (d.sent) {
+                shareShowConfirm('Einladung gesendet', 'Die Einladung wurde an ' + email + ' gesendet.', false);
+                announce('Einladung an ' + email + ' gesendet.');
+            } else {
+                shareShowConfirm('Freigabe erstellt', 'Die E-Mail konnte nicht versendet werden. Bitte kopiere den Einladungslink und sende ihn selbst an ' + email + '.', true);
+                announce('E-Mail-Versand nicht möglich, bitte Link kopieren.');
+            }
+        } catch (e) { if (statusEl) statusEl.textContent = 'Netzwerkfehler.'; shareSetBusy(false); }
+    }
+
+    async function doShareLinkOnly(projectId) {
+        const email = shareValidateEmail();
+        if (!email) return;
+        const name = ((document.getElementById('shareName') || {}).value || '').trim();
+        const statusEl = document.getElementById('shareStatus');
+        shareSetBusy(true);
+        if (statusEl) statusEl.textContent = 'Link wird erstellt …';
+        announce('Link wird erstellt …');
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/share', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+                body: JSON.stringify({ guest_email: email, guest_name: name, notify: false })
+            });
+            const d = await r.json();
+            if (!r.ok) {
+                if (statusEl) statusEl.textContent = (d.detail || 'Fehler beim Erstellen der Freigabe.');
+                shareSetBusy(false);
+                const em = document.getElementById('shareEmail'); if (em) em.focus();
+                return;
+            }
+            window._lastShareUrl = d.url || '';
+            shareShowConfirm('Link erstellt', 'Sie können diesen Einladungslink jetzt selbst an ' + email + ' verschicken. Der Gast muss beim Öffnen genau diese E-Mail-Adresse bestätigen.', true);
+            announce('Einladungslink erstellt.');
+        } catch (e) { if (statusEl) statusEl.textContent = 'Netzwerkfehler.'; shareSetBusy(false); }
+    }
+
+    function shareCopyLink() {
+        const url = window._lastShareUrl || '';
+        const statusEl = document.getElementById('shareCopyStatus');
+        if (!url) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function () {
+                if (statusEl) statusEl.textContent = 'Link kopiert.';
+                announce('Link in die Zwischenablage kopiert.');
+            }).catch(function () {
+                if (statusEl) statusEl.textContent = 'Kopieren nicht möglich – der Link oben ist markierbar.';
+            });
+        } else {
+            if (statusEl) statusEl.textContent = 'Kopieren nicht möglich – der Link oben ist markierbar.';
+        }
+    }
+
+    // ─── Etappe 5: Gast schliesst die Pruefung ab ───
+    function openGuestComplete() {
+        const p = document.getElementById('guestCompletePanel');
+        if (p) p.style.display = '';
+        const t = document.getElementById('guestCompleteMsg');
+        if (t) t.focus();
+    }
+    async function doGuestComplete() {
+        const msgEl = document.getElementById('guestCompleteMsg');
+        const statusEl = document.getElementById('guestCompleteStatus');
+        const sendBtn = document.getElementById('guestCompleteSend');
+        // Sofort-Feedback: Knopf sperren + native Statusmeldung, damit nicht doppelt geklickt wird.
+        if (sendBtn) sendBtn.disabled = true;
+        if (statusEl) statusEl.textContent = 'Wird gesendet…';
+        announce('Prüfung wird gesendet …');
+        try {
+            const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/complete', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin', body: JSON.stringify({ message: msgEl ? msgEl.value : '' })
+            });
+            if (!r.ok) {
+                if (statusEl) statusEl.textContent = 'Fehler beim Abschließen. Bitte erneut versuchen.';
+                if (sendBtn) sendBtn.disabled = false;   // wieder freigeben fuer einen zweiten Versuch
+                return;
+            }
+            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem auto;"><h1 class="section-title">Vielen Dank!</h1><p>Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen.</p></section>';
+            announce('Prüfung abgeschlossen und gesendet.');
+        } catch (e) {
+            if (statusEl) statusEl.textContent = 'Netzwerkfehler. Bitte erneut versuchen.';
+            if (sendBtn) sendBtn.disabled = false;
+        }
+    }
+
+    async function setContextSetting(projectId, useContext) {
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/context-setting', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'same-origin',
+                body: JSON.stringify({use_context: useContext})
+            });
+            if (!res.ok) { announce('Umschalten des KI-Kontexts fehlgeschlagen.'); return; }
+            announce(useContext
+                ? 'KI-Kontext eingeschaltet. Neue Generierungen nutzen den Dokument-Kontext.'
+                : 'KI-Kontext ausgeschaltet. Neue Generierungen ohne Kontext.');
+        } catch (e) {
+            announce('Netzwerkfehler beim Umschalten des KI-Kontexts.');
+        }
+    }
+
+    /**
+     * Rendert eine gespeicherte Pruef-Anmerkung als natives Aufklapp-Element.
+     * Bewusst OHNE ARIA: <details>/<summary> tragen Auf-/Zu-Zustand und Screenreader-Ansage selbst.
+     * Wird identisch von Besitzer- UND Gast-Ansicht genutzt, damit beide Seiten nie auseinanderlaufen.
+     */
+    function reviewNoteDetails(note, summaryLabel) {
+        if (!note) return '';
+        // Eigene HTML-Escape-Funktion: reviewNoteDetails liegt im Modul-Scope und darf
+        // NICHT vom lokalen esc() aus renderImages abhaengen (dort ist es nicht sichtbar).
+        const escHtml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<details class="kundenanmerkung" style="margin:0.3rem 0;"><summary>${summaryLabel}</summary>`
+             + `<div style="padding:0.4rem 0;white-space:pre-wrap;">${escHtml(note)}</div></details>`;
+    }
+
+    function renderImages(images, projectId, showLang, documents, project) {
+        const list = document.getElementById('imageList');
+        if (!images.length) {
+            list.innerHTML = '<div class="empty-state"><p>Keine Bilder gefunden.</p></div>';
+            return;
+        }
+        if (projectId !== openPagesProjectId) { openPages = new Set(); openPagesProjectId = projectId; }
+        if (projectId !== openDocsProjectId) { openDocs = new Set(); openDocsProjectId = projectId; }
+        const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','strukturformel','dekorativ'];
+        const complexTypes = ['diagramm','karte','tabelle','infografik','strukturformel'];
+
+        // HTML-Escape für eingebetteten Seitentext (kann <, >, & enthalten)
+        const esc = s => !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+        // Multi-Datei (08.06.2026): Erst nach document_id, dann nach page_number gruppieren.
+        // Bei Web/Grafik-Projekten kommen Bilder ohne document_id -> sammeln unter Key 0.
+        // groupsByDoc: Map(document_id -> Map(page_number -> [images]))
+        const groupsByDoc = new Map();
+        for (const img of images) {
+            const docKey = img.document_id || 0;
+            const pageKey = img.page_number > 0 ? img.page_number : 0;
+            if (!groupsByDoc.has(docKey)) groupsByDoc.set(docKey, new Map());
+            const pageMap = groupsByDoc.get(docKey);
+            if (!pageMap.has(pageKey)) pageMap.set(pageKey, []);
+            pageMap.get(pageKey).push(img);
+        }
+        // Doc-Reihenfolge: aus documents-Liste; was übrig bleibt (z.B. Bilder ohne document_id), kommt zum Schluss.
+        const orderedDocs = Array.isArray(documents) ? documents.slice().sort((a, b) => (a.doc_index || 0) - (b.doc_index || 0)) : [];
+        const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf'));
+
+        // Steve 08.06.2026: Pro Dokument eine fortlaufende Anzeige-Nummer ab 1 vergeben,
+        // konsistent zur Seitennummerierung (zaehlt auch pro Dokument). Die DB-Spalte
+        // image_index bleibt projektweit, das macht den Frontend-Wert reine Anzeige.
+        // Reihenfolge innerhalb eines Dokuments: nach Seite, dann image_index (so wie
+        // die Bilder auch sortiert ankommen). Web/Grafik (docKey 0) bekommt weiterhin
+        // image_index, weil dort keine Dokument-Ebene existiert.
+        for (const [docKey, pageMap] of groupsByDoc.entries()) {
+            if (docKey === 0) {
+                for (const imgs of pageMap.values()) {
+                    for (const img of imgs) img.display_nr = img.image_index;
+                }
+                continue;
+            }
+            let counter = 0;
+            const sortedPages = Array.from(pageMap.keys()).sort((a, b) => a - b);
+            for (const pn of sortedPages) {
+                const imgs = pageMap.get(pn).slice().sort((a, b) => a.image_index - b.image_index);
+                for (const img of imgs) { counter += 1; img.display_nr = counter; }
+            }
+        }
+
+        // Eine Image-Card rendern.
+        // Karbe-Feintuning (06.06.2026): Die Bedien-Buttons unter dem Alt-Text
+        // (Daumen-hoch/runter, Kategorie-Auswahl, "Generieren") werden nun
+        // immer angezeigt — solange das Bild nicht gerade VERARBEITET wird.
+        // Dadurch kann ein Nutzer auch für ein einzelnes, noch nicht generiertes
+        // Bild direkt eine Generierung anstossen, ohne erst die Sammelaktion
+        // laufen lassen zu müssen. Früher waren die Buttons erst sichtbar,
+        // wenn img.status === 'done' war.
+        //
+        // Folge-Feintuning (06.06.2026): Button-Beschriftung einheitlich auf
+        // "Generieren" (kein "neu") — sowohl für erstmalig erzeugte als auch
+        // für überschriebene Alt-Texte konsistent.
+        // 08.06.2026 (Steve, regenerate-Bug-Fix): Bei img.status === 'error' bleibt
+        // der Button auf "Generieren" / data-status='pending'. Ein erneuter Klick
+        // gilt als Erstversuch (Live-Region "Alt-Text wird generiert", nicht "neu"),
+        // weil das vorherige Bild ja keinen Alt-Text geliefert hat.
+        // Barrierefreiheit (Steve, ausdrücklicher Wunsch): Der vom Screen-
+        // reader vorgelesene Button-Name muss EXAKT dem sichtbaren Text
+        // entsprechen — also bewusst KEIN abweichendes aria-label wie
+        // "Bild 3 generieren". Die Zuordnung zum Bild leistet die semantische
+        // Struktur: jede Card ist eine <section> mit eigener <h3>-Überschrift
+        // ("Bild 1, Seite 2"), sodass ein Screenreader-Nutzer beim Erreichen
+        // des Buttons im Kontext der jeweiligen Bild-Sektion ist.
+        // Multi-Datei (08.06.2026): Überschriften-Tiefe steuert sich über das
+        // Argument 'cardHeadingLevel' — PDF-Projekte gehen Dokument(h2)/Seite(h3)/Bild(h4),
+        // Web/Grafik bleibt bei h3 für die Bild-Card (kein Dokument-Wrapper).
+        const renderCard = (img, cardHeadingLevel) => {
+            const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
+            // Multi-Datei (08.06.2026): Anzeige-Nummer ist display_nr (pro Dokument
+            // bei 1 startend) — Steve-Wunsch nach Michael-Feedback. Die DB-Spalte
+            // image_index bleibt projektweit unveraendert (eindeutige interne ID);
+            // hier nutzen wir nur die Anzeige, damit Doc 2 wieder bei "Bild 1, ..."
+            // anfaengt. Fallback display_nr -> image_index, falls die Helferspalte
+            // mal nicht vorberechnet ist (z.B. defensive Render-Pfade).
+            const displayNr = (img.display_nr != null) ? img.display_nr : img.image_index;
+            const heading = img.page_number > 0
+                ? `Bild ${displayNr}, Seite ${img.page_number}`
+                : `Bild ${displayNr}`;
+            const hTag = cardHeadingLevel || 'h3';
+            return `
+            <section class="image-review" aria-labelledby="img_heading_${img.id}">
+                <${hTag} id="img_heading_${img.id}" class="image-heading">${heading}</${hTag}>
+                <div class="image-review-header">
+                    <span class="image-meta">${img.width}x${img.height}px</span>
+                    ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
+                    ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Konfidenz: ' + img.konfidenz + '</span>' : ''}
+                    ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#475569;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? 'mit Kontext' : 'ohne Kontext') + '</span>' : ''}
+                    ${!window.GUEST_MODE && window._inReview && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? '<span class="badge" style="background:' + (img.review_status === 'freigegeben' ? 'var(--success,#2a7)' : (img.review_status === 'zu_ueberarbeiten' ? '#d97706' : '#64748b')) + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Pr\u00fcfstatus: ' + (img.review_status === 'freigegeben' ? 'Freigegeben' : (img.review_status === 'zu_ueberarbeiten' ? 'Nachbessern' : 'Ausstehend')) + (img.review_note ? ' \u2014 mit Anmerkung' : '') + '</span>' : ''}
+                    ${img.status === 'processing' ? '<span class="badge badge-processing">Wird analysiert...</span>' : ''}
+                    ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">Fehler</span>' : ''}
+                </div>
+                ${!window.GUEST_MODE ? reviewNoteDetails(img.review_note, 'Anmerkung des Kunden anzeigen') : ''}
+                ${img.status === 'error' ? `
+                    <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
+                        Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.
+                    </p>` : ''}
+                <img src="${imgFileUrl(img.id)}" alt="Extrahiertes Bild${img.page_number > 0 ? ' von Seite ' + img.page_number : ''}" class="image-preview" loading="lazy">
+                <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
+                    Alt-Text
+                    <span class="save-indicator" id="saved_${img.id}">Gespeichert</span>
+                </label>
+                <textarea class="alt-text-field" id="alttext_${img.id}" data-image-id="${img.id}"
+                    placeholder="${img.status === 'processing' ? 'Alt-Text wird generiert...' : (img.status === 'done' ? '' : 'Noch kein Alt-Text - hier eingeben oder generieren lassen')}"
+                    ${img.status === 'processing' ? 'disabled' : ''}
+                >${img.alt_text_edited || img.alt_text || img.original_alt || ''}</textarea>
+                ${img.status !== 'processing' ? `
+                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
+                        ${!window.GUEST_MODE ? `<span style="font-size:0.85rem;color:var(--text-muted);">Alt-Text bewerten:</span>
+                        <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="Alt-Text gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'good' ? 'background:var(--success);color:white;border-color:var(--success);' : ''}">&#128077;</button>
+                        <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="Alt-Text schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'bad' ? 'background:var(--error);color:white;border-color:var(--error);' : ''}">&#128078;</button>` : ''}
+                        ${(img.alt_text_edited || img.alt_text || img.original_alt) ? '<button class="btn btn-secondary btn-small tts-btn" onclick="speakAltText(' + img.id + ', this)" aria-pressed="false" style="padding:0.3rem 0.7rem;">Anhören</button>' : ''}
+                        <span id="feedback_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                    </div>
+                ` : ''}
+                <div id="langcontainer_${img.id}">
+                ${(showLang && hasLang) ? `
+                    <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung</label>
+                    <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;">${img.langbeschreibung}</textarea>
+                    ${!window.GUEST_MODE ? `<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
+                        <span style="font-size:0.85rem;color:var(--text-muted);">Langbeschreibung bewerten:</span>
+                        <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'good', this, 'lang')" aria-label="Langbeschreibung gut" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128077;</button>
+                        <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'bad', this, 'lang')" aria-label="Langbeschreibung schlecht" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128078;</button>
+                        <span id="feedback_lang_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                    </div>` : ''}
+                ` : ''}
+                </div>
+                ${window.GUEST_MODE && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? `
+                    <div class="guest-review" id="guestrev_${img.id}" data-status="${img.review_status || 'offen'}" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
+                        <p style="margin:0 0 0.4rem 0;font-weight:600;">Status: <span id="rev_status_${img.id}">${img.review_status === 'freigegeben' ? 'Freigegeben' : (img.review_status === 'zu_ueberarbeiten' ? 'Änderung gewünscht' : 'Noch nicht geprüft')}</span></p>
+                        <!-- Ein Klick = Status sofort gesetzt (guestSetStatus); aktiver Knopf via aria-pressed, Statuswechsel per announce() angesagt. Block erscheint fuer JEDEN Alt-Text (auch vorhandene PDF-Originaltexte), nicht nur frisch generierte (Karbe 23.06.2026). -->
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                            <button type="button" class="btn btn-secondary btn-small" id="rev_btn_frei_${img.id}" aria-pressed="${img.review_status === 'freigegeben'}" onclick="guestSetStatus(${img.id}, 'freigegeben')">Freigeben</button>
+                            <button type="button" class="btn btn-secondary btn-small" id="rev_btn_aend_${img.id}" aria-pressed="${img.review_status === 'zu_ueberarbeiten'}" onclick="guestSetStatus(${img.id}, 'zu_ueberarbeiten')">Änderung wünschen</button>
+                        </div>
+                        <!-- Optionale Anmerkung, vom Status entkoppelt: natives <details> (zero ARIA), geht bei jedem Status. -->
+                        <details class="guest-note-edit" id="rev_note_details_${img.id}" style="margin-top:0.5rem;">
+                            <summary id="rev_note_summary_${img.id}">${img.review_note ? 'Anmerkung bearbeiten' : 'Anmerkung hinzufügen'}</summary>
+                            <div style="margin-top:0.4rem;">
+                                <label for="rev_comment_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">Anmerkung (optional)</label>
+                                <textarea id="rev_comment_${img.id}" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:0.95rem;">${esc(img.review_note || '')}</textarea>
+                                <div style="margin-top:0.4rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                                    <button type="button" class="btn btn-primary btn-small" onclick="guestSaveNote(${img.id})">Anmerkung speichern</button>
+                                    <button type="button" class="btn btn-secondary btn-small" onclick="guestDeleteNote(${img.id})">Anmerkung löschen</button>
+                                    <output id="rev_note_msg_${img.id}" style="font-size:0.85rem;"></output>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                ` : ''}
+                ${!window.GUEST_MODE && img.status !== 'processing' ? `
+                    <div class="regen-area" style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                        <label for="regen_type_${img.id}" class="sr-only">Bildtyp für Generierung</label>
+                        <select id="regen_type_${img.id}" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
+                            <option value="">Automatisch</option>
+                            ${imageTypes.map(t => '<option value="' + t + '"' + (img.image_type === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('')}
+                        </select>
+                        <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}" data-status="${img.status === 'done' ? 'done' : 'pending'}">${img.status === 'done' ? 'Neu generieren' : 'Generieren'}</button>
+
+                        ${showLang && complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">Langbeschreibung (optional)</button>' : ''}
+                        <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
+                    </div>
+                ` : ''}
+            </section>`;
+        };
+
+        // Eine Seitengruppe rendern.
+        // Web-Projekte (pageNum 0): unverändert, flache Cards ohne Klappbarkeit.
+        // PDF-Seiten: ganze Seite als klappbares <details>, Überschrift ist der Schalter.
+        // Heading-Level (Multi-Datei 08.06.2026): bei PDF h3 Seite + h4 Bild, sonst h3 Bild ohne Seitenwrapper.
+        const renderPageGroup = (pageNum, imgs, pageHeadingLevel, cardHeadingLevel, docKey) => {
+            if (pageNum === 0) return imgs.map(i => renderCard(i, cardHeadingLevel)).join('');
+            const first = imgs[0];
+            const pageId = `${docKey}_${pageNum}`;
+            const isOpen = openPages.has(pageId) ? ' open' : '';
+            const count = imgs.length === 1 ? '1 Bild' : imgs.length + ' Bilder';
+            const pageView = first.page_view_path
+                ? `<details class="page-view-details">
+                    <summary>Seitenansicht anzeigen</summary>
+                    <img src="${pageViewUrl(first.id)}" alt="" class="page-view-image">
+                </details>` : '';
+            const pageTextBlock = first.page_text ? `
+                <details class="page-text-details">
+                    <summary>Seitentext anzeigen</summary>
+                    <div class="page-text-content">${esc(first.page_text)}</div>
+                </details>` : '';
+            const pageH = pageHeadingLevel || 'h2';
+            return `
+                <details class="page-section" data-page="${pageId}"${isOpen}>
+                    <summary class="page-summary">
+                        <${pageH} class="page-heading" id="page_heading_${pageId}">Seite ${pageNum} <span class="page-count">(${count})</span></${pageH}>
+                    </summary>
+                    ${pageView}
+                    ${pageTextBlock}
+                    ${imgs.map(i => renderCard(i, cardHeadingLevel)).join('')}
+                </details>`;
+        };
+
+        // Multi-Datei (08.06.2026): bei PDF-Projekten wird jedes Dokument zu einem eigenen
+        // klappbaren Block (h2 in summary). Bei Web/Grafik bleibt die alte flache Struktur.
+        const renderDocBlock = (doc, pageMap, pos) => {
+            const docKey = doc.id || 0;
+            // Karbe/Steve 09.06.2026: Dokumente standardmaessig ZUGEKLAPPT, damit man
+            // beim Oeffnen eines Projekts direkt die Liste der PDFs sieht und gezielt
+            // eine aufklappen kann. Nur vom Nutzer geoeffnete Dokumente bleiben beim
+            // Neu-Rendern (Polling/Anhaengen) offen (openDocs via toggle-Listener gemerkt).
+            const isOpen = openDocs.has(docKey);
+            const totalImgs = Array.from(pageMap.values()).reduce((a, b) => a + b.length, 0);
+            const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)';
+            const labelName = esc(docDisplayName(doc));
+            const pageBlocks = Array.from(pageMap.entries())
+                .sort((a, b) => a[0] - b[0])
+                .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))
+                .join('');
+            // Aktionen (Umbenennen/Löschen) sitzen IN der <summary>, sind also
+            // erreichbar, ohne das Dokument aufzuklappen (Michael-Wunsch 09.06.).
+            // Eindeutiger Screenreader-Name ueber einen visuell versteckten <span>
+            // mit echtem Text statt aria-label (native-HTML-first). Der Klick wird
+            // in den Handlern per stopPropagation vom Auf-/Zuklappen entkoppelt.
+            // Die Aktionen liegen BEWUSST ausserhalb der <summary>, als Geschwister
+            // neben dem <details>. Ein <button> innerhalb der (interaktiven)
+            // <summary> waere ein verschachteltes Bedienelement (axe:
+            // nested-interactive, schlecht fuer Screenreader). So bleibt die
+            // native Aufklapp-Mechanik inkl. Dreieck erhalten, die Aktionen sind
+            // trotzdem dauerhaft sichtbar (oben rechts per CSS positioniert,
+            // siehe .doc-block/.doc-actions in style.css) und ohne ARIA erreichbar.
+            return `
+                <div class="doc-block">
+                    <details class="doc-section" data-doc="${docKey}"${isOpen ? ' open' : ''}>
+                        <summary class="doc-summary">
+                            <h2 class="doc-heading" id="doc_heading_${docKey}">Dokument ${pos}: ${labelName} <span class="page-count">(${totalImgs} ${totalImgs === 1 ? 'Bild' : 'Bilder'}, ${ext})</span></h2>
+                        </summary>
+                        ${pageBlocks}
+                    </details>
+                    ${!window.GUEST_MODE ? `<span class="doc-actions">
+                        <button type="button" class="doc-action-btn" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">Umbenennen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
+                        <button type="button" class="doc-action-btn doc-action-danger" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">Löschen<span class="visually-hidden"> – Dokument „${labelName}"</span></button>
+                    </span>` : ''}
+                </div>`;
+        };
+
+        let html;
+        if (isPdfProject && orderedDocs.length > 0) {
+            // PDF-Projekt mit Dokument-Ebene. pos = Anzeige-Position (1..N).
+            html = orderedDocs.map((doc, i) => {
+                const pageMap = groupsByDoc.get(doc.id) || new Map();
+                return renderDocBlock(doc, pageMap, i + 1);
+            }).join('');
+            // Reste (Bilder ohne document_id, sollte nach Migration nicht vorkommen) -> ans Ende
+            const leftover = groupsByDoc.get(0);
+            if (leftover && leftover.size) {
+                html += Array.from(leftover.entries())
+                    .sort((a, b) => a[0] - b[0])
+                    .map(([pn, imgs]) => renderPageGroup(pn, imgs, 'h3', 'h4', 'leftover')).join('');
+            }
+        } else {
+            // Web/Grafik oder PDF ohne Dokument-Einträge: flache Seiten-Liste wie bisher.
+            // Reduziere alle pageMaps in eine einzige (es gibt nur Schlüssel 0 oder genau eine Doc).
+            const merged = new Map();
+            for (const pageMap of groupsByDoc.values()) {
+                for (const [pn, imgs] of pageMap.entries()) {
+                    if (!merged.has(pn)) merged.set(pn, []);
+                    merged.get(pn).push(...imgs);
+                }
+            }
+            html = Array.from(merged.entries())
+                .sort((a, b) => a[0] - b[0])
+                .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h2', 'h3', 'flat'))
+                .join('');
+        }
+        list.innerHTML = html;
+
+        // Auto-save alt-text on edit
+        document.querySelectorAll('.alt-text-field:not(.langtext-field)').forEach(ta => {
+            let timeout;
+            ta.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(async () => {
+                    const id = ta.dataset.imageId;
+                    await fetch(altTextSaveUrl(id), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ alt_text: ta.value }),
+                    });
+                    const ind = document.getElementById('saved_' + id);
+                    if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
+                }, 800);
+            });
+        });
+
+        // Offen/Zu-Zustand der Seiten merken (überlebt Neu-Rendern beim Polling).
+        // Multi-Datei (08.06.2026): page-Key ist jetzt "docKey_pageNum" als String,
+        // weil Seitenzahlen über Dokumente hinweg gleich sein können.
+        document.querySelectorAll('details.page-section').forEach(d => {
+            d.addEventListener('toggle', () => {
+                const p = d.dataset.page;
+                if (d.open) openPages.add(p); else openPages.delete(p);
+            });
+        });
+        // Multi-Datei: Dokument-Auf/Zu merken — beim Anhängen einer neuen PDF
+        // soll der bisherige Stand der geöffneten Dokumente erhalten bleiben.
+        document.querySelectorAll('details.doc-section').forEach(d => {
+            const k = Number(d.dataset.doc);
+            // Initial-Snapshot: aktuell offene Docs eintragen, damit Folge-Renderings
+            // den Zustand beibehalten.
+            if (d.open) openDocs.add(k);
+            d.addEventListener('toggle', () => {
+                if (d.open) openDocs.add(k); else openDocs.delete(k);
+            });
+        });
+    }
+
+    async function sendFeedback(imageId, feedback, btn, type) {
+        try {
+            var res = await fetch('/api/images/' + imageId + '/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ feedback: feedback }),
+            });
+            if (res.ok) {
+                var statusId = type === 'lang' ? 'feedback_lang_status_' + imageId : 'feedback_status_' + imageId;
+                var statusEl = document.getElementById(statusId);
+                var label = type === 'lang' ? 'Langbeschreibung' : 'Alt-Text';
+                if (feedback === 'good') {
+                    btn.style.background = 'var(--success)';
+                    btn.style.color = 'white';
+                    btn.style.borderColor = 'var(--success)';
+                    if (statusEl) statusEl.textContent = 'Danke!';
+                    announce('Feedback: ' + label + ' als gut bewertet');
+                } else {
+                    btn.style.background = 'var(--error)';
+                    btn.style.color = 'white';
+                    btn.style.borderColor = 'var(--error)';
+                    if (statusEl) statusEl.textContent = 'Danke – wird geprüft';
+                    announce('Feedback: ' + label + ' als verbesserungswürdig bewertet');
+                }
+            }
+        } catch (err) {}
+    }
+
+    // Steve-Entscheidung 07.06.2026: Buttontext folgt dem KI-Zustand des Bildes.
+    //  - noch kein KI-Lauf (data-status="pending")  → "Generieren",  Live-Meldung "Alt-Text wird generiert"
+    //  - bereits ein KI-Lauf (data-status="done")    → "Neu generieren", Live-Meldung "Alt-Text wird neu generiert"
+    // Händisch eingetippter Text ändert nichts an der Beschriftung — der Wechsel
+    // tritt ausschliesslich ein, sobald die KI mindestens einmal erfolgreich gelaufen
+    // ist. Ein vorhandener original_alt aus dem PDF zählt nicht als KI-Lauf
+    // (das Bild kommt mit status='pending' aus der Extraktion).
+    async function regenerateImage(projectId, imageId) {
+        const typeSelect = document.getElementById('regen_type_' + imageId);
+        const btn = document.getElementById('regen_btn_' + imageId);
+        const statusEl = document.getElementById('regen_status_' + imageId);
+        const imageType = typeSelect ? typeSelect.value : '';
+        const wasDone = btn && btn.dataset.status === 'done';
+        const restingLabel = wasDone ? 'Neu generieren' : 'Generieren';
+
+        btn.disabled = true;
+        btn.textContent = wasDone ? 'Generiere neu...' : 'Generiere...';
+        if (statusEl) statusEl.textContent = '';
+        announce(wasDone ? 'Alt-Text wird neu generiert' : 'Alt-Text wird generiert');
+
+        try {
+            const body = {};
+            if (imageType) body.image_type = imageType;
+
+            const res = await fetch('/api/projects/' + projectId + '/regenerate/' + imageId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                const ta = document.getElementById('alttext_' + imageId);
+                if (ta) ta.value = data.alt_text || '';
+                if (data.langbeschreibung) {
+                    const lt = document.getElementById('langtext_' + imageId);
+                    if (lt) lt.value = data.langbeschreibung;
+                }
+                const verbDone = wasDone ? 'neu generiert' : 'generiert';
+                if (statusEl) statusEl.textContent = (wasDone ? 'Neu generiert' : 'Generiert') + ' (' + (data.konfidenz || 'mittel') + ')';
+                announce('Alt-Text wurde ' + verbDone);
+                // Ab jetzt gilt das Bild als KI-bearbeitet — nächster Klick lautet "Neu generieren".
+                btn.dataset.status = 'done';
+                // Projekt-Kopf (Badge + "X von Y Bildern generiert") live nachziehen.
+                updateProjectHeader(projectId);
+            } else {
+                if (statusEl) statusEl.textContent = 'Fehler';
+                announce(wasDone ? 'Fehler bei der Neugenerierung' : 'Fehler bei der Generierung');
+            }
+        } catch (err) {
+            if (statusEl) statusEl.textContent = 'Verbindungsfehler';
+        } finally {
+            btn.disabled = false;
+            // Beschriftung folgt dem neuen data-status (kann durch Erfolg auf "done" gehoben sein).
+            btn.textContent = btn.dataset.status === 'done' ? 'Neu generieren' : restingLabel;
+        }
+    }
+
+    async function generateLongDesc(projectId, imageId) {
+        const btn = document.getElementById('longdesc_btn_' + imageId);
+        const statusEl = document.getElementById('regen_status_' + imageId);
+        const typeSelect = document.getElementById('regen_type_' + imageId);
+        const imageType = typeSelect ? typeSelect.value : '';
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Generiere...'; }
+        if (statusEl) statusEl.textContent = '';
+        announce('Langbeschreibung wird generiert');
+
+        try {
+            const body = { image_type: imageType || undefined, long_description: true };
+            const res = await fetch('/api/projects/' + projectId + '/regenerate/' + imageId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (res.ok && data.langbeschreibung) {
+                const container = document.getElementById('langcontainer_' + imageId);
+                if (container) {
+                    container.innerHTML = '<label for="langtext_' + imageId + '" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">Langbeschreibung</label><textarea class="alt-text-field langtext-field" id="langtext_' + imageId + '" style="min-height:80px;">' + (data.langbeschreibung || '') + '</textarea>';
+                }
+                // Also update alt-text if improved
+                if (data.alt_text) {
+                    const ta = document.getElementById('alttext_' + imageId);
+                    if (ta) ta.value = data.alt_text;
+                }
+                if (btn) btn.style.display = 'none';
+                if (statusEl) statusEl.textContent = 'Langbeschreibung generiert';
+                announce('Langbeschreibung wurde generiert');
+            } else {
+                if (statusEl) statusEl.textContent = 'Keine Langbeschreibung verfügbar';
+                announce('Keine Langbeschreibung verfügbar');
+            }
+        } catch (err) {
+            if (statusEl) statusEl.textContent = 'Verbindungsfehler';
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Langbeschreibung (optional)'; }
+        }
+    }
+
+    async function startGeneration(projectId) {
+        const btn = document.getElementById('generateBtn');
+        // Pre-check daily limit
+        if (window._dailyLimit && window._dailyLimit.remaining <= 0) {
+            announce('Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt.');
+            alert('Tageslimit erreicht (' + window._dailyLimit.limit + ' Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt.');
+            return;
+        }
+        if (btn) { btn.disabled = true; btn.textContent = 'Wird gestartet...'; }
+        announce('Alt-Text-Generierung wird gestartet.');
+        const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST' });
+        if (res.ok) { showProject(projectId); }
+        else { const d = await res.json(); announce('Fehler: ' + (d.detail || '')); }
+    }
+
+    // ─── Export ──────────────────────────────────────
+    // Multi-Datei (08.06.2026):
+    //  - Export-Panel hat Radio-Auswahl: "Alle Dokumente" (Default, ZIP) oder eines konkret (Einzeldatei).
+    //  - Dateiname ist optional. Leer = Standardname (basierend auf Doc bzw. Projekt) auf Server-Seite.
+    //  - Für Web/Grafik-Projekte (kein documents-Block gerendert) verhält sich der Export wie bisher.
+    function openExportPanel(projectId) {
+        const panel = document.getElementById('exportPanel');
+        const btn = document.getElementById('exportOpenBtn');
+        const input = document.getElementById('exportFilename');
+        if (panel) {
+            panel.style.display = 'block';
+            if (btn) btn.style.display = 'none';
+            if (input) {
+                input.value = '';
+                input.focus();
+            } else {
+                // Single-Doc oder Web/Grafik: kein Filename-Input vorhanden? Fokus auf erste Schaltfläche.
+                const first = panel.querySelector('button');
+                if (first) first.focus();
+            }
+            announce('Export-Optionen geöffnet.');
+        }
+    }
+
+    function closeExportPanel(silent) {
+        const panel = document.getElementById('exportPanel');
+        const btn = document.getElementById('exportOpenBtn');
+        if (panel) panel.style.display = 'none';
+        if (btn) { btn.style.display = ''; btn.focus(); }
+        if (!silent) announce('Export abgebrochen.');
+    }
+
+    function readExportScope() {
+        // Liefert { document_id?: number, all: boolean }
+        // - "all" -> alle Dokumente (Server liefert ZIP, ausser bei nur einem Dokument)
+        // - "doc:<id>" -> nur dieses Dokument (Einzeldatei)
+        const chosen = document.querySelector('input[name="exportScope"]:checked');
+        if (!chosen) return { all: true };
+        if (chosen.value === 'all') return { all: true };
+        const m = /^doc:(\d+)$/.exec(chosen.value);
+        if (m) return { all: false, document_id: Number(m[1]) };
+        return { all: true };
+    }
+
+    async function doExport(projectId, format) {
+        const filenameInput = document.getElementById('exportFilename');
+        const statusEl = document.getElementById('exportStatus');
+        const scope = readExportScope();
+        const customName = (filenameInput ? filenameInput.value.trim() : '') || '';
+
+        if (statusEl) statusEl.textContent = 'Wird exportiert...';
+        announce(format.toUpperCase() + ' wird exportiert...');
+
+        try {
+            const url = format === 'pdf'
+                ? '/api/projects/' + projectId + '/export'
+                : '/api/projects/' + projectId + '/export/' + format;
+            const body = {};
+            if (!scope.all && scope.document_id) body.document_id = scope.document_id;
+            if (customName) body.filename = customName;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                // Dateiname aus Content-Disposition lesen, sonst Fallback aus Eingabe + Format.
+                const cd = res.headers.get('Content-Disposition') || '';
+                let serverName = null;
+                const m = /filename\*?=(?:UTF-8'')?\"?([^\";]+)\"?/i.exec(cd);
+                if (m) {
+                    try { serverName = decodeURIComponent(m[1]); } catch (e) { serverName = m[1]; }
+                }
+                const ext = format === 'pdf' ? '.pdf' : format === 'xlsx' ? '.xlsx' : format === 'csv' ? '.csv' : '.json';
+                const fallback = (customName || 'export') + (scope.all ? '_alle' : '') + ext;
+                downloadBlob(blob, serverName || fallback);
+                announce((serverName || fallback) + ' wurde heruntergeladen.');
+                closeExportPanel(true);
+            } else {
+                if (statusEl) statusEl.textContent = 'Fehler beim Export.';
+                announce('Fehler beim Export.');
+            }
+        } catch (err) {
+            if (statusEl) statusEl.textContent = 'Verbindungsfehler.';
+        }
+    }
+
+    function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ─── Helpers ─────────────────────────────────────
+    function highlightNav(id) {
+        document.querySelectorAll('.header-btn').forEach(b => b.classList.remove('active'));
+        if (id) document.getElementById(id)?.classList.add('active');
+    }
+
+
+    // ─── Daily limit display ─────────────────────────────
+    function updateLimitDisplay() {
+        const el = document.getElementById('dailyLimit');
+        const dl = window._dailyLimit;
+        if (!el || !dl) return;
+        const pct = Math.round(dl.used / dl.limit * 100);
+        if (pct >= 100) {
+            el.textContent = 'Tageslimit erreicht';
+            el.style.color = '#fca5a5';
+        } else if (pct >= 80) {
+            el.textContent = 'Noch ' + dl.remaining + ' Bilder heute';
+            el.style.color = '#fde68a';
+        } else {
+            el.textContent = dl.used + '/' + dl.limit + ' Bilder heute';
+        }
+    }
+
+    // Refresh limit after generation
+
+
+
+    // ─── InkluAgent (Chatbot pro Projekt) ────────────────────
+    // Karbe-Feintuning (06.06.2026):
+    //  - Button-Beschriftung auf nur "Chatbot" (öffnen/schließen wird per
+    //    aria-expanded an Screenreader gemeldet; visuell reicht das Wort).
+    //  - Früherer H2 "Chatbot zur Alt-Text-Hilfe" entfällt, weil der Button
+    //    nun selbst die Sektion betitelt (aria-labelledby auf den Button).
+    //  - Der erklärende Infotext steht jetzt UNTER dem Button — Karbes Wunsch,
+    //    damit der Schalter sofort ins Auge fällt, der Text dient als Hinweis.
+    function inkluagentSectionHtml(projectId) {
+        return ''
+            + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '">'
+            +   '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
+            +     'Chatbot'
+            +   '</button>'
+            +   '<p class="inkluagent-intro">Bitte den InkluAgent um Hilfe — z.B. einen Alt-Text für ein Bild generieren, '
+            +   'einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. '
+            +   'Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.</p>'
+            +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
+            +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="polite" aria-label="Chat-Verlauf"></div>'
+            +     '<form id="inkluagentForm" class="inkluagent-form">'
+            +       '<label for="inkluagentInput" class="visually-hidden">Nachricht an den InkluAgent</label>'
+            +       '<textarea id="inkluagentInput" rows="2" maxlength="5000" '
+            +         'placeholder="z.B. \'Bild 3 in leichter Sprache\' oder \'Generiere Alt-Text für Bild 5\'" '
+            +         'aria-describedby="inkluagentHint"></textarea>'
+            +       '<div id="inkluagentHint" class="inkluagent-hint">Enter sendet, Shift+Enter macht einen Zeilenumbruch. Maximal 5000 Zeichen.</div>'
+            +       '<div class="inkluagent-controls">'
+            +         '<button type="submit" id="inkluagentSendBtn" class="btn btn-primary">Senden</button>'
+            +         '<span id="inkluagentStatus" class="inkluagent-status" role="status" aria-live="polite"></span>'
+            +       '</div>'
+            +     '</form>'
+            +   '</div>'
+            + '</section>';
+    }
+
+    async function inkluagentInit(projectId) {
+        window._inkluagentProjectId = projectId;
+        const toggle = document.getElementById('inkluagentToggle');
+        const input = document.getElementById('inkluagentInput');
+        const form = document.getElementById('inkluagentForm');
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+            const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+            if (isOpen) inkluagentClose(); else inkluagentOpen(projectId, true);
+        });
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                inkluagentSend();
+            });
+        }
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    inkluagentSend();
+                }
+            });
+        }
+        const wasOpen = localStorage.getItem('inkluagent.panel.' + projectId) === 'open';
+        if (wasOpen) await inkluagentOpen(projectId, false);
+    }
+
+    async function inkluagentOpen(projectId, focusInput) {
+        const toggle = document.getElementById('inkluagentToggle');
+        const panel = document.getElementById('inkluagentPanel');
+        const input = document.getElementById('inkluagentInput');
+        if (!toggle || !panel) return;
+        toggle.setAttribute('aria-expanded', 'true');
+        // Beschriftung bleibt "Chatbot" — Auf/Zu-Status meldet aria-expanded.
+        toggle.textContent = 'Chatbot';
+        panel.hidden = false;
+        try { localStorage.setItem('inkluagent.panel.' + projectId, 'open'); } catch (e) {}
+        await inkluagentLoadHistory(projectId);
+        if (focusInput && input) input.focus();
+    }
+
+    function inkluagentClose() {
+        const toggle = document.getElementById('inkluagentToggle');
+        const panel = document.getElementById('inkluagentPanel');
+        if (!toggle || !panel) return;
+        toggle.setAttribute('aria-expanded', 'false');
+        // Beschriftung bleibt "Chatbot" — Auf/Zu-Status meldet aria-expanded.
+        toggle.textContent = 'Chatbot';
+        panel.hidden = true;
+        const projectId = window._inkluagentProjectId;
+        if (projectId) {
+            try { localStorage.removeItem('inkluagent.panel.' + projectId); } catch (e) {}
+        }
+    }
+
+    async function inkluagentLoadHistory(projectId) {
+        const log = document.getElementById('inkluagentLog');
+        if (!log) return;
+        log.textContent = '';
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/chat/history');
+            if (res.status === 401) { window.location.href = '/'; return; }
+            if (!res.ok) {
+                inkluagentSetStatus('Verlauf konnte nicht geladen werden.', true);
+                return;
+            }
+            const data = await res.json();
+            for (const m of data.messages || []) {
+                inkluagentAppendMessage(m.role, m.content);
+            }
+            log.scrollTop = log.scrollHeight;
+        } catch (e) {
+            inkluagentSetStatus('Fehler beim Laden des Verlaufs.', true);
+        }
+    }
+
+    function inkluagentAppendMessage(role, content) {
+        const log = document.getElementById('inkluagentLog');
+        if (!log) return;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'inkluagent-message ' + (role === 'user' ? 'user' : 'assistant');
+        const roleEl = document.createElement('div');
+        roleEl.className = 'inkluagent-message-role';
+        roleEl.textContent = (role === 'user' ? 'Du' : 'InkluAgent');
+        const contentEl = document.createElement('div');
+        contentEl.className = 'inkluagent-message-content';
+        contentEl.textContent = content || '';
+        wrapper.appendChild(roleEl);
+        wrapper.appendChild(contentEl);
+        log.appendChild(wrapper);
+    }
+
+    function inkluagentSetStatus(text, isError) {
+        const status = document.getElementById('inkluagentStatus');
+        if (!status) return;
+        status.textContent = text || '';
+        if (isError) status.setAttribute('data-state', 'error');
+        else status.removeAttribute('data-state');
+    }
+
+    async function inkluagentSend() {
+        const projectId = window._inkluagentProjectId;
+        const input = document.getElementById('inkluagentInput');
+        const sendBtn = document.getElementById('inkluagentSendBtn');
+        const log = document.getElementById('inkluagentLog');
+        if (!projectId || !input || !sendBtn || !log) return;
+        const message = input.value.trim();
+        if (!message) {
+            inkluagentSetStatus('Bitte eine Nachricht eingeben.', true);
+            input.focus();
+            return;
+        }
+        if (message.length > 5000) {
+            inkluagentSetStatus('Nachricht ist zu lang (max. 5000 Zeichen).', true);
+            return;
+        }
+        inkluagentAppendMessage('user', message);
+        log.scrollTop = log.scrollHeight;
+        input.value = '';
+        sendBtn.disabled = true;
+        inkluagentSetStatus('InkluAgent denkt nach...', false);
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+            if (res.status === 401) { window.location.href = '/'; return; }
+            if (!res.ok) {
+                let detail = 'HTTP ' + res.status;
+                try { const e = await res.json(); detail = e.detail || detail; } catch (_) {}
+                inkluagentSetStatus(detail, true);
+                return;
+            }
+            const data = await res.json();
+            inkluagentAppendMessage('assistant', data.reply || '(leere Antwort)');
+            log.scrollTop = log.scrollHeight;
+            inkluagentSetStatus('', false);
+            // Refresh-Actions vom Chatbot: pro Bild Textarea-Wert live setzen.
+            // Wenn Bild nicht im DOM (z.B. noch nicht gerendert), Fallback auf Full-Reload.
+            const refreshActions = (data.actions || []).filter(a => a && a.type === 'refresh_image');
+            let needsFullReload = false;
+            let updatedCount = 0;
+            for (const ra of refreshActions) {
+                const ta = document.getElementById('alttext_' + ra.image_id);
+                if (ta && ra.alt_text != null) {
+                    ta.value = ra.alt_text;
+                    updatedCount++;
+                    const ind = document.getElementById('saved_' + ra.image_id);
+                    if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
+                } else if (!ta) {
+                    needsFullReload = true;
+                }
+                const lta = document.getElementById('langtext_' + ra.image_id);
+                if (lta && ra.langbeschreibung != null) {
+                    lta.value = ra.langbeschreibung;
+                } else if (ra.langbeschreibung) {
+                    // Neue Langbeschreibung gesetzt, aber Feld noch nicht im DOM -> Full-Reload
+                    needsFullReload = true;
+                }
+            }
+            if (updatedCount > 0) {
+                announce('InkluAgent hat ' + updatedCount + ' Alt-Text' + (updatedCount === 1 ? '' : 'e') + ' aktualisiert.');
+            }
+            if (needsFullReload && typeof showProject === 'function') {
+                setTimeout(() => showProject(projectId), 800);
+            }
+        } catch (e) {
+            inkluagentSetStatus('Verbindungsfehler. Bitte erneut versuchen.', true);
+        } finally {
+            sendBtn.disabled = false;
+            input.focus();
+        }
+    }
+
+    init();
+{% endraw %}
+</script>
+{% endblock %}

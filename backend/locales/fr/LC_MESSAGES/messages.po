@@ -409,3 +409,23 @@ msgstr "Clé API supprimée."
 
 msgid "Fehler beim Löschen."
 msgstr "Erreur lors de la suppression."
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Dokument löschen?"
+msgstr "Supprimer le document ?"
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Dokument umbenennen"
+msgstr "Renommer le document"
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Neuer Name des Dokuments"
+msgstr "Nouveau nom du document"
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen."
+msgstr "Laisser vide pour réutiliser le nom de fichier d'origine. Le nom apparaît également dans le nom du fichier exporté."
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Speichern"
+msgstr "Enregistrer"

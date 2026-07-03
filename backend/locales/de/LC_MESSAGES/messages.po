@@ -412,3 +412,23 @@ msgstr "API-Schlüssel gelöscht."
 
 msgid "Fehler beim Löschen."
 msgstr "Fehler beim Löschen."
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Dokument löschen?"
+msgstr "Dokument löschen?"
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Dokument umbenennen"
+msgstr "Dokument umbenennen"
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Neuer Name des Dokuments"
+msgstr "Neuer Name des Dokuments"
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen."
+msgstr "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen."
+
+#: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
+msgid "Speichern"
+msgstr "Speichern"

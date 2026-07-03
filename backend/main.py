@@ -3935,18 +3935,9 @@ async def nutzungsbedingungen_app_page(request: Request):
 
 @app.get("/app", response_class=HTMLResponse)
 async def app_page(request: Request):
-    token = request.cookies.get("token")
-    if not token:
-        return RedirectResponse("/")
-    try:
-        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
-        return RedirectResponse("/")
-    html = open("/app/frontend/app.html").read()
-    if "staging" in BASE_URL:
-        html = html.replace("<title>InkluDocs</title>", "<title>InkluDocs (Testumgebung)</title>")
-        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
-    return html
+    # Seit 03.07.2026 Jinja2-Template (i18n): Sprach-Aufloesung, window.I18N,
+    # Staging-Titel und Cache-Busting kommen aus base_app.html.
+    return _render_protected_template(request, "app.html")
 
 
 # ============================================================
@@ -3968,14 +3959,18 @@ async def freigabe_page(token: str, request: Request):
             "die Ihnen den Link geschickt hat.</p></body></html>",
             status_code=404,
         )
-    html = open("/app/frontend/app.html").read()
-    # GAST-MODUS-Flag + Token vor den Skripten einspeisen (Token ist URL-safe).
-    inject = '<script>window.GUEST_MODE=true;window.SHARE_TOKEN="' + token + '";</script>'
-    html = html.replace("</head>", inject + "</head>", 1)
-    if "staging" in BASE_URL:
-        html = html.replace("<title>InkluDocs</title>", "<title>InkluDocs (Testumgebung)</title>")
-        html = html.replace('<span class="brand">Inklu</span>Docs', '<span class="brand">Inklu</span>Docs <span style="font-size:0.6em;color:#e87722;font-weight:normal;">(Testumgebung)</span>')
-    return html
+    # Seit 03.07.2026 dasselbe Jinja2-Template wie /app; GAST-MODUS-Flags kommen
+    # als Template-Variablen (head_extra-Block) statt per String-Injektion.
+    # Sprache fuer Gaeste: Cookie -> Accept-Language -> Deutsch (resolve_ui_language).
+    lang = resolve_ui_language(request)
+    return templates.TemplateResponse(
+        "app.html",
+        template_context(
+            request, lang,
+            is_staging=("staging" in BASE_URL),
+            guest_mode=True, share_token=token,
+        ),
+    )
 
 
 @app.post("/api/freigabe/{token}/confirm")
