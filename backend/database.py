@@ -245,6 +245,9 @@ def _migrate_columns(conn):
         # Ausgabesprache der generierten Alt-Texte (03.07.2026, alirodocs):
         # lebende Projekt-Einstellung wie use_context — gilt fuer alles ab jetzt Generierte.
         ("projects", "alt_language", "ALTER TABLE projects ADD COLUMN alt_language TEXT DEFAULT 'de'"),
+        # Sprache, in der der Alt-Text dieses Bildes GENERIERT wurde (fuer die
+        # Vorlese-Stimme; NULL = deutscher Altbestand). Gemischte Projekte moeglich.
+        ("images", "gen_language", "ALTER TABLE images ADD COLUMN gen_language TEXT"),
         ("images", "langbeschreibung", "ALTER TABLE images ADD COLUMN langbeschreibung TEXT DEFAULT ''"),
         ("images", "original_alt", "ALTER TABLE images ADD COLUMN original_alt TEXT DEFAULT ''"),
         ("images", "feedback", "ALTER TABLE images ADD COLUMN feedback TEXT DEFAULT ''"),

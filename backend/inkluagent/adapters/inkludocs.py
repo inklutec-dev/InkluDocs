@@ -376,7 +376,7 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
         conn.execute(
             "UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, "
             "langbeschreibung = ?, alt_text_edited = NULL, needs_review = ?, "
-            "pipeline_steps = ?, validation_result = ?, status = 'done' "
+            "pipeline_steps = ?, validation_result = ?, gen_language = ?, status = 'done' "
             "WHERE id = ?",
             (
                 result["alt_text"],
@@ -386,6 +386,7 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
                 1 if result.get("needs_review") else 0,
                 result.get("pipeline_steps", ""),
                 result.get("validation_result", ""),
+                (img["alt_language"] or "de"),
                 image_id,
             ),
         )

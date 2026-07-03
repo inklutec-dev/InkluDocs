@@ -2373,12 +2373,13 @@ async def _process_project(project_id: int, user_id: int):
                     result["konfidenz"] = specialized_result.get("konfidenz", result.get("konfidenz", "mittel"))
             conn.execute(
                 """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?,
-                   needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, status = 'done' WHERE id = ?""",
+                   needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done' WHERE id = ?""",
                 (_append_link_reference(result["alt_text"], effective_context or ""), result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
                  1 if result.get("needs_review") else 0,
                  result.get("pipeline_steps", ""),
                  result.get("validation_result", ""),
                  ctx_mode,
+                 alt_lang,
                  img["id"])
             )
             # Nur bei Erfolg den Zaehler hochziehen — Fehler werden separat
@@ -2588,13 +2589,14 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         conn.execute(
             """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?,
                langbeschreibung = ?, alt_text_edited = NULL,
-               needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, status = 'done' WHERE id = ?""",
+               needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done' WHERE id = ?""",
             (_append_link_reference(result["alt_text"], regen_context or ""), result["bildtyp"], result.get("konfidenz", "mittel"),
              langbeschreibung,
              1 if result.get("needs_review") else 0,
              result.get("pipeline_steps", ""),
              result.get("validation_result", ""),
              regen_ctx_mode,
+             regen_lang,
              image_id)
         )
         # processed_images zaehlt nur ECHTE Erfolge (Steve 08.06.2026):

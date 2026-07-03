@@ -701,9 +701,14 @@
         if (!text) { announce(t('Kein Text zum Vorlesen vorhanden.')); return; }
         document.querySelectorAll('.tts-btn[aria-pressed="true"]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); b.textContent = t('Anhören'); });
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'de-DE';
-        const de = (synth.getVoices() || []).find(function (v) { return v.lang && v.lang.toLowerCase().indexOf('de') === 0; });
-        if (de) { u.voice = de; }
+        // Vorlese-Stimme folgt der GENERIERUNGSSPRACHE des Bildes (03.07.2026):
+        // ein daenischer Alt-Text mit deutscher Stimme waere Kauderwelsch.
+        // Altbestand ohne gen_language faellt auf Deutsch zurueck.
+        const ttsTags = { de: 'de-DE', en: 'en-US', da: 'da-DK', fr: 'fr-FR', es: 'es-ES' };
+        const ttsCode = (btn.dataset.lang || 'de');
+        u.lang = ttsTags[ttsCode] || 'de-DE';
+        const voice = (synth.getVoices() || []).find(function (v) { return v.lang && v.lang.toLowerCase().indexOf(ttsCode) === 0; });
+        if (voice) { u.voice = voice; }
         btn.setAttribute('aria-pressed', 'true');
         btn.textContent = t('Stopp');
         u.onend = function () { btn.setAttribute('aria-pressed', 'false'); btn.textContent = t('Anhören'); };
@@ -1109,7 +1114,7 @@
                         ${!window.GUEST_MODE ? `<span style="font-size:0.85rem;color:var(--text-muted);">${t('Alt-Text bewerten:')}</span>
                         <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="${t('Alt-Text gut')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'good' ? 'background:var(--success);color:white;border-color:var(--success);' : ''}">&#128077;</button>
                         <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="${t('Alt-Text schlecht')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'bad' ? 'background:var(--error);color:white;border-color:var(--error);' : ''}">&#128078;</button>` : ''}
-                        ${(img.alt_text_edited || img.alt_text || img.original_alt) ? '<button class="btn btn-secondary btn-small tts-btn" onclick="speakAltText(' + img.id + ', this)" aria-pressed="false" style="padding:0.3rem 0.7rem;">' + t('Anhören') + '</button>' : ''}
+                        ${(img.alt_text_edited || img.alt_text || img.original_alt) ? '<button class="btn btn-secondary btn-small tts-btn" data-lang="' + (img.gen_language || 'de') + '" onclick="speakAltText(' + img.id + ', this)" aria-pressed="false" style="padding:0.3rem 0.7rem;">' + t('Anhören') + '</button>' : ''}
                         <span id="feedback_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
