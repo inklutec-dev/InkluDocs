@@ -15,6 +15,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ /app/
 COPY frontend/ /app/frontend/
 
+# i18n-Vollstaendigkeits-Check: bricht den Build hart ab, wenn ein
+# Template-/JS-String in einem der vier .po-Kataloge fehlt
+RUN python /app/scripts/check_i18n.py
+
 # Kompiliere gettext-Uebersetzungen (.po -> .mo) waehrend des Builds
 RUN pybabel compile -d /app/locales -f || echo "WARN: pybabel compile failed or no locales"
 
