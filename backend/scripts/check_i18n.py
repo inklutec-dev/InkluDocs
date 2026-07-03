@@ -18,8 +18,8 @@ from pathlib import Path
 
 from babel.messages.pofile import read_po
 
-LANGS = ["de", "en", "fr", "es"]
-LANGS_REQUIRE_TRANSLATION = ["en", "fr", "es"]
+LANGS = ["de", "en", "fr", "es", "da"]
+LANGS_REQUIRE_TRANSLATION = ["en", "fr", "es", "da"]
 
 HERE = Path(__file__).resolve().parent
 # Im Container liegt das Skript unter /app/scripts, im Repo unter backend/scripts.

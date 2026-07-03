@@ -1,0 +1,1294 @@
+# Danish translations for InkluDocs.
+# Claude-Erstuebersetzung 03.07.2026 — Muttersprachler-QA offen.
+msgid ""
+msgstr ""
+"Project-Id-Version: InkluDocs\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Anmeldung"
+msgstr "Log ind"
+
+msgid "KI-gestützter Alt-Text-Generator"
+msgstr "AI-baseret generator til alternative tekster"
+
+msgid "E-Mail-Adresse"
+msgstr "E-mailadresse"
+
+msgid "Passwort"
+msgstr "Adgangskode"
+
+msgid "Anmelden"
+msgstr "Log ind"
+
+msgid "Konto erstellen"
+msgstr "Opret konto"
+
+msgid "Passwort vergessen?"
+msgstr "Glemt adgangskode?"
+
+msgid "Impressum"
+msgstr "Kolofon"
+
+msgid "Datenschutz"
+msgstr "Privatlivspolitik"
+
+msgid "Nutzungsbedingungen"
+msgstr "Brugsbetingelser"
+
+msgid "Testumgebung"
+msgstr "Testmiljø"
+
+msgid "Bitte alle Felder ausfüllen."
+msgstr "Udfyld venligst alle felter."
+
+msgid "Anmeldung fehlgeschlagen."
+msgstr "Login mislykkedes."
+
+msgid "Neuen Link senden"
+msgstr "Send nyt link"
+
+msgid "Wird gesendet..."
+msgstr "Sender..."
+
+msgid "Neuer Link gesendet!"
+msgstr "Nyt link sendt!"
+
+msgid "Fehler"
+msgstr "Fejl"
+
+msgid "Verbindungsfehler. Bitte erneut versuchen."
+msgstr "Forbindelsesfejl. Prøv igen."
+
+msgid "Sprache"
+msgstr "Sprog"
+
+msgid "Sprache wechseln"
+msgstr "Skift sprog"
+
+msgid "Zum Hauptinhalt springen"
+msgstr "Spring til hovedindhold"
+
+msgid "Einstellungen"
+msgstr "Indstillinger"
+
+msgid "Sprache der Oberflaeche"
+msgstr "Brugerfladens sprog"
+
+msgid "Sprache fuer Menues, Schaltflaechen und Meldungen. Ihre Wahl wird am Konto gespeichert und gilt bei jeder Anmeldung. Die Sprache der generierten Alt-Texte ist davon unabhaengig."
+msgstr "Sprog for menuer, knapper og meddelelser. Dit valg gemmes på din konto og gælder ved hvert login. Sproget for de genererede alternative tekster er uafhængigt af dette."
+
+msgid "Sprache waehlen"
+msgstr "Vælg sprog"
+
+msgid "Passwort aendern"
+msgstr "Skift adgangskode"
+
+msgid "Aktuelles Passwort"
+msgstr "Nuværende adgangskode"
+
+msgid "Neues Passwort (mind. 8 Zeichen)"
+msgstr "Ny adgangskode (mindst 8 tegn)"
+
+msgid "Neues Passwort wiederholen"
+msgstr "Gentag ny adgangskode"
+
+msgid "Kontoinformationen"
+msgstr "Kontooplysninger"
+
+msgid "Wird geladen ..."
+msgstr "Indlæser …"
+
+msgid "API-Schluessel"
+msgstr "API-nøgler"
+
+msgid "Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren."
+msgstr "Med API-nøgler kan eksterne programmer generere alternative tekster."
+
+msgid "Neuen Schluessel erstellen"
+msgstr "Opret en ny nøgle"
+
+msgid "Erstellen"
+msgstr "Opret"
+
+msgid "Name fuer neuen API-Schluessel"
+msgstr "Navn til den nye API-nøgle"
+
+msgid "Name (z. B. Meine App)"
+msgstr "Navn (f.eks. Min app)"
+
+msgid "Geben Sie einen Namen ein, um den Schluessel spaeter zuordnen zu koennen."
+msgstr "Indtast et navn, så du senere kan genkende nøglen."
+
+msgid "Meine API-Schluessel"
+msgstr "Mine API-nøgler"
+
+msgid "API-Schluessel bearbeiten"
+msgstr "Rediger API-nøgle"
+
+msgid "Startseite"
+msgstr "Startside"
+
+msgid "Neues Projekt anlegen"
+msgstr "Opret nyt projekt"
+
+msgid "Meine Projekte"
+msgstr "Mine projekter"
+
+msgid "Datensicherheit"
+msgstr "Datasikkerhed"
+
+msgid "Benutzerverwaltung"
+msgstr "Brugeradministration"
+
+msgid "Abmelden"
+msgstr "Log ud"
+
+msgid "Hauptnavigation"
+msgstr "Hovednavigation"
+
+msgid "Hallo"
+msgstr "Hej"
+
+msgid "Willkommen"
+msgstr "Velkommen"
+
+msgid "Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig."
+msgstr "I dag er {used} af {limit} billeder brugt – {remaining} tilbage."
+
+msgid "InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+msgstr "InkluDocs er gratis og videreudvikles løbende. Hvis du vil støtte projektet, sætter vi pris på et frivilligt bidrag."
+
+msgid "InkluDocs per PayPal unterstützen"
+msgstr "Støt InkluDocs via PayPal"
+
+msgid "InkluDocs per PayPal unterstützen, öffnet in neuem Tab"
+msgstr "Støt InkluDocs via PayPal, åbner i en ny fane"
+
+msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
+msgstr "Dit bidrag hjælper med at fremme tilgængelighed på nettet."
+
+msgid "DSGVO-konform – Verarbeitung in der EU."
+msgstr "GDPR-kompatibel – databehandling i EU."
+
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Hosting hos Hetzner Online (Falkenstein, Tyskland). AI-behandlingen sker via Amazon Bedrock (Claude-modellen fra Anthropic) i datacentre inden for EU; Amazon Bedrock deler ikke indhold med modeludbyderen og bruger det ikke til træning. Detaljer i vores privatlivspolitik."
+
+msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
+msgstr "Godt at se dig. Vælg en handling til venstre, eller åbn et projekt."
+
+msgid "Neuigkeiten"
+msgstr "Nyheder"
+
+msgid "Rückmeldungen vom Kunden"
+msgstr "Tilbagemeldinger fra kunden"
+
+msgid "Zuletzt bearbeitete Projekte"
+msgstr "Senest redigerede projekter"
+
+msgid "Schließen"
+msgstr "Luk"
+
+msgid "Projekte werden geladen …"
+msgstr "Indlæser projekter …"
+
+msgid "Projektname"
+msgstr "Projektnavn"
+
+msgid "z. B. Geschäftsbericht 2026 oder Mein Projekt"
+msgstr "f.eks. Årsrapport 2026 eller Mit projekt"
+
+msgid "Werkzeug"
+msgstr "Værktøj"
+
+msgid "Bestimmt, womit das Projekt bearbeitet wird."
+msgstr "Bestemmer, hvilket værktøj projektet redigeres med."
+
+msgid "Projekt anlegen"
+msgstr "Opret projekt"
+
+msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Projekterne kunne ikke indlæses. Prøv igen senere."
+
+msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Ingen projekter endnu. Opret dit første via ”Opret nyt projekt” til venstre."
+
+msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Ingen projekter endnu. Opret dit første via ”Opret nyt projekt”."
+
+msgid "Unbenanntes Projekt"
+msgstr "Unavngivet projekt"
+
+msgid "{tool} · angelegt am {datum}"
+msgstr "{tool} · oprettet den {datum}"
+
+msgid "Alle Projekte anzeigen"
+msgstr "Vis alle projekter"
+
+msgid "{n} aktuelle Projekte geladen."
+msgstr "{n} seneste projekter indlæst."
+
+msgid "Zurzeit keine Neuigkeiten."
+msgstr "Ingen nyheder i øjeblikket."
+
+msgid "Frühere Neuigkeiten"
+msgstr "Tidligere nyheder"
+
+msgid "Neuigkeiten ({n})"
+msgstr "Nyheder ({n})"
+
+msgid "Du bist auf dem aktuellen Stand"
+msgstr "Du er helt opdateret"
+
+msgid "Kunde: {namen}"
+msgstr "Kunde: {namen}"
+
+msgid "Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})"
+msgstr "Til gennemsyn: {offen} · Til revision: {ueberarbeiten} · Godkendt: {freigegeben} (af {gesamt})"
+
+msgid "Umbenennen"
+msgstr "Omdøb"
+
+msgid "Löschen"
+msgstr "Slet"
+
+msgid "Neuer Projektname:"
+msgstr "Nyt projektnavn:"
+
+msgid "Bitte einen Namen eingeben."
+msgstr "Indtast venligst et navn."
+
+msgid "Projekt umbenannt in {name}"
+msgstr "Projektet er omdøbt til {name}"
+
+msgid "Umbenennen fehlgeschlagen."
+msgstr "Omdøbning mislykkedes."
+
+msgid "Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?"
+msgstr "Vil du virkelig slette projektet ”{name}” og alle tilhørende data?"
+
+msgid "Projekt gelöscht"
+msgstr "Projekt slettet"
+
+msgid "Löschen fehlgeschlagen."
+msgstr "Sletning mislykkedes."
+
+msgid "{n} Projekte geladen."
+msgstr "{n} projekter indlæst."
+
+msgid "Bitte einen Projektnamen eingeben."
+msgstr "Indtast venligst et projektnavn."
+
+msgid "Bitte ein Werkzeug auswählen."
+msgstr "Vælg venligst et værktøj."
+
+msgid "Projekt wird angelegt …"
+msgstr "Opretter projekt …"
+
+msgid "Angelegt – wird geöffnet …"
+msgstr "Oprettet – åbner …"
+
+msgid "Anlegen fehlgeschlagen."
+msgstr "Oprettelsen mislykkedes."
+
+msgid "Netzwerkfehler. Bitte erneut versuchen."
+msgstr "Netværksfejl. Prøv igen."
+
+msgid "Lieber erst ausprobieren?"
+msgstr "Vil du hellere prøve først?"
+
+msgid "InkluDocs ohne Anmeldung testen"
+msgstr "Prøv InkluDocs uden tilmelding"
+
+msgid "Angemeldet als: {name} ({email})"
+msgstr "Logget ind som: {name} ({email})"
+
+msgid "Mindestens 8 Zeichen"
+msgstr "Mindst 8 tegn"
+
+msgid "Passwörter stimmen nicht überein"
+msgstr "Adgangskoderne stemmer ikke overens"
+
+msgid "Passwort geändert!"
+msgstr "Adgangskode ændret!"
+
+msgid "Passwort wurde geändert"
+msgstr "Adgangskoden er blevet ændret"
+
+msgid "Noch keine API-Schlüssel vorhanden."
+msgstr "Ingen API-nøgler endnu."
+
+msgid "Erstellt: {datum}"
+msgstr "Oprettet: {datum}"
+
+msgid "Zuletzt verwendet: {datum}"
+msgstr "Senest brugt: {datum}"
+
+msgid "Bearbeiten"
+msgstr "Rediger"
+
+msgid "Schlüssel bearbeiten: {name}"
+msgstr "Rediger nøgle: {name}"
+
+msgid "Name"
+msgstr "Navn"
+
+msgid "Name speichern"
+msgstr "Gem navn"
+
+msgid "Schlüssel löschen"
+msgstr "Slet nøgle"
+
+msgid "Abbrechen"
+msgstr "Annuller"
+
+msgid "Bearbeitung für {name} geöffnet."
+msgstr "Redigering af {name} åbnet."
+
+msgid "Bearbeitung geschlossen."
+msgstr "Redigering lukket."
+
+msgid "Name geändert zu: {name}"
+msgstr "Navn ændret til: {name}"
+
+msgid "Fehler beim Speichern."
+msgstr "Fejl ved gemning."
+
+msgid "Neuer Schlüssel erstellt"
+msgstr "Ny nøgle oprettet"
+
+msgid "Dieser Schlüssel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern."
+msgstr "Denne nøgle vises kun én gang. Kopiér den nu, og opbevar den sikkert."
+
+msgid "API-Schlüssel"
+msgstr "API-nøgle"
+
+msgid "Schlüssel kopieren"
+msgstr "Kopiér nøgle"
+
+msgid "Zurück zur Übersicht"
+msgstr "Tilbage til oversigten"
+
+msgid "Neuer API-Schlüssel erstellt. Bitte jetzt kopieren."
+msgstr "Ny API-nøgle oprettet. Kopiér den nu."
+
+msgid "Fehler beim Erstellen."
+msgstr "Fejl ved oprettelse."
+
+msgid "Schlüssel-Anzeige geschlossen."
+msgstr "Nøglevisning lukket."
+
+msgid "API-Schlüssel wurde in die Zwischenablage kopiert."
+msgstr "API-nøglen er kopieret til udklipsholderen."
+
+msgid "Schlüssel markiert. Bitte mit Befehl-C kopieren."
+msgstr "Nøglen er markeret. Kopiér den med Kommando-C."
+
+msgid "API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff."
+msgstr "Vil du virkelig slette API-nøglen ”{name}”? Programmer, der bruger denne nøgle, mister straks adgangen."
+
+msgid "Unbenannt"
+msgstr "Unavngivet"
+
+msgid "API-Schlüssel gelöscht."
+msgstr "API-nøgle slettet."
+
+msgid "Fehler beim Löschen."
+msgstr "Fejl ved sletning."
+
+msgid "Dokument löschen?"
+msgstr "Slet dokument?"
+
+msgid "Dokument umbenennen"
+msgstr "Omdøb dokument"
+
+msgid "Neuer Name des Dokuments"
+msgstr "Dokumentets nye navn"
+
+msgid "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen."
+msgstr "Lad feltet stå tomt for at bruge det oprindelige filnavn igen. Navnet indgår også i eksportfilens navn."
+
+msgid "Speichern"
+msgstr "Gem"
+
+msgid "Freigabe ansehen"
+msgstr "Se delt projekt"
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen."
+msgstr "Bekræft venligst din e-mailadresse for at se de delte alternative tekster."
+
+msgid "Bestätigen"
+msgstr "Bekræft"
+
+msgid "Diese E-Mail-Adresse passt nicht zur Einladung."
+msgstr "Denne e-mailadresse passer ikke til invitationen."
+
+msgid "E-Mail-Adresse passt nicht zur Einladung."
+msgstr "E-mailadressen passer ikke til invitationen."
+
+msgid "Bestätigt. Die Freigabe wird geladen."
+msgstr "Bekræftet. Delingen indlæses."
+
+msgid "Weitere PDF hinzufügen"
+msgstr "Tilføj endnu en PDF"
+
+msgid "PDF hinzufügen"
+msgstr "Tilføj PDF"
+
+msgid "Du kannst jederzeit eine weitere PDF anhängen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unverändert."
+msgstr "Du kan til enhver tid vedhæfte endnu en PDF. Den tilføjes som et nyt dokument nedenfor; eksisterende alternative tekster forbliver uændrede."
+
+msgid "Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert."
+msgstr "Vælg et PDF-dokument, eller træk det hertil. Billederne udtrækkes derfra."
+
+msgid "PDF-Datei auswählen"
+msgstr "Vælg PDF-fil"
+
+msgid "Bilder hinzufügen"
+msgstr "Tilføj billeder"
+
+msgid "Bilddateien auswählen"
+msgstr "Vælg billedfiler"
+
+msgid "Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen."
+msgstr "Du kan vælge flere billeder eller trække dem hertil og til enhver tid tilføje flere."
+
+msgid "Webseite hinzufügen"
+msgstr "Tilføj webside"
+
+msgid "Adresse der Webseite"
+msgstr "Websidens adresse"
+
+msgid "z. B. www.beispiel.de oder https://www.beispiel.de – die Bilder dieser Seite werden geladen. Du kannst danach weitere Seiten hinzufügen."
+msgstr "f.eks. www.eksempel.dk eller https://www.eksempel.dk – sidens billeder indlæses. Du kan derefter tilføje flere sider."
+
+msgid "Seite scannen"
+msgstr "Scan side"
+
+msgid "Bitte eine Adresse eingeben."
+msgstr "Indtast venligst en adresse."
+
+msgid "Seite wird gescannt, bitte warten …"
+msgstr "Scanner siden, vent venligst …"
+
+msgid "Die Seite konnte nicht gescannt werden."
+msgstr "Siden kunne ikke scannes."
+
+msgid "{n} Bilder von der Seite geladen."
+msgstr "{n} billeder indlæst fra siden."
+
+msgid "Fehler: {msg}"
+msgstr "Fejl: {msg}"
+
+msgid "Datei {i} von {n} wird hochgeladen..."
+msgstr "Uploader fil {i} af {n}..."
+
+msgid "Wird hochgeladen..."
+msgstr "Uploader..."
+
+msgid "{name} wird hochgeladen"
+msgstr "Uploader {name}"
+
+msgid "Upload fehlgeschlagen"
+msgstr "Upload mislykkedes"
+
+msgid "Fehler beim Upload: {msg}"
+msgstr "Fejl ved upload: {msg}"
+
+msgid "PDF hinzugefuegt als Dokument {d}. {a} neue Bilder. Insgesamt {gesamt} Bilder im Projekt."
+msgstr "PDF tilføjet som dokument {d}. {a} nye billeder. I alt {gesamt} billeder i projektet."
+
+msgid "{n} Bilder im Projekt."
+msgstr "{n} billeder i projektet."
+
+msgid "Netzwerkfehler beim Upload."
+msgstr "Netværksfejl under upload."
+
+msgid "Alt-Texte werden generiert..."
+msgstr "Genererer alternative tekster..."
+
+msgid "Neu"
+msgstr "Nyt"
+
+msgid "Fertig"
+msgstr "Færdig"
+
+msgid "Fertig (mit Fehlern)"
+msgstr "Færdig (med fejl)"
+
+msgid "Teilweise verarbeitet"
+msgstr "Delvist behandlet"
+
+msgid "Bereit zur Verarbeitung"
+msgstr "Klar til behandling"
+
+msgid "Extraktion: {m}"
+msgstr "Udtrækning: {m}"
+
+msgid "{done} von {total} Bildern generiert"
+msgstr "{done} af {total} billeder genereret"
+
+msgid "Fortschritt: {p} Prozent"
+msgstr "Fremskridt: {p} procent"
+
+msgid "Bild {i} von {n} wird verarbeitet."
+msgstr "Behandler billede {i} af {n}."
+
+msgid "Alle Alt-Texte generieren"
+msgstr "Generér alle alternative tekster"
+
+msgid "Zur Prüfung freigeben"
+msgstr "Del til gennemsyn"
+
+msgid "Kunde zur Prüfung einladen"
+msgstr "Invitér kunden til gennemsyn"
+
+msgid "Pflichtfeld ist gekennzeichnet."
+msgstr "Obligatorisk felt er markeret."
+
+msgid "Name des Kunden (optional)"
+msgstr "Kundens navn (valgfrit)"
+
+msgid "E-Mail-Adresse des Kunden (Pflichtfeld)"
+msgstr "Kundens e-mailadresse (obligatorisk)"
+
+msgid "Persönliche Nachricht (optional)"
+msgstr "Personlig besked (valgfrit)"
+
+msgid "Die Nachricht wird nur bei „Einladung per E-Mail senden\" mitgeschickt."
+msgstr "Beskeden sendes kun med ved ”Send invitation via e-mail”."
+
+msgid "Einladung per E-Mail senden"
+msgstr "Send invitation via e-mail"
+
+msgid "Nur Link erstellen"
+msgstr "Opret kun link"
+
+msgid "Einladung gesendet"
+msgstr "Invitation sendt"
+
+msgid "Einladungslink"
+msgstr "Invitationslink"
+
+msgid "Link kopieren"
+msgstr "Kopiér link"
+
+msgid "Zurück zum Projekt"
+msgstr "Tilbage til projektet"
+
+msgid "Prüfung abschließen"
+msgstr "Afslut gennemsyn"
+
+msgid "Möchten Sie dem Ersteller noch etwas mitteilen? (optional)"
+msgstr "Vil du meddele forfatteren noget mere? (valgfrit)"
+
+msgid "Abschließen &amp; senden"
+msgstr "Afslut &amp; send"
+
+msgid "Exportieren"
+msgstr "Eksportér"
+
+msgid "Export-Optionen"
+msgstr "Eksportindstillinger"
+
+msgid "Dateiname (optional)"
+msgstr "Filnavn (valgfrit)"
+
+msgid "Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt."
+msgstr "Lad feltet stå tomt for at bruge standardnavnet. Filendelsen tilføjes automatisk."
+
+msgid "Als Excel"
+msgstr "Som Excel"
+
+msgid "Als JSON"
+msgstr "Som JSON"
+
+msgid "Als CSV"
+msgstr "Som CSV"
+
+msgid "Als PDF (Beta)"
+msgstr "Som PDF (beta)"
+
+msgid "KI-Kontext aus dem Dokument verwenden"
+msgstr "Brug AI-kontekst fra dokumentet"
+
+msgid "Bilder ({n})"
+msgstr "Billeder ({n})"
+
+msgid "Alle Alt-Texte wurden generiert."
+msgstr "Alle alternative tekster er genereret."
+
+msgid "Fehler bei der Verarbeitung."
+msgstr "Fejl under behandlingen."
+
+msgid "Was exportieren?"
+msgstr "Hvad skal eksporteres?"
+
+msgid "Alle Dokumente (eine ZIP-Datei)"
+msgstr "Alle dokumenter (én ZIP-fil)"
+
+msgid "Dokument {n}: {name}"
+msgstr "Dokument {n}: {name}"
+
+msgid "dieses Dokument"
+msgstr "dette dokument"
+
+msgid "Möchtest du das Dokument „{name}\" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette dokumentet ”{name}” med 1 billede? Dette kan ikke fortrydes."
+
+msgid "Möchtest du das Dokument „{name}\" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette dokumentet ”{name}” med {n} billeder? Dette kan ikke fortrydes."
+
+msgid "Netzwerkfehler beim Umbenennen."
+msgstr "Netværksfejl under omdøbning."
+
+msgid "Dokument umbenannt."
+msgstr "Dokument omdøbt."
+
+msgid "Netzwerkfehler beim Löschen."
+msgstr "Netværksfejl under sletning."
+
+msgid "Dokument gelöscht."
+msgstr "Dokument slettet."
+
+msgid "Sprachausgabe wird in diesem Browser nicht unterstützt."
+msgstr "Oplæsning understøttes ikke i denne browser."
+
+msgid "Anhören"
+msgstr "Lyt"
+
+msgid "Stopp"
+msgstr "Stop"
+
+msgid "Kein Text zum Vorlesen vorhanden."
+msgstr "Ingen tekst at læse op."
+
+msgid "Wird vorgelesen."
+msgstr "Læser op."
+
+msgid "Freigegeben"
+msgstr "Godkendt"
+
+msgid "Änderung gewünscht"
+msgstr "Ændring ønsket"
+
+msgid "Status gesetzt: {s}"
+msgstr "Status sat: {s}"
+
+msgid "Anmerkung gespeichert."
+msgstr "Bemærkning gemt."
+
+msgid "Anmerkung entfernt."
+msgstr "Bemærkning fjernet."
+
+msgid "Anmerkung bearbeiten"
+msgstr "Rediger bemærkning"
+
+msgid "Anmerkung hinzufügen"
+msgstr "Tilføj bemærkning"
+
+msgid "Keine Anmerkung vorhanden."
+msgstr "Ingen bemærkning."
+
+msgid "Bitte eine gültige E-Mail-Adresse eingeben."
+msgstr "Indtast venligst en gyldig e-mailadresse."
+
+msgid "Einladung wird gesendet …"
+msgstr "Sender invitation …"
+
+msgid "Fehler beim Erstellen der Freigabe."
+msgstr "Fejl ved oprettelse af delingen."
+
+msgid "Die Einladung wurde an {email} gesendet."
+msgstr "Invitationen er sendt til {email}."
+
+msgid "Einladung an {email} gesendet."
+msgstr "Invitation sendt til {email}."
+
+msgid "Freigabe erstellt"
+msgstr "Deling oprettet"
+
+msgid "Die E-Mail konnte nicht versendet werden. Bitte kopiere den Einladungslink und sende ihn selbst an {email}."
+msgstr "E-mailen kunne ikke sendes. Kopiér invitationslinket, og send det selv til {email}."
+
+msgid "E-Mail-Versand nicht möglich, bitte Link kopieren."
+msgstr "E-mail kunne ikke sendes, kopiér venligst linket."
+
+msgid "Netzwerkfehler."
+msgstr "Netværksfejl."
+
+msgid "Link wird erstellt …"
+msgstr "Opretter link …"
+
+msgid "Link erstellt"
+msgstr "Link oprettet"
+
+msgid "Sie können diesen Einladungslink jetzt selbst an {email} verschicken. Der Gast muss beim Öffnen genau diese E-Mail-Adresse bestätigen."
+msgstr "Du kan nu selv sende dette invitationslink til {email}. Gæsten skal bekræfte netop denne e-mailadresse ved åbning."
+
+msgid "Einladungslink erstellt."
+msgstr "Invitationslink oprettet."
+
+msgid "Link kopiert."
+msgstr "Link kopieret."
+
+msgid "Link in die Zwischenablage kopiert."
+msgstr "Linket er kopieret til udklipsholderen."
+
+msgid "Kopieren nicht möglich – der Link oben ist markierbar."
+msgstr "Kopiering ikke mulig – linket ovenfor kan markeres."
+
+msgid "Wird gesendet…"
+msgstr "Sender…"
+
+msgid "Prüfung wird gesendet …"
+msgstr "Sender gennemsyn …"
+
+msgid "Fehler beim Abschließen. Bitte erneut versuchen."
+msgstr "Fejl ved afslutning. Prøv igen."
+
+msgid "Vielen Dank!"
+msgstr "Mange tak!"
+
+msgid "Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen."
+msgstr "Dit gennemsyn er sendt til forfatteren. Du kan lukke dette vindue — eller til enhver tid vende tilbage via dit link og foretage ændringer."
+
+msgid "Prüfung abgeschlossen und gesendet."
+msgstr "Gennemsyn afsluttet og sendt."
+
+msgid "Umschalten des KI-Kontexts fehlgeschlagen."
+msgstr "Skift af AI-kontekst mislykkedes."
+
+msgid "KI-Kontext eingeschaltet. Neue Generierungen nutzen den Dokument-Kontext."
+msgstr "AI-kontekst slået til. Nye genereringer bruger dokumentets kontekst."
+
+msgid "KI-Kontext ausgeschaltet. Neue Generierungen ohne Kontext."
+msgstr "AI-kontekst slået fra. Nye genereringer uden kontekst."
+
+msgid "Netzwerkfehler beim Umschalten des KI-Kontexts."
+msgstr "Netværksfejl ved skift af AI-kontekst."
+
+msgid "Keine Bilder gefunden."
+msgstr "Ingen billeder fundet."
+
+msgid "Bild {n}, Seite {p}"
+msgstr "Billede {n}, side {p}"
+
+msgid "Bild {n}"
+msgstr "Billede {n}"
+
+msgid "Konfidenz: {k}"
+msgstr "Konfidens: {k}"
+
+msgid "mit Kontext"
+msgstr "med kontekst"
+
+msgid "ohne Kontext"
+msgstr "uden kontekst"
+
+msgid "Prüfstatus: {s}"
+msgstr "Gennemsynsstatus: {s}"
+
+msgid "Nachbessern"
+msgstr "Skal forbedres"
+
+msgid "Ausstehend"
+msgstr "Afventer"
+
+msgid "— mit Anmerkung"
+msgstr "— med bemærkning"
+
+msgid "Wird analysiert..."
+msgstr "Analyserer..."
+
+msgid "Anmerkung des Kunden anzeigen"
+msgstr "Vis kundens bemærkning"
+
+msgid "Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren\" klicken, um es erneut zu versuchen."
+msgstr "Der opstod en fejl under genereringen. Klik på ”Generér” for at prøve igen."
+
+msgid "Extrahiertes Bild"
+msgstr "Udtrukket billede"
+
+msgid "von Seite {p}"
+msgstr "fra side {p}"
+
+msgid "Alt-Text"
+msgstr "Alternativ tekst"
+
+msgid "Gespeichert"
+msgstr "Gemt"
+
+msgid "Alt-Text wird generiert..."
+msgstr "Genererer alternativ tekst..."
+
+msgid "Noch kein Alt-Text - hier eingeben oder generieren lassen"
+msgstr "Ingen alternativ tekst endnu - skriv den her, eller lad den generere"
+
+msgid "Alt-Text bewerten:"
+msgstr "Bedøm alternativ tekst:"
+
+msgid "Alt-Text gut"
+msgstr "Alternativ tekst god"
+
+msgid "Alt-Text schlecht"
+msgstr "Alternativ tekst dårlig"
+
+msgid "Langbeschreibung"
+msgstr "Lang beskrivelse"
+
+msgid "Langbeschreibung bewerten:"
+msgstr "Bedøm lang beskrivelse:"
+
+msgid "Langbeschreibung gut"
+msgstr "Lang beskrivelse god"
+
+msgid "Langbeschreibung schlecht"
+msgstr "Lang beskrivelse dårlig"
+
+msgid "Status:"
+msgstr "Status:"
+
+msgid "Noch nicht geprüft"
+msgstr "Endnu ikke gennemset"
+
+msgid "Freigeben"
+msgstr "Godkend"
+
+msgid "Änderung wünschen"
+msgstr "Ønsk ændring"
+
+msgid "Anmerkung (optional)"
+msgstr "Bemærkning (valgfrit)"
+
+msgid "Anmerkung speichern"
+msgstr "Gem bemærkning"
+
+msgid "Anmerkung löschen"
+msgstr "Slet bemærkning"
+
+msgid "Bildtyp für Generierung"
+msgstr "Billedtype til generering"
+
+msgid "Automatisch"
+msgstr "Automatisk"
+
+msgid "Neu generieren"
+msgstr "Generér igen"
+
+msgid "Generieren"
+msgstr "Generér"
+
+msgid "Langbeschreibung (optional)"
+msgstr "Lang beskrivelse (valgfrit)"
+
+msgid "1 Bild"
+msgstr "1 billede"
+
+msgid "{n} Bilder"
+msgstr "{n} billeder"
+
+msgid "Seitenansicht anzeigen"
+msgstr "Vis sidevisning"
+
+msgid "Seitentext anzeigen"
+msgstr "Vis sidetekst"
+
+msgid "Seite {n}"
+msgstr "Side {n}"
+
+msgid "Bild"
+msgstr "billede"
+
+msgid "Bilder"
+msgstr "billeder"
+
+msgid "– Dokument „{name}\""
+msgstr "– dokument ”{name}”"
+
+msgid "Danke!"
+msgstr "Tak!"
+
+msgid "Danke – wird geprüft"
+msgstr "Tak – bliver gennemgået"
+
+msgid "Feedback: {l} als gut bewertet"
+msgstr "Feedback: {l} vurderet som god"
+
+msgid "Feedback: {l} als verbesserungswürdig bewertet"
+msgstr "Feedback: {l} vurderet som til forbedring"
+
+msgid "Generiere neu..."
+msgstr "Genererer igen..."
+
+msgid "Generiere..."
+msgstr "Genererer..."
+
+msgid "Alt-Text wird neu generiert"
+msgstr "Genererer alternativ tekst igen"
+
+msgid "Alt-Text wird generiert"
+msgstr "Genererer alternativ tekst"
+
+msgid "Alt-Text wurde neu generiert"
+msgstr "Den alternative tekst blev genereret igen"
+
+msgid "Alt-Text wurde generiert"
+msgstr "Den alternative tekst blev genereret"
+
+msgid "Neu generiert"
+msgstr "Genereret igen"
+
+msgid "Generiert"
+msgstr "Genereret"
+
+msgid "Fehler bei der Neugenerierung"
+msgstr "Fejl under den nye generering"
+
+msgid "Fehler bei der Generierung"
+msgstr "Fejl under genereringen"
+
+msgid "Verbindungsfehler"
+msgstr "Forbindelsesfejl"
+
+msgid "Langbeschreibung wird generiert"
+msgstr "Genererer lang beskrivelse"
+
+msgid "Langbeschreibung generiert"
+msgstr "Lang beskrivelse genereret"
+
+msgid "Langbeschreibung wurde generiert"
+msgstr "Den lange beskrivelse blev genereret"
+
+msgid "Keine Langbeschreibung verfügbar"
+msgstr "Ingen lang beskrivelse tilgængelig"
+
+msgid "Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt."
+msgstr "Dagsgrænsen er nået. Grænsen nulstilles ved midnat."
+
+msgid "Tageslimit erreicht ({n} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt."
+msgstr "Dagsgrænsen er nået ({n} billeder pr. dag). Grænsen nulstilles ved midnat (UTC)."
+
+msgid "Wird gestartet..."
+msgstr "Starter..."
+
+msgid "Alt-Text-Generierung wird gestartet."
+msgstr "Genereringen af alternative tekster starter."
+
+msgid "Wird exportiert..."
+msgstr "Eksporterer..."
+
+msgid "{f} wird exportiert..."
+msgstr "Eksporterer {f}..."
+
+msgid "{name} wurde heruntergeladen."
+msgstr "{name} er downloadet."
+
+msgid "Fehler beim Export."
+msgstr "Fejl ved eksport."
+
+msgid "Verbindungsfehler."
+msgstr "Forbindelsesfejl."
+
+msgid "Export-Optionen geöffnet."
+msgstr "Eksportindstillinger åbnet."
+
+msgid "Export abgebrochen."
+msgstr "Eksport annulleret."
+
+msgid "Tageslimit erreicht"
+msgstr "Dagsgrænsen er nået"
+
+msgid "Noch {n} Bilder heute"
+msgstr "{n} billeder tilbage i dag"
+
+msgid "{u}/{l} Bilder heute"
+msgstr "{u}/{l} billeder i dag"
+
+msgid "Chatbot"
+msgstr "Chatbot"
+
+msgid "Bitte den InkluAgent um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
+msgstr "Bed InkluAgent om hjælp — f.eks. generere en alternativ tekst til et billede, omformulere en eksisterende tekst til letlæseligt sprog eller oversætte den til et andet sprog. Angiv billeder med nummer (f.eks. <em>billede 3</em>, <em>billeder 1-5</em>). Højst 10 billeder pr. forespørgsel."
+
+msgid "Chat-Verlauf"
+msgstr "Chathistorik"
+
+msgid "Nachricht an den InkluAgent"
+msgstr "Besked til InkluAgent"
+
+msgid "z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'"
+msgstr "f.eks. 'billede 3 i letlæseligt sprog' eller 'generér alternativ tekst til billede 5'"
+
+msgid "Enter sendet, Shift+Enter macht einen Zeilenumbruch. Maximal 5000 Zeichen."
+msgstr "Enter sender, Shift+Enter laver et linjeskift. Højst 5000 tegn."
+
+msgid "Senden"
+msgstr "Send"
+
+msgid "Verlauf konnte nicht geladen werden."
+msgstr "Historikken kunne ikke indlæses."
+
+msgid "Fehler beim Laden des Verlaufs."
+msgstr "Fejl ved indlæsning af historikken."
+
+msgid "Du"
+msgstr "Du"
+
+msgid "Bitte eine Nachricht eingeben."
+msgstr "Indtast venligst en besked."
+
+msgid "Nachricht ist zu lang (max. 5000 Zeichen)."
+msgstr "Beskeden er for lang (højst 5000 tegn)."
+
+msgid "InkluAgent denkt nach..."
+msgstr "InkluAgent tænker..."
+
+msgid "(leere Antwort)"
+msgstr "(tomt svar)"
+
+msgid "InkluAgent hat 1 Alt-Text aktualisiert."
+msgstr "InkluAgent har opdateret 1 alternativ tekst."
+
+msgid "InkluAgent hat {n} Alt-Texte aktualisiert."
+msgstr "InkluAgent har opdateret {n} alternative tekster."
+
+msgid "Link ungültig oder abgelaufen"
+msgstr "Linket er ugyldigt eller udløbet"
+
+msgid "Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
+msgstr "Denne deling er ikke (længere) gyldig. Kontakt venligst den person, der har sendt dig linket."
+
+msgid "Registrierung"
+msgstr "Registrering"
+
+msgid "Neues Konto erstellen"
+msgstr "Opret en ny konto"
+
+msgid "Passwort (mind. 8 Zeichen)"
+msgstr "Adgangskode (mindst 8 tegn)"
+
+msgid "Passwort wiederholen"
+msgstr "Gentag adgangskode"
+
+msgid "Ich akzeptiere die <a href=\"/nutzungsbedingungen\" target=\"_blank\">Nutzungsbedingungen</a> und die <a href=\"/datenschutz\" target=\"_blank\">Datenschutzerklärung</a>."
+msgstr "Jeg accepterer <a href=\"/nutzungsbedingungen\" target=\"_blank\">brugsbetingelserne</a> og <a href=\"/datenschutz\" target=\"_blank\">privatlivspolitikken</a>."
+
+msgid "Bereits ein Konto? Anmelden"
+msgstr "Har du allerede en konto? Log ind"
+
+msgid "Bitte akzeptieren Sie die Nutzungsbedingungen und Datenschutzerklärung."
+msgstr "Accepter venligst brugsbetingelserne og privatlivspolitikken."
+
+msgid "Passwort muss mindestens 8 Zeichen lang sein."
+msgstr "Adgangskoden skal være på mindst 8 tegn."
+
+msgid "Passwörter stimmen nicht überein."
+msgstr "Adgangskoderne stemmer ikke overens."
+
+msgid "Fast geschafft!"
+msgstr "Næsten færdig!"
+
+msgid "Wir haben eine Bestätigungsmail an {email} gesendet."
+msgstr "Vi har sendt en bekræftelsesmail til {email}."
+
+msgid "Bitte klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren."
+msgstr "Klik på linket i e-mailen for at aktivere din konto."
+
+msgid "Keine E-Mail erhalten? Prüfen Sie Ihren Spam-Ordner oder"
+msgstr "Ingen e-mail modtaget? Tjek din spammappe, eller"
+
+msgid "fordern Sie einen neuen Link an"
+msgstr "anmod om et nyt link"
+
+msgid "Zur Anmeldung"
+msgstr "Gå til login"
+
+msgid "Fehler – bitte erneut versuchen"
+msgstr "Fejl – prøv igen"
+
+msgid "Registrierung fehlgeschlagen."
+msgstr "Registreringen mislykkedes."
+
+msgid "Passwort vergessen"
+msgstr "Glemt adgangskode"
+
+msgid "Passwort zurücksetzen"
+msgstr "Nulstil adgangskode"
+
+msgid "Reset-Link anfordern"
+msgstr "Anmod om nulstillingslink"
+
+msgid "Reset-Link (bitte kopieren und im Browser öffnen):"
+msgstr "Nulstillingslink (kopiér det, og åbn det i browseren):"
+
+msgid "Zurück zur Anmeldung"
+msgstr "Tilbage til login"
+
+msgid "Bitte E-Mail-Adresse eingeben."
+msgstr "Indtast venligst en e-mailadresse."
+
+msgid "Reset-Link wurde erstellt."
+msgstr "Nulstillingslink oprettet."
+
+msgid "Falls ein Konto existiert, wurde ein Reset-Link erstellt."
+msgstr "Hvis der findes en konto, er der oprettet et nulstillingslink."
+
+msgid "Fehler aufgetreten."
+msgstr "Der opstod en fejl."
+
+msgid "Neues Passwort setzen"
+msgstr "Angiv en ny adgangskode"
+
+msgid "Passwort setzen"
+msgstr "Angiv adgangskode"
+
+msgid "Ungültiger Reset-Link. Bitte fordern Sie einen neuen an."
+msgstr "Ugyldigt nulstillingslink. Anmod venligst om et nyt."
+
+msgid "Passwort wurde zurückgesetzt. Sie werden weitergeleitet..."
+msgstr "Adgangskoden er nulstillet. Du bliver viderestillet..."
+
+msgid "Reset fehlgeschlagen."
+msgstr "Nulstilling mislykkedes."
+
+msgid "Vorhandene Benutzer"
+msgstr "Eksisterende brugere"
+
+msgid "Wird geladen …"
+msgstr "Indlæser …"
+
+msgid "Neuen Benutzer anlegen"
+msgstr "Opret ny bruger"
+
+msgid "E-Mail"
+msgstr "E-mail"
+
+msgid "Anlegen"
+msgstr "Opret"
+
+msgid "Administratoren"
+msgstr "Administratorer"
+
+msgid "Admin hinzufügen"
+msgstr "Tilføj administrator"
+
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst oben „Neuen Benutzer anlegen“)."
+msgstr "Personen skal allerede have en konto (brug ellers først ”Opret ny bruger” ovenfor)."
+
+msgid "E-Mail des bestehenden Kontos"
+msgstr "E-mail for den eksisterende konto"
+
+msgid "Rechte-Stufe"
+msgstr "Rettighedsniveau"
+
+msgid "Voll-Admin – alle Rechte"
+msgstr "Fuld administrator – alle rettigheder"
+
+msgid "Nur-Einsicht – sieht Nutzer, ändert nichts"
+msgstr "Kun læseadgang – ser brugere, ændrer intet"
+
+msgid "Zum Admin machen"
+msgstr "Gør til administrator"
+
+msgid "Kein Zugriff – diese Seite ist nur für Administratoren."
+msgstr "Ingen adgang – denne side er kun for administratorer."
+
+msgid "Projekte"
+msgstr "projekter"
+
+msgid "Aktiv"
+msgstr "Aktiv"
+
+msgid "Gesperrt"
+msgstr "Spærret"
+
+msgid "Das sind Sie selbst."
+msgstr "Det er dig selv."
+
+msgid "Sperren"
+msgstr "Spær"
+
+msgid "Entsperren"
+msgstr "Fjern spærring"
+
+msgid "Neues Passwort für {email} (mind. 8 Zeichen):"
+msgstr "Ny adgangskode til {email} (mindst 8 tegn):"
+
+msgid "Passwort muss mindestens 8 Zeichen haben."
+msgstr "Adgangskoden skal have mindst 8 tegn."
+
+msgid "Passwort wiederholen:"
+msgstr "Gentag adgangskode:"
+
+msgid "Passwort zurückgesetzt"
+msgstr "Adgangskode nulstillet"
+
+msgid "Passwort wurde zurückgesetzt."
+msgstr "Adgangskoden er nulstillet."
+
+msgid "Fehler beim Zurücksetzen."
+msgstr "Fejl ved nulstilling."
+
+msgid "Benutzer \"{email}\" und ALLE Daten unwiderruflich löschen? (DSGVO-Löschung)"
+msgstr "Vil du uigenkaldeligt slette brugeren \"{email}\" og ALLE data? (GDPR-sletning)"
+
+msgid "Benutzer gelöscht"
+msgstr "Bruger slettet"
+
+msgid "Benutzer erstellt: {name}"
+msgstr "Bruger oprettet: {name}"
+
+msgid "Administratoren konnten nicht geladen werden."
+msgstr "Administratorerne kunne ikke indlæses."
+
+msgid "Nur-Einsicht"
+msgstr "Kun læseadgang"
+
+msgid "Voll-Admin"
+msgstr "Fuld administrator"
+
+msgid "Auf Nur-Einsicht setzen"
+msgstr "Sæt til kun læseadgang"
+
+msgid "Auf Voll-Admin setzen"
+msgstr "Sæt til fuld administrator"
+
+msgid "Admin-Rechte entziehen"
+msgstr "Fjern administratorrettigheder"
+
+msgid "Rechte-Stufe geändert"
+msgstr "Rettighedsniveau ændret"
+
+msgid "Fehler beim Ändern der Rechte-Stufe."
+msgstr "Fejl ved ændring af rettighedsniveau."
+
+msgid "Admin-Rechte von \"{name}\" entziehen? Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "Vil du fjerne administratorrettighederne fra \"{name}\"? Kontoen består som almindelig bruger."
+
+msgid "Admin-Rechte entzogen"
+msgstr "Administratorrettigheder fjernet"
+
+msgid "Fehler beim Entziehen der Rechte."
+msgstr "Fejl ved fjernelse af rettighederne."
+
+msgid "Bitte eine E-Mail eingeben."
+msgstr "Indtast venligst en e-mail."
+
+msgid "Fehler beim Hinzufügen."
+msgstr "Fejl ved tilføjelse."
+
+msgid "Vorhandene Benutzer ({n})"
+msgstr "Eksisterende brugere ({n})"
+
+msgid "Administratoren ({n})"
+msgstr "Administratorer ({n})"
+
+msgid "{n} Benutzer geladen."
+msgstr "{n} brugere indlæst."
+
+msgid "{n} Administratoren geladen."
+msgstr "{n} administratorer indlæst."
