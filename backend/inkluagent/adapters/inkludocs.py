@@ -348,7 +348,8 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
     conn = get_db()
     try:
         img = conn.execute(
-            "SELECT i.* FROM images i JOIN projects p ON i.project_id = p.id "
+            "SELECT i.*, p.alt_language AS alt_language FROM images i "
+            "JOIN projects p ON i.project_id = p.id "
             "WHERE i.id = ? AND i.project_id = ? AND p.user_id = ?",
             (image_id, project_id, user_id),
         ).fetchone()
@@ -367,6 +368,7 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
         img["height"] or 0,
         img["original_alt"] or "",
         True,  # force_regenerate
+        language=(img["alt_language"] or "de"),  # Projekt-Ausgabesprache (03.07.2026)
     )
 
     conn = get_db()

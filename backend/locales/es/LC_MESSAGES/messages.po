@@ -1601,3 +1601,19 @@ msgstr "{n} usuarios cargados."
 #: register/forgot/reset/benutzer (03.07.2026)
 msgid "{n} Administratoren geladen."
 msgstr "{n} administradores cargados."
+
+#: Ausgabesprache (03.07.2026)
+msgid "Sprache der Alt-Texte"
+msgstr "Idioma de los textos alternativos"
+
+#: Ausgabesprache (03.07.2026)
+msgid "Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird."
+msgstr "Idioma de los textos alternativos cambiado a {s}. Se aplica a todo lo que se genere a partir de ahora."
+
+#: Ausgabesprache (03.07.2026)
+msgid "Umstellen der Alt-Text-Sprache fehlgeschlagen."
+msgstr "Error al cambiar el idioma de los textos alternativos."
+
+#: Ausgabesprache (03.07.2026)
+msgid "Netzwerkfehler beim Umstellen der Sprache."
+msgstr "Error de red al cambiar el idioma."

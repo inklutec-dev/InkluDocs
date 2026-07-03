@@ -826,7 +826,8 @@ def _call_ollama(image_path: str, prompt: str) -> dict:
 
 def generate_alt_text(image_path: str, context: str = "", image_type: str = None,
                       width: int = 0, height: int = 0, original_alt: str = "",
-                      force_regenerate: bool = False, temperature: float = 0.0) -> dict:
+                      force_regenerate: bool = False, temperature: float = 0.0,
+                      language: str = "de") -> dict:
     """Front-Door — Cache-Check + Routing zur konfigurierten Pipeline-Version.
 
     T5 (03.05.2026, Phase A): explizites Routing v3_7|v4 ueber PIPELINE_VERSION env.
@@ -841,7 +842,7 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
     from cache import build_cache_key, get_cached, set_cached
 
     content_hash = _get_image_hash(image_path)
-    cache_key = build_cache_key(content_hash, image_type, None, PIPELINE_VERSION)
+    cache_key = build_cache_key(content_hash, image_type, None, PIPELINE_VERSION, language=language)
 
     if not force_regenerate:
         cached = get_cached(cache_key)
@@ -859,8 +860,11 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
             height=height,
             original_alt=original_alt,
             temperature=temperature,
+            language=language,
         )
     else:
+        # Hinweis Ausgabesprache: der v3.7-Mistral-Fallback kennt keinen
+        # language-Parameter und liefert immer Deutsch (bewusst so belassen).
         from pipelines.v3_7 import generate_alt_text_v3_7
         result = generate_alt_text_v3_7(image_path, context, image_type, width, height, original_alt)
 
@@ -1265,9 +1269,11 @@ def _apply_postfilter(result: dict, image_hash: str = "") -> dict:
 
 
 def generate_alt_text_for_image(image_path: str, context_text: str = "", image_type: str = None,
-                                width: int = 0, height: int = 0, original_alt: str = "") -> dict:
+                                width: int = 0, height: int = 0, original_alt: str = "",
+                                language: str = "de") -> dict:
     """Generate alt-text for a standalone image. Uses the same dual-model pipeline.
     v2.2: Passes through width/height/original_alt for thumbnail/improvement modes.
     """
     return generate_alt_text(image_path, context=context_text, image_type=image_type,
-                             width=width, height=height, original_alt=original_alt)
+                             width=width, height=height, original_alt=original_alt,
+                             language=language)

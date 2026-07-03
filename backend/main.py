@@ -1038,6 +1038,35 @@ async def set_context_setting(project_id: int, request: Request, user: dict = De
     return {"ok": True, "use_context": bool(use_ctx)}
 
 
+ALT_TEXT_LANGUAGES = ("de", "en", "da", "fr", "es")
+
+
+@app.post("/api/projects/{project_id}/language-setting")
+async def set_language_setting(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Setzt die Ausgabesprache der Alt-Texte (03.07.2026, alirodocs).
+
+    Lebende Projekt-Einstellung wie use_context: gilt fuer alles, was AB JETZT
+    generiert wird (Sammellauf und Einzel-Neu-Generieren). Gemischte Sprachen
+    im selben Projekt sind gewollt (Steve 03.07.). Unabhaengig von der
+    UI-Sprache (users.language).
+    """
+    data = await request.json()
+    lang = str(data.get("language", "de")).lower()
+    if lang not in ALT_TEXT_LANGUAGES:
+        raise HTTPException(status_code=400, detail="Unbekannte Sprache")
+    conn = get_db()
+    cur = conn.execute(
+        "UPDATE projects SET alt_language = ? WHERE id = ? AND user_id = ?",
+        (lang, project_id, user["id"])
+    )
+    conn.commit()
+    affected = cur.rowcount
+    conn.close()
+    if not affected:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    return {"ok": True, "language": lang}
+
+
 @app.get("/api/tools")
 async def list_tools(user: dict = Depends(get_current_user)):
     """Liefert die im Dashboard angebotenen Werkzeuge (Quelle: tools.py)."""
@@ -2289,13 +2318,17 @@ async def _process_project(project_id: int, user_id: int):
     ).fetchone()[0]
     # PDF-Schalter (pdf_langbeschreibung_enabled): bei PDF + Schalter aus den zweiten KI-Pass
     # (Langbeschreibung) ueberspringen = Kostenersparnis (Karbe 03.06.2026). Bild-Projekte unberuehrt.
-    _proj = conn.execute("SELECT tool, project_type, use_context FROM projects WHERE id = ?", (project_id,)).fetchone()
+    _proj = conn.execute("SELECT tool, project_type, use_context, alt_language FROM projects WHERE id = ?", (project_id,)).fetchone()
     skip_langbeschreibung = bool(_proj and (_proj["tool"] == "pdf" or _proj["project_type"] == "pdf")) and not pdf_langbeschreibung_enabled()
     # KI-Kontext-Schalter (19.06.2026): bei "aus" bekommt die KI keinen Dokument-
     # Kontext (context=""). Default an (Spalte use_context Default 1). Der Vermerk
     # context_mode wird pro Bild gespeichert (nur Anzeige, NIE exportiert).
     use_context = True if (_proj is None or _proj["use_context"] is None) else bool(_proj["use_context"])
     ctx_mode = "mit" if use_context else "ohne"
+    # Ausgabesprache (03.07.2026): Projekt-Einstellung, Default Deutsch.
+    alt_lang = (_proj["alt_language"] if (_proj and _proj["alt_language"]) else "de")
+    if alt_lang not in ALT_TEXT_LANGUAGES:
+        alt_lang = "de"
 
     for img in images:
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
@@ -2313,7 +2346,8 @@ async def _process_project(project_id: int, user_id: int):
             # First pass: general prompt for type detection + alt-text
             result = await asyncio.get_event_loop().run_in_executor(
                 None, generate_alt_text, img["image_path"], effective_context, None,
-                img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE  # force_regenerate=False; leicht lebendigere Standard-Texte
+                img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE,  # force_regenerate=False; leicht lebendigere Standard-Texte
+                alt_lang
             )
 
             # Second pass: if complex type detected, re-generate with specialized prompt
@@ -2328,7 +2362,8 @@ async def _process_project(project_id: int, user_id: int):
             elif is_complex_type(detected_type) and not langbeschreibung:
                 specialized_result = await asyncio.get_event_loop().run_in_executor(
                     None, generate_alt_text, img["image_path"], effective_context, detected_type,
-                    img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE
+                    img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE,
+                    alt_lang
                 )
                 if specialized_result.get("langbeschreibung"):
                     langbeschreibung = specialized_result["langbeschreibung"]
@@ -2499,7 +2534,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
 
     conn = get_db()
     img = conn.execute(
-        """SELECT i.*, p.use_context AS use_context FROM images i
+        """SELECT i.*, p.use_context AS use_context, p.alt_language AS alt_language FROM images i
            JOIN projects p ON i.project_id = p.id
            WHERE i.id = ? AND i.project_id = ? AND p.user_id = ?""",
         (image_id, project_id, user["id"])
@@ -2526,6 +2561,8 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         _use_context = True if img["use_context"] is None else bool(img["use_context"])
         regen_context = img["context_text"] if _use_context else ""
         regen_ctx_mode = "mit" if _use_context else "ohne"
+        # Ausgabesprache: aktuelle Projekt-Einstellung gilt auch fuer Einzel-Neu-Generieren.
+        regen_lang = img["alt_language"] if img["alt_language"] in ALT_TEXT_LANGUAGES else "de"
 
         # T6 (03.05.2026): Cache evictieren BEVOR die Pipeline laeuft. Ein expliziter
         # Re-Generate-Klick soll alle Cache-Varianten dieses Bildes loeschen (auch andere
@@ -2543,7 +2580,8 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
 
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text, img["image_path"], regen_context, effective_type,
-            regen_width, regen_height, regen_original_alt, True, REGENERATE_TEMPERATURE  # force_regenerate=True; Variation beim Einzel-Neu-Generieren
+            regen_width, regen_height, regen_original_alt, True, REGENERATE_TEMPERATURE,  # force_regenerate=True; Variation beim Einzel-Neu-Generieren
+            regen_lang
         )
 
         langbeschreibung = result.get("langbeschreibung", "")
@@ -3211,9 +3249,11 @@ async def api_generate_alt_text(request: Request):
         except Exception:
             api_img_width, api_img_height = 0, 0
 
+        if str(language).lower() not in ALT_TEXT_LANGUAGES:
+            language = "de"
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text_for_image, tmp_path, context_text, image_type,
-            api_img_width, api_img_height, ""
+            api_img_width, api_img_height, "", str(language).lower()
         )
         processing_time_ms = int((time.time() - start_time) * 1000)
         model_used = result.get("model_used", "")

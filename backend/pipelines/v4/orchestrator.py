@@ -58,6 +58,37 @@ from .llm_client import (
 
 log = logging.getLogger(__name__)
 
+# ── Ausgabesprache (03.07.2026, alirodocs) ────────────────────────────────
+# Die Builder-Prompts (Regeln, Few-Shots, Anti-Halluzination) bleiben KOMPLETT
+# deutsch — nur die Ausgabe-Felder wechseln die Sprache. Die Anweisung haengt
+# zentral HIER am fertigen Beschreibungs-Prompt, damit sie automatisch fuer
+# alle heutigen UND kuenftigen Builder gilt (Daten-Familie, Mini, Gesichter).
+_OUTPUT_LANGUAGE_NAMES = {
+    "en": "Englisch (English)",
+    "da": "Dänisch (dansk)",
+    "fr": "Französisch (français)",
+    "es": "Spanisch (español)",
+}
+
+def _language_suffix(language: str) -> str:
+    """Verbindliche Ausgabesprache-Anweisung fuer den Beschreibungs-Prompt.
+
+    Leer fuer Deutsch (Standardverhalten unveraendert) und fuer unbekannte
+    Codes (defensiv: lieber deutsch als kaputt).
+    """
+    name = _OUTPUT_LANGUAGE_NAMES.get((language or "de").lower())
+    if not name:
+        return ""
+    return (
+        "\n\nAUSGABESPRACHE (VERBINDLICH): Formuliere die Felder alt_text und "
+        f"langbeschreibung ausschließlich auf {name} — fließend und idiomatisch, "
+        "keine wörtliche Übersetzung aus dem Deutschen. Alle obigen Regeln "
+        "(Belegbarkeit, Kompaktheit, Zeichenlimits, kein Intro) gelten unverändert. "
+        "Alle übrigen Felder der JSON-Antwort (bildtyp, konfidenz, begruendung usw.) "
+        "bleiben deutsch."
+    )
+
+
 # Bildtypen die einen Inventar-Pass benötigen.
 INVENTAR_PFLICHTIG: frozenset[str] = frozenset({
     'foto', 'illustration', 'diagramm', 'tabelle', 'karte',
@@ -157,6 +188,7 @@ def _run_multipass_pipeline(
     width: int = 0,
     height: int = 0,
     original_alt: str = '',
+    language: str = 'de',
 ) -> dict:
     """v4-Entry-Point. Wird vom pdf_processor.generate_alt_text gerufen wenn
     PIPELINE_VERSION=v4.
@@ -282,6 +314,7 @@ def _run_multipass_pipeline(
             original_alt=original_alt,
             user_hint=user_hint,
         )
+        mini_prompt += _language_suffix(language)
         beschreibung = call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
             prompt=mini_prompt,
@@ -303,6 +336,7 @@ def _run_multipass_pipeline(
             width=width, height=height,
             user_hint=user_hint,
         )
+        besch_prompt += _language_suffix(language)
         beschreibung = call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
             prompt=besch_prompt,
@@ -424,6 +458,7 @@ def generate_alt_text_v4(
     height: int = 0,
     original_alt: str = '',
     temperature: float = 0.0,  # 0 = deterministisch (Default/Bulk); >0 nur beim Einzel-Neu-Generieren
+    language: str = 'de',
 ) -> dict:
     """v4-Eintrittspunkt mit Mode-Dispatcher.
 
@@ -444,6 +479,7 @@ def generate_alt_text_v4(
             height=height,
             original_alt=original_alt,
             temperature=temperature,
+            language=language,
         )
     # Default: Multi-Pass (rueckwaertskompatibel zu Mistral-Setup)
     return _run_multipass_pipeline(
@@ -454,6 +490,7 @@ def generate_alt_text_v4(
         width=width,
         height=height,
         original_alt=original_alt,
+        language=language,
     )
 
 
@@ -527,6 +564,7 @@ def _run_lean_pipeline(
     height: int = 0,
     original_alt: str = '',
     temperature: float = 0.0,
+    language: str = 'de',
 ) -> dict:
     """Lean-Pipeline: 1 Klassifikations-Aufruf + 1 Combo-Hauptaufruf.
 
@@ -625,6 +663,7 @@ def _run_lean_pipeline(
             original_alt=original_alt,
             user_hint=user_hint,
         )
+        mini_prompt += _language_suffix(language)
         beschreibung = call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
             prompt=mini_prompt,
@@ -642,6 +681,7 @@ def _run_lean_pipeline(
             original_alt=original_alt,
             user_hint=user_hint,
         )
+        combo_prompt += _language_suffix(language)
         beschreibung = call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
             prompt=combo_prompt,

@@ -1601,3 +1601,19 @@ msgstr "{n} users loaded."
 #: register/forgot/reset/benutzer (03.07.2026)
 msgid "{n} Administratoren geladen."
 msgstr "{n} administrators loaded."
+
+#: Ausgabesprache (03.07.2026)
+msgid "Sprache der Alt-Texte"
+msgstr "Language of the alt texts"
+
+#: Ausgabesprache (03.07.2026)
+msgid "Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird."
+msgstr "Alt text language switched to {s}. Applies to everything generated from now on."
+
+#: Ausgabesprache (03.07.2026)
+msgid "Umstellen der Alt-Text-Sprache fehlgeschlagen."
+msgstr "Switching the alt text language failed."
+
+#: Ausgabesprache (03.07.2026)
+msgid "Netzwerkfehler beim Umstellen der Sprache."
+msgstr "Network error while switching the language."

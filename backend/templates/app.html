@@ -477,6 +477,14 @@
                             </label>
                         </div>
                     ` : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? `
+                        <div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                            <label for="altLangSelect" style="font-weight:600;">${t('Sprache der Alt-Texte')}</label>
+                            <select id="altLangSelect" onchange="setAltLanguage(${project.id}, this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
+                                ${['de','en','da','fr','es'].map(code => '<option value="' + code + '"' + ((project.alt_language || 'de') === code ? ' selected' : '') + '>' + ({de:'Deutsch',en:'English',da:'Dansk',fr:'Français',es:'Español'})[code] + '</option>').join('')}
+                            </select>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
             ${window.GUEST_MODE ? '' : uploadBlockHtml(project)}
@@ -943,6 +951,24 @@
                 : t('KI-Kontext ausgeschaltet. Neue Generierungen ohne Kontext.'));
         } catch (e) {
             announce(t('Netzwerkfehler beim Umschalten des KI-Kontexts.'));
+        }
+    }
+
+    // Ausgabesprache der Alt-Texte (03.07.2026): lebende Projekt-Einstellung wie
+    // der KI-Kontext-Schalter — gilt fuer alles, was ab jetzt generiert wird.
+    async function setAltLanguage(projectId, lang) {
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/language-setting', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'same-origin',
+                body: JSON.stringify({ language: lang })
+            });
+            if (!res.ok) { announce(t('Umstellen der Alt-Text-Sprache fehlgeschlagen.')); return; }
+            const names = { de: 'Deutsch', en: 'English', da: 'Dansk', fr: 'Français', es: 'Español' };
+            announce(t('Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird.', { s: names[lang] || lang }));
+        } catch (e) {
+            announce(t('Netzwerkfehler beim Umstellen der Sprache.'));
         }
     }
 

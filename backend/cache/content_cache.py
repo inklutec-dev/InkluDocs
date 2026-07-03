@@ -74,14 +74,22 @@ def build_cache_key(
     image_type_override: Optional[str],
     user_hint: Optional[str],
     pipeline_version: str = "v3_7",
+    language: str = "de",
 ) -> str:
-    """Cache-Key zusammenbauen. Reihenfolge: pipeline:content:type:hinthash."""
+    """Cache-Key zusammenbauen. Reihenfolge: pipeline:content:type:hinthash[:lang].
+
+    Ausgabesprache (03.07.2026): fuer language != 'de' wird ein Sprach-Suffix
+    angehaengt. Deutsch bleibt OHNE Suffix, damit alle bestehenden Cache-
+    Eintraege gueltig bleiben (kein kalter Cache nach dem Deploy).
+    """
     parts = [
         pipeline_version,
         content_hash,
         image_type_override or "auto",
         _hash_user_hint(user_hint),
     ]
+    if language and language != "de":
+        parts.append("lang=" + language)
     return ":".join(parts)
 
 
