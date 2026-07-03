@@ -1288,3 +1288,11 @@ msgstr "InkluAgent hat 1 Alt-Text aktualisiert."
 #: templates/app.html (Phase E2, 03.07.2026)
 msgid "InkluAgent hat {n} Alt-Texte aktualisiert."
 msgstr "InkluAgent hat {n} Alt-Texte aktualisiert."
+
+#: main.py Freigabe-404 (03.07.2026)
+msgid "Link ungültig oder abgelaufen"
+msgstr "Link ungültig oder abgelaufen"
+
+#: main.py Freigabe-404 (03.07.2026)
+msgid "Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
+msgstr "Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat."

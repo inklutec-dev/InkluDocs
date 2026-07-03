@@ -40,7 +40,7 @@ from database import (
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
-from i18n import get_templates, detect_language, template_context, SUPPORTED_LANGUAGES
+from i18n import get_templates, detect_language, template_context, get_gettext, SUPPORTED_LANGUAGES
 from typing import Optional  # frueh, da ab get_optional_user in Typannotationen genutzt
 from tools import TOOLS, is_valid_tool_key
 
@@ -3950,13 +3950,16 @@ async def freigabe_page(token: str, request: Request):
     Ungueltiger/abgelaufener/widerrufener Token -> neutraler Hinweis (kein Datenleck).
     Der Datenzugriff ist zusaetzlich durch das E-Mail-Gate geschuetzt."""
     if not sharing.is_valid_share(token):
+        # Viersprachig (03.07.2026): Gaeste haben kein Konto — Sprache kommt aus
+        # Cookie/Accept-Language. Echte Umlaute (vorher ue-Schreibweise sichtbar).
+        lang = resolve_ui_language(request)
+        _ = get_gettext(lang)
         return HTMLResponse(
-            "<!doctype html><html lang='de'><head><meta charset='utf-8'>"
+            f"<!doctype html><html lang='{lang}'><head><meta charset='utf-8'>"
             "<title>InkluDocs</title></head>"
             "<body style='font-family:sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem'>"
-            "<h1>Link ungueltig oder abgelaufen</h1>"
-            "<p>Diese Freigabe ist nicht (mehr) gueltig. Bitte wenden Sie sich an die Person, "
-            "die Ihnen den Link geschickt hat.</p></body></html>",
+            f"<h1>{_('Link ungültig oder abgelaufen')}</h1>"
+            f"<p>{_('Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat.')}</p></body></html>",
             status_code=404,
         )
     # Seit 03.07.2026 dasselbe Jinja2-Template wie /app; GAST-MODUS-Flags kommen

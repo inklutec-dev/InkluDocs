@@ -1285,3 +1285,11 @@ msgstr "InkluAgent actualizó 1 texto alternativo."
 #: templates/app.html (Phase E2, 03.07.2026)
 msgid "InkluAgent hat {n} Alt-Texte aktualisiert."
 msgstr "InkluAgent actualizó {n} textos alternativos."
+
+#: main.py Freigabe-404 (03.07.2026)
+msgid "Link ungültig oder abgelaufen"
+msgstr "Enlace no válido o caducado"
+
+#: main.py Freigabe-404 (03.07.2026)
+msgid "Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
+msgstr "Este enlace compartido no es válido (o ya no lo es). Póngase en contacto con la persona que le envió el enlace."
