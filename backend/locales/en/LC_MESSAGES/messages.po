@@ -1769,3 +1769,55 @@ msgstr "View in the tool:"
 #: E-Mails (03.07.2026)
 msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
 msgstr "InkluDocs: Review finished ({projekt})"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ungültiger Bestätigungslink."
+msgstr "Invalid confirmation link."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+msgstr "This confirmation link is invalid or has expired."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail-Adresse erfolgreich bestätigt!"
+msgstr "Email address successfully confirmed!"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden."
+msgstr "Your account is now active. You can sign in now."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt anmelden"
+msgstr "Sign in now"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail bestätigt"
+msgstr "Email confirmed"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Bitte fordere in den {einstellungen} einen neuen Link an."
+msgstr "Please request a new link in the {einstellungen}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert."
+msgstr "Your email address has been successfully changed to {email}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Du wirst in 3 Sekunden weitergeleitet."
+msgstr "You will be redirected in 3 seconds."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt zur App"
+msgstr "Go to the app now"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Die Registrierung ist derzeit geschlossen."
+msgstr "Registration is currently closed."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}."
+msgstr "InkluDocs is in a closed beta phase. If you would like a test account, please send an email to {mail}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Registrierung geschlossen"
+msgstr "Registration closed"

@@ -1769,3 +1769,55 @@ msgstr "Voir dans l'outil :"
 #: E-Mails (03.07.2026)
 msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
 msgstr "InkluDocs : Vérification terminée ({projekt})"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ungültiger Bestätigungslink."
+msgstr "Lien de confirmation invalide."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+msgstr "Ce lien de confirmation est invalide ou a expiré."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail-Adresse erfolgreich bestätigt!"
+msgstr "Adresse e-mail confirmée avec succès !"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden."
+msgstr "Votre compte est maintenant actif. Vous pouvez vous connecter."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt anmelden"
+msgstr "Se connecter maintenant"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail bestätigt"
+msgstr "E-mail confirmé"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Bitte fordere in den {einstellungen} einen neuen Link an."
+msgstr "Demande un nouveau lien dans les {einstellungen}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert."
+msgstr "Ton adresse e-mail a été changée en {email}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Du wirst in 3 Sekunden weitergeleitet."
+msgstr "Tu seras redirigé dans 3 secondes."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt zur App"
+msgstr "Aller à l'application"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Die Registrierung ist derzeit geschlossen."
+msgstr "Les inscriptions sont actuellement fermées."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}."
+msgstr "InkluDocs est en phase de bêta fermée. Pour obtenir un accès de test, envoie un e-mail à {mail}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Registrierung geschlossen"
+msgstr "Inscription fermée"

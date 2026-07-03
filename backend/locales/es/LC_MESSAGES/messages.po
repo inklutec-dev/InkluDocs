@@ -1769,3 +1769,55 @@ msgstr "Ver en la herramienta:"
 #: E-Mails (03.07.2026)
 msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
 msgstr "InkluDocs: Revisión finalizada ({projekt})"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ungültiger Bestätigungslink."
+msgstr "Enlace de confirmación no válido."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+msgstr "Este enlace de confirmación no es válido o ha caducado."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail-Adresse erfolgreich bestätigt!"
+msgstr "¡Dirección de correo confirmada correctamente!"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden."
+msgstr "Su cuenta ya está activa. Ya puede iniciar sesión."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt anmelden"
+msgstr "Iniciar sesión ahora"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail bestätigt"
+msgstr "Correo confirmado"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Bitte fordere in den {einstellungen} einen neuen Link an."
+msgstr "Solicita un nuevo enlace en los {einstellungen}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert."
+msgstr "Tu dirección de correo se ha cambiado a {email}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Du wirst in 3 Sekunden weitergeleitet."
+msgstr "Serás redirigido en 3 segundos."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt zur App"
+msgstr "Ir a la aplicación"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Die Registrierung ist derzeit geschlossen."
+msgstr "El registro está cerrado actualmente."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}."
+msgstr "InkluDocs está en fase beta cerrada. Si quieres una cuenta de prueba, envía un correo a {mail}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Registrierung geschlossen"
+msgstr "Registro cerrado"

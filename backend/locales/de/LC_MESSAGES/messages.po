@@ -1772,3 +1772,55 @@ msgstr "Im Werkzeug ansehen:"
 #: E-Mails (03.07.2026)
 msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
 msgstr "InkluDocs: Prüfung abgeschlossen ({projekt})"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ungültiger Bestätigungslink."
+msgstr "Ungültiger Bestätigungslink."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+msgstr "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail-Adresse erfolgreich bestätigt!"
+msgstr "E-Mail-Adresse erfolgreich bestätigt!"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden."
+msgstr "Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt anmelden"
+msgstr "Jetzt anmelden"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail bestätigt"
+msgstr "E-Mail bestätigt"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Bitte fordere in den {einstellungen} einen neuen Link an."
+msgstr "Bitte fordere in den {einstellungen} einen neuen Link an."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert."
+msgstr "Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Du wirst in 3 Sekunden weitergeleitet."
+msgstr "Du wirst in 3 Sekunden weitergeleitet."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt zur App"
+msgstr "Jetzt zur App"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Die Registrierung ist derzeit geschlossen."
+msgstr "Die Registrierung ist derzeit geschlossen."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}."
+msgstr "InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Registrierung geschlossen"
+msgstr "Registrierung geschlossen"

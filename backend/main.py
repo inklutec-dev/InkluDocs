@@ -478,26 +478,21 @@ async def logout():
 
 
 @app.get("/api/verify-email")
-async def verify_email_registration(token: str = ""):
+async def verify_email_registration(request: Request, token: str = ""):
     """Verify email address from registration link."""
+    lang = resolve_ui_language(request)
+    _ = get_gettext(lang)
+    zur_anmeldung = f'<p><a href="/">{_("Zur Anmeldung")}</a></p>'
     if not token:
-        return HTMLResponse("""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs</title>
-        <link rel="stylesheet" href="/static/style.css"></head><body>
-        <div class="auth-wrapper"><div class="auth-container" role="main">
-        <h1><span class="brand">Inklu</span>Docs</h1>
-        <p style="color:#dc2626;margin:2rem 0;">Ungueltiger Bestaetigungslink.</p>
-        <p><a href="/">Zur Anmeldung</a></p>
-        </div></div></body></html>""", status_code=400)
+        return _auth_notice_page(lang,
+            f'<p style="color:#dc2626;margin:2rem 0;">{_("Ungültiger Bestätigungslink.")}</p>' + zur_anmeldung,
+            status_code=400)
 
     result = mark_email_verified(token)
     if not result:
-        return HTMLResponse("""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs</title>
-        <link rel="stylesheet" href="/static/style.css"></head><body>
-        <div class="auth-wrapper"><div class="auth-container" role="main">
-        <h1><span class="brand">Inklu</span>Docs</h1>
-        <p style="color:#dc2626;margin:2rem 0;">Dieser Bestaetigungslink ist ungueltig oder abgelaufen.</p>
-        <p><a href="/">Zur Anmeldung</a></p>
-        </div></div></body></html>""", status_code=400)
+        return _auth_notice_page(lang,
+            f'<p style="color:#dc2626;margin:2rem 0;">{_("Dieser Bestätigungslink ist ungültig oder abgelaufen.")}</p>' + zur_anmeldung,
+            status_code=400)
 
     # Notify admin that email was confirmed
     admin_body = f"""<!DOCTYPE html>
@@ -508,14 +503,11 @@ async def verify_email_registration(token: str = ""):
 </body></html>"""
     send_email(NOTIFICATION_EMAIL, "InkluDocs: E-Mail bestaetigt", admin_body, bcc_admin=False)
 
-    return HTMLResponse(f"""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs – E-Mail bestaetigt</title>
-    <link rel="stylesheet" href="/static/style.css"></head><body>
-    <div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail bestaetigt">
-    <h1><span class="brand">Inklu</span>Docs</h1>
-    <p style="color:#16a34a;font-size:1.2rem;margin:2rem 0;font-weight:600;">&#10003; E-Mail-Adresse erfolgreich bestaetigt!</p>
-    <p>Ihr Konto ist jetzt aktiv. Sie koennen sich jetzt anmelden.</p>
-    <p style="margin-top:1.5rem;"><a href="/" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Jetzt anmelden</a></p>
-    </div></div></body></html>""")
+    return _auth_notice_page(lang,
+        f'''<p style="color:#16a34a;font-size:1.2rem;margin:2rem 0;font-weight:600;">&#10003; {_("E-Mail-Adresse erfolgreich bestätigt!")}</p>
+    <p>{_("Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden.")}</p>
+    <p style="margin-top:1.5rem;"><a href="/" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_("Jetzt anmelden")}</a></p>''',
+        title_suffix=_("E-Mail bestätigt"))
 
 
 @app.post("/api/resend-verification")
@@ -610,30 +602,30 @@ async def change_email(request: Request, user: dict = Depends(get_current_user))
 
 
 @app.get("/api/confirm-email")
-async def confirm_email(token: str = ""):
+async def confirm_email(request: Request, token: str = ""):
     """Confirm email change via link from confirmation email."""
+    lang = resolve_ui_language(request)
+    _ = get_gettext(lang)
     if not token:
         raise HTTPException(status_code=400, detail="Token fehlt")
 
     result = confirm_email_change(token)
     if not result:
-        return HTMLResponse("""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs</title>
-<link rel="stylesheet" href="/static/style.css"></head><body>
-<div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail-Bestaetigung fehlgeschlagen">
-<h1><span class="brand">Inklu</span>Docs</h1>
-<p style="margin:2rem 0;color:var(--error,#dc2626);font-weight:600;">Der Bestaetigungslink ist ungueltig oder abgelaufen.</p>
-<p>Bitte fordere in den <a href="/app">Einstellungen</a> einen neuen Link an.</p>
-</div></div></body></html>""", status_code=400)
+        neuer_link = _('Bitte fordere in den {einstellungen} einen neuen Link an.').format(
+            einstellungen=f'<a href="/app">{_("Einstellungen")}</a>')
+        return _auth_notice_page(lang,
+            f'''<p style="margin:2rem 0;color:var(--error,#dc2626);font-weight:600;">{_("Dieser Bestätigungslink ist ungültig oder abgelaufen.")}</p>
+<p>{neuer_link}</p>''',
+            status_code=400)
 
     # Success – show confirmation page and auto-redirect
     db_user = get_user_by_id(result["user_id"])
-    return HTMLResponse(f"""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs</title>
-<link rel="stylesheet" href="/static/style.css"><meta http-equiv="refresh" content="3;url=/app"></head><body>
-<div class="auth-wrapper"><div class="auth-container" role="main" aria-label="E-Mail-Adresse bestaetigt">
-<h1><span class="brand">Inklu</span>Docs</h1>
-<p style="margin:2rem 0;color:var(--success,#16a34a);font-weight:600;">Deine E-Mail-Adresse wurde erfolgreich auf {result['new_email']} geaendert.</p>
-<p>Du wirst in 3 Sekunden weitergeleitet. <a href="/app">Jetzt zur App</a></p>
-</div></div></body></html>""")
+    geaendert = _('Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert.').format(email=result['new_email'])
+    weiter = _('Du wirst in 3 Sekunden weitergeleitet.')
+    return _auth_notice_page(lang,
+        f'''<p style="margin:2rem 0;color:var(--success,#16a34a);font-weight:600;">{geaendert}</p>
+<p>{weiter} <a href="/app">{_("Jetzt zur App")}</a></p>''',
+        head_extra='<meta http-equiv="refresh" content="3;url=/app">')
 
 
 @app.post("/api/change-displayname")
@@ -1095,6 +1087,19 @@ def _reset_mail(lang: str, display_name: str, reset_url: str):
 <p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
 </body></html>"""
     return subject, body
+
+
+def _auth_notice_page(lang: str, inner_html: str, status_code: int = 200,
+                      title_suffix: str = "", head_extra: str = "") -> HTMLResponse:
+    """Kleine Hinweis-Seite im Anmelde-Layout (Bestaetigungsseiten nach
+    Mail-Klick, Registrierung geschlossen). Sprache aus dem Request."""
+    title = "InkluDocs" + ((" – " + title_suffix) if title_suffix else "")
+    return HTMLResponse(f"""<!DOCTYPE html><html lang="{lang}"><head><meta charset="utf-8"><title>{title}</title>
+<link rel="stylesheet" href="/static/style.css">{head_extra}</head><body>
+<div class="auth-wrapper"><div class="auth-container" role="main">
+<h1><span class="brand">Inklu</span>Docs</h1>
+{inner_html}
+</div></div></body></html>""", status_code=status_code)
 
 
 @app.post("/api/projects/{project_id}/language-setting")
@@ -3910,14 +3915,15 @@ async def set_language(lang: str, request: Request):
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     if os.getenv("REGISTRATION_ENABLED", "true").lower() in ("false", "0", "no"):
-        return """<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>InkluDocs - Registrierung geschlossen</title>
-        <link rel="stylesheet" href="/static/style.css"></head><body>
-        <div class="auth-wrapper"><div class="auth-container" role="main" aria-label="Registrierung geschlossen">
-        <h1><span class="brand">Inklu</span>Docs</h1>
-        <p style="margin:2rem 0;font-size:1.1rem;">Die Registrierung ist derzeit geschlossen.</p>
-        <p>InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten moechtest, schreib bitte eine E-Mail an <strong>kontakt@inklutec.de</strong>.</p>
-        <p style="margin-top:2rem;"><a href="/">Zurueck zur Anmeldung</a></p>
-        </div></div></body></html>"""
+        _lang = resolve_ui_language(request)
+        _ = get_gettext(_lang)
+        _beta = _('InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}.').format(
+            mail='<strong>kontakt@inklutec.de</strong>')
+        return _auth_notice_page(_lang,
+            f'''<p style="margin:2rem 0;font-size:1.1rem;">{_("Die Registrierung ist derzeit geschlossen.")}</p>
+        <p>{_beta}</p>
+        <p style="margin-top:2rem;"><a href="/">{_("Zurück zur Anmeldung")}</a></p>''',
+            title_suffix=_("Registrierung geschlossen"))
     # Seit 03.07.2026 Jinja2-Template (i18n); Staging-Titel/-Brand kommen aus dem Template.
     lang = resolve_ui_language(request)
     return templates.TemplateResponse(

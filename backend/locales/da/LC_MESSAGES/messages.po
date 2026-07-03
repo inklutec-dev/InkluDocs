@@ -1460,3 +1460,55 @@ msgstr "Se i værktøjet:"
 #: E-Mails (03.07.2026)
 msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
 msgstr "InkluDocs: Gennemsyn afsluttet ({projekt})"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ungültiger Bestätigungslink."
+msgstr "Ugyldigt bekræftelseslink."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+msgstr "Dette bekræftelseslink er ugyldigt eller udløbet."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail-Adresse erfolgreich bestätigt!"
+msgstr "E-mailadressen er bekræftet!"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden."
+msgstr "Din konto er nu aktiv. Du kan logge ind nu."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt anmelden"
+msgstr "Log ind nu"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "E-Mail bestätigt"
+msgstr "E-mail bekræftet"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Bitte fordere in den {einstellungen} einen neuen Link an."
+msgstr "Anmod om et nyt link under {einstellungen}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert."
+msgstr "Din e-mailadresse er ændret til {email}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Du wirst in 3 Sekunden weitergeleitet."
+msgstr "Du bliver viderestillet om 3 sekunder."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Jetzt zur App"
+msgstr "Gå til appen nu"
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Die Registrierung ist derzeit geschlossen."
+msgstr "Registrering er i øjeblikket lukket."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}."
+msgstr "InkluDocs er i lukket betafase. Hvis du vil have en testadgang, så send en e-mail til {mail}."
+
+#: Bestaetigungsseiten (03.07.2026)
+msgid "Registrierung geschlossen"
+msgstr "Registrering lukket"
