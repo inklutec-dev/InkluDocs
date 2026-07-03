@@ -429,3 +429,859 @@ msgstr "Leave empty to use the original file name again. The name also appears i
 #: templates/app.html (Dokument-Dialoge, Migration 03.07.2026)
 msgid "Speichern"
 msgstr "Save"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Freigabe ansehen"
+msgstr "View shared project"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen."
+msgstr "Please confirm your email address to view the shared alt texts."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bestätigen"
+msgstr "Confirm"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Diese E-Mail-Adresse passt nicht zur Einladung."
+msgstr "This email address does not match the invitation."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "E-Mail-Adresse passt nicht zur Einladung."
+msgstr "Email address does not match the invitation."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bestätigt. Die Freigabe wird geladen."
+msgstr "Confirmed. Loading the shared project."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Weitere PDF hinzufügen"
+msgstr "Add another PDF"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "PDF hinzufügen"
+msgstr "Add PDF"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Du kannst jederzeit eine weitere PDF anhängen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unverändert."
+msgstr "You can attach another PDF at any time. It will be added as a new document below; existing alt texts remain unchanged."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert."
+msgstr "Choose a PDF document or drag it here. Its images will be extracted."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "PDF-Datei auswählen"
+msgstr "Choose PDF file"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bilder hinzufügen"
+msgstr "Add images"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bilddateien auswählen"
+msgstr "Choose image files"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen."
+msgstr "You can select several images or drag them here, and add more at any time."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Webseite hinzufügen"
+msgstr "Add web page"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Adresse der Webseite"
+msgstr "Web page address"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "z. B. www.beispiel.de oder https://www.beispiel.de – die Bilder dieser Seite werden geladen. Du kannst danach weitere Seiten hinzufügen."
+msgstr "e.g. www.example.com or https://www.example.com – the images of this page will be loaded. You can add more pages afterwards."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Seite scannen"
+msgstr "Scan page"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bitte eine Adresse eingeben."
+msgstr "Please enter an address."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Seite wird gescannt, bitte warten …"
+msgstr "Scanning page, please wait …"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Die Seite konnte nicht gescannt werden."
+msgstr "The page could not be scanned."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "{n} Bilder von der Seite geladen."
+msgstr "{n} images loaded from the page."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler: {msg}"
+msgstr "Error: {msg}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Datei {i} von {n} wird hochgeladen..."
+msgstr "Uploading file {i} of {n}..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Wird hochgeladen..."
+msgstr "Uploading..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "{name} wird hochgeladen"
+msgstr "Uploading {name}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Upload fehlgeschlagen"
+msgstr "Upload failed"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler beim Upload: {msg}"
+msgstr "Upload error: {msg}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "PDF hinzugefuegt als Dokument {d}. {a} neue Bilder. Insgesamt {gesamt} Bilder im Projekt."
+msgstr "PDF added as document {d}. {a} new images. {gesamt} images in the project in total."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "{n} Bilder im Projekt."
+msgstr "{n} images in the project."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Netzwerkfehler beim Upload."
+msgstr "Network error during upload."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Texte werden generiert..."
+msgstr "Generating alt texts..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Neu"
+msgstr "New"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fertig"
+msgstr "Done"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fertig (mit Fehlern)"
+msgstr "Done (with errors)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Teilweise verarbeitet"
+msgstr "Partially processed"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bereit zur Verarbeitung"
+msgstr "Ready for processing"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Extraktion: {m}"
+msgstr "Extraction: {m}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "{done} von {total} Bildern generiert"
+msgstr "{done} of {total} images generated"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fortschritt: {p} Prozent"
+msgstr "Progress: {p} percent"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bild {i} von {n} wird verarbeitet."
+msgstr "Processing image {i} of {n}."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alle Alt-Texte generieren"
+msgstr "Generate all alt texts"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Zur Prüfung freigeben"
+msgstr "Share for review"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Kunde zur Prüfung einladen"
+msgstr "Invite client to review"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Pflichtfeld ist gekennzeichnet."
+msgstr "Required field is marked."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Name des Kunden (optional)"
+msgstr "Client name (optional)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "E-Mail-Adresse des Kunden (Pflichtfeld)"
+msgstr "Client email address (required)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Persönliche Nachricht (optional)"
+msgstr "Personal message (optional)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Die Nachricht wird nur bei „Einladung per E-Mail senden\" mitgeschickt."
+msgstr "The message is only included with “Send invitation by email”."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Einladung per E-Mail senden"
+msgstr "Send invitation by email"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Nur Link erstellen"
+msgstr "Create link only"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Einladung gesendet"
+msgstr "Invitation sent"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Einladungslink"
+msgstr "Invitation link"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Link kopieren"
+msgstr "Copy link"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Zurück zum Projekt"
+msgstr "Back to project"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Prüfung abschließen"
+msgstr "Finish review"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Möchten Sie dem Ersteller noch etwas mitteilen? (optional)"
+msgstr "Would you like to tell the author anything else? (optional)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Abschließen &amp; senden"
+msgstr "Finish &amp; send"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Exportieren"
+msgstr "Export"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Export-Optionen"
+msgstr "Export options"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Dateiname (optional)"
+msgstr "File name (optional)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt."
+msgstr "Leave empty to use the default name. The file extension is added automatically."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Als Excel"
+msgstr "As Excel"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Als JSON"
+msgstr "As JSON"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Als CSV"
+msgstr "As CSV"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Als PDF (Beta)"
+msgstr "As PDF (beta)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "KI-Kontext aus dem Dokument verwenden"
+msgstr "Use AI context from the document"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bilder ({n})"
+msgstr "Images ({n})"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alle Alt-Texte wurden generiert."
+msgstr "All alt texts have been generated."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler bei der Verarbeitung."
+msgstr "Error during processing."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Was exportieren?"
+msgstr "What to export?"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alle Dokumente (eine ZIP-Datei)"
+msgstr "All documents (one ZIP file)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Dokument {n}: {name}"
+msgstr "Document {n}: {name}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "dieses Dokument"
+msgstr "this document"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Möchtest du das Dokument „{name}\" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the document “{name}” with 1 image? This cannot be undone."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Möchtest du das Dokument „{name}\" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the document “{name}” with {n} images? This cannot be undone."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Netzwerkfehler beim Umbenennen."
+msgstr "Network error while renaming."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Dokument umbenannt."
+msgstr "Document renamed."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Netzwerkfehler beim Löschen."
+msgstr "Network error while deleting."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Dokument gelöscht."
+msgstr "Document deleted."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Sprachausgabe wird in diesem Browser nicht unterstützt."
+msgstr "Speech output is not supported in this browser."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anhören"
+msgstr "Listen"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Stopp"
+msgstr "Stop"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Kein Text zum Vorlesen vorhanden."
+msgstr "No text available to read aloud."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Wird vorgelesen."
+msgstr "Reading aloud."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Freigegeben"
+msgstr "Approved"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Änderung gewünscht"
+msgstr "Change requested"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Status gesetzt: {s}"
+msgstr "Status set: {s}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anmerkung gespeichert."
+msgstr "Note saved."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anmerkung entfernt."
+msgstr "Note removed."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anmerkung bearbeiten"
+msgstr "Edit note"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anmerkung hinzufügen"
+msgstr "Add note"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Keine Anmerkung vorhanden."
+msgstr "No note available."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bitte eine gültige E-Mail-Adresse eingeben."
+msgstr "Please enter a valid email address."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Einladung wird gesendet …"
+msgstr "Sending invitation …"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler beim Erstellen der Freigabe."
+msgstr "Error creating the share."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Die Einladung wurde an {email} gesendet."
+msgstr "The invitation was sent to {email}."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Einladung an {email} gesendet."
+msgstr "Invitation sent to {email}."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Freigabe erstellt"
+msgstr "Share created"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Die E-Mail konnte nicht versendet werden. Bitte kopiere den Einladungslink und sende ihn selbst an {email}."
+msgstr "The email could not be sent. Please copy the invitation link and send it to {email} yourself."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "E-Mail-Versand nicht möglich, bitte Link kopieren."
+msgstr "Email could not be sent, please copy the link."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Netzwerkfehler."
+msgstr "Network error."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Link wird erstellt …"
+msgstr "Creating link …"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Link erstellt"
+msgstr "Link created"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Sie können diesen Einladungslink jetzt selbst an {email} verschicken. Der Gast muss beim Öffnen genau diese E-Mail-Adresse bestätigen."
+msgstr "You can now send this invitation link to {email} yourself. When opening it, the guest must confirm exactly this email address."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Einladungslink erstellt."
+msgstr "Invitation link created."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Link kopiert."
+msgstr "Link copied."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Link in die Zwischenablage kopiert."
+msgstr "Link copied to the clipboard."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Kopieren nicht möglich – der Link oben ist markierbar."
+msgstr "Copying is not possible – you can select the link above."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Wird gesendet…"
+msgstr "Sending…"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Prüfung wird gesendet …"
+msgstr "Sending review …"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler beim Abschließen. Bitte erneut versuchen."
+msgstr "Error while finishing. Please try again."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Vielen Dank!"
+msgstr "Thank you!"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen."
+msgstr "Your review has been sent to the author. You can close this window — or come back via your link at any time and make changes."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Prüfung abgeschlossen und gesendet."
+msgstr "Review finished and sent."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Umschalten des KI-Kontexts fehlgeschlagen."
+msgstr "Toggling the AI context failed."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "KI-Kontext eingeschaltet. Neue Generierungen nutzen den Dokument-Kontext."
+msgstr "AI context enabled. New generations use the document context."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "KI-Kontext ausgeschaltet. Neue Generierungen ohne Kontext."
+msgstr "AI context disabled. New generations without context."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Netzwerkfehler beim Umschalten des KI-Kontexts."
+msgstr "Network error while toggling the AI context."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Keine Bilder gefunden."
+msgstr "No images found."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bild {n}, Seite {p}"
+msgstr "Image {n}, page {p}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bild {n}"
+msgstr "Image {n}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Konfidenz: {k}"
+msgstr "Confidence: {k}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "mit Kontext"
+msgstr "with context"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "ohne Kontext"
+msgstr "without context"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Prüfstatus: {s}"
+msgstr "Review status: {s}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Nachbessern"
+msgstr "Needs changes"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Ausstehend"
+msgstr "Pending"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "— mit Anmerkung"
+msgstr "— with note"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Wird analysiert..."
+msgstr "Analyzing..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anmerkung des Kunden anzeigen"
+msgstr "Show client's note"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren\" klicken, um es erneut zu versuchen."
+msgstr "An error occurred during generation. Please click “Generate” to try again."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Extrahiertes Bild"
+msgstr "Extracted image"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "von Seite {p}"
+msgstr "from page {p}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text"
+msgstr "Alt text"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Gespeichert"
+msgstr "Saved"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text wird generiert..."
+msgstr "Generating alt text..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Noch kein Alt-Text - hier eingeben oder generieren lassen"
+msgstr "No alt text yet - type it here or have it generated"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text bewerten:"
+msgstr "Rate alt text:"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text gut"
+msgstr "Alt text good"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text schlecht"
+msgstr "Alt text poor"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Langbeschreibung"
+msgstr "Long description"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Langbeschreibung bewerten:"
+msgstr "Rate long description:"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Langbeschreibung gut"
+msgstr "Long description good"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Langbeschreibung schlecht"
+msgstr "Long description poor"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Status:"
+msgstr "Status:"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Noch nicht geprüft"
+msgstr "Not yet reviewed"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Freigeben"
+msgstr "Approve"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Änderung wünschen"
+msgstr "Request change"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anmerkung (optional)"
+msgstr "Note (optional)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anmerkung speichern"
+msgstr "Save note"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Anmerkung löschen"
+msgstr "Delete note"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bildtyp für Generierung"
+msgstr "Image type for generation"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Automatisch"
+msgstr "Automatic"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Neu generieren"
+msgstr "Regenerate"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Generieren"
+msgstr "Generate"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Langbeschreibung (optional)"
+msgstr "Long description (optional)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "1 Bild"
+msgstr "1 image"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "{n} Bilder"
+msgstr "{n} images"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Seitenansicht anzeigen"
+msgstr "Show page view"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Seitentext anzeigen"
+msgstr "Show page text"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Seite {n}"
+msgstr "Page {n}"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bild"
+msgstr "image"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bilder"
+msgstr "images"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "– Dokument „{name}\""
+msgstr "– document “{name}”"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Danke!"
+msgstr "Thank you!"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Danke – wird geprüft"
+msgstr "Thank you – will be reviewed"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Feedback: {l} als gut bewertet"
+msgstr "Feedback: {l} rated as good"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Feedback: {l} als verbesserungswürdig bewertet"
+msgstr "Feedback: {l} rated as needing improvement"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Generiere neu..."
+msgstr "Regenerating..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Generiere..."
+msgstr "Generating..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text wird neu generiert"
+msgstr "Regenerating alt text"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text wird generiert"
+msgstr "Generating alt text"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text wurde neu generiert"
+msgstr "Alt text was regenerated"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text wurde generiert"
+msgstr "Alt text was generated"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Neu generiert"
+msgstr "Regenerated"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Generiert"
+msgstr "Generated"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler bei der Neugenerierung"
+msgstr "Error during regeneration"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler bei der Generierung"
+msgstr "Error during generation"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Verbindungsfehler"
+msgstr "Connection error"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Langbeschreibung wird generiert"
+msgstr "Generating long description"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Langbeschreibung generiert"
+msgstr "Long description generated"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Langbeschreibung wurde generiert"
+msgstr "Long description was generated"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Keine Langbeschreibung verfügbar"
+msgstr "No long description available"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt."
+msgstr "Daily limit reached. The limit resets at midnight."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Tageslimit erreicht ({n} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt."
+msgstr "Daily limit reached ({n} images per day). The limit resets at midnight (UTC)."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Wird gestartet..."
+msgstr "Starting..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Alt-Text-Generierung wird gestartet."
+msgstr "Starting alt text generation."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Wird exportiert..."
+msgstr "Exporting..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "{f} wird exportiert..."
+msgstr "Exporting {f}..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "{name} wurde heruntergeladen."
+msgstr "{name} was downloaded."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler beim Export."
+msgstr "Export error."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Verbindungsfehler."
+msgstr "Connection error."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Export-Optionen geöffnet."
+msgstr "Export options opened."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Export abgebrochen."
+msgstr "Export cancelled."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Tageslimit erreicht"
+msgstr "Daily limit reached"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Noch {n} Bilder heute"
+msgstr "{n} images left today"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "{u}/{l} Bilder heute"
+msgstr "{u}/{l} images today"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Chatbot"
+msgstr "Chatbot"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bitte den InkluAgent um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
+msgstr "Ask the InkluAgent for help — e.g. generate an alt text for an image, rewrite an existing text in easy language, or translate it into another language. Refer to images by number (e.g. <em>image 3</em>, <em>images 1-5</em>). At most 10 images per request."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Chat-Verlauf"
+msgstr "Chat history"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Nachricht an den InkluAgent"
+msgstr "Message to the InkluAgent"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'"
+msgstr "e.g. 'image 3 in easy language' or 'generate alt text for image 5'"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Enter sendet, Shift+Enter macht einen Zeilenumbruch. Maximal 5000 Zeichen."
+msgstr "Enter sends, Shift+Enter adds a line break. At most 5000 characters."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Senden"
+msgstr "Send"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Verlauf konnte nicht geladen werden."
+msgstr "The history could not be loaded."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Fehler beim Laden des Verlaufs."
+msgstr "Error loading the history."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Du"
+msgstr "You"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Bitte eine Nachricht eingeben."
+msgstr "Please enter a message."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "Nachricht ist zu lang (max. 5000 Zeichen)."
+msgstr "Message is too long (max. 5000 characters)."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "InkluAgent denkt nach..."
+msgstr "InkluAgent is thinking..."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "(leere Antwort)"
+msgstr "(empty reply)"
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "InkluAgent hat 1 Alt-Text aktualisiert."
+msgstr "InkluAgent updated 1 alt text."
+
+#: templates/app.html (Phase E2, 03.07.2026)
+msgid "InkluAgent hat {n} Alt-Texte aktualisiert."
+msgstr "InkluAgent updated {n} alt texts."
