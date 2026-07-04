@@ -1249,23 +1249,66 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
     document_id = doc_cursor.lastrowid
     conn.commit()
 
-    # Extract images — eigener Unterordner pro Dokument, damit sich die
-    # PNG-Dateinamen (p1_img1.png, ...) zwischen Dokumenten nicht ueberschreiben.
-    img_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id), f"doc{doc_index}")
-    os.makedirs(img_dir, exist_ok=True)
+    conn.close()
 
+    # ASYNCHRON SEIT 04.07.2026 (Julia-Befund strukturell geloest): Die
+    # Extraktion (fitz/PDFix, Seitenansichten, Seitentext) lief frueher
+    # synchron in diesem Request — bei grossen PDFs laenger als jedes
+    # Proxy-Timeout, der Browser sah "Netzwerkfehler", obwohl der Server
+    # fertig verarbeitete. Jetzt antwortet der Endpunkt sofort mit Status
+    # 'extracting'; die Extraktion laeuft als Hintergrund-Task (Muster
+    # _process_project), und das Frontend pollt GET /api/projects/{id},
+    # bis der Status wechselt. total_images/added_images stehen deshalb
+    # NICHT mehr in dieser Antwort — sie entstehen erst nach der Extraktion.
+    asyncio.create_task(_extract_document(
+        project_id, document_id, doc_index, file_path, user["id"], is_append))
+
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "document_id": document_id,
+        "doc_index": doc_index,
+        "filename": filename,
+        "project_type": "pdf",
+        "appended": is_append,
+        "status": "extracting",
+    }
+
+
+async def _extract_document(project_id: int, document_id: int, doc_index: int,
+                            file_path: str, user_id: int, is_append: bool):
+    """Hintergrund-Extraktion einer hochgeladenen PDF (ausgelagert 04.07.2026).
+
+    Der frueher synchrone Teil von _handle_pdf_upload, unveraendert in der
+    Logik: Bilder extrahieren, images-Zeilen anlegen, Zaehler und Status
+    fortschreiben. fitz/PDFix blockieren -> Executor-Thread, damit der
+    Event-Loop (und damit die ganze App) waehrenddessen bedienbar bleibt.
+
+    Fehlerpfad: documents-Zeile entfernen (das Verschwinden ist das Signal
+    fuer das pollende Frontend) und den Projektstatus zuruecksetzen —
+    'error' beim ersten Dokument, 'extracted' beim Anhaengen (die alten
+    Dokumente sind unberuehrt; frueher blieb das Projekt hier faelschlich
+    auf 'extracting' haengen, weil nur der HTTP-Fehler die Info trug).
+    """
+    img_dir = os.path.join(RESULTS_DIR, str(user_id), str(project_id), f"doc{doc_index}")
+    os.makedirs(img_dir, exist_ok=True)
+    loop = asyncio.get_event_loop()
     try:
-        images = extract_images_from_pdf(file_path, img_dir, project_id)
+        images = await loop.run_in_executor(
+            None, extract_images_from_pdf, file_path, img_dir, project_id)
     except Exception as e:
-        # Nur das Dokument als fehlerhaft markieren; das Projekt darf weiterlaufen,
-        # wenn frueher schon Dokumente erfolgreich extrahiert wurden.
+        print(f"[upload] Extraktion fehlgeschlagen (Projekt {project_id}, Dokument {document_id}): {e}")
+        conn = get_db()
         conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
-        if not is_append:
+        if is_append:
+            conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
+        else:
             conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
         conn.commit()
         conn.close()
-        raise HTTPException(status_code=500, detail=f"PDF-Verarbeitung fehlgeschlagen: {str(e)}")
+        return
 
+    conn = get_db()
     # Naechsten image_index fortlaufen lassen, damit alte Projekte weiter
     # konsistent durchnummeriert bleiben. Das pro-Dokument-Nummer-Feld leistet
     # die Anzeige im Frontend (dort einfach Position innerhalb des Dokuments).
@@ -1318,19 +1361,6 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         )
     conn.commit()
     conn.close()
-
-    return {
-        "ok": True,
-        "project_id": project_id,
-        "document_id": document_id,
-        "doc_index": doc_index,
-        "filename": filename,
-        "total_images": total_imgs,
-        "added_images": len(images),
-        "project_type": "pdf",
-        "extraction_method": extraction_method,
-        "appended": is_append,
-    }
 
 
 async def _handle_image_upload(file_path: str, filename: str, user: dict, content: bytes, ext: str, project_id: int = None) -> dict:
@@ -2359,6 +2389,13 @@ async def generate_alt_texts(project_id: int, user: dict = Depends(get_current_u
     if project["status"] == "processing":
         conn.close()
         raise HTTPException(status_code=409, detail="Verarbeitung laeuft bereits")
+
+    # Async-Upload (04.07.2026): Waehrend der Hintergrund-Extraktion einer PDF
+    # wuerde die Sammel-Generierung nur die bis dahin eingefuegten Bilder
+    # erwischen — deshalb sauber ablehnen, das Frontend pollt ohnehin.
+    if project["status"] == "extracting":
+        conn.close()
+        raise HTTPException(status_code=409, detail="Die PDF wird noch verarbeitet. Bitte warte, bis die Bilder extrahiert sind.")
 
     conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
     conn.commit()

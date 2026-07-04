@@ -275,6 +275,33 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return false;
     }
 
+    // Wartet auf das Ende der Hintergrund-Extraktion eines frisch hochgeladenen
+    // PDF-Dokuments (Async-Upload 04.07.2026). Erfolg = Projektstatus verlaesst
+    // 'extracting' und das Dokument existiert noch; verschwindet das Dokument,
+    // ist die Extraktion serverseitig fehlgeschlagen (dortiger Fehlerpfad
+    // entfernt die documents-Zeile). Kurzzeitige Netz-/Abruffehler werden
+    // ueberstanden statt abgebrochen.
+    async function waitForExtraction(projectId, documentId) {
+        for (let versuch = 0; versuch < 360; versuch++) { // ~15 Minuten Obergrenze
+            await new Promise((resolve) => setTimeout(resolve, 2500));
+            let data = null;
+            try {
+                const res = await fetch(_projectDataUrl(projectId));
+                if (!res.ok) continue;
+                data = await res.json();
+            } catch (_) { continue; }
+            const doc = (data.documents || []).find((d) => d.id === documentId);
+            if (!doc) return { ok: false };
+            const st = (data.project && data.project.status) || '';
+            if (st !== 'extracting') {
+                return { ok: true,
+                         added: doc.total_images || 0,
+                         total: (data.project && data.project.total_images) || 0 };
+            }
+        }
+        return { ok: false, timeout: true };
+    }
+
     // Gemeinsamer Upload-Kern für Datei-Button UND Drag & Drop (eine Logik, keine Doppelung).
     // Erwartet eine FileList/Array von Dateien und die Ziel-Projekt-ID.
     async function uploadFilesToProject(files, projectId) {
@@ -298,6 +325,27 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     announce(t('Fehler beim Upload: {msg}', { msg: data.detail || '' }));
                     return;
                 }
+                if (data.status === 'extracting' && data.document_id) {
+                    // Async-Upload: Der Server hat die PDF angenommen und
+                    // extrahiert im Hintergrund — Status zeigen und pollen.
+                    const wartetext = t('Die PDF wird verarbeitet – Bilder werden extrahiert …');
+                    if (status) status.textContent = wartetext;
+                    announce(wartetext);
+                    const ergebnis = await waitForExtraction(projectId, data.document_id);
+                    if (!ergebnis.ok) {
+                        const meldung = ergebnis.timeout
+                            ? t('Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste.')
+                            : t('Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.');
+                        if (status) status.textContent = meldung;
+                        announce(meldung);
+                        return;
+                    }
+                    if (status) status.textContent = '';
+                    // Zahlen fuer die Abschluss-Ansage aus dem Poll-Ergebnis —
+                    // die Sofort-Antwort des Servers enthaelt sie nicht mehr.
+                    data.total_images = ergebnis.total;
+                    data.added_images = ergebnis.added;
+                }
                 // Stand fortschreiben, damit die Nachpruefung der NAECHSTEN Datei
                 // gegen den frischen Zaehler vergleicht.
                 before = { count: data.total_images || (before ? before.count : 0),
@@ -312,8 +360,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     return;
                 }
                 // Datei ist trotz Verbindungsfehler angekommen — normal weitermachen.
+                // Bei PDFs kann die Hintergrund-Extraktion noch laufen: abwarten,
+                // bevor die naechste Datei startet bzw. neu gerendert wird.
                 if (status) status.textContent = '';
                 announce(t('Der Upload war trotz Verbindungsfehler erfolgreich. Die Datei ist angekommen.'));
+                for (let versuch = 0; versuch < 360; versuch++) {
+                    const zwischenstand = await projectSnapshot(projectId);
+                    if (!zwischenstand || zwischenstand.status !== 'extracting') break;
+                    await new Promise((resolve) => setTimeout(resolve, 2500));
+                }
                 before = await projectSnapshot(projectId);
             }
             if (i === files.length - 1) {

@@ -2077,3 +2077,15 @@ msgstr "La subida se completó a pesar del error de conexión. El archivo ha lle
 #: Upload-Fix Julia-Feedback (04.07.2026)
 msgid "Verbindungsfehler beim Upload. Die Datei ist bisher nicht angekommen. Bitte prüfe deine Internetverbindung und versuche es erneut. Bei sehr großen PDFs kann die Verarbeitung länger dauern – lade die Seite dann in ein bis zwei Minuten neu und prüfe die Dokumentliste. Maximal {mb} MB pro Datei."
 msgstr "Error de conexión durante la subida. El archivo no ha llegado hasta ahora. Comprueba tu conexión a internet e inténtalo de nuevo. Con PDF muy grandes el procesamiento puede tardar más – en ese caso recarga la página en uno o dos minutos y revisa la lista de documentos. Máximo {mb} MB por archivo."
+
+#: Async-Upload (04.07.2026)
+msgid "Die PDF wird verarbeitet – Bilder werden extrahiert …"
+msgstr "El PDF se está procesando – extrayendo imágenes …"
+
+#: Async-Upload (04.07.2026)
+msgid "Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "El procesamiento del PDF ha fallado. Inténtalo de nuevo con el archivo."
+
+#: Async-Upload (04.07.2026)
+msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
+msgstr "El procesamiento está tardando más de lo habitual. Recarga la página más tarde y revisa la lista de documentos."
