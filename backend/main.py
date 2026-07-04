@@ -4064,7 +4064,10 @@ async def nutzungsbedingungen_app_page(request: Request):
 async def app_page(request: Request):
     # Seit 03.07.2026 Jinja2-Template (i18n): Sprach-Aufloesung, window.I18N,
     # Staging-Titel und Cache-Busting kommen aus base_app.html.
-    return _render_protected_template(request, "app.html")
+    # max_upload_mb: Upload-Limit fuer Hinweis/Fehlertext im Upload-Bereich
+    # (eine Quelle, Julia-Feedback 02.07.2026).
+    return _render_protected_template(request, "app.html",
+                                      max_upload_mb=MAX_UPLOAD_SIZE // (1024 * 1024))
 
 
 # ============================================================

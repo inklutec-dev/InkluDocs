@@ -48,6 +48,11 @@
 
 {% block page_script %}
 <script>
+// Upload-Limit vom Server (eine Quelle: MAX_UPLOAD_SIZE in main.py) — fuer
+// Groessen-Hinweis und Fehlertext im Upload-Bereich (Julia-Feedback 02.07.2026).
+window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
+</script>
+<script>
 {% raw %}
     const main = document.getElementById('main');
     const liveRegion = document.getElementById('liveRegion');
@@ -164,9 +169,11 @@
             // wird zu einem eigenen Dokument unten in der Liste.
             const hasExisting = project.total_images > 0;
             const heading = hasExisting ? t('Weitere PDF hinzufügen') : t('PDF hinzufügen');
-            const hint = hasExisting
+            // Julia-Feedback 02.07.2026: maximale Dateigroesse direkt am Upload-Feld.
+            const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
+            const hint = (hasExisting
                 ? t('Du kannst jederzeit eine weitere PDF anhängen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unverändert.')
-                : t('Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.');
+                : t('Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.')) + sizeHint;
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
                 + '<label for="projUpload" class="sr-only">' + t('PDF-Datei auswählen') + '</label>'
                 + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
@@ -177,7 +184,7 @@
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + t('Bilder hinzufügen') + '</h2>'
                 + '<label for="projUpload" class="sr-only">' + t('Bilddateien auswählen') + '</label>'
                 + '<input type="file" id="projUpload" accept=".jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
-                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + t('Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen.') + '</p>'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + t('Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen.') + ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 }) + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'web') {
@@ -235,11 +242,46 @@
         }
     }
 
+    // Liest den aktuellen Projekt-Stand (Bild- und Dokumentzahl) fuer die
+    // Upload-Nachpruefung. Liefert null, wenn das Projekt nicht abrufbar ist.
+    async function projectSnapshot(projectId) {
+        try {
+            const res = await fetch(_projectDataUrl(projectId));
+            if (!res.ok) return null;
+            const data = await res.json();
+            return {
+                count: (data.project && data.project.total_images) || 0,
+                docs: (data.documents || []).length,
+                status: (data.project && data.project.status) || ''
+            };
+        } catch (_) { return null; }
+    }
+
+    // Nachpruefung nach einem Verbindungsfehler beim Upload (Julia-Befund
+    // 02.07.2026): Der Server kann den Upload trotz gekappter Verbindung fertig
+    // verarbeitet haben (z. B. Proxy-Timeout bei grossen PDFs — die Extraktion
+    // laeuft serverseitig weiter). Pollt deshalb bis zu 60 Sekunden, ob Bilder
+    // oder Dokumente dazugekommen sind, statt vorschnell einen Fehler zu melden.
+    async function verifyUploadArrived(projectId, before, status) {
+        if (!before) return false;
+        if (status) status.textContent = t('Verbindung unterbrochen – prüfe, ob die Datei trotzdem angekommen ist …');
+        announce(t('Verbindung unterbrochen – prüfe, ob die Datei trotzdem angekommen ist …'));
+        for (let versuch = 0; versuch < 20; versuch++) {
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+            const snap = await projectSnapshot(projectId);
+            if (snap && (snap.count > before.count || snap.docs > before.docs)) return true;
+            if (snap && snap.status === 'error') return false;
+        }
+        return false;
+    }
+
     // Gemeinsamer Upload-Kern für Datei-Button UND Drag & Drop (eine Logik, keine Doppelung).
     // Erwartet eine FileList/Array von Dateien und die Ziel-Projekt-ID.
     async function uploadFilesToProject(files, projectId) {
         if (!files || files.length === 0) return;
         const status = document.getElementById('projUploadStatus');
+        // Stand VOR dem Upload merken — Grundlage der Nachpruefung im Fehlerfall.
+        let before = await projectSnapshot(projectId);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             if (status) status.textContent = files.length > 1 ? t('Datei {i} von {n} wird hochgeladen...', { i: i + 1, n: files.length }) : t('Wird hochgeladen...');
@@ -247,40 +289,56 @@
             const fd = new FormData();
             fd.append('file', file);
             fd.append('project_id', projectId);
+            let data = null;
             try {
                 const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                const data = await res.json();
+                data = await res.json();
                 if (!res.ok) {
                     if (status) status.textContent = t('Fehler: {msg}', { msg: data.detail || t('Upload fehlgeschlagen') });
                     announce(t('Fehler beim Upload: {msg}', { msg: data.detail || '' }));
                     return;
                 }
-                if (i === files.length - 1) {
-                    // Multi-Datei (08.06.2026): Beim Anhängen einer weiteren PDF auch
-                    // den Doc-Stand mit ansagen, damit Screenreader-Nutzer Bescheid wissen,
-                    // dass ein neues Dokument unten angelegt wurde.
-                    if (data.appended && data.doc_index) {
-                        announce(t('PDF hinzugefuegt als Dokument {d}. {a} neue Bilder. Insgesamt {gesamt} Bilder im Projekt.', { d: data.doc_index, a: data.added_images, gesamt: data.total_images }));
-                    } else {
-                        announce(t('{n} Bilder im Projekt.', { n: data.total_images }));
-                    }
-                    // Fokus beim Append auf das neue Dokument legen (sofern vorhanden),
-                    // sonst weiterhin auf die Bilder-Sammelüberschrift.
-                    await showProject(projectId);
-                    const docHead = data.document_id ? document.getElementById('doc_heading_' + data.document_id) : null;
-                    if (docHead) {
-                        // h2 in summary ist nicht fokussierbar — Fokus auf die summary legen.
-                        const sum = docHead.closest('summary');
-                        if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); }
-                    } else {
-                        const h = document.getElementById('bilderHeading');
-                        if (h) h.focus();
-                    }
-                }
+                // Stand fortschreiben, damit die Nachpruefung der NAECHSTEN Datei
+                // gegen den frischen Zaehler vergleicht.
+                before = { count: data.total_images || (before ? before.count : 0),
+                           docs: (before ? before.docs : 0) + (data.document_id ? 1 : 0),
+                           status: '' };
             } catch (err) {
-                if (status) status.textContent = t('Netzwerkfehler beim Upload.');
-                announce(t('Netzwerkfehler beim Upload.'));
-                return;
+                const angekommen = await verifyUploadArrived(projectId, before, status);
+                if (!angekommen) {
+                    const meldung = t('Verbindungsfehler beim Upload. Die Datei ist bisher nicht angekommen. Bitte prüfe deine Internetverbindung und versuche es erneut. Bei sehr großen PDFs kann die Verarbeitung länger dauern – lade die Seite dann in ein bis zwei Minuten neu und prüfe die Dokumentliste. Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
+                    if (status) status.textContent = meldung;
+                    announce(meldung);
+                    return;
+                }
+                // Datei ist trotz Verbindungsfehler angekommen — normal weitermachen.
+                if (status) status.textContent = '';
+                announce(t('Der Upload war trotz Verbindungsfehler erfolgreich. Die Datei ist angekommen.'));
+                before = await projectSnapshot(projectId);
+            }
+            if (i === files.length - 1) {
+                // Multi-Datei (08.06.2026): Beim Anhängen einer weiteren PDF auch
+                // den Doc-Stand mit ansagen, damit Screenreader-Nutzer Bescheid wissen,
+                // dass ein neues Dokument unten angelegt wurde. Nach einer
+                // Nachpruefungs-Rettung gibt es keine Server-Antwort (data=null) —
+                // die Erfolgs-Ansage kam dann schon aus dem Rettungspfad.
+                if (data && data.appended && data.doc_index) {
+                    announce(t('PDF hinzugefuegt als Dokument {d}. {a} neue Bilder. Insgesamt {gesamt} Bilder im Projekt.', { d: data.doc_index, a: data.added_images, gesamt: data.total_images }));
+                } else if (data) {
+                    announce(t('{n} Bilder im Projekt.', { n: data.total_images }));
+                }
+                // Fokus beim Append auf das neue Dokument legen (sofern vorhanden),
+                // sonst weiterhin auf die Bilder-Sammelüberschrift.
+                await showProject(projectId);
+                const docHead = (data && data.document_id) ? document.getElementById('doc_heading_' + data.document_id) : null;
+                if (docHead) {
+                    // h2 in summary ist nicht fokussierbar — Fokus auf die summary legen.
+                    const sum = docHead.closest('summary');
+                    if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); }
+                } else {
+                    const h = document.getElementById('bilderHeading');
+                    if (h) h.focus();
+                }
             }
         }
     }

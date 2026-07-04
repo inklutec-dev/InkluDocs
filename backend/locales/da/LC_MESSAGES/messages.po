@@ -1752,3 +1752,19 @@ msgstr "Dine {n} gratis analyser for i dag er brugt op. For ubegrænsede billede
 #: Demo-Seiten i18n (04.07.2026)
 msgid "Du hast die {n} kostenlosen Chat-Nachrichten für heute genutzt. Für unbegrenztes Verfeinern: kostenlos registrieren."
 msgstr "Du har brugt dine {n} gratis chatbeskeder for i dag. For ubegrænset finpudsning: opret en gratis konto."
+
+#: Upload-Fix Julia-Feedback (04.07.2026)
+msgid "Maximal {mb} MB pro Datei."
+msgstr "Maksimalt {mb} MB pr. fil."
+
+#: Upload-Fix Julia-Feedback (04.07.2026)
+msgid "Verbindung unterbrochen – prüfe, ob die Datei trotzdem angekommen ist …"
+msgstr "Forbindelsen blev afbrudt – kontrollerer, om filen alligevel er ankommet …"
+
+#: Upload-Fix Julia-Feedback (04.07.2026)
+msgid "Der Upload war trotz Verbindungsfehler erfolgreich. Die Datei ist angekommen."
+msgstr "Uploaden lykkedes trods forbindelsesfejlen. Filen er ankommet."
+
+#: Upload-Fix Julia-Feedback (04.07.2026)
+msgid "Verbindungsfehler beim Upload. Die Datei ist bisher nicht angekommen. Bitte prüfe deine Internetverbindung und versuche es erneut. Bei sehr großen PDFs kann die Verarbeitung länger dauern – lade die Seite dann in ein bis zwei Minuten neu und prüfe die Dokumentliste. Maximal {mb} MB pro Datei."
+msgstr "Forbindelsesfejl under upload. Filen er endnu ikke ankommet. Kontrollér din internetforbindelse, og prøv igen. Ved meget store PDF'er kan behandlingen tage længere tid – genindlæs i så fald siden om et til to minutter, og tjek dokumentlisten. Maksimalt {mb} MB pr. fil."

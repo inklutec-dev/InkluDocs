@@ -2061,3 +2061,19 @@ msgstr "Vos {n} analyses gratuites pour aujourd'hui sont épuisées. Pour des im
 #: Demo-Seiten i18n (04.07.2026)
 msgid "Du hast die {n} kostenlosen Chat-Nachrichten für heute genutzt. Für unbegrenztes Verfeinern: kostenlos registrieren."
 msgstr "Vous avez utilisé vos {n} messages de chat gratuits pour aujourd'hui. Pour un affinage illimité : inscription gratuite."
+
+#: Upload-Fix Julia-Feedback (04.07.2026)
+msgid "Maximal {mb} MB pro Datei."
+msgstr "Maximum {mb} Mo par fichier."
+
+#: Upload-Fix Julia-Feedback (04.07.2026)
+msgid "Verbindung unterbrochen – prüfe, ob die Datei trotzdem angekommen ist …"
+msgstr "Connexion interrompue – vérification que le fichier est bien arrivé …"
+
+#: Upload-Fix Julia-Feedback (04.07.2026)
+msgid "Der Upload war trotz Verbindungsfehler erfolgreich. Die Datei ist angekommen."
+msgstr "Le téléversement a réussi malgré l'erreur de connexion. Le fichier est bien arrivé."
+
+#: Upload-Fix Julia-Feedback (04.07.2026)
+msgid "Verbindungsfehler beim Upload. Die Datei ist bisher nicht angekommen. Bitte prüfe deine Internetverbindung und versuche es erneut. Bei sehr großen PDFs kann die Verarbeitung länger dauern – lade die Seite dann in ein bis zwei Minuten neu und prüfe die Dokumentliste. Maximal {mb} MB pro Datei."
+msgstr "Erreur de connexion pendant le téléversement. Le fichier n'est pas arrivé pour l'instant. Veuillez vérifier votre connexion Internet et réessayer. Pour les très gros PDF, le traitement peut prendre plus de temps – rechargez alors la page dans une à deux minutes et vérifiez la liste des documents. Maximum {mb} Mo par fichier."
