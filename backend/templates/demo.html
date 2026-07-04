@@ -1,0 +1,120 @@
+{# ──────────────────────────────────────────────────────────────────────────
+   demo.html — öffentliche Demo-Startseite (Kostprobe ohne Anmeldung), seit
+   04.07.2026 als Jinja2-Template fünfsprachig (vorher frontend/demo.html).
+   Neu gegenüber der statischen Fassung: Sprachmenü für die AUSGABESPRACHE
+   der Alt-Texte neben dem Generieren-Knopf (wie die Projekt-Einstellung im
+   Werkzeug, alirodocs-Muster) — vorbelegt mit der UI-Sprache des Besuchers.
+   Die UI-Sprache selbst kommt ohne Umschalter über die Browser-Erkennung. #}
+{% extends "base_demo.html" %}
+
+{% block title %}{{ _('InkluDocs – kostenlos testen') }}{% endblock %}
+
+{% block main %}
+      <section class="demo-intro">
+        <h1>{{ _('InkluDocs kostenlos testen') }}</h1>
+        <p class="demo-lead">{{ _('Lade ein Bild hoch und erhalte in Sekunden einen barrierefreien Alternativtext und eine Langbeschreibung – ganz ohne Anmeldung.') }}</p>
+        <p class="demo-privacy">{{ _('Dein Bild wird nur für deine Sitzung gespeichert, nicht dauerhaft, und spätestens nach einer Stunde automatisch gelöscht. Mit „Löschen" entfernst du es sofort.') }}</p>
+        <p class="demo-quota" id="quota" aria-live="polite"></p>
+      </section>
+
+      <!-- Upload -->
+      <section id="uploadSection" class="card demo-card">
+        <h2>{{ _('Bild auswählen') }}</h2>
+        <div id="dropzone" class="demo-dropzone">
+          <label for="fileInput" class="demo-upload-label">{{ _('Bild hierher ziehen oder auswählen') }}</label>
+          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp" class="demo-file-input">
+          <p class="demo-hint">{{ _('JPG, PNG, GIF oder WebP. PDFs gibt es im vollen Werkzeug nach Anmeldung.') }}</p>
+        </div>
+      </section>
+
+      <!-- Ergebnis-Maske — gestapelt wie im eingeloggten Werkzeug:
+           Abzeichen, dann Bild, dann Alt-Text-Feld, dann Langbeschreibung. -->
+      <section id="resultSection" class="card demo-card" hidden>
+        <h2>{{ _('Ergebnis') }}</h2>
+
+        <p id="badges" class="demo-badges"></p>
+
+        <figure class="demo-figure">
+          <img id="resultImage" alt="" class="demo-result-image">
+        </figure>
+
+        <!-- Generieren-Steuerung — bewusst identisch zum eingeloggten Werkzeug
+             (vgl. die regen-area in app.html): nativer Button plus sichtbarer
+             Status-Text. Davor das Sprachmenü für die AUSGABESPRACHE der
+             Alt-Texte (native label+select, Sprachnamen als Eigennamen
+             unübersetzt, vorbelegt mit der UI-Sprache des Besuchers). -->
+        <div id="generateArea" class="demo-generate-area" hidden>
+          <span class="demo-lang-wrap">
+            <label for="altLangSelect">{{ _('Sprache der Alt-Texte') }}</label>
+            <select id="altLangSelect">
+              {% for code in ['de', 'en', 'da', 'fr', 'es'] %}
+              <option value="{{ code }}"{% if code == current_lang %} selected{% endif %}>{{ language_labels[code] }}</option>
+              {% endfor %}
+            </select>
+          </span>
+          <button type="button" id="generateBtn" class="btn btn-primary">{{ _('Alternativtext generieren') }}</button>
+          <span id="genStatus" class="demo-gen-status" role="status"></span>
+        </div>
+
+        <!-- Ergebnis-Inhalte: erst nach erfolgreicher Analyse sichtbar. -->
+        <div id="resultBody" hidden>
+        <label for="altField">{{ _('Alternativtext') }}</label>
+        <textarea id="altField" class="alt-text-field" rows="3"></textarea>
+        <button type="button" class="btn btn-secondary btn-small" data-copy="altField" data-copy-label="{{ _('Alternativtext') }}">{{ _('Alternativtext kopieren') }}</button>
+
+        <div id="langWrap">
+          <label for="langField">{{ _('Langbeschreibung') }}</label>
+          <textarea id="langField" class="alt-text-field demo-langfield" rows="6"></textarea>
+          <button type="button" class="btn btn-secondary btn-small" data-copy="langField" data-copy-label="{{ _('Langbeschreibung') }}">{{ _('Langbeschreibung kopieren') }}</button>
+        </div>
+
+        <!-- Chatbot zum Verfeinern (derselbe InkluAgent). Kopfbalken in Navy wie im Werkzeug. -->
+        <section class="demo-chat">
+          <h3 class="demo-chat-header">{{ _('Mit dem Assistenten verfeinern') }}</h3>
+          <p class="demo-hint">{{ _('Bitte zum Beispiel „mach den Text kürzer" oder stelle Fragen zu Barrierefreiheit (BITV/WCAG).') }}</p>
+          <!-- role="log" ist hier noetig (kein natives Element) und impliziert aria-live="polite". -->
+          <div id="chatLog" class="demo-chatlog" role="log" aria-label="{{ _('Chat-Verlauf') }}"></div>
+          <form id="chatForm" class="demo-chat-form">
+            <label for="chatInput" class="demo-visually-hidden">{{ _('Nachricht an den Assistenten') }}</label>
+            <input type="text" id="chatInput" maxlength="2000" autocomplete="off"
+                   placeholder="{{ _('Nachricht an den Assistenten …') }}">
+            <button type="submit" class="btn btn-primary">{{ _('Senden') }}</button>
+          </form>
+        </section>
+
+        <!-- Anmelde-Aufforderung direkt unter dem Ergebnis -->
+        <div class="demo-cta">
+          <p>{{ _('Gefällt dir das Ergebnis? Für ganze Dokumente und den fertig getaggten Export geht es mit einem Konto weiter.') }}</p>
+          <a class="btn btn-primary" href="https://inkludocs.de/">{{ _('Anmelden oder registrieren') }}</a>
+        </div>
+        </div><!-- /resultBody -->
+
+        <button type="button" id="deleteBtn" class="btn btn-secondary btn-small demo-delete">{{ _('Bild und Ergebnis löschen') }}</button>
+      </section>
+
+      <!-- Kontingent aufgebraucht / Anmelde-Aufforderung -->
+      <section id="upsellSection" class="card demo-card demo-upsell" hidden>
+        <h2>{{ _('Mehr braucht ein Konto') }}</h2>
+        <p id="upsellText"></p>
+        <a class="btn btn-primary" href="https://inkludocs.de/">{{ _('Anmelden oder registrieren') }}</a>
+      </section>
+{% endblock %}
+
+{% block dialogs %}
+<!-- Barrierefreier Bestaetigungsdialog vor dem Loeschen. Gleiches Muster wie im
+     Werkzeug: natives <dialog> + showModal() liefert Fokusfalle, Escape und
+     Modal-Semantik vom Browser — daher bewusst ohne role/aria-modal. Steht
+     ausserhalb der App-Shell, damit das Modal die gesamte Seite überlagert. -->
+<dialog id="deleteConfirmDialog" class="app-dialog">
+  <h2>{{ _('Bild und Ergebnis löschen?') }}</h2>
+  <p>{{ _('Möchtest du das Bild und das Ergebnis wirklich löschen? Das lässt sich nicht rückgängig machen.') }}</p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="deleteCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="deleteConfirm">{{ _('Löschen') }}</button>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block page_script %}
+<script src="/static/demo.js?v={{ asset_version }}"></script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{# Rechtsseite IM Demo-Rahmen — Aufbau identisch zu demo-impressum.html,
+   siehe Kommentar dort. #}
+{% extends "base_demo.html" %}
+
+{% block title %}{{ _('Datenschutz') }} · InkluDocs{% endblock %}
+
+{% block main %}
+      <h1>{{ _('Datenschutz') }}</h1>
+      <p class="dash-sub">{{ _('Eine Quelle, kein Doppeltext: Der Inhalt kommt von der öffentlichen Seite.') }}
+        <a href="/datenschutz">{{ _('Öffentliche Seite öffnen') }}</a></p>
+      <div id="legalContent" aria-busy="true" role="region" aria-label="{{ _('Datenschutzerklärung') }}">
+        <p class="dash-sub">{{ _('Inhalt wird geladen …') }}</p>
+      </div>
+{% endblock %}
+
+{% block page_script %}
+<script>DemoShell.loadLegalInline('/datenschutz', {{ _('Datenschutzerklärung')|tojson }});</script>
+{% endblock %}

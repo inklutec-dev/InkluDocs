@@ -3,6 +3,12 @@
    /api/demo/* -Endpunkte an (Sitzung laeuft ueber das HttpOnly-Cookie,
    der Browser sendet es automatisch mit). Alle Statusaenderungen werden
    per Live-Region fuer Screenreader angesagt.
+
+   04.07.2026: fuenfsprachig ueber den t()-Helfer aus demo-shell.js
+   (window.I18N liefert base_demo.html); ASCII-Umlaute der sichtbaren Texte
+   dabei zu echten Umlauten korrigiert (msgid = Laufzeittext). NEU ausserdem:
+   das Sprachmenue #altLangSelect (Ausgabesprache der Alt-Texte) wird beim
+   Generieren als language-Feld mitgeschickt.
    ───────────────────────────────────────────────────────────────────────── */
 (function () {
   "use strict";
@@ -12,7 +18,7 @@
   ["srStatus", "quota", "uploadSection", "resultSection", "upsellSection", "upsellText",
    "dropzone", "fileInput", "resultImage", "badges", "altField", "langField", "langWrap",
    "deleteBtn", "chatLog", "chatForm", "chatInput",
-   "generateArea", "generateBtn", "genStatus", "resultBody",
+   "generateArea", "generateBtn", "genStatus", "resultBody", "altLangSelect",
    "deleteConfirmDialog", "deleteCancel", "deleteConfirm"].forEach((k) => (els[k] = $(k)));
 
   let pollTimer = null;
@@ -30,9 +36,10 @@
 
   function setQuota(limits) {
     if (!limits || !els.quota) return;
-    els.quota.textContent =
-      `Noch ${limits.images_remaining} von ${limits.images_per_day} kostenlosen Analysen heute` +
-      ` · ${limits.chat_remaining} von ${limits.chat_per_day} Chat-Nachrichten.`;
+    els.quota.textContent = t("Noch {bilder_frei} von {bilder_tag} kostenlosen Analysen heute · {chat_frei} von {chat_tag} Chat-Nachrichten.", {
+      bilder_frei: limits.images_remaining, bilder_tag: limits.images_per_day,
+      chat_frei: limits.chat_remaining, chat_tag: limits.chat_per_day,
+    });
   }
 
   function show(el) { if (el) el.hidden = false; }
@@ -40,9 +47,9 @@
 
   function showUpsell(text) {
     if (els.upsellText) els.upsellText.textContent = text ||
-      "Deine kostenlosen Analysen für heute sind aufgebraucht.";
+      t("Deine kostenlosen Analysen für heute sind aufgebraucht.");
     show(els.upsellSection);
-    announce(text || "Kostenloses Kontingent aufgebraucht.");
+    announce(text || t("Kostenloses Kontingent aufgebraucht."));
   }
 
   async function api(path, opts) {
@@ -64,14 +71,14 @@
   function handleFile(file) {
     if (busy) return;
     if (!validImage(file)) {
-      announce("Bitte ein Bild im Format JPG, PNG, GIF oder WebP waehlen.");
+      announce(t("Bitte ein Bild im Format JPG, PNG, GIF oder WebP wählen."));
       return;
     }
     selectedFile = file;
     hide(els.upsellSection);
     // Sofortige lokale Vorschau (ohne Serverabruf)
     els.resultImage.src = URL.createObjectURL(file);
-    els.resultImage.alt = "Vorschau deines ausgewaehlten Bildes";
+    els.resultImage.alt = t("Vorschau deines ausgewählten Bildes");
     els.altField.value = "";
     els.langField.value = "";
     els.badges.textContent = "";
@@ -79,11 +86,11 @@
     // Ergebnis-Inhalte verbergen, Generieren-Bereich zeigen
     hide(els.resultBody);
     els.generateBtn.disabled = false;
-    els.generateBtn.textContent = "Alternativtext generieren";
+    els.generateBtn.textContent = t("Alternativtext generieren");
     show(els.generateArea);
     show(els.resultSection);
     hide(els.uploadSection); // Upload-Flaeche ausblenden, solange ein Bild gewaehlt ist
-    announce("Bild ausgewaehlt. Auf 'Alternativtext generieren' klicken, um die Analyse zu starten.");
+    announce(t("Bild ausgewählt. Auf „Alternativtext generieren\" klicken, um die Analyse zu starten."));
     els.generateBtn.focus();
   }
 
@@ -94,12 +101,14 @@
     if (busy || !selectedFile) return;
     busy = true;
     els.generateBtn.disabled = true;
-    els.generateBtn.textContent = "Generiere …";
-    els.genStatus.textContent = "Bild wird analysiert …";
-    announce("Bild wird hochgeladen und analysiert. Das dauert ein paar Sekunden.");
+    els.generateBtn.textContent = t("Generiere …");
+    els.genStatus.textContent = t("Bild wird analysiert …");
+    announce(t("Bild wird hochgeladen und analysiert. Das dauert ein paar Sekunden."));
 
     const fd = new FormData();
     fd.append("file", selectedFile);
+    // Ausgabesprache der Alt-Texte (Sprachmenue neben dem Generieren-Knopf).
+    fd.append("language", els.altLangSelect ? els.altLangSelect.value : "de");
     const { res, data } = await api("/api/demo/generate", { method: "POST", body: fd });
     if (res.status === 429) {
       busy = false;
@@ -110,9 +119,9 @@
     if (!res.ok) {
       busy = false;
       els.generateBtn.disabled = false;
-      els.generateBtn.textContent = "Alternativtext generieren";
-      els.genStatus.textContent = "Es ist ein Fehler aufgetreten. Bitte erneut versuchen.";
-      announce((data && data.detail) || "Upload fehlgeschlagen.");
+      els.generateBtn.textContent = t("Alternativtext generieren");
+      els.genStatus.textContent = t("Es ist ein Fehler aufgetreten. Bitte erneut versuchen.");
+      announce((data && data.detail) || t("Upload fehlgeschlagen."));
       return;
     }
     poll();
@@ -129,12 +138,12 @@
       if (img.status === "done") { fillResult(img); busy = false; return; }
       if (img.status === "error") {
         busy = false;
-        els.resultImage.alt = "Analyse fehlgeschlagen";
+        els.resultImage.alt = t("Analyse fehlgeschlagen");
         // Generieren-Button wieder freigeben, damit der Nutzer es erneut versuchen kann
         els.generateBtn.disabled = false;
-        els.generateBtn.textContent = "Alternativtext generieren";
-        els.genStatus.textContent = "Analyse fehlgeschlagen.";
-        announce("Die Analyse ist fehlgeschlagen. Bitte versuche es noch einmal.");
+        els.generateBtn.textContent = t("Alternativtext generieren");
+        els.genStatus.textContent = t("Analyse fehlgeschlagen.");
+        announce(t("Die Analyse ist fehlgeschlagen. Bitte versuche es noch einmal."));
         return;
       }
       pollTimer = setTimeout(tick, 2500); // weiter warten (processing)
@@ -154,19 +163,22 @@
     // Kurze, neutrale Bildbeschriftung — der eigentliche Alt-Text steht NUR EINMAL
     // im beschrifteten Feld darunter. Sonst laese ein Screenreader ihn doppelt vor
     // (Steve-Befund 13.06.).
-    els.resultImage.alt = "Vorschau deines hochgeladenen Bildes";
+    els.resultImage.alt = t("Vorschau deines hochgeladenen Bildes");
     let b = "";
-    if (img.image_type) b += badge("Typ: " + img.image_type, "ready");
+    // Bildtyp und Konfidenz-Stufe sind Server-Daten und bleiben deutsch
+    // (Entscheidung 7b, wie im eingeloggten Werkzeug) — nur die Labels
+    // davor werden uebersetzt.
+    if (img.image_type) b += badge(t("Typ: {typ}", { typ: img.image_type }), "ready");
     if (img.konfidenz) {
       const k = img.konfidenz === "hoch" ? "done" : img.konfidenz === "niedrig" ? "error" : "processing";
-      b += badge("Konfidenz: " + img.konfidenz, k);
+      b += badge(t("Konfidenz: {wert}", { wert: img.konfidenz }), k);
     }
     els.badges.innerHTML = b;
     // Generieren-Bereich ausblenden, Ergebnis-Inhalte einblenden
     els.genStatus.textContent = "";
     hide(els.generateArea);
     show(els.resultBody);
-    announce("Analyse fertig. Alternativtext und Langbeschreibung stehen bereit.");
+    announce(t("Analyse fertig. Alternativtext und Langbeschreibung stehen bereit."));
     els.altField.focus();
   }
 
@@ -176,16 +188,17 @@
     if (!btn) return;
     const field = $(btn.getAttribute("data-copy"));
     if (!field) return;
-    const label = btn.getAttribute("data-copy-label") || "Text";
+    // data-copy-label kommt bereits uebersetzt aus dem Template.
+    const label = btn.getAttribute("data-copy-label") || t("Text");
     try {
       await navigator.clipboard.writeText(field.value);
-      announce(label + " kopiert.");
+      announce(t("{was} kopiert.", { was: label }));
       const old = btn.textContent;
-      btn.textContent = "Kopiert ✓";
+      btn.textContent = t("Kopiert ✓");
       setTimeout(() => (btn.textContent = old), 1500);
     } catch (_) {
       field.select();
-      announce("Bitte mit Strg+C kopieren.");
+      announce(t("Bitte mit Strg+C kopieren."));
     }
   });
 
@@ -213,7 +226,7 @@
     hide(els.resultBody);
     show(els.uploadSection); // Upload-Flaeche wieder zeigen
     els.fileInput.value = "";
-    announce("Bild und Ergebnis wurden geloescht. Du kannst ein neues Bild hochladen.");
+    announce(t("Bild und Ergebnis wurden gelöscht. Du kannst ein neues Bild hochladen."));
     refreshQuota();
     els.fileInput.focus();
   }
@@ -242,16 +255,16 @@
     if (!msg) return;
     addMsg("user", msg);
     els.chatInput.value = "";
-    announce("Assistent denkt nach …");
+    announce(t("Assistent denkt nach …"));
     const { res, data } = await api("/api/demo/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: msg }),
     });
     if (res.status === 429) { showUpsell(data && data.detail); return; }
-    if (!res.ok || !data) { addMsg("bot", (data && data.detail) || "Entschuldigung, das hat nicht geklappt."); return; }
+    if (!res.ok || !data) { addMsg("bot", (data && data.detail) || t("Entschuldigung, das hat nicht geklappt.")); return; }
     addMsg("bot", data.reply || "");
-    announce("Antwort des Assistenten ist da.");
+    announce(t("Antwort des Assistenten ist da."));
     if (data.limits) setQuota(data.limits);
     // Der Assistent kann den Alt-Text geaendert haben — frisch laden
     refreshResultTexts();
@@ -285,8 +298,8 @@
         // Status anzeigen und weiter pollen.
         show(els.generateArea);
         els.generateBtn.disabled = true;
-        els.generateBtn.textContent = "Generiere …";
-        els.genStatus.textContent = "Bild wird analysiert …";
+        els.generateBtn.textContent = t("Generiere …");
+        els.genStatus.textContent = t("Bild wird analysiert …");
         busy = true;
         poll();
       }

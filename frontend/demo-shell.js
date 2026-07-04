@@ -9,7 +9,24 @@
    Die Rechtsseiten der Demo nutzen die öffentlichen Routen (/impressum, …),
    die ohne Login erreichbar sind; die -app-Varianten des Werkzeugs setzen
    einen Login voraus und sind in der anonymen Demo nicht nutzbar. 15.06.2026.
+
+   04.07.2026: fünfsprachig über window.I18N (liefert base_demo.html) und den
+   t()-Helfer unten — dieselben Fußzeilen-msgids wie dashboard.js, damit die
+   Übersetzungen nicht doppelt gepflegt werden.
    ───────────────────────────────────────────────────────────────────────── */
+
+// Übersetzungs-Helfer — identisch zu dashboard.js (das die Demo-Seiten nicht
+// laden). Fallback ist der deutsche Ausgangstext, Platzhalter im Muster {name}.
+function t(s, params) {
+  var out = (window.I18N && window.I18N[s]) || s;
+  if (params) {
+    Object.keys(params).forEach(function (k) {
+      out = out.replace('{' + k + '}', params[k]);
+    });
+  }
+  return out;
+}
+
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);
@@ -17,8 +34,8 @@
   // Sidebar-Navigation der Demo. „Datensicherheit" führt auf die In-Rahmen-Sicht
   // /demo-datenschutz (zeigt den öffentlichen Datenschutz-Text mit Sidebar).
   const NAV = [
-    { href: "/", label: "Demo testen" },
-    { href: "/demo-datenschutz", label: "Datensicherheit" },
+    { href: "/", label: t("Demo testen") },
+    { href: "/demo-datenschutz", label: t("Datensicherheit") },
   ];
 
   function renderSidebar() {
@@ -34,7 +51,7 @@
     host.appendChild(brand);
 
     const nav = document.createElement("nav");
-    nav.setAttribute("aria-label", "Hauptnavigation");
+    nav.setAttribute("aria-label", t("Hauptnavigation"));
     const ul = document.createElement("ul");
     ul.className = "app-nav";
     NAV.forEach((it) => {
@@ -51,7 +68,7 @@
     liOut.className = "app-nav-logout";
     const aOut = document.createElement("a");
     aOut.href = "https://inkludocs.de/";
-    aOut.textContent = "Anmelden oder registrieren";
+    aOut.textContent = t("Anmelden oder registrieren");
     liOut.appendChild(aOut);
     ul.appendChild(liOut);
 
@@ -60,27 +77,25 @@
   }
 
   // Fußzeile identisch zum Werkzeug (rechtliche Links, DSGVO-Hinweis, Spenden),
-  // nur mit den öffentlichen Demo-Routen verlinkt. Idempotent.
+  // nur mit den öffentlichen Demo-Routen verlinkt. Idempotent. Die Texte nutzen
+  // dieselben msgids wie dashboard.js (eine Übersetzung, zwei Renderer).
   function renderFooter() {
     document.querySelectorAll(".dash-footer").forEach((footer) => {
       if (footer.querySelector(".dash-legal-links")) return;
       footer.innerHTML =
         '<div class="dash-legal-links">' +
-          '<a href="/demo-impressum">Impressum</a> · ' +
-          '<a href="/demo-datenschutz">Datenschutz</a> · ' +
-          '<a href="/demo-nutzungsbedingungen">Nutzungsbedingungen</a>' +
+          '<a href="/demo-impressum">' + t("Impressum") + '</a> · ' +
+          '<a href="/demo-datenschutz">' + t("Datenschutz") + '</a> · ' +
+          '<a href="/demo-nutzungsbedingungen">' + t("Nutzungsbedingungen") + '</a>' +
         '</div>' +
-        '<p class="dsgvo-note"><strong>DSGVO-konform &ndash; Verarbeitung in der EU.</strong> ' +
-          'Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon ' +
-          'Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine ' +
-          'Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer ' +
-          'Datenschutzerklärung.</p>' +
+        '<p class="dsgvo-note"><strong>' + t("DSGVO-konform – Verarbeitung in der EU.") + '</strong>' +
+          t(" Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.") +
+        '</p>' +
         '<div class="dash-support">' +
-          '<p class="dash-support-text">InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das ' +
-            'Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.</p>' +
+          '<p class="dash-support-text">' + t("InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.") + '</p>' +
           '<a class="dash-support-link" href="https://www.paypal.com/donate?business=steve.weidel%40gmail.com&item_name=InkluDocs+-+Freiwilliger+Beitrag&currency_code=EUR" ' +
-            'target="_blank" rel="noopener" aria-label="InkluDocs per PayPal unterstützen, öffnet in neuem Tab">InkluDocs per PayPal unterstützen</a>' +
-          '<p class="dash-support-note">Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen.</p>' +
+            'target="_blank" rel="noopener" aria-label="' + t("InkluDocs per PayPal unterstützen, öffnet in neuem Tab") + '">' + t("InkluDocs per PayPal unterstützen") + '</a>' +
+          '<p class="dash-support-note">' + t("Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen.") + '</p>' +
         '</div>';
     });
   }
@@ -106,9 +121,10 @@
       target.appendChild(container);
       target.setAttribute("aria-busy", "false");
     } catch (err) {
-      target.innerHTML = '<p style="color:var(--error,#c33);">' + label +
-        ' konnte nicht geladen werden (' + (err && err.message ? err.message : "Fehler") +
-        '). Bitte die öffentliche Seite aufrufen: <a href="' + sourceUrl + '">' + sourceUrl + '</a></p>';
+      target.innerHTML = '<p style="color:var(--error,#c33);">' +
+        t("{was} konnte nicht geladen werden ({fehler}). Bitte die öffentliche Seite aufrufen:",
+          { was: label, fehler: (err && err.message ? err.message : t("Fehler")) }) +
+        ' <a href="' + sourceUrl + '">' + sourceUrl + '</a></p>';
       target.setAttribute("aria-busy", "false");
     }
   }

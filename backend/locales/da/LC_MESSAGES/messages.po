@@ -1512,3 +1512,243 @@ msgstr "InkluDocs er i lukket betafase. Hvis du vil have en testadgang, så send
 #: Bestaetigungsseiten (03.07.2026)
 msgid "Registrierung geschlossen"
 msgstr "Registrering lukket"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Zum Inhalt springen"
+msgstr "Spring til indhold"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "InkluDocs – kostenlos testen"
+msgstr "InkluDocs – prøv gratis"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "InkluDocs kostenlos testen"
+msgstr "Prøv InkluDocs gratis"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Lade ein Bild hoch und erhalte in Sekunden einen barrierefreien Alternativtext und eine Langbeschreibung – ganz ohne Anmeldung."
+msgstr "Upload et billede, og få på få sekunder en tilgængelig alternativ tekst og en lang beskrivelse – helt uden tilmelding."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Dein Bild wird nur für deine Sitzung gespeichert, nicht dauerhaft, und spätestens nach einer Stunde automatisch gelöscht. Mit „Löschen\" entfernst du es sofort."
+msgstr "Dit billede gemmes kun i din session, ikke permanent, og slettes automatisk senest efter en time. Med ”Slet” fjerner du det med det samme."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bild auswählen"
+msgstr "Vælg et billede"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bild hierher ziehen oder auswählen"
+msgstr "Træk et billede hertil, eller vælg et"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "JPG, PNG, GIF oder WebP. PDFs gibt es im vollen Werkzeug nach Anmeldung."
+msgstr "JPG, PNG, GIF eller WebP. PDF'er findes i det fulde værktøj efter tilmelding."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Ergebnis"
+msgstr "Resultat"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Alternativtext generieren"
+msgstr "Generér alternativ tekst"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Alternativtext"
+msgstr "Alternativ tekst"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Alternativtext kopieren"
+msgstr "Kopiér alternativ tekst"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Langbeschreibung kopieren"
+msgstr "Kopiér lang beskrivelse"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Mit dem Assistenten verfeinern"
+msgstr "Finpuds med assistenten"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bitte zum Beispiel „mach den Text kürzer\" oder stelle Fragen zu Barrierefreiheit (BITV/WCAG)."
+msgstr "Bed for eksempel om ”gør teksten kortere”, eller stil spørgsmål om tilgængelighed (BITV/WCAG)."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Nachricht an den Assistenten"
+msgstr "Besked til assistenten"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Nachricht an den Assistenten …"
+msgstr "Besked til assistenten …"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Gefällt dir das Ergebnis? Für ganze Dokumente und den fertig getaggten Export geht es mit einem Konto weiter."
+msgstr "Kan du lide resultatet? Med en konto kan du fortsætte med hele dokumenter og færdigtagget eksport."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Anmelden oder registrieren"
+msgstr "Log ind eller opret konto"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bild und Ergebnis löschen"
+msgstr "Slet billede og resultat"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Mehr braucht ein Konto"
+msgstr "Mere kræver en konto"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bild und Ergebnis löschen?"
+msgstr "Slet billede og resultat?"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Möchtest du das Bild und das Ergebnis wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette billedet og resultatet? Det kan ikke fortrydes."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Eine Quelle, kein Doppeltext: Der Inhalt kommt von der öffentlichen Seite."
+msgstr "Én kilde, ingen dobbelt tekst: Indholdet kommer fra den offentlige side."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Öffentliche Seite öffnen"
+msgstr "Åbn den offentlige side"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Inhalt wird geladen …"
+msgstr "Indholdet indlæses …"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Datenschutzerklärung"
+msgstr "Privatlivspolitik"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Noch {bilder_frei} von {bilder_tag} kostenlosen Analysen heute · {chat_frei} von {chat_tag} Chat-Nachrichten."
+msgstr "I dag: {bilder_frei} af {bilder_tag} gratis analyser tilbage · {chat_frei} af {chat_tag} chatbeskeder."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Deine kostenlosen Analysen für heute sind aufgebraucht."
+msgstr "Dine gratis analyser for i dag er brugt op."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Kostenloses Kontingent aufgebraucht."
+msgstr "Gratis kvote brugt op."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bitte ein Bild im Format JPG, PNG, GIF oder WebP wählen."
+msgstr "Vælg venligst et billede i formatet JPG, PNG, GIF eller WebP."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Vorschau deines ausgewählten Bildes"
+msgstr "Forhåndsvisning af dit valgte billede"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bild ausgewählt. Auf „Alternativtext generieren\" klicken, um die Analyse zu starten."
+msgstr "Billede valgt. Klik på ”Generér alternativ tekst” for at starte analysen."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Generiere …"
+msgstr "Genererer …"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bild wird analysiert …"
+msgstr "Billedet analyseres …"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bild wird hochgeladen und analysiert. Das dauert ein paar Sekunden."
+msgstr "Billedet uploades og analyseres. Det tager et par sekunder."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Es ist ein Fehler aufgetreten. Bitte erneut versuchen."
+msgstr "Der opstod en fejl. Prøv venligst igen."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Upload fehlgeschlagen."
+msgstr "Upload mislykkedes."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Analyse fehlgeschlagen"
+msgstr "Analyse mislykkedes"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Analyse fehlgeschlagen."
+msgstr "Analyse mislykkedes."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Die Analyse ist fehlgeschlagen. Bitte versuche es noch einmal."
+msgstr "Analysen mislykkedes. Prøv venligst igen."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Vorschau deines hochgeladenen Bildes"
+msgstr "Forhåndsvisning af dit uploadede billede"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Typ: {typ}"
+msgstr "Type: {typ}"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Konfidenz: {wert}"
+msgstr "Konfidens: {wert}"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Analyse fertig. Alternativtext und Langbeschreibung stehen bereit."
+msgstr "Analysen er færdig. Alternativ tekst og lang beskrivelse er klar."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Text"
+msgstr "Tekst"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "{was} kopiert."
+msgstr "{was} kopieret."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Kopiert ✓"
+msgstr "Kopieret ✓"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bitte mit Strg+C kopieren."
+msgstr "Kopiér venligst med Ctrl+C."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bild und Ergebnis wurden gelöscht. Du kannst ein neues Bild hochladen."
+msgstr "Billede og resultat er slettet. Du kan uploade et nyt billede."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Assistent denkt nach …"
+msgstr "Assistenten tænker …"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Entschuldigung, das hat nicht geklappt."
+msgstr "Beklager, det virkede ikke."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Antwort des Assistenten ist da."
+msgstr "Assistentens svar er klar."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Demo testen"
+msgstr "Prøv demoen"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "{was} konnte nicht geladen werden ({fehler}). Bitte die öffentliche Seite aufrufen:"
+msgstr "{was} kunne ikke indlæses ({fehler}). Åbn venligst den offentlige side:"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Bitte ein Bild hochladen (JPG, PNG, GIF, WebP …). PDFs gibt es im vollen Werkzeug nach Anmeldung."
+msgstr "Upload venligst et billede (JPG, PNG, GIF, WebP …). PDF'er findes i det fulde værktøj efter tilmelding."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Datei zu groß. Maximum: {mb} MB"
+msgstr "Filen er for stor. Maksimum: {mb} MB"
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Die Demo ist heute stark gefragt — das Tageskontingent ist erreicht. Bitte morgen wieder probieren oder gleich kostenlos registrieren."
+msgstr "Demoen er meget efterspurgt i dag — dagskvoten er nået. Prøv igen i morgen, eller opret en gratis konto med det samme."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Deine {n} kostenlosen Analysen für heute sind aufgebraucht. Für unbegrenzte Bilder, ganze PDFs und den fertig getaggten Export: kostenlos registrieren."
+msgstr "Dine {n} gratis analyser for i dag er brugt op. For ubegrænsede billeder, hele PDF'er og færdigtagget eksport: opret en gratis konto."
+
+#: Demo-Seiten i18n (04.07.2026)
+msgid "Du hast die {n} kostenlosen Chat-Nachrichten für heute genutzt. Für unbegrenztes Verfeinern: kostenlos registrieren."
+msgstr "Du har brugt dine {n} gratis chatbeskeder for i dag. For ubegrænset finpudsning: opret en gratis konto."

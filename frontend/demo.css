@@ -130,3 +130,8 @@
   .demo-intro h1 { font-size: 1.6rem; }
   .demo-result-image { max-width: 100%; }
 }
+
+/* 04.07.2026 — Sprachmenü für die Ausgabesprache der Alt-Texte im
+   Generieren-Bereich (Demo-i18n). Natives label+select wie im Werkzeug. */
+.demo-lang-wrap { display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 0.75rem; }
+.demo-lang-wrap select { padding: 0.4rem; border: 1px solid var(--border, #ccc); border-radius: 4px; font-size: 0.9rem; }

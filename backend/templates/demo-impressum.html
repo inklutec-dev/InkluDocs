@@ -1,0 +1,21 @@
+{# Rechtsseite IM Demo-Rahmen (Sidebar + Footer wie das Werkzeug), seit
+   04.07.2026 als Jinja2-Template fünfsprachig. Der Rechtstext selbst kommt
+   per fetch aus der öffentlichen /impressum-Route (eine Quelle) und bleibt
+   bewusst deutsch — juristischer Text, Übersetzung ist eine offene
+   Entscheidung (siehe I18N.md). Hülle und Lader liefert demo-shell.js. #}
+{% extends "base_demo.html" %}
+
+{% block title %}{{ _('Impressum') }} · InkluDocs{% endblock %}
+
+{% block main %}
+      <h1>{{ _('Impressum') }}</h1>
+      <p class="dash-sub">{{ _('Eine Quelle, kein Doppeltext: Der Inhalt kommt von der öffentlichen Seite.') }}
+        <a href="/impressum">{{ _('Öffentliche Seite öffnen') }}</a></p>
+      <div id="legalContent" aria-busy="true" role="region" aria-label="{{ _('Impressum') }}">
+        <p class="dash-sub">{{ _('Inhalt wird geladen …') }}</p>
+      </div>
+{% endblock %}
+
+{% block page_script %}
+<script>DemoShell.loadLegalInline('/impressum', {{ _('Impressum')|tojson }});</script>
+{% endblock %}

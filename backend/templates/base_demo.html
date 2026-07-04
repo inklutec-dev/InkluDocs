@@ -1,0 +1,52 @@
+{# ──────────────────────────────────────────────────────────────────────────
+   base_demo.html — Grundgerüst der öffentlichen Demo-Seiten (Startseite und
+   Rechtsseiten im Demo-Rahmen). Pendant zu base_app.html, aber anonym:
+   Sidebar und Fußzeile rendert demo-shell.js (keine Projekte/Einstellungen,
+   dafür „Anmelden oder registrieren").
+   Sprache: Browser-Erkennung bzw. lang-Cookie (detect_language) — bewusst
+   OHNE Umschalter-Menü (Entscheidung Steve 03.07.2026, Browser-Default
+   reicht für Nicht-Eingeloggte). Blöcke: title, main, dialogs, page_script.
+   04.07.2026. #}
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}InkluDocs{% endblock %}</title>
+{# Wiederverwendung der echten Werkzeug-Optik; demo.css danach, damit
+   Demo-spezifische Regeln bei Bedarf nachschärfen können. ?v= ist das
+   Cache-Busting aus i18n.py (asset_version). #}
+<link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
+<link rel="stylesheet" href="/static/dashboard.css?v={{ asset_version }}">
+<link rel="stylesheet" href="/static/demo.css?v={{ asset_version }}">
+</head>
+<body class="demo-body">
+<a class="demo-skip" href="#main">{{ _('Zum Inhalt springen') }}</a>
+
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+{% block main %}{% endblock %}
+    </main>
+    {# Fußzeile rendert demo-shell.js (eine Quelle für alle Demo-Seiten). #}
+    <footer class="dash-footer"></footer>
+  </div><!-- /app-content -->
+</div><!-- /app-shell -->
+
+{% block dialogs %}{% endblock %}
+
+<!-- Statuszeile für Screenreader. role="status" ist hier nötig (kein natives
+     Live-Region-Element) und impliziert bereits aria-live="polite". -->
+<p id="srStatus" class="demo-visually-hidden" role="status"></p>
+
+{# Übersetzungstabelle VOR demo-shell.js, damit t() ab der ersten Zeile
+   Übersetzungen findet (gleiches Muster wie base_app.html). #}
+<script>
+window.LANG = "{{ current_lang }}";
+window.I18N = {{ i18n_json|safe }};
+</script>
+<script src="/static/demo-shell.js?v={{ asset_version }}"></script>
+{% block page_script %}{% endblock %}
+</body>
+</html>

@@ -1438,33 +1438,34 @@ def _demo_user_ctx(user_id: int) -> dict:
 
 
 @app.post("/api/demo/generate")
-async def demo_generate(request: Request, file: UploadFile = File(...)):
+async def demo_generate(request: Request, file: UploadFile = File(...),
+                        language: Optional[str] = Form(None)):
     """Anonymer Einzelbild-Upload fuer die Demo. Legt bei Bedarf eine fluechtige
     Demo-Sitzung an (signiertes Cookie), speichert das Bild, startet die normale
     Generierungs-Pipeline im Hintergrund und gibt die Projekt-ID zurueck. Das
     Ergebnis wird ueber GET /api/demo/result abgeholt (Polling). Limits: Schritt 3."""
     _require_demo()
+    # Sichtbare Fehlertexte in der Sprache des Besuchers (die Demo ist
+    # oeffentlich und mehrsprachig). ACHTUNG: _()-Strings in main.py werden
+    # vom Bau-Zeit-Check NICHT erfasst — .po-Eintraege manuell pflegen.
+    _ = get_gettext(detect_language(request))
     filename = file.filename or "upload"
     ext = os.path.splitext(filename)[1].lower()
     if ext not in IMAGE_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail="Bitte ein Bild hochladen (JPG, PNG, GIF, WebP …). PDFs gibt es im vollen Werkzeug nach Anmeldung.",
+            detail=_('Bitte ein Bild hochladen (JPG, PNG, GIF, WebP …). PDFs gibt es im vollen Werkzeug nach Anmeldung.'),
         )
     content = await file.read()
     if len(content) > MAX_UPLOAD_SIZE:
-        raise HTTPException(status_code=413, detail=f"Datei zu gross. Maximum: {MAX_UPLOAD_SIZE // (1024*1024)} MB")
+        raise HTTPException(status_code=413, detail=_('Datei zu groß. Maximum: {mb} MB').format(mb=MAX_UPLOAD_SIZE // (1024*1024)))
 
     # Limit pruefen (server-seitig, VOR jeder teuren Generierung — nie vom Bot)
     chk = demo_mod.check_generation(request)
     if not chk["allowed"]:
         if chk["global_reached"]:
-            raise HTTPException(status_code=429, detail=(
-                "Die Demo ist heute stark gefragt — das Tageskontingent ist erreicht. "
-                "Bitte morgen wieder probieren oder gleich kostenlos registrieren."))
-        raise HTTPException(status_code=429, detail=(
-            f"Deine {demo_mod.daily_image_limit()} kostenlosen Analysen für heute sind aufgebraucht. "
-            "Für unbegrenzte Bilder, ganze PDFs und den fertig getaggten Export: kostenlos registrieren."))
+            raise HTTPException(status_code=429, detail=_('Die Demo ist heute stark gefragt — das Tageskontingent ist erreicht. Bitte morgen wieder probieren oder gleich kostenlos registrieren.'))
+        raise HTTPException(status_code=429, detail=_('Deine {n} kostenlosen Analysen für heute sind aufgebraucht. Für unbegrenzte Bilder, ganze PDFs und den fertig getaggten Export: kostenlos registrieren.').format(n=demo_mod.daily_image_limit()))
 
     # Sitzung aus Cookie ableiten oder neu anlegen
     uid = demo_mod.resolve_session_user_id(request.cookies.get(demo_mod.DEMO_COOKIE_NAME))
@@ -1486,6 +1487,13 @@ async def demo_generate(request: Request, file: UploadFile = File(...)):
 
     # Generierung wie im normalen Pfad starten (Hintergrund) — Frontend pollt /result
     conn = get_db()
+    # Ausgabesprache der Alt-Texte (Sprachmenue der Demo, gleiches Prinzip wie
+    # die Projekt-Einstellung im Werkzeug). Ungueltige oder fehlende Werte
+    # fallen still auf den Projekt-Default de zurueck — das Menue sendet nur
+    # gueltige Codes, alles andere waere Handarbeit gegen die API.
+    alt_lang = (language or "").lower()
+    if alt_lang in ALT_TEXT_LANGUAGES and alt_lang != "de":
+        conn.execute("UPDATE projects SET alt_language = ? WHERE id = ?", (alt_lang, project_id))
     conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
     conn.commit()
     conn.close()
@@ -1571,9 +1579,9 @@ async def demo_chat(request: Request):
 
     chk = demo_mod.check_chat(request)
     if not chk["allowed"]:
-        raise HTTPException(status_code=429, detail=(
-            f"Du hast die {demo_mod.daily_chat_limit()} kostenlosen Chat-Nachrichten für heute genutzt. "
-            "Für unbegrenztes Verfeinern: kostenlos registrieren."))
+        # Sichtbarer Text in Besuchersprache (.po-Eintrag manuell, s. demo_generate).
+        _ = get_gettext(detect_language(request))
+        raise HTTPException(status_code=429, detail=_('Du hast die {n} kostenlosen Chat-Nachrichten für heute genutzt. Für unbegrenztes Verfeinern: kostenlos registrieren.').format(n=demo_mod.daily_chat_limit()))
 
     conn = get_db()
     proj = conn.execute(
@@ -3850,8 +3858,11 @@ async def mark_news_seen(user: dict = Depends(get_current_user)):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     # Demo-Instanz: die Wurzel IST die oeffentliche Demo-Seite (statt Login/Dashboard).
+    # Seit 04.07.2026 als Jinja2-Template fuenfsprachig; Sprache per Browser-
+    # Erkennung bzw. lang-Cookie — bewusst ohne Umschalter (Steve 03.07.2026).
     if demo_mod.demo_enabled():
-        return FileResponse("/app/frontend/demo.html")
+        return templates.TemplateResponse(
+            "demo.html", template_context(request, detect_language(request)))
     lang = detect_language(request)
     registration_enabled = os.getenv("REGISTRATION_ENABLED", "true").lower() not in ("false", "0", "no")
     is_staging = "staging" in BASE_URL
@@ -3870,23 +3881,26 @@ async def index(request: Request):
 # des Werkzeugs setzen ein Login voraus und leiten anonyme Besucher zur Wurzel um.
 # Der Rechtstext selbst kommt per fetch aus den oeffentlichen Routen (Single Source).
 @app.get("/demo-impressum", response_class=HTMLResponse)
-async def demo_impressum_page():
+async def demo_impressum_page(request: Request):
     if demo_mod.demo_enabled():
-        return FileResponse("/app/frontend/demo-impressum.html")
+        return templates.TemplateResponse(
+            "demo-impressum.html", template_context(request, detect_language(request)))
     return RedirectResponse("/")
 
 
 @app.get("/demo-datenschutz", response_class=HTMLResponse)
-async def demo_datenschutz_page():
+async def demo_datenschutz_page(request: Request):
     if demo_mod.demo_enabled():
-        return FileResponse("/app/frontend/demo-datenschutz.html")
+        return templates.TemplateResponse(
+            "demo-datenschutz.html", template_context(request, detect_language(request)))
     return RedirectResponse("/")
 
 
 @app.get("/demo-nutzungsbedingungen", response_class=HTMLResponse)
-async def demo_nutzungsbedingungen_page():
+async def demo_nutzungsbedingungen_page(request: Request):
     if demo_mod.demo_enabled():
-        return FileResponse("/app/frontend/demo-nutzungsbedingungen.html")
+        return templates.TemplateResponse(
+            "demo-nutzungsbedingungen.html", template_context(request, detect_language(request)))
     return RedirectResponse("/")
 
 
