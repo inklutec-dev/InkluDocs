@@ -128,6 +128,7 @@ def call_mistral_with_schema(
     image_path: str,
     schema: Type[T],
     max_tokens: int = 1500,
+    system: 'str | None' = None,
     temperature: float = 0.0,
 ) -> T:
     """Mistral-Call mit Strict JSON Schema Mode + Pydantic-Validierung.
@@ -149,6 +150,9 @@ def call_mistral_with_schema(
     """
     from pdf_processor import _resize_image_for_model  # lazy zur Vermeidung von Circular-Import
     img_b64 = _resize_image_for_model(image_path)
+    if system:
+        # Mistral-Fallback: System-Anteil dem Prompt voranstellen (kein separates Feld noetig).
+        prompt = system + '\n\n' + prompt
     schema_dict = schema.model_json_schema()
 
     response_format = {

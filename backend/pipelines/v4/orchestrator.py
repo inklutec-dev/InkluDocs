@@ -38,6 +38,7 @@ from prompts.builders import (
     build_validierung_prompt,
     handle_dekorativ_classification,
 )
+from prompts.components.roles import SYSTEM_BESCHREIBUNG
 from prompts.components.schemas import (
     BeschreibungOutput,
     BildtypEffective,
@@ -320,7 +321,8 @@ def _run_multipass_pipeline(
             prompt=mini_prompt,
             image_path=image_path,
             schema=IconBeschreibungOutput,
-            max_tokens=300,  # Mini-Pipelines liefern <80 Zeichen — 300 Tokens reichen.
+            max_tokens=300,
+            system=SYSTEM_BESCHREIBUNG,  # Mini-Pipelines liefern <80 Zeichen — 300 Tokens reichen.
         )
     else:
         # Standard-Pfad mit Inventar.
@@ -343,6 +345,7 @@ def _run_multipass_pipeline(
             image_path=image_path,
             schema=BeschreibungOutput,
             max_tokens=2500,
+            system=SYSTEM_BESCHREIBUNG,
         )
 
     # Halluzinations-Self-Check: hat das Modell Items genannt die nicht im Inventar sind?
@@ -670,6 +673,7 @@ def _run_lean_pipeline(
             image_path=image_path,
             schema=IconBeschreibungOutput,
             max_tokens=300,
+            system=SYSTEM_BESCHREIBUNG,
         )
     else:
         # Hauptpfad: Combo-Aufruf mit Inventar+Beschreibung in einem Schritt
@@ -688,7 +692,8 @@ def _run_lean_pipeline(
             image_path=image_path,
             schema=BeschreibungOutput,
             max_tokens=3500,  # Lean: mehr Tokens weil Inventar+Beschreibung
-            temperature=temperature,  # Variation nur beim Neu-Generieren; Klassifikation bleibt deterministisch
+            temperature=temperature,
+            system=SYSTEM_BESCHREIBUNG,  # Variation nur beim Neu-Generieren; Klassifikation bleibt deterministisch
         )
 
     # === Self-Check: Halluzinations-Indikator ohne Validator-Pass ===

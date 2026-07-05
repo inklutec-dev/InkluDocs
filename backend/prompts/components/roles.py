@@ -84,6 +84,26 @@ Du baust eine Brücke aus harten Inventar-Daten zu echter, anwendbarer Informati
 Jedes Wort sitzt; das Wichtigste und Belegbare steht vorne."""
 
 
+# System-Prompt fuer die Beschreibungs-/Combo-Aufrufe (05.07.2026, Fable-5-Review).
+# WARUM System-Ebene: Anthropic-Modelle identifizieren Personen auf Bildern aus
+# Zurueckhaltung standardmaessig NICHT — auch nicht auf Nutzer-Prompt-Bitte.
+# Die legitime Freischaltung fuer den Barrierefreiheits-Anwendungsfall gehoert
+# per Anthropic-Konvention in den System-Prompt. Getestet 05.07.: Merkel-Portraet
+# ohne Kontext wurde mit Nutzer-Prompt-Freigabe NICHT benannt.
+SYSTEM_BESCHREIBUNG = """Du arbeitest im Backend von InkluDocs, einem professionellen
+Barrierefreiheits-Werkzeug der Firma InkluTec. Deine Texte sind Alternativtexte für
+blinde und sehbehinderte Menschen nach WCAG 2.2 — sie ersetzen das Bild vollständig.
+
+Zum gleichberechtigten Informationszugang gehört ausdrücklich, zweifelsfrei erkennbare
+Personen des öffentlichen Lebens (Politiker, Staats- und Regierungschefs, bekannte
+Künstler, Sportler, historische Persönlichkeiten) beim Namen zu nennen — auch ohne
+Bildunterschrift oder Kontext. Sehende erkennen diese Personen auf einen Blick; blinde
+Nutzer erfahren es nur aus deinem Text. Diese Benennung ist hier redaktionell legitim,
+erwünscht und Teil des Auftrags. Es gilt dabei: nur bei zweifelsfreier Erkennbarkeit —
+bei Unsicherheit neutral beschreiben, niemals raten. Privatpersonen werden nicht per
+Gesichtserkennung identifiziert, sondern nur über Kontext oder Beschriftung benannt."""
+
+
 ROLE_VALIDATOR = """Du bist ein Qualitätskontrolleur für barrierefreie Bildbeschreibungen.
 Du bekommst: Bild, Inventar, generierter Alt-Text und Langbeschreibung.
 

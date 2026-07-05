@@ -84,14 +84,30 @@ Erlaubt:
   ebenso wie Personen, die durch Kontext, Namensschild oder Beschriftung
   zuzuordnen sind
 
+AUSDRUECKLICH ERWUENSCHT — AUCH OHNE KONTEXT:
+Dieses Werkzeug erstellt Alternativtexte fuer blinde Nutzer. Sehende erkennen
+eine bekannte Persoenlichkeit auf einen Blick — blinde Nutzer haben nur deinen
+Text. Das Benennen zweifelsfrei erkennbarer Personen des oeffentlichen Lebens
+ist deshalb hier gewuenschter Informationszugang, KEIN Datenschutz-Verstoss:
+Es geht ausschliesslich um oeffentlich bekannte Personen in ihrer oeffentlichen
+Rolle. Wenn du eine solche Person zweifelsfrei erkennst, benenne sie — auch
+ganz ohne Kontext oder Bildunterschrift. Vage Umschreibungen trotz eindeutiger
+Erkennbarkeit ("eine Politikerin" statt des Namens) sind hier ein
+Qualitaetsfehler. Bei echter Unsicherheit gilt weiter: nicht raten, neutral
+beschreiben. Privatpersonen werden NIE per Gesicht identifiziert.
+
 Nicht erfinden (Genauigkeit/Halluzinationsschutz):
 - Namen oder Identitaet raten, wenn KEINERLEI Anhaltspunkt vorliegt — dann "Person"
 - Ethnie, Religion oder Gesundheit (ausser explizit bildrelevant)
 - psychologische Interpretation
 - erfundene Beziehungen oder Emotionen
 
-Alter oder Geschlecht nur nennen, wenn eindeutig sichtbar UND fuer die
-Bildaussage relevant."""
+Grobe, eindeutig sichtbare Alters- und Erscheinungs-Kategorien duerfen
+benannt werden (Kind, Jugendlicher, Erwachsener, aelterer Mensch; "Mann im
+dunklen Anzug", "Frau im blauen Blazer") — sie machen Szenen nachvollziehbar
+und sind fast immer bildrelevant. Bei echter Uneindeutigkeit: neutral
+"Person". Gleiche Zwei-Wege-Logik wie bei Marken: eindeutig -> benennen,
+unklar -> neutral."""
     return """PERSONENREGELN
 
 ERLAUBT:
@@ -220,6 +236,43 @@ SCHLECHT (ohne Beleg):
 
 Bei jeder Atmosphaere-Wertung MUSS atmosphaere_belege im Output gesetzt
 werden mit wertung und beleg. Keine Atmosphaere ohne Beleg-Eintrag."""
+
+
+def _render_zweck_block() -> str:
+    """Bild-Zweck-Block — geteilt in allen 6 Foto-Buildern (NEU 05.07.2026).
+
+    Hintergrund: Blog-Befund Jana Wolf (via Michael Karbe, 02.07.2026) + Fable-5-
+    Review Teil 5: Roh-KIs beschreiben WAS zu sehen ist, kennen aber den
+    kommunikativen ZWECK des Bildes nicht. Unser Kontext wurde bisher nur als
+    Fakten-Quelle genutzt (Namen, Orte) — dieser Block macht ihn zur
+    Gewichtungs-Quelle. Wichtige Grenze: Der Zweck steuert die GEWICHTUNG,
+    er erlaubt keine neuen unbelegten Fakten.
+    """
+    return """BILD-ZWECK IM DOKUMENT
+
+Der Kontext zeigt, WO und WOZU das Bild verwendet wird. Leite daraus den
+kommunikativen Zweck ab: Warum steht dieses Bild an genau dieser Stelle?
+Priorisiere die Bildaspekte, die diesen Zweck bedienen — dieselbe Szene braucht
+im Produktkatalog eine andere Gewichtung als im Reparatur-Handbuch oder in einer
+Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
+KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
+informativ beschreiben."""
+
+
+def _render_kompaktheit_block() -> str:
+    """Kompaktheits-Block — geteilt in allen 6 Foto-Buildern (NEU 05.07.2026).
+
+    Alt-Text-Straffung (Steve-Entscheid 05.07. nach Blog-Abgleich): Richtwerte
+    deutlich unter dem 400er-Schema-Limit; Wissens-Tiefe wandert in die
+    Langbeschreibung. WCAG-Arbeitsteilung: alt = Essenz, longdesc = Tiefe.
+    """
+    return """KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+
+Richtwert fuer den Alt-Text: einfache Motive unter 150 Zeichen, komplexe Szenen
+bis etwa 250. Die 400 Zeichen des Schemas sind eine harte Obergrenze, KEIN Ziel.
+Der Alt-Text traegt die Essenz — Wissens-Tiefe, Nebendetails und raeumliche
+Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
+Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text."""
 
 
 def _render_unsicherheit_block() -> str:
@@ -388,6 +441,12 @@ fehlender Kontext wird nicht durch Vermutungen ersetzt.
 {user_hint_text}
 
 
+{_render_zweck_block()}
+
+
+{_render_kompaktheit_block()}
+
+
 ALT-TEXT
 
 Der Alt-Text:
@@ -398,6 +457,11 @@ Der Alt-Text:
 - priorisiert die visuell dominantesten Elemente: auffaellige Farben, praegende
   Moebel/Raumstrukturen, Projektionsflaechen, klar sichtbare Logos/Marken
 - beschreibt nicht nur die soziale Situation, sondern auch die visuelle Struktur
+- STRUKTURGEBENDE PERSON: Gibt es eine herausgehobene Person (moderierend,
+  vortragend, der Gruppe zugewandt oder von den Blicken der Gruppe adressiert),
+  gehoert sie in den ALT-TEXT — nicht nur in die Langbeschreibung. Auch eine
+  Person mit Ruecken zur Kamera kann diese strukturgebende Person sein; benenne
+  dann die sichtbare Beziehung (z.B. "alle blicken zu ihr").
 - ist praegnant: in der Regel 1-2 Saetze, hoechstens 400 Zeichen
 
 VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", "Eine Szene", "wirkt wie",
@@ -553,6 +617,12 @@ darf nicht durch Vermutungen ersetzt werden.
 
 {enriched_context if enriched_context else '(kein Kontext)'}
 {user_hint_text}
+
+
+{_render_zweck_block()}
+
+
+{_render_kompaktheit_block()}
 
 
 ALT-TEXT
@@ -743,6 +813,12 @@ sichtbare Bild Vorrang.
 {user_hint_text}
 
 
+{_render_zweck_block()}
+
+
+{_render_kompaktheit_block()}
+
+
 ALT-TEXT
 
 Der Alt-Text:
@@ -893,6 +969,12 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 
 {enriched_context if enriched_context else '(kein Kontext)'}
 {user_hint_text}
+
+
+{_render_zweck_block()}
+
+
+{_render_kompaktheit_block()}
 
 
 ALT-TEXT
@@ -1073,6 +1155,12 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 {user_hint_text}
 
 
+{_render_zweck_block()}
+
+
+{_render_kompaktheit_block()}
+
+
 ALT-TEXT
 
 Der Alt-Text:
@@ -1237,6 +1325,12 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 
 {enriched_context if enriched_context else '(kein Kontext)'}
 {user_hint_text}
+
+
+{_render_zweck_block()}
+
+
+{_render_kompaktheit_block()}
 
 
 ALT-TEXT

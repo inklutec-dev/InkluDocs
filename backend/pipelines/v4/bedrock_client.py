@@ -97,6 +97,7 @@ def _invoke_bedrock(
     schema_dict: dict,
     max_tokens: int,
     temperature: float = 0.0,
+    system: str | None = None,
 ) -> dict:
     """Bedrock-Invoke-Call mit Anthropic-Tool-Use fuer Strict-JSON.
 
@@ -133,6 +134,11 @@ def _invoke_bedrock(
         }],
         'tool_choice': {'type': 'tool', 'name': schema_name},
     }
+    # System-Prompt (05.07.2026): Mission/Rolle auf System-Ebene — wirksamste
+    # Position bei Anthropic-Modellen; noetig u.a. fuer die legitime Benennung
+    # oeffentlicher Personen in Alternativtexten (Barrierefreiheits-Auftrag).
+    if system:
+        body['system'] = system
 
     try:
         response = client.invoke_model(
@@ -169,6 +175,7 @@ def call_bedrock_with_schema(
     schema: Type[T],
     max_tokens: int = 1500,
     temperature: float = 0.0,
+    system: str | None = None,
 ) -> T:
     """Bedrock-Call mit Anthropic-Tool-Use + Pydantic-Validierung.
 
@@ -189,6 +196,7 @@ def call_bedrock_with_schema(
         schema_dict=schema_dict,
         max_tokens=max_tokens,
         temperature=temperature,
+        system=system,
     )
 
     try:
@@ -213,6 +221,7 @@ def call_bedrock_with_schema(
             schema_dict=schema_dict,
             max_tokens=max_tokens,
             temperature=temperature,
+            system=system,
         )
         try:
             return schema.model_validate(retry_raw)
