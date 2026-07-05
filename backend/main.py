@@ -51,7 +51,11 @@ from tools import TOOLS, is_valid_tool_key
 # dort jeden Vorschlag einzeln prueft und Variation ausdruecklich wuenscht.
 # Klassifikation bleibt immer deterministisch (temp 0, im Orchestrator).
 GENERATION_TEMPERATURE = 0.3   # Normalbetrieb; jederzeit verstellbar (0.0-0.5)
-REGENERATE_TEMPERATURE = 0.7   # nur beim Einzel-Neu-Generieren
+REGENERATE_TEMPERATURE = 0.5   # Einzel-Neu-Generieren; seit 05.07.2026 gesenkt,
+# weil die Variation nicht mehr allein am Zufall haengt: der bisherige Alt-Text
+# wird als previous_alt mitgereicht und der Orchestrator haengt eine gezielte
+# Variations-Anweisung an (_variation_suffix) — Verschiedenheit per Auftrag,
+# Fakten bleiben stabil.
 
 # Generate a persistent SECRET_KEY if not set
 SECRET_KEY_FILE = "/app/data/.secret_key"
@@ -2670,6 +2674,9 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         regen_ctx_mode = "mit" if _use_context else "ohne"
         # Ausgabesprache: aktuelle Projekt-Einstellung gilt auch fuer Einzel-Neu-Generieren.
         regen_lang = img["alt_language"] if img["alt_language"] in ALT_TEXT_LANGUAGES else "de"
+        # Gezielte Variation (05.07.2026): der Text, den der Nutzer gerade sieht
+        # (manuell editierte Fassung hat Vorrang), geht als Abgrenzungs-Vorlage mit.
+        regen_previous = img["alt_text_edited"] or img["alt_text"] or ""
 
         # T6 (03.05.2026): Cache evictieren BEVOR die Pipeline laeuft. Ein expliziter
         # Re-Generate-Klick soll alle Cache-Varianten dieses Bildes loeschen (auch andere
@@ -2688,7 +2695,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text, img["image_path"], regen_context, effective_type,
             regen_width, regen_height, regen_original_alt, True, REGENERATE_TEMPERATURE,  # force_regenerate=True; Variation beim Einzel-Neu-Generieren
-            regen_lang
+            regen_lang, regen_previous
         )
 
         langbeschreibung = result.get("langbeschreibung", "")

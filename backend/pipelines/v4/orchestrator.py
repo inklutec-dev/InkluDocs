@@ -90,6 +90,33 @@ def _language_suffix(language: str) -> str:
     )
 
 
+def _variation_suffix(previous_alt: str) -> str:
+    """Gezielte Variation beim Einzel-Neu-Generieren (05.07.2026).
+
+    Statt reiner Zufalls-Temperatur bekommt das Modell den bisherigen Alt-Text
+    als Abgrenzungs-Vorlage und den Auftrag, sich deutlich davon abzuheben —
+    bei identischer Faktenlage. Leer bei Erst-Generierung und im Sammellauf
+    (previous_alt kommt nur vom Neu-Generieren-Endpunkt). Haengt wie
+    _language_suffix zentral am fertigen Prompt und gilt damit automatisch
+    fuer alle heutigen und kuenftigen Builder.
+    """
+    prev = (previous_alt or '').strip()
+    if not prev:
+        return ''
+    if len(prev) > 600:
+        prev = prev[:600] + ' …'
+    return (
+        '\n\nVARIATION (NEU GENERIEREN): Der Nutzer wünscht eine Alternative zu '
+        'diesem bisherigen Alt-Text:\n'
+        f'"{prev}"\n'
+        'Schreibe eine DEUTLICH anders formulierte und anders gewichtete Fassung: '
+        'anderer Satzeinstieg, anderer Satzbau, gern eine andere Reihenfolge oder '
+        'ein anderer Schwerpunkt bei gleichwertigen Aspekten. Die Faktenlage bleibt '
+        'identisch — keine neuen unbelegten Aussagen, nichts Wesentliches weglassen. '
+        'Alle übrigen Regeln gelten unverändert.'
+    )
+
+
 # Bildtypen die einen Inventar-Pass benötigen.
 INVENTAR_PFLICHTIG: frozenset[str] = frozenset({
     'foto', 'illustration', 'diagramm', 'tabelle', 'karte',
@@ -190,6 +217,7 @@ def _run_multipass_pipeline(
     height: int = 0,
     original_alt: str = '',
     language: str = 'de',
+    previous_alt: str = '',
 ) -> dict:
     """v4-Entry-Point. Wird vom pdf_processor.generate_alt_text gerufen wenn
     PIPELINE_VERSION=v4.
@@ -316,6 +344,7 @@ def _run_multipass_pipeline(
             user_hint=user_hint,
         )
         mini_prompt += _language_suffix(language)
+        mini_prompt += _variation_suffix(previous_alt)
         beschreibung = call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
             prompt=mini_prompt,
@@ -339,6 +368,7 @@ def _run_multipass_pipeline(
             user_hint=user_hint,
         )
         besch_prompt += _language_suffix(language)
+        besch_prompt += _variation_suffix(previous_alt)
         beschreibung = call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
             prompt=besch_prompt,
@@ -462,6 +492,7 @@ def generate_alt_text_v4(
     original_alt: str = '',
     temperature: float = 0.0,  # 0 = deterministisch (Default/Bulk); >0 nur beim Einzel-Neu-Generieren
     language: str = 'de',
+    previous_alt: str = '',  # bisheriger Alt-Text — nur beim Neu-Generieren gesetzt (gezielte Variation)
 ) -> dict:
     """v4-Eintrittspunkt mit Mode-Dispatcher.
 
@@ -483,6 +514,7 @@ def generate_alt_text_v4(
             original_alt=original_alt,
             temperature=temperature,
             language=language,
+            previous_alt=previous_alt,
         )
     # Default: Multi-Pass (rueckwaertskompatibel zu Mistral-Setup)
     return _run_multipass_pipeline(
@@ -494,6 +526,7 @@ def generate_alt_text_v4(
         height=height,
         original_alt=original_alt,
         language=language,
+        previous_alt=previous_alt,
     )
 
 
@@ -568,6 +601,7 @@ def _run_lean_pipeline(
     original_alt: str = '',
     temperature: float = 0.0,
     language: str = 'de',
+    previous_alt: str = '',
 ) -> dict:
     """Lean-Pipeline: 1 Klassifikations-Aufruf + 1 Combo-Hauptaufruf.
 
@@ -667,6 +701,7 @@ def _run_lean_pipeline(
             user_hint=user_hint,
         )
         mini_prompt += _language_suffix(language)
+        mini_prompt += _variation_suffix(previous_alt)
         beschreibung = call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
             prompt=mini_prompt,
@@ -686,6 +721,7 @@ def _run_lean_pipeline(
             user_hint=user_hint,
         )
         combo_prompt += _language_suffix(language)
+        combo_prompt += _variation_suffix(previous_alt)
         beschreibung = call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
             prompt=combo_prompt,

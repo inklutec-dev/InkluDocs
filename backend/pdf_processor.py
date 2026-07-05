@@ -827,7 +827,7 @@ def _call_ollama(image_path: str, prompt: str) -> dict:
 def generate_alt_text(image_path: str, context: str = "", image_type: str = None,
                       width: int = 0, height: int = 0, original_alt: str = "",
                       force_regenerate: bool = False, temperature: float = 0.0,
-                      language: str = "de") -> dict:
+                      language: str = "de", previous_alt: str = "") -> dict:
     """Front-Door — Cache-Check + Routing zur konfigurierten Pipeline-Version.
 
     T5 (03.05.2026, Phase A): explizites Routing v3_7|v4 ueber PIPELINE_VERSION env.
@@ -861,6 +861,7 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
             original_alt=original_alt,
             temperature=temperature,
             language=language,
+            previous_alt=previous_alt,
         )
     else:
         # Hinweis Ausgabesprache: der v3.7-Mistral-Fallback kennt keinen
