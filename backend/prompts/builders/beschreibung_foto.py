@@ -3,7 +3,10 @@
 Sub-Typen werden vom Inventar-Pass entschieden — siehe BildtypEffective
 im Schema-Paket und BILDTYP_INVENTAR_SCHWERPUNKTE['foto'] im inventar.py.
 
-Alle 6 Builder folgen dem gleichen Aufbau:
+Alle 6 Builder folgen dem gleichen Aufbau (ROLE_BESCHREIBER war zwischen
+den Refactorings 05/06-2026 versehentlich aus allen 6 Buildern herausgefallen —
+am 05.07.2026 nach Fable-5-Review wieder eingesetzt, s. Desktop-Doku
+Premium-Prompt-Review-Fable5.txt):
   ROLE_BESCHREIBER + ANTI_HALLUZINATION_REGELN + (ATMOSPHAERE_REGEL je nach Typ)
   + (PERSONEN_REGELN bei foto_personen/foto_event)
   + (KONTAKTDATEN_PFLICHT bei Typen wo Kontaktdaten häufig vorkommen)
@@ -347,7 +350,9 @@ def build_beschreibung_prompt_foto_event(
     inventar_json = inventar.model_dump_json(indent=2)
     user_hint_text = user_hint_block(user_hint)
 
-    return f"""{ANTI_HALLUZINATION_REGELN}
+    return f"""{ROLE_BESCHREIBER}
+
+{ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_event
 BILDGROESSE: {width}x{height} Pixel
@@ -395,7 +400,7 @@ Der Alt-Text:
 - beschreibt nicht nur die soziale Situation, sondern auch die visuelle Struktur
 - ist praegnant: in der Regel 1-2 Saetze, hoechstens 400 Zeichen
 
-VERMEIDEN: "Das Bild zeigt", "Auf dem Bild", "Eine Szene", "wirkt wie",
+VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", "Eine Szene", "wirkt wie",
 "im Rahmen einer Veranstaltung", journalistische/erzaehlerische Sprache.
 
 
@@ -501,7 +506,9 @@ def build_beschreibung_prompt_foto_personen(
     inventar_json = inventar.model_dump_json(indent=2)
     user_hint_text = user_hint_block(user_hint)
 
-    return f"""{ANTI_HALLUZINATION_REGELN}
+    return f"""{ROLE_BESCHREIBER}
+
+{ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_personen
 BILDGROESSE: {width}x{height} Pixel
@@ -569,7 +576,11 @@ muss der Name im Alt-Text auftauchen — nicht nur in der Langbeschreibung.
 
 VERMEIDEN:
 - "Das Bild zeigt"
+- "Das Foto zeigt"
 - "Auf dem Bild"
+- "Auf dem Foto"
+- "Zu sehen ist"
+- "Hier sieht man"
 - "Eine Gruppe von Personen"
 - "Mehrere Menschen"
 - "wirkt wie"
@@ -680,7 +691,9 @@ def build_beschreibung_prompt_foto_objekte(
     halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
     halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ANTI_HALLUZINATION_REGELN}
+    return f"""{ROLE_BESCHREIBER}
+
+{ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_objekte
 BILDGROESSE: {width}x{height} Pixel
@@ -739,7 +752,7 @@ Der Alt-Text:
 - macht Form und Beschaffenheit nachvollziehbar
 - uebernimmt lesbaren Text und relevante Beschriftungen
 
-VERMEIDEN: generische Einleitungen, blosse Inventarlisten, vage Umschreibungen
+VERMEIDEN: generische Einleitungen ("Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man"), blosse Inventarlisten, vage Umschreibungen
 fuer eindeutig Benennbares.
 
 
@@ -762,6 +775,8 @@ Oberflaeche, Boden, Struktur oder Spiegelung — aber erfinde keinen Inhalt
 
 
 LANGBESCHREIBUNG
+
+Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" — steige direkt mit dem Objekt ein.
 
 Sinnvolle Reihenfolge: zentrales Objekt (konkret benannt) -> Form und Proportion
 -> Oberflaeche, Struktur, Material -> raeumliche Anordnung -> sichtbare Details
@@ -828,7 +843,9 @@ def build_beschreibung_prompt_foto_essen(
     halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
     halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ANTI_HALLUZINATION_REGELN}
+    return f"""{ROLE_BESCHREIBER}
+
+{ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_essen
 BILDGROESSE: {width}x{height} Pixel
@@ -891,7 +908,7 @@ Der Alt-Text:
 - ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze; das Zeichenlimit ist
   Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
 
-VERMEIDEN: "Das Bild zeigt", "Auf dem Teller befindet sich", blosse
+VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Foto", "Zu sehen ist", "Auf dem Teller befindet sich", blosse
 Inventarlisten, vage Umschreibungen fuer klar Benennbares, sowie mikroskopische
 Details (Poren, Lentizellen, einzelne Maserungen) — die gehoeren nicht in einen
 kompakten Alt-Text.
@@ -938,7 +955,7 @@ Restaurant und keinen Anlass, die nicht belegt sind.
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt" oder "Auf dem Teller".
+Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Foto", "Zu sehen ist" oder "Auf dem Teller".
 Sinnvolle Reihenfolge ohne sie als Ueberschriften zu setzen:
 Gericht (konkret benannt), sichtbare Hauptkomponenten und Beilagen, Anrichtung
 und Geschirr (Material/Farbe wenn relevant), Setting wenn relevant (Restaurant-
@@ -1009,7 +1026,9 @@ def build_beschreibung_prompt_foto_landschaft(
     halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
     halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ANTI_HALLUZINATION_REGELN}
+    return f"""{ROLE_BESCHREIBER}
+
+{ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_landschaft
 BILDGROESSE: {width}x{height} Pixel
@@ -1066,7 +1085,7 @@ Der Alt-Text:
 - ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze; das Zeichenlimit ist
   Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
 
-VERMEIDEN: "Das Bild zeigt", "Auf dem Bild", generische Einleitungen, blosse
+VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", generische Einleitungen, blosse
 Inventarlisten, vage Umschreibungen fuer klar Benennbares.
 
 
@@ -1093,7 +1112,7 @@ aus Prinzip vage bleiben, wenn die Landschaftsart klar belegt ist.
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt" oder "Auf dem Bild".
+Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man".
 Folge inhaltlich dieser Reihenfolge, ohne sie als
 Ueberschriften zu setzen: zuerst Landschaftsart und Gesamtraum (Vorder-, Mittel-,
 Hintergrund, Tiefe), dann Topografie (Hoehen, Senken, Ebenen, Gewaesser), dann
@@ -1171,7 +1190,9 @@ def build_beschreibung_prompt_foto_architektur(
     halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
     halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ANTI_HALLUZINATION_REGELN}
+    return f"""{ROLE_BESCHREIBER}
+
+{ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_architektur
 BILDGROESSE: {width}x{height} Pixel
@@ -1230,7 +1251,7 @@ Der Alt-Text:
 - ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze. Das Zeichenlimit ist eine
   Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
 
-VERMEIDEN: "Das Bild zeigt", "Auf dem Bild", generische Einleitungen, blosse
+VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", generische Einleitungen, blosse
 Inventarlisten, das Auslisten jeder Saeule/jedes Fensters.
 
 
@@ -1265,7 +1286,7 @@ immer wortgetreu uebernehmen.
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt" oder "Auf dem Bild".
+Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man".
 Halte auch die Langbeschreibung kompakt: Bauwerkstyp/Name
 und Gesamtform, dann Fassade/Material, dann die markantesten Elemente (Dachform,
 Saeulen, Tuerme), dann die Einbettung in die Umgebung, zuletzt lesbare
