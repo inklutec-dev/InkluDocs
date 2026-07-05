@@ -3949,11 +3949,26 @@ async def demo_nutzungsbedingungen_page(request: Request):
 async def set_language(lang: str, request: Request):
     """Wechsle UI-Sprache via Session-Cookie (spaeter auch in DB fuer User)."""
     referer = request.headers.get("referer", "/")
-    # Zielort immer zurueck zum Referer, aber nur wenn same-origin (Sicherheit)
-    if referer and (referer.startswith(BASE_URL) or referer.startswith("/")):
+    # Zielort immer zurueck zum Referer, aber nur same-origin (Sicherheit).
+    # Host-Vergleich statt BASE_URL-Praefix: die App laeuft unter mehreren
+    # Domains (inkludocs.de, www.inkludocs.de, inkludocs.inklutec.de) —
+    # der alte Praefix-Check passte nur auf EINE davon; auf allen anderen
+    # landete der Sprachwechsel faelschlich auf "/" (= Anmeldemaske).
+    # Weitergeleitet wird nur der Pfad, nie eine fremde absolute URL.
+    from urllib.parse import urlsplit
+    redirect_to = "/"
+    if referer.startswith("/") and not referer.startswith("//"):
         redirect_to = referer
     else:
-        redirect_to = "/"
+        try:
+            parts = urlsplit(referer)
+            req_host = (request.url.hostname or "").lower()
+            if parts.hostname and req_host and parts.hostname.lower() == req_host:
+                redirect_to = parts.path or "/"
+                if parts.query:
+                    redirect_to += "?" + parts.query
+        except ValueError:
+            pass
     response = RedirectResponse(redirect_to, status_code=303)
     if lang in SUPPORTED_LANGUAGES:
         # 1 Jahr gueltig, samesite=lax, nicht HttpOnly (Client koennte lesen).
