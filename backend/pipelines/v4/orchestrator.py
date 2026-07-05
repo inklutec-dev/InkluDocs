@@ -90,6 +90,98 @@ def _language_suffix(language: str) -> str:
     )
 
 
+# ── Verify-Pass (Fable-5-Review Fund 3, 05.07.2026) ─────────────────────────
+# Der Lean-Modus hat keinen Validator mehr; der Selbst-Check (nicht_im_inventar)
+# ist wirkungslos, weil dasselbe Modell sich gegen sein eigenes Kopf-Inventar
+# nie belastet. Dieser unabhaengige Pruef-Aufruf versucht stattdessen aktiv,
+# den fertigen Alt-Text gegen das Bild zu WIDERLEGEN (Refuter-Muster) — faengt
+# Transkriptions-Ausrutscher (Markennamen, Zahlen, zitierte Texte) und falsche
+# Benennungen. Fehler im Verify duerfen die Generierung NIE blockieren.
+#
+# Schaltung per ENV V4_VERIFY_MODE:
+#   'off' (Default) — kein Verify (Kosten-Entscheidung: +1 Bild-Aufruf/Pruefung)
+#   'kritisch'      — nur risikoreiche Typen (Personen, Events, Objekte, Screenshots)
+#   'alle'          — jeder Nicht-Mini-Typ
+from pydantic import BaseModel, Field, field_validator
+
+
+class VerifyOutput(BaseModel):
+    """Schema des Verify-Passes (bewusst klein — nur Verdikt + Belege).
+
+    Tolerant gebaut (Befund Ersttest 05.07.): Modelle liefern die Liste
+    gelegentlich als JSON-String und schreiben laengere Anmerkungen —
+    beides wird normalisiert statt hart abgelehnt, damit der Verify nie
+    an Formalien scheitert.
+    """
+    alt_text_belegt: bool = Field(description='True wenn JEDE konkrete Behauptung des Alt-Texts durch das Bild gedeckt ist')
+    strittige_aussagen: list[str] = Field(default_factory=list, description='Woertlich zitierte strittige Behauptungen mit kurzem Grund')
+    anmerkung: str = Field(default='')
+
+    @field_validator('strittige_aussagen', mode='before')
+    @classmethod
+    def _coerce_list(cls, v):
+        if isinstance(v, str):
+            import json as _json
+            try:
+                parsed = _json.loads(v)
+                if isinstance(parsed, list):
+                    return [str(x) for x in parsed]
+            except ValueError:
+                pass
+            return [v] if v.strip() else []
+        return v
+
+
+_VERIFY_KRITISCHE_TYPEN = frozenset({'foto_personen', 'foto_event', 'foto_objekte', 'screenshot'})
+
+
+def _verify_scope_matches(bildtyp: str) -> bool:
+    mode = os.environ.get('V4_VERIFY_MODE', 'off').strip().lower()
+    if mode == 'alle':
+        return True
+    if mode == 'kritisch':
+        return bildtyp in _VERIFY_KRITISCHE_TYPEN
+    return False
+
+
+def _build_verify_prompt(alt_text: str) -> str:
+    return (
+        'Du bist ein unabhaengiger Qualitaetspruefer fuer Alternativtexte. '
+        'Deine EINZIGE Aufgabe: versuche, den folgenden Alt-Text anhand des Bildes '
+        'zu WIDERLEGEN. Pruefe jede konkrete Behauptung einzeln gegen das Bild:\n'
+        '- Marken-, Produkt- und Personen-Namen (stimmen sie exakt?)\n'
+        '- wortgetreu zitierte Texte und Aufschriften (Buchstabe fuer Buchstabe)\n'
+        '- Zahlen, Mengen, Groessenangaben, Anzahl von Personen oder Objekten\n'
+        '- Farben und eindeutige visuelle Merkmale\n\n'
+        'alt_text_belegt=false NUR, wenn eine konkrete Behauptung falsch oder im '
+        'Bild nicht belegt ist. Stil, Wortwahl oder Vollstaendigkeit sind KEINE '
+        'Pruefkriterien. Feine Farb- oder Deutungs-Nuancen sind nur strittig, wenn der Alt-Text klar danebenliegt. Plausibel reicht nicht als Widerlegung — du brauchst einen '
+        'sichtbaren Widerspruch. '
+        'Die Benennung zweifelsfrei erkennbarer Personen des oeffentlichen Lebens '
+        'ist in diesem Barrierefreiheits-Werkzeug legitim und erwuenscht — pruefe '
+        'nur, ob es die RICHTIGE Person ist, nicht OB benannt werden darf.\n\n'
+        f'ALT-TEXT ZUR PRUEFUNG:\n"{alt_text}"'
+    )
+
+
+def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str):
+    """Fuehrt den Verify-Aufruf aus. Gibt VerifyOutput oder None (Fehler/aus) zurueck."""
+    if not alt_text or not _verify_scope_matches(bildtyp):
+        return None
+    try:
+        return call_mistral_with_schema(
+            model=MISTRAL_MODEL_GENERATE,
+            prompt=_build_verify_prompt(alt_text),
+            image_path=image_path,
+            schema=VerifyOutput,
+            max_tokens=600,
+            system=SYSTEM_BESCHREIBUNG,  # gleiche Legitimation wie die Generierung
+        )
+    except Exception as e:  # Verify ist Sicherheitsnetz, nie Blocker
+        log.warning('Verify-Pass fehlgeschlagen (ignoriert): %s', e)
+        return None
+
+
 def _variation_suffix(previous_alt: str) -> str:
     """Gezielte Variation beim Einzel-Neu-Generieren (05.07.2026).
 
@@ -743,6 +835,17 @@ def _run_lean_pipeline(
         )
         needs_review = True
 
+    # === Verify-Pass (optional per V4_VERIFY_MODE, s. Bausteine oben) ===
+    verify_result = None
+    if effective_bildtyp not in _MINI_TYPES:
+        verify_result = _run_verify_pass(image_path, effective_bildtyp, beschreibung.alt_text)
+        if verify_result is not None and not verify_result.alt_text_belegt:
+            log.warning(
+                'Verify-Pass: Alt-Text nicht voll belegt (%s): %s',
+                effective_bildtyp, verify_result.strittige_aussagen,
+            )
+            needs_review = True
+
     langbeschreibung = (
         beschreibung.langbeschreibung
         if isinstance(beschreibung, BeschreibungOutput)
@@ -755,7 +858,10 @@ def _run_lean_pipeline(
         'alt_text': beschreibung.alt_text,
         'langbeschreibung': langbeschreibung,
         'needs_review': needs_review,
-        'pipeline_steps': f'lean:classified:{classification.bildtyp},combo:{effective_bildtyp}',
+        'pipeline_steps': (
+            f'lean:classified:{classification.bildtyp},combo:{effective_bildtyp}'
+            + (f',verify:ok={verify_result.alt_text_belegt}' if verify_result is not None else '')
+        ),
         'inventar_json': None,  # Im Lean-Mode kein separates Inventar-Objekt
-        'validation_result': None,  # Im Lean-Mode kein Validator-Pass
+        'validation_result': verify_result.model_dump_json() if verify_result is not None else None,
     }

@@ -827,6 +827,10 @@ Der Alt-Text:
 - priorisiert die sichtbar wichtigsten, charakteristischen Eigenschaften
 - macht Form und Beschaffenheit nachvollziehbar
 - uebernimmt lesbaren Text und relevante Beschriftungen
+- begrenzt Werbe-Claims der Verpackung auf die zwei bis drei kennzeichnendsten
+  (die das Produkt identifizieren oder unterscheiden) — nicht jede Aussage
+  der Verpackung abschreiben; weitere Claims gehoeren, wenn ueberhaupt,
+  in die Langbeschreibung
 
 VERMEIDEN: generische Einleitungen ("Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man"), blosse Inventarlisten, vage Umschreibungen
 fuer eindeutig Benennbares.
