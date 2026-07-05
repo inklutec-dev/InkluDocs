@@ -88,6 +88,31 @@ def _detect_media_type(image_path: str) -> str:
     return 'image/jpeg'  # Default: jpg/jpeg + AVIF/HEIC/HEIF (vom Resize konvertiert)
 
 
+def _detect_media_type_from_bytes(image_b64: str, image_path: str) -> str:
+    """Media-Type aus den ECHTEN gesendeten Bytes statt der Datei-Endung.
+
+    Budni-Befund 05.07.2026: _resize_image_for_model re-encodiert grosse
+    Bilder als PNG. Bei .webp-Quellen (>1536px) passte die aus der Endung
+    abgeleitete Deklaration ('image/webp') nicht mehr zu den PNG-Bytes ->
+    Bedrock ValidationException, Bild scheiterte (4 von 37 auf budni.de).
+    Byte-Signatur ist die Wahrheit; die Endungs-Heuristik bleibt Fallback.
+    """
+    import base64
+    try:
+        head = base64.b64decode(image_b64[:32])
+    except Exception:
+        return _detect_media_type(image_path)
+    if head.startswith(b'\x89PNG'):
+        return 'image/png'
+    if head.startswith(b'\xff\xd8'):
+        return 'image/jpeg'
+    if head.startswith(b'GIF8'):
+        return 'image/gif'
+    if head[:4] == b'RIFF' and head[8:12] == b'WEBP':
+        return 'image/webp'
+    return _detect_media_type(image_path)
+
+
 def _invoke_bedrock(
     model: str,
     prompt: str,
@@ -120,7 +145,7 @@ def _invoke_bedrock(
                     'type': 'image',
                     'source': {
                         'type': 'base64',
-                        'media_type': _detect_media_type(image_path),
+                        'media_type': _detect_media_type_from_bytes(image_b64, image_path),
                         'data': image_b64,
                     },
                 },
