@@ -111,9 +111,11 @@ def _variation_suffix(previous_alt: str) -> str:
         f'"{prev}"\n'
         'Schreibe eine DEUTLICH anders formulierte und anders gewichtete Fassung: '
         'anderer Satzeinstieg, anderer Satzbau, gern eine andere Reihenfolge oder '
-        'ein anderer Schwerpunkt bei gleichwertigen Aspekten. Die Faktenlage bleibt '
-        'identisch — keine neuen unbelegten Aussagen, nichts Wesentliches weglassen. '
-        'Alle übrigen Regeln gelten unverändert.'
+        'ein anderer Schwerpunkt bei gleichwertigen Aspekten. Das gilt für Alt-Text '
+        'UND Langbeschreibung. Die Faktenlage bleibt identisch — keine neuen '
+        'unbelegten Aussagen, und belegte Kernfakten (Namen, Marken, Typen, lesbare '
+        'Texte wie Schild- oder Gate-Aufschriften) bleiben in BEIDEN Feldern der '
+        'neuen Fassung erhalten. Alle übrigen Regeln gelten unverändert.'
     )
 
 
