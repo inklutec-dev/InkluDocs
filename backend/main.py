@@ -3842,6 +3842,10 @@ def _append_link_reference(alt_text: str, context_text: str) -> str:
 
 NEUIGKEITEN = [
     # Neueste zuerst. Nur Eintraege, die fuer Nutzer relevant + auf Production live sind.
+    {"datum": "05.07.2026", "text": "InkluDocs in deiner Sprache: Die Oberfläche gibt es jetzt auf Deutsch, Englisch, Französisch, Spanisch und Dänisch. Deine Sprache stellst du in den Einstellungen um."},
+    {"datum": "05.07.2026", "text": "Alt-Texte in mehreren Sprachen: Je Projekt wählst du die Ausgabesprache der generierten Texte – jederzeit umschaltbar. Das Anhören nutzt automatisch die passende Stimme."},
+    {"datum": "05.07.2026", "text": "Upload verbessert: Das Hochladen antwortet sofort, die Verarbeitung läuft im Hintergrund weiter – auch bei großen PDFs."},
+    {"datum": "05.07.2026", "text": "Foto-Beschreibungen verbessert: Essen, Landschaften und Architektur werden präziser beschrieben, bekannte Wahrzeichen benannt."},
     {"datum": "25.06.2026", "text": "Passwort anzeigen: Bei Anmeldung, Registrierung und Passwort-Änderung kannst du dein Passwort jetzt per Häkchen sichtbar machen."},
     {"datum": "22.06.2026", "text": "Gastzugang: Du kannst ein Projekt mit einer Person ohne Konto teilen – sie kann deine Alt-Texte ansehen, kommentieren und freigeben."},
     {"datum": "19.06.2026", "text": "Seitentext übersichtlicher dargestellt; Alt-Texte und Beschreibungen lassen sich jetzt anhören."},
