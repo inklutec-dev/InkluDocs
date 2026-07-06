@@ -1876,3 +1876,6 @@ msgstr "Kunne ikke ændre egen prompt."
 
 msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
 msgstr "Netværksfejl ved ændring af egen prompt."
+
+msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
+msgstr "Ingen prompts gemt endnu. Opret din første via knappen nedenfor."

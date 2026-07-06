@@ -2188,3 +2188,6 @@ msgstr ""
 
 msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
 msgstr ""
+
+msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
+msgstr ""

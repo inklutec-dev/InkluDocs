@@ -2185,3 +2185,6 @@ msgstr "No se pudo cambiar el prompt propio."
 
 msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
 msgstr "Error de red al cambiar el prompt propio."
+
+msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
+msgstr "Todavía no hay prompts guardados. Crea el primero con el botón de abajo."

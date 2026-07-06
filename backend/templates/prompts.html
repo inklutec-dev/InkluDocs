@@ -4,7 +4,16 @@
       <h1>{{ _('Eigene Prompts') }}</h1>
       <p class="dash-sub">{{ _('Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll.') }}</p>
 
-      <section class="dash-card" aria-labelledby="promptform-h">
+      <section class="dash-card" aria-labelledby="promptlist-h">
+        <h2 id="promptlist-h">{{ _('Gespeicherte Prompts') }}</h2>
+        <div id="promptList" aria-busy="true">
+          <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
+        </div>
+      </section>
+
+      <p><button type="button" class="btn btn-primary" id="promptNewBtn">{{ _('Neuen Prompt anlegen') }}</button></p>
+
+      <section class="dash-card" aria-labelledby="promptform-h" id="promptFormCard" hidden>
         <h2 id="promptform-h">{{ _('Neuen Prompt anlegen') }}</h2>
         <form id="promptForm" novalidate>
           <input type="hidden" id="promptEditId" value="">
@@ -29,16 +38,9 @@
             <p id="promptTextHint" class="dash-meta">{{ _('Deine Anweisung an die KI, zum Beispiel: Formuliere besonders förmlich und nenne immer zuerst die Marke.') }}</p>
           </div>
           <button type="submit" class="btn btn-primary" id="promptSubmitBtn">{{ _('Speichern') }}</button>
-          <button type="button" class="btn btn-secondary" id="promptCancelBtn" hidden>{{ _('Abbrechen') }}</button>
+          <button type="button" class="btn btn-secondary" id="promptCancelBtn">{{ _('Abbrechen') }}</button>
           <span id="promptMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
         </form>
-      </section>
-
-      <section class="dash-card" aria-labelledby="promptlist-h">
-        <h2 id="promptlist-h">{{ _('Gespeicherte Prompts') }}</h2>
-        <div id="promptList" aria-busy="true">
-          <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
-        </div>
       </section>
 {% endblock %}
 {% block page_script %}
@@ -47,6 +49,9 @@
   // Eigene Prompts (Prompt-Verwaltung, 06.07.2026). Muster wie einstellungen.html:
   // DOM-basiertes Rendern (textContent = XSS-sicher), announce() + role=status
   // fuer Screenreader-Rueckmeldungen, natives confirm() wie in projekte.html.
+  // Seitenaufbau (Steve 06.07.): ERST die gespeicherten Prompts, die Anlege-
+  // Maske ist zugeklappt und oeffnet sich erst ueber den Knopf (Fokusfuehrung:
+  // rein ins Namensfeld, beim Schliessen zurueck auf den Knopf).
   let _prompts = [];
 
   function _pEl(id) { return document.getElementById(id); }
@@ -65,7 +70,19 @@
     ['promptName', 'promptCategory', 'promptDescription', 'promptText'].forEach((id) => { _pEl(id).value = ''; });
     _pEl('promptform-h').textContent = t('Neuen Prompt anlegen');
     _pEl('promptSubmitBtn').textContent = t('Speichern');
-    _pEl('promptCancelBtn').hidden = true;
+  }
+
+  function _openPromptForm() {
+    _pEl('promptFormCard').hidden = false;
+    _pEl('promptNewBtn').hidden = true;
+    _pEl('promptName').focus();
+  }
+
+  function _closePromptForm() {
+    _resetPromptForm();
+    _pEl('promptFormCard').hidden = true;
+    _pEl('promptNewBtn').hidden = false;
+    _pEl('promptNewBtn').focus();
   }
 
   function _promptStatus(msg) {
@@ -95,7 +112,7 @@
     if (!_prompts.length) {
       const p = document.createElement('p');
       p.className = 'dash-meta';
-      p.textContent = t('Noch keine Prompts gespeichert. Lege oben deinen ersten an.');
+      p.textContent = t('Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an.');
       cont.appendChild(p);
       return;
     }
@@ -164,8 +181,7 @@
     _pEl('promptText').value = pr.prompt_text || '';
     _pEl('promptform-h').textContent = t('Prompt bearbeiten');
     _pEl('promptSubmitBtn').textContent = t('Änderungen speichern');
-    _pEl('promptCancelBtn').hidden = false;
-    _pEl('promptName').focus();
+    _openPromptForm();
     _promptStatus(t('Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular.', { name: pr.name }));
   }
 
@@ -178,10 +194,15 @@
       _promptStatus(t('Löschen fehlgeschlagen. Bitte später erneut versuchen.'));
       return;
     }
-    if (_pEl('promptEditId').value === String(id)) _resetPromptForm();
+    if (_pEl('promptEditId').value === String(id)) _closePromptForm();
     _promptStatus(t('Prompt gelöscht.'));
     loadPrompts();
   }
+
+  _pEl('promptNewBtn').addEventListener('click', () => {
+    _resetPromptForm();
+    _openPromptForm();
+  });
 
   _pEl('promptForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -205,13 +226,13 @@
       _promptStatus(t('Speichern fehlgeschlagen. Bitte später erneut versuchen.'));
       return;
     }
-    _resetPromptForm();
+    _closePromptForm();
     _promptStatus(t('Prompt gespeichert.'));
     loadPrompts();
   });
 
   _pEl('promptCancelBtn').addEventListener('click', () => {
-    _resetPromptForm();
+    _closePromptForm();
     _promptStatus(t('Bearbeitung abgebrochen. Formular ist wieder leer.'));
   });
 

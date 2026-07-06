@@ -2185,3 +2185,6 @@ msgstr "Changing the custom prompt failed."
 
 msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
 msgstr "Network error while changing the custom prompt."
+
+msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
+msgstr "No prompts saved yet. Create your first one via the button below."

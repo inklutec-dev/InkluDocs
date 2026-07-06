@@ -2185,3 +2185,6 @@ msgstr "Échec du changement de prompt personnalisé."
 
 msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
 msgstr "Erreur réseau lors du changement de prompt personnalisé."
+
+msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
+msgstr "Aucun prompt enregistré pour le moment. Crée le premier via le bouton ci-dessous."
