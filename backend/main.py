@@ -1132,6 +1132,138 @@ async def set_language_setting(project_id: int, request: Request, user: dict = D
     return {"ok": True, "language": lang}
 
 
+# ─── Eigene Prompts (Prompt-Verwaltung, 06.07.2026) ─────────────────────────
+# Vom Nutzer gespeicherte Zusatz-Anweisungen fuer die Alt-Text-Generierung.
+# Ein Projekt referenziert ueber projects.prompt_id genau einen aktiven Prompt
+# (NULL = keiner). Der Text geht additiv als Suffix in die v4-Pipeline
+# (_user_prompt_suffix im Orchestrator) — die Premium-Prompts bleiben unangetastet.
+
+PROMPT_NAME_MAX = 100
+PROMPT_CATEGORY_MAX = 60
+PROMPT_DESCRIPTION_MAX = 300
+PROMPT_TEXT_MAX = 4000
+
+
+def _clean_prompt_payload(data: dict) -> dict:
+    """Validiert die Prompt-Felder; wirft HTTPException bei Verstoessen."""
+    name = str(data.get("name") or "").strip()
+    category = str(data.get("category") or "").strip()
+    description = str(data.get("description") or "").strip()
+    prompt_text = str(data.get("prompt_text") or "").strip()
+    if not name or not prompt_text:
+        raise HTTPException(status_code=400, detail="Name und Prompt-Text sind Pflichtfelder")
+    if len(name) > PROMPT_NAME_MAX:
+        raise HTTPException(status_code=400, detail=f"Name darf maximal {PROMPT_NAME_MAX} Zeichen lang sein")
+    if len(category) > PROMPT_CATEGORY_MAX:
+        raise HTTPException(status_code=400, detail=f"Kategorie darf maximal {PROMPT_CATEGORY_MAX} Zeichen lang sein")
+    if len(description) > PROMPT_DESCRIPTION_MAX:
+        raise HTTPException(status_code=400, detail=f"Beschreibung darf maximal {PROMPT_DESCRIPTION_MAX} Zeichen lang sein")
+    if len(prompt_text) > PROMPT_TEXT_MAX:
+        raise HTTPException(status_code=400, detail=f"Prompt-Text darf maximal {PROMPT_TEXT_MAX} Zeichen lang sein")
+    return {"name": name, "category": category, "description": description, "prompt_text": prompt_text}
+
+
+@app.get("/api/prompts")
+async def list_prompts(user: dict = Depends(get_current_user)):
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, name, description, category, prompt_text, created_at, updated_at "
+        "FROM user_prompts WHERE user_id = ? ORDER BY LOWER(category), LOWER(name)",
+        (user["id"],)
+    ).fetchall()
+    conn.close()
+    return {"prompts": [dict(r) for r in rows]}
+
+
+@app.post("/api/prompts")
+async def create_prompt(request: Request, user: dict = Depends(get_current_user)):
+    fields = _clean_prompt_payload(await request.json())
+    conn = get_db()
+    cur = conn.execute(
+        "INSERT INTO user_prompts (user_id, name, description, category, prompt_text) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (user["id"], fields["name"], fields["description"], fields["category"], fields["prompt_text"])
+    )
+    conn.commit()
+    new_id = cur.lastrowid
+    conn.close()
+    return {"ok": True, "id": new_id}
+
+
+@app.patch("/api/prompts/{prompt_id}")
+async def update_prompt(prompt_id: int, request: Request, user: dict = Depends(get_current_user)):
+    fields = _clean_prompt_payload(await request.json())
+    conn = get_db()
+    cur = conn.execute(
+        "UPDATE user_prompts SET name = ?, description = ?, category = ?, prompt_text = ?, "
+        "updated_at = datetime('now') WHERE id = ? AND user_id = ?",
+        (fields["name"], fields["description"], fields["category"], fields["prompt_text"], prompt_id, user["id"])
+    )
+    conn.commit()
+    affected = cur.rowcount
+    conn.close()
+    if not affected:
+        raise HTTPException(status_code=404, detail="Prompt nicht gefunden")
+    return {"ok": True}
+
+
+@app.delete("/api/prompts/{prompt_id}")
+async def delete_prompt(prompt_id: int, user: dict = Depends(get_current_user)):
+    conn = get_db()
+    # Projekte, die diesen Prompt nutzen, fallen auf "kein eigener Prompt" zurueck.
+    conn.execute(
+        "UPDATE projects SET prompt_id = NULL WHERE prompt_id = ? AND user_id = ?",
+        (prompt_id, user["id"])
+    )
+    cur = conn.execute(
+        "DELETE FROM user_prompts WHERE id = ? AND user_id = ?",
+        (prompt_id, user["id"])
+    )
+    conn.commit()
+    affected = cur.rowcount
+    conn.close()
+    if not affected:
+        raise HTTPException(status_code=404, detail="Prompt nicht gefunden")
+    return {"ok": True}
+
+
+@app.post("/api/projects/{project_id}/prompt-setting")
+async def set_prompt_setting(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Setzt den aktiven eigenen Prompt eines Projekts (06.07.2026).
+
+    Lebende Projekt-Einstellung wie die Ausgabesprache: gilt fuer alles, was
+    AB JETZT generiert wird (Sammellauf, Einzel-Neu-Generieren, InkluAgent).
+    prompt_id null/leer = kein eigener Prompt (Standardverhalten).
+    """
+    data = await request.json()
+    raw = data.get("prompt_id")
+    prompt_id = None
+    if raw not in (None, "", 0, "0"):
+        try:
+            prompt_id = int(raw)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Ungueltige prompt_id")
+    conn = get_db()
+    if prompt_id is not None:
+        owned = conn.execute(
+            "SELECT 1 FROM user_prompts WHERE id = ? AND user_id = ?",
+            (prompt_id, user["id"])
+        ).fetchone()
+        if not owned:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Prompt nicht gefunden")
+    cur = conn.execute(
+        "UPDATE projects SET prompt_id = ? WHERE id = ? AND user_id = ?",
+        (prompt_id, project_id, user["id"])
+    )
+    conn.commit()
+    affected = cur.rowcount
+    conn.close()
+    if not affected:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    return {"ok": True, "prompt_id": prompt_id}
+
+
 @app.get("/api/tools")
 async def list_tools(user: dict = Depends(get_current_user)):
     """Liefert die im Dashboard angebotenen Werkzeuge (Quelle: tools.py)."""
@@ -2439,6 +2571,18 @@ async def _process_project(project_id: int, user_id: int):
     alt_lang = (_proj["alt_language"] if (_proj and _proj["alt_language"]) else "de")
     if alt_lang not in ALT_TEXT_LANGUAGES:
         alt_lang = "de"
+    # Eigener Prompt (06.07.2026): aktiver gespeicherter Prompt des Projekt-
+    # Besitzers — geht additiv als user_prompt in die Pipeline. Geloeschter
+    # oder fremder Prompt liefert keine Zeile -> leer = Standardverhalten.
+    user_prompt = ""
+    _up = conn.execute(
+        "SELECT up.prompt_text FROM user_prompts up "
+        "JOIN projects p ON p.prompt_id = up.id AND p.user_id = up.user_id "
+        "WHERE p.id = ?",
+        (project_id,)
+    ).fetchone()
+    if _up and _up["prompt_text"]:
+        user_prompt = _up["prompt_text"]
 
     for img in images:
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
@@ -2457,7 +2601,7 @@ async def _process_project(project_id: int, user_id: int):
             result = await asyncio.get_event_loop().run_in_executor(
                 None, generate_alt_text, img["image_path"], effective_context, None,
                 img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE,  # force_regenerate=False; leicht lebendigere Standard-Texte
-                alt_lang
+                alt_lang, "", user_prompt
             )
 
             # Second pass: if complex type detected, re-generate with specialized prompt
@@ -2473,7 +2617,7 @@ async def _process_project(project_id: int, user_id: int):
                 specialized_result = await asyncio.get_event_loop().run_in_executor(
                     None, generate_alt_text, img["image_path"], effective_context, detected_type,
                     img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE,
-                    alt_lang
+                    alt_lang, "", user_prompt
                 )
                 if specialized_result.get("langbeschreibung"):
                     langbeschreibung = specialized_result["langbeschreibung"]
@@ -2645,7 +2789,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
 
     conn = get_db()
     img = conn.execute(
-        """SELECT i.*, p.use_context AS use_context, p.alt_language AS alt_language FROM images i
+        """SELECT i.*, p.use_context AS use_context, p.alt_language AS alt_language, p.prompt_id AS prompt_id FROM images i
            JOIN projects p ON i.project_id = p.id
            WHERE i.id = ? AND i.project_id = ? AND p.user_id = ?""",
         (image_id, project_id, user["id"])
@@ -2677,6 +2821,15 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         # Gezielte Variation (05.07.2026): der Text, den der Nutzer gerade sieht
         # (manuell editierte Fassung hat Vorrang), geht als Abgrenzungs-Vorlage mit.
         regen_previous = img["alt_text_edited"] or img["alt_text"] or ""
+        # Eigener Prompt: aktive Projekt-Einstellung gilt auch beim Einzel-Neu-Generieren.
+        regen_user_prompt = ""
+        if img["prompt_id"]:
+            _up = conn.execute(
+                "SELECT prompt_text FROM user_prompts WHERE id = ? AND user_id = ?",
+                (img["prompt_id"], user["id"])
+            ).fetchone()
+            if _up and _up["prompt_text"]:
+                regen_user_prompt = _up["prompt_text"]
 
         # T6 (03.05.2026): Cache evictieren BEVOR die Pipeline laeuft. Ein expliziter
         # Re-Generate-Klick soll alle Cache-Varianten dieses Bildes loeschen (auch andere
@@ -2695,7 +2848,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         result = await asyncio.get_event_loop().run_in_executor(
             None, generate_alt_text, img["image_path"], regen_context, effective_type,
             regen_width, regen_height, regen_original_alt, True, REGENERATE_TEMPERATURE,  # force_regenerate=True; Variation beim Einzel-Neu-Generieren
-            regen_lang, regen_previous
+            regen_lang, regen_previous, regen_user_prompt
         )
 
         langbeschreibung = result.get("langbeschreibung", "")
@@ -4091,6 +4244,11 @@ async def new_project_page(request: Request):
 @app.get("/einstellungen", response_class=HTMLResponse)
 async def settings_page(request: Request):
     return _render_protected_template(request, "einstellungen.html")
+
+
+@app.get("/prompts", response_class=HTMLResponse)
+async def prompts_page(request: Request):
+    return _render_protected_template(request, "prompts.html")
 
 
 @app.get("/benutzer", response_class=HTMLResponse)

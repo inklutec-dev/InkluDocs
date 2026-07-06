@@ -2089,3 +2089,99 @@ msgstr "Processing the PDF failed. Please try the file again."
 #: Async-Upload (04.07.2026)
 msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
 msgstr "Processing is taking unusually long. Please reload the page later and check the document list."
+
+msgid "Eigene Prompts"
+msgstr "My prompts"
+
+msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
+msgstr "Here you can save your own instructions for the AI. Inside a project you then choose which of these prompts should additionally apply during generation."
+
+msgid "Neuen Prompt anlegen"
+msgstr "Create a new prompt"
+
+msgid "Name (Pflichtfeld)"
+msgstr "Name (required)"
+
+msgid "z. B. Förmlicher Ton oder Produktbeschreibungen"
+msgstr "e.g. Formal tone or Product descriptions"
+
+msgid "Kategorie (optional)"
+msgstr "Category (optional)"
+
+msgid "Frei wählbar, gruppiert deine Liste, z. B. Marketing oder Technik."
+msgstr "Free text, groups your list, e.g. Marketing or Technology."
+
+msgid "Beschreibung (optional)"
+msgstr "Description (optional)"
+
+msgid "Kurze Notiz, wofür der Prompt gedacht ist."
+msgstr "A short note on what this prompt is for."
+
+msgid "Prompt-Text (Pflichtfeld)"
+msgstr "Prompt text (required)"
+
+msgid "Deine Anweisung an die KI, zum Beispiel: Formuliere besonders förmlich und nenne immer zuerst die Marke."
+msgstr "Your instruction for the AI, for example: Use a very formal style and always mention the brand first."
+
+msgid "Gespeicherte Prompts"
+msgstr "Saved prompts"
+
+msgid "Ohne Kategorie"
+msgstr "No category"
+
+msgid "Prompt-Text anzeigen"
+msgstr "Show prompt text"
+
+msgid "Noch keine Prompts gespeichert. Lege oben deinen ersten an."
+msgstr "No prompts saved yet. Create your first one above."
+
+msgid "Bitte Name und Prompt-Text ausfüllen."
+msgstr "Please fill in the name and the prompt text."
+
+msgid "Prompt gespeichert."
+msgstr "Prompt saved."
+
+msgid "Prompt gelöscht."
+msgstr "Prompt deleted."
+
+msgid "Speichern fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Saving failed. Please try again later."
+
+msgid "Löschen fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Deleting failed. Please try again later."
+
+msgid "Diesen Prompt wirklich löschen? Projekte, die ihn verwenden, nutzen dann wieder keinen eigenen Prompt."
+msgstr "Really delete this prompt? Projects using it will fall back to no custom prompt."
+
+msgid "Prompt bearbeiten"
+msgstr "Edit prompt"
+
+msgid "Änderungen speichern"
+msgstr "Save changes"
+
+msgid "Bearbeitung abgebrochen. Formular ist wieder leer."
+msgstr "Editing cancelled. The form is empty again."
+
+msgid "Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular."
+msgstr "Prompt {name} loaded for editing. The fields are in the form above."
+
+msgid "Eigener Prompt"
+msgstr "Custom prompt"
+
+msgid "Kein eigener Prompt"
+msgstr "No custom prompt"
+
+msgid "Prompts verwalten"
+msgstr "Manage prompts"
+
+msgid "Eigener Prompt umgestellt: {name}. Gilt für alles, was ab jetzt generiert wird."
+msgstr "Custom prompt changed: {name}. Applies to everything generated from now on."
+
+msgid "Eigener Prompt entfernt. Es gilt wieder das Standardverhalten."
+msgstr "Custom prompt removed. Standard behaviour applies again."
+
+msgid "Umstellen des eigenen Prompts fehlgeschlagen."
+msgstr "Changing the custom prompt failed."
+
+msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
+msgstr "Network error while changing the custom prompt."

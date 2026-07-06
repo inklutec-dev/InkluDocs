@@ -1,0 +1,221 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Eigene Prompts') }} · InkluDocs{% endblock %}
+{% block main %}
+      <h1>{{ _('Eigene Prompts') }}</h1>
+      <p class="dash-sub">{{ _('Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll.') }}</p>
+
+      <section class="dash-card" aria-labelledby="promptform-h">
+        <h2 id="promptform-h">{{ _('Neuen Prompt anlegen') }}</h2>
+        <form id="promptForm" novalidate>
+          <input type="hidden" id="promptEditId" value="">
+          <div class="dash-field">
+            <label for="promptName">{{ _('Name (Pflichtfeld)') }}</label>
+            <input type="text" id="promptName" class="dash-input" required maxlength="100" aria-describedby="promptNameHint" autocomplete="off">
+            <p id="promptNameHint" class="dash-meta">{{ _('z. B. Förmlicher Ton oder Produktbeschreibungen') }}</p>
+          </div>
+          <div class="dash-field">
+            <label for="promptCategory">{{ _('Kategorie (optional)') }}</label>
+            <input type="text" id="promptCategory" class="dash-input" maxlength="60" aria-describedby="promptCategoryHint" autocomplete="off">
+            <p id="promptCategoryHint" class="dash-meta">{{ _('Frei wählbar, gruppiert deine Liste, z. B. Marketing oder Technik.') }}</p>
+          </div>
+          <div class="dash-field">
+            <label for="promptDescription">{{ _('Beschreibung (optional)') }}</label>
+            <input type="text" id="promptDescription" class="dash-input" maxlength="300" aria-describedby="promptDescriptionHint" autocomplete="off">
+            <p id="promptDescriptionHint" class="dash-meta">{{ _('Kurze Notiz, wofür der Prompt gedacht ist.') }}</p>
+          </div>
+          <div class="dash-field">
+            <label for="promptText">{{ _('Prompt-Text (Pflichtfeld)') }}</label>
+            <textarea id="promptText" class="dash-input" required maxlength="4000" rows="5" aria-describedby="promptTextHint"></textarea>
+            <p id="promptTextHint" class="dash-meta">{{ _('Deine Anweisung an die KI, zum Beispiel: Formuliere besonders förmlich und nenne immer zuerst die Marke.') }}</p>
+          </div>
+          <button type="submit" class="btn btn-primary" id="promptSubmitBtn">{{ _('Speichern') }}</button>
+          <button type="button" class="btn btn-secondary" id="promptCancelBtn" hidden>{{ _('Abbrechen') }}</button>
+          <span id="promptMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        </form>
+      </section>
+
+      <section class="dash-card" aria-labelledby="promptlist-h">
+        <h2 id="promptlist-h">{{ _('Gespeicherte Prompts') }}</h2>
+        <div id="promptList" aria-busy="true">
+          <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
+        </div>
+      </section>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  // Eigene Prompts (Prompt-Verwaltung, 06.07.2026). Muster wie einstellungen.html:
+  // DOM-basiertes Rendern (textContent = XSS-sicher), announce() + role=status
+  // fuer Screenreader-Rueckmeldungen, natives confirm() wie in projekte.html.
+  let _prompts = [];
+
+  function _pEl(id) { return document.getElementById(id); }
+
+  function _promptFormValues() {
+    return {
+      name: _pEl('promptName').value.trim(),
+      category: _pEl('promptCategory').value.trim(),
+      description: _pEl('promptDescription').value.trim(),
+      prompt_text: _pEl('promptText').value.trim(),
+    };
+  }
+
+  function _resetPromptForm() {
+    _pEl('promptEditId').value = '';
+    ['promptName', 'promptCategory', 'promptDescription', 'promptText'].forEach((id) => { _pEl(id).value = ''; });
+    _pEl('promptform-h').textContent = t('Neuen Prompt anlegen');
+    _pEl('promptSubmitBtn').textContent = t('Speichern');
+    _pEl('promptCancelBtn').hidden = true;
+  }
+
+  function _promptStatus(msg) {
+    _pEl('promptMsg').textContent = msg;
+    announce(msg);
+  }
+
+  async function loadPrompts() {
+    const cont = _pEl('promptList');
+    let data;
+    try {
+      const res = await fetch('/api/prompts', { credentials: 'same-origin' });
+      if (res.status === 401) { window.location.href = '/'; return; }
+      data = await res.json();
+    } catch (e) {
+      cont.setAttribute('aria-busy', 'false');
+      return;
+    }
+    _prompts = data.prompts || [];
+    renderPrompts();
+  }
+
+  function renderPrompts() {
+    const cont = _pEl('promptList');
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+    if (!_prompts.length) {
+      const p = document.createElement('p');
+      p.className = 'dash-meta';
+      p.textContent = t('Noch keine Prompts gespeichert. Lege oben deinen ersten an.');
+      cont.appendChild(p);
+      return;
+    }
+    const groups = new Map();
+    _prompts.forEach((pr) => {
+      const cat = (pr.category || '').trim() || t('Ohne Kategorie');
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat).push(pr);
+    });
+    groups.forEach((items, cat) => {
+      const h3 = document.createElement('h3');
+      h3.textContent = cat;
+      cont.appendChild(h3);
+      const ul = document.createElement('ul');
+      ul.className = 'dash-list';
+      items.forEach((pr) => {
+        const li = document.createElement('li');
+        li.className = 'dash-item';
+        const h4 = document.createElement('h4');
+        h4.textContent = pr.name;
+        li.appendChild(h4);
+        if (pr.description) {
+          const d = document.createElement('p');
+          d.className = 'dash-meta';
+          d.textContent = pr.description;
+          li.appendChild(d);
+        }
+        const det = document.createElement('details');
+        const sum = document.createElement('summary');
+        sum.textContent = t('Prompt-Text anzeigen');
+        det.appendChild(sum);
+        const body = document.createElement('p');
+        body.style.whiteSpace = 'pre-wrap';
+        body.textContent = pr.prompt_text;
+        det.appendChild(body);
+        li.appendChild(det);
+        const row = document.createElement('p');
+        row.style.marginTop = '.5rem';
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'btn btn-secondary';
+        editBtn.textContent = t('Bearbeiten');
+        editBtn.addEventListener('click', () => startEditPrompt(pr.id));
+        row.appendChild(editBtn);
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'btn btn-secondary';
+        delBtn.style.marginLeft = '.5rem';
+        delBtn.textContent = t('Löschen');
+        delBtn.addEventListener('click', () => deletePrompt(pr.id));
+        row.appendChild(delBtn);
+        li.appendChild(row);
+        ul.appendChild(li);
+      });
+      cont.appendChild(ul);
+    });
+  }
+
+  function startEditPrompt(id) {
+    const pr = _prompts.find((p) => p.id === id);
+    if (!pr) return;
+    _pEl('promptEditId').value = String(pr.id);
+    _pEl('promptName').value = pr.name || '';
+    _pEl('promptCategory').value = pr.category || '';
+    _pEl('promptDescription').value = pr.description || '';
+    _pEl('promptText').value = pr.prompt_text || '';
+    _pEl('promptform-h').textContent = t('Prompt bearbeiten');
+    _pEl('promptSubmitBtn').textContent = t('Änderungen speichern');
+    _pEl('promptCancelBtn').hidden = false;
+    _pEl('promptName').focus();
+    _promptStatus(t('Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular.', { name: pr.name }));
+  }
+
+  async function deletePrompt(id) {
+    if (!confirm(t('Diesen Prompt wirklich löschen? Projekte, die ihn verwenden, nutzen dann wieder keinen eigenen Prompt.'))) return;
+    try {
+      const res = await fetch('/api/prompts/' + id, { method: 'DELETE', credentials: 'same-origin' });
+      if (!res.ok) { _promptStatus(t('Löschen fehlgeschlagen. Bitte später erneut versuchen.')); return; }
+    } catch (e) {
+      _promptStatus(t('Löschen fehlgeschlagen. Bitte später erneut versuchen.'));
+      return;
+    }
+    if (_pEl('promptEditId').value === String(id)) _resetPromptForm();
+    _promptStatus(t('Prompt gelöscht.'));
+    loadPrompts();
+  }
+
+  _pEl('promptForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const fields = _promptFormValues();
+    if (!fields.name || !fields.prompt_text) {
+      _promptStatus(t('Bitte Name und Prompt-Text ausfüllen.'));
+      return;
+    }
+    const editId = _pEl('promptEditId').value;
+    const url = editId ? '/api/prompts/' + editId : '/api/prompts';
+    const method = editId ? 'PATCH' : 'POST';
+    try {
+      const res = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(fields),
+      });
+      if (!res.ok) { _promptStatus(t('Speichern fehlgeschlagen. Bitte später erneut versuchen.')); return; }
+    } catch (e) {
+      _promptStatus(t('Speichern fehlgeschlagen. Bitte später erneut versuchen.'));
+      return;
+    }
+    _resetPromptForm();
+    _promptStatus(t('Prompt gespeichert.'));
+    loadPrompts();
+  });
+
+  _pEl('promptCancelBtn').addEventListener('click', () => {
+    _resetPromptForm();
+    _promptStatus(t('Bearbeitung abgebrochen. Formular ist wieder leer.'));
+  });
+
+  loadPrompts();
+{% endraw %}
+</script>
+{% endblock %}

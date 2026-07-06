@@ -62,6 +62,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: t('Startseite') },
   { href: '/projekt-neu', label: t('Neues Projekt anlegen') },
   { href: '/projekte', label: t('Meine Projekte') },
+  { href: '/prompts', label: t('Eigene Prompts') },
   { href: '/einstellungen', label: t('Einstellungen') },
   { href: '/datensicherheit', label: t('Datensicherheit') },
   { href: '/benutzer', label: t('Benutzerverwaltung'), admin: true },

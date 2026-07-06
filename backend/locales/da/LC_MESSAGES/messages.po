@@ -1780,3 +1780,99 @@ msgstr "Behandlingen af PDF'en mislykkedes. Prøv venligst igen med filen."
 #: Async-Upload (04.07.2026)
 msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
 msgstr "Behandlingen tager usædvanligt lang tid. Genindlæs venligst siden senere, og tjek dokumentlisten."
+
+msgid "Eigene Prompts"
+msgstr "Mine prompts"
+
+msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
+msgstr "Her gemmer du dine egne instruktioner til AI'en. I projektet vælger du derefter, hvilken af disse prompts der desuden skal gælde ved genereringen."
+
+msgid "Neuen Prompt anlegen"
+msgstr "Opret en ny prompt"
+
+msgid "Name (Pflichtfeld)"
+msgstr "Navn (obligatorisk)"
+
+msgid "z. B. Förmlicher Ton oder Produktbeschreibungen"
+msgstr "f.eks. Formel tone eller Produktbeskrivelser"
+
+msgid "Kategorie (optional)"
+msgstr "Kategori (valgfri)"
+
+msgid "Frei wählbar, gruppiert deine Liste, z. B. Marketing oder Technik."
+msgstr "Frit valg, grupperer din liste, f.eks. Marketing eller Teknik."
+
+msgid "Beschreibung (optional)"
+msgstr "Beskrivelse (valgfri)"
+
+msgid "Kurze Notiz, wofür der Prompt gedacht ist."
+msgstr "En kort note om, hvad prompten er tænkt til."
+
+msgid "Prompt-Text (Pflichtfeld)"
+msgstr "Prompttekst (obligatorisk)"
+
+msgid "Deine Anweisung an die KI, zum Beispiel: Formuliere besonders förmlich und nenne immer zuerst die Marke."
+msgstr "Din instruktion til AI'en, for eksempel: Formulér meget formelt og nævn altid mærket først."
+
+msgid "Gespeicherte Prompts"
+msgstr "Gemte prompts"
+
+msgid "Ohne Kategorie"
+msgstr "Uden kategori"
+
+msgid "Prompt-Text anzeigen"
+msgstr "Vis prompttekst"
+
+msgid "Noch keine Prompts gespeichert. Lege oben deinen ersten an."
+msgstr "Ingen prompts gemt endnu. Opret din første ovenfor."
+
+msgid "Bitte Name und Prompt-Text ausfüllen."
+msgstr "Udfyld venligst navn og prompttekst."
+
+msgid "Prompt gespeichert."
+msgstr "Prompt gemt."
+
+msgid "Prompt gelöscht."
+msgstr "Prompt slettet."
+
+msgid "Speichern fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Kunne ikke gemme. Prøv igen senere."
+
+msgid "Löschen fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Kunne ikke slette. Prøv igen senere."
+
+msgid "Diesen Prompt wirklich löschen? Projekte, die ihn verwenden, nutzen dann wieder keinen eigenen Prompt."
+msgstr "Vil du virkelig slette denne prompt? Projekter, der bruger den, går tilbage til ingen egen prompt."
+
+msgid "Prompt bearbeiten"
+msgstr "Redigér prompt"
+
+msgid "Änderungen speichern"
+msgstr "Gem ændringer"
+
+msgid "Bearbeitung abgebrochen. Formular ist wieder leer."
+msgstr "Redigering annulleret. Formularen er tom igen."
+
+msgid "Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular."
+msgstr "Prompt {name} indlæst til redigering. Felterne står i formularen ovenfor."
+
+msgid "Eigener Prompt"
+msgstr "Egen prompt"
+
+msgid "Kein eigener Prompt"
+msgstr "Ingen egen prompt"
+
+msgid "Prompts verwalten"
+msgstr "Administrér prompts"
+
+msgid "Eigener Prompt umgestellt: {name}. Gilt für alles, was ab jetzt generiert wird."
+msgstr "Egen prompt ændret: {name}. Gælder for alt, der genereres fra nu af."
+
+msgid "Eigener Prompt entfernt. Es gilt wieder das Standardverhalten."
+msgstr "Egen prompt fjernet. Standardadfærden gælder igen."
+
+msgid "Umstellen des eigenen Prompts fehlgeschlagen."
+msgstr "Kunne ikke ændre egen prompt."
+
+msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
+msgstr "Netværksfejl ved ændring af egen prompt."

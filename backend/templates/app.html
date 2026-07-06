@@ -598,6 +598,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             </select>
                         </div>
                     ` : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? `
+                        <div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                            <label for="ownPromptSelect" style="font-weight:600;">${t('Eigener Prompt')}</label>
+                            <select id="ownPromptSelect" onchange="setPromptSetting(${project.id}, this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
+                                <option value="">${t('Kein eigener Prompt')}</option>
+                            </select>
+                            <a href="/prompts" style="font-size:0.9rem;color:#c75000;font-weight:600;">${t('Prompts verwalten')}</a>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
             ${window.GUEST_MODE ? '' : uploadBlockHtml(project)}
@@ -621,6 +630,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         `;
 
         renderImages(images, projectId, data.show_langbeschreibung !== false, documents, project);
+
+        // Eigener Prompt (06.07.2026): Auswahlliste erst nach dem Rendern fuellen
+        // (DOM-basiert, XSS-sicher) — Fehlschlag laesst nur die Standardoption stehen.
+        populatePromptSelect(project.id, project.prompt_id);
         if (window.GUEST_MODE) { document.querySelectorAll('.langtext-field').forEach(function (f) { f.readOnly = true; }); }
         inkluagentInit(projectId);
         setupProjectDropzone(projectId);
@@ -1087,6 +1100,46 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             announce(t('Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird.', { s: names[lang] || lang }));
         } catch (e) {
             announce(t('Netzwerkfehler beim Umstellen der Sprache.'));
+        }
+    }
+
+    // Eigener Prompt (06.07.2026): lebende Projekt-Einstellung wie die
+    // Ausgabesprache — gilt fuer alles, was ab jetzt generiert wird.
+    async function populatePromptSelect(projectId, selectedId) {
+        const sel = document.getElementById('ownPromptSelect');
+        if (!sel) return;
+        try {
+            const res = await fetch('/api/prompts', { credentials: 'same-origin' });
+            if (!res.ok) return;
+            const data = await res.json();
+            (data.prompts || []).forEach((p) => {
+                const opt = document.createElement('option');
+                opt.value = String(p.id);
+                opt.textContent = p.name;
+                if (selectedId && Number(selectedId) === Number(p.id)) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        } catch (e) { /* Liste bleibt leer — Standardoption reicht */ }
+    }
+
+    async function setPromptSetting(projectId, value) {
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/prompt-setting', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'same-origin',
+                body: JSON.stringify({ prompt_id: value ? Number(value) : null })
+            });
+            if (!res.ok) { announce(t('Umstellen des eigenen Prompts fehlgeschlagen.')); return; }
+            if (value) {
+                const sel = document.getElementById('ownPromptSelect');
+                const name = sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].textContent : '';
+                announce(t('Eigener Prompt umgestellt: {name}. Gilt für alles, was ab jetzt generiert wird.', { name: name }));
+            } else {
+                announce(t('Eigener Prompt entfernt. Es gilt wieder das Standardverhalten.'));
+            }
+        } catch (e) {
+            announce(t('Netzwerkfehler beim Umstellen des eigenen Prompts.'));
         }
     }
 

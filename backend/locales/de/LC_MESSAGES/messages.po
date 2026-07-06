@@ -2092,3 +2092,99 @@ msgstr "Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der D
 #: Async-Upload (04.07.2026)
 msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
 msgstr "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
+
+msgid "Eigene Prompts"
+msgstr ""
+
+msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
+msgstr ""
+
+msgid "Neuen Prompt anlegen"
+msgstr ""
+
+msgid "Name (Pflichtfeld)"
+msgstr ""
+
+msgid "z. B. Förmlicher Ton oder Produktbeschreibungen"
+msgstr ""
+
+msgid "Kategorie (optional)"
+msgstr ""
+
+msgid "Frei wählbar, gruppiert deine Liste, z. B. Marketing oder Technik."
+msgstr ""
+
+msgid "Beschreibung (optional)"
+msgstr ""
+
+msgid "Kurze Notiz, wofür der Prompt gedacht ist."
+msgstr ""
+
+msgid "Prompt-Text (Pflichtfeld)"
+msgstr ""
+
+msgid "Deine Anweisung an die KI, zum Beispiel: Formuliere besonders förmlich und nenne immer zuerst die Marke."
+msgstr ""
+
+msgid "Gespeicherte Prompts"
+msgstr ""
+
+msgid "Ohne Kategorie"
+msgstr ""
+
+msgid "Prompt-Text anzeigen"
+msgstr ""
+
+msgid "Noch keine Prompts gespeichert. Lege oben deinen ersten an."
+msgstr ""
+
+msgid "Bitte Name und Prompt-Text ausfüllen."
+msgstr ""
+
+msgid "Prompt gespeichert."
+msgstr ""
+
+msgid "Prompt gelöscht."
+msgstr ""
+
+msgid "Speichern fehlgeschlagen. Bitte später erneut versuchen."
+msgstr ""
+
+msgid "Löschen fehlgeschlagen. Bitte später erneut versuchen."
+msgstr ""
+
+msgid "Diesen Prompt wirklich löschen? Projekte, die ihn verwenden, nutzen dann wieder keinen eigenen Prompt."
+msgstr ""
+
+msgid "Prompt bearbeiten"
+msgstr ""
+
+msgid "Änderungen speichern"
+msgstr ""
+
+msgid "Bearbeitung abgebrochen. Formular ist wieder leer."
+msgstr ""
+
+msgid "Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular."
+msgstr ""
+
+msgid "Eigener Prompt"
+msgstr ""
+
+msgid "Kein eigener Prompt"
+msgstr ""
+
+msgid "Prompts verwalten"
+msgstr ""
+
+msgid "Eigener Prompt umgestellt: {name}. Gilt für alles, was ab jetzt generiert wird."
+msgstr ""
+
+msgid "Eigener Prompt entfernt. Es gilt wieder das Standardverhalten."
+msgstr ""
+
+msgid "Umstellen des eigenen Prompts fehlgeschlagen."
+msgstr ""
+
+msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
+msgstr ""

@@ -348,7 +348,7 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
     conn = get_db()
     try:
         img = conn.execute(
-            "SELECT i.*, p.alt_language AS alt_language FROM images i "
+            "SELECT i.*, p.alt_language AS alt_language, p.prompt_id AS prompt_id FROM images i "
             "JOIN projects p ON i.project_id = p.id "
             "WHERE i.id = ? AND i.project_id = ? AND p.user_id = ?",
             (image_id, project_id, user_id),
@@ -357,6 +357,21 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
         conn.close()
     if not img:
         return None
+
+    # Eigener Prompt (06.07.2026): aktive Projekt-Einstellung gilt auch fuer
+    # Generierungen ueber den InkluAgent (gleicher Pipeline-Pfad).
+    user_prompt = ""
+    if img["prompt_id"]:
+        conn = get_db()
+        try:
+            _up = conn.execute(
+                "SELECT prompt_text FROM user_prompts WHERE id = ? AND user_id = ?",
+                (img["prompt_id"], user_id),
+            ).fetchone()
+        finally:
+            conn.close()
+        if _up and _up["prompt_text"]:
+            user_prompt = _up["prompt_text"]
 
     from pdf_processor import generate_alt_text
 
@@ -369,6 +384,7 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
         img["original_alt"] or "",
         True,  # force_regenerate
         language=(img["alt_language"] or "de"),  # Projekt-Ausgabesprache (03.07.2026)
+        user_prompt=user_prompt,
     )
 
     conn = get_db()

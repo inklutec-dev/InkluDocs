@@ -827,7 +827,8 @@ def _call_ollama(image_path: str, prompt: str) -> dict:
 def generate_alt_text(image_path: str, context: str = "", image_type: str = None,
                       width: int = 0, height: int = 0, original_alt: str = "",
                       force_regenerate: bool = False, temperature: float = 0.0,
-                      language: str = "de", previous_alt: str = "") -> dict:
+                      language: str = "de", previous_alt: str = "",
+                      user_prompt: str = "") -> dict:
     """Front-Door — Cache-Check + Routing zur konfigurierten Pipeline-Version.
 
     T5 (03.05.2026, Phase A): explizites Routing v3_7|v4 ueber PIPELINE_VERSION env.
@@ -842,7 +843,9 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
     from cache import build_cache_key, get_cached, set_cached
 
     content_hash = _get_image_hash(image_path)
-    cache_key = build_cache_key(content_hash, image_type, None, PIPELINE_VERSION, language=language)
+    # Eigener Prompt (06.07.2026) geht in den Key (Slot user_hint): anderer Prompt =
+    # anderer Cache-Eintrag; ohne Prompt (None) bleiben alle Alt-Eintraege gueltig.
+    cache_key = build_cache_key(content_hash, image_type, (user_prompt or None), PIPELINE_VERSION, language=language)
 
     if not force_regenerate:
         cached = get_cached(cache_key)
@@ -862,6 +865,7 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
             temperature=temperature,
             language=language,
             previous_alt=previous_alt,
+            user_prompt=user_prompt,
         )
     else:
         # Hinweis Ausgabesprache: der v3.7-Mistral-Fallback kennt keinen

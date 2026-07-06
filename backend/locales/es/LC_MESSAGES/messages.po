@@ -2089,3 +2089,99 @@ msgstr "El procesamiento del PDF ha fallado. Inténtalo de nuevo con el archivo.
 #: Async-Upload (04.07.2026)
 msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
 msgstr "El procesamiento está tardando más de lo habitual. Recarga la página más tarde y revisa la lista de documentos."
+
+msgid "Eigene Prompts"
+msgstr "Mis prompts"
+
+msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
+msgstr "Aquí guardas tus propias instrucciones para la IA. Dentro del proyecto eliges después cuál de estos prompts debe aplicarse adicionalmente al generar."
+
+msgid "Neuen Prompt anlegen"
+msgstr "Crear un nuevo prompt"
+
+msgid "Name (Pflichtfeld)"
+msgstr "Nombre (obligatorio)"
+
+msgid "z. B. Förmlicher Ton oder Produktbeschreibungen"
+msgstr "p. ej. Tono formal o Descripciones de productos"
+
+msgid "Kategorie (optional)"
+msgstr "Categoría (opcional)"
+
+msgid "Frei wählbar, gruppiert deine Liste, z. B. Marketing oder Technik."
+msgstr "Texto libre, agrupa tu lista, p. ej. Marketing o Técnica."
+
+msgid "Beschreibung (optional)"
+msgstr "Descripción (opcional)"
+
+msgid "Kurze Notiz, wofür der Prompt gedacht ist."
+msgstr "Una nota breve sobre para qué sirve este prompt."
+
+msgid "Prompt-Text (Pflichtfeld)"
+msgstr "Texto del prompt (obligatorio)"
+
+msgid "Deine Anweisung an die KI, zum Beispiel: Formuliere besonders förmlich und nenne immer zuerst die Marke."
+msgstr "Tu instrucción para la IA, por ejemplo: Redacta de forma muy formal y menciona siempre primero la marca."
+
+msgid "Gespeicherte Prompts"
+msgstr "Prompts guardados"
+
+msgid "Ohne Kategorie"
+msgstr "Sin categoría"
+
+msgid "Prompt-Text anzeigen"
+msgstr "Mostrar el texto del prompt"
+
+msgid "Noch keine Prompts gespeichert. Lege oben deinen ersten an."
+msgstr "Todavía no hay prompts guardados. Crea el primero arriba."
+
+msgid "Bitte Name und Prompt-Text ausfüllen."
+msgstr "Rellena el nombre y el texto del prompt."
+
+msgid "Prompt gespeichert."
+msgstr "Prompt guardado."
+
+msgid "Prompt gelöscht."
+msgstr "Prompt eliminado."
+
+msgid "Speichern fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Error al guardar. Inténtalo de nuevo más tarde."
+
+msgid "Löschen fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Error al eliminar. Inténtalo de nuevo más tarde."
+
+msgid "Diesen Prompt wirklich löschen? Projekte, die ihn verwenden, nutzen dann wieder keinen eigenen Prompt."
+msgstr "¿Eliminar este prompt? Los proyectos que lo usan volverán a no usar ningún prompt propio."
+
+msgid "Prompt bearbeiten"
+msgstr "Editar prompt"
+
+msgid "Änderungen speichern"
+msgstr "Guardar cambios"
+
+msgid "Bearbeitung abgebrochen. Formular ist wieder leer."
+msgstr "Edición cancelada. El formulario está vacío de nuevo."
+
+msgid "Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular."
+msgstr "Prompt {name} cargado para editar. Los campos están en el formulario de arriba."
+
+msgid "Eigener Prompt"
+msgstr "Prompt propio"
+
+msgid "Kein eigener Prompt"
+msgstr "Sin prompt propio"
+
+msgid "Prompts verwalten"
+msgstr "Gestionar prompts"
+
+msgid "Eigener Prompt umgestellt: {name}. Gilt für alles, was ab jetzt generiert wird."
+msgstr "Prompt propio cambiado: {name}. Se aplica a todo lo que se genere a partir de ahora."
+
+msgid "Eigener Prompt entfernt. Es gilt wieder das Standardverhalten."
+msgstr "Prompt propio eliminado. Vuelve a aplicarse el comportamiento estándar."
+
+msgid "Umstellen des eigenen Prompts fehlgeschlagen."
+msgstr "No se pudo cambiar el prompt propio."
+
+msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
+msgstr "Error de red al cambiar el prompt propio."

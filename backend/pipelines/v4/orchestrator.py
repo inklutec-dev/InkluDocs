@@ -90,6 +90,27 @@ def _language_suffix(language: str) -> str:
     )
 
 
+def _user_prompt_suffix(user_prompt: str) -> str:
+    """Gespeicherter eigener Prompt des Nutzers (Prompt-Verwaltung, 06.07.2026).
+
+    Wird wie _language_suffix zentral an den fertigen Beschreibungs-Prompt
+    gehaengt (alle Builder, lean + full) — additiv: Stil-/Schwerpunkt-Vorgaben
+    des Nutzers gelten verbindlich, Faktentreue/Belegbarkeit und das
+    JSON-Antwortformat bleiben unveraendert. Leer = Standardverhalten.
+    """
+    text = (user_prompt or '').strip()
+    if not text:
+        return ''
+    return (
+        '\n\nEIGENE VORGABEN DES NUTZERS (VERBINDLICH): Der Nutzer hat für dieses '
+        'Projekt eigene Vorgaben hinterlegt. Setze sie um, soweit sie Stil, Ton, '
+        'Wortwahl, Schwerpunkt, Zielgruppe oder Detailgrad betreffen — bei '
+        'Längen-Vorgaben haben sie Vorrang vor den Richtwerten oben. Faktentreue '
+        'und Belegbarkeit sowie das JSON-Antwortformat bleiben unverändert gültig.\n'
+        + text
+    )
+
+
 # ── Verify-Pass (Fable-5-Review Fund 3, 05.07.2026) ─────────────────────────
 # Der Lean-Modus hat keinen Validator mehr; der Selbst-Check (nicht_im_inventar)
 # ist wirkungslos, weil dasselbe Modell sich gegen sein eigenes Kopf-Inventar
@@ -312,6 +333,7 @@ def _run_multipass_pipeline(
     original_alt: str = '',
     language: str = 'de',
     previous_alt: str = '',
+    user_prompt: str = '',  # Eigener gespeicherter Nutzer-Prompt (Prompt-Verwaltung 06.07.2026)
 ) -> dict:
     """v4-Entry-Point. Wird vom pdf_processor.generate_alt_text gerufen wenn
     PIPELINE_VERSION=v4.
@@ -437,6 +459,7 @@ def _run_multipass_pipeline(
             original_alt=original_alt,
             user_hint=user_hint,
         )
+        mini_prompt += _user_prompt_suffix(user_prompt)
         mini_prompt += _language_suffix(language)
         mini_prompt += _variation_suffix(previous_alt)
         beschreibung = call_mistral_with_schema(
@@ -461,6 +484,7 @@ def _run_multipass_pipeline(
             width=width, height=height,
             user_hint=user_hint,
         )
+        besch_prompt += _user_prompt_suffix(user_prompt)
         besch_prompt += _language_suffix(language)
         besch_prompt += _variation_suffix(previous_alt)
         beschreibung = call_mistral_with_schema(
@@ -587,6 +611,7 @@ def generate_alt_text_v4(
     temperature: float = 0.0,  # 0 = deterministisch (Default/Bulk); >0 nur beim Einzel-Neu-Generieren
     language: str = 'de',
     previous_alt: str = '',  # bisheriger Alt-Text — nur beim Neu-Generieren gesetzt (gezielte Variation)
+    user_prompt: str = '',  # Eigener gespeicherter Nutzer-Prompt (Prompt-Verwaltung 06.07.2026)
 ) -> dict:
     """v4-Eintrittspunkt mit Mode-Dispatcher.
 
@@ -609,6 +634,7 @@ def generate_alt_text_v4(
             temperature=temperature,
             language=language,
             previous_alt=previous_alt,
+            user_prompt=user_prompt,
         )
     # Default: Multi-Pass (rueckwaertskompatibel zu Mistral-Setup)
     return _run_multipass_pipeline(
@@ -621,6 +647,7 @@ def generate_alt_text_v4(
         original_alt=original_alt,
         language=language,
         previous_alt=previous_alt,
+        user_prompt=user_prompt,
     )
 
 
@@ -696,6 +723,7 @@ def _run_lean_pipeline(
     temperature: float = 0.0,
     language: str = 'de',
     previous_alt: str = '',
+    user_prompt: str = '',  # Eigener gespeicherter Nutzer-Prompt (Prompt-Verwaltung 06.07.2026)
 ) -> dict:
     """Lean-Pipeline: 1 Klassifikations-Aufruf + 1 Combo-Hauptaufruf.
 
@@ -794,6 +822,7 @@ def _run_lean_pipeline(
             original_alt=original_alt,
             user_hint=user_hint,
         )
+        mini_prompt += _user_prompt_suffix(user_prompt)
         mini_prompt += _language_suffix(language)
         mini_prompt += _variation_suffix(previous_alt)
         beschreibung = call_mistral_with_schema(
@@ -814,6 +843,7 @@ def _run_lean_pipeline(
             original_alt=original_alt,
             user_hint=user_hint,
         )
+        combo_prompt += _user_prompt_suffix(user_prompt)
         combo_prompt += _language_suffix(language)
         combo_prompt += _variation_suffix(previous_alt)
         beschreibung = call_mistral_with_schema(

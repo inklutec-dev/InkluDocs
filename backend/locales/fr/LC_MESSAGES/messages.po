@@ -2089,3 +2089,99 @@ msgstr "Le traitement du PDF a échoué. Veuillez réessayer avec le fichier."
 #: Async-Upload (04.07.2026)
 msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
 msgstr "Le traitement prend un temps inhabituellement long. Veuillez recharger la page plus tard et vérifier la liste des documents."
+
+msgid "Eigene Prompts"
+msgstr "Mes prompts"
+
+msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
+msgstr "Ici, tu enregistres tes propres consignes pour l'IA. Dans le projet, tu choisis ensuite lequel de ces prompts doit s'appliquer en plus lors de la génération."
+
+msgid "Neuen Prompt anlegen"
+msgstr "Créer un nouveau prompt"
+
+msgid "Name (Pflichtfeld)"
+msgstr "Nom (obligatoire)"
+
+msgid "z. B. Förmlicher Ton oder Produktbeschreibungen"
+msgstr "p. ex. Ton formel ou Descriptions de produits"
+
+msgid "Kategorie (optional)"
+msgstr "Catégorie (facultatif)"
+
+msgid "Frei wählbar, gruppiert deine Liste, z. B. Marketing oder Technik."
+msgstr "Texte libre, regroupe ta liste, p. ex. Marketing ou Technique."
+
+msgid "Beschreibung (optional)"
+msgstr "Description (facultatif)"
+
+msgid "Kurze Notiz, wofür der Prompt gedacht ist."
+msgstr "Une courte note sur l'usage prévu de ce prompt."
+
+msgid "Prompt-Text (Pflichtfeld)"
+msgstr "Texte du prompt (obligatoire)"
+
+msgid "Deine Anweisung an die KI, zum Beispiel: Formuliere besonders förmlich und nenne immer zuerst die Marke."
+msgstr "Ta consigne pour l'IA, par exemple : Formule de manière très formelle et cite toujours la marque en premier."
+
+msgid "Gespeicherte Prompts"
+msgstr "Prompts enregistrés"
+
+msgid "Ohne Kategorie"
+msgstr "Sans catégorie"
+
+msgid "Prompt-Text anzeigen"
+msgstr "Afficher le texte du prompt"
+
+msgid "Noch keine Prompts gespeichert. Lege oben deinen ersten an."
+msgstr "Aucun prompt enregistré pour le moment. Crée le premier ci-dessus."
+
+msgid "Bitte Name und Prompt-Text ausfüllen."
+msgstr "Merci de remplir le nom et le texte du prompt."
+
+msgid "Prompt gespeichert."
+msgstr "Prompt enregistré."
+
+msgid "Prompt gelöscht."
+msgstr "Prompt supprimé."
+
+msgid "Speichern fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Échec de l'enregistrement. Réessaie plus tard."
+
+msgid "Löschen fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Échec de la suppression. Réessaie plus tard."
+
+msgid "Diesen Prompt wirklich löschen? Projekte, die ihn verwenden, nutzen dann wieder keinen eigenen Prompt."
+msgstr "Vraiment supprimer ce prompt ? Les projets qui l'utilisent reviendront à aucun prompt personnalisé."
+
+msgid "Prompt bearbeiten"
+msgstr "Modifier le prompt"
+
+msgid "Änderungen speichern"
+msgstr "Enregistrer les modifications"
+
+msgid "Bearbeitung abgebrochen. Formular ist wieder leer."
+msgstr "Modification annulée. Le formulaire est de nouveau vide."
+
+msgid "Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular."
+msgstr "Prompt {name} chargé pour modification. Les champs se trouvent dans le formulaire ci-dessus."
+
+msgid "Eigener Prompt"
+msgstr "Prompt personnalisé"
+
+msgid "Kein eigener Prompt"
+msgstr "Aucun prompt personnalisé"
+
+msgid "Prompts verwalten"
+msgstr "Gérer les prompts"
+
+msgid "Eigener Prompt umgestellt: {name}. Gilt für alles, was ab jetzt generiert wird."
+msgstr "Prompt personnalisé changé : {name}. S'applique à tout ce qui est généré à partir de maintenant."
+
+msgid "Eigener Prompt entfernt. Es gilt wieder das Standardverhalten."
+msgstr "Prompt personnalisé retiré. Le comportement standard s'applique de nouveau."
+
+msgid "Umstellen des eigenen Prompts fehlgeschlagen."
+msgstr "Échec du changement de prompt personnalisé."
+
+msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
+msgstr "Erreur réseau lors du changement de prompt personnalisé."

@@ -215,6 +215,23 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_messages_project ON messages(project_id);
         CREATE INDEX IF NOT EXISTS idx_messages_image ON messages(image_id);
+
+        -- Eigene Prompts (06.07.2026): vom Nutzer gespeicherte Zusatz-Anweisungen
+        -- fuer die Alt-Text-Generierung (Prompt-Verwaltung). Ein Projekt kann ueber
+        -- projects.prompt_id (Migration unten) genau einen aktiven Prompt
+        -- referenzieren; NULL = kein eigener Prompt (Standardverhalten).
+        CREATE TABLE IF NOT EXISTS user_prompts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT DEFAULT '',
+            category TEXT DEFAULT '',
+            prompt_text TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_user_prompts_user ON user_prompts(user_id);
     """)
     conn.commit()
 
@@ -245,6 +262,7 @@ def _migrate_columns(conn):
         # Ausgabesprache der generierten Alt-Texte (03.07.2026, alirodocs):
         # lebende Projekt-Einstellung wie use_context — gilt fuer alles ab jetzt Generierte.
         ("projects", "alt_language", "ALTER TABLE projects ADD COLUMN alt_language TEXT DEFAULT 'de'"),
+        ("projects", "prompt_id", "ALTER TABLE projects ADD COLUMN prompt_id INTEGER"),
         # Sprache, in der der Alt-Text dieses Bildes GENERIERT wurde (fuer die
         # Vorlese-Stimme; NULL = deutscher Altbestand). Gemischte Projekte moeglich.
         ("images", "gen_language", "ALTER TABLE images ADD COLUMN gen_language TEXT"),
