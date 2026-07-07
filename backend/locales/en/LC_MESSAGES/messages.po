@@ -2093,8 +2093,8 @@ msgstr "Processing is taking unusually long. Please reload the page later and ch
 msgid "Eigene Prompts"
 msgstr "My prompts"
 
-msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
-msgstr "Here you can save your own instructions for the AI. Inside a project you then choose which of these prompts should additionally apply during generation."
+msgid "Hier speicherst du eigene Anweisungen für die KI mit maximal 4.000 Zeichen. Im Projekt wählst du dann aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Ein eigener Prompt beschreibt am besten Abweichungen vom Standard, zum Beispiel: „verwende einfache Sprache“, „formuliere besonders förmlich“, „einen Satz mit 300 Zeichen“ oder „nenne die Kernaussagen vor den Werten“."
+msgstr "Here you can save your own instructions for the AI, up to 4,000 characters. Inside a project you then choose which prompt should additionally apply during generation. A custom prompt works best for describing deviations from the standard, for example: “use plain language”, “phrase it particularly formally”, “one sentence of 300 characters” or “state the key messages before the values”."
 
 msgid "Neuen Prompt anlegen"
 msgstr "Create a new prompt"

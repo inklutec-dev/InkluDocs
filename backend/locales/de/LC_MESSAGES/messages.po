@@ -2096,7 +2096,7 @@ msgstr "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite späte
 msgid "Eigene Prompts"
 msgstr ""
 
-msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
+msgid "Hier speicherst du eigene Anweisungen für die KI mit maximal 4.000 Zeichen. Im Projekt wählst du dann aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Ein eigener Prompt beschreibt am besten Abweichungen vom Standard, zum Beispiel: „verwende einfache Sprache“, „formuliere besonders förmlich“, „einen Satz mit 300 Zeichen“ oder „nenne die Kernaussagen vor den Werten“."
 msgstr ""
 
 msgid "Neuen Prompt anlegen"

@@ -1784,8 +1784,8 @@ msgstr "Behandlingen tager usædvanligt lang tid. Genindlæs venligst siden sene
 msgid "Eigene Prompts"
 msgstr "Mine prompts"
 
-msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
-msgstr "Her gemmer du dine egne instruktioner til AI'en. I projektet vælger du derefter, hvilken af disse prompts der desuden skal gælde ved genereringen."
+msgid "Hier speicherst du eigene Anweisungen für die KI mit maximal 4.000 Zeichen. Im Projekt wählst du dann aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Ein eigener Prompt beschreibt am besten Abweichungen vom Standard, zum Beispiel: „verwende einfache Sprache“, „formuliere besonders förmlich“, „einen Satz mit 300 Zeichen“ oder „nenne die Kernaussagen vor den Werten“."
+msgstr "Her gemmer du dine egne instruktioner til AI'en med højst 4.000 tegn. I projektet vælger du derefter, hvilken prompt der desuden skal gælde ved genereringen. En egen prompt beskriver bedst afvigelser fra standarden, for eksempel: ”brug et enkelt sprog”, ”formulér særligt formelt”, ”én sætning på 300 tegn” eller ”nævn hovedbudskaberne før værdierne”."
 
 msgid "Neuen Prompt anlegen"
 msgstr "Opret en ny prompt"

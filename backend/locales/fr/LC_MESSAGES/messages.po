@@ -2093,8 +2093,8 @@ msgstr "Le traitement prend un temps inhabituellement long. Veuillez recharger l
 msgid "Eigene Prompts"
 msgstr "Mes prompts"
 
-msgid "Hier speicherst du eigene Anweisungen für die KI. Im Projekt wählst du dann aus, welcher dieser Prompts bei der Generierung zusätzlich gelten soll."
-msgstr "Ici, tu enregistres tes propres consignes pour l'IA. Dans le projet, tu choisis ensuite lequel de ces prompts doit s'appliquer en plus lors de la génération."
+msgid "Hier speicherst du eigene Anweisungen für die KI mit maximal 4.000 Zeichen. Im Projekt wählst du dann aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Ein eigener Prompt beschreibt am besten Abweichungen vom Standard, zum Beispiel: „verwende einfache Sprache“, „formuliere besonders förmlich“, „einen Satz mit 300 Zeichen“ oder „nenne die Kernaussagen vor den Werten“."
+msgstr "Ici, tu enregistres tes propres consignes pour l'IA, avec 4 000 caractères au maximum. Dans le projet, tu choisis ensuite quel prompt doit s'appliquer en plus lors de la génération. Un prompt personnel sert avant tout à décrire des écarts par rapport au standard, par exemple : « utilise un langage simple », « formule de façon particulièrement soutenue », « une seule phrase de 300 caractères » ou « cite les messages clés avant les valeurs »."
 
 msgid "Neuen Prompt anlegen"
 msgstr "Créer un nouveau prompt"
