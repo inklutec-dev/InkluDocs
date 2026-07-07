@@ -34,6 +34,10 @@
 .dash-main { max-width:880px; margin:0; padding:1.5rem 1.5rem 3rem; }
 .dash-greeting { margin:.5rem 0 .25rem; }
 .dash-sub { color:var(--text-muted); margin:0 0 2rem; }
+/* Info-Kasten ueber der Prompt-Liste (Karbe-Wunsch 07.07.2026): Text in
+   einem Feld, Schriftgroesse wie .dash-meta (Prompt-Beschreibung).
+   Kontrast text-muted auf card-bg = 8,9:1 (WCAG AAA). */
+.dash-intro-box { max-width:640px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; margin:0 0 1.5rem; font-size:.9rem; line-height:1.6; color:var(--text-muted); }
 .dash-section { margin-bottom:2.5rem; }
 
 /* Karten-Block (Einstellungen) */
