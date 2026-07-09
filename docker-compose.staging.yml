@@ -61,6 +61,7 @@ services:
       - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
       - PIPELINE_VERSION=${PIPELINE_VERSION:-v3_7}
       - V4_PASS_MODE=${V4_PASS_MODE:-full}
+      - V4_VERIFY_MODE=${V4_VERIFY_MODE:-off}
       - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"

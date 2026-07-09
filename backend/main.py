@@ -4002,6 +4002,9 @@ def _append_link_reference(alt_text: str, context_text: str) -> str:
 
 NEUIGKEITEN = [
     # Neueste zuerst. Nur Eintraege, die fuer Nutzer relevant + auf Production live sind.
+    {"datum": "09.07.2026", "text": "Neu: Eigene Prompts. Du speicherst eigene Anweisungen für die KI – zum Beispiel ‚verwende einfache Sprache‘ – und wählst pro Projekt aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Auch beim einzelnen Neu-Generieren."},
+    {"datum": "09.07.2026", "text": "PDF-Auslesung verbessert: Texte werden bei Spalten- und Seitenumbrüchen nicht mehr doppelt erfasst, und Tabelleninhalte werden vollständiger übernommen. Die KI bekommt dadurch sauberere Zusammenhänge für ihre Beschreibungen."},
+    {"datum": "09.07.2026", "text": "Bildbeschreibungen nochmals verbessert: kompaktere Alt-Texte, wichtige Personen im Bild werden zuverlässiger erwähnt, und eine automatische Gegenprüfung kontrolliert kritische Angaben."},
     {"datum": "05.07.2026", "text": "InkluDocs in deiner Sprache: Die Oberfläche gibt es jetzt auf Deutsch, Englisch, Französisch, Spanisch und Dänisch. Deine Sprache stellst du in den Einstellungen um."},
     {"datum": "05.07.2026", "text": "Alt-Texte in mehreren Sprachen: Je Projekt wählst du die Ausgabesprache der generierten Texte – jederzeit umschaltbar. Das Anhören nutzt automatisch die passende Stimme."},
     {"datum": "05.07.2026", "text": "Upload verbessert: Das Hochladen antwortet sofort, die Verarbeitung läuft im Hintergrund weiter – auch bei großen PDFs."},
