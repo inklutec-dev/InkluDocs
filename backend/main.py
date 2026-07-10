@@ -4377,15 +4377,33 @@ async def freigabe_data(token: str, request: Request):
            FROM documents WHERE project_id = ? ORDER BY doc_index""",
         (pid,)
     ).fetchall()
+    # Rollen-Workflow (10.07.2026): Pruefstatus pro Rolle an jedes Bild haengen —
+    # der Gast sieht seinen eigenen Stand, der Kunde zusaetzlich die Lektorat-
+    # Vorgeschichte. Wie alles hier strikt auf DIESES Projekt begrenzt.
+    review_rows = conn.execute(
+        """SELECT r.image_id, r.role, r.status, r.reviewed_at FROM image_reviews r
+           JOIN images i ON i.id = r.image_id WHERE i.project_id = ?""",
+        (pid,)
+    ).fetchall()
     conn.close()
+    reviews_by_image = {}
+    for r in review_rows:
+        reviews_by_image.setdefault(r["image_id"], {})[r["role"]] = {
+            "status": r["status"], "reviewed_at": r["reviewed_at"]}
+    image_dicts = []
+    for i in images:
+        d = dict(i)
+        d["reviews"] = reviews_by_image.get(d["id"], {})
+        image_dicts.append(d)
     proj_dict = dict(project)
     _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
     return {
         "project": proj_dict,
-        "images": [dict(i) for i in images],
+        "images": image_dicts,
         "documents": [dict(d) for d in documents],
         "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
         "guest": True,
+        "role": (dict(share).get("role") or "kunde"),
     }
 
 
@@ -4433,9 +4451,24 @@ async def freigabe_save_alttext(token: str, image_id: int, request: Request):
     if "langbeschreibung" in data:
         conn.execute("UPDATE images SET langbeschreibung = ? WHERE id = ?",
                      (data.get("langbeschreibung", ""), image_id))
+    # Rollen-Workflow (10.07.2026): Haendisches Editieren ohne gesetzten Status
+    # schaltet das Bild fuer DIESE Rolle automatisch auf 'in_bearbeitung' —
+    # ein gesetztes Urteil (freigegeben/ruecksprache/...) wird NIE ueberschrieben.
+    role = (dict(share).get("role") or "kunde")
+    cur = conn.execute("SELECT status FROM image_reviews WHERE image_id = ? AND role = ?",
+                       (image_id, role)).fetchone()
+    auto_status = None
+    if not cur or (cur["status"] or "offen") == "offen":
+        conn.execute(
+            "INSERT INTO image_reviews (image_id, role, status, reviewed_at) VALUES (?, ?, 'in_bearbeitung', datetime('now')) "
+            "ON CONFLICT(image_id, role) DO UPDATE SET status = 'in_bearbeitung', reviewed_at = datetime('now')",
+            (image_id, role))
+        conn.execute("UPDATE images SET review_status = 'in_bearbeitung', reviewed_at = datetime('now') WHERE id = ?",
+                     (image_id,))
+        auto_status = "in_bearbeitung"
     conn.commit()
     conn.close()
-    return {"ok": True}
+    return {"ok": True, "auto_status": auto_status}
 
 
 @app.post("/api/freigabe/{token}/images/{image_id}/review")
@@ -4446,9 +4479,12 @@ async def freigabe_set_review(token: str, image_id: int, request: Request):
     share = _require_guest(request, token)
     session = get_guest_session(request, token)
     data = await request.json()
+    role = (dict(share).get("role") or "kunde")
     status = data.get("status", "offen")
-    if status not in ("offen", "freigegeben", "zu_ueberarbeiten"):
+    if status not in ("offen", "in_bearbeitung", "freigegeben", "zu_ueberarbeiten", "ruecksprache"):
         raise HTTPException(status_code=400, detail="Ungueltiger Status.")
+    if status == "ruecksprache" and role != "lektorat":
+        raise HTTPException(status_code=403, detail="Ruecksprache kann nur das Lektorat setzen.")
     comment = (data.get("comment") or "").strip()
     conn = get_db()
     img = conn.execute("SELECT id FROM images WHERE id = ? AND project_id = ?",
@@ -4456,6 +4492,11 @@ async def freigabe_set_review(token: str, image_id: int, request: Request):
     if not img:
         conn.close()
         raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    conn.execute(
+        "INSERT INTO image_reviews (image_id, role, status, reviewed_at) VALUES (?, ?, ?, datetime('now')) "
+        "ON CONFLICT(image_id, role) DO UPDATE SET status = excluded.status, reviewed_at = excluded.reviewed_at",
+        (image_id, role, status))
+    # Spiegel fuer Besitzer-Badge/Zaehler: haelt das jeweils LETZTE Gast-Urteil.
     conn.execute("UPDATE images SET review_status = ?, reviewed_at = datetime('now') WHERE id = ?",
                  (status, image_id))
     # Genau eine review_note pro Bild: alte ersetzen / bei leerem Kommentar entfernen.
@@ -4468,7 +4509,7 @@ async def freigabe_set_review(token: str, image_id: int, request: Request):
         )
     conn.commit()
     conn.close()
-    return {"ok": True, "review_status": status, "comment": comment}
+    return {"ok": True, "review_status": status, "comment": comment, "role": role}
 
 
 def _mail_escape(t):
@@ -4490,6 +4531,9 @@ async def create_project_share(project_id: int, request: Request, user: dict = D
     guest_name = (data.get("guest_name") or "").strip()
     custom_message = (data.get("message") or "").strip()
     notify = data.get("notify", True)
+    role = (data.get("role") or "kunde").strip().lower()
+    if role not in sharing.VALID_ROLES:
+        raise HTTPException(status_code=400, detail="Ungueltige Rolle.")
     if not guest_email or "@" not in guest_email:
         raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse angeben.")
     conn = get_db()
@@ -4498,7 +4542,7 @@ async def create_project_share(project_id: int, request: Request, user: dict = D
     conn.close()
     if not proj:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    token = sharing.create_share(project_id, guest_email, user["id"], guest_name=guest_name)
+    token = sharing.create_share(project_id, guest_email, user["id"], guest_name=guest_name, role=role)
     url = BASE_URL + "/freigabe/" + token
     sent = False
     if notify:
@@ -4526,7 +4570,7 @@ async def create_project_share(project_id: int, request: Request, user: dict = D
         subject = _('Bitte Alt-Texte prüfen: {projekt}').format(projekt=proj_name)
         sent = send_email(guest_email, subject, body, bcc_admin=False,
                           reply_to=owner_email, from_name=(owner_name + " über InkluDocs"))
-    return {"ok": True, "token": token, "url": url, "guest_email": guest_email, "sent": bool(sent)}
+    return {"ok": True, "token": token, "url": url, "guest_email": guest_email, "sent": bool(sent), "role": role}
 
 
 @app.get("/api/projects/{project_id}/shares")
@@ -4564,13 +4608,23 @@ async def freigabe_complete(token: str, request: Request):
     pid = share["project_id"]
     conn = get_db()
     project = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
-    imgs = conn.execute("SELECT review_status FROM images WHERE project_id = ?", (pid,)).fetchall()
+    role = (dict(share).get("role") or "kunde")
+    # Zaehler aus der Pro-Rolle-Tabelle DIESER Rolle — der Lektor schliesst
+    # seine eigene Pruefung ab, nicht die des Kunden (und umgekehrt).
+    imgs = conn.execute(
+        """SELECT COALESCE(r.status, 'offen') AS review_status FROM images i
+           LEFT JOIN image_reviews r ON r.image_id = i.id AND r.role = ?
+           WHERE i.project_id = ?""",
+        (role, pid)
+    ).fetchall()
     notes = conn.execute(
         "SELECT body FROM messages WHERE project_id = ? AND msg_type = 'review_note'", (pid,)
     ).fetchall()
     conn.close()
     freigegeben = sum(1 for i in imgs if i["review_status"] == "freigegeben")
     zu_ueber = sum(1 for i in imgs if i["review_status"] == "zu_ueberarbeiten")
+    ruecksprache = sum(1 for i in imgs if i["review_status"] == "ruecksprache")
+    in_bearb = sum(1 for i in imgs if i["review_status"] == "in_bearbeitung")
     offen = sum(1 for i in imgs if (i["review_status"] or "offen") == "offen")
     sharing.mark_completed(token)
     from database import get_user_by_id
@@ -4584,14 +4638,17 @@ async def freigabe_complete(token: str, request: Request):
         "<p>" + _('{gast} hat die Prüfung für das Projekt „{projekt}“ abgeschlossen.').format(
             gast=_mail_escape(guest), projekt=_mail_escape(pname)) + "</p>"
         + "<p><strong>" + _('Ergebnis:') + "</strong> "
-        + _('{f} freigegeben, {z} zu überarbeiten, {o} offen.').format(f=freigegeben, z=zu_ueber, o=offen) + "</p>"
+        + _('{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen.').format(
+            f=freigegeben, z=zu_ueber, r=ruecksprache, b=in_bearb, o=offen) + "</p>"
+        + "<p><strong>" + _('Rolle:') + "</strong> " + (_('Lektorat') if role == "lektorat" else _('Endkunde')) + "</p>"
         + (("<p><strong>" + _('Nachricht:') + "</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
         + (("<p><strong>" + _('Anmerkungen:') + "</strong></p><ul>" + notes_html + "</ul>") if notes_html else "")
         + "<p>" + _('Im Werkzeug ansehen:') + " <a href='" + link + "'>" + link + "</a></p>"
     )
     if owner and owner.get("email"):
         send_email(owner["email"], _('InkluDocs: Prüfung abgeschlossen ({projekt})').format(projekt=pname), body, bcc_admin=False)
-    return {"ok": True, "freigegeben": freigegeben, "zu_ueberarbeiten": zu_ueber, "offen": offen}
+    return {"ok": True, "freigegeben": freigegeben, "zu_ueberarbeiten": zu_ueber,
+            "ruecksprache": ruecksprache, "in_bearbeitung": in_bearb, "offen": offen, "role": role}
 
 
 @app.get("/api/review-overview")

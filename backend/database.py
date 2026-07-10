@@ -196,6 +196,18 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_shares_token ON shares(token);
         CREATE INDEX IF NOT EXISTS idx_shares_project ON shares(project_id);
 
+        -- Gastzugang-Rollen (10.07.2026): Pruefstatus pro Bild UND Rolle
+        -- ('kunde'/'lektorat'). images.review_status bleibt als Spiegel des
+        -- jeweils LETZTEN Gast-Urteils fuer Badge + Dashboard-Zaehler erhalten.
+        CREATE TABLE IF NOT EXISTS image_reviews (
+            image_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'offen',
+            reviewed_at TEXT,
+            PRIMARY KEY (image_id, role),
+            FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+        );
+
         -- Nachrichten (19.06.2026): bewusst ALLGEMEIN gehalten, damit daraus
         -- spaeter ohne Umbau das volle In-App-Messaging (User<->User, Abteilungen)
         -- wachsen kann. v1 nutzt nur Gast<->Besitzer, optional an Bild/Projekt.
@@ -307,6 +319,9 @@ def _migrate_columns(conn):
         # Default 'de', damit bestehende User Deutsch behalten. Steuert NUR die
         # Oberflaechen-Sprache, NICHT die Alt-Text-Ausgabesprache (separates Feature).
         ("users", "language", "ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'de'"),
+        # Gastzugang-Rollen (10.07.2026): Rolle der Einladung — 'kunde' (Endkunde,
+        # Default, entspricht dem bisherigen Verhalten) oder 'lektorat'.
+        ("shares", "role", "ALTER TABLE shares ADD COLUMN role TEXT DEFAULT 'kunde'"),
     ]
 
     for table, column, sql in migrations:
@@ -318,6 +333,20 @@ def _migrate_columns(conn):
                 print(f"Migration: Added {table}.{column}")
             except Exception as e:
                 print(f"Migration warning ({table}.{column}): {e}")
+
+    # Gastzugang-Rollen (10.07.2026): bestehende Pruefstatus einmalig in die
+    # Pro-Rolle-Tabelle uebernehmen — bisherige Gaeste entsprechen der Rolle
+    # 'kunde'. Laeuft NUR, solange image_reviews komplett leer ist (echter
+    # Einmal-Backfill, ueberschreibt nie spaetere Rollen-Eintraege).
+    try:
+        if not conn.execute("SELECT 1 FROM image_reviews LIMIT 1").fetchone():
+            conn.execute(
+                "INSERT INTO image_reviews (image_id, role, status, reviewed_at) "
+                "SELECT id, 'kunde', review_status, reviewed_at FROM images "
+                "WHERE review_status IS NOT NULL AND review_status NOT IN ('', 'offen')"
+            )
+    except Exception as e:
+        print(f"Migration warning (image_reviews backfill): {e}")
 
     # Dashboard (02.06.2026): bestehende Projekte bekommen ihren Dateinamen
     # als Anzeigenamen. Idempotent - setzt nur noch leere Namen.

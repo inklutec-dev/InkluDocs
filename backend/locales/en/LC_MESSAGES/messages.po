@@ -2194,3 +2194,54 @@ msgstr "or drag a file here"
 
 msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
 msgstr "You can upload additional PDFs of up to {mb} MB at any time. They will be added to the list below; existing alt texts remain unchanged."
+
+msgid "Genehmigt durch Lektorat"
+msgstr "Approved by proofreading"
+
+msgid "Freigegeben durch Kunde"
+msgstr "Approved by customer"
+
+msgid "Texte noch anpassen"
+msgstr "Texts still need changes"
+
+msgid "Änderung durch Lektorat"
+msgstr "Change requested by proofreading"
+
+msgid "Mit Kunde klären"
+msgstr "Clarify with customer"
+
+msgid "Rücksprache mit dem Kunden"
+msgstr "Consultation with the customer"
+
+msgid "In Bearbeitung"
+msgstr "In progress"
+
+msgid "Rücksprache"
+msgstr "Consultation"
+
+msgid "Rolle des Gastes"
+msgstr "Guest role"
+
+msgid "Endkunde"
+msgstr "End customer"
+
+msgid "Lektorat"
+msgstr "Proofreading"
+
+msgid "Gespeichert."
+msgstr "Saved."
+
+msgid "Lektorat: {s}"
+msgstr "Proofreading: {s}"
+
+msgid "Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren."
+msgstr "The role sets the labels of the review buttons; proofreading can additionally mark images for consultation with the customer."
+
+msgid "{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen."
+msgstr "{f} approved, {z} to revise, {r} consultation, {b} in progress, {o} open."
+
+msgid "Rolle:"
+msgstr "Role:"
+
+msgid "Seitentext"
+msgstr "Page text"

@@ -2194,3 +2194,54 @@ msgstr "ou glissez un fichier ici"
 
 msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
 msgstr "Vous pouvez à tout moment téléverser d'autres PDF de {mb} Mo maximum. Ils seront ajoutés à la liste ci-dessous ; les textes alternatifs existants sont conservés."
+
+msgid "Genehmigt durch Lektorat"
+msgstr "Approuvé par la relecture"
+
+msgid "Freigegeben durch Kunde"
+msgstr "Approuvé par le client"
+
+msgid "Texte noch anpassen"
+msgstr "Textes encore à ajuster"
+
+msgid "Änderung durch Lektorat"
+msgstr "Modification demandée par la relecture"
+
+msgid "Mit Kunde klären"
+msgstr "À clarifier avec le client"
+
+msgid "Rücksprache mit dem Kunden"
+msgstr "Concertation avec le client"
+
+msgid "In Bearbeitung"
+msgstr "En cours"
+
+msgid "Rücksprache"
+msgstr "Concertation"
+
+msgid "Rolle des Gastes"
+msgstr "Rôle de l'invité"
+
+msgid "Endkunde"
+msgstr "Client final"
+
+msgid "Lektorat"
+msgstr "Relecture"
+
+msgid "Gespeichert."
+msgstr "Enregistré."
+
+msgid "Lektorat: {s}"
+msgstr "Relecture : {s}"
+
+msgid "Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren."
+msgstr "Le rôle détermine les libellés des boutons de contrôle ; la relecture peut aussi marquer des images pour concertation avec le client."
+
+msgid "{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen."
+msgstr "{f} approuvés, {z} à revoir, {r} concertation, {b} en cours, {o} ouverts."
+
+msgid "Rolle:"
+msgstr "Rôle :"
+
+msgid "Seitentext"
+msgstr "Texte de la page"

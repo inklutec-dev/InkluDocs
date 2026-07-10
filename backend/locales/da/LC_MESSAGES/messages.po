@@ -1885,3 +1885,54 @@ msgstr "eller træk en fil hertil"
 
 msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
 msgstr "Du kan til enhver tid uploade flere PDF'er på op til {mb} MB. De tilføjes i listen nedenfor; eksisterende alternative tekster bevares."
+
+msgid "Genehmigt durch Lektorat"
+msgstr "Godkendt af korrekturlæsningen"
+
+msgid "Freigegeben durch Kunde"
+msgstr "Godkendt af kunden"
+
+msgid "Texte noch anpassen"
+msgstr "Teksterne skal justeres"
+
+msgid "Änderung durch Lektorat"
+msgstr "Ændring ønsket af korrekturlæsningen"
+
+msgid "Mit Kunde klären"
+msgstr "Afklares med kunden"
+
+msgid "Rücksprache mit dem Kunden"
+msgstr "Afstemning med kunden"
+
+msgid "In Bearbeitung"
+msgstr "I gang"
+
+msgid "Rücksprache"
+msgstr "Afstemning"
+
+msgid "Rolle des Gastes"
+msgstr "Gæstens rolle"
+
+msgid "Endkunde"
+msgstr "Slutkunde"
+
+msgid "Lektorat"
+msgstr "Korrekturlæsning"
+
+msgid "Gespeichert."
+msgstr "Gemt."
+
+msgid "Lektorat: {s}"
+msgstr "Korrekturlæsning: {s}"
+
+msgid "Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren."
+msgstr "Rollen bestemmer knappernes tekster; korrekturlæsningen kan desuden markere billeder til afstemning med kunden."
+
+msgid "{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen."
+msgstr "{f} godkendt, {z} til revision, {r} afstemning, {b} i gang, {o} åbne."
+
+msgid "Rolle:"
+msgstr "Rolle:"
+
+msgid "Seitentext"
+msgstr "Sidetekst"

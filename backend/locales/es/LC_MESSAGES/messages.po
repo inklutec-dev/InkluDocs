@@ -2194,3 +2194,54 @@ msgstr "o arrastra un archivo aquí"
 
 msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
 msgstr "Puedes subir más PDF de hasta {mb} MB en cualquier momento. Se añadirán a la lista de abajo; los textos alternativos existentes se conservan."
+
+msgid "Genehmigt durch Lektorat"
+msgstr "Aprobado por la revisión"
+
+msgid "Freigegeben durch Kunde"
+msgstr "Aprobado por el cliente"
+
+msgid "Texte noch anpassen"
+msgstr "Textos aún por ajustar"
+
+msgid "Änderung durch Lektorat"
+msgstr "Cambio solicitado por la revisión"
+
+msgid "Mit Kunde klären"
+msgstr "Aclarar con el cliente"
+
+msgid "Rücksprache mit dem Kunden"
+msgstr "Consulta con el cliente"
+
+msgid "In Bearbeitung"
+msgstr "En curso"
+
+msgid "Rücksprache"
+msgstr "Consulta"
+
+msgid "Rolle des Gastes"
+msgstr "Rol del invitado"
+
+msgid "Endkunde"
+msgstr "Cliente final"
+
+msgid "Lektorat"
+msgstr "Revisión"
+
+msgid "Gespeichert."
+msgstr "Guardado."
+
+msgid "Lektorat: {s}"
+msgstr "Revisión: {s}"
+
+msgid "Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren."
+msgstr "El rol determina las etiquetas de los botones de revisión; la revisión puede además marcar imágenes para consulta con el cliente."
+
+msgid "{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen."
+msgstr "{f} aprobados, {z} por revisar, {r} consulta, {b} en curso, {o} abiertos."
+
+msgid "Rolle:"
+msgstr "Rol:"
+
+msgid "Seitentext"
+msgstr "Texto de la página"

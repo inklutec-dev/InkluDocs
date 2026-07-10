@@ -779,7 +779,9 @@ input[type="file"] {
 }
 .save-indicator {
     font-size: 0.85rem;
-    color: var(--success);
+    /* a11y-Fix 10.07.2026: var(--success) hatte nur 2,96:1 auf Weiss ->
+       dunkleres Gruen 5,1:1 (AA), gleiche Farbe wie .rev-saved. */
+    color: #1e7e34;
     margin-left: 0.5rem;
     opacity: 0;
     transition: opacity 0.3s;
@@ -1045,6 +1047,28 @@ input[type="file"] {
 .dropzone-or { color: var(--text-muted); margin: 0; }
 /* Sichtbarer Fokusring auf dem Label-Knopf, wenn das (versteckte) Feld Tastaturfokus hat. */
 input[type="file"]:focus + .upload-btn { box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
+
+/* Gast-Rollen-Workflow (10.07.2026) */
+/* Freigeben gedrueckt = gruen (Steve-Wunsch); Weiss auf #1e7e34 = 5,3:1 (AA). */
+.guest-review .btn.rev-frei[aria-pressed="true"] { background: #1e7e34; border-color: #1e7e34; color: #fff; }
+.guest-review .btn.rev-frei[aria-pressed="true"]:hover:not(:disabled) { border-color: #1e7e34; }
+/* Sichtbare Speicher-Bestaetigung neben der Statuszeile. */
+.rev-saved { color: #1e7e34; font-weight: 600; margin-left: 0.4rem; }
+/* Anmerkung prominenter (Befund 10.07.: Klappzeile wurde uebersehen) —
+   Summary sieht aus wie ein Knopf, bleibt aber natives details/summary. */
+.guest-note-edit summary {
+    display: inline-block;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+}
+.guest-note-edit summary::-webkit-details-marker { display: none; }
+.guest-note-edit summary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
+.guest-note-edit summary:hover { border-color: var(--text-muted); }
 
 /* DSGVO-Hinweis in der Fußzeile (04.06.2026: Schild-Icon + kaputter Aufklapp-Knopf entfernt).
  * Karbe/Steve 08.06.2026: linksbuendig wie der umgebende Footer-Text, nicht mehr zentriert.

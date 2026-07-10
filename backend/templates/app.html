@@ -484,6 +484,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const images = data.images;
         const documents = data.documents || [];
         window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt
+        if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';  // Rollen-Workflow (10.07.2026)
 
         const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
         const extractionText = (project.project_type === 'pdf')
@@ -529,6 +530,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('E-Mail-Adresse des Kunden (Pflichtfeld)')}</label>
                                 <input type="email" id="shareEmail" autocomplete="email" aria-required="true" aria-describedby="shareEmailError" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
                                 <p id="shareEmailError" role="alert" style="color:var(--error,#c33);font-weight:600;margin:0.3rem 0 0;"></p>
+                                <fieldset style="border:1px solid var(--border);border-radius:6px;margin:0.8rem 0 0;padding:0.6rem 0.8rem;">
+                                    <legend style="font-weight:600;padding:0 0.3rem;">${t('Rolle des Gastes')}</legend>
+                                    <label style="display:block;margin-bottom:0.3rem;"><input type="radio" name="shareRole" value="kunde" checked> ${t('Endkunde')}</label>
+                                    <label style="display:block;"><input type="radio" name="shareRole" value="lektorat"> ${t('Lektorat')}</label>
+                                    <p style="font-size:0.85rem;color:var(--text-muted);margin:0.4rem 0 0;">${t('Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren.')}</p>
+                                </fieldset>
                                 <label for="shareMessage" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Persönliche Nachricht (optional)')}</label>
                                 <textarea id="shareMessage" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
                                 <p style="font-size:0.85rem;color:var(--text-muted);margin:0.3rem 0 0;">${t('Die Nachricht wird nur bei „Einladung per E-Mail senden" mitgeschickt.')}</p>
@@ -853,6 +860,38 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // --- Gast-Review: Ein-Klick-Status + optionale, entkoppelte Anmerkung ---
     // Status wird mit EINEM Klick gesetzt; die Anmerkung ist davon getrennt (natives <details>),
     // geht bei jedem Status und blockiert das Freigeben nie. Backend haelt eine review_note pro Bild.
+    // Rollen-Workflow (10.07.2026): Beschriftungen je Gast-Rolle ('kunde'/'lektorat').
+    function revRole() { return window.SHARE_ROLE || 'kunde'; }
+    function revOwnStatus(img) {
+        const r = (img.reviews || {})[revRole()];
+        return (r && r.status) || 'offen';
+    }
+    function revStatusLabel(status) {
+        if (status === 'freigegeben') return revRole() === 'lektorat' ? t('Genehmigt durch Lektorat') : t('Freigegeben durch Kunde');
+        if (status === 'zu_ueberarbeiten') return revRole() === 'lektorat' ? t('Änderung durch Lektorat') : t('Änderung gewünscht');
+        if (status === 'ruecksprache') return t('Rücksprache mit dem Kunden');
+        if (status === 'in_bearbeitung') return t('In Bearbeitung');
+        return t('Noch nicht geprüft');
+    }
+    // Kunde sieht die Lektorat-Vorgeschichte als eigene Zeile (nur Anzeige).
+    function revHistoryHtml(img) {
+        if (revRole() !== 'kunde') return '';
+        const lek = (img.reviews || {}).lektorat;
+        if (!lek || !lek.status || lek.status === 'offen') return '';
+        const map = {
+            freigegeben: t('Genehmigt durch Lektorat'),
+            zu_ueberarbeiten: t('Änderung durch Lektorat'),
+            ruecksprache: t('Rücksprache mit dem Kunden'),
+            in_bearbeitung: t('In Bearbeitung'),
+        };
+        return '<p class="rev-history" style="margin:0 0 0.4rem 0;color:var(--text-muted);">' + t('Lektorat: {s}', { s: map[lek.status] || lek.status }) + '</p>';
+    }
+    // Ruecksprache-Knopf gibt es NUR fuer das Lektorat (Server erzwingt das ebenfalls).
+    function revRueckBtnHtml(img) {
+        if (revRole() !== 'lektorat') return '';
+        return '<button type="button" class="btn btn-secondary btn-small" id="rev_btn_rueck_' + img.id + '" aria-pressed="' + (revOwnStatus(img) === 'ruecksprache') + '" onclick="guestSetStatus(' + img.id + ", 'ruecksprache'" + ')">' + t('Mit Kunde klären') + '</button>';
+    }
+
     async function guestReviewPost(imageId, status, comment) {
         try {
             const r = await fetch('/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/review', {
@@ -868,16 +907,26 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const comment = field ? field.value.trim() : '';   // bestehende Anmerkung erhalten
         const ok = await guestReviewPost(imageId, status, comment);
         if (!ok) { announce(t('Fehler beim Speichern.')); return; }
-        const label = status === 'freigegeben' ? t('Freigegeben') : t('Änderung gewünscht');
+        applyGuestStatusUI(imageId, status);
+        // Sichtbare Bestaetigung (Karbe-Befund 10.07.: Klick-Reaktion war zu subtil).
+        const saved = document.getElementById('rev_saved_' + imageId);
+        if (saved) { saved.textContent = t('Gespeichert.'); setTimeout(() => { saved.textContent = ''; }, 4000); }
+        announce(t('Status gesetzt: {s}', { s: revStatusLabel(status) }));
+    }
+
+    // Statuszeile + Knopfzustaende eines Bildes setzen (auch fuer den
+    // Auto-Status 'in_bearbeitung', den der Server beim Editieren meldet).
+    function applyGuestStatusUI(imageId, status) {
         const st = document.getElementById('rev_status_' + imageId);
-        if (st) st.textContent = label;
+        if (st) st.textContent = revStatusLabel(status);
         const cont = document.getElementById('guestrev_' + imageId);
         if (cont) cont.dataset.status = status;
         const bF = document.getElementById('rev_btn_frei_' + imageId);
         const bA = document.getElementById('rev_btn_aend_' + imageId);
+        const bR = document.getElementById('rev_btn_rueck_' + imageId);
         if (bF) bF.setAttribute('aria-pressed', status === 'freigegeben');
         if (bA) bA.setAttribute('aria-pressed', status === 'zu_ueberarbeiten');
-        announce(t('Status gesetzt: {s}', { s: label }));
+        if (bR) bR.setAttribute('aria-pressed', status === 'ruecksprache');
     }
 
     async function guestSaveNote(imageId) {                // optionale Anmerkung speichern; Status bleibt
@@ -967,6 +1016,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const linkBtn = document.getElementById('shareLinkBtn'); if (linkBtn) linkBtn.disabled = busy;
     }
 
+    function shareSelectedRole() {
+        const el = document.querySelector('input[name="shareRole"]:checked');
+        return el ? el.value : 'kunde';
+    }
+
     async function doShare(projectId) {
         const email = shareValidateEmail();
         if (!email) return;
@@ -979,7 +1033,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         try {
             const r = await fetch('/api/projects/' + projectId + '/share', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ guest_email: email, guest_name: name, message: message, notify: true })
+                body: JSON.stringify({ guest_email: email, guest_name: name, message: message, notify: true, role: shareSelectedRole() })
             });
             const d = await r.json();
             if (!r.ok) {
@@ -1010,7 +1064,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         try {
             const r = await fetch('/api/projects/' + projectId + '/share', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ guest_email: email, guest_name: name, notify: false })
+                body: JSON.stringify({ guest_email: email, guest_name: name, notify: false, role: shareSelectedRole() })
             });
             const d = await r.json();
             if (!r.ok) {
@@ -1263,7 +1317,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
                     ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Konfidenz: {k}', { k: img.konfidenz }) + '</span>' : ''}
                     ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#475569;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? t('mit Kontext') : t('ohne Kontext')) + '</span>' : ''}
-                    ${!window.GUEST_MODE && window._inReview && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? '<span class="badge" style="background:' + (img.review_status === 'freigegeben' ? 'var(--success,#2a7)' : (img.review_status === 'zu_ueberarbeiten' ? '#d97706' : '#64748b')) + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Prüfstatus: {s}', { s: (img.review_status === 'freigegeben' ? t('Freigegeben') : (img.review_status === 'zu_ueberarbeiten' ? t('Nachbessern') : t('Ausstehend'))) }) + (img.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>' : ''}
+                    ${!window.GUEST_MODE && window._inReview && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? '<span class="badge" style="background:' + (img.review_status === 'freigegeben' ? 'var(--success,#2a7)' : img.review_status === 'zu_ueberarbeiten' ? '#d97706' : img.review_status === 'ruecksprache' ? '#6d28d9' : img.review_status === 'in_bearbeitung' ? '#0369a1' : '#64748b') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Prüfstatus: {s}', { s: (img.review_status === 'freigegeben' ? t('Freigegeben') : img.review_status === 'zu_ueberarbeiten' ? t('Nachbessern') : img.review_status === 'ruecksprache' ? t('Rücksprache') : img.review_status === 'in_bearbeitung' ? t('In Bearbeitung') : t('Ausstehend')) }) + (img.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>' : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">' + t('Wird analysiert...') + '</span>' : ''}
                     ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Fehler') + '</span>' : ''}
                 </div>
@@ -1303,12 +1357,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 ` : ''}
                 </div>
                 ${window.GUEST_MODE && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? `
-                    <div class="guest-review" id="guestrev_${img.id}" data-status="${img.review_status || 'offen'}" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
-                        <p style="margin:0 0 0.4rem 0;font-weight:600;">${t('Status:')} <span id="rev_status_${img.id}">${img.review_status === 'freigegeben' ? t('Freigegeben') : (img.review_status === 'zu_ueberarbeiten' ? t('Änderung gewünscht') : t('Noch nicht geprüft'))}</span></p>
+                    <div class="guest-review" id="guestrev_${img.id}" data-status="${revOwnStatus(img)}" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
+                        <p style="margin:0 0 0.4rem 0;font-weight:600;">${t('Status:')} <span id="rev_status_${img.id}">${revStatusLabel(revOwnStatus(img))}</span> <output id="rev_saved_${img.id}" class="rev-saved"></output></p>
+                        ${revHistoryHtml(img)}
                         <!-- Ein Klick = Status sofort gesetzt (guestSetStatus); aktiver Knopf via aria-pressed, Statuswechsel per announce() angesagt. Block erscheint fuer JEDEN Alt-Text (auch vorhandene PDF-Originaltexte), nicht nur frisch generierte (Karbe 23.06.2026). -->
                         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-                            <button type="button" class="btn btn-secondary btn-small" id="rev_btn_frei_${img.id}" aria-pressed="${img.review_status === 'freigegeben'}" onclick="guestSetStatus(${img.id}, 'freigegeben')">${t('Freigeben')}</button>
-                            <button type="button" class="btn btn-secondary btn-small" id="rev_btn_aend_${img.id}" aria-pressed="${img.review_status === 'zu_ueberarbeiten'}" onclick="guestSetStatus(${img.id}, 'zu_ueberarbeiten')">${t('Änderung wünschen')}</button>
+                            <button type="button" class="btn btn-secondary btn-small rev-frei" id="rev_btn_frei_${img.id}" aria-pressed="${revOwnStatus(img) === 'freigegeben'}" onclick="guestSetStatus(${img.id}, 'freigegeben')">${t('Freigeben')}</button>
+                            <button type="button" class="btn btn-secondary btn-small" id="rev_btn_aend_${img.id}" aria-pressed="${revOwnStatus(img) === 'zu_ueberarbeiten'}" onclick="guestSetStatus(${img.id}, 'zu_ueberarbeiten')">${revRole() === 'lektorat' ? t('Texte noch anpassen') : t('Änderung wünschen')}</button>
+                            ${revRueckBtnHtml(img)}
                         </div>
                         <!-- Optionale Anmerkung, vom Status entkoppelt: natives <details> (zero ARIA), geht bei jedem Status. -->
                         <details class="guest-note-edit" id="rev_note_details_${img.id}" style="margin-top:0.5rem;">
@@ -1359,7 +1415,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const pageTextBlock = first.page_text ? `
                 <details class="page-text-details">
                     <summary>${t('Seitentext anzeigen')}</summary>
-                    <div class="page-text-content">${esc(first.page_text)}</div>
+                    <div class="page-text-content" role="region" aria-label="${t('Seitentext')}" tabindex="0">${esc(first.page_text)}</div>
                 </details>` : '';
             const pageH = pageHeadingLevel || 'h2';
             return `
@@ -1454,11 +1510,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 clearTimeout(timeout);
                 timeout = setTimeout(async () => {
                     const id = ta.dataset.imageId;
-                    await fetch(altTextSaveUrl(id), {
+                    const res = await fetch(altTextSaveUrl(id), {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ alt_text: ta.value }),
                     });
+                    // Rollen-Workflow: Editieren ohne Status -> Server meldet 'in_bearbeitung'.
+                    if (window.GUEST_MODE && res.ok) {
+                        try {
+                            const d = await res.json();
+                            if (d.auto_status) applyGuestStatusUI(Number(id), d.auto_status);
+                        } catch (e) { /* reine Anzeige, Speichern war erfolgreich */ }
+                    }
                     const ind = document.getElementById('saved_' + id);
                     if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
                 }, 800);

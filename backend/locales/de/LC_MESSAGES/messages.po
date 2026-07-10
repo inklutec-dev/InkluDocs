@@ -2197,3 +2197,54 @@ msgstr "oder Datei hierher ziehen"
 
 msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
 msgstr "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+
+msgid "Genehmigt durch Lektorat"
+msgstr "Genehmigt durch Lektorat"
+
+msgid "Freigegeben durch Kunde"
+msgstr "Freigegeben durch Kunde"
+
+msgid "Texte noch anpassen"
+msgstr "Texte noch anpassen"
+
+msgid "Änderung durch Lektorat"
+msgstr "Änderung durch Lektorat"
+
+msgid "Mit Kunde klären"
+msgstr "Mit Kunde klären"
+
+msgid "Rücksprache mit dem Kunden"
+msgstr "Rücksprache mit dem Kunden"
+
+msgid "In Bearbeitung"
+msgstr "In Bearbeitung"
+
+msgid "Rücksprache"
+msgstr "Rücksprache"
+
+msgid "Rolle des Gastes"
+msgstr "Rolle des Gastes"
+
+msgid "Endkunde"
+msgstr "Endkunde"
+
+msgid "Lektorat"
+msgstr "Lektorat"
+
+msgid "Gespeichert."
+msgstr "Gespeichert."
+
+msgid "Lektorat: {s}"
+msgstr "Lektorat: {s}"
+
+msgid "Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren."
+msgstr "Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren."
+
+msgid "{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen."
+msgstr "{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen."
+
+msgid "Rolle:"
+msgstr "Rolle:"
+
+msgid "Seitentext"
+msgstr "Seitentext"

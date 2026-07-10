@@ -25,9 +25,18 @@ DEFAULT_EXPIRY_DAYS = 30
 _USABLE_STATES = ("active", "completed")
 
 
-def create_share(project_id, guest_email, created_by, expiry_days=DEFAULT_EXPIRY_DAYS, guest_name=""):
+# Gastzugang-Rollen (10.07.2026): 'kunde' = Endkunde (Default, bisheriges
+# Verhalten), 'lektorat' = optionale Zwischenstation mit eigener Beschriftung
+# und dem zusaetzlichen Status 'ruecksprache'.
+VALID_ROLES = ("kunde", "lektorat")
+
+
+def create_share(project_id, guest_email, created_by, expiry_days=DEFAULT_EXPIRY_DAYS, guest_name="", role="kunde"):
     """Legt eine Freigabe an und gibt den geheimen Token zurueck.
-    guest_email wird normalisiert (trim+lowercase) gespeichert; guest_name optional (Klarname)."""
+    guest_email wird normalisiert (trim+lowercase) gespeichert; guest_name optional (Klarname).
+    role steuert Beschriftung + Rechte im Gast-UI (siehe VALID_ROLES)."""
+    if role not in VALID_ROLES:
+        role = "kunde"
     token = secrets.token_urlsafe(32)
     expires_at = None
     if expiry_days:
@@ -35,9 +44,9 @@ def create_share(project_id, guest_email, created_by, expiry_days=DEFAULT_EXPIRY
     conn = get_db()
     try:
         conn.execute(
-            "INSERT INTO shares (project_id, token, guest_email, created_by, expires_at, guest_name) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (project_id, token, (guest_email or "").strip().lower(), created_by, expires_at, (guest_name or "").strip()),
+            "INSERT INTO shares (project_id, token, guest_email, created_by, expires_at, guest_name, role) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (project_id, token, (guest_email or "").strip().lower(), created_by, expires_at, (guest_name or "").strip(), role),
         )
         conn.commit()
     finally:
