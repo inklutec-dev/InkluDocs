@@ -2188,3 +2188,6 @@ msgstr "Error de red al cambiar el prompt propio."
 
 msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
 msgstr "Todavía no hay prompts guardados. Crea el primero con el botón de abajo."
+
+msgid "oder Datei hierher ziehen"
+msgstr "o arrastra un archivo aquí"

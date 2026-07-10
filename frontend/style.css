@@ -1028,6 +1028,25 @@ input[type="file"] {
     background: rgba(232, 119, 34, 0.06);
 }
 
+/* Upload-Zone sichtbar gemacht (10.07.2026): Sehende hatten kein Klick-Element,
+   weil input[type=file] global visually-hidden ist und das Label sr-only war.
+   Fuer Screenreader unveraendert: gleiches Input, gleicher Label-Text. */
+.dropzone-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.02);
+}
+.dropzone-icon { color: var(--text-muted); }
+.dropzone-or { color: var(--text-muted); margin: 0; }
+/* Sichtbarer Fokusring auf dem Label-Knopf, wenn das (versteckte) Feld Tastaturfokus hat. */
+input[type="file"]:focus + .upload-btn { box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
+
 /* DSGVO-Hinweis in der Fußzeile (04.06.2026: Schild-Icon + kaputter Aufklapp-Knopf entfernt).
  * Karbe/Steve 08.06.2026: linksbuendig wie der umgebende Footer-Text, nicht mehr zentriert.
  * Frueher 'margin: 0 auto 0.5rem' — das hat den 640er-Block bei breitem Container

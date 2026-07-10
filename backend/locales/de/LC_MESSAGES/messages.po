@@ -2191,3 +2191,6 @@ msgstr ""
 
 msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
 msgstr ""
+
+msgid "oder Datei hierher ziehen"
+msgstr "oder Datei hierher ziehen"

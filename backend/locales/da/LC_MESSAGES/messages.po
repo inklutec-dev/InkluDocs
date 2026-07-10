@@ -1879,3 +1879,6 @@ msgstr "Netværksfejl ved ændring af egen prompt."
 
 msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
 msgstr "Ingen prompts gemt endnu. Opret din første via knappen nedenfor."
+
+msgid "oder Datei hierher ziehen"
+msgstr "eller træk en fil hertil"
