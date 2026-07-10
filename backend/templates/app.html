@@ -132,15 +132,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
 
     // ─── Project Detail ──────────────────────────────
-    // Dekoratives Symbol der Upload-Zone: Blatt mit Pluszeichen. aria-hidden,
-    // weil Label + Hinweistext die Funktion bereits vollstaendig beschreiben.
-    function dropzoneIcon() {
-        return '<svg class="dropzone-icon" aria-hidden="true" focusable="false" viewBox="0 0 48 48" width="40" height="40">'
-            + '<path d="M12 4h16l8 8v28a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4z" fill="none" stroke="currentColor" stroke-width="2.5"/>'
-            + '<path d="M28 4v8h8" fill="none" stroke="currentColor" stroke-width="2.5"/>'
-            + '<path d="M24 22v12M18 28h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>';
-    }
-
     // Macht den Upload-Bereich zur Drag-&-Drop-Zone. Wird nach jedem showProject-Render
     // aufgerufen. Der Datei-Button (#projUpload) bleibt der primäre, barrierefreie Weg;
     // Drag & Drop ist eine Ergänzung für sehende Nutzer und nutzt denselben Upload-Kern.
@@ -180,12 +171,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const heading = hasExisting ? t('Weitere PDF hinzufügen') : t('PDF hinzufügen');
             // Julia-Feedback 02.07.2026: maximale Dateigroesse direkt am Upload-Feld.
             const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
-            const hint = (hasExisting
-                ? t('Du kannst jederzeit eine weitere PDF anhängen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unverändert.')
-                : t('Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.')) + sizeHint;
+            const hint = hasExisting
+                ? t('Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten.', { mb: window.MAX_UPLOAD_MB || 50 })
+                : t('Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert.') + sizeHint;
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
                 + '<div class="dropzone-inner">'
-                + dropzoneIcon()
                 + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
                 + '<label for="projUpload" class="upload-btn">' + t('PDF-Datei auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
@@ -196,7 +186,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (tool === 'grafik') {
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + t('Bilder hinzufügen') + '</h2>'
                 + '<div class="dropzone-inner">'
-                + dropzoneIcon()
                 + '<input type="file" id="projUpload" accept=".jpg,.jpeg,.png,.gif,.svg,.webp,.heic,.heif,.bmp,.tiff,.tif" multiple aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
                 + '<label for="projUpload" class="upload-btn">' + t('Bilddateien auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'

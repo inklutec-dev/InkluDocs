@@ -2191,3 +2191,6 @@ msgstr "Aucun prompt enregistré pour le moment. Crée le premier via le bouton 
 
 msgid "oder Datei hierher ziehen"
 msgstr "ou glissez un fichier ici"
+
+msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "Vous pouvez à tout moment téléverser d'autres PDF de {mb} Mo maximum. Ils seront ajoutés à la liste ci-dessous ; les textes alternatifs existants sont conservés."

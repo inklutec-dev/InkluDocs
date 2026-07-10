@@ -2194,3 +2194,6 @@ msgstr ""
 
 msgid "oder Datei hierher ziehen"
 msgstr "oder Datei hierher ziehen"
+
+msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."

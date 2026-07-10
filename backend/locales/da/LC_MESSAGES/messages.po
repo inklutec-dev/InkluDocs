@@ -1882,3 +1882,6 @@ msgstr "Ingen prompts gemt endnu. Opret din første via knappen nedenfor."
 
 msgid "oder Datei hierher ziehen"
 msgstr "eller træk en fil hertil"
+
+msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "Du kan til enhver tid uploade flere PDF'er på op til {mb} MB. De tilføjes i listen nedenfor; eksisterende alternative tekster bevares."

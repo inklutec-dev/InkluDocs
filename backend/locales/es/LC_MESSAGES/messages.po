@@ -2191,3 +2191,6 @@ msgstr "Todavía no hay prompts guardados. Crea el primero con el botón de abaj
 
 msgid "oder Datei hierher ziehen"
 msgstr "o arrastra un archivo aquí"
+
+msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "Puedes subir más PDF de hasta {mb} MB en cualquier momento. Se añadirán a la lista de abajo; los textos alternativos existentes se conservan."

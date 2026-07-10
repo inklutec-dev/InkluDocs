@@ -1042,7 +1042,6 @@ input[type="file"] {
     text-align: center;
     background: rgba(0, 0, 0, 0.02);
 }
-.dropzone-icon { color: var(--text-muted); }
 .dropzone-or { color: var(--text-muted); margin: 0; }
 /* Sichtbarer Fokusring auf dem Label-Knopf, wenn das (versteckte) Feld Tastaturfokus hat. */
 input[type="file"]:focus + .upload-btn { box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.4); }
