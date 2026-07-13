@@ -81,7 +81,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
     // ─── Init ────────────────────────────────────────
     async function init() {
-        if (window.GUEST_MODE) { return initGuest(); }   // Gast: E-Mail-Gate statt Login
+        // Gast: erst direkt das Projekt versuchen — bei gültiger Gast-Sitzung
+        // (guest_token-Cookie) entfällt das erneute E-Mail-Gate. Ohne Sitzung
+        // antwortet der Server mit 401 und showProject zeigt das Gate (initGuest).
+        // Etappe-2-Fix 13.07.2026: wiederkehrende Gäste mussten vorher immer neu bestätigen.
+        if (window.GUEST_MODE) { return showProject(window.SHARE_TOKEN); }
         const res = await fetch('/api/me');
         if (res.status === 401) { window.location.href = '/'; return; }
         const meData = await res.json();
@@ -484,6 +488,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const images = data.images;
         const documents = data.documents || [];
         window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt
+        window._shareRoles = data.share_roles || [];  // aktive Gast-Rollen (Etappe 2: Badges + Filter)
         if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';  // Rollen-Workflow (10.07.2026)
 
         const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
@@ -523,25 +528,26 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <button type="button" class="btn btn-secondary" id="shareOpenBtn" onclick="openShareDialog(${project.id})">${t('Zur Prüfung freigeben')}</button>
                         <dialog id="shareDialog" aria-labelledby="shareHeading" class="invite-dialog">
                             <div id="shareForm">
-                                <h2 id="shareHeading" style="margin-top:0;">${t('Kunde zur Prüfung einladen')}</h2>
+                                <!-- GUI nach Karbe-Feedback 11.07.2026 maximal einfach: Headline
+                                     „Zur Prüfung einladen", Labels ÜBER den Feldern, Rolle als
+                                     Auswahlfeld (UI-Wort „Herausgeber", DB-Wert bleibt 'kunde'),
+                                     keine Erklärtexte, kein „Nur Link"-Knopf. -->
+                                <h2 id="shareHeading" style="margin-top:0;">${t('Zur Prüfung einladen')}</h2>
                                 <p style="font-size:0.9rem;color:var(--text-muted);margin:0 0 0.8rem;">${t('Pflichtfeld ist gekennzeichnet.')}</p>
-                                <label for="shareName" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Name des Kunden (optional)')}</label>
+                                <label for="shareName" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Name (optional)')}</label>
                                 <input type="text" id="shareName" autocomplete="name" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.8rem;">
-                                <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('E-Mail-Adresse des Kunden (Pflichtfeld)')}</label>
+                                <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('E-Mail-Adresse (Pflichtfeld)')}</label>
                                 <input type="email" id="shareEmail" autocomplete="email" aria-required="true" aria-describedby="shareEmailError" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
                                 <p id="shareEmailError" role="alert" style="color:var(--error,#c33);font-weight:600;margin:0.3rem 0 0;"></p>
-                                <fieldset style="border:1px solid var(--border);border-radius:6px;margin:0.8rem 0 0;padding:0.6rem 0.8rem;">
-                                    <legend style="font-weight:600;padding:0 0.3rem;">${t('Rolle des Gastes')}</legend>
-                                    <label style="display:block;margin-bottom:0.3rem;"><input type="radio" name="shareRole" value="kunde" checked> ${t('Endkunde')}</label>
-                                    <label style="display:block;"><input type="radio" name="shareRole" value="lektorat"> ${t('Lektorat')}</label>
-                                    <p style="font-size:0.85rem;color:var(--text-muted);margin:0.4rem 0 0;">${t('Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren.')}</p>
-                                </fieldset>
-                                <label for="shareMessage" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Persönliche Nachricht (optional)')}</label>
+                                <label for="shareRole" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Rolle des Empfängers')}</label>
+                                <select id="shareRole" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
+                                    <option value="kunde" selected>${t('Herausgeber')}</option>
+                                    <option value="lektorat">${t('Lektorat')}</option>
+                                </select>
+                                <label for="shareMessage" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Nachricht (optional)')}</label>
                                 <textarea id="shareMessage" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
-                                <p style="font-size:0.85rem;color:var(--text-muted);margin:0.3rem 0 0;">${t('Die Nachricht wird nur bei „Einladung per E-Mail senden" mitgeschickt.')}</p>
                                 <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
                                     <button type="button" class="btn btn-primary" id="shareSendBtn" onclick="doShare(${project.id})">${t('Einladung per E-Mail senden')}</button>
-                                    <button type="button" class="btn btn-secondary" id="shareLinkBtn" onclick="doShareLinkOnly(${project.id})">${t('Nur Link erstellen')}</button>
                                     <button type="button" class="btn btn-secondary" onclick="closeShareDialog()">${t('Abbrechen')}</button>
                                 </div>
                                 <output id="shareStatus" style="display:block;margin-top:0.6rem;"></output>
@@ -638,11 +644,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 }
                 return `<h2 class="section-title" id="bilderHeading" tabindex="-1" style="margin-top:1.5rem">${t('Bilder ({n})', { n: images.length })}</h2>`;
             })()}
+            ${renderImageFilterBar(images, project)}
             <div id="imageList"></div>
             ${window.GUEST_MODE ? '' : inkluagentSectionHtml(projectId)}
         `;
 
         renderImages(images, projectId, data.show_langbeschreibung !== false, documents, project);
+        applyImageFilter(false);   // aktiven Filter nach jedem Re-Render wieder anwenden
 
         // Eigener Prompt (06.07.2026): Auswahlliste erst nach dem Rendern fuellen
         // (DOM-basiert, XSS-sicher) — Fehlschlag laesst nur die Standardoption stehen.
@@ -856,6 +864,223 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         announce(t('Wird vorgelesen.'));
     }
 
+    // ─── Besitzer-Badges: Pruefstatus PRO ROLLE (Etappe 2, 13.07.2026) ───
+    // Der Besitzer sieht am Bild fuer jede eingeladene Rolle ein eigenes Badge
+    // („Lektorat: Freigegeben" / „Herausgeber: Ausstehend"). Ohne Rollen-Daten
+    // (Altbestand, Backfill fehlt) faellt die Anzeige auf den bisherigen
+    // Spiegel images.review_status zurueck.
+    function ownerBadgeColor(s) {
+        return s === 'freigegeben' ? 'var(--success,#2a7)'
+            : s === 'zu_ueberarbeiten' ? '#d97706'
+            : s === 'ruecksprache' ? '#6d28d9'
+            : s === 'in_bearbeitung' ? '#0369a1'
+            : '#64748b';
+    }
+    function ownerBadgeStatusLabel(s) {
+        return s === 'freigegeben' ? t('Freigegeben')
+            : s === 'zu_ueberarbeiten' ? t('Nachbessern')
+            : s === 'ruecksprache' ? t('Rücksprache')
+            : s === 'in_bearbeitung' ? t('In Bearbeitung')
+            : t('Ausstehend');
+    }
+    function ownerReviewBadges(img) {
+        const badge = function (text, status, withNote) {
+            return '<span class="badge" style="background:' + ownerBadgeColor(status)
+                + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">'
+                + text + (withNote && img.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>';
+        };
+        const roles = (window._shareRoles || []).slice().sort();  // 'kunde' vor 'lektorat' -> stabil
+        if (!roles.length) {
+            const s = img.review_status;
+            return badge(t('Prüfstatus: {s}', { s: ownerBadgeStatusLabel(s) }), s, true);
+        }
+        // Lektorat zuerst (Arbeitsreihenfolge: Lektorat prueft vor dem Herausgeber).
+        const ordered = roles.filter(r => r === 'lektorat').concat(roles.filter(r => r !== 'lektorat'));
+        return ordered.map(function (r, idx) {
+            const s = roleReviewStatus(img, r);
+            const text = r === 'lektorat'
+                ? t('Lektorat: {s}', { s: ownerBadgeStatusLabel(s) })
+                : t('Herausgeber: {s}', { s: ownerBadgeStatusLabel(s) });
+            return badge(text, s, idx === ordered.length - 1);
+        }).join(' ');
+    }
+
+    // ─── Bilder-Filterleiste (Rollen-Workflow Etappe 2, 13.07.2026) ───
+    // Sichtbar NUR fuer Gaeste (immer) und fuer Besitzer geteilter Projekte
+    // (window._inReview). Solo-Arbeit ohne Einladung bleibt bewusst filterfrei
+    // (Steve-Entscheidung 10.07.2026) — dort gibt es keine Pruefstatus.
+    //
+    // Technik: natives fieldset + Radio-Chips mit Zaehlern, KEIN ARIA-Widget.
+    // Filtern blendet Karten per hidden-Attribut aus (KEIN Re-Render, damit
+    // ungespeicherte Textfeld-Eingaben anderer Karten nie verloren gehen);
+    // leere Seiten-/Dokument-Gruppen werden mit ausgeblendet. Der Filter-
+    // Zustand ueberlebt das Neu-Rendern beim Polling (imageFilter pro Projekt).
+    let imageFilter = { key: 'alle', role: null, projectId: null };
+    let filterImages = [];   // Bilder des aktuellen Renders (Datenbasis der Zaehler)
+
+    // Besitzer: welche Rolle wird gefiltert? Standard = Lektorat, falls eingeladen.
+    // Gaeste filtern immer ihre eigene Rolle.
+    function filterActiveRole() {
+        if (window.GUEST_MODE) return revRole();
+        if (imageFilter.role) return imageFilter.role;
+        const roles = window._shareRoles || [];
+        return roles.indexOf('lektorat') >= 0 ? 'lektorat' : 'kunde';
+    }
+
+    function roleReviewStatus(img, role) {
+        const r = (img.reviews || {})[role];
+        return (r && r.status) || 'offen';
+    }
+
+    // Ein Bild gegen einen Filter-Schluessel pruefen. 'ohne_alt'/'fehler' sind
+    // Besitzer-Zusatzfilter (inhaltlich, nicht statusbezogen); 'lek_ruecksprache'
+    // zeigt dem Herausgeber die vom Lektorat zur Ruecksprache markierten Bilder.
+    function imageMatchesKey(img, key) {
+        if (key === 'alle') return true;
+        if (key === 'ohne_alt') return !(img.alt_text_edited || img.alt_text || img.original_alt);
+        if (key === 'fehler') return img.status === 'error';
+        if (key === 'lek_ruecksprache') return roleReviewStatus(img, 'lektorat') === 'ruecksprache';
+        return roleReviewStatus(img, filterActiveRole()) === key;
+    }
+
+    function filterCount(key) {
+        let n = 0;
+        for (const img of filterImages) { if (imageMatchesKey(img, key)) n += 1; }
+        return n;
+    }
+
+    function filterChipLabel(key) {
+        if (key === 'offen') return t('Noch nicht geprüft');
+        if (key === 'in_bearbeitung') return t('In Bearbeitung');
+        if (key === 'freigegeben') return t('Freigegeben');
+        if (key === 'zu_ueberarbeiten') return (window.GUEST_MODE && revRole() === 'lektorat') ? t('Texte noch anpassen') : t('Änderung gewünscht');
+        if (key === 'ruecksprache') return t('Rücksprache');
+        if (key === 'lek_ruecksprache') return t('Rücksprache des Lektorats');
+        if (key === 'ohne_alt') return t('Ohne Alt-Text');
+        if (key === 'fehler') return t('Fehler');
+        return t('Alle');
+    }
+
+    // Chip-Auswahl je Sicht. Alle Chips sind IMMER sichtbar (auch mit Zaehler 0),
+    // damit die Leiste fuer Screenreader-Nutzer vorhersagbar bleibt. Einzige
+    // Ausnahme: der Herausgeber-Zusatzchip „Rücksprache des Lektorats" erscheint
+    // nur, wenn es solche Bilder gibt (sonst waere er reine Verwirrung).
+    function filterChipKeys() {
+        const keys = ['alle', 'offen', 'in_bearbeitung', 'freigegeben', 'zu_ueberarbeiten'];
+        if (window.GUEST_MODE) {
+            if (revRole() === 'lektorat') keys.push('ruecksprache');
+            else if (filterCount('lek_ruecksprache') > 0) keys.push('lek_ruecksprache');
+        } else {
+            keys.push('ruecksprache', 'ohne_alt', 'fehler');
+        }
+        return keys;
+    }
+
+    function filterChipsHtml() {
+        return filterChipKeys().map(function (k) {
+            return '<label class="filter-chip"><input type="radio" name="imgFilterStatus" value="' + k + '"'
+                + (imageFilter.key === k ? ' checked' : '')
+                + ' onchange="setImageFilterKey(this.value)"> '
+                + filterChipLabel(k) + ' (' + filterCount(k) + ')</label>';
+        }).join('');
+    }
+
+    // Gesamte Leiste als HTML (wird in showProject vor der Bilderliste eingesetzt).
+    function renderImageFilterBar(images, project) {
+        filterImages = images || [];
+        if (!filterImages.length) return '';
+        if (!window.GUEST_MODE && !window._inReview) return '';
+        // Projektwechsel setzt den Filter zurueck; Re-Render desselben Projekts
+        // (Polling, Upload) behaelt die aktive Auswahl.
+        if (imageFilter.projectId !== project.id) imageFilter = { key: 'alle', role: null, projectId: project.id };
+        const roles = window._shareRoles || [];
+        const roleFs = (!window.GUEST_MODE && roles.length > 1) ? (
+            '<fieldset class="filter-fieldset" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;margin:0 0 0.6rem;">'
+            + '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Prüfende Rolle') + '</legend>'
+            + ['lektorat', 'kunde'].map(function (r) {
+                return '<label class="filter-chip"><input type="radio" name="imgFilterRole" value="' + r + '"'
+                    + (filterActiveRole() === r ? ' checked' : '')
+                    + ' onchange="setImageFilterRole(this.value)"> '
+                    + (r === 'lektorat' ? t('Lektorat') : t('Herausgeber')) + '</label>';
+            }).join('')
+            + '</fieldset>') : '';
+        return '<section class="card image-filter" id="imageFilterBar" aria-labelledby="filterHeading">'
+            + '<h2 id="filterHeading" class="section-title">' + t('Bilder filtern') + '</h2>'
+            + roleFs
+            + '<fieldset class="filter-fieldset" id="filterStatusFieldset" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;margin:0;">'
+            + '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Prüfstatus filtern') + '</legend>'
+            + filterChipsHtml()
+            + '</fieldset>'
+            + '<p id="filterResult" style="margin:0.5rem 0 0;color:var(--text-muted);"></p>'
+            + '</section>';
+    }
+
+    // Nur die Status-Chips neu aufbauen (Zaehler-Update nach Datenaenderung).
+    // Bewusst NICHT die ganze Leiste ersetzen: der Fokus koennte gerade auf dem
+    // Rollen-Radio liegen und wuerde sonst verloren gehen.
+    function rebuildFilterChips() {
+        const fs = document.getElementById('filterStatusFieldset');
+        if (!fs) return;
+        fs.innerHTML = '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Prüfstatus filtern') + '</legend>' + filterChipsHtml();
+    }
+
+    // Nach einer Statusaenderung nur DATEN + ZAEHLER aktualisieren, die Sichtbarkeit
+    // der Karten aber unveraendert lassen: sonst verschwaende die gerade bearbeitete
+    // Karte unter dem Fokus des Nutzers (Screenreader-Falle). Die Liste filtert
+    // sich beim naechsten Filterwechsel bzw. Re-Render neu.
+    function updateFilterDataStatus(imageId, status) {
+        const role = filterActiveRole();
+        for (const img of filterImages) {
+            if (img.id === Number(imageId)) {
+                img.reviews = img.reviews || {};
+                img.reviews[role] = img.reviews[role] || {};
+                img.reviews[role].status = status;
+                break;
+            }
+        }
+        rebuildFilterChips();
+    }
+
+    function setImageFilterKey(key) {
+        imageFilter.key = key;
+        applyImageFilter(true);
+    }
+
+    function setImageFilterRole(role) {
+        imageFilter.role = role;
+        rebuildFilterChips();   // Zaehler beziehen sich auf die neue Rolle
+        applyImageFilter(true);
+    }
+
+    // Wendet den aktiven Filter auf die gerenderte Liste an (hidden-Attribut).
+    // announceResult=true nur bei Nutzer-Interaktion — beim initialen Render
+    // bleibt die Live-Ansage still.
+    function applyImageFilter(announceResult) {
+        const bar = document.getElementById('imageFilterBar');
+        if (!bar) return;
+        let visible = 0;
+        for (const img of filterImages) {
+            const card = document.getElementById('imgcard_' + img.id);
+            if (!card) continue;
+            const match = imageMatchesKey(img, imageFilter.key);
+            card.hidden = !match;
+            if (match) visible += 1;
+        }
+        // Leere Seiten- und Dokumentgruppen mit ausblenden (reine Anzeige).
+        document.querySelectorAll('#imageList details.page-section').forEach(function (d) {
+            d.hidden = !d.querySelector('section.image-review:not([hidden])');
+        });
+        document.querySelectorAll('#imageList .doc-block').forEach(function (b) {
+            b.hidden = !b.querySelector('section.image-review:not([hidden])');
+        });
+        const msg = (imageFilter.key === 'alle')
+            ? t('Alle {n} Bilder angezeigt.', { n: filterImages.length })
+            : t('{n} von {m} Bildern angezeigt.', { n: visible, m: filterImages.length });
+        const res = document.getElementById('filterResult');
+        if (res) res.textContent = msg;
+        if (announceResult) announce(msg);
+    }
+
     // ─── Gast-Review (Etappe 3): Freigeben / Aenderung wuenschen + Kommentar ───
     // --- Gast-Review: Ein-Klick-Status + optionale, entkoppelte Anmerkung ---
     // Status wird mit EINEM Klick gesetzt; die Anmerkung ist davon getrennt (natives <details>),
@@ -866,14 +1091,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const r = (img.reviews || {})[revRole()];
         return (r && r.status) || 'offen';
     }
+    // UI-Wortwahl seit 13.07.2026 (Karbe): die Rolle 'kunde' heißt in der
+    // Oberfläche überall „Herausgeber". Der DB-Wert bleibt 'kunde'.
     function revStatusLabel(status) {
-        if (status === 'freigegeben') return revRole() === 'lektorat' ? t('Genehmigt durch Lektorat') : t('Freigegeben durch Kunde');
+        if (status === 'freigegeben') return revRole() === 'lektorat' ? t('Genehmigt durch Lektorat') : t('Freigegeben durch Herausgeber');
         if (status === 'zu_ueberarbeiten') return revRole() === 'lektorat' ? t('Änderung durch Lektorat') : t('Änderung gewünscht');
-        if (status === 'ruecksprache') return t('Rücksprache mit dem Kunden');
+        if (status === 'ruecksprache') return t('Rücksprache mit dem Herausgeber');
         if (status === 'in_bearbeitung') return t('In Bearbeitung');
         return t('Noch nicht geprüft');
     }
-    // Kunde sieht die Lektorat-Vorgeschichte als eigene Zeile (nur Anzeige).
+    // Herausgeber sieht die Lektorat-Vorgeschichte als eigene Zeile (nur Anzeige).
     function revHistoryHtml(img) {
         if (revRole() !== 'kunde') return '';
         const lek = (img.reviews || {}).lektorat;
@@ -881,7 +1108,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const map = {
             freigegeben: t('Genehmigt durch Lektorat'),
             zu_ueberarbeiten: t('Änderung durch Lektorat'),
-            ruecksprache: t('Rücksprache mit dem Kunden'),
+            ruecksprache: t('Rücksprache mit dem Herausgeber'),
             in_bearbeitung: t('In Bearbeitung'),
         };
         return '<p class="rev-history" style="margin:0 0 0.4rem 0;color:var(--text-muted);">' + t('Lektorat: {s}', { s: map[lek.status] || lek.status }) + '</p>';
@@ -889,7 +1116,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Ruecksprache-Knopf gibt es NUR fuer das Lektorat (Server erzwingt das ebenfalls).
     function revRueckBtnHtml(img) {
         if (revRole() !== 'lektorat') return '';
-        return '<button type="button" class="btn btn-secondary btn-small" id="rev_btn_rueck_' + img.id + '" aria-pressed="' + (revOwnStatus(img) === 'ruecksprache') + '" onclick="guestSetStatus(' + img.id + ", 'ruecksprache'" + ')">' + t('Mit Kunde klären') + '</button>';
+        return '<button type="button" class="btn btn-secondary btn-small" id="rev_btn_rueck_' + img.id + '" aria-pressed="' + (revOwnStatus(img) === 'ruecksprache') + '" onclick="guestSetStatus(' + img.id + ", 'ruecksprache'" + ')">' + t('Mit Herausgeber klären') + '</button>';
     }
 
     async function guestReviewPost(imageId, status, comment) {
@@ -908,6 +1135,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const ok = await guestReviewPost(imageId, status, comment);
         if (!ok) { announce(t('Fehler beim Speichern.')); return; }
         applyGuestStatusUI(imageId, status);
+        updateFilterDataStatus(imageId, status);   // Filter-Zaehler aktuell halten
         // Sichtbare Bestaetigung (Karbe-Befund 10.07.: Klick-Reaktion war zu subtil).
         const saved = document.getElementById('rev_saved_' + imageId);
         if (saved) { saved.textContent = t('Gespeichert.'); setTimeout(() => { saved.textContent = ''; }, 4000); }
@@ -961,7 +1189,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const conf = document.getElementById('shareConfirm'); if (conf) conf.hidden = true;
         const lw = document.getElementById('shareConfirmLinkWrap'); if (lw) lw.hidden = true;
         const sendBtn = document.getElementById('shareSendBtn'); if (sendBtn) sendBtn.disabled = false;
-        const linkBtn = document.getElementById('shareLinkBtn'); if (linkBtn) linkBtn.disabled = false;
+        const roleSel = document.getElementById('shareRole'); if (roleSel) roleSel.value = 'kunde';
         const err = document.getElementById('shareEmailError'); if (err) err.textContent = '';
         const st = document.getElementById('shareStatus'); if (st) st.textContent = '';
         const cs = document.getElementById('shareCopyStatus'); if (cs) cs.textContent = '';
@@ -1013,12 +1241,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
     function shareSetBusy(busy) {
         const sendBtn = document.getElementById('shareSendBtn'); if (sendBtn) sendBtn.disabled = busy;
-        const linkBtn = document.getElementById('shareLinkBtn'); if (linkBtn) linkBtn.disabled = busy;
     }
 
+    // Rollen-Auswahlfeld (Karbe-GUI 11.07.2026): UI zeigt „Herausgeber"/„Lektorat",
+    // die DB-Werte bleiben 'kunde'/'lektorat' (Arbeitsbegriffe, jederzeit umbenennbar).
     function shareSelectedRole() {
-        const el = document.querySelector('input[name="shareRole"]:checked');
-        return el ? el.value : 'kunde';
+        const el = document.getElementById('shareRole');
+        return (el && el.value) || 'kunde';
     }
 
     async function doShare(projectId) {
@@ -1053,32 +1282,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         } catch (e) { if (statusEl) statusEl.textContent = t('Netzwerkfehler.'); shareSetBusy(false); }
     }
 
-    async function doShareLinkOnly(projectId) {
-        const email = shareValidateEmail();
-        if (!email) return;
-        const name = ((document.getElementById('shareName') || {}).value || '').trim();
-        const statusEl = document.getElementById('shareStatus');
-        shareSetBusy(true);
-        if (statusEl) statusEl.textContent = t('Link wird erstellt …');
-        announce(t('Link wird erstellt …'));
-        try {
-            const r = await fetch('/api/projects/' + projectId + '/share', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-                body: JSON.stringify({ guest_email: email, guest_name: name, notify: false, role: shareSelectedRole() })
-            });
-            const d = await r.json();
-            if (!r.ok) {
-                if (statusEl) statusEl.textContent = (d.detail || t('Fehler beim Erstellen der Freigabe.'));
-                shareSetBusy(false);
-                const em = document.getElementById('shareEmail'); if (em) em.focus();
-                return;
-            }
-            window._lastShareUrl = d.url || '';
-            shareShowConfirm(t('Link erstellt'), t('Sie können diesen Einladungslink jetzt selbst an {email} verschicken. Der Gast muss beim Öffnen genau diese E-Mail-Adresse bestätigen.', { email: email }), true);
-            announce(t('Einladungslink erstellt.'));
-        } catch (e) { if (statusEl) statusEl.textContent = t('Netzwerkfehler.'); shareSetBusy(false); }
-    }
-
+    // Der frühere „Nur Link erstellen"-Knopf ist auf Karbe-Wunsch (11.07.2026)
+    // entfallen — die GUI bleibt maximal einfach. Der Link-Kopier-Block im
+    // Bestätigungs-Dialog bleibt als Fallback, falls der Mail-Versand scheitert.
     function shareCopyLink() {
         const url = window._lastShareUrl || '';
         const statusEl = document.getElementById('shareCopyStatus');
@@ -1310,18 +1516,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 : t('Bild {n}', { n: displayNr });
             const hTag = cardHeadingLevel || 'h3';
             return `
-            <section class="image-review" aria-labelledby="img_heading_${img.id}">
+            <section class="image-review" id="imgcard_${img.id}" aria-labelledby="img_heading_${img.id}">
                 <${hTag} id="img_heading_${img.id}" class="image-heading">${heading}</${hTag}>
                 <div class="image-review-header">
                     <span class="image-meta">${img.width}x${img.height}px</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
                     ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Konfidenz: {k}', { k: img.konfidenz }) + '</span>' : ''}
                     ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#475569;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? t('mit Kontext') : t('ohne Kontext')) + '</span>' : ''}
-                    ${!window.GUEST_MODE && window._inReview && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? '<span class="badge" style="background:' + (img.review_status === 'freigegeben' ? 'var(--success,#2a7)' : img.review_status === 'zu_ueberarbeiten' ? '#d97706' : img.review_status === 'ruecksprache' ? '#6d28d9' : img.review_status === 'in_bearbeitung' ? '#0369a1' : '#64748b') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Prüfstatus: {s}', { s: (img.review_status === 'freigegeben' ? t('Freigegeben') : img.review_status === 'zu_ueberarbeiten' ? t('Nachbessern') : img.review_status === 'ruecksprache' ? t('Rücksprache') : img.review_status === 'in_bearbeitung' ? t('In Bearbeitung') : t('Ausstehend')) }) + (img.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>' : ''}
+                    ${!window.GUEST_MODE && window._inReview && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? ownerReviewBadges(img) : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">' + t('Wird analysiert...') + '</span>' : ''}
                     ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Fehler') + '</span>' : ''}
                 </div>
-                ${!window.GUEST_MODE ? reviewNoteDetails(img.review_note, t('Anmerkung des Kunden anzeigen')) : ''}
+                ${!window.GUEST_MODE ? reviewNoteDetails(img.review_note, t('Anmerkung des Gastes anzeigen')) : ''}
                 ${img.status === 'error' ? `
                     <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
                         ${t('Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.')}
@@ -1519,7 +1725,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     if (window.GUEST_MODE && res.ok) {
                         try {
                             const d = await res.json();
-                            if (d.auto_status) applyGuestStatusUI(Number(id), d.auto_status);
+                            if (d.auto_status) {
+                                applyGuestStatusUI(Number(id), d.auto_status);
+                                updateFilterDataStatus(id, d.auto_status);   // Filter-Zaehler aktuell halten
+                            }
                         } catch (e) { /* reine Anzeige, Speichern war erfolgreich */ }
                     }
                     const ind = document.getElementById('saved_' + id);

@@ -1936,3 +1936,63 @@ msgstr "Rolle:"
 
 msgid "Seitentext"
 msgstr "Sidetekst"
+
+# Rollen-Workflow Etappe 2 (13.07.2026): Teilen-Dialog-GUI, Rolle
+# "Herausgeber", Filterleiste, Besitzer-Badges pro Rolle.
+
+msgid "Zur Prüfung einladen"
+msgstr "Inviter til gennemsyn"
+
+msgid "Name (optional)"
+msgstr "Navn (valgfrit)"
+
+msgid "E-Mail-Adresse (Pflichtfeld)"
+msgstr "E-mailadresse (obligatorisk)"
+
+msgid "Rolle des Empfängers"
+msgstr "Modtagerens rolle"
+
+msgid "Herausgeber"
+msgstr "Udgiver"
+
+msgid "Nachricht (optional)"
+msgstr "Besked (valgfri)"
+
+msgid "Freigegeben durch Herausgeber"
+msgstr "Godkendt af udgiver"
+
+msgid "Rücksprache mit dem Herausgeber"
+msgstr "Afstemning med udgiveren"
+
+msgid "Mit Herausgeber klären"
+msgstr "Afklar med udgiveren"
+
+msgid "Anmerkung des Gastes anzeigen"
+msgstr "Vis gæstens bemærkning"
+
+msgid "Herausgeber: {s}"
+msgstr "Udgiver: {s}"
+
+msgid "Bilder filtern"
+msgstr "Filtrer billeder"
+
+msgid "Prüfende Rolle"
+msgstr "Gennemsynsrolle"
+
+msgid "Nach Prüfstatus filtern"
+msgstr "Filtrer efter gennemsynsstatus"
+
+msgid "Rücksprache des Lektorats"
+msgstr "Afstemning (korrekturlæsning)"
+
+msgid "Ohne Alt-Text"
+msgstr "Uden alternativ tekst"
+
+msgid "Alle"
+msgstr "Alle"
+
+msgid "Alle {n} Bilder angezeigt."
+msgstr "Alle {n} billeder vises."
+
+msgid "{n} von {m} Bildern angezeigt."
+msgstr "{n} af {m} billeder vises."

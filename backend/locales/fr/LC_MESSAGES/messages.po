@@ -2245,3 +2245,63 @@ msgstr "Rôle :"
 
 msgid "Seitentext"
 msgstr "Texte de la page"
+
+# Rollen-Workflow Etappe 2 (13.07.2026): Teilen-Dialog-GUI, Rolle
+# "Herausgeber", Filterleiste, Besitzer-Badges pro Rolle.
+
+msgid "Zur Prüfung einladen"
+msgstr "Inviter à la vérification"
+
+msgid "Name (optional)"
+msgstr "Nom (facultatif)"
+
+msgid "E-Mail-Adresse (Pflichtfeld)"
+msgstr "Adresse e-mail (obligatoire)"
+
+msgid "Rolle des Empfängers"
+msgstr "Rôle du destinataire"
+
+msgid "Herausgeber"
+msgstr "Éditeur"
+
+msgid "Nachricht (optional)"
+msgstr "Message (facultatif)"
+
+msgid "Freigegeben durch Herausgeber"
+msgstr "Validé par l'éditeur"
+
+msgid "Rücksprache mit dem Herausgeber"
+msgstr "Concertation avec l'éditeur"
+
+msgid "Mit Herausgeber klären"
+msgstr "À clarifier avec l'éditeur"
+
+msgid "Anmerkung des Gastes anzeigen"
+msgstr "Afficher la remarque de l'invité"
+
+msgid "Herausgeber: {s}"
+msgstr "Éditeur : {s}"
+
+msgid "Bilder filtern"
+msgstr "Filtrer les images"
+
+msgid "Prüfende Rolle"
+msgstr "Rôle de vérification"
+
+msgid "Nach Prüfstatus filtern"
+msgstr "Filtrer par statut de vérification"
+
+msgid "Rücksprache des Lektorats"
+msgstr "Concertation (relecture)"
+
+msgid "Ohne Alt-Text"
+msgstr "Sans texte alternatif"
+
+msgid "Alle"
+msgstr "Tous"
+
+msgid "Alle {n} Bilder angezeigt."
+msgstr "Les {n} images sont affichées."
+
+msgid "{n} von {m} Bildern angezeigt."
+msgstr "{n} images sur {m} affichées."

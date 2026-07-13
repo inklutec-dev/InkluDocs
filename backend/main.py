@@ -2320,7 +2320,31 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
            FROM documents WHERE project_id = ? ORDER BY doc_index""",
         (project_id,)
     ).fetchall()
+    # Rollen-Workflow Etappe 2 (13.07.2026): Pruefstatus PRO ROLLE auch fuer den
+    # Besitzer — Datenbasis der Badges „Lektorat: X / Herausgeber: Y" und der
+    # Filterleiste. Zusaetzlich die aktiven Gast-Rollen des Projekts, damit das
+    # Frontend weiss, welche Rollen-Badges/Filter es anbieten soll.
+    review_rows = conn.execute(
+        """SELECT r.image_id, r.role, r.status, r.reviewed_at FROM image_reviews r
+           JOIN images i ON i.id = r.image_id WHERE i.project_id = ?""",
+        (project_id,)
+    ).fetchall()
+    share_roles = [row["role"] for row in conn.execute(
+        """SELECT DISTINCT COALESCE(NULLIF(role, ''), 'kunde') AS role FROM shares
+           WHERE project_id = ? AND status IN ('active', 'completed') ORDER BY role""",
+        (project_id,)
+    ).fetchall()]
     conn.close()
+
+    reviews_by_image = {}
+    for r in review_rows:
+        reviews_by_image.setdefault(r["image_id"], {})[r["role"]] = {
+            "status": r["status"], "reviewed_at": r["reviewed_at"]}
+    image_dicts = []
+    for img in images:
+        d = dict(img)
+        d["reviews"] = reviews_by_image.get(d["id"], {})
+        image_dicts.append(d)
 
     # Schalter PDF_LANGBESCHREIBUNG (Standard aus): Langbeschreibung im Frontend nur zeigen,
     # wenn kein PDF-Projekt ODER der Schalter an ist (siehe pdf_langbeschreibung_enabled).
@@ -2328,17 +2352,15 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
     # Review-Status nur zeigen, wenn das Projekt ueberhaupt zur Pruefung freigegeben
     # wurde (Steve 20.06.) -> Solo-Arbeit ohne Einladung bleibt frei von Pruef-Badges.
-    _rconn = get_db()
-    _in_review = _rconn.execute(
-        "SELECT 1 FROM shares WHERE project_id = ? AND status IN ('active','completed') LIMIT 1",
-        (project_id,)).fetchone() is not None
-    _rconn.close()
+    # share_roles traegt dieselbe Information pro Rolle; der bool bleibt fuer
+    # Bestands-Codepfade erhalten.
     return {
         "project": proj_dict,
-        "images": [dict(img) for img in images],
+        "images": image_dicts,
         "documents": [dict(d) for d in documents],
         "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
-        "in_review": _in_review,
+        "in_review": bool(share_roles),
+        "share_roles": share_roles,
     }
 
 
@@ -4640,7 +4662,7 @@ async def freigabe_complete(token: str, request: Request):
         + "<p><strong>" + _('Ergebnis:') + "</strong> "
         + _('{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen.').format(
             f=freigegeben, z=zu_ueber, r=ruecksprache, b=in_bearb, o=offen) + "</p>"
-        + "<p><strong>" + _('Rolle:') + "</strong> " + (_('Lektorat') if role == "lektorat" else _('Endkunde')) + "</p>"
+        + "<p><strong>" + _('Rolle:') + "</strong> " + (_('Lektorat') if role == "lektorat" else _('Herausgeber')) + "</p>"
         + (("<p><strong>" + _('Nachricht:') + "</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
         + (("<p><strong>" + _('Anmerkungen:') + "</strong></p><ul>" + notes_html + "</ul>") if notes_html else "")
         + "<p>" + _('Im Werkzeug ansehen:') + " <a href='" + link + "'>" + link + "</a></p>"

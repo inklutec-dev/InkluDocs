@@ -2248,3 +2248,63 @@ msgstr "Rolle:"
 
 msgid "Seitentext"
 msgstr "Seitentext"
+
+# Rollen-Workflow Etappe 2 (13.07.2026): Teilen-Dialog-GUI, Rolle
+# "Herausgeber", Filterleiste, Besitzer-Badges pro Rolle.
+
+msgid "Zur Prüfung einladen"
+msgstr ""
+
+msgid "Name (optional)"
+msgstr ""
+
+msgid "E-Mail-Adresse (Pflichtfeld)"
+msgstr ""
+
+msgid "Rolle des Empfängers"
+msgstr ""
+
+msgid "Herausgeber"
+msgstr ""
+
+msgid "Nachricht (optional)"
+msgstr ""
+
+msgid "Freigegeben durch Herausgeber"
+msgstr ""
+
+msgid "Rücksprache mit dem Herausgeber"
+msgstr ""
+
+msgid "Mit Herausgeber klären"
+msgstr ""
+
+msgid "Anmerkung des Gastes anzeigen"
+msgstr ""
+
+msgid "Herausgeber: {s}"
+msgstr ""
+
+msgid "Bilder filtern"
+msgstr ""
+
+msgid "Prüfende Rolle"
+msgstr ""
+
+msgid "Nach Prüfstatus filtern"
+msgstr ""
+
+msgid "Rücksprache des Lektorats"
+msgstr ""
+
+msgid "Ohne Alt-Text"
+msgstr ""
+
+msgid "Alle"
+msgstr ""
+
+msgid "Alle {n} Bilder angezeigt."
+msgstr ""
+
+msgid "{n} von {m} Bildern angezeigt."
+msgstr ""

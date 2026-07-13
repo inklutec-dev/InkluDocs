@@ -78,7 +78,14 @@ function renderSidebar() {
   brand.className = 'app-brand';
   brand.href = window.GUEST_MODE ? '/' : '/dashboard';
   brand.innerHTML = '<span class="brand">Inklu</span>Docs';
-  host.appendChild(brand);
+  // a11y-Fix 13.07.2026 (axe "region", Memory todo_inkludocs_app_a11y): der
+  // Marken-Link lag als einziges Element ausserhalb jeder Landmarke. Das
+  // <header>-Element (role banner) macht ihn zu Landmarken-Inhalt — fuer
+  // Gaeste (nur Logo) und Eingeloggte (Logo + nav) gleichermassen. Das
+  // Styling haengt nur an .app-brand, der Wrapper ist layoutneutral.
+  const brandHeader = document.createElement('header');
+  brandHeader.appendChild(brand);
+  host.appendChild(brandHeader);
 
   if (window.GUEST_MODE) {
     // Gast-Modus: nur das Logo in der Huelle — keine Navigation, keine

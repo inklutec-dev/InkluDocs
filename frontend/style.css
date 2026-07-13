@@ -1121,3 +1121,33 @@ input[type="file"]:focus + .upload-btn { box-shadow: 0 0 0 3px rgba(27, 42, 74, 
    Karbe 25.06.: persoenliche Nachricht + Kommentar bei der Pruefung waren dadurch zu klein.
    Felder mit eigener Groesse (.alt-text-field, inline rev_comment) behalten ihre. */
 textarea { font-family: inherit; font-size: 1rem; }
+
+/* Bilder-Filterleiste (Rollen-Workflow Etappe 2, 13.07.2026).
+   Radio-Chips im gleichen Muster wie .export-scope-*: natives Radio, nur
+   vergroessertes Target (WCAG 2.2 AA target-size, 24x24 + Abstand), sichtbarer
+   Fokusring ueber :focus-within am Label. Chips fliessen nebeneinander und
+   brechen auf schmalen Screens um. */
+.filter-fieldset {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+}
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 32px;
+    padding: 0.25rem 0.2rem;
+    cursor: pointer;
+}
+.filter-chip:focus-within {
+    outline: 2px solid var(--focus, #c75000);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+.filter-chip input[type="radio"] {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    margin: 0; /* native Radio-Erscheinung erhalten — nur das Target vergroessern */
+}
