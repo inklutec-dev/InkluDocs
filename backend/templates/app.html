@@ -1340,7 +1340,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 return;
             }
             closeGuestComplete();   // Modal sauber schliessen, BEVOR der Inhalt ersetzt wird
-            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem auto;"><h1 class="section-title">' + t('Vielen Dank!') + '</h1><p>' + t('Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen.') + '</p></section>';
+            // Dankeseite mit Rueckweg (Steve 13.07.2026): wie im Teilen-Dialog
+            // fuehrt "Zurueck zum Projekt" direkt zurueck in die Freigabe-Ansicht
+            // (der Link bleibt ja gueltig) — keine Sackgasse. Fokus auf die
+            // Ueberschrift, damit die Bestaetigung sofort vorgelesen wird.
+            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem auto;">'
+                + '<h1 class="section-title" id="guestThanksHeading" tabindex="-1">' + t('Vielen Dank!') + '</h1>'
+                + '<p>' + t('Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen.') + '</p>'
+                + '<div style="margin-top:1rem;">'
+                + '<button type="button" class="btn btn-primary" onclick="showProject(window.SHARE_TOKEN)">' + t('Zurück zum Projekt') + '</button>'
+                + '</div></section>';
+            const thanksH = document.getElementById('guestThanksHeading');
+            if (thanksH) thanksH.focus();
             announce(t('Prüfung abgeschlossen und gesendet.'));
         } catch (e) {
             if (statusEl) statusEl.textContent = t('Netzwerkfehler. Bitte erneut versuchen.');
