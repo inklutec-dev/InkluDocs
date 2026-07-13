@@ -571,15 +571,20 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ` : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">${t('Prüfung abschließen')}</button>
-                        <div id="guestCompletePanel" style="display:none;flex-basis:100%;margin-top:0.6rem;padding:1rem;border:1px solid var(--border);border-radius:8px;">
+                        <!-- Natives Modal wie der Teilen-Dialog (Steve-Befund 13.07.2026: der
+                             fruehere Inline-Bereich hatte keine Fokusfalle — per Ueberschriften-
+                             Navigation lief man mitten im Abschluss wieder ins Projekt).
+                             showModal() liefert Fokusfang, Escape und inerten Hintergrund nativ. -->
+                        <dialog id="guestCompleteDialog" aria-labelledby="guestCompleteHeading" class="invite-dialog">
+                            <h2 id="guestCompleteHeading" style="margin-top:0;">${t('Prüfung abschließen')}</h2>
                             <label for="guestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Möchten Sie dem Ersteller noch etwas mitteilen? (optional)')}</label>
                             <textarea id="guestCompleteMsg" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
-                            <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
                                 <button class="btn btn-primary" id="guestCompleteSend" onclick="doGuestComplete()">${t('Abschließen &amp; senden')}</button>
-                                <button class="btn btn-secondary" onclick="document.getElementById('guestCompletePanel').style.display='none'">${t('Abbrechen')}</button>
+                                <button class="btn btn-secondary" onclick="closeGuestComplete()">${t('Abbrechen')}</button>
                             </div>
                             <output id="guestCompleteStatus" style="display:block;margin-top:0.5rem;"></output>
-                        </div>
+                        </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${t('Exportieren')}</button>
@@ -1302,11 +1307,19 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     // ─── Etappe 5: Gast schliesst die Pruefung ab ───
+    // Natives Modal (13.07.2026): Fokusfalle, Escape und inerter Hintergrund
+    // kommen von dialog.showModal() — der Fokus kehrt beim Schliessen
+    // automatisch zum "Pruefung abschliessen"-Knopf zurueck.
     function openGuestComplete() {
-        const p = document.getElementById('guestCompletePanel');
-        if (p) p.style.display = '';
+        const dlg = document.getElementById('guestCompleteDialog');
+        if (!dlg) return;
+        if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
         const msgField = document.getElementById('guestCompleteMsg');
         if (msgField) msgField.focus();
+    }
+    function closeGuestComplete() {
+        const dlg = document.getElementById('guestCompleteDialog');
+        if (dlg && typeof dlg.close === 'function') dlg.close(); else if (dlg) dlg.removeAttribute('open');
     }
     async function doGuestComplete() {
         const msgEl = document.getElementById('guestCompleteMsg');
@@ -1326,6 +1339,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (sendBtn) sendBtn.disabled = false;   // wieder freigeben fuer einen zweiten Versuch
                 return;
             }
+            closeGuestComplete();   // Modal sauber schliessen, BEVOR der Inhalt ersetzt wird
             main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem auto;"><h1 class="section-title">' + t('Vielen Dank!') + '</h1><p>' + t('Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen.') + '</p></section>';
             announce(t('Prüfung abgeschlossen und gesendet.'));
         } catch (e) {
