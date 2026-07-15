@@ -2334,3 +2334,23 @@ msgstr ""
 
 msgid "Zur Rücksprache (Lektorat): {n}"
 msgstr ""
+
+# ── Karbe Optik-Punkte 12.07. (umgesetzt 15.07.2026) ──
+
+msgid "Kategorie: {typ}"
+msgstr ""
+
+msgid "Kontext: Ja"
+msgstr ""
+
+msgid "Kontext: Nein"
+msgstr ""
+
+msgid "Kategorie {name}"
+msgstr ""
+
+msgid "Name:"
+msgstr ""
+
+msgid "Beschreibung:"
+msgstr ""

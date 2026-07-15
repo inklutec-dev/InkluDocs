@@ -2022,3 +2022,23 @@ msgstr "Bemærkning:"
 
 msgid "Zur Rücksprache (Lektorat): {n}"
 msgstr "Til afstemning (korrekturlæsning): {n}"
+
+# ── Karbe Optik-Punkte 12.07. (umgesetzt 15.07.2026) ──
+
+msgid "Kategorie: {typ}"
+msgstr "Kategori: {typ}"
+
+msgid "Kontext: Ja"
+msgstr "Kontekst: ja"
+
+msgid "Kontext: Nein"
+msgstr "Kontekst: nej"
+
+msgid "Kategorie {name}"
+msgstr "Kategori {name}"
+
+msgid "Name:"
+msgstr "Navn:"
+
+msgid "Beschreibung:"
+msgstr "Beskrivelse:"

@@ -111,7 +111,7 @@
         reset.textContent = t('Passwort zurücksetzen');
         reset.addEventListener('click', () => resetUserPw(u.id, u.email));
         const del = document.createElement('button');
-        del.className = 'btn btn-danger btn-small';
+        del.className = 'btn btn-delete btn-small';   // Michael 12.07.2026 (Optik 5)
         del.textContent = t('Löschen');
         del.addEventListener('click', () => deleteUser(u.id, u.email));
         actions.appendChild(toggle);
@@ -224,7 +224,7 @@
           lvlBtn.addEventListener('click', () => setAdminLevel(a.id, 'full'));
         }
         const rev = document.createElement('button');
-        rev.className = 'btn btn-danger btn-small';
+        rev.className = 'btn btn-delete btn-small';   // Michael 12.07.2026 (Optik 5)
         rev.textContent = t('Admin-Rechte entziehen');
         rev.addEventListener('click', () => revokeAdmin(a.id, a.display_name));
         actions.appendChild(lvlBtn);

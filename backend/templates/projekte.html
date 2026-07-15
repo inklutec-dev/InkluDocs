@@ -69,7 +69,7 @@
       renameBtn.textContent = t('Umbenennen');
       renameBtn.addEventListener('click', () => renameProject(pr.id, pr.name || pr.filename || ''));
       const delBtn = document.createElement('button');
-      delBtn.className = 'btn btn-danger btn-small';
+      delBtn.className = 'btn btn-delete btn-small';   // Michael 12.07.2026 (Optik 5)
       delBtn.textContent = t('Löschen');
       delBtn.addEventListener('click', () => deleteProject(pr.id, pr.name || pr.filename || ''));
       actions.appendChild(renameBtn);

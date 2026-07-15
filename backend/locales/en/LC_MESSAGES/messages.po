@@ -2331,3 +2331,23 @@ msgstr "Note:"
 
 msgid "Zur Rücksprache (Lektorat): {n}"
 msgstr "For consultation (proofreading): {n}"
+
+# ── Karbe Optik-Punkte 12.07. (umgesetzt 15.07.2026) ──
+
+msgid "Kategorie: {typ}"
+msgstr "Category: {typ}"
+
+msgid "Kontext: Ja"
+msgstr "Context: Yes"
+
+msgid "Kontext: Nein"
+msgstr "Context: No"
+
+msgid "Kategorie {name}"
+msgstr "Category {name}"
+
+msgid "Name:"
+msgstr "Name:"
+
+msgid "Beschreibung:"
+msgstr "Description:"

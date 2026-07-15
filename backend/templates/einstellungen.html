@@ -163,7 +163,7 @@
     const actions = document.createElement('div'); actions.className = 'dash-actions';
     const save = document.createElement('button'); save.className = 'btn btn-primary'; save.textContent = t('Name speichern');
     save.addEventListener('click', () => saveApiKeyName(id));
-    const del = document.createElement('button'); del.className = 'btn btn-danger'; del.textContent = t('Schlüssel löschen');
+    const del = document.createElement('button'); del.className = 'btn btn-delete'; del.textContent = t('Schlüssel löschen');   // Michael 12.07.2026 (Optik 5)
     del.addEventListener('click', () => deleteApiKey(id, currentName));
     const cancel = document.createElement('button'); cancel.className = 'btn btn-secondary'; cancel.textContent = t('Abbrechen');
     cancel.addEventListener('click', closeEditApiKey);

@@ -32,6 +32,10 @@
 }
 
 .dash-main { max-width:880px; margin:0; padding:1.5rem 1.5rem 3rem; }
+/* Michael 12.07.2026 (Optik 4): Trennstrich unter der Topueberschrift der
+   Dashboard-Seiten — wirkt sonst gequetscht. Gilt nur fuer die H1 direkt in
+   der Hauptflaeche (Seitentitel), nicht fuer H1 in Karten/Dialogen. */
+.dash-main > h1:not(.dash-greeting) { padding-bottom:.5rem; border-bottom:1px solid var(--border); margin-bottom:1.2rem; }
 .dash-greeting { margin:.5rem 0 .25rem; }
 .dash-sub { color:var(--text-muted); margin:0 0 2rem; }
 /* Info-Kasten ueber der Prompt-Liste (Karbe-Wunsch 07.07.2026): Text in

@@ -628,12 +628,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </div>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
-                        <div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                            <label for="ownPromptSelect" style="font-weight:600;">${t('Eigener Prompt')}</label>
+                        <div style="flex-basis:100%;margin-top:0.6rem;">
+                            <!-- Michael 12.07.2026 (Optik 1+6): Ueberschrift "Gespeicherte Prompts"
+                                 UEBER dem Feld (wie bei den anderen Feldern); der Link zur
+                                 Promptverwaltung ist raus — die erreicht man uebers Dashboard. -->
+                            <label for="ownPromptSelect" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Gespeicherte Prompts')}</label>
                             <select id="ownPromptSelect" onchange="setPromptSetting(${project.id}, this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
                                 <option value="">${t('Kein eigener Prompt')}</option>
                             </select>
-                            <a href="/prompts" style="font-size:0.9rem;color:#c75000;font-weight:600;">${t('Prompts verwalten')}</a>
                         </div>
                     ` : ''}
                 </div>
@@ -1601,9 +1603,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 <${hTag} id="img_heading_${img.id}" class="image-heading">${heading}</${hTag}>
                 <div class="image-review-header">
                     <span class="image-meta">${img.width}x${img.height}px</span>
-                    ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + img.image_type + '</span>' : ''}
-                    ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? 'var(--success,#2a7)' : img.konfidenz === 'niedrig' ? 'var(--error,#c33)' : '#e90') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Konfidenz: {k}', { k: img.konfidenz }) + '</span>' : ''}
-                    ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#475569;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? t('mit Kontext') : t('ohne Kontext')) + '</span>' : ''}
+                    ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + t('Kategorie: {typ}', { typ: img.image_type.charAt(0).toUpperCase() + img.image_type.slice(1) }) + '</span>' : ''}
+                    <!-- Bestands-a11y-Fix 15.07.2026: Konfidenz-Farben auf AA gehoben (weisse
+                         Schrift auf var(--success)/#e90 hatte < 3,5:1) — hoch #1e7e34 (5,1:1),
+                         mittel #a15c00 (5,2:1), niedrig #b91c1c (5,9:1). -->
+                    ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? '#1e7e34' : img.konfidenz === 'niedrig' ? '#b91c1c' : '#a15c00') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Konfidenz: {k}', { k: img.konfidenz }) + '</span>' : ''}
+                    ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#1e7e34;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? t('Kontext: Ja') : t('Kontext: Nein')) + '</span>' : ''}
                     ${!window.GUEST_MODE && window._inReview && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? ownerReviewBadges(img) : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">' + t('Wird analysiert...') + '</span>' : ''}
                     ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Fehler') + '</span>' : ''}
@@ -1664,7 +1669,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <textarea id="rev_comment_${img.id}" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:0.95rem;">${esc(img.review_note || '')}</textarea>
                                 <div style="margin-top:0.4rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
                                     <button type="button" class="btn btn-primary btn-small" onclick="guestSaveNote(${img.id})">${t('Anmerkung speichern')}</button>
-                                    <button type="button" class="btn btn-secondary btn-small" onclick="guestDeleteNote(${img.id})">${t('Anmerkung löschen')}</button>
+                                    <button type="button" class="btn btn-delete btn-small" onclick="guestDeleteNote(${img.id})">${t('Anmerkung löschen')}</button>
                                     <output id="rev_note_msg_${img.id}" style="font-size:0.85rem;"></output>
                                 </div>
                             </div>

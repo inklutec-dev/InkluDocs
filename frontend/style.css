@@ -404,6 +404,15 @@ input[type="file"] {
 .btn-secondary:hover:not(:disabled) { border-color: var(--text-muted); }
 .btn-danger { background: var(--error); color: white; }
 .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+/* Michael 12.07.2026 (Optik 5): Loeschen-Knoepfe in Listen einheitlich —
+   weisser Hintergrund, oranger Rahmen + Text. AA-Orange #c75000 (4,59:1 auf
+   Weiss). Der Bestaetigen-Knopf im Loesch-Dialog bleibt bewusst btn-danger. */
+.btn-delete {
+    background: var(--card-bg, #fff);
+    border: 2px solid #c75000;
+    color: #c75000;
+}
+.btn-delete:hover:not(:disabled) { background: #fdf1e7; }
 .btn-small { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
 
 /* Progress */
@@ -565,13 +574,15 @@ input[type="file"] {
     outline: 2px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
+/* Michael 12.07.2026 (Optik 5): auch das Dokument-Loeschen im Projekt folgt dem
+   einheitlichen Loeschen-Muster (weiss, oranger Rahmen + Text). */
 .doc-action-danger {
-    border-color: var(--error, #c0392b);
-    color: var(--error, #c0392b);
+    border: 2px solid #c75000;
+    color: #c75000;
 }
 .doc-action-danger:hover {
-    background: var(--error, #c0392b);
-    color: #fff;
+    background: #fdf1e7;
+    color: #c75000;
 }
 
 /* Schmale Geräte (10.06.2026): Die Aktionsgruppe schwebt nicht mehr oben rechts
@@ -771,11 +782,13 @@ input[type="file"] {
 .image-type-badge {
     display: inline-block;
     padding: 0.2rem 0.5rem;
-    background: #fff7ed;
+    /* Michael 12.07.2026 (Optik 7): Kategorie-Badge gruen wie das Kontext-Badge
+       ("sonst zu bunt"). Gruen #1e7e34 = 5,1:1 auf Weiss (AA, wie save-indicator). */
+    background: #1e7e34;
     border-radius: 4px;
     font-size: 0.8rem;
     font-weight: 600;
-    color: #9a3412;
+    color: #fff;
 }
 .save-indicator {
     font-size: 0.85rem;

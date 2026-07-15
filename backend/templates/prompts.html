@@ -124,7 +124,9 @@
     });
     groups.forEach((items, cat) => {
       const h3 = document.createElement('h3');
-      h3.textContent = cat;
+      // Michael 12.07.2026 (Optik 2): "Kategorie" vor dem Kategorienamen;
+      // die Sammelgruppe "Ohne Kategorie" bleibt ohne Praefix (sonst doppelt).
+      h3.textContent = (cat === t('Ohne Kategorie')) ? cat : t('Kategorie {name}', { name: cat });
       cont.appendChild(h3);
       const ul = document.createElement('ul');
       ul.className = 'dash-list';
@@ -132,12 +134,13 @@
         const li = document.createElement('li');
         li.className = 'dash-item';
         const h4 = document.createElement('h4');
-        h4.textContent = pr.name;
+        // Michael 12.07.2026 (Optik 3): Praefixe "Name:" / "Beschreibung:" in der Liste.
+        h4.textContent = t('Name:') + ' ' + pr.name;
         li.appendChild(h4);
         if (pr.description) {
           const d = document.createElement('p');
           d.className = 'dash-meta';
-          d.textContent = pr.description;
+          d.textContent = t('Beschreibung:') + ' ' + pr.description;
           li.appendChild(d);
         }
         const det = document.createElement('details');
@@ -159,7 +162,8 @@
         row.appendChild(editBtn);
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
-        delBtn.className = 'btn btn-secondary';
+        // Michael 12.07.2026 (Optik 5): Loeschen einheitlich weiss mit orangem Rahmen+Text.
+        delBtn.className = 'btn btn-delete';
         delBtn.style.marginLeft = '.5rem';
         delBtn.textContent = t('Löschen');
         delBtn.addEventListener('click', () => deletePrompt(pr.id));
