@@ -1996,3 +1996,29 @@ msgstr "Alle {n} billeder vises."
 
 msgid "{n} von {m} Bildern angezeigt."
 msgstr "{n} af {m} billeder vises."
+
+# ── Gastzugang-Rollen Etappe 3: Ruecksprache-Block (15.07.2026) ──
+
+msgid "1 Bild zur Rücksprache markiert"
+msgstr "1 billede markeret til afstemning"
+
+msgid "{n} Bilder zur Rücksprache markiert"
+msgstr "{n} billeder markeret til afstemning"
+
+msgid "1 Bild zur Rücksprache markiert:"
+msgstr "1 billede markeret til afstemning:"
+
+msgid "{n} Bilder zur Rücksprache markiert:"
+msgstr "{n} billeder markeret til afstemning:"
+
+msgid "Diese Liste wird dem Ersteller automatisch mit übermittelt:"
+msgstr "Denne liste sendes automatisk med til opretteren:"
+
+msgid "Dokument „{name}\", {bild}"
+msgstr "Dokument »{name}«, {bild}"
+
+msgid "Anmerkung:"
+msgstr "Bemærkning:"
+
+msgid "Zur Rücksprache (Lektorat): {n}"
+msgstr "Til afstemning (korrekturlæsning): {n}"

@@ -260,6 +260,14 @@
         offen: pr.offen, ueberarbeiten: pr.zu_ueberarbeiten, freigegeben: pr.freigegeben, gesamt: pr.total,
       });
       li.appendChild(p);
+      // Etappe 3 (15.07.2026): Ruecksprache-Bilder des Lektorats als eigene Zeile,
+      // damit Steve beim Kundengespraech direkt sieht, wo Klaerungsbedarf ist.
+      if (pr.ruecksprache > 0) {
+        const pr2 = document.createElement('p');
+        pr2.className = 'dash-sub';
+        pr2.textContent = t('Zur Rücksprache (Lektorat): {n}', { n: pr.ruecksprache });
+        li.appendChild(pr2);
+      }
       ul.appendChild(li);
     });
     cont.appendChild(ul);

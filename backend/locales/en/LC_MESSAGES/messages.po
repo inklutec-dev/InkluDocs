@@ -2305,3 +2305,29 @@ msgstr "Showing all {n} images."
 
 msgid "{n} von {m} Bildern angezeigt."
 msgstr "Showing {n} of {m} images."
+
+# ── Gastzugang-Rollen Etappe 3: Ruecksprache-Block (15.07.2026) ──
+
+msgid "1 Bild zur Rücksprache markiert"
+msgstr "1 image marked for consultation"
+
+msgid "{n} Bilder zur Rücksprache markiert"
+msgstr "{n} images marked for consultation"
+
+msgid "1 Bild zur Rücksprache markiert:"
+msgstr "1 image marked for consultation:"
+
+msgid "{n} Bilder zur Rücksprache markiert:"
+msgstr "{n} images marked for consultation:"
+
+msgid "Diese Liste wird dem Ersteller automatisch mit übermittelt:"
+msgstr "This list is automatically included for the creator:"
+
+msgid "Dokument „{name}\", {bild}"
+msgstr "Document “{name}”, {bild}"
+
+msgid "Anmerkung:"
+msgstr "Note:"
+
+msgid "Zur Rücksprache (Lektorat): {n}"
+msgstr "For consultation (proofreading): {n}"

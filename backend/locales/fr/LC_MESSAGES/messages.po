@@ -2305,3 +2305,29 @@ msgstr "Les {n} images sont affichées."
 
 msgid "{n} von {m} Bildern angezeigt."
 msgstr "{n} images sur {m} affichées."
+
+# ── Gastzugang-Rollen Etappe 3: Ruecksprache-Block (15.07.2026) ──
+
+msgid "1 Bild zur Rücksprache markiert"
+msgstr "1 image marquée pour concertation"
+
+msgid "{n} Bilder zur Rücksprache markiert"
+msgstr "{n} images marquées pour concertation"
+
+msgid "1 Bild zur Rücksprache markiert:"
+msgstr "1 image marquée pour concertation :"
+
+msgid "{n} Bilder zur Rücksprache markiert:"
+msgstr "{n} images marquées pour concertation :"
+
+msgid "Diese Liste wird dem Ersteller automatisch mit übermittelt:"
+msgstr "Cette liste est transmise automatiquement au créateur :"
+
+msgid "Dokument „{name}\", {bild}"
+msgstr "Document « {name} », {bild}"
+
+msgid "Anmerkung:"
+msgstr "Remarque :"
+
+msgid "Zur Rücksprache (Lektorat): {n}"
+msgstr "Pour concertation (relecture) : {n}"

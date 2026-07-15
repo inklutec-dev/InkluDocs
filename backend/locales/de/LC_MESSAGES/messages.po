@@ -2308,3 +2308,29 @@ msgstr ""
 
 msgid "{n} von {m} Bildern angezeigt."
 msgstr ""
+
+# ── Gastzugang-Rollen Etappe 3: Ruecksprache-Block (15.07.2026) ──
+
+msgid "1 Bild zur Rücksprache markiert"
+msgstr ""
+
+msgid "{n} Bilder zur Rücksprache markiert"
+msgstr ""
+
+msgid "1 Bild zur Rücksprache markiert:"
+msgstr ""
+
+msgid "{n} Bilder zur Rücksprache markiert:"
+msgstr ""
+
+msgid "Diese Liste wird dem Ersteller automatisch mit übermittelt:"
+msgstr ""
+
+msgid "Dokument „{name}\", {bild}"
+msgstr ""
+
+msgid "Anmerkung:"
+msgstr ""
+
+msgid "Zur Rücksprache (Lektorat): {n}"
+msgstr ""

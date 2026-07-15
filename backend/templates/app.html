@@ -579,6 +579,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             <h2 id="guestCompleteHeading" style="margin-top:0;">${t('Prüfung abschließen')}</h2>
                             <label for="guestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Möchten Sie dem Ersteller noch etwas mitteilen? (optional)')}</label>
                             <textarea id="guestCompleteMsg" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
+                            <!-- Etappe 3 (15.07.2026): Automatisch erzeugter Ruecksprache-Block — NICHT
+                                 editierbare Vorschau der zur Ruecksprache markierten Bilder. Bewusst NICHT
+                                 ins Textfeld vorgefuellt (versehentliches Loeschen + muehsame Screenreader-
+                                 Navigation); openGuestComplete() fuellt ihn aus den aktuellen Bilddaten. -->
+                            <div id="guestCompleteRueck" hidden></div>
                             <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
                                 <button class="btn btn-primary" id="guestCompleteSend" onclick="doGuestComplete()">${t('Abschließen &amp; senden')}</button>
                                 <button class="btn btn-secondary" onclick="closeGuestComplete()">${t('Abbrechen')}</button>
@@ -922,6 +927,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Zustand ueberlebt das Neu-Rendern beim Polling (imageFilter pro Projekt).
     let imageFilter = { key: 'alle', role: null, projectId: null };
     let filterImages = [];   // Bilder des aktuellen Renders (Datenbasis der Zaehler)
+    let currentRenderDocs = [];   // Dokumente des aktuellen Renders (fuer den Ruecksprache-Block im Abschluss)
 
     // Besitzer: welche Rolle wird gefiltert? Standard = Lektorat, falls eingeladen.
     // Gaeste filtern immer ihre eigene Rolle.
@@ -1310,9 +1316,58 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Natives Modal (13.07.2026): Fokusfalle, Escape und inerter Hintergrund
     // kommen von dialog.showModal() — der Fokus kehrt beim Schliessen
     // automatisch zum "Pruefung abschliessen"-Knopf zurueck.
+    // ─── Etappe 3 (15.07.2026): Ruecksprache-Block im Abschluss-Dialog ───
+    // Datenbasis sind die aktuell gerenderten Bilder (filterImages, werden bei
+    // jedem Statusklick via updateFilterDataStatus aktuell gehalten) plus die
+    // LIVE-Werte der Anmerkungsfelder (frischer als das letzte Server-Polling).
+    function guestRueckItems() {
+        if (revRole() !== 'lektorat') return [];
+        const items = [];
+        for (const img of filterImages) {
+            if (roleReviewStatus(img, 'lektorat') !== 'ruecksprache') continue;
+            const field = document.getElementById('rev_comment_' + img.id);
+            const note = field ? field.value.trim() : String(img.review_note || '');
+            items.push({ img: img, note: note });
+        }
+        return items;
+    }
+    // Bild-Bezeichnung wie in den Karten-Ueberschriften, plus Dokumentname davor.
+    function rueckItemLabel(img) {
+        const nr = (img.display_nr != null) ? img.display_nr : img.image_index;
+        const base = img.page_number > 0
+            ? t('Bild {n}, Seite {p}', { n: nr, p: img.page_number })
+            : t('Bild {n}', { n: nr });
+        const doc = currentRenderDocs.find(d => d.id === img.document_id);
+        const dname = doc ? (doc.display_name || doc.original_filename || '') : '';
+        return dname ? t('Dokument „{name}", {bild}', { name: dname, bild: base }) : base;
+    }
+    // Vom System erzeugte, nicht editierbare Vorschau (Spec Etappe 3): Ueberschrift
+    // + Liste; erscheint nur beim Lektorat und nur, wenn es Ruecksprache-Bilder gibt.
+    function renderGuestCompleteRueck() {
+        const box = document.getElementById('guestCompleteRueck');
+        if (!box) return;
+        const items = guestRueckItems();
+        if (!items.length) { box.innerHTML = ''; box.hidden = true; return; }
+        const escHtml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const lis = items.map(function (it) {
+            return '<li>' + escHtml(rueckItemLabel(it.img))
+                + (it.note ? '<br><span style="color:var(--text-muted);">' + escHtml(t('Anmerkung:') + ' ' + it.note) + '</span>' : '')
+                + '</li>';
+        }).join('');
+        const heading = items.length === 1
+            ? t('1 Bild zur Rücksprache markiert')
+            : t('{n} Bilder zur Rücksprache markiert', { n: items.length });
+        box.innerHTML = '<h3 style="margin:0.9rem 0 0.2rem;font-size:1rem;">' + heading + '</h3>'
+            + '<p style="margin:0 0 0.3rem;color:var(--text-muted);">' + t('Diese Liste wird dem Ersteller automatisch mit übermittelt:') + '</p>'
+            + '<ul style="margin:0.3rem 0 0;padding-left:1.2rem;">' + lis + '</ul>';
+        box.hidden = false;
+    }
+
     function openGuestComplete() {
         const dlg = document.getElementById('guestCompleteDialog');
         if (!dlg) return;
+        renderGuestCompleteRueck();   // Etappe 3: Vorschau vor dem Absenden
         if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
         const msgField = document.getElementById('guestCompleteMsg');
         if (msgField) msgField.focus();
@@ -1478,6 +1533,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         // Doc-Reihenfolge: aus documents-Liste; was übrig bleibt (z.B. Bilder ohne document_id), kommt zum Schluss.
         const orderedDocs = Array.isArray(documents) ? documents.slice().sort((a, b) => (a.doc_index || 0) - (b.doc_index || 0)) : [];
+        currentRenderDocs = orderedDocs;   // fuer rueckItemLabel() im Abschluss-Dialog
         const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf'));
 
         // Steve 08.06.2026: Pro Dokument eine fortlaufende Anzeige-Nummer ab 1 vergeben,
@@ -1587,8 +1643,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     </div>` : ''}
                 ` : ''}
                 </div>
-                ${window.GUEST_MODE && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? `
-                    <div class="guest-review" id="guestrev_${img.id}" data-status="${revOwnStatus(img)}" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
+                ${window.GUEST_MODE && img.status !== 'processing' ? `
+                    <!-- Etappe-3-Glaettung (15.07.2026): Die Pruefleiste wird auch fuer LEERE
+                         Alt-Felder gerendert, nur versteckt. Fuellt der Gast das Feld erstmals,
+                         blendet der Speicher-Handler sie sofort ein (vorher: erst nach Neuladen). -->
+                    <div class="guest-review" id="guestrev_${img.id}" data-status="${revOwnStatus(img)}" ${(img.alt_text_edited || img.alt_text || img.original_alt) ? '' : 'hidden'} style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
                         <p style="margin:0 0 0.4rem 0;font-weight:600;">${t('Status:')} <span id="rev_status_${img.id}">${revStatusLabel(revOwnStatus(img))}</span> <output id="rev_saved_${img.id}" class="rev-saved"></output></p>
                         ${revHistoryHtml(img)}
                         <!-- Ein Klick = Status sofort gesetzt (guestSetStatus); aktiver Knopf via aria-pressed, Statuswechsel per announce() angesagt. Block erscheint fuer JEDEN Alt-Text (auch vorhandene PDF-Originaltexte), nicht nur frisch generierte (Karbe 23.06.2026). -->
@@ -1748,6 +1807,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     });
                     // Rollen-Workflow: Editieren ohne Status -> Server meldet 'in_bearbeitung'.
                     if (window.GUEST_MODE && res.ok) {
+                        // Etappe-3-Glaettung: erstes Fuellen eines leeren Alt-Felds blendet
+                        // die (versteckt gerenderte) Pruefleiste sofort ein.
+                        if (ta.value.trim()) {
+                            const gr = document.getElementById('guestrev_' + id);
+                            if (gr && gr.hidden) gr.hidden = false;
+                        }
                         try {
                             const d = await res.json();
                             if (d.auto_status) {

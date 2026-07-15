@@ -4642,6 +4642,36 @@ async def freigabe_complete(token: str, request: Request):
     notes = conn.execute(
         "SELECT body FROM messages WHERE project_id = ? AND msg_type = 'review_note'", (pid,)
     ).fetchall()
+    # Etappe 3 (15.07.2026): Schliesst das LEKTORAT ab, bekommt der Besitzer die
+    # Ruecksprache-Bilder als eigene Liste in der Mail (Dokument, Bild, Seite,
+    # Anmerkung). Anzeige-Nummer wie im Frontend: pro Dokument fortlaufend ab 1
+    # (Web/Grafik ohne Dokument behaelt image_index).
+    rueck_items = []
+    if role == "lektorat":
+        all_rows = conn.execute(
+            """SELECT i.id, i.image_index, i.page_number, i.document_id,
+                      COALESCE(d.doc_index, 0) AS doc_index,
+                      COALESCE(NULLIF(d.display_name, ''), d.original_filename) AS doc_name,
+                      COALESCE(r.status, '') AS lek_status,
+                      (SELECT body FROM messages m WHERE m.image_id = i.id AND m.msg_type = 'review_note' LIMIT 1) AS note
+               FROM images i
+               LEFT JOIN documents d ON d.id = i.document_id
+               LEFT JOIN image_reviews r ON r.image_id = i.id AND r.role = 'lektorat'
+               WHERE i.project_id = ?
+               ORDER BY doc_index, i.page_number, i.image_index""",
+            (pid,)
+        ).fetchall()
+        doc_counters = {}
+        for row in all_rows:
+            dk = row["document_id"] or 0
+            if dk == 0:
+                nr = row["image_index"]
+            else:
+                doc_counters[dk] = doc_counters.get(dk, 0) + 1
+                nr = doc_counters[dk]
+            if row["lek_status"] == "ruecksprache":
+                rueck_items.append({"nr": nr, "page": row["page_number"],
+                                    "doc": row["doc_name"], "note": row["note"]})
     conn.close()
     freigegeben = sum(1 for i in imgs if i["review_status"] == "freigegeben")
     zu_ueber = sum(1 for i in imgs if i["review_status"] == "zu_ueberarbeiten")
@@ -4656,6 +4686,23 @@ async def freigabe_complete(token: str, request: Request):
     link = BASE_URL + "/freigabe/" + token
     notes_html = "".join("<li>" + _mail_escape(n["body"]) + "</li>" for n in notes)
     _ = get_gettext(_mail_lang(owner))
+    # Etappe 3: Ruecksprache-Block fuer die Besitzer-Mail (nur Lektorat, nur wenn vorhanden).
+    rueck_html = ""
+    if rueck_items:
+        rueck_lis = []
+        for it in rueck_items:
+            label = (_('Bild {n}, Seite {p}').format(n=it["nr"], p=it["page"])
+                     if it["page"] and it["page"] > 0 else _('Bild {n}').format(n=it["nr"]))
+            if it["doc"]:
+                label = _('Dokument „{name}", {bild}').format(name=it["doc"], bild=label)
+            li = "<li>" + _mail_escape(label)
+            if it["note"]:
+                li += "<br><em>" + _mail_escape(_('Anmerkung:') + " " + it["note"]) + "</em>"
+            rueck_lis.append(li + "</li>")
+        rueck_heading = (_('1 Bild zur Rücksprache markiert:') if len(rueck_items) == 1
+                         else _('{n} Bilder zur Rücksprache markiert:').format(n=len(rueck_items)))
+        rueck_html = ("<p><strong>" + rueck_heading + "</strong></p><ul>"
+                      + "".join(rueck_lis) + "</ul>")
     body = (
         "<p>" + _('{gast} hat die Prüfung für das Projekt „{projekt}“ abgeschlossen.').format(
             gast=_mail_escape(guest), projekt=_mail_escape(pname)) + "</p>"
@@ -4663,6 +4710,7 @@ async def freigabe_complete(token: str, request: Request):
         + _('{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen.').format(
             f=freigegeben, z=zu_ueber, r=ruecksprache, b=in_bearb, o=offen) + "</p>"
         + "<p><strong>" + _('Rolle:') + "</strong> " + (_('Lektorat') if role == "lektorat" else _('Herausgeber')) + "</p>"
+        + rueck_html
         + (("<p><strong>" + _('Nachricht:') + "</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
         + (("<p><strong>" + _('Anmerkungen:') + "</strong></p><ul>" + notes_html + "</ul>") if notes_html else "")
         + "<p>" + _('Im Werkzeug ansehen:') + " <a href='" + link + "'>" + link + "</a></p>"
@@ -4683,6 +4731,9 @@ async def review_overview(user: dict = Depends(get_current_user)):
                   SUM(CASE WHEN COALESCE(i.review_status,'offen')='offen' THEN 1 ELSE 0 END) AS offen,
                   SUM(CASE WHEN i.review_status='zu_ueberarbeiten' THEN 1 ELSE 0 END) AS zu_ueberarbeiten,
                   SUM(CASE WHEN i.review_status='freigegeben' THEN 1 ELSE 0 END) AS freigegeben,
+                  SUM(CASE WHEN EXISTS (SELECT 1 FROM image_reviews r
+                        WHERE r.image_id = i.id AND r.role = 'lektorat' AND r.status = 'ruecksprache')
+                      THEN 1 ELSE 0 END) AS ruecksprache,
                   COUNT(i.id) AS total,
                   (SELECT GROUP_CONCAT(DISTINCT COALESCE(NULLIF(g.guest_name,''), g.guest_email)) FROM shares g
                     WHERE g.project_id = p.id AND g.status IN ('active','completed')) AS guests
