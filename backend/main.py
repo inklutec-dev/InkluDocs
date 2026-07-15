@@ -2334,8 +2334,22 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
            WHERE project_id = ? AND status IN ('active', 'completed') ORDER BY role""",
         (project_id,)
     ).fetchall()]
+    # Rollen-Workflow Etappe 4 (15.07.2026): Nachrichten-Verlauf pro Bild.
+    thread_rows = conn.execute(
+        """SELECT m.image_id, COALESCE(m.sender_role, '') AS sender_role,
+                  COALESCE(m.sender_name, '') AS sender_name, m.body, m.created_at
+           FROM messages m JOIN images i ON i.id = m.image_id
+           WHERE i.project_id = ? AND m.msg_type = 'chat'
+           ORDER BY m.created_at, m.id""",
+        (project_id,)
+    ).fetchall()
     conn.close()
 
+    thread_by_image = {}
+    for m in thread_rows:
+        thread_by_image.setdefault(m["image_id"], []).append({
+            "sender_role": m["sender_role"], "sender_name": m["sender_name"],
+            "body": m["body"], "created_at": m["created_at"]})
     reviews_by_image = {}
     for r in review_rows:
         reviews_by_image.setdefault(r["image_id"], {})[r["role"]] = {
@@ -2344,6 +2358,7 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     for img in images:
         d = dict(img)
         d["reviews"] = reviews_by_image.get(d["id"], {})
+        d["thread"] = thread_by_image.get(d["id"], [])
         image_dicts.append(d)
 
     # Schalter PDF_LANGBESCHREIBUNG (Standard aus): Langbeschreibung im Frontend nur zeigen,
@@ -4407,7 +4422,22 @@ async def freigabe_data(token: str, request: Request):
            JOIN images i ON i.id = r.image_id WHERE i.project_id = ?""",
         (pid,)
     ).fetchall()
+    # Rollen-Workflow Etappe 4 (15.07.2026): Nachrichten-Verlauf pro Bild —
+    # Gaeste sehen denselben gemeinsamen Verlauf wie der Besitzer.
+    thread_rows = conn.execute(
+        """SELECT m.image_id, COALESCE(m.sender_role, '') AS sender_role,
+                  COALESCE(m.sender_name, '') AS sender_name, m.body, m.created_at
+           FROM messages m JOIN images i ON i.id = m.image_id
+           WHERE i.project_id = ? AND m.msg_type = 'chat'
+           ORDER BY m.created_at, m.id""",
+        (pid,)
+    ).fetchall()
     conn.close()
+    thread_by_image = {}
+    for m in thread_rows:
+        thread_by_image.setdefault(m["image_id"], []).append({
+            "sender_role": m["sender_role"], "sender_name": m["sender_name"],
+            "body": m["body"], "created_at": m["created_at"]})
     reviews_by_image = {}
     for r in review_rows:
         reviews_by_image.setdefault(r["image_id"], {})[r["role"]] = {
@@ -4416,6 +4446,7 @@ async def freigabe_data(token: str, request: Request):
     for i in images:
         d = dict(i)
         d["reviews"] = reviews_by_image.get(d["id"], {})
+        d["thread"] = thread_by_image.get(d["id"], [])
         image_dicts.append(d)
     proj_dict = dict(project)
     _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
@@ -4537,6 +4568,144 @@ async def freigabe_set_review(token: str, image_id: int, request: Request):
 def _mail_escape(t):
     """Minimaler HTML-Schutz fuer Gast-Eingaben in Benachrichtigungs-Mails."""
     return (t or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+# ─── Rollen-Workflow Etappe 4 (15.07.2026): Nachrichten-Verlauf pro Bild ───
+# Modell "Kommentare unter einem Dokument" (Spec Abschnitt 4): EIN gemeinsamer
+# Verlauf pro Bild am Projekt, keine Adressierung. Besitzer sieht immer alles,
+# Gaeste ueber ihren Link; jede Nachricht traegt die Absender-Rolle. Neue
+# Nachrichten loesen kurze Mails an alle anderen Beteiligten aus.
+MSG_MAX_LEN = 2000
+
+
+def _msg_role_label(_, role):
+    if role == "lektorat":
+        return _('Lektorat')
+    if role == "kunde":
+        return _('Herausgeber')
+    return _('Ersteller')
+
+
+def _image_mail_label(conn, _, image_id):
+    """Bild-Bezeichnung fuer Mails — gleiche Anzeige-Nummerierung wie im
+    Frontend (pro Dokument fortlaufend ab 1; Web/Grafik behaelt image_index)."""
+    img = conn.execute(
+        "SELECT id, image_index, page_number, document_id FROM images WHERE id = ?",
+        (image_id,)).fetchone()
+    if not img:
+        return ""
+    nr = img["image_index"]
+    doc_name = ""
+    if img["document_id"]:
+        rows = conn.execute(
+            "SELECT id FROM images WHERE document_id = ? ORDER BY page_number, image_index",
+            (img["document_id"],)).fetchall()
+        nr = next((i + 1 for i, r in enumerate(rows) if r["id"] == image_id), nr)
+        doc = conn.execute(
+            "SELECT COALESCE(NULLIF(display_name, ''), original_filename) AS n FROM documents WHERE id = ?",
+            (img["document_id"],)).fetchone()
+        doc_name = (doc["n"] if doc else "") or ""
+    base = (_('Bild {n}, Seite {p}').format(n=nr, p=img["page_number"])
+            if img["page_number"] and img["page_number"] > 0 else _('Bild {n}').format(n=nr))
+    return _('Dokument „{name}", {bild}').format(name=doc_name, bild=base) if doc_name else base
+
+
+def _notify_message_recipients(project_row, image_id, sender_role, sender_name, body,
+                               exclude_share_token=None, skip_owner=False):
+    """Kurze Benachrichtigung "Neue Nachricht im Projekt X" an Besitzer + alle
+    Gaeste mit nutzbarer Freigabe — ausser an den Absender selbst. Mail-Fehler
+    blockieren das Speichern nicht (send_email faengt selbst)."""
+    pid = project_row["id"]
+    pname = project_row["name"] or project_row["filename"] or ("Projekt " + str(pid))
+    from database import get_user_by_id
+    owner = get_user_by_id(project_row["user_id"])
+    conn = get_db()
+    shares_rows = conn.execute(
+        "SELECT token, guest_email FROM shares WHERE project_id = ? AND status IN ('active', 'completed')",
+        (pid,)).fetchall()
+    _ = get_gettext(_mail_lang(owner))
+    label = _image_mail_label(conn, _, image_id)
+    conn.close()
+    sender_label = _msg_role_label(_, sender_role) + ((" (" + sender_name + ")") if sender_name else "")
+    intro = _('{absender} hat eine neue Nachricht zu {bild} im Projekt „{projekt}" geschrieben:').format(
+        absender=_mail_escape(sender_label), bild=(label or _('einem Bild')), projekt=_mail_escape(pname))
+    text_html = ("<p>" + intro + "</p><p>" + _mail_escape(body).replace(chr(10), "<br>") + "</p>")
+    subject = _('InkluDocs: Neue Nachricht im Projekt „{projekt}"').format(projekt=pname)
+    if not skip_owner and owner and owner.get("email"):
+        link = BASE_URL + "/app?projekt=" + str(pid)
+        send_email(owner["email"], subject,
+                   text_html + "<p>" + _('Im Werkzeug ansehen:') + " <a href='" + link + "'>" + link + "</a></p>",
+                   bcc_admin=False)
+    for sh in shares_rows:
+        if exclude_share_token and sh["token"] == exclude_share_token:
+            continue
+        if not sh["guest_email"]:
+            continue
+        glink = BASE_URL + "/freigabe/" + sh["token"]
+        send_email(sh["guest_email"], subject,
+                   text_html + "<p>" + _('Im Werkzeug ansehen:') + " <a href='" + glink + "'>" + glink + "</a></p>",
+                   bcc_admin=False)
+
+
+def _insert_chat_message(conn, project_id, image_id, sender_user_id, sender_guest,
+                         sender_role, sender_name, body):
+    conn.execute(
+        "INSERT INTO messages (project_id, image_id, sender_user_id, sender_guest, body, msg_type, sender_role, sender_name) "
+        "VALUES (?, ?, ?, ?, ?, 'chat', ?, ?)",
+        (project_id, image_id, sender_user_id, sender_guest, body, sender_role, sender_name))
+
+
+@app.post("/api/images/{image_id}/messages")
+async def post_image_message_owner(image_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Besitzer schreibt eine Nachricht zum Bild; alle Gaeste werden per Mail informiert."""
+    data = await request.json()
+    body = (data.get("text") or "").strip()
+    if not body:
+        raise HTTPException(status_code=400, detail="Leere Nachricht.")
+    if len(body) > MSG_MAX_LEN:
+        raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 2000 Zeichen).")
+    conn = get_db()
+    project = conn.execute(
+        """SELECT p.* FROM projects p JOIN images i ON i.project_id = p.id
+           WHERE i.id = ? AND p.user_id = ?""",
+        (image_id, user["id"])).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    sender_name = (user.get("display_name") or "").strip()
+    _insert_chat_message(conn, project["id"], image_id, user["id"], None, "besitzer", sender_name, body)
+    conn.commit()
+    conn.close()
+    _notify_message_recipients(project, image_id, "besitzer", sender_name, body, skip_owner=True)
+    return {"ok": True}
+
+
+@app.post("/api/freigabe/{token}/images/{image_id}/messages")
+async def post_image_message_guest(token: str, image_id: int, request: Request):
+    """Gast (Lektorat/Herausgeber) schreibt eine Nachricht zum Bild; Besitzer und
+    die jeweils anderen Gaeste werden per Mail informiert. Alles gast-/projektbegrenzt."""
+    share = _require_guest(request, token)
+    data = await request.json()
+    body = (data.get("text") or "").strip()
+    if not body:
+        raise HTTPException(status_code=400, detail="Leere Nachricht.")
+    if len(body) > MSG_MAX_LEN:
+        raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 2000 Zeichen).")
+    role = (dict(share).get("role") or "kunde")
+    sender_name = (dict(share).get("guest_name") or "").strip()
+    conn = get_db()
+    img = conn.execute("SELECT id FROM images WHERE id = ? AND project_id = ?",
+                       (image_id, share["project_id"])).fetchone()
+    if not img:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    project = conn.execute("SELECT * FROM projects WHERE id = ?", (share["project_id"],)).fetchone()
+    _insert_chat_message(conn, share["project_id"], image_id, None, share["guest_email"],
+                         role, sender_name, body)
+    conn.commit()
+    conn.close()
+    _notify_message_recipients(project, image_id, role, sender_name, body, exclude_share_token=token)
+    return {"ok": True}
 
 
 # ─── Etappe 4: Besitzer erstellt/verwaltet Freigaben ───
@@ -4734,6 +4903,8 @@ async def review_overview(user: dict = Depends(get_current_user)):
                   SUM(CASE WHEN EXISTS (SELECT 1 FROM image_reviews r
                         WHERE r.image_id = i.id AND r.role = 'lektorat' AND r.status = 'ruecksprache')
                       THEN 1 ELSE 0 END) AS ruecksprache,
+                  (SELECT COUNT(*) FROM messages m
+                    WHERE m.project_id = p.id AND m.msg_type = 'chat') AS nachrichten,
                   COUNT(i.id) AS total,
                   (SELECT GROUP_CONCAT(DISTINCT COALESCE(NULLIF(g.guest_name,''), g.guest_email)) FROM shares g
                     WHERE g.project_id = p.id AND g.status IN ('active','completed')) AS guests

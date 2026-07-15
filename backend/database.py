@@ -322,6 +322,12 @@ def _migrate_columns(conn):
         # Gastzugang-Rollen (10.07.2026): Rolle der Einladung — 'kunde' (Endkunde,
         # Default, entspricht dem bisherigen Verhalten) oder 'lektorat'.
         ("shares", "role", "ALTER TABLE shares ADD COLUMN role TEXT DEFAULT 'kunde'"),
+        # Rollen-Workflow Etappe 4 (15.07.2026): Nachrichten-Verlauf pro Bild
+        # (msg_type 'chat'). Absender-Rolle ('besitzer'/'lektorat'/'kunde') und
+        # Anzeigename werden denormalisiert mitgespeichert — der Verlauf bleibt
+        # auch nach Widerruf einer Freigabe lesbar zuordenbar.
+        ("messages", "sender_role", "ALTER TABLE messages ADD COLUMN sender_role TEXT DEFAULT ''"),
+        ("messages", "sender_name", "ALTER TABLE messages ADD COLUMN sender_name TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:

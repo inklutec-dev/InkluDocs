@@ -2354,3 +2354,38 @@ msgstr ""
 
 msgid "Beschreibung:"
 msgstr ""
+
+# ── Gastzugang-Rollen Etappe 4: Nachrichten-Verlauf pro Bild (15.07.2026) ──
+
+msgid "Nachrichten ({n})"
+msgstr ""
+
+msgid "Neue Nachricht"
+msgstr ""
+
+msgid "Nachricht senden"
+msgstr ""
+
+msgid "Nachricht gesendet."
+msgstr ""
+
+msgid "Fehler beim Senden."
+msgstr ""
+
+msgid "Bitte zuerst eine Nachricht eingeben."
+msgstr ""
+
+msgid "Ersteller"
+msgstr ""
+
+msgid "Nachrichten: {n}"
+msgstr ""
+
+msgid "InkluDocs: Neue Nachricht im Projekt „{projekt}\""
+msgstr ""
+
+msgid "{absender} hat eine neue Nachricht zu {bild} im Projekt „{projekt}\" geschrieben:"
+msgstr ""
+
+msgid "einem Bild"
+msgstr ""

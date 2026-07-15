@@ -1491,6 +1491,96 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
+    // ─── Rollen-Workflow Etappe 4 (15.07.2026): Nachrichten-Verlauf pro Bild ───
+    // Modell "Kommentare unter einem Dokument": EIN gemeinsamer Verlauf pro Bild,
+    // sichtbar fuer Besitzer und Gaeste, jede Nachricht traegt die Absender-Rolle.
+    // Natives <details> (zero ARIA); Offen-Zustand und ungesendete Entwuerfe
+    // ueberleben das Polling-Re-Render (openThreads / msgDrafts).
+    let openThreads = new Set();
+    let msgDrafts = {};
+
+    function msgEsc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function msgRoleLabel(r) {
+        return r === 'lektorat' ? t('Lektorat') : r === 'kunde' ? t('Herausgeber') : t('Ersteller');
+    }
+    // SQLite-Zeitstempel "YYYY-MM-DD HH:MM:SS" robust formatieren (kein Date()-
+    // Parsing wegen Safari-Eigenheiten, gleiche Begruendung wie formatDate).
+    function msgDate(s) {
+        if (!s) return '';
+        const d = String(s);
+        const day = d.substring(8, 10) + '.' + d.substring(5, 7) + '.' + d.substring(0, 4);
+        return d.length >= 16 ? day + ', ' + d.substring(11, 16) : day;
+    }
+    function msgItemHtml(m) {
+        const who = msgRoleLabel(m.sender_role) + (m.sender_name ? ' (' + msgEsc(m.sender_name) + ')' : '');
+        return '<li style="margin:0 0 0.5rem;">'
+            + '<span style="font-weight:600;">' + who + '</span>'
+            + (m.created_at ? ' <span style="color:var(--text-muted);font-size:0.85rem;">' + msgDate(m.created_at) + '</span>' : '')
+            + '<span style="display:block;white-space:pre-wrap;">' + msgEsc(m.body) + '</span></li>';
+    }
+    function messageThreadHtml(img) {
+        const msgs = img.thread || [];
+        return `
+                <details class="msg-thread" id="msg_thread_${img.id}" data-image="${img.id}"${openThreads.has(img.id) ? ' open' : ''} style="margin-top:0.6rem;">
+                    <summary id="msg_summary_${img.id}">${t('Nachrichten ({n})', { n: msgs.length })}</summary>
+                    <div style="margin-top:0.4rem;">
+                        <ol id="msg_list_${img.id}" style="list-style:none;padding:0;margin:0 0 0.5rem;">${msgs.map(msgItemHtml).join('')}</ol>
+                        <label for="msg_input_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Neue Nachricht')}</label>
+                        <textarea id="msg_input_${img.id}" maxlength="2000" oninput="msgDrafts[${img.id}] = this.value" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:0.95rem;">${msgEsc(msgDrafts[img.id] || '')}</textarea>
+                        <div style="margin-top:0.4rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                            <button type="button" class="btn btn-primary btn-small" onclick="sendImageMessage(${img.id})">${t('Nachricht senden')}</button>
+                            <output id="msg_status_${img.id}" style="font-size:0.85rem;"></output>
+                        </div>
+                    </div>
+                </details>`;
+    }
+    async function sendImageMessage(imageId) {
+        const field = document.getElementById('msg_input_' + imageId);
+        const status = document.getElementById('msg_status_' + imageId);
+        const text = field ? field.value.trim() : '';
+        if (!text) {
+            if (status) status.textContent = t('Bitte zuerst eine Nachricht eingeben.');
+            announce(t('Bitte zuerst eine Nachricht eingeben.'));
+            return;
+        }
+        const url = window.GUEST_MODE
+            ? '/api/freigabe/' + window.SHARE_TOKEN + '/images/' + imageId + '/messages'
+            : '/api/images/' + imageId + '/messages';
+        let ok = false;
+        try {
+            const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin', body: JSON.stringify({ text: text }) });
+            ok = r.ok;
+        } catch (e) { ok = false; }
+        if (!ok) {
+            if (status) status.textContent = t('Fehler beim Senden.');
+            announce(t('Fehler beim Senden.'));
+            return;
+        }
+        // Sofort in Liste + Datenbasis uebernehmen (Zeitstempel liefert das
+        // naechste Server-Rendern; Rolle reicht fuer die eigene Nachricht).
+        const me = { sender_role: window.GUEST_MODE ? revRole() : 'besitzer', sender_name: '', body: text, created_at: '' };
+        const list = document.getElementById('msg_list_' + imageId);
+        if (list) list.insertAdjacentHTML('beforeend', msgItemHtml(me));
+        let count = 1;
+        for (const img of filterImages) {
+            if (img.id === Number(imageId)) {
+                img.thread = (img.thread || []).concat([me]);
+                count = img.thread.length;
+                break;
+            }
+        }
+        const sum = document.getElementById('msg_summary_' + imageId);
+        if (sum) sum.textContent = t('Nachrichten ({n})', { n: count });
+        if (field) field.value = '';
+        delete msgDrafts[imageId];
+        if (status) { status.textContent = t('Nachricht gesendet.'); setTimeout(() => { status.textContent = ''; }, 4000); }
+        announce(t('Nachricht gesendet.'));
+    }
+
     /**
      * Rendert eine gespeicherte Pruef-Anmerkung als natives Aufklapp-Element.
      * Bewusst OHNE ARIA: <details>/<summary> tragen Auf-/Zu-Zustand und Screenreader-Ansage selbst.
@@ -1689,6 +1779,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
+                <!-- Etappe 4 (15.07.2026): Nachrichten-Verlauf — nur bei geteilten
+                     Projekten (Gast oder Besitzer in Review); Solo-Arbeit bleibt
+                     bewusst frei davon (Spec: Nachrichten sind optional). -->
+                ${(window.GUEST_MODE || window._inReview) && img.status !== 'processing' ? messageThreadHtml(img) : ''}
             </section>`;
         };
 
@@ -1839,6 +1933,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             d.addEventListener('toggle', () => {
                 const p = d.dataset.page;
                 if (d.open) openPages.add(p); else openPages.delete(p);
+            });
+        });
+        // Etappe 4: Offen/Zu der Nachrichten-Verlaeufe merken (wie openPages).
+        document.querySelectorAll('details.msg-thread').forEach(d => {
+            d.addEventListener('toggle', () => {
+                const k = Number(d.dataset.image);
+                if (d.open) openThreads.add(k); else openThreads.delete(k);
             });
         });
         // Multi-Datei: Dokument-Auf/Zu merken — beim Anhängen einer neuen PDF

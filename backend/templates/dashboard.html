@@ -268,6 +268,13 @@
         pr2.textContent = t('Zur Rücksprache (Lektorat): {n}', { n: pr.ruecksprache });
         li.appendChild(pr2);
       }
+      // Etappe 4 (15.07.2026): gesammelte Nachrichten-Anzahl des Projekts.
+      if (pr.nachrichten > 0) {
+        const pm = document.createElement('p');
+        pm.className = 'dash-sub';
+        pm.textContent = t('Nachrichten: {n}', { n: pr.nachrichten });
+        li.appendChild(pm);
+      }
       ul.appendChild(li);
     });
     cont.appendChild(ul);

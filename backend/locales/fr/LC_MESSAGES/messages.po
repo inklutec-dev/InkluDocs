@@ -2351,3 +2351,38 @@ msgstr "Nom :"
 
 msgid "Beschreibung:"
 msgstr "Description :"
+
+# ── Gastzugang-Rollen Etappe 4: Nachrichten-Verlauf pro Bild (15.07.2026) ──
+
+msgid "Nachrichten ({n})"
+msgstr "Messages ({n})"
+
+msgid "Neue Nachricht"
+msgstr "Nouveau message"
+
+msgid "Nachricht senden"
+msgstr "Envoyer le message"
+
+msgid "Nachricht gesendet."
+msgstr "Message envoyé."
+
+msgid "Fehler beim Senden."
+msgstr "Échec de l'envoi."
+
+msgid "Bitte zuerst eine Nachricht eingeben."
+msgstr "Veuillez d'abord saisir un message."
+
+msgid "Ersteller"
+msgstr "Créateur"
+
+msgid "Nachrichten: {n}"
+msgstr "Messages : {n}"
+
+msgid "InkluDocs: Neue Nachricht im Projekt „{projekt}\""
+msgstr "InkluDocs : nouveau message dans le projet « {projekt} »"
+
+msgid "{absender} hat eine neue Nachricht zu {bild} im Projekt „{projekt}\" geschrieben:"
+msgstr "{absender} a écrit un nouveau message concernant {bild} dans le projet « {projekt} » :"
+
+msgid "einem Bild"
+msgstr "une image"

@@ -2042,3 +2042,38 @@ msgstr "Navn:"
 
 msgid "Beschreibung:"
 msgstr "Beskrivelse:"
+
+# ── Gastzugang-Rollen Etappe 4: Nachrichten-Verlauf pro Bild (15.07.2026) ──
+
+msgid "Nachrichten ({n})"
+msgstr "Beskeder ({n})"
+
+msgid "Neue Nachricht"
+msgstr "Ny besked"
+
+msgid "Nachricht senden"
+msgstr "Send besked"
+
+msgid "Nachricht gesendet."
+msgstr "Besked sendt."
+
+msgid "Fehler beim Senden."
+msgstr "Fejl ved afsendelse."
+
+msgid "Bitte zuerst eine Nachricht eingeben."
+msgstr "Skriv først en besked."
+
+msgid "Ersteller"
+msgstr "Opretter"
+
+msgid "Nachrichten: {n}"
+msgstr "Beskeder: {n}"
+
+msgid "InkluDocs: Neue Nachricht im Projekt „{projekt}\""
+msgstr "InkluDocs: ny besked i projektet »{projekt}«"
+
+msgid "{absender} hat eine neue Nachricht zu {bild} im Projekt „{projekt}\" geschrieben:"
+msgstr "{absender} har skrevet en ny besked om {bild} i projektet »{projekt}«:"
+
+msgid "einem Bild"
+msgstr "et billede"
