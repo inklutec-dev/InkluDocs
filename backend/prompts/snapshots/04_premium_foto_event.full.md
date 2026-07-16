@@ -1,6 +1,6 @@
 # Premium-Builder foto_event — Prompt-Modus: full
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:401`
+- **Builder:** `prompts/builders/beschreibung_foto.py:419`
 - **Generiert:** 2026-07-16
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `full`
@@ -79,6 +79,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
+
+5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
+   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
+   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
+   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
+   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
+   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   schwerer Fehler.
 
 BILDTYP: foto_event
 BILDGROESSE: 1280x720 Pixel
@@ -245,11 +254,14 @@ VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "
 "im Rahmen einer Veranstaltung", journalistische/erzaehlerische Sprache.
 
 
-PERSONENZAHL
+ZAEHL-DISZIPLIN
 
-Wenn Personen klar sichtbar sind: systematisch zaehlen statt schaetzen.
-"Mindestens" oder "etwa" nur, wenn Personen teilweise verdeckt, abgeschnitten
-oder unscharf sind.
+Zaehlbare Personen und Objekte bis etwa 15 exakt zaehlen und die exakte Zahl
+nennen — nicht schaetzen. "Circa", "rund", "etwa" oder "mindestens" sind NUR
+erlaubt, wenn sichtbare Teile echt verdeckt, abgeschnitten oder unscharf sind;
+dann den Grund im Text nennen (z.B. "mindestens sieben Personen, weitere teils
+verdeckt"). Bei deutlich mehr als 15 ist eine ehrliche Groessenordnung zulaessig
+("ueber zwanzig Personen").
 
 
 EVENT-LOGIK

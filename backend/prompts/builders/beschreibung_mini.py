@@ -127,22 +127,28 @@ KONTEXT:
 {user_hint_block(user_hint)}
 
 DEIN AUFTRAG: Der blinde Nutzer muss SOFORT die Funktion verstehen.
-Sonst nichts. Kein visuelles Design, keine Symbol-Form, keine Farben.
+Sonst nichts. Kein visuelles Design und keine Farben — einzige Ausnahme
+ist die kurze Formbeschreibung in runden Klammern (siehe FORMAT-PFLICHT).
 
 FORMAT-PFLICHT:
-- Nur die Funktion ('Suche öffnen', 'Menü', 'Warenkorb anzeigen',
-  'Einstellungen', 'Hilfe')
+- Die Funktion zuerst, optional gefolgt von einer kurzen Formbeschreibung
+  in runden Klammern: 'Suche (Lupe)', 'Menü öffnen (drei Striche)',
+  'Warenkorb anzeigen', 'Einstellungen (Zahnrad)', 'Hilfe'
 - KEIN Präfix 'Icon —'
 - 3-50 Zeichen (Schema-Untergrenze 3, hier max 50 für icon)
 - Langbeschreibung leer (Schema hat kein langbeschreibung-Feld)
 
 VERBOTEN:
-- Visuelle Beschreibung der Symbol-Form (Lupe, Zahnrad, Stern, Pfeil)
+- Formbeschreibung als Ersatz für die Funktion oder außerhalb der
+  Klammer ('Lupe' allein, 'Zahnrad-Symbol')
+- Farben
 - 'Symbol für ...'
 - 'stilisiertes ...'
 
 VERLINKTE ICONS:
-Wenn LINK-ZIEL gesetzt: Format '[Funktion] – Link zu [Ziel]'
+Wenn LINK-ZIEL gesetzt: Format '[Funktion] – Link zu [Ziel]'; die
+Formbeschreibung in Klammern entfaellt dann (Platz fuer das Link-Ziel,
+max 50 Zeichen)
 - 'Suche – Link zur Suchseite'
 - 'Profil – Link zum Benutzerkonto'
 - 'Warenkorb – Link zum Warenkorb (3 Artikel)' wenn Anzahl im

@@ -1,6 +1,6 @@
 # Standard-Builder foto_landschaft
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:1109`
+- **Builder:** `prompts/builders/beschreibung_foto.py:1132`
 - **Generiert:** 2026-07-16
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
@@ -78,6 +78,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
+
+5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
+   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
+   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
+   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
+   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
+   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   schwerer Fehler.
 
 BILDTYP: foto_landschaft
 BILDGROESSE: 1280x720 Pixel
@@ -233,6 +242,16 @@ Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
 Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text.
 
 
+ZAEHL-DISZIPLIN
+
+Zaehlbare Personen und Objekte bis etwa 15 exakt zaehlen und die exakte Zahl
+nennen — nicht schaetzen. "Circa", "rund", "etwa" oder "mindestens" sind NUR
+erlaubt, wenn sichtbare Teile echt verdeckt, abgeschnitten oder unscharf sind;
+dann den Grund im Text nennen (z.B. "mindestens sieben Personen, weitere teils
+verdeckt"). Bei deutlich mehr als 15 ist eine ehrliche Groessenordnung zulaessig
+("ueber zwanzig Personen").
+
+
 ALT-TEXT
 
 Der Alt-Text:
@@ -262,11 +281,14 @@ NICHT erfinden — nur bei Schild- oder Kontext-Beleg nennen:
 - Eigenname eines Berges, Sees, Flusses oder einer Stadt
 - eine Jahreszeit, die nicht sichtbar belegt ist
 
-Ikonische Sichtmotive mit eindeutiger Silhouette (Eiffelturm, Brandenburger Tor,
-Golden Gate Bridge) duerfen bei klarer Erkennbarkeit benannt werden. Bei echter
-Unsicherheit auf die reine sichtbare Beschreibung ausweichen ("Bergpanorama mit
-hohen, schneebedeckten Gipfeln" statt "die Alpen") — nicht raten, aber auch nicht
-aus Prinzip vage bleiben, wenn die Landschaftsart klar belegt ist.
+Eindeutig erkennbare ikonische Motive mit unverwechselbarer Silhouette
+(Eiffelturm, Brandenburger Tor, Golden Gate Bridge, Koelner Dom) SOLLEN beim
+Namen genannt werden — eine vage Umschreibung trotz eindeutiger Erkennbarkeit
+("ein grosser Torbau" statt Brandenburger Tor) ist ein Qualitaetsfehler. Bei
+echter Unsicherheit auf die reine sichtbare Beschreibung ausweichen
+("Bergpanorama mit hohen, schneebedeckten Gipfeln" statt "die Alpen") — nicht
+raten, aber auch nicht aus Prinzip vage bleiben, wenn die Landschaftsart klar
+belegt ist.
 
 
 LANGBESCHREIBUNG

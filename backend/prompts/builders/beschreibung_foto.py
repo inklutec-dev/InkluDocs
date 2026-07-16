@@ -9,7 +9,7 @@ am 05.07.2026 nach Fable-5-Review wieder eingesetzt, s. Desktop-Doku
 Premium-Prompt-Review-Fable5.txt):
   ROLE_BESCHREIBER + ANTI_HALLUZINATION_REGELN + (ATMOSPHAERE_REGEL je nach Typ)
   + geteilte Helper-Blöcke (Personen-, Kontext-, Unterschriften-, Atmosphäre-,
-    Zweck-, Kompaktheits-Block — siehe _render_*-Funktionen unten)
+    Zweck-, Kompaktheits-, Zähl-Block — siehe _render_*-Funktionen unten)
   + Bildtyp-spezifische SPEZIFITAETS-PFLICHT + VOLLSTÄNDIGKEITS-PFLICHT
   + Few-Shot + Schema-Doc
   (Paket 1, 16.07.2026: die früher hier genannten Constraint-Module
@@ -48,10 +48,10 @@ from .helpers import load_examples, user_hint_block
 # Logik, Kontext-Logik, Atmosphaere-Logik etc. nur an EINER Stelle
 # gepflegt — Drift-Vermeidung.
 #
-# Sie werden NUR von den Premium-Buildern (foto_personen, foto_event)
-# verwendet. Die anderen 4 foto-Builder (foto_objekte, foto_essen,
-# foto_landschaft, foto_architektur) nutzen weiter die alten Constraint-
-# Imports und sind unveraendert.
+# Historisch nur fuer die Premium-Builder (foto_personen, foto_event);
+# seit 05.07.2026 nutzen alle 6 Foto-Builder den Zweck- und Kompaktheits-
+# Block, seit Paket 2 (16.07.2026) auch den Zaehl-Block. Personen-/Kontext-/
+# Unterschriften-/Atmosphaere-Block bleiben Premium-only.
 #
 # Konzeptionell setzen die Helpers ChatGPTs "Personen als Dimension"-
 # Idee in Code um: jeder Helper ist eine Dimension die in mehreren
@@ -292,6 +292,24 @@ Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
 Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text."""
 
 
+def _render_zaehl_block() -> str:
+    """Zaehl-Disziplin-Block — geteilt in allen 6 Foto-Buildern (Paket 2, 16.07.2026).
+
+    Vorher lebte die Zaehlregel nur inline in foto_event (Sektion PERSONENZAHL);
+    dieser Baustein ersetzt sie dort und gilt jetzt analog zum Zweck-Block fuer
+    die ganze Foto-Familie. Kern: exakt zaehlen statt schaetzen; Schaetz-Woerter
+    nur bei echter Verdeckung und dann mit Grund.
+    """
+    return """ZAEHL-DISZIPLIN
+
+Zaehlbare Personen und Objekte bis etwa 15 exakt zaehlen und die exakte Zahl
+nennen — nicht schaetzen. "Circa", "rund", "etwa" oder "mindestens" sind NUR
+erlaubt, wenn sichtbare Teile echt verdeckt, abgeschnitten oder unscharf sind;
+dann den Grund im Text nennen (z.B. "mindestens sieben Personen, weitere teils
+verdeckt"). Bei deutlich mehr als 15 ist eine ehrliche Groessenordnung zulaessig
+("ueber zwanzig Personen")."""
+
+
 def _render_unsicherheit_block() -> str:
     """Unsicherheits-Block (Hedge-Wort-Verbot) — wiederverwendet in beiden Premium-Buildern.
 
@@ -485,11 +503,7 @@ VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "
 "im Rahmen einer Veranstaltung", journalistische/erzaehlerische Sprache.
 
 
-PERSONENZAHL
-
-Wenn Personen klar sichtbar sind: systematisch zaehlen statt schaetzen.
-"Mindestens" oder "etwa" nur, wenn Personen teilweise verdeckt, abgeschnitten
-oder unscharf sind.
+{_render_zaehl_block()}
 
 
 EVENT-LOGIK
@@ -640,6 +654,9 @@ darf nicht durch Vermutungen ersetzt werden.
 
 
 {_render_kompaktheit_block()}
+
+
+{_render_zaehl_block()}
 
 
 ALT-TEXT
@@ -836,6 +853,9 @@ sichtbare Bild Vorrang.
 {_render_kompaktheit_block()}
 
 
+{_render_zaehl_block()}
+
+
 ALT-TEXT
 
 Der Alt-Text:
@@ -998,6 +1018,9 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 {_render_kompaktheit_block()}
 
 
+{_render_zaehl_block()}
+
+
 ALT-TEXT
 
 Der Alt-Text:
@@ -1120,8 +1143,10 @@ def build_beschreibung_prompt_foto_landschaft(
     Premium-Muster von foto_objekte gehoben: self-contained, ANTI_HALLUZINATION
     als geteilte Schicht voran, inline ZIEL/AUSGABE-SCHEMA, Few-Shot. Kategorie-
     spezifisch: keine erfundenen Ortsnamen/Regionen/Gipfel — ikonische
-    Sichtmotive (Eiffelturm, Brandenburger Tor) duerfen bei klarer Erkennbarkeit
-    benannt werden. Reversibel: Backup .bak-pre-fotofamilie-20260630.
+    Sichtmotive (Eiffelturm, Brandenburger Tor) SOLLEN bei eindeutiger
+    Erkennbarkeit benannt werden (Paket 2, 16.07.2026: von 'duerfen' auf das
+    SOLL-Niveau von foto_architektur gehoben — Koelner-Dom-Fall der
+    Regel-Inventur). Reversibel: Backup .bak-pre-fotofamilie-20260630.
     """
     examples = load_examples('foto_landschaft')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -1182,6 +1207,9 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 {_render_kompaktheit_block()}
 
 
+{_render_zaehl_block()}
+
+
 ALT-TEXT
 
 Der Alt-Text:
@@ -1211,11 +1239,14 @@ NICHT erfinden — nur bei Schild- oder Kontext-Beleg nennen:
 - Eigenname eines Berges, Sees, Flusses oder einer Stadt
 - eine Jahreszeit, die nicht sichtbar belegt ist
 
-Ikonische Sichtmotive mit eindeutiger Silhouette (Eiffelturm, Brandenburger Tor,
-Golden Gate Bridge) duerfen bei klarer Erkennbarkeit benannt werden. Bei echter
-Unsicherheit auf die reine sichtbare Beschreibung ausweichen ("Bergpanorama mit
-hohen, schneebedeckten Gipfeln" statt "die Alpen") — nicht raten, aber auch nicht
-aus Prinzip vage bleiben, wenn die Landschaftsart klar belegt ist.
+Eindeutig erkennbare ikonische Motive mit unverwechselbarer Silhouette
+(Eiffelturm, Brandenburger Tor, Golden Gate Bridge, Koelner Dom) SOLLEN beim
+Namen genannt werden — eine vage Umschreibung trotz eindeutiger Erkennbarkeit
+("ein grosser Torbau" statt Brandenburger Tor) ist ein Qualitaetsfehler. Bei
+echter Unsicherheit auf die reine sichtbare Beschreibung ausweichen
+("Bergpanorama mit hohen, schneebedeckten Gipfeln" statt "die Alpen") — nicht
+raten, aber auch nicht aus Prinzip vage bleiben, wenn die Landschaftsart klar
+belegt ist.
 
 
 LANGBESCHREIBUNG
@@ -1352,6 +1383,9 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 
 
 {_render_kompaktheit_block()}
+
+
+{_render_zaehl_block()}
 
 
 ALT-TEXT

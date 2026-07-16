@@ -79,6 +79,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
+5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
+   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
+   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
+   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
+   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
+   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   schwerer Fehler.
+
 BILDTYP: foto
 BILDGRÖSSE: 1280x720 Pixel
 SCHWERPUNKT FOTO:
@@ -133,6 +142,14 @@ Beispiele:
 - 'Hellfarbene Glasur könnte als Flüssigkeit fehlinterpretiert werden'
 - 'Stilisierte Tierdarstellung — Spezies-Festlegung wäre Spekulation'
 - 'Personen halten kleine runde Objekte — diese sind nicht eindeutig identifizierbar'
+
+MONTAGE-CHECK:
+Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
+Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
+Kombinationen. Erkennst du solche Indikatoren, trage einen Eintrag in
+halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
+Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
+reales Foto beschreiben').
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - foto_subtyp [OPTIONAL]: Nur wenn bildtyp=foto, sonst None
@@ -221,6 +238,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
+5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
+   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
+   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
+   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
+   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
+   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   schwerer Fehler.
+
 BILDTYP: foto_objekte
 BILDGROESSE: 1280x720 Pixel
 
@@ -304,6 +330,16 @@ bis etwa 250. Die 400 Zeichen des Schemas sind eine harte Obergrenze, KEIN Ziel.
 Der Alt-Text traegt die Essenz — Wissens-Tiefe, Nebendetails und raeumliche
 Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
 Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text.
+
+
+ZAEHL-DISZIPLIN
+
+Zaehlbare Personen und Objekte bis etwa 15 exakt zaehlen und die exakte Zahl
+nennen — nicht schaetzen. "Circa", "rund", "etwa" oder "mindestens" sind NUR
+erlaubt, wenn sichtbare Teile echt verdeckt, abgeschnitten oder unscharf sind;
+dann den Grund im Text nennen (z.B. "mindestens sieben Personen, weitere teils
+verdeckt"). Bei deutlich mehr als 15 ist eine ehrliche Groessenordnung zulaessig
+("ueber zwanzig Personen").
 
 
 ALT-TEXT

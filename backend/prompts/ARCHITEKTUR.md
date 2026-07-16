@@ -63,7 +63,8 @@ Die ENV-Schalter des Gesamtsystems:
 - LLM_PROVIDER — bedrock (Claude Sonnet) oder mistral; steuert auch den Prompt-Modus-Default.
 - V4_PASS_MODE — full (4 Paesse) oder lean (2 Aufrufe).
 - V4_PROMPT_MODE — full (Mistral-Drill-Bloecke) oder lean (schlank fuer Sonnet); Default lean bei bedrock.
-- V4_VERIFY_MODE — Verify-Pass an/aus.
+- V4_VERIFY_MODE — Verify-Pass an/aus (off/kritisch/alle).
+- V4_VERIFY_KORREKTUR — off (Default) = eine mitgelieferte Redakteurs-Korrektur wird ignoriert (Flag-Verhalten wie bisher); on = Korrektur wird uebernommen (siehe Paket 3 unten). Nur im Lean-Pfad wirksam.
 - VALIDATOR_MODE — Verhalten des Validator-Passes.
 
 ## Aufruf-Fluss
@@ -123,3 +124,22 @@ Bewusste NICHT-Aenderungen in Paket 1:
 
 Nach der adversarischen Review (Code-Korrektheit + Prompt-Konsistenz) ergaenzt: ANTI_HALLUZINATION Regel 2 erlaubt jetzt ausdruecklich die gleichwertige Nennung zweier naheliegender Deutungen („als Katze oder Fuchs deutbar") als praezise Mehrdeutigkeits-Beschreibung — damit ist die Illustration-Alternativen-Form systemweit gedeckt. Die Nutzer-Hinweis-Vorrang-Ordnung stellt klar, dass Hinweise Wissen liefern duerfen, das dem Bild nicht anzusehen ist (Bildtyp, Identitaet), und dass der Seitenkontext belegte Namen und Funktionen liefert. Meta-Kommentare und Code-Verweise wurden aus den Modell-Texten in Python-Kommentare verschoben (Full-Personen-Block, Evidenz-Stufen, Screenshot-Praefix). Neuer Snapshot „01_classification.lean.mit-nutzerhinweis" macht die Vorrang-Ordnung sichtbar.
 - Das Benennungs-SOLL (einheitliche Charta fuer Personen/Orte/Marken ueber alle Generationen) und die neue Fotomontage-/Collage-Regel kommen als Paket 2 — das sind inhaltliche Regelaenderungen, kein Aufraeumen.
+
+## Paket 2+3 (16.07.2026 abends)
+
+Paket 2 — Qualitaets-Charta (inhaltliche Regelaenderungen):
+
+1. Wahrzeichen-Benennung auf SOLL-Niveau vereinheitlicht: foto_landschaft hebt eindeutig erkennbare ikonische Motive (Eiffelturm, Brandenburger Tor, Golden Gate Bridge, Koelner Dom) vom frueheren "duerfen" auf das SOLL-Niveau von foto_architektur — vage Umschreibung trotz eindeutiger Erkennbarkeit ist ein Qualitaetsfehler, bei echter Unsicherheit weiter neutral beschreiben, nie raten.
+2. SYSTEM_BESCHREIBUNG (roles.py) erweitert den Personen-Benennungs-Auftrag um zweifelsfrei erkennbare Wahrzeichen und beruehmte Bauwerke — gleiche Logik: eindeutig erkennbar heisst benennen ist Teil des Auftrags.
+3. Neue systemweite Regel 5 "FOTOMONTAGEN UND COLLAGEN" in ANTI_HALLUZINATION_REGELN (halluzination.py): erkennbar nicht zusammenpassende Bildelemente werden ausdruecklich als Fotomontage/Collage benannt und getrennt beschrieben; da die Schicht in allen Buildern vorangestellt ist, gilt die Regel ueberall automatisch. Der Inventar-Pass bekommt zusaetzlich einen Montage-Check-Pruefauftrag (Indikatoren als halluzinations_warnung-Eintrag, kein Schema-Feld geaendert).
+4. Icon-Formel praezisiert (Schwingshandl R3): Funktion zuerst, optional kurze Formbeschreibung in runden Klammern ("Suche (Lupe)", "Menue oeffnen (drei Striche)"); Farben- und Praefix-Verbote unveraendert.
+5. Eineindeutigkeits-Prueffrage im Validator (Schwingshandl R6): Koennte ein Grafiker aus Kontext plus Alt-Text ein Bild erstellen, das dieselbe Funktion erfuellt — fehlende zentrale Funktions-Information wird als fehlend markiert.
+6. Zaehl-Disziplin als geteilter Baustein (_render_zaehl_block) in allen 6 Foto-Buildern: bis etwa 15 exakt zaehlen, circa/rund/etwa NUR bei echter Verdeckung sichtbarer Teile und dann mit Grund; die fruehere Inline-Version in foto_event (PERSONENZAHL) ist durch den Baustein ersetzt.
+
+Paket 3 — Redakteurs-Pass (pipelines/v4/orchestrator.py):
+
+7. VerifyOutput um zwei optionale Felder erweitert: korrigierter_alt_text (20-400 Zeichen) und korrektur_begruendung (kurz); tolerant normalisiert, damit der Verify nie an Formalien scheitert.
+8. Der Verify-Prompt arbeitet jetzt als Redakteur statt als reiner Widerleger (Vorbild: InkluAgent-Modify-Muster): binaerer Punkt-fuer-Punkt-Abgleich jeder Aussage ("weitgehend korrekt" verboten), exaktes Nachzaehlen von Personen/Objekten (Hedge-Woerter nur mit sichtbarem Verdeckungs-, Anschnitt- oder Unschaerfe-Grund — gleiche Ausnahmen wie der Zaehl-Baustein), Vollstaendigkeits-Check (fehlende zentrale Elemente wie lesbarer Text, Wahrzeichen, praegende Objekte) und Montage-Check; bei Beanstandung liefert er eine korrigierte Fassung. Die Zielsprache wird dem Redakteur explizit benannt (gleiche Quelle wie _language_suffix), das Laengen-Regime ist an das Original gekoppelt (einfache Motive unter 150, komplexe bis etwa 250, harte Obergrenze 400). Achtung: der Prompt selbst ist damit strenger als der alte Refuter — bei V4_VERIFY_MODE=kritisch/alle kann sich die needs_review-Rate auch mit KORREKTUR=off aendern (gleicher Mechanismus, strengerer Pruefer).
+9. Neue ENV V4_VERIFY_KORREKTUR: off (Default) = gleicher Mechanismus wie bisher — needs_review wird nur bei alt_text_belegt=false gesetzt, ein mitgelieferter korrigierter Text wird ignoriert (liefert der Redakteur eine Korrektur bei alt_text_belegt=true, z.B. wegen Unvollstaendigkeit, passiert bei off nichts; sie steht nur im validation_result-JSON); on = der korrigierte Alt-Text wird uebernommen (auch bei alt_text_belegt=true), needs_review gesetzt, Original und Begruendung stehen im Log und die Anwendung im pipeline_steps-Audit-Trail. Die Langbeschreibung bleibt in beiden Faellen unangetastet; Verify laeuft weiterhin nur nach V4_VERIFY_MODE (off/kritisch/alle) — und wie bisher ausschliesslich im Lean-Pfad: die Full-Pipeline (V4_PASS_MODE=full) hat keinen Verify/Redakteur, dort prueft der Validator-Pass.
+
+Kosten: der Verify-Pass kostet wie bisher rund einen zusaetzlichen Sonnet-Aufruf pro geprueftem Bild (jetzt mit etwas mehr Output-Tokens fuer die Korrektur); V4_VERIFY_KORREKTUR=on erzeugt KEINEN weiteren Aufruf. Das Default-Verhalten der Pipeline bleibt bis zur bewussten Aktivierung beider ENV-Schalter unveraendert.

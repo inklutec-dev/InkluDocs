@@ -274,6 +274,9 @@ DEINE AUFGABE — IN GENAU DIESER REIHENFOLGE:
    - Hauptmotiv-Personen oder dominante Objekte
    - Setting-Indikatoren die für die Bildaussage zentral sind
    In fehlende_wichtige_inventar_items eintragen.
+   PRÜFFRAGE: Könnte ein Grafiker aus Kontext plus Alt-Text ein Bild erstellen,
+   das an dieser Stelle dieselbe Funktion erfüllt? Wenn zentrale
+   Funktions-Information fehlt, markiere sie als fehlend.
 
 4. KORREKTUR-VORSCHLAG (nur bei validierung_ok=false):
    Wenn nicht_belegte_aussagen oder fehlende_wichtige_inventar_items nicht-leer sind:

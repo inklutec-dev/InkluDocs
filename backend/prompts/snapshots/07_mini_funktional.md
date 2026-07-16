@@ -1,6 +1,6 @@
 # Mini-Builder funktional
 
-- **Builder:** `prompts/builders/beschreibung_mini.py:164`
+- **Builder:** `prompts/builders/beschreibung_mini.py:170`
 - **Generiert:** 2026-07-16
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
@@ -79,6 +79,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
+
+5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
+   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
+   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
+   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
+   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
+   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   schwerer Fehler.
 
 BILDTYP: funktional (Navigations- oder Steuerungselement mit Zustands-
 information — Paginierungspfeile, Vor/Zurück, Fortschrittsanzeigen,

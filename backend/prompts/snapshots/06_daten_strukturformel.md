@@ -79,6 +79,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
+5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
+   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
+   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
+   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
+   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
+   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   schwerer Fehler.
+
 # ATMOSPHAERE_REGEL gilt für strukturformel NICHT — Chemie ist
 # objektiv, keine Stimmungsbeschreibungen.
 

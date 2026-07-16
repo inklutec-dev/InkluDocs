@@ -112,32 +112,51 @@ def _user_prompt_suffix(user_prompt: str) -> str:
     )
 
 
-# ── Verify-Pass (Fable-5-Review Fund 3, 05.07.2026) ─────────────────────────
+# ── Verify-Pass (Fable-5-Review Fund 3, 05.07.2026; Redakteur seit Paket 3) ──
 # Der Lean-Modus hat keinen Validator mehr; der Selbst-Check (nicht_im_inventar)
 # ist wirkungslos, weil dasselbe Modell sich gegen sein eigenes Kopf-Inventar
-# nie belastet. Dieser unabhaengige Pruef-Aufruf versucht stattdessen aktiv,
-# den fertigen Alt-Text gegen das Bild zu WIDERLEGEN (Refuter-Muster) — faengt
-# Transkriptions-Ausrutscher (Markennamen, Zahlen, zitierte Texte) und falsche
-# Benennungen. Fehler im Verify duerfen die Generierung NIE blockieren.
+# nie belastet. Dieser unabhaengige Pruef-Aufruf glich den fertigen Alt-Text
+# urspruenglich nur widerlegend gegen das Bild ab (Refuter-Muster); seit
+# Paket 3 (16.07.2026) arbeitet er als REDAKTEUR: binaerer Punkt-fuer-Punkt-
+# Abgleich, exaktes Nachzaehlen, Vollstaendigkeits- und Montage-Check, bei
+# Beanstandung gleich ein korrigierter Alt-Text. Fehler im Verify duerfen die
+# Generierung NIE blockieren.
 #
-# Schaltung per ENV V4_VERIFY_MODE:
+# Schaltung per ENV V4_VERIFY_MODE (ob geprueft wird):
 #   'off' (Default) — kein Verify (Kosten-Entscheidung: +1 Bild-Aufruf/Pruefung)
 #   'kritisch'      — nur risikoreiche Typen (Personen, Events, Objekte, Screenshots)
 #   'alle'          — jeder Nicht-Mini-Typ
+# Schaltung per ENV V4_VERIFY_KORREKTUR (was mit der Korrektur passiert):
+#   'off' (Default) — verhaltensneutral: nur needs_review-Flag wie bisher
+#   'on'            — korrigierter_alt_text wird uebernommen + needs_review gesetzt;
+#                     Original und Begruendung landen im Log, die Anwendung im
+#                     pipeline_steps-Audit-Trail. Langbeschreibung bleibt unangetastet.
 from pydantic import BaseModel, Field, field_validator
 
 
 class VerifyOutput(BaseModel):
-    """Schema des Verify-Passes (bewusst klein — nur Verdikt + Belege).
+    """Schema des Verify-Passes (bewusst klein — Verdikt + Belege + Korrektur).
 
     Tolerant gebaut (Befund Ersttest 05.07.): Modelle liefern die Liste
     gelegentlich als JSON-String und schreiben laengere Anmerkungen —
     beides wird normalisiert statt hart abgelehnt, damit der Verify nie
     an Formalien scheitert.
+
+    Paket 3 (16.07.2026): zwei optionale Redakteurs-Felder. korrigierter_alt_text
+    wird nur uebernommen, wenn ENV V4_VERIFY_KORREKTUR=on (siehe Lean-Pipeline) —
+    das Schema selbst ist verhaltensneutral.
     """
     alt_text_belegt: bool = Field(description='True wenn JEDE konkrete Behauptung des Alt-Texts durch das Bild gedeckt ist')
     strittige_aussagen: list[str] = Field(default_factory=list, description='Woertlich zitierte strittige Behauptungen mit kurzem Grund')
     anmerkung: str = Field(default='')
+    korrigierter_alt_text: Optional[str] = Field(
+        default=None, min_length=20, max_length=400,
+        description='Vollstaendig korrigierter Alt-Text (20-400 Zeichen), nur bei Beanstandung — sonst leer',
+    )
+    korrektur_begruendung: Optional[str] = Field(
+        default=None,
+        description='Kurze Begruendung, was warum korrigiert wurde — nur zusammen mit korrigierter_alt_text',
+    )
 
     @field_validator('strittige_aussagen', mode='before')
     @classmethod
@@ -153,6 +172,24 @@ class VerifyOutput(BaseModel):
             return [v] if v.strip() else []
         return v
 
+    @field_validator('korrigierter_alt_text', 'korrektur_begruendung', mode='before')
+    @classmethod
+    def _coerce_optional_text(cls, v, info):
+        # Tolerant wie oben: Modelle liefern statt null gern '' oder ' ' —
+        # das ist "keine Korrektur" und darf den Verify nicht scheitern lassen.
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return None
+            # Zu kurz fuer einen echten Alt-Text -> als "keine Korrektur" werten,
+            # statt den ganzen Verify an min_length scheitern zu lassen.
+            if info.field_name == 'korrigierter_alt_text' and len(v) < 20:
+                return None
+            # Hart am Schema-Limit kappen statt Validierungsfehler (400 = alt_text-Cap).
+            if len(v) > 400:
+                return v[:400]
+        return v
+
 
 _VERIFY_KRITISCHE_TYPEN = frozenset({'foto_personen', 'foto_event', 'foto_objekte', 'screenshot'})
 
@@ -166,37 +203,66 @@ def _verify_scope_matches(bildtyp: str) -> bool:
     return False
 
 
-def _build_verify_prompt(alt_text: str) -> str:
+def _build_verify_prompt(alt_text: str, language: str = 'de') -> str:
+    # Paket 3 (16.07.2026): vom reinen Widerlegen (Refuter) zum Redakteur, nach
+    # dem Vorbild des InkluAgent-Modify-Musters (inkluagent/prompts/system_modify.py):
+    # binaerer Punkt-fuer-Punkt-Abgleich, exaktes Nachzaehlen, dazu Vollstaendig-
+    # keits- und Montage-Check; bei Beanstandung liefert das Modell gleich eine
+    # korrigierte Fassung (Anwendung nur bei V4_VERIFY_KORREKTUR=on).
+    # Review-Fix (16.07. abends): Zielsprache wird explizit benannt (statt nur
+    # "gleiche Sprache wie das Original"), damit die Korrektur bei EN/DA/FR/ES/SV-
+    # Dokumenten nicht deutsch zurueckfaellt — gleiche Quelle wie _language_suffix.
+    sprach_name = _OUTPUT_LANGUAGE_NAMES.get((language or 'de').lower()) or 'Deutsch'
     return (
-        'Du bist ein unabhaengiger Qualitaetspruefer fuer Alternativtexte. '
-        'Deine EINZIGE Aufgabe: versuche, den folgenden Alt-Text anhand des Bildes '
-        'zu WIDERLEGEN. Pruefe jede konkrete Behauptung einzeln gegen das Bild:\n'
+        'Du bist ein unabhaengiger Redakteur fuer Alternativtexte. Gleiche den '
+        'folgenden Alt-Text Punkt fuer Punkt mit dem Bild ab. Jede Aussage wird '
+        'binaer bewertet: belegt oder nicht belegt — Einstufungen wie '
+        '"weitgehend korrekt" sind verboten.\n\n'
+        'PRUEFE JEDE KONKRETE BEHAUPTUNG EINZELN GEGEN DAS BILD:\n'
         '- Marken-, Produkt- und Personen-Namen (stimmen sie exakt?)\n'
         '- wortgetreu zitierte Texte und Aufschriften (Buchstabe fuer Buchstabe)\n'
-        '- Zahlen, Mengen, Groessenangaben, Anzahl von Personen oder Objekten\n'
-        '- Farben und eindeutige visuelle Merkmale\n\n'
+        '- Personen- und Objekt-Zahlen: zaehle selbst EXAKT nach. "Circa", "rund" '
+        'oder "etwa" ohne sichtbaren Verdeckungs-, Anschnitt- oder Unschaerfe-Grund '
+        'ist eine Beanstandung.\n'
+        '- Farben und eindeutige visuelle Merkmale\n'
+        '- VOLLSTAENDIGKEIT: Fehlen zentrale, fuer die Bildfunktion wichtige '
+        'Elemente (lesbarer Text, ein Wahrzeichen, praegende Objekte)?\n'
+        '- MONTAGE-CHECK: Passen Bildelemente erkennbar nicht zusammen (harte '
+        'Freisteller-Kanten, widerspruechliche Schatten/Perspektive/Massstab, '
+        'Stilbruch Foto/Grafik, unmoegliche Kombinationen)? Dann muss der '
+        'Alt-Text das Bild als Fotomontage oder Collage benennen.\n\n'
         'alt_text_belegt=false NUR, wenn eine konkrete Behauptung falsch oder im '
-        'Bild nicht belegt ist. Stil, Wortwahl oder Vollstaendigkeit sind KEINE '
-        'Pruefkriterien. Feine Farb- oder Deutungs-Nuancen sind nur strittig, wenn der Alt-Text klar danebenliegt. Plausibel reicht nicht als Widerlegung — du brauchst einen '
-        'sichtbaren Widerspruch. '
+        'Bild nicht belegt ist. Stil und Wortwahl sind KEINE Pruefkriterien. '
+        'Feine Farb- oder Deutungs-Nuancen sind nur strittig, wenn der Alt-Text '
+        'klar danebenliegt. Plausibel reicht nicht als Widerlegung — du brauchst '
+        'einen sichtbaren Widerspruch. '
         'Die Benennung zweifelsfrei erkennbarer Personen des oeffentlichen Lebens '
-        'ist in diesem Barrierefreiheits-Werkzeug legitim und erwuenscht — pruefe '
-        'nur, ob es die RICHTIGE Person ist, nicht OB benannt werden darf.\n\n'
+        'und Wahrzeichen ist in diesem Barrierefreiheits-Werkzeug legitim und '
+        'erwuenscht — pruefe nur, ob die Benennung RICHTIG ist, nicht OB benannt '
+        'werden darf.\n\n'
+        'KORREKTUR: Ist etwas falsch, unbelegt, ohne sichtbaren Grund gehedgt, '
+        'unvollstaendig oder eine unerkannte Montage, liefere in '
+        'korrigierter_alt_text eine vollstaendig korrigierte Fassung — '
+        f'ausschliesslich auf {sprach_name} (die Sprache des Original-Alt-Texts). '
+        'Laengen-Regime wie beim Original: einfache Motive unter 150 Zeichen, '
+        'komplexe Szenen bis etwa 250, harte Obergrenze 400 — und in '
+        'korrektur_begruendung kurz, was warum geaendert wurde. Keine halben '
+        'Anpassungen. Ist nichts zu beanstanden, lasse beide Felder leer.\n\n'
         f'ALT-TEXT ZUR PRUEFUNG:\n"{alt_text}"'
     )
 
 
-def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str):
+def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str = 'de'):
     """Fuehrt den Verify-Aufruf aus. Gibt VerifyOutput oder None (Fehler/aus) zurueck."""
     if not alt_text or not _verify_scope_matches(bildtyp):
         return None
     try:
         return call_mistral_with_schema(
             model=MISTRAL_MODEL_GENERATE,
-            prompt=_build_verify_prompt(alt_text),
+            prompt=_build_verify_prompt(alt_text, language=language),
             image_path=image_path,
             schema=VerifyOutput,
-            max_tokens=600,
+            max_tokens=1000,  # Paket 3: Platz fuer korrigierter_alt_text + Begruendung
             system=SYSTEM_BESCHREIBUNG,  # gleiche Legitimation wie die Generierung
         )
     except Exception as e:  # Verify ist Sicherheitsnetz, nie Blocker
@@ -868,14 +934,36 @@ def _run_lean_pipeline(
 
     # === Verify-Pass (optional per V4_VERIFY_MODE, s. Bausteine oben) ===
     verify_result = None
+    verify_korrektur_applied = False
     if effective_bildtyp not in _MINI_TYPES:
-        verify_result = _run_verify_pass(image_path, effective_bildtyp, beschreibung.alt_text)
+        verify_result = _run_verify_pass(
+            image_path, effective_bildtyp, beschreibung.alt_text, language=language,
+        )
         if verify_result is not None and not verify_result.alt_text_belegt:
             log.warning(
                 'Verify-Pass: Alt-Text nicht voll belegt (%s): %s',
                 effective_bildtyp, verify_result.strittige_aussagen,
             )
             needs_review = True
+        # Paket 3 (16.07.2026): Redakteurs-Korrektur nur bei explizitem Opt-in
+        # V4_VERIFY_KORREKTUR=on. Default 'off' ist verhaltensneutral (nur Flag
+        # wie bisher). Original + Begruendung werden geloggt (Muster wie oben);
+        # der volle Verify-Output steht ohnehin in validation_result. Die
+        # Langbeschreibung bleibt in beiden Faellen unangetastet.
+        if (
+            verify_result is not None
+            and verify_result.korrigierter_alt_text
+            and os.environ.get('V4_VERIFY_KORREKTUR', 'off').strip().lower() == 'on'
+        ):
+            log.warning(
+                'Verify-Korrektur uebernommen (%s). Original: %r — Begruendung: %s',
+                effective_bildtyp,
+                beschreibung.alt_text,
+                verify_result.korrektur_begruendung or '(keine)',
+            )
+            beschreibung.alt_text = verify_result.korrigierter_alt_text
+            needs_review = True  # wie bisher bei Beanstandung: Mensch liest gegen
+            verify_korrektur_applied = True
 
     langbeschreibung = (
         beschreibung.langbeschreibung
@@ -892,6 +980,7 @@ def _run_lean_pipeline(
         'pipeline_steps': (
             f'lean:classified:{classification.bildtyp},combo:{effective_bildtyp}'
             + (f',verify:ok={verify_result.alt_text_belegt}' if verify_result is not None else '')
+            + (',verify_korrektur:applied' if verify_korrektur_applied else '')
         ),
         'inventar_json': None,  # Im Lean-Mode kein separates Inventar-Objekt
         'validation_result': verify_result.model_dump_json() if verify_result is not None else None,

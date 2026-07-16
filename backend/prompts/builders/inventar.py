@@ -146,5 +146,13 @@ Beispiele:
 - 'Stilisierte Tierdarstellung — Spezies-Festlegung wäre Spekulation'
 - 'Personen halten kleine runde Objekte — diese sind nicht eindeutig identifizierbar'
 
+MONTAGE-CHECK:
+Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
+Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
+Kombinationen. Erkennst du solche Indikatoren, trage einen Eintrag in
+halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
+Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
+reales Foto beschreiben').
+
 {schema_doc}
 """

@@ -72,6 +72,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
+5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
+   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
+   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
+   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
+   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
+   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   schwerer Fehler.
+
 BILDTYP: diagramm
 BILDGRÖSSE: 1280x720 Pixel
 SCHWERPUNKT DIAGRAMM:
@@ -94,6 +103,14 @@ Beispiele:
 - 'Hellfarbene Glasur könnte als Flüssigkeit fehlinterpretiert werden'
 - 'Stilisierte Tierdarstellung — Spezies-Festlegung wäre Spekulation'
 - 'Personen halten kleine runde Objekte — diese sind nicht eindeutig identifizierbar'
+
+MONTAGE-CHECK:
+Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
+Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
+Kombinationen. Erkennst du solche Indikatoren, trage einen Eintrag in
+halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
+Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
+reales Foto beschreiben').
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - foto_subtyp [OPTIONAL]: Nur wenn bildtyp=foto, sonst None
