@@ -7,10 +7,7 @@
 
       <p><button type="button" id="newsBtn" class="dash-news-btn" aria-haspopup="dialog" hidden>{{ _('Neuigkeiten') }}</button></p>
 
-      <section class="dash-section" id="reviewOverviewSection" aria-labelledby="reviewov-h" hidden>
-        <h2 id="reviewov-h">{{ _('Rückmeldungen vom Kunden') }}</h2>
-        <div id="reviewOverviewContainer"></div>
-      </section>
+      <p><a id="sharedBtn" class="dash-news-btn" href="/geteilte-projekte" hidden style="text-decoration:none;">{{ _('Geteilte Projekte') }}</a></p>
 
       <section class="dash-section" aria-labelledby="recent-h">
         <h2 id="recent-h">{{ _('Zuletzt bearbeitete Projekte') }}</h2>
@@ -223,68 +220,41 @@
     });
   }
 
-  async function loadReviewOverview() {
-    let data;
+    // ─── Geteilte Projekte (15.07.2026): Knopf-Link zur Unterseite ───
+  // Der Zaehler kommt aus /api/review-overview. Als gelesen markiert wird auf
+  // der Unterseite /geteilte-projekte (POST /api/review-overview/seen beim
+  // Seitenbesuch) — hier wird nur gezaehlt und beschriftet.
+  function sharedNeuCount(pr) {
+    const n = pr.neu || {};
+    return (n.nachrichten || 0) + (n.pruefungen || 0) + (n.abschluesse || 0);
+  }
+  async function loadSharedProjects() {
+    let projects = [];
     try {
       const res = await fetch('/api/review-overview');
       if (!res.ok) return;
-      data = await res.json();
+      projects = (await res.json()).projects || [];
     } catch (e) { return; }
-    const projects = data.projects || [];
-    const section = byId('reviewOverviewSection');
-    const cont = byId('reviewOverviewContainer');
-    if (!section || !cont) return;
-    if (projects.length === 0) { section.hidden = true; return; }
-    cont.innerHTML = '';
-    const ul = document.createElement('ul');
-    ul.className = 'dash-list';
-    projects.forEach((pr) => {
-      const li = document.createElement('li');
-      li.className = 'dash-item';
-      const h3 = document.createElement('h3');
-      const a = document.createElement('a');
-      a.href = '/app?projekt=' + encodeURIComponent(pr.id);
-      a.textContent = pr.display_name;
-      h3.appendChild(a);
-      li.appendChild(h3);
-      // Kunde(n) anzeigen, die zu diesem Projekt eingeladen sind (aus den Freigaben).
-      if (pr.guests) {
-        const pk = document.createElement('p');
-        pk.className = 'dash-sub';
-        pk.textContent = t('Kunde: {namen}', { namen: pr.guests.split(',').join(', ') });
-        li.appendChild(pk);
-      }
-      const p = document.createElement('p');
-      p.className = 'dash-sub';
-      p.textContent = t('Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})', {
-        offen: pr.offen, ueberarbeiten: pr.zu_ueberarbeiten, freigegeben: pr.freigegeben, gesamt: pr.total,
-      });
-      li.appendChild(p);
-      // Etappe 3 (15.07.2026): Ruecksprache-Bilder des Lektorats als eigene Zeile,
-      // damit Steve beim Kundengespraech direkt sieht, wo Klaerungsbedarf ist.
-      if (pr.ruecksprache > 0) {
-        const pr2 = document.createElement('p');
-        pr2.className = 'dash-sub';
-        pr2.textContent = t('Zur Rücksprache (Lektorat): {n}', { n: pr.ruecksprache });
-        li.appendChild(pr2);
-      }
-      // Etappe 4 (15.07.2026): gesammelte Nachrichten-Anzahl des Projekts.
-      if (pr.nachrichten > 0) {
-        const pm = document.createElement('p');
-        pm.className = 'dash-sub';
-        pm.textContent = t('Nachrichten: {n}', { n: pr.nachrichten });
-        li.appendChild(pm);
-      }
-      ul.appendChild(li);
-    });
-    cont.appendChild(ul);
-    section.hidden = false;
+    const btn = byId('sharedBtn');
+    if (!btn || projects.length === 0) return;
+    const neuP = projects.filter((p) => sharedNeuCount(p) > 0).length;
+    if (neuP === 1) {
+      btn.textContent = t('Geteilte Projekte – Neues in einem Projekt');
+      btn.classList.add('has-unread');
+    } else if (neuP > 1) {
+      btn.textContent = t('Geteilte Projekte – Neues in {n} Projekten', { n: neuP });
+      btn.classList.add('has-unread');
+    } else {
+      btn.textContent = t('Geteilte Projekte');
+      btn.classList.remove('has-unread');
+    }
+    btn.hidden = false;
   }
 
   (async function init() {
     await loadTools();
     loadNews();
-    await loadReviewOverview();
+    await loadSharedProjects();
     await loadRecent();
   })();
 {% endraw %}

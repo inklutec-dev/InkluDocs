@@ -2386,3 +2386,74 @@ msgstr "{absender} a écrit un nouveau message concernant {bild} dans le projet 
 
 msgid "einem Bild"
 msgstr "une image"
+
+# ── Geteilte-Projekte-Kasten + Gast-Rollenzeile (15.07.2026) ──
+
+msgid "Geteilte Projekte"
+msgstr "Projets partagés"
+
+msgid "Geteilte Projekte – Neues in {n} Projekten"
+msgstr "Projets partagés – du nouveau dans {n} projets"
+
+msgid "Prüfung abgeschlossen am {datum}"
+msgstr "Vérification terminée le {datum}"
+
+msgid "Prüfung abgeschlossen"
+msgstr "Vérification terminée"
+
+msgid "{rolle}: abgeschlossen"
+msgstr "{rolle} : terminé"
+
+msgid "{rolle}: in Prüfung"
+msgstr "{rolle} : en cours de vérification"
+
+msgid "In Prüfung"
+msgstr "En cours de vérification"
+
+msgid "{n} neue Nachrichten"
+msgstr "{n} nouveaux messages"
+
+msgid "{n} Prüfstatus-Änderungen"
+msgstr "{n} changements de statut de vérification"
+
+msgid "{n} Prüfungen abgeschlossen"
+msgstr "{n} vérifications terminées"
+
+msgid "Neu seit deinem letzten Besuch:"
+msgstr "Nouveautés depuis votre dernière visite :"
+
+msgid "Du prüfst dieses Projekt als {rolle}."
+msgstr "Vous vérifiez ce projet en tant que {rolle}."
+
+msgid "Du schließt die Prüfung als {rolle} ab."
+msgstr "Vous terminez la vérification en tant que {rolle}."
+
+msgid "Geteilte Projekte – Neues in einem Projekt"
+msgstr "Projets partagés – du nouveau dans un projet"
+
+msgid "{rolle}: {wer} — abgeschlossen am {datum} um {zeit}"
+msgstr "{rolle} : {wer} — terminé le {datum} à {zeit}"
+
+msgid "{rolle}: {wer} — in Prüfung, eingeladen am {datum}"
+msgstr "{rolle} : {wer} — en cours de vérification, invité le {datum}"
+
+msgid "Zurzeit keine geteilten Projekte."
+msgstr "Aucun projet partagé pour le moment."
+
+msgid "{n} geteilte Projekte geladen."
+msgstr "{n} projets partagés chargés."
+
+msgid "{rolle}: {wer} — in Prüfung seit {datum}"
+msgstr "{rolle} : {wer} — en cours de vérification depuis le {datum}"
+
+msgid "{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen"
+msgstr "{rolle} : {wer} — invité le {datum}, pas encore commencé"
+
+msgid "dazu {n} frühere Einladungen"
+msgstr "ainsi que {n} invitations antérieures"
+
+msgid "Projekt abgeschlossen am {datum}"
+msgstr "Projet terminé le {datum}"
+
+msgid "{n} Bilder ohne Prüfurteil"
+msgstr "{n} images sans verdict de vérification"

@@ -2386,3 +2386,74 @@ msgstr "{absender} wrote a new message about {bild} in project “{projekt}”:"
 
 msgid "einem Bild"
 msgstr "an image"
+
+# ── Geteilte-Projekte-Kasten + Gast-Rollenzeile (15.07.2026) ──
+
+msgid "Geteilte Projekte"
+msgstr "Shared projects"
+
+msgid "Geteilte Projekte – Neues in {n} Projekten"
+msgstr "Shared projects – updates in {n} projects"
+
+msgid "Prüfung abgeschlossen am {datum}"
+msgstr "Review completed on {datum}"
+
+msgid "Prüfung abgeschlossen"
+msgstr "Review completed"
+
+msgid "{rolle}: abgeschlossen"
+msgstr "{rolle}: completed"
+
+msgid "{rolle}: in Prüfung"
+msgstr "{rolle}: in review"
+
+msgid "In Prüfung"
+msgstr "In review"
+
+msgid "{n} neue Nachrichten"
+msgstr "{n} new messages"
+
+msgid "{n} Prüfstatus-Änderungen"
+msgstr "{n} review status changes"
+
+msgid "{n} Prüfungen abgeschlossen"
+msgstr "{n} reviews completed"
+
+msgid "Neu seit deinem letzten Besuch:"
+msgstr "New since your last visit:"
+
+msgid "Du prüfst dieses Projekt als {rolle}."
+msgstr "You are reviewing this project as {rolle}."
+
+msgid "Du schließt die Prüfung als {rolle} ab."
+msgstr "You are completing the review as {rolle}."
+
+msgid "Geteilte Projekte – Neues in einem Projekt"
+msgstr "Shared projects – updates in one project"
+
+msgid "{rolle}: {wer} — abgeschlossen am {datum} um {zeit}"
+msgstr "{rolle}: {wer} — completed on {datum} at {zeit}"
+
+msgid "{rolle}: {wer} — in Prüfung, eingeladen am {datum}"
+msgstr "{rolle}: {wer} — in review, invited on {datum}"
+
+msgid "Zurzeit keine geteilten Projekte."
+msgstr "No shared projects at the moment."
+
+msgid "{n} geteilte Projekte geladen."
+msgstr "{n} shared projects loaded."
+
+msgid "{rolle}: {wer} — in Prüfung seit {datum}"
+msgstr "{rolle}: {wer} — in review since {datum}"
+
+msgid "{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen"
+msgstr "{rolle}: {wer} — invited on {datum}, not started yet"
+
+msgid "dazu {n} frühere Einladungen"
+msgstr "plus {n} earlier invitations"
+
+msgid "Projekt abgeschlossen am {datum}"
+msgstr "Project completed on {datum}"
+
+msgid "{n} Bilder ohne Prüfurteil"
+msgstr "{n} images without a review verdict"

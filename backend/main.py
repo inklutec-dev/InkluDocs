@@ -4286,6 +4286,11 @@ async def settings_page(request: Request):
     return _render_protected_template(request, "einstellungen.html")
 
 
+@app.get("/geteilte-projekte", response_class=HTMLResponse)
+async def shared_projects_page(request: Request):
+    return _render_protected_template(request, "geteilte_projekte.html")
+
+
 @app.get("/prompts", response_class=HTMLResponse)
 async def prompts_page(request: Request):
     return _render_protected_template(request, "prompts.html")
@@ -4519,6 +4524,11 @@ async def freigabe_save_alttext(token: str, image_id: int, request: Request):
         conn.execute("UPDATE images SET review_status = 'in_bearbeitung', reviewed_at = datetime('now') WHERE id = ?",
                      (image_id,))
         auto_status = "in_bearbeitung"
+    # Wieder-Einstieg (Steve 15.07.2026): arbeitet ein Gast mit bereits
+    # abgeschlossener Pruefung weiter (Status setzen / Text aendern), springt
+    # seine Freigabe automatisch auf 'in Pruefung' zurueck. Nachrichten und
+    # reines Lesen loesen das bewusst NICHT aus.
+    conn.execute("UPDATE shares SET status = 'active' WHERE token = ? AND status = 'completed'", (token,))
     conn.commit()
     conn.close()
     return {"ok": True, "auto_status": auto_status}
@@ -4560,6 +4570,11 @@ async def freigabe_set_review(token: str, image_id: int, request: Request):
             "VALUES (?, ?, ?, ?, ?, 'review_note')",
             (share["project_id"], image_id, (session or {}).get("guest", ""), share["created_by"], comment),
         )
+    # Wieder-Einstieg (Steve 15.07.2026): arbeitet ein Gast mit bereits
+    # abgeschlossener Pruefung weiter (Status setzen / Text aendern), springt
+    # seine Freigabe automatisch auf 'in Pruefung' zurueck. Nachrichten und
+    # reines Lesen loesen das bewusst NICHT aus.
+    conn.execute("UPDATE shares SET status = 'active' WHERE token = ? AND status = 'completed'", (token,))
     conn.commit()
     conn.close()
     return {"ok": True, "review_status": status, "comment": comment, "role": role}
@@ -4916,13 +4931,69 @@ async def review_overview(user: dict = Depends(get_current_user)):
            ORDER BY p.updated_at DESC""",
         (user["id"],)
     ).fetchall()
-    conn.close()
+    # Geteilte-Projekte-Kasten (15.07.2026): Lese-Stand + Rollen-Status + Neu-Zaehler.
+    seen_row = conn.execute("SELECT reviews_seen_until FROM users WHERE id = ?", (user["id"],)).fetchone()
+    seen = seen_row["reviews_seen_until"] if seen_row and seen_row["reviews_seen_until"] else ""
     projects = []
     for r in rows:
         d = dict(r)
         d["display_name"] = (d.get("name") or d.get("filename") or ("Projekt " + str(d["id"])))
+        pid = d["id"]
+        # Status pro Rolle: solange EINE Freigabe der Rolle aktiv ist, gilt die
+        # Rolle als "in Pruefung"; abgeschlossen erst, wenn alle durch sind.
+        d["rollen"] = [dict(x) for x in conn.execute(
+            """SELECT role,
+                      CASE WHEN SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) > 0
+                           THEN 'active' ELSE 'completed' END AS status,
+                      MAX(completed_at) AS completed_at
+               FROM shares WHERE project_id = ? AND status IN ('active','completed')
+               GROUP BY role""", (pid,)).fetchall()]
+        # Detail-Zeilen fuer die Unterseite: wer (Name, sonst E-Mail) pro Freigabe,
+        # mit Einladungs- und Abschluss-Zeitpunkt (UTC, Frontend rechnet lokal um).
+        d["freigaben"] = [dict(x) for x in conn.execute(
+            """SELECT role, COALESCE(NULLIF(guest_name,''), guest_email) AS wer,
+                      guest_email, email_confirmed_at,
+                      status, completed_at, created_at
+               FROM shares WHERE project_id = ? AND status IN ('active','completed')
+               ORDER BY CASE role WHEN 'lektorat' THEN 0 ELSE 1 END, created_at DESC""",
+            (pid,)).fetchall()]
+        # "Neu seit letztem Besuch": eigene Besitzer-Nachrichten zaehlen nicht mit;
+        # leerer Lese-Stand (Erstnutzung) zaehlt alles Bisherige als neu.
+        if seen:
+            neu_msgs = conn.execute(
+                "SELECT COUNT(*) FROM messages WHERE project_id = ? AND msg_type = 'chat' "
+                "AND COALESCE(sender_role,'') <> 'besitzer' AND created_at > ?", (pid, seen)).fetchone()[0]
+            neu_reviews = conn.execute(
+                "SELECT COUNT(*) FROM image_reviews r JOIN images i ON i.id = r.image_id "
+                "WHERE i.project_id = ? AND r.reviewed_at > ?", (pid, seen)).fetchone()[0]
+            neu_abschluesse = conn.execute(
+                "SELECT COUNT(*) FROM shares WHERE project_id = ? AND completed_at IS NOT NULL "
+                "AND completed_at > ?", (pid, seen)).fetchone()[0]
+        else:
+            neu_msgs = conn.execute(
+                "SELECT COUNT(*) FROM messages WHERE project_id = ? AND msg_type = 'chat' "
+                "AND COALESCE(sender_role,'') <> 'besitzer'", (pid,)).fetchone()[0]
+            neu_reviews = conn.execute(
+                "SELECT COUNT(*) FROM image_reviews r JOIN images i ON i.id = r.image_id "
+                "WHERE i.project_id = ?", (pid,)).fetchone()[0]
+            neu_abschluesse = conn.execute(
+                "SELECT COUNT(*) FROM shares WHERE project_id = ? AND status = 'completed'", (pid,)).fetchone()[0]
+        d["neu"] = {"nachrichten": neu_msgs, "pruefungen": neu_reviews, "abschluesse": neu_abschluesse}
         projects.append(d)
-    return {"projects": projects}
+    conn.close()
+    return {"projects": projects, "seen_until": seen}
+
+
+@app.post("/api/review-overview/seen")
+async def review_overview_seen(user: dict = Depends(get_current_user)):
+    """Markiert den Geteilte-Projekte-Kasten als gelesen (UTC-Zeitstempel,
+    vergleichbar mit den created_at/reviewed_at/completed_at-Spalten)."""
+    conn = get_db()
+    conn.execute("UPDATE users SET reviews_seen_until = datetime('now') WHERE id = ?", (user["id"],))
+    conn.commit()
+    row = conn.execute("SELECT reviews_seen_until FROM users WHERE id = ?", (user["id"],)).fetchone()
+    conn.close()
+    return {"seen_until": row["reviews_seen_until"] if row else ""}
 
 @app.get("/impressum", response_class=HTMLResponse)
 async def impressum_page():

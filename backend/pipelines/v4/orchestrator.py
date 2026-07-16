@@ -69,6 +69,7 @@ _OUTPUT_LANGUAGE_NAMES = {
     "da": "Dänisch (dansk)",
     "fr": "Französisch (français)",
     "es": "Spanisch (español)",
+    "sv": "Schwedisch (svenska)",
 }
 
 def _language_suffix(language: str) -> str:

@@ -56,7 +56,7 @@ def _compute_asset_version() -> str:
 
 ASSET_VERSION = _compute_asset_version()
 
-SUPPORTED_LANGUAGES = ["de", "en", "fr", "es", "da"]
+SUPPORTED_LANGUAGES = ["de", "en", "fr", "es", "da", "sv"]
 DEFAULT_LANGUAGE = "de"
 
 # Sprachnamen in der jeweiligen Landessprache (damit User eigene Sprache findet)
@@ -66,6 +66,7 @@ LANGUAGE_LABELS = {
     "fr": "Français",
     "es": "Español",
     "da": "Dansk",
+    "sv": "Svenska",
 }
 
 _translations_cache: dict = {}

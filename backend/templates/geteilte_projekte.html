@@ -1,0 +1,163 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Geteilte Projekte') }} · InkluDocs{% endblock %}
+{% block main %}
+      <h1>{{ _('Geteilte Projekte') }}</h1>
+      <div id="sharedContainer" aria-busy="true">
+        <p class="dash-sub">{{ _('Wird geladen ...') }}</p>
+      </div>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  // Eigene Seite statt Dialog (Steve 15.07.2026): echte H1, Seitenleiste
+  // bleibt, kein Overlay. Besuch = gelesen. Status-Konzept v2 (Steve abends):
+  // pro Rolle+Person zaehlt nur die NEUESTE Einladung, drei Zustaende
+  // (eingeladen/in Pruefung/abgeschlossen) mit Person + E-Mail + Zeitpunkt.
+  function sharedRoleLabel(r) {
+    return r === 'lektorat' ? t('Lektorat') : t('Herausgeber');
+  }
+  // DB-Zeitstempel sind UTC -> lokal umrechnen (Zahlen einzeln, kein Date()-
+  // String-Parsing wegen Safari).
+  function sharedDateLocal(s) {
+    const d = String(s || '');
+    if (d.length < 10) return { datum: '', zeit: '' };
+    const dt = d.length >= 16
+      ? new Date(Date.UTC(+d.substring(0, 4), +d.substring(5, 7) - 1, +d.substring(8, 10), +d.substring(11, 13), +d.substring(14, 16)))
+      : new Date(Date.UTC(+d.substring(0, 4), +d.substring(5, 7) - 1, +d.substring(8, 10)));
+    const p = (n) => String(n).padStart(2, '0');
+    return { datum: p(dt.getDate()) + '.' + p(dt.getMonth() + 1) + '.' + dt.getFullYear(),
+             zeit: p(dt.getHours()) + ':' + p(dt.getMinutes()) };
+  }
+  function sharedNeuCount(pr) {
+    const n = pr.neu || {};
+    return (n.nachrichten || 0) + (n.pruefungen || 0) + (n.abschluesse || 0);
+  }
+  // Neueste Einladung je Rolle+E-Mail; alles Aeltere wird nur gezaehlt.
+  function sharedDedupe(pr) {
+    const seen = new Set(); const neueste = []; let aeltere = 0;
+    (pr.freigaben || []).forEach((f) => {
+      const key = f.role + '|' + (f.guest_email || '');
+      if (seen.has(key)) { aeltere += 1; return; }
+      seen.add(key); neueste.push(f);
+    });
+    return { neueste: neueste, aeltere: aeltere };
+  }
+  function sharedWer(f) {
+    const mail = f.guest_email || '';
+    return (f.wer && f.wer !== mail) ? (f.wer + ' (' + mail + ')') : mail;
+  }
+  // Eine Zeile pro Einladung: Rolle, Person + E-Mail, Zustand, Zeitpunkt.
+  function sharedFreigabeText(f) {
+    const rolle = sharedRoleLabel(f.role);
+    const wer = sharedWer(f);
+    if (f.status === 'completed') {
+      const dz = sharedDateLocal(f.completed_at);
+      return t('{rolle}: {wer} — abgeschlossen am {datum} um {zeit}',
+        { rolle: rolle, wer: wer, datum: dz.datum, zeit: dz.zeit });
+    }
+    if (f.email_confirmed_at) {
+      return t('{rolle}: {wer} — in Prüfung seit {datum}',
+        { rolle: rolle, wer: wer, datum: sharedDateLocal(f.email_confirmed_at).datum });
+    }
+    return t('{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen',
+      { rolle: rolle, wer: wer, datum: sharedDateLocal(f.created_at).datum });
+  }
+  // Gesamt-Zeile aus den NEUESTEN Einladungen; gruen erst wenn alle durch
+  // sind, mit ehrlichem Zusatz falls Bilder ohne Urteil geblieben sind.
+  function sharedStatusEl(pr, neueste) {
+    const done = neueste.length > 0 && neueste.every((f) => f.status === 'completed');
+    let text;
+    if (done) {
+      const latest = neueste.map((f) => f.completed_at || '').sort().pop();
+      text = t('Projekt abgeschlossen am {datum}', { datum: sharedDateLocal(latest).datum });
+      if (pr.offen > 0) text += ' — ' + t('{n} Bilder ohne Prüfurteil', { n: pr.offen });
+    } else {
+      text = t('In Prüfung');
+    }
+    const span = document.createElement('span');
+    span.textContent = text;
+    span.style.cssText = 'display:inline-block;background:' + (done ? '#1a7f37' : '#0369a1')
+      + ';color:#fff;padding:0.15rem 0.6rem;border-radius:4px;font-size:0.85rem;font-weight:600;';
+    return span;
+  }
+  function sharedNeuLine(pr) {
+    const n = pr.neu || {};
+    const parts = [];
+    if (n.nachrichten > 0) parts.push(t('{n} neue Nachrichten', { n: n.nachrichten }));
+    if (n.pruefungen > 0) parts.push(t('{n} Prüfstatus-Änderungen', { n: n.pruefungen }));
+    if (n.abschluesse > 0) parts.push(t('{n} Prüfungen abgeschlossen', { n: n.abschluesse }));
+    return parts.length ? t('Neu seit deinem letzten Besuch:') + ' ' + parts.join(', ') : '';
+  }
+  function sub(li, text, bold) {
+    const p = document.createElement('p');
+    p.className = 'dash-sub';
+    if (bold) p.style.fontWeight = '600';
+    p.textContent = text;
+    li.appendChild(p);
+  }
+  function sharedRender(projects) {
+    const cont = byId('sharedContainer');
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+    if (projects.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Zurzeit keine geteilten Projekte.');
+      cont.appendChild(p);
+      return;
+    }
+    const list = projects.slice().sort((a, b) => sharedNeuCount(b) - sharedNeuCount(a));
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    list.forEach((pr) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h2 = document.createElement('h2');
+      h2.style.fontSize = '1.1rem';
+      const a = document.createElement('a');
+      a.href = '/app?projekt=' + encodeURIComponent(pr.id);
+      a.textContent = pr.display_name;
+      h2.appendChild(a);
+      li.appendChild(h2);
+      const dd = sharedDedupe(pr);
+      const st = document.createElement('p');
+      st.className = 'dash-sub';
+      st.appendChild(sharedStatusEl(pr, dd.neueste));
+      li.appendChild(st);
+      dd.neueste.forEach((f) => sub(li, sharedFreigabeText(f)));
+      if (dd.aeltere > 0) sub(li, t('dazu {n} frühere Einladungen', { n: dd.aeltere }));
+      const neuText = sharedNeuLine(pr);
+      if (neuText) sub(li, neuText, true);
+      sub(li, t('Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})', {
+        offen: pr.offen, ueberarbeiten: pr.zu_ueberarbeiten, freigegeben: pr.freigegeben, gesamt: pr.total,
+      }));
+      if (pr.ruecksprache > 0) sub(li, t('Zur Rücksprache (Lektorat): {n}', { n: pr.ruecksprache }));
+      if (pr.nachrichten > 0) sub(li, t('Nachrichten: {n}', { n: pr.nachrichten }));
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+  }
+  (async function init() {
+    let projects = [];
+    try {
+      const res = await fetch('/api/review-overview');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      projects = (await res.json()).projects || [];
+    } catch (e) {
+      const cont = byId('sharedContainer');
+      cont.setAttribute('aria-busy', 'false');
+      cont.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Projekte konnten nicht geladen werden. Bitte später erneut versuchen.');
+      cont.appendChild(p);
+      return;
+    }
+    sharedRender(projects);
+    announce(t('{n} geteilte Projekte geladen.', { n: projects.length }));
+    // Besuch gilt als gelesen — die "Neu"-Zeilen dieses Besuchs bleiben stehen.
+    try { fetch('/api/review-overview/seen', { method: 'POST' }); } catch (e) {}
+  })();
+{% endraw %}
+</script>
+{% endblock %}

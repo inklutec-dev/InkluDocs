@@ -2077,3 +2077,74 @@ msgstr "{absender} har skrevet en ny besked om {bild} i projektet »{projekt}«:
 
 msgid "einem Bild"
 msgstr "et billede"
+
+# ── Geteilte-Projekte-Kasten + Gast-Rollenzeile (15.07.2026) ──
+
+msgid "Geteilte Projekte"
+msgstr "Delte projekter"
+
+msgid "Geteilte Projekte – Neues in {n} Projekten"
+msgstr "Delte projekter – nyt i {n} projekter"
+
+msgid "Prüfung abgeschlossen am {datum}"
+msgstr "Gennemgang afsluttet den {datum}"
+
+msgid "Prüfung abgeschlossen"
+msgstr "Gennemgang afsluttet"
+
+msgid "{rolle}: abgeschlossen"
+msgstr "{rolle}: afsluttet"
+
+msgid "{rolle}: in Prüfung"
+msgstr "{rolle}: under gennemgang"
+
+msgid "In Prüfung"
+msgstr "Under gennemgang"
+
+msgid "{n} neue Nachrichten"
+msgstr "{n} nye beskeder"
+
+msgid "{n} Prüfstatus-Änderungen"
+msgstr "{n} ændringer i gennemgangsstatus"
+
+msgid "{n} Prüfungen abgeschlossen"
+msgstr "{n} gennemgange afsluttet"
+
+msgid "Neu seit deinem letzten Besuch:"
+msgstr "Nyt siden dit sidste besøg:"
+
+msgid "Du prüfst dieses Projekt als {rolle}."
+msgstr "Du gennemgår dette projekt som {rolle}."
+
+msgid "Du schließt die Prüfung als {rolle} ab."
+msgstr "Du afslutter gennemgangen som {rolle}."
+
+msgid "Geteilte Projekte – Neues in einem Projekt"
+msgstr "Delte projekter – nyt i ét projekt"
+
+msgid "{rolle}: {wer} — abgeschlossen am {datum} um {zeit}"
+msgstr "{rolle}: {wer} — afsluttet den {datum} kl. {zeit}"
+
+msgid "{rolle}: {wer} — in Prüfung, eingeladen am {datum}"
+msgstr "{rolle}: {wer} — under gennemgang, inviteret den {datum}"
+
+msgid "Zurzeit keine geteilten Projekte."
+msgstr "Ingen delte projekter i øjeblikket."
+
+msgid "{n} geteilte Projekte geladen."
+msgstr "{n} delte projekter indlæst."
+
+msgid "{rolle}: {wer} — in Prüfung seit {datum}"
+msgstr "{rolle}: {wer} — under gennemgang siden {datum}"
+
+msgid "{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen"
+msgstr "{rolle}: {wer} — inviteret den {datum}, endnu ikke begyndt"
+
+msgid "dazu {n} frühere Einladungen"
+msgstr "derudover {n} tidligere invitationer"
+
+msgid "Projekt abgeschlossen am {datum}"
+msgstr "Projekt afsluttet den {datum}"
+
+msgid "{n} Bilder ohne Prüfurteil"
+msgstr "{n} billeder uden bedømmelse"

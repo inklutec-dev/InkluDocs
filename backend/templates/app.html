@@ -515,6 +515,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <h1 id="projectName" class="card-name" tabindex="-1">${headTitle}</h1>
                     <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
+                <!-- Rollen-Ansage (Steve 15.07.2026): der Gast hoert direkt nach der H1,
+                     in welcher Rolle sein Link ihn hereingelassen hat. -->
+                ${window.GUEST_MODE ? '<p class="card-info" id="guestRoleInfo" style="font-weight:600;">' + t('Du prüfst dieses Projekt als {rolle}.', { rolle: msgRoleLabel(revRole()) }) + '</p>' : ''}
                 <div class="card-info" id="projectHeadInfo">${headInfo}</div>
                 ${project.status === 'processing' ? `
                     <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="${t('Fortschritt: {p} Prozent', { p: progress })}">
@@ -577,6 +580,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                              showModal() liefert Fokusfang, Escape und inerten Hintergrund nativ. -->
                         <dialog id="guestCompleteDialog" aria-labelledby="guestCompleteHeading" class="invite-dialog">
                             <h2 id="guestCompleteHeading" style="margin-top:0;">${t('Prüfung abschließen')}</h2>
+                            <p id="guestCompleteRole">${t('Du schließt die Prüfung als {rolle} ab.', { rolle: msgRoleLabel(revRole()) })}</p>
                             <label for="guestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Möchten Sie dem Ersteller noch etwas mitteilen? (optional)')}</label>
                             <textarea id="guestCompleteMsg" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
                             <!-- Etappe 3 (15.07.2026): Automatisch erzeugter Ruecksprache-Block — NICHT
@@ -623,7 +627,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                             <label for="altLangSelect" style="font-weight:600;">${t('Sprache der Alt-Texte')}</label>
                             <select id="altLangSelect" onchange="setAltLanguage(${project.id}, this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
-                                ${['de','en','da','fr','es'].map(code => '<option value="' + code + '"' + ((project.alt_language || 'de') === code ? ' selected' : '') + '>' + ({de:'Deutsch',en:'English',da:'Dansk',fr:'Français',es:'Español'})[code] + '</option>').join('')}
+                                ${['de','en','da','fr','es','sv'].map(code => '<option value="' + code + '"' + ((project.alt_language || 'de') === code ? ' selected' : '') + '>' + ({de:'Deutsch',en:'English',da:'Dansk',fr:'Français',es:'Español',sv:'Svenska'})[code] + '</option>').join('')}
                             </select>
                         </div>
                     ` : ''}
@@ -863,7 +867,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Vorlese-Stimme folgt der GENERIERUNGSSPRACHE des Bildes (03.07.2026):
         // ein daenischer Alt-Text mit deutscher Stimme waere Kauderwelsch.
         // Altbestand ohne gen_language faellt auf Deutsch zurueck.
-        const ttsTags = { de: 'de-DE', en: 'en-US', da: 'da-DK', fr: 'fr-FR', es: 'es-ES' };
+        const ttsTags = { de: 'de-DE', en: 'en-US', da: 'da-DK', fr: 'fr-FR', es: 'es-ES', sv: 'sv-SE' };
         const ttsCode = (btn.dataset.lang || 'de');
         u.lang = ttsTags[ttsCode] || 'de-DE';
         const voice = (synth.getVoices() || []).find(function (v) { return v.lang && v.lang.toLowerCase().indexOf(ttsCode) === 0; });
@@ -1444,7 +1448,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 body: JSON.stringify({ language: lang })
             });
             if (!res.ok) { announce(t('Umstellen der Alt-Text-Sprache fehlgeschlagen.')); return; }
-            const names = { de: 'Deutsch', en: 'English', da: 'Dansk', fr: 'Français', es: 'Español' };
+            const names = { de: 'Deutsch', en: 'English', da: 'Dansk', fr: 'Français', es: 'Español', sv: 'Svenska' };
             announce(t('Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird.', { s: names[lang] || lang }));
         } catch (e) {
             announce(t('Netzwerkfehler beim Umstellen der Sprache.'));
@@ -1511,8 +1515,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function msgDate(s) {
         if (!s) return '';
         const d = String(s);
-        const day = d.substring(8, 10) + '.' + d.substring(5, 7) + '.' + d.substring(0, 4);
-        return d.length >= 16 ? day + ', ' + d.substring(11, 16) : day;
+        // DB speichert UTC -> fuer die Anzeige in lokale Zeit umrechnen.
+        // Zahlen einzeln aus dem String nehmen (kein Date()-String-Parsing, Safari).
+        if (d.length >= 16) {
+            const dt = new Date(Date.UTC(+d.substring(0, 4), +d.substring(5, 7) - 1,
+                +d.substring(8, 10), +d.substring(11, 13), +d.substring(14, 16)));
+            const p = n => String(n).padStart(2, '0');
+            return p(dt.getDate()) + '.' + p(dt.getMonth() + 1) + '.' + dt.getFullYear()
+                + ', ' + p(dt.getHours()) + ':' + p(dt.getMinutes());
+        }
+        return d.substring(8, 10) + '.' + d.substring(5, 7) + '.' + d.substring(0, 4);
     }
     function msgItemHtml(m) {
         const who = msgRoleLabel(m.sender_role) + (m.sender_name ? ' (' + msgEsc(m.sender_name) + ')' : '');

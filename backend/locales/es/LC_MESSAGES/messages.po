@@ -2386,3 +2386,74 @@ msgstr "{absender} ha escrito un nuevo mensaje sobre {bild} en el proyecto «{pr
 
 msgid "einem Bild"
 msgstr "una imagen"
+
+# ── Geteilte-Projekte-Kasten + Gast-Rollenzeile (15.07.2026) ──
+
+msgid "Geteilte Projekte"
+msgstr "Proyectos compartidos"
+
+msgid "Geteilte Projekte – Neues in {n} Projekten"
+msgstr "Proyectos compartidos – novedades en {n} proyectos"
+
+msgid "Prüfung abgeschlossen am {datum}"
+msgstr "Revisión finalizada el {datum}"
+
+msgid "Prüfung abgeschlossen"
+msgstr "Revisión finalizada"
+
+msgid "{rolle}: abgeschlossen"
+msgstr "{rolle}: finalizada"
+
+msgid "{rolle}: in Prüfung"
+msgstr "{rolle}: en revisión"
+
+msgid "In Prüfung"
+msgstr "En revisión"
+
+msgid "{n} neue Nachrichten"
+msgstr "{n} mensajes nuevos"
+
+msgid "{n} Prüfstatus-Änderungen"
+msgstr "{n} cambios de estado de revisión"
+
+msgid "{n} Prüfungen abgeschlossen"
+msgstr "{n} revisiones finalizadas"
+
+msgid "Neu seit deinem letzten Besuch:"
+msgstr "Novedades desde tu última visita:"
+
+msgid "Du prüfst dieses Projekt als {rolle}."
+msgstr "Estás revisando este proyecto como {rolle}."
+
+msgid "Du schließt die Prüfung als {rolle} ab."
+msgstr "Estás finalizando la revisión como {rolle}."
+
+msgid "Geteilte Projekte – Neues in einem Projekt"
+msgstr "Proyectos compartidos – novedades en un proyecto"
+
+msgid "{rolle}: {wer} — abgeschlossen am {datum} um {zeit}"
+msgstr "{rolle}: {wer} — finalizada el {datum} a las {zeit}"
+
+msgid "{rolle}: {wer} — in Prüfung, eingeladen am {datum}"
+msgstr "{rolle}: {wer} — en revisión, invitación enviada el {datum}"
+
+msgid "Zurzeit keine geteilten Projekte."
+msgstr "De momento no hay proyectos compartidos."
+
+msgid "{n} geteilte Projekte geladen."
+msgstr "{n} proyectos compartidos cargados."
+
+msgid "{rolle}: {wer} — in Prüfung seit {datum}"
+msgstr "{rolle}: {wer} — en revisión desde el {datum}"
+
+msgid "{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen"
+msgstr "{rolle}: {wer} — invitación enviada el {datum}, aún sin empezar"
+
+msgid "dazu {n} frühere Einladungen"
+msgstr "además de {n} invitaciones anteriores"
+
+msgid "Projekt abgeschlossen am {datum}"
+msgstr "Proyecto finalizado el {datum}"
+
+msgid "{n} Bilder ohne Prüfurteil"
+msgstr "{n} imágenes sin veredicto de revisión"

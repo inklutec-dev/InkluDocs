@@ -2389,3 +2389,74 @@ msgstr ""
 
 msgid "einem Bild"
 msgstr ""
+
+# ── Geteilte-Projekte-Kasten + Gast-Rollenzeile (15.07.2026) ──
+
+msgid "Geteilte Projekte"
+msgstr "Geteilte Projekte"
+
+msgid "Geteilte Projekte – Neues in {n} Projekten"
+msgstr "Geteilte Projekte – Neues in {n} Projekten"
+
+msgid "Prüfung abgeschlossen am {datum}"
+msgstr "Prüfung abgeschlossen am {datum}"
+
+msgid "Prüfung abgeschlossen"
+msgstr "Prüfung abgeschlossen"
+
+msgid "{rolle}: abgeschlossen"
+msgstr "{rolle}: abgeschlossen"
+
+msgid "{rolle}: in Prüfung"
+msgstr "{rolle}: in Prüfung"
+
+msgid "In Prüfung"
+msgstr "In Prüfung"
+
+msgid "{n} neue Nachrichten"
+msgstr "{n} neue Nachrichten"
+
+msgid "{n} Prüfstatus-Änderungen"
+msgstr "{n} Prüfstatus-Änderungen"
+
+msgid "{n} Prüfungen abgeschlossen"
+msgstr "{n} Prüfungen abgeschlossen"
+
+msgid "Neu seit deinem letzten Besuch:"
+msgstr "Neu seit deinem letzten Besuch:"
+
+msgid "Du prüfst dieses Projekt als {rolle}."
+msgstr "Du prüfst dieses Projekt als {rolle}."
+
+msgid "Du schließt die Prüfung als {rolle} ab."
+msgstr "Du schließt die Prüfung als {rolle} ab."
+
+msgid "Geteilte Projekte – Neues in einem Projekt"
+msgstr "Geteilte Projekte – Neues in einem Projekt"
+
+msgid "{rolle}: {wer} — abgeschlossen am {datum} um {zeit}"
+msgstr "{rolle}: {wer} — abgeschlossen am {datum} um {zeit}"
+
+msgid "{rolle}: {wer} — in Prüfung, eingeladen am {datum}"
+msgstr "{rolle}: {wer} — in Prüfung, eingeladen am {datum}"
+
+msgid "Zurzeit keine geteilten Projekte."
+msgstr "Zurzeit keine geteilten Projekte."
+
+msgid "{n} geteilte Projekte geladen."
+msgstr "{n} geteilte Projekte geladen."
+
+msgid "{rolle}: {wer} — in Prüfung seit {datum}"
+msgstr "{rolle}: {wer} — in Prüfung seit {datum}"
+
+msgid "{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen"
+msgstr "{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen"
+
+msgid "dazu {n} frühere Einladungen"
+msgstr "dazu {n} frühere Einladungen"
+
+msgid "Projekt abgeschlossen am {datum}"
+msgstr "Projekt abgeschlossen am {datum}"
+
+msgid "{n} Bilder ohne Prüfurteil"
+msgstr "{n} Bilder ohne Prüfurteil"

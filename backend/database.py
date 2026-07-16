@@ -283,6 +283,9 @@ def _migrate_columns(conn):
         ("images", "feedback", "ALTER TABLE images ADD COLUMN feedback TEXT DEFAULT ''"),
         ("users", "email_verified", "ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 1"),
         ("users", "news_seen_until", "ALTER TABLE users ADD COLUMN news_seen_until TEXT"),
+        # Geteilte-Projekte-Kasten (15.07.2026): Lese-Stand wie news_seen_until,
+        # aber als UTC-Zeitstempel (vergleichbar mit created_at/reviewed_at/completed_at).
+        ("users", "reviews_seen_until", "ALTER TABLE users ADD COLUMN reviews_seen_until TEXT"),
         # Admin-Rechte-Stufe (14.06.2026): 'full' = alle Rechte, 'view' = nur Einsicht.
         # Default 'full', damit bestehende Admins (Steve, Michael) volle Rechte behalten.
         ("users", "admin_level", "ALTER TABLE users ADD COLUMN admin_level TEXT DEFAULT 'full'"),

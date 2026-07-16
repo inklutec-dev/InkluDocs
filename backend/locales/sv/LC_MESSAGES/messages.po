@@ -1,0 +1,2020 @@
+# Swedish translations for InkluDocs.
+msgid ""
+msgstr ""
+"Project-Id-Version: InkluDocs 1.0\n"
+"Report-Msgid-Bugs-To: kontakt@inklutec.de\n"
+"POT-Creation-Date: 2026-04-20 00:00+0000\n"
+"PO-Revision-Date: 2026-04-20 00:00+0000\n"
+"Language-Team: INKLUTEC\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Anmeldung"
+msgstr "Inloggning"
+
+msgid "KI-gestützter Alt-Text-Generator"
+msgstr "AI-driven alt-textgenerator"
+
+msgid "E-Mail-Adresse"
+msgstr "E-postadress"
+
+msgid "Passwort"
+msgstr "Lösenord"
+
+msgid "Anmelden"
+msgstr "Logga in"
+
+msgid "Konto erstellen"
+msgstr "Skapa konto"
+
+msgid "Passwort vergessen?"
+msgstr "Glömt lösenordet?"
+
+msgid "Impressum"
+msgstr "Impressum"
+
+msgid "Datenschutz"
+msgstr "Integritetspolicy"
+
+msgid "Nutzungsbedingungen"
+msgstr "Användarvillkor"
+
+msgid "Testumgebung"
+msgstr "Testmiljö"
+
+msgid "Bitte alle Felder ausfüllen."
+msgstr "Fyll i alla fält."
+
+msgid "Anmeldung fehlgeschlagen."
+msgstr "Inloggningen misslyckades."
+
+msgid "Neuen Link senden"
+msgstr "Skicka ny länk"
+
+msgid "Wird gesendet..."
+msgstr "Skickar..."
+
+msgid "Neuer Link gesendet!"
+msgstr "Ny länk skickad!"
+
+msgid "Fehler"
+msgstr "Fel"
+
+msgid "Verbindungsfehler. Bitte erneut versuchen."
+msgstr "Anslutningsfel. Försök igen."
+
+msgid "Sprache"
+msgstr "Språk"
+
+msgid "Sprache wechseln"
+msgstr "Byt språk"
+
+msgid "Zum Hauptinhalt springen"
+msgstr "Hoppa till huvudinnehållet"
+
+msgid "Einstellungen"
+msgstr "Inställningar"
+
+msgid "Sprache der Oberflaeche"
+msgstr "Gränssnittets språk"
+
+msgid "Sprache fuer Menues, Schaltflaechen und Meldungen. Ihre Wahl wird am Konto gespeichert und gilt bei jeder Anmeldung. Die Sprache der generierten Alt-Texte ist davon unabhaengig."
+msgstr "Språk för menyer, knappar och meddelanden. Ditt val sparas på kontot och gäller vid varje inloggning. Språket för de genererade alt-texterna är oberoende av detta."
+
+msgid "Sprache waehlen"
+msgstr "Välj språk"
+
+msgid "Passwort aendern"
+msgstr "Ändra lösenord"
+
+msgid "Aktuelles Passwort"
+msgstr "Nuvarande lösenord"
+
+msgid "Neues Passwort (mind. 8 Zeichen)"
+msgstr "Nytt lösenord (minst 8 tecken)"
+
+msgid "Neues Passwort wiederholen"
+msgstr "Upprepa nytt lösenord"
+
+msgid "Kontoinformationen"
+msgstr "Kontoinformation"
+
+msgid "Wird geladen ..."
+msgstr "Läser in ..."
+
+msgid "API-Schluessel"
+msgstr "API-nycklar"
+
+msgid "Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren."
+msgstr "Med API-nycklar kan externa program generera alt-texter."
+
+msgid "Neuen Schluessel erstellen"
+msgstr "Skapa ny nyckel"
+
+msgid "Erstellen"
+msgstr "Skapa"
+
+msgid "Name fuer neuen API-Schluessel"
+msgstr "Namn för den nya API-nyckeln"
+
+msgid "Name (z. B. Meine App)"
+msgstr "Namn (t.ex. Min app)"
+
+msgid "Geben Sie einen Namen ein, um den Schluessel spaeter zuordnen zu koennen."
+msgstr "Ange ett namn så att du senare kan känna igen nyckeln."
+
+msgid "Meine API-Schluessel"
+msgstr "Mina API-nycklar"
+
+msgid "API-Schluessel bearbeiten"
+msgstr "Redigera API-nyckel"
+
+msgid "Startseite"
+msgstr "Startsida"
+
+msgid "Neues Projekt anlegen"
+msgstr "Skapa nytt projekt"
+
+msgid "Meine Projekte"
+msgstr "Mina projekt"
+
+msgid "Datensicherheit"
+msgstr "Datasäkerhet"
+
+msgid "Benutzerverwaltung"
+msgstr "Användarhantering"
+
+msgid "Abmelden"
+msgstr "Logga ut"
+
+msgid "Hauptnavigation"
+msgstr "Huvudnavigation"
+
+msgid "Hallo"
+msgstr "Hej"
+
+msgid "Willkommen"
+msgstr "Välkommen"
+
+msgid "Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig."
+msgstr "Idag har {used} av {limit} bilder använts – {remaining} kvar."
+
+msgid "InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+msgstr "InkluDocs är gratis och vidareutvecklas löpande. Om du vill stödja projektet blir vi glada för ett frivilligt bidrag."
+
+msgid "InkluDocs per PayPal unterstützen"
+msgstr "Stöd InkluDocs via PayPal"
+
+msgid "InkluDocs per PayPal unterstützen, öffnet in neuem Tab"
+msgstr "Stöd InkluDocs via PayPal, öppnas i ny flik"
+
+msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
+msgstr "Ditt bidrag hjälper till att främja tillgänglighet på webben."
+
+msgid "DSGVO-konform – Verarbeitung in der EU."
+msgstr "GDPR-kompatibel – behandling inom EU."
+
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Hosting hos Hetzner Online (Falkenstein, Tyskland). AI-behandlingen sker via Amazon Bedrock (modellen Claude från Anthropic) i datacenter inom EU; Amazon Bedrock delar inte innehåll med modelleverantören och använder det inte för träning. Mer information finns i vår integritetspolicy."
+
+msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
+msgstr "Kul att du är här. Välj en åtgärd till vänster eller öppna ett projekt."
+
+msgid "Neuigkeiten"
+msgstr "Nyheter"
+
+msgid "Rückmeldungen vom Kunden"
+msgstr "Återkoppling från kunden"
+
+msgid "Zuletzt bearbeitete Projekte"
+msgstr "Senast redigerade projekt"
+
+msgid "Schließen"
+msgstr "Stäng"
+
+msgid "Projekte werden geladen …"
+msgstr "Projekten läses in …"
+
+msgid "Projektname"
+msgstr "Projektnamn"
+
+msgid "z. B. Geschäftsbericht 2026 oder Mein Projekt"
+msgstr "t.ex. Årsredovisning 2026 eller Mitt projekt"
+
+msgid "Werkzeug"
+msgstr "Verktyg"
+
+msgid "Bestimmt, womit das Projekt bearbeitet wird."
+msgstr "Avgör vilket verktyg projektet bearbetas med."
+
+msgid "Projekt anlegen"
+msgstr "Skapa projekt"
+
+msgid "Projekte konnten nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Projekten kunde inte läsas in. Försök igen senare."
+
+msgid "Noch keine Projekte. Lege links über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Inga projekt ännu. Skapa ditt första via ”Skapa nytt projekt” till vänster."
+
+msgid "Noch keine Projekte. Lege über „Neues Projekt anlegen“ dein erstes an."
+msgstr "Inga projekt ännu. Skapa ditt första via ”Skapa nytt projekt”."
+
+msgid "Unbenanntes Projekt"
+msgstr "Namnlöst projekt"
+
+msgid "{tool} · angelegt am {datum}"
+msgstr "{tool} · skapat den {datum}"
+
+msgid "Alle Projekte anzeigen"
+msgstr "Visa alla projekt"
+
+msgid "{n} aktuelle Projekte geladen."
+msgstr "{n} aktuella projekt inlästa."
+
+msgid "Zurzeit keine Neuigkeiten."
+msgstr "Inga nyheter just nu."
+
+msgid "Frühere Neuigkeiten"
+msgstr "Tidigare nyheter"
+
+msgid "Neuigkeiten ({n})"
+msgstr "Nyheter ({n})"
+
+msgid "Du bist auf dem aktuellen Stand"
+msgstr "Du är uppdaterad"
+
+msgid "Kunde: {namen}"
+msgstr "Kund: {namen}"
+
+msgid "Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})"
+msgstr "Att granska: {offen} · Att omarbeta: {ueberarbeiten} · Godkända: {freigegeben} (av {gesamt})"
+
+msgid "Umbenennen"
+msgstr "Byt namn"
+
+msgid "Löschen"
+msgstr "Ta bort"
+
+msgid "Neuer Projektname:"
+msgstr "Nytt projektnamn:"
+
+msgid "Bitte einen Namen eingeben."
+msgstr "Ange ett namn."
+
+msgid "Projekt umbenannt in {name}"
+msgstr "Projektet har bytt namn till {name}"
+
+msgid "Umbenennen fehlgeschlagen."
+msgstr "Namnbytet misslyckades."
+
+msgid "Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?"
+msgstr "Vill du verkligen ta bort projektet ”{name}” och alla tillhörande data?"
+
+msgid "Projekt gelöscht"
+msgstr "Projektet har tagits bort"
+
+msgid "Löschen fehlgeschlagen."
+msgstr "Borttagningen misslyckades."
+
+msgid "{n} Projekte geladen."
+msgstr "{n} projekt inlästa."
+
+msgid "Bitte einen Projektnamen eingeben."
+msgstr "Ange ett projektnamn."
+
+msgid "Bitte ein Werkzeug auswählen."
+msgstr "Välj ett verktyg."
+
+msgid "Projekt wird angelegt …"
+msgstr "Projektet skapas …"
+
+msgid "Angelegt – wird geöffnet …"
+msgstr "Skapat – öppnas …"
+
+msgid "Anlegen fehlgeschlagen."
+msgstr "Det gick inte att skapa projektet."
+
+msgid "Netzwerkfehler. Bitte erneut versuchen."
+msgstr "Nätverksfel. Försök igen."
+
+msgid "Lieber erst ausprobieren?"
+msgstr "Vill du hellre prova först?"
+
+msgid "InkluDocs ohne Anmeldung testen"
+msgstr "Testa InkluDocs utan att logga in"
+
+msgid "Angemeldet als: {name} ({email})"
+msgstr "Inloggad som: {name} ({email})"
+
+msgid "Mindestens 8 Zeichen"
+msgstr "Minst 8 tecken"
+
+msgid "Passwörter stimmen nicht überein"
+msgstr "Lösenorden stämmer inte överens"
+
+msgid "Passwort geändert!"
+msgstr "Lösenordet har ändrats!"
+
+msgid "Passwort wurde geändert"
+msgstr "Lösenordet har ändrats"
+
+msgid "Noch keine API-Schlüssel vorhanden."
+msgstr "Inga API-nycklar ännu."
+
+msgid "Erstellt: {datum}"
+msgstr "Skapad: {datum}"
+
+msgid "Zuletzt verwendet: {datum}"
+msgstr "Senast använd: {datum}"
+
+msgid "Bearbeiten"
+msgstr "Redigera"
+
+msgid "Schlüssel bearbeiten: {name}"
+msgstr "Redigera nyckel: {name}"
+
+msgid "Name"
+msgstr "Namn"
+
+msgid "Name speichern"
+msgstr "Spara namn"
+
+msgid "Schlüssel löschen"
+msgstr "Ta bort nyckel"
+
+msgid "Abbrechen"
+msgstr "Avbryt"
+
+msgid "Bearbeitung für {name} geöffnet."
+msgstr "Redigering för {name} öppnad."
+
+msgid "Bearbeitung geschlossen."
+msgstr "Redigeringen stängd."
+
+msgid "Name geändert zu: {name}"
+msgstr "Namnet ändrat till: {name}"
+
+msgid "Fehler beim Speichern."
+msgstr "Fel vid sparandet."
+
+msgid "Neuer Schlüssel erstellt"
+msgstr "Ny nyckel skapad"
+
+msgid "Dieser Schlüssel wird nur einmal angezeigt. Bitte jetzt kopieren und sicher speichern."
+msgstr "Den här nyckeln visas bara en gång. Kopiera den nu och spara den säkert."
+
+msgid "API-Schlüssel"
+msgstr "API-nyckel"
+
+msgid "Schlüssel kopieren"
+msgstr "Kopiera nyckel"
+
+msgid "Zurück zur Übersicht"
+msgstr "Tillbaka till översikten"
+
+msgid "Neuer API-Schlüssel erstellt. Bitte jetzt kopieren."
+msgstr "Ny API-nyckel skapad. Kopiera den nu."
+
+msgid "Fehler beim Erstellen."
+msgstr "Fel vid skapandet."
+
+msgid "Schlüssel-Anzeige geschlossen."
+msgstr "Nyckelvisningen stängd."
+
+msgid "API-Schlüssel wurde in die Zwischenablage kopiert."
+msgstr "API-nyckeln har kopierats till urklipp."
+
+msgid "Schlüssel markiert. Bitte mit Befehl-C kopieren."
+msgstr "Nyckeln markerad. Kopiera med Kommando-C."
+
+msgid "API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff."
+msgstr "Vill du verkligen ta bort API-nyckeln ”{name}”? Program som använder nyckeln förlorar genast åtkomsten."
+
+msgid "Unbenannt"
+msgstr "Namnlös"
+
+msgid "API-Schlüssel gelöscht."
+msgstr "API-nyckeln har tagits bort."
+
+msgid "Fehler beim Löschen."
+msgstr "Fel vid borttagningen."
+
+msgid "Dokument löschen?"
+msgstr "Ta bort dokumentet?"
+
+msgid "Dokument umbenennen"
+msgstr "Byt namn på dokumentet"
+
+msgid "Neuer Name des Dokuments"
+msgstr "Dokumentets nya namn"
+
+msgid "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen."
+msgstr "Lämna tomt för att åter använda det ursprungliga filnamnet. Namnet visas även i exportfilens namn."
+
+msgid "Speichern"
+msgstr "Spara"
+
+msgid "Freigabe ansehen"
+msgstr "Visa delat projekt"
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen."
+msgstr "Bekräfta din e-postadress för att se de delade alt-texterna."
+
+msgid "Bestätigen"
+msgstr "Bekräfta"
+
+msgid "Diese E-Mail-Adresse passt nicht zur Einladung."
+msgstr "Den här e-postadressen stämmer inte med inbjudan."
+
+msgid "E-Mail-Adresse passt nicht zur Einladung."
+msgstr "E-postadressen stämmer inte med inbjudan."
+
+msgid "Bestätigt. Die Freigabe wird geladen."
+msgstr "Bekräftat. Det delade projektet läses in."
+
+msgid "Weitere PDF hinzufügen"
+msgstr "Lägg till ytterligare en PDF"
+
+msgid "PDF hinzufügen"
+msgstr "Lägg till PDF"
+
+msgid "Du kannst jederzeit eine weitere PDF anhängen. Sie wird als neues Dokument unten angelegt; vorhandene Alt-Texte bleiben unverändert."
+msgstr "Du kan när som helst bifoga ytterligare en PDF. Den läggs till som ett nytt dokument nedan; befintliga alt-texter förblir oförändrade."
+
+msgid "Wähle ein PDF-Dokument oder ziehe es hierher. Daraus werden die Bilder extrahiert."
+msgstr "Välj ett PDF-dokument eller dra det hit. Bilderna extraheras ur det."
+
+msgid "PDF-Datei auswählen"
+msgstr "Välj PDF-fil"
+
+msgid "Bilder hinzufügen"
+msgstr "Lägg till bilder"
+
+msgid "Bilddateien auswählen"
+msgstr "Välj bildfiler"
+
+msgid "Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen."
+msgstr "Du kan välja flera bilder eller dra dem hit och när som helst lägga till fler."
+
+msgid "Webseite hinzufügen"
+msgstr "Lägg till webbsida"
+
+msgid "Adresse der Webseite"
+msgstr "Webbsidans adress"
+
+msgid "z. B. www.beispiel.de oder https://www.beispiel.de – die Bilder dieser Seite werden geladen. Du kannst danach weitere Seiten hinzufügen."
+msgstr "t.ex. www.exempel.se eller https://www.exempel.se – bilderna på den sidan läses in. Du kan lägga till fler sidor efteråt."
+
+msgid "Seite scannen"
+msgstr "Skanna sida"
+
+msgid "Bitte eine Adresse eingeben."
+msgstr "Ange en adress."
+
+msgid "Seite wird gescannt, bitte warten …"
+msgstr "Sidan skannas, vänta …"
+
+msgid "Die Seite konnte nicht gescannt werden."
+msgstr "Sidan kunde inte skannas."
+
+msgid "{n} Bilder von der Seite geladen."
+msgstr "{n} bilder inlästa från sidan."
+
+msgid "Fehler: {msg}"
+msgstr "Fel: {msg}"
+
+msgid "Datei {i} von {n} wird hochgeladen..."
+msgstr "Fil {i} av {n} laddas upp..."
+
+msgid "Wird hochgeladen..."
+msgstr "Laddar upp..."
+
+msgid "{name} wird hochgeladen"
+msgstr "{name} laddas upp"
+
+msgid "Upload fehlgeschlagen"
+msgstr "Uppladdningen misslyckades"
+
+msgid "Fehler beim Upload: {msg}"
+msgstr "Fel vid uppladdningen: {msg}"
+
+msgid "PDF hinzugefuegt als Dokument {d}. {a} neue Bilder. Insgesamt {gesamt} Bilder im Projekt."
+msgstr "PDF tillagd som dokument {d}. {a} nya bilder. Totalt {gesamt} bilder i projektet."
+
+msgid "{n} Bilder im Projekt."
+msgstr "{n} bilder i projektet."
+
+msgid "Netzwerkfehler beim Upload."
+msgstr "Nätverksfel vid uppladdningen."
+
+msgid "Alt-Texte werden generiert..."
+msgstr "Alt-texter genereras..."
+
+msgid "Neu"
+msgstr "Ny"
+
+msgid "Fertig"
+msgstr "Klar"
+
+msgid "Fertig (mit Fehlern)"
+msgstr "Klar (med fel)"
+
+msgid "Teilweise verarbeitet"
+msgstr "Delvis bearbetad"
+
+msgid "Bereit zur Verarbeitung"
+msgstr "Redo för bearbetning"
+
+msgid "Extraktion: {m}"
+msgstr "Extrahering: {m}"
+
+msgid "{done} von {total} Bildern generiert"
+msgstr "{done} av {total} bilder genererade"
+
+msgid "Fortschritt: {p} Prozent"
+msgstr "Förlopp: {p} procent"
+
+msgid "Bild {i} von {n} wird verarbeitet."
+msgstr "Bild {i} av {n} bearbetas."
+
+msgid "Alle Alt-Texte generieren"
+msgstr "Generera alla alt-texter"
+
+msgid "Zur Prüfung freigeben"
+msgstr "Dela för granskning"
+
+msgid "Kunde zur Prüfung einladen"
+msgstr "Bjud in kunden till granskning"
+
+msgid "Pflichtfeld ist gekennzeichnet."
+msgstr "Obligatoriskt fält är markerat."
+
+msgid "Name des Kunden (optional)"
+msgstr "Kundens namn (valfritt)"
+
+msgid "E-Mail-Adresse des Kunden (Pflichtfeld)"
+msgstr "Kundens e-postadress (obligatoriskt)"
+
+msgid "Persönliche Nachricht (optional)"
+msgstr "Personligt meddelande (valfritt)"
+
+msgid "Die Nachricht wird nur bei „Einladung per E-Mail senden\" mitgeschickt."
+msgstr "Meddelandet skickas bara med vid ”Skicka inbjudan via e-post”."
+
+msgid "Einladung per E-Mail senden"
+msgstr "Skicka inbjudan via e-post"
+
+msgid "Nur Link erstellen"
+msgstr "Skapa endast länk"
+
+msgid "Einladung gesendet"
+msgstr "Inbjudan skickad"
+
+msgid "Einladungslink"
+msgstr "Inbjudningslänk"
+
+msgid "Link kopieren"
+msgstr "Kopiera länk"
+
+msgid "Zurück zum Projekt"
+msgstr "Tillbaka till projektet"
+
+msgid "Prüfung abschließen"
+msgstr "Slutför granskningen"
+
+msgid "Möchten Sie dem Ersteller noch etwas mitteilen? (optional)"
+msgstr "Vill du meddela skaparen något mer? (valfritt)"
+
+msgid "Abschließen &amp; senden"
+msgstr "Slutför &amp; skicka"
+
+msgid "Exportieren"
+msgstr "Exportera"
+
+msgid "Export-Optionen"
+msgstr "Exportalternativ"
+
+msgid "Dateiname (optional)"
+msgstr "Filnamn (valfritt)"
+
+msgid "Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt."
+msgstr "Lämna tomt för att använda standardnamnet. Filändelsen läggs till automatiskt."
+
+msgid "Als Excel"
+msgstr "Som Excel"
+
+msgid "Als JSON"
+msgstr "Som JSON"
+
+msgid "Als CSV"
+msgstr "Som CSV"
+
+msgid "Als PDF (Beta)"
+msgstr "Som PDF (beta)"
+
+msgid "KI-Kontext aus dem Dokument verwenden"
+msgstr "Använd AI-kontext från dokumentet"
+
+msgid "Bilder ({n})"
+msgstr "Bilder ({n})"
+
+msgid "Alle Alt-Texte wurden generiert."
+msgstr "Alla alt-texter har genererats."
+
+msgid "Fehler bei der Verarbeitung."
+msgstr "Fel vid bearbetningen."
+
+msgid "Was exportieren?"
+msgstr "Vad ska exporteras?"
+
+msgid "Alle Dokumente (eine ZIP-Datei)"
+msgstr "Alla dokument (en ZIP-fil)"
+
+msgid "Dokument {n}: {name}"
+msgstr "Dokument {n}: {name}"
+
+msgid "dieses Dokument"
+msgstr "det här dokumentet"
+
+msgid "Möchtest du das Dokument „{name}\" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen ta bort dokumentet ”{name}” med 1 bild? Det kan inte ångras."
+
+msgid "Möchtest du das Dokument „{name}\" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen ta bort dokumentet ”{name}” med {n} bilder? Det kan inte ångras."
+
+msgid "Netzwerkfehler beim Umbenennen."
+msgstr "Nätverksfel vid namnbytet."
+
+msgid "Dokument umbenannt."
+msgstr "Dokumentet har bytt namn."
+
+msgid "Netzwerkfehler beim Löschen."
+msgstr "Nätverksfel vid borttagningen."
+
+msgid "Dokument gelöscht."
+msgstr "Dokumentet har tagits bort."
+
+msgid "Sprachausgabe wird in diesem Browser nicht unterstützt."
+msgstr "Talsyntes stöds inte i den här webbläsaren."
+
+msgid "Anhören"
+msgstr "Lyssna"
+
+msgid "Stopp"
+msgstr "Stopp"
+
+msgid "Kein Text zum Vorlesen vorhanden."
+msgstr "Ingen text att läsa upp."
+
+msgid "Wird vorgelesen."
+msgstr "Läses upp."
+
+msgid "Freigegeben"
+msgstr "Godkänd"
+
+msgid "Änderung gewünscht"
+msgstr "Ändring önskas"
+
+msgid "Status gesetzt: {s}"
+msgstr "Status satt: {s}"
+
+msgid "Anmerkung gespeichert."
+msgstr "Anteckningen sparad."
+
+msgid "Anmerkung entfernt."
+msgstr "Anteckningen borttagen."
+
+msgid "Anmerkung bearbeiten"
+msgstr "Redigera anteckning"
+
+msgid "Anmerkung hinzufügen"
+msgstr "Lägg till anteckning"
+
+msgid "Keine Anmerkung vorhanden."
+msgstr "Ingen anteckning finns."
+
+msgid "Bitte eine gültige E-Mail-Adresse eingeben."
+msgstr "Ange en giltig e-postadress."
+
+msgid "Einladung wird gesendet …"
+msgstr "Inbjudan skickas …"
+
+msgid "Fehler beim Erstellen der Freigabe."
+msgstr "Fel när delningen skulle skapas."
+
+msgid "Die Einladung wurde an {email} gesendet."
+msgstr "Inbjudan har skickats till {email}."
+
+msgid "Einladung an {email} gesendet."
+msgstr "Inbjudan skickad till {email}."
+
+msgid "Freigabe erstellt"
+msgstr "Delning skapad"
+
+msgid "Die E-Mail konnte nicht versendet werden. Bitte kopiere den Einladungslink und sende ihn selbst an {email}."
+msgstr "E-postmeddelandet kunde inte skickas. Kopiera inbjudningslänken och skicka den själv till {email}."
+
+msgid "E-Mail-Versand nicht möglich, bitte Link kopieren."
+msgstr "E-post kunde inte skickas, kopiera länken."
+
+msgid "Netzwerkfehler."
+msgstr "Nätverksfel."
+
+msgid "Link wird erstellt …"
+msgstr "Länken skapas …"
+
+msgid "Link erstellt"
+msgstr "Länk skapad"
+
+msgid "Sie können diesen Einladungslink jetzt selbst an {email} verschicken. Der Gast muss beim Öffnen genau diese E-Mail-Adresse bestätigen."
+msgstr "Du kan nu själv skicka den här inbjudningslänken till {email}. Gästen måste bekräfta exakt denna e-postadress när länken öppnas."
+
+msgid "Einladungslink erstellt."
+msgstr "Inbjudningslänk skapad."
+
+msgid "Link kopiert."
+msgstr "Länken kopierad."
+
+msgid "Link in die Zwischenablage kopiert."
+msgstr "Länken kopierad till urklipp."
+
+msgid "Kopieren nicht möglich – der Link oben ist markierbar."
+msgstr "Det gick inte att kopiera – länken ovan går att markera."
+
+msgid "Wird gesendet…"
+msgstr "Skickar…"
+
+msgid "Prüfung wird gesendet …"
+msgstr "Granskningen skickas …"
+
+msgid "Fehler beim Abschließen. Bitte erneut versuchen."
+msgstr "Fel vid slutförandet. Försök igen."
+
+msgid "Vielen Dank!"
+msgstr "Tack så mycket!"
+
+msgid "Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen."
+msgstr "Din granskning har skickats till skaparen. Du kan stänga det här fönstret — eller när som helst komma tillbaka via din länk och göra ändringar."
+
+msgid "Prüfung abgeschlossen und gesendet."
+msgstr "Granskningen slutförd och skickad."
+
+msgid "Umschalten des KI-Kontexts fehlgeschlagen."
+msgstr "Det gick inte att växla AI-kontexten."
+
+msgid "KI-Kontext eingeschaltet. Neue Generierungen nutzen den Dokument-Kontext."
+msgstr "AI-kontext aktiverad. Nya genereringar använder dokumentkontexten."
+
+msgid "KI-Kontext ausgeschaltet. Neue Generierungen ohne Kontext."
+msgstr "AI-kontext avaktiverad. Nya genereringar utan kontext."
+
+msgid "Netzwerkfehler beim Umschalten des KI-Kontexts."
+msgstr "Nätverksfel när AI-kontexten skulle växlas."
+
+msgid "Keine Bilder gefunden."
+msgstr "Inga bilder hittades."
+
+msgid "Bild {n}, Seite {p}"
+msgstr "Bild {n}, sida {p}"
+
+msgid "Bild {n}"
+msgstr "Bild {n}"
+
+msgid "Konfidenz: {k}"
+msgstr "Konfidens: {k}"
+
+msgid "mit Kontext"
+msgstr "med kontext"
+
+msgid "ohne Kontext"
+msgstr "utan kontext"
+
+msgid "Prüfstatus: {s}"
+msgstr "Granskningsstatus: {s}"
+
+msgid "Nachbessern"
+msgstr "Behöver förbättras"
+
+msgid "Ausstehend"
+msgstr "Väntar"
+
+msgid "— mit Anmerkung"
+msgstr "— med anteckning"
+
+msgid "Wird analysiert..."
+msgstr "Analyseras..."
+
+msgid "Anmerkung des Kunden anzeigen"
+msgstr "Visa kundens anteckning"
+
+msgid "Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren\" klicken, um es erneut zu versuchen."
+msgstr "Ett fel uppstod vid genereringen. Klicka på ”Generera” för att försöka igen."
+
+msgid "Extrahiertes Bild"
+msgstr "Extraherad bild"
+
+msgid "von Seite {p}"
+msgstr "från sida {p}"
+
+msgid "Alt-Text"
+msgstr "Alt-text"
+
+msgid "Gespeichert"
+msgstr "Sparat"
+
+msgid "Alt-Text wird generiert..."
+msgstr "Alt-text genereras..."
+
+msgid "Noch kein Alt-Text - hier eingeben oder generieren lassen"
+msgstr "Ingen alt-text ännu - skriv den här eller låt den genereras"
+
+msgid "Alt-Text bewerten:"
+msgstr "Betygsätt alt-texten:"
+
+msgid "Alt-Text gut"
+msgstr "Alt-texten bra"
+
+msgid "Alt-Text schlecht"
+msgstr "Alt-texten dålig"
+
+msgid "Langbeschreibung"
+msgstr "Lång beskrivning"
+
+msgid "Langbeschreibung bewerten:"
+msgstr "Betygsätt den långa beskrivningen:"
+
+msgid "Langbeschreibung gut"
+msgstr "Lång beskrivning bra"
+
+msgid "Langbeschreibung schlecht"
+msgstr "Lång beskrivning dålig"
+
+msgid "Status:"
+msgstr "Status:"
+
+msgid "Noch nicht geprüft"
+msgstr "Ännu inte granskad"
+
+msgid "Freigeben"
+msgstr "Godkänn"
+
+msgid "Änderung wünschen"
+msgstr "Önska ändring"
+
+msgid "Anmerkung (optional)"
+msgstr "Anteckning (valfritt)"
+
+msgid "Anmerkung speichern"
+msgstr "Spara anteckning"
+
+msgid "Anmerkung löschen"
+msgstr "Ta bort anteckning"
+
+msgid "Bildtyp für Generierung"
+msgstr "Bildtyp för generering"
+
+msgid "Automatisch"
+msgstr "Automatiskt"
+
+msgid "Neu generieren"
+msgstr "Generera om"
+
+msgid "Generieren"
+msgstr "Generera"
+
+msgid "Langbeschreibung (optional)"
+msgstr "Lång beskrivning (valfritt)"
+
+msgid "1 Bild"
+msgstr "1 bild"
+
+msgid "{n} Bilder"
+msgstr "{n} bilder"
+
+msgid "Seitenansicht anzeigen"
+msgstr "Visa sidvy"
+
+msgid "Seitentext anzeigen"
+msgstr "Visa sidtext"
+
+msgid "Seite {n}"
+msgstr "Sida {n}"
+
+msgid "Bild"
+msgstr "bild"
+
+msgid "Bilder"
+msgstr "bilder"
+
+msgid "– Dokument „{name}\""
+msgstr "– dokument ”{name}”"
+
+msgid "Danke!"
+msgstr "Tack!"
+
+msgid "Danke – wird geprüft"
+msgstr "Tack – granskas"
+
+msgid "Feedback: {l} als gut bewertet"
+msgstr "Feedback: {l} betygsatt som bra"
+
+msgid "Feedback: {l} als verbesserungswürdig bewertet"
+msgstr "Feedback: {l} betygsatt som i behov av förbättring"
+
+msgid "Generiere neu..."
+msgstr "Genererar om..."
+
+msgid "Generiere..."
+msgstr "Genererar..."
+
+msgid "Alt-Text wird neu generiert"
+msgstr "Alt-texten genereras om"
+
+msgid "Alt-Text wird generiert"
+msgstr "Alt-texten genereras"
+
+msgid "Alt-Text wurde neu generiert"
+msgstr "Alt-texten har genererats om"
+
+msgid "Alt-Text wurde generiert"
+msgstr "Alt-texten har genererats"
+
+msgid "Neu generiert"
+msgstr "Omgenererad"
+
+msgid "Generiert"
+msgstr "Genererad"
+
+msgid "Fehler bei der Neugenerierung"
+msgstr "Fel vid omgenereringen"
+
+msgid "Fehler bei der Generierung"
+msgstr "Fel vid genereringen"
+
+msgid "Verbindungsfehler"
+msgstr "Anslutningsfel"
+
+msgid "Langbeschreibung wird generiert"
+msgstr "Den långa beskrivningen genereras"
+
+msgid "Langbeschreibung generiert"
+msgstr "Lång beskrivning genererad"
+
+msgid "Langbeschreibung wurde generiert"
+msgstr "Den långa beskrivningen har genererats"
+
+msgid "Keine Langbeschreibung verfügbar"
+msgstr "Ingen lång beskrivning tillgänglig"
+
+msgid "Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt."
+msgstr "Dagsgränsen nådd. Gränsen nollställs vid midnatt."
+
+msgid "Tageslimit erreicht ({n} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt."
+msgstr "Dagsgränsen nådd ({n} bilder per dag). Gränsen nollställs vid midnatt (UTC)."
+
+msgid "Wird gestartet..."
+msgstr "Startar..."
+
+msgid "Alt-Text-Generierung wird gestartet."
+msgstr "Alt-textgenereringen startar."
+
+msgid "Wird exportiert..."
+msgstr "Exporterar..."
+
+msgid "{f} wird exportiert..."
+msgstr "{f} exporteras..."
+
+msgid "{name} wurde heruntergeladen."
+msgstr "{name} har laddats ner."
+
+msgid "Fehler beim Export."
+msgstr "Fel vid exporten."
+
+msgid "Verbindungsfehler."
+msgstr "Anslutningsfel."
+
+msgid "Export-Optionen geöffnet."
+msgstr "Exportalternativen öppnade."
+
+msgid "Export abgebrochen."
+msgstr "Exporten avbruten."
+
+msgid "Tageslimit erreicht"
+msgstr "Dagsgränsen nådd"
+
+msgid "Noch {n} Bilder heute"
+msgstr "{n} bilder kvar idag"
+
+msgid "{u}/{l} Bilder heute"
+msgstr "{u}/{l} bilder idag"
+
+msgid "Chatbot"
+msgstr "Chattbot"
+
+msgid "Bitte den InkluAgent um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
+msgstr "Be InkluAgent om hjälp — t.ex. generera en alt-text för en bild, skriva om en befintlig text på lättläst språk eller översätta den till ett annat språk. Ange bilder med nummer (t.ex. <em>bild 3</em>, <em>bilder 1-5</em>). Högst 10 bilder per förfrågan."
+
+msgid "Chat-Verlauf"
+msgstr "Chatthistorik"
+
+msgid "Nachricht an den InkluAgent"
+msgstr "Meddelande till InkluAgent"
+
+msgid "z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'"
+msgstr "t.ex. 'bild 3 på lättläst språk' eller 'generera alt-text för bild 5'"
+
+msgid "Enter sendet, Shift+Enter macht einen Zeilenumbruch. Maximal 5000 Zeichen."
+msgstr "Enter skickar, Skift+Enter gör en radbrytning. Högst 5000 tecken."
+
+msgid "Senden"
+msgstr "Skicka"
+
+msgid "Verlauf konnte nicht geladen werden."
+msgstr "Historiken kunde inte läsas in."
+
+msgid "Fehler beim Laden des Verlaufs."
+msgstr "Fel vid inläsningen av historiken."
+
+msgid "Du"
+msgstr "Du"
+
+msgid "Bitte eine Nachricht eingeben."
+msgstr "Skriv ett meddelande."
+
+msgid "Nachricht ist zu lang (max. 5000 Zeichen)."
+msgstr "Meddelandet är för långt (max 5000 tecken)."
+
+msgid "InkluAgent denkt nach..."
+msgstr "InkluAgent tänker..."
+
+msgid "(leere Antwort)"
+msgstr "(tomt svar)"
+
+msgid "InkluAgent hat 1 Alt-Text aktualisiert."
+msgstr "InkluAgent har uppdaterat 1 alt-text."
+
+msgid "InkluAgent hat {n} Alt-Texte aktualisiert."
+msgstr "InkluAgent har uppdaterat {n} alt-texter."
+
+msgid "Link ungültig oder abgelaufen"
+msgstr "Länken är ogiltig eller har gått ut"
+
+msgid "Diese Freigabe ist nicht (mehr) gültig. Bitte wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
+msgstr "Den här delningen är inte (längre) giltig. Kontakta personen som skickade länken till dig."
+
+msgid "Registrierung"
+msgstr "Registrering"
+
+msgid "Neues Konto erstellen"
+msgstr "Skapa nytt konto"
+
+msgid "Passwort (mind. 8 Zeichen)"
+msgstr "Lösenord (minst 8 tecken)"
+
+msgid "Passwort wiederholen"
+msgstr "Upprepa lösenord"
+
+msgid "Ich akzeptiere die <a href=\"/nutzungsbedingungen\" target=\"_blank\">Nutzungsbedingungen</a> und die <a href=\"/datenschutz\" target=\"_blank\">Datenschutzerklärung</a>."
+msgstr "Jag accepterar <a href=\"/nutzungsbedingungen\" target=\"_blank\">användarvillkoren</a> och <a href=\"/datenschutz\" target=\"_blank\">integritetspolicyn</a>."
+
+msgid "Bereits ein Konto? Anmelden"
+msgstr "Har du redan ett konto? Logga in"
+
+msgid "Bitte akzeptieren Sie die Nutzungsbedingungen und Datenschutzerklärung."
+msgstr "Acceptera användarvillkoren och integritetspolicyn."
+
+msgid "Passwort muss mindestens 8 Zeichen lang sein."
+msgstr "Lösenordet måste vara minst 8 tecken långt."
+
+msgid "Passwörter stimmen nicht überein."
+msgstr "Lösenorden stämmer inte överens."
+
+msgid "Fast geschafft!"
+msgstr "Nästan klart!"
+
+msgid "Wir haben eine Bestätigungsmail an {email} gesendet."
+msgstr "Vi har skickat ett bekräftelsemejl till {email}."
+
+msgid "Bitte klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren."
+msgstr "Klicka på länken i mejlet för att aktivera ditt konto."
+
+msgid "Keine E-Mail erhalten? Prüfen Sie Ihren Spam-Ordner oder"
+msgstr "Inget mejl? Kolla din skräppostmapp eller"
+
+msgid "fordern Sie einen neuen Link an"
+msgstr "begär en ny länk"
+
+msgid "Zur Anmeldung"
+msgstr "Till inloggningen"
+
+msgid "Fehler – bitte erneut versuchen"
+msgstr "Fel – försök igen"
+
+msgid "Registrierung fehlgeschlagen."
+msgstr "Registreringen misslyckades."
+
+msgid "Passwort vergessen"
+msgstr "Glömt lösenord"
+
+msgid "Passwort zurücksetzen"
+msgstr "Återställ lösenord"
+
+msgid "Reset-Link anfordern"
+msgstr "Begär återställningslänk"
+
+msgid "Reset-Link (bitte kopieren und im Browser öffnen):"
+msgstr "Återställningslänk (kopiera och öppna i webbläsaren):"
+
+msgid "Zurück zur Anmeldung"
+msgstr "Tillbaka till inloggningen"
+
+msgid "Bitte E-Mail-Adresse eingeben."
+msgstr "Ange en e-postadress."
+
+msgid "Reset-Link wurde erstellt."
+msgstr "Återställningslänken har skapats."
+
+msgid "Falls ein Konto existiert, wurde ein Reset-Link erstellt."
+msgstr "Om ett konto finns har en återställningslänk skapats."
+
+msgid "Fehler aufgetreten."
+msgstr "Ett fel uppstod."
+
+msgid "Neues Passwort setzen"
+msgstr "Ange nytt lösenord"
+
+msgid "Passwort setzen"
+msgstr "Spara lösenord"
+
+msgid "Ungültiger Reset-Link. Bitte fordern Sie einen neuen an."
+msgstr "Ogiltig återställningslänk. Begär en ny."
+
+msgid "Passwort wurde zurückgesetzt. Sie werden weitergeleitet..."
+msgstr "Lösenordet har återställts. Du skickas vidare..."
+
+msgid "Reset fehlgeschlagen."
+msgstr "Återställningen misslyckades."
+
+msgid "Vorhandene Benutzer"
+msgstr "Befintliga användare"
+
+msgid "Wird geladen …"
+msgstr "Läser in …"
+
+msgid "Neuen Benutzer anlegen"
+msgstr "Skapa ny användare"
+
+msgid "E-Mail"
+msgstr "E-post"
+
+msgid "Anlegen"
+msgstr "Skapa"
+
+msgid "Administratoren"
+msgstr "Administratörer"
+
+msgid "Admin hinzufügen"
+msgstr "Lägg till admin"
+
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst oben „Neuen Benutzer anlegen“)."
+msgstr "Personen måste redan ha ett konto (annars först ”Skapa ny användare” ovan)."
+
+msgid "E-Mail des bestehenden Kontos"
+msgstr "Det befintliga kontots e-postadress"
+
+msgid "Rechte-Stufe"
+msgstr "Behörighetsnivå"
+
+msgid "Voll-Admin – alle Rechte"
+msgstr "Fullständig admin – alla rättigheter"
+
+msgid "Nur-Einsicht – sieht Nutzer, ändert nichts"
+msgstr "Endast läsbehörighet – ser användare, ändrar inget"
+
+msgid "Zum Admin machen"
+msgstr "Gör till admin"
+
+msgid "Kein Zugriff – diese Seite ist nur für Administratoren."
+msgstr "Ingen åtkomst – den här sidan är endast för administratörer."
+
+msgid "Projekte"
+msgstr "Projekt"
+
+msgid "Aktiv"
+msgstr "Aktiv"
+
+msgid "Gesperrt"
+msgstr "Spärrad"
+
+msgid "Das sind Sie selbst."
+msgstr "Det här är du själv."
+
+msgid "Sperren"
+msgstr "Spärra"
+
+msgid "Entsperren"
+msgstr "Ta bort spärr"
+
+msgid "Neues Passwort für {email} (mind. 8 Zeichen):"
+msgstr "Nytt lösenord för {email} (minst 8 tecken):"
+
+msgid "Passwort muss mindestens 8 Zeichen haben."
+msgstr "Lösenordet måste ha minst 8 tecken."
+
+msgid "Passwort wiederholen:"
+msgstr "Upprepa lösenordet:"
+
+msgid "Passwort zurückgesetzt"
+msgstr "Lösenordet återställt"
+
+msgid "Passwort wurde zurückgesetzt."
+msgstr "Lösenordet har återställts."
+
+msgid "Fehler beim Zurücksetzen."
+msgstr "Fel vid återställningen."
+
+msgid "Benutzer \"{email}\" und ALLE Daten unwiderruflich löschen? (DSGVO-Löschung)"
+msgstr "Ta bort användaren \"{email}\" och ALLA data oåterkalleligt? (GDPR-radering)"
+
+msgid "Benutzer gelöscht"
+msgstr "Användaren borttagen"
+
+msgid "Benutzer erstellt: {name}"
+msgstr "Användare skapad: {name}"
+
+msgid "Administratoren konnten nicht geladen werden."
+msgstr "Administratörerna kunde inte läsas in."
+
+msgid "Nur-Einsicht"
+msgstr "Endast läsbehörighet"
+
+msgid "Voll-Admin"
+msgstr "Fullständig admin"
+
+msgid "Auf Nur-Einsicht setzen"
+msgstr "Sätt till endast läsbehörighet"
+
+msgid "Auf Voll-Admin setzen"
+msgstr "Sätt till fullständig admin"
+
+msgid "Admin-Rechte entziehen"
+msgstr "Återkalla admin-rättigheter"
+
+msgid "Rechte-Stufe geändert"
+msgstr "Behörighetsnivån ändrad"
+
+msgid "Fehler beim Ändern der Rechte-Stufe."
+msgstr "Fel vid ändringen av behörighetsnivån."
+
+msgid "Admin-Rechte von \"{name}\" entziehen? Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "Återkalla admin-rättigheterna för \"{name}\"? Kontot finns kvar som vanlig användare."
+
+msgid "Admin-Rechte entzogen"
+msgstr "Admin-rättigheterna återkallade"
+
+msgid "Fehler beim Entziehen der Rechte."
+msgstr "Fel vid återkallandet av rättigheterna."
+
+msgid "Bitte eine E-Mail eingeben."
+msgstr "Ange en e-postadress."
+
+msgid "Fehler beim Hinzufügen."
+msgstr "Det gick inte att lägga till."
+
+msgid "Vorhandene Benutzer ({n})"
+msgstr "Befintliga användare ({n})"
+
+msgid "Administratoren ({n})"
+msgstr "Administratörer ({n})"
+
+msgid "{n} Benutzer geladen."
+msgstr "{n} användare inlästa."
+
+msgid "{n} Administratoren geladen."
+msgstr "{n} administratörer inlästa."
+
+msgid "Sprache der Alt-Texte"
+msgstr "Alt-texternas språk"
+
+msgid "Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird."
+msgstr "Alt-texternas språk ändrat till {s}. Gäller allt som genereras från och med nu."
+
+msgid "Umstellen der Alt-Text-Sprache fehlgeschlagen."
+msgstr "Det gick inte att byta alt-textspråk."
+
+msgid "Netzwerkfehler beim Umstellen der Sprache."
+msgstr "Nätverksfel vid språkbytet."
+
+msgid "InkluDocs: E-Mail-Adresse bestätigen"
+msgstr "InkluDocs: bekräfta e-postadress"
+
+msgid "Willkommen bei InkluDocs"
+msgstr "Välkommen till InkluDocs"
+
+msgid "vielen Dank für Ihre Registrierung bei InkluDocs – dem KI-gestützten Alt-Text-Generator für barrierefreie Dokumente und Bilder."
+msgstr "tack för din registrering hos InkluDocs – den AI-drivna alt-textgeneratorn för tillgängliga dokument och bilder."
+
+msgid "E-Mail-Adresse bestätigen"
+msgstr "Bekräfta e-postadress"
+
+msgid "Bitte klicken Sie auf den folgenden Link, um Ihr Konto zu aktivieren:"
+msgstr "Klicka på följande länk för att aktivera ditt konto:"
+
+msgid "Oder kopieren Sie diesen Link:"
+msgstr "Eller kopiera den här länken:"
+
+msgid "Der Link ist 24 Stunden gültig."
+msgstr "Länken är giltig i 24 timmar."
+
+msgid "So funktioniert InkluDocs"
+msgstr "Så fungerar InkluDocs"
+
+msgid "Nachdem Sie Ihre E-Mail-Adresse bestätigt haben:"
+msgstr "När du har bekräftat din e-postadress:"
+
+msgid "Melden Sie sich auf {url} an."
+msgstr "Logga in på {url}."
+
+msgid "Laden Sie ein PDF oder Bilder hoch oder geben Sie eine Website-Adresse ein."
+msgstr "Ladda upp en PDF eller bilder, eller ange en webbadress."
+
+msgid "Klicken Sie auf „Alt-Texte generieren“."
+msgstr "Klicka på ”Generera alt-texter”."
+
+msgid "Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie."
+msgstr "Redigera alt-texterna vid behov och exportera dem."
+
+msgid "Bei Fragen wenden Sie sich gerne an {mail}."
+msgstr "Vid frågor är du välkommen att kontakta {mail}."
+
+msgid "InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de"
+msgstr "InkluDocs är en produkt från INKLUTEC – support@inklutec.de"
+
+msgid "InkluDocs – E-Mail bestätigen"
+msgstr "InkluDocs – bekräfta e-post"
+
+msgid "hier ist Ihr neuer Bestätigungslink:"
+msgstr "här är din nya bekräftelselänk:"
+
+msgid "du hast angefordert, deine InkluDocs E-Mail-Adresse auf {email} zu ändern."
+msgstr "du har begärt att ändra din InkluDocs-e-postadress till {email}."
+
+msgid "Oder kopiere diesen Link:"
+msgstr "Eller kopiera den här länken:"
+
+msgid "Der Link ist 1 Stunde gültig. Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail."
+msgstr "Länken är giltig i 1 timme. Om du inte har begärt den här ändringen kan du ignorera det här mejlet."
+
+msgid "InkluDocs: Passwort zurücksetzen"
+msgstr "InkluDocs: återställ lösenord"
+
+msgid "du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert."
+msgstr "du har begärt en lösenordsåterställning för ditt InkluDocs-konto."
+
+msgid "Passwort jetzt zurücksetzen"
+msgstr "Återställ lösenordet nu"
+
+msgid "Der Link ist 1 Stunde gültig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren."
+msgstr "Länken är giltig i 1 timme. Om du inte har gjort den här begäran kan du ignorera det här mejlet."
+
+msgid "Ein InkluDocs-Nutzer"
+msgstr "En InkluDocs-användare"
+
+msgid "Hallo {name},"
+msgstr "Hej {name},"
+
+msgid "Hallo,"
+msgstr "Hej,"
+
+msgid "{name} möchte Sie bitten, die Alt-Texte für das Projekt „{projekt}“ zu prüfen."
+msgstr "{name} ber dig granska alt-texterna för projektet ”{projekt}”."
+
+msgid "Bitte öffnen Sie diesen Link und bestätigen Sie Ihre E-Mail-Adresse:"
+msgstr "Öppna den här länken och bekräfta din e-postadress:"
+
+msgid "Eingeladen von:"
+msgstr "Inbjuden av:"
+
+msgid "Bitte Alt-Texte prüfen: {projekt}"
+msgstr "Granska alt-texter: {projekt}"
+
+msgid "{gast} hat die Prüfung für das Projekt „{projekt}“ abgeschlossen."
+msgstr "{gast} har slutfört granskningen av projektet ”{projekt}”."
+
+msgid "Ergebnis:"
+msgstr "Resultat:"
+
+msgid "{f} freigegeben, {z} zu überarbeiten, {o} offen."
+msgstr "{f} godkända, {z} att omarbeta, {o} öppna."
+
+msgid "Nachricht:"
+msgstr "Meddelande:"
+
+msgid "Anmerkungen:"
+msgstr "Anteckningar:"
+
+msgid "Im Werkzeug ansehen:"
+msgstr "Visa i verktyget:"
+
+msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
+msgstr "InkluDocs: granskning slutförd ({projekt})"
+
+msgid "Ungültiger Bestätigungslink."
+msgstr "Ogiltig bekräftelselänk."
+
+msgid "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+msgstr "Den här bekräftelselänken är ogiltig eller har gått ut."
+
+msgid "E-Mail-Adresse erfolgreich bestätigt!"
+msgstr "E-postadressen har bekräftats!"
+
+msgid "Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden."
+msgstr "Ditt konto är nu aktivt. Du kan logga in nu."
+
+msgid "Jetzt anmelden"
+msgstr "Logga in nu"
+
+msgid "E-Mail bestätigt"
+msgstr "E-post bekräftad"
+
+msgid "Bitte fordere in den {einstellungen} einen neuen Link an."
+msgstr "Begär en ny länk i {einstellungen}."
+
+msgid "Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert."
+msgstr "Din e-postadress har ändrats till {email}."
+
+msgid "Du wirst in 3 Sekunden weitergeleitet."
+msgstr "Du skickas vidare om 3 sekunder."
+
+msgid "Jetzt zur App"
+msgstr "Till appen nu"
+
+msgid "Die Registrierung ist derzeit geschlossen."
+msgstr "Registreringen är för närvarande stängd."
+
+msgid "InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}."
+msgstr "InkluDocs är i sluten betafas. Om du vill få ett testkonto, skicka ett mejl till {mail}."
+
+msgid "Registrierung geschlossen"
+msgstr "Registreringen stängd"
+
+msgid "Zum Inhalt springen"
+msgstr "Hoppa till innehållet"
+
+msgid "InkluDocs – kostenlos testen"
+msgstr "InkluDocs – testa gratis"
+
+msgid "InkluDocs kostenlos testen"
+msgstr "Testa InkluDocs gratis"
+
+msgid "Lade ein Bild hoch und erhalte in Sekunden einen barrierefreien Alternativtext und eine Langbeschreibung – ganz ohne Anmeldung."
+msgstr "Ladda upp en bild och få på några sekunder en tillgänglig alternativtext och en lång beskrivning – helt utan att logga in."
+
+msgid "Dein Bild wird nur für deine Sitzung gespeichert, nicht dauerhaft, und spätestens nach einer Stunde automatisch gelöscht. Mit „Löschen\" entfernst du es sofort."
+msgstr "Din bild sparas bara under din session, inte permanent, och tas automatiskt bort senast efter en timme. Med ”Ta bort” raderar du den direkt."
+
+msgid "Bild auswählen"
+msgstr "Välj bild"
+
+msgid "Bild hierher ziehen oder auswählen"
+msgstr "Dra en bild hit eller välj en"
+
+msgid "JPG, PNG, GIF oder WebP. PDFs gibt es im vollen Werkzeug nach Anmeldung."
+msgstr "JPG, PNG, GIF eller WebP. PDF:er finns i det fullständiga verktyget efter inloggning."
+
+msgid "Ergebnis"
+msgstr "Resultat"
+
+msgid "Alternativtext generieren"
+msgstr "Generera alternativtext"
+
+msgid "Alternativtext"
+msgstr "Alternativtext"
+
+msgid "Alternativtext kopieren"
+msgstr "Kopiera alternativtext"
+
+msgid "Langbeschreibung kopieren"
+msgstr "Kopiera lång beskrivning"
+
+msgid "Mit dem Assistenten verfeinern"
+msgstr "Förfina med assistenten"
+
+msgid "Bitte zum Beispiel „mach den Text kürzer\" oder stelle Fragen zu Barrierefreiheit (BITV/WCAG)."
+msgstr "Be till exempel ”gör texten kortare” eller ställ frågor om tillgänglighet (BITV/WCAG)."
+
+msgid "Nachricht an den Assistenten"
+msgstr "Meddelande till assistenten"
+
+msgid "Nachricht an den Assistenten …"
+msgstr "Meddelande till assistenten …"
+
+msgid "Gefällt dir das Ergebnis? Für ganze Dokumente und den fertig getaggten Export geht es mit einem Konto weiter."
+msgstr "Gillar du resultatet? För hela dokument och färdigtaggad export fortsätter du med ett konto."
+
+msgid "Anmelden oder registrieren"
+msgstr "Logga in eller registrera dig"
+
+msgid "Bild und Ergebnis löschen"
+msgstr "Ta bort bild och resultat"
+
+msgid "Mehr braucht ein Konto"
+msgstr "För mer krävs ett konto"
+
+msgid "Bild und Ergebnis löschen?"
+msgstr "Ta bort bild och resultat?"
+
+msgid "Möchtest du das Bild und das Ergebnis wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen ta bort bilden och resultatet? Det kan inte ångras."
+
+msgid "Eine Quelle, kein Doppeltext: Der Inhalt kommt von der öffentlichen Seite."
+msgstr "En källa, ingen dubbeltext: innehållet kommer från den offentliga sidan."
+
+msgid "Öffentliche Seite öffnen"
+msgstr "Öppna den offentliga sidan"
+
+msgid "Inhalt wird geladen …"
+msgstr "Innehållet läses in …"
+
+msgid "Datenschutzerklärung"
+msgstr "Integritetspolicy"
+
+msgid "Noch {bilder_frei} von {bilder_tag} kostenlosen Analysen heute · {chat_frei} von {chat_tag} Chat-Nachrichten."
+msgstr "{bilder_frei} av {bilder_tag} gratisanalyser kvar idag · {chat_frei} av {chat_tag} chattmeddelanden."
+
+msgid "Deine kostenlosen Analysen für heute sind aufgebraucht."
+msgstr "Dina gratisanalyser för idag är slut."
+
+msgid "Kostenloses Kontingent aufgebraucht."
+msgstr "Gratiskvoten är slut."
+
+msgid "Bitte ein Bild im Format JPG, PNG, GIF oder WebP wählen."
+msgstr "Välj en bild i formatet JPG, PNG, GIF eller WebP."
+
+msgid "Vorschau deines ausgewählten Bildes"
+msgstr "Förhandsvisning av din valda bild"
+
+msgid "Bild ausgewählt. Auf „Alternativtext generieren\" klicken, um die Analyse zu starten."
+msgstr "Bild vald. Klicka på ”Generera alternativtext” för att starta analysen."
+
+msgid "Generiere …"
+msgstr "Genererar …"
+
+msgid "Bild wird analysiert …"
+msgstr "Bilden analyseras …"
+
+msgid "Bild wird hochgeladen und analysiert. Das dauert ein paar Sekunden."
+msgstr "Bilden laddas upp och analyseras. Det tar några sekunder."
+
+msgid "Es ist ein Fehler aufgetreten. Bitte erneut versuchen."
+msgstr "Ett fel uppstod. Försök igen."
+
+msgid "Upload fehlgeschlagen."
+msgstr "Uppladdningen misslyckades."
+
+msgid "Analyse fehlgeschlagen"
+msgstr "Analysen misslyckades"
+
+msgid "Analyse fehlgeschlagen."
+msgstr "Analysen misslyckades."
+
+msgid "Die Analyse ist fehlgeschlagen. Bitte versuche es noch einmal."
+msgstr "Analysen misslyckades. Försök en gång till."
+
+msgid "Vorschau deines hochgeladenen Bildes"
+msgstr "Förhandsvisning av din uppladdade bild"
+
+msgid "Typ: {typ}"
+msgstr "Typ: {typ}"
+
+msgid "Konfidenz: {wert}"
+msgstr "Konfidens: {wert}"
+
+msgid "Analyse fertig. Alternativtext und Langbeschreibung stehen bereit."
+msgstr "Analysen klar. Alternativtext och lång beskrivning är redo."
+
+msgid "Text"
+msgstr "Text"
+
+msgid "{was} kopiert."
+msgstr "{was} kopierad."
+
+msgid "Kopiert ✓"
+msgstr "Kopierat ✓"
+
+msgid "Bitte mit Strg+C kopieren."
+msgstr "Kopiera med Ctrl+C."
+
+msgid "Bild und Ergebnis wurden gelöscht. Du kannst ein neues Bild hochladen."
+msgstr "Bilden och resultatet har tagits bort. Du kan ladda upp en ny bild."
+
+msgid "Assistent denkt nach …"
+msgstr "Assistenten tänker …"
+
+msgid "Entschuldigung, das hat nicht geklappt."
+msgstr "Tyvärr, det gick inte."
+
+msgid "Antwort des Assistenten ist da."
+msgstr "Assistentens svar är här."
+
+msgid "Demo testen"
+msgstr "Testa demon"
+
+msgid "{was} konnte nicht geladen werden ({fehler}). Bitte die öffentliche Seite aufrufen:"
+msgstr "{was} kunde inte läsas in ({fehler}). Öppna den offentliga sidan:"
+
+msgid "Bitte ein Bild hochladen (JPG, PNG, GIF, WebP …). PDFs gibt es im vollen Werkzeug nach Anmeldung."
+msgstr "Ladda upp en bild (JPG, PNG, GIF, WebP …). PDF:er finns i det fullständiga verktyget efter inloggning."
+
+msgid "Datei zu groß. Maximum: {mb} MB"
+msgstr "Filen är för stor. Max: {mb} MB"
+
+msgid "Die Demo ist heute stark gefragt — das Tageskontingent ist erreicht. Bitte morgen wieder probieren oder gleich kostenlos registrieren."
+msgstr "Demon är mycket efterfrågad idag — dagskvoten är nådd. Prova igen imorgon eller registrera dig gratis direkt."
+
+msgid "Deine {n} kostenlosen Analysen für heute sind aufgebraucht. Für unbegrenzte Bilder, ganze PDFs und den fertig getaggten Export: kostenlos registrieren."
+msgstr "Dina {n} gratisanalyser för idag är slut. För obegränsat antal bilder, hela PDF:er och färdigtaggad export: registrera dig gratis."
+
+msgid "Du hast die {n} kostenlosen Chat-Nachrichten für heute genutzt. Für unbegrenztes Verfeinern: kostenlos registrieren."
+msgstr "Du har använt dagens {n} gratis chattmeddelanden. För obegränsat förfinande: registrera dig gratis."
+
+msgid "Maximal {mb} MB pro Datei."
+msgstr "Högst {mb} MB per fil."
+
+msgid "Verbindung unterbrochen – prüfe, ob die Datei trotzdem angekommen ist …"
+msgstr "Anslutningen bröts – kontrollerar om filen ändå kom fram …"
+
+msgid "Der Upload war trotz Verbindungsfehler erfolgreich. Die Datei ist angekommen."
+msgstr "Uppladdningen lyckades trots anslutningsfelet. Filen har kommit fram."
+
+msgid "Verbindungsfehler beim Upload. Die Datei ist bisher nicht angekommen. Bitte prüfe deine Internetverbindung und versuche es erneut. Bei sehr großen PDFs kann die Verarbeitung länger dauern – lade die Seite dann in ein bis zwei Minuten neu und prüfe die Dokumentliste. Maximal {mb} MB pro Datei."
+msgstr "Anslutningsfel vid uppladdningen. Filen har hittills inte kommit fram. Kontrollera din internetanslutning och försök igen. Vid mycket stora PDF:er kan bearbetningen ta längre tid – ladda då om sidan om en till två minuter och kontrollera dokumentlistan. Högst {mb} MB per fil."
+
+msgid "Die PDF wird verarbeitet – Bilder werden extrahiert …"
+msgstr "PDF:en bearbetas – bilder extraheras …"
+
+msgid "Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Bearbetningen av PDF:en misslyckades. Försök igen med filen."
+
+msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
+msgstr "Bearbetningen tar ovanligt lång tid. Ladda om sidan senare och kontrollera dokumentlistan."
+
+msgid "Eigene Prompts"
+msgstr "Egna promptar"
+
+msgid "Hier speicherst du eigene Anweisungen für die KI mit maximal 4.000 Zeichen. Im Projekt wählst du dann aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Ein eigener Prompt beschreibt am besten Abweichungen vom Standard, zum Beispiel: „verwende einfache Sprache“, „formuliere besonders förmlich“, „einen Satz mit 300 Zeichen“ oder „nenne die Kernaussagen vor den Werten“."
+msgstr "Här sparar du egna instruktioner till AI:n med högst 4 000 tecken. I projektet väljer du sedan vilken prompt som dessutom ska gälla vid genereringen. En egen prompt beskriver helst avvikelser från standarden, till exempel: ”använd enkelt språk”, ”formulera särskilt formellt”, ”en mening med 300 tecken” eller ”nämn kärnbudskapen före värdena”."
+
+msgid "Neuen Prompt anlegen"
+msgstr "Skapa ny prompt"
+
+msgid "Name (Pflichtfeld)"
+msgstr "Namn (obligatoriskt)"
+
+msgid "z. B. Förmlicher Ton oder Produktbeschreibungen"
+msgstr "t.ex. Formell ton eller Produktbeskrivningar"
+
+msgid "Kategorie (optional)"
+msgstr "Kategori (valfritt)"
+
+msgid "Frei wählbar, gruppiert deine Liste, z. B. Marketing oder Technik."
+msgstr "Fritt valbar, grupperar din lista, t.ex. Marknadsföring eller Teknik."
+
+msgid "Beschreibung (optional)"
+msgstr "Beskrivning (valfritt)"
+
+msgid "Kurze Notiz, wofür der Prompt gedacht ist."
+msgstr "Kort notering om vad prompten är tänkt för."
+
+msgid "Prompt-Text (Pflichtfeld)"
+msgstr "Prompttext (obligatoriskt)"
+
+msgid "Deine Anweisung an die KI, zum Beispiel: Formuliere besonders förmlich und nenne immer zuerst die Marke."
+msgstr "Din instruktion till AI:n, till exempel: Formulera särskilt formellt och nämn alltid varumärket först."
+
+msgid "Gespeicherte Prompts"
+msgstr "Sparade promptar"
+
+msgid "Ohne Kategorie"
+msgstr "Utan kategori"
+
+msgid "Prompt-Text anzeigen"
+msgstr "Visa prompttext"
+
+msgid "Noch keine Prompts gespeichert. Lege oben deinen ersten an."
+msgstr "Inga promptar sparade ännu. Skapa din första ovan."
+
+msgid "Bitte Name und Prompt-Text ausfüllen."
+msgstr "Fyll i namn och prompttext."
+
+msgid "Prompt gespeichert."
+msgstr "Prompten sparad."
+
+msgid "Prompt gelöscht."
+msgstr "Prompten borttagen."
+
+msgid "Speichern fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Det gick inte att spara. Försök igen senare."
+
+msgid "Löschen fehlgeschlagen. Bitte später erneut versuchen."
+msgstr "Det gick inte att ta bort. Försök igen senare."
+
+msgid "Diesen Prompt wirklich löschen? Projekte, die ihn verwenden, nutzen dann wieder keinen eigenen Prompt."
+msgstr "Vill du verkligen ta bort den här prompten? Projekt som använder den återgår då till att inte använda någon egen prompt."
+
+msgid "Prompt bearbeiten"
+msgstr "Redigera prompt"
+
+msgid "Änderungen speichern"
+msgstr "Spara ändringar"
+
+msgid "Bearbeitung abgebrochen. Formular ist wieder leer."
+msgstr "Redigeringen avbruten. Formuläret är tomt igen."
+
+msgid "Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular."
+msgstr "Prompten {name} inläst för redigering. Fälten finns i formuläret ovan."
+
+msgid "Eigener Prompt"
+msgstr "Egen prompt"
+
+msgid "Kein eigener Prompt"
+msgstr "Ingen egen prompt"
+
+msgid "Prompts verwalten"
+msgstr "Hantera promptar"
+
+msgid "Eigener Prompt umgestellt: {name}. Gilt für alles, was ab jetzt generiert wird."
+msgstr "Egen prompt bytt: {name}. Gäller allt som genereras från och med nu."
+
+msgid "Eigener Prompt entfernt. Es gilt wieder das Standardverhalten."
+msgstr "Egen prompt borttagen. Standardbeteendet gäller igen."
+
+msgid "Umstellen des eigenen Prompts fehlgeschlagen."
+msgstr "Det gick inte att byta egen prompt."
+
+msgid "Netzwerkfehler beim Umstellen des eigenen Prompts."
+msgstr "Nätverksfel vid bytet av egen prompt."
+
+msgid "Noch keine Prompts gespeichert. Lege unten über den Knopf deinen ersten an."
+msgstr "Inga promptar sparade ännu. Skapa din första via knappen nedan."
+
+msgid "oder Datei hierher ziehen"
+msgstr "eller dra en fil hit"
+
+msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "Du kan när som helst ladda upp fler PDF:er med högst {mb} MB. De läggs till i listan nedan; redan befintliga alt-texter bevaras."
+
+msgid "Genehmigt durch Lektorat"
+msgstr "Godkänd av korrekturläsningen"
+
+msgid "Freigegeben durch Kunde"
+msgstr "Godkänd av kunden"
+
+msgid "Texte noch anpassen"
+msgstr "Texterna behöver justeras"
+
+msgid "Änderung durch Lektorat"
+msgstr "Ändring från korrekturläsningen"
+
+msgid "Mit Kunde klären"
+msgstr "Stäm av med kunden"
+
+msgid "Rücksprache mit dem Kunden"
+msgstr "Avstämning med kunden"
+
+msgid "In Bearbeitung"
+msgstr "Under arbete"
+
+msgid "Rücksprache"
+msgstr "Avstämning"
+
+msgid "Rolle des Gastes"
+msgstr "Gästens roll"
+
+msgid "Endkunde"
+msgstr "Slutkund"
+
+msgid "Lektorat"
+msgstr "Korrekturläsning"
+
+msgid "Gespeichert."
+msgstr "Sparat."
+
+msgid "Lektorat: {s}"
+msgstr "Korrekturläsning: {s}"
+
+msgid "Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren."
+msgstr "Rollen avgör hur granskningsknapparna är märkta; korrekturläsningen kan dessutom markera bilder för avstämning med kunden."
+
+msgid "{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen."
+msgstr "{f} godkända, {z} att omarbeta, {r} avstämning, {b} under arbete, {o} öppna."
+
+msgid "Rolle:"
+msgstr "Roll:"
+
+msgid "Seitentext"
+msgstr "Sidtext"
+
+msgid "Zur Prüfung einladen"
+msgstr "Bjud in till granskning"
+
+msgid "Name (optional)"
+msgstr "Namn (valfritt)"
+
+msgid "E-Mail-Adresse (Pflichtfeld)"
+msgstr "E-postadress (obligatoriskt)"
+
+msgid "Rolle des Empfängers"
+msgstr "Mottagarens roll"
+
+msgid "Herausgeber"
+msgstr "Utgivare"
+
+msgid "Nachricht (optional)"
+msgstr "Meddelande (valfritt)"
+
+msgid "Freigegeben durch Herausgeber"
+msgstr "Godkänd av utgivaren"
+
+msgid "Rücksprache mit dem Herausgeber"
+msgstr "Avstämning med utgivaren"
+
+msgid "Mit Herausgeber klären"
+msgstr "Stäm av med utgivaren"
+
+msgid "Anmerkung des Gastes anzeigen"
+msgstr "Visa gästens anteckning"
+
+msgid "Herausgeber: {s}"
+msgstr "Utgivare: {s}"
+
+msgid "Bilder filtern"
+msgstr "Filtrera bilder"
+
+msgid "Prüfende Rolle"
+msgstr "Granskande roll"
+
+msgid "Nach Prüfstatus filtern"
+msgstr "Filtrera efter granskningsstatus"
+
+msgid "Rücksprache des Lektorats"
+msgstr "Korrekturläsningens avstämning"
+
+msgid "Ohne Alt-Text"
+msgstr "Utan alt-text"
+
+msgid "Alle"
+msgstr "Alla"
+
+msgid "Alle {n} Bilder angezeigt."
+msgstr "Alla {n} bilder visas."
+
+msgid "{n} von {m} Bildern angezeigt."
+msgstr "{n} av {m} bilder visas."
+
+msgid "1 Bild zur Rücksprache markiert"
+msgstr "1 bild markerad för avstämning"
+
+msgid "{n} Bilder zur Rücksprache markiert"
+msgstr "{n} bilder markerade för avstämning"
+
+msgid "1 Bild zur Rücksprache markiert:"
+msgstr "1 bild markerad för avstämning:"
+
+msgid "{n} Bilder zur Rücksprache markiert:"
+msgstr "{n} bilder markerade för avstämning:"
+
+msgid "Diese Liste wird dem Ersteller automatisch mit übermittelt:"
+msgstr "Den här listan skickas automatiskt med till skaparen:"
+
+msgid "Dokument „{name}\", {bild}"
+msgstr "Dokument ”{name}”, {bild}"
+
+msgid "Anmerkung:"
+msgstr "Anteckning:"
+
+msgid "Zur Rücksprache (Lektorat): {n}"
+msgstr "För avstämning (korrekturläsning): {n}"
+
+msgid "Kategorie: {typ}"
+msgstr "Kategori: {typ}"
+
+msgid "Kontext: Ja"
+msgstr "Kontext: Ja"
+
+msgid "Kontext: Nein"
+msgstr "Kontext: Nej"
+
+msgid "Kategorie {name}"
+msgstr "Kategori {name}"
+
+msgid "Name:"
+msgstr "Namn:"
+
+msgid "Beschreibung:"
+msgstr "Beskrivning:"
+
+msgid "Nachrichten ({n})"
+msgstr "Meddelanden ({n})"
+
+msgid "Neue Nachricht"
+msgstr "Nytt meddelande"
+
+msgid "Nachricht senden"
+msgstr "Skicka meddelande"
+
+msgid "Nachricht gesendet."
+msgstr "Meddelandet skickat."
+
+msgid "Fehler beim Senden."
+msgstr "Fel vid sändningen."
+
+msgid "Bitte zuerst eine Nachricht eingeben."
+msgstr "Skriv först ett meddelande."
+
+msgid "Ersteller"
+msgstr "Skapare"
+
+msgid "Nachrichten: {n}"
+msgstr "Meddelanden: {n}"
+
+msgid "InkluDocs: Neue Nachricht im Projekt „{projekt}\""
+msgstr "InkluDocs: nytt meddelande i projektet ”{projekt}”"
+
+msgid "{absender} hat eine neue Nachricht zu {bild} im Projekt „{projekt}\" geschrieben:"
+msgstr "{absender} har skrivit ett nytt meddelande om {bild} i projektet ”{projekt}”:"
+
+msgid "einem Bild"
+msgstr "en bild"
+
+msgid "Geteilte Projekte"
+msgstr "Delade projekt"
+
+msgid "Geteilte Projekte – Neues in {n} Projekten"
+msgstr "Delade projekt – nytt i {n} projekt"
+
+msgid "Prüfung abgeschlossen am {datum}"
+msgstr "Granskning slutförd den {datum}"
+
+msgid "Prüfung abgeschlossen"
+msgstr "Granskning slutförd"
+
+msgid "{rolle}: abgeschlossen"
+msgstr "{rolle}: slutförd"
+
+msgid "{rolle}: in Prüfung"
+msgstr "{rolle}: under granskning"
+
+msgid "In Prüfung"
+msgstr "Under granskning"
+
+msgid "{n} neue Nachrichten"
+msgstr "{n} nya meddelanden"
+
+msgid "{n} Prüfstatus-Änderungen"
+msgstr "{n} ändringar av granskningsstatus"
+
+msgid "{n} Prüfungen abgeschlossen"
+msgstr "{n} granskningar slutförda"
+
+msgid "Neu seit deinem letzten Besuch:"
+msgstr "Nytt sedan ditt senaste besök:"
+
+msgid "Du prüfst dieses Projekt als {rolle}."
+msgstr "Du granskar det här projektet som {rolle}."
+
+msgid "Du schließt die Prüfung als {rolle} ab."
+msgstr "Du slutför granskningen som {rolle}."
+
+msgid "Geteilte Projekte – Neues in einem Projekt"
+msgstr "Delade projekt – nytt i ett projekt"
+
+msgid "{rolle}: {wer} — abgeschlossen am {datum} um {zeit}"
+msgstr "{rolle}: {wer} — slutförd den {datum} kl. {zeit}"
+
+msgid "{rolle}: {wer} — in Prüfung, eingeladen am {datum}"
+msgstr "{rolle}: {wer} — under granskning, inbjuden den {datum}"
+
+msgid "Zurzeit keine geteilten Projekte."
+msgstr "Inga delade projekt för tillfället."
+
+msgid "{n} geteilte Projekte geladen."
+msgstr "{n} delade projekt inlästa."
+
+msgid "{rolle}: {wer} — in Prüfung seit {datum}"
+msgstr "{rolle}: {wer} — under granskning sedan {datum}"
+
+msgid "{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen"
+msgstr "{rolle}: {wer} — inbjuden den {datum}, ännu inte påbörjad"
+
+msgid "dazu {n} frühere Einladungen"
+msgstr "därtill {n} tidigare inbjudningar"
+
+msgid "Projekt abgeschlossen am {datum}"
+msgstr "Projekt slutfört den {datum}"
+
+msgid "{n} Bilder ohne Prüfurteil"
+msgstr "{n} bilder utan bedömning"
