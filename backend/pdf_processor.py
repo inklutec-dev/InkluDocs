@@ -32,7 +32,7 @@ def clear_project_cache():
     """Cache leeren (am Anfang jedes Projekts aufrufen)."""
     _project_image_cache.clear()
 
-from context_engine import get_prompt, detect_type_from_context, clean_alt_text, remove_hedge_words
+from context_engine import get_prompt, clean_alt_text, remove_hedge_words
 
 # PDFIX-INTEGRATION (24.04.2026): strukturelle Figure-Extraktion fuer getaggte PDFs
 import logging as _logging

@@ -152,6 +152,10 @@ def build_classification_prompt(
       user_hint:        Workflow-Variante 3: Nutzer-Hinweis mit Vorrang
 
     Output: prompt-String, der mit ClassificationOutput-Schema gerufen wird.
+
+    ACHTUNG Sync-Pflicht: Die Pixel-Schwelle im IST_DEKORATIV-Hinweis
+    (<100x100 px) muss mit _DEKORATIV_MAX_SIDE in dekorativ.py synchron
+    gehalten werden (angeglichen in Paket 1, 16.07.2026 — vorher 80x80).
     """
     schema_doc = render_schema_for_prompt(ClassificationOutput)
 
@@ -211,7 +215,7 @@ IST_DEKORATIV (Boolean):
 
 True NUR wenn das Bild zweifelsfrei dekorativ ist (Trennlinie,
 Schmuck-Hintergrund, Designelement ohne Inhalt). Sehr kleine Bilder
-(<80x80 px) sind oft aber nicht immer dekorativ — pruefen.
+(<100x100 px) sind oft aber nicht immer dekorativ — pruefen.
 
 KLASSIFIKATIONS_BEGRUENDUNG (10-200 Zeichen, ein Satz):
 

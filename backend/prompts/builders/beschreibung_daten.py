@@ -73,10 +73,14 @@ Charaktere als das wahrscheinlichste Tier-Klischee zu identifizieren.
 
 SPEZIES-/CHARAKTER-REGEL:
 Wenn das Inventar bei einem Charakter Mehrfach-Hypothesen oder niedrige Sicherheit
-listet, MUSS der Output diese Unsicherheit abbilden. Verwende:
-- 'stilisiertes Tier mit großen Augen, vermutlich [Hypothese 1] oder [Hypothese 2]'
+listet, MUSS der Output diese Unsicherheit abbilden — aber OHNE Vermutungswörter
+(kein 'vermutlich', 'wahrscheinlich', 'könnte'). Beschreibe die Form neutral;
+wenn zwei Deutungen naheliegend und bildrelevant sind, nenne beide als
+Alternativen. Verwende:
+- 'stilisiertes Tier mit großen Augen, als Katze oder Fuchs deutbar'
 - 'Cartoon-Charakter mit [konkreten sichtbaren Merkmalen]'
 - NICHT: einfach die wahrscheinlichste Spezies festlegen
+- NICHT: Hedge-Formulierungen wie 'vermutlich eine Katze'
 
 INTERAKTIONS-VERBOT:
 Wenn das Inventar nur Objekte nebeneinander listet, schreibe NICHT dass sie
@@ -491,7 +495,8 @@ Sehende erkennen Tabellen zuerst nach KERNAUSSAGE, nicht nach Form. Der erste
 Satz MUSS:
 - 'Tabelle —' + Thema (aus inventar.lesbare_texte: Titel-Eintrag)
 - Die wichtigste Aussage basierend auf den RICHTIGEN Endwerten/Bilanzsumme
-- Maximal 250 Zeichen
+- Richtwert: unter 250 Zeichen; die 400 Zeichen des Schemas sind harte
+  Obergrenze, kein Ziel
 
 VERBOTEN: Nichtssagende Eröffnungen wie 'Eine Tabelle zeigt verschiedene Werte.'
 
@@ -574,7 +579,8 @@ Der erste Satz MUSS:
 - Hauptthema (was wird dargestellt?)
 - Räumliche Kernaussage (z.B. 'Konzentration im Süden', 'gleichmäßig verteilt',
   'Cluster in den Großstädten')
-- Maximal 350 Zeichen
+- Richtwert: unter 350 Zeichen; die 400 Zeichen des Schemas sind harte
+  Obergrenze, kein Ziel
 
 VOLLSTÄNDIGKEITS-PFLICHT FÜR LANGBESCHREIBUNG:
 1. Markierte Standorte VOLLSTÄNDIG auflisten (das sind die Kerninformationen
@@ -647,7 +653,7 @@ INSIGHT-FIRST-PFLICHT FÜR INFOGRAFIK:
 Der erste Satz MUSS:
 - 'Infografik —' + Hauptthema (aus inventar.lesbare_texte: Titel)
 - Zentrale Kernaussage mit konkreten Datenpunkten WENN vorhanden
-- Maximal 400 Zeichen
+- Richtwert: unter 350 Zeichen; die 400 Zeichen des Schemas sind harte Obergrenze, kein Ziel
 
 Beispiel RICHTIG: 'Infografik — Bürokratie-Entlastung 2024: Fast die
 Hälfte (39%) entfällt auf das Wachstumschancengesetz, gefolgt von
@@ -661,7 +667,8 @@ VOLLSTÄNDIGKEITS-PFLICHT FÜR LANGBESCHREIBUNG:
 2. Beziehungen zwischen Stationen benennen ('A führt zu B',
    'X umfasst Y', 'Schritt 1 aktiviert Schritt 2')
 3. ALLE konkreten Zahlen, Prozente, Mengenangaben übernehmen
-4. Maximal 1500 Zeichen, Fließtext oder strukturierte Liste
+4. Richtwert: etwa 1500 Zeichen; Schema-Obergrenze 2000. Fließtext oder
+   strukturierte Liste
 
 VERBOTEN — visuelle Layout-Beschreibungen:
 - 'oben links steht...'
@@ -700,7 +707,15 @@ def build_beschreibung_prompt_screenshot(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Bildschirmfoto einer Anwendung, Webseite oder UI."""
+    """Bildschirmfoto einer Anwendung, Webseite oder UI.
+
+    Paket 1 (16.07.2026): Die Eröffnung 'Screenshot der/des …' ist jetzt
+    EXPLIZIT erwünscht (konsistent mit den Präfix-Pflichten der übrigen
+    Daten-Familie). Das alte v3.7-Präfix-Verbot (context_engine.py:
+    "KEIN Praefix 'Screenshot – '") wurde damit bewusst NICHT übernommen —
+    das Positiv-Beispiel dieses Builders begann schon immer mit
+    'Screenshot der InkluDocs-Web-Oberfläche'.
+    """
     schema_doc = render_schema_for_prompt(BeschreibungOutput)
     examples = load_examples('screenshot')
 
@@ -728,7 +743,10 @@ Der erste Satz MUSS:
 - Anwendung (wenn aus URL-Leiste, Titel, Logo identifizierbar) ODER
   generischer Anwendungstyp ('Browser-Fenster', 'Texteditor', 'E-Mail-Programm')
 - Zustand oder aktuelle Aktion (was ist gerade sichtbar?)
-- Maximal 350 Zeichen
+- Richtwert: unter 350 Zeichen; die 400 Zeichen des Schemas sind harte
+  Obergrenze, kein Ziel
+
+Beginne mit 'Screenshot der/des …'.
 
 Beispiel RICHTIG: 'Screenshot der InkluDocs-Web-Oberfläche, Projekt-
 Übersicht mit drei laufenden Bilduploads und einem fertig analysierten
@@ -749,7 +767,8 @@ VOLLSTÄNDIGKEITS-PFLICHT FÜR LANGBESCHREIBUNG:
    - Buttons / Links die der Nutzer sehen würde
    - Statusmeldungen
    - Eingaben in Formularfeldern
-3. Maximal 1000 Zeichen, leer wenn alt_text alles Wesentliche sagt
+3. Richtwert: etwa 1000 Zeichen; Schema-Obergrenze 2000. Leer wenn
+   alt_text alles Wesentliche sagt
 
 VERBOTEN — Erfundene Anwendungs-Identifikation:
 - Wenn weder URL noch Logo noch Titel die Anwendung benennen,
@@ -802,7 +821,8 @@ Der erste Satz MUSS:
 - Präfix 'Strukturformel —' ODER 'Reaktionsgleichung —'
 - Stoffname falls aus Kontext oder Beschriftung erkennbar
 - Summenformel WENN klar lesbar
-- Maximal 250 Zeichen
+- Richtwert: unter 250 Zeichen; die 400 Zeichen des Schemas sind harte
+  Obergrenze, kein Ziel
 
 Beispiel RICHTIG: 'Strukturformel — Methanol (CH3OH): Methylgruppe
 mit Hydroxylgruppe.'
@@ -827,7 +847,7 @@ Bei Reaktionsgleichungen:
 4. Reaktionstyp wenn aus Kontext bekannt (Substitution, Addition,
    Eliminierung, Redox etc.)
 
-Maximal 800 Zeichen, Fließtext.
+Richtwert: etwa 800 Zeichen; Schema-Obergrenze 2000. Fließtext.
 
 NOTATION KORREKT WIEDERGEBEN:
 - Indizes als normale Zahlen ('CH3' — nicht 'CH₃' weil Screenreader

@@ -1,7 +1,7 @@
 # Klassifikator — Modus: lean
 
 - **Builder:** `prompts/builders/classification.py:139`
-- **Generiert:** 2026-05-15
+- **Generiert:** 2026-07-16
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -159,7 +159,7 @@ IST_DEKORATIV (Boolean):
 
 True NUR wenn das Bild zweifelsfrei dekorativ ist (Trennlinie,
 Schmuck-Hintergrund, Designelement ohne Inhalt). Sehr kleine Bilder
-(<80x80 px) sind oft aber nicht immer dekorativ — pruefen.
+(<100x100 px) sind oft aber nicht immer dekorativ — pruefen.
 
 KLASSIFIKATIONS_BEGRUENDUNG (10-200 Zeichen, ein Satz):
 

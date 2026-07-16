@@ -1,4 +1,20 @@
 """
+=============================================================================
+LEGACY v3.7 — NICHT DER AKTIVE REGELSTAND (Kennzeichnung Paket 1, 16.07.2026)
+=============================================================================
+Unter PIPELINE_VERSION=v4 sind aus diesem Modul NUR extract_page_profile
+und is_complex_type aktiv. Alle Prompt-Funktionen (get_prompt,
+get_generation_prompt, SPECIALIZED_GENERATION_PROMPTS, Qwen-Fallbacks,
+GENERAL_PROMPT) und die Regex-Postfilter (clean_alt_text,
+remove_hedge_words, KONTEXT_PHRASEN, HEDGE_PATTERNS) laufen
+ausschliesslich im v3.7-Pfad (pdf_processor.py, pipelines/v3_7.py).
+
+Der Regelstand hier ist EINGEFROREN (aelteste Generation: Farben-Verbot,
+Personen-nur-aus-Kontext, eigene Zeichen-Caps). Neue oder geaenderte
+Regeln gehoeren NICHT hierher, sondern nach prompts/ (v4-Builder).
+Rueckbau dieses Moduls: separate Entscheidung, siehe prompts/ARCHITEKTUR.md.
+=============================================================================
+
 Context Engine for InkluDocs Alt-Text Generation.
 Version 2.2 – Anti-Halluzination + Funktional + Thumbnail-Guard (30.03.2026)
 
@@ -108,7 +124,7 @@ ANTI-HALLUZINATION – KONTEXTNUTZUNG:
 KONTEXT-ANREICHERUNG BEI UNSPEZIFISCHEN BILDERN:
 - Wenn das Bild allein betrachtet keine spezifische Information liefert (z.B. "eine Person in einem Raum", "eine leere Halle"), DANN nutze den Seitenkontext um dem Bild Bedeutung zu geben.
 - Beispiel: Bild zeigt "leere Halle mit sandigem Boden" + Kontext ist Pferdesport → "Reithalle mit sandigem Boden und Hindernissen"
-- Beispiel: Bild zeigt "Person in einem Geschaeft" + Kontext ist budni/Drogeriemarkt → "Kundin im Drogeriemarkt budni beim Einkaufen"
+- Beispiel: Bild zeigt "Person in einem Geschaeft" + Kontext ist budni/Drogeriemarkt → "Kundin im Drogeriemarkt budni" (KEINE erfundene Handlung wie "beim Einkaufen" — nur wenn aus Pose belegt)
 - WICHTIG: Dies ist KEIN Widerspruch zur Anti-Halluzination. Du darfst den Kontext nutzen um das Thema zuzuordnen ("Reithalle" statt "Halle"), aber du darfst KEINE Details erfinden die du nicht siehst.
 - FAUSTREGEL: Wenn dein Alt-Text kuerzer als 50 Zeichen ist und der Seitenkontext mehr Information liefert, nutze den Kontext zur Anreicherung.
 

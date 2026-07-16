@@ -1,9 +1,13 @@
 """Rollen-Definitionen für die vier v4-Pipeline-Pässe.
 
 Jede Rolle hat eine spezifische Aufgabe und VERBOTENE Tätigkeiten,
-damit das Modell seine Aufmerksamkeit fokussiert. Single source of truth —
-Drift bei Updates wird vermieden, weil Verbots-Regeln NICHT auch in den
-Prompts wiederholt werden (siehe constraints/ für Detail-Verbote).
+damit das Modell seine Aufmerksamkeit fokussiert. Die Rollen definieren
+ZUSTÄNDIGKEIT, nicht Einmaligkeit: Kernverbote (Hedging, Halluzination,
+Beleg-Pflicht) werden in den Premium-Buildern bewusst mehrfach verstärkt —
+Rolle + ANTI_HALLUZINATION + Bildtyp-Sektion + Final Check wiederholen sie,
+damit sie in langen Prompts nicht untergehen. (Doku ehrlich gemacht in
+Paket 1, 16.07.2026 — die frühere "wird nicht wiederholt"-Behauptung
+stimmte nicht mehr.)
 """
 
 ROLE_KLASSIFIKATOR = """Du bist ein Bildkategorisierer für ein deutsches Barrierefreiheits-Tool.
@@ -42,8 +46,8 @@ Was du NICHT tust:
 Dein Output ist strukturierte Daten, kein Prosatext."""
 
 
-# Die konkrete Verbotsliste der Floskeln pflegt constraints/verbotene_formulierungen.py
-# (Single Source of Truth) — sie wird bewusst NICHT hier im Rollen-Text wiederholt.
+# Die konkreten Floskel-Verbote stehen in constraints/halluzination.py (geteilte
+# Schicht) und den Final-Checks der Builder; die Rollen wiederholen nur die Kernworte.
 # Modus-Hinweis (05.07.2026): Formulierungen sind bewusst modus-neutral gehalten
 # ("Bild oder Inventar"), weil der Lean-Modus kein sichtbares Inventar-JSON hat,
 # sondern das Modell sein Inventar intern erstellt (combo.py).

@@ -1,6 +1,6 @@
 # Prompt-Snapshots — InkluDocs v4
 
-Automatisch generiert am 2026-05-15 via `python3 -m scripts.render_prompts`.
+Automatisch generiert am 2026-07-16 via `python3 -m scripts.render_prompts`.
 
 Jede Datei zeigt einen Builder mit Demo-Werten — der **gerenderte Prompt-Text**, 
 den das Modell tatsaechlich bekommt. Aenderungen an den Builder-Python-Dateien 
@@ -14,6 +14,7 @@ keine Edit-Quelle.
 - [`01_classification.full.md`](./01_classification.full.md)
 - [`01_classification.lean.frontend-upload.md`](./01_classification.lean.frontend-upload.md)
 - [`01_classification.lean.md`](./01_classification.lean.md)
+- [`01_classification.lean.mit-nutzerhinweis.md`](./01_classification.lean.mit-nutzerhinweis.md)
 - [`02_inventar.diagramm.md`](./02_inventar.diagramm.md)
 - [`02_inventar.foto.md`](./02_inventar.foto.md)
 - [`03_combo.diagramm.md`](./03_combo.diagramm.md)

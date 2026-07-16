@@ -1,4 +1,4 @@
-# Klassifikator — Modus: lean, Frontend-Einzelbild-Upload (leerer Kontext)
+# Klassifikator — Modus: lean, MIT Nutzer-Hinweis (Vorrang-Ordnung)
 
 - **Builder:** `prompts/builders/classification.py:139`
 - **Generiert:** 2026-07-16
@@ -6,8 +6,9 @@
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
   - width × height: 1280 × 720
-  - enriched_context: (leer — Frontend-Einzelbild-Upload ohne PDF)
+  - enriched_context: rich (Workshop-PDF-Auszug)
   - original_alt: (leer)
+  - user_hint: gesetzt (Workshop Acer Deutschland)
 
 ---
 
@@ -62,8 +63,12 @@ DIE 12 TOP-LEVEL-BILDTYPEN:
 INPUTS:
 - Bildgroesse: 1280x720 Pixel
 - Original-Alt vom Autor: (keiner)
-- Kontext (Web-Scraper, PDF, API): (kein Kontext)
+- Kontext (Web-Scraper, PDF, API): Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
 
+
+NUTZER-HINWEIS (HOHE PRIORITÄT — Nutzer sagt was über das Bild):
+Das ist unser Workshop am 5. Mai 2026 mit der Firma Acer Deutschland als Kooperationspartner. Bitte Workshop-Charakter betonen.
+Vorrang-Ordnung: Der Nutzer-Hinweis hat Vorrang bei FOKUS, ZWECK und WORTWAHL. Er darf außerdem Wissen liefern, das dem Bild nicht anzusehen ist — etwa den Bildtyp oder die Identität einer Person; solches Wissen übernimmst du. Sichtbare FAKTEN kommen immer aus dem Bild — ein Hinweis kann nicht behaupten, etwas sei sichtbar, was das Bild nicht zeigt. Der Seitenkontext dient der Gewichtung und liefert belegte Namen und Funktionen. Wenn Hinweis und Bild auseinanderliegen: Erkläre kurz im Output warum.
 
 ROUTING-REGELN (in dieser Prioritaet):
 

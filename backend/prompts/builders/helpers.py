@@ -44,8 +44,14 @@ def user_hint_block(user_hint: Optional[str]) -> str:
     return (
         '\n\nNUTZER-HINWEIS (HOHE PRIORITÄT — Nutzer sagt was über das Bild):\n'
         + user_hint
-        + '\nWenn der Nutzer-Hinweis deiner Wahrnehmung widerspricht: Hinweis hat Vorrang. '
-        + 'Erkläre kurz im Output warum.'
+        + '\nVorrang-Ordnung: Der Nutzer-Hinweis hat Vorrang bei FOKUS, ZWECK und '
+        + 'WORTWAHL. Er darf außerdem Wissen liefern, das dem Bild nicht anzusehen '
+        + 'ist — etwa den Bildtyp oder die Identität einer Person; solches Wissen '
+        + 'übernimmst du. Sichtbare FAKTEN kommen immer aus dem Bild — ein Hinweis '
+        + 'kann nicht behaupten, etwas sei sichtbar, was das Bild nicht zeigt. Der '
+        + 'Seitenkontext dient der Gewichtung und liefert belegte Namen und '
+        + 'Funktionen. Wenn Hinweis und Bild auseinanderliegen: Erkläre kurz im '
+        + 'Output warum.'
     )
 
 

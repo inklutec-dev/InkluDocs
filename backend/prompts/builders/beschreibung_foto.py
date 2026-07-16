@@ -8,10 +8,13 @@ den Refactorings 05/06-2026 versehentlich aus allen 6 Buildern herausgefallen �
 am 05.07.2026 nach Fable-5-Review wieder eingesetzt, s. Desktop-Doku
 Premium-Prompt-Review-Fable5.txt):
   ROLE_BESCHREIBER + ANTI_HALLUZINATION_REGELN + (ATMOSPHAERE_REGEL je nach Typ)
-  + (PERSONEN_REGELN bei foto_personen/foto_event)
-  + (KONTAKTDATEN_PFLICHT bei Typen wo Kontaktdaten häufig vorkommen)
+  + geteilte Helper-Blöcke (Personen-, Kontext-, Unterschriften-, Atmosphäre-,
+    Zweck-, Kompaktheits-Block — siehe _render_*-Funktionen unten)
   + Bildtyp-spezifische SPEZIFITAETS-PFLICHT + VOLLSTÄNDIGKEITS-PFLICHT
   + Few-Shot + Schema-Doc
+  (Paket 1, 16.07.2026: die früher hier genannten Constraint-Module
+  PERSONEN_REGELN und KONTAKTDATEN_PFLICHT waren tote Importe und wurden
+  entfernt — die Personen-Logik lebt in _render_personenregeln_block.)
 
 ATMOSPHAERE_REGEL gilt für foto_essen EINGESCHRÄNKT (nur visuell belegbare
 Eigenschaften, keine Geschmacks-Adjektive) — siehe Builder-Kommentar.
@@ -22,12 +25,12 @@ from typing import Optional
 
 from .helpers import resolve_prompt_mode
 
+# Paket 1 (16.07.2026): tote Importe entfernt — EVIDENZ_STUFEN_REGELN,
+# KONTAKTDATEN_PFLICHT und PERSONEN_REGELN wurden in keinem Prompt-String
+# dieser Datei verwendet (Regel-Inventur, Strukturbefund 2).
 from prompts.components.constraints import (
     ANTI_HALLUZINATION_REGELN,
     ATMOSPHAERE_REGEL,
-    EVIDENZ_STUFEN_REGELN,
-    KONTAKTDATEN_PFLICHT,
-    PERSONEN_REGELN,
 )
 from prompts.components.roles import ROLE_BESCHREIBER
 from prompts.components.schema_helpers import render_schema_for_prompt
@@ -124,12 +127,18 @@ ERLAUBT:
 
 NICHT ERFINDEN (Genauigkeit/Halluzinationsschutz):
 - Namen oder Identitaet raten, wenn KEINERLEI Anhaltspunkt vorliegt — dann "Person"
-- Altersschaetzung
-- Geschlechtszuschreibung ohne Kontext
+- praezise Alterszahlen raten (z.B. "34 Jahre alt")
 - Ethnie, Religion, Gesundheit
 - erfundene Beziehungen (z.B. Kolleginnen, Familie, Teilnehmer — nur wenn Kontext das belegt)
 - erfundene Emotionen (z.B. gluecklich, begeistert, interessiert)
-- psychologische Interpretationen"""
+- psychologische Interpretationen
+
+Grobe, eindeutig sichtbare Alters- und Erscheinungs-Kategorien duerfen
+benannt werden (Kind, Jugendlicher, Erwachsener, aelterer Mensch; "Mann im
+dunklen Anzug").
+Bei echter Uneindeutigkeit: neutral "Person"."""
+# Hinweis (Paket 1, 16.07.2026): Der Full-Zweig wurde an die 16.06.-Lockerung
+# des Lean-Zweigs angeglichen (grobe Alters-/Erscheinungs-Kategorien erlaubt).
 
 
 def _render_kontextregeln_block() -> str:
@@ -256,7 +265,15 @@ Priorisiere die Bildaspekte, die diesen Zweck bedienen — dieselbe Szene brauch
 im Produktkatalog eine andere Gewichtung als im Reparatur-Handbuch oder in einer
 Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
 KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
-informativ beschreiben."""
+informativ beschreiben.
+
+ANTI-REDUNDANZ ZUR BILDUNTERSCHRIFT: Wiederhole keine beschreibenden Details,
+die die Bildunterschrift bereits nennt — Namen, Funktionen und Identitaeten
+dagegen IMMER nennen (der Alt-Text muss allein verstaendlich sein).
+
+KONTEXT-ANREICHERUNG OHNE ERFUNDENE HANDLUNG: Der Kontext darf praezisieren,
+WAS zu sehen ist ("Filiale der Drogeriekette budni"), aber keine Handlung oder
+Absicht erfinden, die das Bild nicht zeigt (NICHT: "beim Einkaufen")."""
 
 
 def _render_kompaktheit_block() -> str:
@@ -452,7 +469,7 @@ ALT-TEXT
 Der Alt-Text:
 - beginnt mit der Art der Szene und dem charakteristischsten, orientierungs-
   relevanten Element, nicht mit einer generischen Personenzaehlung. Beispiel:
-  "Workshop in hellem Seminarraum: rund zehn Personen nebeneinander, einige
+  "Workshop in hellem Seminarraum: zehn Personen nebeneinander, einige
   halten orange-weisse runde Karten; im Hintergrund Catering-Tisch und Acer-Beamer"
 - priorisiert die visuell dominantesten Elemente: auffaellige Farben, praegende
   Moebel/Raumstrukturen, Projektionsflaechen, klar sichtbare Logos/Marken

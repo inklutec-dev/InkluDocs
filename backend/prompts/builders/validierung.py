@@ -111,12 +111,6 @@ Plus halluzinations_warnung-Respekt: wenn das Inventar in
 halluzinations_warnung explizit warnt (z.B. 'Glasur könnte als Flüssigkeit
 fehlinterpretiert werden') und der Output trotzdem 'Flüssigkeit',
 'Substanz', 'Füllung' verwendet, ist das eine BESONDERS schwere
-Halluzination — markieren plus needs_review=True forcieren.
-
-Plus halluzinations_warnung-Respekt: wenn das Inventar in
-halluzinations_warnung explizit warnt (z.B. 'Glasur könnte als Flüssigkeit
-fehlinterpretiert werden') und der Output trotzdem 'Flüssigkeit',
-'Substanz', 'Füllung' verwendet, ist das eine BESONDERS schwere
 Halluzination — markieren plus needs_review=True forcieren.""",
 
     'illustration': """SPEZIAL FÜR illustration:

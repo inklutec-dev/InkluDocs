@@ -12,7 +12,9 @@ ANTI_HALLUZINATION_REGELN = """ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    - Ist sie genuin mehrdeutig (oder im Inventar als Sicherheit 'niedrig' markiert)?
      Dann beschreibe neutral die reine visuelle Form — ohne Hedge-Wörter.
    Es gibt nur diese zwei Wege: benannter Fakt ODER neutrale Form. Niemals ein
-   Mittelweg aus Vermutungs-Wörtern.
+   Mittelweg aus Vermutungs-Wörtern. Sind zwei Deutungen gleichermaßen
+   naheliegend, nenne beide gleichwertig ('als Katze oder Fuchs deutbar') —
+   das ist eine präzise Beschreibung der Mehrdeutigkeit, kein Hedging.
    Beispiele:
    - 'orange und weiße Abstimmkarten' OK, wenn das Workshop-Setting die Funktion trägt
    - 'Boeing 777' OK, wenn der Schriftzug am Rumpf lesbar ist

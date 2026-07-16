@@ -401,6 +401,35 @@ def render_all(out_dir: Path) -> list[Path]:
         prompt_text=text,
     ))
 
+    # Klassifikator — Variante MIT Nutzer-Hinweis (zeigt die Vorrang-Ordnung
+    # des user_hint_block aus helpers.py im gerenderten Prompt)
+    prev = _set_env({'V4_PASS_MODE': 'lean', 'V4_PROMPT_MODE': '', 'LLM_PROVIDER': 'bedrock'})
+    try:
+        text = build_classification_prompt(
+            enriched_context=DEMO_CONTEXT_RICH,
+            width=DEMO_WIDTH,
+            height=DEMO_HEIGHT,
+            original_alt=DEMO_ORIGINAL_ALT_LEER,
+            user_hint=DEMO_USER_HINT_SET,
+        )
+    finally:
+        _restore_env(prev)
+
+    written.append(_write_snapshot(
+        out_dir,
+        filename='01_classification.lean.mit-nutzerhinweis.md',
+        title='Klassifikator — Modus: lean, MIT Nutzer-Hinweis (Vorrang-Ordnung)',
+        builder_ref=_builder_source_link(build_classification_prompt),
+        mode_info={'V4_PASS_MODE': 'lean'},
+        demo_values={
+            **common_demo,
+            'enriched_context': 'rich (Workshop-PDF-Auszug)',
+            'original_alt': '(leer)',
+            'user_hint': 'gesetzt (Workshop Acer Deutschland)',
+        },
+        prompt_text=text,
+    ))
+
     # ------------------------------------------------------------------
     # 2) Inventar — fuer foto + diagramm (kein Lean/Full-Schalter im Builder)
     # ------------------------------------------------------------------

@@ -2,20 +2,20 @@
 
 Importpfad-Beispiel:
   from prompts.components.constraints import ANTI_HALLUZINATION_REGELN
+
+Paket 1 (16.07.2026): Tote Module entfernt — personen_regeln.py, wcag.py,
+kontext_nutzung.py und verbotene_formulierungen.py wurden von keinem Builder
+mehr eingebunden (Regel-Inventur, Strukturbefund 2). Der inhaltliche Kern von
+kontext_nutzung.py (Anti-Redundanz zur Bildunterschrift, Kontext-Anreicherung
+ohne erfundene Handlung / budni-Korrektur) lebt jetzt in
+prompts/builders/beschreibung_foto.py (_render_zweck_block) weiter.
 """
 from .atmosphere_evidenz import ATMOSPHAERE_REGEL
 from .eigennamen import EIGENNAMEN_REGELN
 from .evidenz_stufen import EVIDENZ_STUFEN_REGELN
 from .halluzination import ANTI_HALLUZINATION_REGELN
 from .kontaktdaten import KONTAKTDATEN_PFLICHT
-from .kontext_nutzung import KONTEXT_NUTZUNGS_REGELN
 from .lizenz_logos import LIZENZ_LOGOS_REGELN
-from .personen_regeln import PERSONEN_REGELN
-from .verbotene_formulierungen import (
-    VERBOTENE_INTERPRETATIONS_PHRASEN,
-    VERBOTENE_VERMUTUNGSWOERTER,
-)
-from .wcag import WCAG_GRUNDPRINZIP, WCAG_KONKRET_PFLICHTEN
 
 __all__ = [
     'ATMOSPHAERE_REGEL',
@@ -23,11 +23,5 @@ __all__ = [
     'EVIDENZ_STUFEN_REGELN',
     'ANTI_HALLUZINATION_REGELN',
     'KONTAKTDATEN_PFLICHT',
-    'KONTEXT_NUTZUNGS_REGELN',
     'LIZENZ_LOGOS_REGELN',
-    'PERSONEN_REGELN',
-    'VERBOTENE_INTERPRETATIONS_PHRASEN',
-    'VERBOTENE_VERMUTUNGSWOERTER',
-    'WCAG_GRUNDPRINZIP',
-    'WCAG_KONKRET_PFLICHTEN',
 ]

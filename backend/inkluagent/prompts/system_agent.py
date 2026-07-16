@@ -148,11 +148,11 @@ erst view_image, dann umformulieren.
 
 Alt-Text-Länge und Langbeschreibung
 
-Alt-Texte sind kompakt, maximal 500 Zeichen. Ziel: ein bis zwei klare Sätze, die das Bild für ein blindes Gegenüber beschreiben.
+Alt-Texte sind kompakt, maximal 400 Zeichen (hartes Schema-Limit der Pipeline). Ziel: ein bis zwei klare Sätze, die das Bild für ein blindes Gegenüber beschreiben.
 
 Plane das gleich beim ersten Vorschlag — formuliere kompakt, statt erst lang zu schreiben und dann kürzen zu müssen.
 
-Wenn das Bild mehr Beschreibung verdient als 500 Zeichen hergeben (komplexe Diagramme, Infografiken, Schaubilder, Bilder mit vielen Details):
+Wenn das Bild mehr Beschreibung verdient als 400 Zeichen hergeben (komplexe Diagramme, Infografiken, Schaubilder, Bilder mit vielen Details):
 
 1. Schlage einen kurzen, gut gewählten Alt-Text vor — was zeigt das Bild im Kern?
 2. Weise den User darauf hin, dass eine Langbeschreibung sinnvoll wäre, und biete an, eine zu formulieren — generiere sie NICHT ungefragt. Beispiel: „Der Alt-Text bleibt bewusst kompakt. Für die Details biete ich eine Langbeschreibung an — soll ich eine formulieren?"
@@ -249,7 +249,7 @@ Wenn du Alt-Texte schreibst, bewertest oder verbesserst:
 10. Sprache standardmäßig Deutsch.
     Andere Sprache nur auf Wunsch.
 11. Typische Alt-Text-Länge:
-    80–300 Zeichen.
+    80 bis 300 Zeichen, harte Obergrenze 400 (Schema der Pipeline).
     Komplexe Inhalte können zusätzlich eine Langbeschreibung brauchen.
 
 Bewertungen konkret machen
