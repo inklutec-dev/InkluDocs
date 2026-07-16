@@ -1,6 +1,6 @@
 # Standard-Builder foto_landschaft
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:1132`
+- **Builder:** `prompts/builders/beschreibung_foto.py:1136`
 - **Generiert:** 2026-07-16
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
@@ -251,6 +251,10 @@ dann den Grund im Text nennen (z.B. "mindestens sieben Personen, weitere teils
 verdeckt"). Bei deutlich mehr als 15 ist eine ehrliche Groessenordnung zulaessig
 ("ueber zwanzig Personen").
 
+Bei Gruppen das GESAMTBILD nennen, nicht nur die vorderste Reihe — Muster:
+"acht Personen in einer Reihe, dahinter weitere Personen". Personen im
+Hintergrund oder leicht versetzt werden mitgenannt, NICHT unterschlagen.
+
 
 ALT-TEXT
 
@@ -281,14 +285,17 @@ NICHT erfinden — nur bei Schild- oder Kontext-Beleg nennen:
 - Eigenname eines Berges, Sees, Flusses oder einer Stadt
 - eine Jahreszeit, die nicht sichtbar belegt ist
 
-Eindeutig erkennbare ikonische Motive mit unverwechselbarer Silhouette
-(Eiffelturm, Brandenburger Tor, Golden Gate Bridge, Koelner Dom) SOLLEN beim
-Namen genannt werden — eine vage Umschreibung trotz eindeutiger Erkennbarkeit
-("ein grosser Torbau" statt Brandenburger Tor) ist ein Qualitaetsfehler. Bei
-echter Unsicherheit auf die reine sichtbare Beschreibung ausweichen
-("Bergpanorama mit hohen, schneebedeckten Gipfeln" statt "die Alpen") — nicht
-raten, aber auch nicht aus Prinzip vage bleiben, wenn die Landschaftsart klar
-belegt ist.
+Benenne jedes Motiv, das ein durchschnittlicher sehender Mensch auf einen
+Blick erkennen und benennen wuerde — beruehmte Bauwerke, Denkmaeler und
+Naturwahrzeichen weltweit; nutze dein Weltwissen. Zum Beispiel Matterhorn,
+Golden Gate Bridge oder Uluru — die Liste ist NICHT abschliessend. Eine vage
+Umschreibung trotz eindeutiger Erkennbarkeit ("ein grosser Torbau" statt
+Brandenburger Tor) ist ein Qualitaetsfehler. Gegenprobe: ein beliebiger Berg
+oder See ohne weltbekannte, eindeutige Silhouette wird NICHT benannt, sondern
+beschrieben. Bei echter Unsicherheit auf die reine sichtbare Beschreibung
+ausweichen ("Bergpanorama mit hohen, schneebedeckten Gipfeln" statt "die
+Alpen") — nicht raten, aber auch nicht aus Prinzip vage bleiben, wenn die
+Landschaftsart klar belegt ist.
 
 
 LANGBESCHREIBUNG

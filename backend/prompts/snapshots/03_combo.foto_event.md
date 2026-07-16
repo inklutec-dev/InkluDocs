@@ -348,6 +348,10 @@ dann den Grund im Text nennen (z.B. "mindestens sieben Personen, weitere teils
 verdeckt"). Bei deutlich mehr als 15 ist eine ehrliche Groessenordnung zulaessig
 ("ueber zwanzig Personen").
 
+Bei Gruppen das GESAMTBILD nennen, nicht nur die vorderste Reihe — Muster:
+"acht Personen in einer Reihe, dahinter weitere Personen". Personen im
+Hintergrund oder leicht versetzt werden mitgenannt, NICHT unterschlagen.
+
 
 EVENT-LOGIK
 

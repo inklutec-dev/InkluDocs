@@ -307,7 +307,11 @@ nennen — nicht schaetzen. "Circa", "rund", "etwa" oder "mindestens" sind NUR
 erlaubt, wenn sichtbare Teile echt verdeckt, abgeschnitten oder unscharf sind;
 dann den Grund im Text nennen (z.B. "mindestens sieben Personen, weitere teils
 verdeckt"). Bei deutlich mehr als 15 ist eine ehrliche Groessenordnung zulaessig
-("ueber zwanzig Personen")."""
+("ueber zwanzig Personen").
+
+Bei Gruppen das GESAMTBILD nennen, nicht nur die vorderste Reihe — Muster:
+"acht Personen in einer Reihe, dahinter weitere Personen". Personen im
+Hintergrund oder leicht versetzt werden mitgenannt, NICHT unterschlagen."""
 
 
 def _render_unsicherheit_block() -> str:
@@ -1239,14 +1243,17 @@ NICHT erfinden — nur bei Schild- oder Kontext-Beleg nennen:
 - Eigenname eines Berges, Sees, Flusses oder einer Stadt
 - eine Jahreszeit, die nicht sichtbar belegt ist
 
-Eindeutig erkennbare ikonische Motive mit unverwechselbarer Silhouette
-(Eiffelturm, Brandenburger Tor, Golden Gate Bridge, Koelner Dom) SOLLEN beim
-Namen genannt werden — eine vage Umschreibung trotz eindeutiger Erkennbarkeit
-("ein grosser Torbau" statt Brandenburger Tor) ist ein Qualitaetsfehler. Bei
-echter Unsicherheit auf die reine sichtbare Beschreibung ausweichen
-("Bergpanorama mit hohen, schneebedeckten Gipfeln" statt "die Alpen") — nicht
-raten, aber auch nicht aus Prinzip vage bleiben, wenn die Landschaftsart klar
-belegt ist.
+Benenne jedes Motiv, das ein durchschnittlicher sehender Mensch auf einen
+Blick erkennen und benennen wuerde — beruehmte Bauwerke, Denkmaeler und
+Naturwahrzeichen weltweit; nutze dein Weltwissen. Zum Beispiel Matterhorn,
+Golden Gate Bridge oder Uluru — die Liste ist NICHT abschliessend. Eine vage
+Umschreibung trotz eindeutiger Erkennbarkeit ("ein grosser Torbau" statt
+Brandenburger Tor) ist ein Qualitaetsfehler. Gegenprobe: ein beliebiger Berg
+oder See ohne weltbekannte, eindeutige Silhouette wird NICHT benannt, sondern
+beschrieben. Bei echter Unsicherheit auf die reine sichtbare Beschreibung
+ausweichen ("Bergpanorama mit hohen, schneebedeckten Gipfeln" statt "die
+Alpen") — nicht raten, aber auch nicht aus Prinzip vage bleiben, wenn die
+Landschaftsart klar belegt ist.
 
 
 LANGBESCHREIBUNG
@@ -1345,9 +1352,11 @@ Mittelpunkt steht (Wohnhaus, Buerogebaeude, Kirche, Bruecke, Hochhaus, Halle,
 Innenraum, Fassaden-Ausschnitt). Ziel ist dichte, faktenbasierte
 Wissensvermittlung — praezise, beobachtend, und so KOMPAKT wie moeglich.
 
-Fuehre mit dem Namen, wenn das Bauwerk ein bekanntes, eindeutig erkennbares
-Wahrzeichen ist — trau dich, dein Wissen ueber bekannte Architektur zu nutzen
-(z.B. Brandenburger Tor, Koelner Dom, Eiffelturm). Ist kein eindeutiges
+Fuehre mit dem Namen, wenn das Bauwerk ein Motiv ist, das ein durchschnittlicher
+sehender Mensch auf einen Blick erkennen und benennen wuerde — beruehmte
+Bauwerke, Denkmaeler und Naturwahrzeichen weltweit; nutze dein Weltwissen
+(zum Beispiel Koelner Dom oder Sydney Opera House — die Liste ist NICHT
+abschliessend). Ist kein eindeutiges
 Wahrzeichen erkennbar, schliesse aus dem Sichtbaren auf Bautyp und FUNKTION
 (z.B. Reithalle, Lagerhalle, Bahnhofshalle, Buerogebaeude) — auch ohne Kontext.
 Erfinde nur keine FALSCHE konkrete Identitaet (keinen geratenen Namen fuer ein
@@ -1406,10 +1415,13 @@ Inventarlisten, das Auslisten jeder Saeule/jedes Fensters.
 
 BENENNEN — TRAU DICH, ABER ERFINDE NICHTS FALSCHES
 
-Nenne ein bekanntes Bauwerk BEIM NAMEN, wenn es eindeutig erkennbar ist — nutze
-dafuer dein Wissen ueber bekannte Architektur (Brandenburger Tor, Koelner Dom,
-Eiffelturm, Sydney Opera House, Reichstag usw.). Das ist ausdruecklich erwuenscht
-und fuer blinde Nutzer wertvoll.
+Benenne jedes Bauwerk BEIM NAMEN, das ein durchschnittlicher sehender Mensch
+auf einen Blick erkennen und benennen wuerde — beruehmte Bauwerke, Denkmaeler
+und Naturwahrzeichen weltweit; nutze dein Weltwissen. Zum Beispiel Eiffelturm
+oder Sydney Opera House — die Liste ist NICHT abschliessend. Das ist
+ausdruecklich erwuenscht und fuer blinde Nutzer wertvoll. Gegenprobe: ein
+beliebiges Schloss oder Hochhaus ohne weltbekannte, eindeutige Silhouette wird
+NICHT benannt, sondern nach Bautyp und Funktion beschrieben.
 
 Ist kein eindeutiges Wahrzeichen erkennbar, schliesse aus dem Sichtbaren auf den
 Bautyp und die FUNKTION (Reithalle an Sandboden und Bande, Lagerhalle an Toren

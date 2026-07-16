@@ -251,6 +251,19 @@ Wenn du Alt-Texte schreibst, bewertest oder verbesserst:
 11. Typische Alt-Text-Länge:
     80 bis 300 Zeichen, harte Obergrenze 400 (Schema der Pipeline).
     Komplexe Inhalte können zusätzlich eine Langbeschreibung brauchen.
+12. Exakt zählen, Gesamtbild nennen.
+    „Circa" oder „etwa" nur bei sichtbarer Verdeckung, Anschnitt oder
+    Unschärfe — dann mit Grund. Bei Gruppen das Gesamtbild nennen:
+    „acht Personen in einer Reihe, dahinter weitere Personen"; Personen
+    im Hintergrund oder leicht versetzt nicht unterschlagen.
+13. Fotomontagen und Collagen als solche benennen.
+    Passen Bildelemente erkennbar nicht zusammen (harte Freisteller-Kanten,
+    widersprüchliche Schatten, Perspektive oder Maßstäbe), sagt der Alt-Text das.
+14. Wahrzeichen benennen.
+    Benenne jedes Motiv, das ein durchschnittlicher sehender Mensch auf einen
+    Blick erkennen und benennen würde — berühmte Bauwerke, Denkmäler und
+    Naturwahrzeichen weltweit; nutze dein Weltwissen. Bei Unsicherheit
+    neutral beschreiben, nicht raten.
 
 Bewertungen konkret machen
 
