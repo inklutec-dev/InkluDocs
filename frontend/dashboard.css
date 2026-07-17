@@ -59,6 +59,11 @@
 .dash-item { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; }
 .dash-item h2, .dash-item h3 { margin:0 0 .2rem; font-size:1.1rem; }
 .dash-item a { color:#c75000; text-decoration:underline; }
+/* Michael 17.07.2026 (Optik A1): Projekttitel fett, OHNE Dauer-Unterstrich.
+   Erkennbarkeit als Link bleibt ueber Farbe + Unterstrich bei Hover/Fokus. */
+.dash-item h2 a, .dash-item h3 a { font-weight:700; text-decoration:none; }
+.dash-item h2 a:hover, .dash-item h3 a:hover,
+.dash-item h2 a:focus, .dash-item h3 a:focus { text-decoration:underline; }
 .dash-meta { color:var(--text-muted); font-size:.9rem; margin:.2rem 0 0; }
 .dash-actions { margin-top:.7rem; display:flex; gap:.4rem; flex-wrap:wrap; }
 .dash-empty { color:var(--text-muted); background:var(--card-bg); border:1px dashed var(--border); border-radius:8px; padding:1.5rem; }
