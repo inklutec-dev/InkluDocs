@@ -2761,27 +2761,6 @@ async def get_project_status(project_id: int, user: dict = Depends(get_current_u
     }
 
 
-def _mark_owner_in_bearbeitung(conn, image_id: int):
-    """Besitzer-Bearbeitung als Status-Ereignis stempeln (Michael 17.07.2026):
-    Speichert der BESITZER einen Alt-Text oder generiert er ein Bild EINZELN
-    neu, soll die Bildkarte „In Bearbeitung" zeigen (statt „Neu"). Das Frontend
-    leitet den Karten-Status als JUENGSTES Ereignis aus image_reviews ab
-    (latestReview/unifiedStatusKey in app.html, Korb A/B) — daher genuegt ein
-    role-neutraler Eintrag role='ersteller' mit frischem Zeitstempel; ein
-    SPAETERES Prüf-Urteil eines Gastes ueberschreibt die Anzeige automatisch
-    (jüngstes Ereignis gewinnt), die Gast-Zeilen (kunde/lektorat) bleiben
-    unberuehrt. Bewusst NUR die gezielte Einzel-Aktion: Sammellauf und
-    Erst-Generierung beim Upload stempeln NICHT (frische Projekte = „Neu").
-    Kein Commit hier — der Aufrufer committet seine Transaktion selbst."""
-    conn.execute(
-        "INSERT INTO image_reviews (image_id, role, status, reviewed_at) "
-        "VALUES (?, 'ersteller', 'in_bearbeitung', datetime('now')) "
-        "ON CONFLICT(image_id, role) DO UPDATE SET "
-        "status = 'in_bearbeitung', reviewed_at = datetime('now')",
-        (image_id,)
-    )
-
-
 @app.post("/api/images/{image_id}/alt-text")
 async def update_alt_text(image_id: int, request: Request, user: dict = Depends(get_current_user)):
     data = await request.json()
@@ -2806,8 +2785,6 @@ async def update_alt_text(image_id: int, request: Request, user: dict = Depends(
             "UPDATE images SET langbeschreibung = ? WHERE id = ?",
             (data.get("langbeschreibung", ""), image_id)
         )
-    # Michael 17.07.2026: Besitzer-Speichern = Karten-Status „In Bearbeitung".
-    _mark_owner_in_bearbeitung(conn, image_id)
     conn.commit()
     conn.close()
     return {"ok": True}
@@ -2988,10 +2965,6 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
             "UPDATE projects SET processed_images = ? WHERE id = ?",
             (processed_count, project_id)
         )
-        # Michael 17.07.2026: gezieltes Einzel-Neu-Generieren durch den Besitzer
-        # = Karten-Status „In Bearbeitung" (nur bei Erfolg; der Fehlerpfad unten
-        # stempelt bewusst nicht — die Karte zeigt dann status='error').
-        _mark_owner_in_bearbeitung(conn, image_id)
         conn.commit()
         conn.close()
 
@@ -4128,6 +4101,10 @@ def _append_link_reference(alt_text: str, context_text: str) -> str:
 
 NEUIGKEITEN = [
     # Neueste zuerst. Nur Eintraege, die fuer Nutzer relevant + auf Production live sind.
+    {"datum": "17.07.2026", "text": "Großes Update der Bildbeschreibungen: Alle 16 Bildkategorien — von Foto über Diagramm und Tabelle bis Strukturformel — liefern jetzt spürbar präzisere Texte: Kernaussage zuerst, Zahlen wortgetreu. Ein automatischer Redakteur prüft kritische Bilder zusätzlich gegen das Bild und korrigiert offensichtliche Fehler."},
+    {"datum": "17.07.2026", "text": "Prüf-Workflow vereinfacht: Jedes Bild trägt genau einen Status — Neu, In Bearbeitung, Lektorat Freigabe/Änderung, Herausgeber Freigabe/Änderung — und genau danach kannst du filtern. Beim Abschluss einer Prüfung genügt eine Anmerkung."},
+    {"datum": "17.07.2026", "text": "Neu: SVG-Dateien (Vektorgrafiken) können jetzt direkt hochgeladen werden — sie werden automatisch umgewandelt und durchlaufen die normale Generierung."},
+    {"datum": "17.07.2026", "text": "Neue Sprache: Die Oberfläche und die Alt-Text-Ausgabe gibt es jetzt auch auf Schwedisch."},
     {"datum": "09.07.2026", "text": "Neu: Eigene Prompts. Du speicherst eigene Anweisungen für die KI – zum Beispiel ‚verwende einfache Sprache‘ – und wählst pro Projekt aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Auch beim einzelnen Neu-Generieren."},
     {"datum": "09.07.2026", "text": "PDF-Auslesung verbessert: Texte werden bei Spalten- und Seitenumbrüchen nicht mehr doppelt erfasst, und Tabelleninhalte werden vollständiger übernommen. Die KI bekommt dadurch sauberere Zusammenhänge für ihre Beschreibungen."},
     {"datum": "09.07.2026", "text": "Bildbeschreibungen nochmals verbessert: kompaktere Alt-Texte, wichtige Personen im Bild werden zuverlässiger erwähnt, und eine automatische Gegenprüfung kontrolliert kritische Angaben."},
@@ -4956,9 +4933,7 @@ async def freigabe_complete(token: str, request: Request):
     owner = get_user_by_id(share["created_by"])
     pname = (project["name"] if project and project["name"] else (project["filename"] if project else "Projekt"))
     guest = (session or {}).get("guest", share["guest_email"])
-    # Karbe A7 (17.07.2026): KEIN Gast-Link mehr in der Besitzer-Mail — der
-    # Besitzer hat ein eigenes Konto und braucht den Freigabe-Link nicht
-    # (weniger Token-Streuung per Mail).
+    link = BASE_URL + "/freigabe/" + token
     notes_html = "".join("<li>" + _mail_escape(n["body"]) + "</li>" for n in notes)
     _ = get_gettext(_mail_lang(owner))
     # Etappe 3: Ruecksprache-Block fuer die Besitzer-Mail (nur Lektorat, nur wenn vorhanden).
@@ -4988,6 +4963,7 @@ async def freigabe_complete(token: str, request: Request):
         + rueck_html
         + (("<p><strong>" + _('Nachricht:') + "</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
         + (("<p><strong>" + _('Anmerkungen:') + "</strong></p><ul>" + notes_html + "</ul>") if notes_html else "")
+        + "<p>" + _('Im Werkzeug ansehen:') + " <a href='" + link + "'>" + link + "</a></p>"
     )
     if owner and owner.get("email"):
         send_email(owner["email"], _('InkluDocs: Prüfung abgeschlossen ({projekt})').format(projekt=pname), body, bcc_admin=False)
@@ -5053,11 +5029,9 @@ async def review_overview(user: dict = Depends(get_current_user)):
             neu_msgs = conn.execute(
                 "SELECT COUNT(*) FROM messages WHERE project_id = ? AND msg_type = 'chat' "
                 "AND COALESCE(sender_role,'') <> 'besitzer' AND created_at > ?", (pid, seen)).fetchone()[0]
-            # role='ersteller' = eigene Besitzer-Bearbeitung (17.07.2026) — zaehlt
-            # nicht als "neue Pruefstatus-Aenderung" (analog eigener Nachrichten).
             neu_reviews = conn.execute(
                 "SELECT COUNT(*) FROM image_reviews r JOIN images i ON i.id = r.image_id "
-                "WHERE i.project_id = ? AND r.role <> 'ersteller' AND r.reviewed_at > ?", (pid, seen)).fetchone()[0]
+                "WHERE i.project_id = ? AND r.reviewed_at > ?", (pid, seen)).fetchone()[0]
             neu_abschluesse = conn.execute(
                 "SELECT COUNT(*) FROM shares WHERE project_id = ? AND completed_at IS NOT NULL "
                 "AND completed_at > ?", (pid, seen)).fetchone()[0]
@@ -5067,7 +5041,7 @@ async def review_overview(user: dict = Depends(get_current_user)):
                 "AND COALESCE(sender_role,'') <> 'besitzer'", (pid,)).fetchone()[0]
             neu_reviews = conn.execute(
                 "SELECT COUNT(*) FROM image_reviews r JOIN images i ON i.id = r.image_id "
-                "WHERE i.project_id = ? AND r.role <> 'ersteller'", (pid,)).fetchone()[0]
+                "WHERE i.project_id = ?", (pid,)).fetchone()[0]
             neu_abschluesse = conn.execute(
                 "SELECT COUNT(*) FROM shares WHERE project_id = ? AND status = 'completed'", (pid,)).fetchone()[0]
         d["neu"] = {"nachrichten": neu_msgs, "pruefungen": neu_reviews, "abschluesse": neu_abschluesse}
