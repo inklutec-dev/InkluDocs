@@ -1,7 +1,7 @@
 # Daten-Builder karte
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:548`
-- **Generiert:** 2026-07-16
+- **Builder:** `prompts/builders/beschreibung_daten.py:696`
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -88,25 +88,26 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
-EIGENNAMEN UND ORTSNAMEN — Bild hat Vorrang vor Kontext:
-
-Wenn ein Eigenname oder Ortsname im Bild lesbar ist und im Kontext anders steht,
-hat der im Bild lesbare Text Vorrang. Häufige OCR-Verwechslungen:
-- TURKU (finnische Stadt) ist NICHT Turkey (englisch für Türkei)
-- Berlin vs. Berkeley (ähnlicher Anfang)
-- Bonn vs. Bern (ähnlich kurz)
-
-PRÜFE im Inventar: lesbare_texte hat Eigennamen mit Typ 'logo' oder 'beschriftung'.
-Diese MÜSSEN wortgetreu übernommen werden — auch wenn der Kontext einen anderen
-ähnlichen Namen nennt. Bei Mehrdeutigkeit dem Bild trauen, nicht dem Kontext.
-
-
-# WICHTIG: ATMOSPHAERE_REGEL gilt NICHT für karte.
-
 BILDTYP: karte (Landkarte, Stadtplan, Lageplan, Übersichtskarte)
-BILDGRÖSSE: 1280x720 Pixel
+BILDGROESSE: 1280x720 Pixel
 
-INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
+ZIEL
+
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
+eine Karte. Ziel ist räumliche Orientierung aus Text: Gebiet, Thema und die
+räumliche Kernaussage zuerst, dann die markierten Standorte und die Legende
+so, dass ein blinder Nutzer die Verteilung nachvollziehen kann. Ortsnamen
+sind hier heikel — sie werden wortgetreu und in Originalsprache übernommen,
+nie geraten und nie aus dem Kontext 'korrigiert'.
+
+
+INVENTAR (Pass-2-Beobachtungen)
+
+Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primäre faktische Grundlage. Sichtbare
+Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
+widersprechen.
+
 {
   "foto_subtyp": null,
   "personen": [],
@@ -165,60 +166,138 @@ INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
   "inventar_konfidenz_gesamt": "hoch"
 }
 
-KONTEXT:
+
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt, Bildunterschriften oder
+API-Aufrufen stammen. Er hilft, die Grafik fachlich einzuordnen. Ohne
+Kontext beschreibst du ausschließlich sichtbar belegbare Bildinformationen;
+fehlender Kontext wird nicht durch Vermutungen ersetzt.
+
+BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen sichtbaren Werten oder
+Beschriftungen und dem Kontext gelten die sichtbaren Bildinformationen.
+
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
 
 
-INSIGHT-FIRST-PFLICHT FÜR KARTEN:
-Der erste Satz MUSS:
-- 'Karte —' + Gebiet (Stadt, Region, Land — aus inventar oder Kontext)
-- Hauptthema (was wird dargestellt?)
-- Räumliche Kernaussage (z.B. 'Konzentration im Süden', 'gleichmäßig verteilt',
-  'Cluster in den Großstädten')
-- Richtwert: unter 350 Zeichen; die 400 Zeichen des Schemas sind harte
-  Obergrenze, kein Ziel
 
-VOLLSTÄNDIGKEITS-PFLICHT FÜR LANGBESCHREIBUNG:
-1. Markierte Standorte VOLLSTÄNDIG auflisten (das sind die Kerninformationen
-   einer Karte mit Markierungen)
-2. Legende EXPLIZIT erklären (Symbole, Farben, Größen-Bedeutungen)
-3. Räumliche Verteilung beschreiben — mit Himmelsrichtungen statt nur 'oben/unten'
-   wenn die Karte geografisch ausgerichtet ist (Norden oben)
-4. Maßstab nennen wenn lesbar
+BILD-ZWECK IM DOKUMENT
 
-ORTSNAMEN — Originalsprache beibehalten:
+Der Kontext zeigt, WO und WOZU die Grafik verwendet wird. Leite daraus den
+kommunikativen Zweck ab: Warum steht diese Grafik an genau dieser Stelle?
+Priorisiere die Aspekte, die diesen Zweck bedienen — dieselbe Tabelle braucht
+im Geschäftsbericht eine andere Gewichtung als im Schulbuch oder in einer
+Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
+KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
+informativ beschreiben.
+
+ANTI-REDUNDANZ ZUR BILDUNTERSCHRIFT: Wiederhole keine Details, die die
+Bildunterschrift bereits nennt — Titel, Thema und Kernaussage dagegen IMMER
+nennen (der Alt-Text muss allein verständlich sein).
+
+
+KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+
+Richtwert für den Alt-Text: unter 350 Zeichen. Die 400 Zeichen des Schemas sind
+eine harte Obergrenze, KEIN Ziel. Der Alt-Text trägt die Kernaussage —
+Vollständigkeit, Einzelwerte und Struktur-Tiefe gehören in die
+Langbeschreibung. Die Langbeschreibung nutzt maximal 2000 Zeichen (Schema-Obergrenze).
+
+
+ALT-TEXT
+
+Der erste Satz:
+- beginnt mit 'Karte —' + Gebiet (Stadt, Region, Land — aus Inventar
+  oder Kontext)
+- nennt das Hauptthema (was wird dargestellt?)
+- nennt die räumliche Kernaussage (z.B. 'Konzentration im Süden',
+  'gleichmäßig verteilt', 'Cluster in den Großstädten')
+
+
+ORTSNAMEN UND EIGENNAMEN
+
+Ortsnamen in Originalsprache beibehalten:
 - 'Bordeaux' nicht 'Bordeo'
 - 'İstanbul' nicht 'Istanbul' (wenn das I-Punkt-Zeichen lesbar ist)
 - 'Köln' nicht 'Cologne' (auch wenn der Kontext englisch ist)
 
+EIGENNAMEN UND ORTSNAMEN — Bild hat Vorrang vor Kontext:
+
+Wenn ein Eigenname oder Ortsname im Bild lesbar ist und im Kontext anders steht,
+hat der im Bild lesbare Text Vorrang. Häufige OCR-Verwechslungen:
+- TURKU (finnische Stadt) ist NICHT Turkey (englisch für Türkei)
+- Berlin vs. Berkeley (ähnlicher Anfang)
+- Bonn vs. Bern (ähnlich kurz)
+
+PRÜFE im Inventar: lesbare_texte hat Eigennamen mit Typ 'logo' oder 'beschriftung'.
+Diese MÜSSEN wortgetreu übernommen werden — auch wenn der Kontext einen anderen
+ähnlichen Namen nennt. Bei Mehrdeutigkeit dem Bild trauen, nicht dem Kontext.
+
+
+Keine Orte oder Routen erfinden, die nicht im Inventar stehen. Bei
+verschwommenen Details: 'Details teilweise nicht lesbar' — statt zu raten.
+
+
+LANGBESCHREIBUNG
+
+Reihenfolge und Umfang:
+1. Markierte Standorte vollständig auflisten (das sind die
+   Kerninformationen einer Karte mit Markierungen)
+2. Legende explizit erklären (Symbole, Farben, Größen-Bedeutungen)
+3. Räumliche Verteilung beschreiben — mit Himmelsrichtungen statt nur
+   'oben/unten', wenn die Karte geografisch ausgerichtet ist (Norden oben)
+4. Maßstab nennen wenn lesbar
+
 HINTERGRUND-ORTSNAMEN:
 Bei Karten mit vielen Hintergrund-Städten zur Orientierung NICHT erschöpfend
 auflisten — nur die beschrifteten/markierten relevanten Standorte. Andere
-Städte erwähnen wenn sie für die räumliche Einordnung wichtig sind ('zwischen
-München und Stuttgart').
+Städte erwähnen, wenn sie für die räumliche Einordnung wichtig sind
+('zwischen München und Stuttgart').
 
-SYMBOLIK INTERPRETIEREN:
+SYMBOLIK AUS DER LEGENDE:
 - Rote Markierungen sind nicht automatisch 'Warnungen' oder 'Gefahren' —
-  Bedeutung kommt aus der Legende
+  die Bedeutung kommt aus der Legende
 - Größenunterschiede von Markern (große vs. kleine Kreise) bedeuten meist
   unterschiedliche Werte — Legende prüfen
 
-ANTI-HALLUZINATION:
-- Keine Orte oder Routen erfinden die nicht im Inventar sind
-- Bei verschwommenen Details: 'Details teilweise nicht lesbar' — statt zu raten
 
-FEW-SHOT BEISPIELE:
+ATMOSPHAERE
+
+Karten werden sachlich-räumlich beschrieben. Keine Wertungen über Stimmung oder Wirkung;
+atmosphaere_belege bleibt leer.
+
+
+AUSGABE-SCHEMA
+
+Fülle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, beginnt mit Karte — + Gebiet und räumlicher Kernaussage
+- langbeschreibung: maximal 2000 Zeichen, leer wenn alt_text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS leer bleiben
+- atmosphaere_belege: bleibt leer
+
+Kein Markdown im Output — Fließtext oder einfache Satzlisten, keine
+Markdown-Tabellen.
+
+
+FEW-SHOT BEISPIELE
 
 (Noch keine Few-Shot-Beispiele für Bildtyp "karte" kuratiert.)
 
-Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
-  - alt_text [PFLICHT]: Kernaussage. Erste Information bild-spezifisch (siehe SPEZIFITAETS_PFLICHT).
-  - langbeschreibung [OPTIONAL]: Vertiefung. Leer wenn alt_text alles wesentliche sagt.
-  - verwendete_inventar_items [PFLICHT]: Welche Inventar-Items wurden im Output verwendet? Audit-Trail.
-  - nicht_verwendete_inventar_items [OPTIONAL]: Welche bewusst weggelassen, weil unwichtig? (Kein Fehler.)
-  - nicht_im_inventar [OPTIONAL]: MUSS LEER SEIN. Wenn Items im Output stehen die nicht im Inventar sind, hier auflisten — Pipeline schlägt dann Alarm. Halluzinations-Self-Check.
-  - atmosphaere_belege [OPTIONAL]: Bei evidenzbasierten Wertungen: jede Wertung mit explizitem visuellem Beleg. Siehe AtmosphaereBeleg-Submodel.
 
-Kein anderer Text. Kein Markdown. Nur valides JSON.
+FINAL CHECK
+
+1. Beginnt der Alt-Text mit 'Karte —' + Gebiet, Hauptthema und räumlicher
+   Kernaussage?
+2. Alle Ortsnamen wortgetreu und in Originalsprache (im Bild lesbarer Name
+   schlägt Kontext)?
+3. Alle markierten Standorte in der Langbeschreibung, Legende erklärt?
+4. Symbol-Bedeutungen aus der Legende statt aus Annahmen?
+5. Keine Orte oder Routen erfunden; Unlesbares ehrlich benannt?
+6. nicht_im_inventar leer?
+
+Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
 
 ```

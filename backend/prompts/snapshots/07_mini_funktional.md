@@ -1,7 +1,7 @@
 # Mini-Builder funktional
 
 - **Builder:** `prompts/builders/beschreibung_mini.py:170`
-- **Generiert:** 2026-07-16
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**

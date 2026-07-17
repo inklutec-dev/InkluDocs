@@ -1,7 +1,7 @@
 # Daten-Builder screenshot
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:704`
-- **Generiert:** 2026-07-16
+- **Builder:** `prompts/builders/beschreibung_daten.py:950`
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -88,29 +88,25 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
-LESBARE KONTAKTDATEN — KRITISCHE PFLICHT:
-
-Wenn das Inventar lesbare_texte mit Typ 'kontaktdaten', 'url', 'datum' oder 'zahl' enthält,
-MÜSSEN diese im alt_text oder in der Langbeschreibung erscheinen — wortgetreu, mit
-korrekten Trennzeichen.
-
-Für Screenreader-Nutzer sind diese Daten oft der einzige Zugang zur Information.
-Ein Alt-Text der eine lesbare Telefonnummer übersieht ist UNVOLLSTÄNDIG, auch wenn
-er das Bild sonst korrekt beschreibt.
-
-Beispiele:
-  '02 28 / 24 25 26 27' — exakt so übernehmen, nicht zu '022824252627' zusammenziehen
-  'Mo-Fr 9-17 Uhr' — wortwörtlich
-  'info@beispiel.de' — exakt
-  'https://www.beispiel.de/kontakt' — vollständig
-
-# ATMOSPHAERE_REGEL gilt für Screenshots NICHT — UI-Beschreibungen
-# sind funktional, keine emotionalen Wertungen erlaubt.
-
 BILDTYP: screenshot (Bildschirmfoto einer Anwendung, Webseite oder UI)
-BILDGRÖSSE: 1280x720 Pixel
+BILDGROESSE: 1280x720 Pixel
 
-INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
+ZIEL
+
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
+einen Screenshot. Screenshots werden funktional beschrieben: Welche Anwendung,
+welcher Zustand, welche Bedienelemente — so, dass ein blinder Nutzer versteht,
+was auf dem Bildschirm passiert und wo er wäre. Lesbare UI-Texte sind dabei
+die verlässlichste Informationsquelle und werden wortgetreu übernommen.
+
+
+INVENTAR (Pass-2-Beobachtungen)
+
+Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primäre faktische Grundlage. Sichtbare
+Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
+widersprechen.
+
 {
   "foto_subtyp": null,
   "personen": [],
@@ -169,19 +165,51 @@ INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
   "inventar_konfidenz_gesamt": "hoch"
 }
 
-KONTEXT:
+
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt, Bildunterschriften oder
+API-Aufrufen stammen. Er hilft, die Grafik fachlich einzuordnen. Ohne
+Kontext beschreibst du ausschließlich sichtbar belegbare Bildinformationen;
+fehlender Kontext wird nicht durch Vermutungen ersetzt.
+
+BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen sichtbaren Werten oder
+Beschriftungen und dem Kontext gelten die sichtbaren Bildinformationen.
+
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
 
 
-INSIGHT-FIRST FÜR SCREENSHOT:
-Der erste Satz MUSS:
-- Anwendung (wenn aus URL-Leiste, Titel, Logo identifizierbar) ODER
-  generischer Anwendungstyp ('Browser-Fenster', 'Texteditor', 'E-Mail-Programm')
-- Zustand oder aktuelle Aktion (was ist gerade sichtbar?)
-- Richtwert: unter 350 Zeichen; die 400 Zeichen des Schemas sind harte
-  Obergrenze, kein Ziel
 
-Beginne mit 'Screenshot der/des …'.
+BILD-ZWECK IM DOKUMENT
+
+Der Kontext zeigt, WO und WOZU die Grafik verwendet wird. Leite daraus den
+kommunikativen Zweck ab: Warum steht diese Grafik an genau dieser Stelle?
+Priorisiere die Aspekte, die diesen Zweck bedienen — dieselbe Tabelle braucht
+im Geschäftsbericht eine andere Gewichtung als im Schulbuch oder in einer
+Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
+KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
+informativ beschreiben.
+
+ANTI-REDUNDANZ ZUR BILDUNTERSCHRIFT: Wiederhole keine Details, die die
+Bildunterschrift bereits nennt — Titel, Thema und Kernaussage dagegen IMMER
+nennen (der Alt-Text muss allein verständlich sein).
+
+
+KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+
+Richtwert für den Alt-Text: unter 350 Zeichen. Die 400 Zeichen des Schemas sind
+eine harte Obergrenze, KEIN Ziel. Der Alt-Text trägt die Kernaussage —
+Vollständigkeit, Einzelwerte und Struktur-Tiefe gehören in die
+Langbeschreibung. Richtwert für die Langbeschreibung: etwa 1000 Zeichen; harte Obergrenze sind die 2000 Zeichen des Schemas.
+
+
+ALT-TEXT
+
+Beginne mit 'Screenshot der/des …'. Der erste Satz:
+- nennt die Anwendung (wenn aus URL-Leiste, Titel oder Logo identifizierbar)
+  ODER den generischen Anwendungstyp ('Browser-Fenster', 'Texteditor',
+  'E-Mail-Programm')
+- nennt Zustand oder aktuelle Aktion (was ist gerade sichtbar?)
 
 Beispiel RICHTIG: 'Screenshot der InkluDocs-Web-Oberfläche, Projekt-
 Übersicht mit drei laufenden Bilduploads und einem fertig analysierten
@@ -190,44 +218,92 @@ PDF mit 12 Bildern.'
 Beispiel FALSCH: 'Ein Screenshot zeigt eine Anwendung mit verschiedenen
 Elementen.'
 
-VOLLSTÄNDIGKEITS-PFLICHT FÜR LANGBESCHREIBUNG:
+
+ANWENDUNGS-IDENTIFIKATION NUR MIT BELEG
+
+Gleiche Zwei-Wege-Logik wie bei Marken: eindeutig belegt -> benennen,
+unklar -> generisch bleiben.
+- Wenn weder URL noch Logo noch Titel die Anwendung benennen, schreibe
+  nicht 'Screenshot von Microsoft Word' — sondern 'Screenshot eines
+  Texteditors' oder generischer
+- Bei unklarer Domain in der URL: nur die sichtbare Domain nennen,
+  nicht raten, was sich dahinter verbirgt
+
+
+LANGBESCHREIBUNG
+
+Reihenfolge und Umfang:
 1. Sichtbare UI-Elemente in funktionaler Hierarchie:
    - Hauptmenü / Navigation
    - Hauptbereich / Inhalt
    - Sekundär-Bereiche / Sidebars
    - Statusleiste / Footer
-2. Lesbare Texte WORTGETREU übernehmen — vor allem:
+2. Lesbare Texte wortgetreu übernehmen — vor allem:
    - URL in der Adressleiste (vollständig)
    - Fenstertitel
-   - Buttons / Links die der Nutzer sehen würde
+   - Buttons / Links, die der Nutzer sehen würde
    - Statusmeldungen
    - Eingaben in Formularfeldern
-3. Richtwert: etwa 1000 Zeichen; Schema-Obergrenze 2000. Leer wenn
-   alt_text alles Wesentliche sagt
-
-VERBOTEN — Erfundene Anwendungs-Identifikation:
-- Wenn weder URL noch Logo noch Titel die Anwendung benennen,
-  schreibe NICHT 'Screenshot von Microsoft Word' — sondern
-  'Screenshot eines Texteditors' oder generischer
-- Bei unklarer Domain in URL: nur die sichtbare Domain nennen,
-  nicht raten was sich dahinter verbirgt
 
 DARK MODE / LIGHT MODE:
-Wenn relevant für die Beschreibung (z.B. bei UI-Tutorials),
-benennen. Sonst weglassen — ist meist irrelevant für die Funktion.
+Wenn relevant für die Beschreibung (z.B. bei UI-Tutorials), benennen.
+Sonst weglassen — meist irrelevant für die Funktion.
 
-FEW-SHOT BEISPIELE:
+
+LESBARE KONTAKTDATEN — KRITISCHE PFLICHT:
+
+Wenn das Inventar lesbare_texte mit Typ 'kontaktdaten', 'url', 'datum' oder 'zahl' enthält,
+MÜSSEN diese im alt_text oder in der Langbeschreibung erscheinen — wortgetreu, mit
+korrekten Trennzeichen.
+
+Für Screenreader-Nutzer sind diese Daten oft der einzige Zugang zur Information.
+Ein Alt-Text der eine lesbare Telefonnummer übersieht ist UNVOLLSTÄNDIG, auch wenn
+er das Bild sonst korrekt beschreibt.
+
+Beispiele:
+  '02 28 / 24 25 26 27' — exakt so übernehmen, nicht zu '022824252627' zusammenziehen
+  'Mo-Fr 9-17 Uhr' — wortwörtlich
+  'info@beispiel.de' — exakt
+  'https://www.beispiel.de/kontakt' — vollständig
+
+
+ATMOSPHAERE
+
+UI-Beschreibungen sind funktional — keine emotionalen Wertungen. Keine Wertungen über Stimmung oder Wirkung;
+atmosphaere_belege bleibt leer.
+
+
+AUSGABE-SCHEMA
+
+Fülle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, beginnt mit 'Screenshot der/des …' + Anwendung und Zustand
+- langbeschreibung: maximal 2000 Zeichen, leer wenn alt_text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS leer bleiben
+- atmosphaere_belege: bleibt leer
+
+Kein Markdown im Output — Fließtext oder einfache Satzlisten, keine
+Markdown-Tabellen.
+
+
+FEW-SHOT BEISPIELE
 
 (Noch keine Few-Shot-Beispiele für Bildtyp "screenshot" kuratiert.)
 
-Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
-  - alt_text [PFLICHT]: Kernaussage. Erste Information bild-spezifisch (siehe SPEZIFITAETS_PFLICHT).
-  - langbeschreibung [OPTIONAL]: Vertiefung. Leer wenn alt_text alles wesentliche sagt.
-  - verwendete_inventar_items [PFLICHT]: Welche Inventar-Items wurden im Output verwendet? Audit-Trail.
-  - nicht_verwendete_inventar_items [OPTIONAL]: Welche bewusst weggelassen, weil unwichtig? (Kein Fehler.)
-  - nicht_im_inventar [OPTIONAL]: MUSS LEER SEIN. Wenn Items im Output stehen die nicht im Inventar sind, hier auflisten — Pipeline schlägt dann Alarm. Halluzinations-Self-Check.
-  - atmosphaere_belege [OPTIONAL]: Bei evidenzbasierten Wertungen: jede Wertung mit explizitem visuellem Beleg. Siehe AtmosphaereBeleg-Submodel.
 
-Kein anderer Text. Kein Markdown. Nur valides JSON.
+FINAL CHECK
+
+1. Beginnt der Alt-Text mit 'Screenshot der/des …' + Anwendung bzw.
+   generischem Typ + Zustand?
+2. Anwendung nur benannt, wenn URL, Logo oder Titel sie belegen?
+3. Lesbare UI-Texte wortgetreu übernommen (URL, Fenstertitel, Buttons,
+   Statusmeldungen)?
+4. UI-Elemente in funktionaler Hierarchie beschrieben?
+5. Funktional beschrieben — keine emotionalen Wertungen?
+6. nicht_im_inventar leer?
+
+Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
 
 ```

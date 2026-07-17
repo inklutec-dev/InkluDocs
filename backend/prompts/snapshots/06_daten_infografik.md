@@ -1,7 +1,7 @@
 # Daten-Builder infografik
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:622`
-- **Generiert:** 2026-07-16
+- **Builder:** `prompts/builders/beschreibung_daten.py:815`
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -88,34 +88,26 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
-ATMOSPHAERE-REGEL (evidenzbasiert, Steve-Designentscheidung):
-
-Wertungen über Atmosphäre, Stimmung, Charakter sind ERLAUBT — sie vermitteln blinden
-Nutzern das Erlebnis das ein Sehender hat. ABER: jede Wertung muss durch ein konkret
-sichtbares Inventar-Item gestützt sein, das im selben Satz oder in der Langbeschreibung
-genannt wird.
-
-GUT (mit Evidenz):
-  'Die Atmosphäre wirkt formell, was durch die Anzüge und die aufrechte Haltung der
-   Teilnehmer unterstrichen wird.'
-  'Die Szene wirkt konzentriert: alle blicken nach vorne, niemand spricht miteinander.'
-
-SCHLECHT (ohne Evidenz):
-  'Die Atmosphäre wirkt formell, aber entspannt.' (was belegt 'entspannt'?)
-  'Eine fröhliche Stimmung.' (was belegt 'fröhlich'?)
-  'Die Szene strahlt Professionalität aus.' (was strahlt sie aus?)
-
-Wenn keine Evidenz im Inventar, dann KEINE Wertung. Lieber faktisch und kalt als
-gefühlvoll und falsch.
-
-# Atmosphäre-Regel gilt für Infografik EINGESCHRÄNKT — nur dort wo
-# eine bewusste Designwahl Stimmung transportiert (z.B. Kampagnen-
-# Infografik), nicht bei reinen Daten-Visualisierungen.
-
 BILDTYP: infografik (Schaubild, Übersichtsgrafik mit Stationen oder Schritten)
-BILDGRÖSSE: 1280x720 Pixel
+BILDGROESSE: 1280x720 Pixel
 
-INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
+ZIEL
+
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
+eine Infografik. Infografiken übersetzen Inhalte in visuelle Anordnung — deine
+Aufgabe ist die Rückübersetzung: die inhaltliche Logik (Stationen, Schritte,
+Beziehungen, Zahlen) verständlich machen, nicht das Layout nacherzählen.
+Der Alt-Text trägt die Kernaussage, die Langbeschreibung die vollständige
+inhaltliche Struktur.
+
+
+INVENTAR (Pass-2-Beobachtungen)
+
+Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primäre faktische Grundlage. Sichtbare
+Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
+widersprechen.
+
 {
   "foto_subtyp": null,
   "personen": [],
@@ -174,15 +166,49 @@ INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
   "inventar_konfidenz_gesamt": "hoch"
 }
 
-KONTEXT:
+
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt, Bildunterschriften oder
+API-Aufrufen stammen. Er hilft, die Grafik fachlich einzuordnen. Ohne
+Kontext beschreibst du ausschließlich sichtbar belegbare Bildinformationen;
+fehlender Kontext wird nicht durch Vermutungen ersetzt.
+
+BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen sichtbaren Werten oder
+Beschriftungen und dem Kontext gelten die sichtbaren Bildinformationen.
+
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
 
 
-INSIGHT-FIRST-PFLICHT FÜR INFOGRAFIK:
-Der erste Satz MUSS:
-- 'Infografik —' + Hauptthema (aus inventar.lesbare_texte: Titel)
-- Zentrale Kernaussage mit konkreten Datenpunkten WENN vorhanden
-- Richtwert: unter 350 Zeichen; die 400 Zeichen des Schemas sind harte Obergrenze, kein Ziel
+
+BILD-ZWECK IM DOKUMENT
+
+Der Kontext zeigt, WO und WOZU die Grafik verwendet wird. Leite daraus den
+kommunikativen Zweck ab: Warum steht diese Grafik an genau dieser Stelle?
+Priorisiere die Aspekte, die diesen Zweck bedienen — dieselbe Tabelle braucht
+im Geschäftsbericht eine andere Gewichtung als im Schulbuch oder in einer
+Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
+KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
+informativ beschreiben.
+
+ANTI-REDUNDANZ ZUR BILDUNTERSCHRIFT: Wiederhole keine Details, die die
+Bildunterschrift bereits nennt — Titel, Thema und Kernaussage dagegen IMMER
+nennen (der Alt-Text muss allein verständlich sein).
+
+
+KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+
+Richtwert für den Alt-Text: unter 350 Zeichen. Die 400 Zeichen des Schemas sind
+eine harte Obergrenze, KEIN Ziel. Der Alt-Text trägt die Kernaussage —
+Vollständigkeit, Einzelwerte und Struktur-Tiefe gehören in die
+Langbeschreibung. Richtwert für die Langbeschreibung: etwa 1500 Zeichen; harte Obergrenze sind die 2000 Zeichen des Schemas.
+
+
+ALT-TEXT
+
+Der erste Satz:
+- beginnt mit 'Infografik —' + Hauptthema (aus inventar.lesbare_texte: Titel)
+- nennt die zentrale Kernaussage mit konkreten Datenpunkten, wenn vorhanden
 
 Beispiel RICHTIG: 'Infografik — Bürokratie-Entlastung 2024: Fast die
 Hälfte (39%) entfällt auf das Wachstumschancengesetz, gefolgt von
@@ -190,50 +216,106 @@ vier weiteren Maßnahmen mit zusammen 61%.'
 
 Beispiel FALSCH: 'Eine Infografik mit verschiedenen Daten.'
 
-VOLLSTÄNDIGKEITS-PFLICHT FÜR LANGBESCHREIBUNG:
+
+LANGBESCHREIBUNG
+
+Reihenfolge und Umfang:
 1. Alle inhaltlichen Stationen in LOGISCHER Reihenfolge auflisten
    (chronologisch / hierarchisch / kausal — je nach Infografik-Typ)
 2. Beziehungen zwischen Stationen benennen ('A führt zu B',
    'X umfasst Y', 'Schritt 1 aktiviert Schritt 2')
-3. ALLE konkreten Zahlen, Prozente, Mengenangaben übernehmen
-4. Richtwert: etwa 1500 Zeichen; Schema-Obergrenze 2000. Fließtext oder
-   strukturierte Liste
+3. Alle konkreten Zahlen, Prozente, Mengenangaben übernehmen
 
-VERBOTEN — visuelle Layout-Beschreibungen:
+Fließtext oder strukturierte Liste, keine Markdown-Tabellen.
+
+
+INHALTLICH STATT LAYOUT
+
+Visuelle Layout-Beschreibungen vermeiden:
 - 'oben links steht...'
 - 'ein Pfeil zeigt von X nach Y...'
 - 'im Zentrum befindet sich...'
 - 'die linke Hälfte des Bildes zeigt...'
 
-Stattdessen INHALTLICH formulieren:
+Stattdessen inhaltlich formulieren:
 - 'Schritt 1 ist X, daraus folgt Schritt 2 mit Y'
 - 'Hauptkategorie A umfasst die Unterkategorien B, C und D'
 - 'Im Mittelpunkt steht das Konzept X' (wenn das WIRKLICH die
   inhaltliche Botschaft ist, nicht nur die geometrische Position)
 
-OCR-TEXT als Pflichtquelle:
-Wenn inventar.lesbare_texte Beschriftungen enthält, sind diese
-wortgetreu zu übernehmen. Bei Konflikt visuelle Wahrnehmung vs.
-OCR: OCR-Text vertrauen.
 
-KONTAKTDATEN/URL-PFLICHT:
-Wenn inventar.lesbare_texte Typ 'kontaktdaten' oder 'url'
-enthält (häufig bei Behörden-Infografiken am unteren Rand),
-MÜSSEN diese in der Beschreibung stehen — wortgetreu mit
-Trennzeichen.
+OCR-TEXT ALS PFLICHTQUELLE
 
-FEW-SHOT BEISPIELE:
+Wenn inventar.lesbare_texte Beschriftungen enthält, sind diese wortgetreu
+zu übernehmen. Bei Konflikt zwischen visueller Wahrnehmung und OCR:
+dem OCR-Text vertrauen.
+
+KONTAKTDATEN UND URLS:
+Enthält inventar.lesbare_texte Einträge vom Typ 'kontaktdaten' oder 'url'
+(häufig bei Behörden-Infografiken am unteren Rand), gehören diese
+wortgetreu und mit korrekten Trennzeichen in die Beschreibung — für
+Screenreader-Nutzer sind sie oft der einzige Zugang zu dieser Information.
+
+
+ATMOSPHAERE (bei Infografiken EINGESCHRÄNKT)
+
+Bei reinen Daten-Visualisierungen bleibt atmosphaere_belege leer — Daten
+haben keine Stimmung. Nur wo eine bewusste Designwahl erkennbar Stimmung
+transportiert (z.B. eine Kampagnen-Infografik), gilt die folgende Regel:
+
+ATMOSPHAERE-REGEL (evidenzbasiert, Steve-Designentscheidung):
+
+Wertungen über Atmosphäre, Stimmung, Charakter sind ERLAUBT — sie vermitteln blinden
+Nutzern das Erlebnis das ein Sehender hat. ABER: jede Wertung muss durch ein konkret
+sichtbares Inventar-Item gestützt sein, das im selben Satz oder in der Langbeschreibung
+genannt wird.
+
+GUT (mit Evidenz):
+  'Die Atmosphäre wirkt formell, was durch die Anzüge und die aufrechte Haltung der
+   Teilnehmer unterstrichen wird.'
+  'Die Szene wirkt konzentriert: alle blicken nach vorne, niemand spricht miteinander.'
+
+SCHLECHT (ohne Evidenz):
+  'Die Atmosphäre wirkt formell, aber entspannt.' (was belegt 'entspannt'?)
+  'Eine fröhliche Stimmung.' (was belegt 'fröhlich'?)
+  'Die Szene strahlt Professionalität aus.' (was strahlt sie aus?)
+
+Wenn keine Evidenz im Inventar, dann KEINE Wertung. Lieber faktisch und kalt als
+gefühlvoll und falsch.
+
+
+AUSGABE-SCHEMA
+
+Fülle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, beginnt mit Infografik — + Hauptthema und Kernaussage
+- langbeschreibung: maximal 2000 Zeichen, leer wenn alt_text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS leer bleiben
+- atmosphaere_belege: nur bei Kampagnen-Design mit sichtbarem Beleg, sonst leer
+
+Kein Markdown im Output — Fließtext oder einfache Satzlisten, keine
+Markdown-Tabellen.
+
+
+FEW-SHOT BEISPIELE
 
 (Noch keine Few-Shot-Beispiele für Bildtyp "infografik" kuratiert.)
 
-Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
-  - alt_text [PFLICHT]: Kernaussage. Erste Information bild-spezifisch (siehe SPEZIFITAETS_PFLICHT).
-  - langbeschreibung [OPTIONAL]: Vertiefung. Leer wenn alt_text alles wesentliche sagt.
-  - verwendete_inventar_items [PFLICHT]: Welche Inventar-Items wurden im Output verwendet? Audit-Trail.
-  - nicht_verwendete_inventar_items [OPTIONAL]: Welche bewusst weggelassen, weil unwichtig? (Kein Fehler.)
-  - nicht_im_inventar [OPTIONAL]: MUSS LEER SEIN. Wenn Items im Output stehen die nicht im Inventar sind, hier auflisten — Pipeline schlägt dann Alarm. Halluzinations-Self-Check.
-  - atmosphaere_belege [OPTIONAL]: Bei evidenzbasierten Wertungen: jede Wertung mit explizitem visuellem Beleg. Siehe AtmosphaereBeleg-Submodel.
 
-Kein anderer Text. Kein Markdown. Nur valides JSON.
+FINAL CHECK
+
+1. Beginnt der Alt-Text mit 'Infografik —' + Hauptthema und Kernaussage
+   mit Datenpunkten?
+2. Alle Stationen in logischer Reihenfolge, mit ihren Beziehungen?
+3. Alle Zahlen, Prozente und Mengenangaben übernommen?
+4. Inhaltlich statt Layout formuliert (kein 'oben links steht ...')?
+5. OCR-Beschriftungen wortgetreu; Kontaktdaten und URLs enthalten?
+6. Atmosphäre nur bei bewusster Designwahl, mit Beleg und gesetztem
+   atmosphaere_belege?
+7. nicht_im_inventar leer?
+
+Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
 
 ```

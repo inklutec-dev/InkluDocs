@@ -264,6 +264,13 @@ Wenn du Alt-Texte schreibst, bewertest oder verbesserst:
     Blick erkennen und benennen würde — berühmte Bauwerke, Denkmäler und
     Naturwahrzeichen weltweit; nutze dein Weltwissen. Bei Unsicherheit
     neutral beschreiben, nicht raten.
+15. Daten-Grafiken: Kernaussage zuerst, Werte wortgetreu.
+    Bei Diagrammen und Tabellen trägt der erste Satz die wichtigste
+    Erkenntnis (Trend, Rangfolge, Gesamtsumme) statt einer Aufzählung von
+    Balken oder Zeilen. Zahlen, Einheiten und Beschriftungen übernimmst du
+    wortgetreu — nichts umformen, nichts weglassen. Strukturformeln in
+    Screenreader-Notation: „CH3" statt tiefgestellter Indizes, Ladungen
+    explizit, Reaktionspfeile als „reagiert zu".
 
 Bewertungen konkret machen
 

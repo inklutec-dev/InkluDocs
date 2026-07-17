@@ -1,7 +1,7 @@
 # Daten-Builder tabelle
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:464`
-- **Generiert:** 2026-07-16
+- **Builder:** `prompts/builders/beschreibung_daten.py:557`
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -88,29 +88,26 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
-LESBARE KONTAKTDATEN — KRITISCHE PFLICHT:
-
-Wenn das Inventar lesbare_texte mit Typ 'kontaktdaten', 'url', 'datum' oder 'zahl' enthält,
-MÜSSEN diese im alt_text oder in der Langbeschreibung erscheinen — wortgetreu, mit
-korrekten Trennzeichen.
-
-Für Screenreader-Nutzer sind diese Daten oft der einzige Zugang zur Information.
-Ein Alt-Text der eine lesbare Telefonnummer übersieht ist UNVOLLSTÄNDIG, auch wenn
-er das Bild sonst korrekt beschreibt.
-
-Beispiele:
-  '02 28 / 24 25 26 27' — exakt so übernehmen, nicht zu '022824252627' zusammenziehen
-  'Mo-Fr 9-17 Uhr' — wortwörtlich
-  'info@beispiel.de' — exakt
-  'https://www.beispiel.de/kontakt' — vollständig
-
-# WICHTIG: ATMOSPHAERE_REGEL gilt NICHT für tabelle — Wertungen über
-# Atmosphäre haben hier keinen Platz. Tabellen sind Daten, keine Stimmungen.
-
 BILDTYP: tabelle (tabellarische Daten als Grafik)
-BILDGRÖSSE: 1280x720 Pixel
+BILDGROESSE: 1280x720 Pixel
 
-INVENTAR (von Pass 2 erstellt — die verbindliche Faktenbasis):
+ZIEL
+
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
+eine als Grafik vorliegende Tabelle. Sehende erfassen Tabellen zuerst nach
+ihrer Kernaussage, nicht nach ihrer Form — der Alt-Text transportiert deshalb
+die wichtigste Aussage auf Basis der RICHTIGEN Endwerte, die Langbeschreibung
+macht die Struktur mit korrekter Spaltenzuordnung nachvollziehbar. Präzision
+bei Zahlen, Summen und Einheiten ist hier der Qualitätsmaßstab.
+
+
+INVENTAR (Pass-2-Beobachtungen)
+
+Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primäre faktische Grundlage. Sichtbare
+Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
+widersprechen.
+
 {
   "foto_subtyp": null,
   "personen": [],
@@ -169,69 +166,161 @@ INVENTAR (von Pass 2 erstellt — die verbindliche Faktenbasis):
   "inventar_konfidenz_gesamt": "hoch"
 }
 
-KONTEXT:
+
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt, Bildunterschriften oder
+API-Aufrufen stammen. Er hilft, die Grafik fachlich einzuordnen. Ohne
+Kontext beschreibst du ausschließlich sichtbar belegbare Bildinformationen;
+fehlender Kontext wird nicht durch Vermutungen ersetzt.
+
+BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen sichtbaren Werten oder
+Beschriftungen und dem Kontext gelten die sichtbaren Bildinformationen.
+
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
 
 
-INSIGHT-FIRST-PFLICHT FÜR TABELLEN:
-Sehende erkennen Tabellen zuerst nach KERNAUSSAGE, nicht nach Form. Der erste
-Satz MUSS:
-- 'Tabelle —' + Thema (aus inventar.lesbare_texte: Titel-Eintrag)
-- Die wichtigste Aussage basierend auf den RICHTIGEN Endwerten/Bilanzsumme
-- Richtwert: unter 250 Zeichen; die 400 Zeichen des Schemas sind harte
-  Obergrenze, kein Ziel
 
-VERBOTEN: Nichtssagende Eröffnungen wie 'Eine Tabelle zeigt verschiedene Werte.'
+BILD-ZWECK IM DOKUMENT
 
-BILANZ-WARNUNG (KRITISCH):
-- Unterscheide ABSCHNITTS-Zwischensummen von der GESAMT-Summe
+Der Kontext zeigt, WO und WOZU die Grafik verwendet wird. Leite daraus den
+kommunikativen Zweck ab: Warum steht diese Grafik an genau dieser Stelle?
+Priorisiere die Aspekte, die diesen Zweck bedienen — dieselbe Tabelle braucht
+im Geschäftsbericht eine andere Gewichtung als im Schulbuch oder in einer
+Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
+KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
+informativ beschreiben.
+
+ANTI-REDUNDANZ ZUR BILDUNTERSCHRIFT: Wiederhole keine Details, die die
+Bildunterschrift bereits nennt — Titel, Thema und Kernaussage dagegen IMMER
+nennen (der Alt-Text muss allein verständlich sein).
+
+
+KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+
+Richtwert für den Alt-Text: unter 250 Zeichen. Die 400 Zeichen des Schemas sind
+eine harte Obergrenze, KEIN Ziel. Der Alt-Text trägt die Kernaussage —
+Vollständigkeit, Einzelwerte und Struktur-Tiefe gehören in die
+Langbeschreibung. Die Langbeschreibung nutzt maximal 2000 Zeichen (Schema-Obergrenze).
+
+
+ALT-TEXT
+
+Der erste Satz:
+- beginnt mit 'Tabelle —' + Thema (aus inventar.lesbare_texte: Titel-Eintrag)
+- nennt die wichtigste Aussage, gestützt auf die richtigen
+  Endwerte bzw. die Bilanzsumme
+
+VERMEIDEN: nichtssagende Eröffnungen wie 'Eine Tabelle zeigt verschiedene
+Werte.'
+
+
+BILANZ-REGEL (bei Buchhaltungs- und Bilanztabellen)
+
+Unterscheide Abschnitts-Zwischensummen von der Gesamtsumme:
 - 'Anlagevermögen' und 'Umlaufvermögen' sind ABSCHNITTE (Zwischensummen)
-- 'Bilanzsumme', 'Bilanzsumme Aktiva', 'Gesamtsumme' oder 'Summe Aktiva/Passiva'
-  ist das GESAMTERGEBNIS
-- Die LETZTE Summenzeile der Tabelle ist fast immer die Bilanzsumme,
-  NICHT ein Abschnittsname
-- FALSCH: 'Gesamtsumme des Umlaufvermögens beträgt X EUR' wenn X die Bilanzsumme ist
-- RICHTIG: 'Bilanzsumme Aktiva beträgt X EUR' oder 'Gesamtsumme Aktiva beträgt X EUR'
+- 'Bilanzsumme', 'Bilanzsumme Aktiva', 'Gesamtsumme' oder 'Summe
+  Aktiva/Passiva' ist das GESAMTERGEBNIS
+- Die letzte Summenzeile der Tabelle ist fast immer die Bilanzsumme,
+  nicht ein Abschnittswert
+- FALSCH: 'Gesamtsumme des Umlaufvermögens beträgt X EUR' wenn X die
+  Bilanzsumme ist
+- RICHTIG: 'Bilanzsumme Aktiva beträgt X EUR' oder 'Gesamtsumme Aktiva
+  beträgt X EUR'
 
-VOLLSTÄNDIGKEITS-PFLICHT FÜR LANGBESCHREIBUNG:
-1. Gesamtsumme/Bilanzsumme ZUERST nennen — sie ist die wichtigste Zahl, darf
-   NICHT durch Token-Limits abgeschnitten werden
+
+SPALTEN-ZUORDNUNG
+
+So liest du die Tabelle korrekt:
+1. Lies zuerst alle Spaltenköpfe von links nach rechts
+2. Lies dann jede Zeile und ordne jeden Wert seiner exakten Spalte zu
+3. Verwechsle Zwischenwerte (Zugänge, Abschreibungen, Veränderungen)
+   nicht mit Bestands- oder Endwerten
+4. Wenn eine Zeile Werte in der Spalte '01.01.' UND '31.12.' hat, sind das
+   verschiedene Werte — nenne beide mit Spaltenzuordnung
+5. Bei Buchhaltungstabellen sind Anfangs- und Endbestand die entscheidenden
+   Werte, nicht die Bewegungen dazwischen
+
+EINHEITEN: %, EUR, Mio., Tsd. penibel übernehmen — nicht weglassen,
+nicht umformen.
+
+
+LANGBESCHREIBUNG
+
+Reihenfolge und Umfang:
+1. Gesamtsumme/Bilanzsumme zuerst nennen — sie ist die wichtigste Zahl und
+   darf nicht am Ende abgeschnitten werden
 2. Spaltenköpfe wortgetreu auflisten
-3. ALLE Zeilen mit korrekter Spaltenzuordnung
+3. Alle Zeilen mit korrekter Spaltenzuordnung
 4. Spitzen- und Tiefstwerte benennen, auffällige Muster
 5. Nur bei sehr kleinen Tabellen (max 4x4) alle Werte einzeln auflisten
 6. Bei größeren Tabellen: Zusammenfassung statt vollständige Wertliste
 
-KEINE MARKDOWN-TABELLEN im JSON-Output — Fließtext oder strukturierte Liste.
+Keine Markdown-Tabellen im JSON-Output — Fließtext oder strukturierte Liste.
 
-SPALTEN-ZUORDNUNG (KRITISCH):
-1. Lies ZUERST alle Spaltenköpfe von links nach rechts
-2. Lies DANN jede Zeile und ordne JEDEN Wert seiner EXAKTEN Spalte zu
-3. Verwechsle NIEMALS Zwischenwerte (Zugänge, Abschreibungen, Veränderungen)
-   mit Bestands- oder Endwerten
-4. Wenn eine Zeile Werte in der Spalte '01.01.' UND '31.12.' hat, sind das
-   VERSCHIEDENE Werte — nenne BEIDE mit Spaltenzuordnung
-5. Bei Buchhaltungstabellen: Anfangs- und Endbestand sind die entscheidenden
-   Werte, NICHT die Bewegungen dazwischen
 
-EINHEITEN: %, EUR, Mio., Tsd. penibel übernehmen — nicht weglassen, nicht umformen.
+OCR-TEXT ALS PRIMÄRQUELLE
 
-OCR-TEXT: Wenn inventar.lesbare_texte Zellinhalte aus OCR enthält, sind diese
-die primäre Wahrheitsquelle. Bei OCR-Werten + visueller Wahrnehmung im Konflikt:
-OCR vertrauen.
+Wenn inventar.lesbare_texte Zellinhalte aus OCR enthält, sind diese die
+primäre Wahrheitsquelle. Bei Konflikt zwischen OCR-Werten und visueller
+Wahrnehmung: dem OCR-Text vertrauen.
 
-FEW-SHOT BEISPIELE:
+
+LESBARE KONTAKTDATEN — KRITISCHE PFLICHT:
+
+Wenn das Inventar lesbare_texte mit Typ 'kontaktdaten', 'url', 'datum' oder 'zahl' enthält,
+MÜSSEN diese im alt_text oder in der Langbeschreibung erscheinen — wortgetreu, mit
+korrekten Trennzeichen.
+
+Für Screenreader-Nutzer sind diese Daten oft der einzige Zugang zur Information.
+Ein Alt-Text der eine lesbare Telefonnummer übersieht ist UNVOLLSTÄNDIG, auch wenn
+er das Bild sonst korrekt beschreibt.
+
+Beispiele:
+  '02 28 / 24 25 26 27' — exakt so übernehmen, nicht zu '022824252627' zusammenziehen
+  'Mo-Fr 9-17 Uhr' — wortwörtlich
+  'info@beispiel.de' — exakt
+  'https://www.beispiel.de/kontakt' — vollständig
+
+
+ATMOSPHAERE
+
+Tabellen sind Daten, keine Stimmungen. Keine Wertungen über Stimmung oder Wirkung;
+atmosphaere_belege bleibt leer.
+
+
+AUSGABE-SCHEMA
+
+Fülle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, beginnt mit Tabelle — + Thema und Kernaussage
+- langbeschreibung: maximal 2000 Zeichen, leer wenn alt_text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS leer bleiben
+- atmosphaere_belege: bleibt leer
+
+Kein Markdown im Output — Fließtext oder einfache Satzlisten, keine
+Markdown-Tabellen.
+
+
+FEW-SHOT BEISPIELE
 
 (Noch keine Few-Shot-Beispiele für Bildtyp "tabelle" kuratiert.)
 
-Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
-  - alt_text [PFLICHT]: Kernaussage. Erste Information bild-spezifisch (siehe SPEZIFITAETS_PFLICHT).
-  - langbeschreibung [OPTIONAL]: Vertiefung. Leer wenn alt_text alles wesentliche sagt.
-  - verwendete_inventar_items [PFLICHT]: Welche Inventar-Items wurden im Output verwendet? Audit-Trail.
-  - nicht_verwendete_inventar_items [OPTIONAL]: Welche bewusst weggelassen, weil unwichtig? (Kein Fehler.)
-  - nicht_im_inventar [OPTIONAL]: MUSS LEER SEIN. Wenn Items im Output stehen die nicht im Inventar sind, hier auflisten — Pipeline schlägt dann Alarm. Halluzinations-Self-Check.
-  - atmosphaere_belege [OPTIONAL]: Bei evidenzbasierten Wertungen: jede Wertung mit explizitem visuellem Beleg. Siehe AtmosphaereBeleg-Submodel.
 
-Kein anderer Text. Kein Markdown. Nur valides JSON.
+FINAL CHECK
+
+1. Beginnt der Alt-Text mit 'Tabelle —' + Thema und der wichtigsten Aussage?
+2. Ist die letzte Summenzeile korrekt eingeordnet (Bilanzsumme/Gesamtsumme,
+   nicht als Abschnitts-Zwischensumme ausgegeben)?
+3. Ist jeder genannte Wert seiner exakten Spalte zugeordnet (keine
+   Zwischenwerte als Endwerte)?
+4. Einheiten (%, EUR, Mio., Tsd.) wortgetreu übernommen?
+5. Lesbare Kontaktdaten, URLs, Daten und Zahlen wortgetreu enthalten?
+6. Keine Markdown-Tabellen im Output?
+7. nicht_im_inventar leer?
+
+Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
 
 ```

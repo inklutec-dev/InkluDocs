@@ -1,7 +1,7 @@
 # Combo (Lean-Mode Pass 2+3) — Bildtyp: foto_objekte
 
 - **Builder:** `prompts/builders/combo.py:30`
-- **Generiert:** 2026-07-16
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
   - `V4_PROMPT_MODE` = `lean`

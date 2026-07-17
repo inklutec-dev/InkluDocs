@@ -1,7 +1,7 @@
 # Daten-Builder strukturformel
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:792`
-- **Generiert:** 2026-07-16
+- **Builder:** `prompts/builders/beschreibung_daten.py:1074`
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -88,13 +88,26 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
-# ATMOSPHAERE_REGEL gilt für strukturformel NICHT — Chemie ist
-# objektiv, keine Stimmungsbeschreibungen.
-
 BILDTYP: strukturformel (Chemische Struktur-, Reaktions- oder Summenformel)
-BILDGRÖSSE: 1280x720 Pixel
+BILDGROESSE: 1280x720 Pixel
 
-INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
+ZIEL
+
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
+eine chemische Formel-Darstellung. Ziel ist fachliche Verlässlichkeit in
+screenreader-tauglicher Notation: Ein blinder Chemie-Lernender muss aus dem
+Text das Molekül oder die Reaktion korrekt rekonstruieren können. Was das Bild
+belegt, wird präzise benannt; Stoff-Identifikationen kommen aus Kontext oder
+Beschriftung, nicht aus visueller Vermutung.
+
+
+INVENTAR (Pass-2-Beobachtungen)
+
+Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primäre faktische Grundlage. Sichtbare
+Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
+widersprechen.
+
 {
   "foto_subtyp": null,
   "personen": [],
@@ -153,17 +166,50 @@ INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
   "inventar_konfidenz_gesamt": "hoch"
 }
 
-KONTEXT:
+
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt, Bildunterschriften oder
+API-Aufrufen stammen. Er hilft, die Grafik fachlich einzuordnen. Ohne
+Kontext beschreibst du ausschließlich sichtbar belegbare Bildinformationen;
+fehlender Kontext wird nicht durch Vermutungen ersetzt.
+
+BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen sichtbaren Werten oder
+Beschriftungen und dem Kontext gelten die sichtbaren Bildinformationen.
+
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
 
 
-INSIGHT-FIRST FÜR STRUKTURFORMEL:
-Der erste Satz MUSS:
-- Präfix 'Strukturformel —' ODER 'Reaktionsgleichung —'
-- Stoffname falls aus Kontext oder Beschriftung erkennbar
-- Summenformel WENN klar lesbar
-- Richtwert: unter 250 Zeichen; die 400 Zeichen des Schemas sind harte
-  Obergrenze, kein Ziel
+
+BILD-ZWECK IM DOKUMENT
+
+Der Kontext zeigt, WO und WOZU die Grafik verwendet wird. Leite daraus den
+kommunikativen Zweck ab: Warum steht diese Grafik an genau dieser Stelle?
+Priorisiere die Aspekte, die diesen Zweck bedienen — dieselbe Tabelle braucht
+im Geschäftsbericht eine andere Gewichtung als im Schulbuch oder in einer
+Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
+KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
+informativ beschreiben.
+
+ANTI-REDUNDANZ ZUR BILDUNTERSCHRIFT: Wiederhole keine Details, die die
+Bildunterschrift bereits nennt — Titel, Thema und Kernaussage dagegen IMMER
+nennen (der Alt-Text muss allein verständlich sein).
+
+
+KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+
+Richtwert für den Alt-Text: unter 250 Zeichen. Die 400 Zeichen des Schemas sind
+eine harte Obergrenze, KEIN Ziel. Der Alt-Text trägt die Kernaussage —
+Vollständigkeit, Einzelwerte und Struktur-Tiefe gehören in die
+Langbeschreibung. Richtwert für die Langbeschreibung: etwa 800 Zeichen; harte Obergrenze sind die 2000 Zeichen des Schemas.
+
+
+ALT-TEXT
+
+Der erste Satz:
+- beginnt mit dem Präfix 'Strukturformel —' ODER 'Reaktionsgleichung —'
+- nennt den Stoffnamen, falls aus Kontext oder Beschriftung erkennbar
+- nennt die Summenformel, wenn klar lesbar
 
 Beispiel RICHTIG: 'Strukturformel — Methanol (CH3OH): Methylgruppe
 mit Hydroxylgruppe.'
@@ -172,7 +218,9 @@ Beispiel RICHTIG für Reaktion: 'Reaktionsgleichung — Veresterung von
 Essigsäure mit Methanol zu Methylacetat und Wasser, katalysiert
 durch Schwefelsäure.'
 
-VOLLSTÄNDIGKEITS-PFLICHT FÜR LANGBESCHREIBUNG:
+
+LANGBESCHREIBUNG
+
 Bei Strukturformeln:
 1. Grundgerüst beschreiben (Kette, Ring, verzweigt)
 2. Atome und Atomgruppen (CH3, OH, COOH, NH2, Aromaten etc.)
@@ -188,34 +236,64 @@ Bei Reaktionsgleichungen:
 4. Reaktionstyp wenn aus Kontext bekannt (Substitution, Addition,
    Eliminierung, Redox etc.)
 
-Richtwert: etwa 800 Zeichen; Schema-Obergrenze 2000. Fließtext.
+Fließtext, keine Markdown-Formatierung.
 
-NOTATION KORREKT WIEDERGEBEN:
-- Indizes als normale Zahlen ('CH3' — nicht 'CH₃' weil Screenreader
+
+NOTATION (screenreader-tauglich)
+
+- Indizes als normale Zahlen ('CH3' — nicht 'CH₃', weil Screenreader
   Indizes oft schlecht vorlesen)
 - Ladungen explizit ('Natrium-Kation' oder 'Na+')
 - Reaktionspfeile beschreiben als 'reagiert zu' oder 'ergibt'
 
-ANTI-HALLUZINATION CHEMIE:
-- Erfinde KEINE Atome die nicht im Bild sind
-- Bei unleserlichen Bindungen: 'Bindungstyp nicht eindeutig
-  erkennbar' statt zu raten
-- Stoffnamen NUR aus Kontext oder Bildbeschriftung — Strukturen
-  visuell zu identifizieren ist fehleranfällig (außer einfachsten
-  Molekülen wie H2O, CO2)
 
-FEW-SHOT BEISPIELE:
+CHEMISCHE GENAUIGKEIT
+
+- Erfinde keine Atome oder Gruppen, die nicht im Bild sind
+- Bei unleserlichen Bindungen: 'Bindungstyp nicht eindeutig erkennbar' —
+  statt zu raten
+- Stoffnamen nur aus Kontext oder Bildbeschriftung — Strukturen visuell
+  zu identifizieren ist fehleranfällig (außer bei einfachsten Molekülen
+  wie H2O, CO2)
+
+
+ATMOSPHAERE
+
+Chemie ist objektiv. Keine Wertungen über Stimmung oder Wirkung;
+atmosphaere_belege bleibt leer.
+
+
+AUSGABE-SCHEMA
+
+Fülle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, beginnt mit 'Strukturformel —' oder 'Reaktionsgleichung —'
+- langbeschreibung: maximal 2000 Zeichen, leer wenn alt_text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS leer bleiben
+- atmosphaere_belege: bleibt leer
+
+Kein Markdown im Output — Fließtext oder einfache Satzlisten, keine
+Markdown-Tabellen.
+
+
+FEW-SHOT BEISPIELE
 
 (Noch keine Few-Shot-Beispiele für Bildtyp "strukturformel" kuratiert.)
 
-Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
-  - alt_text [PFLICHT]: Kernaussage. Erste Information bild-spezifisch (siehe SPEZIFITAETS_PFLICHT).
-  - langbeschreibung [OPTIONAL]: Vertiefung. Leer wenn alt_text alles wesentliche sagt.
-  - verwendete_inventar_items [PFLICHT]: Welche Inventar-Items wurden im Output verwendet? Audit-Trail.
-  - nicht_verwendete_inventar_items [OPTIONAL]: Welche bewusst weggelassen, weil unwichtig? (Kein Fehler.)
-  - nicht_im_inventar [OPTIONAL]: MUSS LEER SEIN. Wenn Items im Output stehen die nicht im Inventar sind, hier auflisten — Pipeline schlägt dann Alarm. Halluzinations-Self-Check.
-  - atmosphaere_belege [OPTIONAL]: Bei evidenzbasierten Wertungen: jede Wertung mit explizitem visuellem Beleg. Siehe AtmosphaereBeleg-Submodel.
 
-Kein anderer Text. Kein Markdown. Nur valides JSON.
+FINAL CHECK
+
+1. Beginnt der Alt-Text mit 'Strukturformel —' oder 'Reaktionsgleichung —'
+   + Stoffname (falls belegt) und Summenformel (falls lesbar)?
+2. Notation screenreader-tauglich (CH3 statt CH₃, Ladungen explizit,
+   Pfeile als 'reagiert zu')?
+3. Keine Atome oder Gruppen erfunden; Unleserliches ehrlich benannt?
+4. Stoffname nur aus Kontext oder Beschriftung (außer einfachste Moleküle)?
+5. Grundgerüst und funktionelle Gruppen in der Langbeschreibung?
+6. nicht_im_inventar leer?
+
+Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
 
 ```

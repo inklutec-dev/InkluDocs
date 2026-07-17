@@ -1,7 +1,7 @@
 # Standard-Builder foto_architektur
 
 - **Builder:** `prompts/builders/beschreibung_foto.py:1316`
-- **Generiert:** 2026-07-16
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**

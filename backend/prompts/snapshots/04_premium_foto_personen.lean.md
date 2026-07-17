@@ -1,7 +1,7 @@
 # Premium-Builder foto_personen — Prompt-Modus: lean
 
 - **Builder:** `prompts/builders/beschreibung_foto.py:588`
-- **Generiert:** 2026-07-16
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
   - `LLM_PROVIDER` = `bedrock`

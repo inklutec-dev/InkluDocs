@@ -1,7 +1,7 @@
 # Daten-Builder illustration
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:41`
-- **Generiert:** 2026-07-16
+- **Builder:** `prompts/builders/beschreibung_daten.py:181`
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -89,9 +89,25 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    schwerer Fehler.
 
 BILDTYP: illustration (Cartoon, Vektor-Grafik, gemalte Illustration, Buch-Bild)
-BILDGRÖSSE: 1280x720 Pixel
+BILDGROESSE: 1280x720 Pixel
 
-INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
+ZIEL
+
+Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
+eine Illustration. Ziel ist ehrliche Spezifität: benenne, was die Darstellung
+klar trägt, und beschreibe neutral, was genuin mehrdeutig bleibt. Stilisierte
+Darstellungen sind die häufigste Quelle für Fehldeutungen — vereinfachte
+Cartoon-Motive werden leicht als etwas anderes gesehen, mehrdeutige Charaktere
+leicht auf das naheliegendste Klischee festgelegt. Genau das vermeidest du.
+
+
+INVENTAR (Pass-2-Beobachtungen)
+
+Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primäre faktische Grundlage. Sichtbare
+Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
+widersprechen.
+
 {
   "foto_subtyp": null,
   "personen": [],
@@ -150,57 +166,134 @@ INVENTAR (von Pass 2 erstellt — nutze AUSSCHLIESSLICH diese Items):
   "inventar_konfidenz_gesamt": "hoch"
 }
 
-KONTEXT:
+
+KONTEXT
+
+Kontext kann aus PDF-Text, Webseiteninhalt, Bildunterschriften oder
+API-Aufrufen stammen. Er hilft, die Grafik fachlich einzuordnen. Ohne
+Kontext beschreibst du ausschließlich sichtbar belegbare Bildinformationen;
+fehlender Kontext wird nicht durch Vermutungen ersetzt.
+
+BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen sichtbaren Werten oder
+Beschriftungen und dem Kontext gelten die sichtbaren Bildinformationen.
+
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
 
 
-SPEZIALWARNUNG FÜR ILLUSTRATIONEN:
-Stilisierte Darstellungen sind die häufigste Quelle für Halluzinationen. Das Modell
-neigt dazu, vereinfachte Cartoon-Tiere als Maschinen zu sehen, oder mehrdeutige
-Charaktere als das wahrscheinlichste Tier-Klischee zu identifizieren.
 
-SPEZIES-/CHARAKTER-REGEL:
-Wenn das Inventar bei einem Charakter Mehrfach-Hypothesen oder niedrige Sicherheit
-listet, MUSS der Output diese Unsicherheit abbilden — aber OHNE Vermutungswörter
-(kein 'vermutlich', 'wahrscheinlich', 'könnte'). Beschreibe die Form neutral;
-wenn zwei Deutungen naheliegend und bildrelevant sind, nenne beide als
-Alternativen. Verwende:
+BILD-ZWECK IM DOKUMENT
+
+Der Kontext zeigt, WO und WOZU die Grafik verwendet wird. Leite daraus den
+kommunikativen Zweck ab: Warum steht diese Grafik an genau dieser Stelle?
+Priorisiere die Aspekte, die diesen Zweck bedienen — dieselbe Tabelle braucht
+im Geschäftsbericht eine andere Gewichtung als im Schulbuch oder in einer
+Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
+KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
+informativ beschreiben.
+
+ANTI-REDUNDANZ ZUR BILDUNTERSCHRIFT: Wiederhole keine Details, die die
+Bildunterschrift bereits nennt — Titel, Thema und Kernaussage dagegen IMMER
+nennen (der Alt-Text muss allein verständlich sein).
+
+
+KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+
+Richtwert für den Alt-Text: einfache Motive unter 150 Zeichen, komplexe Illustrationen bis etwa 250. Die 400 Zeichen des Schemas sind
+eine harte Obergrenze, KEIN Ziel. Der Alt-Text trägt die Kernaussage —
+Vollständigkeit, Einzelwerte und Struktur-Tiefe gehören in die
+Langbeschreibung. Die Langbeschreibung nutzt maximal 2000 Zeichen (Schema-Obergrenze).
+
+
+ALT-TEXT
+
+Der erste Satz nennt:
+- die Stilrichtung (Cartoon, Vektor, gemalt, comic-haft etc.)
+- das Hauptmotiv mit ehrlicher Spezifität
+- mindestens ein konkretes Element
+
+VERMEIDEN: generische Einleitungen ("Das Bild zeigt", "Eine Illustration von"
+als bloße Floskel ohne Inhalt), Festlegung auf eine Deutung, die das Bild
+nicht trägt.
+
+
+SPEZIES- UND CHARAKTER-REGEL
+
+Wenn das Inventar bei einem Charakter Mehrfach-Hypothesen oder niedrige
+Sicherheit listet, bildet der Output diese Unsicherheit ab — ohne
+Vermutungswörter (kein 'vermutlich', 'wahrscheinlich', 'könnte'). Beschreibe
+die Form neutral; wenn zwei Deutungen naheliegend und bildrelevant sind,
+nenne beide gleichwertig als Alternativen:
 - 'stilisiertes Tier mit großen Augen, als Katze oder Fuchs deutbar'
 - 'Cartoon-Charakter mit [konkreten sichtbaren Merkmalen]'
 - NICHT: einfach die wahrscheinlichste Spezies festlegen
 - NICHT: Hedge-Formulierungen wie 'vermutlich eine Katze'
 
-INTERAKTIONS-VERBOT:
-Wenn das Inventar nur Objekte nebeneinander listet, schreibe NICHT dass sie
-miteinander interagieren. Beispiele:
+
+INTERAKTIONEN NUR MIT BELEG
+
+Bei Illustrationen ist die Interaktions-Regel besonders wichtig: Wenn das
+Inventar nur Objekte nebeneinander listet, schreibe nicht, dass sie
+miteinander interagieren.
 - Inventar: 'Hundekopf, Mikroskop, Laptop, Tablet, Smartphone — keine Hände sichtbar'
-- VERBOTEN: 'Der Hund arbeitet am Laptop und hält ein Tablet.'
-- ERLAUBT: 'Cartoon-Illustration eines Hundekopfes; daneben ein Mikroskop und drei
+- FALSCH: 'Der Hund arbeitet am Laptop und hält ein Tablet.'
+- RICHTIG: 'Cartoon-Illustration eines Hundekopfes; daneben ein Mikroskop und drei
   Geräte (Laptop, Tablet, Smartphone).'
 
-VOLLSTÄNDIGKEIT:
+
+VOLLSTÄNDIGKEIT
+
 Bei Illustrationen werden Nebenelemente besonders häufig übersehen (z.B. das
-Mikroskop im Hund-Bild). Gehe das Inventar VOLLSTÄNDIG durch und benenne ALLE
+Mikroskop im Hund-Bild). Gehe das Inventar vollständig durch und benenne alle
 sichtbaren Elemente — auch wenn sie unscheinbar wirken.
 
-SPEZIFITAETS-PFLICHT (für illustration):
-Erster Satz nennt:
-- Stilrichtung (Cartoon, Vektor, comic-haft etc.)
-- Hauptmotiv mit ehrlicher Spezifität
-- Mindestens ein konkretes Element
 
-FEW-SHOT BEISPIELE:
+LANGBESCHREIBUNG
+
+Sinnvolle Reihenfolge: Stilrichtung und Hauptmotiv -> zentrale Charaktere
+oder Objekte mit ihren sichtbaren Merkmalen -> Nebenelemente vollständig ->
+lesbare Texte oder Beschriftungen -> relevanter Kontext. Fließtext, keine
+Markdown-Formatierung.
+
+
+ATMOSPHAERE
+
+Illustrationen werden sachlich beschrieben. Keine Wertungen über Stimmung oder Wirkung;
+atmosphaere_belege bleibt leer.
+
+
+AUSGABE-SCHEMA
+
+Fülle exakt das Schema BeschreibungOutput:
+- alt_text: 20 bis 400 Zeichen, spezifisch und ehrlich
+- langbeschreibung: maximal 2000 Zeichen, leer wenn alt_text alles
+  Wesentliche sagt
+- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
+- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
+- nicht_im_inventar: MUSS leer bleiben
+- atmosphaere_belege: bleibt leer
+
+Kein Markdown im Output — Fließtext oder einfache Satzlisten, keine
+Markdown-Tabellen.
+
+
+FEW-SHOT BEISPIELE
 
 (Noch keine Few-Shot-Beispiele für Bildtyp "illustration" kuratiert.)
 
-Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
-  - alt_text [PFLICHT]: Kernaussage. Erste Information bild-spezifisch (siehe SPEZIFITAETS_PFLICHT).
-  - langbeschreibung [OPTIONAL]: Vertiefung. Leer wenn alt_text alles wesentliche sagt.
-  - verwendete_inventar_items [PFLICHT]: Welche Inventar-Items wurden im Output verwendet? Audit-Trail.
-  - nicht_verwendete_inventar_items [OPTIONAL]: Welche bewusst weggelassen, weil unwichtig? (Kein Fehler.)
-  - nicht_im_inventar [OPTIONAL]: MUSS LEER SEIN. Wenn Items im Output stehen die nicht im Inventar sind, hier auflisten — Pipeline schlägt dann Alarm. Halluzinations-Self-Check.
-  - atmosphaere_belege [OPTIONAL]: Bei evidenzbasierten Wertungen: jede Wertung mit explizitem visuellem Beleg. Siehe AtmosphaereBeleg-Submodel.
 
-Kein anderer Text. Kein Markdown. Nur valides JSON.
+FINAL CHECK
+
+1. Nennt der erste Satz Stilrichtung, Hauptmotiv und mindestens ein
+   konkretes Element?
+2. Ist jede Aussage durch Inventar oder sichtbare Bildinformation belegt?
+3. Bei mehrdeutigen Charakteren: neutrale Form oder gleichwertige
+   Alternativen ('als X oder Y deutbar') statt Festlegung oder
+   Vermutungswörtern?
+4. Keine Interaktion erfunden, die das Inventar nicht belegt?
+5. Alle Inventar-Elemente berücksichtigt — auch unscheinbare Nebenelemente?
+6. nicht_im_inventar leer?
+7. Schema vollständig korrekt (alle Pflichtfelder gefüllt)?
+
+Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
 
 ```

@@ -1,7 +1,7 @@
 # Validierung (Pass 4) — Bildtyp: diagramm
 
 - **Builder:** `prompts/builders/validierung.py:191`
-- **Generiert:** 2026-07-16
+- **Generiert:** 2026-07-17
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
