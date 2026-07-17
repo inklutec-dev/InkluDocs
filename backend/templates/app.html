@@ -515,9 +515,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <h1 id="projectName" class="card-name" tabindex="-1">${headTitle}</h1>
                     <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
-                <!-- Rollen-Ansage (Steve 15.07.2026): der Gast hoert direkt nach der H1,
-                     in welcher Rolle sein Link ihn hereingelassen hat. -->
-                ${window.GUEST_MODE ? '<p class="card-info" id="guestRoleInfo" style="font-weight:600;">' + t('Du prüfst dieses Projekt als {rolle}.', { rolle: msgRoleLabel(revRole()) }) + '</p>' : ''}
+                <!-- Korb C (Steve 17.07.2026): die fruehere Gast-Rollenzeile
+                     „Du prüfst dieses Projekt als …" unter der H1 ist entfallen. -->
                 <div class="card-info" id="projectHeadInfo">${headInfo}</div>
                 ${project.status === 'processing' ? `
                     <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="${t('Fortschritt: {p} Prozent', { p: progress })}">
@@ -886,13 +885,26 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         announce(t('Wird vorgelesen.'));
     }
 
+    // ─── Rücksprache-Funktion ausgeblendet (Korb C, Steve 17.07.2026) ───
+    // Auf Michaels Wunsch ist der komplette Rücksprache-Workflow in der
+    // Oberflaeche AUSGEBLENDET, aber NICHT ausgebaut: Reaktivierung = diese
+    // Konstante auf true setzen. Bei false entfallen (a) der Lektorat-Knopf
+    // „Mit Herausgeber klären", (b) die Rücksprache-Filter-Chips (Lektorat-Chip
+    // und Herausgeber-Zusatzchip „Rücksprache des Lektorats") und (c) der
+    // automatisch erzeugte Rücksprache-Block im Abschluss-Dialog. Die Server-
+    // Logik (image_reviews, 403-Regel „nur Lektorat", Mail-Block) bleibt
+    // absichtlich unangetastet; bestehende Rücksprache-Werte aus Alt-Daten
+    // werden weiterhin korrekt als Badge angezeigt (nur nicht mehr erzeugbar).
+    const RUECKSPRACHE_UI = false;   // Steve 17.07.2026: ausgeblendet auf Michaels Wunsch, Reaktivierung = true
+
     // ─── EIN Status pro Bildkarte (Karbe B1, 17.07.2026) ───
     // Michaels 6 Begriffe: Neu / In Bearbeitung / Lektorat Freigabe / Lektorat
     // Änderung / Herausgeber Freigabe / Herausgeber Änderung. Angezeigt wird
     // IMMER nur der JUENGSTE Ereignis-Status (abgeleitet aus den vorhandenen
     // image_reviews-Daten via reviewed_at — Datenmodell unveraendert, reines
-    // Anzeige-Mapping). Rücksprache bleibt als 7. Anzeige-Fall unangetastet
-    // (Korb C, Entscheidung offen). Ersetzt die fruehere Doppelzeile
+    // Anzeige-Mapping). Rücksprache bleibt 7. Anzeige-Fall fuer Alt-Daten
+    // (Badge), ist aber bei RUECKSPRACHE_UI=false nicht mehr neu erzeugbar.
+    // Ersetzt die fruehere Doppelzeile
     // „Lektorat: X / Herausgeber: Y" (KEINE „ausstehend"-Anzeigen mehr).
     function latestReview(img) {
         let best = null;
@@ -958,35 +970,29 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // ungespeicherte Textfeld-Eingaben anderer Karten nie verloren gehen);
     // leere Seiten-/Dokument-Gruppen werden mit ausgeblendet. Der Filter-
     // Zustand ueberlebt das Neu-Rendern beim Polling (imageFilter pro Projekt).
-    let imageFilter = { key: 'alle', role: null, projectId: null };
+    let imageFilter = { key: 'alle', projectId: null };
     let filterImages = [];   // Bilder des aktuellen Renders (Datenbasis der Zaehler)
     let currentRenderDocs = [];   // Dokumente des aktuellen Renders (fuer den Ruecksprache-Block im Abschluss)
 
-    // Besitzer: welche Rolle wird gefiltert? Standard = Lektorat, falls eingeladen.
-    // Gaeste filtern immer ihre eigene Rolle.
-    function filterActiveRole() {
-        if (window.GUEST_MODE) return revRole();
-        if (imageFilter.role) return imageFilter.role;
-        const roles = window._shareRoles || [];
-        return roles.indexOf('lektorat') >= 0 ? 'lektorat' : 'kunde';
-    }
+    // Korb C (17.07.2026): der fruehere Besitzer-Rollen-Umschalter (Lektorat/
+    // Herausgeber-Radios, filterActiveRole/setImageFilterRole) ist ENTFERNT —
+    // Besitzer und Gast filtern ueber dieselben 6 Status-Chips + „Alle".
 
     function roleReviewStatus(img, role) {
         const r = (img.reviews || {})[role];
         return (r && r.status) || 'offen';
     }
 
-    // Ein Bild gegen einen Filter-Schluessel pruefen. 'ohne_alt'/'fehler' sind
-    // Besitzer-Zusatzfilter (inhaltlich, nicht statusbezogen); 'lek_ruecksprache'
-    // zeigt dem Herausgeber die vom Lektorat zur Ruecksprache markierten Bilder.
+    // Ein Bild gegen einen Filter-Schluessel pruefen. Die frueheren Besitzer-
+    // Zusatzfilter 'ohne_alt'/'fehler' sind entfernt (Korb C, 17.07.2026 —
+    // Steve: nie benutzt). Die Rücksprache-Schluessel bleiben fuer die
+    // Reaktivierung via RUECKSPRACHE_UI erhalten (Chips sind bei false weg).
     // Karbe B2 (17.07.2026): Status-Chips matchen den EINEN abgeleiteten
     // Anzeige-Status (juengstes Ereignis) — identisch zum Badge an der Karte.
     function imageMatchesKey(img, key) {
         if (key === 'alle') return true;
-        if (key === 'ohne_alt') return !(img.alt_text_edited || img.alt_text || img.original_alt);
-        if (key === 'fehler') return img.status === 'error';
         if (key === 'lek_ruecksprache') return roleReviewStatus(img, 'lektorat') === 'ruecksprache';
-        if (key === 'ruecksprache') return roleReviewStatus(img, revRole()) === 'ruecksprache';   // Lektorat-Chip, unveraendert (Korb C)
+        if (key === 'ruecksprache') return roleReviewStatus(img, revRole()) === 'ruecksprache';
         return unifiedStatusKey(img) === key;
     }
 
@@ -998,25 +1004,21 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
     function filterChipLabel(key) {
         if (key === 'lek_ruecksprache') return t('Rücksprache des Lektorats');
-        if (key === 'ohne_alt') return t('Ohne Alt-Text');
-        if (key === 'fehler') return t('Fehler');
         if (key === 'alle') return t('Alle');
         return unifiedStatusLabel(key);   // die 6 Michael-Status + Rücksprache
     }
 
-    // Chip-Auswahl je Sicht (Karbe B2, 17.07.2026): Gast UND Besitzer sehen
-    // dieselben 6 Status + „Alle" (Zaehler bleiben). Alle Chips sind IMMER
+    // Chip-Auswahl (Karbe B2 + Korb C, 17.07.2026): Gast UND Besitzer sehen
+    // exakt dieselben 6 Status + „Alle" (Zaehler bleiben). Alle Chips sind IMMER
     // sichtbar (auch mit Zaehler 0), damit die Leiste fuer Screenreader-Nutzer
-    // vorhersagbar bleibt. Unveraendert (Korb C offen): der Rücksprache-Chip
-    // des Lektorats, der bedingte Herausgeber-Chip „Rücksprache des Lektorats"
-    // sowie die Besitzer-Zusatzchips „Ohne Alt-Text"/„Fehler".
+    // vorhersagbar bleibt. Die frueheren Besitzer-Zusatzchips „Ohne Alt-Text"/
+    // „Fehler" sind entfernt (Steve: nie benutzt); die Rücksprache-Chips
+    // erscheinen nur noch bei RUECKSPRACHE_UI=true.
     function filterChipKeys() {
         const keys = ['alle', 'neu', 'in_bearbeitung', 'lek_frei', 'lek_aend', 'her_frei', 'her_aend'];
-        if (window.GUEST_MODE) {
+        if (RUECKSPRACHE_UI && window.GUEST_MODE) {
             if (revRole() === 'lektorat') keys.push('ruecksprache');
             else if (filterCount('lek_ruecksprache') > 0) keys.push('lek_ruecksprache');
-        } else {
-            keys.push('ohne_alt', 'fehler');
         }
         return keys;
     }
@@ -1037,21 +1039,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (!window.GUEST_MODE && !window._inReview) return '';
         // Projektwechsel setzt den Filter zurueck; Re-Render desselben Projekts
         // (Polling, Upload) behaelt die aktive Auswahl.
-        if (imageFilter.projectId !== project.id) imageFilter = { key: 'alle', role: null, projectId: project.id };
-        const roles = window._shareRoles || [];
-        const roleFs = (!window.GUEST_MODE && roles.length > 1) ? (
-            '<fieldset class="filter-fieldset" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;margin:0 0 0.6rem;">'
-            + '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Prüfende Rolle') + '</legend>'
-            + ['lektorat', 'kunde'].map(function (r) {
-                return '<label class="filter-chip"><input type="radio" name="imgFilterRole" value="' + r + '"'
-                    + (filterActiveRole() === r ? ' checked' : '')
-                    + ' onchange="setImageFilterRole(this.value)"> '
-                    + (r === 'lektorat' ? t('Lektorat') : t('Herausgeber')) + '</label>';
-            }).join('')
-            + '</fieldset>') : '';
+        if (imageFilter.projectId !== project.id) imageFilter = { key: 'alle', projectId: project.id };
         return '<section class="card image-filter" id="imageFilterBar" aria-labelledby="filterHeading">'
             + '<h2 id="filterHeading" class="section-title">' + t('Bilder filtern') + '</h2>'
-            + roleFs
             + '<fieldset class="filter-fieldset" id="filterStatusFieldset" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;margin:0;">'
             + '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Prüfstatus filtern') + '</legend>'
             + filterChipsHtml()
@@ -1061,8 +1051,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     // Nur die Status-Chips neu aufbauen (Zaehler-Update nach Datenaenderung).
-    // Bewusst NICHT die ganze Leiste ersetzen: der Fokus koennte gerade auf dem
-    // Rollen-Radio liegen und wuerde sonst verloren gehen.
+    // Bewusst NICHT die ganze Leiste ersetzen: der Fokus koennte gerade auf
+    // einem Element ausserhalb des Fieldsets liegen und wuerde sonst verloren gehen.
     function rebuildFilterChips() {
         const fs = document.getElementById('filterStatusFieldset');
         if (!fs) return;
@@ -1074,7 +1064,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Karte unter dem Fokus des Nutzers (Screenreader-Falle). Die Liste filtert
     // sich beim naechsten Filterwechsel bzw. Re-Render neu.
     function updateFilterDataStatus(imageId, status) {
-        const role = filterActiveRole();
+        // Wird nur aus guestSetStatus aufgerufen — die betroffene Rolle ist
+        // daher immer die eigene Gast-Rolle (Korb C: filterActiveRole entfiel).
+        const role = revRole();
         for (const img of filterImages) {
             if (img.id === Number(imageId)) {
                 img.reviews = img.reviews || {};
@@ -1091,12 +1083,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
     function setImageFilterKey(key) {
         imageFilter.key = key;
-        applyImageFilter(true);
-    }
-
-    function setImageFilterRole(role) {
-        imageFilter.role = role;
-        rebuildFilterChips();   // Zaehler beziehen sich auf die neue Rolle
         applyImageFilter(true);
     }
 
@@ -1151,8 +1137,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Die fruehere Lektorat-Vorgeschichte-Zeile (revHistoryHtml) ist entfallen —
     // das eine Badge oben rechts zeigt bereits den juengsten Ereignis-Status
     // (Karbe B1: „immer nur EIN Status").
-    // Ruecksprache-Knopf gibt es NUR fuer das Lektorat (Server erzwingt das ebenfalls).
+    // Ruecksprache-Knopf gibt es NUR fuer das Lektorat (Server erzwingt das ebenfalls)
+    // und nur bei aktivierter Rücksprache-Oberflaeche (Korb C, 17.07.2026).
     function revRueckBtnHtml(img) {
+        if (!RUECKSPRACHE_UI) return '';
         if (revRole() !== 'lektorat') return '';
         return '<button type="button" class="btn btn-secondary btn-small" id="rev_btn_rueck_' + img.id + '" aria-pressed="' + (revOwnStatus(img) === 'ruecksprache') + '" onclick="guestSetStatus(' + img.id + ", 'ruecksprache'" + ')">' + t('Mit Herausgeber klären') + '</button>';
     }
@@ -1356,6 +1344,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // jedem Statusklick via updateFilterDataStatus aktuell gehalten) plus die
     // LIVE-Werte der Anmerkungsfelder (frischer als das letzte Server-Polling).
     function guestRueckItems() {
+        // Korb C (17.07.2026): bei ausgeblendeter Rücksprache-Oberflaeche gibt es
+        // keinen Block im Abschluss-Dialog — auch nicht fuer Alt-Daten.
+        if (!RUECKSPRACHE_UI) return [];
         if (revRole() !== 'lektorat') return [];
         const items = [];
         for (const img of filterImages) {
