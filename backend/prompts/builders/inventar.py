@@ -149,10 +149,14 @@ Beispiele:
 MONTAGE-CHECK:
 Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
 Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
-Kombinationen. Erkennst du solche Indikatoren, trage einen Eintrag in
+Kombinationen. SUCHE DABEI AKTIV, Quadrant für Quadrant, auch nach KLEINEN
+eingefügten Objekten — ein winziges Bauwerk oder Objekt an einem Ort, an den
+es nicht gehört (z.B. eine Kathedrale am Grund einer Schlucht), ist ein
+Montage-Beweis; geringe Größe schützt eine Montage nicht vor der Erkennung.
+Erkennst du solche Indikatoren, trage einen Eintrag in
 halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
 Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
-reales Foto beschreiben').
+reales Foto beschreiben') und liste das eingefügte Objekt als eigenes Objekt.
 
 {schema_doc}
 """
