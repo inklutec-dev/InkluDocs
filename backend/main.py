@@ -148,8 +148,26 @@ def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = Tr
 
 
 # Allowed image extensions for direct upload
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".bmp", ".tiff", ".tif"}
-# Note: SVG intentionally excluded – PIL/Pillow cannot open SVGs, causes processing crash
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".bmp", ".tiff", ".tif", ".svg"}
+# SVG-Hinweis (17.07.2026): PIL/Pillow kann SVG nicht oeffnen (frueherer Crash-Grund,
+# deshalb war SVG hier ausgeschlossen). SVGs werden jetzt direkt bei der Annahme mit
+# cairosvg nach PNG konvertiert (_svg_to_png_bytes) und laufen ab dort den normalen
+# Bild-Weg — hinter den Upload-Endpunkten existiert nie eine SVG-Datei.
+
+
+def _svg_to_png_bytes(svg_bytes: bytes) -> bytes:
+    """Konvertiert eine SVG-Datei (Bytes) nach PNG (Bytes) — cairosvg.
+
+    Weisser Hintergrund ist Pflicht: transparente SVGs wuerden beim spaeteren
+    RGB-Convert sonst schwarz — gleiche Falle wie der Transparenz-Fix in
+    pdf_processor._resize_image_for_model (Befund App-Durchlauf 17.07.2026).
+    output_width=1200 wie bisher im Web-Scan-Pfad: genug Detail fuer das
+    Modell, haelt Riesen-PNGs aus Vektor-Rendering im Zaum (Seitenverhaeltnis
+    bleibt erhalten). Wirft bei kaputtem SVG eine Exception — die Aufrufer
+    fangen sie und antworten mit 400."""
+    import cairosvg
+    return cairosvg.svg2png(bytestring=svg_bytes, output_width=1200,
+                            background_color="white")
 
 # Rate limiting for login
 _login_attempts = defaultdict(list)
@@ -1306,13 +1324,26 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
             detail=f"Datei zu gross. Maximum: {MAX_UPLOAD_SIZE // (1024*1024)} MB"
         )
 
+    # SVG sofort nach PNG wandeln (PIL kann kein SVG). Gespeichert und
+    # verarbeitet wird nur das PNG; der Original-Dateiname (foo.svg) bleibt
+    # als Anzeige-Name des Projekts/Bilds erhalten.
+    if ext == ".svg":
+        try:
+            content = _svg_to_png_bytes(content)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"SVG konnte nicht verarbeitet werden: {e}")
+        ext = ".png"
+
     # Create user directory
     user_dir = os.path.join(UPLOAD_DIR, str(user["id"]))
     os.makedirs(user_dir, exist_ok=True)
 
     # Save file with sanitized name
+    # Endung aus `ext` (nicht aus dem Original-Namen): nach SVG-Konvertierung
+    # traegt die gespeicherte Datei .png — sonst laege PNG-Inhalt unter .svg.
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_name = f"{timestamp}_{os.path.basename(filename)}"
+    base_name = os.path.splitext(os.path.basename(filename))[0]
+    safe_name = f"{timestamp}_{base_name}{ext}"
     file_path = os.path.join(user_dir, safe_name)
     with open(file_path, "wb") as f:
         f.write(content)
@@ -1626,6 +1657,19 @@ async def demo_generate(request: Request, file: UploadFile = File(...),
     if len(content) > MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=413, detail=_('Datei zu groß. Maximum: {mb} MB').format(mb=MAX_UPLOAD_SIZE // (1024*1024)))
 
+    # SVG sofort nach PNG wandeln (PIL kann kein SVG; gleiche Behandlung wie
+    # /api/upload). Fehlertext: bewusst die bestehende, bereits uebersetzte
+    # Format-Meldung wiederverwenden — kein neuer msgid (siehe Hinweis oben).
+    if ext == ".svg":
+        try:
+            content = _svg_to_png_bytes(content)
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail=_('Bitte ein Bild hochladen (JPG, PNG, GIF, WebP …). PDFs gibt es im vollen Werkzeug nach Anmeldung.'),
+            )
+        ext = ".png"
+
     # Limit pruefen (server-seitig, VOR jeder teuren Generierung — nie vom Bot)
     chk = demo_mod.check_generation(request)
     if not chk["allowed"]:
@@ -1642,7 +1686,8 @@ async def demo_generate(request: Request, file: UploadFile = File(...),
     # Datei speichern (eigener Sitzungs-Ordner) — wie im normalen Upload-Pfad
     user_dir = os.path.join(UPLOAD_DIR, str(uid))
     os.makedirs(user_dir, exist_ok=True)
-    safe_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.path.basename(filename)}"
+    # Endung aus `ext`: nach SVG-Konvertierung traegt die Datei .png (wie /api/upload)
+    safe_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.path.splitext(os.path.basename(filename))[0]}{ext}"
     file_path = os.path.join(user_dir, safe_name)
     with open(file_path, "wb") as f:
         f.write(content)
@@ -2096,12 +2141,16 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                 if not ext:
                     continue  # Skip unknown formats
 
-                # Convert SVGs to PNG
+                # SVG nach PNG wandeln — zentrale Hilfe _svg_to_png_bytes
+                # (weisser Hintergrund, gleicher Weg wie die Upload-Endpunkte).
+                # Bis 17.07.2026 war dieser Zweig unerreichbar: _ext_from_content_type
+                # und _ext_from_url kannten SVG nicht, `if not ext: continue` oben
+                # uebersprang SVGs still — jetzt liefern beide ".svg".
                 if ext == ".svg" or "svg" in content_type:
                     try:
-                        import cairosvg
                         png_path = os.path.join(img_dir, f"web_{idx}.png")
-                        cairosvg.svg2png(bytestring=img_content, write_to=png_path, output_width=1200)
+                        with open(png_path, "wb") as f:
+                            f.write(_svg_to_png_bytes(img_content))
                         img_path = png_path
                         ext = ".png"
                         img_filename = f"web_{idx}.png"
@@ -2267,7 +2316,9 @@ def _ext_from_content_type(ct: str) -> str:
         "image/avif": ".avif",
         "image/heic": ".heic",
         "image/heif": ".heif",
-        # SVG excluded – PIL cannot process it, causes UnidentifiedImageError
+        # SVG wird vom Aufrufer sofort nach PNG konvertiert (_svg_to_png_bytes) —
+        # PIL selbst kann kein SVG (frueher deshalb hier ausgeschlossen).
+        "image/svg+xml": ".svg",
     }
     return mapping.get(ct, "")
 
@@ -3495,7 +3546,8 @@ async def api_generate_alt_text(request: Request):
             mime_part = image_b64.split(",")[0]  # "data:image/png;base64"
             image_b64 = image_b64.split(",", 1)[1]
             # Detect extension from MIME
-            if "png" in mime_part: ext = ".png"
+            if "svg" in mime_part: ext = ".svg"  # wird unten nach PNG konvertiert
+            elif "png" in mime_part: ext = ".png"
             elif "gif" in mime_part: ext = ".gif"
             elif "webp" in mime_part: ext = ".webp"
             else: ext = ".jpg"
@@ -3527,9 +3579,19 @@ async def api_generate_alt_text(request: Request):
                           error_message=f"Ungueltiges Format: {ext}")
             raise HTTPException(
                 status_code=400,
-                detail="Nur Bilddateien erlaubt (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC)"
+                detail="Nur Bilddateien erlaubt (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG)"
             )
         content = await file.read()
+
+    # SVG sofort nach PNG wandeln (PIL kann kein SVG; gleiche Behandlung wie /api/upload)
+    if ext == ".svg":
+        try:
+            content = _svg_to_png_bytes(content)
+        except Exception as e:
+            log_api_usage(api_key_id, api_user["id"], success=False,
+                          error_message=f"SVG-Konvertierung fehlgeschlagen: {e}")
+            raise HTTPException(status_code=400, detail="SVG konnte nicht verarbeitet werden")
+        ext = ".png"
 
     image_size = len(content)
     if image_size > 10 * 1024 * 1024:  # 10 MB limit for API
@@ -4867,7 +4929,9 @@ async def freigabe_complete(token: str, request: Request):
     owner = get_user_by_id(share["created_by"])
     pname = (project["name"] if project and project["name"] else (project["filename"] if project else "Projekt"))
     guest = (session or {}).get("guest", share["guest_email"])
-    link = BASE_URL + "/freigabe/" + token
+    # Karbe A7 (17.07.2026): KEIN Gast-Link mehr in der Besitzer-Mail — der
+    # Besitzer hat ein eigenes Konto und braucht den Freigabe-Link nicht
+    # (weniger Token-Streuung per Mail).
     notes_html = "".join("<li>" + _mail_escape(n["body"]) + "</li>" for n in notes)
     _ = get_gettext(_mail_lang(owner))
     # Etappe 3: Ruecksprache-Block fuer die Besitzer-Mail (nur Lektorat, nur wenn vorhanden).
@@ -4897,7 +4961,6 @@ async def freigabe_complete(token: str, request: Request):
         + rueck_html
         + (("<p><strong>" + _('Nachricht:') + "</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
         + (("<p><strong>" + _('Anmerkungen:') + "</strong></p><ul>" + notes_html + "</ul>") if notes_html else "")
-        + "<p>" + _('Im Werkzeug ansehen:') + " <a href='" + link + "'>" + link + "</a></p>"
     )
     if owner and owner.get("email"):
         send_email(owner["email"], _('InkluDocs: Prüfung abgeschlossen ({projekt})').format(projekt=pname), body, bcc_admin=False)

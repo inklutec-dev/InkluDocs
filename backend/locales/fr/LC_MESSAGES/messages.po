@@ -2457,3 +2457,28 @@ msgstr "Projet terminé le {datum}"
 
 msgid "{n} Bilder ohne Prüfurteil"
 msgstr "{n} images sans verdict de vérification"
+
+# ─── Retour Karbe corbeilles A+B (17.07.2026) ───
+msgid "Anmerkung"
+msgstr "Remarque"
+
+msgid "Beenden"
+msgstr "Terminer"
+
+msgid "Ansicht beendet"
+msgstr "Vue terminée"
+
+msgid "Sie können dieses Fenster jetzt schließen. Über Ihren Einladungslink kommen Sie jederzeit zurück."
+msgstr "Vous pouvez fermer cette fenêtre maintenant. Vous pouvez revenir à tout moment via votre lien d'invitation."
+
+msgid "Lektorat Freigabe"
+msgstr "Approbation relecture"
+
+msgid "Lektorat Änderung"
+msgstr "Modification relecture"
+
+msgid "Herausgeber Freigabe"
+msgstr "Approbation éditeur"
+
+msgid "Herausgeber Änderung"
+msgstr "Modification éditeur"

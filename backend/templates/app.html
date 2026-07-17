@@ -99,7 +99,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // ─── Gast-Modus: E-Mail-Gate, dann read-only Projekt-Ansicht ───
     function initGuest() {
         main.innerHTML =
-            '<section class="card" aria-labelledby="gateHeading" style="max-width:32rem;margin:1.5rem auto;">'
+            '<section class="card" aria-labelledby="gateHeading" style="max-width:32rem;margin:1.5rem 0;">'
             + '<h1 id="gateHeading" class="section-title">' + t('Freigabe ansehen') + '</h1>'
             + '<p>' + t('Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen.') + '</p>'
             + '<form id="gateForm" style="margin-top:1rem;">'
@@ -574,14 +574,19 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ` : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">${t('Prüfung abschließen')}</button>
+                        <!-- Karbe A8 (17.07.2026): sichtbarer Beenden-Knopf im Kopfbereich.
+                             window.close() darf der Browser oft nicht — dann Abschieds-
+                             Seite MIT Rueckweg-Knopf (Merksatz: keine Sackgassen-Screens). -->
+                        <button type="button" class="btn btn-secondary" id="guestExitBtn" onclick="guestExit()">${t('Beenden')}</button>
                         <!-- Natives Modal wie der Teilen-Dialog (Steve-Befund 13.07.2026: der
                              fruehere Inline-Bereich hatte keine Fokusfalle — per Ueberschriften-
                              Navigation lief man mitten im Abschluss wieder ins Projekt).
                              showModal() liefert Fokusfang, Escape und inerten Hintergrund nativ. -->
                         <dialog id="guestCompleteDialog" aria-labelledby="guestCompleteHeading" class="invite-dialog">
                             <h2 id="guestCompleteHeading" style="margin-top:0;">${t('Prüfung abschließen')}</h2>
-                            <p id="guestCompleteRole">${t('Du schließt die Prüfung als {rolle} ab.', { rolle: msgRoleLabel(revRole()) })}</p>
-                            <label for="guestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Möchten Sie dem Ersteller noch etwas mitteilen? (optional)')}</label>
+                            <!-- Karbe A6 (17.07.2026, Steve-Freigabe): Dialog verschlankt —
+                                 Rollen-Satz raus, ueber dem Feld nur noch das Label „Anmerkung". -->
+                            <label for="guestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Anmerkung')}</label>
                             <textarea id="guestCompleteMsg" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
                             <!-- Etappe 3 (15.07.2026): Automatisch erzeugter Ruecksprache-Block — NICHT
                                  editierbare Vorschau der zur Ruecksprache markierten Bilder. Bewusst NICHT
@@ -617,9 +622,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <div style="flex-basis:100%;margin-top:0.6rem;">
-                            <label for="useContextToggle" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;">
+                            <!-- Karbe A3 (17.07.2026): Checkbox RECHTS neben ihrem Label —
+                                 konsistent mit den Zeilen Sprache/Gespeicherte Prompts. -->
+                            <label for="useContextToggle" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                                <span style="font-weight:600;">${t('KI-Kontext aus dem Dokument verwenden')}</span>
                                 <input type="checkbox" id="useContextToggle" ${project.use_context ? 'checked' : ''} onchange="setContextSetting(${project.id}, this.checked)" style="width:1.2rem;height:1.2rem;">
-                                <span>${t('KI-Kontext aus dem Dokument verwenden')}</span>
                             </label>
                         </div>
                     ` : ''}
@@ -632,11 +639,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </div>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
-                        <div style="flex-basis:100%;margin-top:0.6rem;">
-                            <!-- Michael 12.07.2026 (Optik 1+6): Ueberschrift "Gespeicherte Prompts"
-                                 UEBER dem Feld (wie bei den anderen Feldern); der Link zur
-                                 Promptverwaltung ist raus — die erreicht man uebers Dashboard. -->
-                            <label for="ownPromptSelect" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Gespeicherte Prompts')}</label>
+                        <div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                            <!-- Karbe A2 (17.07.2026, ersetzt Optik 1 vom 12.07.): Auswahlfeld
+                                 NEBEN dem Label — gleiche Zeilenform wie „Sprache der Alt-Texte". -->
+                            <label for="ownPromptSelect" style="font-weight:600;">${t('Gespeicherte Prompts')}</label>
                             <select id="ownPromptSelect" onchange="setPromptSetting(${project.id}, this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
                                 <option value="">${t('Kein eigener Prompt')}</option>
                             </select>
@@ -880,45 +886,66 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         announce(t('Wird vorgelesen.'));
     }
 
-    // ─── Besitzer-Badges: Pruefstatus PRO ROLLE (Etappe 2, 13.07.2026) ───
-    // Der Besitzer sieht am Bild fuer jede eingeladene Rolle ein eigenes Badge
-    // („Lektorat: Freigegeben" / „Herausgeber: Ausstehend"). Ohne Rollen-Daten
-    // (Altbestand, Backfill fehlt) faellt die Anzeige auf den bisherigen
-    // Spiegel images.review_status zurueck.
-    function ownerBadgeColor(s) {
-        return s === 'freigegeben' ? 'var(--success,#2a7)'
-            : s === 'zu_ueberarbeiten' ? '#d97706'
-            : s === 'ruecksprache' ? '#6d28d9'
-            : s === 'in_bearbeitung' ? '#0369a1'
+    // ─── EIN Status pro Bildkarte (Karbe B1, 17.07.2026) ───
+    // Michaels 6 Begriffe: Neu / In Bearbeitung / Lektorat Freigabe / Lektorat
+    // Änderung / Herausgeber Freigabe / Herausgeber Änderung. Angezeigt wird
+    // IMMER nur der JUENGSTE Ereignis-Status (abgeleitet aus den vorhandenen
+    // image_reviews-Daten via reviewed_at — Datenmodell unveraendert, reines
+    // Anzeige-Mapping). Rücksprache bleibt als 7. Anzeige-Fall unangetastet
+    // (Korb C, Entscheidung offen). Ersetzt die fruehere Doppelzeile
+    // „Lektorat: X / Herausgeber: Y" (KEINE „ausstehend"-Anzeigen mehr).
+    function latestReview(img) {
+        let best = null;
+        const revs = img.reviews || {};
+        for (const role of Object.keys(revs)) {
+            const r = revs[role];
+            if (!r || !r.status || r.status === 'offen') continue;
+            if (!best || String(r.reviewed_at || '') >= String(best.reviewed_at || '')) {
+                best = { role: role, status: r.status, reviewed_at: r.reviewed_at || '' };
+            }
+        }
+        // Altbestand ohne image_reviews-Zeilen: Spiegel images.review_status
+        // (letztes Urteil) als Herausgeber-Ereignis werten.
+        if (!best && img.review_status && img.review_status !== 'offen') {
+            best = { role: 'kunde', status: img.review_status, reviewed_at: '' };
+        }
+        return best;
+    }
+    function unifiedKeyFor(role, status) {
+        if (status === 'in_bearbeitung') return 'in_bearbeitung';
+        if (status === 'ruecksprache') return 'ruecksprache';
+        if (status === 'freigegeben') return role === 'lektorat' ? 'lek_frei' : 'her_frei';
+        if (status === 'zu_ueberarbeiten') return role === 'lektorat' ? 'lek_aend' : 'her_aend';
+        return 'neu';
+    }
+    function unifiedStatusKey(img) {
+        const lr = latestReview(img);
+        return lr ? unifiedKeyFor(lr.role, lr.status) : 'neu';
+    }
+    function unifiedStatusLabel(key) {
+        if (key === 'in_bearbeitung') return t('In Bearbeitung');
+        if (key === 'lek_frei') return t('Lektorat Freigabe');
+        if (key === 'lek_aend') return t('Lektorat Änderung');
+        if (key === 'her_frei') return t('Herausgeber Freigabe');
+        if (key === 'her_aend') return t('Herausgeber Änderung');
+        if (key === 'ruecksprache') return t('Rücksprache');
+        return t('Neu');
+    }
+    // Farben wie bisher pro Status-Familie (alle AA-geprueft im Bestand).
+    function unifiedStatusColor(key) {
+        return (key === 'lek_frei' || key === 'her_frei') ? 'var(--success,#2a7)'
+            : (key === 'lek_aend' || key === 'her_aend') ? '#d97706'
+            : key === 'ruecksprache' ? '#6d28d9'
+            : key === 'in_bearbeitung' ? '#0369a1'
             : '#64748b';
     }
-    function ownerBadgeStatusLabel(s) {
-        return s === 'freigegeben' ? t('Freigegeben')
-            : s === 'zu_ueberarbeiten' ? t('Nachbessern')
-            : s === 'ruecksprache' ? t('Rücksprache')
-            : s === 'in_bearbeitung' ? t('In Bearbeitung')
-            : t('Ausstehend');
-    }
-    function ownerReviewBadges(img) {
-        const badge = function (text, status, withNote) {
-            return '<span class="badge" style="background:' + ownerBadgeColor(status)
-                + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">'
-                + text + (withNote && img.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>';
-        };
-        const roles = (window._shareRoles || []).slice().sort();  // 'kunde' vor 'lektorat' -> stabil
-        if (!roles.length) {
-            const s = img.review_status;
-            return badge(t('Prüfstatus: {s}', { s: ownerBadgeStatusLabel(s) }), s, true);
-        }
-        // Lektorat zuerst (Arbeitsreihenfolge: Lektorat prueft vor dem Herausgeber).
-        const ordered = roles.filter(r => r === 'lektorat').concat(roles.filter(r => r !== 'lektorat'));
-        return ordered.map(function (r, idx) {
-            const s = roleReviewStatus(img, r);
-            const text = r === 'lektorat'
-                ? t('Lektorat: {s}', { s: ownerBadgeStatusLabel(s) })
-                : t('Herausgeber: {s}', { s: ownerBadgeStatusLabel(s) });
-            return badge(text, s, idx === ordered.length - 1);
-        }).join(' ');
+    // Das eine Badge oben rechts an der Bildkarte (Besitzer UND Gast).
+    function unifiedReviewBadge(img) {
+        const key = unifiedStatusKey(img);
+        return '<span class="badge" id="unibadge_' + img.id + '" style="background:' + unifiedStatusColor(key)
+            + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">'
+            + unifiedStatusLabel(key)
+            + (!window.GUEST_MODE && img.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>';
     }
 
     // ─── Bilder-Filterleiste (Rollen-Workflow Etappe 2, 13.07.2026) ───
@@ -952,12 +979,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Ein Bild gegen einen Filter-Schluessel pruefen. 'ohne_alt'/'fehler' sind
     // Besitzer-Zusatzfilter (inhaltlich, nicht statusbezogen); 'lek_ruecksprache'
     // zeigt dem Herausgeber die vom Lektorat zur Ruecksprache markierten Bilder.
+    // Karbe B2 (17.07.2026): Status-Chips matchen den EINEN abgeleiteten
+    // Anzeige-Status (juengstes Ereignis) — identisch zum Badge an der Karte.
     function imageMatchesKey(img, key) {
         if (key === 'alle') return true;
         if (key === 'ohne_alt') return !(img.alt_text_edited || img.alt_text || img.original_alt);
         if (key === 'fehler') return img.status === 'error';
         if (key === 'lek_ruecksprache') return roleReviewStatus(img, 'lektorat') === 'ruecksprache';
-        return roleReviewStatus(img, filterActiveRole()) === key;
+        if (key === 'ruecksprache') return roleReviewStatus(img, revRole()) === 'ruecksprache';   // Lektorat-Chip, unveraendert (Korb C)
+        return unifiedStatusKey(img) === key;
     }
 
     function filterCount(key) {
@@ -967,28 +997,26 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     function filterChipLabel(key) {
-        if (key === 'offen') return t('Noch nicht geprüft');
-        if (key === 'in_bearbeitung') return t('In Bearbeitung');
-        if (key === 'freigegeben') return t('Freigegeben');
-        if (key === 'zu_ueberarbeiten') return (window.GUEST_MODE && revRole() === 'lektorat') ? t('Texte noch anpassen') : t('Änderung gewünscht');
-        if (key === 'ruecksprache') return t('Rücksprache');
         if (key === 'lek_ruecksprache') return t('Rücksprache des Lektorats');
         if (key === 'ohne_alt') return t('Ohne Alt-Text');
         if (key === 'fehler') return t('Fehler');
-        return t('Alle');
+        if (key === 'alle') return t('Alle');
+        return unifiedStatusLabel(key);   // die 6 Michael-Status + Rücksprache
     }
 
-    // Chip-Auswahl je Sicht. Alle Chips sind IMMER sichtbar (auch mit Zaehler 0),
-    // damit die Leiste fuer Screenreader-Nutzer vorhersagbar bleibt. Einzige
-    // Ausnahme: der Herausgeber-Zusatzchip „Rücksprache des Lektorats" erscheint
-    // nur, wenn es solche Bilder gibt (sonst waere er reine Verwirrung).
+    // Chip-Auswahl je Sicht (Karbe B2, 17.07.2026): Gast UND Besitzer sehen
+    // dieselben 6 Status + „Alle" (Zaehler bleiben). Alle Chips sind IMMER
+    // sichtbar (auch mit Zaehler 0), damit die Leiste fuer Screenreader-Nutzer
+    // vorhersagbar bleibt. Unveraendert (Korb C offen): der Rücksprache-Chip
+    // des Lektorats, der bedingte Herausgeber-Chip „Rücksprache des Lektorats"
+    // sowie die Besitzer-Zusatzchips „Ohne Alt-Text"/„Fehler".
     function filterChipKeys() {
-        const keys = ['alle', 'offen', 'in_bearbeitung', 'freigegeben', 'zu_ueberarbeiten'];
+        const keys = ['alle', 'neu', 'in_bearbeitung', 'lek_frei', 'lek_aend', 'her_frei', 'her_aend'];
         if (window.GUEST_MODE) {
             if (revRole() === 'lektorat') keys.push('ruecksprache');
             else if (filterCount('lek_ruecksprache') > 0) keys.push('lek_ruecksprache');
         } else {
-            keys.push('ruecksprache', 'ohne_alt', 'fehler');
+            keys.push('ohne_alt', 'fehler');
         }
         return keys;
     }
@@ -1052,6 +1080,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 img.reviews = img.reviews || {};
                 img.reviews[role] = img.reviews[role] || {};
                 img.reviews[role].status = status;
+                // Karbe B1: frisches Ereignis stempeln (UTC, DB-Format), damit die
+                // Juengster-Status-Ableitung ohne Server-Roundtrip stimmt.
+                img.reviews[role].reviewed_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
                 break;
             }
         }
@@ -1110,26 +1141,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
     // UI-Wortwahl seit 13.07.2026 (Karbe): die Rolle 'kunde' heißt in der
     // Oberfläche überall „Herausgeber". Der DB-Wert bleibt 'kunde'.
+    // Karbe B1 (17.07.2026): Beschriftungen auf Michaels 6 Begriffe vereinfacht;
+    // die eigene Aktion des Gastes IST danach das juengste Ereignis, die Zeile
+    // deckt sich also mit dem Badge. Rücksprache-Wortlaut unveraendert (Korb C).
     function revStatusLabel(status) {
-        if (status === 'freigegeben') return revRole() === 'lektorat' ? t('Genehmigt durch Lektorat') : t('Freigegeben durch Herausgeber');
-        if (status === 'zu_ueberarbeiten') return revRole() === 'lektorat' ? t('Änderung durch Lektorat') : t('Änderung gewünscht');
         if (status === 'ruecksprache') return t('Rücksprache mit dem Herausgeber');
-        if (status === 'in_bearbeitung') return t('In Bearbeitung');
-        return t('Noch nicht geprüft');
+        return unifiedStatusLabel(unifiedKeyFor(revRole(), status));
     }
-    // Herausgeber sieht die Lektorat-Vorgeschichte als eigene Zeile (nur Anzeige).
-    function revHistoryHtml(img) {
-        if (revRole() !== 'kunde') return '';
-        const lek = (img.reviews || {}).lektorat;
-        if (!lek || !lek.status || lek.status === 'offen') return '';
-        const map = {
-            freigegeben: t('Genehmigt durch Lektorat'),
-            zu_ueberarbeiten: t('Änderung durch Lektorat'),
-            ruecksprache: t('Rücksprache mit dem Herausgeber'),
-            in_bearbeitung: t('In Bearbeitung'),
-        };
-        return '<p class="rev-history" style="margin:0 0 0.4rem 0;color:var(--text-muted);">' + t('Lektorat: {s}', { s: map[lek.status] || lek.status }) + '</p>';
-    }
+    // Die fruehere Lektorat-Vorgeschichte-Zeile (revHistoryHtml) ist entfallen —
+    // das eine Badge oben rechts zeigt bereits den juengsten Ereignis-Status
+    // (Karbe B1: „immer nur EIN Status").
     // Ruecksprache-Knopf gibt es NUR fuer das Lektorat (Server erzwingt das ebenfalls).
     function revRueckBtnHtml(img) {
         if (revRole() !== 'lektorat') return '';
@@ -1164,6 +1185,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function applyGuestStatusUI(imageId, status) {
         const st = document.getElementById('rev_status_' + imageId);
         if (st) st.textContent = revStatusLabel(status);
+        // Karbe B1: das eine Badge oben rechts an der Karte live mitziehen —
+        // die eigene Aktion ist ab jetzt das juengste Ereignis.
+        const ub = document.getElementById('unibadge_' + imageId);
+        if (ub) {
+            const key = unifiedKeyFor(revRole(), status);
+            ub.textContent = unifiedStatusLabel(key);
+            ub.style.background = unifiedStatusColor(key);
+        }
         const cont = document.getElementById('guestrev_' + imageId);
         if (cont) cont.dataset.status = status;
         const bF = document.getElementById('rev_btn_frei_' + imageId);
@@ -1405,7 +1434,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // fuehrt "Zurueck zum Projekt" direkt zurueck in die Freigabe-Ansicht
             // (der Link bleibt ja gueltig) — keine Sackgasse. Fokus auf die
             // Ueberschrift, damit die Bestaetigung sofort vorgelesen wird.
-            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem auto;">'
+            // Karbe A4 (17.07.2026): linksbuendig am Inhaltsbereich (kein auto-Zentrieren).
+            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem 0;">'
                 + '<h1 class="section-title" id="guestThanksHeading" tabindex="-1">' + t('Vielen Dank!') + '</h1>'
                 + '<p>' + t('Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen.') + '</p>'
                 + '<div style="margin-top:1rem;">'
@@ -1418,6 +1448,25 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             if (statusEl) statusEl.textContent = t('Netzwerkfehler. Bitte erneut versuchen.');
             if (sendBtn) sendBtn.disabled = false;
         }
+    }
+
+    // ─── Karbe A8 (17.07.2026): Gast beendet die Ansicht ───
+    // window.close() wirkt nur, wenn der Browser es erlaubt (per Script/Link
+    // geoeffnete Fenster). Klappt es nicht, zeigen wir eine Abschieds-Seite —
+    // bewusst MIT Rueckweg-Knopf (Merksatz: keine Sackgassen-Endscreens).
+    function guestExit() {
+        window.close();
+        setTimeout(function () {
+            if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem 0;">'
+                + '<h1 class="section-title" id="guestExitHeading" tabindex="-1">' + t('Ansicht beendet') + '</h1>'
+                + '<p>' + t('Sie können dieses Fenster jetzt schließen. Über Ihren Einladungslink kommen Sie jederzeit zurück.') + '</p>'
+                + '<div style="margin-top:1rem;">'
+                + '<button type="button" class="btn btn-primary" onclick="showProject(window.SHARE_TOKEN)">' + t('Zurück zum Projekt') + '</button>'
+                + '</div></section>';
+            const h = document.getElementById('guestExitHeading');
+            if (h) h.focus();
+        }, 250);
     }
 
     async function setContextSetting(projectId, useContext) {
@@ -1711,7 +1760,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                          mittel #a15c00 (5,2:1), niedrig #b91c1c (5,9:1). -->
                     ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? '#1e7e34' : img.konfidenz === 'niedrig' ? '#b91c1c' : '#a15c00') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Konfidenz: {k}', { k: img.konfidenz }) + '</span>' : ''}
                     ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#1e7e34;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? t('Kontext: Ja') : t('Kontext: Nein')) + '</span>' : ''}
-                    ${!window.GUEST_MODE && window._inReview && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? ownerReviewBadges(img) : ''}
+                    ${(window.GUEST_MODE || window._inReview) && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? unifiedReviewBadge(img) : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">' + t('Wird analysiert...') + '</span>' : ''}
                     ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Fehler') + '</span>' : ''}
                 </div>
@@ -1755,12 +1804,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                          Alt-Felder gerendert, nur versteckt. Fuellt der Gast das Feld erstmals,
                          blendet der Speicher-Handler sie sofort ein (vorher: erst nach Neuladen). -->
                     <div class="guest-review" id="guestrev_${img.id}" data-status="${revOwnStatus(img)}" ${(img.alt_text_edited || img.alt_text || img.original_alt) ? '' : 'hidden'} style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
-                        <p style="margin:0 0 0.4rem 0;font-weight:600;">${t('Status:')} <span id="rev_status_${img.id}">${revStatusLabel(revOwnStatus(img))}</span> <output id="rev_saved_${img.id}" class="rev-saved"></output></p>
-                        ${revHistoryHtml(img)}
+                        <!-- Karbe B1: Statuszeile zeigt den EINEN abgeleiteten Status (wie das
+                             Badge oben rechts); nach eigener Aktion ist das die eigene Aktion. -->
+                        <p style="margin:0 0 0.4rem 0;font-weight:600;">${t('Status:')} <span id="rev_status_${img.id}">${unifiedStatusLabel(unifiedStatusKey(img))}</span> <output id="rev_saved_${img.id}" class="rev-saved"></output></p>
                         <!-- Ein Klick = Status sofort gesetzt (guestSetStatus); aktiver Knopf via aria-pressed, Statuswechsel per announce() angesagt. Block erscheint fuer JEDEN Alt-Text (auch vorhandene PDF-Originaltexte), nicht nur frisch generierte (Karbe 23.06.2026). -->
                         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
                             <button type="button" class="btn btn-secondary btn-small rev-frei" id="rev_btn_frei_${img.id}" aria-pressed="${revOwnStatus(img) === 'freigegeben'}" onclick="guestSetStatus(${img.id}, 'freigegeben')">${t('Freigeben')}</button>
-                            <button type="button" class="btn btn-secondary btn-small" id="rev_btn_aend_${img.id}" aria-pressed="${revOwnStatus(img) === 'zu_ueberarbeiten'}" onclick="guestSetStatus(${img.id}, 'zu_ueberarbeiten')">${revRole() === 'lektorat' ? t('Texte noch anpassen') : t('Änderung wünschen')}</button>
+                            <button type="button" class="btn btn-secondary btn-small" id="rev_btn_aend_${img.id}" aria-pressed="${revOwnStatus(img) === 'zu_ueberarbeiten'}" onclick="guestSetStatus(${img.id}, 'zu_ueberarbeiten')">${t('Änderung wünschen')}</button>
                             ${revRueckBtnHtml(img)}
                         </div>
                         <!-- Optionale Anmerkung, vom Status entkoppelt: natives <details> (zero ARIA), geht bei jedem Status. -->

@@ -2018,3 +2018,28 @@ msgstr "Projekt slutfört den {datum}"
 
 msgid "{n} Bilder ohne Prüfurteil"
 msgstr "{n} bilder utan bedömning"
+
+# ─── Karbe-feedback korgar A+B (17.07.2026) ───
+msgid "Anmerkung"
+msgstr "Anteckning"
+
+msgid "Beenden"
+msgstr "Avsluta"
+
+msgid "Ansicht beendet"
+msgstr "Vyn avslutad"
+
+msgid "Sie können dieses Fenster jetzt schließen. Über Ihren Einladungslink kommen Sie jederzeit zurück."
+msgstr "Du kan stänga det här fönstret nu. Du kan när som helst komma tillbaka via din inbjudningslänk."
+
+msgid "Lektorat Freigabe"
+msgstr "Korrekturläsning godkänd"
+
+msgid "Lektorat Änderung"
+msgstr "Korrekturläsning ändring"
+
+msgid "Herausgeber Freigabe"
+msgstr "Utgivare godkänd"
+
+msgid "Herausgeber Änderung"
+msgstr "Utgivare ändring"

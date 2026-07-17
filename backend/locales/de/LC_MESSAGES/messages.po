@@ -2460,3 +2460,28 @@ msgstr "Projekt abgeschlossen am {datum}"
 
 msgid "{n} Bilder ohne Prüfurteil"
 msgstr "{n} Bilder ohne Prüfurteil"
+
+# ─── Karbe-Feedback Körbe A+B (17.07.2026) ───
+msgid "Anmerkung"
+msgstr "Anmerkung"
+
+msgid "Beenden"
+msgstr "Beenden"
+
+msgid "Ansicht beendet"
+msgstr "Ansicht beendet"
+
+msgid "Sie können dieses Fenster jetzt schließen. Über Ihren Einladungslink kommen Sie jederzeit zurück."
+msgstr "Sie können dieses Fenster jetzt schließen. Über Ihren Einladungslink kommen Sie jederzeit zurück."
+
+msgid "Lektorat Freigabe"
+msgstr "Lektorat Freigabe"
+
+msgid "Lektorat Änderung"
+msgstr "Lektorat Änderung"
+
+msgid "Herausgeber Freigabe"
+msgstr "Herausgeber Freigabe"
+
+msgid "Herausgeber Änderung"
+msgstr "Herausgeber Änderung"

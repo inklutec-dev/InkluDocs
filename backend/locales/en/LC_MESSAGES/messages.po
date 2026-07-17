@@ -2457,3 +2457,28 @@ msgstr "Project completed on {datum}"
 
 msgid "{n} Bilder ohne Prüfurteil"
 msgstr "{n} images without a review verdict"
+
+# ─── Karbe feedback baskets A+B (2026-07-17) ───
+msgid "Anmerkung"
+msgstr "Note"
+
+msgid "Beenden"
+msgstr "Exit"
+
+msgid "Ansicht beendet"
+msgstr "View closed"
+
+msgid "Sie können dieses Fenster jetzt schließen. Über Ihren Einladungslink kommen Sie jederzeit zurück."
+msgstr "You can close this window now. You can return at any time via your invitation link."
+
+msgid "Lektorat Freigabe"
+msgstr "Proofreading approval"
+
+msgid "Lektorat Änderung"
+msgstr "Proofreading change"
+
+msgid "Herausgeber Freigabe"
+msgstr "Publisher approval"
+
+msgid "Herausgeber Änderung"
+msgstr "Publisher change"

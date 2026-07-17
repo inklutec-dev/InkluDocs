@@ -2148,3 +2148,28 @@ msgstr "Projekt afsluttet den {datum}"
 
 msgid "{n} Bilder ohne Prüfurteil"
 msgstr "{n} billeder uden bedømmelse"
+
+# ─── Karbe-feedback kurve A+B (17.07.2026) ───
+msgid "Anmerkung"
+msgstr "Bemærkning"
+
+msgid "Beenden"
+msgstr "Afslut"
+
+msgid "Ansicht beendet"
+msgstr "Visning afsluttet"
+
+msgid "Sie können dieses Fenster jetzt schließen. Über Ihren Einladungslink kommen Sie jederzeit zurück."
+msgstr "Du kan lukke dette vindue nu. Du kan til enhver tid vende tilbage via dit invitationslink."
+
+msgid "Lektorat Freigabe"
+msgstr "Korrekturlæsning godkendt"
+
+msgid "Lektorat Änderung"
+msgstr "Korrekturlæsning ændring"
+
+msgid "Herausgeber Freigabe"
+msgstr "Udgiver godkendt"
+
+msgid "Herausgeber Änderung"
+msgstr "Udgiver ændring"

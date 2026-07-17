@@ -2457,3 +2457,28 @@ msgstr "Proyecto finalizado el {datum}"
 
 msgid "{n} Bilder ohne Prüfurteil"
 msgstr "{n} imágenes sin veredicto de revisión"
+
+# ─── Feedback Karbe cestas A+B (17.07.2026) ───
+msgid "Anmerkung"
+msgstr "Nota"
+
+msgid "Beenden"
+msgstr "Salir"
+
+msgid "Ansicht beendet"
+msgstr "Vista finalizada"
+
+msgid "Sie können dieses Fenster jetzt schließen. Über Ihren Einladungslink kommen Sie jederzeit zurück."
+msgstr "Ya puede cerrar esta ventana. Puede volver en cualquier momento a través de su enlace de invitación."
+
+msgid "Lektorat Freigabe"
+msgstr "Aprobación revisión"
+
+msgid "Lektorat Änderung"
+msgstr "Cambio revisión"
+
+msgid "Herausgeber Freigabe"
+msgstr "Aprobación editor"
+
+msgid "Herausgeber Änderung"
+msgstr "Cambio editor"
