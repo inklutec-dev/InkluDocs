@@ -191,7 +191,8 @@ class VerifyOutput(BaseModel):
         return v
 
 
-_VERIFY_KRITISCHE_TYPEN = frozenset({'foto_personen', 'foto_event', 'foto_objekte', 'screenshot'})
+_VERIFY_KRITISCHE_TYPEN = frozenset({'foto_personen', 'foto_event', 'foto_objekte', 'screenshot',
+                                     'foto_landschaft', 'foto_architektur'})  # +landschaft/architektur 17.07.: Wahrzeichen- und Montage-Risiko (Schwingshandl-Fall)
 
 
 def _verify_scope_matches(bildtyp: str) -> bool:
@@ -207,7 +208,7 @@ def _build_verify_prompt(alt_text: str, language: str = 'de') -> str:
     # Paket 3 (16.07.2026): vom reinen Widerlegen (Refuter) zum Redakteur, nach
     # dem Vorbild des InkluAgent-Modify-Musters (inkluagent/prompts/system_modify.py):
     # binaerer Punkt-fuer-Punkt-Abgleich, exaktes Nachzaehlen, dazu Vollstaendig-
-    # keits- und Montage-Check; bei Beanstandung liefert das Modell gleich eine
+    # keits- und Montage-Check; bei Beanstandung liefert das Modell gleich eine Suche dabei AKTIV Quadrant fuer Quadrant auch nach KLEINEN eingefuegten Objekten (z.B. ein winziges Bauwerk an einem unmoeglichen Ort) — geringe Groesse schuetzt eine Montage nicht; ein solcher Fund gehoert benannt in den korrigierten Alt-Text.
     # korrigierte Fassung (Anwendung nur bei V4_VERIFY_KORREKTUR=on).
     # Review-Fix (16.07. abends): Zielsprache wird explizit benannt (statt nur
     # "gleiche Sprache wie das Original"), damit die Korrektur bei EN/DA/FR/ES/SV-
