@@ -280,7 +280,30 @@ Markdown-Tabellen.
 
 FEW-SHOT BEISPIELE
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "strukturformel" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Skelettformel der Acetylsalicylsäure (Wikimedia-Grafik Aspirin-skeletal.svg): Benzolring mit zwei Substituenten — einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3) in Nachbarstellung. Bildunterschrift im Dokument: 'Aspirin (Acetylsalicylsäure)'.",
+  "alt_text": "Strukturformel — Acetylsalicylsäure (Aspirin, C9H8O4): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).",
+  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Strukturformel —' und nennt den Stoffnamen, weil die Bildunterschrift ihn belegt — nicht aus visueller Vermutung. Screenreader-taugliche Notation durchgehalten: CH3 und C9H8O4 mit normalen Zahlen statt tiefgestellter Indizes (CH₃). Grundgerüst (Benzolring) und funktionelle Gruppen explizit benannt, keine Atome erfunden.",
+  "prinzip": "Mit 'Strukturformel —' + belegtem Stoffnamen und Summenformel führen; Indizes als normale Zahlen (CH3, nicht CH₃), funktionelle Gruppen explizit, Stoffname nur aus Kontext oder Beschriftung.",
+  "quelle": "Wikimedia Commons: Aspirin-skeletal.svg",
+  "lizenz": "Wikimedia Commons, frei lizenziert"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dieselbe Skelettformel der Acetylsalicylsäure (Aspirin-skeletal.svg): Benzolring mit Carboxygruppe und Acetoxygruppe, Bildunterschrift 'Aspirin (Acetylsalicylsäure)'.",
+  "alt_text": "Eine chemische Formel mit einem Sechseck und mehreren Linien, vermutlich Paracetamol. Der Ring trägt eine CH₃-Gruppe und eine NH₂-Gruppe.",
+  "fehler": [
+    "'vermutlich Paracetamol' identifiziert den Stoff per Hedge-Wort und gegen die Beschriftung — die Bildunterschrift belegt Acetylsalicylsäure (Aspirin); Stoffnamen kommen aus Kontext oder Beschriftung, nicht aus visueller Vermutung.",
+    "'CH₃' nutzt tiefgestellte Indizes, die Screenreader schlecht vorlesen — screenreader-tauglich ist 'CH3' mit normaler Zahl.",
+    "'eine NH₂-Gruppe' erfindet eine Atomgruppe, die die Formel nicht zeigt — sichtbar sind Carboxygruppe (COOH) und Acetoxygruppe (O-CO-CH3).",
+    "'Eine chemische Formel mit einem Sechseck und mehreren Linien' beschreibt nur die Geometrie ohne das Präfix 'Strukturformel —' und ohne fachliche Information (Grundgerüst, funktionelle Gruppen)."
+  ],
+  "besser": "Mit 'Strukturformel — Acetylsalicylsäure (Aspirin, C9H8O4)' führen (Name aus der Beschriftung), Benzolring und die beiden belegten funktionellen Gruppen in screenreader-tauglicher Notation nennen und keine Gruppen erfinden.",
+  "quelle": "Wikimedia Commons: Aspirin-skeletal.svg",
+  "lizenz": "Wikimedia Commons, frei lizenziert"
+}
 
 
 FINAL CHECK

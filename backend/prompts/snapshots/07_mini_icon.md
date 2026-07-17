@@ -133,7 +133,30 @@ ist die ehrliche Antwort. NICHT raten.
 
 FEW-SHOT BEISPIELE:
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "icon" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Kleines Symbol (24x24 Pixel) in der Kopfleiste einer Webseite: ein Zahnrad, direkt neben dem Benutzermenü platziert. Kein Link-Ziel im Kontext, der umgebende Menüpunkt heißt 'Konto verwalten'.",
+  "alt_text": "Einstellungen (Zahnrad)",
+  "begruendung": "Wendet die Icon-Formel 'Funktion (Form)' an: Die Funktion 'Einstellungen' steht zuerst — sie ist aus Symbol-Form und Kontext (Kopfleiste neben dem Benutzermenü) eindeutig ableitbar —, die Form 'Zahnrad' folgt als kurze Klammer-Ergänzung. Kein Präfix 'Icon —', keine Farben, kein 'Symbol für ...'; mit 23 Zeichen deutlich unter der 50-Zeichen-Grenze.",
+  "prinzip": "Funktion zuerst, optional die Form in runden Klammern ('Einstellungen (Zahnrad)'); nie die Form als Ersatz für die Funktion, keine Farben, 3-50 Zeichen.",
+  "quelle": "fiktives Beispiel (generisches UI-Symbol)",
+  "lizenz": "fiktives Beispiel"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dasselbe kleine Zahnrad-Symbol in der Kopfleiste der Webseite, neben dem Benutzermenü 'Konto verwalten'.",
+  "alt_text": "Graues Zahnrad-Symbol, ein stilisiertes Icon, das vermutlich für Einstellungen steht",
+  "fehler": [
+    "Die Form ('Zahnrad-Symbol') ersetzt die Funktion — die Formbeschreibung darf nur in runden Klammern HINTER der Funktion stehen ('Einstellungen (Zahnrad)').",
+    "'Graues' nennt eine Farbe — bei Icons verboten, sie trägt keine Funktionsinformation.",
+    "'vermutlich für Einstellungen steht' hedgt, obwohl Symbol-Form und Kontext die Funktion eindeutig belegen; 'stilisiertes' ist ebenfalls verboten.",
+    "Mit 79 Zeichen weit über dem Nötigen und über der 50-Zeichen-Grenze für Icons — die Funktion wäre in 23 Zeichen gesagt."
+  ],
+  "besser": "'Einstellungen (Zahnrad)' — Funktion zuerst, Form nur als Klammer-Zusatz, keine Farbe, kein Hedging, kurz.",
+  "quelle": "fiktives Beispiel (generisches UI-Symbol)",
+  "lizenz": "fiktives Beispiel"
+}
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - alt_text [PFLICHT]: Funktion (icon: 3-50 Zeichen, funktional: 3-80 Zeichen). Validierung der Bildtyp-spezifischen Obergrenze erfolgt in der jeweiligen Mini-Pipeline.

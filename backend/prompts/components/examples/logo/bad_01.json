@@ -1,0 +1,13 @@
+{
+  "szene": "Dasselbe Logo im Kopfbereich der Firmen-Webseite: lesbarer Schriftzug 'MUSTERWERK', Slogan 'Technik für alle', verlinkt auf die Startseite.",
+  "alt_text": "Ein stilisiertes blaues Quadrat mit modernem Schriftzug, Symbol für Innovation und technische Kompetenz des Unternehmens",
+  "fehler": [
+    "Der lesbare Markenname 'MUSTERWERK' fehlt — genau er ist die einzige Pflichtinformation ('Logo MUSTERWERK').",
+    "'stilisiertes blaues Quadrat' und 'modernem Schriftzug' beschreiben visuelles Design (Form, Farbe) — bei Logos verboten.",
+    "'Symbol für Innovation und technische Kompetenz' spekuliert über die Bedeutung des Logos ('Symbol für ...' ist explizit verboten).",
+    "Das Format 'Logo ' + Markenname fehlt ebenso wie der Link-Hinweis, obwohl das Logo auf die Startseite verlinkt ist."
+  ],
+  "besser": "'Logo MUSTERWERK — Link zur Startseite' — Markenname aus dem lesbaren Schriftzug (Evidenz-Stufe 1), Link-Ziel ergänzt, keinerlei Form-, Farb- oder Bedeutungsbeschreibung.",
+  "quelle": "fiktives Beispiel (erfundene Marke 'MUSTERWERK')",
+  "lizenz": "fiktives Beispiel"
+}

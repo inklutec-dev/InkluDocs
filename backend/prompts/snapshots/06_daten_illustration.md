@@ -278,7 +278,30 @@ Markdown-Tabellen.
 
 FEW-SHOT BEISPIELE
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "illustration" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Flache Vektor-Illustration: ein stilisiertes Tier mit spitzen Ohren, großen runden Augen und buschigem Schwanz sitzt neben einem Schreibtisch; auf dem Tisch ein aufgeklappter Laptop und ein Mikroskop, an der Wand eine gerahmte Urkunde mit unlesbarem Text. Keine Hände oder Pfoten an den Geräten.",
+  "alt_text": "Flache Vektor-Illustration: Ein stilisiertes Tier mit spitzen Ohren, großen runden Augen und buschigem Schwanz, als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und einem Mikroskop; an der Wand hängt eine gerahmte Urkunde mit nicht lesbarem Text.",
+  "begruendung": "Erster Satz nennt Stilrichtung (flache Vektor-Illustration), Hauptmotiv und konkrete Elemente. Die Spezies-Mehrdeutigkeit wird als gleichwertige Alternativen-Form gelöst ('als Katze oder Fuchs deutbar') — ohne Hedge-Wörter wie 'vermutlich'. Keine Interaktion erfunden: Das Tier sitzt NEBEN dem Tisch, es 'arbeitet' nicht am Laptop. Nebenelemente vollständig (Mikroskop, Urkunde), Unlesbares ehrlich benannt.",
+  "prinzip": "Stilrichtung zuerst, mehrdeutige Charaktere als gleichwertige Alternativen ('als X oder Y deutbar') statt Festlegung oder Vermutungswörtern, Interaktionen nur mit Beleg, Nebenelemente vollständig.",
+  "quelle": "fiktives Beispiel (generische Szene, an das Hund/Mikroskop-Muster der Builder-Regeln angelehnt)",
+  "lizenz": "fiktives Beispiel"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dieselbe Vektor-Illustration: stilisiertes Tier mit spitzen Ohren und buschigem Schwanz neben einem Schreibtisch mit Laptop und Mikroskop, gerahmte Urkunde an der Wand, keine Pfoten an den Geräten.",
+  "alt_text": "Eine niedliche Illustration von vermutlich einer Katze, die fleißig am Laptop arbeitet und wissenschaftliche Ergebnisse in ihren Computer eintippt.",
+  "fehler": [
+    "'vermutlich einer Katze' legt die mehrdeutige Figur per Hedge-Wort fest, statt beide naheliegenden Deutungen gleichwertig zu nennen ('als Katze oder Fuchs deutbar').",
+    "'am Laptop arbeitet' und 'eintippt' erfinden eine Interaktion — das Tier sitzt nur neben dem Tisch, keine Pfoten an den Geräten sichtbar.",
+    "'niedliche' und 'fleißig' sind Wertungen ohne Beleg; 'Eine niedliche Illustration von' ist eine Floskel-Eröffnung ohne Stilrichtung.",
+    "Mikroskop und gerahmte Urkunde fehlen komplett — Nebenelemente übersehen (Vollständigkeits-Verstoß)."
+  ],
+  "besser": "Mit der Stilrichtung führen ('Flache Vektor-Illustration: ...'), die Figur neutral mit Alternativen-Form beschreiben, Objekte als nebeneinander liegend benennen statt Interaktion zu erfinden, und alle Inventar-Elemente einschließlich Mikroskop und Urkunde nennen.",
+  "quelle": "fiktives Beispiel (generische Szene, an das Hund/Mikroskop-Muster der Builder-Regeln angelehnt)",
+  "lizenz": "fiktives Beispiel"
+}
 
 
 FINAL CHECK

@@ -1,0 +1,8 @@
+{
+  "szene": "Behörden-Infografik 'Recycling-Kreislauf' mit vier nummerierten Stationen: 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion; zentrale Zahl '67% der Verpackungen werden wiederverwertet'. Am unteren Rand: 'Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27'.",
+  "alt_text": "Infografik — Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten: Auf die Sammlung folgt die Sortierung, danach die Aufbereitung, aus der die Neuproduktion hervorgeht. Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27.",
+  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Infografik —' plus Hauptthema und der Kernaussage mit konkretem Datenpunkt (67%). Die vier Stationen stehen in logischer Reihenfolge und sind über ihre Beziehungen verbunden ('auf ... folgt', 'aus der ... hervorgeht') statt über Pfeil- oder Positionsbeschreibungen. URL und Telefonnummer wortgetreu mit originalgetreuen Trennzeichen ('02 28 / 24 25 26 27' — nicht zusammengezogen), weil sie für Screenreader-Nutzer der einzige Zugang zu dieser Information sind.",
+  "prinzip": "Mit 'Infografik —' + Thema und Kernaussage mit Datenpunkten führen; Stationen inhaltlich-logisch verketten statt Layout nachzuerzählen; Kontaktdaten und URLs wortgetreu mit Original-Trennzeichen.",
+  "quelle": "fiktives Beispiel (generische Behörden-Infografik, Kontaktdaten erfunden)",
+  "lizenz": "fiktives Beispiel"
+}

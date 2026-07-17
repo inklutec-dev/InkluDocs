@@ -1,0 +1,13 @@
+{
+  "szene": "Dasselbe Bildschirmfoto: E-Mail-Programm mit Fenstertitel 'Postfach — Mustermail', Navigation 'Posteingang (3)', geöffnete E-Mail 'Terminbestätigung Dienstag 10 Uhr', Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Kein Microsoft-Logo, keine Outlook-Beschriftung sichtbar.",
+  "alt_text": "Ein Screenshot zeigt Microsoft Outlook mit einem modernen, aufgeräumten Design. Verschiedene Menüpunkte und Buttons sind zu sehen, mit denen man wahrscheinlich E-Mails verwalten kann.",
+  "fehler": [
+    "'Microsoft Outlook' benennt eine Anwendung ohne Beleg — weder Logo noch Titel stützen das; der Fenstertitel belegt 'Mustermail' (Zwei-Wege-Regel verletzt).",
+    "'Ein Screenshot zeigt' ist die Floskel-Variante statt des Präfixes 'Screenshot der/des ...' mit Anwendung und Zustand.",
+    "'modernen, aufgeräumten Design' ist eine emotionale/ästhetische Wertung — Screenshots werden funktional beschrieben.",
+    "'Verschiedene Menüpunkte und Buttons' und 'wahrscheinlich E-Mails verwalten' bleiben generisch mit Hedge-Wort, statt die lesbaren UI-Texte ('Posteingang (3)', 'Antworten', Betreff) wortgetreu zu übernehmen."
+  ],
+  "besser": "Mit 'Screenshot des E-Mail-Programms Mustermail' (belegt durch den Fenstertitel) und dem Zustand führen, die lesbaren UI-Texte wortgetreu in funktionaler Hierarchie nennen und auf Design-Wertungen sowie Vermutungswörter verzichten.",
+  "quelle": "fiktives Beispiel (erfundene Anwendung 'Mustermail', keine echten Nutzerdaten)",
+  "lizenz": "fiktives Beispiel"
+}

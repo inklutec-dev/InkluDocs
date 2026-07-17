@@ -1,0 +1,13 @@
+{
+  "szene": "Dieselbe Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion), zentrale Zahl '67% der Verpackungen werden wiederverwertet', unten URL und Bürgertelefon '02 28 / 24 25 26 27'.",
+  "alt_text": "Eine Infografik mit verschiedenen Daten zum Thema Umwelt. Oben links steht ein grünes Symbol, von dem ein Pfeil nach rechts zu einem blauen Kasten zeigt; im Zentrum befindet sich eine große Zahl. Bei Fragen: Telefon 0228242526 27.",
+  "fehler": [
+    "'Eine Infografik mit verschiedenen Daten' ist die klassische Floskel-Eröffnung — Präfix 'Infografik —', Thema und Kernaussage mit dem Datenpunkt 67% fehlen.",
+    "'Oben links steht ...', 'ein Pfeil nach rechts ...', 'im Zentrum befindet sich ...' erzählen das Layout nach, statt die inhaltliche Logik der vier Stationen zu vermitteln.",
+    "Die vier Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion) und die zentrale Zahl 67% werden nicht übernommen — Zahlen-Vollständigkeit verletzt ('eine große Zahl' statt des Werts).",
+    "'0228242526 27' zieht die Telefonnummer zusammen und verstümmelt sie — Kontaktdaten müssen wortgetreu mit den Original-Trennzeichen übernommen werden ('02 28 / 24 25 26 27'); die URL fehlt ganz."
+  ],
+  "besser": "Mit 'Infografik — Recycling-Kreislauf' und der Kernaussage (67% wiederverwertet) führen, die vier Stationen in logischer Reihenfolge mit ihren Beziehungen nennen, alle Zahlen übernehmen und URL plus Telefonnummer wortgetreu mit Original-Trennzeichen wiedergeben.",
+  "quelle": "fiktives Beispiel (generische Behörden-Infografik, Kontaktdaten erfunden)",
+  "lizenz": "fiktives Beispiel"
+}

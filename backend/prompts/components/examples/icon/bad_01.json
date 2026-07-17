@@ -1,0 +1,13 @@
+{
+  "szene": "Dasselbe kleine Zahnrad-Symbol in der Kopfleiste der Webseite, neben dem Benutzermenü 'Konto verwalten'.",
+  "alt_text": "Graues Zahnrad-Symbol, ein stilisiertes Icon, das vermutlich für Einstellungen steht",
+  "fehler": [
+    "Die Form ('Zahnrad-Symbol') ersetzt die Funktion — die Formbeschreibung darf nur in runden Klammern HINTER der Funktion stehen ('Einstellungen (Zahnrad)').",
+    "'Graues' nennt eine Farbe — bei Icons verboten, sie trägt keine Funktionsinformation.",
+    "'vermutlich für Einstellungen steht' hedgt, obwohl Symbol-Form und Kontext die Funktion eindeutig belegen; 'stilisiertes' ist ebenfalls verboten.",
+    "Mit 79 Zeichen weit über dem Nötigen und über der 50-Zeichen-Grenze für Icons — die Funktion wäre in 23 Zeichen gesagt."
+  ],
+  "besser": "'Einstellungen (Zahnrad)' — Funktion zuerst, Form nur als Klammer-Zusatz, keine Farbe, kein Hedging, kurz.",
+  "quelle": "fiktives Beispiel (generisches UI-Symbol)",
+  "lizenz": "fiktives Beispiel"
+}

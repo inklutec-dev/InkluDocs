@@ -190,7 +190,30 @@ EIGENNAMEN UND SLOGANS: Im Original belassen, nicht eindeutschen.
 
 FEW-SHOT BEISPIELE:
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "logo" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Kopfbereich einer Firmen-Webseite: quadratische Bildmarke mit klar lesbarem Schriftzug 'MUSTERWERK' und darunter dem Slogan 'Technik für alle'. Das Logo ist auf die Startseite der Domain verlinkt.",
+  "alt_text": "Logo MUSTERWERK — Link zur Startseite",
+  "begruendung": "Beginnt mit 'Logo ' + Markenname (Evidenz-Stufe 1: der Name ist als Text im Logo lesbar). Da ein Link-Ziel gesetzt ist, wird 'Link zur Startseite' ergänzt; die 80-Zeichen-Grenze ist eingehalten. Kein visuelles Design, keine Farben, keine Formen, keine Deutung — der blinde Nutzer erfährt sofort, welche Marke das Logo repräsentiert und wohin es führt.",
+  "prinzip": "'Logo ' + Markenname, nur was Text oder weltweit eindeutiges Symbol belegt (Zwei-Wege-Regel); bei verlinkten Logos das Link-Ziel ergänzen; kein visuelles Design beschreiben.",
+  "quelle": "fiktives Beispiel (erfundene Marke 'MUSTERWERK')",
+  "lizenz": "fiktives Beispiel"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dasselbe Logo im Kopfbereich der Firmen-Webseite: lesbarer Schriftzug 'MUSTERWERK', Slogan 'Technik für alle', verlinkt auf die Startseite.",
+  "alt_text": "Ein stilisiertes blaues Quadrat mit modernem Schriftzug, Symbol für Innovation und technische Kompetenz des Unternehmens",
+  "fehler": [
+    "Der lesbare Markenname 'MUSTERWERK' fehlt — genau er ist die einzige Pflichtinformation ('Logo MUSTERWERK').",
+    "'stilisiertes blaues Quadrat' und 'modernem Schriftzug' beschreiben visuelles Design (Form, Farbe) — bei Logos verboten.",
+    "'Symbol für Innovation und technische Kompetenz' spekuliert über die Bedeutung des Logos ('Symbol für ...' ist explizit verboten).",
+    "Das Format 'Logo ' + Markenname fehlt ebenso wie der Link-Hinweis, obwohl das Logo auf die Startseite verlinkt ist."
+  ],
+  "besser": "'Logo MUSTERWERK — Link zur Startseite' — Markenname aus dem lesbaren Schriftzug (Evidenz-Stufe 1), Link-Ziel ergänzt, keinerlei Form-, Farb- oder Bedeutungsbeschreibung.",
+  "quelle": "fiktives Beispiel (erfundene Marke 'MUSTERWERK')",
+  "lizenz": "fiktives Beispiel"
+}
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - alt_text [PFLICHT]: Funktion (icon: 3-50 Zeichen, funktional: 3-80 Zeichen). Validierung der Bildtyp-spezifischen Obergrenze erfolgt in der jeweiligen Mini-Pipeline.

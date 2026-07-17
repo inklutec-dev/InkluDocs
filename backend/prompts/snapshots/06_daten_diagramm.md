@@ -392,7 +392,30 @@ Markdown-Tabellen.
 
 FEW-SHOT BEISPIELE
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "diagramm" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Wikimedia-Grafik Population_curve.svg): x-Achse Jahrtausende, y-Achse Bevölkerung in Milliarden. Die Kurve verläuft über fast den gesamten Zeitraum nahe der Nulllinie und steigt erst ab etwa 1800 steil an, bis auf rund 6 Milliarden im Jahr 2000.",
+  "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, erst ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
+  "begruendung": "Kernaussage zuerst: Der erste Satz transportiert die wichtigste Erkenntnis (jahrtausendelange Stagnation, dann steiler Anstieg) mit konkreten, im Diagramm belegten Werten (ab etwa 1800, rund 6 Milliarden im Jahr 2000) statt vage 'die Kurve steigt'. Diagrammtyp und Zeitraum sind benannt, Trend-Vokabular ('steil an') ist sichtbar belegt. Keine Ursachen behauptet.",
+  "prinzip": "Der erste Satz trägt die Kernaussage mit konkreten Werten. Trend-Vokabular nur, wenn der Verlauf es sichtbar belegt; keine Ursachen erfinden.",
+  "quelle": "Wikimedia Commons: Population_curve.svg",
+  "lizenz": "Wikimedia Commons, frei lizenziert"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dasselbe Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Population_curve.svg): Kurve lange nahe null, ab etwa 1800 steiler Anstieg auf rund 6 Milliarden im Jahr 2000.",
+  "alt_text": "Das Diagramm zeigt eine Linie, die im Verlauf ansteigt. Der dramatische Anstieg ist wahrscheinlich eine Folge der Industrialisierung und der modernen Medizin, die die Menschheit vor dem Untergang bewahrt haben.",
+  "fehler": [
+    "'Das Diagramm zeigt' ist eine verbotene generische Eröffnung; es fehlt jede Kernaussage mit konkreten Werten (kein Zeitraum, keine 6 Milliarden, kein 'ab etwa 1800').",
+    "'wahrscheinlich eine Folge der Industrialisierung und der modernen Medizin' erfindet Ursachen, die das Diagramm nicht belegt — zusätzlich mit Hedge-Wort 'wahrscheinlich'.",
+    "'dramatische' und 'vor dem Untergang bewahrt' sind Wertung und Erzählung statt Datenbeschreibung.",
+    "Diagrammtyp (Liniendiagramm) und Thema (Weltbevölkerung) werden nicht benannt — 'eine Linie, die ansteigt' ist eine reine Formbeschreibung ohne Information."
+  ],
+  "besser": "Mit Diagrammtyp, Thema und Kernaussage führen ('Liniendiagramm zur Weltbevölkerung ...: Über Jahrtausende nahe null, ab etwa 1800 steiler Anstieg auf rund 6 Milliarden im Jahr 2000'). Konkrete Werte statt vager Trend-Floskeln, keine Ursachen und keine Dramatisierung.",
+  "quelle": "Wikimedia Commons: Population_curve.svg",
+  "lizenz": "Wikimedia Commons, frei lizenziert"
+}
 
 
 FINAL CHECK

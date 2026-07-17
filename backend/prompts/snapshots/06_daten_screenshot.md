@@ -290,7 +290,30 @@ Markdown-Tabellen.
 
 FEW-SHOT BEISPIELE
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "screenshot" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Bildschirmfoto eines E-Mail-Programms: Fenstertitel 'Postfach — Mustermail', linke Navigationsleiste mit den Einträgen 'Posteingang (3)', 'Gesendet', 'Entwürfe', 'Papierkorb'; im Hauptbereich eine geöffnete E-Mail mit Betreff 'Terminbestätigung Dienstag 10 Uhr', darüber die Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Kein Hersteller-Logo außer dem Schriftzug 'Mustermail' im Titel.",
+  "alt_text": "Screenshot des E-Mail-Programms Mustermail: Im Hauptbereich ist eine E-Mail mit dem Betreff 'Terminbestätigung Dienstag 10 Uhr' geöffnet, darüber die Buttons 'Antworten', 'Weiterleiten' und 'Löschen'; die linke Navigation zeigt 'Posteingang (3)', 'Gesendet', 'Entwürfe' und 'Papierkorb'.",
+  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Screenshot des ...' und benennt die Anwendung nur, weil der Fenstertitel 'Mustermail' sie belegt (Zwei-Wege-Regel: belegt -> benennen, sonst generischer Typ). Nennt den Zustand (geöffnete E-Mail mit Betreff) und übernimmt alle UI-Texte wortgetreu in funktionaler Hierarchie (Hauptbereich vor Navigation). Keine emotionale Wertung wie 'aufgeräumt' oder 'modern'.",
+  "prinzip": "Mit 'Screenshot der/des ...' + belegter Anwendung (oder generischem Typ) und Zustand führen; UI-Texte wortgetreu, funktional statt wertend beschreiben.",
+  "quelle": "fiktives Beispiel (erfundene Anwendung 'Mustermail', keine echten Nutzerdaten)",
+  "lizenz": "fiktives Beispiel"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dasselbe Bildschirmfoto: E-Mail-Programm mit Fenstertitel 'Postfach — Mustermail', Navigation 'Posteingang (3)', geöffnete E-Mail 'Terminbestätigung Dienstag 10 Uhr', Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Kein Microsoft-Logo, keine Outlook-Beschriftung sichtbar.",
+  "alt_text": "Ein Screenshot zeigt Microsoft Outlook mit einem modernen, aufgeräumten Design. Verschiedene Menüpunkte und Buttons sind zu sehen, mit denen man wahrscheinlich E-Mails verwalten kann.",
+  "fehler": [
+    "'Microsoft Outlook' benennt eine Anwendung ohne Beleg — weder Logo noch Titel stützen das; der Fenstertitel belegt 'Mustermail' (Zwei-Wege-Regel verletzt).",
+    "'Ein Screenshot zeigt' ist die Floskel-Variante statt des Präfixes 'Screenshot der/des ...' mit Anwendung und Zustand.",
+    "'modernen, aufgeräumten Design' ist eine emotionale/ästhetische Wertung — Screenshots werden funktional beschrieben.",
+    "'Verschiedene Menüpunkte und Buttons' und 'wahrscheinlich E-Mails verwalten' bleiben generisch mit Hedge-Wort, statt die lesbaren UI-Texte ('Posteingang (3)', 'Antworten', Betreff) wortgetreu zu übernehmen."
+  ],
+  "besser": "Mit 'Screenshot des E-Mail-Programms Mustermail' (belegt durch den Fenstertitel) und dem Zustand führen, die lesbaren UI-Texte wortgetreu in funktionaler Hierarchie nennen und auf Design-Wertungen sowie Vermutungswörter verzichten.",
+  "quelle": "fiktives Beispiel (erfundene Anwendung 'Mustermail', keine echten Nutzerdaten)",
+  "lizenz": "fiktives Beispiel"
+}
 
 
 FINAL CHECK

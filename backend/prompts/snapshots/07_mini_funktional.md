@@ -127,7 +127,30 @@ funktionale Beschreibung des Zustands.
 
 FEW-SHOT BEISPIELE:
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "funktional" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Paginierungselement am Ende einer Artikelliste: Pfeil nach rechts, daneben lesbar 'Seite 3 von 12'. Original-Alt: 'Bild'. Kein Link-Ziel im Kontext über die Paginierung hinaus.",
+  "alt_text": "Nächste Seite (von 12)",
+  "begruendung": "Der Original-Alt 'Bild' ist unbrauchbar, also wird generiert: Funktionsbeschreibung in natürlichem Deutsch ('Nächste Seite') plus Zustandsinformation, weil die Gesamtzahl im Bild lesbar ist ('von 12' — wortgetreu aus 'Seite 3 von 12'). Keine Formbeschreibung ('Pfeil nach rechts'), kein 'Klicken Sie hier'; mit 22 Zeichen deutlich unter der 80-Zeichen-Grenze.",
+  "prinzip": "Funktion und ableitbaren Zustand benennen ('Nächste Seite (von 12)'); lesbare Zahlen wortgetreu übernehmen; nie die Form statt der Funktion beschreiben.",
+  "quelle": "fiktives Beispiel (generisches Paginierungselement)",
+  "lizenz": "fiktives Beispiel"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dasselbe Paginierungselement: Pfeil nach rechts, daneben 'Seite 3 von 12'. Original-Alt: 'Weiter zur nächsten Seite'.",
+  "alt_text": "Ein kleiner grauer Pfeil, der nach rechts zeigt — klicken Sie hier, um wahrscheinlich auf die nächste Seite der Liste zu gelangen",
+  "fehler": [
+    "Der brauchbare Original-Alt 'Weiter zur nächsten Seite' wird verworfen statt übernommen — ein brauchbarer Original-Alt wird niemals verschlechtert.",
+    "'Ein kleiner grauer Pfeil, der nach rechts zeigt' beschreibt Form und Farbe statt der Funktion.",
+    "'klicken Sie hier' ist eine Bedienungsanweisung statt einer Funktionsbeschreibung; 'wahrscheinlich' hedgt eine eindeutig ableitbare Funktion.",
+    "Die lesbare Zustandsinformation 'Seite 3 von 12' wird nicht genutzt, dafür ist der Text mit 124 Zeichen über der 80-Zeichen-Grenze."
+  ],
+  "besser": "Den brauchbaren Original-Alt übernehmen ('Weiter zur nächsten Seite') oder mit Zustand präzisieren ('Nächste Seite (von 12)') — kurz, funktional, ohne Formbeschreibung und ohne Hedging.",
+  "quelle": "fiktives Beispiel (generisches Paginierungselement)",
+  "lizenz": "fiktives Beispiel"
+}
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - alt_text [PFLICHT]: Funktion (icon: 3-50 Zeichen, funktional: 3-80 Zeichen). Validierung der Bildtyp-spezifischen Obergrenze erfolgt in der jeweiligen Mini-Pipeline.

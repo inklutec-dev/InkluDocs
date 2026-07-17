@@ -301,7 +301,30 @@ Markdown-Tabellen.
 
 FEW-SHOT BEISPIELE
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "infografik" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Behörden-Infografik 'Recycling-Kreislauf' mit vier nummerierten Stationen: 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion; zentrale Zahl '67% der Verpackungen werden wiederverwertet'. Am unteren Rand: 'Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27'.",
+  "alt_text": "Infografik — Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten: Auf die Sammlung folgt die Sortierung, danach die Aufbereitung, aus der die Neuproduktion hervorgeht. Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27.",
+  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Infografik —' plus Hauptthema und der Kernaussage mit konkretem Datenpunkt (67%). Die vier Stationen stehen in logischer Reihenfolge und sind über ihre Beziehungen verbunden ('auf ... folgt', 'aus der ... hervorgeht') statt über Pfeil- oder Positionsbeschreibungen. URL und Telefonnummer wortgetreu mit originalgetreuen Trennzeichen ('02 28 / 24 25 26 27' — nicht zusammengezogen), weil sie für Screenreader-Nutzer der einzige Zugang zu dieser Information sind.",
+  "prinzip": "Mit 'Infografik —' + Thema und Kernaussage mit Datenpunkten führen; Stationen inhaltlich-logisch verketten statt Layout nachzuerzählen; Kontaktdaten und URLs wortgetreu mit Original-Trennzeichen.",
+  "quelle": "fiktives Beispiel (generische Behörden-Infografik, Kontaktdaten erfunden)",
+  "lizenz": "fiktives Beispiel"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dieselbe Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion), zentrale Zahl '67% der Verpackungen werden wiederverwertet', unten URL und Bürgertelefon '02 28 / 24 25 26 27'.",
+  "alt_text": "Eine Infografik mit verschiedenen Daten zum Thema Umwelt. Oben links steht ein grünes Symbol, von dem ein Pfeil nach rechts zu einem blauen Kasten zeigt; im Zentrum befindet sich eine große Zahl. Bei Fragen: Telefon 0228242526 27.",
+  "fehler": [
+    "'Eine Infografik mit verschiedenen Daten' ist die klassische Floskel-Eröffnung — Präfix 'Infografik —', Thema und Kernaussage mit dem Datenpunkt 67% fehlen.",
+    "'Oben links steht ...', 'ein Pfeil nach rechts ...', 'im Zentrum befindet sich ...' erzählen das Layout nach, statt die inhaltliche Logik der vier Stationen zu vermitteln.",
+    "Die vier Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion) und die zentrale Zahl 67% werden nicht übernommen — Zahlen-Vollständigkeit verletzt ('eine große Zahl' statt des Werts).",
+    "'0228242526 27' zieht die Telefonnummer zusammen und verstümmelt sie — Kontaktdaten müssen wortgetreu mit den Original-Trennzeichen übernommen werden ('02 28 / 24 25 26 27'); die URL fehlt ganz."
+  ],
+  "besser": "Mit 'Infografik — Recycling-Kreislauf' und der Kernaussage (67% wiederverwertet) führen, die vier Stationen in logischer Reihenfolge mit ihren Beziehungen nennen, alle Zahlen übernehmen und URL plus Telefonnummer wortgetreu mit Original-Trennzeichen wiedergeben.",
+  "quelle": "fiktives Beispiel (generische Behörden-Infografik, Kontaktdaten erfunden)",
+  "lizenz": "fiktives Beispiel"
+}
 
 
 FINAL CHECK

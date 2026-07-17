@@ -306,7 +306,30 @@ Markdown-Tabellen.
 
 FEW-SHOT BEISPIELE
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "tabelle" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Periodensystem der Elemente als Grafik (Wikimedia-Grafik Periodic_table_large.svg): 118 Elemente in 18 Gruppen (Spalten) und 7 Perioden (Zeilen), jede Zelle mit Elementsymbol, Ordnungszahl und Name, von Wasserstoff (H, 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide als zwei separate Zeilen unterhalb der Haupttabelle.",
+  "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente, angeordnet in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide stehen als zwei separate Zeilen unterhalb der Haupttabelle.",
+  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Tabelle —' plus Thema und trägt die Kernaussage über die belegten Endwerte: exakt 118 Elemente, erster und letzter Eintrag mit wortgetreuen Symbolen und Ordnungszahlen (Zähl-Disziplin, keine gerundeten oder erfundenen Werte). Die Struktur (18 Gruppen, 7 Perioden, Sonderzeilen) macht die Tabelle ohne Layout-Geschwätz nachvollziehbar. Fließtext, keine Markdown-Tabelle.",
+  "prinzip": "Mit 'Tabelle —' + Thema und der wichtigsten Aussage auf Basis der richtigen Endwerte führen; Zahlen, Symbole und Struktur wortgetreu und exakt übernehmen.",
+  "quelle": "Wikimedia Commons: Periodic_table_large.svg",
+  "lizenz": "Wikimedia Commons, frei lizenziert"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dasselbe Periodensystem der Elemente (Periodic_table_large.svg): 118 Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, 1) bis Oganesson (Og, 118).",
+  "alt_text": "Eine bunte Tabelle zeigt verschiedene chemische Elemente in farbigen Kästchen. Oben links steht ein Kästchen, rechts daneben viele weitere; insgesamt sind es ungefähr 120 Elemente in schönen Regenbogenfarben.",
+  "fehler": [
+    "'Eine bunte Tabelle zeigt verschiedene chemische Elemente' ist eine nichtssagende Floskel-Eröffnung ohne das Präfix 'Tabelle —' und ohne Kernaussage.",
+    "'ungefähr 120 Elemente' verletzt die Zähl-Disziplin — die Tabelle belegt exakt 118; weder Wasserstoff noch Oganesson werden mit Symbol und Ordnungszahl genannt.",
+    "'Oben links steht ein Kästchen, rechts daneben viele weitere' beschreibt das Layout statt der Struktur (18 Gruppen, 7 Perioden).",
+    "'in schönen Regenbogenfarben' ist Farb-Beschreibung mit Wertung statt Inhalt — die Farbkodierung wäre nur relevant, wenn ihre Bedeutung (Elementkategorien) erklärt würde."
+  ],
+  "besser": "Mit 'Tabelle — Periodensystem der Elemente' führen, die exakten belegten Werte nennen (118 Elemente, H 1 bis Og 118), die Struktur über Gruppen und Perioden statt über Kästchen-Positionen beschreiben und Farben nur mit ihrer belegten Bedeutung erwähnen.",
+  "quelle": "Wikimedia Commons: Periodic_table_large.svg",
+  "lizenz": "Wikimedia Commons, frei lizenziert"
+}
 
 
 FINAL CHECK

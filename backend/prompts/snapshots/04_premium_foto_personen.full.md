@@ -421,7 +421,30 @@ Fuelle exakt das Schema BeschreibungOutput:
 
 FEW-SHOT BEISPIELE
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "foto_personen" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Schwarz-Weiß-Foto: eine Frau in dunklem, hochgeschlossenem Kleid steht an einem Labortisch mit Glaskolben und einer Messapparatur, die rechte Hand hält ein Glasgefäß, der Blick ist auf die Apparatur gerichtet. Bildunterschrift im Dokument: 'Marie Curie in ihrem Pariser Labor, um 1912'. Nur eine Person sichtbar.",
+  "alt_text": "Marie Curie in ihrem Pariser Labor, um 1912: Die Physikerin steht in dunklem, hochgeschlossenem Kleid an einem Labortisch mit Glaskolben und einer Messapparatur und hält ein Glasgefäß in der rechten Hand, den Blick auf die Apparatur gerichtet.",
+  "begruendung": "Namen-Pflicht erfüllt: Die Bildunterschrift benennt die einzige sichtbare Person eindeutig, also steht 'Marie Curie' im Alt-Text — nicht erst in der Langbeschreibung. Führt mit Person und Situation statt mit 'Das Foto zeigt'. Nennt belegte visuelle Marker (dunkles Kleid, Glasgefäß, Labortisch) und Blickrichtung, aber keine Emotion und kein 'wirkt konzentriert'. Zählt exakt (eine Person).",
+  "prinzip": "Bei eindeutiger Kontext-Benennung gehört der Name in den Alt-Text. Haltung, Blickrichtung und prägende Marker beobachtend beschreiben — keine Gefühle oder Motive vermuten.",
+  "quelle": "fiktives Beispiel (historische Person des öffentlichen Lebens, Szene generisch nach dem Bogart-Muster)",
+  "lizenz": "fiktives Beispiel"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dieselbe Szene: Schwarz-Weiß-Foto, eine Frau in dunklem Kleid am Labortisch mit Glaskolben, Bildunterschrift 'Marie Curie in ihrem Pariser Labor, um 1912'.",
+  "alt_text": "Das Foto zeigt eine Wissenschaftlerin, die konzentriert und ein wenig erschöpft wirkt, während sie vermutlich an ihrer bahnbrechenden Radium-Forschung arbeitet, die ihr später den Nobelpreis einbringen sollte.",
+  "fehler": [
+    "'Das Foto zeigt' ist eine verbotene Floskel-Eröffnung; der Alt-Text führt nicht mit Person und Situation.",
+    "Der Name Marie Curie fehlt, obwohl die Bildunterschrift die einzige sichtbare Person eindeutig benennt (Namen-Pflicht verletzt).",
+    "'konzentriert und ein wenig erschöpft wirkt' deutet Emotionen ohne sichtbaren Beleg ('wirkt wie' ist verboten).",
+    "'vermutlich an ihrer bahnbrechenden Radium-Forschung' kombiniert ein Hedge-Wort mit erfundener Tätigkeit; der Nobelpreis-Ausblick ist Weltwissen-Erzählung statt Bildbeschreibung — sichtbar sind nur Labortisch, Glaskolben und Haltung."
+  ],
+  "besser": "Mit Name und Situation führen ('Marie Curie in ihrem Pariser Labor, um 1912: ...'), dann Haltung, Blickrichtung und belegte Marker (dunkles Kleid, Glasgefäß, Messapparatur) beobachtend nennen. Keine Emotionen, keine Vermutungswörter, keine biografische Erzählung.",
+  "quelle": "fiktives Beispiel (historische Person des öffentlichen Lebens, Szene generisch nach dem Bogart-Muster)",
+  "lizenz": "fiktives Beispiel"
+}
 
 UNSICHERHEIT
 

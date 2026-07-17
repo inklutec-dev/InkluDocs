@@ -1,0 +1,13 @@
+{
+  "szene": "Dasselbe Paginierungselement: Pfeil nach rechts, daneben 'Seite 3 von 12'. Original-Alt: 'Weiter zur nächsten Seite'.",
+  "alt_text": "Ein kleiner grauer Pfeil, der nach rechts zeigt — klicken Sie hier, um wahrscheinlich auf die nächste Seite der Liste zu gelangen",
+  "fehler": [
+    "Der brauchbare Original-Alt 'Weiter zur nächsten Seite' wird verworfen statt übernommen — ein brauchbarer Original-Alt wird niemals verschlechtert.",
+    "'Ein kleiner grauer Pfeil, der nach rechts zeigt' beschreibt Form und Farbe statt der Funktion.",
+    "'klicken Sie hier' ist eine Bedienungsanweisung statt einer Funktionsbeschreibung; 'wahrscheinlich' hedgt eine eindeutig ableitbare Funktion.",
+    "Die lesbare Zustandsinformation 'Seite 3 von 12' wird nicht genutzt, dafür ist der Text mit 124 Zeichen über der 80-Zeichen-Grenze."
+  ],
+  "besser": "Den brauchbaren Original-Alt übernehmen ('Weiter zur nächsten Seite') oder mit Zustand präzisieren ('Nächste Seite (von 12)') — kurz, funktional, ohne Formbeschreibung und ohne Hedging.",
+  "quelle": "fiktives Beispiel (generisches Paginierungselement)",
+  "lizenz": "fiktives Beispiel"
+}

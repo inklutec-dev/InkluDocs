@@ -284,7 +284,30 @@ Markdown-Tabellen.
 
 FEW-SHOT BEISPIELE
 
-(Noch keine Few-Shot-Beispiele für Bildtyp "karte" kuratiert.)
+POSITIVES BEISPIEL 1:
+{
+  "szene": "Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle. Deutliche Häufung der Marker im Süden um München und Stuttgart, vereinzelte Marker im Norden bei Hamburg; beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin.",
+  "alt_text": "Karte — Deutschland: Verteilung von 45 Beratungsstellen mit deutlicher Konzentration im Süden um München und Stuttgart, vereinzelten Standorten im Norden bei Hamburg; große Kreise stehen laut Legende für Beratungsstellen mit Werkstatt, kleine für reine Beratungsstellen.",
+  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Karte —' plus Gebiet, Hauptthema und räumlicher Kernaussage (Konzentration im Süden). Ortsnamen wortgetreu in Originalsprache (München, Köln — nicht Munich, Cologne). Die Marker-Größen werden aus der Legende erklärt statt gedeutet; räumliche Lage mit Himmelsrichtungen (Süden, Norden) statt 'oben/unten'. Exakte Anzahl (45) statt 'viele'.",
+  "prinzip": "Mit 'Karte —' + Gebiet und räumlicher Kernaussage führen, Symbolbedeutung ausschließlich aus der Legende, Ortsnamen wortgetreu in Originalsprache, Himmelsrichtungen statt Bildkoordinaten.",
+  "quelle": "fiktives Beispiel (generische Standortkarte, keine echten Kundendaten)",
+  "lizenz": "fiktives Beispiel"
+}
+
+ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
+{
+  "szene": "Dieselbe Deutschlandkarte: 45 blaue Punkt-Markierungen für Beratungsstellen, Legende mit großen und kleinen Kreisen, Häufung im Süden, beschriftete Städte München, Stuttgart, Köln, Hamburg, Berlin.",
+  "alt_text": "Eine Landkarte mit vielen blauen Punkten, die Gefahrenstellen markieren. Unten sind mehr Punkte als oben, unter anderem bei Munich und Cologne; eine empfohlene Route verbindet die Standorte von Nord nach Süd.",
+  "fehler": [
+    "'Gefahrenstellen' deutet die Marker ohne Legende — laut Legende sind es Beratungsstellen; Symbolbedeutung kommt ausschließlich aus der Legende.",
+    "'Munich' und 'Cologne' übersetzen die im Bild lesbaren Ortsnamen — München und Köln müssen wortgetreu in Originalsprache übernommen werden.",
+    "'eine empfohlene Route verbindet die Standorte' erfindet eine Route, die die Karte nicht zeigt (Halluzination).",
+    "'Unten sind mehr Punkte als oben' nutzt Bildkoordinaten statt Himmelsrichtungen und 'vielen blauen Punkten' verschenkt die belegte exakte Zahl 45; das Präfix 'Karte —' mit Gebiet und Thema fehlt."
+  ],
+  "besser": "Mit 'Karte — Deutschland' plus Thema und räumlicher Kernaussage führen (Konzentration im Süden), die exakte Anzahl 45 nennen, Marker-Bedeutung aus der Legende erklären, Ortsnamen wortgetreu übernehmen und keine Routen erfinden.",
+  "quelle": "fiktives Beispiel (generische Standortkarte, keine echten Kundendaten)",
+  "lizenz": "fiktives Beispiel"
+}
 
 
 FINAL CHECK

@@ -1,0 +1,13 @@
+{
+  "szene": "Dieselbe Vektor-Illustration: stilisiertes Tier mit spitzen Ohren und buschigem Schwanz neben einem Schreibtisch mit Laptop und Mikroskop, gerahmte Urkunde an der Wand, keine Pfoten an den Geräten.",
+  "alt_text": "Eine niedliche Illustration von vermutlich einer Katze, die fleißig am Laptop arbeitet und wissenschaftliche Ergebnisse in ihren Computer eintippt.",
+  "fehler": [
+    "'vermutlich einer Katze' legt die mehrdeutige Figur per Hedge-Wort fest, statt beide naheliegenden Deutungen gleichwertig zu nennen ('als Katze oder Fuchs deutbar').",
+    "'am Laptop arbeitet' und 'eintippt' erfinden eine Interaktion — das Tier sitzt nur neben dem Tisch, keine Pfoten an den Geräten sichtbar.",
+    "'niedliche' und 'fleißig' sind Wertungen ohne Beleg; 'Eine niedliche Illustration von' ist eine Floskel-Eröffnung ohne Stilrichtung.",
+    "Mikroskop und gerahmte Urkunde fehlen komplett — Nebenelemente übersehen (Vollständigkeits-Verstoß)."
+  ],
+  "besser": "Mit der Stilrichtung führen ('Flache Vektor-Illustration: ...'), die Figur neutral mit Alternativen-Form beschreiben, Objekte als nebeneinander liegend benennen statt Interaktion zu erfinden, und alle Inventar-Elemente einschließlich Mikroskop und Urkunde nennen.",
+  "quelle": "fiktives Beispiel (generische Szene, an das Hund/Mikroskop-Muster der Builder-Regeln angelehnt)",
+  "lizenz": "fiktives Beispiel"
+}
