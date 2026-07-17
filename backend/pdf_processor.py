@@ -642,8 +642,16 @@ def _resize_image_for_model(image_path: str) -> str:
             return base64.b64encode(png_data).decode()
         except Exception:
             raise ValueError(f"Bild konnte nicht geladen werden: {image_path}")
-    # Convert palette/RGBA/LA modes to RGB for JPEG compatibility
-    if img.mode not in ("RGB", "L"):
+    # Convert palette/RGBA/LA modes to RGB for JPEG compatibility.
+    # Transparente Pixel dabei auf WEISS legen — ein blosses convert("RGB")
+    # macht sie schwarz, wodurch dunkle Beschriftungen transparenter PNGs
+    # fuer das Modell unsichtbar werden (Befund App-Durchlauf 17.07.2026).
+    if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+        rgba = img.convert("RGBA")
+        bg = Image.new("RGB", rgba.size, (255, 255, 255))
+        bg.paste(rgba, mask=rgba.split()[-1])
+        img = bg
+    elif img.mode not in ("RGB", "L"):
         img = img.convert("RGB")
     # Force-convert AVIF/HEIC to JPEG (Ollama and other tools cannot read these formats)
     if image_path.lower().endswith((".avif", ".heic", ".heif")):
