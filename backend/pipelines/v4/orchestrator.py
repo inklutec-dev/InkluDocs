@@ -691,7 +691,7 @@ def generate_alt_text_v4(
 
     Args/Returns: identisch zu beiden Pipelines.
     """
-    pass_mode = os.environ.get('V4_PASS_MODE', 'full').lower()
+    pass_mode = os.environ.get('V4_PASS_MODE', 'full').strip().lower()
     if pass_mode == 'lean':
         return _run_lean_pipeline(
             image_path=image_path,

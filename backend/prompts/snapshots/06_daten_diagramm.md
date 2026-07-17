@@ -353,7 +353,7 @@ LESBARE TEXTE / KONTAKTDATEN
 
 Lesbare Texte aus dem Diagramm differenziert behandeln:
 
-IMMER wortgetreu übernehmen:
+IMMER wortgetreu übernehmen (mit originalgetreuen Trennzeichen — '02 28 / 24 25 26 27' nicht zusammenziehen):
 - URLs
 - Telefonnummern
 - Datumsangaben

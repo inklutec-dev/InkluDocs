@@ -531,7 +531,7 @@ def render_all(out_dir: Path) -> list[Path]:
         ('foto_architektur', build_beschreibung_prompt_foto_architektur),
     ]
     for subtyp, builder in standard_foto_builders:
-        prev = _set_env({'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
+        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
         try:
             text = builder(
                 inventar=DEMO_INVENTAR_FOTO_EVENT,
@@ -565,7 +565,7 @@ def render_all(out_dir: Path) -> list[Path]:
         ('strukturformel', build_beschreibung_prompt_strukturformel),
     ]
     for bildtyp, builder in daten_builders:
-        prev = _set_env({'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
+        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
         try:
             text = builder(
                 inventar=DEMO_INVENTAR_GENERISCH,
@@ -595,7 +595,7 @@ def render_all(out_dir: Path) -> list[Path]:
         ('funktional', build_beschreibung_prompt_funktional, DEMO_CLASSIFICATION_FUNKTIONAL, DEMO_ORIGINAL_ALT_LEER),
     ]
     for bildtyp, builder, classification, orig_alt in mini_builders:
-        prev = _set_env({'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
+        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
         try:
             text = builder(
                 classification=classification,
@@ -625,7 +625,7 @@ def render_all(out_dir: Path) -> list[Path]:
         ('diagramm', DEMO_INVENTAR_GENERISCH),
     ]
     for bildtyp, inventar in validierung_cases:
-        prev = _set_env({'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
+        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
         try:
             text = build_validierung_prompt(
                 bildtyp=bildtyp,

@@ -131,7 +131,7 @@ entschieden — das macht spaeter der Inventar-Pass. Lasse foto_subtyp leer."""
 
 def _foto_subtyp_block() -> str:
     """Modus-abhaengiger foto_subtyp-Block (lean=Pflicht, full=delegiert)."""
-    if os.environ.get('V4_PASS_MODE', 'full').lower() == 'lean':
+    if os.environ.get('V4_PASS_MODE', 'full').strip().lower() == 'lean':
         return _FOTO_SUBTYP_LEAN
     return _FOTO_SUBTYP_MULTIPASS
 
