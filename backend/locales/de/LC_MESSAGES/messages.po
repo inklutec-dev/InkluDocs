@@ -2600,3 +2600,12 @@ msgstr "Du bist jetzt Mitglied im Team von"
 
 msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
 msgstr "Ihr teilt euch ein gemeinsames Credit-Kontingent."
+
+msgid "Betreiber-Konto: unbegrenzte Credits. Diesen Monat verbraucht: {verbraucht}."
+msgstr "Betreiber-Konto: unbegrenzte Credits. Diesen Monat verbraucht: {verbraucht}."
+
+msgid "Dein Konto: Betreiber (unbegrenzt)"
+msgstr "Dein Konto: Betreiber (unbegrenzt)"
+
+msgid "Diesen Monat verbraucht: {verbraucht} Credits."
+msgstr "Diesen Monat verbraucht: {verbraucht} Credits."

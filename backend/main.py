@@ -618,6 +618,10 @@ async def me(user: dict = Depends(get_current_user)):
             "pakete_rest": abo_info.get("pakete_rest", 0),
             "zeitraum_ende": abo_info.get("zeitraum_ende"),
             "enforcement": billing.ABO_ENFORCEMENT,
+            # Betreiber-Konten (Admins) werden gezaehlt, aber nie gesperrt.
+            # Ohne dieses Kennzeichen zeigte die Oberflaeche ihnen ein
+            # Kontingent an, das fuer sie gar nicht gilt (Steve-Befund 31.07.).
+            "ist_betreiber": bool(db_user["is_admin"]),
         },
     }
 

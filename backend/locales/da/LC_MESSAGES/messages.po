@@ -2288,3 +2288,12 @@ msgstr "Du er nu medlem af teamet hos"
 
 msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
 msgstr "I deler et fælles Credit-kontingent."
+
+msgid "Betreiber-Konto: unbegrenzte Credits. Diesen Monat verbraucht: {verbraucht}."
+msgstr "Operatørkonto: ubegrænsede credits. Brugt denne måned: {verbraucht}."
+
+msgid "Dein Konto: Betreiber (unbegrenzt)"
+msgstr "Din konto: operatør (ubegrænset)"
+
+msgid "Diesen Monat verbraucht: {verbraucht} Credits."
+msgstr "Brugt denne måned: {verbraucht} credits."

@@ -35,9 +35,19 @@ function formatDate(s) {
 // /abo-Seite rufen dieselbe Funktion auf. Liefert fertige Textzeilen
 // (Zeile 1 = Monats-Credits, optional Zeile 2 = Zusatz-Credits aus Paketen).
 // Defensive Fallbacks, falls der Server verfuegbar_monat/rest nicht liefert.
-function buildCreditLines(abo) {
+function buildCreditLines(abo, kurz) {
   const lines = [];
-  if (abo.kontingent === null || abo.kontingent === undefined) {
+  if (abo.ist_betreiber && kurz) {
+    // Abo-Seite: die Betreiber-Aussage steht schon in der Plan-Zeile darueber —
+    // hier nur noch der reine Verbrauch, damit Screenreader-Nutzer sie nicht
+    // zweimal hintereinander hoeren (Steve-Hoertest 31.07.).
+    lines.push(t('Diesen Monat verbraucht: {verbraucht} Credits.', { verbraucht: abo.verbraucht }));
+  } else if (abo.ist_betreiber) {
+    // Betreiber-Konto: kein Kontingent, aber der Verbrauch bleibt sichtbar —
+    // so sieht der Betreiber seine eigenen KI-Kosten, ohne eine Grenze
+    // vorgegaukelt zu bekommen, die fuer ihn nicht gilt.
+    lines.push(t('Betreiber-Konto: unbegrenzte Credits. Diesen Monat verbraucht: {verbraucht}.', { verbraucht: abo.verbraucht }));
+  } else if (abo.kontingent === null || abo.kontingent === undefined) {
     // Enterprise/unbegrenzt: kein Kontingent, nur den Verbrauch nennen.
     lines.push(t('Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan).', { verbraucht: abo.verbraucht }));
   } else {
@@ -98,7 +108,7 @@ async function loadCurrentUser() {
     pLink.className = 'dash-limit dash-limit-zusatz';
     const a = document.createElement('a');
     a.href = '/abo';
-    a.textContent = t('Abo & Verbrauch verwalten');
+    a.textContent = t('Abo & Verbrauch öffnen');
     pLink.appendChild(a);
     anker.insertAdjacentElement('afterend', pLink);
   } else if (limitInfo && dl) {

@@ -2597,3 +2597,12 @@ msgstr "You are now a member of the team of"
 
 msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
 msgstr "You share a common Credit quota."
+
+msgid "Betreiber-Konto: unbegrenzte Credits. Diesen Monat verbraucht: {verbraucht}."
+msgstr "Operator account: unlimited credits. Used this month: {verbraucht}."
+
+msgid "Dein Konto: Betreiber (unbegrenzt)"
+msgstr "Your account: operator (unlimited)"
+
+msgid "Diesen Monat verbraucht: {verbraucht} Credits."
+msgstr "Used this month: {verbraucht} credits."

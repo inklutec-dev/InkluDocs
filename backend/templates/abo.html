@@ -67,7 +67,11 @@
       return;
     }
     const pPlan = document.createElement('p');
-    pPlan.textContent = t('Dein Plan: {plan}', { plan: PLAN_LABELS[abo.plan] || abo.plan });
+    // Betreiber (Admins) haben kein Kontingent — 'Dein Plan: Free' waere
+    // hier irrefuehrend (Steve-Befund 31.07.).
+    pPlan.textContent = abo.ist_betreiber
+      ? t('Dein Konto: Betreiber (unbegrenzt)')
+      : t('Dein Plan: {plan}', { plan: PLAN_LABELS[abo.plan] || abo.plan });
     box.appendChild(pPlan);
     if (abo.ist_team_mitglied && abo.team_inhaber) {
       const pTeam = document.createElement('p');
@@ -75,7 +79,7 @@
       pTeam.textContent = t('Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf.', { inhaber: abo.team_inhaber });
       box.appendChild(pTeam);
     }
-    buildCreditLines(abo).forEach((zeile) => {
+    buildCreditLines(abo, true).forEach((zeile) => {
       const p = document.createElement('p');
       p.textContent = zeile;
       box.appendChild(p);

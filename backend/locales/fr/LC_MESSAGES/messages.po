@@ -2597,3 +2597,12 @@ msgstr "Vous faites maintenant partie de l'équipe de"
 
 msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
 msgstr "Vous partagez un contingent commun de Credits."
+
+msgid "Betreiber-Konto: unbegrenzte Credits. Diesen Monat verbraucht: {verbraucht}."
+msgstr "Compte exploitant : crédits illimités. Utilisés ce mois-ci : {verbraucht}."
+
+msgid "Dein Konto: Betreiber (unbegrenzt)"
+msgstr "Votre compte : exploitant (illimité)"
+
+msgid "Diesen Monat verbraucht: {verbraucht} Credits."
+msgstr "Utilisés ce mois-ci : {verbraucht} crédits."

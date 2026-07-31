@@ -2597,3 +2597,12 @@ msgstr "Ahora formas parte del equipo de"
 
 msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
 msgstr "Compartís un contingente común de Credits."
+
+msgid "Betreiber-Konto: unbegrenzte Credits. Diesen Monat verbraucht: {verbraucht}."
+msgstr "Cuenta de operador: créditos ilimitados. Usados este mes: {verbraucht}."
+
+msgid "Dein Konto: Betreiber (unbegrenzt)"
+msgstr "Tu cuenta: operador (ilimitado)"
+
+msgid "Diesen Monat verbraucht: {verbraucht} Credits."
+msgstr "Usados este mes: {verbraucht} créditos."
