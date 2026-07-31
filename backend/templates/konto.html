@@ -67,7 +67,12 @@
             <input type="password" id="new_password2" class="dash-input" required autocomplete="new-password">
           </div>
           <button type="submit" class="btn btn-primary">{{ _('Passwort aendern') }}</button>
+          {# Wie bei Name und E-Mail oben: Erfolg ruhig als role=status,
+             Fehler assertiv in einer eigenen role=alert-Region. Bis 31.07.2026
+             stand der Fehler mit im Status-Feld und war nur rot eingefaerbt —
+             Farbe allein traegt keine Information. #}
           <span id="pwMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="pwErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
         </form>
       </section>
 {% endblock %}
@@ -175,24 +180,35 @@
   byId('changePwForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = byId('pwMsg');
+    const err = byId('pwErr');
     msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
     const old_password = byId('old_password').value;
     const new_password = byId('new_password').value;
     const new_password2 = byId('new_password2').value;
-    if (new_password.length < 8) { msg.textContent = t('Mindestens 8 Zeichen'); msg.style.color = 'var(--error)'; return; }
-    if (new_password !== new_password2) { msg.textContent = t('Passwörter stimmen nicht überein'); msg.style.color = 'var(--error)'; return; }
-    const res = await fetch('/api/change-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ old_password, new_password }),
-    });
+    // Fehler gehen in die role=alert-Region: der Grund steht als Text da, die
+    // rote Farbe ist nur Verstaerkung. Gleiche Wortlaute wie bisher.
+    if (new_password.length < 8) { err.textContent = t('Mindestens 8 Zeichen'); return; }
+    if (new_password !== new_password2) { err.textContent = t('Passwörter stimmen nicht überein'); return; }
+    let res;
+    try {
+      res = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_password, new_password }),
+      });
+    } catch (e) {
+      // Ohne try/catch bliebe bei Netzausfall gar keine Rueckmeldung stehen.
+      err.textContent = t('Fehler');
+      return;
+    }
     if (res.ok) {
       msg.textContent = t('Passwort geändert!'); msg.style.color = 'var(--success)';
       announce(t('Passwort wurde geändert'));
       byId('changePwForm').reset();
     } else {
-      const d = await res.json();
-      msg.textContent = d.detail || t('Fehler'); msg.style.color = 'var(--error)';
+      const d = await res.json().catch(() => ({}));
+      err.textContent = d.detail || t('Fehler');
     }
   });
 {% endraw %}

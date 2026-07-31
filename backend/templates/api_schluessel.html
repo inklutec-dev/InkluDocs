@@ -20,12 +20,55 @@
       </section>
 
       <section class="dash-card" aria-labelledby="myKeysHeading">
-        <h2 id="myKeysHeading">{{ _('Meine API-Schluessel') }} <span id="apiKeyCount" style="color:var(--text-muted);font-weight:normal;"></span></h2>
+        <h2 id="myKeysHeading" tabindex="-1">{{ _('Meine API-Schluessel') }} <span id="apiKeyCount" style="color:var(--text-muted);font-weight:normal;"></span></h2>
         <div id="apiKeyList" aria-live="polite" aria-labelledby="myKeysHeading" role="region" style="margin-top:.5rem;"></div>
-        {# Bearbeiten-Bereich liegt bewusst INNERHALB dieses Abschnitts: seine
-           per JavaScript erzeugte h3 haengt so lueckenlos unter dieser h2. #}
-        <div id="apiKeyEditOverlay" style="display:none;margin-top:1rem;" role="dialog" aria-label="{{ _('API-Schluessel bearbeiten') }}"></div>
+        {# Der Bearbeiten-Bereich ist seit 31.07.2026 ein echtes <dialog> (siehe
+           Block "dialogs" unten). Hier bleibt nur die Fehlerstelle der Liste:
+           Scheitert das Loeschen, sind beide Dialoge schon zu und der Fokus
+           steht auf der Ueberschrift daruber — role=alert sagt den Grund an,
+           ohne dass man ihn erst suchen muss. #}
+        <p id="apiKeyListErr" role="alert" style="color:var(--error);margin-top:.5rem;"></p>
       </section>
+{% endblock %}
+{% block dialogs %}
+{# Hausregel: Overlays IMMER als natives <dialog> + showModal(). Fokusfang,
+   Escape und der inerte Hintergrund kommen dann vom Browser statt aus
+   nachgebautem JavaScript. Struktur bewusst identisch zum Team-Dialog in
+   abo.html: eigene h2 (der Dialog ist ein eigener Kontext), Text, dann
+   .dialog-actions. Beide Dialoge liegen ausserhalb von <main>, weil sie als
+   Geschwister der App-Shell stehen muessen. #}
+<dialog id="apiKeyEditDialog" class="app-dialog" aria-labelledby="apiKeyEditHeading">
+  {# Der Titel nennt den Schluesselnamen und wird beim Oeffnen gesetzt —
+     Wortlaut wie bisher ("Schluessel bearbeiten: {name}"). #}
+  <h2 id="apiKeyEditHeading"></h2>
+  <div class="dash-field">
+    {# Label UEBER dem Feld mit for/id — nicht als Platzhalter. #}
+    <label for="editKeyName">{{ _('Name') }}</label>
+    <input type="text" id="editKeyName" class="dash-input" autocomplete="off" autofocus>
+  </div>
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-secondary" id="editKeyCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-delete" id="editKeyDelete">{{ _('Schlüssel löschen') }}</button>
+    <button type="button" class="btn btn-primary" id="editKeySave">{{ _('Name speichern') }}</button>
+  </div>
+  {# Zwei getrennte Regionen, beide statisch im DOM: Erfolg ruhig als
+     role=status, Fehler assertiv als role=alert. Die rote Farbe ist nur
+     Verstaerkung — der Grund steht immer als Text da. #}
+  <p id="editKeyMsg" role="status" aria-live="polite" style="margin:.75rem 0 0 0;"></p>
+  <p id="editKeyErr" role="alert" style="margin:.25rem 0 0 0;color:var(--error);"></p>
+</dialog>
+
+{# Zweite Rueckfrage statt confirm(): ein Browser-Dialog laesst sich weder
+   uebersetzen noch gestalten. Abbrechen bekommt den Startfokus, damit ein
+   versehentliches Enter nichts loescht. #}
+<dialog id="apiKeyDeleteDialog" class="app-dialog" aria-labelledby="apiKeyDeleteHeading">
+  <h2 id="apiKeyDeleteHeading">{{ _('API-Schlüssel löschen?') }}</h2>
+  <p id="apiKeyDeleteBody"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="apiKeyDeleteCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="apiKeyDeleteConfirm">{{ _('Löschen') }}</button>
+  </div>
+</dialog>
 {% endblock %}
 {% block page_script %}
 <script>
@@ -73,7 +116,8 @@
       const editBtn = document.createElement('button');
       editBtn.className = 'btn btn-secondary btn-small';
       editBtn.textContent = t('Bearbeiten');
-      editBtn.addEventListener('click', () => showEditApiKey(k.id, k.name));
+      // Der Ausloeser wandert mit: der Dialog gibt ihm beim Schliessen den Fokus zurueck.
+      editBtn.addEventListener('click', () => showEditApiKey(k.id, k.name, editBtn));
       li.appendChild(info);
       li.appendChild(editBtn);
       ul.appendChild(li);
@@ -81,48 +125,88 @@
     list.appendChild(ul);
   }
 
-  function showEditApiKey(id, currentName) {
-    const overlay = byId('apiKeyEditOverlay');
-    overlay.style.display = 'block';
-    overlay.innerHTML = '';
-    const box = document.createElement('div');
-    box.className = 'dash-card'; box.style.border = '2px solid var(--primary)';
-    const h = document.createElement('h3'); h.textContent = t('Schlüssel bearbeiten: {name}', { name: currentName });
-    const field = document.createElement('div'); field.className = 'dash-field';
-    const lab = document.createElement('label'); lab.setAttribute('for', 'editKeyName'); lab.textContent = t('Name');
-    const inp = document.createElement('input'); inp.type = 'text'; inp.id = 'editKeyName'; inp.className = 'dash-input'; inp.value = currentName;
-    field.appendChild(lab); field.appendChild(inp);
-    const actions = document.createElement('div'); actions.className = 'dash-actions';
-    const save = document.createElement('button'); save.className = 'btn btn-primary'; save.textContent = t('Name speichern');
-    save.addEventListener('click', () => saveApiKeyName(id));
-    const del = document.createElement('button'); del.className = 'btn btn-delete'; del.textContent = t('Schlüssel löschen');   // Michael 12.07.2026 (Optik 5)
-    del.addEventListener('click', () => deleteApiKey(id, currentName));
-    const cancel = document.createElement('button'); cancel.className = 'btn btn-secondary'; cancel.textContent = t('Abbrechen');
-    cancel.addEventListener('click', closeEditApiKey);
-    actions.appendChild(save); actions.appendChild(del); actions.appendChild(cancel);
-    const msg = document.createElement('div'); msg.id = 'editKeyMsg'; msg.setAttribute('role', 'status'); msg.setAttribute('aria-live', 'polite'); msg.style.marginTop = '.5rem';
-    box.appendChild(h); box.appendChild(field); box.appendChild(actions); box.appendChild(msg);
-    overlay.appendChild(box);
+  // --- Bearbeiten-Dialog -------------------------------------------------
+  // Bis 31.07.2026 war das ein per style.display ein-/ausgeblendeter Bereich,
+  // dessen Inhalt hier per JavaScript zusammengebaut wurde. Jetzt steht das
+  // Markup statisch im Template und wir oeffnen es mit showModal() — Fokusfang,
+  // Escape und inerter Hintergrund kommen vom Browser (Muster wie abo.html).
+  let _editKeyId = null;        // Schluessel, der gerade bearbeitet wird
+  let _editKeyName = '';        // sein Name — fuer Titel und Loesch-Rueckfrage
+  let _editKeyTrigger = null;   // "Bearbeiten"-Knopf fuer die Fokus-Rueckkehr
+  let _editKeyHandOff = false;  // true = der Loesch-Dialog uebernimmt den Fokus
+
+  function showEditApiKey(id, currentName, triggerBtn) {
+    _editKeyId = id;
+    _editKeyName = currentName;
+    // Beim Zurueckkommen aus der Loesch-Rueckfrage gibt es keinen neuen
+    // Ausloeser — dann den gemerkten behalten statt ihn zu verlieren.
+    if (triggerBtn !== undefined) _editKeyTrigger = triggerBtn || null;
+    byId('apiKeyEditHeading').textContent = t('Schlüssel bearbeiten: {name}', { name: currentName });
+    const inp = byId('editKeyName');
+    inp.value = currentName;
+    byId('editKeyMsg').textContent = '';
+    byId('editKeyErr').textContent = '';
+    byId('apiKeyEditDialog').showModal();
+    // autofocus zieht nur beim ersten Oeffnen — danach von Hand setzen.
     inp.focus();
-    announce(t('Bearbeitung für {name} geöffnet.', { name: currentName }));
+    inp.select();
   }
 
   function closeEditApiKey() {
-    const overlay = byId('apiKeyEditOverlay');
-    overlay.style.display = 'none'; overlay.innerHTML = '';
-    announce(t('Bearbeitung geschlossen.'));
+    byId('apiKeyEditDialog').close();
   }
+
+  // Fokus-Rueckkehr auf den Ausloeser. Das close-Event deckt jeden Weg hinaus
+  // ab: Abbrechen, Escape, erfolgreiches Speichern. Ist der Knopf nicht mehr im
+  // Dokument (Liste neu geladen) oder gab es keinen, faengt die Abschnitts-
+  // Ueberschrift den Fokus auf — er darf nie ins Leere fallen.
+  byId('apiKeyEditDialog').addEventListener('close', () => {
+    if (_editKeyHandOff) { _editKeyHandOff = false; return; }
+    if (_editKeyTrigger && document.contains(_editKeyTrigger)) _editKeyTrigger.focus();
+    else byId('myKeysHeading').focus();
+  });
+
+  byId('editKeyCancel').addEventListener('click', closeEditApiKey);
+  byId('editKeySave').addEventListener('click', () => saveApiKeyName(_editKeyId));
+
+  byId('editKeyDelete').addEventListener('click', () => {
+    // Nie zwei offene Dialoge uebereinander: erst den Bearbeiten-Dialog zu,
+    // dabei seine Fokus-Rueckkehr unterdruecken, weil gleich der Loesch-Dialog
+    // den Fokus bekommt. Bricht man dort ab, geht es hierher zurueck.
+    _editKeyHandOff = true;
+    byId('apiKeyEditDialog').close();
+    openDeleteApiKey(_editKeyId, _editKeyName, true, null);
+  });
 
   async function saveApiKeyName(id) {
     const nameInput = byId('editKeyName');
     const msg = byId('editKeyMsg');
+    const err = byId('editKeyErr');
+    msg.textContent = '';
+    err.textContent = '';
     const newName = nameInput.value.trim();
     if (!newName) { nameInput.focus(); return; }
-    const res = await fetch('/api/api-keys/' + id, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }),
-    });
-    if (res.ok) { announce(t('Name geändert zu: {name}', { name: newName })); closeEditApiKey(); loadApiKeys(); }
-    else { const d = await res.json(); if (msg) { msg.textContent = d.detail || t('Fehler beim Speichern.'); msg.style.color = 'var(--error)'; } }
+    let res;
+    try {
+      res = await fetch('/api/api-keys/' + id, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName }),
+      });
+    } catch (e) {
+      // Netzfehler: Dialog bleibt offen, Fokus bleibt im Dialog.
+      err.textContent = t('Fehler beim Speichern.');
+      return;
+    }
+    if (res.ok) {
+      announce(t('Name geändert zu: {name}', { name: newName }));
+      // Die Liste wird gleich neu gebaut, der alte Knopf verschwindet dabei —
+      // darum uebernimmt die Ueberschrift den Fokus (siehe close-Handler).
+      _editKeyTrigger = null;
+      closeEditApiKey();
+      loadApiKeys();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      err.textContent = d.detail || t('Fehler beim Speichern.');
+    }
   }
 
   async function createApiKey() {
@@ -181,12 +265,60 @@
     });
   }
 
+  // --- Loesch-Rueckfrage -------------------------------------------------
+  // Loest das alte confirm() ab: nicht uebersetzbar, nicht gestaltbar und mit
+  // Screenreadern unberechenbar. Gleiches Dialog-Muster wie oben.
+  let _delKeyId = null;
+  let _delKeyName = '';
+  let _delFromEdit = false;   // aus dem Bearbeiten-Dialog heraus ausgeloest?
+  let _delKeyTrigger = null;  // Ausloeser, falls direkt aus der Liste gestartet
+  let _delHandled = false;    // true = der Bestaetigen-Zweig setzt den Fokus
+
+  function openDeleteApiKey(id, keyName, fromEdit, triggerBtn) {
+    _delKeyId = id;
+    _delKeyName = keyName || t('Unbenannt');
+    _delFromEdit = !!fromEdit;
+    _delKeyTrigger = triggerBtn || null;
+    byId('apiKeyDeleteBody').textContent = t('Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff.', { name: _delKeyName });
+    byId('apiKeyDeleteDialog').showModal();
+  }
+
+  byId('apiKeyDeleteCancel').addEventListener('click', () => byId('apiKeyDeleteDialog').close());
+
+  // Abbruch (Knopf, Escape): zurueck dorthin, wo das Loeschen begonnen hat —
+  // in den Bearbeiten-Dialog, sonst auf den Listen-Knopf, notfalls auf die
+  // Ueberschrift. Der Bestaetigen-Zweig meldet sich per _delHandled ab, weil er
+  // den Fokus selbst setzt.
+  byId('apiKeyDeleteDialog').addEventListener('close', () => {
+    if (_delHandled) { _delHandled = false; return; }
+    if (_delFromEdit) { showEditApiKey(_delKeyId, _delKeyName); return; }
+    if (_delKeyTrigger && document.contains(_delKeyTrigger)) _delKeyTrigger.focus();
+    else byId('myKeysHeading').focus();
+  });
+
+  byId('apiKeyDeleteConfirm').addEventListener('click', () => {
+    _delHandled = true;
+    byId('apiKeyDeleteDialog').close();
+    // Fokus sofort auf die Abschnitts-Ueberschrift: der Ausloeser verschwindet
+    // gleich mit der Liste, und der Abruf laeuft noch. So steht der Fokus schon
+    // dort, wo danach das Ergebnis (Liste bzw. Fehlermeldung) erscheint.
+    byId('myKeysHeading').focus();
+    deleteApiKey(_delKeyId, _delKeyName);
+  });
+
+  // Loescht wirklich — die Rueckfrage ist zu diesem Zeitpunkt schon beantwortet.
   async function deleteApiKey(id, keyName) {
-    const m = t('API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff.', { name: keyName || t('Unbenannt') });
-    if (!confirm(m)) return;
-    const res = await fetch('/api/api-keys/' + id, { method: 'DELETE' });
-    if (res.ok) { announce(t('API-Schlüssel gelöscht.')); closeEditApiKey(); loadApiKeys(); }
-    else { announce(t('Fehler beim Löschen.')); }
+    const err = byId('apiKeyListErr');
+    err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/api-keys/' + id, { method: 'DELETE' });
+    } catch (e) {
+      err.textContent = t('Fehler beim Löschen.');
+      return;
+    }
+    if (res.ok) { announce(t('API-Schlüssel gelöscht.')); loadApiKeys(); }
+    else { err.textContent = t('Fehler beim Löschen.'); }
   }
 
   loadApiKeys();

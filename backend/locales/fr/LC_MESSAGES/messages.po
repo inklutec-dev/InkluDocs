@@ -2659,3 +2659,9 @@ msgstr "Ouvrir les clés API"
 
 msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
 msgstr "Lien de confirmation envoyé à {email}. Merci de vérifier votre boîte de réception."
+
+msgid "API-Schlüssel löschen?"
+msgstr "Supprimer la clé API ?"
+
+msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
+msgstr "La clé « {name} » sera supprimée immédiatement et deviendra définitivement invalide. Les applications qui l’utilisent perdront l’accès sur-le-champ."

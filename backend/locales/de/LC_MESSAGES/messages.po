@@ -2662,3 +2662,9 @@ msgstr "API-Schlüssel öffnen"
 
 msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
 msgstr "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
+
+msgid "API-Schlüssel löschen?"
+msgstr "API-Schlüssel löschen?"
+
+msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
+msgstr "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."

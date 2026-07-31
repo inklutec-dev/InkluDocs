@@ -2350,3 +2350,9 @@ msgstr "Åbn API-nøgler"
 
 msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
 msgstr "Bekræftelseslink sendt til {email}. Tjek venligst din indbakke."
+
+msgid "API-Schlüssel löschen?"
+msgstr "Slet API-nøgle?"
+
+msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
+msgstr "Nøglen „{name}“ slettes med det samme og bliver permanent ugyldig. Programmer, der bruger den, mister adgangen med det samme."
