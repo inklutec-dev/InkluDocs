@@ -265,6 +265,60 @@ def init_db():
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_usage_events_konto_monat ON usage_events(konto_user_id, created_at)")
 
+    # Abo-Etappe 2 (31.07.2026): Zusatz-Credit-Pakete (Geschenk/Kauf/Rechnung).
+    # user_id = Abrechnungs-KONTO (bei Teams der zahlende Inhaber, siehe
+    # billing._konto_fuer). verbleibend wird beim Verbrauch dekrementiert,
+    # verfallene Pakete bleiben als Beleg stehen (nie loeschen).
+    # quelle: 'admin' (Geschenk) | 'stripe' (Etappe 3) | 'rechnung'.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS quota_pakete (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            groesse INTEGER NOT NULL,
+            verbleibend INTEGER NOT NULL,
+            quelle TEXT NOT NULL,
+            notiz TEXT DEFAULT '',
+            erstellt_am TEXT DEFAULT (datetime('now')),
+            verfaellt_am TEXT NOT NULL
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_quota_pakete_konto ON quota_pakete(user_id, verfaellt_am)")
+
+    # Abo-Etappe 2, Nachbesserung (31.07.2026, Review-Befund 1): Team-Beitritt
+    # nur noch mit ZUSTIMMUNG des Eingeladenen. Eine Einladung ist ein Token
+    # mit Ablaufdatum (Muster wie password_resets); erst das Einloesen ueber
+    # GET /team-einladung/{token} haengt das Konto um. Vorher konnte ein
+    # Team-Inhaber fremde Bestandskonten per stillem UPDATE kapern.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS team_einladungen (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT UNIQUE NOT NULL,
+            inhaber_id INTEGER NOT NULL,
+            email TEXT NOT NULL,
+            erstellt_am TEXT DEFAULT (datetime('now')),
+            gueltig_bis TEXT NOT NULL,
+            eingeloest_am TEXT
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_team_einladungen_token ON team_einladungen(token)")
+
+    # Abo-Etappe 2, Nachbesserung (31.07.2026, Review-Befund 2): append-only
+    # Protokoll der Paket-Abbuchungen. billing._pakete_abbuchen rechnet die
+    # Soll-Abbuchung als DIFFERENZ (Monats-Ueberhang minus bereits
+    # protokollierte Abbuchungen) — dafuer braucht es eine Summe je Monat,
+    # die quota_pakete selbst nicht hergibt (dort steht nur der Endstand
+    # ohne Zeitbezug der einzelnen Abbuchungen).
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS paket_abbuchungen (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            paket_id INTEGER NOT NULL,
+            konto_user_id INTEGER NOT NULL,
+            betrag INTEGER NOT NULL,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_paket_abbuchungen_konto_monat ON paket_abbuchungen(konto_user_id, created_at)")
+
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 
@@ -281,6 +335,12 @@ def _migrate_columns(conn):
     migrations = [
         # Abo-/Credit-System Etappe 1 (31.07.2026)
         ("users", "plan", "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'"),
+        # Abo-Etappe 2 (31.07.2026): Team-Toepfe — Mitglieder zeigen auf den
+        # zahlenden Inhaber (NULL = eigenes Konto). Genau EIN Level, keine Ketten.
+        ("users", "abo_owner_id", "ALTER TABLE users ADD COLUMN abo_owner_id INTEGER"),
+        # Abo-Etappe 2: Ablaufdatum fuer Rechnungskunden/Gruender-Tarif
+        # (NULL = unbefristet; Auswertung folgt mit dem Rechnungs-Workflow).
+        ("users", "plan_gueltig_bis", "ALTER TABLE users ADD COLUMN plan_gueltig_bis TEXT"),
         # Vector graphics support (from earlier migration)
         ("images", "bbox_x0", "ALTER TABLE images ADD COLUMN bbox_x0 REAL"),
         ("images", "bbox_y0", "ALTER TABLE images ADD COLUMN bbox_y0 REAL"),
@@ -593,6 +653,14 @@ def delete_user_data(user_id: int):
         conn.execute("DELETE FROM documents WHERE project_id = ?", (p["id"],))
     conn.execute("DELETE FROM projects WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
+    # Review-Befund 4 (31.07.2026): Wird ein TEAM-INHABER geloescht, duerfen
+    # seine Mitglieder nicht mit baumelndem abo_owner_id zurueckbleiben —
+    # billing wuerde sonst gegen ein nicht existentes Konto rechnen. Die
+    # Mitglieder fallen auf ihren eigenen Plan zurueck. Offene Einladungen
+    # des Geloeschten werden mit entsorgt, damit kein Token mehr auf ein
+    # totes Konto zeigen kann.
+    conn.execute("UPDATE users SET abo_owner_id = NULL WHERE abo_owner_id = ?", (user_id,))
+    conn.execute("DELETE FROM team_einladungen WHERE inhaber_id = ?", (user_id,))
     conn.execute("DELETE FROM api_keys WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()

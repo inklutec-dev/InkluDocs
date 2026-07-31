@@ -4,6 +4,7 @@ import shutil
 import json
 import csv
 import asyncio
+import html  # Review-Befund 7 (31.07.2026): Nutzereingaben in Mail-HTML escapen
 import secrets
 import time
 import io
@@ -427,6 +428,20 @@ async def login(request: Request):
     return response
 
 
+def _normiere_display_name(name) -> str:
+    """Anzeigenamen auf EINE Zeile normieren und auf 100 Zeichen begrenzen.
+
+    Review-Befund 7 (31.07.2026): display_name landet in System-Mails
+    (HTML-Body, teils Betreff). Zeilenumbrueche und Steuerzeichen wuerden
+    dort Header-/HTML-Injection ermoeglichen — darum laeuft JEDE Setz-Stelle
+    (Registrierung, Admin-Anlage, Team-Einladung, Namensaenderung) durch
+    diesen Filter. HTML-Escaping passiert zusaetzlich an der Ausgabe-Stelle.
+    """
+    name = re.sub(r"[\x00-\x1f\x7f]+", " ", str(name or ""))
+    name = re.sub(r"\s{2,}", " ", name).strip()
+    return name[:100]
+
+
 @app.post("/api/register")
 async def register(request: Request):
     # Registration can be disabled via environment variable
@@ -435,7 +450,7 @@ async def register(request: Request):
     data = await request.json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
-    display_name = data.get("display_name", "").strip()
+    display_name = _normiere_display_name(data.get("display_name", ""))  # Befund 7: eine Zeile, max. 100
 
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
@@ -561,6 +576,20 @@ async def me(user: dict = Depends(get_current_user)):
     if not db_user:
         raise HTTPException(status_code=401, detail="User nicht gefunden")
     daily_used = get_daily_image_count(db_user["id"])
+
+    # Abo & Verbrauch (Etappe 2, 31.07.2026): Zahlen IMMER fuer das
+    # AUFGELOESTE Abrechnungs-Konto — ein Team-Mitglied sieht den
+    # gemeinsamen Team-Topf des Inhabers, keinen eigenen (leeren) Zaehler.
+    # Quelle ist billing.pruefe_kontingent (eine Wahrheit fuer Anzeige UND Sperre).
+    abo_info = billing.pruefe_kontingent(db_user["id"])
+    abo_owner_id = db_user.get("abo_owner_id")
+    team_inhaber = None
+    if abo_owner_id:
+        _inhaber = get_user_by_id(abo_owner_id)
+        team_inhaber = _inhaber["display_name"] if _inhaber else None
+    _verfuegbar = abo_info.get("verfuegbar_monat")
+    _verbraucht = abo_info.get("verbraucht", 0)
+
     return {
         "ok": True,
         "user": {
@@ -570,10 +599,25 @@ async def me(user: dict = Depends(get_current_user)):
             "is_admin": db_user["is_admin"],
             "admin_level": db_user.get("admin_level", "full"),
         },
+        # deprecated: altes Tages-Limit — bleibt bis zur Frontend-Umstellung
+        # auf den "abo"-Block mitgeliefert, danach entfernen.
         "daily_limit": {
             "used": daily_used,
             "limit": DAILY_IMAGE_LIMIT,
             "remaining": max(0, DAILY_IMAGE_LIMIT - daily_used),
+        },
+        "abo": {
+            "plan": abo_info.get("plan", "free"),
+            "ist_team_mitglied": bool(abo_owner_id),
+            "team_inhaber": team_inhaber,
+            "kontingent": abo_info.get("kontingent"),
+            "uebertrag": abo_info.get("uebertrag", 0),
+            "verfuegbar_monat": _verfuegbar,
+            "verbraucht": _verbraucht,
+            "rest": None if _verfuegbar is None else max(0, _verfuegbar - _verbraucht),
+            "pakete_rest": abo_info.get("pakete_rest", 0),
+            "zeitraum_ende": abo_info.get("zeitraum_ende"),
+            "enforcement": billing.ABO_ENFORCEMENT,
         },
     }
 
@@ -654,7 +698,7 @@ async def confirm_email(request: Request, token: str = ""):
 @app.post("/api/change-displayname")
 async def change_displayname(request: Request, user: dict = Depends(get_current_user)):
     data = await request.json()
-    new_name = data.get("display_name", "").strip()
+    new_name = _normiere_display_name(data.get("display_name", ""))  # Befund 7: eine Zeile, max. 100
 
     if not new_name:
         raise HTTPException(status_code=400, detail="Bitte einen Namen eingeben")
@@ -753,7 +797,7 @@ async def admin_create_user(request: Request, user: dict = Depends(require_full_
     data = await request.json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
-    display_name = data.get("display_name", "").strip()
+    display_name = _normiere_display_name(data.get("display_name", ""))  # Befund 7: eine Zeile, max. 100
 
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
@@ -826,6 +870,56 @@ async def admin_delete_user(user_id: int, user: dict = Depends(require_full_admi
     return {"ok": True, "message": f"User {target['email']} und alle Daten wurden geloescht"}
 
 
+# ─── Abo-Stufenverwaltung (Etappe 2, 31.07.2026) ─────────────
+# Voll-Admins setzen den Plan von Hand — der Weg fuer Gruender-Tarif und
+# Rechnungskunden, solange es keine Online-Zahlung gibt (Etappe 3).
+
+@app.post("/api/admin/users/{user_id}/plan")
+async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(require_full_admin)):
+    """Admin: Abo-Plan (+ optionales Ablaufdatum) eines Kontos setzen."""
+    data = await request.json()
+    plan = (data.get("plan") or "").strip().lower()
+    if plan not in billing.PLAN_KONTINGENTE:
+        raise HTTPException(status_code=400,
+                            detail=f"Ungueltiger Plan. Erlaubt: {', '.join(billing.PLAN_KONTINGENTE)}")
+    # gueltig_bis: ISO-Datum fuer befristete Plaene (Rechnungskunden),
+    # null/leer = unbefristet. Nur Format pruefen, Auswertung folgt spaeter.
+    gueltig_bis = data.get("gueltig_bis") or None
+    if gueltig_bis is not None:
+        try:
+            datetime.fromisoformat(str(gueltig_bis))
+            gueltig_bis = str(gueltig_bis)
+        except ValueError:
+            raise HTTPException(status_code=400,
+                                detail="gueltig_bis muss ein ISO-Datum sein (JJJJ-MM-TT) oder null")
+    target = get_user_by_id(user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User nicht gefunden")
+    conn = get_db()
+    geloest = 0
+    try:
+        conn.execute("UPDATE users SET plan = ?, plan_gueltig_bis = ? WHERE id = ?",
+                     (plan, gueltig_bis, user_id))
+        # Review-Befund 5 (31.07.2026): Wechsel WEG von 'team' darf kein
+        # Geister-Team hinterlassen — die Mitglieder wuerden sonst weiter aus
+        # einem Topf schoepfen, den niemand mehr bezahlt. Alle Mitglieder
+        # automatisch loesen; sie fallen auf ihren eigenen Plan zurueck.
+        if target.get("plan") == "team" and plan != "team":
+            cur = conn.execute("UPDATE users SET abo_owner_id = NULL WHERE abo_owner_id = ?",
+                               (user_id,))
+            geloest = cur.rowcount
+        conn.commit()
+    finally:
+        conn.close()
+    msg = f"Plan von {target['email']} ist jetzt '{plan}'"
+    if gueltig_bis:
+        msg += f" (gueltig bis {gueltig_bis})"
+    if geloest:
+        msg += f" – {geloest} Team-Mitglieder wurden gelöst"
+    return {"ok": True, "message": msg, "plan": plan,
+            "plan_gueltig_bis": gueltig_bis, "team_mitglieder_geloest": geloest}
+
+
 # ─── Administrator-Verwaltung (14.06.2026) ──────────────────
 # Voll-Admins koennen bestehende Konten zu Admins machen und die
 # Rechte-Stufe setzen ('full' = alle Rechte, 'view' = nur Einsicht).
@@ -888,6 +982,296 @@ async def admin_revoke_admin(user_id: int, user: dict = Depends(require_full_adm
         raise HTTPException(status_code=400, detail="Der letzte Voll-Admin kann nicht entfernt werden")
     set_user_admin(user_id, 0)
     return {"ok": True, "message": f"Admin-Rechte von {target['display_name']} entzogen"}
+
+
+# ─── Team-Verwaltung (Abo-Etappe 2, 31.07.2026) ──────────────
+# Team-Topf: Mitglieder (users.abo_owner_id -> Inhaber) verbrauchen aus dem
+# Kontingent des zahlenden Inhabers. Verwalten darf NUR der Inhaber selbst —
+# also ein Konto mit plan='team', das nicht seinerseits Mitglied ist.
+
+def _require_team_inhaber(user: dict) -> dict:
+    """Liefert den frischen DB-Datensatz des Team-Inhabers oder wirft 403.
+
+    Frisch aus der DB (nicht aus dem Token), damit ein Plan-Wechsel oder
+    eine Team-Umhaengung sofort greift — gleiches Prinzip wie
+    require_full_admin.
+    """
+    db_user = get_user_by_id(user["id"])
+    if not db_user or db_user.get("plan") != "team" or db_user.get("abo_owner_id"):
+        raise HTTPException(status_code=403,
+                            detail="Nur fuer Team-Inhaber (Plan 'team') verfuegbar")
+    return db_user
+
+
+def _team_sitze_belegt(inhaber_id: int) -> int:
+    """Belegte Team-Sitze = Mitglieder + 1 (der Inhaber selbst).
+
+    Eine Stelle fuer die Zaehlweise, weil der Sitz-Deckel jetzt ZWEIMAL
+    geprueft wird: beim Einladen (freundliche Sofort-Ablehnung) und beim
+    Einloesen der Einladung (verbindlich, siehe Review-Befund 1).
+    """
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT COUNT(*) FROM users WHERE abo_owner_id = ?",
+                           (inhaber_id,)).fetchone()
+    finally:
+        conn.close()
+    return int(row[0]) + 1
+
+
+@app.get("/api/team")
+async def team_uebersicht(user: dict = Depends(get_current_user)):
+    """Team-Uebersicht fuer den Inhaber: Mitglieder + gemeinsamer Topf."""
+    inhaber = _require_team_inhaber(user)
+    abo_info = billing.pruefe_kontingent(inhaber["id"])
+    conn = get_db()
+    try:
+        # Inhaber + Mitglieder in einer Abfrage; verbraucht_monat je Person
+        # nach VERURSACHER (user_id), waehrend der Konto-Topf ueber
+        # konto_user_id laeuft — so sieht der Inhaber, WER wieviel zieht.
+        rows = conn.execute(
+            "SELECT u.id, u.display_name, u.email, "
+            "COALESCE((SELECT SUM(e.credits) FROM usage_events e "
+            "  WHERE e.user_id = u.id "
+            "  AND e.created_at >= date('now', 'start of month')), 0) AS verbraucht_monat "
+            "FROM users u WHERE u.id = ? OR u.abo_owner_id = ? "
+            "ORDER BY (u.id != ?), u.display_name COLLATE NOCASE",
+            (inhaber["id"], inhaber["id"], inhaber["id"]),
+        ).fetchall()
+    finally:
+        conn.close()
+    mitglieder = []
+    for r in rows:
+        m = dict(r)
+        m["ist_inhaber"] = (r["id"] == inhaber["id"])
+        mitglieder.append(m)
+    return {
+        "ok": True,
+        "mitglieder": mitglieder,
+        "kontingent": abo_info.get("kontingent"),
+        "uebertrag": abo_info.get("uebertrag", 0),
+        "verfuegbar_monat": abo_info.get("verfuegbar_monat"),
+        "verbraucht_gesamt": abo_info.get("verbraucht", 0),
+        "rest": abo_info.get("rest"),
+        "pakete_rest": abo_info.get("pakete_rest", 0),
+        "zeitraum_ende": abo_info.get("zeitraum_ende"),
+        "sitze_belegt": len(mitglieder),
+        "sitze_inklusive": billing.TEAM_SITZE_INKLUSIVE,
+    }
+
+
+@app.post("/api/team/einladen")
+async def team_einladen(request: Request, user: dict = Depends(get_current_user)):
+    """Team-Inhaber laedt per E-Mail ein — IMMER nur als Einladung, nie mehr
+    als stilles Umhaengen (Review-Befund 1, 31.07.2026):
+
+    - Bestehendes Konto: Einladungs-Token (7 Tage gueltig) + Mail an den
+      EINGELADENEN; Mitglied wird er erst, wenn er den Annahme-Link
+      /team-einladung/{token} eingeloggt bestaetigt. Vorher konnte ein
+      Inhaber fremde Bestandskonten per UPDATE kapern.
+    - Unbekannte Adresse: Konto entsteht ERST durch die Einladung, darum darf
+      abo_owner_id dort direkt gesetzt werden (niemandem wird etwas
+      weggenommen); Mail mit Passwort-Reset-Link und Team-Hinweis.
+
+    Antwort bewusst NEUTRAL (immer "Einladung versandt" — kein Name, kein
+    neu_angelegt-Flag): sonst koennte ein Inhaber ueber die Antwort auslesen,
+    welche E-Mail-Adressen ein InkluDocs-Konto haben (E-Mail-Enumeration).
+    """
+    inhaber = _require_team_inhaber(user)
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
+    if email == (inhaber.get("email") or "").lower():
+        raise HTTPException(status_code=400, detail="Du kannst dich nicht selbst einladen")
+
+    # Sitz-Deckel: Inhaber belegt den ersten Sitz. Zukauf gibt es erst mit
+    # der Online-Zahlung (Etappe 3) — bis dahin ehrlich ablehnen. Beim
+    # EINLOESEN wird erneut geprueft, denn zwischen Einladung und Annahme
+    # koennen andere Eingeladene schneller gewesen sein.
+    if _team_sitze_belegt(inhaber["id"]) >= billing.TEAM_SITZE_INKLUSIVE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Alle {billing.TEAM_SITZE_INKLUSIVE} inklusiven Sitze sind belegt. "
+                   "Sitz-Zukauf folgt mit der Online-Zahlung.")
+
+    neutrale_antwort = {"ok": True, "message": "Einladung versandt"}
+    # Befund 7: Anzeigename ist zwar an den Setz-Stellen normiert, im
+    # Mail-HTML wird trotzdem escaped (Verteidigung in der Tiefe).
+    inhaber_name = html.escape(inhaber["display_name"])
+
+    ziel = get_user_by_email(email)
+    if ziel:
+        # Konflikte (schon in einem Team, selbst Team-Inhaber) werden NICHT
+        # gemeldet — sonst waere die Antwort nicht mehr neutral. Sie werden
+        # beim Einloesen verbindlich geprueft; hier entfaellt nur die
+        # sinnlose Mail.
+        if ziel.get("abo_owner_id") or ziel.get("plan") == "team":
+            return neutrale_antwort
+        einladungs_token = secrets.token_urlsafe(32)
+        conn = get_db()
+        try:
+            conn.execute(
+                "INSERT INTO team_einladungen (token, inhaber_id, email, gueltig_bis) "
+                "VALUES (?, ?, ?, datetime('now', '+7 days'))",
+                (einladungs_token, inhaber["id"], email))
+            conn.commit()
+        finally:
+            conn.close()
+        annahme_url = f"{BASE_URL}/team-einladung/{einladungs_token}"
+        email_body = f"""<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
+<h1 style="color:#1b2a4a;">Einladung in ein InkluDocs-Team</h1>
+<p>Hallo,</p>
+<p><strong>{inhaber_name}</strong> möchte dich in sein InkluDocs-Team aufnehmen. Ihr teilt euch dann ein gemeinsames Credit-Kontingent.</p>
+<p>Wenn du einverstanden bist, bestätige hier:</p>
+<p><a href="{annahme_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Team-Einladung annehmen</a></p>
+<p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {annahme_url}</p>
+<p style="color:#64748b;font-size:0.9rem;">Der Link ist 7 Tage gültig und funktioniert nur, wenn du mit deinem Konto ({html.escape(email)}) angemeldet bist. Wenn du die Einladung nicht annehmen möchtest, ignoriere diese Mail einfach — an deinem Konto ändert sich dann nichts.</p>
+<p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
+</body></html>"""
+        # Betreff bewusst OHNE Nutzereingabe (Header-Injektionsflaeche, Befund 7).
+        send_email(email, "Einladung in ein InkluDocs-Team", email_body, bcc_admin=False)
+        return neutrale_antwort
+
+    # Unbekannte Adresse: Konto anlegen mit Zufallspasswort, das niemand je
+    # sieht — die Einladung laeuft ueber den Passwort-Reset-Link (1h gueltig,
+    # danach hilft 'Passwort vergessen' auf der Login-Seite).
+    zufallspasswort = secrets.token_urlsafe(16)
+    display_name = _normiere_display_name(data.get("display_name") or "") or email.split("@")[0]
+    try:
+        neu_id = create_user(email, zufallspasswort, display_name)
+    except Exception:
+        # Bewusst KEIN Detail nach aussen (neutraler 500): auch der seltene
+        # Anlage-Fehler darf nicht verraten, ob es die Adresse schon gab.
+        raise HTTPException(status_code=500, detail="Einladung konnte nicht verarbeitet werden")
+    conn = get_db()
+    try:
+        conn.execute("UPDATE users SET abo_owner_id = ? WHERE id = ?", (inhaber["id"], neu_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+    reset_token = create_password_reset_token(neu_id)
+    reset_url = f"{BASE_URL}/reset?token={reset_token}"
+    sicherer_name = html.escape(display_name)
+    email_body = f"""<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
+<h1 style="color:#1b2a4a;">Einladung in ein InkluDocs-Team</h1>
+<p>Hallo {sicherer_name},</p>
+<p><strong>{inhaber_name}</strong> hat dich zu InkluDocs eingeladen und in sein Team aufgenommen. InkluDocs ist ein KI-gestützter Alt-Text-Generator für barrierefreie Dokumente und Bilder — als Team-Mitglied teilt ihr euch ein gemeinsames Credit-Kontingent.</p>
+<p>Zum Loslegen setzt du einmal dein persönliches Passwort:</p>
+<p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Passwort festlegen und starten</a></p>
+<p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {reset_url}</p>
+<p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gültig. Danach kannst du auf <a href="{BASE_URL}">{BASE_URL}</a> jederzeit die Funktion „Passwort vergessen“ nutzen — dein Konto ist die Adresse {html.escape(email)}.</p>
+<p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
+</body></html>"""
+    send_email(email, "Einladung in ein InkluDocs-Team", email_body, bcc_admin=False)
+    return neutrale_antwort
+
+
+@app.get("/team-einladung/{token}", response_class=HTMLResponse)
+async def team_einladung_annehmen(token: str, request: Request):
+    """Annahme-Seite fuer Team-Einladungen (Review-Befund 1, 31.07.2026).
+
+    Die ZUSTIMMUNG des Eingeladenen: erst dieser eingeloggte Klick haengt
+    sein Konto in den Team-Topf um. Aufbau wie die anderen
+    Bestaetigungsseiten (_auth_notice_page): h1, Fliesstext, Rueckweg-Link —
+    bewusst kein eigenes Template.
+    """
+    lang = resolve_ui_language(request)
+    _ = get_gettext(lang)
+    zum_dashboard = f'<p style="margin-top:1.5rem;"><a href="/dashboard">{_("Zur Startseite")}</a></p>'
+
+    # Login-Pflicht mit derselben Redirect-Logik wie die geschuetzten Seiten
+    # (_render_protected_template): ohne gueltiges Cookie zur Anmeldung —
+    # nach dem Login fuehrt der Link aus der Mail erneut hierher.
+    user = get_optional_user(request)
+    if not user:
+        return RedirectResponse("/")
+
+    conn = get_db()
+    try:
+        einladung = conn.execute(
+            "SELECT * FROM team_einladungen WHERE token = ? AND eingeloest_am IS NULL "
+            "AND gueltig_bis > datetime('now')",
+            (token,),
+        ).fetchone()
+    finally:
+        conn.close()
+    if not einladung:
+        return _auth_notice_page(lang,
+            f'<p style="color:#dc2626;margin:2rem 0;">{_("Dieser Einladungslink ist ungültig oder abgelaufen.")}</p>' + zum_dashboard,
+            status_code=400)
+
+    db_user = get_user_by_id(user["id"])
+    if not db_user or (db_user.get("email") or "").lower() != einladung["email"].lower():
+        # Falsches Konto eingeloggt: Einladung bleibt offen und unangetastet.
+        return _auth_notice_page(lang,
+            f'<p style="color:#dc2626;margin:2rem 0;">{_("Diese Einladung gehört zu einer anderen E-Mail-Adresse. Bitte melde dich mit dem eingeladenen Konto an.")}</p>' + zum_dashboard,
+            status_code=403)
+
+    # Zwischen Einladen und Annehmen kann sich alles geaendert haben — die
+    # fachlichen Regeln hier VERBINDLICH erneut pruefen: Inhaber muss noch
+    # Team-Inhaber sein, der Eingeladene darf nicht inzwischen selbst
+    # Team-Inhaber oder Mitglied eines anderen Teams sein.
+    inhaber = get_user_by_id(einladung["inhaber_id"])
+    fremdes_team = db_user.get("abo_owner_id") and db_user.get("abo_owner_id") != einladung["inhaber_id"]
+    if (not inhaber or inhaber.get("plan") != "team" or inhaber.get("abo_owner_id")
+            or db_user.get("plan") == "team" or fremdes_team):
+        return _auth_notice_page(lang,
+            f'<p style="color:#dc2626;margin:2rem 0;">{_("Diese Einladung kann nicht mehr angenommen werden.")}</p>' + zum_dashboard,
+            status_code=409)
+
+    schon_mitglied = db_user.get("abo_owner_id") == einladung["inhaber_id"]
+    conn = get_db()
+    try:
+        # Sitz-Check und Umhaengen atomar (BEGIN IMMEDIATE): zwei gleichzeitig
+        # klickende Eingeladene koennen den Sitz-Deckel sonst ueberrennen.
+        conn.isolation_level = None
+        conn.execute("BEGIN IMMEDIATE")
+        belegt = int(conn.execute(
+            "SELECT COUNT(*) FROM users WHERE abo_owner_id = ?",
+            (einladung["inhaber_id"],)).fetchone()[0]) + 1
+        if not schon_mitglied and belegt >= billing.TEAM_SITZE_INKLUSIVE:
+            conn.execute("ROLLBACK")
+            return _auth_notice_page(lang,
+                f'<p style="color:#dc2626;margin:2rem 0;">{_("Alle Plätze in diesem Team sind bereits belegt.")}</p>' + zum_dashboard,
+                status_code=409)
+        if not schon_mitglied:
+            conn.execute("UPDATE users SET abo_owner_id = ? WHERE id = ?",
+                         (einladung["inhaber_id"], db_user["id"]))
+        conn.execute("UPDATE team_einladungen SET eingeloest_am = datetime('now') WHERE id = ?",
+                     (einladung["id"],))
+        conn.execute("COMMIT")
+    finally:
+        conn.close()
+
+    inhaber_name = html.escape(inhaber["display_name"])
+    return _auth_notice_page(lang,
+        f'''<p style="color:#16a34a;font-size:1.2rem;margin:2rem 0;font-weight:600;">&#10003; {_("Team-Beitritt bestätigt!")}</p>
+    <p>{_("Du bist jetzt Mitglied im Team von")} {inhaber_name}. {_("Ihr teilt euch ein gemeinsames Credit-Kontingent.")}</p>''' + zum_dashboard,
+        title_suffix=_("Team-Beitritt bestätigt"))
+
+
+@app.delete("/api/team/mitglied/{mitglied_id}")
+async def team_mitglied_entfernen(mitglied_id: int, user: dict = Depends(get_current_user)):
+    """Mitglied aus dem eigenen Team loesen (Konto bleibt bestehen, faellt
+    auf seinen eigenen Plan zurueck; bisherige Verbraeuche bleiben als
+    Protokoll auf dem Team-Konto)."""
+    inhaber = _require_team_inhaber(user)
+    ziel = get_user_by_id(mitglied_id)
+    if not ziel or ziel.get("abo_owner_id") != inhaber["id"]:
+        raise HTTPException(status_code=404, detail="Kein Mitglied deines Teams")
+    conn = get_db()
+    try:
+        conn.execute("UPDATE users SET abo_owner_id = NULL WHERE id = ?", (mitglied_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "message": f"{ziel['display_name']} wurde aus dem Team entfernt"}
 
 
 # ─── API Key Management ─────────────────────────────────────
@@ -4392,6 +4776,13 @@ async def settings_page(request: Request):
 @app.get("/geteilte-projekte", response_class=HTMLResponse)
 async def shared_projects_page(request: Request):
     return _render_protected_template(request, "geteilte_projekte.html")
+
+
+@app.get("/abo", response_class=HTMLResponse)
+async def abo_page(request: Request):
+    # Abo & Verbrauch (Etappe 2, 31.07.2026): eigene Unterseite; das
+    # Template abo.html liefert der Frontend-Teil dieser Etappe.
+    return _render_protected_template(request, "abo.html")
 
 
 @app.get("/prompts", response_class=HTMLResponse)

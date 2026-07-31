@@ -2482,3 +2482,118 @@ msgstr "Approbation éditeur"
 
 msgid "Herausgeber Änderung"
 msgstr "Modification éditeur"
+
+msgid "Credits diesen Monat: {verbraucht} von {verfuegbar} verbraucht — {rest} verfügbar."
+msgstr "Credits ce mois-ci : {verbraucht} sur {verfuegbar} utilisés — {rest} disponibles."
+
+msgid "Davon sind {uebertrag} Credits aus dem Vormonat übernommen."
+msgstr "Dont {uebertrag} Credits reportés du mois précédent."
+
+msgid "Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan)."
+msgstr "Credits ce mois-ci : {verbraucht} utilisés (forfait illimité)."
+
+msgid "Zusatz-Credits: {anzahl} verfügbar."
+msgstr "Credits supplémentaires : {anzahl} disponibles."
+
+msgid "Abo & Verbrauch verwalten"
+msgstr "Gérer l'abonnement et la consommation"
+
+msgid "Abo & Verbrauch"
+msgstr "Abonnement et consommation"
+
+msgid "Plan und Verbrauch"
+msgstr "Plan et consommation"
+
+msgid "Dein Plan: {plan}"
+msgstr "Votre plan : {plan}"
+
+msgid "Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf."
+msgstr "Vous faites partie de l'équipe de {inhaber}. Vous partagez un pot commun de Credits."
+
+msgid "Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Changer de plan ou acheter des Credits supplémentaires : le paiement en ligne est en cours d'intégration. D'ici là, il suffit d'envoyer un e-mail à"
+
+msgid "— wir schalten von Hand frei."
+msgstr "— nous activons manuellement."
+
+msgid "Verbrauchsdaten sind gerade nicht verfügbar."
+msgstr "Les données de consommation ne sont pas disponibles pour le moment."
+
+msgid "Team-Mitglieder"
+msgstr "Membres de l'équipe"
+
+msgid "diesen Monat: {anzahl} Credits"
+msgstr "ce mois-ci : {anzahl} Credits"
+
+msgid "Entfernen"
+msgstr "Retirer"
+
+msgid "{name} aus dem Team entfernen"
+msgstr "Retirer {name} de l'équipe"
+
+msgid "Team-Mitglied entfernen?"
+msgstr "Retirer ce membre de l'équipe ?"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person verliert den Zugriff auf den gemeinsamen Credit-Topf."
+msgstr "Voulez-vous vraiment retirer « {name} » de l'équipe ? Cette personne perdra l'accès au pot commun de Credits."
+
+msgid "Mitglied einladen"
+msgstr "Inviter un membre"
+
+msgid "E-Mail-Adresse des neuen Mitglieds"
+msgstr "Adresse e-mail du nouveau membre"
+
+msgid "Einladen"
+msgstr "Inviter"
+
+msgid "Mitglied eingeladen: {email}"
+msgstr "Membre invité : {email}"
+
+msgid "Noch keine Team-Mitglieder."
+msgstr "Aucun membre dans l'équipe pour le moment."
+
+msgid "Team-Mitglieder konnten nicht geladen werden."
+msgstr "Impossible de charger les membres de l'équipe."
+
+msgid "Mitglied wurde aus dem Team entfernt."
+msgstr "Membre retiré de l'équipe."
+
+msgid "Abonnement & Rechnungen"
+msgstr "Abonnement et facturation"
+
+msgid "Deinen Plan, deinen Credit-Verbrauch und dein Team findest du auf einer eigenen Seite."
+msgstr "Votre plan, votre consommation de Credits et votre équipe se trouvent sur une page dédiée."
+
+msgid "Abo & Verbrauch öffnen"
+msgstr "Ouvrir Abonnement et consommation"
+
+# Team-Einladung mit Zustimmung (Review-Befund 1/15, 31.07.2026)
+msgid "Einladung versandt an {email}."
+msgstr "Invitation envoyée à {email}."
+
+msgid "Zur Startseite"
+msgstr "Vers la page d'accueil"
+
+msgid "Dieser Einladungslink ist ungültig oder abgelaufen."
+msgstr "Ce lien d'invitation est invalide ou a expiré."
+
+msgid "Diese Einladung gehört zu einer anderen E-Mail-Adresse. Bitte melde dich mit dem eingeladenen Konto an."
+msgstr "Cette invitation correspond à une autre adresse e-mail. Veuillez vous connecter avec le compte invité."
+
+msgid "Diese Einladung kann nicht mehr angenommen werden."
+msgstr "Cette invitation ne peut plus être acceptée."
+
+msgid "Alle Plätze in diesem Team sind bereits belegt."
+msgstr "Toutes les places de cette équipe sont déjà occupées."
+
+msgid "Team-Beitritt bestätigt!"
+msgstr "Adhésion à l'équipe confirmée !"
+
+msgid "Team-Beitritt bestätigt"
+msgstr "Adhésion à l'équipe confirmée"
+
+msgid "Du bist jetzt Mitglied im Team von"
+msgstr "Vous faites maintenant partie de l'équipe de"
+
+msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
+msgstr "Vous partagez un contingent commun de Credits."

@@ -2482,3 +2482,118 @@ msgstr "Aprobación editor"
 
 msgid "Herausgeber Änderung"
 msgstr "Cambio editor"
+
+msgid "Credits diesen Monat: {verbraucht} von {verfuegbar} verbraucht — {rest} verfügbar."
+msgstr "Credits este mes: {verbraucht} de {verfuegbar} usados — {rest} disponibles."
+
+msgid "Davon sind {uebertrag} Credits aus dem Vormonat übernommen."
+msgstr "De ellos, {uebertrag} Credits proceden del mes anterior."
+
+msgid "Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan)."
+msgstr "Credits este mes: {verbraucht} usados (plan ilimitado)."
+
+msgid "Zusatz-Credits: {anzahl} verfügbar."
+msgstr "Credits adicionales: {anzahl} disponibles."
+
+msgid "Abo & Verbrauch verwalten"
+msgstr "Gestionar suscripción y consumo"
+
+msgid "Abo & Verbrauch"
+msgstr "Suscripción y consumo"
+
+msgid "Plan und Verbrauch"
+msgstr "Plan y consumo"
+
+msgid "Dein Plan: {plan}"
+msgstr "Tu plan: {plan}"
+
+msgid "Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf."
+msgstr "Formas parte del equipo de {inhaber}. Compartís un fondo común de Credits."
+
+msgid "Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Cambiar de plan o comprar Credits adicionales: el pago en línea está en desarrollo. Hasta entonces, basta con enviar un correo a"
+
+msgid "— wir schalten von Hand frei."
+msgstr "— lo activamos manualmente."
+
+msgid "Verbrauchsdaten sind gerade nicht verfügbar."
+msgstr "Los datos de consumo no están disponibles en este momento."
+
+msgid "Team-Mitglieder"
+msgstr "Miembros del equipo"
+
+msgid "diesen Monat: {anzahl} Credits"
+msgstr "este mes: {anzahl} Credits"
+
+msgid "Entfernen"
+msgstr "Quitar"
+
+msgid "{name} aus dem Team entfernen"
+msgstr "Quitar a {name} del equipo"
+
+msgid "Team-Mitglied entfernen?"
+msgstr "¿Quitar a este miembro del equipo?"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person verliert den Zugriff auf den gemeinsamen Credit-Topf."
+msgstr "¿Seguro que quieres quitar a «{name}» del equipo? Esa persona perderá el acceso al fondo común de Credits."
+
+msgid "Mitglied einladen"
+msgstr "Invitar a un miembro"
+
+msgid "E-Mail-Adresse des neuen Mitglieds"
+msgstr "Correo electrónico del nuevo miembro"
+
+msgid "Einladen"
+msgstr "Invitar"
+
+msgid "Mitglied eingeladen: {email}"
+msgstr "Miembro invitado: {email}"
+
+msgid "Noch keine Team-Mitglieder."
+msgstr "Aún no hay miembros en el equipo."
+
+msgid "Team-Mitglieder konnten nicht geladen werden."
+msgstr "No se pudieron cargar los miembros del equipo."
+
+msgid "Mitglied wurde aus dem Team entfernt."
+msgstr "Miembro quitado del equipo."
+
+msgid "Abonnement & Rechnungen"
+msgstr "Suscripción y facturación"
+
+msgid "Deinen Plan, deinen Credit-Verbrauch und dein Team findest du auf einer eigenen Seite."
+msgstr "Tu plan, tu consumo de Credits y tu equipo están en una página propia."
+
+msgid "Abo & Verbrauch öffnen"
+msgstr "Abrir Suscripción y consumo"
+
+# Team-Einladung mit Zustimmung (Review-Befund 1/15, 31.07.2026)
+msgid "Einladung versandt an {email}."
+msgstr "Invitación enviada a {email}."
+
+msgid "Zur Startseite"
+msgstr "Ir a la página de inicio"
+
+msgid "Dieser Einladungslink ist ungültig oder abgelaufen."
+msgstr "Este enlace de invitación no es válido o ha caducado."
+
+msgid "Diese Einladung gehört zu einer anderen E-Mail-Adresse. Bitte melde dich mit dem eingeladenen Konto an."
+msgstr "Esta invitación pertenece a otra dirección de correo electrónico. Inicia sesión con la cuenta invitada."
+
+msgid "Diese Einladung kann nicht mehr angenommen werden."
+msgstr "Esta invitación ya no se puede aceptar."
+
+msgid "Alle Plätze in diesem Team sind bereits belegt."
+msgstr "Todos los puestos de este equipo ya están ocupados."
+
+msgid "Team-Beitritt bestätigt!"
+msgstr "¡Ingreso al equipo confirmado!"
+
+msgid "Team-Beitritt bestätigt"
+msgstr "Ingreso al equipo confirmado"
+
+msgid "Du bist jetzt Mitglied im Team von"
+msgstr "Ahora formas parte del equipo de"
+
+msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
+msgstr "Compartís un contingente común de Credits."

@@ -23,6 +23,7 @@ from .adapters.inkludocs import (
     get_project_context,
     resolve_image_refs,
     run_pipeline_for_image,
+    KONTINGENT_MELDUNG,
     update_alt_text,
     build_project_summary,
     MAX_IMAGES_PER_REQUEST,
@@ -184,6 +185,13 @@ def _handle_generate_fresh(project: dict, user_message: str, user_id: int) -> di
     for img in refs:
         try:
             res = run_pipeline_for_image(img["id"], project["id"], user_id)
+            if isinstance(res, dict) and res.get("kontingent_erschoepft"):
+                # Review-Befund 6 (31.07.2026): Kontingent-Sperre ANSAGEN
+                # statt das Bild stumm zu ueberspringen. Abbruch der
+                # Schleife: die restlichen Bilder scheitern am selben
+                # Kontingent, eine Meldung genuegt.
+                results.append((img["ui_label"], KONTINGENT_MELDUNG))
+                break
             if res:
                 results.append((img["ui_label"], res["alt_text"]))
         except Exception as e:

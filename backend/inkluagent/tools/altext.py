@@ -38,12 +38,23 @@ def generate_alt_text(image_id: int, project_id: int, user_id: int) -> dict[str,
         {"ok": True, "result": {alt_text, langbeschreibung, image_type, pipeline_steps, konfidenz, needs_review}}
         oder {"ok": False, "error": "..."}.
     """
+    # Abo-Etappe 2: freundliche Kontingent-Auskunft VOR der teuren Pipeline.
+    # pruefe_kontingent liefert erlaubt=False nur bei ABO_ENFORCEMENT=on und
+    # nie fuer Admins — ohne Enforcement greift dieser Block schlicht nie.
+    if not billing.pruefe_kontingent(user_id).get("erlaubt", True):
+        return {"ok": False, "error": "Das Monatskontingent dieses Kontos ist aufgebraucht. Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits."}
     try:
         result = _run_pipeline(image_id, project_id, user_id)
     except Exception as e:
         log.exception("generate_alt_text Pipeline-Fehler")
         return {"ok": False, "error": f"Pipeline-Fehler: {e}"}
 
+    # Review-Befund 6 (31.07.2026): Marker der Kontingent-Sperre abfangen —
+    # er darf nie als gueltiges Pipeline-Ergebnis durchrutschen. Die Vorab-
+    # Pruefung oben kann von einer parallel laufenden Verbuchung ueberholt
+    # werden (TOCTOU), darum hier die zweite, verbindliche Auswertung.
+    if isinstance(result, dict) and result.get("kontingent_erschoepft"):
+        return {"ok": False, "error": "Das Monatskontingent dieses Kontos ist aufgebraucht. Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits."}
     if result is None:
         return {"ok": False, "error": f"Bild {image_id} nicht in Projekt oder Pipeline lieferte nichts."}
 
@@ -81,6 +92,10 @@ def update_alt_text(
     - Maximal 500 Zeichen (BITV-Empfehlung kompakter Alt-Text)
     - Kein „Bild von..." / „Foto von..." (zu generisch)
     """
+    # Abo-Etappe 2: auch das AENDERN kostet 1 Credit (Umschreib-Schlupfloch),
+    # darum dieselbe freundliche Kontingent-Wache wie bei generate_alt_text.
+    if not billing.pruefe_kontingent(user_id).get("erlaubt", True):
+        return {"ok": False, "error": "Das Monatskontingent dieses Kontos ist aufgebraucht. Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits."}
     if not _check_project_access(project_id, user_id):
         return {"ok": False, "error": "Projekt nicht gefunden oder kein Zugriff."}
 

@@ -2485,3 +2485,118 @@ msgstr "Herausgeber Freigabe"
 
 msgid "Herausgeber Änderung"
 msgstr "Herausgeber Änderung"
+
+msgid "Credits diesen Monat: {verbraucht} von {verfuegbar} verbraucht — {rest} verfügbar."
+msgstr "Credits diesen Monat: {verbraucht} von {verfuegbar} verbraucht — {rest} verfügbar."
+
+msgid "Davon sind {uebertrag} Credits aus dem Vormonat übernommen."
+msgstr "Davon sind {uebertrag} Credits aus dem Vormonat übernommen."
+
+msgid "Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan)."
+msgstr "Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan)."
+
+msgid "Zusatz-Credits: {anzahl} verfügbar."
+msgstr "Zusatz-Credits: {anzahl} verfügbar."
+
+msgid "Abo & Verbrauch verwalten"
+msgstr "Abo & Verbrauch verwalten"
+
+msgid "Abo & Verbrauch"
+msgstr "Abo & Verbrauch"
+
+msgid "Plan und Verbrauch"
+msgstr "Plan und Verbrauch"
+
+msgid "Dein Plan: {plan}"
+msgstr "Dein Plan: {plan}"
+
+msgid "Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf."
+msgstr "Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf."
+
+msgid "Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+
+msgid "— wir schalten von Hand frei."
+msgstr "— wir schalten von Hand frei."
+
+msgid "Verbrauchsdaten sind gerade nicht verfügbar."
+msgstr "Verbrauchsdaten sind gerade nicht verfügbar."
+
+msgid "Team-Mitglieder"
+msgstr "Team-Mitglieder"
+
+msgid "diesen Monat: {anzahl} Credits"
+msgstr "diesen Monat: {anzahl} Credits"
+
+msgid "Entfernen"
+msgstr "Entfernen"
+
+msgid "{name} aus dem Team entfernen"
+msgstr "{name} aus dem Team entfernen"
+
+msgid "Team-Mitglied entfernen?"
+msgstr "Team-Mitglied entfernen?"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person verliert den Zugriff auf den gemeinsamen Credit-Topf."
+msgstr "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person verliert den Zugriff auf den gemeinsamen Credit-Topf."
+
+msgid "Mitglied einladen"
+msgstr "Mitglied einladen"
+
+msgid "E-Mail-Adresse des neuen Mitglieds"
+msgstr "E-Mail-Adresse des neuen Mitglieds"
+
+msgid "Einladen"
+msgstr "Einladen"
+
+msgid "Mitglied eingeladen: {email}"
+msgstr "Mitglied eingeladen: {email}"
+
+msgid "Noch keine Team-Mitglieder."
+msgstr "Noch keine Team-Mitglieder."
+
+msgid "Team-Mitglieder konnten nicht geladen werden."
+msgstr "Team-Mitglieder konnten nicht geladen werden."
+
+msgid "Mitglied wurde aus dem Team entfernt."
+msgstr "Mitglied wurde aus dem Team entfernt."
+
+msgid "Abonnement & Rechnungen"
+msgstr "Abonnement & Rechnungen"
+
+msgid "Deinen Plan, deinen Credit-Verbrauch und dein Team findest du auf einer eigenen Seite."
+msgstr "Deinen Plan, deinen Credit-Verbrauch und dein Team findest du auf einer eigenen Seite."
+
+msgid "Abo & Verbrauch öffnen"
+msgstr "Abo & Verbrauch öffnen"
+
+# Team-Einladung mit Zustimmung (Review-Befund 1/15, 31.07.2026)
+msgid "Einladung versandt an {email}."
+msgstr "Einladung versandt an {email}."
+
+msgid "Zur Startseite"
+msgstr "Zur Startseite"
+
+msgid "Dieser Einladungslink ist ungültig oder abgelaufen."
+msgstr "Dieser Einladungslink ist ungültig oder abgelaufen."
+
+msgid "Diese Einladung gehört zu einer anderen E-Mail-Adresse. Bitte melde dich mit dem eingeladenen Konto an."
+msgstr "Diese Einladung gehört zu einer anderen E-Mail-Adresse. Bitte melde dich mit dem eingeladenen Konto an."
+
+msgid "Diese Einladung kann nicht mehr angenommen werden."
+msgstr "Diese Einladung kann nicht mehr angenommen werden."
+
+msgid "Alle Plätze in diesem Team sind bereits belegt."
+msgstr "Alle Plätze in diesem Team sind bereits belegt."
+
+msgid "Team-Beitritt bestätigt!"
+msgstr "Team-Beitritt bestätigt!"
+
+msgid "Team-Beitritt bestätigt"
+msgstr "Team-Beitritt bestätigt"
+
+msgid "Du bist jetzt Mitglied im Team von"
+msgstr "Du bist jetzt Mitglied im Team von"
+
+msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
+msgstr "Ihr teilt euch ein gemeinsames Credit-Kontingent."

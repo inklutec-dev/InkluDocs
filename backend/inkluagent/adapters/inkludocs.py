@@ -1,10 +1,13 @@
 """InkluDocs-spezifischer Adapter: stellt Bruecke zwischen chat_engine
 und InkluDocs-Datenmodell (projects/images, Pipeline) her."""
+import logging
 import re
 from typing import Optional
 
 import billing  # Abo-/Credit-System Etappe 1
 from database import get_db
+
+log = logging.getLogger(__name__)
 
 
 MAX_IMAGES_PER_REQUEST = 10
@@ -339,6 +342,12 @@ def update_alt_text(project_id: int, image_id: int, new_alt: str) -> bool:
         conn.close()
 
 
+# Review-Befund 6 (31.07.2026): EINE Formulierung fuer die Kontingent-Sperre
+# im Chatbot — gleiche freundliche Meldung wie in tools/altext.py.
+KONTINGENT_MELDUNG = ("Das Monatskontingent dieses Kontos ist aufgebraucht. "
+                      "Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits.")
+
+
 def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Optional[dict]:
     """Rufe die Standard-Pipeline (v3.7) fuer ein einzelnes Bild auf.
 
@@ -346,6 +355,16 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
     pdf_processor.py. Schreibt das Ergebnis in die DB (alt_text,
     langbeschreibung, etc.) und gibt das Result zurueck.
     """
+    # Abo-Etappe 2: Kontingent-Wache VOR dem Pipeline-Start (dieser Adapter
+    # ist der gemeinsame Trichter beider Chatbot-Wege). Greift nur bei
+    # ABO_ENFORCEMENT=on, nie fuer Admins. Rueckgabe ist ein MARKER-dict
+    # statt None (Review-Befund 6, 31.07.2026): None bedeutet weiterhin
+    # "Bild nicht gefunden" — die Kontingent-Sperre muessen die Aufrufer
+    # aber ANSAGEN koennen, statt das Bild stumm zu ueberspringen.
+    if not billing.pruefe_kontingent(user_id).get("erlaubt", True):
+        log.info("run_pipeline_for_image: Kontingent erschoepft (user=%s, image=%s)",
+                 user_id, image_id)
+        return {"kontingent_erschoepft": True}
     conn = get_db()
     try:
         img = conn.execute(

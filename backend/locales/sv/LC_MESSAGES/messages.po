@@ -2043,3 +2043,118 @@ msgstr "Utgivare godkänd"
 
 msgid "Herausgeber Änderung"
 msgstr "Utgivare ändring"
+
+msgid "Credits diesen Monat: {verbraucht} von {verfuegbar} verbraucht — {rest} verfügbar."
+msgstr "Credits denna månad: {verbraucht} av {verfuegbar} förbrukade — {rest} tillgängliga."
+
+msgid "Davon sind {uebertrag} Credits aus dem Vormonat übernommen."
+msgstr "Av dessa är {uebertrag} Credits överförda från föregående månad."
+
+msgid "Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan)."
+msgstr "Credits denna månad: {verbraucht} förbrukade (obegränsad plan)."
+
+msgid "Zusatz-Credits: {anzahl} verfügbar."
+msgstr "Extra krediter: {anzahl} tillgängliga."
+
+msgid "Abo & Verbrauch verwalten"
+msgstr "Hantera abonnemang och förbrukning"
+
+msgid "Abo & Verbrauch"
+msgstr "Abonnemang och förbrukning"
+
+msgid "Plan und Verbrauch"
+msgstr "Plan och förbrukning"
+
+msgid "Dein Plan: {plan}"
+msgstr "Din plan: {plan}"
+
+msgid "Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf."
+msgstr "Du ingår i {inhaber}s team. Ni delar en gemensam Credit-pott."
+
+msgid "Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Byta plan eller köpa extra krediter: online-betalning är under uppbyggnad. Tills dess räcker det med ett mejl till"
+
+msgid "— wir schalten von Hand frei."
+msgstr "— vi aktiverar det manuellt."
+
+msgid "Verbrauchsdaten sind gerade nicht verfügbar."
+msgstr "Förbrukningsdata är inte tillgängliga just nu."
+
+msgid "Team-Mitglieder"
+msgstr "Teammedlemmar"
+
+msgid "diesen Monat: {anzahl} Credits"
+msgstr "denna månad: {anzahl} Credits"
+
+msgid "Entfernen"
+msgstr "Ta bort"
+
+msgid "{name} aus dem Team entfernen"
+msgstr "Ta bort {name} från teamet"
+
+msgid "Team-Mitglied entfernen?"
+msgstr "Ta bort teammedlem?"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person verliert den Zugriff auf den gemeinsamen Credit-Topf."
+msgstr "Ska ”{name}” verkligen tas bort från teamet? Personen förlorar åtkomsten till den gemensamma Credit-potten."
+
+msgid "Mitglied einladen"
+msgstr "Bjud in en medlem"
+
+msgid "E-Mail-Adresse des neuen Mitglieds"
+msgstr "E-postadress till den nya medlemmen"
+
+msgid "Einladen"
+msgstr "Bjud in"
+
+msgid "Mitglied eingeladen: {email}"
+msgstr "Medlem inbjuden: {email}"
+
+msgid "Noch keine Team-Mitglieder."
+msgstr "Inga teammedlemmar ännu."
+
+msgid "Team-Mitglieder konnten nicht geladen werden."
+msgstr "Teammedlemmarna kunde inte läsas in."
+
+msgid "Mitglied wurde aus dem Team entfernt."
+msgstr "Medlemmen har tagits bort från teamet."
+
+msgid "Abonnement & Rechnungen"
+msgstr "Abonnemang och fakturering"
+
+msgid "Deinen Plan, deinen Credit-Verbrauch und dein Team findest du auf einer eigenen Seite."
+msgstr "Din plan, din Credit-förbrukning och ditt team finns på en egen sida."
+
+msgid "Abo & Verbrauch öffnen"
+msgstr "Öppna Abonnemang och förbrukning"
+
+# Team-Einladung mit Zustimmung (Review-Befund 1/15, 31.07.2026)
+msgid "Einladung versandt an {email}."
+msgstr "Inbjudan skickad till {email}."
+
+msgid "Zur Startseite"
+msgstr "Till startsidan"
+
+msgid "Dieser Einladungslink ist ungültig oder abgelaufen."
+msgstr "Denna inbjudningslänk är ogiltig eller har gått ut."
+
+msgid "Diese Einladung gehört zu einer anderen E-Mail-Adresse. Bitte melde dich mit dem eingeladenen Konto an."
+msgstr "Denna inbjudan tillhör en annan e-postadress. Logga in med det inbjudna kontot."
+
+msgid "Diese Einladung kann nicht mehr angenommen werden."
+msgstr "Denna inbjudan kan inte längre accepteras."
+
+msgid "Alle Plätze in diesem Team sind bereits belegt."
+msgstr "Alla platser i detta team är redan upptagna."
+
+msgid "Team-Beitritt bestätigt!"
+msgstr "Teammedlemskap bekräftat!"
+
+msgid "Team-Beitritt bestätigt"
+msgstr "Teammedlemskap bekräftat"
+
+msgid "Du bist jetzt Mitglied im Team von"
+msgstr "Du är nu medlem i teamet hos"
+
+msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
+msgstr "Ni delar ett gemensamt Credit-kontingent."

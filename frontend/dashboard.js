@@ -1,5 +1,6 @@
 // Gemeinsame Logik für alle Dashboard-Seiten (App-Shell): Helfer, Login-Status,
-// Navigationsleiste (mit aria-current), Tageslimit, Spenden-Footer, Abmelden.
+// Navigationsleiste (mit aria-current), Credit-/Tageslimit-Anzeige,
+// Spenden-Footer, Abmelden.
 
 const byId = (id) => document.getElementById(id);
 
@@ -29,6 +30,35 @@ function formatDate(s) {
   return p.length === 3 ? `${p[2]}.${p[1]}.${p[0]}` : String(s);
 }
 
+// Credit-Zeilen aus dem abo-Block von /api/me bauen (Abo-Modell Etappe 2,
+// 31.07.2026). EINE Quelle der Wahrheit fuer die Wortwahl: Startseite und
+// /abo-Seite rufen dieselbe Funktion auf. Liefert fertige Textzeilen
+// (Zeile 1 = Monats-Credits, optional Zeile 2 = Zusatz-Credits aus Paketen).
+// Defensive Fallbacks, falls der Server verfuegbar_monat/rest nicht liefert.
+function buildCreditLines(abo) {
+  const lines = [];
+  if (abo.kontingent === null || abo.kontingent === undefined) {
+    // Enterprise/unbegrenzt: kein Kontingent, nur den Verbrauch nennen.
+    lines.push(t('Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan).', { verbraucht: abo.verbraucht }));
+  } else {
+    const verfuegbar = (abo.verfuegbar_monat === null || abo.verfuegbar_monat === undefined)
+      ? abo.kontingent + (abo.uebertrag || 0)
+      : abo.verfuegbar_monat;
+    const rest = (abo.rest === null || abo.rest === undefined)
+      ? Math.max(0, verfuegbar - abo.verbraucht)
+      : abo.rest;
+    let zeile = t('Credits diesen Monat: {verbraucht} von {verfuegbar} verbraucht — {rest} verfügbar.', { verbraucht: abo.verbraucht, verfuegbar: verfuegbar, rest: rest });
+    if (abo.uebertrag > 0) {
+      zeile += ' ' + t('Davon sind {uebertrag} Credits aus dem Vormonat übernommen.', { uebertrag: abo.uebertrag });
+    }
+    lines.push(zeile);
+  }
+  if (abo.pakete_rest > 0) {
+    lines.push(t('Zusatz-Credits: {anzahl} verfügbar.', { anzahl: abo.pakete_rest }));
+  }
+  return lines;
+}
+
 let currentUser = null;
 
 async function loadCurrentUser() {
@@ -41,10 +71,37 @@ async function loadCurrentUser() {
   if (greeting && currentUser) {
     greeting.textContent = currentUser.display_name ? (t('Hallo') + ', ' + currentUser.display_name) : t('Willkommen');
   }
-  // Tageslimit auf der Startseite anzeigen (falls das Element vorhanden ist)
+  // Credit-Anzeige auf der Startseite (Abo-Modell Etappe 2, 31.07.2026):
+  // ersetzt die alte Tageslimit-Zeile, sobald /api/me den abo-Block liefert
+  // (Steve: "erst mal nur die Credits", kein zusaetzlicher Bilder-Zaehler).
+  // Fehlt der Block (Backend noch nicht umgestellt), bleibt die bisherige
+  // Tageslimit-Anzeige als Fallback unveraendert stehen. Bewusst KEINE
+  // Live-Region: ruhige Textzeilen im Dokumentfluss.
   const limitInfo = byId('dailyLimitInfo');
   const dl = data.daily_limit;
-  if (limitInfo && dl) {
+  if (limitInfo && data.abo) {
+    // Idempotent wie renderLegalNote (Review-Befund 12): bei einem erneuten
+    // Aufruf zuerst die frueher eingefuegten Zusatzzeilen entfernen, sonst
+    // stapeln sich Credit-Zeilen und Abo-Link mit jedem Durchlauf.
+    limitInfo.parentNode.querySelectorAll('.dash-limit-zusatz').forEach((el) => el.remove());
+    const lines = buildCreditLines(data.abo);
+    limitInfo.textContent = lines[0] || '';
+    let anker = limitInfo;
+    lines.slice(1).forEach((zeile) => {
+      const p = document.createElement('p');
+      p.className = 'dash-limit dash-limit-zusatz';
+      p.textContent = zeile;
+      anker.insertAdjacentElement('afterend', p);
+      anker = p;
+    });
+    const pLink = document.createElement('p');
+    pLink.className = 'dash-limit dash-limit-zusatz';
+    const a = document.createElement('a');
+    a.href = '/abo';
+    a.textContent = t('Abo & Verbrauch verwalten');
+    pLink.appendChild(a);
+    anker.insertAdjacentElement('afterend', pLink);
+  } else if (limitInfo && dl) {
     limitInfo.textContent = t('Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig.', { used: dl.used, limit: dl.limit, remaining: dl.remaining });
   }
   return currentUser;

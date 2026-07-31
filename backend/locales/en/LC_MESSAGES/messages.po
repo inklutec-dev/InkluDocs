@@ -2482,3 +2482,118 @@ msgstr "Publisher approval"
 
 msgid "Herausgeber Änderung"
 msgstr "Publisher change"
+
+msgid "Credits diesen Monat: {verbraucht} von {verfuegbar} verbraucht — {rest} verfügbar."
+msgstr "Credits this month: {verbraucht} of {verfuegbar} used — {rest} available."
+
+msgid "Davon sind {uebertrag} Credits aus dem Vormonat übernommen."
+msgstr "Of these, {uebertrag} Credits were carried over from the previous month."
+
+msgid "Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan)."
+msgstr "Credits this month: {verbraucht} used (unlimited plan)."
+
+msgid "Zusatz-Credits: {anzahl} verfügbar."
+msgstr "Extra credits: {anzahl} available."
+
+msgid "Abo & Verbrauch verwalten"
+msgstr "Manage subscription & usage"
+
+msgid "Abo & Verbrauch"
+msgstr "Subscription & usage"
+
+msgid "Plan und Verbrauch"
+msgstr "Plan and usage"
+
+msgid "Dein Plan: {plan}"
+msgstr "Your plan: {plan}"
+
+msgid "Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf."
+msgstr "You are part of {inhaber}'s team. You share a common Credit pool."
+
+msgid "Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Change your plan or buy additional credits: online payment is currently being built. Until then, simply send an email to"
+
+msgid "— wir schalten von Hand frei."
+msgstr "— we will activate it manually."
+
+msgid "Verbrauchsdaten sind gerade nicht verfügbar."
+msgstr "Usage data is currently unavailable."
+
+msgid "Team-Mitglieder"
+msgstr "Team members"
+
+msgid "diesen Monat: {anzahl} Credits"
+msgstr "this month: {anzahl} Credits"
+
+msgid "Entfernen"
+msgstr "Remove"
+
+msgid "{name} aus dem Team entfernen"
+msgstr "Remove {name} from the team"
+
+msgid "Team-Mitglied entfernen?"
+msgstr "Remove team member?"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person verliert den Zugriff auf den gemeinsamen Credit-Topf."
+msgstr "Really remove “{name}” from the team? This person will lose access to the shared Credit pool."
+
+msgid "Mitglied einladen"
+msgstr "Invite a member"
+
+msgid "E-Mail-Adresse des neuen Mitglieds"
+msgstr "Email address of the new member"
+
+msgid "Einladen"
+msgstr "Invite"
+
+msgid "Mitglied eingeladen: {email}"
+msgstr "Member invited: {email}"
+
+msgid "Noch keine Team-Mitglieder."
+msgstr "No team members yet."
+
+msgid "Team-Mitglieder konnten nicht geladen werden."
+msgstr "Team members could not be loaded."
+
+msgid "Mitglied wurde aus dem Team entfernt."
+msgstr "Member removed from the team."
+
+msgid "Abonnement & Rechnungen"
+msgstr "Subscription & billing"
+
+msgid "Deinen Plan, deinen Credit-Verbrauch und dein Team findest du auf einer eigenen Seite."
+msgstr "Your plan, your Credit usage and your team live on a dedicated page."
+
+msgid "Abo & Verbrauch öffnen"
+msgstr "Open subscription & usage"
+
+# Team-Einladung mit Zustimmung (Review-Befund 1/15, 31.07.2026)
+msgid "Einladung versandt an {email}."
+msgstr "Invitation sent to {email}."
+
+msgid "Zur Startseite"
+msgstr "Go to the home page"
+
+msgid "Dieser Einladungslink ist ungültig oder abgelaufen."
+msgstr "This invitation link is invalid or has expired."
+
+msgid "Diese Einladung gehört zu einer anderen E-Mail-Adresse. Bitte melde dich mit dem eingeladenen Konto an."
+msgstr "This invitation belongs to a different email address. Please sign in with the invited account."
+
+msgid "Diese Einladung kann nicht mehr angenommen werden."
+msgstr "This invitation can no longer be accepted."
+
+msgid "Alle Plätze in diesem Team sind bereits belegt."
+msgstr "All seats in this team are already taken."
+
+msgid "Team-Beitritt bestätigt!"
+msgstr "Team membership confirmed!"
+
+msgid "Team-Beitritt bestätigt"
+msgstr "Team membership confirmed"
+
+msgid "Du bist jetzt Mitglied im Team von"
+msgstr "You are now a member of the team of"
+
+msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
+msgstr "You share a common Credit quota."
