@@ -2606,3 +2606,6 @@ msgstr "Your account: operator (unlimited)"
 
 msgid "Diesen Monat verbraucht: {verbraucht} Credits."
 msgstr "Used this month: {verbraucht} credits."
+
+msgid "Aktueller Stand"
+msgstr "Current status"

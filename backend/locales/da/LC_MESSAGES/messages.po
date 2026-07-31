@@ -2297,3 +2297,6 @@ msgstr "Din konto: operatør (ubegrænset)"
 
 msgid "Diesen Monat verbraucht: {verbraucht} Credits."
 msgstr "Brugt denne måned: {verbraucht} credits."
+
+msgid "Aktueller Stand"
+msgstr "Aktuel status"

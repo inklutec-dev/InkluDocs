@@ -2606,3 +2606,6 @@ msgstr "Tu cuenta: operador (ilimitado)"
 
 msgid "Diesen Monat verbraucht: {verbraucht} Credits."
 msgstr "Usados este mes: {verbraucht} créditos."
+
+msgid "Aktueller Stand"
+msgstr "Estado actual"

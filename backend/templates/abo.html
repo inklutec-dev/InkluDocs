@@ -3,14 +3,18 @@
 {% block main %}
       <h1>{{ _('Abo & Verbrauch') }}</h1>
 
-      <section class="dash-card" aria-labelledby="plan-h">
-        <h2 id="plan-h">{{ _('Plan und Verbrauch') }}</h2>
+      {# Kein eigenes h2 fuer diesen Block: er IST der Hauptinhalt der Seite und
+         wird von der h1 getragen. Zwei Ueberschriften direkt untereinander sind
+         beim Durchspringen mit dem Screenreader nur Ballast (Steve 31.07.).
+         Deshalb div statt section — ein Bereich ohne Ueberschrift braucht keine
+         eigene Landmarke. #}
+      <div class="dash-card">
         <div id="aboInfo">
           <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
         </div>
         {# Ehrlicher Hinweis statt toter Knoepfe: Online-Zahlung kommt spaeter. #}
-        <p class="dash-meta">{{ _('Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
-      </section>
+        <p class="dash-meta">{{ _('Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
+      </div>
 
       {# Team-Verwaltung: nur sichtbar fuer den INHABER eines Team-Plans
          (renderAbo blendet ein). Mitglieder sehen stattdessen die

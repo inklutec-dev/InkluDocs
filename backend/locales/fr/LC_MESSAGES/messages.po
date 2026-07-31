@@ -2606,3 +2606,6 @@ msgstr "Votre compte : exploitant (illimité)"
 
 msgid "Diesen Monat verbraucht: {verbraucht} Credits."
 msgstr "Utilisés ce mois-ci : {verbraucht} crédits."
+
+msgid "Aktueller Stand"
+msgstr "État actuel"

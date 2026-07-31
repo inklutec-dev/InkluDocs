@@ -2609,3 +2609,6 @@ msgstr "Dein Konto: Betreiber (unbegrenzt)"
 
 msgid "Diesen Monat verbraucht: {verbraucht} Credits."
 msgstr "Diesen Monat verbraucht: {verbraucht} Credits."
+
+msgid "Aktueller Stand"
+msgstr "Aktueller Stand"
