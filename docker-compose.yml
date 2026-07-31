@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260710
+    image: inkludocs:v4-20260717b
     container_name: inkludocs
     restart: unless-stopped
     ports:
@@ -35,6 +35,9 @@ services:
       - PIPELINE_VERSION=${PIPELINE_VERSION:-v4}
       - V4_PASS_MODE=${V4_PASS_MODE:-lean}
       - V4_VERIFY_MODE=${V4_VERIFY_MODE:-off}
+      - V4_VERIFY_KORREKTUR=${V4_VERIFY_KORREKTUR:-off}
+      # Abo-/Credit-System (31.07.2026): off = nur zaehlen, on = Kontingente durchsetzen (Review-Befund 3)
+      - ABO_ENFORCEMENT=${ABO_ENFORCEMENT:-off}
       - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
       - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
       - AWS_REGION=${AWS_REGION:-eu-central-1}

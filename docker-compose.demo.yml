@@ -43,6 +43,9 @@ services:
       - DEMO_MODE=on
       # In der Demo registriert sich niemand — der Weg zum Konto führt zur echten App.
       - REGISTRATION_ENABLED=false
+      # Abo-Enforcement in der Demo HART aus (eigene Wegwerf-DB, bewusst ohne Abo-Zaehlung) —
+      # hart statt ${...:-off}, weil die Demo-Schalter hier versioniert festgeschrieben sind.
+      - ABO_ENFORCEMENT=off
       # Limits — Werte hier dokumentiert; WIRKSAM ab Schritt 3 (dann liest der Code sie).
       - DEMO_DAILY_IMAGE_LIMIT=${DEMO_DAILY_IMAGE_LIMIT:-3}      # Generierungen/Tag pro Besucher
       - DEMO_DAILY_CHAT_LIMIT=${DEMO_DAILY_CHAT_LIMIT:-12}       # Chat-Nachrichten/Tag pro Besucher
@@ -90,6 +93,8 @@ services:
       - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
       - PIPELINE_VERSION=${PIPELINE_VERSION:-v3_7}
       - V4_PASS_MODE=${V4_PASS_MODE:-full}
+      - V4_VERIFY_MODE=${V4_VERIFY_MODE:-off}
+      - V4_VERIFY_KORREKTUR=${V4_VERIFY_KORREKTUR:-off}
       - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
