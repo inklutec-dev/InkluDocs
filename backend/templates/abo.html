@@ -132,22 +132,33 @@
       const strong = document.createElement('strong');
       strong.textContent = m.display_name || m.email;
       info.appendChild(strong);
+      if (m.ist_inhaber) {
+        // Der Inhaber selbst: klar gekennzeichnet, kein Entfernen-Knopf.
+        const rolle = document.createElement('span');
+        rolle.className = 'dash-meta'; rolle.style.marginLeft = '.5rem';
+        rolle.textContent = t('(Inhaber)');
+        info.appendChild(rolle);
+      }
+      // Trennzeichen als echter Text: sonst liest der Screenreader Name,
+      // E-Mail und Verbrauch ohne Pause in einem Wort zusammen.
       const mail = document.createElement('span');
       mail.className = 'dash-meta'; mail.style.marginLeft = '.5rem';
-      mail.textContent = m.email;
+      mail.textContent = '· ' + m.email;
       info.appendChild(mail);
       const used = document.createElement('span');
       used.className = 'dash-meta'; used.style.marginLeft = '.5rem';
-      used.textContent = t('diesen Monat: {anzahl} Credits', { anzahl: m.verbraucht_monat });
+      used.textContent = '· ' + t('diesen Monat: {anzahl} Credits', { anzahl: m.verbraucht_monat });
       info.appendChild(used);
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'btn btn-delete btn-small';
-      del.textContent = t('Entfernen');
-      del.setAttribute('aria-label', t('{name} aus dem Team entfernen', { name: m.display_name || m.email }));
-      del.addEventListener('click', () => openTeamRemove(m, del));
       li.appendChild(info);
-      li.appendChild(del);
+      if (!m.ist_inhaber) {
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'btn btn-delete btn-small';
+        del.textContent = t('Entfernen');
+        del.setAttribute('aria-label', t('{name} aus dem Team entfernen', { name: m.display_name || m.email }));
+        del.addEventListener('click', () => openTeamRemove(m, del));
+        li.appendChild(del);
+      }
       ul.appendChild(li);
     });
     list.appendChild(ul);

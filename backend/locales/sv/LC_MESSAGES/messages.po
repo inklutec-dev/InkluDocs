@@ -2170,3 +2170,6 @@ msgstr "Använt denna månad: {verbraucht} credits."
 
 msgid "Aktueller Stand"
 msgstr "Aktuell status"
+
+msgid "(Inhaber)"
+msgstr "(ägare)"

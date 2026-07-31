@@ -2612,3 +2612,6 @@ msgstr "Diesen Monat verbraucht: {verbraucht} Credits."
 
 msgid "Aktueller Stand"
 msgstr "Aktueller Stand"
+
+msgid "(Inhaber)"
+msgstr "(Inhaber)"

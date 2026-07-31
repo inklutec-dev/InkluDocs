@@ -2609,3 +2609,6 @@ msgstr "Usados este mes: {verbraucht} créditos."
 
 msgid "Aktueller Stand"
 msgstr "Estado actual"
+
+msgid "(Inhaber)"
+msgstr "(propietario)"
