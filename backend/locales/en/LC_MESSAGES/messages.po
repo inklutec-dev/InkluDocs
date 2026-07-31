@@ -2612,3 +2612,50 @@ msgstr "Current status"
 
 msgid "(Inhaber)"
 msgstr "(owner)"
+
+# Unterseiten E-Mail & Passwort / API-Schluessel (31.07.2026)
+
+msgid "E-Mail & Passwort"
+msgstr "Email & password"
+
+msgid "Deine Anmeldedaten änderst du auf einer eigenen Seite."
+msgstr "You change your sign-in details on a separate page."
+
+msgid "E-Mail & Passwort öffnen"
+msgstr "Open email & password"
+
+msgid "Anzeigename"
+msgstr "Display name"
+
+msgid "Dieser Name erscheint in der Begrüßung auf der Startseite und ist für andere Team-Mitglieder sichtbar."
+msgstr "This name appears in the greeting on the home page and is visible to other team members."
+
+msgid "Namen speichern"
+msgstr "Save name"
+
+msgid "Name wurde gespeichert."
+msgstr "Name saved."
+
+msgid "Die Umstellung wird erst wirksam, wenn du den Bestätigungslink in der E-Mail an die neue Adresse anklickst. Bis dahin gilt deine bisherige Adresse."
+msgstr "The change only takes effect once you click the confirmation link in the email sent to the new address. Until then your previous address remains valid."
+
+msgid "Neue E-Mail-Adresse"
+msgstr "New email address"
+
+msgid "Bestätigungslink senden"
+msgstr "Send confirmation link"
+
+msgid "Bestätigungslink gesendet."
+msgstr "Confirmation link sent."
+
+msgid "Kontoinformationen konnten nicht geladen werden."
+msgstr "Account information could not be loaded."
+
+msgid "Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite."
+msgstr "You manage your keys for the programming interface (API) on a separate page."
+
+msgid "API-Schlüssel öffnen"
+msgstr "Open API keys"
+
+msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
+msgstr "Confirmation link sent to {email}. Please check your inbox."

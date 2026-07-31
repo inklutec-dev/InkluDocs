@@ -2615,3 +2615,50 @@ msgstr "Aktueller Stand"
 
 msgid "(Inhaber)"
 msgstr "(Inhaber)"
+
+# Unterseiten E-Mail & Passwort / API-Schluessel (31.07.2026)
+
+msgid "E-Mail & Passwort"
+msgstr "E-Mail & Passwort"
+
+msgid "Deine Anmeldedaten änderst du auf einer eigenen Seite."
+msgstr "Deine Anmeldedaten änderst du auf einer eigenen Seite."
+
+msgid "E-Mail & Passwort öffnen"
+msgstr "E-Mail & Passwort öffnen"
+
+msgid "Anzeigename"
+msgstr "Anzeigename"
+
+msgid "Dieser Name erscheint in der Begrüßung auf der Startseite und ist für andere Team-Mitglieder sichtbar."
+msgstr "Dieser Name erscheint in der Begrüßung auf der Startseite und ist für andere Team-Mitglieder sichtbar."
+
+msgid "Namen speichern"
+msgstr "Namen speichern"
+
+msgid "Name wurde gespeichert."
+msgstr "Name wurde gespeichert."
+
+msgid "Die Umstellung wird erst wirksam, wenn du den Bestätigungslink in der E-Mail an die neue Adresse anklickst. Bis dahin gilt deine bisherige Adresse."
+msgstr "Die Umstellung wird erst wirksam, wenn du den Bestätigungslink in der E-Mail an die neue Adresse anklickst. Bis dahin gilt deine bisherige Adresse."
+
+msgid "Neue E-Mail-Adresse"
+msgstr "Neue E-Mail-Adresse"
+
+msgid "Bestätigungslink senden"
+msgstr "Bestätigungslink senden"
+
+msgid "Bestätigungslink gesendet."
+msgstr "Bestätigungslink gesendet."
+
+msgid "Kontoinformationen konnten nicht geladen werden."
+msgstr "Kontoinformationen konnten nicht geladen werden."
+
+msgid "Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite."
+msgstr "Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite."
+
+msgid "API-Schlüssel öffnen"
+msgstr "API-Schlüssel öffnen"
+
+msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
+msgstr "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."

@@ -2173,3 +2173,50 @@ msgstr "Aktuell status"
 
 msgid "(Inhaber)"
 msgstr "(ägare)"
+
+# Unterseiten E-Mail & Passwort / API-Schluessel (31.07.2026)
+
+msgid "E-Mail & Passwort"
+msgstr "E-post och lösenord"
+
+msgid "Deine Anmeldedaten änderst du auf einer eigenen Seite."
+msgstr "Du ändrar dina inloggningsuppgifter på en egen sida."
+
+msgid "E-Mail & Passwort öffnen"
+msgstr "Öppna e-post och lösenord"
+
+msgid "Anzeigename"
+msgstr "Visningsnamn"
+
+msgid "Dieser Name erscheint in der Begrüßung auf der Startseite und ist für andere Team-Mitglieder sichtbar."
+msgstr "Det här namnet visas i hälsningen på startsidan och är synligt för andra teammedlemmar."
+
+msgid "Namen speichern"
+msgstr "Spara namn"
+
+msgid "Name wurde gespeichert."
+msgstr "Namnet har sparats."
+
+msgid "Die Umstellung wird erst wirksam, wenn du den Bestätigungslink in der E-Mail an die neue Adresse anklickst. Bis dahin gilt deine bisherige Adresse."
+msgstr "Ändringen träder i kraft först när du klickar på bekräftelselänken i e-postmeddelandet till den nya adressen. Fram till dess gäller din nuvarande adress."
+
+msgid "Neue E-Mail-Adresse"
+msgstr "Ny e-postadress"
+
+msgid "Bestätigungslink senden"
+msgstr "Skicka bekräftelselänk"
+
+msgid "Bestätigungslink gesendet."
+msgstr "Bekräftelselänk skickad."
+
+msgid "Kontoinformationen konnten nicht geladen werden."
+msgstr "Kontouppgifterna kunde inte laddas."
+
+msgid "Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite."
+msgstr "Du hanterar dina nycklar för programmeringsgränssnittet (API) på en egen sida."
+
+msgid "API-Schlüssel öffnen"
+msgstr "Öppna API-nycklar"
+
+msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
+msgstr "Bekräftelselänk skickad till {email}. Kontrollera din inkorg."

@@ -1,0 +1,201 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('E-Mail & Passwort') }} · InkluDocs{% endblock %}
+{% block main %}
+      <h1>{{ _('E-Mail & Passwort') }}</h1>
+
+      {# Die Konto-Zeile stand bis 31.07.2026 als Karte "Kontoinformationen" in
+         den Einstellungen. Wortlaut und Datenquelle sind unveraendert; sie
+         steht hier ganz oben, damit man vor dem Aendern hoert, um welches
+         Konto es ueberhaupt geht. Keine eigene Ueberschrift: eine einzelne
+         Zeile unter der h1 braucht keine. #}
+      <p id="accountInfo" class="dash-meta">{{ _('Wird geladen ...') }}</p>
+
+      {# Drei echte Bereiche (Name, Adresse, Passwort) — hier sind h2 richtig,
+         weil keiner von ihnen allein "der" Hauptinhalt ist und die h1 sie nur
+         zusammenfasst (Steve-Regel 31.07.: keine h2, die die h1 wiederholt). #}
+      <section class="dash-card" aria-labelledby="name-h">
+        <h2 id="name-h">{{ _('Anzeigename') }}</h2>
+        <p class="dash-meta">{{ _('Dieser Name erscheint in der Begrüßung auf der Startseite und ist für andere Team-Mitglieder sichtbar.') }}</p>
+        <form id="changeNameForm">
+          <div class="dash-field">
+            <label for="display_name">{{ _('Anzeigename') }}</label>
+            {# maxlength 100 wie die Pruefung im Endpunkt — der Fehler soll
+               gar nicht erst entstehen muessen. #}
+            <input type="text" id="display_name" class="dash-input" required maxlength="100" autocomplete="name">
+          </div>
+          <button type="submit" class="btn btn-primary">{{ _('Namen speichern') }}</button>
+          <span id="nameMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="nameErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        </form>
+      </section>
+
+      <section class="dash-card" aria-labelledby="mail-h">
+        <h2 id="mail-h">{{ _('E-Mail-Adresse') }}</h2>
+        {# Ehrliche Erwartung setzen: Der Wechsel passiert NICHT beim Absenden,
+           sondern erst beim Klick auf den Link in der Mail an die neue Adresse. #}
+        <p class="dash-meta">{{ _('Die Umstellung wird erst wirksam, wenn du den Bestätigungslink in der E-Mail an die neue Adresse anklickst. Bis dahin gilt deine bisherige Adresse.') }}</p>
+        <form id="changeMailForm">
+          <div class="dash-field">
+            <label for="new_email">{{ _('Neue E-Mail-Adresse') }}</label>
+            <input type="email" id="new_email" class="dash-input" required autocomplete="email">
+          </div>
+          <button type="submit" class="btn btn-primary">{{ _('Bestätigungslink senden') }}</button>
+          {# Beide Meldungsregionen stehen statisch im DOM (Muster aus abo.html):
+             Erfolg ruhig als role=status, Fehler assertiv als role=alert. #}
+          <span id="mailMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="mailErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        </form>
+      </section>
+
+      {# 1:1 uebernommen aus einstellungen.html (31.07.2026) — gleiche Feld-IDs,
+         gleiche Validierung, gleiche Meldungen, damit sich am Verhalten des
+         Passwortwechsels nichts aendert. Nur die Ueberschrift heisst jetzt
+         "Passwort", weil der Knopf darunter das "aendern" schon sagt. #}
+      <section class="dash-card" aria-labelledby="pw-h">
+        <h2 id="pw-h">{{ _('Passwort') }}</h2>
+        <form id="changePwForm" novalidate>
+          <div class="dash-field">
+            <label for="old_password">{{ _('Aktuelles Passwort') }}</label>
+            <input type="password" id="old_password" class="dash-input" required autocomplete="current-password">
+          </div>
+          <div class="dash-field">
+            <label for="new_password">{{ _('Neues Passwort (mind. 8 Zeichen)') }}</label>
+            <input type="password" id="new_password" class="dash-input" required minlength="8" autocomplete="new-password">
+          </div>
+          <div class="dash-field">
+            <label for="new_password2">{{ _('Neues Passwort wiederholen') }}</label>
+            <input type="password" id="new_password2" class="dash-input" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn-primary">{{ _('Passwort aendern') }}</button>
+          <span id="pwMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        </form>
+      </section>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  // Unterseite "E-Mail & Passwort" (31.07.2026). Loest die frueheren
+  // Abschnitte "Kontoinformationen" und "Passwort aendern" aus den
+  // Einstellungen ab; die Einstellungen verweisen nur noch hierher.
+
+  // Gemerkte Konto-Daten: Nach dem Namenswechsel muss die Zeile oben ohne
+  // Neuladen stimmen — dafuer brauchen wir die E-Mail-Adresse weiterhin.
+  let _konto = { name: '', email: '' };
+
+  function zeigeKontoZeile() {
+    byId('accountInfo').textContent = t('Angemeldet als: {name} ({email})', { name: _konto.name, email: _konto.email });
+  }
+
+  // Text und Datenquelle 1:1 aus einstellungen.html uebernommen (/api/me).
+  // Neu ist nur der try/catch: faellt der Abruf aus, stuende sonst ewig
+  // "Wird geladen ..." da.
+  (async function loadAccount() {
+    let u = null;
+    try {
+      const res = await fetch('/api/me');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      u = (await res.json()).user || {};
+    } catch (e) { u = null; }
+    if (!u) {
+      byId('accountInfo').textContent = t('Kontoinformationen konnten nicht geladen werden.');
+      return;
+    }
+    _konto = { name: u.display_name || '', email: u.email || '' };
+    zeigeKontoZeile();
+    // Feld mit dem aktuellen Namen vorbelegen — Aendern statt Neutippen.
+    byId('display_name').value = _konto.name;
+  })();
+
+  byId('changeNameForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = byId('display_name');
+    const msg = byId('nameMsg');
+    const err = byId('nameErr');
+    msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
+    const display_name = input.value.trim();
+    if (!display_name) { input.focus(); return; }
+    let res;
+    try {
+      res = await fetch('/api/change-displayname', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ display_name }),
+      });
+    } catch (e) {
+      err.textContent = t('Fehler');
+      return;
+    }
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) {
+      // Der Server normiert den Namen (eine Zeile, max. 100 Zeichen) und gibt
+      // ihn zurueck — wir uebernehmen SEINEN Wert, nicht die Roh-Eingabe.
+      _konto.name = d.display_name || display_name;
+      input.value = _konto.name;
+      zeigeKontoZeile();
+      // Bewusst die eigene, uebersetzte Meldung statt d.message: die
+      // Server-Antwort ist ein technischer ASCII-Text ("Name wurde geaendert")
+      // und existiert nur auf Deutsch (Steve-Hoertest 31.07.).
+      msg.textContent = t('Name wurde gespeichert.');
+      msg.style.color = 'var(--success)';
+    } else {
+      err.textContent = d.detail || t('Fehler');
+    }
+  });
+
+  byId('changeMailForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = byId('new_email');
+    const msg = byId('mailMsg');
+    const err = byId('mailErr');
+    msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
+    const new_email = input.value.trim();
+    if (!new_email) { input.focus(); return; }
+    let res;
+    try {
+      res = await fetch('/api/change-email', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_email }),
+      });
+    } catch (e) {
+      err.textContent = t('Fehler');
+      return;
+    }
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) {
+      // Eigene, uebersetzte Meldung statt d.message (technisches ASCII-Deutsch,
+      // nur einsprachig) — mit der Zieladresse, damit Tippfehler auffallen.
+      msg.textContent = t('Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach.', { email: new_email });
+      msg.style.color = 'var(--success)';
+      input.value = '';
+    } else {
+      // 400/409/500 liefern den Grund in detail (z. B. Adresse schon vergeben).
+      err.textContent = d.detail || t('Fehler');
+    }
+  });
+
+  byId('changePwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = byId('pwMsg');
+    msg.textContent = ''; msg.style.color = '';
+    const old_password = byId('old_password').value;
+    const new_password = byId('new_password').value;
+    const new_password2 = byId('new_password2').value;
+    if (new_password.length < 8) { msg.textContent = t('Mindestens 8 Zeichen'); msg.style.color = 'var(--error)'; return; }
+    if (new_password !== new_password2) { msg.textContent = t('Passwörter stimmen nicht überein'); msg.style.color = 'var(--error)'; return; }
+    const res = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old_password, new_password }),
+    });
+    if (res.ok) {
+      msg.textContent = t('Passwort geändert!'); msg.style.color = 'var(--success)';
+      announce(t('Passwort wurde geändert'));
+      byId('changePwForm').reset();
+    } else {
+      const d = await res.json();
+      msg.textContent = d.detail || t('Fehler'); msg.style.color = 'var(--error)';
+    }
+  });
+{% endraw %}
+</script>
+  <script src="/static/pwtoggle.js?v={{ asset_version }}" defer></script>
+{% endblock %}

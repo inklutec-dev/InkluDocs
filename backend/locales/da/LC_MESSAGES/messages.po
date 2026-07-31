@@ -2303,3 +2303,50 @@ msgstr "Aktuel status"
 
 msgid "(Inhaber)"
 msgstr "(ejer)"
+
+# Unterseiten E-Mail & Passwort / API-Schluessel (31.07.2026)
+
+msgid "E-Mail & Passwort"
+msgstr "E-mail og adgangskode"
+
+msgid "Deine Anmeldedaten änderst du auf einer eigenen Seite."
+msgstr "Du ændrer dine loginoplysninger på en separat side."
+
+msgid "E-Mail & Passwort öffnen"
+msgstr "Åbn e-mail og adgangskode"
+
+msgid "Anzeigename"
+msgstr "Vist navn"
+
+msgid "Dieser Name erscheint in der Begrüßung auf der Startseite und ist für andere Team-Mitglieder sichtbar."
+msgstr "Dette navn vises i hilsenen på startsiden og er synligt for andre teammedlemmer."
+
+msgid "Namen speichern"
+msgstr "Gem navn"
+
+msgid "Name wurde gespeichert."
+msgstr "Navnet er gemt."
+
+msgid "Die Umstellung wird erst wirksam, wenn du den Bestätigungslink in der E-Mail an die neue Adresse anklickst. Bis dahin gilt deine bisherige Adresse."
+msgstr "Ændringen træder først i kraft, når du klikker på bekræftelseslinket i e-mailen til den nye adresse. Indtil da gælder din hidtidige adresse."
+
+msgid "Neue E-Mail-Adresse"
+msgstr "Ny e-mailadresse"
+
+msgid "Bestätigungslink senden"
+msgstr "Send bekræftelseslink"
+
+msgid "Bestätigungslink gesendet."
+msgstr "Bekræftelseslink sendt."
+
+msgid "Kontoinformationen konnten nicht geladen werden."
+msgstr "Kontooplysningerne kunne ikke indlæses."
+
+msgid "Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite."
+msgstr "Du administrerer dine nøgler til programmeringsgrænsefladen (API) på en separat side."
+
+msgid "API-Schlüssel öffnen"
+msgstr "Åbn API-nøgler"
+
+msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
+msgstr "Bekræftelseslink sendt til {email}. Tjek venligst din indbakke."

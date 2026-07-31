@@ -2612,3 +2612,50 @@ msgstr "État actuel"
 
 msgid "(Inhaber)"
 msgstr "(propriétaire)"
+
+# Unterseiten E-Mail & Passwort / API-Schluessel (31.07.2026)
+
+msgid "E-Mail & Passwort"
+msgstr "E-mail et mot de passe"
+
+msgid "Deine Anmeldedaten änderst du auf einer eigenen Seite."
+msgstr "Vous modifiez vos identifiants de connexion sur une page dédiée."
+
+msgid "E-Mail & Passwort öffnen"
+msgstr "Ouvrir e-mail et mot de passe"
+
+msgid "Anzeigename"
+msgstr "Nom affiché"
+
+msgid "Dieser Name erscheint in der Begrüßung auf der Startseite und ist für andere Team-Mitglieder sichtbar."
+msgstr "Ce nom apparaît dans le message d'accueil de la page d'accueil et est visible par les autres membres de l'équipe."
+
+msgid "Namen speichern"
+msgstr "Enregistrer le nom"
+
+msgid "Name wurde gespeichert."
+msgstr "Nom enregistré."
+
+msgid "Die Umstellung wird erst wirksam, wenn du den Bestätigungslink in der E-Mail an die neue Adresse anklickst. Bis dahin gilt deine bisherige Adresse."
+msgstr "Le changement ne prend effet qu'après avoir cliqué sur le lien de confirmation envoyé à la nouvelle adresse. Jusque-là, votre adresse actuelle reste valable."
+
+msgid "Neue E-Mail-Adresse"
+msgstr "Nouvelle adresse e-mail"
+
+msgid "Bestätigungslink senden"
+msgstr "Envoyer le lien de confirmation"
+
+msgid "Bestätigungslink gesendet."
+msgstr "Lien de confirmation envoyé."
+
+msgid "Kontoinformationen konnten nicht geladen werden."
+msgstr "Impossible de charger les informations du compte."
+
+msgid "Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite."
+msgstr "Vous gérez vos clés pour l'interface de programmation (API) sur une page dédiée."
+
+msgid "API-Schlüssel öffnen"
+msgstr "Ouvrir les clés API"
+
+msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
+msgstr "Lien de confirmation envoyé à {email}. Merci de vérifier votre boîte de réception."

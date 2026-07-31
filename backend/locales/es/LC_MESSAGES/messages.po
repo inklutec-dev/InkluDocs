@@ -2612,3 +2612,50 @@ msgstr "Estado actual"
 
 msgid "(Inhaber)"
 msgstr "(propietario)"
+
+# Unterseiten E-Mail & Passwort / API-Schluessel (31.07.2026)
+
+msgid "E-Mail & Passwort"
+msgstr "Correo electrónico y contraseña"
+
+msgid "Deine Anmeldedaten änderst du auf einer eigenen Seite."
+msgstr "Tus datos de acceso se cambian en una página propia."
+
+msgid "E-Mail & Passwort öffnen"
+msgstr "Abrir correo electrónico y contraseña"
+
+msgid "Anzeigename"
+msgstr "Nombre visible"
+
+msgid "Dieser Name erscheint in der Begrüßung auf der Startseite und ist für andere Team-Mitglieder sichtbar."
+msgstr "Este nombre aparece en el saludo de la página de inicio y es visible para los demás miembros del equipo."
+
+msgid "Namen speichern"
+msgstr "Guardar nombre"
+
+msgid "Name wurde gespeichert."
+msgstr "Nombre guardado."
+
+msgid "Die Umstellung wird erst wirksam, wenn du den Bestätigungslink in der E-Mail an die neue Adresse anklickst. Bis dahin gilt deine bisherige Adresse."
+msgstr "El cambio solo se aplica cuando haces clic en el enlace de confirmación del correo enviado a la nueva dirección. Hasta entonces sigue vigente tu dirección anterior."
+
+msgid "Neue E-Mail-Adresse"
+msgstr "Nueva dirección de correo electrónico"
+
+msgid "Bestätigungslink senden"
+msgstr "Enviar enlace de confirmación"
+
+msgid "Bestätigungslink gesendet."
+msgstr "Enlace de confirmación enviado."
+
+msgid "Kontoinformationen konnten nicht geladen werden."
+msgstr "No se pudo cargar la información de la cuenta."
+
+msgid "Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite."
+msgstr "Gestionas tus claves para la interfaz de programación (API) en una página propia."
+
+msgid "API-Schlüssel öffnen"
+msgstr "Abrir claves de API"
+
+msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
+msgstr "Enlace de confirmación enviado a {email}. Revisa tu bandeja de entrada."

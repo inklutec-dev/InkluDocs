@@ -4789,6 +4789,20 @@ async def abo_page(request: Request):
     return _render_protected_template(request, "abo.html")
 
 
+@app.get("/konto", response_class=HTMLResponse)
+async def konto_page(request: Request):
+    # E-Mail & Passwort (31.07.2026): Die Einstellungen sind eine schlanke
+    # Uebersicht; Anmeldedaten aendert man auf dieser Unterseite.
+    return _render_protected_template(request, "konto.html")
+
+
+@app.get("/api-schluessel", response_class=HTMLResponse)
+async def api_schluessel_page(request: Request):
+    # API-Schluessel-Verwaltung (31.07.2026): aus den Einstellungen
+    # ausgelagert, damit die Uebersicht kurz und hoerbar bleibt.
+    return _render_protected_template(request, "api_schluessel.html")
+
+
 @app.get("/prompts", response_class=HTMLResponse)
 async def prompts_page(request: Request):
     return _render_protected_template(request, "prompts.html")
