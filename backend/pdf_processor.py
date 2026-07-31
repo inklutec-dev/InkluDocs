@@ -859,6 +859,9 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
         cached = get_cached(cache_key)
         if cached is not None:
             print(f"T6 cache-hit: {image_path} (key={cache_key[:48]}...)")
+            # Abo-Etappe-1: Cache-Treffer als solche markieren — die Verbuchungs-
+            # Stellen (billing.verbuche) lassen markierte Ergebnisse kostenlos.
+            cached["from_cache"] = True
             return cached
 
     # Cache-Miss oder force_regenerate -> Pipeline rufen

@@ -18,6 +18,7 @@ from email.mime.multipart import MIMEMultipart
 import httpx
 from bs4 import BeautifulSoup
 
+import billing  # Abo-/Credit-System Etappe 1: zentrale Verbrauchs-Zaehlung (backend/ABRECHNUNG.md)
 import demo as demo_mod  # Demo-Modus (oeffentliche Kostprobe ohne Anmeldung) — nur aktiv bei DEMO_MODE=on
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, StreamingResponse
@@ -2673,6 +2674,15 @@ async def _process_project(project_id: int, user_id: int):
         user_prompt = _up["prompt_text"]
 
     for img in images:
+        # Abo-Etappe-1: Kontingent VOR JEDEM Bild pruefen, nicht nur am Lauf-Start —
+        # sonst rutscht eine 500-Bilder-PDF bei Reststand 1 komplett durch.
+        # Bei ABO_ENFORCEMENT=off (Zaehl-Phase) ist erlaubt immer True.
+        _kontingent = billing.pruefe_kontingent(user_id)
+        if not _kontingent["erlaubt"]:
+            # Sauber beenden: restliche Bilder bleiben 'pending' und laufen nach
+            # Aufstockung ueber einen erneuten Sammellauf weiter.
+            print(f"Sammellauf Projekt {project_id}: Monatskontingent erschoepft nach {processed} Bildern — Rest bleibt pending")
+            break
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
 
@@ -2727,6 +2737,13 @@ async def _process_project(project_id: int, user_id: int):
             # Nur bei Erfolg den Zaehler hochziehen — Fehler werden separat
             # als status='error' an der Bild-Karte sichtbar.
             processed += 1
+            # Bild-Update sofort festschreiben: die Verbuchung nutzt eine EIGENE
+            # DB-Verbindung und wuerde sonst am offenen Schreib-Lock scheitern.
+            conn.commit()
+            # Abo-Etappe-1: nur echte Generierungen verbuchen — Fehllaeufe (except-Pfad)
+            # und Cache-Treffer (from_cache, siehe pdf_processor) kosten keine Credits.
+            if not result.get("from_cache"):
+                billing.verbuche(user_id, "sammellauf", image_id=img["id"])
         except Exception as e:
             import traceback
             print(f"Fehler bei Bild {img['id']} ({img['image_path']}): {e}")
@@ -2872,6 +2889,11 @@ async def submit_feedback(image_id: int, request: Request, user: dict = Depends(
 async def regenerate_image(project_id: int, image_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Regenerate alt-text for a single image with optional specialized prompt."""
     data = await request.json()
+    # Abo-Etappe-1: Einzel-Neu-Generieren ist eine echte neue KI-Anfrage und
+    # unterliegt dem Monatskontingent (greift erst bei ABO_ENFORCEMENT=on).
+    _kontingent = billing.pruefe_kontingent(user["id"])
+    if not _kontingent["erlaubt"]:
+        raise HTTPException(status_code=429, detail="Monatskontingent erreicht. Bitte Credits nachbuchen oder den Plan wechseln (Abo & Verbrauch).")
     image_type = data.get("image_type")  # Optional: foto, diagramm, karte, etc.
     want_long_desc = data.get("long_description", False)
 
@@ -2967,6 +2989,10 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         )
         conn.commit()
         conn.close()
+
+        # Abo-Etappe-1: erfolgreiches Einzel-Neu-Generieren = 1 Credit
+        # (laeuft mit force_regenerate, also nie aus dem Cache).
+        billing.verbuche(user["id"], "einzeln", image_id=image_id)
 
         return {
             "ok": True,
@@ -3517,6 +3543,12 @@ async def api_generate_alt_text(request: Request):
     # Rate limiting
     rate_info = check_api_rate_limit(api_key_id)
 
+    # Abo-Etappe-1: API zieht aus DEMSELBEN Credit-Topf wie die App
+    # (greift erst bei ABO_ENFORCEMENT=on; maschinenlesbares Fehlerformat folgt in Etappe 4).
+    _kontingent = billing.pruefe_kontingent(api_user["id"])
+    if not _kontingent["erlaubt"]:
+        raise HTTPException(status_code=429, detail="Monatskontingent erreicht. Bitte Credits nachbuchen oder den Plan wechseln.")
+
     content_type = request.headers.get("content-type", "")
     context_text = ""
     language = "de"
@@ -3630,6 +3662,11 @@ async def api_generate_alt_text(request: Request):
                       processing_time_ms=processing_time_ms,
                       model_used=model_used,
                       image_size_bytes=image_size, success=True)
+
+        # Abo-Etappe-1: API-Generierung = 1 Credit aus dem Konto-Topf
+        # (Cache-Treffer kosten nichts, siehe pdf_processor from_cache).
+        if not result.get("from_cache"):
+            billing.verbuche(api_user["id"], "api")
 
         # result_id generieren und Ergebnis speichern
         result_id = secrets.token_urlsafe(16)

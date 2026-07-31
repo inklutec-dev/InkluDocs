@@ -247,6 +247,24 @@ def init_db():
     """)
     conn.commit()
 
+    # Abo-/Credit-System Etappe 1 (31.07.2026): jede kostenpflichtige Aktion
+    # wird als einzelnes Ereignis gespeichert (siehe backend/ABRECHNUNG.md).
+    # konto_user_id = wessen Kontingent belastet wird (Etappe 2: Team-Inhaber);
+    # Etappe 1 immer = user_id.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS usage_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            konto_user_id INTEGER NOT NULL,
+            quelle TEXT NOT NULL,
+            aktion TEXT NOT NULL DEFAULT 'bild_generierung',
+            credits INTEGER NOT NULL DEFAULT 1,
+            image_id INTEGER,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_usage_events_konto_monat ON usage_events(konto_user_id, created_at)")
+
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 
@@ -261,6 +279,8 @@ def init_db():
 def _migrate_columns(conn):
     """Add new columns to existing tables. Uses try/except for idempotency."""
     migrations = [
+        # Abo-/Credit-System Etappe 1 (31.07.2026)
+        ("users", "plan", "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'"),
         # Vector graphics support (from earlier migration)
         ("images", "bbox_x0", "ALTER TABLE images ADD COLUMN bbox_x0 REAL"),
         ("images", "bbox_y0", "ALTER TABLE images ADD COLUMN bbox_y0 REAL"),

@@ -3,6 +3,7 @@ und InkluDocs-Datenmodell (projects/images, Pipeline) her."""
 import re
 from typing import Optional
 
+import billing  # Abo-/Credit-System Etappe 1
 from database import get_db
 
 
@@ -409,4 +410,8 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
         conn.commit()
     finally:
         conn.close()
+    # Abo-Etappe-1: Chatbot-Generierung = 1 Credit. Dieser Adapter ist der
+    # gemeinsame Trichter beider Chatbot-Wege (chat_engine + Tool-Schicht);
+    # laeuft mit force_regenerate, also nie aus dem Cache.
+    billing.verbuche(user_id, "chatbot", image_id=image_id)
     return result

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+
+import billing  # Abo-/Credit-System Etappe 1
 from typing import Any, Optional
 
 from ..adapters.inkludocs import run_pipeline_for_image as _run_pipeline
@@ -146,6 +148,10 @@ def update_alt_text(
         result["saved_langbeschreibung_length"] = len(lang_text)
         result["langbeschreibung_info"] = "Langbeschreibung wurde ueberschrieben (kein Rollback-Feld vorhanden)."
 
+    # Abo-Regel (Steve, 31.07.2026): "Reden ist frei — sobald der Chatbot einen
+    # Alt-Text ERZEUGT oder AENDERT, kostet es 1 Credit." Das hier ist der
+    # AENDERT-Fall (Umschreiben/Optimieren ohne Pipeline-Lauf).
+    billing.verbuche(user_id, "chatbot", aktion="alt_text_aenderung_chatbot", image_id=image_id)
     return {"ok": True, "result": result}
 
 
