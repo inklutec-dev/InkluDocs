@@ -112,7 +112,10 @@
     const allLink = document.createElement('a');
     allLink.href = '/projekte';
     allLink.textContent = 'Alle Projekte anzeigen';
-    allLink.style.color = '#c75000';
+    // AA-Kontrast (31.07.2026): #c75000 erreicht 4,59:1 auf WEISS, auf der
+    // grauen Karte (#f5f7fa) aber nur 4,28:1 — unter der AA-Schwelle. Dieser
+    // Link braucht deshalb das dunklere Orange (5,1:1). axe-Befund vom 31.07.
+    allLink.style.color = '#b34700';
     allLink.style.fontWeight = '600';
     all.appendChild(allLink);
     cont.appendChild(all);
