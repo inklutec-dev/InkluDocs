@@ -1400,7 +1400,7 @@ async def set_context_setting(project_id: int, request: Request, user: dict = De
     return {"ok": True, "use_context": bool(use_ctx)}
 
 
-ALT_TEXT_LANGUAGES = ("de", "en", "da", "fr", "es")
+ALT_TEXT_LANGUAGES = ("de", "en", "da", "fr", "es", "sv")
 
 
 # ── Konto-Mails in Empfaengersprache (03.07.2026) ──────────────────────────

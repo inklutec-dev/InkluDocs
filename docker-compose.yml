@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260717b
+    image: inkludocs:v4-20260717b-svfix
     container_name: inkludocs
     restart: unless-stopped
     ports:
