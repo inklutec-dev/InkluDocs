@@ -632,9 +632,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                             <label for="altLangSelect" style="font-weight:600;">${t('Sprache der Alt-Texte')}</label>
-                            <select id="altLangSelect" onchange="setAltLanguage(${project.id}, this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
+                            <select id="altLangSelect" onchange="setAltLanguage(${project.id}, this.value)" data-confirmed="${project.alt_language || 'de'}" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">
                                 ${['de','en','da','fr','es','sv'].map(code => '<option value="' + code + '"' + ((project.alt_language || 'de') === code ? ' selected' : '') + '>' + ({de:'Deutsch',en:'English',da:'Dansk',fr:'Français',es:'Español',sv:'Svenska'})[code] + '</option>').join('')}
                             </select>
+                            <span id="altLangStatus" style="font-size:0.9rem;"></span>
                         </div>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
@@ -1480,6 +1481,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Ausgabesprache der Alt-Texte (03.07.2026): lebende Projekt-Einstellung wie
     // der KI-Kontext-Schalter — gilt fuer alles, was ab jetzt generiert wird.
     async function setAltLanguage(projectId, lang) {
+        const sel = document.getElementById('altLangSelect');
+        const statusEl = document.getElementById('altLangStatus');
+        const prev = (sel && sel.dataset.confirmed) || 'de';
+        // Sichtbare Statuszeile (03.08.2026): Fehler waren bisher nur hörbar
+        // (Live-Region) — Sehende sahen ein Menü, das auf dem abgelehnten Wert
+        // stehen blieb. Kein aria-live hier, announce() bleibt die einzige Ansage.
+        const zeigeStatus = (msg, fehler) => {
+            if (!statusEl) return;
+            statusEl.textContent = msg;
+            statusEl.style.color = fehler ? '#b3261e' : 'inherit';
+            statusEl.style.fontWeight = fehler ? '600' : 'normal';
+        };
         try {
             const res = await fetch('/api/projects/' + projectId + '/language-setting', {
                 method: 'POST',
@@ -1487,11 +1500,23 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 credentials: 'same-origin',
                 body: JSON.stringify({ language: lang })
             });
-            if (!res.ok) { announce(t('Umstellen der Alt-Text-Sprache fehlgeschlagen.')); return; }
+            if (!res.ok) {
+                if (sel) sel.value = prev;
+                const msg = t('Umstellen der Alt-Text-Sprache fehlgeschlagen.');
+                zeigeStatus(msg, true);
+                announce(msg);
+                return;
+            }
+            if (sel) sel.dataset.confirmed = lang;
             const names = { de: 'Deutsch', en: 'English', da: 'Dansk', fr: 'Français', es: 'Español', sv: 'Svenska' };
-            announce(t('Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird.', { s: names[lang] || lang }));
+            const msg = t('Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird.', { s: names[lang] || lang });
+            zeigeStatus(msg, false);
+            announce(msg);
         } catch (e) {
-            announce(t('Netzwerkfehler beim Umstellen der Sprache.'));
+            if (sel) sel.value = prev;
+            const msg = t('Netzwerkfehler beim Umstellen der Sprache.');
+            zeigeStatus(msg, true);
+            announce(msg);
         }
     }
 
