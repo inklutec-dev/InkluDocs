@@ -2665,3 +2665,43 @@ msgstr "Supprimer la clé API ?"
 
 msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
 msgstr "La clé « {name} » sera supprimée immédiatement et deviendra définitivement invalide. Les applications qui l’utilisent perdront l’accès sur-le-champ."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenzschlüssel"
+msgstr "Clé de licence"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen."
+msgstr "Votre entreprise dispose d'une clé de licence ? Activez-la ici pour utiliser le pot de crédits commun."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Aktivieren"
+msgstr "Activer"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei."
+msgstr "Les membres rejoignent avec la clé de licence de votre entreprise."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz"
+msgstr "Licence d'entreprise"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz für {domain} — gültig bis {datum}."
+msgstr "Licence d'entreprise pour {domain} — valable jusqu'au {datum}."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Euer Lizenzschlüssel: {key}"
+msgstr "Votre clé de licence : {key}"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei."
+msgstr "Transmettez la clé aux collègues disposant d'une adresse {domain}. Chaque activation rejoint le pot de crédits commun."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs."
+msgstr "Licence activée — votre compte est désormais titulaire du pot de crédits de l'entreprise."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
+msgstr "Adhésion confirmée — vous utilisez maintenant le pot de crédits commun de votre entreprise."

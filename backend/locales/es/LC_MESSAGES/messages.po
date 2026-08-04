@@ -2665,3 +2665,43 @@ msgstr "¿Eliminar la clave API?"
 
 msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
 msgstr "La clave «{name}» se eliminará de inmediato y quedará permanentemente inválida. Las aplicaciones que la usen perderán el acceso al instante."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenzschlüssel"
+msgstr "Clave de licencia"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen."
+msgstr "¿Tu empresa tiene una clave de licencia? Actívala aquí para usar el fondo de créditos compartido."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Aktivieren"
+msgstr "Activar"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei."
+msgstr "Los miembros se unen con la clave de licencia de vuestra empresa."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz"
+msgstr "Licencia de empresa"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz für {domain} — gültig bis {datum}."
+msgstr "Licencia de empresa para {domain} — válida hasta el {datum}."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Euer Lizenzschlüssel: {key}"
+msgstr "Vuestra clave de licencia: {key}"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei."
+msgstr "Comparte la clave con compañeros que tengan una dirección {domain}. Cada activación se une al fondo de créditos compartido."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs."
+msgstr "Licencia activada — tu cuenta es ahora titular del fondo de créditos de la empresa."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
+msgstr "Incorporación confirmada — ahora usas el fondo de créditos compartido de tu empresa."

@@ -2356,3 +2356,43 @@ msgstr "Slet API-nøgle?"
 
 msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
 msgstr "Nøglen „{name}“ slettes med det samme og bliver permanent ugyldig. Programmer, der bruger den, mister adgangen med det samme."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenzschlüssel"
+msgstr "Licensnøgle"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen."
+msgstr "Har din virksomhed en licensnøgle? Aktivér den her for at bruge den fælles kreditpulje."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Aktivieren"
+msgstr "Aktivér"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei."
+msgstr "Medlemmer tilslutter sig med jeres virksomheds licensnøgle."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz"
+msgstr "Virksomhedslicens"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz für {domain} — gültig bis {datum}."
+msgstr "Virksomhedslicens for {domain} — gyldig til {datum}."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Euer Lizenzschlüssel: {key}"
+msgstr "Jeres licensnøgle: {key}"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei."
+msgstr "Giv nøglen videre til kolleger med en {domain}-adresse. Hver aktivering tilslutter sig den fælles kreditpulje."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs."
+msgstr "Licens aktiveret — din konto er nu indehaver af virksomhedens kreditpulje."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
+msgstr "Tilslutning bekræftet — du bruger nu din virksomheds fælles kreditpulje."

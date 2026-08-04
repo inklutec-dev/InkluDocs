@@ -2665,3 +2665,43 @@ msgstr "Delete API key?"
 
 msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
 msgstr "The key “{name}” will be deleted immediately and becomes permanently invalid. Applications that use it will lose access at once."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenzschlüssel"
+msgstr "License key"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen."
+msgstr "Does your company have a license key? Activate it here to use the shared credit pool."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Aktivieren"
+msgstr "Activate"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei."
+msgstr "Members join with your company's license key."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz"
+msgstr "Company license"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz für {domain} — gültig bis {datum}."
+msgstr "Company license for {domain} — valid until {datum}."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Euer Lizenzschlüssel: {key}"
+msgstr "Your license key: {key}"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei."
+msgstr "Share the key with colleagues who have a {domain} address. Each activation joins the shared credit pool."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs."
+msgstr "License activated — your account now owns the company credit pool."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
+msgstr "Joined — you now use your company's shared credit pool."

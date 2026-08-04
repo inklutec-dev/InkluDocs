@@ -2668,3 +2668,43 @@ msgstr "API-Schlüssel löschen?"
 
 msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
 msgstr "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenzschlüssel"
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen."
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Aktivieren"
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei."
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz"
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz für {domain} — gültig bis {datum}."
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Euer Lizenzschlüssel: {key}"
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei."
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs."
+msgstr ""
+
+#: Lizenzschluessel 04.08.2026
+msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
+msgstr ""

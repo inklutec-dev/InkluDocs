@@ -6,6 +6,7 @@ import csv
 import asyncio
 import html  # Review-Befund 7 (31.07.2026): Nutzereingaben in Mail-HTML escapen
 import secrets
+import sqlite3  # Lizenzschluessel: IntegrityError beim Neu-Wuerfeln abfangen
 import time
 import io
 from collections import defaultdict
@@ -590,6 +591,31 @@ async def me(user: dict = Depends(get_current_user)):
     _verfuegbar = abo_info.get("verfuegbar_monat")
     _verbraucht = abo_info.get("verbraucht", 0)
 
+    # Lizenzschluessel-Modell (04.08.2026): Konten im Lizenz-Topf bekommen die
+    # Lizenz-Eckdaten mitgeliefert. Den SCHLUESSEL selbst sieht nur der
+    # Inhaber (er gibt ihn im Unternehmen weiter); Mitglieder sehen Domain
+    # und Laufzeit.
+    lizenz_info = None
+    if abo_info.get("plan") == "lizenz":
+        _konto_id = abo_owner_id or db_user["id"]
+        conn = get_db()
+        try:
+            _lk = conn.execute(
+                "SELECT schluessel, domain, gueltig_bis, inhaber_user_id "
+                "FROM lizenzschluessel WHERE inhaber_user_id = ? AND status = 'aktiv' "
+                "ORDER BY aktiviert_am DESC LIMIT 1",
+                (_konto_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+        if _lk:
+            lizenz_info = {
+                "domain": _lk["domain"],
+                "gueltig_bis": (_lk["gueltig_bis"] or "")[:10],
+                "schluessel": (_lk["schluessel"]
+                               if _lk["inhaber_user_id"] == db_user["id"] else None),
+            }
+
     return {
         "ok": True,
         "user": {
@@ -617,6 +643,7 @@ async def me(user: dict = Depends(get_current_user)):
             "rest": None if _verfuegbar is None else max(0, _verfuegbar - _verbraucht),
             "pakete_rest": abo_info.get("pakete_rest", 0),
             "zeitraum_ende": abo_info.get("zeitraum_ende"),
+            "lizenz": lizenz_info,
             "enforcement": billing.ABO_ENFORCEMENT,
             # Betreiber-Konten (Admins) werden gezaehlt, aber nie gesperrt.
             # Ohne dieses Kennzeichen zeigte die Oberflaeche ihnen ein
@@ -993,17 +1020,22 @@ async def admin_revoke_admin(user_id: int, user: dict = Depends(require_full_adm
 # Kontingent des zahlenden Inhabers. Verwalten darf NUR der Inhaber selbst —
 # also ein Konto mit plan='team', das nicht seinerseits Mitglied ist.
 
-def _require_team_inhaber(user: dict) -> dict:
-    """Liefert den frischen DB-Datensatz des Team-Inhabers oder wirft 403.
+def _require_team_inhaber(user: dict, erlaubte_plaene=("team",)) -> dict:
+    """Liefert den frischen DB-Datensatz des Topf-Inhabers oder wirft 403.
 
     Frisch aus der DB (nicht aus dem Token), damit ein Plan-Wechsel oder
     eine Team-Umhaengung sofort greift — gleiches Prinzip wie
-    require_full_admin.
+    require_full_admin. Seit dem Lizenzschluessel-Modell (04.08.2026) gibt es
+    ZWEI Topf-Inhaber-Arten: 'team' (Alt-Modell, Einladungs-Fluss) und
+    'lizenz' (Beitritt NUR ueber den Schluessel). Der Plan wird ueber
+    billing.effektiver_plan gelesen — ein abgelaufener Plan verliert damit
+    auch die Verwaltungs-Rechte (Auto-Rueckfall, Punkt 8).
     """
     db_user = get_user_by_id(user["id"])
-    if not db_user or db_user.get("plan") != "team" or db_user.get("abo_owner_id"):
+    if (not db_user or billing.effektiver_plan(db_user) not in erlaubte_plaene
+            or db_user.get("abo_owner_id")):
         raise HTTPException(status_code=403,
-                            detail="Nur fuer Team-Inhaber (Plan 'team') verfuegbar")
+                            detail="Nur fuer Inhaber eines Team- oder Lizenz-Kontos verfuegbar")
     return db_user
 
 
@@ -1025,8 +1057,8 @@ def _team_sitze_belegt(inhaber_id: int) -> int:
 
 @app.get("/api/team")
 async def team_uebersicht(user: dict = Depends(get_current_user)):
-    """Team-Uebersicht fuer den Inhaber: Mitglieder + gemeinsamer Topf."""
-    inhaber = _require_team_inhaber(user)
+    """Topf-Uebersicht fuer den Inhaber (Team- ODER Lizenz-Konto)."""
+    inhaber = _require_team_inhaber(user, erlaubte_plaene=("team", "lizenz"))
     abo_info = billing.pruefe_kontingent(inhaber["id"])
     conn = get_db()
     try:
@@ -1060,7 +1092,10 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
         "pakete_rest": abo_info.get("pakete_rest", 0),
         "zeitraum_ende": abo_info.get("zeitraum_ende"),
         "sitze_belegt": len(mitglieder),
-        "sitze_inklusive": billing.TEAM_SITZE_INKLUSIVE,
+        # Lizenz-Toepfe haben KEINEN Sitz-Deckel (beliebig viele Nutzer,
+        # Michaels Modell); der Deckel gilt nur fuer den alten Team-Plan.
+        "sitze_inklusive": (billing.TEAM_SITZE_INKLUSIVE
+                            if billing.effektiver_plan(inhaber) == "team" else None),
     }
 
 
@@ -1262,10 +1297,10 @@ async def team_einladung_annehmen(token: str, request: Request):
 
 @app.delete("/api/team/mitglied/{mitglied_id}")
 async def team_mitglied_entfernen(mitglied_id: int, user: dict = Depends(get_current_user)):
-    """Mitglied aus dem eigenen Team loesen (Konto bleibt bestehen, faellt
-    auf seinen eigenen Plan zurueck; bisherige Verbraeuche bleiben als
-    Protokoll auf dem Team-Konto)."""
-    inhaber = _require_team_inhaber(user)
+    """Mitglied aus dem eigenen Topf loesen (Team ODER Lizenz; Konto bleibt
+    bestehen, faellt auf seinen eigenen Plan zurueck; bisherige Verbraeuche
+    bleiben als Protokoll auf dem Topf-Konto)."""
+    inhaber = _require_team_inhaber(user, erlaubte_plaene=("team", "lizenz"))
     ziel = get_user_by_id(mitglied_id)
     if not ziel or ziel.get("abo_owner_id") != inhaber["id"]:
         raise HTTPException(status_code=404, detail="Kein Mitglied deines Teams")
@@ -1276,6 +1311,201 @@ async def team_mitglied_entfernen(mitglied_id: int, user: dict = Depends(get_cur
     finally:
         conn.close()
     return {"ok": True, "message": f"{ziel['display_name']} wurde aus dem Team entfernt"}
+
+
+# ─── Lizenzschluessel (04.08.2026, Michaels Modell) ──────────
+# EIN Schluessel pro Unternehmen, domain-gebunden, beliebig viele Nutzer:
+# Der ERSTE Aktivierer wird Topf-Inhaber (plan='lizenz', 50 Credits/Monat),
+# jeder weitere Aktivierer mit passender E-Mail-Domain tritt dem Firmen-Topf
+# bei (users.abo_owner_id). Erzeugung durch Voll-Admins = zugleich Michaels
+# Rechnungsweg (Kauf auf Rechnung ueber Actino), bis Stripe kommt.
+
+@app.post("/api/abo/lizenz")
+async def lizenz_aktivieren(request: Request, user: dict = Depends(get_current_user)):
+    """Lizenzschluessel aktivieren (Erst-Aktivierung ODER Topf-Beitritt)."""
+    data = await request.json()
+    eingabe = (data.get("schluessel") or "").strip().upper()
+    if not eingabe:
+        raise HTTPException(status_code=400, detail="Bitte einen Lizenzschluessel eingeben")
+    db_user = get_user_by_id(user["id"])
+    if not db_user:
+        raise HTTPException(status_code=401, detail="User nicht gefunden")
+    nutzer_domain = (db_user.get("email") or "").rsplit("@", 1)[-1].strip().lower()
+
+    conn = get_db()
+    try:
+        # Erst-Aktivierung und Beitritt atomar (BEGIN IMMEDIATE): zwei
+        # gleichzeitige Erst-Aktivierer desselben Schluessels duerfen nicht
+        # beide Inhaber werden.
+        conn.isolation_level = None
+        conn.execute("BEGIN IMMEDIATE")
+        key = conn.execute(
+            "SELECT * FROM lizenzschluessel WHERE schluessel = ?", (eingabe,)
+        ).fetchone()
+        # Ungueltig und gesperrt antworten IDENTISCH — kein Orakel, mit dem
+        # sich gueltige Schluessel durchprobieren lassen.
+        if not key or key["status"] == "gesperrt":
+            conn.execute("ROLLBACK")
+            raise HTTPException(status_code=404, detail="Dieser Lizenzschluessel ist ungueltig")
+        if key["gueltig_bis"] and billing.plan_ist_abgelaufen(key["gueltig_bis"]):
+            conn.execute("ROLLBACK")
+            raise HTTPException(status_code=400,
+                                detail="Diese Lizenz ist abgelaufen. Zum Verlaengern bitte an support@inklutec.de wenden")
+        if key["domain"] and key["domain"] != nutzer_domain:
+            conn.execute("ROLLBACK")
+            raise HTTPException(status_code=403,
+                                detail="Dieser Lizenzschluessel gehoert zu einem anderen Unternehmen. "
+                                       "Aktivieren koennen ihn nur Konten mit passender Firmen-E-Mail-Adresse")
+        # Eigene Konflikte des Aktivierers:
+        eigener_plan = billing.effektiver_plan(db_user)
+        ist_topf_inhaber = eigener_plan in ("team", "lizenz") and not db_user.get("abo_owner_id")
+        if ist_topf_inhaber and key["inhaber_user_id"] != db_user["id"]:
+            conn.execute("ROLLBACK")
+            raise HTTPException(status_code=400,
+                                detail="Dein Konto ist bereits Inhaber eines eigenen Credit-Topfs. "
+                                       "Bitte zuerst das bestehende Team/die Lizenz aufloesen (support@inklutec.de)")
+        if db_user.get("abo_owner_id") and db_user["abo_owner_id"] != key["inhaber_user_id"]:
+            conn.execute("ROLLBACK")
+            raise HTTPException(status_code=400,
+                                detail="Dein Konto ist bereits Mitglied eines anderen Credit-Topfs")
+
+        if key["inhaber_user_id"] is None:
+            # Erst-Aktivierung: Aktivierer wird Inhaber, Schluessel wird aktiv.
+            domain = key["domain"]
+            if not domain:
+                # Schluessel ohne vorgegebene Domain bindet sich jetzt an die
+                # Domain des Aktivierers — Freemail ist dabei tabu (Schluessel
+                # gehoeren Unternehmen; sonst waere die Bindung wirkungslos).
+                if billing.ist_freemail_domain(nutzer_domain) or "." not in nutzer_domain:
+                    conn.execute("ROLLBACK")
+                    raise HTTPException(status_code=400,
+                                        detail="Dieser Schluessel muss mit einer Firmen-E-Mail-Adresse aktiviert "
+                                               "werden (keine Freemail-Adresse). Bitte an support@inklutec.de wenden")
+                domain = nutzer_domain
+            laufzeit = int(key["laufzeit_monate"] or 6)
+            gueltig_bis = conn.execute(
+                "SELECT datetime('now', ?)", (f"+{laufzeit} months",)
+            ).fetchone()[0]
+            conn.execute(
+                "UPDATE lizenzschluessel SET inhaber_user_id = ?, domain = ?, status = 'aktiv', "
+                "aktiviert_am = datetime('now'), gueltig_bis = ? WHERE id = ?",
+                (db_user["id"], domain, gueltig_bis, key["id"]))
+            conn.execute(
+                "UPDATE users SET plan = 'lizenz', plan_gueltig_bis = ?, abo_owner_id = NULL "
+                "WHERE id = ?",
+                (gueltig_bis, db_user["id"]))
+            conn.execute("COMMIT")
+            return {"ok": True, "rolle": "inhaber", "domain": domain,
+                    "gueltig_bis": gueltig_bis[:10],
+                    "message": f"Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs ({domain})"}
+
+        # Schluessel ist schon aktiv: Beitritt zum bestehenden Firmen-Topf.
+        if key["inhaber_user_id"] == db_user["id"]:
+            conn.execute("ROLLBACK")
+            return {"ok": True, "rolle": "inhaber", "domain": key["domain"],
+                    "gueltig_bis": (key["gueltig_bis"] or "")[:10],
+                    "message": "Diese Lizenz ist auf deinem Konto bereits aktiv"}
+        if db_user.get("abo_owner_id") == key["inhaber_user_id"]:
+            conn.execute("ROLLBACK")
+            return {"ok": True, "rolle": "mitglied", "domain": key["domain"],
+                    "gueltig_bis": (key["gueltig_bis"] or "")[:10],
+                    "message": "Du bist bereits Mitglied dieses Firmen-Topfs"}
+        conn.execute("UPDATE users SET abo_owner_id = ? WHERE id = ?",
+                     (key["inhaber_user_id"], db_user["id"]))
+        conn.execute("COMMIT")
+        return {"ok": True, "rolle": "mitglied", "domain": key["domain"],
+                "gueltig_bis": (key["gueltig_bis"] or "")[:10],
+                "message": "Beitritt bestaetigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens"}
+    except HTTPException:
+        raise
+    except Exception:
+        try:
+            conn.execute("ROLLBACK")
+        except Exception:
+            pass
+        raise
+    finally:
+        conn.close()
+
+
+@app.post("/api/admin/lizenzen")
+async def admin_lizenz_erzeugen(request: Request, user: dict = Depends(require_full_admin)):
+    """Admin: neue Lizenzschluessel erzeugen (Rechnungsweg, bis Stripe kommt).
+
+    domain optional: leer = der Schluessel bindet sich bei der Erst-
+    Aktivierung an die Firmen-Domain des Aktivierers. monats_credits ist
+    bewusst NICHT waehlbar — das Kontingent kommt einheitlich aus
+    billing.PLAN_KONTINGENTE['lizenz'] (eine Wahrheit, keine Drift).
+    """
+    data = await request.json()
+    domain = (data.get("domain") or "").strip().lower().lstrip("@") or None
+    if domain and ("@" in domain or " " in domain or "." not in domain):
+        raise HTTPException(status_code=400, detail="Ungueltige Domain (erwartet z. B. firma.de)")
+    if domain and billing.ist_freemail_domain(domain):
+        raise HTTPException(status_code=400,
+                            detail="Freemail-Domains koennen keine Lizenz-Domain sein — Schluessel gehoeren Unternehmen")
+    try:
+        laufzeit = int(data.get("laufzeit_monate") or 6)
+        anzahl = int(data.get("anzahl") or 1)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="laufzeit_monate und anzahl muessen Zahlen sein")
+    if not 1 <= laufzeit <= 60:
+        raise HTTPException(status_code=400, detail="laufzeit_monate muss zwischen 1 und 60 liegen")
+    if not 1 <= anzahl <= 50:
+        raise HTTPException(status_code=400, detail="anzahl muss zwischen 1 und 50 liegen")
+    notiz = (data.get("notiz") or "").strip()[:500]
+    schluessel = []
+    conn = get_db()
+    try:
+        for _ in range(anzahl):
+            # Kollisionen sind bei 31^12 Kombinationen praktisch ausgeschlossen,
+            # der UNIQUE-Index faengt den Rest — dann einfach neu wuerfeln.
+            for _versuch in range(5):
+                kandidat = billing.neuer_lizenzschluessel_string()
+                try:
+                    conn.execute(
+                        "INSERT INTO lizenzschluessel (schluessel, domain, laufzeit_monate, notiz, erstellt_von) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (kandidat, domain, laufzeit, notiz, user["id"]))
+                    schluessel.append(kandidat)
+                    break
+                except sqlite3.IntegrityError:
+                    continue
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "schluessel": schluessel, "domain": domain,
+            "laufzeit_monate": laufzeit,
+            "message": f"{len(schluessel)} Lizenzschluessel erzeugt"}
+
+
+@app.get("/api/admin/lizenzen")
+async def admin_lizenz_liste(user: dict = Depends(require_admin)):
+    """Admin: alle Lizenzschluessel mit Status, Inhaber, Nutzerzahl, Verbrauch."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT l.id, l.schluessel, l.domain, l.status, l.laufzeit_monate, "
+            "l.gueltig_bis, l.notiz, l.created_at, l.aktiviert_am, "
+            "u.email AS inhaber_email, u.display_name AS inhaber_name, "
+            "CASE WHEN l.inhaber_user_id IS NULL THEN 0 ELSE "
+            "  1 + (SELECT COUNT(*) FROM users m WHERE m.abo_owner_id = l.inhaber_user_id) "
+            "END AS nutzer, "
+            "COALESCE((SELECT SUM(e.credits) FROM usage_events e "
+            "  WHERE e.konto_user_id = l.inhaber_user_id "
+            "  AND e.created_at >= date('now', 'start of month')), 0) AS verbrauch_monat "
+            "FROM lizenzschluessel l "
+            "LEFT JOIN users u ON u.id = l.inhaber_user_id "
+            "ORDER BY l.created_at DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+    lizenzen = []
+    for r in rows:
+        d = dict(r)
+        d["abgelaufen"] = billing.plan_ist_abgelaufen(d.get("gueltig_bis"))
+        lizenzen.append(d)
+    return {"ok": True, "lizenzen": lizenzen}
 
 
 # ─── API Key Management ─────────────────────────────────────

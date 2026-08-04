@@ -2226,3 +2226,43 @@ msgstr "Ta bort API-nyckel?"
 
 msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
 msgstr "Nyckeln ”{name}” tas bort omedelbart och blir permanent ogiltig. Program som använder den förlorar åtkomsten direkt."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenzschlüssel"
+msgstr "Licensnyckel"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen."
+msgstr "Har ditt företag en licensnyckel? Aktivera den här för att använda den gemensamma kreditpotten."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Aktivieren"
+msgstr "Aktivera"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei."
+msgstr "Medlemmar ansluter med ert företags licensnyckel."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz"
+msgstr "Företagslicens"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Firmenlizenz für {domain} — gültig bis {datum}."
+msgstr "Företagslicens för {domain} — giltig till {datum}."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Euer Lizenzschlüssel: {key}"
+msgstr "Er licensnyckel: {key}"
+
+#: Lizenzschluessel 04.08.2026
+msgid "Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei."
+msgstr "Ge nyckeln vidare till kollegor med en {domain}-adress. Varje aktivering ansluter till den gemensamma kreditpotten."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs."
+msgstr "Licensen är aktiverad — ditt konto är nu innehavare av företagets kreditpott."
+
+#: Lizenzschluessel 04.08.2026
+msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
+msgstr "Anslutningen är bekräftad — du använder nu ditt företags gemensamma kreditpott."

@@ -319,6 +319,35 @@ def init_db():
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_paket_abbuchungen_konto_monat ON paket_abbuchungen(konto_user_id, created_at)")
 
+    # Lizenzschluessel (04.08.2026, Michaels Modell — Mail 03.08., bestaetigt):
+    # EIN Schluessel pro Unternehmen statt Pro/Team/Enterprise. Der Schluessel
+    # ist an die E-Mail-Domain der Firma gebunden (Missbrauchs-Schutz, Steves
+    # Nachschaerfung 3); der ERSTE Aktivierer wird Topf-Inhaber (plan='lizenz'),
+    # jeder weitere Aktivierer mit passender Domain haengt sich per
+    # users.abo_owner_id in denselben Firmen-Topf — beliebig viele Nutzer.
+    # domain NULL = bindet sich bei der Erst-Aktivierung an die Domain des
+    # Aktivierers (Freemail-Domains werden dabei abgelehnt).
+    # status: 'neu' (erzeugt, noch nie aktiviert) | 'aktiv' | 'gesperrt'.
+    # Erzeugt werden Schluessel von Voll-Admins — das ist zugleich Michaels
+    # Rechnungsweg (Kauf auf Rechnung ueber Actino, Mail 03.08.).
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS lizenzschluessel (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            schluessel TEXT UNIQUE NOT NULL,
+            domain TEXT,
+            inhaber_user_id INTEGER,
+            monats_credits INTEGER NOT NULL DEFAULT 50,
+            laufzeit_monate INTEGER NOT NULL DEFAULT 6,
+            gueltig_bis TEXT,
+            status TEXT NOT NULL DEFAULT 'neu',
+            notiz TEXT DEFAULT '',
+            erstellt_von INTEGER,
+            created_at TEXT DEFAULT (datetime('now')),
+            aktiviert_am TEXT
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_lizenzschluessel_key ON lizenzschluessel(schluessel)")
+
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 

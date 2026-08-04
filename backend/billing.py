@@ -36,6 +36,7 @@ Grundregeln (Steve/Michael 31.07.2026):
 import calendar
 import logging
 import os
+import secrets
 from datetime import datetime, timezone
 
 from database import get_db
@@ -64,6 +65,12 @@ PLAN_KONTINGENTE = {
     "pro": 150,
     "team": 500,
     "enterprise": None,
+    # Lizenzschluessel-Modell (Michael, bestaetigt 03.08.2026): EIN Schluessel
+    # pro Unternehmen, 9,95 EUR/Monat inkl. 50 Credits, beliebig viele Nutzer
+    # im Firmen-Topf, 6 Monate Mindestlaufzeit. Loest Pro/Team/Enterprise als
+    # VERKAUFTES Modell ab — die alten Plaene bleiben technisch bestehen
+    # (Bestandsdaten, spaetere Team-Stufe).
+    "lizenz": 50,
 }
 
 GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot")
@@ -72,6 +79,39 @@ GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot")
 # Mehr Sitze gibt es erst mit der Online-Zahlung (Etappe 3, Sitz-Zukauf) —
 # bis dahin lehnt /api/team/einladen darueber hinaus ehrlich mit 400 ab.
 TEAM_SITZE_INKLUSIVE = 5
+
+
+def plan_ist_abgelaufen(plan_gueltig_bis) -> bool:
+    """Auto-Rueckfall auf Free (Michaels Punkt 8, 03.08.2026), LAZY ausgewertet.
+
+    Kein Cronjob, kein UPDATE: ueberall, wo der Plan eines Kontos gelesen
+    wird, gilt ein abgelaufener Bezahl-Plan als 'free'. users.plan bleibt
+    unveraendert stehen (Beleg + einfache Reaktivierung bei Verlaengerung).
+    Regel: gueltig BIS EINSCHLIESSLICH des gespeicherten Tages (ISO-Datum
+    oder -Zeitstempel, UTC); leerer Wert = unbefristet.
+    """
+    if not plan_gueltig_bis:
+        return False
+    try:
+        return str(plan_gueltig_bis)[:10] < datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    except Exception:
+        return False
+
+
+def effektiver_plan(row) -> str:
+    """Plan einer users-Zeile nach Ablauf-Pruefung (sqlite3.Row oder dict)."""
+    try:
+        plan = row["plan"]
+    except (KeyError, IndexError):
+        plan = None
+    plan = plan if plan in PLAN_KONTINGENTE else "free"
+    try:
+        gueltig_bis = row["plan_gueltig_bis"]
+    except (KeyError, IndexError):
+        gueltig_bis = None
+    if plan != "free" and plan_ist_abgelaufen(gueltig_bis):
+        return "free"
+    return plan
 
 
 def _konto_fuer(user_id: int):
@@ -242,7 +282,8 @@ def pruefe_kontingent(user_id: int) -> dict:
         conn = get_db()
         try:
             row = conn.execute(
-                "SELECT COALESCE(plan, 'free') AS plan, is_admin FROM users WHERE id = ?",
+                "SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis, is_admin "
+                "FROM users WHERE id = ?",
                 (konto_id,),
             ).fetchone()
         finally:
@@ -270,7 +311,8 @@ def pruefe_kontingent(user_id: int) -> dict:
                 conn.close()
             if row is None:
                 return ergebnis
-        plan = row["plan"] if row["plan"] in PLAN_KONTINGENTE else "free"
+        # Auto-Rueckfall (Punkt 8): abgelaufener Bezahl-Plan zaehlt als Free.
+        plan = effektiver_plan(row)
         kontingent = PLAN_KONTINGENTE[plan]
         verbraucht = monats_verbrauch(konto_id)
         uebertrag = _uebertrag(konto_id, plan, kontingent)
@@ -377,12 +419,12 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
     hier darf nichts halb committen.
     """
     row = conn.execute(
-        "SELECT COALESCE(plan, 'free') AS plan FROM users WHERE id = ?",
+        "SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis FROM users WHERE id = ?",
         (konto_id,),
     ).fetchone()
     if row is None:
         return
-    plan = row["plan"] if row["plan"] in PLAN_KONTINGENTE else "free"
+    plan = effektiver_plan(row)
     kontingent = PLAN_KONTINGENTE[plan]
     if kontingent is None:
         return
@@ -424,6 +466,40 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
         # Rest nach, sobald wieder Pakete da sind.
         log.info("_pakete_abbuchen: %s Credits Ueberhang ohne Paket-Deckung (konto=%s)",
                  abzug_gesamt, konto_id)
+
+
+# ---------------------------------------------------------------------------
+# Lizenzschluessel (Michaels Modell, bestaetigt 03.08.2026)
+# ---------------------------------------------------------------------------
+
+# Freemail-/Wegwerf-Domains duerfen KEINE Schluessel-Domain werden: der
+# Schluessel gehoert einem UNTERNEHMEN, und die Domain-Bindung waere bei
+# gmail.com & Co. wirkungslos (jeder Gmail-Nutzer koennte beitreten).
+# Dieselbe Liste dient in Umbau-Punkt 2 als Basis fuer die Free-Domain-
+# Buendelung (dort umgekehrt: Freemailer werden NICHT gebuendelt).
+FREEMAIL_DOMAINS = frozenset({
+    "gmail.com", "googlemail.com", "web.de", "gmx.de", "gmx.net", "gmx.at",
+    "gmx.ch", "yahoo.com", "yahoo.de", "outlook.com", "outlook.de",
+    "hotmail.com", "hotmail.de", "live.com", "live.de", "icloud.com",
+    "me.com", "t-online.de", "aol.com", "mail.de", "mail.com", "freenet.de",
+    "posteo.de", "protonmail.com", "proton.me", "tutanota.com", "tuta.io",
+    "arcor.de", "online.de", "email.de", "1und1.de", "magenta.de",
+})
+
+# Zeichenvorrat ohne verwechselbare Zeichen (0/O, 1/I/L) — Schluessel werden
+# am Telefon durchgegeben und von Screenreadern vorgelesen.
+_KEY_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
+def neuer_lizenzschluessel_string() -> str:
+    """Erzeugt einen neuen Schluessel im Format IDOC-XXXX-XXXX-XXXX."""
+    gruppen = ["".join(secrets.choice(_KEY_ALPHABET) for _ in range(4))
+               for _ in range(3)]
+    return "IDOC-" + "-".join(gruppen)
+
+
+def ist_freemail_domain(domain: str) -> bool:
+    return (domain or "").strip().lower() in FREEMAIL_DOMAINS
 
 
 def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "admin") -> int:

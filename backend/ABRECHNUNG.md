@@ -170,3 +170,53 @@ Sitz-Zukauf, Paket-Kauf (quota_pakete quelle='stripe'), Auswertung
 plan_gueltig_bis, Credits-Geschenk-Oberflaeche.
 Etappe 4: maschinenlesbare API-Fehlercodes, api_results-Retention, PayPal-Rueckbau
 (dashboard.js:171, demo-shell.js:96, nutzungsbedingungen.html), Preisseite.
+
+## Lizenzschluessel-Modell (04.08.2026 — Michaels Modell, Mail 03.08. bestaetigt)
+
+Loest Pro/Team/Enterprise als VERKAUFTES Modell ab (die Plaene bleiben
+technisch fuer Bestandsdaten und eine spaetere Team-Stufe bestehen):
+EIN Schluessel pro Unternehmen, 9,95 EUR/Monat inkl. 50 Credits
+(PLAN_KONTINGENTE["lizenz"]), 6 Monate Mindestlaufzeit, beliebig viele Nutzer.
+
+Ablauf:
+- Voll-Admin erzeugt Schluessel: POST /api/admin/lizenzen
+  {domain?, laufzeit_monate=6, anzahl=1, notiz?} -> IDOC-XXXX-XXXX-XXXX
+  (Zeichenvorrat ohne 0/O/1/I/L — telefonier- und vorlesbar). Das ist
+  zugleich der RECHNUNGSWEG (Kauf auf Rechnung ueber Actino): Rechnung
+  bezahlt -> Admin erzeugt Schluessel -> Kunde aktiviert.
+- Aktivierung: POST /api/abo/lizenz {schluessel} auf der /abo-Seite.
+  Der ERSTE Aktivierer wird Topf-Inhaber (plan="lizenz",
+  plan_gueltig_bis = jetzt + laufzeit); jeder WEITERE Aktivierer haengt
+  sich per users.abo_owner_id in den Firmen-Topf (Team-Topf-Technik).
+- Domain-Bindung (Steves Nachschaerfung 3): Schluessel ist an die
+  E-Mail-Domain der Firma gebunden — entweder vom Admin vorgegeben oder
+  bei der Erst-Aktivierung an die Domain des Aktivierers gebunden.
+  Freemail-Domains (billing.FREEMAIL_DOMAINS) werden abgelehnt.
+  Aktivieren koennen nur Konten mit passender Domain (403 sonst;
+  ungueltig und gesperrt antworten identisch 404 — kein Schluessel-Orakel).
+- Auto-Rueckfall (Punkt 8): billing.effektiver_plan wertet
+  plan_gueltig_bis LAZY aus — abgelaufener Bezahl-Plan zaehlt ueberall
+  als "free", ohne Cronjob und ohne UPDATE. users.plan bleibt als Beleg
+  stehen; Verlaengern = plan_gueltig_bis neu setzen.
+- Topf-Verwaltung: /api/team + Mitglied-Entfernen gelten jetzt fuer
+  Inhaber von "team" ODER "lizenz" (lizenz OHNE Sitz-Deckel);
+  /api/team/einladen bleibt team-only — Lizenz-Beitritt laeuft NUR ueber
+  den Schluessel, sonst waere die Domain-Bindung umgehbar.
+- /api/me liefert abo.lizenz {domain, gueltig_bis, schluessel} — den
+  Schluessel selbst sieht nur der Inhaber.
+
+Tabelle lizenzschluessel: schluessel UNIQUE, domain, inhaber_user_id,
+monats_credits (dokumentarisch, Kontingent kommt aus PLAN_KONTINGENTE),
+laufzeit_monate, gueltig_bis, status (neu/aktiv/gesperrt), notiz,
+erstellt_von, aktiviert_am. Migration additiv+idempotent.
+
+Verifikation 04.08.2026: verify_lizenz.py (32 Checks im Container, API +
+billing + Ablauf/Rueckfall), ui_lizenz.py (Playwright-Klicktest Aktivierung),
+axe_abo.py (0 Verstoesse), verify_abo2.py Regression 26/26.
+
+Offen (Folge-Runden laut Umbau-Liste 04.08.): Free 20->10 +
+Domain-Buendelung + Wegwerf-/XFF-Schutz, Wasserzeichen im Free-PDF-Export
+(PDFix-Lizenz-Frage!), Paketpreise (100=20 EUR, 500=87,50, 1000=150,
+verfallen erst bei Kuendigung statt +12 Monate), Stripe-Halbjahresrechnung
+(SEPA+Karte+Apple Pay+PayPal), Tarif-/Preisseite, Admin-Oberflaeche fuer
+Schluessel (bisher nur API), Gruender-Regel (Basisschluessel 3 Monate frei).

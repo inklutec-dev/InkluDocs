@@ -16,15 +16,39 @@
         <p class="dash-meta">{{ _('Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
       </div>
 
-      {# Team-Verwaltung: nur sichtbar fuer den INHABER eines Team-Plans
-         (renderAbo blendet ein). Mitglieder sehen stattdessen die
-         Team-Zeile in der Plan-Anzeige oben. #}
+      {# Lizenzschluessel (04.08.2026, Michaels Modell): EIN Schluessel pro
+         Unternehmen. Der Bereich ist fuer alle sichtbar, deren Konto noch
+         nicht im Lizenz-Topf ist (renderAbo blendet aus); nach einer
+         Aktivierung bleibt er mit der Erfolgsmeldung stehen. #}
+      <section class="dash-card" aria-labelledby="lizenzHeading" id="lizenzBereich">
+        <h2 id="lizenzHeading">{{ _('Lizenzschlüssel') }}</h2>
+        <div id="lizenzFormWrap">
+          <p class="dash-meta">{{ _('Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen.') }}</p>
+          <form id="lizenzForm">
+            <div class="dash-field">
+              <label for="lizenzKey">{{ _('Lizenzschlüssel') }}</label>
+              <input type="text" id="lizenzKey" class="dash-input" required autocomplete="off" spellcheck="false">
+            </div>
+            <button type="submit" class="btn btn-primary">{{ _('Aktivieren') }}</button>
+            <span id="lizenzErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+          </form>
+        </div>
+        {# Erfolg ausserhalb des Formular-Wrappers: das Formular verschwindet
+           nach der Aktivierung, die Meldung bleibt lesbar stehen. #}
+        <span id="lizenzMsg" role="status" aria-live="polite"></span>
+      </section>
+
+      {# Topf-Verwaltung: nur sichtbar fuer den INHABER eines Team- oder
+         Lizenz-Kontos (renderAbo blendet ein). Mitglieder sehen stattdessen
+         die Team-Zeile in der Plan-Anzeige oben. Beim Lizenz-Modell gibt es
+         KEIN Einladen — Beitritt laeuft ueber den Schluessel (Domain-Schutz). #}
       <section class="dash-card" aria-labelledby="teamHeading" id="teamBereich" hidden>
         <h2 id="teamHeading" tabindex="-1">{{ _('Team-Mitglieder') }}</h2>
         <div id="teamList" style="margin-top:.5rem;">
           <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
         </div>
-        <h3 style="margin-top:1rem;">{{ _('Mitglied einladen') }}</h3>
+        <p id="teamJoinHint" class="dash-meta" style="margin-top:1rem;" hidden>{{ _('Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei.') }}</p>
+        <h3 id="teamInviteHeading" style="margin-top:1rem;">{{ _('Mitglied einladen') }}</h3>
         <form id="teamInviteForm">
           <div class="dash-field">
             <label for="inviteEmail">{{ _('E-Mail-Adresse des neuen Mitglieds') }}</label>
@@ -58,7 +82,7 @@
   // auf der Startseite: buildCreditLines() kommt aus dashboard.js (App-Shell).
   // Fehlt der abo-Block von /api/me (Backend noch nicht umgestellt), zeigen
   // wir einen ruhigen Hinweis statt falscher Zahlen.
-  const PLAN_LABELS = { free: 'Free', pro: 'Pro', team: 'Team', enterprise: 'Enterprise' };
+  const PLAN_LABELS = { free: 'Free', pro: 'Pro', team: 'Team', enterprise: 'Enterprise', lizenz: t('Firmenlizenz') };
 
   function renderAbo(abo) {
     const box = byId('aboInfo');
@@ -83,14 +107,42 @@
       pTeam.textContent = t('Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf.', { inhaber: abo.team_inhaber });
       box.appendChild(pTeam);
     }
+    // Firmenlizenz: Eckdaten fuer alle im Topf, den Schluessel selbst sieht
+    // nur der Inhaber (zum Weitergeben im Unternehmen).
+    if (abo.plan === 'lizenz' && abo.lizenz) {
+      const pLiz = document.createElement('p');
+      pLiz.className = 'dash-meta';
+      pLiz.textContent = t('Firmenlizenz für {domain} — gültig bis {datum}.', { domain: abo.lizenz.domain, datum: abo.lizenz.gueltig_bis });
+      box.appendChild(pLiz);
+      if (abo.lizenz.schluessel) {
+        const pKey = document.createElement('p');
+        pKey.textContent = t('Euer Lizenzschlüssel: {key}', { key: abo.lizenz.schluessel });
+        box.appendChild(pKey);
+        const pHint = document.createElement('p');
+        pHint.className = 'dash-meta';
+        pHint.textContent = t('Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei.', { domain: '@' + abo.lizenz.domain });
+        box.appendChild(pHint);
+      }
+    }
     buildCreditLines(abo, true).forEach((zeile) => {
       const p = document.createElement('p');
       p.textContent = zeile;
       box.appendChild(p);
     });
-    // Team-Verwaltung nur fuer den Inhaber eines Team-Plans einblenden.
-    if (abo.plan === 'team' && !abo.ist_team_mitglied) {
+    // Aktivierungs-Bereich ausblenden, sobald das Konto im Lizenz-Topf ist —
+    // ausser eine frische Erfolgsmeldung steht darin (die soll lesbar bleiben).
+    const lizenzBereich = byId('lizenzBereich');
+    if (lizenzBereich) {
+      lizenzBereich.hidden = (abo.plan === 'lizenz' && !byId('lizenzMsg').textContent);
+    }
+    // Topf-Verwaltung nur fuer den Inhaber (Team- oder Lizenz-Konto).
+    if ((abo.plan === 'team' || abo.plan === 'lizenz') && !abo.ist_team_mitglied) {
       byId('teamBereich').hidden = false;
+      // Lizenz: Beitritt NUR ueber den Schluessel — Einladen ausblenden.
+      const istLizenz = (abo.plan === 'lizenz');
+      byId('teamInviteHeading').hidden = istLizenz;
+      byId('teamInviteForm').hidden = istLizenz;
+      byId('teamJoinHint').hidden = !istLizenz;
       loadTeam();
     }
   }
@@ -238,6 +290,41 @@
       // Auch der 400er (z. B. max. 5 Sitze) kommt hier als detail-Text an.
       err.textContent = d.detail || t('Fehler');
     }
+  });
+
+  byId('lizenzForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = byId('lizenzKey');
+    const msg = byId('lizenzMsg');
+    const err = byId('lizenzErr');
+    msg.textContent = ''; err.textContent = '';
+    const schluessel = input.value.trim();
+    if (!schluessel) { input.focus(); return; }
+    let res;
+    try {
+      res = await fetch('/api/abo/lizenz', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ schluessel }),
+      });
+    } catch (e2) {
+      err.textContent = t('Fehler');
+      return;
+    }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      err.textContent = d.detail || t('Fehler');
+      return;
+    }
+    // Formular weg, Erfolgsmeldung bleibt im Bereich stehen (role=status
+    // sagt sie an); danach die Plan-Anzeige oben frisch laden.
+    byId('lizenzFormWrap').hidden = true;
+    msg.textContent = d.rolle === 'inhaber'
+      ? t('Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs.')
+      : t('Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens.');
+    msg.style.color = 'var(--success)';
+    try {
+      const r2 = await fetch('/api/me');
+      renderAbo((await r2.json()).abo || null);
+    } catch (e3) { /* Anzeige aktualisiert sich spaetestens beim naechsten Laden */ }
   });
 
   (async function initAbo() {
