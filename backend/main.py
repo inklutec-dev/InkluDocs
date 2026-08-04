@@ -189,6 +189,14 @@ _register_attempts = defaultdict(list)
 MAX_REGISTRATIONS_PER_WINDOW = 5
 REGISTER_WINDOW_SECONDS = 3600  # 1 Stunde
 
+# Bremse fuers Lizenzschluessel-Raten (Review-Befund 04.08. abends): Der
+# Schluesselraum (31^12) ist praktisch unratbar und der Endpunkt braucht ein
+# Login — die Bremse ist Guertel UND Hosentraeger. Gezaehlt werden nur
+# FEHLGESCHLAGENE Eingaben unbekannter Schluessel, pro Konto.
+_lizenz_attempts = defaultdict(list)
+MAX_LIZENZ_ATTEMPTS = 10
+LIZENZ_WINDOW_SECONDS = 600  # 10 Minuten
+
 # Rate limiting for API (per API key)
 _api_rate_minute = defaultdict(list)  # key_id -> [timestamps]
 _api_rate_day = defaultdict(list)     # key_id -> [timestamps]
@@ -1370,6 +1378,14 @@ async def lizenz_aktivieren(request: Request, user: dict = Depends(get_current_u
         raise HTTPException(status_code=401, detail="User nicht gefunden")
     nutzer_domain = (db_user.get("email") or "").rsplit("@", 1)[-1].strip().lower()
 
+    # Rate-Bremse gegen Schluessel-Raten (nur Fehlversuche zaehlen, s. oben).
+    _jetzt = time.time()
+    _lizenz_attempts[user["id"]] = [t for t in _lizenz_attempts[user["id"]]
+                                    if _jetzt - t < LIZENZ_WINDOW_SECONDS]
+    if len(_lizenz_attempts[user["id"]]) >= MAX_LIZENZ_ATTEMPTS:
+        raise HTTPException(status_code=429,
+                            detail="Zu viele Aktivierungs-Versuche. Bitte 10 Minuten warten")
+
     conn = get_db()
     try:
         # Erst-Aktivierung und Beitritt atomar (BEGIN IMMEDIATE): zwei
@@ -1384,6 +1400,7 @@ async def lizenz_aktivieren(request: Request, user: dict = Depends(get_current_u
         # sich gueltige Schluessel durchprobieren lassen.
         if not key or key["status"] == "gesperrt":
             conn.execute("ROLLBACK")
+            _lizenz_attempts[user["id"]].append(_jetzt)
             raise HTTPException(status_code=404, detail="Dieser Lizenzschluessel ist ungueltig")
         if key["gueltig_bis"] and billing.plan_ist_abgelaufen(key["gueltig_bis"]):
             conn.execute("ROLLBACK")
