@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}InkluDocs - {{ _('Preise') }}{% endblock %}
+
+{% block head %}
+<style>
+  /* Bekannter Kontrast-Bug der oeffentlichen Seiten: Marken-Orange #e87722
+     schafft auf Weiss nur 2,96:1. Diese NEUE Seite startet direkt mit dem
+     AA-Orange #c75000 (4,59:1) — der globale Tausch auf den Altseiten
+     bleibt ein eigener Arbeitspunkt (siehe Memory Kontrast-Bug). */
+  .auth-container .brand { color: #c75000; }
+  .auth-links a { color: #c75000; }
+</style>
+{% endblock %}
+
+{% block body %}
+    {# Oeffentliche Tarif-/Preisseite (Umbau-Punkt 7, 04.08.2026, Michaels
+       Lizenzschluessel-Modell). Alle Zahlen kommen als Variablen aus
+       billing.py (eine Wahrheit) — Preisaenderung = Konfiguration, nie
+       Template-Pflege. Bewusst Listen statt Tabellen (VoiceOver). #}
+    <a href="#main" class="skip-link">{{ _('Zum Hauptinhalt springen') }}</a>
+    <main id="main" tabindex="-1">
+        <div class="auth-container" role="region" aria-label="{{ _('Preise') }}" style="max-width:640px;">
+            <h1><span class="brand">Inklu</span>Docs — {{ _('Preise') }}{# Staging-Label in #c75000 statt #e87722: das Orange schafft auf Weiss nur
+   2,96:1 (bekannter Kontrast-Bug, auf den Altseiten noch offen) — hier
+   direkt AA-konform (4,59:1). #}{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}</h1>
+            <p class="subtitle">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise zzgl. USt.') }}</p>
+
+            <h2>{{ _('Kostenlos starten') }}</h2>
+            <ul>
+                <li>{{ _('{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig.').format(n=free_credits) }}</li>
+                <li>{{ _('Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain.') }}</li>
+            </ul>
+
+            <h2>{{ _('Firmenlizenz') }}</h2>
+            <ul>
+                <li>{{ _('Ein Lizenzschlüssel pro Unternehmen — beliebig viele Mitarbeiter teilen sich einen gemeinsamen Credit-Topf.') }}</li>
+                <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten.').format(preis=lizenz_preis, credits=lizenz_credits) }}</li>
+                <li>{{ _('Mindestlaufzeit {monate} Monate, Abrechnung {halbjahr} € pro Halbjahr.').format(monate=lizenz_monate, halbjahr=halbjahr_preis) }}</li>
+                <li>{{ _('Der Schlüssel ist an die E-Mail-Domain deines Unternehmens gebunden — niemand Fremdes kann ihn benutzen.') }}</li>
+            </ul>
+
+            <h2>{{ _('Zusatzpakete') }}</h2>
+            <p>{{ _('Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange deine Lizenz läuft — die monatlichen Credits kommen immer obendrauf.') }}</p>
+            <ul>
+                {% for anzahl, preis in pakete %}
+                <li>{{ _('{n} Credits für {preis} €').format(n=anzahl, preis=preis) }}</li>
+                {% endfor %}
+            </ul>
+
+            <h2>{{ _('So bestellst du') }}</h2>
+            <p>{{ _('Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> — {{ _('du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert.') }}</p>
+
+            <div class="auth-links center">
+                <a href="/">{{ _('Zur Anmeldung') }}</a>
+            </div>
+        </div>
+        <footer class="legal-footer" role="contentinfo">
+            <a href="/impressum">{{ _('Impressum') }}</a> |
+            <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
+            <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a>
+        </footer>
+    </main>
+{% endblock %}

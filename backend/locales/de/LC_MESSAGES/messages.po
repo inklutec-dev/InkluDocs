@@ -2712,3 +2712,131 @@ msgstr ""
 #: Domain-Buendelung 04.08.2026
 msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
 msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuen Lizenzschlüssel erzeugen"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ohne Domain bindet sich der Schlüssel bei der ersten Aktivierung an die Firmen-Adresse des Kunden. Gründer-Tarif: Laufzeit 3 Monate."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Firmen-Domain (optional, z. B. firma.de)"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Laufzeit in Monaten"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Notiz (z. B. Firmenname, Rechnungsnummer)"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel erzeugen"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel konnten nicht geladen werden."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel ({n})"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch keine Lizenzschlüssel erzeugt."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch nicht aktiviert"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Domain: {domain}"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Inhaber: {email}"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Abgelaufen am {datum}"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Gültig bis {datum}"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Nutzer"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuer Schlüssel: {key}"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel wurde erzeugt."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Preise"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise zzgl. USt."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Kostenlos starten"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ein Lizenzschlüssel pro Unternehmen — beliebig viele Mitarbeiter teilen sich einen gemeinsamen Credit-Topf."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Mindestlaufzeit {monate} Monate, Abrechnung {halbjahr} € pro Halbjahr."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Der Schlüssel ist an die E-Mail-Domain deines Unternehmens gebunden — niemand Fremdes kann ihn benutzen."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Zusatzpakete"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange deine Lizenz läuft — die monatlichen Credits kommen immer obendrauf."
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits für {preis} €"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "So bestellst du"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr ""
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
+msgstr ""

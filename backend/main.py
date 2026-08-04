@@ -1546,6 +1546,52 @@ async def admin_lizenz_liste(user: dict = Depends(require_admin)):
     return {"ok": True, "lizenzen": lizenzen}
 
 
+@app.post("/api/admin/users/{user_id}/pakete")
+async def admin_paket_anlegen(user_id: int, request: Request,
+                              user: dict = Depends(require_full_admin)):
+    """Admin: Zusatz-Credit-Paket fuer ein Konto anlegen (Rechnungsweg).
+
+    Punkt 4 (04.08.2026): Preise laut billing.PAKET_PREISE (100/500/1000);
+    andere Groessen sind fuer Kulanz erlaubt. verfall='kuendigung' (Vorgabe,
+    Michaels Regel: Credits verfallen erst mit der Kuendigung) oder eine
+    Monats-Zahl fuer klassische Datums-Pakete.
+    """
+    data = await request.json()
+    try:
+        groesse = int(data.get("groesse") or 0)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="groesse muss eine Zahl sein")
+    if not 1 <= groesse <= 100000:
+        raise HTTPException(status_code=400, detail="groesse muss zwischen 1 und 100000 liegen")
+    verfall = data.get("verfall", "kuendigung")
+    if verfall == "kuendigung":
+        verfall_monate = None
+    else:
+        try:
+            verfall_monate = int(verfall)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400,
+                                detail="verfall muss 'kuendigung' oder eine Monats-Zahl sein")
+        if not 1 <= verfall_monate <= 120:
+            raise HTTPException(status_code=400, detail="verfall (Monate) muss zwischen 1 und 120 liegen")
+    quelle = data.get("quelle", "rechnung")
+    if quelle not in ("rechnung", "admin"):
+        raise HTTPException(status_code=400, detail="quelle muss 'rechnung' oder 'admin' sein")
+    notiz = (data.get("notiz") or "").strip()[:500]
+    target = get_user_by_id(user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User nicht gefunden")
+    # Pakete gehoeren dem ABRECHNUNGS-Konto: bei Topf-Mitgliedern dem Inhaber.
+    konto_id = target.get("abo_owner_id") or target["id"]
+    paket_id = billing.schenke_credits(konto_id, groesse, notiz=notiz,
+                                       quelle=quelle, verfall_monate=verfall_monate)
+    preis = billing.PAKET_PREISE.get(groesse)
+    return {"ok": True, "paket_id": paket_id, "konto_user_id": konto_id,
+            "groesse": groesse, "preis_eur": preis,
+            "verfall": "kuendigung" if verfall_monate is None else f"{verfall_monate} Monate",
+            "message": f"Paket ({groesse} Credits) fuer {target['email']} angelegt"}
+
+
 # ─── API Key Management ─────────────────────────────────────
 
 @app.get("/api/api-keys")
@@ -3911,6 +3957,16 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
 
+    # Punkt 4 (04.08.2026, Michaels Modell): PDF-Export kostet 5 Credits —
+    # pro Export-VORGANG, nur fuer Bezahl-Konten. Free bleibt bis zur
+    # Wasserzeichen-Runde (Punkt 3) unverbucht: dort bekommt Free seinen
+    # Wasserzeichen-Export, erst dann waere ein Zaehlen ehrlich.
+    _abo_export = billing.pruefe_kontingent(user["id"])
+    _export_kostenpflichtig = _abo_export.get("plan") != "free"
+    if _export_kostenpflichtig and not _abo_export.get("erlaubt", True):
+        raise HTTPException(status_code=429,
+                            detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+
     if document_id is not None or len(units) == 1:
         # Einzelne Datei zurueckgeben (direkter Download, kein ZIP).
         unit = units[0]
@@ -3926,6 +3982,9 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         if info.get("warnings"):
             headers["X-Export-Warnings"] = json.dumps(info["warnings"], ensure_ascii=False)
         download_base = custom_name or _doc_label(unit["doc"])
+        # Nur ERFOLGREICHE Exporte verbuchen (Datei liegt fertig da).
+        if _export_kostenpflichtig:
+            billing.verbuche(user["id"], "export", aktion="pdf_export")
         return FileResponse(
             output_path,
             filename=f"inkludocs_{download_base}.pdf",
@@ -3957,6 +4016,10 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     }
     if aggregated_warnings:
         headers["X-Export-Warnings"] = json.dumps(aggregated_warnings, ensure_ascii=False)
+    # Ein Export-Vorgang = 5 Credits, auch fuer das Alle-Dokumente-ZIP
+    # (siehe billing.AKTIONS_PREISE); nur nach erfolgreichem Bau.
+    if _export_kostenpflichtig:
+        billing.verbuche(user["id"], "export", aktion="pdf_export")
     return FileResponse(
         zip_path,
         filename=f"{zip_base}_alle_pdfs.zip",
@@ -5087,6 +5150,32 @@ async def datensicherheit_page(request: Request):
     # damit die Sidebar beim Aufruf sichtbar bleibt. Der Inhalt wird im
     # Frontend per fetch aus /datenschutz (Single Source) geladen.
     return _serve_protected_page(request, "datensicherheit.html")
+
+
+@app.get("/preise", response_class=HTMLResponse)
+async def preise_page(request: Request):
+    """Oeffentliche Tarif-/Preisseite (Umbau-Punkt 7, 04.08.2026).
+
+    Alle Zahlen kommen aus billing.py — eine Preisaenderung ist dort EINE
+    Konfigurationszeile, die Seite zieht automatisch mit. Deutsche
+    Komma-Formatierung mit zwei Nachkommastellen (9,95 / 87,50).
+    Noch nirgends verlinkt — Verlinkung (Login-Fusszeile) kommt bewusst
+    erst mit dem Livegang der Online-Zahlung.
+    """
+    def _eur(betrag: float) -> str:
+        return f"{betrag:.2f}".replace(".", ",")
+
+    ctx = template_context(request, detect_language(request))
+    ctx.update({
+        "free_credits": billing.PLAN_KONTINGENTE["free"],
+        "lizenz_credits": billing.PLAN_KONTINGENTE["lizenz"],
+        "lizenz_preis": _eur(billing.LIZENZ_GRUNDPREIS_EUR),
+        "lizenz_monate": billing.LIZENZ_MINDESTLAUFZEIT_MONATE,
+        "halbjahr_preis": _eur(billing.LIZENZ_GRUNDPREIS_EUR
+                               * billing.LIZENZ_MINDESTLAUFZEIT_MONATE),
+        "pakete": [(n, _eur(p)) for n, p in sorted(billing.PAKET_PREISE.items())],
+    })
+    return templates.TemplateResponse("preise.html", ctx)
 
 
 @app.get("/impressum-app", response_class=HTMLResponse)

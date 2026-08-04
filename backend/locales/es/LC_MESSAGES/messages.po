@@ -2709,3 +2709,131 @@ msgstr "Incorporación confirmada — ahora usas el fondo de créditos compartid
 #: Domain-Buendelung 04.08.2026
 msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
 msgstr "El contingente gratuito se comparte entre todas las cuentas del dominio {domain}."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuen Lizenzschlüssel erzeugen"
+msgstr "Crear una nueva clave de licencia"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ohne Domain bindet sich der Schlüssel bei der ersten Aktivierung an die Firmen-Adresse des Kunden. Gründer-Tarif: Laufzeit 3 Monate."
+msgstr "Sin dominio, la clave se vincula a la dirección de empresa del cliente en la primera activación. Tarifa fundador: duración de 3 meses."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Firmen-Domain (optional, z. B. firma.de)"
+msgstr "Dominio de la empresa (opcional, p. ej. empresa.es)"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Laufzeit in Monaten"
+msgstr "Duración en meses"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Notiz (z. B. Firmenname, Rechnungsnummer)"
+msgstr "Nota (p. ej. nombre de la empresa, número de factura)"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel erzeugen"
+msgstr "Crear clave"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel konnten nicht geladen werden."
+msgstr "No se pudieron cargar las claves de licencia."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel ({n})"
+msgstr "Claves de licencia ({n})"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch keine Lizenzschlüssel erzeugt."
+msgstr "Todavía no se han creado claves de licencia."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch nicht aktiviert"
+msgstr "Aún no activada"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Domain: {domain}"
+msgstr "Dominio: {domain}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Inhaber: {email}"
+msgstr "Titular: {email}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Abgelaufen am {datum}"
+msgstr "Caducada el {datum}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Gültig bis {datum}"
+msgstr "Válida hasta el {datum}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Nutzer"
+msgstr "{n} usuarios"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuer Schlüssel: {key}"
+msgstr "Nueva clave: {key}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel wurde erzeugt."
+msgstr "La clave se ha creado."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Preise"
+msgstr "Precios"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise zzgl. USt."
+msgstr "Una sola moneda para todo: créditos. Un texto alternativo cuesta 1 crédito, la exportación del PDF final 5 créditos. Todos los precios sin IVA."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Kostenlos starten"
+msgstr "Empezar gratis"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig."
+msgstr "{n} créditos al mes — todas las funciones, sin datos de pago."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain."
+msgstr "En las direcciones de empresa, el volumen gratuito se comparte entre todas las cuentas del mismo dominio."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ein Lizenzschlüssel pro Unternehmen — beliebig viele Mitarbeiter teilen sich einen gemeinsamen Credit-Topf."
+msgstr "Una clave de licencia por empresa — cualquier número de empleados comparte un fondo de créditos común."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten."
+msgstr "{preis} € al mes, con {credits} créditos incluidos."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Mindestlaufzeit {monate} Monate, Abrechnung {halbjahr} € pro Halbjahr."
+msgstr "Duración mínima de {monate} meses, facturación de {halbjahr} € por semestre."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Der Schlüssel ist an die E-Mail-Domain deines Unternehmens gebunden — niemand Fremdes kann ihn benutzen."
+msgstr "La clave está vinculada al dominio de correo de tu empresa — nadie ajeno puede usarla."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Zusatzpakete"
+msgstr "Paquetes adicionales"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange deine Lizenz läuft — die monatlichen Credits kommen immer obendrauf."
+msgstr "Si los créditos mensuales no bastan: simplemente compra más. Los créditos comprados no caducan mientras tu licencia esté activa — los créditos mensuales siempre se suman."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits für {preis} €"
+msgstr "{n} créditos por {preis} €"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "So bestellst du"
+msgstr "Cómo hacer el pedido"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "El pago en línea se está integrando ahora mismo. Hasta entonces, basta con un correo a"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
+msgstr "recibirás una factura y tu clave de licencia, que funciona de inmediato."

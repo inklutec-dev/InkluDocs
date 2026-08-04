@@ -279,10 +279,37 @@ def init_db():
             quelle TEXT NOT NULL,
             notiz TEXT DEFAULT '',
             erstellt_am TEXT DEFAULT (datetime('now')),
-            verfaellt_am TEXT NOT NULL
+            verfaellt_am TEXT
         )
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_quota_pakete_konto ON quota_pakete(user_id, verfaellt_am)")
+
+    # Punkt 4 des Abo-Umbaus (04.08.2026, Michaels Regel): verfaellt_am darf
+    # jetzt NULL sein = "verfaellt erst mit der Kuendigung" (Auswertung lazy
+    # in billing.pakete_rest). Bestands-DBs tragen noch NOT NULL — SQLite
+    # kann das nicht per ALTER entfernen, darum einmaliger idempotenter
+    # Tabellen-Umbau (Neuanlage, Kopie, Umbenennung; Daten + ids bleiben).
+    _pragma = conn.execute("PRAGMA table_info(quota_pakete)").fetchall()
+    _verfall_notnull = any(r[1] == "verfaellt_am" and r[3] == 1 for r in _pragma)
+    if _verfall_notnull:
+        conn.executescript('''
+            CREATE TABLE quota_pakete_neu (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                groesse INTEGER NOT NULL,
+                verbleibend INTEGER NOT NULL,
+                quelle TEXT NOT NULL,
+                notiz TEXT DEFAULT '',
+                erstellt_am TEXT DEFAULT (datetime('now')),
+                verfaellt_am TEXT
+            );
+            INSERT INTO quota_pakete_neu (id, user_id, groesse, verbleibend, quelle, notiz, erstellt_am, verfaellt_am)
+                SELECT id, user_id, groesse, verbleibend, quelle, notiz, erstellt_am, verfaellt_am FROM quota_pakete;
+            DROP TABLE quota_pakete;
+            ALTER TABLE quota_pakete_neu RENAME TO quota_pakete;
+        ''')
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_quota_pakete_konto ON quota_pakete(user_id, verfaellt_am)")
+        conn.commit()
 
     # Abo-Etappe 2, Nachbesserung (31.07.2026, Review-Befund 1): Team-Beitritt
     # nur noch mit ZUSTIMMUNG des Eingeladenen. Eine Einladung ist ein Token

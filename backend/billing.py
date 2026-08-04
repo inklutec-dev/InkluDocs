@@ -57,7 +57,28 @@ AKTIONS_PREISE = {
     # Aktion                          Credits
     "bild_generierung": 1,          # alle Generierungswege
     "alt_text_aenderung_chatbot": 1,  # Chatbot ersetzt/optimiert einen Alt-Text
+    # Michaels Modell (03.08.2026): "Der Export in PDF 5 Credits." Gezaehlt
+    # wird PRO EXPORT-VORGANG (ein Klick = 5, auch beim Alle-Dokumente-ZIP —
+    # kundenfreundliche Lesart; pro-Dokument waere die strengere, mit Michael
+    # klaeren falls gewuenscht). Free-Konten werden bis zur Wasserzeichen-
+    # Runde (Umbau-Punkt 3) bewusst NICHT verbucht.
+    "pdf_export": 5,
 }
+
+# Zusatzpakete (Michaels Preise, bestaetigt 03.08.2026). Reine Konfiguration
+# fuer Preisseite und Online-Zahlung — der Kauf selbst kommt mit Stripe
+# (Etappe 3); bis dahin legen Admins Pakete ueber den Rechnungsweg an.
+# Werte in EUR zzgl. USt.
+PAKET_PREISE = {
+    100: 20.00,
+    500: 87.50,
+    1000: 150.00,
+}
+
+# Grundpreis Lizenzschluessel (EUR/Monat zzgl. USt., inkl. 50 Credits),
+# 6 Monate Mindestlaufzeit -> 59,70 EUR pro Halbjahresrechnung.
+LIZENZ_GRUNDPREIS_EUR = 9.95
+LIZENZ_MINDESTLAUFZEIT_MONATE = 6
 
 PLAN_KONTINGENTE = {
     # Plan          Credits pro Monat (None = unbegrenzt/individuell)
@@ -76,7 +97,7 @@ PLAN_KONTINGENTE = {
     "lizenz": 50,
 }
 
-GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot")
+GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export")
 
 # Team-Plan: so viele Sitze (INKLUSIVE Inhaber) sind im Preis enthalten.
 # Mehr Sitze gibt es erst mit der Online-Zahlung (Etappe 3, Sitz-Zukauf) —
@@ -266,13 +287,27 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None) -> int:
 
 
 def pakete_rest(konto_id: int) -> int:
-    """Summe der noch nutzbaren Zusatz-Credits (nicht verfallene Pakete)."""
+    """Summe der noch nutzbaren Zusatz-Credits.
+
+    Zwei Verfalls-Arten (Punkt 4, Michaels Regel 03.08.2026):
+    - verfaellt_am gesetzt: klassisches Datums-Paket (Alt-Modell, 12 Monate).
+    - verfaellt_am NULL: "verfaellt erst mit der Kuendigung" — das Paket gilt,
+      solange das Konto einen AKTIVEN Bezahl-Plan hat (effektiver_plan !=
+      free). Faellt das Abo aus (Auto-Rueckfall), ruhen diese Credits; bei
+      Verlaengerung leben sie wieder auf — geloescht wird nie (Beleg).
+    """
     conn = get_db()
     try:
+        konto = conn.execute(
+            "SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis "
+            "FROM users WHERE id = ?", (konto_id,)).fetchone()
+        abo_aktiv = 1 if (konto is not None
+                          and effektiver_plan(konto) != "free") else 0
         row = conn.execute(
             "SELECT COALESCE(SUM(verbleibend), 0) FROM quota_pakete "
-            "WHERE user_id = ? AND verbleibend > 0 AND verfaellt_am > datetime('now')",
-            (konto_id,),
+            "WHERE user_id = ? AND verbleibend > 0 AND "
+            "(verfaellt_am > datetime('now') OR (verfaellt_am IS NULL AND ?))",
+            (konto_id, abo_aktiv),
         ).fetchone()
         return int(row[0])
     finally:
@@ -485,11 +520,17 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
     abzug_gesamt = soll - bereits
     if abzug_gesamt <= 0:
         return
+    # Kuendigungs-Pakete (verfaellt_am NULL) nur bei aktivem Bezahl-Plan
+    # anfassen — nach dem Auto-Rueckfall auf Free RUHEN sie (gleiche Regel
+    # wie in pakete_rest, sonst wuerde Free-Ueberhang ruhende Credits
+    # aufzehren). Datums-Pakete zuerst (frueheste zuerst), NULL zuletzt.
+    abo_aktiv = 1 if plan != "free" else 0
     pakete = conn.execute(
         "SELECT id, verbleibend FROM quota_pakete "
-        "WHERE user_id = ? AND verbleibend > 0 AND verfaellt_am > datetime('now') "
-        "ORDER BY verfaellt_am, id",
-        (konto_id,),
+        "WHERE user_id = ? AND verbleibend > 0 AND "
+        "(verfaellt_am > datetime('now') OR (verfaellt_am IS NULL AND ?)) "
+        "ORDER BY (verfaellt_am IS NULL), verfaellt_am, id",
+        (konto_id, abo_aktiv),
     ).fetchall()
     for paket in pakete:
         if abzug_gesamt <= 0:
@@ -563,16 +604,18 @@ def ist_freemail_domain(domain: str) -> bool:
     return (domain or "").strip().lower() in FREEMAIL_DOMAINS
 
 
-def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "admin") -> int:
+def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "admin",
+                    verfall_monate=12) -> int:
     """Legt ein Zusatz-Credit-Paket fuer ein Abrechnungs-Konto an.
 
-    Verfall nach 12 Monaten (fix, Beschluss 31.07.2026). `quelle` ist
-    'admin' (Geschenk/Kulanz), spaeter 'stripe' (Kauf) oder 'rechnung'.
-    Wirft bei ungueltiger Menge einen ValueError — diese Funktion laeuft
-    NICHT im Generierungspfad, darf also streng sein.
-
-    Stand 31.07.2026: noch ohne Oberflaeche, bewusst — Steve will die
-    Admin-Bedienung spaeter anders gestalten (kein HTTP-Endpunkt in Etappe 2).
+    verfall_monate: Zahl = Datums-Verfall (Alt-Modell/Kulanz-Geschenke, 12
+    Monate Vorgabe); None = Michaels Regel 03.08.2026 "Diese Credits gehen
+    nicht verloren ... verfallen erst mit der Nicht-Verlaengerung bzw.
+    Kuendigung" — gespeichert als verfaellt_am NULL, nutzbar solange das
+    Konto einen aktiven Bezahl-Plan hat (siehe pakete_rest). `quelle` ist
+    'admin' (Geschenk/Kulanz), 'rechnung' (Kauf ueber Actino) oder spaeter
+    'stripe'. Wirft bei ungueltiger Menge einen ValueError — diese Funktion
+    laeuft NICHT im Generierungspfad, darf also streng sein.
 
     Rueckgabe: id der neuen quota_pakete-Zeile.
     """
@@ -581,11 +624,19 @@ def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "a
         raise ValueError("menge muss positiv sein")
     conn = get_db()
     try:
-        cursor = conn.execute(
-            "INSERT INTO quota_pakete (user_id, groesse, verbleibend, quelle, notiz, verfaellt_am) "
-            "VALUES (?, ?, ?, ?, ?, datetime('now', '+12 months'))",
-            (int(konto_id), menge, menge, quelle, notiz or ""),
-        )
+        if verfall_monate is None:
+            cursor = conn.execute(
+                "INSERT INTO quota_pakete (user_id, groesse, verbleibend, quelle, notiz, verfaellt_am) "
+                "VALUES (?, ?, ?, ?, ?, NULL)",
+                (int(konto_id), menge, menge, quelle, notiz or ""),
+            )
+        else:
+            cursor = conn.execute(
+                "INSERT INTO quota_pakete (user_id, groesse, verbleibend, quelle, notiz, verfaellt_am) "
+                "VALUES (?, ?, ?, ?, ?, datetime('now', ?))",
+                (int(konto_id), menge, menge, quelle, notiz or "",
+                 f"+{int(verfall_monate)} months"),
+            )
         conn.commit()
         return int(cursor.lastrowid)
     finally:

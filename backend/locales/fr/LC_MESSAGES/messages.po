@@ -2709,3 +2709,131 @@ msgstr "Adhésion confirmée — vous utilisez maintenant le pot de crédits com
 #: Domain-Buendelung 04.08.2026
 msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
 msgstr "Le quota gratuit est partagé par tous les comptes du domaine {domain}."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuen Lizenzschlüssel erzeugen"
+msgstr "Créer une nouvelle clé de licence"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ohne Domain bindet sich der Schlüssel bei der ersten Aktivierung an die Firmen-Adresse des Kunden. Gründer-Tarif: Laufzeit 3 Monate."
+msgstr "Sans domaine, la clé se lie à l'adresse d'entreprise du client lors de la première activation. Tarif fondateur : durée de 3 mois."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Firmen-Domain (optional, z. B. firma.de)"
+msgstr "Domaine de l'entreprise (facultatif, p. ex. entreprise.fr)"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Laufzeit in Monaten"
+msgstr "Durée en mois"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Notiz (z. B. Firmenname, Rechnungsnummer)"
+msgstr "Note (p. ex. nom de l'entreprise, numéro de facture)"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel erzeugen"
+msgstr "Créer la clé"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel konnten nicht geladen werden."
+msgstr "Les clés de licence n'ont pas pu être chargées."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel ({n})"
+msgstr "Clés de licence ({n})"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch keine Lizenzschlüssel erzeugt."
+msgstr "Aucune clé de licence créée pour l'instant."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch nicht aktiviert"
+msgstr "Pas encore activée"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Domain: {domain}"
+msgstr "Domaine : {domain}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Inhaber: {email}"
+msgstr "Titulaire : {email}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Abgelaufen am {datum}"
+msgstr "Expirée le {datum}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Gültig bis {datum}"
+msgstr "Valable jusqu'au {datum}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Nutzer"
+msgstr "{n} utilisateurs"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuer Schlüssel: {key}"
+msgstr "Nouvelle clé : {key}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel wurde erzeugt."
+msgstr "La clé a été créée."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Preise"
+msgstr "Tarifs"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise zzgl. USt."
+msgstr "Une seule monnaie pour tout : les crédits. Un texte alternatif coûte 1 crédit, l'export du PDF final 5 crédits. Tous les prix s'entendent hors TVA."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Kostenlos starten"
+msgstr "Commencer gratuitement"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig."
+msgstr "{n} crédits par mois — toutes les fonctions, sans données de paiement."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain."
+msgstr "Pour les adresses d'entreprise, le volume gratuit est partagé par tous les comptes du même domaine."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ein Lizenzschlüssel pro Unternehmen — beliebig viele Mitarbeiter teilen sich einen gemeinsamen Credit-Topf."
+msgstr "Une clé de licence par entreprise — un nombre illimité de collaborateurs partagent un pot de crédits commun."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten."
+msgstr "{preis} € par mois, {credits} crédits inclus."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Mindestlaufzeit {monate} Monate, Abrechnung {halbjahr} € pro Halbjahr."
+msgstr "Durée minimale de {monate} mois, facturation de {halbjahr} € par semestre."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Der Schlüssel ist an die E-Mail-Domain deines Unternehmens gebunden — niemand Fremdes kann ihn benutzen."
+msgstr "La clé est liée au domaine e-mail de votre entreprise — personne d'extérieur ne peut l'utiliser."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Zusatzpakete"
+msgstr "Packs supplémentaires"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange deine Lizenz läuft — die monatlichen Credits kommen immer obendrauf."
+msgstr "Si les crédits mensuels ne suffisent pas : achetez-en simplement d'autres. Les crédits achetés n'expirent pas tant que votre licence est active — les crédits mensuels s'ajoutent toujours."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits für {preis} €"
+msgstr "{n} crédits pour {preis} €"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "So bestellst du"
+msgstr "Comment commander"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Le paiement en ligne est en cours d'intégration. D'ici là, envoyez simplement un e-mail à"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
+msgstr "vous recevrez une facture et votre clé de licence, utilisable immédiatement."

@@ -60,6 +60,43 @@
           <span id="addAdminMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
         </form>
       </section>
+
+      {# Lizenzschluessel-Verwaltung (04.08.2026, Michaels Modell): Erzeugen =
+         Rechnungsweg (Rechnung bezahlt -> Schluessel erzeugen -> Kunde
+         aktiviert). Gruender bekommen den Basisschluessel mit Laufzeit 3
+         Monate kostenlos. Nur-Einsicht-Admins sehen die Liste, aber kein
+         Erzeugen-Formular (init blendet aus). #}
+      <section class="dash-section" aria-labelledby="lizenzen-h">
+        <h2 id="lizenzen-h">{{ _('Lizenzschlüssel') }}</h2>
+        <div id="lizenzenContainer" aria-busy="true">
+          <p class="dash-sub">{{ _('Wird geladen …') }}</p>
+        </div>
+      </section>
+
+      <section class="dash-card" aria-labelledby="newlizenz-h" id="newLizenzSection">
+        <h2 id="newlizenz-h">{{ _('Neuen Lizenzschlüssel erzeugen') }}</h2>
+        <p class="dash-sub">{{ _('Ohne Domain bindet sich der Schlüssel bei der ersten Aktivierung an die Firmen-Adresse des Kunden. Gründer-Tarif: Laufzeit 3 Monate.') }}</p>
+        <form id="createLizenzForm" novalidate>
+          <div class="dash-field">
+            <label for="lizDomain">{{ _('Firmen-Domain (optional, z. B. firma.de)') }}</label>
+            <input type="text" id="lizDomain" class="dash-input" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="dash-field">
+            <label for="lizLaufzeit">{{ _('Laufzeit in Monaten') }}</label>
+            <input type="number" id="lizLaufzeit" class="dash-input" value="6" min="1" max="60">
+          </div>
+          <div class="dash-field">
+            <label for="lizNotiz">{{ _('Notiz (z. B. Firmenname, Rechnungsnummer)') }}</label>
+            <input type="text" id="lizNotiz" class="dash-input" autocomplete="off">
+          </div>
+          <button type="submit" class="btn btn-primary">{{ _('Schlüssel erzeugen') }}</button>
+          <span id="createLizenzMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="createLizenzErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        </form>
+        {# Der frisch erzeugte Schluessel als eigener Absatz — gut kopier- und
+           vorlesbar, bleibt stehen bis zum naechsten Erzeugen. #}
+        <p id="neuerSchluessel" hidden style="font-weight:600;"></p>
+      </section>
 {% endblock %}
 
 {% block page_script %}
@@ -277,6 +314,101 @@
     }
   });
 
+  // ── Lizenzschluessel (04.08.2026) ─────────────────────────
+  async function loadLizenzen() {
+    const cont = byId('lizenzenContainer');
+    let data;
+    try {
+      const res = await fetch('/api/admin/lizenzen');
+      if (!res.ok) throw new Error('lizenzen');
+      data = await res.json();
+    } catch (e) {
+      cont.setAttribute('aria-busy', 'false');
+      cont.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Lizenzschlüssel konnten nicht geladen werden.');
+      cont.appendChild(p);
+      return;
+    }
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+    const lizenzen = data.lizenzen || [];
+    byId('lizenzen-h').textContent = t('Lizenzschlüssel ({n})', { n: lizenzen.length });
+    if (lizenzen.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Noch keine Lizenzschlüssel erzeugt.');
+      cont.appendChild(p);
+      return;
+    }
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    lizenzen.forEach((l) => {
+      const li = document.createElement('li');
+      li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      h3.textContent = l.schluessel;
+      li.appendChild(h3);
+      const meta = document.createElement('p');
+      meta.className = 'dash-meta';
+      const teile = [];
+      teile.push(l.status === 'aktiv' ? t('Aktiv')
+        : (l.status === 'gesperrt' ? t('Gesperrt') : t('Noch nicht aktiviert')));
+      if (l.domain) teile.push(t('Domain: {domain}', { domain: l.domain }));
+      if (l.inhaber_email) teile.push(t('Inhaber: {email}', { email: l.inhaber_email }));
+      if (l.gueltig_bis) {
+        const datum = String(l.gueltig_bis).slice(0, 10);
+        teile.push(l.abgelaufen ? t('Abgelaufen am {datum}', { datum: datum })
+                                : t('Gültig bis {datum}', { datum: datum }));
+      }
+      if (l.nutzer) teile.push(t('{n} Nutzer', { n: l.nutzer }));
+      if (l.verbrauch_monat) teile.push(t('diesen Monat: {anzahl} Credits', { anzahl: l.verbrauch_monat }));
+      if (l.notiz) teile.push(l.notiz);
+      meta.textContent = teile.join(' · ');
+      li.appendChild(meta);
+      ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+  }
+
+  byId('createLizenzForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = byId('createLizenzMsg');
+    const err = byId('createLizenzErr');
+    msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
+    const body = {
+      domain: byId('lizDomain').value.trim() || null,
+      laufzeit_monate: parseInt(byId('lizLaufzeit').value, 10) || 6,
+      notiz: byId('lizNotiz').value.trim(),
+    };
+    let res;
+    try {
+      res = await fetch('/api/admin/lizenzen', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+    } catch (e2) {
+      err.textContent = t('Fehler');
+      return;
+    }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      err.textContent = d.detail || t('Fehler');
+      return;
+    }
+    const key = (d.schluessel || [])[0] || '';
+    const out = byId('neuerSchluessel');
+    out.hidden = false;
+    out.textContent = t('Neuer Schlüssel: {key}', { key: key });
+    msg.textContent = t('Schlüssel wurde erzeugt.');
+    msg.style.color = 'var(--success)';
+    byId('lizDomain').value = '';
+    byId('lizNotiz').value = '';
+    announce(t('Schlüssel wurde erzeugt.'));
+    loadLizenzen();
+  });
+
   (async function init() {
     await loadCurrentUser();   // currentUser für "Sie selbst"-Erkennung + Rechte-Stufe
     const isFull = currentUser && currentUser.admin_level === 'full';
@@ -284,9 +416,11 @@
       // Nur-Einsicht-Admins: Anlege- und Verwaltungs-Formulare ausblenden.
       const ns = byId('newuser-section'); if (ns) ns.hidden = true;
       const aa = byId('addAdminSection'); if (aa) aa.hidden = true;
+      const nl = byId('newLizenzSection'); if (nl) nl.hidden = true;
     }
     await loadUsers();
     await loadAdmins();
+    await loadLizenzen();
   })();
 {% endraw %}
 </script>

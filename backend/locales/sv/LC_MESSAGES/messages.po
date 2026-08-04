@@ -2270,3 +2270,131 @@ msgstr "Anslutningen är bekräftad — du använder nu ditt företags gemensamm
 #: Domain-Buendelung 04.08.2026
 msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
 msgstr "Free-kontingenten delas av alla konton på domänen {domain}."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuen Lizenzschlüssel erzeugen"
+msgstr "Skapa en ny licensnyckel"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ohne Domain bindet sich der Schlüssel bei der ersten Aktivierung an die Firmen-Adresse des Kunden. Gründer-Tarif: Laufzeit 3 Monate."
+msgstr "Utan domän binds nyckeln till kundens företagsadress vid första aktiveringen. Grundartaxa: 3 månaders löptid."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Firmen-Domain (optional, z. B. firma.de)"
+msgstr "Företagsdomän (valfritt, t.ex. foretag.se)"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Laufzeit in Monaten"
+msgstr "Löptid i månader"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Notiz (z. B. Firmenname, Rechnungsnummer)"
+msgstr "Anteckning (t.ex. företagsnamn, fakturanummer)"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel erzeugen"
+msgstr "Skapa nyckel"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel konnten nicht geladen werden."
+msgstr "Licensnycklarna kunde inte läsas in."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel ({n})"
+msgstr "Licensnycklar ({n})"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch keine Lizenzschlüssel erzeugt."
+msgstr "Inga licensnycklar har skapats ännu."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch nicht aktiviert"
+msgstr "Ännu inte aktiverad"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Domain: {domain}"
+msgstr "Domän: {domain}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Inhaber: {email}"
+msgstr "Innehavare: {email}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Abgelaufen am {datum}"
+msgstr "Gick ut den {datum}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Gültig bis {datum}"
+msgstr "Giltig till {datum}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Nutzer"
+msgstr "{n} användare"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuer Schlüssel: {key}"
+msgstr "Ny nyckel: {key}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel wurde erzeugt."
+msgstr "Nyckeln har skapats."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Preise"
+msgstr "Priser"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise zzgl. USt."
+msgstr "En valuta för allt: krediter. En alt-text kostar 1 kredit, export av den färdiga PDF:en 5 krediter. Alla priser exkl. moms."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Kostenlos starten"
+msgstr "Börja gratis"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig."
+msgstr "{n} krediter per månad — full funktionalitet, inga betalningsuppgifter behövs."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain."
+msgstr "För företagsadresser delas den kostnadsfria volymen av alla konton på samma domän."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ein Lizenzschlüssel pro Unternehmen — beliebig viele Mitarbeiter teilen sich einen gemeinsamen Credit-Topf."
+msgstr "En licensnyckel per företag — valfritt antal medarbetare delar en gemensam kreditpott."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten."
+msgstr "{preis} € per månad, inklusive {credits} krediter."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Mindestlaufzeit {monate} Monate, Abrechnung {halbjahr} € pro Halbjahr."
+msgstr "Minsta löptid {monate} månader, fakturering {halbjahr} € per halvår."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Der Schlüssel ist an die E-Mail-Domain deines Unternehmens gebunden — niemand Fremdes kann ihn benutzen."
+msgstr "Nyckeln är bunden till ditt företags e-postdomän — ingen utomstående kan använda den."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Zusatzpakete"
+msgstr "Tilläggspaket"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange deine Lizenz läuft — die monatlichen Credits kommen immer obendrauf."
+msgstr "Om månadskrediterna inte räcker: köp helt enkelt fler. Köpta krediter förfaller inte så länge din licens är aktiv — månadskrediterna kommer alltid ovanpå."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits für {preis} €"
+msgstr "{n} krediter för {preis} €"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "So bestellst du"
+msgstr "Så här beställer du"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Onlinebetalning byggs in just nu. Tills dess räcker ett mejl till"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
+msgstr "du får en faktura och din licensnyckel, som fungerar direkt."

@@ -2709,3 +2709,131 @@ msgstr "Joined — you now use your company's shared credit pool."
 #: Domain-Buendelung 04.08.2026
 msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
 msgstr "The free quota is shared by all accounts of the domain {domain}."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuen Lizenzschlüssel erzeugen"
+msgstr "Create a new license key"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ohne Domain bindet sich der Schlüssel bei der ersten Aktivierung an die Firmen-Adresse des Kunden. Gründer-Tarif: Laufzeit 3 Monate."
+msgstr "Without a domain, the key binds to the customer's company address on first activation. Founder plan: 3-month term."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Firmen-Domain (optional, z. B. firma.de)"
+msgstr "Company domain (optional, e.g. company.com)"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Laufzeit in Monaten"
+msgstr "Term in months"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Notiz (z. B. Firmenname, Rechnungsnummer)"
+msgstr "Note (e.g. company name, invoice number)"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel erzeugen"
+msgstr "Create key"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel konnten nicht geladen werden."
+msgstr "License keys could not be loaded."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Lizenzschlüssel ({n})"
+msgstr "License keys ({n})"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch keine Lizenzschlüssel erzeugt."
+msgstr "No license keys created yet."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Noch nicht aktiviert"
+msgstr "Not activated yet"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Domain: {domain}"
+msgstr "Domain: {domain}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Inhaber: {email}"
+msgstr "Owner: {email}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Abgelaufen am {datum}"
+msgstr "Expired on {datum}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Gültig bis {datum}"
+msgstr "Valid until {datum}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Nutzer"
+msgstr "{n} users"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Neuer Schlüssel: {key}"
+msgstr "New key: {key}"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Schlüssel wurde erzeugt."
+msgstr "Key was created."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Preise"
+msgstr "Pricing"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise zzgl. USt."
+msgstr "One currency for everything: credits. An alt text costs 1 credit, exporting the finished PDF costs 5 credits. All prices plus VAT."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Kostenlos starten"
+msgstr "Start for free"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig."
+msgstr "{n} credits per month — full feature set, no payment details needed."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain."
+msgstr "For company addresses, the free volume is shared by all accounts of the same domain."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Ein Lizenzschlüssel pro Unternehmen — beliebig viele Mitarbeiter teilen sich einen gemeinsamen Credit-Topf."
+msgstr "One license key per company — any number of employees share a common credit pool."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten."
+msgstr "{preis} € per month, including {credits} credits."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Mindestlaufzeit {monate} Monate, Abrechnung {halbjahr} € pro Halbjahr."
+msgstr "Minimum term {monate} months, billed at {halbjahr} € per half-year."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Der Schlüssel ist an die E-Mail-Domain deines Unternehmens gebunden — niemand Fremdes kann ihn benutzen."
+msgstr "The key is bound to your company's email domain — no outsider can use it."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Zusatzpakete"
+msgstr "Add-on packages"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange deine Lizenz läuft — die monatlichen Credits kommen immer obendrauf."
+msgstr "If the monthly credits are not enough: simply buy more. Purchased credits do not expire while your license is active — the monthly credits always come on top."
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "{n} Credits für {preis} €"
+msgstr "{n} credits for {preis} €"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "So bestellst du"
+msgstr "How to order"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Online payment is being built right now. Until then, just send an email to"
+
+#: Lizenz-Admin+Preisseite 04.08.2026
+msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
+msgstr "you will receive an invoice and your license key, which works immediately."

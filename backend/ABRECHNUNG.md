@@ -248,3 +248,32 @@ Schluessel (bisher nur API), Gruender-Regel (Basisschluessel 3 Monate frei).
 - Verifikation: verify_sicherheit2.py 17/17 (XFF-Logik, Login-Bremse mit
   Faelschungs-Versuchen, Wegwerf, Registrier-Limit, Buendelung),
   verify_lizenz.py 32/32, verify_abo2.py 26/26, axe 0.
+
+## Punkt 4 + Preisseite + Admin-UI (04.08.2026 abends)
+
+- AKTIONS_PREISE: pdf_export = 5 Credits — verbucht PRO EXPORT-VORGANG in
+  /api/projects/{id}/export, NUR fuer Bezahl-Konten (Free bleibt bis zur
+  Wasserzeichen-Runde unverbucht); bei erschoepftem Kontingent 429 vor dem
+  Bau. Pro-Vorgang vs. pro-Dokument ist eine bewusste kundenfreundliche
+  Lesart — bei Bedarf mit Michael klaeren.
+- PAKET_PREISE {100: 20, 500: 87.50, 1000: 150} + LIZENZ_GRUNDPREIS_EUR /
+  LIZENZ_MINDESTLAUFZEIT_MONATE als einzige Preis-Quelle (Preisseite liest
+  sie, Stripe spaeter auch).
+- Kuendigungs-Verfall: quota_pakete.verfaellt_am darf NULL sein (einmaliger
+  idempotenter Tabellen-Umbau in database.py, SQLite kann NOT NULL nicht
+  per ALTER entfernen). NULL-Pakete gelten nur bei aktivem Bezahl-Plan
+  (pakete_rest/_pakete_abbuchen) — nach Auto-Rueckfall RUHEN sie und leben
+  bei Verlaengerung wieder auf; geloescht wird nie. Datums-Pakete
+  (Alt-Modell, 12 Monate, auch ohne Abo nutzbar) bleiben unveraendert.
+- POST /api/admin/users/{id}/pakete: Rechnungsweg fuer Zusatzpakete
+  (verfall="kuendigung" Vorgabe oder Monats-Zahl; Paket landet immer auf
+  dem ABRECHNUNGS-Konto, bei Topf-Mitgliedern dem Inhaber).
+- /preise: oeffentliche Tarifseite (base.html, 6 Sprachen), Zahlen aus
+  billing via Template-Variablen; NOCH NIRGENDS verlinkt (Verlinkung mit
+  Livegang der Online-Zahlung). Kontrast: neue Seite nutzt #c75000 statt
+  des bekannten zu hellen #e87722 (globaler Tausch = eigener TODO).
+- /benutzer: Lizenzschluessel-Bereich (Liste + Erzeugen-Formular, nur
+  Voll-Admins; Gruender = Laufzeit 3 Monate im Formular).
+- Verifikation: verify_punkt4.py 16/16, ui_punkt4.py (Klicktest Erzeugen +
+  axe 0 auf /benutzer und /preise), Regressionen verify_lizenz 32/32,
+  verify_sicherheit2 17/17, verify_abo2 26/26, axe_abo 0.
