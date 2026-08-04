@@ -2705,3 +2705,7 @@ msgstr "Licence activée — votre compte est désormais titulaire du pot de cr�
 #: Lizenzschluessel 04.08.2026
 msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
 msgstr "Adhésion confirmée — vous utilisez maintenant le pot de crédits commun de votre entreprise."
+
+#: Domain-Buendelung 04.08.2026
+msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
+msgstr "Le quota gratuit est partagé par tous les comptes du domaine {domain}."

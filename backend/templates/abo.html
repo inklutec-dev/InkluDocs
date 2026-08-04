@@ -129,6 +129,14 @@
       p.textContent = zeile;
       box.appendChild(p);
     });
+    // Punkt 2 (04.08.2026): Free-Volumen fuer Firmen-Domains gebuendelt —
+    // ehrlich sagen, dass die Zahlen fuer die ganze Domain gelten.
+    if (abo.domain_pool) {
+      const pPool = document.createElement('p');
+      pPool.className = 'dash-meta';
+      pPool.textContent = t('Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}.', { domain: abo.domain_pool });
+      box.appendChild(pPool);
+    }
     // Aktivierungs-Bereich ausblenden, sobald das Konto im Lizenz-Topf ist —
     // ausser eine frische Erfolgsmeldung steht darin (die soll lesbar bleiben).
     const lizenzBereich = byId('lizenzBereich');

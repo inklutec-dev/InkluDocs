@@ -220,3 +220,31 @@ Domain-Buendelung + Wegwerf-/XFF-Schutz, Wasserzeichen im Free-PDF-Export
 verfallen erst bei Kuendigung statt +12 Monate), Stripe-Halbjahresrechnung
 (SEPA+Karte+Apple Pay+PayPal), Tarif-/Preisseite, Admin-Oberflaeche fuer
 Schluessel (bisher nur API), Gruender-Regel (Basisschluessel 3 Monate frei).
+
+## Punkt 2 + Sicherheitspaket (04.08.2026)
+
+- Free: 10 Credits/Monat (vorher 20) und fuer FIRMEN-Domains GEBUENDELT:
+  pruefe_kontingent zaehlt bei plan=free die Monats-Summe ALLER Free-Konten
+  derselben E-Mail-Domain (_domain_monats_verbrauch; exakter substr-Vergleich,
+  kein LIKE). Freemailer (billing.FREEMAIL_DOMAINS) und Betreiber-Konten
+  werden NIE gebuendelt; Zusatz-Pakete bleiben pro Konto. Ergebnis-Feld
+  domain_pool wandert bis in /api/me — die /abo-Seite sagt ehrlich
+  "Das Free-Kontingent gilt gemeinsam fuer alle Konten der Domain X."
+- Wegwerf-Schutz: /api/register lehnt billing.WEGWERF_DOMAINS ab (400)
+  und bremst Konten-Farming: max. 5 ERFOLGREICHE Registrierungen pro
+  Stunde und echter IP (429).
+- backend/absender.py (uebernommen aus InkluEdit, dort 75 Tests):
+  X-Forwarded-For wird von RECHTS gelesen (der eigene Proxy haengt die
+  echte Adresse immer zuletzt an), IPv6 als /64-Korb, Kopfzeile nur bei
+  vertrauter Gegenstelle geglaubt (INKLUDOCS_PROXY_NETZE /
+  FORWARDED_ALLOW_IPS, Rueckfall private Netze). Behebt beide Befunde
+  vom 02.08.: (1) Demo-Tageslimits waren per linkem XFF-Eintrag beliebig
+  umgehbar (Bedrock-Kosten!) — demo.client_ip nutzt jetzt
+  absender.limit_schluessel; auf der LIVE-Demo per In-Place-Image-Patch
+  geschlossen (Backup-Tag inkludocs-demo-inkludocs-demo:bak-pre-xff-20260804).
+  (2) Login-Bremse zaehlte hinter NPM alle Nutzer in EINEN Topf
+  (request.client.host = Proxy-IP) — jetzt pro echter Besucher-IP.
+  PROD hat Befund 2 noch — kommt mit dem naechsten Prod-Promote.
+- Verifikation: verify_sicherheit2.py 17/17 (XFF-Logik, Login-Bremse mit
+  Faelschungs-Versuchen, Wegwerf, Registrier-Limit, Buendelung),
+  verify_lizenz.py 32/32, verify_abo2.py 26/26, axe 0.

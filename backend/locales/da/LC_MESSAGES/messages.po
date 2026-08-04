@@ -2396,3 +2396,7 @@ msgstr "Licens aktiveret — din konto er nu indehaver af virksomhedens kreditpu
 #: Lizenzschluessel 04.08.2026
 msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
 msgstr "Tilslutning bekræftet — du bruger nu din virksomheds fælles kreditpulje."
+
+#: Domain-Buendelung 04.08.2026
+msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
+msgstr "Free-kontingentet deles af alle konti på domænet {domain}."

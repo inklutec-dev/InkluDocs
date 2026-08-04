@@ -2705,3 +2705,7 @@ msgstr "Licencia activada — tu cuenta es ahora titular del fondo de créditos 
 #: Lizenzschluessel 04.08.2026
 msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
 msgstr "Incorporación confirmada — ahora usas el fondo de créditos compartido de tu empresa."
+
+#: Domain-Buendelung 04.08.2026
+msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
+msgstr "El contingente gratuito se comparte entre todas las cuentas del dominio {domain}."

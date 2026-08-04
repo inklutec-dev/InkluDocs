@@ -2266,3 +2266,7 @@ msgstr "Licensen är aktiverad — ditt konto är nu innehavare av företagets k
 #: Lizenzschluessel 04.08.2026
 msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
 msgstr "Anslutningen är bekräftad — du använder nu ditt företags gemensamma kreditpott."
+
+#: Domain-Buendelung 04.08.2026
+msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
+msgstr "Free-kontingenten delas av alla konton på domänen {domain}."

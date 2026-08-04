@@ -61,7 +61,10 @@ AKTIONS_PREISE = {
 
 PLAN_KONTINGENTE = {
     # Plan          Credits pro Monat (None = unbegrenzt/individuell)
-    "free": 20,
+    # free: 10 statt 20 seit 04.08.2026 (Michaels Modell, Punkt 2) — und fuer
+    # Firmen-Domains GEBUENDELT: alle Free-Konten derselben Domain teilen sich
+    # das Volumen (siehe pruefe_kontingent), Freemailer werden NIE gebuendelt.
+    "free": 10,
     "pro": 150,
     "team": 500,
     "enterprise": None,
@@ -156,6 +159,35 @@ def monats_verbrauch(konto_user_id: int, conn=None) -> int:
             "SELECT COALESCE(SUM(credits), 0) FROM usage_events "
             "WHERE konto_user_id = ? AND created_at >= date('now', 'start of month')",
             (konto_user_id,),
+        ).fetchone()
+        return int(row[0])
+    finally:
+        if eigene_conn:
+            conn.close()
+
+
+def _domain_monats_verbrauch(domain: str, conn=None) -> int:
+    """Gemeinsamer Free-Monatsverbrauch ALLER Konten einer Firmen-Domain.
+
+    Punkt 2 des Abo-Umbaus (Michaels Modell, 04.08.2026): "Es koennen sich
+    gerne 5 Mitarbeiter oder mehr kostenlos anmelden, in der Summe gibt es
+    aber nur das definierte Volumen." Gezaehlt werden nur Konten, die selbst
+    auf Free stehen und keinem Bezahl-Topf angehoeren; Betreiber-Konten
+    (Admins) bleiben aussen vor — ihr Eigenverbrauch soll keinem Kunden das
+    Free-Volumen leeren. Domain-Vergleich exakt (substr ab dem @), kein LIKE.
+    """
+    eigene_conn = conn is None
+    if eigene_conn:
+        conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT COALESCE(SUM(e.credits), 0) FROM usage_events e "
+            "JOIN users u ON u.id = e.konto_user_id "
+            "WHERE substr(u.email, instr(u.email, '@') + 1) = ? "
+            "AND COALESCE(u.plan, 'free') = 'free' AND u.is_admin = 0 "
+            "AND u.abo_owner_id IS NULL "
+            "AND e.created_at >= date('now', 'start of month')",
+            (domain,),
         ).fetchone()
         return int(row[0])
     finally:
@@ -274,7 +306,7 @@ def pruefe_kontingent(user_id: int) -> dict:
         "erlaubt": True, "grund": "", "plan": "free",
         "kontingent": PLAN_KONTINGENTE["free"], "verbraucht": 0, "rest": None,
         "uebertrag": 0, "verfuegbar_monat": PLAN_KONTINGENTE["free"],
-        "pakete_rest": 0, "zeitraum_ende": None,
+        "pakete_rest": 0, "zeitraum_ende": None, "domain_pool": None,
     }
     try:
         ergebnis["zeitraum_ende"] = _monatsende_iso()
@@ -282,7 +314,7 @@ def pruefe_kontingent(user_id: int) -> dict:
         conn = get_db()
         try:
             row = conn.execute(
-                "SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis, is_admin "
+                "SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis, is_admin, email "
                 "FROM users WHERE id = ?",
                 (konto_id,),
             ).fetchone()
@@ -304,7 +336,8 @@ def pruefe_kontingent(user_id: int) -> dict:
                 # bepreist werden, nicht den (womoeglich unbezahlten)
                 # eigenen Plan des Mitglieds uebernehmen.
                 row = conn.execute(
-                    "SELECT 'free' AS plan, is_admin FROM users WHERE id = ?",
+                    "SELECT 'free' AS plan, NULL AS plan_gueltig_bis, is_admin, email "
+                    "FROM users WHERE id = ?",
                     (konto_id,),
                 ).fetchone()
             finally:
@@ -315,6 +348,18 @@ def pruefe_kontingent(user_id: int) -> dict:
         plan = effektiver_plan(row)
         kontingent = PLAN_KONTINGENTE[plan]
         verbraucht = monats_verbrauch(konto_id)
+        # Domain-Buendelung Free (Punkt 2, 04.08.2026): Konten einer
+        # Firmen-Domain teilen sich das Free-Volumen — der ANGEZEIGTE und
+        # fuer die Sperre massgebliche Verbrauch ist dann die Domain-Summe.
+        # Freemailer werden nie gebuendelt (sonst teilten sich alle
+        # Gmail-Nutzer der Welt einen Topf), Betreiber-Konten auch nicht.
+        # Zusatz-Pakete bleiben bewusst PRO KONTO (gekauft ist gekauft).
+        domain_pool = None
+        if plan == "free" and not row["is_admin"]:
+            _dom = (row["email"] or "").rsplit("@", 1)[-1].strip().lower()
+            if _dom and "." in _dom and not ist_freemail_domain(_dom):
+                domain_pool = _dom
+                verbraucht = _domain_monats_verbrauch(_dom)
         uebertrag = _uebertrag(konto_id, plan, kontingent)
         pakete = pakete_rest(konto_id)
         verfuegbar = None if kontingent is None else kontingent + uebertrag
@@ -326,6 +371,7 @@ def pruefe_kontingent(user_id: int) -> dict:
             "verbraucht": verbraucht,
             "rest": None if verfuegbar is None else max(0, verfuegbar - verbraucht),
             "pakete_rest": pakete,
+            "domain_pool": domain_pool,
         })
         # Admins werden nie gesperrt; ohne Enforcement wird nie gesperrt.
         if not ABO_ENFORCEMENT or row["is_admin"]:
@@ -484,6 +530,21 @@ FREEMAIL_DOMAINS = frozenset({
     "me.com", "t-online.de", "aol.com", "mail.de", "mail.com", "freenet.de",
     "posteo.de", "protonmail.com", "proton.me", "tutanota.com", "tuta.io",
     "arcor.de", "online.de", "email.de", "1und1.de", "magenta.de",
+})
+
+# Wegwerf-Mail-Anbieter (Punkt 2, 04.08.2026): Registrierung lehnt diese
+# Domains ab — sie wuerden sowohl die Free-Domain-Buendelung als auch jedes
+# Konten-Limit aushebeln. Liste bewusst kurz und pflegbar (die gaengigsten
+# Anbieter); Erweiterung = neue Zeile, kein Umbau.
+WEGWERF_DOMAINS = frozenset({
+    "mailinator.com", "guerrillamail.com", "guerrillamail.de", "sharklasers.com",
+    "grr.la", "10minutemail.com", "10minutemail.de", "temp-mail.org",
+    "temp-mail.io", "tempmail.dev", "tempmail.email", "trashmail.com",
+    "trash-mail.com", "trashmail.de", "kurzepost.de", "wegwerfemail.de",
+    "wegwerfmail.de", "wegwerfmail.net", "byom.de", "yopmail.com",
+    "dispostable.com", "mintemail.com", "mohmal.com", "maildrop.cc",
+    "getnada.com", "emailondeck.com", "fakemail.net", "throwawaymail.com",
+    "mail-temp.com", "moakt.com", "tmpmail.org", "tmpmail.net", "emltmp.com",
 })
 
 # Zeichenvorrat ohne verwechselbare Zeichen (0/O, 1/I/L) — Schluessel werden

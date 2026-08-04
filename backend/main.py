@@ -20,6 +20,7 @@ from email.mime.multipart import MIMEMultipart
 import httpx
 from bs4 import BeautifulSoup
 
+import absender  # Sicherheitspaket 04.08.2026: echte Besucher-IP hinter dem Proxy (X-Forwarded-For von RECHTS)
 import billing  # Abo-/Credit-System Etappe 1: zentrale Verbrauchs-Zaehlung (backend/ABRECHNUNG.md)
 import demo as demo_mod  # Demo-Modus (oeffentliche Kostprobe ohne Anmeldung) — nur aktiv bei DEMO_MODE=on
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Form
@@ -173,9 +174,20 @@ def _svg_to_png_bytes(svg_bytes: bytes) -> bytes:
                             background_color="white")
 
 # Rate limiting for login
+# Sicherheitspaket 04.08.2026 (Befund 2 vom 02.08.): Schluessel ist jetzt die
+# ECHTE Besucher-IP via absender.limit_schluessel — vorher zaehlte
+# request.client.host (hinter NPM immer dieselbe Proxy-IP) alle Nutzer in
+# EINEN Topf, ein Angreifer konnte damit alle echten Nutzer aussperren.
 _login_attempts = defaultdict(list)
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_WINDOW_SECONDS = 300  # 5 minutes
+
+# Anmelde-Limit pro Absender (Punkt 2 des Abo-Umbaus, Steves Mail an Michael
+# 03.08.: "Anmelde-Limits pro Absender gelten zusaetzlich"). Gezaehlt werden
+# nur ERFOLGREICHE Konto-Anlagen — Tippfehler kosten keinen Versuch.
+_register_attempts = defaultdict(list)
+MAX_REGISTRATIONS_PER_WINDOW = 5
+REGISTER_WINDOW_SECONDS = 3600  # 1 Stunde
 
 # Rate limiting for API (per API key)
 _api_rate_minute = defaultdict(list)  # key_id -> [timestamps]
@@ -391,8 +403,10 @@ def check_api_rate_limit(api_key_id: int):
 
 @app.post("/api/login")
 async def login(request: Request):
-    # Rate limiting
-    client_ip = request.client.host if request.client else "unknown"
+    # Rate limiting — pro ECHTER Besucher-IP (Sicherheitspaket 04.08.2026):
+    # request.client.host war hinter NPM immer die Proxy-IP, die Bremse
+    # zaehlte global und liess sich als Aussperr-Angriff missbrauchen.
+    client_ip = absender.limit_schluessel(request)
     now = time.time()
     _login_attempts[client_ip] = [t for t in _login_attempts[client_ip] if now - t < LOGIN_WINDOW_SECONDS]
     if len(_login_attempts[client_ip]) >= MAX_LOGIN_ATTEMPTS:
@@ -460,6 +474,25 @@ async def register(request: Request):
     if not display_name:
         raise HTTPException(status_code=400, detail="Bitte einen Namen eingeben")
 
+    # Wegwerf-Schutz (Punkt 2 des Abo-Umbaus, 04.08.2026): Wegwerf-Adressen
+    # hebeln die Free-Domain-Buendelung aus — ehrliche Ablehnung statt
+    # stiller Drossel.
+    email_domain = email.rsplit("@", 1)[-1]
+    if email_domain in billing.WEGWERF_DOMAINS:
+        raise HTTPException(status_code=400,
+                            detail="Wegwerf-E-Mail-Adressen koennen nicht registriert werden. "
+                                   "Bitte eine dauerhafte E-Mail-Adresse verwenden")
+
+    # Anmelde-Limit pro Absender (echte IP dank absender.py): bremst
+    # Konten-Farming, ohne ehrliche Einzel-Registrierungen zu stoeren.
+    reg_ip = absender.limit_schluessel(request)
+    now = time.time()
+    _register_attempts[reg_ip] = [t for t in _register_attempts[reg_ip]
+                                  if now - t < REGISTER_WINDOW_SECONDS]
+    if len(_register_attempts[reg_ip]) >= MAX_REGISTRATIONS_PER_WINDOW:
+        raise HTTPException(status_code=429,
+                            detail="Zu viele Registrierungen von dieser Adresse. Bitte spaeter erneut versuchen")
+
     existing = get_user_by_email(email)
     if existing:
         raise HTTPException(status_code=409, detail="Diese E-Mail-Adresse ist bereits registriert")
@@ -468,6 +501,7 @@ async def register(request: Request):
         user_id = create_user(email, password, display_name, email_verified=0)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Registrierung fehlgeschlagen")
+    _register_attempts[reg_ip].append(now)
 
     # Neue Nutzer starten bei den Neuigkeiten "auf dem aktuellen Stand". Bestandsnutzer
     # haben news_seen_until NULL und sehen daher beim naechsten Login alles Bisherige.
@@ -644,6 +678,10 @@ async def me(user: dict = Depends(get_current_user)):
             "pakete_rest": abo_info.get("pakete_rest", 0),
             "zeitraum_ende": abo_info.get("zeitraum_ende"),
             "lizenz": lizenz_info,
+            # Punkt 2 (04.08.2026): Free-Volumen ist bei Firmen-Domains
+            # gebuendelt — die Oberflaeche sagt dann ehrlich, dass der
+            # Verbrauch fuer die ganze Domain gilt.
+            "domain_pool": abo_info.get("domain_pool"),
             "enforcement": billing.ABO_ENFORCEMENT,
             # Betreiber-Konten (Admins) werden gezaehlt, aber nie gesperrt.
             # Ohne dieses Kennzeichen zeigte die Oberflaeche ihnen ein

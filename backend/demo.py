@@ -229,12 +229,16 @@ def _today() -> str:
 
 
 def client_ip(request) -> str:
-    """Besucher-IP bestimmen. Hinter dem Nginx-Proxy steht die echte IP im
-    X-Forwarded-For (erste Adresse); sonst die direkte Verbindung."""
-    xff = request.headers.get("x-forwarded-for", "")
-    if xff:
-        return xff.split(",")[0].strip()
-    return request.client.host if request.client else "unbekannt"
+    """Besucher-IP fuer die Demo-Tageslimits.
+
+    Sicherheitspaket 04.08.2026 (Befund 1 vom 02.08.): Vorher wurde der LINKE,
+    vom Besucher frei faelschbare Eintrag von X-Forwarded-For genommen — die
+    Tageslimits (und damit die Bedrock-Kosten) waren per Kopfzeile beliebig
+    umgehbar. Jetzt liest absender.py die Kette von RECHTS (der eigene Proxy
+    haengt die echte Adresse immer zuletzt an) und buendelt IPv6 als /64.
+    """
+    import absender
+    return absender.limit_schluessel(request)
 
 
 def _count(conn, scope: str, day: str) -> int:

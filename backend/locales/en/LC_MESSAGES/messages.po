@@ -2705,3 +2705,7 @@ msgstr "License activated — your account now owns the company credit pool."
 #: Lizenzschluessel 04.08.2026
 msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
 msgstr "Joined — you now use your company's shared credit pool."
+
+#: Domain-Buendelung 04.08.2026
+msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
+msgstr "The free quota is shared by all accounts of the domain {domain}."
