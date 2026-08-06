@@ -506,6 +506,11 @@ def _migrate_columns(conn):
         ("users", "plan_laufzeit_monate", "ALTER TABLE users ADD COLUMN plan_laufzeit_monate INTEGER"),
         ("users", "auto_verlaengerung", "ALTER TABLE users ADD COLUMN auto_verlaengerung INTEGER DEFAULT 1"),
         ("users", "team_name", "ALTER TABLE users ADD COLUMN team_name TEXT DEFAULT ''"),
+        # Sicherheits-Review 06.08.: Einladungen an UNBEKANNTE Adressen legen
+        # das Konto zwar an, die Mitgliedschaft entsteht aber erst, wenn die
+        # Person ihr Passwort setzt (= registriert). konto_neu=1 kennzeichnet
+        # diese Einladungen; do_reset_password loest sie automatisch ein.
+        ("team_einladungen", "konto_neu", "ALTER TABLE team_einladungen ADD COLUMN konto_neu INTEGER DEFAULT 0"),
     ]
 
     for table, column, sql in migrations:

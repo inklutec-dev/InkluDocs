@@ -188,6 +188,16 @@
     });
   }
 
+  function zurueckAufAktiv() {
+    // Fehlerfall beim Umschalten (z. B. Team gerade abgelaufen): das Radio
+    // auf den serverseitig weiter gueltigen Kontext zuruecksetzen, damit
+    // Anzeige und Wirklichkeit nicht auseinanderlaufen.
+    const aktiv = _abo ? String(_abo.aktiver_topf) : 'eigen';
+    document.querySelectorAll('input[name=topfwahl]').forEach((r) => {
+      r.checked = (r.value === aktiv);
+    });
+  }
+
   async function waehleKontext(k) {
     const msg = byId('kontextMsg');
     const err = byId('kontextErr');
@@ -198,12 +208,14 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topf: k.topf }),
       });
-    } catch (e) { err.textContent = t('Fehler'); return; }
+    } catch (e) { err.textContent = t('Fehler'); zurueckAufAktiv(); return; }
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
       err.textContent = d.detail || t('Fehler');
+      zurueckAufAktiv();
       return;
     }
+    _abo.aktiver_topf = k.topf;
     msg.textContent = (k.topf === 'eigen')
       ? t('Du arbeitest jetzt aus deinem eigenen Guthaben.')
       : t('Du arbeitest jetzt aus dem Guthaben: {team}.', { team: teamLabel(k) });

@@ -196,6 +196,23 @@ _register_attempts = defaultdict(list)
 MAX_REGISTRATIONS_PER_WINDOW = 5
 REGISTER_WINDOW_SECONDS = 3600  # 1 Stunde
 
+# Einladungs-Bremse (Sicherheits-Review 06.08.): Team-Einladungen versenden
+# Mails an frei waehlbare Adressen — ohne Bremse waere das eine Spam-Kanone
+# mit gueltiger Absender-Signatur. Gezaehlt werden nur ERFOLGREICH versandte
+# Einladungen, pro Inhaber-Konto.
+_einladung_attempts = defaultdict(list)
+MAX_EINLADUNGEN_PER_WINDOW = 10
+EINLADUNG_WINDOW_SECONDS = 3600  # 1 Stunde
+
+# Schlanke E-Mail-Formatpruefung (Sicherheits-Review 06.08.): kein RFC-Parser,
+# nur das Noetigste gegen Steuerzeichen/Leerzeichen und fehlende Domain —
+# Konten mit unzustellbaren Adressen sollen gar nicht erst entstehen.
+_EMAIL_RE = re.compile(r"^[^\s@\x00-\x1f\x7f]+@[^\s@\x00-\x1f\x7f]+\.[^\s@\x00-\x1f\x7f]+$")
+
+
+def _email_plausibel(email: str) -> bool:
+    return bool(email) and len(email) <= 254 and bool(_EMAIL_RE.match(email))
+
 
 # Rate limiting for API (per API key)
 _api_rate_minute = defaultdict(list)  # key_id -> [timestamps]
@@ -475,7 +492,7 @@ async def register(request: Request):
     password = data.get("password", "")
     display_name = _normiere_display_name(data.get("display_name", ""))  # Befund 7: eine Zeile, max. 100
 
-    if not email or "@" not in email:
+    if not _email_plausibel(email):
         raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="Passwort muss mindestens 8 Zeichen lang sein")
@@ -622,8 +639,11 @@ async def me(user: dict = Depends(get_current_user)):
 
     # Abo-Tageslauf (06.08.2026): Erinnerungen + Auto-Verlaengerungen ohne
     # Cron — laeuft hoechstens 1x/Tag, im Hintergrund-Thread (Mails!).
+    # Prozess-Merker zuerst: im Normalfall (heute schon gelaufen) entsteht
+    # hier weder ein Thread noch ein DB-Zugriff (Review-Befund 06.08.).
     try:
-        threading.Thread(target=_abo_tageslauf, daemon=True).start()
+        if _abo_tageslauf_noetig():
+            threading.Thread(target=_abo_tageslauf, daemon=True).start()
     except Exception:
         pass
 
@@ -839,6 +859,59 @@ async def forgot_password(request: Request):
     }
 
 
+def _team_beitritt_nach_passwort(user_id: int) -> None:
+    """Loest offene konto_neu-Einladungen ein, sobald die eingeladene Person
+    ihr Passwort gesetzt hat (= ihre Registrierung; neues Abomodell 06.08.).
+
+    Nur Einladungen mit konto_neu=1 (Konto entstand DURCH die Einladung) —
+    Bestandskonten treten weiterhin ausschliesslich ueber den bewussten
+    Annahme-Klick bei. Sitz-Check atomar wie im Annahme-Pfad; ist das Team
+    inzwischen voll oder der Plan abgelaufen, bleibt die Person einfach auf
+    Free (Konto und Projekte unberuehrt). Fehler werden geloggt, nie geworfen.
+    """
+    try:
+        db_user = get_user_by_id(user_id)
+        if not db_user:
+            return
+        conn = get_db()
+        try:
+            conn.isolation_level = None
+            conn.execute("BEGIN IMMEDIATE")
+            offene = conn.execute(
+                "SELECT e.id, e.inhaber_id, u.plan, u.plan_gueltig_bis "
+                "FROM team_einladungen e JOIN users u ON u.id = e.inhaber_id "
+                "WHERE e.email = ? AND e.konto_neu = 1 AND e.eingeloest_am IS NULL "
+                "AND e.gueltig_bis > datetime('now')",
+                ((db_user.get("email") or "").lower(),)).fetchall()
+            for e in offene:
+                plan = billing.effektiver_plan(e)
+                sitze_max = billing.sitze_fuer_plan(plan)
+                if sitze_max is None:
+                    continue
+                belegt = int(conn.execute(
+                    "SELECT COUNT(*) FROM team_mitgliedschaften WHERE inhaber_id = ?",
+                    (e["inhaber_id"],)).fetchone()[0]) + 1
+                if belegt >= sitze_max:
+                    continue
+                conn.execute("INSERT OR IGNORE INTO team_mitgliedschaften (inhaber_id, mitglied_id) "
+                             "VALUES (?, ?)", (e["inhaber_id"], user_id))
+                conn.execute("UPDATE users SET aktiver_topf = ? WHERE id = ? AND aktiver_topf IS NULL",
+                             (e["inhaber_id"], user_id))
+                conn.execute("UPDATE team_einladungen SET eingeloest_am = datetime('now') WHERE id = ?",
+                             (e["id"],))
+            conn.execute("COMMIT")
+        except Exception:
+            try:
+                conn.execute("ROLLBACK")
+            except Exception:
+                pass
+            raise
+        finally:
+            conn.close()
+    except Exception:
+        logger.exception("Team-Beitritt nach Passwort-Setzen fehlgeschlagen (user=%s)", user_id)
+
+
 @app.post("/api/reset-password")
 async def do_reset_password(request: Request):
     data = await request.json()
@@ -848,8 +921,20 @@ async def do_reset_password(request: Request):
     if len(new_password) < 8:
         raise HTTPException(status_code=400, detail="Passwort muss mindestens 8 Zeichen lang sein")
 
+    # user_id VOR dem Einloesen merken (reset_password verbraucht den Token) —
+    # noetig fuer den automatischen Team-Beitritt eingeladener Neu-Konten.
+    conn = get_db()
+    try:
+        _pr = conn.execute("SELECT user_id FROM password_resets WHERE token = ?",
+                           (token,)).fetchone()
+    finally:
+        conn.close()
+
     if not reset_password(token, new_password):
         raise HTTPException(status_code=400, detail="Reset-Link ist ungueltig oder abgelaufen")
+
+    if _pr:
+        _team_beitritt_nach_passwort(int(_pr["user_id"]))
 
     return {"ok": True, "message": "Passwort wurde zurueckgesetzt. Sie koennen sich jetzt anmelden."}
 
@@ -901,7 +986,7 @@ async def admin_create_user(request: Request, user: dict = Depends(require_full_
     password = data.get("password", "")
     display_name = _normiere_display_name(data.get("display_name", ""))  # Befund 7: eine Zeile, max. 100
 
-    if not email or "@" not in email:
+    if not _email_plausibel(email):
         raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="Passwort muss mindestens 8 Zeichen lang sein")
@@ -1048,6 +1133,17 @@ async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(re
             geloest = cur.rowcount
             conn.execute("UPDATE users SET aktiver_topf = NULL WHERE aktiver_topf = ?",
                          (user_id,))
+        # Review-Befund K6 (06.08.): Downgrade zwischen Sitz-Plaenen (z. B.
+        # enterprise -> team) behaelt die Mitglieder bewusst — aber der Admin
+        # muss eine Ueberbelegung sehen, um von Hand zu trimmen (Einladen ist
+        # dann ohnehin gesperrt, Bestand arbeitet weiter).
+        ueberbelegt = 0
+        neuer_deckel = billing.sitze_fuer_plan(plan)
+        if neuer_deckel is not None:
+            belegt = int(conn.execute(
+                "SELECT COUNT(*) FROM team_mitgliedschaften WHERE inhaber_id = ?",
+                (user_id,)).fetchone()[0]) + 1
+            ueberbelegt = max(0, belegt - neuer_deckel)
         conn.commit()
     finally:
         conn.close()
@@ -1063,6 +1159,9 @@ async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(re
         msg += f" (gueltig bis {str(gueltig_bis)[:10]})"
     if geloest:
         msg += f" – {geloest} Team-Mitgliedschaften wurden gelöst"
+    if ueberbelegt:
+        msg += (f" – ACHTUNG: {ueberbelegt} Mitglieder über dem neuen Sitz-Deckel, "
+                "bitte über die Abo-Seite des Kunden entfernen")
     return {"ok": True, "message": msg, "plan": plan,
             "plan_gueltig_bis": gueltig_bis, "team_mitglieder_geloest": geloest}
 
@@ -1261,21 +1360,55 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
     sitze_max = billing.sitze_fuer_plan(plan)
     data = await request.json()
     email = (data.get("email") or "").strip().lower()
-    if not email or "@" not in email:
+    if not _email_plausibel(email):
         raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse eingeben")
     if email == (inhaber.get("email") or "").lower():
         raise HTTPException(status_code=400, detail="Du kannst dich nicht selbst einladen")
+    if email.rsplit("@", 1)[-1] in billing.WEGWERF_DOMAINS:
+        raise HTTPException(status_code=400,
+                            detail="Wegwerf-E-Mail-Adressen koennen nicht eingeladen werden")
 
-    # Sitz-Deckel je Plan (Team 5 / Enterprise 25, inkl. Inhaber). Beim
-    # EINLOESEN wird erneut geprueft, denn zwischen Einladung und Annahme
-    # koennen andere Eingeladene schneller gewesen sein.
-    if _team_sitze_belegt(inhaber["id"]) >= sitze_max:
+    # Einladungs-Bremse pro Inhaber (Sicherheits-Review 06.08.): begrenzt
+    # Mail-Versand an frei waehlbare Adressen. Nur Erfolge zaehlen.
+    _jetzt = time.time()
+    _einladung_attempts[inhaber["id"]] = [t for t in _einladung_attempts[inhaber["id"]]
+                                          if _jetzt - t < EINLADUNG_WINDOW_SECONDS]
+    if len(_einladung_attempts[inhaber["id"]]) >= MAX_EINLADUNGEN_PER_WINDOW:
+        raise HTTPException(status_code=429,
+                            detail="Zu viele Einladungen in kurzer Zeit. Bitte spaeter erneut versuchen")
+
+    # Sitz-Deckel je Plan (Team 5 / Enterprise 25, inkl. Inhaber): belegte
+    # Sitze PLUS offene Einladungen — sonst laedt man mehr ein, als beim
+    # Einloesen Platz haben. Verbindlich geprueft wird beim EINLOESEN.
+    conn = get_db()
+    try:
+        offene = int(conn.execute(
+            "SELECT COUNT(*) FROM team_einladungen WHERE inhaber_id = ? "
+            "AND eingeloest_am IS NULL AND gueltig_bis > datetime('now')",
+            (inhaber["id"],)).fetchone()[0])
+    finally:
+        conn.close()
+    if _team_sitze_belegt(inhaber["id"]) + offene >= sitze_max:
         raise HTTPException(
             status_code=400,
-            detail=f"Alle {sitze_max} Plätze deines Abos sind belegt. "
-                   "Mehr Nutzer gibt es in der nächsthöheren Abo-Stufe.")
+            detail=f"Alle {sitze_max} Plätze deines Abos sind belegt oder durch offene "
+                   "Einladungen reserviert. Mehr Nutzer gibt es in der nächsthöheren Abo-Stufe.")
 
     neutrale_antwort = {"ok": True, "message": "Einladung versandt"}
+
+    # Dedup (Sicherheits-Review 06.08.): pro (Inhaber, Adresse) hoechstens
+    # EINE offene Einladung — verhindert Mail-Wiederholung und Token-Wildwuchs.
+    # Antwort bleibt neutral.
+    conn = get_db()
+    try:
+        schon_offen = conn.execute(
+            "SELECT 1 FROM team_einladungen WHERE inhaber_id = ? AND email = ? "
+            "AND eingeloest_am IS NULL AND gueltig_bis > datetime('now')",
+            (inhaber["id"], email)).fetchone()
+    finally:
+        conn.close()
+    if schon_offen:
+        return neutrale_antwort
     # Befund 7: Anzeigename ist zwar an den Setz-Stellen normiert, im
     # Mail-HTML wird trotzdem escaped (Verteidigung in der Tiefe).
     inhaber_name = html.escape(inhaber["display_name"])
@@ -1322,12 +1455,18 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
 </body></html>"""
         # Betreff bewusst OHNE Nutzereingabe (Header-Injektionsflaeche, Befund 7).
         send_email(email, "Einladung in ein InkluDocs-Team", email_body, bcc_admin=False)
+        _einladung_attempts[inhaber["id"]].append(_jetzt)
         return neutrale_antwort
 
     # Unbekannte Adresse: Konto anlegen mit Zufallspasswort, das niemand je
-    # sieht — die Person wird per Mail gebeten, ihr Passwort zu setzen
-    # (= ihre Registrierung); die Team-Zuordnung ist dann schon da.
-    # Der Reset-Link ist 1h gueltig, danach hilft 'Passwort vergessen'.
+    # sieht. Die MITGLIEDSCHAFT entsteht bewusst NOCH NICHT (Sicherheits-
+    # Review 06.08.: sonst verriete die Team-Liste sofort, ob eine Adresse
+    # schon ein Konto hatte — E-Mail-Enumeration). Stattdessen wird eine
+    # Einladung mit konto_neu=1 hinterlegt; sobald die Person ihr Passwort
+    # setzt (= ihre Registrierung, Reset-Link aus der Mail), loest
+    # do_reset_password die Einladung automatisch ein — Sitz-Check dort
+    # atomar. Der Reset-Link ist 1h gueltig, danach hilft 'Passwort
+    # vergessen' (die Einladung selbst gilt 7 Tage).
     zufallspasswort = secrets.token_urlsafe(16)
     display_name = _normiere_display_name(data.get("display_name") or "") or email.split("@")[0]
     try:
@@ -1336,14 +1475,13 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
         # Bewusst KEIN Detail nach aussen (neutraler 500): auch der seltene
         # Anlage-Fehler darf nicht verraten, ob es die Adresse schon gab.
         raise HTTPException(status_code=500, detail="Einladung konnte nicht verarbeitet werden")
+    einladungs_token = secrets.token_urlsafe(32)
     conn = get_db()
     try:
-        # Konto entsteht ERST durch die Einladung — Mitgliedschaft und
-        # Arbeits-Kontext duerfen darum direkt gesetzt werden (niemandem
-        # wird etwas weggenommen, ein eigenes Abo existiert noch nicht).
-        conn.execute("INSERT OR IGNORE INTO team_mitgliedschaften (inhaber_id, mitglied_id) "
-                     "VALUES (?, ?)", (inhaber["id"], neu_id))
-        conn.execute("UPDATE users SET aktiver_topf = ? WHERE id = ?", (inhaber["id"], neu_id))
+        conn.execute(
+            "INSERT INTO team_einladungen (token, inhaber_id, email, gueltig_bis, konto_neu) "
+            "VALUES (?, ?, ?, datetime('now', '+7 days'), 1)",
+            (einladungs_token, inhaber["id"], email))
         conn.commit()
     finally:
         conn.close()
@@ -1355,8 +1493,8 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
 <html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
 <h1 style="color:#1b2a4a;">Einladung in ein InkluDocs-Team</h1>
 <p>Hallo {sicherer_name},</p>
-<p><strong>{inhaber_name}</strong> hat dich zu InkluDocs eingeladen und in {team_label} aufgenommen. InkluDocs ist ein KI-gestützter Alt-Text-Generator für barrierefreie Dokumente und Bilder — als Team-Mitglied arbeitet ihr aus einem gemeinsamen Credit-Kontingent.</p>
-<p>Du hast noch kein Konto bei uns. Zum Loslegen registrierst du dich einfach, indem du einmal dein persönliches Passwort setzt:</p>
+<p><strong>{inhaber_name}</strong> möchte dich bei InkluDocs in {team_label} aufnehmen. InkluDocs ist ein KI-gestützter Alt-Text-Generator für barrierefreie Dokumente und Bilder — als Team-Mitglied arbeitet ihr aus einem gemeinsamen Credit-Kontingent.</p>
+<p>Du hast noch kein Konto bei uns. Zum Loslegen registrierst du dich einfach, indem du einmal dein persönliches Passwort setzt — damit trittst du zugleich dem Team bei:</p>
 <p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Passwort festlegen und starten</a></p>
 <p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {reset_url}</p>
 <p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gültig. Danach kannst du auf <a href="{BASE_URL}">{BASE_URL}</a> jederzeit die Funktion „Passwort vergessen“ nutzen — dein Konto ist die Adresse {html.escape(email)}.</p>
@@ -1364,6 +1502,7 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
 <p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
 </body></html>"""
     send_email(email, "Einladung in ein InkluDocs-Team", email_body, bcc_admin=False)
+    _einladung_attempts[inhaber["id"]].append(_jetzt)
     return neutrale_antwort
 
 
@@ -1446,8 +1585,12 @@ async def team_einladung_annehmen(token: str, request: Request):
             # jederzeit auf der Abo-Seite.
             conn.execute("UPDATE users SET aktiver_topf = ? WHERE id = ?",
                          (einladung["inhaber_id"], db_user["id"]))
-        conn.execute("UPDATE team_einladungen SET eingeloest_am = datetime('now') WHERE id = ?",
-                     (einladung["id"],))
+        # ALLE offenen Einladungen dieses Paars einloesen (Sicherheits-Review
+        # 06.08.): sonst bliebe ein zweiter Token als Hintertuer offen, mit
+        # dem ein spaeter entferntes Mitglied ohne neue Einladung zurueckkommt.
+        conn.execute("UPDATE team_einladungen SET eingeloest_am = datetime('now') "
+                     "WHERE inhaber_id = ? AND email = ? AND eingeloest_am IS NULL",
+                     (einladung["inhaber_id"], einladung["email"]))
         conn.execute("COMMIT")
     finally:
         conn.close()
@@ -1486,6 +1629,10 @@ async def team_mitglied_entfernen(mitglied_id: int, user: dict = Depends(get_cur
         # zurueckfallen, aber die Oberflaeche zeigte einen toten Kontext.
         conn.execute("UPDATE users SET aktiver_topf = NULL WHERE id = ? AND aktiver_topf = ?",
                      (mitglied_id, inhaber["id"]))
+        # Offene Einladungen dieses Inhabers an die Person mitloeschen —
+        # ein alter Token darf nach dem Entfernen keine Rueckkehr-Tuer sein.
+        conn.execute("DELETE FROM team_einladungen WHERE inhaber_id = ? AND email = ? "
+                     "AND eingeloest_am IS NULL", (inhaber["id"], ziel["email"]))
         conn.commit()
     finally:
         conn.close()
@@ -1649,34 +1796,60 @@ def _kv_einmal(key: str) -> bool:
         conn.close()
 
 
+# Prozesslokaler Schnell-Merker (Review-Befund 06.08.): /api/me soll nicht
+# bei jedem Aufruf einen Thread + SQLite-Schreibzugriff erzeugen. Erst wenn
+# der Prozess den heutigen Lauf noch nicht gesehen hat, wird ueberhaupt
+# gestartet; den Rest entscheidet der atomare system_kv-Claim.
+_tageslauf_lock = threading.Lock()
+_tageslauf_datum = None
+
+
+def _abo_tageslauf_noetig() -> bool:
+    heute = datetime.utcnow().strftime("%Y-%m-%d")
+    return _tageslauf_datum != heute
+
+
 def _abo_tageslauf() -> None:
     """Taeglicher Abo-Lauf (Erinnerungen, Auto-Verlaengerungen), max. 1x/Tag.
 
     Atomarer Tages-Claim ueber system_kv: von zwei parallelen Anstoessen
-    arbeitet nur einer. Fehler je Konto werden geloggt und geschluckt.
+    arbeitet nur einer; der Prozess-Merker verhindert danach jeden weiteren
+    Anlauf des Tages. Fehler je Konto werden geloggt und geschluckt.
     """
+    global _tageslauf_datum
     try:
         heute = datetime.utcnow().strftime("%Y-%m-%d")
-        conn = get_db()
-        try:
-            claimed = conn.execute(
-                "UPDATE system_kv SET value = ?, updated_at = datetime('now') "
-                "WHERE key = 'abo_tageslauf' AND value != ?", (heute, heute)).rowcount
-            if not claimed:
+        with _tageslauf_lock:
+            if _tageslauf_datum == heute:
+                return
+            conn = get_db()
+            try:
                 claimed = conn.execute(
-                    "INSERT OR IGNORE INTO system_kv (key, value) VALUES ('abo_tageslauf', ?)",
-                    (heute,)).rowcount
-            conn.commit()
-            if not claimed:
-                return  # heute schon gelaufen (oder ein Parallel-Thread hat uebernommen)
-            faellige = conn.execute(
-                "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, "
-                "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
-                "FROM users WHERE plan IN ('single', 'team', 'enterprise') "
-                "AND plan_gueltig_bis IS NOT NULL "
-                "AND date(plan_gueltig_bis) <= date('now', '+14 days')").fetchall()
-        finally:
-            conn.close()
+                    "UPDATE system_kv SET value = ?, updated_at = datetime('now') "
+                    "WHERE key = 'abo_tageslauf' AND value != ?", (heute, heute)).rowcount
+                if not claimed:
+                    claimed = conn.execute(
+                        "INSERT OR IGNORE INTO system_kv (key, value) VALUES ('abo_tageslauf', ?)",
+                        (heute,)).rowcount
+                conn.commit()
+                # Ob WIR den Claim haben oder ein anderer Prozess: fuer diesen
+                # Prozess ist der Tag damit erledigt.
+                _tageslauf_datum = heute
+                if not claimed:
+                    return
+                # Untergrenze -62 Tage (Review-Befund K5): laengst abgelaufene
+                # Bestandskonten werden weder taeglich durchgekaut noch beim
+                # Erst-Deploy mit Abschieds-Mails geflutet; die Verlaengerungs-
+                # Aufholung deckt trotzdem bis zu zwei Monate Server-Pause.
+                faellige = conn.execute(
+                    "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, "
+                    "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
+                    "FROM users WHERE plan IN ('single', 'team', 'enterprise') "
+                    "AND plan_gueltig_bis IS NOT NULL "
+                    "AND date(plan_gueltig_bis) <= date('now', '+14 days') "
+                    "AND date(plan_gueltig_bis) >= date('now', '-62 days')").fetchall()
+            finally:
+                conn.close()
         for k in faellige:
             try:
                 _abo_konto_pruefen(dict(k), heute)
@@ -1698,7 +1871,10 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
         # Noch nicht abgelaufen -> Erinnerung (einmal pro Periode).
         if not _kv_einmal(f"abo_mail_erinnerung_{k['id']}_{ablauf}"):
             return
-        if auto:
+        # Review-Befund K2: "verlaengert sich automatisch" nur versprechen,
+        # wenn die Verlaengerung auch ausgefuehrt wird (auto UND Laufzeit) —
+        # sonst ehrlich das Ende ankuendigen.
+        if auto and laufzeit:
             saetze = [f"Hallo {name},",
                       f"dein {plan_name}-Abo bei InkluDocs erreicht am {ablauf} das Laufzeitende "
                       f"und verlängert sich dann automatisch"
@@ -1716,7 +1892,7 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                        "Stripe-Kunden bucht die Online-Zahlung, sobald sie live ist."])
         else:
             saetze = [f"Hallo {name},",
-                      f"dein {plan_name}-Abo bei InkluDocs ist gekündigt und endet am {ablauf}. "
+                      f"dein {plan_name}-Abo bei InkluDocs endet am {ablauf}. "
                       "Bis dahin kannst du es ganz normal weiter nutzen.",
                       "Danach wechselt dein Konto automatisch auf den Free-Plan — deine Projekte "
                       "und Daten bleiben vollständig erhalten. Gekaufte Zusatz-Credits ruhen und "
@@ -1757,8 +1933,11 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
         return
 
     # Abgelaufen ohne Verlaengerung: der Lazy-Rueckfall in billing macht das
-    # Konto bereits zu Free — hier nur die Abschieds-Mail (einmalig).
-    if _kv_einmal(f"abo_mail_abgelaufen_{k['id']}_{ablauf}"):
+    # Konto bereits zu Free — hier nur die Abschieds-Mail (einmalig, und nur
+    # bei FRISCHEM Ablauf: Bestandskonten, die laengst ausgelaufen sind,
+    # sollen beim Erst-Deploy keine verspaeteten Mails bekommen — Befund K5).
+    frisch_ab = (datetime.utcnow() - timedelta(days=14)).strftime("%Y-%m-%d")
+    if ablauf >= frisch_ab and _kv_einmal(f"abo_mail_abgelaufen_{k['id']}_{ablauf}"):
         _abo_mail(k["email"], "InkluDocs: Dein Abo ist beendet",
                   "Dein Abo ist beendet",
                   [f"Hallo {name},",
@@ -1803,17 +1982,27 @@ async def admin_paket_anlegen(user_id: int, request: Request,
     target = get_user_by_id(user_id)
     if not target:
         raise HTTPException(status_code=404, detail="User nicht gefunden")
-    # Pakete gehoeren dem ABRECHNUNGS-Konto: arbeitet das Ziel gerade im
-    # Team-Kontext, landet das Paket beim Topf-Inhaber (billing._konto_fuer
-    # validiert Mitgliedschaft + aktiven Plan).
-    konto_id = billing._konto_fuer(target["id"])
+    # Review-Befund K1 (06.08.): Das Paket gehoert IMMER genau dem Konto, das
+    # der Admin angegeben hat — NICHT dem fluechtigen Arbeits-Kontext
+    # (aktiver_topf ist jederzeit umschaltbar; die Gutschrift eines Kaeufers
+    # darf nie beim fremden Team-Inhaber landen, nur weil der Kaeufer gerade
+    # dort arbeitet). Team-Pakete legt der Admin direkt auf die E-Mail des
+    # Team-Inhabers.
+    konto_id = target["id"]
+    # Review-Befund K4: Kuendigungs-Pakete (verfaellt_am NULL) sind nur bei
+    # aktivem Bezahl-Plan nutzbar — fuer ein effektiv freies Konto waeren die
+    # Credits unsichtbar. Kulanz/Free bekommt automatisch ein Datums-Paket.
+    hinweis = ""
+    if verfall_monate is None and billing.effektiver_plan(target) == "free":
+        verfall_monate = 12
+        hinweis = " (Konto ohne aktives Abo: Paket verfaellt in 12 Monaten statt bei Kuendigung)"
     paket_id = billing.schenke_credits(konto_id, groesse, notiz=notiz,
                                        quelle=quelle, verfall_monate=verfall_monate)
     preis = billing.PAKET_PREISE.get(groesse)
     return {"ok": True, "paket_id": paket_id, "konto_user_id": konto_id,
             "groesse": groesse, "preis_eur": preis,
             "verfall": "kuendigung" if verfall_monate is None else f"{verfall_monate} Monate",
-            "message": f"Paket ({groesse} Credits) fuer {target['email']} angelegt"}
+            "message": f"Paket ({groesse} Credits) fuer {target['email']} angelegt{hinweis}"}
 
 
 # ─── API Key Management ─────────────────────────────────────

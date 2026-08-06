@@ -2704,3 +2704,11 @@ msgstr "{belegt} af {max} pladser optaget (inklusive dig som ejer)."
 
 msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
 msgstr "{preis} € pr. måned, inklusive {credits} credits — mængderabat allerede indregnet."
+
+# ── Review-Fixes Abomodell (06.08.2026 abends) ──
+
+msgid "Benutzerliste konnte nicht geladen werden. Bitte erneut versuchen."
+msgstr "Brugerlisten kunne ikke indlæses. Prøv igen."
+
+msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten."
+msgstr "Pakker: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Pakken lander på præcis denne konto — for team-saldi angives team-ejerens e-mail. Den udløber først ved opsigelse; for konti uden aktivt abonnement efter 12 måneder."

@@ -228,11 +228,18 @@ def _domain_monats_verbrauch(domain: str, conn=None) -> int:
     if eigene_conn:
         conn = get_db()
     try:
+        # Review-Befund 06.08.: Filter auf den EFFEKTIVEN Plan heben — ein
+        # abgelaufener Bezahl-Plan (users.plan bleibt beim Lazy-Rueckfall
+        # stehen) zaehlt als Free und muss in der Domain-Summe mitzaehlen,
+        # sonst misst pruefe_kontingent ihn am Pool, den seine eigenen
+        # Ereignisse nie fuellen (Gratis-Loch nach jeder Kuendigung).
         row = conn.execute(
             "SELECT COALESCE(SUM(e.credits), 0) FROM usage_events e "
             "JOIN users u ON u.id = e.konto_user_id "
             "WHERE substr(u.email, instr(u.email, '@') + 1) = ? "
-            "AND COALESCE(u.plan, 'free') = 'free' AND u.is_admin = 0 "
+            "AND (COALESCE(u.plan, 'free') = 'free' "
+            "     OR (u.plan_gueltig_bis IS NOT NULL AND date(u.plan_gueltig_bis) < date('now'))) "
+            "AND u.is_admin = 0 "
             "AND e.created_at >= date('now', 'start of month')",
             (domain,),
         ).fetchone()

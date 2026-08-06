@@ -101,7 +101,7 @@
 
       <section class="dash-card" aria-labelledby="paket-h" id="paketSection">
         <h2 id="paket-h">{{ _('Zusatz-Credits gutschreiben (Rechnungsweg)') }}</h2>
-        <p class="dash-sub">{{ _('Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf dem Abrechnungs-Konto (bei Team-Mitgliedern beim Inhaber) und verfällt erst mit der Kündigung.') }}</p>
+        <p class="dash-sub">{{ _('Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten.') }}</p>
         <form id="paketForm" novalidate>
           <div class="dash-field">
             <label for="paketEmail">{{ _('E-Mail des bestehenden Kontos') }}</label>
@@ -345,9 +345,15 @@
   async function findeKontoId(email) {
     // Konto per E-Mail aus der Benutzerliste suchen (Admin-Kontext — die
     // Liste liegt ohnehin auf dieser Seite offen, keine Enumeration-Frage).
-    const res = await fetch('/api/admin/users');
-    if (!res.ok) return null;
-    const data = await res.json();
+    // Ladefehler werden von "kein Treffer" unterschieden, sonst legt der
+    // Admin bei einem Netzproblem versehentlich ein Duplikat an.
+    let res;
+    try {
+      res = await fetch('/api/admin/users');
+    } catch (e) { return 'LADEFEHLER'; }
+    if (!res.ok) return 'LADEFEHLER';
+    const data = await res.json().catch(() => null);
+    if (!data) return 'LADEFEHLER';
     const ziel = (data.users || []).find(
       (u) => (u.email || '').toLowerCase() === email.toLowerCase());
     return ziel ? ziel.id : null;
@@ -362,6 +368,10 @@
     const email = byId('aboEmail').value.trim();
     if (!email) { byId('aboEmail').focus(); return; }
     const kontoId = await findeKontoId(email);
+    if (kontoId === 'LADEFEHLER') {
+      err.textContent = t('Benutzerliste konnte nicht geladen werden. Bitte erneut versuchen.');
+      return;
+    }
     if (!kontoId) {
       err.textContent = t('Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“.');
       return;
@@ -394,6 +404,10 @@
     const email = byId('paketEmail').value.trim();
     if (!email) { byId('paketEmail').focus(); return; }
     const kontoId = await findeKontoId(email);
+    if (kontoId === 'LADEFEHLER') {
+      err.textContent = t('Benutzerliste konnte nicht geladen werden. Bitte erneut versuchen.');
+      return;
+    }
     if (!kontoId) {
       err.textContent = t('Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“.');
       return;

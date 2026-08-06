@@ -3013,3 +3013,11 @@ msgstr "{belegt} places sur {max} occupées (toi compris en tant que propriétai
 
 msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
 msgstr "{preis} € par mois, {credits} crédits inclus — remise de volume déjà comprise."
+
+# ── Review-Fixes Abomodell (06.08.2026 abends) ──
+
+msgid "Benutzerliste konnte nicht geladen werden. Bitte erneut versuchen."
+msgstr "La liste des utilisateurs n’a pas pu être chargée. Réessaie."
+
+msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten."
+msgstr "Packs : 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Le pack est crédité exactement sur ce compte — pour un crédit d’équipe, indiquer l’e-mail du propriétaire de l’équipe. Il n’expire qu’à la résiliation ; pour les comptes sans abonnement actif, après 12 mois."
