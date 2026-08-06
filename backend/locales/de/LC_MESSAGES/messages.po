@@ -2840,3 +2840,179 @@ msgstr ""
 #: Lizenz-Admin+Preisseite 04.08.2026
 msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
 msgstr ""
+
+# ── Neues Abomodell (06.08.2026): Single/Team/Enterprise, Kontext-Umschalter ──
+
+msgid "12 Monate"
+msgstr ""
+
+msgid "3 Monate"
+msgstr ""
+
+msgid "6 Monate"
+msgstr ""
+
+msgid "Abo kündigen"
+msgstr ""
+
+msgid "Abo kündigen?"
+msgstr ""
+
+msgid "Abo wurde zugewiesen."
+msgstr ""
+
+msgid "Abo zuweisen"
+msgstr ""
+
+msgid "Abo zuweisen (Rechnungsweg)"
+msgstr ""
+
+msgid "Alle Abos werden fest für {laufzeiten} Monate gebucht — keine monatliche Abbuchung."
+msgstr ""
+
+msgid "Aus welchem Guthaben möchtest du arbeiten? Die Wahl gilt für alles, was Credits kostet."
+msgstr ""
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App."
+msgstr ""
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf."
+msgstr ""
+
+msgid "Credits wurden gutgeschrieben."
+msgstr ""
+
+msgid "Dein Abo"
+msgstr ""
+
+msgid "Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten."
+msgstr ""
+
+msgid "Dein Team"
+msgstr ""
+
+msgid "Dein eigener Plan: {plan}"
+msgstr ""
+
+msgid "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch."
+msgstr ""
+
+msgid "Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an."
+msgstr ""
+
+msgid "Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan})."
+msgstr ""
+
+msgid "Du arbeitest jetzt aus deinem eigenen Guthaben."
+msgstr ""
+
+msgid "Du arbeitest jetzt aus dem Guthaben: {team}."
+msgstr ""
+
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du unten per E-Mail — bald auch direkt online."
+msgstr ""
+
+msgid "Free (Abo beenden)"
+msgstr ""
+
+msgid "Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen."
+msgstr ""
+
+msgid "Für eine Person — das Abo gehört fest zu deinem Konto."
+msgstr ""
+
+msgid "Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free."
+msgstr ""
+
+msgid "Gekündigt. Dein Abo läuft bis {datum} und endet dann."
+msgstr ""
+
+msgid "Guthaben wählen"
+msgstr ""
+
+msgid "Gutschreiben"
+msgstr ""
+
+msgid "Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“."
+msgstr ""
+
+msgid "Kündigung zurücknehmen"
+msgstr ""
+
+msgid "Laufzeit"
+msgstr ""
+
+msgid "Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch."
+msgstr ""
+
+msgid "Laufzeiten"
+msgstr ""
+
+msgid "Mein eigenes Guthaben (Plan {plan})"
+msgstr ""
+
+msgid "Mitglieder"
+msgstr ""
+
+msgid "Notiz (z. B. Rechnungsnummer)"
+msgstr ""
+
+msgid "Ohne Kündigung verlängert sich das Abo automatisch um die gebuchte Laufzeit; kündigen kannst du jederzeit zum Laufzeitende, direkt in der App."
+msgstr ""
+
+msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf dem Abrechnungs-Konto (bei Team-Mitgliedern beim Inhaber) und verfällt erst mit der Kündigung."
+msgstr ""
+
+msgid "Paketgröße (Credits)"
+msgstr ""
+
+msgid "Plan"
+msgstr ""
+
+msgid "Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr ""
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Guthaben und wird per E-Mail informiert."
+msgstr ""
+
+msgid "Team von {inhaber}"
+msgstr ""
+
+msgid "Team „{name}“ von {inhaber}"
+msgstr ""
+
+msgid "Teamname (wird deinen Mitgliedern angezeigt)"
+msgstr ""
+
+msgid "Teamname gespeichert."
+msgstr ""
+
+msgid "Teamnamen speichern"
+msgstr ""
+
+msgid "Verlängert sich am {datum} automatisch."
+msgstr ""
+
+msgid "Verlängert sich automatisch (Kunde kann jederzeit kündigen)"
+msgstr ""
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange dein Abo läuft — die monatlichen Credits kommen immer obendrauf. Mehr Nutzer im Team erhöhen das Kontingent nicht; mehr Credits gibt es über die Pakete."
+msgstr ""
+
+msgid "Zum Laufzeitende kündigen"
+msgstr ""
+
+msgid "Zusatz-Credits gutschreiben (Rechnungsweg)"
+msgstr ""
+
+msgid "diesen Monat aus dem Team-Topf: {anzahl} Credits"
+msgstr ""
+
+msgid "du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet."
+msgstr ""
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber)."
+msgstr ""
+
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
+msgstr ""

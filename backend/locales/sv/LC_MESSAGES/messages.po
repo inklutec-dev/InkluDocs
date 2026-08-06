@@ -2398,3 +2398,179 @@ msgstr "Onlinebetalning byggs in just nu. Tills dess räcker ett mejl till"
 #: Lizenz-Admin+Preisseite 04.08.2026
 msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
 msgstr "du får en faktura och din licensnyckel, som fungerar direkt."
+
+# ── Neues Abomodell (06.08.2026): Single/Team/Enterprise, Kontext-Umschalter ──
+
+msgid "12 Monate"
+msgstr "12 månader"
+
+msgid "3 Monate"
+msgstr "3 månader"
+
+msgid "6 Monate"
+msgstr "6 månader"
+
+msgid "Abo kündigen"
+msgstr "Säg upp abonnemanget"
+
+msgid "Abo kündigen?"
+msgstr "Säga upp abonnemanget?"
+
+msgid "Abo wurde zugewiesen."
+msgstr "Abonnemanget har tilldelats."
+
+msgid "Abo zuweisen"
+msgstr "Tilldela abonnemang"
+
+msgid "Abo zuweisen (Rechnungsweg)"
+msgstr "Tilldela abonnemang (faktura)"
+
+msgid "Alle Abos werden fest für {laufzeiten} Monate gebucht — keine monatliche Abbuchung."
+msgstr "Alla abonnemang tecknas fast för {laufzeiten} månader — ingen månadsdebitering."
+
+msgid "Aus welchem Guthaben möchtest du arbeiten? Die Wahl gilt für alles, was Credits kostet."
+msgstr "Vilket saldo vill du arbeta från? Valet gäller allt som kostar krediter."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App."
+msgstr "Upp till {n} användare (inklusive ägaren) arbetar från en gemensam kreditpott — bjud in enkelt via e-post direkt i appen."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf."
+msgstr "Upp till {n} användare (inklusive ägaren) delar den gemensamma kreditpotten."
+
+msgid "Credits wurden gutgeschrieben."
+msgstr "Krediterna har lagts till."
+
+msgid "Dein Abo"
+msgstr "Ditt abonnemang"
+
+msgid "Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten."
+msgstr "Ditt abonnemang fortsätter som vanligt till {datum} och avslutas sedan i stället för att förnyas. Dina projekt och data finns kvar."
+
+msgid "Dein Team"
+msgstr "Ditt team"
+
+msgid "Dein eigener Plan: {plan}"
+msgstr "Din egen plan: {plan}"
+
+msgid "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch."
+msgstr "Uppsägningen har återkallats — ditt abonnemang förnyas automatiskt igen."
+
+msgid "Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an."
+msgstr "Personen får ett e-postmeddelande och bekräftar själv sitt deltagande. Om personen inte har något konto skapar inbjudan ett."
+
+msgid "Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan})."
+msgstr "Du arbetar just nu från det gemensamma saldot: {team} (plan {plan})."
+
+msgid "Du arbeitest jetzt aus deinem eigenen Guthaben."
+msgstr "Du arbetar nu från ditt eget saldo."
+
+msgid "Du arbeitest jetzt aus dem Guthaben: {team}."
+msgstr "Du arbetar nu från saldot: {team}."
+
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du unten per E-Mail — bald auch direkt online."
+msgstr "Du använder den kostnadsfria Free-planen. Ett abonnemang med fler krediter bokar du nedan via e-post — snart även direkt online."
+
+msgid "Free (Abo beenden)"
+msgstr "Free (avsluta abonnemang)"
+
+msgid "Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen."
+msgstr "För beställningar mot faktura: sök kontot via e-post, ange plan och löptid. Kunden informeras via e-post och kan när som helst säga upp själv."
+
+msgid "Für eine Person — das Abo gehört fest zu deinem Konto."
+msgstr "För en person — abonnemanget är knutet till ditt konto."
+
+msgid "Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free."
+msgstr "Uppsagt — löper till {datum}, därefter byter ditt konto till Free."
+
+msgid "Gekündigt. Dein Abo läuft bis {datum} und endet dann."
+msgstr "Uppsagt. Ditt abonnemang löper till {datum} och avslutas sedan."
+
+msgid "Guthaben wählen"
+msgstr "Välj saldo"
+
+msgid "Gutschreiben"
+msgstr "Lägg till"
+
+msgid "Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“."
+msgstr "Inget konto med den här e-postadressen. Använd först ”Skapa ny användare” ovan."
+
+msgid "Kündigung zurücknehmen"
+msgstr "Ångra uppsägningen"
+
+msgid "Laufzeit"
+msgstr "Löptid"
+
+msgid "Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch."
+msgstr "Löptid: {monate} månader, förnyas automatiskt den {datum}."
+
+msgid "Laufzeiten"
+msgstr "Löptider"
+
+msgid "Mein eigenes Guthaben (Plan {plan})"
+msgstr "Mitt eget saldo (plan {plan})"
+
+msgid "Mitglieder"
+msgstr "Medlemmar"
+
+msgid "Notiz (z. B. Rechnungsnummer)"
+msgstr "Anteckning (t.ex. fakturanummer)"
+
+msgid "Ohne Kündigung verlängert sich das Abo automatisch um die gebuchte Laufzeit; kündigen kannst du jederzeit zum Laufzeitende, direkt in der App."
+msgstr "Utan uppsägning förnyas abonnemanget automatiskt med den bokade löptiden; du kan när som helst säga upp till periodens slut, direkt i appen."
+
+msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf dem Abrechnungs-Konto (bei Team-Mitgliedern beim Inhaber) und verfällt erst mit der Kündigung."
+msgstr "Paket: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Paketet hamnar på faktureringskontot (för teammedlemmar hos ägaren) och förfaller först vid uppsägning."
+
+msgid "Paketgröße (Credits)"
+msgstr "Paketstorlek (krediter)"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Boka eller byt plan, eller fyll på krediter: onlinebetalningen byggs just nu. Tills dess räcker ett mejl till"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Guthaben und wird per E-Mail informiert."
+msgstr "Ska ”{name}” verkligen tas bort från teamet? Personen arbetar därefter från sitt eget saldo igen och informeras via e-post."
+
+msgid "Team von {inhaber}"
+msgstr "Team av {inhaber}"
+
+msgid "Team „{name}“ von {inhaber}"
+msgstr "Team ”{name}” av {inhaber}"
+
+msgid "Teamname (wird deinen Mitgliedern angezeigt)"
+msgstr "Teamnamn (visas för dina medlemmar)"
+
+msgid "Teamname gespeichert."
+msgstr "Teamnamnet har sparats."
+
+msgid "Teamnamen speichern"
+msgstr "Spara teamnamn"
+
+msgid "Verlängert sich am {datum} automatisch."
+msgstr "Förnyas automatiskt den {datum}."
+
+msgid "Verlängert sich automatisch (Kunde kann jederzeit kündigen)"
+msgstr "Förnyas automatiskt (kunden kan när som helst säga upp)"
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange dein Abo läuft — die monatlichen Credits kommen immer obendrauf. Mehr Nutzer im Team erhöhen das Kontingent nicht; mehr Credits gibt es über die Pakete."
+msgstr "Om månadskrediterna inte räcker: köp helt enkelt fler. Köpta krediter förfaller inte så länge ditt abonnemang är aktivt — månadskrediterna kommer alltid utöver. Fler användare i teamet ökar inte kvoten; fler krediter får du via paketen."
+
+msgid "Zum Laufzeitende kündigen"
+msgstr "Säg upp till periodens slut"
+
+msgid "Zusatz-Credits gutschreiben (Rechnungsweg)"
+msgstr "Lägg till extra krediter (faktura)"
+
+msgid "diesen Monat aus dem Team-Topf: {anzahl} Credits"
+msgstr "denna månad från teampotten: {anzahl} krediter"
+
+msgid "du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet."
+msgstr "du får en faktura och ditt abonnemang aktiveras direkt."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber)."
+msgstr "{belegt} av {max} platser upptagna (inklusive du som ägare)."
+
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
+msgstr "{preis} € per månad, inklusive {credits} krediter — mängdrabatt redan inräknad."

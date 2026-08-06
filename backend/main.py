@@ -6,7 +6,8 @@ import csv
 import asyncio
 import html  # Review-Befund 7 (31.07.2026): Nutzereingaben in Mail-HTML escapen
 import secrets
-import sqlite3  # Lizenzschluessel: IntegrityError beim Neu-Wuerfeln abfangen
+import sqlite3
+import threading  # Abo-Tageslauf (Erinnerungen/Verlaengerungen) ohne Cron
 import time
 import io
 from collections import defaultdict
@@ -20,9 +21,15 @@ from email.mime.multipart import MIMEMultipart
 import httpx
 from bs4 import BeautifulSoup
 
+import logging
+
 import absender  # Sicherheitspaket 04.08.2026: echte Besucher-IP hinter dem Proxy (X-Forwarded-For von RECHTS)
 import billing  # Abo-/Credit-System Etappe 1: zentrale Verbrauchs-Zaehlung (backend/ABRECHNUNG.md)
 import demo as demo_mod  # Demo-Modus (oeffentliche Kostprobe ohne Anmeldung) — nur aktiv bei DEMO_MODE=on
+
+# Abo-System (06.08.2026): Fehler in Mail-/Tageslauf-Pfaden landen im Log,
+# nie beim Nutzer — gleiche Nie-Crashen-Philosophie wie billing.
+logger = logging.getLogger("inkludocs")
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -189,13 +196,6 @@ _register_attempts = defaultdict(list)
 MAX_REGISTRATIONS_PER_WINDOW = 5
 REGISTER_WINDOW_SECONDS = 3600  # 1 Stunde
 
-# Bremse fuers Lizenzschluessel-Raten (Review-Befund 04.08. abends): Der
-# Schluesselraum (31^12) ist praktisch unratbar und der Endpunkt braucht ein
-# Login — die Bremse ist Guertel UND Hosentraeger. Gezaehlt werden nur
-# FEHLGESCHLAGENE Eingaben unbekannter Schluessel, pro Konto.
-_lizenz_attempts = defaultdict(list)
-MAX_LIZENZ_ATTEMPTS = 10
-LIZENZ_WINDOW_SECONDS = 600  # 10 Minuten
 
 # Rate limiting for API (per API key)
 _api_rate_minute = defaultdict(list)  # key_id -> [timestamps]
@@ -620,43 +620,53 @@ async def me(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=401, detail="User nicht gefunden")
     daily_used = get_daily_image_count(db_user["id"])
 
-    # Abo & Verbrauch (Etappe 2, 31.07.2026): Zahlen IMMER fuer das
-    # AUFGELOESTE Abrechnungs-Konto — ein Team-Mitglied sieht den
-    # gemeinsamen Team-Topf des Inhabers, keinen eigenen (leeren) Zaehler.
-    # Quelle ist billing.pruefe_kontingent (eine Wahrheit fuer Anzeige UND Sperre).
+    # Abo-Tageslauf (06.08.2026): Erinnerungen + Auto-Verlaengerungen ohne
+    # Cron — laeuft hoechstens 1x/Tag, im Hintergrund-Thread (Mails!).
+    try:
+        threading.Thread(target=_abo_tageslauf, daemon=True).start()
+    except Exception:
+        pass
+
+    # Abo & Verbrauch: Zahlen IMMER fuer den AKTIVEN Topf (Kontext-
+    # Umschalter, 06.08.2026) — ein Mitglied, das gerade im Team-Kontext
+    # arbeitet, sieht den gemeinsamen Topf; im eigenen Kontext das eigene
+    # Abo. Quelle billing.pruefe_kontingent (eine Wahrheit fuer Anzeige UND
+    # Sperre) — pruefe_kontingent loest den Kontext selbst auf.
     abo_info = billing.pruefe_kontingent(db_user["id"])
-    abo_owner_id = db_user.get("abo_owner_id")
-    team_inhaber = None
-    if abo_owner_id:
-        _inhaber = get_user_by_id(abo_owner_id)
-        team_inhaber = _inhaber["display_name"] if _inhaber else None
+    konto_id = billing._konto_fuer(db_user["id"])
+
+    # Verfuegbare Kontexte: eigenes Abo + jede Team-/Enterprise-
+    # Mitgliedschaft mit AKTIVEM Plan des Inhabers (abgelaufene Teams
+    # werden nicht angeboten — dort kann man nicht arbeiten).
+    eigener_plan = billing.effektiver_plan(db_user)
+    kontexte = [{"topf": "eigen", "plan": eigener_plan}]
+    conn = get_db()
+    try:
+        _rows = conn.execute(
+            "SELECT u.id, u.display_name, u.team_name, u.plan, u.plan_gueltig_bis "
+            "FROM team_mitgliedschaften m JOIN users u ON u.id = m.inhaber_id "
+            "WHERE m.mitglied_id = ? ORDER BY u.display_name COLLATE NOCASE",
+            (db_user["id"],)).fetchall()
+    finally:
+        conn.close()
+    aktives_team = None
+    for _r in _rows:
+        _plan = billing.effektiver_plan(_r)
+        if _plan not in billing.PLAN_SITZE:
+            continue
+        _eintrag = {
+            "topf": _r["id"],
+            "plan": _plan,
+            "team_name": _r["team_name"] or "",
+            "inhaber_name": _r["display_name"],
+        }
+        kontexte.append(_eintrag)
+        if konto_id == _r["id"]:
+            aktives_team = _eintrag
+
     _verfuegbar = abo_info.get("verfuegbar_monat")
     _verbraucht = abo_info.get("verbraucht", 0)
-
-    # Lizenzschluessel-Modell (04.08.2026): Konten im Lizenz-Topf bekommen die
-    # Lizenz-Eckdaten mitgeliefert. Den SCHLUESSEL selbst sieht nur der
-    # Inhaber (er gibt ihn im Unternehmen weiter); Mitglieder sehen Domain
-    # und Laufzeit.
-    lizenz_info = None
-    if abo_info.get("plan") == "lizenz":
-        _konto_id = abo_owner_id or db_user["id"]
-        conn = get_db()
-        try:
-            _lk = conn.execute(
-                "SELECT schluessel, domain, gueltig_bis, inhaber_user_id "
-                "FROM lizenzschluessel WHERE inhaber_user_id = ? AND status = 'aktiv' "
-                "ORDER BY aktiviert_am DESC LIMIT 1",
-                (_konto_id,),
-            ).fetchone()
-        finally:
-            conn.close()
-        if _lk:
-            lizenz_info = {
-                "domain": _lk["domain"],
-                "gueltig_bis": (_lk["gueltig_bis"] or "")[:10],
-                "schluessel": (_lk["schluessel"]
-                               if _lk["inhaber_user_id"] == db_user["id"] else None),
-            }
+    _av = db_user.get("auto_verlaengerung")
 
     return {
         "ok": True,
@@ -675,9 +685,25 @@ async def me(user: dict = Depends(get_current_user)):
             "remaining": max(0, DAILY_IMAGE_LIMIT - daily_used),
         },
         "abo": {
+            # Plan des AKTIVEN Topfs (danach richten sich die Credit-Zeilen).
             "plan": abo_info.get("plan", "free"),
-            "ist_team_mitglied": bool(abo_owner_id),
-            "team_inhaber": team_inhaber,
+            # Kontext-Umschalter: was ist gerade aktiv, was ist waehlbar.
+            "aktiver_topf": "eigen" if aktives_team is None else aktives_team["topf"],
+            "aktives_team": aktives_team,
+            "kontexte": kontexte,
+            # Eckdaten des EIGENEN Plans — Kuendigung/Laufzeit betreffen immer
+            # das eigene Abo, nie ein Team, in dem man nur Mitglied ist.
+            "eigen": {
+                "plan": eigener_plan,
+                "gueltig_bis": (db_user.get("plan_gueltig_bis") or "")[:10] or None,
+                "laufzeit_monate": db_user.get("plan_laufzeit_monate"),
+                "auto_verlaengerung": bool(1 if _av is None else _av),
+                "ist_topf_inhaber": eigener_plan in billing.PLAN_SITZE,
+                "team_name": db_user.get("team_name") or "",
+            },
+            # kompatibel zu Dashboard/App-Shell (Team-Zeile):
+            "ist_team_mitglied": aktives_team is not None,
+            "team_inhaber": aktives_team["inhaber_name"] if aktives_team else None,
             "kontingent": abo_info.get("kontingent"),
             "uebertrag": abo_info.get("uebertrag", 0),
             "verfuegbar_monat": _verfuegbar,
@@ -685,7 +711,6 @@ async def me(user: dict = Depends(get_current_user)):
             "rest": None if _verfuegbar is None else max(0, _verfuegbar - _verbraucht),
             "pakete_rest": abo_info.get("pakete_rest", 0),
             "zeitraum_ende": abo_info.get("zeitraum_ende"),
-            "lizenz": lizenz_info,
             # Punkt 2 (04.08.2026): Free-Volumen ist bei Firmen-Domains
             # gebuendelt — die Oberflaeche sagt dann ehrlich, dass der
             # Verbrauch fuer die ganze Domain gilt.
@@ -953,46 +978,91 @@ async def admin_delete_user(user_id: int, user: dict = Depends(require_full_admi
 
 @app.post("/api/admin/users/{user_id}/plan")
 async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(require_full_admin)):
-    """Admin: Abo-Plan (+ optionales Ablaufdatum) eines Kontos setzen."""
+    """Admin: Abo-Plan eines Kontos setzen — der Rechnungsweg (Actino/INKLUTEC).
+
+    Neues Abomodell (06.08.2026): Bezahl-Plaene werden fest fuer 3/6/12
+    Monate gebucht (laufzeit_monate); gueltig_bis errechnet sich daraus.
+    Alternativ kann weiterhin ein exaktes gueltig_bis uebergeben werden.
+    auto_verlaengerung (Default an) steuert, ob der Plan am Laufzeitende
+    automatisch verlaengert wird (siehe _abo_tageslauf). Der Kunde bekommt
+    eine Bestaetigungs-Mail und sieht den Plan sofort in seinem Abo-Bereich.
+    """
     data = await request.json()
     plan = (data.get("plan") or "").strip().lower()
     if plan not in billing.PLAN_KONTINGENTE:
         raise HTTPException(status_code=400,
                             detail=f"Ungueltiger Plan. Erlaubt: {', '.join(billing.PLAN_KONTINGENTE)}")
-    # gueltig_bis: ISO-Datum fuer befristete Plaene (Rechnungskunden),
-    # null/leer = unbefristet. Nur Format pruefen, Auswertung folgt spaeter.
+    laufzeit = data.get("laufzeit_monate")
+    if laufzeit is not None:
+        try:
+            laufzeit = int(laufzeit)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="laufzeit_monate muss eine Zahl sein")
+        if laufzeit not in billing.PLAN_LAUFZEITEN:
+            raise HTTPException(status_code=400,
+                                detail=f"Laufzeit muss {', '.join(str(m) for m in billing.PLAN_LAUFZEITEN)} Monate sein")
     gueltig_bis = data.get("gueltig_bis") or None
     if gueltig_bis is not None:
         try:
             datetime.fromisoformat(str(gueltig_bis))
-            gueltig_bis = str(gueltig_bis)
+            gueltig_bis = str(gueltig_bis)[:10]
         except ValueError:
             raise HTTPException(status_code=400,
                                 detail="gueltig_bis muss ein ISO-Datum sein (JJJJ-MM-TT) oder null")
+    _av_raw = data.get("auto_verlaengerung")
+    auto_verlaengerung = 1 if _av_raw is None else (1 if _av_raw in (1, True, "1", "true") else 0)
+    if plan != "free" and laufzeit is None and gueltig_bis is None:
+        raise HTTPException(status_code=400,
+                            detail="Bezahl-Plaene brauchen eine Laufzeit (3, 6 oder 12 Monate)")
     target = get_user_by_id(user_id)
     if not target:
         raise HTTPException(status_code=404, detail="User nicht gefunden")
     conn = get_db()
     geloest = 0
     try:
-        conn.execute("UPDATE users SET plan = ?, plan_gueltig_bis = ? WHERE id = ?",
-                     (plan, gueltig_bis, user_id))
-        # Review-Befund 5 (31.07.2026): Wechsel WEG von 'team' darf kein
-        # Geister-Team hinterlassen — die Mitglieder wuerden sonst weiter aus
-        # einem Topf schoepfen, den niemand mehr bezahlt. Alle Mitglieder
-        # automatisch loesen; sie fallen auf ihren eigenen Plan zurueck.
-        if target.get("plan") == "team" and plan != "team":
-            cur = conn.execute("UPDATE users SET abo_owner_id = NULL WHERE abo_owner_id = ?",
+        if plan == "free":
+            # Free hat weder Laufzeit noch Verlaengerung.
+            conn.execute("UPDATE users SET plan = 'free', plan_gueltig_bis = NULL, "
+                         "plan_laufzeit_monate = NULL, auto_verlaengerung = 1 WHERE id = ?",
+                         (user_id,))
+            gueltig_bis = None
+        elif gueltig_bis is not None:
+            conn.execute("UPDATE users SET plan = ?, plan_gueltig_bis = ?, "
+                         "plan_laufzeit_monate = ?, auto_verlaengerung = ? WHERE id = ?",
+                         (plan, gueltig_bis, laufzeit, auto_verlaengerung, user_id))
+        else:
+            conn.execute("UPDATE users SET plan = ?, "
+                         "plan_gueltig_bis = date('now', ?), "
+                         "plan_laufzeit_monate = ?, auto_verlaengerung = ? WHERE id = ?",
+                         (plan, f"+{laufzeit} months", laufzeit, auto_verlaengerung, user_id))
+            gueltig_bis = conn.execute("SELECT plan_gueltig_bis FROM users WHERE id = ?",
+                                       (user_id,)).fetchone()[0]
+        # Review-Befund 5 (31.07.2026): Wechsel WEG von einem Topf-Plan darf
+        # kein Geister-Team hinterlassen — Mitglieder wuerden sonst weiter aus
+        # einem Topf schoepfen, den niemand mehr bezahlt. Mitgliedschaften
+        # loesen; wer gerade in diesem Topf arbeitete, faellt auf den eigenen
+        # Kontext zurueck.
+        if target.get("plan") in billing.PLAN_SITZE and plan not in billing.PLAN_SITZE:
+            cur = conn.execute("DELETE FROM team_mitgliedschaften WHERE inhaber_id = ?",
                                (user_id,))
             geloest = cur.rowcount
+            conn.execute("UPDATE users SET aktiver_topf = NULL WHERE aktiver_topf = ?",
+                         (user_id,))
         conn.commit()
     finally:
         conn.close()
+    # Bestaetigungs-Mail an den Kunden — gleicher Text wie spaeter beim
+    # Online-Kauf: er sieht sofort, was gebucht wurde und bis wann es laeuft.
+    if plan != "free":
+        try:
+            _sende_plan_bestaetigung(target, plan, gueltig_bis, laufzeit, auto_verlaengerung)
+        except Exception:
+            logger.exception("Plan-Bestaetigungs-Mail an %s fehlgeschlagen", target.get("email"))
     msg = f"Plan von {target['email']} ist jetzt '{plan}'"
     if gueltig_bis:
-        msg += f" (gueltig bis {gueltig_bis})"
+        msg += f" (gueltig bis {str(gueltig_bis)[:10]})"
     if geloest:
-        msg += f" – {geloest} Team-Mitglieder wurden gelöst"
+        msg += f" – {geloest} Team-Mitgliedschaften wurden gelöst"
     return {"ok": True, "message": msg, "plan": plan,
             "plan_gueltig_bis": gueltig_bis, "team_mitglieder_geloest": geloest}
 
@@ -1061,40 +1131,38 @@ async def admin_revoke_admin(user_id: int, user: dict = Depends(require_full_adm
     return {"ok": True, "message": f"Admin-Rechte von {target['display_name']} entzogen"}
 
 
-# ─── Team-Verwaltung (Abo-Etappe 2, 31.07.2026) ──────────────
-# Team-Topf: Mitglieder (users.abo_owner_id -> Inhaber) verbrauchen aus dem
-# Kontingent des zahlenden Inhabers. Verwalten darf NUR der Inhaber selbst —
-# also ein Konto mit plan='team', das nicht seinerseits Mitglied ist.
+# ─── Team-Verwaltung (neues Abomodell, 06.08.2026) ──────────────
+# Team-/Enterprise-Topf: Mitglieder (team_mitgliedschaften) koennen aus dem
+# Kontingent des zahlenden Inhabers verbrauchen, wenn ihr aktiver_topf darauf
+# steht. Verwalten (einladen, entfernen, benennen) darf NUR der Inhaber —
+# Mitglieder koennen sich ausdruecklich NICHT selbst entfernen (Steve 06.08.).
 
-def _require_team_inhaber(user: dict, erlaubte_plaene=("team",)) -> dict:
+def _require_team_inhaber(user: dict) -> dict:
     """Liefert den frischen DB-Datensatz des Topf-Inhabers oder wirft 403.
 
-    Frisch aus der DB (nicht aus dem Token), damit ein Plan-Wechsel oder
-    eine Team-Umhaengung sofort greift — gleiches Prinzip wie
-    require_full_admin. Seit dem Lizenzschluessel-Modell (04.08.2026) gibt es
-    ZWEI Topf-Inhaber-Arten: 'team' (Alt-Modell, Einladungs-Fluss) und
-    'lizenz' (Beitritt NUR ueber den Schluessel). Der Plan wird ueber
-    billing.effektiver_plan gelesen — ein abgelaufener Plan verliert damit
-    auch die Verwaltungs-Rechte (Auto-Rueckfall, Punkt 8).
+    Frisch aus der DB (nicht aus dem Token), damit ein Plan-Wechsel sofort
+    greift. Inhaber ist, wessen EIGENER effektiver Plan Sitze kennt
+    (team/enterprise); ein abgelaufener Plan verliert damit auch die
+    Verwaltungs-Rechte (Lazy-Rueckfall). Dass der Inhaber selbst irgendwo
+    Mitglied ist, ist im neuen Modell erlaubt und hier egal.
     """
     db_user = get_user_by_id(user["id"])
-    if (not db_user or billing.effektiver_plan(db_user) not in erlaubte_plaene
-            or db_user.get("abo_owner_id")):
+    if not db_user or billing.effektiver_plan(db_user) not in billing.PLAN_SITZE:
         raise HTTPException(status_code=403,
-                            detail="Nur fuer Inhaber eines Team- oder Lizenz-Kontos verfuegbar")
+                            detail="Nur fuer Inhaber eines Team- oder Enterprise-Abos verfuegbar")
     return db_user
 
 
 def _team_sitze_belegt(inhaber_id: int) -> int:
-    """Belegte Team-Sitze = Mitglieder + 1 (der Inhaber selbst).
+    """Belegte Sitze = Mitgliedschaften + 1 (der Inhaber selbst).
 
-    Eine Stelle fuer die Zaehlweise, weil der Sitz-Deckel jetzt ZWEIMAL
-    geprueft wird: beim Einladen (freundliche Sofort-Ablehnung) und beim
-    Einloesen der Einladung (verbindlich, siehe Review-Befund 1).
+    Eine Stelle fuer die Zaehlweise, weil der Sitz-Deckel ZWEIMAL geprueft
+    wird: beim Einladen (freundliche Sofort-Ablehnung) und beim Einloesen
+    der Einladung (verbindlich, siehe Review-Befund 1).
     """
     conn = get_db()
     try:
-        row = conn.execute("SELECT COUNT(*) FROM users WHERE abo_owner_id = ?",
+        row = conn.execute("SELECT COUNT(*) FROM team_mitgliedschaften WHERE inhaber_id = ?",
                            (inhaber_id,)).fetchone()
     finally:
         conn.close()
@@ -1103,22 +1171,34 @@ def _team_sitze_belegt(inhaber_id: int) -> int:
 
 @app.get("/api/team")
 async def team_uebersicht(user: dict = Depends(get_current_user)):
-    """Topf-Uebersicht fuer den Inhaber (Team- ODER Lizenz-Konto)."""
-    inhaber = _require_team_inhaber(user, erlaubte_plaene=("team", "lizenz"))
-    abo_info = billing.pruefe_kontingent(inhaber["id"])
+    """Topf-Uebersicht fuer den Inhaber eines Team-/Enterprise-Abos.
+
+    WICHTIG: Die Topf-Zahlen werden fuer das INHABER-KONTO gerechnet, nicht
+    ueber pruefe_kontingent(inhaber) — der Inhaber koennte ja gerade selbst
+    im Kontext eines fremden Teams arbeiten.
+    """
+    inhaber = _require_team_inhaber(user)
+    plan = billing.effektiver_plan(inhaber)
+    kontingent = billing.PLAN_KONTINGENTE[plan]
+    uebertrag = billing._uebertrag(inhaber["id"], plan, kontingent)
+    verbraucht = billing.monats_verbrauch(inhaber["id"])
+    pakete = billing.pakete_rest(inhaber["id"])
+    verfuegbar = kontingent + uebertrag
     conn = get_db()
     try:
-        # Inhaber + Mitglieder in einer Abfrage; verbraucht_monat je Person
-        # nach VERURSACHER (user_id), waehrend der Konto-Topf ueber
-        # konto_user_id laeuft — so sieht der Inhaber, WER wieviel zieht.
+        # Inhaber + Mitglieder in einer Abfrage; verbraucht_monat je Person =
+        # was sie DIESEM Topf entnommen hat (konto_user_id = Inhaber) — so
+        # sieht der Inhaber, wer wieviel zieht; Eigenverbrauch der Mitglieder
+        # in anderen Kontexten geht ihn nichts an.
         rows = conn.execute(
             "SELECT u.id, u.display_name, u.email, "
             "COALESCE((SELECT SUM(e.credits) FROM usage_events e "
-            "  WHERE e.user_id = u.id "
+            "  WHERE e.user_id = u.id AND e.konto_user_id = ? "
             "  AND e.created_at >= date('now', 'start of month')), 0) AS verbraucht_monat "
-            "FROM users u WHERE u.id = ? OR u.abo_owner_id = ? "
+            "FROM users u WHERE u.id = ? OR u.id IN "
+            "(SELECT mitglied_id FROM team_mitgliedschaften WHERE inhaber_id = ?) "
             "ORDER BY (u.id != ?), u.display_name COLLATE NOCASE",
-            (inhaber["id"], inhaber["id"], inhaber["id"]),
+            (inhaber["id"], inhaber["id"], inhaber["id"], inhaber["id"]),
         ).fetchall()
     finally:
         conn.close()
@@ -1129,20 +1209,34 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
         mitglieder.append(m)
     return {
         "ok": True,
+        "plan": plan,
+        "team_name": inhaber.get("team_name") or "",
         "mitglieder": mitglieder,
-        "kontingent": abo_info.get("kontingent"),
-        "uebertrag": abo_info.get("uebertrag", 0),
-        "verfuegbar_monat": abo_info.get("verfuegbar_monat"),
-        "verbraucht_gesamt": abo_info.get("verbraucht", 0),
-        "rest": abo_info.get("rest"),
-        "pakete_rest": abo_info.get("pakete_rest", 0),
-        "zeitraum_ende": abo_info.get("zeitraum_ende"),
+        "kontingent": kontingent,
+        "uebertrag": uebertrag,
+        "verfuegbar_monat": verfuegbar,
+        "verbraucht_gesamt": verbraucht,
+        "rest": max(0, verfuegbar - verbraucht),
+        "pakete_rest": pakete,
+        "zeitraum_ende": billing._monatsende_iso(),
         "sitze_belegt": len(mitglieder),
-        # Lizenz-Toepfe haben KEINEN Sitz-Deckel (beliebig viele Nutzer,
-        # Michaels Modell); der Deckel gilt nur fuer den alten Team-Plan.
-        "sitze_inklusive": (billing.TEAM_SITZE_INKLUSIVE
-                            if billing.effektiver_plan(inhaber) == "team" else None),
+        "sitze_inklusive": billing.sitze_fuer_plan(plan),
     }
+
+
+@app.post("/api/team/name")
+async def team_name_setzen(request: Request, user: dict = Depends(get_current_user)):
+    """Inhaber benennt sein Team (Anzeige beim Mitglied und im Umschalter)."""
+    inhaber = _require_team_inhaber(user)
+    data = await request.json()
+    name = _normiere_display_name(data.get("team_name") or "")
+    conn = get_db()
+    try:
+        conn.execute("UPDATE users SET team_name = ? WHERE id = ?", (name, inhaber["id"]))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "team_name": name}
 
 
 @app.post("/api/team/einladen")
@@ -1155,7 +1249,7 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
       /team-einladung/{token} eingeloggt bestaetigt. Vorher konnte ein
       Inhaber fremde Bestandskonten per UPDATE kapern.
     - Unbekannte Adresse: Konto entsteht ERST durch die Einladung, darum darf
-      abo_owner_id dort direkt gesetzt werden (niemandem wird etwas
+      die Mitgliedschaft dort direkt angelegt werden (niemandem wird etwas
       weggenommen); Mail mit Passwort-Reset-Link und Team-Hinweis.
 
     Antwort bewusst NEUTRAL (immer "Einladung versandt" — kein Name, kein
@@ -1163,6 +1257,8 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
     welche E-Mail-Adressen ein InkluDocs-Konto haben (E-Mail-Enumeration).
     """
     inhaber = _require_team_inhaber(user)
+    plan = billing.effektiver_plan(inhaber)
+    sitze_max = billing.sitze_fuer_plan(plan)
     data = await request.json()
     email = (data.get("email") or "").strip().lower()
     if not email or "@" not in email:
@@ -1170,28 +1266,36 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
     if email == (inhaber.get("email") or "").lower():
         raise HTTPException(status_code=400, detail="Du kannst dich nicht selbst einladen")
 
-    # Sitz-Deckel: Inhaber belegt den ersten Sitz. Zukauf gibt es erst mit
-    # der Online-Zahlung (Etappe 3) — bis dahin ehrlich ablehnen. Beim
+    # Sitz-Deckel je Plan (Team 5 / Enterprise 25, inkl. Inhaber). Beim
     # EINLOESEN wird erneut geprueft, denn zwischen Einladung und Annahme
     # koennen andere Eingeladene schneller gewesen sein.
-    if _team_sitze_belegt(inhaber["id"]) >= billing.TEAM_SITZE_INKLUSIVE:
+    if _team_sitze_belegt(inhaber["id"]) >= sitze_max:
         raise HTTPException(
             status_code=400,
-            detail=f"Alle {billing.TEAM_SITZE_INKLUSIVE} inklusiven Sitze sind belegt. "
-                   "Sitz-Zukauf folgt mit der Online-Zahlung.")
+            detail=f"Alle {sitze_max} Plätze deines Abos sind belegt. "
+                   "Mehr Nutzer gibt es in der nächsthöheren Abo-Stufe.")
 
     neutrale_antwort = {"ok": True, "message": "Einladung versandt"}
     # Befund 7: Anzeigename ist zwar an den Setz-Stellen normiert, im
     # Mail-HTML wird trotzdem escaped (Verteidigung in der Tiefe).
     inhaber_name = html.escape(inhaber["display_name"])
+    team_label = html.escape(inhaber.get("team_name") or "") or f"das Team von {inhaber_name}"
 
     ziel = get_user_by_email(email)
     if ziel:
-        # Konflikte (schon in einem Team, selbst Team-Inhaber) werden NICHT
-        # gemeldet — sonst waere die Antwort nicht mehr neutral. Sie werden
-        # beim Einloesen verbindlich geprueft; hier entfaellt nur die
-        # sinnlose Mail.
-        if ziel.get("abo_owner_id") or ziel.get("plan") == "team":
+        # Neues Modell: ein eigener Bezahl-Plan oder andere Mitgliedschaften
+        # sind KEIN Hindernis mehr — beides darf parallel bestehen, der
+        # Kontext-Umschalter regelt den Verbrauch. Nur wer bereits Mitglied
+        # DIESES Teams ist, bekommt keine sinnlose Mail (Antwort bleibt
+        # neutral — keine E-Mail-Enumeration).
+        conn = get_db()
+        try:
+            schon = conn.execute(
+                "SELECT 1 FROM team_mitgliedschaften WHERE inhaber_id = ? AND mitglied_id = ?",
+                (inhaber["id"], ziel["id"])).fetchone()
+        finally:
+            conn.close()
+        if schon:
             return neutrale_antwort
         einladungs_token = secrets.token_urlsafe(32)
         conn = get_db()
@@ -1208,7 +1312,7 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
 <html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
 <h1 style="color:#1b2a4a;">Einladung in ein InkluDocs-Team</h1>
 <p>Hallo,</p>
-<p><strong>{inhaber_name}</strong> möchte dich in sein InkluDocs-Team aufnehmen. Ihr teilt euch dann ein gemeinsames Credit-Kontingent.</p>
+<p><strong>{inhaber_name}</strong> möchte dich bei InkluDocs in {team_label} aufnehmen. Ihr arbeitet dann aus einem gemeinsamen Credit-Kontingent; dein Konto, deine Projekte und ein eventuell vorhandenes eigenes Abo bleiben unberührt — du kannst jederzeit wählen, aus welchem Guthaben du arbeitest.</p>
 <p>Wenn du einverstanden bist, bestätige hier:</p>
 <p><a href="{annahme_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Team-Einladung annehmen</a></p>
 <p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {annahme_url}</p>
@@ -1221,8 +1325,9 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
         return neutrale_antwort
 
     # Unbekannte Adresse: Konto anlegen mit Zufallspasswort, das niemand je
-    # sieht — die Einladung laeuft ueber den Passwort-Reset-Link (1h gueltig,
-    # danach hilft 'Passwort vergessen' auf der Login-Seite).
+    # sieht — die Person wird per Mail gebeten, ihr Passwort zu setzen
+    # (= ihre Registrierung); die Team-Zuordnung ist dann schon da.
+    # Der Reset-Link ist 1h gueltig, danach hilft 'Passwort vergessen'.
     zufallspasswort = secrets.token_urlsafe(16)
     display_name = _normiere_display_name(data.get("display_name") or "") or email.split("@")[0]
     try:
@@ -1233,7 +1338,12 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
         raise HTTPException(status_code=500, detail="Einladung konnte nicht verarbeitet werden")
     conn = get_db()
     try:
-        conn.execute("UPDATE users SET abo_owner_id = ? WHERE id = ?", (inhaber["id"], neu_id))
+        # Konto entsteht ERST durch die Einladung — Mitgliedschaft und
+        # Arbeits-Kontext duerfen darum direkt gesetzt werden (niemandem
+        # wird etwas weggenommen, ein eigenes Abo existiert noch nicht).
+        conn.execute("INSERT OR IGNORE INTO team_mitgliedschaften (inhaber_id, mitglied_id) "
+                     "VALUES (?, ?)", (inhaber["id"], neu_id))
+        conn.execute("UPDATE users SET aktiver_topf = ? WHERE id = ?", (inhaber["id"], neu_id))
         conn.commit()
     finally:
         conn.close()
@@ -1245,8 +1355,8 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
 <html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
 <h1 style="color:#1b2a4a;">Einladung in ein InkluDocs-Team</h1>
 <p>Hallo {sicherer_name},</p>
-<p><strong>{inhaber_name}</strong> hat dich zu InkluDocs eingeladen und in sein Team aufgenommen. InkluDocs ist ein KI-gestützter Alt-Text-Generator für barrierefreie Dokumente und Bilder — als Team-Mitglied teilt ihr euch ein gemeinsames Credit-Kontingent.</p>
-<p>Zum Loslegen setzt du einmal dein persönliches Passwort:</p>
+<p><strong>{inhaber_name}</strong> hat dich zu InkluDocs eingeladen und in {team_label} aufgenommen. InkluDocs ist ein KI-gestützter Alt-Text-Generator für barrierefreie Dokumente und Bilder — als Team-Mitglied arbeitet ihr aus einem gemeinsamen Credit-Kontingent.</p>
+<p>Du hast noch kein Konto bei uns. Zum Loslegen registrierst du dich einfach, indem du einmal dein persönliches Passwort setzt:</p>
 <p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Passwort festlegen und starten</a></p>
 <p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {reset_url}</p>
 <p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gültig. Danach kannst du auf <a href="{BASE_URL}">{BASE_URL}</a> jederzeit die Funktion „Passwort vergessen“ nutzen — dein Konto ist die Adresse {html.escape(email)}.</p>
@@ -1299,34 +1409,42 @@ async def team_einladung_annehmen(token: str, request: Request):
             status_code=403)
 
     # Zwischen Einladen und Annehmen kann sich alles geaendert haben — die
-    # fachlichen Regeln hier VERBINDLICH erneut pruefen: Inhaber muss noch
-    # Team-Inhaber sein, der Eingeladene darf nicht inzwischen selbst
-    # Team-Inhaber oder Mitglied eines anderen Teams sein.
+    # fachlichen Regeln hier VERBINDLICH erneut pruefen: der Inhaber muss
+    # noch ein aktives Team-/Enterprise-Abo haben. Ein eigener Plan oder
+    # andere Mitgliedschaften des Eingeladenen sind im neuen Modell KEIN
+    # Hindernis — beides existiert parallel, der Kontext-Umschalter regelt
+    # den Verbrauch.
     inhaber = get_user_by_id(einladung["inhaber_id"])
-    fremdes_team = db_user.get("abo_owner_id") and db_user.get("abo_owner_id") != einladung["inhaber_id"]
-    if (not inhaber or inhaber.get("plan") != "team" or inhaber.get("abo_owner_id")
-            or db_user.get("plan") == "team" or fremdes_team):
+    inhaber_plan = billing.effektiver_plan(inhaber) if inhaber else "free"
+    if not inhaber or inhaber_plan not in billing.PLAN_SITZE:
         return _auth_notice_page(lang,
             f'<p style="color:#dc2626;margin:2rem 0;">{_("Diese Einladung kann nicht mehr angenommen werden.")}</p>' + zum_dashboard,
             status_code=409)
 
-    schon_mitglied = db_user.get("abo_owner_id") == einladung["inhaber_id"]
     conn = get_db()
     try:
-        # Sitz-Check und Umhaengen atomar (BEGIN IMMEDIATE): zwei gleichzeitig
+        # Sitz-Check und Beitritt atomar (BEGIN IMMEDIATE): zwei gleichzeitig
         # klickende Eingeladene koennen den Sitz-Deckel sonst ueberrennen.
         conn.isolation_level = None
         conn.execute("BEGIN IMMEDIATE")
+        schon_mitglied = conn.execute(
+            "SELECT 1 FROM team_mitgliedschaften WHERE inhaber_id = ? AND mitglied_id = ?",
+            (einladung["inhaber_id"], db_user["id"])).fetchone() is not None
         belegt = int(conn.execute(
-            "SELECT COUNT(*) FROM users WHERE abo_owner_id = ?",
+            "SELECT COUNT(*) FROM team_mitgliedschaften WHERE inhaber_id = ?",
             (einladung["inhaber_id"],)).fetchone()[0]) + 1
-        if not schon_mitglied and belegt >= billing.TEAM_SITZE_INKLUSIVE:
+        if not schon_mitglied and belegt >= billing.sitze_fuer_plan(inhaber_plan):
             conn.execute("ROLLBACK")
             return _auth_notice_page(lang,
                 f'<p style="color:#dc2626;margin:2rem 0;">{_("Alle Plätze in diesem Team sind bereits belegt.")}</p>' + zum_dashboard,
                 status_code=409)
         if not schon_mitglied:
-            conn.execute("UPDATE users SET abo_owner_id = ? WHERE id = ?",
+            conn.execute("INSERT OR IGNORE INTO team_mitgliedschaften (inhaber_id, mitglied_id) "
+                         "VALUES (?, ?)", (einladung["inhaber_id"], db_user["id"]))
+            # Der Beitritt schaltet den Arbeits-Kontext aufs neue Team — das
+            # Erwartbare nach dem Klick auf 'annehmen'; zurueckwechseln geht
+            # jederzeit auf der Abo-Seite.
+            conn.execute("UPDATE users SET aktiver_topf = ? WHERE id = ?",
                          (einladung["inhaber_id"], db_user["id"]))
         conn.execute("UPDATE team_einladungen SET eingeloest_am = datetime('now') WHERE id = ?",
                      (einladung["id"],))
@@ -1335,232 +1453,319 @@ async def team_einladung_annehmen(token: str, request: Request):
         conn.close()
 
     inhaber_name = html.escape(inhaber["display_name"])
+    team_label = html.escape(inhaber.get("team_name") or "")
+    team_satz = (f'{_("Du bist jetzt Mitglied im Team")} „{team_label}“ ({inhaber_name}).'
+                 if team_label else
+                 f'{_("Du bist jetzt Mitglied im Team von")} {inhaber_name}.')
     return _auth_notice_page(lang,
         f'''<p style="color:#16a34a;font-size:1.2rem;margin:2rem 0;font-weight:600;">&#10003; {_("Team-Beitritt bestätigt!")}</p>
-    <p>{_("Du bist jetzt Mitglied im Team von")} {inhaber_name}. {_("Ihr teilt euch ein gemeinsames Credit-Kontingent.")}</p>''' + zum_dashboard,
+    <p>{team_satz} {_("Ihr arbeitet aus einem gemeinsamen Credit-Kontingent. Auf der Seite „Abo & Verbrauch“ wählst du jederzeit, aus welchem Guthaben du arbeitest.")}</p>''' + zum_dashboard,
         title_suffix=_("Team-Beitritt bestätigt"))
 
 
 @app.delete("/api/team/mitglied/{mitglied_id}")
 async def team_mitglied_entfernen(mitglied_id: int, user: dict = Depends(get_current_user)):
-    """Mitglied aus dem eigenen Topf loesen (Team ODER Lizenz; Konto bleibt
-    bestehen, faellt auf seinen eigenen Plan zurueck; bisherige Verbraeuche
-    bleiben als Protokoll auf dem Topf-Konto)."""
-    inhaber = _require_team_inhaber(user, erlaubte_plaene=("team", "lizenz"))
+    """Mitglied aus dem eigenen Topf loesen — NUR der Inhaber darf das
+    (Mitglieder koennen sich nicht selbst entfernen, Steve 06.08.2026).
+    Das Konto bleibt bestehen und arbeitet weiter mit eigenem Abo/Free;
+    bisherige Verbraeuche bleiben als Protokoll auf dem Topf-Konto. Der
+    Entfernte bekommt eine kurze Info-Mail."""
+    inhaber = _require_team_inhaber(user)
     ziel = get_user_by_id(mitglied_id)
-    if not ziel or ziel.get("abo_owner_id") != inhaber["id"]:
-        raise HTTPException(status_code=404, detail="Kein Mitglied deines Teams")
     conn = get_db()
     try:
-        conn.execute("UPDATE users SET abo_owner_id = NULL WHERE id = ?", (mitglied_id,))
+        mitglied = conn.execute(
+            "SELECT 1 FROM team_mitgliedschaften WHERE inhaber_id = ? AND mitglied_id = ?",
+            (inhaber["id"], mitglied_id)).fetchone()
+        if not ziel or not mitglied:
+            raise HTTPException(status_code=404, detail="Kein Mitglied deines Teams")
+        conn.execute("DELETE FROM team_mitgliedschaften WHERE inhaber_id = ? AND mitglied_id = ?",
+                     (inhaber["id"], mitglied_id))
+        # Arbeitete die Person gerade in diesem Topf, faellt sie auf den
+        # eigenen Kontext zurueck — sonst wuerde _konto_fuer zwar still
+        # zurueckfallen, aber die Oberflaeche zeigte einen toten Kontext.
+        conn.execute("UPDATE users SET aktiver_topf = NULL WHERE id = ? AND aktiver_topf = ?",
+                     (mitglied_id, inhaber["id"]))
         conn.commit()
     finally:
         conn.close()
+    try:
+        team_label = html.escape(inhaber.get("team_name") or "") or f"dem Team von {html.escape(inhaber['display_name'])}"
+        info_body = f"""<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
+<h1 style="color:#1b2a4a;">Änderung an deinem InkluDocs-Konto</h1>
+<p>Hallo {html.escape(ziel['display_name'])},</p>
+<p>du wurdest aus {team_label} entfernt und arbeitest ab jetzt wieder mit deinem eigenen Guthaben. Dein Konto und alle deine Projekte bleiben unverändert bestehen.</p>
+<p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
+</body></html>"""
+        send_email(ziel["email"], "InkluDocs: Team-Mitgliedschaft beendet", info_body, bcc_admin=False)
+    except Exception:
+        logger.exception("Info-Mail an entferntes Mitglied %s fehlgeschlagen", mitglied_id)
     return {"ok": True, "message": f"{ziel['display_name']} wurde aus dem Team entfernt"}
 
 
-# ─── Lizenzschluessel (04.08.2026, Michaels Modell) ──────────
-# EIN Schluessel pro Unternehmen, domain-gebunden, beliebig viele Nutzer:
-# Der ERSTE Aktivierer wird Topf-Inhaber (plan='lizenz', 50 Credits/Monat),
-# jeder weitere Aktivierer mit passender E-Mail-Domain tritt dem Firmen-Topf
-# bei (users.abo_owner_id). Erzeugung durch Voll-Admins = zugleich Michaels
-# Rechnungsweg (Kauf auf Rechnung ueber Actino), bis Stripe kommt.
+# ─── Kontext-Umschalter + Kuendigung (neues Abomodell, 06.08.2026) ───
 
-@app.post("/api/abo/lizenz")
-async def lizenz_aktivieren(request: Request, user: dict = Depends(get_current_user)):
-    """Lizenzschluessel aktivieren (Erst-Aktivierung ODER Topf-Beitritt)."""
-    data = await request.json()
-    eingabe = (data.get("schluessel") or "").strip().upper()
-    if not eingabe:
-        raise HTTPException(status_code=400, detail="Bitte einen Lizenzschluessel eingeben")
-    db_user = get_user_by_id(user["id"])
-    if not db_user:
-        raise HTTPException(status_code=401, detail="User nicht gefunden")
-    nutzer_domain = (db_user.get("email") or "").rsplit("@", 1)[-1].strip().lower()
+@app.post("/api/abo/kontext")
+async def abo_kontext_setzen(request: Request, user: dict = Depends(get_current_user)):
+    """Waehlt, aus welchem Credit-Topf das Konto arbeitet.
 
-    # Rate-Bremse gegen Schluessel-Raten (nur Fehlversuche zaehlen, s. oben).
-    _jetzt = time.time()
-    _lizenz_attempts[user["id"]] = [t for t in _lizenz_attempts[user["id"]]
-                                    if _jetzt - t < LIZENZ_WINDOW_SECONDS]
-    if len(_lizenz_attempts[user["id"]]) >= MAX_LIZENZ_ATTEMPTS:
-        raise HTTPException(status_code=429,
-                            detail="Zu viele Aktivierungs-Versuche. Bitte 10 Minuten warten")
-
-    conn = get_db()
-    try:
-        # Erst-Aktivierung und Beitritt atomar (BEGIN IMMEDIATE): zwei
-        # gleichzeitige Erst-Aktivierer desselben Schluessels duerfen nicht
-        # beide Inhaber werden.
-        conn.isolation_level = None
-        conn.execute("BEGIN IMMEDIATE")
-        key = conn.execute(
-            "SELECT * FROM lizenzschluessel WHERE schluessel = ?", (eingabe,)
-        ).fetchone()
-        # Ungueltig und gesperrt antworten IDENTISCH — kein Orakel, mit dem
-        # sich gueltige Schluessel durchprobieren lassen.
-        if not key or key["status"] == "gesperrt":
-            conn.execute("ROLLBACK")
-            _lizenz_attempts[user["id"]].append(_jetzt)
-            raise HTTPException(status_code=404, detail="Dieser Lizenzschluessel ist ungueltig")
-        if key["gueltig_bis"] and billing.plan_ist_abgelaufen(key["gueltig_bis"]):
-            conn.execute("ROLLBACK")
-            raise HTTPException(status_code=400,
-                                detail="Diese Lizenz ist abgelaufen. Zum Verlaengern bitte an support@inklutec.de wenden")
-        if key["domain"] and key["domain"] != nutzer_domain:
-            conn.execute("ROLLBACK")
-            raise HTTPException(status_code=403,
-                                detail="Dieser Lizenzschluessel gehoert zu einem anderen Unternehmen. "
-                                       "Aktivieren koennen ihn nur Konten mit passender Firmen-E-Mail-Adresse")
-        # Eigene Konflikte des Aktivierers:
-        eigener_plan = billing.effektiver_plan(db_user)
-        ist_topf_inhaber = eigener_plan in ("team", "lizenz") and not db_user.get("abo_owner_id")
-        if ist_topf_inhaber and key["inhaber_user_id"] != db_user["id"]:
-            conn.execute("ROLLBACK")
-            raise HTTPException(status_code=400,
-                                detail="Dein Konto ist bereits Inhaber eines eigenen Credit-Topfs. "
-                                       "Bitte zuerst das bestehende Team/die Lizenz aufloesen (support@inklutec.de)")
-        if db_user.get("abo_owner_id") and db_user["abo_owner_id"] != key["inhaber_user_id"]:
-            conn.execute("ROLLBACK")
-            raise HTTPException(status_code=400,
-                                detail="Dein Konto ist bereits Mitglied eines anderen Credit-Topfs")
-
-        if key["inhaber_user_id"] is None:
-            # Erst-Aktivierung: Aktivierer wird Inhaber, Schluessel wird aktiv.
-            domain = key["domain"]
-            if not domain:
-                # Schluessel ohne vorgegebene Domain bindet sich jetzt an die
-                # Domain des Aktivierers — Freemail ist dabei tabu (Schluessel
-                # gehoeren Unternehmen; sonst waere die Bindung wirkungslos).
-                if billing.ist_freemail_domain(nutzer_domain) or "." not in nutzer_domain:
-                    conn.execute("ROLLBACK")
-                    raise HTTPException(status_code=400,
-                                        detail="Dieser Schluessel muss mit einer Firmen-E-Mail-Adresse aktiviert "
-                                               "werden (keine Freemail-Adresse). Bitte an support@inklutec.de wenden")
-                domain = nutzer_domain
-            laufzeit = int(key["laufzeit_monate"] or 6)
-            gueltig_bis = conn.execute(
-                "SELECT datetime('now', ?)", (f"+{laufzeit} months",)
-            ).fetchone()[0]
-            conn.execute(
-                "UPDATE lizenzschluessel SET inhaber_user_id = ?, domain = ?, status = 'aktiv', "
-                "aktiviert_am = datetime('now'), gueltig_bis = ? WHERE id = ?",
-                (db_user["id"], domain, gueltig_bis, key["id"]))
-            conn.execute(
-                "UPDATE users SET plan = 'lizenz', plan_gueltig_bis = ?, abo_owner_id = NULL "
-                "WHERE id = ?",
-                (gueltig_bis, db_user["id"]))
-            conn.execute("COMMIT")
-            return {"ok": True, "rolle": "inhaber", "domain": domain,
-                    "gueltig_bis": gueltig_bis[:10],
-                    "message": f"Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs ({domain})"}
-
-        # Schluessel ist schon aktiv: Beitritt zum bestehenden Firmen-Topf.
-        if key["inhaber_user_id"] == db_user["id"]:
-            conn.execute("ROLLBACK")
-            return {"ok": True, "rolle": "inhaber", "domain": key["domain"],
-                    "gueltig_bis": (key["gueltig_bis"] or "")[:10],
-                    "message": "Diese Lizenz ist auf deinem Konto bereits aktiv"}
-        if db_user.get("abo_owner_id") == key["inhaber_user_id"]:
-            conn.execute("ROLLBACK")
-            return {"ok": True, "rolle": "mitglied", "domain": key["domain"],
-                    "gueltig_bis": (key["gueltig_bis"] or "")[:10],
-                    "message": "Du bist bereits Mitglied dieses Firmen-Topfs"}
-        conn.execute("UPDATE users SET abo_owner_id = ? WHERE id = ?",
-                     (key["inhaber_user_id"], db_user["id"]))
-        conn.execute("COMMIT")
-        return {"ok": True, "rolle": "mitglied", "domain": key["domain"],
-                "gueltig_bis": (key["gueltig_bis"] or "")[:10],
-                "message": "Beitritt bestaetigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens"}
-    except HTTPException:
-        raise
-    except Exception:
-        try:
-            conn.execute("ROLLBACK")
-        except Exception:
-            pass
-        raise
-    finally:
-        conn.close()
-
-
-@app.post("/api/admin/lizenzen")
-async def admin_lizenz_erzeugen(request: Request, user: dict = Depends(require_full_admin)):
-    """Admin: neue Lizenzschluessel erzeugen (Rechnungsweg, bis Stripe kommt).
-
-    domain optional: leer = der Schluessel bindet sich bei der Erst-
-    Aktivierung an die Firmen-Domain des Aktivierers. monats_credits ist
-    bewusst NICHT waehlbar — das Kontingent kommt einheitlich aus
-    billing.PLAN_KONTINGENTE['lizenz'] (eine Wahrheit, keine Drift).
+    topf: 'eigen' (eigenes Abo/Free) oder die Nutzer-ID eines Team-Inhabers,
+    bei dem eine Mitgliedschaft besteht und dessen Plan aktiv ist. Gilt fuer
+    JEDEN Verbrauch (Generierung, Export, Chatbot, API) — billing._konto_fuer
+    liest genau diesen Wert und validiert ihn bei jeder Buchung erneut.
     """
     data = await request.json()
-    domain = (data.get("domain") or "").strip().lower().lstrip("@") or None
-    if domain and ("@" in domain or " " in domain or "." not in domain):
-        raise HTTPException(status_code=400, detail="Ungueltige Domain (erwartet z. B. firma.de)")
-    if domain and billing.ist_freemail_domain(domain):
-        raise HTTPException(status_code=400,
-                            detail="Freemail-Domains koennen keine Lizenz-Domain sein — Schluessel gehoeren Unternehmen")
+    topf = data.get("topf")
+    if topf in ("eigen", None, "", 0):
+        conn = get_db()
+        try:
+            conn.execute("UPDATE users SET aktiver_topf = NULL WHERE id = ?", (user["id"],))
+            conn.commit()
+        finally:
+            conn.close()
+        return {"ok": True, "aktiver_topf": "eigen"}
     try:
-        laufzeit = int(data.get("laufzeit_monate") or 6)
-        anzahl = int(data.get("anzahl") or 1)
+        topf = int(topf)
     except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="laufzeit_monate und anzahl muessen Zahlen sein")
-    if not 1 <= laufzeit <= 60:
-        raise HTTPException(status_code=400, detail="laufzeit_monate muss zwischen 1 und 60 liegen")
-    if not 1 <= anzahl <= 50:
-        raise HTTPException(status_code=400, detail="anzahl muss zwischen 1 und 50 liegen")
-    notiz = (data.get("notiz") or "").strip()[:500]
-    schluessel = []
+        raise HTTPException(status_code=400, detail="Ungueltiger Topf")
     conn = get_db()
     try:
-        for _ in range(anzahl):
-            # Kollisionen sind bei 31^12 Kombinationen praktisch ausgeschlossen,
-            # der UNIQUE-Index faengt den Rest — dann einfach neu wuerfeln.
-            for _versuch in range(5):
-                kandidat = billing.neuer_lizenzschluessel_string()
-                try:
-                    conn.execute(
-                        "INSERT INTO lizenzschluessel (schluessel, domain, laufzeit_monate, notiz, erstellt_von) "
-                        "VALUES (?, ?, ?, ?, ?)",
-                        (kandidat, domain, laufzeit, notiz, user["id"]))
-                    schluessel.append(kandidat)
-                    break
-                except sqlite3.IntegrityError:
-                    continue
+        inhaber = conn.execute(
+            "SELECT u.plan, u.plan_gueltig_bis FROM team_mitgliedschaften m "
+            "JOIN users u ON u.id = m.inhaber_id "
+            "WHERE m.inhaber_id = ? AND m.mitglied_id = ?",
+            (topf, user["id"])).fetchone()
+        if inhaber is None or billing.effektiver_plan(inhaber) not in billing.PLAN_SITZE:
+            raise HTTPException(status_code=404,
+                                detail="Dieses Team steht dir nicht (mehr) zur Verfügung")
+        conn.execute("UPDATE users SET aktiver_topf = ? WHERE id = ?", (topf, user["id"]))
         conn.commit()
     finally:
         conn.close()
-    return {"ok": True, "schluessel": schluessel, "domain": domain,
-            "laufzeit_monate": laufzeit,
-            "message": f"{len(schluessel)} Lizenzschluessel erzeugt"}
+    return {"ok": True, "aktiver_topf": topf}
 
 
-@app.get("/api/admin/lizenzen")
-async def admin_lizenz_liste(user: dict = Depends(require_admin)):
-    """Admin: alle Lizenzschluessel mit Status, Inhaber, Nutzerzahl, Verbrauch."""
+@app.post("/api/abo/kuendigen")
+async def abo_kuendigen(user: dict = Depends(get_current_user)):
+    """Eigenes Abo zum Laufzeitende kuendigen (auto_verlaengerung aus).
+
+    Betrifft IMMER nur den eigenen Plan — ein Team, in dem man nur Mitglied
+    ist, kann man nicht kuendigen (das macht dessen Inhaber). Der Plan
+    laeuft bis zum Laufzeitende normal weiter und faellt dann auf Free.
+    """
+    db_user = get_user_by_id(user["id"])
+    if not db_user or billing.effektiver_plan(db_user) == "free":
+        raise HTTPException(status_code=400, detail="Kein aktives Abo zum Kündigen")
     conn = get_db()
     try:
-        rows = conn.execute(
-            "SELECT l.id, l.schluessel, l.domain, l.status, l.laufzeit_monate, "
-            "l.gueltig_bis, l.notiz, l.created_at, l.aktiviert_am, "
-            "u.email AS inhaber_email, u.display_name AS inhaber_name, "
-            "CASE WHEN l.inhaber_user_id IS NULL THEN 0 ELSE "
-            "  1 + (SELECT COUNT(*) FROM users m WHERE m.abo_owner_id = l.inhaber_user_id) "
-            "END AS nutzer, "
-            "COALESCE((SELECT SUM(e.credits) FROM usage_events e "
-            "  WHERE e.konto_user_id = l.inhaber_user_id "
-            "  AND e.created_at >= date('now', 'start of month')), 0) AS verbrauch_monat "
-            "FROM lizenzschluessel l "
-            "LEFT JOIN users u ON u.id = l.inhaber_user_id "
-            "ORDER BY l.created_at DESC"
-        ).fetchall()
+        conn.execute("UPDATE users SET auto_verlaengerung = 0 WHERE id = ?", (user["id"],))
+        conn.commit()
     finally:
         conn.close()
-    lizenzen = []
-    for r in rows:
-        d = dict(r)
-        d["abgelaufen"] = billing.plan_ist_abgelaufen(d.get("gueltig_bis"))
-        lizenzen.append(d)
-    return {"ok": True, "lizenzen": lizenzen}
+    bis = (db_user.get("plan_gueltig_bis") or "")[:10] or None
+    return {"ok": True, "gueltig_bis": bis,
+            "message": "Gekündigt — dein Abo läuft bis zum Laufzeitende weiter und endet dann"}
+
+
+@app.post("/api/abo/kuendigung-widerrufen")
+async def abo_kuendigung_widerrufen(user: dict = Depends(get_current_user)):
+    """Kuendigung zuruecknehmen, solange die Laufzeit noch laeuft."""
+    db_user = get_user_by_id(user["id"])
+    if not db_user or billing.effektiver_plan(db_user) == "free":
+        raise HTTPException(status_code=400, detail="Kein aktives Abo")
+    conn = get_db()
+    try:
+        conn.execute("UPDATE users SET auto_verlaengerung = 1 WHERE id = ?", (user["id"],))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "message": "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch"}
+
+
+# ─── Lizenzschluessel: Modell VERWORFEN 06.08.2026 (Steve+Michael) ─────
+# Das Schluessel-Modell (03.–05.08.) wurde zugunsten der Abo-Stufen
+# Single/Team/Enterprise aufgegeben. Alle Routen und die Oberflaeche sind
+# entfernt; die DB-Tabelle lizenzschluessel bleibt als Beleg stehen.
+# Bestands-Toepfe wurden per Migration auf plan='team' ueberfuehrt.
+
+
+# ─── Abo-Tageslauf: Erinnerungen + Auto-Verlaengerung (06.08.2026) ─────
+# Ohne Cron: /api/me stoesst den Lauf an (Hintergrund-Thread), system_kv
+# stellt sicher, dass er hoechstens 1x pro Tag arbeitet und keine Mail
+# doppelt rausgeht. Fachregeln (Steve 06.08.): Bezahl-Plaene laufen fest
+# 3/6/12 Monate; ohne Kuendigung verlaengert sich der Plan automatisch um
+# die gebuchte Laufzeit (die Rechnung folgt — Betreiber werden erinnert);
+# mit Kuendigung endet er am Laufzeitende (Lazy-Rueckfall in billing).
+
+PLAN_ANZEIGENAMEN = {"free": "Free", "single": "Single", "team": "Team",
+                     "enterprise": "Enterprise"}
+
+_MAIL_FUSS = ('<p>Bei Fragen wende dich an <a href="mailto:support@inklutec.de">support@inklutec.de</a>.</p>'
+              '<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">'
+              'InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>')
+
+
+def _abo_mail(empfaenger: str, betreff: str, ueberschrift: str, saetze: list) -> None:
+    """Einheitlicher Rahmen fuer alle Abo-Mails (Bestaetigung/Erinnerung)."""
+    absaetze = "".join(f"<p>{s}</p>" for s in saetze)
+    body = (f'<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"></head>'
+            f'<body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">'
+            f'<h1 style="color:#1b2a4a;">{ueberschrift}</h1>{absaetze}{_MAIL_FUSS}</body></html>')
+    send_email(empfaenger, betreff, body, bcc_admin=False)
+
+
+def _sende_plan_bestaetigung(konto: dict, plan: str, gueltig_bis, laufzeit,
+                             auto_verlaengerung: int) -> None:
+    """Bestaetigungs-Mail nach einer Plan-Buchung (Admin-/Rechnungsweg —
+    derselbe Text dient spaeter dem Stripe-Weg)."""
+    name = html.escape(konto.get("display_name") or "")
+    plan_name = PLAN_ANZEIGENAMEN.get(plan, plan)
+    datum = str(gueltig_bis or "")[:10]
+    saetze = [f"Hallo {name},",
+              f"dein InkluDocs-Abo wurde umgestellt: Du hast jetzt den Plan <strong>{plan_name}</strong>"
+              + (f" mit einer Laufzeit von {laufzeit} Monaten" if laufzeit else "")
+              + (f", gültig bis {datum}" if datum else "") + "."]
+    if auto_verlaengerung:
+        saetze.append("Wenn du nicht kündigst, verlängert sich das Abo am Laufzeitende "
+                      "automatisch um dieselbe Laufzeit. Kündigen kannst du jederzeit "
+                      "zum Laufzeitende auf der Seite „Abo &amp; Verbrauch“.")
+    else:
+        saetze.append(f"Das Abo läuft am {datum} aus und wird nicht automatisch verlängert.")
+    saetze.append("Deinen aktuellen Stand siehst du jederzeit unter „Abo &amp; Verbrauch“ in der App.")
+    _abo_mail(konto["email"], f"InkluDocs: Dein {plan_name}-Abo ist aktiv",
+              "Dein InkluDocs-Abo", saetze)
+
+
+def _kv_einmal(key: str) -> bool:
+    """True genau beim ERSTEN Aufruf fuer diesen Schluessel (Doppel-Schutz)."""
+    conn = get_db()
+    try:
+        cur = conn.execute("INSERT OR IGNORE INTO system_kv (key, value) VALUES (?, '1')", (key,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def _abo_tageslauf() -> None:
+    """Taeglicher Abo-Lauf (Erinnerungen, Auto-Verlaengerungen), max. 1x/Tag.
+
+    Atomarer Tages-Claim ueber system_kv: von zwei parallelen Anstoessen
+    arbeitet nur einer. Fehler je Konto werden geloggt und geschluckt.
+    """
+    try:
+        heute = datetime.utcnow().strftime("%Y-%m-%d")
+        conn = get_db()
+        try:
+            claimed = conn.execute(
+                "UPDATE system_kv SET value = ?, updated_at = datetime('now') "
+                "WHERE key = 'abo_tageslauf' AND value != ?", (heute, heute)).rowcount
+            if not claimed:
+                claimed = conn.execute(
+                    "INSERT OR IGNORE INTO system_kv (key, value) VALUES ('abo_tageslauf', ?)",
+                    (heute,)).rowcount
+            conn.commit()
+            if not claimed:
+                return  # heute schon gelaufen (oder ein Parallel-Thread hat uebernommen)
+            faellige = conn.execute(
+                "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, "
+                "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
+                "FROM users WHERE plan IN ('single', 'team', 'enterprise') "
+                "AND plan_gueltig_bis IS NOT NULL "
+                "AND date(plan_gueltig_bis) <= date('now', '+14 days')").fetchall()
+        finally:
+            conn.close()
+        for k in faellige:
+            try:
+                _abo_konto_pruefen(dict(k), heute)
+            except Exception:
+                logger.exception("Abo-Tageslauf: Konto %s fehlgeschlagen", k["id"])
+    except Exception:
+        logger.exception("Abo-Tageslauf fehlgeschlagen")
+
+
+def _abo_konto_pruefen(k: dict, heute: str) -> None:
+    """Ein faelliges Konto abarbeiten: erinnern, verlaengern oder verabschieden."""
+    ablauf = str(k["plan_gueltig_bis"])[:10]
+    plan_name = PLAN_ANZEIGENAMEN.get(k["plan"], k["plan"])
+    name = html.escape(k.get("display_name") or "")
+    auto = int(k.get("auto_verlaengerung") or 0)
+    laufzeit = k.get("plan_laufzeit_monate")
+
+    if ablauf >= heute:
+        # Noch nicht abgelaufen -> Erinnerung (einmal pro Periode).
+        if not _kv_einmal(f"abo_mail_erinnerung_{k['id']}_{ablauf}"):
+            return
+        if auto:
+            saetze = [f"Hallo {name},",
+                      f"dein {plan_name}-Abo bei InkluDocs erreicht am {ablauf} das Laufzeitende "
+                      f"und verlängert sich dann automatisch"
+                      + (f" um {laufzeit} Monate" if laufzeit else "") + ".",
+                      "Wenn du das nicht möchtest, kündige einfach vorher auf der Seite "
+                      "„Abo &amp; Verbrauch“ — dann endet das Abo zum Laufzeitende."]
+            _abo_mail(k["email"], "InkluDocs: Dein Abo verlängert sich bald",
+                      "Dein Abo verlängert sich bald", saetze)
+            # Betreiber-Hinweis: beim Rechnungsweg muss eine neue Rechnung raus.
+            _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Abo-Verlängerung: {k['email']}",
+                      "Abo-Verlängerung steht an",
+                      [f"Das {plan_name}-Abo von {html.escape(k['email'])} verlängert sich am {ablauf} "
+                       f"automatisch{f' um {laufzeit} Monate' if laufzeit else ''}.",
+                       "Rechnungskunden brauchen jetzt eine neue Rechnung (Actino/INKLUTEC); "
+                       "Stripe-Kunden bucht die Online-Zahlung, sobald sie live ist."])
+        else:
+            saetze = [f"Hallo {name},",
+                      f"dein {plan_name}-Abo bei InkluDocs ist gekündigt und endet am {ablauf}. "
+                      "Bis dahin kannst du es ganz normal weiter nutzen.",
+                      "Danach wechselt dein Konto automatisch auf den Free-Plan — deine Projekte "
+                      "und Daten bleiben vollständig erhalten. Gekaufte Zusatz-Credits ruhen und "
+                      "leben wieder auf, sobald du erneut ein Abo buchst.",
+                      "Du hast es dir anders überlegt? Dann nimm die Kündigung unter "
+                      "„Abo &amp; Verbrauch“ einfach wieder zurück."]
+            _abo_mail(k["email"], "InkluDocs: Dein Abo endet bald",
+                      "Dein Abo endet bald", saetze)
+        return
+
+    # Laufzeitende ueberschritten.
+    if auto and laufzeit:
+        # Auto-Verlaengerung: gueltig_bis um die Laufzeit verlaengern, bis es
+        # in der Zukunft liegt (faengt auch lange Server-Pausen ab).
+        conn = get_db()
+        try:
+            neues = ablauf
+            while neues < heute:
+                neues = conn.execute("SELECT date(?, ?)",
+                                     (neues, f"+{int(laufzeit)} months")).fetchone()[0]
+            conn.execute("UPDATE users SET plan_gueltig_bis = ? WHERE id = ? AND plan_gueltig_bis = ?",
+                         (neues, k["id"], k["plan_gueltig_bis"]))
+            conn.commit()
+        finally:
+            conn.close()
+        if _kv_einmal(f"abo_mail_verlaengert_{k['id']}_{neues}"):
+            _abo_mail(k["email"], "InkluDocs: Dein Abo wurde verlängert",
+                      "Dein Abo wurde verlängert",
+                      [f"Hallo {name},",
+                       f"dein {plan_name}-Abo wurde wie vereinbart um {laufzeit} Monate verlängert "
+                       f"und läuft jetzt bis {neues}.",
+                       "Wenn du das nicht mehr möchtest, kündige jederzeit zum Laufzeitende "
+                       "auf der Seite „Abo &amp; Verbrauch“."])
+            _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Abo verlängert: {k['email']}",
+                      "Abo wurde automatisch verlängert",
+                      [f"Das {plan_name}-Abo von {html.escape(k['email'])} wurde automatisch bis {neues} "
+                       "verlängert. Bitte Rechnung stellen (Rechnungskunden)."])
+        return
+
+    # Abgelaufen ohne Verlaengerung: der Lazy-Rueckfall in billing macht das
+    # Konto bereits zu Free — hier nur die Abschieds-Mail (einmalig).
+    if _kv_einmal(f"abo_mail_abgelaufen_{k['id']}_{ablauf}"):
+        _abo_mail(k["email"], "InkluDocs: Dein Abo ist beendet",
+                  "Dein Abo ist beendet",
+                  [f"Hallo {name},",
+                   f"dein {plan_name}-Abo ist am {ablauf} ausgelaufen. Dein Konto steht jetzt "
+                   "auf dem Free-Plan — alle Projekte und Daten bleiben erhalten.",
+                   "Du möchtest weitermachen? Buche jederzeit wieder ein Abo — gekaufte "
+                   "Zusatz-Credits leben dann automatisch wieder auf."])
 
 
 @app.post("/api/admin/users/{user_id}/pakete")
@@ -1598,8 +1803,10 @@ async def admin_paket_anlegen(user_id: int, request: Request,
     target = get_user_by_id(user_id)
     if not target:
         raise HTTPException(status_code=404, detail="User nicht gefunden")
-    # Pakete gehoeren dem ABRECHNUNGS-Konto: bei Topf-Mitgliedern dem Inhaber.
-    konto_id = target.get("abo_owner_id") or target["id"]
+    # Pakete gehoeren dem ABRECHNUNGS-Konto: arbeitet das Ziel gerade im
+    # Team-Kontext, landet das Paket beim Topf-Inhaber (billing._konto_fuer
+    # validiert Mitgliedschaft + aktiven Plan).
+    konto_id = billing._konto_fuer(target["id"])
     paket_id = billing.schenke_credits(konto_id, groesse, notiz=notiz,
                                        quelle=quelle, verfall_monate=verfall_monate)
     preis = billing.PAKET_PREISE.get(groesse)
@@ -5185,11 +5392,15 @@ async def preise_page(request: Request):
     ctx = template_context(request, detect_language(request))
     ctx.update({
         "free_credits": billing.PLAN_KONTINGENTE["free"],
-        "lizenz_credits": billing.PLAN_KONTINGENTE["lizenz"],
-        "lizenz_preis": _eur(billing.LIZENZ_GRUNDPREIS_EUR),
-        "lizenz_monate": billing.LIZENZ_MINDESTLAUFZEIT_MONATE,
-        "halbjahr_preis": _eur(billing.LIZENZ_GRUNDPREIS_EUR
-                               * billing.LIZENZ_MINDESTLAUFZEIT_MONATE),
+        "single_preis": _eur(billing.PLAN_PREISE_EUR["single"]),
+        "single_credits": billing.PLAN_KONTINGENTE["single"],
+        "team_preis": _eur(billing.PLAN_PREISE_EUR["team"]),
+        "team_credits": billing.PLAN_KONTINGENTE["team"],
+        "team_sitze": billing.PLAN_SITZE["team"],
+        "enterprise_preis": _eur(billing.PLAN_PREISE_EUR["enterprise"]),
+        "enterprise_credits": billing.PLAN_KONTINGENTE["enterprise"],
+        "enterprise_sitze": billing.PLAN_SITZE["enterprise"],
+        "laufzeiten": "3, 6 oder 12",
         "pakete": [(n, _eur(p)) for n, p in sorted(billing.PAKET_PREISE.items())],
     })
     return templates.TemplateResponse("preise.html", ctx)

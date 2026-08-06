@@ -14,10 +14,11 @@
 {% endblock %}
 
 {% block body %}
-    {# Oeffentliche Tarif-/Preisseite (Umbau-Punkt 7, 04.08.2026, Michaels
-       Lizenzschluessel-Modell). Alle Zahlen kommen als Variablen aus
-       billing.py (eine Wahrheit) — Preisaenderung = Konfiguration, nie
-       Template-Pflege. Bewusst Listen statt Tabellen (VoiceOver). #}
+    {# Oeffentliche Tarif-/Preisseite (neues Abomodell, 06.08.2026:
+       Free/Single/Team/Enterprise, Laufzeiten 3/6/12 Monate). Alle Zahlen
+       kommen als Variablen aus billing.py (eine Wahrheit) — Preisaenderung =
+       Konfiguration, nie Template-Pflege. Bewusst Listen statt Tabellen
+       (VoiceOver). #}
     <a href="#main" class="skip-link">{{ _('Zum Hauptinhalt springen') }}</a>
     <main id="main" tabindex="-1">
         <div class="auth-container" role="region" aria-label="{{ _('Preise') }}" style="max-width:640px;">
@@ -32,16 +33,32 @@
                 <li>{{ _('Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain.') }}</li>
             </ul>
 
-            <h2>{{ _('Firmenlizenz') }}</h2>
+            <h2>Single</h2>
             <ul>
-                <li>{{ _('Ein Lizenzschlüssel pro Unternehmen — beliebig viele Mitarbeiter teilen sich einen gemeinsamen Credit-Topf.') }}</li>
-                <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten.').format(preis=lizenz_preis, credits=lizenz_credits) }}</li>
-                <li>{{ _('Mindestlaufzeit {monate} Monate, Abrechnung {halbjahr} € pro Halbjahr.').format(monate=lizenz_monate, halbjahr=halbjahr_preis) }}</li>
-                <li>{{ _('Der Schlüssel ist an die E-Mail-Domain deines Unternehmens gebunden — niemand Fremdes kann ihn benutzen.') }}</li>
+                <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten.').format(preis=single_preis, credits=single_credits) }}</li>
+                <li>{{ _('Für eine Person — das Abo gehört fest zu deinem Konto.') }}</li>
+            </ul>
+
+            <h2>Team</h2>
+            <ul>
+                <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten.').format(preis=team_preis, credits=team_credits) }}</li>
+                <li>{{ _('Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App.').format(n=team_sitze) }}</li>
+            </ul>
+
+            <h2>Enterprise</h2>
+            <ul>
+                <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet.').format(preis=enterprise_preis, credits=enterprise_credits) }}</li>
+                <li>{{ _('Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf.').format(n=enterprise_sitze) }}</li>
+            </ul>
+
+            <h2>{{ _('Laufzeiten') }}</h2>
+            <ul>
+                <li>{{ _('Alle Abos werden fest für {laufzeiten} Monate gebucht — keine monatliche Abbuchung.').format(laufzeiten=laufzeiten) }}</li>
+                <li>{{ _('Ohne Kündigung verlängert sich das Abo automatisch um die gebuchte Laufzeit; kündigen kannst du jederzeit zum Laufzeitende, direkt in der App.') }}</li>
             </ul>
 
             <h2>{{ _('Zusatzpakete') }}</h2>
-            <p>{{ _('Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange deine Lizenz läuft — die monatlichen Credits kommen immer obendrauf.') }}</p>
+            <p>{{ _('Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange dein Abo läuft — die monatlichen Credits kommen immer obendrauf. Mehr Nutzer im Team erhöhen das Kontingent nicht; mehr Credits gibt es über die Pakete.') }}</p>
             <ul>
                 {% for anzahl, preis in pakete %}
                 <li>{{ _('{n} Credits für {preis} €').format(n=anzahl, preis=preis) }}</li>
@@ -49,7 +66,7 @@
             </ul>
 
             <h2>{{ _('So bestellst du') }}</h2>
-            <p>{{ _('Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> — {{ _('du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert.') }}</p>
+            <p>{{ _('Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> — {{ _('du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet.') }}</p>
 
             <div class="auth-links center">
                 <a href="/">{{ _('Zur Anmeldung') }}</a>

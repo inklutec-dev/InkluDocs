@@ -4,68 +4,79 @@
       <h1>{{ _('Abo & Verbrauch') }}</h1>
 
       {# Kein eigenes h2 fuer diesen Block: er IST der Hauptinhalt der Seite und
-         wird von der h1 getragen. Zwei Ueberschriften direkt untereinander sind
-         beim Durchspringen mit dem Screenreader nur Ballast (Steve 31.07.).
-         Deshalb div statt section — ein Bereich ohne Ueberschrift braucht keine
-         eigene Landmarke. #}
+         wird von der h1 getragen (Steve 31.07.). Zeigt IMMER den AKTIVEN Topf
+         (Kontext-Umschalter darunter). #}
       <div class="dash-card">
         <div id="aboInfo">
           <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
         </div>
-        {# Ehrlicher Hinweis statt toter Knoepfe: Online-Zahlung kommt spaeter. #}
-        <p class="dash-meta">{{ _('Plan wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
       </div>
 
-      {# Lizenzschluessel (04.08.2026, Michaels Modell): EIN Schluessel pro
-         Unternehmen. Der Bereich ist fuer alle sichtbar, deren Konto noch
-         nicht im Lizenz-Topf ist (renderAbo blendet aus); nach einer
-         Aktivierung bleibt er mit der Erfolgsmeldung stehen. #}
-      <section class="dash-card" aria-labelledby="lizenzHeading" id="lizenzBereich">
-        <h2 id="lizenzHeading">{{ _('Lizenzschlüssel') }}</h2>
-        <div id="lizenzFormWrap">
-          <p class="dash-meta">{{ _('Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen.') }}</p>
-          <form id="lizenzForm">
-            <div class="dash-field">
-              <label for="lizenzKey">{{ _('Lizenzschlüssel') }}</label>
-              <input type="text" id="lizenzKey" class="dash-input" required autocomplete="off" spellcheck="false">
-            </div>
-            <button type="submit" class="btn btn-primary">{{ _('Aktivieren') }}</button>
-            <span id="lizenzErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
-          </form>
-        </div>
-        {# Erfolg ausserhalb des Formular-Wrappers: das Formular verschwindet
-           nach der Aktivierung, die Meldung bleibt lesbar stehen. #}
-        <span id="lizenzMsg" role="status" aria-live="polite"></span>
+      {# Kontext-Umschalter (06.08.2026): nur sichtbar, wenn es mehr als einen
+         Topf gibt (eigenes Abo + mindestens ein Team). Native Radios im
+         fieldset; der Wechsel wird per role=status angesagt, die Radio-Gruppe
+         selbst wird beim Wechsel NICHT neu gebaut (Fokus bleibt stehen). #}
+      <section class="dash-card" aria-labelledby="kontextHeading" id="kontextBereich" hidden>
+        <h2 id="kontextHeading">{{ _('Guthaben wählen') }}</h2>
+        <fieldset id="kontextFieldset" style="border:0;padding:0;margin:0;">
+          <legend class="dash-meta" style="padding:0;margin-bottom:.5rem;">{{ _('Aus welchem Guthaben möchtest du arbeiten? Die Wahl gilt für alles, was Credits kostet.') }}</legend>
+          <div id="kontextListe"></div>
+        </fieldset>
+        <span id="kontextMsg" role="status" aria-live="polite"></span>
+        <span id="kontextErr" role="alert" style="color:var(--error);"></span>
+      </section>
+
+      {# Eigenes Abo: Laufzeit, Verlaengerung, Kuendigung. Betrifft immer nur
+         den EIGENEN Plan — Teams, in denen man Mitglied ist, kuendigt man
+         nicht (das macht deren Inhaber). #}
+      <section class="dash-card" aria-labelledby="eigenHeading" id="eigenBereich" hidden>
+        <h2 id="eigenHeading">{{ _('Dein Abo') }}</h2>
+        <div id="eigenInfo"></div>
+        <button type="button" class="btn btn-secondary" id="kuendigenBtn" hidden>{{ _('Abo kündigen') }}</button>
+        <button type="button" class="btn btn-secondary" id="widerrufBtn" hidden>{{ _('Kündigung zurücknehmen') }}</button>
+        <span id="eigenMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        <span id="eigenErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        <p class="dash-meta" style="margin-top:1rem;">{{ _('Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
       </section>
 
       {# Topf-Verwaltung: nur sichtbar fuer den INHABER eines Team- oder
-         Lizenz-Kontos (renderAbo blendet ein). Mitglieder sehen stattdessen
-         die Team-Zeile in der Plan-Anzeige oben. Beim Lizenz-Modell gibt es
-         KEIN Einladen — Beitritt laeuft ueber den Schluessel (Domain-Schutz). #}
+         Enterprise-Abos. Eingeladen wird per E-Mail aus dem Abo heraus —
+         Mitglieder koennen sich nicht selbst entfernen (Steve 06.08.). #}
       <section class="dash-card" aria-labelledby="teamHeading" id="teamBereich" hidden>
-        <h2 id="teamHeading" tabindex="-1">{{ _('Team-Mitglieder') }}</h2>
+        <h2 id="teamHeading" tabindex="-1">{{ _('Dein Team') }}</h2>
+        <form id="teamNameForm" style="margin-bottom:1rem;">
+          <div class="dash-field">
+            <label for="teamNameInput">{{ _('Teamname (wird deinen Mitgliedern angezeigt)') }}</label>
+            <input type="text" id="teamNameInput" class="dash-input" maxlength="100" autocomplete="off">
+          </div>
+          <button type="submit" class="btn btn-secondary">{{ _('Teamnamen speichern') }}</button>
+          <span id="teamNameMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        </form>
+        <h3 id="teamListHeading">{{ _('Mitglieder') }}</h3>
+        <p id="teamSitze" class="dash-meta"></p>
         <div id="teamList" style="margin-top:.5rem;">
           <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
         </div>
-        <p id="teamJoinHint" class="dash-meta" style="margin-top:1rem;" hidden>{{ _('Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei.') }}</p>
         <h3 id="teamInviteHeading" style="margin-top:1rem;">{{ _('Mitglied einladen') }}</h3>
+        <p class="dash-meta">{{ _('Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an.') }}</p>
         <form id="teamInviteForm">
           <div class="dash-field">
             <label for="inviteEmail">{{ _('E-Mail-Adresse des neuen Mitglieds') }}</label>
             <input type="email" id="inviteEmail" class="dash-input" required autocomplete="off">
           </div>
+          <div class="dash-field">
+            <label for="inviteName">{{ _('Name (optional)') }}</label>
+            <input type="text" id="inviteName" class="dash-input" maxlength="100" autocomplete="off">
+          </div>
           <button type="submit" class="btn btn-primary">{{ _('Einladen') }}</button>
           <span id="teamMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
-          {# Review-Befund 15 (31.07.2026): Fehler (Sitze voll, Ablehnungen)
-             in einer eigenen role=alert-Region — assertive Ansage fuer
-             Screenreader. Erfolge bleiben im ruhigeren role=status daneben. #}
           <span id="teamErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
         </form>
       </section>
 {% endblock %}
 {% block dialogs %}
 {# Natives <dialog> + showModal(): Fokusfang, Escape und inerter Hintergrund
-   nativ (Hausregel, gleiches Muster wie app.html). Eigene h2. #}
+   nativ (Hausregel). Eigene h2. #}
 <dialog id="teamRemoveDialog" class="app-dialog" aria-labelledby="teamRemoveHeading">
   <h2 id="teamRemoveHeading">{{ _('Team-Mitglied entfernen?') }}</h2>
   <p id="teamRemoveBody"></p>
@@ -74,17 +85,37 @@
     <button type="button" class="btn btn-danger" id="teamRemoveConfirm">{{ _('Entfernen') }}</button>
   </div>
 </dialog>
+<dialog id="kuendigenDialog" class="app-dialog" aria-labelledby="kuendigenHeading">
+  <h2 id="kuendigenHeading">{{ _('Abo kündigen?') }}</h2>
+  <p id="kuendigenBody"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="kuendigenCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="kuendigenConfirm">{{ _('Zum Laufzeitende kündigen') }}</button>
+  </div>
+</dialog>
 {% endblock %}
 {% block page_script %}
 <script>
 {% raw %}
-  // Abo & Verbrauch (Abo-Modell Etappe 2, 31.07.2026). Gleiche Wortwahl wie
-  // auf der Startseite: buildCreditLines() kommt aus dashboard.js (App-Shell).
-  // Fehlt der abo-Block von /api/me (Backend noch nicht umgestellt), zeigen
-  // wir einen ruhigen Hinweis statt falscher Zahlen.
-  const PLAN_LABELS = { free: 'Free', pro: 'Pro', team: 'Team', enterprise: 'Enterprise', lizenz: t('Firmenlizenz') };
+  // Abo & Verbrauch — neues Abomodell (06.08.2026): Stufen Single/Team/
+  // Enterprise, Kontext-Umschalter (aus welchem Topf wird gearbeitet),
+  // Kuendigung zum Laufzeitende, Team-Verwaltung mit Einladungen.
+  // buildCreditLines() kommt aus dashboard.js (App-Shell).
+  const PLAN_LABELS = { free: 'Free', single: 'Single', team: 'Team', enterprise: 'Enterprise' };
+
+  let _abo = null;
+
+  function planLabel(p) { return PLAN_LABELS[p] || p; }
+
+  function teamLabel(k) {
+    // Anzeigename eines Team-Kontexts: Teamname, sonst "Team von X".
+    return k.team_name
+      ? t('Team „{name}“ von {inhaber}', { name: k.team_name, inhaber: k.inhaber_name })
+      : t('Team von {inhaber}', { inhaber: k.inhaber_name });
+  }
 
   function renderAbo(abo) {
+    _abo = abo;
     const box = byId('aboInfo');
     box.innerHTML = '';
     if (!abo) {
@@ -95,65 +126,214 @@
       return;
     }
     const pPlan = document.createElement('p');
-    // Betreiber (Admins) haben kein Kontingent — 'Dein Plan: Free' waere
-    // hier irrefuehrend (Steve-Befund 31.07.).
-    pPlan.textContent = abo.ist_betreiber
-      ? t('Dein Konto: Betreiber (unbegrenzt)')
-      : t('Dein Plan: {plan}', { plan: PLAN_LABELS[abo.plan] || abo.plan });
+    if (abo.ist_betreiber) {
+      pPlan.textContent = t('Dein Konto: Betreiber (unbegrenzt)');
+    } else if (abo.aktives_team) {
+      pPlan.textContent = t('Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan}).',
+        { team: teamLabel(abo.aktives_team), plan: planLabel(abo.aktives_team.plan) });
+    } else {
+      pPlan.textContent = t('Dein Plan: {plan}', { plan: planLabel(abo.plan) });
+    }
     box.appendChild(pPlan);
-    if (abo.ist_team_mitglied && abo.team_inhaber) {
-      const pTeam = document.createElement('p');
-      pTeam.className = 'dash-meta';
-      pTeam.textContent = t('Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf.', { inhaber: abo.team_inhaber });
-      box.appendChild(pTeam);
-    }
-    // Firmenlizenz: Eckdaten fuer alle im Topf, den Schluessel selbst sieht
-    // nur der Inhaber (zum Weitergeben im Unternehmen).
-    if (abo.plan === 'lizenz' && abo.lizenz) {
-      const pLiz = document.createElement('p');
-      pLiz.className = 'dash-meta';
-      pLiz.textContent = t('Firmenlizenz für {domain} — gültig bis {datum}.', { domain: abo.lizenz.domain, datum: abo.lizenz.gueltig_bis });
-      box.appendChild(pLiz);
-      if (abo.lizenz.schluessel) {
-        const pKey = document.createElement('p');
-        pKey.textContent = t('Euer Lizenzschlüssel: {key}', { key: abo.lizenz.schluessel });
-        box.appendChild(pKey);
-        const pHint = document.createElement('p');
-        pHint.className = 'dash-meta';
-        pHint.textContent = t('Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei.', { domain: '@' + abo.lizenz.domain });
-        box.appendChild(pHint);
-      }
-    }
     buildCreditLines(abo, true).forEach((zeile) => {
       const p = document.createElement('p');
       p.textContent = zeile;
       box.appendChild(p);
     });
-    // Punkt 2 (04.08.2026): Free-Volumen fuer Firmen-Domains gebuendelt —
-    // ehrlich sagen, dass die Zahlen fuer die ganze Domain gelten.
     if (abo.domain_pool) {
       const pPool = document.createElement('p');
       pPool.className = 'dash-meta';
       pPool.textContent = t('Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}.', { domain: abo.domain_pool });
       box.appendChild(pPool);
     }
-    // Aktivierungs-Bereich ausblenden, sobald das Konto im Lizenz-Topf ist —
-    // ausser eine frische Erfolgsmeldung steht darin (die soll lesbar bleiben).
-    const lizenzBereich = byId('lizenzBereich');
-    if (lizenzBereich) {
-      lizenzBereich.hidden = (abo.plan === 'lizenz' && !byId('lizenzMsg').textContent);
-    }
-    // Topf-Verwaltung nur fuer den Inhaber (Team- oder Lizenz-Konto).
-    if ((abo.plan === 'team' || abo.plan === 'lizenz') && !abo.ist_team_mitglied) {
+    renderKontexte(abo);
+    renderEigen(abo);
+    if (abo.eigen && abo.eigen.ist_topf_inhaber) {
       byId('teamBereich').hidden = false;
-      // Lizenz: Beitritt NUR ueber den Schluessel — Einladen ausblenden.
-      const istLizenz = (abo.plan === 'lizenz');
-      byId('teamInviteHeading').hidden = istLizenz;
-      byId('teamInviteForm').hidden = istLizenz;
-      byId('teamJoinHint').hidden = !istLizenz;
+      byId('teamNameInput').value = abo.eigen.team_name || '';
       loadTeam();
+    } else {
+      byId('teamBereich').hidden = true;
     }
   }
+
+  function renderKontexte(abo) {
+    // Radio-Gruppe nur beim (Neu-)Laden der Seite aufbauen — beim Umschalten
+    // wird sie NICHT neu gerendert, damit der Fokus stehen bleibt.
+    const bereich = byId('kontextBereich');
+    const liste = byId('kontextListe');
+    const kontexte = (abo && abo.kontexte) || [];
+    if (kontexte.length < 2 || abo.ist_betreiber) { bereich.hidden = true; return; }
+    bereich.hidden = false;
+    liste.innerHTML = '';
+    kontexte.forEach((k, idx) => {
+      const id = 'topf_' + (k.topf === 'eigen' ? 'eigen' : k.topf);
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;align-items:center;gap:.5rem;padding:.35rem 0;';
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'topfwahl';
+      radio.id = id;
+      radio.value = String(k.topf);
+      radio.checked = String(abo.aktiver_topf) === String(k.topf);
+      radio.addEventListener('change', () => waehleKontext(k));
+      const label = document.createElement('label');
+      label.setAttribute('for', id);
+      label.textContent = (k.topf === 'eigen')
+        ? t('Mein eigenes Guthaben (Plan {plan})', { plan: planLabel(k.plan) })
+        : teamLabel(k) + ' — ' + planLabel(k.plan);
+      wrap.appendChild(radio);
+      wrap.appendChild(label);
+      liste.appendChild(wrap);
+    });
+  }
+
+  async function waehleKontext(k) {
+    const msg = byId('kontextMsg');
+    const err = byId('kontextErr');
+    msg.textContent = ''; err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/abo/kontext', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topf: k.topf }),
+      });
+    } catch (e) { err.textContent = t('Fehler'); return; }
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      err.textContent = d.detail || t('Fehler');
+      return;
+    }
+    msg.textContent = (k.topf === 'eigen')
+      ? t('Du arbeitest jetzt aus deinem eigenen Guthaben.')
+      : t('Du arbeitest jetzt aus dem Guthaben: {team}.', { team: teamLabel(k) });
+    // Nur die Zahlen oben auffrischen — die Radio-Gruppe bleibt unangetastet
+    // (Fokus!). renderAbo wuerde sie neu bauen, darum nur aboInfo fuellen.
+    try {
+      const r2 = await fetch('/api/me');
+      const abo = (await r2.json()).abo || null;
+      if (abo) {
+        _abo = abo;
+        const box = byId('aboInfo');
+        box.innerHTML = '';
+        const pPlan = document.createElement('p');
+        pPlan.textContent = abo.aktives_team
+          ? t('Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan}).',
+              { team: teamLabel(abo.aktives_team), plan: planLabel(abo.aktives_team.plan) })
+          : t('Dein Plan: {plan}', { plan: planLabel(abo.plan) });
+        box.appendChild(pPlan);
+        buildCreditLines(abo, true).forEach((zeile) => {
+          const p = document.createElement('p');
+          p.textContent = zeile;
+          box.appendChild(p);
+        });
+      }
+    } catch (e) { /* Anzeige aktualisiert sich beim naechsten Laden */ }
+  }
+
+  function renderEigen(abo) {
+    const bereich = byId('eigenBereich');
+    const info = byId('eigenInfo');
+    const kuendigen = byId('kuendigenBtn');
+    const widerruf = byId('widerrufBtn');
+    if (!abo || !abo.eigen || abo.ist_betreiber) { bereich.hidden = !abo || abo.ist_betreiber; return; }
+    bereich.hidden = false;
+    info.innerHTML = '';
+    const eigen = abo.eigen;
+    const pPlan = document.createElement('p');
+    pPlan.textContent = t('Dein eigener Plan: {plan}', { plan: planLabel(eigen.plan) });
+    info.appendChild(pPlan);
+    kuendigen.hidden = true;
+    widerruf.hidden = true;
+    if (eigen.plan !== 'free') {
+      if (eigen.gueltig_bis) {
+        const pLauf = document.createElement('p');
+        if (eigen.auto_verlaengerung) {
+          pLauf.textContent = eigen.laufzeit_monate
+            ? t('Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch.', { monate: eigen.laufzeit_monate, datum: eigen.gueltig_bis })
+            : t('Verlängert sich am {datum} automatisch.', { datum: eigen.gueltig_bis });
+          kuendigen.hidden = false;
+        } else {
+          pLauf.textContent = t('Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free.', { datum: eigen.gueltig_bis });
+          widerruf.hidden = false;
+        }
+        info.appendChild(pLauf);
+      }
+    } else {
+      const pFrei = document.createElement('p');
+      pFrei.className = 'dash-meta';
+      pFrei.textContent = t('Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du unten per E-Mail — bald auch direkt online.');
+      info.appendChild(pFrei);
+    }
+  }
+
+  byId('kuendigenBtn').addEventListener('click', () => {
+    const bis = (_abo && _abo.eigen && _abo.eigen.gueltig_bis) || '';
+    byId('kuendigenBody').textContent = t('Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten.', { datum: bis });
+    byId('kuendigenDialog').showModal();
+  });
+  byId('kuendigenCancel').addEventListener('click', () => byId('kuendigenDialog').close());
+  byId('kuendigenDialog').addEventListener('close', () => {
+    const btn = byId('kuendigenBtn');
+    if (!btn.hidden) btn.focus(); else byId('widerrufBtn').focus();
+  });
+  byId('kuendigenConfirm').addEventListener('click', async () => {
+    const dlg = byId('kuendigenDialog');
+    const msg = byId('eigenMsg');
+    const err = byId('eigenErr');
+    msg.textContent = ''; err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/abo/kuendigen', { method: 'POST' });
+    } catch (e) { dlg.close(); err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    dlg.close();
+    if (!res.ok) { err.textContent = d.detail || t('Fehler'); return; }
+    msg.textContent = t('Gekündigt. Dein Abo läuft bis {datum} und endet dann.', { datum: d.gueltig_bis || '' });
+    await reloadAbo();
+  });
+
+  byId('widerrufBtn').addEventListener('click', async () => {
+    const msg = byId('eigenMsg');
+    const err = byId('eigenErr');
+    msg.textContent = ''; err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/abo/kuendigung-widerrufen', { method: 'POST' });
+    } catch (e) { err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { err.textContent = d.detail || t('Fehler'); return; }
+    msg.textContent = t('Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch.');
+    await reloadAbo();
+  });
+
+  async function reloadAbo() {
+    try {
+      const res = await fetch('/api/me');
+      renderAbo((await res.json()).abo || null);
+    } catch (e) { /* naechstes Laden richtet es */ }
+  }
+
+  byId('teamNameForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = byId('teamNameMsg');
+    msg.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/team/name', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_name: byId('teamNameInput').value.trim() }),
+      });
+    } catch (e2) { msg.textContent = t('Fehler'); return; }
+    if (res.ok) {
+      msg.textContent = t('Teamname gespeichert.');
+      msg.style.color = 'var(--success)';
+    } else {
+      const d = await res.json().catch(() => ({}));
+      msg.textContent = d.detail || t('Fehler');
+      msg.style.color = 'var(--error)';
+    }
+  });
 
   let _teamRemoveId = null;      // Ziel-Mitglied des laufenden Entfernens
   let _teamRemoveTrigger = null; // Ausloeser-Knopf fuer die Fokus-Rueckkehr
@@ -172,6 +352,13 @@
       p.textContent = t('Team-Mitglieder konnten nicht geladen werden.');
       list.appendChild(p);
       return;
+    }
+    // Sitz-Zeile: "3 von 5 Plätzen belegt (inklusive dir)."
+    const sitze = byId('teamSitze');
+    if (data.sitze_inklusive) {
+      sitze.textContent = t('{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber).', { belegt: data.sitze_belegt, max: data.sitze_inklusive });
+    } else {
+      sitze.textContent = '';
     }
     const members = data.mitglieder || [];
     list.innerHTML = '';
@@ -193,7 +380,6 @@
       strong.textContent = m.display_name || m.email;
       info.appendChild(strong);
       if (m.ist_inhaber) {
-        // Der Inhaber selbst: klar gekennzeichnet, kein Entfernen-Knopf.
         const rolle = document.createElement('span');
         rolle.className = 'dash-meta'; rolle.style.marginLeft = '.5rem';
         rolle.textContent = t('(Inhaber)');
@@ -207,7 +393,7 @@
       info.appendChild(mail);
       const used = document.createElement('span');
       used.className = 'dash-meta'; used.style.marginLeft = '.5rem';
-      used.textContent = '· ' + t('diesen Monat: {anzahl} Credits', { anzahl: m.verbraucht_monat });
+      used.textContent = '· ' + t('diesen Monat aus dem Team-Topf: {anzahl} Credits', { anzahl: m.verbraucht_monat });
       info.appendChild(used);
       li.appendChild(info);
       if (!m.ist_inhaber) {
@@ -227,7 +413,7 @@
   function openTeamRemove(m, triggerBtn) {
     _teamRemoveId = m.id;
     _teamRemoveTrigger = triggerBtn;
-    byId('teamRemoveBody').textContent = t('Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person verliert den Zugriff auf den gemeinsamen Credit-Topf.', { name: m.display_name || m.email });
+    byId('teamRemoveBody').textContent = t('Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Guthaben und wird per E-Mail informiert.', { name: m.display_name || m.email });
     byId('teamRemoveDialog').showModal();
   }
 
@@ -279,60 +465,26 @@
     let res;
     try {
       res = await fetch('/api/team/einladen', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, display_name: byId('inviteName').value.trim() }),
       });
     } catch (e) {
       err.textContent = t('Fehler');
       return;
     }
     if (res.ok) {
-      // Zustimmungs-Fluss (Review-Befund 1): Mitglied wird man erst nach
-      // Annahme der Mail-Einladung — darum ehrlich "versandt" statt
-      // "eingeladen"; die Liste unten fuellt sich erst nach der Annahme.
+      // Zustimmungs-Fluss: Mitglied wird man erst nach Annahme der
+      // Mail-Einladung — darum ehrlich "versandt" statt "eingeladen".
       msg.textContent = t('Einladung versandt an {email}.', { email: email });
       msg.style.color = 'var(--success)';
       input.value = '';
+      byId('inviteName').value = '';
       loadTeam();
     } else {
       const d = await res.json().catch(() => ({}));
-      // Auch der 400er (z. B. max. 5 Sitze) kommt hier als detail-Text an.
+      // Auch der 400er (z. B. alle Plätze belegt) kommt hier als detail an.
       err.textContent = d.detail || t('Fehler');
     }
-  });
-
-  byId('lizenzForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const input = byId('lizenzKey');
-    const msg = byId('lizenzMsg');
-    const err = byId('lizenzErr');
-    msg.textContent = ''; err.textContent = '';
-    const schluessel = input.value.trim();
-    if (!schluessel) { input.focus(); return; }
-    let res;
-    try {
-      res = await fetch('/api/abo/lizenz', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ schluessel }),
-      });
-    } catch (e2) {
-      err.textContent = t('Fehler');
-      return;
-    }
-    const d = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      err.textContent = d.detail || t('Fehler');
-      return;
-    }
-    // Formular weg, Erfolgsmeldung bleibt im Bereich stehen (role=status
-    // sagt sie an); danach die Plan-Anzeige oben frisch laden.
-    byId('lizenzFormWrap').hidden = true;
-    msg.textContent = d.rolle === 'inhaber'
-      ? t('Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs.')
-      : t('Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens.');
-    msg.style.color = 'var(--success)';
-    try {
-      const r2 = await fetch('/api/me');
-      renderAbo((await r2.json()).abo || null);
-    } catch (e3) { /* Anzeige aktualisiert sich spaetestens beim naechsten Laden */ }
   });
 
   (async function initAbo() {

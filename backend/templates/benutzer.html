@@ -61,41 +61,68 @@
         </form>
       </section>
 
-      {# Lizenzschluessel-Verwaltung (04.08.2026, Michaels Modell): Erzeugen =
-         Rechnungsweg (Rechnung bezahlt -> Schluessel erzeugen -> Kunde
-         aktiviert). Gruender bekommen den Basisschluessel mit Laufzeit 3
-         Monate kostenlos. Nur-Einsicht-Admins sehen die Liste, aber kein
-         Erzeugen-Formular (init blendet aus). #}
-      <section class="dash-section" aria-labelledby="lizenzen-h">
-        <h2 id="lizenzen-h">{{ _('Lizenzschlüssel') }}</h2>
-        <div id="lizenzenContainer" aria-busy="true">
-          <p class="dash-sub">{{ _('Wird geladen …') }}</p>
-        </div>
+      {# Abo zuweisen (neues Abomodell, 06.08.2026): der Rechnungsweg — der
+         Kunde bestellt bei Actino/INKLUTEC, der Admin sucht das Konto per
+         E-Mail heraus und setzt den Plan mit fester Laufzeit. Der Kunde
+         bekommt eine Bestaetigungs-Mail und sieht den Plan sofort. #}
+      <section class="dash-card" aria-labelledby="abo-h" id="aboZuweisenSection">
+        <h2 id="abo-h">{{ _('Abo zuweisen (Rechnungsweg)') }}</h2>
+        <p class="dash-sub">{{ _('Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen.') }}</p>
+        <form id="aboZuweisenForm" novalidate>
+          <div class="dash-field">
+            <label for="aboEmail">{{ _('E-Mail des bestehenden Kontos') }}</label>
+            <input type="email" id="aboEmail" class="dash-input" required autocomplete="off">
+          </div>
+          <div class="dash-field">
+            <label for="aboPlan">{{ _('Plan') }}</label>
+            <select id="aboPlan" class="dash-input">
+              <option value="single">Single (9,95 € / 50 Credits)</option>
+              <option value="team">Team (19,95 € / 100 Credits, bis 5 Nutzer)</option>
+              <option value="enterprise">Enterprise (49,95 € / 275 Credits, bis 25 Nutzer)</option>
+              <option value="free">{{ _('Free (Abo beenden)') }}</option>
+            </select>
+          </div>
+          <div class="dash-field">
+            <label for="aboLaufzeit">{{ _('Laufzeit') }}</label>
+            <select id="aboLaufzeit" class="dash-input">
+              <option value="3">{{ _('3 Monate') }}</option>
+              <option value="6" selected>{{ _('6 Monate') }}</option>
+              <option value="12">{{ _('12 Monate') }}</option>
+            </select>
+          </div>
+          <div class="dash-field">
+            <label><input type="checkbox" id="aboAutoVerl" checked> {{ _('Verlängert sich automatisch (Kunde kann jederzeit kündigen)') }}</label>
+          </div>
+          <button type="submit" class="btn btn-primary">{{ _('Abo zuweisen') }}</button>
+          <span id="aboZuweisenMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="aboZuweisenErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        </form>
       </section>
 
-      <section class="dash-card" aria-labelledby="newlizenz-h" id="newLizenzSection">
-        <h2 id="newlizenz-h">{{ _('Neuen Lizenzschlüssel erzeugen') }}</h2>
-        <p class="dash-sub">{{ _('Ohne Domain bindet sich der Schlüssel bei der ersten Aktivierung an die Firmen-Adresse des Kunden. Gründer-Tarif: Laufzeit 3 Monate.') }}</p>
-        <form id="createLizenzForm" novalidate>
+      <section class="dash-card" aria-labelledby="paket-h" id="paketSection">
+        <h2 id="paket-h">{{ _('Zusatz-Credits gutschreiben (Rechnungsweg)') }}</h2>
+        <p class="dash-sub">{{ _('Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf dem Abrechnungs-Konto (bei Team-Mitgliedern beim Inhaber) und verfällt erst mit der Kündigung.') }}</p>
+        <form id="paketForm" novalidate>
           <div class="dash-field">
-            <label for="lizDomain">{{ _('Firmen-Domain (optional, z. B. firma.de)') }}</label>
-            <input type="text" id="lizDomain" class="dash-input" autocomplete="off" spellcheck="false">
+            <label for="paketEmail">{{ _('E-Mail des bestehenden Kontos') }}</label>
+            <input type="email" id="paketEmail" class="dash-input" required autocomplete="off">
           </div>
           <div class="dash-field">
-            <label for="lizLaufzeit">{{ _('Laufzeit in Monaten') }}</label>
-            <input type="number" id="lizLaufzeit" class="dash-input" value="6" min="1" max="60">
+            <label for="paketGroesse">{{ _('Paketgröße (Credits)') }}</label>
+            <select id="paketGroesse" class="dash-input">
+              <option value="100">100</option>
+              <option value="500">500</option>
+              <option value="1000">1000</option>
+            </select>
           </div>
           <div class="dash-field">
-            <label for="lizNotiz">{{ _('Notiz (z. B. Firmenname, Rechnungsnummer)') }}</label>
-            <input type="text" id="lizNotiz" class="dash-input" autocomplete="off">
+            <label for="paketNotiz">{{ _('Notiz (z. B. Rechnungsnummer)') }}</label>
+            <input type="text" id="paketNotiz" class="dash-input" autocomplete="off">
           </div>
-          <button type="submit" class="btn btn-primary">{{ _('Schlüssel erzeugen') }}</button>
-          <span id="createLizenzMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
-          <span id="createLizenzErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+          <button type="submit" class="btn btn-primary">{{ _('Gutschreiben') }}</button>
+          <span id="paketMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="paketErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
         </form>
-        {# Der frisch erzeugte Schluessel als eigener Absatz — gut kopier- und
-           vorlesbar, bleibt stehen bis zum naechsten Erzeugen. #}
-        <p id="neuerSchluessel" hidden style="font-weight:600;"></p>
       </section>
 {% endblock %}
 
@@ -314,99 +341,81 @@
     }
   });
 
-  // ── Lizenzschluessel (04.08.2026) ─────────────────────────
-  async function loadLizenzen() {
-    const cont = byId('lizenzenContainer');
-    let data;
-    try {
-      const res = await fetch('/api/admin/lizenzen');
-      if (!res.ok) throw new Error('lizenzen');
-      data = await res.json();
-    } catch (e) {
-      cont.setAttribute('aria-busy', 'false');
-      cont.innerHTML = '';
-      const p = document.createElement('p');
-      p.className = 'dash-empty';
-      p.textContent = t('Lizenzschlüssel konnten nicht geladen werden.');
-      cont.appendChild(p);
-      return;
-    }
-    cont.setAttribute('aria-busy', 'false');
-    cont.innerHTML = '';
-    const lizenzen = data.lizenzen || [];
-    byId('lizenzen-h').textContent = t('Lizenzschlüssel ({n})', { n: lizenzen.length });
-    if (lizenzen.length === 0) {
-      const p = document.createElement('p');
-      p.className = 'dash-empty';
-      p.textContent = t('Noch keine Lizenzschlüssel erzeugt.');
-      cont.appendChild(p);
-      return;
-    }
-    const ul = document.createElement('ul');
-    ul.className = 'dash-list';
-    lizenzen.forEach((l) => {
-      const li = document.createElement('li');
-      li.className = 'dash-item';
-      const h3 = document.createElement('h3');
-      h3.textContent = l.schluessel;
-      li.appendChild(h3);
-      const meta = document.createElement('p');
-      meta.className = 'dash-meta';
-      const teile = [];
-      teile.push(l.status === 'aktiv' ? t('Aktiv')
-        : (l.status === 'gesperrt' ? t('Gesperrt') : t('Noch nicht aktiviert')));
-      if (l.domain) teile.push(t('Domain: {domain}', { domain: l.domain }));
-      if (l.inhaber_email) teile.push(t('Inhaber: {email}', { email: l.inhaber_email }));
-      if (l.gueltig_bis) {
-        const datum = String(l.gueltig_bis).slice(0, 10);
-        teile.push(l.abgelaufen ? t('Abgelaufen am {datum}', { datum: datum })
-                                : t('Gültig bis {datum}', { datum: datum }));
-      }
-      if (l.nutzer) teile.push(t('{n} Nutzer', { n: l.nutzer }));
-      if (l.verbrauch_monat) teile.push(t('diesen Monat: {anzahl} Credits', { anzahl: l.verbrauch_monat }));
-      if (l.notiz) teile.push(l.notiz);
-      meta.textContent = teile.join(' · ');
-      li.appendChild(meta);
-      ul.appendChild(li);
-    });
-    cont.appendChild(ul);
+  // ── Abo zuweisen + Zusatzpakete (Rechnungsweg, 06.08.2026) ─────
+  async function findeKontoId(email) {
+    // Konto per E-Mail aus der Benutzerliste suchen (Admin-Kontext — die
+    // Liste liegt ohnehin auf dieser Seite offen, keine Enumeration-Frage).
+    const res = await fetch('/api/admin/users');
+    if (!res.ok) return null;
+    const data = await res.json();
+    const ziel = (data.users || []).find(
+      (u) => (u.email || '').toLowerCase() === email.toLowerCase());
+    return ziel ? ziel.id : null;
   }
 
-  byId('createLizenzForm').addEventListener('submit', async (e) => {
+  byId('aboZuweisenForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const msg = byId('createLizenzMsg');
-    const err = byId('createLizenzErr');
+    const msg = byId('aboZuweisenMsg');
+    const err = byId('aboZuweisenErr');
     msg.textContent = ''; msg.style.color = '';
     err.textContent = '';
+    const email = byId('aboEmail').value.trim();
+    if (!email) { byId('aboEmail').focus(); return; }
+    const kontoId = await findeKontoId(email);
+    if (!kontoId) {
+      err.textContent = t('Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“.');
+      return;
+    }
+    const plan = byId('aboPlan').value;
+    const body = { plan: plan };
+    if (plan !== 'free') {
+      body.laufzeit_monate = parseInt(byId('aboLaufzeit').value, 10);
+      body.auto_verlaengerung = byId('aboAutoVerl').checked;
+    }
+    let res;
+    try {
+      res = await fetch('/api/admin/users/' + kontoId + '/plan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+    } catch (e2) { err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { err.textContent = d.detail || t('Fehler'); return; }
+    msg.textContent = d.message || t('Abo wurde zugewiesen.');
+    msg.style.color = 'var(--success)';
+    announce(msg.textContent);
+  });
+
+  byId('paketForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = byId('paketMsg');
+    const err = byId('paketErr');
+    msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
+    const email = byId('paketEmail').value.trim();
+    if (!email) { byId('paketEmail').focus(); return; }
+    const kontoId = await findeKontoId(email);
+    if (!kontoId) {
+      err.textContent = t('Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“.');
+      return;
+    }
     const body = {
-      domain: byId('lizDomain').value.trim() || null,
-      laufzeit_monate: parseInt(byId('lizLaufzeit').value, 10) || 6,
-      notiz: byId('lizNotiz').value.trim(),
+      groesse: parseInt(byId('paketGroesse').value, 10),
+      verfall: 'kuendigung',
+      quelle: 'rechnung',
+      notiz: byId('paketNotiz').value.trim(),
     };
     let res;
     try {
-      res = await fetch('/api/admin/lizenzen', {
+      res = await fetch('/api/admin/users/' + kontoId + '/pakete', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
-    } catch (e2) {
-      err.textContent = t('Fehler');
-      return;
-    }
+    } catch (e2) { err.textContent = t('Fehler'); return; }
     const d = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      err.textContent = d.detail || t('Fehler');
-      return;
-    }
-    const key = (d.schluessel || [])[0] || '';
-    const out = byId('neuerSchluessel');
-    out.hidden = false;
-    out.textContent = t('Neuer Schlüssel: {key}', { key: key });
-    msg.textContent = t('Schlüssel wurde erzeugt.');
+    if (!res.ok) { err.textContent = d.detail || t('Fehler'); return; }
+    msg.textContent = d.message || t('Credits wurden gutgeschrieben.');
     msg.style.color = 'var(--success)';
-    byId('lizDomain').value = '';
-    byId('lizNotiz').value = '';
-    announce(t('Schlüssel wurde erzeugt.'));
-    loadLizenzen();
+    byId('paketNotiz').value = '';
+    announce(msg.textContent);
   });
 
   (async function init() {
@@ -416,11 +425,11 @@
       // Nur-Einsicht-Admins: Anlege- und Verwaltungs-Formulare ausblenden.
       const ns = byId('newuser-section'); if (ns) ns.hidden = true;
       const aa = byId('addAdminSection'); if (aa) aa.hidden = true;
-      const nl = byId('newLizenzSection'); if (nl) nl.hidden = true;
+      const az = byId('aboZuweisenSection'); if (az) az.hidden = true;
+      const ps = byId('paketSection'); if (ps) ps.hidden = true;
     }
     await loadUsers();
     await loadAdmins();
-    await loadLizenzen();
   })();
 {% endraw %}
 </script>

@@ -2837,3 +2837,179 @@ msgstr "Le paiement en ligne est en cours d'intégration. D'ici là, envoyez sim
 #: Lizenz-Admin+Preisseite 04.08.2026
 msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
 msgstr "vous recevrez une facture et votre clé de licence, utilisable immédiatement."
+
+# ── Neues Abomodell (06.08.2026): Single/Team/Enterprise, Kontext-Umschalter ──
+
+msgid "12 Monate"
+msgstr "12 mois"
+
+msgid "3 Monate"
+msgstr "3 mois"
+
+msgid "6 Monate"
+msgstr "6 mois"
+
+msgid "Abo kündigen"
+msgstr "Résilier l’abonnement"
+
+msgid "Abo kündigen?"
+msgstr "Résilier l’abonnement ?"
+
+msgid "Abo wurde zugewiesen."
+msgstr "Abonnement attribué."
+
+msgid "Abo zuweisen"
+msgstr "Attribuer un abonnement"
+
+msgid "Abo zuweisen (Rechnungsweg)"
+msgstr "Attribuer un abonnement (facturation)"
+
+msgid "Alle Abos werden fest für {laufzeiten} Monate gebucht — keine monatliche Abbuchung."
+msgstr "Tous les abonnements sont souscrits pour une durée fixe de {laufzeiten} mois — pas de prélèvement mensuel."
+
+msgid "Aus welchem Guthaben möchtest du arbeiten? Die Wahl gilt für alles, was Credits kostet."
+msgstr "Avec quel crédit veux-tu travailler ? Ce choix s’applique à tout ce qui coûte des crédits."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App."
+msgstr "Jusqu’à {n} utilisateurs (propriétaire inclus) travaillent avec une réserve de crédits commune — les invitations se font par e-mail depuis l’application."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf."
+msgstr "Jusqu’à {n} utilisateurs (propriétaire inclus) se partagent la réserve de crédits commune."
+
+msgid "Credits wurden gutgeschrieben."
+msgstr "Les crédits ont été crédités."
+
+msgid "Dein Abo"
+msgstr "Ton abonnement"
+
+msgid "Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten."
+msgstr "Ton abonnement continue normalement jusqu’au {datum}, puis prend fin au lieu de se renouveler. Tes projets et tes données sont conservés."
+
+msgid "Dein Team"
+msgstr "Ton équipe"
+
+msgid "Dein eigener Plan: {plan}"
+msgstr "Ton propre plan : {plan}"
+
+msgid "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch."
+msgstr "La résiliation a été annulée — ton abonnement se renouvellera de nouveau automatiquement."
+
+msgid "Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an."
+msgstr "La personne reçoit un e-mail et confirme elle-même son adhésion. Si elle n’a pas encore de compte, l’invitation en crée un."
+
+msgid "Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan})."
+msgstr "Tu travailles actuellement avec le crédit commun : {team} (plan {plan})."
+
+msgid "Du arbeitest jetzt aus deinem eigenen Guthaben."
+msgstr "Tu travailles maintenant avec ton propre crédit."
+
+msgid "Du arbeitest jetzt aus dem Guthaben: {team}."
+msgstr "Tu travailles maintenant avec le crédit : {team}."
+
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du unten per E-Mail — bald auch direkt online."
+msgstr "Tu utilises le plan Free gratuit. Pour un abonnement avec plus de crédits, écris-nous ci-dessous — bientôt aussi directement en ligne."
+
+msgid "Free (Abo beenden)"
+msgstr "Free (mettre fin à l’abonnement)"
+
+msgid "Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen."
+msgstr "Pour les commandes sur facture : chercher le compte par e-mail, définir le plan et la durée. Le client est informé par e-mail et peut résilier à tout moment."
+
+msgid "Für eine Person — das Abo gehört fest zu deinem Konto."
+msgstr "Pour une personne — l’abonnement est lié à ton compte."
+
+msgid "Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free."
+msgstr "Résilié — actif jusqu’au {datum}, ensuite ton compte passe en Free."
+
+msgid "Gekündigt. Dein Abo läuft bis {datum} und endet dann."
+msgstr "Résilié. Ton abonnement reste actif jusqu’au {datum}, puis prend fin."
+
+msgid "Guthaben wählen"
+msgstr "Choisir le crédit"
+
+msgid "Gutschreiben"
+msgstr "Créditer"
+
+msgid "Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“."
+msgstr "Aucun compte avec cet e-mail. Utilise d’abord « Créer un nouvel utilisateur » ci-dessus."
+
+msgid "Kündigung zurücknehmen"
+msgstr "Annuler la résiliation"
+
+msgid "Laufzeit"
+msgstr "Durée"
+
+msgid "Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch."
+msgstr "Durée : {monate} mois, renouvellement automatique le {datum}."
+
+msgid "Laufzeiten"
+msgstr "Durées"
+
+msgid "Mein eigenes Guthaben (Plan {plan})"
+msgstr "Mon propre crédit (plan {plan})"
+
+msgid "Mitglieder"
+msgstr "Membres"
+
+msgid "Notiz (z. B. Rechnungsnummer)"
+msgstr "Note (p. ex. numéro de facture)"
+
+msgid "Ohne Kündigung verlängert sich das Abo automatisch um die gebuchte Laufzeit; kündigen kannst du jederzeit zum Laufzeitende, direkt in der App."
+msgstr "Sans résiliation, l’abonnement se renouvelle automatiquement pour la durée souscrite ; tu peux résilier à tout moment pour la fin de la période, directement dans l’application."
+
+msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf dem Abrechnungs-Konto (bei Team-Mitgliedern beim Inhaber) und verfällt erst mit der Kündigung."
+msgstr "Packs : 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Le pack est crédité sur le compte de facturation (pour les membres d’équipe, le propriétaire) et n’expire qu’à la résiliation."
+
+msgid "Paketgröße (Credits)"
+msgstr "Taille du pack (crédits)"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Réserver ou changer de plan, ou recharger des crédits : le paiement en ligne est en cours d’intégration. D’ici là, il suffit d’un e-mail à"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Guthaben und wird per E-Mail informiert."
+msgstr "Vraiment retirer « {name} » de l’équipe ? La personne travaillera ensuite de nouveau avec son propre crédit et sera informée par e-mail."
+
+msgid "Team von {inhaber}"
+msgstr "Équipe de {inhaber}"
+
+msgid "Team „{name}“ von {inhaber}"
+msgstr "Équipe « {name} » de {inhaber}"
+
+msgid "Teamname (wird deinen Mitgliedern angezeigt)"
+msgstr "Nom de l’équipe (affiché à tes membres)"
+
+msgid "Teamname gespeichert."
+msgstr "Nom de l’équipe enregistré."
+
+msgid "Teamnamen speichern"
+msgstr "Enregistrer le nom de l’équipe"
+
+msgid "Verlängert sich am {datum} automatisch."
+msgstr "Renouvellement automatique le {datum}."
+
+msgid "Verlängert sich automatisch (Kunde kann jederzeit kündigen)"
+msgstr "Renouvellement automatique (le client peut résilier à tout moment)"
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange dein Abo läuft — die monatlichen Credits kommen immer obendrauf. Mehr Nutzer im Team erhöhen das Kontingent nicht; mehr Credits gibt es über die Pakete."
+msgstr "Si les crédits mensuels ne suffisent pas : il suffit d’en racheter. Les crédits achetés n’expirent pas tant que ton abonnement est actif — les crédits mensuels s’ajoutent toujours. Plus d’utilisateurs dans l’équipe n’augmentent pas le quota ; plus de crédits passent par les packs."
+
+msgid "Zum Laufzeitende kündigen"
+msgstr "Résilier pour la fin de la période"
+
+msgid "Zusatz-Credits gutschreiben (Rechnungsweg)"
+msgstr "Créditer des crédits supplémentaires (facturation)"
+
+msgid "diesen Monat aus dem Team-Topf: {anzahl} Credits"
+msgstr "ce mois-ci depuis la réserve d’équipe : {anzahl} crédits"
+
+msgid "du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet."
+msgstr "tu recevras une facture et ton abonnement sera activé immédiatement."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber)."
+msgstr "{belegt} places sur {max} occupées (toi compris en tant que propriétaire)."
+
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
+msgstr "{preis} € par mois, {credits} crédits inclus — remise de volume déjà comprise."

@@ -2837,3 +2837,179 @@ msgstr "Online payment is being built right now. Until then, just send an email 
 #: Lizenz-Admin+Preisseite 04.08.2026
 msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
 msgstr "you will receive an invoice and your license key, which works immediately."
+
+# ── Neues Abomodell (06.08.2026): Single/Team/Enterprise, Kontext-Umschalter ──
+
+msgid "12 Monate"
+msgstr "12 months"
+
+msgid "3 Monate"
+msgstr "3 months"
+
+msgid "6 Monate"
+msgstr "6 months"
+
+msgid "Abo kündigen"
+msgstr "Cancel subscription"
+
+msgid "Abo kündigen?"
+msgstr "Cancel subscription?"
+
+msgid "Abo wurde zugewiesen."
+msgstr "Subscription assigned."
+
+msgid "Abo zuweisen"
+msgstr "Assign subscription"
+
+msgid "Abo zuweisen (Rechnungsweg)"
+msgstr "Assign subscription (invoice)"
+
+msgid "Alle Abos werden fest für {laufzeiten} Monate gebucht — keine monatliche Abbuchung."
+msgstr "All subscriptions are booked for a fixed term of {laufzeiten} months — no monthly billing."
+
+msgid "Aus welchem Guthaben möchtest du arbeiten? Die Wahl gilt für alles, was Credits kostet."
+msgstr "Which balance would you like to work from? The choice applies to everything that costs credits."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App."
+msgstr "Up to {n} users (including the owner) work from one shared credit pool — inviting people is easy by email from within the app."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf."
+msgstr "Up to {n} users (including the owner) share the common credit pool."
+
+msgid "Credits wurden gutgeschrieben."
+msgstr "Credits have been added."
+
+msgid "Dein Abo"
+msgstr "Your subscription"
+
+msgid "Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten."
+msgstr "Your subscription continues normally until {datum} and then ends instead of renewing. Your projects and data are kept."
+
+msgid "Dein Team"
+msgstr "Your team"
+
+msgid "Dein eigener Plan: {plan}"
+msgstr "Your own plan: {plan}"
+
+msgid "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch."
+msgstr "The cancellation has been withdrawn — your subscription will renew automatically again."
+
+msgid "Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an."
+msgstr "The person receives an email and confirms joining themselves. If they don’t have an account yet, the invitation creates one."
+
+msgid "Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan})."
+msgstr "You are currently working from the shared balance: {team} (plan {plan})."
+
+msgid "Du arbeitest jetzt aus deinem eigenen Guthaben."
+msgstr "You are now working from your own balance."
+
+msgid "Du arbeitest jetzt aus dem Guthaben: {team}."
+msgstr "You are now working from the balance: {team}."
+
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du unten per E-Mail — bald auch direkt online."
+msgstr "You are on the free plan. To get a subscription with more credits, email us below — online booking is coming soon."
+
+msgid "Free (Abo beenden)"
+msgstr "Free (end subscription)"
+
+msgid "Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen."
+msgstr "For orders on invoice: find the account by email, set plan and term. The customer is notified by email and can cancel at any time."
+
+msgid "Für eine Person — das Abo gehört fest zu deinem Konto."
+msgstr "For one person — the subscription is tied to your account."
+
+msgid "Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free."
+msgstr "Cancelled — runs until {datum}, after which your account switches to Free."
+
+msgid "Gekündigt. Dein Abo läuft bis {datum} und endet dann."
+msgstr "Cancelled. Your subscription runs until {datum} and then ends."
+
+msgid "Guthaben wählen"
+msgstr "Choose balance"
+
+msgid "Gutschreiben"
+msgstr "Add credits"
+
+msgid "Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“."
+msgstr "No account with this email. Please use “Create new user” above first."
+
+msgid "Kündigung zurücknehmen"
+msgstr "Withdraw cancellation"
+
+msgid "Laufzeit"
+msgstr "Term"
+
+msgid "Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch."
+msgstr "Term: {monate} months, renews automatically on {datum}."
+
+msgid "Laufzeiten"
+msgstr "Terms"
+
+msgid "Mein eigenes Guthaben (Plan {plan})"
+msgstr "My own balance (plan {plan})"
+
+msgid "Mitglieder"
+msgstr "Members"
+
+msgid "Notiz (z. B. Rechnungsnummer)"
+msgstr "Note (e.g. invoice number)"
+
+msgid "Ohne Kündigung verlängert sich das Abo automatisch um die gebuchte Laufzeit; kündigen kannst du jederzeit zum Laufzeitende, direkt in der App."
+msgstr "Without cancellation, the subscription renews automatically for the booked term; you can cancel at any time, effective at the end of the term, directly in the app."
+
+msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf dem Abrechnungs-Konto (bei Team-Mitgliedern beim Inhaber) und verfällt erst mit der Kündigung."
+msgstr "Packages: 100 = €20, 500 = €87.50, 1000 = €150. The package goes to the billing account (for team members, the owner) and only expires on cancellation."
+
+msgid "Paketgröße (Credits)"
+msgstr "Package size (credits)"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Book or change a plan, or top up credits: online payment is being built right now. Until then, just email"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Guthaben und wird per E-Mail informiert."
+msgstr "Really remove “{name}” from the team? The person will then work from their own balance again and will be notified by email."
+
+msgid "Team von {inhaber}"
+msgstr "Team of {inhaber}"
+
+msgid "Team „{name}“ von {inhaber}"
+msgstr "Team “{name}” of {inhaber}"
+
+msgid "Teamname (wird deinen Mitgliedern angezeigt)"
+msgstr "Team name (shown to your members)"
+
+msgid "Teamname gespeichert."
+msgstr "Team name saved."
+
+msgid "Teamnamen speichern"
+msgstr "Save team name"
+
+msgid "Verlängert sich am {datum} automatisch."
+msgstr "Renews automatically on {datum}."
+
+msgid "Verlängert sich automatisch (Kunde kann jederzeit kündigen)"
+msgstr "Renews automatically (customer can cancel at any time)"
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange dein Abo läuft — die monatlichen Credits kommen immer obendrauf. Mehr Nutzer im Team erhöhen das Kontingent nicht; mehr Credits gibt es über die Pakete."
+msgstr "If the monthly credits aren’t enough: simply buy more. Purchased credits don’t expire while your subscription is active — the monthly credits always come on top. More users in a team don’t increase the quota; more credits come from the packages."
+
+msgid "Zum Laufzeitende kündigen"
+msgstr "Cancel at end of term"
+
+msgid "Zusatz-Credits gutschreiben (Rechnungsweg)"
+msgstr "Add extra credits (invoice)"
+
+msgid "diesen Monat aus dem Team-Topf: {anzahl} Credits"
+msgstr "this month from the team pool: {anzahl} credits"
+
+msgid "du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet."
+msgstr "you’ll receive an invoice, and your subscription is activated immediately."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber)."
+msgstr "{belegt} of {max} seats taken (including you as the owner)."
+
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
+msgstr "€{preis} per month, including {credits} credits — volume discount already included."

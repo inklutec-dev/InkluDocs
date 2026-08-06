@@ -277,3 +277,55 @@ Schluessel (bisher nur API), Gruender-Regel (Basisschluessel 3 Monate frei).
 - Verifikation: verify_punkt4.py 16/16, ui_punkt4.py (Klicktest Erzeugen +
   axe 0 auf /benutzer und /preise), Regressionen verify_lizenz 32/32,
   verify_sicherheit2 17/17, verify_abo2 26/26, axe_abo 0.
+
+## NEUES ABOMODELL (06.08.2026, Steve+Michael — ERSETZT das Lizenzschluessel-Modell)
+
+Das Lizenzschluessel-Modell (Abschnitte oben, 04.08.) wurde am 06.08.2026
+verworfen: Kunden sehen KEINE Schluessel mehr. Stattdessen klassische
+Abo-Stufen mit fester Laufzeit. Die lizenzschluessel-Tabelle bleibt als
+Beleg; alle Routen/UI sind entfernt. Bestands-Toepfe: plan 'lizenz' -> 'team',
+'pro' -> 'single' (einmalige Migration in database.py).
+
+### Stufen (billing.PLAN_* = einzige Preis-/Kontingent-Quelle)
+- free: 10 Credits/Monat, Domain-Buendelung fuer Firmen-Domains bleibt.
+- single: 9,95 EUR/Monat, 50 Credits — strikt EIN Konto, kein Teilen.
+- team: 19,95 EUR/Monat, 100 Credits gemeinsam, bis 5 Nutzer INKL. Inhaber.
+- enterprise: 49,95 EUR/Monat, 275 Credits gemeinsam, bis 25 Nutzer inkl.
+  Inhaber (Rabatt eingerechnet).
+- Einladungen erhoehen das Kontingent NIE; mehr Credits = Zusatzpakete
+  (100/500/1000, unveraendert inkl. Kuendigungs-Verfall-Regel).
+
+### Laufzeit + Verlaengerung
+- Buchung IMMER fest 3/6/12 Monate (users.plan_laufzeit_monate,
+  plan_gueltig_bis). Keine Monats-Abbuchung (Rechnungsstellung, Michael).
+- users.auto_verlaengerung (Default 1): Kuendigen = Schalter auf 0
+  (POST /api/abo/kuendigen, Widerruf moeglich), Nutzung bis Laufzeitende,
+  danach Lazy-Rueckfall auf free (billing.effektiver_plan, wie gehabt).
+- _abo_tageslauf (main.py, von /api/me angestossen, max. 1x/Tag via
+  system_kv): 14 Tage vorher Erinnerung an Kunde + Betreiber; am Ende mit
+  auto_verlaengerung=1 wird plan_gueltig_bis um die Laufzeit verlaengert
+  (Mail an Kunde + Betreiber "Rechnung stellen"); ohne = Abschieds-Mail.
+
+### Mitgliedschaft ENTKOPPELT vom Plan (Kern-Umbau)
+- NEU team_mitgliedschaften(inhaber_id, mitglied_id): ein Konto kann einen
+  EIGENEN Bezahl-Plan haben UND in mehreren Teams Mitglied sein.
+- NEU users.aktiver_topf: aus welchem Topf das Konto GERADE arbeitet
+  (NULL = eigener). billing._konto_fuer validiert bei JEDER Buchung
+  (Mitgliedschaft + aktiver Inhaber-Plan), sonst stiller Rueckfall aufs
+  eigene Konto. Umschalter auf /abo (POST /api/abo/kontext).
+- users.abo_owner_id ist TOT (geleert, wird nirgends mehr gelesen).
+- Einladung (nur Inhaber, team+enterprise): bestehendes Konto -> Token-Mail
+  + Bestaetigung (auch wenn es einen eigenen Plan hat); unbekannte Adresse
+  -> Konto + Mitgliedschaft + Kontext direkt, Registrierung = Passwort
+  setzen per Reset-Link. Mitglieder koennen sich NICHT selbst entfernen —
+  nur der Inhaber (DELETE /api/team/mitglied/{id}, Info-Mail an den
+  Entfernten). users.team_name (POST /api/team/name) fuer die Anzeige.
+
+### Buchungswege
+1. Online (Stripe, kommende Etappe): setzt users.plan/laufzeit direkt.
+2. Rechnungsweg (Actino/INKLUTEC): /benutzer -> "Abo zuweisen" sucht das
+   Konto per E-Mail und ruft POST /api/admin/users/{id}/plan mit
+   laufzeit_monate + auto_verlaengerung; Kunde bekommt Bestaetigungs-Mail
+   (_sende_plan_bestaetigung) und kann selbst kuendigen. Zusatzpakete:
+   /benutzer -> "Zusatz-Credits gutschreiben" (landet via _konto_fuer auf
+   dem Abrechnungs-Konto).

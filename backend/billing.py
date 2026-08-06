@@ -8,10 +8,15 @@ Konzept (siehe backend/ABRECHNUNG.md):
   liefert pruefe_kontingent immer erlaubt=True, aber bereits mit echten
   Zahlen. Scharfschalten = ABO_ENFORCEMENT=on in der .env — kein Code-Umbau.
 
-Etappe 2 (Team-Toepfe, Uebertrag, Zusatz-Pakete):
-- Team-Aufloesung: users.abo_owner_id zeigt bei Team-Mitgliedern auf den
-  zahlenden Inhaber. _konto_fuer loest genau EIN Level auf (keine Ketten) —
-  alle Zaehl- und Sperr-Entscheidungen laufen ueber das aufgeloeste Konto.
+Neues Abomodell (06.08.2026, Steve+Michael): Stufen Free/Single/Team/
+Enterprise, feste Laufzeiten 3/6/12 Monate, Auto-Verlaengerung.
+- Topf-Aufloesung: users.aktiver_topf zeigt auf den Inhaber des Teams, aus
+  dessen Topf das Konto GERADE arbeitet (Kontext-Umschalter auf der
+  Abo-Seite; NULL = eigenes Konto). Mitgliedschaften liegen ENTKOPPELT vom
+  eigenen Plan in team_mitgliedschaften — ein Konto kann einen eigenen
+  Bezahl-Plan haben UND in mehreren Teams Mitglied sein. _konto_fuer
+  validiert den Kontext bei jeder Buchung (Mitgliedschaft vorhanden,
+  Inhaber-Plan aktiv) und faellt sonst still aufs eigene Konto zurueck.
 - Uebertrag ("Rollover"): max. EIN Monatskontingent wandert in den
   Folgemonat, nur fuer Bezahl-Plaene (Free nie). Wird ZUSTANDSLOS aus der
   usage_events-Historie berechnet (siehe _uebertrag) — keine eigene
@@ -36,7 +41,6 @@ Grundregeln (Steve/Michael 31.07.2026):
 import calendar
 import logging
 import os
-import secrets
 from datetime import datetime, timezone
 
 from database import get_db
@@ -66,43 +70,50 @@ AKTIONS_PREISE = {
 }
 
 # Zusatzpakete (Michaels Preise, bestaetigt 03.08.2026). Reine Konfiguration
-# fuer Preisseite und Online-Zahlung — der Kauf selbst kommt mit Stripe
-# (Etappe 3); bis dahin legen Admins Pakete ueber den Rechnungsweg an.
-# Werte in EUR zzgl. USt.
+# fuer Preisseite und Online-Zahlung — der Kauf selbst kommt mit Stripe;
+# bis dahin legen Admins Pakete ueber den Rechnungsweg an.
 PAKET_PREISE = {
     100: 20.00,
     500: 87.50,
     1000: 150.00,
 }
 
-# Grundpreis Lizenzschluessel (EUR/Monat zzgl. USt., inkl. 50 Credits),
-# 6 Monate Mindestlaufzeit -> 59,70 EUR pro Halbjahresrechnung.
-LIZENZ_GRUNDPREIS_EUR = 9.95
-LIZENZ_MINDESTLAUFZEIT_MONATE = 6
+# Abo-Stufen (Steve+Michael, 06.08.2026 — loest das Lizenzschluessel-Modell
+# ab): Preise pro Monat, gebucht wird IMMER fest fuer 3/6/12 Monate (keine
+# Monats-Abbuchung — die Rechnungsstellung lohnt sonst nicht, Michael).
+# Team/Enterprise: EIN gemeinsamer Credit-Topf, Sitze INKLUSIVE Inhaber,
+# Einladungen erhoehen das Kontingent NIE (mehr Credits = Zusatzpakete).
+PLAN_PREISE_EUR = {
+    "single": 9.95,
+    "team": 19.95,
+    "enterprise": 49.95,   # Rabatt bereits eingerechnet
+}
+PLAN_LAUFZEITEN = (3, 6, 12)
 
 PLAN_KONTINGENTE = {
-    # Plan          Credits pro Monat (None = unbegrenzt/individuell)
-    # free: 10 statt 20 seit 04.08.2026 (Michaels Modell, Punkt 2) — und fuer
-    # Firmen-Domains GEBUENDELT: alle Free-Konten derselben Domain teilen sich
-    # das Volumen (siehe pruefe_kontingent), Freemailer werden NIE gebuendelt.
+    # Plan          Credits pro Monat
+    # free: 10 (Michaels Modell) — fuer Firmen-Domains GEBUENDELT: alle
+    # Free-Konten derselben Domain teilen sich das Volumen (siehe
+    # pruefe_kontingent), Freemailer werden NIE gebuendelt.
     "free": 10,
-    "pro": 150,
-    "team": 500,
-    "enterprise": None,
-    # Lizenzschluessel-Modell (Michael, bestaetigt 03.08.2026): EIN Schluessel
-    # pro Unternehmen, 9,95 EUR/Monat inkl. 50 Credits, beliebig viele Nutzer
-    # im Firmen-Topf, 6 Monate Mindestlaufzeit. Loest Pro/Team/Enterprise als
-    # VERKAUFTES Modell ab — die alten Plaene bleiben technisch bestehen
-    # (Bestandsdaten, spaetere Team-Stufe).
-    "lizenz": 50,
+    # single: strikt an EIN Konto gebunden, kein Teilen, kein Einladen.
+    "single": 50,
+    "team": 100,
+    "enterprise": 275,
+}
+
+# Sitz-Deckel INKLUSIVE Inhaber (Single bewusst ohne Eintrag = kein Team).
+PLAN_SITZE = {
+    "team": 5,
+    "enterprise": 25,
 }
 
 GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export")
 
-# Team-Plan: so viele Sitze (INKLUSIVE Inhaber) sind im Preis enthalten.
-# Mehr Sitze gibt es erst mit der Online-Zahlung (Etappe 3, Sitz-Zukauf) —
-# bis dahin lehnt /api/team/einladen darueber hinaus ehrlich mit 400 ab.
-TEAM_SITZE_INKLUSIVE = 5
+
+def sitze_fuer_plan(plan: str):
+    """Sitz-Deckel eines Plans inkl. Inhaber; None = Plan kennt keine Sitze."""
+    return PLAN_SITZE.get(plan)
 
 
 def plan_ist_abgelaufen(plan_gueltig_bis) -> bool:
@@ -141,10 +152,13 @@ def effektiver_plan(row) -> str:
 def _konto_fuer(user_id: int):
     """Ermittelt das Abrechnungs-Konto fuer einen Nutzer.
 
-    Team-Mitglieder (users.abo_owner_id gesetzt) belasten den Topf des
-    zahlenden Inhabers. Bewusst nur EIN Level Aufloesung, kein rekursives
-    Folgen: Ketten (Mitglied eines Mitglieds) sind fachlich nicht vorgesehen,
-    und eine Schleife in den Daten duerfte hier nie zur Endlosschleife werden.
+    Neues Abomodell (06.08.2026): users.aktiver_topf zeigt auf den Inhaber
+    des Teams, aus dessen Topf das Konto GERADE arbeitet (NULL = eigenes
+    Konto). Der Kontext wird bei JEDER Buchung validiert: die Mitgliedschaft
+    muss bestehen und der Inhaber einen aktiven Team-/Enterprise-Plan haben —
+    sonst faellt die Buchung still aufs eigene Konto zurueck (ein entfernter
+    oder abgelaufener Topf darf nie weiter belastet werden). Bewusst nur EIN
+    Level Aufloesung, keine Ketten.
     Fehlerfall (DB nicht erreichbar, Nutzer fehlt): eigenes Konto — die
     Verbuchung bleibt damit in jedem Fall moeglich (Nie-Crashen-Garantie).
     """
@@ -152,12 +166,23 @@ def _konto_fuer(user_id: int):
         conn = get_db()
         try:
             row = conn.execute(
-                "SELECT abo_owner_id FROM users WHERE id = ?", (user_id,)
+                "SELECT aktiver_topf FROM users WHERE id = ?", (user_id,)
+            ).fetchone()
+            if row is None or not row["aktiver_topf"]:
+                return user_id
+            topf = int(row["aktiver_topf"])
+            if topf == user_id:
+                return user_id
+            inhaber = conn.execute(
+                "SELECT u.plan, u.plan_gueltig_bis FROM team_mitgliedschaften m "
+                "JOIN users u ON u.id = m.inhaber_id "
+                "WHERE m.inhaber_id = ? AND m.mitglied_id = ?",
+                (topf, user_id),
             ).fetchone()
         finally:
             conn.close()
-        if row is not None and row["abo_owner_id"]:
-            return int(row["abo_owner_id"])
+        if inhaber is not None and effektiver_plan(inhaber) in PLAN_SITZE:
+            return topf
         return user_id
     except Exception:
         log.exception("_konto_fuer fehlgeschlagen — Fallback auf user_id %s", user_id)
@@ -193,9 +218,11 @@ def _domain_monats_verbrauch(domain: str, conn=None) -> int:
     Punkt 2 des Abo-Umbaus (Michaels Modell, 04.08.2026): "Es koennen sich
     gerne 5 Mitarbeiter oder mehr kostenlos anmelden, in der Summe gibt es
     aber nur das definierte Volumen." Gezaehlt werden nur Konten, die selbst
-    auf Free stehen und keinem Bezahl-Topf angehoeren; Betreiber-Konten
-    (Admins) bleiben aussen vor — ihr Eigenverbrauch soll keinem Kunden das
-    Free-Volumen leeren. Domain-Vergleich exakt (substr ab dem @), kein LIKE.
+    auf Free stehen; Betreiber-Konten (Admins) bleiben aussen vor — ihr
+    Eigenverbrauch soll keinem Kunden das Free-Volumen leeren. Ereignisse, die
+    ein Konto im TEAM-Kontext erzeugt hat, zaehlen ohnehin nicht mit — sie
+    stehen auf dem konto_user_id des Team-Inhabers, nicht auf dem Free-Konto.
+    Domain-Vergleich exakt (substr ab dem @), kein LIKE.
     """
     eigene_conn = conn is None
     if eigene_conn:
@@ -206,7 +233,6 @@ def _domain_monats_verbrauch(domain: str, conn=None) -> int:
             "JOIN users u ON u.id = e.konto_user_id "
             "WHERE substr(u.email, instr(u.email, '@') + 1) = ? "
             "AND COALESCE(u.plan, 'free') = 'free' AND u.is_admin = 0 "
-            "AND u.abo_owner_id IS NULL "
             "AND e.created_at >= date('now', 'start of month')",
             (domain,),
         ).fetchone()
@@ -556,14 +582,13 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Lizenzschluessel (Michaels Modell, bestaetigt 03.08.2026)
+# Domain-Listen (Free-Buendelung + Wegwerf-Schutz)
 # ---------------------------------------------------------------------------
 
-# Freemail-/Wegwerf-Domains duerfen KEINE Schluessel-Domain werden: der
-# Schluessel gehoert einem UNTERNEHMEN, und die Domain-Bindung waere bei
-# gmail.com & Co. wirkungslos (jeder Gmail-Nutzer koennte beitreten).
-# Dieselbe Liste dient in Umbau-Punkt 2 als Basis fuer die Free-Domain-
-# Buendelung (dort umgekehrt: Freemailer werden NICHT gebuendelt).
+# Freemail-Domains werden bei der Free-Domain-Buendelung NIE gebuendelt
+# (sonst teilten sich alle Gmail-Nutzer der Welt einen Topf). Stammt aus dem
+# verworfenen Lizenzschluessel-Modell (03.–06.08.2026), bleibt aber die
+# Grundlage des Buendelungs-Filters.
 FREEMAIL_DOMAINS = frozenset({
     "gmail.com", "googlemail.com", "web.de", "gmx.de", "gmx.net", "gmx.at",
     "gmx.ch", "yahoo.com", "yahoo.de", "outlook.com", "outlook.de",
@@ -587,18 +612,6 @@ WEGWERF_DOMAINS = frozenset({
     "getnada.com", "emailondeck.com", "fakemail.net", "throwawaymail.com",
     "mail-temp.com", "moakt.com", "tmpmail.org", "tmpmail.net", "emltmp.com",
 })
-
-# Zeichenvorrat ohne verwechselbare Zeichen (0/O, 1/I/L) — Schluessel werden
-# am Telefon durchgegeben und von Screenreadern vorgelesen.
-_KEY_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
-
-
-def neuer_lizenzschluessel_string() -> str:
-    """Erzeugt einen neuen Schluessel im Format IDOC-XXXX-XXXX-XXXX."""
-    gruppen = ["".join(secrets.choice(_KEY_ALPHABET) for _ in range(4))
-               for _ in range(3)]
-    return "IDOC-" + "-".join(gruppen)
-
 
 def ist_freemail_domain(domain: str) -> bool:
     return (domain or "").strip().lower() in FREEMAIL_DOMAINS

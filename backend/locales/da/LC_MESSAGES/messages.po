@@ -2528,3 +2528,179 @@ msgstr "Onlinebetaling er ved at blive indbygget. Indtil da er en e-mail nok til
 #: Lizenz-Admin+Preisseite 04.08.2026
 msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
 msgstr "du modtager en faktura og din licensnøgle, som virker med det samme."
+
+# ── Neues Abomodell (06.08.2026): Single/Team/Enterprise, Kontext-Umschalter ──
+
+msgid "12 Monate"
+msgstr "12 måneder"
+
+msgid "3 Monate"
+msgstr "3 måneder"
+
+msgid "6 Monate"
+msgstr "6 måneder"
+
+msgid "Abo kündigen"
+msgstr "Opsig abonnement"
+
+msgid "Abo kündigen?"
+msgstr "Opsig abonnement?"
+
+msgid "Abo wurde zugewiesen."
+msgstr "Abonnement tildelt."
+
+msgid "Abo zuweisen"
+msgstr "Tildel abonnement"
+
+msgid "Abo zuweisen (Rechnungsweg)"
+msgstr "Tildel abonnement (faktura)"
+
+msgid "Alle Abos werden fest für {laufzeiten} Monate gebucht — keine monatliche Abbuchung."
+msgstr "Alle abonnementer tegnes fast for {laufzeiten} måneder — ingen månedlig betaling."
+
+msgid "Aus welchem Guthaben möchtest du arbeiten? Die Wahl gilt für alles, was Credits kostet."
+msgstr "Hvilken saldo vil du arbejde fra? Valget gælder for alt, der koster credits."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App."
+msgstr "Op til {n} brugere (inklusive ejeren) arbejder fra en fælles credit-pulje — invitationer sendes nemt via e-mail fra appen."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf."
+msgstr "Op til {n} brugere (inklusive ejeren) deler den fælles credit-pulje."
+
+msgid "Credits wurden gutgeschrieben."
+msgstr "Credits er blevet tilføjet."
+
+msgid "Dein Abo"
+msgstr "Dit abonnement"
+
+msgid "Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten."
+msgstr "Dit abonnement fortsætter normalt indtil {datum} og slutter derefter i stedet for at blive fornyet. Dine projekter og data bevares."
+
+msgid "Dein Team"
+msgstr "Dit team"
+
+msgid "Dein eigener Plan: {plan}"
+msgstr "Din egen plan: {plan}"
+
+msgid "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch."
+msgstr "Opsigelsen er trukket tilbage — dit abonnement fornys automatisk igen."
+
+msgid "Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an."
+msgstr "Personen modtager en e-mail og bekræfter selv sin deltagelse. Har personen endnu ingen konto, opretter invitationen en."
+
+msgid "Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan})."
+msgstr "Du arbejder i øjeblikket fra den fælles saldo: {team} (plan {plan})."
+
+msgid "Du arbeitest jetzt aus deinem eigenen Guthaben."
+msgstr "Du arbejder nu fra din egen saldo."
+
+msgid "Du arbeitest jetzt aus dem Guthaben: {team}."
+msgstr "Du arbejder nu fra saldoen: {team}."
+
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du unten per E-Mail — bald auch direkt online."
+msgstr "Du bruger den gratis Free-plan. Et abonnement med flere credits bestiller du nedenfor via e-mail — snart også direkte online."
+
+msgid "Free (Abo beenden)"
+msgstr "Free (afslut abonnement)"
+
+msgid "Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen."
+msgstr "Ved bestillinger på faktura: find kontoen via e-mail, angiv plan og løbetid. Kunden informeres via e-mail og kan til enhver tid selv opsige."
+
+msgid "Für eine Person — das Abo gehört fest zu deinem Konto."
+msgstr "Til én person — abonnementet er knyttet til din konto."
+
+msgid "Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free."
+msgstr "Opsagt — løber indtil {datum}, derefter skifter din konto til Free."
+
+msgid "Gekündigt. Dein Abo läuft bis {datum} und endet dann."
+msgstr "Opsagt. Dit abonnement løber indtil {datum} og slutter derefter."
+
+msgid "Guthaben wählen"
+msgstr "Vælg saldo"
+
+msgid "Gutschreiben"
+msgstr "Tilføj"
+
+msgid "Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“."
+msgstr "Ingen konto med denne e-mail. Brug først “Opret ny bruger” ovenfor."
+
+msgid "Kündigung zurücknehmen"
+msgstr "Fortryd opsigelse"
+
+msgid "Laufzeit"
+msgstr "Løbetid"
+
+msgid "Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch."
+msgstr "Løbetid: {monate} måneder, fornys automatisk den {datum}."
+
+msgid "Laufzeiten"
+msgstr "Løbetider"
+
+msgid "Mein eigenes Guthaben (Plan {plan})"
+msgstr "Min egen saldo (plan {plan})"
+
+msgid "Mitglieder"
+msgstr "Medlemmer"
+
+msgid "Notiz (z. B. Rechnungsnummer)"
+msgstr "Note (f.eks. fakturanummer)"
+
+msgid "Ohne Kündigung verlängert sich das Abo automatisch um die gebuchte Laufzeit; kündigen kannst du jederzeit zum Laufzeitende, direkt in der App."
+msgstr "Uden opsigelse fornys abonnementet automatisk med den valgte løbetid; du kan til enhver tid opsige til udgangen af perioden, direkte i appen."
+
+msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf dem Abrechnungs-Konto (bei Team-Mitgliedern beim Inhaber) und verfällt erst mit der Kündigung."
+msgstr "Pakker: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Pakken lander på faktureringskontoen (for teammedlemmer hos ejeren) og udløber først ved opsigelse."
+
+msgid "Paketgröße (Credits)"
+msgstr "Pakkestørrelse (credits)"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Bestil eller skift plan, eller køb flere credits: online-betaling er ved at blive bygget. Indtil da er en e-mail nok til"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Guthaben und wird per E-Mail informiert."
+msgstr "Skal “{name}” virkelig fjernes fra teamet? Personen arbejder derefter igen fra sin egen saldo og informeres via e-mail."
+
+msgid "Team von {inhaber}"
+msgstr "Team af {inhaber}"
+
+msgid "Team „{name}“ von {inhaber}"
+msgstr "Team “{name}” af {inhaber}"
+
+msgid "Teamname (wird deinen Mitgliedern angezeigt)"
+msgstr "Teamnavn (vises for dine medlemmer)"
+
+msgid "Teamname gespeichert."
+msgstr "Teamnavn gemt."
+
+msgid "Teamnamen speichern"
+msgstr "Gem teamnavn"
+
+msgid "Verlängert sich am {datum} automatisch."
+msgstr "Fornys automatisk den {datum}."
+
+msgid "Verlängert sich automatisch (Kunde kann jederzeit kündigen)"
+msgstr "Fornys automatisk (kunden kan til enhver tid opsige)"
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange dein Abo läuft — die monatlichen Credits kommen immer obendrauf. Mehr Nutzer im Team erhöhen das Kontingent nicht; mehr Credits gibt es über die Pakete."
+msgstr "Hvis de månedlige credits ikke rækker: køb blot flere. Købte credits udløber ikke, så længe dit abonnement er aktivt — de månedlige credits kommer altid oveni. Flere brugere i teamet øger ikke kvoten; flere credits fås via pakkerne."
+
+msgid "Zum Laufzeitende kündigen"
+msgstr "Opsig til udgangen af perioden"
+
+msgid "Zusatz-Credits gutschreiben (Rechnungsweg)"
+msgstr "Tilføj ekstra credits (faktura)"
+
+msgid "diesen Monat aus dem Team-Topf: {anzahl} Credits"
+msgstr "denne måned fra team-puljen: {anzahl} credits"
+
+msgid "du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet."
+msgstr "du modtager en faktura, og dit abonnement aktiveres med det samme."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber)."
+msgstr "{belegt} af {max} pladser optaget (inklusive dig som ejer)."
+
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
+msgstr "{preis} € pr. måned, inklusive {credits} credits — mængderabat allerede indregnet."

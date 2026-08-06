@@ -375,6 +375,37 @@ def init_db():
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_lizenzschluessel_key ON lizenzschluessel(schluessel)")
 
+    # Neues Abomodell (06.08.2026, Steve+Michael): Mitgliedschaft ist vom
+    # eigenen Plan ENTKOPPELT. Ein Konto kann einen eigenen Bezahl-Plan haben
+    # UND gleichzeitig Mitglied in einem oder mehreren Team-/Enterprise-
+    # Toepfen sein — auch in mehreren Teams. Aus welchem Topf verbraucht wird,
+    # entscheidet users.aktiver_topf (Kontext-Umschalter auf der Abo-Seite).
+    # Ersetzt users.abo_owner_id (Alt-Spalte bleibt leer stehen, wird nirgends
+    # mehr gelesen). Die lizenzschluessel-Tabelle oben bleibt als Beleg,
+    # das Schluessel-Modell selbst wurde am 06.08.2026 zugunsten der
+    # Abo-Stufen Single/Team/Enterprise verworfen (Steve+Michael).
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS team_mitgliedschaften (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            inhaber_id INTEGER NOT NULL,
+            mitglied_id INTEGER NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            UNIQUE(inhaber_id, mitglied_id)
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_team_mitglied ON team_mitgliedschaften(mitglied_id)")
+
+    # Kleiner Schluessel-Wert-Speicher fuer System-Merker (letzter
+    # Abo-Tageslauf, bereits versandte Erinnerungs-Mails) — generisch, damit
+    # nicht jede Kleinigkeit eine eigene Tabelle braucht.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS system_kv (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at TEXT DEFAULT (datetime('now'))
+        )
+    ''')
+
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 
@@ -467,6 +498,14 @@ def _migrate_columns(conn):
         # auch nach Widerruf einer Freigabe lesbar zuordenbar.
         ("messages", "sender_role", "ALTER TABLE messages ADD COLUMN sender_role TEXT DEFAULT ''"),
         ("messages", "sender_name", "ALTER TABLE messages ADD COLUMN sender_name TEXT DEFAULT ''"),
+        # Neues Abomodell (06.08.2026): aktiver Credit-Topf (NULL = eigener,
+        # sonst inhaber_id einer Mitgliedschaft), feste Laufzeit 3/6/12 Monate,
+        # Auto-Verlaengerung (Kuendigen = Schalter auf 0, Nutzung bis
+        # Laufzeitende), Teamname des Inhabers (Anzeige beim Mitglied).
+        ("users", "aktiver_topf", "ALTER TABLE users ADD COLUMN aktiver_topf INTEGER"),
+        ("users", "plan_laufzeit_monate", "ALTER TABLE users ADD COLUMN plan_laufzeit_monate INTEGER"),
+        ("users", "auto_verlaengerung", "ALTER TABLE users ADD COLUMN auto_verlaengerung INTEGER DEFAULT 1"),
+        ("users", "team_name", "ALTER TABLE users ADD COLUMN team_name TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:
@@ -478,6 +517,26 @@ def _migrate_columns(conn):
                 print(f"Migration: Added {table}.{column}")
             except Exception as e:
                 print(f"Migration warning ({table}.{column}): {e}")
+
+    # Neues Abomodell (06.08.2026): Alt-Daten einmalig ueberfuehren.
+    # (a) users.abo_owner_id -> team_mitgliedschaften + aktiver_topf; danach
+    #     wird die Alt-Spalte geleert (bleibt bestehen, wird nie mehr gelesen).
+    # (b) Alt-Plaene: 'pro' -> 'single'; 'lizenz' -> 'team' (der Firmen-Topf
+    #     lebt als Team weiter; betrifft nur Staging-Testdaten — die Prod-DB
+    #     kennt diese Plaene noch nicht).
+    # Idempotent: INSERT OR IGNORE + WHERE-Bedingungen; zweiter Lauf tut nichts.
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO team_mitgliedschaften (inhaber_id, mitglied_id) "
+            "SELECT abo_owner_id, id FROM users WHERE abo_owner_id IS NOT NULL")
+        conn.execute(
+            "UPDATE users SET aktiver_topf = abo_owner_id "
+            "WHERE abo_owner_id IS NOT NULL AND aktiver_topf IS NULL")
+        conn.execute("UPDATE users SET abo_owner_id = NULL WHERE abo_owner_id IS NOT NULL")
+        conn.execute("UPDATE users SET plan = 'single' WHERE plan = 'pro'")
+        conn.execute("UPDATE users SET plan = 'team' WHERE plan = 'lizenz'")
+    except Exception as e:
+        print(f"Migration warning (abomodell 2026-08): {e}")
 
     # Gastzugang-Rollen (10.07.2026): bestehende Pruefstatus einmalig in die
     # Pro-Rolle-Tabelle uebernehmen — bisherige Gaeste entsprechen der Rolle
@@ -709,12 +768,16 @@ def delete_user_data(user_id: int):
         conn.execute("DELETE FROM documents WHERE project_id = ?", (p["id"],))
     conn.execute("DELETE FROM projects WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
-    # Review-Befund 4 (31.07.2026): Wird ein TEAM-INHABER geloescht, duerfen
-    # seine Mitglieder nicht mit baumelndem abo_owner_id zurueckbleiben —
-    # billing wuerde sonst gegen ein nicht existentes Konto rechnen. Die
-    # Mitglieder fallen auf ihren eigenen Plan zurueck. Offene Einladungen
-    # des Geloeschten werden mit entsorgt, damit kein Token mehr auf ein
-    # totes Konto zeigen kann.
+    # Review-Befund 4 (31.07.2026) / Abomodell 06.08.2026: Wird ein TEAM-
+    # INHABER geloescht, duerfen keine baumelnden Mitgliedschaften bleiben —
+    # billing wuerde sonst gegen ein nicht existentes Konto rechnen. Beide
+    # Richtungen aufraeumen (als Inhaber UND als Mitglied); wer gerade in
+    # diesem Topf arbeitete, faellt auf den eigenen Topf zurueck. Offene
+    # Einladungen des Geloeschten werden mit entsorgt, damit kein Token mehr
+    # auf ein totes Konto zeigen kann.
+    conn.execute("DELETE FROM team_mitgliedschaften WHERE inhaber_id = ? OR mitglied_id = ?",
+                 (user_id, user_id))
+    conn.execute("UPDATE users SET aktiver_topf = NULL WHERE aktiver_topf = ?", (user_id,))
     conn.execute("UPDATE users SET abo_owner_id = NULL WHERE abo_owner_id = ?", (user_id,))
     conn.execute("DELETE FROM team_einladungen WHERE inhaber_id = ?", (user_id,))
     conn.execute("DELETE FROM api_keys WHERE user_id = ?", (user_id,))

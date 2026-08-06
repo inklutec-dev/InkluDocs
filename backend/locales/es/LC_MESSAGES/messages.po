@@ -2837,3 +2837,179 @@ msgstr "El pago en línea se está integrando ahora mismo. Hasta entonces, basta
 #: Lizenz-Admin+Preisseite 04.08.2026
 msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
 msgstr "recibirás una factura y tu clave de licencia, que funciona de inmediato."
+
+# ── Neues Abomodell (06.08.2026): Single/Team/Enterprise, Kontext-Umschalter ──
+
+msgid "12 Monate"
+msgstr "12 meses"
+
+msgid "3 Monate"
+msgstr "3 meses"
+
+msgid "6 Monate"
+msgstr "6 meses"
+
+msgid "Abo kündigen"
+msgstr "Cancelar la suscripción"
+
+msgid "Abo kündigen?"
+msgstr "¿Cancelar la suscripción?"
+
+msgid "Abo wurde zugewiesen."
+msgstr "Suscripción asignada."
+
+msgid "Abo zuweisen"
+msgstr "Asignar suscripción"
+
+msgid "Abo zuweisen (Rechnungsweg)"
+msgstr "Asignar suscripción (por factura)"
+
+msgid "Alle Abos werden fest für {laufzeiten} Monate gebucht — keine monatliche Abbuchung."
+msgstr "Todas las suscripciones se contratan por un periodo fijo de {laufzeiten} meses — sin cargos mensuales."
+
+msgid "Aus welchem Guthaben möchtest du arbeiten? Die Wahl gilt für alles, was Credits kostet."
+msgstr "¿Con qué saldo quieres trabajar? La elección se aplica a todo lo que cuesta créditos."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App."
+msgstr "Hasta {n} usuarios (incluido el titular) trabajan con un fondo de créditos común — invitar es fácil por correo desde la aplicación."
+
+msgid "Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf."
+msgstr "Hasta {n} usuarios (incluido el titular) comparten el fondo de créditos común."
+
+msgid "Credits wurden gutgeschrieben."
+msgstr "Los créditos se han abonado."
+
+msgid "Dein Abo"
+msgstr "Tu suscripción"
+
+msgid "Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten."
+msgstr "Tu suscripción sigue funcionando con normalidad hasta el {datum} y luego termina en lugar de renovarse. Tus proyectos y datos se conservan."
+
+msgid "Dein Team"
+msgstr "Tu equipo"
+
+msgid "Dein eigener Plan: {plan}"
+msgstr "Tu propio plan: {plan}"
+
+msgid "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch."
+msgstr "La cancelación se ha retirado — tu suscripción volverá a renovarse automáticamente."
+
+msgid "Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an."
+msgstr "La persona recibe un correo y confirma su incorporación. Si aún no tiene cuenta, la invitación crea una."
+
+msgid "Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan})."
+msgstr "Actualmente trabajas con el saldo compartido: {team} (plan {plan})."
+
+msgid "Du arbeitest jetzt aus deinem eigenen Guthaben."
+msgstr "Ahora trabajas con tu propio saldo."
+
+msgid "Du arbeitest jetzt aus dem Guthaben: {team}."
+msgstr "Ahora trabajas con el saldo: {team}."
+
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du unten per E-Mail — bald auch direkt online."
+msgstr "Usas el plan Free gratuito. Para una suscripción con más créditos, escríbenos abajo — pronto también directamente en línea."
+
+msgid "Free (Abo beenden)"
+msgstr "Free (finalizar suscripción)"
+
+msgid "Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen."
+msgstr "Para pedidos por factura: busca la cuenta por correo, establece plan y duración. El cliente recibe un aviso por correo y puede cancelar en cualquier momento."
+
+msgid "Für eine Person — das Abo gehört fest zu deinem Konto."
+msgstr "Para una persona — la suscripción está vinculada a tu cuenta."
+
+msgid "Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free."
+msgstr "Cancelada — activa hasta el {datum}, después tu cuenta pasa a Free."
+
+msgid "Gekündigt. Dein Abo läuft bis {datum} und endet dann."
+msgstr "Cancelada. Tu suscripción sigue activa hasta el {datum} y luego termina."
+
+msgid "Guthaben wählen"
+msgstr "Elegir saldo"
+
+msgid "Gutschreiben"
+msgstr "Abonar"
+
+msgid "Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“."
+msgstr "No hay ninguna cuenta con este correo. Usa primero «Crear nuevo usuario» arriba."
+
+msgid "Kündigung zurücknehmen"
+msgstr "Retirar la cancelación"
+
+msgid "Laufzeit"
+msgstr "Duración"
+
+msgid "Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch."
+msgstr "Duración: {monate} meses, se renueva automáticamente el {datum}."
+
+msgid "Laufzeiten"
+msgstr "Duraciones"
+
+msgid "Mein eigenes Guthaben (Plan {plan})"
+msgstr "Mi propio saldo (plan {plan})"
+
+msgid "Mitglieder"
+msgstr "Miembros"
+
+msgid "Notiz (z. B. Rechnungsnummer)"
+msgstr "Nota (p. ej. número de factura)"
+
+msgid "Ohne Kündigung verlängert sich das Abo automatisch um die gebuchte Laufzeit; kündigen kannst du jederzeit zum Laufzeitende, direkt in der App."
+msgstr "Sin cancelación, la suscripción se renueva automáticamente por la duración contratada; puedes cancelar en cualquier momento con efecto al final del periodo, directamente en la aplicación."
+
+msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf dem Abrechnungs-Konto (bei Team-Mitgliedern beim Inhaber) und verfällt erst mit der Kündigung."
+msgstr "Paquetes: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. El paquete va a la cuenta de facturación (en miembros de equipo, el titular) y solo caduca con la cancelación."
+
+msgid "Paketgröße (Credits)"
+msgstr "Tamaño del paquete (créditos)"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
+msgstr "Contratar o cambiar de plan, o recargar créditos: el pago en línea está en construcción. Hasta entonces basta un correo a"
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Guthaben und wird per E-Mail informiert."
+msgstr "¿Quitar de verdad a «{name}» del equipo? La persona volverá a trabajar con su propio saldo y será informada por correo."
+
+msgid "Team von {inhaber}"
+msgstr "Equipo de {inhaber}"
+
+msgid "Team „{name}“ von {inhaber}"
+msgstr "Equipo «{name}» de {inhaber}"
+
+msgid "Teamname (wird deinen Mitgliedern angezeigt)"
+msgstr "Nombre del equipo (visible para tus miembros)"
+
+msgid "Teamname gespeichert."
+msgstr "Nombre del equipo guardado."
+
+msgid "Teamnamen speichern"
+msgstr "Guardar nombre del equipo"
+
+msgid "Verlängert sich am {datum} automatisch."
+msgstr "Se renueva automáticamente el {datum}."
+
+msgid "Verlängert sich automatisch (Kunde kann jederzeit kündigen)"
+msgstr "Se renueva automáticamente (el cliente puede cancelar en cualquier momento)"
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange dein Abo läuft — die monatlichen Credits kommen immer obendrauf. Mehr Nutzer im Team erhöhen das Kontingent nicht; mehr Credits gibt es über die Pakete."
+msgstr "Si los créditos mensuales no bastan: simplemente compra más. Los créditos comprados no caducan mientras tu suscripción esté activa — los créditos mensuales siempre se suman. Más usuarios en el equipo no aumentan el contingente; más créditos se consiguen con los paquetes."
+
+msgid "Zum Laufzeitende kündigen"
+msgstr "Cancelar al final del periodo"
+
+msgid "Zusatz-Credits gutschreiben (Rechnungsweg)"
+msgstr "Abonar créditos adicionales (por factura)"
+
+msgid "diesen Monat aus dem Team-Topf: {anzahl} Credits"
+msgstr "este mes del fondo del equipo: {anzahl} créditos"
+
+msgid "du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet."
+msgstr "recibirás una factura y tu suscripción se activará de inmediato."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber)."
+msgstr "{belegt} de {max} plazas ocupadas (incluido tú como titular)."
+
+msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
+msgstr "{preis} € al mes, con {credits} créditos incluidos — descuento por volumen ya incluido."
