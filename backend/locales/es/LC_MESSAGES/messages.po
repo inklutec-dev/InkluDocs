@@ -3021,3 +3021,38 @@ msgstr "No se pudo cargar la lista de usuarios. Inténtalo de nuevo."
 
 msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten."
 msgstr "Paquetes: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. El paquete va exactamente a esta cuenta — para saldos de equipo, indica el correo del titular del equipo. Solo caduca con la cancelación; en cuentas sin suscripción activa, a los 12 meses."
+
+# ── Stripe-Buchungsstrecke (06.08.2026 nachts) ──
+
+msgid "Abo buchen"
+msgstr "Contratar suscripción"
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite (SEPA-Lastschrift, Karte oder Apple Pay). Ohne Kündigung verlängert sich das Abo automatisch um die gewählte Laufzeit."
+msgstr "El pago se realiza en la página segura de Stripe (adeudo SEPA, tarjeta o Apple Pay). Sin cancelación, la suscripción se renueva automáticamente por la duración elegida."
+
+msgid "Die Zahlung wurde abgebrochen. Es wurde nichts gebucht."
+msgstr "El pago se canceló. No se contrató nada."
+
+msgid "Gesamtpreis: {summe} € für {monate} Monate."
+msgstr "Precio total: {summe} € por {monate} meses."
+
+msgid "Kostenpflichtig buchen"
+msgstr "Contratar con obligación de pago"
+
+msgid "Kostenpflichtig kaufen"
+msgstr "Comprar con obligación de pago"
+
+msgid "Rechnungen und Zahlungen ansehen"
+msgstr "Ver facturas y pagos"
+
+msgid "Zahlung erfolgreich — dein Abo wird gerade freigeschaltet. Die Anzeige aktualisiert sich gleich."
+msgstr "Pago correcto — tu suscripción se está activando. La pantalla se actualizará en un momento."
+
+msgid "Zahlung erfolgreich — die Zusatz-Credits werden deinem Konto gerade gutgeschrieben."
+msgstr "Pago correcto — los créditos adicionales se están abonando a tu cuenta."
+
+msgid "Zahlungsseite wird geöffnet …"
+msgstr "Abriendo la página de pago …"
+
+msgid "Zusatz-Credits kaufen"
+msgstr "Comprar créditos adicionales"

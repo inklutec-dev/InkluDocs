@@ -20,3 +20,6 @@ pdfix-sdk==8.7.10
 
 # AWS BEDROCK (08.05.2026): Anthropic Claude via Frankfurt fuer v4-Pipeline
 boto3==1.35.50
+
+# STRIPE (06.08.2026): Online-Zahlung Abo-Modell (Checkout, Portal, Webhooks)
+stripe==11.1.0

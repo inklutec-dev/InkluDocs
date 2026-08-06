@@ -511,6 +511,13 @@ def _migrate_columns(conn):
         # Person ihr Passwort setzt (= registriert). konto_neu=1 kennzeichnet
         # diese Einladungen; do_reset_password loest sie automatisch ein.
         ("team_einladungen", "konto_neu", "ALTER TABLE team_einladungen ADD COLUMN konto_neu INTEGER DEFAULT 0"),
+        # Stripe-Anbindung (06.08.2026 nachts): Kunde/Subscription je Konto,
+        # plan_quelle ('stripe' | 'rechnung' | NULL=Altbestand) entscheidet,
+        # WER verlaengert — Stripe-Abos verlaengert invoice.paid, NIE der
+        # Tageslauf (sonst doppelt).
+        ("users", "stripe_customer_id", "ALTER TABLE users ADD COLUMN stripe_customer_id TEXT"),
+        ("users", "stripe_subscription_id", "ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT"),
+        ("users", "plan_quelle", "ALTER TABLE users ADD COLUMN plan_quelle TEXT"),
     ]
 
     for table, column, sql in migrations:

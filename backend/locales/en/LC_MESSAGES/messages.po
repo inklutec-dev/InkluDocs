@@ -3021,3 +3021,38 @@ msgstr "The user list could not be loaded. Please try again."
 
 msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten."
 msgstr "Packages: 100 = €20, 500 = €87.50, 1000 = €150. The package goes to exactly this account — for team balances, enter the team owner’s email. It only expires on cancellation; for accounts without an active subscription, after 12 months."
+
+# ── Stripe-Buchungsstrecke (06.08.2026 nachts) ──
+
+msgid "Abo buchen"
+msgstr "Book a subscription"
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite (SEPA-Lastschrift, Karte oder Apple Pay). Ohne Kündigung verlängert sich das Abo automatisch um die gewählte Laufzeit."
+msgstr "Payment happens on the secure Stripe page (SEPA direct debit, card or Apple Pay). Without cancellation, the subscription renews automatically for the chosen term."
+
+msgid "Die Zahlung wurde abgebrochen. Es wurde nichts gebucht."
+msgstr "The payment was cancelled. Nothing was booked."
+
+msgid "Gesamtpreis: {summe} € für {monate} Monate."
+msgstr "Total price: €{summe} for {monate} months."
+
+msgid "Kostenpflichtig buchen"
+msgstr "Book with obligation to pay"
+
+msgid "Kostenpflichtig kaufen"
+msgstr "Buy with obligation to pay"
+
+msgid "Rechnungen und Zahlungen ansehen"
+msgstr "View invoices and payments"
+
+msgid "Zahlung erfolgreich — dein Abo wird gerade freigeschaltet. Die Anzeige aktualisiert sich gleich."
+msgstr "Payment successful — your subscription is being activated. The display will refresh in a moment."
+
+msgid "Zahlung erfolgreich — die Zusatz-Credits werden deinem Konto gerade gutgeschrieben."
+msgstr "Payment successful — the extra credits are being added to your account."
+
+msgid "Zahlungsseite wird geöffnet …"
+msgstr "Opening payment page …"
+
+msgid "Zusatz-Credits kaufen"
+msgstr "Buy extra credits"

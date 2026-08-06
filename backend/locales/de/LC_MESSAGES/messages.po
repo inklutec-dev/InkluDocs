@@ -3024,3 +3024,38 @@ msgstr ""
 
 msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten."
 msgstr ""
+
+# ── Stripe-Buchungsstrecke (06.08.2026 nachts) ──
+
+msgid "Abo buchen"
+msgstr ""
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite (SEPA-Lastschrift, Karte oder Apple Pay). Ohne Kündigung verlängert sich das Abo automatisch um die gewählte Laufzeit."
+msgstr ""
+
+msgid "Die Zahlung wurde abgebrochen. Es wurde nichts gebucht."
+msgstr ""
+
+msgid "Gesamtpreis: {summe} € für {monate} Monate."
+msgstr ""
+
+msgid "Kostenpflichtig buchen"
+msgstr ""
+
+msgid "Kostenpflichtig kaufen"
+msgstr ""
+
+msgid "Rechnungen und Zahlungen ansehen"
+msgstr ""
+
+msgid "Zahlung erfolgreich — dein Abo wird gerade freigeschaltet. Die Anzeige aktualisiert sich gleich."
+msgstr ""
+
+msgid "Zahlung erfolgreich — die Zusatz-Credits werden deinem Konto gerade gutgeschrieben."
+msgstr ""
+
+msgid "Zahlungsseite wird geöffnet …"
+msgstr ""
+
+msgid "Zusatz-Credits kaufen"
+msgstr ""

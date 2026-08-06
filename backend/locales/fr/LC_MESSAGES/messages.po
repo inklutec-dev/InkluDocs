@@ -3021,3 +3021,38 @@ msgstr "La liste des utilisateurs n’a pas pu être chargée. Réessaie."
 
 msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten."
 msgstr "Packs : 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Le pack est crédité exactement sur ce compte — pour un crédit d’équipe, indiquer l’e-mail du propriétaire de l’équipe. Il n’expire qu’à la résiliation ; pour les comptes sans abonnement actif, après 12 mois."
+
+# ── Stripe-Buchungsstrecke (06.08.2026 nachts) ──
+
+msgid "Abo buchen"
+msgstr "Réserver un abonnement"
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite (SEPA-Lastschrift, Karte oder Apple Pay). Ohne Kündigung verlängert sich das Abo automatisch um die gewählte Laufzeit."
+msgstr "Le paiement s’effectue sur la page sécurisée de Stripe (prélèvement SEPA, carte ou Apple Pay). Sans résiliation, l’abonnement se renouvelle automatiquement pour la durée choisie."
+
+msgid "Die Zahlung wurde abgebrochen. Es wurde nichts gebucht."
+msgstr "Le paiement a été annulé. Rien n’a été réservé."
+
+msgid "Gesamtpreis: {summe} € für {monate} Monate."
+msgstr "Prix total : {summe} € pour {monate} mois."
+
+msgid "Kostenpflichtig buchen"
+msgstr "Réserver (avec obligation de paiement)"
+
+msgid "Kostenpflichtig kaufen"
+msgstr "Acheter (avec obligation de paiement)"
+
+msgid "Rechnungen und Zahlungen ansehen"
+msgstr "Voir les factures et paiements"
+
+msgid "Zahlung erfolgreich — dein Abo wird gerade freigeschaltet. Die Anzeige aktualisiert sich gleich."
+msgstr "Paiement réussi — ton abonnement est en cours d’activation. L’affichage va se mettre à jour dans un instant."
+
+msgid "Zahlung erfolgreich — die Zusatz-Credits werden deinem Konto gerade gutgeschrieben."
+msgstr "Paiement réussi — les crédits supplémentaires sont en cours d’ajout à ton compte."
+
+msgid "Zahlungsseite wird geöffnet …"
+msgstr "Ouverture de la page de paiement …"
+
+msgid "Zusatz-Credits kaufen"
+msgstr "Acheter des crédits supplémentaires"

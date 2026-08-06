@@ -2582,3 +2582,38 @@ msgstr "Användarlistan kunde inte läsas in. Försök igen."
 
 msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten."
 msgstr "Paket: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Paketet hamnar på exakt detta konto — för teamsaldon anges teamägarens e-post. Det förfaller först vid uppsägning; för konton utan aktivt abonnemang efter 12 månader."
+
+# ── Stripe-Buchungsstrecke (06.08.2026 nachts) ──
+
+msgid "Abo buchen"
+msgstr "Boka abonnemang"
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite (SEPA-Lastschrift, Karte oder Apple Pay). Ohne Kündigung verlängert sich das Abo automatisch um die gewählte Laufzeit."
+msgstr "Betalningen sker på Stripes säkra sida (SEPA-autogiro, kort eller Apple Pay). Utan uppsägning förnyas abonnemanget automatiskt med den valda löptiden."
+
+msgid "Die Zahlung wurde abgebrochen. Es wurde nichts gebucht."
+msgstr "Betalningen avbröts. Inget bokades."
+
+msgid "Gesamtpreis: {summe} € für {monate} Monate."
+msgstr "Totalpris: {summe} € för {monate} månader."
+
+msgid "Kostenpflichtig buchen"
+msgstr "Boka mot betalning"
+
+msgid "Kostenpflichtig kaufen"
+msgstr "Köp mot betalning"
+
+msgid "Rechnungen und Zahlungen ansehen"
+msgstr "Visa fakturor och betalningar"
+
+msgid "Zahlung erfolgreich — dein Abo wird gerade freigeschaltet. Die Anzeige aktualisiert sich gleich."
+msgstr "Betalningen lyckades — ditt abonnemang aktiveras nu. Visningen uppdateras strax."
+
+msgid "Zahlung erfolgreich — die Zusatz-Credits werden deinem Konto gerade gutgeschrieben."
+msgstr "Betalningen lyckades — extrakrediterna läggs nu till på ditt konto."
+
+msgid "Zahlungsseite wird geöffnet …"
+msgstr "Betalningssidan öppnas …"
+
+msgid "Zusatz-Credits kaufen"
+msgstr "Köp extra krediter"

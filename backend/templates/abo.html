@@ -36,7 +36,51 @@
         <button type="button" class="btn btn-secondary" id="widerrufBtn" hidden>{{ _('Kündigung zurücknehmen') }}</button>
         <span id="eigenMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
         <span id="eigenErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
-        <p class="dash-meta" style="margin-top:1rem;">{{ _('Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
+        <p class="dash-meta" id="mailHinweis" style="margin-top:1rem;">{{ _('Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
+        <button type="button" class="btn btn-secondary" id="portalBtn" hidden>{{ _('Rechnungen und Zahlungen ansehen') }}</button>
+        <span id="portalErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+      </section>
+
+      {# Stripe-Buchung (06.08.2026): sichtbar nur, wenn die Online-Zahlung
+         konfiguriert ist (abo.stripe_aktiv) und das Konto noch kein Abo hat.
+         Der Knopf sagt nach der Buttonloesung klar "Kostenpflichtig buchen";
+         bezahlt wird auf der barrierefreien Stripe-Checkout-Seite. #}
+      <section class="dash-card" aria-labelledby="buchenHeading" id="buchenBereich" hidden>
+        <h2 id="buchenHeading">{{ _('Abo buchen') }}</h2>
+        <div id="aboBuchenTeil">
+        <div class="dash-field">
+          <label for="buchenPlan">{{ _('Plan') }}</label>
+          <select id="buchenPlan" class="dash-input">
+            <option value="single">Single — 9,95 € / Monat, 50 Credits</option>
+            <option value="team">Team — 19,95 € / Monat, 100 Credits, bis 5 Nutzer</option>
+            <option value="enterprise">Enterprise — 49,95 € / Monat, 275 Credits, bis 25 Nutzer</option>
+          </select>
+        </div>
+        <div class="dash-field">
+          <label for="buchenLaufzeit">{{ _('Laufzeit') }}</label>
+          <select id="buchenLaufzeit" class="dash-input">
+            <option value="3">{{ _('3 Monate') }}</option>
+            <option value="6" selected>{{ _('6 Monate') }}</option>
+            <option value="12">{{ _('12 Monate') }}</option>
+          </select>
+        </div>
+        <p id="buchenSumme"></p>
+        <p class="dash-meta">{{ _('Bezahlt wird auf der sicheren Stripe-Seite (SEPA-Lastschrift, Karte oder Apple Pay). Ohne Kündigung verlängert sich das Abo automatisch um die gewählte Laufzeit.') }}</p>
+        <button type="button" class="btn btn-primary" id="buchenBtn">{{ _('Kostenpflichtig buchen') }}</button>
+        <span id="buchenMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        <span id="buchenErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        </div>
+        <h3 style="margin-top:1.25rem;">{{ _('Zusatz-Credits kaufen') }}</h3>
+        <div class="dash-field">
+          <label for="paketWahl">{{ _('Paketgröße (Credits)') }}</label>
+          <select id="paketWahl" class="dash-input">
+            <option value="100">100 — 20 €</option>
+            <option value="500">500 — 87,50 €</option>
+            <option value="1000">1000 — 150 €</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-secondary" id="paketBtn">{{ _('Kostenpflichtig kaufen') }}</button>
+        <span id="paketErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
       </section>
 
       {# Topf-Verwaltung: nur sichtbar fuer den INHABER eines Team- oder
@@ -148,6 +192,7 @@
     }
     renderKontexte(abo);
     renderEigen(abo);
+    renderBuchen(abo);
     if (abo.eigen && abo.eigen.ist_topf_inhaber) {
       byId('teamBereich').hidden = false;
       byId('teamNameInput').value = abo.eigen.team_name || '';
@@ -277,6 +322,98 @@
       pFrei.textContent = t('Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du unten per E-Mail — bald auch direkt online.');
       info.appendChild(pFrei);
     }
+  }
+
+  // Stripe-Buchungsstrecke (06.08.2026): Knoepfe nur zeigen, wenn die
+  // Online-Zahlung konfiguriert ist; sonst bleibt der E-Mail-Hinweis.
+  const PLAN_MONATSPREISE = { single: 9.95, team: 19.95, enterprise: 49.95 };
+
+  function renderBuchen(abo) {
+    const bereich = byId('buchenBereich');
+    if (!abo || abo.ist_betreiber || !abo.stripe_aktiv) {
+      bereich.hidden = true;
+      byId('portalBtn').hidden = !(abo && abo.hat_stripe_kunde && abo.stripe_aktiv);
+      return;
+    }
+    bereich.hidden = false;
+    byId('mailHinweis').hidden = true;
+    // Abo-Neubuchung nur ohne aktiven Bezahl-Plan (Wechsel folgt spaeter);
+    // Zusatz-Pakete kann jeder kaufen.
+    byId('aboBuchenTeil').hidden = !(abo.eigen && abo.eigen.plan === 'free');
+    byId('portalBtn').hidden = !abo.hat_stripe_kunde;
+    aktualisiereSumme();
+  }
+
+  function aktualisiereSumme() {
+    const plan = byId('buchenPlan').value;
+    const monate = parseInt(byId('buchenLaufzeit').value, 10);
+    const summe = (PLAN_MONATSPREISE[plan] * monate).toFixed(2).replace('.', ',');
+    byId('buchenSumme').textContent = t('Gesamtpreis: {summe} € für {monate} Monate.', { summe: summe, monate: monate });
+  }
+  byId('buchenPlan').addEventListener('change', aktualisiereSumme);
+  byId('buchenLaufzeit').addEventListener('change', aktualisiereSumme);
+
+  byId('buchenBtn').addEventListener('click', async () => {
+    const msg = byId('buchenMsg');
+    const err = byId('buchenErr');
+    msg.textContent = t('Zahlungsseite wird geöffnet …');
+    err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/abo/checkout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: byId('buchenPlan').value,
+                               laufzeit_monate: parseInt(byId('buchenLaufzeit').value, 10) }),
+      });
+    } catch (e) { msg.textContent = ''; err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || !d.url) { msg.textContent = ''; err.textContent = d.detail || t('Fehler'); return; }
+    window.location.href = d.url;
+  });
+
+  byId('paketBtn').addEventListener('click', async () => {
+    const err = byId('paketErr');
+    err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/abo/paket-checkout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groesse: parseInt(byId('paketWahl').value, 10) }),
+      });
+    } catch (e) { err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || !d.url) { err.textContent = d.detail || t('Fehler'); return; }
+    window.location.href = d.url;
+  });
+
+  byId('portalBtn').addEventListener('click', async () => {
+    const err = byId('portalErr');
+    err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/abo/portal', { method: 'POST' });
+    } catch (e) { err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || !d.url) { err.textContent = d.detail || t('Fehler'); return; }
+    window.location.href = d.url;
+  });
+
+  function zahlungsRueckkehr() {
+    // Rueckkehr von der Stripe-Seite: Statusmeldung ansagen, URL bereinigen.
+    const params = new URLSearchParams(window.location.search);
+    const z = params.get('zahlung');
+    if (!z) return;
+    const msg = byId('eigenMsg');
+    if (z === 'erfolg') {
+      msg.textContent = t('Zahlung erfolgreich — dein Abo wird gerade freigeschaltet. Die Anzeige aktualisiert sich gleich.');
+      setTimeout(reloadAbo, 4000);
+    } else if (z === 'paket-erfolg') {
+      msg.textContent = t('Zahlung erfolgreich — die Zusatz-Credits werden deinem Konto gerade gutgeschrieben.');
+      setTimeout(reloadAbo, 4000);
+    } else {
+      msg.textContent = t('Die Zahlung wurde abgebrochen. Es wurde nichts gebucht.');
+    }
+    window.history.replaceState({}, '', '/abo');
   }
 
   byId('kuendigenBtn').addEventListener('click', () => {
@@ -507,6 +644,7 @@
       abo = (await res.json()).abo || null;
     } catch (e) { abo = null; }
     renderAbo(abo);
+    zahlungsRueckkehr();
   })();
 {% endraw %}
 </script>

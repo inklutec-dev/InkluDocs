@@ -26,6 +26,7 @@ import logging
 import absender  # Sicherheitspaket 04.08.2026: echte Besucher-IP hinter dem Proxy (X-Forwarded-For von RECHTS)
 import billing  # Abo-/Credit-System Etappe 1: zentrale Verbrauchs-Zaehlung (backend/ABRECHNUNG.md)
 import demo as demo_mod  # Demo-Modus (oeffentliche Kostprobe ohne Anmeldung) — nur aktiv bei DEMO_MODE=on
+import stripe_zahlung  # Online-Zahlung (06.08.2026): inert ohne STRIPE_SECRET_KEY
 
 # Abo-System (06.08.2026): Fehler in Mail-/Tageslauf-Pfaden landen im Log,
 # nie beim Nutzer — gleiche Nie-Crashen-Philosophie wie billing.
@@ -111,6 +112,12 @@ def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = Tr
     if not SMTP_PASS:
         print(f"E-Mail nicht gesendet (kein SMTP-Passwort konfiguriert): {subject} an {to_email}")
         return False
+    # Testlaeufe (06.08.2026): Adressen auf der reservierten .invalid-Domain
+    # (RFC 2606) werden NIE versendet — sonst fluten Unzustellbarkeits-
+    # Meldungen das support-Postfach (Steve-Befund nach den E2E-Laeufen).
+    if (to_email or "").strip().lower().rsplit(".", 1)[-1] == "invalid":
+        print(f"E-Mail unterdrueckt (Testadresse .invalid): {subject} an {to_email}")
+        return True
     try:
         from email.mime.base import MIMEBase
         from email import encoders
@@ -720,7 +727,12 @@ async def me(user: dict = Depends(get_current_user)):
                 "auto_verlaengerung": bool(1 if _av is None else _av),
                 "ist_topf_inhaber": eigener_plan in billing.PLAN_SITZE,
                 "team_name": db_user.get("team_name") or "",
+                "quelle": db_user.get("plan_quelle") or None,
             },
+            # Stripe-Buchungsweg (06.08. nachts): steuert, ob die Abo-Seite
+            # echte Buchen-Knoepfe oder den E-Mail-Hinweis zeigt.
+            "stripe_aktiv": stripe_zahlung.AKTIV,
+            "hat_stripe_kunde": bool(db_user.get("stripe_customer_id")),
             # kompatibel zu Dashboard/App-Shell (Team-Zeile):
             "ist_team_mitglied": aktives_team is not None,
             "team_inhaber": aktives_team["inhaber_name"] if aktives_team else None,
@@ -1061,6 +1073,57 @@ async def admin_delete_user(user_id: int, user: dict = Depends(require_full_admi
 # Voll-Admins setzen den Plan von Hand — der Weg fuer Gruender-Tarif und
 # Rechnungskunden, solange es keine Online-Zahlung gibt (Etappe 3).
 
+def _setze_plan_kern(user_id: int, target: dict, plan: str, laufzeit,
+                     gueltig_bis, auto_verlaengerung: int, quelle) -> tuple:
+    """Der eigentliche Plan-Wechsel — EINE Mechanik fuer Admin-/Rechnungsweg
+    UND Stripe-Webhook (06.08.2026 nachts). Rueckgabe:
+    (gueltig_bis, geloeste_mitgliedschaften, ueberbelegte_sitze)."""
+    conn = get_db()
+    geloest = 0
+    try:
+        if plan == "free":
+            # Free hat weder Laufzeit noch Verlaengerung noch Quelle.
+            conn.execute("UPDATE users SET plan = 'free', plan_gueltig_bis = NULL, "
+                         "plan_laufzeit_monate = NULL, auto_verlaengerung = 1, "
+                         "plan_quelle = NULL WHERE id = ?", (user_id,))
+            gueltig_bis = None
+        elif gueltig_bis is not None:
+            conn.execute("UPDATE users SET plan = ?, plan_gueltig_bis = ?, "
+                         "plan_laufzeit_monate = ?, auto_verlaengerung = ?, "
+                         "plan_quelle = ? WHERE id = ?",
+                         (plan, gueltig_bis, laufzeit, auto_verlaengerung, quelle, user_id))
+        else:
+            conn.execute("UPDATE users SET plan = ?, "
+                         "plan_gueltig_bis = date('now', ?), "
+                         "plan_laufzeit_monate = ?, auto_verlaengerung = ?, "
+                         "plan_quelle = ? WHERE id = ?",
+                         (plan, f"+{laufzeit} months", laufzeit, auto_verlaengerung, quelle, user_id))
+            gueltig_bis = conn.execute("SELECT plan_gueltig_bis FROM users WHERE id = ?",
+                                       (user_id,)).fetchone()[0]
+        # Review-Befund 5 (31.07.2026): Wechsel WEG von einem Topf-Plan darf
+        # kein Geister-Team hinterlassen — Mitgliedschaften loesen; wer gerade
+        # in diesem Topf arbeitete, faellt auf den eigenen Kontext zurueck.
+        if target.get("plan") in billing.PLAN_SITZE and plan not in billing.PLAN_SITZE:
+            cur = conn.execute("DELETE FROM team_mitgliedschaften WHERE inhaber_id = ?",
+                               (user_id,))
+            geloest = cur.rowcount
+            conn.execute("UPDATE users SET aktiver_topf = NULL WHERE aktiver_topf = ?",
+                         (user_id,))
+        # Review-Befund K6 (06.08.): Downgrade zwischen Sitz-Plaenen behaelt
+        # die Mitglieder bewusst — Ueberbelegung wird aber gemeldet.
+        ueberbelegt = 0
+        neuer_deckel = billing.sitze_fuer_plan(plan)
+        if neuer_deckel is not None:
+            belegt = int(conn.execute(
+                "SELECT COUNT(*) FROM team_mitgliedschaften WHERE inhaber_id = ?",
+                (user_id,)).fetchone()[0]) + 1
+            ueberbelegt = max(0, belegt - neuer_deckel)
+        conn.commit()
+    finally:
+        conn.close()
+    return gueltig_bis, geloest, ueberbelegt
+
+
 @app.post("/api/admin/users/{user_id}/plan")
 async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(require_full_admin)):
     """Admin: Abo-Plan eines Kontos setzen — der Rechnungsweg (Actino/INKLUTEC).
@@ -1102,51 +1165,9 @@ async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(re
     target = get_user_by_id(user_id)
     if not target:
         raise HTTPException(status_code=404, detail="User nicht gefunden")
-    conn = get_db()
-    geloest = 0
-    try:
-        if plan == "free":
-            # Free hat weder Laufzeit noch Verlaengerung.
-            conn.execute("UPDATE users SET plan = 'free', plan_gueltig_bis = NULL, "
-                         "plan_laufzeit_monate = NULL, auto_verlaengerung = 1 WHERE id = ?",
-                         (user_id,))
-            gueltig_bis = None
-        elif gueltig_bis is not None:
-            conn.execute("UPDATE users SET plan = ?, plan_gueltig_bis = ?, "
-                         "plan_laufzeit_monate = ?, auto_verlaengerung = ? WHERE id = ?",
-                         (plan, gueltig_bis, laufzeit, auto_verlaengerung, user_id))
-        else:
-            conn.execute("UPDATE users SET plan = ?, "
-                         "plan_gueltig_bis = date('now', ?), "
-                         "plan_laufzeit_monate = ?, auto_verlaengerung = ? WHERE id = ?",
-                         (plan, f"+{laufzeit} months", laufzeit, auto_verlaengerung, user_id))
-            gueltig_bis = conn.execute("SELECT plan_gueltig_bis FROM users WHERE id = ?",
-                                       (user_id,)).fetchone()[0]
-        # Review-Befund 5 (31.07.2026): Wechsel WEG von einem Topf-Plan darf
-        # kein Geister-Team hinterlassen — Mitglieder wuerden sonst weiter aus
-        # einem Topf schoepfen, den niemand mehr bezahlt. Mitgliedschaften
-        # loesen; wer gerade in diesem Topf arbeitete, faellt auf den eigenen
-        # Kontext zurueck.
-        if target.get("plan") in billing.PLAN_SITZE and plan not in billing.PLAN_SITZE:
-            cur = conn.execute("DELETE FROM team_mitgliedschaften WHERE inhaber_id = ?",
-                               (user_id,))
-            geloest = cur.rowcount
-            conn.execute("UPDATE users SET aktiver_topf = NULL WHERE aktiver_topf = ?",
-                         (user_id,))
-        # Review-Befund K6 (06.08.): Downgrade zwischen Sitz-Plaenen (z. B.
-        # enterprise -> team) behaelt die Mitglieder bewusst — aber der Admin
-        # muss eine Ueberbelegung sehen, um von Hand zu trimmen (Einladen ist
-        # dann ohnehin gesperrt, Bestand arbeitet weiter).
-        ueberbelegt = 0
-        neuer_deckel = billing.sitze_fuer_plan(plan)
-        if neuer_deckel is not None:
-            belegt = int(conn.execute(
-                "SELECT COUNT(*) FROM team_mitgliedschaften WHERE inhaber_id = ?",
-                (user_id,)).fetchone()[0]) + 1
-            ueberbelegt = max(0, belegt - neuer_deckel)
-        conn.commit()
-    finally:
-        conn.close()
+    gueltig_bis, geloest, ueberbelegt = _setze_plan_kern(
+        user_id, target, plan, laufzeit, gueltig_bis, auto_verlaengerung,
+        quelle="rechnung")
     # Bestaetigungs-Mail an den Kunden — gleicher Text wie spaeter beim
     # Online-Kauf: er sieht sofort, was gebucht wurde und bis wann es laeuft.
     if plan != "free":
@@ -1694,6 +1715,24 @@ async def abo_kontext_setzen(request: Request, user: dict = Depends(get_current_
     return {"ok": True, "aktiver_topf": topf}
 
 
+def _stripe_kuendigung_sync(db_user: dict, kuendigen: bool) -> None:
+    """Kuendigungs-Status mit Stripe abgleichen (nur Stripe-verwaltete Abos).
+
+    Wichtig: Bei Stripe-Abos MUSS der Abgleich gelingen — sonst stuende
+    lokal 'gekuendigt', waehrend Stripe echtes Geld weiter abbucht.
+    """
+    sub = (db_user.get("stripe_subscription_id") or "").strip()
+    if not sub or db_user.get("plan_quelle") != "stripe" or not stripe_zahlung.AKTIV:
+        return
+    try:
+        stripe_zahlung.kuendige_subscription(sub, kuendigen)
+    except Exception:
+        logger.exception("Stripe-Kuendigungs-Abgleich fehlgeschlagen (user=%s)", db_user["id"])
+        raise HTTPException(status_code=502,
+                            detail="Die Kündigung konnte bei unserem Zahlungsdienst gerade nicht "
+                                   "hinterlegt werden. Bitte in ein paar Minuten erneut versuchen")
+
+
 @app.post("/api/abo/kuendigen")
 async def abo_kuendigen(user: dict = Depends(get_current_user)):
     """Eigenes Abo zum Laufzeitende kuendigen (auto_verlaengerung aus).
@@ -1701,10 +1740,12 @@ async def abo_kuendigen(user: dict = Depends(get_current_user)):
     Betrifft IMMER nur den eigenen Plan — ein Team, in dem man nur Mitglied
     ist, kann man nicht kuendigen (das macht dessen Inhaber). Der Plan
     laeuft bis zum Laufzeitende normal weiter und faellt dann auf Free.
+    Stripe-Abos werden zusaetzlich bei Stripe zum Periodenende gekuendigt.
     """
     db_user = get_user_by_id(user["id"])
     if not db_user or billing.effektiver_plan(db_user) == "free":
         raise HTTPException(status_code=400, detail="Kein aktives Abo zum Kündigen")
+    _stripe_kuendigung_sync(db_user, True)
     conn = get_db()
     try:
         conn.execute("UPDATE users SET auto_verlaengerung = 0 WHERE id = ?", (user["id"],))
@@ -1722,6 +1763,7 @@ async def abo_kuendigung_widerrufen(user: dict = Depends(get_current_user)):
     db_user = get_user_by_id(user["id"])
     if not db_user or billing.effektiver_plan(db_user) == "free":
         raise HTTPException(status_code=400, detail="Kein aktives Abo")
+    _stripe_kuendigung_sync(db_user, False)
     conn = get_db()
     try:
         conn.execute("UPDATE users SET auto_verlaengerung = 1 WHERE id = ?", (user["id"],))
@@ -1729,6 +1771,194 @@ async def abo_kuendigung_widerrufen(user: dict = Depends(get_current_user)):
     finally:
         conn.close()
     return {"ok": True, "message": "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch"}
+
+
+# ─── Stripe-Buchungsweg (06.08.2026 nachts, zuerst Testmodus) ───
+# Checkout und Portal sind duenn: die Freischaltung passiert IMMER im
+# Webhook (auch wenn der Kunde den Erfolgs-Redirect nie sieht).
+
+@app.post("/api/abo/checkout")
+async def abo_checkout(request: Request, user: dict = Depends(get_current_user)):
+    """Stripe-Checkout-Link fuer eine Abo-Buchung (Plan + Laufzeit)."""
+    if not stripe_zahlung.AKTIV:
+        raise HTTPException(status_code=503, detail="Online-Zahlung ist noch nicht freigeschaltet")
+    data = await request.json()
+    plan = (data.get("plan") or "").strip().lower()
+    if plan not in billing.PLAN_PREISE_EUR:
+        raise HTTPException(status_code=400, detail="Ungueltiger Plan")
+    try:
+        monate = int(data.get("laufzeit_monate"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="laufzeit_monate fehlt")
+    if monate not in billing.PLAN_LAUFZEITEN:
+        raise HTTPException(status_code=400, detail="Laufzeit muss 3, 6 oder 12 Monate sein")
+    db_user = get_user_by_id(user["id"])
+    if billing.effektiver_plan(db_user) != "free":
+        raise HTTPException(status_code=400,
+                            detail="Du hast bereits ein aktives Abo. Plan-Wechsel bitte über "
+                                   "support@inklutec.de — Online-Wechsel folgt")
+    try:
+        kunde = stripe_zahlung.kunde_fuer(db_user)
+        if kunde != db_user.get("stripe_customer_id"):
+            conn = get_db()
+            try:
+                conn.execute("UPDATE users SET stripe_customer_id = ? WHERE id = ?",
+                             (kunde, db_user["id"]))
+                conn.commit()
+            finally:
+                conn.close()
+        url = stripe_zahlung.checkout_abo(db_user, plan, monate, BASE_URL, kunde)
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Stripe-Checkout fehlgeschlagen (user=%s)", user["id"])
+        raise HTTPException(status_code=502, detail="Die Zahlungsseite konnte nicht erstellt werden")
+    return {"ok": True, "url": url}
+
+
+@app.post("/api/abo/paket-checkout")
+async def abo_paket_checkout(request: Request, user: dict = Depends(get_current_user)):
+    """Stripe-Checkout-Link fuer ein Zusatz-Credit-Paket (Einmalzahlung)."""
+    if not stripe_zahlung.AKTIV:
+        raise HTTPException(status_code=503, detail="Online-Zahlung ist noch nicht freigeschaltet")
+    data = await request.json()
+    try:
+        groesse = int(data.get("groesse"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="groesse fehlt")
+    if groesse not in billing.PAKET_PREISE:
+        raise HTTPException(status_code=400, detail="Ungueltige Paketgroesse")
+    db_user = get_user_by_id(user["id"])
+    try:
+        kunde = stripe_zahlung.kunde_fuer(db_user)
+        if kunde != db_user.get("stripe_customer_id"):
+            conn = get_db()
+            try:
+                conn.execute("UPDATE users SET stripe_customer_id = ? WHERE id = ?",
+                             (kunde, db_user["id"]))
+                conn.commit()
+            finally:
+                conn.close()
+        url = stripe_zahlung.checkout_paket(db_user, groesse, BASE_URL, kunde)
+    except Exception:
+        logger.exception("Stripe-Paket-Checkout fehlgeschlagen (user=%s)", user["id"])
+        raise HTTPException(status_code=502, detail="Die Zahlungsseite konnte nicht erstellt werden")
+    return {"ok": True, "url": url}
+
+
+@app.post("/api/abo/portal")
+async def abo_portal(user: dict = Depends(get_current_user)):
+    """Link ins Stripe-Kundenportal (Rechnungen, Zahlungsart, Kuendigung)."""
+    if not stripe_zahlung.AKTIV:
+        raise HTTPException(status_code=503, detail="Online-Zahlung ist noch nicht freigeschaltet")
+    db_user = get_user_by_id(user["id"])
+    kunde = (db_user.get("stripe_customer_id") or "").strip()
+    if not kunde:
+        raise HTTPException(status_code=400, detail="Für dieses Konto gibt es noch keine Online-Zahlungen")
+    try:
+        url = stripe_zahlung.portal_url(kunde, BASE_URL)
+    except Exception:
+        logger.exception("Stripe-Portal fehlgeschlagen (user=%s)", user["id"])
+        raise HTTPException(status_code=502, detail="Das Zahlungs-Portal ist gerade nicht erreichbar")
+    return {"ok": True, "url": url}
+
+
+@app.post("/api/stripe/webhook")
+async def stripe_webhook(request: Request):
+    """Stripe meldet Zahlungs-Ereignisse — HIER passiert die Freischaltung.
+
+    Signaturgeprueft (STRIPE_WEBHOOK_SECRET). Antwortet Stripe gegenueber
+    immer schnell mit 200, sobald das Ereignis verarbeitet oder bewusst
+    ignoriert wurde; nur Signatur-/Formatfehler geben 400.
+    """
+    payload = await request.body()
+    signatur = request.headers.get("stripe-signature", "")
+    try:
+        event = stripe_zahlung.pruefe_webhook(payload, signatur)
+    except Exception:
+        logger.warning("Stripe-Webhook mit ungueltiger Signatur abgewiesen")
+        raise HTTPException(status_code=400, detail="Ungueltige Signatur")
+
+    typ = event["type"]
+    obj = event["data"]["object"]
+    try:
+        if typ == "checkout.session.completed":
+            meta = obj.get("metadata") or {}
+            user_id = int(meta.get("idoc_user_id") or 0)
+            target = get_user_by_id(user_id) if user_id else None
+            if not target:
+                logger.warning("Stripe-Webhook: unbekanntes Konto in %s", typ)
+                return {"ok": True}
+            if obj.get("mode") == "subscription" and meta.get("idoc_plan"):
+                plan = meta["idoc_plan"]
+                monate = int(meta.get("idoc_laufzeit") or 6)
+                gueltig_bis, _g, _u = _setze_plan_kern(
+                    user_id, target, plan, monate, None, 1, quelle="stripe")
+                conn = get_db()
+                try:
+                    conn.execute("UPDATE users SET stripe_subscription_id = ?, "
+                                 "stripe_customer_id = ? WHERE id = ?",
+                                 (obj.get("subscription"), obj.get("customer"), user_id))
+                    conn.commit()
+                finally:
+                    conn.close()
+                try:
+                    _sende_plan_bestaetigung(target, plan, gueltig_bis, monate, 1)
+                except Exception:
+                    logger.exception("Bestaetigungs-Mail nach Stripe-Buchung fehlgeschlagen")
+                _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Stripe-Buchung: {target['email']}",
+                          "Neue Online-Buchung",
+                          [f"{html.escape(target['email'])} hat {PLAN_ANZEIGENAMEN.get(plan, plan)} "
+                           f"für {monate} Monate über Stripe gebucht (gültig bis {str(gueltig_bis)[:10]})."])
+            elif obj.get("mode") == "payment" and meta.get("idoc_paket"):
+                groesse = int(meta["idoc_paket"])
+                # Kuendigungs-Verfall nur bei aktivem Bezahl-Plan sinnvoll —
+                # sonst Datums-Paket (gleiche Regel wie der Admin-Weg, K4).
+                verfall = None if billing.effektiver_plan(target) != "free" else 12
+                billing.schenke_credits(user_id, groesse, notiz="Stripe-Kauf",
+                                        quelle="stripe", verfall_monate=verfall)
+                _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Stripe-Paketkauf: {target['email']}",
+                          "Credit-Paket gekauft",
+                          [f"{html.escape(target['email'])} hat {groesse} Zusatz-Credits über "
+                           "Stripe gekauft."])
+        elif typ == "invoice.paid":
+            # Verlaengerung eines laufenden Stripe-Abos: Laufzeitende auf das
+            # Ende der bezahlten Periode setzen. Die Erst-Rechnung einer neuen
+            # Subscription behandelt schon checkout.session.completed.
+            if obj.get("billing_reason") == "subscription_cycle":
+                sub_id = obj.get("subscription")
+                zeilen_liste = (obj.get("lines") or {}).get("data") or []
+                periode_ende = max((z.get("period", {}).get("end") or 0)
+                                   for z in zeilen_liste) if zeilen_liste else 0
+                if sub_id and periode_ende:
+                    neues_datum = datetime.utcfromtimestamp(int(periode_ende)).strftime("%Y-%m-%d")
+                    conn = get_db()
+                    try:
+                        conn.execute("UPDATE users SET plan_gueltig_bis = ? "
+                                     "WHERE stripe_subscription_id = ?",
+                                     (neues_datum, sub_id))
+                        conn.commit()
+                    finally:
+                        conn.close()
+        elif typ in ("customer.subscription.updated", "customer.subscription.deleted"):
+            # Kuendigung im Stripe-Portal (oder durch Stripe selbst) mit
+            # unserem auto_verlaengerung-Schalter synchron halten.
+            sub_id = obj.get("id")
+            beendet = (typ == "customer.subscription.deleted")
+            auslaufend = bool(obj.get("cancel_at_period_end")) or beendet
+            conn = get_db()
+            try:
+                conn.execute("UPDATE users SET auto_verlaengerung = ? "
+                             "WHERE stripe_subscription_id = ?",
+                             (0 if auslaufend else 1, sub_id))
+                conn.commit()
+            finally:
+                conn.close()
+    except Exception:
+        # Verarbeitungsfehler loggen, aber 200 melden — Stripe wiederholt
+        # sonst endlos; der Vorgang laesst sich im Log/Dashboard nachziehen.
+        logger.exception("Stripe-Webhook-Verarbeitung fehlgeschlagen (%s)", typ)
+    return {"ok": True}
 
 
 # ─── Lizenzschluessel: Modell VERWORFEN 06.08.2026 (Steve+Michael) ─────
@@ -1843,7 +2073,7 @@ def _abo_tageslauf() -> None:
                 # Aufholung deckt trotzdem bis zu zwei Monate Server-Pause.
                 faellige = conn.execute(
                     "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, "
-                    "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
+                    "plan_quelle, COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
                     "FROM users WHERE plan IN ('single', 'team', 'enterprise') "
                     "AND plan_gueltig_bis IS NOT NULL "
                     "AND date(plan_gueltig_bis) <= date('now', '+14 days') "
@@ -1883,13 +2113,19 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                       "„Abo &amp; Verbrauch“ — dann endet das Abo zum Laufzeitende."]
             _abo_mail(k["email"], "InkluDocs: Dein Abo verlängert sich bald",
                       "Dein Abo verlängert sich bald", saetze)
-            # Betreiber-Hinweis: beim Rechnungsweg muss eine neue Rechnung raus.
+            # Betreiber-Hinweis: beim Rechnungsweg muss eine neue Rechnung
+            # raus; Stripe-Abos bucht und fakturiert Stripe von selbst.
+            if k.get("plan_quelle") == "stripe":
+                betreiber_satz = ("Stripe-Abo: Die Verlängerung bucht und fakturiert Stripe "
+                                  "automatisch — hier ist nichts zu tun (nur zur Kenntnis).")
+            else:
+                betreiber_satz = ("Rechnungskunde: Jetzt eine neue Rechnung stellen "
+                                  "(Actino/INKLUTEC) — die App verlängert am Stichtag automatisch.")
             _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Abo-Verlängerung: {k['email']}",
                       "Abo-Verlängerung steht an",
                       [f"Das {plan_name}-Abo von {html.escape(k['email'])} verlängert sich am {ablauf} "
                        f"automatisch{f' um {laufzeit} Monate' if laufzeit else ''}.",
-                       "Rechnungskunden brauchen jetzt eine neue Rechnung (Actino/INKLUTEC); "
-                       "Stripe-Kunden bucht die Online-Zahlung, sobald sie live ist."])
+                       betreiber_satz])
         else:
             saetze = [f"Hallo {name},",
                       f"dein {plan_name}-Abo bei InkluDocs endet am {ablauf}. "
@@ -1903,7 +2139,12 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                       "Dein Abo endet bald", saetze)
         return
 
-    # Laufzeitende ueberschritten.
+    # Laufzeitende ueberschritten. Stripe-Abos verlaengert AUSSCHLIESSLICH
+    # der invoice.paid-Webhook (sonst doppelt); scheitert dort die Zahlung,
+    # setzt customer.subscription.deleted auto_verlaengerung=0 und dieses
+    # Konto laeuft beim naechsten Tageslauf in den Abschieds-Zweig.
+    if k.get("plan_quelle") == "stripe" and auto:
+        return
     if auto and laufzeit:
         # Auto-Verlaengerung: gueltig_bis um die Laufzeit verlaengern, bis es
         # in der Zukunft liegt (faengt auch lange Server-Pausen ab).
