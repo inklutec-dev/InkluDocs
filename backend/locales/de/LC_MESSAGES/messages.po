@@ -3059,3 +3059,8 @@ msgstr ""
 
 msgid "Zusatz-Credits kaufen"
 msgstr ""
+
+# ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
+
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr ""

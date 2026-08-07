@@ -2747,3 +2747,8 @@ msgstr "Betalingssiden åbnes …"
 
 msgid "Zusatz-Credits kaufen"
 msgstr "Køb ekstra credits"
+
+# ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
+
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "Én valuta til alt: credits. En alternativ tekst koster 1 credit, eksport af den færdige PDF 5 credits. Alle priser er slutpriser — i henhold til § 19 i den tyske momslov (UStG) opkræves der ingen moms."
