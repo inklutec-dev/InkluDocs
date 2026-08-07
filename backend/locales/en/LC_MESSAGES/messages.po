@@ -3061,3 +3061,80 @@ msgstr "Buy extra credits"
 
 msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
 msgstr "One currency for everything: credits. An alt text costs 1 credit, exporting the finished PDF 5 credits. All prices are final — in accordance with Section 19 of the German VAT Act (UStG), no VAT is charged."
+
+# ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
+
+msgid "Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein."
+msgstr "All members immediately lose access to the shared balance and work from their own again. They are notified by email. Accounts and projects remain unchanged. Your subscription continues as normal — you then use the credits on your own."
+
+msgid "Dein Team: {name}"
+msgstr "Your team: {name}"
+
+msgid "Diesen Plan hast du bereits."
+msgstr "You already have this plan."
+
+msgid "Du hast ein Abo mit mehreren Plätzen. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen."
+msgstr "Your subscription includes several seats. Give your team a name first — then you can invite members."
+
+msgid "Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate."
+msgstr "Downgrade: scheduled for the end of the term. Until {datum} everything stays as it is; after that the new plan applies at €{summe} per {monate} months."
+
+msgid "Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben."
+msgstr "Note: {team} ends on {datum}. After that you will work from your own balance again."
+
+msgid "Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate."
+msgstr "Upgrade: takes effect immediately. What you have already paid for the current period is credited — you only pay the difference. New price: €{summe} for {monate} months."
+
+msgid "Liste aktualisieren"
+msgstr "Refresh list"
+
+msgid "Liste ist aktuell."
+msgstr "List is up to date."
+
+msgid "Neuer Plan"
+msgstr "New plan"
+
+msgid "Neuer Teamname"
+msgstr "New team name"
+
+msgid "Plan gewechselt."
+msgstr "Plan changed."
+
+msgid "Plan wechseln"
+msgstr "Change plan"
+
+msgid "Team aufgelöst."
+msgstr "Team disbanded."
+
+msgid "Team auflösen"
+msgstr "Disband team"
+
+msgid "Team erstellen"
+msgstr "Create team"
+
+msgid "Team wirklich auflösen?"
+msgstr "Really disband the team?"
+
+msgid "Teamnamen ändern"
+msgstr "Change team name"
+
+msgid "Vorgemerkten Wechsel zurücknehmen"
+msgstr "Withdraw scheduled change"
+
+msgid "Wechsel anfordern"
+msgstr "Request change"
+
+msgid "Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}."
+msgstr "Change scheduled: from {datum} the plan {plan} applies."
+
+msgid "Wechsel zurückgenommen."
+msgstr "Change withdrawn."
+
+msgid "Wie soll dein Team heißen?"
+msgstr "What should your team be called?"
+
+msgid "Wird aktualisiert ..."
+msgstr "Refreshing …"
+
+msgid "Wird umgestellt ..."
+msgstr "Changing …"

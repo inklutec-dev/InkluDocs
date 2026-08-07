@@ -518,6 +518,13 @@ def _migrate_columns(conn):
         ("users", "stripe_customer_id", "ALTER TABLE users ADD COLUMN stripe_customer_id TEXT"),
         ("users", "stripe_subscription_id", "ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT"),
         ("users", "plan_quelle", "ALTER TABLE users ADD COLUMN plan_quelle TEXT"),
+        # Planwechsel (07.08.2026): Ein DOWNGRADE wird nur vorgemerkt und
+        # wirkt zum Ende der bezahlten Laufzeit — bis dahin laeuft alles
+        # unveraendert weiter. geplanter_plan/geplante_laufzeit halten den
+        # Wunsch; der Tageslauf stellt am Stichtag um (plan_gueltig_bis).
+        # Upgrades brauchen das nicht (sofort wirksam).
+        ("users", "geplanter_plan", "ALTER TABLE users ADD COLUMN geplanter_plan TEXT"),
+        ("users", "geplante_laufzeit", "ALTER TABLE users ADD COLUMN geplante_laufzeit INTEGER"),
     ]
 
     for table, column, sql in migrations:

@@ -3061,3 +3061,80 @@ msgstr "Comprar créditos adicionales"
 
 msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
 msgstr "Una sola moneda para todo: créditos. Un texto alternativo cuesta 1 crédito, la exportación del PDF terminado 5 créditos. Todos los precios son finales — conforme al artículo 19 de la ley alemana del IVA (UStG), no se cobra IVA."
+
+# ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
+
+msgid "Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein."
+msgstr "Todos los miembros pierden de inmediato el acceso al saldo compartido y vuelven a trabajar con el suyo. Se les informa por correo. Cuentas y proyectos permanecen sin cambios. Tu suscripción sigue con normalidad — luego usas los créditos en solitario."
+
+msgid "Dein Team: {name}"
+msgstr "Tu equipo: {name}"
+
+msgid "Diesen Plan hast du bereits."
+msgstr "Ya tienes este plan."
+
+msgid "Du hast ein Abo mit mehreren Plätzen. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen."
+msgstr "Tu suscripción incluye varias plazas. Primero dale un nombre a tu equipo — después podrás invitar a miembros."
+
+msgid "Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate."
+msgstr "Bajada de plan: programada para el final del periodo. Hasta el {datum} todo sigue igual; después se aplica el nuevo plan por {summe} € cada {monate} meses."
+
+msgid "Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben."
+msgstr "Nota: {team} finaliza el {datum}. Después volverás a trabajar con tu propio saldo."
+
+msgid "Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate."
+msgstr "Subida de plan: efecto inmediato. Lo que ya has pagado por el periodo actual se descuenta — solo pagas la diferencia. Nuevo precio: {summe} € por {monate} meses."
+
+msgid "Liste aktualisieren"
+msgstr "Actualizar lista"
+
+msgid "Liste ist aktuell."
+msgstr "La lista está actualizada."
+
+msgid "Neuer Plan"
+msgstr "Nuevo plan"
+
+msgid "Neuer Teamname"
+msgstr "Nuevo nombre del equipo"
+
+msgid "Plan gewechselt."
+msgstr "Plan cambiado."
+
+msgid "Plan wechseln"
+msgstr "Cambiar de plan"
+
+msgid "Team aufgelöst."
+msgstr "Equipo disuelto."
+
+msgid "Team auflösen"
+msgstr "Disolver equipo"
+
+msgid "Team erstellen"
+msgstr "Crear equipo"
+
+msgid "Team wirklich auflösen?"
+msgstr "¿Disolver de verdad el equipo?"
+
+msgid "Teamnamen ändern"
+msgstr "Cambiar nombre del equipo"
+
+msgid "Vorgemerkten Wechsel zurücknehmen"
+msgstr "Retirar el cambio programado"
+
+msgid "Wechsel anfordern"
+msgstr "Solicitar cambio"
+
+msgid "Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}."
+msgstr "Cambio programado: a partir del {datum} se aplica el plan {plan}."
+
+msgid "Wechsel zurückgenommen."
+msgstr "Cambio retirado."
+
+msgid "Wie soll dein Team heißen?"
+msgstr "¿Cómo se llamará tu equipo?"
+
+msgid "Wird aktualisiert ..."
+msgstr "Actualizando …"
+
+msgid "Wird umgestellt ..."
+msgstr "Cambiando …"

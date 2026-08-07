@@ -3061,3 +3061,80 @@ msgstr "Acheter des crédits supplémentaires"
 
 msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
 msgstr "Une seule monnaie pour tout : les crédits. Un texte alternatif coûte 1 crédit, l’export du PDF finalisé 5 crédits. Tous les prix sont des prix finaux — conformément à l’article 19 de la loi allemande sur la TVA (UStG), aucune TVA n’est facturée."
+
+# ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
+
+msgid "Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein."
+msgstr "Tous les membres perdent immédiatement l’accès au crédit commun et travaillent de nouveau avec le leur. Ils sont informés par e-mail. Les comptes et les projets restent inchangés. Ton abonnement continue normalement — tu utilises alors les crédits seul."
+
+msgid "Dein Team: {name}"
+msgstr "Ton équipe : {name}"
+
+msgid "Diesen Plan hast du bereits."
+msgstr "Tu as déjà ce plan."
+
+msgid "Du hast ein Abo mit mehreren Plätzen. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen."
+msgstr "Ton abonnement comprend plusieurs places. Donne d’abord un nom à ton équipe — ensuite tu pourras inviter des membres."
+
+msgid "Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate."
+msgstr "Rétrogradation : programmée pour la fin de la période. Jusqu’au {datum} rien ne change ; ensuite le nouveau plan s’applique à {summe} € par {monate} mois."
+
+msgid "Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben."
+msgstr "Remarque : {team} se termine le {datum}. Ensuite, tu travailleras de nouveau avec ton propre crédit."
+
+msgid "Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate."
+msgstr "Passage à un plan supérieur : effet immédiat. Ce que tu as déjà payé pour la période en cours est déduit — tu ne paies que la différence. Nouveau prix : {summe} € pour {monate} mois."
+
+msgid "Liste aktualisieren"
+msgstr "Actualiser la liste"
+
+msgid "Liste ist aktuell."
+msgstr "La liste est à jour."
+
+msgid "Neuer Plan"
+msgstr "Nouveau plan"
+
+msgid "Neuer Teamname"
+msgstr "Nouveau nom d’équipe"
+
+msgid "Plan gewechselt."
+msgstr "Plan modifié."
+
+msgid "Plan wechseln"
+msgstr "Changer de plan"
+
+msgid "Team aufgelöst."
+msgstr "Équipe dissoute."
+
+msgid "Team auflösen"
+msgstr "Dissoudre l’équipe"
+
+msgid "Team erstellen"
+msgstr "Créer l’équipe"
+
+msgid "Team wirklich auflösen?"
+msgstr "Vraiment dissoudre l’équipe ?"
+
+msgid "Teamnamen ändern"
+msgstr "Modifier le nom de l’équipe"
+
+msgid "Vorgemerkten Wechsel zurücknehmen"
+msgstr "Annuler le changement programmé"
+
+msgid "Wechsel anfordern"
+msgstr "Demander le changement"
+
+msgid "Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}."
+msgstr "Changement programmé : à partir du {datum}, le plan {plan} s’applique."
+
+msgid "Wechsel zurückgenommen."
+msgstr "Changement annulé."
+
+msgid "Wie soll dein Team heißen?"
+msgstr "Comment ton équipe doit-elle s’appeler ?"
+
+msgid "Wird aktualisiert ..."
+msgstr "Actualisation …"
+
+msgid "Wird umgestellt ..."
+msgstr "Modification …"

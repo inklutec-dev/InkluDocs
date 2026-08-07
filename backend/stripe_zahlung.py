@@ -214,3 +214,106 @@ def kuendige_subscription(subscription_id: str, zum_periodenende: bool) -> None:
     """Kuendigt (oder reaktiviert) die Stripe-Subscription zum Periodenende."""
     stripe.Subscription.modify(subscription_id,
                                cancel_at_period_end=bool(zum_periodenende))
+
+
+# ---------------------------------------------------------------------------
+# Planwechsel (07.08.2026, Steve+Michael nach dem Meeting)
+# ---------------------------------------------------------------------------
+# Fachregel:
+# - UPGRADE (teurer): SOFORT wirksam. Stripe rechnet den Restwert des alten
+#   Plans automatisch an (proration_behavior='create_prorations') und stellt
+#   die Differenz sofort in Rechnung — der Kunde zahlt also nur den
+#   Unterschied und hat sofort mehr Credits.
+# - DOWNGRADE (guenstiger): wird nur VORGEMERKT und wirkt zum Ende der
+#   bezahlten Laufzeit. Bis dahin laeuft alles unveraendert weiter, es wird
+#   nichts abgebucht und nichts erstattet. Umgesetzt ueber einen
+#   Subscription-Schedule: die laufende Phase bleibt, die Folgephase startet
+#   mit dem neuen Preis.
+
+
+def _preis_und_intervall(plan: str, monate: int):
+    p = stripe.Price.retrieve(_preis_id(_plan_lookup(plan, monate)))
+    return p
+
+
+def loese_schedule(subscription_id: str) -> bool:
+    """Gibt einen etwaigen Subscription-Schedule frei (Rueckgabe: war einer da?).
+
+    WICHTIG (Befund 07.08.2026): Solange ein Schedule an der Subscription
+    haengt (= ein vorgemerkter Downgrade), lehnt Stripe JEDE direkte
+    Aenderung an Kuendigung oder Preis ab ("managed by the subscription
+    schedule"). Vor Kuendigung und vor einem sofortigen Upgrade muss der
+    Schedule also weg — fachlich ist das auch richtig: beides hebt den
+    vorgemerkten Wechsel ohnehin auf.
+    """
+    sub = stripe.Subscription.retrieve(subscription_id)
+    schedule_id = sub.get("schedule")
+    if not schedule_id:
+        return False
+    stripe.SubscriptionSchedule.release(schedule_id)
+    return True
+
+
+def wechsle_sofort(subscription_id: str, plan: str, monate: int) -> dict:
+    """UPGRADE: Subscription sofort auf den neuen Preis umstellen.
+
+    Anteilige Verrechnung durch Stripe; die Differenz wird sofort
+    fakturiert (payment_behavior default: Rechnung wird automatisch
+    beglichen, wenn eine Zahlungsart hinterlegt ist). Rueckgabe: die
+    aktualisierte Subscription.
+    """
+    # Ein vorgemerkter Downgrade wird durch das Upgrade hinfaellig — und
+    # blockiert sonst die Aenderung (s. loese_schedule).
+    loese_schedule(subscription_id)
+    sub = stripe.Subscription.retrieve(subscription_id)
+    item_id = sub["items"]["data"][0]["id"]
+    return stripe.Subscription.modify(
+        subscription_id,
+        items=[{"id": item_id, "price": _preis_id(_plan_lookup(plan, monate))}],
+        proration_behavior="create_prorations",
+        billing_cycle_anchor="now",   # neue Laufzeit startet jetzt
+        metadata={"idoc_plan": plan, "idoc_laufzeit": str(monate)},
+    )
+
+
+def plane_wechsel_zum_periodenende(subscription_id: str, plan: str, monate: int):
+    """DOWNGRADE: neuen Plan als Folgephase einplanen (nichts sofort).
+
+    Nutzt einen Subscription-Schedule: Phase 1 = die laufende Periode
+    unveraendert (damit der Kunde bekommt, wofuer er bezahlt hat),
+    Phase 2 = der neue, guenstigere Plan. Rueckgabe: (schedule_id, ab_datum).
+    """
+    sub = stripe.Subscription.retrieve(subscription_id)
+    schedule_id = sub.get("schedule")
+    if schedule_id:
+        schedule = stripe.SubscriptionSchedule.retrieve(schedule_id)
+    else:
+        schedule = stripe.SubscriptionSchedule.create(from_subscription=subscription_id)
+    aktuelle = schedule["phases"][0]
+    neuer_preis = _preis_id(_plan_lookup(plan, monate))
+    schedule = stripe.SubscriptionSchedule.modify(
+        schedule.id,
+        end_behavior="release",
+        phases=[
+            {
+                "items": [{"price": aktuelle["items"][0]["price"],
+                           "quantity": aktuelle["items"][0].get("quantity", 1)}],
+                "start_date": aktuelle["start_date"],
+                "end_date": aktuelle["end_date"],
+                "proration_behavior": "none",
+            },
+            {
+                "items": [{"price": neuer_preis, "quantity": 1}],
+                "iterations": 1,
+                "proration_behavior": "none",
+                "metadata": {"idoc_plan": plan, "idoc_laufzeit": str(monate)},
+            },
+        ],
+        metadata={"idoc_geplanter_plan": plan, "idoc_geplante_laufzeit": str(monate)},
+    )
+    return schedule.id, aktuelle["end_date"]
+
+
+def widerrufe_geplanten_wechsel(subscription_id: str) -> None:
+    """Nimmt einen vorgemerkten Downgrade zurueck (Schedule aufloesen)."""
+    loese_schedule(subscription_id)

@@ -670,7 +670,8 @@ async def me(user: dict = Depends(get_current_user)):
     conn = get_db()
     try:
         _rows = conn.execute(
-            "SELECT u.id, u.display_name, u.team_name, u.plan, u.plan_gueltig_bis "
+            "SELECT u.id, u.display_name, u.team_name, u.plan, u.plan_gueltig_bis, "
+            "u.geplanter_plan, COALESCE(u.auto_verlaengerung, 1) AS auto_verlaengerung "
             "FROM team_mitgliedschaften m JOIN users u ON u.id = m.inhaber_id "
             "WHERE m.mitglied_id = ? ORDER BY u.display_name COLLATE NOCASE",
             (db_user["id"],)).fetchall()
@@ -681,11 +682,19 @@ async def me(user: dict = Depends(get_current_user)):
         _plan = billing.effektiver_plan(_r)
         if _plan not in billing.PLAN_SITZE:
             continue
+        # Endet der gemeinsame Topf absehbar (Inhaber hat gekuendigt oder
+        # einen Downgrade ohne Sitze vorgemerkt), sagen wir das Datum
+        # ehrlich dazu — Steve 07.08.: „das sollte jeder im Team sehen".
+        _endet_am = None
+        _gp = (_r["geplanter_plan"] or "").strip()
+        if not int(_r["auto_verlaengerung"] or 0) or (_gp and _gp not in billing.PLAN_SITZE):
+            _endet_am = (_r["plan_gueltig_bis"] or "")[:10] or None
         _eintrag = {
             "topf": _r["id"],
             "plan": _plan,
             "team_name": _r["team_name"] or "",
             "inhaber_name": _r["display_name"],
+            "endet_am": _endet_am,
         }
         kontexte.append(_eintrag)
         if konto_id == _r["id"]:
@@ -728,6 +737,10 @@ async def me(user: dict = Depends(get_current_user)):
                 "ist_topf_inhaber": eigener_plan in billing.PLAN_SITZE,
                 "team_name": db_user.get("team_name") or "",
                 "quelle": db_user.get("plan_quelle") or None,
+                # Vorgemerkter Plan-Wechsel (Downgrade) — die Oberflaeche
+                # zeigt „ab TT.MM. gilt Plan X" statt eines Wechsel-Angebots.
+                "geplanter_plan": db_user.get("geplanter_plan") or None,
+                "geplante_laufzeit": db_user.get("geplante_laufzeit"),
             },
             # Stripe-Buchungsweg (06.08. nachts): steuert, ob die Abo-Seite
             # echte Buchen-Knoepfe oder den E-Mail-Hinweis zeigt.
@@ -1346,10 +1359,16 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
 
 @app.post("/api/team/name")
 async def team_name_setzen(request: Request, user: dict = Depends(get_current_user)):
-    """Inhaber benennt sein Team (Anzeige beim Mitglied und im Umschalter)."""
+    """Inhaber benennt sein Team (Anzeige beim Mitglied und im Umschalter).
+
+    Auch der Weg, ein Team ERSTMALS anzulegen: Ohne Namen gibt es kein Team,
+    erst danach kann eingeladen werden (Steve 07.08.).
+    """
     inhaber = _require_team_inhaber(user)
     data = await request.json()
     name = _normiere_display_name(data.get("team_name") or "")
+    if not name:
+        raise HTTPException(status_code=400, detail="Bitte einen Teamnamen eingeben")
     conn = get_db()
     try:
         conn.execute("UPDATE users SET team_name = ? WHERE id = ?", (name, inhaber["id"]))
@@ -1357,6 +1376,51 @@ async def team_name_setzen(request: Request, user: dict = Depends(get_current_us
     finally:
         conn.close()
     return {"ok": True, "team_name": name}
+
+
+@app.delete("/api/team")
+async def team_aufloesen(user: dict = Depends(get_current_user)):
+    """Loest das Team auf — SOFORT und unabhaengig vom Abo (Steve 07.08.).
+
+    Wichtig: Das Abo bleibt unveraendert bestehen (der Inhaber behaelt Plan
+    und Credits, nutzt sie dann allein) — „Team" und „Abo" sind zwei Dinge.
+    Alle Mitgliedschaften fallen weg, wer im Team-Kontext arbeitete, faellt
+    auf sein eigenes Guthaben zurueck, alle bekommen eine Mail. Der Teamname
+    wird geleert, damit beim naechsten Mal wieder sauber „Team erstellen"
+    steht.
+    """
+    inhaber = _require_team_inhaber(user)
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT u.id, u.email, u.display_name FROM team_mitgliedschaften m "
+            "JOIN users u ON u.id = m.mitglied_id WHERE m.inhaber_id = ?",
+            (inhaber["id"],)).fetchall()
+        mitglieder = [dict(r) for r in rows]
+        conn.execute("DELETE FROM team_mitgliedschaften WHERE inhaber_id = ?", (inhaber["id"],))
+        conn.execute("UPDATE users SET aktiver_topf = NULL WHERE aktiver_topf = ?", (inhaber["id"],))
+        conn.execute("DELETE FROM team_einladungen WHERE inhaber_id = ? AND eingeloest_am IS NULL",
+                     (inhaber["id"],))
+        conn.execute("UPDATE users SET team_name = '' WHERE id = ?", (inhaber["id"],))
+        conn.commit()
+    finally:
+        conn.close()
+    team_label = html.escape(inhaber.get("team_name") or "") or f"das Team von {html.escape(inhaber['display_name'])}"
+    for m in mitglieder:
+        try:
+            _abo_mail(m["email"], "InkluDocs: Euer gemeinsames Guthaben wurde aufgelöst",
+                      "Team aufgelöst",
+                      [f"Hallo {html.escape(m['display_name'] or '')},",
+                       f"{html.escape(inhaber['display_name'])} hat {team_label} aufgelöst. "
+                       "Ab sofort arbeitest du wieder mit deinem eigenen Guthaben "
+                       "(oder dem kostenlosen Free-Plan).",
+                       "Dein Konto und alle deine Projekte bleiben davon unberührt — es ändert "
+                       "sich nur, aus welchem Guthaben neue Alt-Texte bezahlt werden."])
+        except Exception:
+            logger.exception("Aufloesungs-Mail an %s fehlgeschlagen", m["email"])
+    return {"ok": True, "entfernt": len(mitglieder),
+            "message": f"Team aufgelöst — {len(mitglieder)} Mitglieder wurden informiert. "
+                       "Dein Abo läuft unverändert weiter."}
 
 
 @app.post("/api/team/einladen")
@@ -1725,6 +1789,11 @@ def _stripe_kuendigung_sync(db_user: dict, kuendigen: bool) -> None:
     if not sub or db_user.get("plan_quelle") != "stripe" or not stripe_zahlung.AKTIV:
         return
     try:
+        # Befund 07.08.: Ein vorgemerkter Wechsel (Subscription-Schedule)
+        # blockiert bei Stripe jede Kuendigungs-Aenderung. Beim Kuendigen
+        # wird der Wechsel ohnehin hinfaellig — also erst freigeben.
+        if kuendigen:
+            stripe_zahlung.loese_schedule(sub)
         stripe_zahlung.kuendige_subscription(sub, kuendigen)
     except Exception:
         logger.exception("Stripe-Kuendigungs-Abgleich fehlgeschlagen (user=%s)", db_user["id"])
@@ -1748,11 +1817,22 @@ async def abo_kuendigen(user: dict = Depends(get_current_user)):
     _stripe_kuendigung_sync(db_user, True)
     conn = get_db()
     try:
-        conn.execute("UPDATE users SET auto_verlaengerung = 0 WHERE id = ?", (user["id"],))
+        # Eine Kuendigung hebt einen vorgemerkten Plan-Wechsel auf — sonst
+        # wuerde am Stichtag ein neuer (bezahlpflichtiger) Plan starten,
+        # obwohl der Kunde gerade gekuendigt hat.
+        conn.execute("UPDATE users SET auto_verlaengerung = 0, geplanter_plan = NULL, "
+                     "geplante_laufzeit = NULL WHERE id = ?", (user["id"],))
         conn.commit()
     finally:
         conn.close()
     bis = (db_user.get("plan_gueltig_bis") or "")[:10] or None
+    # Team-Mitglieder rechtzeitig informieren (Steve 07.08.): Wer ein
+    # Team-/Enterprise-Abo kuendigt, beendet damit auch den gemeinsamen Topf.
+    if bis and billing.effektiver_plan(db_user) in billing.PLAN_SITZE:
+        try:
+            _team_enddatum_mail(db_user, bis, "kuendigung")
+        except Exception:
+            logger.exception("Team-Enddatum-Mails nach Kuendigung fehlgeschlagen")
     return {"ok": True, "gueltig_bis": bis,
             "message": "Gekündigt — dein Abo läuft bis zum Laufzeitende weiter und endet dann"}
 
@@ -1776,6 +1856,165 @@ async def abo_kuendigung_widerrufen(user: dict = Depends(get_current_user)):
 # ─── Stripe-Buchungsweg (06.08.2026 nachts, zuerst Testmodus) ───
 # Checkout und Portal sind duenn: die Freischaltung passiert IMMER im
 # Webhook (auch wenn der Kunde den Erfolgs-Redirect nie sieht).
+
+def _team_enddatum_mail(inhaber: dict, bis: str, grund: str) -> None:
+    """Informiert alle Team-Mitglieder, dass der gemeinsame Topf endet.
+
+    grund: 'downgrade' (Inhaber wechselt auf einen Plan ohne Sitze) oder
+    'kuendigung' (Abo laeuft aus). Bis zum Stichtag aendert sich fuer die
+    Mitglieder NICHTS — sie sollen nur rechtzeitig Bescheid wissen.
+    """
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT u.email, u.display_name FROM team_mitgliedschaften m "
+            "JOIN users u ON u.id = m.mitglied_id WHERE m.inhaber_id = ?",
+            (inhaber["id"],)).fetchall()
+    finally:
+        conn.close()
+    team_label = html.escape(inhaber.get("team_name") or "") or f"das Team von {html.escape(inhaber['display_name'])}"
+    for r in rows:
+        try:
+            _abo_mail(r["email"], "InkluDocs: Euer gemeinsames Guthaben endet bald",
+                      "Änderung an eurem Team",
+                      [f"Hallo {html.escape(r['display_name'] or '')},",
+                       f"{html.escape(inhaber['display_name'])} hat das Abo für {team_label} geändert: "
+                       f"Das gemeinsame Guthaben endet am {bis}.",
+                       "Bis dahin ändert sich für dich nichts. Danach arbeitest du automatisch "
+                       "wieder mit deinem eigenen Guthaben (oder dem kostenlosen Free-Plan) "
+                       "weiter — dein Konto und alle deine Projekte bleiben unverändert."])
+        except Exception:
+            logger.exception("Team-Enddatum-Mail an %s fehlgeschlagen", r["email"])
+
+
+@app.post("/api/abo/wechseln")
+async def abo_wechseln(request: Request, user: dict = Depends(get_current_user)):
+    """Plan wechseln aus einem laufenden Abo heraus (07.08.2026).
+
+    UPGRADE (teurer): sofort wirksam, Stripe rechnet den Restwert des alten
+    Plans an und fakturiert nur die Differenz.
+    DOWNGRADE (guenstiger): wird vorgemerkt und wirkt zum Ende der bezahlten
+    Laufzeit; bis dahin laeuft alles unveraendert weiter.
+    Massstab ist der Monatspreis — nicht die Laufzeit.
+    """
+    data = await request.json()
+    plan = (data.get("plan") or "").strip().lower()
+    if plan not in billing.PLAN_PREISE_EUR:
+        raise HTTPException(status_code=400, detail="Ungueltiger Plan")
+    try:
+        monate = int(data.get("laufzeit_monate"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="laufzeit_monate fehlt")
+    if monate not in billing.PLAN_LAUFZEITEN:
+        raise HTTPException(status_code=400, detail="Laufzeit muss 3, 6 oder 12 Monate sein")
+
+    db_user = get_user_by_id(user["id"])
+    aktueller = billing.effektiver_plan(db_user)
+    if aktueller == "free":
+        raise HTTPException(status_code=400,
+                            detail="Du hast noch kein Abo — bitte über „Abo buchen“ starten")
+    if aktueller == plan and (db_user.get("plan_laufzeit_monate") or 0) == monate:
+        raise HTTPException(status_code=400, detail="Diesen Plan hast du bereits")
+
+    ist_upgrade = billing.PLAN_PREISE_EUR[plan] > billing.PLAN_PREISE_EUR[aktueller]
+    sub_id = (db_user.get("stripe_subscription_id") or "").strip()
+    stripe_abo = bool(sub_id) and db_user.get("plan_quelle") == "stripe" and stripe_zahlung.AKTIV
+
+    if ist_upgrade:
+        # SOFORT: erst bei Stripe umstellen (dort haengt das Geld), dann lokal.
+        if stripe_abo:
+            try:
+                stripe_zahlung.wechsle_sofort(sub_id, plan, monate)
+            except Exception:
+                logger.exception("Stripe-Upgrade fehlgeschlagen (user=%s)", user["id"])
+                raise HTTPException(status_code=502,
+                                    detail="Der Wechsel konnte bei unserem Zahlungsdienst gerade "
+                                           "nicht durchgeführt werden. Bitte später erneut versuchen")
+        gueltig_bis, geloest, ueberbelegt = _setze_plan_kern(
+            db_user["id"], db_user, plan, monate, None, 1,
+            quelle=db_user.get("plan_quelle") or "rechnung")
+        # Ein evtl. vorgemerkter Downgrade ist mit dem Upgrade hinfaellig.
+        conn = get_db()
+        try:
+            conn.execute("UPDATE users SET geplanter_plan = NULL, geplante_laufzeit = NULL "
+                         "WHERE id = ?", (db_user["id"],))
+            conn.commit()
+        finally:
+            conn.close()
+        try:
+            _sende_plan_bestaetigung(db_user, plan, gueltig_bis, monate, 1)
+        except Exception:
+            logger.exception("Bestaetigungs-Mail nach Upgrade fehlgeschlagen")
+        return {"ok": True, "sofort": True, "plan": plan, "gueltig_bis": str(gueltig_bis)[:10],
+                "message": "Dein Plan wurde sofort umgestellt — die höheren Credits stehen ab jetzt bereit.",
+                "team_geloest": geloest, "ueberbelegt": ueberbelegt}
+
+    # DOWNGRADE: nur vormerken, wirksam zum Laufzeitende.
+    bis = (db_user.get("plan_gueltig_bis") or "")[:10]
+    if not bis:
+        raise HTTPException(status_code=400,
+                            detail="Für dieses Konto ist kein Laufzeitende hinterlegt — bitte an "
+                                   "support@inklutec.de wenden")
+    if stripe_abo:
+        try:
+            stripe_zahlung.plane_wechsel_zum_periodenende(sub_id, plan, monate)
+        except Exception:
+            logger.exception("Stripe-Downgrade-Planung fehlgeschlagen (user=%s)", user["id"])
+            raise HTTPException(status_code=502,
+                                detail="Der Wechsel konnte bei unserem Zahlungsdienst gerade nicht "
+                                       "vorgemerkt werden. Bitte später erneut versuchen")
+    conn = get_db()
+    try:
+        conn.execute("UPDATE users SET geplanter_plan = ?, geplante_laufzeit = ?, "
+                     "auto_verlaengerung = 1 WHERE id = ?", (plan, monate, db_user["id"]))
+        conn.commit()
+    finally:
+        conn.close()
+    # Verliert das Konto zum Stichtag die Team-Faehigkeit, muessen die
+    # Mitglieder das rechtzeitig erfahren (Steve 07.08.).
+    if aktueller in billing.PLAN_SITZE and plan not in billing.PLAN_SITZE:
+        _team_enddatum_mail(db_user, bis, "downgrade")
+    try:
+        _abo_mail(db_user["email"], "InkluDocs: Dein Plan-Wechsel ist vorgemerkt",
+                  "Plan-Wechsel vorgemerkt",
+                  [f"Hallo {html.escape(db_user['display_name'])},",
+                   f"dein Wechsel auf den Plan {PLAN_ANZEIGENAMEN.get(plan, plan)} ist vorgemerkt. "
+                   f"Bis zum {bis} läuft dein jetziger Plan unverändert weiter — du behältst also "
+                   "alles, wofür du bezahlt hast.",
+                   f"Am {bis} stellen wir dann automatisch um; ab da gilt der neue Plan mit "
+                   f"{billing.PLAN_KONTINGENTE[plan]} Credits im Monat.",
+                   "Du kannst den Wechsel bis dahin jederzeit auf der Seite „Abo & Verbrauch“ "
+                   "wieder zurücknehmen."])
+    except Exception:
+        logger.exception("Downgrade-Bestaetigung fehlgeschlagen")
+    return {"ok": True, "sofort": False, "plan": plan, "ab": bis,
+            "message": f"Wechsel vorgemerkt — dein jetziger Plan läuft bis {bis}, danach gilt der neue."}
+
+
+@app.post("/api/abo/wechsel-widerrufen")
+async def abo_wechsel_widerrufen(user: dict = Depends(get_current_user)):
+    """Nimmt einen vorgemerkten Downgrade wieder zurueck."""
+    db_user = get_user_by_id(user["id"])
+    if not db_user or not db_user.get("geplanter_plan"):
+        raise HTTPException(status_code=400, detail="Es ist kein Wechsel vorgemerkt")
+    sub_id = (db_user.get("stripe_subscription_id") or "").strip()
+    if sub_id and db_user.get("plan_quelle") == "stripe" and stripe_zahlung.AKTIV:
+        try:
+            stripe_zahlung.widerrufe_geplanten_wechsel(sub_id)
+        except Exception:
+            logger.exception("Stripe-Wechsel-Widerruf fehlgeschlagen (user=%s)", user["id"])
+            raise HTTPException(status_code=502,
+                                detail="Der Widerruf konnte bei unserem Zahlungsdienst gerade nicht "
+                                       "hinterlegt werden. Bitte später erneut versuchen")
+    conn = get_db()
+    try:
+        conn.execute("UPDATE users SET geplanter_plan = NULL, geplante_laufzeit = NULL WHERE id = ?",
+                     (db_user["id"],))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "message": "Der vorgemerkte Wechsel wurde zurückgenommen — dein Plan bleibt bestehen."}
+
 
 @app.post("/api/abo/checkout")
 async def abo_checkout(request: Request, user: dict = Depends(get_current_user)):
@@ -2073,7 +2312,8 @@ def _abo_tageslauf() -> None:
                 # Aufholung deckt trotzdem bis zu zwei Monate Server-Pause.
                 faellige = conn.execute(
                     "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, "
-                    "plan_quelle, COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
+                    "plan_quelle, geplanter_plan, geplante_laufzeit, "
+                    "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
                     "FROM users WHERE plan IN ('single', 'team', 'enterprise') "
                     "AND plan_gueltig_bis IS NOT NULL "
                     "AND date(plan_gueltig_bis) <= date('now', '+14 days') "
@@ -2096,6 +2336,46 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
     name = html.escape(k.get("display_name") or "")
     auto = int(k.get("auto_verlaengerung") or 0)
     laufzeit = k.get("plan_laufzeit_monate")
+
+    # Vorgemerkter DOWNGRADE (07.08.2026): Am Stichtag wird der neue Plan
+    # gesetzt — VOR jeder Verlaengerungs-Logik, denn der neue Plan bringt
+    # seine eigene Laufzeit mit. Bis hierher lief alles unveraendert weiter,
+    # der Kunde hat also bekommen, wofuer er bezahlt hat.
+    geplant = (k.get("geplanter_plan") or "").strip()
+    if geplant and ablauf < heute:
+        ziel_laufzeit = int(k.get("geplante_laufzeit") or laufzeit or 6)
+        db_user = get_user_by_id(k["id"])
+        if db_user:
+            gueltig_bis, geloest, _u = _setze_plan_kern(
+                k["id"], db_user, geplant, ziel_laufzeit, None, 1,
+                quelle=k.get("plan_quelle") or "rechnung")
+            conn = get_db()
+            try:
+                conn.execute("UPDATE users SET geplanter_plan = NULL, geplante_laufzeit = NULL "
+                             "WHERE id = ?", (k["id"],))
+                conn.commit()
+            finally:
+                conn.close()
+            if _kv_einmal(f"abo_mail_gewechselt_{k['id']}_{ablauf}"):
+                saetze = [f"Hallo {name},",
+                          f"wie vorgemerkt haben wir dein Abo heute auf den Plan "
+                          f"{PLAN_ANZEIGENAMEN.get(geplant, geplant)} umgestellt. Ab sofort stehen dir "
+                          f"{billing.PLAN_KONTINGENTE[geplant]} Credits im Monat zur Verfügung, "
+                          f"die Laufzeit läuft bis {str(gueltig_bis)[:10]}."]
+                if geloest:
+                    saetze.append(f"Dein Team wurde damit aufgelöst — die {geloest} Mitglieder "
+                                  "arbeiten ab jetzt wieder mit ihrem eigenen Guthaben und wurden "
+                                  "darüber informiert.")
+                _abo_mail(k["email"], "InkluDocs: Dein Plan wurde umgestellt",
+                          "Dein neuer Plan ist aktiv", saetze)
+                _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Plan-Wechsel vollzogen: {k['email']}",
+                          "Vorgemerkter Plan-Wechsel ausgeführt",
+                          [f"{html.escape(k['email'])} wurde heute planmäßig von {plan_name} auf "
+                           f"{PLAN_ANZEIGENAMEN.get(geplant, geplant)} umgestellt "
+                           f"({ziel_laufzeit} Monate, gültig bis {str(gueltig_bis)[:10]}).",
+                           "Stripe-Abos stellt der Zahlungsplan automatisch um; Rechnungskunden "
+                           "brauchen eine Rechnung über den neuen Plan."])
+        return
 
     if ablauf >= heute:
         # Noch nicht abgelaufen -> Erinnerung (einmal pro Periode).

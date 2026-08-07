@@ -34,6 +34,7 @@
         <div id="eigenInfo"></div>
         <button type="button" class="btn btn-secondary" id="kuendigenBtn" hidden>{{ _('Abo kündigen') }}</button>
         <button type="button" class="btn btn-secondary" id="widerrufBtn" hidden>{{ _('Kündigung zurücknehmen') }}</button>
+        <button type="button" class="btn btn-secondary" id="wechselWiderrufBtn" hidden>{{ _('Vorgemerkten Wechsel zurücknehmen') }}</button>
         <span id="eigenMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
         <span id="eigenErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
         <p class="dash-meta" id="mailHinweis" style="margin-top:1rem;">{{ _('Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
@@ -83,44 +84,113 @@
         <span id="paketErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
       </section>
 
+      {# Plan wechseln (07.08.2026): nur fuer Konten MIT laufendem Abo.
+         Upgrade wirkt sofort (anteilige Verrechnung), Downgrade wird zum
+         Laufzeitende vorgemerkt — die Ansage darunter sagt jeweils, was
+         genau passieren wird. #}
+      <section class="dash-card" aria-labelledby="wechselHeading" id="wechselBereich" hidden>
+        <h2 id="wechselHeading">{{ _('Plan wechseln') }}</h2>
+        <div class="dash-field">
+          <label for="wechselPlan">{{ _('Neuer Plan') }}</label>
+          <select id="wechselPlan" class="dash-input">
+            <option value="single">Single — 9,95 € / Monat, 50 Credits</option>
+            <option value="team">Team — 19,95 € / Monat, 100 Credits, bis 5 Nutzer</option>
+            <option value="enterprise">Enterprise — 49,95 € / Monat, 275 Credits, bis 25 Nutzer</option>
+          </select>
+        </div>
+        <div class="dash-field">
+          <label for="wechselLaufzeit">{{ _('Laufzeit') }}</label>
+          <select id="wechselLaufzeit" class="dash-input">
+            <option value="3">{{ _('3 Monate') }}</option>
+            <option value="6" selected>{{ _('6 Monate') }}</option>
+            <option value="12">{{ _('12 Monate') }}</option>
+          </select>
+        </div>
+        <p id="wechselHinweis"></p>
+        <button type="button" class="btn btn-primary" id="wechselBtn">{{ _('Wechsel anfordern') }}</button>
+        <span id="wechselMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        <span id="wechselErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+      </section>
+
       {# Topf-Verwaltung: nur sichtbar fuer den INHABER eines Team- oder
          Enterprise-Abos. Eingeladen wird per E-Mail aus dem Abo heraus —
          Mitglieder koennen sich nicht selbst entfernen (Steve 06.08.). #}
       <section class="dash-card" aria-labelledby="teamHeading" id="teamBereich" hidden>
         <h2 id="teamHeading" tabindex="-1">{{ _('Dein Team') }}</h2>
-        <form id="teamNameForm" style="margin-bottom:1rem;">
-          <div class="dash-field">
-            <label for="teamNameInput">{{ _('Teamname (wird deinen Mitgliedern angezeigt)') }}</label>
-            <input type="text" id="teamNameInput" class="dash-input" maxlength="100" autocomplete="off">
-          </div>
-          <button type="submit" class="btn btn-secondary">{{ _('Teamnamen speichern') }}</button>
-          <span id="teamNameMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
-        </form>
-        <h3 id="teamListHeading">{{ _('Mitglieder') }}</h3>
-        <p id="teamSitze" class="dash-meta"></p>
-        <div id="teamList" style="margin-top:.5rem;">
-          <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
+
+        {# Noch KEIN Team: erst benennen, dann einladen (Steve 07.08.).
+           Das Namensfeld verschwindet danach — es steht nicht dauerhaft
+           im Weg, geändert wird über einen eigenen Knopf. #}
+        <div id="teamAnlegen" hidden>
+          <p class="dash-meta">{{ _('Du hast ein Abo mit mehreren Plätzen. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen.') }}</p>
+          <form id="teamCreateForm">
+            <div class="dash-field">
+              <label for="teamCreateInput">{{ _('Wie soll dein Team heißen?') }}</label>
+              <input type="text" id="teamCreateInput" class="dash-input" maxlength="100" required autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary">{{ _('Team erstellen') }}</button>
+            <span id="teamCreateMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+            <span id="teamCreateErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+          </form>
         </div>
-        <h3 id="teamInviteHeading" style="margin-top:1rem;">{{ _('Mitglied einladen') }}</h3>
-        <p class="dash-meta">{{ _('Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an.') }}</p>
-        <form id="teamInviteForm">
-          <div class="dash-field">
-            <label for="inviteEmail">{{ _('E-Mail-Adresse des neuen Mitglieds') }}</label>
-            <input type="email" id="inviteEmail" class="dash-input" required autocomplete="off">
+
+        {# Team besteht: Name als Zeile + Knöpfe zum Umbenennen/Auflösen. #}
+        <div id="teamVorhanden" hidden>
+          <p id="teamNameZeile"></p>
+          <button type="button" class="btn btn-secondary" id="teamRenameBtn">{{ _('Teamnamen ändern') }}</button>
+          <button type="button" class="btn btn-delete" id="teamAufloesenBtn">{{ _('Team auflösen') }}</button>
+          <span id="teamNameMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+
+          <h3 id="teamListHeading" style="margin-top:1rem;">{{ _('Mitglieder') }}</h3>
+          <p id="teamSitze" class="dash-meta"></p>
+          <div id="teamList" style="margin-top:.5rem;">
+            <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
           </div>
-          <div class="dash-field">
-            <label for="inviteName">{{ _('Name (optional)') }}</label>
-            <input type="text" id="inviteName" class="dash-input" maxlength="100" autocomplete="off">
-          </div>
-          <button type="submit" class="btn btn-primary">{{ _('Einladen') }}</button>
-          <span id="teamMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
-          <span id="teamErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
-        </form>
+          <button type="button" class="btn btn-secondary btn-small" id="teamReloadBtn">{{ _('Liste aktualisieren') }}</button>
+          <span id="teamReloadMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+
+          <h3 id="teamInviteHeading" style="margin-top:1rem;">{{ _('Mitglied einladen') }}</h3>
+          <p class="dash-meta">{{ _('Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an.') }}</p>
+          <form id="teamInviteForm">
+            <div class="dash-field">
+              <label for="inviteEmail">{{ _('E-Mail-Adresse des neuen Mitglieds') }}</label>
+              <input type="email" id="inviteEmail" class="dash-input" required autocomplete="off">
+            </div>
+            <div class="dash-field">
+              <label for="inviteName">{{ _('Name (optional)') }}</label>
+              <input type="text" id="inviteName" class="dash-input" maxlength="100" autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary">{{ _('Einladen') }}</button>
+            <span id="teamMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+            <span id="teamErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+          </form>
+        </div>
       </section>
 {% endblock %}
 {% block dialogs %}
 {# Natives <dialog> + showModal(): Fokusfang, Escape und inerter Hintergrund
    nativ (Hausregel). Eigene h2. #}
+<dialog id="teamRenameDialog" class="app-dialog" aria-labelledby="teamRenameHeading">
+  <h2 id="teamRenameHeading">{{ _('Teamnamen ändern') }}</h2>
+  <form id="teamRenameForm" method="dialog">
+    <div class="dash-field">
+      <label for="teamRenameInput">{{ _('Neuer Teamname') }}</label>
+      <input type="text" id="teamRenameInput" class="dash-input" maxlength="100" required autocomplete="off">
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="teamRenameCancel">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary" id="teamRenameConfirm">{{ _('Speichern') }}</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="teamAufloesenDialog" class="app-dialog" aria-labelledby="teamAufloesenHeading">
+  <h2 id="teamAufloesenHeading">{{ _('Team wirklich auflösen?') }}</h2>
+  <p id="teamAufloesenBody"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="teamAufloesenCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="teamAufloesenConfirm">{{ _('Team auflösen') }}</button>
+  </div>
+</dialog>
 <dialog id="teamRemoveDialog" class="app-dialog" aria-labelledby="teamRemoveHeading">
   <h2 id="teamRemoveHeading">{{ _('Team-Mitglied entfernen?') }}</h2>
   <p id="teamRemoveBody"></p>
@@ -184,6 +254,15 @@
       p.textContent = zeile;
       box.appendChild(p);
     });
+    // Endet ein Team, in dem ich Mitglied bin, absehbar? Ehrlich ansagen
+    // (Steve 07.08.: „das sollte jeder im Team sehen").
+    (abo.kontexte || []).forEach((k) => {
+      if (k.topf !== 'eigen' && k.endet_am) {
+        const pEnde = document.createElement('p');
+        pEnde.textContent = t('Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben.', { team: teamLabel(k), datum: k.endet_am });
+        box.appendChild(pEnde);
+      }
+    });
     if (abo.domain_pool) {
       const pPool = document.createElement('p');
       pPool.className = 'dash-meta';
@@ -193,13 +272,8 @@
     renderKontexte(abo);
     renderEigen(abo);
     renderBuchen(abo);
-    if (abo.eigen && abo.eigen.ist_topf_inhaber) {
-      byId('teamBereich').hidden = false;
-      byId('teamNameInput').value = abo.eigen.team_name || '';
-      loadTeam();
-    } else {
-      byId('teamBereich').hidden = true;
-    }
+    renderWechsel(abo);
+    renderTeamBereich(abo);
   }
 
   function renderKontexte(abo) {
@@ -315,6 +389,16 @@
           widerruf.hidden = false;
         }
         info.appendChild(pLauf);
+        // Vorgemerkter Plan-Wechsel (Downgrade): ehrlich ansagen, ab wann
+        // welcher Plan gilt — samt Möglichkeit, das zurückzunehmen.
+        if (eigen.geplanter_plan) {
+          const pWechsel = document.createElement('p');
+          pWechsel.textContent = t('Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}.', { datum: eigen.gueltig_bis, plan: planLabel(eigen.geplanter_plan) });
+          info.appendChild(pWechsel);
+          byId('wechselWiderrufBtn').hidden = false;
+        } else {
+          byId('wechselWiderrufBtn').hidden = true;
+        }
       }
     } else {
       const pFrei = document.createElement('p');
@@ -352,6 +436,77 @@
   }
   byId('buchenPlan').addEventListener('change', aktualisiereSumme);
   byId('buchenLaufzeit').addEventListener('change', aktualisiereSumme);
+
+  // ── Plan wechseln (07.08.2026) ──
+  function renderWechsel(abo) {
+    const bereich = byId('wechselBereich');
+    const hatAbo = abo && abo.eigen && abo.eigen.plan !== 'free' && !abo.ist_betreiber;
+    if (!hatAbo) { bereich.hidden = true; return; }
+    bereich.hidden = false;
+    // Vorauswahl: eine Stufe über dem aktuellen Plan, damit der häufigste
+    // Fall (Upgrade) ohne Umstellen passt.
+    const reihe = ['single', 'team', 'enterprise'];
+    const idx = reihe.indexOf(abo.eigen.plan);
+    byId('wechselPlan').value = reihe[Math.min(idx + 1, reihe.length - 1)];
+    byId('wechselLaufzeit').value = String(abo.eigen.laufzeit_monate || 6);
+    wechselHinweisSetzen();
+  }
+
+  function wechselHinweisSetzen() {
+    if (!_abo || !_abo.eigen) return;
+    const aktuell = _abo.eigen.plan;
+    const ziel = byId('wechselPlan').value;
+    const monate = parseInt(byId('wechselLaufzeit').value, 10);
+    const summe = (PLAN_MONATSPREISE[ziel] * monate).toFixed(2).replace('.', ',');
+    const hinweis = byId('wechselHinweis');
+    if (ziel === aktuell && monate === (_abo.eigen.laufzeit_monate || 0)) {
+      hinweis.textContent = t('Diesen Plan hast du bereits.');
+      byId('wechselBtn').disabled = true;
+      return;
+    }
+    byId('wechselBtn').disabled = false;
+    if (PLAN_MONATSPREISE[ziel] > PLAN_MONATSPREISE[aktuell]) {
+      hinweis.textContent = t('Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate.', { summe: summe, monate: monate });
+    } else {
+      hinweis.textContent = t('Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate.', { datum: _abo.eigen.gueltig_bis || '', summe: summe, monate: monate });
+    }
+  }
+  byId('wechselPlan').addEventListener('change', wechselHinweisSetzen);
+  byId('wechselLaufzeit').addEventListener('change', wechselHinweisSetzen);
+
+  byId('wechselBtn').addEventListener('click', async () => {
+    const msg = byId('wechselMsg');
+    const err = byId('wechselErr');
+    msg.textContent = t('Wird umgestellt ...');
+    err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/abo/wechseln', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: byId('wechselPlan').value,
+                               laufzeit_monate: parseInt(byId('wechselLaufzeit').value, 10) }),
+      });
+    } catch (e) { msg.textContent = ''; err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { msg.textContent = ''; err.textContent = d.detail || t('Fehler'); return; }
+    msg.textContent = d.message || t('Plan gewechselt.');
+    msg.style.color = 'var(--success)';
+    await reloadAbo();
+  });
+
+  byId('wechselWiderrufBtn').addEventListener('click', async () => {
+    const msg = byId('eigenMsg');
+    const err = byId('eigenErr');
+    msg.textContent = ''; err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/abo/wechsel-widerrufen', { method: 'POST' });
+    } catch (e) { err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { err.textContent = d.detail || t('Fehler'); return; }
+    msg.textContent = d.message || t('Wechsel zurückgenommen.');
+    await reloadAbo();
+  });
 
   byId('buchenBtn').addEventListener('click', async () => {
     const msg = byId('buchenMsg');
@@ -463,25 +618,101 @@
     } catch (e) { /* naechstes Laden richtet es */ }
   }
 
-  byId('teamNameForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = byId('teamNameMsg');
-    msg.textContent = '';
+  // ── Team-Bereich (07.08.2026): erst benennen, dann einladen ──
+  function renderTeamBereich(abo) {
+    const bereich = byId('teamBereich');
+    if (!abo || !abo.eigen || !abo.eigen.ist_topf_inhaber) { bereich.hidden = true; return; }
+    bereich.hidden = false;
+    const name = (abo.eigen.team_name || '').trim();
+    byId('teamAnlegen').hidden = !!name;
+    byId('teamVorhanden').hidden = !name;
+    if (name) {
+      byId('teamNameZeile').textContent = t('Dein Team: {name}', { name: name });
+      loadTeam();
+    }
+  }
+
+  async function teamNamenSpeichern(name, msgEl, errEl) {
+    if (errEl) errEl.textContent = '';
     let res;
     try {
       res = await fetch('/api/team/name', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team_name: byId('teamNameInput').value.trim() }),
+        body: JSON.stringify({ team_name: name }),
       });
-    } catch (e2) { msg.textContent = t('Fehler'); return; }
-    if (res.ok) {
-      msg.textContent = t('Teamname gespeichert.');
-      msg.style.color = 'var(--success)';
-    } else {
-      const d = await res.json().catch(() => ({}));
-      msg.textContent = d.detail || t('Fehler');
-      msg.style.color = 'var(--error)';
+    } catch (e) { (errEl || msgEl).textContent = t('Fehler'); return false; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { (errEl || msgEl).textContent = d.detail || t('Fehler'); return false; }
+    if (_abo && _abo.eigen) _abo.eigen.team_name = d.team_name || name;
+    msgEl.textContent = t('Teamname gespeichert.');
+    msgEl.style.color = 'var(--success)';
+    renderTeamBereich(_abo);
+    return true;
+  }
+
+  byId('teamCreateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const wert = byId('teamCreateInput').value.trim();
+    if (!wert) { byId('teamCreateInput').focus(); return; }
+    const ok = await teamNamenSpeichern(wert, byId('teamCreateMsg'), byId('teamCreateErr'));
+    if (ok) {
+      // Nach dem Anlegen direkt zur Mitglieder-Einladung führen.
+      byId('teamHeading').focus();
     }
+  });
+
+  byId('teamRenameBtn').addEventListener('click', () => {
+    byId('teamRenameInput').value = (_abo && _abo.eigen && _abo.eigen.team_name) || '';
+    byId('teamRenameDialog').showModal();
+  });
+  byId('teamRenameCancel').addEventListener('click', () => byId('teamRenameDialog').close());
+  byId('teamRenameDialog').addEventListener('close', () => byId('teamRenameBtn').focus());
+  byId('teamRenameForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const wert = byId('teamRenameInput').value.trim();
+    if (!wert) { byId('teamRenameInput').focus(); return; }
+    byId('teamRenameDialog').close();
+    await teamNamenSpeichern(wert, byId('teamNameMsg'), null);
+  });
+
+  byId('teamAufloesenBtn').addEventListener('click', () => {
+    byId('teamAufloesenBody').textContent = t('Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein.');
+    byId('teamAufloesenDialog').showModal();
+  });
+  byId('teamAufloesenCancel').addEventListener('click', () => byId('teamAufloesenDialog').close());
+  byId('teamAufloesenDialog').addEventListener('close', () => {
+    const btn = byId('teamAufloesenBtn');
+    if (document.contains(btn) && !btn.closest('[hidden]')) btn.focus();
+  });
+  byId('teamAufloesenConfirm').addEventListener('click', async () => {
+    const msg = byId('teamNameMsg');
+    msg.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/team', { method: 'DELETE' });
+    } catch (e) { byId('teamAufloesenDialog').close(); msg.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    byId('teamAufloesenDialog').close();
+    if (!res.ok) { msg.textContent = d.detail || t('Fehler'); msg.style.color = 'var(--error)'; return; }
+    if (_abo && _abo.eigen) _abo.eigen.team_name = '';
+    renderTeamBereich(_abo);
+    const cmsg = byId('teamCreateMsg');
+    cmsg.textContent = d.message || t('Team aufgelöst.');
+    cmsg.style.color = 'var(--success)';
+    byId('teamHeading').focus();
+  });
+
+  byId('teamReloadBtn').addEventListener('click', async () => {
+    const msg = byId('teamReloadMsg');
+    msg.textContent = t('Wird aktualisiert ...');
+    await loadTeam();
+    msg.textContent = t('Liste ist aktuell.');
+  });
+
+  // Stilles Nachladen beim Zurückkehren zur Seite (kein Dauer-Polling:
+  // das würde beim Lesen mit dem Screenreader stören, Steve 07.08.).
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !byId('teamVorhanden').hidden) loadTeam();
   });
 
   let _teamRemoveId = null;      // Ziel-Mitglied des laufenden Entfernens

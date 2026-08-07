@@ -3064,3 +3064,80 @@ msgstr ""
 
 msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
 msgstr ""
+
+# ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
+
+msgid "Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein."
+msgstr ""
+
+msgid "Dein Team: {name}"
+msgstr ""
+
+msgid "Diesen Plan hast du bereits."
+msgstr ""
+
+msgid "Du hast ein Abo mit mehreren Plätzen. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen."
+msgstr ""
+
+msgid "Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate."
+msgstr ""
+
+msgid "Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben."
+msgstr ""
+
+msgid "Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate."
+msgstr ""
+
+msgid "Liste aktualisieren"
+msgstr ""
+
+msgid "Liste ist aktuell."
+msgstr ""
+
+msgid "Neuer Plan"
+msgstr ""
+
+msgid "Neuer Teamname"
+msgstr ""
+
+msgid "Plan gewechselt."
+msgstr ""
+
+msgid "Plan wechseln"
+msgstr ""
+
+msgid "Team aufgelöst."
+msgstr ""
+
+msgid "Team auflösen"
+msgstr ""
+
+msgid "Team erstellen"
+msgstr ""
+
+msgid "Team wirklich auflösen?"
+msgstr ""
+
+msgid "Teamnamen ändern"
+msgstr ""
+
+msgid "Vorgemerkten Wechsel zurücknehmen"
+msgstr ""
+
+msgid "Wechsel anfordern"
+msgstr ""
+
+msgid "Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}."
+msgstr ""
+
+msgid "Wechsel zurückgenommen."
+msgstr ""
+
+msgid "Wie soll dein Team heißen?"
+msgstr ""
+
+msgid "Wird aktualisiert ..."
+msgstr ""
+
+msgid "Wird umgestellt ..."
+msgstr ""

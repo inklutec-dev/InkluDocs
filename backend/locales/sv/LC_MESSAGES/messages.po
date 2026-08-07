@@ -2622,3 +2622,80 @@ msgstr "Köp extra krediter"
 
 msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
 msgstr "En valuta för allt: krediter. En alternativtext kostar 1 kredit, export av den färdiga PDF:en 5 krediter. Alla priser är slutpriser — enligt § 19 i den tyska momslagen (UStG) tas ingen moms ut."
+
+# ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
+
+msgid "Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein."
+msgstr "Alla medlemmar förlorar omedelbart åtkomsten till det gemensamma saldot och arbetar igen från sitt eget. De informeras via e-post. Konton och projekt förblir oförändrade. Ditt abonnemang fortsätter som vanligt — du använder då krediterna själv."
+
+msgid "Dein Team: {name}"
+msgstr "Ditt team: {name}"
+
+msgid "Diesen Plan hast du bereits."
+msgstr "Du har redan den här planen."
+
+msgid "Du hast ein Abo mit mehreren Plätzen. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen."
+msgstr "Ditt abonnemang innehåller flera platser. Ge först ditt team ett namn — därefter kan du bjuda in medlemmar."
+
+msgid "Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate."
+msgstr "Nedgradering: schemalagd till periodens slut. Fram till {datum} är allt som nu; därefter gäller den nya planen för {summe} € per {monate} månader."
+
+msgid "Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben."
+msgstr "Obs: {team} avslutas den {datum}. Därefter arbetar du igen från ditt eget saldo."
+
+msgid "Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate."
+msgstr "Uppgradering: gäller omedelbart. Det du redan betalat för den pågående perioden räknas av — du betalar bara mellanskillnaden. Nytt pris: {summe} € för {monate} månader."
+
+msgid "Liste aktualisieren"
+msgstr "Uppdatera listan"
+
+msgid "Liste ist aktuell."
+msgstr "Listan är uppdaterad."
+
+msgid "Neuer Plan"
+msgstr "Ny plan"
+
+msgid "Neuer Teamname"
+msgstr "Nytt teamnamn"
+
+msgid "Plan gewechselt."
+msgstr "Planen har ändrats."
+
+msgid "Plan wechseln"
+msgstr "Byt plan"
+
+msgid "Team aufgelöst."
+msgstr "Teamet har upplösts."
+
+msgid "Team auflösen"
+msgstr "Upplös teamet"
+
+msgid "Team erstellen"
+msgstr "Skapa team"
+
+msgid "Team wirklich auflösen?"
+msgstr "Vill du verkligen upplösa teamet?"
+
+msgid "Teamnamen ändern"
+msgstr "Ändra teamnamn"
+
+msgid "Vorgemerkten Wechsel zurücknehmen"
+msgstr "Ångra schemalagt byte"
+
+msgid "Wechsel anfordern"
+msgstr "Begär byte"
+
+msgid "Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}."
+msgstr "Byte schemalagt: från {datum} gäller planen {plan}."
+
+msgid "Wechsel zurückgenommen."
+msgstr "Bytet har ångrats."
+
+msgid "Wie soll dein Team heißen?"
+msgstr "Vad ska ditt team heta?"
+
+msgid "Wird aktualisiert ..."
+msgstr "Uppdaterar …"
+
+msgid "Wird umgestellt ..."
+msgstr "Ändrar …"
