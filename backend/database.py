@@ -530,6 +530,11 @@ def _migrate_columns(conn):
         # verschieben — der Wechsel muss trotzdem am vorgemerkten Datum
         # greifen, sonst bleibt er bei Stripe-Abos fuer immer liegen.
         ("users", "geplant_ab", "ALTER TABLE users ADD COLUMN geplant_ab TEXT"),
+        # Steve 07.08.2026: Beim UPGRADE startet eine neue Laufzeit und es
+        # gibt sofort das VOLLE neue Kontingent. Dieser Zeitstempel markiert
+        # den Neustart — billing.monats_verbrauch zaehlt ab hier frisch
+        # (wirkt nur im Monat der Umstellung, danach gilt wieder der Monatsanfang).
+        ("users", "kontingent_reset_am", "ALTER TABLE users ADD COLUMN kontingent_reset_am TEXT"),
     ]
 
     for table, column, sql in migrations:

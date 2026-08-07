@@ -1950,8 +1950,11 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
         try:
             stripe_zahlung.wechsle_sofort(
                 sub_id, plan, monate,
-                idempotency_key=f"wechsel-{db_user['id']}-{plan}-{monate}-"
-                                f"{datetime.utcnow().strftime('%Y%m%d%H')}")
+                # Schluessel enthaelt die Subscription: derselbe Wechsel an
+                # DERSELBEN Subscription ist idempotent (Doppelklick-Schutz),
+                # ein Wechsel an einer anderen kollidiert nicht.
+                idempotency_key=f"wechsel-{sub_id}-{plan}-{monate}-"
+                                f"{datetime.utcnow().strftime('%Y%m%d%H%M')}")
         except stripe_zahlung.ZahlungOffen as z:
             # Review-Befund 3: Stripe hat umgestellt, aber die Differenz ist
             # NICHT bezahlt -> lokal nichts freischalten, Kunde zur Rechnung
@@ -1970,17 +1973,21 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
             raise HTTPException(status_code=502,
                                 detail="Der Wechsel konnte bei unserem Zahlungsdienst gerade "
                                        "nicht durchgeführt werden. Bitte später erneut versuchen")
-        # Review-Befund 6: Bereits bezahlte Restlaufzeit darf nicht verfallen —
-        # das neue Ende ist das SPAETERE aus (heute + Laufzeit) und altem Ende.
-        alt_ende = (db_user.get("plan_gueltig_bis") or "")[:10]
+        # Steve 07.08.2026: Beim Upgrade startet eine NEUE Laufzeit ab heute
+        # (nicht das alte Ende weiterschieben). Bezahlte Restzeit verfaellt
+        # dabei NICHT — Stripe rechnet sie als Gutschrift an, siehe
+        # stripe_zahlung.wechsle_sofort.
+        gueltig_bis, geloest, ueberbelegt = _setze_plan_kern(
+            db_user["id"], db_user, plan, monate, None, 1, quelle="stripe")
+        # ... und der Kunde bekommt SOFORT das volle neue Kontingent: der
+        # Verbrauch des laufenden Monats zaehlt ab hier neu.
         conn = get_db()
         try:
-            neu_ende = conn.execute("SELECT date('now', ?)", (f"+{monate} months",)).fetchone()[0]
+            conn.execute("UPDATE users SET kontingent_reset_am = datetime('now') WHERE id = ?",
+                         (db_user["id"],))
+            conn.commit()
         finally:
             conn.close()
-        ziel_ende = max(neu_ende, alt_ende) if alt_ende else neu_ende
-        gueltig_bis, geloest, ueberbelegt = _setze_plan_kern(
-            db_user["id"], db_user, plan, monate, ziel_ende, 1, quelle="stripe")
         # Ein evtl. vorgemerkter Downgrade ist mit dem Upgrade hinfaellig.
         conn = get_db()
         try:
@@ -2267,7 +2274,11 @@ async def stripe_webhook(request: Request):
                                          gueltig, 1, quelle="stripe")
                         conn = get_db()
                         try:
-                            # Vormerkung ist mit der Abrechnung erledigt.
+                            # Vormerkung ist mit der Abrechnung erledigt; bei
+                            # einem PLANWECHSEL startet auch das Kontingent neu.
+                            if alter_plan != neuer_plan:
+                                conn.execute("UPDATE users SET kontingent_reset_am = datetime('now') "
+                                             "WHERE id = ?", (ziel["id"],))
                             conn.execute("UPDATE users SET geplanter_plan = NULL, "
                                          "geplante_laufzeit = NULL, geplant_ab = NULL "
                                          "WHERE id = ?", (ziel["id"],))
@@ -2515,6 +2526,14 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
             gueltig_bis, geloest, _u = _setze_plan_kern(
                 k["id"], db_user, geplant, ziel_laufzeit, None, 1,
                 quelle=k.get("plan_quelle") or "rechnung")
+            # Neue Laufzeit = neuer Abrechnungszeitraum, auch beim Downgrade.
+            conn = get_db()
+            try:
+                conn.execute("UPDATE users SET kontingent_reset_am = datetime('now') "
+                             "WHERE id = ?", (k["id"],))
+                conn.commit()
+            finally:
+                conn.close()
             if _kv_einmal(f"abo_mail_gewechselt_{k['id']}_{ablauf}"):
                 saetze = [f"Hallo {name},",
                           f"wie vorgemerkt haben wir dein Abo heute auf den Plan "

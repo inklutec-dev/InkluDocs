@@ -3146,3 +3146,20 @@ msgstr "Shorter term: scheduled for the end of the current term. Until {datum} e
 
 msgid "Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate."
 msgstr "Longer term: takes effect immediately. Time you have already paid for is kept. New price: €{summe} for {monate} months."
+
+# ── Upgrade-Logik neue Laufzeit + Actino-Rechnungsweg (07.08.2026) ──
+
+msgid ", dein Abo wird dann für dich freigeschaltet."
+msgstr " — your subscription will then be activated for you."
+
+msgid "Du möchtest lieber auf Rechnung bestellen? Das geht über unseren Partner Actino Software:"
+msgstr "Would you rather order by invoice? That works through our partner Actino Software:"
+
+msgid "Höherstufung: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit deines bisherigen Plans wird angerechnet. Die vollen Credits stehen sofort bereit."
+msgstr "Upgrade: takes effect immediately. A new term of {monate} months starts at €{summe}; time already paid for on your previous plan is credited. The full credits are available right away."
+
+msgid "Lieber auf Rechnung bestellen? Unser Partner Actino Software wickelt Bestellungen auf Rechnung ab — schreib einfach an"
+msgstr "Prefer to order by invoice? Our partner Actino Software handles invoice orders — simply write to"
+
+msgid "Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet."
+msgstr "Longer term: takes effect immediately. A new term of {monate} months starts at €{summe}; time already paid for is credited."

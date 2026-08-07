@@ -189,8 +189,25 @@ def _konto_fuer(user_id: int):
         return user_id
 
 
+def _abrechnungsbeginn_sql(spalte: str = "u.kontingent_reset_am") -> str:
+    """SQL-Ausdruck fuer den Beginn des laufenden Abrechnungszeitraums.
+
+    Normalerweise der Monatserste. Nach einem UPGRADE (Steve 07.08.2026:
+    „neue Laufzeit, volle Credits sofort") steht in users.kontingent_reset_am
+    der Umstellungs-Zeitpunkt — ab dann zaehlt frisch, damit das volle neue
+    Kontingent sofort zur Verfuegung steht. Der Wert wirkt nur im Monat der
+    Umstellung: spaetestens am Monatsersten gewinnt wieder der Monatsanfang.
+    """
+    return (f"MAX(date('now', 'start of month'), COALESCE({spalte}, '0000-01-01'))")
+
+
 def monats_verbrauch(konto_user_id: int, conn=None) -> int:
-    """Summe der Credits des laufenden Kalendermonats (UTC) fuer ein Konto.
+    """Credits des laufenden ABRECHNUNGS-Zeitraums fuer ein Konto.
+
+    Das ist der Kalendermonat (UTC) — oder, falls im laufenden Monat ein
+    Upgrade stattfand, die Zeit seit dem Upgrade (users.kontingent_reset_am).
+    So bekommt der Kunde nach einer Hoeherstufung sofort das VOLLE neue
+    Kontingent, statt sich den bereits verbrauchten Teil anrechnen zu lassen.
 
     conn: optional eine BESTEHENDE Verbindung. Noetig, wenn der Aufrufer
     gerade eine offene Transaktion haelt (BEGIN IMMEDIATE in verbuche) —
@@ -202,8 +219,9 @@ def monats_verbrauch(konto_user_id: int, conn=None) -> int:
         conn = get_db()
     try:
         row = conn.execute(
-            "SELECT COALESCE(SUM(credits), 0) FROM usage_events "
-            "WHERE konto_user_id = ? AND created_at >= date('now', 'start of month')",
+            "SELECT COALESCE(SUM(e.credits), 0) FROM usage_events e "
+            "JOIN users u ON u.id = e.konto_user_id "
+            f"WHERE e.konto_user_id = ? AND e.created_at >= {_abrechnungsbeginn_sql()}",
             (konto_user_id,),
         ).fetchone()
         return int(row[0])
@@ -240,7 +258,7 @@ def _domain_monats_verbrauch(domain: str, conn=None) -> int:
             "AND (COALESCE(u.plan, 'free') = 'free' "
             "     OR (u.plan_gueltig_bis IS NOT NULL AND date(u.plan_gueltig_bis) < date('now'))) "
             "AND u.is_admin = 0 "
-            "AND e.created_at >= date('now', 'start of month')",
+            "AND e.created_at >= " + _abrechnungsbeginn_sql() + " ",
             (domain,),
         ).fetchone()
         return int(row[0])
@@ -545,9 +563,12 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
     budget = kontingent + _uebertrag(konto_id, plan, kontingent, conn=conn)
     verbraucht = monats_verbrauch(konto_id, conn=conn)
     soll = max(0, verbraucht - budget)
+    # Gleicher Zeitraum wie monats_verbrauch (sonst wuerde nach einem
+    # Upgrade-Reset ein alter Ueberhang erneut von den Paketen abgebucht).
     bereits = int(conn.execute(
-        "SELECT COALESCE(SUM(betrag), 0) FROM paket_abbuchungen "
-        "WHERE konto_user_id = ? AND created_at >= date('now', 'start of month')",
+        "SELECT COALESCE(SUM(a.betrag), 0) FROM paket_abbuchungen a "
+        "JOIN users u ON u.id = a.konto_user_id "
+        f"WHERE a.konto_user_id = ? AND a.created_at >= {_abrechnungsbeginn_sql()}",
         (konto_id,),
     ).fetchone()[0])
     abzug_gesamt = soll - bereits

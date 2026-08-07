@@ -2707,3 +2707,20 @@ msgstr "Kortare löptid: schemalagd till periodens slut. Fram till {datum} är a
 
 msgid "Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate."
 msgstr "Längre löptid: gäller omedelbart. Redan betald tid behålls. Nytt pris: {summe} € för {monate} månader."
+
+# ── Upgrade-Logik neue Laufzeit + Actino-Rechnungsweg (07.08.2026) ──
+
+msgid ", dein Abo wird dann für dich freigeschaltet."
+msgstr " — ditt abonnemang aktiveras sedan åt dig."
+
+msgid "Du möchtest lieber auf Rechnung bestellen? Das geht über unseren Partner Actino Software:"
+msgstr "Vill du hellre beställa mot faktura? Det går via vår partner Actino Software:"
+
+msgid "Höherstufung: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit deines bisherigen Plans wird angerechnet. Die vollen Credits stehen sofort bereit."
+msgstr "Uppgradering: gäller omedelbart. En ny löptid på {monate} månader startar för {summe} €; redan betald tid på din tidigare plan räknas av. De fulla krediterna är tillgängliga direkt."
+
+msgid "Lieber auf Rechnung bestellen? Unser Partner Actino Software wickelt Bestellungen auf Rechnung ab — schreib einfach an"
+msgstr "Vill du hellre beställa mot faktura? Vår partner Actino Software hanterar fakturabeställningar — skriv helt enkelt till"
+
+msgid "Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet."
+msgstr "Längre löptid: gäller omedelbart. En ny löptid på {monate} månader startar för {summe} €; redan betald tid räknas av."

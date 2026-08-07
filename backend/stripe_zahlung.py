@@ -293,9 +293,12 @@ def wechsle_sofort(subscription_id: str, plan: str, monate: int,
     geprueft und bei Nicht-Zahlung ZahlungOffen geworfen; der Plan wird dann
     nicht freigeschaltet.
 
-    Der Abrechnungs-Zyklus wird bewusst NICHT zurueckgesetzt
-    (Review-Befund 6): sonst verfaellt bereits bezahlte Restlaufzeit.
-    Stripe verrechnet den Restwert stattdessen anteilig.
+    Steve 07.08.2026: Beim Upgrade startet eine NEUE Laufzeit sofort
+    (billing_cycle_anchor='now'), der neue Plan wird also voll berechnet —
+    UND der Restwert des alten Plans wird angerechnet
+    (proration_behavior='create_prorations'), damit bezahlte Zeit nicht
+    verfaellt. Der Kunde zahlt somit den vollen neuen Preis abzueglich
+    Gutschrift und bekommt eine frische volle Laufzeit.
     """
     # Ein vorgemerkter Downgrade wird durch das Upgrade hinfaellig — und
     # blockiert sonst die Aenderung (s. loese_schedule).
@@ -304,7 +307,8 @@ def wechsle_sofort(subscription_id: str, plan: str, monate: int,
     item_id = sub["items"]["data"][0]["id"]
     args = dict(
         items=[{"id": item_id, "price": _preis_id(_plan_lookup(plan, monate))}],
-        proration_behavior="create_prorations",
+        proration_behavior="create_prorations",   # Restwert wird angerechnet
+        billing_cycle_anchor="now",               # neue Laufzeit startet jetzt
         metadata={"idoc_plan": plan, "idoc_laufzeit": str(monate)},
         expand=["latest_invoice"],
     )

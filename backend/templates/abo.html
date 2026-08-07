@@ -38,6 +38,10 @@
         <span id="eigenMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
         <span id="eigenErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
         <p class="dash-meta" id="mailHinweis" style="margin-top:1rem;">{{ _('Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inklutec.de">support@inklutec.de</a> {{ _('— wir schalten von Hand frei.') }}</p>
+        {# Rechnungsweg ueber den Partner Actino (Steve 07.08.): Kunden, die
+           nicht online zahlen wollen, bestellen dort auf Rechnung. Adresse
+           klickbar mit vorbereitetem Betreff. #}
+        <p class="dash-meta" id="rechnungHinweis" style="margin-top:.75rem;">{{ _('Lieber auf Rechnung bestellen? Unser Partner Actino Software wickelt Bestellungen auf Rechnung ab — schreib einfach an') }} <a href="mailto:sales@actino.de?subject=InkluDocs-Anfrage">sales@actino.de</a>{{ _(', dein Abo wird dann für dich freigeschaltet.') }}</p>
         <button type="button" class="btn btn-secondary" id="portalBtn" hidden>{{ _('Rechnungen und Zahlungen ansehen') }}</button>
         <span id="portalErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
       </section>
@@ -67,6 +71,7 @@
         </div>
         <p id="buchenSumme"></p>
         <p class="dash-meta">{{ _('Bezahlt wird auf der sicheren Stripe-Seite (SEPA-Lastschrift, Karte oder Apple Pay). Ohne Kündigung verlängert sich das Abo automatisch um die gewählte Laufzeit.') }}</p>
+        <p class="dash-meta">{{ _('Du möchtest lieber auf Rechnung bestellen? Das geht über unseren Partner Actino Software:') }} <a href="mailto:sales@actino.de?subject=InkluDocs-Anfrage">sales@actino.de</a></p>
         <button type="button" class="btn btn-primary" id="buchenBtn">{{ _('Kostenpflichtig buchen') }}</button>
         <span id="buchenMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
         <span id="buchenErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
@@ -474,12 +479,12 @@
     if (ziel === aktuell) {
       // Gleicher Plan, andere Laufzeit: länger = sofort, kürzer = zum Ende.
       hinweis.textContent = monate > alteLaufzeit
-        ? t('Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate.', { summe: summe, monate: monate })
+        ? t('Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet.', { summe: summe, monate: monate })
         : t('Kürzere Laufzeit: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt.', { datum: _abo.eigen.gueltig_bis || '' });
       return;
     }
     if (PLAN_MONATSPREISE[ziel] > PLAN_MONATSPREISE[aktuell]) {
-      hinweis.textContent = t('Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate.', { summe: summe, monate: monate });
+      hinweis.textContent = t('Höherstufung: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit deines bisherigen Plans wird angerechnet. Die vollen Credits stehen sofort bereit.', { summe: summe, monate: monate });
     } else {
       hinweis.textContent = t('Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate.', { datum: _abo.eigen.gueltig_bis || '', summe: summe, monate: monate });
     }

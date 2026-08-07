@@ -3146,3 +3146,20 @@ msgstr "Duración más corta: programada para el final del periodo. Hasta el {da
 
 msgid "Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate."
 msgstr "Duración más larga: efecto inmediato. El tiempo ya pagado se conserva. Nuevo precio: {summe} € por {monate} meses."
+
+# ── Upgrade-Logik neue Laufzeit + Actino-Rechnungsweg (07.08.2026) ──
+
+msgid ", dein Abo wird dann für dich freigeschaltet."
+msgstr " — tu suscripción se activará entonces para ti."
+
+msgid "Du möchtest lieber auf Rechnung bestellen? Das geht über unseren Partner Actino Software:"
+msgstr "¿Prefieres pedir con factura? Es posible a través de nuestro socio Actino Software:"
+
+msgid "Höherstufung: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit deines bisherigen Plans wird angerechnet. Die vollen Credits stehen sofort bereit."
+msgstr "Subida de plan: efecto inmediato. Comienza un nuevo periodo de {monate} meses por {summe} €; el tiempo ya pagado de tu plan anterior se descuenta. Los créditos completos están disponibles al instante."
+
+msgid "Lieber auf Rechnung bestellen? Unser Partner Actino Software wickelt Bestellungen auf Rechnung ab — schreib einfach an"
+msgstr "¿Prefieres pedir con factura? Nuestro socio Actino Software gestiona los pedidos con factura — escribe simplemente a"
+
+msgid "Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet."
+msgstr "Duración más larga: efecto inmediato. Comienza un nuevo periodo de {monate} meses por {summe} €; el tiempo ya pagado se descuenta."
