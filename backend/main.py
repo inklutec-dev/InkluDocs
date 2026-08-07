@@ -1821,7 +1821,7 @@ async def abo_kuendigen(user: dict = Depends(get_current_user)):
         # wuerde am Stichtag ein neuer (bezahlpflichtiger) Plan starten,
         # obwohl der Kunde gerade gekuendigt hat.
         conn.execute("UPDATE users SET auto_verlaengerung = 0, geplanter_plan = NULL, "
-                     "geplante_laufzeit = NULL WHERE id = ?", (user["id"],))
+                     "geplante_laufzeit = NULL, geplant_ab = NULL WHERE id = ?", (user["id"],))
         conn.commit()
     finally:
         conn.close()
@@ -1913,36 +1913,91 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
     if aktueller == "free":
         raise HTTPException(status_code=400,
                             detail="Du hast noch kein Abo — bitte über „Abo buchen“ starten")
-    if aktueller == plan and (db_user.get("plan_laufzeit_monate") or 0) == monate:
+    aktuelle_laufzeit = db_user.get("plan_laufzeit_monate") or 0
+    if aktueller == plan and aktuelle_laufzeit == monate:
         raise HTTPException(status_code=400, detail="Diesen Plan hast du bereits")
 
-    ist_upgrade = billing.PLAN_PREISE_EUR[plan] > billing.PLAN_PREISE_EUR[aktueller]
     sub_id = (db_user.get("stripe_subscription_id") or "").strip()
     stripe_abo = bool(sub_id) and db_user.get("plan_quelle") == "stripe" and stripe_zahlung.AKTIV
+    # Review-Befund 1 (KRITISCH): Ohne zahlenden Stripe-Vertrag darf hier
+    # NIEMAND einen hoeheren Plan bekommen — sonst waere „Enterprise gratis"
+    # nur ein API-Aufruf entfernt. Rechnungskunden laufen ueber Actino/
+    # INKLUTEC, dort stellt der Admin um (mit Rechnung).
+    if not stripe_abo:
+        raise HTTPException(
+            status_code=400,
+            detail="Dein Abo läuft über den Rechnungsweg. Schreib uns kurz an "
+                   "support@inklutec.de — wir stellen den Plan für dich um.")
+    # Review-Befund 8: Ein gekuendigtes Abo darf nicht durch einen Wechsel
+    # stillschweigend reaktiviert werden.
+    if not int(db_user.get("auto_verlaengerung") or 0):
+        raise HTTPException(
+            status_code=400,
+            detail="Dein Abo ist gekündigt. Nimm zuerst die Kündigung zurück, "
+                   "dann kannst du den Plan wechseln.")
+
+    # Review-Befund 7: Der Preisvergleich allein reicht nicht — bei GLEICHEM
+    # Plan entscheidet die Laufzeit. Laengere Bindung gilt sofort (mehr
+    # Leistung fuer den Kunden, mehr Umsatz), kuerzere zum Laufzeitende.
+    if plan == aktueller:
+        ist_upgrade = monate > aktuelle_laufzeit
+    else:
+        ist_upgrade = billing.PLAN_PREISE_EUR[plan] > billing.PLAN_PREISE_EUR[aktueller]
 
     if ist_upgrade:
         # SOFORT: erst bei Stripe umstellen (dort haengt das Geld), dann lokal.
-        if stripe_abo:
-            try:
-                stripe_zahlung.wechsle_sofort(sub_id, plan, monate)
-            except Exception:
-                logger.exception("Stripe-Upgrade fehlgeschlagen (user=%s)", user["id"])
-                raise HTTPException(status_code=502,
-                                    detail="Der Wechsel konnte bei unserem Zahlungsdienst gerade "
-                                           "nicht durchgeführt werden. Bitte später erneut versuchen")
+        # Review-Befund 5: Idempotency-Key gegen Doppelklick/Doppelbuchung.
+        try:
+            stripe_zahlung.wechsle_sofort(
+                sub_id, plan, monate,
+                idempotency_key=f"wechsel-{db_user['id']}-{plan}-{monate}-"
+                                f"{datetime.utcnow().strftime('%Y%m%d%H')}")
+        except stripe_zahlung.ZahlungOffen as z:
+            # Review-Befund 3: Stripe hat umgestellt, aber die Differenz ist
+            # NICHT bezahlt -> lokal nichts freischalten, Kunde zur Rechnung
+            # schicken. Der invoice.paid-Webhook holt den Plan nach, sobald
+            # gezahlt wurde.
+            logger.warning("Upgrade offen (unbezahlt) user=%s", user["id"])
+            raise HTTPException(
+                status_code=402,
+                detail="Die Zahlung für den höheren Plan ist noch offen. Bitte schließe sie "
+                       "ab — danach wird der Plan automatisch freigeschaltet."
+                       + (f" Rechnung: {z.invoice_url}" if z.invoice_url else ""))
+        except HTTPException:
+            raise
+        except Exception:
+            logger.exception("Stripe-Upgrade fehlgeschlagen (user=%s)", user["id"])
+            raise HTTPException(status_code=502,
+                                detail="Der Wechsel konnte bei unserem Zahlungsdienst gerade "
+                                       "nicht durchgeführt werden. Bitte später erneut versuchen")
+        # Review-Befund 6: Bereits bezahlte Restlaufzeit darf nicht verfallen —
+        # das neue Ende ist das SPAETERE aus (heute + Laufzeit) und altem Ende.
+        alt_ende = (db_user.get("plan_gueltig_bis") or "")[:10]
+        conn = get_db()
+        try:
+            neu_ende = conn.execute("SELECT date('now', ?)", (f"+{monate} months",)).fetchone()[0]
+        finally:
+            conn.close()
+        ziel_ende = max(neu_ende, alt_ende) if alt_ende else neu_ende
         gueltig_bis, geloest, ueberbelegt = _setze_plan_kern(
-            db_user["id"], db_user, plan, monate, None, 1,
-            quelle=db_user.get("plan_quelle") or "rechnung")
+            db_user["id"], db_user, plan, monate, ziel_ende, 1, quelle="stripe")
         # Ein evtl. vorgemerkter Downgrade ist mit dem Upgrade hinfaellig.
         conn = get_db()
         try:
-            conn.execute("UPDATE users SET geplanter_plan = NULL, geplante_laufzeit = NULL "
-                         "WHERE id = ?", (db_user["id"],))
+            conn.execute("UPDATE users SET geplanter_plan = NULL, geplante_laufzeit = NULL, "
+                         "geplant_ab = NULL WHERE id = ?", (db_user["id"],))
             conn.commit()
         finally:
             conn.close()
         try:
             _sende_plan_bestaetigung(db_user, plan, gueltig_bis, monate, 1)
+            _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Plan-Upgrade: {db_user['email']}",
+                      "Kunde hat hochgestuft",
+                      [f"{html.escape(db_user['email'])} hat von "
+                       f"{PLAN_ANZEIGENAMEN.get(aktueller, aktueller)} auf "
+                       f"{PLAN_ANZEIGENAMEN.get(plan, plan)} hochgestuft "
+                       f"({monate} Monate, gültig bis {str(gueltig_bis)[:10]}). "
+                       "Die Differenz hat Stripe anteilig abgerechnet."])
         except Exception:
             logger.exception("Bestaetigungs-Mail nach Upgrade fehlgeschlagen")
         return {"ok": True, "sofort": True, "plan": plan, "gueltig_bis": str(gueltig_bis)[:10],
@@ -1965,15 +2020,21 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
                                        "vorgemerkt werden. Bitte später erneut versuchen")
     conn = get_db()
     try:
+        # Review-Befund 2: Der Stichtag wird FEST gespeichert. plan_gueltig_bis
+        # kann sich durch Stripe-Webhooks verschieben — der vorgemerkte
+        # Wechsel muss trotzdem am ursprünglichen Datum greifen.
         conn.execute("UPDATE users SET geplanter_plan = ?, geplante_laufzeit = ?, "
-                     "auto_verlaengerung = 1 WHERE id = ?", (plan, monate, db_user["id"]))
+                     "geplant_ab = ? WHERE id = ?", (plan, monate, bis, db_user["id"]))
         conn.commit()
     finally:
         conn.close()
     # Verliert das Konto zum Stichtag die Team-Faehigkeit, muessen die
     # Mitglieder das rechtzeitig erfahren (Steve 07.08.).
     if aktueller in billing.PLAN_SITZE and plan not in billing.PLAN_SITZE:
-        _team_enddatum_mail(db_user, bis, "downgrade")
+        try:
+            _team_enddatum_mail(db_user, bis, "downgrade")
+        except Exception:
+            logger.exception("Team-Enddatum-Mails nach Downgrade fehlgeschlagen")
     try:
         _abo_mail(db_user["email"], "InkluDocs: Dein Plan-Wechsel ist vorgemerkt",
                   "Plan-Wechsel vorgemerkt",
@@ -1997,6 +2058,13 @@ async def abo_wechsel_widerrufen(user: dict = Depends(get_current_user)):
     db_user = get_user_by_id(user["id"])
     if not db_user or not db_user.get("geplanter_plan"):
         raise HTTPException(status_code=400, detail="Es ist kein Wechsel vorgemerkt")
+    # Review-Befund 11: Ist der Stichtag erreicht, kann der Tageslauf gerade
+    # umstellen — dann waere „zurueckgenommen" gelogen.
+    _ab = (db_user.get("geplant_ab") or "")[:10]
+    if _ab and _ab < datetime.utcnow().strftime("%Y-%m-%d"):
+        raise HTTPException(status_code=409,
+                            detail="Der Wechsel wird gerade vollzogen und kann nicht mehr "
+                                   "zurückgenommen werden. Du kannst den Plan danach neu wechseln.")
     sub_id = (db_user.get("stripe_subscription_id") or "").strip()
     if sub_id and db_user.get("plan_quelle") == "stripe" and stripe_zahlung.AKTIV:
         try:
@@ -2008,8 +2076,8 @@ async def abo_wechsel_widerrufen(user: dict = Depends(get_current_user)):
                                        "hinterlegt werden. Bitte später erneut versuchen")
     conn = get_db()
     try:
-        conn.execute("UPDATE users SET geplanter_plan = NULL, geplante_laufzeit = NULL WHERE id = ?",
-                     (db_user["id"],))
+        conn.execute("UPDATE users SET geplanter_plan = NULL, geplante_laufzeit = NULL, "
+                     "geplant_ab = NULL WHERE id = ?", (db_user["id"],))
         conn.commit()
     finally:
         conn.close()
@@ -2161,35 +2229,111 @@ async def stripe_webhook(request: Request):
                           [f"{html.escape(target['email'])} hat {groesse} Zusatz-Credits über "
                            "Stripe gekauft."])
         elif typ == "invoice.paid":
-            # Verlaengerung eines laufenden Stripe-Abos: Laufzeitende auf das
-            # Ende der bezahlten Periode setzen. Die Erst-Rechnung einer neuen
-            # Subscription behandelt schon checkout.session.completed.
-            if obj.get("billing_reason") == "subscription_cycle":
-                sub_id = obj.get("subscription")
+            # DIE letzte Wahrheit fuer Stripe-Abos (Review-Befunde 2 und 4,
+            # 07.08.2026): Jede bezahlte Abo-Rechnung setzt Plan, Laufzeit
+            # UND Laufzeitende so, wie tatsaechlich bezahlt wurde — egal ob
+            # Zyklus-Verlaengerung, sofortiges Upgrade (subscription_update)
+            # oder der vollzogene Downgrade aus einem Schedule. Damit kommt
+            # ein bezahlter Plan auch dann an, wenn der ausloesende Aufruf
+            # unterwegs abgebrochen ist, und ein Downgrade wird genau dann
+            # wirksam, wenn Stripe ihn abrechnet.
+            grund = obj.get("billing_reason") or ""
+            sub_id = obj.get("subscription")
+            if sub_id and grund.startswith("subscription"):
                 zeilen_liste = (obj.get("lines") or {}).get("data") or []
                 periode_ende = max((z.get("period", {}).get("end") or 0)
                                    for z in zeilen_liste) if zeilen_liste else 0
-                if sub_id and periode_ende:
-                    neues_datum = datetime.utcfromtimestamp(int(periode_ende)).strftime("%Y-%m-%d")
-                    conn = get_db()
-                    try:
-                        conn.execute("UPDATE users SET plan_gueltig_bis = ? "
-                                     "WHERE stripe_subscription_id = ?",
-                                     (neues_datum, sub_id))
-                        conn.commit()
-                    finally:
-                        conn.close()
+                # Bezahlten Plan aus dem Preis-Lookup der Abo-Zeile lesen.
+                neuer_plan, neue_laufzeit = None, None
+                for z in zeilen_liste:
+                    lk = ((z.get("price") or {}).get("lookup_key")
+                          or (z.get("pricing") or {}).get("price_details", {}).get("lookup_key"))
+                    p, m = stripe_zahlung.plan_aus_lookup(lk)
+                    if p:
+                        neuer_plan, neue_laufzeit = p, m
+                conn = get_db()
+                try:
+                    row = conn.execute("SELECT id FROM users WHERE stripe_subscription_id = ?",
+                                       (sub_id,)).fetchone()
+                finally:
+                    conn.close()
+                if row:
+                    ziel = get_user_by_id(row["id"])
+                    if ziel and neuer_plan and neuer_plan in billing.PLAN_KONTINGENTE:
+                        gueltig = (datetime.utcfromtimestamp(int(periode_ende)).strftime("%Y-%m-%d")
+                                   if periode_ende else None)
+                        alter_plan = ziel.get("plan")
+                        _setze_plan_kern(ziel["id"], ziel, neuer_plan, neue_laufzeit,
+                                         gueltig, 1, quelle="stripe")
+                        conn = get_db()
+                        try:
+                            # Vormerkung ist mit der Abrechnung erledigt.
+                            conn.execute("UPDATE users SET geplanter_plan = NULL, "
+                                         "geplante_laufzeit = NULL, geplant_ab = NULL "
+                                         "WHERE id = ?", (ziel["id"],))
+                            conn.commit()
+                        finally:
+                            conn.close()
+                        if alter_plan != neuer_plan and _kv_einmal(
+                                f"abo_mail_stripewechsel_{ziel['id']}_{gueltig}_{neuer_plan}"):
+                            try:
+                                _sende_plan_bestaetigung(ziel, neuer_plan, gueltig,
+                                                         neue_laufzeit, 1)
+                            except Exception:
+                                logger.exception("Bestaetigung nach Stripe-Abrechnung fehlgeschlagen")
+                    elif row and periode_ende:
+                        # Kein erkennbarer Plan (Fremdpreis): wenigstens das
+                        # Laufzeitende mitziehen.
+                        conn = get_db()
+                        try:
+                            conn.execute("UPDATE users SET plan_gueltig_bis = ? "
+                                         "WHERE stripe_subscription_id = ?",
+                                         (datetime.utcfromtimestamp(int(periode_ende)).strftime("%Y-%m-%d"),
+                                          sub_id))
+                            conn.commit()
+                        finally:
+                            conn.close()
         elif typ in ("customer.subscription.updated", "customer.subscription.deleted"):
             # Kuendigung im Stripe-Portal (oder durch Stripe selbst) mit
             # unserem auto_verlaengerung-Schalter synchron halten.
+            #
+            # BEFUND 07.08.2026 (im Test gefunden): Stripe-Events koennen sich
+            # UEBERHOLEN. Beim Kuendigen loesen wir erst den Wechsel-Schedule
+            # (Event: cancel_at_period_end=false) und kuendigen dann (Event:
+            # true) — trifft das erste Event zuletzt ein, wuerde es die
+            # Kuendigung stillschweigend aufheben. Darum wird der Zustand
+            # frisch bei Stripe abgefragt statt dem (evtl. veralteten)
+            # Payload zu glauben.
             sub_id = obj.get("id")
             beendet = (typ == "customer.subscription.deleted")
-            auslaufend = bool(obj.get("cancel_at_period_end")) or beendet
+            aktuell = obj
+            if not beendet and sub_id and stripe_zahlung.AKTIV:
+                try:
+                    aktuell = stripe_zahlung.stripe.Subscription.retrieve(sub_id)
+                except Exception:
+                    logger.exception("Subscription-Nachfrage fehlgeschlagen (%s)", sub_id)
+            if not beendet and aktuell.get("status") in ("canceled", "incomplete_expired"):
+                beendet = True
+            auslaufend = bool(aktuell.get("cancel_at_period_end")) or beendet
             conn = get_db()
             try:
                 conn.execute("UPDATE users SET auto_verlaengerung = ? "
                              "WHERE stripe_subscription_id = ?",
                              (0 if auslaufend else 1, sub_id))
+                # Review-Befund 3: Beendet Stripe die Subscription (etwa nach
+                # gescheiterten Zahlungsversuchen), darf lokal keine bezahlte
+                # Restlaufzeit stehen bleiben — sonst laeuft ein nie bezahlter
+                # Plan monatelang weiter. Auf das echte Periodenende kappen.
+                if beendet:
+                    ende = (aktuell.get("current_period_end") or aktuell.get("ended_at")
+                            or obj.get("current_period_end") or obj.get("ended_at"))
+                    if ende:
+                        conn.execute(
+                            "UPDATE users SET plan_gueltig_bis = ? "
+                            "WHERE stripe_subscription_id = ? AND "
+                            "(plan_gueltig_bis IS NULL OR date(plan_gueltig_bis) > date(?))",
+                            (datetime.utcfromtimestamp(int(ende)).strftime("%Y-%m-%d"), sub_id,
+                             datetime.utcfromtimestamp(int(ende)).strftime("%Y-%m-%d")))
                 conn.commit()
             finally:
                 conn.close()
@@ -2312,12 +2456,14 @@ def _abo_tageslauf() -> None:
                 # Aufholung deckt trotzdem bis zu zwei Monate Server-Pause.
                 faellige = conn.execute(
                     "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, "
-                    "plan_quelle, geplanter_plan, geplante_laufzeit, "
+                    "plan_quelle, geplanter_plan, geplante_laufzeit, geplant_ab, "
                     "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
                     "FROM users WHERE plan IN ('single', 'team', 'enterprise') "
-                    "AND plan_gueltig_bis IS NOT NULL "
-                    "AND date(plan_gueltig_bis) <= date('now', '+14 days') "
-                    "AND date(plan_gueltig_bis) >= date('now', '-62 days')").fetchall()
+                    "AND ((plan_gueltig_bis IS NOT NULL "
+                    "      AND date(plan_gueltig_bis) <= date('now', '+14 days') "
+                    "      AND date(plan_gueltig_bis) >= date('now', '-62 days')) "
+                    "  OR (geplanter_plan IS NOT NULL AND geplant_ab IS NOT NULL "
+                    "      AND date(geplant_ab) <= date('now')))").fetchall()
             finally:
                 conn.close()
         for k in faellige:
@@ -2341,21 +2487,34 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
     # gesetzt — VOR jeder Verlaengerungs-Logik, denn der neue Plan bringt
     # seine eigene Laufzeit mit. Bis hierher lief alles unveraendert weiter,
     # der Kunde hat also bekommen, wofuer er bezahlt hat.
+    # Stichtag aus geplant_ab (Review-Befund 2): plan_gueltig_bis kann sich
+    # durch Stripe-Webhooks verschoben haben — der Wechsel muss trotzdem am
+    # ursprünglich vorgemerkten Datum greifen. Bei STRIPE-Abos vollzieht ihn
+    # der invoice.paid-Webhook (dort ist die Zahlung belegt); hier laufen nur
+    # Rechnungsweg-Konten durch.
     geplant = (k.get("geplanter_plan") or "").strip()
-    if geplant and ablauf < heute:
+    geplant_ab = (k.get("geplant_ab") or "")[:10]
+    if geplant and geplant_ab and geplant_ab <= heute and k.get("plan_quelle") != "stripe":
         ziel_laufzeit = int(k.get("geplante_laufzeit") or laufzeit or 6)
         db_user = get_user_by_id(k["id"])
         if db_user:
+            # Bedingtes Loeschen ZUERST (Review-Befund 11): Wer die Vormerkung
+            # abraeumt, fuehrt den Wechsel aus — ein paralleler Lauf oder ein
+            # gleichzeitiger Widerruf kommt dann nicht mehr zum Zug.
+            conn = get_db()
+            try:
+                cur = conn.execute("UPDATE users SET geplanter_plan = NULL, "
+                                   "geplante_laufzeit = NULL, geplant_ab = NULL "
+                                   "WHERE id = ? AND geplanter_plan = ?", (k["id"], geplant))
+                conn.commit()
+                zustaendig = cur.rowcount > 0
+            finally:
+                conn.close()
+            if not zustaendig:
+                return
             gueltig_bis, geloest, _u = _setze_plan_kern(
                 k["id"], db_user, geplant, ziel_laufzeit, None, 1,
                 quelle=k.get("plan_quelle") or "rechnung")
-            conn = get_db()
-            try:
-                conn.execute("UPDATE users SET geplanter_plan = NULL, geplante_laufzeit = NULL "
-                             "WHERE id = ?", (k["id"],))
-                conn.commit()
-            finally:
-                conn.close()
             if _kv_einmal(f"abo_mail_gewechselt_{k['id']}_{ablauf}"):
                 saetze = [f"Hallo {name},",
                           f"wie vorgemerkt haben wir dein Abo heute auf den Plan "

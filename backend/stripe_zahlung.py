@@ -42,6 +42,22 @@ def _plan_lookup(plan: str, monate: int) -> str:
     return f"idoc_{plan}_{monate}m"
 
 
+def plan_aus_lookup(lookup_key: str):
+    """Zerlegt 'idoc_team_6m' -> ('team', 6); sonst (None, None).
+
+    Der Webhook leitet daraus den bezahlten Plan ab — er ist damit die
+    letzte Wahrheit, auch wenn der ausloesende Aufruf abgebrochen ist
+    (Review-Befund 4, 07.08.2026).
+    """
+    try:
+        teile = (lookup_key or "").split("_")
+        if len(teile) == 3 and teile[0] == "idoc" and teile[2].endswith("m"):
+            return teile[1], int(teile[2][:-1])
+    except Exception:
+        pass
+    return None, None
+
+
 def _paket_lookup(groesse: int) -> str:
     return f"idoc_paket_{groesse}"
 
@@ -254,26 +270,56 @@ def loese_schedule(subscription_id: str) -> bool:
     return True
 
 
-def wechsle_sofort(subscription_id: str, plan: str, monate: int) -> dict:
+class ZahlungOffen(Exception):
+    """Upgrade angelegt, aber die faellige Differenz ist NICHT bezahlt.
+
+    Traegt die Hosted-Invoice-URL, damit die Oberflaeche den Kunden dorthin
+    schicken kann. Der Aufrufer darf den Plan dann NICHT freischalten
+    (Review-Befund 3, 07.08.2026).
+    """
+    def __init__(self, invoice_url: str = ""):
+        super().__init__("Zahlung offen")
+        self.invoice_url = invoice_url or ""
+
+
+def wechsle_sofort(subscription_id: str, plan: str, monate: int,
+                   idempotency_key: str = None) -> dict:
     """UPGRADE: Subscription sofort auf den neuen Preis umstellen.
 
-    Anteilige Verrechnung durch Stripe; die Differenz wird sofort
-    fakturiert (payment_behavior default: Rechnung wird automatisch
-    beglichen, wenn eine Zahlungsart hinterlegt ist). Rueckgabe: die
-    aktualisierte Subscription.
+    Anteilige Verrechnung durch Stripe. WICHTIG (Review-Befund 3): Der
+    Aufruf allein beweist keine Zahlung — bei abgelaufener oder gedeckelter
+    Karte legt Stripe die Differenz-Rechnung nur an (Status 'open') und die
+    Subscription geht auf past_due. Darum wird die erzeugte Rechnung hier
+    geprueft und bei Nicht-Zahlung ZahlungOffen geworfen; der Plan wird dann
+    nicht freigeschaltet.
+
+    Der Abrechnungs-Zyklus wird bewusst NICHT zurueckgesetzt
+    (Review-Befund 6): sonst verfaellt bereits bezahlte Restlaufzeit.
+    Stripe verrechnet den Restwert stattdessen anteilig.
     """
     # Ein vorgemerkter Downgrade wird durch das Upgrade hinfaellig — und
     # blockiert sonst die Aenderung (s. loese_schedule).
     loese_schedule(subscription_id)
     sub = stripe.Subscription.retrieve(subscription_id)
     item_id = sub["items"]["data"][0]["id"]
-    return stripe.Subscription.modify(
-        subscription_id,
+    args = dict(
         items=[{"id": item_id, "price": _preis_id(_plan_lookup(plan, monate))}],
         proration_behavior="create_prorations",
-        billing_cycle_anchor="now",   # neue Laufzeit startet jetzt
         metadata={"idoc_plan": plan, "idoc_laufzeit": str(monate)},
+        expand=["latest_invoice"],
     )
+    if idempotency_key:
+        args["idempotency_key"] = idempotency_key
+    neu = stripe.Subscription.modify(subscription_id, **args)
+    # Zahlung pruefen: 'paid' oder gar keine Rechnung (z.B. Gutschrift deckt
+    # alles) sind ok; alles andere ist offen.
+    rechnung = neu.get("latest_invoice")
+    if isinstance(rechnung, str):
+        rechnung = stripe.Invoice.retrieve(rechnung)
+    if rechnung and rechnung.get("status") not in (None, "paid", "draft"):
+        if neu.get("status") in ("past_due", "unpaid", "incomplete"):
+            raise ZahlungOffen(rechnung.get("hosted_invoice_url") or "")
+    return neu
 
 
 def plane_wechsel_zum_periodenende(subscription_id: str, plan: str, monate: int):

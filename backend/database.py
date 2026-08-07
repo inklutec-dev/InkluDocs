@@ -525,6 +525,11 @@ def _migrate_columns(conn):
         # Upgrades brauchen das nicht (sofort wirksam).
         ("users", "geplanter_plan", "ALTER TABLE users ADD COLUMN geplanter_plan TEXT"),
         ("users", "geplante_laufzeit", "ALTER TABLE users ADD COLUMN geplante_laufzeit INTEGER"),
+        # Review-Befund 2 (07.08.2026): FESTER Stichtag des vorgemerkten
+        # Wechsels. plan_gueltig_bis kann sich durch Stripe-Webhooks
+        # verschieben — der Wechsel muss trotzdem am vorgemerkten Datum
+        # greifen, sonst bleibt er bei Stripe-Abos fuer immer liegen.
+        ("users", "geplant_ab", "ALTER TABLE users ADD COLUMN geplant_ab TEXT"),
     ]
 
     for table, column, sql in migrations:

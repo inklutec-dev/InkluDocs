@@ -30,7 +30,7 @@
          den EIGENEN Plan — Teams, in denen man Mitglied ist, kuendigt man
          nicht (das macht deren Inhaber). #}
       <section class="dash-card" aria-labelledby="eigenHeading" id="eigenBereich" hidden>
-        <h2 id="eigenHeading">{{ _('Dein Abo') }}</h2>
+        <h2 id="eigenHeading" tabindex="-1">{{ _('Dein Abo') }}</h2>
         <div id="eigenInfo"></div>
         <button type="button" class="btn btn-secondary" id="kuendigenBtn" hidden>{{ _('Abo kündigen') }}</button>
         <button type="button" class="btn btn-secondary" id="widerrufBtn" hidden>{{ _('Kündigung zurücknehmen') }}</button>
@@ -440,8 +440,13 @@
   // ── Plan wechseln (07.08.2026) ──
   function renderWechsel(abo) {
     const bereich = byId('wechselBereich');
-    const hatAbo = abo && abo.eigen && abo.eigen.plan !== 'free' && !abo.ist_betreiber;
+    // Nur für online bezahlte Abos: Rechnungskunden stellt der Betreiber um
+    // (sonst könnte man sich ohne Zahlung hochstufen — Review-Befund 1).
+    const hatAbo = abo && abo.eigen && abo.eigen.plan !== 'free' && !abo.ist_betreiber
+                   && abo.stripe_aktiv && abo.eigen.quelle === 'stripe';
     if (!hatAbo) { bereich.hidden = true; return; }
+    // Gekündigte Abos: erst Kündigung zurücknehmen (Review-Befund 8).
+    if (abo.eigen.auto_verlaengerung === false) { bereich.hidden = true; return; }
     bereich.hidden = false;
     // Vorauswahl: eine Stufe über dem aktuellen Plan, damit der häufigste
     // Fall (Upgrade) ohne Umstellen passt.
@@ -465,6 +470,14 @@
       return;
     }
     byId('wechselBtn').disabled = false;
+    const alteLaufzeit = _abo.eigen.laufzeit_monate || 0;
+    if (ziel === aktuell) {
+      // Gleicher Plan, andere Laufzeit: länger = sofort, kürzer = zum Ende.
+      hinweis.textContent = monate > alteLaufzeit
+        ? t('Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate.', { summe: summe, monate: monate })
+        : t('Kürzere Laufzeit: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt.', { datum: _abo.eigen.gueltig_bis || '' });
+      return;
+    }
     if (PLAN_MONATSPREISE[ziel] > PLAN_MONATSPREISE[aktuell]) {
       hinweis.textContent = t('Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate.', { summe: summe, monate: monate });
     } else {
@@ -475,23 +488,30 @@
   byId('wechselLaufzeit').addEventListener('change', wechselHinweisSetzen);
 
   byId('wechselBtn').addEventListener('click', async () => {
+    const btn = byId('wechselBtn');
     const msg = byId('wechselMsg');
     const err = byId('wechselErr');
+    if (btn.disabled) return;          // Doppelklick-Schutz (Review-Befund 5)
+    btn.disabled = true;
     msg.textContent = t('Wird umgestellt ...');
     err.textContent = '';
-    let res;
     try {
-      res = await fetch('/api/abo/wechseln', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: byId('wechselPlan').value,
-                               laufzeit_monate: parseInt(byId('wechselLaufzeit').value, 10) }),
-      });
-    } catch (e) { msg.textContent = ''; err.textContent = t('Fehler'); return; }
-    const d = await res.json().catch(() => ({}));
-    if (!res.ok) { msg.textContent = ''; err.textContent = d.detail || t('Fehler'); return; }
-    msg.textContent = d.message || t('Plan gewechselt.');
-    msg.style.color = 'var(--success)';
-    await reloadAbo();
+      let res;
+      try {
+        res = await fetch('/api/abo/wechseln', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: byId('wechselPlan').value,
+                                 laufzeit_monate: parseInt(byId('wechselLaufzeit').value, 10) }),
+        });
+      } catch (e) { msg.textContent = ''; err.textContent = t('Fehler'); return; }
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { msg.textContent = ''; err.textContent = d.detail || t('Fehler'); return; }
+      msg.textContent = d.message || t('Plan gewechselt.');
+      msg.style.color = 'var(--success)';
+      await reloadAbo();
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   byId('wechselWiderrufBtn').addEventListener('click', async () => {
@@ -506,6 +526,9 @@
     if (!res.ok) { err.textContent = d.detail || t('Fehler'); return; }
     msg.textContent = d.message || t('Wechsel zurückgenommen.');
     await reloadAbo();
+    // Der Auslöser-Knopf verschwindet dabei — Fokus auf die Bereichs-
+    // Überschrift setzen, sonst fällt er auf body (Review-Befund 10).
+    byId('eigenHeading').focus();
   });
 
   byId('buchenBtn').addEventListener('click', async () => {

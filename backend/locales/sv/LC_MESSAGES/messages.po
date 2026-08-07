@@ -2699,3 +2699,11 @@ msgstr "Uppdaterar …"
 
 msgid "Wird umgestellt ..."
 msgstr "Ändrar …"
+
+# ── Review-Fixes Planwechsel (07.08.2026 abends) ──
+
+msgid "Kürzere Laufzeit: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt."
+msgstr "Kortare löptid: schemalagd till periodens slut. Fram till {datum} är allt som nu."
+
+msgid "Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate."
+msgstr "Längre löptid: gäller omedelbart. Redan betald tid behålls. Nytt pris: {summe} € för {monate} månader."

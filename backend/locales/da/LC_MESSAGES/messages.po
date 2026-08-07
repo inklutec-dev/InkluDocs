@@ -2829,3 +2829,11 @@ msgstr "Opdaterer …"
 
 msgid "Wird umgestellt ..."
 msgstr "Ændrer …"
+
+# ── Review-Fixes Planwechsel (07.08.2026 abends) ──
+
+msgid "Kürzere Laufzeit: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt."
+msgstr "Kortere løbetid: planlagt til udgangen af perioden. Indtil {datum} forbliver alt som nu."
+
+msgid "Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate."
+msgstr "Længere løbetid: gælder straks. Allerede betalt tid bevares. Ny pris: {summe} € for {monate} måneder."

@@ -3141,3 +3141,11 @@ msgstr ""
 
 msgid "Wird umgestellt ..."
 msgstr ""
+
+# ── Review-Fixes Planwechsel (07.08.2026 abends) ──
+
+msgid "Kürzere Laufzeit: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt."
+msgstr ""
+
+msgid "Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate."
+msgstr ""
