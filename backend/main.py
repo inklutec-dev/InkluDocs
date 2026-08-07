@@ -1181,6 +1181,11 @@ async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(re
     gueltig_bis, geloest, ueberbelegt = _setze_plan_kern(
         user_id, target, plan, laufzeit, gueltig_bis, auto_verlaengerung,
         quelle="rechnung")
+    # Review-Befund 9: Rechnungskunden duerfen nicht schlechter stehen als
+    # Stripe-Kunden — steigt das Kontingent, startet es auch hier frisch.
+    if (billing.PLAN_KONTINGENTE.get(plan, 0)
+            > billing.PLAN_KONTINGENTE.get(target.get("plan"), 0)):
+        billing.starte_kontingent_neu(user_id)
     # Bestaetigungs-Mail an den Kunden — gleicher Text wie spaeter beim
     # Online-Kauf: er sieht sofort, was gebucht wurde und bis wann es laeuft.
     if plan != "free":
@@ -1327,7 +1332,9 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
             "SELECT u.id, u.display_name, u.email, "
             "COALESCE((SELECT SUM(e.credits) FROM usage_events e "
             "  WHERE e.user_id = u.id AND e.konto_user_id = ? "
-            "  AND e.created_at >= date('now', 'start of month')), 0) AS verbraucht_monat "
+            "  AND e.created_at >= (SELECT MAX(date('now','start of month'), "
+            "      COALESCE(iu.kontingent_reset_am,'0000-01-01')) FROM users iu WHERE iu.id = ?)"
+            "  ), 0) AS verbraucht_monat "
             "FROM users u WHERE u.id = ? OR u.id IN "
             "(SELECT mitglied_id FROM team_mitgliedschaften WHERE inhaber_id = ?) "
             "ORDER BY (u.id != ?), u.display_name COLLATE NOCASE",
@@ -1945,16 +1952,38 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
         ist_upgrade = billing.PLAN_PREISE_EUR[plan] > billing.PLAN_PREISE_EUR[aktueller]
 
     if ist_upgrade:
+        # Review-Befund 1 (07.08. KRITISCH): Beim Upgrade startet eine NEUE
+        # Laufzeit ab heute — sie darf das bezahlte Ende aber nie NACH VORN
+        # ziehen. Beispiel: team/12 bis naechsten August, Wechsel auf
+        # enterprise/3 haette 9 bezahlte Monate gekostet (und bei Stripe ein
+        # Guthaben erzeugt, das bei Kuendigung verfaellt).
+        alt_ende = (db_user.get("plan_gueltig_bis") or "")[:10]
+        if alt_ende:
+            conn = get_db()
+            try:
+                neu_ende = conn.execute("SELECT date('now', ?)",
+                                        (f"+{monate} months",)).fetchone()[0]
+            finally:
+                conn.close()
+            if neu_ende < alt_ende:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Dein jetziger Plan ist noch bis {alt_ende} bezahlt. Bitte wähle "
+                           "eine Laufzeit, die mindestens bis dahin reicht — sonst würde "
+                           "bezahlte Zeit verloren gehen.")
         # SOFORT: erst bei Stripe umstellen (dort haengt das Geld), dann lokal.
         # Review-Befund 5: Idempotency-Key gegen Doppelklick/Doppelbuchung.
         try:
             stripe_zahlung.wechsle_sofort(
                 sub_id, plan, monate,
-                # Schluessel enthaelt die Subscription: derselbe Wechsel an
-                # DERSELBEN Subscription ist idempotent (Doppelklick-Schutz),
-                # ein Wechsel an einer anderen kollidiert nicht.
+                # Review-Befund 5: KEINE Zeitkomponente — mit
+                # billing_cycle_anchor='now' wuerde ein Wiederholungs-Aufruf
+                # sonst eine zweite volle Periode berechnen. Der Schluessel
+                # enthaelt das ALTE Laufzeitende: derselbe Wechsel ist
+                # idempotent, ein spaeterer echter Wechsel (dann ist das Ende
+                # ein anderes) bleibt moeglich.
                 idempotency_key=f"wechsel-{sub_id}-{plan}-{monate}-"
-                                f"{datetime.utcnow().strftime('%Y%m%d%H%M')}")
+                                f"{(db_user.get('plan_gueltig_bis') or 'x')[:10]}")
         except stripe_zahlung.ZahlungOffen as z:
             # Review-Befund 3: Stripe hat umgestellt, aber die Differenz ist
             # NICHT bezahlt -> lokal nichts freischalten, Kunde zur Rechnung
@@ -1980,14 +2009,10 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
         gueltig_bis, geloest, ueberbelegt = _setze_plan_kern(
             db_user["id"], db_user, plan, monate, None, 1, quelle="stripe")
         # ... und der Kunde bekommt SOFORT das volle neue Kontingent: der
-        # Verbrauch des laufenden Monats zaehlt ab hier neu.
-        conn = get_db()
-        try:
-            conn.execute("UPDATE users SET kontingent_reset_am = datetime('now') WHERE id = ?",
-                         (db_user["id"],))
-            conn.commit()
-        finally:
-            conn.close()
+        # Verbrauch des laufenden Zeitraums zaehlt ab hier neu. Die Funktion
+        # bucht vorher offenen Ueberhang ab und gewaehrt den Neustart
+        # hoechstens EINMAL pro Kalendermonat (Review-Befunde 2 und 8).
+        billing.starte_kontingent_neu(db_user["id"])
         # Ein evtl. vorgemerkter Downgrade ist mit dem Upgrade hinfaellig.
         conn = get_db()
         try:
@@ -2274,17 +2299,20 @@ async def stripe_webhook(request: Request):
                                          gueltig, 1, quelle="stripe")
                         conn = get_db()
                         try:
-                            # Vormerkung ist mit der Abrechnung erledigt; bei
-                            # einem PLANWECHSEL startet auch das Kontingent neu.
-                            if alter_plan != neuer_plan:
-                                conn.execute("UPDATE users SET kontingent_reset_am = datetime('now') "
-                                             "WHERE id = ?", (ziel["id"],))
                             conn.execute("UPDATE users SET geplanter_plan = NULL, "
                                          "geplante_laufzeit = NULL, geplant_ab = NULL "
                                          "WHERE id = ?", (ziel["id"],))
                             conn.commit()
                         finally:
                             conn.close()
+                        # Review-Befund 6: Kontingent-Neustart auch beim reinen
+                        # Laufzeit-Upgrade (single/3 -> single/12), aber NIE bei
+                        # der bloßen Verlaengerung desselben Plans.
+                        if (billing.PLAN_KONTINGENTE.get(neuer_plan, 0)
+                                > billing.PLAN_KONTINGENTE.get(alter_plan, 0)
+                                or (alter_plan == neuer_plan
+                                    and neue_laufzeit != (ziel.get("plan_laufzeit_monate") or 0))):
+                            billing.starte_kontingent_neu(ziel["id"])
                         if alter_plan != neuer_plan and _kv_einmal(
                                 f"abo_mail_stripewechsel_{ziel['id']}_{gueltig}_{neuer_plan}"):
                             try:
@@ -2526,14 +2554,12 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
             gueltig_bis, geloest, _u = _setze_plan_kern(
                 k["id"], db_user, geplant, ziel_laufzeit, None, 1,
                 quelle=k.get("plan_quelle") or "rechnung")
-            # Neue Laufzeit = neuer Abrechnungszeitraum, auch beim Downgrade.
-            conn = get_db()
-            try:
-                conn.execute("UPDATE users SET kontingent_reset_am = datetime('now') "
-                             "WHERE id = ?", (k["id"],))
-                conn.commit()
-            finally:
-                conn.close()
+            # Review-Befund 7: Kontingent-Neustart NUR, wenn der Zielplan
+            # mehr Credits hat. Beim Downgrade waere er ein Geschenk (voller
+            # neuer Topf zusaetzlich zum schon verbrauchten alten).
+            if (billing.PLAN_KONTINGENTE.get(geplant, 0)
+                    > billing.PLAN_KONTINGENTE.get(k.get("plan"), 0)):
+                billing.starte_kontingent_neu(k["id"])
             if _kv_einmal(f"abo_mail_gewechselt_{k['id']}_{ablauf}"):
                 saetze = [f"Hallo {name},",
                           f"wie vorgemerkt haben wir dein Abo heute auf den Plan "

@@ -220,7 +220,7 @@ def monats_verbrauch(konto_user_id: int, conn=None) -> int:
     try:
         row = conn.execute(
             "SELECT COALESCE(SUM(e.credits), 0) FROM usage_events e "
-            "JOIN users u ON u.id = e.konto_user_id "
+            "LEFT JOIN users u ON u.id = e.konto_user_id "
             f"WHERE e.konto_user_id = ? AND e.created_at >= {_abrechnungsbeginn_sql()}",
             (konto_user_id,),
         ).fetchone()
@@ -258,7 +258,12 @@ def _domain_monats_verbrauch(domain: str, conn=None) -> int:
             "AND (COALESCE(u.plan, 'free') = 'free' "
             "     OR (u.plan_gueltig_bis IS NOT NULL AND date(u.plan_gueltig_bis) < date('now'))) "
             "AND u.is_admin = 0 "
-            "AND e.created_at >= " + _abrechnungsbeginn_sql() + " ",
+            # Review-Befund 10 (07.08.): HIER bewusst fest der Monatsanfang.
+            # Der gemeinsame Free-Topf darf nicht aus Zeitfenstern
+            # unterschiedlicher Laenge zusammengerechnet werden — ein
+            # Upgrade-Reset an EINEM Konto wuerde sonst der ganzen Domain
+            # zusaetzliche Gratis-Credits verschaffen.
+            "AND e.created_at >= date('now', 'start of month') ",
             (domain,),
         ).fetchone()
         return int(row[0])
@@ -304,6 +309,23 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None) -> int:
     """
     if plan == "free" or not kontingent:
         return 0
+    # Review-Befund 3 (07.08.): Nach einem Kontingent-Neustart im laufenden
+    # Monat gibt es KEINEN Uebertrag mehr — "frischer Topf" heisst frisch.
+    # Sonst wuerde der Uebertrag aus den Vormonaten ein zweites Mal gewaehrt
+    # (und durch die K-Naeherung sogar mit dem neuen, groesseren Kontingent
+    # nachgerechnet).
+    eigene_pruef_conn = conn is None
+    _c = get_db() if eigene_pruef_conn else conn
+    try:
+        _r = _c.execute(
+            "SELECT 1 FROM users WHERE id = ? AND kontingent_reset_am IS NOT NULL "
+            "AND kontingent_reset_am >= date('now', 'start of month')",
+            (konto_id,)).fetchone()
+    finally:
+        if eigene_pruef_conn:
+            _c.close()
+    if _r:
+        return 0
     eigene_conn = conn is None
     if eigene_conn:
         conn = get_db()
@@ -335,6 +357,47 @@ def _uebertrag(konto_id: int, plan: str, kontingent, conn=None) -> int:
         if monat > 12:
             monat, jahr = 1, jahr + 1
     return u
+
+
+def starte_kontingent_neu(konto_id: int) -> None:
+    """Setzt den Abrechnungs-Zeitraum eines Kontos auf JETZT (Upgrade).
+
+    Vorher wird der noch ungedeckte Ueberhang des laufenden Zeitraums ein
+    letztes Mal von den Zusatz-Paketen abgebucht (Review-Befund 8,
+    07.08.2026) — sonst verschwaende der Reset diese Forderung dauerhaft,
+    weil die Differenzrechnung danach bei null beginnt.
+
+    Der Reset wird HOECHSTENS EINMAL pro Kalendermonat gewaehrt
+    (Review-Befund 2): sonst koennte man sich ueber eine Kette von
+    Upgrades (single/3 -> single/6 -> ... -> enterprise/12) an einem Tag
+    mehrfach das volle Kontingent verschaffen.
+    Rueckgabe: nichts; Fehler werden geloggt (Abrechnung darf nie crashen).
+    """
+    try:
+        conn = get_db()
+        try:
+            conn.isolation_level = None
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                _pakete_abbuchen(conn, konto_id)
+            except Exception:
+                log.exception("Ueberhang-Abbuchung vor dem Reset fehlgeschlagen (konto=%s)", konto_id)
+            conn.execute(
+                "UPDATE users SET kontingent_reset_am = datetime('now') WHERE id = ? "
+                "AND (kontingent_reset_am IS NULL "
+                "     OR kontingent_reset_am < date('now', 'start of month'))",
+                (konto_id,))
+            conn.execute("COMMIT")
+        except Exception:
+            try:
+                conn.execute("ROLLBACK")
+            except Exception:
+                pass
+            raise
+        finally:
+            conn.close()
+    except Exception:
+        log.exception("Kontingent-Neustart fehlgeschlagen (konto=%s)", konto_id)
 
 
 def pakete_rest(konto_id: int) -> int:
@@ -567,7 +630,7 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
     # Upgrade-Reset ein alter Ueberhang erneut von den Paketen abgebucht).
     bereits = int(conn.execute(
         "SELECT COALESCE(SUM(a.betrag), 0) FROM paket_abbuchungen a "
-        "JOIN users u ON u.id = a.konto_user_id "
+        "LEFT JOIN users u ON u.id = a.konto_user_id "
         f"WHERE a.konto_user_id = ? AND a.created_at >= {_abrechnungsbeginn_sql()}",
         (konto_id,),
     ).fetchone()[0])

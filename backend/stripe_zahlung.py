@@ -315,13 +315,27 @@ def wechsle_sofort(subscription_id: str, plan: str, monate: int,
     if idempotency_key:
         args["idempotency_key"] = idempotency_key
     neu = stripe.Subscription.modify(subscription_id, **args)
-    # Zahlung pruefen: 'paid' oder gar keine Rechnung (z.B. Gutschrift deckt
-    # alles) sind ok; alles andere ist offen.
+    # Review-Befund 4 (07.08.): Zahlung STRENG pruefen. Vorher waren drei
+    # Luecken drin — 'draft' galt als bezahlt, die Pruefung verlangte
+    # ZUSAETZLICH einen past_due-Status (den Stripe erst Tage spaeter setzt),
+    # und es wurde nicht geprueft, ob latest_invoice ueberhaupt die NEUE
+    # Rechnung ist. Jetzt gilt: freigeschaltet wird nur, wenn nichts mehr
+    # offen ist.
     rechnung = neu.get("latest_invoice")
     if isinstance(rechnung, str):
         rechnung = stripe.Invoice.retrieve(rechnung)
-    if rechnung and rechnung.get("status") not in (None, "paid", "draft"):
-        if neu.get("status") in ("past_due", "unpaid", "incomplete"):
+    if rechnung:
+        # Gehoert die Rechnung zu DIESEM Vorgang? (Sonst ist es die bezahlte
+        # der Vorperiode und wuerde faelschlich gruenes Licht geben.)
+        gehoert_dazu = (rechnung.get("billing_reason") in
+                        ("subscription_update", "subscription_cycle", "subscription_create"))
+        offen = float(rechnung.get("amount_remaining") or 0) > 0
+        status = rechnung.get("status")
+        # 'processing' = SEPA-Lastschrift laeuft (dauert Werktage) — bewusst
+        # als bezahlt behandeln, sonst koennte niemand per Lastschrift
+        # hochstufen. 'draft' ist NICHT bezahlt (wird erst finalisiert).
+        bezahlt = (status == "paid") or (not offen and status not in ("draft", "open", "uncollectible"))
+        if gehoert_dazu and not bezahlt and status != "processing":
             raise ZahlungOffen(rechnung.get("hosted_invoice_url") or "")
     return neu
 
