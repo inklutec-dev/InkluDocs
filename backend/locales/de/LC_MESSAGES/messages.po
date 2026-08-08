@@ -3543,3 +3543,13 @@ msgstr "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber) — {frei
 
 msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
 msgstr "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
+
+# Plan-Wechsel: aktueller Plan gekennzeichnet, Team-Folgen (08.08.2026)
+msgid "dein aktueller Plan"
+msgstr "dein aktueller Plan"
+
+msgid "Der neue Plan hat keine Team-Plätze: Dein Team wird zum Stichtag aufgelöst. Die Mitglieder werden jetzt schon per E-Mail informiert und arbeiten ab dann wieder mit ihrem eigenen Guthaben."
+msgstr "Der neue Plan hat keine Team-Plätze: Dein Team wird zum Stichtag aufgelöst. Die Mitglieder werden jetzt schon per E-Mail informiert und arbeiten ab dann wieder mit ihrem eigenen Guthaben."
+
+msgid "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
+msgstr "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."

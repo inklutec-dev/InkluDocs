@@ -3101,3 +3101,13 @@ msgstr "{belegt} av {max} platser upptagna (du som ägare inräknad) — {frei} 
 
 msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
 msgstr "Vill du verkligen ta bort ”{name}” från teamet? Personen arbetar sedan med sitt eget abonnemang igen och informeras via e-post. Platsen blir ledig direkt."
+
+# Plan-Wechsel: aktueller Plan gekennzeichnet, Team-Folgen (08.08.2026)
+msgid "dein aktueller Plan"
+msgstr "ditt nuvarande abonnemang"
+
+msgid "Der neue Plan hat keine Team-Plätze: Dein Team wird zum Stichtag aufgelöst. Die Mitglieder werden jetzt schon per E-Mail informiert und arbeiten ab dann wieder mit ihrem eigenen Guthaben."
+msgstr "Det nya abonnemanget har inga teamplatser: ditt team upplöses vid brytdatumet. Medlemmarna informeras via e-post redan nu och arbetar därefter från sitt eget saldo igen."
+
+msgid "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
+msgstr "Ditt team finns kvar — se bara till att platserna i det nya abonnemanget räcker."

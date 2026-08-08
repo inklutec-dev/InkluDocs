@@ -3540,3 +3540,13 @@ msgstr "{belegt} of {max} seats taken (including you as the owner) — {frei} fr
 
 msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
 msgstr "Really remove “{name}” from the team? The person will then work from their own plan again and will be informed by email. The seat becomes free immediately."
+
+# Plan-Wechsel: aktueller Plan gekennzeichnet, Team-Folgen (08.08.2026)
+msgid "dein aktueller Plan"
+msgstr "your current plan"
+
+msgid "Der neue Plan hat keine Team-Plätze: Dein Team wird zum Stichtag aufgelöst. Die Mitglieder werden jetzt schon per E-Mail informiert und arbeiten ab dann wieder mit ihrem eigenen Guthaben."
+msgstr "The new plan has no team seats: your team will be dissolved on that date. The members are informed by email right away and will then work from their own credit again."
+
+msgid "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
+msgstr "Your team stays — just make sure the seats of the new plan are enough."

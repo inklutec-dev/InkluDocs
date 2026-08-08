@@ -3540,3 +3540,13 @@ msgstr "{belegt} de {max} plazas ocupadas (incluido tú como titular): {frei} li
 
 msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
 msgstr "¿Quitar realmente a «{name}» del equipo? La persona volverá a trabajar con su propio plan y se le informará por correo electrónico. La plaza queda libre de inmediato."
+
+# Plan-Wechsel: aktueller Plan gekennzeichnet, Team-Folgen (08.08.2026)
+msgid "dein aktueller Plan"
+msgstr "tu plan actual"
+
+msgid "Der neue Plan hat keine Team-Plätze: Dein Team wird zum Stichtag aufgelöst. Die Mitglieder werden jetzt schon per E-Mail informiert und arbeiten ab dann wieder mit ihrem eigenen Guthaben."
+msgstr "El nuevo plan no incluye plazas de equipo: tu equipo se disolverá en esa fecha. Se informa a los miembros por correo electrónico desde ahora y a partir de entonces trabajarán con su propio crédito."
+
+msgid "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
+msgstr "Tu equipo se mantiene: solo asegúrate de que las plazas del nuevo plan sean suficientes."

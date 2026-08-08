@@ -406,6 +406,16 @@
     // Gekündigte Abos: erst Kündigung zurücknehmen (Review-Befund 8).
     if (abo.eigen.auto_verlaengerung === false) { bereich.hidden = true; return; }
     bereich.hidden = false;
+    // Den laufenden Plan im Auswahlfeld kennzeichnen (Steve 08.08.): Sonst
+    // steht er dort wie ein Angebot, obwohl man ihn schon hat. Der
+    // Grundtext bleibt in data-basis, damit mehrfaches Rendern den Zusatz
+    // nicht anhäuft.
+    Array.from(byId('wechselPlan').options).forEach((opt) => {
+      if (!opt.dataset.basis) opt.dataset.basis = opt.textContent;
+      opt.textContent = (opt.value === abo.eigen.plan)
+        ? opt.dataset.basis + ' — ' + t('dein aktueller Plan')
+        : opt.dataset.basis;
+    });
     // Vorauswahl: eine Stufe über dem aktuellen Plan, damit der häufigste
     // Fall (Upgrade) ohne Umstellen passt.
     const reihe = ['single', 'team', 'enterprise'];
@@ -439,7 +449,17 @@
     if (PLAN_MONATSPREISE[ziel] > PLAN_MONATSPREISE[aktuell]) {
       hinweis.textContent = t('Höherstufung: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit deines bisherigen Plans wird angerechnet. Die vollen Credits stehen sofort bereit.', { summe: summe, monate: monate });
     } else {
-      hinweis.textContent = t('Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate.', { datum: _abo.eigen.gueltig_bis || '', summe: summe, monate: monate });
+      let text = t('Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate.', { datum: _abo.eigen.gueltig_bis || '', summe: summe, monate: monate });
+      // Wer Plätze verliert, soll das VOR dem Klick lesen — nicht erst aus
+      // der Mail an die Mitglieder erfahren (Steve 08.08.).
+      const hatteSitze = aktuell === 'team' || aktuell === 'enterprise';
+      const behaeltSitze = ziel === 'team' || ziel === 'enterprise';
+      if (hatteSitze && !behaeltSitze) {
+        text += ' ' + t('Der neue Plan hat keine Team-Plätze: Dein Team wird zum Stichtag aufgelöst. Die Mitglieder werden jetzt schon per E-Mail informiert und arbeiten ab dann wieder mit ihrem eigenen Guthaben.');
+      } else if (hatteSitze && behaeltSitze) {
+        text += ' ' + t('Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen.');
+      }
+      hinweis.textContent = text;
     }
   }
   byId('wechselPlan').addEventListener('change', wechselHinweisSetzen);
