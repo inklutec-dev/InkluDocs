@@ -114,3 +114,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .lang-option:hover { border-color: #c75000; }
 .lang-option:focus-visible { outline: 3px solid #c75000; outline-offset: 2px; }
 .lang-option.is-current { border-color: #c75000; background: #c75000; color: #fff; font-weight: 700; }
+
+/* Rechtstexte in der App-Ansicht (08.08.2026): Der nachgeladene
+   .legal-container lag direkt auf dem grauen Seitenhintergrund (#f5f7fa).
+   Dort schafft die Akzentfarbe #c75000 nur 4,27:1 — knapp unter AA, obwohl
+   sie auf Weiss 4,59:1 erreicht. Statt die Markenfarbe ein zweites Mal zu
+   aendern, bekommt der Textblock den weissen Kartengrund, auf dem sie
+   passt. Nebenbei sieht es aus wie die uebrigen Karten der App.
+   Betrifft /nutzungsbedingungen-app, /datensicherheit, /widerruf-app. */
+#legalContent,
+#datensicherheitContent {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  max-width: 60rem;
+}
+#legalContent > .legal-container,
+#datensicherheitContent > .legal-container { max-width: none; margin: 0; padding: 0; background: none; }

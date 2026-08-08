@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InkluDocs - Widerrufsbelehrung</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+<a href="#main" class="dash-skip">Zum Hauptinhalt springen</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      <h1>Widerrufsbelehrung</h1>
+      <p class="dash-sub">Inhalt aus
+        <a href="/widerruf">der öffentlichen Widerrufsbelehrung</a> — eine Quelle, kein Doppeltext.</p>
+      <div id="legalContent" aria-busy="true" role="region" aria-label="Widerrufsbelehrung">
+        <p class="dash-sub">Inhalt wird geladen …</p>
+      </div>
+    </main>
+    <footer class="dash-footer"></footer>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
+
+<script src="/static/dashboard.js"></script>
+<script>
+  // 08.08.2026: Gleiche Mechanik wie /nutzungsbedingungen-app — eine
+  // Quelle, kein Doppeltext. Der Kündigungsknopf bekommt bewusst KEINE
+  // App-Sicht: § 312k BGB verlangt einen Weg, der ohne Anmeldung erreichbar
+  // ist, und genau dorthin soll der Link aus der Fußzeile führen.
+  (async function loadWiderrufInline() {
+    const target = document.getElementById('legalContent');
+    try {
+      const res = await fetch('/widerruf', { credentials: 'same-origin' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const container = doc.querySelector('.legal-container');
+      if (!container) throw new Error('Widerrufs-Inhalt nicht gefunden (.legal-container fehlt)');
+      container.querySelectorAll('h1').forEach((h) => h.remove());
+      container.querySelectorAll('nav.auth-links').forEach((n) => n.remove());
+      target.innerHTML = '';
+      target.appendChild(container);
+      target.setAttribute('aria-busy', 'false');
+    } catch (err) {
+      target.innerHTML = '<p style="color:var(--error,#c33);">Die Widerrufsbelehrung konnte nicht geladen werden: '
+        + (err && err.message ? err.message : 'Unbekannter Fehler')
+        + '. Bitte stattdessen die <a href="/widerruf">öffentliche Widerrufsbelehrung</a> aufrufen.</p>';
+      target.setAttribute('aria-busy', 'false');
+    }
+  })();
+</script>
+</body>
+</html>

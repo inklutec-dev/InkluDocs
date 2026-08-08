@@ -207,7 +207,7 @@ const LEGAL_LINKS = [
   { href: '/impressum-app', label: t('Impressum') },
   { href: '/datensicherheit', label: t('Datenschutz') },
   { href: '/nutzungsbedingungen-app', label: t('Nutzungsbedingungen') },
-  { href: '/widerruf', label: t('Widerrufsbelehrung') },
+  { href: '/widerruf-app', label: t('Widerrufsbelehrung') },
   // § 312k BGB verlangt, dass der Kuendigungsknopf staendig verfuegbar und
   // leicht erreichbar ist — deshalb in JEDER Fusszeile, nicht nur im Abo-Bereich.
   { href: '/kuendigen', label: t('Vertrag kündigen') },

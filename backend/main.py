@@ -6826,6 +6826,17 @@ async def impressum_app_page(request: Request):
     return _serve_protected_page(request, "impressum-app.html")
 
 
+@app.get("/widerruf-app", response_class=HTMLResponse)
+async def widerruf_app_page(request: Request):
+    """In-App-Sicht der Widerrufsbelehrung (08.08.2026), Inhalt aus /widerruf.
+
+    Die Kuendigungsseite bekommt bewusst KEINE App-Sicht: § 312k BGB
+    verlangt einen Weg, der ohne Anmeldung erreichbar ist — der Link aus der
+    Fusszeile fuehrt deshalb direkt auf /kuendigen.
+    """
+    return _serve_protected_page(request, "widerruf-app.html")
+
+
 @app.get("/nutzungsbedingungen-app", response_class=HTMLResponse)
 async def nutzungsbedingungen_app_page(request: Request):
     # Steve 08.06.2026: In-App-Sicht der Nutzungsbedingungen. Gleiches Muster
