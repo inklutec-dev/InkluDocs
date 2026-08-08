@@ -1,0 +1,385 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Dein Team') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# Eigene Team-Seite (08.08.2026, Steve): Vorher stand die ganze Team-
+   Verwaltung mitten im Abo-Bereich und machte die Seite lang — auch fuer
+   alle, die gar kein Team fuehren wollen. Jetzt steht im Abo nur noch eine
+   Zusammenfassung mit Link; hier ist der Platz zum Arbeiten.
+   Bewusst KEIN Eintrag in der Seitenleiste: Der Weg fuehrt ueber „Abo &
+   Verbrauch", sonst steht der Punkt auch bei Konten ohne Team-Abo herum. #}
+<h1>{{ _('Dein Team') }}</h1>
+<p class="dash-sub">
+  <a href="/abo">{{ _('Zurück zu Abo &amp; Verbrauch') }}</a>
+</p>
+
+{# Kein Team-/Enterprise-Abo: ehrlich sagen, was fehlt, statt leere
+   Formulare zu zeigen. #}
+<section class="dash-card" aria-labelledby="keinPlanHeading" id="keinPlanBereich" hidden>
+  <h2 id="keinPlanHeading" tabindex="-1">{{ _('Dein Plan hat keine Team-Plätze') }}</h2>
+  <p>{{ _('Ein gemeinsames Guthaben gibt es in den Tarifen Team (5 Plätze) und Enterprise (25 Plätze) — jeweils inklusive dir. In deinem jetzigen Tarif arbeitest du allein.') }}</p>
+  <p><a href="/abo">{{ _('Zu Abo &amp; Verbrauch, um den Tarif zu wechseln') }}</a></p>
+</section>
+
+{# Betreiber-Konten: Sie zahlen nichts und werden nie begrenzt — die
+   Team-Verwaltung ist fuer sie ohne Bedeutung. #}
+<section class="dash-card" aria-labelledby="betreiberHeading" id="betreiberBereich" hidden>
+  <h2 id="betreiberHeading" tabindex="-1">{{ _('Betreiber-Konto') }}</h2>
+  <p>{{ _('Betreiber-Konten nutzen InkluDocs ohne Abo und ohne Begrenzung. Ein Team brauchst du dafür nicht.') }}</p>
+  <p><a href="/abo">{{ _('Zurück zu Abo &amp; Verbrauch') }}</a></p>
+</section>
+
+{# Noch kein Team: erst benennen, dann einladen (Steve 07.08.). #}
+<section class="dash-card" aria-labelledby="anlegenHeading" id="teamAnlegen" hidden>
+  <h2 id="anlegenHeading" tabindex="-1">{{ _('Team erstellen') }}</h2>
+  <p>{{ _('Dein Tarif enthält mehrere Plätze. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen. Alle Mitglieder arbeiten dann aus demselben Guthaben.') }}</p>
+  <form id="teamCreateForm" novalidate>
+    <div class="dash-field">
+      <label for="teamCreateInput">{{ _('Wie soll dein Team heißen?') }}</label>
+      <input type="text" id="teamCreateInput" class="dash-input" maxlength="100" required autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-primary">{{ _('Team erstellen') }}</button>
+    <span id="teamCreateMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+    <span id="teamCreateErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+  </form>
+</section>
+
+{# Team besteht: verwalten. #}
+<div id="teamVorhanden" hidden>
+  <section class="dash-card" aria-labelledby="uebersichtHeading">
+    <h2 id="uebersichtHeading" tabindex="-1">{{ _('Übersicht') }}</h2>
+    <p id="teamNameZeile"></p>
+    <p id="teamSitze" class="dash-meta"></p>
+    <button type="button" class="btn btn-secondary" id="teamRenameBtn">{{ _('Teamnamen ändern') }}</button>
+    <button type="button" class="btn btn-delete" id="teamAufloesenBtn">{{ _('Team auflösen') }}</button>
+    <span id="teamNameMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+  </section>
+
+  <section class="dash-card" aria-labelledby="teamListHeading">
+    <h2 id="teamListHeading" tabindex="-1">{{ _('Mitglieder') }}</h2>
+    <div id="teamList">
+      <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
+    </div>
+    <button type="button" class="btn btn-secondary btn-small" id="teamReloadBtn">{{ _('Liste aktualisieren') }}</button>
+    <span id="teamReloadMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+  </section>
+
+  <section class="dash-card" aria-labelledby="teamInviteHeading">
+    <h2 id="teamInviteHeading" tabindex="-1">{{ _('Mitglied einladen') }}</h2>
+    <p class="dash-meta">{{ _('Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an.') }}</p>
+    <form id="teamInviteForm" novalidate>
+      <div class="dash-field">
+        <label for="inviteEmail">{{ _('E-Mail-Adresse des neuen Mitglieds') }}</label>
+        <input type="email" id="inviteEmail" class="dash-input" required autocomplete="off">
+      </div>
+      <div class="dash-field">
+        <label for="inviteName">{{ _('Name (optional)') }}</label>
+        <input type="text" id="inviteName" class="dash-input" maxlength="100" autocomplete="off">
+      </div>
+      <button type="submit" class="btn btn-primary">{{ _('Einladen') }}</button>
+      <span id="teamMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+      <span id="teamErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+    </form>
+  </section>
+</div>
+{% endblock %}
+
+{% block dialogs %}
+{# Natives <dialog> + showModal(): Fokusfang, Escape und inerter Hintergrund
+   nativ (Hausregel). #}
+<dialog id="teamRenameDialog" class="app-dialog" aria-labelledby="teamRenameHeading">
+  <h2 id="teamRenameHeading">{{ _('Teamnamen ändern') }}</h2>
+  <form id="teamRenameForm" method="dialog">
+    <div class="dash-field">
+      <label for="teamRenameInput">{{ _('Neuer Teamname') }}</label>
+      <input type="text" id="teamRenameInput" class="dash-input" maxlength="100" required autocomplete="off">
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="teamRenameCancel">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary" id="teamRenameConfirm">{{ _('Speichern') }}</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="teamAufloesenDialog" class="app-dialog" aria-labelledby="teamAufloesenHeading">
+  <h2 id="teamAufloesenHeading">{{ _('Team wirklich auflösen?') }}</h2>
+  <p id="teamAufloesenBody"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="teamAufloesenCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="teamAufloesenConfirm">{{ _('Team auflösen') }}</button>
+  </div>
+</dialog>
+<dialog id="teamRemoveDialog" class="app-dialog" aria-labelledby="teamRemoveHeading">
+  <h2 id="teamRemoveHeading">{{ _('Team-Mitglied entfernen?') }}</h2>
+  <p id="teamRemoveBody"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="teamRemoveCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="teamRemoveConfirm">{{ _('Entfernen') }}</button>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block page_script %}
+<script>
+{% raw %}
+  let _abo = null;
+
+  function zeigeBereich(welcher) {
+    ['keinPlanBereich', 'betreiberBereich', 'teamAnlegen'].forEach((id) => {
+      byId(id).hidden = (id !== welcher);
+    });
+    byId('teamVorhanden').hidden = (welcher !== 'vorhanden');
+  }
+
+  function renderTeamSeite(abo) {
+    _abo = abo;
+    if (!abo || !abo.eigen) { zeigeBereich('keinPlanBereich'); return; }
+    if (abo.ist_betreiber) { zeigeBereich('betreiberBereich'); return; }
+    if (!abo.eigen.ist_topf_inhaber) { zeigeBereich('keinPlanBereich'); return; }
+    const name = (abo.eigen.team_name || '').trim();
+    if (!name) { zeigeBereich('teamAnlegen'); return; }
+    zeigeBereich('vorhanden');
+    byId('teamNameZeile').textContent = t('Dein Team: {name}', { name: name });
+    loadTeam();
+  }
+
+  async function teamNamenSpeichern(name, msgEl, errEl) {
+    if (errEl) errEl.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/team/name', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_name: name }),
+      });
+    } catch (e) { (errEl || msgEl).textContent = t('Fehler'); return false; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { (errEl || msgEl).textContent = d.detail || t('Fehler'); return false; }
+    if (_abo && _abo.eigen) _abo.eigen.team_name = d.team_name || name;
+    msgEl.textContent = t('Teamname gespeichert.');
+    msgEl.style.color = 'var(--success)';
+    return true;
+  }
+
+  byId('teamCreateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const wert = byId('teamCreateInput').value.trim();
+    if (!wert) { byId('teamCreateInput').focus(); return; }
+    const ok = await teamNamenSpeichern(wert, byId('teamCreateMsg'), byId('teamCreateErr'));
+    if (ok) {
+      // Steves Wunsch (08.08.): Nach dem Anlegen zurueck zur Abo-Seite, wo
+      // das neue Team gleich mit Platzstand steht. Kurze Pause, damit die
+      // Erfolgsmeldung noch vorgelesen wird.
+      byId('teamCreateMsg').textContent = t('Team „{name}“ wurde erstellt. Du kommst gleich zurück zur Abo-Seite.', { name: wert });
+      setTimeout(() => { window.location.href = '/abo?team=neu'; }, 1600);
+    }
+  });
+
+  byId('teamRenameBtn').addEventListener('click', () => {
+    byId('teamRenameInput').value = (_abo && _abo.eigen && _abo.eigen.team_name) || '';
+    byId('teamRenameDialog').showModal();
+  });
+  byId('teamRenameCancel').addEventListener('click', () => byId('teamRenameDialog').close());
+  byId('teamRenameDialog').addEventListener('close', () => byId('teamRenameBtn').focus());
+  byId('teamRenameForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const wert = byId('teamRenameInput').value.trim();
+    if (!wert) { byId('teamRenameInput').focus(); return; }
+    byId('teamRenameDialog').close();
+    const ok = await teamNamenSpeichern(wert, byId('teamNameMsg'), null);
+    if (ok) byId('teamNameZeile').textContent = t('Dein Team: {name}', { name: wert });
+  });
+
+  byId('teamAufloesenBtn').addEventListener('click', () => {
+    byId('teamAufloesenBody').textContent = t('Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein.');
+    byId('teamAufloesenDialog').showModal();
+  });
+  byId('teamAufloesenCancel').addEventListener('click', () => byId('teamAufloesenDialog').close());
+  byId('teamAufloesenDialog').addEventListener('close', () => {
+    const btn = byId('teamAufloesenBtn');
+    if (document.contains(btn) && !btn.closest('[hidden]')) btn.focus();
+  });
+  byId('teamAufloesenConfirm').addEventListener('click', async () => {
+    const msg = byId('teamNameMsg');
+    msg.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/team', { method: 'DELETE' });
+    } catch (e) { byId('teamAufloesenDialog').close(); msg.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    byId('teamAufloesenDialog').close();
+    if (!res.ok) { msg.textContent = d.detail || t('Fehler'); msg.style.color = 'var(--error)'; return; }
+    if (_abo && _abo.eigen) _abo.eigen.team_name = '';
+    zeigeBereich('teamAnlegen');
+    const cmsg = byId('teamCreateMsg');
+    cmsg.textContent = d.message || t('Team aufgelöst.');
+    cmsg.style.color = 'var(--success)';
+    byId('anlegenHeading').focus();
+  });
+
+  byId('teamReloadBtn').addEventListener('click', async () => {
+    const msg = byId('teamReloadMsg');
+    msg.textContent = t('Wird aktualisiert ...');
+    await loadTeam();
+    msg.textContent = t('Liste ist aktuell.');
+  });
+
+  // Stilles Nachladen beim Zurueckkehren zur Seite (kein Dauer-Polling:
+  // das wuerde beim Lesen mit dem Screenreader stoeren, Steve 07.08.).
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !byId('teamVorhanden').hidden) loadTeam();
+  });
+
+  let _teamRemoveId = null;
+  let _teamRemoveTrigger = null;
+
+  async function loadTeam() {
+    const list = byId('teamList');
+    let data;
+    try {
+      const res = await fetch('/api/team');
+      if (!res.ok) throw new Error('teamload');
+      data = await res.json();
+    } catch (e) {
+      list.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'dash-meta';
+      p.textContent = t('Team-Mitglieder konnten nicht geladen werden.');
+      list.appendChild(p);
+      return;
+    }
+    // Platzstand oben in der Uebersicht: „3 von 5 Plätzen belegt, 2 frei."
+    const sitze = byId('teamSitze');
+    if (data.sitze_inklusive) {
+      const frei = Math.max(0, data.sitze_inklusive - data.sitze_belegt);
+      sitze.textContent = t('{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber) — {frei} frei.', { belegt: data.sitze_belegt, max: data.sitze_inklusive, frei: frei });
+    } else {
+      sitze.textContent = '';
+    }
+    const members = data.mitglieder || [];
+    list.innerHTML = '';
+    if (members.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'dash-meta';
+      p.textContent = t('Noch keine Team-Mitglieder.');
+      list.appendChild(p);
+      return;
+    }
+    const ul = document.createElement('ul');
+    ul.setAttribute('role', 'list');
+    ul.style.cssText = 'list-style:none;padding:0;margin:0;';
+    members.forEach((m) => {
+      const li = document.createElement('li');
+      li.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border);flex-wrap:wrap;';
+      const info = document.createElement('div');
+      const strong = document.createElement('strong');
+      strong.textContent = m.display_name || m.email;
+      info.appendChild(strong);
+      if (m.ist_inhaber) {
+        const rolle = document.createElement('span');
+        rolle.className = 'dash-meta'; rolle.style.marginLeft = '.5rem';
+        rolle.textContent = t('(Inhaber)');
+        info.appendChild(rolle);
+      }
+      // Trennzeichen als echter Text: sonst liest der Screenreader Name,
+      // E-Mail und Verbrauch ohne Pause in einem Wort zusammen.
+      const mail = document.createElement('span');
+      mail.className = 'dash-meta'; mail.style.marginLeft = '.5rem';
+      mail.textContent = '· ' + m.email;
+      info.appendChild(mail);
+      const used = document.createElement('span');
+      used.className = 'dash-meta'; used.style.marginLeft = '.5rem';
+      used.textContent = '· ' + t('diesen Monat aus dem Team-Topf: {anzahl} Credits', { anzahl: m.verbraucht_monat });
+      info.appendChild(used);
+      li.appendChild(info);
+      if (!m.ist_inhaber) {
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'btn btn-delete btn-small';
+        del.textContent = t('Entfernen');
+        del.setAttribute('aria-label', t('{name} aus dem Team entfernen', { name: m.display_name || m.email }));
+        del.addEventListener('click', () => openTeamRemove(m, del));
+        li.appendChild(del);
+      }
+      ul.appendChild(li);
+    });
+    list.appendChild(ul);
+  }
+
+  function openTeamRemove(m, triggerBtn) {
+    _teamRemoveId = m.id;
+    _teamRemoveTrigger = triggerBtn;
+    byId('teamRemoveBody').textContent = t('Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei.', { name: m.display_name || m.email });
+    byId('teamRemoveDialog').showModal();
+  }
+
+  byId('teamRemoveCancel').addEventListener('click', () => byId('teamRemoveDialog').close());
+  byId('teamRemoveDialog').addEventListener('close', () => {
+    if (_teamRemoveTrigger && document.contains(_teamRemoveTrigger)) _teamRemoveTrigger.focus();
+  });
+
+  byId('teamRemoveConfirm').addEventListener('click', async () => {
+    const dlg = byId('teamRemoveDialog');
+    const msg = byId('teamMsg');
+    const err = byId('teamErr');
+    msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/team/mitglied/' + _teamRemoveId, { method: 'DELETE' });
+    } catch (e) { dlg.close(); err.textContent = t('Fehler'); return; }
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      dlg.close();
+      err.textContent = d.detail || t('Fehler');
+      return;
+    }
+    _teamRemoveTrigger = null;   // Knopf verschwindet gleich mit der Liste
+    dlg.close();
+    msg.textContent = t('Mitglied wurde aus dem Team entfernt.'); msg.style.color = 'var(--success)';
+    await loadTeam();
+    byId('teamListHeading').focus();
+  });
+
+  byId('teamInviteForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = byId('inviteEmail');
+    const msg = byId('teamMsg');
+    const err = byId('teamErr');
+    msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
+    const email = input.value.trim();
+    if (!email) { input.focus(); return; }
+    let res;
+    try {
+      res = await fetch('/api/team/einladen', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, display_name: byId('inviteName').value.trim() }),
+      });
+    } catch (e) { err.textContent = t('Fehler'); return; }
+    if (res.ok) {
+      // Zustimmungs-Fluss: Mitglied wird man erst nach Annahme der
+      // Mail-Einladung — darum ehrlich "versandt" statt "eingeladen".
+      msg.textContent = t('Einladung versandt an {email}.', { email: email });
+      msg.style.color = 'var(--success)';
+      input.value = '';
+      byId('inviteName').value = '';
+      loadTeam();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      // Auch der 400er (z. B. alle Plätze belegt) kommt hier als detail an.
+      err.textContent = d.detail || t('Fehler');
+    }
+  });
+
+  (async function initTeam() {
+    let abo = null;
+    try {
+      const res = await fetch('/api/me');
+      if (res.status === 401) { window.location.href = '/'; return; }
+      abo = (await res.json()).abo || null;
+    } catch (e) { abo = null; }
+    renderTeamSeite(abo);
+  })();
+{% endraw %}
+</script>
+{% endblock %}

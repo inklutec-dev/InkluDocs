@@ -2049,7 +2049,7 @@ async def team_mitglied_entfernen(mitglied_id: int, user: dict = Depends(get_cur
 <html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
 <h1 style="color:#1b2a4a;">Änderung an deinem InkluDocs-Konto</h1>
 <p>Hallo {html.escape(ziel['display_name'])},</p>
-<p>du wurdest aus {team_label} entfernt und arbeitest ab jetzt wieder mit deinem eigenen Guthaben. Dein Konto und alle deine Projekte bleiben unverändert bestehen.</p>
+<p>du wurdest aus {team_label} entfernt. Ab jetzt arbeitest du wieder mit deinem eigenen Tarif und dem Guthaben, das dazu gehört — hast du kein eigenes Abo, ist das der kostenlose Free-Tarif. Dein Konto und alle deine Projekte bleiben unverändert bestehen.</p>
 <p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
 <p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
 </body></html>"""
@@ -6753,6 +6753,20 @@ async def abo_page(request: Request):
     # Abo & Verbrauch (Etappe 2, 31.07.2026): eigene Unterseite; das
     # Template abo.html liefert der Frontend-Teil dieser Etappe.
     return _render_protected_template(request, "abo.html")
+
+
+@app.get("/team", response_class=HTMLResponse)
+async def team_page(request: Request):
+    """Team-Verwaltung als eigene Seite (08.08.2026, Steve).
+
+    Vorher stand die ganze Verwaltung mitten im Abo-Bereich und machte die
+    Seite lang — auch fuer alle, die kein Team fuehren wollen. Bewusst OHNE
+    Eintrag in der Seitenleiste: Der Weg fuehrt ueber „Abo & Verbrauch",
+    sonst stuende der Punkt auch bei Konten ohne Team-Tarif herum.
+    Wer hier ohne passenden Tarif landet, bekommt eine Erklaerung statt
+    leerer Formulare — die Endpunkte pruefen die Rechte ohnehin selbst.
+    """
+    return _render_protected_template(request, "team.html")
 
 
 @app.get("/konto", response_class=HTMLResponse)

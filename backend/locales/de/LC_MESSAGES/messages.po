@@ -3494,3 +3494,52 @@ msgstr "Ja, Rechte entziehen"
 # Demo-Spendenhinweis praezisiert (08.08.2026)
 msgid "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
 msgstr "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+
+# Eigene Team-Seite (08.08.2026)
+msgid "Übersicht"
+msgstr "Übersicht"
+
+msgid "Team verwalten"
+msgstr "Team verwalten"
+
+msgid "Betreiber-Konto"
+msgstr "Betreiber-Konto"
+
+msgid "Dein Plan hat keine Team-Plätze"
+msgstr "Dein Plan hat keine Team-Plätze"
+
+msgid "Du hast noch kein Team angelegt."
+msgstr "Du hast noch kein Team angelegt."
+
+msgid "Dein Team wurde erstellt."
+msgstr "Dein Team wurde erstellt."
+
+msgid "Zurück zu Abo &amp; Verbrauch"
+msgstr "Zurück zu Abo &amp; Verbrauch"
+
+msgid "Zu Abo &amp; Verbrauch, um den Tarif zu wechseln"
+msgstr "Zu Abo &amp; Verbrauch, um den Tarif zu wechseln"
+
+msgid "Dein Tarif enthält mehrere Plätze: Du kannst Leute einladen, die dann aus demselben Guthaben arbeiten."
+msgstr "Dein Tarif enthält mehrere Plätze: Du kannst Leute einladen, die dann aus demselben Guthaben arbeiten."
+
+msgid "Dein Tarif enthält mehrere Plätze. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen. Alle Mitglieder arbeiten dann aus demselben Guthaben."
+msgstr "Dein Tarif enthält mehrere Plätze. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen. Alle Mitglieder arbeiten dann aus demselben Guthaben."
+
+msgid "Ein gemeinsames Guthaben gibt es in den Tarifen Team (5 Plätze) und Enterprise (25 Plätze) — jeweils inklusive dir. In deinem jetzigen Tarif arbeitest du allein."
+msgstr "Ein gemeinsames Guthaben gibt es in den Tarifen Team (5 Plätze) und Enterprise (25 Plätze) — jeweils inklusive dir. In deinem jetzigen Tarif arbeitest du allein."
+
+msgid "Betreiber-Konten nutzen InkluDocs ohne Abo und ohne Begrenzung. Ein Team brauchst du dafür nicht."
+msgstr "Betreiber-Konten nutzen InkluDocs ohne Abo und ohne Begrenzung. Ein Team brauchst du dafür nicht."
+
+msgid "Team „{name}“ wurde erstellt. Du kommst gleich zurück zur Abo-Seite."
+msgstr "Team „{name}“ wurde erstellt. Du kommst gleich zurück zur Abo-Seite."
+
+msgid "Dein Team: {name} — {belegt} von {max} Plätzen belegt, {frei} frei."
+msgstr "Dein Team: {name} — {belegt} von {max} Plätzen belegt, {frei} frei."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber) — {frei} frei."
+msgstr "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber) — {frei} frei."
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
+msgstr "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."

@@ -3182,3 +3182,52 @@ msgstr "Ja, fjern rettighederne"
 # Demo-Spendenhinweis praezisiert (08.08.2026)
 msgid "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
 msgstr "Denne demo er gratis og videreudvikles løbende. Hvis du vil støtte projektet, sætter vi pris på et frivilligt bidrag."
+
+# Eigene Team-Seite (08.08.2026)
+msgid "Übersicht"
+msgstr "Oversigt"
+
+msgid "Team verwalten"
+msgstr "Administrer team"
+
+msgid "Betreiber-Konto"
+msgstr "Operatørkonto"
+
+msgid "Dein Plan hat keine Team-Plätze"
+msgstr "Dit abonnement har ingen teampladser"
+
+msgid "Du hast noch kein Team angelegt."
+msgstr "Du har endnu ikke oprettet et team."
+
+msgid "Dein Team wurde erstellt."
+msgstr "Dit team er oprettet."
+
+msgid "Zurück zu Abo &amp; Verbrauch"
+msgstr "Tilbage til Abonnement og forbrug"
+
+msgid "Zu Abo &amp; Verbrauch, um den Tarif zu wechseln"
+msgstr "Gå til Abonnement og forbrug for at skifte abonnement"
+
+msgid "Dein Tarif enthält mehrere Plätze: Du kannst Leute einladen, die dann aus demselben Guthaben arbeiten."
+msgstr "Dit abonnement indeholder flere pladser: Du kan invitere personer, som så arbejder ud af samme forbrug."
+
+msgid "Dein Tarif enthält mehrere Plätze. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen. Alle Mitglieder arbeiten dann aus demselben Guthaben."
+msgstr "Dit abonnement indeholder flere pladser. Giv først dit team et navn — derefter kan du invitere medlemmer. Alle medlemmer arbejder så ud af samme forbrug."
+
+msgid "Ein gemeinsames Guthaben gibt es in den Tarifen Team (5 Plätze) und Enterprise (25 Plätze) — jeweils inklusive dir. In deinem jetzigen Tarif arbeitest du allein."
+msgstr "Fælles forbrug findes i abonnementerne Team (5 pladser) og Enterprise (25 pladser) — dig medregnet i begge tilfælde. I dit nuværende abonnement arbejder du alene."
+
+msgid "Betreiber-Konten nutzen InkluDocs ohne Abo und ohne Begrenzung. Ein Team brauchst du dafür nicht."
+msgstr "Operatørkonti bruger InkluDocs uden abonnement og uden begrænsning. Det kræver ikke et team."
+
+msgid "Team „{name}“ wurde erstellt. Du kommst gleich zurück zur Abo-Seite."
+msgstr "Teamet „{name}“ er oprettet. Du sendes straks tilbage til abonnementssiden."
+
+msgid "Dein Team: {name} — {belegt} von {max} Plätzen belegt, {frei} frei."
+msgstr "Dit team: {name} — {belegt} af {max} pladser optaget, {frei} ledige."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber) — {frei} frei."
+msgstr "{belegt} af {max} pladser optaget (dig som ejer medregnet) — {frei} ledige."
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
+msgstr "Vil du virkelig fjerne „{name}“ fra teamet? Personen arbejder derefter igen med sit eget abonnement og får besked via e-mail. Pladsen bliver ledig med det samme."

@@ -3491,3 +3491,52 @@ msgstr "Oui, retirer les droits"
 # Demo-Spendenhinweis praezisiert (08.08.2026)
 msgid "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
 msgstr "Cette démo est gratuite et évolue en permanence. Si vous souhaitez soutenir le projet, une contribution volontaire nous fait plaisir."
+
+# Eigene Team-Seite (08.08.2026)
+msgid "Übersicht"
+msgstr "Vue d’ensemble"
+
+msgid "Team verwalten"
+msgstr "Gérer l’équipe"
+
+msgid "Betreiber-Konto"
+msgstr "Compte d’exploitant"
+
+msgid "Dein Plan hat keine Team-Plätze"
+msgstr "Votre formule ne comprend pas de places d’équipe"
+
+msgid "Du hast noch kein Team angelegt."
+msgstr "Vous n’avez pas encore créé d’équipe."
+
+msgid "Dein Team wurde erstellt."
+msgstr "Votre équipe a été créée."
+
+msgid "Zurück zu Abo &amp; Verbrauch"
+msgstr "Retour à Abonnement et consommation"
+
+msgid "Zu Abo &amp; Verbrauch, um den Tarif zu wechseln"
+msgstr "Aller à Abonnement et consommation pour changer de formule"
+
+msgid "Dein Tarif enthält mehrere Plätze: Du kannst Leute einladen, die dann aus demselben Guthaben arbeiten."
+msgstr "Votre formule comprend plusieurs places : vous pouvez inviter des personnes qui travailleront alors sur le même crédit."
+
+msgid "Dein Tarif enthält mehrere Plätze. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen. Alle Mitglieder arbeiten dann aus demselben Guthaben."
+msgstr "Votre formule comprend plusieurs places. Donnez d’abord un nom à votre équipe, puis vous pourrez inviter des membres. Tous les membres travailleront alors sur le même crédit."
+
+msgid "Ein gemeinsames Guthaben gibt es in den Tarifen Team (5 Plätze) und Enterprise (25 Plätze) — jeweils inklusive dir. In deinem jetzigen Tarif arbeitest du allein."
+msgstr "Le crédit partagé existe dans les formules Team (5 places) et Enterprise (25 places), vous compris dans les deux cas. Dans votre formule actuelle, vous travaillez seul."
+
+msgid "Betreiber-Konten nutzen InkluDocs ohne Abo und ohne Begrenzung. Ein Team brauchst du dafür nicht."
+msgstr "Les comptes d’exploitant utilisent InkluDocs sans abonnement ni limite. Vous n’avez pas besoin d’une équipe pour cela."
+
+msgid "Team „{name}“ wurde erstellt. Du kommst gleich zurück zur Abo-Seite."
+msgstr "L’équipe « {name} » a été créée. Vous allez être redirigé vers la page d’abonnement."
+
+msgid "Dein Team: {name} — {belegt} von {max} Plätzen belegt, {frei} frei."
+msgstr "Votre équipe : {name} — {belegt} places sur {max} occupées, {frei} libres."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber) — {frei} frei."
+msgstr "{belegt} places sur {max} occupées (vous inclus en tant que propriétaire) — {frei} libres."
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
+msgstr "Retirer vraiment « {name} » de l’équipe ? La personne travaillera de nouveau avec sa propre formule et sera informée par e-mail. La place se libère immédiatement."

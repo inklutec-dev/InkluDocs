@@ -3491,3 +3491,52 @@ msgstr "Sí, retirar permisos"
 # Demo-Spendenhinweis praezisiert (08.08.2026)
 msgid "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
 msgstr "Esta demo es gratuita y se sigue desarrollando continuamente. Si quieres apoyar el proyecto, agradecemos una aportación voluntaria."
+
+# Eigene Team-Seite (08.08.2026)
+msgid "Übersicht"
+msgstr "Resumen"
+
+msgid "Team verwalten"
+msgstr "Gestionar el equipo"
+
+msgid "Betreiber-Konto"
+msgstr "Cuenta de operador"
+
+msgid "Dein Plan hat keine Team-Plätze"
+msgstr "Tu plan no incluye plazas de equipo"
+
+msgid "Du hast noch kein Team angelegt."
+msgstr "Todavía no has creado un equipo."
+
+msgid "Dein Team wurde erstellt."
+msgstr "Se ha creado tu equipo."
+
+msgid "Zurück zu Abo &amp; Verbrauch"
+msgstr "Volver a Suscripción y consumo"
+
+msgid "Zu Abo &amp; Verbrauch, um den Tarif zu wechseln"
+msgstr "Ir a Suscripción y consumo para cambiar de plan"
+
+msgid "Dein Tarif enthält mehrere Plätze: Du kannst Leute einladen, die dann aus demselben Guthaben arbeiten."
+msgstr "Tu plan incluye varias plazas: puedes invitar a personas que trabajarán con el mismo crédito."
+
+msgid "Dein Tarif enthält mehrere Plätze. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen. Alle Mitglieder arbeiten dann aus demselben Guthaben."
+msgstr "Tu plan incluye varias plazas. Primero dale un nombre a tu equipo; después podrás invitar a miembros. Todos los miembros trabajarán con el mismo crédito."
+
+msgid "Ein gemeinsames Guthaben gibt es in den Tarifen Team (5 Plätze) und Enterprise (25 Plätze) — jeweils inklusive dir. In deinem jetzigen Tarif arbeitest du allein."
+msgstr "El crédito compartido existe en los planes Team (5 plazas) y Enterprise (25 plazas), incluyéndote a ti en ambos casos. En tu plan actual trabajas en solitario."
+
+msgid "Betreiber-Konten nutzen InkluDocs ohne Abo und ohne Begrenzung. Ein Team brauchst du dafür nicht."
+msgstr "Las cuentas de operador usan InkluDocs sin suscripción y sin límites. Para eso no necesitas un equipo."
+
+msgid "Team „{name}“ wurde erstellt. Du kommst gleich zurück zur Abo-Seite."
+msgstr "Se ha creado el equipo «{name}». Volverás enseguida a la página de suscripción."
+
+msgid "Dein Team: {name} — {belegt} von {max} Plätzen belegt, {frei} frei."
+msgstr "Tu equipo: {name}: {belegt} de {max} plazas ocupadas, {frei} libres."
+
+msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber) — {frei} frei."
+msgstr "{belegt} de {max} plazas ocupadas (incluido tú como titular): {frei} libres."
+
+msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
+msgstr "¿Quitar realmente a «{name}» del equipo? La persona volverá a trabajar con su propio plan y se le informará por correo electrónico. La plaza queda libre de inmediato."
