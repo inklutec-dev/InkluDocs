@@ -1338,7 +1338,8 @@ async def team_uebersicht(user: dict = Depends(get_current_user)):
             "FROM users u WHERE u.id = ? OR u.id IN "
             "(SELECT mitglied_id FROM team_mitgliedschaften WHERE inhaber_id = ?) "
             "ORDER BY (u.id != ?), u.display_name COLLATE NOCASE",
-            (inhaber["id"], inhaber["id"], inhaber["id"], inhaber["id"]),
+            # Fuenf Platzhalter: Topf, Reset-Konto, Inhaber, Mitgliedschaft, Sortierung.
+            (inhaber["id"],) * 5,
         ).fetchall()
     finally:
         conn.close()
