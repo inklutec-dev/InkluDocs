@@ -3490,3 +3490,7 @@ msgstr "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer b
 
 msgid "Ja, Rechte entziehen"
 msgstr "Ja, Rechte entziehen"
+
+# Demo-Spendenhinweis praezisiert (08.08.2026)
+msgid "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+msgstr "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."

@@ -3178,3 +3178,7 @@ msgstr "{name} mister administratorrettighederne. Kontoen består som almindelig
 
 msgid "Ja, Rechte entziehen"
 msgstr "Ja, fjern rettighederne"
+
+# Demo-Spendenhinweis praezisiert (08.08.2026)
+msgid "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+msgstr "Denne demo er gratis og videreudvikles løbende. Hvis du vil støtte projektet, sætter vi pris på et frivilligt bidrag."

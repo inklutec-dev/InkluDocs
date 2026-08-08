@@ -92,7 +92,7 @@ function t(s, params) {
           t(" Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.") +
         '</p>' +
         '<div class="dash-support">' +
-          '<p class="dash-support-text">' + t("InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.") + '</p>' +
+          '<p class="dash-support-text">' + t("Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.") + '</p>' +
           '<a class="dash-support-link" href="https://www.paypal.com/donate?business=steve.weidel%40gmail.com&item_name=InkluDocs+-+Freiwilliger+Beitrag&currency_code=EUR" ' +
             'target="_blank" rel="noopener" aria-label="' + t("InkluDocs per PayPal unterstützen, öffnet in neuem Tab") + '">' + t("InkluDocs per PayPal unterstützen") + '</a>' +
           '<p class="dash-support-note">' + t("Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen.") + '</p>' +

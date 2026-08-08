@@ -228,34 +228,11 @@ function renderLegalLinks() {
   });
 }
 
-// Spenden-Hinweis dezent im Fussbereich (auf jeder Dashboard-Seite).
-function renderSupportFooter() {
-  document.querySelectorAll('.dash-footer').forEach((footer) => {
-    if (footer.querySelector('.dash-support')) return;
-    const sec = document.createElement('div');
-    sec.className = 'dash-support';
-    const p = document.createElement('p');
-    p.className = 'dash-support-text';
-    // Seit dem Abomodell (06.08.2026) ist "InkluDocs ist kostenlos" schlicht
-    // falsch — es gibt einen kostenlosen Tarif, aber der Dienst ist nicht
-    // kostenlos. Text entsprechend richtiggestellt.
-    p.textContent = t('InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt.');
-    const a = document.createElement('a');
-    a.className = 'dash-support-link';
-    a.href = 'https://www.paypal.com/donate?business=steve.weidel%40gmail.com&item_name=InkluDocs+-+Freiwilliger+Beitrag&currency_code=EUR';
-    a.target = '_blank';
-    a.rel = 'noopener';
-    a.textContent = t('InkluDocs per PayPal unterstützen');
-    a.setAttribute('aria-label', t('InkluDocs per PayPal unterstützen, öffnet in neuem Tab'));
-    const note = document.createElement('p');
-    note.className = 'dash-support-note';
-    note.textContent = t('Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen.');
-    sec.appendChild(p);
-    sec.appendChild(a);
-    sec.appendChild(note);
-    footer.appendChild(sec);
-  });
-}
+// Spenden-Hinweis: am 08.08.2026 aus der App ENTFERNT (Steve).
+// Seit dem Abomodell zahlt die Kundschaft hier fuer den Dienst — ein
+// Spendenaufruf daneben passt nicht und wirkt wie eine zweite Kasse.
+// Auf der oeffentlichen Demo (demo-shell.js) bleibt er, dort ist das
+// Angebot tatsaechlich kostenlos.
 
 // DSGVO-Hinweis in jede Dashboard-Fußzeile (zentral gepflegt, gleicher Text wie auf /app).
 // Idempotent. /app hat .legal-footer (eigener Hinweis) und wird hier nicht getroffen.
@@ -277,5 +254,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSidebar();
   renderLegalLinks();
   renderLegalNote();
-  renderSupportFooter();
+
 });

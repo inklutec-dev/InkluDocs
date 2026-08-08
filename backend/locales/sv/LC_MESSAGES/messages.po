@@ -3048,3 +3048,7 @@ msgstr "{name} förlorar administratörsrättigheterna. Kontot finns kvar som va
 
 msgid "Ja, Rechte entziehen"
 msgstr "Ja, ta bort rättigheterna"
+
+# Demo-Spendenhinweis praezisiert (08.08.2026)
+msgid "Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag."
+msgstr "Den här demon är kostnadsfri och vidareutvecklas löpande. Vill du stödja projektet uppskattar vi ett frivilligt bidrag."
