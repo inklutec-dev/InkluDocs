@@ -2,16 +2,9 @@
 
 {% block title %}InkluDocs - {{ _('Preise') }}{% endblock %}
 
-{% block head %}
-<style>
-  /* Bekannter Kontrast-Bug der oeffentlichen Seiten: Marken-Orange #e87722
-     schafft auf Weiss nur 2,96:1. Diese NEUE Seite startet direkt mit dem
-     AA-Orange #c75000 (4,59:1) — der globale Tausch auf den Altseiten
-     bleibt ein eigener Arbeitspunkt (siehe Memory Kontrast-Bug). */
-  .auth-container .brand { color: #c75000; }
-  .auth-links a { color: #c75000; }
-</style>
-{% endblock %}
+{# Die frueher hier noetige Farb-Uebersteuerung ist seit dem globalen
+   Kontrast-Tausch (08.08.2026) ueberfluessig: --accent in style.css ist
+   jetzt selbst das AA-Orange #c75000 (4,59:1). #}
 
 {% block body %}
     {# Oeffentliche Tarif-/Preisseite (neues Abomodell, 06.08.2026:
@@ -22,7 +15,7 @@
     <a href="#main" class="skip-link">{{ _('Zum Hauptinhalt springen') }}</a>
     <main id="main" tabindex="-1">
         <div class="auth-container" role="region" aria-label="{{ _('Preise') }}" style="max-width:640px;">
-            <h1><span class="brand">Inklu</span>Docs — {{ _('Preise') }}{# Staging-Label in #c75000 statt #e87722: das Orange schafft auf Weiss nur
+            <h1><span class="brand">Inklu</span>Docs — {{ _('Preise') }}{# Staging-Label in der Akzentfarbe (#c75000, 4,59:1). Das fruehere Orange schaffte nur
    2,96:1 (bekannter Kontrast-Bug, auf den Altseiten noch offen) — hier
    direkt AA-konform (4,59:1). #}{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}</h1>
             <p class="subtitle">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.') }}</p>

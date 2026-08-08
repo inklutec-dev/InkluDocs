@@ -1,8 +1,13 @@
 :root {
     --primary: #1b2a4a;
     --primary-hover: #0f1d36;
-    --accent: #e87722;
-    --accent-hover: #d4691e;
+    /* Kontrast-Fix (08.08.2026): Das helle Marken-Orange #c75000 schafft auf
+       Weiss nur 2,96:1 und fiel damit unter WCAG AA (4,5:1) — in einem
+       Barrierefreiheits-Produkt ein Widerspruch in sich. Ersetzt durch das
+       kraeftigere #c75000 (4,59:1), das die Dashboard-Seiten, InkluEdit und
+       die Preisseite laengst verwenden. Gleicher Farbton, nur satter. */
+    --accent: #c75000;
+    --accent-hover: #a94200;
     --bg: #f5f7fa;
     --card-bg: #ffffff;
     --text: #1e293b;
@@ -10,7 +15,7 @@
     --border: #e2e8f0;
     --error: #dc2626;
     --success: #16a34a;
-    --focus: #e87722;
+    --focus: #c75000;
     --warning: #f59e0b;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -480,7 +485,7 @@ input[type="file"] {
     padding: 0.25rem 0.2rem;
 }
 .export-scope-label:focus-within {
-    outline: 2px solid var(--focus, #e87722);
+    outline: 2px solid var(--focus, #c75000);
     outline-offset: 2px;
     border-radius: 4px;
 }
@@ -506,7 +511,7 @@ input[type="file"] {
     padding: 0.85rem 1rem;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-left: 6px solid var(--accent, #e87722);
+    border-left: 6px solid var(--accent, #c75000);
     border-radius: 10px;
     margin-bottom: 0.75rem;
 }
@@ -514,7 +519,7 @@ input[type="file"] {
     border-radius: 10px 10px 0 0;
 }
 .doc-section > summary:focus-visible {
-    outline: 2px solid var(--focus, #e87722);
+    outline: 2px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
 .doc-heading {
@@ -668,7 +673,7 @@ input[type="file"] {
     padding: 0.7rem 1rem;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-left: 4px solid var(--accent, #e87722);
+    border-left: 4px solid var(--accent, #c75000);
     border-radius: 8px;
     margin-bottom: 0.75rem;
 }
@@ -677,7 +682,7 @@ input[type="file"] {
     margin-bottom: 0.75rem;
 }
 .page-section > summary:focus-visible {
-    outline: 2px solid var(--focus, #e87722);
+    outline: 2px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
 .page-heading {
@@ -716,7 +721,7 @@ input[type="file"] {
     padding: 0.3rem 0;
 }
 .page-view-details > summary:focus-visible {
-    outline: 2px solid var(--focus, #e87722);
+    outline: 2px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
 /* Seitentext: eigenes inneres Klapp-Element innerhalb der Seitengruppe */
@@ -734,7 +739,7 @@ input[type="file"] {
     padding: 0.3rem 0;
 }
 .page-text-details > summary:focus-visible {
-    outline: 2px solid var(--focus, #e87722);
+    outline: 2px solid var(--focus, #c75000);
     outline-offset: 2px;
 }
 .page-text-content {

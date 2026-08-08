@@ -3166,3 +3166,49 @@ msgstr ""
 
 msgid "Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet."
 msgstr ""
+
+# Konto-Selbstloeschung (08.08.2026, DSGVO)
+msgid "Konto löschen"
+msgstr "Konto löschen"
+
+msgid "Du kannst dein Konto jederzeit selbst löschen. Dabei werden alle deine Projekte, Dokumente und Alt-Texte unwiderruflich entfernt — das lässt sich nicht rückgängig machen."
+msgstr "Du kannst dein Konto jederzeit selbst löschen. Dabei werden alle deine Projekte, Dokumente und Alt-Texte unwiderruflich entfernt — das lässt sich nicht rückgängig machen."
+
+msgid "Zur Sicherheit: dein aktuelles Passwort"
+msgstr "Zur Sicherheit: dein aktuelles Passwort"
+
+msgid "Konto endgültig löschen"
+msgstr "Konto endgültig löschen"
+
+msgid "Konto wirklich löschen?"
+msgstr "Konto wirklich löschen?"
+
+msgid "Ja, Konto löschen"
+msgstr "Ja, Konto löschen"
+
+msgid "Alle deine Projekte, Dokumente und Alt-Texte werden unwiderruflich gelöscht. Das lässt sich nicht rückgängig machen."
+msgstr "Alle deine Projekte, Dokumente und Alt-Texte werden unwiderruflich gelöscht. Das lässt sich nicht rückgängig machen."
+
+msgid "Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht."
+msgstr "Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht."
+
+msgid "Dein laufendes Abo wird dabei beendet."
+msgstr "Dein laufendes Abo wird dabei beendet."
+
+msgid "Dein laufendes Abo wird beendet, eine Erstattung gibt es nicht."
+msgstr "Dein laufendes Abo wird beendet, eine Erstattung gibt es nicht."
+
+msgid "Dein Team wird aufgelöst. Die Mitglieder behalten ihre Konten und Projekte und arbeiten danach wieder mit ihrem eigenen Guthaben; sie werden per E-Mail informiert."
+msgstr "Dein Team wird aufgelöst. Die Mitglieder behalten ihre Konten und Projekte und arbeiten danach wieder mit ihrem eigenen Guthaben; sie werden per E-Mail informiert."
+
+msgid "Dein Team wird aufgelöst."
+msgstr "Dein Team wird aufgelöst."
+
+msgid "Hinweis: Betreiber-Konten können sich nicht selbst löschen."
+msgstr "Hinweis: Betreiber-Konten können sich nicht selbst löschen."
+
+msgid "Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet."
+msgstr "Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet."
+
+msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
+msgstr "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."

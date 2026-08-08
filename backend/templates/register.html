@@ -6,7 +6,7 @@
     <a href="#main" class="skip-link">{{ _('Zum Hauptinhalt springen') }}</a>
     <main id="main" tabindex="-1">
         <div class="auth-container" role="region" aria-label="{{ _('Registrierung') }}">
-            <h1><span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#e87722;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}</h1>
+            <h1><span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}</h1>
             <p class="subtitle">{{ _('Neues Konto erstellen') }}</p>
             <form id="registerForm" novalidate>
                 <div class="form-group">
@@ -106,7 +106,7 @@
                             '<p style="margin:1rem 0;">' + T.mailSentTo.replace('{email}', '<strong>' + email + '</strong>') + '</p>' +
                             '<p>' + T.clickLink + '</p>' +
                             '<p style="color:#64748b;font-size:0.9rem;margin-top:1.5rem;">' + T.noMail + ' ' +
-                            '<button type="button" id="resendBtn" style="background:none;border:none;color:#e87722;text-decoration:underline;cursor:pointer;font-size:0.9rem;padding:0;">' + T.resendLink + '</button>.</p>' +
+                            '<button type="button" id="resendBtn" style="background:none;border:none;color:#c75000;text-decoration:underline;cursor:pointer;font-size:0.9rem;padding:0;">' + T.resendLink + '</button>.</p>' +
                         '</div>' +
                         '<p><a href="/">' + T.toLogin + '</a></p>';
                     const resendBtn = document.getElementById('resendBtn');

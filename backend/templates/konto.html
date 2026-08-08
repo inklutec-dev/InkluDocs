@@ -75,6 +75,38 @@
           <span id="pwErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
         </form>
       </section>
+
+      {# Konto-Selbstloeschung (08.08.2026, DSGVO): Bis hierher konnten nur
+         Admins loeschen. Bewusst als LETZTER Abschnitt, mit Passwort-
+         Bestaetigung und nativem Dialog — und mit ehrlicher Ansage, was
+         alles verschwindet. #}
+      <section class="dash-card" aria-labelledby="del-h">
+        <h2 id="del-h" tabindex="-1">{{ _('Konto löschen') }}</h2>
+        <p>{{ _('Du kannst dein Konto jederzeit selbst löschen. Dabei werden alle deine Projekte, Dokumente und Alt-Texte unwiderruflich entfernt — das lässt sich nicht rückgängig machen.') }}</p>
+        <div id="delHinweise"></div>
+        <form id="deleteForm" novalidate>
+          <div class="dash-field">
+            <label for="del_password">{{ _('Zur Sicherheit: dein aktuelles Passwort') }}</label>
+            <input type="password" id="del_password" class="dash-input" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-delete">{{ _('Konto endgültig löschen') }}</button>
+          <span id="delMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="delErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        </form>
+      </section>
+{% endblock %}
+{% block dialogs %}
+{# Natives dialog + showModal (Hausregel): Fokusfang, Escape, inerter
+   Hintergrund. Abbrechen hat den Autofokus — die Loeschung ist die
+   gefaehrliche Aktion. #}
+<dialog id="deleteDialog" class="app-dialog" aria-labelledby="deleteHeading">
+  <h2 id="deleteHeading">{{ _('Konto wirklich löschen?') }}</h2>
+  <p id="deleteBody"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="deleteCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="deleteConfirm">{{ _('Ja, Konto löschen') }}</button>
+  </div>
+</dialog>
 {% endblock %}
 {% block page_script %}
 <script>
@@ -210,6 +242,89 @@
       const d = await res.json().catch(() => ({}));
       err.textContent = d.detail || t('Fehler');
     }
+  });
+
+  // ── Konto-Selbstloeschung (08.08.2026, DSGVO) ──
+  // Ehrliche Vorab-Ansage: Was der Kunde verliert, haengt von seinem Abo ab
+  // (laufendes Abo, eigenes Team). Die Daten dafuer kommen aus /api/me.
+  let _delInfo = null;
+
+  (async function loadLoeschHinweise() {
+    let abo = null;
+    try {
+      const res = await fetch('/api/me');
+      abo = (await res.json()).abo || null;
+    } catch (e) { return; }
+    if (!abo) return;
+    _delInfo = abo;
+    const box = byId('delHinweise');
+    box.innerHTML = '';
+    const zeilen = [];
+    if (abo.eigen && abo.eigen.plan !== 'free') {
+      zeilen.push(abo.eigen.gueltig_bis
+        ? t('Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht.', { plan: abo.eigen.plan, datum: abo.eigen.gueltig_bis })
+        : t('Dein laufendes Abo wird dabei beendet.'));
+    }
+    if (abo.eigen && abo.eigen.ist_topf_inhaber && abo.eigen.team_name) {
+      zeilen.push(t('Dein Team wird aufgelöst. Die Mitglieder behalten ihre Konten und Projekte und arbeiten danach wieder mit ihrem eigenen Guthaben; sie werden per E-Mail informiert.'));
+    }
+    if (abo.ist_betreiber) {
+      zeilen.push(t('Hinweis: Betreiber-Konten können sich nicht selbst löschen.'));
+      byId('deleteForm').hidden = true;
+    }
+    zeilen.forEach((z) => {
+      const p = document.createElement('p');
+      p.textContent = z;
+      box.appendChild(p);
+    });
+  })();
+
+  byId('deleteForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pw = byId('del_password').value;
+    const err = byId('delErr');
+    err.textContent = '';
+    if (!pw) { byId('del_password').focus(); return; }
+    let text = t('Alle deine Projekte, Dokumente und Alt-Texte werden unwiderruflich gelöscht. Das lässt sich nicht rückgängig machen.');
+    if (_delInfo && _delInfo.eigen && _delInfo.eigen.plan !== 'free') {
+      text += ' ' + t('Dein laufendes Abo wird beendet, eine Erstattung gibt es nicht.');
+    }
+    if (_delInfo && _delInfo.eigen && _delInfo.eigen.ist_topf_inhaber && _delInfo.eigen.team_name) {
+      text += ' ' + t('Dein Team wird aufgelöst.');
+    }
+    byId('deleteBody').textContent = text;
+    byId('deleteDialog').showModal();
+  });
+
+  byId('deleteCancel').addEventListener('click', () => byId('deleteDialog').close());
+  byId('deleteDialog').addEventListener('close', () => {
+    const f = byId('deleteForm');
+    if (!f.hidden) byId('del_password').focus();
+  });
+
+  byId('deleteConfirm').addEventListener('click', async () => {
+    const dlg = byId('deleteDialog');
+    const err = byId('delErr');
+    const msg = byId('delMsg');
+    err.textContent = ''; msg.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/konto/loeschen', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: byId('del_password').value }),
+      });
+    } catch (e) { dlg.close(); err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    dlg.close();
+    if (!res.ok) {
+      err.textContent = d.detail || t('Fehler');
+      byId('del_password').value = '';
+      byId('del_password').focus();
+      return;
+    }
+    // Konto ist weg — Sitzung beenden und zur Startseite mit Abschiedsgruss.
+    msg.textContent = t('Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet.');
+    setTimeout(() => { window.location.href = '/?geloescht=1'; }, 1500);
   });
 {% endraw %}
 </script>

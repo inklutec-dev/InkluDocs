@@ -2724,3 +2724,49 @@ msgstr "Vill du hellre beställa mot faktura? Vår partner Actino Software hante
 
 msgid "Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet."
 msgstr "Längre löptid: gäller omedelbart. En ny löptid på {monate} månader startar för {summe} €; redan betald tid räknas av."
+
+# Konto-Selbstloeschung (08.08.2026, DSGVO)
+msgid "Konto löschen"
+msgstr "Radera konto"
+
+msgid "Du kannst dein Konto jederzeit selbst löschen. Dabei werden alle deine Projekte, Dokumente und Alt-Texte unwiderruflich entfernt — das lässt sich nicht rückgängig machen."
+msgstr "Du kan när som helst radera ditt konto själv. Alla dina projekt, dokument och alt-texter tas bort permanent — det går inte att ångra."
+
+msgid "Zur Sicherheit: dein aktuelles Passwort"
+msgstr "För säkerhets skull: ditt nuvarande lösenord"
+
+msgid "Konto endgültig löschen"
+msgstr "Radera kontot permanent"
+
+msgid "Konto wirklich löschen?"
+msgstr "Vill du verkligen radera kontot?"
+
+msgid "Ja, Konto löschen"
+msgstr "Ja, radera kontot"
+
+msgid "Alle deine Projekte, Dokumente und Alt-Texte werden unwiderruflich gelöscht. Das lässt sich nicht rückgängig machen."
+msgstr "Alla dina projekt, dokument och alt-texter raderas permanent. Det går inte att ångra."
+
+msgid "Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht."
+msgstr "Din pågående prenumeration ({plan}, betald till {datum}) avslutas — återstående tid återbetalas inte."
+
+msgid "Dein laufendes Abo wird dabei beendet."
+msgstr "Din pågående prenumeration avslutas."
+
+msgid "Dein laufendes Abo wird beendet, eine Erstattung gibt es nicht."
+msgstr "Din pågående prenumeration avslutas och ingen återbetalning sker."
+
+msgid "Dein Team wird aufgelöst. Die Mitglieder behalten ihre Konten und Projekte und arbeiten danach wieder mit ihrem eigenen Guthaben; sie werden per E-Mail informiert."
+msgstr "Ditt team upplöses. Medlemmarna behåller sina konton och projekt och arbetar sedan med sitt eget saldo igen; de informeras via e-post."
+
+msgid "Dein Team wird aufgelöst."
+msgstr "Ditt team upplöses."
+
+msgid "Hinweis: Betreiber-Konten können sich nicht selbst löschen."
+msgstr "Obs: operatörskonton kan inte radera sig själva."
+
+msgid "Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet."
+msgstr "Ditt konto har raderats. Du loggas nu ut."
+
+msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
+msgstr "Ditt konto har raderats. Alla dina projekt och alt-texter är borttagna. Tack för att du använde InkluDocs."

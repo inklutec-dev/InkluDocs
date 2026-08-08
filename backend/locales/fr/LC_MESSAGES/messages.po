@@ -3163,3 +3163,49 @@ msgstr "Tu préfères commander sur facture ? Notre partenaire Actino Software g
 
 msgid "Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet."
 msgstr "Durée plus longue : effet immédiat. Une nouvelle période de {monate} mois démarre au prix de {summe} € ; le temps déjà payé est déduit."
+
+# Konto-Selbstloeschung (08.08.2026, DSGVO)
+msgid "Konto löschen"
+msgstr "Supprimer le compte"
+
+msgid "Du kannst dein Konto jederzeit selbst löschen. Dabei werden alle deine Projekte, Dokumente und Alt-Texte unwiderruflich entfernt — das lässt sich nicht rückgängig machen."
+msgstr "Vous pouvez supprimer votre compte vous-même à tout moment. Tous vos projets, documents et textes alternatifs seront définitivement supprimés — cette action est irréversible."
+
+msgid "Zur Sicherheit: dein aktuelles Passwort"
+msgstr "Par sécurité : votre mot de passe actuel"
+
+msgid "Konto endgültig löschen"
+msgstr "Supprimer définitivement le compte"
+
+msgid "Konto wirklich löschen?"
+msgstr "Supprimer vraiment le compte ?"
+
+msgid "Ja, Konto löschen"
+msgstr "Oui, supprimer le compte"
+
+msgid "Alle deine Projekte, Dokumente und Alt-Texte werden unwiderruflich gelöscht. Das lässt sich nicht rückgängig machen."
+msgstr "Tous vos projets, documents et textes alternatifs seront définitivement supprimés. Cette action est irréversible."
+
+msgid "Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht."
+msgstr "Votre abonnement en cours ({plan}, payé jusqu’au {datum}) prendra fin — la durée restante n’est pas remboursée."
+
+msgid "Dein laufendes Abo wird dabei beendet."
+msgstr "Votre abonnement en cours prendra fin."
+
+msgid "Dein laufendes Abo wird beendet, eine Erstattung gibt es nicht."
+msgstr "Votre abonnement en cours prendra fin ; aucun remboursement n’est prévu."
+
+msgid "Dein Team wird aufgelöst. Die Mitglieder behalten ihre Konten und Projekte und arbeiten danach wieder mit ihrem eigenen Guthaben; sie werden per E-Mail informiert."
+msgstr "Votre équipe sera dissoute. Les membres conservent leurs comptes et leurs projets et travailleront ensuite de nouveau avec leur propre crédit ; ils seront informés par e-mail."
+
+msgid "Dein Team wird aufgelöst."
+msgstr "Votre équipe sera dissoute."
+
+msgid "Hinweis: Betreiber-Konten können sich nicht selbst löschen."
+msgstr "Remarque : les comptes d’exploitant ne peuvent pas se supprimer eux-mêmes."
+
+msgid "Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet."
+msgstr "Votre compte a été supprimé. Vous allez être déconnecté."
+
+msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
+msgstr "Votre compte a été supprimé. Tous vos projets et textes alternatifs ont été effacés. Merci d’avoir utilisé InkluDocs."

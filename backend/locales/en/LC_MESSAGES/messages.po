@@ -3163,3 +3163,49 @@ msgstr "Prefer to order by invoice? Our partner Actino Software handles invoice 
 
 msgid "Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet."
 msgstr "Longer term: takes effect immediately. A new term of {monate} months starts at €{summe}; time already paid for is credited."
+
+# Konto-Selbstloeschung (08.08.2026, DSGVO)
+msgid "Konto löschen"
+msgstr "Delete account"
+
+msgid "Du kannst dein Konto jederzeit selbst löschen. Dabei werden alle deine Projekte, Dokumente und Alt-Texte unwiderruflich entfernt — das lässt sich nicht rückgängig machen."
+msgstr "You can delete your account yourself at any time. All your projects, documents and alt texts will be removed permanently — this cannot be undone."
+
+msgid "Zur Sicherheit: dein aktuelles Passwort"
+msgstr "For security: your current password"
+
+msgid "Konto endgültig löschen"
+msgstr "Delete account permanently"
+
+msgid "Konto wirklich löschen?"
+msgstr "Really delete your account?"
+
+msgid "Ja, Konto löschen"
+msgstr "Yes, delete account"
+
+msgid "Alle deine Projekte, Dokumente und Alt-Texte werden unwiderruflich gelöscht. Das lässt sich nicht rückgängig machen."
+msgstr "All your projects, documents and alt texts will be deleted permanently. This cannot be undone."
+
+msgid "Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht."
+msgstr "Your current subscription ({plan}, paid until {datum}) will end — there is no refund for the remaining time."
+
+msgid "Dein laufendes Abo wird dabei beendet."
+msgstr "Your current subscription will end."
+
+msgid "Dein laufendes Abo wird beendet, eine Erstattung gibt es nicht."
+msgstr "Your current subscription will end; there is no refund."
+
+msgid "Dein Team wird aufgelöst. Die Mitglieder behalten ihre Konten und Projekte und arbeiten danach wieder mit ihrem eigenen Guthaben; sie werden per E-Mail informiert."
+msgstr "Your team will be dissolved. Members keep their accounts and projects and will then work from their own credit again; they will be informed by email."
+
+msgid "Dein Team wird aufgelöst."
+msgstr "Your team will be dissolved."
+
+msgid "Hinweis: Betreiber-Konten können sich nicht selbst löschen."
+msgstr "Note: operator accounts cannot delete themselves."
+
+msgid "Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet."
+msgstr "Your account has been deleted. You are being signed out now."
+
+msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
+msgstr "Your account has been deleted. All your projects and alt texts have been removed. Thank you for using InkluDocs."

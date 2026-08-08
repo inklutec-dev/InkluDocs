@@ -1,6 +1,7 @@
 /* Gemeinsame Styles fuer die Dashboard-Seiten (App-Shell mit linker
    Navigationsleiste + Hauptbereich). Baut auf style.css auf, nutzt aber
-   das kontraststarke #c75000 statt des helleren #e87722 fuer Text/Links. */
+   das kontraststarke #c75000 fuer Text und Links — seit 08.08.2026 ist das
+   auch die globale Akzentfarbe in style.css. */
 
 .dash-skip { position:absolute; left:-999px; top:auto; background:#fff; color:#1b2a4a; padding:.6rem 1rem; z-index:100; border-radius:0 0 6px 0; font-weight:600; }
 .dash-skip:focus { left:0; top:0; }

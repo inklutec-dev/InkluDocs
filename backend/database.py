@@ -792,11 +792,38 @@ def delete_user_data(user_id: int):
     conn = get_db()
     projects = conn.execute("SELECT id FROM projects WHERE user_id = ?", (user_id,)).fetchall()
     for p in projects:
+        # Selbstloeschung (08.08.2026): SQLite erzwingt Fremdschluessel nur mit
+        # PRAGMA foreign_keys=ON — auf das ON DELETE CASCADE im Schema ist also
+        # kein Verlass. Alles, was an einem Projekt haengt, wird ausdruecklich
+        # mitgeloescht, sonst bleiben Alt-Texte, Chatverlaeufe und Gast-Links
+        # (mit gueltigem Token!) als Waisen zurueck.
+        conn.execute("DELETE FROM image_reviews WHERE image_id IN "
+                     "(SELECT id FROM images WHERE project_id = ?)", (p["id"],))
         conn.execute("DELETE FROM images WHERE project_id = ?", (p["id"],))
         # Multi-Datei (08.06.2026): Dokumente eines Projekts mit aufraeumen.
         conn.execute("DELETE FROM documents WHERE project_id = ?", (p["id"],))
+        conn.execute("DELETE FROM chat_messages WHERE project_id = ?", (p["id"],))
+        conn.execute("DELETE FROM messages WHERE project_id = ?", (p["id"],))
+        conn.execute("DELETE FROM shares WHERE project_id = ?", (p["id"],))
     conn.execute("DELETE FROM projects WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM shares WHERE created_by = ?", (user_id,))
+    conn.execute("DELETE FROM messages WHERE sender_user_id = ? OR recipient_user_id = ?",
+                 (user_id, user_id))
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
+    # Personenbezogene Nebenspuren (DSGVO): Nutzung, API-Ergebnisse, offene
+    # Adress-Wechsel und Bestaetigungen, eigene Prompt-Vorlagen.
+    conn.execute("DELETE FROM api_usage WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM api_results WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM email_changes WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM email_verifications WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM user_prompts WHERE user_id = ?", (user_id,))
+    # Abrechnungsspuren: sowohl die eigenen Buchungen als auch die, die in
+    # SEINEN Topf gelaufen sind (Team-Inhaber) — sonst rechnet billing spaeter
+    # gegen ein Konto, das es nicht mehr gibt.
+    conn.execute("DELETE FROM usage_events WHERE user_id = ? OR konto_user_id = ?",
+                 (user_id, user_id))
+    conn.execute("DELETE FROM paket_abbuchungen WHERE konto_user_id = ?", (user_id,))
+    conn.execute("DELETE FROM quota_pakete WHERE user_id = ?", (user_id,))
     # Review-Befund 4 (31.07.2026) / Abomodell 06.08.2026: Wird ein TEAM-
     # INHABER geloescht, duerfen keine baumelnden Mitgliedschaften bleiben —
     # billing wuerde sonst gegen ein nicht existentes Konto rechnen. Beide
@@ -809,6 +836,16 @@ def delete_user_data(user_id: int):
     conn.execute("UPDATE users SET aktiver_topf = NULL WHERE aktiver_topf = ?", (user_id,))
     conn.execute("UPDATE users SET abo_owner_id = NULL WHERE abo_owner_id = ?", (user_id,))
     conn.execute("DELETE FROM team_einladungen WHERE inhaber_id = ?", (user_id,))
+    # Auch Einladungen AN diese Adresse: sie zeigen sonst weiter auf eine
+    # E-Mail, deren Konto nicht mehr existiert.
+    conn.execute("DELETE FROM team_einladungen WHERE lower(email) = "
+                 "(SELECT lower(email) FROM users WHERE id = ?)", (user_id,))
+    # Altmodell Lizenzschluessel: Verweis loesen statt Schluessel loeschen
+    # (er kann noch bei einem Kunden liegen und muss sichtbar bleiben).
+    conn.execute("UPDATE lizenzschluessel SET inhaber_user_id = NULL "
+                 "WHERE inhaber_user_id = ?", (user_id,))
+    conn.execute("UPDATE lizenzschluessel SET erstellt_von = NULL WHERE erstellt_von = ?",
+                 (user_id,))
     conn.execute("DELETE FROM api_keys WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()

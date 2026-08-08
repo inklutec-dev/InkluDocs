@@ -211,6 +211,14 @@ _einladung_attempts = defaultdict(list)
 MAX_EINLADUNGEN_PER_WINDOW = 10
 EINLADUNG_WINDOW_SECONDS = 3600  # 1 Stunde
 
+# Loesch-Bremse (Selbst-Review 08.08.): Der Loeschweg prueft das Passwort —
+# mit einer gekaperten Sitzung koennte man es sonst unbegrenzt raten (und die
+# Anmelde-Bremse greift dort gar nicht, weil man ja schon angemeldet ist).
+# Gezaehlt werden nur FEHLVERSUCHE, pro Konto.
+_loesch_attempts = defaultdict(list)
+MAX_LOESCH_VERSUCHE = 5
+LOESCH_WINDOW_SECONDS = 900  # 15 Minuten
+
 # Schlanke E-Mail-Formatpruefung (Sicherheits-Review 06.08.): kein RFC-Parser,
 # nur das Noetigste gegen Steuerzeichen/Leerzeichen und fehlende Domain —
 # Konten mit unzustellbaren Adressen sollen gar nicht erst entstehen.
@@ -785,6 +793,165 @@ async def change_password(request: Request, user: dict = Depends(get_current_use
 
     admin_reset_password(user["id"], new_password)
     return {"ok": True, "message": "Passwort wurde geaendert"}
+
+
+@app.post("/api/konto/loeschen")
+async def konto_loeschen(request: Request, user: dict = Depends(get_current_user)):
+    """Konto-Selbstloeschung durch den Kunden (08.08.2026, DSGVO).
+
+    Bis hierher konnten nur Admins loeschen. Reihenfolge ist wichtig:
+    1. Passwort verifizieren (Schutz gegen fremden Zugriff auf offene Sitzung),
+    2. Betreiber-Konten ablehnen (sonst sperrt sich der Betrieb aus),
+    3. laufende Stripe-Subscription SOFORT beenden — sonst bucht Stripe
+       weiter gegen ein Konto, das es nicht mehr gibt,
+    4. Team-Mitglieder informieren (ihr gemeinsamer Topf faellt weg),
+    5. Abschieds-Mail + Admin-Benachrichtigung (VOR dem Loeschen verschicken,
+       danach sind Adresse und Name weg),
+    6. Daten loeschen (delete_user_data raeumt Projekte, Dateien,
+       Mitgliedschaften, Einladungen, API-Schluessel mit ab),
+    7. Sitzungs-Cookie entfernen.
+    """
+    data = await request.json()
+    passwort = data.get("password", "")
+    db_user = get_user_by_id(user["id"])
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Konto nicht gefunden")
+    jetzt = time.time()
+    _loesch_attempts[user["id"]] = [t for t in _loesch_attempts[user["id"]]
+                                    if jetzt - t < LOESCH_WINDOW_SECONDS]
+    if len(_loesch_attempts[user["id"]]) >= MAX_LOESCH_VERSUCHE:
+        raise HTTPException(status_code=429,
+                            detail="Zu viele Fehlversuche. Bitte 15 Minuten warten.")
+    if not passwort or not verify_user(db_user["email"], passwort):
+        _loesch_attempts[user["id"]].append(jetzt)
+        raise HTTPException(status_code=401, detail="Passwort ist falsch")
+    if db_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Betreiber-Konten können sich nicht selbst löschen. Bitte an "
+                   "support@inklutec.de wenden.")
+
+    # 3. Stripe: laufendes Abo sofort beenden (nicht erst zum Periodenende —
+    #    das Konto verschwindet ja jetzt).
+    sub_id = (db_user.get("stripe_subscription_id") or "").strip()
+    kunde_id = (db_user.get("stripe_customer_id") or "").strip()
+    # Nur ein WIRKLICH laufendes Stripe-Abo blockiert. Eine blosse
+    # stripe_customer_id (jemand hat mal etwas gekauft) darf niemanden
+    # aussperren — sonst koennte sich auf einer Instanz ohne Stripe-Schluessel
+    # kein Altkunde mehr loeschen.
+    hat_stripe_abo = bool(sub_id) or (db_user.get("plan_quelle") == "stripe"
+                                      and (db_user.get("plan") or "free") != "free")
+    if hat_stripe_abo and not stripe_zahlung.AKTIV:
+        # Darf nicht still passieren: die Subscription liefe bei Stripe weiter,
+        # waehrend das Konto hier verschwindet. Lieber abbrechen und melden.
+        logger.error("Loeschung abgelehnt: Stripe-Abo %s, aber Stripe ist nicht "
+                     "konfiguriert (user=%s)", sub_id or "(ohne id)", db_user["id"])
+        raise HTTPException(
+            status_code=503,
+            detail="Dein Konto hat ein laufendes Abo, das wir gerade nicht beenden können. "
+                   "Bitte melde dich kurz bei support@inklutec.de — wir erledigen das von Hand.")
+    if kunde_id and stripe_zahlung.AKTIV:
+        # Ueber den KUNDEN aufraeumen, nicht nur ueber die gespeicherte
+        # Subscription: sonst ueberlebt ein Abo, dessen Webhook nie ankam.
+        try:
+            beendet = stripe_zahlung.beende_alle_subscriptions(kunde_id)
+            logger.info("Konto-Loeschung: %s Stripe-Abo(s) beendet (user=%s)",
+                        beendet, db_user["id"])
+        except Exception:
+            logger.exception("Stripe-Abo beim Loeschen nicht beendet (user=%s, kunde=%s)",
+                             db_user["id"], kunde_id)
+            raise HTTPException(
+                status_code=502,
+                detail="Dein laufendes Abo konnte gerade nicht beendet werden. Bitte in ein "
+                       "paar Minuten erneut versuchen — wir wollen vermeiden, dass dir nach "
+                       "der Löschung noch etwas berechnet wird.")
+
+    elif sub_id and stripe_zahlung.AKTIV:
+        try:
+            stripe_zahlung.loese_schedule(sub_id)
+            stripe_zahlung.beende_subscription_sofort(sub_id)
+        except Exception:
+            logger.exception("Stripe-Abo beim Loeschen nicht beendet (user=%s, sub=%s)",
+                             db_user["id"], sub_id)
+            raise HTTPException(
+                status_code=502,
+                detail="Dein laufendes Abo konnte gerade nicht beendet werden. Bitte in ein "
+                       "paar Minuten erneut versuchen — wir wollen vermeiden, dass dir nach "
+                       "der Löschung noch etwas berechnet wird.")
+
+    # 4. Team-Mitglieder informieren, solange die Daten noch da sind.
+    conn = get_db()
+    try:
+        mitglieder = [dict(r) for r in conn.execute(
+            "SELECT u.email, u.display_name FROM team_mitgliedschaften m "
+            "JOIN users u ON u.id = m.mitglied_id WHERE m.inhaber_id = ?",
+            (db_user["id"],)).fetchall()]
+        inhaber = [dict(r) for r in conn.execute(
+            "SELECT u.email, u.display_name, u.team_name FROM team_mitgliedschaften m "
+            "JOIN users u ON u.id = m.inhaber_id WHERE m.mitglied_id = ?",
+            (db_user["id"],)).fetchall()]
+    finally:
+        conn.close()
+    # Umgekehrter Fall: Wer nur MITGLIED ist, gibt einen bezahlten Platz frei —
+    # der Inhaber soll das erfahren, sonst wundert er sich ueber die Liste.
+    team_label = html.escape(db_user.get("team_name") or "") or f"das Team von {html.escape(db_user['display_name'])}"
+    for m in mitglieder:
+        try:
+            _abo_mail(m["email"], "InkluDocs: Euer gemeinsames Guthaben endet",
+                      "Team aufgelöst",
+                      [f"Hallo {html.escape(m['display_name'] or '')},",
+                       f"{html.escape(db_user['display_name'])} hat sein InkluDocs-Konto gelöscht; "
+                       f"damit entfällt {team_label}.",
+                       "Ab sofort arbeitest du wieder mit deinem eigenen Guthaben "
+                       "(oder dem kostenlosen Free-Plan). Dein Konto und alle deine Projekte "
+                       "bleiben unverändert erhalten."])
+        except Exception:
+            logger.exception("Team-Info beim Loeschen fehlgeschlagen (%s)", m["email"])
+
+    for inh in inhaber:
+        try:
+            _abo_mail(inh["email"], "InkluDocs: Ein Team-Mitglied hat sein Konto gelöscht",
+                      "Ein Platz ist wieder frei",
+                      [f"Hallo {html.escape(inh['display_name'] or '')},",
+                       f"{html.escape(db_user['display_name'])} "
+                       f"({html.escape(db_user['email'])}) hat das eigene InkluDocs-Konto "
+                       f"gelöscht und ist damit nicht mehr in "
+                       f"{html.escape(inh.get('team_name') or 'deinem Team')}.",
+                       "Der Platz ist wieder frei — du kannst jemand anderen einladen. "
+                       "An deinem Abo und deinem Guthaben ändert sich nichts."])
+        except Exception:
+            logger.exception("Inhaber-Info beim Loeschen fehlgeschlagen (%s)", inh["email"])
+
+    # 5. Abschied + Admin-Info (danach sind die Daten weg).
+    mail, name = db_user["email"], html.escape(db_user["display_name"] or "")
+    try:
+        _abo_mail(mail, "InkluDocs: Dein Konto wurde gelöscht", "Dein Konto wurde gelöscht",
+                  [f"Hallo {name},",
+                   "dein InkluDocs-Konto wurde soeben auf deinen Wunsch hin gelöscht. "
+                   "Alle deine Projekte, Dokumente und Alt-Texte sind damit entfernt.",
+                   "Falls du dich irgendwann wieder anmelden möchtest, kannst du jederzeit "
+                   "ein neues Konto anlegen. Danke, dass du InkluDocs genutzt hast!"])
+        _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs: Konto gelöscht ({mail})",
+                  "Konto-Selbstlöschung",
+                  [f"{html.escape(mail)} hat das eigene Konto gelöscht.",
+                   f"Plan zum Zeitpunkt der Löschung: {db_user.get('plan') or 'free'}"
+                   + (f", Team mit {len(mitglieder)} Mitgliedern aufgelöst." if mitglieder else ".")])
+    except Exception:
+        logger.exception("Abschieds-Mail fehlgeschlagen (%s)", mail)
+
+    # 6. + 7. Daten weg, Sitzung beenden.
+    user_upload_dir = os.path.join(UPLOAD_DIR, str(db_user["id"]))
+    user_results_dir = os.path.join(RESULTS_DIR, str(db_user["id"]))
+    for pfad in (user_upload_dir, user_results_dir):
+        try:
+            if os.path.exists(pfad):
+                shutil.rmtree(pfad)
+        except Exception:
+            logger.exception("Dateien beim Loeschen nicht entfernt: %s", pfad)
+    delete_user_data(db_user["id"])
+    antwort = JSONResponse({"ok": True, "message": "Konto wurde gelöscht"})
+    antwort.delete_cookie("token")
+    return antwort
 
 
 @app.post("/api/change-email")
@@ -6074,6 +6241,9 @@ async def index(request: Request):
             request, lang,
             registration_enabled=registration_enabled,
             is_staging=is_staging,
+            # Konto-Selbstloeschung (08.08.2026): Nach dem Loeschen landet man
+            # hier — mit einer Bestaetigung statt eines wortlosen Rauswurfs.
+            geloescht=request.query_params.get("geloescht") == "1",
         ),
     )
 

@@ -378,6 +378,47 @@ def plane_wechsel_zum_periodenende(subscription_id: str, plan: str, monate: int)
     return schedule.id, aktuelle["end_date"]
 
 
+def beende_subscription_sofort(subscription_id: str) -> None:
+    """Beendet eine Subscription SOFORT (nicht erst zum Periodenende).
+
+    Fuer die Konto-Loeschung (08.08.2026): Ein Konto, das es nicht mehr
+    gibt, darf bei Stripe keine offene Subscription behalten — sonst
+    laufen Abbuchungen und Rechnungen gegen einen Kunden, den wir nicht
+    mehr kennen. Bereits bezahlte Zeit wird NICHT erstattet (das ist auch
+    so kommuniziert); 'invoice_now'/'prorate' bleiben daher aus.
+    Bereits geloeschte oder unbekannte Subscriptions sind kein Fehler.
+    """
+    try:
+        stripe.Subscription.cancel(subscription_id)
+    except stripe.error.InvalidRequestError as e:
+        if "No such subscription" in str(e) or "canceled" in str(e).lower():
+            return
+        raise
+
+
+def beende_alle_subscriptions(customer_id: str) -> int:
+    """Beendet ALLE noch laufenden Subscriptions eines Kunden. Gibt die Anzahl zurueck.
+
+    Sicherheitsnetz fuer die Konto-Loeschung (Selbst-Review 08.08.2026):
+    users.stripe_subscription_id ist nur so aktuell wie der letzte Webhook.
+    Kam einer nicht an (Checkout abgeschlossen, Zustellung verpasst), laeuft
+    bei Stripe ein Abo, von dem die Datenbank nichts weiss — und es wuerde
+    gegen ein geloeschtes Konto weiterbuchen. Darum wird hier ueber den
+    KUNDEN aufgeraeumt, nicht nur ueber die gespeicherte Subscription.
+    """
+    n = 0
+    for s in stripe.Subscription.list(customer=customer_id, status="all", limit=100).data:
+        if s.status in ("canceled", "incomplete_expired"):
+            continue
+        try:
+            loese_schedule(s.id)
+        except Exception:
+            log.warning("Schedule zu %s nicht geloest", s.id)
+        stripe.Subscription.cancel(s.id)
+        n += 1
+    return n
+
+
 def widerrufe_geplanten_wechsel(subscription_id: str) -> None:
     """Nimmt einen vorgemerkten Downgrade zurueck (Schedule aufloesen)."""
     loese_schedule(subscription_id)
