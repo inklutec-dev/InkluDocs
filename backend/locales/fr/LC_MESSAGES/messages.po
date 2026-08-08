@@ -3294,3 +3294,196 @@ msgstr "Veuillez d’abord confirmer le début immédiat de la prestation."
 
 msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
 msgstr "InkluDocs est développé en permanence. En plus des formules, une contribution volontaire nous fait plaisir si le projet vous plaît."
+
+# Admin-Kundenverwaltung und Verbrauchs-Report (08.08.2026)
+msgid "Konto"
+msgstr "Compte"
+
+msgid "Abo"
+msgstr "Abonnement"
+
+msgid "Team"
+msgstr "Équipe"
+
+msgid "Report"
+msgstr "Rapport"
+
+msgid "Report: {name}"
+msgstr "Rapport : {name}"
+
+msgid "Report schließen"
+msgstr "Fermer le rapport"
+
+msgid "Report geschlossen."
+msgstr "Rapport fermé."
+
+msgid "Report für {name} geladen."
+msgstr "Rapport pour {name} chargé."
+
+msgid "Report konnte nicht geladen werden."
+msgstr "Le rapport n’a pas pu être chargé."
+
+msgid "Plan verwalten"
+msgstr "Gérer la formule"
+
+msgid "Credits gutschreiben"
+msgstr "Créditer des crédits"
+
+msgid "Plan-Formular für {name} ausgefüllt."
+msgstr "Formulaire de formule prérempli pour {name}."
+
+msgid "Credit-Formular für {name} ausgefüllt."
+msgstr "Formulaire de crédits prérempli pour {name}."
+
+msgid "Plan: {plan}"
+msgstr "Formule : {plan}"
+
+msgid "verlängert sich am {datum}"
+msgstr "se renouvelle le {datum}"
+
+msgid "gekündigt zum {datum}"
+msgstr "résilié au {datum}"
+
+msgid "gekündigt zum Laufzeitende"
+msgstr "résilié à la fin de la période"
+
+msgid "{monate} Monate"
+msgstr "{monate} mois"
+
+msgid "über Stripe"
+msgstr "via Stripe"
+
+msgid "auf Rechnung"
+msgstr "sur facture"
+
+msgid "Stripe"
+msgstr "Stripe"
+
+msgid "Rechnung"
+msgstr "Facture"
+
+msgid "Team „{name}“ mit {n} Mitgliedern"
+msgstr "Équipe « {name} » avec {n} membres"
+
+msgid "Team-Mitglieder ({n})"
+msgstr "Membres de l’équipe ({n})"
+
+msgid "Arbeitet außerdem im Team von: {liste}"
+msgstr "Travaille également dans l’équipe de : {liste}"
+
+msgid "Angelegt am"
+msgstr "Créé le"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "Hinweis"
+msgstr "Remarque"
+
+msgid "Betreiber-Konto — wird nicht gesperrt."
+msgstr "Compte d’exploitant — jamais bloqué."
+
+msgid "Gültig bis"
+msgstr "Valable jusqu’au"
+
+msgid "Verlängerung"
+msgstr "Renouvellement"
+
+msgid "automatisch"
+msgstr "automatique"
+
+msgid "Gebucht über"
+msgstr "Souscrit via"
+
+msgid "Preis"
+msgstr "Prix"
+
+msgid "{preis} € im Monat, {summe} € für die Laufzeit"
+msgstr "{preis} € par mois, {summe} € pour la période"
+
+msgid "Vorgemerkter Wechsel"
+msgstr "Changement prévu"
+
+msgid "Plätze inklusive"
+msgstr "Places incluses"
+
+msgid "Guthaben im laufenden Monat"
+msgstr "Crédit du mois en cours"
+
+msgid "Monatskontingent"
+msgstr "Quota mensuel"
+
+msgid "Übertrag aus dem Vormonat"
+msgstr "Report du mois précédent"
+
+msgid "Verbraucht"
+msgstr "Consommé"
+
+msgid "Rest"
+msgstr "Restant"
+
+msgid "unbegrenzt"
+msgstr "illimité"
+
+msgid "Zusatz-Credits aus Paketen"
+msgstr "Crédits supplémentaires des forfaits"
+
+msgid "Nutzung insgesamt"
+msgstr "Utilisation totale"
+
+msgid "API-Aufrufe"
+msgstr "Appels API"
+
+msgid "Credits verbraucht"
+msgstr "Crédits consommés"
+
+msgid "Zuletzt aktiv"
+msgstr "Dernière activité"
+
+msgid "noch nie"
+msgstr "jamais"
+
+msgid "Geschätzte KI-Kosten"
+msgstr "Coût IA estimé"
+
+msgid "{betrag} € (grobe Schätzung, {satz} € je Credit)"
+msgstr "{betrag} € (estimation approximative, {satz} € par crédit)"
+
+msgid "Verbrauch je Monat"
+msgstr "Consommation par mois"
+
+msgid "{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €"
+msgstr "{monat} : {topf} crédits, dont {selbst} générés personnellement — estimation {kosten} €"
+
+msgid "Gutgeschriebene Pakete"
+msgstr "Forfaits crédités"
+
+msgid "{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})"
+msgstr "{groesse} crédits du {datum}, {rest} restants ({quelle})"
+
+msgid "Für: {email}"
+msgstr "Pour : {email}"
+
+msgid "Passwort für {email} wurde zurückgesetzt."
+msgstr "Le mot de passe de {email} a été réinitialisé."
+
+msgid "Benutzer wirklich löschen?"
+msgstr "Supprimer vraiment cet utilisateur ?"
+
+msgid "Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen."
+msgstr "Le compte {email} et TOUTES les données associées seront définitivement supprimés (suppression RGPD). Cette action est irréversible."
+
+msgid "Ja, löschen"
+msgstr "Oui, supprimer"
+
+msgid "Benutzer {email} wurde gelöscht."
+msgstr "L’utilisateur {email} a été supprimé."
+
+msgid "Admin-Rechte entziehen?"
+msgstr "Retirer les droits d’administration ?"
+
+msgid "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "{name} perd les droits d’administration. Le compte subsiste en tant qu’utilisateur normal."
+
+msgid "Ja, Rechte entziehen"
+msgstr "Oui, retirer les droits"

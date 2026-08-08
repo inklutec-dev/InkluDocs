@@ -3297,3 +3297,196 @@ msgstr "Bitte bestätige zuerst den sofortigen Leistungsbeginn."
 
 msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
 msgstr "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
+
+# Admin-Kundenverwaltung und Verbrauchs-Report (08.08.2026)
+msgid "Konto"
+msgstr "Konto"
+
+msgid "Abo"
+msgstr "Abo"
+
+msgid "Team"
+msgstr "Team"
+
+msgid "Report"
+msgstr "Report"
+
+msgid "Report: {name}"
+msgstr "Report: {name}"
+
+msgid "Report schließen"
+msgstr "Report schließen"
+
+msgid "Report geschlossen."
+msgstr "Report geschlossen."
+
+msgid "Report für {name} geladen."
+msgstr "Report für {name} geladen."
+
+msgid "Report konnte nicht geladen werden."
+msgstr "Report konnte nicht geladen werden."
+
+msgid "Plan verwalten"
+msgstr "Plan verwalten"
+
+msgid "Credits gutschreiben"
+msgstr "Credits gutschreiben"
+
+msgid "Plan-Formular für {name} ausgefüllt."
+msgstr "Plan-Formular für {name} ausgefüllt."
+
+msgid "Credit-Formular für {name} ausgefüllt."
+msgstr "Credit-Formular für {name} ausgefüllt."
+
+msgid "Plan: {plan}"
+msgstr "Plan: {plan}"
+
+msgid "verlängert sich am {datum}"
+msgstr "verlängert sich am {datum}"
+
+msgid "gekündigt zum {datum}"
+msgstr "gekündigt zum {datum}"
+
+msgid "gekündigt zum Laufzeitende"
+msgstr "gekündigt zum Laufzeitende"
+
+msgid "{monate} Monate"
+msgstr "{monate} Monate"
+
+msgid "über Stripe"
+msgstr "über Stripe"
+
+msgid "auf Rechnung"
+msgstr "auf Rechnung"
+
+msgid "Stripe"
+msgstr "Stripe"
+
+msgid "Rechnung"
+msgstr "Rechnung"
+
+msgid "Team „{name}“ mit {n} Mitgliedern"
+msgstr "Team „{name}“ mit {n} Mitgliedern"
+
+msgid "Team-Mitglieder ({n})"
+msgstr "Team-Mitglieder ({n})"
+
+msgid "Arbeitet außerdem im Team von: {liste}"
+msgstr "Arbeitet außerdem im Team von: {liste}"
+
+msgid "Angelegt am"
+msgstr "Angelegt am"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Hinweis"
+msgstr "Hinweis"
+
+msgid "Betreiber-Konto — wird nicht gesperrt."
+msgstr "Betreiber-Konto — wird nicht gesperrt."
+
+msgid "Gültig bis"
+msgstr "Gültig bis"
+
+msgid "Verlängerung"
+msgstr "Verlängerung"
+
+msgid "automatisch"
+msgstr "automatisch"
+
+msgid "Gebucht über"
+msgstr "Gebucht über"
+
+msgid "Preis"
+msgstr "Preis"
+
+msgid "{preis} € im Monat, {summe} € für die Laufzeit"
+msgstr "{preis} € im Monat, {summe} € für die Laufzeit"
+
+msgid "Vorgemerkter Wechsel"
+msgstr "Vorgemerkter Wechsel"
+
+msgid "Plätze inklusive"
+msgstr "Plätze inklusive"
+
+msgid "Guthaben im laufenden Monat"
+msgstr "Guthaben im laufenden Monat"
+
+msgid "Monatskontingent"
+msgstr "Monatskontingent"
+
+msgid "Übertrag aus dem Vormonat"
+msgstr "Übertrag aus dem Vormonat"
+
+msgid "Verbraucht"
+msgstr "Verbraucht"
+
+msgid "Rest"
+msgstr "Rest"
+
+msgid "unbegrenzt"
+msgstr "unbegrenzt"
+
+msgid "Zusatz-Credits aus Paketen"
+msgstr "Zusatz-Credits aus Paketen"
+
+msgid "Nutzung insgesamt"
+msgstr "Nutzung insgesamt"
+
+msgid "API-Aufrufe"
+msgstr "API-Aufrufe"
+
+msgid "Credits verbraucht"
+msgstr "Credits verbraucht"
+
+msgid "Zuletzt aktiv"
+msgstr "Zuletzt aktiv"
+
+msgid "noch nie"
+msgstr "noch nie"
+
+msgid "Geschätzte KI-Kosten"
+msgstr "Geschätzte KI-Kosten"
+
+msgid "{betrag} € (grobe Schätzung, {satz} € je Credit)"
+msgstr "{betrag} € (grobe Schätzung, {satz} € je Credit)"
+
+msgid "Verbrauch je Monat"
+msgstr "Verbrauch je Monat"
+
+msgid "{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €"
+msgstr "{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €"
+
+msgid "Gutgeschriebene Pakete"
+msgstr "Gutgeschriebene Pakete"
+
+msgid "{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})"
+msgstr "{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})"
+
+msgid "Für: {email}"
+msgstr "Für: {email}"
+
+msgid "Passwort für {email} wurde zurückgesetzt."
+msgstr "Passwort für {email} wurde zurückgesetzt."
+
+msgid "Benutzer wirklich löschen?"
+msgstr "Benutzer wirklich löschen?"
+
+msgid "Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen."
+msgstr "Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen."
+
+msgid "Ja, löschen"
+msgstr "Ja, löschen"
+
+msgid "Benutzer {email} wurde gelöscht."
+msgstr "Benutzer {email} wurde gelöscht."
+
+msgid "Admin-Rechte entziehen?"
+msgstr "Admin-Rechte entziehen?"
+
+msgid "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen."
+
+msgid "Ja, Rechte entziehen"
+msgstr "Ja, Rechte entziehen"

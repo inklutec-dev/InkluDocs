@@ -3294,3 +3294,196 @@ msgstr "Please confirm the immediate start of the service first."
 
 msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
 msgstr "InkluDocs is continuously being developed further. Alongside the plans, we welcome a voluntary contribution if you like the project."
+
+# Admin-Kundenverwaltung und Verbrauchs-Report (08.08.2026)
+msgid "Konto"
+msgstr "Account"
+
+msgid "Abo"
+msgstr "Subscription"
+
+msgid "Team"
+msgstr "Team"
+
+msgid "Report"
+msgstr "Report"
+
+msgid "Report: {name}"
+msgstr "Report: {name}"
+
+msgid "Report schließen"
+msgstr "Close report"
+
+msgid "Report geschlossen."
+msgstr "Report closed."
+
+msgid "Report für {name} geladen."
+msgstr "Report for {name} loaded."
+
+msgid "Report konnte nicht geladen werden."
+msgstr "The report could not be loaded."
+
+msgid "Plan verwalten"
+msgstr "Manage plan"
+
+msgid "Credits gutschreiben"
+msgstr "Add credits"
+
+msgid "Plan-Formular für {name} ausgefüllt."
+msgstr "Plan form filled in for {name}."
+
+msgid "Credit-Formular für {name} ausgefüllt."
+msgstr "Credit form filled in for {name}."
+
+msgid "Plan: {plan}"
+msgstr "Plan: {plan}"
+
+msgid "verlängert sich am {datum}"
+msgstr "renews on {datum}"
+
+msgid "gekündigt zum {datum}"
+msgstr "cancelled as of {datum}"
+
+msgid "gekündigt zum Laufzeitende"
+msgstr "cancelled at the end of the term"
+
+msgid "{monate} Monate"
+msgstr "{monate} months"
+
+msgid "über Stripe"
+msgstr "via Stripe"
+
+msgid "auf Rechnung"
+msgstr "by invoice"
+
+msgid "Stripe"
+msgstr "Stripe"
+
+msgid "Rechnung"
+msgstr "Invoice"
+
+msgid "Team „{name}“ mit {n} Mitgliedern"
+msgstr "Team “{name}” with {n} members"
+
+msgid "Team-Mitglieder ({n})"
+msgstr "Team members ({n})"
+
+msgid "Arbeitet außerdem im Team von: {liste}"
+msgstr "Also works in the team of: {liste}"
+
+msgid "Angelegt am"
+msgstr "Created on"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Hinweis"
+msgstr "Note"
+
+msgid "Betreiber-Konto — wird nicht gesperrt."
+msgstr "Operator account — is never blocked."
+
+msgid "Gültig bis"
+msgstr "Valid until"
+
+msgid "Verlängerung"
+msgstr "Renewal"
+
+msgid "automatisch"
+msgstr "automatic"
+
+msgid "Gebucht über"
+msgstr "Booked via"
+
+msgid "Preis"
+msgstr "Price"
+
+msgid "{preis} € im Monat, {summe} € für die Laufzeit"
+msgstr "€{preis} per month, €{summe} for the term"
+
+msgid "Vorgemerkter Wechsel"
+msgstr "Scheduled change"
+
+msgid "Plätze inklusive"
+msgstr "Seats included"
+
+msgid "Guthaben im laufenden Monat"
+msgstr "Credit in the current month"
+
+msgid "Monatskontingent"
+msgstr "Monthly allowance"
+
+msgid "Übertrag aus dem Vormonat"
+msgstr "Carried over from last month"
+
+msgid "Verbraucht"
+msgstr "Used"
+
+msgid "Rest"
+msgstr "Remaining"
+
+msgid "unbegrenzt"
+msgstr "unlimited"
+
+msgid "Zusatz-Credits aus Paketen"
+msgstr "Extra credits from packages"
+
+msgid "Nutzung insgesamt"
+msgstr "Usage in total"
+
+msgid "API-Aufrufe"
+msgstr "API calls"
+
+msgid "Credits verbraucht"
+msgstr "Credits used"
+
+msgid "Zuletzt aktiv"
+msgstr "Last active"
+
+msgid "noch nie"
+msgstr "never"
+
+msgid "Geschätzte KI-Kosten"
+msgstr "Estimated AI cost"
+
+msgid "{betrag} € (grobe Schätzung, {satz} € je Credit)"
+msgstr "€{betrag} (rough estimate, €{satz} per credit)"
+
+msgid "Verbrauch je Monat"
+msgstr "Usage by month"
+
+msgid "{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €"
+msgstr "{monat}: {topf} credits, {selbst} of them generated personally — estimated €{kosten}"
+
+msgid "Gutgeschriebene Pakete"
+msgstr "Credited packages"
+
+msgid "{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})"
+msgstr "{groesse} credits from {datum}, {rest} remaining ({quelle})"
+
+msgid "Für: {email}"
+msgstr "For: {email}"
+
+msgid "Passwort für {email} wurde zurückgesetzt."
+msgstr "The password for {email} has been reset."
+
+msgid "Benutzer wirklich löschen?"
+msgstr "Really delete this user?"
+
+msgid "Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen."
+msgstr "The account {email} and ALL associated data will be deleted permanently (GDPR deletion). This cannot be undone."
+
+msgid "Ja, löschen"
+msgstr "Yes, delete"
+
+msgid "Benutzer {email} wurde gelöscht."
+msgstr "User {email} has been deleted."
+
+msgid "Admin-Rechte entziehen?"
+msgstr "Revoke admin rights?"
+
+msgid "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "{name} loses admin rights. The account remains as a regular user."
+
+msgid "Ja, Rechte entziehen"
+msgstr "Yes, revoke rights"

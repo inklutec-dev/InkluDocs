@@ -2855,3 +2855,196 @@ msgstr "Bekräfta först att tjänsten får börja omedelbart."
 
 msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
 msgstr "InkluDocs vidareutvecklas löpande. Utöver abonnemangen uppskattar vi ett frivilligt bidrag om du gillar projektet."
+
+# Admin-Kundenverwaltung und Verbrauchs-Report (08.08.2026)
+msgid "Konto"
+msgstr "Konto"
+
+msgid "Abo"
+msgstr "Prenumeration"
+
+msgid "Team"
+msgstr "Team"
+
+msgid "Report"
+msgstr "Rapport"
+
+msgid "Report: {name}"
+msgstr "Rapport: {name}"
+
+msgid "Report schließen"
+msgstr "Stäng rapporten"
+
+msgid "Report geschlossen."
+msgstr "Rapporten är stängd."
+
+msgid "Report für {name} geladen."
+msgstr "Rapport för {name} har lästs in."
+
+msgid "Report konnte nicht geladen werden."
+msgstr "Rapporten kunde inte läsas in."
+
+msgid "Plan verwalten"
+msgstr "Hantera abonnemang"
+
+msgid "Credits gutschreiben"
+msgstr "Kreditera credits"
+
+msgid "Plan-Formular für {name} ausgefüllt."
+msgstr "Abonnemangsformuläret är ifyllt för {name}."
+
+msgid "Credit-Formular für {name} ausgefüllt."
+msgstr "Credit-formuläret är ifyllt för {name}."
+
+msgid "Plan: {plan}"
+msgstr "Abonnemang: {plan}"
+
+msgid "verlängert sich am {datum}"
+msgstr "förnyas den {datum}"
+
+msgid "gekündigt zum {datum}"
+msgstr "uppsagd per {datum}"
+
+msgid "gekündigt zum Laufzeitende"
+msgstr "uppsagd vid periodens slut"
+
+msgid "{monate} Monate"
+msgstr "{monate} månader"
+
+msgid "über Stripe"
+msgstr "via Stripe"
+
+msgid "auf Rechnung"
+msgstr "mot faktura"
+
+msgid "Stripe"
+msgstr "Stripe"
+
+msgid "Rechnung"
+msgstr "Faktura"
+
+msgid "Team „{name}“ mit {n} Mitgliedern"
+msgstr "Teamet ”{name}” med {n} medlemmar"
+
+msgid "Team-Mitglieder ({n})"
+msgstr "Teammedlemmar ({n})"
+
+msgid "Arbeitet außerdem im Team von: {liste}"
+msgstr "Arbetar dessutom i teamet hos: {liste}"
+
+msgid "Angelegt am"
+msgstr "Skapad den"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Hinweis"
+msgstr "Obs"
+
+msgid "Betreiber-Konto — wird nicht gesperrt."
+msgstr "Operatörskonto — spärras aldrig."
+
+msgid "Gültig bis"
+msgstr "Giltig till"
+
+msgid "Verlängerung"
+msgstr "Förnyelse"
+
+msgid "automatisch"
+msgstr "automatisk"
+
+msgid "Gebucht über"
+msgstr "Bokat via"
+
+msgid "Preis"
+msgstr "Pris"
+
+msgid "{preis} € im Monat, {summe} € für die Laufzeit"
+msgstr "{preis} € per månad, {summe} € för perioden"
+
+msgid "Vorgemerkter Wechsel"
+msgstr "Planerat byte"
+
+msgid "Plätze inklusive"
+msgstr "Platser ingår"
+
+msgid "Guthaben im laufenden Monat"
+msgstr "Saldo för innevarande månad"
+
+msgid "Monatskontingent"
+msgstr "Månadskvot"
+
+msgid "Übertrag aus dem Vormonat"
+msgstr "Överfört från föregående månad"
+
+msgid "Verbraucht"
+msgstr "Förbrukat"
+
+msgid "Rest"
+msgstr "Kvar"
+
+msgid "unbegrenzt"
+msgstr "obegränsat"
+
+msgid "Zusatz-Credits aus Paketen"
+msgstr "Extra credits från paket"
+
+msgid "Nutzung insgesamt"
+msgstr "Total användning"
+
+msgid "API-Aufrufe"
+msgstr "API-anrop"
+
+msgid "Credits verbraucht"
+msgstr "Förbrukade credits"
+
+msgid "Zuletzt aktiv"
+msgstr "Senast aktiv"
+
+msgid "noch nie"
+msgstr "aldrig"
+
+msgid "Geschätzte KI-Kosten"
+msgstr "Uppskattad AI-kostnad"
+
+msgid "{betrag} € (grobe Schätzung, {satz} € je Credit)"
+msgstr "{betrag} € (grov uppskattning, {satz} € per credit)"
+
+msgid "Verbrauch je Monat"
+msgstr "Förbrukning per månad"
+
+msgid "{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €"
+msgstr "{monat}: {topf} credits, varav {selbst} skapade av personen själv — uppskattat {kosten} €"
+
+msgid "Gutgeschriebene Pakete"
+msgstr "Krediterade paket"
+
+msgid "{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})"
+msgstr "{groesse} credits från {datum}, {rest} kvar ({quelle})"
+
+msgid "Für: {email}"
+msgstr "För: {email}"
+
+msgid "Passwort für {email} wurde zurückgesetzt."
+msgstr "Lösenordet för {email} har återställts."
+
+msgid "Benutzer wirklich löschen?"
+msgstr "Vill du verkligen radera den här användaren?"
+
+msgid "Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen."
+msgstr "Kontot {email} och ALLA tillhörande data raderas permanent (GDPR-radering). Det går inte att ångra."
+
+msgid "Ja, löschen"
+msgstr "Ja, radera"
+
+msgid "Benutzer {email} wurde gelöscht."
+msgstr "Användaren {email} har raderats."
+
+msgid "Admin-Rechte entziehen?"
+msgstr "Ta bort administratörsrättigheter?"
+
+msgid "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "{name} förlorar administratörsrättigheterna. Kontot finns kvar som vanlig användare."
+
+msgid "Ja, Rechte entziehen"
+msgstr "Ja, ta bort rättigheterna"

@@ -428,6 +428,15 @@ def pakete_rest(konto_id: int) -> int:
         conn.close()
 
 
+# Grober Kostensatz pro Credit fuer den Admin-Report (08.08.2026). Er ist
+# eine SCHAETZUNG, keine Abrechnung: Die tatsaechlichen KI-Kosten fallen bei
+# AWS/Mistral pro Modellaufruf an und lassen sich nicht sauber einem einzelnen
+# Kunden zuordnen (Cache-Treffer, mehrere Paesse, unterschiedliche Modelle).
+# Der Wert stammt aus den Monatsrechnungen geteilt durch die Credits und ist
+# per Umgebungsvariable anpassbar, ohne den Code zu aendern.
+KOSTEN_PRO_CREDIT_EUR = float(os.environ.get("KOSTEN_PRO_CREDIT_EUR", "0.06"))
+
+
 def pruefe_kontingent(user_id: int) -> dict:
     """Prueft, ob eine kostenpflichtige Aktion stattfinden darf.
 

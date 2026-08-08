@@ -123,6 +123,16 @@ def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = Tr
         from email import encoders
 
         msg = MIMEMultipart("mixed")
+        # Kopfzeilen saeubern (Selbst-Review 08.08.2026): Ein Zeilenumbruch in
+        # Betreff oder Empfaenger kann zusaetzliche Mail-Kopfzeilen einschleusen
+        # (etwa ein heimliches Bcc). Heute kommen alle Werte aus geprueften
+        # Quellen — aber das gilt nur, solange niemand einen neuen Aufrufer
+        # ergaenzt. Darum hier zentral, wo jede Mail durchmuss.
+        def _kopfzeile(wert: str) -> str:
+            return " ".join((wert or "").replace("\r", " ").replace("\n", " ").split())
+
+        subject = _kopfzeile(subject)
+        to_email = _kopfzeile(to_email)
         if "staging" in BASE_URL:
             subject = f"[STAGING] {subject}"
         msg["Subject"] = subject
@@ -1142,13 +1152,144 @@ async def do_reset_password(request: Request):
 @app.get("/api/admin/users")
 async def admin_list_users(user: dict = Depends(require_admin)):
     users = list_all_users()
-    # Count projects per user
     conn = get_db()
-    for u in users:
-        row = conn.execute("SELECT COUNT(*) as cnt FROM projects WHERE user_id = ?", (u["id"],)).fetchone()
-        u["project_count"] = row["cnt"]
-    conn.close()
+    try:
+        for u in users:
+            row = conn.execute("SELECT COUNT(*) as cnt FROM projects WHERE user_id = ?",
+                               (u["id"],)).fetchone()
+            u["project_count"] = row["cnt"]
+            # Abo-Eckdaten gleich mitliefern (Steve 07.08.): Die Liste soll
+            # zeigen, WAS jemand hat — sonst muss man fuer jede Kleinigkeit
+            # erst die E-Mail abtippen und in einem anderen Formular nachsehen.
+            u["plan"] = billing.effektiver_plan(u)
+            u["plan_gueltig_bis"] = (u.get("plan_gueltig_bis") or "")[:10] or None
+            u["plan_laufzeit_monate"] = u.get("plan_laufzeit_monate")
+            u["plan_quelle"] = u.get("plan_quelle") or None
+            av = u.get("auto_verlaengerung")
+            u["auto_verlaengerung"] = bool(1 if av is None else av)
+            u["team_name"] = u.get("team_name") or ""
+            u["team_mitglieder"] = conn.execute(
+                "SELECT COUNT(*) FROM team_mitgliedschaften WHERE inhaber_id = ?",
+                (u["id"],)).fetchone()[0]
+            # Passwort-Hash und Stripe-Kennungen gehoeren nicht in eine Liste,
+            # die im Browser landet.
+            for feld in ("password_hash", "stripe_customer_id", "stripe_subscription_id"):
+                u.pop(feld, None)
+    finally:
+        conn.close()
     return {"users": users}
+
+
+@app.get("/api/admin/users/{user_id}/report")
+async def admin_kunden_report(user_id: int, monate: int = 12,
+                              user: dict = Depends(require_admin)):
+    """Verbrauchs- und Abo-Report zu einem Konto (Steve-Wunsch 07.08.2026).
+
+    Beantwortet die Fragen, die vor einem Kundengespraech aufkommen: Was hat
+    die Person gebucht, was verbraucht sie, wie entwickelt sich das, und was
+    kostet uns das ungefaehr.
+
+    Die Kostenangabe ist ausdruecklich eine SCHAETZUNG (siehe
+    billing.KOSTEN_PRO_CREDIT_EUR) — echte Modellkosten fallen pro Aufruf an
+    und sind einzelnen Kunden nicht sauber zuzuordnen. Lieber eine ehrlich
+    beschriftete Groessenordnung als eine Zahl, die Genauigkeit vortaeuscht.
+    """
+    ziel = get_user_by_id(user_id)
+    if not ziel:
+        raise HTTPException(status_code=404, detail="Konto nicht gefunden")
+    monate = max(1, min(int(monate or 12), 36))
+
+    zustand = billing.pruefe_kontingent(user_id)
+    conn = get_db()
+    try:
+        # Verbrauch je Monat — sowohl was die Person selbst erzeugt hat als
+        # auch, was in ihren Topf gelaufen ist (bei Team-Inhabern der ganze
+        # Topf; das ist die Zahl, die die Kosten treibt).
+        verlauf = [dict(r) for r in conn.execute(
+            "SELECT strftime('%Y-%m', created_at) AS monat, "
+            "       SUM(CASE WHEN user_id = ? THEN credits ELSE 0 END) AS selbst, "
+            "       SUM(credits) AS topf "
+            "FROM usage_events WHERE (user_id = ? OR konto_user_id = ?) "
+            "  AND created_at >= date('now', ?) "
+            "GROUP BY monat ORDER BY monat DESC",
+            (user_id, user_id, user_id, f"-{monate} months")).fetchall()]
+        gesamt = conn.execute(
+            "SELECT COALESCE(SUM(credits), 0) FROM usage_events "
+            "WHERE user_id = ? OR konto_user_id = ?", (user_id, user_id)).fetchone()[0]
+        projekte = conn.execute("SELECT COUNT(*) FROM projects WHERE user_id = ?",
+                                (user_id,)).fetchone()[0]
+        bilder = conn.execute(
+            "SELECT COUNT(*) FROM images WHERE project_id IN "
+            "(SELECT id FROM projects WHERE user_id = ?)", (user_id,)).fetchone()[0]
+        letzte_aktion = conn.execute(
+            "SELECT MAX(created_at) FROM usage_events WHERE user_id = ?",
+            (user_id,)).fetchone()[0]
+        pakete = [dict(r) for r in conn.execute(
+            "SELECT groesse, verbleibend, quelle, notiz, erstellt_am, verfaellt_am "
+            "FROM quota_pakete WHERE user_id = ? ORDER BY erstellt_am DESC LIMIT 20",
+            (user_id,)).fetchall()]
+        mitglieder = [dict(r) for r in conn.execute(
+            "SELECT u.display_name, u.email FROM team_mitgliedschaften m "
+            "JOIN users u ON u.id = m.mitglied_id WHERE m.inhaber_id = ? "
+            "ORDER BY u.display_name", (user_id,)).fetchall()]
+        teams = [dict(r) for r in conn.execute(
+            "SELECT u.display_name AS inhaber, u.team_name FROM team_mitgliedschaften m "
+            "JOIN users u ON u.id = m.inhaber_id WHERE m.mitglied_id = ?",
+            (user_id,)).fetchall()]
+        api_aufrufe = conn.execute(
+            "SELECT COUNT(*) FROM api_usage WHERE user_id = ?", (user_id,)).fetchone()[0]
+    finally:
+        conn.close()
+
+    satz = billing.KOSTEN_PRO_CREDIT_EUR
+    for zeile in verlauf:
+        zeile["kosten_geschaetzt"] = round((zeile["topf"] or 0) * satz, 2)
+    plan = billing.effektiver_plan(ziel)
+    monatspreis = billing.PLAN_PREISE_EUR.get(plan, 0.0)
+
+    return {
+        "ok": True,
+        "konto": {
+            "id": ziel["id"], "name": ziel["display_name"], "email": ziel["email"],
+            "angelegt_am": (ziel.get("created_at") or "")[:10],
+            "aktiv": bool(ziel.get("is_active", 1)),
+            "ist_betreiber": bool(ziel.get("is_admin")),
+        },
+        "abo": {
+            "plan": plan,
+            "laufzeit_monate": ziel.get("plan_laufzeit_monate"),
+            "gueltig_bis": (ziel.get("plan_gueltig_bis") or "")[:10] or None,
+            "auto_verlaengerung": bool(1 if ziel.get("auto_verlaengerung") is None
+                                       else ziel.get("auto_verlaengerung")),
+            "quelle": ziel.get("plan_quelle") or None,
+            "geplanter_plan": ziel.get("geplanter_plan") or None,
+            "monatspreis_eur": monatspreis,
+            "erloes_laufzeit_eur": round(monatspreis * (ziel.get("plan_laufzeit_monate") or 0), 2),
+            "team_name": ziel.get("team_name") or "",
+            "sitze_inklusive": billing.PLAN_SITZE.get(plan),
+        },
+        "guthaben": {
+            "kontingent": zustand.get("kontingent"),
+            "uebertrag": zustand.get("uebertrag", 0),
+            "verfuegbar_monat": zustand.get("verfuegbar_monat"),
+            "verbraucht_monat": zustand.get("verbraucht", 0),
+            "rest": zustand.get("rest"),
+            "pakete_rest": zustand.get("pakete_rest", 0),
+            "pakete": pakete,
+        },
+        "nutzung": {
+            "projekte": projekte, "bilder": bilder, "api_aufrufe": api_aufrufe,
+            "credits_gesamt": gesamt, "letzte_aktion": letzte_aktion,
+            "verlauf": verlauf,
+        },
+        "kosten": {
+            "satz_pro_credit_eur": satz,
+            "gesamt_geschaetzt_eur": round(gesamt * satz, 2),
+            "hinweis": "Schätzung auf Basis eines Durchschnittssatzes je Credit — "
+                       "keine kundengenaue Abrechnung der Modellkosten.",
+        },
+        "team": {"mitglieder": mitglieder, "mitglied_in": teams},
+    }
 
 
 @app.post("/api/admin/users/{user_id}/toggle-active")
@@ -2030,6 +2171,19 @@ _kuendigung_mail = defaultdict(list)
 MAX_KUENDIGUNGEN_IP = 20
 MAX_KUENDIGUNGEN_MAIL = 3
 KUENDIGUNG_WINDOW_SECONDS = 3600
+# Selbst-Review 08.08.: Der Adress-Zaehler waechst mit JEDER angefragten
+# Adresse — von aussen frei waehlbar. Ohne Aufraeumen koennte man den
+# Prozess-Speicher damit langsam vollschreiben. Darum werden abgelaufene
+# Eintraege regelmaessig entfernt, statt sie ewig mitzuschleppen.
+MAX_BREMS_SCHLUESSEL = 5000
+
+
+def _bremse_aufraeumen(speicher: dict, fenster: int) -> None:
+    """Entfernt abgelaufene Zaehler aus einem Bremsen-Speicher."""
+    jetzt = time.time()
+    for schluessel in [k for k, v in speicher.items()
+                       if not v or jetzt - v[-1] > fenster]:
+        speicher.pop(schluessel, None)
 
 
 @app.post("/api/kuendigung")
@@ -2067,6 +2221,8 @@ async def oeffentliche_kuendigung(request: Request):
     if not _email_plausibel(mail):
         raise HTTPException(status_code=400, detail="Bitte eine gültige E-Mail-Adresse angeben")
     mail_key = mail.lower()
+    if len(_kuendigung_mail) > MAX_BREMS_SCHLUESSEL:
+        _bremse_aufraeumen(_kuendigung_mail, KUENDIGUNG_WINDOW_SECONDS)
     _kuendigung_mail[mail_key] = [t for t in _kuendigung_mail[mail_key]
                                   if jetzt - t < KUENDIGUNG_WINDOW_SECONDS]
     if len(_kuendigung_mail[mail_key]) >= MAX_KUENDIGUNGEN_MAIL:

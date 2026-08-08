@@ -798,9 +798,21 @@ def reset_password(token: str, new_password: str) -> bool:
 
 
 def list_all_users():
+    """Nutzerliste fuer die Admin-Verwaltung.
+
+    Seit 08.08.2026 mit den Abo-Eckdaten: Die Liste soll auf einen Blick
+    zeigen, was jemand gebucht hat — vorher musste man dafuer jede E-Mail
+    einzeln in ein anderes Formular tippen. Bewusst eine feste Spaltenliste
+    statt SELECT *: So kann kein neues Feld (Passwort-Hash, Stripe-Kennung,
+    Token) versehentlich im Browser landen.
+    """
     conn = get_db()
     rows = conn.execute(
-        "SELECT id, email, display_name, is_admin, admin_level, is_active, created_at, last_login FROM users ORDER BY created_at DESC"
+        "SELECT id, email, display_name, is_admin, admin_level, is_active, "
+        "       created_at, last_login, plan, plan_gueltig_bis, "
+        "       plan_laufzeit_monate, plan_quelle, auto_verlaengerung, "
+        "       team_name, abo_owner_id, geplanter_plan "
+        "FROM users ORDER BY created_at DESC"
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]

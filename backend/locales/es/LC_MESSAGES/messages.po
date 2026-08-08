@@ -3294,3 +3294,196 @@ msgstr "Confirma primero el inicio inmediato del servicio."
 
 msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
 msgstr "InkluDocs se sigue desarrollando continuamente. Además de los planes, agradecemos una aportación voluntaria si te gusta el proyecto."
+
+# Admin-Kundenverwaltung und Verbrauchs-Report (08.08.2026)
+msgid "Konto"
+msgstr "Cuenta"
+
+msgid "Abo"
+msgstr "Suscripción"
+
+msgid "Team"
+msgstr "Equipo"
+
+msgid "Report"
+msgstr "Informe"
+
+msgid "Report: {name}"
+msgstr "Informe: {name}"
+
+msgid "Report schließen"
+msgstr "Cerrar el informe"
+
+msgid "Report geschlossen."
+msgstr "Informe cerrado."
+
+msgid "Report für {name} geladen."
+msgstr "Informe de {name} cargado."
+
+msgid "Report konnte nicht geladen werden."
+msgstr "No se ha podido cargar el informe."
+
+msgid "Plan verwalten"
+msgstr "Gestionar el plan"
+
+msgid "Credits gutschreiben"
+msgstr "Abonar créditos"
+
+msgid "Plan-Formular für {name} ausgefüllt."
+msgstr "Formulario de plan rellenado para {name}."
+
+msgid "Credit-Formular für {name} ausgefüllt."
+msgstr "Formulario de créditos rellenado para {name}."
+
+msgid "Plan: {plan}"
+msgstr "Plan: {plan}"
+
+msgid "verlängert sich am {datum}"
+msgstr "se renueva el {datum}"
+
+msgid "gekündigt zum {datum}"
+msgstr "cancelado con efecto {datum}"
+
+msgid "gekündigt zum Laufzeitende"
+msgstr "cancelado al final del periodo"
+
+msgid "{monate} Monate"
+msgstr "{monate} meses"
+
+msgid "über Stripe"
+msgstr "a través de Stripe"
+
+msgid "auf Rechnung"
+msgstr "contra factura"
+
+msgid "Stripe"
+msgstr "Stripe"
+
+msgid "Rechnung"
+msgstr "Factura"
+
+msgid "Team „{name}“ mit {n} Mitgliedern"
+msgstr "Equipo «{name}» con {n} miembros"
+
+msgid "Team-Mitglieder ({n})"
+msgstr "Miembros del equipo ({n})"
+
+msgid "Arbeitet außerdem im Team von: {liste}"
+msgstr "También trabaja en el equipo de: {liste}"
+
+msgid "Angelegt am"
+msgstr "Creada el"
+
+msgid "Status"
+msgstr "Estado"
+
+msgid "Hinweis"
+msgstr "Nota"
+
+msgid "Betreiber-Konto — wird nicht gesperrt."
+msgstr "Cuenta de operador: nunca se bloquea."
+
+msgid "Gültig bis"
+msgstr "Válido hasta"
+
+msgid "Verlängerung"
+msgstr "Renovación"
+
+msgid "automatisch"
+msgstr "automática"
+
+msgid "Gebucht über"
+msgstr "Contratado a través de"
+
+msgid "Preis"
+msgstr "Precio"
+
+msgid "{preis} € im Monat, {summe} € für die Laufzeit"
+msgstr "{preis} € al mes, {summe} € por el periodo"
+
+msgid "Vorgemerkter Wechsel"
+msgstr "Cambio programado"
+
+msgid "Plätze inklusive"
+msgstr "Plazas incluidas"
+
+msgid "Guthaben im laufenden Monat"
+msgstr "Crédito del mes en curso"
+
+msgid "Monatskontingent"
+msgstr "Cuota mensual"
+
+msgid "Übertrag aus dem Vormonat"
+msgstr "Traspaso del mes anterior"
+
+msgid "Verbraucht"
+msgstr "Consumido"
+
+msgid "Rest"
+msgstr "Restante"
+
+msgid "unbegrenzt"
+msgstr "ilimitado"
+
+msgid "Zusatz-Credits aus Paketen"
+msgstr "Créditos adicionales de paquetes"
+
+msgid "Nutzung insgesamt"
+msgstr "Uso total"
+
+msgid "API-Aufrufe"
+msgstr "Llamadas a la API"
+
+msgid "Credits verbraucht"
+msgstr "Créditos consumidos"
+
+msgid "Zuletzt aktiv"
+msgstr "Última actividad"
+
+msgid "noch nie"
+msgstr "nunca"
+
+msgid "Geschätzte KI-Kosten"
+msgstr "Coste de IA estimado"
+
+msgid "{betrag} € (grobe Schätzung, {satz} € je Credit)"
+msgstr "{betrag} € (estimación aproximada, {satz} € por crédito)"
+
+msgid "Verbrauch je Monat"
+msgstr "Consumo por mes"
+
+msgid "{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €"
+msgstr "{monat}: {topf} créditos, {selbst} generados por la propia persona: estimado {kosten} €"
+
+msgid "Gutgeschriebene Pakete"
+msgstr "Paquetes abonados"
+
+msgid "{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})"
+msgstr "{groesse} créditos del {datum}, quedan {rest} ({quelle})"
+
+msgid "Für: {email}"
+msgstr "Para: {email}"
+
+msgid "Passwort für {email} wurde zurückgesetzt."
+msgstr "Se ha restablecido la contraseña de {email}."
+
+msgid "Benutzer wirklich löschen?"
+msgstr "¿Eliminar realmente a este usuario?"
+
+msgid "Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen."
+msgstr "La cuenta {email} y TODOS los datos asociados se eliminarán de forma definitiva (borrado según el RGPD). Esta acción no se puede deshacer."
+
+msgid "Ja, löschen"
+msgstr "Sí, eliminar"
+
+msgid "Benutzer {email} wurde gelöscht."
+msgstr "Se ha eliminado al usuario {email}."
+
+msgid "Admin-Rechte entziehen?"
+msgstr "¿Retirar los permisos de administrador?"
+
+msgid "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "{name} pierde los permisos de administrador. La cuenta se mantiene como usuario normal."
+
+msgid "Ja, Rechte entziehen"
+msgstr "Sí, retirar permisos"

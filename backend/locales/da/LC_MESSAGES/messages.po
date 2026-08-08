@@ -2985,3 +2985,196 @@ msgstr "Bekræft først, at ydelsen må begynde med det samme."
 
 msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
 msgstr "InkluDocs videreudvikles løbende. Ud over abonnementerne sætter vi pris på et frivilligt bidrag, hvis du kan lide projektet."
+
+# Admin-Kundenverwaltung und Verbrauchs-Report (08.08.2026)
+msgid "Konto"
+msgstr "Konto"
+
+msgid "Abo"
+msgstr "Abonnement"
+
+msgid "Team"
+msgstr "Team"
+
+msgid "Report"
+msgstr "Rapport"
+
+msgid "Report: {name}"
+msgstr "Rapport: {name}"
+
+msgid "Report schließen"
+msgstr "Luk rapporten"
+
+msgid "Report geschlossen."
+msgstr "Rapporten er lukket."
+
+msgid "Report für {name} geladen."
+msgstr "Rapport for {name} er indlæst."
+
+msgid "Report konnte nicht geladen werden."
+msgstr "Rapporten kunne ikke indlæses."
+
+msgid "Plan verwalten"
+msgstr "Administrer abonnement"
+
+msgid "Credits gutschreiben"
+msgstr "Tilskriv credits"
+
+msgid "Plan-Formular für {name} ausgefüllt."
+msgstr "Abonnementsformularen er udfyldt for {name}."
+
+msgid "Credit-Formular für {name} ausgefüllt."
+msgstr "Credit-formularen er udfyldt for {name}."
+
+msgid "Plan: {plan}"
+msgstr "Abonnement: {plan}"
+
+msgid "verlängert sich am {datum}"
+msgstr "fornyes den {datum}"
+
+msgid "gekündigt zum {datum}"
+msgstr "opsagt pr. {datum}"
+
+msgid "gekündigt zum Laufzeitende"
+msgstr "opsagt ved periodens udløb"
+
+msgid "{monate} Monate"
+msgstr "{monate} måneder"
+
+msgid "über Stripe"
+msgstr "via Stripe"
+
+msgid "auf Rechnung"
+msgstr "mod faktura"
+
+msgid "Stripe"
+msgstr "Stripe"
+
+msgid "Rechnung"
+msgstr "Faktura"
+
+msgid "Team „{name}“ mit {n} Mitgliedern"
+msgstr "Teamet „{name}“ med {n} medlemmer"
+
+msgid "Team-Mitglieder ({n})"
+msgstr "Teammedlemmer ({n})"
+
+msgid "Arbeitet außerdem im Team von: {liste}"
+msgstr "Arbejder desuden i teamet hos: {liste}"
+
+msgid "Angelegt am"
+msgstr "Oprettet den"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Hinweis"
+msgstr "Bemærk"
+
+msgid "Betreiber-Konto — wird nicht gesperrt."
+msgstr "Operatørkonto — spærres aldrig."
+
+msgid "Gültig bis"
+msgstr "Gyldig til"
+
+msgid "Verlängerung"
+msgstr "Fornyelse"
+
+msgid "automatisch"
+msgstr "automatisk"
+
+msgid "Gebucht über"
+msgstr "Bestilt via"
+
+msgid "Preis"
+msgstr "Pris"
+
+msgid "{preis} € im Monat, {summe} € für die Laufzeit"
+msgstr "{preis} € om måneden, {summe} € for perioden"
+
+msgid "Vorgemerkter Wechsel"
+msgstr "Planlagt skift"
+
+msgid "Plätze inklusive"
+msgstr "Pladser inkluderet"
+
+msgid "Guthaben im laufenden Monat"
+msgstr "Forbrug i den aktuelle måned"
+
+msgid "Monatskontingent"
+msgstr "Månedskvote"
+
+msgid "Übertrag aus dem Vormonat"
+msgstr "Overført fra sidste måned"
+
+msgid "Verbraucht"
+msgstr "Forbrugt"
+
+msgid "Rest"
+msgstr "Rest"
+
+msgid "unbegrenzt"
+msgstr "ubegrænset"
+
+msgid "Zusatz-Credits aus Paketen"
+msgstr "Ekstra credits fra pakker"
+
+msgid "Nutzung insgesamt"
+msgstr "Samlet forbrug"
+
+msgid "API-Aufrufe"
+msgstr "API-kald"
+
+msgid "Credits verbraucht"
+msgstr "Forbrugte credits"
+
+msgid "Zuletzt aktiv"
+msgstr "Senest aktiv"
+
+msgid "noch nie"
+msgstr "aldrig"
+
+msgid "Geschätzte KI-Kosten"
+msgstr "Anslåede AI-omkostninger"
+
+msgid "{betrag} € (grobe Schätzung, {satz} € je Credit)"
+msgstr "{betrag} € (groft skøn, {satz} € pr. credit)"
+
+msgid "Verbrauch je Monat"
+msgstr "Forbrug pr. måned"
+
+msgid "{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €"
+msgstr "{monat}: {topf} credits, heraf {selbst} genereret selv — anslået {kosten} €"
+
+msgid "Gutgeschriebene Pakete"
+msgstr "Tilskrevne pakker"
+
+msgid "{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})"
+msgstr "{groesse} credits fra {datum}, {rest} tilbage ({quelle})"
+
+msgid "Für: {email}"
+msgstr "For: {email}"
+
+msgid "Passwort für {email} wurde zurückgesetzt."
+msgstr "Adgangskoden for {email} er nulstillet."
+
+msgid "Benutzer wirklich löschen?"
+msgstr "Vil du virkelig slette denne bruger?"
+
+msgid "Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen."
+msgstr "Kontoen {email} og ALLE tilhørende data slettes permanent (GDPR-sletning). Det kan ikke fortrydes."
+
+msgid "Ja, löschen"
+msgstr "Ja, slet"
+
+msgid "Benutzer {email} wurde gelöscht."
+msgstr "Brugeren {email} er slettet."
+
+msgid "Admin-Rechte entziehen?"
+msgstr "Fjern administratorrettigheder?"
+
+msgid "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen."
+msgstr "{name} mister administratorrettighederne. Kontoen består som almindelig bruger."
+
+msgid "Ja, Rechte entziehen"
+msgstr "Ja, fjern rettighederne"

@@ -6,7 +6,7 @@
       <h1>{{ _('Benutzerverwaltung') }}</h1>
 
       <section class="dash-section" aria-labelledby="users-h">
-        <h2 id="users-h">{{ _('Vorhandene Benutzer') }}</h2>
+        <h2 id="users-h" tabindex="-1">{{ _('Vorhandene Benutzer') }}</h2>
         <div id="usersContainer" aria-busy="true">
           <p class="dash-sub">{{ _('Wird geladen …') }}</p>
         </div>
@@ -66,7 +66,7 @@
          E-Mail heraus und setzt den Plan mit fester Laufzeit. Der Kunde
          bekommt eine Bestaetigungs-Mail und sieht den Plan sofort. #}
       <section class="dash-card" aria-labelledby="abo-h" id="aboZuweisenSection">
-        <h2 id="abo-h">{{ _('Abo zuweisen (Rechnungsweg)') }}</h2>
+        <h2 id="abo-h" tabindex="-1">{{ _('Abo zuweisen (Rechnungsweg)') }}</h2>
         <p class="dash-sub">{{ _('Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen.') }}</p>
         <form id="aboZuweisenForm" novalidate>
           <div class="dash-field">
@@ -100,7 +100,7 @@
       </section>
 
       <section class="dash-card" aria-labelledby="paket-h" id="paketSection">
-        <h2 id="paket-h">{{ _('Zusatz-Credits gutschreiben (Rechnungsweg)') }}</h2>
+        <h2 id="paket-h" tabindex="-1">{{ _('Zusatz-Credits gutschreiben (Rechnungsweg)') }}</h2>
         <p class="dash-sub">{{ _('Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet auf genau diesem Konto — für Team-Guthaben die E-Mail des Team-Inhabers angeben. Es verfällt erst mit der Kündigung; bei Konten ohne aktives Abo nach 12 Monaten.') }}</p>
         <form id="paketForm" novalidate>
           <div class="dash-field">
@@ -124,11 +124,211 @@
           <span id="paketErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
         </form>
       </section>
+
+      {# Verbrauchs-Report je Kunde (08.08.2026, Steve-Wunsch vom 07.08.).
+         Bewusst als eigener Abschnitt statt als Dialog: Der Report ist lang,
+         man liest ihn im Gespraech mit dem Kunden und will darin scrollen. #}
+      <section class="dash-card" aria-labelledby="report-h" id="reportSection" hidden>
+        <h2 id="report-h" tabindex="-1">{{ _('Report') }}</h2>
+        <div id="reportInhalt"></div>
+        <button type="button" class="btn btn-secondary" id="reportSchliessen">{{ _('Report schließen') }}</button>
+      </section>
+{% endblock %}
+
+{% block dialogs %}
+{# Native Dialoge statt alert/prompt/confirm (Hausregel): Fokusfang, Escape,
+   inerter Hintergrund — und Text, den ein Screenreader zuverlaessig vorliest. #}
+<dialog id="pwDialog" class="app-dialog" aria-labelledby="pwHeading">
+  <h2 id="pwHeading">{{ _('Passwort zurücksetzen') }}</h2>
+  <p id="pwBody"></p>
+  <form id="pwForm" method="dialog">
+    <div class="dash-field">
+      <label for="pwNeu">{{ _('Neues Passwort (mind. 8 Zeichen)') }}</label>
+      <input type="password" id="pwNeu" class="dash-input" required minlength="8" autocomplete="new-password">
+    </div>
+    <div class="dash-field">
+      <label for="pwNeu2">{{ _('Passwort wiederholen') }}</label>
+      <input type="password" id="pwNeu2" class="dash-input" required minlength="8" autocomplete="new-password">
+    </div>
+    <span id="pwErr" role="alert" style="color:var(--error);"></span>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="pwCancel">{{ _('Abbrechen') }}</button>
+      <button type="button" class="btn btn-primary" id="pwConfirm">{{ _('Passwort setzen') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="revokeDialog" class="app-dialog" aria-labelledby="revokeHeading">
+  <h2 id="revokeHeading">{{ _('Admin-Rechte entziehen?') }}</h2>
+  <p id="revokeBody"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="revokeCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="revokeConfirm">{{ _('Ja, Rechte entziehen') }}</button>
+  </div>
+</dialog>
+
+<dialog id="delUserDialog" class="app-dialog" aria-labelledby="delUserHeading">
+  <h2 id="delUserHeading">{{ _('Benutzer wirklich löschen?') }}</h2>
+  <p id="delUserBody"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="delUserCancel">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="delUserConfirm">{{ _('Ja, löschen') }}</button>
+  </div>
+</dialog>
 {% endblock %}
 
 {% block page_script %}
 <script>
 {% raw %}
+  const PLAN_NAMEN = { free: 'Free', single: 'Single', team: 'Team', enterprise: 'Enterprise' };
+
+  // „Direkt aus der Tabelle wählen" (Steve 07.08.): Statt die E-Mail
+  // abzutippen, fuellt der Knopf das vorhandene Formular vor und setzt den
+  // Fokus dorthin — die Endpunkte und die Rechtepruefung bleiben unveraendert.
+  function uebernehmen(ziel, u) {
+    if (ziel === 'abo') {
+      byId('aboEmail').value = u.email;
+      if (u.plan && u.plan !== 'free') byId('aboPlan').value = u.plan;
+      if (u.plan_laufzeit_monate) byId('aboLaufzeit').value = String(u.plan_laufzeit_monate);
+      byId('aboAutoVerl').checked = u.auto_verlaengerung !== false;
+      byId('aboZuweisenMsg').textContent = '';
+      byId('aboZuweisenErr').textContent = '';
+      byId('abo-h').focus();
+      announce(t('Plan-Formular für {name} ausgefüllt.', { name: u.display_name }));
+    } else {
+      byId('paketEmail').value = u.email;
+      byId('paketMsg').textContent = '';
+      byId('paketErr').textContent = '';
+      byId('paket-h').focus();
+      announce(t('Credit-Formular für {name} ausgefüllt.', { name: u.display_name }));
+    }
+  }
+
+  // ── Verbrauchs-Report (08.08.2026) ──
+  // Bewusst Listen und Absaetze statt einer Tabelle: Steve hoert die Seite
+  // mit VoiceOver, und Tabellen sind dort mühsam.
+  function zeile(dl, begriff, wert) {
+    if (wert === null || wert === undefined || wert === '') return;
+    const dt = document.createElement('dt'); dt.textContent = begriff;
+    const dd = document.createElement('dd'); dd.textContent = String(wert);
+    dl.appendChild(dt); dl.appendChild(dd);
+  }
+
+  function block(ziel, ueberschrift) {
+    const h3 = document.createElement('h3');
+    h3.textContent = ueberschrift;
+    ziel.appendChild(h3);
+    const dl = document.createElement('dl');
+    ziel.appendChild(dl);
+    return dl;
+  }
+
+  async function zeigeReport(id, name) {
+    const abschnitt = byId('reportSection');
+    const inhalt = byId('reportInhalt');
+    inhalt.innerHTML = '';
+    abschnitt.hidden = false;
+    byId('report-h').textContent = t('Report: {name}', { name: name });
+    byId('report-h').focus();
+    const res = await fetch('/api/admin/users/' + id + '/report');
+    if (!res.ok) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Report konnte nicht geladen werden.');
+      inhalt.appendChild(p);
+      return;
+    }
+    const d = await res.json();
+
+    let dl = block(inhalt, t('Konto'));
+    zeile(dl, t('Name'), d.konto.name);
+    zeile(dl, t('E-Mail'), d.konto.email);
+    zeile(dl, t('Angelegt am'), d.konto.angelegt_am);
+    zeile(dl, t('Status'), d.konto.aktiv ? t('Aktiv') : t('Gesperrt'));
+    if (d.konto.ist_betreiber) zeile(dl, t('Hinweis'), t('Betreiber-Konto — wird nicht gesperrt.'));
+
+    dl = block(inhalt, t('Abo'));
+    zeile(dl, t('Plan'), PLAN_NAMEN[d.abo.plan] || d.abo.plan);
+    if (d.abo.plan !== 'free') {
+      zeile(dl, t('Laufzeit'), d.abo.laufzeit_monate ? t('{monate} Monate', { monate: d.abo.laufzeit_monate }) : null);
+      zeile(dl, t('Gültig bis'), d.abo.gueltig_bis);
+      zeile(dl, t('Verlängerung'), d.abo.auto_verlaengerung ? t('automatisch') : t('gekündigt zum Laufzeitende'));
+      zeile(dl, t('Gebucht über'), d.abo.quelle === 'stripe' ? t('Stripe') : t('Rechnung'));
+      zeile(dl, t('Preis'), t('{preis} € im Monat, {summe} € für die Laufzeit', { preis: String(d.abo.monatspreis_eur).replace('.', ','), summe: String(d.abo.erloes_laufzeit_eur).replace('.', ',') }));
+      if (d.abo.geplanter_plan) zeile(dl, t('Vorgemerkter Wechsel'), PLAN_NAMEN[d.abo.geplanter_plan] || d.abo.geplanter_plan);
+    }
+    if (d.abo.team_name) zeile(dl, t('Team'), d.abo.team_name);
+    if (d.abo.sitze_inklusive) zeile(dl, t('Plätze inklusive'), d.abo.sitze_inklusive);
+
+    dl = block(inhalt, t('Guthaben im laufenden Monat'));
+    zeile(dl, t('Monatskontingent'), d.guthaben.kontingent === null ? t('unbegrenzt') : d.guthaben.kontingent);
+    zeile(dl, t('Übertrag aus dem Vormonat'), d.guthaben.uebertrag);
+    zeile(dl, t('Verbraucht'), d.guthaben.verbraucht_monat);
+    zeile(dl, t('Rest'), d.guthaben.rest === null ? t('unbegrenzt') : d.guthaben.rest);
+    zeile(dl, t('Zusatz-Credits aus Paketen'), d.guthaben.pakete_rest);
+
+    dl = block(inhalt, t('Nutzung insgesamt'));
+    zeile(dl, t('Projekte'), d.nutzung.projekte);
+    zeile(dl, t('Bilder'), d.nutzung.bilder);
+    zeile(dl, t('API-Aufrufe'), d.nutzung.api_aufrufe);
+    zeile(dl, t('Credits verbraucht'), d.nutzung.credits_gesamt);
+    zeile(dl, t('Zuletzt aktiv'), (d.nutzung.letzte_aktion || '').slice(0, 16) || t('noch nie'));
+    zeile(dl, t('Geschätzte KI-Kosten'), t('{betrag} € (grobe Schätzung, {satz} € je Credit)', { betrag: String(d.kosten.gesamt_geschaetzt_eur).replace('.', ','), satz: String(d.kosten.satz_pro_credit_eur).replace('.', ',') }));
+
+    if (d.nutzung.verlauf.length) {
+      const h3 = document.createElement('h3');
+      h3.textContent = t('Verbrauch je Monat');
+      inhalt.appendChild(h3);
+      const ul = document.createElement('ul');
+      ul.className = 'dash-list';
+      d.nutzung.verlauf.forEach((m) => {
+        const li = document.createElement('li');
+        li.textContent = t('{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €', { monat: m.monat, topf: m.topf, selbst: m.selbst, kosten: String(m.kosten_geschaetzt).replace('.', ',') });
+        ul.appendChild(li);
+      });
+      inhalt.appendChild(ul);
+    }
+
+    if (d.team.mitglieder.length) {
+      const h3 = document.createElement('h3');
+      h3.textContent = t('Team-Mitglieder ({n})', { n: d.team.mitglieder.length });
+      inhalt.appendChild(h3);
+      const ul = document.createElement('ul');
+      ul.className = 'dash-list';
+      d.team.mitglieder.forEach((m) => {
+        const li = document.createElement('li');
+        li.textContent = m.display_name + ' (' + m.email + ')';
+        ul.appendChild(li);
+      });
+      inhalt.appendChild(ul);
+    }
+    if (d.team.mitglied_in.length) {
+      const p = document.createElement('p');
+      p.textContent = t('Arbeitet außerdem im Team von: {liste}', { liste: d.team.mitglied_in.map((x) => x.team_name || x.inhaber).join(', ') });
+      inhalt.appendChild(p);
+    }
+    if (d.guthaben.pakete.length) {
+      const h3 = document.createElement('h3');
+      h3.textContent = t('Gutgeschriebene Pakete');
+      inhalt.appendChild(h3);
+      const ul = document.createElement('ul');
+      ul.className = 'dash-list';
+      d.guthaben.pakete.forEach((pk) => {
+        const li = document.createElement('li');
+        li.textContent = t('{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})', { groesse: pk.groesse, datum: (pk.erstellt_am || '').slice(0, 10), rest: pk.verbleibend, quelle: pk.quelle }) + (pk.notiz ? ' — ' + pk.notiz : '');
+        ul.appendChild(li);
+      });
+      inhalt.appendChild(ul);
+    }
+    announce(t('Report für {name} geladen.', { name: name }));
+  }
+
+  byId('reportSchliessen').addEventListener('click', () => {
+    byId('reportSection').hidden = true;
+    byId('users-h').focus();
+    announce(t('Report geschlossen.'));
+  });
+
   async function loadUsers() {
     const cont = byId('usersContainer');
     const res = await fetch('/api/admin/users');
@@ -158,6 +358,24 @@
       li.appendChild(h3);
       li.appendChild(meta);
 
+      // Abo-Zeile: Was hat die Person gebucht? Ohne diese Angabe muesste man
+      // fuer jede Frage erst die E-Mail abtippen und woanders nachsehen.
+      const abo = document.createElement('p');
+      abo.className = 'dash-meta';
+      const teile = [t('Plan: {plan}', { plan: PLAN_NAMEN[u.plan] || u.plan })];
+      if (u.plan !== 'free') {
+        if (u.plan_gueltig_bis) {
+          teile.push(u.auto_verlaengerung
+            ? t('verlängert sich am {datum}', { datum: u.plan_gueltig_bis })
+            : t('gekündigt zum {datum}', { datum: u.plan_gueltig_bis }));
+        }
+        if (u.plan_laufzeit_monate) teile.push(t('{monate} Monate', { monate: u.plan_laufzeit_monate }));
+        if (u.plan_quelle) teile.push(u.plan_quelle === 'stripe' ? t('über Stripe') : t('auf Rechnung'));
+      }
+      if (u.team_name) teile.push(t('Team „{name}“ mit {n} Mitgliedern', { name: u.team_name, n: u.team_mitglieder }));
+      abo.textContent = teile.join(' · ');
+      li.appendChild(abo);
+
       const actions = document.createElement('div');
       actions.className = 'dash-actions';
       if (currentUser && u.id === currentUser.id) {
@@ -182,6 +400,26 @@
         actions.appendChild(reset);
         actions.appendChild(del);
       }
+      // Report und die beiden Abo-Aktionen darf auch ein Nur-Einsicht-Admin
+      // sehen bzw. anstossen — das Ausfuellen aendert noch nichts, und beim
+      // Absenden greift ohnehin die Rechtepruefung im Backend.
+      const report = document.createElement('button');
+      report.className = 'btn btn-secondary btn-small';
+      report.textContent = t('Report');
+      report.addEventListener('click', () => zeigeReport(u.id, u.display_name));
+      actions.appendChild(report);
+      if (currentUser && currentUser.admin_level === 'full') {
+        const planBtn = document.createElement('button');
+        planBtn.className = 'btn btn-secondary btn-small';
+        planBtn.textContent = t('Plan verwalten');
+        planBtn.addEventListener('click', () => uebernehmen('abo', u));
+        const creditBtn = document.createElement('button');
+        creditBtn.className = 'btn btn-secondary btn-small';
+        creditBtn.textContent = t('Credits gutschreiben');
+        creditBtn.addEventListener('click', () => uebernehmen('paket', u));
+        actions.appendChild(planBtn);
+        actions.appendChild(creditBtn);
+      }
       li.appendChild(actions);
       ul.appendChild(li);
     });
@@ -195,24 +433,54 @@
     loadUsers();
   }
 
-  async function resetUserPw(id, email) {
-    const pw = prompt(t('Neues Passwort für {email} (mind. 8 Zeichen):', { email: email }));
-    if (!pw || pw.length < 8) { alert(t('Passwort muss mindestens 8 Zeichen haben.')); return; }
-    const pw2 = prompt(t('Passwort wiederholen:'));
-    if (pw !== pw2) { alert(t('Passwörter stimmen nicht überein.')); return; }
-    const res = await fetch('/api/admin/users/' + id + '/reset-password', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_password: pw }),
-    });
-    if (res.ok) { announce(t('Passwort zurückgesetzt')); alert(t('Passwort wurde zurückgesetzt.')); }
-    else { alert(t('Fehler beim Zurücksetzen.')); }
+  // Passwort und Loeschen laufen ueber native Dialoge statt prompt/confirm
+  // (08.08.2026): Browser-Dialoge blockieren die Seite, sind kaum gestaltbar
+  // und im Screenreader unangenehm sprunghaft.
+  let _pwZiel = null;
+  let _delZiel = null;
+
+  function resetUserPw(id, email) {
+    _pwZiel = { id: id, email: email };
+    byId('pwBody').textContent = t('Für: {email}', { email: email });
+    byId('pwNeu').value = ''; byId('pwNeu2').value = ''; byId('pwErr').textContent = '';
+    byId('pwDialog').showModal();
+    byId('pwNeu').focus();
   }
 
-  async function deleteUser(id, email) {
-    if (!confirm(t('Benutzer "{email}" und ALLE Daten unwiderruflich löschen? (DSGVO-Löschung)', { email: email }))) return;
-    const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
-    if (res.ok) { announce(t('Benutzer gelöscht')); loadUsers(); }
-    else { alert(t('Fehler beim Löschen.')); }
+  byId('pwCancel').addEventListener('click', () => byId('pwDialog').close());
+  byId('pwConfirm').addEventListener('click', async () => {
+    const err = byId('pwErr');
+    const pw = byId('pwNeu').value;
+    const pw2 = byId('pwNeu2').value;
+    err.textContent = '';
+    if (pw.length < 8) { err.textContent = t('Passwort muss mindestens 8 Zeichen haben.'); byId('pwNeu').focus(); return; }
+    if (pw !== pw2) { err.textContent = t('Passwörter stimmen nicht überein.'); byId('pwNeu2').focus(); return; }
+    const res = await fetch('/api/admin/users/' + _pwZiel.id + '/reset-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_password: pw }),
+    });
+    if (res.ok) {
+      byId('pwDialog').close();
+      announce(t('Passwort für {email} wurde zurückgesetzt.', { email: _pwZiel.email }));
+    } else {
+      const d = await res.json().catch(() => ({}));
+      err.textContent = d.detail || t('Fehler beim Zurücksetzen.');
+    }
+  });
+
+  function deleteUser(id, email) {
+    _delZiel = { id: id, email: email };
+    byId('delUserBody').textContent = t('Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen.', { email: email });
+    byId('delUserDialog').showModal();
   }
+
+  byId('delUserCancel').addEventListener('click', () => byId('delUserDialog').close());
+  byId('delUserConfirm').addEventListener('click', async () => {
+    const res = await fetch('/api/admin/users/' + _delZiel.id, { method: 'DELETE' });
+    byId('delUserDialog').close();
+    if (res.ok) { announce(t('Benutzer {email} wurde gelöscht.', { email: _delZiel.email })); loadUsers(); }
+    else { announce(t('Fehler beim Löschen.')); }
+  });
 
   byId('createUserForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -308,16 +576,25 @@
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok) { announce(data.message || t('Rechte-Stufe geändert')); loadAdmins(); loadUsers(); }
-    else { alert(data.detail || t('Fehler beim Ändern der Rechte-Stufe.')); }
+    else { announce(data.detail || t('Fehler beim Ändern der Rechte-Stufe.')); }
   }
 
-  async function revokeAdmin(id, name) {
-    if (!confirm(t('Admin-Rechte von "{name}" entziehen? Das Konto bleibt als normaler Nutzer bestehen.', { name: name }))) return;
-    const res = await fetch('/api/admin/admins/' + id, { method: 'DELETE' });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) { announce(data.message || t('Admin-Rechte entzogen')); loadAdmins(); loadUsers(); }
-    else { alert(data.detail || t('Fehler beim Entziehen der Rechte.')); }
+  let _revokeZiel = null;
+
+  function revokeAdmin(id, name) {
+    _revokeZiel = { id: id, name: name };
+    byId('revokeBody').textContent = t('{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen.', { name: name });
+    byId('revokeDialog').showModal();
   }
+
+  byId('revokeCancel').addEventListener('click', () => byId('revokeDialog').close());
+  byId('revokeConfirm').addEventListener('click', async () => {
+    const res = await fetch('/api/admin/admins/' + _revokeZiel.id, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    byId('revokeDialog').close();
+    if (res.ok) { announce(data.message || t('Admin-Rechte entzogen')); loadAdmins(); loadUsers(); }
+    else { announce(data.detail || t('Fehler beim Entziehen der Rechte.')); }
+  });
 
   byId('addAdminForm').addEventListener('submit', async (e) => {
     e.preventDefault();
