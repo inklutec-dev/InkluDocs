@@ -2770,3 +2770,88 @@ msgstr "Ditt konto har raderats. Du loggas nu ut."
 
 msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
 msgstr "Ditt konto har raderats. Alla dina projekt och alt-texter är borttagna. Tack för att du använde InkluDocs."
+
+# Verbraucherrecht: Widerruf, Kuendigungsknopf, Pflichtangaben (08.08.2026)
+msgid "Vertrag kündigen"
+msgstr "Säg upp avtalet"
+
+msgid "Verträge hier kündigen"
+msgstr "Säg upp avtal här"
+
+msgid "Jetzt kündigen"
+msgstr "Säg upp nu"
+
+msgid "Kündigung bestätigen"
+msgstr "Bekräfta uppsägningen"
+
+msgid "Kündigung ist eingegangen"
+msgstr "Vi har tagit emot din uppsägning"
+
+msgid "Zurück zu den Angaben"
+msgstr "Tillbaka till uppgifterna"
+
+msgid "Art der Kündigung"
+msgstr "Typ av uppsägning"
+
+msgid "Ordentliche Kündigung zum Laufzeitende"
+msgstr "Ordinarie uppsägning vid periodens slut"
+
+msgid "Außerordentliche Kündigung aus wichtigem Grund"
+msgstr "Extraordinär uppsägning av viktig anledning"
+
+msgid "Widerruf innerhalb von 14 Tagen"
+msgstr "Ångerrätt inom 14 dagar"
+
+msgid "Widerrufsbelehrung"
+msgstr "Ångerrätt"
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular"
+msgstr "Ångerrätt och standardblankett för ångerrätt"
+
+msgid "E-Mail-Adresse deines Kontos"
+msgstr "E-postadressen till ditt konto"
+
+msgid "Dein Name"
+msgstr "Ditt namn"
+
+msgid "Grund oder Anmerkung (freiwillig)"
+msgstr "Skäl eller kommentar (frivilligt)"
+
+msgid "Bitte gib die E-Mail-Adresse deines Kontos an."
+msgstr "Ange e-postadressen till ditt konto."
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns deine Kündigung zu."
+msgstr "Kontrollera dina uppgifter. Med nästa klick når din uppsägning oss."
+
+msgid "Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar."
+msgstr "Här kan du säga upp din betalda InkluDocs-prenumeration — utan inloggning. Uppsägningen träder i kraft vid den pågående periodens slut; fram till dess kan du använda ditt saldo."
+
+msgid "Angemeldet geht es auch direkt: im Bereich „Abo & Verbrauch“ über „Abo kündigen“. Fragen? Schreib an"
+msgstr "När du är inloggad går det direkt: under ”Prenumeration och förbrukning” via ”Säg upp prenumerationen”. Frågor? Skriv till"
+
+msgid "Deine Bestellung"
+msgstr "Din beställning"
+
+msgid "Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Tjänst: {credits} credits per månad. Ett credit motsvarar en bildbeskrivning."
+
+msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Tjänst: {credits} credits per månad för upp till {plaetze} personer (du inräknad). Ett credit motsvarar en bildbeskrivning."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
+msgstr "Löptid {monate} månader, betalas i förskott. Därefter förlängs prenumerationen automatiskt med {monate} månader om du inte säger upp den — uppsägningsbar när som helst till periodens slut."
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite. Welche Zahlungsarten dort erscheinen, hängt davon ab, was für dein Land freigeschaltet ist; Kartenzahlung geht immer."
+msgstr "Betalningen sker på Stripes säkra sida. Vilka betalsätt som visas beror på vad som är aktiverat för ditt land; kortbetalning fungerar alltid."
+
+msgid "Preise sind Endpreise. Nach § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen."
+msgstr "Priserna är slutpriser. Enligt § 19 i den tyska momslagen tas ingen moms ut och den anges därför inte."
+
+msgid "Ich verlange ausdrücklich, dass InkluDocs sofort nach der Buchung bereitsteht — also vor Ablauf der 14-tägigen Widerrufsfrist. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für die bis dahin verbrauchten Credits schulde und mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt."
+msgstr "Jag begär uttryckligen att InkluDocs ska vara tillgängligt omedelbart efter beställningen — alltså innan ångerfristen på 14 dagar löper ut. Jag är medveten om att jag vid ånger ska ersätta de credits som förbrukats fram till dess och att min ångerrätt upphör när avtalet fullgjorts."
+
+msgid "Bitte bestätige zuerst den sofortigen Leistungsbeginn."
+msgstr "Bekräfta först att tjänsten får börja omedelbart."
+
+msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
+msgstr "InkluDocs vidareutvecklas löpande. Utöver abonnemangen uppskattar vi ett frivilligt bidrag om du gillar projektet."

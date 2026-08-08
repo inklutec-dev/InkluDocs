@@ -17,6 +17,7 @@ die Oberflaeche zeigt dann weiter den E-Mail-Hinweis statt Buchen-Knoepfen.
 """
 import logging
 import os
+import re
 
 import billing
 
@@ -138,10 +139,96 @@ def kunde_fuer(db_user: dict) -> str:
     return c.id
 
 
+# Zahlungsarten, die wir anbieten WOLLEN. Was davon wirklich erscheint,
+# entscheidet _zahlungsarten() anhand der freigeschalteten Konto-Faehigkeiten.
+# Apple Pay, Google Pay und Link laufen bei Stripe Checkout unter "card" und
+# brauchen keinen eigenen Eintrag.
+# Genau die Auswahl, die Stripe fuer unsere Sessions bisher selbst getroffen
+# hat — damit sich fuer funktionierende Zahlungsarten NICHTS aendert und nur
+# die nicht freigeschalteten wegfallen.
+GEWUENSCHTE_ZAHLUNGSARTEN = ["card", "sepa_debit", "klarna", "paypal", "amazon_pay",
+                             "bancontact", "eps", "mb_way", "satispay"]
+
+_zahlungsarten_cache = None
+
+
+def _zahlungsarten() -> list:
+    """Nur Zahlungsarten, die das Stripe-Konto wirklich kann (08.08.2026).
+
+    Anlass: Steve und Michael waehlten im Checkout PayPal, meldeten sich dort
+    an — und landeten wieder bei der Kartenzahlung. Grund: In den Einstellungen
+    stand PayPal auf "an", die Konto-Faehigkeit `paypal_payments` fehlte aber
+    (PayPal-Geschaeftskonto nie verknuepft). Stripe zeigt die Kachel dann
+    trotzdem und faellt still auf Karte zurueck — fuer Kunden schlicht kaputt.
+
+    Darum fragen wir die Faehigkeiten ab und bieten nur an, was auch traegt.
+    Sobald PayPal im Dashboard verknuepft ist, erscheint es von allein: die
+    Liste wird pro Prozessstart einmal ermittelt (ein Neustart genuegt).
+    Faellt die Abfrage aus, geben wir None zurueck — dann entscheidet Stripe
+    wie bisher selbst, statt dass gar nichts mehr buchbar ist.
+    """
+    global _zahlungsarten_cache
+    if _zahlungsarten_cache is not None:
+        return _zahlungsarten_cache
+    try:
+        caps = stripe.Account.retrieve().get("capabilities") or {}
+    except Exception:
+        log.exception("Konto-Faehigkeiten nicht abrufbar — Stripe waehlt selbst")
+        return None
+    aktiv = [a for a in GEWUENSCHTE_ZAHLUNGSARTEN
+             if caps.get(f"{a}_payments") == "active"]
+    fehlend = [a for a in GEWUENSCHTE_ZAHLUNGSARTEN if a not in aktiv]
+    if fehlend:
+        log.warning("Stripe: nicht freigeschaltete Zahlungsarten werden nicht "
+                    "angeboten: %s", ", ".join(fehlend))
+    # Karte ist die Rueckfalllinie: ohne sie waere gar nichts buchbar.
+    _zahlungsarten_cache = aktiv or ["card"]
+    return _zahlungsarten_cache
+
+
+# Was in welchem Modus nicht geht, sagt uns Stripe selbst — z. B. "The payment
+# method `eps` cannot be used in `subscription` mode.". Statt diese Regeln zu
+# pflegen (sie aendern sich), lernen wir sie aus der Fehlermeldung und merken
+# sie uns pro Modus.
+_ABGELEHNT_RE = re.compile(r"payment method `([a-z_]+)` cannot be used")
+_nicht_moeglich = {}
+
+
+def _session_mit_zahlungsarten(**felder):
+    """Legt eine Checkout-Session an — mit gefilterten Zahlungsarten.
+
+    Lehnt Stripe eine Methode fuer diesen Modus ab, fliegt genau sie raus und
+    der Aufruf wird wiederholt. Erst wenn das nicht hilft, laesst der Aufruf
+    Stripe selbst waehlen: eine Buchung darf nie an unserer Vorauswahl
+    scheitern — lieber eine Kachel zu viel als ein Kunde, der nicht zahlen kann.
+    """
+    modus = felder.get("mode", "payment")
+    arten = _zahlungsarten()
+    if not arten:
+        return stripe.checkout.Session.create(**felder)
+    gesperrt = _nicht_moeglich.setdefault(modus, set())
+    for _ in range(len(arten) + 1):
+        rest = [a for a in arten if a not in gesperrt]
+        if not rest:
+            break
+        try:
+            return stripe.checkout.Session.create(payment_method_types=rest, **felder)
+        except stripe.error.InvalidRequestError as e:
+            treffer = _ABGELEHNT_RE.search(str(e))
+            if not treffer or treffer.group(1) in gesperrt:
+                log.warning("Zahlungsarten %s abgelehnt (%s) — Stripe waehlt selbst",
+                            rest, e)
+                break
+            gesperrt.add(treffer.group(1))
+            log.info("Zahlungsart %s ist im Modus %s nicht moeglich — entfernt",
+                     treffer.group(1), modus)
+    return stripe.checkout.Session.create(**felder)
+
+
 def checkout_abo(db_user: dict, plan: str, monate: int, base_url: str,
                  kunde: str) -> str:
     """Checkout-Link fuer eine Abo-Buchung (fester Zeitraum, auto-verlaengernd)."""
-    s = stripe.checkout.Session.create(
+    s = _session_mit_zahlungsarten(
         customer=kunde,
         mode="subscription",
         line_items=[{"price": _preis_id(_plan_lookup(plan, monate)), "quantity": 1}],
@@ -158,7 +245,7 @@ def checkout_abo(db_user: dict, plan: str, monate: int, base_url: str,
 
 def checkout_paket(db_user: dict, groesse: int, base_url: str, kunde: str) -> str:
     """Checkout-Link fuer ein Zusatz-Credit-Paket (Einmalzahlung)."""
-    s = stripe.checkout.Session.create(
+    s = _session_mit_zahlungsarten(
         customer=kunde,
         mode="payment",
         line_items=[{"price": _preis_id(_paket_lookup(groesse)), "quantity": 1}],

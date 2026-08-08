@@ -3209,3 +3209,88 @@ msgstr "Your account has been deleted. You are being signed out now."
 
 msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
 msgstr "Your account has been deleted. All your projects and alt texts have been removed. Thank you for using InkluDocs."
+
+# Verbraucherrecht: Widerruf, Kuendigungsknopf, Pflichtangaben (08.08.2026)
+msgid "Vertrag kündigen"
+msgstr "Cancel contract"
+
+msgid "Verträge hier kündigen"
+msgstr "Cancel contracts here"
+
+msgid "Jetzt kündigen"
+msgstr "Cancel now"
+
+msgid "Kündigung bestätigen"
+msgstr "Confirm cancellation"
+
+msgid "Kündigung ist eingegangen"
+msgstr "We have received your cancellation"
+
+msgid "Zurück zu den Angaben"
+msgstr "Back to the details"
+
+msgid "Art der Kündigung"
+msgstr "Type of cancellation"
+
+msgid "Ordentliche Kündigung zum Laufzeitende"
+msgstr "Ordinary cancellation at the end of the term"
+
+msgid "Außerordentliche Kündigung aus wichtigem Grund"
+msgstr "Extraordinary cancellation for good cause"
+
+msgid "Widerruf innerhalb von 14 Tagen"
+msgstr "Withdrawal within 14 days"
+
+msgid "Widerrufsbelehrung"
+msgstr "Right of withdrawal"
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular"
+msgstr "Right of withdrawal and model withdrawal form"
+
+msgid "E-Mail-Adresse deines Kontos"
+msgstr "Email address of your account"
+
+msgid "Dein Name"
+msgstr "Your name"
+
+msgid "Grund oder Anmerkung (freiwillig)"
+msgstr "Reason or comment (optional)"
+
+msgid "Bitte gib die E-Mail-Adresse deines Kontos an."
+msgstr "Please enter the email address of your account."
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns deine Kündigung zu."
+msgstr "Please check your details. With the next click, your cancellation reaches us."
+
+msgid "Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar."
+msgstr "Here you can cancel your paid InkluDocs subscription — no sign-in needed. The cancellation takes effect at the end of the current term; until then your credit remains usable."
+
+msgid "Angemeldet geht es auch direkt: im Bereich „Abo & Verbrauch“ über „Abo kündigen“. Fragen? Schreib an"
+msgstr "When signed in you can do it directly: in “Subscription & usage” via “Cancel subscription”. Questions? Write to"
+
+msgid "Deine Bestellung"
+msgstr "Your order"
+
+msgid "Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Service: {credits} credits per month. One credit equals one image description."
+
+msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Service: {credits} credits per month for up to {plaetze} people (including you). One credit equals one image description."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
+msgstr "Term {monate} months, payable in advance. After that the subscription renews automatically for {monate} months unless you cancel — cancellable at any time to the end of the term."
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite. Welche Zahlungsarten dort erscheinen, hängt davon ab, was für dein Land freigeschaltet ist; Kartenzahlung geht immer."
+msgstr "Payment happens on Stripe’s secure page. Which payment methods appear there depends on what is enabled for your country; card payment always works."
+
+msgid "Preise sind Endpreise. Nach § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen."
+msgstr "Prices are final prices. Under section 19 of the German VAT Act no VAT is charged and therefore none is shown."
+
+msgid "Ich verlange ausdrücklich, dass InkluDocs sofort nach der Buchung bereitsteht — also vor Ablauf der 14-tägigen Widerrufsfrist. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für die bis dahin verbrauchten Credits schulde und mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt."
+msgstr "I expressly request that InkluDocs be available immediately after booking — that is, before the 14-day withdrawal period expires. I am aware that in the event of withdrawal I owe compensation for the credits used up to that point and that my right of withdrawal expires once the contract has been fully performed."
+
+msgid "Bitte bestätige zuerst den sofortigen Leistungsbeginn."
+msgstr "Please confirm the immediate start of the service first."
+
+msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
+msgstr "InkluDocs is continuously being developed further. Alongside the plans, we welcome a voluntary contribution if you like the project."

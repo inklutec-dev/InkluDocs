@@ -211,6 +211,12 @@ _einladung_attempts = defaultdict(list)
 MAX_EINLADUNGEN_PER_WINDOW = 10
 EINLADUNG_WINDOW_SECONDS = 3600  # 1 Stunde
 
+# Fassung der Widerrufsbelehrung, der die Kundschaft beim Buchen zustimmt
+# (08.08.2026). Wird mitprotokolliert und in der Bestaetigungs-Mail genannt:
+# Aendert sich der Text, muss nachvollziehbar bleiben, WELCHE Fassung galt.
+# Bei jeder inhaltlichen Aenderung von frontend/widerruf.html hochzaehlen.
+WIDERRUFSBELEHRUNG_FASSUNG = "2026-08-08"
+
 # Loesch-Bremse (Selbst-Review 08.08.): Der Loeschweg prueft das Passwort —
 # mit einer gekaperten Sitzung koennte man es sonst unbegrenzt raten (und die
 # Anmelde-Bremse greift dort gar nicht, weil man ja schon angemeldet ist).
@@ -2012,6 +2018,149 @@ async def abo_kuendigen(user: dict = Depends(get_current_user)):
             "message": "Gekündigt — dein Abo läuft bis zum Laufzeitende weiter und endet dann"}
 
 
+# Bremsen fuer den oeffentlichen Kuendigungsknopf. Zwei Ebenen, bewusst
+# unterschiedlich streng (Selbst-Review 08.08.): Der Knopf ist gesetzlich
+# vorgeschrieben und muss verfuegbar sein — eine zu enge Bremse waere selbst
+# ein Rechtsverstoss. Hinter einer Firmen-IP koennen mehrere Personen
+# nacheinander kuendigen wollen, darum ist das IP-Limit weit. Eng ist nur
+# das Limit PRO ADRESSE: dieselbe Adresse mehrfach zu kuendigen bringt
+# niemandem etwas, waere aber eine Mail-Kanone gegen diese Adresse.
+_kuendigung_ip = defaultdict(list)
+_kuendigung_mail = defaultdict(list)
+MAX_KUENDIGUNGEN_IP = 20
+MAX_KUENDIGUNGEN_MAIL = 3
+KUENDIGUNG_WINDOW_SECONDS = 3600
+
+
+@app.post("/api/kuendigung")
+async def oeffentliche_kuendigung(request: Request):
+    """Gesetzlicher Kuendigungsknopf nach § 312k BGB (08.08.2026).
+
+    Muss OHNE Anmeldung funktionieren — genau das ist der Sinn der
+    Vorschrift. Rechtlich zaehlt der Zeitpunkt des ZUGANGS, darum wird jede
+    Erklaerung protokolliert, auch wenn sich kein Konto dazu finden laesst.
+
+    Missbrauchsabwaegung: Wer eine fremde Adresse eintraegt, kann damit ein
+    fremdes Abo zum Laufzeitende kuendigen. Der Schaden ist gering und
+    umkehrbar — das Abo laeuft mit vollem Guthaben weiter, die betroffene
+    Person wird sofort per Mail informiert und kann die Kuendigung im
+    Abo-Bereich mit einem Klick widerrufen. Die Alternative (Bestaetigungs-
+    link vor Wirksamkeit) wuerde die vom Gesetz geforderte unmittelbare
+    Kuendigungsmoeglichkeit aushebeln. Deshalb: sofort wirksam, sofort
+    informieren, jederzeit widerrufbar.
+
+    Aus demselben Grund verraet die Antwort NICHT, ob es zu der Adresse ein
+    Konto gibt (keine Konto-Ausforschung) — die Rueckmeldung ist immer
+    gleich, die Einzelheiten stehen in der Mail an die Adresse selbst.
+    """
+    schluessel = absender.limit_schluessel(request)
+    jetzt = time.time()
+    _kuendigung_ip[schluessel] = [t for t in _kuendigung_ip[schluessel]
+                                  if jetzt - t < KUENDIGUNG_WINDOW_SECONDS]
+    if len(_kuendigung_ip[schluessel]) >= MAX_KUENDIGUNGEN_IP:
+        raise HTTPException(status_code=429,
+                            detail="Zu viele Anfragen von dieser Verbindung. Bitte später erneut "
+                                   "versuchen oder direkt an kontakt@inklutec.de schreiben — "
+                                   "eine Kündigung per E-Mail ist genauso wirksam.")
+    data = await request.json()
+    mail = (data.get("email") or "").strip()
+    if not _email_plausibel(mail):
+        raise HTTPException(status_code=400, detail="Bitte eine gültige E-Mail-Adresse angeben")
+    mail_key = mail.lower()
+    _kuendigung_mail[mail_key] = [t for t in _kuendigung_mail[mail_key]
+                                  if jetzt - t < KUENDIGUNG_WINDOW_SECONDS]
+    if len(_kuendigung_mail[mail_key]) >= MAX_KUENDIGUNGEN_MAIL:
+        raise HTTPException(status_code=429,
+                            detail="Für diese Adresse liegt uns bereits eine Kündigung vor. "
+                                   "Die Bestätigung ist unterwegs; bei Fragen schreib uns bitte "
+                                   "an kontakt@inklutec.de.")
+    art = (data.get("art") or "ordentlich").strip().lower()
+    if art not in ("ordentlich", "ausserordentlich", "widerruf"):
+        art = "ordentlich"
+    name = (data.get("name") or "").strip()[:200]
+    zusatz = (data.get("zusatz") or "").strip()[:2000]
+    _kuendigung_ip[schluessel].append(jetzt)
+    _kuendigung_mail[mail_key].append(jetzt)
+
+    db_user = get_user_by_email(mail)
+    hat_abo = bool(db_user and billing.effektiver_plan(db_user) != "free")
+    wirksam_zum = (db_user.get("plan_gueltig_bis") or "")[:10] if hat_abo else None
+
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO kuendigungen (email, name, art, zusatz, user_id, vollzogen, "
+            "wirksam_zum, absender) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (mail, name, art, zusatz, db_user["id"] if db_user else None,
+             1 if hat_abo else 0, wirksam_zum, schluessel))
+        conn.commit()
+    finally:
+        conn.close()
+
+    if hat_abo:
+        # Denselben Weg gehen wie der Knopf im Abo-Bereich — eine Mechanik.
+        try:
+            _stripe_kuendigung_sync(db_user, True)
+        except Exception:
+            logger.exception("Stripe-Kuendigung ueber den oeffentlichen Weg fehlgeschlagen (%s)", mail)
+        conn = get_db()
+        try:
+            conn.execute("UPDATE users SET auto_verlaengerung = 0, geplanter_plan = NULL, "
+                         "geplante_laufzeit = NULL, geplant_ab = NULL WHERE id = ?",
+                         (db_user["id"],))
+            conn.commit()
+        finally:
+            conn.close()
+        if wirksam_zum and billing.effektiver_plan(db_user) in billing.PLAN_SITZE:
+            try:
+                _team_enddatum_mail(db_user, wirksam_zum, "kuendigung")
+            except Exception:
+                logger.exception("Team-Enddatum-Mails nach oeffentlicher Kuendigung fehlgeschlagen")
+
+    # Bestaetigung in Textform — Pflicht nach § 312k Abs. 4 BGB. Sie geht an
+    # die angegebene Adresse; nur dort stehen die Einzelheiten.
+    art_text = {"ordentlich": "ordentliche Kündigung zum Laufzeitende",
+                "ausserordentlich": "außerordentliche Kündigung aus wichtigem Grund",
+                "widerruf": "Widerruf innerhalb von 14 Tagen"}[art]
+    saetze = [f"Hallo {html.escape(name) or 'zusammen'},",
+              f"deine Erklärung ist bei uns eingegangen: {art_text}, "
+              f"eingegangen am {datetime.now().strftime('%d.%m.%Y um %H:%M Uhr')}."]
+    if hat_abo:
+        saetze.append(f"Dein Abo endet damit am {wirksam_zum}. Bis dahin kannst du es mit "
+                      "vollem Guthaben weiternutzen; danach läuft dein Konto im "
+                      "kostenlosen Free-Tarif weiter.")
+        saetze.append("Falls du das nicht wolltest: Im Bereich „Abo &amp; Verbrauch“ kannst du "
+                      "die Kündigung bis zum Laufzeitende mit einem Klick widerrufen.")
+    else:
+        saetze.append("Zu dieser Adresse ist bei uns kein laufendes kostenpflichtiges Abo "
+                      "hinterlegt. Wir haben deine Erklärung trotzdem festgehalten und sehen "
+                      "sie uns an — falls etwas offen ist, melden wir uns.")
+    if art == "widerruf":
+        saetze.append("Zum Widerruf melden wir uns gesondert wegen der Rückabwicklung. "
+                      "Einzelheiten stehen in unserer Widerrufsbelehrung.")
+    try:
+        _abo_mail(mail, "InkluDocs: Deine Kündigung ist eingegangen",
+                  "Kündigung bestätigt", saetze)
+        _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs: Kündigung über den Kündigungsknopf ({mail})",
+                  "Kündigung eingegangen",
+                  [f"Adresse: {html.escape(mail)}",
+                   f"Name: {html.escape(name) or '(ohne)'}",
+                   f"Art: {art_text}",
+                   f"Konto gefunden: {'ja' if db_user else 'nein'}; "
+                   f"laufendes Abo: {'ja, beendet zum ' + str(wirksam_zum) if hat_abo else 'nein'}",
+                   f"Anmerkung: {html.escape(zusatz) or '(keine)'}"])
+    except Exception:
+        logger.exception("Kuendigungs-Bestaetigung konnte nicht versandt werden (%s)", mail)
+
+    return {"ok": True, "meldungen": [
+        "Deine Kündigung ist eingegangen. Wir haben sie mit Datum und Uhrzeit festgehalten.",
+        "Eine Bestätigung in Textform geht gerade an die angegebene E-Mail-Adresse — dort "
+        "steht auch, wann dein Vertrag genau endet.",
+        "Falls du innerhalb weniger Minuten keine E-Mail bekommst, schreib uns bitte an "
+        "kontakt@inklutec.de.",
+    ]}
+
+
 @app.post("/api/abo/kuendigung-widerrufen")
 async def abo_kuendigung_widerrufen(user: dict = Depends(get_current_user)):
     """Kuendigung zuruecknehmen, solange die Laufzeit noch laeuft."""
@@ -2299,6 +2448,16 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
         raise HTTPException(status_code=400, detail="laufzeit_monate fehlt")
     if monate not in billing.PLAN_LAUFZEITEN:
         raise HTTPException(status_code=400, detail="Laufzeit muss 3, 6 oder 12 Monate sein")
+    # Verbraucherrecht (08.08.2026): Weil die Leistung sofort bereitsteht,
+    # braucht es VOR der Buchung die ausdrueckliche Zustimmung zum Beginn
+    # vor Ablauf der Widerrufsfrist — sonst koennte nach Wochen der Nutzung
+    # noch der volle Betrag zurueckgefordert werden. Die Zustimmung wird
+    # protokolliert, weil im Streitfall WIR sie beweisen muessen.
+    if data.get("widerruf_zustimmung") is not True:
+        raise HTTPException(
+            status_code=400,
+            detail="Bitte bestätige zuerst den sofortigen Leistungsbeginn und die "
+                   "Kenntnisnahme der Widerrufsbelehrung.")
     db_user = get_user_by_id(user["id"])
     if billing.effektiver_plan(db_user) != "free":
         raise HTTPException(status_code=400,
@@ -2314,6 +2473,17 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
                 conn.commit()
             finally:
                 conn.close()
+        conn = get_db()
+        try:
+            conn.execute(
+                "INSERT INTO widerruf_zustimmungen (user_id, plan, laufzeit_monate, "
+                "summe_cent, belehrung_fassung, absender) VALUES (?, ?, ?, ?, ?, ?)",
+                (db_user["id"], plan, monate,
+                 round(billing.PLAN_PREISE_EUR[plan] * monate * 100),
+                 WIDERRUFSBELEHRUNG_FASSUNG, absender.limit_schluessel(request)))
+            conn.commit()
+        finally:
+            conn.close()
         url = stripe_zahlung.checkout_abo(db_user, plan, monate, BASE_URL, kunde)
     except HTTPException:
         raise
@@ -7188,3 +7358,22 @@ async def datenschutz_page():
 @app.get("/nutzungsbedingungen", response_class=HTMLResponse)
 async def nutzungsbedingungen_page():
     return open("/app/frontend/nutzungsbedingungen.html").read()
+
+@app.get("/widerruf", response_class=HTMLResponse)
+async def widerruf_page():
+    """Widerrufsbelehrung und Muster-Widerrufsformular (08.08.2026)."""
+    return open("/app/frontend/widerruf.html").read()
+
+
+@app.get("/kuendigen", response_class=HTMLResponse)
+async def kuendigen_page(request: Request):
+    """Kuendigungsknopf nach § 312k BGB — bewusst ohne Anmeldung erreichbar.
+
+    Anders als die uebrigen Rechtsseiten ein Template, weil hier ein Formular
+    steht: Angaben, Bestaetigungsseite, Bestaetigung in Textform.
+    """
+    lang = detect_language(request)
+    return templates.TemplateResponse(
+        "kuendigen.html",
+        template_context(request, lang, is_staging="staging" in BASE_URL),
+    )

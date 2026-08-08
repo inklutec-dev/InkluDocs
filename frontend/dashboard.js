@@ -207,6 +207,10 @@ const LEGAL_LINKS = [
   { href: '/impressum-app', label: t('Impressum') },
   { href: '/datensicherheit', label: t('Datenschutz') },
   { href: '/nutzungsbedingungen-app', label: t('Nutzungsbedingungen') },
+  { href: '/widerruf', label: t('Widerrufsbelehrung') },
+  // § 312k BGB verlangt, dass der Kuendigungsknopf staendig verfuegbar und
+  // leicht erreichbar ist — deshalb in JEDER Fusszeile, nicht nur im Abo-Bereich.
+  { href: '/kuendigen', label: t('Vertrag kündigen') },
 ];
 function renderLegalLinks() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {
@@ -232,7 +236,10 @@ function renderSupportFooter() {
     sec.className = 'dash-support';
     const p = document.createElement('p');
     p.className = 'dash-support-text';
-    p.textContent = t('InkluDocs ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.');
+    // Seit dem Abomodell (06.08.2026) ist "InkluDocs ist kostenlos" schlicht
+    // falsch — es gibt einen kostenlosen Tarif, aber der Dienst ist nicht
+    // kostenlos. Text entsprechend richtiggestellt.
+    p.textContent = t('InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt.');
     const a = document.createElement('a');
     a.className = 'dash-support-link';
     a.href = 'https://www.paypal.com/donate?business=steve.weidel%40gmail.com&item_name=InkluDocs+-+Freiwilliger+Beitrag&currency_code=EUR';

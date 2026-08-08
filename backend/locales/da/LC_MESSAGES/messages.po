@@ -2900,3 +2900,88 @@ msgstr "Din konto er slettet. Du bliver nu logget ud."
 
 msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
 msgstr "Din konto er slettet. Alle dine projekter og alt-tekster er fjernet. Tak, fordi du brugte InkluDocs."
+
+# Verbraucherrecht: Widerruf, Kuendigungsknopf, Pflichtangaben (08.08.2026)
+msgid "Vertrag kündigen"
+msgstr "Opsig aftalen"
+
+msgid "Verträge hier kündigen"
+msgstr "Opsig aftaler her"
+
+msgid "Jetzt kündigen"
+msgstr "Opsig nu"
+
+msgid "Kündigung bestätigen"
+msgstr "Bekræft opsigelsen"
+
+msgid "Kündigung ist eingegangen"
+msgstr "Vi har modtaget din opsigelse"
+
+msgid "Zurück zu den Angaben"
+msgstr "Tilbage til oplysningerne"
+
+msgid "Art der Kündigung"
+msgstr "Opsigelsestype"
+
+msgid "Ordentliche Kündigung zum Laufzeitende"
+msgstr "Almindelig opsigelse ved periodens udløb"
+
+msgid "Außerordentliche Kündigung aus wichtigem Grund"
+msgstr "Ekstraordinær opsigelse af vigtig grund"
+
+msgid "Widerruf innerhalb von 14 Tagen"
+msgstr "Fortrydelse inden for 14 dage"
+
+msgid "Widerrufsbelehrung"
+msgstr "Fortrydelsesret"
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular"
+msgstr "Fortrydelsesret og standardfortrydelsesformular"
+
+msgid "E-Mail-Adresse deines Kontos"
+msgstr "E-mailadressen på din konto"
+
+msgid "Dein Name"
+msgstr "Dit navn"
+
+msgid "Grund oder Anmerkung (freiwillig)"
+msgstr "Årsag eller bemærkning (frivilligt)"
+
+msgid "Bitte gib die E-Mail-Adresse deines Kontos an."
+msgstr "Angiv venligst e-mailadressen på din konto."
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns deine Kündigung zu."
+msgstr "Tjek venligst dine oplysninger. Med næste klik når din opsigelse frem til os."
+
+msgid "Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar."
+msgstr "Her kan du opsige dit betalte InkluDocs-abonnement — uden at logge ind. Opsigelsen træder i kraft ved udgangen af den nuværende periode; indtil da kan du bruge dit forbrug."
+
+msgid "Angemeldet geht es auch direkt: im Bereich „Abo & Verbrauch“ über „Abo kündigen“. Fragen? Schreib an"
+msgstr "Når du er logget ind, kan du gøre det direkte: under „Abonnement og forbrug“ via „Opsig abonnement“. Spørgsmål? Skriv til"
+
+msgid "Deine Bestellung"
+msgstr "Din bestilling"
+
+msgid "Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Ydelse: {credits} credits om måneden. Ét credit svarer til én billedbeskrivelse."
+
+msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Ydelse: {credits} credits om måneden til op til {plaetze} personer (dig medregnet). Ét credit svarer til én billedbeskrivelse."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
+msgstr "Løbetid {monate} måneder, betales forud. Derefter forlænges abonnementet automatisk med {monate} måneder, medmindre du opsiger — kan opsiges når som helst til periodens udløb."
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite. Welche Zahlungsarten dort erscheinen, hängt davon ab, was für dein Land freigeschaltet ist; Kartenzahlung geht immer."
+msgstr "Betalingen sker på Stripes sikre side. Hvilke betalingsmåder der vises, afhænger af, hvad der er aktiveret for dit land; kortbetaling virker altid."
+
+msgid "Preise sind Endpreise. Nach § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen."
+msgstr "Priserne er slutpriser. I henhold til § 19 i den tyske momslov opkræves og angives der ingen moms."
+
+msgid "Ich verlange ausdrücklich, dass InkluDocs sofort nach der Buchung bereitsteht — also vor Ablauf der 14-tägigen Widerrufsfrist. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für die bis dahin verbrauchten Credits schulde und mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt."
+msgstr "Jeg anmoder udtrykkeligt om, at InkluDocs er tilgængelig umiddelbart efter bestillingen — altså inden fortrydelsesfristen på 14 dage udløber. Jeg er bekendt med, at jeg ved fortrydelse skal betale for de credits, der er forbrugt indtil da, og at min fortrydelsesret bortfalder, når aftalen er fuldt opfyldt."
+
+msgid "Bitte bestätige zuerst den sofortigen Leistungsbeginn."
+msgstr "Bekræft først, at ydelsen må begynde med det samme."
+
+msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
+msgstr "InkluDocs videreudvikles løbende. Ud over abonnementerne sætter vi pris på et frivilligt bidrag, hvis du kan lide projektet."

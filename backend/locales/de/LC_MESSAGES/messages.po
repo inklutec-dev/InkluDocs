@@ -3212,3 +3212,88 @@ msgstr "Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet."
 
 msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
 msgstr "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
+
+# Verbraucherrecht: Widerruf, Kuendigungsknopf, Pflichtangaben (08.08.2026)
+msgid "Vertrag kündigen"
+msgstr "Vertrag kündigen"
+
+msgid "Verträge hier kündigen"
+msgstr "Verträge hier kündigen"
+
+msgid "Jetzt kündigen"
+msgstr "Jetzt kündigen"
+
+msgid "Kündigung bestätigen"
+msgstr "Kündigung bestätigen"
+
+msgid "Kündigung ist eingegangen"
+msgstr "Kündigung ist eingegangen"
+
+msgid "Zurück zu den Angaben"
+msgstr "Zurück zu den Angaben"
+
+msgid "Art der Kündigung"
+msgstr "Art der Kündigung"
+
+msgid "Ordentliche Kündigung zum Laufzeitende"
+msgstr "Ordentliche Kündigung zum Laufzeitende"
+
+msgid "Außerordentliche Kündigung aus wichtigem Grund"
+msgstr "Außerordentliche Kündigung aus wichtigem Grund"
+
+msgid "Widerruf innerhalb von 14 Tagen"
+msgstr "Widerruf innerhalb von 14 Tagen"
+
+msgid "Widerrufsbelehrung"
+msgstr "Widerrufsbelehrung"
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular"
+msgstr "Widerrufsbelehrung und Muster-Widerrufsformular"
+
+msgid "E-Mail-Adresse deines Kontos"
+msgstr "E-Mail-Adresse deines Kontos"
+
+msgid "Dein Name"
+msgstr "Dein Name"
+
+msgid "Grund oder Anmerkung (freiwillig)"
+msgstr "Grund oder Anmerkung (freiwillig)"
+
+msgid "Bitte gib die E-Mail-Adresse deines Kontos an."
+msgstr "Bitte gib die E-Mail-Adresse deines Kontos an."
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns deine Kündigung zu."
+msgstr "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns deine Kündigung zu."
+
+msgid "Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar."
+msgstr "Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar."
+
+msgid "Angemeldet geht es auch direkt: im Bereich „Abo & Verbrauch“ über „Abo kündigen“. Fragen? Schreib an"
+msgstr "Angemeldet geht es auch direkt: im Bereich „Abo & Verbrauch“ über „Abo kündigen“. Fragen? Schreib an"
+
+msgid "Deine Bestellung"
+msgstr "Deine Bestellung"
+
+msgid "Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung."
+
+msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
+msgstr "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite. Welche Zahlungsarten dort erscheinen, hängt davon ab, was für dein Land freigeschaltet ist; Kartenzahlung geht immer."
+msgstr "Bezahlt wird auf der sicheren Stripe-Seite. Welche Zahlungsarten dort erscheinen, hängt davon ab, was für dein Land freigeschaltet ist; Kartenzahlung geht immer."
+
+msgid "Preise sind Endpreise. Nach § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen."
+msgstr "Preise sind Endpreise. Nach § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen."
+
+msgid "Ich verlange ausdrücklich, dass InkluDocs sofort nach der Buchung bereitsteht — also vor Ablauf der 14-tägigen Widerrufsfrist. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für die bis dahin verbrauchten Credits schulde und mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt."
+msgstr "Ich verlange ausdrücklich, dass InkluDocs sofort nach der Buchung bereitsteht — also vor Ablauf der 14-tägigen Widerrufsfrist. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für die bis dahin verbrauchten Credits schulde und mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt."
+
+msgid "Bitte bestätige zuerst den sofortigen Leistungsbeginn."
+msgstr "Bitte bestätige zuerst den sofortigen Leistungsbeginn."
+
+msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
+msgstr "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."

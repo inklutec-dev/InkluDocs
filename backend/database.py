@@ -406,6 +406,45 @@ def init_db():
         )
     ''')
 
+    # Nachweis der Widerrufs-Zustimmung (08.08.2026, Verbraucherrecht):
+    # Vor jeder kostenpflichtigen Buchung muss der Kunde ausdruecklich
+    # zustimmen, dass wir vor Ablauf der Widerrufsfrist mit der Leistung
+    # beginnen (§ 356 Abs. 4/5 BGB). Diese Zustimmung muessen WIR im
+    # Streitfall beweisen — darum wird sie mit Zeitpunkt, Textfassung und
+    # Absender-Kennung protokolliert und nicht nur "irgendwo angehakt".
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS widerruf_zustimmungen (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            plan TEXT NOT NULL,
+            laufzeit_monate INTEGER NOT NULL,
+            summe_cent INTEGER NOT NULL,
+            belehrung_fassung TEXT NOT NULL,
+            absender TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    ''')
+
+    # Kuendigungen ueber den gesetzlichen Kuendigungsknopf (§ 312k BGB).
+    # Der Zeitpunkt des ZUGANGS ist rechtlich entscheidend und wird darum
+    # unabhaengig davon festgehalten, ob sich die Erklaerung automatisch
+    # einem Konto zuordnen liess.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS kuendigungen (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            name TEXT DEFAULT '',
+            art TEXT NOT NULL DEFAULT 'ordentlich',
+            grund TEXT DEFAULT '',
+            zusatz TEXT DEFAULT '',
+            user_id INTEGER,
+            vollzogen INTEGER NOT NULL DEFAULT 0,
+            wirksam_zum TEXT,
+            absender TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    ''')
+
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 

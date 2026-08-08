@@ -3209,3 +3209,88 @@ msgstr "Votre compte a été supprimé. Vous allez être déconnecté."
 
 msgid "Dein Konto wurde gelöscht. Alle deine Projekte und Alt-Texte sind entfernt. Danke, dass du InkluDocs genutzt hast."
 msgstr "Votre compte a été supprimé. Tous vos projets et textes alternatifs ont été effacés. Merci d’avoir utilisé InkluDocs."
+
+# Verbraucherrecht: Widerruf, Kuendigungsknopf, Pflichtangaben (08.08.2026)
+msgid "Vertrag kündigen"
+msgstr "Résilier le contrat"
+
+msgid "Verträge hier kündigen"
+msgstr "Résilier les contrats ici"
+
+msgid "Jetzt kündigen"
+msgstr "Résilier maintenant"
+
+msgid "Kündigung bestätigen"
+msgstr "Confirmer la résiliation"
+
+msgid "Kündigung ist eingegangen"
+msgstr "Nous avons reçu votre résiliation"
+
+msgid "Zurück zu den Angaben"
+msgstr "Retour aux informations"
+
+msgid "Art der Kündigung"
+msgstr "Type de résiliation"
+
+msgid "Ordentliche Kündigung zum Laufzeitende"
+msgstr "Résiliation ordinaire à la fin de la période"
+
+msgid "Außerordentliche Kündigung aus wichtigem Grund"
+msgstr "Résiliation extraordinaire pour motif grave"
+
+msgid "Widerruf innerhalb von 14 Tagen"
+msgstr "Rétractation dans un délai de 14 jours"
+
+msgid "Widerrufsbelehrung"
+msgstr "Droit de rétractation"
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular"
+msgstr "Droit de rétractation et formulaire type de rétractation"
+
+msgid "E-Mail-Adresse deines Kontos"
+msgstr "Adresse e-mail de votre compte"
+
+msgid "Dein Name"
+msgstr "Votre nom"
+
+msgid "Grund oder Anmerkung (freiwillig)"
+msgstr "Motif ou remarque (facultatif)"
+
+msgid "Bitte gib die E-Mail-Adresse deines Kontos an."
+msgstr "Veuillez indiquer l’adresse e-mail de votre compte."
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns deine Kündigung zu."
+msgstr "Veuillez vérifier vos informations. Au prochain clic, votre résiliation nous parviendra."
+
+msgid "Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar."
+msgstr "Vous pouvez résilier ici votre abonnement InkluDocs payant, sans connexion. La résiliation prend effet à la fin de la période en cours ; jusque-là, votre crédit reste utilisable."
+
+msgid "Angemeldet geht es auch direkt: im Bereich „Abo & Verbrauch“ über „Abo kündigen“. Fragen? Schreib an"
+msgstr "Une fois connecté, c’est encore plus direct : dans « Abonnement et consommation » via « Résilier l’abonnement ». Des questions ? Écrivez à"
+
+msgid "Deine Bestellung"
+msgstr "Votre commande"
+
+msgid "Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Prestation : {credits} crédits par mois. Un crédit correspond à une description d’image."
+
+msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung."
+msgstr "Prestation : {credits} crédits par mois pour {plaetze} personnes au maximum (vous compris). Un crédit correspond à une description d’image."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
+msgstr "Durée {monate} mois, payable d’avance. Ensuite, l’abonnement se renouvelle automatiquement pour {monate} mois sauf résiliation — résiliable à tout moment pour la fin de la période."
+
+msgid "Bezahlt wird auf der sicheren Stripe-Seite. Welche Zahlungsarten dort erscheinen, hängt davon ab, was für dein Land freigeschaltet ist; Kartenzahlung geht immer."
+msgstr "Le paiement s’effectue sur la page sécurisée de Stripe. Les moyens de paiement proposés dépendent de ce qui est activé pour votre pays ; la carte fonctionne toujours."
+
+msgid "Preise sind Endpreise. Nach § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen."
+msgstr "Les prix sont des prix définitifs. En vertu du § 19 de la loi allemande sur la TVA, aucune TVA n’est perçue ni indiquée."
+
+msgid "Ich verlange ausdrücklich, dass InkluDocs sofort nach der Buchung bereitsteht — also vor Ablauf der 14-tägigen Widerrufsfrist. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für die bis dahin verbrauchten Credits schulde und mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt."
+msgstr "Je demande expressément qu’InkluDocs soit disponible immédiatement après la commande, c’est-à-dire avant l’expiration du délai de rétractation de 14 jours. Je sais qu’en cas de rétractation je dois une compensation pour les crédits consommés jusque-là et que mon droit de rétractation s’éteint lorsque le contrat est entièrement exécuté."
+
+msgid "Bitte bestätige zuerst den sofortigen Leistungsbeginn."
+msgstr "Veuillez d’abord confirmer le début immédiat de la prestation."
+
+msgid "InkluDocs wird laufend weiterentwickelt. Neben den Tarifen freuen wir uns über einen freiwilligen Beitrag, wenn dir das Projekt gefällt."
+msgstr "InkluDocs est développé en permanence. En plus des formules, une contribution volontaire nous fait plaisir si le projet vous plaît."

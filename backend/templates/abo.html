@@ -69,9 +69,26 @@
             <option value="12">{{ _('12 Monate') }}</option>
           </select>
         </div>
-        <p id="buchenSumme"></p>
-        <p class="dash-meta">{{ _('Bezahlt wird auf der sicheren Stripe-Seite (SEPA-Lastschrift, Karte oder Apple Pay). Ohne Kündigung verlängert sich das Abo automatisch um die gewählte Laufzeit.') }}</p>
+        {# Pflichtangaben unmittelbar vor dem Bestellknopf (§ 312j Abs. 2 BGB):
+           wesentliche Merkmale, Gesamtpreis, Laufzeit und Verlaengerung muessen
+           direkt beim Knopf stehen — nicht irgendwo weiter oben auf der Seite. #}
+        <div class="dash-intro-box" id="bestellUebersicht">
+          <h3 style="margin:0 0 .4rem;font-size:1rem;">{{ _('Deine Bestellung') }}</h3>
+          <p id="buchenSumme"></p>
+          <p id="buchenLeistung"></p>
+          <p id="buchenVerlaengerung"></p>
+        </div>
+        <p class="dash-meta">{{ _('Bezahlt wird auf der sicheren Stripe-Seite. Welche Zahlungsarten dort erscheinen, hängt davon ab, was für dein Land freigeschaltet ist; Kartenzahlung geht immer.') }}</p>
+        <p class="dash-meta">{{ _('Preise sind Endpreise. Nach § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen.') }}</p>
         <p class="dash-meta">{{ _('Du möchtest lieber auf Rechnung bestellen? Das geht über unseren Partner Actino Software:') }} <a href="mailto:sales@actino.de?subject=InkluDocs-Anfrage">sales@actino.de</a></p>
+        {# Ausdrueckliche Zustimmung zum sofortigen Leistungsbeginn — sonst
+           koennte nach Wochen der Nutzung der volle Betrag zurueckgefordert
+           werden (§ 356 Abs. 4 BGB). Bewusst NICHT vorangehakt. #}
+        <div class="dash-field" style="display:flex;gap:.6rem;align-items:flex-start;">
+          <input type="checkbox" id="widerrufOk" style="margin-top:.3rem;">
+          <label for="widerrufOk">{{ _('Ich verlange ausdrücklich, dass InkluDocs sofort nach der Buchung bereitsteht — also vor Ablauf der 14-tägigen Widerrufsfrist. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für die bis dahin verbrauchten Credits schulde und mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt.') }}</label>
+        </div>
+        <p class="dash-meta"><a href="/widerruf">{{ _('Widerrufsbelehrung und Muster-Widerrufsformular') }}</a> · <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a></p>
         <button type="button" class="btn btn-primary" id="buchenBtn">{{ _('Kostenpflichtig buchen') }}</button>
         <span id="buchenMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
         <span id="buchenErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
@@ -433,11 +450,21 @@
     aktualisiereSumme();
   }
 
+  const PLAN_CREDITS = { single: 50, team: 100, enterprise: 275 };
+  const PLAN_PLAETZE = { team: 5, enterprise: 25 };
+
   function aktualisiereSumme() {
     const plan = byId('buchenPlan').value;
     const monate = parseInt(byId('buchenLaufzeit').value, 10);
     const summe = (PLAN_MONATSPREISE[plan] * monate).toFixed(2).replace('.', ',');
     byId('buchenSumme').textContent = t('Gesamtpreis: {summe} € für {monate} Monate.', { summe: summe, monate: monate });
+    // Wesentliche Merkmale ausschreiben statt nur den Preis zu nennen.
+    const credits = PLAN_CREDITS[plan];
+    const plaetze = PLAN_PLAETZE[plan];
+    byId('buchenLeistung').textContent = plaetze
+      ? t('Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung.', { credits: credits, plaetze: plaetze })
+      : t('Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung.', { credits: credits });
+    byId('buchenVerlaengerung').textContent = t('Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende.', { monate: monate });
   }
   byId('buchenPlan').addEventListener('change', aktualisiereSumme);
   byId('buchenLaufzeit').addEventListener('change', aktualisiereSumme);
@@ -539,14 +566,23 @@
   byId('buchenBtn').addEventListener('click', async () => {
     const msg = byId('buchenMsg');
     const err = byId('buchenErr');
-    msg.textContent = t('Zahlungsseite wird geöffnet …');
+    msg.textContent = '';
     err.textContent = '';
+    // Ohne Zustimmung geht es nicht weiter — und der Fokus springt dorthin,
+    // damit klar ist, WAS fehlt (nicht nur eine Meldung irgendwo).
+    if (!byId('widerrufOk').checked) {
+      err.textContent = t('Bitte bestätige zuerst den sofortigen Leistungsbeginn.');
+      byId('widerrufOk').focus();
+      return;
+    }
+    msg.textContent = t('Zahlungsseite wird geöffnet …');
     let res;
     try {
       res = await fetch('/api/abo/checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: byId('buchenPlan').value,
-                               laufzeit_monate: parseInt(byId('buchenLaufzeit').value, 10) }),
+                               laufzeit_monate: parseInt(byId('buchenLaufzeit').value, 10),
+                               widerruf_zustimmung: true }),
       });
     } catch (e) { msg.textContent = ''; err.textContent = t('Fehler'); return; }
     const d = await res.json().catch(() => ({}));
