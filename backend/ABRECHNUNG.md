@@ -58,3 +58,92 @@ Stripe-Abos (Rechnungskunden stellt der Admin um, siehe unten):
 - customer.subscription.updated wird NICHT dem Payload geglaubt: der
   Zustand wird frisch bei Stripe abgefragt. Sonst konnte ein verspaetetes
   „Schedule geloest"-Ereignis eine Kuendigung stillschweigend aufheben.
+
+## TAEGLICHER ABO-LAUF: ANSTOSS VON AUSSEN (10.08.2026)
+
+### Warum es das gibt
+Der Abo-Tageslauf `_abo_tageslauf()` erledigt vier Dinge: die Erinnerung
+14 Tage vor einer Verlaengerung (an Kunde UND Betreiber, weil daran die
+Rechnung haengt), die Auto-Verlaengerung am Stichtag, den Vollzug vorgemerkter
+Plan-Wechsel bei Konten auf Rechnungsweg, und den Rueckfall auf Free bei
+abgelaufenen Abos.
+
+Bis zum 10.08.2026 wurde er an GENAU EINER Stelle angestossen: in `/api/me`,
+also wenn ein angemeldeter Nutzer die App oeffnete. Belegt per Suche — die
+uebrigen Fundstellen im Quelltext sind Kommentare. Solange nichts kostete,
+war das folgenlos. Mit echtem Geld nicht mehr: Meldet sich einen Tag lang
+niemand an, verschieben sich Erinnerungen und Verlaengerungen um einen Tag.
+Die 14-Tage-Erinnerung ist aber eine Zusage aus den Nutzungsbedingungen.
+
+NICHT betroffen ist das monatliche Guthaben. Das wird beim Zugriff
+ausgerechnet (`kontingent_reset_am` gegen den Monatsanfang, siehe
+`_abrechnungsbeginn_sql`), nicht vom Tageslauf gesetzt. Dort kann also auch
+bei tagelangem Stillstand nichts verlorengehen.
+
+### Was gebaut wurde
+`POST /api/intern/tageslauf`
+- Berechtigung ueber `TAGESLAUF_TOKEN` aus der Umgebung, mitgegeben im Kopf
+  `X-Tageslauf-Token`, verglichen mit `secrets.compare_digest`.
+- Ohne eingerichteten Token antwortet der Endpunkt 503 statt offen zu stehen.
+- Startet den vorhandenen Lauf in einem Thread und wartet hoechstens 20
+  Sekunden auf ihn: So enthaelt die Antwort im Normalfall schon den frischen
+  Abschluss, ohne dass ein Waechter in seinen Zeitablauf laeuft. Dauert es
+  laenger, laeuft der Lauf zu Ende und der naechste Aufruf sieht das Ergebnis.
+- Antwort: `angestossen` (hat DIESER Aufruf den Lauf gestartet?), `lauf_datum`
+  (wann war der Lauf zuletzt wirklich dran?), `letzter_abschluss`,
+  `letzter_fehler`.
+
+Neue Merker in `system_kv`, geschrieben von `_kv_setzen`, gelesen von
+`_kv_lesen`:
+- `abo_tageslauf_fertig` — Zeitpunkt des letzten vollstaendigen Durchlaufs.
+- `abo_tageslauf_fehler` — Zeitpunkt des letzten Fehlschlags.
+
+### Zwei Dinge, die erst beim Bauen sichtbar wurden
+1. `lauf_datum` gehoert in die Antwort. Ohne dieses Feld kann ein Waechter
+   „heute schon erledigt" nicht von „seit Tagen laeuft nichts" unterscheiden —
+   beide Faelle liefern nur `angestossen: false`. Genau das ist beim ersten
+   Test passiert und haette als Dauer-Fehlalarm geendet.
+2. Nach einem Fehlschlag wird der Tag WIEDER FREIGEGEBEN (Prozessmerker auf
+   None, `abo_tageslauf` auf "fehlgeschlagen"). Vorher galt ein abgebrochener
+   Lauf als erledigt: Weder Cron noch `/api/me` haetten es an dem Tag nochmal
+   versucht, die Erinnerungen waeren still ausgefallen. Ein zweiter Anlauf am
+   selben Tag ist gefahrlos, weil jede einzelne Mail ueber `_kv_einmal` gegen
+   Doppelversand gesichert ist.
+
+### Selbstschutz, der unveraendert bleibt
+Ein Lauf je Tag, atomar ueber den `system_kv`-Eintrag `abo_tageslauf`; dazu
+ein prozesslokaler Merker, damit `/api/me` nicht bei jedem Aufruf die
+Datenbank anfasst. Mehrfache Anstoesse koennen nichts doppelt tun. Der Weg
+ueber `/api/me` bleibt als zweites Standbein bestehen.
+
+Zu beachten: Der prozesslokale Merker bedeutet, dass sich nach dem ersten
+gueltigen Aufruf an diesem Tag kein weiterer Lauf mehr ausloesen laesst —
+auch nicht zum Testen. Fuer einen erzwungenen Testlauf den Container neu
+starten und den `system_kv`-Eintrag zuruecksetzen; genau das macht
+`verify_tageslauf.py`.
+
+### Betrieb (Staging)
+- `/home/claude/abo_tageslauf_anstoss.sh`, Rechte 700; Token in
+  `/home/claude/.tageslauf-token`, Rechte 600 — bewusst NICHT in der Crontab.
+- Cron: `15 3 * * *`, Protokoll unter `/home/claude/logs/abo_tageslauf.log`.
+- Uptime Kuma als zweiter Waechter ist vorgesehen, aber noch nicht
+  eingerichtet (braucht einmal Zugang zur Oberflaeche).
+- Fuer Produktion sind beim Promote zu setzen: `TAGESLAUF_TOKEN` in der
+  Prod-Umgebungsdatei, ein Cron-Eintrag gegen Port 8001, und die Antwort
+  einmal von Hand pruefen.
+
+### VORSICHT auf Staging
+In der Staging-Datenbank stehen ECHTE Adressen (u. a. `sales@actino.de`,
+`karbe@actino.de`, `info@actino.de`). Ein erzwungener Lauf mit faelligen
+Konten verschickt echte Mails an Michaels Leute. `verify_tageslauf.py` zaehlt
+deshalb vorher die faelligen Konten und ueberspringt den erzwungenen Lauf,
+wenn welche da sind. Am 10.08.2026 war keines faellig (naechster Ablauf
+07.11.2026).
+
+### Geprueft
+`verify_tageslauf.py`: 12 Pruefungen, 0 Fehler — Zugangsschutz (ohne Token,
+falscher Token, Token mit Anhaengsel: je 401), Antwortform, echter Durchlauf
+mit Abschluss von heute, zweiter Aufruf loest nichts erneut aus.
+Danach der volle Satz: verify_wechsel 63, verify_abo3 68, verify_stripe 32,
+verify_sicherheit2 17, verify_loeschen 43, verify_recht 54, verify_admin 54 —
+alle 0 Fehler; i18n 820 Strings in 6 Katalogen.

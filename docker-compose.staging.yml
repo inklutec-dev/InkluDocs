@@ -64,6 +64,11 @@ services:
       - V4_VERIFY_MODE=${V4_VERIFY_MODE:-off}
       - V4_VERIFY_KORREKTUR=${V4_VERIFY_KORREKTUR:-off}
       - ABO_ENFORCEMENT=${ABO_ENFORCEMENT:-off}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      # Anstoss des Abo-Tageslaufs von aussen (Cron), 10.08.2026
+      - TAGESLAUF_TOKEN=${TAGESLAUF_TOKEN:-}
       - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"

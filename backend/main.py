@@ -2931,6 +2931,27 @@ def _sende_plan_bestaetigung(konto: dict, plan: str, gueltig_bis, laufzeit,
               "Dein InkluDocs-Abo", saetze)
 
 
+def _kv_setzen(key: str, value: str) -> None:
+    """Schluessel/Wert in system_kv ablegen (anlegen oder ueberschreiben)."""
+    conn = get_db()
+    try:
+        conn.execute("INSERT INTO system_kv (key, value) VALUES (?, ?) "
+                     "ON CONFLICT(key) DO UPDATE SET value = excluded.value, "
+                     "updated_at = datetime('now')", (key, value))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _kv_lesen(key: str):
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT value FROM system_kv WHERE key = ?", (key,)).fetchone()
+        return row["value"] if row else None
+    finally:
+        conn.close()
+
+
 def _kv_einmal(key: str) -> bool:
     """True genau beim ERSTEN Aufruf fuer diesen Schluessel (Doppel-Schutz)."""
     conn = get_db()
@@ -3004,8 +3025,65 @@ def _abo_tageslauf() -> None:
                 _abo_konto_pruefen(dict(k), heute)
             except Exception:
                 logger.exception("Abo-Tageslauf: Konto %s fehlgeschlagen", k["id"])
+        # Abschluss festhalten (10.08.2026): Nur so kann ein Waechter von aussen
+        # sehen, ob der Lauf wirklich durchlief — ein blosses "angestossen"
+        # meldet auch dann gruen, wenn er unterwegs abbricht.
+        _kv_setzen("abo_tageslauf_fertig", datetime.utcnow().strftime("%Y-%m-%d %H:%M") + " UTC")
     except Exception:
         logger.exception("Abo-Tageslauf fehlgeschlagen")
+        # Nach einem Fehlschlag den Tag WIEDER FREIGEBEN (10.08.2026): Sonst
+        # gilt der Tag als erledigt, obwohl nichts passiert ist — weder ein
+        # spaeterer Anstoss vom Cron noch der Weg ueber /api/me kaeme dann
+        # nochmal zum Zug, und Erinnerungen fielen still aus. Die einzelnen
+        # Mails sind ohnehin gegen Doppelversand gesichert (_kv_einmal), ein
+        # zweiter Anlauf am selben Tag ist also gefahrlos.
+        try:
+            _tageslauf_datum = None
+            _kv_setzen("abo_tageslauf", "fehlgeschlagen")
+            _kv_setzen("abo_tageslauf_fehler", datetime.utcnow().strftime("%Y-%m-%d %H:%M") + " UTC")
+        except Exception:
+            pass
+
+
+@app.post("/api/intern/tageslauf")
+async def intern_tageslauf(request: Request):
+    """Taeglicher Anstoss von aussen (10.08.2026) — fuer Cron/Uptime-Kuma.
+
+    Bis hierher hing der Abo-Tageslauf allein daran, dass sich jemand anmeldet
+    (/api/me). Meldet sich einen Tag lang niemand an, verschieben sich
+    Erinnerungen, Verlaengerungen und vorgemerkte Wechsel um einen Tag — bei
+    der zugesagten 14-Tage-Erinnerung ist das ein Versprechen, das wir dann
+    nicht halten. Dieser Endpunkt stoesst denselben Lauf an. Sein Selbstschutz
+    bleibt unveraendert (ein Lauf je Tag, atomar ueber system_kv), und der Weg
+    ueber /api/me bleibt als zweites Standbein bestehen.
+
+    Antwort: angestossen = ob DIESER Aufruf den Lauf gestartet hat,
+    letzter_abschluss = wann der Lauf zuletzt vollstaendig durchlief.
+    """
+    token = (os.environ.get("TAGESLAUF_TOKEN") or "").strip()
+    if not token:
+        raise HTTPException(status_code=503, detail="Tageslauf-Anstoss ist nicht eingerichtet.")
+    mitgegeben = (request.headers.get("X-Tageslauf-Token") or "").strip()
+    if not secrets.compare_digest(mitgegeben, token):
+        raise HTTPException(status_code=401, detail="Nicht berechtigt.")
+    angestossen = _abo_tageslauf_noetig()
+    if angestossen:
+        # Im Hintergrund, aber mit kurzer Wartezeit: Der Lauf verschickt Mails
+        # und darf den Waechter nicht in seinen Zeitablauf ziehen. 20 Sekunden
+        # reichen im Normalfall, damit die Antwort den frischen Abschluss schon
+        # enthaelt; dauert es laenger, laeuft er trotzdem zu Ende und der
+        # naechste Aufruf sieht das Ergebnis.
+        t = threading.Thread(target=_abo_tageslauf, daemon=True)
+        t.start()
+        t.join(timeout=20)
+    # lauf_datum ist der Tag, an dem der Lauf zuletzt WIRKLICH dran war. Ohne
+    # dieses Feld kann ein Waechter "heute schon erledigt" nicht von "seit
+    # Tagen nichts gelaufen" unterscheiden — beide zeigten sonst nur
+    # angestossen=false. Genau das ist beim ersten Test passiert (10.08.2026).
+    return {"ok": True, "angestossen": angestossen,
+            "lauf_datum": _kv_lesen("abo_tageslauf"),
+            "letzter_abschluss": _kv_lesen("abo_tageslauf_fertig"),
+            "letzter_fehler": _kv_lesen("abo_tageslauf_fehler")}
 
 
 def _abo_konto_pruefen(k: dict, heute: str) -> None:
