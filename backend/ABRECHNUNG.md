@@ -132,13 +132,18 @@ starten und den `system_kv`-Eintrag zuruecksetzen; genau das macht
   Prod-Umgebungsdatei, ein Cron-Eintrag gegen Port 8001, und die Antwort
   einmal von Hand pruefen.
 
-### VORSICHT auf Staging
-In der Staging-Datenbank stehen ECHTE Adressen (u. a. `sales@actino.de`,
-`karbe@actino.de`, `info@actino.de`). Ein erzwungener Lauf mit faelligen
-Konten verschickt echte Mails an Michaels Leute. `verify_tageslauf.py` zaehlt
-deshalb vorher die faelligen Konten und ueberspringt den erzwungenen Lauf,
-wenn welche da sind. Am 10.08.2026 war keines faellig (naechster Ablauf
-07.11.2026).
+### Mailversand auf Staging (Steve, 10.08.2026)
+In der Staging-Datenbank stehen Adressen bei actino.de (`sales@`, `karbe@`,
+`info@`). Das sind BEWUSST angelegte Testkonten — sie existieren genau dafuer,
+den Mailweg echt zu pruefen. Ein Lauf, der dorthin schreibt, ist also kein
+Unfall, sondern der Zweck.
+
+`verify_tageslauf.py` haelt sich trotzdem zurueck: Es zaehlt vorher die
+faelligen Konten und ueberspringt den erzwungenen Durchlauf, wenn welche da
+sind. Das ist absichtlich konservativ, damit ein beilaeufiger Testlauf nicht
+ungefragt Post ausloest. Wer den Mailweg wirklich pruefen will, setzt ein
+Konto faellig und stoesst den Lauf von Hand an. Am 10.08.2026 war keines
+faellig (naechster Ablauf 07.11.2026).
 
 ### Geprueft
 `verify_tageslauf.py`: 12 Pruefungen, 0 Fehler — Zugangsschutz (ohne Token,
