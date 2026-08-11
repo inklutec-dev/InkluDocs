@@ -15,6 +15,9 @@ services:
     volumes:
       - inkludocs_staging_data:/app/data
     environment:
+      # Nur STAGING: Testlaeufe des InkluEdit-Website-Einzugs brauchen mehr
+      # als 100 Bilder/Tag. Auf PROD bleibt die Vorgabe 100 unangetastet.
+      - DAILY_IMAGE_LIMIT=5000
       # PDF_LANGBESCHREIBUNG (03.06.2026): Langbeschreibung bei PDF an/aus, Standard off. Siehe .env / backend main.py.
       - PDF_LANGBESCHREIBUNG=${PDF_LANGBESCHREIBUNG:-off}
       - SECRET_KEY=${SECRET_KEY:-inkludocs-staging-key-2026}
