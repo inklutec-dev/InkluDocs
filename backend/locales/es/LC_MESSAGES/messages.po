@@ -3611,3 +3611,34 @@ msgstr "Créditos generados por esta persona (todos los fondos)"
 
 msgid "Geschätzte KI-Kosten dieses Kontos"
 msgstr "Coste de IA estimado de esta cuenta"
+
+# API-Tageslimit / Missbrauchsbremse (11.08.2026)
+msgid "API-Tageslimit (Missbrauchsbremse)"
+msgstr "Límite diario de la API (freno antiabuso)"
+
+msgid "Begrenzt, wie viele Bilder ein Konto pro Tag über die API generieren darf. Das Abo-Guthaben gilt zusätzlich — diese Bremse schützt nur vor Amok-Läufen. Leer lassen stellt den Standard wieder her."
+msgstr "Limita cuántas imágenes puede generar una cuenta al día a través de la API. El crédito de la suscripción se aplica además; este freno solo protege contra descontroles. Dejar vacío restablece el valor estándar."
+
+msgid "Tageslimit (Bilder pro Tag, 0 sperrt die API, leer = Standard)"
+msgstr "Límite diario (imágenes al día, 0 bloquea la API, vacío = estándar)"
+
+msgid "Limit speichern"
+msgstr "Guardar límite"
+
+msgid "Das Tageslimit muss eine ganze Zahl von 0 bis 1000000 sein."
+msgstr "El límite diario debe ser un número entero entre 0 y 1000000."
+
+msgid "API-Tageslimit"
+msgstr "Límite diario de la API"
+
+msgid "{limit} Bilder pro Tag (Standard)"
+msgstr "{limit} imágenes al día (estándar)"
+
+msgid "{limit} Bilder pro Tag (individuell festgelegt)"
+msgstr "{limit} imágenes al día (personalizado)"
+
+msgid "API-Limit {limit}/Tag"
+msgstr "Límite de API {limit}/día"
+
+msgid "Der Standard ist aktuell {standard} Bilder pro Tag."
+msgstr "El valor estándar actual es de {standard} imágenes al día."

@@ -545,6 +545,12 @@ def _migrate_columns(conn):
         ("users", "plan_laufzeit_monate", "ALTER TABLE users ADD COLUMN plan_laufzeit_monate INTEGER"),
         ("users", "auto_verlaengerung", "ALTER TABLE users ADD COLUMN auto_verlaengerung INTEGER DEFAULT 1"),
         ("users", "team_name", "ALTER TABLE users ADD COLUMN team_name TEXT DEFAULT ''"),
+        # Missbrauchsbremse API (11.08.2026, Steve): Tageslimit der Bild-
+        # Generierung pro KONTO einstellbar (NULL = globaler Standard
+        # DAILY_IMAGE_LIMIT, 0 = gesperrt). Fuer Betreiber-Konten mit
+        # unbegrenzten Credits ist das die EINZIGE Bremse — deshalb
+        # einstellbar statt Admin-Ausnahme.
+        ("users", "api_tageslimit", "ALTER TABLE users ADD COLUMN api_tageslimit INTEGER"),
         # Sicherheits-Review 06.08.: Einladungen an UNBEKANNTE Adressen legen
         # das Konto zwar an, die Mitgliedschaft entsteht aber erst, wenn die
         # Person ihr Passwort setzt (= registriert). konto_neu=1 kennzeichnet
@@ -811,7 +817,7 @@ def list_all_users():
         "SELECT id, email, display_name, is_admin, admin_level, is_active, "
         "       created_at, last_login, plan, plan_gueltig_bis, "
         "       plan_laufzeit_monate, plan_quelle, auto_verlaengerung, "
-        "       team_name, abo_owner_id, geplanter_plan "
+        "       team_name, abo_owner_id, geplanter_plan, api_tageslimit "
         "FROM users ORDER BY created_at DESC"
     ).fetchall()
     conn.close()

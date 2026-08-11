@@ -3172,3 +3172,34 @@ msgstr "Krediter skapade av denna person (alla potter)"
 
 msgid "Geschätzte KI-Kosten dieses Kontos"
 msgstr "Uppskattad AI-kostnad för detta konto"
+
+# API-Tageslimit / Missbrauchsbremse (11.08.2026)
+msgid "API-Tageslimit (Missbrauchsbremse)"
+msgstr "API-dagsgräns (missbruksbroms)"
+
+msgid "Begrenzt, wie viele Bilder ein Konto pro Tag über die API generieren darf. Das Abo-Guthaben gilt zusätzlich — diese Bremse schützt nur vor Amok-Läufen. Leer lassen stellt den Standard wieder her."
+msgstr "Begränsar hur många bilder ett konto får generera per dag via API:et. Abonnemangskrediten gäller dessutom — bromsen skyddar bara mot skenande körningar. Lämna tomt för att återställa standard."
+
+msgid "Tageslimit (Bilder pro Tag, 0 sperrt die API, leer = Standard)"
+msgstr "Dagsgräns (bilder per dag, 0 spärrar API:et, tomt = standard)"
+
+msgid "Limit speichern"
+msgstr "Spara gräns"
+
+msgid "Das Tageslimit muss eine ganze Zahl von 0 bis 1000000 sein."
+msgstr "Dagsgränsen måste vara ett heltal mellan 0 och 1000000."
+
+msgid "API-Tageslimit"
+msgstr "API-dagsgräns"
+
+msgid "{limit} Bilder pro Tag (Standard)"
+msgstr "{limit} bilder per dag (standard)"
+
+msgid "{limit} Bilder pro Tag (individuell festgelegt)"
+msgstr "{limit} bilder per dag (individuellt inställt)"
+
+msgid "API-Limit {limit}/Tag"
+msgstr "API-gräns {limit}/dag"
+
+msgid "Der Standard ist aktuell {standard} Bilder pro Tag."
+msgstr "Nuvarande standard är {standard} bilder per dag."

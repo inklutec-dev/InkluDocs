@@ -3614,3 +3614,34 @@ msgstr ""
 
 msgid "Geschätzte KI-Kosten dieses Kontos"
 msgstr ""
+
+# API-Tageslimit / Missbrauchsbremse (11.08.2026)
+msgid "API-Tageslimit (Missbrauchsbremse)"
+msgstr ""
+
+msgid "Begrenzt, wie viele Bilder ein Konto pro Tag über die API generieren darf. Das Abo-Guthaben gilt zusätzlich — diese Bremse schützt nur vor Amok-Läufen. Leer lassen stellt den Standard wieder her."
+msgstr ""
+
+msgid "Tageslimit (Bilder pro Tag, 0 sperrt die API, leer = Standard)"
+msgstr ""
+
+msgid "Limit speichern"
+msgstr ""
+
+msgid "Das Tageslimit muss eine ganze Zahl von 0 bis 1000000 sein."
+msgstr ""
+
+msgid "API-Tageslimit"
+msgstr ""
+
+msgid "{limit} Bilder pro Tag (Standard)"
+msgstr ""
+
+msgid "{limit} Bilder pro Tag (individuell festgelegt)"
+msgstr ""
+
+msgid "API-Limit {limit}/Tag"
+msgstr ""
+
+msgid "Der Standard ist aktuell {standard} Bilder pro Tag."
+msgstr ""

@@ -101,6 +101,21 @@ NOTIFICATION_EMAIL = os.environ.get("NOTIFICATION_EMAIL", SMTP_FROM)
 DAILY_IMAGE_LIMIT = int(os.environ.get("DAILY_IMAGE_LIMIT", "100"))
 
 
+def effektives_api_tageslimit(user_row) -> int:
+    """Missbrauchsbremse der Bild-Generierung: Tageslimit pro Konto.
+
+    users.api_tageslimit: NULL = globaler Standard DAILY_IMAGE_LIMIT,
+    0 = Generierung fuer dieses Konto gesperrt. Das Abo-Guthaben gilt
+    IMMER zusaetzlich — diese Bremse faengt nur Amok-Laeufe ab und ist
+    fuer Betreiber-Konten (unbegrenzte Credits) die einzige Grenze.
+    """
+    try:
+        wert = user_row["api_tageslimit"]
+    except (KeyError, IndexError, TypeError):
+        wert = None
+    return DAILY_IMAGE_LIMIT if wert is None else int(wert)
+
+
 def send_email(to_email: str, subject: str, html_body: str, bcc_admin: bool = True, attachment_path: str = None, reply_to: str = None, from_name: str = None) -> bool:
     """Send an email via SMTP with optional file attachment.
 
@@ -741,8 +756,8 @@ async def me(user: dict = Depends(get_current_user)):
         # auf den "abo"-Block mitgeliefert, danach entfernen.
         "daily_limit": {
             "used": daily_used,
-            "limit": DAILY_IMAGE_LIMIT,
-            "remaining": max(0, DAILY_IMAGE_LIMIT - daily_used),
+            "limit": effektives_api_tageslimit(db_user),
+            "remaining": max(0, effektives_api_tageslimit(db_user) - daily_used),
         },
         "abo": {
             # Plan des AKTIVEN Topfs (danach richten sich die Credit-Zeilen).
@@ -1315,6 +1330,9 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
             "angelegt_am": (ziel.get("created_at") or "")[:10],
             "aktiv": bool(ziel.get("is_active", 1)),
             "ist_betreiber": bool(ziel.get("is_admin")),
+            # Missbrauchsbremse (11.08.2026): individuell oder Standard.
+            "api_tageslimit": ziel.get("api_tageslimit"),
+            "api_tageslimit_effektiv": effektives_api_tageslimit(ziel),
         },
         "abo": {
             "plan": plan,
@@ -3368,6 +3386,48 @@ async def admin_paket_anlegen(user_id: int, request: Request,
             "message": f"Paket ({groesse} Credits) fuer {target['email']} angelegt{hinweis}"}
 
 
+@app.post("/api/admin/users/{user_id}/api-limit")
+async def admin_setze_api_limit(user_id: int, request: Request,
+                                user: dict = Depends(require_full_admin)):
+    """Admin: API-Tageslimit (Missbrauchsbremse) pro Konto setzen.
+
+    Steve 11.08.2026: Das starre globale DAILY_IMAGE_LIMIT bremste den
+    InkluEdit-Einzug aus (alle Schluessel unter einem Konto). limit =
+    ganze Zahl 0..1000000 (0 sperrt die API-Generierung), null/leer =
+    zurueck auf den globalen Standard. Das Abo-Guthaben gilt immer
+    zusaetzlich.
+    """
+    data = await request.json()
+    roh = data.get("limit", None)
+    if roh in (None, ""):
+        limit = None
+    else:
+        try:
+            limit = int(roh)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400,
+                                detail="limit muss eine ganze Zahl oder leer sein")
+        if not 0 <= limit <= 1000000:
+            raise HTTPException(status_code=400,
+                                detail="limit muss zwischen 0 und 1000000 liegen")
+    ziel = get_user_by_id(user_id)
+    if not ziel:
+        raise HTTPException(status_code=404, detail="User nicht gefunden")
+    conn = get_db()
+    try:
+        conn.execute("UPDATE users SET api_tageslimit = ? WHERE id = ?",
+                     (limit, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+    if limit is None:
+        text = f"Standard ({DAILY_IMAGE_LIMIT} Bilder pro Tag)"
+    else:
+        text = f"{limit} Bilder pro Tag"
+    return {"ok": True, "api_tageslimit": limit,
+            "message": f"API-Tageslimit fuer {ziel['email']}: {text}"}
+
+
 # ─── API Key Management ─────────────────────────────────────
 
 @app.get("/api/api-keys")
@@ -5077,9 +5137,10 @@ async def get_image_page_view(image_id: int, user: dict = Depends(get_current_us
 async def generate_alt_texts(project_id: int, user: dict = Depends(get_current_user)):
     # Check daily limit (admins are exempt)
     if not user.get("is_admin"):
+        _tageslimit = effektives_api_tageslimit(user)
         daily_used = get_daily_image_count(user["id"])
-        if daily_used >= DAILY_IMAGE_LIMIT:
-            raise HTTPException(status_code=429, detail=f"Tageslimit erreicht ({DAILY_IMAGE_LIMIT} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.")
+        if daily_used >= _tageslimit:
+            raise HTTPException(status_code=429, detail=f"Tageslimit erreicht ({_tageslimit} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.")
 
     conn = get_db()
     project = conn.execute(
@@ -6025,14 +6086,17 @@ async def api_generate_alt_text(request: Request):
     api_user = get_api_user(request)
     api_key_id = api_user["api_key_id"]
 
-    # Daily limit check
+    # Daily limit check — Missbrauchsbremse, pro Konto einstellbar
+    # (11.08.2026). get_api_user liefert nur die Schluessel-Kurzform,
+    # deshalb hier die Konto-Zeile fuer das individuelle Limit nachladen.
+    tageslimit = effektives_api_tageslimit(get_user_by_id(api_user["id"]) or {})
     daily_used = get_daily_api_count(api_user["id"])
-    daily_remaining = max(0, DAILY_IMAGE_LIMIT - daily_used)
-    if daily_used >= DAILY_IMAGE_LIMIT:
+    daily_remaining = max(0, tageslimit - daily_used)
+    if daily_used >= tageslimit:
         raise HTTPException(
             status_code=429,
-            detail=f"Tageslimit erreicht ({DAILY_IMAGE_LIMIT} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.",
-            headers={"X-RateLimit-Limit": str(DAILY_IMAGE_LIMIT), "X-RateLimit-Remaining": "0"},
+            detail=f"Tageslimit erreicht ({tageslimit} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.",
+            headers={"X-RateLimit-Limit": str(tageslimit), "X-RateLimit-Remaining": "0"},
         )
 
     # Rate limiting
@@ -6192,7 +6256,7 @@ async def api_generate_alt_text(request: Request):
             headers={
                 "X-RateLimit-Remaining-Minute": str(rate_info["minute_remaining"]),
                 "X-RateLimit-Remaining-Day": str(rate_info["day_remaining"]),
-                "X-DailyLimit-Limit": str(DAILY_IMAGE_LIMIT),
+                "X-DailyLimit-Limit": str(tageslimit),
                 "X-DailyLimit-Used": str(daily_used + 1),
                 "X-DailyLimit-Remaining": str(max(0, daily_remaining - 1)),
             }
@@ -6934,7 +6998,10 @@ async def prompts_page(request: Request):
 
 @app.get("/benutzer", response_class=HTMLResponse)
 async def users_page(request: Request):
-    return _render_protected_template(request, "benutzer.html")
+    # api_limit_standard: aktueller Standard der Missbrauchsbremse — auf
+    # Staging per ENV 5000, auf Prod 100. Die Seite zeigt ihn im Limit-Feld.
+    return _render_protected_template(request, "benutzer.html",
+                                      api_limit_standard=DAILY_IMAGE_LIMIT)
 
 
 @app.get("/benutzer/report/{user_id}", response_class=HTMLResponse)

@@ -134,6 +134,32 @@
         </form>
       </section>
 
+      {# Missbrauchsbremse API (11.08.2026, Steve): Tageslimit der Bild-
+         Generierung pro Konto einstellbar. Das Abo-Guthaben gilt immer
+         zusaetzlich; fuer Betreiber-Konten (unbegrenzte Credits) ist diese
+         Bremse die einzige Grenze. #}
+      <section class="dash-card" aria-labelledby="apilimit-h" id="apiLimitSection">
+        <h2 id="apilimit-h" tabindex="-1">{{ _('API-Tageslimit (Missbrauchsbremse)') }}</h2>
+        <p class="dash-sub">{{ _('Begrenzt, wie viele Bilder ein Konto pro Tag über die API generieren darf. Das Abo-Guthaben gilt zusätzlich — diese Bremse schützt nur vor Amok-Läufen. Leer lassen stellt den Standard wieder her.') }}</p>
+        <form id="apiLimitForm" novalidate>
+          <div class="dash-field">
+            <label for="apiLimitEmail">{{ _('E-Mail des bestehenden Kontos') }}</label>
+            <input type="email" id="apiLimitEmail" class="dash-input" required autocomplete="off">
+          </div>
+          <div class="dash-field">
+            <label for="apiLimitWert">{{ _('Tageslimit (Bilder pro Tag, 0 sperrt die API, leer = Standard)') }}</label>
+            {# Steve 11.08.: Der Standardwert soll IM Feld stehen, damit man
+               ihn kennt. Wert = Standard wird beim Speichern als "Standard"
+               behandelt (kein individueller Eintrag). #}
+            <input type="number" id="apiLimitWert" class="dash-input" min="0" max="1000000" step="1" autocomplete="off" value="{{ api_limit_standard }}" aria-describedby="apiLimitStandardHinweis">
+            <p class="dash-sub" id="apiLimitStandardHinweis">{{ _('Der Standard ist aktuell {standard} Bilder pro Tag.').replace('{standard}', api_limit_standard|string) }}</p>
+          </div>
+          <button type="submit" class="btn btn-primary">{{ _('Limit speichern') }}</button>
+          <span id="apiLimitMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="apiLimitErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        </form>
+      </section>
+
       {# Verbrauchs-Report je Kunde: seit 11.08.2026 eigene Unterseite
          /benutzer/report/<id> (Steve) — vorher oeffnete er sich hier unten
          als Abschnitt, was mit Vergroesserung leicht unbemerkt blieb. #}
@@ -183,6 +209,8 @@
 
 {% block page_script %}
 <script>
+  // Standard der API-Missbrauchsbremse (vom Server, ENV-abhaengig).
+  const API_LIMIT_STANDARD = {{ api_limit_standard }};
 {% raw %}
   const PLAN_NAMEN = { free: 'Free', single: 'Single', team: 'Team', enterprise: 'Enterprise' };
 
@@ -255,6 +283,9 @@
         if (u.plan_quelle) teile.push(u.plan_quelle === 'stripe' ? t('über Stripe') : t('auf Rechnung'));
       }
       if (u.team_name) teile.push(t('Team „{name}“ mit {n} Mitgliedern', { name: u.team_name, n: u.team_mitglieder }));
+      if (u.api_tageslimit !== null && u.api_tageslimit !== undefined) {
+        teile.push(t('API-Limit {limit}/Tag', { limit: u.api_tageslimit }));
+      }
       abo.textContent = teile.join(' · ');
       li.appendChild(abo);
 
@@ -607,6 +638,54 @@
     announce(msg.textContent);
   });
 
+  // ── API-Tageslimit (Missbrauchsbremse, 11.08.2026) ─────
+  byId('apiLimitForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = byId('apiLimitMsg');
+    const err = byId('apiLimitErr');
+    msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
+    const email = byId('apiLimitEmail').value.trim();
+    if (!email) { byId('apiLimitEmail').focus(); return; }
+    const kontoId = await findeKontoId(email);
+    if (kontoId === 'LADEFEHLER') {
+      err.textContent = t('Benutzerliste konnte nicht geladen werden. Bitte erneut versuchen.');
+      return;
+    }
+    if (!kontoId) {
+      err.textContent = t('Kein Konto mit dieser E-Mail. Bitte zuerst oben „Neuen Benutzer anlegen“.');
+      return;
+    }
+    const roh = byId('apiLimitWert').value.trim();
+    let limit = null;
+    if (roh !== '') {
+      limit = parseInt(roh, 10);
+      if (!Number.isInteger(limit) || String(limit) !== roh || limit < 0 || limit > 1000000) {
+        err.textContent = t('Das Tageslimit muss eine ganze Zahl von 0 bis 1000000 sein.');
+        byId('apiLimitWert').focus();
+        return;
+      }
+      // Genau der Standardwert = Standard, kein individueller Eintrag
+      // (Steve 11.08.: der Standard steht sichtbar im Feld).
+      if (limit === API_LIMIT_STANDARD) limit = null;
+    }
+    let res;
+    try {
+      res = await fetch('/api/admin/users/' + kontoId + '/api-limit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: limit }),
+      });
+    } catch (e2) { err.textContent = t('Fehler'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { err.textContent = d.detail || t('Fehler'); return; }
+    msg.textContent = d.message || t('Gespeichert.');
+    msg.style.color = 'var(--success)';
+    // Nach dem Zuruecksetzen steht der Standard wieder sichtbar im Feld.
+    if (limit === null) byId('apiLimitWert').value = String(API_LIMIT_STANDARD);
+    announce(msg.textContent);
+    loadUsers();
+  });
+
   (async function init() {
     await loadCurrentUser();   // currentUser für "Sie selbst"-Erkennung + Rechte-Stufe
     const isFull = currentUser && currentUser.admin_level === 'full';
@@ -616,6 +695,7 @@
       const aa = byId('addAdminSection'); if (aa) aa.hidden = true;
       const az = byId('aboZuweisenSection'); if (az) az.hidden = true;
       const ps = byId('paketSection'); if (ps) ps.hidden = true;
+      const al = byId('apiLimitSection'); if (al) al.hidden = true;
     }
     await loadUsers();
     await loadAdmins();

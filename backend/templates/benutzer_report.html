@@ -119,6 +119,12 @@
     zeile(dl, t('Angelegt am'), datumLokal(d.konto.angelegt_am));
     zeile(dl, t('Status'), d.konto.aktiv ? t('Aktiv') : t('Gesperrt'));
     if (d.konto.ist_betreiber) zeile(dl, t('Hinweis'), t('Betreiber-Konto — wird nicht gesperrt.'));
+    if (d.konto.api_tageslimit_effektiv !== undefined) {
+      zeile(dl, t('API-Tageslimit'),
+            (d.konto.api_tageslimit === null || d.konto.api_tageslimit === undefined)
+              ? t('{limit} Bilder pro Tag (Standard)', { limit: d.konto.api_tageslimit_effektiv })
+              : t('{limit} Bilder pro Tag (individuell festgelegt)', { limit: d.konto.api_tageslimit_effektiv }));
+    }
 
     dl = block(inhalt, t('Abo'));
     zeile(dl, t('Plan'), PLAN_NAMEN[d.abo.plan] || d.abo.plan);
