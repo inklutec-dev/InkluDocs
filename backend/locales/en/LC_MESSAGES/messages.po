@@ -3585,3 +3585,13 @@ msgstr "Team “{team}” of {inhaber} — the numbers below refer to this team 
 
 msgid "Arbeitet außerdem im Team von"
 msgstr "Also works in the team of"
+
+# Report: Verbrauch nach Topf (11.08.2026)
+msgid "Verbrauch nach Topf im laufenden Monat"
+msgstr "Usage by pool in the current month"
+
+msgid "Eigenes Abo ({plan}): {credits} Credits"
+msgstr "Own subscription ({plan}): {credits} credits"
+
+msgid "Team „{team}“ von {inhaber}: {credits} Credits"
+msgstr "Team “{team}” of {inhaber}: {credits} credits"

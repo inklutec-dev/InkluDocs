@@ -3588,3 +3588,13 @@ msgstr ""
 
 msgid "Arbeitet außerdem im Team von"
 msgstr ""
+
+# Report: Verbrauch nach Topf (11.08.2026)
+msgid "Verbrauch nach Topf im laufenden Monat"
+msgstr ""
+
+msgid "Eigenes Abo ({plan}): {credits} Credits"
+msgstr ""
+
+msgid "Team „{team}“ von {inhaber}: {credits} Credits"
+msgstr ""

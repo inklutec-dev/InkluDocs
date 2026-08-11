@@ -3146,3 +3146,13 @@ msgstr "Team ”{team}” hos {inhaber} — siffrorna nedan gäller denna team-p
 
 msgid "Arbeitet außerdem im Team von"
 msgstr "Arbetar också i teamet hos"
+
+# Report: Verbrauch nach Topf (11.08.2026)
+msgid "Verbrauch nach Topf im laufenden Monat"
+msgstr "Förbrukning per pott under innevarande månad"
+
+msgid "Eigenes Abo ({plan}): {credits} Credits"
+msgstr "Eget abonnemang ({plan}): {credits} krediter"
+
+msgid "Team „{team}“ von {inhaber}: {credits} Credits"
+msgstr "Team ”{team}” hos {inhaber}: {credits} krediter"

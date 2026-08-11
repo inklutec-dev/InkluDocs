@@ -29,6 +29,30 @@
 {% raw %}
   const PLAN_NAMEN = { free: 'Free', single: 'Single', team: 'Team', enterprise: 'Enterprise' };
 
+  // Datumsangaben in der Sprache der Oberflaeche ausschreiben (Steve
+  // 11.08.2026: "2026-11-07" klingt vorgelesen falsch herum). Der Browser
+  // kennt alle Sprachen selbst — keine Katalog-Arbeit noetig.
+  function datumLokal(iso) {
+    if (!iso) return '';
+    const p = String(iso).slice(0, 10).split('-');
+    if (p.length !== 3) return String(iso);
+    const d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+    try {
+      return new Intl.DateTimeFormat(window.LANG || 'de',
+        { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
+    } catch (e) { return p[2] + '.' + p[1] + '.' + p[0]; }
+  }
+
+  function monatLokal(ym) {
+    const p = String(ym).split('-');
+    if (p.length !== 2) return String(ym);
+    const d = new Date(Date.UTC(+p[0], +p[1] - 1, 1));
+    try {
+      return new Intl.DateTimeFormat(window.LANG || 'de',
+        { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
+    } catch (e) { return String(ym); }
+  }
+
   // Bewusst schlichte Absaetze "Begriff: Wert" statt Tabelle ODER
   // Beschreibungsliste: Steve hoert die Seite mit VoiceOver. Die fruehere
   // <dl>-Variante las sich als "Name, leeres Objekt, 1 von 8" (VoiceOver
@@ -92,7 +116,7 @@
     let dl = block(inhalt, t('Konto'));
     zeile(dl, t('Name'), d.konto.name);
     zeile(dl, t('E-Mail'), d.konto.email);
-    zeile(dl, t('Angelegt am'), d.konto.angelegt_am);
+    zeile(dl, t('Angelegt am'), datumLokal(d.konto.angelegt_am));
     zeile(dl, t('Status'), d.konto.aktiv ? t('Aktiv') : t('Gesperrt'));
     if (d.konto.ist_betreiber) zeile(dl, t('Hinweis'), t('Betreiber-Konto — wird nicht gesperrt.'));
 
@@ -100,7 +124,7 @@
     zeile(dl, t('Plan'), PLAN_NAMEN[d.abo.plan] || d.abo.plan);
     if (d.abo.plan !== 'free') {
       zeile(dl, t('Laufzeit'), d.abo.laufzeit_monate ? t('{monate} Monate', { monate: d.abo.laufzeit_monate }) : null);
-      zeile(dl, t('Gültig bis'), d.abo.gueltig_bis);
+      zeile(dl, t('Gültig bis'), datumLokal(d.abo.gueltig_bis));
       zeile(dl, t('Verlängerung'), d.abo.auto_verlaengerung ? t('automatisch') : t('gekündigt zum Laufzeitende'));
       zeile(dl, t('Gebucht über'), d.abo.quelle === 'stripe' ? t('Stripe') : t('Rechnung'));
       zeile(dl, t('Preis'), t('{preis} € im Monat, {summe} € für die Laufzeit', { preis: String(d.abo.monatspreis_eur).replace('.', ','), summe: String(d.abo.erloes_laufzeit_eur).replace('.', ',') }));
@@ -130,19 +154,36 @@
     zeile(dl, t('Rest'), d.guthaben.rest === null ? t('unbegrenzt') : d.guthaben.rest);
     zeile(dl, t('Zusatz-Credits aus Paketen'), d.guthaben.pakete_rest);
 
+    // Verbrauch nach Topf (Steve 11.08.2026): eigener Topf und jede
+    // Team-Mitgliedschaft immer sichtbar — auch mit 0 —, damit "abends
+    // privat, tagsueber im Team" als zwei Zahlen dasteht.
+    const toepfe = d.guthaben.verbrauch_nach_topf || [];
+    if (toepfe.length) {
+      const ulT = listenBlock(inhalt, t('Verbrauch nach Topf im laufenden Monat'));
+      toepfe.forEach((tp) => {
+        const li = document.createElement('li');
+        li.textContent = tp.eigen
+          ? t('Eigenes Abo ({plan}): {credits} Credits', { plan: PLAN_NAMEN[tp.plan] || tp.plan, credits: tp.credits })
+          : t('Team „{team}“ von {inhaber}: {credits} Credits', { team: tp.team_name || '—', inhaber: tp.inhaber, credits: tp.credits });
+        ulT.appendChild(li);
+      });
+    }
+
     dl = block(inhalt, t('Nutzung insgesamt'));
     zeile(dl, t('Projekte'), d.nutzung.projekte);
     zeile(dl, t('Bilder'), d.nutzung.bilder);
     zeile(dl, t('API-Aufrufe'), d.nutzung.api_aufrufe);
     zeile(dl, t('Credits verbraucht'), d.nutzung.credits_gesamt);
-    zeile(dl, t('Zuletzt aktiv'), (d.nutzung.letzte_aktion || '').slice(0, 16) || t('noch nie'));
+    zeile(dl, t('Zuletzt aktiv'), d.nutzung.letzte_aktion
+      ? datumLokal(d.nutzung.letzte_aktion) + ', ' + String(d.nutzung.letzte_aktion).slice(11, 16)
+      : t('noch nie'));
     zeile(dl, t('Geschätzte KI-Kosten'), t('{betrag} € (grobe Schätzung, {satz} € je Credit)', { betrag: String(d.kosten.gesamt_geschaetzt_eur).replace('.', ','), satz: String(d.kosten.satz_pro_credit_eur).replace('.', ',') }));
 
     if (d.nutzung.verlauf.length) {
       const ul = listenBlock(inhalt, t('Verbrauch je Monat'));
       d.nutzung.verlauf.forEach((m) => {
         const li = document.createElement('li');
-        li.textContent = t('{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €', { monat: m.monat, topf: m.topf, selbst: m.selbst, kosten: String(m.kosten_geschaetzt).replace('.', ',') });
+        li.textContent = t('{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €', { monat: monatLokal(m.monat), topf: m.topf, selbst: m.selbst, kosten: String(m.kosten_geschaetzt).replace('.', ',') });
         ul.appendChild(li);
       });
     }
@@ -161,7 +202,7 @@
         const li = document.createElement('li');
         // quelle 'admin' = Kulanz-Gutschrift ohne Rechnung, 'rechnung' = Rechnungsweg
         const quelleText = pk.quelle === 'admin' ? t('Kulanz') : t('Rechnung');
-        li.textContent = t('{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})', { groesse: pk.groesse, datum: (pk.erstellt_am || '').slice(0, 10), rest: pk.verbleibend, quelle: quelleText }) + (pk.notiz ? ' — ' + pk.notiz : '');
+        li.textContent = t('{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})', { groesse: pk.groesse, datum: datumLokal(pk.erstellt_am), rest: pk.verbleibend, quelle: quelleText }) + (pk.notiz ? ' — ' + pk.notiz : '');
         ul.appendChild(li);
       });
     }

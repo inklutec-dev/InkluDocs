@@ -3276,3 +3276,13 @@ msgstr "Team “{team}” hos {inhaber} — tallene nedenfor gælder denne team-
 
 msgid "Arbeitet außerdem im Team von"
 msgstr "Arbejder også i teamet hos"
+
+# Report: Verbrauch nach Topf (11.08.2026)
+msgid "Verbrauch nach Topf im laufenden Monat"
+msgstr "Forbrug pr. pulje i den løbende måned"
+
+msgid "Eigenes Abo ({plan}): {credits} Credits"
+msgstr "Eget abonnement ({plan}): {credits} credits"
+
+msgid "Team „{team}“ von {inhaber}: {credits} Credits"
+msgstr "Team “{team}” hos {inhaber}: {credits} credits"

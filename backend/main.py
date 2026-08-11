@@ -1247,11 +1247,21 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
             "JOIN users u ON u.id = m.mitglied_id WHERE m.inhaber_id = ? "
             "ORDER BY u.display_name", (user_id,)).fetchall()]
         teams = [dict(r) for r in conn.execute(
-            "SELECT u.display_name AS inhaber, u.team_name FROM team_mitgliedschaften m "
+            "SELECT u.id AS inhaber_id, u.display_name AS inhaber, u.team_name "
+            "FROM team_mitgliedschaften m "
             "JOIN users u ON u.id = m.inhaber_id WHERE m.mitglied_id = ?",
             (user_id,)).fetchall()]
         api_aufrufe = conn.execute(
             "SELECT COUNT(*) FROM api_usage WHERE user_id = ?", (user_id,)).fetchone()[0]
+        # Verbrauch der Person im laufenden Kalendermonat, aufgeteilt nach dem
+        # belasteten Topf (Steve 11.08.2026): "abends privat, tagsueber im
+        # Team" muss der Admin als getrennte Zahlen sehen, ohne umzuschalten.
+        topf_rows = conn.execute(
+            "SELECT COALESCE(konto_user_id, user_id) AS konto, "
+            "       COALESCE(SUM(credits), 0) AS credits "
+            "FROM usage_events WHERE user_id = ? "
+            "  AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now') "
+            "GROUP BY konto", (user_id,)).fetchall()
     finally:
         conn.close()
 
@@ -1260,6 +1270,27 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
         zeile["kosten_geschaetzt"] = round((zeile["topf"] or 0) * satz, 2)
     plan = billing.effektiver_plan(ziel)
     monatspreis = billing.PLAN_PREISE_EUR.get(plan, 0.0)
+
+    # Aufstellung "Verbrauch nach Topf": eigener Topf und JEDE Mitgliedschaft
+    # erscheinen immer (auch mit 0), fruehere Toepfe nur bei Verbrauch.
+    topf_credits = {r["konto"]: r["credits"] for r in topf_rows}
+    verbrauch_nach_topf = [{
+        "eigen": True, "plan": plan, "credits": topf_credits.pop(user_id, 0),
+    }]
+    for tm in teams:
+        verbrauch_nach_topf.append({
+            "eigen": False, "inhaber": tm["inhaber"],
+            "team_name": tm.get("team_name") or "",
+            "credits": topf_credits.pop(tm["inhaber_id"], 0),
+        })
+    for fremd_id, fremd_credits in topf_credits.items():
+        frueher = get_user_by_id(fremd_id)
+        verbrauch_nach_topf.append({
+            "eigen": False,
+            "inhaber": frueher["display_name"] if frueher else "?",
+            "team_name": (frueher.get("team_name") or "") if frueher else "",
+            "credits": fremd_credits,
+        })
 
     return {
         "ok": True,
@@ -1291,6 +1322,7 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
             "pakete_rest": zustand.get("pakete_rest", 0),
             "pakete": pakete,
             "topf_fremd": topf_fremd,
+            "verbrauch_nach_topf": verbrauch_nach_topf,
         },
         "nutzung": {
             "projekte": projekte, "bilder": bilder, "api_aufrufe": api_aufrufe,

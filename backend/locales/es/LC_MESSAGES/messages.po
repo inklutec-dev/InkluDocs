@@ -3585,3 +3585,13 @@ msgstr "Equipo «{team}» de {inhaber}: las cifras siguientes se refieren al fon
 
 msgid "Arbeitet außerdem im Team von"
 msgstr "También trabaja en el equipo de"
+
+# Report: Verbrauch nach Topf (11.08.2026)
+msgid "Verbrauch nach Topf im laufenden Monat"
+msgstr "Consumo por fondo en el mes en curso"
+
+msgid "Eigenes Abo ({plan}): {credits} Credits"
+msgstr "Suscripción propia ({plan}): {credits} créditos"
+
+msgid "Team „{team}“ von {inhaber}: {credits} Credits"
+msgstr "Equipo «{team}» de {inhaber}: {credits} créditos"
