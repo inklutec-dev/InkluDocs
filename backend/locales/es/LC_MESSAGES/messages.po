@@ -3595,3 +3595,19 @@ msgstr "Suscripción propia ({plan}): {credits} créditos"
 
 msgid "Team „{team}“ von {inhaber}: {credits} Credits"
 msgstr "Equipo «{team}» de {inhaber}: {credits} créditos"
+
+# Report: gestaffelter Verbrauch nach Topf mit Kosten (11.08.2026)
+msgid "Verbrauch nach Topf"
+msgstr "Consumo por fondo"
+
+msgid "Eigenes Abo ({plan}): diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} €"
+msgstr "Suscripción propia ({plan}): {monat} créditos este mes, {gesamt} en total — coste de IA estimado {kosten} €"
+
+msgid "Team „{team}“ von {inhaber}: diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} € (zählen beim Konto des Team-Inhabers)"
+msgstr "Equipo «{team}» de {inhaber}: {monat} créditos este mes, {gesamt} en total — coste de IA estimado {kosten} € (se contabiliza en la cuenta del propietario del equipo)"
+
+msgid "Selbst erzeugte Credits (alle Töpfe)"
+msgstr "Créditos generados por esta persona (todos los fondos)"
+
+msgid "Geschätzte KI-Kosten dieses Kontos"
+msgstr "Coste de IA estimado de esta cuenta"

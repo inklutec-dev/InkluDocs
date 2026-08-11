@@ -3598,3 +3598,19 @@ msgstr ""
 
 msgid "Team „{team}“ von {inhaber}: {credits} Credits"
 msgstr ""
+
+# Report: gestaffelter Verbrauch nach Topf mit Kosten (11.08.2026)
+msgid "Verbrauch nach Topf"
+msgstr ""
+
+msgid "Eigenes Abo ({plan}): diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} €"
+msgstr ""
+
+msgid "Team „{team}“ von {inhaber}: diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} € (zählen beim Konto des Team-Inhabers)"
+msgstr ""
+
+msgid "Selbst erzeugte Credits (alle Töpfe)"
+msgstr ""
+
+msgid "Geschätzte KI-Kosten dieses Kontos"
+msgstr ""

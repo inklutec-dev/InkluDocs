@@ -3286,3 +3286,19 @@ msgstr "Eget abonnement ({plan}): {credits} credits"
 
 msgid "Team „{team}“ von {inhaber}: {credits} Credits"
 msgstr "Team “{team}” hos {inhaber}: {credits} credits"
+
+# Report: gestaffelter Verbrauch nach Topf mit Kosten (11.08.2026)
+msgid "Verbrauch nach Topf"
+msgstr "Forbrug pr. pulje"
+
+msgid "Eigenes Abo ({plan}): diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} €"
+msgstr "Eget abonnement ({plan}): {monat} credits denne måned, {gesamt} i alt — anslåede AI-omkostninger {kosten} €"
+
+msgid "Team „{team}“ von {inhaber}: diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} € (zählen beim Konto des Team-Inhabers)"
+msgstr "Team “{team}” hos {inhaber}: {monat} credits denne måned, {gesamt} i alt — anslåede AI-omkostninger {kosten} € (tælles på teamejerens konto)"
+
+msgid "Selbst erzeugte Credits (alle Töpfe)"
+msgstr "Credits genereret af denne person (alle puljer)"
+
+msgid "Geschätzte KI-Kosten dieses Kontos"
+msgstr "Anslåede AI-omkostninger for denne konto"

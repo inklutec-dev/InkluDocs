@@ -154,17 +154,19 @@
     zeile(dl, t('Rest'), d.guthaben.rest === null ? t('unbegrenzt') : d.guthaben.rest);
     zeile(dl, t('Zusatz-Credits aus Paketen'), d.guthaben.pakete_rest);
 
-    // Verbrauch nach Topf (Steve 11.08.2026): eigener Topf und jede
-    // Team-Mitgliedschaft immer sichtbar — auch mit 0 —, damit "abends
-    // privat, tagsueber im Team" als zwei Zahlen dasteht.
+    // Gestaffelter Verbrauch nach Topf (Steve 11.08.2026): eigener Topf und
+    // jede Team-Mitgliedschaft immer sichtbar — auch mit 0 —, je Zeile mit
+    // Monat, Gesamt und geschaetzten KI-Kosten. Bei fremden Toepfen steht
+    // ausdruecklich dabei, dass die Kosten beim Team-Inhaber zaehlen.
     const toepfe = d.guthaben.verbrauch_nach_topf || [];
     if (toepfe.length) {
-      const ulT = listenBlock(inhalt, t('Verbrauch nach Topf im laufenden Monat'));
+      const ulT = listenBlock(inhalt, t('Verbrauch nach Topf'));
       toepfe.forEach((tp) => {
         const li = document.createElement('li');
+        const kosten = String(tp.kosten_geschaetzt_eur).replace('.', ',');
         li.textContent = tp.eigen
-          ? t('Eigenes Abo ({plan}): {credits} Credits', { plan: PLAN_NAMEN[tp.plan] || tp.plan, credits: tp.credits })
-          : t('Team „{team}“ von {inhaber}: {credits} Credits', { team: tp.team_name || '—', inhaber: tp.inhaber, credits: tp.credits });
+          ? t('Eigenes Abo ({plan}): diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} €', { plan: PLAN_NAMEN[tp.plan] || tp.plan, monat: tp.monat, gesamt: tp.gesamt, kosten: kosten })
+          : t('Team „{team}“ von {inhaber}: diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} € (zählen beim Konto des Team-Inhabers)', { team: tp.team_name || '—', inhaber: tp.inhaber, monat: tp.monat, gesamt: tp.gesamt, kosten: kosten });
         ulT.appendChild(li);
       });
     }
@@ -173,11 +175,12 @@
     zeile(dl, t('Projekte'), d.nutzung.projekte);
     zeile(dl, t('Bilder'), d.nutzung.bilder);
     zeile(dl, t('API-Aufrufe'), d.nutzung.api_aufrufe);
-    zeile(dl, t('Credits verbraucht'), d.nutzung.credits_gesamt);
+    zeile(dl, t('Selbst erzeugte Credits (alle Töpfe)'),
+          d.nutzung.selbst_gesamt !== undefined ? d.nutzung.selbst_gesamt : d.nutzung.credits_gesamt);
     zeile(dl, t('Zuletzt aktiv'), d.nutzung.letzte_aktion
       ? datumLokal(d.nutzung.letzte_aktion) + ', ' + String(d.nutzung.letzte_aktion).slice(11, 16)
       : t('noch nie'));
-    zeile(dl, t('Geschätzte KI-Kosten'), t('{betrag} € (grobe Schätzung, {satz} € je Credit)', { betrag: String(d.kosten.gesamt_geschaetzt_eur).replace('.', ','), satz: String(d.kosten.satz_pro_credit_eur).replace('.', ',') }));
+    zeile(dl, t('Geschätzte KI-Kosten dieses Kontos'), t('{betrag} € (grobe Schätzung, {satz} € je Credit)', { betrag: String(d.kosten.gesamt_geschaetzt_eur).replace('.', ','), satz: String(d.kosten.satz_pro_credit_eur).replace('.', ',') }));
 
     if (d.nutzung.verlauf.length) {
       const ul = listenBlock(inhalt, t('Verbrauch je Monat'));

@@ -267,7 +267,7 @@
     const zeilen = [];
     if (abo.eigen && abo.eigen.plan !== 'free') {
       zeilen.push(abo.eigen.gueltig_bis
-        ? t('Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht.', { plan: abo.eigen.plan, datum: abo.eigen.gueltig_bis })
+        ? t('Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht.', { plan: abo.eigen.plan, datum: formatDate(abo.eigen.gueltig_bis) })
         : t('Dein laufendes Abo wird dabei beendet.'));
     }
     if (abo.eigen && abo.eigen.ist_topf_inhaber && abo.eigen.team_name) {

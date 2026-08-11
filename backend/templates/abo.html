@@ -212,7 +212,7 @@
     (abo.kontexte || []).forEach((k) => {
       if (k.topf !== 'eigen' && k.endet_am) {
         const pEnde = document.createElement('p');
-        pEnde.textContent = t('Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben.', { team: teamLabel(k), datum: k.endet_am });
+        pEnde.textContent = t('Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben.', { team: teamLabel(k), datum: formatDate(k.endet_am) });
         box.appendChild(pEnde);
       }
     });
@@ -334,11 +334,11 @@
         const pLauf = document.createElement('p');
         if (eigen.auto_verlaengerung) {
           pLauf.textContent = eigen.laufzeit_monate
-            ? t('Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch.', { monate: eigen.laufzeit_monate, datum: eigen.gueltig_bis })
-            : t('Verlängert sich am {datum} automatisch.', { datum: eigen.gueltig_bis });
+            ? t('Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch.', { monate: eigen.laufzeit_monate, datum: formatDate(eigen.gueltig_bis) })
+            : t('Verlängert sich am {datum} automatisch.', { datum: formatDate(eigen.gueltig_bis) });
           kuendigen.hidden = false;
         } else {
-          pLauf.textContent = t('Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free.', { datum: eigen.gueltig_bis });
+          pLauf.textContent = t('Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free.', { datum: formatDate(eigen.gueltig_bis) });
           widerruf.hidden = false;
         }
         info.appendChild(pLauf);
@@ -346,7 +346,7 @@
         // welcher Plan gilt — samt Möglichkeit, das zurückzunehmen.
         if (eigen.geplanter_plan) {
           const pWechsel = document.createElement('p');
-          pWechsel.textContent = t('Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}.', { datum: eigen.gueltig_bis, plan: planLabel(eigen.geplanter_plan) });
+          pWechsel.textContent = t('Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}.', { datum: formatDate(eigen.gueltig_bis), plan: planLabel(eigen.geplanter_plan) });
           info.appendChild(pWechsel);
           byId('wechselWiderrufBtn').hidden = false;
         } else {
@@ -448,13 +448,13 @@
       // Gleicher Plan, andere Laufzeit: länger = sofort, kürzer = zum Ende.
       hinweis.textContent = monate > alteLaufzeit
         ? t('Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet.', { summe: summe, monate: monate })
-        : t('Kürzere Laufzeit: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt.', { datum: _abo.eigen.gueltig_bis || '' });
+        : t('Kürzere Laufzeit: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt.', { datum: formatDate(_abo.eigen.gueltig_bis || '') });
       return;
     }
     if (PLAN_MONATSPREISE[ziel] > PLAN_MONATSPREISE[aktuell]) {
       hinweis.textContent = t('Höherstufung: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit deines bisherigen Plans wird angerechnet. Die vollen Credits stehen sofort bereit.', { summe: summe, monate: monate });
     } else {
-      let text = t('Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate.', { datum: _abo.eigen.gueltig_bis || '', summe: summe, monate: monate });
+      let text = t('Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate.', { datum: formatDate(_abo.eigen.gueltig_bis || ''), summe: summe, monate: monate });
       // Wer Plätze verliert, soll das VOR dem Klick lesen — nicht erst aus
       // der Mail an die Mitglieder erfahren (Steve 08.08.).
       const hatteSitze = aktuell === 'team' || aktuell === 'enterprise';
@@ -599,7 +599,7 @@
   }
 
   byId('kuendigenBtn').addEventListener('click', () => {
-    const bis = (_abo && _abo.eigen && _abo.eigen.gueltig_bis) || '';
+    const bis = formatDate((_abo && _abo.eigen && _abo.eigen.gueltig_bis) || '');
     byId('kuendigenBody').textContent = t('Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten.', { datum: bis });
     byId('kuendigenDialog').showModal();
   });
@@ -620,7 +620,7 @@
     const d = await res.json().catch(() => ({}));
     dlg.close();
     if (!res.ok) { err.textContent = d.detail || t('Fehler'); return; }
-    msg.textContent = t('Gekündigt. Dein Abo läuft bis {datum} und endet dann.', { datum: d.gueltig_bis || '' });
+    msg.textContent = t('Gekündigt. Dein Abo läuft bis {datum} und endet dann.', { datum: formatDate(d.gueltig_bis || '') });
     await reloadAbo();
   });
 

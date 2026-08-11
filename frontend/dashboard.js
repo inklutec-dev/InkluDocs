@@ -22,12 +22,21 @@ function announce(msg) {
   if (el) el.textContent = msg;
 }
 
-// Datum robust formatieren (kein Date()-Parsing wegen Safari-Eigenheiten bei
-// SQLite-Zeitstempeln "YYYY-MM-DD HH:MM:SS").
+// Datum robust formatieren (kein Date()-Parsing des Rohstrings wegen
+// Safari-Eigenheiten bei SQLite-Zeitstempeln "YYYY-MM-DD HH:MM:SS").
+// Seit 11.08.2026 (Steve): in der Sprache der Oberflaeche AUSGESCHRIEBEN —
+// "7. November 2026" statt "07.11.2026"; VoiceOver liest das richtig herum.
+// Der Browser kennt alle Sprachen selbst (Intl), Fallback bleibt das alte
+// Punkt-Format.
 function formatDate(s) {
   if (!s) return '';
   const p = String(s).substring(0, 10).split('-');
-  return p.length === 3 ? `${p[2]}.${p[1]}.${p[0]}` : String(s);
+  if (p.length !== 3) return String(s);
+  try {
+    const d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+    return new Intl.DateTimeFormat(window.LANG || 'de',
+      { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
+  } catch (e) { return `${p[2]}.${p[1]}.${p[0]}`; }
 }
 
 // Credit-Zeilen aus dem abo-Block von /api/me bauen (Abo-Modell Etappe 2,

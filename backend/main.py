@@ -1216,17 +1216,18 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
             }
     conn = get_db()
     try:
-        # Verbrauch je Monat — sowohl was die Person selbst erzeugt hat als
-        # auch, was in ihren Topf gelaufen ist (bei Team-Inhabern der ganze
-        # Topf; das ist die Zahl, die die Kosten treibt).
+        # Verbrauch je Monat des EIGENEN Topfes (Steve 11.08.2026: das ist
+        # die Zahl, die die Kosten DIESES Kontos treibt — bei Team-Inhabern
+        # inklusive der Mitglieder). Was die Person in fremden Toepfen tut,
+        # steht in der Aufstellung "Verbrauch nach Topf" darunter.
         verlauf = [dict(r) for r in conn.execute(
             "SELECT strftime('%Y-%m', created_at) AS monat, "
             "       SUM(CASE WHEN user_id = ? THEN credits ELSE 0 END) AS selbst, "
             "       SUM(credits) AS topf "
-            "FROM usage_events WHERE (user_id = ? OR konto_user_id = ?) "
+            "FROM usage_events WHERE COALESCE(konto_user_id, user_id) = ? "
             "  AND created_at >= date('now', ?) "
             "GROUP BY monat ORDER BY monat DESC",
-            (user_id, user_id, user_id, f"-{monate} months")).fetchall()]
+            (user_id, user_id, f"-{monate} months")).fetchall()]
         gesamt = conn.execute(
             "SELECT COALESCE(SUM(credits), 0) FROM usage_events "
             "WHERE user_id = ? OR konto_user_id = ?", (user_id, user_id)).fetchone()[0]
@@ -1253,15 +1254,22 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
             (user_id,)).fetchall()]
         api_aufrufe = conn.execute(
             "SELECT COUNT(*) FROM api_usage WHERE user_id = ?", (user_id,)).fetchone()[0]
-        # Verbrauch der Person im laufenden Kalendermonat, aufgeteilt nach dem
-        # belasteten Topf (Steve 11.08.2026): "abends privat, tagsueber im
-        # Team" muss der Admin als getrennte Zahlen sehen, ohne umzuschalten.
+        # Verbrauch der Person aufgeteilt nach dem belasteten Topf (Steve
+        # 11.08.2026, gestaffelt): "abends privat, tagsueber im Team" muss
+        # der Admin als getrennte Zahlen sehen — Monat, Gesamt und die
+        # geschaetzten KI-Kosten je Topf.
         topf_rows = conn.execute(
             "SELECT COALESCE(konto_user_id, user_id) AS konto, "
-            "       COALESCE(SUM(credits), 0) AS credits "
+            "       COALESCE(SUM(CASE WHEN strftime('%Y-%m', created_at) = "
+            "                strftime('%Y-%m', 'now') THEN credits ELSE 0 END), 0) AS monat, "
+            "       COALESCE(SUM(credits), 0) AS gesamt "
             "FROM usage_events WHERE user_id = ? "
-            "  AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now') "
             "GROUP BY konto", (user_id,)).fetchall()
+        # Was DIESES Konto uns insgesamt kostet: alles, was seinen Topf
+        # belastet hat (bei Inhabern inkl. Mitglieder) — Basis der Kostenzeile.
+        eigener_topf_gesamt = conn.execute(
+            "SELECT COALESCE(SUM(credits), 0) FROM usage_events "
+            "WHERE COALESCE(konto_user_id, user_id) = ?", (user_id,)).fetchone()[0]
     finally:
         conn.close()
 
@@ -1273,24 +1281,32 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
 
     # Aufstellung "Verbrauch nach Topf": eigener Topf und JEDE Mitgliedschaft
     # erscheinen immer (auch mit 0), fruehere Toepfe nur bei Verbrauch.
-    topf_credits = {r["konto"]: r["credits"] for r in topf_rows}
-    verbrauch_nach_topf = [{
-        "eigen": True, "plan": plan, "credits": topf_credits.pop(user_id, 0),
-    }]
+    # Je Topf: Monat, Gesamt und geschaetzte KI-Kosten des SELBST-Anteils.
+    topf_map = {r["konto"]: {"monat": r["monat"], "gesamt": r["gesamt"]}
+                for r in topf_rows}
+
+    def _topf_zeile(basis, daten):
+        daten = daten or {"monat": 0, "gesamt": 0}
+        basis["monat"] = daten["monat"]
+        basis["gesamt"] = daten["gesamt"]
+        basis["kosten_geschaetzt_eur"] = round(daten["gesamt"] * satz, 2)
+        return basis
+
+    verbrauch_nach_topf = [_topf_zeile({"eigen": True, "plan": plan},
+                                       topf_map.pop(user_id, None))]
     for tm in teams:
-        verbrauch_nach_topf.append({
+        verbrauch_nach_topf.append(_topf_zeile({
             "eigen": False, "inhaber": tm["inhaber"],
             "team_name": tm.get("team_name") or "",
-            "credits": topf_credits.pop(tm["inhaber_id"], 0),
-        })
-    for fremd_id, fremd_credits in topf_credits.items():
+        }, topf_map.pop(tm["inhaber_id"], None)))
+    for fremd_id, fremd_daten in topf_map.items():
         frueher = get_user_by_id(fremd_id)
-        verbrauch_nach_topf.append({
+        verbrauch_nach_topf.append(_topf_zeile({
             "eigen": False,
             "inhaber": frueher["display_name"] if frueher else "?",
             "team_name": (frueher.get("team_name") or "") if frueher else "",
-            "credits": fremd_credits,
-        })
+        }, fremd_daten))
+    selbst_gesamt = sum(r["gesamt"] for r in topf_rows)
 
     return {
         "ok": True,
@@ -1326,12 +1342,15 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
         },
         "nutzung": {
             "projekte": projekte, "bilder": bilder, "api_aufrufe": api_aufrufe,
-            "credits_gesamt": gesamt, "letzte_aktion": letzte_aktion,
+            "credits_gesamt": gesamt, "selbst_gesamt": selbst_gesamt,
+            "letzte_aktion": letzte_aktion,
             "verlauf": verlauf,
         },
         "kosten": {
             "satz_pro_credit_eur": satz,
-            "gesamt_geschaetzt_eur": round(gesamt * satz, 2),
+            # Seit 11.08.2026: NUR der eigene Topf — sonst zaehlt Team-
+            # Verbrauch im Report des Mitglieds UND des Inhabers doppelt.
+            "gesamt_geschaetzt_eur": round(eigener_topf_gesamt * satz, 2),
             "hinweis": "Schätzung auf Basis eines Durchschnittssatzes je Credit — "
                        "keine kundengenaue Abrechnung der Modellkosten.",
         },

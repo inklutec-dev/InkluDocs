@@ -248,8 +248,8 @@
       if (u.plan !== 'free') {
         if (u.plan_gueltig_bis) {
           teile.push(u.auto_verlaengerung
-            ? t('verlängert sich am {datum}', { datum: u.plan_gueltig_bis })
-            : t('gekündigt zum {datum}', { datum: u.plan_gueltig_bis }));
+            ? t('verlängert sich am {datum}', { datum: formatDate(u.plan_gueltig_bis) })
+            : t('gekündigt zum {datum}', { datum: formatDate(u.plan_gueltig_bis) }));
         }
         if (u.plan_laufzeit_monate) teile.push(t('{monate} Monate', { monate: u.plan_laufzeit_monate }));
         if (u.plan_quelle) teile.push(u.plan_quelle === 'stripe' ? t('über Stripe') : t('auf Rechnung'));

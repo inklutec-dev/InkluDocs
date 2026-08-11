@@ -30,7 +30,10 @@
       ? new Date(Date.UTC(+d.substring(0, 4), +d.substring(5, 7) - 1, +d.substring(8, 10), +d.substring(11, 13), +d.substring(14, 16)))
       : new Date(Date.UTC(+d.substring(0, 4), +d.substring(5, 7) - 1, +d.substring(8, 10)));
     const p = (n) => String(n).padStart(2, '0');
-    return { datum: p(dt.getDate()) + '.' + p(dt.getMonth() + 1) + '.' + dt.getFullYear(),
+    // Datum aus der LOKALEN Zeit ableiten (wie die Uhrzeit darunter), dann
+    // ueber formatDate in der Sprache der Oberflaeche ausschreiben.
+    const lokalIso = dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate());
+    return { datum: formatDate(lokalIso),
              zeit: p(dt.getHours()) + ':' + p(dt.getMinutes()) };
   }
   function sharedNeuCount(pr) {
