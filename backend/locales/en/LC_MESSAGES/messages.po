@@ -3575,3 +3575,13 @@ msgstr "opens Subscription & usage"
 
 msgid "Kulanz"
 msgstr "Goodwill"
+
+# Report: Arbeits-Kontext + Mitgliedschaften im Abo-Block (11.08.2026)
+msgid "Arbeits-Kontext"
+msgstr "Working context"
+
+msgid "Team „{team}“ von {inhaber} — die Zahlen unten gelten für diesen Team-Topf, nicht für das eigene Abo."
+msgstr "Team “{team}” of {inhaber} — the numbers below refer to this team pool, not to the personal subscription."
+
+msgid "Arbeitet außerdem im Team von"
+msgstr "Also works in the team of"

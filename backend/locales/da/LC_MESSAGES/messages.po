@@ -3266,3 +3266,13 @@ msgstr "åbner Abonnement og forbrug"
 
 msgid "Kulanz"
 msgstr "Kulance"
+
+# Report: Arbeits-Kontext + Mitgliedschaften im Abo-Block (11.08.2026)
+msgid "Arbeits-Kontext"
+msgstr "Arbejdskontekst"
+
+msgid "Team „{team}“ von {inhaber} — die Zahlen unten gelten für diesen Team-Topf, nicht für das eigene Abo."
+msgstr "Team “{team}” hos {inhaber} — tallene nedenfor gælder denne team-pulje, ikke det egne abonnement."
+
+msgid "Arbeitet außerdem im Team von"
+msgstr "Arbejder også i teamet hos"

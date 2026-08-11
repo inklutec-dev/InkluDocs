@@ -3575,3 +3575,13 @@ msgstr "ouvre Abonnement et consommation"
 
 msgid "Kulanz"
 msgstr "Geste commercial"
+
+# Report: Arbeits-Kontext + Mitgliedschaften im Abo-Block (11.08.2026)
+msgid "Arbeits-Kontext"
+msgstr "Contexte de travail"
+
+msgid "Team „{team}“ von {inhaber} — die Zahlen unten gelten für diesen Team-Topf, nicht für das eigene Abo."
+msgstr "Équipe « {team} » de {inhaber} — les chiffres ci-dessous concernent ce pot d'équipe, pas l'abonnement personnel."
+
+msgid "Arbeitet außerdem im Team von"
+msgstr "Travaille aussi dans l'équipe de"

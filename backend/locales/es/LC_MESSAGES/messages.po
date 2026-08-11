@@ -3575,3 +3575,13 @@ msgstr "abre Suscripción y consumo"
 
 msgid "Kulanz"
 msgstr "Cortesía"
+
+# Report: Arbeits-Kontext + Mitgliedschaften im Abo-Block (11.08.2026)
+msgid "Arbeits-Kontext"
+msgstr "Contexto de trabajo"
+
+msgid "Team „{team}“ von {inhaber} — die Zahlen unten gelten für diesen Team-Topf, nicht für das eigene Abo."
+msgstr "Equipo «{team}» de {inhaber}: las cifras siguientes se refieren al fondo del equipo, no a la suscripción propia."
+
+msgid "Arbeitet außerdem im Team von"
+msgstr "También trabaja en el equipo de"

@@ -3136,3 +3136,13 @@ msgstr "öppnar Abonnemang och förbrukning"
 
 msgid "Kulanz"
 msgstr "Kulans"
+
+# Report: Arbeits-Kontext + Mitgliedschaften im Abo-Block (11.08.2026)
+msgid "Arbeits-Kontext"
+msgstr "Arbetskontext"
+
+msgid "Team „{team}“ von {inhaber} — die Zahlen unten gelten für diesen Team-Topf, nicht für das eigene Abo."
+msgstr "Team ”{team}” hos {inhaber} — siffrorna nedan gäller denna team-pott, inte det egna abonnemanget."
+
+msgid "Arbeitet außerdem im Team von"
+msgstr "Arbetar också i teamet hos"

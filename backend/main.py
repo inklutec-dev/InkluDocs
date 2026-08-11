@@ -1200,6 +1200,20 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
     monate = max(1, min(int(monate or 12), 36))
 
     zustand = billing.pruefe_kontingent(user_id)
+    # Hoertest-Befund 11.08.2026 (Steve): pruefe_kontingent rechnet mit dem
+    # AKTIVEN Arbeits-Topf (_konto_fuer). Arbeitet die Person gerade aus einem
+    # fremden Team-Topf, zeigte der Report "Plan: Single" und darunter das
+    # Team-Kontingent (z. B. 100 statt 50) — ohne den Zusammenhang zu nennen.
+    # Deshalb: fremden Topf explizit mitliefern, das Frontend sagt ihn an.
+    topf_fremd = None
+    topf_id = billing._konto_fuer(user_id)
+    if topf_id != user_id:
+        topf_inhaber = get_user_by_id(topf_id)
+        if topf_inhaber:
+            topf_fremd = {
+                "inhaber": topf_inhaber["display_name"],
+                "team_name": topf_inhaber.get("team_name") or "",
+            }
     conn = get_db()
     try:
         # Verbrauch je Monat — sowohl was die Person selbst erzeugt hat als
@@ -1276,6 +1290,7 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
             "rest": zustand.get("rest"),
             "pakete_rest": zustand.get("pakete_rest", 0),
             "pakete": pakete,
+            "topf_fremd": topf_fremd,
         },
         "nutzung": {
             "projekte": projekte, "bilder": bilder, "api_aufrufe": api_aufrufe,
