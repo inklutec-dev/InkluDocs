@@ -3241,3 +3241,28 @@ msgstr "Det nye abonnement har ingen teampladser: Dit team opløses på skæring
 
 msgid "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
 msgstr "Dit team består — sørg blot for, at pladserne i det nye abonnement rækker."
+
+# Report-Unterseite, Kulanz-Feld, Zurueck-Links (11.08.2026)
+msgid "Zurück zur Benutzerverwaltung"
+msgstr "Tilbage til brugeradministrationen"
+
+msgid "Zurück zu den Einstellungen"
+msgstr "Tilbage til indstillingerne"
+
+msgid "Zurück zur Startseite"
+msgstr "Tilbage til startsiden"
+
+msgid "Oder beliebiger Betrag (Credits, 1 bis 100000)"
+msgstr "Eller et valgfrit beløb (credits, 1 til 100000)"
+
+msgid "Für Kulanz und kleine Geschenke: Steht hier eine Zahl, gilt sie statt der Paketgröße. Es entsteht nie automatisch eine Rechnung; im Report erscheint die Gutschrift als Kulanz."
+msgstr "Til kulance og små gaver: står der et tal her, gælder det i stedet for pakkestørrelsen. Der oprettes aldrig automatisk en faktura; rapporten viser krediteringen som kulance."
+
+msgid "Der beliebige Betrag muss eine ganze Zahl von 1 bis 100000 sein."
+msgstr "Det valgfri beløb skal være et helt tal mellem 1 og 100000."
+
+msgid "öffnet Abo & Verbrauch"
+msgstr "åbner Abonnement og forbrug"
+
+msgid "Kulanz"
+msgstr "Kulance"

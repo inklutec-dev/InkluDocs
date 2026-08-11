@@ -2,6 +2,11 @@
 {% block title %}{{ _('API-Schluessel') }} · InkluDocs{% endblock %}
 {% block main %}
       <h1>{{ _('API-Schluessel') }}</h1>
+      {# Einheitlicher Zurueck-Link auf Unterseiten ohne Seitenleisten-Eintrag
+         (Steve 11.08.2026): eine Ebene hoch, immer direkt unter der h1. #}
+      <p class="dash-sub">
+        <a href="/einstellungen">{{ _('Zurück zu den Einstellungen') }}</a>
+      </p>
       <p class="dash-meta">{{ _('Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren.') }}</p>
 
       {# 1:1 aus einstellungen.html uebernommen (31.07.2026). Aus den frueheren

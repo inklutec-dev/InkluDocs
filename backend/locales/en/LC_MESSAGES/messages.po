@@ -3550,3 +3550,28 @@ msgstr "The new plan has no team seats: your team will be dissolved on that date
 
 msgid "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
 msgstr "Your team stays — just make sure the seats of the new plan are enough."
+
+# Report-Unterseite, Kulanz-Feld, Zurueck-Links (11.08.2026)
+msgid "Zurück zur Benutzerverwaltung"
+msgstr "Back to user management"
+
+msgid "Zurück zu den Einstellungen"
+msgstr "Back to settings"
+
+msgid "Zurück zur Startseite"
+msgstr "Back to the home page"
+
+msgid "Oder beliebiger Betrag (Credits, 1 bis 100000)"
+msgstr "Or a custom amount (credits, 1 to 100000)"
+
+msgid "Für Kulanz und kleine Geschenke: Steht hier eine Zahl, gilt sie statt der Paketgröße. Es entsteht nie automatisch eine Rechnung; im Report erscheint die Gutschrift als Kulanz."
+msgstr "For goodwill and small gifts: if a number is entered here, it is used instead of the package size. No invoice is ever created automatically; the report shows the credit as goodwill."
+
+msgid "Der beliebige Betrag muss eine ganze Zahl von 1 bis 100000 sein."
+msgstr "The custom amount must be a whole number from 1 to 100000."
+
+msgid "öffnet Abo & Verbrauch"
+msgstr "opens Subscription & usage"
+
+msgid "Kulanz"
+msgstr "Goodwill"

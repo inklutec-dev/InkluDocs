@@ -2,6 +2,11 @@
 {% block title %}{{ _('Geteilte Projekte') }} · InkluDocs{% endblock %}
 {% block main %}
       <h1>{{ _('Geteilte Projekte') }}</h1>
+      {# Einheitlicher Zurueck-Link auf Unterseiten ohne Seitenleisten-Eintrag
+         (Steve 11.08.2026): eine Ebene hoch, immer direkt unter der h1. #}
+      <p class="dash-sub">
+        <a href="/dashboard">{{ _('Zurück zur Startseite') }}</a>
+      </p>
       <div id="sharedContainer" aria-busy="true">
         <p class="dash-sub">{{ _('Wird geladen ...') }}</p>
       </div>

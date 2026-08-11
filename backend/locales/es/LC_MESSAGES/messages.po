@@ -3550,3 +3550,28 @@ msgstr "El nuevo plan no incluye plazas de equipo: tu equipo se disolverá en es
 
 msgid "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
 msgstr "Tu equipo se mantiene: solo asegúrate de que las plazas del nuevo plan sean suficientes."
+
+# Report-Unterseite, Kulanz-Feld, Zurueck-Links (11.08.2026)
+msgid "Zurück zur Benutzerverwaltung"
+msgstr "Volver a la gestión de usuarios"
+
+msgid "Zurück zu den Einstellungen"
+msgstr "Volver a la configuración"
+
+msgid "Zurück zur Startseite"
+msgstr "Volver a la página de inicio"
+
+msgid "Oder beliebiger Betrag (Credits, 1 bis 100000)"
+msgstr "O un importe libre (créditos, de 1 a 100000)"
+
+msgid "Für Kulanz und kleine Geschenke: Steht hier eine Zahl, gilt sie statt der Paketgröße. Es entsteht nie automatisch eine Rechnung; im Report erscheint die Gutschrift als Kulanz."
+msgstr "Para cortesías y pequeños regalos: si aquí hay un número, se usa en lugar del tamaño del paquete. Nunca se crea una factura automáticamente; el informe muestra el abono como cortesía."
+
+msgid "Der beliebige Betrag muss eine ganze Zahl von 1 bis 100000 sein."
+msgstr "El importe libre debe ser un número entero entre 1 y 100000."
+
+msgid "öffnet Abo & Verbrauch"
+msgstr "abre Suscripción y consumo"
+
+msgid "Kulanz"
+msgstr "Cortesía"

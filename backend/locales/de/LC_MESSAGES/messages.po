@@ -3553,3 +3553,28 @@ msgstr "Der neue Plan hat keine Team-Plätze: Dein Team wird zum Stichtag aufgel
 
 msgid "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
 msgstr "Dein Team bleibt bestehen — achte nur darauf, dass die Plätze des neuen Plans reichen."
+
+# Report-Unterseite, Kulanz-Feld, Zurueck-Links (11.08.2026)
+msgid "Zurück zur Benutzerverwaltung"
+msgstr ""
+
+msgid "Zurück zu den Einstellungen"
+msgstr ""
+
+msgid "Zurück zur Startseite"
+msgstr ""
+
+msgid "Oder beliebiger Betrag (Credits, 1 bis 100000)"
+msgstr ""
+
+msgid "Für Kulanz und kleine Geschenke: Steht hier eine Zahl, gilt sie statt der Paketgröße. Es entsteht nie automatisch eine Rechnung; im Report erscheint die Gutschrift als Kulanz."
+msgstr ""
+
+msgid "Der beliebige Betrag muss eine ganze Zahl von 1 bis 100000 sein."
+msgstr ""
+
+msgid "öffnet Abo & Verbrauch"
+msgstr ""
+
+msgid "Kulanz"
+msgstr ""

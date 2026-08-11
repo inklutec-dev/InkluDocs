@@ -2,6 +2,11 @@
 {% block title %}{{ _('Abo & Verbrauch') }} · InkluDocs{% endblock %}
 {% block main %}
       <h1>{{ _('Abo & Verbrauch') }}</h1>
+      {# Einheitlicher Zurueck-Link auf Unterseiten ohne Seitenleisten-Eintrag
+         (Steve 11.08.2026): eine Ebene hoch, immer direkt unter der h1. #}
+      <p class="dash-sub">
+        <a href="/einstellungen">{{ _('Zurück zu den Einstellungen') }}</a>
+      </p>
 
       {# Kein eigenes h2 fuer diesen Block: er IST der Hauptinhalt der Seite und
          wird von der h1 getragen (Steve 31.07.). Zeigt IMMER den AKTIVEN Topf

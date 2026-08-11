@@ -60,6 +60,11 @@
 .dash-item { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; }
 .dash-item h2, .dash-item h3 { margin:0 0 .2rem; font-size:1.1rem; }
 .dash-item a { color:#c75000; text-decoration:underline; }
+/* Links im Knopf-Look (z. B. Report in der Benutzerliste, 11.08.2026):
+   die Listen-Linkfarbe #c75000 schafft auf dem Knopf-Hintergrund kein AA —
+   Links mit .btn uebernehmen deshalb die normale Knopf-Textfarbe. */
+.dash-item a.btn { color:var(--text); text-decoration:none; }
+.dash-item a.btn:hover, .dash-item a.btn:focus { text-decoration:underline; }
 /* Michael 17.07.2026 (Optik A1): Projekttitel fett, OHNE Dauer-Unterstrich.
    Erkennbarkeit als Link bleibt ueber Farbe + Unterstrich bei Hover/Fokus. */
 .dash-item h2 a, .dash-item h3 a { font-weight:700; text-decoration:none; }

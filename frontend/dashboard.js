@@ -95,7 +95,19 @@ async function loadCurrentUser() {
     // stapeln sich Credit-Zeilen und Abo-Link mit jedem Durchlauf.
     limitInfo.parentNode.querySelectorAll('.dash-limit-zusatz').forEach((el) => el.remove());
     const lines = buildCreditLines(data.abo);
-    limitInfo.textContent = lines[0] || '';
+    // Die Credit-Zeile selbst ist der Link zu /abo (Steve 11.08.2026) —
+    // vorher stand dahinter ein eigener "Abo & Verbrauch öffnen"-Link.
+    // Ein unsichtbarer Zusatz nennt das Linkziel (WCAG 2.4.4), Sehende
+    // erkennen den Link an der Unterstreichung.
+    limitInfo.textContent = '';
+    const creditLink = document.createElement('a');
+    creditLink.href = '/abo';
+    creditLink.textContent = lines[0] || '';
+    const srZiel = document.createElement('span');
+    srZiel.className = 'sr-only';
+    srZiel.textContent = ' — ' + t('öffnet Abo & Verbrauch');
+    creditLink.appendChild(srZiel);
+    limitInfo.appendChild(creditLink);
     let anker = limitInfo;
     lines.slice(1).forEach((zeile) => {
       const p = document.createElement('p');
@@ -104,13 +116,6 @@ async function loadCurrentUser() {
       anker.insertAdjacentElement('afterend', p);
       anker = p;
     });
-    const pLink = document.createElement('p');
-    pLink.className = 'dash-limit dash-limit-zusatz';
-    const a = document.createElement('a');
-    a.href = '/abo';
-    a.textContent = t('Abo & Verbrauch öffnen');
-    pLink.appendChild(a);
-    anker.insertAdjacentElement('afterend', pLink);
   } else if (limitInfo && dl) {
     limitInfo.textContent = t('Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig.', { used: dl.used, limit: dl.limit, remaining: dl.remaining });
   }

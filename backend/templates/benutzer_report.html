@@ -1,0 +1,162 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Report') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# Eigene Report-Seite (11.08.2026, Steve): Vorher oeffnete sich der Report
+   als Abschnitt unten in der Benutzerverwaltung — fuer Vergroesserungs-
+   Nutzer schwer zu bemerken, und der Schliessen-Knopf lag am Ende eines
+   langen Dokuments. Jetzt: eigene Seite, Schliessen = Zurueck.
+   Die Blöcke sind h2 (vorher h3), weil der Report hier die h1 traegt. #}
+<h1 id="report-h">{{ _('Report') }}</h1>
+<p class="dash-sub">
+  <a href="/benutzer">{{ _('Zurück zur Benutzerverwaltung') }}</a>
+</p>
+
+<div class="dash-card">
+  <div id="reportInhalt">
+    <p class="dash-sub">{{ _('Wird geladen …') }}</p>
+  </div>
+</div>
+
+<p class="dash-sub">
+  <a href="/benutzer">{{ _('Zurück zur Benutzerverwaltung') }}</a>
+</p>
+{% endblock %}
+
+{% block page_script %}
+<script>
+{% raw %}
+  const PLAN_NAMEN = { free: 'Free', single: 'Single', team: 'Team', enterprise: 'Enterprise' };
+
+  // Bewusst Listen und Absaetze statt einer Tabelle: Steve hoert die Seite
+  // mit VoiceOver, und Tabellen sind dort mühsam.
+  function zeile(dl, begriff, wert) {
+    if (wert === null || wert === undefined || wert === '') return;
+    const dt = document.createElement('dt'); dt.textContent = begriff;
+    const dd = document.createElement('dd'); dd.textContent = String(wert);
+    dl.appendChild(dt); dl.appendChild(dd);
+  }
+
+  function block(ziel, ueberschrift) {
+    const h2 = document.createElement('h2');
+    h2.textContent = ueberschrift;
+    ziel.appendChild(h2);
+    const dl = document.createElement('dl');
+    ziel.appendChild(dl);
+    return dl;
+  }
+
+  function listenBlock(ziel, ueberschrift) {
+    const h2 = document.createElement('h2');
+    h2.textContent = ueberschrift;
+    ziel.appendChild(h2);
+    const ul = document.createElement('ul');
+    ul.className = 'dash-list';
+    ziel.appendChild(ul);
+    return ul;
+  }
+
+  async function ladeReport() {
+    const inhalt = byId('reportInhalt');
+    // Konto-Nummer aus der Adresse: /benutzer/report/<id>
+    const id = parseInt(window.location.pathname.split('/').pop(), 10);
+    let res;
+    try {
+      res = await fetch('/api/admin/users/' + id + '/report');
+    } catch (e) { res = null; }
+    if (res && res.status === 401) { window.location.href = '/'; return; }
+    inhalt.innerHTML = '';
+    if (res && res.status === 403) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Kein Zugriff – diese Seite ist nur für Administratoren.');
+      inhalt.appendChild(p);
+      return;
+    }
+    if (!res || !res.ok) {
+      const p = document.createElement('p');
+      p.className = 'dash-empty';
+      p.textContent = t('Report konnte nicht geladen werden.');
+      inhalt.appendChild(p);
+      return;
+    }
+    const d = await res.json();
+    const name = d.konto.name || d.konto.email;
+    byId('report-h').textContent = t('Report: {name}', { name: name });
+    document.title = t('Report: {name}', { name: name }) + ' · InkluDocs';
+
+    let dl = block(inhalt, t('Konto'));
+    zeile(dl, t('Name'), d.konto.name);
+    zeile(dl, t('E-Mail'), d.konto.email);
+    zeile(dl, t('Angelegt am'), d.konto.angelegt_am);
+    zeile(dl, t('Status'), d.konto.aktiv ? t('Aktiv') : t('Gesperrt'));
+    if (d.konto.ist_betreiber) zeile(dl, t('Hinweis'), t('Betreiber-Konto — wird nicht gesperrt.'));
+
+    dl = block(inhalt, t('Abo'));
+    zeile(dl, t('Plan'), PLAN_NAMEN[d.abo.plan] || d.abo.plan);
+    if (d.abo.plan !== 'free') {
+      zeile(dl, t('Laufzeit'), d.abo.laufzeit_monate ? t('{monate} Monate', { monate: d.abo.laufzeit_monate }) : null);
+      zeile(dl, t('Gültig bis'), d.abo.gueltig_bis);
+      zeile(dl, t('Verlängerung'), d.abo.auto_verlaengerung ? t('automatisch') : t('gekündigt zum Laufzeitende'));
+      zeile(dl, t('Gebucht über'), d.abo.quelle === 'stripe' ? t('Stripe') : t('Rechnung'));
+      zeile(dl, t('Preis'), t('{preis} € im Monat, {summe} € für die Laufzeit', { preis: String(d.abo.monatspreis_eur).replace('.', ','), summe: String(d.abo.erloes_laufzeit_eur).replace('.', ',') }));
+      if (d.abo.geplanter_plan) zeile(dl, t('Vorgemerkter Wechsel'), PLAN_NAMEN[d.abo.geplanter_plan] || d.abo.geplanter_plan);
+    }
+    if (d.abo.team_name) zeile(dl, t('Team'), d.abo.team_name);
+    if (d.abo.sitze_inklusive) zeile(dl, t('Plätze inklusive'), d.abo.sitze_inklusive);
+
+    dl = block(inhalt, t('Guthaben im laufenden Monat'));
+    zeile(dl, t('Monatskontingent'), d.guthaben.kontingent === null ? t('unbegrenzt') : d.guthaben.kontingent);
+    zeile(dl, t('Übertrag aus dem Vormonat'), d.guthaben.uebertrag);
+    zeile(dl, t('Verbraucht'), d.guthaben.verbraucht_monat);
+    zeile(dl, t('Rest'), d.guthaben.rest === null ? t('unbegrenzt') : d.guthaben.rest);
+    zeile(dl, t('Zusatz-Credits aus Paketen'), d.guthaben.pakete_rest);
+
+    dl = block(inhalt, t('Nutzung insgesamt'));
+    zeile(dl, t('Projekte'), d.nutzung.projekte);
+    zeile(dl, t('Bilder'), d.nutzung.bilder);
+    zeile(dl, t('API-Aufrufe'), d.nutzung.api_aufrufe);
+    zeile(dl, t('Credits verbraucht'), d.nutzung.credits_gesamt);
+    zeile(dl, t('Zuletzt aktiv'), (d.nutzung.letzte_aktion || '').slice(0, 16) || t('noch nie'));
+    zeile(dl, t('Geschätzte KI-Kosten'), t('{betrag} € (grobe Schätzung, {satz} € je Credit)', { betrag: String(d.kosten.gesamt_geschaetzt_eur).replace('.', ','), satz: String(d.kosten.satz_pro_credit_eur).replace('.', ',') }));
+
+    if (d.nutzung.verlauf.length) {
+      const ul = listenBlock(inhalt, t('Verbrauch je Monat'));
+      d.nutzung.verlauf.forEach((m) => {
+        const li = document.createElement('li');
+        li.textContent = t('{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €', { monat: m.monat, topf: m.topf, selbst: m.selbst, kosten: String(m.kosten_geschaetzt).replace('.', ',') });
+        ul.appendChild(li);
+      });
+    }
+
+    if (d.team.mitglieder.length) {
+      const ul = listenBlock(inhalt, t('Team-Mitglieder ({n})', { n: d.team.mitglieder.length }));
+      d.team.mitglieder.forEach((m) => {
+        const li = document.createElement('li');
+        li.textContent = m.display_name + ' (' + m.email + ')';
+        ul.appendChild(li);
+      });
+    }
+    if (d.team.mitglied_in.length) {
+      const p = document.createElement('p');
+      p.textContent = t('Arbeitet außerdem im Team von: {liste}', { liste: d.team.mitglied_in.map((x) => x.team_name || x.inhaber).join(', ') });
+      inhalt.appendChild(p);
+    }
+    if (d.guthaben.pakete.length) {
+      const ul = listenBlock(inhalt, t('Gutgeschriebene Pakete'));
+      d.guthaben.pakete.forEach((pk) => {
+        const li = document.createElement('li');
+        // quelle 'admin' = Kulanz-Gutschrift ohne Rechnung, 'rechnung' = Rechnungsweg
+        const quelleText = pk.quelle === 'admin' ? t('Kulanz') : t('Rechnung');
+        li.textContent = t('{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})', { groesse: pk.groesse, datum: (pk.erstellt_am || '').slice(0, 10), rest: pk.verbleibend, quelle: quelleText }) + (pk.notiz ? ' — ' + pk.notiz : '');
+        ul.appendChild(li);
+      });
+    }
+    announce(t('Report für {name} geladen.', { name: name }));
+  }
+
+  ladeReport();
+{% endraw %}
+</script>
+{% endblock %}

@@ -6871,6 +6871,14 @@ async def users_page(request: Request):
     return _render_protected_template(request, "benutzer.html")
 
 
+@app.get("/benutzer/report/{user_id}", response_class=HTMLResponse)
+async def user_report_page(user_id: int, request: Request):
+    # Eigene Report-Seite je Kunde (11.08.2026, Steve). Die Rechtepruefung
+    # macht der Daten-Endpunkt /api/admin/users/<id>/report — die Seite
+    # selbst zeigt ohne Rechte nur die Kein-Zugriff-Meldung.
+    return _render_protected_template(request, "benutzer_report.html")
+
+
 @app.get("/datensicherheit", response_class=HTMLResponse)
 async def datensicherheit_page(request: Request):
     # Steve/Karbe 08.06.2026: eigene In-App-Sicht der Datenschutzerklaerung,
