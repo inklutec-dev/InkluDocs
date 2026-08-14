@@ -3642,3 +3642,107 @@ msgstr "API limit {limit}/day"
 
 msgid "Der Standard ist aktuell {standard} Bilder pro Tag."
 msgstr "The current default is {standard} images per day."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite {n}: {name}"
+msgstr "Web page {n}: {name}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild {n}: {name}"
+msgstr "Image {n}: {name}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite im neuen Tab öffnen"
+msgstr "Open web page in a new tab"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "(externer Link)"
+msgstr "(external link)"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite löschen?"
+msgstr "Delete web page?"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite umbenennen"
+msgstr "Rename web page"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Neuer Name der Webseite"
+msgstr "New name of the web page"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Leer lassen, um wieder den Seitentitel zu verwenden. Der Name erscheint auch im Export-Dateinamen."
+msgstr "Leave empty to use the page title again. The name also appears in the export file name."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "diese Webseite"
+msgstr "this web page"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite gelöscht."
+msgstr "Web page deleted."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite umbenannt."
+msgstr "Web page renamed."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du die Webseite „{name}\" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the web page “{name}” with 1 image? This cannot be undone."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du die Webseite „{name}\" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the web page “{name}” with {n} images? This cannot be undone."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "– Webseite „{name}\""
+msgstr "– web page “{name}”"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite „{name}\", {bild}"
+msgstr "Web page “{name}”, {bild}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Alle Webseiten (eine ZIP-Datei)"
+msgstr "All web pages (one ZIP file)"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild löschen?"
+msgstr "Delete image?"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild löschen"
+msgstr "Delete image"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild umbenennen"
+msgstr "Rename image"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Neuer Name des Bildes"
+msgstr "New name of the image"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden."
+msgstr "Leave empty to use the original file name again."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "dieses Bild"
+msgstr "this image"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild gelöscht."
+msgstr "Image deleted."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild umbenannt."
+msgstr "Image renamed."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du das Bild „{name}\" wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the image “{name}”? This cannot be undone."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "– Bild „{name}\""
+msgstr "– image “{name}”"

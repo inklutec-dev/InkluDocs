@@ -580,6 +580,22 @@ def _migrate_columns(conn):
         # den Neustart — billing.monats_verbrauch zaehlt ab hier frisch
         # (wirkt nur im Monat der Umstellung, danach gilt wieder der Monatsanfang).
         ("users", "kontingent_reset_am", "ALTER TABLE users ADD COLUMN kontingent_reset_am TEXT"),
+        # Multi-Datei Phase 2 (14.08.2026): Web-Projekte bekommen die Dokument-
+        # Ebene (eine gescannte Adresse = eine "Webseite"), Grafik-Projekte
+        # Umbenennen/Loeschen pro Bild.
+        #  - images.original_filename: Original-Dateiname beim Grafik-Upload
+        #    (Anzeige "Bild 1: urlaubsfoto.jpg"); Altbestand bleibt leer.
+        #  - images.display_name: vom Nutzer vergebener Anzeigename pro Bild
+        #    (NULL = Rueckfall auf original_filename, wie bei documents).
+        #  - documents.source_url: Adresse der gescannten Webseite (Link
+        #    "Webseite im neuen Tab oeffnen"); bei PDF-Dokumenten leer.
+        #  - documents.page_text: Textinhalt der Webseite fuer die
+        #    "Seitentext anzeigen"-Klappe. Bei PDFs bleibt die Spalte leer,
+        #    dort haengt der Seitentext wie gehabt an images.page_text.
+        ("images", "original_filename", "ALTER TABLE images ADD COLUMN original_filename TEXT DEFAULT ''"),
+        ("images", "display_name", "ALTER TABLE images ADD COLUMN display_name TEXT"),
+        ("documents", "source_url", "ALTER TABLE documents ADD COLUMN source_url TEXT DEFAULT ''"),
+        ("documents", "page_text", "ALTER TABLE documents ADD COLUMN page_text TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:
@@ -679,6 +695,43 @@ def _migrate_columns(conn):
             )
     except Exception as e:
         print(f"Migration warning (documents backfill): {e}")
+
+    # Multi-Datei Phase 2 (14.08.2026): Bestehende WEB-Projekte bekommen ihre
+    # bisher flachen Bilder als EINE "Webseite 1" zugeschlagen. Der Altbestand
+    # laesst sich nicht mehr pro Einzel-Adresse trennen (die Quell-URL wurde
+    # pro Bild nie gespeichert) — deshalb bewusst ein Sammel-Dokument mit der
+    # ersten Projekt-Adresse als Namen. Neue Scans legen ab jetzt pro Adresse
+    # ein eigenes Dokument an (main.py scan_url). Idempotent wie der
+    # PDF-Backfill: nur Web-Projekte ohne documents-Eintrag und mit Bildern.
+    try:
+        rows = conn.execute(
+            """SELECT id, filename, source_url FROM projects
+               WHERE (project_type = 'url' OR tool = 'web')
+                 AND id NOT IN (SELECT project_id FROM documents)
+                 AND EXISTS (SELECT 1 FROM images i WHERE i.project_id = projects.id)"""
+        ).fetchall()
+        for r in rows:
+            quelle = (r["source_url"] or "").strip()
+            name = quelle or (r["filename"] or "Webseite")
+            cnt = conn.execute(
+                "SELECT COUNT(*) FROM images WHERE project_id = ?", (r["id"],)
+            ).fetchone()[0]
+            cur = conn.execute(
+                """INSERT INTO documents
+                   (project_id, doc_index, original_filename, original_path,
+                    extraction_method, total_images, source_url)
+                   VALUES (?, 1, ?, '', 'web', ?, ?)""",
+                (r["id"], name[:200], cnt, quelle)
+            )
+            doc_id = cur.lastrowid
+            conn.execute(
+                "UPDATE images SET document_id = ? WHERE project_id = ? AND document_id IS NULL",
+                (doc_id, r["id"])
+            )
+        if rows:
+            print(f"Migration: Web-Projekte auf Dokument-Ebene umgestellt ({len(rows)} Projekte)")
+    except Exception as e:
+        print(f"Migration warning (web documents backfill): {e}")
 
     # Phantom-Dokument-Cleanup (08.06.2026 — Michael-Befund auf Staging):
     # Entfernt Dokument-Zeilen, die KEINEM einzigen Bild zugeordnet sind. Solche

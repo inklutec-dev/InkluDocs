@@ -23,9 +23,12 @@
          <dialog>-Element mit showModal(): Fokusfalle, Escape-zum-Schliessen und
          Modal-Semantik kommen vom Browser — daher bewusst OHNE role/aria-modal
          (ARIA nur, wo nativ nichts vorhanden ist). Inhalte werden beim Oeffnen
-         per JS gefuellt (siehe openDocDelete/openDocRename). -->
+         per JS gefuellt (siehe openDocDelete/openDocRename).
+         Multi-Datei Phase 2 (14.08.2026): dieselben zwei Dialoge bedienen jetzt
+         drei Arten (PDF-Dokument, Webseite, Einzelbild) — Titel/Label/Hinweis
+         werden beim Oeffnen passend zur Art gesetzt (siehe _kindTexte). -->
     <dialog id="docDeleteDialog" class="app-dialog">
-        <h2>{{ _('Dokument löschen?') }}</h2>
+        <h2 id="docDeleteTitle">{{ _('Dokument löschen?') }}</h2>
         <p id="docDeleteBody"></p>
         <div class="dialog-actions">
             <button type="button" autofocus class="btn btn-secondary" id="docDeleteCancel">{{ _('Abbrechen') }}</button>
@@ -34,10 +37,10 @@
     </dialog>
     <dialog id="docRenameDialog" class="app-dialog">
         <form id="docRenameForm">
-            <h2>{{ _('Dokument umbenennen') }}</h2>
-            <label for="docRenameInput">{{ _('Neuer Name des Dokuments') }}</label>
+            <h2 id="docRenameTitle">{{ _('Dokument umbenennen') }}</h2>
+            <label for="docRenameInput" id="docRenameLabel">{{ _('Neuer Name des Dokuments') }}</label>
             <input id="docRenameInput" type="text" maxlength="200" autocomplete="off">
-            <p class="dialog-hint">{{ _('Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.') }}</p>
+            <p class="dialog-hint" id="docRenameHint">{{ _('Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.') }}</p>
             <div class="dialog-actions">
                 <button type="button" class="btn btn-secondary" id="docRenameCancel">{{ _('Abbrechen') }}</button>
                 <button type="submit" class="btn btn-primary">{{ _('Speichern') }}</button>
@@ -603,7 +606,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${t('Exportieren')}</button>
                         <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;font-size:1.05rem;">${t('Export-Optionen')}</h2>
-                            ${renderExportScopeBlock(documents)}
+                            ${renderExportScopeBlock(documents, project)}
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Dateiname (optional)')}</label>
                                 <input type="text" id="exportFilename" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
@@ -718,10 +721,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // - Bei einem einzelnen Dokument zeigen wir die Auswahl nicht (wäre redundant).
     // - "Alle Dokumente" (value=all) ist Default, wenn es mehr als ein Dokument gibt;
     //   sonst zeigt der Default direkt auf das einzelne Dokument.
-    function renderExportScopeBlock(documents) {
+    function renderExportScopeBlock(documents, project) {
         const esc = s => !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         if (!documents || documents.length <= 1) return '';
+        // Phase 2 (14.08.2026): Web-Projekte haben ebenfalls Dokumente — dort
+        // heißt die Einheit in der Oberfläche durchgehend „Webseite".
+        const isWeb = !!(project && (project.tool === 'web' || project.project_type === 'url'));
         // WCAG 2.2 AA target-size (24x24px): Radios werden via .export-scope-radio
         // CSS-Klasse vergrößert (Default-Browser-Radios sind nur 13x13).
         // Zusätzlich genug vertikalen Abstand zwischen den Einträgen, damit
@@ -729,7 +735,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const items = documents.map((d, idx) => {
             // Anzeige-Position (1..N) statt doc_index — konsistent zur „Dokument N"-
             // Ueberschrift, die nach Loeschungen Luecken im doc_index vermeidet.
-            const label = t('Dokument {n}: {name}', { n: idx + 1, name: esc(docDisplayName(d)) });
+            const label = isWeb
+                ? t('Webseite {n}: {name}', { n: idx + 1, name: esc(docDisplayName(d)) })
+                : t('Dokument {n}: {name}', { n: idx + 1, name: esc(docDisplayName(d)) });
             return '<li class="export-scope-item"><label class="export-scope-label">'
                 + '<input class="export-scope-radio" type="radio" name="exportScope" value="doc:' + d.id + '">'
                 + '<span>' + label + '</span></label></li>';
@@ -740,7 +748,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             +   '<ul class="export-scope-list">'
             +     '<li class="export-scope-item"><label class="export-scope-label">'
             +       '<input class="export-scope-radio" type="radio" name="exportScope" value="all" checked>'
-            +       '<span>' + t('Alle Dokumente (eine ZIP-Datei)') + '</span></label></li>'
+            +       '<span>' + (isWeb ? t('Alle Webseiten (eine ZIP-Datei)') : t('Alle Dokumente (eine ZIP-Datei)')) + '</span></label></li>'
             +     items
             +   '</ul>'
             + '</fieldset>';
@@ -755,6 +763,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // der bereits geöffneten Dokumente nicht zurücksetzt.
     let openDocs = new Set();
     let openDocsProjectId = null;
+    // Phase 2 (14.08.2026): Auf/Zu-Zustand der Einzelbild-Blöcke im
+    // Grafik-Werkzeug (eigenes Set, weil Bild-IDs und Dokument-IDs
+    // unabhängige Zahlenräume sind und sich sonst überschneiden könnten).
+    let openImgs = new Set();
 
     // ─── Dokument-Aktionen: Umbenennen + Löschen (10.06.2026) ──────────────
     // Michael Karbe 09.06.: pro PDF (= Dokument) ein Löschen-Knopf direkt neben
@@ -765,14 +777,53 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Beide Dialoge sind native <dialog>-Elemente (showModal) — siehe Markup im
     // Body. Die Handler sind global, weil sie aus inline-onclick aufgerufen werden.
     let currentDocProjectId = null;   // welches Projekt gerade offen ist
-    let _docActionId = null;          // Ziel-Dokument der laufenden Aktion
+    let _docActionId = null;          // Ziel (Dokument-, Webseiten- oder Bild-ID) der laufenden Aktion
+    let _docActionKind = 'doc';       // 'doc' = PDF-Dokument | 'web' = Webseite | 'img' = Einzelbild
+
+    // Multi-Datei Phase 2 (14.08.2026): dieselben zwei Dialoge fuer drei Arten.
+    // Alle Texte als Funktionen, damit t() zur Laufzeit (aktuelle Sprache) zieht.
+    const _kindTexte = {
+        doc: {
+            deleteTitle: () => t('Dokument löschen?'),
+            renameTitle: () => t('Dokument umbenennen'),
+            renameLabel: () => t('Neuer Name des Dokuments'),
+            renameHint: () => t('Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.'),
+            fallbackName: () => t('dieses Dokument'),
+            deleted: () => t('Dokument gelöscht.'),
+            renamed: () => t('Dokument umbenannt.'),
+        },
+        web: {
+            deleteTitle: () => t('Webseite löschen?'),
+            renameTitle: () => t('Webseite umbenennen'),
+            renameLabel: () => t('Neuer Name der Webseite'),
+            renameHint: () => t('Leer lassen, um wieder den Seitentitel zu verwenden. Der Name erscheint auch im Export-Dateinamen.'),
+            fallbackName: () => t('diese Webseite'),
+            deleted: () => t('Webseite gelöscht.'),
+            renamed: () => t('Webseite umbenannt.'),
+        },
+        img: {
+            deleteTitle: () => t('Bild löschen?'),
+            renameTitle: () => t('Bild umbenennen'),
+            renameLabel: () => t('Neuer Name des Bildes'),
+            renameHint: () => t('Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden.'),
+            fallbackName: () => t('dieses Bild'),
+            deleted: () => t('Bild gelöscht.'),
+            renamed: () => t('Bild umbenannt.'),
+        },
+    };
+    // API-Pfadstueck je Art: Webseiten sind technisch documents-Zeilen,
+    // Einzelbilder laufen ueber die neuen /images/-Endpunkte.
+    function _docActionPath() {
+        return (_docActionKind === 'img' ? '/images/' : '/documents/') + _docActionId;
+    }
 
     // Nach Umbenennen/Löschen den Fokus sinnvoll setzen: bevorzugt auf das
-    // betroffene Dokument (Summary ist fokussierbar via tabindex=-1), sonst auf
+    // betroffene Element (Summary ist fokussierbar via tabindex=-1), sonst auf
     // die Bilder-Sammelueberschrift. Beim Löschen ist _docActionId vorher auf
     // null gesetzt, weil das Ziel nicht mehr existiert.
     function _moveFocusAfterDocChange() {
-        const head = _docActionId ? document.getElementById('doc_heading_' + _docActionId) : null;
+        const prefix = _docActionKind === 'img' ? 'img_heading_' : 'doc_heading_';
+        const head = _docActionId ? document.getElementById(prefix + _docActionId) : null;
         const sum = head ? head.closest('summary') : null;
         if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); return; }
         const h = document.getElementById('bilderHeading');
@@ -784,9 +835,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         event.stopPropagation();   // nicht das umgebende <details> auf-/zuklappen
         const btn = event.currentTarget;
         _docActionId = parseInt(btn.dataset.docId, 10);
+        _docActionKind = btn.dataset.kind || 'doc';
+        const texte = _kindTexte[_docActionKind] || _kindTexte.doc;
+        document.getElementById('docRenameTitle').textContent = texte.renameTitle();
+        document.getElementById('docRenameLabel').textContent = texte.renameLabel();
+        document.getElementById('docRenameHint').textContent = texte.renameHint();
         const dlg = document.getElementById('docRenameDialog');
         const input = document.getElementById('docRenameInput');
-        input.value = btn.dataset.docName || '';
+        // Vorbelegung: data-rename-value (kann bewusst leer sein, z.B. unbenanntes
+        // Bild) gewinnt vor dem Anzeige-Namen aus data-doc-name.
+        input.value = (btn.dataset.renameValue !== undefined ? btn.dataset.renameValue : btn.dataset.docName) || '';
         dlg.showModal();
         input.focus();
         input.select();
@@ -797,11 +855,24 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         event.stopPropagation();
         const btn = event.currentTarget;
         _docActionId = parseInt(btn.dataset.docId, 10);
-        const name = btn.dataset.docName || t('dieses Dokument');
+        _docActionKind = btn.dataset.kind || 'doc';
+        const texte = _kindTexte[_docActionKind] || _kindTexte.doc;
+        document.getElementById('docDeleteTitle').textContent = texte.deleteTitle();
+        const name = btn.dataset.docName || texte.fallbackName();
         const count = parseInt(btn.dataset.docCount, 10) || 0;
-        document.getElementById('docDeleteBody').textContent = count === 1
-            ? t('Möchtest du das Dokument „{name}" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name })
-            : t('Möchtest du das Dokument „{name}" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name, n: count });
+        let body;
+        if (_docActionKind === 'img') {
+            body = t('Möchtest du das Bild „{name}" wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name });
+        } else if (_docActionKind === 'web') {
+            body = count === 1
+                ? t('Möchtest du die Webseite „{name}" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name })
+                : t('Möchtest du die Webseite „{name}" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name, n: count });
+        } else {
+            body = count === 1
+                ? t('Möchtest du das Dokument „{name}" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name })
+                : t('Möchtest du das Dokument „{name}" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name, n: count });
+        }
+        document.getElementById('docDeleteBody').textContent = body;
         document.getElementById('docDeleteDialog').showModal();
     }
 
@@ -809,8 +880,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         ev.preventDefault();
         const dlg = document.getElementById('docRenameDialog');
         const name = document.getElementById('docRenameInput').value.trim();
+        const texte = _kindTexte[_docActionKind] || _kindTexte.doc;
         try {
-            const res = await fetch('/api/projects/' + currentDocProjectId + '/documents/' + _docActionId, {
+            const res = await fetch('/api/projects/' + currentDocProjectId + _docActionPath(), {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ display_name: name }),
@@ -819,14 +891,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         } catch (e) { announce(t('Netzwerkfehler beim Umbenennen.')); return; }
         dlg.close();
         await showProject(currentDocProjectId);
-        announce(t('Dokument umbenannt.'));
+        announce(texte.renamed());
         _moveFocusAfterDocChange();
     }
 
     async function _confirmDocDelete() {
         const dlg = document.getElementById('docDeleteDialog');
+        const texte = _kindTexte[_docActionKind] || _kindTexte.doc;
         try {
-            const res = await fetch('/api/projects/' + currentDocProjectId + '/documents/' + _docActionId, {
+            const res = await fetch('/api/projects/' + currentDocProjectId + _docActionPath(), {
                 method: 'DELETE',
             });
             if (!res.ok) { announce(t('Löschen fehlgeschlagen.')); return; }
@@ -834,7 +907,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         dlg.close();
         _docActionId = null;   // Ziel existiert nicht mehr -> Fokus auf Bilder-Ueberschrift
         await showProject(currentDocProjectId);
-        announce(t('Dokument gelöscht.'));
+        announce(texte.deleted());
         _moveFocusAfterDocChange();
     }
 
@@ -1361,12 +1434,21 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Bild-Bezeichnung wie in den Karten-Ueberschriften, plus Dokumentname davor.
     function rueckItemLabel(img) {
         const nr = (img.display_nr != null) ? img.display_nr : img.image_index;
-        const base = img.page_number > 0
+        const doc = currentRenderDocs.find(d => d.id === img.document_id);
+        // Phase 2 (14.08.2026): Web-Dokumente erkennt man an source_url/
+        // extraction_method 'web' — dort heißt die Einheit „Webseite" und
+        // die technische page_number (immer 1) bleibt draußen.
+        const isWebDoc = !!(doc && (doc.source_url || doc.extraction_method === 'web'));
+        // window._renderIsPdf setzt renderImages beim letzten Rendern — nur
+        // PDF-Projekte führen die Seitennummer im Label.
+        const base = (img.page_number > 0 && !isWebDoc && window._renderIsPdf)
             ? t('Bild {n}, Seite {p}', { n: nr, p: img.page_number })
             : t('Bild {n}', { n: nr });
-        const doc = currentRenderDocs.find(d => d.id === img.document_id);
         const dname = doc ? (doc.display_name || doc.original_filename || '') : '';
-        return dname ? t('Dokument „{name}", {bild}', { name: dname, bild: base }) : base;
+        if (!dname) return base;
+        return isWebDoc
+            ? t('Webseite „{name}", {bild}', { name: dname, bild: base })
+            : t('Dokument „{name}", {bild}', { name: dname, bild: base });
     }
     // Vom System erzeugte, nicht editierbare Vorschau (Spec Etappe 3): Ueberschrift
     // + Liste; erscheint nur beim Lektorat und nur, wenn es Ruecksprache-Bilder gibt.
@@ -1680,7 +1762,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             return;
         }
         if (projectId !== openPagesProjectId) { openPages = new Set(); openPagesProjectId = projectId; }
-        if (projectId !== openDocsProjectId) { openDocs = new Set(); openDocsProjectId = projectId; }
+        if (projectId !== openDocsProjectId) { openDocs = new Set(); openImgs = new Set(); openDocsProjectId = projectId; }
         const imageTypes = ['foto','diagramm','karte','logo','tabelle','screenshot','infografik','strukturformel','dekorativ'];
         const complexTypes = ['diagramm','karte','tabelle','infografik','strukturformel'];
 
@@ -1704,6 +1786,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const orderedDocs = Array.isArray(documents) ? documents.slice().sort((a, b) => (a.doc_index || 0) - (b.doc_index || 0)) : [];
         currentRenderDocs = orderedDocs;   // fuer rueckItemLabel() im Abschluss-Dialog
         const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf'));
+        // Multi-Datei Phase 2 (14.08.2026): Web-Projekte haben jetzt ebenfalls
+        // Dokumente (eine gescannte Adresse = "Webseite N"), Grafik-Projekte
+        // rendern jedes Bild als eigenen klappbaren Block.
+        const isWebProject = !!(project && (project.tool === 'web' || project.project_type === 'url'));
+        const isGrafikProject = !!(project && (project.tool === 'grafik' || project.project_type === 'images'));
+        window._renderIsPdf = isPdfProject;   // fuer rueckItemLabel() (Seitennummer nur bei PDF)
 
         // Steve 08.06.2026: Pro Dokument eine fortlaufende Anzeige-Nummer ab 1 vergeben,
         // konsistent zur Seitennummerierung (zaehlt auch pro Dokument). Die DB-Spalte
@@ -1752,7 +1840,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Multi-Datei (08.06.2026): Überschriften-Tiefe steuert sich über das
         // Argument 'cardHeadingLevel' — PDF-Projekte gehen Dokument(h2)/Seite(h3)/Bild(h4),
         // Web/Grafik bleibt bei h3 für die Bild-Card (kein Dokument-Wrapper).
-        const renderCard = (img, cardHeadingLevel) => {
+        const renderCard = (img, cardHeadingLevel, cardOpts) => {
+            const opts = cardOpts || {};
             const hasLang = img.langbeschreibung && img.langbeschreibung.trim();
             // Multi-Datei (08.06.2026): Anzeige-Nummer ist display_nr (pro Dokument
             // bei 1 startend) — Steve-Wunsch nach Michael-Feedback. Die DB-Spalte
@@ -1761,13 +1850,27 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // anfaengt. Fallback display_nr -> image_index, falls die Helferspalte
             // mal nicht vorberechnet ist (z.B. defensive Render-Pfade).
             const displayNr = (img.display_nr != null) ? img.display_nr : img.image_index;
-            const heading = img.page_number > 0
+            // Phase 2 (14.08.2026): "Seite N" nur bei PDF-Projekten in die
+            // Ueberschrift — bei Web/Grafik ist page_number ein technischer
+            // Restwert (immer 1) und wuerde nur verwirren.
+            const heading = (img.page_number > 0 && isPdfProject)
                 ? t('Bild {n}, Seite {p}', { n: displayNr, p: img.page_number })
                 : t('Bild {n}', { n: displayNr });
             const hTag = cardHeadingLevel || 'h3';
+            // Phase 2: Bild-Loeschen im Web-Werkzeug (Feinschnitt innerhalb einer
+            // Webseite). Name fuer den Dialog: eigener Name -> Dateiname -> "Bild N".
+            const imgLabel = ((img.display_name || '').trim()) || ((img.original_filename || '').trim()) || t('Bild {n}', { n: displayNr });
+            const deleteBtnHtml = (opts.deleteBtn && !window.GUEST_MODE) ? `
+                <div style="margin-top:0.8rem;">
+                    <button type="button" class="btn btn-delete btn-small" data-kind="img" data-doc-id="${img.id}" data-doc-name="${esc(imgLabel)}" onclick="openDocDelete(event)">${t('Bild löschen')}<span class="visually-hidden"> ${t('– Bild „{name}"', { name: esc(imgLabel) })}</span></button>
+                </div>` : '';
+            // Phase 2: Grafik-Bloecke tragen ihre Ueberschrift in der <summary>
+            // (id img_heading_N) — die Card selbst bleibt dann ohne eigene
+            // Ueberschrift, aria-labelledby zeigt weiter auf dieselbe id.
+            const headingHtml = opts.noHeading ? '' : `<${hTag} id="img_heading_${img.id}" class="image-heading">${heading}</${hTag}>`;
             return `
             <section class="image-review" id="imgcard_${img.id}" aria-labelledby="img_heading_${img.id}">
-                <${hTag} id="img_heading_${img.id}" class="image-heading">${heading}</${hTag}>
+                ${headingHtml}
                 <div class="image-review-header">
                     <span class="image-meta">${img.width}x${img.height}px</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + t('Kategorie: {typ}', { typ: img.image_type.charAt(0).toUpperCase() + img.image_type.slice(1) }) + '</span>' : ''}
@@ -1785,7 +1888,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
                         ${t('Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.')}
                     </p>` : ''}
-                <img src="${imgFileUrl(img.id)}" alt="${t('Extrahiertes Bild')}${img.page_number > 0 ? ' ' + t('von Seite {p}', { p: img.page_number }) : ''}" class="image-preview" loading="lazy">
+                <img src="${imgFileUrl(img.id)}" alt="${t('Extrahiertes Bild')}${(img.page_number > 0 && isPdfProject) ? ' ' + t('von Seite {p}', { p: img.page_number }) : ''}" class="image-preview" loading="lazy">
                 <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
                     ${t('Alt-Text')}
                     <span class="save-indicator" id="saved_${img.id}">${t('Gespeichert')}</span>
@@ -1861,6 +1964,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                      Projekten (Gast oder Besitzer in Review); Solo-Arbeit bleibt
                      bewusst frei davon (Spec: Nachrichten sind optional). -->
                 ${(window.GUEST_MODE || window._inReview) && img.status !== 'processing' ? messageThreadHtml(img) : ''}
+                ${deleteBtnHtml}
             </section>`;
         };
 
@@ -1897,7 +2001,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         };
 
         // Multi-Datei (08.06.2026): bei PDF-Projekten wird jedes Dokument zu einem eigenen
-        // klappbaren Block (h2 in summary). Bei Web/Grafik bleibt die alte flache Struktur.
+        // klappbaren Block (h2 in summary). Phase 2 (14.08.2026): Web-Projekte nutzen
+        // DENSELBEN Block pro gescannter Adresse ("Webseite N: Name") — statt der
+        // Seiten-Ebene gibt es dort den Link zur Original-Seite, die Seitentext-
+        // Klappe (documents.page_text) und direkt darunter die Bild-Cards (h3).
         const renderDocBlock = (doc, pageMap, pos) => {
             const docKey = doc.id || 0;
             // Karbe/Steve 09.06.2026: Dokumente standardmaessig ZUGEKLAPPT, damit man
@@ -1906,12 +2013,43 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // Neu-Rendern (Polling/Anhaengen) offen (openDocs via toggle-Listener gemerkt).
             const isOpen = openDocs.has(docKey);
             const totalImgs = Array.from(pageMap.values()).reduce((a, b) => a + b.length, 0);
-            const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)';
+            const isWebDoc = isWebProject;
             const labelName = esc(docDisplayName(doc));
-            const pageBlocks = Array.from(pageMap.entries())
-                .sort((a, b) => a[0] - b[0])
-                .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))
-                .join('');
+            let innerBlocks;
+            let headingText;
+            let countMeta;
+            if (isWebDoc) {
+                // Webseite: alle Bilder flach (die technische page_number ist hier
+                // immer 1), sortiert nach image_index. Der Original-Link steht als
+                // ERSTES Element im aufgeklappten Block — dieselbe Stelle, an der
+                // PDF-Nutzer die Seitenansicht finden (Steve, 14.08.2026).
+                const imgs = [];
+                Array.from(pageMap.entries()).sort((a, b) => a[0] - b[0])
+                    .forEach(([pn, arr]) => imgs.push(...arr.slice().sort((x, y) => x.image_index - y.image_index)));
+                const srcLink = doc.source_url ? `
+                    <p class="web-source-line" style="margin:0.8rem 0 0.4rem;">
+                        <a href="${esc(doc.source_url)}" target="_blank" rel="noopener">${t('Webseite im neuen Tab öffnen')}<span class="visually-hidden"> ${t('(externer Link)')}</span></a>
+                    </p>` : '';
+                const pageTextBlock = doc.page_text ? `
+                    <details class="page-text-details">
+                        <summary>${t('Seitentext anzeigen')}</summary>
+                        <div class="page-text-content" role="region" aria-label="${t('Seitentext')}" tabindex="0">${esc(doc.page_text)}</div>
+                    </details>` : '';
+                innerBlocks = srcLink + pageTextBlock + imgs.map(i => renderCard(i, 'h3', { deleteBtn: true })).join('');
+                headingText = t('Webseite {n}: {name}', { n: pos, name: labelName });
+                countMeta = `(${totalImgs} ${totalImgs === 1 ? t('Bild') : t('Bilder')})`;
+            } else {
+                const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)';
+                innerBlocks = Array.from(pageMap.entries())
+                    .sort((a, b) => a[0] - b[0])
+                    .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))
+                    .join('');
+                headingText = t('Dokument {n}: {name}', { n: pos, name: labelName });
+                countMeta = `(${totalImgs} ${totalImgs === 1 ? t('Bild') : t('Bilder')}, ${ext})`;
+            }
+            const vhSuffix = isWebDoc
+                ? t('– Webseite „{name}"', { name: labelName })
+                : t('– Dokument „{name}"', { name: labelName });
             // Aktionen (Umbenennen/Löschen) sitzen IN der <summary>, sind also
             // erreichbar, ohne das Dokument aufzuklappen (Michael-Wunsch 09.06.).
             // Eindeutiger Screenreader-Name ueber einen visuell versteckten <span>
@@ -1928,20 +2066,51 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 <div class="doc-block">
                     <details class="doc-section" data-doc="${docKey}"${isOpen ? ' open' : ''}>
                         <summary class="doc-summary">
-                            <h2 class="doc-heading" id="doc_heading_${docKey}">${t('Dokument {n}: {name}', { n: pos, name: labelName })} <span class="page-count">(${totalImgs} ${totalImgs === 1 ? t('Bild') : t('Bilder')}, ${ext})</span></h2>
+                            <h2 class="doc-heading" id="doc_heading_${docKey}">${headingText} <span class="page-count">${countMeta}</span></h2>
                         </summary>
-                        ${pageBlocks}
+                        ${innerBlocks}
                     </details>
                     ${!window.GUEST_MODE ? `<span class="doc-actions">
-                        <button type="button" class="doc-action-btn" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">${t('Umbenennen')}<span class="visually-hidden"> ${t('– Dokument „{name}"', { name: labelName })}</span></button>
-                        <button type="button" class="doc-action-btn doc-action-danger" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">${t('Löschen')}<span class="visually-hidden"> ${t('– Dokument „{name}"', { name: labelName })}</span></button>
+                        <button type="button" class="doc-action-btn" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">${t('Umbenennen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
+                        <button type="button" class="doc-action-btn doc-action-danger" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">${t('Löschen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
+                    </span>` : ''}
+                </div>`;
+        };
+
+        // Phase 2 (14.08.2026): Grafik-Projekte — jedes Bild ein eigener klappbarer
+        // Block "Bild N: dateiname.jpg" mit Umbenennen/Löschen an derselben Stelle
+        // wie bei Dokumenten/Webseiten. Die Card darin verzichtet auf ihre eigene
+        // Ueberschrift (die Summary-h2 traegt die id img_heading_N, auf die die
+        // Card per aria-labelledby zeigt) — so gibt es pro Bild genau EINE
+        // Ueberschrift fuer den Screenreader.
+        const renderImgBlock = (img, pos) => {
+            img.display_nr = pos;   // Anzeige-Nummer 1..N (Chat-Labels zaehlen genauso positionsbasiert)
+            const isOpen = openImgs.has(img.id);
+            const rawName = ((img.display_name || '').trim()) || ((img.original_filename || '').trim());
+            const labelName = esc(rawName);
+            const heading = rawName
+                ? t('Bild {n}: {name}', { n: pos, name: labelName })
+                : t('Bild {n}', { n: pos });
+            const dialogName = labelName || t('Bild {n}', { n: pos });
+            const vhSuffix = t('– Bild „{name}"', { name: dialogName });
+            return `
+                <div class="doc-block">
+                    <details class="doc-section img-section" data-img="${img.id}"${isOpen ? ' open' : ''}>
+                        <summary class="doc-summary">
+                            <h2 class="doc-heading" id="img_heading_${img.id}">${heading}</h2>
+                        </summary>
+                        ${renderCard(img, 'h3', { noHeading: true })}
+                    </details>
+                    ${!window.GUEST_MODE ? `<span class="doc-actions">
+                        <button type="button" class="doc-action-btn" data-kind="img" data-doc-id="${img.id}" data-doc-name="${dialogName}" data-rename-value="${labelName}" onclick="openDocRename(event)">${t('Umbenennen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
+                        <button type="button" class="doc-action-btn doc-action-danger" data-kind="img" data-doc-id="${img.id}" data-doc-name="${dialogName}" onclick="openDocDelete(event)">${t('Löschen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
                     </span>` : ''}
                 </div>`;
         };
 
         let html;
-        if (isPdfProject && orderedDocs.length > 0) {
-            // PDF-Projekt mit Dokument-Ebene. pos = Anzeige-Position (1..N).
+        if ((isPdfProject || isWebProject) && orderedDocs.length > 0) {
+            // PDF- oder Web-Projekt mit Dokument-Ebene. pos = Anzeige-Position (1..N).
             html = orderedDocs.map((doc, i) => {
                 const pageMap = groupsByDoc.get(doc.id) || new Map();
                 return renderDocBlock(doc, pageMap, i + 1);
@@ -1953,9 +2122,19 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     .sort((a, b) => a[0] - b[0])
                     .map(([pn, imgs]) => renderPageGroup(pn, imgs, 'h3', 'h4', 'leftover')).join('');
             }
+        } else if (isGrafikProject) {
+            // Grafik: Bilder flach einsammeln (sortiert nach image_index) und
+            // jedes als eigenen Block rendern. Anzeige-Nummer = Position 1..N,
+            // damit nach Loeschungen keine Luecken entstehen (wie bei PDF).
+            const imgs = [];
+            for (const pageMap of groupsByDoc.values()) {
+                for (const arr of pageMap.values()) imgs.push(...arr);
+            }
+            imgs.sort((a, b) => a.image_index - b.image_index);
+            html = imgs.map((img, i) => renderImgBlock(img, i + 1)).join('');
         } else {
-            // Web/Grafik oder PDF ohne Dokument-Einträge: flache Seiten-Liste wie bisher.
-            // Reduziere alle pageMaps in eine einzige (es gibt nur Schlüssel 0 oder genau eine Doc).
+            // Fallback (PDF/Web ohne Dokument-Einträge, unbekannte Typen):
+            // flache Seiten-Liste wie bisher.
             const merged = new Map();
             for (const pageMap of groupsByDoc.values()) {
                 for (const [pn, imgs] of pageMap.entries()) {
@@ -2022,13 +2201,25 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         });
         // Multi-Datei: Dokument-Auf/Zu merken — beim Anhängen einer neuen PDF
         // soll der bisherige Stand der geöffneten Dokumente erhalten bleiben.
+        // Phase 2: Einzelbild-Blöcke (img-section) haben ihr eigenes Set und
+        // werden hier übersprungen.
         document.querySelectorAll('details.doc-section').forEach(d => {
+            if (d.classList.contains('img-section')) return;
             const k = Number(d.dataset.doc);
             // Initial-Snapshot: aktuell offene Docs eintragen, damit Folge-Renderings
             // den Zustand beibehalten.
             if (d.open) openDocs.add(k);
             d.addEventListener('toggle', () => {
                 if (d.open) openDocs.add(k); else openDocs.delete(k);
+            });
+        });
+        // Phase 2: Auf/Zu der Einzelbild-Blöcke im Grafik-Werkzeug merken
+        // (überlebt das Neu-Rendern beim Polling/Anhängen, wie openDocs).
+        document.querySelectorAll('details.img-section').forEach(d => {
+            const k = Number(d.dataset.img);
+            if (d.open) openImgs.add(k);
+            d.addEventListener('toggle', () => {
+                if (d.open) openImgs.add(k); else openImgs.delete(k);
             });
         });
     }

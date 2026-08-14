@@ -3642,3 +3642,107 @@ msgstr "Limite API {limit}/jour"
 
 msgid "Der Standard ist aktuell {standard} Bilder pro Tag."
 msgstr "La valeur par défaut actuelle est de {standard} images par jour."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite {n}: {name}"
+msgstr "Page web {n} : {name}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild {n}: {name}"
+msgstr "Image {n} : {name}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite im neuen Tab öffnen"
+msgstr "Ouvrir la page web dans un nouvel onglet"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "(externer Link)"
+msgstr "(lien externe)"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite löschen?"
+msgstr "Supprimer la page web ?"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite umbenennen"
+msgstr "Renommer la page web"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Neuer Name der Webseite"
+msgstr "Nouveau nom de la page web"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Leer lassen, um wieder den Seitentitel zu verwenden. Der Name erscheint auch im Export-Dateinamen."
+msgstr "Laisser vide pour réutiliser le titre de la page. Le nom apparaît également dans le nom du fichier exporté."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "diese Webseite"
+msgstr "cette page web"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite gelöscht."
+msgstr "Page web supprimée."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite umbenannt."
+msgstr "Page web renommée."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du die Webseite „{name}\" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Voulez-vous vraiment supprimer la page web « {name} » avec 1 image ? Cette action est irréversible."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du die Webseite „{name}\" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Voulez-vous vraiment supprimer la page web « {name} » avec {n} images ? Cette action est irréversible."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "– Webseite „{name}\""
+msgstr "– page web « {name} »"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite „{name}\", {bild}"
+msgstr "Page web « {name} », {bild}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Alle Webseiten (eine ZIP-Datei)"
+msgstr "Toutes les pages web (un fichier ZIP)"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild löschen?"
+msgstr "Supprimer l'image ?"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild löschen"
+msgstr "Supprimer l'image"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild umbenennen"
+msgstr "Renommer l'image"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Neuer Name des Bildes"
+msgstr "Nouveau nom de l'image"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden."
+msgstr "Laisser vide pour réutiliser le nom de fichier d'origine."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "dieses Bild"
+msgstr "cette image"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild gelöscht."
+msgstr "Image supprimée."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild umbenannt."
+msgstr "Image renommée."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du das Bild „{name}\" wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Voulez-vous vraiment supprimer l'image « {name} » ? Cette action est irréversible."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "– Bild „{name}\""
+msgstr "– image « {name} »"

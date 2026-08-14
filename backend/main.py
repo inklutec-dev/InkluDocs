@@ -4129,11 +4129,13 @@ async def _handle_image_upload(file_path: str, filename: str, user: dict, conten
     except Exception:
         pass
 
+    # Multi-Datei Phase 2 (14.08.2026): Original-Dateiname pro Bild speichern —
+    # die Grafik-Ansicht zeigt "Bild 1: urlaubsfoto.jpg" (Michael-Wunsch 10.06.).
     conn.execute(
         """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
-           width, height, xref)
-           VALUES (?, 1, ?, ?, '', ?, ?, 0)""",
-        (project_id, next_idx, img_path, width, height)
+           width, height, xref, original_filename)
+           VALUES (?, 1, ?, ?, '', ?, ?, 0, ?)""",
+        (project_id, next_idx, img_path, width, height, (filename or "")[:200])
     )
     total = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)).fetchone()[0]
     conn.execute(
@@ -4441,6 +4443,36 @@ def _clean_link_label(label: str) -> str:
     return cleaned
 
 
+def _web_page_text(soup) -> str:
+    """Lesbarer Textinhalt einer gescannten Webseite fuer die
+    "Seitentext anzeigen"-Klappe (Multi-Datei Phase 2, 14.08.2026).
+
+    Gleiche Rolle wie images.page_text bei PDF-Seiten, nur pro Webseite
+    (documents.page_text). Bewusst schlicht: Skript-/Stil-/Navigations-
+    Gerippe raus, dann die sichtbaren Textelemente in Dokumentreihenfolge.
+    Deckel 15.000 Zeichen — die Klappe soll vorlesbar bleiben, kein
+    Datenarchiv sein. Liest NUR, veraendert die Soup nicht (sie wird vom
+    Aufrufer weiterbenutzt)."""
+    skip = {"script", "style", "noscript", "template", "svg", "nav"}
+    body = soup.body or soup
+    parts = []
+    seen = set()
+    for el in body.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "p", "li",
+                             "figcaption", "blockquote", "td", "th"]):
+        if el.find_parent(lambda t: t.name in skip):
+            continue
+        txt = el.get_text(" ", strip=True)
+        # Dedupe exakt gleicher Texte: <li><p>…</p></li> liefert den Absatz
+        # sonst doppelt (einmal als li-, einmal als p-Treffer).
+        if not txt or txt in seen:
+            continue
+        seen.add(txt)
+        parts.append(txt)
+        if sum(len(p) for p in parts) > 15000:
+            break
+    return "\n".join(parts)[:15000]
+
+
 @app.post("/api/scan-url")
 async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     """Scan a URL for images and create a project."""
@@ -4515,6 +4547,26 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         )
         project_id = cursor.lastrowid
         conn.commit()
+
+    # Multi-Datei Phase 2 (14.08.2026): Jede gescannte Adresse wird ein eigenes
+    # "Webseite N"-Dokument — gleiches Muster wie die PDF-Dokumente aus Phase 1,
+    # inklusive Umbenennen/Loeschen ueber die bestehenden documents-Endpunkte.
+    # Die Zeile entsteht VOR dem Bild-Download, damit die Bilder direkt mit
+    # document_id eingefuegt werden koennen; liefert die Seite am Ende nichts,
+    # wird sie wieder entfernt (gleiches Aufraeum-Muster wie _extract_document).
+    next_doc_index = conn.execute(
+        "SELECT COALESCE(MAX(doc_index), 0) FROM documents WHERE project_id = ?",
+        (project_id,)
+    ).fetchone()[0] + 1
+    doc_cursor = conn.execute(
+        """INSERT INTO documents
+           (project_id, doc_index, original_filename, original_path,
+            extraction_method, total_images, source_url, page_text)
+           VALUES (?, ?, ?, '', 'web', 0, ?, ?)""",
+        (project_id, next_doc_index, page_title[:200], url, _web_page_text(soup))
+    )
+    document_id = doc_cursor.lastrowid
+    conn.commit()
 
     # Fortlaufende Bildnummer: beim Anhaengen weiterer Seiten ab dem bisherigen Maximum
     # weiterzaehlen. Das haelt image_index eindeutig UND verhindert Dateinamens-Kollisionen
@@ -4594,10 +4646,10 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
             # Hard bypass: only aria-hidden and role=presentation skip KI
             if is_hidden:
                 conn.execute(
-                    """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
+                    """INSERT INTO images (project_id, document_id, page_number, image_index, image_path, context_text,
                        width, height, xref, original_alt, status, image_type, alt_text)
-                       VALUES (?, 1, ?, '', '', 0, 0, 0, ?, 'done', 'dekorativ', '')""",
-                    (project_id, idx, original_alt)
+                       VALUES (?, ?, 1, ?, '', '', 0, 0, 0, ?, 'done', 'dekorativ', '')""",
+                    (project_id, document_id, idx, original_alt)
                 )
                 downloaded += 1
                 continue
@@ -4753,10 +4805,10 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                             pass
 
                 conn.execute(
-                    """INSERT INTO images (project_id, page_number, image_index, image_path, context_text,
+                    """INSERT INTO images (project_id, document_id, page_number, image_index, image_path, context_text,
                        width, height, xref, original_alt)
-                       VALUES (?, 1, ?, ?, ?, ?, ?, 0, ?)""",
-                    (project_id, idx, img_path, context_text, width, height, original_alt)
+                       VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ?)""",
+                    (project_id, document_id, idx, img_path, context_text, width, height, original_alt)
                 )
                 downloaded += 1
 
@@ -4767,6 +4819,9 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     # Kumulative Gesamtzahl (beim Anhaengen schon vorhandene Bilder mitzaehlen).
     total = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)).fetchone()[0]
     if downloaded == 0:
+        # Leeres "Webseite N"-Dokument wieder entfernen — es haengen keine
+        # Bilder dran (Phase 2; sonst bliebe ein leerer Block in der Ansicht).
+        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
         # Beim Anhaengen ein bestehendes Projekt NICHT zerstoeren: hat es schon Bilder,
         # nur freundlich melden und Status zurueck auf 'extracted'. Nur ein wirklich leeres
         # Projekt (Erst-Scan ohne Treffer) wird als Fehler markiert.
@@ -4781,6 +4836,10 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Keine Bilder konnten heruntergeladen werden")
 
     conn.execute(
+        "UPDATE documents SET total_images = ? WHERE id = ?",
+        (downloaded, document_id)
+    )
+    conn.execute(
         "UPDATE projects SET status = 'extracted', total_images = ? WHERE id = ?",
         (total, project_id)
     )
@@ -4790,6 +4849,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     return {
         "ok": True,
         "project_id": project_id,
+        "document_id": document_id,
         "added": downloaded,
         "total_images": total,
         "source_url": url,
@@ -4906,7 +4966,8 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
         (project_id,)
     ).fetchall()
     documents = conn.execute(
-        """SELECT id, doc_index, original_filename, display_name, extraction_method, total_images, created_at
+        """SELECT id, doc_index, original_filename, display_name, extraction_method,
+                  total_images, created_at, source_url, page_text
            FROM documents WHERE project_id = ? ORDER BY doc_index""",
         (project_id,)
     ).fetchall()
@@ -5048,7 +5109,33 @@ async def delete_document(project_id: int, document_id: int, user: dict = Depend
         except OSError:
             pass
 
-    # DB-Zeilen entfernen (Bilder zuerst, dann das Dokument).
+    # Multi-Datei Phase 2 (14.08.2026): Web-Dokumente haben KEINEN doc<N>-
+    # Ordner — ihre Bilddateien liegen flach im Projektordner (web_<idx>.*).
+    # Deshalb zusaetzlich die Dateien der betroffenen Bilder einzeln entfernen.
+    # Best-effort und nur unterhalb von RESULTS_DIR (Pfade stammen aus unserer
+    # DB; der Guard schuetzt vor Altlasten mit kaputten Pfaden). Fuer PDF-
+    # Dokumente ist das ein No-op-Doppel zur doc-Ordner-Loeschung oben.
+    _results_root = os.path.realpath(RESULTS_DIR) + os.sep
+    img_rows = conn.execute(
+        "SELECT id, image_path, page_view_path FROM images WHERE document_id = ? AND project_id = ?",
+        (document_id, project_id)
+    ).fetchall()
+    for ir in img_rows:
+        for p in (ir["image_path"], ir["page_view_path"]):
+            if p and os.path.isfile(p) and os.path.realpath(p).startswith(_results_root):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+
+    # DB-Zeilen entfernen (Bilder zuerst, dann das Dokument). Pruefstatus und
+    # Nachrichten der geloeschten Bilder raeumen wir mit ab (Phase 2) — vorher
+    # blieben sie als harmlose Waisen liegen (alle Lese-Wege JOINen auf images).
+    _img_ids = [ir["id"] for ir in img_rows]
+    if _img_ids:
+        _ph = ",".join("?" * len(_img_ids))
+        conn.execute(f"DELETE FROM image_reviews WHERE image_id IN ({_ph})", _img_ids)
+        conn.execute(f"DELETE FROM messages WHERE image_id IN ({_ph})", _img_ids)
     conn.execute("DELETE FROM images WHERE document_id = ? AND project_id = ?", (document_id, project_id))
     conn.execute("DELETE FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id))
 
@@ -5073,6 +5160,119 @@ async def delete_document(project_id: int, document_id: int, user: dict = Depend
         "ok": True,
         "remaining_images": remaining_images,
         "remaining_documents": remaining_docs,
+    }
+
+
+def _require_non_pdf_project(conn, project_id: int, user_id: int) -> dict:
+    """Gemeinsamer Wachposten der Einzelbild-Endpunkte (Phase 2, 14.08.2026):
+    Projekt muss dem eingeloggten Nutzer gehoeren (kein IDOR) und darf KEIN
+    PDF-Projekt sein — bei PDFs ist das Dokument die kleinste loesch- und
+    benennbare Einheit (Michael-Vorgabe 09.06.2026: die komplette PDF wird
+    angezeigt, einzelne Seiten/Bilder bleiben unantastbar)."""
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    project = dict(project)
+    if project.get("tool") == "pdf" or project.get("project_type") == "pdf":
+        conn.close()
+        raise HTTPException(status_code=400,
+                            detail="Bei PDF-Projekten werden ganze Dokumente bearbeitet, keine einzelnen Bilder")
+    return project
+
+
+@app.patch("/api/projects/{project_id}/images/{image_id}")
+async def rename_image(project_id: int, image_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Multi-Datei Phase 2 (14.08.2026): Anzeigename EINES Bildes setzen —
+    nur fuer Grafik- und Web-Projekte. Leeres Feld setzt auf NULL zurueck,
+    die Anzeige faellt dann auf den Original-Dateinamen bzw. "Bild N"
+    zurueck (gleiche Logik wie rename_document)."""
+    data = await request.json()
+    name = (data.get("display_name") or "").strip()
+    if len(name) > 200:
+        raise HTTPException(status_code=400, detail="Anzeigename darf maximal 200 Zeichen lang sein")
+    conn = get_db()
+    _require_non_pdf_project(conn, project_id, user["id"])
+    cur = conn.execute(
+        "UPDATE images SET display_name = ? WHERE id = ? AND project_id = ?",
+        (name or None, image_id, project_id)
+    )
+    conn.commit()
+    affected = cur.rowcount
+    conn.close()
+    if not affected:
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    return {"ok": True, "display_name": name or None}
+
+
+@app.delete("/api/projects/{project_id}/images/{image_id}")
+async def delete_image(project_id: int, image_id: int, user: dict = Depends(get_current_user)):
+    """Multi-Datei Phase 2 (14.08.2026): EIN Bild aus einem Grafik- oder
+    Web-Projekt entfernen. Bei Grafik ist das Einzelbild die atomare Einheit
+    (vereinbart 10.06.2026), bei Web dient es dem Feinschnitt innerhalb einer
+    Webseite (z.B. mitgeladene Deko-Grafiken aussortieren). PDF bleibt
+    gesperrt — dort loescht man auf Dokument-Ebene (delete_document).
+
+    Mandantensicher wie delete_document: Projekt- UND Bild-Zugriff sind auf
+    den eingeloggten Nutzer eingegrenzt. Wird das letzte Bild einer Webseite
+    entfernt, verschwindet auch deren documents-Zeile — sonst bliebe ein
+    leerer "Webseite N"-Block stehen (und der Phantom-Cleanup beim naechsten
+    Start wuerde ihn ohnehin wegputzen)."""
+    conn = get_db()
+    _require_non_pdf_project(conn, project_id, user["id"])
+    img = conn.execute(
+        "SELECT * FROM images WHERE id = ? AND project_id = ?", (image_id, project_id)
+    ).fetchone()
+    if not img:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    img = dict(img)
+
+    # Dateien best-effort entfernen, nur unterhalb von RESULTS_DIR (Pfade
+    # stammen aus unserer DB; Guard wie in delete_document).
+    _results_root = os.path.realpath(RESULTS_DIR) + os.sep
+    for p in (img.get("image_path"), img.get("page_view_path")):
+        if p and os.path.isfile(p) and os.path.realpath(p).startswith(_results_root):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+
+    conn.execute("DELETE FROM image_reviews WHERE image_id = ?", (image_id,))
+    conn.execute("DELETE FROM messages WHERE image_id = ?", (image_id,))
+    conn.execute("DELETE FROM images WHERE id = ? AND project_id = ?", (image_id, project_id))
+
+    removed_document = None
+    doc_id = img.get("document_id")
+    if doc_id:
+        left_in_doc = conn.execute(
+            "SELECT COUNT(*) FROM images WHERE document_id = ?", (doc_id,)
+        ).fetchone()[0]
+        if left_in_doc == 0:
+            conn.execute("DELETE FROM documents WHERE id = ? AND project_id = ?", (doc_id, project_id))
+            removed_document = doc_id
+        else:
+            conn.execute("UPDATE documents SET total_images = ? WHERE id = ?", (left_in_doc, doc_id))
+
+    # Projekt-Zaehler aus dem Ist-Stand neu berechnen (wie delete_document).
+    remaining_images = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)
+    ).fetchone()[0]
+    processed = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'", (project_id,)
+    ).fetchone()[0]
+    conn.execute(
+        "UPDATE projects SET total_images = ?, processed_images = ?, updated_at = datetime('now') WHERE id = ?",
+        (remaining_images, processed, project_id)
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "ok": True,
+        "remaining_images": remaining_images,
+        "removed_document": removed_document,
     }
 
 
@@ -7167,7 +7367,8 @@ async def freigabe_data(token: str, request: Request):
         (pid,)
     ).fetchall()
     documents = conn.execute(
-        """SELECT id, doc_index, original_filename, display_name, extraction_method, total_images, created_at
+        """SELECT id, doc_index, original_filename, display_name, extraction_method,
+                  total_images, created_at, source_url, page_text
            FROM documents WHERE project_id = ? ORDER BY doc_index""",
         (pid,)
     ).fetchall()

@@ -3333,3 +3333,107 @@ msgstr "API-grænse {limit}/dag"
 
 msgid "Der Standard ist aktuell {standard} Bilder pro Tag."
 msgstr "Den aktuelle standard er {standard} billeder pr. dag."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite {n}: {name}"
+msgstr "Webside {n}: {name}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild {n}: {name}"
+msgstr "Billede {n}: {name}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite im neuen Tab öffnen"
+msgstr "Åbn websiden i en ny fane"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "(externer Link)"
+msgstr "(eksternt link)"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite löschen?"
+msgstr "Slet webside?"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite umbenennen"
+msgstr "Omdøb webside"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Neuer Name der Webseite"
+msgstr "Websidens nye navn"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Leer lassen, um wieder den Seitentitel zu verwenden. Der Name erscheint auch im Export-Dateinamen."
+msgstr "Lad feltet stå tomt for at bruge sidens titel igen. Navnet indgår også i eksportfilens navn."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "diese Webseite"
+msgstr "denne webside"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite gelöscht."
+msgstr "Webside slettet."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite umbenannt."
+msgstr "Webside omdøbt."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du die Webseite „{name}\" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette websiden ”{name}” med 1 billede? Dette kan ikke fortrydes."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du die Webseite „{name}\" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette websiden ”{name}” med {n} billeder? Dette kan ikke fortrydes."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "– Webseite „{name}\""
+msgstr "– webside ”{name}”"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Webseite „{name}\", {bild}"
+msgstr "Webside »{name}«, {bild}"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Alle Webseiten (eine ZIP-Datei)"
+msgstr "Alle websider (én ZIP-fil)"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild löschen?"
+msgstr "Slet billede?"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild löschen"
+msgstr "Slet billede"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild umbenennen"
+msgstr "Omdøb billede"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Neuer Name des Bildes"
+msgstr "Billedets nye navn"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden."
+msgstr "Lad feltet stå tomt for at bruge det oprindelige filnavn igen."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "dieses Bild"
+msgstr "dette billede"
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild gelöscht."
+msgstr "Billede slettet."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Bild umbenannt."
+msgstr "Billede omdøbt."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "Möchtest du das Bild „{name}\" wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette billedet ”{name}”? Dette kan ikke fortrydes."
+
+#: multi-datei-phase2 (14.08.2026)
+msgid "– Bild „{name}\""
+msgstr "– billede ”{name}”"
