@@ -37,8 +37,8 @@ services:
       - MISTRAL_MODEL_CLASSIFY=${MISTRAL_MODEL_CLASSIFY:-mistral-medium-latest}
       - MISTRAL_MODEL_GENERATE=${MISTRAL_MODEL_GENERATE:-pixtral-large-latest}
       - MISTRAL_MODEL_VALIDATE=${MISTRAL_MODEL_VALIDATE:-mistral-large-latest}
-      - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-true}
-      - VALIDATOR_MODE=${VALIDATOR_MODE:-correct}
+      - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-false}
+      - VALIDATOR_MODE=${VALIDATOR_MODE:-off}
       - BASE_URL=https://staging.inkludocs.inklutec.de
       # PDFIX-INTEGRATION (24.04.2026): Kill-Switch, default OFF. Fuer Staging auf true.
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
@@ -54,18 +54,18 @@ services:
       - TAVILY_API_KEY=${TAVILY_API_KEY:-}
       - INKLUAGENT_AGENTIC=${INKLUAGENT_AGENTIC:-false}
       # AWS Bedrock (08.05.2026): Anthropic Claude über Frankfurt fuer v4
-      - LLM_PROVIDER=${LLM_PROVIDER:-mistral}
+      - LLM_PROVIDER=bedrock
       - AWS_REGION=${AWS_REGION:-eu-central-1}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
-      - BEDROCK_MODEL_CLASSIFY=${BEDROCK_MODEL_CLASSIFY:-eu.anthropic.claude-haiku-4-5}
+      - BEDROCK_MODEL_CLASSIFY=eu.anthropic.claude-sonnet-4-6
       - BEDROCK_MODEL_INVENTAR=${BEDROCK_MODEL_INVENTAR:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_GENERATE=${BEDROCK_MODEL_GENERATE:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
       - PIPELINE_VERSION=${PIPELINE_VERSION:-v3_7}
-      - V4_PASS_MODE=${V4_PASS_MODE:-full}
-      - V4_VERIFY_MODE=${V4_VERIFY_MODE:-off}
-      - V4_VERIFY_KORREKTUR=${V4_VERIFY_KORREKTUR:-off}
+      - V4_PASS_MODE=${V4_PASS_MODE:-lean}
+      - V4_VERIFY_MODE=kritisch
+      - V4_VERIFY_KORREKTUR=on
       - ABO_ENFORCEMENT=${ABO_ENFORCEMENT:-off}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}

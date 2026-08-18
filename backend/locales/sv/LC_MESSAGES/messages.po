@@ -3307,3 +3307,27 @@ msgstr "Vill du verkligen ta bort bilden ”{name}”? Det kan inte ångras."
 #: multi-datei-phase2 (14.08.2026)
 msgid "– Bild „{name}\""
 msgstr "– bild ”{name}”"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Bilder werden geprüft …"
+msgstr "Kontrollerar bilder …"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid ", {n} als dekorativ markiert"
+msgstr ", {n} markerade som dekorativa"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
+msgstr "Alla {n} bilder har en beskrivning{dek}."
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} mit Fehler"
+msgstr "{n} med fel"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} noch nicht generiert"
+msgstr "{n} inte genererade ännu"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
+msgstr "{b} av {n} bilder har en beskrivning{dek}. {s} hoppas över: {g}."

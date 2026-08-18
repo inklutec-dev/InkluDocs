@@ -25,7 +25,7 @@ name: inkludocs-demo
 
 services:
   inkludocs-demo:
-    build: .
+    image: inkludocs:demo-20260818-pipefix  # 18.08. Fable 5: festes Image statt Baum-Build (Baum enthaelt Abo-Code, der NICHT auf die Demo darf)
     container_name: inkludocs-demo
     restart: unless-stopped
     ports:
@@ -43,6 +43,7 @@ services:
       - DEMO_MODE=on
       # In der Demo registriert sich niemand — der Weg zum Konto führt zur echten App.
       - REGISTRATION_ENABLED=false
+      - CREATE_DEFAULT_ADMIN=false   # 18.08.2026 Fable 5: Demo hat keinen Admin-Login
       # Abo-Enforcement in der Demo HART aus (eigene Wegwerf-DB, bewusst ohne Abo-Zaehlung) —
       # hart statt ${...:-off}, weil die Demo-Schalter hier versioniert festgeschrieben sind.
       - ABO_ENFORCEMENT=off

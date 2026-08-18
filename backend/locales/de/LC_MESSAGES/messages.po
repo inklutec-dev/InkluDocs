@@ -3749,3 +3749,27 @@ msgstr ""
 #: multi-datei-phase2 (14.08.2026)
 msgid "– Bild „{name}\""
 msgstr ""
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Bilder werden geprüft …"
+msgstr ""
+
+#: export-summary (18.08.2026, Fable 5)
+msgid ", {n} als dekorativ markiert"
+msgstr ""
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
+msgstr ""
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} mit Fehler"
+msgstr ""
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} noch nicht generiert"
+msgstr ""
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
+msgstr ""

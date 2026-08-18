@@ -62,6 +62,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // currentUser wird gemeinsam in dashboard.js deklariert (eine Quelle)
     let pollInterval = null;
 
+    // Zentrale HTML-Escape-Funktion (18.08.2026, Fable 5): global sichtbar, da
+    // die lokalen esc()-Konstanten nur in einzelnen Funktionen gelten. Verhindert
+    // Stored XSS, wenn Alt-Text/Langbeschreibung/Projektname (auch aus Gast- oder
+    // Fremdseiten-Eingaben) per innerHTML in die Seite geschrieben werden.
+    function escHtml(s) {
+        return !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     function announce(msg) {
         liveRegion.textContent = '';
         setTimeout(() => { liveRegion.textContent = msg; }, 100);
@@ -515,7 +524,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         main.innerHTML = `
             <div class="card">
                 <div class="card-header">
-                    <h1 id="projectName" class="card-name" tabindex="-1">${headTitle}</h1>
+                    <h1 id="projectName" class="card-name" tabindex="-1">${escHtml(headTitle)}</h1>
                     <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
                 <!-- Korb C (Steve 17.07.2026): die fruehere Gast-Rollenzeile
@@ -604,8 +613,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${t('Exportieren')}</button>
-                        <div id="exportPanel" style="display:none;margin-top:1rem;padding:1rem;border:1px solid var(--border);border-radius:8px;" role="region" aria-labelledby="exportPanelHeading">
+                        <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;font-size:1.05rem;">${t('Export-Optionen')}</h2>
+                            <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
                             ${renderExportScopeBlock(documents, project)}
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Dateiname (optional)')}</label>
@@ -620,7 +630,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <button class="btn btn-secondary" onclick="closeExportPanel()">${t('Abbrechen')}</button>
                             </div>
                             <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
-                        </div>
+                        </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <div style="flex-basis:100%;margin-top:0.6rem;">
@@ -1896,7 +1906,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 <textarea class="alt-text-field" id="alttext_${img.id}" data-image-id="${img.id}"
                     placeholder="${img.status === 'processing' ? t('Alt-Text wird generiert...') : (img.status === 'done' ? '' : t('Noch kein Alt-Text - hier eingeben oder generieren lassen'))}"
                     ${img.status === 'processing' ? 'disabled' : ''}
-                >${img.alt_text_edited || img.alt_text || img.original_alt || ''}</textarea>
+                >${escHtml(img.alt_text_edited || img.alt_text || img.original_alt || '')}</textarea>
                 ${img.status !== 'processing' ? `
                     <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                         ${!window.GUEST_MODE ? `<span style="font-size:0.85rem;color:var(--text-muted);">${t('Alt-Text bewerten:')}</span>
@@ -1909,7 +1919,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 <div id="langcontainer_${img.id}">
                 ${(showLang && hasLang) ? `
                     <label for="langtext_${img.id}" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">${t('Langbeschreibung')}</label>
-                    <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;">${img.langbeschreibung}</textarea>
+                    <textarea class="alt-text-field langtext-field" id="langtext_${img.id}" style="min-height:80px;">${escHtml(img.langbeschreibung)}</textarea>
                     ${!window.GUEST_MODE ? `<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                         <span style="font-size:0.85rem;color:var(--text-muted);">${t('Langbeschreibung bewerten:')}</span>
                         <button class="btn btn-secondary btn-small" onclick="sendFeedback(${img.id}, 'good', this, 'lang')" aria-label="${t('Langbeschreibung gut')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;">&#128077;</button>
@@ -2329,7 +2339,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             if (res.ok && data.langbeschreibung) {
                 const container = document.getElementById('langcontainer_' + imageId);
                 if (container) {
-                    container.innerHTML = '<label for="langtext_' + imageId + '" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">' + t('Langbeschreibung') + '</label><textarea class="alt-text-field langtext-field" id="langtext_' + imageId + '" style="min-height:80px;">' + (data.langbeschreibung || '') + '</textarea>';
+                    container.innerHTML = '<label for="langtext_' + imageId + '" style="display:block;font-weight:600;margin-top:0.8rem;margin-bottom:0.3rem;">' + t('Langbeschreibung') + '</label><textarea class="alt-text-field langtext-field" id="langtext_' + imageId + '" style="min-height:80px;">' + escHtml(data.langbeschreibung || '') + '</textarea>';
                 }
                 // Also update alt-text if improved
                 if (data.alt_text) {
@@ -2371,29 +2381,71 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     //  - Dateiname ist optional. Leer = Standardname (basierend auf Doc bzw. Projekt) auf Server-Seite.
     //  - Für Web/Grafik-Projekte (kein documents-Block gerendert) verhält sich der Export wie bisher.
     function openExportPanel(projectId) {
+        // 18.08.2026 (Fable 5): echtes modales <dialog> statt Inline-Bereich.
+        // showModal() liefert Fokusfalle, Escape-zum-Schliessen und inerten
+        // Hintergrund nativ — derselbe Weg wie die anderen Dialoge im Tool.
+        // Die Zusammenfassung ist eine statische Status-Region direkt unter der
+        // Ueberschrift und wird von loadExportSummary() gefuellt + angesagt.
         const panel = document.getElementById('exportPanel');
-        const btn = document.getElementById('exportOpenBtn');
         const input = document.getElementById('exportFilename');
-        if (panel) {
-            panel.style.display = 'block';
-            if (btn) btn.style.display = 'none';
-            if (input) {
-                input.value = '';
-                input.focus();
-            } else {
-                // Single-Doc oder Web/Grafik: kein Filename-Input vorhanden? Fokus auf erste Schaltfläche.
-                const first = panel.querySelector('button');
-                if (first) first.focus();
+        if (!panel) return;
+        panel.querySelectorAll('input[name="exportScope"]').forEach(function (rb) {
+            if (!rb._summaryBound) {
+                rb._summaryBound = true;
+                rb.addEventListener('change', function () { loadExportSummary(projectId); });
             }
-            announce(t('Export-Optionen geöffnet.'));
+        });
+        if (input) input.value = '';
+        if (typeof panel.showModal === 'function') {
+            panel.showModal();
+        } else {
+            panel.setAttribute('open', '');
+        }
+        loadExportSummary(projectId);
+        announce(t('Export-Optionen geöffnet.'));
+    }
+
+    async function loadExportSummary(projectId) {
+        const region = document.getElementById('exportSummary');
+        if (!region) return;
+        const scope = readExportScope();
+        region.textContent = t('Bilder werden geprüft …');
+        try {
+            const body = {};
+            if (!scope.all && scope.document_id) body.document_id = scope.document_id;
+            const res = await fetch('/api/projects/' + projectId + '/export/summary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) { region.textContent = ''; return; }
+            const d = await res.json();
+            const dekTeil = d.dekorativ ? t(', {n} als dekorativ markiert', { n: d.dekorativ }) : '';
+            let msg;
+            if (d.uebersprungen === 0) {
+                msg = t('Alle {n} Bilder haben eine Beschreibung{dek}.', { n: d.total, dek: dekTeil });
+            } else {
+                const gruende = [];
+                if (d.fehler) gruende.push(t('{n} mit Fehler', { n: d.fehler }));
+                if (d.offen) gruende.push(t('{n} noch nicht generiert', { n: d.offen }));
+                msg = t('{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}.',
+                        { b: d.beschrieben, n: d.total, dek: dekTeil, s: d.uebersprungen, g: gruende.join(', ') });
+            }
+            region.textContent = msg;
+            announce(msg);
+        } catch (e) {
+            region.textContent = '';
         }
     }
 
     function closeExportPanel(silent) {
+        // Natives <dialog>: close() gibt den Fokus automatisch an den
+        // "Exportieren"-Knopf zurueck (das Element, das showModal ausgeloest hat).
         const panel = document.getElementById('exportPanel');
-        const btn = document.getElementById('exportOpenBtn');
-        if (panel) panel.style.display = 'none';
-        if (btn) { btn.style.display = ''; btn.focus(); }
+        if (panel && panel.open) {
+            if (typeof panel.close === 'function') panel.close();
+            else panel.removeAttribute('open');
+        }
         if (!silent) announce(t('Export abgebrochen.'));
     }
 

@@ -67,7 +67,19 @@ def _get_client():
             ) from e
         # AWS-Credentials werden aus den Standard-ENV-Vars geholt:
         # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
-        _client = boto3.client('bedrock-runtime', region_name=_AWS_REGION)
+        # 17.08.2026: Ohne Retry-Vorgabe gilt boto3s alter Standardmodus.
+        # Am 17./20.07. bekamen zehn Bilder eines Kunden eine
+        # ThrottlingException (AWS-Drosselung) als Alt-Text — eine
+        # Verkehrsregelung, kein Defekt. Der adaptive Modus bremst
+        # clientseitig und wiederholt gedrosselte Aufrufe mit wachsenden
+        # Pausen. Kosten: keine, ein gedrosselter Aufruf wurde nicht
+        # ausgefuehrt und wird nicht berechnet.
+        from botocore.config import Config as _BotoConfig
+        _client = boto3.client(
+            'bedrock-runtime',
+            region_name=_AWS_REGION,
+            config=_BotoConfig(retries={'max_attempts': 8, 'mode': 'adaptive'}),
+        )
     return _client
 
 

@@ -3746,3 +3746,27 @@ msgstr "Voulez-vous vraiment supprimer l'image « {name} » ? Cette action est i
 #: multi-datei-phase2 (14.08.2026)
 msgid "– Bild „{name}\""
 msgstr "– image « {name} »"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Bilder werden geprüft …"
+msgstr "Vérification des images …"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid ", {n} als dekorativ markiert"
+msgstr ", {n} marquée(s) comme décorative(s)"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
+msgstr "Les {n} images ont toutes une description{dek}."
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} mit Fehler"
+msgstr "{n} en erreur"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} noch nicht generiert"
+msgstr "{n} pas encore générée(s)"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
+msgstr "{b} images sur {n} ont une description{dek}. {s} seront ignorées : {g}."

@@ -3746,3 +3746,27 @@ msgstr "Do you really want to delete the image “{name}”? This cannot be undo
 #: multi-datei-phase2 (14.08.2026)
 msgid "– Bild „{name}\""
 msgstr "– image “{name}”"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Bilder werden geprüft …"
+msgstr "Checking images …"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid ", {n} als dekorativ markiert"
+msgstr ", {n} marked as decorative"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
+msgstr "All {n} images have a description{dek}."
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} mit Fehler"
+msgstr "{n} with an error"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} noch nicht generiert"
+msgstr "{n} not yet generated"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
+msgstr "{b} of {n} images have a description{dek}. {s} will be skipped: {g}."

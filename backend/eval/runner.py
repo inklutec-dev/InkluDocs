@@ -165,6 +165,18 @@ def run_single_test(entry: dict) -> TestResult:
         except (json.JSONDecodeError, KeyError):
             pass
 
+    # 17.08.2026: Im Lean-Modus entsteht kein inventar_json, der Sub-Typ stand
+    # deshalb immer auf None und der sub_typ_erwartung-Check schlug bei JEDEM
+    # Fall fehl — ohne Qualitaetsproblem. Der effektive Sub-Typ steht in
+    # pipeline_steps als 'combo:<subtyp>', z.B.
+    # 'lean:classified:foto,combo:foto_personen,verify:ok=False'.
+    if not result.sub_typ_actual:
+        for schritt in (result.pipeline_steps or '').split(','):
+            schritt = schritt.strip()
+            if schritt.startswith('combo:'):
+                result.sub_typ_actual = schritt.split(':', 1)[1] or None
+                break
+
     # Output-Text für Checks zusammensetzen
     full_text = pipeline_result.get('alt_text', '') + ' ' + pipeline_result.get('langbeschreibung', '')
 
@@ -243,7 +255,11 @@ def print_summary(results: list[TestResult]) -> int:
 
 def main(argv: list[str]) -> int:
     manifest_path = Path(argv[1]) if len(argv) > 1 else DEFAULT_MANIFEST
-    if not os.environ.get('MISTRAL_API_KEY'):
+    # 17.08.2026: Die Startpruefung verlangte immer einen MISTRAL_API_KEY und
+    # brach deshalb seit dem Bedrock-Umstieg jeden Eval-Lauf sofort ab.
+    # Jetzt providerabhaengig: Bedrock authentifiziert ueber die AWS-Kette.
+    provider = os.environ.get('LLM_PROVIDER', 'mistral').strip().lower()
+    if provider == 'mistral' and not os.environ.get('MISTRAL_API_KEY'):
         print('FEHLER: MISTRAL_API_KEY nicht gesetzt — Eval-Run nicht möglich.')
         return 2
     results = run_manifest(manifest_path)

@@ -288,11 +288,30 @@ async def lifespan(app: FastAPI):
     user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
     conn.close()
     if user_count == 0:
-        try:
-            create_user("kontakt@inklutec.de", "inkludocs2025", "Administrator", is_admin=1)
-            print("Default admin user created (fresh install)")
-        except Exception:
-            pass
+        # 18.08.2026 (Fable 5): KEIN fest eingebautes Passwort mehr im Quellcode.
+        # Frueher wurde hier ein Admin mit dem oeffentlich im Code stehenden Passwort
+        # "inkludocs2025" angelegt -> auf jeder Frischinstallation dieselben bekannten
+        # Zugangsdaten (Sicherheitsluecke, oeffentlich einsehbar). Jetzt drei Wege:
+        #   - CREATE_DEFAULT_ADMIN=false  -> es wird GAR KEIN Admin angelegt
+        #     (so faehrt die oeffentliche Demo: sie braucht keinen Admin-Login).
+        #   - INITIAL_ADMIN_PASSWORD gesetzt -> dieses Passwort wird verwendet.
+        #   - sonst -> ein Zufallspasswort wird erzeugt und EINMALIG ins Log
+        #     geschrieben. Damit existiert nie ein bekanntes Standard-Passwort.
+        if os.getenv("CREATE_DEFAULT_ADMIN", "true").lower() not in ("false", "0", "no"):
+            _admin_email = os.getenv("INITIAL_ADMIN_EMAIL", "kontakt@inklutec.de")
+            _admin_pw_env = os.getenv("INITIAL_ADMIN_PASSWORD")
+            _admin_pw = _admin_pw_env or secrets.token_urlsafe(18)
+            try:
+                create_user(_admin_email, _admin_pw, "Administrator", is_admin=1)
+                if _admin_pw_env:
+                    print(f"Default-Admin '{_admin_email}' angelegt (Passwort aus INITIAL_ADMIN_PASSWORD).")
+                else:
+                    print(f"Default-Admin '{_admin_email}' angelegt mit ZUFALLSPASSWORT: {_admin_pw}")
+                    print("  -> bitte notieren und nach dem ersten Login aendern.")
+            except Exception as e:
+                print(f"Default-Admin-Anlage fehlgeschlagen: {e}")
+        else:
+            print("Kein Default-Admin angelegt (CREATE_DEFAULT_ADMIN=false).")
 
     # ── Demo-Modus: periodischer Aufraeumer fuer abgelaufene Sitzungen ──
     # Laeuft NUR bei DEMO_MODE=on (eigene Demo-Instanz). Entfernt Wegwerf-Sitzungen
@@ -510,7 +529,7 @@ async def login(request: Request):
         "display_name": user["display_name"],
         "is_admin": user["is_admin"],
     })
-    response.set_cookie("token", token, httponly=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
+    response.set_cookie("token", token, httponly=True, secure=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
     return response
 
 
@@ -4290,7 +4309,7 @@ async def demo_result(request: Request):
         image = {
             "id": img["id"],
             "status": img["status"],
-            "alt_text": _display_alt_text(img),
+            "alt_text": _ausgabe_alt_text(img) or "",
             "langbeschreibung": img["langbeschreibung"] or "",
             "image_type": img["image_type"] or "",
             "konfidenz": img["konfidenz"] or "",
@@ -4473,6 +4492,58 @@ def _web_page_text(soup) -> str:
     return "\n".join(parts)[:15000]
 
 
+# --- SSRF-Schutz fuer den URL-Scanner (18.08.2026, Fable 5) ------------------
+# Der Scanner ruft beliebige, vom Nutzer angegebene Adressen ab (Seite + alle
+# Bilder). Ohne Schutz kann ein angemeldeter Nutzer den Server interne Ziele
+# abrufen lassen (z.B. die Cloud-Metadaten-Adresse 169.254.169.254 -> AWS-
+# Zugangsdaten, oder localhost/private Netze). _pruefe_url_sicher() loest den
+# Host auf und blockiert interne Adressbereiche; _safe_fetch() folgt Redirects
+# MANUELL und prueft JEDEN Hop (follow_redirects=True wuerde die Vorpruefung
+# aushebeln) und begrenzt die Download-Groesse.
+# Bekannte Restgrenze: DNS-Rebinding (Aufloesung aendert sich zwischen Pruefung
+# und Abruf) ist nicht abgedeckt; die praktischen Angriffe (Metadaten,
+# localhost, private Bereiche) sind geschlossen.
+def _pruefe_url_sicher(url: str) -> None:
+    import ipaddress, socket
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="Nur HTTP/HTTPS-URLs werden unterstuetzt")
+    host = parsed.hostname
+    if not host:
+        raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
+    for info in infos:
+        ip_str = info[4][0]
+        try:
+            addr = ipaddress.ip_address(ip_str)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
+        mapped = getattr(addr, "ipv4_mapped", None)
+        if mapped is not None:
+            addr = mapped
+        if (addr.is_private or addr.is_loopback or addr.is_link_local
+                or addr.is_reserved or addr.is_multicast or addr.is_unspecified):
+            raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
+
+
+async def _safe_fetch(client, url, *, max_redirects: int = 5, max_bytes: int | None = None):
+    """SSRF-sicherer GET: prueft jeden Redirect-Hop, begrenzt die Groesse."""
+    current = url
+    for _ in range(max_redirects + 1):
+        _pruefe_url_sicher(current)
+        resp = await client.get(current, follow_redirects=False)
+        if resp.is_redirect and resp.headers.get("location"):
+            current = urljoin(current, resp.headers["location"])
+            continue
+        if max_bytes is not None and len(resp.content) > max_bytes:
+            raise HTTPException(status_code=413, detail="Datei zu gross")
+        return resp
+    raise HTTPException(status_code=502, detail="Zu viele Weiterleitungen")
+
+
 @app.post("/api/scan-url")
 async def scan_url(request: Request, user: dict = Depends(get_current_user)):
     """Scan a URL for images and create a project."""
@@ -4494,17 +4565,20 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="Nur HTTP/HTTPS-URLs werden unterstuetzt")
 
     try:
-        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-            response = await client.get(url, headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
-            })
+        _seiten_headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+        }
+        async with httpx.AsyncClient(timeout=30.0, headers=_seiten_headers) as client:
+            response = await _safe_fetch(client, url, max_bytes=15 * 1024 * 1024)
             response.raise_for_status()
+    except HTTPException:
+        raise
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="Zeitueberschreitung beim Laden der Seite")
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=502, detail=f"Seite nicht erreichbar: HTTP {e.response.status_code}")
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Fehler beim Laden der Seite: {str(e)}")
+    except Exception:
+        raise HTTPException(status_code=502, detail="Seite konnte nicht geladen werden")
 
     # Parse HTML
     soup = BeautifulSoup(response.text, "html.parser")
@@ -4722,7 +4796,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
 
             # Download image
             try:
-                img_response = await client.get(img_url)
+                img_response = await _safe_fetch(client, img_url, max_bytes=20 * 1024 * 1024)
                 img_response.raise_for_status()
                 img_content = img_response.content
 
@@ -4774,7 +4848,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                     for candidate_url in larger_urls:
                         try:
                             resolved_url = urljoin(url, candidate_url)
-                            larger_response = await client.get(resolved_url)
+                            larger_response = await _safe_fetch(client, resolved_url, max_bytes=20 * 1024 * 1024)
                             if larger_response.status_code == 200:
                                 larger_ct = larger_response.headers.get("content-type", "")
                                 if "image" in larger_ct:
@@ -5487,8 +5561,15 @@ async def _process_project(project_id: int, user_id: int):
             import traceback
             print(f"Fehler bei Bild {img['id']} ({img['image_path']}): {e}")
             print(traceback.format_exc())
-            conn.execute("UPDATE images SET status = 'error', alt_text = ? WHERE id = ?",
-                         (f"Fehler bei der Analyse: {str(e)[:200]}", img["id"]))
+            # 17.08.2026: alt_text NICHT mehr ueberschreiben. Das Feld wird
+            # ausgeliefert (PDF /Alt, JSON, CSV, XLSX, Public API, Demo) und
+            # wurde Screenreader-Nutzern als Bildbeschreibung vorgelesen —
+            # im Versuch belegt, 23 Faelle auf Produktion. Die Ursache steht
+            # im Log (print + traceback direkt darueber), der Zustand im
+            # Status. Gleiche Bauweise wie Zeile 5749 (Steve, 08.06.2026):
+            # "Bild ehrlich als Fehler markieren".
+            conn.execute("UPDATE images SET status = 'error' WHERE id = ?",
+                         (img["id"],))
 
         conn.execute(
             "UPDATE projects SET processed_images = ? WHERE id = ?",
@@ -5550,6 +5631,86 @@ def _display_alt_text(img):
     """Frontend-Fallback in Python: User-Edit > KI-Output > Original aus Quelle.
     Symmetrisch zur Render-Logik in app.html (textarea-value)."""
     return img["alt_text_edited"] or img["alt_text"] or img["original_alt"]
+
+
+# 17.08.2026: Zweite Verteidigungslinie an der Systemgrenze.
+# Befund: 23 Bilder auf Produktion trugen eine technische Fehlermeldung im
+# Feld alt_text; im Versuch belegt, dass sie als /Alt im exportierten PDF
+# landet und Screenreader-Nutzern als Bildbeschreibung vorgelesen wird.
+# Die Ursache ist mit dem Fix an der Schreibstelle behoben (nur ein aktiver
+# Weg, vollstaendige Inventur 17.08.). Dieser Filter deckt zwei Dinge ab:
+# die Altdaten, die noch in der Datenbank stehen, und kuenftige Regressionen
+# an einer Stelle, die niemand mehr im Blick hat.
+# Treffgenauigkeit an ALLEN 2378 Prod-Alt-Texten gemessen: 23 Treffer,
+# ausnahmslos echte Fehlermeldungen, kein einziger Fehlgriff. Erhalten
+# bleiben z.B. "Navigationsfehler von Studienteilnehmern" und
+# "Fehler bei der Analyse der Bodenproben" — der Doppelpunkt bzw. der volle
+# Wortlaut ist Teil des Musters.
+_FEHLER_PRAEFIXE = (
+    "fehler bei der analyse:",
+    "pipeline-fehler:",
+    "bedrock invoke_model fehlgeschlagen",
+    "mistral-aufruf fehlgeschlagen",
+    "[modell-antwort konnte nicht verarbeitet werden",
+    # 18.08.2026 (Fable 5): zusaetzliche technische Praefixe fuer rohe interne
+    # wie externe Meldungen (AWS/boto3/HTTP/Python). An ALLEN 3585 echten
+    # Prod-Texten geprueft: 0 Falschtreffer. Nur am Textanfang -> sicher.
+    "an error occurred",
+    "throttlingexception",
+    "server error '",
+    "traceback (most recent call",
+    "botocore",
+    "httperror",
+    "connection error",
+    "connecterror",
+    "readtimeout",
+    "500 internal server error",
+    "502 bad gateway",
+    "503 service",
+)
+
+
+def ist_pipeline_fehlertext(text) -> bool:
+    """True, wenn der Text eine technische Fehlermeldung unserer Pipeline ist.
+
+    Bewusst streng: nur unsere eigenen Praefixe und nur am Textanfang.
+    """
+    if not text:
+        return False
+    anfang = str(text).strip().lower()
+    return any(anfang.startswith(p) for p in _FEHLER_PRAEFIXE)
+
+
+def _ausgabe_alt_text(img):
+    """Alt-Text fuer alles, was das System VERLAESST: Datei-Exporte, Public
+    API, oeffentliche Demo.
+
+    Unterschied zu _display_alt_text: technische Fehlermeldungen werden zu
+    None. In der angemeldeten Oberflaeche bleibt die Meldung sichtbar — dort
+    ist sie ein Hinweis, kein Inhalt. Nach aussen geht sie nie.
+    """
+    text = _display_alt_text(img)
+    if ist_pipeline_fehlertext(text):
+        return None
+    return text
+
+
+def _ohne_fehlertext(text):
+    """Fuer Ausgabefelder OHNE img-Kontext (langbeschreibung, API-Strings):
+    gibt '' zurueck, wenn der Text eine technische Meldung ist, sonst den Text.
+    Zusammen mit _ausgabe_alt_text deckt das JEDEN Ausgang ab -> nie eine
+    Meldung nach aussen, in KEINEM Textfeld."""
+    return "" if ist_pipeline_fehlertext(text) else (text or "")
+
+
+def _csv_safe(text):
+    """CSV/XLSX-Formel-Injection entschaerfen: Zellen, die mit = + - @ (oder
+    einem Steuerzeichen) beginnen, bekommen ein vorangestelltes Apostroph.
+    Excel/Calc zeigen den Text unveraendert, fuehren ihn aber nicht als Formel aus."""
+    s = "" if text is None else str(text)
+    if s[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + s
+    return s
 
 
 @app.post("/api/images/{image_id}/feedback")
@@ -5877,7 +6038,7 @@ def _exportable_alt_text(img) -> Optional[str]:
     Original-Alt-Textes. Vorher schrieb der Export leere /Alt-Eintraege in
     die Datei (Befund 12.06.2026: Export eines teilbearbeiteten Projekts
     erzeugte 6 leere Alt-Texte, die Pruefwerkzeuge als Fehler werten)."""
-    alt_text = _display_alt_text(img)
+    alt_text = _ausgabe_alt_text(img)
     if alt_text is None:
         return None
     if alt_text == "dekorativ" or alt_text.strip():
@@ -6123,9 +6284,9 @@ def _build_json_bytes(unit: dict, project_name: str) -> bytes:
         "bilder": [],
     }
     for img in unit["images"]:
-        alt_text = _display_alt_text(img)
+        alt_text = _ausgabe_alt_text(img)
         entry = {"alt_text": alt_text or ""}
-        lang = img.get("langbeschreibung") or ""
+        lang = _ohne_fehlertext(img.get("langbeschreibung"))
         if lang:
             entry["langbeschreibung"] = lang
         export_data["bilder"].append(entry)
@@ -6137,8 +6298,8 @@ def _build_csv_bytes(unit: dict) -> bytes:
     writer = csv.writer(output, delimiter=";")
     writer.writerow(["Alt-Text", "Langbeschreibung"])
     for img in unit["images"]:
-        alt_text = _display_alt_text(img)
-        writer.writerow([alt_text or "", img.get("langbeschreibung") or ""])
+        alt_text = _ausgabe_alt_text(img)
+        writer.writerow([_csv_safe(alt_text or ""), _csv_safe(_ohne_fehlertext(img.get("langbeschreibung")))])
     return output.getvalue().encode("utf-8-sig")
 
 
@@ -6161,8 +6322,8 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
 
     for i, img in enumerate(unit["images"]):
         row = i + 2
-        alt_text = _display_alt_text(img)
-        langbeschreibung = img.get("langbeschreibung") or ""
+        alt_text = _ausgabe_alt_text(img)
+        langbeschreibung = _ohne_fehlertext(img.get("langbeschreibung"))
         img_path = img.get("image_path") or ""
         img_filename = os.path.basename(img_path) if img_path else "unbekannt"
         ws[f"A{row}"] = img_filename
@@ -6188,9 +6349,9 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
                 ws.add_image(xl_img, f"A{row}")
             except Exception:
                 pass
-        ws[f"B{row}"] = alt_text or ""
+        ws[f"B{row}"] = _csv_safe(alt_text or "")
         ws[f"B{row}"].alignment = Alignment(wrap_text=True, vertical="top")
-        ws[f"C{row}"] = langbeschreibung
+        ws[f"C{row}"] = _csv_safe(langbeschreibung)
         ws[f"C{row}"].alignment = Alignment(wrap_text=True, vertical="top")
 
     buf = io.BytesIO()
@@ -6273,6 +6434,56 @@ async def export_csv(project_id: int, request: Request, user: dict = Depends(get
 async def export_xlsx(project_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Multi-Datei: ohne document_id alle Dokumente als ZIP, sonst Einzeldatei."""
     return await _table_export_dispatch(project_id, request, user, "xlsx")
+
+
+@app.post("/api/projects/{project_id}/export/summary")
+async def export_summary(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Ehrlichkeits-Zusammenfassung VOR dem Export (18.08.2026, Fable 5).
+    Zaehlt, wie viele Bilder eine echte Beschreibung bekommen und wie viele
+    uebersprungen werden (mit Grund: Fehler oder noch nicht generiert). So
+    sieht der Kunde vor dem Herunterladen, ob sein Dokument Luecken hat.
+    Es wird NUR gezaehlt — nichts davon wandert in den Export oder den Inhalt.
+    Zaehlweise identisch zum Export: _ausgabe_alt_text (Fehlertext-gefiltert)."""
+    document_id, _name = await _read_export_options(request)
+    conn = get_db()
+    projekt = conn.execute(
+        "SELECT id FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not projekt:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    if document_id is not None:
+        rows = conn.execute(
+            "SELECT * FROM images WHERE project_id = ? AND document_id = ?",
+            (project_id, document_id),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM images WHERE project_id = ?", (project_id,)
+        ).fetchall()
+    conn.close()
+
+    total = beschrieben = dekorativ = fehler = offen = 0
+    for r in rows:
+        img = dict(r)
+        total += 1
+        ausgabe = _ausgabe_alt_text(img)
+        if ausgabe == "dekorativ":
+            dekorativ += 1
+        elif ausgabe and ausgabe.strip():
+            beschrieben += 1
+        elif img.get("status") == "error":
+            fehler += 1
+        else:
+            offen += 1
+    return JSONResponse(content={
+        "total": total,
+        "beschrieben": beschrieben,
+        "dekorativ": dekorativ,
+        "uebersprungen": fehler + offen,
+        "fehler": fehler,
+        "offen": offen,
+    })
 
 
 # ─── Public API ──────────────────────────────────────────────
@@ -6433,8 +6644,8 @@ async def api_generate_alt_text(request: Request):
             result_id=result_id,
             user_id=api_user["id"],
             api_key_id=api_key_id,
-            alt_text=result.get("alt_text", ""),
-            langbeschreibung=result.get("langbeschreibung", ""),
+            alt_text=_ohne_fehlertext(result.get("alt_text")),
+            langbeschreibung=_ohne_fehlertext(result.get("langbeschreibung")),
             bildtyp=result.get("bildtyp", "unbekannt"),
             konfidenz=result.get("konfidenz", "mittel"),
             model_used=model_used,
@@ -6445,8 +6656,10 @@ async def api_generate_alt_text(request: Request):
 
         response_data = {
             "result_id": result_id,
-            "alt_text": result.get("alt_text", ""),
-            "langbeschreibung": result.get("langbeschreibung", ""),
+            # 17.08.2026: keine technischen Fehlermeldungen an API-Kunden
+            "alt_text": ("" if ist_pipeline_fehlertext(result.get("alt_text"))
+                         else result.get("alt_text", "")),
+            "langbeschreibung": _ohne_fehlertext(result.get("langbeschreibung")),
             "bildtyp": result.get("bildtyp", "unbekannt"),
             "konfidenz": result.get("konfidenz", "mittel"),
             "processing_time_ms": processing_time_ms,
@@ -6488,8 +6701,8 @@ async def api_get_alt_text(result_id: str, request: Request):
 
     return JSONResponse(content={
         "result_id": result["id"],
-        "alt_text": result["alt_text"],
-        "langbeschreibung": result["langbeschreibung"],
+        "alt_text": _ohne_fehlertext(result["alt_text"]),
+        "langbeschreibung": _ohne_fehlertext(result["langbeschreibung"]),
         "bildtyp": result["bildtyp"],
         "konfidenz": result["konfidenz"],
         "created_at": result["created_at"],
@@ -7334,7 +7547,7 @@ async def freigabe_confirm(token: str, request: Request):
         raise HTTPException(status_code=403, detail="E-Mail stimmt nicht mit der Einladung ueberein.")
     resp = JSONResponse({"ok": True})
     resp.set_cookie("guest_token", create_guest_token(token, email.lower()),
-                    httponly=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
+                    httponly=True, secure=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
     return resp
 
 

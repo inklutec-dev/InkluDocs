@@ -3437,3 +3437,27 @@ msgstr "Vil du virkelig slette billedet ”{name}”? Dette kan ikke fortrydes."
 #: multi-datei-phase2 (14.08.2026)
 msgid "– Bild „{name}\""
 msgstr "– billede ”{name}”"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Bilder werden geprüft …"
+msgstr "Kontrollerer billeder …"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid ", {n} als dekorativ markiert"
+msgstr ", {n} markeret som dekorativ"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
+msgstr "Alle {n} billeder har en beskrivelse{dek}."
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} mit Fehler"
+msgstr "{n} med fejl"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} noch nicht generiert"
+msgstr "{n} endnu ikke genereret"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
+msgstr "{b} af {n} billeder har en beskrivelse{dek}. {s} springes over: {g}."

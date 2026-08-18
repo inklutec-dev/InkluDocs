@@ -3746,3 +3746,27 @@ msgstr "¿Seguro que desea eliminar la imagen «{name}»? Esto no se puede desha
 #: multi-datei-phase2 (14.08.2026)
 msgid "– Bild „{name}\""
 msgstr "– imagen «{name}»"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Bilder werden geprüft …"
+msgstr "Comprobando las imágenes …"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid ", {n} als dekorativ markiert"
+msgstr ", {n} marcada(s) como decorativa(s)"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
+msgstr "Las {n} imágenes tienen una descripción{dek}."
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} mit Fehler"
+msgstr "{n} con error"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{n} noch nicht generiert"
+msgstr "{n} aún sin generar"
+
+#: export-summary (18.08.2026, Fable 5)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
+msgstr "{b} de {n} imágenes tienen una descripción{dek}. {s} se omitirán: {g}."
