@@ -1,6 +1,20 @@
 {
-  "szene": "Draufsicht auf etwa 25 handgetöpferte Gefäße, cremefarbene Innenglasur, blau-schwarze Reaktivglasur-Ränder, rosa Textiluntergrund. Die Gefäße sind leer; das Cremefarbene ist Glasur.",
+ "szene": "Draufsicht auf etwa 25 handgetöpferte Gefäße, cremefarbene Innenglasur, blau-schwarze Reaktivglasur-Ränder, rosa Textiluntergrund. Die Gefäße sind leer; das Cremefarbene ist Glasur.",
+ "alt_text": "Etwa 25 handgetöpferte Keramikschalen verschiedener Größen, von oben fotografiert: cremefarbene Innenglasur mit blau-grauer Sprenkelung und dunklem Rand, dicht auf einem rosa Textiltuch ausgelegt.",
+ "begruendung": "Benennt das Material 'Keramik' selbstbewusst, weil Form und Glasur es klar tragen. Das helle Innere wird als GLASUR beschrieben, nicht als Inhalt — es ist nichts in den Schalen.",
+ "prinzip": "Material und Typ benennen, wenn visuell klar. Innenflächen von Behältern als Oberfläche oder Glasur beschreiben. Sichtbaren Inhalt darf man nennen; nicht sichtbaren Inhalt niemals erfinden.",
+ "antwort": {
   "alt_text": "Etwa 25 handgetöpferte Keramikschalen verschiedener Größen, von oben fotografiert: cremefarbene Innenglasur mit blau-grauer Sprenkelung und dunklem Rand, dicht auf einem rosa Textiltuch ausgelegt.",
-  "begruendung": "Benennt das Material 'Keramik' selbstbewusst, weil Form und Glasur es klar tragen. Das helle Innere wird als GLASUR beschrieben, nicht als Inhalt — es ist nichts in den Schalen.",
-  "prinzip": "Material und Typ benennen, wenn visuell klar. Innenflächen von Behältern als Oberfläche oder Glasur beschreiben. Sichtbaren Inhalt darf man nennen; nicht sichtbaren Inhalt niemals erfinden."
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+   "etwa 25 handgetöpferte Keramikschalen",
+   "cremefarbene Innenglasur",
+   "blau-graue Sprenkelung",
+   "dunkler Rand",
+   "rosa Textiltuch"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ }
 }

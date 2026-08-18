@@ -1,8 +1,22 @@
 {
-  "szene": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Wikimedia-Grafik Population_curve.svg): x-Achse Jahrtausende, y-Achse Bevölkerung in Milliarden. Die Kurve verläuft über fast den gesamten Zeitraum nahe der Nulllinie und steigt erst ab etwa 1800 steil an, bis auf rund 6 Milliarden im Jahr 2000.",
+ "szene": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Wikimedia-Grafik Population_curve.svg): x-Achse Jahrtausende, y-Achse Bevölkerung in Milliarden. Die Kurve verläuft über fast den gesamten Zeitraum nahe der Nulllinie und steigt erst ab etwa 1800 steil an, bis auf rund 6 Milliarden im Jahr 2000.",
+ "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, erst ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
+ "begruendung": "Kernaussage zuerst: Der erste Satz transportiert die wichtigste Erkenntnis (jahrtausendelange Stagnation, dann steiler Anstieg) mit konkreten, im Diagramm belegten Werten (ab etwa 1800, rund 6 Milliarden im Jahr 2000) statt vage 'die Kurve steigt'. Diagrammtyp und Zeitraum sind benannt, Trend-Vokabular ('steil an') ist sichtbar belegt. Keine Ursachen behauptet.",
+ "prinzip": "Der erste Satz trägt die Kernaussage mit konkreten Werten. Trend-Vokabular nur, wenn der Verlauf es sichtbar belegt; keine Ursachen erfinden.",
+ "quelle": "Wikimedia Commons: Population_curve.svg",
+ "lizenz": "Wikimedia Commons, frei lizenziert",
+ "antwort": {
   "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, erst ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
-  "begruendung": "Kernaussage zuerst: Der erste Satz transportiert die wichtigste Erkenntnis (jahrtausendelange Stagnation, dann steiler Anstieg) mit konkreten, im Diagramm belegten Werten (ab etwa 1800, rund 6 Milliarden im Jahr 2000) statt vage 'die Kurve steigt'. Diagrammtyp und Zeitraum sind benannt, Trend-Vokabular ('steil an') ist sichtbar belegt. Keine Ursachen behauptet.",
-  "prinzip": "Der erste Satz trägt die Kernaussage mit konkreten Werten. Trend-Vokabular nur, wenn der Verlauf es sichtbar belegt; keine Ursachen erfinden.",
-  "quelle": "Wikimedia Commons: Population_curve.svg",
-  "lizenz": "Wikimedia Commons, frei lizenziert"
+  "langbeschreibung": "Das Liniendiagramm stellt die Entwicklung der Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. dar. Die x-Achse umfasst den Zeitraum, die y-Achse die Bevölkerung in Milliarden. Über fast den gesamten Zeitraum verläuft die Kurve nahe der Nulllinie. Ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
+  "verwendete_inventar_items": [
+   "Liniendiagramm",
+   "x-Achse: 10.000 v. Chr. bis 2000 n. Chr.",
+   "y-Achse: Bevölkerung in Milliarden",
+   "Kurve nahe null bis etwa 1800",
+   "steiler Anstieg auf rund 6 Milliarden im Jahr 2000"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ }
 }

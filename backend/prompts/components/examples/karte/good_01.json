@@ -1,8 +1,22 @@
 {
-  "szene": "Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle. Deutliche Häufung der Marker im Süden um München und Stuttgart, vereinzelte Marker im Norden bei Hamburg; beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin.",
+ "szene": "Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle. Deutliche Häufung der Marker im Süden um München und Stuttgart, vereinzelte Marker im Norden bei Hamburg; beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin.",
+ "alt_text": "Karte — Deutschland: Verteilung von 45 Beratungsstellen mit deutlicher Konzentration im Süden um München und Stuttgart, vereinzelten Standorten im Norden bei Hamburg; große Kreise stehen laut Legende für Beratungsstellen mit Werkstatt, kleine für reine Beratungsstellen.",
+ "begruendung": "Beginnt mit dem Pflicht-Präfix 'Karte —' plus Gebiet, Hauptthema und räumlicher Kernaussage (Konzentration im Süden). Ortsnamen wortgetreu in Originalsprache (München, Köln — nicht Munich, Cologne). Die Marker-Größen werden aus der Legende erklärt statt gedeutet; räumliche Lage mit Himmelsrichtungen (Süden, Norden) statt 'oben/unten'. Exakte Anzahl (45) statt 'viele'.",
+ "prinzip": "Mit 'Karte —' + Gebiet und räumlicher Kernaussage führen, Symbolbedeutung ausschließlich aus der Legende, Ortsnamen wortgetreu in Originalsprache, Himmelsrichtungen statt Bildkoordinaten.",
+ "quelle": "fiktives Beispiel (generische Standortkarte, keine echten Kundendaten)",
+ "lizenz": "fiktives Beispiel",
+ "antwort": {
   "alt_text": "Karte — Deutschland: Verteilung von 45 Beratungsstellen mit deutlicher Konzentration im Süden um München und Stuttgart, vereinzelten Standorten im Norden bei Hamburg; große Kreise stehen laut Legende für Beratungsstellen mit Werkstatt, kleine für reine Beratungsstellen.",
-  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Karte —' plus Gebiet, Hauptthema und räumlicher Kernaussage (Konzentration im Süden). Ortsnamen wortgetreu in Originalsprache (München, Köln — nicht Munich, Cologne). Die Marker-Größen werden aus der Legende erklärt statt gedeutet; räumliche Lage mit Himmelsrichtungen (Süden, Norden) statt 'oben/unten'. Exakte Anzahl (45) statt 'viele'.",
-  "prinzip": "Mit 'Karte —' + Gebiet und räumlicher Kernaussage führen, Symbolbedeutung ausschließlich aus der Legende, Ortsnamen wortgetreu in Originalsprache, Himmelsrichtungen statt Bildkoordinaten.",
-  "quelle": "fiktives Beispiel (generische Standortkarte, keine echten Kundendaten)",
-  "lizenz": "fiktives Beispiel"
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+   "Deutschlandkarte",
+   "45 blaue Punkt-Markierungen",
+   "Legende: große und kleine Kreise",
+   "Häufung im Süden um München und Stuttgart",
+   "vereinzelte Marker im Norden bei Hamburg"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ }
 }

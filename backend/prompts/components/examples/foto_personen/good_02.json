@@ -1,0 +1,20 @@
+{
+ "szene": "Farbfoto einer Feierstunde: Fünf Personen stehen nebeneinander auf einer Bühne, eine hält eine Urkunde. Der Umgebungstext nennt 'unser Projektteam, darunter Lena Hartkamp, Timur Kaya und Ines Vogel' — OHNE Zuordnung, wer auf dem Foto wer ist; keine Person ist einzeln hervorgehoben oder beschriftet.",
+ "alt_text": "Fünf Personen stehen nebeneinander auf einer Bühne bei einer Feierstunde; eine von ihnen hält eine Urkunde.",
+ "antwort": {
+  "alt_text": "Fünf Personen stehen nebeneinander auf einer Bühne bei einer Feierstunde; eine von ihnen hält eine Urkunde.",
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+   "fünf Personen nebeneinander",
+   "Bühne",
+   "Urkunde"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ },
+ "begruendung": "Der Kontext nennt drei Namen für fünf sichtbare Personen ohne jede Zuordnung ('darunter ...'). Keiner der Namen ist nachprüfbar genau einer Person zuzuordnen — deshalb bleiben ALLE Namen weg und die Personen werden neutral benannt. Das ist Datenschutz, kein Qualitätsmangel.",
+ "prinzip": "Namen aus dem Kontext nur bei nachprüfbarer Zuordnung zu genau einer sichtbaren Person. Nennt der Kontext mehrere Namen ohne Zuordnung (Teil-Listen, 'darunter ...', 'und weitere'), bleiben ALLE Namen weg — Personen neutral benennen.",
+ "quelle": "Konstruiertes Beispiel (Fable 5, 18.08.2026), keine reale Person",
+ "lizenz": "eigenes Werk"
+}

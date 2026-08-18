@@ -1,6 +1,23 @@
 {
-  "szene": "Heller Seminarraum: acht Personen in einer Reihe (eine neunte teils verdeckt), mehrere halten runde orange und weiße Karten hoch, Namensschilder, rotes Sofa links, Acer-Logo/Beamer und weißgedeckter Catering-Tisch im Hintergrund.",
+ "szene": "Heller Seminarraum: acht Personen in einer Reihe (eine neunte teils verdeckt), mehrere halten runde orange und weiße Karten hoch, Namensschilder, rotes Sofa links, Acer-Logo/Beamer und weißgedeckter Catering-Tisch im Hintergrund.",
+ "alt_text": "Workshop in hellem Seminarraum: acht Personen stehen in einer Reihe, mehrere halten orange und weiße Abstimmkarten hoch; links ein rotes Sofa, im Hintergrund ein Acer-Beamer und ein Catering-Tisch.",
+ "begruendung": "Führt mit der Art der Szene (Workshop) statt mit einer generischen Zählung. Benennt die Funktion 'Abstimmkarten', weil Form (hochgehaltene runde Karten) UND Setting (Workshop) sie klar tragen. Zählt exakt (acht). Fließtext, kein Markdown.",
+ "prinzip": "Eine Funktion benennen, wenn Form UND Setting sie klar tragen. Mit der Szenen-Art beginnen, exakt zählen, barrierefrei schreiben (kein Markdown).",
+ "antwort": {
   "alt_text": "Workshop in hellem Seminarraum: acht Personen stehen in einer Reihe, mehrere halten orange und weiße Abstimmkarten hoch; links ein rotes Sofa, im Hintergrund ein Acer-Beamer und ein Catering-Tisch.",
-  "begruendung": "Führt mit der Art der Szene (Workshop) statt mit einer generischen Zählung. Benennt die Funktion 'Abstimmkarten', weil Form (hochgehaltene runde Karten) UND Setting (Workshop) sie klar tragen. Zählt exakt (acht). Fließtext, kein Markdown.",
-  "prinzip": "Eine Funktion benennen, wenn Form UND Setting sie klar tragen. Mit der Szenen-Art beginnen, exakt zählen, barrierefrei schreiben (kein Markdown)."
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+   "acht Personen in einer Reihe",
+   "orange und weiße Abstimmkarten",
+   "rotes Sofa",
+   "Acer-Beamer",
+   "Catering-Tisch"
+  ],
+  "nicht_verwendete_inventar_items": [
+   "Namensschilder",
+   "neunte teils verdeckte Person"
+  ],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ }
 }

@@ -1,8 +1,23 @@
 {
-  "szene": "Schwarz-Weiß-Foto: eine Frau in dunklem, hochgeschlossenem Kleid steht an einem Labortisch mit Glaskolben und einer Messapparatur, die rechte Hand hält ein Glasgefäß, der Blick ist auf die Apparatur gerichtet. Bildunterschrift im Dokument: 'Marie Curie in ihrem Pariser Labor, um 1912'. Nur eine Person sichtbar.",
-  "alt_text": "Marie Curie in ihrem Pariser Labor, um 1912: Die Physikerin steht in dunklem, hochgeschlossenem Kleid an einem Labortisch mit Glaskolben und einer Messapparatur und hält ein Glasgefäß in der rechten Hand, den Blick auf die Apparatur gerichtet.",
-  "begruendung": "Namen-Pflicht erfüllt: Die Bildunterschrift benennt die einzige sichtbare Person eindeutig, also steht 'Marie Curie' im Alt-Text — nicht erst in der Langbeschreibung. Führt mit Person und Situation statt mit 'Das Foto zeigt'. Nennt belegte visuelle Marker (dunkles Kleid, Glasgefäß, Labortisch) und Blickrichtung, aber keine Emotion und kein 'wirkt konzentriert'. Zählt exakt (eine Person).",
-  "prinzip": "Bei eindeutiger Kontext-Benennung gehört der Name in den Alt-Text. Haltung, Blickrichtung und prägende Marker beobachtend beschreiben — keine Gefühle oder Motive vermuten.",
-  "quelle": "fiktives Beispiel (historische Person des öffentlichen Lebens, Szene generisch nach dem Bogart-Muster)",
-  "lizenz": "fiktives Beispiel"
+ "szene": "Schwarz-Weiß-Foto: eine Frau in dunklem, hochgeschlossenem Kleid steht an einem Labortisch mit Glaskolben und einer Messapparatur, die rechte Hand hält ein Glasgefäß, der Blick ist auf die Apparatur gerichtet. Bildunterschrift im Dokument: 'Marie Curie in ihrem Pariser Labor, um 1912'. Nur eine Person sichtbar.",
+ "alt_text": "Marie Curie steht um 1912 in ihrem Pariser Labor in dunklem, hochgeschlossenem Kleid an einem Labortisch mit Glaskolben und einer Messapparatur; in der rechten Hand hält sie ein Glasgefäß, den Blick auf die Apparatur gerichtet.",
+ "begruendung": "Namen-Pflicht erfüllt: Die Bildunterschrift benennt die einzige sichtbare Person eindeutig, also steht 'Marie Curie' im Alt-Text — nicht erst in der Langbeschreibung. Führt mit Person und Situation statt mit 'Das Foto zeigt'. Nennt belegte visuelle Marker (dunkles Kleid, Glasgefäß, Labortisch) und Blickrichtung, aber keine Emotion und kein 'wirkt konzentriert'. Zählt exakt (eine Person).",
+ "prinzip": "Bei eindeutiger Kontext-Benennung gehört der Name in den Alt-Text — als Subjekt des ersten Satzes, ohne die Person danach erneut anonym einzuführen. Haltung, Blickrichtung und prägende Marker beobachtend beschreiben.",
+ "quelle": "fiktives Beispiel (historische Person des öffentlichen Lebens, Szene generisch nach dem Bogart-Muster)",
+ "lizenz": "fiktives Beispiel",
+ "antwort": {
+  "alt_text": "Marie Curie steht um 1912 in ihrem Pariser Labor in dunklem, hochgeschlossenem Kleid an einem Labortisch mit Glaskolben und einer Messapparatur; in der rechten Hand hält sie ein Glasgefäß, den Blick auf die Apparatur gerichtet.",
+  "langbeschreibung": "Marie Curie steht aufrecht an einem hölzernen Labortisch, auf dem mehrere Glaskolben und eine Messapparatur aufgebaut sind. Sie trägt ein dunkles, hochgeschlossenes Kleid mit langen Ärmeln, das Haar ist hochgesteckt. Mit der rechten Hand hält sie ein kleines Glasgefäß auf Brusthoehe, der Blick ist auf die Apparatur gerichtet. Die Aufnahme entstand um 1912 in ihrem Pariser Labor.",
+  "verwendete_inventar_items": [
+   "eine Frau (laut Bildunterschrift Marie Curie)",
+   "dunkles hochgeschlossenes Kleid",
+   "Labortisch",
+   "Glaskolben",
+   "Messapparatur",
+   "Glasgefäß in der rechten Hand"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ }
 }

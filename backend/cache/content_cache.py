@@ -75,6 +75,7 @@ def build_cache_key(
     user_hint: Optional[str],
     pipeline_version: str = "v3_7",
     language: str = "de",
+    enriched_context: str = "",
 ) -> str:
     """Cache-Key zusammenbauen. Reihenfolge: pipeline:content:type:hinthash[:lang].
 
@@ -90,6 +91,14 @@ def build_cache_key(
     ]
     if language and language != "de":
         parts.append("lang=" + language)
+    # 18.08.2026 (Fable 5): Kontext-Anteil im Schluessel — nur wenn Kontext
+    # vorhanden, damit Bilder ohne Kontext ihre bestehenden Schluessel behalten
+    # (kein kalter Cache). Verhindert, dass dasselbe Bild bei verschiedenen
+    # Kunden denselben kontextabgeleiteten Alt-Text (inkl. Namen) teilt.
+    if enriched_context and enriched_context.strip():
+        import hashlib
+        parts.append("ctx=" + hashlib.sha256(
+            enriched_context.strip().encode("utf-8")).hexdigest()[:16])
     return ":".join(parts)
 
 

@@ -1,8 +1,23 @@
 {
-  "szene": "Periodensystem der Elemente als Grafik (Wikimedia-Grafik Periodic_table_large.svg): 118 Elemente in 18 Gruppen (Spalten) und 7 Perioden (Zeilen), jede Zelle mit Elementsymbol, Ordnungszahl und Name, von Wasserstoff (H, 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide als zwei separate Zeilen unterhalb der Haupttabelle.",
+ "szene": "Periodensystem der Elemente als Grafik (Wikimedia-Grafik Periodic_table_large.svg): 118 Elemente in 18 Gruppen (Spalten) und 7 Perioden (Zeilen), jede Zelle mit Elementsymbol, Ordnungszahl und Name, von Wasserstoff (H, 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide als zwei separate Zeilen unterhalb der Haupttabelle.",
+ "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente, angeordnet in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide stehen als zwei separate Zeilen unterhalb der Haupttabelle.",
+ "begruendung": "Beginnt mit dem Pflicht-Präfix 'Tabelle —' plus Thema und trägt die Kernaussage über die belegten Endwerte: exakt 118 Elemente, erster und letzter Eintrag mit wortgetreuen Symbolen und Ordnungszahlen (Zähl-Disziplin, keine gerundeten oder erfundenen Werte). Die Struktur (18 Gruppen, 7 Perioden, Sonderzeilen) macht die Tabelle ohne Layout-Geschwätz nachvollziehbar. Fließtext, keine Markdown-Tabelle.",
+ "prinzip": "Mit 'Tabelle —' + Thema und der wichtigsten Aussage auf Basis der richtigen Endwerte führen; Zahlen, Symbole und Struktur wortgetreu und exakt übernehmen.",
+ "quelle": "Wikimedia Commons: Periodic_table_large.svg",
+ "lizenz": "Wikimedia Commons, frei lizenziert",
+ "antwort": {
   "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente, angeordnet in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide stehen als zwei separate Zeilen unterhalb der Haupttabelle.",
-  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Tabelle —' plus Thema und trägt die Kernaussage über die belegten Endwerte: exakt 118 Elemente, erster und letzter Eintrag mit wortgetreuen Symbolen und Ordnungszahlen (Zähl-Disziplin, keine gerundeten oder erfundenen Werte). Die Struktur (18 Gruppen, 7 Perioden, Sonderzeilen) macht die Tabelle ohne Layout-Geschwätz nachvollziehbar. Fließtext, keine Markdown-Tabelle.",
-  "prinzip": "Mit 'Tabelle —' + Thema und der wichtigsten Aussage auf Basis der richtigen Endwerte führen; Zahlen, Symbole und Struktur wortgetreu und exakt übernehmen.",
-  "quelle": "Wikimedia Commons: Periodic_table_large.svg",
-  "lizenz": "Wikimedia Commons, frei lizenziert"
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+   "118 Elemente",
+   "18 Gruppen",
+   "7 Perioden",
+   "Wasserstoff (H, 1)",
+   "Oganesson (Og, 118)",
+   "Lanthanoide und Actinoide als separate Zeilen"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ }
 }

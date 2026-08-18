@@ -91,12 +91,20 @@ class Examples:
     bad_examples: list[dict] = field(default_factory=list)
 
     def format_for_prompt(self) -> str:
-        """Formatiert die Beispiele für die Aufnahme in den Prompt.
+        """Formatiert die Beispiele fuer die Aufnahme in den Prompt.
 
-        Pro Beispiel kommt ein Header (POSITIVES BEISPIEL / NEGATIV-BEISPIEL)
-        plus das vollständige JSON. Falls keine Beispiele vorhanden sind:
-        Hinweis-Text 'noch keine Beispiele kuratiert' (zwingt den Eval-
-        Workflow nicht, sondern signalisiert das dem Modell ehrlich).
+        Umbau 18.08.2026 (Fable 5, Textguete-Runde): Positive Beispiele
+        zeigen jetzt Szene + GUELTIGE ANTWORT im echten Ausgabe-Schema
+        (Schluessel 'antwort' in der Beispieldatei) statt des rohen
+        Lehr-JSONs mit fremden Schluesseln (szene/begruendung/prinzip) —
+        das Modell sah vorher kein einziges valides Muster seiner eigenen
+        Ausgabe. Metadaten (begruendung, quelle, lizenz) bleiben in der
+        Datei fuer Menschen, gelangen aber NICHT mehr in den Prompt.
+        'prinzip' wird als kurzer Merksatz gerendert.
+        Anti-Pattern-Beispiele werden als Prosa gerendert (Szene,
+        schlechter Alt-Text, Fehlerliste, Besser-Hinweis).
+        Altformat ohne 'antwort'-Schluessel: Fallback zeigt nur den
+        Alt-Text, nie mehr die Lehr-Schluessel.
         """
         if not self.good_examples and not self.bad_examples:
             return f'(Noch keine Few-Shot-Beispiele für Bildtyp "{self.bildtyp}" kuratiert.)'
@@ -104,11 +112,26 @@ class Examples:
         lines: list[str] = []
         for i, ex in enumerate(self.good_examples, start=1):
             lines.append(f'POSITIVES BEISPIEL {i}:')
-            lines.append(json.dumps(ex, ensure_ascii=False, indent=2))
+            if ex.get('szene'):
+                lines.append(f'Szene: {ex["szene"]}')
+            antwort = ex.get('antwort')
+            if antwort is not None:
+                lines.append('Gueltige Antwort (exakt dieses JSON-Format):')
+                lines.append(json.dumps(antwort, ensure_ascii=False, indent=2))
+            else:
+                lines.append('Guter Alt-Text: ' + json.dumps(ex.get('alt_text', ''), ensure_ascii=False))
+            if ex.get('prinzip'):
+                lines.append(f'(Merksatz: {ex["prinzip"]})')
             lines.append('')
         for i, ex in enumerate(self.bad_examples, start=1):
             lines.append(f'ANTI-PATTERN-BEISPIEL {i} (NICHT so machen):')
-            lines.append(json.dumps(ex, ensure_ascii=False, indent=2))
+            if ex.get('szene'):
+                lines.append(f'Szene: {ex["szene"]}')
+            lines.append('Schlechter Alt-Text: ' + json.dumps(ex.get('alt_text', ''), ensure_ascii=False))
+            for fehler in ex.get('fehler', []):
+                lines.append(f'- Fehler: {fehler}')
+            if ex.get('besser'):
+                lines.append(f'Besser: {ex["besser"]}')
             lines.append('')
         return '\n'.join(lines).rstrip()
 

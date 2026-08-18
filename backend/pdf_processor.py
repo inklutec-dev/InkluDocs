@@ -853,7 +853,7 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
     content_hash = _get_image_hash(image_path)
     # Eigener Prompt (06.07.2026) geht in den Key (Slot user_hint): anderer Prompt =
     # anderer Cache-Eintrag; ohne Prompt (None) bleiben alle Alt-Eintraege gueltig.
-    cache_key = build_cache_key(content_hash, image_type, (user_prompt or None), PIPELINE_VERSION, language=language)
+    cache_key = build_cache_key(content_hash, image_type, (user_prompt or None), PIPELINE_VERSION, language=language, enriched_context=(context or ""))
 
     if not force_regenerate:
         cached = get_cached(cache_key)

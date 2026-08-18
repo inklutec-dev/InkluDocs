@@ -167,7 +167,21 @@ PERSONEN BENENNEN:
 Erkennbare Personen duerfen benannt werden — Personen des oeffentlichen
 Lebens auch ohne Bildunterschrift. Liegt ein Name aus Kontext, Beschriftung
 oder Bildunterschrift vor, ist er zu verwenden. Nur wenn gar kein
-Anhaltspunkt vorliegt: "Person"."""
+Anhaltspunkt vorliegt: "Person".
+
+NAME ALS SATZANFANG:
+Ein verwendeter Name ist das SUBJEKT des ersten Satzes:
+"Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem Holztisch,
+vor sich ein aufgeklapptes Laptop." FALSCH ist die Etikett-Struktur
+"Name, Funktion: Ein Mann ..." — die benannte Person wird danach NIE
+erneut anonym eingefuehrt ("ein Mann", "eine Frau", "eine Person");
+stattdessen Pronomen oder Rolle ("der Gruender", "die Physikerin").
+
+QUELLEN-FLOSKELN VERBOTEN:
+Formulierungen wie "laut Seitenkontext", "laut Kontext", "dem Kontext
+zufolge" oder "laut Bildunterschrift" sind in Alt-Text UND
+Langbeschreibung verboten. Eine belegte Angabe wird direkt ausgesagt,
+ohne ihre Herkunft zu nennen."""
     return """KONTEXTREGELN
 
 Kontext darf nur verwendet werden, wenn eindeutig zuordenbar.
@@ -184,7 +198,21 @@ nennt sie eindeutig), muss der Name im Output verwendet werden.
 PERSONEN BENENNEN:
 Erkennbare Personen duerfen benannt werden — Personen des oeffentlichen
 Lebens auch ohne Bildbeschriftung. Liegt ein Name aus Bildbeschriftung
-oder Kontext vor, ist er zu verwenden. Nur ohne jeden Anhaltspunkt: "Person"."""
+oder Kontext vor, ist er zu verwenden. Nur ohne jeden Anhaltspunkt: "Person".
+
+NAME ALS SATZANFANG:
+Ein verwendeter Name ist das SUBJEKT des ersten Satzes:
+"Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem Holztisch,
+vor sich ein aufgeklapptes Laptop." FALSCH ist die Etikett-Struktur
+"Name, Funktion: Ein Mann ..." — die benannte Person wird danach NIE
+erneut anonym eingefuehrt ("ein Mann", "eine Frau", "eine Person");
+stattdessen Pronomen oder Rolle ("der Gruender", "die Physikerin").
+
+QUELLEN-FLOSKELN VERBOTEN:
+Formulierungen wie "laut Seitenkontext", "laut Kontext", "dem Kontext
+zufolge" oder "laut Bildunterschrift" sind in Alt-Text UND
+Langbeschreibung verboten. Eine belegte Angabe wird direkt ausgesagt,
+ohne ihre Herkunft zu nennen."""
 
 
 def _render_unterschriften_block() -> str:
@@ -680,7 +708,7 @@ Wichtige Bestandteile (wenn sichtbar oder durch Kontext belegt):
 NAMEN-PFLICHT (Erinnerung):
 Wenn der Kontext eine Person eindeutig benennt (z.B. Bildunterschrift
 "Humphrey Bogart in CASABLANCA, 1942" und nur eine Person sichtbar),
-muss der Name im Alt-Text auftauchen — nicht nur in der Langbeschreibung.
+muss der Name im Alt-Text auftauchen — nicht nur in der Langbeschreibung. Der Name ist dabei das Subjekt des ersten Satzes; die benannte Person danach nicht erneut anonym als "ein Mann" oder "eine Frau" einfuehren.
 
 VERMEIDEN:
 - "Das Bild zeigt"

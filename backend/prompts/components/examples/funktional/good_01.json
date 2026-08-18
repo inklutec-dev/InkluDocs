@@ -1,8 +1,15 @@
 {
-  "szene": "Paginierungselement am Ende einer Artikelliste: Pfeil nach rechts, daneben lesbar 'Seite 3 von 12'. Original-Alt: 'Bild'. Kein Link-Ziel im Kontext über die Paginierung hinaus.",
+ "szene": "Paginierungselement am Ende einer Artikelliste: Pfeil nach rechts, daneben lesbar 'Seite 3 von 12'. Original-Alt: 'Bild'. Kein Link-Ziel im Kontext über die Paginierung hinaus.",
+ "alt_text": "Nächste Seite (von 12)",
+ "begruendung": "Der Original-Alt 'Bild' ist unbrauchbar, also wird generiert: Funktionsbeschreibung in natürlichem Deutsch ('Nächste Seite') plus Zustandsinformation, weil die Gesamtzahl im Bild lesbar ist ('von 12' — wortgetreu aus 'Seite 3 von 12'). Keine Formbeschreibung ('Pfeil nach rechts'), kein 'Klicken Sie hier'; mit 22 Zeichen deutlich unter der 80-Zeichen-Grenze.",
+ "prinzip": "Funktion und ableitbaren Zustand benennen ('Nächste Seite (von 12)'); lesbare Zahlen wortgetreu übernehmen; nie die Form statt der Funktion beschreiben.",
+ "quelle": "fiktives Beispiel (generisches Paginierungselement)",
+ "lizenz": "fiktives Beispiel",
+ "antwort": {
   "alt_text": "Nächste Seite (von 12)",
-  "begruendung": "Der Original-Alt 'Bild' ist unbrauchbar, also wird generiert: Funktionsbeschreibung in natürlichem Deutsch ('Nächste Seite') plus Zustandsinformation, weil die Gesamtzahl im Bild lesbar ist ('von 12' — wortgetreu aus 'Seite 3 von 12'). Keine Formbeschreibung ('Pfeil nach rechts'), kein 'Klicken Sie hier'; mit 22 Zeichen deutlich unter der 80-Zeichen-Grenze.",
-  "prinzip": "Funktion und ableitbaren Zustand benennen ('Nächste Seite (von 12)'); lesbare Zahlen wortgetreu übernehmen; nie die Form statt der Funktion beschreiben.",
-  "quelle": "fiktives Beispiel (generisches Paginierungselement)",
-  "lizenz": "fiktives Beispiel"
+  "verwendete_inventar_items": [
+   "Pfeil nach rechts",
+   "Text 'Seite 3 von 12'"
+  ]
+ }
 }

@@ -1,8 +1,15 @@
 {
-  "szene": "Kleines Symbol (24x24 Pixel) in der Kopfleiste einer Webseite: ein Zahnrad, direkt neben dem Benutzermenü platziert. Kein Link-Ziel im Kontext, der umgebende Menüpunkt heißt 'Konto verwalten'.",
+ "szene": "Kleines Symbol (24x24 Pixel) in der Kopfleiste einer Webseite: ein Zahnrad, direkt neben dem Benutzermenü platziert. Kein Link-Ziel im Kontext, der umgebende Menüpunkt heißt 'Konto verwalten'.",
+ "alt_text": "Einstellungen (Zahnrad)",
+ "begruendung": "Wendet die Icon-Formel 'Funktion (Form)' an: Die Funktion 'Einstellungen' steht zuerst — sie ist aus Symbol-Form und Kontext (Kopfleiste neben dem Benutzermenü) eindeutig ableitbar —, die Form 'Zahnrad' folgt als kurze Klammer-Ergänzung. Kein Präfix 'Icon —', keine Farben, kein 'Symbol für ...'; mit 23 Zeichen deutlich unter der 50-Zeichen-Grenze.",
+ "prinzip": "Funktion zuerst, optional die Form in runden Klammern ('Einstellungen (Zahnrad)'); nie die Form als Ersatz für die Funktion, keine Farben, 3-50 Zeichen.",
+ "quelle": "fiktives Beispiel (generisches UI-Symbol)",
+ "lizenz": "fiktives Beispiel",
+ "antwort": {
   "alt_text": "Einstellungen (Zahnrad)",
-  "begruendung": "Wendet die Icon-Formel 'Funktion (Form)' an: Die Funktion 'Einstellungen' steht zuerst — sie ist aus Symbol-Form und Kontext (Kopfleiste neben dem Benutzermenü) eindeutig ableitbar —, die Form 'Zahnrad' folgt als kurze Klammer-Ergänzung. Kein Präfix 'Icon —', keine Farben, kein 'Symbol für ...'; mit 23 Zeichen deutlich unter der 50-Zeichen-Grenze.",
-  "prinzip": "Funktion zuerst, optional die Form in runden Klammern ('Einstellungen (Zahnrad)'); nie die Form als Ersatz für die Funktion, keine Farben, 3-50 Zeichen.",
-  "quelle": "fiktives Beispiel (generisches UI-Symbol)",
-  "lizenz": "fiktives Beispiel"
+  "verwendete_inventar_items": [
+   "Zahnrad-Symbol",
+   "Position neben dem Benutzermenü"
+  ]
+ }
 }

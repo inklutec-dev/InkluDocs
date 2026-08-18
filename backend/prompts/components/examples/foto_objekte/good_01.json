@@ -1,6 +1,23 @@
 {
-  "szene": "Foto durch eine Flughafen-Terminalscheibe: ein weißes Großraumflugzeug am Gate, Schriftzug 'BOEING 777' am Rumpf, Emirates-Logo und arabische Schrift am Heck, Gate-Schild 'J8', Vorfeld mit Servicefahrzeugen, bewölkter Himmel. Kein Ortsschild außer dem Gate.",
+ "szene": "Foto durch eine Flughafen-Terminalscheibe: ein weißes Großraumflugzeug am Gate, Schriftzug 'BOEING 777' am Rumpf, Emirates-Logo und arabische Schrift am Heck, Gate-Schild 'J8', Vorfeld mit Servicefahrzeugen, bewölkter Himmel. Kein Ortsschild außer dem Gate.",
+ "alt_text": "Emirates Boeing 777 am Gate, aufgenommen durch eine Terminalscheibe mit Spiegelungen. Das Großraumflugzeug steht an einer Fluggastbrücke; im Vordergrund Vorfeld mit Servicefahrzeugen und Gate-Schild 'J8', im Hintergrund bewölkter Himmel.",
+ "begruendung": "Führt mit der konkretesten BELEGTEN Benennung (Emirates Boeing 777 aus Schriftzug und Lackierung) und nennt das lesbare Schild 'J8'. Der Standort (z.B. Frankfurt) wird NICHT genannt, weil im Bild nicht belegt — er käme nur in den Text, wenn ein Schild ('FRA') oder der Dokumentkontext ihn trägt, und dann eher in die Langbeschreibung.",
+ "prinzip": "Benenne, was durch lesbaren Text, Logo oder Lackierung klar belegt ist. Rate keinen Ort und keine Tatsache, die nur plausibel, aber nicht belegt ist.",
+ "antwort": {
   "alt_text": "Emirates Boeing 777 am Gate, aufgenommen durch eine Terminalscheibe mit Spiegelungen. Das Großraumflugzeug steht an einer Fluggastbrücke; im Vordergrund Vorfeld mit Servicefahrzeugen und Gate-Schild 'J8', im Hintergrund bewölkter Himmel.",
-  "begruendung": "Führt mit der konkretesten BELEGTEN Benennung (Emirates Boeing 777 aus Schriftzug und Lackierung) und nennt das lesbare Schild 'J8'. Der Standort (z.B. Frankfurt) wird NICHT genannt, weil im Bild nicht belegt — er käme nur in den Text, wenn ein Schild ('FRA') oder der Dokumentkontext ihn trägt, und dann eher in die Langbeschreibung.",
-  "prinzip": "Benenne, was durch lesbaren Text, Logo oder Lackierung klar belegt ist. Rate keinen Ort und keine Tatsache, die nur plausibel, aber nicht belegt ist."
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+   "weißes Großraumflugzeug",
+   "Schriftzug BOEING 777",
+   "Emirates-Logo am Heck",
+   "Gate-Schild 'J8'",
+   "Servicefahrzeuge auf dem Vorfeld",
+   "Terminalscheibe mit Spiegelungen"
+  ],
+  "nicht_verwendete_inventar_items": [
+   "arabische Schrift am Heck"
+  ],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ }
 }

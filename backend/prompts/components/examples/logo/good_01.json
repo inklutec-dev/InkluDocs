@@ -1,8 +1,15 @@
 {
-  "szene": "Kopfbereich einer Firmen-Webseite: quadratische Bildmarke mit klar lesbarem Schriftzug 'MUSTERWERK' und darunter dem Slogan 'Technik für alle'. Das Logo ist auf die Startseite der Domain verlinkt.",
+ "szene": "Kopfbereich einer Firmen-Webseite: quadratische Bildmarke mit klar lesbarem Schriftzug 'MUSTERWERK' und darunter dem Slogan 'Technik für alle'. Das Logo ist auf die Startseite der Domain verlinkt.",
+ "alt_text": "Logo MUSTERWERK — Link zur Startseite",
+ "begruendung": "Beginnt mit 'Logo ' + Markenname (Evidenz-Stufe 1: der Name ist als Text im Logo lesbar). Da ein Link-Ziel gesetzt ist, wird 'Link zur Startseite' ergänzt; die 80-Zeichen-Grenze ist eingehalten. Kein visuelles Design, keine Farben, keine Formen, keine Deutung — der blinde Nutzer erfährt sofort, welche Marke das Logo repräsentiert und wohin es führt.",
+ "prinzip": "'Logo ' + Markenname, nur was Text oder weltweit eindeutiges Symbol belegt (Zwei-Wege-Regel); bei verlinkten Logos das Link-Ziel ergänzen; kein visuelles Design beschreiben.",
+ "quelle": "fiktives Beispiel (erfundene Marke 'MUSTERWERK')",
+ "lizenz": "fiktives Beispiel",
+ "antwort": {
   "alt_text": "Logo MUSTERWERK — Link zur Startseite",
-  "begruendung": "Beginnt mit 'Logo ' + Markenname (Evidenz-Stufe 1: der Name ist als Text im Logo lesbar). Da ein Link-Ziel gesetzt ist, wird 'Link zur Startseite' ergänzt; die 80-Zeichen-Grenze ist eingehalten. Kein visuelles Design, keine Farben, keine Formen, keine Deutung — der blinde Nutzer erfährt sofort, welche Marke das Logo repräsentiert und wohin es führt.",
-  "prinzip": "'Logo ' + Markenname, nur was Text oder weltweit eindeutiges Symbol belegt (Zwei-Wege-Regel); bei verlinkten Logos das Link-Ziel ergänzen; kein visuelles Design beschreiben.",
-  "quelle": "fiktives Beispiel (erfundene Marke 'MUSTERWERK')",
-  "lizenz": "fiktives Beispiel"
+  "verwendete_inventar_items": [
+   "Schriftzug 'MUSTERWERK'",
+   "Link auf die Startseite"
+  ]
+ }
 }
