@@ -69,6 +69,7 @@
         <div class="dash-field">
           <label for="buchenLaufzeit">{{ _('Laufzeit') }}</label>
           <select id="buchenLaufzeit" class="dash-input">
+            <option value="1">{{ _('Monatsabo (monatlich kündbar)') }}</option>
             <option value="3">{{ _('3 Monate') }}</option>
             <option value="6" selected>{{ _('6 Monate') }}</option>
             <option value="12">{{ _('12 Monate') }}</option>
@@ -128,6 +129,7 @@
         <div class="dash-field">
           <label for="wechselLaufzeit">{{ _('Laufzeit') }}</label>
           <select id="wechselLaufzeit" class="dash-input">
+            <option value="1">{{ _('Monatsabo (monatlich kündbar)') }}</option>
             <option value="3">{{ _('3 Monate') }}</option>
             <option value="6" selected>{{ _('6 Monate') }}</option>
             <option value="12">{{ _('12 Monate') }}</option>
@@ -333,9 +335,11 @@
       if (eigen.gueltig_bis) {
         const pLauf = document.createElement('p');
         if (eigen.auto_verlaengerung) {
-          pLauf.textContent = eigen.laufzeit_monate
-            ? t('Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch.', { monate: eigen.laufzeit_monate, datum: formatDate(eigen.gueltig_bis) })
-            : t('Verlängert sich am {datum} automatisch.', { datum: formatDate(eigen.gueltig_bis) });
+          pLauf.textContent = (eigen.laufzeit_monate === 1)
+            ? t('Monatsabo — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar.', { datum: formatDate(eigen.gueltig_bis) })
+            : (eigen.laufzeit_monate
+              ? t('Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch.', { monate: eigen.laufzeit_monate, datum: formatDate(eigen.gueltig_bis) })
+              : t('Verlängert sich am {datum} automatisch.', { datum: formatDate(eigen.gueltig_bis) }));
           kuendigen.hidden = false;
         } else {
           pLauf.textContent = t('Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free.', { datum: formatDate(eigen.gueltig_bis) });
@@ -364,6 +368,11 @@
   // Stripe-Buchungsstrecke (06.08.2026): Knoepfe nur zeigen, wenn die
   // Online-Zahlung konfiguriert ist; sonst bleibt der E-Mail-Hinweis.
   const PLAN_MONATSPREISE = { single: 9.95, team: 19.95, enterprise: 49.95 };
+  // Monatsabo (19.08.2026): eigener, rund 20 % hoeherer Preis ohne Bindung.
+  const PLAN_MONATSPREISE_MONATLICH = { single: 11.95, team: 23.95, enterprise: 59.95 };
+  function monatsrate(plan, monate) {
+    return monate === 1 ? PLAN_MONATSPREISE_MONATLICH[plan] : PLAN_MONATSPREISE[plan];
+  }
 
   function renderBuchen(abo) {
     const bereich = byId('buchenBereich');
@@ -387,15 +396,19 @@
   function aktualisiereSumme() {
     const plan = byId('buchenPlan').value;
     const monate = parseInt(byId('buchenLaufzeit').value, 10);
-    const summe = (PLAN_MONATSPREISE[plan] * monate).toFixed(2).replace('.', ',');
-    byId('buchenSumme').textContent = t('Gesamtpreis: {summe} € für {monate} Monate.', { summe: summe, monate: monate });
+    const summe = (monatsrate(plan, monate) * monate).toFixed(2).replace('.', ',');
+    byId('buchenSumme').textContent = (monate === 1)
+      ? t('Gesamtpreis: {summe} € pro Monat, monatlich kündbar.', { summe: summe })
+      : t('Gesamtpreis: {summe} € für {monate} Monate.', { summe: summe, monate: monate });
     // Wesentliche Merkmale ausschreiben statt nur den Preis zu nennen.
     const credits = PLAN_CREDITS[plan];
     const plaetze = PLAN_PLAETZE[plan];
     byId('buchenLeistung').textContent = plaetze
       ? t('Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung.', { credits: credits, plaetze: plaetze })
       : t('Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung.', { credits: credits });
-    byId('buchenVerlaengerung').textContent = t('Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende.', { monate: monate });
+    byId('buchenVerlaengerung').textContent = (monate === 1)
+      ? t('Monatsabo: {summe} € werden jeweils für einen Monat im Voraus abgebucht. Das Abo verlängert sich monatlich und ist jederzeit zum Ende des laufenden Monats kündbar.', { summe: summe })
+      : t('Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende.', { monate: monate });
   }
   byId('buchenPlan').addEventListener('change', aktualisiereSumme);
   byId('buchenLaufzeit').addEventListener('change', aktualisiereSumme);
@@ -435,7 +448,7 @@
     const aktuell = _abo.eigen.plan;
     const ziel = byId('wechselPlan').value;
     const monate = parseInt(byId('wechselLaufzeit').value, 10);
-    const summe = (PLAN_MONATSPREISE[ziel] * monate).toFixed(2).replace('.', ',');
+    const summe = (monatsrate(ziel, monate) * monate).toFixed(2).replace('.', ',');
     const hinweis = byId('wechselHinweis');
     if (ziel === aktuell && monate === (_abo.eigen.laufzeit_monate || 0)) {
       hinweis.textContent = t('Diesen Plan hast du bereits.');

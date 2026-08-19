@@ -1311,7 +1311,8 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
     for zeile in verlauf:
         zeile["kosten_geschaetzt"] = round((zeile["topf"] or 0) * satz, 2)
     plan = billing.effektiver_plan(ziel)
-    monatspreis = billing.PLAN_PREISE_EUR.get(plan, 0.0)
+    monatspreis = (billing.preis_pro_monat(plan, ziel.get("plan_laufzeit_monate") or 0)
+                   if plan in billing.PLAN_PREISE_EUR else 0.0)
 
     # Aufstellung "Verbrauch nach Topf": eigener Topf und JEDE Mitgliedschaft
     # erscheinen immer (auch mit 0), fruehere Toepfe nur bei Verbrauch.
@@ -1576,9 +1577,11 @@ async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(re
             laufzeit = int(laufzeit)
         except (TypeError, ValueError):
             raise HTTPException(status_code=400, detail="laufzeit_monate muss eine Zahl sein")
-        if laufzeit not in billing.PLAN_LAUFZEITEN:
+        # Monatsabo (Laufzeit 1) gibt es NUR online ueber Stripe — der
+        # Rechnungsweg bleibt bei festen Laufzeiten (Steve/Michael 19.08.2026).
+        if laufzeit not in billing.PLAN_LAUFZEITEN_RECHNUNG:
             raise HTTPException(status_code=400,
-                                detail=f"Laufzeit muss {', '.join(str(m) for m in billing.PLAN_LAUFZEITEN)} Monate sein")
+                                detail=f"Laufzeit muss {', '.join(str(m) for m in billing.PLAN_LAUFZEITEN_RECHNUNG)} Monate sein (Monatsabo nur online)")
     gueltig_bis = data.get("gueltig_bis") or None
     if gueltig_bis is not None:
         try:
@@ -2489,7 +2492,7 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail="laufzeit_monate fehlt")
     if monate not in billing.PLAN_LAUFZEITEN:
-        raise HTTPException(status_code=400, detail="Laufzeit muss 3, 6 oder 12 Monate sein")
+        raise HTTPException(status_code=400, detail="Laufzeit muss 1 (Monatsabo), 3, 6 oder 12 Monate sein")
 
     db_user = get_user_by_id(user["id"])
     aktueller = billing.effektiver_plan(db_user)
@@ -2706,7 +2709,7 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail="laufzeit_monate fehlt")
     if monate not in billing.PLAN_LAUFZEITEN:
-        raise HTTPException(status_code=400, detail="Laufzeit muss 3, 6 oder 12 Monate sein")
+        raise HTTPException(status_code=400, detail="Laufzeit muss 1 (Monatsabo), 3, 6 oder 12 Monate sein")
     # Verbraucherrecht (08.08.2026): Weil die Leistung sofort bereitsteht,
     # braucht es VOR der Buchung die ausdrueckliche Zustimmung zum Beginn
     # vor Ablauf der Widerrufsfrist — sonst koennte nach Wochen der Nutzung
@@ -2738,7 +2741,7 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
                 "INSERT INTO widerruf_zustimmungen (user_id, plan, laufzeit_monate, "
                 "summe_cent, belehrung_fassung, absender) VALUES (?, ?, ?, ?, ?, ?)",
                 (db_user["id"], plan, monate,
-                 round(billing.PLAN_PREISE_EUR[plan] * monate * 100),
+                 round(billing.preis_pro_monat(plan, monate) * monate * 100),
                  WIDERRUFSBELEHRUNG_FASSUNG, absender.limit_schluessel(request)))
             conn.commit()
         finally:
@@ -3257,6 +3260,10 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
         return
 
     if ablauf >= heute:
+        # Monatsabo (19.08.2026): KEINE monatliche Erinnerungsmail — das
+        # waere Spam. Es ist jederzeit kuendbar, Stripe fakturiert selbst.
+        if int(laufzeit or 0) == 1:
+            return
         # Noch nicht abgelaufen -> Erinnerung (einmal pro Periode).
         if not _kv_einmal(f"abo_mail_erinnerung_{k['id']}_{ablauf}"):
             return
@@ -4511,6 +4518,11 @@ def _pruefe_url_sicher(url: str) -> None:
     host = parsed.hostname
     if not host:
         raise HTTPException(status_code=400, detail="Diese Adresse ist nicht erlaubt")
+    # Testgeschirr (19.08.2026): verify_multidatei2 serviert Pruefseiten von
+    # 127.0.0.1. Loopback ist NUR erlaubt, wenn der Betreiber es ausdruecklich
+    # per Umgebungsvariable freigibt — auf Staging gesetzt, auf Prod/Demo NIE.
+    if os.environ.get("SCAN_ERLAUBE_LOOPBACK") == "1" and host in ("127.0.0.1", "localhost"):
+        return
     try:
         infos = socket.getaddrinfo(host, None)
     except Exception:
@@ -7457,6 +7469,9 @@ async def preise_page(request: Request):
         "enterprise_preis": _eur(billing.PLAN_PREISE_EUR["enterprise"]),
         "enterprise_credits": billing.PLAN_KONTINGENTE["enterprise"],
         "enterprise_sitze": billing.PLAN_SITZE["enterprise"],
+        "single_preis_monat": _eur(billing.PLAN_PREISE_MONATLICH_EUR["single"]),
+        "team_preis_monat": _eur(billing.PLAN_PREISE_MONATLICH_EUR["team"]),
+        "enterprise_preis_monat": _eur(billing.PLAN_PREISE_MONATLICH_EUR["enterprise"]),
         "laufzeiten": "3, 6 oder 12",
         "pakete": [(n, _eur(p)) for n, p in sorted(billing.PAKET_PREISE.items())],
     })

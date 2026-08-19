@@ -3770,3 +3770,21 @@ msgstr "{n} aún sin generar"
 #: export-summary (18.08.2026, Fable 5)
 msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
 msgstr "{b} de {n} imágenes tienen una descripción{dek}. {s} se omitirán: {g}."
+
+msgid "Monatsabo (monatlich kündbar)"
+msgstr "Suscripción mensual (cancelable cada mes)"
+
+msgid "Gesamtpreis: {summe} € pro Monat, monatlich kündbar."
+msgstr "Precio total: {summe} € al mes, cancelable mensualmente."
+
+msgid "Monatsabo: {summe} € werden jeweils für einen Monat im Voraus abgebucht. Das Abo verlängert sich monatlich und ist jederzeit zum Ende des laufenden Monats kündbar."
+msgstr "Suscripción mensual: se cobran {summe} € por adelantado para un mes. La suscripción se renueva mensualmente y puede cancelarse en cualquier momento con efecto al final del mes en curso."
+
+msgid "Monatsabo — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar."
+msgstr "Suscripción mensual: se renueva el {datum} por un mes más, cancelable en cualquier momento."
+
+msgid "Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar."
+msgstr "Sin permanencia: {preis} € al mes en la suscripción mensual, cancelable en cualquier momento."
+
+msgid "Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten."
+msgstr "Cada plan de pago está disponible como suscripción mensual (cancelable en cualquier momento) o a un precio más bajo con una permanencia de {laufzeiten} meses."

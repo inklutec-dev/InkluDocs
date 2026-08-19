@@ -3331,3 +3331,21 @@ msgstr "{n} inte genererade ännu"
 #: export-summary (18.08.2026, Fable 5)
 msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
 msgstr "{b} av {n} bilder har en beskrivning{dek}. {s} hoppas över: {g}."
+
+msgid "Monatsabo (monatlich kündbar)"
+msgstr "Månadsabonnemang (kan sägas upp varje månad)"
+
+msgid "Gesamtpreis: {summe} € pro Monat, monatlich kündbar."
+msgstr "Totalpris: {summe} € per månad, kan sägas upp månadsvis."
+
+msgid "Monatsabo: {summe} € werden jeweils für einen Monat im Voraus abgebucht. Das Abo verlängert sich monatlich und ist jederzeit zum Ende des laufenden Monats kündbar."
+msgstr "Månadsabonnemang: {summe} € debiteras i förskott för en månad i taget. Abonnemanget förnyas månadsvis och kan när som helst sägas upp till slutet av innevarande månad."
+
+msgid "Monatsabo — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar."
+msgstr "Månadsabonnemang — förnyas den {datum} med ytterligare en månad, kan sägas upp när som helst."
+
+msgid "Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar."
+msgstr "Utan bindning: {preis} € per månad i månadsabonnemanget, kan sägas upp när som helst."
+
+msgid "Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten."
+msgstr "Varje betalnivå finns som månadsabonnemang (kan sägas upp när som helst) eller billigare med en fast löptid på {laufzeiten} månader."

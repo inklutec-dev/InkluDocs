@@ -152,3 +152,29 @@ mit Abschluss von heute, zweiter Aufruf loest nichts erneut aus.
 Danach der volle Satz: verify_wechsel 63, verify_abo3 68, verify_stripe 32,
 verify_sicherheit2 17, verify_loeschen 43, verify_recht 54, verify_admin 54 —
 alle 0 Fehler; i18n 820 Strings in 6 Katalogen.
+
+## MONATSABO (19.08.2026, Steves Vorgabe)
+
+Jede Bezahlstufe gibt es zusaetzlich als Monatsabo (laufzeit_monate = 1)
+mit rund 20 % Aufschlag: Single 11,95 / Team 23,95 / Enterprise 59,95 EUR
+(billing.PLAN_PREISE_MONATLICH_EUR, Helfer billing.preis_pro_monat).
+Regeln:
+- NUR online ueber Stripe buchbar. Der Admin-/Rechnungsweg validiert gegen
+  PLAN_LAUFZEITEN_RECHNUNG = (3, 6, 12) — Michael stellt keine
+  Monatsrechnungen.
+- Stripe-Preis: lookup_key idoc_abo_<plan>_1, recurring interval=month,
+  interval_count=1; sichere_produkte() legt ihn idempotent an.
+- Verlaengerung/Abbuchung macht Stripe monatlich (invoice.paid verschiebt
+  plan_gueltig_bis um 1 Monat); Kuendigung wie gehabt ueber
+  cancel_at_period_end = wirksam zum Ende des laufenden Monats. Damit ist
+  das Monatsabo von sich aus konform mit 309 Nr. 9 BGB.
+- KEINE 14-Tage-Erinnerungsmail beim Monatsabo (_abo_konto_pruefen steigt
+  bei laufzeit 1 vor der Erinnerung aus) — waere monatlicher Spam; AGB
+  Ziffer 7 sagt das ausdruecklich.
+- Kontingent/Rollover/ Pakete verhalten sich wie bei allen Bezahlplaenen.
+- Plan-Wechsel: laengere Laufzeit = sofort (neue Laufzeit, voller Preis,
+  Anrechnung), Wechsel AUF das Monatsabo = kuerzere Laufzeit = zum
+  Laufzeitende vorgemerkt. Unveraendert.
+Rechtstext: Nutzungsbedingungen Ziffer 6 (Preise) + Ziffer 7 (monatliche
+Verlaengerung, keine Erinnerung).
+

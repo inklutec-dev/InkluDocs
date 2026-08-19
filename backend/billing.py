@@ -79,8 +79,9 @@ PAKET_PREISE = {
 }
 
 # Abo-Stufen (Steve+Michael, 06.08.2026 — loest das Lizenzschluessel-Modell
-# ab): Preise pro Monat, gebucht wird IMMER fest fuer 3/6/12 Monate (keine
-# Monats-Abbuchung — die Rechnungsstellung lohnt sonst nicht, Michael).
+# ab): Preise pro Monat. Gebucht wird online wahlweise als Monatsabo
+# (seit 19.08.2026, Steves Vorgabe) oder fest fuer 3/6/12 Monate; der
+# Rechnungsweg (Michael/Actino) bleibt bei festen Laufzeiten.
 # Team/Enterprise: EIN gemeinsamer Credit-Topf, Sitze INKLUSIVE Inhaber,
 # Einladungen erhoehen das Kontingent NIE (mehr Credits = Zusatzpakete).
 PLAN_PREISE_EUR = {
@@ -88,7 +89,23 @@ PLAN_PREISE_EUR = {
     "team": 19.95,
     "enterprise": 49.95,   # Rabatt bereits eingerechnet
 }
-PLAN_LAUFZEITEN = (3, 6, 12)
+PLAN_LAUFZEITEN = (1, 3, 6, 12)          # online buchbar; 1 = Monatsabo
+
+# Monatsabo (Steve, 19.08.2026): rund 20 % Aufschlag gegenueber dem
+# Laufzeitpreis, NUR online ueber Stripe buchbar, monatlich kuendbar.
+PLAN_PREISE_MONATLICH_EUR = {
+    "single": 11.95,
+    "team": 23.95,
+    "enterprise": 59.95,
+}
+PLAN_LAUFZEITEN_RECHNUNG = (3, 6, 12)    # Admin-/Rechnungsweg (Michael)
+
+
+def preis_pro_monat(plan: str, monate) -> float:
+    """Monatspreis fuer die gewaehlte Laufzeit (1 = Monatsabo mit Aufschlag)."""
+    if int(monate or 0) == 1:
+        return PLAN_PREISE_MONATLICH_EUR[plan]
+    return PLAN_PREISE_EUR[plan]
 
 PLAN_KONTINGENTE = {
     # Plan          Credits pro Monat

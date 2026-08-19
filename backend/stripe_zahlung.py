@@ -74,10 +74,11 @@ def sichere_produkte() -> dict:
     if not AKTIV:
         raise RuntimeError("Stripe ist nicht konfiguriert")
     gewuenscht = {}
-    for plan, preis_monat in billing.PLAN_PREISE_EUR.items():
+    for plan in billing.PLAN_PREISE_EUR:
         for monate in billing.PLAN_LAUFZEITEN:
-            gewuenscht[_plan_lookup(plan, monate)] = ("abo", plan, monate,
-                                                      round(preis_monat * monate * 100))
+            gewuenscht[_plan_lookup(plan, monate)] = (
+                "abo", plan, monate,
+                round(billing.preis_pro_monat(plan, monate) * monate * 100))
     for groesse, preis in billing.PAKET_PREISE.items():
         gewuenscht[_paket_lookup(groesse)] = ("paket", groesse, None, round(preis * 100))
 
@@ -106,7 +107,7 @@ def sichere_produkte() -> dict:
             produkt_id = _produkt(PLAN_NAMEN[a], f"plan_{a}")
             preis = stripe.Price.create(
                 product=produkt_id, currency="eur", unit_amount=cents,
-                lookup_key=lk, nickname=f"{PLAN_NAMEN[a]} — {monate} Monate",
+                lookup_key=lk, nickname=(f"{PLAN_NAMEN[a]} — Monatsabo" if monate == 1 else f"{PLAN_NAMEN[a]} — {monate} Monate"),
                 recurring={"interval": "month", "interval_count": monate},
             )
         else:
