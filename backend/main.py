@@ -5551,7 +5551,7 @@ async def _process_project(project_id: int, user_id: int):
             conn.execute(
                 """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?,
                    needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done' WHERE id = ?""",
-                (_append_link_reference(result["alt_text"], effective_context or ""), result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
+                (_append_link_reference(result["alt_text"], effective_context or "", alt_lang), result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
                  1 if result.get("needs_review") else 0,
                  result.get("pipeline_steps", ""),
                  result.get("validation_result", ""),
@@ -5878,7 +5878,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
             """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?,
                langbeschreibung = ?, alt_text_edited = NULL,
                needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done' WHERE id = ?""",
-            (_append_link_reference(result["alt_text"], regen_context or ""), result["bildtyp"], result.get("konfidenz", "mittel"),
+            (_append_link_reference(result["alt_text"], regen_context or "", regen_lang), result["bildtyp"], result.get("konfidenz", "mittel"),
              langbeschreibung,
              1 if result.get("needs_review") else 0,
              result.get("pipeline_steps", ""),
@@ -7100,7 +7100,14 @@ _LINK_REF_GENERIC = {
 # Summe immer unter 500 (Befund budni-Test 21.08.2026: 452 Zeichen).
 _LINK_REF_LABEL_MAX = 80
 
-def _append_link_reference(alt_text: str, context_text: str) -> str:
+# Schlagwort-Fix 21.08.2026 (Steve): Der Zusatz erscheint in der
+# Ausgabesprache des Projekts, nicht mehr fest deutsch.
+_LINK_REF_PHRASES = {
+    "de": "verweist auf", "en": "links to", "fr": "renvoie à",
+    "es": "enlaza a", "da": "henviser til", "sv": "länkar till",
+}
+
+def _append_link_reference(alt_text: str, context_text: str, language: str = "de") -> str:
     """Haengt "(verweist auf: <Beschriftung>)" an alt_text, wenn das Bild
     verlinkt ist und eine sinnvolle Beschriftung im Kontext steht.
 
@@ -7117,7 +7124,9 @@ def _append_link_reference(alt_text: str, context_text: str) -> str:
     """
     if not alt_text or not context_text:
         return alt_text
-    if "verweist auf" in alt_text.lower():
+    phrase = _LINK_REF_PHRASES.get((language or "de").lower(), "verweist auf")
+    alt_low_gesamt = alt_text.lower()
+    if "verweist auf" in alt_low_gesamt or phrase in alt_low_gesamt:
         return alt_text
 
     def _brauchbares_label(label: str) -> bool:
@@ -7144,7 +7153,7 @@ def _append_link_reference(alt_text: str, context_text: str) -> str:
     def _mit_label(label: str) -> str:
         if len(label) > _LINK_REF_LABEL_MAX:
             label = label[:_LINK_REF_LABEL_MAX].rstrip() + "…"
-        return f"{alt_text.rstrip()} (verweist auf: {label})"
+        return f"{alt_text.rstrip()} ({phrase}: {label})"
 
     m = re.search(r"\[Link-Beschriftung\]\s*(.+?)(?:\n|$)", context_text)
     if m:
