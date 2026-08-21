@@ -1,5 +1,5 @@
 {
- "_doc": "Eval-Korpus für die v4-Pipeline. Cowork's vollständiger Wikimedia-Korpus folgt separat. Diese Skelett-Sammlung dient als regression-test für Production-Symptome.",
+ "_doc": "Eval-Korpus für die v4-Pipeline. Cowork's vollständiger Wikimedia-Korpus folgt separat. Diese Skelett-Sammlung dient als regression-test für Production-Symptome. | 21.08.2026: Bogart (Bilddatei fehlte, Lizenzfrage) ersetzt durch Selenskyj-Fall; +9 Faelle aus dem Kategorien-Test (Projekt 256, Quellen Wikimedia Commons bzw. selbst erstellt).",
  "eval_korpus": [
   {
    "id": "workshop_foto_kersten",
@@ -26,27 +26,6 @@
    }
   },
   {
-   "id": "bogart_foto_personen",
-   "image_path": "/app/data/uploads/5/20260429_220912_Bogart.png",
-   "bildtyp_erwartung": "foto",
-   "sub_typ_erwartung": "foto_personen",
-   "enriched_context": "Foto von Humphrey Bogart, US-amerikanischer Schauspieler. Filmpose 1940er.",
-   "width": 600,
-   "height": 600,
-   "original_alt": "",
-   "checks": {
-    "must_not_contain": [
-     "etwa 30 Jahre",
-     "ein älterer Mann"
-    ],
-    "must_contain": [
-     "Humphrey Bogart"
-    ],
-    "min_alt_length": 20,
-    "max_alt_length": 400
-   }
-  },
-  {
    "id": "keramikschuessel_garagelab",
    "image_path": "/app/data/uploads/1/20260428_133936_01_keramikschuesselchen_garagelab.jpg",
    "bildtyp_erwartung": "foto",
@@ -70,6 +49,173 @@
     "min_alt_length": 80,
     "max_alt_length": 400,
     "sub_typ_erwartung_strict": true
+   }
+  },
+  {
+   "id": "selenskyj_foto_personen",
+   "image_path": "/app/data/results/1/256/img_1.jpg",
+   "bildtyp_erwartung": "foto",
+   "sub_typ_erwartung": "foto_personen",
+   "enriched_context": "Artikel über deutsche Politik der 2010er Jahre.\n(Quelle: Wikimedia Commons, File:Vladimir Zelensky and Angela Merkel (2019-12-10) (cropped).jpg)",
+   "width": 488,
+   "height": 695,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "Selenskyj"
+    ],
+    "must_not_contain": [
+     "vermutlich",
+     "wahrscheinlich"
+    ],
+    "min_alt_length": 60,
+    "max_alt_length": 400
+   }
+  },
+  {
+   "id": "montage_foto_event",
+   "image_path": "/app/data/results/1/256/img_2.jpg",
+   "bildtyp_erwartung": "foto",
+   "sub_typ_erwartung": "foto_event",
+   "enriched_context": "Bericht über eine Fachkonferenz.\n(Quelle: Wikimedia Commons, File:BZHL Sitzung Gruppenarbeit.png)",
+   "width": 717,
+   "height": 540,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "Fotomontage"
+    ],
+    "max_alt_length": 400
+   }
+  },
+  {
+   "id": "matterhorn_foto_landschaft",
+   "image_path": "/app/data/results/1/256/img_5.jpg",
+   "bildtyp_erwartung": "foto",
+   "sub_typ_erwartung": "foto_landschaft",
+   "enriched_context": "Reisebericht über die Schweizer Alpen.\n(Quelle: Wikimedia Commons, File:CH.VS.Zermatt 2021-10-17 Matterhorn 8726.jpg)",
+   "width": 1280,
+   "height": 853,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "Matterhorn"
+    ],
+    "must_not_contain": [
+     "vermutlich"
+    ],
+    "max_alt_length": 400
+   }
+  },
+  {
+   "id": "koelner_dom_foto_architektur",
+   "image_path": "/app/data/results/1/256/img_6.jpg",
+   "bildtyp_erwartung": "foto",
+   "sub_typ_erwartung": "foto_architektur",
+   "enriched_context": "Reiseführer-Seite über Köln.\n(Quelle: Wikimedia Commons, File:Cologne Germany Cologne-Cathedral-West-Facade-01.jpg)",
+   "width": 1280,
+   "height": 621,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "Kölner Dom"
+    ],
+    "max_alt_length": 400
+   }
+  },
+  {
+   "id": "naehrwert_tabelle",
+   "image_path": "/app/data/results/1/256/img_9.png",
+   "bildtyp_erwartung": "tabelle",
+   "enriched_context": "Produktseite eines Lebensmittels im Online-Shop.\n(Quelle: Wikimedia Commons, File:China nutrition facts label.png)",
+   "width": 1201,
+   "height": 906,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "284",
+     "3,1",
+     "62",
+     "13"
+    ],
+    "must_not_contain": [
+     "vermutlich"
+    ],
+    "max_alt_length": 400
+   }
+  },
+  {
+   "id": "deutschland_karte",
+   "image_path": "/app/data/results/1/256/img_10.png",
+   "bildtyp_erwartung": "karte",
+   "enriched_context": "Erdkunde-Lernmaterial über Deutschland.\n(Quelle: Wikimedia Commons, File:States and City-States of the Federal Republic of Germany - West Germany (1957-1990).png)",
+   "width": 1280,
+   "height": 1517,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "Karte",
+     "Bundesrepublik"
+    ],
+    "max_alt_length": 400
+   }
+  },
+  {
+   "id": "aspirin_strukturformel",
+   "image_path": "/app/data/results/1/256/img_13.png",
+   "bildtyp_erwartung": "strukturformel",
+   "enriched_context": "Chemie-Lehrbuchseite über Schmerzmittel.\n(Quelle: Wikimedia Commons, File:Aspirin-skeletal benzene-circle.svg)",
+   "width": 1280,
+   "height": 1063,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "Benzolring",
+     "COOH"
+    ],
+    "max_alt_length": 400
+   }
+  },
+  {
+   "id": "hamburger_icon",
+   "image_path": "/app/data/results/1/256/img_15.png",
+   "bildtyp_erwartung": "icon",
+   "enriched_context": "Navigationsleiste einer Webseite, Menü-Knopf.",
+   "width": 1280,
+   "height": 1280,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "Menü"
+    ],
+    "max_alt_length": 80
+   }
+  },
+  {
+   "id": "paginierung_funktional",
+   "image_path": "/app/data/results/1/256/img_16.png",
+   "bildtyp_erwartung": "funktional",
+   "enriched_context": "Seitennavigation unter einer Artikelliste, aktuelle Seite 3 von 5.",
+   "width": 900,
+   "height": 120,
+   "original_alt": "",
+   "checks": {
+    "must_contain": [
+     "Seite 3"
+    ],
+    "max_alt_length": 120
+   }
+  },
+  {
+   "id": "deko_banner_dekorativ",
+   "image_path": "/app/data/results/1/256/img_17.png",
+   "bildtyp_erwartung": "dekorativ",
+   "enriched_context": "Trennelement zwischen zwei Textabschnitten einer Webseite.",
+   "width": 1600,
+   "height": 300,
+   "original_alt": "",
+   "checks": {
+    "max_alt_length": 0
    }
   }
  ]
