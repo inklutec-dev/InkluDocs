@@ -1,7 +1,7 @@
 # Daten-Builder karte
 
 - **Builder:** `prompts/builders/beschreibung_daten.py:696`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: karte (Landkarte, Stadtplan, Lageplan, Übersichtskarte)
@@ -285,29 +295,32 @@ Markdown-Tabellen.
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle. Deutliche Häufung der Marker im Süden um München und Stuttgart, vereinzelte Marker im Norden bei Hamburg; beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle. Deutliche Häufung der Marker im Süden um München und Stuttgart, vereinzelte Marker im Norden bei Hamburg; beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin.",
   "alt_text": "Karte — Deutschland: Verteilung von 45 Beratungsstellen mit deutlicher Konzentration im Süden um München und Stuttgart, vereinzelten Standorten im Norden bei Hamburg; große Kreise stehen laut Legende für Beratungsstellen mit Werkstatt, kleine für reine Beratungsstellen.",
-  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Karte —' plus Gebiet, Hauptthema und räumlicher Kernaussage (Konzentration im Süden). Ortsnamen wortgetreu in Originalsprache (München, Köln — nicht Munich, Cologne). Die Marker-Größen werden aus der Legende erklärt statt gedeutet; räumliche Lage mit Himmelsrichtungen (Süden, Norden) statt 'oben/unten'. Exakte Anzahl (45) statt 'viele'.",
-  "prinzip": "Mit 'Karte —' + Gebiet und räumlicher Kernaussage führen, Symbolbedeutung ausschließlich aus der Legende, Ortsnamen wortgetreu in Originalsprache, Himmelsrichtungen statt Bildkoordinaten.",
-  "quelle": "fiktives Beispiel (generische Standortkarte, keine echten Kundendaten)",
-  "lizenz": "fiktives Beispiel"
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "Deutschlandkarte",
+    "45 blaue Punkt-Markierungen",
+    "Legende: große und kleine Kreise",
+    "Häufung im Süden um München und Stuttgart",
+    "vereinzelte Marker im Norden bei Hamburg"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Mit 'Karte —' + Gebiet und räumlicher Kernaussage führen, Symbolbedeutung ausschließlich aus der Legende, Ortsnamen wortgetreu in Originalsprache, Himmelsrichtungen statt Bildkoordinaten.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dieselbe Deutschlandkarte: 45 blaue Punkt-Markierungen für Beratungsstellen, Legende mit großen und kleinen Kreisen, Häufung im Süden, beschriftete Städte München, Stuttgart, Köln, Hamburg, Berlin.",
-  "alt_text": "Eine Landkarte mit vielen blauen Punkten, die Gefahrenstellen markieren. Unten sind mehr Punkte als oben, unter anderem bei Munich und Cologne; eine empfohlene Route verbindet die Standorte von Nord nach Süd.",
-  "fehler": [
-    "'Gefahrenstellen' deutet die Marker ohne Legende — laut Legende sind es Beratungsstellen; Symbolbedeutung kommt ausschließlich aus der Legende.",
-    "'Munich' und 'Cologne' übersetzen die im Bild lesbaren Ortsnamen — München und Köln müssen wortgetreu in Originalsprache übernommen werden.",
-    "'eine empfohlene Route verbindet die Standorte' erfindet eine Route, die die Karte nicht zeigt (Halluzination).",
-    "'Unten sind mehr Punkte als oben' nutzt Bildkoordinaten statt Himmelsrichtungen und 'vielen blauen Punkten' verschenkt die belegte exakte Zahl 45; das Präfix 'Karte —' mit Gebiet und Thema fehlt."
-  ],
-  "besser": "Mit 'Karte — Deutschland' plus Thema und räumlicher Kernaussage führen (Konzentration im Süden), die exakte Anzahl 45 nennen, Marker-Bedeutung aus der Legende erklären, Ortsnamen wortgetreu übernehmen und keine Routen erfinden.",
-  "quelle": "fiktives Beispiel (generische Standortkarte, keine echten Kundendaten)",
-  "lizenz": "fiktives Beispiel"
-}
+Szene: Dieselbe Deutschlandkarte: 45 blaue Punkt-Markierungen für Beratungsstellen, Legende mit großen und kleinen Kreisen, Häufung im Süden, beschriftete Städte München, Stuttgart, Köln, Hamburg, Berlin.
+Schlechter Alt-Text: "Eine Landkarte mit vielen blauen Punkten, die Gefahrenstellen markieren. Unten sind mehr Punkte als oben, unter anderem bei Munich und Cologne; eine empfohlene Route verbindet die Standorte von Nord nach Süd."
+- Fehler: 'Gefahrenstellen' deutet die Marker ohne Legende — laut Legende sind es Beratungsstellen; Symbolbedeutung kommt ausschließlich aus der Legende.
+- Fehler: 'Munich' und 'Cologne' übersetzen die im Bild lesbaren Ortsnamen — München und Köln müssen wortgetreu in Originalsprache übernommen werden.
+- Fehler: 'eine empfohlene Route verbindet die Standorte' erfindet eine Route, die die Karte nicht zeigt (Halluzination).
+- Fehler: 'Unten sind mehr Punkte als oben' nutzt Bildkoordinaten statt Himmelsrichtungen und 'vielen blauen Punkten' verschenkt die belegte exakte Zahl 45; das Präfix 'Karte —' mit Gebiet und Thema fehlt.
+Besser: Mit 'Karte — Deutschland' plus Thema und räumlicher Kernaussage führen (Konzentration im Süden), die exakte Anzahl 45 nennen, Marker-Bedeutung aus der Legende erklären, Ortsnamen wortgetreu übernehmen und keine Routen erfinden.
 
 
 FINAL CHECK

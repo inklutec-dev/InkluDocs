@@ -161,6 +161,45 @@ Alle 7 Builder in `prompts/builders/beschreibung_daten.py` auf das Premium-Muste
 Querschnitt: ANTI_HALLUZINATION_REGELN stehen jetzt auch im Combo-Modus genau EINMAL pro gerendertem Prompt — im Lean-Pass-Modus (V4_PASS_MODE=lean) traegt der Inventar-Teil des Combo-Prompts die Schicht, die Daten-Builder lassen sie dann weg (Helper `_basis_schichten`; combo.py, Dispatcher und alle Signaturen unveraendert). Im Full-Pass-Modus (Default, eigenstaendiger Pass 3) tragen die Builder die Schicht selbst. Die Foto-Familie dupliziert im Combo-Modus weiterhin (bekannter Restpunkt). Snapshots via scripts/render_prompts unveraendert nutzbar.
 
 
+## Qualitaetsrunde 21.08.2026: Stil-Charta + Verbote entschlackt + Chatbot-Verify
+
+Steves Vorgabe: Der Chatbot-Ton ist die Messlatte (Befund Projekt 390 auf Prod —
+Zutatenlisten-Prosa "..., den Kopf leicht nach oben links gewandt und den Mund
+leicht geoeffnet, sitzt ..."). Aenderungen:
+
+1. NEUE Ebene: `prompts/components/stilregeln.py` (STILREGELN) — gemeinsame
+   Stil-Charta fuer Pipeline UND InkluAgent (sechs Punkte: Wichtigstes zuerst,
+   natuerlicher Satzbau, Koerperdetails nur mit Bedeutung, Name als Satzanfang,
+   Floskel-Verbote inkl. Quellen-Floskeln, Laengen-Arbeitsteilung). Ersetzt in
+   der Foto-Familie den Kompaktheits-Block und buendelt die vorher verstreuten
+   Stil-Verbote. Der InkluAgent-System-Prompt bindet DENSELBEN Textbaustein ein
+   (system_agent.py) — Stil wird nur noch an einer Stelle gepflegt.
+2. Verbote entschlackt (Foto-Familie): Die bewusste Mehrfach-Verstaerkung aus
+   der Mistral-Zeit ist fuer den Sonnet/Fable-Betrieb zurueckgedreht. Entfernt:
+   Floskel-Listen-Duplikate in allen 6 Buildern (VERMEIDEN-Reste nur noch
+   typspezifisch), HALLUZINATIONSSCHUTZ-Doppelsektion in foto_event,
+   PERSONEN-BENENNEN-Duplikat und Stil-Absaetze der Kontextregeln, Emotions-
+   Duplikat im Atmosphaere-Block, Lean-Final-Check von 9 auf 5 Punkte (neuer
+   Stil-Pruefpunkt). foto_personen: Haltung/Blickrichtung/Mundstellung sind
+   keine Alt-Text-Zutaten mehr (nur noch Langbeschreibung, wo tragend).
+   Der Full-Modus (Mistral) bleibt unveraendert erzieherisch.
+3. Beleg-Definition erweitert (halluzination.py Regel 4 + Verify-Prompt):
+   Unverwechselbares Produktdesign zaehlt als Beleg (MacBook-Fall); Gegenprobe
+   generischer Laptop bleibt generisch. Der Verify stuft design-belegte
+   Benennungen nicht mehr auf Gattungsbegriffe zurueck.
+4. Few-Shots foto_personen: good_01 (Marie Curie) auf die knappe Form
+   umgeschrieben (Alt-Text ~120 Zeichen, Kleid/Blickrichtung nur noch in der
+   Langbeschreibung), bad_01-Besser-Hinweis angepasst, NEU bad_02 =
+   Ueberladungs-Anti-Pattern nach dem realen Befund (faktisch korrekt, aber
+   Abhak-Prosa; zeigt auch den MacBook-Beleg).
+5. Chatbot-Speichern durch den Verify: `update_alt_text` (InkluAgent) laeuft
+   vor dem DB-Write durch `pipelines/v4/orchestrator.verify_alt_text_extern`
+   (neuer oeffentlicher Einstieg, gleicher Pruefer + ENV-Scope wie die
+   Pipeline). Beanstandung -> nicht gespeichert, Agent bekommt strittige
+   Aussagen + Korrektur-Vorschlag und legt sie dem User vor; ausdrueckliches
+   Beharren des Users -> force=true speichert ohne erneute Pruefung.
+   Verify aus/Fehler -> speichern wie bisher (Sicherheitsnetz, nie Blocker).
+
 ### Nachtrag Paket-4-Review (17.07.2026)
 
 Der geteilte Inventar-Block der Daten-Familie uebernimmt BEWUSST die gelockerte Foto-Premium-Formulierung (sichtbare Bildinformationen duerfen ergaenzt werden, duerfen dem Inventar aber nicht widersprechen) statt des alten AUSSCHLIESSLICH-Wortlauts. Diagramm und Illustration nutzen seit Paket 4 NEU das 150/250-Richtwert-Regime der Foto-Familie. Die V4_PASS_MODE-Normalisierung ist jetzt an allen drei Lesestellen identisch (strip und lower — vorher konnte ein Leerzeichen im ENV-Wert die Anti-Halluzinations-Schicht im Standalone-Pass still entfernen). render_prompts pinnt V4_PASS_MODE=full fuer alle Standalone-Snapshots. Die Diagramm-Sektion LESBARE TEXTE nennt die Trennzeichen-Treue jetzt ausdruecklich.

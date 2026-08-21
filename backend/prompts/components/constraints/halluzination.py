@@ -28,7 +28,12 @@ ANTI_HALLUZINATION_REGELN = """ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 

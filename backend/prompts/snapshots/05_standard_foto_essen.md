@@ -1,7 +1,7 @@
 # Standard-Builder foto_essen
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:944`
-- **Generiert:** 2026-07-17
+- **Builder:** `prompts/builders/beschreibung_foto.py:899`
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: foto_essen
@@ -238,13 +248,51 @@ WAS zu sehen ist ("Filiale der Drogeriekette budni"), aber keine Handlung oder
 Absicht erfinden, die das Bild nicht zeigt (NICHT: "beim Einkaufen").
 
 
-KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
 
-Richtwert fuer den Alt-Text: einfache Motive unter 150 Zeichen, komplexe Szenen
-bis etwa 250. Die 400 Zeichen des Schemas sind eine harte Obergrenze, KEIN Ziel.
-Der Alt-Text traegt die Essenz — Wissens-Tiefe, Nebendetails und raeumliche
-Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
-Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text.
+1. WICHTIGSTES ZUERST: Fuehre mit der Information, wegen der das Bild an
+   seiner Stelle steht — Wer oder Was und die sichtbare Situation. Jedes
+   weitere Detail muss die Frage bestehen: Hilft es, dieses Bild an dieser
+   Stelle zu verstehen? Wenn nein, gehoert es nicht in den Alt-Text —
+   sondern in die Langbeschreibung oder nirgendwohin.
+
+2. NATUERLICHER SATZBAU: Schreibe wie ein guter Redakteur — Subjekt und
+   Verb stehen frueh und nah beieinander, ein bis zwei Saetze. Keine
+   Partizip-Einschuebe zwischen Subjekt und Verb, keine Semikolon-Ketten,
+   keine Lage-Floskeln wie "im Bildvordergrund" oder "im Bildhintergrund"
+   (stattdessen natuerlich: "vor ihr", "dahinter", "auf dem Tisch").
+   GUT: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
+   aufgeklapptem Laptop vor einer hellen Wand."
+   SCHLECHT: "Anna Reimers in schwarzem Blazer, den Kopf leicht nach oben
+   links gewandt und den Mund leicht geoeffnet, sitzt vor einer hellen
+   Wand; im Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch."
+
+3. KOERPERDETAILS NUR MIT BEDEUTUNG: Kopfhaltung, Blickrichtung,
+   Mundstellung, Gestik und Mimik gehoeren NICHT in den Alt-Text — ausser
+   sie tragen die Kernaussage des Bildes (die Rednerin zeigt auf die
+   Leinwand; zwei Personen geben sich die Hand). In der Langbeschreibung
+   nur dort, wo sie die Szene wirklich nachvollziehbarer machen.
+
+4. NAME ALS SATZANFANG: Ein verwendeter Name ist das SUBJEKT des ersten
+   Satzes ("Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem
+   Holztisch ..."). FALSCH ist die Etikett-Struktur "Name, Funktion: Ein
+   Mann ..." — die benannte Person wird danach NIE erneut anonym
+   eingefuehrt ("ein Mann", "eine Frau", "eine Person"); stattdessen
+   Pronomen oder Rolle ("der Gruender", "die Physikerin").
+
+5. KEINE FLOSKELN: Nicht mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem
+   Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" beginnen —
+   direkt mit dem Motiv einsteigen. Ebenso verboten sind Quellen-Floskeln
+   wie "laut Seitenkontext", "laut Kontext", "dem Kontext zufolge" oder
+   "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt,
+   ohne ihre Herkunft zu nennen.
+
+6. LAENGE (Arbeitsteilung Alt-Text / Langbeschreibung): So kurz wie
+   moeglich, so lang wie noetig. Richtwert fuer den Alt-Text: einfache
+   Motive unter 150 Zeichen, komplexe Szenen bis etwa 250. Die 400 Zeichen
+   des Schemas sind eine harte Obergrenze, KEIN Ziel. Der Alt-Text traegt
+   die Essenz — Wissens-Tiefe, Nebendetails und raeumliche Ausfuehrung
+   gehoeren in die Langbeschreibung.
 
 
 ZAEHL-DISZIPLIN
@@ -274,10 +322,10 @@ Der Alt-Text:
 - ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze; das Zeichenlimit ist
   Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
 
-VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Foto", "Zu sehen ist", "Auf dem Teller befindet sich", blosse
-Inventarlisten, vage Umschreibungen fuer klar Benennbares, sowie mikroskopische
-Details (Poren, Lentizellen, einzelne Maserungen) — die gehoeren nicht in einen
-kompakten Alt-Text.
+VERMEIDEN (zusaetzlich zu den STILREGELN): "Auf dem Teller befindet sich",
+blosse Inventarlisten, vage Umschreibungen fuer klar Benennbares, sowie
+mikroskopische Details (Poren, Lentizellen, einzelne Maserungen) — die
+gehoeren nicht in einen kompakten Alt-Text.
 
 
 ZUTATEN — BENENNEN STATT VAGE, ABER NICHTS ERFINDEN
@@ -321,7 +369,8 @@ Restaurant und keinen Anlass, die nicht belegt sind.
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Foto", "Zu sehen ist" oder "Auf dem Teller".
+Aufzaehlungszeichen. Steige direkt mit dem Gericht ein (Floskel-Verbot:
+STILREGELN Punkt 5; hier auch nicht mit "Auf dem Teller" beginnen).
 Sinnvolle Reihenfolge ohne sie als Ueberschriften zu setzen:
 Gericht (konkret benannt), sichtbare Hauptkomponenten und Beilagen, Anrichtung
 und Geschirr (Material/Farbe wenn relevant), Setting wenn relevant (Restaurant-
@@ -353,26 +402,34 @@ Fuelle exakt das Schema BeschreibungOutput:
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Weißer Teller auf einem Holztisch: ein gebratenes Lachsfilet mit gebräunter Oberseite auf mehreren grünen Spargelstangen, daneben eine Zitronenspalte und eine kleine Lache heller Soße. Die Zusammensetzung der Soße ist nicht erkennbar.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Weißer Teller auf einem Holztisch: ein gebratenes Lachsfilet mit gebräunter Oberseite auf mehreren grünen Spargelstangen, daneben eine Zitronenspalte und eine kleine Lache heller Soße. Die Zusammensetzung der Soße ist nicht erkennbar.",
   "alt_text": "Gebratenes Lachsfilet mit gebräunter Kruste auf grünen Spargelstangen, angerichtet auf einem weißen Teller. Daneben eine Zitronenspalte und eine helle Soße; der Teller steht auf einem Holztisch.",
-  "begruendung": "Führt mit der Art des Gerichts (gebratenes Lachsfilet) und der Servierform (weißer Teller). Benennt die klar erkennbaren Komponenten selbstbewusst (Lachs mit gebräunter Kruste, grüner Spargel, Zitrone), weil sie visuell eindeutig sind. Die Soße bleibt 'helle Soße', weil ihre Zusammensetzung nicht erkennbar ist — keine Rezeptur geraten. Keine Geschmackswertung. 'gebräunte Kruste' ist erlaubt, weil die Bräunung sichtbar ist.",
-  "prinzip": "Mit der Art des Gerichts führen. Klar Erkennbares konkret benennen, nicht Erkennbares neutral nach Aussehen beschreiben. Visuell belegbare Eigenschaften (Bräunung) ja, Geschmacks- oder Rezeptur-Behauptungen nein."
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "gebratenes Lachsfilet mit gebräunter Kruste",
+    "grüne Spargelstangen",
+    "Zitronenspalte",
+    "helle Soße",
+    "weißer Teller",
+    "Holztisch"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Mit der Art des Gerichts führen. Klar Erkennbares konkret benennen, nicht Erkennbares neutral nach Aussehen beschreiben. Visuell belegbare Eigenschaften (Bräunung) ja, Geschmacks- oder Rezeptur-Behauptungen nein.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Derselbe weiße Teller mit gebratenem Lachs, grünem Spargel, Zitronenspalte und einer hellen Soße auf einem Holztisch.",
-  "alt_text": "Ein köstliches, appetitlich angerichtetes Lachsfilet, mit frischen Kräutern garniert und von einer hausgemachten Zitronen-Butter-Sauce umgeben — ein Klassiker der mediterranen Küche.",
-  "fehler": [
-    "'köstliches' und 'appetitlich' sind Geschmacks- und Wertungsadjektive ohne visuelle Evidenz (verboten).",
-    "'mit frischen Kräutern garniert' erfindet eine Zutat, die nicht sichtbar belegt ist (Halluzination).",
-    "'hausgemachte Zitronen-Butter-Sauce' erfindet die Rezeptur und Zubereitung der Soße — sichtbar ist nur eine helle Soße.",
-    "'ein Klassiker der mediterranen Küche' erfindet eine Herkunft/Einordnung ohne Kontext-Beleg.",
-    "Nennt weder Spargel noch Servierform und führt nicht klar mit dem Gericht — Wertung verdrängt die Beobachtung."
-  ],
-  "besser": "Mit dem Gericht und der Servierform führen ('gebratenes Lachsfilet auf einem weißen Teller'), nur klar Erkennbares benennen (Lachs, Spargel, Zitrone), die Soße neutral als 'helle Soße' beschreiben, keine Garnierung und keine Herkunft erfinden, keine Geschmackswertung."
-}
+Szene: Derselbe weiße Teller mit gebratenem Lachs, grünem Spargel, Zitronenspalte und einer hellen Soße auf einem Holztisch.
+Schlechter Alt-Text: "Ein köstliches, appetitlich angerichtetes Lachsfilet, mit frischen Kräutern garniert und von einer hausgemachten Zitronen-Butter-Sauce umgeben — ein Klassiker der mediterranen Küche."
+- Fehler: 'köstliches' und 'appetitlich' sind Geschmacks- und Wertungsadjektive ohne visuelle Evidenz (verboten).
+- Fehler: 'mit frischen Kräutern garniert' erfindet eine Zutat, die nicht sichtbar belegt ist (Halluzination).
+- Fehler: 'hausgemachte Zitronen-Butter-Sauce' erfindet die Rezeptur und Zubereitung der Soße — sichtbar ist nur eine helle Soße.
+- Fehler: 'ein Klassiker der mediterranen Küche' erfindet eine Herkunft/Einordnung ohne Kontext-Beleg.
+- Fehler: Nennt weder Spargel noch Servierform und führt nicht klar mit dem Gericht — Wertung verdrängt die Beobachtung.
+Besser: Mit dem Gericht und der Servierform führen ('gebratenes Lachsfilet auf einem weißen Teller'), nur klar Erkennbares benennen (Lachs, Spargel, Zitrone), die Soße neutral als 'helle Soße' beschreiben, keine Garnierung und keine Herkunft erfinden, keine Geschmackswertung.
 
 FINAL CHECK (vor der Ausgabe pruefen):
 

@@ -35,6 +35,7 @@ from prompts.components.constraints import (
 from prompts.components.roles import ROLE_BESCHREIBER
 from prompts.components.schema_helpers import render_schema_for_prompt
 from prompts.components.schemas import BeschreibungOutput, InventarOutput
+from prompts.components.stilregeln import STILREGELN
 
 from .helpers import load_examples, user_hint_block
 
@@ -162,26 +163,8 @@ einer sichtbaren Person zugeordnet werden koennen.
 
 Beispiel: Wenn die Bildunterschrift "Humphrey Bogart in CASABLANCA (1942)"
 lautet und nur eine Person sichtbar ist, soll der Name verwendet werden.
-
-PERSONEN BENENNEN:
-Erkennbare Personen duerfen benannt werden — Personen des oeffentlichen
-Lebens auch ohne Bildunterschrift. Liegt ein Name aus Kontext, Beschriftung
-oder Bildunterschrift vor, ist er zu verwenden. Nur wenn gar kein
-Anhaltspunkt vorliegt: "Person".
-
-NAME ALS SATZANFANG:
-Ein verwendeter Name ist das SUBJEKT des ersten Satzes:
-"Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem Holztisch,
-vor sich ein aufgeklapptes Laptop." FALSCH ist die Etikett-Struktur
-"Name, Funktion: Ein Mann ..." — die benannte Person wird danach NIE
-erneut anonym eingefuehrt ("ein Mann", "eine Frau", "eine Person");
-stattdessen Pronomen oder Rolle ("der Gruender", "die Physikerin").
-
-QUELLEN-FLOSKELN VERBOTEN:
-Formulierungen wie "laut Seitenkontext", "laut Kontext", "dem Kontext
-zufolge" oder "laut Bildunterschrift" sind in Alt-Text UND
-Langbeschreibung verboten. Eine belegte Angabe wird direkt ausgesagt,
-ohne ihre Herkunft zu nennen."""
+Der Name steht dann als Subjekt am Satzanfang, ohne Quellen-Floskel
+(siehe STILREGELN Punkte 4 und 5)."""
     return """KONTEXTREGELN
 
 Kontext darf nur verwendet werden, wenn eindeutig zuordenbar.
@@ -194,25 +177,8 @@ NAMEN-PFLICHT:
 Wenn ein Name oder eine Funktion im Kontext eindeutig einer Person im
 Bild zuzuordnen ist (z.B. einzige Person im Bild, oder Bildunterschrift
 nennt sie eindeutig), muss der Name im Output verwendet werden.
-
-PERSONEN BENENNEN:
-Erkennbare Personen duerfen benannt werden — Personen des oeffentlichen
-Lebens auch ohne Bildbeschriftung. Liegt ein Name aus Bildbeschriftung
-oder Kontext vor, ist er zu verwenden. Nur ohne jeden Anhaltspunkt: "Person".
-
-NAME ALS SATZANFANG:
-Ein verwendeter Name ist das SUBJEKT des ersten Satzes:
-"Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem Holztisch,
-vor sich ein aufgeklapptes Laptop." FALSCH ist die Etikett-Struktur
-"Name, Funktion: Ein Mann ..." — die benannte Person wird danach NIE
-erneut anonym eingefuehrt ("ein Mann", "eine Frau", "eine Person");
-stattdessen Pronomen oder Rolle ("der Gruender", "die Physikerin").
-
-QUELLEN-FLOSKELN VERBOTEN:
-Formulierungen wie "laut Seitenkontext", "laut Kontext", "dem Kontext
-zufolge" oder "laut Bildunterschrift" sind in Alt-Text UND
-Langbeschreibung verboten. Eine belegte Angabe wird direkt ausgesagt,
-ohne ihre Herkunft zu nennen."""
+Der Name steht dann als Subjekt am Satzanfang, ohne Quellen-Floskel
+(siehe STILREGELN Punkte 4 und 5)."""
 
 
 def _render_unterschriften_block() -> str:
@@ -253,10 +219,8 @@ SCHLECHT (ohne Beleg):
 'Die Atmosphaere wirkt locker und motiviert.'
 'Eine froehliche Stimmung.'
 
-Keine Emotionen erfinden, keine Motivation interpretieren, keine
-Beziehungen annehmen. Bei jeder Atmosphaere-Wertung MUSS
-atmosphaere_belege im Output gesetzt werden mit wertung und beleg.
-Keine Atmosphaere ohne Beleg-Eintrag."""
+Bei jeder Atmosphaere-Wertung MUSS atmosphaere_belege im Output gesetzt
+werden mit wertung und beleg. Keine Atmosphaere ohne Beleg-Eintrag."""
     return """ATMOSPHAERE
 
 Wertungen ueber Atmosphaere (wirkt konzentriert, formell, lebendig)
@@ -304,20 +268,8 @@ WAS zu sehen ist ("Filiale der Drogeriekette budni"), aber keine Handlung oder
 Absicht erfinden, die das Bild nicht zeigt (NICHT: "beim Einkaufen")."""
 
 
-def _render_kompaktheit_block() -> str:
-    """Kompaktheits-Block — geteilt in allen 6 Foto-Buildern (NEU 05.07.2026).
-
-    Alt-Text-Straffung (Steve-Entscheid 05.07. nach Blog-Abgleich): Richtwerte
-    deutlich unter dem 400er-Schema-Limit; Wissens-Tiefe wandert in die
-    Langbeschreibung. WCAG-Arbeitsteilung: alt = Essenz, longdesc = Tiefe.
-    """
-    return """KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
-
-Richtwert fuer den Alt-Text: einfache Motive unter 150 Zeichen, komplexe Szenen
-bis etwa 250. Die 400 Zeichen des Schemas sind eine harte Obergrenze, KEIN Ziel.
-Der Alt-Text traegt die Essenz — Wissens-Tiefe, Nebendetails und raeumliche
-Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
-Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text."""
+# Kompaktheits-Block: 21.08.2026 in die geteilten STILREGELN aufgegangen
+# (prompts/components/stilregeln.py, Punkt 6) — dort pflegen, nicht hier.
 
 
 def _render_zaehl_block() -> str:
@@ -435,15 +387,18 @@ def _render_final_check_lean() -> str:
     """
     return """FINAL CHECK (vor der Ausgabe pruefen):
 
-1. Jede Aussage durch Inventar oder sichtbare Bildinformation belegbar?
-2. Keine Halluzination (kein Item im Output das weder im Inventar noch sichtbar belegt ist)?
-3. Keine Emotion oder Beziehung erfunden (gluecklich, motiviert, Kolleginnen, Familie)?
-4. Keine Identitaet geraten ohne Kontext-Beleg?
-5. Bei unklaren Objekten: sichtbare Form/Farbe/Position beschrieben statt Funktion zu erraten?
-6. Alt-Text konkret und visuell charakteristisch — nicht nur Personen- oder Inventar-Aufzaehlung?
-7. Vermeidet generische Einleitungen (\"Auf dem Bild\", \"Eine Gruppe von Personen\")?
-8. Schema vollstaendig korrekt (alle Pflichtfelder gefuellt)?
-9. atmosphaere_belege gefuellt wenn Atmosphaere im Text vorkommt?
+1. Jede Aussage durch Inventar oder sichtbare Bildinformation belegt —
+   keine Halluzination, keine erfundene Emotion oder Beziehung, keine
+   geratene Identitaet?
+2. Bei unklaren Objekten: sichtbare Form/Farbe/Position beschrieben statt
+   Funktion zu erraten?
+3. STILREGELN eingehalten — Wichtigstes zuerst, natuerlicher Satzbau,
+   keine Koerperdetails ohne Bedeutung im Alt-Text, keine Floskeln,
+   Laengen-Richtwert getroffen?
+4. Alt-Text konkret und charakteristisch — keine blosse Aufzaehlung, kein
+   \"Eine Gruppe von Personen\", wo sich zaehlen laesst?
+5. Schema vollstaendig; atmosphaere_belege gefuellt, wenn eine Wertung im
+   Text vorkommt?
 
 Wenn ein Punkt nicht erfuellt: Output neu formulieren.
 """
@@ -511,7 +466,7 @@ fehlender Kontext wird nicht durch Vermutungen ersetzt.
 {_render_zweck_block()}
 
 
-{_render_kompaktheit_block()}
+{STILREGELN}
 
 
 ALT-TEXT
@@ -529,9 +484,9 @@ Der Alt-Text:
   gehoert sie in den ALT-TEXT — nicht nur in die Langbeschreibung. Auch eine
   Person mit Ruecken zur Kamera kann diese strukturgebende Person sein; benenne
   dann die sichtbare Beziehung (z.B. "alle blicken zu ihr").
-- ist praegnant: in der Regel 1-2 Saetze, hoechstens 400 Zeichen
+- ist praegnant: in der Regel 1-2 Saetze (Laengen-Richtwerte: STILREGELN)
 
-VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", "Eine Szene", "wirkt wie",
+VERMEIDEN (zusaetzlich zu den STILREGELN): "Eine Szene", "wirkt wie",
 "im Rahmen einer Veranstaltung", journalistische/erzaehlerische Sprache.
 
 
@@ -572,20 +527,6 @@ vermitteln.
 
 
 {_render_unterschriften_block()}
-
-
-HALLUZINATIONSSCHUTZ
-
-Beschreibe nur sichtbare Inhalte, belegbare Kontextinformationen, lesbare Texte
-und klar erkennbare raeumliche Strukturen. Wende die Zwei-Wege-Regel an: klar
-durch Form UND Setting Getragenes wird benannt, genuin Unklares neutral
-beschrieben (Form/Farbe/Position) — nie hedgen.
-
-SCHLECHT (Hedging): "vermutlich", "wirkt wie", "wahrscheinlich", "eine Art von",
-"moegliche Flyer", "scheint"
-GUT: Klar Getragenes benennen ("orange und weisse Abstimmkarten" im Workshop-
-Setting, "Acer-Logo", "Projektionsflaeche"); genuin Unklares neutral ("runde
-orangefarbene Gegenstaende, Funktion nicht erkennbar", "rotes Sofa im Hintergrund").
 
 
 {_render_atmosphaere_block()}
@@ -652,13 +593,15 @@ Nicht Motivation, Beziehungen oder Emotionen vermuten. Nur sichtbar
 belegbare Informationen verwenden.
 
 Der Fokus liegt auf:
-- visueller Charakterisierung der Person(en)
-- Haltung, Blickrichtung, Konstellation
-- praegenden visuellen Markern (Kleidung, Hut, charakteristische Objekte)
+- WER zu sehen ist (Name oder Funktion bei eindeutiger Zuordnung)
+- der sichtbaren Situation und Taetigkeit
+- praegenden visuellen Markern, wo sie die Person oder Szene
+  charakterisieren (Kleidung, charakteristische Objekte)
 - praegnanter Wissensvermittlung
 
 Der Alt-Text soll nicht nur benennen WER zu sehen ist, sondern die
-Person und ihre sichtbare Situation mental nachvollziehbar machen.
+Person und ihre sichtbare Situation mental nachvollziehbar machen —
+in der knappen, natuerlichen Form der STILREGELN.
 
 
 INVENTAR (Pass-2-Beobachtungen)
@@ -685,7 +628,7 @@ darf nicht durch Vermutungen ersetzt werden.
 {_render_zweck_block()}
 
 
-{_render_kompaktheit_block()}
+{STILREGELN}
 
 
 {_render_zaehl_block()}
@@ -693,39 +636,22 @@ darf nicht durch Vermutungen ersetzt werden.
 
 ALT-TEXT
 
-Der Alt-Text soll:
-- konkret beginnen
-- die Person(en) und ihre sichtbare Situation sofort verstaendlich machen
-- die visuell dominantesten und orientierungsrelevantesten Elemente priorisieren
-
-Wichtige Bestandteile (wenn sichtbar oder durch Kontext belegt):
+Der Alt-Text ist die knappe Antwort auf: Wer ist das, und was ist die
+sichtbare Situation? Bausteine (nur was sichtbar oder belegt ist und
+zum Verstehen beitraegt):
+- Name oder Funktion bei eindeutiger Zuordnung — muss dann in den
+  Alt-Text, nicht erst in die Langbeschreibung (NAMEN-PFLICHT, siehe
+  KONTEXTREGELN)
 - Anzahl der Personen
-- zentrale Haltung, Handlung oder Blickrichtung
-- praegende visuelle Marker (Kleidung, Hut, charakteristische Objekte)
-- praegnante Hintergrund- oder Raumelemente
-- Name oder Funktion bei eindeutiger Zuordnung
+- die sichtbare Situation oder Taetigkeit
+- hoechstens ein bis zwei praegende Marker (Kleidung, charakteristisches
+  Objekt, Umgebung), wenn sie die Person oder Szene wirklich
+  charakterisieren
 
-NAMEN-PFLICHT (Erinnerung):
-Wenn der Kontext eine Person eindeutig benennt (z.B. Bildunterschrift
-"Humphrey Bogart in CASABLANCA, 1942" und nur eine Person sichtbar),
-muss der Name im Alt-Text auftauchen — nicht nur in der Langbeschreibung. Der Name ist dabei das Subjekt des ersten Satzes; die benannte Person danach nicht erneut anonym als "ein Mann" oder "eine Frau" einfuehren.
-
-VERMEIDEN:
-- "Das Bild zeigt"
-- "Das Foto zeigt"
-- "Auf dem Bild"
-- "Auf dem Foto"
-- "Zu sehen ist"
-- "Hier sieht man"
-- "Eine Gruppe von Personen"
-- "Mehrere Menschen"
-- "wirkt wie"
-- erzaehlerische oder journalistische Einleitungen
-
-BEVORZUGEN:
-- konkrete sichtbare Beobachtungen
-- praezise Charakterisierung
-- visuelle Orientierungspunkte
+Alles Weitere — Koerperhaltung, Blickrichtung, Nebenobjekte, Raumdetails —
+gehoert NICHT in den Alt-Text (STILREGELN Punkt 3), sondern, wo es
+traegt, in die Langbeschreibung. Vermeide Sammel-Vagheit wie "Eine Gruppe
+von Personen" oder "Mehrere Menschen", wenn sich exakt zaehlen laesst.
 
 
 LANGBESCHREIBUNG
@@ -733,7 +659,8 @@ LANGBESCHREIBUNG
 Struktur in dieser Reihenfolge:
 
 1. zentrale Person(en): Anzahl, sichtbare Identifikation, Konstellation
-2. Haltung, Blickrichtung, sichtbare Taetigkeit
+2. sichtbare Taetigkeit; Haltung und Blickrichtung nur, wo sie die Szene
+   wirklich nachvollziehbarer machen
 3. praegende visuelle Marker (Kleidung, Objekte, Hut)
 4. Umgebung und Raumwirkung
 5. relevante Texte, Logos oder Kontextinformationen
@@ -882,7 +809,7 @@ sichtbare Bild Vorrang.
 {_render_zweck_block()}
 
 
-{_render_kompaktheit_block()}
+{STILREGELN}
 
 
 {_render_zaehl_block()}
@@ -901,8 +828,8 @@ Der Alt-Text:
   der Verpackung abschreiben; weitere Claims gehoeren, wenn ueberhaupt,
   in die Langbeschreibung
 
-VERMEIDEN: generische Einleitungen ("Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man"), blosse Inventarlisten, vage Umschreibungen
-fuer eindeutig Benennbares.
+VERMEIDEN (zusaetzlich zu den STILREGELN): blosse Inventarlisten, vage
+Umschreibungen fuer eindeutig Benennbares.
 
 
 BENENNEN STATT VAGE BLEIBEN
@@ -925,7 +852,7 @@ Oberflaeche, Boden, Struktur oder Spiegelung — aber erfinde keinen Inhalt
 
 LANGBESCHREIBUNG
 
-Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" — steige direkt mit dem Objekt ein.
+Steige direkt mit dem Objekt ein (Floskel-Verbot: STILREGELN Punkt 5).
 
 Sinnvolle Reihenfolge: zentrales Objekt (konkret benannt) -> Form und Proportion
 -> Oberflaeche, Struktur, Material -> raeumliche Anordnung -> sichtbare Details
@@ -1047,7 +974,7 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 {_render_zweck_block()}
 
 
-{_render_kompaktheit_block()}
+{STILREGELN}
 
 
 {_render_zaehl_block()}
@@ -1066,10 +993,10 @@ Der Alt-Text:
 - ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze; das Zeichenlimit ist
   Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
 
-VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Foto", "Zu sehen ist", "Auf dem Teller befindet sich", blosse
-Inventarlisten, vage Umschreibungen fuer klar Benennbares, sowie mikroskopische
-Details (Poren, Lentizellen, einzelne Maserungen) — die gehoeren nicht in einen
-kompakten Alt-Text.
+VERMEIDEN (zusaetzlich zu den STILREGELN): "Auf dem Teller befindet sich",
+blosse Inventarlisten, vage Umschreibungen fuer klar Benennbares, sowie
+mikroskopische Details (Poren, Lentizellen, einzelne Maserungen) — die
+gehoeren nicht in einen kompakten Alt-Text.
 
 
 ZUTATEN — BENENNEN STATT VAGE, ABER NICHTS ERFINDEN
@@ -1113,7 +1040,8 @@ Restaurant und keinen Anlass, die nicht belegt sind.
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Foto", "Zu sehen ist" oder "Auf dem Teller".
+Aufzaehlungszeichen. Steige direkt mit dem Gericht ein (Floskel-Verbot:
+STILREGELN Punkt 5; hier auch nicht mit "Auf dem Teller" beginnen).
 Sinnvolle Reihenfolge ohne sie als Ueberschriften zu setzen:
 Gericht (konkret benannt), sichtbare Hauptkomponenten und Beilagen, Anrichtung
 und Geschirr (Material/Farbe wenn relevant), Setting wenn relevant (Restaurant-
@@ -1236,7 +1164,7 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 {_render_zweck_block()}
 
 
-{_render_kompaktheit_block()}
+{STILREGELN}
 
 
 {_render_zaehl_block()}
@@ -1248,14 +1176,15 @@ Der Alt-Text:
 - beginnt mit der Art der Landschaft (Kueste, Gebirge, Wald, Feld, Skyline usw.)
   und einem konkreten praegenden Merkmal (dominante Form, Gewaesser, Wetter/
   Licht wenn klar erkennbar), nicht mit einer generischen Einleitung
-- benennt die belegten geografischen Hauptelemente und ihre Anordnung
-- macht den Raum und die Tiefe der Szene nachvollziehbar
+- benennt die zwei bis drei praegendsten geografischen Elemente — nicht jede
+  Gesteinsschicht und Geländestufe; die raeumliche Staffelung (Vorder-/Mittel-/
+  Hintergrund, Tiefe) traegt die LANGBESCHREIBUNG, nicht der Alt-Text
 - uebernimmt lesbaren Text (Orts-/Wegschilder) wenn relevant
 - ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze; das Zeichenlimit ist
   Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
 
-VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", generische Einleitungen, blosse
-Inventarlisten, vage Umschreibungen fuer klar Benennbares.
+VERMEIDEN (zusaetzlich zu den STILREGELN): blosse Inventarlisten, vage
+Umschreibungen fuer klar Benennbares.
 
 
 ORTE UND BENENNUNG — BENENNEN STATT RATEN
@@ -1287,7 +1216,8 @@ Landschaftsart klar belegt ist.
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man".
+Aufzaehlungszeichen. Steige direkt mit der Landschaft ein (Floskel-Verbot:
+STILREGELN Punkt 5).
 Folge inhaltlich dieser Reihenfolge, ohne sie als
 Ueberschriften zu setzen: zuerst Landschaftsart und Gesamtraum (Vorder-, Mittel-,
 Hintergrund, Tiefe), dann Topografie (Hoehen, Senken, Ebenen, Gewaesser), dann
@@ -1419,7 +1349,7 @@ BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 {_render_zweck_block()}
 
 
-{_render_kompaktheit_block()}
+{STILREGELN}
 
 
 {_render_zaehl_block()}
@@ -1437,8 +1367,8 @@ Der Alt-Text:
 - ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze. Das Zeichenlimit ist eine
   Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
 
-VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", generische Einleitungen, blosse
-Inventarlisten, das Auslisten jeder Saeule/jedes Fensters.
+VERMEIDEN (zusaetzlich zu den STILREGELN): blosse Inventarlisten, das
+Auslisten jeder Saeule/jedes Fensters.
 
 
 BENENNEN — TRAU DICH, ABER ERFINDE NICHTS FALSCHES
@@ -1475,7 +1405,8 @@ immer wortgetreu uebernehmen.
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man".
+Aufzaehlungszeichen. Steige direkt mit dem Bauwerk ein (Floskel-Verbot:
+STILREGELN Punkt 5).
 Halte auch die Langbeschreibung kompakt: Bauwerkstyp/Name
 und Gesamtform, dann Fassade/Material, dann die markantesten Elemente (Dachform,
 Saeulen, Tuerme), dann die Einbettung in die Umgebung, zuletzt lesbare

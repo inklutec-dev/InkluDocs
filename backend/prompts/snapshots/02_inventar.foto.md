@@ -1,7 +1,7 @@
 # Inventar (Pass 2) — Bildtyp: foto
 
 - **Builder:** `prompts/builders/inventar.py:104`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `full`
 - **Demo-Werte:**
@@ -68,7 +68,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -78,7 +83,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: foto
@@ -139,10 +149,14 @@ Beispiele:
 MONTAGE-CHECK:
 Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
 Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
-Kombinationen. Erkennst du solche Indikatoren, trage einen Eintrag in
+Kombinationen. SUCHE DABEI AKTIV, Quadrant für Quadrant, auch nach KLEINEN
+eingefügten Objekten — ein winziges Bauwerk oder Objekt an einem Ort, an den
+es nicht gehört (z.B. eine Kathedrale am Grund einer Schlucht), ist ein
+Montage-Beweis; geringe Größe schützt eine Montage nicht vor der Erkennung.
+Erkennst du solche Indikatoren, trage einen Eintrag in
 halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
 Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
-reales Foto beschreiben').
+reales Foto beschreiben') und liste das eingefügte Objekt als eigenes Objekt.
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - foto_subtyp [OPTIONAL]: Nur wenn bildtyp=foto, sonst None

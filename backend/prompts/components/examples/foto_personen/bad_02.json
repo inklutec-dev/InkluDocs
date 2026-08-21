@@ -1,0 +1,13 @@
+{
+  "szene": "Farbfoto: Ein Mann in schwarzem Hemd sitzt an einem Holztisch, vor ihm ein aufgeklapptes MacBook, dahinter eine helle Wand. Der Umgebungstext (Team-Seite) benennt ihn eindeutig als Jonas Berger, Gründer der Firma.",
+  "alt_text": "Jonas Berger in schwarzem Hemd, den Kopf leicht nach oben links gewandt und den Mund leicht geöffnet, sitzt vor einer hellen Wand; im Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch.",
+  "fehler": [
+    "Faktisch alles korrekt — und trotzdem ein schlechter Alt-Text: Er hakt eine Zutatenliste ab, statt die Situation zu erzählen.",
+    "Kopfhaltung und Mundstellung sind Körperdetails ohne Bedeutung für ein Porträt auf einer Team-Seite (STILREGELN Punkt 3) — sie blähen den Text auf und beschreiben die Person unvorteilhaft.",
+    "Der Partizip-Einschub trennt Subjekt und Verb ('Jonas Berger, ..., sitzt'), dazu Semikolon-Kette und die Lage-Floskel 'im Bildvordergrund' — Amtston statt natürlicher Satz (STILREGELN Punkt 2).",
+    "'ein aufgeklapptes Laptop' verschenkt einen Beleg: Das unverwechselbare Design macht das Gerät als MacBook benennbar (Anti-Halluzinations-Regel 4)."
+  ],
+  "besser": "Jonas Berger, Gründer der Firma, sitzt in schwarzem Hemd an einem Holztisch mit aufgeklapptem MacBook vor einer hellen Wand.",
+  "quelle": "Konstruiertes Beispiel nach realem Befund (Team-Porträt, 18.08.2026), keine reale Person",
+  "lizenz": "eigenes Werk"
+}

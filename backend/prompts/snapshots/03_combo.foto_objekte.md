@@ -1,7 +1,7 @@
 # Combo (Lean-Mode Pass 2+3) — Bildtyp: foto_objekte
 
 - **Builder:** `prompts/builders/combo.py:30`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
   - `V4_PROMPT_MODE` = `lean`
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: foto
@@ -146,10 +156,14 @@ Beispiele:
 MONTAGE-CHECK:
 Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
 Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
-Kombinationen. Erkennst du solche Indikatoren, trage einen Eintrag in
+Kombinationen. SUCHE DABEI AKTIV, Quadrant für Quadrant, auch nach KLEINEN
+eingefügten Objekten — ein winziges Bauwerk oder Objekt an einem Ort, an den
+es nicht gehört (z.B. eine Kathedrale am Grund einer Schlucht), ist ein
+Montage-Beweis; geringe Größe schützt eine Montage nicht vor der Erkennung.
+Erkennst du solche Indikatoren, trage einen Eintrag in
 halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
 Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
-reales Foto beschreiben').
+reales Foto beschreiben') und liste das eingefügte Objekt als eigenes Objekt.
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - foto_subtyp [OPTIONAL]: Nur wenn bildtyp=foto, sonst None
@@ -234,7 +248,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -244,7 +263,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: foto_objekte
@@ -323,13 +347,51 @@ WAS zu sehen ist ("Filiale der Drogeriekette budni"), aber keine Handlung oder
 Absicht erfinden, die das Bild nicht zeigt (NICHT: "beim Einkaufen").
 
 
-KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
 
-Richtwert fuer den Alt-Text: einfache Motive unter 150 Zeichen, komplexe Szenen
-bis etwa 250. Die 400 Zeichen des Schemas sind eine harte Obergrenze, KEIN Ziel.
-Der Alt-Text traegt die Essenz — Wissens-Tiefe, Nebendetails und raeumliche
-Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
-Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text.
+1. WICHTIGSTES ZUERST: Fuehre mit der Information, wegen der das Bild an
+   seiner Stelle steht — Wer oder Was und die sichtbare Situation. Jedes
+   weitere Detail muss die Frage bestehen: Hilft es, dieses Bild an dieser
+   Stelle zu verstehen? Wenn nein, gehoert es nicht in den Alt-Text —
+   sondern in die Langbeschreibung oder nirgendwohin.
+
+2. NATUERLICHER SATZBAU: Schreibe wie ein guter Redakteur — Subjekt und
+   Verb stehen frueh und nah beieinander, ein bis zwei Saetze. Keine
+   Partizip-Einschuebe zwischen Subjekt und Verb, keine Semikolon-Ketten,
+   keine Lage-Floskeln wie "im Bildvordergrund" oder "im Bildhintergrund"
+   (stattdessen natuerlich: "vor ihr", "dahinter", "auf dem Tisch").
+   GUT: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
+   aufgeklapptem Laptop vor einer hellen Wand."
+   SCHLECHT: "Anna Reimers in schwarzem Blazer, den Kopf leicht nach oben
+   links gewandt und den Mund leicht geoeffnet, sitzt vor einer hellen
+   Wand; im Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch."
+
+3. KOERPERDETAILS NUR MIT BEDEUTUNG: Kopfhaltung, Blickrichtung,
+   Mundstellung, Gestik und Mimik gehoeren NICHT in den Alt-Text — ausser
+   sie tragen die Kernaussage des Bildes (die Rednerin zeigt auf die
+   Leinwand; zwei Personen geben sich die Hand). In der Langbeschreibung
+   nur dort, wo sie die Szene wirklich nachvollziehbarer machen.
+
+4. NAME ALS SATZANFANG: Ein verwendeter Name ist das SUBJEKT des ersten
+   Satzes ("Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem
+   Holztisch ..."). FALSCH ist die Etikett-Struktur "Name, Funktion: Ein
+   Mann ..." — die benannte Person wird danach NIE erneut anonym
+   eingefuehrt ("ein Mann", "eine Frau", "eine Person"); stattdessen
+   Pronomen oder Rolle ("der Gruender", "die Physikerin").
+
+5. KEINE FLOSKELN: Nicht mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem
+   Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" beginnen —
+   direkt mit dem Motiv einsteigen. Ebenso verboten sind Quellen-Floskeln
+   wie "laut Seitenkontext", "laut Kontext", "dem Kontext zufolge" oder
+   "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt,
+   ohne ihre Herkunft zu nennen.
+
+6. LAENGE (Arbeitsteilung Alt-Text / Langbeschreibung): So kurz wie
+   moeglich, so lang wie noetig. Richtwert fuer den Alt-Text: einfache
+   Motive unter 150 Zeichen, komplexe Szenen bis etwa 250. Die 400 Zeichen
+   des Schemas sind eine harte Obergrenze, KEIN Ziel. Der Alt-Text traegt
+   die Essenz — Wissens-Tiefe, Nebendetails und raeumliche Ausfuehrung
+   gehoeren in die Langbeschreibung.
 
 
 ZAEHL-DISZIPLIN
@@ -359,8 +421,8 @@ Der Alt-Text:
   der Verpackung abschreiben; weitere Claims gehoeren, wenn ueberhaupt,
   in die Langbeschreibung
 
-VERMEIDEN: generische Einleitungen ("Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man"), blosse Inventarlisten, vage Umschreibungen
-fuer eindeutig Benennbares.
+VERMEIDEN (zusaetzlich zu den STILREGELN): blosse Inventarlisten, vage
+Umschreibungen fuer eindeutig Benennbares.
 
 
 BENENNEN STATT VAGE BLEIBEN
@@ -383,7 +445,7 @@ Oberflaeche, Boden, Struktur oder Spiegelung — aber erfinde keinen Inhalt
 
 LANGBESCHREIBUNG
 
-Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" — steige direkt mit dem Objekt ein.
+Steige direkt mit dem Objekt ein (Floskel-Verbot: STILREGELN Punkt 5).
 
 Sinnvolle Reihenfolge: zentrales Objekt (konkret benannt) -> Form und Proportion
 -> Oberflaeche, Struktur, Material -> raeumliche Anordnung -> sichtbare Details
@@ -412,32 +474,53 @@ Fuelle exakt das Schema BeschreibungOutput:
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Foto durch eine Flughafen-Terminalscheibe: ein weißes Großraumflugzeug am Gate, Schriftzug 'BOEING 777' am Rumpf, Emirates-Logo und arabische Schrift am Heck, Gate-Schild 'J8', Vorfeld mit Servicefahrzeugen, bewölkter Himmel. Kein Ortsschild außer dem Gate.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Foto durch eine Flughafen-Terminalscheibe: ein weißes Großraumflugzeug am Gate, Schriftzug 'BOEING 777' am Rumpf, Emirates-Logo und arabische Schrift am Heck, Gate-Schild 'J8', Vorfeld mit Servicefahrzeugen, bewölkter Himmel. Kein Ortsschild außer dem Gate.",
   "alt_text": "Emirates Boeing 777 am Gate, aufgenommen durch eine Terminalscheibe mit Spiegelungen. Das Großraumflugzeug steht an einer Fluggastbrücke; im Vordergrund Vorfeld mit Servicefahrzeugen und Gate-Schild 'J8', im Hintergrund bewölkter Himmel.",
-  "begruendung": "Führt mit der konkretesten BELEGTEN Benennung (Emirates Boeing 777 aus Schriftzug und Lackierung) und nennt das lesbare Schild 'J8'. Der Standort (z.B. Frankfurt) wird NICHT genannt, weil im Bild nicht belegt — er käme nur in den Text, wenn ein Schild ('FRA') oder der Dokumentkontext ihn trägt, und dann eher in die Langbeschreibung.",
-  "prinzip": "Benenne, was durch lesbaren Text, Logo oder Lackierung klar belegt ist. Rate keinen Ort und keine Tatsache, die nur plausibel, aber nicht belegt ist."
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "weißes Großraumflugzeug",
+    "Schriftzug BOEING 777",
+    "Emirates-Logo am Heck",
+    "Gate-Schild 'J8'",
+    "Servicefahrzeuge auf dem Vorfeld",
+    "Terminalscheibe mit Spiegelungen"
+  ],
+  "nicht_verwendete_inventar_items": [
+    "arabische Schrift am Heck"
+  ],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Benenne, was durch lesbaren Text, Logo oder Lackierung klar belegt ist. Rate keinen Ort und keine Tatsache, die nur plausibel, aber nicht belegt ist.)
 
 POSITIVES BEISPIEL 2:
+Szene: Draufsicht auf etwa 25 handgetöpferte Gefäße, cremefarbene Innenglasur, blau-schwarze Reaktivglasur-Ränder, rosa Textiluntergrund. Die Gefäße sind leer; das Cremefarbene ist Glasur.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Draufsicht auf etwa 25 handgetöpferte Gefäße, cremefarbene Innenglasur, blau-schwarze Reaktivglasur-Ränder, rosa Textiluntergrund. Die Gefäße sind leer; das Cremefarbene ist Glasur.",
   "alt_text": "Etwa 25 handgetöpferte Keramikschalen verschiedener Größen, von oben fotografiert: cremefarbene Innenglasur mit blau-grauer Sprenkelung und dunklem Rand, dicht auf einem rosa Textiltuch ausgelegt.",
-  "begruendung": "Benennt das Material 'Keramik' selbstbewusst, weil Form und Glasur es klar tragen. Das helle Innere wird als GLASUR beschrieben, nicht als Inhalt — es ist nichts in den Schalen.",
-  "prinzip": "Material und Typ benennen, wenn visuell klar. Innenflächen von Behältern als Oberfläche oder Glasur beschreiben. Sichtbaren Inhalt darf man nennen; nicht sichtbaren Inhalt niemals erfinden."
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "etwa 25 handgetöpferte Keramikschalen",
+    "cremefarbene Innenglasur",
+    "blau-graue Sprenkelung",
+    "dunkler Rand",
+    "rosa Textiltuch"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Material und Typ benennen, wenn visuell klar. Innenflächen von Behältern als Oberfläche oder Glasur beschreiben. Sichtbaren Inhalt darf man nennen; nicht sichtbaren Inhalt niemals erfinden.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dieselben leeren Keramikschalen mit cremefarbener Glasur.",
-  "alt_text": "Etwa 25 Schalen, viele gefüllt mit einer cremig-weißen Substanz, daneben einzelne mit heller Flüssigkeit.",
-  "fehler": [
-    "'gefüllt mit cremig-weißer Substanz' erfindet einen Inhalt — die Schalen sind leer, das Cremefarbene ist die Glasur (Halluzination).",
-    "'helle Flüssigkeit' deutet eine Innenfläche als Inhalt fehl.",
-    "bleibt zugleich vage beim Material (sagt nicht 'Keramik', obwohl klar belegt)."
-  ],
-  "besser": "Material benennen ('Keramik') und das Innere als Glasur oder Oberfläche beschreiben, ohne einen Inhalt zu erfinden. Sichtbaren Inhalt (z.B. Kaffee in einer Tasse) darf man dagegen benennen."
-}
+Szene: Dieselben leeren Keramikschalen mit cremefarbener Glasur.
+Schlechter Alt-Text: "Etwa 25 Schalen, viele gefüllt mit einer cremig-weißen Substanz, daneben einzelne mit heller Flüssigkeit."
+- Fehler: 'gefüllt mit cremig-weißer Substanz' erfindet einen Inhalt — die Schalen sind leer, das Cremefarbene ist die Glasur (Halluzination).
+- Fehler: 'helle Flüssigkeit' deutet eine Innenfläche als Inhalt fehl.
+- Fehler: bleibt zugleich vage beim Material (sagt nicht 'Keramik', obwohl klar belegt).
+Besser: Material benennen ('Keramik') und das Innere als Glasur oder Oberfläche beschreiben, ohne einen Inhalt zu erfinden. Sichtbaren Inhalt (z.B. Kaffee in einer Tasse) darf man dagegen benennen.
 
 
 FINAL CHECK

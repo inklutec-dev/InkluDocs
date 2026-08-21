@@ -1,7 +1,7 @@
 # Klassifikator — Modus: lean
 
 - **Builder:** `prompts/builders/classification.py:139`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**

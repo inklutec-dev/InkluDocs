@@ -1,7 +1,7 @@
 # Daten-Builder tabelle
 
 - **Builder:** `prompts/builders/beschreibung_daten.py:557`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: tabelle (tabellarische Daten als Grafik)
@@ -307,29 +317,33 @@ Markdown-Tabellen.
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Periodensystem der Elemente als Grafik (Wikimedia-Grafik Periodic_table_large.svg): 118 Elemente in 18 Gruppen (Spalten) und 7 Perioden (Zeilen), jede Zelle mit Elementsymbol, Ordnungszahl und Name, von Wasserstoff (H, 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide als zwei separate Zeilen unterhalb der Haupttabelle.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Periodensystem der Elemente als Grafik (Wikimedia-Grafik Periodic_table_large.svg): 118 Elemente in 18 Gruppen (Spalten) und 7 Perioden (Zeilen), jede Zelle mit Elementsymbol, Ordnungszahl und Name, von Wasserstoff (H, 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide als zwei separate Zeilen unterhalb der Haupttabelle.",
   "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente, angeordnet in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide stehen als zwei separate Zeilen unterhalb der Haupttabelle.",
-  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Tabelle —' plus Thema und trägt die Kernaussage über die belegten Endwerte: exakt 118 Elemente, erster und letzter Eintrag mit wortgetreuen Symbolen und Ordnungszahlen (Zähl-Disziplin, keine gerundeten oder erfundenen Werte). Die Struktur (18 Gruppen, 7 Perioden, Sonderzeilen) macht die Tabelle ohne Layout-Geschwätz nachvollziehbar. Fließtext, keine Markdown-Tabelle.",
-  "prinzip": "Mit 'Tabelle —' + Thema und der wichtigsten Aussage auf Basis der richtigen Endwerte führen; Zahlen, Symbole und Struktur wortgetreu und exakt übernehmen.",
-  "quelle": "Wikimedia Commons: Periodic_table_large.svg",
-  "lizenz": "Wikimedia Commons, frei lizenziert"
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "118 Elemente",
+    "18 Gruppen",
+    "7 Perioden",
+    "Wasserstoff (H, 1)",
+    "Oganesson (Og, 118)",
+    "Lanthanoide und Actinoide als separate Zeilen"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Mit 'Tabelle —' + Thema und der wichtigsten Aussage auf Basis der richtigen Endwerte führen; Zahlen, Symbole und Struktur wortgetreu und exakt übernehmen.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dasselbe Periodensystem der Elemente (Periodic_table_large.svg): 118 Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, 1) bis Oganesson (Og, 118).",
-  "alt_text": "Eine bunte Tabelle zeigt verschiedene chemische Elemente in farbigen Kästchen. Oben links steht ein Kästchen, rechts daneben viele weitere; insgesamt sind es ungefähr 120 Elemente in schönen Regenbogenfarben.",
-  "fehler": [
-    "'Eine bunte Tabelle zeigt verschiedene chemische Elemente' ist eine nichtssagende Floskel-Eröffnung ohne das Präfix 'Tabelle —' und ohne Kernaussage.",
-    "'ungefähr 120 Elemente' verletzt die Zähl-Disziplin — die Tabelle belegt exakt 118; weder Wasserstoff noch Oganesson werden mit Symbol und Ordnungszahl genannt.",
-    "'Oben links steht ein Kästchen, rechts daneben viele weitere' beschreibt das Layout statt der Struktur (18 Gruppen, 7 Perioden).",
-    "'in schönen Regenbogenfarben' ist Farb-Beschreibung mit Wertung statt Inhalt — die Farbkodierung wäre nur relevant, wenn ihre Bedeutung (Elementkategorien) erklärt würde."
-  ],
-  "besser": "Mit 'Tabelle — Periodensystem der Elemente' führen, die exakten belegten Werte nennen (118 Elemente, H 1 bis Og 118), die Struktur über Gruppen und Perioden statt über Kästchen-Positionen beschreiben und Farben nur mit ihrer belegten Bedeutung erwähnen.",
-  "quelle": "Wikimedia Commons: Periodic_table_large.svg",
-  "lizenz": "Wikimedia Commons, frei lizenziert"
-}
+Szene: Dasselbe Periodensystem der Elemente (Periodic_table_large.svg): 118 Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, 1) bis Oganesson (Og, 118).
+Schlechter Alt-Text: "Eine bunte Tabelle zeigt verschiedene chemische Elemente in farbigen Kästchen. Oben links steht ein Kästchen, rechts daneben viele weitere; insgesamt sind es ungefähr 120 Elemente in schönen Regenbogenfarben."
+- Fehler: 'Eine bunte Tabelle zeigt verschiedene chemische Elemente' ist eine nichtssagende Floskel-Eröffnung ohne das Präfix 'Tabelle —' und ohne Kernaussage.
+- Fehler: 'ungefähr 120 Elemente' verletzt die Zähl-Disziplin — die Tabelle belegt exakt 118; weder Wasserstoff noch Oganesson werden mit Symbol und Ordnungszahl genannt.
+- Fehler: 'Oben links steht ein Kästchen, rechts daneben viele weitere' beschreibt das Layout statt der Struktur (18 Gruppen, 7 Perioden).
+- Fehler: 'in schönen Regenbogenfarben' ist Farb-Beschreibung mit Wertung statt Inhalt — die Farbkodierung wäre nur relevant, wenn ihre Bedeutung (Elementkategorien) erklärt würde.
+Besser: Mit 'Tabelle — Periodensystem der Elemente' führen, die exakten belegten Werte nennen (118 Elemente, H 1 bis Og 118), die Struktur über Gruppen und Perioden statt über Kästchen-Positionen beschreiben und Farben nur mit ihrer belegten Bedeutung erwähnen.
 
 
 FINAL CHECK

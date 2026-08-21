@@ -1,7 +1,7 @@
 # Combo (Lean-Mode Pass 2+3) — Bildtyp: diagramm
 
 - **Builder:** `prompts/builders/combo.py:30`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
   - `V4_PROMPT_MODE` = `lean`
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: diagramm
@@ -114,10 +124,14 @@ Beispiele:
 MONTAGE-CHECK:
 Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
 Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
-Kombinationen. Erkennst du solche Indikatoren, trage einen Eintrag in
+Kombinationen. SUCHE DABEI AKTIV, Quadrant für Quadrant, auch nach KLEINEN
+eingefügten Objekten — ein winziges Bauwerk oder Objekt an einem Ort, an den
+es nicht gehört (z.B. eine Kathedrale am Grund einer Schlucht), ist ein
+Montage-Beweis; geringe Größe schützt eine Montage nicht vor der Erkennung.
+Erkennst du solche Indikatoren, trage einen Eintrag in
 halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
 Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
-reales Foto beschreiben').
+reales Foto beschreiben') und liste das eingefügte Objekt als eigenes Objekt.
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - foto_subtyp [OPTIONAL]: Nur wenn bildtyp=foto, sonst None
@@ -432,29 +446,32 @@ Markdown-Tabellen.
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Wikimedia-Grafik Population_curve.svg): x-Achse Jahrtausende, y-Achse Bevölkerung in Milliarden. Die Kurve verläuft über fast den gesamten Zeitraum nahe der Nulllinie und steigt erst ab etwa 1800 steil an, bis auf rund 6 Milliarden im Jahr 2000.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Wikimedia-Grafik Population_curve.svg): x-Achse Jahrtausende, y-Achse Bevölkerung in Milliarden. Die Kurve verläuft über fast den gesamten Zeitraum nahe der Nulllinie und steigt erst ab etwa 1800 steil an, bis auf rund 6 Milliarden im Jahr 2000.",
   "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, erst ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
-  "begruendung": "Kernaussage zuerst: Der erste Satz transportiert die wichtigste Erkenntnis (jahrtausendelange Stagnation, dann steiler Anstieg) mit konkreten, im Diagramm belegten Werten (ab etwa 1800, rund 6 Milliarden im Jahr 2000) statt vage 'die Kurve steigt'. Diagrammtyp und Zeitraum sind benannt, Trend-Vokabular ('steil an') ist sichtbar belegt. Keine Ursachen behauptet.",
-  "prinzip": "Der erste Satz trägt die Kernaussage mit konkreten Werten. Trend-Vokabular nur, wenn der Verlauf es sichtbar belegt; keine Ursachen erfinden.",
-  "quelle": "Wikimedia Commons: Population_curve.svg",
-  "lizenz": "Wikimedia Commons, frei lizenziert"
+  "langbeschreibung": "Das Liniendiagramm stellt die Entwicklung der Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. dar. Die x-Achse umfasst den Zeitraum, die y-Achse die Bevölkerung in Milliarden. Über fast den gesamten Zeitraum verläuft die Kurve nahe der Nulllinie. Ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
+  "verwendete_inventar_items": [
+    "Liniendiagramm",
+    "x-Achse: 10.000 v. Chr. bis 2000 n. Chr.",
+    "y-Achse: Bevölkerung in Milliarden",
+    "Kurve nahe null bis etwa 1800",
+    "steiler Anstieg auf rund 6 Milliarden im Jahr 2000"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Der erste Satz trägt die Kernaussage mit konkreten Werten. Trend-Vokabular nur, wenn der Verlauf es sichtbar belegt; keine Ursachen erfinden.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dasselbe Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Population_curve.svg): Kurve lange nahe null, ab etwa 1800 steiler Anstieg auf rund 6 Milliarden im Jahr 2000.",
-  "alt_text": "Das Diagramm zeigt eine Linie, die im Verlauf ansteigt. Der dramatische Anstieg ist wahrscheinlich eine Folge der Industrialisierung und der modernen Medizin, die die Menschheit vor dem Untergang bewahrt haben.",
-  "fehler": [
-    "'Das Diagramm zeigt' ist eine verbotene generische Eröffnung; es fehlt jede Kernaussage mit konkreten Werten (kein Zeitraum, keine 6 Milliarden, kein 'ab etwa 1800').",
-    "'wahrscheinlich eine Folge der Industrialisierung und der modernen Medizin' erfindet Ursachen, die das Diagramm nicht belegt — zusätzlich mit Hedge-Wort 'wahrscheinlich'.",
-    "'dramatische' und 'vor dem Untergang bewahrt' sind Wertung und Erzählung statt Datenbeschreibung.",
-    "Diagrammtyp (Liniendiagramm) und Thema (Weltbevölkerung) werden nicht benannt — 'eine Linie, die ansteigt' ist eine reine Formbeschreibung ohne Information."
-  ],
-  "besser": "Mit Diagrammtyp, Thema und Kernaussage führen ('Liniendiagramm zur Weltbevölkerung ...: Über Jahrtausende nahe null, ab etwa 1800 steiler Anstieg auf rund 6 Milliarden im Jahr 2000'). Konkrete Werte statt vager Trend-Floskeln, keine Ursachen und keine Dramatisierung.",
-  "quelle": "Wikimedia Commons: Population_curve.svg",
-  "lizenz": "Wikimedia Commons, frei lizenziert"
-}
+Szene: Dasselbe Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Population_curve.svg): Kurve lange nahe null, ab etwa 1800 steiler Anstieg auf rund 6 Milliarden im Jahr 2000.
+Schlechter Alt-Text: "Das Diagramm zeigt eine Linie, die im Verlauf ansteigt. Der dramatische Anstieg ist wahrscheinlich eine Folge der Industrialisierung und der modernen Medizin, die die Menschheit vor dem Untergang bewahrt haben."
+- Fehler: 'Das Diagramm zeigt' ist eine verbotene generische Eröffnung; es fehlt jede Kernaussage mit konkreten Werten (kein Zeitraum, keine 6 Milliarden, kein 'ab etwa 1800').
+- Fehler: 'wahrscheinlich eine Folge der Industrialisierung und der modernen Medizin' erfindet Ursachen, die das Diagramm nicht belegt — zusätzlich mit Hedge-Wort 'wahrscheinlich'.
+- Fehler: 'dramatische' und 'vor dem Untergang bewahrt' sind Wertung und Erzählung statt Datenbeschreibung.
+- Fehler: Diagrammtyp (Liniendiagramm) und Thema (Weltbevölkerung) werden nicht benannt — 'eine Linie, die ansteigt' ist eine reine Formbeschreibung ohne Information.
+Besser: Mit Diagrammtyp, Thema und Kernaussage führen ('Liniendiagramm zur Weltbevölkerung ...: Über Jahrtausende nahe null, ab etwa 1800 steiler Anstieg auf rund 6 Milliarden im Jahr 2000'). Konkrete Werte statt vager Trend-Floskeln, keine Ursachen und keine Dramatisierung.
 
 
 FINAL CHECK

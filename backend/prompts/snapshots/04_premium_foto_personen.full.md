@@ -1,7 +1,7 @@
 # Premium-Builder foto_personen — Prompt-Modus: full
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:588`
-- **Generiert:** 2026-07-17
+- **Builder:** `prompts/builders/beschreibung_foto.py:557`
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `full`
   - `LLM_PROVIDER` = `mistral`
@@ -76,7 +76,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -86,7 +91,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: foto_personen
@@ -104,13 +114,15 @@ Nicht Motivation, Beziehungen oder Emotionen vermuten. Nur sichtbar
 belegbare Informationen verwenden.
 
 Der Fokus liegt auf:
-- visueller Charakterisierung der Person(en)
-- Haltung, Blickrichtung, Konstellation
-- praegenden visuellen Markern (Kleidung, Hut, charakteristische Objekte)
+- WER zu sehen ist (Name oder Funktion bei eindeutiger Zuordnung)
+- der sichtbaren Situation und Taetigkeit
+- praegenden visuellen Markern, wo sie die Person oder Szene
+  charakterisieren (Kleidung, charakteristische Objekte)
 - praegnanter Wissensvermittlung
 
 Der Alt-Text soll nicht nur benennen WER zu sehen ist, sondern die
-Person und ihre sichtbare Situation mental nachvollziehbar machen.
+Person und ihre sichtbare Situation mental nachvollziehbar machen —
+in der knappen, natuerlichen Form der STILREGELN.
 
 
 INVENTAR (Pass-2-Beobachtungen)
@@ -235,13 +247,51 @@ WAS zu sehen ist ("Filiale der Drogeriekette budni"), aber keine Handlung oder
 Absicht erfinden, die das Bild nicht zeigt (NICHT: "beim Einkaufen").
 
 
-KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
 
-Richtwert fuer den Alt-Text: einfache Motive unter 150 Zeichen, komplexe Szenen
-bis etwa 250. Die 400 Zeichen des Schemas sind eine harte Obergrenze, KEIN Ziel.
-Der Alt-Text traegt die Essenz — Wissens-Tiefe, Nebendetails und raeumliche
-Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
-Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text.
+1. WICHTIGSTES ZUERST: Fuehre mit der Information, wegen der das Bild an
+   seiner Stelle steht — Wer oder Was und die sichtbare Situation. Jedes
+   weitere Detail muss die Frage bestehen: Hilft es, dieses Bild an dieser
+   Stelle zu verstehen? Wenn nein, gehoert es nicht in den Alt-Text —
+   sondern in die Langbeschreibung oder nirgendwohin.
+
+2. NATUERLICHER SATZBAU: Schreibe wie ein guter Redakteur — Subjekt und
+   Verb stehen frueh und nah beieinander, ein bis zwei Saetze. Keine
+   Partizip-Einschuebe zwischen Subjekt und Verb, keine Semikolon-Ketten,
+   keine Lage-Floskeln wie "im Bildvordergrund" oder "im Bildhintergrund"
+   (stattdessen natuerlich: "vor ihr", "dahinter", "auf dem Tisch").
+   GUT: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
+   aufgeklapptem Laptop vor einer hellen Wand."
+   SCHLECHT: "Anna Reimers in schwarzem Blazer, den Kopf leicht nach oben
+   links gewandt und den Mund leicht geoeffnet, sitzt vor einer hellen
+   Wand; im Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch."
+
+3. KOERPERDETAILS NUR MIT BEDEUTUNG: Kopfhaltung, Blickrichtung,
+   Mundstellung, Gestik und Mimik gehoeren NICHT in den Alt-Text — ausser
+   sie tragen die Kernaussage des Bildes (die Rednerin zeigt auf die
+   Leinwand; zwei Personen geben sich die Hand). In der Langbeschreibung
+   nur dort, wo sie die Szene wirklich nachvollziehbarer machen.
+
+4. NAME ALS SATZANFANG: Ein verwendeter Name ist das SUBJEKT des ersten
+   Satzes ("Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem
+   Holztisch ..."). FALSCH ist die Etikett-Struktur "Name, Funktion: Ein
+   Mann ..." — die benannte Person wird danach NIE erneut anonym
+   eingefuehrt ("ein Mann", "eine Frau", "eine Person"); stattdessen
+   Pronomen oder Rolle ("der Gruender", "die Physikerin").
+
+5. KEINE FLOSKELN: Nicht mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem
+   Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" beginnen —
+   direkt mit dem Motiv einsteigen. Ebenso verboten sind Quellen-Floskeln
+   wie "laut Seitenkontext", "laut Kontext", "dem Kontext zufolge" oder
+   "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt,
+   ohne ihre Herkunft zu nennen.
+
+6. LAENGE (Arbeitsteilung Alt-Text / Langbeschreibung): So kurz wie
+   moeglich, so lang wie noetig. Richtwert fuer den Alt-Text: einfache
+   Motive unter 150 Zeichen, komplexe Szenen bis etwa 250. Die 400 Zeichen
+   des Schemas sind eine harte Obergrenze, KEIN Ziel. Der Alt-Text traegt
+   die Essenz — Wissens-Tiefe, Nebendetails und raeumliche Ausfuehrung
+   gehoeren in die Langbeschreibung.
 
 
 ZAEHL-DISZIPLIN
@@ -260,39 +310,22 @@ Hintergrund oder leicht versetzt werden mitgenannt, NICHT unterschlagen.
 
 ALT-TEXT
 
-Der Alt-Text soll:
-- konkret beginnen
-- die Person(en) und ihre sichtbare Situation sofort verstaendlich machen
-- die visuell dominantesten und orientierungsrelevantesten Elemente priorisieren
-
-Wichtige Bestandteile (wenn sichtbar oder durch Kontext belegt):
+Der Alt-Text ist die knappe Antwort auf: Wer ist das, und was ist die
+sichtbare Situation? Bausteine (nur was sichtbar oder belegt ist und
+zum Verstehen beitraegt):
+- Name oder Funktion bei eindeutiger Zuordnung — muss dann in den
+  Alt-Text, nicht erst in die Langbeschreibung (NAMEN-PFLICHT, siehe
+  KONTEXTREGELN)
 - Anzahl der Personen
-- zentrale Haltung, Handlung oder Blickrichtung
-- praegende visuelle Marker (Kleidung, Hut, charakteristische Objekte)
-- praegnante Hintergrund- oder Raumelemente
-- Name oder Funktion bei eindeutiger Zuordnung
+- die sichtbare Situation oder Taetigkeit
+- hoechstens ein bis zwei praegende Marker (Kleidung, charakteristisches
+  Objekt, Umgebung), wenn sie die Person oder Szene wirklich
+  charakterisieren
 
-NAMEN-PFLICHT (Erinnerung):
-Wenn der Kontext eine Person eindeutig benennt (z.B. Bildunterschrift
-"Humphrey Bogart in CASABLANCA, 1942" und nur eine Person sichtbar),
-muss der Name im Alt-Text auftauchen — nicht nur in der Langbeschreibung.
-
-VERMEIDEN:
-- "Das Bild zeigt"
-- "Das Foto zeigt"
-- "Auf dem Bild"
-- "Auf dem Foto"
-- "Zu sehen ist"
-- "Hier sieht man"
-- "Eine Gruppe von Personen"
-- "Mehrere Menschen"
-- "wirkt wie"
-- erzaehlerische oder journalistische Einleitungen
-
-BEVORZUGEN:
-- konkrete sichtbare Beobachtungen
-- praezise Charakterisierung
-- visuelle Orientierungspunkte
+Alles Weitere — Koerperhaltung, Blickrichtung, Nebenobjekte, Raumdetails —
+gehoert NICHT in den Alt-Text (STILREGELN Punkt 3), sondern, wo es
+traegt, in die Langbeschreibung. Vermeide Sammel-Vagheit wie "Eine Gruppe
+von Personen" oder "Mehrere Menschen", wenn sich exakt zaehlen laesst.
 
 
 LANGBESCHREIBUNG
@@ -300,7 +333,8 @@ LANGBESCHREIBUNG
 Struktur in dieser Reihenfolge:
 
 1. zentrale Person(en): Anzahl, sichtbare Identifikation, Konstellation
-2. Haltung, Blickrichtung, sichtbare Taetigkeit
+2. sichtbare Taetigkeit; Haltung und Blickrichtung nur, wo sie die Szene
+   wirklich nachvollziehbarer machen
 3. praegende visuelle Marker (Kleidung, Objekte, Hut)
 4. Umgebung und Raumwirkung
 5. relevante Texte, Logos oder Kontextinformationen
@@ -350,11 +384,8 @@ NAMEN-PFLICHT:
 Wenn ein Name oder eine Funktion im Kontext eindeutig einer Person im
 Bild zuzuordnen ist (z.B. einzige Person im Bild, oder Bildunterschrift
 nennt sie eindeutig), muss der Name im Output verwendet werden.
-
-PERSONEN BENENNEN:
-Erkennbare Personen duerfen benannt werden — Personen des oeffentlichen
-Lebens auch ohne Bildbeschriftung. Liegt ein Name aus Bildbeschriftung
-oder Kontext vor, ist er zu verwenden. Nur ohne jeden Anhaltspunkt: "Person".
+Der Name steht dann als Subjekt am Satzanfang, ohne Quellen-Floskel
+(siehe STILREGELN Punkte 4 und 5).
 
 
 UNTERSCHRIFTEN
@@ -422,29 +453,60 @@ Fuelle exakt das Schema BeschreibungOutput:
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Schwarz-Weiß-Foto: eine Frau in dunklem, hochgeschlossenem Kleid steht an einem Labortisch mit Glaskolben und einer Messapparatur, die rechte Hand hält ein Glasgefäß, der Blick ist auf die Apparatur gerichtet. Bildunterschrift im Dokument: 'Marie Curie in ihrem Pariser Labor, um 1912'. Nur eine Person sichtbar.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Schwarz-Weiß-Foto: eine Frau in dunklem, hochgeschlossenem Kleid steht an einem Labortisch mit Glaskolben und einer Messapparatur, die rechte Hand hält ein Glasgefäß, der Blick ist auf die Apparatur gerichtet. Bildunterschrift im Dokument: 'Marie Curie in ihrem Pariser Labor, um 1912'. Nur eine Person sichtbar.",
-  "alt_text": "Marie Curie in ihrem Pariser Labor, um 1912: Die Physikerin steht in dunklem, hochgeschlossenem Kleid an einem Labortisch mit Glaskolben und einer Messapparatur und hält ein Glasgefäß in der rechten Hand, den Blick auf die Apparatur gerichtet.",
-  "begruendung": "Namen-Pflicht erfüllt: Die Bildunterschrift benennt die einzige sichtbare Person eindeutig, also steht 'Marie Curie' im Alt-Text — nicht erst in der Langbeschreibung. Führt mit Person und Situation statt mit 'Das Foto zeigt'. Nennt belegte visuelle Marker (dunkles Kleid, Glasgefäß, Labortisch) und Blickrichtung, aber keine Emotion und kein 'wirkt konzentriert'. Zählt exakt (eine Person).",
-  "prinzip": "Bei eindeutiger Kontext-Benennung gehört der Name in den Alt-Text. Haltung, Blickrichtung und prägende Marker beobachtend beschreiben — keine Gefühle oder Motive vermuten.",
-  "quelle": "fiktives Beispiel (historische Person des öffentlichen Lebens, Szene generisch nach dem Bogart-Muster)",
-  "lizenz": "fiktives Beispiel"
+  "alt_text": "Marie Curie hält um 1912 in ihrem Pariser Labor ein Glasgefäß an einem Labortisch mit Glaskolben und einer Messapparatur.",
+  "langbeschreibung": "Marie Curie steht aufrecht an einem hölzernen Labortisch, auf dem mehrere Glaskolben und eine Messapparatur aufgebaut sind. Sie trägt ein dunkles, hochgeschlossenes Kleid mit langen Ärmeln, das Haar ist hochgesteckt. Mit der rechten Hand hält sie ein kleines Glasgefäß auf Brusthöhe, der Blick ist auf die Apparatur gerichtet. Die Aufnahme entstand um 1912 in ihrem Pariser Labor.",
+  "verwendete_inventar_items": [
+    "eine Frau (laut Bildunterschrift Marie Curie)",
+    "Labortisch",
+    "Glaskolben",
+    "Messapparatur",
+    "Glasgefäß in der rechten Hand"
+  ],
+  "nicht_verwendete_inventar_items": [
+    "dunkles hochgeschlossenes Kleid (nur Langbeschreibung — kein tragendes Alt-Text-Detail)"
+  ],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Bei eindeutiger Kontext-Benennung gehört der Name in den Alt-Text — als Subjekt des ersten Satzes. Der Alt-Text bleibt die knappe Antwort auf Wer und Situation; Kleidung, Haltung und Blickrichtung trägt die Langbeschreibung.)
+
+POSITIVES BEISPIEL 2:
+Szene: Farbfoto einer Feierstunde: Fünf Personen stehen nebeneinander auf einer Bühne, eine hält eine Urkunde. Der Umgebungstext nennt 'unser Projektteam, darunter Lena Hartkamp, Timur Kaya und Ines Vogel' — OHNE Zuordnung, wer auf dem Foto wer ist; keine Person ist einzeln hervorgehoben oder beschriftet.
+Gueltige Antwort (exakt dieses JSON-Format):
+{
+  "alt_text": "Fünf Personen stehen nebeneinander auf einer Bühne bei einer Feierstunde; eine von ihnen hält eine Urkunde.",
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "fünf Personen nebeneinander",
+    "Bühne",
+    "Urkunde"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+}
+(Merksatz: Namen aus dem Kontext nur bei nachprüfbarer Zuordnung zu genau einer sichtbaren Person. Nennt der Kontext mehrere Namen ohne Zuordnung (Teil-Listen, 'darunter ...', 'und weitere'), bleiben ALLE Namen weg — Personen neutral benennen.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dieselbe Szene: Schwarz-Weiß-Foto, eine Frau in dunklem Kleid am Labortisch mit Glaskolben, Bildunterschrift 'Marie Curie in ihrem Pariser Labor, um 1912'.",
-  "alt_text": "Das Foto zeigt eine Wissenschaftlerin, die konzentriert und ein wenig erschöpft wirkt, während sie vermutlich an ihrer bahnbrechenden Radium-Forschung arbeitet, die ihr später den Nobelpreis einbringen sollte.",
-  "fehler": [
-    "'Das Foto zeigt' ist eine verbotene Floskel-Eröffnung; der Alt-Text führt nicht mit Person und Situation.",
-    "Der Name Marie Curie fehlt, obwohl die Bildunterschrift die einzige sichtbare Person eindeutig benennt (Namen-Pflicht verletzt).",
-    "'konzentriert und ein wenig erschöpft wirkt' deutet Emotionen ohne sichtbaren Beleg ('wirkt wie' ist verboten).",
-    "'vermutlich an ihrer bahnbrechenden Radium-Forschung' kombiniert ein Hedge-Wort mit erfundener Tätigkeit; der Nobelpreis-Ausblick ist Weltwissen-Erzählung statt Bildbeschreibung — sichtbar sind nur Labortisch, Glaskolben und Haltung."
-  ],
-  "besser": "Mit Name und Situation führen ('Marie Curie in ihrem Pariser Labor, um 1912: ...'), dann Haltung, Blickrichtung und belegte Marker (dunkles Kleid, Glasgefäß, Messapparatur) beobachtend nennen. Keine Emotionen, keine Vermutungswörter, keine biografische Erzählung.",
-  "quelle": "fiktives Beispiel (historische Person des öffentlichen Lebens, Szene generisch nach dem Bogart-Muster)",
-  "lizenz": "fiktives Beispiel"
-}
+Szene: Dieselbe Szene: Schwarz-Weiß-Foto, eine Frau in dunklem Kleid am Labortisch mit Glaskolben, Bildunterschrift 'Marie Curie in ihrem Pariser Labor, um 1912'.
+Schlechter Alt-Text: "Das Foto zeigt eine Wissenschaftlerin, die konzentriert und ein wenig erschöpft wirkt, während sie vermutlich an ihrer bahnbrechenden Radium-Forschung arbeitet, die ihr später den Nobelpreis einbringen sollte."
+- Fehler: 'Das Foto zeigt' ist eine verbotene Floskel-Eröffnung; der Alt-Text führt nicht mit Person und Situation.
+- Fehler: Der Name Marie Curie fehlt, obwohl die Bildunterschrift die einzige sichtbare Person eindeutig benennt (Namen-Pflicht verletzt).
+- Fehler: 'konzentriert und ein wenig erschöpft wirkt' deutet Emotionen ohne sichtbaren Beleg ('wirkt wie' ist verboten).
+- Fehler: 'vermutlich an ihrer bahnbrechenden Radium-Forschung' kombiniert ein Hedge-Wort mit erfundener Tätigkeit; der Nobelpreis-Ausblick ist Weltwissen-Erzählung statt Bildbeschreibung — sichtbar sind nur Labortisch, Glaskolben und Haltung.
+Besser: Mit dem Namen als Subjekt führen und knapp die Situation nennen: 'Marie Curie hält um 1912 in ihrem Pariser Labor ein Glasgefäß an einem Labortisch mit Glaskolben.' Keine Emotionen, keine Vermutungswörter, keine biografische Erzählung; Kleid und Blickrichtung gehören in die Langbeschreibung.
+
+ANTI-PATTERN-BEISPIEL 2 (NICHT so machen):
+Szene: Farbfoto: Ein Mann in schwarzem Hemd sitzt an einem Holztisch, vor ihm ein aufgeklapptes MacBook, dahinter eine helle Wand. Der Umgebungstext (Team-Seite) benennt ihn eindeutig als Jonas Berger, Gründer der Firma.
+Schlechter Alt-Text: "Jonas Berger in schwarzem Hemd, den Kopf leicht nach oben links gewandt und den Mund leicht geöffnet, sitzt vor einer hellen Wand; im Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch."
+- Fehler: Faktisch alles korrekt — und trotzdem ein schlechter Alt-Text: Er hakt eine Zutatenliste ab, statt die Situation zu erzählen.
+- Fehler: Kopfhaltung und Mundstellung sind Körperdetails ohne Bedeutung für ein Porträt auf einer Team-Seite (STILREGELN Punkt 3) — sie blähen den Text auf und beschreiben die Person unvorteilhaft.
+- Fehler: Der Partizip-Einschub trennt Subjekt und Verb ('Jonas Berger, ..., sitzt'), dazu Semikolon-Kette und die Lage-Floskel 'im Bildvordergrund' — Amtston statt natürlicher Satz (STILREGELN Punkt 2).
+- Fehler: 'ein aufgeklapptes Laptop' verschenkt einen Beleg: Das unverwechselbare Design macht das Gerät als MacBook benennbar (Anti-Halluzinations-Regel 4).
+Besser: Jonas Berger, Gründer der Firma, sitzt in schwarzem Hemd an einem Holztisch mit aufgeklapptem MacBook vor einer hellen Wand.
 
 UNSICHERHEIT
 

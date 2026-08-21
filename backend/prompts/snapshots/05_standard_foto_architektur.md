@@ -1,7 +1,7 @@
 # Standard-Builder foto_architektur
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:1316`
-- **Generiert:** 2026-07-17
+- **Builder:** `prompts/builders/beschreibung_foto.py:1274`
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: foto_architektur
@@ -237,13 +247,51 @@ WAS zu sehen ist ("Filiale der Drogeriekette budni"), aber keine Handlung oder
 Absicht erfinden, die das Bild nicht zeigt (NICHT: "beim Einkaufen").
 
 
-KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
 
-Richtwert fuer den Alt-Text: einfache Motive unter 150 Zeichen, komplexe Szenen
-bis etwa 250. Die 400 Zeichen des Schemas sind eine harte Obergrenze, KEIN Ziel.
-Der Alt-Text traegt die Essenz — Wissens-Tiefe, Nebendetails und raeumliche
-Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
-Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text.
+1. WICHTIGSTES ZUERST: Fuehre mit der Information, wegen der das Bild an
+   seiner Stelle steht — Wer oder Was und die sichtbare Situation. Jedes
+   weitere Detail muss die Frage bestehen: Hilft es, dieses Bild an dieser
+   Stelle zu verstehen? Wenn nein, gehoert es nicht in den Alt-Text —
+   sondern in die Langbeschreibung oder nirgendwohin.
+
+2. NATUERLICHER SATZBAU: Schreibe wie ein guter Redakteur — Subjekt und
+   Verb stehen frueh und nah beieinander, ein bis zwei Saetze. Keine
+   Partizip-Einschuebe zwischen Subjekt und Verb, keine Semikolon-Ketten,
+   keine Lage-Floskeln wie "im Bildvordergrund" oder "im Bildhintergrund"
+   (stattdessen natuerlich: "vor ihr", "dahinter", "auf dem Tisch").
+   GUT: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
+   aufgeklapptem Laptop vor einer hellen Wand."
+   SCHLECHT: "Anna Reimers in schwarzem Blazer, den Kopf leicht nach oben
+   links gewandt und den Mund leicht geoeffnet, sitzt vor einer hellen
+   Wand; im Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch."
+
+3. KOERPERDETAILS NUR MIT BEDEUTUNG: Kopfhaltung, Blickrichtung,
+   Mundstellung, Gestik und Mimik gehoeren NICHT in den Alt-Text — ausser
+   sie tragen die Kernaussage des Bildes (die Rednerin zeigt auf die
+   Leinwand; zwei Personen geben sich die Hand). In der Langbeschreibung
+   nur dort, wo sie die Szene wirklich nachvollziehbarer machen.
+
+4. NAME ALS SATZANFANG: Ein verwendeter Name ist das SUBJEKT des ersten
+   Satzes ("Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem
+   Holztisch ..."). FALSCH ist die Etikett-Struktur "Name, Funktion: Ein
+   Mann ..." — die benannte Person wird danach NIE erneut anonym
+   eingefuehrt ("ein Mann", "eine Frau", "eine Person"); stattdessen
+   Pronomen oder Rolle ("der Gruender", "die Physikerin").
+
+5. KEINE FLOSKELN: Nicht mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem
+   Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" beginnen —
+   direkt mit dem Motiv einsteigen. Ebenso verboten sind Quellen-Floskeln
+   wie "laut Seitenkontext", "laut Kontext", "dem Kontext zufolge" oder
+   "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt,
+   ohne ihre Herkunft zu nennen.
+
+6. LAENGE (Arbeitsteilung Alt-Text / Langbeschreibung): So kurz wie
+   moeglich, so lang wie noetig. Richtwert fuer den Alt-Text: einfache
+   Motive unter 150 Zeichen, komplexe Szenen bis etwa 250. Die 400 Zeichen
+   des Schemas sind eine harte Obergrenze, KEIN Ziel. Der Alt-Text traegt
+   die Essenz — Wissens-Tiefe, Nebendetails und raeumliche Ausfuehrung
+   gehoeren in die Langbeschreibung.
 
 
 ZAEHL-DISZIPLIN
@@ -272,8 +320,8 @@ Der Alt-Text:
 - ist so KOMPAKT wie moeglich: in der Regel 1-2 Saetze. Das Zeichenlimit ist eine
   Obergrenze, KEIN Ziel — nimm nur, was zum Verstehen noetig ist
 
-VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", generische Einleitungen, blosse
-Inventarlisten, das Auslisten jeder Saeule/jedes Fensters.
+VERMEIDEN (zusaetzlich zu den STILREGELN): blosse Inventarlisten, das
+Auslisten jeder Saeule/jedes Fensters.
 
 
 BENENNEN — TRAU DICH, ABER ERFINDE NICHTS FALSCHES
@@ -310,7 +358,8 @@ immer wortgetreu uebernehmen.
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen. Beginne NICHT mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man".
+Aufzaehlungszeichen. Steige direkt mit dem Bauwerk ein (Floskel-Verbot:
+STILREGELN Punkt 5).
 Halte auch die Langbeschreibung kompakt: Bauwerkstyp/Name
 und Gesamtform, dann Fassade/Material, dann die markantesten Elemente (Dachform,
 Saeulen, Tuerme), dann die Einbettung in die Umgebung, zuletzt lesbare
@@ -344,33 +393,50 @@ Fuelle exakt das Schema BeschreibungOutput:
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Eine gewaltige gotische Kathedrale mit zwei filigranen, durchbrochenen Spitztürmen aus dunklem Stein, reich gegliederter Westfassade mit Spitzbogenportalen und Maßwerk; eindeutig die bekannte Silhouette des Kölner Doms. Davor ein gepflasterter Platz.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Eine gewaltige gotische Kathedrale mit zwei filigranen, durchbrochenen Spitztuermen aus dunklem Stein, reich gegliederter Westfassade mit Spitzbogenportalen und Maßwerk; eindeutig die bekannte Silhouette des Koelner Doms. Davor ein gepflasterter Platz.",
-  "alt_text": "Der Koelner Dom: eine gotische Kathedrale mit zwei hohen, filigran durchbrochenen Spitztuermen und reich gegliederter Westfassade mit Spitzbogenportalen, davor ein gepflasterter Platz.",
-  "begruendung": "Das Bauwerk ist ein eindeutig erkennbares Wahrzeichen — die Doppelturm-Silhouette und gotische Fassade des Koelner Doms sind unverwechselbar. Darum wird es BEIM NAMEN genannt; das nutzt das Modellwissen und ist fuer blinde Nutzer der wertvollste Einstieg. Danach kompakt die praegenden Merkmale, ohne jedes Maßwerk-Detail auszulisten.",
-  "prinzip": "Bekannte, eindeutig erkennbare Wahrzeichen beim Namen nennen — trau dich, dein Wissen zu nutzen — und dann kompakt die charakteristische Bauform ergaenzen."
+  "alt_text": "Der Kölner Dom: eine gotische Kathedrale mit zwei hohen, filigran durchbrochenen Spitztürmen und reich gegliederter Westfassade mit Spitzbogenportalen, davor ein gepflasterter Platz.",
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "gotische Kathedrale (Kölner Dom)",
+    "zwei filigran durchbrochene Spitztürme",
+    "Westfassade mit Spitzbogenportalen",
+    "gepflasterter Platz"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Bekannte, eindeutig erkennbare Wahrzeichen beim Namen nennen — trau dich, dein Wissen zu nutzen — und dann kompakt die charakteristische Bauform ergaenzen.)
 
 POSITIVES BEISPIEL 2:
+Szene: Eine große, lichtdurchflutete Halle mit hellem Sandboden, an den Laengsseiten niedrige Holzbanden, dahinter Sitztribünen; eine offene Dachkonstruktion aus Leimbindern, mehrere Hindernisstangen am Rand. Kein Schild, kein Ortsname, kein Kontext.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Eine große, lichtdurchflutete Halle mit hellem Sandboden, an den Laengsseiten niedrige Holzbanden, dahinter Sitztribuenen; eine offene Dachkonstruktion aus Leimbindern, mehrere Hindernisstangen am Rand. Kein Schild, kein Ortsname, kein Kontext.",
-  "alt_text": "Reithalle mit hellem Sandboden, niedrigen Holzbanden an den Laengsseiten und Sitztribuenen dahinter; offene Dachkonstruktion aus Leimbindern, am Rand mehrere Hindernisstangen.",
-  "begruendung": "Es ist kein bekanntes Wahrzeichen und kein Schild sichtbar — also wird kein Eigenname erfunden. Aber aus den sichtbaren Belegen (Sandboden, Banden, Hindernisstangen, Hallenmaße) laesst sich die FUNKTION eindeutig erschliessen: eine Reithalle. Das ist mehr wert als 'eine große Halle'. Kompakt, ohne jeden Leimbinder zu zaehlen.",
-  "prinzip": "Wenn kein Wahrzeichen erkennbar ist, aus dem Sichtbaren die Funktion/den Bautyp erschliessen (Reithalle, Lagerhalle, Bahnhof) — auch ohne Kontext — statt nur 'ein Gebaeude' zu sagen; aber keinen konkreten Eigennamen erfinden."
+  "alt_text": "Reithalle mit hellem Sandboden, niedrigen Holzbanden an den Laengsseiten und Sitztribünen dahinter; offene Dachkonstruktion aus Leimbindern, am Rand mehrere Hindernisstangen.",
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "heller Sandboden",
+    "niedrige Holzbanden",
+    "Sitztribünen",
+    "Dachkonstruktion aus Leimbindern",
+    "Hindernisstangen"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Wenn kein Wahrzeichen erkennbar ist, aus dem Sichtbaren die Funktion/den Bautyp erschliessen (Reithalle, Lagerhalle, Bahnhof) — auch ohne Kontext — statt nur 'ein Gebaeude' zu sagen; aber keinen konkreten Eigennamen erfinden.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Ein gewoehnliches mehrstoeckiges Buerogebaeude mit glatter Glas-und-Beton-Fassade an einer Strasse. Keine Beschriftung, kein Schild, kein bekanntes Merkmal, kein Kontext — ein beliebiger Zweckbau.",
-  "alt_text": "Das weltberuehmte Solaris-Hochhaus, ein Meisterwerk des Bauhaus-Stils, erbaut 1928 vom Architekten Friedrich Lindner; eines der bedeutendsten Bauwerke der Stadt.",
-  "fehler": [
-    "'Das weltberuehmte Solaris-Hochhaus' erfindet einen konkreten Eigennamen fuer ein beliebiges, nicht erkennbares Gebaeude (Halluzination einer Identitaet).",
-    "'erbaut 1928 vom Architekten Friedrich Lindner' erfindet Baujahr und Architekt — frei erfundene Fakten.",
-    "'Meisterwerk des Bauhaus-Stils' schreibt eine Stil-Epoche fest, die die glatte Glas-und-Beton-Fassade nicht eindeutig belegt.",
-    "'eines der bedeutendsten Bauwerke der Stadt' ist eine unbelegte Wertung ohne sichtbaren Anhalt."
-  ],
-  "besser": "Da kein bekanntes Wahrzeichen und kein Schild erkennbar sind: nicht raten. Stattdessen Bautyp/Funktion und Material kompakt benennen — z.B. 'Mehrstoeckiges Buerogebaeude mit glatter Glas-und-Beton-Fassade an einer Strasse.' Einen beruehmten Namen, Architekten oder ein Baujahr nur nennen, wenn das Bauwerk eindeutig erkennbar ist oder ein Beleg vorliegt."
-}
+Szene: Ein gewoehnliches mehrstoeckiges Buerogebaeude mit glatter Glas-und-Beton-Fassade an einer Strasse. Keine Beschriftung, kein Schild, kein bekanntes Merkmal, kein Kontext — ein beliebiger Zweckbau.
+Schlechter Alt-Text: "Das weltberuehmte Solaris-Hochhaus, ein Meisterwerk des Bauhaus-Stils, erbaut 1928 vom Architekten Friedrich Lindner; eines der bedeutendsten Bauwerke der Stadt."
+- Fehler: 'Das weltberuehmte Solaris-Hochhaus' erfindet einen konkreten Eigennamen fuer ein beliebiges, nicht erkennbares Gebaeude (Halluzination einer Identitaet).
+- Fehler: 'erbaut 1928 vom Architekten Friedrich Lindner' erfindet Baujahr und Architekt — frei erfundene Fakten.
+- Fehler: 'Meisterwerk des Bauhaus-Stils' schreibt eine Stil-Epoche fest, die die glatte Glas-und-Beton-Fassade nicht eindeutig belegt.
+- Fehler: 'eines der bedeutendsten Bauwerke der Stadt' ist eine unbelegte Wertung ohne sichtbaren Anhalt.
+Besser: Da kein bekanntes Wahrzeichen und kein Schild erkennbar sind: nicht raten. Stattdessen Bautyp/Funktion und Material kompakt benennen — z.B. 'Mehrstoeckiges Buerogebaeude mit glatter Glas-und-Beton-Fassade an einer Strasse.' Einen beruehmten Namen, Architekten oder ein Baujahr nur nennen, wenn das Bauwerk eindeutig erkennbar ist oder ein Beleg vorliegt.
 
 FINAL CHECK (vor der Ausgabe pruefen):
 

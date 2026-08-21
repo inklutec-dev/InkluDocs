@@ -1,7 +1,7 @@
 # Mini-Builder icon
 
 - **Builder:** `prompts/builders/beschreibung_mini.py:104`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -76,7 +76,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -86,7 +91,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: icon (kleines funktionales Symbol — Lupe, Hamburger, Warenkorb etc.)
@@ -134,29 +144,25 @@ ist die ehrliche Antwort. NICHT raten.
 FEW-SHOT BEISPIELE:
 
 POSITIVES BEISPIEL 1:
+Szene: Kleines Symbol (24x24 Pixel) in der Kopfleiste einer Webseite: ein Zahnrad, direkt neben dem Benutzermenü platziert. Kein Link-Ziel im Kontext, der umgebende Menüpunkt heißt 'Konto verwalten'.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Kleines Symbol (24x24 Pixel) in der Kopfleiste einer Webseite: ein Zahnrad, direkt neben dem Benutzermenü platziert. Kein Link-Ziel im Kontext, der umgebende Menüpunkt heißt 'Konto verwalten'.",
   "alt_text": "Einstellungen (Zahnrad)",
-  "begruendung": "Wendet die Icon-Formel 'Funktion (Form)' an: Die Funktion 'Einstellungen' steht zuerst — sie ist aus Symbol-Form und Kontext (Kopfleiste neben dem Benutzermenü) eindeutig ableitbar —, die Form 'Zahnrad' folgt als kurze Klammer-Ergänzung. Kein Präfix 'Icon —', keine Farben, kein 'Symbol für ...'; mit 23 Zeichen deutlich unter der 50-Zeichen-Grenze.",
-  "prinzip": "Funktion zuerst, optional die Form in runden Klammern ('Einstellungen (Zahnrad)'); nie die Form als Ersatz für die Funktion, keine Farben, 3-50 Zeichen.",
-  "quelle": "fiktives Beispiel (generisches UI-Symbol)",
-  "lizenz": "fiktives Beispiel"
+  "verwendete_inventar_items": [
+    "Zahnrad-Symbol",
+    "Position neben dem Benutzermenü"
+  ]
 }
+(Merksatz: Funktion zuerst, optional die Form in runden Klammern ('Einstellungen (Zahnrad)'); nie die Form als Ersatz für die Funktion, keine Farben, 3-50 Zeichen.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dasselbe kleine Zahnrad-Symbol in der Kopfleiste der Webseite, neben dem Benutzermenü 'Konto verwalten'.",
-  "alt_text": "Graues Zahnrad-Symbol, ein stilisiertes Icon, das vermutlich für Einstellungen steht",
-  "fehler": [
-    "Die Form ('Zahnrad-Symbol') ersetzt die Funktion — die Formbeschreibung darf nur in runden Klammern HINTER der Funktion stehen ('Einstellungen (Zahnrad)').",
-    "'Graues' nennt eine Farbe — bei Icons verboten, sie trägt keine Funktionsinformation.",
-    "'vermutlich für Einstellungen steht' hedgt, obwohl Symbol-Form und Kontext die Funktion eindeutig belegen; 'stilisiertes' ist ebenfalls verboten.",
-    "Mit 79 Zeichen weit über dem Nötigen und über der 50-Zeichen-Grenze für Icons — die Funktion wäre in 23 Zeichen gesagt."
-  ],
-  "besser": "'Einstellungen (Zahnrad)' — Funktion zuerst, Form nur als Klammer-Zusatz, keine Farbe, kein Hedging, kurz.",
-  "quelle": "fiktives Beispiel (generisches UI-Symbol)",
-  "lizenz": "fiktives Beispiel"
-}
+Szene: Dasselbe kleine Zahnrad-Symbol in der Kopfleiste der Webseite, neben dem Benutzermenü 'Konto verwalten'.
+Schlechter Alt-Text: "Graues Zahnrad-Symbol, ein stilisiertes Icon, das vermutlich für Einstellungen steht"
+- Fehler: Die Form ('Zahnrad-Symbol') ersetzt die Funktion — die Formbeschreibung darf nur in runden Klammern HINTER der Funktion stehen ('Einstellungen (Zahnrad)').
+- Fehler: 'Graues' nennt eine Farbe — bei Icons verboten, sie trägt keine Funktionsinformation.
+- Fehler: 'vermutlich für Einstellungen steht' hedgt, obwohl Symbol-Form und Kontext die Funktion eindeutig belegen; 'stilisiertes' ist ebenfalls verboten.
+- Fehler: Mit 79 Zeichen weit über dem Nötigen und über der 50-Zeichen-Grenze für Icons — die Funktion wäre in 23 Zeichen gesagt.
+Besser: 'Einstellungen (Zahnrad)' — Funktion zuerst, Form nur als Klammer-Zusatz, keine Farbe, kein Hedging, kurz.
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - alt_text [PFLICHT]: Funktion (icon: 3-50 Zeichen, funktional: 3-80 Zeichen). Validierung der Bildtyp-spezifischen Obergrenze erfolgt in der jeweiligen Mini-Pipeline.

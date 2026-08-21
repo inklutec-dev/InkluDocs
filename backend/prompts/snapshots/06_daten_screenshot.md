@@ -1,7 +1,7 @@
 # Daten-Builder screenshot
 
 - **Builder:** `prompts/builders/beschreibung_daten.py:950`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: screenshot (Bildschirmfoto einer Anwendung, Webseite oder UI)
@@ -291,29 +301,31 @@ Markdown-Tabellen.
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Bildschirmfoto eines E-Mail-Programms: Fenstertitel 'Postfach — Mustermail', linke Navigationsleiste mit den Einträgen 'Posteingang (3)', 'Gesendet', 'Entwürfe', 'Papierkorb'; im Hauptbereich eine geöffnete E-Mail mit Betreff 'Terminbestätigung Dienstag 10 Uhr', darüber die Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Kein Hersteller-Logo außer dem Schriftzug 'Mustermail' im Titel.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Bildschirmfoto eines E-Mail-Programms: Fenstertitel 'Postfach — Mustermail', linke Navigationsleiste mit den Einträgen 'Posteingang (3)', 'Gesendet', 'Entwürfe', 'Papierkorb'; im Hauptbereich eine geöffnete E-Mail mit Betreff 'Terminbestätigung Dienstag 10 Uhr', darüber die Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Kein Hersteller-Logo außer dem Schriftzug 'Mustermail' im Titel.",
   "alt_text": "Screenshot des E-Mail-Programms Mustermail: Im Hauptbereich ist eine E-Mail mit dem Betreff 'Terminbestätigung Dienstag 10 Uhr' geöffnet, darüber die Buttons 'Antworten', 'Weiterleiten' und 'Löschen'; die linke Navigation zeigt 'Posteingang (3)', 'Gesendet', 'Entwürfe' und 'Papierkorb'.",
-  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Screenshot des ...' und benennt die Anwendung nur, weil der Fenstertitel 'Mustermail' sie belegt (Zwei-Wege-Regel: belegt -> benennen, sonst generischer Typ). Nennt den Zustand (geöffnete E-Mail mit Betreff) und übernimmt alle UI-Texte wortgetreu in funktionaler Hierarchie (Hauptbereich vor Navigation). Keine emotionale Wertung wie 'aufgeräumt' oder 'modern'.",
-  "prinzip": "Mit 'Screenshot der/des ...' + belegter Anwendung (oder generischem Typ) und Zustand führen; UI-Texte wortgetreu, funktional statt wertend beschreiben.",
-  "quelle": "fiktives Beispiel (erfundene Anwendung 'Mustermail', keine echten Nutzerdaten)",
-  "lizenz": "fiktives Beispiel"
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "Fenstertitel 'Postfach — Mustermail'",
+    "Navigation 'Posteingang (3)', 'Gesendet', 'Entwürfe', 'Papierkorb'",
+    "geöffnete E-Mail 'Terminbestätigung Dienstag 10 Uhr'",
+    "Buttons 'Antworten', 'Weiterleiten', 'Löschen'"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Mit 'Screenshot der/des ...' + belegter Anwendung (oder generischem Typ) und Zustand führen; UI-Texte wortgetreu, funktional statt wertend beschreiben.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dasselbe Bildschirmfoto: E-Mail-Programm mit Fenstertitel 'Postfach — Mustermail', Navigation 'Posteingang (3)', geöffnete E-Mail 'Terminbestätigung Dienstag 10 Uhr', Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Kein Microsoft-Logo, keine Outlook-Beschriftung sichtbar.",
-  "alt_text": "Ein Screenshot zeigt Microsoft Outlook mit einem modernen, aufgeräumten Design. Verschiedene Menüpunkte und Buttons sind zu sehen, mit denen man wahrscheinlich E-Mails verwalten kann.",
-  "fehler": [
-    "'Microsoft Outlook' benennt eine Anwendung ohne Beleg — weder Logo noch Titel stützen das; der Fenstertitel belegt 'Mustermail' (Zwei-Wege-Regel verletzt).",
-    "'Ein Screenshot zeigt' ist die Floskel-Variante statt des Präfixes 'Screenshot der/des ...' mit Anwendung und Zustand.",
-    "'modernen, aufgeräumten Design' ist eine emotionale/ästhetische Wertung — Screenshots werden funktional beschrieben.",
-    "'Verschiedene Menüpunkte und Buttons' und 'wahrscheinlich E-Mails verwalten' bleiben generisch mit Hedge-Wort, statt die lesbaren UI-Texte ('Posteingang (3)', 'Antworten', Betreff) wortgetreu zu übernehmen."
-  ],
-  "besser": "Mit 'Screenshot des E-Mail-Programms Mustermail' (belegt durch den Fenstertitel) und dem Zustand führen, die lesbaren UI-Texte wortgetreu in funktionaler Hierarchie nennen und auf Design-Wertungen sowie Vermutungswörter verzichten.",
-  "quelle": "fiktives Beispiel (erfundene Anwendung 'Mustermail', keine echten Nutzerdaten)",
-  "lizenz": "fiktives Beispiel"
-}
+Szene: Dasselbe Bildschirmfoto: E-Mail-Programm mit Fenstertitel 'Postfach — Mustermail', Navigation 'Posteingang (3)', geöffnete E-Mail 'Terminbestätigung Dienstag 10 Uhr', Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Kein Microsoft-Logo, keine Outlook-Beschriftung sichtbar.
+Schlechter Alt-Text: "Ein Screenshot zeigt Microsoft Outlook mit einem modernen, aufgeräumten Design. Verschiedene Menüpunkte und Buttons sind zu sehen, mit denen man wahrscheinlich E-Mails verwalten kann."
+- Fehler: 'Microsoft Outlook' benennt eine Anwendung ohne Beleg — weder Logo noch Titel stützen das; der Fenstertitel belegt 'Mustermail' (Zwei-Wege-Regel verletzt).
+- Fehler: 'Ein Screenshot zeigt' ist die Floskel-Variante statt des Präfixes 'Screenshot der/des ...' mit Anwendung und Zustand.
+- Fehler: 'modernen, aufgeräumten Design' ist eine emotionale/ästhetische Wertung — Screenshots werden funktional beschrieben.
+- Fehler: 'Verschiedene Menüpunkte und Buttons' und 'wahrscheinlich E-Mails verwalten' bleiben generisch mit Hedge-Wort, statt die lesbaren UI-Texte ('Posteingang (3)', 'Antworten', Betreff) wortgetreu zu übernehmen.
+Besser: Mit 'Screenshot des E-Mail-Programms Mustermail' (belegt durch den Fenstertitel) und dem Zustand führen, die lesbaren UI-Texte wortgetreu in funktionaler Hierarchie nennen und auf Design-Wertungen sowie Vermutungswörter verzichten.
 
 
 FINAL CHECK

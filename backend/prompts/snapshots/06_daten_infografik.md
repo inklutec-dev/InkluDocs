@@ -1,7 +1,7 @@
 # Daten-Builder infografik
 
 - **Builder:** `prompts/builders/beschreibung_daten.py:815`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: infografik (Schaubild, Übersichtsgrafik mit Stationen oder Schritten)
@@ -302,29 +312,32 @@ Markdown-Tabellen.
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Behörden-Infografik 'Recycling-Kreislauf' mit vier nummerierten Stationen: 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion; zentrale Zahl '67% der Verpackungen werden wiederverwertet'. Am unteren Rand: 'Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27'.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Behörden-Infografik 'Recycling-Kreislauf' mit vier nummerierten Stationen: 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion; zentrale Zahl '67% der Verpackungen werden wiederverwertet'. Am unteren Rand: 'Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27'.",
   "alt_text": "Infografik — Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten: Auf die Sammlung folgt die Sortierung, danach die Aufbereitung, aus der die Neuproduktion hervorgeht. Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27.",
-  "begruendung": "Beginnt mit dem Pflicht-Präfix 'Infografik —' plus Hauptthema und der Kernaussage mit konkretem Datenpunkt (67%). Die vier Stationen stehen in logischer Reihenfolge und sind über ihre Beziehungen verbunden ('auf ... folgt', 'aus der ... hervorgeht') statt über Pfeil- oder Positionsbeschreibungen. URL und Telefonnummer wortgetreu mit originalgetreuen Trennzeichen ('02 28 / 24 25 26 27' — nicht zusammengezogen), weil sie für Screenreader-Nutzer der einzige Zugang zu dieser Information sind.",
-  "prinzip": "Mit 'Infografik —' + Thema und Kernaussage mit Datenpunkten führen; Stationen inhaltlich-logisch verketten statt Layout nachzuerzählen; Kontaktdaten und URLs wortgetreu mit Original-Trennzeichen.",
-  "quelle": "fiktives Beispiel (generische Behörden-Infografik, Kontaktdaten erfunden)",
-  "lizenz": "fiktives Beispiel"
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "Titel 'Recycling-Kreislauf'",
+    "zentrale Zahl 67%",
+    "vier Stationen: Sammlung, Sortierung, Aufbereitung, Neuproduktion",
+    "URL www.beispiel-behoerde.de",
+    "Buergertelefon 02 28 / 24 25 26 27"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Mit 'Infografik —' + Thema und Kernaussage mit Datenpunkten führen; Stationen inhaltlich-logisch verketten statt Layout nachzuerzählen; Kontaktdaten und URLs wortgetreu mit Original-Trennzeichen.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dieselbe Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion), zentrale Zahl '67% der Verpackungen werden wiederverwertet', unten URL und Bürgertelefon '02 28 / 24 25 26 27'.",
-  "alt_text": "Eine Infografik mit verschiedenen Daten zum Thema Umwelt. Oben links steht ein grünes Symbol, von dem ein Pfeil nach rechts zu einem blauen Kasten zeigt; im Zentrum befindet sich eine große Zahl. Bei Fragen: Telefon 0228242526 27.",
-  "fehler": [
-    "'Eine Infografik mit verschiedenen Daten' ist die klassische Floskel-Eröffnung — Präfix 'Infografik —', Thema und Kernaussage mit dem Datenpunkt 67% fehlen.",
-    "'Oben links steht ...', 'ein Pfeil nach rechts ...', 'im Zentrum befindet sich ...' erzählen das Layout nach, statt die inhaltliche Logik der vier Stationen zu vermitteln.",
-    "Die vier Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion) und die zentrale Zahl 67% werden nicht übernommen — Zahlen-Vollständigkeit verletzt ('eine große Zahl' statt des Werts).",
-    "'0228242526 27' zieht die Telefonnummer zusammen und verstümmelt sie — Kontaktdaten müssen wortgetreu mit den Original-Trennzeichen übernommen werden ('02 28 / 24 25 26 27'); die URL fehlt ganz."
-  ],
-  "besser": "Mit 'Infografik — Recycling-Kreislauf' und der Kernaussage (67% wiederverwertet) führen, die vier Stationen in logischer Reihenfolge mit ihren Beziehungen nennen, alle Zahlen übernehmen und URL plus Telefonnummer wortgetreu mit Original-Trennzeichen wiedergeben.",
-  "quelle": "fiktives Beispiel (generische Behörden-Infografik, Kontaktdaten erfunden)",
-  "lizenz": "fiktives Beispiel"
-}
+Szene: Dieselbe Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion), zentrale Zahl '67% der Verpackungen werden wiederverwertet', unten URL und Bürgertelefon '02 28 / 24 25 26 27'.
+Schlechter Alt-Text: "Eine Infografik mit verschiedenen Daten zum Thema Umwelt. Oben links steht ein grünes Symbol, von dem ein Pfeil nach rechts zu einem blauen Kasten zeigt; im Zentrum befindet sich eine große Zahl. Bei Fragen: Telefon 0228242526 27."
+- Fehler: 'Eine Infografik mit verschiedenen Daten' ist die klassische Floskel-Eröffnung — Präfix 'Infografik —', Thema und Kernaussage mit dem Datenpunkt 67% fehlen.
+- Fehler: 'Oben links steht ...', 'ein Pfeil nach rechts ...', 'im Zentrum befindet sich ...' erzählen das Layout nach, statt die inhaltliche Logik der vier Stationen zu vermitteln.
+- Fehler: Die vier Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion) und die zentrale Zahl 67% werden nicht übernommen — Zahlen-Vollständigkeit verletzt ('eine große Zahl' statt des Werts).
+- Fehler: '0228242526 27' zieht die Telefonnummer zusammen und verstümmelt sie — Kontaktdaten müssen wortgetreu mit den Original-Trennzeichen übernommen werden ('02 28 / 24 25 26 27'); die URL fehlt ganz.
+Besser: Mit 'Infografik — Recycling-Kreislauf' und der Kernaussage (67% wiederverwertet) führen, die vier Stationen in logischer Reihenfolge mit ihren Beziehungen nennen, alle Zahlen übernehmen und URL plus Telefonnummer wortgetreu mit Original-Trennzeichen wiedergeben.
 
 
 FINAL CHECK

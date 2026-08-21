@@ -97,7 +97,12 @@ TOOL_DEFINITIONS: list[dict] = [
             "erhalten — Rollback via revert_alt_text möglich). "
             "Langbeschreibung überschreibt direkt das langbeschreibung-Feld (kein _edited-Feld). "
             "Nur aufrufen wenn der User klar bestätigt hat ('ja speichern', 'übernehmen', 'passt so'). "
-            "Alt-Text-Validierung: 5-500 Zeichen, kein 'Bild von...'/'Foto von...'-Präfix."
+            "Alt-Text-Validierung: 5-500 Zeichen, kein 'Bild von...'/'Foto von...'-Präfix. "
+            "Vor dem Speichern prüft derselbe Bild-Verify wie in der Pipeline den Text gegen das Bild. "
+            "Bei einer Beanstandung wird NICHT gespeichert und du bekommst die strittigen Aussagen plus "
+            "ggf. einen Korrektur-Vorschlag zurück — lege beides dem User vor. Nur wenn der User "
+            "ausdrücklich auf seiner Fassung besteht (er weiß z.B. etwas, das im Bild nicht sichtbar ist), "
+            "rufst du das Tool erneut mit force=true auf."
         ),
         "input_schema": {
             "type": "object",
@@ -116,6 +121,13 @@ TOOL_DEFINITIONS: list[dict] = [
                         "Optional: neue Langbeschreibung. Wenn nicht gesetzt, bleibt die bestehende "
                         "Langbeschreibung erhalten. Sinnvoll wenn der User eine konkrete inhaltliche "
                         "Änderung wünscht oder du beide Texte gleichzeitig überarbeitest."
+                    ),
+                },
+                "force": {
+                    "type": "boolean",
+                    "description": (
+                        "Nur nach einer Verify-Beanstandung UND ausdrücklichem Beharren des Users: "
+                        "true speichert ohne erneute Bild-Prüfung. Standard: false."
                     ),
                 },
             },
@@ -210,6 +222,7 @@ class ToolExecutor:
                 int(a["image_id"]), p, u,
                 str(a.get("new_alt_text", "")),
                 a.get("new_langbeschreibung") if a.get("new_langbeschreibung") is not None else None,
+                force=bool(a.get("force", False)),
             ),
             "revert_alt_text": lambda a: altext_tools.revert_alt_text(
                 int(a["image_id"]), p, u,

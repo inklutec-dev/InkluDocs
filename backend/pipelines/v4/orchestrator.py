@@ -264,7 +264,12 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'binaer bewertet: belegt oder nicht belegt — Einstufungen wie '
         '"weitgehend korrekt" sind verboten.\n\n'
         'PRUEFE JEDE KONKRETE BEHAUPTUNG EINZELN GEGEN DAS BILD:\n'
-        '- Marken-, Produkt- und Personen-Namen (stimmen sie exakt?)\n'
+        '- Marken-, Produkt- und Personen-Namen (stimmen sie exakt?). Auch ein '
+        'unverwechselbares Produktdesign zaehlt als Beleg: Ein Produkt, das ein '
+        'durchschnittlicher sehender Mensch am Design sofort erkennt (z.B. ein '
+        'MacBook am charakteristischen flachen Aluminiumgehaeuse), gilt als '
+        'BELEGT — stufe es NICHT auf die generische Bezeichnung zurueck. '
+        'Umgekehrt bleibt ein generisches Geraet ohne solche Merkmale generisch.\n'
         '- wortgetreu zitierte Texte und Aufschriften (Buchstabe fuer Buchstabe)\n'
         '- Personen- und Objekt-Zahlen: zaehle selbst EXAKT nach. "Circa", "rund" '
         'oder "etwa" ohne sichtbaren Verdeckungs-, Anschnitt- oder Unschaerfe-Grund '
@@ -322,6 +327,21 @@ def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str
     except Exception as e:  # Verify ist Sicherheitsnetz, nie Blocker
         log.warning('Verify-Pass fehlgeschlagen (ignoriert): %s', e)
         return None
+
+
+def verify_alt_text_extern(image_path: str, bildtyp: str, alt_text: str,
+                           language: str = 'de', enriched_context: str = ''):
+    """Oeffentlicher Einstieg fuer den Redakteurs-Check AUSSERHALB der Pipeline.
+
+    Qualitaetsrunde 21.08.2026: Der InkluAgent-Speicherweg (update_alt_text)
+    laeuft vor dem DB-Write durch DENSELBEN Pruefer wie die Pipeline —
+    gleicher Prompt, gleiche ENV-Schalter (V4_VERIFY_MODE-Scope), gleiches
+    Namensregister-Verhalten. Rueckgabe: VerifyOutput oder None (Verify aus,
+    Bildtyp nicht im Scope oder Pruef-Fehler — der Verify ist Sicherheitsnetz,
+    nie Blocker).
+    """
+    return _run_verify_pass(image_path, bildtyp, alt_text,
+                            language=language, enriched_context=enriched_context)
 
 
 def _variation_suffix(previous_alt: str) -> str:

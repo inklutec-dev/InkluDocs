@@ -1,7 +1,7 @@
 # Mini-Builder funktional
 
 - **Builder:** `prompts/builders/beschreibung_mini.py:170`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -76,7 +76,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -86,7 +91,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: funktional (Navigations- oder Steuerungselement mit Zustands-
@@ -128,29 +138,25 @@ funktionale Beschreibung des Zustands.
 FEW-SHOT BEISPIELE:
 
 POSITIVES BEISPIEL 1:
+Szene: Paginierungselement am Ende einer Artikelliste: Pfeil nach rechts, daneben lesbar 'Seite 3 von 12'. Original-Alt: 'Bild'. Kein Link-Ziel im Kontext über die Paginierung hinaus.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Paginierungselement am Ende einer Artikelliste: Pfeil nach rechts, daneben lesbar 'Seite 3 von 12'. Original-Alt: 'Bild'. Kein Link-Ziel im Kontext über die Paginierung hinaus.",
   "alt_text": "Nächste Seite (von 12)",
-  "begruendung": "Der Original-Alt 'Bild' ist unbrauchbar, also wird generiert: Funktionsbeschreibung in natürlichem Deutsch ('Nächste Seite') plus Zustandsinformation, weil die Gesamtzahl im Bild lesbar ist ('von 12' — wortgetreu aus 'Seite 3 von 12'). Keine Formbeschreibung ('Pfeil nach rechts'), kein 'Klicken Sie hier'; mit 22 Zeichen deutlich unter der 80-Zeichen-Grenze.",
-  "prinzip": "Funktion und ableitbaren Zustand benennen ('Nächste Seite (von 12)'); lesbare Zahlen wortgetreu übernehmen; nie die Form statt der Funktion beschreiben.",
-  "quelle": "fiktives Beispiel (generisches Paginierungselement)",
-  "lizenz": "fiktives Beispiel"
+  "verwendete_inventar_items": [
+    "Pfeil nach rechts",
+    "Text 'Seite 3 von 12'"
+  ]
 }
+(Merksatz: Funktion und ableitbaren Zustand benennen ('Nächste Seite (von 12)'); lesbare Zahlen wortgetreu übernehmen; nie die Form statt der Funktion beschreiben.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dasselbe Paginierungselement: Pfeil nach rechts, daneben 'Seite 3 von 12'. Original-Alt: 'Weiter zur nächsten Seite'.",
-  "alt_text": "Ein kleiner grauer Pfeil, der nach rechts zeigt — klicken Sie hier, um wahrscheinlich auf die nächste Seite der Liste zu gelangen",
-  "fehler": [
-    "Der brauchbare Original-Alt 'Weiter zur nächsten Seite' wird verworfen statt übernommen — ein brauchbarer Original-Alt wird niemals verschlechtert.",
-    "'Ein kleiner grauer Pfeil, der nach rechts zeigt' beschreibt Form und Farbe statt der Funktion.",
-    "'klicken Sie hier' ist eine Bedienungsanweisung statt einer Funktionsbeschreibung; 'wahrscheinlich' hedgt eine eindeutig ableitbare Funktion.",
-    "Die lesbare Zustandsinformation 'Seite 3 von 12' wird nicht genutzt, dafür ist der Text mit 124 Zeichen über der 80-Zeichen-Grenze."
-  ],
-  "besser": "Den brauchbaren Original-Alt übernehmen ('Weiter zur nächsten Seite') oder mit Zustand präzisieren ('Nächste Seite (von 12)') — kurz, funktional, ohne Formbeschreibung und ohne Hedging.",
-  "quelle": "fiktives Beispiel (generisches Paginierungselement)",
-  "lizenz": "fiktives Beispiel"
-}
+Szene: Dasselbe Paginierungselement: Pfeil nach rechts, daneben 'Seite 3 von 12'. Original-Alt: 'Weiter zur nächsten Seite'.
+Schlechter Alt-Text: "Ein kleiner grauer Pfeil, der nach rechts zeigt — klicken Sie hier, um wahrscheinlich auf die nächste Seite der Liste zu gelangen"
+- Fehler: Der brauchbare Original-Alt 'Weiter zur nächsten Seite' wird verworfen statt übernommen — ein brauchbarer Original-Alt wird niemals verschlechtert.
+- Fehler: 'Ein kleiner grauer Pfeil, der nach rechts zeigt' beschreibt Form und Farbe statt der Funktion.
+- Fehler: 'klicken Sie hier' ist eine Bedienungsanweisung statt einer Funktionsbeschreibung; 'wahrscheinlich' hedgt eine eindeutig ableitbare Funktion.
+- Fehler: Die lesbare Zustandsinformation 'Seite 3 von 12' wird nicht genutzt, dafür ist der Text mit 124 Zeichen über der 80-Zeichen-Grenze.
+Besser: Den brauchbaren Original-Alt übernehmen ('Weiter zur nächsten Seite') oder mit Zustand präzisieren ('Nächste Seite (von 12)') — kurz, funktional, ohne Formbeschreibung und ohne Hedging.
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - alt_text [PFLICHT]: Funktion (icon: 3-50 Zeichen, funktional: 3-80 Zeichen). Validierung der Bildtyp-spezifischen Obergrenze erfolgt in der jeweiligen Mini-Pipeline.

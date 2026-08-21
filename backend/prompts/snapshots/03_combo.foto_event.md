@@ -1,7 +1,7 @@
 # Combo (Lean-Mode Pass 2+3) — Bildtyp: foto_event
 
 - **Builder:** `prompts/builders/combo.py:30`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
   - `V4_PROMPT_MODE` = `lean`
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: foto
@@ -146,10 +156,14 @@ Beispiele:
 MONTAGE-CHECK:
 Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
 Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
-Kombinationen. Erkennst du solche Indikatoren, trage einen Eintrag in
+Kombinationen. SUCHE DABEI AKTIV, Quadrant für Quadrant, auch nach KLEINEN
+eingefügten Objekten — ein winziges Bauwerk oder Objekt an einem Ort, an den
+es nicht gehört (z.B. eine Kathedrale am Grund einer Schlucht), ist ein
+Montage-Beweis; geringe Größe schützt eine Montage nicht vor der Erkennung.
+Erkennst du solche Indikatoren, trage einen Eintrag in
 halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
 Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
-reales Foto beschreiben').
+reales Foto beschreiben') und liste das eingefügte Objekt als eigenes Objekt.
 
 Antworte ausschliesslich mit JSON, das diesem Schema entspricht:
   - foto_subtyp [OPTIONAL]: Nur wenn bildtyp=foto, sonst None
@@ -234,7 +248,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -244,7 +263,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: foto_event
@@ -309,13 +333,51 @@ WAS zu sehen ist ("Filiale der Drogeriekette budni"), aber keine Handlung oder
 Absicht erfinden, die das Bild nicht zeigt (NICHT: "beim Einkaufen").
 
 
-KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
+STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
 
-Richtwert fuer den Alt-Text: einfache Motive unter 150 Zeichen, komplexe Szenen
-bis etwa 250. Die 400 Zeichen des Schemas sind eine harte Obergrenze, KEIN Ziel.
-Der Alt-Text traegt die Essenz — Wissens-Tiefe, Nebendetails und raeumliche
-Ausfuehrung gehoeren in die Langbeschreibung. Lieber ein praeziser, kurzer
-Alt-Text plus dichte Langbeschreibung als ein ueberladener Alt-Text.
+1. WICHTIGSTES ZUERST: Fuehre mit der Information, wegen der das Bild an
+   seiner Stelle steht — Wer oder Was und die sichtbare Situation. Jedes
+   weitere Detail muss die Frage bestehen: Hilft es, dieses Bild an dieser
+   Stelle zu verstehen? Wenn nein, gehoert es nicht in den Alt-Text —
+   sondern in die Langbeschreibung oder nirgendwohin.
+
+2. NATUERLICHER SATZBAU: Schreibe wie ein guter Redakteur — Subjekt und
+   Verb stehen frueh und nah beieinander, ein bis zwei Saetze. Keine
+   Partizip-Einschuebe zwischen Subjekt und Verb, keine Semikolon-Ketten,
+   keine Lage-Floskeln wie "im Bildvordergrund" oder "im Bildhintergrund"
+   (stattdessen natuerlich: "vor ihr", "dahinter", "auf dem Tisch").
+   GUT: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
+   aufgeklapptem Laptop vor einer hellen Wand."
+   SCHLECHT: "Anna Reimers in schwarzem Blazer, den Kopf leicht nach oben
+   links gewandt und den Mund leicht geoeffnet, sitzt vor einer hellen
+   Wand; im Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch."
+
+3. KOERPERDETAILS NUR MIT BEDEUTUNG: Kopfhaltung, Blickrichtung,
+   Mundstellung, Gestik und Mimik gehoeren NICHT in den Alt-Text — ausser
+   sie tragen die Kernaussage des Bildes (die Rednerin zeigt auf die
+   Leinwand; zwei Personen geben sich die Hand). In der Langbeschreibung
+   nur dort, wo sie die Szene wirklich nachvollziehbarer machen.
+
+4. NAME ALS SATZANFANG: Ein verwendeter Name ist das SUBJEKT des ersten
+   Satzes ("Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem
+   Holztisch ..."). FALSCH ist die Etikett-Struktur "Name, Funktion: Ein
+   Mann ..." — die benannte Person wird danach NIE erneut anonym
+   eingefuehrt ("ein Mann", "eine Frau", "eine Person"); stattdessen
+   Pronomen oder Rolle ("der Gruender", "die Physikerin").
+
+5. KEINE FLOSKELN: Nicht mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem
+   Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" beginnen —
+   direkt mit dem Motiv einsteigen. Ebenso verboten sind Quellen-Floskeln
+   wie "laut Seitenkontext", "laut Kontext", "dem Kontext zufolge" oder
+   "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt,
+   ohne ihre Herkunft zu nennen.
+
+6. LAENGE (Arbeitsteilung Alt-Text / Langbeschreibung): So kurz wie
+   moeglich, so lang wie noetig. Richtwert fuer den Alt-Text: einfache
+   Motive unter 150 Zeichen, komplexe Szenen bis etwa 250. Die 400 Zeichen
+   des Schemas sind eine harte Obergrenze, KEIN Ziel. Der Alt-Text traegt
+   die Essenz — Wissens-Tiefe, Nebendetails und raeumliche Ausfuehrung
+   gehoeren in die Langbeschreibung.
 
 
 ALT-TEXT
@@ -333,9 +395,9 @@ Der Alt-Text:
   gehoert sie in den ALT-TEXT — nicht nur in die Langbeschreibung. Auch eine
   Person mit Ruecken zur Kamera kann diese strukturgebende Person sein; benenne
   dann die sichtbare Beziehung (z.B. "alle blicken zu ihr").
-- ist praegnant: in der Regel 1-2 Saetze, hoechstens 400 Zeichen
+- ist praegnant: in der Regel 1-2 Saetze (Laengen-Richtwerte: STILREGELN)
 
-VERMEIDEN: "Das Bild zeigt", "Das Foto zeigt", "Auf dem Bild", "Auf dem Foto", "Zu sehen ist", "Hier sieht man", "Eine Szene", "wirkt wie",
+VERMEIDEN (zusaetzlich zu den STILREGELN): "Eine Szene", "wirkt wie",
 "im Rahmen einer Veranstaltung", journalistische/erzaehlerische Sprache.
 
 
@@ -437,12 +499,8 @@ einer sichtbaren Person zugeordnet werden koennen.
 
 Beispiel: Wenn die Bildunterschrift "Humphrey Bogart in CASABLANCA (1942)"
 lautet und nur eine Person sichtbar ist, soll der Name verwendet werden.
-
-PERSONEN BENENNEN:
-Erkennbare Personen duerfen benannt werden — Personen des oeffentlichen
-Lebens auch ohne Bildunterschrift. Liegt ein Name aus Kontext, Beschriftung
-oder Bildunterschrift vor, ist er zu verwenden. Nur wenn gar kein
-Anhaltspunkt vorliegt: "Person".
+Der Name steht dann als Subjekt am Satzanfang, ohne Quellen-Floskel
+(siehe STILREGELN Punkte 4 und 5).
 
 
 UNTERSCHRIFTEN
@@ -450,20 +508,6 @@ UNTERSCHRIFTEN
 Gedruckte Namen oder Beschriftungen duerfen verwendet werden.
 Handschriftliche Unterschriften nicht selbst entziffern oder
 interpretieren.
-
-
-HALLUZINATIONSSCHUTZ
-
-Beschreibe nur sichtbare Inhalte, belegbare Kontextinformationen, lesbare Texte
-und klar erkennbare raeumliche Strukturen. Wende die Zwei-Wege-Regel an: klar
-durch Form UND Setting Getragenes wird benannt, genuin Unklares neutral
-beschrieben (Form/Farbe/Position) — nie hedgen.
-
-SCHLECHT (Hedging): "vermutlich", "wirkt wie", "wahrscheinlich", "eine Art von",
-"moegliche Flyer", "scheint"
-GUT: Klar Getragenes benennen ("orange und weisse Abstimmkarten" im Workshop-
-Setting, "Acer-Logo", "Projektionsflaeche"); genuin Unklares neutral ("runde
-orangefarbene Gegenstaende, Funktion nicht erkennbar", "rotes Sofa im Hintergrund").
 
 
 ATMOSPHAERE
@@ -479,10 +523,8 @@ SCHLECHT (ohne Beleg):
 'Die Atmosphaere wirkt locker und motiviert.'
 'Eine froehliche Stimmung.'
 
-Keine Emotionen erfinden, keine Motivation interpretieren, keine
-Beziehungen annehmen. Bei jeder Atmosphaere-Wertung MUSS
-atmosphaere_belege im Output gesetzt werden mit wertung und beleg.
-Keine Atmosphaere ohne Beleg-Eintrag.
+Bei jeder Atmosphaere-Wertung MUSS atmosphaere_belege im Output gesetzt
+werden mit wertung und beleg. Keine Atmosphaere ohne Beleg-Eintrag.
 
 
 SEMANTISCHE OUTPUT-REGELN
@@ -494,37 +536,50 @@ Der Alt-Text umfasst hoechstens 400 Zeichen.
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Heller Seminarraum: acht Personen in einer Reihe (eine neunte teils verdeckt), mehrere halten runde orange und weiße Karten hoch, Namensschilder, rotes Sofa links, Acer-Logo/Beamer und weißgedeckter Catering-Tisch im Hintergrund.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Heller Seminarraum: acht Personen in einer Reihe (eine neunte teils verdeckt), mehrere halten runde orange und weiße Karten hoch, Namensschilder, rotes Sofa links, Acer-Logo/Beamer und weißgedeckter Catering-Tisch im Hintergrund.",
   "alt_text": "Workshop in hellem Seminarraum: acht Personen stehen in einer Reihe, mehrere halten orange und weiße Abstimmkarten hoch; links ein rotes Sofa, im Hintergrund ein Acer-Beamer und ein Catering-Tisch.",
-  "begruendung": "Führt mit der Art der Szene (Workshop) statt mit einer generischen Zählung. Benennt die Funktion 'Abstimmkarten', weil Form (hochgehaltene runde Karten) UND Setting (Workshop) sie klar tragen. Zählt exakt (acht). Fließtext, kein Markdown.",
-  "prinzip": "Eine Funktion benennen, wenn Form UND Setting sie klar tragen. Mit der Szenen-Art beginnen, exakt zählen, barrierefrei schreiben (kein Markdown)."
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "acht Personen in einer Reihe",
+    "orange und weiße Abstimmkarten",
+    "rotes Sofa",
+    "Acer-Beamer",
+    "Catering-Tisch"
+  ],
+  "nicht_verwendete_inventar_items": [
+    "Namensschilder",
+    "neunte teils verdeckte Person"
+  ],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Eine Funktion benennen, wenn Form UND Setting sie klar tragen. Mit der Szenen-Art beginnen, exakt zählen, barrierefrei schreiben (kein Markdown).)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Derselbe Workshop, Personen halten runde Karten hoch.",
-  "alt_text": "Etwa zehn Personen stimmen über einen Antrag ab; vermutlich eine Vereinssitzung. Auf dem Bild sieht man eine Gruppe in einem Raum.",
-  "fehler": [
-    "'stimmen über einen Antrag ab' erfindet eine HANDLUNG — die Karten belegen keine laufende Abstimmung (Funktion 'Abstimmkarte' ja, Vorgang 'Abstimmung läuft' nein).",
-    "'vermutlich eine Vereinssitzung' ist geraten und ein Hedge-Wort.",
-    "'Etwa zehn' statt exakt gezählt; 'Auf dem Bild sieht man' ist eine verbotene Floskel."
-  ],
-  "besser": "Mit der Szenen-Art beginnen, exakt zählen, das OBJEKT benennen ('Abstimmkarten'), ohne die HANDLUNG ('Abstimmung läuft') oder den Event-Typ ('Vereinssitzung') zu erfinden."
-}
+Szene: Derselbe Workshop, Personen halten runde Karten hoch.
+Schlechter Alt-Text: "Etwa zehn Personen stimmen über einen Antrag ab; vermutlich eine Vereinssitzung. Auf dem Bild sieht man eine Gruppe in einem Raum."
+- Fehler: 'stimmen über einen Antrag ab' erfindet eine HANDLUNG — die Karten belegen keine laufende Abstimmung (Funktion 'Abstimmkarte' ja, Vorgang 'Abstimmung läuft' nein).
+- Fehler: 'vermutlich eine Vereinssitzung' ist geraten und ein Hedge-Wort.
+- Fehler: 'Etwa zehn' statt exakt gezählt; 'Auf dem Bild sieht man' ist eine verbotene Floskel.
+Besser: Mit der Szenen-Art beginnen, exakt zählen, das OBJEKT benennen ('Abstimmkarten'), ohne die HANDLUNG ('Abstimmung läuft') oder den Event-Typ ('Vereinssitzung') zu erfinden.
 
 
 FINAL CHECK (vor der Ausgabe pruefen):
 
-1. Jede Aussage durch Inventar oder sichtbare Bildinformation belegbar?
-2. Keine Halluzination (kein Item im Output das weder im Inventar noch sichtbar belegt ist)?
-3. Keine Emotion oder Beziehung erfunden (gluecklich, motiviert, Kolleginnen, Familie)?
-4. Keine Identitaet geraten ohne Kontext-Beleg?
-5. Bei unklaren Objekten: sichtbare Form/Farbe/Position beschrieben statt Funktion zu erraten?
-6. Alt-Text konkret und visuell charakteristisch — nicht nur Personen- oder Inventar-Aufzaehlung?
-7. Vermeidet generische Einleitungen ("Auf dem Bild", "Eine Gruppe von Personen")?
-8. Schema vollstaendig korrekt (alle Pflichtfelder gefuellt)?
-9. atmosphaere_belege gefuellt wenn Atmosphaere im Text vorkommt?
+1. Jede Aussage durch Inventar oder sichtbare Bildinformation belegt —
+   keine Halluzination, keine erfundene Emotion oder Beziehung, keine
+   geratene Identitaet?
+2. Bei unklaren Objekten: sichtbare Form/Farbe/Position beschrieben statt
+   Funktion zu erraten?
+3. STILREGELN eingehalten — Wichtigstes zuerst, natuerlicher Satzbau,
+   keine Koerperdetails ohne Bedeutung im Alt-Text, keine Floskeln,
+   Laengen-Richtwert getroffen?
+4. Alt-Text konkret und charakteristisch — keine blosse Aufzaehlung, kein
+   "Eine Gruppe von Personen", wo sich zaehlen laesst?
+5. Schema vollstaendig; atmosphaere_belege gefuellt, wenn eine Wertung im
+   Text vorkommt?
 
 Wenn ein Punkt nicht erfuellt: Output neu formulieren.
 

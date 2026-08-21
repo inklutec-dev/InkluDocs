@@ -72,12 +72,80 @@ def generate_alt_text(image_id: int, project_id: int, user_id: int) -> dict[str,
     }
 
 
+def _verify_gegen_bild(image_id: int, project_id: int, alt_text: str) -> Optional[dict[str, Any]]:
+    """Redakteurs-Check des Chatbot-Alt-Texts gegen das Bild (21.08.2026).
+
+    Nutzt DENSELBEN Verify wie die Pipeline (orchestrator.verify_alt_text_extern):
+    gleiche ENV-Schalter, gleiches Namensregister aus dem gespeicherten
+    Bild-Kontext. Rueckgabe:
+      None                          -> Verify aus/nicht im Scope/Fehler (kein Blocker)
+      {"blockiert": True, ...}      -> Speichern ablehnen, Meldung fuer den Agenten
+      {"blockiert": False, "hinweis": str} -> speichern, Hinweis mitgeben
+    """
+    conn = sqlite3.connect(_DB_PATH)
+    try:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT i.image_path, i.image_type, i.context_text, i.gen_language, "
+            "p.alt_language FROM images i JOIN projects p ON p.id = i.project_id "
+            "WHERE i.id = ? AND i.project_id = ?",
+            (image_id, project_id),
+        ).fetchone()
+    finally:
+        conn.close()
+    if not row or not row["image_path"]:
+        return None
+
+    try:
+        from pipelines.v4.orchestrator import verify_alt_text_extern
+        pruef = verify_alt_text_extern(
+            row["image_path"],
+            row["image_type"] or "",
+            alt_text,
+            language=(row["gen_language"] or row["alt_language"] or "de"),
+            enriched_context=row["context_text"] or "",
+        )
+    except Exception:
+        log.exception("Chatbot-Verify fehlgeschlagen (ignoriert, kein Blocker)")
+        return None
+    if pruef is None:
+        return None
+
+    if not pruef.alt_text_belegt:
+        strittig = "; ".join(pruef.strittige_aussagen) or pruef.anmerkung or "keine Einzelheiten"
+        vorschlag = (
+            f' Korrektur-Vorschlag des Pruefers: "{pruef.korrigierter_alt_text}"'
+            if pruef.korrigierter_alt_text else ""
+        )
+        return {
+            "blockiert": True,
+            "meldung": (
+                "NICHT gespeichert: Der Bild-Verify (gleicher Pruefer wie die "
+                f"Pipeline) haelt den Text nicht fuer belegt. Strittig: {strittig}."
+                f"{vorschlag} Lege dem Nutzer die Beanstandung und ggf. den "
+                "Korrektur-Vorschlag vor. NUR wenn der Nutzer ausdruecklich auf "
+                "seiner Fassung besteht (etwa weil er etwas weiss, das im Bild "
+                "nicht sichtbar ist), rufe update_alt_text erneut mit force=true auf."
+            ),
+        }
+
+    hinweis = "Bild-Verify: alle Aussagen am Bild belegt."
+    if pruef.korrigierter_alt_text:
+        hinweis += (
+            " Unverbindliche Anmerkung des Pruefers (z.B. Vollstaendigkeit): "
+            f'"{pruef.korrigierter_alt_text}"'
+            + (f" — {pruef.korrektur_begruendung}" if pruef.korrektur_begruendung else "")
+        )
+    return {"blockiert": False, "hinweis": hinweis}
+
+
 def update_alt_text(
     image_id: int,
     project_id: int,
     user_id: int,
     new_alt_text: str,
     new_langbeschreibung: Optional[str] = None,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Speichert Alt-Text (Pflicht) + optional Langbeschreibung in der DB.
 
@@ -129,6 +197,18 @@ def update_alt_text(
         if lang_text and len(lang_text) > 5000:
             return {"ok": False, "error": f"Langbeschreibung zu lang ({len(lang_text)} Zeichen, max 5000)."}
 
+    # Qualitaetsrunde 21.08.2026: Chatbot-Speichern laeuft durch denselben
+    # Bild-Verify wie die Pipeline (vorher schrieb update_alt_text ungeprueft
+    # in die DB). force=True = ausdrueckliche Nutzer-Entscheidung nach einer
+    # Beanstandung — dann wird ohne erneute Pruefung gespeichert.
+    verify_hinweis: Optional[str] = None
+    if not force:
+        pruef = _verify_gegen_bild(image_id, project_id, text)
+        if pruef and pruef.get("blockiert"):
+            return {"ok": False, "error": pruef["meldung"]}
+        if pruef:
+            verify_hinweis = pruef.get("hinweis")
+
     updates = ["alt_text_edited = ?"]
     params: list[Any] = [text]
     if lang_text is not None:
@@ -159,6 +239,10 @@ def update_alt_text(
         "saved_alt_text_length": len(text),
         "info": "Alt-Text in DB-Feld 'alt_text_edited' gespeichert. Original-Pipeline-Ausgabe bleibt in 'alt_text'.",
     }
+    if verify_hinweis:
+        result["verify"] = verify_hinweis
+    if force:
+        result["verify"] = "Bild-Verify auf ausdrueckliche Nutzer-Entscheidung uebersprungen (force)."
     if lang_text is not None:
         result["saved_langbeschreibung_length"] = len(lang_text)
         result["langbeschreibung_info"] = "Langbeschreibung wurde ueberschrieben (kein Rollback-Feld vorhanden)."

@@ -1,57 +1,76 @@
 {
-  "_doc": "Eval-Korpus für die v4-Pipeline. Cowork's vollständiger Wikimedia-Korpus folgt separat. Diese Skelett-Sammlung dient als regression-test für Production-Symptome.",
-  "eval_korpus": [
-    {
-      "id": "workshop_foto_kersten",
-      "image_path": "/app/data/uploads/1/20260428_102609_03_workshop-foto_kersten.jpeg",
-      "bildtyp_erwartung": "foto",
-      "sub_typ_erwartung": "foto_event",
-      "enriched_context": "Workshop-Foto Kersten Berlin 26.04.2026 — Vor-Ort-Schulung Barrierefreiheit",
-      "width": 1200,
-      "height": 800,
-      "original_alt": "",
-      "checks": {
-        "must_not_contain": ["Getränke", "Snacks", "formell, aber entspannt", "Gruppe von Personen bei einer Veranstaltung"],
-        "must_contain": ["Workshop"],
-        "min_alt_length": 80,
-        "max_alt_length": 400,
-        
-        "sub_typ_erwartung_strict": true
-      }
-    },
-    {
-      "id": "bogart_foto_personen",
-      "image_path": "/app/data/uploads/5/20260429_220912_Bogart.png",
-      "bildtyp_erwartung": "foto",
-      "sub_typ_erwartung": "foto_personen",
-      "enriched_context": "Foto von Humphrey Bogart, US-amerikanischer Schauspieler. Filmpose 1940er.",
-      "width": 600,
-      "height": 600,
-      "original_alt": "",
-      "checks": {
-        "must_not_contain": ["etwa 30 Jahre", "ein älterer Mann"],
-        "must_contain": ["Humphrey Bogart"],
-        "min_alt_length": 20,
-        "max_alt_length": 400
-      }
-    },
-    {
-      "id": "keramikschuessel_garagelab",
-      "image_path": "/app/data/uploads/1/20260428_133936_01_keramikschuesselchen_garagelab.jpg",
-      "bildtyp_erwartung": "foto",
-      "sub_typ_erwartung": "foto_objekte",
-      "enriched_context": "GarageLab Keramik-Werkstatt Berlin — handgefertigte Keramikschuesselchen",
-      "width": 1200,
-      "height": 900,
-      "original_alt": "",
-      "checks": {
-        "must_not_contain": ["Flüssigkeit", "Substanz", "gefüllt mit", "cremige"],
-        "must_contain": ["Keramik"],
-        "min_alt_length": 80,
-        "max_alt_length": 400,
-        
-        "sub_typ_erwartung_strict": true
-      }
-    }
-  ]
+ "_doc": "Eval-Korpus für die v4-Pipeline. Cowork's vollständiger Wikimedia-Korpus folgt separat. Diese Skelett-Sammlung dient als regression-test für Production-Symptome.",
+ "eval_korpus": [
+  {
+   "id": "workshop_foto_kersten",
+   "image_path": "/app/data/uploads/1/20260428_102609_03_workshop-foto_kersten.jpeg",
+   "bildtyp_erwartung": "foto",
+   "sub_typ_erwartung": "foto_event",
+   "enriched_context": "Workshop-Foto Kersten Berlin 26.04.2026 — Vor-Ort-Schulung Barrierefreiheit",
+   "width": 1200,
+   "height": 800,
+   "original_alt": "",
+   "checks": {
+    "must_not_contain": [
+     "Getränke",
+     "Snacks",
+     "formell, aber entspannt",
+     "Gruppe von Personen bei einer Veranstaltung"
+    ],
+    "must_contain": [
+     "Workshop"
+    ],
+    "min_alt_length": 80,
+    "max_alt_length": 400,
+    "sub_typ_erwartung_strict": true
+   }
+  },
+  {
+   "id": "bogart_foto_personen",
+   "image_path": "/app/data/uploads/5/20260429_220912_Bogart.png",
+   "bildtyp_erwartung": "foto",
+   "sub_typ_erwartung": "foto_personen",
+   "enriched_context": "Foto von Humphrey Bogart, US-amerikanischer Schauspieler. Filmpose 1940er.",
+   "width": 600,
+   "height": 600,
+   "original_alt": "",
+   "checks": {
+    "must_not_contain": [
+     "etwa 30 Jahre",
+     "ein älterer Mann"
+    ],
+    "must_contain": [
+     "Humphrey Bogart"
+    ],
+    "min_alt_length": 20,
+    "max_alt_length": 400
+   }
+  },
+  {
+   "id": "keramikschuessel_garagelab",
+   "image_path": "/app/data/uploads/1/20260428_133936_01_keramikschuesselchen_garagelab.jpg",
+   "bildtyp_erwartung": "foto",
+   "sub_typ_erwartung": "foto_objekte",
+   "enriched_context": "GarageLab Keramik-Werkstatt Berlin — handgefertigte Keramikschuesselchen",
+   "width": 1200,
+   "height": 900,
+   "original_alt": "",
+   "checks": {
+    "must_not_contain": [
+     "Flüssigkeit",
+     "Substanz",
+     "gefüllt mit",
+     "cremige Masse",
+     "cremige Substanz",
+     "cremige Füllung"
+    ],
+    "must_contain": [
+     "Keramik"
+    ],
+    "min_alt_length": 80,
+    "max_alt_length": 400,
+    "sub_typ_erwartung_strict": true
+   }
+  }
+ ]
 }

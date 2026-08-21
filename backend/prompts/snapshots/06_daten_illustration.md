@@ -1,7 +1,7 @@
 # Daten-Builder illustration
 
 - **Builder:** `prompts/builders/beschreibung_daten.py:181`
-- **Generiert:** 2026-07-17
+- **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -75,7 +75,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
    Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
@@ -85,7 +90,12 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
    oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
    eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Eine Montage als reales Foto zu beschreiben ist ein
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
    schwerer Fehler.
 
 BILDTYP: illustration (Cartoon, Vektor-Grafik, gemalte Illustration, Buch-Bild)
@@ -279,29 +289,32 @@ Markdown-Tabellen.
 FEW-SHOT BEISPIELE
 
 POSITIVES BEISPIEL 1:
+Szene: Flache Vektor-Illustration: ein stilisiertes Tier mit spitzen Ohren, großen runden Augen und buschigem Schwanz sitzt neben einem Schreibtisch; auf dem Tisch ein aufgeklappter Laptop und ein Mikroskop, an der Wand eine gerahmte Urkunde mit unlesbarem Text. Keine Hände oder Pfoten an den Geräten.
+Gueltige Antwort (exakt dieses JSON-Format):
 {
-  "szene": "Flache Vektor-Illustration: ein stilisiertes Tier mit spitzen Ohren, großen runden Augen und buschigem Schwanz sitzt neben einem Schreibtisch; auf dem Tisch ein aufgeklappter Laptop und ein Mikroskop, an der Wand eine gerahmte Urkunde mit unlesbarem Text. Keine Hände oder Pfoten an den Geräten.",
   "alt_text": "Flache Vektor-Illustration: Ein stilisiertes Tier mit spitzen Ohren, großen runden Augen und buschigem Schwanz, als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und einem Mikroskop; an der Wand hängt eine gerahmte Urkunde mit nicht lesbarem Text.",
-  "begruendung": "Erster Satz nennt Stilrichtung (flache Vektor-Illustration), Hauptmotiv und konkrete Elemente. Die Spezies-Mehrdeutigkeit wird als gleichwertige Alternativen-Form gelöst ('als Katze oder Fuchs deutbar') — ohne Hedge-Wörter wie 'vermutlich'. Keine Interaktion erfunden: Das Tier sitzt NEBEN dem Tisch, es 'arbeitet' nicht am Laptop. Nebenelemente vollständig (Mikroskop, Urkunde), Unlesbares ehrlich benannt.",
-  "prinzip": "Stilrichtung zuerst, mehrdeutige Charaktere als gleichwertige Alternativen ('als X oder Y deutbar') statt Festlegung oder Vermutungswörtern, Interaktionen nur mit Beleg, Nebenelemente vollständig.",
-  "quelle": "fiktives Beispiel (generische Szene, an das Hund/Mikroskop-Muster der Builder-Regeln angelehnt)",
-  "lizenz": "fiktives Beispiel"
+  "langbeschreibung": "",
+  "verwendete_inventar_items": [
+    "stilisiertes Tier (Katze oder Fuchs)",
+    "Schreibtisch",
+    "aufgeklappter Laptop",
+    "Mikroskop",
+    "gerahmte Urkunde mit unlesbarem Text"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
 }
+(Merksatz: Stilrichtung zuerst, mehrdeutige Charaktere als gleichwertige Alternativen ('als X oder Y deutbar') statt Festlegung oder Vermutungswörtern, Interaktionen nur mit Beleg, Nebenelemente vollständig.)
 
 ANTI-PATTERN-BEISPIEL 1 (NICHT so machen):
-{
-  "szene": "Dieselbe Vektor-Illustration: stilisiertes Tier mit spitzen Ohren und buschigem Schwanz neben einem Schreibtisch mit Laptop und Mikroskop, gerahmte Urkunde an der Wand, keine Pfoten an den Geräten.",
-  "alt_text": "Eine niedliche Illustration von vermutlich einer Katze, die fleißig am Laptop arbeitet und wissenschaftliche Ergebnisse in ihren Computer eintippt.",
-  "fehler": [
-    "'vermutlich einer Katze' legt die mehrdeutige Figur per Hedge-Wort fest, statt beide naheliegenden Deutungen gleichwertig zu nennen ('als Katze oder Fuchs deutbar').",
-    "'am Laptop arbeitet' und 'eintippt' erfinden eine Interaktion — das Tier sitzt nur neben dem Tisch, keine Pfoten an den Geräten sichtbar.",
-    "'niedliche' und 'fleißig' sind Wertungen ohne Beleg; 'Eine niedliche Illustration von' ist eine Floskel-Eröffnung ohne Stilrichtung.",
-    "Mikroskop und gerahmte Urkunde fehlen komplett — Nebenelemente übersehen (Vollständigkeits-Verstoß)."
-  ],
-  "besser": "Mit der Stilrichtung führen ('Flache Vektor-Illustration: ...'), die Figur neutral mit Alternativen-Form beschreiben, Objekte als nebeneinander liegend benennen statt Interaktion zu erfinden, und alle Inventar-Elemente einschließlich Mikroskop und Urkunde nennen.",
-  "quelle": "fiktives Beispiel (generische Szene, an das Hund/Mikroskop-Muster der Builder-Regeln angelehnt)",
-  "lizenz": "fiktives Beispiel"
-}
+Szene: Dieselbe Vektor-Illustration: stilisiertes Tier mit spitzen Ohren und buschigem Schwanz neben einem Schreibtisch mit Laptop und Mikroskop, gerahmte Urkunde an der Wand, keine Pfoten an den Geräten.
+Schlechter Alt-Text: "Eine niedliche Illustration von vermutlich einer Katze, die fleißig am Laptop arbeitet und wissenschaftliche Ergebnisse in ihren Computer eintippt."
+- Fehler: 'vermutlich einer Katze' legt die mehrdeutige Figur per Hedge-Wort fest, statt beide naheliegenden Deutungen gleichwertig zu nennen ('als Katze oder Fuchs deutbar').
+- Fehler: 'am Laptop arbeitet' und 'eintippt' erfinden eine Interaktion — das Tier sitzt nur neben dem Tisch, keine Pfoten an den Geräten sichtbar.
+- Fehler: 'niedliche' und 'fleißig' sind Wertungen ohne Beleg; 'Eine niedliche Illustration von' ist eine Floskel-Eröffnung ohne Stilrichtung.
+- Fehler: Mikroskop und gerahmte Urkunde fehlen komplett — Nebenelemente übersehen (Vollständigkeits-Verstoß).
+Besser: Mit der Stilrichtung führen ('Flache Vektor-Illustration: ...'), die Figur neutral mit Alternativen-Form beschreiben, Objekte als nebeneinander liegend benennen statt Interaktion zu erfinden, und alle Inventar-Elemente einschließlich Mikroskop und Urkunde nennen.
 
 
 FINAL CHECK
