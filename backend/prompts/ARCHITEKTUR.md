@@ -221,6 +221,36 @@ leicht geoeffnet, sitzt ..."). Aenderungen:
    Substring UND Wort-Abgleich, Label-Deckel 80 Zeichen (Summe bleibt unter
    dem manuellen 500er-Limit; Befund budni: 452-Zeichen-Alt).
 
+### Runden 3-6 der Qualitaetsrunde (21.08.2026, gleicher Tag)
+
+9. Kenn-Fakten-Regel (Steve-Entscheid): Zu einem zweifelsfrei benannten
+   Wahrzeichen darf EIN allgemein bekanntes, sicheres Kenn-Faktum ergaenzt
+   werden ("Matterhorn (4.478 m)") — roles.py ROLE_BESCHREIBER-Ausnahme;
+   der Verify beanstandet solche Fakten nur bei sachlicher Falschheit.
+10. Floskel-Verbot als MUSTER (Steves Hoertest-Befund): keine Ansage, DASS
+    etwas gezeigt wird — beide Felder, Anfang UND mitten im Text, inkl.
+    Perspektiv-Ansagen ("Blick von Suedwesten auf den Dom" statt "Die
+    Aufnahme zeigt ..."); Lang-Direkteinstiegs-Zeile auch in
+    foto_personen/foto_event.
+11. Fotomontage-Kennzeichnung WOERTLICH Pflicht (Hoertest-Befund: ging bei
+    Regenerierungen verloren): Regel 5 verlangt das Wort, der
+    Verify-Redakteur erzwingt/ergaenzt es, der Variations-Suffix zaehlt es
+    zu den erhaltenen Kernfakten.
+12. Ausgabe-Sprache: Der Sprach-Suffix verlangt Schlagwoerter/
+    Gattungs-Praefixe in der Zielsprache (Table —/Map —/Photomontage:);
+    der Link-Referenz-Postprozessor (main.py) nutzt _LINK_REF_PHRASES
+    (de/en/fr/es/da/sv) statt festem "verweist auf".
+13. Eval-Korpus 3 -> 12 Faelle (Kategorien-Testbilder Projekt 256; Bogart
+    durch Selenskyj ersetzt), Floskel-Waechter in 6 Faellen, neuer
+    Runner-Check must_contain_any (Synonym-tolerant). Der Korpus ist
+    Pflicht-Regression vor jedem Rollout.
+14. PRAEZISIERUNG zu Punkt 2 (Runde 1): "Full-Modus bleibt unveraendert"
+    gilt fuer die modus-gegateten Bloecke (Personenregeln, Final Check,
+    Unsicherheit); die geteilten, nicht gegateten Sektionen (ZIEL,
+    ALT-TEXT-Bausteine, STILREGELN statt Kompaktheit) wirken auch im
+    Full-Modus. Bewusst akzeptiert — Mistral ist Notfall-Fallback, die
+    Drill-Bloecke bleiben ihm erhalten.
+
 ### Nachtrag Paket-4-Review (17.07.2026)
 
 Der geteilte Inventar-Block der Daten-Familie uebernimmt BEWUSST die gelockerte Foto-Premium-Formulierung (sichtbare Bildinformationen duerfen ergaenzt werden, duerfen dem Inventar aber nicht widersprechen) statt des alten AUSSCHLIESSLICH-Wortlauts. Diagramm und Illustration nutzen seit Paket 4 NEU das 150/250-Richtwert-Regime der Foto-Familie. Die V4_PASS_MODE-Normalisierung ist jetzt an allen drei Lesestellen identisch (strip und lower — vorher konnte ein Leerzeichen im ENV-Wert die Anti-Halluzinations-Schicht im Standalone-Pass still entfernen). render_prompts pinnt V4_PASS_MODE=full fuer alle Standalone-Snapshots. Die Diagramm-Sektion LESBARE TEXTE nennt die Trennzeichen-Treue jetzt ausdruecklich.
