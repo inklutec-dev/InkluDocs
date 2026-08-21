@@ -1,6 +1,6 @@
 # Klassifikator — Modus: full
 
-- **Builder:** `prompts/builders/classification.py:139`
+- **Builder:** `prompts/builders/classification.py:146`
 - **Generiert:** 2026-08-21
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `full`
@@ -58,7 +58,9 @@ DIE 12 TOP-LEVEL-BILDTYPEN:
 10. icon        — Kleines funktionales Symbol (Lupe, Burger, Warenkorb)
 11. funktional  — Navigations-/Steuerungselement mit Zustand
                   (Paginierung, Vor/Zurueck, Fortschrittsanzeige, Breadcrumb)
-12. dekorativ   — Rein schmueckendes Bild ohne Information (leerer Alt-Text)
+12. dekorativ   — Reines Designelement ohne Informationswert (leerer
+                  Alt-Text) — unabhaengig von der Groesse, auch grosse
+                  Trennbanner und Farbflaechen
 
 INPUTS:
 - Bildgroesse: 1280x720 Pixel
@@ -82,11 +84,16 @@ ROUTING-REGELN (in dieser Prioritaet):
 7. Plakat oder Flyer mit Layout und Information -> infografik.
 8. Kleine UI-Symbole (Lupe, Burger, Pfeil) -> icon oder funktional.
    funktional = Element mit Zustand, icon = generisches Symbol.
-9. dekorativ NUR bei wirklich rein schmueckenden Elementen ohne
-   Informationswert. Bei sehr kleinen Bildern (<80x80 px) Vorsicht —
-   oft, aber nicht immer, dekorativ. Wenn das Bild Text, Navigation,
-   Branding oder fachliche Information transportiert, ist es NICHT
-   dekorativ.
+9. dekorativ haengt an der FUNKTION, nicht an der Groesse: rein
+   schmueckende Designelemente ohne Informationswert (Trennlinien,
+   Farbflaechen, Verlaeufe, abstrakte Formen-Banner, Zierrahmen,
+   Hintergrund-Texturen) sind dekorativ — auch als bildschirmbreites
+   Banner. Massgeblich ist der Kontext der Seite: Transportiert das Bild
+   an seiner Stelle Text, Navigation, Branding, ein Motiv (Personen,
+   Produkte, Orte) oder Stimmungs-/Fach-Information, ist es NICHT
+   dekorativ — ein grosses Stimmungsfoto ist Inhalt, kein Schmuck.
+   Bei sehr kleinen Bildern (<100x100 px) genau pruefen — oft, aber
+   nicht immer dekorativ. Im Zweifel NICHT dekorativ.
 10. Bei Unsicherheit zwischen zwei Typen: konfidenz=mittel/niedrig
     und in der Begruendung beide Optionen nennen.
 
@@ -110,9 +117,13 @@ False kostet Geld — beides hat Konsequenzen.
 
 IST_DEKORATIV (Boolean):
 
-True NUR wenn das Bild zweifelsfrei dekorativ ist (Trennlinie,
-Schmuck-Hintergrund, Designelement ohne Inhalt). Sehr kleine Bilder
-(<100x100 px) sind oft aber nicht immer dekorativ — pruefen.
+True NUR wenn das Bild zweifelsfrei ein reines Designelement ohne
+Informationswert ist (Trennlinie, Farbflaeche, Verlauf, abstraktes
+Schmuck-Banner, Hintergrund-Textur) — die Groesse ist dabei egal, auch
+ein bildschirmbreites Trennbanner kann dekorativ sein. Zeigt das Bild
+ein Motiv (Personen, Produkte, Orte), Text, Navigation oder Branding,
+ist es NICHT dekorativ. Im Zweifel False. Sehr kleine Bilder
+(<100x100 px) sind oft, aber nicht immer dekorativ — pruefen.
 
 KLASSIFIKATIONS_BEGRUENDUNG (10-200 Zeichen, ein Satz):
 

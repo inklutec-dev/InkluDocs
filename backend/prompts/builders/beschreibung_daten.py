@@ -48,6 +48,7 @@ from prompts.components.constraints import (
     KONTAKTDATEN_PFLICHT,
 )
 from prompts.components.roles import ROLE_BESCHREIBER
+from prompts.components.stilregeln import STILREGELN_KERN
 from prompts.components.schemas import InventarOutput
 
 from .helpers import load_examples, user_hint_block
@@ -225,6 +226,12 @@ leicht auf das naheliegendste Klischee festgelegt. Genau das vermeidest du.
 {_render_kompaktheit_block('einfache Motive unter 150 Zeichen, komplexe Illustrationen bis etwa 250')}
 
 
+{STILREGELN_KERN}
+(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
+das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
+allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+
+
 ALT-TEXT
 
 Der erste Satz nennt:
@@ -370,6 +377,12 @@ benennen.
 
 
 {_render_kompaktheit_block('einfache Diagramme unter 150 Zeichen, komplexe bis etwa 250')}
+
+
+{STILREGELN_KERN}
+(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
+das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
+allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
 
 
 ALT-TEXT
@@ -601,6 +614,12 @@ bei Zahlen, Summen und Einheiten ist hier der Qualitätsmaßstab.
 {_render_kompaktheit_block('unter 250 Zeichen')}
 
 
+{STILREGELN_KERN}
+(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
+das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
+allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+
+
 ALT-TEXT
 
 Der erste Satz:
@@ -740,6 +759,12 @@ nie geraten und nie aus dem Kontext 'korrigiert'.
 {_render_kompaktheit_block('unter 350 Zeichen')}
 
 
+{STILREGELN_KERN}
+(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
+das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
+allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+
+
 ALT-TEXT
 
 Der erste Satz:
@@ -859,6 +884,12 @@ inhaltliche Struktur.
 
 
 {_render_kompaktheit_block('unter 350 Zeichen', 'etwa 1500 Zeichen')}
+
+
+{STILREGELN_KERN}
+(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
+das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
+allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
 
 
 ALT-TEXT
@@ -995,6 +1026,12 @@ die verlässlichste Informationsquelle und werden wortgetreu übernommen.
 {_render_kompaktheit_block('unter 350 Zeichen', 'etwa 1000 Zeichen')}
 
 
+{STILREGELN_KERN}
+(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
+das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
+allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+
+
 ALT-TEXT
 
 Beginne mit 'Screenshot der/des …'. Der erste Satz:
@@ -1117,6 +1154,12 @@ Beschriftung, nicht aus visueller Vermutung.
 
 
 {_render_kompaktheit_block('unter 250 Zeichen', 'etwa 800 Zeichen')}
+
+
+{STILREGELN_KERN}
+(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
+das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
+allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
 
 
 ALT-TEXT

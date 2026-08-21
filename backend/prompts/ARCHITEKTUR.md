@@ -200,6 +200,27 @@ leicht geoeffnet, sitzt ..."). Aenderungen:
    Beharren des Users -> force=true speichert ohne erneute Pruefung.
    Verify aus/Fehler -> speichern wie bisher (Sicherheitsnetz, nie Blocker).
 
+### Runde 2 der Qualitaetsrunde (21.08.2026, gleicher Tag)
+
+6. STILREGELN gesplittet: STILREGELN_KERN (Punkte 1-5, ohne Laengen) +
+   STILREGELN (= Kern + Laengen-Punkt 6). Die Daten-Familie bindet den KERN
+   nach ihrem Kompaktheits-Block ein (mit Einordnungszeile: ihr eigenes
+   Laengen-Regime bleibt massgeblich); ihre typspezifischen VERMEIDEN-Blöcke
+   bleiben bewusst stehen (inhaltlich, nicht redundant). Die Mini-Familie
+   bleibt bewusst OHNE Stil-Block — ihre Funktions-Formel ist die Stilvorgabe.
+7. Dekorativ haengt an der FUNKTION, nicht an der Groesse: Klassifikator darf
+   grosse reine Designelemente (Trennbanner, Farbflaechen, Verlaeufe) als
+   dekorativ einstufen (Befund budni-Test: 3840x762-Deko-Banner wurde als
+   foto_landschaft beschrieben). Sicherung: dekorativ OBERHALB 100 px bekommt
+   needs_review=True (leerer Alt-Text ist Vorschlag, Mensch bestaetigt;
+   pipeline_steps 'classified:dekorativ-gross-review'); <=100 px bleibt still
+   automatisch. Heuristik-Override bei brauchbarem original_alt unveraendert.
+8. Link-Referenz-Postprozessor (main.py _append_link_reference) verschaerft:
+   generische Ziel-Beschriftungen erweitert (Startseite/Home), Meta-Labels
+   ("... verlinkt ...", "Logo ...") uebersprungen, Doppelungs-Erkennung per
+   Substring UND Wort-Abgleich, Label-Deckel 80 Zeichen (Summe bleibt unter
+   dem manuellen 500er-Limit; Befund budni: 452-Zeichen-Alt).
+
 ### Nachtrag Paket-4-Review (17.07.2026)
 
 Der geteilte Inventar-Block der Daten-Familie uebernimmt BEWUSST die gelockerte Foto-Premium-Formulierung (sichtbare Bildinformationen duerfen ergaenzt werden, duerfen dem Inventar aber nicht widersprechen) statt des alten AUSSCHLIESSLICH-Wortlauts. Diagramm und Illustration nutzen seit Paket 4 NEU das 150/250-Richtwert-Regime der Foto-Familie. Die V4_PASS_MODE-Normalisierung ist jetzt an allen drei Lesestellen identisch (strip und lower — vorher konnte ein Leerzeichen im ENV-Wert die Anti-Halluzinations-Schicht im Standalone-Pass still entfernen). render_prompts pinnt V4_PASS_MODE=full fuer alle Standalone-Snapshots. Die Diagramm-Sektion LESBARE TEXTE nennt die Trennzeichen-Treue jetzt ausdruecklich.

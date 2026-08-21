@@ -97,14 +97,25 @@ def handle_dekorativ_classification(
         return (None, corrected_type)
 
     # Dekorativ bestätigt — leer, WCAG-konform, keine weiteren Pässe.
+    # Qualitaetsrunde 21.08.2026: Der Klassifikator darf jetzt auch GROSSE
+    # reine Designelemente (Trennbanner, Farbflaechen) als dekorativ
+    # einstufen. Ein faelschlich geleertes informatives Bild waere aber ein
+    # echter Barrierefreiheits-Schaden — deshalb bekommt jedes dekorative
+    # Bild OBERHALB der klassischen Kleinbild-Schwelle needs_review=True:
+    # der leere Alt-Text ist dann ein VORSCHLAG, den ein Mensch bestaetigt.
+    # Kleine Bilder (<=100 px) bleiben wie bisher still automatisch leer.
+    is_large = width > _DEKORATIV_MAX_SIDE or height > _DEKORATIV_MAX_SIDE
     return (
         {
             'bildtyp': 'dekorativ',
             'konfidenz': classification.konfidenz,
             'alt_text': '',
             'langbeschreibung': '',
-            'needs_review': False,
-            'pipeline_steps': 'classified:dekorativ',
+            'needs_review': bool(is_large),
+            'pipeline_steps': (
+                'classified:dekorativ-gross-review' if is_large
+                else 'classified:dekorativ'
+            ),
             'inventar_json': None,
             'validation_result': None,
         },

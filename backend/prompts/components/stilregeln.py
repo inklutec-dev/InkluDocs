@@ -15,9 +15,17 @@ Gepflegt wird ausschliesslich HIER — nicht in den Buildern nachziehen.
 
 Abgrenzung: Fakten-Regeln (Belege, Halluzination, Hedging) leben in
 constraints/halluzination.py. Hier steht nur STIL.
+
+Zwei Exporte (21.08.2026, Anschluss Daten-Familie):
+- STILREGELN_KERN — Punkte 1-5 (reiner Stil, ohne Laengen). Fuer Builder,
+  die eigene Laengen-Richtwerte fuehren (Daten-Familie: 250/350er-Regime).
+- STILREGELN — Kern + Punkt 6 (Laengen 150/250/400). Fuer die Foto-Familie
+  und den InkluAgent.
+Die Mini-Familie (logo/icon/funktional) bleibt bewusst OHNE diesen Block:
+ihre Formel (Funktion zuerst, 3-80 Zeichen) IST bereits die Stilvorgabe.
 """
 
-STILREGELN = """STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
+STILREGELN_KERN = """STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
 
 1. WICHTIGSTES ZUERST: Fuehre mit der Information, wegen der das Bild an
    seiner Stelle steht — Wer oder Was und die sichtbare Situation. Jedes
@@ -54,7 +62,9 @@ STILREGELN = """STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht F
    direkt mit dem Motiv einsteigen. Ebenso verboten sind Quellen-Floskeln
    wie "laut Seitenkontext", "laut Kontext", "dem Kontext zufolge" oder
    "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt,
-   ohne ihre Herkunft zu nennen.
+   ohne ihre Herkunft zu nennen."""
+
+STILREGELN = STILREGELN_KERN + """
 
 6. LAENGE (Arbeitsteilung Alt-Text / Langbeschreibung): So kurz wie
    moeglich, so lang wie noetig. Richtwert fuer den Alt-Text: einfache

@@ -7090,7 +7090,15 @@ _LINK_REF_GENERIC = {
     "mehr info", "mehr informationen", "weiterlesen", "hier klicken",
     "klicken", "link", "details", "mehr", "weiter", "mehr erfahren",
     "lesen sie mehr", "mehr lesen", "weiterlesen...",
+    # Qualitaetsrunde 21.08.2026: Beschriftungen, die nur die Verlinkung
+    # selbst beschreiben, sind kein Ziel — Zusatz waere reine Doppelung.
+    "startseite", "zur startseite", "home", "homepage", "start",
 }
+
+# Zusatz darf den Alt-Text nicht sprengen: Schema-Cap der Generierung ist
+# 400, die App erlaubt manuell bis 500 — mit Label-Deckel 80 bleibt die
+# Summe immer unter 500 (Befund budni-Test 21.08.2026: 452 Zeichen).
+_LINK_REF_LABEL_MAX = 80
 
 def _append_link_reference(alt_text: str, context_text: str) -> str:
     """Haengt "(verweist auf: <Beschriftung>)" an alt_text, wenn das Bild
@@ -7101,22 +7109,53 @@ def _append_link_reference(alt_text: str, context_text: str) -> str:
     2. [title] verweist auf: <text>  (Scraper-vorformatiert)
 
     Skip-Regeln: leerer alt_text, kein Kontext, alt_text enthaelt bereits
-    "verweist auf", Beschriftung generisch (Mehr Info etc.) oder <3 Zeichen.
+    "verweist auf", Beschriftung generisch (Mehr Info, Startseite etc.),
+    <3 Zeichen, im Alt-Text bereits enthalten (Doppelung) oder eine
+    Meta-Beschriftung, die nur die Verlinkung beschreibt ("Logo verlinkt
+    auf die Startseite"). Lange Beschriftungen werden auf
+    _LINK_REF_LABEL_MAX Zeichen gekappt.
     """
     if not alt_text or not context_text:
         return alt_text
     if "verweist auf" in alt_text.lower():
         return alt_text
+
+    def _brauchbares_label(label: str) -> bool:
+        low = label.lower()
+        if len(label) < 3 or low in _LINK_REF_GENERIC:
+            return False
+        # Doppelung: steht die Beschriftung (oder ihr Kern) schon im Alt-Text,
+        # traegt der Zusatz nichts bei ("Logo budni — Link zur Startseite").
+        alt_low = alt_text.lower()
+        if low in alt_low:
+            return False
+        # Wort-Abgleich faengt Umformulierungen ("InkluTec - Zur Startseite"
+        # vs. "Logo InkluTec — Link zur Startseite"): Wenn JEDES Wort der
+        # Beschriftung mit >=3 Zeichen schon im Alt-Text steht, ist der
+        # Zusatz redundant.
+        woerter = [w for w in re.findall(r"\w+", low) if len(w) >= 3]
+        if woerter and all(w in alt_low for w in woerter):
+            return False
+        # Meta-Beschriftung beschreibt die Verlinkung statt des Ziels.
+        if "verlinkt" in low or low.startswith("logo "):
+            return False
+        return True
+
+    def _mit_label(label: str) -> str:
+        if len(label) > _LINK_REF_LABEL_MAX:
+            label = label[:_LINK_REF_LABEL_MAX].rstrip() + "…"
+        return f"{alt_text.rstrip()} (verweist auf: {label})"
+
     m = re.search(r"\[Link-Beschriftung\]\s*(.+?)(?:\n|$)", context_text)
     if m:
         label = m.group(1).strip()
-        if label and len(label) >= 3 and label.lower() not in _LINK_REF_GENERIC:
-            return f"{alt_text.rstrip()} (verweist auf: {label})"
+        if label and _brauchbares_label(label):
+            return _mit_label(label)
     m = re.search(r"\[title\]\s*verweist auf:\s*(.+?)(?:\n|$)", context_text)
     if m:
         ref = m.group(1).strip()
-        if ref:
-            return f"{alt_text.rstrip()} (verweist auf: {ref})"
+        if ref and _brauchbares_label(ref):
+            return _mit_label(ref)
     return alt_text
 
 
