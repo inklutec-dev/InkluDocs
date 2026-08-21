@@ -49,4 +49,7 @@ ANTI_HALLUZINATION_REGELN = """ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
    Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
    als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
-   schwerer Fehler."""
+   schwerer Fehler. Die Kennzeichnung erfolgt WOERTLICH mit dem Wort
+   'Fotomontage' oder 'Collage' im Alt-Text (bewaehrter Auftakt:
+   'Fotomontage: ...') — Umschreibungen wie 'aufgesetzte', 'eingefuegte'
+   oder 'montierte' Elemente ersetzen die woertliche Kennzeichnung NICHT."""

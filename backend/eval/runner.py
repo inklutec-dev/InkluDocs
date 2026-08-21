@@ -79,6 +79,25 @@ def _check_must_contain(text: str, needles: list[str]) -> list[CheckResult]:
     return results
 
 
+def _check_must_contain_any(text: str, gruppen: list[list[str]]) -> list[CheckResult]:
+    """Je Gruppe muss MINDESTENS EINER der Begriffe vorkommen (21.08.2026).
+
+    Fuer legitime Synonym-Varianz: Die Event-Regel erlaubt z.B. Workshop,
+    Schulung oder Seminar gleichermassen — ein starres must_contain:"Workshop"
+    schlug bei korrekter Synonymwahl fehl.
+    """
+    results = []
+    text_lower = text.lower()
+    for gruppe in gruppen:
+        treffer = [n for n in gruppe if n.lower() in text_lower]
+        results.append(CheckResult(
+            name='must_contain_any:' + '|'.join(gruppe),
+            passed=bool(treffer),
+            detail=f'gefunden: {treffer[0]}' if treffer else 'KEINER der Begriffe im Output',
+        ))
+    return results
+
+
 def _check_must_not_contain(text: str, needles: list[str]) -> list[CheckResult]:
     results = []
     text_lower = text.lower()
@@ -183,6 +202,8 @@ def run_single_test(entry: dict) -> TestResult:
     checks_cfg = entry.get('checks', {})
     if 'must_contain' in checks_cfg:
         result.checks.extend(_check_must_contain(full_text, checks_cfg['must_contain']))
+    if 'must_contain_any' in checks_cfg:
+        result.checks.extend(_check_must_contain_any(full_text, checks_cfg['must_contain_any']))
     if 'must_not_contain' in checks_cfg:
         result.checks.extend(_check_must_not_contain(full_text, checks_cfg['must_not_contain']))
     result.checks.extend(_check_length(

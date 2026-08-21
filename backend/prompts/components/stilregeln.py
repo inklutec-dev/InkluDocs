@@ -57,9 +57,17 @@ STILREGELN_KERN = """STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, ni
    eingefuehrt ("ein Mann", "eine Frau", "eine Person"); stattdessen
    Pronomen oder Rolle ("der Gruender", "die Physikerin").
 
-5. KEINE FLOSKELN: Nicht mit "Das Bild zeigt", "Das Foto zeigt", "Auf dem
-   Bild", "Auf dem Foto", "Zu sehen ist" oder "Hier sieht man" beginnen —
-   direkt mit dem Motiv einsteigen. Ebenso verboten sind Quellen-Floskeln
+5. KEINE FLOSKELN: Keine Ansage, DASS etwas gezeigt wird — verboten ist
+   das ganze Muster, nicht nur einzelne Woerter: "Das Bild zeigt", "Das
+   Foto zeigt", "Die Aufnahme zeigt", "Auf dem Bild", "Zu sehen ist",
+   "Hier sieht man" und jede sinngemaesse Variante. Das gilt fuer
+   Alt-Text UND Langbeschreibung, am Anfang UND mitten im Text.
+   Steige direkt mit dem Motiv ein: statt "Die Aufnahme zeigt einen
+   hellen Seminarraum mit drei Personen" schreibe "In einem hellen
+   Seminarraum stehen drei Personen ...". Auch Perspektiv-Angaben ohne
+   Ansage formulieren: statt "Die Aufnahme zeigt den Dom von Suedwesten"
+   schreibe "Blick von Suedwesten auf den Dom".
+   Ebenso verboten sind Quellen-Floskeln
    wie "laut Seitenkontext", "laut Kontext", "dem Kontext zufolge" oder
    "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt,
    ohne ihre Herkunft zu nennen."""

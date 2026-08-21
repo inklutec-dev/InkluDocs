@@ -288,8 +288,11 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'Stilbruch Foto/Grafik, unmoegliche Kombinationen)? Suche dabei AKTIV '
         'Quadrant fuer Quadrant auch nach KLEINEN eingefuegten Objekten (z.B. ein '
         'winziges Bauwerk an unmoeglicher Stelle) — geringe Groesse schuetzt eine '
-        'Montage nicht. Dann muss der Alt-Text das Bild als Fotomontage oder '
-        'Collage benennen.\n\n'
+        'Montage nicht. Dann muss der Alt-Text das Bild WOERTLICH als '
+        '"Fotomontage" oder "Collage" benennen — Umschreibungen wie '
+        '"aufgesetzte" oder "eingefuegte" Elemente reichen NICHT. Fehlt die '
+        'woertliche Kennzeichnung bei erkennbarer Montage, ist das eine '
+        'Beanstandung, und deine Korrektur ergaenzt sie.\n\n'
         'alt_text_belegt=false NUR, wenn eine konkrete Behauptung falsch oder im '
         'Bild nicht belegt ist. Stil und Wortwahl sind KEINE Pruefkriterien. '
         'Feine Farb- oder Deutungs-Nuancen sind nur strittig, wenn der Alt-Text '
@@ -370,7 +373,8 @@ def _variation_suffix(previous_alt: str) -> str:
         'ein anderer Schwerpunkt bei gleichwertigen Aspekten. Das gilt für Alt-Text '
         'UND Langbeschreibung. Die Faktenlage bleibt identisch — keine neuen '
         'unbelegten Aussagen, und belegte Kernfakten (Namen, Marken, Typen, lesbare '
-        'Texte wie Schild- oder Gate-Aufschriften) bleiben in BEIDEN Feldern der '
+        'Texte wie Schild- oder Gate-Aufschriften, und eine vorhandene '
+        'Fotomontage-/Collage-Kennzeichnung) bleiben in BEIDEN Feldern der '
         'neuen Fassung erhalten. Alle übrigen Regeln gelten unverändert.'
     )
 

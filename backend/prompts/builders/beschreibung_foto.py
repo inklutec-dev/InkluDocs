@@ -511,7 +511,9 @@ einem Beamer in einer Schulung).
 LANGBESCHREIBUNG
 
 Schreibe FLIESSTEXT — keine Markdown-Formatierung, keine Ueberschriften, keine
-Aufzaehlungszeichen, keine fettgedruckten Abschnittstitel. Folge inhaltlich
+Aufzaehlungszeichen, keine fettgedruckten Abschnittstitel. Steige direkt mit
+der Szene ein — auch die Langbeschreibung beginnt NICHT mit "Das Bild zeigt"
+oder "Das Foto zeigt" (Floskel-Verbot: STILREGELN Punkt 5). Folge inhaltlich
 dieser Reihenfolge, ohne sie als Ueberschriften zu setzen: zuerst ein
 Gesamtueberblick, dann die raeumliche Orientierung, dann Personen und
 Interaktion, dann zentrale Objekte/Materialien, dann sichtbare Texte/Logos,
@@ -655,6 +657,10 @@ von Personen" oder "Mehrere Menschen", wenn sich exakt zaehlen laesst.
 
 
 LANGBESCHREIBUNG
+
+Steige direkt mit der Person oder Szene ein — auch die Langbeschreibung
+beginnt NICHT mit "Das Bild zeigt" oder "Das Foto zeigt" (Floskel-Verbot:
+STILREGELN Punkt 5).
 
 Struktur in dieser Reihenfolge:
 

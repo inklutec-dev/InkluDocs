@@ -15,14 +15,25 @@
      "Getränke",
      "Snacks",
      "formell, aber entspannt",
-     "Gruppe von Personen bei einer Veranstaltung"
+     "Gruppe von Personen bei einer Veranstaltung",
+     "Das Bild zeigt",
+     "Das Foto zeigt",
+     "Die Aufnahme zeigt",
+     "Zu sehen ist"
     ],
-    "must_contain": [
-     "Workshop"
-    ],
+    "must_contain": [],
     "min_alt_length": 80,
     "max_alt_length": 400,
-    "sub_typ_erwartung_strict": true
+    "sub_typ_erwartung_strict": true,
+    "must_contain_any": [
+     [
+      "Workshop",
+      "Schulung",
+      "Seminar",
+      "Präsentation",
+      "Veranstaltung"
+     ]
+    ]
    }
   },
   {
@@ -66,7 +77,11 @@
     ],
     "must_not_contain": [
      "vermutlich",
-     "wahrscheinlich"
+     "wahrscheinlich",
+     "Das Bild zeigt",
+     "Das Foto zeigt",
+     "Die Aufnahme zeigt",
+     "Zu sehen ist"
     ],
     "min_alt_length": 60,
     "max_alt_length": 400
@@ -85,7 +100,13 @@
     "must_contain": [
      "Fotomontage"
     ],
-    "max_alt_length": 400
+    "max_alt_length": 400,
+    "must_not_contain": [
+     "Das Bild zeigt",
+     "Das Foto zeigt",
+     "Die Aufnahme zeigt",
+     "Zu sehen ist"
+    ]
    }
   },
   {
@@ -102,7 +123,11 @@
      "Matterhorn"
     ],
     "must_not_contain": [
-     "vermutlich"
+     "vermutlich",
+     "Das Bild zeigt",
+     "Das Foto zeigt",
+     "Die Aufnahme zeigt",
+     "Zu sehen ist"
     ],
     "max_alt_length": 400
    }
@@ -120,7 +145,13 @@
     "must_contain": [
      "Kölner Dom"
     ],
-    "max_alt_length": 400
+    "max_alt_length": 400,
+    "must_not_contain": [
+     "Das Bild zeigt",
+     "Das Foto zeigt",
+     "Die Aufnahme zeigt",
+     "Zu sehen ist"
+    ]
    }
   },
   {
@@ -139,7 +170,11 @@
      "13"
     ],
     "must_not_contain": [
-     "vermutlich"
+     "vermutlich",
+     "Das Bild zeigt",
+     "Das Foto zeigt",
+     "Die Aufnahme zeigt",
+     "Zu sehen ist"
     ],
     "max_alt_length": 400
    }
