@@ -879,7 +879,7 @@ async def konto_loeschen(request: Request, user: dict = Depends(get_current_user
         raise HTTPException(
             status_code=403,
             detail="Betreiber-Konten können sich nicht selbst löschen. Bitte an "
-                   "support@inklutec.de wenden.")
+                   "support@inkludocs.de wenden.")
 
     # 3. Stripe: laufendes Abo sofort beenden (nicht erst zum Periodenende —
     #    das Konto verschwindet ja jetzt).
@@ -899,7 +899,7 @@ async def konto_loeschen(request: Request, user: dict = Depends(get_current_user
         raise HTTPException(
             status_code=503,
             detail="Dein Konto hat ein laufendes Abo, das wir gerade nicht beenden können. "
-                   "Bitte melde dich kurz bei support@inklutec.de — wir erledigen das von Hand.")
+                   "Bitte melde dich kurz bei support@inkludocs.de — wir erledigen das von Hand.")
     if kunde_id and stripe_zahlung.AKTIV:
         # Ueber den KUNDEN aufraeumen, nicht nur ueber die gespeicherte
         # Subscription: sonst ueberlebt ein Abo, dessen Webhook nie ankam.
@@ -2513,7 +2513,7 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
         raise HTTPException(
             status_code=400,
             detail="Dein Abo läuft über den Rechnungsweg. Schreib uns kurz an "
-                   "support@inklutec.de — wir stellen den Plan für dich um.")
+                   "support@inkludocs.de — wir stellen den Plan für dich um.")
     # Review-Befund 8: Ein gekuendigtes Abo darf nicht durch einen Wechsel
     # stillschweigend reaktiviert werden.
     if not int(db_user.get("auto_verlaengerung") or 0):
@@ -2620,7 +2620,7 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
     if not bis:
         raise HTTPException(status_code=400,
                             detail="Für dieses Konto ist kein Laufzeitende hinterlegt — bitte an "
-                                   "support@inklutec.de wenden")
+                                   "support@inkludocs.de wenden")
     if stripe_abo:
         try:
             stripe_zahlung.plane_wechsel_zum_periodenende(sub_id, plan, monate)
@@ -2724,7 +2724,7 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
     if billing.effektiver_plan(db_user) != "free":
         raise HTTPException(status_code=400,
                             detail="Du hast bereits ein aktives Abo. Plan-Wechsel bitte über "
-                                   "support@inklutec.de — Online-Wechsel folgt")
+                                   "support@inkludocs.de — Online-Wechsel folgt")
     try:
         kunde = stripe_zahlung.kunde_fuer(db_user)
         if kunde != db_user.get("stripe_customer_id"):
@@ -3001,7 +3001,7 @@ async def stripe_webhook(request: Request):
 PLAN_ANZEIGENAMEN = {"free": "Free", "single": "Single", "team": "Team",
                      "enterprise": "Enterprise"}
 
-_MAIL_FUSS = ('<p>Bei Fragen wende dich an <a href="mailto:support@inklutec.de">support@inklutec.de</a>.</p>'
+_MAIL_FUSS = ('<p>Bei Fragen wende dich an <a href="mailto:support@inkludocs.de">support@inkludocs.de</a>.</p>'
               '<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">'
               'InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>')
 
@@ -3595,7 +3595,7 @@ def _verification_mail_full(lang: str, display_name: str, verify_url: str):
     subject = _('InkluDocs: E-Mail-Adresse bestätigen')
     anmelden = _('Melden Sie sich auf {url} an.').format(url=f'<a href="{BASE_URL}">{BASE_URL}</a>')
     fragen = _('Bei Fragen wenden Sie sich gerne an {mail}.').format(
-        mail='<a href="mailto:support@inklutec.de">support@inklutec.de</a>')
+        mail='<a href="mailto:support@inkludocs.de">support@inkludocs.de</a>')
     body = f"""<!DOCTYPE html>
 <html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
 <h1 style="color:#1b2a4a;">{_('Willkommen bei InkluDocs')}</h1>
@@ -3618,7 +3618,7 @@ def _verification_mail_full(lang: str, display_name: str, verify_url: str):
 </ol>
 
 <p>{fragen}</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">{_('InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de')}</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">{_('InkluDocs ist ein Produkt von INKLUTEC – support@inkludocs.de')}</p>
 </body></html>"""
     return subject, body
 
@@ -3635,7 +3635,7 @@ def _verification_mail_short(lang: str, display_name: str, verify_url: str):
 <p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('E-Mail-Adresse bestätigen')}</a></p>
 <p style="color:#64748b;font-size:0.9rem;">{_('Oder kopieren Sie diesen Link:')} {verify_url}</p>
 <p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 24 Stunden gültig.')}</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – support@inklutec.de</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – support@inkludocs.de</p>
 </body></html>"""
     return subject, body
 

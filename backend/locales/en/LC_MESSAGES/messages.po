@@ -1675,8 +1675,8 @@ msgid "Bei Fragen wenden Sie sich gerne an {mail}."
 msgstr "If you have any questions, feel free to contact {mail}."
 
 #: E-Mails (03.07.2026)
-msgid "InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de"
-msgstr "InkluDocs is a product of INKLUTEC – support@inklutec.de"
+msgid "InkluDocs ist ein Produkt von INKLUTEC – support@inkludocs.de"
+msgstr "InkluDocs is a product of INKLUTEC – support@inkludocs.de"
 
 #: E-Mails (03.07.2026)
 msgid "InkluDocs – E-Mail bestätigen"

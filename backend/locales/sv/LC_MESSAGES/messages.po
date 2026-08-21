@@ -1350,8 +1350,8 @@ msgstr "Redigera alt-texterna vid behov och exportera dem."
 msgid "Bei Fragen wenden Sie sich gerne an {mail}."
 msgstr "Vid frågor är du välkommen att kontakta {mail}."
 
-msgid "InkluDocs ist ein Produkt von INKLUTEC – support@inklutec.de"
-msgstr "InkluDocs är en produkt från INKLUTEC – support@inklutec.de"
+msgid "InkluDocs ist ein Produkt von INKLUTEC – support@inkludocs.de"
+msgstr "InkluDocs är en produkt från INKLUTEC – support@inkludocs.de"
 
 msgid "InkluDocs – E-Mail bestätigen"
 msgstr "InkluDocs – bekräfta e-post"
