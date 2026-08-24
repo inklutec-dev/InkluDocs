@@ -3941,3 +3941,54 @@ msgstr ""
 
 msgid "Ohne Kündigung läuft das Abo nach der festen Laufzeit als Monatsabo zum gleichen Monatspreis weiter — jederzeit monatlich kündbar. Kündigen kannst du auch vorher, jederzeit zum Laufzeitende, direkt in der App."
 msgstr ""
+
+msgid "Auftragsverarbeitung"
+msgstr ""
+
+msgid "Auftragsverarbeitung nach Artikel 28 DSGVO"
+msgstr ""
+
+msgid "Wenn du mit InkluDocs personenbezogene Daten aus deinem Verantwortungsbereich verarbeitest — etwa Dokumente mit Namen oder Fotos von Personen — brauchst du dafür einen Vertrag zur Auftragsverarbeitung. Diesen Vertrag bieten wir dir an."
+msgstr ""
+
+msgid "Vertrag herunterladen"
+msgstr ""
+
+msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)"
+msgstr ""
+
+msgid "Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft."
+msgstr ""
+
+msgid "So schließen wir ihn ab"
+msgstr ""
+
+msgid "Nach Artikel 28 Absatz 9 DSGVO genügt die elektronische Form — eine handschriftliche Unterschrift ist nicht nötig. Schick uns den ausgefüllten Vertrag oder einfach eine kurze Nachricht an"
+msgstr ""
+
+msgid "; du erhältst die Bestätigung in Textform zurück."
+msgstr ""
+
+msgid "Bringst du eine eigene Vorlage mit, etwa als Behörde oder größeres Unternehmen? Schick sie uns gern — wir prüfen sie und melden uns."
+msgstr ""
+
+msgid "Was im Vertrag steht"
+msgstr ""
+
+msgid "Gegenstand, Dauer, Art und Zweck der Verarbeitung sowie die Arten der Daten und die betroffenen Personen"
+msgstr ""
+
+msgid "Rechte und Pflichten beider Seiten, Weisungsbindung und Vertraulichkeit"
+msgstr ""
+
+msgid "Die technischen und organisatorischen Schutzmaßnahmen (Anlage 1)"
+msgstr ""
+
+msgid "Alle eingesetzten Unterauftragsverarbeiter mit Sitz und Aufgabe (Anlage 2)"
+msgstr ""
+
+msgid "Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte"
+msgstr ""
+
+msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt."
+msgstr ""

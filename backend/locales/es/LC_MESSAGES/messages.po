@@ -3938,3 +3938,54 @@ msgstr "Juntos desarrollamos tecnologías preparadas para el futuro que realment
 
 msgid "Ohne Kündigung läuft das Abo nach der festen Laufzeit als Monatsabo zum gleichen Monatspreis weiter — jederzeit monatlich kündbar. Kündigen kannst du auch vorher, jederzeit zum Laufzeitende, direkt in der App."
 msgstr "Sin cancelación, tras el periodo fijo la suscripción continúa como suscripción mensual al mismo precio mensual — cancelable cada mes. También puedes cancelar antes, en cualquier momento con efecto al final del periodo, directamente en la aplicación."
+
+msgid "Auftragsverarbeitung"
+msgstr "Encargo del tratamiento"
+
+msgid "Auftragsverarbeitung nach Artikel 28 DSGVO"
+msgstr "Encargo del tratamiento según el artículo 28 del RGPD"
+
+msgid "Wenn du mit InkluDocs personenbezogene Daten aus deinem Verantwortungsbereich verarbeitest — etwa Dokumente mit Namen oder Fotos von Personen — brauchst du dafür einen Vertrag zur Auftragsverarbeitung. Diesen Vertrag bieten wir dir an."
+msgstr "Si con InkluDocs tratas datos personales de tu ámbito de responsabilidad — por ejemplo documentos con nombres o fotos de personas — necesitas un contrato de encargo del tratamiento. Te lo ofrecemos."
+
+msgid "Vertrag herunterladen"
+msgstr "Descargar el contrato"
+
+msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)"
+msgstr "Contrato de encargo del tratamiento en PDF (versión 1.0 de 24 de agosto de 2026)"
+
+msgid "Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft."
+msgstr "El documento está preparado de forma accesible y verificado según la norma PDF/UA-1."
+
+msgid "So schließen wir ihn ab"
+msgstr "Cómo lo formalizamos"
+
+msgid "Nach Artikel 28 Absatz 9 DSGVO genügt die elektronische Form — eine handschriftliche Unterschrift ist nicht nötig. Schick uns den ausgefüllten Vertrag oder einfach eine kurze Nachricht an"
+msgstr "Según el artículo 28, apartado 9, del RGPD basta la forma electrónica — no se necesita firma manuscrita. Envíanos el contrato cumplimentado o simplemente un mensaje breve a"
+
+msgid "; du erhältst die Bestätigung in Textform zurück."
+msgstr "; recibirás la confirmación en forma de texto."
+
+msgid "Bringst du eine eigene Vorlage mit, etwa als Behörde oder größeres Unternehmen? Schick sie uns gern — wir prüfen sie und melden uns."
+msgstr "¿Traes tu propia plantilla, por ejemplo como organismo público o empresa grande? Envíanosla — la revisamos y te respondemos."
+
+msgid "Was im Vertrag steht"
+msgstr "Qué contiene el contrato"
+
+msgid "Gegenstand, Dauer, Art und Zweck der Verarbeitung sowie die Arten der Daten und die betroffenen Personen"
+msgstr "Objeto, duración, naturaleza y finalidad del tratamiento, tipos de datos y personas afectadas"
+
+msgid "Rechte und Pflichten beider Seiten, Weisungsbindung und Vertraulichkeit"
+msgstr "Derechos y obligaciones de ambas partes, sujeción a instrucciones y confidencialidad"
+
+msgid "Die technischen und organisatorischen Schutzmaßnahmen (Anlage 1)"
+msgstr "Las medidas técnicas y organizativas (anexo 1)"
+
+msgid "Alle eingesetzten Unterauftragsverarbeiter mit Sitz und Aufgabe (Anlage 2)"
+msgstr "Todos los subencargados, con sede y función (anexo 2)"
+
+msgid "Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte"
+msgstr "Supresión y devolución de los datos al final del contrato, así como derechos de prueba y control"
+
+msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt."
+msgstr "Importante para ti: no usamos tus contenidos para entrenar modelos de IA y obligamos contractualmente a nuestros proveedores a lo mismo. El tratamiento se realiza en centros de datos en Alemania y la Unión Europea."

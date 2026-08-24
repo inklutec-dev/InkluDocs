@@ -8674,6 +8674,17 @@ async def kuendigen_page(request: Request):
     )
 
 
+@app.get("/avv", response_class=HTMLResponse)
+async def avv_page(request: Request):
+    """Auftragsverarbeitung nach Art. 28 DSGVO (24.08.2026): erfuellt das
+    Angebot aus AGB Ziffer 18; Vertrag als barrierefreies PDF zum Download."""
+    lang = detect_language(request)
+    return templates.TemplateResponse(
+        "avv.html",
+        template_context(request, lang, is_staging="staging" in BASE_URL),
+    )
+
+
 @app.get("/ueber-uns", response_class=HTMLResponse)
 async def ueber_uns_page(request: Request):
     """Ueber-uns-Seite (Steve + Michael, 24.08.2026): InkluTec + Actino."""

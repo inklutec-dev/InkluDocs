@@ -3938,3 +3938,54 @@ msgstr "Ensemble, nous développons des technologies pérennes qui n'excluent vr
 
 msgid "Ohne Kündigung läuft das Abo nach der festen Laufzeit als Monatsabo zum gleichen Monatspreis weiter — jederzeit monatlich kündbar. Kündigen kannst du auch vorher, jederzeit zum Laufzeitende, direkt in der App."
 msgstr "Sans résiliation, à l'issue de la durée fixe, l'abonnement se poursuit en abonnement mensuel au même prix mensuel — résiliable chaque mois. Vous pouvez aussi résilier avant, à tout moment pour la fin de la durée, directement dans l'application."
+
+msgid "Auftragsverarbeitung"
+msgstr "Sous-traitance"
+
+msgid "Auftragsverarbeitung nach Artikel 28 DSGVO"
+msgstr "Sous-traitance au sens de l'article 28 du RGPD"
+
+msgid "Wenn du mit InkluDocs personenbezogene Daten aus deinem Verantwortungsbereich verarbeitest — etwa Dokumente mit Namen oder Fotos von Personen — brauchst du dafür einen Vertrag zur Auftragsverarbeitung. Diesen Vertrag bieten wir dir an."
+msgstr "Si vous traitez avec InkluDocs des données personnelles relevant de votre responsabilité — par exemple des documents contenant des noms ou des photos de personnes — vous avez besoin d'un contrat de sous-traitance. Nous vous le proposons."
+
+msgid "Vertrag herunterladen"
+msgstr "Télécharger le contrat"
+
+msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)"
+msgstr "Contrat de sous-traitance au format PDF (version 1.0 du 24 août 2026)"
+
+msgid "Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft."
+msgstr "Le document est préparé de manière accessible et vérifié selon la norme PDF/UA-1."
+
+msgid "So schließen wir ihn ab"
+msgstr "Comment nous le concluons"
+
+msgid "Nach Artikel 28 Absatz 9 DSGVO genügt die elektronische Form — eine handschriftliche Unterschrift ist nicht nötig. Schick uns den ausgefüllten Vertrag oder einfach eine kurze Nachricht an"
+msgstr "Conformément à l'article 28, paragraphe 9, du RGPD, la forme électronique suffit — aucune signature manuscrite n'est nécessaire. Envoyez-nous le contrat complété ou simplement un court message à"
+
+msgid "; du erhältst die Bestätigung in Textform zurück."
+msgstr " ; vous recevrez la confirmation sous forme de texte."
+
+msgid "Bringst du eine eigene Vorlage mit, etwa als Behörde oder größeres Unternehmen? Schick sie uns gern — wir prüfen sie und melden uns."
+msgstr "Vous avez votre propre modèle, par exemple en tant qu'administration ou grande entreprise ? Envoyez-le nous — nous l'examinerons et reviendrons vers vous."
+
+msgid "Was im Vertrag steht"
+msgstr "Ce que contient le contrat"
+
+msgid "Gegenstand, Dauer, Art und Zweck der Verarbeitung sowie die Arten der Daten und die betroffenen Personen"
+msgstr "Objet, durée, nature et finalité du traitement, types de données et personnes concernées"
+
+msgid "Rechte und Pflichten beider Seiten, Weisungsbindung und Vertraulichkeit"
+msgstr "Droits et obligations des deux parties, obligation d'instruction et confidentialité"
+
+msgid "Die technischen und organisatorischen Schutzmaßnahmen (Anlage 1)"
+msgstr "Les mesures techniques et organisationnelles (annexe 1)"
+
+msgid "Alle eingesetzten Unterauftragsverarbeiter mit Sitz und Aufgabe (Anlage 2)"
+msgstr "Tous les sous-traitants ultérieurs, avec siège et mission (annexe 2)"
+
+msgid "Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte"
+msgstr "Suppression et restitution des données en fin de contrat, ainsi que droits de preuve et de contrôle"
+
+msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt."
+msgstr "Important pour vous : nous n'utilisons pas vos contenus pour entraîner des modèles d'IA et imposons contractuellement la même chose à nos prestataires. Le traitement a lieu dans des centres de données en Allemagne et dans l'Union européenne."
