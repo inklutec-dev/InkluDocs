@@ -178,3 +178,44 @@ Regeln:
 Rechtstext: Nutzungsbedingungen Ziffer 6 (Preise) + Ziffer 7 (monatliche
 Verlaengerung, keine Erinnerung).
 
+
+
+## TREUE-MONATSABO: ANSCHLUSS NACH FESTER LAUFZEIT (24.08.2026)
+
+AGB Ziffer 7: Ein ONLINE gebuchter Vertrag mit fester Laufzeit laeuft nach
+dem Laufzeitende automatisch als MONATSABO zur Treuekondition weiter —
+zum monatlichen Effektivpreis der gebuchten Laufzeit (billing.
+treue_preis_eur: 9,95/19,95/49,95), nicht zum regulaeren Monatsabo-Preis
+(11,95/23,95/59,95). Jederzeit zum Monatsende kuendbar. Der Rechnungsweg
+(Michael/Actino) verlaengert unveraendert um dieselbe Laufzeit.
+
+Umsetzung:
+- Stripe-Preise idoc_<plan>_treue_1m (sichere_produkte, jetzt 18 Preise).
+  BEIM LIVE-GANG: sichere_produkte() im LIVE-Konto laufen lassen!
+- plan_aus_lookup liefert (plan, monate, treue) — Aufrufer unterscheiden
+  Treue (9,95, kein Kontingent-Neustart) von regulaerem Monatsabo (11,95).
+- stripe_zahlung.plane_treue_anschluss: Zweiphasen-Schedule (Phase 1 =
+  bezahlte Laufzeit, Phase 2 = 1 Monat Treuepreis, end_behavior release
+  -> danach laeuft das Abo von selbst monatlich zum Treuepreis).
+- Angelegt beim checkout.session.completed (Laufzeit > 1); SELBSTHEILUNG
+  im invoice.paid-Webhook (nur_wenn_frei=True — vorgemerkte Downgrades
+  werden nie ueberschrieben).
+- Die drei Zerstoerungs-Wege sind abgedeckt: UPGRADE (wechsle_sofort setzt
+  den Zeitplan fuer den neuen Plan neu auf), KUENDIGUNGS-WIDERRUF
+  (_stripe_kuendigung_sync stellt ihn wieder her), DOWNGRADE
+  (plane_wechsel_zum_periodenende plant Phase 3 = Treue des neuen Plans;
+  der Downgrade-Widerruf stellt den Anschluss des laufenden Plans her).
+- users.plan_treue markiert laufende Treue-Abos (Anzeige /abo, /api/me
+  eigen.treue); Erinnerungsmail, Bestaetigungsmail und /abo-Texte nennen
+  fuer Stripe-Laufzeiten den Treue-Anschluss statt einer Verlaengerung.
+- Bestaetigungsmail dokumentiert seit 24.08. auch die protokollierte
+  Zustimmung zum sofortigen Leistungsbeginn (Paragraf 312f BGB).
+
+WIDERRUFSFUNKTION Paragraf 356a BGB (24.08.2026): /widerrufen —
+zweistufig (Vertrag widerrufen -> Widerruf bestaetigen), ohne Anmeldung,
+in allen Fusszeilen verlinkt, nutzt /api/kuendigung mit art=widerruf.
+Belehrungs-Fassung 2026-08-24. Rueckabwicklung bleibt vorerst Handarbeit
+(Steves Entscheidung 23.08.2026).
+
+Tests: verify_treue.py (61 Checks, echte Stripe-Test-API, in
+alle_tests.sh); verify_stripe-Pin auf 18 Preise.

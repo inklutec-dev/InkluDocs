@@ -3349,3 +3349,69 @@ msgstr "Utan bindning: {preis} € per månad i månadsabonnemanget, kan sägas 
 
 msgid "Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten."
 msgstr "Varje betalnivå finns som månadsabonnemang (kan sägas upp när som helst) eller billigare med en fast löptid på {laufzeiten} månader."
+
+msgid "Vertrag widerrufen"
+msgstr "Ångra avtalet"
+
+msgid "Als Verbraucherin oder Verbraucher kannst du deinen Vertrag innerhalb von 14 Tagen nach Vertragsschluss ohne Angabe von Gründen widerrufen — hier direkt online, ohne Anmeldung. Einzelheiten stehen in der Widerrufsbelehrung."
+msgstr "Som konsument kan du ångra ditt avtal inom 14 dagar efter att det ingicks, utan att ange skäl — direkt online, utan inloggning. Detaljerna finns i ångerinformationen."
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular lesen"
+msgstr "Läs ångerinformationen och standardångerblanketten"
+
+msgid "Angaben zum Vertrag, z. B. Bestelldatum (freiwillig)"
+msgstr "Uppgifter om avtalet, t.ex. beställningsdatum (frivilligt)"
+
+msgid "Widerruf bestätigen"
+msgstr "Bekräfta ånger"
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns dein Widerruf zu."
+msgstr "Kontrollera dina uppgifter. Med nästa klick skickas din ångeranmälan till oss."
+
+msgid "Widerruf ist eingegangen"
+msgstr "Ångeranmälan mottagen"
+
+msgid "Zur Rückabwicklung deiner Zahlung melden wir uns per E-Mail — Einzelheiten stehen in der Widerrufsbelehrung."
+msgstr "Vi kontaktar dig via e-post om återbetalningen av din betalning — detaljerna finns i ångerinformationen."
+
+msgid "Du möchtest nicht widerrufen, sondern zum Laufzeitende kündigen?"
+msgstr "Vill du inte ångra dig, utan säga upp vid periodens slut?"
+
+msgid "Angaben zum Vertrag"
+msgstr "Uppgifter om avtalet"
+
+msgid "Erklärung"
+msgstr "Förklaring"
+
+msgid "Dein Vertrag ist jünger als 14 Tage und du möchtest ihn widerrufen? Dann nutze die Widerrufsfunktion:"
+msgstr "Är ditt avtal yngre än 14 dagar och du vill ångra det? Använd då ångerfunktionen:"
+
+msgid "Treue-Monatsabo: {preis} € pro Monat — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar."
+msgstr "Trohets-månadsabonnemang: {preis} € per månad — förnyas den {datum} med ytterligare en månad, kan sägas upp när som helst."
+
+msgid "Laufzeit: {monate} Monate bis {datum}. Danach läuft dein Abo als Monatsabo zur Treuekondition weiter — {preis} € pro Monat, jederzeit monatlich kündbar."
+msgstr "Löptid: {monate} månader till {datum}. Därefter fortsätter ditt abonnemang som månadsabonnemang till trohetspriset — {preis} € per månad, kan sägas upp månadsvis."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Wenn du nicht zum Laufzeitende kündigst, läuft das Abo danach als Monatsabo zur Treuekondition weiter: {treue} € pro Monat, jederzeit monatlich kündbar."
+msgstr "Löptid på {monate} månader, betalas i förskott. Om du inte säger upp till löptidens slut fortsätter abonnemanget därefter som månadsabonnemang till trohetspriset: {treue} € per månad, kan sägas upp månadsvis."
+
+msgid "Kontakt"
+msgstr "Kontakt"
+
+msgid "Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter"
+msgstr "Skriv till oss — vi återkommer via e-post. Du kan också nå oss direkt på"
+
+msgid "Deine E-Mail-Adresse (für die Antwort)"
+msgstr "Din e-postadress (för svaret)"
+
+msgid "Deine Nachricht"
+msgstr "Ditt meddelande"
+
+msgid "Nachricht ist unterwegs"
+msgstr "Meddelandet är på väg"
+
+msgid "Danke! Deine Nachricht ist bei uns eingegangen — wir antworten per E-Mail an die angegebene Adresse."
+msgstr "Tack! Ditt meddelande har nått oss — vi svarar via e-post till den angivna adressen."
+
+msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
+msgstr "Ange din e-postadress och ett meddelande."

@@ -467,6 +467,9 @@ def _migrate_columns(conn):
         # Abo-Etappe 2: Ablaufdatum fuer Rechnungskunden/Gruender-Tarif
         # (NULL = unbefristet; Auswertung folgt mit dem Rechnungs-Workflow).
         ("users", "plan_gueltig_bis", "ALTER TABLE users ADD COLUMN plan_gueltig_bis TEXT"),
+        # Treue-Monatsabo (AGB Ziffer 7, 24.08.2026): 1 = das Abo laeuft nach
+        # einer festen Laufzeit in der Anschluss-Kondition weiter.
+        ("users", "plan_treue", "ALTER TABLE users ADD COLUMN plan_treue INTEGER DEFAULT 0"),
         # Vector graphics support (from earlier migration)
         ("images", "bbox_x0", "ALTER TABLE images ADD COLUMN bbox_x0 REAL"),
         ("images", "bbox_y0", "ALTER TABLE images ADD COLUMN bbox_y0 REAL"),

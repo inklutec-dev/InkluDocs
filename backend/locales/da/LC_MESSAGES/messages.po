@@ -3479,3 +3479,69 @@ msgstr "Uden binding: {preis} € pr. måned i månedsabonnementet, kan opsiges 
 
 msgid "Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten."
 msgstr "Hvert betalt abonnement fås som månedsabonnement (kan opsiges når som helst) eller billigere med en fast løbetid på {laufzeiten} måneder."
+
+msgid "Vertrag widerrufen"
+msgstr "Fortryd aftalen"
+
+msgid "Als Verbraucherin oder Verbraucher kannst du deinen Vertrag innerhalb von 14 Tagen nach Vertragsschluss ohne Angabe von Gründen widerrufen — hier direkt online, ohne Anmeldung. Einzelheiten stehen in der Widerrufsbelehrung."
+msgstr "Som forbruger kan du fortryde din aftale inden for 14 dage efter aftalens indgåelse uden begrundelse — direkte online, uden login. Detaljerne står i fortrydelsesvejledningen."
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular lesen"
+msgstr "Læs fortrydelsesvejledningen og standardfortrydelsesformularen"
+
+msgid "Angaben zum Vertrag, z. B. Bestelldatum (freiwillig)"
+msgstr "Oplysninger om aftalen, f.eks. bestillingsdato (frivilligt)"
+
+msgid "Widerruf bestätigen"
+msgstr "Bekræft fortrydelse"
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns dein Widerruf zu."
+msgstr "Tjek venligst dine oplysninger. Med næste klik modtager vi din fortrydelse."
+
+msgid "Widerruf ist eingegangen"
+msgstr "Fortrydelse modtaget"
+
+msgid "Zur Rückabwicklung deiner Zahlung melden wir uns per E-Mail — Einzelheiten stehen in der Widerrufsbelehrung."
+msgstr "Vi kontakter dig pr. e-mail om tilbagebetaling af din betaling — detaljerne står i fortrydelsesvejledningen."
+
+msgid "Du möchtest nicht widerrufen, sondern zum Laufzeitende kündigen?"
+msgstr "Vil du ikke fortryde, men opsige ved periodens udløb?"
+
+msgid "Angaben zum Vertrag"
+msgstr "Oplysninger om aftalen"
+
+msgid "Erklärung"
+msgstr "Erklæring"
+
+msgid "Dein Vertrag ist jünger als 14 Tage und du möchtest ihn widerrufen? Dann nutze die Widerrufsfunktion:"
+msgstr "Er din aftale under 14 dage gammel, og vil du fortryde? Så brug fortrydelsesfunktionen:"
+
+msgid "Treue-Monatsabo: {preis} € pro Monat — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar."
+msgstr "Loyalitets-månedsabonnement: {preis} € pr. måned — fornys den {datum} med endnu en måned, kan opsiges når som helst."
+
+msgid "Laufzeit: {monate} Monate bis {datum}. Danach läuft dein Abo als Monatsabo zur Treuekondition weiter — {preis} € pro Monat, jederzeit monatlich kündbar."
+msgstr "Løbetid: {monate} måneder indtil {datum}. Derefter fortsætter dit abonnement som månedsabonnement til loyalitetsprisen — {preis} € pr. måned, kan opsiges månedligt."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Wenn du nicht zum Laufzeitende kündigst, läuft das Abo danach als Monatsabo zur Treuekondition weiter: {treue} € pro Monat, jederzeit monatlich kündbar."
+msgstr "Løbetid på {monate} måneder, betales forud. Hvis du ikke opsiger inden løbetidens udløb, fortsætter abonnementet derefter som månedsabonnement til loyalitetsprisen: {treue} € pr. måned, kan opsiges månedligt."
+
+msgid "Kontakt"
+msgstr "Kontakt"
+
+msgid "Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter"
+msgstr "Skriv til os — vi vender tilbage pr. e-mail. Du kan også kontakte os direkte på"
+
+msgid "Deine E-Mail-Adresse (für die Antwort)"
+msgstr "Din e-mailadresse (til svaret)"
+
+msgid "Deine Nachricht"
+msgstr "Din besked"
+
+msgid "Nachricht ist unterwegs"
+msgstr "Beskeden er på vej"
+
+msgid "Danke! Deine Nachricht ist bei uns eingegangen — wir antworten per E-Mail an die angegebene Adresse."
+msgstr "Tak! Din besked er nået frem til os — vi svarer pr. e-mail til den angivne adresse."
+
+msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
+msgstr "Angiv venligst din e-mailadresse og en besked."

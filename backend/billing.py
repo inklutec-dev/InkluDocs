@@ -107,6 +107,16 @@ def preis_pro_monat(plan: str, monate) -> float:
         return PLAN_PREISE_MONATLICH_EUR[plan]
     return PLAN_PREISE_EUR[plan]
 
+
+def treue_preis_eur(plan: str) -> float:
+    """Treuekondition (AGB Ziffer 7): Nach einer festen Online-Laufzeit laeuft
+    das Abo als Monatsabo zum monatlichen EFFEKTIVPREIS der gebuchten Laufzeit
+    weiter — nicht zum regulaeren Monatsabo-Preis. Weil der Laufzeitpreis fuer
+    3/6/12 Monate gleich ist, gibt es pro Plan genau EINEN Treuepreis.
+    Umgesetzt ueber Stripe-Subscription-Schedules
+    (stripe_zahlung.plane_treue_anschluss); Rechnungsweg unberuehrt."""
+    return PLAN_PREISE_EUR[plan]
+
 PLAN_KONTINGENTE = {
     # Plan          Credits pro Monat
     # free: 10 (Michaels Modell) — fuer Firmen-Domains GEBUENDELT: alle

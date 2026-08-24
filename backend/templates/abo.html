@@ -335,11 +335,21 @@
       if (eigen.gueltig_bis) {
         const pLauf = document.createElement('p');
         if (eigen.auto_verlaengerung) {
-          pLauf.textContent = (eigen.laufzeit_monate === 1)
-            ? t('Monatsabo — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar.', { datum: formatDate(eigen.gueltig_bis) })
-            : (eigen.laufzeit_monate
+          // Anschluss-Regel (AGB Ziffer 7): Online gebuchte feste Laufzeiten
+          // laufen danach als Monatsabo zur Treuekondition weiter; nur der
+          // Rechnungsweg verlängert um dieselbe Laufzeit.
+          const treuePreis = (PLAN_MONATSPREISE[eigen.plan] || 0).toFixed(2).replace('.', ',');
+          if (eigen.laufzeit_monate === 1) {
+            pLauf.textContent = eigen.treue
+              ? t('Treue-Monatsabo: {preis} € pro Monat — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar.', { preis: treuePreis, datum: formatDate(eigen.gueltig_bis) })
+              : t('Monatsabo — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar.', { datum: formatDate(eigen.gueltig_bis) });
+          } else if (eigen.laufzeit_monate && eigen.quelle === 'stripe') {
+            pLauf.textContent = t('Laufzeit: {monate} Monate bis {datum}. Danach läuft dein Abo als Monatsabo zur Treuekondition weiter — {preis} € pro Monat, jederzeit monatlich kündbar.', { monate: eigen.laufzeit_monate, datum: formatDate(eigen.gueltig_bis), preis: treuePreis });
+          } else {
+            pLauf.textContent = eigen.laufzeit_monate
               ? t('Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch.', { monate: eigen.laufzeit_monate, datum: formatDate(eigen.gueltig_bis) })
-              : t('Verlängert sich am {datum} automatisch.', { datum: formatDate(eigen.gueltig_bis) }));
+              : t('Verlängert sich am {datum} automatisch.', { datum: formatDate(eigen.gueltig_bis) });
+          }
           kuendigen.hidden = false;
         } else {
           pLauf.textContent = t('Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free.', { datum: formatDate(eigen.gueltig_bis) });
@@ -406,9 +416,12 @@
     byId('buchenLeistung').textContent = plaetze
       ? t('Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung.', { credits: credits, plaetze: plaetze })
       : t('Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung.', { credits: credits });
+    // Anschluss-Regel (AGB Ziffer 7): Nach der festen Laufzeit läuft das Abo
+    // als Monatsabo zur Treuekondition weiter (Effektivpreis der Laufzeit).
+    const treue = PLAN_MONATSPREISE[plan].toFixed(2).replace('.', ',');
     byId('buchenVerlaengerung').textContent = (monate === 1)
       ? t('Monatsabo: {summe} € werden jeweils für einen Monat im Voraus abgebucht. Das Abo verlängert sich monatlich und ist jederzeit zum Ende des laufenden Monats kündbar.', { summe: summe })
-      : t('Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende.', { monate: monate });
+      : t('Laufzeit {monate} Monate, im Voraus zu zahlen. Wenn du nicht zum Laufzeitende kündigst, läuft das Abo danach als Monatsabo zur Treuekondition weiter: {treue} € pro Monat, jederzeit monatlich kündbar.', { monate: monate, treue: treue });
   }
   byId('buchenPlan').addEventListener('change', aktualisiereSumme);
   byId('buchenLaufzeit').addEventListener('change', aktualisiereSumme);

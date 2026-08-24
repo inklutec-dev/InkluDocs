@@ -18,6 +18,7 @@
 
         <div id="schrittFormular">
             <p>{{ _('Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar.') }}</p>
+            <p>{{ _('Dein Vertrag ist jünger als 14 Tage und du möchtest ihn widerrufen? Dann nutze die Widerrufsfunktion:') }} <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a></p>
             <form id="kuendForm" novalidate>
                 <div class="form-group">
                     <label for="k_email">{{ _('E-Mail-Adresse deines Kontos') }}</label>
@@ -68,7 +69,8 @@
         <a href="/impressum">{{ _('Impressum') }}</a> |
         <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
         <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a> |
-        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a>
+        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a> |
+        <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a>
     </footer>
 </main>
 <script>

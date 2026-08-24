@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}InkluDocs - {{ _('Kontakt') }}{% endblock %}
+
+{% block body %}
+{# Kontaktseite (24.08.2026): zweiter Kommunikationsweg fuers Impressum
+   (§ 5 DDG verlangt E-Mail PLUS einen weiteren Weg — Telefon ODER
+   Kontaktformular; wir nehmen das Formular, keine private Nummer noetig).
+   Bewusst ohne Anmeldung. Die Nachricht geht ans Support-Postfach mit
+   Antwort-an = Absender; es geht KEINE automatische Mail an die
+   eingetragene Adresse (sonst waere das Formular eine Mail-Kanone
+   gegen fremde Adressen). #}
+<main>
+    <div class="auth-container" role="region" aria-label="{{ _('Kontakt') }}">
+        <h1>
+            <span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}
+        </h1>
+        <p class="subtitle">{{ _('Kontakt') }}</p>
+
+        <div id="schrittFormular">
+            <p>{{ _('Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a>.</p>
+            <form id="kontaktForm" novalidate>
+                <div class="form-group">
+                    <label for="ko_name">{{ _('Dein Name') }}</label>
+                    <input type="text" id="ko_name" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="ko_email">{{ _('Deine E-Mail-Adresse (für die Antwort)') }}</label>
+                    <input type="email" id="ko_email" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="ko_nachricht">{{ _('Deine Nachricht') }}</label>
+                    <textarea id="ko_nachricht" rows="6" class="dash-input" required></textarea>
+                </div>
+                {# Honigtopf gegen Formular-Bots: fuer Menschen unsichtbar und
+                   nicht fokussierbar; wer es fuellt, wird still verworfen. #}
+                <div aria-hidden="true" style="position:absolute;left:-9999px;" hidden>
+                    <label for="ko_firma">Firma</label>
+                    <input type="text" id="ko_firma" tabindex="-1" autocomplete="off">
+                </div>
+                <button type="submit" class="btn-full">{{ _('Nachricht senden') }}</button>
+                <div id="kontaktErr" class="error-message" role="alert" aria-live="polite"></div>
+            </form>
+        </div>
+
+        <div id="schrittFertig" hidden>
+            <h2 id="fertigHeading" tabindex="-1">{{ _('Nachricht ist unterwegs') }}</h2>
+            <p role="status">{{ _('Danke! Deine Nachricht ist bei uns eingegangen — wir antworten per E-Mail an die angegebene Adresse.') }}</p>
+            <p><a href="/">{{ _('Zur Anmeldung') }}</a></p>
+        </div>
+    </div>
+    <footer class="legal-footer" role="contentinfo">
+        <a href="/impressum">{{ _('Impressum') }}</a> |
+        <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
+        <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a> |
+        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a>
+    </footer>
+</main>
+<script>
+    const T = {
+        pflicht: {{ _('Bitte gib deine E-Mail-Adresse und eine Nachricht an.')|tojson }},
+        fehler: {{ _('Fehler')|tojson }},
+        verbindung: {{ _('Verbindungsfehler. Bitte erneut versuchen.')|tojson }}
+    };
+    const byId = (id) => document.getElementById(id);
+
+    byId('kontaktForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = byId('kontaktErr');
+        err.textContent = '';
+        const mail = byId('ko_email').value.trim();
+        const nachricht = byId('ko_nachricht').value.trim();
+        if (!mail || !nachricht) {
+            err.textContent = T.pflicht;
+            (!mail ? byId('ko_email') : byId('ko_nachricht')).focus();
+            return;
+        }
+        let res;
+        try {
+            res = await fetch('/api/kontakt', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: byId('ko_name').value.trim(),
+                    email: mail,
+                    nachricht: nachricht,
+                    firma: byId('ko_firma').value
+                })
+            });
+        } catch (e2) { err.textContent = T.verbindung; return; }
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) { err.textContent = d.detail || T.fehler; return; }
+        byId('schrittFormular').hidden = true;
+        byId('schrittFertig').hidden = false;
+        byId('fertigHeading').focus();
+    });
+</script>
+{% endblock %}

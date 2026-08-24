@@ -3788,3 +3788,69 @@ msgstr "Sin permanencia: {preis} € al mes en la suscripción mensual, cancelab
 
 msgid "Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten."
 msgstr "Cada plan de pago está disponible como suscripción mensual (cancelable en cualquier momento) o a un precio más bajo con una permanencia de {laufzeiten} meses."
+
+msgid "Vertrag widerrufen"
+msgstr "Desistir del contrato"
+
+msgid "Als Verbraucherin oder Verbraucher kannst du deinen Vertrag innerhalb von 14 Tagen nach Vertragsschluss ohne Angabe von Gründen widerrufen — hier direkt online, ohne Anmeldung. Einzelheiten stehen in der Widerrufsbelehrung."
+msgstr "Como consumidor, puedes desistir de tu contrato en un plazo de 14 días desde su celebración, sin indicar motivos — directamente en línea, sin iniciar sesión. Los detalles figuran en la información sobre el desistimiento."
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular lesen"
+msgstr "Leer la información sobre el desistimiento y el modelo de formulario de desistimiento"
+
+msgid "Angaben zum Vertrag, z. B. Bestelldatum (freiwillig)"
+msgstr "Datos del contrato, p. ej. fecha del pedido (opcional)"
+
+msgid "Widerruf bestätigen"
+msgstr "Confirmar el desistimiento"
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns dein Widerruf zu."
+msgstr "Comprueba tus datos. Con el siguiente clic nos llegará tu desistimiento."
+
+msgid "Widerruf ist eingegangen"
+msgstr "Desistimiento recibido"
+
+msgid "Zur Rückabwicklung deiner Zahlung melden wir uns per E-Mail — Einzelheiten stehen in der Widerrufsbelehrung."
+msgstr "Nos pondremos en contacto contigo por correo electrónico sobre el reembolso de tu pago — los detalles figuran en la información sobre el desistimiento."
+
+msgid "Du möchtest nicht widerrufen, sondern zum Laufzeitende kündigen?"
+msgstr "¿No quieres desistir, sino cancelar al final del periodo?"
+
+msgid "Angaben zum Vertrag"
+msgstr "Datos del contrato"
+
+msgid "Erklärung"
+msgstr "Declaración"
+
+msgid "Dein Vertrag ist jünger als 14 Tage und du möchtest ihn widerrufen? Dann nutze die Widerrufsfunktion:"
+msgstr "¿Tu contrato tiene menos de 14 días y quieres desistir? Entonces usa la función de desistimiento:"
+
+msgid "Treue-Monatsabo: {preis} € pro Monat — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar."
+msgstr "Suscripción mensual de fidelidad: {preis} € al mes — se renueva el {datum} por un mes más, cancelable en cualquier momento."
+
+msgid "Laufzeit: {monate} Monate bis {datum}. Danach läuft dein Abo als Monatsabo zur Treuekondition weiter — {preis} € pro Monat, jederzeit monatlich kündbar."
+msgstr "Periodo: {monate} meses hasta el {datum}. Después, tu suscripción continúa como suscripción mensual con la tarifa de fidelidad — {preis} € al mes, cancelable cada mes."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Wenn du nicht zum Laufzeitende kündigst, läuft das Abo danach als Monatsabo zur Treuekondition weiter: {treue} € pro Monat, jederzeit monatlich kündbar."
+msgstr "Periodo de {monate} meses, pagadero por adelantado. Si no cancelas antes del final del periodo, la suscripción continúa después como suscripción mensual con la tarifa de fidelidad: {treue} € al mes, cancelable cada mes."
+
+msgid "Kontakt"
+msgstr "Contacto"
+
+msgid "Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter"
+msgstr "Escríbenos — te responderemos por correo electrónico. También puedes contactarnos directamente en"
+
+msgid "Deine E-Mail-Adresse (für die Antwort)"
+msgstr "Tu dirección de correo electrónico (para la respuesta)"
+
+msgid "Deine Nachricht"
+msgstr "Tu mensaje"
+
+msgid "Nachricht ist unterwegs"
+msgstr "Mensaje en camino"
+
+msgid "Danke! Deine Nachricht ist bei uns eingegangen — wir antworten per E-Mail an die angegebene Adresse."
+msgstr "¡Gracias! Tu mensaje nos ha llegado — responderemos por correo electrónico a la dirección indicada."
+
+msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
+msgstr "Indica tu dirección de correo electrónico y un mensaje."

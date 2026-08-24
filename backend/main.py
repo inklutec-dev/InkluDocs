@@ -240,7 +240,7 @@ EINLADUNG_WINDOW_SECONDS = 3600  # 1 Stunde
 # (08.08.2026). Wird mitprotokolliert und in der Bestaetigungs-Mail genannt:
 # Aendert sich der Text, muss nachvollziehbar bleiben, WELCHE Fassung galt.
 # Bei jeder inhaltlichen Aenderung von frontend/widerruf.html hochzaehlen.
-WIDERRUFSBELEHRUNG_FASSUNG = "2026-08-08"
+WIDERRUFSBELEHRUNG_FASSUNG = "2026-08-24"
 
 # Loesch-Bremse (Selbst-Review 08.08.): Der Loeschweg prueft das Passwort —
 # mit einer gekaperten Sitzung koennte man es sonst unbegrenzt raten (und die
@@ -791,6 +791,9 @@ async def me(user: dict = Depends(get_current_user)):
                 "plan": eigener_plan,
                 "gueltig_bis": (db_user.get("plan_gueltig_bis") or "")[:10] or None,
                 "laufzeit_monate": db_user.get("plan_laufzeit_monate"),
+                # Treue-Monatsabo (AGB Ziffer 7): laeuft das Abo bereits in
+                # der Anschluss-Kondition? Steuert die Anzeige auf /abo.
+                "treue": bool(db_user.get("plan_treue")),
                 "auto_verlaengerung": bool(1 if _av is None else _av),
                 "ist_topf_inhaber": eigener_plan in billing.PLAN_SITZE,
                 "team_name": db_user.get("team_name") or "",
@@ -1512,22 +1515,25 @@ def _setze_plan_kern(user_id: int, target: dict, plan: str, laufzeit,
     conn = get_db()
     geloest = 0
     try:
+        # plan_treue wird bei JEDEM Plan-Wechsel zurueckgesetzt (zentral,
+        # Geldfluss-Review Befund 6, 24.08.2026); der invoice.paid-Webhook
+        # setzt es fuer laufende Treue-Abos direkt danach wieder auf 1.
         if plan == "free":
             # Free hat weder Laufzeit noch Verlaengerung noch Quelle.
             conn.execute("UPDATE users SET plan = 'free', plan_gueltig_bis = NULL, "
                          "plan_laufzeit_monate = NULL, auto_verlaengerung = 1, "
-                         "plan_quelle = NULL WHERE id = ?", (user_id,))
+                         "plan_quelle = NULL, plan_treue = 0 WHERE id = ?", (user_id,))
             gueltig_bis = None
         elif gueltig_bis is not None:
             conn.execute("UPDATE users SET plan = ?, plan_gueltig_bis = ?, "
                          "plan_laufzeit_monate = ?, auto_verlaengerung = ?, "
-                         "plan_quelle = ? WHERE id = ?",
+                         "plan_quelle = ?, plan_treue = 0 WHERE id = ?",
                          (plan, gueltig_bis, laufzeit, auto_verlaengerung, quelle, user_id))
         else:
             conn.execute("UPDATE users SET plan = ?, "
                          "plan_gueltig_bis = date('now', ?), "
                          "plan_laufzeit_monate = ?, auto_verlaengerung = ?, "
-                         "plan_quelle = ? WHERE id = ?",
+                         "plan_quelle = ?, plan_treue = 0 WHERE id = ?",
                          (plan, f"+{laufzeit} months", laufzeit, auto_verlaengerung, quelle, user_id))
             gueltig_bis = conn.execute("SELECT plan_gueltig_bis FROM users WHERE id = ?",
                                        (user_id,)).fetchone()[0]
@@ -2223,6 +2229,16 @@ def _stripe_kuendigung_sync(db_user: dict, kuendigen: bool) -> None:
         if kuendigen:
             stripe_zahlung.loese_schedule(sub)
         stripe_zahlung.kuendige_subscription(sub, kuendigen)
+        # Kuendigungs-WIDERRUF (24.08.2026): Die Kuendigung hatte auch den
+        # Treue-Anschluss (AGB Ziffer 7) geloest — bei fester Laufzeit
+        # wieder aufsetzen, sonst verlaengert sich der reaktivierte Vertrag
+        # still um die volle Laufzeit statt als Treue-Monatsabo.
+        if not kuendigen and int(db_user.get("plan_laufzeit_monate") or 0) > 1:
+            try:
+                stripe_zahlung.plane_treue_anschluss(sub, db_user.get("plan"))
+            except Exception:
+                logger.exception("Treue-Anschluss nach Kuendigungs-Widerruf "
+                                 "nicht angelegt (user=%s)", db_user["id"])
     except Exception:
         logger.exception("Stripe-Kuendigungs-Abgleich fehlgeschlagen (user=%s)", db_user["id"])
         raise HTTPException(status_code=502,
@@ -2365,6 +2381,29 @@ async def oeffentliche_kuendigung(request: Request):
             _stripe_kuendigung_sync(db_user, True)
         except Exception:
             logger.exception("Stripe-Kuendigung ueber den oeffentlichen Weg fehlgeschlagen (%s)", mail)
+            # Geldfluss-Review Befund 2 (24.08.2026): Hier NUR zu loggen hiesse:
+            # der Kunde bekommt "Kuendigung bestaetigt", Stripe bucht aber
+            # weiter ab. Der Zugang der Erklaerung zaehlt rechtlich trotzdem —
+            # also Vorgang als NICHT vollzogen markieren und den Betreiber
+            # alarmieren, damit er die Stripe-Seite von Hand nachzieht.
+            conn = get_db()
+            try:
+                conn.execute("UPDATE kuendigungen SET vollzogen = 0 WHERE id = "
+                             "(SELECT MAX(id) FROM kuendigungen WHERE email = ?)", (mail,))
+                conn.commit()
+            finally:
+                conn.close()
+            try:
+                _abo_mail(NOTIFICATION_EMAIL,
+                          f"InkluDocs ALARM: Stripe-Kündigung fehlgeschlagen ({mail})",
+                          "Stripe-Kündigung von Hand nachziehen",
+                          [f"Die Erklärung ({html.escape(art)}) von {html.escape(mail)} ist "
+                           "protokolliert und dem Kunden bestätigt, aber der Stripe-Abgleich "
+                           "ist fehlgeschlagen — die Subscription läuft dort noch.",
+                           "Bitte im Stripe-Dashboard zum Periodenende kündigen, sonst wird "
+                           "weiter abgebucht. Details im Server-Log."])
+            except Exception:
+                logger.exception("Alarm-Mail zur fehlgeschlagenen Stripe-Kuendigung scheiterte")
         conn = get_db()
         try:
             conn.execute("UPDATE users SET auto_verlaengerung = 0, geplanter_plan = NULL, "
@@ -2401,8 +2440,11 @@ async def oeffentliche_kuendigung(request: Request):
         saetze.append("Zum Widerruf melden wir uns gesondert wegen der Rückabwicklung. "
                       "Einzelheiten stehen in unserer Widerrufsbelehrung.")
     try:
-        _abo_mail(mail, "InkluDocs: Deine Kündigung ist eingegangen",
-                  "Kündigung bestätigt", saetze)
+        _abo_mail(mail,
+                  ("InkluDocs: Dein Widerruf ist eingegangen" if art == "widerruf"
+                   else "InkluDocs: Deine Kündigung ist eingegangen"),
+                  ("Widerruf bestätigt" if art == "widerruf" else "Kündigung bestätigt"),
+                  saetze)
         _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs: Kündigung über den Kündigungsknopf ({mail})",
                   "Kündigung eingegangen",
                   [f"Adresse: {html.escape(mail)}",
@@ -2414,6 +2456,13 @@ async def oeffentliche_kuendigung(request: Request):
     except Exception:
         logger.exception("Kuendigungs-Bestaetigung konnte nicht versandt werden (%s)", mail)
 
+    if art == "widerruf":
+        return {"ok": True, "meldungen": [
+            "Dein Widerruf ist eingegangen. Wir haben ihn mit Datum und Uhrzeit festgehalten.",
+            "Eine Bestätigung in Textform geht gerade an die angegebene E-Mail-Adresse.",
+            "Falls du innerhalb weniger Minuten keine E-Mail bekommst, schreib uns bitte an "
+            "kontakt@inklutec.de.",
+        ]}
     return {"ok": True, "meldungen": [
         "Deine Kündigung ist eingegangen. Wir haben sie mit Datum und Uhrzeit festgehalten.",
         "Eine Bestätigung in Textform geht gerade an die angegebene E-Mail-Adresse — dort "
@@ -2421,6 +2470,71 @@ async def oeffentliche_kuendigung(request: Request):
         "Falls du innerhalb weniger Minuten keine E-Mail bekommst, schreib uns bitte an "
         "kontakt@inklutec.de.",
     ]}
+
+
+# Bremsen fuer das Kontaktformular (gleiche Bauart wie beim Kuendigungsknopf).
+_kontakt_ip = defaultdict(list)
+_kontakt_mail = defaultdict(list)
+MAX_KONTAKT_IP = 10
+MAX_KONTAKT_MAIL = 3
+KONTAKT_WINDOW_SECONDS = 3600
+SUPPORT_EMAIL = os.environ.get("SUPPORT_EMAIL", "support@inkludocs.de")
+
+
+@app.post("/api/kontakt")
+async def oeffentlicher_kontakt(request: Request):
+    """Kontaktformular (24.08.2026, § 5 DDG zweiter Weg) — ohne Anmeldung.
+
+    Die Nachricht geht ans Support-Postfach mit Antwort-an = Absender.
+    BEWUSST keine automatische Mail an die eingetragene Adresse: sonst
+    liesse sich das Formular als Mail-Kanone gegen fremde Adressen nutzen.
+    Der Honigtopf (Feld 'firma') faengt Formular-Bots: gefuellt = still
+    verworfen, damit der Bot keinen Unterschied sieht.
+    """
+    schluessel = absender.limit_schluessel(request)
+    jetzt = time.time()
+    _kontakt_ip[schluessel] = [t for t in _kontakt_ip[schluessel]
+                               if jetzt - t < KONTAKT_WINDOW_SECONDS]
+    if len(_kontakt_ip[schluessel]) >= MAX_KONTAKT_IP:
+        raise HTTPException(status_code=429,
+                            detail="Zu viele Anfragen von dieser Verbindung. Bitte später erneut "
+                                   "versuchen oder direkt an support@inkludocs.de schreiben.")
+    data = await request.json()
+    if (data.get("firma") or "").strip():
+        return {"ok": True}
+    mail = (data.get("email") or "").strip()
+    nachricht = (data.get("nachricht") or "").strip()[:5000]
+    name = (data.get("name") or "").strip()[:200]
+    if not _email_plausibel(mail):
+        raise HTTPException(status_code=400, detail="Bitte eine gültige E-Mail-Adresse angeben")
+    if not nachricht:
+        raise HTTPException(status_code=400, detail="Bitte eine Nachricht eingeben")
+    mail_key = mail.lower()
+    if len(_kontakt_mail) > MAX_BREMS_SCHLUESSEL:
+        _bremse_aufraeumen(_kontakt_mail, KONTAKT_WINDOW_SECONDS)
+    _kontakt_mail[mail_key] = [t for t in _kontakt_mail[mail_key]
+                               if jetzt - t < KONTAKT_WINDOW_SECONDS]
+    if len(_kontakt_mail[mail_key]) >= MAX_KONTAKT_MAIL:
+        raise HTTPException(status_code=429,
+                            detail="Für diese Adresse liegen uns bereits Nachrichten vor. Bitte "
+                                   "warte auf unsere Antwort oder schreib direkt an "
+                                   "support@inkludocs.de.")
+    _kontakt_ip[schluessel].append(jetzt)
+    _kontakt_mail[mail_key].append(jetzt)
+    body = (f'<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"></head><body>'
+            f'<h1>Kontaktformular</h1>'
+            f'<p>Von: {html.escape(name) or "(ohne Namen)"} &lt;{html.escape(mail)}&gt;</p>'
+            f'<p style="white-space:pre-wrap;">{html.escape(nachricht)}</p></body></html>')
+    try:
+        send_email(SUPPORT_EMAIL, f"InkluDocs Kontaktformular: {name or mail}",
+                   body, bcc_admin=False, reply_to=mail)
+    except Exception:
+        logger.exception("Kontaktformular-Mail fehlgeschlagen (%s)", mail)
+        raise HTTPException(status_code=502,
+                            detail="Die Nachricht konnte gerade nicht zugestellt werden. Bitte "
+                                   "später erneut versuchen oder direkt an support@inkludocs.de "
+                                   "schreiben.")
+    return {"ok": True}
 
 
 @app.post("/api/abo/kuendigung-widerrufen")
@@ -2502,6 +2616,18 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
     aktuelle_laufzeit = db_user.get("plan_laufzeit_monate") or 0
     if aktueller == plan and aktuelle_laufzeit == monate:
         raise HTTPException(status_code=400, detail="Diesen Plan hast du bereits")
+    # Geldfluss-Review Befund 5 (24.08.2026): "Gleicher Plan als Monatsabo"
+    # wuerde die zugesagte Treuekondition (Effektivpreis der Laufzeit) still
+    # durch das TEURERE regulaere Monatsabo ersetzen — dieselbe Leistung,
+    # mehr Geld. Der Weiterlauf als Monatsabo passiert am Laufzeitende
+    # ohnehin automatisch und guenstiger.
+    if plan == aktueller and monate == 1 and int(aktuelle_laufzeit) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Das brauchst du nicht zu buchen: Nach dem Laufzeitende läuft dein "
+                   "Abo automatisch als Monatsabo zur Treuekondition weiter — zum "
+                   "Monatspreis deiner jetzigen Laufzeit, günstiger als das reguläre "
+                   "Monatsabo. Kündigen kannst du das Anschluss-Abo jederzeit monatlich.")
 
     sub_id = (db_user.get("stripe_subscription_id") or "").strip()
     stripe_abo = bool(sub_id) and db_user.get("plan_quelle") == "stripe" and stripe_zahlung.AKTIV
@@ -2601,7 +2727,7 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
         finally:
             conn.close()
         try:
-            _sende_plan_bestaetigung(db_user, plan, gueltig_bis, monate, 1)
+            _sende_plan_bestaetigung(db_user, plan, gueltig_bis, monate, 1, quelle="stripe")
             _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Plan-Upgrade: {db_user['email']}",
                       "Kunde hat hochgestuft",
                       [f"{html.escape(db_user['email'])} hat von "
@@ -2679,7 +2805,10 @@ async def abo_wechsel_widerrufen(user: dict = Depends(get_current_user)):
     sub_id = (db_user.get("stripe_subscription_id") or "").strip()
     if sub_id and db_user.get("plan_quelle") == "stripe" and stripe_zahlung.AKTIV:
         try:
-            stripe_zahlung.widerrufe_geplanten_wechsel(sub_id)
+            # Plan + Laufzeit mitgeben, damit der Treue-Anschluss des
+            # LAUFENDEN Plans direkt wieder aufgesetzt wird (24.08.2026).
+            stripe_zahlung.widerrufe_geplanten_wechsel(
+                sub_id, db_user.get("plan"), db_user.get("plan_laufzeit_monate"))
         except Exception:
             logger.exception("Stripe-Wechsel-Widerruf fehlgeschlagen (user=%s)", user["id"])
             raise HTTPException(status_code=502,
@@ -2737,16 +2866,22 @@ async def abo_checkout(request: Request, user: dict = Depends(get_current_user))
                 conn.close()
         conn = get_db()
         try:
-            conn.execute(
+            cur = conn.execute(
                 "INSERT INTO widerruf_zustimmungen (user_id, plan, laufzeit_monate, "
                 "summe_cent, belehrung_fassung, absender) VALUES (?, ?, ?, ?, ?, ?)",
                 (db_user["id"], plan, monate,
                  round(billing.preis_pro_monat(plan, monate) * monate * 100),
                  WIDERRUFSBELEHRUNG_FASSUNG, absender.limit_schluessel(request)))
+            zustimmung_id = cur.lastrowid
             conn.commit()
         finally:
             conn.close()
-        url = stripe_zahlung.checkout_abo(db_user, plan, monate, BASE_URL, kunde)
+        # Die Zustimmungs-Nummer reist als Metadatum durch Stripe zurueck —
+        # so dokumentiert die Bestaetigungsmail genau DIE Zustimmung, die zu
+        # dieser Zahlung gehoert, nicht die eines abgebrochenen Versuchs
+        # (Geldfluss-Review Befund 7, 24.08.2026).
+        url = stripe_zahlung.checkout_abo(db_user, plan, monate, BASE_URL, kunde,
+                                          zustimmung_id=zustimmung_id)
     except HTTPException:
         raise
     except Exception:
@@ -2836,13 +2971,26 @@ async def stripe_webhook(request: Request):
                 conn = get_db()
                 try:
                     conn.execute("UPDATE users SET stripe_subscription_id = ?, "
-                                 "stripe_customer_id = ? WHERE id = ?",
+                                 "stripe_customer_id = ?, plan_treue = 0 WHERE id = ?",
                                  (obj.get("subscription"), obj.get("customer"), user_id))
                     conn.commit()
                 finally:
                     conn.close()
+                # Treue-Anschluss (AGB Ziffer 7, 24.08.2026): Feste Laufzeiten
+                # laufen danach als Monatsabo zur Treuekondition weiter — der
+                # Zeitplan wird direkt bei der Buchung hinterlegt. Scheitert
+                # das hier, heilt der invoice.paid-Webhook nach.
+                if monate > 1:
+                    try:
+                        stripe_zahlung.plane_treue_anschluss(obj.get("subscription"), plan)
+                    except Exception:
+                        logger.exception("Treue-Anschluss nach Buchung nicht angelegt (user=%s)", user_id)
                 try:
-                    _sende_plan_bestaetigung(target, plan, gueltig_bis, monate, 1)
+                    _sende_plan_bestaetigung(target, plan, gueltig_bis, monate, 1,
+                                             quelle="stripe",
+                                             zustimmung=_letzte_widerruf_zustimmung(
+                                                 user_id, plan, monate,
+                                                 zustimmung_id=meta.get("idoc_zustimmung")))
                 except Exception:
                     logger.exception("Bestaetigungs-Mail nach Stripe-Buchung fehlgeschlagen")
                 _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Stripe-Buchung: {target['email']}",
@@ -2876,13 +3024,13 @@ async def stripe_webhook(request: Request):
                 periode_ende = max((z.get("period", {}).get("end") or 0)
                                    for z in zeilen_liste) if zeilen_liste else 0
                 # Bezahlten Plan aus dem Preis-Lookup der Abo-Zeile lesen.
-                neuer_plan, neue_laufzeit = None, None
+                neuer_plan, neue_laufzeit, ist_treue = None, None, False
                 for z in zeilen_liste:
                     lk = ((z.get("price") or {}).get("lookup_key")
                           or (z.get("pricing") or {}).get("price_details", {}).get("lookup_key"))
-                    p, m = stripe_zahlung.plan_aus_lookup(lk)
+                    p, m, tr = stripe_zahlung.plan_aus_lookup(lk)
                     if p:
-                        neuer_plan, neue_laufzeit = p, m
+                        neuer_plan, neue_laufzeit, ist_treue = p, m, tr
                 conn = get_db()
                 try:
                     row = conn.execute("SELECT id FROM users WHERE stripe_subscription_id = ?",
@@ -2895,29 +3043,74 @@ async def stripe_webhook(request: Request):
                         gueltig = (datetime.utcfromtimestamp(int(periode_ende)).strftime("%Y-%m-%d")
                                    if periode_ende else None)
                         alter_plan = ziel.get("plan")
+                        alte_laufzeit = int(ziel.get("plan_laufzeit_monate") or 0)
+                        # Geldfluss-Review Befund 2 (24.08.2026): Eine ZYKLUS-
+                        # Abrechnung sagt nichts ueber eine Kuendigung — sie darf
+                        # auto_verlaengerung=0 nicht wieder auf 1 heben (sonst
+                        # lebt eine Kuendigung nach der letzten Zahlung wieder
+                        # auf). Neubuchung/Upgrade setzen dagegen bewusst 1.
+                        if grund == "subscription_cycle":
+                            _av_alt = ziel.get("auto_verlaengerung")
+                            auto_neu = 1 if _av_alt is None else int(_av_alt)
+                        else:
+                            auto_neu = 1
                         _setze_plan_kern(ziel["id"], ziel, neuer_plan, neue_laufzeit,
-                                         gueltig, 1, quelle="stripe")
+                                         gueltig, auto_neu, quelle="stripe")
                         conn = get_db()
                         try:
                             conn.execute("UPDATE users SET geplanter_plan = NULL, "
-                                         "geplante_laufzeit = NULL, geplant_ab = NULL "
-                                         "WHERE id = ?", (ziel["id"],))
+                                         "geplante_laufzeit = NULL, geplant_ab = NULL, "
+                                         "plan_treue = ? WHERE id = ?",
+                                         (1 if ist_treue else 0, ziel["id"]))
                             conn.commit()
                         finally:
                             conn.close()
                         # Review-Befund 6: Kontingent-Neustart auch beim reinen
                         # Laufzeit-Upgrade (single/3 -> single/12), aber NIE bei
-                        # der bloßen Verlaengerung desselben Plans.
+                        # der bloßen Verlaengerung desselben Plans. Der TREUE-
+                        # Uebergang (12 Monate -> Treue-Monatsabo) ist dieselbe
+                        # Stufe in neuem Rhythmus — KEIN Neustart (24.08.2026).
                         if (billing.PLAN_KONTINGENTE.get(neuer_plan, 0)
                                 > billing.PLAN_KONTINGENTE.get(alter_plan, 0)
-                                or (alter_plan == neuer_plan
-                                    and neue_laufzeit != (ziel.get("plan_laufzeit_monate") or 0))):
+                                or (alter_plan == neuer_plan and not ist_treue
+                                    and neue_laufzeit != alte_laufzeit)):
                             billing.starte_kontingent_neu(ziel["id"])
+                        # Selbstheilung Treue-Anschluss (24.08.2026): Jede
+                        # bezahlte FESTE Laufzeit muss ihren Anschluss-Zeitplan
+                        # haben — auch wenn der Checkout-Webhook ausfiel oder
+                        # das Upgrade vor dem Anlegen abbrach. nur_wenn_frei
+                        # laesst vorgemerkte Downgrades unangetastet.
+                        if (not ist_treue and neue_laufzeit and int(neue_laufzeit) > 1
+                                and stripe_zahlung.AKTIV):
+                            try:
+                                stripe_zahlung.plane_treue_anschluss(
+                                    sub_id, neuer_plan, nur_wenn_frei=True)
+                            except Exception:
+                                logger.exception("Treue-Anschluss-Selbstheilung "
+                                                 "fehlgeschlagen (%s)", sub_id)
+                        if ist_treue and alte_laufzeit > 1 and _kv_einmal(
+                                f"abo_mail_treue_{ziel['id']}_{gueltig}"):
+                            # Erste Treue-Abrechnung: dem Kunden den Uebergang
+                            # bestaetigen (AGB Ziffer 7).
+                            try:
+                                _preis = f"{billing.treue_preis_eur(neuer_plan):.2f}".replace(".", ",")
+                                _abo_mail(ziel["email"],
+                                          "InkluDocs: Dein Abo läuft jetzt als Monatsabo weiter",
+                                          "Dein Abo läuft als Monatsabo weiter",
+                                          [f"Hallo {html.escape(ziel.get('display_name') or '')},",
+                                           f"deine feste Laufzeit ist abgelaufen. Wie in den Nutzungsbedingungen "
+                                           f"zugesagt, läuft dein {PLAN_ANZEIGENAMEN.get(neuer_plan, neuer_plan)}-Abo "
+                                           f"jetzt als Monatsabo zur Treuekondition weiter: {_preis} € pro Monat — "
+                                           "der Monatspreis deiner bisherigen Laufzeit, günstiger als das reguläre Monatsabo.",
+                                           "Du kannst jederzeit zum Ende des laufenden Monats kündigen oder erneut "
+                                           "eine feste Laufzeit buchen — beides auf der Seite „Abo &amp; Verbrauch“."])
+                            except Exception:
+                                logger.exception("Treue-Uebergangs-Mail fehlgeschlagen")
                         if alter_plan != neuer_plan and _kv_einmal(
                                 f"abo_mail_stripewechsel_{ziel['id']}_{gueltig}_{neuer_plan}"):
                             try:
                                 _sende_plan_bestaetigung(ziel, neuer_plan, gueltig,
-                                                         neue_laufzeit, 1)
+                                                         neue_laufzeit, 1, quelle="stripe")
                             except Exception:
                                 logger.exception("Bestaetigung nach Stripe-Abrechnung fehlgeschlagen")
                     elif row and periode_ende:
@@ -2956,6 +3149,12 @@ async def stripe_webhook(request: Request):
             auslaufend = bool(aktuell.get("cancel_at_period_end")) or beendet
             conn = get_db()
             try:
+                # Zustand VOR dem Update merken: Der Treue-Zeitplan unten darf
+                # nur nach einer ECHTEN Reaktivierung (0 -> 1) neu entstehen.
+                treue_row = conn.execute(
+                    "SELECT plan, plan_laufzeit_monate, "
+                    "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
+                    "FROM users WHERE stripe_subscription_id = ?", (sub_id,)).fetchone()
                 conn.execute("UPDATE users SET auto_verlaengerung = ? "
                              "WHERE stripe_subscription_id = ?",
                              (0 if auslaufend else 1, sub_id))
@@ -2976,6 +3175,25 @@ async def stripe_webhook(request: Request):
                 conn.commit()
             finally:
                 conn.close()
+            # Reaktivierung AUCH ueber diesen Weg (Portal statt App,
+            # 24.08.2026): Die Kuendigung hatte den Treue-Zeitplan geloest —
+            # bei fester Laufzeit wieder aufsetzen, sonst haengt der Treue-
+            # Anschluss (AGB Ziffer 7) davon ab, WO der Kunde reaktiviert.
+            # nur_wenn_frei laesst einen vorhandenen Zeitplan unangetastet.
+            # NUR bei echter Reaktivierung (vorher gekuendigt) — sonst wuerde
+            # das Release-Event einer GERADE LAUFENDEN Kuendigung hier den
+            # Zeitplan neu anlegen und den cancel-Aufruf blockieren
+            # (Geldfluss-Review Befund 2, 24.08.2026).
+            if (not auslaufend and treue_row
+                    and int(treue_row["auto_verlaengerung"]) == 0
+                    and int(treue_row["plan_laufzeit_monate"] or 0) > 1
+                    and stripe_zahlung.AKTIV):
+                try:
+                    stripe_zahlung.plane_treue_anschluss(
+                        sub_id, treue_row["plan"], nur_wenn_frei=True)
+                except Exception:
+                    logger.exception("Treue-Anschluss nach Portal-Reaktivierung "
+                                     "nicht angelegt (%s)", sub_id)
     except Exception:
         # Verarbeitungsfehler loggen, aber 200 melden — Stripe wiederholt
         # sonst endlos; der Vorgang laesst sich im Log/Dashboard nachziehen.
@@ -3015,23 +3233,85 @@ def _abo_mail(empfaenger: str, betreff: str, ueberschrift: str, saetze: list) ->
     send_email(empfaenger, betreff, body, bcc_admin=False)
 
 
+def _letzte_widerruf_zustimmung(user_id: int, plan: str, laufzeit,
+                                zustimmung_id=None) -> dict:
+    """Protokollierte Zustimmung zum sofortigen Leistungsbeginn fuer die
+    Dokumentation in der Bestaetigungsmail nach § 312f BGB (24.08.2026).
+    Bevorzugt die per Checkout-Metadatum mitgereiste Nummer (beweissicher
+    genau DIESER Kauf); Rueckfall: juengster Eintrag zu Plan + Laufzeit.
+    None, wenn keine vorliegt (Admin-/Rechnungsweg erhebt keine)."""
+    conn = get_db()
+    try:
+        if zustimmung_id:
+            row = conn.execute(
+                "SELECT belehrung_fassung, created_at, summe_cent FROM widerruf_zustimmungen "
+                "WHERE id = ? AND user_id = ?", (int(zustimmung_id), user_id)).fetchone()
+            if row:
+                return dict(row)
+        row = conn.execute(
+            "SELECT belehrung_fassung, created_at, summe_cent FROM widerruf_zustimmungen "
+            "WHERE user_id = ? AND plan = ? AND laufzeit_monate = ? "
+            "ORDER BY id DESC LIMIT 1", (user_id, plan, int(laufzeit or 0))).fetchone()
+        return dict(row) if row else None
+    except Exception:
+        logger.exception("Widerruf-Zustimmung nicht lesbar (user=%s)", user_id)
+        return None
+    finally:
+        conn.close()
+
+
 def _sende_plan_bestaetigung(konto: dict, plan: str, gueltig_bis, laufzeit,
-                             auto_verlaengerung: int) -> None:
-    """Bestaetigungs-Mail nach einer Plan-Buchung (Admin-/Rechnungsweg —
-    derselbe Text dient spaeter dem Stripe-Weg)."""
+                             auto_verlaengerung: int, quelle: str = "rechnung",
+                             zustimmung: dict = None) -> None:
+    """Bestaetigungs-Mail nach einer Plan-Buchung (Admin-/Rechnungsweg UND
+    Stripe-Weg). quelle steuert den Verlaengerungs-Text: Online-Vertraege
+    (stripe) mit fester Laufzeit laufen nach AGB Ziffer 7 als Monatsabo zur
+    Treuekondition weiter; Rechnungsvertraege verlaengern sich um dieselbe
+    Laufzeit. zustimmung dokumentiert die beim Checkout erteilte Zustimmung
+    zum sofortigen Leistungsbeginn (§ 312f BGB, 24.08.2026)."""
     name = html.escape(konto.get("display_name") or "")
     plan_name = PLAN_ANZEIGENAMEN.get(plan, plan)
     datum = str(gueltig_bis or "")[:10]
+    laufzeit_zahl = int(laufzeit or 0)
     saetze = [f"Hallo {name},",
               f"dein InkluDocs-Abo wurde umgestellt: Du hast jetzt den Plan <strong>{plan_name}</strong>"
-              + (f" mit einer Laufzeit von {laufzeit} Monaten" if laufzeit else "")
+              + (f" mit einer Laufzeit von {laufzeit} Monaten" if laufzeit_zahl > 1 else
+                 (" als Monatsabo" if laufzeit_zahl == 1 else ""))
               + (f", gültig bis {datum}" if datum else "") + "."]
     if auto_verlaengerung:
-        saetze.append("Wenn du nicht kündigst, verlängert sich das Abo am Laufzeitende "
-                      "automatisch um dieselbe Laufzeit. Kündigen kannst du jederzeit "
-                      "zum Laufzeitende auf der Seite „Abo &amp; Verbrauch“.")
+        if quelle == "stripe" and laufzeit_zahl > 1:
+            treue = f"{billing.treue_preis_eur(plan):.2f}".replace(".", ",")
+            saetze.append(f"Nach dem Laufzeitende läuft das Abo automatisch als Monatsabo zur "
+                          f"Treuekondition weiter: {treue} € pro Monat — der Monatspreis deiner "
+                          "gebuchten Laufzeit, günstiger als das reguläre Monatsabo. Das "
+                          "Anschluss-Abo ist jederzeit zum Ende des laufenden Monats kündbar; "
+                          "du kannst stattdessen auch erneut eine feste Laufzeit buchen. "
+                          "Kündigen kannst du jederzeit zum Laufzeitende auf der Seite "
+                          "„Abo &amp; Verbrauch“.")
+        elif quelle == "stripe" and laufzeit_zahl == 1:
+            saetze.append("Das Monatsabo verlängert sich um jeweils einen Monat und ist "
+                          "jederzeit zum Ende des laufenden Monatszeitraums kündbar — auf der "
+                          "Seite „Abo &amp; Verbrauch“.")
+        else:
+            saetze.append("Wenn du nicht kündigst, verlängert sich das Abo am Laufzeitende "
+                          "automatisch um dieselbe Laufzeit. Kündigen kannst du jederzeit "
+                          "zum Laufzeitende auf der Seite „Abo &amp; Verbrauch“.")
     else:
         saetze.append(f"Das Abo läuft am {datum} aus und wird nicht automatisch verlängert.")
+    if zustimmung:
+        # § 312f BGB: Die Bestaetigung muss die erteilte Zustimmung zum
+        # Leistungsbeginn VOR Ablauf der Widerrufsfrist dokumentieren.
+        wann = str(zustimmung.get("created_at") or "")[:16].replace("T", " ")
+        saetze.append("Zur Dokumentation: Du hast bei der Buchung"
+                      + (f" am {wann} Uhr (UTC)" if wann else "")
+                      + " ausdrücklich zugestimmt, dass wir vor Ablauf der 14-tägigen "
+                      "Widerrufsfrist mit der Leistung beginnen, und bestätigt, die "
+                      f"Widerrufsbelehrung (Fassung {html.escape(str(zustimmung.get('belehrung_fassung') or ''))}) "
+                      "zur Kenntnis genommen zu haben. Dein Widerrufsrecht erlischt bei "
+                      "vollständiger Vertragserfüllung; bei einem Widerruf vorher wird der "
+                      "bereits erbrachte Anteil angerechnet. Die Belehrung samt "
+                      f'Muster-Widerrufsformular: <a href="{BASE_URL}/widerruf">{BASE_URL}/widerruf</a>. '
+                      f'Online widerrufen kannst du hier: <a href="{BASE_URL}/widerrufen">{BASE_URL}/widerrufen</a>.')
     saetze.append("Deinen aktuellen Stand siehst du jederzeit unter „Abo &amp; Verbrauch“ in der App.")
     _abo_mail(konto["email"], f"InkluDocs: Dein {plan_name}-Abo ist aktiv",
               "Dein InkluDocs-Abo", saetze)
@@ -3116,7 +3396,7 @@ def _abo_tageslauf() -> None:
                 # Aufholung deckt trotzdem bis zu zwei Monate Server-Pause.
                 faellige = conn.execute(
                     "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, "
-                    "plan_quelle, geplanter_plan, geplante_laufzeit, geplant_ab, "
+                    "plan_quelle, stripe_subscription_id, geplanter_plan, geplante_laufzeit, geplant_ab, "
                     "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung "
                     "FROM users WHERE plan IN ('single', 'team', 'enterprise') "
                     "AND ((plan_gueltig_bis IS NOT NULL "
@@ -3271,6 +3551,65 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
         # wenn die Verlaengerung auch ausgefuehrt wird (auto UND Laufzeit) —
         # sonst ehrlich das Ende ankuendigen.
         if auto and laufzeit:
+            ist_stripe = k.get("plan_quelle") == "stripe"
+            if ist_stripe and int(laufzeit) > 1:
+                # Online-Vertrag (AGB Ziffer 7, 24.08.2026): KEINE erneute
+                # feste Laufzeit — Weiterlauf als Monatsabo zur Treuekondition.
+                #
+                # RECONCILIATION (Geldfluss-Review Befund 1, 24.08.2026):
+                # Ohne haengenden Treue-Zeitplan wuerde Stripe am Stichtag
+                # still die VOLLE Laufzeit erneut abbuchen — und dieser Lauf
+                # hier ist die letzte Kontrolle davor. Fehlt der Zeitplan,
+                # wird er nachgelegt; klappt auch das nicht (z. B. fehlende
+                # Treue-Preise im Live-Konto), bekommt der Betreiber einen
+                # ALARM statt der Beruhigungsmail.
+                zeitplan_ok = True
+                sub_id_k = (k.get("stripe_subscription_id") or "").strip()
+                if stripe_zahlung.AKTIV and sub_id_k:
+                    try:
+                        _sub = stripe_zahlung.stripe.Subscription.retrieve(sub_id_k)
+                        if not _sub.get("schedule") and not _sub.get("cancel_at_period_end"):
+                            stripe_zahlung.plane_treue_anschluss(
+                                sub_id_k, k["plan"], nur_wenn_frei=True)
+                            _sub = stripe_zahlung.stripe.Subscription.retrieve(sub_id_k)
+                        zeitplan_ok = bool(_sub.get("schedule")) or bool(
+                            _sub.get("cancel_at_period_end"))
+                    except Exception:
+                        logger.exception("Treue-Zeitplan-Kontrolle fehlgeschlagen (user=%s)",
+                                         k["id"])
+                        zeitplan_ok = False
+                treue = f"{billing.treue_preis_eur(k['plan']):.2f}".replace(".", ",")
+                saetze = [f"Hallo {name},",
+                          f"dein {plan_name}-Abo bei InkluDocs erreicht am {ablauf} das Laufzeitende. "
+                          "Danach läuft es automatisch als Monatsabo zur Treuekondition weiter: "
+                          f"{treue} € pro Monat — der Monatspreis deiner bisherigen Laufzeit, "
+                          "günstiger als das reguläre Monatsabo.",
+                          "Das Anschluss-Abo ist jederzeit zum Ende des laufenden Monats kündbar. "
+                          "Du kannst stattdessen auch erneut eine feste Laufzeit zum günstigeren "
+                          "Laufzeitpreis buchen — oder vorher auf der Seite „Abo &amp; Verbrauch“ "
+                          "kündigen, dann endet das Abo zum Laufzeitende."]
+                _abo_mail(k["email"], "InkluDocs: Dein Abo läuft bald als Monatsabo weiter",
+                          "Dein Abo läuft bald als Monatsabo weiter", saetze)
+                if zeitplan_ok:
+                    betreiber_satz = ("Stripe-Abo mit fester Laufzeit: Der hinterlegte Zahlungsplan "
+                                      "stellt zum Laufzeitende automatisch auf das Treue-Monatsabo um "
+                                      "und fakturiert monatlich — hier ist nichts zu tun (nur zur Kenntnis).")
+                    betreff = f"InkluDocs Abo-Anschluss: {k['email']}"
+                    kopf = "Abo läuft bald als Treue-Monatsabo weiter"
+                else:
+                    betreiber_satz = ("ALARM: Am Abo haengt KEIN Treue-Zahlungsplan, und er liess "
+                                      "sich nicht nachlegen. Ohne Eingriff bucht Stripe am Stichtag "
+                                      "die VOLLE Laufzeit erneut ab — entgegen AGB Ziffer 7. Bitte "
+                                      "im Stripe-Dashboard pruefen (Subscription "
+                                      f"{html.escape(sub_id_k or 'unbekannt')}); Ursache koennen "
+                                      "fehlende Treue-Preise sein (sichere_produkte() ausfuehren).")
+                    betreff = f"InkluDocs ALARM Treue-Zeitplan fehlt: {k['email']}"
+                    kopf = "Treue-Zeitplan fehlt — Eingriff noetig"
+                _abo_mail(NOTIFICATION_EMAIL, betreff, kopf,
+                          [f"Das {plan_name}-Abo von {html.escape(k['email'])} erreicht am {ablauf} das "
+                           f"Laufzeitende und soll dann als Treue-Monatsabo ({treue} €/Monat) weiterlaufen.",
+                           betreiber_satz])
+                return
             saetze = [f"Hallo {name},",
                       f"dein {plan_name}-Abo bei InkluDocs erreicht am {ablauf} das Laufzeitende "
                       f"und verlängert sich dann automatisch"
@@ -3281,7 +3620,7 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                       "Dein Abo verlängert sich bald", saetze)
             # Betreiber-Hinweis: beim Rechnungsweg muss eine neue Rechnung
             # raus; Stripe-Abos bucht und fakturiert Stripe von selbst.
-            if k.get("plan_quelle") == "stripe":
+            if ist_stripe:
                 betreiber_satz = ("Stripe-Abo: Die Verlängerung bucht und fakturiert Stripe "
                                   "automatisch — hier ist nichts zu tun (nur zur Kenntnis).")
             else:
@@ -8252,5 +8591,31 @@ async def kuendigen_page(request: Request):
     lang = detect_language(request)
     return templates.TemplateResponse(
         "kuendigen.html",
+        template_context(request, lang, is_staging="staging" in BASE_URL),
+    )
+
+
+@app.get("/kontakt", response_class=HTMLResponse)
+async def kontakt_page(request: Request):
+    """Kontaktseite (24.08.2026): zweiter Kommunikationsweg nach § 5 DDG
+    (E-Mail + Kontaktformular statt Telefonnummer), ohne Anmeldung."""
+    lang = detect_language(request)
+    return templates.TemplateResponse(
+        "kontakt.html",
+        template_context(request, lang, is_staging="staging" in BASE_URL),
+    )
+
+
+@app.get("/widerrufen", response_class=HTMLResponse)
+async def widerrufen_page(request: Request):
+    """Widerrufsfunktion nach § 356a BGB (Pflicht seit 19.06.2026; gebaut
+    24.08.2026): gut sichtbar, ohne Anmeldung, zweistufig — erst die
+    Widerrufserklaerung ("Vertrag widerrufen"), dann die Bestaetigung
+    ("Widerruf bestätigen"). Die Erklaerung geht denselben Weg wie der
+    Kuendigungsknopf (/api/kuendigung mit art='widerruf'): protokolliert,
+    sofort wirksam zum Abo-Ende-Verhalten, Bestaetigung in Textform."""
+    lang = detect_language(request)
+    return templates.TemplateResponse(
+        "widerrufen.html",
         template_context(request, lang, is_staging="staging" in BASE_URL),
     )

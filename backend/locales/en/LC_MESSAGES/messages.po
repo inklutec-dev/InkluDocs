@@ -3788,3 +3788,69 @@ msgstr "No commitment: {preis} € per month on the monthly plan, cancelable at 
 
 msgid "Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten."
 msgstr "Every paid tier is available as a monthly plan (cancelable at any time) or at a lower price with a fixed term of {laufzeiten} months."
+
+msgid "Vertrag widerrufen"
+msgstr "Withdraw from contract"
+
+msgid "Als Verbraucherin oder Verbraucher kannst du deinen Vertrag innerhalb von 14 Tagen nach Vertragsschluss ohne Angabe von Gründen widerrufen — hier direkt online, ohne Anmeldung. Einzelheiten stehen in der Widerrufsbelehrung."
+msgstr "As a consumer, you can withdraw from your contract within 14 days of concluding it, without giving reasons — right here online, no sign-in required. Details are in the withdrawal notice."
+
+msgid "Widerrufsbelehrung und Muster-Widerrufsformular lesen"
+msgstr "Read the withdrawal notice and model withdrawal form"
+
+msgid "Angaben zum Vertrag, z. B. Bestelldatum (freiwillig)"
+msgstr "Details about the contract, e.g. order date (optional)"
+
+msgid "Widerruf bestätigen"
+msgstr "Confirm withdrawal"
+
+msgid "Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns dein Widerruf zu."
+msgstr "Please check your details. With the next click, your withdrawal will be submitted to us."
+
+msgid "Widerruf ist eingegangen"
+msgstr "Withdrawal received"
+
+msgid "Zur Rückabwicklung deiner Zahlung melden wir uns per E-Mail — Einzelheiten stehen in der Widerrufsbelehrung."
+msgstr "We will contact you by email about refunding your payment — details are in the withdrawal notice."
+
+msgid "Du möchtest nicht widerrufen, sondern zum Laufzeitende kündigen?"
+msgstr "You don't want to withdraw, but cancel at the end of the term?"
+
+msgid "Angaben zum Vertrag"
+msgstr "Details about the contract"
+
+msgid "Erklärung"
+msgstr "Declaration"
+
+msgid "Dein Vertrag ist jünger als 14 Tage und du möchtest ihn widerrufen? Dann nutze die Widerrufsfunktion:"
+msgstr "Your contract is less than 14 days old and you want to withdraw? Then use the withdrawal function:"
+
+msgid "Treue-Monatsabo: {preis} € pro Monat — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar."
+msgstr "Loyalty monthly plan: {preis} € per month — renews on {datum} for another month, cancelable at any time."
+
+msgid "Laufzeit: {monate} Monate bis {datum}. Danach läuft dein Abo als Monatsabo zur Treuekondition weiter — {preis} € pro Monat, jederzeit monatlich kündbar."
+msgstr "Term: {monate} months until {datum}. After that, your subscription continues as a monthly plan at the loyalty rate — {preis} € per month, cancelable monthly."
+
+msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Wenn du nicht zum Laufzeitende kündigst, läuft das Abo danach als Monatsabo zur Treuekondition weiter: {treue} € pro Monat, jederzeit monatlich kündbar."
+msgstr "Term of {monate} months, payable in advance. If you do not cancel by the end of the term, the subscription then continues as a monthly plan at the loyalty rate: {treue} € per month, cancelable monthly."
+
+msgid "Kontakt"
+msgstr "Contact"
+
+msgid "Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter"
+msgstr "Write to us — we will get back to you by email. You can also reach us directly at"
+
+msgid "Deine E-Mail-Adresse (für die Antwort)"
+msgstr "Your email address (for our reply)"
+
+msgid "Deine Nachricht"
+msgstr "Your message"
+
+msgid "Nachricht ist unterwegs"
+msgstr "Message is on its way"
+
+msgid "Danke! Deine Nachricht ist bei uns eingegangen — wir antworten per E-Mail an die angegebene Adresse."
+msgstr "Thank you! Your message has reached us — we will reply by email to the address you provided."
+
+msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
+msgstr "Please provide your email address and a message."

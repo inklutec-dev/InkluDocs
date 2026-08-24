@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}InkluDocs - {{ _('Vertrag widerrufen') }}{% endblock %}
+
+{% block body %}
+{# Widerrufsfunktion nach § 356a BGB (Pflicht seit 19.06.2026; gebaut
+   24.08.2026). Bewusst OHNE Anmeldung erreichbar und dauerhaft verlinkt.
+   Zwei Stufen, wie das Gesetz sie verlangt: erst die Widerrufserklaerung
+   ("Vertrag widerrufen"), dann eine Bestaetigungsseite mit gesonderter
+   Schaltflaeche ("Widerruf bestätigen"). Der Zugangszeitpunkt wird
+   protokolliert und dem Kunden in Textform bestaetigt — derselbe Weg wie
+   der Kuendigungsknopf (/api/kuendigung, art='widerruf'). #}
+<main>
+    <div class="auth-container" role="region" aria-label="{{ _('Vertrag widerrufen') }}">
+        <h1>
+            <span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}
+        </h1>
+        <p class="subtitle">{{ _('Vertrag widerrufen') }}</p>
+
+        <div id="schrittFormular">
+            <p>{{ _('Als Verbraucherin oder Verbraucher kannst du deinen Vertrag innerhalb von 14 Tagen nach Vertragsschluss ohne Angabe von Gründen widerrufen — hier direkt online, ohne Anmeldung. Einzelheiten stehen in der Widerrufsbelehrung.') }}</p>
+            <p><a href="/widerruf">{{ _('Widerrufsbelehrung und Muster-Widerrufsformular lesen') }}</a></p>
+            <form id="widForm" novalidate>
+                <div class="form-group">
+                    <label for="w_email">{{ _('E-Mail-Adresse deines Kontos') }}</label>
+                    <input type="email" id="w_email" required autocomplete="email" autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="w_name">{{ _('Dein Name') }}</label>
+                    <input type="text" id="w_name" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="w_zusatz">{{ _('Angaben zum Vertrag, z. B. Bestelldatum (freiwillig)') }}</label>
+                    <textarea id="w_zusatz" rows="3" class="dash-input"></textarea>
+                </div>
+                <button type="submit" class="btn-full">{{ _('Vertrag widerrufen') }}</button>
+                <div id="widErr" class="error-message" role="alert" aria-live="polite"></div>
+            </form>
+        </div>
+
+        <div id="schrittBestaetigen" hidden>
+            <h2 id="bestaetigenHeading" tabindex="-1">{{ _('Widerruf bestätigen') }}</h2>
+            <p>{{ _('Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns dein Widerruf zu.') }}</p>
+            <div id="widUebersicht"></div>
+            <button type="button" class="btn-full" id="widConfirm">{{ _('Widerruf bestätigen') }}</button>
+            <button type="button" class="btn btn-secondary" id="widBack" style="margin-top:.6rem;">{{ _('Zurück zu den Angaben') }}</button>
+            <div id="widErr2" class="error-message" role="alert" aria-live="polite"></div>
+        </div>
+
+        <div id="schrittFertig" hidden>
+            <h2 id="fertigHeading" tabindex="-1">{{ _('Widerruf ist eingegangen') }}</h2>
+            <div id="widErgebnis" role="status"></div>
+            <p>{{ _('Zur Rückabwicklung deiner Zahlung melden wir uns per E-Mail — Einzelheiten stehen in der Widerrufsbelehrung.') }}</p>
+            <p><a href="/">{{ _('Zur Anmeldung') }}</a></p>
+        </div>
+
+        <p style="margin-top:1.5rem; padding-top:1.1rem; border-top:1px solid var(--border); color:var(--text-muted); font-size:0.95rem;">
+            {{ _('Du möchtest nicht widerrufen, sondern zum Laufzeitende kündigen?') }}
+            <a href="/kuendigen">{{ _('Vertrag kündigen') }}</a>
+        </p>
+    </div>
+    <footer class="legal-footer" role="contentinfo">
+        <a href="/impressum">{{ _('Impressum') }}</a> |
+        <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
+        <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a> |
+        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a> |
+        <a href="/kuendigen">{{ _('Vertrag kündigen') }}</a>
+    </footer>
+</main>
+<script>
+    const T = {
+        pflicht: {{ _('Bitte gib die E-Mail-Adresse deines Kontos an.')|tojson }},
+        fehler: {{ _('Fehler')|tojson }},
+        verbindung: {{ _('Verbindungsfehler. Bitte erneut versuchen.')|tojson }},
+        email: {{ _('E-Mail-Adresse')|tojson }},
+        name: {{ _('Name')|tojson }},
+        anmerkung: {{ _('Angaben zum Vertrag')|tojson }},
+        art: {{ _('Erklärung')|tojson }},
+        widerruf: {{ _('Widerruf innerhalb von 14 Tagen')|tojson }}
+    };
+    const byId = (id) => document.getElementById(id);
+
+    function zeige(schritt) {
+        byId('schrittFormular').hidden = schritt !== 'formular';
+        byId('schrittBestaetigen').hidden = schritt !== 'bestaetigen';
+        byId('schrittFertig').hidden = schritt !== 'fertig';
+    }
+
+    byId('widForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const err = byId('widErr');
+        err.textContent = '';
+        const mail = byId('w_email').value.trim();
+        if (!mail) { err.textContent = T.pflicht; byId('w_email').focus(); return; }
+        {# Uebersicht als schlichte Absaetze "Begriff: Wert" — fuer Wertepaare
+           weder Tabelle noch dl (VoiceOver zaehlt dl-Kinder als Objekte). #}
+        const box = byId('widUebersicht');
+        box.innerHTML = '';
+        const zeilen = [
+            [T.art, T.widerruf],
+            [T.email, mail],
+            [T.name, byId('w_name').value.trim() || '—'],
+            [T.anmerkung, byId('w_zusatz').value.trim() || '—']
+        ];
+        zeilen.forEach(([k, v]) => {
+            const p = document.createElement('p');
+            p.textContent = k + ': ' + v;
+            box.appendChild(p);
+        });
+        zeige('bestaetigen');
+        byId('bestaetigenHeading').focus();
+    });
+
+    byId('widBack').addEventListener('click', () => {
+        zeige('formular');
+        byId('w_email').focus();
+    });
+
+    byId('widConfirm').addEventListener('click', async () => {
+        const err = byId('widErr2');
+        err.textContent = '';
+        let res;
+        try {
+            res = await fetch('/api/kuendigung', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: byId('w_email').value.trim(),
+                    name: byId('w_name').value.trim(),
+                    art: 'widerruf',
+                    zusatz: byId('w_zusatz').value.trim()
+                })
+            });
+        } catch (e) { err.textContent = T.verbindung; return; }
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) { err.textContent = d.detail || T.fehler; return; }
+        const box = byId('widErgebnis');
+        box.innerHTML = '';
+        (d.meldungen || []).forEach((m) => {
+            const p = document.createElement('p');
+            p.textContent = m;
+            box.appendChild(p);
+        });
+        zeige('fertig');
+        byId('fertigHeading').focus();
+    });
+</script>
+{% endblock %}

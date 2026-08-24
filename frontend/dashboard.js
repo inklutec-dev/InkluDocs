@@ -225,6 +225,10 @@ const LEGAL_LINKS = [
   // § 312k BGB verlangt, dass der Kuendigungsknopf staendig verfuegbar und
   // leicht erreichbar ist — deshalb in JEDER Fusszeile, nicht nur im Abo-Bereich.
   { href: '/kuendigen', label: t('Vertrag kündigen') },
+  // Widerrufsfunktion nach § 356a BGB: waehrend der Widerrufsfrist dauerhaft
+  // gut sichtbar und leicht zugaenglich — deshalb ebenfalls in jeder Fusszeile.
+  { href: '/widerrufen', label: t('Vertrag widerrufen') },
+  { href: '/kontakt', label: t('Kontakt') },
 ];
 function renderLegalLinks() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {

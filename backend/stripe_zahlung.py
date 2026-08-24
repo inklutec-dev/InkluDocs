@@ -43,20 +43,32 @@ def _plan_lookup(plan: str, monate: int) -> str:
     return f"idoc_{plan}_{monate}m"
 
 
+def _plan_lookup_treue(plan: str) -> str:
+    return f"idoc_{plan}_treue_1m"
+
+
 def plan_aus_lookup(lookup_key: str):
-    """Zerlegt 'idoc_team_6m' -> ('team', 6); sonst (None, None).
+    """Zerlegt 'idoc_team_6m' -> ('team', 6, False) und
+    'idoc_team_treue_1m' -> ('team', 1, True); sonst (None, None, False).
 
     Der Webhook leitet daraus den bezahlten Plan ab — er ist damit die
     letzte Wahrheit, auch wenn der ausloesende Aufruf abgebrochen ist
-    (Review-Befund 4, 07.08.2026).
+    (Review-Befund 4, 07.08.2026). Das dritte Feld sagt, ob es der
+    TREUE-Preis ist (Anschluss-Monatsabo nach fester Laufzeit): der
+    Aufrufer muss 'regulaeres Monatsabo gebucht' (11,95) von 'laeuft in
+    der Treuekondition' (9,95) unterscheiden koennen — sonst stimmen
+    Anzeige und Kontingent-Logik nicht (Codys Stolperstein, 23.08.2026).
     """
     try:
         teile = (lookup_key or "").split("_")
         if len(teile) == 3 and teile[0] == "idoc" and teile[2].endswith("m"):
-            return teile[1], int(teile[2][:-1])
+            return teile[1], int(teile[2][:-1]), False
+        if (len(teile) == 4 and teile[0] == "idoc" and teile[2] == "treue"
+                and teile[3].endswith("m")):
+            return teile[1], int(teile[3][:-1]), True
     except Exception:
         pass
-    return None, None
+    return None, None, False
 
 
 def _paket_lookup(groesse: int) -> str:
@@ -79,6 +91,9 @@ def sichere_produkte() -> dict:
             gewuenscht[_plan_lookup(plan, monate)] = (
                 "abo", plan, monate,
                 round(billing.preis_pro_monat(plan, monate) * monate * 100))
+        # Treue-Monatsabo (AGB Ziffer 7): Anschlusspreis nach fester Laufzeit.
+        gewuenscht[_plan_lookup_treue(plan)] = (
+            "treue", plan, 1, round(billing.treue_preis_eur(plan) * 100))
     for groesse, preis in billing.PAKET_PREISE.items():
         gewuenscht[_paket_lookup(groesse)] = ("paket", groesse, None, round(preis * 100))
 
@@ -103,11 +118,17 @@ def sichere_produkte() -> dict:
     for lk, (art, a, monate, cents) in gewuenscht.items():
         if lk in vorhanden:
             continue
-        if art == "abo":
+        if art in ("abo", "treue"):
             produkt_id = _produkt(PLAN_NAMEN[a], f"plan_{a}")
+            if art == "treue":
+                nickname = f"{PLAN_NAMEN[a]} — Treue-Monatsabo (Anschluss)"
+            elif monate == 1:
+                nickname = f"{PLAN_NAMEN[a]} — Monatsabo"
+            else:
+                nickname = f"{PLAN_NAMEN[a]} — {monate} Monate"
             preis = stripe.Price.create(
                 product=produkt_id, currency="eur", unit_amount=cents,
-                lookup_key=lk, nickname=(f"{PLAN_NAMEN[a]} — Monatsabo" if monate == 1 else f"{PLAN_NAMEN[a]} — {monate} Monate"),
+                lookup_key=lk, nickname=nickname,
                 recurring={"interval": "month", "interval_count": monate},
             )
         else:
@@ -227,16 +248,22 @@ def _session_mit_zahlungsarten(**felder):
 
 
 def checkout_abo(db_user: dict, plan: str, monate: int, base_url: str,
-                 kunde: str) -> str:
-    """Checkout-Link fuer eine Abo-Buchung (fester Zeitraum, auto-verlaengernd)."""
+                 kunde: str, zustimmung_id=None) -> str:
+    """Checkout-Link fuer eine Abo-Buchung (fester Zeitraum, auto-verlaengernd).
+
+    zustimmung_id: Nummer der protokollierten Leistungsbeginn-Zustimmung —
+    reist als Metadatum mit, damit der Webhook die richtige dokumentiert."""
+    meta = {"idoc_user_id": str(db_user["id"]), "idoc_plan": plan,
+            "idoc_laufzeit": str(monate)}
+    if zustimmung_id:
+        meta["idoc_zustimmung"] = str(zustimmung_id)
     s = _session_mit_zahlungsarten(
         customer=kunde,
         mode="subscription",
         line_items=[{"price": _preis_id(_plan_lookup(plan, monate)), "quantity": 1}],
         success_url=f"{base_url}/abo?zahlung=erfolg",
         cancel_url=f"{base_url}/abo?zahlung=abbruch",
-        metadata={"idoc_user_id": str(db_user["id"]), "idoc_plan": plan,
-                  "idoc_laufzeit": str(monate)},
+        metadata=meta,
         subscription_data={"metadata": {"idoc_user_id": str(db_user["id"]),
                                         "idoc_plan": plan,
                                         "idoc_laufzeit": str(monate)}},
@@ -315,9 +342,27 @@ def pruefe_webhook(payload: bytes, signatur: str):
 
 
 def kuendige_subscription(subscription_id: str, zum_periodenende: bool) -> None:
-    """Kuendigt (oder reaktiviert) die Stripe-Subscription zum Periodenende."""
-    stripe.Subscription.modify(subscription_id,
-                               cancel_at_period_end=bool(zum_periodenende))
+    """Kuendigt (oder reaktiviert) die Stripe-Subscription zum Periodenende.
+
+    BEHARRLICH (Geldfluss-Review Befund 2, 24.08.2026): Ein angehaengter
+    Schedule blockiert die Aenderung — und er kann zwischen Loesen und
+    Kuendigen NEU erscheinen, weil der subscription.updated-Webhook den
+    Treue-Anschluss wieder anlegt (das Release-Event der eigenen Kuendigung
+    ueberholt den cancel-Aufruf). Eine verlorene Kuendigung heisst: Stripe
+    bucht echtes Geld weiter ab. Darum: bei 'subscription schedule'-Fehler
+    den Zeitplan loesen und erneut versuchen, statt aufzugeben.
+    """
+    for versuch in range(3):
+        try:
+            stripe.Subscription.modify(subscription_id,
+                                       cancel_at_period_end=bool(zum_periodenende))
+            return
+        except stripe.error.InvalidRequestError as e:
+            if "subscription schedule" not in str(e).lower() or versuch == 2:
+                raise
+            log.warning("Schedule blockiert Kuendigungs-Aenderung (%s) — "
+                        "loese und versuche erneut", subscription_id)
+            loese_schedule(subscription_id)
 
 
 # ---------------------------------------------------------------------------
@@ -340,6 +385,18 @@ def _preis_und_intervall(plan: str, monate: int):
     return p
 
 
+def _aktuelle_phase(schedule) -> dict:
+    """Die LAUFENDE Phase eines Zeitplans (Geldfluss-Review Befund 4,
+    24.08.2026): Im ersten Treue-Monat ist phases[0] die laengst beendete
+    Laufzeit-Phase — wer sie blind als 'aktuell' nimmt, baut rueckdatierte
+    Phasen, die Stripe ablehnt oder die falsche Stichtage liefern."""
+    start = (schedule.get("current_phase") or {}).get("start_date")
+    for ph in schedule["phases"]:
+        if start and ph.get("start_date") == start:
+            return ph
+    return schedule["phases"][0]
+
+
 def loese_schedule(subscription_id: str) -> bool:
     """Gibt einen etwaigen Subscription-Schedule frei (Rueckgabe: war einer da?).
 
@@ -356,6 +413,61 @@ def loese_schedule(subscription_id: str) -> bool:
         return False
     stripe.SubscriptionSchedule.release(schedule_id)
     return True
+
+
+def plane_treue_anschluss(subscription_id: str, plan: str,
+                          nur_wenn_frei: bool = False):
+    """TREUE-ANSCHLUSS (AGB Ziffer 7, gebaut 24.08.2026): Nach der bezahlten
+    festen Laufzeit laeuft das Abo automatisch als MONATSABO zur
+    Treuekondition weiter (Effektivpreis der Laufzeit, siehe
+    billing.treue_preis_eur) — statt sich still um dieselbe Laufzeit zum
+    vollen Preis zu verlaengern.
+
+    Mechanik: Zweiphasen-Schedule. Phase 1 = die laufende, bezahlte Periode
+    unveraendert; Phase 2 = EIN Monat zum Treuepreis. end_behavior 'release'
+    loest den Zeitplan danach vom Abo — das Abo laeuft dann von selbst
+    monatlich zum Treuepreis weiter, jederzeit zum Monatsende kuendbar.
+
+    nur_wenn_frei=True (Selbstheilungs-Pfad im invoice.paid-Webhook): NICHT
+    anfassen, wenn schon ein Schedule haengt — der koennte ein vorgemerkter
+    Downgrade sein, dessen Phasen sonst ueberschrieben wuerden.
+
+    Gekuendigte oder beendete Abos bekommen KEINEN Anschluss.
+    Rueckgabe: schedule_id oder None (nichts zu tun).
+    """
+    sub = stripe.Subscription.retrieve(subscription_id)
+    if sub.get("cancel_at_period_end") or sub.get("status") in (
+            "canceled", "incomplete_expired"):
+        return None
+    schedule_id = sub.get("schedule")
+    if schedule_id and nur_wenn_frei:
+        return None
+    if schedule_id:
+        schedule = stripe.SubscriptionSchedule.retrieve(schedule_id)
+    else:
+        schedule = stripe.SubscriptionSchedule.create(from_subscription=subscription_id)
+    aktuelle = _aktuelle_phase(schedule)
+    schedule = stripe.SubscriptionSchedule.modify(
+        schedule.id,
+        end_behavior="release",
+        phases=[
+            {
+                "items": [{"price": aktuelle["items"][0]["price"],
+                           "quantity": aktuelle["items"][0].get("quantity", 1)}],
+                "start_date": aktuelle["start_date"],
+                "end_date": aktuelle["end_date"],
+                "proration_behavior": "none",
+            },
+            {
+                "items": [{"price": _preis_id(_plan_lookup_treue(plan)), "quantity": 1}],
+                "iterations": 1,
+                "proration_behavior": "none",
+                "metadata": {"idoc_plan": plan, "idoc_laufzeit": "1", "idoc_treue": "1"},
+            },
+        ],
+        metadata={"idoc_treue_anschluss": plan},
+    )
+    return schedule.id
 
 
 class ZahlungOffen(Exception):
@@ -425,6 +537,17 @@ def wechsle_sofort(subscription_id: str, plan: str, monate: int,
         bezahlt = (status == "paid") or (not offen and status not in ("draft", "open", "uncollectible"))
         if gehoert_dazu and not bezahlt and status != "processing":
             raise ZahlungOffen(rechnung.get("hosted_invoice_url") or "")
+    # Treue-Anschluss neu aufsetzen (24.08.2026): loese_schedule oben hat
+    # auch einen bestehenden Treue-Zeitplan entfernt — ohne diesen Schritt
+    # wuerde der hochgestufte Vertrag sich wieder still um die volle
+    # Laufzeit verlaengern, entgegen AGB Ziffer 7. Ein Fehler hier darf das
+    # bezahlte Upgrade nicht rueckabwickeln; der invoice.paid-Webhook heilt
+    # einen fehlenden Zeitplan zusaetzlich nach (nur_wenn_frei=True).
+    if int(monate) > 1:
+        try:
+            plane_treue_anschluss(subscription_id, plan)
+        except Exception:
+            log.exception("Treue-Anschluss nach Upgrade nicht angelegt (%s)", subscription_id)
     return neu
 
 
@@ -433,7 +556,10 @@ def plane_wechsel_zum_periodenende(subscription_id: str, plan: str, monate: int)
 
     Nutzt einen Subscription-Schedule: Phase 1 = die laufende Periode
     unveraendert (damit der Kunde bekommt, wofuer er bezahlt hat),
-    Phase 2 = der neue, guenstigere Plan. Rueckgabe: (schedule_id, ab_datum).
+    Phase 2 = der neue, guenstigere Plan. Bei fester Ziel-Laufzeit folgt
+    Phase 3 = Treue-Monatsabo des NEUEN Plans (AGB Ziffer 7, 24.08.2026) —
+    sonst wuerde ausgerechnet der Downgrade den Treue-Anschluss verlieren.
+    Rueckgabe: (schedule_id, ab_datum).
     """
     sub = stripe.Subscription.retrieve(subscription_id)
     schedule_id = sub.get("schedule")
@@ -441,26 +567,34 @@ def plane_wechsel_zum_periodenende(subscription_id: str, plan: str, monate: int)
         schedule = stripe.SubscriptionSchedule.retrieve(schedule_id)
     else:
         schedule = stripe.SubscriptionSchedule.create(from_subscription=subscription_id)
-    aktuelle = schedule["phases"][0]
+    aktuelle = _aktuelle_phase(schedule)
     neuer_preis = _preis_id(_plan_lookup(plan, monate))
+    phasen = [
+        {
+            "items": [{"price": aktuelle["items"][0]["price"],
+                       "quantity": aktuelle["items"][0].get("quantity", 1)}],
+            "start_date": aktuelle["start_date"],
+            "end_date": aktuelle["end_date"],
+            "proration_behavior": "none",
+        },
+        {
+            "items": [{"price": neuer_preis, "quantity": 1}],
+            "iterations": 1,
+            "proration_behavior": "none",
+            "metadata": {"idoc_plan": plan, "idoc_laufzeit": str(monate)},
+        },
+    ]
+    if int(monate) > 1:
+        phasen.append({
+            "items": [{"price": _preis_id(_plan_lookup_treue(plan)), "quantity": 1}],
+            "iterations": 1,
+            "proration_behavior": "none",
+            "metadata": {"idoc_plan": plan, "idoc_laufzeit": "1", "idoc_treue": "1"},
+        })
     schedule = stripe.SubscriptionSchedule.modify(
         schedule.id,
         end_behavior="release",
-        phases=[
-            {
-                "items": [{"price": aktuelle["items"][0]["price"],
-                           "quantity": aktuelle["items"][0].get("quantity", 1)}],
-                "start_date": aktuelle["start_date"],
-                "end_date": aktuelle["end_date"],
-                "proration_behavior": "none",
-            },
-            {
-                "items": [{"price": neuer_preis, "quantity": 1}],
-                "iterations": 1,
-                "proration_behavior": "none",
-                "metadata": {"idoc_plan": plan, "idoc_laufzeit": str(monate)},
-            },
-        ],
+        phases=phasen,
         metadata={"idoc_geplanter_plan": plan, "idoc_geplante_laufzeit": str(monate)},
     )
     return schedule.id, aktuelle["end_date"]
@@ -507,6 +641,14 @@ def beende_alle_subscriptions(customer_id: str) -> int:
     return n
 
 
-def widerrufe_geplanten_wechsel(subscription_id: str) -> None:
-    """Nimmt einen vorgemerkten Downgrade zurueck (Schedule aufloesen)."""
+def widerrufe_geplanten_wechsel(subscription_id: str, plan: str = None,
+                                monate=None) -> None:
+    """Nimmt einen vorgemerkten Downgrade zurueck (Schedule aufloesen).
+
+    24.08.2026: Der geloeste Schedule enthielt auch den Treue-Anschluss des
+    LAUFENDEN Plans — bei fester Laufzeit wird er direkt wieder aufgesetzt,
+    sonst ginge die AGB-Zusage durch den Widerruf still verloren.
+    """
     loese_schedule(subscription_id)
+    if plan and int(monate or 0) > 1:
+        plane_treue_anschluss(subscription_id, plan)
