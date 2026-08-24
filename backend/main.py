@@ -98,7 +98,11 @@ SMTP_USER = os.environ.get("SMTP_USER", "kontakt@inklutec.de")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 SMTP_FROM = os.environ.get("SMTP_FROM", "kontakt@inklutec.de")
 NOTIFICATION_EMAIL = os.environ.get("NOTIFICATION_EMAIL", SMTP_FROM)
-DAILY_IMAGE_LIMIT = int(os.environ.get("DAILY_IMAGE_LIMIT", "100"))
+# Technisches Tageslimit je Konto. Steve 24.08.2026: von 100 auf 500
+# erhoeht — der Missbrauchsschutz laeuft jetzt ueber die Credits; das
+# Limit ist nur noch Schutzventil gegen AWS-Drosselung und Fehlerschleifen.
+# Einzelne Grosskunden bekommen ueber users.api_tageslimit mehr.
+DAILY_IMAGE_LIMIT = int(os.environ.get("DAILY_IMAGE_LIMIT", "500"))
 
 
 def effektives_api_tageslimit(user_row) -> int:
