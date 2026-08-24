@@ -3854,3 +3854,36 @@ msgstr "Merci ! Votre message nous est bien parvenu — nous répondrons par e-m
 
 msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
 msgstr "Veuillez indiquer votre adresse e-mail et un message."
+
+msgid "Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung."
+msgstr "Important : avec renouvellement automatique uniquement pour les professionnels (B2B). Si, exceptionnellement, un consommateur commande sur facture, décochez « Se renouvelle automatiquement » — le renouvellement ne se fait alors qu'activement via une nouvelle facture ; le client reçoit automatiquement un rappel au préalable."
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete."
+msgstr "Si les crédits mensuels ne suffisent pas : achetez-en simplement davantage. Les crédits achetés n'expirent pas — vous pouvez les utiliser même après la fin d'un abonnement. Les crédits mensuels s'y ajoutent toujours ; plus de membres dans l'équipe n'augmentent pas le quota, des crédits supplémentaires sont disponibles via les packs."
+
+msgid "Bei Fragen wende dich gerne an {mail}."
+msgstr "Pour toute question, contactez {mail}."
+
+msgid "danke für deine Registrierung bei InkluDocs – deinem KI-Werkzeug für barrierefreie Dokumente und Bilder."
+msgstr "merci de votre inscription à InkluDocs – votre outil d'IA pour des documents et images accessibles."
+
+msgid "Bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren:"
+msgstr "Veuillez confirmer votre adresse e-mail pour activer votre compte :"
+
+msgid "Melde dich auf {url} an."
+msgstr "Connectez-vous sur {url}."
+
+msgid "Nachdem du deine E-Mail-Adresse bestätigt hast:"
+msgstr "Après avoir confirmé votre adresse e-mail :"
+
+msgid "Lade ein PDF oder Bilder hoch oder gib eine Website-Adresse ein."
+msgstr "Téléversez un PDF ou des images, ou saisissez l'adresse d'un site web."
+
+msgid "Klicke auf „Alt-Texte generieren“."
+msgstr "Cliquez sur « Générer les textes alternatifs »."
+
+msgid "Bearbeite die Alt-Texte bei Bedarf und exportiere sie."
+msgstr "Modifiez les textes alternatifs si nécessaire et exportez-les."
+
+msgid "hier ist dein neuer Bestätigungslink:"
+msgstr "voici votre nouveau lien de confirmation :"

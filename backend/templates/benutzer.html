@@ -68,6 +68,10 @@
       <section class="dash-card" aria-labelledby="abo-h" id="aboZuweisenSection">
         <h2 id="abo-h" tabindex="-1">{{ _('Abo zuweisen (Rechnungsweg)') }}</h2>
         <p class="dash-sub">{{ _('Für Bestellungen auf Rechnung: Konto per E-Mail suchen, Plan und Laufzeit setzen. Der Kunde wird per E-Mail informiert und kann jederzeit selbst kündigen.') }}</p>
+        {# Rechtsregel (Steve, 24.08.2026): Auto-Verlaengerung um feste
+           Laufzeiten ist nur unter Unternehmern zulaessig (Par. 309 Nr. 9
+           BGB schuetzt Verbraucher). #}
+        <p class="dash-sub">{{ _('Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung.') }}</p>
         <form id="aboZuweisenForm" novalidate>
           <div class="dash-field">
             <label for="aboEmail">{{ _('E-Mail des bestehenden Kontos') }}</label>

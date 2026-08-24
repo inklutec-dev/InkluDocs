@@ -3854,3 +3854,36 @@ msgstr "¡Gracias! Tu mensaje nos ha llegado — responderemos por correo electr
 
 msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
 msgstr "Indica tu dirección de correo electrónico y un mensaje."
+
+msgid "Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung."
+msgstr "Importante: con renovación automática solo para empresas (B2B). Si excepcionalmente un consumidor contrata por factura, desmarca «Se renueva automáticamente» — la renovación solo se hará activamente con una nueva factura; el cliente recibe antes un recordatorio automático."
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete."
+msgstr "Si los créditos mensuales no bastan: simplemente compra más. Los créditos comprados no caducan — puedes usarlos incluso después de que termine una suscripción. Los créditos mensuales siempre se suman; más usuarios en el equipo no aumentan el contingente, más créditos se obtienen con los paquetes."
+
+msgid "Bei Fragen wende dich gerne an {mail}."
+msgstr "Si tienes preguntas, escribe a {mail}."
+
+msgid "danke für deine Registrierung bei InkluDocs – deinem KI-Werkzeug für barrierefreie Dokumente und Bilder."
+msgstr "gracias por registrarte en InkluDocs – tu herramienta de IA para documentos e imágenes accesibles."
+
+msgid "Bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren:"
+msgstr "Confirma tu dirección de correo electrónico para activar tu cuenta:"
+
+msgid "Melde dich auf {url} an."
+msgstr "Inicia sesión en {url}."
+
+msgid "Nachdem du deine E-Mail-Adresse bestätigt hast:"
+msgstr "Cuando hayas confirmado tu dirección de correo electrónico:"
+
+msgid "Lade ein PDF oder Bilder hoch oder gib eine Website-Adresse ein."
+msgstr "Sube un PDF o imágenes, o introduce la dirección de un sitio web."
+
+msgid "Klicke auf „Alt-Texte generieren“."
+msgstr "Haz clic en «Generar textos alternativos»."
+
+msgid "Bearbeite die Alt-Texte bei Bedarf und exportiere sie."
+msgstr "Edita los textos alternativos si es necesario y expórtalos."
+
+msgid "hier ist dein neuer Bestätigungslink:"
+msgstr "aquí tienes tu nuevo enlace de confirmación:"

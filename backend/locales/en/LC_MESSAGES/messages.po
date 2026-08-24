@@ -3854,3 +3854,36 @@ msgstr "Thank you! Your message has reached us — we will reply by email to the
 
 msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
 msgstr "Please provide your email address and a message."
+
+msgid "Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung."
+msgstr "Important: With automatic renewal only for businesses (B2B). If, as an exception, a consumer books on invoice, untick “Renews automatically” — renewal then only happens actively via a new invoice; the customer automatically receives a reminder beforehand."
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete."
+msgstr "If the monthly credits are not enough: simply buy more. Purchased credits never expire — you can use them up even after a subscription ends. The monthly credits always come on top; more team members do not increase the quota, more credits are available via the packages."
+
+msgid "Bei Fragen wende dich gerne an {mail}."
+msgstr "If you have any questions, feel free to contact {mail}."
+
+msgid "danke für deine Registrierung bei InkluDocs – deinem KI-Werkzeug für barrierefreie Dokumente und Bilder."
+msgstr "thank you for registering with InkluDocs – your AI tool for accessible documents and images."
+
+msgid "Bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren:"
+msgstr "Please confirm your email address to activate your account:"
+
+msgid "Melde dich auf {url} an."
+msgstr "Sign in at {url}."
+
+msgid "Nachdem du deine E-Mail-Adresse bestätigt hast:"
+msgstr "Once you have confirmed your email address:"
+
+msgid "Lade ein PDF oder Bilder hoch oder gib eine Website-Adresse ein."
+msgstr "Upload a PDF or images, or enter a website address."
+
+msgid "Klicke auf „Alt-Texte generieren“."
+msgstr "Click “Generate alt texts”."
+
+msgid "Bearbeite die Alt-Texte bei Bedarf und exportiere sie."
+msgstr "Edit the alt texts if needed and export them."
+
+msgid "hier ist dein neuer Bestätigungslink:"
+msgstr "here is your new confirmation link:"

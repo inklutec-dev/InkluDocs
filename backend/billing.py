@@ -430,25 +430,19 @@ def starte_kontingent_neu(konto_id: int) -> None:
 def pakete_rest(konto_id: int) -> int:
     """Summe der noch nutzbaren Zusatz-Credits.
 
-    Zwei Verfalls-Arten (Punkt 4, Michaels Regel 03.08.2026):
-    - verfaellt_am gesetzt: klassisches Datums-Paket (Alt-Modell, 12 Monate).
-    - verfaellt_am NULL: "verfaellt erst mit der Kuendigung" — das Paket gilt,
-      solange das Konto einen AKTIVEN Bezahl-Plan hat (effektiver_plan !=
-      free). Faellt das Abo aus (Auto-Rueckfall), ruhen diese Credits; bei
-      Verlaengerung leben sie wieder auf — geloescht wird nie (Beleg).
+    Zwei Verfalls-Arten (Steves Regel 24.08.2026, ersetzt das Ruhen):
+    - verfaellt_am NULL: GEKAUFTES Paket — verfaellt nie und ist IMMER
+      nutzbar, auch ohne Abo im Free-Plan ("bezahlt ist bezahlt": wer
+      kuendigt, braucht seine Pakete trotzdem auf).
+    - verfaellt_am gesetzt: Datums-Paket (Alt-Modell/Kulanz-Geschenke).
     """
     conn = get_db()
     try:
-        konto = conn.execute(
-            "SELECT COALESCE(plan, 'free') AS plan, plan_gueltig_bis "
-            "FROM users WHERE id = ?", (konto_id,)).fetchone()
-        abo_aktiv = 1 if (konto is not None
-                          and effektiver_plan(konto) != "free") else 0
         row = conn.execute(
             "SELECT COALESCE(SUM(verbleibend), 0) FROM quota_pakete "
             "WHERE user_id = ? AND verbleibend > 0 AND "
-            "(verfaellt_am > datetime('now') OR (verfaellt_am IS NULL AND ?))",
-            (konto_id, abo_aktiv),
+            "(verfaellt_am IS NULL OR verfaellt_am > datetime('now'))",
+            (konto_id,),
         ).fetchone()
         return int(row[0])
     finally:
@@ -673,17 +667,16 @@ def _pakete_abbuchen(conn, konto_id: int) -> None:
     abzug_gesamt = soll - bereits
     if abzug_gesamt <= 0:
         return
-    # Kuendigungs-Pakete (verfaellt_am NULL) nur bei aktivem Bezahl-Plan
-    # anfassen — nach dem Auto-Rueckfall auf Free RUHEN sie (gleiche Regel
-    # wie in pakete_rest, sonst wuerde Free-Ueberhang ruhende Credits
-    # aufzehren). Datums-Pakete zuerst (frueheste zuerst), NULL zuletzt.
-    abo_aktiv = 1 if plan != "free" else 0
+    # Gekaufte Pakete (verfaellt_am NULL) sind IMMER nutzbar — auch im
+    # Free-Plan nach einer Kuendigung (Steves Regel 24.08.2026, ersetzt
+    # das fruehere Ruhen). Datums-Pakete zuerst (frueheste zuerst, damit
+    # nichts unnoetig verfaellt), unbefristete zuletzt.
     pakete = conn.execute(
         "SELECT id, verbleibend FROM quota_pakete "
         "WHERE user_id = ? AND verbleibend > 0 AND "
-        "(verfaellt_am > datetime('now') OR (verfaellt_am IS NULL AND ?)) "
+        "(verfaellt_am IS NULL OR verfaellt_am > datetime('now')) "
         "ORDER BY (verfaellt_am IS NULL), verfaellt_am, id",
-        (konto_id, abo_aktiv),
+        (konto_id,),
     ).fetchall()
     for paket in pakete:
         if abzug_gesamt <= 0:

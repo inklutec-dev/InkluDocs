@@ -3857,3 +3857,36 @@ msgstr ""
 
 msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
 msgstr ""
+
+msgid "Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung."
+msgstr ""
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete."
+msgstr ""
+
+msgid "Bei Fragen wende dich gerne an {mail}."
+msgstr ""
+
+msgid "danke für deine Registrierung bei InkluDocs – deinem KI-Werkzeug für barrierefreie Dokumente und Bilder."
+msgstr ""
+
+msgid "Bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren:"
+msgstr ""
+
+msgid "Melde dich auf {url} an."
+msgstr ""
+
+msgid "Nachdem du deine E-Mail-Adresse bestätigt hast:"
+msgstr ""
+
+msgid "Lade ein PDF oder Bilder hoch oder gib eine Website-Adresse ein."
+msgstr ""
+
+msgid "Klicke auf „Alt-Texte generieren“."
+msgstr ""
+
+msgid "Bearbeite die Alt-Texte bei Bedarf und exportiere sie."
+msgstr ""
+
+msgid "hier ist dein neuer Bestätigungslink:"
+msgstr ""

@@ -3415,3 +3415,36 @@ msgstr "Tack! Ditt meddelande har nått oss — vi svarar via e-post till den an
 
 msgid "Bitte gib deine E-Mail-Adresse und eine Nachricht an."
 msgstr "Ange din e-postadress och ett meddelande."
+
+msgid "Wichtig: Mit automatischer Verlängerung nur für Unternehmer (B2B). Bucht ausnahmsweise ein Verbraucher auf Rechnung, das Häkchen „Verlängert sich automatisch“ entfernen — verlängert wird dann nur aktiv per neuer Rechnung; der Kunde bekommt vorher automatisch eine Erinnerung."
+msgstr "Viktigt: Med automatisk förlängning endast för företag (B2B). Om en konsument undantagsvis bokar mot faktura, avmarkera ”Förlängs automatiskt” — förlängning sker då endast aktivt via en ny faktura; kunden får automatiskt en påminnelse i förväg."
+
+msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete."
+msgstr "Om månadskrediterna inte räcker: köp bara fler. Köpta krediter förfaller inte — du kan använda dem även efter att ett abonnemang har upphört. Månadskrediterna kommer alltid ovanpå; fler användare i teamet ökar inte kvoten, fler krediter finns via paketen."
+
+msgid "Bei Fragen wende dich gerne an {mail}."
+msgstr "Har du frågor, hör av dig till {mail}."
+
+msgid "danke für deine Registrierung bei InkluDocs – deinem KI-Werkzeug für barrierefreie Dokumente und Bilder."
+msgstr "tack för din registrering hos InkluDocs – ditt AI-verktyg för tillgängliga dokument och bilder."
+
+msgid "Bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren:"
+msgstr "Bekräfta din e-postadress för att aktivera ditt konto:"
+
+msgid "Melde dich auf {url} an."
+msgstr "Logga in på {url}."
+
+msgid "Nachdem du deine E-Mail-Adresse bestätigt hast:"
+msgstr "När du har bekräftat din e-postadress:"
+
+msgid "Lade ein PDF oder Bilder hoch oder gib eine Website-Adresse ein."
+msgstr "Ladda upp en PDF eller bilder, eller ange en webbadress."
+
+msgid "Klicke auf „Alt-Texte generieren“."
+msgstr "Klicka på ”Generera alt-texter”."
+
+msgid "Bearbeite die Alt-Texte bei Bedarf und exportiere sie."
+msgstr "Redigera alt-texterna vid behov och exportera dem."
+
+msgid "hier ist dein neuer Bestätigungslink:"
+msgstr "här är din nya bekräftelselänk:"

@@ -54,7 +54,7 @@
             </ul>
 
             <h2>{{ _('Zusatzpakete') }}</h2>
-            <p>{{ _('Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange dein Abo läuft — die monatlichen Credits kommen immer obendrauf. Mehr Nutzer im Team erhöhen das Kontingent nicht; mehr Credits gibt es über die Pakete.') }}</p>
+            <p>{{ _('Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete.') }}</p>
             <ul>
                 {% for anzahl, preis in pakete %}
                 <li>{{ _('{n} Credits für {preis} €').format(n=anzahl, preis=preis) }}</li>

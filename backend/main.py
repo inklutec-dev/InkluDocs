@@ -1452,27 +1452,26 @@ async def admin_create_user(request: Request, user: dict = Depends(require_full_
     send_welcome = data.get("send_email", True)
     email_sent = False
     if send_welcome:
-        email_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
-<h1 style="color:#1b2a4a;">Willkommen bei InkluDocs</h1>
-<p>Hallo {display_name},</p>
-<p>dein Zugang zu InkluDocs wurde erstellt. InkluDocs ist ein KI-gestützter Alt-Text-Generator für barrierefreie Dokumente und Bilder.</p>
-<h2 style="color:#e87722;font-size:1.1rem;">Deine Zugangsdaten</h2>
-<p><strong>Login-Seite:</strong> <a href="{BASE_URL}">{BASE_URL}</a></p>
-<p><strong>E-Mail:</strong> {email}</p>
-<p><strong>Passwort:</strong> {password}</p>
-<p style="background:#fff7ed;padding:1rem;border-left:3px solid #e87722;border-radius:0 4px 4px 0;">
-Bitte ändere dein Passwort nach dem ersten Login unter <strong>Einstellungen</strong>.</p>
-<h2 style="color:#e87722;font-size:1.1rem;">So funktioniert es</h2>
-<ol>
-<li>Melde dich auf <a href="{BASE_URL}">{BASE_URL}</a> an</li>
-<li>Lade ein PDF, Bilder hoch oder gib eine Website-URL ein</li>
-<li>Klicke auf "Alt-Texte generieren"</li>
-<li>Bearbeite die Alt-Texte bei Bedarf und exportiere sie</li>
-</ol>
-<p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
-</body></html>"""
+        # Steve 24.08.2026: gleicher Karten-Rahmen, Kontrastfarbe und
+        # verallgemeinerter Claim wie bei allen anderen Konto-Mails.
+        inhalt = (
+            f'{_MAIL_P}Hallo {display_name},</p>'
+            f'{_MAIL_P}dein Zugang zu InkluDocs wurde erstellt — deinem KI-Werkzeug '
+            'für barrierefreie Dokumente und Bilder.</p>'
+            '<h2 style="color:#1b2a4a;font-size:17px;margin:18px 0 10px;">Deine Zugangsdaten</h2>'
+            f'{_MAIL_P}<strong>Login-Seite:</strong> <a href="{BASE_URL}">{BASE_URL}</a><br>'
+            f'<strong>E-Mail:</strong> {email}<br>'
+            f'<strong>Passwort:</strong> {password}</p>'
+            '<p style="background-color:#fff3eb;padding:14px;border-left:3px solid #c75000;'
+            'border-radius:0 4px 4px 0;margin:0 0 14px;line-height:1.55;">'
+            'Bitte ändere dein Passwort nach dem ersten Login unter <strong>Einstellungen</strong>.</p>'
+            '<h2 style="color:#1b2a4a;font-size:17px;margin:18px 0 10px;">So funktioniert InkluDocs</h2>'
+            '<ol style="line-height:1.7;margin:0 0 4px;padding-left:22px;">'
+            f'<li>Melde dich auf <a href="{BASE_URL}">{BASE_URL}</a> an.</li>'
+            '<li>Lade ein PDF oder Bilder hoch oder gib eine Website-Adresse ein.</li>'
+            '<li>Klicke auf „Alt-Texte generieren“.</li>'
+            '<li>Bearbeite die Alt-Texte bei Bedarf und exportiere sie.</li></ol>')
+        email_body = _auth_mail_rahmen("de", "Willkommen bei InkluDocs", inhalt)
         email_sent = send_email(email, f"Dein InkluDocs-Zugang", email_body)
 
     msg = f"Benutzer {display_name} ({email}) wurde erstellt"
@@ -1960,18 +1959,20 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
         finally:
             conn.close()
         annahme_url = f"{BASE_URL}/team-einladung/{einladungs_token}"
-        email_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
-<h1 style="color:#1b2a4a;">Einladung in ein InkluDocs-Team</h1>
-<p>Hallo,</p>
-<p><strong>{inhaber_name}</strong> möchte dich bei InkluDocs in {team_label} aufnehmen. Ihr arbeitet dann aus einem gemeinsamen Credit-Kontingent; dein Konto, deine Projekte und ein eventuell vorhandenes eigenes Abo bleiben unberührt — du kannst jederzeit wählen, aus welchem Guthaben du arbeitest.</p>
-<p>Wenn du einverstanden bist, bestätige hier:</p>
-<p><a href="{annahme_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Team-Einladung annehmen</a></p>
-<p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {annahme_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">Der Link ist 7 Tage gültig und funktioniert nur, wenn du mit deinem Konto ({html.escape(email)}) angemeldet bist. Wenn du die Einladung nicht annehmen möchtest, ignoriere diese Mail einfach — an deinem Konto ändert sich dann nichts.</p>
-<p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
-</body></html>"""
+        # Steve 24.08.2026: neuer Karten-Rahmen + Kontrastfarbe wie alle Mails.
+        inhalt = (
+            f'{_MAIL_P}Hallo,</p>'
+            f'{_MAIL_P}<strong>{inhaber_name}</strong> möchte dich bei InkluDocs in {team_label} '
+            'aufnehmen. Ihr arbeitet dann aus einem gemeinsamen Credit-Kontingent; dein Konto, '
+            'deine Projekte und ein eventuell vorhandenes eigenes Abo bleiben unberührt — du '
+            'kannst jederzeit wählen, aus welchem Guthaben du arbeitest.</p>'
+            f'{_MAIL_P}Wenn du einverstanden bist, bestätige hier:</p>'
+            + _mail_knopf(annahme_url, "Team-Einladung annehmen")
+            + f'{_MAIL_KLEIN}Oder kopiere diesen Link: {annahme_url}</p>'
+            + f'{_MAIL_KLEIN}Der Link ist 7 Tage gültig und funktioniert nur, wenn du mit deinem '
+            f'Konto ({html.escape(email)}) angemeldet bist. Wenn du die Einladung nicht annehmen '
+            'möchtest, ignoriere diese Mail einfach — an deinem Konto ändert sich dann nichts.</p>')
+        email_body = _auth_mail_rahmen("de", "Einladung in ein InkluDocs-Team", inhalt)
         # Betreff bewusst OHNE Nutzereingabe (Header-Injektionsflaeche, Befund 7).
         send_email(email, "Einladung in ein InkluDocs-Team", email_body, bcc_admin=False)
         _einladung_attempts[inhaber["id"]].append(_jetzt)
@@ -2008,18 +2009,21 @@ async def team_einladen(request: Request, user: dict = Depends(get_current_user)
     reset_token = create_password_reset_token(neu_id)
     reset_url = f"{BASE_URL}/reset?token={reset_token}"
     sicherer_name = html.escape(display_name)
-    email_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
-<h1 style="color:#1b2a4a;">Einladung in ein InkluDocs-Team</h1>
-<p>Hallo {sicherer_name},</p>
-<p><strong>{inhaber_name}</strong> möchte dich bei InkluDocs in {team_label} aufnehmen. InkluDocs ist ein KI-gestützter Alt-Text-Generator für barrierefreie Dokumente und Bilder — als Team-Mitglied arbeitet ihr aus einem gemeinsamen Credit-Kontingent.</p>
-<p>Du hast noch kein Konto bei uns. Zum Loslegen registrierst du dich einfach, indem du einmal dein persönliches Passwort setzt — damit trittst du zugleich dem Team bei:</p>
-<p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">Passwort festlegen und starten</a></p>
-<p style="color:#64748b;font-size:0.9rem;">Oder kopiere diesen Link: {reset_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">Der Link ist 1 Stunde gültig. Danach kannst du auf <a href="{BASE_URL}">{BASE_URL}</a> jederzeit die Funktion „Passwort vergessen“ nutzen — dein Konto ist die Adresse {html.escape(email)}.</p>
-<p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
-</body></html>"""
+    # Steve 24.08.2026: neuer Rahmen + verallgemeinerter Claim (nicht nur Alt-Texte).
+    inhalt = (
+        f'{_MAIL_P}Hallo {sicherer_name},</p>'
+        f'{_MAIL_P}<strong>{inhaber_name}</strong> möchte dich bei InkluDocs in {team_label} '
+        'aufnehmen. InkluDocs ist dein KI-Werkzeug für barrierefreie Dokumente und Bilder — '
+        'als Team-Mitglied arbeitet ihr aus einem gemeinsamen Credit-Kontingent.</p>'
+        f'{_MAIL_P}Du hast noch kein Konto bei uns. Zum Loslegen registrierst du dich einfach, '
+        'indem du einmal dein persönliches Passwort setzt — damit trittst du zugleich dem '
+        'Team bei:</p>'
+        + _mail_knopf(reset_url, "Passwort festlegen und starten")
+        + f'{_MAIL_KLEIN}Oder kopiere diesen Link: {reset_url}</p>'
+        + f'{_MAIL_KLEIN}Der Link ist 1 Stunde gültig. Danach kannst du auf '
+        f'<a href="{BASE_URL}">{BASE_URL}</a> jederzeit die Funktion „Passwort vergessen“ '
+        f'nutzen — dein Konto ist die Adresse {html.escape(email)}.</p>')
+    email_body = _auth_mail_rahmen("de", "Einladung in ein InkluDocs-Team", inhalt)
     send_email(email, "Einladung in ein InkluDocs-Team", email_body, bcc_admin=False)
     _einladung_attempts[inhaber["id"]].append(_jetzt)
     return neutrale_antwort
@@ -2157,14 +2161,13 @@ async def team_mitglied_entfernen(mitglied_id: int, user: dict = Depends(get_cur
         conn.close()
     try:
         team_label = html.escape(inhaber.get("team_name") or "") or f"dem Team von {html.escape(inhaber['display_name'])}"
-        info_body = f"""<!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
-<h1 style="color:#1b2a4a;">Änderung an deinem InkluDocs-Konto</h1>
-<p>Hallo {html.escape(ziel['display_name'])},</p>
-<p>du wurdest aus {team_label} entfernt. Ab jetzt arbeitest du wieder mit deinem eigenen Tarif und dem Guthaben, das dazu gehört — hast du kein eigenes Abo, ist das der kostenlose Free-Tarif. Dein Konto und alle deine Projekte bleiben unverändert bestehen.</p>
-<p>Bei Fragen wende dich an <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>.</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>
-</body></html>"""
+        inhalt = (
+            f"{_MAIL_P}Hallo {html.escape(ziel['display_name'])},</p>"
+            f'{_MAIL_P}du wurdest aus {team_label} entfernt. Ab jetzt arbeitest du wieder mit '
+            'deinem eigenen Tarif und dem Guthaben, das dazu gehört — hast du kein eigenes Abo, '
+            'ist das der kostenlose Free-Tarif. Dein Konto und alle deine Projekte bleiben '
+            'unverändert bestehen.</p>')
+        info_body = _auth_mail_rahmen("de", "Änderung an deinem InkluDocs-Konto", inhalt)
         send_email(ziel["email"], "InkluDocs: Team-Mitgliedschaft beendet", info_body, bcc_admin=False)
     except Exception:
         logger.exception("Info-Mail an entferntes Mitglied %s fehlgeschlagen", mitglied_id)
@@ -2425,9 +2428,10 @@ async def oeffentliche_kuendigung(request: Request):
                 "widerruf": "Widerruf innerhalb von 14 Tagen"}[art]
     saetze = [f"Hallo {html.escape(name) or 'zusammen'},",
               f"deine Erklärung ist bei uns eingegangen: {art_text}, "
-              f"eingegangen am {datetime.now().strftime('%d.%m.%Y um %H:%M Uhr')}."]
+              f"eingegangen am {_datum_lang(datetime.now().strftime('%Y-%m-%d'))} "
+              f"um {datetime.now().strftime('%H:%M')} Uhr."]
     if hat_abo:
-        saetze.append(f"Dein Abo endet damit am {wirksam_zum}. Bis dahin kannst du es mit "
+        saetze.append(f"Dein Abo endet damit am {_datum_lang(wirksam_zum)}. Bis dahin kannst du es mit "
                       "vollem Guthaben weiternutzen; danach läuft dein Konto im "
                       "kostenlosen Free-Tarif weiter.")
         saetze.append("Falls du das nicht wolltest: Im Bereich „Abo &amp; Verbrauch“ kannst du "
@@ -2445,7 +2449,7 @@ async def oeffentliche_kuendigung(request: Request):
                    else "InkluDocs: Deine Kündigung ist eingegangen"),
                   ("Widerruf bestätigt" if art == "widerruf" else "Kündigung bestätigt"),
                   saetze)
-        _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs: Kündigung über den Kündigungsknopf ({mail})",
+        _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs: Kündigung über die Kündigungsseite ({mail})",
                   "Kündigung eingegangen",
                   [f"Adresse: {html.escape(mail)}",
                    f"Name: {html.escape(name) or '(ohne)'}",
@@ -2579,7 +2583,7 @@ def _team_enddatum_mail(inhaber: dict, bis: str, grund: str) -> None:
                       "Änderung an eurem Team",
                       [f"Hallo {html.escape(r['display_name'] or '')},",
                        f"{html.escape(inhaber['display_name'])} hat das Abo für {team_label} geändert: "
-                       f"Das gemeinsame Guthaben endet am {bis}.",
+                       f"Das gemeinsame Guthaben endet am {_datum_lang(bis)}.",
                        "Bis dahin ändert sich für dich nichts. Danach arbeitest du automatisch "
                        "wieder mit deinem eigenen Guthaben (oder dem kostenlosen Free-Plan) "
                        "weiter — dein Konto und alle deine Projekte bleiben unverändert."])
@@ -2777,9 +2781,9 @@ async def abo_wechseln(request: Request, user: dict = Depends(get_current_user))
                   "Plan-Wechsel vorgemerkt",
                   [f"Hallo {html.escape(db_user['display_name'])},",
                    f"dein Wechsel auf den Plan {PLAN_ANZEIGENAMEN.get(plan, plan)} ist vorgemerkt. "
-                   f"Bis zum {bis} läuft dein jetziger Plan unverändert weiter — du behältst also "
+                   f"Bis zum {_datum_lang(bis)} läuft dein jetziger Plan unverändert weiter — du behältst also "
                    "alles, wofür du bezahlt hast.",
-                   f"Am {bis} stellen wir dann automatisch um; ab da gilt der neue Plan mit "
+                   f"Am {_datum_lang(bis)} stellen wir dann automatisch um; ab da gilt der neue Plan mit "
                    f"{billing.PLAN_KONTINGENTE[plan]} Credits im Monat.",
                    "Du kannst den Wechsel bis dahin jederzeit auf der Seite „Abo & Verbrauch“ "
                    "wieder zurücknehmen."])
@@ -2999,11 +3003,11 @@ async def stripe_webhook(request: Request):
                            f"für {monate} Monate über Stripe gebucht (gültig bis {str(gueltig_bis)[:10]})."])
             elif obj.get("mode") == "payment" and meta.get("idoc_paket"):
                 groesse = int(meta["idoc_paket"])
-                # Kuendigungs-Verfall nur bei aktivem Bezahl-Plan sinnvoll —
-                # sonst Datums-Paket (gleiche Regel wie der Admin-Weg, K4).
-                verfall = None if billing.effektiver_plan(target) != "free" else 12
+                # Steves Regel (24.08.2026): GEKAUFTE Pakete verfallen nie
+                # und sind immer nutzbar — auch fuer Free-Konten. Datums-
+                # Verfall gibt es nur noch fuer Kulanz-Geschenke (Admin-Weg).
                 billing.schenke_credits(user_id, groesse, notiz="Stripe-Kauf",
-                                        quelle="stripe", verfall_monate=verfall)
+                                        quelle="stripe", verfall_monate=None)
                 _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Stripe-Paketkauf: {target['email']}",
                           "Credit-Paket gekauft",
                           [f"{html.escape(target['email'])} hat {groesse} Zusatz-Credits über "
@@ -3101,7 +3105,7 @@ async def stripe_webhook(request: Request):
                                            f"deine feste Laufzeit ist abgelaufen. Wie in den Nutzungsbedingungen "
                                            f"zugesagt, läuft dein {PLAN_ANZEIGENAMEN.get(neuer_plan, neuer_plan)}-Abo "
                                            f"jetzt als Monatsabo zur Treuekondition weiter: {_preis} € pro Monat — "
-                                           "der Monatspreis deiner bisherigen Laufzeit, günstiger als das reguläre Monatsabo.",
+                                           "dein bisheriger Monatspreis, jetzt ohne feste Laufzeit und monatlich kündbar.",
                                            "Du kannst jederzeit zum Ende des laufenden Monats kündigen oder erneut "
                                            "eine feste Laufzeit buchen — beides auf der Seite „Abo &amp; Verbrauch“."])
                             except Exception:
@@ -3219,17 +3223,35 @@ async def stripe_webhook(request: Request):
 PLAN_ANZEIGENAMEN = {"free": "Free", "single": "Single", "team": "Team",
                      "enterprise": "Enterprise"}
 
-_MAIL_FUSS = ('<p>Bei Fragen wende dich an <a href="mailto:support@inkludocs.de">support@inkludocs.de</a>.</p>'
-              '<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">'
-              'InkluDocs ist ein Produkt von INKLUTEC – kontakt@inklutec.de</p>')
+_MAIL_FUSS = ('<p style="margin:0 0 6px;">Bei Fragen wende dich an '
+              '<a href="mailto:support@inkludocs.de" style="color:#1b2a4a;">support@inkludocs.de</a>.</p>'
+              '<p style="color:#64748b;font-size:13px;margin:18px 0 0;">'
+              'InkluDocs ist ein Produkt von INKLUTEC · kontakt@inklutec.de</p>')
 
 
 def _abo_mail(empfaenger: str, betreff: str, ueberschrift: str, saetze: list) -> None:
-    """Einheitlicher Rahmen fuer alle Abo-Mails (Bestaetigung/Erinnerung)."""
-    absaetze = "".join(f"<p>{s}</p>" for s in saetze)
-    body = (f'<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"></head>'
-            f'<body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">'
-            f'<h1 style="color:#1b2a4a;">{ueberschrift}</h1>{absaetze}{_MAIL_FUSS}</body></html>')
+    """Einheitlicher Rahmen fuer alle Abo-Mails (Bestaetigung/Erinnerung).
+
+    Aufgeraeumtes, mail-client-sicheres Layout (Steve, 24.08.2026): alle
+    Stile inline, ein Markenkopf, ruhige Abstaende, klare Fusszeile —
+    wirkt auf ALLE Systemmails gleichzeitig.
+    """
+    absaetze = "".join(
+        f'<p style="margin:0 0 14px;line-height:1.55;">{s}</p>' for s in saetze)
+    body = (
+        '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"></head>'
+        '<body style="margin:0;padding:0;background-color:#f1f5f9;">'
+        '<div style="max-width:600px;margin:0 auto;padding:24px 16px;'
+        'font-family:Arial,Helvetica,sans-serif;color:#1e293b;font-size:16px;">'
+        '<p style="margin:0 0 18px;font-size:22px;font-weight:bold;color:#1b2a4a;">'
+        'Inklu<span style="font-weight:normal;">Docs</span></p>'
+        '<div style="background-color:#ffffff;border-radius:8px;padding:28px 24px;'
+        'border:1px solid #e2e8f0;">'
+        f'<h1 style="color:#1b2a4a;font-size:20px;margin:0 0 18px;">{ueberschrift}</h1>'
+        f'{absaetze}'
+        '</div>'
+        f'<div style="padding:18px 8px 0;font-size:14px;color:#475569;">{_MAIL_FUSS}</div>'
+        '</div></body></html>')
     send_email(empfaenger, betreff, body, bcc_admin=False)
 
 
@@ -3260,6 +3282,20 @@ def _letzte_widerruf_zustimmung(user_id: int, plan: str, laufzeit,
         conn.close()
 
 
+_MONATSNAMEN = ("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
+                "August", "September", "Oktober", "November", "Dezember")
+
+
+def _datum_lang(iso: str) -> str:
+    """'2026-08-24…' -> '24. August 2026' (fuer Mailtexte; Steve 24.08.:
+    Datumsangaben ausgeschrieben statt als Technik-Kuerzel)."""
+    try:
+        j, m, t = str(iso)[:10].split("-")
+        return f"{int(t)}. {_MONATSNAMEN[int(m) - 1]} {j}"
+    except Exception:
+        return str(iso)[:10]
+
+
 def _sende_plan_bestaetigung(konto: dict, plan: str, gueltig_bis, laufzeit,
                              auto_verlaengerung: int, quelle: str = "rechnung",
                              zustimmung: dict = None) -> None:
@@ -3273,19 +3309,29 @@ def _sende_plan_bestaetigung(konto: dict, plan: str, gueltig_bis, laufzeit,
     plan_name = PLAN_ANZEIGENAMEN.get(plan, plan)
     datum = str(gueltig_bis or "")[:10]
     laufzeit_zahl = int(laufzeit or 0)
+    # Betrag nur beim Online-Kauf nennen (Steve 24.08.); Rechnungskunden
+    # bekommen ihn ueber Michaels Rechnung.
+    preis_zusatz = ""
+    if quelle == "stripe" and laufzeit_zahl > 1:
+        _cent = ((zustimmung or {}).get("summe_cent")
+                 or round(billing.preis_pro_monat(plan, laufzeit_zahl) * laufzeit_zahl * 100))
+        preis_zusatz = f" zum Gesamtpreis von {_cent / 100:.2f} €".replace(".", ",")
+    elif quelle == "stripe" and laufzeit_zahl == 1:
+        _monat = f"{billing.preis_pro_monat(plan, 1):.2f}".replace(".", ",")
+        preis_zusatz = f" für {_monat} € pro Monat"
     saetze = [f"Hallo {name},",
               f"dein InkluDocs-Abo wurde umgestellt: Du hast jetzt den Plan <strong>{plan_name}</strong>"
               + (f" mit einer Laufzeit von {laufzeit} Monaten" if laufzeit_zahl > 1 else
                  (" als Monatsabo" if laufzeit_zahl == 1 else ""))
-              + (f", gültig bis {datum}" if datum else "") + "."]
+              + preis_zusatz
+              + (f", gültig bis {_datum_lang(datum)}" if datum else "") + "."]
     if auto_verlaengerung:
         if quelle == "stripe" and laufzeit_zahl > 1:
             treue = f"{billing.treue_preis_eur(plan):.2f}".replace(".", ",")
             saetze.append(f"Nach dem Laufzeitende läuft das Abo automatisch als Monatsabo zur "
-                          f"Treuekondition weiter: {treue} € pro Monat — der Monatspreis deiner "
-                          "gebuchten Laufzeit, günstiger als das reguläre Monatsabo. Das "
-                          "Anschluss-Abo ist jederzeit zum Ende des laufenden Monats kündbar; "
-                          "du kannst stattdessen auch erneut eine feste Laufzeit buchen. "
+                          f"Treuekondition weiter: {treue} € pro Monat — dein Monatspreis "
+                          "bleibt also gleich, nur ohne feste Laufzeit und monatlich kündbar. "
+                          "Du kannst stattdessen auch erneut eine feste Laufzeit buchen. "
                           "Kündigen kannst du jederzeit zum Laufzeitende auf der Seite "
                           "„Abo &amp; Verbrauch“.")
         elif quelle == "stripe" and laufzeit_zahl == 1:
@@ -3297,21 +3343,27 @@ def _sende_plan_bestaetigung(konto: dict, plan: str, gueltig_bis, laufzeit,
                           "automatisch um dieselbe Laufzeit. Kündigen kannst du jederzeit "
                           "zum Laufzeitende auf der Seite „Abo &amp; Verbrauch“.")
     else:
-        saetze.append(f"Das Abo läuft am {datum} aus und wird nicht automatisch verlängert.")
+        saetze.append(f"Das Abo läuft am {_datum_lang(datum)} aus und wird nicht automatisch verlängert.")
     if zustimmung:
         # § 312f BGB: Die Bestaetigung muss die erteilte Zustimmung zum
         # Leistungsbeginn VOR Ablauf der Widerrufsfrist dokumentieren.
-        wann = str(zustimmung.get("created_at") or "")[:16].replace("T", " ")
-        saetze.append("Zur Dokumentation: Du hast bei der Buchung"
-                      + (f" am {wann} Uhr (UTC)" if wann else "")
-                      + " ausdrücklich zugestimmt, dass wir vor Ablauf der 14-tägigen "
-                      "Widerrufsfrist mit der Leistung beginnen, und bestätigt, die "
-                      f"Widerrufsbelehrung (Fassung {html.escape(str(zustimmung.get('belehrung_fassung') or ''))}) "
-                      "zur Kenntnis genommen zu haben. Dein Widerrufsrecht erlischt bei "
-                      "vollständiger Vertragserfüllung; bei einem Widerruf vorher wird der "
-                      "bereits erbrachte Anteil angerechnet. Die Belehrung samt "
-                      f'Muster-Widerrufsformular: <a href="{BASE_URL}/widerruf">{BASE_URL}/widerruf</a>. '
-                      f'Online widerrufen kannst du hier: <a href="{BASE_URL}/widerrufen">{BASE_URL}/widerrufen</a>.')
+        # Formulierung nach Steves Hoertest 24.08.: freundlicher Absatz
+        # statt Behoerdenton; nur das Buchungsdatum (der sekundengenaue
+        # Zeitstempel bleibt im Protokoll), Fassung ausgeschrieben.
+        wann = _datum_lang(str(zustimmung.get("created_at") or ""))
+        fassung = _datum_lang(str(zustimmung.get("belehrung_fassung") or ""))
+        saetze.append("Dein Widerrufsrecht: Als Verbraucher kannst du diesen Vertrag "
+                      "innerhalb von 14 Tagen widerrufen — am einfachsten online über "
+                      f'unsere <a href="{BASE_URL}/widerrufen">Widerrufsseite</a>. '
+                      "Damit du InkluDocs sofort nutzen kannst, hast du bei der Buchung"
+                      + (f" am {wann}" if wann else "")
+                      + " zugestimmt, dass wir direkt mit der Leistung beginnen. "
+                      "Widerrufst du innerhalb der Frist, erstatten wir den Betrag "
+                      "abzüglich des bereits genutzten Anteils; ist die Leistung "
+                      "vollständig erbracht, erlischt das Widerrufsrecht. Alle "
+                      "Einzelheiten stehen in der "
+                      f'<a href="{BASE_URL}/widerruf">Widerrufsbelehrung</a>'
+                      + (f" (Fassung vom {fassung})" if fassung else "") + ".")
     saetze.append("Deinen aktuellen Stand siehst du jederzeit unter „Abo &amp; Verbrauch“ in der App.")
     _abo_mail(konto["email"], f"InkluDocs: Dein {plan_name}-Abo ist aktiv",
               "Dein InkluDocs-Abo", saetze)
@@ -3523,7 +3575,7 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                           f"wie vorgemerkt haben wir dein Abo heute auf den Plan "
                           f"{PLAN_ANZEIGENAMEN.get(geplant, geplant)} umgestellt. Ab sofort stehen dir "
                           f"{billing.PLAN_KONTINGENTE[geplant]} Credits im Monat zur Verfügung, "
-                          f"die Laufzeit läuft bis {str(gueltig_bis)[:10]}."]
+                          f"die Laufzeit läuft bis {_datum_lang(str(gueltig_bis)[:10])}."]
                 if geloest:
                     saetze.append(f"Dein Team wurde damit aufgelöst — die {geloest} Mitglieder "
                                   "arbeiten ab jetzt wieder mit ihrem eigenen Guthaben und wurden "
@@ -3580,14 +3632,18 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                         zeitplan_ok = False
                 treue = f"{billing.treue_preis_eur(k['plan']):.2f}".replace(".", ",")
                 saetze = [f"Hallo {name},",
-                          f"dein {plan_name}-Abo bei InkluDocs erreicht am {ablauf} das Laufzeitende. "
-                          "Danach läuft es automatisch als Monatsabo zur Treuekondition weiter: "
-                          f"{treue} € pro Monat — der Monatspreis deiner bisherigen Laufzeit, "
-                          "günstiger als das reguläre Monatsabo.",
-                          "Das Anschluss-Abo ist jederzeit zum Ende des laufenden Monats kündbar. "
-                          "Du kannst stattdessen auch erneut eine feste Laufzeit zum günstigeren "
-                          "Laufzeitpreis buchen — oder vorher auf der Seite „Abo &amp; Verbrauch“ "
-                          "kündigen, dann endet das Abo zum Laufzeitende."]
+                          f"dein {plan_name}-Abo bei InkluDocs erreicht am {_datum_lang(ablauf)} "
+                          "das Laufzeitende. Danach läuft es automatisch als Monatsabo zur "
+                          f"Treuekondition weiter: {treue} € pro Monat — dein bisheriger "
+                          "Monatspreis, jetzt ohne feste Laufzeit und monatlich kündbar.",
+                          # Formulierung nach Steves Hoertest 24.08. (die alte Fassung
+                          # versprach faelschlich einen "guenstigeren" Laufzeitpreis).
+                          "Das Anschluss-Abo ist jederzeit zum Ende des laufenden Monats "
+                          "kündbar — du musst also nichts tun. Wenn du möchtest, kannst du "
+                          "stattdessen erneut eine feste Laufzeit buchen. Und falls du nicht "
+                          f"verlängern willst: Kündige einfach vor dem {_datum_lang(ablauf)} "
+                          "auf der Seite „Abo &amp; Verbrauch“, dann endet das Abo zum "
+                          "Laufzeitende."]
                 _abo_mail(k["email"], "InkluDocs: Dein Abo läuft bald als Monatsabo weiter",
                           "Dein Abo läuft bald als Monatsabo weiter", saetze)
                 if zeitplan_ok:
@@ -3611,8 +3667,8 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                            betreiber_satz])
                 return
             saetze = [f"Hallo {name},",
-                      f"dein {plan_name}-Abo bei InkluDocs erreicht am {ablauf} das Laufzeitende "
-                      f"und verlängert sich dann automatisch"
+                      f"dein {plan_name}-Abo bei InkluDocs erreicht am {_datum_lang(ablauf)} "
+                      "das Laufzeitende und verlängert sich dann automatisch"
                       + (f" um {laufzeit} Monate" if laufzeit else "") + ".",
                       "Wenn du das nicht möchtest, kündige einfach vorher auf der Seite "
                       "„Abo &amp; Verbrauch“ — dann endet das Abo zum Laufzeitende."]
@@ -3633,11 +3689,13 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                        betreiber_satz])
         else:
             saetze = [f"Hallo {name},",
-                      f"dein {plan_name}-Abo bei InkluDocs endet am {ablauf}. "
+                      f"dein {plan_name}-Abo bei InkluDocs endet am {_datum_lang(ablauf)}. "
                       "Bis dahin kannst du es ganz normal weiter nutzen.",
-                      "Danach wechselt dein Konto automatisch auf den Free-Plan — deine Projekte "
-                      "und Daten bleiben vollständig erhalten. Gekaufte Zusatz-Credits ruhen und "
-                      "leben wieder auf, sobald du erneut ein Abo buchst.",
+                      "Danach wechselt dein Konto automatisch auf den Free-Plan mit "
+                      f"{billing.PLAN_KONTINGENTE['free']} kostenlosen Credits pro Monat — deine "
+                      "Projekte und Daten bleiben vollständig erhalten. Gekaufte Zusatz-Credits "
+                      "bleiben dir ebenfalls erhalten und verfallen nicht — du kannst sie auch im "
+                      "Free-Plan aufbrauchen.",
                       "Du hast es dir anders überlegt? Dann nimm die Kündigung unter "
                       "„Abo &amp; Verbrauch“ einfach wieder zurück."]
             _abo_mail(k["email"], "InkluDocs: Dein Abo endet bald",
@@ -3669,7 +3727,7 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                       "Dein Abo wurde verlängert",
                       [f"Hallo {name},",
                        f"dein {plan_name}-Abo wurde wie vereinbart um {laufzeit} Monate verlängert "
-                       f"und läuft jetzt bis {neues}.",
+                       f"und läuft jetzt bis {_datum_lang(neues)}.",
                        "Wenn du das nicht mehr möchtest, kündige jederzeit zum Laufzeitende "
                        "auf der Seite „Abo &amp; Verbrauch“."])
             _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Abo verlängert: {k['email']}",
@@ -3687,10 +3745,12 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
         _abo_mail(k["email"], "InkluDocs: Dein Abo ist beendet",
                   "Dein Abo ist beendet",
                   [f"Hallo {name},",
-                   f"dein {plan_name}-Abo ist am {ablauf} ausgelaufen. Dein Konto steht jetzt "
-                   "auf dem Free-Plan — alle Projekte und Daten bleiben erhalten.",
-                   "Du möchtest weitermachen? Buche jederzeit wieder ein Abo — gekaufte "
-                   "Zusatz-Credits leben dann automatisch wieder auf."])
+                   f"dein {plan_name}-Abo ist am {_datum_lang(ablauf)} ausgelaufen. Dein Konto steht jetzt "
+                   "auf dem Free-Plan — alle Projekte und Daten bleiben erhalten, und du hast "
+                   f"weiterhin {billing.PLAN_KONTINGENTE['free']} kostenlose Credits pro Monat.",
+                   "Gekaufte Zusatz-Credits bleiben dir erhalten und verfallen nicht — du kannst "
+                   "sie auch im Free-Plan aufbrauchen. Und wenn du weitermachen möchtest: Buche "
+                   "jederzeit wieder ein Abo."])
 
 
 @app.post("/api/admin/users/{user_id}/pakete")
@@ -3928,91 +3988,110 @@ def _mail_lang(user_row) -> str:
     return lang if lang in SUPPORTED_LANGUAGES else "de"
 
 
+_MAIL_P = '<p style="margin:0 0 14px;line-height:1.55;">'
+_MAIL_KLEIN = '<p style="color:#64748b;font-size:14px;margin:0 0 14px;">'
+
+
+def _mail_knopf(url: str, label: str) -> str:
+    """Handlungs-Link im Knopf-Look — Kontrastfarbe #c75000 (4,5:1 mit
+    weisser Schrift, app-weiter Farbwert seit 08.08.2026)."""
+    return (f'<p style="margin:0 0 14px;"><a href="{url}" '
+            'style="display:inline-block;background-color:#c75000;color:#ffffff;'
+            'padding:12px 24px;border-radius:6px;text-decoration:none;'
+            f'font-weight:bold;">{label}</a></p>')
+
+
+def _auth_mail_rahmen(lang: str, ueberschrift: str, inhalt_html: str) -> str:
+    """Karten-Rahmen fuer Konto-Mails — gleiche Optik wie _abo_mail
+    (Steve, 24.08.2026): Markenkopf, weisse Karte, Fusszeile mit
+    support@inkludocs.de. Alle Stile inline (Mail-Clients)."""
+    _ = get_gettext(lang)
+    fragen = _('Bei Fragen wende dich gerne an {mail}.').format(
+        mail='<a href="mailto:support@inkludocs.de" style="color:#1b2a4a;">support@inkludocs.de</a>')
+    return (
+        f'<!DOCTYPE html><html lang="{lang}"><head><meta charset="utf-8"></head>'
+        '<body style="margin:0;padding:0;background-color:#f1f5f9;">'
+        '<div style="max-width:600px;margin:0 auto;padding:24px 16px;'
+        'font-family:Arial,Helvetica,sans-serif;color:#1e293b;font-size:16px;">'
+        '<p style="margin:0 0 18px;font-size:22px;font-weight:bold;color:#1b2a4a;">'
+        'Inklu<span style="font-weight:normal;">Docs</span></p>'
+        '<div style="background-color:#ffffff;border-radius:8px;padding:28px 24px;'
+        'border:1px solid #e2e8f0;">'
+        f'<h1 style="color:#1b2a4a;font-size:20px;margin:0 0 18px;">{ueberschrift}</h1>'
+        f'{inhalt_html}'
+        '</div>'
+        '<div style="padding:18px 8px 0;font-size:14px;color:#475569;">'
+        f'<p style="margin:0 0 6px;">{fragen}</p>'
+        '<p style="color:#64748b;font-size:13px;margin:18px 0 0;">'
+        f"{_('InkluDocs ist ein Produkt von INKLUTEC – support@inkludocs.de')}</p>"
+        '</div></div></body></html>')
+
+
 def _verification_mail_full(lang: str, display_name: str, verify_url: str):
-    """Willkommens-/Bestaetigungsmail bei der Registrierung."""
+    """Willkommens-/Bestaetigungsmail bei der Registrierung.
+
+    Steve 24.08.2026: durchgehend Du-Form (vorher siezte diese Mail als
+    einzige), verallgemeinerter Claim (nicht nur Alt-Texte), kein
+    Meta-Gerede ueber Knoepfe, neuer Karten-Rahmen."""
     _ = get_gettext(lang)
     subject = _('InkluDocs: E-Mail-Adresse bestätigen')
-    anmelden = _('Melden Sie sich auf {url} an.').format(url=f'<a href="{BASE_URL}">{BASE_URL}</a>')
-    fragen = _('Bei Fragen wenden Sie sich gerne an {mail}.').format(
-        mail='<a href="mailto:support@inkludocs.de">support@inkludocs.de</a>')
-    body = f"""<!DOCTYPE html>
-<html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;">
-<h1 style="color:#1b2a4a;">{_('Willkommen bei InkluDocs')}</h1>
-<p>{_('Hallo')} {display_name},</p>
-<p>{_('vielen Dank für Ihre Registrierung bei InkluDocs – dem KI-gestützten Alt-Text-Generator für barrierefreie Dokumente und Bilder.')}</p>
-
-<h2 style="color:#e87722;font-size:1.1rem;">{_('E-Mail-Adresse bestätigen')}</h2>
-<p>{_('Bitte klicken Sie auf den folgenden Link, um Ihr Konto zu aktivieren:')}</p>
-<p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('E-Mail-Adresse bestätigen')}</a></p>
-<p style="color:#64748b;font-size:0.9rem;">{_('Oder kopieren Sie diesen Link:')} {verify_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 24 Stunden gültig.')}</p>
-
-<h2 style="color:#e87722;font-size:1.1rem;">{_('So funktioniert InkluDocs')}</h2>
-<p>{_('Nachdem Sie Ihre E-Mail-Adresse bestätigt haben:')}</p>
-<ol style="line-height:1.8;">
-<li>{anmelden}</li>
-<li>{_('Laden Sie ein PDF oder Bilder hoch oder geben Sie eine Website-Adresse ein.')}</li>
-<li>{_('Klicken Sie auf „Alt-Texte generieren“.')}</li>
-<li>{_('Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie.')}</li>
-</ol>
-
-<p>{fragen}</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">{_('InkluDocs ist ein Produkt von INKLUTEC – support@inkludocs.de')}</p>
-</body></html>"""
-    return subject, body
+    anmelden = _('Melde dich auf {url} an.').format(url=f'<a href="{BASE_URL}">{BASE_URL}</a>')
+    inhalt = (
+        f'{_MAIL_P}{_("Hallo")} {display_name},</p>'
+        f'{_MAIL_P}{_("danke für deine Registrierung bei InkluDocs – deinem KI-Werkzeug für barrierefreie Dokumente und Bilder.")}</p>'
+        f'{_MAIL_P}{_("Bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren:")}</p>'
+        + _mail_knopf(verify_url, _('E-Mail-Adresse bestätigen'))
+        + f'{_MAIL_KLEIN}{_("Oder kopiere diesen Link:")} {verify_url}</p>'
+        + f'{_MAIL_KLEIN}{_("Der Link ist 24 Stunden gültig.")}</p>'
+        + f'<h2 style="color:#1b2a4a;font-size:17px;margin:18px 0 10px;">{_("So funktioniert InkluDocs")}</h2>'
+        + f'{_MAIL_P}{_("Nachdem du deine E-Mail-Adresse bestätigt hast:")}</p>'
+        + '<ol style="line-height:1.7;margin:0 0 4px;padding-left:22px;">'
+        + f'<li>{anmelden}</li>'
+        + f'<li>{_("Lade ein PDF oder Bilder hoch oder gib eine Website-Adresse ein.")}</li>'
+        + f'<li>{_("Klicke auf „Alt-Texte generieren“.")}</li>'
+        + f'<li>{_("Bearbeite die Alt-Texte bei Bedarf und exportiere sie.")}</li></ol>')
+    return subject, _auth_mail_rahmen(lang, _('Willkommen bei InkluDocs'), inhalt)
 
 
 def _verification_mail_short(lang: str, display_name: str, verify_url: str):
     """Neuer Bestaetigungslink (Resend)."""
     _ = get_gettext(lang)
     subject = _('InkluDocs: E-Mail-Adresse bestätigen')
-    body = f"""<!DOCTYPE html>
-<html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h2 style="color:#e87722;">{_('InkluDocs – E-Mail bestätigen')}</h2>
-<p>{_('Hallo')} {display_name},</p>
-<p>{_('hier ist Ihr neuer Bestätigungslink:')}</p>
-<p><a href="{verify_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('E-Mail-Adresse bestätigen')}</a></p>
-<p style="color:#64748b;font-size:0.9rem;">{_('Oder kopieren Sie diesen Link:')} {verify_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 24 Stunden gültig.')}</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – support@inkludocs.de</p>
-</body></html>"""
-    return subject, body
+    inhalt = (
+        f'{_MAIL_P}{_("Hallo")} {display_name},</p>'
+        f'{_MAIL_P}{_("hier ist dein neuer Bestätigungslink:")}</p>'
+        + _mail_knopf(verify_url, _('E-Mail-Adresse bestätigen'))
+        + f'{_MAIL_KLEIN}{_("Oder kopiere diesen Link:")} {verify_url}</p>'
+        + f'{_MAIL_KLEIN}{_("Der Link ist 24 Stunden gültig.")}</p>')
+    return subject, _auth_mail_rahmen(lang, _('E-Mail-Adresse bestätigen'), inhalt)
 
 
 def _email_change_mail(lang: str, display_name: str, new_email: str, confirm_url: str):
-    """Bestaetigung einer E-Mail-Adress-Aenderung (du-Form wie bisher)."""
+    """Bestaetigung einer E-Mail-Adress-Aenderung."""
     _ = get_gettext(lang)
     subject = _('InkluDocs: E-Mail-Adresse bestätigen')
     aendern = _('du hast angefordert, deine InkluDocs E-Mail-Adresse auf {email} zu ändern.').format(
         email=f'<strong>{new_email}</strong>')
-    body = f"""<!DOCTYPE html>
-<html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h1 style="color:#1b2a4a;">{_('E-Mail-Adresse bestätigen')}</h1>
-<p>{_('Hallo')} {display_name},</p>
-<p>{aendern}</p>
-<p><a href="{confirm_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('E-Mail-Adresse bestätigen')}</a></p>
-<p style="color:#64748b;font-size:0.9rem;">{_('Oder kopiere diesen Link:')} {confirm_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 1 Stunde gültig. Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail.')}</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
-</body></html>"""
-    return subject, body
+    inhalt = (
+        f'{_MAIL_P}{_("Hallo")} {display_name},</p>'
+        f'{_MAIL_P}{aendern}</p>'
+        + _mail_knopf(confirm_url, _('E-Mail-Adresse bestätigen'))
+        + f'{_MAIL_KLEIN}{_("Oder kopiere diesen Link:")} {confirm_url}</p>'
+        + f'{_MAIL_KLEIN}{_("Der Link ist 1 Stunde gültig. Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail.")}</p>')
+    return subject, _auth_mail_rahmen(lang, _('E-Mail-Adresse bestätigen'), inhalt)
 
 
 def _reset_mail(lang: str, display_name: str, reset_url: str):
-    """Passwort-Reset-Mail (du-Form wie bisher)."""
+    """Passwort-Reset-Mail."""
     _ = get_gettext(lang)
     subject = _('InkluDocs: Passwort zurücksetzen')
-    body = f"""<!DOCTYPE html>
-<html lang="{lang}"><head><meta charset="utf-8"></head><body style="font-family:sans-serif;color:#1e293b;max-width:600px;">
-<h1 style="color:#1b2a4a;">{_('Passwort zurücksetzen')}</h1>
-<p>{_('Hallo')} {display_name},</p>
-<p>{_('du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert.')}</p>
-<p><a href="{reset_url}" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_('Passwort jetzt zurücksetzen')}</a></p>
-<p style="color:#64748b;font-size:0.9rem;">{_('Oder kopiere diesen Link:')} {reset_url}</p>
-<p style="color:#64748b;font-size:0.9rem;">{_('Der Link ist 1 Stunde gültig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.')}</p>
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs – kontakt@inklutec.de</p>
-</body></html>"""
-    return subject, body
+    inhalt = (
+        f'{_MAIL_P}{_("Hallo")} {display_name},</p>'
+        f'{_MAIL_P}{_("du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert.")}</p>'
+        + _mail_knopf(reset_url, _('Passwort jetzt zurücksetzen'))
+        + f'{_MAIL_KLEIN}{_("Oder kopiere diesen Link:")} {reset_url}</p>'
+        + f'{_MAIL_KLEIN}{_("Der Link ist 1 Stunde gültig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.")}</p>')
+    return subject, _auth_mail_rahmen(lang, _('Passwort zurücksetzen'), inhalt)
 
 
 def _auth_notice_page(lang: str, inner_html: str, status_code: int = 200,
