@@ -3989,3 +3989,6 @@ msgstr "Supresión y devolución de los datos al final del contrato, así como d
 
 msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt."
 msgstr "Importante para ti: no usamos tus contenidos para entrenar modelos de IA y obligamos contractualmente a nuestros proveedores a lo mismo. El tratamiento se realiza en centros de datos en Alemania y la Unión Europea."
+
+msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
+msgstr "El InkluAgent es un asistente de IA. Pídele ayuda — por ejemplo generar un texto alternativo para una imagen, reformular un texto existente en lenguaje sencillo o traducirlo a otro idioma. Nombra las imágenes por su número (p. ej. <em>imagen 3</em>, <em>imágenes 1-5</em>). Máximo 10 imágenes por solicitud."
