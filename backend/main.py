@@ -8674,6 +8674,16 @@ async def kuendigen_page(request: Request):
     )
 
 
+@app.get("/ueber-uns", response_class=HTMLResponse)
+async def ueber_uns_page(request: Request):
+    """Ueber-uns-Seite (Steve + Michael, 24.08.2026): InkluTec + Actino."""
+    lang = detect_language(request)
+    return templates.TemplateResponse(
+        "ueber_uns.html",
+        template_context(request, lang, is_staging="staging" in BASE_URL),
+    )
+
+
 @app.get("/kontakt", response_class=HTMLResponse)
 async def kontakt_page(request: Request):
     """Kontaktseite (24.08.2026): zweiter Kommunikationsweg nach § 5 DDG

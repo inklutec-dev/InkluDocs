@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}InkluDocs - {{ _('Über uns') }}{% endblock %}
+
+{% block body %}
+{# Ueber-uns-Seite (Steve + Michael, 24.08.2026). Struktur nach Steves
+   Vorgabe: Einleitung (gemeinsam), dann Steve/InkluTec, dann Michael/
+   Actino, dann gemeinsamer Schluss. Bilder koennen spaeter je Abschnitt
+   ergaenzt werden (Platz ist vorgesehen). Actino-Fakten von actino.de
+   (gegruendet 1999, PDF seit den fruehen 1990ern, ISO-Standards). #}
+<main>
+    <div class="auth-container" role="region" aria-label="{{ _('Über uns') }}">
+        <h1>
+            <span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}
+        </h1>
+        <p class="subtitle">{{ _('Über uns') }}</p>
+
+        <p>{{ _('InkluDocs entsteht in enger Zusammenarbeit von InkluTec aus Hamburg und der Actino Software GmbH aus Euskirchen — Entwicklung, PDF-Kompetenz und Vertrieb aus einer Hand.') }}</p>
+
+        <h2>{{ _('Steve Weidel — InkluTec') }}</h2>
+        <p>{{ _('Steve Weidel ist KI- und Barrierefreiheitsexperte und entwickelt mit InkluTec Werkzeuge, die barrierefreie Inhalte selbstverständlich machen. Er ist selbst blind und baut InkluDocs aus eigener täglicher Erfahrung — er weiß, was ein guter Alt-Text leisten muss und woran unzugängliche Dokumente im Alltag scheitern.') }}</p>
+
+        <h2>{{ _('Michael Karbe — Actino Software') }}</h2>
+        <p>{{ _('Die Actino Software GmbH wurde 1999 von Michael Karbe gegründet und arbeitet bereits seit den frühen Neunzigerjahren mit dem PDF-Format. Das Team ist auf professionelle PDF-Lösungen spezialisiert — von der automatisierten Verarbeitung über die ISO-Standards PDF/A, PDF/X und PDF/UA bis zur barrierefreien Aufbereitung von Dokumenten. Bei InkluDocs steuert Actino Vertrieb und PDF-Expertise bei.') }}</p>
+
+        <h2>{{ _('Was uns verbindet') }}</h2>
+        <p>{{ _('Gemeinsam entwickeln wir zukunftssichere Technologien, die wirklich niemanden ausschließen — damit Dokumente und Bilder für alle Menschen zugänglich werden.') }}</p>
+
+        <p><a href="/kontakt">{{ _('Kontakt') }}</a></p>
+    </div>
+    <footer class="legal-footer" role="contentinfo">
+        <a href="/impressum">{{ _('Impressum') }}</a> |
+        <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
+        <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a> |
+        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a> |
+        <a href="/kontakt">{{ _('Kontakt') }}</a>
+    </footer>
+</main>
+{% endblock %}

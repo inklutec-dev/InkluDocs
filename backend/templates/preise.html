@@ -50,7 +50,9 @@
             <h2>{{ _('Laufzeiten') }}</h2>
             <ul>
                 <li>{{ _('Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten.').format(laufzeiten=laufzeiten) }}</li>
-                <li>{{ _('Ohne Kündigung verlängert sich das Abo automatisch um die gebuchte Laufzeit; kündigen kannst du jederzeit zum Laufzeitende, direkt in der App.') }}</li>
+                {# Treue-Anschluss (AGB Ziffer 7, 24.08.2026): keine erneute
+                   feste Laufzeit — Weiterlauf als Monatsabo zum Laufzeitpreis. #}
+                <li>{{ _('Ohne Kündigung läuft das Abo nach der festen Laufzeit als Monatsabo zum gleichen Monatspreis weiter — jederzeit monatlich kündbar. Kündigen kannst du auch vorher, jederzeit zum Laufzeitende, direkt in der App.') }}</li>
             </ul>
 
             <h2>{{ _('Zusatzpakete') }}</h2>
@@ -75,7 +77,8 @@
         <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a> |
         <a href="/kuendigen">{{ _('Vertrag kündigen') }}</a> |
         <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a> |
-        <a href="/kontakt">{{ _('Kontakt') }}</a>
+        <a href="/kontakt">{{ _('Kontakt') }}</a> |
+        <a href="/ueber-uns">{{ _('Über uns') }}</a>
         </footer>
     </main>
 {% endblock %}

@@ -3472,3 +3472,30 @@ msgstr "Eller skriv till oss direkt här"
 
 msgid "Wir antworten per E-Mail an die Adresse, die du angibst."
 msgstr "Vi svarar via e-post till den adress du anger."
+
+msgid "Über uns"
+msgstr "Om oss"
+
+msgid "InkluDocs entsteht in enger Zusammenarbeit von InkluTec aus Hamburg und der Actino Software GmbH aus Euskirchen — Entwicklung, PDF-Kompetenz und Vertrieb aus einer Hand."
+msgstr "InkluDocs skapas i nära samarbete mellan InkluTec från Hamburg och Actino Software GmbH från Euskirchen — utveckling, PDF-expertis och försäljning från en och samma hand."
+
+msgid "Steve Weidel — InkluTec"
+msgstr "Steve Weidel — InkluTec"
+
+msgid "Steve Weidel ist KI- und Barrierefreiheitsexperte und entwickelt mit InkluTec Werkzeuge, die barrierefreie Inhalte selbstverständlich machen. Er ist selbst blind und baut InkluDocs aus eigener täglicher Erfahrung — er weiß, was ein guter Alt-Text leisten muss und woran unzugängliche Dokumente im Alltag scheitern."
+msgstr "Steve Weidel är expert på AI och tillgänglighet och utvecklar med InkluTec verktyg som gör tillgängligt innehåll till en självklarhet. Han är själv blind och bygger InkluDocs utifrån sin egen dagliga erfarenhet — han vet vad en bra alt-text måste leverera och var otillgängliga dokument brister i vardagen."
+
+msgid "Michael Karbe — Actino Software"
+msgstr "Michael Karbe — Actino Software"
+
+msgid "Die Actino Software GmbH wurde 1999 von Michael Karbe gegründet und arbeitet bereits seit den frühen Neunzigerjahren mit dem PDF-Format. Das Team ist auf professionelle PDF-Lösungen spezialisiert — von der automatisierten Verarbeitung über die ISO-Standards PDF/A, PDF/X und PDF/UA bis zur barrierefreien Aufbereitung von Dokumenten. Bei InkluDocs steuert Actino Vertrieb und PDF-Expertise bei."
+msgstr "Actino Software GmbH grundades 1999 av Michael Karbe och har arbetat med PDF-formatet sedan tidigt 1990-tal. Teamet är specialiserat på professionella PDF-lösningar — från automatiserad bearbetning och ISO-standarderna PDF/A, PDF/X och PDF/UA till tillgänglig bearbetning av dokument. Hos InkluDocs bidrar Actino med försäljning och PDF-expertis."
+
+msgid "Was uns verbindet"
+msgstr "Det som förenar oss"
+
+msgid "Gemeinsam entwickeln wir zukunftssichere Technologien, die wirklich niemanden ausschließen — damit Dokumente und Bilder für alle Menschen zugänglich werden."
+msgstr "Tillsammans utvecklar vi framtidssäkra teknologier som verkligen inte utesluter någon — så att dokument och bilder blir tillgängliga för alla människor."
+
+msgid "Ohne Kündigung läuft das Abo nach der festen Laufzeit als Monatsabo zum gleichen Monatspreis weiter — jederzeit monatlich kündbar. Kündigen kannst du auch vorher, jederzeit zum Laufzeitende, direkt in der App."
+msgstr "Utan uppsägning fortsätter abonnemanget efter den fasta löptiden som månadsabonnemang till samma månadspris — kan sägas upp månadsvis. Du kan också säga upp i förväg, när som helst till löptidens slut, direkt i appen."

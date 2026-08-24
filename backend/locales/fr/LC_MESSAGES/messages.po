@@ -3911,3 +3911,30 @@ msgstr "Ou écrivez-nous directement ici"
 
 msgid "Wir antworten per E-Mail an die Adresse, die du angibst."
 msgstr "Nous répondrons par e-mail à l'adresse indiquée."
+
+msgid "Über uns"
+msgstr "À propos de nous"
+
+msgid "InkluDocs entsteht in enger Zusammenarbeit von InkluTec aus Hamburg und der Actino Software GmbH aus Euskirchen — Entwicklung, PDF-Kompetenz und Vertrieb aus einer Hand."
+msgstr "InkluDocs naît d'une étroite collaboration entre InkluTec (Hambourg) et Actino Software GmbH (Euskirchen) — développement, expertise PDF et distribution d'une seule main."
+
+msgid "Steve Weidel — InkluTec"
+msgstr "Steve Weidel — InkluTec"
+
+msgid "Steve Weidel ist KI- und Barrierefreiheitsexperte und entwickelt mit InkluTec Werkzeuge, die barrierefreie Inhalte selbstverständlich machen. Er ist selbst blind und baut InkluDocs aus eigener täglicher Erfahrung — er weiß, was ein guter Alt-Text leisten muss und woran unzugängliche Dokumente im Alltag scheitern."
+msgstr "Steve Weidel est expert en IA et en accessibilité ; avec InkluTec, il développe des outils qui rendent les contenus accessibles évidents. Lui-même aveugle, il construit InkluDocs à partir de sa propre expérience quotidienne — il sait ce qu'un bon texte alternatif doit apporter et où les documents inaccessibles échouent au quotidien."
+
+msgid "Michael Karbe — Actino Software"
+msgstr "Michael Karbe — Actino Software"
+
+msgid "Die Actino Software GmbH wurde 1999 von Michael Karbe gegründet und arbeitet bereits seit den frühen Neunzigerjahren mit dem PDF-Format. Das Team ist auf professionelle PDF-Lösungen spezialisiert — von der automatisierten Verarbeitung über die ISO-Standards PDF/A, PDF/X und PDF/UA bis zur barrierefreien Aufbereitung von Dokumenten. Bei InkluDocs steuert Actino Vertrieb und PDF-Expertise bei."
+msgstr "Actino Software GmbH a été fondée en 1999 par Michael Karbe et travaille avec le format PDF depuis le début des années 1990. L'équipe est spécialisée dans les solutions PDF professionnelles — du traitement automatisé et des normes ISO PDF/A, PDF/X et PDF/UA à la préparation accessible des documents. Pour InkluDocs, Actino apporte la distribution et l'expertise PDF."
+
+msgid "Was uns verbindet"
+msgstr "Ce qui nous unit"
+
+msgid "Gemeinsam entwickeln wir zukunftssichere Technologien, die wirklich niemanden ausschließen — damit Dokumente und Bilder für alle Menschen zugänglich werden."
+msgstr "Ensemble, nous développons des technologies pérennes qui n'excluent vraiment personne — pour que documents et images deviennent accessibles à tous."
+
+msgid "Ohne Kündigung läuft das Abo nach der festen Laufzeit als Monatsabo zum gleichen Monatspreis weiter — jederzeit monatlich kündbar. Kündigen kannst du auch vorher, jederzeit zum Laufzeitende, direkt in der App."
+msgstr "Sans résiliation, à l'issue de la durée fixe, l'abonnement se poursuit en abonnement mensuel au même prix mensuel — résiliable chaque mois. Vous pouvez aussi résilier avant, à tout moment pour la fin de la durée, directement dans l'application."

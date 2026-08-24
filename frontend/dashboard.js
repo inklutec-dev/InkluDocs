@@ -229,6 +229,7 @@ const LEGAL_LINKS = [
   // gut sichtbar und leicht zugaenglich — deshalb ebenfalls in jeder Fusszeile.
   { href: '/widerrufen', label: t('Vertrag widerrufen') },
   { href: '/kontakt', label: t('Kontakt') },
+  { href: '/ueber-uns', label: t('Über uns') },
 ];
 function renderLegalLinks() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {
