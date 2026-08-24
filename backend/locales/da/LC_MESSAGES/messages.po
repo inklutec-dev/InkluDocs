@@ -3578,3 +3578,27 @@ msgstr "Rediger de alternative tekster efter behov, og eksportér dem."
 
 msgid "hier ist dein neuer Bestätigungslink:"
 msgstr "her er dit nye bekræftelseslink:"
+
+msgid "Dein KI-Werkzeug für barrierefreie Dokumente und Bilder"
+msgstr "Dit AI-værktøj til tilgængelige dokumenter og billeder"
+
+msgid "So erreichst du uns"
+msgstr "Sådan når du os"
+
+msgid "E-Mail (schnellster Weg):"
+msgstr "E-mail (hurtigste vej):"
+
+msgid "Telefon:"
+msgstr "Telefon:"
+
+msgid "unser Vertriebspartner Actino Software, Michael Karbe"
+msgstr "vores salgspartner Actino Software, Michael Karbe"
+
+msgid "Bestellungen auf Rechnung für Firmen:"
+msgstr "Bestillinger på faktura for virksomheder:"
+
+msgid "Oder schreib uns direkt hier"
+msgstr "Eller skriv til os direkte her"
+
+msgid "Wir antworten per E-Mail an die Adresse, die du angibst."
+msgstr "Vi svarer pr. e-mail til den adresse, du angiver."

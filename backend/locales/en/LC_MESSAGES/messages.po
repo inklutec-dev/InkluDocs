@@ -3887,3 +3887,27 @@ msgstr "Edit the alt texts if needed and export them."
 
 msgid "hier ist dein neuer Bestätigungslink:"
 msgstr "here is your new confirmation link:"
+
+msgid "Dein KI-Werkzeug für barrierefreie Dokumente und Bilder"
+msgstr "Your AI tool for accessible documents and images"
+
+msgid "So erreichst du uns"
+msgstr "How to reach us"
+
+msgid "E-Mail (schnellster Weg):"
+msgstr "Email (fastest way):"
+
+msgid "Telefon:"
+msgstr "Phone:"
+
+msgid "unser Vertriebspartner Actino Software, Michael Karbe"
+msgstr "our sales partner Actino Software, Michael Karbe"
+
+msgid "Bestellungen auf Rechnung für Firmen:"
+msgstr "Orders on invoice for companies:"
+
+msgid "Oder schreib uns direkt hier"
+msgstr "Or write to us right here"
+
+msgid "Wir antworten per E-Mail an die Adresse, die du angibst."
+msgstr "We will reply by email to the address you provide."

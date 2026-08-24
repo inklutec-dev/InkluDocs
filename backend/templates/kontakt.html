@@ -17,8 +17,17 @@
         </h1>
         <p class="subtitle">{{ _('Kontakt') }}</p>
 
+        {# "So erreichst du uns" (Steve + Michael, 24.08.2026): eine Adresse
+           fuer alles (support@ lesen beide), Telefon = Actinos oeffentliche
+           Bueronummer aus dem Impressum, Rechnungsweg fuer Firmen. #}
+        <h2>{{ _('So erreichst du uns') }}</h2>
+        <p>{{ _('E-Mail (schnellster Weg):') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a></p>
+        <p>{{ _('Telefon:') }} <a href="tel:+492251148020">02251&nbsp;1480-20</a> — {{ _('unser Vertriebspartner Actino Software, Michael Karbe') }}</p>
+        <p>{{ _('Bestellungen auf Rechnung für Firmen:') }} <a href="mailto:sales@actino.de">sales@actino.de</a></p>
+
         <div id="schrittFormular">
-            <p>{{ _('Schreib uns — wir melden uns per E-Mail zurück. Du erreichst uns auch direkt unter') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a>.</p>
+            <h2>{{ _('Oder schreib uns direkt hier') }}</h2>
+            <p>{{ _('Wir antworten per E-Mail an die Adresse, die du angibst.') }}</p>
             <form id="kontaktForm" novalidate>
                 <div class="form-group">
                     <label for="ko_name">{{ _('Dein Name') }}</label>
