@@ -1,48 +1,41 @@
-{% extends "base.html" %}
+{% extends "base_oeffentlich.html" %}
 
 {% block title %}InkluDocs - {{ _('Auftragsverarbeitung') }}{% endblock %}
+{% block seitentitel %}{{ _('Auftragsverarbeitung') }}{% endblock %}
 
-{% block body %}
+{% block main %}
 {# AVV-Seite (24.08.2026): erfuellt das Angebot aus AGB Ziffer 18. Der
    Vertrag liegt als barrierefreies PDF (PDF/UA-1, veraPDF-geprueft) unter
    /static/InkluDocs-AVV.pdf. Spaeterer Ausbau: Zustimmung im Konto mit
-   individualisiertem PDF (Name, Datum, Fassung) statt Mailweg. #}
-<main>
-    <div class="auth-container" role="region" aria-label="{{ _('Auftragsverarbeitung') }}">
-        <h1>
-            <span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}
-        </h1>
-        <p class="subtitle">{{ _('Auftragsverarbeitung nach Artikel 28 DSGVO') }}</p>
+   individualisiertem PDF (Name, Datum, Fassung) statt Mailweg.
+   25.08.2026: auf das oeffentliche Geruest (base_oeffentlich.html)
+   umgestellt; der Untertitel nennt die Rechtsgrundlage. #}
+<p class="dash-sub">{{ _('Auftragsverarbeitung nach Artikel 28 DSGVO') }}</p>
 
-        <p>{{ _('Wenn du mit InkluDocs personenbezogene Daten aus deinem Verantwortungsbereich verarbeitest — etwa Dokumente mit Namen oder Fotos von Personen — brauchst du dafür einen Vertrag zur Auftragsverarbeitung. Diesen Vertrag bieten wir dir an.') }}</p>
+<p>{{ _('Wenn du mit InkluDocs personenbezogene Daten aus deinem Verantwortungsbereich verarbeitest — etwa Dokumente mit Namen oder Fotos von Personen — brauchst du dafür einen Vertrag zur Auftragsverarbeitung. Diesen Vertrag bieten wir dir an.') }}</p>
 
-        <h2>{{ _('Vertrag herunterladen') }}</h2>
-        <p><a href="/static/InkluDocs-AVV.pdf" download>{{ _('Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)') }}</a></p>
-        <p class="dash-meta">{{ _('Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft.') }}</p>
+<section class="dash-card" aria-labelledby="download-h">
+    <h2 id="download-h">{{ _('Vertrag herunterladen') }}</h2>
+    <p><a href="/static/InkluDocs-AVV.pdf" download>{{ _('Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)') }}</a></p>
+    <p class="dash-meta">{{ _('Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft.') }}</p>
+</section>
 
-        <h2>{{ _('So schließen wir ihn ab') }}</h2>
-        <p>{{ _('Nach Artikel 28 Absatz 9 DSGVO genügt die elektronische Form — eine handschriftliche Unterschrift ist nicht nötig. Schick uns den ausgefüllten Vertrag oder einfach eine kurze Nachricht an') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a>{{ _('; du erhältst die Bestätigung in Textform zurück.') }}</p>
-        <p>{{ _('Bringst du eine eigene Vorlage mit, etwa als Behörde oder größeres Unternehmen? Schick sie uns gern — wir prüfen sie und melden uns.') }}</p>
+<section class="dash-card" aria-labelledby="abschluss-h">
+    <h2 id="abschluss-h">{{ _('So schließen wir ihn ab') }}</h2>
+    <p>{{ _('Nach Artikel 28 Absatz 9 DSGVO genügt die elektronische Form — eine handschriftliche Unterschrift ist nicht nötig. Schick uns den ausgefüllten Vertrag oder einfach eine kurze Nachricht an') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a>{{ _('; du erhältst die Bestätigung in Textform zurück.') }}</p>
+    <p>{{ _('Bringst du eine eigene Vorlage mit, etwa als Behörde oder größeres Unternehmen? Schick sie uns gern — wir prüfen sie und melden uns.') }}</p>
+</section>
 
-        <h2>{{ _('Was im Vertrag steht') }}</h2>
-        <ul>
-            <li>{{ _('Gegenstand, Dauer, Art und Zweck der Verarbeitung sowie die Arten der Daten und die betroffenen Personen') }}</li>
-            <li>{{ _('Rechte und Pflichten beider Seiten, Weisungsbindung und Vertraulichkeit') }}</li>
-            <li>{{ _('Die technischen und organisatorischen Schutzmaßnahmen (Anlage 1)') }}</li>
-            <li>{{ _('Alle eingesetzten Unterauftragsverarbeiter mit Sitz und Aufgabe (Anlage 2)') }}</li>
-            <li>{{ _('Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte') }}</li>
-        </ul>
-        <p>{{ _('Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt.') }}</p>
-
-        <p><a href="/kontakt">{{ _('Kontakt') }}</a> | <a href="/datenschutz">{{ _('Datenschutz') }}</a></p>
-    </div>
-    <footer class="legal-footer" role="contentinfo">
-        <a href="/impressum">{{ _('Impressum') }}</a> |
-        <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
-        <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a> |
-        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a> |
-        <a href="/kontakt">{{ _('Kontakt') }}</a> |
-        <a href="/ueber-uns">{{ _('Über uns') }}</a>
-    </footer>
-</main>
+<section class="dash-card" aria-labelledby="inhalt-h">
+    <h2 id="inhalt-h">{{ _('Was im Vertrag steht') }}</h2>
+    <ul>
+        <li>{{ _('Gegenstand, Dauer, Art und Zweck der Verarbeitung sowie die Arten der Daten und die betroffenen Personen') }}</li>
+        <li>{{ _('Rechte und Pflichten beider Seiten, Weisungsbindung und Vertraulichkeit') }}</li>
+        <li>{{ _('Die technischen und organisatorischen Schutzmaßnahmen (Anlage 1)') }}</li>
+        <li>{{ _('Alle eingesetzten Unterauftragsverarbeiter mit Sitz und Aufgabe (Anlage 2)') }}</li>
+        <li>{{ _('Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte') }}</li>
+    </ul>
+    <p>{{ _('Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt.') }}</p>
+    <p><a href="/kontakt">{{ _('Kontakt') }}</a> | <a href="/datenschutz">{{ _('Datenschutz') }}</a></p>
+</section>
 {% endblock %}

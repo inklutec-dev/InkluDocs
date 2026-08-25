@@ -2572,10 +2572,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             +     t('Chatbot')
             +   '</button>'
             +   '<p class="inkluagent-intro">'
-            {# KI-VO Art. 50 Abs. 1 (gilt seit 02.08.2026): Menschen muessen
-               erkennen, dass sie mit einem KI-System sprechen. "Chatbot"
-               waere wohl schon offensichtlich — der ausdrueckliche Satz
-               macht daraus Gewissheit statt Auslegungsspielraum. #}
+            // KI-VO Art. 50 Abs. 1 (gilt seit 02.08.2026): Menschen muessen
+            // erkennen, dass sie mit einem KI-System sprechen. "Chatbot"
+            // waere wohl schon offensichtlich — der ausdrueckliche Satz
+            // macht daraus Gewissheit statt Auslegungsspielraum.
+            // (25.08.2026: stand als Jinja-Kommentar INNERHALB des raw-Blocks,
+            // blieb woertlich im JavaScript stehen und brach das ganze
+            // App-Skript mit einem SyntaxError ab. Im raw-Block nur
+            // JS-Kommentare verwenden.)
             +   t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.')
             +   '</p>'
             +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'

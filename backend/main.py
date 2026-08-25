@@ -243,7 +243,8 @@ EINLADUNG_WINDOW_SECONDS = 3600  # 1 Stunde
 # Fassung der Widerrufsbelehrung, der die Kundschaft beim Buchen zustimmt
 # (08.08.2026). Wird mitprotokolliert und in der Bestaetigungs-Mail genannt:
 # Aendert sich der Text, muss nachvollziehbar bleiben, WELCHE Fassung galt.
-# Bei jeder inhaltlichen Aenderung von frontend/widerruf.html hochzaehlen.
+# Bei jeder inhaltlichen Aenderung von templates/widerruf.html hochzaehlen
+# (bis 25.08.2026 lag der Text in frontend/widerruf.html).
 WIDERRUFSBELEHRUNG_FASSUNG = "2026-08-24"
 
 # Loesch-Bremse (Selbst-Review 08.08.): Der Loeschweg prueft das Passwort —
@@ -7928,7 +7929,8 @@ async def preise_page(request: Request):
     def _eur(betrag: float) -> str:
         return f"{betrag:.2f}".replace(".", ",")
 
-    ctx = template_context(request, detect_language(request))
+    ctx = template_context(request, detect_language(request),
+                           is_staging="staging" in BASE_URL)
     ctx.update({
         "free_credits": billing.PLAN_KONTINGENTE["free"],
         "single_preis": _eur(billing.PLAN_PREISE_EUR["single"]),
@@ -8646,22 +8648,40 @@ async def review_overview_seen(user: dict = Depends(get_current_user)):
     conn.close()
     return {"seen_until": row["reviews_seen_until"] if row else ""}
 
+# Rechtsseiten (Impressum, Datenschutz, Nutzungsbedingungen, Widerrufsbelehrung):
+# bis 25.08.2026 rohe HTML-Dateien aus frontend/, seitdem Templates auf dem
+# oeffentlichen Seitengeruest base_oeffentlich.html (Skip-Link, Seitenleiste,
+# H1 = Seitenthema, einheitliche Fusszeile). Der Rechtstext selbst ist
+# unveraendert und bleibt deutsch; der .legal-container darin ist die EINE
+# Quelle fuer die In-App-Sichten (_serve_protected_page) und die Demo, die ihn
+# per fetch holen. Doku: docs/SEITENGERUEST.md
+def _rechtsseite(request: Request, template: str):
+    lang = detect_language(request)
+    return templates.TemplateResponse(
+        template,
+        template_context(request, lang, is_staging="staging" in BASE_URL),
+    )
+
+
 @app.get("/impressum", response_class=HTMLResponse)
-async def impressum_page():
-    return open("/app/frontend/impressum.html").read()
+async def impressum_page(request: Request):
+    return _rechtsseite(request, "impressum.html")
+
 
 @app.get("/datenschutz", response_class=HTMLResponse)
-async def datenschutz_page():
-    return open("/app/frontend/datenschutz.html").read()
+async def datenschutz_page(request: Request):
+    return _rechtsseite(request, "datenschutz.html")
+
 
 @app.get("/nutzungsbedingungen", response_class=HTMLResponse)
-async def nutzungsbedingungen_page():
-    return open("/app/frontend/nutzungsbedingungen.html").read()
+async def nutzungsbedingungen_page(request: Request):
+    return _rechtsseite(request, "nutzungsbedingungen.html")
+
 
 @app.get("/widerruf", response_class=HTMLResponse)
-async def widerruf_page():
+async def widerruf_page(request: Request):
     """Widerrufsbelehrung und Muster-Widerrufsformular (08.08.2026)."""
-    return open("/app/frontend/widerruf.html").read()
+    return _rechtsseite(request, "widerruf.html")
 
 
 @app.get("/kuendigen", response_class=HTMLResponse)

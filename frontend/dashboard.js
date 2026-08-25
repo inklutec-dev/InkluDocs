@@ -1,6 +1,18 @@
 // Gemeinsame Logik für alle Dashboard-Seiten (App-Shell): Helfer, Login-Status,
 // Navigationsleiste (mit aria-current), Credit-/Tageslimit-Anzeige,
-// Spenden-Footer, Abmelden.
+// Fußzeile, Abmelden.
+//
+// Drei Betriebsarten der Hülle (Schalter setzt das jeweilige Template):
+//   (keiner)           eingeloggte App-Seite (base_app.html): /api/me ist
+//                      Pflicht, 401 leitet zur Anmeldung um.
+//   window.GUEST_MODE  Gast-Review (Upload-Zone/Gastzugang): kein /api/me,
+//                      nur das Logo in der Seitenleiste.
+//   window.OEFFENTLICH öffentliche Inhaltsseite (base_oeffentlich.html,
+//                      25.08.2026): /api/me wird versucht — eingeloggte
+//                      Nutzer bekommen ihre normale Navigation, alle anderen
+//                      die öffentliche (Preise, Kontakt, Über uns, Anmelden).
+//                      Nie eine Weiterleitung: Impressum, Kündigungsknopf,
+//                      Widerruf und Kontakt müssen ohne Login erreichbar sein.
 
 const byId = (id) => document.getElementById(id);
 
@@ -82,8 +94,22 @@ let currentUser = null;
 
 async function loadCurrentUser() {
   if (window.GUEST_MODE) { currentUser = null; return null; }  // Gast: kein /api/me, keine Weiterleitung
-  const res = await fetch('/api/me');
-  if (res.status === 401) { window.location.href = '/'; return null; }
+  let res;
+  try {
+    res = await fetch('/api/me');
+  } catch (e) {
+    // Netzfehler: eine oeffentliche Seite bleibt trotzdem benutzbar (anonyme
+    // Huelle); App-Seiten verhalten sich wie bisher.
+    if (window.OEFFENTLICH) { currentUser = null; return null; }
+    throw e;
+  }
+  if (res.status === 401) {
+    // Oeffentliche Seite: kein Login noetig, keine Weiterleitung — die Huelle
+    // rendert gleich die oeffentliche Navigation (renderSidebar).
+    if (window.OEFFENTLICH) { currentUser = null; return null; }
+    window.location.href = '/';
+    return null;
+  }
   const data = await res.json();
   currentUser = data.user || null;
   const greeting = byId('greeting');
@@ -149,6 +175,21 @@ const NAV_ITEMS = [
   { href: '/benutzer', label: t('Benutzerverwaltung'), admin: true },
 ];
 
+// Navigation der oeffentlichen Seiten fuer Besucher OHNE Anmeldung
+// (25.08.2026). Dieselben Ziele wie die Fusszeile _fusszeile.html nennt —
+// hier nur die drei, die als Menuepunkte taugen. Ein Eintrag mehr hier
+// erscheint auf allen oeffentlichen Seiten.
+const OEFFENTLICH_NAV = [
+  { href: '/preise', label: t('Preise') },
+  { href: '/kontakt', label: t('Kontakt') },
+  { href: '/ueber-uns', label: t('Über uns') },
+];
+
+// Besucher ohne Konto-Kontext: Gast-Review oder oeffentliche Seite ohne Login.
+function istAnonym() {
+  return !!window.GUEST_MODE || (!!window.OEFFENTLICH && !currentUser);
+}
+
 function renderSidebar() {
   const host = byId('appSidebar');
   if (!host) return;
@@ -157,7 +198,7 @@ function renderSidebar() {
 
   const brand = document.createElement('a');
   brand.className = 'app-brand';
-  brand.href = window.GUEST_MODE ? '/' : '/dashboard';
+  brand.href = istAnonym() ? '/' : '/dashboard';
   brand.innerHTML = '<span class="brand">Inklu</span>Docs';
   // a11y-Fix 13.07.2026 (axe "region", Memory todo_inkludocs_app_a11y): der
   // Marken-Link lag als einziges Element ausserhalb jeder Landmarke. Das
@@ -179,6 +220,32 @@ function renderSidebar() {
   nav.setAttribute('aria-label', t('Hauptnavigation'));
   const ul = document.createElement('ul');
   ul.className = 'app-nav';
+
+  if (window.OEFFENTLICH && !currentUser) {
+    // Oeffentliche Seite ohne Login: Preise / Kontakt / Ueber uns, und an der
+    // Stelle, an der sonst „Abmelden“ steht, der Weg zur Anmeldung (gleiches
+    // Muster wie die Demo-Huelle demo-shell.js).
+    OEFFENTLICH_NAV.forEach((it) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = it.href;
+      a.textContent = it.label;
+      if (path === it.href) a.setAttribute('aria-current', 'page');
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    const liIn = document.createElement('li');
+    liIn.className = 'app-nav-logout';
+    const aIn = document.createElement('a');
+    aIn.href = '/';
+    aIn.textContent = t('Anmelden oder registrieren');
+    liIn.appendChild(aIn);
+    ul.appendChild(liIn);
+    nav.appendChild(ul);
+    host.appendChild(nav);
+    return;
+  }
+
   NAV_ITEMS.forEach((it) => {
     if (it.admin && !(currentUser && currentUser.is_admin)) return;
     const li = document.createElement('li');
@@ -217,11 +284,15 @@ function renderSidebar() {
 // Die Links werden als ERSTES Element der Fußzeile eingesetzt (vor DSGVO-Hinweis
 // und Unterstützungsblock), damit die Reihenfolge der bereits abgenommenen
 // Übersichtsseiten erhalten bleibt: Links -> DSGVO-Hinweis -> Unterstützung.
+// 25.08.2026: Die -app-Sichten setzen einen Login voraus (sonst Umleitung
+// zur Anmeldung). Fuer Besucher ohne Login (Gast-Review) nennt `oeffentlich`
+// das frei erreichbare Ziel. Beschriftungen und Reihenfolge = _fusszeile.html
+// (ui_geruest.py vergleicht beide Listen).
 const LEGAL_LINKS = [
-  { href: '/impressum-app', label: t('Impressum') },
-  { href: '/datensicherheit', label: t('Datenschutz') },
-  { href: '/nutzungsbedingungen-app', label: t('Nutzungsbedingungen') },
-  { href: '/widerruf-app', label: t('Widerrufsbelehrung') },
+  { href: '/impressum-app', oeffentlich: '/impressum', label: t('Impressum') },
+  { href: '/datensicherheit', oeffentlich: '/datenschutz', label: t('Datenschutz') },
+  { href: '/nutzungsbedingungen-app', oeffentlich: '/nutzungsbedingungen', label: t('Nutzungsbedingungen') },
+  { href: '/widerruf-app', oeffentlich: '/widerruf', label: t('Widerrufsbelehrung') },
   // § 312k BGB verlangt, dass der Kuendigungsknopf staendig verfuegbar und
   // leicht erreichbar ist — deshalb in JEDER Fusszeile, nicht nur im Abo-Bereich.
   { href: '/kuendigen', label: t('Vertrag kündigen') },
@@ -233,13 +304,15 @@ const LEGAL_LINKS = [
 ];
 function renderLegalLinks() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {
-    if (footer.querySelector('.dash-legal-links')) return;   // idempotent
+    // idempotent — und: base_oeffentlich.html liefert die Links bereits
+    // serverseitig (ohne JavaScript sichtbar), dann bleibt hier alles so.
+    if (footer.querySelector('.dash-legal-links')) return;
     const wrap = document.createElement('div');
     wrap.className = 'dash-legal-links';
     LEGAL_LINKS.forEach((it, i) => {
       if (i > 0) wrap.appendChild(document.createTextNode(' · '));
       const a = document.createElement('a');
-      a.href = it.href;
+      a.href = (istAnonym() && it.oeffentlich) ? it.oeffentlich : it.href;
       a.textContent = it.label;
       wrap.appendChild(a);
     });
@@ -273,5 +346,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSidebar();
   renderLegalLinks();
   renderLegalNote();
-
 });

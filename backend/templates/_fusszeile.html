@@ -1,0 +1,40 @@
+{# ──────────────────────────────────────────────────────────────────────────
+   _fusszeile.html — EINE Quelle für die rechtlichen Fußzeilen-Links aller
+   ÖFFENTLICHEN Seiten (25.08.2026):
+     - Login, Registrierung, Passwort vergessen/zurücksetzen (base.html,
+       Fußzeile .legal-footer, Trenner „|“ wie bisher)
+     - alle Inhaltsseiten über base_oeffentlich.html (Fußzeile .dash-footer,
+       Trenner „·“ wie in der App)
+
+   Gegenstück für die EINGELOGGTEN Seiten: LEGAL_LINKS in frontend/dashboard.js
+   — gleiche Beschriftungen und Reihenfolge, aber Ziele in der App-Sicht
+   (/impressum-app, /datensicherheit, …). Wer hier einen Link ergänzt oder
+   umbenennt, trägt ihn dort ebenfalls nach; ui_geruest.py vergleicht beide.
+
+   Pflichtlinks und ihre Grundlage:
+     Impressum            § 5 DDG (leicht erkennbar, unmittelbar erreichbar)
+     Datenschutz          Art. 13 DSGVO
+     Nutzungsbedingungen  Vertragsgrundlage, § 312d BGB
+     Widerrufsbelehrung   Art. 246a EGBGB
+     Vertrag kündigen     § 312k BGB — Kündigungsknopf, ohne Anmeldung
+     Vertrag widerrufen   § 356a BGB — Widerrufsfunktion, ohne Anmeldung
+     Kontakt              § 5 DDG zweiter Kommunikationsweg
+     Über uns             freiwillig
+
+   Aufruf:  {% import "_fusszeile.html" as fusszeile with context %}
+            {{ fusszeile.rechtslinks(' · ') }}
+   „with context“ ist nötig, damit das Makro die Übersetzungsfunktion _()
+   der Seite sieht.
+   ────────────────────────────────────────────────────────────────────────── #}
+{% macro rechtslinks(trenner=' · ') -%}
+<div class="dash-legal-links">
+  <a href="/impressum">{{ _('Impressum') }}</a>{{ trenner }}
+  <a href="/datenschutz">{{ _('Datenschutz') }}</a>{{ trenner }}
+  <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a>{{ trenner }}
+  <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a>{{ trenner }}
+  <a href="/kuendigen">{{ _('Vertrag kündigen') }}</a>{{ trenner }}
+  <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a>{{ trenner }}
+  <a href="/kontakt">{{ _('Kontakt') }}</a>{{ trenner }}
+  <a href="/ueber-uns">{{ _('Über uns') }}</a>
+</div>
+{%- endmacro %}

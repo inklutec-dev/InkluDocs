@@ -1,17 +1,20 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InkluDocs - Datenschutzerklärung</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <a href="#main" class="skip-link">Zum Hauptinhalt springen</a>
-    <main id="main" tabindex="-1">
-        <div class="legal-container" role="region" aria-label="Datenschutzerklärung">
-            <h1><span class="brand">Inklu</span>Docs</h1>
-            <p class="subtitle">Datenschutzerklärung</p>
+{% extends "base_oeffentlich.html" %}
+
+{% block title %}InkluDocs - {{ _('Datenschutzerklärung') }}{% endblock %}
+{% block seitentitel %}{{ _('Datenschutzerklärung') }}{% endblock %}
+
+{% block main %}
+{# Rechtstext Datenschutzerklärung. Bis 25.08.2026 eine rohe HTML-Datei unter frontend/,
+   seitdem ein Template auf dem oeffentlichen Geruest (base_oeffentlich.html):
+   Skip-Link, Seitenleiste, H1 und Fusszeile kommen von dort, der Text ist
+   unveraendert uebernommen. Der Text bleibt bewusst deutsch (juristischer
+   Text; Uebersetzung ist eine offene Entscheidung, siehe I18N.md).
+   WICHTIG: Der Block .legal-container ist die EINE Quelle fuer die
+   In-App-Sicht (/datenschutz-app bzw. /datensicherheit) und die Demo — beide
+   holen ihn per fetch aus dieser Seite. Klasse und Struktur daher nicht
+   umbenennen. #}
+<div id="legalContent">
+<div class="legal-container" role="region" aria-label="Datenschutzerklärung">
 
             <h2>1. Verantwortliche Stelle</h2>
             <p>Verantwortlich für die Datenverarbeitung auf dieser Website ist:</p>
@@ -133,13 +136,6 @@
             <p>Wir behalten uns vor, diese Datenschutzerklärung anzupassen, um sie an geänderte Rechtslagen oder bei Änderungen des Dienstes anzupassen. Die jeweils aktuelle Fassung finden Sie stets auf dieser Seite.</p>
 
             <p class="legal-date">Stand: August 2026</p>
-
-            <nav class="auth-links" aria-label="Rechtliche Seiten">
-                <a href="/">Zur Anmeldung</a>
-                <a href="/impressum">Impressum</a>
-                <a href="/nutzungsbedingungen">Nutzungsbedingungen</a>
-            </nav>
-        </div>
-    </main>
-</body>
-</html>
+</div>
+</div>
+{% endblock %}

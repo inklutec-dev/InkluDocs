@@ -1,84 +1,75 @@
-{% extends "base.html" %}
+{% extends "base_oeffentlich.html" %}
 
 {% block title %}InkluDocs - {{ _('Preise') }}{% endblock %}
+{% block seitentitel %}{{ _('Preise') }}{% endblock %}
 
-{# Die frueher hier noetige Farb-Uebersteuerung ist seit dem globalen
-   Kontrast-Tausch (08.08.2026) ueberfluessig: --accent in style.css ist
-   jetzt selbst das AA-Orange #c75000 (4,59:1). #}
+{% block main %}
+{# Oeffentliche Tarif-/Preisseite (neues Abomodell, 06.08.2026:
+   Free/Single/Team/Enterprise, Laufzeiten 3/6/12 Monate). Alle Zahlen
+   kommen als Variablen aus billing.py (eine Wahrheit) — Preisaenderung =
+   Konfiguration, nie Template-Pflege. Bewusst Listen statt Tabellen
+   (VoiceOver).
+   25.08.2026: auf das oeffentliche Geruest (base_oeffentlich.html)
+   umgestellt; jede Stufe ist eine Karte wie in der App. #}
+<p class="dash-sub">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.') }}</p>
 
-{% block body %}
-    {# Oeffentliche Tarif-/Preisseite (neues Abomodell, 06.08.2026:
-       Free/Single/Team/Enterprise, Laufzeiten 3/6/12 Monate). Alle Zahlen
-       kommen als Variablen aus billing.py (eine Wahrheit) — Preisaenderung =
-       Konfiguration, nie Template-Pflege. Bewusst Listen statt Tabellen
-       (VoiceOver). #}
-    <a href="#main" class="skip-link">{{ _('Zum Hauptinhalt springen') }}</a>
-    <main id="main" tabindex="-1">
-        <div class="auth-container" role="region" aria-label="{{ _('Preise') }}" style="max-width:640px;">
-            <h1><span class="brand">Inklu</span>Docs — {{ _('Preise') }}{# Staging-Label in der Akzentfarbe (#c75000, 4,59:1). Das fruehere Orange schaffte nur
-   2,96:1 (bekannter Kontrast-Bug, auf den Altseiten noch offen) — hier
-   direkt AA-konform (4,59:1). #}{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}</h1>
-            <p class="subtitle">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.') }}</p>
+<section class="dash-card" aria-labelledby="free-h">
+    <h2 id="free-h">{{ _('Kostenlos starten') }}</h2>
+    <ul>
+        <li>{{ _('{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig.').format(n=free_credits) }}</li>
+        <li>{{ _('Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain.') }}</li>
+    </ul>
+</section>
 
-            <h2>{{ _('Kostenlos starten') }}</h2>
-            <ul>
-                <li>{{ _('{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig.').format(n=free_credits) }}</li>
-                <li>{{ _('Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain.') }}</li>
-            </ul>
+<section class="dash-card" aria-labelledby="single-h">
+    <h2 id="single-h">Single</h2>
+    <ul>
+        <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten.').format(preis=single_preis, credits=single_credits) }}</li>
+        <li>{{ _('Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar.').format(preis=single_preis_monat) }}</li>
+        <li>{{ _('Für eine Person — das Abo gehört fest zu deinem Konto.') }}</li>
+    </ul>
+</section>
 
-            <h2>Single</h2>
-            <ul>
-                <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten.').format(preis=single_preis, credits=single_credits) }}</li>
-                <li>{{ _('Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar.').format(preis=single_preis_monat) }}</li>
-                <li>{{ _('Für eine Person — das Abo gehört fest zu deinem Konto.') }}</li>
-            </ul>
+<section class="dash-card" aria-labelledby="team-h">
+    <h2 id="team-h">Team</h2>
+    <ul>
+        <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten.').format(preis=team_preis, credits=team_credits) }}</li>
+        <li>{{ _('Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar.').format(preis=team_preis_monat) }}</li>
+        <li>{{ _('Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App.').format(n=team_sitze) }}</li>
+    </ul>
+</section>
 
-            <h2>Team</h2>
-            <ul>
-                <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten.').format(preis=team_preis, credits=team_credits) }}</li>
-                <li>{{ _('Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar.').format(preis=team_preis_monat) }}</li>
-                <li>{{ _('Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App.').format(n=team_sitze) }}</li>
-            </ul>
+<section class="dash-card" aria-labelledby="enterprise-h">
+    <h2 id="enterprise-h">Enterprise</h2>
+    <ul>
+        <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet.').format(preis=enterprise_preis, credits=enterprise_credits) }}</li>
+        <li>{{ _('Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar.').format(preis=enterprise_preis_monat) }}</li>
+        <li>{{ _('Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf.').format(n=enterprise_sitze) }}</li>
+    </ul>
+</section>
 
-            <h2>Enterprise</h2>
-            <ul>
-                <li>{{ _('{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet.').format(preis=enterprise_preis, credits=enterprise_credits) }}</li>
-                <li>{{ _('Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar.').format(preis=enterprise_preis_monat) }}</li>
-                <li>{{ _('Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf.').format(n=enterprise_sitze) }}</li>
-            </ul>
+<section class="dash-card" aria-labelledby="laufzeit-h">
+    <h2 id="laufzeit-h">{{ _('Laufzeiten') }}</h2>
+    <ul>
+        <li>{{ _('Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten.').format(laufzeiten=laufzeiten) }}</li>
+        {# Treue-Anschluss (AGB Ziffer 7, 24.08.2026): keine erneute
+           feste Laufzeit — Weiterlauf als Monatsabo zum Laufzeitpreis. #}
+        <li>{{ _('Ohne Kündigung läuft das Abo nach der festen Laufzeit als Monatsabo zum gleichen Monatspreis weiter — jederzeit monatlich kündbar. Kündigen kannst du auch vorher, jederzeit zum Laufzeitende, direkt in der App.') }}</li>
+    </ul>
+</section>
 
-            <h2>{{ _('Laufzeiten') }}</h2>
-            <ul>
-                <li>{{ _('Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten.').format(laufzeiten=laufzeiten) }}</li>
-                {# Treue-Anschluss (AGB Ziffer 7, 24.08.2026): keine erneute
-                   feste Laufzeit — Weiterlauf als Monatsabo zum Laufzeitpreis. #}
-                <li>{{ _('Ohne Kündigung läuft das Abo nach der festen Laufzeit als Monatsabo zum gleichen Monatspreis weiter — jederzeit monatlich kündbar. Kündigen kannst du auch vorher, jederzeit zum Laufzeitende, direkt in der App.') }}</li>
-            </ul>
+<section class="dash-card" aria-labelledby="pakete-h">
+    <h2 id="pakete-h">{{ _('Zusatzpakete') }}</h2>
+    <p>{{ _('Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete.') }}</p>
+    <ul>
+        {% for anzahl, preis in pakete %}
+        <li>{{ _('{n} Credits für {preis} €').format(n=anzahl, preis=preis) }}</li>
+        {% endfor %}
+    </ul>
+</section>
 
-            <h2>{{ _('Zusatzpakete') }}</h2>
-            <p>{{ _('Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete.') }}</p>
-            <ul>
-                {% for anzahl, preis in pakete %}
-                <li>{{ _('{n} Credits für {preis} €').format(n=anzahl, preis=preis) }}</li>
-                {% endfor %}
-            </ul>
-
-            <h2>{{ _('So bestellst du') }}</h2>
-            <p>{{ _('Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a> — {{ _('du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet.') }}</p>
-
-            <div class="auth-links center">
-                <a href="/">{{ _('Zur Anmeldung') }}</a>
-            </div>
-        </div>
-        <footer class="legal-footer" role="contentinfo">
-            <a href="/impressum">{{ _('Impressum') }}</a> |
-            <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
-            <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a> |
-        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a> |
-        <a href="/kuendigen">{{ _('Vertrag kündigen') }}</a> |
-        <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a> |
-        <a href="/kontakt">{{ _('Kontakt') }}</a> |
-        <a href="/ueber-uns">{{ _('Über uns') }}</a>
-        </footer>
-    </main>
+<section class="dash-card" aria-labelledby="bestellen-h">
+    <h2 id="bestellen-h">{{ _('So bestellst du') }}</h2>
+    <p>{{ _('Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a> — {{ _('du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet.') }}</p>
+</section>
 {% endblock %}

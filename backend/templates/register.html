@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_fusszeile.html" as fusszeile with context %}
 
 {% block title %}InkluDocs - {{ _('Registrierung') }}{% endblock %}
 
@@ -37,15 +38,8 @@
             </div>
         </div>
         <footer class="legal-footer" role="contentinfo">
-            <a href="/impressum">{{ _('Impressum') }}</a> |
-            <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
-            <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a> |
-        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a> |
-        <a href="/kuendigen">{{ _('Vertrag kündigen') }}</a> |
-        <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a> |
-        <a href="/kontakt">{{ _('Kontakt') }}</a> |
-        <a href="/ueber-uns">{{ _('Über uns') }}</a>
-        </footer>
+        {{ fusszeile.rechtslinks(' | ') }}
+    </footer>
     </main>
     <script>
         // Übersetzbare UI-Strings für JavaScript (von Jinja2 per Request injiziert)

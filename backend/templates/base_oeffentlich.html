@@ -1,0 +1,87 @@
+{# ──────────────────────────────────────────────────────────────────────────
+   base_oeffentlich.html — Grundgerüst der ÖFFENTLICHEN Inhaltsseiten
+   (Preise, Kontakt, Über uns, Auftragsverarbeitung, Impressum, Datenschutz,
+   Nutzungsbedingungen, Widerrufsbelehrung, Kündigen, Widerrufen).
+
+   Warum es das gibt (Steve, 25.08.2026): Diese Seiten bauten ihr Gerüst
+   bisher jede für sich nach dem Muster der Login-Seite — ohne Skip-Link,
+   mit dem Markennamen als H1, ohne Weg zur Startseite und mit einer von
+   Hand getippten, uneinheitlichen Fußzeile. Jetzt liefert dieses Template
+   alles einmal; eine Seite bringt nur noch Titel und Inhalt mit.
+
+   Optik = App-Shell (base_app.html): gleiche Seitenleiste, gleiche
+   Hauptfläche, gleiche Fußzeile. Die Hülle rendert dashboard.js im Modus
+   window.OEFFENTLICH:
+     - ohne Anmeldung: öffentliche Navigation (Preise, Kontakt, Über uns,
+       „Anmelden oder registrieren“), Marken-Link auf die Startseite
+     - mit Anmeldung: die normale App-Navigation — wer aus der App auf
+       „Kontakt“ klickt, bleibt in seiner gewohnten Umgebung und kommt
+       über die Seitenleiste ins Dashboard zurück
+   In beiden Fällen KEINE Weiterleitung: Die Seiten müssen ohne Login
+   erreichbar bleiben (§ 5 DDG Kontaktweg, § 312k BGB Kündigungsknopf,
+   § 356a BGB Widerrufsfunktion, Impressums- und Datenschutzpflicht).
+
+   Die rechtlichen Fußzeilen-Links werden SERVERSEITIG gerendert
+   (_fusszeile.html): Sie stehen damit auch ohne JavaScript im HTML
+   (Impressum „leicht erkennbar und unmittelbar erreichbar“), sind für
+   Prüfskripte und Suchmaschinen sichtbar und für alle öffentlichen Seiten
+   garantiert identisch. dashboard.js erkennt die vorhandenen Links
+   (idempotent) und ergänzt nur noch den DSGVO-Hinweis. Die Link-Liste der
+   EINGELOGGTEN Seiten lebt in dashboard.js (LEGAL_LINKS) und zeigt auf
+   die -app-Sichten; beide Listen tragen dieselben Beschriftungen in
+   derselben Reihenfolge — ui_geruest.py prüft das.
+
+   Blöcke:
+     title        Fenstertitel; base.html hängt auf Staging „(Testumgebung)“
+                  an — genau wie bei den App-Seiten steht der Hinweis NUR
+                  dort, nicht in der Überschrift.
+     seitentitel  Text der H1 = Thema der Seite (WCAG 2.4.6), NICHT die Marke.
+     main         Seiteninhalt. Karten wie in der App: section.dash-card.
+     page_script  Seiten-JavaScript. ACHTUNG: dashboard.js ist geladen und
+                  definiert byId(), t(), announce(), formatDate() global —
+                  Seitenskripte in eine IIFE packen und keine eigenen
+                  const byId/T auf oberster Ebene anlegen (sonst SyntaxError
+                  „already declared“ und das Skript läuft gar nicht).
+
+   Neue öffentliche Seite anlegen = dieses Template erweitern, Route mit
+   template_context(request, lang, is_staging=...) rendern, fertig.
+   Doku: docs/SEITENGERUEST.md
+   ────────────────────────────────────────────────────────────────────────── #}
+{% extends "base.html" %}
+{% import "_fusszeile.html" as fusszeile with context %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/dashboard.css?v={{ asset_version }}">
+{% endblock %}
+
+{% block body %}
+<a href="#main" class="dash-skip">{{ _('Zum Hauptinhalt springen') }}</a>
+<div class="app-shell">
+  <div class="app-sidebar" id="appSidebar"></div>
+  <div class="app-content">
+    <main id="main" class="dash-main" tabindex="-1">
+      {# Bewusst KEIN Zurueck-Link unter der H1 (Steve 25.08.2026): Die
+         Seitenleiste fuehrt in beiden Betriebsarten zur Startseite bzw.
+         ins Dashboard; Steves Zurueck-Link-Regel gilt fuer Unterseiten
+         eine Ebene tiefer (z. B. Konto unter Einstellungen), nicht hier. #}
+      <h1>{% block seitentitel %}{% endblock %}</h1>
+{% block main %}{% endblock %}
+    </main>
+    <footer class="dash-footer">
+      {{ fusszeile.rechtslinks(' · ') }}
+    </footer>
+  </div>
+</div>
+
+<div class="sr-only" role="status" aria-live="polite" id="liveRegion"></div>
+
+{# Übersetzungstabelle VOR dashboard.js (gleiches Muster wie base_app.html),
+   dazu der Schalter für die anonyme Hülle. #}
+<script>
+window.LANG = "{{ current_lang }}";
+window.I18N = {{ i18n_json|safe }};
+window.OEFFENTLICH = true;
+</script>
+<script src="/static/dashboard.js?v={{ asset_version }}"></script>
+{% block page_script %}{% endblock %}
+{% endblock %}

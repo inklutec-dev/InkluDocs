@@ -1,17 +1,20 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InkluDocs - Widerrufsbelehrung</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <a href="#main" class="skip-link">Zum Hauptinhalt springen</a>
-    <main id="main" tabindex="-1">
-        <div class="legal-container" role="region" aria-label="Widerrufsbelehrung">
-            <h1><span class="brand">Inklu</span>Docs</h1>
-            <p class="subtitle">Widerrufsbelehrung</p>
+{% extends "base_oeffentlich.html" %}
+
+{% block title %}InkluDocs - {{ _('Widerrufsbelehrung') }}{% endblock %}
+{% block seitentitel %}{{ _('Widerrufsbelehrung') }}{% endblock %}
+
+{% block main %}
+{# Rechtstext Widerrufsbelehrung. Bis 25.08.2026 eine rohe HTML-Datei unter frontend/,
+   seitdem ein Template auf dem oeffentlichen Geruest (base_oeffentlich.html):
+   Skip-Link, Seitenleiste, H1 und Fusszeile kommen von dort, der Text ist
+   unveraendert uebernommen. Der Text bleibt bewusst deutsch (juristischer
+   Text; Uebersetzung ist eine offene Entscheidung, siehe I18N.md).
+   WICHTIG: Der Block .legal-container ist die EINE Quelle fuer die
+   In-App-Sicht (/widerruf-app bzw. /datensicherheit) und die Demo — beide
+   holen ihn per fetch aus dieser Seite. Klasse und Struktur daher nicht
+   umbenennen. #}
+<div id="legalContent">
+<div class="legal-container" role="region" aria-label="Widerrufsbelehrung">
 
             <p>Diese Belehrung gilt für Verbraucherinnen und Verbraucher. Verbraucher ist jede natürliche Person, die ein Rechtsgeschäft zu Zwecken abschließt, die überwiegend weder ihrer gewerblichen noch ihrer selbständigen beruflichen Tätigkeit zugerechnet werden können.</p>
 
@@ -60,15 +63,6 @@
             <p>Schließen Sie den Vertrag zu gewerblichen oder selbständigen beruflichen Zwecken ab, besteht kein gesetzliches Widerrufsrecht. Die Kündigungsmöglichkeiten nach unseren <a href="/nutzungsbedingungen">Nutzungsbedingungen</a> bleiben davon unberührt.</p>
 
             <p class="legal-date">Stand: August 2026 (Fassung 2026-08-24)</p>
-
-            <nav class="auth-links" aria-label="Rechtliche Seiten">
-                <a href="/">Zur Anmeldung</a>
-                <a href="/impressum">Impressum</a>
-                <a href="/datenschutz">Datenschutz</a>
-                <a href="/nutzungsbedingungen">Nutzungsbedingungen</a>
-                <a href="/kuendigen">Vertrag kündigen</a>
-            </nav>
-        </div>
-    </main>
-</body>
-</html>
+</div>
+</div>
+{% endblock %}

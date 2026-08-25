@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_fusszeile.html" as fusszeile with context %}
 
 {% block title %}InkluDocs - {{ _('Passwort vergessen') }}{% endblock %}
 
@@ -25,6 +26,9 @@
                 <a href="/">{{ _('Zurück zur Anmeldung') }}</a>
             </div>
         </div>
+    <footer class="legal-footer" role="contentinfo">
+        {{ fusszeile.rechtslinks(' | ') }}
+    </footer>
     </main>
     <script>
         // Übersetzbare UI-Strings für JavaScript (von Jinja2 per Request injiziert)

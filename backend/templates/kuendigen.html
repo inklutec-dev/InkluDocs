@@ -1,79 +1,75 @@
-{% extends "base.html" %}
+{% extends "base_oeffentlich.html" %}
 
 {% block title %}InkluDocs - {{ _('Vertrag kündigen') }}{% endblock %}
+{% block seitentitel %}{{ _('Vertrag kündigen') }}{% endblock %}
 
-{% block body %}
+{% block main %}
 {# Gesetzlicher Kuendigungsknopf nach § 312k BGB (08.08.2026).
    Bewusst OHNE Anmeldung erreichbar — genau das verlangt die Vorschrift.
    Zwei Schritte: Angaben ausfuellen und „Verträge hier kündigen“ (die
    gesetzlich vorgegebene Beschriftung), danach eine Bestaetigungsseite mit
    „Jetzt kündigen“. Der Zugangszeitpunkt wird protokolliert und dem Kunden
-   in Textform bestaetigt. #}
-<main>
-    <div class="auth-container" role="region" aria-label="{{ _('Vertrag kündigen') }}">
-        <h1>
-            <span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}
-        </h1>
-        <p class="subtitle">{{ _('Vertrag kündigen') }}</p>
-
-        <div id="schrittFormular">
-            <p>{{ _('Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar.') }}</p>
-            <p>{{ _('Dein Vertrag ist jünger als 14 Tage und du möchtest ihn widerrufen? Dann nutze die Widerrufsfunktion:') }} <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a></p>
-            <form id="kuendForm" novalidate>
-                <div class="form-group">
-                    <label for="k_email">{{ _('E-Mail-Adresse deines Kontos') }}</label>
-                    <input type="email" id="k_email" required autocomplete="email" autofocus>
-                </div>
-                <div class="form-group">
-                    <label for="k_name">{{ _('Dein Name') }}</label>
-                    <input type="text" id="k_name" autocomplete="name">
-                </div>
-                <div class="form-group">
-                    <label for="k_art">{{ _('Art der Kündigung') }}</label>
-                    <select id="k_art" class="dash-input">
-                        <option value="ordentlich" selected>{{ _('Ordentliche Kündigung zum Laufzeitende') }}</option>
-                        <option value="ausserordentlich">{{ _('Außerordentliche Kündigung aus wichtigem Grund') }}</option>
-                        <option value="widerruf">{{ _('Widerruf innerhalb von 14 Tagen') }}</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="k_zusatz">{{ _('Grund oder Anmerkung (freiwillig)') }}</label>
-                    <textarea id="k_zusatz" rows="3" class="dash-input"></textarea>
-                </div>
-                <button type="submit" class="btn-full">{{ _('Verträge hier kündigen') }}</button>
-                <div id="kuendErr" class="error-message" role="alert" aria-live="polite"></div>
-            </form>
-        </div>
-
-        <div id="schrittBestaetigen" hidden>
-            <h2 id="bestaetigenHeading" tabindex="-1">{{ _('Kündigung bestätigen') }}</h2>
-            <p>{{ _('Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns deine Kündigung zu.') }}</p>
-            <dl id="kuendUebersicht"></dl>
-            <button type="button" class="btn-full" id="kuendConfirm">{{ _('Jetzt kündigen') }}</button>
-            <button type="button" class="btn btn-secondary" id="kuendBack" style="margin-top:.6rem;">{{ _('Zurück zu den Angaben') }}</button>
-            <div id="kuendErr2" class="error-message" role="alert" aria-live="polite"></div>
-        </div>
-
-        <div id="schrittFertig" hidden>
-            <h2 id="fertigHeading" tabindex="-1">{{ _('Kündigung ist eingegangen') }}</h2>
-            <div id="kuendErgebnis" role="status"></div>
-            <p><a href="/">{{ _('Zur Anmeldung') }}</a></p>
-        </div>
-
-        <p style="margin-top:1.5rem; padding-top:1.1rem; border-top:1px solid var(--border); color:var(--text-muted); font-size:0.95rem;">
-            {{ _('Angemeldet geht es auch direkt: im Bereich „Abo & Verbrauch“ über „Abo kündigen“. Fragen? Schreib an') }}
-            <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>
-        </p>
+   in Textform bestaetigt.
+   25.08.2026: auf das oeffentliche Geruest (base_oeffentlich.html)
+   umgestellt; Uebersicht im zweiten Schritt jetzt als Absaetze statt <dl>
+   (Steves Regel vom 11.08.: fuer Wertepaare weder Tabelle noch dl). #}
+<section class="dash-card" aria-label="{{ _('Vertrag kündigen') }}">
+    <div id="schrittFormular">
+        <p>{{ _('Hier kannst du dein kostenpflichtiges InkluDocs-Abo kündigen — ohne Anmeldung. Die Kündigung wirkt zum Ende der laufenden Laufzeit; bis dahin bleibt dein Guthaben nutzbar.') }}</p>
+        <p>{{ _('Dein Vertrag ist jünger als 14 Tage und du möchtest ihn widerrufen? Dann nutze die Widerrufsfunktion:') }} <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a></p>
+        <form id="kuendForm" novalidate>
+            <div class="dash-field">
+                <label for="k_email">{{ _('E-Mail-Adresse deines Kontos') }}</label>
+                <input type="email" id="k_email" class="dash-input" required autocomplete="email" autofocus>
+            </div>
+            <div class="dash-field">
+                <label for="k_name">{{ _('Dein Name') }}</label>
+                <input type="text" id="k_name" class="dash-input" autocomplete="name">
+            </div>
+            <div class="dash-field">
+                <label for="k_art">{{ _('Art der Kündigung') }}</label>
+                <select id="k_art" class="dash-select">
+                    <option value="ordentlich" selected>{{ _('Ordentliche Kündigung zum Laufzeitende') }}</option>
+                    <option value="ausserordentlich">{{ _('Außerordentliche Kündigung aus wichtigem Grund') }}</option>
+                    <option value="widerruf">{{ _('Widerruf innerhalb von 14 Tagen') }}</option>
+                </select>
+            </div>
+            <div class="dash-field">
+                <label for="k_zusatz">{{ _('Grund oder Anmerkung (freiwillig)') }}</label>
+                <textarea id="k_zusatz" rows="3" class="dash-input"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">{{ _('Verträge hier kündigen') }}</button>
+            <div id="kuendErr" class="error-message" role="alert" aria-live="polite"></div>
+        </form>
     </div>
-    <footer class="legal-footer" role="contentinfo">
-        <a href="/impressum">{{ _('Impressum') }}</a> |
-        <a href="/datenschutz">{{ _('Datenschutz') }}</a> |
-        <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a> |
-        <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a> |
-        <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a>
-    </footer>
-</main>
+
+    <div id="schrittBestaetigen" hidden>
+        <h2 id="bestaetigenHeading" tabindex="-1">{{ _('Kündigung bestätigen') }}</h2>
+        <p>{{ _('Bitte prüfe deine Angaben. Mit dem nächsten Klick geht uns deine Kündigung zu.') }}</p>
+        <div id="kuendUebersicht"></div>
+        <div class="dash-actions">
+            <button type="button" class="btn btn-primary" id="kuendConfirm">{{ _('Jetzt kündigen') }}</button>
+            <button type="button" class="btn btn-secondary" id="kuendBack">{{ _('Zurück zu den Angaben') }}</button>
+        </div>
+        <div id="kuendErr2" class="error-message" role="alert" aria-live="polite"></div>
+    </div>
+
+    <div id="schrittFertig" hidden>
+        <h2 id="fertigHeading" tabindex="-1">{{ _('Kündigung ist eingegangen') }}</h2>
+        <div id="kuendErgebnis" role="status"></div>
+    </div>
+</section>
+
+<p class="dash-meta">
+    {{ _('Angemeldet geht es auch direkt: im Bereich „Abo & Verbrauch“ über „Abo kündigen“. Fragen? Schreib an') }}
+    <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a>
+</p>
+{% endblock %}
+
+{% block page_script %}
 <script>
+{# IIFE: dashboard.js definiert byId() bereits global (siehe base_oeffentlich.html). #}
+(() => {
     const T = {
         pflicht: {{ _('Bitte gib die E-Mail-Adresse deines Kontos an.')|tojson }},
         fehler: {{ _('Fehler')|tojson }},
@@ -88,7 +84,6 @@
             widerruf: {{ _('Widerruf innerhalb von 14 Tagen')|tojson }}
         }
     };
-    const byId = (id) => document.getElementById(id);
 
     function zeige(schritt) {
         byId('schrittFormular').hidden = schritt !== 'formular';
@@ -102,9 +97,10 @@
         err.textContent = '';
         const mail = byId('k_email').value.trim();
         if (!mail) { err.textContent = T.pflicht; byId('k_email').focus(); return; }
-        // Bestaetigungsseite mit den Angaben aufbauen (§ 312k Abs. 2 BGB).
-        const dl = byId('kuendUebersicht');
-        dl.innerHTML = '';
+        // Bestaetigungsseite mit den Angaben aufbauen (§ 312k Abs. 2 BGB) —
+        // als Absaetze "Begriff: Wert", nicht als dl (VoiceOver-Zaehlerei).
+        const box = byId('kuendUebersicht');
+        box.innerHTML = '';
         const zeilen = [
             [T.email, mail],
             [T.name, byId('k_name').value.trim() || '—'],
@@ -112,9 +108,10 @@
             [T.anmerkung, byId('k_zusatz').value.trim() || '—']
         ];
         zeilen.forEach(([k, v]) => {
-            const dt = document.createElement('dt'); dt.textContent = k;
-            const dd = document.createElement('dd'); dd.textContent = v;
-            dl.appendChild(dt); dl.appendChild(dd);
+            const p = document.createElement('p');
+            p.className = 'dash-report-zeile';
+            p.textContent = k + ': ' + v;
+            box.appendChild(p);
         });
         zeige('bestaetigen');
         byId('bestaetigenHeading').focus();
@@ -152,5 +149,6 @@
         zeige('fertig');
         byId('fertigHeading').focus();
     });
+})();
 </script>
 {% endblock %}

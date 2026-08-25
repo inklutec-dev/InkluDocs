@@ -140,3 +140,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 #legalContent > .legal-container,
 #datensicherheitContent > .legal-container { max-width: none; margin: 0; padding: 0; background: none; }
+
+/* Oeffentliches Seitengeruest (base_oeffentlich.html, 25.08.2026): Die
+   Formulare von Kontakt/Kuendigen/Widerrufen nutzen die generische
+   .error-message aus style.css, die fuer die zentrierten Login-Karten
+   gedacht ist. In der linksbuendigen Hauptflaeche soll die Meldung unter
+   dem Knopf stehen, nicht in der Mitte. Textarea/Select in .dash-input
+   bekommen dieselbe Breite wie die Eingabefelder. */
+.dash-main .error-message { text-align: left; }
+.dash-main textarea.dash-input { max-width: 480px; }
