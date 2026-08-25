@@ -2090,7 +2090,7 @@ msgstr "El procesamiento del PDF ha fallado. Inténtalo de nuevo con el archivo.
 msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
 msgstr "El procesamiento está tardando más de lo habitual. Recarga la página más tarde y revisa la lista de documentos."
 
-msgid "Eigene Prompts"
+msgid "Meine Prompts"
 msgstr "Mis prompts"
 
 msgid "Hier speicherst du eigene Anweisungen für die KI mit maximal 4.000 Zeichen. Im Projekt wählst du dann aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Ein eigener Prompt beschreibt am besten Abweichungen vom Standard, zum Beispiel: „verwende einfache Sprache“, „formuliere besonders förmlich“, „einen Satz mit 300 Zeichen“ oder „nenne die Kernaussagen vor den Werten“."

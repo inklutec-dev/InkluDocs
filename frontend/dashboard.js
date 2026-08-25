@@ -169,9 +169,16 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: t('Startseite') },
   { href: '/projekt-neu', label: t('Neues Projekt anlegen') },
   { href: '/projekte', label: t('Meine Projekte') },
-  { href: '/prompts', label: t('Eigene Prompts') },
+  // 25.08.2026 (Michael): „Meine Prompts“ wie „Meine Projekte“.
+  { href: '/prompts', label: t('Meine Prompts') },
   { href: '/einstellungen', label: t('Einstellungen') },
   { href: '/datensicherheit', label: t('Datensicherheit') },
+  // 25.08.2026 (Michael): Kontakt und Über uns gehören in die Navigation,
+  // nicht nur in die Fußzeile — für Eingeloggte hier, für Besucher ohne
+  // Login in OEFFENTLICH_NAV. Beide Seiten liegen im öffentlichen Gerüst
+  // (base_oeffentlich.html) und zeigen Eingeloggten diese Seitenleiste.
+  { href: '/kontakt', label: t('Kontakt') },
+  { href: '/ueber-uns', label: t('Über uns') },
   { href: '/benutzer', label: t('Benutzerverwaltung'), admin: true },
 ];
 
@@ -299,8 +306,8 @@ const LEGAL_LINKS = [
   // Widerrufsfunktion nach § 356a BGB: waehrend der Widerrufsfrist dauerhaft
   // gut sichtbar und leicht zugaenglich — deshalb ebenfalls in jeder Fusszeile.
   { href: '/widerrufen', label: t('Vertrag widerrufen') },
-  { href: '/kontakt', label: t('Kontakt') },
-  { href: '/ueber-uns', label: t('Über uns') },
+  // Kontakt und Über uns: seit 25.08.2026 in der Seitenleiste (NAV_ITEMS /
+  // OEFFENTLICH_NAV), deshalb hier nicht mehr doppelt.
 ];
 function renderLegalLinks() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {

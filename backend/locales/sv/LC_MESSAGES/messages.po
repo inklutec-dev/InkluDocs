@@ -1662,8 +1662,8 @@ msgstr "Bearbetningen av PDF:en misslyckades. Försök igen med filen."
 msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
 msgstr "Bearbetningen tar ovanligt lång tid. Ladda om sidan senare och kontrollera dokumentlistan."
 
-msgid "Eigene Prompts"
-msgstr "Egna promptar"
+msgid "Meine Prompts"
+msgstr "Mina promptar"
 
 msgid "Hier speicherst du eigene Anweisungen für die KI mit maximal 4.000 Zeichen. Im Projekt wählst du dann aus, welcher Prompt bei der Generierung zusätzlich gelten soll. Ein eigener Prompt beschreibt am besten Abweichungen vom Standard, zum Beispiel: „verwende einfache Sprache“, „formuliere besonders förmlich“, „einen Satz mit 300 Zeichen“ oder „nenne die Kernaussagen vor den Werten“."
 msgstr "Här sparar du egna instruktioner till AI:n med högst 4 000 tecken. I projektet väljer du sedan vilken prompt som dessutom ska gälla vid genereringen. En egen prompt beskriver helst avvikelser från standarden, till exempel: ”använd enkelt språk”, ”formulera särskilt formellt”, ”en mening med 300 tecken” eller ”nämn kärnbudskapen före värdena”."

@@ -1,13 +1,20 @@
 {# ──────────────────────────────────────────────────────────────────────────
    _fusszeile.html — EINE Quelle für die rechtlichen Fußzeilen-Links aller
    ÖFFENTLICHEN Seiten (25.08.2026):
-     - Login, Registrierung, Passwort vergessen/zurücksetzen (base.html,
-       Fußzeile .legal-footer, Trenner „|“ wie bisher)
      - alle Inhaltsseiten über base_oeffentlich.html (Fußzeile .dash-footer,
-       Trenner „·“ wie in der App)
+       Trenner „·“ wie in der App) — sechs Links
+     - Login, Registrierung, Passwort vergessen/zurücksetzen (base.html,
+       Fußzeile .legal-footer, Trenner „|“) — dieselben sechs PLUS Kontakt
+       und Über uns (mit_kontakt=True), weil diese Seiten keine Seitenleiste
+       haben, in der die beiden sonst stehen
+
+   Kontakt und Über uns sind seit 25.08.2026 (Michael) Einträge der
+   SEITENLEISTE — für Eingeloggte (NAV_ITEMS in dashboard.js) wie für
+   Besucher ohne Login (OEFFENTLICH_NAV). In den Fußzeilen der Gerüst-Seiten
+   stehen sie deshalb nicht mehr doppelt.
 
    Gegenstück für die EINGELOGGTEN Seiten: LEGAL_LINKS in frontend/dashboard.js
-   — gleiche Beschriftungen und Reihenfolge, aber Ziele in der App-Sicht
+   — gleiche sechs Beschriftungen und Reihenfolge, aber Ziele in der App-Sicht
    (/impressum-app, /datensicherheit, …). Wer hier einen Link ergänzt oder
    umbenennt, trägt ihn dort ebenfalls nach; ui_geruest.py vergleicht beide.
 
@@ -18,23 +25,25 @@
      Widerrufsbelehrung   Art. 246a EGBGB
      Vertrag kündigen     § 312k BGB — Kündigungsknopf, ohne Anmeldung
      Vertrag widerrufen   § 356a BGB — Widerrufsfunktion, ohne Anmeldung
-     Kontakt              § 5 DDG zweiter Kommunikationsweg
+     Kontakt              § 5 DDG zweiter Kommunikationsweg (Seitenleiste
+                          bzw. Login-Fußzeile — auf jeder Seite erreichbar)
      Über uns             freiwillig
 
    Aufruf:  {% import "_fusszeile.html" as fusszeile with context %}
             {{ fusszeile.rechtslinks(' · ') }}
+            {{ fusszeile.rechtslinks(' | ', mit_kontakt=True) }}
    „with context“ ist nötig, damit das Makro die Übersetzungsfunktion _()
    der Seite sieht.
    ────────────────────────────────────────────────────────────────────────── #}
-{% macro rechtslinks(trenner=' · ') -%}
+{% macro rechtslinks(trenner=' · ', mit_kontakt=False) -%}
 <div class="dash-legal-links">
   <a href="/impressum">{{ _('Impressum') }}</a>{{ trenner }}
   <a href="/datenschutz">{{ _('Datenschutz') }}</a>{{ trenner }}
   <a href="/nutzungsbedingungen">{{ _('Nutzungsbedingungen') }}</a>{{ trenner }}
   <a href="/widerruf">{{ _('Widerrufsbelehrung') }}</a>{{ trenner }}
   <a href="/kuendigen">{{ _('Vertrag kündigen') }}</a>{{ trenner }}
-  <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a>{{ trenner }}
+  <a href="/widerrufen">{{ _('Vertrag widerrufen') }}</a>{% if mit_kontakt %}{{ trenner }}
   <a href="/kontakt">{{ _('Kontakt') }}</a>{{ trenner }}
-  <a href="/ueber-uns">{{ _('Über uns') }}</a>
+  <a href="/ueber-uns">{{ _('Über uns') }}</a>{% endif %}
 </div>
 {%- endmacro %}

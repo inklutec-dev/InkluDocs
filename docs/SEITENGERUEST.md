@@ -42,7 +42,13 @@ führt immer zur Startseite bzw. ins Dashboard.
 Die rechtlichen Links stehen auf **jeder** Seite in derselben Reihenfolge:
 
 Impressum · Datenschutz · Nutzungsbedingungen · Widerrufsbelehrung ·
-Vertrag kündigen · Vertrag widerrufen · Kontakt · Über uns
+Vertrag kündigen · Vertrag widerrufen
+
+**Kontakt** und **Über uns** sind seit 25.08.2026 (Michael) Einträge der
+Seitenleiste — für Eingeloggte in `NAV_ITEMS`, für Besucher ohne Login in
+`OEFFENTLICH_NAV` (beide in `dashboard.js`). Nur die vier Login-Karten ohne
+Seitenleiste führen sie zusätzlich in der Fußzeile
+(`rechtslinks(' | ', mit_kontakt=True)`).
 
 Es gibt zwei Quellen, weil die Ziele sich unterscheiden:
 
@@ -76,7 +82,10 @@ ohne Anmeldung), Kontakt (§ 5 DDG, zweiter Kommunikationsweg).
 Ohne Login rendert `dashboard.js` (`OEFFENTLICH_NAV`) die Einträge Preise,
 Kontakt, Über uns und unten — an der Stelle von „Abmelden“ — „Anmelden oder
 registrieren“ (→ `/`). Der Marken-Link zeigt auf `/`. Mit Login erscheint
-die normale `NAV_ITEMS`-Navigation, der Marken-Link zeigt auf `/dashboard`.
+die normale `NAV_ITEMS`-Navigation (Startseite, Neues Projekt anlegen, Meine
+Projekte, Meine Prompts, Einstellungen, Datensicherheit, Kontakt, Über uns,
+für Admins Benutzerverwaltung, Abmelden), der Marken-Link zeigt auf
+`/dashboard`.
 
 ## Rechtstexte: eine Quelle, drei Sichten
 
