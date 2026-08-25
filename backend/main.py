@@ -2514,6 +2514,14 @@ async def oeffentlicher_kontakt(request: Request):
     mail = (data.get("email") or "").strip()
     nachricht = (data.get("nachricht") or "").strip()[:5000]
     name = (data.get("name") or "").strip()[:200]
+    # Betreff (freiwillig, 25.08.2026) — landet in der Betreffzeile der
+    # Support-Mail, damit das Postfach sortierbar bleibt.
+    betreff = (data.get("betreff") or "").strip()[:150]
+    # Angemeldete Absender: Konto-Adresse NUR intern in die Support-Mail
+    # (Zuordnung im Postfach). Das Formular wird bewusst nicht vorausgefuellt
+    # (Steve 25.08.2026: die Antwort soll an die eingetragene Adresse gehen).
+    # Steht so in der Datenschutzerklaerung, Abschnitt „Kontaktformular“.
+    angemeldet = get_optional_user(request)
     if not _email_plausibel(mail):
         raise HTTPException(status_code=400, detail="Bitte eine gültige E-Mail-Adresse angeben")
     if not nachricht:
@@ -2530,12 +2538,18 @@ async def oeffentlicher_kontakt(request: Request):
                                    "support@inkludocs.de.")
     _kontakt_ip[schluessel].append(jetzt)
     _kontakt_mail[mail_key].append(jetzt)
+    konto_zeile = ""
+    if angemeldet and angemeldet.get("email"):
+        konto_zeile = (f'<p>Angemeldet als: {html.escape(angemeldet["email"])} '
+                       f'(Konto-ID {int(angemeldet["id"])})</p>')
     body = (f'<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"></head><body>'
             f'<h1>Kontaktformular</h1>'
             f'<p>Von: {html.escape(name) or "(ohne Namen)"} &lt;{html.escape(mail)}&gt;</p>'
+            f'{konto_zeile}'
+            f'<p>Betreff: {html.escape(betreff) or "(ohne Betreff)"}</p>'
             f'<p style="white-space:pre-wrap;">{html.escape(nachricht)}</p></body></html>')
     try:
-        send_email(SUPPORT_EMAIL, f"InkluDocs Kontaktformular: {name or mail}",
+        send_email(SUPPORT_EMAIL, f"InkluDocs Kontaktformular: {betreff or name or mail}",
                    body, bcc_admin=False, reply_to=mail)
     except Exception:
         logger.exception("Kontaktformular-Mail fehlgeschlagen (%s)", mail)

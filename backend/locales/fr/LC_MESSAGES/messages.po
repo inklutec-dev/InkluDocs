@@ -3992,3 +3992,12 @@ msgstr "Important pour vous : nous n'utilisons pas vos contenus pour entraîner 
 
 msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
 msgstr "L'InkluAgent est un assistant d'IA. Demandez-lui de l'aide — par exemple générer un texte alternatif pour une image, reformuler un texte existant en langage simple ou le traduire dans une autre langue. Désignez les images par leur numéro (p. ex. <em>image 3</em>, <em>images 1-5</em>). Maximum 10 images par demande."
+
+msgid "Betreff (freiwillig)"
+msgstr "Objet (facultatif)"
+
+msgid "Deine Angaben nutzen wir nur, um deine Anfrage zu beantworten."
+msgstr "Nous utilisons vos données uniquement pour répondre à votre demande."
+
+msgid "Einzelheiten in der Datenschutzerklärung"
+msgstr "Détails dans la déclaration de protection des données"

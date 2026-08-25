@@ -33,9 +33,15 @@ function t(s, params) {
 
   // Sidebar-Navigation der Demo. „Datensicherheit" führt auf die In-Rahmen-Sicht
   // /demo-datenschutz (zeigt den öffentlichen Datenschutz-Text mit Sidebar).
+  // 25.08.2026 (Steve): Die Demo ist das Schaufenster — Preise, Kontakt und
+  // Über uns fuehren auf die oeffentlichen Seiten des Werkzeugs (eine Quelle,
+  // keine Kopien in der Demo), wie „Anmelden oder registrieren“ unten.
   const NAV = [
     { href: "/", label: t("Demo testen") },
     { href: "/demo-datenschutz", label: t("Datensicherheit") },
+    { href: "https://inkludocs.de/preise", label: t("Preise") },
+    { href: "https://inkludocs.de/kontakt", label: t("Kontakt") },
+    { href: "https://inkludocs.de/ueber-uns", label: t("Über uns") },
   ];
 
   function renderSidebar() {

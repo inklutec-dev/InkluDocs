@@ -3553,3 +3553,12 @@ msgstr "Viktigt för dig: vi använder inte ditt innehåll för att träna AI-mo
 
 msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
 msgstr "InkluAgent är en AI-assistent. Be den om hjälp — till exempel att generera en alt-text för en bild, skriva om en befintlig text på lättläst svenska eller översätta den till ett annat språk. Ange bilder med nummer (t.ex. <em>bild 3</em>, <em>bilder 1-5</em>). Högst 10 bilder per förfrågan."
+
+msgid "Betreff (freiwillig)"
+msgstr "Ämne (valfritt)"
+
+msgid "Deine Angaben nutzen wir nur, um deine Anfrage zu beantworten."
+msgstr "Vi använder dina uppgifter enbart för att besvara din förfrågan."
+
+msgid "Einzelheiten in der Datenschutzerklärung"
+msgstr "Detaljer i integritetspolicyn"

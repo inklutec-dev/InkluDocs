@@ -13,7 +13,13 @@
    gegen fremde Adressen).
    25.08.2026: auf das oeffentliche Geruest (base_oeffentlich.html)
    umgestellt — Skip-Link, Seitenleiste, H1 „Kontakt“ und Fusszeile kommen
-   von dort; die Bloecke sind Karten wie in der App. #}
+   von dort; die Bloecke sind Karten wie in der App.
+   25.08.2026 (2. Runde, Steve): Betreff (freiwillig), Datenschutz-Hinweis
+   nach Art. 13 DSGVO direkt am Formular (KEIN Einwilligungs-Haekchen —
+   Rechtsgrundlage ist Art. 6 Abs. 1 lit. b/f, eine erzwungene Einwilligung
+   waere nicht freiwillig), Fehler markieren das Feld mit aria-invalid und
+   setzen den Fokus dorthin. Bewusst KEIN Vorausfuellen aus dem Konto; der
+   Server vermerkt bei angemeldeten Absendern nur intern „Angemeldet als“. #}
 
 {# "So erreichst du uns" (Steve + Michael, 24.08.2026): eine Adresse
    fuer alles (support@ lesen beide), Telefon = Actinos oeffentliche
@@ -38,9 +44,17 @@
             <input type="email" id="ko_email" class="dash-input" required autocomplete="email">
         </div>
         <div class="dash-field">
-            <label for="ko_nachricht">{{ _('Deine Nachricht') }}</label>
-            <textarea id="ko_nachricht" rows="6" class="dash-input" required></textarea>
+            <label for="ko_betreff">{{ _('Betreff (freiwillig)') }}</label>
+            <input type="text" id="ko_betreff" class="dash-input" maxlength="150">
         </div>
+        <div class="dash-field">
+            <label for="ko_nachricht">{{ _('Deine Nachricht') }}</label>
+            <textarea id="ko_nachricht" rows="6" class="dash-input" required maxlength="5000"></textarea>
+        </div>
+        {# Informationspflicht Art. 13 DSGVO: kurzer Hinweis am Formular, die
+           Einzelheiten stehen in Abschnitt „Kontaktformular“ der Datenschutz-
+           erklaerung. Kein Haekchen (siehe Kommentar oben). #}
+        <p class="dash-meta" id="ko_hinweis">{{ _('Deine Angaben nutzen wir nur, um deine Anfrage zu beantworten.') }} <a href="/datenschutz">{{ _('Einzelheiten in der Datenschutzerklärung') }}</a></p>
         {# Honigtopf gegen Formular-Bots: fuer Menschen unsichtbar und
            nicht fokussierbar; wer es fuellt, wird still verworfen. #}
         <div aria-hidden="true" style="position:absolute;left:-9999px;" hidden>
@@ -70,6 +84,17 @@
         verbindung: {{ _('Verbindungsfehler. Bitte erneut versuchen.')|tojson }}
     };
 
+    // Fehlerhaftes Feld markieren (aria-invalid) und den Fokus dorthin setzen;
+    // die Markierung verschwindet, sobald wieder getippt wird.
+    const felder = ['ko_name', 'ko_email', 'ko_betreff', 'ko_nachricht'];
+    function markiere(id) {
+        felder.forEach((f) => byId(f).removeAttribute('aria-invalid'));
+        const el = byId(id);
+        el.setAttribute('aria-invalid', 'true');
+        el.focus();
+    }
+    felder.forEach((f) => byId(f).addEventListener('input', () => byId(f).removeAttribute('aria-invalid')));
+
     byId('kontaktForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const err = byId('kontaktErr');
@@ -78,7 +103,7 @@
         const nachricht = byId('ko_nachricht').value.trim();
         if (!mail || !nachricht) {
             err.textContent = T.pflicht;
-            (!mail ? byId('ko_email') : byId('ko_nachricht')).focus();
+            markiere(!mail ? 'ko_email' : 'ko_nachricht');
             return;
         }
         let res;
@@ -88,13 +113,21 @@
                 body: JSON.stringify({
                     name: byId('ko_name').value.trim(),
                     email: mail,
+                    betreff: byId('ko_betreff').value.trim(),
                     nachricht: nachricht,
                     firma: byId('ko_firma').value
                 })
             });
         } catch (e2) { err.textContent = T.verbindung; return; }
         const d = await res.json().catch(() => ({}));
-        if (!res.ok) { err.textContent = d.detail || T.fehler; return; }
+        if (!res.ok) {
+            err.textContent = d.detail || T.fehler;
+            // 400 = Eingabefehler: E-Mail-Adresse ungueltig oder Nachricht leer —
+            // das betroffene Feld markieren. 429/502 sind keine Eingabefehler,
+            // dort bleibt der Fokus beim Knopf und die Meldung wird angesagt.
+            if (res.status === 400) markiere(/mail/i.test(err.textContent) ? 'ko_email' : 'ko_nachricht');
+            return;
+        }
         byId('schrittFormular').hidden = true;
         byId('schrittFertig').hidden = false;
         byId('fertigHeading').focus();
