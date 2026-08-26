@@ -93,11 +93,10 @@
     const allLink = document.createElement('a');
     allLink.href = '/projekte';
     allLink.textContent = t('Alle Projekte anzeigen');
-    // AA-Kontrast (31.07.2026): #c75000 erreicht 4,59:1 auf WEISS, auf der
-    // grauen Karte (#f5f7fa) aber nur 4,28:1 — unter der AA-Schwelle. Dieser
-    // Link braucht deshalb das dunklere Orange (5,1:1). axe-Befund vom 31.07.
-    allLink.style.color = '#b34700';
-    allLink.style.fontWeight = '600';
+    // Knopf-Optik (Michael, 26.08.2026): bleibt ein LINK, sieht aus wie der
+    // Sekundaer-Knopf. Der fruehere Orange-Sonderfall (#b34700, axe 31.07.)
+    // entfaellt, weil .btn-secondary Textfarbe auf Hintergrund nutzt.
+    allLink.className = 'btn btn-secondary';
     all.appendChild(allLink);
     cont.appendChild(all);
     announce(t('{n} aktuelle Projekte geladen.', { n: projects.length }));

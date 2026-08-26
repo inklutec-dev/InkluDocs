@@ -37,6 +37,21 @@
    Dashboard-Seiten — wirkt sonst gequetscht. Gilt nur fuer die H1 direkt in
    der Hauptflaeche (Seitentitel), nicht fuer H1 in Karten/Dialogen. */
 .dash-main > h1:not(.dash-greeting) { padding-bottom:.5rem; border-bottom:1px solid var(--border); margin-bottom:1.2rem; }
+/* Ueberschriften-Groessen (Michael, 26.08.2026): H1 auf 75 % des
+   Browser-Standards (2rem -> 1.5rem), H2 etwas kleiner (1.5rem -> 1.25rem).
+   NUR Darstellung — die Ebenen bleiben (H1 = Seitenthema, H2 = Abschnitt).
+   Gilt auch fuer die Projektseite (app.html): dort war die H1 (Projektname,
+   .card-name 1.05rem) KLEINER als die H2-Abschnitte; jetzt H1 1.5rem, alle
+   Abschnitte einheitlich 1.25rem. Steht VOR .dash-item h2 (1.1rem), damit die
+   Listen-Titel bei gleicher Spezifitaet ihre kleinere Groesse behalten. */
+.dash-main h1 { font-size:1.5rem; }
+.dash-main h2 { font-size:1.25rem; }
+/* Links im Knopf-Look (Michael, 26.08.2026): "Alle Projekte anzeigen" und
+   alle Zurueck-Links der Unterseiten. Bleiben semantisch LINKS (Navigation),
+   nur die Optik ist die des Sekundaer-Knopfs. */
+.dash-main a.btn { display:inline-block; text-decoration:none; }
+.dash-main a.btn-secondary { color:var(--text); }
+.dash-main a.btn:hover, .dash-main a.btn:focus { text-decoration:underline; }
 .dash-greeting { margin:.5rem 0 .25rem; }
 .dash-sub { color:var(--text-muted); margin:0 0 2rem; }
 /* Info-Kasten ueber der Prompt-Liste (Karbe-Wunsch 07.07.2026): Text in
@@ -88,7 +103,7 @@
 .dash-actions { margin-top:.7rem; display:flex; gap:.4rem; flex-wrap:wrap; }
 .dash-empty { color:var(--text-muted); background:var(--card-bg); border:1px dashed var(--border); border-radius:8px; padding:1.5rem; }
 
-.dash-limit { margin:.25rem 0 1.25rem; font-weight:600; color:var(--text); background:var(--card-bg); border:1px solid var(--border); border-left:4px solid #c75000; border-radius:6px; padding:.6rem .9rem; max-width:520px; }
+.dash-limit { margin:.25rem 0 1.25rem; font-weight:600; color:var(--text); background:var(--card-bg); border:1px solid var(--border); border-left:4px solid #c75000; border-radius:6px; padding:.6rem .9rem; } /* max-width 520px entfernt (Michael 26.08.2026): so breit wie die Projektkarten */
 
 .dash-footer { padding:1.5rem; border-top:1px solid var(--border); color:var(--text-muted); }
 /* 10.06.2026: #c75000 ergibt auf dem App-Hintergrund #f5f7fa nur 4,27:1 (knapp

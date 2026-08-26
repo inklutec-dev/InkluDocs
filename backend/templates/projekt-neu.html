@@ -2,7 +2,8 @@
 {% block title %}{{ _('Neues Projekt anlegen') }} · InkluDocs{% endblock %}
 {% block main %}
       <h1>{{ _('Neues Projekt anlegen') }}</h1>
-      <form id="newProjectForm">
+      {# Formular als Karte wie alle anderen Inhalte (Michael, 26.08.2026) #}
+      <form id="newProjectForm" class="dash-card">
         <div class="dash-field">
           <label for="projectName">{{ _('Projektname') }}</label>
           <span class="dash-hint" id="projectNameHint">{{ _('z. B. Geschäftsbericht 2026 oder Mein Projekt') }}</span>
