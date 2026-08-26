@@ -3894,23 +3894,26 @@ msgstr "Your AI tool for accessible documents and images"
 msgid "So erreichst du uns"
 msgstr "How to reach us"
 
-msgid "E-Mail (schnellster Weg):"
-msgstr "Email (fastest way):"
+msgid "Fragen zu InkluDocs, Hilfe beim Einstieg oder eine Idee, was wir besser machen können? Wir freuen uns über deine Nachricht."
+msgstr "Questions about InkluDocs, help getting started or an idea for what we could do better? We look forward to hearing from you."
 
-msgid "Telefon:"
-msgstr "Phone:"
+msgid "Am schnellsten geht es per E-Mail an"
+msgstr "The fastest way is by email to"
 
-msgid "unser Vertriebspartner Actino Software, Michael Karbe"
-msgstr "our sales partner Actino Software, Michael Karbe"
+msgid "Das Postfach lesen Steve Weidel von InkluTec und Michael Karbe von Actino Software, je nach Thema meldet sich einer von uns beiden."
+msgstr "The mailbox is read by Steve Weidel of InkluTec and Michael Karbe of Actino Software – depending on the topic, one of us will get back to you."
 
-msgid "Bestellungen auf Rechnung für Firmen:"
-msgstr "Orders on invoice for companies:"
+msgid "Du sprichst lieber oder möchtest InkluDocs für dein Unternehmen auf Rechnung bestellen? Dann ist Michael Karbe von unserem Vertriebspartner Actino Software für dich da, telefonisch unter"
+msgstr "Prefer to talk, or want to order InkluDocs on invoice for your company? Then Michael Karbe of our sales partner Actino Software is there for you, by phone on"
+
+msgid "Bestellungen auf Rechnung nimmt er auch per E-Mail entgegen, an"
+msgstr "He also takes orders on invoice by email, at"
+
+msgid "Du kannst uns auch gleich von hier aus schreiben. Wir antworten an die E-Mail-Adresse, die du angibst."
+msgstr "You can also write to us right here. We will reply to the email address you provide."
 
 msgid "Oder schreib uns direkt hier"
 msgstr "Or write to us right here"
-
-msgid "Wir antworten per E-Mail an die Adresse, die du angibst."
-msgstr "We will reply by email to the address you provide."
 
 msgid "Über uns"
 msgstr "About us"

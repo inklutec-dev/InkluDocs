@@ -3585,23 +3585,26 @@ msgstr "Dit AI-værktøj til tilgængelige dokumenter og billeder"
 msgid "So erreichst du uns"
 msgstr "Sådan når du os"
 
-msgid "E-Mail (schnellster Weg):"
-msgstr "E-mail (hurtigste vej):"
+msgid "Fragen zu InkluDocs, Hilfe beim Einstieg oder eine Idee, was wir besser machen können? Wir freuen uns über deine Nachricht."
+msgstr "Spørgsmål om InkluDocs, hjælp til at komme i gang eller en idé til, hvad vi kan gøre bedre? Vi glæder os til din besked."
 
-msgid "Telefon:"
-msgstr "Telefon:"
+msgid "Am schnellsten geht es per E-Mail an"
+msgstr "Hurtigst går det pr. e-mail til"
 
-msgid "unser Vertriebspartner Actino Software, Michael Karbe"
-msgstr "vores salgspartner Actino Software, Michael Karbe"
+msgid "Das Postfach lesen Steve Weidel von InkluTec und Michael Karbe von Actino Software, je nach Thema meldet sich einer von uns beiden."
+msgstr "Postkassen læses af Steve Weidel fra InkluTec og Michael Karbe fra Actino Software – alt efter emnet svarer en af os."
 
-msgid "Bestellungen auf Rechnung für Firmen:"
-msgstr "Bestillinger på faktura for virksomheder:"
+msgid "Du sprichst lieber oder möchtest InkluDocs für dein Unternehmen auf Rechnung bestellen? Dann ist Michael Karbe von unserem Vertriebspartner Actino Software für dich da, telefonisch unter"
+msgstr "Vil du hellere tale med os eller bestille InkluDocs på faktura til din virksomhed? Så står Michael Karbe fra vores salgspartner Actino Software klar på telefon"
+
+msgid "Bestellungen auf Rechnung nimmt er auch per E-Mail entgegen, an"
+msgstr "Bestillinger på faktura modtager han også pr. e-mail på"
+
+msgid "Du kannst uns auch gleich von hier aus schreiben. Wir antworten an die E-Mail-Adresse, die du angibst."
+msgstr "Du kan også skrive til os direkte her. Vi svarer til den e-mailadresse, du angiver."
 
 msgid "Oder schreib uns direkt hier"
 msgstr "Eller skriv til os direkte her"
-
-msgid "Wir antworten per E-Mail an die Adresse, die du angibst."
-msgstr "Vi svarer pr. e-mail til den adresse, du angiver."
 
 msgid "Über uns"
 msgstr "Om os"

@@ -3455,23 +3455,26 @@ msgstr "Ditt AI-verktyg för tillgängliga dokument och bilder"
 msgid "So erreichst du uns"
 msgstr "Så når du oss"
 
-msgid "E-Mail (schnellster Weg):"
-msgstr "E-post (snabbaste vägen):"
+msgid "Fragen zu InkluDocs, Hilfe beim Einstieg oder eine Idee, was wir besser machen können? Wir freuen uns über deine Nachricht."
+msgstr "Frågor om InkluDocs, hjälp att komma igång eller en idé om vad vi kan göra bättre? Vi ser fram emot ditt meddelande."
 
-msgid "Telefon:"
-msgstr "Telefon:"
+msgid "Am schnellsten geht es per E-Mail an"
+msgstr "Snabbast går det via e-post till"
 
-msgid "unser Vertriebspartner Actino Software, Michael Karbe"
-msgstr "vår försäljningspartner Actino Software, Michael Karbe"
+msgid "Das Postfach lesen Steve Weidel von InkluTec und Michael Karbe von Actino Software, je nach Thema meldet sich einer von uns beiden."
+msgstr "Brevlådan läses av Steve Weidel från InkluTec och Michael Karbe från Actino Software – beroende på ämne hör en av oss av sig."
 
-msgid "Bestellungen auf Rechnung für Firmen:"
-msgstr "Beställningar mot faktura för företag:"
+msgid "Du sprichst lieber oder möchtest InkluDocs für dein Unternehmen auf Rechnung bestellen? Dann ist Michael Karbe von unserem Vertriebspartner Actino Software für dich da, telefonisch unter"
+msgstr "Vill du hellre prata eller beställa InkluDocs mot faktura för ditt företag? Då finns Michael Karbe från vår försäljningspartner Actino Software till hands på telefon"
+
+msgid "Bestellungen auf Rechnung nimmt er auch per E-Mail entgegen, an"
+msgstr "Beställningar mot faktura tar han också emot via e-post på"
+
+msgid "Du kannst uns auch gleich von hier aus schreiben. Wir antworten an die E-Mail-Adresse, die du angibst."
+msgstr "Du kan också skriva till oss direkt här. Vi svarar till den e-postadress du anger."
 
 msgid "Oder schreib uns direkt hier"
 msgstr "Eller skriv till oss direkt här"
-
-msgid "Wir antworten per E-Mail an die Adresse, die du angibst."
-msgstr "Vi svarar via e-post till den adress du anger."
 
 msgid "Über uns"
 msgstr "Om oss"

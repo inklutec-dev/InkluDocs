@@ -52,6 +52,7 @@
    (Michael, 25.08.2026) — .9rem, gedaempft, Zeilenabstand 1.6.
    Kontrast text-muted auf card-bg = 8,9:1 (wie .dash-intro-box). */
 .dash-card.dash-prosa p { font-size:.9rem; line-height:1.6; color:var(--text-muted); }
+.dash-card.dash-prosa p + p { margin-top:.75rem; }
 .dash-card.dash-prosa p:last-child { margin-bottom:0; }
 
 /* Formularfelder */
@@ -79,6 +80,11 @@
 .dash-item h2 a:hover, .dash-item h3 a:hover,
 .dash-item h2 a:focus, .dash-item h3 a:focus { text-decoration:underline; }
 .dash-meta { color:var(--text-muted); font-size:.9rem; margin:.2rem 0 0; }
+/* Kontaktformular: Luft zwischen Einleitung und erstem Feld sowie zwischen
+   Datenschutz-Hinweis und Senden-Knopf (Steve, 26.08.2026). Nach .dash-meta,
+   weil gleiche Spezifitaet – die Reihenfolge entscheidet. */
+.dash-form-intro { margin-bottom:1rem; }
+.dash-form-hinweis { margin-bottom:1rem; }
 .dash-actions { margin-top:.7rem; display:flex; gap:.4rem; flex-wrap:wrap; }
 .dash-empty { color:var(--text-muted); background:var(--card-bg); border:1px dashed var(--border); border-radius:8px; padding:1.5rem; }
 

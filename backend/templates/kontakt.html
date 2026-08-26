@@ -21,19 +21,26 @@
    setzen den Fokus dorthin. Bewusst KEIN Vorausfuellen aus dem Konto; der
    Server vermerkt bei angemeldeten Absendern nur intern „Angemeldet als“. #}
 
-{# "So erreichst du uns" (Steve + Michael, 24.08.2026): eine Adresse
-   fuer alles (support@ lesen beide), Telefon = Actinos oeffentliche
-   Bueronummer aus dem Impressum, Rechnungsweg fuer Firmen. #}
-<section class="dash-card" aria-labelledby="wege-h">
+{# Einleitung + "So erreichst du uns" (Steve + Michael 24.08.2026;
+   Formulierung Steve 26.08.2026 nach Michaels Rueckmeldung „klobig“):
+   Prosa statt Liste, Schrift wie die Prompt-Beschreibungen (dash-intro-box
+   + dash-prosa, s. ueber_uns.html). support@ lesen beide; Telefon UND
+   Rechnungsweg gehoeren zu Michael/Actino und stehen deshalb zusammen in
+   EINEM Absatz (vorher wirkte die Nummer wie eine allgemeine Hotline).
+   Links (mailto/tel) stehen zwischen den uebersetzten Satzteilen, damit
+   die Kataloge keine HTML-Fragmente enthalten. Bewusst KEINE Antwortzeit-
+   Zusage und kein „persoenlich“ (spaeter antwortet auch ein Support-Agent). #}
+<p class="dash-intro-box">{{ _('Fragen zu InkluDocs, Hilfe beim Einstieg oder eine Idee, was wir besser machen können? Wir freuen uns über deine Nachricht.') }}</p>
+
+<section class="dash-card dash-prosa" aria-labelledby="wege-h">
     <h2 id="wege-h">{{ _('So erreichst du uns') }}</h2>
-    <p>{{ _('E-Mail (schnellster Weg):') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a></p>
-    <p>{{ _('Telefon:') }} <a href="tel:+492251148020">02251&nbsp;1480-20</a> — {{ _('unser Vertriebspartner Actino Software, Michael Karbe') }}</p>
-    <p>{{ _('Bestellungen auf Rechnung für Firmen:') }} <a href="mailto:sales@actino.de">sales@actino.de</a></p>
+    <p>{{ _('Am schnellsten geht es per E-Mail an') }} <a href="mailto:support@inkludocs.de">support@inkludocs.de</a>. {{ _('Das Postfach lesen Steve Weidel von InkluTec und Michael Karbe von Actino Software, je nach Thema meldet sich einer von uns beiden.') }}</p>
+    <p>{{ _('Du sprichst lieber oder möchtest InkluDocs für dein Unternehmen auf Rechnung bestellen? Dann ist Michael Karbe von unserem Vertriebspartner Actino Software für dich da, telefonisch unter') }} <a href="tel:+492251148020">02251&nbsp;1480-20</a>. {{ _('Bestellungen auf Rechnung nimmt er auch per E-Mail entgegen, an') }} <a href="mailto:sales@actino.de">sales@actino.de</a>.</p>
 </section>
 
 <section class="dash-card" id="schrittFormular" aria-labelledby="formular-h">
     <h2 id="formular-h">{{ _('Oder schreib uns direkt hier') }}</h2>
-    <p class="dash-meta">{{ _('Wir antworten per E-Mail an die Adresse, die du angibst.') }}</p>
+    <p class="dash-meta dash-form-intro">{{ _('Du kannst uns auch gleich von hier aus schreiben. Wir antworten an die E-Mail-Adresse, die du angibst.') }}</p>
     <form id="kontaktForm" novalidate>
         <div class="dash-field">
             <label for="ko_name">{{ _('Dein Name') }}</label>
@@ -54,7 +61,7 @@
         {# Informationspflicht Art. 13 DSGVO: kurzer Hinweis am Formular, die
            Einzelheiten stehen in Abschnitt „Kontaktformular“ der Datenschutz-
            erklaerung. Kein Haekchen (siehe Kommentar oben). #}
-        <p class="dash-meta" id="ko_hinweis">{{ _('Deine Angaben nutzen wir nur, um deine Anfrage zu beantworten.') }} <a href="/datenschutz">{{ _('Einzelheiten in der Datenschutzerklärung') }}</a></p>
+        <p class="dash-meta dash-form-hinweis" id="ko_hinweis">{{ _('Deine Angaben nutzen wir nur, um deine Anfrage zu beantworten.') }} <a href="/datenschutz">{{ _('Einzelheiten in der Datenschutzerklärung') }}</a></p>
         {# Honigtopf gegen Formular-Bots: fuer Menschen unsichtbar und
            nicht fokussierbar; wer es fuellt, wird still verworfen. #}
         <div aria-hidden="true" style="position:absolute;left:-9999px;" hidden>
