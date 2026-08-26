@@ -48,6 +48,11 @@
 /* Karten-Block (Einstellungen) */
 .dash-card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin-bottom:1.25rem; max-width:640px; }
 .dash-card h2 { margin-top:0; }
+/* Fliesstext-Karten (Ueber uns): Schrift wie die Prompt-Beschreibungen
+   (Michael, 25.08.2026) — .9rem, gedaempft, Zeilenabstand 1.6.
+   Kontrast text-muted auf card-bg = 8,9:1 (wie .dash-intro-box). */
+.dash-card.dash-prosa p { font-size:.9rem; line-height:1.6; color:var(--text-muted); }
+.dash-card.dash-prosa p:last-child { margin-bottom:0; }
 
 /* Formularfelder */
 .dash-field { margin-bottom:1.25rem; }
