@@ -51,6 +51,9 @@ from database import (
     set_user_language,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
+# WORD-WERKZEUG (26.08.2026): .docx lesen (Bilder + Kontext) und Alt-Texte zurueckschreiben
+from docx_processor import extract_images_from_docx, validiere_docx, DocxFehler
+import docx_export
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, get_gettext, SUPPORTED_LANGUAGES
 from typing import Optional  # frueh, da ab get_optional_user in Typannotationen genutzt
@@ -3938,7 +3941,9 @@ async def create_project(request: Request, user: dict = Depends(get_current_user
         raise HTTPException(status_code=400, detail="Projektname darf maximal 120 Zeichen lang sein")
     if not is_valid_tool_key(tool):
         raise HTTPException(status_code=400, detail="Unbekanntes oder nicht verfuegbares Werkzeug")
-    project_type = {"pdf": "pdf", "web": "url", "grafik": "images"}.get(tool)
+    # project_type ist der Datentyp der Quelle (Anzeige-/Verzweigungslogik im Frontend);
+    # "docx" = Word-Werkzeug (26.08.2026).
+    project_type = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx"}.get(tool)
     if not project_type:
         raise HTTPException(status_code=400, detail="Fuer dieses Werkzeug ist das Anlegen noch nicht verfuegbar")
     conn = get_db()
@@ -4310,12 +4315,20 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
     ext = os.path.splitext(filename)[1].lower()
 
     is_pdf = ext == ".pdf"
+    is_docx = ext == ".docx"       # Word-Werkzeug (26.08.2026)
     is_image = ext in IMAGE_EXTENSIONS
 
-    if not is_pdf and not is_image:
+    # Word-Altformat und Makro-Dateien bewusst mit eigener Meldung abweisen —
+    # .doc kann das Werkzeug nicht lesen (Binaerformat), .docm enthaelt Makros,
+    # die wir weder pruefen noch weitergeben wollen.
+    if ext == ".doc":
+        raise HTTPException(status_code=400, detail="Das alte Word-Format .doc wird nicht unterstützt. Bitte in Word über „Speichern unter“ als .docx speichern.")
+    if ext in (".docm", ".dotm", ".dotx"):
+        raise HTTPException(status_code=400, detail="Word-Vorlagen und Dateien mit Makros (.docm, .dotm, .dotx) werden nicht verarbeitet. Bitte als normale .docx-Datei speichern.")
+    if not is_pdf and not is_docx and not is_image:
         raise HTTPException(
             status_code=400,
-            detail="Nur PDF- und Bilddateien erlaubt (PDF, JPG, PNG, GIF, SVG, WebP, HEIC, BMP, TIFF)"
+            detail="Nur PDF-, Word- und Bilddateien erlaubt (PDF, DOCX, JPG, PNG, GIF, SVG, WebP, HEIC, BMP, TIFF)"
         )
 
     # Read and check file size
@@ -4352,13 +4365,32 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
 
     if is_pdf:
         return await _handle_pdf_upload(file_path, filename, user, project_id)
+    elif is_docx:
+        # Vorpruefung im Request (Zip, Grenzen, echtes DOCX ohne Makros), damit der
+        # Nutzer eine klare Meldung bekommt statt eines still verschwundenen Dokuments.
+        try:
+            validiere_docx(file_path)
+        except DocxFehler as e:
+            try:
+                os.unlink(file_path)
+            except OSError:
+                pass
+            raise HTTPException(status_code=400, detail=str(e))
+        return await _handle_pdf_upload(file_path, filename, user, project_id, art="docx")
     else:
         return await _handle_image_upload(file_path, filename, user, content, ext, project_id)
 
 
-async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_id: int = None) -> dict:
+async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_id: int = None,
+                             art: str = "pdf") -> dict:
     """Legt ein neues PDF-Projekt an ODER haengt eine weitere PDF an ein
     bestehendes PDF-Projekt an.
+
+    art="docx" (Word-Werkzeug, 26.08.2026): identischer Ablauf fuer Word-
+    Dateien — Werkzeug "word", project_type "docx", extraction_method "docx",
+    Extraktor docx_processor. Ein Dokument = eine Word-Datei, Multi-Datei
+    wie bei PDF. Bewusst KEINE Kopie dieser Funktion, damit Aenderungen am
+    Upload-Ablauf beide Formate treffen.
 
     Multi-Datei Phase 1 (08.06.2026): Ein PDF-Projekt kann mehrere PDFs
     enthalten. Jede hochgeladene PDF wird zu einem Dokument
@@ -4378,9 +4410,10 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         if not proj:
             conn.close()
             raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-        if proj["tool"] != "pdf":
+        erwartet_tool = "word" if art == "docx" else "pdf"
+        if proj["tool"] != erwartet_tool:
             conn.close()
-            raise HTTPException(status_code=400, detail="Dieses Projekt ist kein PDF-Projekt")
+            raise HTTPException(status_code=400, detail=("Dieses Projekt ist kein Word-Projekt" if art == "docx" else "Dieses Projekt ist kein PDF-Projekt"))
         # Multi-Datei: Anhaengen ist ab jetzt erlaubt — kein 409 mehr bei total_images > 0.
         is_append = bool(proj["total_images"] and proj["total_images"] > 0)
         # status auf extracting setzen; filename/original_path nur beim ERSTEN
@@ -4396,8 +4429,8 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         conn.commit()
     else:
         cursor = conn.execute(
-            "INSERT INTO projects (user_id, filename, original_path, status, project_type, tool) VALUES (?, ?, ?, 'extracting', 'pdf', 'pdf')",
-            (user["id"], filename, file_path)
+            "INSERT INTO projects (user_id, filename, original_path, status, project_type, tool) VALUES (?, ?, ?, 'extracting', ?, ?)",
+            (user["id"], filename, file_path, "docx" if art == "docx" else "pdf", "word" if art == "docx" else "pdf")
         )
         project_id = cursor.lastrowid
         conn.commit()
@@ -4413,7 +4446,7 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         """INSERT INTO documents
            (project_id, doc_index, original_filename, original_path, extraction_method, total_images)
            VALUES (?, ?, ?, ?, ?, 0)""",
-        (project_id, doc_index, filename, file_path, "fitz")
+        (project_id, doc_index, filename, file_path, "docx" if art == "docx" else "fitz")
     )
     document_id = doc_cursor.lastrowid
     conn.commit()
@@ -4430,7 +4463,7 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
     # bis der Status wechselt. total_images/added_images stehen deshalb
     # NICHT mehr in dieser Antwort — sie entstehen erst nach der Extraktion.
     asyncio.create_task(_extract_document(
-        project_id, document_id, doc_index, file_path, user["id"], is_append))
+        project_id, document_id, doc_index, file_path, user["id"], is_append, art=art))
 
     return {
         "ok": True,
@@ -4438,14 +4471,15 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         "document_id": document_id,
         "doc_index": doc_index,
         "filename": filename,
-        "project_type": "pdf",
+        "project_type": "docx" if art == "docx" else "pdf",
         "appended": is_append,
         "status": "extracting",
     }
 
 
 async def _extract_document(project_id: int, document_id: int, doc_index: int,
-                            file_path: str, user_id: int, is_append: bool):
+                            file_path: str, user_id: int, is_append: bool,
+                            art: str = "pdf"):
     """Hintergrund-Extraktion einer hochgeladenen PDF (ausgelagert 04.07.2026).
 
     Der frueher synchrone Teil von _handle_pdf_upload, unveraendert in der
@@ -4463,8 +4497,9 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
     os.makedirs(img_dir, exist_ok=True)
     loop = asyncio.get_event_loop()
     try:
+        extraktor = extract_images_from_docx if art == "docx" else extract_images_from_pdf
         images = await loop.run_in_executor(
-            None, extract_images_from_pdf, file_path, img_dir, project_id)
+            None, extraktor, file_path, img_dir, project_id)
     except Exception as e:
         print(f"[upload] Extraktion fehlgeschlagen (Projekt {project_id}, Dokument {document_id}): {e}")
         conn = get_db()
@@ -4497,17 +4532,24 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
         conn.execute(
             """INSERT INTO images (project_id, document_id, page_number, image_index, image_path, context_text,
                width, height, xref, bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-               original_alt, page_view_path, page_text)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               original_alt, page_view_path, page_text, docx_anker)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (project_id, document_id, img["page_number"], next_idx, img["image_path"],
-             img["context_text"], img["width"], img["height"], img["xref"],
+             img["context_text"], img["width"], img["height"], img.get("xref"),
              bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-             img.get("original_alt", ""),
-             img.get("page_view_path", ""), img.get("page_text", ""))
+             # Word: ein vom Autor gesetztes Dekorativ-Kennzeichen wird als
+             # original_alt "dekorativ" uebernommen — so bleibt es beim Export
+             # erhalten, auch wenn der Nutzer das Bild nie generieren laesst.
+             ("dekorativ" if img.get("decorative_hint") else img.get("original_alt", "")),
+             img.get("page_view_path", ""), img.get("page_text", ""),
+             img.get("docx_anker", ""))
         )
 
     # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg merken (fitz|pdfix)
-    extraction_method = "pdfix" if images and any(i.get("source") == "pdfix" for i in images) else "fitz"
+    if art == "docx":
+        extraction_method = "docx"
+    else:
+        extraction_method = "pdfix" if images and any(i.get("source") == "pdfix" for i in images) else "fitz"
     conn.execute(
         "UPDATE documents SET extraction_method = ?, total_images = ? WHERE id = ?",
         (extraction_method, len(images), document_id)
@@ -5912,7 +5954,8 @@ async def _process_project(project_id: int, user_id: int):
     # PDF-Schalter (pdf_langbeschreibung_enabled): bei PDF + Schalter aus den zweiten KI-Pass
     # (Langbeschreibung) ueberspringen = Kostenersparnis (Karbe 03.06.2026). Bild-Projekte unberuehrt.
     _proj = conn.execute("SELECT tool, project_type, use_context, alt_language FROM projects WHERE id = ?", (project_id,)).fetchone()
-    skip_langbeschreibung = bool(_proj and (_proj["tool"] == "pdf" or _proj["project_type"] == "pdf")) and not pdf_langbeschreibung_enabled()
+    # Word-Werkzeug (26.08.2026): .docx kennt nur descr/title, keine Langbeschreibung -> wie PDF.
+    skip_langbeschreibung = bool(_proj and (_proj["tool"] in ("pdf", "word") or _proj["project_type"] in ("pdf", "docx"))) and not pdf_langbeschreibung_enabled()
     # KI-Kontext-Schalter (19.06.2026): bei "aus" bekommt die KI keinen Dokument-
     # Kontext (context=""). Default an (Spalte use_context Default 1). Der Vermerk
     # context_mode wird pro Bild gespeichert (nur Anzeige, NIE exportiert).
@@ -6423,7 +6466,7 @@ async def _read_export_options(request: Optional[Request]) -> tuple[Optional[int
 def _doc_label(doc: dict) -> str:
     """Anzeigename eines Dokuments fuer Dateinamen (display_name -> original_filename ohne .pdf)."""
     raw = (doc.get("display_name") or "").strip() or (doc.get("original_filename") or "").strip()
-    raw = re.sub(r"\.pdf$", "", raw, flags=re.IGNORECASE)
+    raw = re.sub(r"\.(pdf|docx)$", "", raw, flags=re.IGNORECASE)
     return _safe_filename_component(raw, f"dokument_{doc.get('doc_index', 1)}")
 
 
@@ -6673,6 +6716,113 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         media_type="application/zip",
         headers=headers,
     )
+
+
+# ─── WORD-EXPORT (26.08.2026): Word-Datei mit Alt-Texten zurueckgeben ────────
+#
+# Spiegelbild des PDF-Exports: ein Dokument -> direkter Download der .docx,
+# mehrere -> ZIP. Die Alt-Texte gehen ueber _exportable_alt_text (gleiche
+# Regeln: leer = Bild unberuehrt lassen, "dekorativ" = Kennzeichen setzen).
+# Der Anker images.docx_anker fuehrt zum Bildelement. Die Originaldatei wird
+# NIE veraendert; docx_export schreibt ein neues Zip in RESULTS_DIR/.../_export.
+
+_uploads_root = os.path.realpath(UPLOAD_DIR) + os.sep
+
+
+def _build_docx_for_document(unit: dict, output_dir: str, custom_title: Optional[str] = None) -> tuple[str, dict]:
+    doc = unit["doc"]
+    src = doc.get("original_path") or ""
+    # Nur Dateien aus dem Upload-Verzeichnis lesen (Schutz gegen manipulierte Pfade).
+    if not src or not os.path.realpath(src).startswith(_uploads_root) or not os.path.isfile(src):
+        raise HTTPException(status_code=404, detail="Die Originaldatei dieses Dokuments ist nicht mehr vorhanden")
+    alt_texts: dict[str, str] = {}
+    for img in unit["images"]:
+        anker = (img.get("docx_anker") or "").strip()
+        if not anker:
+            continue
+        text = _exportable_alt_text(img)
+        if text is None:
+            continue
+        alt_texts[anker] = text
+    base = custom_title or _doc_label(doc)
+    out_path = os.path.join(output_dir, "inkludocs_" + _safe_filename_component(base) + ".docx")
+    try:
+        erg = docx_export.write_alt_texts_to_docx(src, out_path, alt_texts)
+    except DocxFehler as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return out_path, {
+        "method": "docx",
+        "tagged": erg.geschrieben,
+        "total": len(unit["images"]),
+        "warnings": erg.warnungen,
+    }
+
+
+DOCX_MEDIA = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+@app.post("/api/projects/{project_id}/export/docx")
+async def export_docx(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Word-Export: ohne document_id alle Dokumente als ZIP, mit document_id
+    nur dieses Dokument als direkter Download. Kostet wie der PDF-Export
+    (billing.AKTIONS_PREISE["docx_export"]), nur fuer Bezahl-Konten."""
+    document_id, custom_name = await _read_export_options(request)
+    conn = get_db()
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    project = dict(project)
+    conn.close()
+    if project.get("project_type") != "docx":
+        raise HTTPException(status_code=400, detail="Word-Export ist nur fuer Word-Projekte verfuegbar")
+
+    units = _load_pdf_export_units(project, user["id"], document_id)
+    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
+    os.makedirs(output_dir, exist_ok=True)
+
+    _abo_export = billing.pruefe_kontingent(user["id"])
+    _export_kostenpflichtig = _abo_export.get("plan") != "free"
+    if _export_kostenpflichtig and not _abo_export.get("erlaubt", True):
+        raise HTTPException(status_code=429,
+                            detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+
+    if document_id is not None or len(units) == 1:
+        unit = units[0]
+        output_path, info = _build_docx_for_document(unit, output_dir, custom_title=custom_name)
+        headers = {"X-Export-Method": "docx", "X-Export-Tagged": str(info["tagged"]),
+                   "X-Export-Total": str(info["total"])}
+        if info.get("warnings"):
+            headers["X-Export-Warnings"] = json.dumps(info["warnings"], ensure_ascii=False)
+        download_base = custom_name or _doc_label(unit["doc"])
+        if _export_kostenpflichtig:
+            billing.verbuche(user["id"], "export", aktion="docx_export")
+        return FileResponse(output_path, filename=f"inkludocs_{download_base}.docx",
+                            media_type=DOCX_MEDIA, headers=headers)
+
+    zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
+    zip_path = os.path.join(output_dir, f"{zip_base}_alle_word.zip")
+    aggregated_warnings: list[str] = []
+    total_tagged = 0
+    total_images = 0
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for pos, unit in enumerate(units, start=1):
+            out_path, info = _build_docx_for_document(unit, output_dir)
+            inner = f"{pos:02d}_{_doc_label(unit['doc'])}.docx"
+            zf.write(out_path, arcname=inner)
+            total_tagged += int(info.get("tagged", 0) or 0)
+            total_images += int(info.get("total", 0) or 0)
+            for w in info.get("warnings", []) or []:
+                aggregated_warnings.append(f"[{inner}] {w}")
+    headers = {"X-Export-Tagged": str(total_tagged), "X-Export-Total": str(total_images)}
+    if aggregated_warnings:
+        headers["X-Export-Warnings"] = json.dumps(aggregated_warnings, ensure_ascii=False)
+    if _export_kostenpflichtig:
+        billing.verbuche(user["id"], "export", aktion="docx_export")
+    return FileResponse(zip_path, filename=f"{zip_base}_alle_word.zip",
+                        media_type="application/zip", headers=headers)
 
 
 # ─── Multi-Datei Export: JSON / CSV / XLSX (08.06.2026) ────────

@@ -4004,3 +4004,38 @@ msgstr "We use your details only to answer your enquiry."
 
 msgid "Einzelheiten in der Datenschutzerklärung"
 msgstr "Details in the privacy policy"
+
+# Word-Werkzeug (26.08.2026)
+
+msgid "Word-Datei hinzufügen"
+msgstr "Add Word file"
+
+msgid "Weitere Word-Datei hinzufügen"
+msgstr "Add another Word file"
+
+msgid "Word-Datei auswählen"
+msgstr "Choose Word file"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Daraus werden die Bilder extrahiert."
+msgstr "Choose a Word document (.docx) or drag it here. Its images will be extracted."
+
+msgid "Du kannst jederzeit weitere Word-Dateien mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "You can upload more Word files (max. {mb} MB each) at any time. They are added to the list below; existing alt texts are kept."
+
+msgid "Die Word-Datei wird verarbeitet – Bilder werden extrahiert …"
+msgstr "The Word file is being processed – extracting images …"
+
+msgid "Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Processing the Word file failed. Please try the file again."
+
+msgid "Als Word (Beta)"
+msgstr "As Word (beta)"
+
+msgid "Abschnitt {n}"
+msgstr "Section {n}"
+
+msgid "Bild {n}, Abschnitt {p}"
+msgstr "Image {n}, section {p}"
+
+msgid "aus Abschnitt {p}"
+msgstr "from section {p}"

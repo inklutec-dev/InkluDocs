@@ -79,6 +79,17 @@ TOOLS: list[Tool] = [
         route="/app",
         status=ToolStatus.VERFUEGBAR,
     ),
+    # WORD-WERKZEUG (26.08.2026, Steve + Michael): eigenes Werkzeug, NICHT ins
+    # PDF-Werkzeug (Entscheidung 14.08.2026). Backend: docx_processor.py (lesen)
+    # + docx_export.py (zurueckschreiben), Doku docs/WORD.md. Beta, bis echte
+    # Kundendokumente durch sind (Vektorgrafiken/SmartArt kommen in Stufe 2).
+    Tool(
+        key="word",
+        name="Alt-Texte für Word-Dokumente",
+        description="Word-Dokument (.docx) hochladen, die enthaltenen Bilder mit Alt-Texten versehen und die Datei mit Alt-Texten wieder herunterladen.",
+        route="/app",
+        status=ToolStatus.BETA,
+    ),
     Tool(
         key="pdf-a11y",
         name="Barrierefreie PDFs erstellen",

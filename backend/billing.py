@@ -67,6 +67,9 @@ AKTIONS_PREISE = {
     # klaeren falls gewuenscht). Free-Konten werden bis zur Wasserzeichen-
     # Runde (Umbau-Punkt 3) bewusst NICHT verbucht.
     "pdf_export": 5,
+    # Word-Werkzeug (26.08.2026): Export der Word-Datei mit Alt-Texten — gleiche
+    # Regel wie PDF (pro Vorgang, nur Bezahl-Konten).
+    "docx_export": 5,
 }
 
 # Zusatzpakete (Michaels Preise, bestaetigt 03.08.2026). Reine Konfiguration

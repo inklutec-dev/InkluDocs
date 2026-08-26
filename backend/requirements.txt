@@ -18,6 +18,10 @@ Babel>=2.16.0
 # PDFIX-INTEGRATION (24.04.2026): strukturelle Figure-Extraktion fuer getaggte PDFs
 pdfix-sdk==8.7.10
 
+# WORD-WERKZEUG (26.08.2026): .docx lesen/schreiben direkt im OOXML-Zip
+# (docx_processor.py / docx_export.py). lxml = sicherer XML-Parser ohne Entities.
+lxml==5.3.0
+
 # AWS BEDROCK (08.05.2026): Anthropic Claude via Frankfurt fuer v4-Pipeline
 boto3==1.35.50
 

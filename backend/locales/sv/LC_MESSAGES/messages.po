@@ -3565,3 +3565,38 @@ msgstr "Vi använder dina uppgifter enbart för att besvara din förfrågan."
 
 msgid "Einzelheiten in der Datenschutzerklärung"
 msgstr "Detaljer i integritetspolicyn"
+
+# Word-Werkzeug (26.08.2026)
+
+msgid "Word-Datei hinzufügen"
+msgstr "Lägg till Word-fil"
+
+msgid "Weitere Word-Datei hinzufügen"
+msgstr "Lägg till ytterligare en Word-fil"
+
+msgid "Word-Datei auswählen"
+msgstr "Välj Word-fil"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Daraus werden die Bilder extrahiert."
+msgstr "Välj ett Word-dokument (.docx) eller dra det hit. Bilderna extraheras därifrån."
+
+msgid "Du kannst jederzeit weitere Word-Dateien mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "Du kan när som helst ladda upp fler Word-filer på max {mb} MB. De läggs till i listan nedan; befintliga alt-texter behålls."
+
+msgid "Die Word-Datei wird verarbeitet – Bilder werden extrahiert …"
+msgstr "Word-filen bearbetas – bilder extraheras …"
+
+msgid "Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Bearbetningen av Word-filen misslyckades. Försök igen med filen."
+
+msgid "Als Word (Beta)"
+msgstr "Som Word (beta)"
+
+msgid "Abschnitt {n}"
+msgstr "Avsnitt {n}"
+
+msgid "Bild {n}, Abschnitt {p}"
+msgstr "Bild {n}, avsnitt {p}"
+
+msgid "aus Abschnitt {p}"
+msgstr "från avsnitt {p}"

@@ -4004,3 +4004,38 @@ msgstr "Nous utilisons vos données uniquement pour répondre à votre demande."
 
 msgid "Einzelheiten in der Datenschutzerklärung"
 msgstr "Détails dans la déclaration de protection des données"
+
+# Word-Werkzeug (26.08.2026)
+
+msgid "Word-Datei hinzufügen"
+msgstr "Ajouter un fichier Word"
+
+msgid "Weitere Word-Datei hinzufügen"
+msgstr "Ajouter un autre fichier Word"
+
+msgid "Word-Datei auswählen"
+msgstr "Choisir un fichier Word"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Daraus werden die Bilder extrahiert."
+msgstr "Choisissez un document Word (.docx) ou glissez-le ici. Ses images seront extraites."
+
+msgid "Du kannst jederzeit weitere Word-Dateien mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "Vous pouvez à tout moment ajouter d’autres fichiers Word (max. {mb} Mo). Ils sont insérés dans la liste ci-dessous ; les textes alternatifs existants sont conservés."
+
+msgid "Die Word-Datei wird verarbeitet – Bilder werden extrahiert …"
+msgstr "Le fichier Word est en cours de traitement – extraction des images …"
+
+msgid "Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Le traitement du fichier Word a échoué. Veuillez réessayer avec le fichier."
+
+msgid "Als Word (Beta)"
+msgstr "En Word (bêta)"
+
+msgid "Abschnitt {n}"
+msgstr "Section {n}"
+
+msgid "Bild {n}, Abschnitt {p}"
+msgstr "Image {n}, section {p}"
+
+msgid "aus Abschnitt {p}"
+msgstr "de la section {p}"

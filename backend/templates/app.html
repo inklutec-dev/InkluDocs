@@ -199,6 +199,23 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
+        if (tool === 'word') {
+            // WORD-WERKZEUG (26.08.2026): gleicher Block wie PDF, nur .docx.
+            const hasExisting = project.total_images > 0;
+            const heading = hasExisting ? t('Weitere Word-Datei hinzufügen') : t('Word-Datei hinzufügen');
+            const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
+            const hint = hasExisting
+                ? t('Du kannst jederzeit weitere Word-Dateien mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten.', { mb: window.MAX_UPLOAD_MB || 50 })
+                : t('Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Daraus werden die Bilder extrahiert.') + sizeHint;
+            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
+                + '<div class="dropzone-inner">'
+                + '<input type="file" id="projUpload" accept=".docx" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<label for="projUpload" class="upload-btn">' + t('Word-Datei auswählen') + '</label>'
+                + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
+                + '</div>'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
+                + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
+        }
         if (tool === 'grafik') {
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + t('Bilder hinzufügen') + '</h2>'
                 + '<div class="dropzone-inner">'
@@ -350,14 +367,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (data.status === 'extracting' && data.document_id) {
                     // Async-Upload: Der Server hat die PDF angenommen und
                     // extrahiert im Hintergrund — Status zeigen und pollen.
-                    const wartetext = t('Die PDF wird verarbeitet – Bilder werden extrahiert …');
+                    const wartetext = data.project_type === 'docx'
+                        ? t('Die Word-Datei wird verarbeitet – Bilder werden extrahiert …')
+                        : t('Die PDF wird verarbeitet – Bilder werden extrahiert …');
                     if (status) status.textContent = wartetext;
                     announce(wartetext);
                     const ergebnis = await waitForExtraction(projectId, data.document_id);
                     if (!ergebnis.ok) {
                         const meldung = ergebnis.timeout
                             ? t('Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste.')
-                            : t('Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.');
+                            : (data.project_type === 'docx'
+                                ? t('Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')
+                                : t('Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.'));
                         if (status) status.textContent = meldung;
                         announce(meldung);
                         return;
@@ -473,7 +494,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const images = data.images || [];
             const extractionText = (project.project_type === 'pdf')
                 ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
-                : null;
+                : (project.project_type === 'docx' ? 'Word (OOXML)' : null);
             const badge = computeStatusBadge(project, images);
             const headInfo = formatProjectHeadInfo(project, extractionText, images);
             const badgeEl = document.getElementById('projectStatusBadge');
@@ -506,7 +527,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
         const extractionText = (project.project_type === 'pdf')
             ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
-            : null;
+            : (project.project_type === 'docx' ? 'Word (OOXML)' : null);
         const badge = computeStatusBadge(project, images);
         const headInfo = formatProjectHeadInfo(project, extractionText, images);
 
@@ -627,6 +648,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">${t('Als JSON')}</button>
                                 <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
                                 ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF (Beta)') + '</button>' : ''}
+                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word (Beta)') + '</button>' : ''}
                                 <button class="btn btn-secondary" onclick="closeExportPanel()">${t('Abbrechen')}</button>
                             </div>
                             <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
@@ -673,7 +695,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 // wir das tabindex=-1-Element, damit der Fokus nach dem Upload weiter
                 // dorthin springen kann; bei PDF wird es zum visuell unsichtbaren
                 // Anker ohne semantisches Heading.
-                const isPdf = project.tool === 'pdf' || project.project_type === 'pdf';
+                const isPdf = project.tool === 'pdf' || project.project_type === 'pdf'
+                    || project.tool === 'word' || project.project_type === 'docx';   // Word: gleiche Struktur
                 if (isPdf) {
                     return `<div id="bilderHeading" class="sr-only" tabindex="-1" role="status" aria-live="off">${t('Bilder ({n})', { n: images.length })}</div>`;
                 }
@@ -1795,7 +1818,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Doc-Reihenfolge: aus documents-Liste; was übrig bleibt (z.B. Bilder ohne document_id), kommt zum Schluss.
         const orderedDocs = Array.isArray(documents) ? documents.slice().sort((a, b) => (a.doc_index || 0) - (b.doc_index || 0)) : [];
         currentRenderDocs = orderedDocs;   // fuer rueckItemLabel() im Abschluss-Dialog
-        const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf'));
+        // WORD-WERKZEUG (26.08.2026): Word-Projekte nutzen exakt die PDF-Struktur
+        // (Dokument h2 > Gruppe h3 > Bild h4). Unterschied nur im Etikett: Word hat
+        // keine Seiten, page_number ist dort der Abschnitt (Ueberschrift 1).
+        const isWordProject = !!(project && (project.tool === 'word' || project.project_type === 'docx'));
+        const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf')) || isWordProject;
         // Multi-Datei Phase 2 (14.08.2026): Web-Projekte haben jetzt ebenfalls
         // Dokumente (eine gescannte Adresse = "Webseite N"), Grafik-Projekte
         // rendern jedes Bild als eigenen klappbaren Block.
@@ -1864,7 +1891,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // Ueberschrift — bei Web/Grafik ist page_number ein technischer
             // Restwert (immer 1) und wuerde nur verwirren.
             const heading = (img.page_number > 0 && isPdfProject)
-                ? t('Bild {n}, Seite {p}', { n: displayNr, p: img.page_number })
+                ? (isWordProject
+                    ? t('Bild {n}, Abschnitt {p}', { n: displayNr, p: img.page_number })
+                    : t('Bild {n}, Seite {p}', { n: displayNr, p: img.page_number }))
                 : t('Bild {n}', { n: displayNr });
             const hTag = cardHeadingLevel || 'h3';
             // Phase 2: Bild-Loeschen im Web-Werkzeug (Feinschnitt innerhalb einer
@@ -1898,7 +1927,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
                         ${t('Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.')}
                     </p>` : ''}
-                <img src="${imgFileUrl(img.id)}" alt="${t('Extrahiertes Bild')}${(img.page_number > 0 && isPdfProject) ? ' ' + t('von Seite {p}', { p: img.page_number }) : ''}" class="image-preview" loading="lazy">
+                <img src="${imgFileUrl(img.id)}" alt="${t('Extrahiertes Bild')}${(img.page_number > 0 && isPdfProject) ? ' ' + (isWordProject ? t('aus Abschnitt {p}', { p: img.page_number }) : t('von Seite {p}', { p: img.page_number })) : ''}" class="image-preview" loading="lazy">
                 <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
                     ${t('Alt-Text')}
                     <span class="save-indicator" id="saved_${img.id}">${t('Gespeichert')}</span>
@@ -2002,7 +2031,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             return `
                 <details class="page-section" data-page="${pageId}"${isOpen}>
                     <summary class="page-summary">
-                        <${pageH} class="page-heading" id="page_heading_${pageId}">${t('Seite {n}', { n: pageNum })} <span class="page-count">(${count})</span></${pageH}>
+                        <${pageH} class="page-heading" id="page_heading_${pageId}">${isWordProject ? t('Abschnitt {n}', { n: pageNum }) : t('Seite {n}', { n: pageNum })} <span class="page-count">(${count})</span></${pageH}>
                     </summary>
                     ${pageView}
                     ${pageTextBlock}
@@ -2049,7 +2078,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 headingText = t('Webseite {n}: {name}', { n: pos, name: labelName });
                 countMeta = `(${totalImgs} ${totalImgs === 1 ? t('Bild') : t('Bilder')})`;
             } else {
-                const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)';
+                const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)'
+                    : doc.extraction_method === 'docx' ? 'Word (OOXML)' : 'Heuristisch (PyMuPDF)';
                 innerBlocks = Array.from(pageMap.entries())
                     .sort((a, b) => a[0] - b[0])
                     .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))
@@ -2491,7 +2521,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (m) {
                     try { serverName = decodeURIComponent(m[1]); } catch (e) { serverName = m[1]; }
                 }
-                const ext = format === 'pdf' ? '.pdf' : format === 'xlsx' ? '.xlsx' : format === 'csv' ? '.csv' : '.json';
+                const ext = format === 'pdf' ? '.pdf' : format === 'docx' ? '.docx' : format === 'xlsx' ? '.xlsx' : format === 'csv' ? '.csv' : '.json';
                 const fallback = (customName || 'export') + (scope.all ? '_alle' : '') + ext;
                 downloadBlob(blob, serverName || fallback);
                 announce(t('{name} wurde heruntergeladen.', { name: serverName || fallback }));

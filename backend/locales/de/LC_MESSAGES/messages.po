@@ -4007,3 +4007,38 @@ msgstr ""
 
 msgid "Einzelheiten in der Datenschutzerklärung"
 msgstr ""
+
+# Word-Werkzeug (26.08.2026)
+
+msgid "Word-Datei hinzufügen"
+msgstr ""
+
+msgid "Weitere Word-Datei hinzufügen"
+msgstr ""
+
+msgid "Word-Datei auswählen"
+msgstr ""
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Daraus werden die Bilder extrahiert."
+msgstr ""
+
+msgid "Du kannst jederzeit weitere Word-Dateien mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr ""
+
+msgid "Die Word-Datei wird verarbeitet – Bilder werden extrahiert …"
+msgstr ""
+
+msgid "Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr ""
+
+msgid "Als Word (Beta)"
+msgstr ""
+
+msgid "Abschnitt {n}"
+msgstr ""
+
+msgid "Bild {n}, Abschnitt {p}"
+msgstr ""
+
+msgid "aus Abschnitt {p}"
+msgstr ""

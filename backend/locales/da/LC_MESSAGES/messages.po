@@ -3695,3 +3695,38 @@ msgstr "Vi bruger kun dine oplysninger til at besvare din henvendelse."
 
 msgid "Einzelheiten in der Datenschutzerklärung"
 msgstr "Detaljer i privatlivspolitikken"
+
+# Word-Werkzeug (26.08.2026)
+
+msgid "Word-Datei hinzufügen"
+msgstr "Tilføj Word-fil"
+
+msgid "Weitere Word-Datei hinzufügen"
+msgstr "Tilføj endnu en Word-fil"
+
+msgid "Word-Datei auswählen"
+msgstr "Vælg Word-fil"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Daraus werden die Bilder extrahiert."
+msgstr "Vælg et Word-dokument (.docx), eller træk det hertil. Billederne udtrækkes derfra."
+
+msgid "Du kannst jederzeit weitere Word-Dateien mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
+msgstr "Du kan når som helst uploade flere Word-filer på maks. {mb} MB. De indsættes i listen nedenfor; eksisterende alt-tekster bevares."
+
+msgid "Die Word-Datei wird verarbeitet – Bilder werden extrahiert …"
+msgstr "Word-filen behandles – billeder udtrækkes …"
+
+msgid "Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Behandlingen af Word-filen mislykkedes. Prøv venligst filen igen."
+
+msgid "Als Word (Beta)"
+msgstr "Som Word (beta)"
+
+msgid "Abschnitt {n}"
+msgstr "Afsnit {n}"
+
+msgid "Bild {n}, Abschnitt {p}"
+msgstr "Billede {n}, afsnit {p}"
+
+msgid "aus Abschnitt {p}"
+msgstr "fra afsnit {p}"

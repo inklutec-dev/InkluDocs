@@ -599,6 +599,10 @@ def _migrate_columns(conn):
         ("images", "display_name", "ALTER TABLE images ADD COLUMN display_name TEXT"),
         ("documents", "source_url", "ALTER TABLE documents ADD COLUMN source_url TEXT DEFAULT ''"),
         ("documents", "page_text", "ALTER TABLE documents ADD COLUMN page_text TEXT DEFAULT ''"),
+        # WORD-WERKZEUG (26.08.2026): Anker des Bildvorkommens in der .docx
+        # ("<part>|<docPr-id>", z. B. "word/document.xml|7"). Damit findet
+        # docx_export das Element beim Zurueckschreiben wieder. PDF: leer.
+        ("images", "docx_anker", "ALTER TABLE images ADD COLUMN docx_anker TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:
