@@ -1823,6 +1823,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // keine Seiten, page_number ist dort der Abschnitt (Ueberschrift 1).
         const isWordProject = !!(project && (project.tool === 'word' || project.project_type === 'docx'));
         const isPdfProject = !!(project && (project.tool === 'pdf' || project.project_type === 'pdf')) || isWordProject;
+        // Word (27.08.2026): Dokumente mit Word-Seitenmarken (extraction_method
+        // 'docx-seiten') zeigen "Seite N" wie in Word; ohne Marken bleibt "Abschnitt N".
+        const wordSeitenDocs = new Set(orderedDocs.filter(d => d.extraction_method === 'docx-seiten').map(d => d.id));
+        const wordAbschnitt = (docId) => isWordProject && !wordSeitenDocs.has(docId);
         // Multi-Datei Phase 2 (14.08.2026): Web-Projekte haben jetzt ebenfalls
         // Dokumente (eine gescannte Adresse = "Webseite N"), Grafik-Projekte
         // rendern jedes Bild als eigenen klappbaren Block.
@@ -1891,7 +1895,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // Ueberschrift — bei Web/Grafik ist page_number ein technischer
             // Restwert (immer 1) und wuerde nur verwirren.
             const heading = (img.page_number > 0 && isPdfProject)
-                ? (isWordProject
+                ? (wordAbschnitt(img.document_id)
                     ? t('Bild {n}, Abschnitt {p}', { n: displayNr, p: img.page_number })
                     : t('Bild {n}, Seite {p}', { n: displayNr, p: img.page_number }))
                 : t('Bild {n}', { n: displayNr });
@@ -1927,7 +1931,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
                         ${t('Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.')}
                     </p>` : ''}
-                <img src="${imgFileUrl(img.id)}" alt="${t('Extrahiertes Bild')}${(img.page_number > 0 && isPdfProject) ? ' ' + (isWordProject ? t('aus Abschnitt {p}', { p: img.page_number }) : t('von Seite {p}', { p: img.page_number })) : ''}" class="image-preview" loading="lazy">
+                <img src="${imgFileUrl(img.id)}" alt="${t('Extrahiertes Bild')}${(img.page_number > 0 && isPdfProject) ? ' ' + (wordAbschnitt(img.document_id) ? t('aus Abschnitt {p}', { p: img.page_number }) : t('von Seite {p}', { p: img.page_number })) : ''}" class="image-preview" loading="lazy">
                 <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
                     ${t('Alt-Text')}
                     <span class="save-indicator" id="saved_${img.id}">${t('Gespeichert')}</span>
@@ -2031,7 +2035,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             return `
                 <details class="page-section" data-page="${pageId}"${isOpen}>
                     <summary class="page-summary">
-                        <${pageH} class="page-heading" id="page_heading_${pageId}">${isWordProject ? t('Abschnitt {n}', { n: pageNum }) : t('Seite {n}', { n: pageNum })} <span class="page-count">(${count})</span></${pageH}>
+                        <${pageH} class="page-heading" id="page_heading_${pageId}">${wordAbschnitt(first.document_id) ? t('Abschnitt {n}', { n: pageNum }) : t('Seite {n}', { n: pageNum })} <span class="page-count">(${count})</span></${pageH}>
                     </summary>
                     ${pageView}
                     ${pageTextBlock}
@@ -2079,7 +2083,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 countMeta = `(${totalImgs} ${totalImgs === 1 ? t('Bild') : t('Bilder')})`;
             } else {
                 const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)'
-                    : doc.extraction_method === 'docx' ? 'Word (OOXML)' : 'Heuristisch (PyMuPDF)';
+                    : (doc.extraction_method === 'docx' || doc.extraction_method === 'docx-seiten') ? 'Word (OOXML)' : 'Heuristisch (PyMuPDF)';
                 innerBlocks = Array.from(pageMap.entries())
                     .sort((a, b) => a[0] - b[0])
                     .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))

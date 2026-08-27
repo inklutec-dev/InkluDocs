@@ -256,6 +256,45 @@ class TestEchteWordDokumente(unittest.TestCase):
         neu = dp.analysiere_docx(out, tempfile.mkdtemp()).bilder
         self.assertEqual([b.original_alt for b in neu], ["Erstes", "Zweites"])
 
+    # --- Seiten aus Word-Marken (27.08.2026)
+    def _mit_marke(self, marke_xml, vor="<w:drawing"):
+        """word_einfach.docx mit eingefuegtem XML direkt vor dem Bild-Element."""
+        ziel = os.path.join(self.tmp, "seiten.docx")
+        with zipfile.ZipFile(FIX_EINFACH) as zin, zipfile.ZipFile(ziel, "w") as zout:
+            for zi in zin.infolist():
+                daten = zin.read(zi.filename)
+                if zi.filename == "word/document.xml":
+                    xml = daten.decode("utf-8")
+                    a = xml.index(vor)
+                    daten = (xml[:a] + marke_xml + xml[a:]).encode("utf-8")
+                zout.writestr(zi, daten)
+        return ziel
+
+    def test_ohne_marken_bleibt_abschnitt(self):
+        erg = dp.analysiere_docx(FIX_EINFACH, self.tmp)
+        self.assertFalse(erg.seiten_bekannt)
+        rows = dp.extract_images_from_docx(FIX_EINFACH, self.tmp, 1)
+        self.assertEqual((rows[0]["docx_einheit"], rows[0]["page_number"]), ("abschnitt", 1))
+
+    def test_word_seitenmarken(self):
+        doc = self._mit_marke("<w:lastRenderedPageBreak/></w:r><w:r><w:lastRenderedPageBreak/></w:r><w:r>")
+        erg = dp.analysiere_docx(doc, self.tmp)
+        self.assertEqual((erg.seiten_bekannt, erg.seiten_quelle), (True, "word"))
+        self.assertEqual(erg.bilder[0].seite, 3)
+        rows = dp.extract_images_from_docx(doc, self.tmp, 1)
+        self.assertEqual((rows[0]["docx_einheit"], rows[0]["page_number"]), ("seite", 3))
+
+    def test_manueller_umbruch_ohne_wordmarken(self):
+        doc = self._mit_marke('<w:br w:type="page"/></w:r><w:r>')
+        erg = dp.analysiere_docx(doc, self.tmp)
+        self.assertEqual((erg.seiten_quelle, erg.bilder[0].seite), ("umbrueche", 2))
+
+    def test_wordmarken_haben_vorrang_vor_umbruechen(self):
+        # Word schreibt nach einem manuellen Umbruch AUCH eine Seitenmarke -> nicht doppelt zaehlen
+        doc = self._mit_marke('<w:br w:type="page"/></w:r><w:r><w:lastRenderedPageBreak/></w:r><w:r>')
+        erg = dp.analysiere_docx(doc, self.tmp)
+        self.assertEqual((erg.seiten_quelle, erg.bilder[0].seite), ("word", 2))
+
     def test_unbekannter_anker_wird_gemeldet(self):
         out, r = self._export(FIX_VML, {"word/document.xml|v:gibtsnicht": "x", "word/document.xml|abc": "y"})
         self.assertEqual(sorted(r.nicht_gefunden), ["word/document.xml|abc", "word/document.xml|v:gibtsnicht"])

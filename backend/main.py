@@ -4547,7 +4547,10 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
 
     # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg merken (fitz|pdfix)
     if art == "docx":
-        extraction_method = "docx"
+        # 27.08.2026 (Steve: "wenn moeglich dieselben Seiten wie im Dokument"):
+        # "docx-seiten", wenn das Dokument Word-Seitenmarken traegt (page_number =
+        # Seite wie zuletzt in Word gezeigt), sonst "docx" (page_number = Abschnitt).
+        extraction_method = "docx-seiten" if images and images[0].get("docx_einheit") == "seite" else "docx"
     else:
         extraction_method = "pdfix" if images and any(i.get("source") == "pdfix" for i in images) else "fitz"
     conn.execute(

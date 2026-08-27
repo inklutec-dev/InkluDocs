@@ -1,6 +1,6 @@
 # Word-Werkzeug: Alt-Texte für Word-Dokumente (.docx)
 
-**Stand:** 27.08.2026, Stufe 1 (Alt-Texte) nach Härtetest mit echten Word-Dateien. Autor: Claude (InkluTec), Vorgaben Steve Weidel und Michael Karbe.
+**Stand:** 27.08.2026, Stufe 1 (Alt-Texte) nach Härtetest mit echten Word-Dateien und Seitenerkennung. Autor: Claude (InkluTec), Vorgaben Steve Weidel und Michael Karbe.
 
 ## Worum es geht
 
@@ -83,7 +83,7 @@ geschrieben. Anker: `"<part>|v:<shape-id>"`.
 | `backend/database.py` | Migration `images.docx_anker TEXT`. |
 | `backend/billing.py` | Aktion `docx_export` (5 Credits pro Vorgang, nur Bezahl-Konten — gleiche Regel wie `pdf_export`). |
 | `backend/templates/app.html` | Upload-Block für Word, Etiketten „Abschnitt" statt „Seite", Export-Knopf „Als Word (Beta)". |
-| `tests/test_docx_roundtrip.py` | 29 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr, echte Word-Fälle). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung); dazu vier von Microsoft Word erzeugte Dateien aus dem LibreOffice-Testkorpus (`word_textfeld_bild`, `word_vml_bild`, `word_vml_kopfzeile`, `word_einfach`; MPL-2.0). |
+| `tests/test_docx_roundtrip.py` | 33 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr, echte Word-Fälle). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung); dazu vier von Microsoft Word erzeugte Dateien aus dem LibreOffice-Testkorpus (`word_textfeld_bild`, `word_vml_bild`, `word_vml_kopfzeile`, `word_einfach`; MPL-2.0). |
 
 Bewusst **keine** Laufzeit-Abhängigkeit von python-docx: Die Bibliothek
 sieht Kopf-/Fußzeilen und frei positionierte Bilder nur über Umwege, und
@@ -98,8 +98,11 @@ Einzige neue Abhängigkeit: `lxml` (XML-Parser ohne Entity-Auflösung).
    verständlicher Meldung zurück, bevor Datenbankzeilen entstehen.
 2. `documents`-Zeile mit `extraction_method = "docx"`; Extraktion asynchron
    wie bei PDF (`_extract_document`, Executor-Thread).
-3. Je Bildvorkommen eine `images`-Zeile: `page_number` = **Abschnitt**
-   (laufende Nummer der Überschrift 1 vor dem Bild; Word hat keine Seiten),
+3. Je Bildvorkommen eine `images`-Zeile: `page_number` = **Seite wie zuletzt
+   in Word gezeigt**, wenn das Dokument Seitenmarken trägt (siehe „Seiten"),
+   sonst **Abschnitt** (laufende Nummer der Überschrift 1 vor dem Bild);
+   `documents.extraction_method` = `"docx-seiten"` bzw. `"docx"`, daran
+   erkennt die Oberfläche die Beschriftung „Seite N" bzw. „Abschnitt N";
    `context_text`, `original_alt` (vorhandener Alt-Text; `"dekorativ"` bei
    gesetztem Kennzeichen), `docx_anker` = `"<part>|<docPr-id>"` (VML:
    `"<part>|v:<shape-id>"`).
@@ -112,6 +115,28 @@ Einzige neue Abhängigkeit: `lxml` (XML-Parser ohne Entity-Auflösung).
    `_exportable_alt_text()`: leer = Bild unberührt lassen (auch ein alter
    Alt-Text bleibt), `"dekorativ"` = Kennzeichen setzen und `descr` leeren.
    Antwort-Header `X-Export-Tagged`, `X-Export-Total`, `X-Export-Warnings`.
+
+## Seiten (27.08.2026, Steve: „wenn möglich dieselben Seiten wie im Dokument")
+
+Word schreibt beim Sichern `<w:lastRenderedPageBreak/>` an jede Stelle, an
+der beim letzten Anzeigen eine neue Seite begann. `_seiten_der_bilder()`
+zählt diese Marken in Dokumentreihenfolge und ordnet jedem Bild die Seite zu,
+die Word zuletzt gezeigt hat — ohne Rendern, ohne LibreOffice. Regeln:
+
+- Gibt es Word-Marken, zählen **nur** sie (Word setzt sie auch nach manuellen
+  Umbrüchen, sonst würde doppelt gezählt).
+- Sonst zählen manuelle Umbrüche: `<w:br w:type="page"/>`, `w:pageBreakBefore`,
+  Abschnittswechsel (`w:sectPr` in `w:pPr`, außer `continuous`; wirkt ab dem
+  nächsten Absatz).
+- Gibt es gar keine Marken (Datei nicht von Word gesichert, z. B. aus
+  python-docx oder Google Docs), bleibt die Einheit **Abschnitt** — die
+  Oberfläche sagt dann „Abschnitt N" statt „Seite N". `docProps/app.xml`
+  (`<Pages>`) wird bewusst nicht genutzt: fremde Erzeuger schreiben dort
+  Platzhalter.
+- Kopf-/Fußzeilenbilder bekommen Seite 1.
+
+Die Seite ist so genau wie Words letzte Anzeige: Wer die Datei in einem
+anderen Programm mit anderen Schriften öffnet, kann andere Umbrüche sehen.
 
 ## Kontext: was die KI bekommt
 
@@ -164,9 +189,9 @@ schwedische Word-Installationen.
   Bilder mit externem Link (nicht im Dokument) werden übersprungen.
 - Die Liste `uebersprungen` (Grund je Element) wird noch nicht in der
   Oberfläche angezeigt.
-- **Keine Seitenvorschau**: Word kennt keine Seiten. Gruppierung nach
-  Abschnitt (Überschrift 1). Vorschau = LibreOffice-Rendern (Entscheidung
-  offen, ca. 400 MB Image).
+- **Keine Seitenvorschau** (Bild der Seite): Vorschau = LibreOffice-Rendern
+  (Entscheidung offen, ca. 400 MB Image). Die Seitennummer selbst kommt aus
+  den Word-Marken (siehe „Seiten").
 - **Langbeschreibung**: Word hat nur `descr`/`title`; die Pipeline
   überspringt sie wie bei PDF (`skip_langbeschreibung`).
 - Der Titel (`title`) wird beim Export nicht verändert (nur gesetzt, wenn
@@ -177,7 +202,7 @@ schwedische Word-Installationen.
 ## Tests
 
 ```
-# Unit (Container, 29 Tests):
+# Unit (Container, 33 Tests):
 docker cp tests/test_docx_roundtrip.py inkludocs-staging:/app/tests/
 docker cp tests/fixtures/<jede .docx> inkludocs-staging:/app/tests/fixtures/
 docker exec -w /app inkludocs-staging python3 -m unittest /app/tests/test_docx_roundtrip.py -v

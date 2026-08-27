@@ -34,6 +34,16 @@ VERSCHACHTELUNG UND DUPLIKATE (Haertetest 27.08.2026)
   - Doppelte docPr-ids ausserhalb von Fallback (kaputte Dokumente nach
     Kopieren/Einfuegen) bekommen Anker "<part>|<id>#<n>" fuer das n-te Vorkommen.
 
+SEITEN (Steve 27.08.2026: "wenn moeglich dieselben Seiten wie im Dokument")
+  Word speichert beim Sichern <w:lastRenderedPageBreak/> ueberall dort, wo beim
+  letzten Anzeigen eine neue Seite begann. Damit laesst sich die Seite jedes
+  Bildes bestimmen, wie Word sie zuletzt gezeigt hat — ohne Rendern. Fehlen
+  diese Marken (Datei nicht von Word gesichert), zaehlen manuelle Umbrueche
+  (<w:br w:type="page"/>, w:pageBreakBefore, Abschnittswechsel ausser
+  "continuous"). Gibt es gar keine Marken, bleibt die Einheit ABSCHNITT
+  (Ueberschrift 1) wie bisher; der Aufrufer erfaehrt das ueber
+  DocxErgebnis.seiten_bekannt bzw. "docx_einheit" je Bild.
+
 ANKER
   Jedes gefundene Bild bekommt einen stabilen Anker "<partname>|<docPr-id>"
   (z. B. "word/document.xml|7"; VML: "word/document.xml|v:_x0000_i1025").
@@ -148,6 +158,7 @@ class DocxBild:
     image_path: str = ""
     unsupported: str = ""       # Grund, falls nicht verarbeitbar (z. B. EMF)
     vml: bool = False           # altes VML-Bild (w:pict/v:shape) statt DrawingML
+    seite: int = 1              # Seite laut Word-Marken (nur gueltig, wenn seiten_bekannt)
 
 
 @dataclass
@@ -158,6 +169,8 @@ class DocxErgebnis:
     volltext_zeichen: int = 0
     uebersprungen: list[dict] = field(default_factory=list)   # {anker, grund}
     warnungen: list[str] = field(default_factory=list)
+    seiten_bekannt: bool = False    # True, wenn das Dokument Seitenmarken traegt
+    seiten_quelle: str = ""         # "word" (lastRenderedPageBreak) | "umbrueche" | ""
 
 
 # ---------------------------------------------------------------- Zip-Pruefung
@@ -494,6 +507,47 @@ def _vml_bilder(root: etree._Element) -> list[tuple[etree._Element, etree._Eleme
     return out
 
 
+def _seiten_der_bilder(root: etree._Element) -> tuple[dict[int, tuple[etree._Element, int]], str]:
+    """Seite je w:drawing/w:pict im Hauptdokument, wie Word sie zuletzt gezeigt
+    hat. Rueckgabe: ({id(el): (el, seite)}, quelle) mit quelle "word"
+    (lastRenderedPageBreak), "umbrueche" (nur manuelle Umbrueche) oder ""
+    (keine Marken -> Seite unbekannt). Elemente werden im Wert festgehalten
+    (lxml-Proxys)."""
+    W = NS["w"]
+    t_lrpb, t_br, t_pbb = f"{{{W}}}lastRenderedPageBreak", f"{{{W}}}br", f"{{{W}}}pageBreakBefore"
+    t_sect, t_ppr, t_p = f"{{{W}}}sectPr", f"{{{W}}}pPr", f"{{{W}}}p"
+    t_type, t_val = f"{{{W}}}type", f"{{{W}}}val"
+    bild_tags = {f"{{{W}}}drawing", f"{{{W}}}pict"}
+    hat_lrpb = root.find(f".//{t_lrpb}") is not None
+    seite, offen, explizit = 1, 0, 0
+    out: dict[int, tuple[etree._Element, int]] = {}
+    for el in root.iter():
+        if not isinstance(el.tag, str):
+            continue
+        if el.tag == t_p and offen:          # Abschnittswechsel wirkt ab dem naechsten Absatz
+            seite += offen
+            offen = 0
+        if hat_lrpb:
+            if el.tag == t_lrpb and not _in_fallback(el):
+                seite += 1
+        elif el.tag == t_br and el.get(t_type) == "page" and not _in_fallback(el):
+            seite += 1
+            explizit += 1
+        elif el.tag == t_pbb and el.get(t_val, "1") not in ("0", "false") \
+                and el.getparent() is not None and el.getparent().tag == t_ppr:
+            seite += 1
+            explizit += 1
+        elif el.tag == t_sect and el.getparent() is not None and el.getparent().tag == t_ppr:
+            typ = el.find(f"{{{W}}}type")
+            if typ is None or typ.get(t_val) != "continuous":
+                offen += 1
+                explizit += 1
+        if el.tag in bild_tags:
+            out[id(el)] = (el, seite)
+    quelle = "word" if hat_lrpb else ("umbrueche" if explizit else "")
+    return out, quelle
+
+
 def validiere_docx(docx_path: str) -> None:
     """Schnelle Vorpruefung direkt im Upload-Request (vor dem Anlegen von
     Datenbankzeilen): Zip gueltig, Grenzen eingehalten, echtes DOCX ohne
@@ -539,10 +593,13 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
             rels = _rels(zf, part)
             absaetze = _absaetze_des_teils(root)
             index_von = {id(p): i for i, p in enumerate(absaetze)}
+            seiten: dict[int, tuple[etree._Element, int]] = {}
             if part == "word/document.xml":
                 erg.volltext_zeichen = sum(len(_text(p)) for p in absaetze)
                 erg.ueberschriften = [_text(p) for p in absaetze
                                       if _heading_level(_pstyle(p), styles) is not None and _text(p)]
+                seiten, erg.seiten_quelle = _seiten_der_bilder(root)
+                erg.seiten_bekannt = bool(erg.seiten_quelle)
             drawing_kennung = _drawing_kennungen(root)
             vml = {id(p): (p, shape, idata, sid) for p, shape, idata, sid in _vml_bilder(root)}
             for el in root.iter(f"{{{NS['w']}}}drawing", f"{{{NS['w']}}}pict"):
@@ -605,6 +662,7 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                                 ort=label, anchored=anchored, vml=ist_vml)
                 bild.context, bild.caption, bild.ort, bild.abschnitt = _kontext_fuer(
                     el, absaetze, index_von, styles, label, erg.titel)
+                bild.seite = seiten[id(el)][1] if id(el) in seiten else 1   # Kopf-/Fusszeile: Seite 1
                 if ext_ in VEKTOR_EXT:
                     bild.unsupported = f"Vektorgrafik ({ext_[1:].upper()}) – wird noch nicht unterstützt"
                     erg.uebersprungen.append({"anker": bild.anker, "grund": bild.unsupported})
@@ -648,7 +706,9 @@ def extract_images_from_docx(docx_path: str, output_dir: str, project_id: int) -
         if b.unsupported or not b.image_path:
             continue
         out.append({
-            "page_number": b.abschnitt,      # Word hat keine Seiten: Abschnitt (Ueberschrift 1)
+            # Seite wie zuletzt in Word gezeigt (Seitenmarken), sonst Abschnitt (Ueberschrift 1)
+            "page_number": b.seite if erg.seiten_bekannt else b.abschnitt,
+            "docx_einheit": "seite" if erg.seiten_bekannt else "abschnitt",
             "image_index": b.order,
             "image_path": b.image_path,
             "width": b.width,
@@ -668,9 +728,9 @@ def extract_images_from_docx(docx_path: str, output_dir: str, project_id: int) -
 if __name__ == "__main__":     # Schnellprobe: python3 docx_processor.py datei.docx
     import json, sys, tempfile
     erg = analysiere_docx(sys.argv[1], tempfile.mkdtemp())
-    print("Titel:", erg.titel, "| Ueberschriften:", erg.ueberschriften)
+    print("Titel:", erg.titel, "| Ueberschriften:", erg.ueberschriften, "| Seiten:", erg.seiten_quelle or "unbekannt")
     for b in erg.bilder:
-        print(f"\n#{b.order} {b.anker} ort={b.ort} abschnitt={b.abschnitt} anchored={b.anchored} vml={b.vml} "
+        print(f"\n#{b.order} {b.anker} ort={b.ort} abschnitt={b.abschnitt} seite={b.seite} anchored={b.anchored} vml={b.vml} "
               f"deko={b.decorative} {b.width}x{b.height} {b.media_part} alt={b.original_alt!r} "
               f"title={b.original_title!r} unsupported={b.unsupported!r}\n{b.context}")
     print("\nUebersprungen:", json.dumps(erg.uebersprungen, ensure_ascii=False))
