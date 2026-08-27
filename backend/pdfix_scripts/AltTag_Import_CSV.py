@@ -29,6 +29,7 @@
 #   5. Maschinenlesbare Ergebniszeile auf stdout ("ALT_APPLIED=n FIGURES_FOUND=m"),
 #      die der Wrapper (pdfix_roundtrip.import_alt_texts_pdfix) auswertet.
 
+import os
 import csv
 import argparse
 import sys
@@ -37,6 +38,19 @@ from pdfixsdk import *
 from pathlib import Path
 
 pdfix = GetPdfix()
+
+# 27.08.2026: Lizenz (Actino/Karbe hat eine Lizenznummer erhalten). Ohne die
+# beiden Umgebungsvariablen laeuft das SDK wie bisher als Testversion
+# (Producer-Tag "Trial version of PDFix SDK", kein Wasserzeichen). Mit
+# PDFIX_LICENSE_USER + PDFIX_LICENSE_KEY wird die Lizenz aktiviert; schlaegt
+# das fehl, laeuft der Export trotzdem weiter (Meldung auf stderr).
+_lu, _lk = os.environ.get("PDFIX_LICENSE_USER", ""), os.environ.get("PDFIX_LICENSE_KEY", "")
+if _lu and _lk:
+    try:
+        if not pdfix.GetAccountAuthorization().Authorize(_lu, _lk):
+            print("PDFix-Lizenz nicht angenommen: " + str(pdfix.GetError()), file=sys.stderr)
+    except Exception as _e:
+        print("PDFix-Lizenz: Fehler bei der Aktivierung: " + repr(_e), file=sys.stderr)
 
 parser = argparse.ArgumentParser(description="Import Alt-Texte aus CSV in PDF (lfnr-basiert).")
 parser.add_argument('-i', '--input', required=True, help='Path to input PDF file')
