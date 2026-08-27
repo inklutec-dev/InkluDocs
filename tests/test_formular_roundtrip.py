@@ -117,12 +117,23 @@ class TestLesen(unittest.TestCase):
 
 
 class TestSchreiben(unittest.TestCase):
+    """Laeuft mit dem Writer PyMuPDF (inkrementell). Die PDFix-Variante prueft
+    TestSchreibenPdfix unten (nur mit Lizenz sinnvoll, siehe Modulkopf von
+    formular_export)."""
+    WRITER = "pymupdf"
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.out = os.path.join(self.tmp.name, "export.pdf")
+        self._env = os.environ.get("FORMULAR_WRITER")
+        os.environ["FORMULAR_WRITER"] = self.WRITER
 
     def tearDown(self):
         self.tmp.cleanup()
+        if self._env is None:
+            os.environ.pop("FORMULAR_WRITER", None)
+        else:
+            os.environ["FORMULAR_WRITER"] = self._env
 
     def _tus(self, pfad):
         felder, _ = fp.extract_formular(pfad, None, 0)
@@ -147,7 +158,13 @@ class TestSchreiben(unittest.TestCase):
         self.assertEqual(tus["email"], "E-Mail-Adresse für Kontoauszüge")
         self.assertEqual(tus["nachname"], "")
 
+    def test_writer_wie_gewaehlt(self):
+        erg = fe.write_quickinfos_to_pdf(FIXTURE, self.out, {"vorname": "Vorname"})
+        self.assertEqual(erg.writer, self.WRITER)
+
     def test_original_ist_praefix(self):
+        if self.WRITER != "pymupdf":
+            self.skipTest("Praefix-Garantie gilt nur fuer den inkrementellen PyMuPDF-Weg")
         fe.write_quickinfos_to_pdf(FIXTURE, self.out, {"vorname": "Vorname"})
         with open(FIXTURE, "rb") as a, open(self.out, "rb") as b:
             orig = a.read()
@@ -178,6 +195,18 @@ class TestSchreiben(unittest.TestCase):
         tus = self._tus(self.out)
         self.assertNotIn("\n", tus["vorname"])
         self.assertLessEqual(len(tus["vorname"]), 1000)
+
+
+class TestSchreibenPdfix(TestSchreiben):
+    """Dieselben Pruefungen ueber Joerg Heines Import-Skript (PDFix). Ohne Lizenz
+    (Testversion) kann das SDK Felder verlieren — dann schlaegt die Nachpruefung
+    an, was hier als Testfehler sichtbar wuerde; deshalb nur mit Lizenz."""
+    WRITER = "pdfix"
+
+    @classmethod
+    def setUpClass(cls):
+        if not (os.environ.get("PDFIX_LICENSE_USER") and os.environ.get("PDFIX_LICENSE_KEY")):
+            raise unittest.SkipTest("PDFix-Lizenz nicht gesetzt")
 
 
 if __name__ == "__main__":

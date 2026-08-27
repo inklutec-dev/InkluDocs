@@ -21,24 +21,28 @@ Nachpruefung (Ergebnis-Integritaet, wie beim Word-Export):
   Schlaegt ein Punkt fehl, wird der Export als Fehler gemeldet, nicht still
   ausgeliefert.
 
-SCHREIBWEG (Entscheidung 27.08.2026 nach Befund, siehe unten):
-  Standard ist PyMuPDF auf Objekt-Ebene: /TU wird als UTF-16-String in das
-  FELD-Dictionary geschrieben (bei Feldern mit Kids in das Elternfeld, sonst in
-  das gemeinsame Feld/Widget-Dictionary — der Ort, den Acrobat und Screenreader
-  lesen) und die Datei INKREMENTELL gespeichert: die Originalbytes bleiben
-  vollstaendig erhalten, angehaengt werden nur die geaenderten Objekte. Damit
-  ist "es aendert sich nichts ausser /TU" nicht nur Absicht, sondern
-  byte-genau belegbar (Praefix-Vergleich in der Nachpruefung).
-  Joerg Heines Import-Skript (PDFix, pdfix_scripts/Formular_Import_Quickinfo.py)
-  bleibt als zweiter Weg waehlbar: Umgebungsvariable FORMULAR_WRITER=pdfix.
+SCHREIBWEG (Entscheidung 27.08.2026, zwei Wege, Auswahl ueber FORMULAR_WRITER):
+  "pdfix"   = Joerg Heines Import-Skript (pdfix_scripts/Formular_Import_Quickinfo.py):
+              /TU ueber das SDK in das Feld-Dictionary, Speichern mit kSaveFull
+              (Datei wird neu aufgebaut). STANDARD, sobald eine PDFix-Lizenz
+              gesetzt ist (PDFIX_LICENSE_USER/KEY) — siehe Befund unten.
+  "pymupdf" = PyMuPDF auf Objekt-Ebene: /TU als UTF-16-String in das FELD-
+              Dictionary (bei Feldern mit Kids in das Elternfeld, sonst in das
+              gemeinsame Feld/Widget-Dictionary — der Ort, den Acrobat und
+              Screenreader lesen), INKREMENTELL gespeichert: die Originalbytes
+              bleiben vollstaendig erhalten (byte-genau belegbar, Praefix-
+              Vergleich). STANDARD ohne Lizenz (Testversion).
+  Ohne gesetzte Variable entscheidet die Lizenz; beide Wege durchlaufen dieselbe
+  Nachpruefung und das Ruecklesen ueber Heines Export-Skript.
 
-  BEFUND 27.08.2026 (reproduziert, Michaels Bankformular testformular.pdf,
-  pdfix-sdk 8.7.10): Nach PutString("TU") + Save (kSaveFull wie kSaveIncremental)
-  fehlen in der gespeicherten Datei zufaellig andere Widget-Annotationen
-  (Lauf 1: Felder 5-8, Lauf 2: keins, Lauf 3: Felder 7-8). Oeffnen + Speichern
-  ohne Aenderung ist sauber (3/3). Die Nachpruefung unten faengt das ab; als
-  Standardweg ist PDFix zum Schreiben deshalb vorerst abgeschaltet. Meldung an
-  Actino (Heine/Karbe) steht an.
+  BEFUND 27.08.2026 (pdfix-sdk 8.7.10, Michaels Bankformular testformular.pdf):
+  In der TESTVERSION (ohne Lizenz) fehlten nach PutString("TU") + Save zufaellig
+  andere Widget-Annotationen (Lauf 1: Felder 5-8, Lauf 2: keins, Lauf 3: 7-8;
+  Oeffnen + Speichern ohne Aenderung sauber 3/3). MIT LIZENZ (Actino, eingetragen
+  27.08. abends): 8/8 Laeufe auf beiden Testformularen ohne Verlust, auch ueber
+  Heines Import-Skript, und der Producer-Vermerk "Trial version" entfaellt. Der
+  Feldverlust ist also eine Eigenheit der Testversion. Die Nachpruefung bleibt
+  fuer beide Wege bestehen (sie hat den Befund gefunden).
 """
 from __future__ import annotations
 
@@ -75,6 +79,7 @@ class FormularExportFehler(RuntimeError):
 class FormularExportErgebnis:
     path: str
     geschrieben: int = 0
+    writer: str = ""
     nicht_gefunden: list = field(default_factory=list)
     warnungen: list = field(default_factory=list)
 
@@ -116,6 +121,17 @@ def _seitentexte_ohne_widgets(doc) -> list[str]:
         return texte
     finally:
         kopie.close()
+
+
+def aktiver_writer() -> str:
+    """"pdfix" oder "pymupdf" — FORMULAR_WRITER, sonst pdfix bei gesetzter Lizenz
+    und verfuegbarem SDK, sonst pymupdf (siehe Modulkopf)."""
+    pdfix_moeglich = _PDFIX_AVAILABLE and os.environ.get("PDFIX_ENABLED", "true").lower() != "false"
+    gewaehlt = os.environ.get("FORMULAR_WRITER", "").strip().lower()
+    if gewaehlt in ("pdfix", "pymupdf"):
+        return "pdfix" if (gewaehlt == "pdfix" and pdfix_moeglich) else "pymupdf"
+    lizenz = bool(os.environ.get("PDFIX_LICENSE_USER") and os.environ.get("PDFIX_LICENSE_KEY"))
+    return "pdfix" if (pdfix_moeglich and lizenz) else "pymupdf"
 
 
 def _pdf_string_utf16(text: str) -> str:
@@ -194,8 +210,8 @@ def write_quickinfos_to_pdf(input_path: str, output_path: str,
         os.replace(tmp_path, output_path)
         return FormularExportErgebnis(path=output_path, geschrieben=0, warnungen=warnungen)
 
-    writer = os.environ.get("FORMULAR_WRITER", "pymupdf").lower()
-    if writer == "pdfix" and _PDFIX_AVAILABLE and os.environ.get("PDFIX_ENABLED", "true").lower() != "false":
+    writer = aktiver_writer()
+    if writer == "pdfix":
         csv_path = os.path.join(out_dir, "_formular_import.csv")
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f, delimiter=";")
@@ -258,5 +274,5 @@ def write_quickinfos_to_pdf(input_path: str, output_path: str,
         ziel.close()
 
     os.replace(tmp_path, output_path)
-    return FormularExportErgebnis(path=output_path, geschrieben=geschrieben,
+    return FormularExportErgebnis(path=output_path, geschrieben=geschrieben, writer=writer,
                                   nicht_gefunden=nicht_gefunden, warnungen=warnungen)

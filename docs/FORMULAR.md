@@ -37,10 +37,10 @@ Kurzfassung von WCAG 3.3.2 / 4.1.2 und Matterhorn-Protokoll 28 (PDF/UA):
 | Datei | Aufgabe |
 |---|---|
 | `backend/formular_processor.py` | Leser: Feldliste über PDFix (Heines Export-Skript), Geometrie/Beschriftung/Abschnitt/Seitentext über PyMuPDF, Bildausschnitt und Seitenansicht mit nummerierten Rahmen. Vorprüfung `validiere_formular()`. |
-| `backend/formular_export.py` | Schreiber: `/TU` je Feld auf Objekt-Ebene, inkrementell gespeichert; Nachprüfung (Präfix, Felder, Seitentext, Rücklesen über PDFix). |
+| `backend/formular_export.py` | Schreiber: zwei Wege (Heines PDFix-Import mit Lizenz, sonst PyMuPDF inkrementell), Nachprüfung (Felder, Seitentext, Rücklesen über PDFix, Präfix beim PyMuPDF-Weg). |
 | `backend/formular_api.py` | Eigener FastAPI-Router: Felder, Quickinfos, Stammdaten, Bilder, Export. Upload-Handler + Hintergrund-Extraktion. |
 | `backend/pdfix_scripts/Formular_Export_Quickinfo.py` | Jörg Heines Export-Skript (Version 1.0.0.2, 25.08.2026), Linux-Anpassungen im Kopf dokumentiert. Original: `original_heine/Formulare_Export_07_r.py`. |
-| `backend/pdfix_scripts/Formular_Import_Quickinfo.py` | Jörg Heines Import-Skript (Version 1.0.0.1, 19.08.2026), wählbar über `FORMULAR_WRITER=pdfix` (siehe Befund unten). Original: `original_heine/Formulare_Import_03.py`. |
+| `backend/pdfix_scripts/Formular_Import_Quickinfo.py` | Jörg Heines Import-Skript (Version 1.0.0.1, 19.08.2026), Standard-Schreibweg mit Lizenz (siehe Schreibweg unten). Original: `original_heine/Formulare_Import_03.py`. |
 | `backend/database.py` | Tabellen `formularfelder` und `stammdaten`; DSGVO-Löschung. |
 | `backend/tools.py` | Werkzeug `formular` (Beta). |
 | `backend/billing.py` | Aktion `formular_export` (5 Credits, nur Bezahlkonten). |
@@ -104,23 +104,28 @@ benutzt.
 
 ## Schreibweg und Nachprüfung
 
-Standard ist PyMuPDF auf Objekt-Ebene: `/TU` als UTF-16-Hexstring in das
-**Feld-Dictionary** (bei Feldern mit `Kids` — Radio-Gruppen, Felder auf
-mehreren Seiten — in das Elternfeld, das den Namen trägt), gespeichert
-**inkrementell**. Die Originalbytes bleiben unverändert; das wird in der
-Nachprüfung als Präfix-Vergleich belegt. Weiter geprüft: Seitenzahl,
-Feld-Erscheinungen (Seite, Name, Typ), sichtbarer Text ohne Widgets, und jede
-geschriebene Quickinfo wird mit Heines Export-Skript (PDFix) zurückgelesen.
-Schlägt ein Punkt fehl, wird der Export als Fehler gemeldet, nie still
-ausgeliefert. Felder ohne Text bleiben unangetastet; eine Quickinfo wird nie
-gelöscht.
+Zwei Schreibwege, Auswahl über `FORMULAR_WRITER` (ohne Variable entscheidet
+die Lizenz):
+- **pdfix** (Standard mit Lizenz): Jörg Heines Import-Skript setzt `/TU` über
+  das SDK im Feld-Dictionary und speichert die Datei neu (kSaveFull).
+- **pymupdf** (Standard ohne Lizenz): `/TU` als UTF-16-Hexstring in das
+  **Feld-Dictionary** (bei `Kids` — Radio-Gruppen, Felder auf mehreren Seiten —
+  in das Elternfeld), **inkrementell** gespeichert; die Originalbytes bleiben
+  unverändert (Präfix-Vergleich).
 
-**Befund 27.08.2026 (pdfix-sdk 8.7.10, Michaels Bankformular):** Nach
-`PutString("TU")` + `Save` (kSaveFull wie kSaveIncremental) fehlen in der
-gespeicherten Datei zufällig andere Widget-Annotationen (Lauf 1: Felder 5–8,
-Lauf 2: keins, Lauf 3: 7–8); Öffnen + Speichern ohne Änderung ist sauber. Die
-Nachprüfung fängt das ab. Deshalb ist Heines Import-Skript nur über
-`FORMULAR_WRITER=pdfix` aktiv, bis Actino den SDK-Befund geklärt hat.
+Beide Wege durchlaufen dieselbe Nachprüfung: Seitenzahl, Feld-Erscheinungen
+(Seite, Name, Typ), sichtbarer Text ohne Widgets, und jede geschriebene
+Quickinfo wird mit Heines Export-Skript zurückgelesen. Schlägt ein Punkt
+fehl, wird der Export als Fehler gemeldet, nie still ausgeliefert. Felder ohne
+Text bleiben unangetastet; eine Quickinfo wird nie gelöscht.
+
+**Befund 27.08.2026 (pdfix-sdk 8.7.10, Michaels Bankformular):** In der
+**Testversion** fehlten nach `PutString("TU")` + `Save` zufällig andere
+Widget-Annotationen (Lauf 1: Felder 5–8, Lauf 2: keins, Lauf 3: 7–8; Öffnen +
+Speichern ohne Änderung sauber). **Mit Lizenz** (Actino, eingetragen 27.08.
+abends in `.env.staging`, Durchreichung in `docker-compose.staging.yml`):
+8/8 Läufe ohne Verlust, auch über Heines Skript, kein „Trial“-Vermerk mehr.
+Der Feldverlust ist eine Eigenheit der Testversion; die Nachprüfung bleibt.
 
 ## Datenschutz und Sicherheit
 

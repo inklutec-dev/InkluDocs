@@ -491,7 +491,7 @@ def build_router(deps: Deps) -> APIRouter:
             erg = formular_export.write_quickinfos_to_pdf(src, out_path, quickinfos)
         except formular_export.FormularExportFehler as e:
             raise HTTPException(status_code=500, detail=str(e))
-        return out_path, {"geschrieben": erg.geschrieben, "gesamt": len(einheit["felder"]),
+        return out_path, {"geschrieben": erg.geschrieben, "writer": erg.writer, "gesamt": len(einheit["felder"]),
                           "offen": sum(1 for f in einheit["felder"] if not (f["quickinfo"] or "").strip()),
                           "warnungen": erg.warnungen}
 
@@ -514,7 +514,8 @@ def build_router(deps: Deps) -> APIRouter:
         if document_id is not None or len(einheiten) == 1:
             einheit = einheiten[0]
             out_path, info = _pdf_fuer_dokument(einheit, output_dir, custom_name)
-            headers = {"X-Export-Method": "formular", "X-Export-Tagged": str(info["geschrieben"]),
+            headers = {"X-Export-Method": "formular", "X-Export-Writer": info.get("writer", ""),
+                       "X-Export-Tagged": str(info["geschrieben"]),
                        "X-Export-Total": str(info["gesamt"]), "X-Export-Open": str(info["offen"])}
             if info["warnungen"]:
                 headers["X-Export-Warnings"] = json.dumps(info["warnungen"], ensure_ascii=False)

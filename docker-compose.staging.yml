@@ -45,6 +45,9 @@ services:
       - BASE_URL=https://staging.inkludocs.inklutec.de
       # PDFIX-INTEGRATION (24.04.2026): Kill-Switch, default OFF. Fuer Staging auf true.
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
+      # PDFix-Lizenz (27.08.2026): aus .env.staging; leer = Testversion wie bisher
+      - PDFIX_LICENSE_USER=${PDFIX_LICENSE_USER:-}
+      - PDFIX_LICENSE_KEY=${PDFIX_LICENSE_KEY:-}
       # v3.7 (28.04.2026): Debug-Logging fuer Generator-Rohausgabe (Truncation-Audit)
       - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-true}
       # InkluAgent (Chatbot) — auf Staging default ON
