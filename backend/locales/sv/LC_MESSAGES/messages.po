@@ -3648,3 +3648,239 @@ msgstr "Sidfot"
 
 msgid "Tabelle"
 msgstr "Tabell"
+
+# QUICKINFO-WERKZEUG (27.08.2026): Formular-Ansicht (frontend/formular.js, app.html)
+msgid "1 Quickinfo aus Stammdaten übernommen."
+msgstr "1 hjälptext hämtad från stamdata."
+
+msgid "Abschnitt: {g}"
+msgstr "Avsnitt: {g}"
+
+msgid "Alle Felder werden angezeigt."
+msgstr "Alla fält visas."
+
+msgid "Als CSV (Feldliste)"
+msgstr "Som CSV (fältlista)"
+
+msgid "Als PDF mit Quickinfos"
+msgstr "Som PDF med hjälptexter"
+
+msgid "Aus Stammdaten übernehmen"
+msgstr "Hämta från stamdata"
+
+msgid "Auswahlknopf"
+msgstr "Radioknapp"
+
+msgid "Auswahlliste"
+msgstr "Rullgardinslista"
+
+msgid "Beschriftung im Formular: {b}"
+msgstr "Etikett i formuläret: {b}"
+
+msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
+msgstr "Formuläret bearbetas – fält läses …"
+
+msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
+msgstr "Gästvyn för formulärprojekt är inte tillgänglig ännu."
+
+msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Bearbetningen av formuläret misslyckades. Försök igen med filen."
+
+msgid "Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten."
+msgstr "Du kan när som helst ladda upp fler PDF-formulär. De läggs till i listan nedan; redan angivna hjälptexter behålls."
+
+msgid "Erscheint auf den Seiten {s}"
+msgstr "Visas på sidorna {s}"
+
+msgid "Export läuft …"
+msgstr "Exporterar …"
+
+msgid "Feld"
+msgstr "Fält"
+
+msgid "Feld Nr. {n} ({art}) hat keinen Feldnamen und kann nicht beschrieben werden."
+msgstr "Fält nr {n} ({art}) saknar fältnamn och kan inte skrivas till."
+
+msgid "Feld {n}, {art}"
+msgstr "Fält {n}, {art}"
+
+msgid "Feld {n}, {art}, Seite {p}"
+msgstr "Fält {n}, {art}, sida {p}"
+
+msgid "Feld „{name}“ ({art}) hat keine sichtbare Darstellung auf einer Seite."
+msgstr "Fältet ”{name}” ({art}) har ingen synlig visning på någon sida."
+
+msgid "Formular gelesen."
+msgstr "Formulär inläst."
+
+msgid "Formular hinzugefügt als Dokument {d}."
+msgstr "Formulär tillagt som dokument {d}."
+
+msgid "Hinweise"
+msgstr "Anmärkningar"
+
+msgid "Hörprobe"
+msgstr "Lyssningsprov"
+
+msgid "Hörprobe: so liest ein Screenreader das Formular"
+msgstr "Lyssningsprov: så läser en skärmläsare formuläret"
+
+msgid "In Arbeit"
+msgstr "Pågår"
+
+msgid "In Stammdaten übernehmen"
+msgstr "Spara i stamdata"
+
+msgid "In deine Stammdaten übernommen."
+msgstr "Sparat i dina stamdata."
+
+msgid "Jedes Feld hat eine Quickinfo. So hört sich das Formular an:"
+msgstr "Varje fält har en hjälptext. Så här låter formuläret:"
+
+msgid "KI-Vorschlag"
+msgstr "AI-förslag"
+
+msgid "Keine Beschriftung in der Nähe des Feldes erkannt."
+msgstr "Ingen etikett hittades nära fältet."
+
+msgid "Kontrollkästchen"
+msgstr "Kryssruta"
+
+msgid "Listenfeld"
+msgstr "Listruta"
+
+msgid "Noch kein Formular hochgeladen."
+msgstr "Inget formulär uppladdat ännu."
+
+msgid "Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen"
+msgstr "Ingen hjälptext ännu – skriv här eller hämta från stamdata"
+
+msgid "Nur offene Felder anzeigen"
+msgstr "Visa bara öppna fält"
+
+msgid "Nur offene Felder werden angezeigt."
+msgstr "Bara öppna fält visas."
+
+msgid "Ohne Seite"
+msgstr "Utan sida"
+
+msgid "Optionen: {o}"
+msgstr "Alternativ: {o}"
+
+msgid "PDF-Formular auswählen"
+msgstr "Välj PDF-formulär"
+
+msgid "PDF-Formular hinzufügen"
+msgstr "Lägg till PDF-formulär"
+
+msgid "Pflichtfeld"
+msgstr "Obligatoriskt fält"
+
+msgid "Projekt konnte nicht geladen werden."
+msgstr "Projektet kunde inte laddas."
+
+msgid "Quickinfo"
+msgstr "Hjälptext"
+
+msgid "Quickinfo auf das Original zurückgesetzt."
+msgstr "Hjälptext återställd till originalet."
+
+msgid "Quickinfo aus Stammdaten übernommen: {q}"
+msgstr "Hjälptext hämtad från stamdata: {q}"
+
+msgid "Quickinfo fehlt"
+msgstr "Hjälptext saknas"
+
+msgid "Schaltfläche"
+msgstr "Knapp"
+
+msgid "Speichern fehlgeschlagen."
+msgstr "Det gick inte att spara."
+
+msgid "Stammdaten auf offene Felder anwenden"
+msgstr "Tillämpa stamdata på öppna fält"
+
+msgid "Stammdaten konnten nicht angewendet werden."
+msgstr "Stamdata kunde inte tillämpas."
+
+msgid "Technischer Feldname: {n}"
+msgstr "Tekniskt fältnamn: {n}"
+
+msgid "Unterschriftsfeld"
+msgstr "Signaturfält"
+
+msgid "Verbindungsfehler beim Speichern."
+msgstr "Anslutningsfel vid sparande."
+
+msgid "Vollständig"
+msgstr "Komplett"
+
+msgid "Vorschlag aus deinen Stammdaten: {q}"
+msgstr "Förslag från dina stamdata: {q}"
+
+msgid "Weiteres PDF-Formular hinzufügen"
+msgstr "Lägg till ännu ett PDF-formulär"
+
+msgid "Wird gelesen"
+msgstr "Läser in"
+
+msgid "Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert."
+msgstr "Välj ett PDF-formulär med ifyllbara fält eller dra det hit. Fälten läses in, fältvärden sparas inte."
+
+msgid "Zurück auf Original"
+msgstr "Tillbaka till original"
+
+msgid "Zurücksetzen fehlgeschlagen."
+msgstr "Återställningen misslyckades."
+
+msgid "aus Stammdaten"
+msgstr "från stamdata"
+
+msgid "bereits ausgefüllt"
+msgstr "redan ifyllt"
+
+msgid "im Feld"
+msgstr "i fältet"
+
+msgid "links vom Feld"
+msgstr "till vänster om fältet"
+
+msgid "ohne Bezeichnung"
+msgstr "utan beteckning"
+
+msgid "rechts vom Feld"
+msgstr "till höger om fältet"
+
+msgid "von Hand"
+msgstr "manuellt"
+
+msgid "vorhanden (aus der PDF)"
+msgstr "finns (från PDF:en)"
+
+msgid "{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert."
+msgstr "{b} av {n} fält har en hjälptext. Fält utan hjälptext förblir oförändrade i PDF:en."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge."
+msgstr "{n} fält i {d} dokument, {o} utan hjälptext. Stamdata: {s} poster."
+
+msgid "{n} Felder werden nur als „ohne Bezeichnung“ vorgelesen. So hört sich das Formular gerade an:"
+msgstr "{n} fält läses bara upp som ”utan beteckning”. Så här låter formuläret just nu:"
+
+msgid "{n} Felder, {o} offen"
+msgstr "{n} fält, {o} öppna"
+
+msgid "{n} Hinweise zu diesem Formular"
+msgstr "{n} anmärkningar om detta formulär"
+
+msgid "{n} Hinweise: {w}"
+msgstr "{n} anmärkningar: {w}"
+
+msgid "{n} Quickinfos aus Stammdaten übernommen."
+msgstr "{n} hjälptexter hämtade från stamdata."
+
+msgid "Übernahme fehlgeschlagen."
+msgstr "Överföringen misslyckades."
+
+msgid "über dem Feld"
+msgstr "ovanför fältet"
+

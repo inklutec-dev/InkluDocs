@@ -4087,3 +4087,239 @@ msgstr "Footer"
 
 msgid "Tabelle"
 msgstr "Table"
+
+# QUICKINFO-WERKZEUG (27.08.2026): Formular-Ansicht (frontend/formular.js, app.html)
+msgid "1 Quickinfo aus Stammdaten übernommen."
+msgstr "1 tooltip taken from master data."
+
+msgid "Abschnitt: {g}"
+msgstr "Section: {g}"
+
+msgid "Alle Felder werden angezeigt."
+msgstr "All fields are shown."
+
+msgid "Als CSV (Feldliste)"
+msgstr "As CSV (field list)"
+
+msgid "Als PDF mit Quickinfos"
+msgstr "As PDF with tooltips"
+
+msgid "Aus Stammdaten übernehmen"
+msgstr "Take from master data"
+
+msgid "Auswahlknopf"
+msgstr "Radio button"
+
+msgid "Auswahlliste"
+msgstr "Drop-down list"
+
+msgid "Beschriftung im Formular: {b}"
+msgstr "Label in the form: {b}"
+
+msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
+msgstr "The form is being processed – reading fields …"
+
+msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
+msgstr "The guest view for form projects is not available yet."
+
+msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Processing the form failed. Please try the file again."
+
+msgid "Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten."
+msgstr "You can upload more PDF forms at any time. They are added to the list below; tooltips already entered are kept."
+
+msgid "Erscheint auf den Seiten {s}"
+msgstr "Appears on pages {s}"
+
+msgid "Export läuft …"
+msgstr "Exporting …"
+
+msgid "Feld"
+msgstr "Field"
+
+msgid "Feld Nr. {n} ({art}) hat keinen Feldnamen und kann nicht beschrieben werden."
+msgstr "Field no. {n} ({art}) has no field name and cannot be written to."
+
+msgid "Feld {n}, {art}"
+msgstr "Field {n}, {art}"
+
+msgid "Feld {n}, {art}, Seite {p}"
+msgstr "Field {n}, {art}, page {p}"
+
+msgid "Feld „{name}“ ({art}) hat keine sichtbare Darstellung auf einer Seite."
+msgstr "Field “{name}” ({art}) has no visible appearance on any page."
+
+msgid "Formular gelesen."
+msgstr "Form read."
+
+msgid "Formular hinzugefügt als Dokument {d}."
+msgstr "Form added as document {d}."
+
+msgid "Hinweise"
+msgstr "Notes"
+
+msgid "Hörprobe"
+msgstr "Listening sample"
+
+msgid "Hörprobe: so liest ein Screenreader das Formular"
+msgstr "Listening sample: how a screen reader reads the form"
+
+msgid "In Arbeit"
+msgstr "In progress"
+
+msgid "In Stammdaten übernehmen"
+msgstr "Save to master data"
+
+msgid "In deine Stammdaten übernommen."
+msgstr "Saved to your master data."
+
+msgid "Jedes Feld hat eine Quickinfo. So hört sich das Formular an:"
+msgstr "Every field has a tooltip. This is how the form sounds:"
+
+msgid "KI-Vorschlag"
+msgstr "AI suggestion"
+
+msgid "Keine Beschriftung in der Nähe des Feldes erkannt."
+msgstr "No label detected near the field."
+
+msgid "Kontrollkästchen"
+msgstr "Check box"
+
+msgid "Listenfeld"
+msgstr "List box"
+
+msgid "Noch kein Formular hochgeladen."
+msgstr "No form uploaded yet."
+
+msgid "Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen"
+msgstr "No tooltip yet – enter here or take from master data"
+
+msgid "Nur offene Felder anzeigen"
+msgstr "Show only open fields"
+
+msgid "Nur offene Felder werden angezeigt."
+msgstr "Only open fields are shown."
+
+msgid "Ohne Seite"
+msgstr "Without page"
+
+msgid "Optionen: {o}"
+msgstr "Options: {o}"
+
+msgid "PDF-Formular auswählen"
+msgstr "Choose PDF form"
+
+msgid "PDF-Formular hinzufügen"
+msgstr "Add PDF form"
+
+msgid "Pflichtfeld"
+msgstr "Required field"
+
+msgid "Projekt konnte nicht geladen werden."
+msgstr "The project could not be loaded."
+
+msgid "Quickinfo"
+msgstr "Tooltip"
+
+msgid "Quickinfo auf das Original zurückgesetzt."
+msgstr "Tooltip reset to the original."
+
+msgid "Quickinfo aus Stammdaten übernommen: {q}"
+msgstr "Tooltip taken from master data: {q}"
+
+msgid "Quickinfo fehlt"
+msgstr "Tooltip missing"
+
+msgid "Schaltfläche"
+msgstr "Button"
+
+msgid "Speichern fehlgeschlagen."
+msgstr "Saving failed."
+
+msgid "Stammdaten auf offene Felder anwenden"
+msgstr "Apply master data to open fields"
+
+msgid "Stammdaten konnten nicht angewendet werden."
+msgstr "Master data could not be applied."
+
+msgid "Technischer Feldname: {n}"
+msgstr "Technical field name: {n}"
+
+msgid "Unterschriftsfeld"
+msgstr "Signature field"
+
+msgid "Verbindungsfehler beim Speichern."
+msgstr "Connection error while saving."
+
+msgid "Vollständig"
+msgstr "Complete"
+
+msgid "Vorschlag aus deinen Stammdaten: {q}"
+msgstr "Suggestion from your master data: {q}"
+
+msgid "Weiteres PDF-Formular hinzufügen"
+msgstr "Add another PDF form"
+
+msgid "Wird gelesen"
+msgstr "Reading"
+
+msgid "Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert."
+msgstr "Choose a PDF form with fillable fields or drag it here. The fields are read; field values are not stored."
+
+msgid "Zurück auf Original"
+msgstr "Back to original"
+
+msgid "Zurücksetzen fehlgeschlagen."
+msgstr "Reset failed."
+
+msgid "aus Stammdaten"
+msgstr "from master data"
+
+msgid "bereits ausgefüllt"
+msgstr "already filled in"
+
+msgid "im Feld"
+msgstr "inside the field"
+
+msgid "links vom Feld"
+msgstr "left of the field"
+
+msgid "ohne Bezeichnung"
+msgstr "without a name"
+
+msgid "rechts vom Feld"
+msgstr "right of the field"
+
+msgid "von Hand"
+msgstr "by hand"
+
+msgid "vorhanden (aus der PDF)"
+msgstr "present (from the PDF)"
+
+msgid "{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert."
+msgstr "{b} of {n} fields have a tooltip. Fields without a tooltip remain unchanged in the PDF."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge."
+msgstr "{n} fields in {d} documents, {o} without tooltip. Master data: {s} entries."
+
+msgid "{n} Felder werden nur als „ohne Bezeichnung“ vorgelesen. So hört sich das Formular gerade an:"
+msgstr "{n} fields are read only as “without a name”. This is how the form sounds right now:"
+
+msgid "{n} Felder, {o} offen"
+msgstr "{n} fields, {o} open"
+
+msgid "{n} Hinweise zu diesem Formular"
+msgstr "{n} notes on this form"
+
+msgid "{n} Hinweise: {w}"
+msgstr "{n} notes: {w}"
+
+msgid "{n} Quickinfos aus Stammdaten übernommen."
+msgstr "{n} tooltips taken from master data."
+
+msgid "Übernahme fehlgeschlagen."
+msgstr "Transfer failed."
+
+msgid "über dem Feld"
+msgstr "above the field"
+

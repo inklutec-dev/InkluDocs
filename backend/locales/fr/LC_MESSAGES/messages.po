@@ -4087,3 +4087,239 @@ msgstr "Pied de page"
 
 msgid "Tabelle"
 msgstr "Tableau"
+
+# QUICKINFO-WERKZEUG (27.08.2026): Formular-Ansicht (frontend/formular.js, app.html)
+msgid "1 Quickinfo aus Stammdaten übernommen."
+msgstr "1 info-bulle reprise des données de référence."
+
+msgid "Abschnitt: {g}"
+msgstr "Section : {g}"
+
+msgid "Alle Felder werden angezeigt."
+msgstr "Tous les champs sont affichés."
+
+msgid "Als CSV (Feldliste)"
+msgstr "En CSV (liste des champs)"
+
+msgid "Als PDF mit Quickinfos"
+msgstr "En PDF avec info-bulles"
+
+msgid "Aus Stammdaten übernehmen"
+msgstr "Reprendre des données de référence"
+
+msgid "Auswahlknopf"
+msgstr "Bouton radio"
+
+msgid "Auswahlliste"
+msgstr "Liste déroulante"
+
+msgid "Beschriftung im Formular: {b}"
+msgstr "Libellé dans le formulaire : {b}"
+
+msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
+msgstr "Le formulaire est en cours de traitement – lecture des champs …"
+
+msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
+msgstr "La vue invité pour les projets de formulaires n’est pas encore disponible."
+
+msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Le traitement du formulaire a échoué. Veuillez réessayer avec le fichier."
+
+msgid "Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten."
+msgstr "Vous pouvez téléverser d’autres formulaires PDF à tout moment. Ils sont ajoutés à la liste ci-dessous ; les info-bulles déjà saisies sont conservées."
+
+msgid "Erscheint auf den Seiten {s}"
+msgstr "Apparaît sur les pages {s}"
+
+msgid "Export läuft …"
+msgstr "Export en cours …"
+
+msgid "Feld"
+msgstr "Champ"
+
+msgid "Feld Nr. {n} ({art}) hat keinen Feldnamen und kann nicht beschrieben werden."
+msgstr "Le champ n° {n} ({art}) n’a pas de nom de champ et ne peut pas être modifié."
+
+msgid "Feld {n}, {art}"
+msgstr "Champ {n}, {art}"
+
+msgid "Feld {n}, {art}, Seite {p}"
+msgstr "Champ {n}, {art}, page {p}"
+
+msgid "Feld „{name}“ ({art}) hat keine sichtbare Darstellung auf einer Seite."
+msgstr "Le champ « {name} » ({art}) n’a pas d’apparence visible sur une page."
+
+msgid "Formular gelesen."
+msgstr "Formulaire lu."
+
+msgid "Formular hinzugefügt als Dokument {d}."
+msgstr "Formulaire ajouté comme document {d}."
+
+msgid "Hinweise"
+msgstr "Remarques"
+
+msgid "Hörprobe"
+msgstr "Écoute témoin"
+
+msgid "Hörprobe: so liest ein Screenreader das Formular"
+msgstr "Écoute témoin : comment un lecteur d’écran lit le formulaire"
+
+msgid "In Arbeit"
+msgstr "En cours"
+
+msgid "In Stammdaten übernehmen"
+msgstr "Enregistrer dans les données de référence"
+
+msgid "In deine Stammdaten übernommen."
+msgstr "Enregistré dans vos données de référence."
+
+msgid "Jedes Feld hat eine Quickinfo. So hört sich das Formular an:"
+msgstr "Chaque champ a une info-bulle. Voici comment sonne le formulaire :"
+
+msgid "KI-Vorschlag"
+msgstr "Proposition de l’IA"
+
+msgid "Keine Beschriftung in der Nähe des Feldes erkannt."
+msgstr "Aucun libellé détecté à proximité du champ."
+
+msgid "Kontrollkästchen"
+msgstr "Case à cocher"
+
+msgid "Listenfeld"
+msgstr "Zone de liste"
+
+msgid "Noch kein Formular hochgeladen."
+msgstr "Aucun formulaire téléversé pour l’instant."
+
+msgid "Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen"
+msgstr "Pas encore d’info-bulle – saisir ici ou reprendre des données de référence"
+
+msgid "Nur offene Felder anzeigen"
+msgstr "Afficher uniquement les champs ouverts"
+
+msgid "Nur offene Felder werden angezeigt."
+msgstr "Seuls les champs ouverts sont affichés."
+
+msgid "Ohne Seite"
+msgstr "Sans page"
+
+msgid "Optionen: {o}"
+msgstr "Options : {o}"
+
+msgid "PDF-Formular auswählen"
+msgstr "Choisir un formulaire PDF"
+
+msgid "PDF-Formular hinzufügen"
+msgstr "Ajouter un formulaire PDF"
+
+msgid "Pflichtfeld"
+msgstr "Champ obligatoire"
+
+msgid "Projekt konnte nicht geladen werden."
+msgstr "Le projet n’a pas pu être chargé."
+
+msgid "Quickinfo"
+msgstr "Info-bulle"
+
+msgid "Quickinfo auf das Original zurückgesetzt."
+msgstr "Info-bulle rétablie à l’original."
+
+msgid "Quickinfo aus Stammdaten übernommen: {q}"
+msgstr "Info-bulle reprise des données de référence : {q}"
+
+msgid "Quickinfo fehlt"
+msgstr "Info-bulle manquante"
+
+msgid "Schaltfläche"
+msgstr "Bouton"
+
+msgid "Speichern fehlgeschlagen."
+msgstr "L’enregistrement a échoué."
+
+msgid "Stammdaten auf offene Felder anwenden"
+msgstr "Appliquer les données de référence aux champs ouverts"
+
+msgid "Stammdaten konnten nicht angewendet werden."
+msgstr "Les données de référence n’ont pas pu être appliquées."
+
+msgid "Technischer Feldname: {n}"
+msgstr "Nom technique du champ : {n}"
+
+msgid "Unterschriftsfeld"
+msgstr "Champ de signature"
+
+msgid "Verbindungsfehler beim Speichern."
+msgstr "Erreur de connexion lors de l’enregistrement."
+
+msgid "Vollständig"
+msgstr "Complet"
+
+msgid "Vorschlag aus deinen Stammdaten: {q}"
+msgstr "Proposition issue de vos données de référence : {q}"
+
+msgid "Weiteres PDF-Formular hinzufügen"
+msgstr "Ajouter un autre formulaire PDF"
+
+msgid "Wird gelesen"
+msgstr "Lecture en cours"
+
+msgid "Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert."
+msgstr "Choisissez un formulaire PDF avec des champs à remplir ou glissez-le ici. Les champs sont lus, les valeurs des champs ne sont pas enregistrées."
+
+msgid "Zurück auf Original"
+msgstr "Retour à l’original"
+
+msgid "Zurücksetzen fehlgeschlagen."
+msgstr "La réinitialisation a échoué."
+
+msgid "aus Stammdaten"
+msgstr "des données de référence"
+
+msgid "bereits ausgefüllt"
+msgstr "déjà rempli"
+
+msgid "im Feld"
+msgstr "dans le champ"
+
+msgid "links vom Feld"
+msgstr "à gauche du champ"
+
+msgid "ohne Bezeichnung"
+msgstr "sans désignation"
+
+msgid "rechts vom Feld"
+msgstr "à droite du champ"
+
+msgid "von Hand"
+msgstr "à la main"
+
+msgid "vorhanden (aus der PDF)"
+msgstr "présente (dans le PDF)"
+
+msgid "{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert."
+msgstr "{b} champs sur {n} ont une info-bulle. Les champs sans info-bulle restent inchangés dans le PDF."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge."
+msgstr "{n} champs dans {d} documents, {o} sans info-bulle. Données de référence : {s} entrées."
+
+msgid "{n} Felder werden nur als „ohne Bezeichnung“ vorgelesen. So hört sich das Formular gerade an:"
+msgstr "{n} champs sont lus uniquement comme « sans désignation ». Voici comment sonne le formulaire actuellement :"
+
+msgid "{n} Felder, {o} offen"
+msgstr "{n} champs, {o} ouverts"
+
+msgid "{n} Hinweise zu diesem Formular"
+msgstr "{n} remarques sur ce formulaire"
+
+msgid "{n} Hinweise: {w}"
+msgstr "{n} remarques : {w}"
+
+msgid "{n} Quickinfos aus Stammdaten übernommen."
+msgstr "{n} info-bulles reprises des données de référence."
+
+msgid "Übernahme fehlgeschlagen."
+msgstr "La reprise a échoué."
+
+msgid "über dem Feld"
+msgstr "au-dessus du champ"
+

@@ -4087,3 +4087,239 @@ msgstr "Pie de página"
 
 msgid "Tabelle"
 msgstr "Tabla"
+
+# QUICKINFO-WERKZEUG (27.08.2026): Formular-Ansicht (frontend/formular.js, app.html)
+msgid "1 Quickinfo aus Stammdaten übernommen."
+msgstr "1 sugerencia tomada de los datos maestros."
+
+msgid "Abschnitt: {g}"
+msgstr "Sección: {g}"
+
+msgid "Alle Felder werden angezeigt."
+msgstr "Se muestran todos los campos."
+
+msgid "Als CSV (Feldliste)"
+msgstr "Como CSV (lista de campos)"
+
+msgid "Als PDF mit Quickinfos"
+msgstr "Como PDF con sugerencias"
+
+msgid "Aus Stammdaten übernehmen"
+msgstr "Tomar de los datos maestros"
+
+msgid "Auswahlknopf"
+msgstr "Botón de opción"
+
+msgid "Auswahlliste"
+msgstr "Lista desplegable"
+
+msgid "Beschriftung im Formular: {b}"
+msgstr "Etiqueta en el formulario: {b}"
+
+msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
+msgstr "El formulario se está procesando – leyendo campos …"
+
+msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
+msgstr "La vista de invitado para proyectos de formularios aún no está disponible."
+
+msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "El procesamiento del formulario ha fallado. Inténtalo de nuevo con el archivo."
+
+msgid "Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten."
+msgstr "Puedes subir más formularios PDF en cualquier momento. Se añaden a la lista de abajo; las sugerencias ya introducidas se conservan."
+
+msgid "Erscheint auf den Seiten {s}"
+msgstr "Aparece en las páginas {s}"
+
+msgid "Export läuft …"
+msgstr "Exportando …"
+
+msgid "Feld"
+msgstr "Campo"
+
+msgid "Feld Nr. {n} ({art}) hat keinen Feldnamen und kann nicht beschrieben werden."
+msgstr "El campo n.º {n} ({art}) no tiene nombre de campo y no se puede escribir."
+
+msgid "Feld {n}, {art}"
+msgstr "Campo {n}, {art}"
+
+msgid "Feld {n}, {art}, Seite {p}"
+msgstr "Campo {n}, {art}, página {p}"
+
+msgid "Feld „{name}“ ({art}) hat keine sichtbare Darstellung auf einer Seite."
+msgstr "El campo «{name}» ({art}) no tiene representación visible en ninguna página."
+
+msgid "Formular gelesen."
+msgstr "Formulario leído."
+
+msgid "Formular hinzugefügt als Dokument {d}."
+msgstr "Formulario añadido como documento {d}."
+
+msgid "Hinweise"
+msgstr "Avisos"
+
+msgid "Hörprobe"
+msgstr "Muestra de audio"
+
+msgid "Hörprobe: so liest ein Screenreader das Formular"
+msgstr "Muestra de audio: así lee un lector de pantalla el formulario"
+
+msgid "In Arbeit"
+msgstr "En curso"
+
+msgid "In Stammdaten übernehmen"
+msgstr "Guardar en datos maestros"
+
+msgid "In deine Stammdaten übernommen."
+msgstr "Guardado en tus datos maestros."
+
+msgid "Jedes Feld hat eine Quickinfo. So hört sich das Formular an:"
+msgstr "Cada campo tiene una sugerencia. Así suena el formulario:"
+
+msgid "KI-Vorschlag"
+msgstr "Sugerencia de la IA"
+
+msgid "Keine Beschriftung in der Nähe des Feldes erkannt."
+msgstr "No se ha detectado ninguna etiqueta cerca del campo."
+
+msgid "Kontrollkästchen"
+msgstr "Casilla de verificación"
+
+msgid "Listenfeld"
+msgstr "Cuadro de lista"
+
+msgid "Noch kein Formular hochgeladen."
+msgstr "Todavía no se ha subido ningún formulario."
+
+msgid "Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen"
+msgstr "Todavía sin sugerencia – escribe aquí o toma de los datos maestros"
+
+msgid "Nur offene Felder anzeigen"
+msgstr "Mostrar solo los campos abiertos"
+
+msgid "Nur offene Felder werden angezeigt."
+msgstr "Solo se muestran los campos abiertos."
+
+msgid "Ohne Seite"
+msgstr "Sin página"
+
+msgid "Optionen: {o}"
+msgstr "Opciones: {o}"
+
+msgid "PDF-Formular auswählen"
+msgstr "Elegir formulario PDF"
+
+msgid "PDF-Formular hinzufügen"
+msgstr "Añadir formulario PDF"
+
+msgid "Pflichtfeld"
+msgstr "Campo obligatorio"
+
+msgid "Projekt konnte nicht geladen werden."
+msgstr "No se pudo cargar el proyecto."
+
+msgid "Quickinfo"
+msgstr "Sugerencia"
+
+msgid "Quickinfo auf das Original zurückgesetzt."
+msgstr "Sugerencia restablecida al original."
+
+msgid "Quickinfo aus Stammdaten übernommen: {q}"
+msgstr "Sugerencia tomada de los datos maestros: {q}"
+
+msgid "Quickinfo fehlt"
+msgstr "Falta la sugerencia"
+
+msgid "Schaltfläche"
+msgstr "Botón"
+
+msgid "Speichern fehlgeschlagen."
+msgstr "Error al guardar."
+
+msgid "Stammdaten auf offene Felder anwenden"
+msgstr "Aplicar datos maestros a los campos abiertos"
+
+msgid "Stammdaten konnten nicht angewendet werden."
+msgstr "No se pudieron aplicar los datos maestros."
+
+msgid "Technischer Feldname: {n}"
+msgstr "Nombre técnico del campo: {n}"
+
+msgid "Unterschriftsfeld"
+msgstr "Campo de firma"
+
+msgid "Verbindungsfehler beim Speichern."
+msgstr "Error de conexión al guardar."
+
+msgid "Vollständig"
+msgstr "Completo"
+
+msgid "Vorschlag aus deinen Stammdaten: {q}"
+msgstr "Sugerencia de tus datos maestros: {q}"
+
+msgid "Weiteres PDF-Formular hinzufügen"
+msgstr "Añadir otro formulario PDF"
+
+msgid "Wird gelesen"
+msgstr "Leyendo"
+
+msgid "Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert."
+msgstr "Elige un formulario PDF con campos rellenables o arrástralo aquí. Se leen los campos; los valores de los campos no se guardan."
+
+msgid "Zurück auf Original"
+msgstr "Volver al original"
+
+msgid "Zurücksetzen fehlgeschlagen."
+msgstr "Error al restablecer."
+
+msgid "aus Stammdaten"
+msgstr "de datos maestros"
+
+msgid "bereits ausgefüllt"
+msgstr "ya rellenado"
+
+msgid "im Feld"
+msgstr "dentro del campo"
+
+msgid "links vom Feld"
+msgstr "a la izquierda del campo"
+
+msgid "ohne Bezeichnung"
+msgstr "sin nombre"
+
+msgid "rechts vom Feld"
+msgstr "a la derecha del campo"
+
+msgid "von Hand"
+msgstr "a mano"
+
+msgid "vorhanden (aus der PDF)"
+msgstr "existente (del PDF)"
+
+msgid "{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert."
+msgstr "{b} de {n} campos tienen sugerencia. Los campos sin sugerencia permanecen sin cambios en el PDF."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge."
+msgstr "{n} campos en {d} documentos, {o} sin sugerencia. Datos maestros: {s} entradas."
+
+msgid "{n} Felder werden nur als „ohne Bezeichnung“ vorgelesen. So hört sich das Formular gerade an:"
+msgstr "{n} campos se leen solo como «sin nombre». Así suena el formulario ahora mismo:"
+
+msgid "{n} Felder, {o} offen"
+msgstr "{n} campos, {o} abiertos"
+
+msgid "{n} Hinweise zu diesem Formular"
+msgstr "{n} avisos sobre este formulario"
+
+msgid "{n} Hinweise: {w}"
+msgstr "{n} avisos: {w}"
+
+msgid "{n} Quickinfos aus Stammdaten übernommen."
+msgstr "{n} sugerencias tomadas de los datos maestros."
+
+msgid "Übernahme fehlgeschlagen."
+msgstr "Error al tomar el valor."
+
+msgid "über dem Feld"
+msgstr "encima del campo"
+

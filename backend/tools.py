@@ -90,6 +90,19 @@ TOOLS: list[Tool] = [
         route="/app",
         status=ToolStatus.BETA,
     ),
+    # QUICKINFO-WERKZEUG (27.08.2026, Steve + Michael Karbe/Joerg Heine, Actino):
+    # PDF-Formulare — jedes Eingabefeld bekommt eine Quickinfo (/TU), den Text,
+    # den Screenreader beim Erreichen des Feldes vorlesen. Eigene Tabellen
+    # (formularfelder, stammdaten), eigener Router formular_api.py, Leser
+    # formular_processor.py, Schreiber formular_export.py, Doku docs/FORMULAR.md.
+    # Beta, bis echte Kundenformulare durch sind (KI-Vorschlaege = Stufe 2).
+    Tool(
+        key="formular",
+        name="Quickinfos für PDF-Formulare",
+        description="PDF-Formular hochladen, jedes Eingabefeld mit einer Quickinfo (Hilfetext für Screenreader) versehen, Stammdaten für künftige Formulare speichern und die PDF mit Quickinfos herunterladen.",
+        route="/app",
+        status=ToolStatus.BETA,
+    ),
     Tool(
         key="pdf-a11y",
         name="Barrierefreie PDFs erstellen",

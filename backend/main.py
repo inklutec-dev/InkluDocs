@@ -54,6 +54,9 @@ from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_a
 # WORD-WERKZEUG (26.08.2026): .docx lesen (Bilder + Kontext) und Alt-Texte zurueckschreiben
 from docx_processor import extract_images_from_docx, extract_docx, validiere_docx, DocxFehler
 import docx_export
+# QUICKINFO-WERKZEUG (27.08.2026): PDF-Formularfelder lesen/schreiben, eigener Router
+import formular_api
+from formular_processor import validiere_formular, FormularFehler
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, get_gettext, SUPPORTED_LANGUAGES
 from typing import Optional  # frueh, da ab get_optional_user in Typannotationen genutzt
@@ -3942,8 +3945,8 @@ async def create_project(request: Request, user: dict = Depends(get_current_user
     if not is_valid_tool_key(tool):
         raise HTTPException(status_code=400, detail="Unbekanntes oder nicht verfuegbares Werkzeug")
     # project_type ist der Datentyp der Quelle (Anzeige-/Verzweigungslogik im Frontend);
-    # "docx" = Word-Werkzeug (26.08.2026).
-    project_type = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx"}.get(tool)
+    # "docx" = Word-Werkzeug (26.08.2026), "pdfform" = Quickinfo-Werkzeug (27.08.2026).
+    project_type = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx", "formular": "pdfform"}.get(tool)
     if not project_type:
         raise HTTPException(status_code=400, detail="Fuer dieses Werkzeug ist das Anlegen noch nicht verfuegbar")
     conn = get_db()
@@ -4363,6 +4366,19 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
     with open(file_path, "wb") as f:
         f.write(content)
 
+    if is_pdf and project_id is not None and formular_api.ist_formular_projekt(project_id, user["id"]):
+        # QUICKINFO-WERKZEUG (27.08.2026): PDF in einem Formular-Projekt geht den
+        # Formularweg (Felder statt Bilder). Vorpruefung im Request, damit der
+        # Nutzer eine klare Meldung bekommt (kein Formular, Passwort, zu gross).
+        try:
+            validiere_formular(file_path)
+        except FormularFehler as e:
+            try:
+                os.unlink(file_path)
+            except OSError:
+                pass
+            raise HTTPException(status_code=400, detail=str(e))
+        return await formular_api.handle_upload(file_path, filename, user, project_id)
     if is_pdf:
         return await _handle_pdf_upload(file_path, filename, user, project_id)
     elif is_docx:
@@ -5706,12 +5722,25 @@ async def delete_document(project_id: int, document_id: int, user: dict = Depend
     # DB-Zeilen entfernen (Bilder zuerst, dann das Dokument). Pruefstatus und
     # Nachrichten der geloeschten Bilder raeumen wir mit ab (Phase 2) — vorher
     # blieben sie als harmlose Waisen liegen (alle Lese-Wege JOINen auf images).
+    # Quickinfo-Werkzeug (27.08.2026): Bilddateien der Formularfelder dieses
+    # Dokuments (Ausschnitte, Seitenansichten) mit loeschen — nur unterhalb
+    # von RESULTS_DIR (Realpath-Schutz wie bei den Bildern).
+    for fr in conn.execute("SELECT ausschnitt_path, page_view_path FROM formularfelder WHERE document_id = ? AND project_id = ?",
+                           (document_id, project_id)).fetchall():
+        for p in (fr["ausschnitt_path"], fr["page_view_path"]):
+            if p and os.path.isfile(p) and os.path.realpath(p).startswith(_results_root):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
     _img_ids = [ir["id"] for ir in img_rows]
     if _img_ids:
         _ph = ",".join("?" * len(_img_ids))
         conn.execute(f"DELETE FROM image_reviews WHERE image_id IN ({_ph})", _img_ids)
         conn.execute(f"DELETE FROM messages WHERE image_id IN ({_ph})", _img_ids)
     conn.execute("DELETE FROM images WHERE document_id = ? AND project_id = ?", (document_id, project_id))
+    # Quickinfo-Werkzeug (27.08.2026): Formularfelder des Dokuments.
+    conn.execute("DELETE FROM formularfelder WHERE document_id = ? AND project_id = ?", (document_id, project_id))
     conn.execute("DELETE FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id))
 
     # Projekt-Zaehler aus dem Ist-Stand neu berechnen. processed_images zaehlt
@@ -5869,6 +5898,8 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
         os.remove(project["original_path"])
 
     conn.execute("DELETE FROM images WHERE project_id = ?", (project_id,))
+    # Quickinfo-Werkzeug (27.08.2026): Formularfelder mit aufraeumen.
+    conn.execute("DELETE FROM formularfelder WHERE project_id = ?", (project_id,))
     # Multi-Datei (08.06.2026): Dokument-Zeilen mit aufraeumen.
     conn.execute("DELETE FROM documents WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
@@ -6833,6 +6864,23 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
         billing.verbuche(user["id"], "export", aktion="docx_export")
     return FileResponse(zip_path, filename=f"{zip_base}_alle_word.zip",
                         media_type="application/zip", headers=headers)
+
+
+# ─── QUICKINFO-WERKZEUG (27.08.2026): eigener Router, eigene Tabellen ────────
+# Alle Formular-Endpunkte liegen in formular_api.py; hier werden nur die
+# gemeinsamen Regeln (Login, DB, Verzeichnisse, Credits, Export-Helfer)
+# uebergeben, damit es keinen Ringimport gibt und die Regeln an EINER Stelle
+# bleiben.
+app.include_router(formular_api.build_router(formular_api.Deps(
+    get_current_user=get_current_user,
+    get_db=get_db,
+    upload_dir=UPLOAD_DIR,
+    results_dir=RESULTS_DIR,
+    billing=billing,
+    read_export_options=_read_export_options,
+    safe_filename_component=_safe_filename_component,
+    doc_label=_doc_label,
+)))
 
 
 # ─── Multi-Datei Export: JSON / CSV / XLSX (08.06.2026) ────────

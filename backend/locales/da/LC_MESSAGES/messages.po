@@ -3778,3 +3778,239 @@ msgstr "Sidefod"
 
 msgid "Tabelle"
 msgstr "Tabel"
+
+# QUICKINFO-WERKZEUG (27.08.2026): Formular-Ansicht (frontend/formular.js, app.html)
+msgid "1 Quickinfo aus Stammdaten übernommen."
+msgstr "1 hjælpetekst overtaget fra stamdata."
+
+msgid "Abschnitt: {g}"
+msgstr "Afsnit: {g}"
+
+msgid "Alle Felder werden angezeigt."
+msgstr "Alle felter vises."
+
+msgid "Als CSV (Feldliste)"
+msgstr "Som CSV (feltliste)"
+
+msgid "Als PDF mit Quickinfos"
+msgstr "Som PDF med hjælpetekster"
+
+msgid "Aus Stammdaten übernehmen"
+msgstr "Overtag fra stamdata"
+
+msgid "Auswahlknopf"
+msgstr "Radioknap"
+
+msgid "Auswahlliste"
+msgstr "Rulleliste"
+
+msgid "Beschriftung im Formular: {b}"
+msgstr "Etiket i formularen: {b}"
+
+msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
+msgstr "Formularen behandles – felter læses …"
+
+msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
+msgstr "Gæstevisningen for formularprojekter er endnu ikke tilgængelig."
+
+msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Behandlingen af formularen mislykkedes. Prøv igen med filen."
+
+msgid "Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten."
+msgstr "Du kan altid uploade flere PDF-formularer. De tilføjes til listen nedenfor; allerede indtastede hjælpetekster bevares."
+
+msgid "Erscheint auf den Seiten {s}"
+msgstr "Vises på siderne {s}"
+
+msgid "Export läuft …"
+msgstr "Eksporterer …"
+
+msgid "Feld"
+msgstr "Felt"
+
+msgid "Feld Nr. {n} ({art}) hat keinen Feldnamen und kann nicht beschrieben werden."
+msgstr "Felt nr. {n} ({art}) har intet feltnavn og kan ikke beskrives."
+
+msgid "Feld {n}, {art}"
+msgstr "Felt {n}, {art}"
+
+msgid "Feld {n}, {art}, Seite {p}"
+msgstr "Felt {n}, {art}, side {p}"
+
+msgid "Feld „{name}“ ({art}) hat keine sichtbare Darstellung auf einer Seite."
+msgstr "Feltet “{name}” ({art}) har ingen synlig visning på en side."
+
+msgid "Formular gelesen."
+msgstr "Formular læst."
+
+msgid "Formular hinzugefügt als Dokument {d}."
+msgstr "Formular tilføjet som dokument {d}."
+
+msgid "Hinweise"
+msgstr "Bemærkninger"
+
+msgid "Hörprobe"
+msgstr "Lytteprøve"
+
+msgid "Hörprobe: so liest ein Screenreader das Formular"
+msgstr "Lytteprøve: sådan læser en skærmlæser formularen"
+
+msgid "In Arbeit"
+msgstr "I gang"
+
+msgid "In Stammdaten übernehmen"
+msgstr "Gem i stamdata"
+
+msgid "In deine Stammdaten übernommen."
+msgstr "Gemt i dine stamdata."
+
+msgid "Jedes Feld hat eine Quickinfo. So hört sich das Formular an:"
+msgstr "Hvert felt har en hjælpetekst. Sådan lyder formularen:"
+
+msgid "KI-Vorschlag"
+msgstr "AI-forslag"
+
+msgid "Keine Beschriftung in der Nähe des Feldes erkannt."
+msgstr "Ingen etiket fundet nær feltet."
+
+msgid "Kontrollkästchen"
+msgstr "Afkrydsningsfelt"
+
+msgid "Listenfeld"
+msgstr "Listefelt"
+
+msgid "Noch kein Formular hochgeladen."
+msgstr "Ingen formular uploadet endnu."
+
+msgid "Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen"
+msgstr "Ingen hjælpetekst endnu – skriv her eller overtag fra stamdata"
+
+msgid "Nur offene Felder anzeigen"
+msgstr "Vis kun åbne felter"
+
+msgid "Nur offene Felder werden angezeigt."
+msgstr "Kun åbne felter vises."
+
+msgid "Ohne Seite"
+msgstr "Uden side"
+
+msgid "Optionen: {o}"
+msgstr "Valgmuligheder: {o}"
+
+msgid "PDF-Formular auswählen"
+msgstr "Vælg PDF-formular"
+
+msgid "PDF-Formular hinzufügen"
+msgstr "Tilføj PDF-formular"
+
+msgid "Pflichtfeld"
+msgstr "Obligatorisk felt"
+
+msgid "Projekt konnte nicht geladen werden."
+msgstr "Projektet kunne ikke indlæses."
+
+msgid "Quickinfo"
+msgstr "Hjælpetekst"
+
+msgid "Quickinfo auf das Original zurückgesetzt."
+msgstr "Hjælpetekst nulstillet til originalen."
+
+msgid "Quickinfo aus Stammdaten übernommen: {q}"
+msgstr "Hjælpetekst overtaget fra stamdata: {q}"
+
+msgid "Quickinfo fehlt"
+msgstr "Hjælpetekst mangler"
+
+msgid "Schaltfläche"
+msgstr "Knap"
+
+msgid "Speichern fehlgeschlagen."
+msgstr "Kunne ikke gemme."
+
+msgid "Stammdaten auf offene Felder anwenden"
+msgstr "Anvend stamdata på åbne felter"
+
+msgid "Stammdaten konnten nicht angewendet werden."
+msgstr "Stamdata kunne ikke anvendes."
+
+msgid "Technischer Feldname: {n}"
+msgstr "Teknisk feltnavn: {n}"
+
+msgid "Unterschriftsfeld"
+msgstr "Underskriftsfelt"
+
+msgid "Verbindungsfehler beim Speichern."
+msgstr "Forbindelsesfejl under lagring."
+
+msgid "Vollständig"
+msgstr "Fuldstændig"
+
+msgid "Vorschlag aus deinen Stammdaten: {q}"
+msgstr "Forslag fra dine stamdata: {q}"
+
+msgid "Weiteres PDF-Formular hinzufügen"
+msgstr "Tilføj endnu en PDF-formular"
+
+msgid "Wird gelesen"
+msgstr "Læses"
+
+msgid "Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert."
+msgstr "Vælg en PDF-formular med udfyldbare felter, eller træk den hertil. Felterne læses, feltværdier gemmes ikke."
+
+msgid "Zurück auf Original"
+msgstr "Tilbage til original"
+
+msgid "Zurücksetzen fehlgeschlagen."
+msgstr "Nulstilling mislykkedes."
+
+msgid "aus Stammdaten"
+msgstr "fra stamdata"
+
+msgid "bereits ausgefüllt"
+msgstr "allerede udfyldt"
+
+msgid "im Feld"
+msgstr "i feltet"
+
+msgid "links vom Feld"
+msgstr "til venstre for feltet"
+
+msgid "ohne Bezeichnung"
+msgstr "uden betegnelse"
+
+msgid "rechts vom Feld"
+msgstr "til højre for feltet"
+
+msgid "von Hand"
+msgstr "manuelt"
+
+msgid "vorhanden (aus der PDF)"
+msgstr "findes (fra PDF’en)"
+
+msgid "{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert."
+msgstr "{b} af {n} felter har en hjælpetekst. Felter uden hjælpetekst forbliver uændrede i PDF’en."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge."
+msgstr "{n} felter i {d} dokumenter, {o} uden hjælpetekst. Stamdata: {s} poster."
+
+msgid "{n} Felder werden nur als „ohne Bezeichnung“ vorgelesen. So hört sich das Formular gerade an:"
+msgstr "{n} felter læses kun som “uden betegnelse”. Sådan lyder formularen lige nu:"
+
+msgid "{n} Felder, {o} offen"
+msgstr "{n} felter, {o} åbne"
+
+msgid "{n} Hinweise zu diesem Formular"
+msgstr "{n} bemærkninger til denne formular"
+
+msgid "{n} Hinweise: {w}"
+msgstr "{n} bemærkninger: {w}"
+
+msgid "{n} Quickinfos aus Stammdaten übernommen."
+msgstr "{n} hjælpetekster overtaget fra stamdata."
+
+msgid "Übernahme fehlgeschlagen."
+msgstr "Overtagelse mislykkedes."
+
+msgid "über dem Feld"
+msgstr "over feltet"
+

@@ -4090,3 +4090,239 @@ msgstr ""
 
 msgid "Tabelle"
 msgstr ""
+
+# QUICKINFO-WERKZEUG (27.08.2026): Formular-Ansicht (frontend/formular.js, app.html)
+msgid "1 Quickinfo aus Stammdaten übernommen."
+msgstr "1 Quickinfo aus Stammdaten übernommen."
+
+msgid "Abschnitt: {g}"
+msgstr "Abschnitt: {g}"
+
+msgid "Alle Felder werden angezeigt."
+msgstr "Alle Felder werden angezeigt."
+
+msgid "Als CSV (Feldliste)"
+msgstr "Als CSV (Feldliste)"
+
+msgid "Als PDF mit Quickinfos"
+msgstr "Als PDF mit Quickinfos"
+
+msgid "Aus Stammdaten übernehmen"
+msgstr "Aus Stammdaten übernehmen"
+
+msgid "Auswahlknopf"
+msgstr "Auswahlknopf"
+
+msgid "Auswahlliste"
+msgstr "Auswahlliste"
+
+msgid "Beschriftung im Formular: {b}"
+msgstr "Beschriftung im Formular: {b}"
+
+msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
+msgstr "Das Formular wird verarbeitet – Felder werden gelesen …"
+
+msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
+msgstr "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
+
+msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+msgstr "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
+
+msgid "Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten."
+msgstr "Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten."
+
+msgid "Erscheint auf den Seiten {s}"
+msgstr "Erscheint auf den Seiten {s}"
+
+msgid "Export läuft …"
+msgstr "Export läuft …"
+
+msgid "Feld"
+msgstr "Feld"
+
+msgid "Feld Nr. {n} ({art}) hat keinen Feldnamen und kann nicht beschrieben werden."
+msgstr "Feld Nr. {n} ({art}) hat keinen Feldnamen und kann nicht beschrieben werden."
+
+msgid "Feld {n}, {art}"
+msgstr "Feld {n}, {art}"
+
+msgid "Feld {n}, {art}, Seite {p}"
+msgstr "Feld {n}, {art}, Seite {p}"
+
+msgid "Feld „{name}“ ({art}) hat keine sichtbare Darstellung auf einer Seite."
+msgstr "Feld „{name}“ ({art}) hat keine sichtbare Darstellung auf einer Seite."
+
+msgid "Formular gelesen."
+msgstr "Formular gelesen."
+
+msgid "Formular hinzugefügt als Dokument {d}."
+msgstr "Formular hinzugefügt als Dokument {d}."
+
+msgid "Hinweise"
+msgstr "Hinweise"
+
+msgid "Hörprobe"
+msgstr "Hörprobe"
+
+msgid "Hörprobe: so liest ein Screenreader das Formular"
+msgstr "Hörprobe: so liest ein Screenreader das Formular"
+
+msgid "In Arbeit"
+msgstr "In Arbeit"
+
+msgid "In Stammdaten übernehmen"
+msgstr "In Stammdaten übernehmen"
+
+msgid "In deine Stammdaten übernommen."
+msgstr "In deine Stammdaten übernommen."
+
+msgid "Jedes Feld hat eine Quickinfo. So hört sich das Formular an:"
+msgstr "Jedes Feld hat eine Quickinfo. So hört sich das Formular an:"
+
+msgid "KI-Vorschlag"
+msgstr "KI-Vorschlag"
+
+msgid "Keine Beschriftung in der Nähe des Feldes erkannt."
+msgstr "Keine Beschriftung in der Nähe des Feldes erkannt."
+
+msgid "Kontrollkästchen"
+msgstr "Kontrollkästchen"
+
+msgid "Listenfeld"
+msgstr "Listenfeld"
+
+msgid "Noch kein Formular hochgeladen."
+msgstr "Noch kein Formular hochgeladen."
+
+msgid "Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen"
+msgstr "Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen"
+
+msgid "Nur offene Felder anzeigen"
+msgstr "Nur offene Felder anzeigen"
+
+msgid "Nur offene Felder werden angezeigt."
+msgstr "Nur offene Felder werden angezeigt."
+
+msgid "Ohne Seite"
+msgstr "Ohne Seite"
+
+msgid "Optionen: {o}"
+msgstr "Optionen: {o}"
+
+msgid "PDF-Formular auswählen"
+msgstr "PDF-Formular auswählen"
+
+msgid "PDF-Formular hinzufügen"
+msgstr "PDF-Formular hinzufügen"
+
+msgid "Pflichtfeld"
+msgstr "Pflichtfeld"
+
+msgid "Projekt konnte nicht geladen werden."
+msgstr "Projekt konnte nicht geladen werden."
+
+msgid "Quickinfo"
+msgstr "Quickinfo"
+
+msgid "Quickinfo auf das Original zurückgesetzt."
+msgstr "Quickinfo auf das Original zurückgesetzt."
+
+msgid "Quickinfo aus Stammdaten übernommen: {q}"
+msgstr "Quickinfo aus Stammdaten übernommen: {q}"
+
+msgid "Quickinfo fehlt"
+msgstr "Quickinfo fehlt"
+
+msgid "Schaltfläche"
+msgstr "Schaltfläche"
+
+msgid "Speichern fehlgeschlagen."
+msgstr "Speichern fehlgeschlagen."
+
+msgid "Stammdaten auf offene Felder anwenden"
+msgstr "Stammdaten auf offene Felder anwenden"
+
+msgid "Stammdaten konnten nicht angewendet werden."
+msgstr "Stammdaten konnten nicht angewendet werden."
+
+msgid "Technischer Feldname: {n}"
+msgstr "Technischer Feldname: {n}"
+
+msgid "Unterschriftsfeld"
+msgstr "Unterschriftsfeld"
+
+msgid "Verbindungsfehler beim Speichern."
+msgstr "Verbindungsfehler beim Speichern."
+
+msgid "Vollständig"
+msgstr "Vollständig"
+
+msgid "Vorschlag aus deinen Stammdaten: {q}"
+msgstr "Vorschlag aus deinen Stammdaten: {q}"
+
+msgid "Weiteres PDF-Formular hinzufügen"
+msgstr "Weiteres PDF-Formular hinzufügen"
+
+msgid "Wird gelesen"
+msgstr "Wird gelesen"
+
+msgid "Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert."
+msgstr "Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert."
+
+msgid "Zurück auf Original"
+msgstr "Zurück auf Original"
+
+msgid "Zurücksetzen fehlgeschlagen."
+msgstr "Zurücksetzen fehlgeschlagen."
+
+msgid "aus Stammdaten"
+msgstr "aus Stammdaten"
+
+msgid "bereits ausgefüllt"
+msgstr "bereits ausgefüllt"
+
+msgid "im Feld"
+msgstr "im Feld"
+
+msgid "links vom Feld"
+msgstr "links vom Feld"
+
+msgid "ohne Bezeichnung"
+msgstr "ohne Bezeichnung"
+
+msgid "rechts vom Feld"
+msgstr "rechts vom Feld"
+
+msgid "von Hand"
+msgstr "von Hand"
+
+msgid "vorhanden (aus der PDF)"
+msgstr "vorhanden (aus der PDF)"
+
+msgid "{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert."
+msgstr "{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge."
+msgstr "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge."
+
+msgid "{n} Felder werden nur als „ohne Bezeichnung“ vorgelesen. So hört sich das Formular gerade an:"
+msgstr "{n} Felder werden nur als „ohne Bezeichnung“ vorgelesen. So hört sich das Formular gerade an:"
+
+msgid "{n} Felder, {o} offen"
+msgstr "{n} Felder, {o} offen"
+
+msgid "{n} Hinweise zu diesem Formular"
+msgstr "{n} Hinweise zu diesem Formular"
+
+msgid "{n} Hinweise: {w}"
+msgstr "{n} Hinweise: {w}"
+
+msgid "{n} Quickinfos aus Stammdaten übernommen."
+msgstr "{n} Quickinfos aus Stammdaten übernommen."
+
+msgid "Übernahme fehlgeschlagen."
+msgstr "Übernahme fehlgeschlagen."
+
+msgid "über dem Feld"
+msgstr "über dem Feld"
+

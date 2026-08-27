@@ -70,6 +70,10 @@ AKTIONS_PREISE = {
     # Word-Werkzeug (26.08.2026): Export der Word-Datei mit Alt-Texten — gleiche
     # Regel wie PDF (pro Vorgang, nur Bezahl-Konten).
     "docx_export": 5,
+    # Quickinfo-Werkzeug (27.08.2026): PDF-Formular mit Quickinfos — gleiche
+    # Regel wie PDF-Export (pro Vorgang, nur Bezahl-Konten). Die CSV-Feldliste
+    # ist kostenlos (kein Schreibvorgang in die PDF).
+    "formular_export": 5,
 }
 
 # Zusatzpakete (Michaels Preise, bestaetigt 03.08.2026). Reine Konfiguration

@@ -50,6 +50,9 @@
 {% endblock %}
 
 {% block page_script %}
+{# QUICKINFO-WERKZEUG (27.08.2026): eigene Projektansicht fuer Formular-Projekte,
+   getrennt von der Bild-/Alt-Text-Ansicht unten (siehe showProject-Weiche). #}
+<script src="/static/formular.js?v={{ asset_version }}"></script>
 <script>
 // Upload-Limit vom Server (eine Quelle: MAX_UPLOAD_SIZE in main.py) — fuer
 // Groessen-Hinweis und Fehlertext im Upload-Bereich (Julia-Feedback 02.07.2026).
@@ -216,6 +219,23 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
+        if (tool === 'formular') {
+            // QUICKINFO-WERKZEUG (27.08.2026): gleicher Block wie PDF, Wortlaut Formular.
+            const hasExisting = project.status !== 'neu' && !!project.original_path;
+            const heading = hasExisting ? t('Weiteres PDF-Formular hinzufügen') : t('PDF-Formular hinzufügen');
+            const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
+            const hint = hasExisting
+                ? t('Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten.') + sizeHint
+                : t('Wähle ein PDF-Formular mit ausfüllbaren Feldern oder ziehe es hierher. Die Felder werden gelesen, Feldwerte werden nicht gespeichert.') + sizeHint;
+            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
+                + '<div class="dropzone-inner">'
+                + '<input type="file" id="projUpload" accept=".pdf" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<label for="projUpload" class="upload-btn">' + t('PDF-Formular auswählen') + '</label>'
+                + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
+                + '</div>'
+                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
+                + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
+        }
         if (tool === 'grafik') {
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + t('Bilder hinzufügen') + '</h2>'
                 + '<div class="dropzone-inner">'
@@ -369,7 +389,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     // extrahiert im Hintergrund — Status zeigen und pollen.
                     const wartetext = data.project_type === 'docx'
                         ? t('Die Word-Datei wird verarbeitet – Bilder werden extrahiert …')
-                        : t('Die PDF wird verarbeitet – Bilder werden extrahiert …');
+                        : (data.project_type === 'pdfform'
+                            ? t('Das Formular wird verarbeitet – Felder werden gelesen …')
+                            : t('Die PDF wird verarbeitet – Bilder werden extrahiert …'));
                     if (status) status.textContent = wartetext;
                     announce(wartetext);
                     const ergebnis = await waitForExtraction(projectId, data.document_id);
@@ -378,7 +400,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             ? t('Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste.')
                             : (data.project_type === 'docx'
                                 ? t('Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')
-                                : t('Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.'));
+                                : (data.project_type === 'pdfform'
+                                    ? t('Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')
+                                    : t('Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')));
                         if (status) status.textContent = meldung;
                         announce(meldung);
                         return;
@@ -420,7 +444,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 // dass ein neues Dokument unten angelegt wurde. Nach einer
                 // Nachpruefungs-Rettung gibt es keine Server-Antwort (data=null) —
                 // die Erfolgs-Ansage kam dann schon aus dem Rettungspfad.
-                if (data && data.appended && data.doc_index) {
+                if (data && data.project_type === 'pdfform') {
+                    // Formular: Zahlen liest die Formular-Ansicht selbst aus (Felder statt Bilder).
+                    announce(data.appended ? t('Formular hinzugefügt als Dokument {d}.', { d: data.doc_index }) : t('Formular gelesen.'));
+                } else if (data && data.appended && data.doc_index) {
                     announce(t('PDF hinzugefuegt als Dokument {d}. {a} neue Bilder. Insgesamt {gesamt} Bilder im Projekt.', { d: data.doc_index, a: data.added_images, gesamt: data.total_images }));
                 } else if (data) {
                     announce(t('{n} Bilder im Projekt.', { n: data.total_images }));
@@ -518,6 +545,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (res.status === 401) { if (window.GUEST_MODE) { return initGuest(); } window.location.href = '/'; return; }
         const data = await res.json();
         const project = data.project;
+        // QUICKINFO-WERKZEUG (27.08.2026): Formular-Projekte haben eine eigene
+        // Ansicht (frontend/formular.js) — Felder statt Bilder. Gast-Freigabe
+        // fuer Formulare kommt in einer spaeteren Stufe.
+        if (project && (project.tool === 'formular' || project.project_type === 'pdfform')) {
+            if (window.GUEST_MODE) {
+                main.innerHTML = '<div class="card"><p>' + t('Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar.') + '</p></div>';
+                return;
+            }
+            return Formular.showProject(projectId);
+        }
         const images = data.images;
         const documents = data.documents || [];
         window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt

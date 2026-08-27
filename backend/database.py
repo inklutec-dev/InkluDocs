@@ -445,6 +445,69 @@ def init_db():
         )
     ''')
 
+    # QUICKINFO-WERKZEUG (27.08.2026, Steve + Fable 5): PDF-Formularfelder mit
+    # Quickinfos (/TU). EIGENE Tabelle, bewusst nicht in "images" — ein Feld ist
+    # kein Bild (Chatbot, Pipeline, Statistik, Abrechnung sollen das nie
+    # verwechseln). Ein Eintrag = ein Feld (voller Feldname = anker) eines
+    # Dokuments. Der FELDWERT wird NIE gespeichert, nur ausgefuellt 0/1
+    # (Datenschutz, siehe formular_processor.py). Bildpfade zeigen auf
+    # RESULTS_DIR/<user>/<projekt>/doc<n>/.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS formularfelder (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            document_id INTEGER NOT NULL,
+            feld_index INTEGER NOT NULL,
+            anker TEXT NOT NULL,
+            feld_name TEXT DEFAULT '',
+            feld_art TEXT DEFAULT 'text',
+            page_number INTEGER DEFAULT 0,
+            seiten TEXT DEFAULT '[]',
+            rect_x0 REAL, rect_y0 REAL, rect_x1 REAL, rect_y1 REAL,
+            beschriftung TEXT DEFAULT '',
+            beschriftung_lage TEXT DEFAULT '',
+            gruppe TEXT DEFAULT '',
+            umfeld TEXT DEFAULT '',
+            optionen TEXT DEFAULT '[]',
+            pflicht INTEGER DEFAULT 0,
+            ausgefuellt INTEGER DEFAULT 0,
+            quickinfo_original TEXT DEFAULT '',
+            quickinfo TEXT DEFAULT '',
+            quelle TEXT DEFAULT '',
+            ausschnitt_path TEXT DEFAULT '',
+            page_view_path TEXT DEFAULT '',
+            page_text TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_formularfelder_project ON formularfelder(project_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_formularfelder_document ON formularfelder(document_id)")
+
+    # Stammdaten-Bibliothek des Kontos: Beschriftung/Feldname + Feldart -> Quickinfo.
+    # Wird beim Hochladen neuer Formulare angewendet und aus bestaetigten
+    # Feldern gefuellt. Gehoert dem Konto (user_id), nie kontouebergreifend.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS stammdaten (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            beschriftung TEXT DEFAULT '',
+            beschriftung_norm TEXT DEFAULT '',
+            feld_art TEXT DEFAULT '',
+            feld_name TEXT DEFAULT '',
+            quickinfo TEXT NOT NULL,
+            sprache TEXT DEFAULT 'de',
+            herkunft TEXT DEFAULT 'hand',
+            verwendet INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_stammdaten_user ON stammdaten(user_id)")
+
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 
@@ -756,10 +819,17 @@ def _migrate_columns(conn):
     # bisherigen Reihenfolge (doc_index, id) neu nummeriert, damit die echte
     # erste PDF wieder Dokument 1 wird. Keine UNIQUE-Constraint auf
     # (project_id, doc_index) — Renumber kann direkt aufsteigend laufen.
+    # QUICKINFO-WERKZEUG (27.08.2026): Formular-Dokumente haben KEINE Bilder,
+    # sondern Formularfelder (Tabelle formularfelder) — sie sind keine Phantome.
+    # Ausgenommen sind alle Dokumente mit Feldern und alle Dokumente eines
+    # Formular-Projekts (auch waehrend die Extraktion noch laeuft). Ohne diese
+    # Ausnahme loeschte der Start am 27.08.2026 ein frisch gelesenes Formular.
     try:
         phantom_rows = conn.execute(
             """SELECT d.id, d.project_id FROM documents d
-               WHERE NOT EXISTS (SELECT 1 FROM images i WHERE i.document_id = d.id)"""
+               WHERE NOT EXISTS (SELECT 1 FROM images i WHERE i.document_id = d.id)
+                 AND NOT EXISTS (SELECT 1 FROM formularfelder f WHERE f.document_id = d.id)
+                 AND NOT EXISTS (SELECT 1 FROM projects p WHERE p.id = d.project_id AND p.tool = 'formular')"""
         ).fetchall()
         if phantom_rows:
             phantom_ids = [r["id"] for r in phantom_rows]
@@ -921,6 +991,8 @@ def delete_user_data(user_id: int):
         conn.execute("DELETE FROM image_reviews WHERE image_id IN "
                      "(SELECT id FROM images WHERE project_id = ?)", (p["id"],))
         conn.execute("DELETE FROM images WHERE project_id = ?", (p["id"],))
+        # Quickinfo-Werkzeug (27.08.2026): Formularfelder des Projekts.
+        conn.execute("DELETE FROM formularfelder WHERE project_id = ?", (p["id"],))
         # Multi-Datei (08.06.2026): Dokumente eines Projekts mit aufraeumen.
         conn.execute("DELETE FROM documents WHERE project_id = ?", (p["id"],))
         conn.execute("DELETE FROM chat_messages WHERE project_id = ?", (p["id"],))
@@ -938,6 +1010,8 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM email_changes WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM email_verifications WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM user_prompts WHERE user_id = ?", (user_id,))
+    # Quickinfo-Werkzeug (27.08.2026): Stammdaten-Bibliothek des Kontos.
+    conn.execute("DELETE FROM stammdaten WHERE user_id = ?", (user_id,))
     # Abrechnungsspuren: sowohl die eigenen Buchungen als auch die, die in
     # SEINEN Topf gelaufen sind (Team-Inhaber) — sonst rechnet billing spaeter
     # gegen ein Konto, das es nicht mehr gibt.
