@@ -670,6 +670,12 @@ def _migrate_columns(conn):
         # Elemente (Diagramm, SmartArt, Textfeld, Vektorgrafik, OLE ...) mit Art,
         # Ort und Seite/Abschnitt, Warnungen, Seitenquelle. PDF: leer.
         ("documents", "hinweise", "ALTER TABLE documents ADD COLUMN hinweise TEXT DEFAULT ''"),
+        # QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): Ergebnis des Feld-Passes je Feld —
+        # Sicherheit (hoch/mittel/niedrig, nach Nachpruefung), Beleg (woertliche
+        # Textstelle der Seite) und Hinweise fuer den Bearbeiter (JSON-Liste).
+        ("formularfelder", "sicherheit", "ALTER TABLE formularfelder ADD COLUMN sicherheit TEXT DEFAULT ''"),
+        ("formularfelder", "beleg", "ALTER TABLE formularfelder ADD COLUMN beleg TEXT DEFAULT ''"),
+        ("formularfelder", "ki_hinweise", "ALTER TABLE formularfelder ADD COLUMN ki_hinweise TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:

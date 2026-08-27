@@ -4030,3 +4030,64 @@ msgstr "detta formulär"
 msgid "– Formular „{name}“"
 msgstr "– formulär ”{name}”"
 
+# QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): KI-Vorschlaege
+msgid "Alle generieren"
+msgstr "Generera alla"
+
+msgid "Beleg: „{b}“"
+msgstr "Belägg: ”{b}”"
+
+msgid "Generieren fehlgeschlagen."
+msgstr "Genereringen misslyckades."
+
+msgid "Generierung abgeschlossen: {n} Quickinfos neu."
+msgstr "Generering klar: {n} nya hjälptexter."
+
+msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
+msgstr "Generering startad för {n} öppna fält. Befintliga hjälptexter förblir oförändrade."
+
+msgid "Hinweise: {w}"
+msgstr "Anmärkningar: {w}"
+
+msgid "KI generiert"
+msgstr "AI genererar"
+
+msgid "KI-Vorschlag, {s}"
+msgstr "AI-förslag, {s}"
+
+msgid "Kein Beleg auf der Seite gefunden."
+msgstr "Inget belägg hittades på sidan."
+
+msgid "Keine offenen Felder – nichts zu generieren."
+msgstr "Inga öppna fält – inget att generera."
+
+msgid "Nur unsichere KI-Vorschläge anzeigen"
+msgstr "Visa bara osäkra AI-förslag"
+
+msgid "Nur unsichere KI-Vorschläge werden angezeigt."
+msgstr "Bara osäkra AI-förslag visas."
+
+msgid "Quickinfo generiert, {s}: {q}"
+msgstr "Hjälptext genererad, {s}: {q}"
+
+msgid "Quickinfo wird generiert …"
+msgstr "Hjälptext genereras …"
+
+msgid "Seite {i} von {n} wird bearbeitet."
+msgstr "Sida {i} av {n} bearbetas."
+
+msgid "Sprache der Quickinfos"
+msgstr "Hjälptexternas språk"
+
+msgid "mittel"
+msgstr "medel"
+
+msgid "sicher"
+msgstr "säker"
+
+msgid "unsicher"
+msgstr "osäker"
+
+msgid "{u} KI-Vorschläge unsicher."
+msgstr "{u} AI-förslag osäkra."
+

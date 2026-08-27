@@ -74,6 +74,10 @@ AKTIONS_PREISE = {
     # Regel wie PDF-Export (pro Vorgang, nur Bezahl-Konten). Die CSV-Feldliste
     # ist kostenlos (kein Schreibvorgang in die PDF).
     "formular_export": 5,
+    # Quickinfo-Werkzeug Stufe 2 (27.08.2026): KI-Vorschlaege — EIN Aufruf je
+    # Formularseite (reiner Text, ohne Bild), 1 Credit je Seite; Einzel-"Neu
+    # generieren" ebenfalls 1. Endgueltige Preisregel mit Michael (offen).
+    "quickinfo_generierung": 1,
 }
 
 # Zusatzpakete (Michaels Preise, bestaetigt 03.08.2026). Reine Konfiguration

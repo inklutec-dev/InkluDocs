@@ -128,7 +128,7 @@ def _detect_media_type_from_bytes(image_b64: str, image_path: str) -> str:
 def _invoke_bedrock(
     model: str,
     prompt: str,
-    image_b64: str,
+    image_b64: str | None,
     image_path: str,
     schema_name: str,
     schema_dict: dict,
@@ -150,9 +150,11 @@ def _invoke_bedrock(
         'anthropic_version': 'bedrock-2023-05-31',
         'max_tokens': max_tokens,
         'temperature': temperature,  # 0 = deterministisch (Default); >0 nur bei explizitem Neu-Generieren (Variation)
+        # image_b64=None: reiner Text-Aufruf (Quickinfo-Werkzeug, 27.08.2026) —
+        # gleicher Tool-Use-Vertrag, nur ohne Bildblock.
         'messages': [{
             'role': 'user',
-            'content': [
+            'content': ([
                 {
                     'type': 'image',
                     'source': {
@@ -161,6 +163,7 @@ def _invoke_bedrock(
                         'data': image_b64,
                     },
                 },
+            ] if image_b64 else []) + [
                 {'type': 'text', 'text': prompt},
             ],
         }],
@@ -266,4 +269,46 @@ def call_bedrock_with_schema(
             raise BedrockCallError(
                 f'Schema verletzt auch nach Retry für {schema_name}: {e2}; '
                 f'raw: {str(retry_raw)[:300]}'
+            ) from e2
+
+
+def call_bedrock_text_with_schema(
+    model: str,
+    prompt: str,
+    schema: Type[T],
+    max_tokens: int = 2000,
+    temperature: float = 0.0,
+    system: str | None = None,
+) -> T:
+    """Text-Aufruf ohne Bild mit Tool-Use-Schema + Pydantic-Validierung
+    (Quickinfo-Werkzeug, 27.08.2026). Gleicher Vertrag und gleiche
+    Retry-Strategie wie call_bedrock_with_schema; nur der Bildblock entfaellt.
+    """
+    schema_dict = schema.model_json_schema()
+    schema_name = schema.__name__
+    raw = _invoke_bedrock(
+        model=model, prompt=prompt, image_b64=None, image_path='',
+        schema_name=schema_name, schema_dict=schema_dict,
+        max_tokens=max_tokens, temperature=temperature, system=system,
+    )
+    try:
+        return schema.model_validate(raw)
+    except ValidationError as e:
+        log.warning('Tool-Use-Schema-Bypass (Text) für %s: %s — Retry mit Korrektur-Hinweis.', schema_name, e)
+        retry_prompt = (
+            prompt
+            + '\n\n--- KRITISCHE KORREKTUR ---\n'
+            + f'Vorherige Antwort verletzte das Schema: {e}\n'
+            + 'Liefere die Antwort exakt nach Schema, jedes Pflichtfeld ausgefuellt.'
+        )
+        retry_raw = _invoke_bedrock(
+            model=model, prompt=retry_prompt, image_b64=None, image_path='',
+            schema_name=schema_name, schema_dict=schema_dict,
+            max_tokens=max_tokens, temperature=temperature, system=system,
+        )
+        try:
+            return schema.model_validate(retry_raw)
+        except ValidationError as e2:
+            raise BedrockCallError(
+                f'Schema verletzt auch nach Retry für {schema_name}: {e2}; raw: {str(retry_raw)[:300]}'
             ) from e2

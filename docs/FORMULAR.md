@@ -185,10 +185,53 @@ offene Felder anzeigen“. Je Dokument die **Hörprobe**: eine Liste, wie ein
 Screenreader das Formular Feld für Feld vorliest („ohne Bezeichnung“ bei
 offenen Feldern). Alle Zustandswechsel werden über `announce()` angesagt.
 
+## Stufe 2: KI-Vorschläge (Feld-Pass), 27.08.2026
+
+- **Ein Modellaufruf je Seite** (`formular_ki.generiere_seite`): Sonnet über
+  Bedrock (`BEDROCK_MODEL_GENERATE`, gleiches Modell wie die Alt-Texte),
+  Tool-Use-Schema `QuickinfoSeiteOutput`, Temperatur 0 (Einzel-„Neu
+  generieren“ 0,5). Eingabe: Textzeilen der Seite mit Positionen (aus der
+  widgetfreien Kopie – nie Feldwerte), Felder mit Positionen, Pflicht,
+  Optionen, geometrische Hinweise, schon beschriebene Quickinfos des Projekts
+  (Konsistenz), eigener Prompt aus „Meine Prompts“, Sprache aus der
+  Projekteinstellung. Kein Bild. Höchstens 40 Felder je Aufruf, Seitentext
+  auf 12 000 Zeichen gekappt.
+- **Prompt**: `prompts/builders/quickinfo.py` (Systemrolle + STILBLOCK nach
+  WCAG 3.3.2/4.1.2 und Matterhorn 28); Schema in
+  `prompts/components/schemas/quickinfo.py`. Der Seitentext steht in einem
+  abgegrenzten Datenblock; der Systemprompt behandelt ihn als Daten
+  (Prompt-Injection aus fremden PDFs).
+- **Nachprüfung** (`formular_ki.nachpruefung`, deterministisch, kann die
+  Sicherheit nur senken): Beleg steht im Seitentext (sonst *niedrig*), Beleg
+  liegt in Feldnähe (sonst höchstens *mittel*), Regeln (Länge ≤ 200,
+  Anleitungsfloskeln, Feldart im Text, Formatangabe ohne Vorkommen auf der
+  Seite, „Pflichtfeld“ ohne Kennzeichnung). `konsistenz()`: gleiche
+  Beschriftung + Feldart + Gruppe → gleicher Wortlaut.
+- **Endpunkte**: `POST /api/projects/{id}/quickinfos/generieren` (Hintergrund,
+  nur offene Felder, nie namenlose; Status `processing`, Fortschritt in
+  `GET …/felder` → `generierung`; 1 Credit je Seite, Kontingent je Seite
+  geprüft, Fehler je Seite statt je Projekt; danach Konsistenz-Lauf) und
+  `POST /api/felder/{id}/generieren` (überschreibt bewusst, Variation,
+  1 Credit). Beim Start werden hängende `processing`-Projekte zurückgesetzt.
+- **Spalten** `formularfelder.sicherheit`, `beleg`, `ki_hinweise` (JSON);
+  `quelle = 'ki'`.
+- **Oberfläche** wie bei den Alt-Texten: „Alle generieren“ (nur Lücken),
+  „Generieren“/„Neu generieren“ am Feld, „Zurück auf Original“; Badge
+  „KI-Vorschlag, sicher/mittel/unsicher“, Beleg-Satz mit Hinweisen unter dem
+  Eingabefeld, Filter „Nur unsichere KI-Vorschläge“, Fortschritt im Kopf,
+  Ansage am Ende; Auswahl „Sprache der Quickinfos“ und „Gespeicherte
+  Prompts“ über dieselben Endpunkte wie bei den Alt-Texten.
+- **Abrechnung**: `quickinfo_generierung` 1 Credit je Seite (vorläufig, mit
+  Michael zu klären). Das Tageslimit der Bilder greift nicht.
+- **Tests**: `tests/test_formular_ki.py` (Nachprüfung, Konsistenz, Builder,
+  Kontext ohne Feldwerte – ohne Modell), E2E `verify_formular.py` Abschnitt G
+  (echte Generierung auf Staging), Klicktest.
+
 ## Grenzen (Stufe 1) und was folgt
 
-- Keine KI-Vorschläge (Stufe 2: ein Aufruf je Seite, Text mit Positionen,
-  Belegpflicht wie im Verify-Pass, Konsistenz über das Dokument).
+- KI-Vorschläge: Eval-Korpus mit Soll-Quickinfos (Michaels Formulare,
+  öffentliche Formulare) steht noch aus; Seitenbild als Ausnahme für
+  textlose Seiten nicht gebaut; InkluAgent-Werkzeuge folgen.
 - Stammdaten-Treffer nur exakt (Feldname, Beschriftung); unscharfe Treffer
   und Auto-Lernen in Stufe 3.
 - Keine Gast-Ansicht für Formular-Projekte; kein Chatbot-Anschluss.

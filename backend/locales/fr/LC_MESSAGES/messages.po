@@ -4469,3 +4469,64 @@ msgstr "ce formulaire"
 msgid "– Formular „{name}“"
 msgstr "– formulaire « {name} »"
 
+# QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): KI-Vorschlaege
+msgid "Alle generieren"
+msgstr "Tout générer"
+
+msgid "Beleg: „{b}“"
+msgstr "Justification : « {b} »"
+
+msgid "Generieren fehlgeschlagen."
+msgstr "La génération a échoué."
+
+msgid "Generierung abgeschlossen: {n} Quickinfos neu."
+msgstr "Génération terminée : {n} nouvelles info-bulles."
+
+msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
+msgstr "Génération lancée pour {n} champs ouverts. Les info-bulles existantes restent inchangées."
+
+msgid "Hinweise: {w}"
+msgstr "Remarques : {w}"
+
+msgid "KI generiert"
+msgstr "IA en cours"
+
+msgid "KI-Vorschlag, {s}"
+msgstr "Proposition de l’IA, {s}"
+
+msgid "Kein Beleg auf der Seite gefunden."
+msgstr "Aucune justification trouvée sur la page."
+
+msgid "Keine offenen Felder – nichts zu generieren."
+msgstr "Aucun champ ouvert – rien à générer."
+
+msgid "Nur unsichere KI-Vorschläge anzeigen"
+msgstr "Afficher uniquement les propositions incertaines de l’IA"
+
+msgid "Nur unsichere KI-Vorschläge werden angezeigt."
+msgstr "Seules les propositions incertaines de l’IA sont affichées."
+
+msgid "Quickinfo generiert, {s}: {q}"
+msgstr "Info-bulle générée, {s} : {q}"
+
+msgid "Quickinfo wird generiert …"
+msgstr "Génération de l’info-bulle …"
+
+msgid "Seite {i} von {n} wird bearbeitet."
+msgstr "Traitement de la page {i} sur {n}."
+
+msgid "Sprache der Quickinfos"
+msgstr "Langue des info-bulles"
+
+msgid "mittel"
+msgstr "moyenne"
+
+msgid "sicher"
+msgstr "sûre"
+
+msgid "unsicher"
+msgstr "incertaine"
+
+msgid "{u} KI-Vorschläge unsicher."
+msgstr "{u} propositions de l’IA incertaines."
+

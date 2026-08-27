@@ -31,6 +31,8 @@ Endpunkte (alle nur fuer den eingeloggten Besitzer des Projekts):
   POST   /api/projects/{pid}/stammdaten-anwenden      Stammdaten auf alle offenen Felder
   GET    /api/felder/{fid}/ausschnitt                 Bildausschnitt (PNG)
   GET    /api/felder/{fid}/page-view                  Seitenansicht mit Rahmen (PNG)
+  POST   /api/projects/{pid}/quickinfos/generieren    Stufe 2: KI-Vorschlaege fuer offene Felder (Hintergrund, je Seite 1 Credit)
+  POST   /api/felder/{fid}/generieren                 Stufe 2: ein Feld neu generieren (ueberschreibt, 1 Credit)
   POST   /api/projects/{pid}/export/formular          PDF mit Quickinfos (einzeln/ZIP), kostet Credits
   POST   /api/projects/{pid}/export/formular_csv      Feldliste als CSV (Heine-kompatibel), kostenlos
   GET    /api/stammdaten                              Bibliothek des Kontos
@@ -64,6 +66,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 
 import formular_export
+import formular_ki
 from formular_processor import extract_formular
 
 log = logging.getLogger(__name__)
@@ -155,6 +158,10 @@ def _feld_dict(row) -> dict:
     d["pflicht"] = bool(d.get("pflicht"))
     d["ausgefuellt"] = bool(d.get("ausgefuellt"))
     d["status"] = "beschrieben" if (d.get("quickinfo") or "").strip() else "offen"
+    try:
+        d["ki_hinweise"] = json.loads(d.get("ki_hinweise") or "[]")
+    except Exception:
+        d["ki_hinweise"] = []
     # Pfade sind intern — nach aussen nur "vorhanden ja/nein".
     d["hat_ausschnitt"] = bool(d.pop("ausschnitt_path", ""))
     d["hat_seitenansicht"] = bool(d.pop("page_view_path", ""))
@@ -415,6 +422,8 @@ def haengende_extraktionen_zuruecksetzen() -> int:
     'error' setzen; Dokumente ohne Felder werden entfernt. Gibt die Anzahl zurueck."""
     conn = _d.get_db()
     try:
+        # Auch 'processing' (Stufe 2, Generierung lief beim Neustart) zurueck auf 'extracted'.
+        conn.execute("UPDATE projects SET status = 'extracted' WHERE tool = 'formular' AND status = 'processing'")
         rows = conn.execute("SELECT id FROM projects WHERE tool = 'formular' AND status = 'extracting'").fetchall()
         for r in rows:
             pid = r["id"]
@@ -428,6 +437,157 @@ def haengende_extraktionen_zuruecksetzen() -> int:
         return len(rows)
     finally:
         conn.close()
+
+
+# --------------------------------------------------------------------------- Stufe 2: Feld-Pass im Hintergrund
+
+# Laufstatus je Projekt (nur im Prozess; nach Neustart setzt _startup den Status zurueck).
+_generierung: dict[int, dict] = {}
+
+
+def _originalpfad(doc: dict) -> str:
+    src = doc.get("original_path") or ""
+    wurzel = os.path.realpath(_d.upload_dir) + os.sep
+    if not src or not os.path.realpath(src).startswith(wurzel) or not os.path.isfile(src):
+        raise HTTPException(status_code=404, detail="Die Originaldatei dieses Dokuments ist nicht mehr vorhanden")
+    return src
+
+
+def _seitenzahl(doc: dict) -> int:
+    try:
+        h = json.loads(doc.get("hinweise") or "{}")
+        return int(h.get("seiten") or 1)
+    except Exception:
+        return 1
+
+
+def _feld_fuer_ki(f: dict) -> dict:
+    """Feld-Zeile -> Eingabe fuer den Feld-Pass (ohne Pfade, ohne Werte)."""
+    try:
+        optionen = json.loads(f.get("optionen") or "[]")
+    except Exception:
+        optionen = []
+    try:
+        seiten = json.loads(f.get("seiten") or "[]")
+    except Exception:
+        seiten = []
+    rect = None
+    if f.get("rect_x0") is not None:
+        rect = (f["rect_x0"], f["rect_y0"], f["rect_x1"], f["rect_y1"])
+    return {"id": f["id"], "feld_index": f["feld_index"], "feld_art": f.get("feld_art") or "unbekannt", "rect": rect,
+            "pflicht": bool(f.get("pflicht")), "optionen": optionen, "beschriftung": f.get("beschriftung") or "",
+            "beschriftung_lage": f.get("beschriftung_lage") or "", "gruppe": f.get("gruppe") or "", "seiten": seiten,
+            "quickinfo_original": f.get("quickinfo_original") or "", "anker": f.get("anker") or ""}
+
+
+def _bestaetigte_quickinfos(conn, project_id: int, ausser_feld: Optional[int] = None) -> list[tuple[str, str]]:
+    """(Beschriftung, Quickinfo) aller beschriebenen Felder des Projekts — Konsistenz-Vorgabe."""
+    rows = conn.execute(
+        """SELECT beschriftung, quickinfo FROM formularfelder WHERE project_id = ? AND TRIM(COALESCE(quickinfo,'')) != ''
+           AND TRIM(COALESCE(beschriftung,'')) != '' ORDER BY document_id, page_number, feld_index""", (project_id,)).fetchall()
+    out, gesehen = [], set()
+    for r in rows:
+        key = r["beschriftung"].strip().lower()
+        if key in gesehen:
+            continue
+        gesehen.add(key)
+        out.append((r["beschriftung"], r["quickinfo"]))
+    return out
+
+
+def _user_prompt(conn, project_id: int) -> str:
+    row = conn.execute(
+        "SELECT up.prompt_text FROM user_prompts up JOIN projects p ON p.prompt_id = up.id AND p.user_id = up.user_id WHERE p.id = ?",
+        (project_id,)).fetchone()
+    return (row["prompt_text"] if row and row["prompt_text"] else "")
+
+
+async def _generiere_projekt(project_id: int, user_id: int, document_id: Optional[int]) -> None:
+    """Hintergrundlauf: je Seite ein Feld-Pass fuer die OFFENEN Felder, Kontingent
+    je Seite geprueft, 1 Credit je Seite; Fehler je Seite, nicht je Projekt."""
+    st = _generierung.setdefault(project_id, {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []})
+    loop = asyncio.get_running_loop()
+    conn = _d.get_db()
+    try:
+        project = dict(conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone())
+        docs = {d["id"]: dict(d) for d in conn.execute("SELECT * FROM documents WHERE project_id = ?", (project_id,)).fetchall()}
+        sql = "SELECT * FROM formularfelder WHERE project_id = ? AND TRIM(COALESCE(quickinfo,'')) = '' AND anker NOT LIKE '#%'"
+        args = [project_id]
+        if document_id is not None:
+            sql += " AND document_id = ?"; args.append(document_id)
+        offen = [dict(r) for r in conn.execute(sql + " ORDER BY document_id, page_number, feld_index", args).fetchall()]
+        user_prompt = _user_prompt(conn, project_id)
+    finally:
+        conn.close()
+    seiten: dict[tuple, list] = {}
+    for f in offen:
+        if f.get("page_number"):
+            seiten.setdefault((f["document_id"], f["page_number"]), []).append(f)
+    st["seiten_gesamt"] = len(seiten)
+    alle_vorschlaege: list = []
+    felder_by_id = {f["id"]: _feld_fuer_ki(f) for f in offen}
+    try:
+        for (doc_id, page), felder in seiten.items():
+            abo = _d.billing.pruefe_kontingent(user_id)
+            if not abo.get("erlaubt", True):
+                st["fehler"].append("Credit-Kontingent erschöpft – Rest bleibt offen.")
+                break
+            doc = docs.get(doc_id) or {}
+            try:
+                src = _originalpfad(doc)
+                conn = _d.get_db()
+                try:
+                    bestaetigte = _bestaetigte_quickinfos(conn, project_id)
+                finally:
+                    conn.close()
+                vorschlaege = await loop.run_in_executor(
+                    None, lambda: formular_ki.generiere_seite(
+                        src, page, [felder_by_id[f["id"]] for f in felder], sprache=project.get("alt_language") or "de",
+                        formular_titel=_d.doc_label(doc), seiten_gesamt=_seitenzahl(doc), bestaetigte=bestaetigte,
+                        user_prompt=user_prompt, variation=False))
+            except (formular_ki.FeldPassFehler, HTTPException) as e:
+                st["fehler"].append(f"Seite {page}: {getattr(e, 'detail', None) or e}")
+                st["seiten_fertig"] += 1
+                continue
+            except Exception as e:  # nie den ganzen Lauf abbrechen
+                log.exception("[formular] Feld-Pass Seite %s Projekt %s: %r", page, project_id, e)
+                st["fehler"].append(f"Seite {page}: unerwarteter Fehler")
+                st["seiten_fertig"] += 1
+                continue
+            alle_vorschlaege.extend(vorschlaege)
+            conn = _d.get_db()
+            try:
+                for v in vorschlaege:
+                    # Nur schreiben, wenn das Feld INZWISCHEN nicht von Hand gefuellt wurde.
+                    cur = conn.execute(
+                        """UPDATE formularfelder SET quickinfo = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
+                           updated_at = datetime('now') WHERE id = ? AND TRIM(COALESCE(quickinfo,'')) = ''""",
+                        (v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
+                    st["felder_neu"] += cur.rowcount
+                conn.commit()
+            finally:
+                conn.close()
+            _d.billing.verbuche(user_id, "generierung", aktion="quickinfo_generierung")
+            st["seiten_fertig"] += 1
+        # Konsistenz ueber das ganze Dokument (nur KI-Texte dieses Laufs).
+        if alle_vorschlaege:
+            angeglichen = formular_ki.konsistenz(alle_vorschlaege, felder_by_id)
+            conn = _d.get_db()
+            try:
+                for v in angeglichen:
+                    conn.execute("UPDATE formularfelder SET quickinfo = ?, ki_hinweise = ? WHERE id = ? AND quelle = 'ki'",
+                                 (v.quickinfo, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
+                conn.commit()
+            finally:
+                conn.close()
+    finally:
+        conn = _d.get_db()
+        try:
+            conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ? AND status = 'processing'", (project_id,))
+            conn.commit()
+        finally:
+            conn.close()
+        st["laeuft"] = False
 
 
 # --------------------------------------------------------------------------- Router
@@ -478,16 +638,17 @@ def build_router(deps: Deps) -> APIRouter:
         for d in docs:
             d["felder_gesamt"] = sum(1 for f in felder if f["document_id"] == d["id"])
             d["felder_offen"] = sum(1 for f in felder if f["document_id"] == d["id"] and f["status"] == "offen")
+            d["felder_unsicher"] = sum(1 for f in felder if f["document_id"] == d["id"] and f["quelle"] == "ki" and f["sicherheit"] == "niedrig")
             try:
                 d["hinweise"] = json.loads(d["hinweise"]) if d.get("hinweise") else None
             except Exception:
                 d["hinweise"] = None
         # Nur, was die Ansicht braucht — keine Serverpfade (original_path) nach aussen.
         projekt_aussen = {k: project.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type",
-                                                       "alt_language", "created_at", "updated_at")}
+                                                       "alt_language", "prompt_id", "created_at", "updated_at")}
         projekt_aussen["hat_original"] = bool(project.get("original_path"))
         return {"project": projekt_aussen, "documents": docs, "felder": felder, "stammdaten_treffer": treffer,
-                "stammdaten_anzahl": len(eintraege)}
+                "stammdaten_anzahl": len(eintraege), "generierung": _generierung.get(project_id)}
 
     # ---- Quickinfo speichern
     @router.patch("/api/felder/{feld_id}")
@@ -578,6 +739,92 @@ def build_router(deps: Deps) -> APIRouter:
         finally:
             conn.close()
         return {"ok": True, "uebernommen": anzahl}
+
+    # ---- Stufe 2: KI-Vorschlaege
+    @router.post("/api/projects/{project_id}/quickinfos/generieren")
+    async def quickinfos_generieren(project_id: int, request: Request, user: dict = Depends(_user)):
+        """Startet den Feld-Pass fuer alle OFFENEN Felder (optional nur ein Dokument)
+        im Hintergrund; das Frontend pollt GET /felder ("generierung"). Vorhandene
+        Texte werden nie ueberschrieben (Regel wie "alle generieren" bei Alt-Texten)."""
+        try:
+            data = await request.json()
+        except Exception:
+            data = {}
+        document_id = data.get("document_id") if isinstance(data, dict) else None
+        try:
+            document_id = int(document_id) if document_id is not None else None
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="document_id ungueltig")
+        conn = _d.get_db()
+        try:
+            project = _projekt_des_nutzers(conn, project_id, user["id"])
+            if project.get("status") in ("extracting", "processing"):
+                raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
+            abo = _d.billing.pruefe_kontingent(user["id"])
+            if not abo.get("erlaubt", True):
+                raise HTTPException(status_code=429, detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+            sql = "SELECT COUNT(*) FROM formularfelder WHERE project_id = ? AND TRIM(COALESCE(quickinfo,'')) = '' AND anker NOT LIKE '#%'"
+            args = [project_id]
+            if document_id is not None:
+                sql += " AND document_id = ?"; args.append(document_id)
+            offen = conn.execute(sql, args).fetchone()[0]
+            if not offen:
+                return {"ok": True, "gestartet": False, "offen": 0}
+            conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
+            conn.commit()
+        finally:
+            conn.close()
+        _generierung[project_id] = {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []}
+        asyncio.create_task(_generiere_projekt(project_id, user["id"], document_id))
+        return {"ok": True, "gestartet": True, "offen": offen}
+
+    @router.post("/api/felder/{feld_id}/generieren")
+    async def feld_generieren(feld_id: int, user: dict = Depends(_user)):
+        """Ein Feld (neu) generieren — ueberschreibt bewusst (Variation), 1 Credit.
+        "Zurueck auf Original" bleibt moeglich (quickinfo_original)."""
+        conn = _d.get_db()
+        try:
+            feld = dict(_feld_des_nutzers(conn, feld_id, user["id"]))
+            if str(feld["anker"] or "").startswith("#"):
+                raise HTTPException(status_code=400, detail="Dieses Feld hat keinen Feldnamen und kann nicht beschrieben werden")
+            project = dict(conn.execute("SELECT * FROM projects WHERE id = ?", (feld["project_id"],)).fetchone())
+            if project.get("status") in ("extracting", "processing"):
+                raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
+            abo = _d.billing.pruefe_kontingent(user["id"])
+            if not abo.get("erlaubt", True):
+                raise HTTPException(status_code=429, detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+            doc = dict(conn.execute("SELECT * FROM documents WHERE id = ?", (feld["document_id"],)).fetchone())
+            seite_felder = [dict(r) for r in conn.execute(
+                "SELECT * FROM formularfelder WHERE document_id = ? AND page_number = ? ORDER BY feld_index",
+                (feld["document_id"], feld["page_number"])).fetchall()]
+            bestaetigte = _bestaetigte_quickinfos(conn, feld["project_id"], ausser_feld=feld_id)
+            user_prompt = _user_prompt(conn, feld["project_id"])
+        finally:
+            conn.close()
+        src = _originalpfad(doc)
+        loop = asyncio.get_running_loop()
+        try:
+            vorschlaege = await loop.run_in_executor(
+                None, lambda: formular_ki.generiere_seite(
+                    src, feld["page_number"], [_feld_fuer_ki(feld)], sprache=project.get("alt_language") or "de",
+                    formular_titel=_d.doc_label(doc), seiten_gesamt=_seitenzahl(doc), bestaetigte=bestaetigte,
+                    user_prompt=user_prompt, variation=True))
+        except formular_ki.FeldPassFehler as e:
+            raise HTTPException(status_code=502, detail=str(e))
+        if not vorschlaege:
+            raise HTTPException(status_code=502, detail="Die KI hat für dieses Feld keinen Vorschlag geliefert")
+        v = vorschlaege[0]
+        conn = _d.get_db()
+        try:
+            conn.execute("""UPDATE formularfelder SET quickinfo = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
+                            updated_at = datetime('now') WHERE id = ?""",
+                         (v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), feld_id))
+            conn.commit()
+        finally:
+            conn.close()
+        _d.billing.verbuche(user["id"], "generierung", aktion="quickinfo_generierung")
+        return {"ok": True, "quickinfo": v.quickinfo, "quelle": "ki", "status": "beschrieben",
+                "sicherheit": v.sicherheit, "beleg": v.beleg, "ki_hinweise": v.hinweise}
 
     # ---- Bilder
     def _datei_des_feldes(feld_id: int, user_id: int, spalte: str) -> str:

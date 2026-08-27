@@ -17,6 +17,10 @@ from .classification import (
     FotoSubtyp,
     KonfidenzStufe,
 )
+from .quickinfo import (
+    QuickinfoFeldOutput,
+    QuickinfoSeiteOutput,
+)
 from .inventar import (
     InventarOutput,
     ObjektInBild,

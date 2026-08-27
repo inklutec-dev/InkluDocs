@@ -254,3 +254,19 @@ leicht geoeffnet, sitzt ..."). Aenderungen:
 ### Nachtrag Paket-4-Review (17.07.2026)
 
 Der geteilte Inventar-Block der Daten-Familie uebernimmt BEWUSST die gelockerte Foto-Premium-Formulierung (sichtbare Bildinformationen duerfen ergaenzt werden, duerfen dem Inventar aber nicht widersprechen) statt des alten AUSSCHLIESSLICH-Wortlauts. Diagramm und Illustration nutzen seit Paket 4 NEU das 150/250-Richtwert-Regime der Foto-Familie. Die V4_PASS_MODE-Normalisierung ist jetzt an allen drei Lesestellen identisch (strip und lower — vorher konnte ein Leerzeichen im ENV-Wert die Anti-Halluzinations-Schicht im Standalone-Pass still entfernen). render_prompts pinnt V4_PASS_MODE=full fuer alle Standalone-Snapshots. Die Diagramm-Sektion LESBARE TEXTE nennt die Trennzeichen-Treue jetzt ausdruecklich.
+
+
+## Quickinfo-Werkzeug (Stufe 2, 27.08.2026) — eigener Baustein neben der Bild-Pipeline
+
+Formularfelder sind keine Bilder: Der Feld-Pass (`prompts/builders/quickinfo.py`,
+Schema `prompts/components/schemas/quickinfo.py`) ist ein **Text-Aufruf ohne
+Bild** über `bedrock_client.call_bedrock_text_with_schema` (gleicher Tool-Use-
+Vertrag wie die Bild-Pässe, nur ohne Bildblock). Ein Aufruf je Formularseite:
+Textzeilen mit Positionen (widgetfreie Kopie, nie Feldwerte) + Felder mit
+Positionen → je Feld Quickinfo, wörtlicher Beleg, Gruppe, Sicherheit, Hinweis.
+Eigene Systemrolle SYSTEM_QUICKINFO und STILBLOCK (WCAG 3.3.2/4.1.2, Matterhorn
+28). Die Nachprüfung (`formular_ki.py`) ist deterministischer Code, kein
+Validator-Modell: Beleg im Seitentext, Beleg in Feldnähe, Regeln, Konsistenz.
+Der eigene Nutzer-Prompt (Prompt-Verwaltung) wird additiv angehängt, wie bei
+den Alt-Texten. Ebenen 1–2 der Bild-Pipeline (Rollen, geteilte Constraints)
+werden bewusst NICHT wiederverwendet — sie handeln von Bildern.

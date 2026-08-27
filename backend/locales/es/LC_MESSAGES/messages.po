@@ -4469,3 +4469,64 @@ msgstr "este formulario"
 msgid "– Formular „{name}“"
 msgstr "– formulario «{name}»"
 
+# QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): KI-Vorschlaege
+msgid "Alle generieren"
+msgstr "Generar todo"
+
+msgid "Beleg: „{b}“"
+msgstr "Evidencia: «{b}»"
+
+msgid "Generieren fehlgeschlagen."
+msgstr "Error al generar."
+
+msgid "Generierung abgeschlossen: {n} Quickinfos neu."
+msgstr "Generación finalizada: {n} sugerencias nuevas."
+
+msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
+msgstr "Generación iniciada para {n} campos abiertos. Las sugerencias existentes no cambian."
+
+msgid "Hinweise: {w}"
+msgstr "Avisos: {w}"
+
+msgid "KI generiert"
+msgstr "IA generando"
+
+msgid "KI-Vorschlag, {s}"
+msgstr "Sugerencia de la IA, {s}"
+
+msgid "Kein Beleg auf der Seite gefunden."
+msgstr "No se encontró evidencia en la página."
+
+msgid "Keine offenen Felder – nichts zu generieren."
+msgstr "No hay campos abiertos – nada que generar."
+
+msgid "Nur unsichere KI-Vorschläge anzeigen"
+msgstr "Mostrar solo sugerencias inciertas de la IA"
+
+msgid "Nur unsichere KI-Vorschläge werden angezeigt."
+msgstr "Solo se muestran las sugerencias inciertas de la IA."
+
+msgid "Quickinfo generiert, {s}: {q}"
+msgstr "Sugerencia generada, {s}: {q}"
+
+msgid "Quickinfo wird generiert …"
+msgstr "Generando sugerencia …"
+
+msgid "Seite {i} von {n} wird bearbeitet."
+msgstr "Procesando página {i} de {n}."
+
+msgid "Sprache der Quickinfos"
+msgstr "Idioma de las sugerencias"
+
+msgid "mittel"
+msgstr "media"
+
+msgid "sicher"
+msgstr "segura"
+
+msgid "unsicher"
+msgstr "incierta"
+
+msgid "{u} KI-Vorschläge unsicher."
+msgstr "{u} sugerencias de la IA inciertas."
+

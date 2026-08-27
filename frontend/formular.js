@@ -14,6 +14,10 @@
  * docDisplayName(), openDocRename(), openDocDelete(), downloadBlob().
  *
  * Datenquelle: GET /api/projects/{id}/felder (siehe backend/formular_api.py).
+ * Stufe 2 (27.08.2026): KI-Vorschlaege wie bei den Alt-Texten — "Alle generieren"
+ * fuellt nur Luecken, "Generieren"/"Neu generieren" am Feld ueberschreibt bewusst,
+ * "Zurueck auf Original" bleibt. Jeder KI-Text traegt Sicherheit (hoch/mittel/
+ * niedrig, nach Nachpruefung) und den Beleg-Satz; Filter "Nur unsichere".
  * Sicherheit: alle Texte aus dem Server laufen durch escHtml(); Eingaben
  * gehen als JSON an PATCH /api/felder/{id}; keine innerHTML-Zuweisung mit
  * unescapten Nutzerdaten.
@@ -40,6 +44,7 @@
     let offeneSeiten = new Set();
     let zustandProjekt = null;
     let nurOffene = false;
+    let nurUnsichere = false;
 
     function feldartText(art) { return (FELDART[art] || FELDART.unbekannt)(); }
 
@@ -70,15 +75,30 @@
 
     function istNamenlos(f) { return typeof f.anker === 'string' && f.anker.charAt(0) === '#'; }
 
+    const SICHERHEIT = { hoch: () => t('sicher'), mittel: () => t('mittel'), niedrig: () => t('unsicher') };
+
     function statusText(f) {
         if (!f.quickinfo || !f.quickinfo.trim()) return t('Quickinfo fehlt');
+        if (f.quelle === 'ki' && f.sicherheit) return t('KI-Vorschlag, {s}', { s: SICHERHEIT[f.sicherheit] ? SICHERHEIT[f.sicherheit]() : f.sicherheit });
         return (QUELLE[f.quelle] || QUELLE.hand)();
+    }
+
+    // Beleg-Satz + Hinweise der Nachpruefung: der Nutzer hoert, WARUM die KI so
+    // formuliert hat — dieselbe Grundlage, die die Maschine geprueft hat.
+    function belegHtml(f) {
+        if (f.quelle !== 'ki') return '<p class="feld-beleg" id="feld_beleg_' + f.id + '" hidden></p>';
+        const teile = [];
+        if (f.beleg) teile.push(t('Beleg: „{b}“', { b: escHtml(f.beleg) }));
+        else teile.push(t('Kein Beleg auf der Seite gefunden.'));
+        (f.ki_hinweise || []).forEach(h => teile.push(escHtml(h)));
+        return '<p class="feld-beleg" id="feld_beleg_' + f.id + '" style="font-size:0.9rem;color:var(--text-muted);margin:0.3rem 0 0;">' + teile.join(' ') + '</p>';
     }
 
     function feldCardHtml(f, treffer) {
         const offen = !(f.quickinfo && f.quickinfo.trim());
         const badges = [];
-        badges.push('<span class="badge ' + (offen ? 'badge-pending' : 'badge-done') + '" id="feld_status_' + f.id + '">' + escHtml(statusText(f)) + '</span>');
+        const unsicher = f.quelle === 'ki' && f.sicherheit === 'niedrig';
+        badges.push('<span class="badge ' + (offen || unsicher ? 'badge-pending' : 'badge-done') + '" id="feld_status_' + f.id + '">' + escHtml(statusText(f)) + '</span>');
         if (f.pflicht) badges.push('<span class="badge" style="background:#a15c00;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Pflichtfeld') + '</span>');
         if (f.ausgefuellt) badges.push('<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('bereits ausgefüllt') + '</span>');
         const bild = f.hat_ausschnitt
@@ -91,7 +111,7 @@
               + '</div>'
             : '';
         return ''
-            + '<section class="image-review feld-review" id="feldcard_' + f.id + '" aria-labelledby="feld_heading_' + f.id + '" data-status="' + (offen ? 'offen' : 'beschrieben') + '">'
+            + '<section class="image-review feld-review" id="feldcard_' + f.id + '" aria-labelledby="feld_heading_' + f.id + '" data-status="' + (offen ? 'offen' : 'beschrieben') + '" data-unsicher="' + (unsicher ? '1' : '0') + '">'
             + '<h4 id="feld_heading_' + f.id + '" class="image-heading">' + escHtml(feldUeberschrift(f)) + '</h4>'
             + '<div class="image-review-header">' + badges.join(' ') + '</div>'
             + bild
@@ -101,8 +121,10 @@
             + '<textarea class="alt-text-field quickinfo-field" id="quickinfo_' + f.id + '" data-feld-id="' + f.id + '" aria-describedby="feld_kontext_' + f.id + '" maxlength="1000"'
             +   (istNamenlos(f) ? ' disabled' : '')
             +   ' placeholder="' + t('Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen') + '">' + escHtml(f.quickinfo || '') + '</textarea>'
+            + belegHtml(f)
             + vorschlag
             + '<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
+            +   (istNamenlos(f) ? '' : '<button type="button" class="btn btn-secondary btn-small" id="feld_gen_' + f.id + '" onclick="Formular.generieren(' + f.id + ')">' + (offen ? t('Generieren') : t('Neu generieren')) + '</button>')
             +   (f.quickinfo_original ? '<button type="button" class="btn btn-secondary btn-small" id="feld_orig_' + f.id + '" onclick="Formular.original(' + f.id + ')">' + t('Zurück auf Original') + '</button>' : '')
             +   '<button type="button" class="btn btn-secondary btn-small" id="feld_sd_' + f.id + '" onclick="Formular.inStammdaten(' + f.id + ')"' + (offen ? ' disabled' : '') + '>' + t('In Stammdaten übernehmen') + '</button>'
             +   '<span id="feld_msg_' + f.id + '" role="status" aria-live="polite" style="font-size:0.85rem;"></span>'
@@ -201,15 +223,20 @@
         else if (!felder.length) { badge = t('Neu'); badgeCls = 'badge-pending'; }
         else if (offen === 0) { badge = t('Vollständig'); badgeCls = 'badge-done'; }
         else { badge = t('In Arbeit'); badgeCls = 'badge-pending'; }
-        const info = felder.length
+        const unsicher = felder.filter(f => f.quelle === 'ki' && f.sicherheit === 'niedrig').length;
+        const gen = data.generierung;
+        let info = felder.length
             ? t('{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge.', { n: felder.length, d: docs.length, o: offen, s: data.stammdaten_anzahl || 0 })
             : t('Noch kein Formular hochgeladen.');
+        if (unsicher) info += ' ' + t('{u} KI-Vorschläge unsicher.', { u: unsicher });
+        if (project.status === 'processing' && gen) { badge = t('KI generiert'); badgeCls = 'badge-processing'; info += ' ' + t('Seite {i} von {n} wird bearbeitet.', { i: Math.min(gen.seiten_fertig + 1, gen.seiten_gesamt || 1), n: gen.seiten_gesamt || 1 }); }
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + escHtml(title) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
             + '<div class="card-info" id="projectHeadInfo">' + info + '</div>'
             + (felder.length ? ''
                 + '<div class="card-actions">'
+                +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>' : '')
                 +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + t('Exportieren') + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf offene Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
@@ -225,9 +252,22 @@
                 +       '<button class="btn btn-secondary" onclick="Formular.exportSchliessen()">' + t('Abbrechen') + '</button>'
                 +     '</div><span id="fExportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>'
                 +   '</dialog>'
-                +   '<div style="flex-basis:100%;margin-top:0.6rem;"><label for="fNurOffene" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">'
+                +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:1.2rem;flex-wrap:wrap;"><label for="fNurOffene" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">'
                 +     '<span style="font-weight:600;">' + t('Nur offene Felder anzeigen') + '</span>'
-                +     '<input type="checkbox" id="fNurOffene"' + (nurOffene ? ' checked' : '') + ' onchange="Formular.filter(this.checked)" style="width:1.2rem;height:1.2rem;"></label></div>'
+                +     '<input type="checkbox" id="fNurOffene"' + (nurOffene ? ' checked' : '') + ' onchange="Formular.filter(this.checked)" style="width:1.2rem;height:1.2rem;"></label>'
+                +   '<label for="fNurUnsichere" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">'
+                +     '<span style="font-weight:600;">' + t('Nur unsichere KI-Vorschläge anzeigen') + '</span>'
+                +     '<input type="checkbox" id="fNurUnsichere"' + (nurUnsichere ? ' checked' : '') + ' onchange="Formular.filterUnsicher(this.checked)" style="width:1.2rem;height:1.2rem;"></label></div>'
+                // Sprache der Quickinfos + gespeicherte Prompts: dieselben Endpunkte und
+                // Funktionen wie bei den Alt-Texten (app.html: setAltLanguage, populatePromptSelect, setPromptSetting).
+                +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
+                +     '<label for="altLangSelect" style="font-weight:600;">' + t('Sprache der Quickinfos') + '</label>'
+                +     '<select id="altLangSelect" onchange="setAltLanguage(' + project.id + ', this.value)" data-confirmed="' + escHtml(project.alt_language || 'de') + '" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">'
+                +       ['de','en','da','fr','es','sv'].map(code => '<option value="' + code + '"' + ((project.alt_language || 'de') === code ? ' selected' : '') + '>' + ({de:'Deutsch',en:'English',da:'Dansk',fr:'Français',es:'Español',sv:'Svenska'})[code] + '</option>').join('')
+                +     '</select><span id="altLangStatus" style="font-size:0.9rem;"></span></div>'
+                +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
+                +     '<label for="ownPromptSelect" style="font-weight:600;">' + t('Gespeicherte Prompts') + '</label>'
+                +     '<select id="ownPromptSelect" onchange="setPromptSetting(' + project.id + ', this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;"><option value="">' + t('Kein eigener Prompt') + '</option></select></div>'
                 + '</div>' : '')
             + '</div>';
     }
@@ -260,7 +300,59 @@
             badge.className = 'badge ' + (offen ? 'badge-pending' : 'badge-done');
         }
         if (sd) sd.disabled = offen;
+        const gen = document.getElementById('feld_gen_' + feldId);
+        if (gen) gen.textContent = offen ? t('Generieren') : t('Neu generieren');
+        const unsicher = antwort.quelle === 'ki' && antwort.sicherheit === 'niedrig';
+        if (card) card.dataset.unsicher = unsicher ? '1' : '0';
+        if (badge && antwort.quelle === 'ki' && antwort.sicherheit) {
+            badge.textContent = t('KI-Vorschlag, {s}', { s: SICHERHEIT[antwort.sicherheit] ? SICHERHEIT[antwort.sicherheit]() : antwort.sicherheit });
+            badge.className = 'badge ' + (unsicher ? 'badge-pending' : 'badge-done');
+        }
+        const beleg = document.getElementById('feld_beleg_' + feldId);
+        if (beleg) {
+            if (antwort.quelle === 'ki') {
+                const teile = [antwort.beleg ? t('Beleg: „{b}“', { b: escHtml(antwort.beleg) }) : t('Kein Beleg auf der Seite gefunden.')];
+                (antwort.ki_hinweise || []).forEach(h => teile.push(escHtml(h)));
+                beleg.innerHTML = teile.join(' '); beleg.hidden = false;
+            } else { beleg.hidden = true; beleg.innerHTML = ''; }
+        }
         // Beim Bearbeiten bewusst NICHT ausblenden, auch wenn der Filter „nur offene" aktiv ist (Fokus bleibt im Feld).
+    }
+
+    async function generieren(feldId) {
+        const btn = document.getElementById('feld_gen_' + feldId);
+        const msg = document.getElementById('feld_msg_' + feldId);
+        if (btn) btn.disabled = true;
+        if (msg) msg.textContent = t('Quickinfo wird generiert …');
+        announce(t('Quickinfo wird generiert …'));
+        try {
+            const res = await fetch('/api/felder/' + feldId + '/generieren', { method: 'POST' });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { const m = d.detail || t('Generieren fehlgeschlagen.'); if (msg) msg.textContent = m; announce(m); return; }
+            const ta = document.getElementById('quickinfo_' + feldId);
+            if (ta) ta.value = d.quickinfo || '';
+            statusSetzen(feldId, d);
+            if (msg) msg.textContent = '';
+            announce(t('Quickinfo generiert, {s}: {q}', { s: SICHERHEIT[d.sicherheit] ? SICHERHEIT[d.sicherheit]() : '', q: d.quickinfo }));
+            if (ta) ta.focus();
+        } catch (e) {
+            if (msg) msg.textContent = t('Verbindungsfehler.');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function alleGenerieren(projectId) {
+        const btn = document.getElementById('fGenAllBtn');
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) btn.disabled = false; return; }
+            if (!d.gestartet) { announce(t('Keine offenen Felder – nichts zu generieren.')); if (btn) btn.disabled = false; return; }
+            announce(t('Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert.', { n: d.offen }));
+            await showProject(projectId);
+        } catch (e) { announce(t('Verbindungsfehler.')); if (btn) btn.disabled = false; }
     }
 
     async function speichern(feldId, text) {
@@ -314,9 +406,18 @@
         await showProject(projectId);
     }
 
-    function filter(nur) {
+    function filterUnsicher(nur) {
+        nurUnsichere = nur;
+        filter(nurOffene, true);
+        announce(nur ? t('Nur unsichere KI-Vorschläge werden angezeigt.') : t('Alle Felder werden angezeigt.'));
+    }
+
+    function filter(nur, still) {
         nurOffene = nur;
-        document.querySelectorAll('.feld-review').forEach(c => { c.hidden = nur && c.dataset.status !== 'offen'; });
+        document.querySelectorAll('.feld-review').forEach(c => {
+            c.hidden = (nur && c.dataset.status !== 'offen') || (nurUnsichere && c.dataset.unsicher !== '1');
+        });
+        nur = nur || nurUnsichere;   // leere Klappen auch beim Unsicher-Filter ausblenden
         // Leer gewordene Seiten- und Dokument-Klappen mit ausblenden (sonst hoert der
         // Screenreader eine Ueberschrift ohne Inhalt).
         document.querySelectorAll('details.page-section').forEach(s => {
@@ -325,7 +426,7 @@
         document.querySelectorAll('.doc-block').forEach(b => {
             b.hidden = nur && b.querySelectorAll('.feld-review:not([hidden])').length === 0;
         });
-        announce(nur ? t('Nur offene Felder werden angezeigt.') : t('Alle Felder werden angezeigt.'));
+        if (!still) announce(nurOffene ? t('Nur offene Felder werden angezeigt.') : t('Alle Felder werden angezeigt.'));
     }
 
     function exportOeffnen() {
@@ -392,7 +493,7 @@
         }
     }
 
-    async function showProject(projectId) {
+    async function showProject(projectId, erneut) {
         const main = document.getElementById('main');
         const res = await fetch('/api/projects/' + projectId + '/felder');
         if (res.status === 401) { window.location.href = '/'; return; }
@@ -408,23 +509,35 @@
             + uploadBlockHtml(project)
             + '<div id="feldListe">' + (data.felder.length ? docsHtml : '') + '</div>';
         bindAutosave();
-        if (nurOffene) filter(true);
+        if (nurOffene || nurUnsichere) filter(nurOffene, true);
         setupProjectDropzone(projectId);
+        if (data.felder.length && typeof populatePromptSelect === 'function') populatePromptSelect(project.id, project.prompt_id);
         const h1 = document.getElementById('projectName');
-        if (h1) h1.focus();
-        // Laeuft die Extraktion noch (z. B. Seite waehrenddessen neu geladen): weiter abfragen.
-        if (project.status === 'extracting') {
+        if (h1 && !erneut) h1.focus();
+        // Laeuft die Extraktion oder die KI-Generierung noch: weiter abfragen, ohne den
+        // Fokus zu bewegen; am Ende einmal ansagen.
+        if (project.status === 'extracting' || project.status === 'processing') {
             setTimeout(async () => {
                 try {
                     const r = await fetch('/api/projects/' + projectId);
                     if (!r.ok) return;
                     const d = await r.json();
-                    if (d.project && d.project.status !== 'extracting') announce(t('Formular gelesen.'));
-                    showProject(projectId);
+                    if (d.project && d.project.status !== project.status) {
+                        if (project.status === 'extracting') announce(t('Formular gelesen.'));
+                        else {
+                            const g = (await (await fetch('/api/projects/' + projectId + '/felder')).json()).generierung || {};
+                            const f = (g.fehler || []).length ? ' ' + t('Hinweise: {w}', { w: g.fehler.join(' ') }) : '';
+                            announce(t('Generierung abgeschlossen: {n} Quickinfos neu.', { n: g.felder_neu || 0 }) + f);
+                        }
+                        showProject(projectId);
+                    } else {
+                        showProject(projectId, true);
+                    }
                 } catch (e) { /* naechster Versuch beim naechsten Aufruf */ }
             }, 2500);
         }
     }
 
-    window.Formular = { showProject, original, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, exportOeffnen, exportSchliessen, exportieren };
+    window.Formular = { showProject, original, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher,
+                        generieren, alleGenerieren, exportOeffnen, exportSchliessen, exportieren };
 })();

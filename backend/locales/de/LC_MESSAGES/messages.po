@@ -4472,3 +4472,64 @@ msgstr "dieses Formular"
 msgid "– Formular „{name}“"
 msgstr "– Formular „{name}“"
 
+# QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): KI-Vorschlaege
+msgid "Alle generieren"
+msgstr "Alle generieren"
+
+msgid "Beleg: „{b}“"
+msgstr "Beleg: „{b}“"
+
+msgid "Generieren fehlgeschlagen."
+msgstr "Generieren fehlgeschlagen."
+
+msgid "Generierung abgeschlossen: {n} Quickinfos neu."
+msgstr "Generierung abgeschlossen: {n} Quickinfos neu."
+
+msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
+msgstr "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
+
+msgid "Hinweise: {w}"
+msgstr "Hinweise: {w}"
+
+msgid "KI generiert"
+msgstr "KI generiert"
+
+msgid "KI-Vorschlag, {s}"
+msgstr "KI-Vorschlag, {s}"
+
+msgid "Kein Beleg auf der Seite gefunden."
+msgstr "Kein Beleg auf der Seite gefunden."
+
+msgid "Keine offenen Felder – nichts zu generieren."
+msgstr "Keine offenen Felder – nichts zu generieren."
+
+msgid "Nur unsichere KI-Vorschläge anzeigen"
+msgstr "Nur unsichere KI-Vorschläge anzeigen"
+
+msgid "Nur unsichere KI-Vorschläge werden angezeigt."
+msgstr "Nur unsichere KI-Vorschläge werden angezeigt."
+
+msgid "Quickinfo generiert, {s}: {q}"
+msgstr "Quickinfo generiert, {s}: {q}"
+
+msgid "Quickinfo wird generiert …"
+msgstr "Quickinfo wird generiert …"
+
+msgid "Seite {i} von {n} wird bearbeitet."
+msgstr "Seite {i} von {n} wird bearbeitet."
+
+msgid "Sprache der Quickinfos"
+msgstr "Sprache der Quickinfos"
+
+msgid "mittel"
+msgstr "mittel"
+
+msgid "sicher"
+msgstr "sicher"
+
+msgid "unsicher"
+msgstr "unsicher"
+
+msgid "{u} KI-Vorschläge unsicher."
+msgstr "{u} KI-Vorschläge unsicher."
+

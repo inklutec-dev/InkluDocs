@@ -4469,3 +4469,64 @@ msgstr "this form"
 msgid "– Formular „{name}“"
 msgstr "– form “{name}”"
 
+# QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): KI-Vorschlaege
+msgid "Alle generieren"
+msgstr "Generate all"
+
+msgid "Beleg: „{b}“"
+msgstr "Evidence: “{b}”"
+
+msgid "Generieren fehlgeschlagen."
+msgstr "Generation failed."
+
+msgid "Generierung abgeschlossen: {n} Quickinfos neu."
+msgstr "Generation finished: {n} new tooltips."
+
+msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
+msgstr "Generation started for {n} open fields. Existing tooltips remain unchanged."
+
+msgid "Hinweise: {w}"
+msgstr "Notes: {w}"
+
+msgid "KI generiert"
+msgstr "AI generating"
+
+msgid "KI-Vorschlag, {s}"
+msgstr "AI suggestion, {s}"
+
+msgid "Kein Beleg auf der Seite gefunden."
+msgstr "No evidence found on the page."
+
+msgid "Keine offenen Felder – nichts zu generieren."
+msgstr "No open fields – nothing to generate."
+
+msgid "Nur unsichere KI-Vorschläge anzeigen"
+msgstr "Show only uncertain AI suggestions"
+
+msgid "Nur unsichere KI-Vorschläge werden angezeigt."
+msgstr "Only uncertain AI suggestions are shown."
+
+msgid "Quickinfo generiert, {s}: {q}"
+msgstr "Tooltip generated, {s}: {q}"
+
+msgid "Quickinfo wird generiert …"
+msgstr "Generating tooltip …"
+
+msgid "Seite {i} von {n} wird bearbeitet."
+msgstr "Processing page {i} of {n}."
+
+msgid "Sprache der Quickinfos"
+msgstr "Language of the tooltips"
+
+msgid "mittel"
+msgstr "medium"
+
+msgid "sicher"
+msgstr "certain"
+
+msgid "unsicher"
+msgstr "uncertain"
+
+msgid "{u} KI-Vorschläge unsicher."
+msgstr "{u} AI suggestions uncertain."
+
