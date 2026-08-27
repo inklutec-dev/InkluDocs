@@ -1,4 +1,5 @@
 import os
+import urllib.parse  # Content-Disposition nach RFC 6266 (_content_disposition)
 import re
 import shutil
 import json
@@ -6488,6 +6489,23 @@ def _safe_filename_component(name: str, fallback: str = "datei") -> str:
     return s[:120] or fallback
 
 
+def _content_disposition(dateiname: str) -> str:
+    """Content-Disposition nach RFC 6266: ASCII-Fallback + filename* in UTF-8.
+    Kopfzeilen sind latin-1 — ein Projektname mit Zeichen ausserhalb davon
+    (typografische Anfuehrungszeichen, Gedankenstrich) liess die Antwort sonst
+    mit 500 abbrechen (Review-Befund 27.08.2026, gleiches Muster wie im
+    Quickinfo-Werkzeug)."""
+    ascii_name = dateiname.encode("ascii", "ignore").decode("ascii").replace('"', "") or "download"
+    return "attachment; filename=\"%s\"; filename*=UTF-8''%s" % (ascii_name, urllib.parse.quote(dateiname))
+
+
+def _warnings_header(warnungen) -> str:
+    """X-Export-Warnings als reines ASCII (JSON-Escapes) — HTTP-Kopfzeilen vertragen
+    kein UTF-8; vorher brach die Antwort bei Umlauten/Anfuehrungszeichen in einer
+    Warnung mit 500 ab, NACHDEM die Credits verbucht waren (Review 27.08.2026)."""
+    return json.dumps(list(warnungen), ensure_ascii=True)
+
+
 async def _read_export_options(request: Optional[Request]) -> tuple[Optional[int], Optional[str]]:
     """Liest optionale Export-Parameter (document_id + filename) aus dem Request-Body.
     Beide Felder sind optional; fehlt der Body komplett, faellt alles auf None zurueck."""
@@ -6718,17 +6736,19 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         if "total" in info:
             headers["X-Export-Total"] = str(info["total"])
         if info.get("warnings"):
-            headers["X-Export-Warnings"] = json.dumps(info["warnings"], ensure_ascii=False)
+            headers["X-Export-Warnings"] = _warnings_header(info["warnings"])
         download_base = custom_name or _doc_label(unit["doc"])
-        # Nur ERFOLGREICHE Exporte verbuchen (Datei liegt fertig da).
-        if _export_kostenpflichtig:
-            billing.verbuche(user["id"], "export", aktion="pdf_export")
-        return FileResponse(
+        # Nur ERFOLGREICHE Exporte verbuchen: Antwort zuerst bauen, dann verbuchen
+        # (Review 27.08.2026 — vorher konnte die Antwort nach der Verbuchung scheitern).
+        response = FileResponse(
             output_path,
             filename=f"inkludocs_{download_base}.pdf",
             media_type="application/pdf",
             headers=headers,
         )
+        if _export_kostenpflichtig:
+            billing.verbuche(user["id"], "export", aktion="pdf_export")
+        return response
 
     # Alle Dokumente -> ZIP.
     zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
@@ -6753,17 +6773,18 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         "X-Export-Total": str(total_images),
     }
     if aggregated_warnings:
-        headers["X-Export-Warnings"] = json.dumps(aggregated_warnings, ensure_ascii=False)
+        headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
     # Ein Export-Vorgang = 5 Credits, auch fuer das Alle-Dokumente-ZIP
-    # (siehe billing.AKTIONS_PREISE); nur nach erfolgreichem Bau.
-    if _export_kostenpflichtig:
-        billing.verbuche(user["id"], "export", aktion="pdf_export")
-    return FileResponse(
+    # (siehe billing.AKTIONS_PREISE); nur nach erfolgreichem Bau der Antwort.
+    response = FileResponse(
         zip_path,
         filename=f"{zip_base}_alle_pdfs.zip",
         media_type="application/zip",
         headers=headers,
     )
+    if _export_kostenpflichtig:
+        billing.verbuche(user["id"], "export", aktion="pdf_export")
+    return response
 
 
 # ─── WORD-EXPORT (26.08.2026): Word-Datei mit Alt-Texten zurueckgeben ────────
@@ -6843,12 +6864,13 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
         headers = {"X-Export-Method": "docx", "X-Export-Tagged": str(info["tagged"]),
                    "X-Export-Total": str(info["total"])}
         if info.get("warnings"):
-            headers["X-Export-Warnings"] = json.dumps(info["warnings"], ensure_ascii=False)
+            headers["X-Export-Warnings"] = _warnings_header(info["warnings"])
         download_base = custom_name or _doc_label(unit["doc"])
+        response = FileResponse(output_path, filename=f"inkludocs_{download_base}.docx",
+                                media_type=DOCX_MEDIA, headers=headers)
         if _export_kostenpflichtig:
             billing.verbuche(user["id"], "export", aktion="docx_export")
-        return FileResponse(output_path, filename=f"inkludocs_{download_base}.docx",
-                            media_type=DOCX_MEDIA, headers=headers)
+        return response
 
     zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
     zip_path = os.path.join(output_dir, f"{zip_base}_alle_word.zip")
@@ -6866,11 +6888,12 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
                 aggregated_warnings.append(f"[{inner}] {w}")
     headers = {"X-Export-Tagged": str(total_tagged), "X-Export-Total": str(total_images)}
     if aggregated_warnings:
-        headers["X-Export-Warnings"] = json.dumps(aggregated_warnings, ensure_ascii=False)
+        headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
+    response = FileResponse(zip_path, filename=f"{zip_base}_alle_word.zip",
+                            media_type="application/zip", headers=headers)
     if _export_kostenpflichtig:
         billing.verbuche(user["id"], "export", aktion="docx_export")
-    return FileResponse(zip_path, filename=f"{zip_base}_alle_word.zip",
-                        media_type="application/zip", headers=headers)
+    return response
 
 
 # ─── QUICKINFO-WERKZEUG (27.08.2026): eigener Router, eigene Tabellen ────────
@@ -7063,7 +7086,7 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
         return StreamingResponse(
             io.BytesIO(data),
             media_type=media,
-            headers={"Content-Disposition": f'attachment; filename="inkludocs_{base}{suffix}"'}
+            headers={"Content-Disposition": _content_disposition(f"inkludocs_{base}{suffix}")}
         )
 
     # Mehrere Dokumente -> ZIP
