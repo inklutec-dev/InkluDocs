@@ -12,6 +12,14 @@ Abgedeckt: 8 Bildvorkommen (Kopfzeile, Bildunterschrift, vorhandener Alt-Text,
 dekorativ, Tabelle, frei positioniert, JPEG, Wiederholung desselben Mediums),
 Zurueckschreiben, Byte-Identitaet unberuehrter Teile, Idempotenz und die
 Abwehr von .doc / .docm / Nicht-Word-Zip / Zip-Bombe.
+
+Echte Word-Dokumente (Haertetest 27.08.2026, Dateien aus dem LibreOffice-
+Testkorpus sw/qa/extras/ooxmlexport/data, MPL-2.0, von Microsoft Word erzeugt):
+  word_textfeld_bild.docx   Bild IN einem Textfeld; Word schreibt das Textfeld
+                            doppelt (mc:Choice + mc:Fallback), gleiche docPr-id
+  word_vml_bild.docx        altes VML-Bild (w:pict/v:shape/v:imagedata), frei
+  word_vml_kopfzeile.docx   VML-Bild in der Kopfzeile
+  word_einfach.docx         ein Inline-Bild; dient dem Test doppelter docPr-ids
 """
 import io
 import os
@@ -29,6 +37,10 @@ import docx_processor as dp   # noqa: E402
 import docx_export as de      # noqa: E402
 
 FIXTURE = os.path.join(HERE, "fixtures", "testdokument_inkludocs.docx")
+FIX_TEXTFELD = os.path.join(HERE, "fixtures", "word_textfeld_bild.docx")
+FIX_VML = os.path.join(HERE, "fixtures", "word_vml_bild.docx")
+FIX_VML_KOPF = os.path.join(HERE, "fixtures", "word_vml_kopfzeile.docx")
+FIX_EINFACH = os.path.join(HERE, "fixtures", "word_einfach.docx")
 
 
 @unittest.skipUnless(os.path.isfile(FIXTURE), "Fixture testdokument_inkludocs.docx fehlt")
@@ -150,6 +162,104 @@ class TestDocxSchreiben(unittest.TestCase):
     def test_word_xml_deklaration_bleibt(self):
         with zipfile.ZipFile(self.out) as z:
             self.assertTrue(z.read("word/document.xml").startswith(b"<?xml"))
+
+
+@unittest.skipUnless(all(os.path.isfile(f) for f in (FIX_TEXTFELD, FIX_VML, FIX_VML_KOPF, FIX_EINFACH)),
+                     "Word-Fixtures des Haertetests fehlen")
+class TestEchteWordDokumente(unittest.TestCase):
+    """Befunde des Haertetests vom 27.08.2026 mit von Word erzeugten Dateien."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="docx-word-")
+
+    def _export(self, quelle, alts):
+        out = os.path.join(self.tmp, "export.docx")
+        r = de.write_alt_texts_to_docx(quelle, out, alts)
+        return out, r
+
+    # --- Bild im Textfeld, Choice/Fallback-Duplikat
+    def test_textfeld_ist_kein_bild(self):
+        erg = dp.analysiere_docx(FIX_TEXTFELD, self.tmp)
+        self.assertEqual(len(erg.bilder), 1)                 # nicht 3 wie vor dem Fix
+        b = erg.bilder[0]
+        self.assertEqual(b.anker, "word/document.xml|3")
+        self.assertEqual(b.ort, "Textfeld")
+        self.assertFalse(b.vml)
+        self.assertEqual([u["anker"] for u in erg.uebersprungen], ["word/document.xml|1"])  # das Textfeld
+
+    def test_fallback_bekommt_denselben_alt_text(self):
+        out, r = self._export(FIX_TEXTFELD, {"word/document.xml|3": "Bild im Textfeld"})
+        self.assertEqual((r.geschrieben, r.nicht_gefunden), (1, []))
+        with zipfile.ZipFile(out) as z:
+            xml = z.read("word/document.xml").decode("utf-8")
+        self.assertEqual(xml.count('descr="Bild im Textfeld"'), 2)   # Choice UND Fallback
+        self.assertEqual(de.pruefe_unveraendert(FIX_TEXTFELD, out, {"word/document.xml"}), [])
+        neu = dp.analysiere_docx(out, tempfile.mkdtemp()).bilder
+        self.assertEqual([(b.anker, b.original_alt) for b in neu], [("word/document.xml|3", "Bild im Textfeld")])
+
+    # --- altes VML-Bild
+    def test_vml_bild_lesen(self):
+        erg = dp.analysiere_docx(FIX_VML, self.tmp)
+        self.assertEqual(len(erg.bilder), 1)
+        b = erg.bilder[0]
+        self.assertTrue(b.vml)
+        self.assertEqual(b.anker, "word/document.xml|v:_x0000_s1029")
+        self.assertTrue(b.anchored)
+        self.assertEqual(b.media_ext, ".jpeg")
+        self.assertTrue(b.image_path.endswith(".jpg"))
+        self.assertGreater(b.width, 0)
+
+    def test_vml_bild_schreiben_und_dekorativ(self):
+        anker = "word/document.xml|v:_x0000_s1029"
+        out, r = self._export(FIX_VML, {anker: "Foto vom Ausflug (fiktiv)"})
+        self.assertEqual((r.geschrieben, r.dekorativ, r.nicht_gefunden), (1, 0, []))
+        self.assertEqual(de.pruefe_unveraendert(FIX_VML, out, {"word/document.xml"}), [])
+        neu = dp.analysiere_docx(out, tempfile.mkdtemp()).bilder[0]
+        self.assertEqual(neu.original_alt, "Foto vom Ausflug (fiktiv)")
+        with zipfile.ZipFile(out) as z:
+            self.assertIn(b'alt="Foto vom Ausflug (fiktiv)"', z.read("word/document.xml"))
+        # dekorativ: VML kennt kein Kennzeichen -> leerer Alt-Text
+        out2 = os.path.join(self.tmp, "deko.docx")
+        r2 = de.write_alt_texts_to_docx(out, out2, {anker: "dekorativ"})
+        self.assertEqual((r2.geschrieben, r2.dekorativ), (1, 1))
+        self.assertEqual(dp.analysiere_docx(out2, tempfile.mkdtemp()).bilder[0].original_alt, "")
+
+    def test_vml_bild_in_kopfzeile(self):
+        erg = dp.analysiere_docx(FIX_VML_KOPF, self.tmp)
+        self.assertEqual([(b.anker, b.ort, b.vml) for b in erg.bilder],
+                         [("word/header1.xml|v:_x0000_i1025", "Kopfzeile", True)])
+        out, r = self._export(FIX_VML_KOPF, {"word/header1.xml|v:_x0000_i1025": "Firmenlogo (fiktiv)"})
+        self.assertEqual(r.geschrieben, 1)
+        self.assertEqual(de.pruefe_unveraendert(FIX_VML_KOPF, out, {"word/header1.xml"}), [])
+        self.assertEqual(dp.analysiere_docx(out, tempfile.mkdtemp()).bilder[0].original_alt, "Firmenlogo (fiktiv)")
+
+    # --- doppelte docPr-ids ausserhalb von mc:Fallback (kaputtes Dokument)
+    def test_doppelte_docpr_ids_bekommen_eigene_anker(self):
+        kaputt = os.path.join(self.tmp, "doppelt.docx")
+        with zipfile.ZipFile(FIX_EINFACH) as zin, zipfile.ZipFile(kaputt, "w") as zout:
+            for zi in zin.infolist():
+                daten = zin.read(zi.filename)
+                if zi.filename == "word/document.xml":
+                    xml = daten.decode("utf-8")
+                    a = xml.index("<w:drawing"); e = xml.index("</w:drawing>") + len("</w:drawing>")
+                    xml = xml[:e] + xml[a:e] + xml[e:]        # Bild-Element direkt verdoppeln
+                    daten = xml.encode("utf-8")
+                zout.writestr(zi, daten)
+        erg = dp.analysiere_docx(kaputt, self.tmp)
+        anker = [b.anker for b in erg.bilder]
+        self.assertEqual(len(anker), 2)
+        self.assertTrue(anker[1].endswith("#2"), anker)
+        self.assertEqual(anker[1].split("#")[0], anker[0])
+        out = os.path.join(self.tmp, "export.docx")
+        r = de.write_alt_texts_to_docx(kaputt, out, {anker[0]: "Erstes", anker[1]: "Zweites"})
+        self.assertEqual((r.geschrieben, r.nicht_gefunden), (2, []))
+        neu = dp.analysiere_docx(out, tempfile.mkdtemp()).bilder
+        self.assertEqual([b.original_alt for b in neu], ["Erstes", "Zweites"])
+
+    def test_unbekannter_anker_wird_gemeldet(self):
+        out, r = self._export(FIX_VML, {"word/document.xml|v:gibtsnicht": "x", "word/document.xml|abc": "y"})
+        self.assertEqual(sorted(r.nicht_gefunden), ["word/document.xml|abc", "word/document.xml|v:gibtsnicht"])
+        self.assertEqual(r.geschrieben, 0)
 
 
 class TestAbwehr(unittest.TestCase):

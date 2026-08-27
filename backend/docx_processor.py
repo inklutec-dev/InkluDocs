@@ -16,10 +16,29 @@ WO DER ALT-TEXT IN WORD STEHT
   Erweiterung <adec:decorative val="1"/> in docPr/a:extLst. Das eigentliche Bild
   referenziert <a:blip r:embed="rIdN"/> -> Relationship -> word/media/... .
 
+ALTE VML-BILDER (Haertetest 27.08.2026)
+  Dokumente aus dem Kompatibilitaetsmodus (aus .doc gewandelt, alte Vorlagen)
+  tragen Bilder als <w:pict><v:shape ...><v:imagedata r:id=".."/></v:shape>.
+  Der Alt-Text steht dort im Attribut alt des Shapes, der Titel in title. Ein
+  Dekorativ-Kennzeichen kennt dieses Altformat nicht. Solche Bilder werden
+  gleichwertig gelesen und zurueckgeschrieben; Anker "<part>|v:<shape-id>".
+
+VERSCHACHTELUNG UND DUPLIKATE (Haertetest 27.08.2026)
+  - Ein Bild IN einem Textfeld: Word schreibt Textfeld-Drawing > txbxContent >
+    Bild-Drawing. Nur der a:blip des Bildes selbst zaehlt (_eigener_blip), das
+    Textfeld ist kein Bild.
+  - Word schreibt Textfelder doppelt: mc:Choice (modern) und mc:Fallback (VML
+    fuer alte Word-Versionen) — mit DENSELBEN docPr-ids. Beim Lesen wird
+    mc:Fallback uebersprungen, beim Schreiben bekommen beide Haelften den
+    Alt-Text (sonst zeigt eine alte Word-Version den alten Stand).
+  - Doppelte docPr-ids ausserhalb von Fallback (kaputte Dokumente nach
+    Kopieren/Einfuegen) bekommen Anker "<part>|<id>#<n>" fuer das n-te Vorkommen.
+
 ANKER
   Jedes gefundene Bild bekommt einen stabilen Anker "<partname>|<docPr-id>"
-  (z. B. "word/document.xml|7"). Damit findet docx_export.py genau dieses
-  Bildelement wieder, ohne auf Reihenfolge oder Dateinamen angewiesen zu sein.
+  (z. B. "word/document.xml|7"; VML: "word/document.xml|v:_x0000_i1025").
+  Damit findet docx_export.py genau dieses Bildelement wieder, ohne auf
+  Reihenfolge oder Dateinamen angewiesen zu sein.
   Voraussetzung: Die Originaldatei bleibt zwischen Lesen und Schreiben
   unveraendert (sie liegt unter /app/data/... und wird nie angefasst).
 
@@ -75,6 +94,8 @@ NS = {
     "cp": "http://schemas.openxmlformats.org/package/2006/metadata/core-properties",
     "dc": "http://purl.org/dc/elements/1.1/",
     "v": "urn:schemas-microsoft-com:vml",
+    "o": "urn:schemas-microsoft-com:office:office",
+    "mc": "http://schemas.openxmlformats.org/markup-compatibility/2006",
 }
 DECORATIVE_EXT_URI = "{C183D7F6-B498-43B3-948B-1728B52AA6E4}"
 CT_DOCM = "application/vnd.ms-word.document.macroEnabled.main+xml"
@@ -126,6 +147,7 @@ class DocxBild:
     height: int = 0
     image_path: str = ""
     unsupported: str = ""       # Grund, falls nicht verarbeitbar (z. B. EMF)
+    vml: bool = False           # altes VML-Bild (w:pict/v:shape) statt DrawingML
 
 
 @dataclass
@@ -382,6 +404,96 @@ def _kontext_fuer(drawing: etree._Element, absaetze: list[etree._Element], index
     return kontext, caption, ort, abschnitt
 
 
+# ---------------------------------------------------------------- Bildelemente finden
+def _in_fallback(el: etree._Element) -> bool:
+    """Steht das Element in einem mc:Fallback? (Duplikat des mc:Choice-Inhalts
+    fuer alte Word-Versionen — beim Lesen ueberspringen.)"""
+    e = el.getparent()
+    while e is not None:
+        if e.tag == f"{{{NS['mc']}}}Fallback":
+            return True
+        e = e.getparent()
+    return False
+
+
+def _eigener_blip(container: etree._Element) -> etree._Element | None:
+    """Der a:blip des Bildes SELBST — nicht der eines Bildes, das in einem
+    Textfeld (w:txbxContent) innerhalb dieses Elements steckt."""
+    for blip in container.iter(f"{{{NS['a']}}}blip"):
+        e = blip.getparent()
+        innen = False
+        while e is not None and e is not container:
+            if e.tag == f"{{{NS['w']}}}txbxContent":
+                innen = True
+                break
+            e = e.getparent()
+        if not innen:
+            return blip
+    return None
+
+
+def _drawing_kennungen(root: etree._Element) -> dict[int, tuple[etree._Element, str]]:
+    """id(w:drawing) -> (w:drawing, Kennung fuer den Anker). Das Element wird im
+    Wert festgehalten, weil lxml-Proxys sonst freigegeben und ihre id() neu
+    vergeben werden. Kennung: normal die docPr-id; bei
+    doppelten ids ausserhalb von mc:Fallback "<id>#<n>" ab dem 2. Vorkommen.
+    Drawings in mc:Fallback bekommen KEINE Kennung (werden nicht gelesen).
+    docx_export nutzt dieselbe Funktion, damit Lesen und Schreiben uebereinstimmen."""
+    out: dict[int, tuple[etree._Element, str]] = {}
+    zaehler: dict[int, int] = {}
+    for drawing in root.iter(f"{{{NS['w']}}}drawing"):
+        if _in_fallback(drawing):
+            continue
+        container = drawing.find("wp:inline", NS)
+        if container is None:
+            container = drawing.find("wp:anchor", NS)
+        if container is None:
+            continue
+        docpr = container.find("wp:docPr", NS)
+        if docpr is None:
+            continue
+        try:
+            did = int(docpr.get("id"))
+        except (TypeError, ValueError):
+            continue
+        n = zaehler.get(did, 0) + 1
+        zaehler[did] = n
+        out[id(drawing)] = (drawing, str(did) if n == 1 else f"{did}#{n}")
+    return out
+
+
+def _vml_bilder(root: etree._Element) -> list[tuple[etree._Element, etree._Element, etree._Element, str]]:
+    """Alle VML-Bilder eines Teils in Dokumentreihenfolge als
+    (w:pict, Shape, v:imagedata, Kennung). Kennung = Shape-id (Word:
+    "_x0000_i1025"), ersatzweise oder bei Doppelung "#<laufende Nummer>".
+    mc:Fallback wird uebersprungen; w:object (OLE, z. B. eingebettetes
+    Excel-Diagramm) ist kein w:pict und damit kein Bild.
+    docx_export nutzt dieselbe Funktion."""
+    out = []
+    n = 0
+    gesehen: set[str] = set()
+    for pict in root.iter(f"{{{NS['w']}}}pict"):
+        if _in_fallback(pict):
+            continue
+        n += 1
+        shape = imagedata = None
+        for kind in pict:
+            if not isinstance(kind.tag, str) or not kind.tag.startswith("{" + NS["v"] + "}"):
+                continue
+            idata = kind.find("v:imagedata", NS)
+            if idata is not None:
+                shape, imagedata = kind, idata
+                break
+        if shape is None:
+            continue
+        sid = (shape.get("id") or shape.get(f"{{{NS['o']}}}spid") or "").strip()
+        if not sid or "|" in sid or sid in gesehen:
+            sid = f"#{n}"
+        gesehen.add(sid)
+        out.append((pict, shape, imagedata, sid))
+    return out
+
+
 def validiere_docx(docx_path: str) -> None:
     """Schnelle Vorpruefung direkt im Upload-Request (vor dem Anlegen von
     Datenbankzeilen): Zip gueltig, Grenzen eingehalten, echtes DOCX ohne
@@ -431,37 +543,54 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                 erg.volltext_zeichen = sum(len(_text(p)) for p in absaetze)
                 erg.ueberschriften = [_text(p) for p in absaetze
                                       if _heading_level(_pstyle(p), styles) is not None and _text(p)]
-            for drawing in root.iter(f"{{{NS['w']}}}drawing"):
-                container = drawing.find("wp:inline", NS)
+            drawing_kennung = _drawing_kennungen(root)
+            vml = {id(p): (p, shape, idata, sid) for p, shape, idata, sid in _vml_bilder(root)}
+            for el in root.iter(f"{{{NS['w']}}}drawing", f"{{{NS['w']}}}pict"):
                 anchored = False
-                if container is None:
-                    container = drawing.find("wp:anchor", NS); anchored = True
-                if container is None:
-                    continue
-                docpr = container.find("wp:docPr", NS)
-                blip = container.find(".//a:blip", NS)
-                if docpr is None:
-                    continue
-                if blip is None:
-                    # Diagramm, SmartArt, Form ohne Bild -> Stufe 2
-                    erg.uebersprungen.append({"anker": f"{part}|{docpr.get('id')}",
-                                              "grund": "kein Rasterbild (Diagramm, SmartArt oder Form)"})
-                    continue
-                rid = blip.get(f"{{{NS['r']}}}embed") or blip.get(f"{{{NS['r']}}}link")
+                deko = False
+                ist_vml = el.tag == f"{{{NS['w']}}}pict"
+                if ist_vml:
+                    if id(el) not in vml:
+                        continue            # kein Bild (Form, Textfeld, Fallback)
+                    _p, shape, idata, sid = vml[id(el)]
+                    anker = f"{part}|v:{sid}"
+                    docpr_id = 0
+                    name = shape.get("id") or ""
+                    original_alt = (shape.get("alt") or "").strip()
+                    original_title = (shape.get("title") or "").strip()
+                    anchored = "position:absolute" in (shape.get("style") or "")
+                    rid = idata.get(f"{{{NS['r']}}}id") or idata.get(f"{{{NS['r']}}}href")
+                else:
+                    eintrag = drawing_kennung.get(id(el))
+                    if eintrag is None:
+                        continue            # mc:Fallback-Duplikat oder ohne docPr
+                    kennung = eintrag[1]
+                    container = el.find("wp:inline", NS)
+                    if container is None:
+                        container = el.find("wp:anchor", NS)
+                        anchored = True
+                    docpr = container.find("wp:docPr", NS)
+                    anker = f"{part}|{kennung}"
+                    blip = _eigener_blip(container)
+                    if blip is None:
+                        # Diagramm, SmartArt, Form, Textfeld ohne eigenes Bild -> Stufe 2
+                        erg.uebersprungen.append({"anker": anker,
+                                                  "grund": "kein Rasterbild (Diagramm, SmartArt, Form oder Textfeld)"})
+                        continue
+                    docpr_id = int(kennung.split("#", 1)[0])
+                    name = docpr.get("name", "")
+                    original_alt = (docpr.get("descr") or "").strip()
+                    original_title = (docpr.get("title") or "").strip()
+                    for ext in docpr.findall("a:extLst/a:ext", NS):
+                        d = ext.find("adec:decorative", NS)
+                        if d is not None and d.get("val") in ("1", "true"):
+                            deko = True
+                    rid = blip.get(f"{{{NS['r']}}}embed") or blip.get(f"{{{NS['r']}}}link")
                 media = rels.get(rid or "")
                 if not media or media not in zf.namelist():
-                    erg.uebersprungen.append({"anker": f"{part}|{docpr.get('id')}",
+                    erg.uebersprungen.append({"anker": anker,
                                               "grund": "Bilddaten nicht im Dokument (externer Link)"})
                     continue
-                try:
-                    docpr_id = int(docpr.get("id"))
-                except (TypeError, ValueError):
-                    continue
-                deko = False
-                for ext in docpr.findall("a:extLst/a:ext", NS):
-                    d = ext.find("adec:decorative", NS)
-                    if d is not None and d.get("val") in ("1", "true"):
-                        deko = True
                 order += 1
                 if order > MAX_IMAGES:
                     erg.warnungen.append(f"Mehr als {MAX_IMAGES} Bilder – Rest übersprungen.")
@@ -469,13 +598,13 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                 daten = zf.read(media)
                 h = hashlib.sha256(daten).hexdigest()
                 ext_ = os.path.splitext(media)[1].lower()
-                bild = DocxBild(anker=f"{part}|{docpr_id}", part=part, docpr_id=docpr_id,
-                                name=docpr.get("name", ""), original_alt=(docpr.get("descr") or "").strip(),
-                                original_title=(docpr.get("title") or "").strip(), decorative=deko,
+                bild = DocxBild(anker=anker, part=part, docpr_id=docpr_id,
+                                name=name, original_alt=original_alt,
+                                original_title=original_title, decorative=deko,
                                 media_part=media, media_ext=ext_, hash=h, order=order, abschnitt=1,
-                                ort=label, anchored=anchored)
+                                ort=label, anchored=anchored, vml=ist_vml)
                 bild.context, bild.caption, bild.ort, bild.abschnitt = _kontext_fuer(
-                    drawing, absaetze, index_von, styles, label, erg.titel)
+                    el, absaetze, index_von, styles, label, erg.titel)
                 if ext_ in VEKTOR_EXT:
                     bild.unsupported = f"Vektorgrafik ({ext_[1:].upper()}) – wird noch nicht unterstützt"
                     erg.uebersprungen.append({"anker": bild.anker, "grund": bild.unsupported})
@@ -490,7 +619,7 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                             im.load()
                             bild.width, bild.height = im.size
                             if output_dir:
-                                if ext_ in (".png", ".jpg", ".jpeg") :
+                                if ext_ in (".png", ".jpg", ".jpeg"):
                                     ziel = os.path.join(output_dir, f"{praefix}_{order:04d}{'.jpg' if ext_ in ('.jpg', '.jpeg') else '.png'}")
                                     with open(ziel, "wb") as f:
                                         f.write(daten)
@@ -541,7 +670,7 @@ if __name__ == "__main__":     # Schnellprobe: python3 docx_processor.py datei.d
     erg = analysiere_docx(sys.argv[1], tempfile.mkdtemp())
     print("Titel:", erg.titel, "| Ueberschriften:", erg.ueberschriften)
     for b in erg.bilder:
-        print(f"\n#{b.order} {b.anker} ort={b.ort} abschnitt={b.abschnitt} anchored={b.anchored} "
+        print(f"\n#{b.order} {b.anker} ort={b.ort} abschnitt={b.abschnitt} anchored={b.anchored} vml={b.vml} "
               f"deko={b.decorative} {b.width}x{b.height} {b.media_part} alt={b.original_alt!r} "
               f"title={b.original_title!r} unsupported={b.unsupported!r}\n{b.context}")
     print("\nUebersprungen:", json.dumps(erg.uebersprungen, ensure_ascii=False))

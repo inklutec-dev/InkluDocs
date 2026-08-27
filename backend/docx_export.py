@@ -17,6 +17,12 @@ WAS GESCHRIEBEN WIRD (pro Bildvorkommen, Anker "<part>|<docPr-id>"):
                  UND descr wird geleert (so macht es Word selbst).
   - Ein Bild, fuer das KEIN Alt-Text uebergeben wird, bleibt exakt wie es war
     (auch ein vorhandener alter Alt-Text bleibt stehen).
+  - mc:Fallback-Duplikate (Word schreibt Textfelder doppelt, gleiche docPr-id)
+    bekommen denselben Alt-Text wie ihr mc:Choice-Original — so sehen auch alte
+    Word-Versionen den neuen Stand. Gezaehlt wird nur das Original.
+  - Alte VML-Bilder (Anker "<part>|v:<shape-id>"): Alt-Text -> v:shape@alt,
+    Titel -> v:shape@title. "dekorativ" heisst hier: alt="" (leer) — das
+    Altformat kennt kein Dekorativ-Kennzeichen.
 
 Die Regeln "leerer Alt-Text = nicht anfassen" und "'dekorativ' = Kennzeichen
 setzen" entsprechen _exportable_alt_text() im PDF-Weg.
@@ -35,7 +41,8 @@ from dataclasses import dataclass, field
 
 from lxml import etree
 
-from docx_processor import NS, DECORATIVE_EXT_URI, DocxFehler, _pruefe_zip, _lese_xml, _safe_parser
+from docx_processor import (NS, DECORATIVE_EXT_URI, DocxFehler, _pruefe_zip, _lese_xml, _safe_parser,
+                            _drawing_kennungen, _vml_bilder)
 
 DEKORATIV = "dekorativ"
 
@@ -87,19 +94,20 @@ def write_alt_texts_to_docx(input_path: str, output_path: str,
     erg = DocxExportErgebnis(path=output_path)
 
     # Anker nach Part gruppieren: {"word/document.xml": {7: "text", ...}}
-    je_part: dict[str, dict[int, str]] = {}
+    je_part: dict[str, dict[str, str]] = {}
     for anker, text in alt_texts.items():
         text = (text or "").strip()
         if not text:
             erg.uebersprungen += 1
             continue
         try:
-            part, sid = anker.rsplit("|", 1)
-            docpr_id = int(sid)
+            part, kennung = anker.rsplit("|", 1)
+            if not kennung.startswith("v:"):
+                int(kennung.split("#", 1)[0])       # Formpruefung: docPr-id[#n]
         except (ValueError, AttributeError):
             erg.nicht_gefunden.append(str(anker))
             continue
-        je_part.setdefault(part, {})[docpr_id] = text
+        je_part.setdefault(part, {})[kennung] = text
 
     try:
         zin = zipfile.ZipFile(input_path)
@@ -110,36 +118,74 @@ def write_alt_texts_to_docx(input_path: str, output_path: str,
         namen = set(zin.namelist())
         for part in je_part:
             if part not in namen:
-                erg.nicht_gefunden.extend(f"{part}|{i}" for i in je_part[part])
+                erg.nicht_gefunden.extend(f"{part}|{k}" for k in je_part[part])
         neu_bytes: dict[str, bytes] = {}
         for part, ziele in je_part.items():
             if part not in namen:
                 continue
             root = _lese_xml(zin, part)
-            gefunden: set[int] = set()
-            for docpr in root.iter(f"{{{NS['wp']}}}docPr"):
-                try:
-                    did = int(docpr.get("id"))
-                except (TypeError, ValueError):
-                    continue
-                if did not in ziele or did in gefunden:
-                    continue
-                gefunden.add(did)
-                text = ziele[did]
-                anker = f"{part}|{did}"
+            gefunden: set[str] = set()
+            kennungen = _drawing_kennungen(root)
+
+            def _schreibe_docpr(docpr: etree._Element, kennung: str, zaehlen: bool) -> None:
+                text = ziele[kennung]
                 if text.lower() == DEKORATIV:
                     docpr.set("descr", "")
                     _setze_dekorativ(docpr, True)
-                    erg.dekorativ += 1
+                    if zaehlen:
+                        erg.dekorativ += 1
                 else:
                     docpr.set("descr", text)
                     _setze_dekorativ(docpr, False)
-                    if anker in titles and (titles[anker] or "").strip():
-                        docpr.set("title", titles[anker].strip())
+                    titel = (titles.get(f"{part}|{kennung}") or "").strip()
+                    if titel:
+                        docpr.set("title", titel)
+                if zaehlen:
+                    erg.geschrieben += 1
+                    gefunden.add(kennung)
+
+            for drawing in root.iter(f"{{{NS['w']}}}drawing"):
+                container = drawing.find("wp:inline", NS)
+                if container is None:
+                    container = drawing.find("wp:anchor", NS)
+                if container is None:
+                    continue
+                docpr = container.find("wp:docPr", NS)
+                if docpr is None:
+                    continue
+                eintrag = kennungen.get(id(drawing))
+                kennung = eintrag[1] if eintrag else None
+                if kennung is None:
+                    # mc:Fallback-Duplikat: Text des ersten Vorkommens derselben id
+                    try:
+                        kennung = str(int(docpr.get("id")))
+                    except (TypeError, ValueError):
+                        continue
+                    if kennung in ziele:
+                        _schreibe_docpr(docpr, kennung, zaehlen=False)
+                    continue
+                if kennung in ziele:
+                    _schreibe_docpr(docpr, kennung, zaehlen=True)
+
+            for _pict, shape, _idata, sid in _vml_bilder(root):
+                kennung = "v:" + sid
+                if kennung not in ziele:
+                    continue
+                text = ziele[kennung]
+                if text.lower() == DEKORATIV:
+                    shape.set("alt", "")
+                    erg.dekorativ += 1
+                else:
+                    shape.set("alt", text)
+                    titel = (titles.get(f"{part}|{kennung}") or "").strip()
+                    if titel:
+                        shape.set("title", titel)
                 erg.geschrieben += 1
-            for did in ziele:
-                if did not in gefunden:
-                    erg.nicht_gefunden.append(f"{part}|{did}")
+                gefunden.add(kennung)
+
+            for kennung in ziele:
+                if kennung not in gefunden:
+                    erg.nicht_gefunden.append(f"{part}|{kennung}")
             # Word schreibt seine XML-Teile mit XML-Deklaration und standalone="yes".
             neu_bytes[part] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
 

@@ -1,6 +1,6 @@
 # Word-Werkzeug: Alt-Texte für Word-Dokumente (.docx)
 
-**Stand:** 26.08.2026, Stufe 1 (Alt-Texte). Autor: Claude (InkluTec), Vorgaben Steve Weidel und Michael Karbe.
+**Stand:** 27.08.2026, Stufe 1 (Alt-Texte) nach Härtetest mit echten Word-Dateien. Autor: Claude (InkluTec), Vorgaben Steve Weidel und Michael Karbe.
 
 ## Worum es geht
 
@@ -45,6 +45,33 @@ Darin:
 - `title` = optionaler Titel (ältere Word-Versionen zeigen ihn an).
 - `adec:decorative` = Kennzeichen „dekorativ". Word leert dabei `descr`.
 
+**Altformat VML** (Dokumente aus dem Kompatibilitätsmodus, aus `.doc`
+gewandelt, alte Firmenvorlagen — in der Praxis häufig):
+
+```xml
+<w:pict>
+  <v:shape id="_x0000_i1025" alt="Alternativtext" title="Titel" style="…">
+    <v:imagedata r:id="rId5"/>    <!-- Relationship -> word/media/image1.jpeg -->
+  </v:shape>
+</w:pict>
+```
+
+Alt-Text = Attribut `alt` des Shapes, Titel = `title`. Ein Dekorativ-
+Kennzeichen kennt VML nicht; „dekorativ" wird dort als leerer `alt`
+geschrieben. Anker: `"<part>|v:<shape-id>"`.
+
+**Verschachtelung und Duplikate** (Befunde des Härtetests 27.08.2026):
+
+- Bild **in einem Textfeld**: Word schreibt Textfeld-Drawing → `txbxContent`
+  → Bild-Drawing. Nur der `a:blip` des Bildes selbst zählt; das Textfeld ist
+  kein Bild (früher wurde es mitgezählt und der Alt-Text wäre am Textfeld
+  gelandet).
+- Word schreibt Textfelder **doppelt**: `mc:Choice` (modern) und `mc:Fallback`
+  (VML für alte Word-Versionen) mit **denselben `docPr`-ids**. Gelesen wird
+  nur `mc:Choice`; beim Export bekommen beide Hälften den Alt-Text.
+- Doppelte `docPr`-ids außerhalb von Fallback (kaputte Dokumente nach
+  Kopieren/Einfügen): Anker `"<part>|<id>#<n>"` ab dem zweiten Vorkommen.
+
 ## Module
 
 | Datei | Aufgabe |
@@ -56,7 +83,7 @@ Darin:
 | `backend/database.py` | Migration `images.docx_anker TEXT`. |
 | `backend/billing.py` | Aktion `docx_export` (5 Credits pro Vorgang, nur Bezahl-Konten — gleiche Regel wie `pdf_export`). |
 | `backend/templates/app.html` | Upload-Block für Word, Etiketten „Abschnitt" statt „Seite", Export-Knopf „Als Word (Beta)". |
-| `tests/test_docx_roundtrip.py` | 22 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung). |
+| `tests/test_docx_roundtrip.py` | 29 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr, echte Word-Fälle). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung); dazu vier von Microsoft Word erzeugte Dateien aus dem LibreOffice-Testkorpus (`word_textfeld_bild`, `word_vml_bild`, `word_vml_kopfzeile`, `word_einfach`; MPL-2.0). |
 
 Bewusst **keine** Laufzeit-Abhängigkeit von python-docx: Die Bibliothek
 sieht Kopf-/Fußzeilen und frei positionierte Bilder nur über Umwege, und
@@ -74,7 +101,8 @@ Einzige neue Abhängigkeit: `lxml` (XML-Parser ohne Entity-Auflösung).
 3. Je Bildvorkommen eine `images`-Zeile: `page_number` = **Abschnitt**
    (laufende Nummer der Überschrift 1 vor dem Bild; Word hat keine Seiten),
    `context_text`, `original_alt` (vorhandener Alt-Text; `"dekorativ"` bei
-   gesetztem Kennzeichen), `docx_anker` = `"<part>|<docPr-id>"`.
+   gesetztem Kennzeichen), `docx_anker` = `"<part>|<docPr-id>"` (VML:
+   `"<part>|v:<shape-id>"`).
    Dasselbe Medium mehrfach im Dokument = mehrere Zeilen, eine Bilddatei.
 4. **Generierung, Editor, Chatbot, Gast-Review, JSON/CSV/XLSX-Export:**
    unverändert — die Zeilen sehen aus wie PDF-Bilder.
@@ -130,8 +158,12 @@ schwedische Word-Installationen.
   ohne Rasterbild: werden erkannt, aber übersprungen (`uebersprungen` mit
   Grund). Stufe 2: Rendern über LibreOffice bzw. Diagramme aus den XML-Daten
   beschreiben (Alleinstellungsmerkmal — echte Zahlen statt Bildschätzung).
-- Bilder in **Textfeldern** werden gefunden (`ort = "Textfeld"`), VML-Alt-
-  Bilder (`<v:imagedata>`, Word ≤ 2007) noch nicht.
+- Bilder in **Textfeldern** (`ort = "Textfeld"`), in Kopf-/Fußzeilen und
+  **VML-Bilder** des Altformats werden gefunden und zurückgeschrieben.
+  Eingebettete OLE-Objekte (`w:object`, z. B. Excel-Diagramm als EMF) und
+  Bilder mit externem Link (nicht im Dokument) werden übersprungen.
+- Die Liste `uebersprungen` (Grund je Element) wird noch nicht in der
+  Oberfläche angezeigt.
 - **Keine Seitenvorschau**: Word kennt keine Seiten. Gruppierung nach
   Abschnitt (Überschrift 1). Vorschau = LibreOffice-Rendern (Entscheidung
   offen, ca. 400 MB Image).
@@ -145,15 +177,34 @@ schwedische Word-Installationen.
 ## Tests
 
 ```
-# Unit (Container, 22 Tests):
+# Unit (Container, 29 Tests):
 docker cp tests/test_docx_roundtrip.py inkludocs-staging:/app/tests/
-docker cp tests/fixtures/testdokument_inkludocs.docx inkludocs-staging:/app/tests/fixtures/
+docker cp tests/fixtures/<jede .docx> inkludocs-staging:/app/tests/fixtures/
 docker exec -w /app inkludocs-staging python3 -m unittest /app/tests/test_docx_roundtrip.py -v
 
+# Alles zusammen (Unit + E2E + Klicktest): bash /home/claude/word_tests.sh
 # End-to-End gegen Staging (Login, Projekt, Upload, Extraktion, Bearbeiten,
 # Export, Rück-Lesen, Negativfälle): /home/claude/verify_docx.py
 # Klicktest mit Screenshots: /home/claude/ui_word.py
+# Härtetest mit 29 von Word erzeugten Dateien (Lesen → Schreiben → Rück-Lesen,
+# Zip-Test, XML wohlgeformt): /home/claude/corpus_test.py (Korpus /home/claude/corpus)
+# Praxislauf über die API mit echten Dokumenten inkl. Generierung und ZIP-Export:
+# /home/claude/praxislauf.py
 ```
+
+## Härtetest 27.08.2026
+
+29 von Microsoft Word erzeugte Dateien (LibreOffice-Testkorpus + Karbes
+Dokumentation mit drei Screenshots): Bilder inline, frei positioniert, in
+Kopfzeilen, in Textfeldern, in Gruppen, zugeschnitten, mit Effekten, in
+Inhaltssteuerelementen; Diagramme, SmartArt, OLE, externe Links, WMF.
+Ergebnis nach den Korrekturen: 29/29 — jedes erkannte Bild bekommt seinen
+Alt-Text zurück, unberührte Zip-Teile bleiben byte-identisch, alle XML-Teile
+wohlgeformt. Die drei behobenen Befunde stehen oben unter „Verschachtelung
+und Duplikate" und „Altformat VML".
+
+Offen: Öffnungsprobe der exportierten Dateien in Microsoft Word selbst
+(Word auf dem Mac ließ sich nicht per Automation steuern).
 
 Regenerieren des Fixtures (Entwicklung, braucht python-docx):
 `python3 tests/fixtures/make_testdoc.py`.
