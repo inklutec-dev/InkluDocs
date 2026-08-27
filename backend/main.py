@@ -52,7 +52,7 @@ from database import (
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
 # WORD-WERKZEUG (26.08.2026): .docx lesen (Bilder + Kontext) und Alt-Texte zurueckschreiben
-from docx_processor import extract_images_from_docx, validiere_docx, DocxFehler
+from docx_processor import extract_images_from_docx, extract_docx, validiere_docx, DocxFehler
 import docx_export
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, get_gettext, SUPPORTED_LANGUAGES
@@ -4497,9 +4497,14 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
     os.makedirs(img_dir, exist_ok=True)
     loop = asyncio.get_event_loop()
     try:
-        extraktor = extract_images_from_docx if art == "docx" else extract_images_from_pdf
-        images = await loop.run_in_executor(
-            None, extraktor, file_path, img_dir, project_id)
+        hinweise: dict = {}
+        if art == "docx":
+            # 27.08.2026: uebersprungene Elemente + Warnungen kommen als Hinweise mit
+            images, hinweise = await loop.run_in_executor(
+                None, extract_docx, file_path, img_dir, project_id)
+        else:
+            images = await loop.run_in_executor(
+                None, extract_images_from_pdf, file_path, img_dir, project_id)
     except Exception as e:
         print(f"[upload] Extraktion fehlgeschlagen (Projekt {project_id}, Dokument {document_id}): {e}")
         conn = get_db()
@@ -4554,8 +4559,10 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
     else:
         extraction_method = "pdfix" if images and any(i.get("source") == "pdfix" for i in images) else "fitz"
     conn.execute(
-        "UPDATE documents SET extraction_method = ?, total_images = ? WHERE id = ?",
-        (extraction_method, len(images), document_id)
+        "UPDATE documents SET extraction_method = ?, total_images = ?, hinweise = ? WHERE id = ?",
+        (extraction_method, len(images),
+         json.dumps(hinweise, ensure_ascii=False) if hinweise and (hinweise.get("uebersprungen") or hinweise.get("warnungen")) else "",
+         document_id)
     )
     # Projekt-Summe = Summe ueber alle Dokumente. extraction_method des Projekts
     # bleibt der des ersten Dokuments (Anzeige im Kopf) — bei Mischfaellen sind
@@ -5535,7 +5542,7 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     ).fetchall()
     documents = conn.execute(
         """SELECT id, doc_index, original_filename, display_name, extraction_method,
-                  total_images, created_at, source_url, page_text
+                  total_images, created_at, source_url, page_text, hinweise
            FROM documents WHERE project_id = ? ORDER BY doc_index""",
         (project_id,)
     ).fetchall()
@@ -8235,7 +8242,7 @@ async def freigabe_data(token: str, request: Request):
     ).fetchall()
     documents = conn.execute(
         """SELECT id, doc_index, original_filename, display_name, extraction_method,
-                  total_images, created_at, source_url, page_text
+                  total_images, created_at, source_url, page_text, hinweise
            FROM documents WHERE project_id = ? ORDER BY doc_index""",
         (pid,)
     ).fetchall()

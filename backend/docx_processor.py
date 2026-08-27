@@ -44,6 +44,14 @@ SEITEN (Steve 27.08.2026: "wenn moeglich dieselben Seiten wie im Dokument")
   (Ueberschrift 1) wie bisher; der Aufrufer erfaehrt das ueber
   DocxErgebnis.seiten_bekannt bzw. "docx_einheit" je Bild.
 
+UEBERSPRUNGENE ELEMENTE (Steve 27.08.2026: "in der Oberflaeche anzeigen")
+  Alles, was wie ein Bild aussieht, aber in Stufe 1 nicht bearbeitet wird,
+  landet mit Art, Ort und Seite/Abschnitt in DocxErgebnis.uebersprungen:
+  diagramm, smartart, textfeld, form, gruppe, vektor (EMF/WMF/SVG), extern
+  (verknuepft, nicht in der Datei), ole (eingebettetes Objekt, z. B. Excel),
+  unlesbar, bild_ohne_daten. main.py speichert die Liste je Dokument
+  (documents.hinweise, JSON), die Oberflaeche zeigt sie ueber den Bildern.
+
 ANKER
   Jedes gefundene Bild bekommt einen stabilen Anker "<partname>|<docPr-id>"
   (z. B. "word/document.xml|7"; VML: "word/document.xml|v:_x0000_i1025").
@@ -167,7 +175,7 @@ class DocxErgebnis:
     titel: str = ""
     ueberschriften: list[str] = field(default_factory=list)
     volltext_zeichen: int = 0
-    uebersprungen: list[dict] = field(default_factory=list)   # {anker, grund}
+    uebersprungen: list[dict] = field(default_factory=list)   # {anker, art, grund, name, format, ort, abschnitt, seite}
     warnungen: list[str] = field(default_factory=list)
     seiten_bekannt: bool = False    # True, wenn das Dokument Seitenmarken traegt
     seiten_quelle: str = ""         # "word" (lastRenderedPageBreak) | "umbrueche" | ""
@@ -548,6 +556,25 @@ def _seiten_der_bilder(root: etree._Element) -> tuple[dict[int, tuple[etree._Ele
     return out, quelle
 
 
+_URI_ART = (("/chart", "diagramm"), ("/diagram", "smartart"), ("wordprocessingGroup", "gruppe"),
+            ("wordprocessingShape", "form"), ("/picture", "bild_ohne_daten"))
+_ART_GRUND = {"diagramm": "Diagramm", "smartart": "SmartArt", "textfeld": "Textfeld", "form": "Form",
+              "gruppe": "Gruppe", "vektor": "Vektorgrafik", "extern": "Verknüpftes Bild (nicht in der Datei)",
+              "ole": "Eingebettetes Objekt", "unlesbar": "Bild nicht lesbar", "bild_ohne_daten": "Bild ohne Bilddaten"}
+
+
+def _art_ohne_bild(container: etree._Element) -> str:
+    """Was ist ein Drawing ohne eigenes Rasterbild? (fuer die Nutzer-Meldung)"""
+    gd = container.find("a:graphic/a:graphicData", NS)
+    uri = gd.get("uri", "") if gd is not None else ""
+    for teil, art in _URI_ART:
+        if teil in uri:
+            if art == "form" and container.find(".//w:txbxContent", NS) is not None:
+                return "textfeld"
+            return art
+    return "form"
+
+
 def validiere_docx(docx_path: str) -> None:
     """Schnelle Vorpruefung direkt im Upload-Request (vor dem Anlegen von
     Datenbankzeilen): Zip gueltig, Grenzen eingehalten, echtes DOCX ohne
@@ -602,6 +629,25 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                 erg.seiten_bekannt = bool(erg.seiten_quelle)
             drawing_kennung = _drawing_kennungen(root)
             vml = {id(p): (p, shape, idata, sid) for p, shape, idata, sid in _vml_bilder(root)}
+
+            def _uebersprungen(anker: str, art: str, el: etree._Element, name: str = "", fmt: str = "") -> None:
+                _k, _c, ort_, abschnitt_ = _kontext_fuer(el, absaetze, index_von, styles, label, erg.titel)
+                grund = _ART_GRUND.get(art, art) + (f" ({fmt})" if fmt else "")
+                if art in ("diagramm", "smartart", "vektor", "ole"):
+                    grund += " – wird noch nicht unterstützt"
+                elif art in ("textfeld", "form", "gruppe"):
+                    grund += " – enthält kein eigenes Bild"
+                erg.uebersprungen.append({"anker": anker, "art": art, "grund": grund, "name": name,
+                                          "format": fmt, "ort": ort_, "abschnitt": abschnitt_,
+                                          "seite": seiten[id(el)][1] if id(el) in seiten else 1})
+
+            # Eingebettete Objekte (w:object, z. B. Excel-Diagramm als OLE) sind keine Bilder
+            for n_obj, obj in enumerate(root.iter(f"{{{NS['w']}}}object"), start=1):
+                if _in_fallback(obj):
+                    continue
+                ole = obj.find(f"{{{NS['o']}}}OLEObject")
+                progid = (ole.get("ProgID") or "") if ole is not None else ""
+                _uebersprungen(f"{part}|o:{n_obj}", "ole", obj, fmt=progid.split(".")[0] if progid else "")
             for el in root.iter(f"{{{NS['w']}}}drawing", f"{{{NS['w']}}}pict"):
                 anchored = False
                 deko = False
@@ -631,8 +677,7 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                     blip = _eigener_blip(container)
                     if blip is None:
                         # Diagramm, SmartArt, Form, Textfeld ohne eigenes Bild -> Stufe 2
-                        erg.uebersprungen.append({"anker": anker,
-                                                  "grund": "kein Rasterbild (Diagramm, SmartArt, Form oder Textfeld)"})
+                        _uebersprungen(anker, _art_ohne_bild(container), el, name=docpr.get("name", ""))
                         continue
                     docpr_id = int(kennung.split("#", 1)[0])
                     name = docpr.get("name", "")
@@ -645,8 +690,7 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                     rid = blip.get(f"{{{NS['r']}}}embed") or blip.get(f"{{{NS['r']}}}link")
                 media = rels.get(rid or "")
                 if not media or media not in zf.namelist():
-                    erg.uebersprungen.append({"anker": anker,
-                                              "grund": "Bilddaten nicht im Dokument (externer Link)"})
+                    _uebersprungen(anker, "extern", el, name=name)
                     continue
                 order += 1
                 if order > MAX_IMAGES:
@@ -665,7 +709,7 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                 bild.seite = seiten[id(el)][1] if id(el) in seiten else 1   # Kopf-/Fusszeile: Seite 1
                 if ext_ in VEKTOR_EXT:
                     bild.unsupported = f"Vektorgrafik ({ext_[1:].upper()}) – wird noch nicht unterstützt"
-                    erg.uebersprungen.append({"anker": bild.anker, "grund": bild.unsupported})
+                    _uebersprungen(bild.anker, "vektor", el, name=name, fmt=ext_[1:].upper())
                     erg.bilder.append(bild)
                     continue
                 # Bilddatei speichern (einmal pro Hash)
@@ -687,7 +731,7 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
                                 bild.image_path = ziel
                     except Exception as e:  # kaputtes oder unbekanntes Bild
                         bild.unsupported = f"Bilddaten nicht lesbar ({type(e).__name__})"
-                        erg.uebersprungen.append({"anker": bild.anker, "grund": bild.unsupported})
+                        _uebersprungen(bild.anker, "unlesbar", el, name=name, fmt=type(e).__name__)
                         erg.bilder.append(bild)
                         continue
                     gespeichert[h] = (bild.image_path, bild.width, bild.height)
@@ -695,12 +739,23 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
     return erg
 
 
+def extract_docx(docx_path: str, output_dir: str, project_id: int) -> tuple[list[dict], dict]:
+    """(Bilder wie extract_images_from_docx, Hinweise fuer documents.hinweise):
+    {"uebersprungen": [...], "warnungen": [...], "seiten": "word"|"umbrueche"|""}."""
+    erg = analysiere_docx(docx_path, output_dir, praefix=f"p{project_id}")
+    return _bilder_als_dicts(erg), {"uebersprungen": erg.uebersprungen, "warnungen": erg.warnungen,
+                                   "seiten": erg.seiten_quelle}
+
+
 def extract_images_from_docx(docx_path: str, output_dir: str, project_id: int) -> list[dict]:
     """Rueckgabe im selben Muster wie pdf_processor.extract_images_from_pdf, damit
     der Upload-Pfad die Datensaetze unveraendert in `images` schreiben kann.
     Nicht verarbeitbare Bilder (Vektor, kaputt) werden NICHT zurueckgegeben;
     sie stehen in analysiere_docx().uebersprungen (fuer die Nutzer-Meldung)."""
-    erg = analysiere_docx(docx_path, output_dir, praefix=f"p{project_id}")
+    return _bilder_als_dicts(analysiere_docx(docx_path, output_dir, praefix=f"p{project_id}"))
+
+
+def _bilder_als_dicts(erg: DocxErgebnis) -> list[dict]:
     out = []
     for b in erg.bilder:
         if b.unsupported or not b.image_path:

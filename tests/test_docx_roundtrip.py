@@ -20,6 +20,9 @@ Testkorpus sw/qa/extras/ooxmlexport/data, MPL-2.0, von Microsoft Word erzeugt):
   word_vml_bild.docx        altes VML-Bild (w:pict/v:shape/v:imagedata), frei
   word_vml_kopfzeile.docx   VML-Bild in der Kopfzeile
   word_einfach.docx         ein Inline-Bild; dient dem Test doppelter docPr-ids
+  word_diagramm.docx        Word-Diagramm (c:chart) -> uebersprungen "diagramm"
+  word_smartart.docx        SmartArt -> uebersprungen "smartart"
+  word_excel_objekt.docx    eingebettetes Excel-Diagramm (w:object) -> "ole"
 """
 import io
 import os
@@ -41,6 +44,9 @@ FIX_TEXTFELD = os.path.join(HERE, "fixtures", "word_textfeld_bild.docx")
 FIX_VML = os.path.join(HERE, "fixtures", "word_vml_bild.docx")
 FIX_VML_KOPF = os.path.join(HERE, "fixtures", "word_vml_kopfzeile.docx")
 FIX_EINFACH = os.path.join(HERE, "fixtures", "word_einfach.docx")
+FIX_DIAGRAMM = os.path.join(HERE, "fixtures", "word_diagramm.docx")
+FIX_SMARTART = os.path.join(HERE, "fixtures", "word_smartart.docx")
+FIX_OLE = os.path.join(HERE, "fixtures", "word_excel_objekt.docx")
 
 
 @unittest.skipUnless(os.path.isfile(FIXTURE), "Fixture testdokument_inkludocs.docx fehlt")
@@ -294,6 +300,30 @@ class TestEchteWordDokumente(unittest.TestCase):
         doc = self._mit_marke('<w:br w:type="page"/></w:r><w:r><w:lastRenderedPageBreak/></w:r><w:r>')
         erg = dp.analysiere_docx(doc, self.tmp)
         self.assertEqual((erg.seiten_quelle, erg.bilder[0].seite), ("word", 2))
+
+    # --- uebersprungene Elemente mit Art/Ort/Seite (27.08.2026)
+    def test_textfeld_wird_als_uebersprungen_gemeldet(self):
+        erg = dp.analysiere_docx(FIX_TEXTFELD, self.tmp)
+        u = erg.uebersprungen[0]
+        self.assertEqual((u["art"], u["ort"], u["abschnitt"], u["seite"]), ("textfeld", "Text", 1, 1))
+        self.assertEqual(u["name"], "Text Box 2")
+        self.assertIn("Textfeld", u["grund"])
+
+    @unittest.skipUnless(os.path.isfile(FIX_DIAGRAMM) and os.path.isfile(FIX_SMARTART) and os.path.isfile(FIX_OLE),
+                         "Fixtures Diagramm/SmartArt/OLE fehlen")
+    def test_diagramm_smartart_ole(self):
+        arten = {}
+        for f in (FIX_DIAGRAMM, FIX_SMARTART, FIX_OLE):
+            erg = dp.analysiere_docx(f, self.tmp)
+            self.assertEqual(erg.bilder, [], f)
+            arten[os.path.basename(f)] = [u["art"] for u in erg.uebersprungen]
+        self.assertEqual(arten["word_diagramm.docx"], ["diagramm"])
+        self.assertEqual(arten["word_smartart.docx"], ["smartart"])
+        self.assertEqual(arten["word_excel_objekt.docx"], ["ole"])
+        bilder, hinweise = dp.extract_docx(FIX_OLE, self.tmp, 1)
+        self.assertEqual(bilder, [])
+        self.assertEqual(hinweise["uebersprungen"][0]["format"], "Excel")
+        self.assertIn("seiten", hinweise)
 
     def test_unbekannter_anker_wird_gemeldet(self):
         out, r = self._export(FIX_VML, {"word/document.xml|v:gibtsnicht": "x", "word/document.xml|abc": "y"})

@@ -4039,3 +4039,51 @@ msgstr "Imagen {n}, sección {p}"
 
 msgid "aus Abschnitt {p}"
 msgstr "de la sección {p}"
+
+msgid "1 Element ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)"
+msgstr "1 elemento sin texto alternativo (aún no compatible)"
+
+msgid "{n} Elemente ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)"
+msgstr "{n} elementos sin texto alternativo (aún no compatibles)"
+
+msgid "Diese Elemente wurden erkannt, aber noch nicht bearbeitet. Sie bleiben in der Datei unverändert."
+msgstr "Estos elementos se detectaron pero aún no se procesaron. Permanecen sin cambios en el archivo."
+
+msgid "Diagramm"
+msgstr "Gráfico"
+
+msgid "SmartArt"
+msgstr "SmartArt"
+
+msgid "Textfeld"
+msgstr "Cuadro de texto"
+
+msgid "Form"
+msgstr "Forma"
+
+msgid "Gruppe"
+msgstr "Grupo"
+
+msgid "Vektorgrafik ({fmt})"
+msgstr "Gráfico vectorial ({fmt})"
+
+msgid "Verknüpftes Bild (nicht in der Datei)"
+msgstr "Imagen vinculada (no está en el archivo)"
+
+msgid "Eingebettetes Objekt ({fmt})"
+msgstr "Objeto incrustado ({fmt})"
+
+msgid "Bild nicht lesbar"
+msgstr "Imagen no legible"
+
+msgid "Bild ohne Bilddaten"
+msgstr "Imagen sin datos"
+
+msgid "Kopfzeile"
+msgstr "Encabezado"
+
+msgid "Fußzeile"
+msgstr "Pie de página"
+
+msgid "Tabelle"
+msgstr "Tabla"

@@ -2048,6 +2048,43 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // DENSELBEN Block pro gescannter Adresse ("Webseite N: Name") — statt der
         // Seiten-Ebene gibt es dort den Link zur Original-Seite, die Seitentext-
         // Klappe (documents.page_text) und direkt darunter die Bild-Cards (h3).
+        // Word (27.08.2026, Steve): Elemente, die erkannt, aber in dieser Ausbaustufe
+        // nicht bearbeitet wurden (Diagramm, SmartArt, Textfeld, Vektorgrafik, OLE ...),
+        // als Klappe ueber den Bildern — sonst wirkt ein fehlendes Bild wie ein Fehler.
+        const docHinweiseHtml = (doc) => {
+            let h = doc.hinweise;
+            if (!h) return '';
+            if (typeof h === 'string') { try { h = JSON.parse(h); } catch (e) { return ''; } }
+            const list = Array.isArray(h.uebersprungen) ? h.uebersprungen : [];
+            if (!list.length) return '';
+            const seitenModus = doc.extraction_method === 'docx-seiten';
+            const artLabel = (u) => ({
+                diagramm: t('Diagramm'), smartart: t('SmartArt'), textfeld: t('Textfeld'), form: t('Form'),
+                gruppe: t('Gruppe'), vektor: t('Vektorgrafik ({fmt})', { fmt: u.format || '' }),
+                extern: t('Verknüpftes Bild (nicht in der Datei)'), ole: t('Eingebettetes Objekt ({fmt})', { fmt: u.format || 'OLE' }),
+                unlesbar: t('Bild nicht lesbar'), bild_ohne_daten: t('Bild ohne Bilddaten'),
+            })[u.art] || esc(u.grund || u.art || '');
+            const ortLabel = (o) => ({ Kopfzeile: t('Kopfzeile'), 'Fußzeile': t('Fußzeile'), Tabelle: t('Tabelle'), Textfeld: t('Textfeld') })[o] || esc(o);
+            const items = list.map(u => {
+                const wo = [];
+                if (u.ort && u.ort !== 'Text') wo.push(ortLabel(u.ort));
+                wo.push(seitenModus ? t('Seite {n}', { n: u.seite || 1 }) : t('Abschnitt {n}', { n: u.abschnitt || 1 }));
+                const name = u.name ? esc(u.name) + ' – ' : '';
+                return `<li>${name}${artLabel(u)} (${wo.join(', ')})</li>`;
+            }).join('');
+            const summary = list.length === 1
+                ? t('1 Element ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)')
+                : t('{n} Elemente ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)', { n: list.length });
+            return `
+                <details class="page-text-details doc-hinweise">
+                    <summary>${summary}</summary>
+                    <div class="page-text-content" role="region" aria-label="${summary}" tabindex="0">
+                        <p>${t('Diese Elemente wurden erkannt, aber noch nicht bearbeitet. Sie bleiben in der Datei unverändert.')}</p>
+                        <ul>${items}</ul>
+                    </div>
+                </details>`;
+        };
+
         const renderDocBlock = (doc, pageMap, pos) => {
             const docKey = doc.id || 0;
             // Karbe/Steve 09.06.2026: Dokumente standardmaessig ZUGEKLAPPT, damit man
@@ -2084,7 +2121,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             } else {
                 const ext = doc.extraction_method === 'pdfix' ? 'Strukturell (PDFix)'
                     : (doc.extraction_method === 'docx' || doc.extraction_method === 'docx-seiten') ? 'Word (OOXML)' : 'Heuristisch (PyMuPDF)';
-                innerBlocks = Array.from(pageMap.entries())
+                innerBlocks = docHinweiseHtml(doc) + Array.from(pageMap.entries())
                     .sort((a, b) => a[0] - b[0])
                     .map(([pageNum, imgs]) => renderPageGroup(pageNum, imgs, 'h3', 'h4', docKey))
                     .join('');

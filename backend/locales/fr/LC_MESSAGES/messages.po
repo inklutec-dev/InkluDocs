@@ -4039,3 +4039,51 @@ msgstr "Image {n}, section {p}"
 
 msgid "aus Abschnitt {p}"
 msgstr "de la section {p}"
+
+msgid "1 Element ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)"
+msgstr "1 élément sans texte alternatif (pas encore pris en charge)"
+
+msgid "{n} Elemente ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)"
+msgstr "{n} éléments sans texte alternatif (pas encore pris en charge)"
+
+msgid "Diese Elemente wurden erkannt, aber noch nicht bearbeitet. Sie bleiben in der Datei unverändert."
+msgstr "Ces éléments ont été détectés mais pas encore traités. Ils restent inchangés dans le fichier."
+
+msgid "Diagramm"
+msgstr "Graphique"
+
+msgid "SmartArt"
+msgstr "SmartArt"
+
+msgid "Textfeld"
+msgstr "Zone de texte"
+
+msgid "Form"
+msgstr "Forme"
+
+msgid "Gruppe"
+msgstr "Groupe"
+
+msgid "Vektorgrafik ({fmt})"
+msgstr "Graphique vectoriel ({fmt})"
+
+msgid "Verknüpftes Bild (nicht in der Datei)"
+msgstr "Image liée (absente du fichier)"
+
+msgid "Eingebettetes Objekt ({fmt})"
+msgstr "Objet incorporé ({fmt})"
+
+msgid "Bild nicht lesbar"
+msgstr "Image illisible"
+
+msgid "Bild ohne Bilddaten"
+msgstr "Image sans données"
+
+msgid "Kopfzeile"
+msgstr "En-tête"
+
+msgid "Fußzeile"
+msgstr "Pied de page"
+
+msgid "Tabelle"
+msgstr "Tableau"

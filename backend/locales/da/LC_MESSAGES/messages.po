@@ -3730,3 +3730,51 @@ msgstr "Billede {n}, afsnit {p}"
 
 msgid "aus Abschnitt {p}"
 msgstr "fra afsnit {p}"
+
+msgid "1 Element ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)"
+msgstr "1 element uden alternativ tekst (understøttes endnu ikke)"
+
+msgid "{n} Elemente ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)"
+msgstr "{n} elementer uden alternativ tekst (understøttes endnu ikke)"
+
+msgid "Diese Elemente wurden erkannt, aber noch nicht bearbeitet. Sie bleiben in der Datei unverändert."
+msgstr "Disse elementer blev fundet, men er endnu ikke behandlet. De forbliver uændrede i filen."
+
+msgid "Diagramm"
+msgstr "Diagram"
+
+msgid "SmartArt"
+msgstr "SmartArt"
+
+msgid "Textfeld"
+msgstr "Tekstboks"
+
+msgid "Form"
+msgstr "Figur"
+
+msgid "Gruppe"
+msgstr "Gruppe"
+
+msgid "Vektorgrafik ({fmt})"
+msgstr "Vektorgrafik ({fmt})"
+
+msgid "Verknüpftes Bild (nicht in der Datei)"
+msgstr "Linket billede (ikke i filen)"
+
+msgid "Eingebettetes Objekt ({fmt})"
+msgstr "Indlejret objekt ({fmt})"
+
+msgid "Bild nicht lesbar"
+msgstr "Billede kan ikke læses"
+
+msgid "Bild ohne Bilddaten"
+msgstr "Billede uden billeddata"
+
+msgid "Kopfzeile"
+msgstr "Sidehoved"
+
+msgid "Fußzeile"
+msgstr "Sidefod"
+
+msgid "Tabelle"
+msgstr "Tabel"

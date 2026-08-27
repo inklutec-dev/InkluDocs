@@ -80,10 +80,10 @@ geschrieben. Anker: `"<part>|v:<shape-id>"`.
 | `backend/docx_export.py` | Schreiben: `write_alt_texts_to_docx(original, ziel, {anker: text})`. Kopiert alle Zip-Mitglieder byteweise, serialisiert nur die XML-Teile mit geänderten Bildern neu. `pruefe_unveraendert()` als Testhilfe. |
 | `backend/tools.py` | Werkzeug `word` (Status Beta). |
 | `backend/main.py` | Upload-Gate (`.docx` erlaubt, `.doc`/`.docm`/`.dotx`/`.dotm` mit klarer Meldung abgewiesen), `_handle_pdf_upload(art="docx")`, `_extract_document(art="docx")`, `POST /api/projects/{id}/export/docx`. |
-| `backend/database.py` | Migration `images.docx_anker TEXT`. |
+| `backend/database.py` | Migrationen `images.docx_anker TEXT`, `documents.hinweise TEXT` (JSON, 27.08.). |
 | `backend/billing.py` | Aktion `docx_export` (5 Credits pro Vorgang, nur Bezahl-Konten — gleiche Regel wie `pdf_export`). |
 | `backend/templates/app.html` | Upload-Block für Word, Etiketten „Abschnitt" statt „Seite", Export-Knopf „Als Word (Beta)". |
-| `tests/test_docx_roundtrip.py` | 33 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr, echte Word-Fälle). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung); dazu vier von Microsoft Word erzeugte Dateien aus dem LibreOffice-Testkorpus (`word_textfeld_bild`, `word_vml_bild`, `word_vml_kopfzeile`, `word_einfach`; MPL-2.0). |
+| `tests/test_docx_roundtrip.py` | 35 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr, echte Word-Fälle). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung); dazu vier von Microsoft Word erzeugte Dateien aus dem LibreOffice-Testkorpus (`word_textfeld_bild`, `word_vml_bild`, `word_vml_kopfzeile`, `word_einfach`, `word_diagramm`, `word_smartart`, `word_excel_objekt`; MPL-2.0). |
 
 Bewusst **keine** Laufzeit-Abhängigkeit von python-docx: Die Bibliothek
 sieht Kopf-/Fußzeilen und frei positionierte Bilder nur über Umwege, und
@@ -187,8 +187,14 @@ schwedische Word-Installationen.
   **VML-Bilder** des Altformats werden gefunden und zurückgeschrieben.
   Eingebettete OLE-Objekte (`w:object`, z. B. Excel-Diagramm als EMF) und
   Bilder mit externem Link (nicht im Dokument) werden übersprungen.
-- Die Liste `uebersprungen` (Grund je Element) wird noch nicht in der
-  Oberfläche angezeigt.
+- Übersprungene Elemente stehen je Dokument in `documents.hinweise` (JSON:
+  `uebersprungen` mit `art` diagramm|smartart|textfeld|form|gruppe|vektor|
+  extern|ole|unlesbar|bild_ohne_daten, `name`, `format`, `ort`, `seite`,
+  `abschnitt`; `warnungen`; `seiten`). Die Oberfläche zeigt sie als Klappe
+  „N Elemente ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)" über
+  den Bildern des Dokuments, mit Art, Name, Ort und Seite/Abschnitt — in
+  allen sechs Sprachen. Textfelder, Formen und Gruppen ohne eigenes Bild
+  werden dort ebenfalls genannt, damit kein Element „fehlt".
 - **Keine Seitenvorschau** (Bild der Seite): Vorschau = LibreOffice-Rendern
   (Entscheidung offen, ca. 400 MB Image). Die Seitennummer selbst kommt aus
   den Word-Marken (siehe „Seiten").
@@ -202,7 +208,7 @@ schwedische Word-Installationen.
 ## Tests
 
 ```
-# Unit (Container, 33 Tests):
+# Unit (Container, 35 Tests):
 docker cp tests/test_docx_roundtrip.py inkludocs-staging:/app/tests/
 docker cp tests/fixtures/<jede .docx> inkludocs-staging:/app/tests/fixtures/
 docker exec -w /app inkludocs-staging python3 -m unittest /app/tests/test_docx_roundtrip.py -v
@@ -215,6 +221,8 @@ docker exec -w /app inkludocs-staging python3 -m unittest /app/tests/test_docx_r
 # Zip-Test, XML wohlgeformt): /home/claude/corpus_test.py (Korpus /home/claude/corpus)
 # Praxislauf über die API mit echten Dokumenten inkl. Generierung und ZIP-Export:
 # /home/claude/praxislauf.py
+# Hinweise (Diagramm/SmartArt/Excel/WMF/Textfeld) über API + Klick-Check: /home/claude/hinweise_e2e.py
+# Export-Integrität (Original vs. Export identisch bis auf Alt-Text): /home/claude/text_erhalt.py
 ```
 
 ## Härtetest 27.08.2026

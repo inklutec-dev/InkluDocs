@@ -603,6 +603,10 @@ def _migrate_columns(conn):
         # ("<part>|<docPr-id>", z. B. "word/document.xml|7"). Damit findet
         # docx_export das Element beim Zurueckschreiben wieder. PDF: leer.
         ("images", "docx_anker", "ALTER TABLE images ADD COLUMN docx_anker TEXT DEFAULT ''"),
+        # WORD-WERKZEUG (27.08.2026): Hinweise je Dokument als JSON — uebersprungene
+        # Elemente (Diagramm, SmartArt, Textfeld, Vektorgrafik, OLE ...) mit Art,
+        # Ort und Seite/Abschnitt, Warnungen, Seitenquelle. PDF: leer.
+        ("documents", "hinweise", "ALTER TABLE documents ADD COLUMN hinweise TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:
