@@ -171,6 +171,8 @@ const NAV_ITEMS = [
   { href: '/projekte', label: t('Meine Projekte') },
   // 25.08.2026 (Michael): „Meine Prompts“ wie „Meine Projekte“.
   { href: '/prompts', label: t('Meine Prompts') },
+  // QUICKINFO-WERKZEUG (27.08.2026): Stammdaten-Bibliothek fuer Formularfelder, gleiche Stelle wie die Prompts.
+  { href: '/stammdaten', label: t('Meine Stammdaten') },
   { href: '/einstellungen', label: t('Einstellungen') },
   { href: '/datensicherheit', label: t('Datensicherheit') },
   // 25.08.2026 (Michael): Kontakt und Über uns gehören in die Navigation,

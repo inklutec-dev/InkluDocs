@@ -4323,3 +4323,118 @@ msgstr "Transfer failed."
 msgid "über dem Feld"
 msgstr "above the field"
 
+# QUICKINFO-WERKZEUG (27.08.2026): Seite Meine Stammdaten
+msgid "Beliebig"
+msgstr "Any"
+
+msgid "Beschriftung im Formular"
+msgstr "Label in the form"
+
+msgid "Bitte eine Beschriftung oder einen Feldnamen und die Quickinfo ausfüllen."
+msgstr "Please fill in a label or a field name and the tooltip."
+
+msgid "CSV herunterladen"
+msgstr "Download CSV"
+
+msgid "CSV importieren"
+msgstr "Import CSV"
+
+msgid "CSV wird importiert …"
+msgstr "Importing CSV …"
+
+msgid "Der interne Name des Feldes in der PDF, z. B. „vorname“. Treffer über den Feldnamen gelten als sicher."
+msgstr "The internal name of the field in the PDF, e.g. “firstname”. Matches by field name count as certain."
+
+msgid "Details anzeigen"
+msgstr "Show details"
+
+msgid "Eintrag bearbeiten"
+msgstr "Edit entry"
+
+msgid "Eintrag gelöscht."
+msgstr "Entry deleted."
+
+msgid "Eintrag gespeichert."
+msgstr "Entry saved."
+
+msgid "Eintrag {name} zum Bearbeiten geladen. Die Felder stehen unten im Formular."
+msgstr "Entry {name} loaded for editing. The fields are in the form below."
+
+msgid "Eintrag „{name}“ wirklich löschen? Bereits eingetragene Quickinfos in Projekten bleiben erhalten."
+msgstr "Really delete entry “{name}”? Tooltips already entered in projects are kept."
+
+msgid "Feldart"
+msgstr "Field type"
+
+msgid "Filtert die Liste nach Beschriftung, Feldname oder Quickinfo."
+msgstr "Filters the list by label, field name or tooltip."
+
+msgid "Gespeicherte Stammdaten"
+msgstr "Saved master data"
+
+msgid "Herkunft: {h}"
+msgstr "Origin: {h}"
+
+msgid "Hier sammelst du Quickinfos für Formularfelder, also die Hilfetexte, die ein Screenreader beim Erreichen eines Feldes vorliest. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt: zuerst über den technischen Feldnamen, sonst über die gleiche Beschriftung im Formular, jeweils mit passender Feldart. Im Werkzeug „Quickinfos für PDF-Formulare“ übernimmst du bestätigte Quickinfos mit einem Knopf hierher."
+msgstr "Here you collect tooltips for form fields – the help texts a screen reader announces when reaching a field. Matching entries are inserted automatically into every new PDF form: first by the technical field name, otherwise by the same label in the form, each with a matching field type. In the tool “Tooltips for PDF forms” you send confirmed tooltips here with one button."
+
+msgid "Import fehlgeschlagen."
+msgstr "Import failed."
+
+msgid "Meine Stammdaten"
+msgstr "My master data"
+
+msgid "Meine Stammdaten öffnen"
+msgstr "Open my master data"
+
+msgid "Neuen Eintrag anlegen"
+msgstr "Create new entry"
+
+msgid "Noch keine Stammdaten gespeichert. Lege unten einen Eintrag an, importiere eine CSV oder übernimm im Formular-Werkzeug bestätigte Quickinfos."
+msgstr "No master data saved yet. Create an entry below, import a CSV or send confirmed tooltips here from the form tool."
+
+msgid "Ohne Beschriftung"
+msgstr "Without label"
+
+msgid "Quickinfo (Pflichtfeld)"
+msgstr "Tooltip (required)"
+
+msgid "Quickinfo:"
+msgstr "Tooltip:"
+
+msgid "Sagt, was einzugeben ist, mit Gruppe und Format, z. B. „Antragsteller: Geburtsdatum, Format Tag Punkt Monat Punkt Jahr“."
+msgstr "Says what to enter, with group and format, e.g. “Applicant: date of birth, format day dot month dot year”."
+
+msgid "So, wie der Text neben dem Feld im Formular steht, z. B. „Vorname“ oder „Geburtsdatum (TT.MM.JJJJ)“. Beschriftung oder Feldname ist Pflicht."
+msgstr "As the text appears next to the field in the form, e.g. “First name” or “Date of birth (DD.MM.YYYY)”. Label or field name is required."
+
+msgid "Sprache: {s}"
+msgstr "Language: {s}"
+
+msgid "Suchen"
+msgstr "Search"
+
+msgid "Technischer Feldname (optional)"
+msgstr "Technical field name (optional)"
+
+msgid "aus CSV importiert"
+msgstr "imported from CSV"
+
+msgid "aus einem Formular übernommen"
+msgstr "taken from a form"
+
+msgid "{n} Einträge importiert, {s} übersprungen."
+msgstr "{n} entries imported, {s} skipped."
+
+msgid "{n} Einträge."
+msgstr "{n} entries."
+
+msgid "{n} von {m} Einträgen passen zur Suche."
+msgstr "{n} of {m} entries match the search."
+
+msgid "{n}-mal verwendet"
+msgstr "used {n} times"
+
+msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
+msgstr "“Any” matches every field type with this label."
+

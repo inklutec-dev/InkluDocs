@@ -46,11 +46,12 @@ Kurzfassung von WCAG 3.3.2 / 4.1.2 und Matterhorn-Protokoll 28 (PDF/UA):
 | `backend/billing.py` | Aktion `formular_export` (5 Credits, nur Bezahlkonten). |
 | `backend/main.py` | Projektanlage (`project_type` `pdfform`), Upload-Weiche, Router einhängen, Löschen von Projekt/Dokument räumt Felder und Bilddateien mit ab. |
 | `frontend/formular.js` | Projektansicht für Formular-Projekte (eigene Datei, gleiche Form wie die Bild-Ansicht). |
+| `backend/templates/stammdaten.html` | Seite „Meine Stammdaten“ (Route `/stammdaten`, Seitenleiste unter „Meine Prompts“): Liste mit Suche, Anlegen/Bearbeiten/Löschen, CSV-Import/-Export; Muster `prompts.html`. |
 | `backend/templates/app.html` | Upload-Block für Formulare, Weiche in `showProject`, Wartetexte. |
 | `backend/locales/*/messages.po` | 78 neue Texte in de/en/fr/es/da/sv. |
 | `tests/test_formular_roundtrip.py` | Unit-Tests (Container). Fixture `tests/fixtures/testformular_inkludocs.pdf` (fiktiv, Generator `make_testformular.py`). |
 | `/home/claude/verify_formular.py` | End-to-End gegen Staging (Login, Negativfälle, Upload, Felder, Stammdaten, Export, Fremdzugriff). |
-| `/home/claude/ui_formular.py` | Playwright-Klicktest mit axe. |
+| `/home/claude/ui_formular.py`, `ui_stammdaten.py` | Playwright-Klicktests mit axe (Projektansicht, Stammdaten-Seite). |
 
 ## Datenmodell
 
@@ -168,7 +169,7 @@ offenen Feldern). Alle Zustandswechsel werden über `announce()` angesagt.
 - Keine KI-Vorschläge (Stufe 2: ein Aufruf je Seite, Text mit Positionen,
   Belegpflicht wie im Verify-Pass, Konsistenz über das Dokument).
 - Stammdaten-Treffer nur exakt (Feldname, Beschriftung); unscharfe Treffer
-  und Auto-Lernen in Stufe 3; Stammdaten-Seite im Kontobereich folgt.
+  und Auto-Lernen in Stufe 3.
 - Keine Gast-Ansicht für Formular-Projekte; kein Chatbot-Anschluss.
 - Beschriftungs-Erkennung ist geometrisch (links/oben/rechts/innen,
   Abschnitt = fette/größere Zeile oder Zeile mit Doppelpunkt); Konstanten in

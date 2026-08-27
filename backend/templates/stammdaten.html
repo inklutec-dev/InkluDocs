@@ -1,0 +1,219 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Meine Stammdaten') }} · InkluDocs{% endblock %}
+{% block main %}
+      {# QUICKINFO-WERKZEUG (27.08.2026, Steve + Fable 5): Stammdaten-Bibliothek des
+         Kontos, aufgebaut wie „Meine Prompts“ (gleiche Klassen, gleiche Klappen,
+         gleiche Fokusfuehrung). Datenquelle: /api/stammdaten (formular_api.py). #}
+      <h1>{{ _('Meine Stammdaten') }}</h1>
+      <p class="dash-intro-box">{{ _('Hier sammelst du Quickinfos für Formularfelder, also die Hilfetexte, die ein Screenreader beim Erreichen eines Feldes vorliest. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt: zuerst über den technischen Feldnamen, sonst über die gleiche Beschriftung im Formular, jeweils mit passender Feldart. Im Werkzeug „Quickinfos für PDF-Formulare“ übernimmst du bestätigte Quickinfos mit einem Knopf hierher.') }}</p>
+
+      <section class="dash-card" aria-labelledby="sdlist-h">
+        <h2 id="sdlist-h">{{ _('Gespeicherte Stammdaten') }}</h2>
+        <div class="dash-field">
+          <label for="sdSearch">{{ _('Suchen') }}</label>
+          <input type="search" id="sdSearch" class="dash-input" autocomplete="off" aria-describedby="sdSearchHint">
+          <p id="sdSearchHint" class="dash-meta">{{ _('Filtert die Liste nach Beschriftung, Feldname oder Quickinfo.') }}</p>
+        </div>
+        <div id="sdList" aria-busy="true">
+          <p class="dash-meta">{{ _('Wird geladen ...') }}</p>
+        </div>
+      </section>
+
+      <p>
+        <button type="button" class="btn btn-primary" id="sdNewBtn">{{ _('Neuen Eintrag anlegen') }}</button>
+        <button type="button" class="btn btn-secondary" id="sdImportBtn" style="margin-left:.5rem;">{{ _('CSV importieren') }}</button>
+        <a class="btn btn-secondary" id="sdExportLink" href="/api/stammdaten/export.csv" style="margin-left:.5rem;">{{ _('CSV herunterladen') }}</a>
+        <input type="file" id="sdImportFile" accept=".csv,text/csv" hidden>
+        <span id="sdMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+      </p>
+
+      <section class="dash-card" aria-labelledby="sdform-h" id="sdFormCard" hidden>
+        <h2 id="sdform-h">{{ _('Neuen Eintrag anlegen') }}</h2>
+        <form id="sdForm" novalidate>
+          <input type="hidden" id="sdEditId" value="">
+          <div class="dash-field">
+            <label for="sdBeschriftung">{{ _('Beschriftung im Formular') }}</label>
+            <input type="text" id="sdBeschriftung" class="dash-input" maxlength="300" aria-describedby="sdBeschriftungHint" autocomplete="off">
+            <p id="sdBeschriftungHint" class="dash-meta">{{ _('So, wie der Text neben dem Feld im Formular steht, z. B. „Vorname“ oder „Geburtsdatum (TT.MM.JJJJ)“. Beschriftung oder Feldname ist Pflicht.') }}</p>
+          </div>
+          <div class="dash-field">
+            <label for="sdFeldart">{{ _('Feldart') }}</label>
+            <select id="sdFeldart" class="dash-input" aria-describedby="sdFeldartHint">
+              <option value="">{{ _('Beliebig') }}</option>
+              <option value="text">{{ _('Textfeld') }}</option>
+              <option value="checkbox">{{ _('Kontrollkästchen') }}</option>
+              <option value="radio">{{ _('Auswahlknopf') }}</option>
+              <option value="dropdown">{{ _('Auswahlliste') }}</option>
+              <option value="liste">{{ _('Listenfeld') }}</option>
+              <option value="signatur">{{ _('Unterschriftsfeld') }}</option>
+              <option value="button">{{ _('Schaltfläche') }}</option>
+            </select>
+            <p id="sdFeldartHint" class="dash-meta">{{ _('„Beliebig“ passt auf jede Feldart mit dieser Beschriftung.') }}</p>
+          </div>
+          <div class="dash-field">
+            <label for="sdFeldname">{{ _('Technischer Feldname (optional)') }}</label>
+            <input type="text" id="sdFeldname" class="dash-input" maxlength="300" aria-describedby="sdFeldnameHint" autocomplete="off">
+            <p id="sdFeldnameHint" class="dash-meta">{{ _('Der interne Name des Feldes in der PDF, z. B. „vorname“. Treffer über den Feldnamen gelten als sicher.') }}</p>
+          </div>
+          <div class="dash-field">
+            <label for="sdQuickinfo">{{ _('Quickinfo (Pflichtfeld)') }}</label>
+            <textarea id="sdQuickinfo" class="dash-input" required maxlength="1000" rows="3" aria-describedby="sdQuickinfoHint"></textarea>
+            <p id="sdQuickinfoHint" class="dash-meta">{{ _('Sagt, was einzugeben ist, mit Gruppe und Format, z. B. „Antragsteller: Geburtsdatum, Format Tag Punkt Monat Punkt Jahr“.') }}</p>
+          </div>
+          <div class="dash-field">
+            <label for="sdSprache">{{ _('Sprache') }}</label>
+            <select id="sdSprache" class="dash-input">
+              <option value="de">Deutsch</option><option value="en">English</option><option value="da">Dansk</option>
+              <option value="fr">Français</option><option value="es">Español</option><option value="sv">Svenska</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="sdSubmitBtn">{{ _('Speichern') }}</button>
+          <button type="button" class="btn btn-secondary" id="sdCancelBtn">{{ _('Abbrechen') }}</button>
+          <span id="sdFormMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+        </form>
+      </section>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  // Stammdaten-Bibliothek (Quickinfo-Werkzeug, 27.08.2026). Muster prompts.html:
+  // DOM-basiertes Rendern (textContent = XSS-sicher), announce() + role=status,
+  // Anlege-Maske zugeklappt, Fokusfuehrung rein ins erste Feld / zurueck auf den Knopf.
+  let _sd = [];
+  const FELDART = { text: t('Textfeld'), checkbox: t('Kontrollkästchen'), radio: t('Auswahlknopf'),
+                    dropdown: t('Auswahlliste'), liste: t('Listenfeld'), signatur: t('Unterschriftsfeld'),
+                    button: t('Schaltfläche'), unbekannt: t('Feld'), '': t('Beliebig') };
+  const HERKUNFT = { hand: t('von Hand'), feld: t('aus einem Formular übernommen'), import: t('aus CSV importiert'), ki: t('KI-Vorschlag') };
+
+  function _el(id) { return document.getElementById(id); }
+  function _status(msg) { _el('sdMsg').textContent = msg; announce(msg); }
+  function _formStatus(msg) { _el('sdFormMsg').textContent = msg; announce(msg); }
+
+  function _values() {
+    return { beschriftung: _el('sdBeschriftung').value.trim(), feld_art: _el('sdFeldart').value,
+             feld_name: _el('sdFeldname').value.trim(), quickinfo: _el('sdQuickinfo').value.trim(),
+             sprache: _el('sdSprache').value };
+  }
+  function _reset() {
+    _el('sdEditId').value = '';
+    ['sdBeschriftung', 'sdFeldname', 'sdQuickinfo'].forEach((id) => { _el(id).value = ''; });
+    _el('sdFeldart').value = ''; _el('sdSprache').value = (window.LANG || 'de');
+    _el('sdform-h').textContent = t('Neuen Eintrag anlegen');
+    _el('sdSubmitBtn').textContent = t('Speichern');
+  }
+  function _open() { _el('sdFormCard').hidden = false; _el('sdNewBtn').hidden = true; _el('sdBeschriftung').focus(); }
+  function _close() { _reset(); _el('sdFormCard').hidden = true; _el('sdNewBtn').hidden = false; _el('sdNewBtn').focus(); }
+
+  async function load() {
+    const cont = _el('sdList');
+    let data;
+    try {
+      const res = await fetch('/api/stammdaten', { credentials: 'same-origin' });
+      if (res.status === 401) { window.location.href = '/'; return; }
+      data = await res.json();
+    } catch (e) { cont.setAttribute('aria-busy', 'false'); return; }
+    _sd = data.stammdaten || [];
+    render();
+  }
+
+  function render() {
+    const cont = _el('sdList');
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+    const q = (_el('sdSearch').value || '').trim().toLowerCase();
+    const items = _sd.filter((e) => !q || [e.beschriftung, e.feld_name, e.quickinfo].some((v) => (v || '').toLowerCase().includes(q)));
+    if (!_sd.length) {
+      const p = document.createElement('p'); p.className = 'dash-meta';
+      p.textContent = t('Noch keine Stammdaten gespeichert. Lege unten einen Eintrag an, importiere eine CSV oder übernimm im Formular-Werkzeug bestätigte Quickinfos.');
+      cont.appendChild(p); return;
+    }
+    const count = document.createElement('p'); count.className = 'dash-meta';
+    count.textContent = q ? t('{n} von {m} Einträgen passen zur Suche.', { n: items.length, m: _sd.length }) : t('{n} Einträge.', { n: _sd.length });
+    cont.appendChild(count);
+    const ul = document.createElement('ul'); ul.className = 'dash-list';
+    items.forEach((e) => {
+      const li = document.createElement('li'); li.className = 'dash-item';
+      const h3 = document.createElement('h3');
+      const titel = e.beschriftung || e.feld_name || t('Ohne Beschriftung');
+      h3.textContent = titel + ', ' + (FELDART[e.feld_art] || e.feld_art);
+      li.appendChild(h3);
+      const qi = document.createElement('p'); qi.textContent = t('Quickinfo:') + ' ' + e.quickinfo; li.appendChild(qi);
+      const det = document.createElement('details');
+      const sum = document.createElement('summary'); sum.textContent = t('Details anzeigen'); det.appendChild(sum);
+      const meta = document.createElement('p'); meta.className = 'dash-meta';
+      const teile = [];
+      if (e.feld_name) teile.push(t('Technischer Feldname: {n}', { n: e.feld_name }));
+      teile.push(t('Sprache: {s}', { s: (e.sprache || 'de').toUpperCase() }));
+      teile.push(t('Herkunft: {h}', { h: HERKUNFT[e.herkunft] || e.herkunft || '' }));
+      teile.push(t('{n}-mal verwendet', { n: e.verwendet || 0 }));
+      meta.textContent = teile.join(' · ');
+      det.appendChild(meta); li.appendChild(det);
+      const row = document.createElement('p'); row.style.marginTop = '.5rem';
+      const editBtn = document.createElement('button'); editBtn.type = 'button'; editBtn.className = 'btn btn-secondary';
+      editBtn.textContent = t('Bearbeiten'); editBtn.addEventListener('click', () => startEdit(e.id)); row.appendChild(editBtn);
+      const delBtn = document.createElement('button'); delBtn.type = 'button'; delBtn.className = 'btn btn-delete'; delBtn.style.marginLeft = '.5rem';
+      delBtn.textContent = t('Löschen'); delBtn.addEventListener('click', () => del(e.id, titel)); row.appendChild(delBtn);
+      li.appendChild(row); ul.appendChild(li);
+    });
+    cont.appendChild(ul);
+  }
+
+  function startEdit(id) {
+    const e = _sd.find((x) => x.id === id); if (!e) return;
+    _el('sdEditId').value = String(e.id);
+    _el('sdBeschriftung').value = e.beschriftung || ''; _el('sdFeldart').value = e.feld_art || '';
+    _el('sdFeldname').value = e.feld_name || ''; _el('sdQuickinfo').value = e.quickinfo || ''; _el('sdSprache').value = e.sprache || 'de';
+    _el('sdform-h').textContent = t('Eintrag bearbeiten'); _el('sdSubmitBtn').textContent = t('Änderungen speichern');
+    _open();
+    _status(t('Eintrag {name} zum Bearbeiten geladen. Die Felder stehen unten im Formular.', { name: e.beschriftung || e.feld_name }));
+  }
+
+  async function del(id, titel) {
+    if (!confirm(t('Eintrag „{name}“ wirklich löschen? Bereits eingetragene Quickinfos in Projekten bleiben erhalten.', { name: titel }))) return;
+    try {
+      const res = await fetch('/api/stammdaten/' + id, { method: 'DELETE', credentials: 'same-origin' });
+      if (!res.ok) { _status(t('Löschen fehlgeschlagen. Bitte später erneut versuchen.')); return; }
+    } catch (e) { _status(t('Löschen fehlgeschlagen. Bitte später erneut versuchen.')); return; }
+    if (_el('sdEditId').value === String(id)) _close();
+    _status(t('Eintrag gelöscht.'));
+    load();
+  }
+
+  _el('sdNewBtn').addEventListener('click', () => { _reset(); _open(); });
+  _el('sdCancelBtn').addEventListener('click', () => { _close(); _status(t('Bearbeitung abgebrochen. Formular ist wieder leer.')); });
+  _el('sdSearch').addEventListener('input', () => render());
+
+  _el('sdForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const f = _values();
+    if (!f.quickinfo || (!f.beschriftung && !f.feld_name)) { _formStatus(t('Bitte eine Beschriftung oder einen Feldnamen und die Quickinfo ausfüllen.')); return; }
+    const editId = _el('sdEditId').value;
+    try {
+      const res = await fetch(editId ? '/api/stammdaten/' + editId : '/api/stammdaten', {
+        method: editId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(f) });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); _formStatus(d.detail || t('Speichern fehlgeschlagen. Bitte später erneut versuchen.')); return; }
+    } catch (e) { _formStatus(t('Speichern fehlgeschlagen. Bitte später erneut versuchen.')); return; }
+    _close();
+    _status(t('Eintrag gespeichert.'));
+    load();
+  });
+
+  _el('sdImportBtn').addEventListener('click', () => _el('sdImportFile').click());
+  _el('sdImportFile').addEventListener('change', async () => {
+    const file = _el('sdImportFile').files[0]; if (!file) return;
+    const fd = new FormData(); fd.append('file', file);
+    _status(t('CSV wird importiert …'));
+    try {
+      const res = await fetch('/api/stammdaten/import', { method: 'POST', credentials: 'same-origin', body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { _status(d.detail || t('Import fehlgeschlagen.')); return; }
+      _status(t('{n} Einträge importiert, {s} übersprungen.', { n: d.uebernommen, s: d.uebersprungen }));
+      load();
+    } catch (e) { _status(t('Import fehlgeschlagen.')); }
+    _el('sdImportFile').value = '';
+  });
+
+  load();
+{% endraw %}
+</script>
+{% endblock %}

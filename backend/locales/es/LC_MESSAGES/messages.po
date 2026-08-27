@@ -4323,3 +4323,118 @@ msgstr "Error al tomar el valor."
 msgid "über dem Feld"
 msgstr "encima del campo"
 
+# QUICKINFO-WERKZEUG (27.08.2026): Seite Meine Stammdaten
+msgid "Beliebig"
+msgstr "Cualquiera"
+
+msgid "Beschriftung im Formular"
+msgstr "Etiqueta en el formulario"
+
+msgid "Bitte eine Beschriftung oder einen Feldnamen und die Quickinfo ausfüllen."
+msgstr "Rellena una etiqueta o un nombre de campo y la sugerencia."
+
+msgid "CSV herunterladen"
+msgstr "Descargar CSV"
+
+msgid "CSV importieren"
+msgstr "Importar CSV"
+
+msgid "CSV wird importiert …"
+msgstr "Importando CSV …"
+
+msgid "Der interne Name des Feldes in der PDF, z. B. „vorname“. Treffer über den Feldnamen gelten als sicher."
+msgstr "El nombre interno del campo en el PDF, p. ej. «nombre». Las coincidencias por nombre de campo se consideran seguras."
+
+msgid "Details anzeigen"
+msgstr "Mostrar detalles"
+
+msgid "Eintrag bearbeiten"
+msgstr "Editar entrada"
+
+msgid "Eintrag gelöscht."
+msgstr "Entrada eliminada."
+
+msgid "Eintrag gespeichert."
+msgstr "Entrada guardada."
+
+msgid "Eintrag {name} zum Bearbeiten geladen. Die Felder stehen unten im Formular."
+msgstr "Entrada {name} cargada para editar. Los campos están en el formulario de abajo."
+
+msgid "Eintrag „{name}“ wirklich löschen? Bereits eingetragene Quickinfos in Projekten bleiben erhalten."
+msgstr "¿Eliminar realmente la entrada «{name}»? Las sugerencias ya introducidas en los proyectos se conservan."
+
+msgid "Feldart"
+msgstr "Tipo de campo"
+
+msgid "Filtert die Liste nach Beschriftung, Feldname oder Quickinfo."
+msgstr "Filtra la lista por etiqueta, nombre de campo o sugerencia."
+
+msgid "Gespeicherte Stammdaten"
+msgstr "Datos maestros guardados"
+
+msgid "Herkunft: {h}"
+msgstr "Origen: {h}"
+
+msgid "Hier sammelst du Quickinfos für Formularfelder, also die Hilfetexte, die ein Screenreader beim Erreichen eines Feldes vorliest. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt: zuerst über den technischen Feldnamen, sonst über die gleiche Beschriftung im Formular, jeweils mit passender Feldart. Im Werkzeug „Quickinfos für PDF-Formulare“ übernimmst du bestätigte Quickinfos mit einem Knopf hierher."
+msgstr "Aquí reúnes sugerencias para campos de formulario, es decir, los textos de ayuda que un lector de pantalla lee al llegar a un campo. En cada nuevo formulario PDF se insertan automáticamente las entradas coincidentes: primero por el nombre técnico del campo, si no por la misma etiqueta en el formulario, siempre con un tipo de campo compatible. En la herramienta «Sugerencias para formularios PDF» envías aquí las sugerencias confirmadas con un botón."
+
+msgid "Import fehlgeschlagen."
+msgstr "Error en la importación."
+
+msgid "Meine Stammdaten"
+msgstr "Mis datos maestros"
+
+msgid "Meine Stammdaten öffnen"
+msgstr "Abrir mis datos maestros"
+
+msgid "Neuen Eintrag anlegen"
+msgstr "Crear nueva entrada"
+
+msgid "Noch keine Stammdaten gespeichert. Lege unten einen Eintrag an, importiere eine CSV oder übernimm im Formular-Werkzeug bestätigte Quickinfos."
+msgstr "Todavía no hay datos maestros guardados. Crea una entrada abajo, importa un CSV o envía aquí sugerencias confirmadas desde la herramienta de formularios."
+
+msgid "Ohne Beschriftung"
+msgstr "Sin etiqueta"
+
+msgid "Quickinfo (Pflichtfeld)"
+msgstr "Sugerencia (obligatorio)"
+
+msgid "Quickinfo:"
+msgstr "Sugerencia:"
+
+msgid "Sagt, was einzugeben ist, mit Gruppe und Format, z. B. „Antragsteller: Geburtsdatum, Format Tag Punkt Monat Punkt Jahr“."
+msgstr "Indica qué introducir, con grupo y formato, p. ej. «Solicitante: fecha de nacimiento, formato día punto mes punto año»."
+
+msgid "So, wie der Text neben dem Feld im Formular steht, z. B. „Vorname“ oder „Geburtsdatum (TT.MM.JJJJ)“. Beschriftung oder Feldname ist Pflicht."
+msgstr "Tal como aparece el texto junto al campo en el formulario, p. ej. «Nombre» o «Fecha de nacimiento (DD.MM.AAAA)». La etiqueta o el nombre de campo es obligatorio."
+
+msgid "Sprache: {s}"
+msgstr "Idioma: {s}"
+
+msgid "Suchen"
+msgstr "Buscar"
+
+msgid "Technischer Feldname (optional)"
+msgstr "Nombre técnico del campo (opcional)"
+
+msgid "aus CSV importiert"
+msgstr "importado de CSV"
+
+msgid "aus einem Formular übernommen"
+msgstr "tomado de un formulario"
+
+msgid "{n} Einträge importiert, {s} übersprungen."
+msgstr "{n} entradas importadas, {s} omitidas."
+
+msgid "{n} Einträge."
+msgstr "{n} entradas."
+
+msgid "{n} von {m} Einträgen passen zur Suche."
+msgstr "{n} de {m} entradas coinciden con la búsqueda."
+
+msgid "{n}-mal verwendet"
+msgstr "usado {n} veces"
+
+msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
+msgstr "«Cualquiera» coincide con cualquier tipo de campo con esta etiqueta."
+

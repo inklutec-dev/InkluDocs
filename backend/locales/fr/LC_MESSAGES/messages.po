@@ -4323,3 +4323,118 @@ msgstr "La reprise a échoué."
 msgid "über dem Feld"
 msgstr "au-dessus du champ"
 
+# QUICKINFO-WERKZEUG (27.08.2026): Seite Meine Stammdaten
+msgid "Beliebig"
+msgstr "Indifférent"
+
+msgid "Beschriftung im Formular"
+msgstr "Libellé dans le formulaire"
+
+msgid "Bitte eine Beschriftung oder einen Feldnamen und die Quickinfo ausfüllen."
+msgstr "Veuillez renseigner un libellé ou un nom de champ ainsi que l’info-bulle."
+
+msgid "CSV herunterladen"
+msgstr "Télécharger le CSV"
+
+msgid "CSV importieren"
+msgstr "Importer un CSV"
+
+msgid "CSV wird importiert …"
+msgstr "Import du CSV en cours …"
+
+msgid "Der interne Name des Feldes in der PDF, z. B. „vorname“. Treffer über den Feldnamen gelten als sicher."
+msgstr "Le nom interne du champ dans le PDF, p. ex. « prenom ». Les correspondances par nom de champ sont considérées comme sûres."
+
+msgid "Details anzeigen"
+msgstr "Afficher les détails"
+
+msgid "Eintrag bearbeiten"
+msgstr "Modifier l’entrée"
+
+msgid "Eintrag gelöscht."
+msgstr "Entrée supprimée."
+
+msgid "Eintrag gespeichert."
+msgstr "Entrée enregistrée."
+
+msgid "Eintrag {name} zum Bearbeiten geladen. Die Felder stehen unten im Formular."
+msgstr "Entrée {name} chargée pour modification. Les champs se trouvent dans le formulaire ci-dessous."
+
+msgid "Eintrag „{name}“ wirklich löschen? Bereits eingetragene Quickinfos in Projekten bleiben erhalten."
+msgstr "Supprimer vraiment l’entrée « {name} » ? Les info-bulles déjà saisies dans les projets sont conservées."
+
+msgid "Feldart"
+msgstr "Type de champ"
+
+msgid "Filtert die Liste nach Beschriftung, Feldname oder Quickinfo."
+msgstr "Filtre la liste par libellé, nom de champ ou info-bulle."
+
+msgid "Gespeicherte Stammdaten"
+msgstr "Données de référence enregistrées"
+
+msgid "Herkunft: {h}"
+msgstr "Origine : {h}"
+
+msgid "Hier sammelst du Quickinfos für Formularfelder, also die Hilfetexte, die ein Screenreader beim Erreichen eines Feldes vorliest. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt: zuerst über den technischen Feldnamen, sonst über die gleiche Beschriftung im Formular, jeweils mit passender Feldart. Im Werkzeug „Quickinfos für PDF-Formulare“ übernimmst du bestätigte Quickinfos mit einem Knopf hierher."
+msgstr "Vous rassemblez ici les info-bulles des champs de formulaire, c’est-à-dire les textes d’aide qu’un lecteur d’écran lit lorsqu’il atteint un champ. Les entrées correspondantes sont insérées automatiquement dans chaque nouveau formulaire PDF : d’abord par le nom technique du champ, sinon par le même libellé dans le formulaire, avec un type de champ correspondant. Dans l’outil « Info-bulles pour formulaires PDF », vous transférez ici les info-bulles confirmées d’un simple bouton."
+
+msgid "Import fehlgeschlagen."
+msgstr "L’import a échoué."
+
+msgid "Meine Stammdaten"
+msgstr "Mes données de référence"
+
+msgid "Meine Stammdaten öffnen"
+msgstr "Ouvrir mes données de référence"
+
+msgid "Neuen Eintrag anlegen"
+msgstr "Créer une nouvelle entrée"
+
+msgid "Noch keine Stammdaten gespeichert. Lege unten einen Eintrag an, importiere eine CSV oder übernimm im Formular-Werkzeug bestätigte Quickinfos."
+msgstr "Aucune donnée de référence enregistrée. Créez une entrée ci-dessous, importez un CSV ou transférez ici des info-bulles confirmées depuis l’outil de formulaires."
+
+msgid "Ohne Beschriftung"
+msgstr "Sans libellé"
+
+msgid "Quickinfo (Pflichtfeld)"
+msgstr "Info-bulle (obligatoire)"
+
+msgid "Quickinfo:"
+msgstr "Info-bulle :"
+
+msgid "Sagt, was einzugeben ist, mit Gruppe und Format, z. B. „Antragsteller: Geburtsdatum, Format Tag Punkt Monat Punkt Jahr“."
+msgstr "Indique ce qu’il faut saisir, avec le groupe et le format, p. ex. « Demandeur : date de naissance, format jour point mois point année »."
+
+msgid "So, wie der Text neben dem Feld im Formular steht, z. B. „Vorname“ oder „Geburtsdatum (TT.MM.JJJJ)“. Beschriftung oder Feldname ist Pflicht."
+msgstr "Tel que le texte figure à côté du champ dans le formulaire, p. ex. « Prénom » ou « Date de naissance (JJ.MM.AAAA) ». Le libellé ou le nom de champ est obligatoire."
+
+msgid "Sprache: {s}"
+msgstr "Langue : {s}"
+
+msgid "Suchen"
+msgstr "Rechercher"
+
+msgid "Technischer Feldname (optional)"
+msgstr "Nom technique du champ (facultatif)"
+
+msgid "aus CSV importiert"
+msgstr "importé depuis un CSV"
+
+msgid "aus einem Formular übernommen"
+msgstr "repris d’un formulaire"
+
+msgid "{n} Einträge importiert, {s} übersprungen."
+msgstr "{n} entrées importées, {s} ignorées."
+
+msgid "{n} Einträge."
+msgstr "{n} entrées."
+
+msgid "{n} von {m} Einträgen passen zur Suche."
+msgstr "{n} entrées sur {m} correspondent à la recherche."
+
+msgid "{n}-mal verwendet"
+msgstr "utilisé {n} fois"
+
+msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
+msgstr "« Indifférent » correspond à tout type de champ portant ce libellé."
+

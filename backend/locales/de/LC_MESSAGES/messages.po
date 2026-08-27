@@ -4326,3 +4326,118 @@ msgstr "Übernahme fehlgeschlagen."
 msgid "über dem Feld"
 msgstr "über dem Feld"
 
+# QUICKINFO-WERKZEUG (27.08.2026): Seite Meine Stammdaten
+msgid "Beliebig"
+msgstr "Beliebig"
+
+msgid "Beschriftung im Formular"
+msgstr "Beschriftung im Formular"
+
+msgid "Bitte eine Beschriftung oder einen Feldnamen und die Quickinfo ausfüllen."
+msgstr "Bitte eine Beschriftung oder einen Feldnamen und die Quickinfo ausfüllen."
+
+msgid "CSV herunterladen"
+msgstr "CSV herunterladen"
+
+msgid "CSV importieren"
+msgstr "CSV importieren"
+
+msgid "CSV wird importiert …"
+msgstr "CSV wird importiert …"
+
+msgid "Der interne Name des Feldes in der PDF, z. B. „vorname“. Treffer über den Feldnamen gelten als sicher."
+msgstr "Der interne Name des Feldes in der PDF, z. B. „vorname“. Treffer über den Feldnamen gelten als sicher."
+
+msgid "Details anzeigen"
+msgstr "Details anzeigen"
+
+msgid "Eintrag bearbeiten"
+msgstr "Eintrag bearbeiten"
+
+msgid "Eintrag gelöscht."
+msgstr "Eintrag gelöscht."
+
+msgid "Eintrag gespeichert."
+msgstr "Eintrag gespeichert."
+
+msgid "Eintrag {name} zum Bearbeiten geladen. Die Felder stehen unten im Formular."
+msgstr "Eintrag {name} zum Bearbeiten geladen. Die Felder stehen unten im Formular."
+
+msgid "Eintrag „{name}“ wirklich löschen? Bereits eingetragene Quickinfos in Projekten bleiben erhalten."
+msgstr "Eintrag „{name}“ wirklich löschen? Bereits eingetragene Quickinfos in Projekten bleiben erhalten."
+
+msgid "Feldart"
+msgstr "Feldart"
+
+msgid "Filtert die Liste nach Beschriftung, Feldname oder Quickinfo."
+msgstr "Filtert die Liste nach Beschriftung, Feldname oder Quickinfo."
+
+msgid "Gespeicherte Stammdaten"
+msgstr "Gespeicherte Stammdaten"
+
+msgid "Herkunft: {h}"
+msgstr "Herkunft: {h}"
+
+msgid "Hier sammelst du Quickinfos für Formularfelder, also die Hilfetexte, die ein Screenreader beim Erreichen eines Feldes vorliest. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt: zuerst über den technischen Feldnamen, sonst über die gleiche Beschriftung im Formular, jeweils mit passender Feldart. Im Werkzeug „Quickinfos für PDF-Formulare“ übernimmst du bestätigte Quickinfos mit einem Knopf hierher."
+msgstr "Hier sammelst du Quickinfos für Formularfelder, also die Hilfetexte, die ein Screenreader beim Erreichen eines Feldes vorliest. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt: zuerst über den technischen Feldnamen, sonst über die gleiche Beschriftung im Formular, jeweils mit passender Feldart. Im Werkzeug „Quickinfos für PDF-Formulare“ übernimmst du bestätigte Quickinfos mit einem Knopf hierher."
+
+msgid "Import fehlgeschlagen."
+msgstr "Import fehlgeschlagen."
+
+msgid "Meine Stammdaten"
+msgstr "Meine Stammdaten"
+
+msgid "Meine Stammdaten öffnen"
+msgstr "Meine Stammdaten öffnen"
+
+msgid "Neuen Eintrag anlegen"
+msgstr "Neuen Eintrag anlegen"
+
+msgid "Noch keine Stammdaten gespeichert. Lege unten einen Eintrag an, importiere eine CSV oder übernimm im Formular-Werkzeug bestätigte Quickinfos."
+msgstr "Noch keine Stammdaten gespeichert. Lege unten einen Eintrag an, importiere eine CSV oder übernimm im Formular-Werkzeug bestätigte Quickinfos."
+
+msgid "Ohne Beschriftung"
+msgstr "Ohne Beschriftung"
+
+msgid "Quickinfo (Pflichtfeld)"
+msgstr "Quickinfo (Pflichtfeld)"
+
+msgid "Quickinfo:"
+msgstr "Quickinfo:"
+
+msgid "Sagt, was einzugeben ist, mit Gruppe und Format, z. B. „Antragsteller: Geburtsdatum, Format Tag Punkt Monat Punkt Jahr“."
+msgstr "Sagt, was einzugeben ist, mit Gruppe und Format, z. B. „Antragsteller: Geburtsdatum, Format Tag Punkt Monat Punkt Jahr“."
+
+msgid "So, wie der Text neben dem Feld im Formular steht, z. B. „Vorname“ oder „Geburtsdatum (TT.MM.JJJJ)“. Beschriftung oder Feldname ist Pflicht."
+msgstr "So, wie der Text neben dem Feld im Formular steht, z. B. „Vorname“ oder „Geburtsdatum (TT.MM.JJJJ)“. Beschriftung oder Feldname ist Pflicht."
+
+msgid "Sprache: {s}"
+msgstr "Sprache: {s}"
+
+msgid "Suchen"
+msgstr "Suchen"
+
+msgid "Technischer Feldname (optional)"
+msgstr "Technischer Feldname (optional)"
+
+msgid "aus CSV importiert"
+msgstr "aus CSV importiert"
+
+msgid "aus einem Formular übernommen"
+msgstr "aus einem Formular übernommen"
+
+msgid "{n} Einträge importiert, {s} übersprungen."
+msgstr "{n} Einträge importiert, {s} übersprungen."
+
+msgid "{n} Einträge."
+msgstr "{n} Einträge."
+
+msgid "{n} von {m} Einträgen passen zur Suche."
+msgstr "{n} von {m} Einträgen passen zur Suche."
+
+msgid "{n}-mal verwendet"
+msgstr "{n}-mal verwendet"
+
+msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
+msgstr "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
+

@@ -8114,6 +8114,12 @@ async def prompts_page(request: Request):
     return _render_protected_template(request, "prompts.html")
 
 
+@app.get("/stammdaten", response_class=HTMLResponse)
+async def stammdaten_page(request: Request):
+    """QUICKINFO-WERKZEUG (27.08.2026): Stammdaten-Bibliothek des Kontos, wie „Meine Prompts“."""
+    return _render_protected_template(request, "stammdaten.html")
+
+
 @app.get("/benutzer", response_class=HTMLResponse)
 async def users_page(request: Request):
     # api_limit_standard: aktueller Standard der Missbrauchsbremse — auf

@@ -4014,3 +4014,118 @@ msgstr "Overtagelse mislykkedes."
 msgid "über dem Feld"
 msgstr "over feltet"
 
+# QUICKINFO-WERKZEUG (27.08.2026): Seite Meine Stammdaten
+msgid "Beliebig"
+msgstr "Vilkårlig"
+
+msgid "Beschriftung im Formular"
+msgstr "Etiket i formularen"
+
+msgid "Bitte eine Beschriftung oder einen Feldnamen und die Quickinfo ausfüllen."
+msgstr "Udfyld en etiket eller et feltnavn og hjælpeteksten."
+
+msgid "CSV herunterladen"
+msgstr "Download CSV"
+
+msgid "CSV importieren"
+msgstr "Importér CSV"
+
+msgid "CSV wird importiert …"
+msgstr "CSV importeres …"
+
+msgid "Der interne Name des Feldes in der PDF, z. B. „vorname“. Treffer über den Feldnamen gelten als sicher."
+msgstr "Feltets interne navn i PDF’en, f.eks. “fornavn”. Match på feltnavn regnes som sikre."
+
+msgid "Details anzeigen"
+msgstr "Vis detaljer"
+
+msgid "Eintrag bearbeiten"
+msgstr "Redigér post"
+
+msgid "Eintrag gelöscht."
+msgstr "Post slettet."
+
+msgid "Eintrag gespeichert."
+msgstr "Post gemt."
+
+msgid "Eintrag {name} zum Bearbeiten geladen. Die Felder stehen unten im Formular."
+msgstr "Post {name} indlæst til redigering. Felterne står i formularen nedenfor."
+
+msgid "Eintrag „{name}“ wirklich löschen? Bereits eingetragene Quickinfos in Projekten bleiben erhalten."
+msgstr "Vil du virkelig slette posten “{name}”? Hjælpetekster, der allerede er indtastet i projekter, bevares."
+
+msgid "Feldart"
+msgstr "Felttype"
+
+msgid "Filtert die Liste nach Beschriftung, Feldname oder Quickinfo."
+msgstr "Filtrerer listen efter etiket, feltnavn eller hjælpetekst."
+
+msgid "Gespeicherte Stammdaten"
+msgstr "Gemte stamdata"
+
+msgid "Herkunft: {h}"
+msgstr "Oprindelse: {h}"
+
+msgid "Hier sammelst du Quickinfos für Formularfelder, also die Hilfetexte, die ein Screenreader beim Erreichen eines Feldes vorliest. Bei jedem neuen PDF-Formular werden passende Einträge automatisch eingesetzt: zuerst über den technischen Feldnamen, sonst über die gleiche Beschriftung im Formular, jeweils mit passender Feldart. Im Werkzeug „Quickinfos für PDF-Formulare“ übernimmst du bestätigte Quickinfos mit einem Knopf hierher."
+msgstr "Her samler du hjælpetekster til formularfelter, altså de tekster en skærmlæser læser op, når et felt nås. I hver ny PDF-formular indsættes passende poster automatisk: først via det tekniske feltnavn, ellers via samme etiket i formularen, hver gang med passende felttype. I værktøjet “Hjælpetekster til PDF-formularer” sender du bekræftede hjælpetekster hertil med én knap."
+
+msgid "Import fehlgeschlagen."
+msgstr "Import mislykkedes."
+
+msgid "Meine Stammdaten"
+msgstr "Mine stamdata"
+
+msgid "Meine Stammdaten öffnen"
+msgstr "Åbn mine stamdata"
+
+msgid "Neuen Eintrag anlegen"
+msgstr "Opret ny post"
+
+msgid "Noch keine Stammdaten gespeichert. Lege unten einen Eintrag an, importiere eine CSV oder übernimm im Formular-Werkzeug bestätigte Quickinfos."
+msgstr "Ingen stamdata gemt endnu. Opret en post nedenfor, importér en CSV eller send bekræftede hjælpetekster hertil fra formularværktøjet."
+
+msgid "Ohne Beschriftung"
+msgstr "Uden etiket"
+
+msgid "Quickinfo (Pflichtfeld)"
+msgstr "Hjælpetekst (obligatorisk)"
+
+msgid "Quickinfo:"
+msgstr "Hjælpetekst:"
+
+msgid "Sagt, was einzugeben ist, mit Gruppe und Format, z. B. „Antragsteller: Geburtsdatum, Format Tag Punkt Monat Punkt Jahr“."
+msgstr "Siger, hvad der skal indtastes, med gruppe og format, f.eks. “Ansøger: fødselsdato, format dag punktum måned punktum år”."
+
+msgid "So, wie der Text neben dem Feld im Formular steht, z. B. „Vorname“ oder „Geburtsdatum (TT.MM.JJJJ)“. Beschriftung oder Feldname ist Pflicht."
+msgstr "Som teksten står ved siden af feltet i formularen, f.eks. “Fornavn” eller “Fødselsdato (DD.MM.ÅÅÅÅ)”. Etiket eller feltnavn er obligatorisk."
+
+msgid "Sprache: {s}"
+msgstr "Sprog: {s}"
+
+msgid "Suchen"
+msgstr "Søg"
+
+msgid "Technischer Feldname (optional)"
+msgstr "Teknisk feltnavn (valgfrit)"
+
+msgid "aus CSV importiert"
+msgstr "importeret fra CSV"
+
+msgid "aus einem Formular übernommen"
+msgstr "overtaget fra en formular"
+
+msgid "{n} Einträge importiert, {s} übersprungen."
+msgstr "{n} poster importeret, {s} sprunget over."
+
+msgid "{n} Einträge."
+msgstr "{n} poster."
+
+msgid "{n} von {m} Einträgen passen zur Suche."
+msgstr "{n} af {m} poster matcher søgningen."
+
+msgid "{n}-mal verwendet"
+msgstr "brugt {n} gange"
+
+msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
+msgstr "“Vilkårlig” passer til enhver felttype med denne etiket."
+
