@@ -25,7 +25,7 @@ name: inkludocs-demo
 
 services:
   inkludocs-demo:
-    image: inkludocs:demo-20260818-pipefix  # 18.08. Fable 5: festes Image statt Baum-Build (Baum enthaelt Abo-Code, der NICHT auf die Demo darf)
+    image: inkludocs:demo-20260827-pdfixfix  # 18.08. Fable 5: festes Image statt Baum-Build (Baum enthaelt Abo-Code, der NICHT auf die Demo darf)
     container_name: inkludocs-demo
     restart: unless-stopped
     ports:
