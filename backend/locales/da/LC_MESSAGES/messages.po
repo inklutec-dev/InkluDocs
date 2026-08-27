@@ -4129,3 +4129,34 @@ msgstr "brugt {n} gange"
 msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
 msgstr "“Vilkårlig” passer til enhver felttype med denne etiket."
 
+# QUICKINFO-WERKZEUG (27.08.2026): Review-Runde (Loeschdialog Formular, namenlose Felder)
+msgid "Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden."
+msgstr "Dette felt har intet feltnavn. Der kan ikke skrives en hjælpetekst til PDF’en for det."
+
+msgid "Formular gelöscht."
+msgstr "Formular slettet."
+
+msgid "Formular löschen?"
+msgstr "Slet formular?"
+
+msgid "Formular umbenannt."
+msgstr "Formular omdøbt."
+
+msgid "Formular umbenennen"
+msgstr "Omdøb formular"
+
+msgid "Möchtest du das Formular „{name}\" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette formularen “{name}” med 1 felt? Dette kan ikke fortrydes."
+
+msgid "Möchtest du das Formular „{name}\" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette formularen “{name}” med {n} felter? Dette kan ikke fortrydes."
+
+msgid "Neuer Name des Formulars"
+msgstr "Nyt navn på formularen"
+
+msgid "dieses Formular"
+msgstr "denne formular"
+
+msgid "– Formular „{name}“"
+msgstr "– formular “{name}”"
+

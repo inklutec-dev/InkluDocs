@@ -8,8 +8,19 @@ Dinge nie verwechseln koennen.
 
 Einbindung: main.py ruft build_router(Abhaengigkeiten) auf und haengt den
 Router an die App. Die Abhaengigkeiten (Auth, DB, Verzeichnisse, Abrechnung,
-Export-Helfer) kommen von main.py — so gibt es keinen Ringimport und die
-Regeln (Login-Cookie, Realpath-Schutz, Credits) bleiben an EINER Stelle.
+Export-Helfer, CSV-Schutz) kommen von main.py — so gibt es keinen Ringimport
+und Login-Regel, Credits und Dateinamen-Helfer bleiben an EINER Stelle. Die
+Realpath-Pruefungen fuer Bild- und Originaldateien stehen hier (gleiche
+Regel wie im Word-Export: nur unterhalb von RESULTS_DIR bzw. UPLOAD_DIR).
+
+Review-Runde 27.08.2026 (unabhaengiger Reviewer, 32 Befunde, die kritischen
+und mittleren hier behoben): Kopfzeilen nur ASCII (sonst 500 nach Verbuchung),
+Credits erst nach fertiger Antwort und nur bei geschriebenen Quickinfos,
+CSV-Formelschutz, Export im Executor (Event-Loop bleibt frei), Temp-Dateien je
+Anfrage, Fehlerpfad der Extraktion setzt Status "error" und raeumt auf,
+haengende "extracting"-Projekte werden beim Start zurueckgesetzt, Stammdaten
+ueberschreiben nie Hand-/PDF-Texte und nie namenlose Felder, JSON-Koerper
+werden geprueft (400 statt 500), Dubletten-Schutz im PATCH, Kappe je Konto.
 
 Endpunkte (alle nur fuer den eingeloggten Besitzer des Projekts):
   GET    /api/projects/{pid}/felder                  Felder + Dokumente + Stammdaten-Treffer
@@ -39,8 +50,12 @@ import asyncio
 import csv
 import io
 import json
+import logging
 import os
 import re
+import shutil
+import tempfile
+import urllib.parse
 import zipfile
 from dataclasses import dataclass
 from typing import Callable, Optional
@@ -51,13 +66,18 @@ from fastapi.responses import FileResponse, Response
 import formular_export
 from formular_processor import extract_formular
 
+log = logging.getLogger(__name__)
+
 # Grenzen fuer Eingaben (Abwehr, nicht Fachlichkeit).
 MAX_QUICKINFO = 1000
 MAX_TEXTFELD = 300
 MAX_IMPORT_BYTES = 1024 * 1024
 MAX_IMPORT_ZEILEN = 5000
+MAX_STAMMDATEN_JE_KONTO = 20000
 FELDARTEN = ("", "text", "checkbox", "radio", "dropdown", "liste", "button", "signatur", "unbekannt")
-QUELLEN = ("", "pdf", "hand", "stammdaten", "ki")
+# Werte von formularfelder.quelle: "" (offen), pdf, hand, stammdaten, ki.
+# Stammdaten duerfen nur "" und "stammdaten" ersetzen — nie Hand oder PDF-Original.
+QUELLEN_ERSETZBAR = ("", "stammdaten")
 
 
 @dataclass
@@ -70,6 +90,7 @@ class Deps:
     read_export_options: Callable      # async (request) -> (document_id, filename)
     safe_filename_component: Callable
     doc_label: Callable
+    csv_safe: Callable                 # Formel-Injection-Schutz fuer CSV-Zellen (main._csv_safe)
 
 
 _d: Optional[Deps] = None
@@ -77,6 +98,28 @@ _d: Optional[Deps] = None
 
 def _user(request: Request) -> dict:
     return _d.get_current_user(request)
+
+
+async def _json_body(request: Request) -> dict:
+    """JSON-Koerper als dict, sonst 400 (statt eines 500 aus request.json())."""
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Ungueltiger JSON-Koerper")
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="JSON-Objekt erwartet")
+    return data
+
+
+def _ascii_header(text: str) -> str:
+    """HTTP-Kopfzeilen sind latin-1; alles andere wuerde die Antwort mit 500 abbrechen."""
+    return str(text).encode("ascii", "backslashreplace").decode("ascii")
+
+
+def _content_disposition(dateiname: str) -> str:
+    """RFC 6266: ASCII-Fallback + filename* in UTF-8 fuer Namen mit Umlauten."""
+    ascii_name = dateiname.encode("ascii", "ignore").decode("ascii").replace('"', "") or "download"
+    return "attachment; filename=\"%s\"; filename*=UTF-8''%s" % (ascii_name, urllib.parse.quote(dateiname))
 
 
 # --------------------------------------------------------------------------- Helfer
@@ -152,21 +195,39 @@ def _stammdaten_treffer(eintraege: list[dict], feld: dict, sprache: str) -> list
     Stufe 1: sicher = gleicher Feldname (+ vertraegliche Feldart),
              wahrscheinlich = gleiche Beschriftung (+ vertraegliche Feldart).
     Sprache: Eintraege in der Projektsprache zuerst, andere danach."""
+    if str(feld.get("anker") or "").startswith("#"):
+        return []   # namenlose Felder koennen nie zurueckgeschrieben werden
     name = (feld.get("feld_name") or "").strip()
     norm = _norm_beschriftung(feld.get("beschriftung") or "")
     art = feld.get("feld_art") or ""
+    index = _stammdaten_index(eintraege)
     treffer = []
-    for e in eintraege:
-        art_ok = (not e["feld_art"]) or (e["feld_art"] == art)
-        if not art_ok:
-            continue
-        if name and e["feld_name"] and e["feld_name"] == name:
-            treffer.append(("name", e))
-        elif norm and e["beschriftung_norm"] and e["beschriftung_norm"] == norm:
+    gesehen = set()
+    for e in (index["name"].get(name, []) if name else []):
+        if (not e["feld_art"]) or e["feld_art"] == art:
+            treffer.append(("name", e)); gesehen.add(e["id"])
+    for e in (index["norm"].get(norm, []) if norm else []):
+        if e["id"] not in gesehen and ((not e["feld_art"]) or e["feld_art"] == art):
             treffer.append(("beschriftung", e))
     rang = {"name": 0, "beschriftung": 1}
     treffer.sort(key=lambda t: (rang[t[0]], 0 if t[1]["sprache"] == sprache else 1, -int(t[1]["verwendet"] or 0)))
     return [dict(t[1], treffer_art=t[0]) for t in treffer]
+
+
+def _stammdaten_index(eintraege: list[dict]) -> dict:
+    """Nachschlage-Indizes (Feldname, Beschriftungs-Norm) — einmal je Liste,
+    damit der Abgleich O(Felder) statt O(Felder x Eintraege) bleibt."""
+    if eintraege and "_index" in eintraege[0]:
+        return eintraege[0]["_index"]
+    idx = {"name": {}, "norm": {}}
+    for e in eintraege:
+        if e["feld_name"]:
+            idx["name"].setdefault(e["feld_name"], []).append(e)
+        if e["beschriftung_norm"]:
+            idx["norm"].setdefault(e["beschriftung_norm"], []).append(e)
+    if eintraege:
+        eintraege[0]["_index"] = idx
+    return idx
 
 
 def _stammdaten_laden(conn, user_id: int) -> list[dict]:
@@ -175,14 +236,18 @@ def _stammdaten_laden(conn, user_id: int) -> list[dict]:
 
 
 def _stammdaten_anwenden(conn, project: dict, felder: list, nur_offene: bool = True) -> int:
-    """Traegt Stammdaten in Felder ein (quelle 'stammdaten'). Gibt die Anzahl zurueck."""
+    """Traegt Stammdaten in Felder ein (quelle 'stammdaten'). Gibt die Anzahl zurueck.
+    nur_offene=True: nur Felder ohne Quickinfo. nur_offene=False: zusaetzlich
+    Felder, deren Text selbst aus Stammdaten kam. Hand-Texte und PDF-Originale
+    werden NIE ersetzt; namenlose Felder (Anker "#n") nie befuellt."""
     eintraege = _stammdaten_laden(conn, project["user_id"])
     if not eintraege:
         return 0
     sprache = project.get("alt_language") or "de"
     anzahl = 0
     for f in felder:
-        if nur_offene and (f["quickinfo"] or "").strip():
+        hat_text = bool((f["quickinfo"] or "").strip())
+        if hat_text and (nur_offene or (f.get("quelle") or "") not in QUELLEN_ERSETZBAR):
             continue
         treffer = _stammdaten_treffer(eintraege, f, sprache)
         if not treffer:
@@ -207,6 +272,8 @@ def _stammdaten_upsert(conn, user_id: int, beschriftung: str, feld_art: str, fel
         raise HTTPException(status_code=400, detail="Die Quickinfo darf nicht leer sein")
     if not norm and not feld_name:
         raise HTTPException(status_code=400, detail="Bitte eine Beschriftung oder einen Feldnamen angeben")
+    if feld_art not in FELDARTEN:
+        raise HTTPException(status_code=400, detail="Unbekannte Feldart")
     if norm:
         vorhanden = conn.execute(
             "SELECT id FROM stammdaten WHERE user_id = ? AND beschriftung_norm = ? AND feld_art = ?",
@@ -221,6 +288,9 @@ def _stammdaten_upsert(conn, user_id: int, beschriftung: str, feld_art: str, fel
                sprache = ?, herkunft = ?, updated_at = datetime('now') WHERE id = ?""",
             (quickinfo, feld_name, feld_name, sprache, herkunft, vorhanden["id"]))
         return int(vorhanden["id"])
+    anzahl = conn.execute("SELECT COUNT(*) FROM stammdaten WHERE user_id = ?", (user_id,)).fetchone()[0]
+    if anzahl >= MAX_STAMMDATEN_JE_KONTO:
+        raise HTTPException(status_code=400, detail=f"Die Stammdaten-Bibliothek ist voll (maximal {MAX_STAMMDATEN_JE_KONTO} Eintraege)")
     cur = conn.execute(
         """INSERT INTO stammdaten (user_id, beschriftung, beschriftung_norm, feld_art, feld_name, quickinfo, sprache, herkunft)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -256,25 +326,52 @@ async def handle_upload(file_path: str, filename: str, user: dict, project_id: i
             "filename": filename, "project_type": "pdfform", "appended": is_append, "status": "extracting"}
 
 
+def _extraktion_fehlgeschlagen(project_id: int, document_id: int, file_path: str, out_dir: str,
+                               is_append: bool, grund: str) -> None:
+    """Fehlerpfad der Extraktion: Dokumentzeile und angefangene Felder weg, Status
+    zurueck ('extracted' beim Anhaengen, sonst 'error'), Upload-Datei und
+    Bildordner entfernen (sonst Waisen auf der Platte)."""
+    log.error("[formular] Extraktion fehlgeschlagen (Projekt %s, Dokument %s): %s", project_id, document_id, grund)
+    conn = _d.get_db()
+    try:
+        conn.execute("DELETE FROM formularfelder WHERE document_id = ?", (document_id,))
+        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+        conn.execute("UPDATE projects SET status = ? WHERE id = ?", ("extracted" if is_append else "error", project_id))
+        conn.commit()
+    finally:
+        conn.close()
+    wurzel_up = os.path.realpath(_d.upload_dir) + os.sep
+    wurzel_res = os.path.realpath(_d.results_dir) + os.sep
+    try:
+        if file_path and os.path.realpath(file_path).startswith(wurzel_up) and os.path.isfile(file_path):
+            os.unlink(file_path)
+        if out_dir and os.path.realpath(out_dir).startswith(wurzel_res) and os.path.isdir(out_dir):
+            shutil.rmtree(out_dir, ignore_errors=True)
+    except OSError:
+        pass
+
+
 async def _extract_in_background(project_id: int, document_id: int, doc_index: int,
                                  file_path: str, user_id: int, is_append: bool):
     out_dir = os.path.join(_d.results_dir, str(user_id), str(project_id), f"doc{doc_index}")
     os.makedirs(out_dir, exist_ok=True)
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     try:
         felder, hinweise = await loop.run_in_executor(None, extract_formular, file_path, out_dir, project_id)
     except Exception as e:
-        print(f"[formular] Extraktion fehlgeschlagen (Projekt {project_id}, Dokument {document_id}): {e}")
-        conn = _d.get_db()
-        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
-        conn.execute("UPDATE projects SET status = ? WHERE id = ?", ("extracted" if is_append else "error", project_id))
-        conn.commit()
-        conn.close()
+        _extraktion_fehlgeschlagen(project_id, document_id, file_path, out_dir, is_append, repr(e))
         return
 
     conn = _d.get_db()
     try:
+        seiten_mit_text: set = set()
         for f in felder:
+            # Seitentext nur am ersten Feld jeder Seite speichern (Bandbreite und
+            # Speicher: bei 2000 Feldern sonst 2000 Kopien des Seitentextes).
+            page_text = ""
+            if f.get("page_number") and f.get("page_number") not in seiten_mit_text:
+                page_text = f.get("page_text") or ""
+                seiten_mit_text.add(f.get("page_number"))
             rect = f.get("rect") or (None, None, None, None)
             quickinfo = f.get("quickinfo_original") or ""
             conn.execute(
@@ -291,7 +388,7 @@ async def _extract_in_background(project_id: int, document_id: int, doc_index: i
                  _sauber(f.get("gruppe"), MAX_TEXTFELD), f.get("umfeld") or "",
                  json.dumps(f.get("optionen") or [], ensure_ascii=False), 1 if f.get("pflicht") else 0,
                  1 if f.get("ausgefuellt") else 0, quickinfo, quickinfo, "pdf" if quickinfo.strip() else "",
-                 f.get("ausschnitt_path") or "", f.get("page_view_path") or "", f.get("page_text") or ""))
+                 f.get("ausschnitt_path") or "", f.get("page_view_path") or "", page_text))
         hinweise_json = json.dumps(hinweise, ensure_ascii=False) if (hinweise.get("uebersprungen") or hinweise.get("warnungen")) else ""
         conn.execute("UPDATE documents SET extraction_method = ?, hinweise = ? WHERE id = ?",
                      ("formular-pdfix" if hinweise.get("quelle_liste") == "pdfix" else "formular", hinweise_json, document_id))
@@ -302,6 +399,33 @@ async def _extract_in_background(project_id: int, document_id: int, doc_index: i
         _stammdaten_anwenden(conn, project, neue, nur_offene=True)
         conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
         conn.commit()
+    except Exception as e:
+        conn.close()
+        conn = None
+        _extraktion_fehlgeschlagen(project_id, document_id, file_path, out_dir, is_append, "DB-Phase: " + repr(e))
+        return
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def haengende_extraktionen_zuruecksetzen() -> int:
+    """Beim Start: Formular-Projekte, die (z. B. durch einen Neustart mitten in der
+    Extraktion) auf 'extracting' stehen geblieben sind, auf 'extracted' bzw.
+    'error' setzen; Dokumente ohne Felder werden entfernt. Gibt die Anzahl zurueck."""
+    conn = _d.get_db()
+    try:
+        rows = conn.execute("SELECT id FROM projects WHERE tool = 'formular' AND status = 'extracting'").fetchall()
+        for r in rows:
+            pid = r["id"]
+            conn.execute("""DELETE FROM documents WHERE project_id = ? AND NOT EXISTS
+                            (SELECT 1 FROM formularfelder f WHERE f.document_id = documents.id)""", (pid,))
+            hat_felder = conn.execute("SELECT COUNT(*) FROM formularfelder WHERE project_id = ?", (pid,)).fetchone()[0]
+            conn.execute("UPDATE projects SET status = ? WHERE id = ?", ("extracted" if hat_felder else "error", pid))
+        conn.commit()
+        if rows:
+            log.warning("[formular] %d haengende Extraktion(en) beim Start zurueckgesetzt", len(rows))
+        return len(rows)
     finally:
         conn.close()
 
@@ -312,6 +436,13 @@ def build_router(deps: Deps) -> APIRouter:
     global _d
     _d = deps
     router = APIRouter()
+
+    @router.on_event("startup")
+    async def _startup():
+        try:
+            haengende_extraktionen_zuruecksetzen()
+        except Exception as e:  # Start darf daran nie scheitern (Tabelle fehlt bei Erstlauf o. ae.)
+            log.warning("[formular] Start-Reparatur uebersprungen: %r", e)
 
     # ---- Felder lesen
     @router.get("/api/projects/{project_id}/felder")
@@ -351,14 +482,18 @@ def build_router(deps: Deps) -> APIRouter:
                 d["hinweise"] = json.loads(d["hinweise"]) if d.get("hinweise") else None
             except Exception:
                 d["hinweise"] = None
-        return {"project": project, "documents": docs, "felder": felder, "stammdaten_treffer": treffer,
+        # Nur, was die Ansicht braucht — keine Serverpfade (original_path) nach aussen.
+        projekt_aussen = {k: project.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type",
+                                                       "alt_language", "created_at", "updated_at")}
+        projekt_aussen["hat_original"] = bool(project.get("original_path"))
+        return {"project": projekt_aussen, "documents": docs, "felder": felder, "stammdaten_treffer": treffer,
                 "stammdaten_anzahl": len(eintraege)}
 
     # ---- Quickinfo speichern
     @router.patch("/api/felder/{feld_id}")
     async def feld_speichern(feld_id: int, request: Request, user: dict = Depends(_user)):
-        data = await request.json()
-        if not isinstance(data, dict) or "quickinfo" not in data:
+        data = await _json_body(request)
+        if "quickinfo" not in data:
             raise HTTPException(status_code=400, detail="quickinfo fehlt")
         text = _sauber(data.get("quickinfo"), MAX_QUICKINFO)
         conn = _d.get_db()
@@ -405,14 +540,16 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.post("/api/felder/{feld_id}/stammdaten-uebernehmen")
     async def feld_aus_stammdaten(feld_id: int, request: Request, user: dict = Depends(_user)):
-        data = await request.json()
+        data = await _json_body(request)
         try:
             sid = int(data.get("stammdaten_id"))
-        except (TypeError, ValueError, AttributeError):
+        except (TypeError, ValueError):
             raise HTTPException(status_code=400, detail="stammdaten_id fehlt")
         conn = _d.get_db()
         try:
-            _feld_des_nutzers(conn, feld_id, user["id"])
+            feld = _feld_des_nutzers(conn, feld_id, user["id"])
+            if str(feld["anker"] or "").startswith("#"):
+                raise HTTPException(status_code=400, detail="Dieses Feld hat keinen Feldnamen und kann nicht beschrieben werden")
             e = conn.execute("SELECT * FROM stammdaten WHERE id = ? AND user_id = ?", (sid, user["id"])).fetchone()
             if not e:
                 raise HTTPException(status_code=404, detail="Stammdaten-Eintrag nicht gefunden")
@@ -479,6 +616,7 @@ def build_router(deps: Deps) -> APIRouter:
         return einheiten
 
     def _pdf_fuer_dokument(einheit: dict, output_dir: str, custom_title: Optional[str]) -> tuple[str, dict]:
+        """Synchron (laeuft im Executor): Originalpfad pruefen, Quickinfos schreiben."""
         doc = einheit["doc"]
         src = doc.get("original_path") or ""
         wurzel = os.path.realpath(_d.upload_dir) + os.sep
@@ -495,6 +633,37 @@ def build_router(deps: Deps) -> APIRouter:
                           "offen": sum(1 for f in einheit["felder"] if not (f["quickinfo"] or "").strip()),
                           "warnungen": erg.warnungen}
 
+    def _export_bauen(einheiten: list, work_dir: str, custom_name: Optional[str], project: dict,
+                      einzeln: bool) -> tuple[str, str, dict]:
+        """Synchron (Executor): erzeugt PDF oder ZIP in work_dir. Liefert (Pfad, Download-Name, Info)."""
+        if einzeln:
+            einheit = einheiten[0]
+            out_path, info = _pdf_fuer_dokument(einheit, work_dir, custom_name)
+            name = f"inkludocs_{custom_name or _d.doc_label(einheit['doc'])}_quickinfos.pdf"
+            return out_path, name, info
+        zip_base = custom_name or _d.safe_filename_component(project.get("name") or project.get("filename") or "projekt")
+        zip_path = os.path.join(work_dir, f"{zip_base}_alle_formulare.zip")
+        warnungen, gesamt, geschrieben, offen = [], 0, 0, 0
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for pos, einheit in enumerate(einheiten, start=1):
+                out_path, info = _pdf_fuer_dokument(einheit, work_dir, None)
+                inner = f"{pos:02d}_{_d.doc_label(einheit['doc'])}_quickinfos.pdf"
+                zf.write(out_path, arcname=inner)
+                gesamt += info["gesamt"]; geschrieben += info["geschrieben"]; offen += info["offen"]
+                warnungen += [f"[{inner}] {w}" for w in info["warnungen"]]
+        return zip_path, f"{zip_base}_alle_formulare.zip", {"geschrieben": geschrieben, "gesamt": gesamt, "offen": offen,
+                                                            "warnungen": warnungen, "writer": formular_export.aktiver_writer()}
+
+    def _alte_exportordner_aufraeumen(export_root: str, behalten: int = 3) -> None:
+        """Nur die juengsten Export-Arbeitsordner (f_*) behalten."""
+        try:
+            ordner = sorted((os.path.join(export_root, n) for n in os.listdir(export_root) if n.startswith("f_")),
+                            key=os.path.getmtime)
+            for alt in ordner[:-behalten]:
+                shutil.rmtree(alt, ignore_errors=True)
+        except OSError:
+            pass
+
     @router.post("/api/projects/{project_id}/export/formular")
     async def export_formular(project_id: int, request: Request, user: dict = Depends(_user)):
         document_id, custom_name = await _d.read_export_options(request)
@@ -504,43 +673,44 @@ def build_router(deps: Deps) -> APIRouter:
             einheiten = _export_einheiten(conn, project, document_id)
         finally:
             conn.close()
-        output_dir = os.path.join(_d.results_dir, str(user["id"]), str(project_id), "_export")
-        os.makedirs(output_dir, exist_ok=True)
+        if not einheiten:
+            raise HTTPException(status_code=400, detail="Dieses Projekt enthaelt noch kein Formular")
         abo = _d.billing.pruefe_kontingent(user["id"])
         kostenpflichtig = abo.get("plan") != "free"
         if kostenpflichtig and not abo.get("erlaubt", True):
             raise HTTPException(status_code=429, detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
 
-        if document_id is not None or len(einheiten) == 1:
-            einheit = einheiten[0]
-            out_path, info = _pdf_fuer_dokument(einheit, output_dir, custom_name)
-            headers = {"X-Export-Method": "formular", "X-Export-Writer": info.get("writer", ""),
-                       "X-Export-Tagged": str(info["geschrieben"]),
-                       "X-Export-Total": str(info["gesamt"]), "X-Export-Open": str(info["offen"])}
-            if info["warnungen"]:
-                headers["X-Export-Warnings"] = json.dumps(info["warnungen"], ensure_ascii=False)
-            if kostenpflichtig:
-                _d.billing.verbuche(user["id"], "export", aktion="formular_export")
-            name = f"inkludocs_{custom_name or _d.doc_label(einheit['doc'])}_quickinfos.pdf"
-            return FileResponse(out_path, filename=name, media_type="application/pdf", headers=headers)
+        # Eigener Arbeitsordner je Anfrage (parallele Exporte desselben Projekts
+        # kommen sich sonst in die Quere); die Datei bleibt fuer den Download liegen,
+        # aeltere Arbeitsordner werden beim naechsten Export aufgeraeumt.
+        export_root = os.path.join(_d.results_dir, str(user["id"]), str(project_id), "_export")
+        os.makedirs(export_root, exist_ok=True)
+        _alte_exportordner_aufraeumen(export_root)
+        work_dir = tempfile.mkdtemp(prefix="f_", dir=export_root)
+        einzeln = document_id is not None or len(einheiten) == 1
+        loop = asyncio.get_running_loop()
+        try:
+            out_path, name, info = await loop.run_in_executor(
+                None, _export_bauen, einheiten, work_dir, custom_name, project, einzeln)
+        except HTTPException:
+            shutil.rmtree(work_dir, ignore_errors=True)
+            raise
+        except Exception as e:
+            shutil.rmtree(work_dir, ignore_errors=True)
+            log.exception("[formular] Export fehlgeschlagen (Projekt %s): %r", project_id, e)
+            raise HTTPException(status_code=500, detail="Der Export ist fehlgeschlagen")
 
-        zip_base = custom_name or _d.safe_filename_component(project.get("name") or project.get("filename") or "projekt")
-        zip_path = os.path.join(output_dir, f"{zip_base}_alle_formulare.zip")
-        warnungen, gesamt, geschrieben = [], 0, 0
-        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-            for pos, einheit in enumerate(einheiten, start=1):
-                out_path, info = _pdf_fuer_dokument(einheit, output_dir, None)
-                inner = f"{pos:02d}_{_d.doc_label(einheit['doc'])}_quickinfos.pdf"
-                zf.write(out_path, arcname=inner)
-                gesamt += info["gesamt"]
-                geschrieben += info["geschrieben"]
-                warnungen += [f"[{inner}] {w}" for w in info["warnungen"]]
-        headers = {"X-Export-Method": "formular", "X-Export-Tagged": str(geschrieben), "X-Export-Total": str(gesamt)}
-        if warnungen:
-            headers["X-Export-Warnings"] = json.dumps(warnungen, ensure_ascii=False)
-        if kostenpflichtig:
+        headers = {"X-Export-Method": "formular", "X-Export-Writer": _ascii_header(info.get("writer") or ""),
+                   "X-Export-Tagged": str(info["geschrieben"]), "X-Export-Total": str(info["gesamt"]),
+                   "X-Export-Open": str(info["offen"])}
+        if info["warnungen"]:
+            headers["X-Export-Warnings"] = json.dumps(info["warnungen"], ensure_ascii=True)
+        # Antwort zuerst bauen, dann verbuchen — und nur, wenn wirklich etwas geschrieben wurde.
+        response = FileResponse(out_path, filename=name, media_type="application/pdf" if einzeln else "application/zip",
+                                headers=headers)
+        if kostenpflichtig and info["geschrieben"] > 0:
             _d.billing.verbuche(user["id"], "export", aktion="formular_export")
-        return FileResponse(zip_path, filename=f"{zip_base}_alle_formulare.zip", media_type="application/zip", headers=headers)
+        return response
 
     @router.post("/api/projects/{project_id}/export/formular_csv")
     async def export_formular_csv(project_id: int, request: Request, user: dict = Depends(_user)):
@@ -553,6 +723,7 @@ def build_router(deps: Deps) -> APIRouter:
             einheiten = _export_einheiten(conn, project, document_id)
         finally:
             conn.close()
+        cs = _d.csv_safe   # Formel-Injection-Schutz: Feldnamen/Texte stammen aus fremden PDFs
         buf = io.StringIO()
         w = csv.writer(buf, delimiter=";")
         w.writerow(["Nummer", "Name", "Quickinfo", "Type-Nr", "Type", "Seite", "Dokument", "Beschriftung", "Abschnitt", "Pflicht", "Quelle"])
@@ -560,12 +731,12 @@ def build_router(deps: Deps) -> APIRouter:
         for einheit in einheiten:
             label = _d.doc_label(einheit["doc"])
             for f in einheit["felder"]:
-                w.writerow([f["feld_index"], f["feld_name"], f["quickinfo"] or "", typ_nr.get(f["feld_art"], 0), f["feld_art"],
-                            f["page_number"] or "", label, f["beschriftung"] or "", f["gruppe"] or "",
+                w.writerow([f["feld_index"], cs(f["feld_name"]), cs(f["quickinfo"] or ""), typ_nr.get(f["feld_art"], 0), f["feld_art"],
+                            f["page_number"] or "", cs(label), cs(f["beschriftung"] or ""), cs(f["gruppe"] or ""),
                             1 if f["pflicht"] else 0, f["quelle"] or ""])
         base = custom_name or _d.safe_filename_component(project.get("name") or "formular")
         return Response(content="﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
-                        headers={"Content-Disposition": f'attachment; filename="{base}_quickinfos.csv"'})
+                        headers={"Content-Disposition": _content_disposition(f"{base}_quickinfos.csv")})
 
     # ---- Stammdaten-Bibliothek
     @router.get("/api/stammdaten")
@@ -579,19 +750,17 @@ def build_router(deps: Deps) -> APIRouter:
         return {"stammdaten": [dict(r) for r in rows]}
 
     def _eintrag_aus_body(data: dict) -> dict:
-        art = (data.get("feld_art") or "").strip()
+        art = _sauber(data.get("feld_art"), 20).lower()
         if art not in FELDARTEN:
             raise HTTPException(status_code=400, detail="Unbekannte Feldart")
-        sprache = (data.get("sprache") or "de").strip().lower()[:5]
+        sprache = (_sauber(data.get("sprache"), 5) or "de").lower()
         return {"beschriftung": _sauber(data.get("beschriftung"), MAX_TEXTFELD), "feld_art": art,
                 "feld_name": _sauber(data.get("feld_name"), MAX_TEXTFELD),
                 "quickinfo": _sauber(data.get("quickinfo"), MAX_QUICKINFO), "sprache": sprache}
 
     @router.post("/api/stammdaten")
     async def stammdaten_anlegen(request: Request, user: dict = Depends(_user)):
-        data = await request.json()
-        if not isinstance(data, dict):
-            raise HTTPException(status_code=400, detail="Ungueltige Daten")
+        data = await _json_body(request)
         e = _eintrag_aus_body(data)
         conn = _d.get_db()
         try:
@@ -603,9 +772,7 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.patch("/api/stammdaten/{sid}")
     async def stammdaten_aendern(sid: int, request: Request, user: dict = Depends(_user)):
-        data = await request.json()
-        if not isinstance(data, dict):
-            raise HTTPException(status_code=400, detail="Ungueltige Daten")
+        data = await _json_body(request)
         conn = _d.get_db()
         try:
             alt = conn.execute("SELECT * FROM stammdaten WHERE id = ? AND user_id = ?", (sid, user["id"])).fetchone()
@@ -614,6 +781,18 @@ def build_router(deps: Deps) -> APIRouter:
             e = _eintrag_aus_body({**dict(alt), **data})
             if not e["quickinfo"]:
                 raise HTTPException(status_code=400, detail="Die Quickinfo darf nicht leer sein")
+            norm = _norm_beschriftung(e["beschriftung"])
+            if not norm and not e["feld_name"]:
+                raise HTTPException(status_code=400, detail="Bitte eine Beschriftung oder einen Feldnamen angeben")
+            # Dubletten-Schutz: derselbe Schluessel darf nicht auf einen zweiten Eintrag zeigen.
+            if norm:
+                dublette = conn.execute("SELECT id FROM stammdaten WHERE user_id = ? AND beschriftung_norm = ? AND feld_art = ? AND id != ?",
+                                        (user["id"], norm, e["feld_art"], sid)).fetchone()
+            else:
+                dublette = conn.execute("SELECT id FROM stammdaten WHERE user_id = ? AND beschriftung_norm = '' AND feld_name = ? AND feld_art = ? AND id != ?",
+                                        (user["id"], e["feld_name"], e["feld_art"], sid)).fetchone()
+            if dublette:
+                raise HTTPException(status_code=409, detail="Es gibt schon einen Eintrag mit dieser Beschriftung und Feldart")
             conn.execute(
                 """UPDATE stammdaten SET beschriftung = ?, beschriftung_norm = ?, feld_art = ?, feld_name = ?, quickinfo = ?,
                    sprache = ?, updated_at = datetime('now') WHERE id = ?""",
@@ -645,10 +824,11 @@ def build_router(deps: Deps) -> APIRouter:
         buf = io.StringIO()
         w = csv.writer(buf, delimiter=";")
         w.writerow(["Beschriftung", "Feldart", "Feldname", "Quickinfo", "Sprache"])
+        cs = _d.csv_safe
         for r in rows:
-            w.writerow([r["beschriftung"], r["feld_art"], r["feld_name"], r["quickinfo"], r["sprache"]])
+            w.writerow([cs(r["beschriftung"]), r["feld_art"], cs(r["feld_name"]), cs(r["quickinfo"]), r["sprache"]])
         return Response(content="﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
-                        headers={"Content-Disposition": 'attachment; filename="inkludocs_stammdaten.csv"'})
+                        headers={"Content-Disposition": _content_disposition("inkludocs_stammdaten.csv")})
 
     @router.post("/api/stammdaten/import")
     async def stammdaten_import(file: UploadFile = File(...), user: dict = Depends(_user)):
@@ -658,11 +838,12 @@ def build_router(deps: Deps) -> APIRouter:
         if len(inhalt) > MAX_IMPORT_BYTES:
             raise HTTPException(status_code=413, detail="Die CSV ist zu gross (maximal 1 MB)")
         text = inhalt.decode("utf-8-sig", errors="replace")
+        class _Semikolon(csv.excel):
+            delimiter = ";"
         try:
             dialekt = csv.Sniffer().sniff(text[:2000], delimiters=";,")
         except Exception:
-            dialekt = csv.excel
-            dialekt.delimiter = ";"
+            dialekt = _Semikolon
         reader = csv.reader(io.StringIO(text), dialekt)
         kopf = next(reader, None)
         if not kopf:
@@ -683,11 +864,16 @@ def build_router(deps: Deps) -> APIRouter:
                 art = zelle(zeile, "feldart").strip().lower()
                 if art not in FELDARTEN:
                     art = ""
+                # CSV-Zellen koennen aus unserem eigenen Export mit Apostroph-Schutz stammen — den wieder abnehmen.
+                def ohne_schutz(v: str) -> str:
+                    return v[1:] if v[:1] == "'" and v[1:2] in ("=", "+", "-", "@") else v
                 try:
-                    _stammdaten_upsert(conn, user["id"], zelle(zeile, "beschriftung"), art, zelle(zeile, "feldname"),
-                                       zelle(zeile, "quickinfo"), (zelle(zeile, "sprache") or "de").strip().lower()[:5], "import")
+                    _stammdaten_upsert(conn, user["id"], ohne_schutz(zelle(zeile, "beschriftung")), art, ohne_schutz(zelle(zeile, "feldname")),
+                                       ohne_schutz(zelle(zeile, "quickinfo")), (zelle(zeile, "sprache") or "de").strip().lower()[:5], "import")
                     uebernommen += 1
-                except HTTPException:
+                except HTTPException as e:
+                    if "voll" in str(e.detail):
+                        raise
                     uebersprungen += 1
             conn.commit()
         finally:

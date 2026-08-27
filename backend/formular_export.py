@@ -50,12 +50,16 @@ import csv
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import fitz
+
+from formular_processor import pdfix_moeglich
 
 log = logging.getLogger(__name__)
 
@@ -63,12 +67,6 @@ _SCRIPT_DIR = Path(__file__).parent / "pdfix_scripts"
 _IMPORT_SCRIPT = _SCRIPT_DIR / "Formular_Import_Quickinfo.py"
 _EXPORT_SCRIPT = _SCRIPT_DIR / "Formular_Export_Quickinfo.py"
 _TIMEOUT_SECONDS = 180
-
-try:
-    from pdfixsdk import GetPdfix  # noqa: F401
-    _PDFIX_AVAILABLE = True
-except ImportError:  # pragma: no cover
-    _PDFIX_AVAILABLE = False
 
 
 class FormularExportFehler(RuntimeError):
@@ -84,23 +82,39 @@ class FormularExportErgebnis:
     warnungen: list = field(default_factory=list)
 
 
+def _subprocess(cmd: list, was: str) -> subprocess.CompletedProcess:
+    """Subprocess mit Zeitlimit; ein Timeout wird zur Nutzer-Meldung statt zum 500."""
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=_TIMEOUT_SECONDS, cwd=str(_SCRIPT_DIR))
+    except subprocess.TimeoutExpired:
+        raise FormularExportFehler(f"{was} hat zu lange gedauert (Zeitlimit {_TIMEOUT_SECONDS} s).")
+
+
+def _temp_pfad(verzeichnis: str, praefix: str, endung: str) -> str:
+    """Eindeutiger Temp-Dateiname im Arbeitsordner (parallele Exporte stoeren sich nicht)."""
+    fd, pfad = tempfile.mkstemp(prefix=praefix, suffix=endung, dir=verzeichnis)
+    os.close(fd)
+    return pfad
+
+
 def _quickinfos_lesen(pdf_path: str, work_dir: str) -> dict[str, str]:
     """Liest Feldname -> Quickinfo (Feld-Ebene) ueber Heines Export-Skript."""
-    csv_path = os.path.join(work_dir, "_formular_pruefung.csv")
-    cmd = [sys.executable, str(_EXPORT_SCRIPT), "-i", pdf_path, "-c", csv_path]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=_TIMEOUT_SECONDS, cwd=str(_SCRIPT_DIR))
-    if result.returncode != 0 or not os.path.exists(csv_path):
-        raise FormularExportFehler("Die exportierte PDF konnte nicht nachgeprüft werden.")
-    out = {}
-    with open(csv_path, encoding="utf-8", newline="") as f:
-        for row in csv.reader(f, delimiter=";"):
-            if row and row[0] != "Nummer" and len(row) > 2:
-                out[row[1]] = row[2]
+    csv_path = _temp_pfad(work_dir, "_pruefung_", ".csv")
     try:
-        os.unlink(csv_path)
-    except OSError:
-        pass
-    return out
+        result = _subprocess([sys.executable, str(_EXPORT_SCRIPT), "-i", pdf_path, "-c", csv_path], "Die Nachprüfung")
+        if result.returncode != 0 or not os.path.exists(csv_path):
+            raise FormularExportFehler("Die exportierte PDF konnte nicht nachgeprüft werden.")
+        out = {}
+        with open(csv_path, encoding="utf-8", newline="") as f:
+            for row in csv.reader(f, delimiter=";"):
+                if row and row[0] != "Nummer" and len(row) > 2:
+                    out[row[1]] = row[2]
+        return out
+    finally:
+        try:
+            os.unlink(csv_path)
+        except OSError:
+            pass
 
 
 def _widget_liste(doc) -> list:
@@ -126,12 +140,12 @@ def _seitentexte_ohne_widgets(doc) -> list[str]:
 def aktiver_writer() -> str:
     """"pdfix" oder "pymupdf" — FORMULAR_WRITER, sonst pdfix bei gesetzter Lizenz
     und verfuegbarem SDK, sonst pymupdf (siehe Modulkopf)."""
-    pdfix_moeglich = _PDFIX_AVAILABLE and os.environ.get("PDFIX_ENABLED", "true").lower() != "false"
+    moeglich = pdfix_moeglich()
     gewaehlt = os.environ.get("FORMULAR_WRITER", "").strip().lower()
     if gewaehlt in ("pdfix", "pymupdf"):
-        return "pdfix" if (gewaehlt == "pdfix" and pdfix_moeglich) else "pymupdf"
+        return "pdfix" if (gewaehlt == "pdfix" and moeglich) else "pymupdf"
     lizenz = bool(os.environ.get("PDFIX_LICENSE_USER") and os.environ.get("PDFIX_LICENSE_KEY"))
-    return "pdfix" if (pdfix_moeglich and lizenz) else "pymupdf"
+    return "pdfix" if (moeglich and lizenz) else "pymupdf"
 
 
 def _pdf_string_utf16(text: str) -> str:
@@ -149,7 +163,6 @@ def _schreibe_mit_pymupdf(input_path: str, tmp_path: str, zu_schreiben: dict[str
     Feld und Widget dasselbe Dictionary. Ein Feld wird genau einmal beschrieben,
     auch wenn es mehrere Erscheinungen hat.
     """
-    import shutil
     shutil.copyfile(input_path, tmp_path)   # inkrementell = an die Kopie anhaengen
     doc = fitz.open(tmp_path)
     try:
@@ -202,28 +215,41 @@ def write_quickinfos_to_pdf(input_path: str, output_path: str,
 
     out_dir = os.path.dirname(output_path) or "."
     os.makedirs(out_dir, exist_ok=True)
-    tmp_path = output_path + ".tmp"
+    tmp_path = _temp_pfad(out_dir, "_export_", ".pdf.tmp")
 
+    try:
+        return _schreiben_und_pruefen(input_path, output_path, tmp_path, out_dir, zu_schreiben, warnungen)
+    finally:
+        try:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)   # bei Erfolg schon nach output_path verschoben, bei Fehler Rest entfernen
+        except OSError:
+            pass
+
+
+def _schreiben_und_pruefen(input_path: str, output_path: str, tmp_path: str, out_dir: str,
+                           zu_schreiben: dict[str, str], warnungen: list) -> FormularExportErgebnis:
     if not zu_schreiben:
-        import shutil
         shutil.copyfile(input_path, tmp_path)
         os.replace(tmp_path, output_path)
-        return FormularExportErgebnis(path=output_path, geschrieben=0, warnungen=warnungen)
+        return FormularExportErgebnis(path=output_path, geschrieben=0, writer=aktiver_writer(), warnungen=warnungen)
 
     writer = aktiver_writer()
     if writer == "pdfix":
-        csv_path = os.path.join(out_dir, "_formular_import.csv")
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f, delimiter=";")
-            w.writerow(["Nummer", "Name", "Quickinfo"])
-            for i, (name, text) in enumerate(zu_schreiben.items(), start=1):
-                w.writerow([i, name, text])
-        cmd = [sys.executable, str(_IMPORT_SCRIPT), "-i", input_path, "-o", tmp_path, "-c", csv_path]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=_TIMEOUT_SECONDS, cwd=str(_SCRIPT_DIR))
+        csv_path = _temp_pfad(out_dir, "_import_", ".csv")
         try:
-            os.unlink(csv_path)
-        except OSError:
-            pass
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                w = csv.writer(f, delimiter=";")
+                w.writerow(["Nummer", "Name", "Quickinfo"])
+                for i, (name, text) in enumerate(zu_schreiben.items(), start=1):
+                    w.writerow([i, name, text])
+            result = _subprocess([sys.executable, str(_IMPORT_SCRIPT), "-i", input_path, "-o", tmp_path, "-c", csv_path],
+                                 "Das Schreiben der Quickinfos")
+        finally:
+            try:
+                os.unlink(csv_path)
+            except OSError:
+                pass
         m = re.search(r"TU_APPLIED=(\d+) FIELDS_FOUND=(\d+) NOT_FOUND=(.*)", result.stdout or "")
         nicht_gefunden = [n for n in (m.group(3).split("|") if m else []) if n]
         if result.returncode not in (0, 4) or not m or not os.path.exists(tmp_path):
@@ -247,7 +273,7 @@ def write_quickinfos_to_pdf(input_path: str, output_path: str,
             a = fa.read()
             if fb.read(len(a)) != a:
                 raise FormularExportFehler("Nachprüfung fehlgeschlagen: Originaldaten wurden verändert.")
-        if _PDFIX_AVAILABLE and os.environ.get("PDFIX_ENABLED", "true").lower() != "false":
+        if pdfix_moeglich():
             # Gegenprobe mit Heines Export-Skript: liest /TU auf Feld-Ebene.
             gelesen = _quickinfos_lesen(tmp_path, out_dir)
             fehlend = [n for n, t in zu_schreiben.items() if n not in nicht_gefunden and gelesen.get(n) != t]

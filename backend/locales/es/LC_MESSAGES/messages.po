@@ -4438,3 +4438,34 @@ msgstr "usado {n} veces"
 msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
 msgstr "«Cualquiera» coincide con cualquier tipo de campo con esta etiqueta."
 
+# QUICKINFO-WERKZEUG (27.08.2026): Review-Runde (Loeschdialog Formular, namenlose Felder)
+msgid "Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden."
+msgstr "Este campo no tiene nombre de campo. No se puede escribir una sugerencia en el PDF para él."
+
+msgid "Formular gelöscht."
+msgstr "Formulario eliminado."
+
+msgid "Formular löschen?"
+msgstr "¿Eliminar formulario?"
+
+msgid "Formular umbenannt."
+msgstr "Formulario renombrado."
+
+msgid "Formular umbenennen"
+msgstr "Renombrar formulario"
+
+msgid "Möchtest du das Formular „{name}\" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "¿Realmente quieres eliminar el formulario «{name}» con 1 campo? Esto no se puede deshacer."
+
+msgid "Möchtest du das Formular „{name}\" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "¿Realmente quieres eliminar el formulario «{name}» con {n} campos? Esto no se puede deshacer."
+
+msgid "Neuer Name des Formulars"
+msgstr "Nuevo nombre del formulario"
+
+msgid "dieses Formular"
+msgstr "este formulario"
+
+msgid "– Formular „{name}“"
+msgstr "– formulario «{name}»"
+

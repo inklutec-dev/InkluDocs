@@ -221,7 +221,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         if (tool === 'formular') {
             // QUICKINFO-WERKZEUG (27.08.2026): gleicher Block wie PDF, Wortlaut Formular.
-            const hasExisting = project.status !== 'neu' && !!project.original_path;
+            const hasExisting = project.status !== 'neu' && !!(project.hat_original || project.original_path);
             const heading = hasExisting ? t('Weiteres PDF-Formular hinzufügen') : t('PDF-Formular hinzufügen');
             const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
             const hint = hasExisting
@@ -871,6 +871,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             deleted: () => t('Webseite gelöscht.'),
             renamed: () => t('Webseite umbenannt.'),
         },
+        // QUICKINFO-WERKZEUG (27.08.2026): Formular-Dokument (Felder statt Bilder).
+        formdoc: {
+            deleteTitle: () => t('Formular löschen?'),
+            renameTitle: () => t('Formular umbenennen'),
+            renameLabel: () => t('Neuer Name des Formulars'),
+            renameHint: () => t('Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.'),
+            fallbackName: () => t('dieses Formular'),
+            deleted: () => t('Formular gelöscht.'),
+            renamed: () => t('Formular umbenannt.'),
+        },
         img: {
             deleteTitle: () => t('Bild löschen?'),
             renameTitle: () => t('Bild umbenennen'),
@@ -933,6 +943,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         let body;
         if (_docActionKind === 'img') {
             body = t('Möchtest du das Bild „{name}" wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name });
+        } else if (_docActionKind === 'formdoc') {
+            body = count === 1
+                ? t('Möchtest du das Formular „{name}" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name })
+                : t('Möchtest du das Formular „{name}" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name, n: count });
         } else if (_docActionKind === 'web') {
             body = count === 1
                 ? t('Möchtest du die Webseite „{name}" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name })

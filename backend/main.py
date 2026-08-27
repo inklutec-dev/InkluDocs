@@ -4366,6 +4366,13 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
     with open(file_path, "wb") as f:
         f.write(content)
 
+    if project_id is not None and not is_pdf and formular_api.ist_formular_projekt(project_id, user["id"]):
+        # Formular-Projekte nehmen nur PDF an — abweisen, bevor eine Waise auf der Platte bleibt.
+        try:
+            os.unlink(file_path)
+        except OSError:
+            pass
+        raise HTTPException(status_code=400, detail="In ein Formular-Projekt können nur PDF-Formulare hochgeladen werden.")
     if is_pdf and project_id is not None and formular_api.ist_formular_projekt(project_id, user["id"]):
         # QUICKINFO-WERKZEUG (27.08.2026): PDF in einem Formular-Projekt geht den
         # Formularweg (Felder statt Bilder). Vorpruefung im Request, damit der
@@ -6880,6 +6887,7 @@ app.include_router(formular_api.build_router(formular_api.Deps(
     read_export_options=_read_export_options,
     safe_filename_component=_safe_filename_component,
     doc_label=_doc_label,
+    csv_safe=_csv_safe,
 )))
 
 

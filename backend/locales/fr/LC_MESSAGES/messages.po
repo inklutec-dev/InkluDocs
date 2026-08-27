@@ -4438,3 +4438,34 @@ msgstr "utilisé {n} fois"
 msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
 msgstr "« Indifférent » correspond à tout type de champ portant ce libellé."
 
+# QUICKINFO-WERKZEUG (27.08.2026): Review-Runde (Loeschdialog Formular, namenlose Felder)
+msgid "Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden."
+msgstr "Ce champ n’a pas de nom de champ. Aucune info-bulle ne peut être écrite dans le PDF pour lui."
+
+msgid "Formular gelöscht."
+msgstr "Formulaire supprimé."
+
+msgid "Formular löschen?"
+msgstr "Supprimer le formulaire ?"
+
+msgid "Formular umbenannt."
+msgstr "Formulaire renommé."
+
+msgid "Formular umbenennen"
+msgstr "Renommer le formulaire"
+
+msgid "Möchtest du das Formular „{name}\" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Voulez-vous vraiment supprimer le formulaire « {name} » avec 1 champ ? Cette action est irréversible."
+
+msgid "Möchtest du das Formular „{name}\" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Voulez-vous vraiment supprimer le formulaire « {name} » avec {n} champs ? Cette action est irréversible."
+
+msgid "Neuer Name des Formulars"
+msgstr "Nouveau nom du formulaire"
+
+msgid "dieses Formular"
+msgstr "ce formulaire"
+
+msgid "– Formular „{name}“"
+msgstr "– formulaire « {name} »"
+

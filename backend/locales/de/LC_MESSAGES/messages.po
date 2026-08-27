@@ -4441,3 +4441,34 @@ msgstr "{n}-mal verwendet"
 msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
 msgstr "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
 
+# QUICKINFO-WERKZEUG (27.08.2026): Review-Runde (Loeschdialog Formular, namenlose Felder)
+msgid "Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden."
+msgstr "Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden."
+
+msgid "Formular gelöscht."
+msgstr "Formular gelöscht."
+
+msgid "Formular löschen?"
+msgstr "Formular löschen?"
+
+msgid "Formular umbenannt."
+msgstr "Formular umbenannt."
+
+msgid "Formular umbenennen"
+msgstr "Formular umbenennen"
+
+msgid "Möchtest du das Formular „{name}\" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Möchtest du das Formular „{name}\" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen."
+
+msgid "Möchtest du das Formular „{name}\" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Möchtest du das Formular „{name}\" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen."
+
+msgid "Neuer Name des Formulars"
+msgstr "Neuer Name des Formulars"
+
+msgid "dieses Formular"
+msgstr "dieses Formular"
+
+msgid "– Formular „{name}“"
+msgstr "– Formular „{name}“"
+

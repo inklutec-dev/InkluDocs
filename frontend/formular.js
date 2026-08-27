@@ -64,8 +64,11 @@
         if (f.optionen && f.optionen.length) teile.push(t('Optionen: {o}', { o: escHtml(f.optionen.join(', ')) }) + '.');
         if (f.seiten && f.seiten.length > 1) teile.push(t('Erscheint auf den Seiten {s}', { s: escHtml(f.seiten.join(', ')) }) + '.');
         if (f.feld_name) teile.push(t('Technischer Feldname: {n}', { n: escHtml(f.feld_name) }) + '.');
+        if (istNamenlos(f)) teile.push(t('Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden.'));
         return '<p class="feld-kontext" id="feld_kontext_' + f.id + '">' + teile.join(' ') + '</p>';
     }
+
+    function istNamenlos(f) { return typeof f.anker === 'string' && f.anker.charAt(0) === '#'; }
 
     function statusText(f) {
         if (!f.quickinfo || !f.quickinfo.trim()) return t('Quickinfo fehlt');
@@ -95,7 +98,8 @@
             + kontextHtml(f)
             + '<label for="quickinfo_' + f.id + '" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Quickinfo')
             +   ' <span class="save-indicator" id="feld_saved_' + f.id + '">' + t('Gespeichert') + '</span></label>'
-            + '<textarea class="alt-text-field quickinfo-field" id="quickinfo_' + f.id + '" data-feld-id="' + f.id + '" aria-describedby="feld_kontext_' + f.id + '"'
+            + '<textarea class="alt-text-field quickinfo-field" id="quickinfo_' + f.id + '" data-feld-id="' + f.id + '" aria-describedby="feld_kontext_' + f.id + '" maxlength="1000"'
+            +   (istNamenlos(f) ? ' disabled' : '')
             +   ' placeholder="' + t('Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen') + '">' + escHtml(f.quickinfo || '') + '</textarea>'
             + vorschlag
             + '<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
@@ -109,7 +113,7 @@
     // Hoerprobe: so klingt das Formular beim Durchgehen mit einem Screenreader —
     // Feld fuer Feld, in der Reihenfolge der Felder. Billig zu erzeugen, erklaert
     // jedem Sehenden in zehn Sekunden, warum Quickinfos wichtig sind.
-    function hoerprobeHtml(docId, felder) {
+    function hoerprobeHtml(felder) {
         const items = felder.map(f => {
             const art = feldartText(f.feld_art);
             const text = (f.quickinfo && f.quickinfo.trim()) ? escHtml(f.quickinfo) : '<em>' + t('ohne Bezeichnung') + '</em>';
@@ -161,19 +165,19 @@
         const name = escHtml(docDisplayName(doc));
         const seiten = new Map();
         felder.forEach(f => { const p = f.page_number || 0; if (!seiten.has(p)) seiten.set(p, []); seiten.get(p).push(f); });
-        const inner = hinweiseHtml(doc) + hoerprobeHtml(docKey, felder)
+        const inner = hinweiseHtml(doc) + hoerprobeHtml(felder)
             + Array.from(seiten.entries()).sort((a, b) => a[0] - b[0]).map(([p, fs]) => seiteHtml(docKey, p, fs, treffer)).join('');
         const offen = felder.filter(f => !(f.quickinfo && f.quickinfo.trim())).length;
         const meta = '(' + t('{n} Felder, {o} offen', { n: felder.length, o: offen }) + ')';
-        const vh = t('– Dokument „{name}"', { name: name });
+        const vh = t('– Formular „{name}“', { name: name });
         return '<div class="doc-block">'
             + '<details class="doc-section" data-doc="' + docKey + '"' + (offeneDocs.has(docKey) ? ' open' : '') + '>'
             +   '<summary class="doc-summary"><h2 class="doc-heading" id="doc_heading_' + docKey + '">' + t('Dokument {n}: {name}', { n: pos, name: name }) + ' <span class="page-count">' + meta + '</span></h2></summary>'
             +   inner
             + '</details>'
             + '<span class="doc-actions">'
-            +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-            +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            +   '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</span></div>';
     }
 
@@ -256,7 +260,7 @@
             badge.className = 'badge ' + (offen ? 'badge-pending' : 'badge-done');
         }
         if (sd) sd.disabled = offen;
-        if (nurOffene && card) card.hidden = !offen && false; // beim Bearbeiten nicht ausblenden (Fokus bleibt)
+        // Beim Bearbeiten bewusst NICHT ausblenden, auch wenn der Filter „nur offene" aktiv ist (Fokus bleibt im Feld).
     }
 
     async function speichern(feldId, text) {
@@ -313,6 +317,14 @@
     function filter(nur) {
         nurOffene = nur;
         document.querySelectorAll('.feld-review').forEach(c => { c.hidden = nur && c.dataset.status !== 'offen'; });
+        // Leer gewordene Seiten- und Dokument-Klappen mit ausblenden (sonst hoert der
+        // Screenreader eine Ueberschrift ohne Inhalt).
+        document.querySelectorAll('details.page-section').forEach(s => {
+            s.hidden = nur && s.querySelectorAll('.feld-review:not([hidden])').length === 0;
+        });
+        document.querySelectorAll('.doc-block').forEach(b => {
+            b.hidden = nur && b.querySelectorAll('.feld-review:not([hidden])').length === 0;
+        });
         announce(nur ? t('Nur offene Felder werden angezeigt.') : t('Alle Felder werden angezeigt.'));
     }
 
@@ -331,7 +343,21 @@
         if (!silent) announce(t('Export abgebrochen.'));
     }
 
+    let exportLaeuft = false;
     async function exportieren(projectId, format) {
+        if (exportLaeuft) return;   // Doppelklick-Sperre: ein Export je Dialog
+        exportLaeuft = true;
+        const knoepfe = Array.from(document.querySelectorAll('#fExportPanel button'));
+        knoepfe.forEach(b => { b.disabled = true; });
+        try {
+            await _exportieren(projectId, format);
+        } finally {
+            exportLaeuft = false;
+            knoepfe.forEach(b => { b.disabled = false; });
+        }
+    }
+
+    async function _exportieren(projectId, format) {
         const statusEl = document.getElementById('fExportStatus');
         const chosen = document.querySelector('input[name="fExportScope"]:checked');
         const body = {};
@@ -386,6 +412,18 @@
         setupProjectDropzone(projectId);
         const h1 = document.getElementById('projectName');
         if (h1) h1.focus();
+        // Laeuft die Extraktion noch (z. B. Seite waehrenddessen neu geladen): weiter abfragen.
+        if (project.status === 'extracting') {
+            setTimeout(async () => {
+                try {
+                    const r = await fetch('/api/projects/' + projectId);
+                    if (!r.ok) return;
+                    const d = await r.json();
+                    if (d.project && d.project.status !== 'extracting') announce(t('Formular gelesen.'));
+                    showProject(projectId);
+                } catch (e) { /* naechster Versuch beim naechsten Aufruf */ }
+            }, 2500);
+        }
     }
 
     window.Formular = { showProject, original, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, exportOeffnen, exportSchliessen, exportieren };

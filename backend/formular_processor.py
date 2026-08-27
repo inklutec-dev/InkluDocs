@@ -80,6 +80,12 @@ except ImportError:  # pragma: no cover
     _PDFIX_AVAILABLE = False
 
 
+def pdfix_moeglich() -> bool:
+    """SDK installiert und nicht per PDFIX_ENABLED=false abgeschaltet (eine Stelle
+    fuer Leser und Schreiber)."""
+    return _PDFIX_AVAILABLE and os.environ.get("PDFIX_ENABLED", "true").lower() != "false"
+
+
 class FormularFehler(ValueError):
     """Fachlicher Fehler mit Meldung fuer den Nutzer (400 im Upload)."""
 
@@ -121,7 +127,6 @@ class Feld:
     ausschnitt_path: str = ""
     page_view_path: str = ""
     page_text: str = ""
-    quelle_liste: str = "pdfix"     # pdfix|fitz — woher die Feldliste kam
 
 
 @dataclass
@@ -423,7 +428,7 @@ def analysiere_formular(pdf_path: str, output_dir: Optional[str] = None,
     # 1. Massgebliche Liste ueber PDFix, Rueckfall fitz.
     pdfix_liste: list[dict] = []
     quelle = "fitz"
-    if _PDFIX_AVAILABLE and os.environ.get("PDFIX_ENABLED", "true").lower() != "false":
+    if pdfix_moeglich():
         try:
             pdfix_liste = _pdfix_feldliste(pdf_path, output_dir or os.path.dirname(pdf_path) or ".")
             quelle = "pdfix"
@@ -485,7 +490,6 @@ def analysiere_formular(pdf_path: str, output_dir: Optional[str] = None,
                 feld_index=eintrag["nummer"], anker=anker, feld_name=name, feld_art=feld_art,
                 quickinfo_original=eintrag.get("quickinfo") or (w["tu"] if w else ""),
                 ausgefuellt=bool(eintrag.get("ausgefuellt")) or bool(w and w["ausgefuellt"]),
-                quelle_liste=quelle,
             )
             if not name:
                 hinweise["uebersprungen"].append({"art": "ohne_name", "nummer": eintrag["nummer"], "feld_art": feld_art})

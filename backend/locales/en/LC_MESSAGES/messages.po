@@ -4438,3 +4438,34 @@ msgstr "used {n} times"
 msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
 msgstr "“Any” matches every field type with this label."
 
+# QUICKINFO-WERKZEUG (27.08.2026): Review-Runde (Loeschdialog Formular, namenlose Felder)
+msgid "Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden."
+msgstr "This field has no field name. A tooltip cannot be written to the PDF for it."
+
+msgid "Formular gelöscht."
+msgstr "Form deleted."
+
+msgid "Formular löschen?"
+msgstr "Delete form?"
+
+msgid "Formular umbenannt."
+msgstr "Form renamed."
+
+msgid "Formular umbenennen"
+msgstr "Rename form"
+
+msgid "Möchtest du das Formular „{name}\" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the form “{name}” with 1 field? This cannot be undone."
+
+msgid "Möchtest du das Formular „{name}\" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the form “{name}” with {n} fields? This cannot be undone."
+
+msgid "Neuer Name des Formulars"
+msgstr "New name of the form"
+
+msgid "dieses Formular"
+msgstr "this form"
+
+msgid "– Formular „{name}“"
+msgstr "– form “{name}”"
+

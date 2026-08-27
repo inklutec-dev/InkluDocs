@@ -141,8 +141,29 @@ Der Feldverlust ist eine Eigenheit der Testversion; die Nachprüfung bleibt.
   ausgeliefert, Originale nur unterhalb von `UPLOAD_DIR` gelesen
   (Realpath-Schutz wie beim Word-Export).
 - Eingaben: Steuerzeichen entfernt, Quickinfo ≤ 1000 Zeichen, Textfelder
-  ≤ 300, CSV-Import ≤ 1 MB / 5000 Zeilen, Feldarten und Quellen als feste
-  Listen. Alle Ausgaben im Frontend laufen durch `escHtml()`.
+  ≤ 300, CSV-Import ≤ 1 MB / 5000 Zeilen, höchstens 20 000 Stammdaten je
+  Konto, Feldarten als feste Liste, JSON-Körper geprüft (400 statt 500).
+  Alle Ausgaben im Frontend laufen durch `escHtml()`.
+- CSV-Ausgaben (Feldliste, Stammdaten) sind gegen Formel-Injection geschützt
+  (`_csv_safe` aus main.py: `=`, `+`, `-`, `@` am Zellanfang bekommen ein
+  Apostroph); der Import nimmt dieses Apostroph wieder ab.
+- Kopfzeilen der Export-Antwort sind reines ASCII, Dateinamen nach RFC 6266;
+  Credits werden erst nach fertiger Antwort und nur bei tatsächlich
+  geschriebenen Quickinfos verbucht. Der Export läuft im Executor (der
+  Server bleibt währenddessen bedienbar), jede Anfrage in einem eigenen
+  Arbeitsordner (`_export/f_*`, die drei jüngsten bleiben liegen).
+- Fehlerpfad der Extraktion: Status `error` (bzw. `extracted` beim Anhängen),
+  Dokument, Felder, Upload-Datei und Bildordner werden entfernt; beim Start
+  werden hängende `extracting`-Formularprojekte zurückgesetzt.
+- Stammdaten ersetzen nie Hand-Texte oder PDF-Originale und nie namenlose
+  Felder; `nur_offene=false` ersetzt nur Texte, die selbst aus Stammdaten
+  stammen.
+- Unabhängige Review-Runde 27.08.2026: 32 Befunde, die kritischen und
+  mittleren (Header-Zeichensatz, Credits vor Antwort, CSV-Formeln, Event-Loop,
+  Temp-Dateien, hängender Status, Stammdaten-Überschreiben, Abrechnung ohne
+  Leistung) behoben; offen geblieben sind geerbte Muster des Altbestands
+  (doc_index ohne Sperre bei parallelen Uploads, Serverpfade in
+  `GET /api/projects/{id}`).
 - PDFix läuft als Subprocess mit Zeitlimit; verschlüsselte PDFs werden mit
   Meldung abgewiesen; Seiten- und Feldzahl sind begrenzt.
 - Der Export ändert nichts außer `/TU` — byte-genau belegbar.

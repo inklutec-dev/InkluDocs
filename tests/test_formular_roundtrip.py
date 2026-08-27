@@ -37,6 +37,15 @@ FIXTURE = os.path.join(HERE, "fixtures", "testformular_inkludocs.pdf")
 WERT = "K-0000-TEST"   # Wert im Feld "kundennummer" — darf nirgends auftauchen
 
 
+def setUpModule():
+    """Fixture liegt im Repo; fehlt sie (frischer Checkout ohne Binaerdatei), wird
+    sie mit dem Generator erzeugt."""
+    if not os.path.isfile(FIXTURE):
+        sys.path.insert(0, os.path.join(HERE, "fixtures"))
+        import make_testformular  # noqa: E402
+        make_testformular.erzeuge(FIXTURE)
+
+
 class TestVorpruefung(unittest.TestCase):
     def test_fixture_ist_formular(self):
         self.assertEqual(fp.validiere_formular(FIXTURE), 13)   # 13 Erscheinungen (Radio = 2)

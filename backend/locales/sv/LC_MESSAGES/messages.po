@@ -3999,3 +3999,34 @@ msgstr "använd {n} gånger"
 msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
 msgstr "”Valfri” matchar alla fälttyper med denna etikett."
 
+# QUICKINFO-WERKZEUG (27.08.2026): Review-Runde (Loeschdialog Formular, namenlose Felder)
+msgid "Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden."
+msgstr "Detta fält saknar fältnamn. Ingen hjälptext kan skrivas till PDF:en för det."
+
+msgid "Formular gelöscht."
+msgstr "Formulär raderat."
+
+msgid "Formular löschen?"
+msgstr "Radera formulär?"
+
+msgid "Formular umbenannt."
+msgstr "Formulär omdöpt."
+
+msgid "Formular umbenennen"
+msgstr "Byt namn på formulär"
+
+msgid "Möchtest du das Formular „{name}\" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen radera formuläret ”{name}” med 1 fält? Detta kan inte ångras."
+
+msgid "Möchtest du das Formular „{name}\" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen radera formuläret ”{name}” med {n} fält? Detta kan inte ångras."
+
+msgid "Neuer Name des Formulars"
+msgstr "Nytt namn på formuläret"
+
+msgid "dieses Formular"
+msgstr "detta formulär"
+
+msgid "– Formular „{name}“"
+msgstr "– formulär ”{name}”"
+

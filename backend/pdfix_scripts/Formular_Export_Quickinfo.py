@@ -24,6 +24,14 @@
 #    5. Ungepaarte UTF-16-Surrogate in Feldnamen/Quickinfos werden vor dem
 #       CSV-Schreiben ersetzt (Lehre aus dem PDFix-Befund vom 27.08.2026,
 #       KBV_Formeln.pdf: sonst UnicodeEncodeError und Abbruch).
+#    6. "aufseiten"/"auf1seite" werden vor der Verzweigung initialisiert (in der
+#       Vorlage nur im Kids-Zweig), und im Kids-Zweig wird jede Seite nach der
+#       Annotationsschleife mit page.Release() freigegeben (Speicher bei
+#       grossen Formularen). "aufseiten" (alle Seiten) wird wie in der Vorlage
+#       berechnet, aber nicht ausgegeben — die Seitenliste kommt in InkluDocs
+#       aus PyMuPDF (formular_processor.py).
+#    7. doc.Close() nach dem Lesen; Fehlermeldung + Exit-Code 2, wenn die PDF
+#       nicht geoeffnet werden kann.
 #
 #  CSV-Format (Semikolon, UTF-8): Nummer;Name;Quickinfo;Type-Nr;Type;Value;Seite
 # =============================================================================
