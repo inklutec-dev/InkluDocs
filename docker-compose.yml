@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260827-pdfixfix
+    image: inkludocs:v4-20260827-lizenz
     container_name: inkludocs
     restart: unless-stopped
     ports:
@@ -52,6 +52,9 @@ services:
       - VALIDATOR_MODE=${VALIDATOR_MODE:-off}
       # Features
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
+      # PDFix-Lizenz (27.08.2026): aus der Env-Datei; leer = Testversion
+      - PDFIX_LICENSE_USER=${PDFIX_LICENSE_USER:-}
+      - PDFIX_LICENSE_KEY=${PDFIX_LICENSE_KEY:-}
       - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-true}
       - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
       - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
