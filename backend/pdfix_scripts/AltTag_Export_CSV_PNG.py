@@ -108,6 +108,20 @@ _rendered_pages = {}     # page_num -> page_view_path (1 Seitenansicht pro Seite
 PAGE_VIEW_SCALE = 2.0    # ~144 DPI fuer lesbare Seitenansicht
 
 
+import re
+
+
+# 27.08.2026 (Befund Karbe, KBV_Formeln.pdf): Text aus Formel-/Symbolschriften
+# kann ungepaarte UTF-16-Surrogate enthalten (kaputte Zeichenzuordnung im PDF).
+# Die lassen sich nicht als UTF-8 schreiben -> csv.writer warf UnicodeEncodeError,
+# der ganze PDFix-Export brach ab und InkluDocs fiel still auf fitz zurueck
+# (1 Bild statt aller Figures). Jedes solche Zeichen wird durch U+FFFD ersetzt.
+_SURROGAT = re.compile("[\ud800-\udfff]")
+
+
+def _sauber(wert):
+    return _SURROGAT.sub("\ufffd", wert) if isinstance(wert, str) else wert
+
 def _render_page_view(page, page_num, crop_box):
     """Rendert die ganze Seite als PNG. Cache: 1x pro Seite (Schluessel page_num)."""
     if page_num in _rendered_pages:
@@ -197,7 +211,7 @@ def _page_text_objects(page_num):
             if obj.GetObjectType() == 1:
                 mcid = obj.GetMcid()
                 if mcid != -1:
-                    objs.append((mcid, obj.GetText()))
+                    objs.append((mcid, _sauber(obj.GetText())))
         _page_objects_cache[page_num] = objs
     return objs
 
@@ -511,7 +525,7 @@ for row in matrix[1:]:
 pfadcsv = os.path.join(data_dir, "figure_array.csv")
 with open(pfadcsv, mode="w", newline="", encoding="utf-8") as f:
     writer = csv.writer(f, delimiter=";")
-    writer.writerows(matrix)
+    writer.writerows([[_sauber(zelle) for zelle in zeile] for zeile in matrix])
 
 end = time.time()
 print("Dauer:", round((end - start), 2), "Sekunden")
