@@ -38,6 +38,7 @@ log = logging.getLogger(__name__)
 _MAX_ITERATIONS = 6
 _HISTORY_TURNS = 20  # weniger als 30, weil Tool-Calls + Images Context-Hungry sind
 _DEFAULT_MAX_TOKENS = 4096
+_MAX_TOOL_RESULT_CHARS = 40000  # Werkzeug-Ergebnis im tool_result (28.08.2026, vorher 8000)
 
 
 def _detect_media_type(img_bytes: bytes) -> str:
@@ -277,11 +278,16 @@ def run_agent(
                 except (TypeError, ValueError):
                     pass
 
-            # Serialisiere result als kompaktes JSON für tool_result
+            # Serialisiere result als kompaktes JSON für tool_result.
+            # 28.08.2026: Kappe 8000 -> 40000 Zeichen — bei 26 Formularfeldern war die
+            # Liste abgeschnitten, der Agent pruefte nur die Haelfte (und sagte es).
             try:
-                content_text = json.dumps(result, ensure_ascii=False)[:8000]
+                content_text = json.dumps(result, ensure_ascii=False)[:_MAX_TOOL_RESULT_CHARS]
             except (TypeError, ValueError):
-                content_text = str(result)[:8000]
+                content_text = str(result)[:_MAX_TOOL_RESULT_CHARS]
+            if len(content_text) >= _MAX_TOOL_RESULT_CHARS:
+                content_text += ' …[Ergebnis gekuerzt — Werkzeug mit engerer Auswahl erneut aufrufen]'
+                log.warning("Tool-Result %s auf %d Zeichen gekappt", name, _MAX_TOOL_RESULT_CHARS)
 
             tool_results.append({
                 "type": "tool_result",

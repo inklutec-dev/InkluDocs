@@ -106,7 +106,7 @@ def _kurz(feld, label: str) -> dict:
         "feld_art": FELDART_TEXT.get(feld["feld_art"] or "unbekannt", "Feld"), "page": feld["page_number"],
         "beschriftung": feld["beschriftung"] or "", "gruppe": feld["gruppe"] or "",
         "pflicht": bool(feld["pflicht"]), "ausgefuellt": bool(feld["ausgefuellt"]),
-        "quickinfo": qi[:300], "status": "beschrieben" if qi.strip() else "offen",
+        "quickinfo": qi[:200], "status": "beschrieben" if qi.strip() else "offen",
         "quelle": QUELLE_TEXT.get(feld["quelle"] or "", feld["quelle"] or ""),
         "sicherheit": feld["sicherheit"] or "", "namenlos": _namenlos(feld),
         "pruefstatus": feld["review_status"] or "offen",

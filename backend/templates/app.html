@@ -2815,10 +2815,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function inkluagentAppendMessage(role, content) {
         const log = document.getElementById('inkluagentLog');
         if (!log) return;
+        // VoiceOver (Steve 28.08.2026): jede Nachricht ist fokussierbar (tabindex -1) und
+        // traegt ihren Absender als Ueberschrift 3 — so laesst sich der Verlauf per
+        // Ueberschriften-Navigation durchgehen und eine Antwort in Ruhe nachlesen; die
+        // Live-Ansage allein war bei langen Antworten abgeschnitten.
         const wrapper = document.createElement('div');
         wrapper.className = 'inkluagent-message ' + (role === 'user' ? 'user' : 'assistant');
-        const roleEl = document.createElement('div');
+        wrapper.tabIndex = -1;
+        const roleEl = document.createElement('h3');
         roleEl.className = 'inkluagent-message-role';
+        roleEl.style.margin = '0 0 0.3rem 0';
         roleEl.textContent = (role === 'user' ? t('Du') : 'InkluAgent');
         const contentEl = document.createElement('div');
         contentEl.className = 'inkluagent-message-content';
@@ -2826,6 +2832,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         wrapper.appendChild(roleEl);
         wrapper.appendChild(contentEl);
         log.appendChild(wrapper);
+        return wrapper;
     }
 
     function inkluagentSetStatus(text, isError) {
@@ -2871,9 +2878,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 return;
             }
             const data = await res.json();
-            inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'));
+            const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'));
             log.scrollTop = log.scrollHeight;
             inkluagentSetStatus('', false);
+            // Fokus auf die Antwort statt zurueck ins Eingabefeld: der Screenreader liest sie
+            // vollstaendig und von vorn; Tab fuehrt danach zum Eingabefeld.
+            if (antwortEl) { window._inkluagentFokusAntwort = true; antwortEl.focus(); }
             // Refresh-Actions vom Chatbot: pro Bild Textarea-Wert live setzen.
             // Wenn Bild nicht im DOM (z.B. noch nicht gerendert), Fallback auf Full-Reload.
             const refreshActions = (data.actions || []).filter(a => a && a.type === 'refresh_image');
@@ -2909,7 +2919,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
         } finally {
             sendBtn.disabled = false;
-            input.focus();
+            if (window._inkluagentFokusAntwort) { window._inkluagentFokusAntwort = false; } else { input.focus(); }
         }
     }
 
