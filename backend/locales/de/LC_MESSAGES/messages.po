@@ -4643,3 +4643,9 @@ msgstr "KI-Vorschlag übernommen: {q}"
 
 msgid "im Chat bestätigt"
 msgstr "im Chat bestätigt"
+
+msgid "{n} Alt-Texte neu generieren, {c} Credits"
+msgstr "{n} Alt-Texte neu generieren, {c} Credits"
+
+msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
+msgstr "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."

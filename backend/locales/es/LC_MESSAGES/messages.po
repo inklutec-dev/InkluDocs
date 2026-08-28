@@ -4640,3 +4640,9 @@ msgstr "Propuesta de la IA aplicada: {q}"
 
 msgid "im Chat bestätigt"
 msgstr "confirmada en el chat"
+
+msgid "{n} Alt-Texte neu generieren, {c} Credits"
+msgstr "Regenerar {n} textos alternativos, {c} créditos"
+
+msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
+msgstr "Se inicia la regeneración de los textos alternativos de la IA. Los textos escritos a mano no cambian."

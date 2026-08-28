@@ -557,6 +557,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         const images = data.images;
         const documents = data.documents || [];
+        // „Alle neu generieren“ (28.08.2026, wie beim Quickinfo-Werkzeug): nur KI-Texte ohne Hand-Text zaehlen.
+        const kiBilder = images.filter(i => i.status === 'done' && !(i.alt_text_edited || '').trim()).length;
         window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt
         window._shareRoles = data.share_roles || [];  // aktive Gast-Rollen (Etappe 2: Badges + Filter)
         if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';  // Rollen-Workflow (10.07.2026)
@@ -596,6 +598,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 ` : ''}
                 <div class="card-actions">
                     ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + t('Alle Alt-Texte generieren') + '</button>' : ''}
+                    ${!window.GUEST_MODE && project.status !== 'extracted' && project.status !== 'processing' && project.status !== 'extracting' && kiBilder > 0 ? '<button class="btn btn-secondary" id="regenAllBtn" onclick="startGeneration(' + project.id + ', \'ki_neu\')">' + t('{n} Alt-Texte neu generieren, {c} Credits', { n: kiBilder, c: kiBilder }) + '</button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">${t('Prüfung abschließen')}</button>
@@ -2491,8 +2494,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
-    async function startGeneration(projectId) {
-        const btn = document.getElementById('generateBtn');
+    async function startGeneration(projectId, modus) {
+        // modus 'ki_neu' (28.08.2026): nur KI-Texte ohne Hand-Text neu, Cache umgangen, 1 Credit je Bild.
+        const btn = document.getElementById(modus === 'ki_neu' ? 'regenAllBtn' : 'generateBtn');
         // Pre-check daily limit
         if (window._dailyLimit && window._dailyLimit.remaining <= 0) {
             announce(t('Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt.'));
@@ -2500,8 +2504,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             return;
         }
         if (btn) { btn.disabled = true; btn.textContent = t('Wird gestartet...'); }
-        announce(t('Alt-Text-Generierung wird gestartet.'));
-        const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST' });
+        announce(modus === 'ki_neu' ? t('Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert.') : t('Alt-Text-Generierung wird gestartet.'));
+        const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(modus === 'ki_neu' ? { modus: 'ki_neu' } : {}) });
         if (res.ok) { showProject(projectId); }
         else { const d = await res.json(); announce(t('Fehler: {msg}', { msg: d.detail || '' })); }
     }

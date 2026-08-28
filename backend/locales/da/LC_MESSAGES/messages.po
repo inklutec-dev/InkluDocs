@@ -4331,3 +4331,9 @@ msgstr "KI-forslag brugt: {q}"
 
 msgid "im Chat bestätigt"
 msgstr "bekræftet i chatten"
+
+msgid "{n} Alt-Texte neu generieren, {c} Credits"
+msgstr "Generér {n} alt-tekster igen, {c} credits"
+
+msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
+msgstr "Genereringen af KI-alt-teksterne starter. Tekster skrevet i hånden forbliver uændrede."

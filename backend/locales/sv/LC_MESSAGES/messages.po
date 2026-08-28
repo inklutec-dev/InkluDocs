@@ -4201,3 +4201,9 @@ msgstr "AI-förslag använt: {q}"
 
 msgid "im Chat bestätigt"
 msgstr "bekräftad i chatten"
+
+msgid "{n} Alt-Texte neu generieren, {c} Credits"
+msgstr "Generera om {n} alt-texter, {c} krediter"
+
+msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
+msgstr "Omgenerering av AI-alt-texterna startar. Texter skrivna för hand förblir oförändrade."

@@ -5951,7 +5951,16 @@ async def get_image_page_view(image_id: int, user: dict = Depends(get_current_us
 
 
 @app.post("/api/projects/{project_id}/generate")
-async def generate_alt_texts(project_id: int, user: dict = Depends(get_current_user)):
+async def generate_alt_texts(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Sammellauf: alle Bilder mit status 'pending'. Seit 28.08.2026 (Steve, wie beim
+    Quickinfo-Werkzeug) optional {"modus": "ki_neu"}: zusaetzlich alle fertigen Bilder OHNE
+    Hand-Text (alt_text_edited leer) werden neu generiert — Cache umgangen, 1 Credit je Bild;
+    Hand-Texte bleiben obenauf (alt_text_edited wird nie angefasst)."""
+    try:
+        _body = await request.json()
+    except Exception:
+        _body = {}
+    modus = "ki_neu" if isinstance(_body, dict) and _body.get("modus") == "ki_neu" else "luecken"
     # Check daily limit (admins are exempt)
     if not user.get("is_admin"):
         _tageslimit = effektives_api_tageslimit(user)
@@ -5978,15 +5987,27 @@ async def generate_alt_texts(project_id: int, user: dict = Depends(get_current_u
         conn.close()
         raise HTTPException(status_code=409, detail="Die PDF wird noch verarbeitet. Bitte warte, bis die Bilder extrahiert sind.")
 
+    anzahl_ki = 0
+    if modus == "ki_neu":
+        anzahl_ki = conn.execute(
+            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done' AND TRIM(COALESCE(alt_text_edited,'')) = ''",
+            (project_id,)).fetchone()[0]
+        if not anzahl_ki:
+            conn.close()
+            return {"ok": True, "gestartet": False, "modus": modus, "anzahl": 0}
+        conn.execute("UPDATE images SET status = 'pending' WHERE project_id = ? AND status = 'done' AND TRIM(COALESCE(alt_text_edited,'')) = ''",
+                     (project_id,))
     conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
     conn.commit()
     conn.close()
 
-    asyncio.create_task(_process_project(project_id, user["id"]))
-    return {"ok": True, "message": "Alt-Text-Generierung gestartet"}
+    asyncio.create_task(_process_project(project_id, user["id"], force=(modus == "ki_neu")))
+    return {"ok": True, "gestartet": True, "modus": modus, "anzahl": anzahl_ki, "message": "Alt-Text-Generierung gestartet"}
 
 
-async def _process_project(project_id: int, user_id: int):
+async def _process_project(project_id: int, user_id: int, force: bool = False):
+    """force (28.08.2026, „Alle neu generieren“): Cache je Bild raeumen und force_regenerate
+    an die Pipeline geben — sonst kaeme fuer bereits gecachte Bilder der alte Text zurueck."""
     # v2.2.3: Clear duplicate cache for this project
     clear_project_cache()
     conn = get_db()
@@ -6042,6 +6063,13 @@ async def _process_project(project_id: int, user_id: int):
             break
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
+        if force:
+            try:
+                from pdf_processor import _get_image_hash
+                from cache import evict_by_content_hash
+                evict_by_content_hash(_get_image_hash(img["image_path"]))
+            except Exception:
+                pass  # Bild fehlt o. ae. — die Pipeline meldet das selbst
 
         try:
             # v2.2: Pass width, height, original_alt to pipeline
@@ -6055,7 +6083,7 @@ async def _process_project(project_id: int, user_id: int):
             # First pass: general prompt for type detection + alt-text
             result = await asyncio.get_event_loop().run_in_executor(
                 None, generate_alt_text, img["image_path"], effective_context, None,
-                img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE,  # force_regenerate=False; leicht lebendigere Standard-Texte
+                img_width, img_height, img_original_alt, force, GENERATION_TEMPERATURE,  # force_regenerate nur bei „Alle neu generieren“; leicht lebendigere Standard-Texte
                 alt_lang, "", user_prompt
             )
 
@@ -6071,7 +6099,7 @@ async def _process_project(project_id: int, user_id: int):
             elif is_complex_type(detected_type) and not langbeschreibung:
                 specialized_result = await asyncio.get_event_loop().run_in_executor(
                     None, generate_alt_text, img["image_path"], effective_context, detected_type,
-                    img_width, img_height, img_original_alt, False, GENERATION_TEMPERATURE,
+                    img_width, img_height, img_original_alt, force, GENERATION_TEMPERATURE,
                     alt_lang, "", user_prompt
                 )
                 if specialized_result.get("langbeschreibung"):
