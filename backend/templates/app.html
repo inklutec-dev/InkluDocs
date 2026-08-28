@@ -2701,7 +2701,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function inkluagentSectionHtml(projectId, variante) {
         const formular = variante === 'formular';
         return ''
-            + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">'
+            + '<section class="inkluagent-section" aria-labelledby="inkluagentHeading" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">'
+            // Ueberschrift Ebene 2 (Steve 28.08.2026): auf einer Stufe mit den Dokumenten, damit die
+            // Nachrichten (Ebene 3) in der Ueberschriftenliste unter dem Chat haengen, nicht unter dem letzten Bild/Feld.
+            +   '<h2 id="inkluagentHeading" class="section-title" style="margin:0 0 0.4rem 0;">InkluAgent</h2>'
             +   '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
             +     t('Chatbot')
             +   '</button>'

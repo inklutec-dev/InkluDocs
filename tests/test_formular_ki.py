@@ -149,6 +149,31 @@ class TestKonsistenzNummern(unittest.TestCase):
         self.assertEqual(out[1].quickinfo, "Wohnadresse des Berechtigten [1].")
         self.assertIn("Wortlaut an gleiche Beschriftung angeglichen.", out[1].hinweise)
 
+class TestSeitenbildAusnahme(unittest.TestCase):
+    """Seitenbild-Ausnahme 28.08.2026: Prompt-Block nur mit Flag; Nachpruefung nennt die Quelle der Zuordnung."""
+
+    def test_prompt_block_nur_mit_flag(self):
+        zeilen, _ = fk.seiten_zeilen(FIXTURE, 1)
+        felder, _ = fp.extract_formular(FIXTURE, None, 0)
+        felder = [dict(f, id=i + 1) for i, f in enumerate(felder) if f["page_number"] == 1]
+        _, ohne = build_quickinfo_prompt(zeilen, felder, seite=1)
+        _, mit = build_quickinfo_prompt(zeilen, felder, seite=1, mit_seitenbild=True)
+        self.assertNotIn("SEITENBILD", ohne)
+        self.assertIn("SEITENBILD", mit)
+        self.assertIn("WÖRTLICHE Textstelle", mit)
+
+    def test_nachpruefung_hinweis_mit_seitenbild(self):
+        zeilen, text = fk.seiten_zeilen(FIXTURE, 1)
+        felder, _ = fp.extract_formular(FIXTURE, None, 0)
+        f = next(x for x in felder if x["beschriftung"] == "Vorname")
+        fern = [z for z in zeilen if not fk._in_feldnaehe(z, f["rect"], "text")]
+        if not fern:
+            self.skipTest("Fixture hat keine Zeile ausserhalb der Feldnaehe")
+        weit = max(fern, key=lambda z: abs(z["rect"][1] - f["rect"][1]))
+        v = fk.nachpruefung(fk.FeldVorschlag(1, "Test.", beleg=weit["text"], sicherheit="hoch"), f, zeilen, text, mit_seitenbild=True)
+        self.assertEqual(v.sicherheit, "mittel")
+        self.assertTrue(any("Seitenbild" in h for h in v.hinweise), v.hinweise)
+
 
 if __name__ == "__main__":
     unittest.main()

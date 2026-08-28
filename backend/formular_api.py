@@ -548,7 +548,8 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                     None, lambda: formular_ki.generiere_seite(
                         src, page, [felder_by_id[f["id"]] for f in felder], sprache=project.get("alt_language") or "de",
                         formular_titel=_d.doc_label(doc), seiten_gesamt=_seitenzahl(doc), bestaetigte=bestaetigte,
-                        user_prompt=user_prompt, variation=False))
+                        user_prompt=user_prompt, variation=False,
+                        seitenbild_path=(felder[0].get("page_view_path") or None)))
             except (formular_ki.FeldPassFehler, HTTPException) as e:
                 st["fehler"].append(f"Seite {page}: {getattr(e, 'detail', None) or e}")
                 st["seiten_fertig"] += 1
@@ -833,7 +834,7 @@ def build_router(deps: Deps) -> APIRouter:
                 None, lambda: formular_ki.generiere_seite(
                     src, feld["page_number"], [_feld_fuer_ki(feld)], sprache=project.get("alt_language") or "de",
                     formular_titel=_d.doc_label(doc), seiten_gesamt=_seitenzahl(doc), bestaetigte=bestaetigte,
-                    user_prompt=user_prompt, variation=True))
+                    user_prompt=user_prompt, variation=True, seitenbild_path=(feld.get("page_view_path") or None)))
         except formular_ki.FeldPassFehler as e:
             raise HTTPException(status_code=502, detail=str(e))
         if not vorschlaege:

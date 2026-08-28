@@ -246,7 +246,7 @@ def generate_quickinfo(feld_id: int, project_id: int, user_id: int) -> dict[str,
         vorschlaege = formular_ki.generiere_seite(
             formular_api._originalpfad(doc), f["page_number"], [feld_ki], sprache=sprache,
             formular_titel=formular_api._d.doc_label(doc), seiten_gesamt=formular_api._seitenzahl(doc),
-            bestaetigte=bestaetigte, user_prompt=user_prompt, variation=True)
+            bestaetigte=bestaetigte, user_prompt=user_prompt, variation=True, seitenbild_path=(f["page_view_path"] or None))
     except formular_ki.FeldPassFehler as e:
         return {"ok": False, "error": f"Feld-Pass fehlgeschlagen: {e}"}
     except Exception as e:

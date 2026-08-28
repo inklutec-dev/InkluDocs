@@ -25,6 +25,7 @@ Seitentext auf 12.000 Zeichen gekappt, Zeitlimit des Bedrock-Clients.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass, field
 
@@ -131,8 +132,11 @@ def _in_feldnaehe(z: dict, rect, feld_art: str) -> bool:
     return links or rechts or innen or oberhalb or ueberschrift
 
 
-def nachpruefung(vorschlag: FeldVorschlag, feld: dict, zeilen: list[dict], seitentext: str) -> FeldVorschlag:
-    """Deterministische Pruefung; senkt die Sicherheit bei Verstoessen und sammelt Hinweise."""
+def nachpruefung(vorschlag: FeldVorschlag, feld: dict, zeilen: list[dict], seitentext: str,
+                 mit_seitenbild: bool = False) -> FeldVorschlag:
+    """Deterministische Pruefung; senkt die Sicherheit bei Verstoessen und sammelt Hinweise.
+    mit_seitenbild: der Vorschlag entstand MIT Seitenbild (Ausnahme fuer Felder ohne Beschriftung in
+    der Naehe) — die Stufen bleiben gleich streng, nur der Hinweis sagt, woher die Zuordnung kommt."""
     stufe = STUFEN.get(vorschlag.sicherheit, 1)
     hinweise = list(vorschlag.hinweise)
     qi = (vorschlag.quickinfo or "").strip()
@@ -152,7 +156,8 @@ def nachpruefung(vorschlag: FeldVorschlag, feld: dict, zeilen: list[dict], seite
             belegzeilen = _zeilen_mit_beleg(vorschlag.beleg, zeilen)
             if belegzeilen and not any(_in_feldnaehe(z, rect, feld.get("feld_art") or "") for z in belegzeilen):
                 stufe = min(stufe, 2)
-                hinweise.append("Beleg liegt nicht in der Nähe des Feldes.")
+                hinweise.append("Beleg liegt nicht in der Nähe des Feldes; Zuordnung aus dem Seitenbild." if mit_seitenbild
+                                else "Beleg liegt nicht in der Nähe des Feldes.")
 
     # Regel-Pruefung
     if len(qi) > MAX_QUICKINFO_LAENGE:
@@ -221,11 +226,16 @@ def konsistenz(vorschlaege: list[FeldVorschlag], felder_by_id: dict[int, dict]) 
 
 def generiere_seite(pdf_path: str, page_number: int, felder: list[dict], *, sprache: str = "de",
                     formular_titel: str = "", seiten_gesamt: int = 1, bestaetigte: list[tuple[str, str]] | None = None,
-                    user_prompt: str = "", variation: bool = False) -> list[FeldVorschlag]:
+                    user_prompt: str = "", variation: bool = False, seitenbild_path: str | None = None) -> list[FeldVorschlag]:
     """Ein Modellaufruf je Seite (bei > 40 Feldern mehrere), mit Nachpruefung.
 
     felder: Feld-Dicts (id, feld_index, feld_art, rect als Tupel, pflicht, optionen,
     beschriftung, beschriftung_lage, gruppe, seiten, quickinfo_original).
+    seitenbild_path: SEITENBILD-AUSNAHME (28.08.2026, Steve): Hat der Aufruf ein Feld OHNE
+    Beschriftung in der Naehe, geht die gerenderte Seite mit nummerierten Feldrahmen
+    (formular_processor._render_seitenansicht) als Bild mit — das Modell liest das
+    Layout wie ein Mensch. Seiten, deren Felder alle beschriftet sind, laufen
+    unveraendert nur mit Text (billiger, belegbarer).
     """
     if not felder:
         return []
@@ -234,13 +244,23 @@ def generiere_seite(pdf_path: str, page_number: int, felder: list[dict], *, spra
     by_index = {f["feld_index"]: f for f in felder}
     for start in range(0, len(felder), MAX_FELDER_JE_AUFRUF):
         teil = felder[start:start + MAX_FELDER_JE_AUFRUF]
+        mit_bild = bool(seitenbild_path) and os.path.isfile(seitenbild_path or "") \
+            and any(not (f.get("beschriftung") or "").strip() for f in teil)
         system, prompt = build_quickinfo_prompt(
             zeilen, teil, formular_titel=formular_titel, seite=page_number, seiten_gesamt=seiten_gesamt,
-            sprache=sprache, bestaetigte=bestaetigte, user_prompt=user_prompt, variation=variation)
+            sprache=sprache, bestaetigte=bestaetigte, user_prompt=user_prompt, variation=variation,
+            mit_seitenbild=mit_bild)
+        temperatur = TEMPERATUR_VARIATION if variation else TEMPERATUR_NORMAL
         try:
-            out = bedrock_client.call_bedrock_text_with_schema(
-                model=bedrock_client.BEDROCK_MODEL_GENERATE, prompt=prompt, schema=QuickinfoSeiteOutput,
-                max_tokens=4000, temperature=TEMPERATUR_VARIATION if variation else TEMPERATUR_NORMAL, system=system)
+            if mit_bild:
+                log.info("Feld-Pass Seite %s: Seitenbild-Ausnahme (Feld ohne Beschriftung)", page_number)
+                out = bedrock_client.call_bedrock_with_schema(
+                    model=bedrock_client.BEDROCK_MODEL_GENERATE, prompt=prompt, image_path=seitenbild_path,
+                    schema=QuickinfoSeiteOutput, max_tokens=4000, temperature=temperatur, system=system)
+            else:
+                out = bedrock_client.call_bedrock_text_with_schema(
+                    model=bedrock_client.BEDROCK_MODEL_GENERATE, prompt=prompt, schema=QuickinfoSeiteOutput,
+                    max_tokens=4000, temperature=temperatur, system=system)
         except bedrock_client.BedrockCallError as e:
             log.error("Feld-Pass Seite %s fehlgeschlagen: %s", page_number, e)
             raise FeldPassFehler("Die KI-Anfrage ist fehlgeschlagen. Bitte später erneut versuchen.")
@@ -252,7 +272,9 @@ def generiere_seite(pdf_path: str, page_number: int, felder: list[dict], *, spra
             gesehen.add(o.feld_index)
             v = FeldVorschlag(feld_id=f["id"], quickinfo=o.quickinfo, beleg=o.beleg or "", gruppe=o.gruppe or "",
                               sicherheit=o.sicherheit, hinweise=[o.hinweis] if o.hinweis else [])
-            ergebnisse.append(nachpruefung(v, f, zeilen, seitentext))
+            if mit_bild and not (f.get("beschriftung") or "").strip():
+                v.hinweise.append("Seitenbild einbezogen (keine Beschriftung in der Nähe).")
+            ergebnisse.append(nachpruefung(v, f, zeilen, seitentext, mit_seitenbild=mit_bild))
         fehlend = [f["feld_index"] for f in teil if f["feld_index"] not in gesehen]
         if fehlend:
             log.warning("Feld-Pass Seite %s: keine Antwort fuer Felder %s", page_number, fehlend)

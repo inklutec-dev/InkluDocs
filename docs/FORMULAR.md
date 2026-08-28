@@ -281,11 +281,25 @@ derselbe Feld-Pass wie der Knopf. Abrechnung wie in der Oberfläche (1 Credit
 je erzeugter oder geänderter Quickinfo, Reden ist frei). Gesamtbild und
 Kochrezept für weitere Werkzeuge: `docs/INKLUAGENT.md`.
 
+## Seitenbild-Ausnahme im Feld-Pass (28.08.2026)
+
+Der Feld-Pass arbeitet rein mit Text und Positionen. Hat eine Seite ein Feld
+OHNE Beschriftung in der Nähe (`beschriftung` leer), geht zusätzlich die
+gerenderte Seite mit nummerierten Feldrahmen (`p<n>_seitenansicht.png`, dieselbe
+Datei wie die Klappe „Seitenansicht“) als Bild mit (`bedrock_client.
+call_bedrock_with_schema` statt `call_bedrock_text_with_schema`); der Prompt
+bekommt den Block SEITENBILD (Nummern im Bild = F<n>). Das Modell liest das
+Layout wie ein Mensch, der Beleg bleibt die wörtliche Textstelle. Die
+Nachprüfung bleibt gleich streng; Hinweise nennen „Zuordnung aus dem
+Seitenbild“, betroffene Felder tragen „Seitenbild einbezogen“. Seiten mit
+vollständig beschrifteten Feldern laufen unverändert nur mit Text. Gilt für
+„Alle generieren“, „Generieren“ am Feld und den InkluAgent (`generate_quickinfo`).
+Kosten: rund 1.500 Eingabe-Token je betroffener Seite.
+
 ## Grenzen (Stufe 1) und was folgt
 
 - KI-Vorschläge: Eval-Korpus mit Soll-Quickinfos (Michaels Formulare,
-  öffentliche Formulare) steht noch aus; Seitenbild als Ausnahme für
-  textlose Seiten nicht gebaut; InkluAgent-Werkzeuge folgen.
+  öffentliche Formulare) steht noch aus.
 - Stammdaten-Treffer nur exakt (Feldname, Beschriftung); unscharfe Treffer
   und Auto-Lernen in Stufe 3.
 - InkluAgent: „Alle offenen generieren“ läuft im Chat Feld für Feld (4–5 je Turn);
