@@ -2158,6 +2158,20 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const totalImgs = Array.from(pageMap.values()).reduce((a, b) => a + b.length, 0);
             const isWebDoc = isWebProject;
             const labelName = esc(docDisplayName(doc));
+            // Knoepfe je Dokument (Michael/Steve 28.08.2026): „Alle generieren“, solange Bilder ohne Text da
+            // sind; sonst „n Alt-Texte neu generieren, c Credits“ (nur KI-Texte); dazu „Exportieren“ mit
+            // diesem Dokument vorausgewaehlt. Nicht im Gast-Modus, nicht waehrend der Verarbeitung.
+            const docImgsAll = Array.from(pageMap.values()).flat();
+            const docPending = docImgsAll.filter(i => i.status === 'pending').length;
+            const docKi = docImgsAll.filter(i => i.status === 'done' && !(i.alt_text_edited || '').trim()).length;
+            const docBusy = project && (project.status === 'processing' || project.status === 'extracting');
+            const vhSuffixDoc = t('– Dokument „{name}“', { name: labelName });
+            let docGenBtn = '';
+            if (!isWebDoc && !docBusy && docPending > 0) {
+                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'luecken', ${docKey})">${t('Alle generieren')}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
+            } else if (!isWebDoc && !docBusy && docKi > 0) {
+                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'ki_neu', ${docKey})">${t('{n} Alt-Texte neu generieren, {c} Credits', { n: docKi, c: docKi })}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
+            }
             let innerBlocks;
             let headingText;
             let countMeta;
@@ -2215,6 +2229,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         ${innerBlocks}
                     </details>
                     ${!window.GUEST_MODE ? `<span class="doc-actions">
+                        ${docGenBtn}
+                        ${!isWebDoc && totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey})">${t('Exportieren')}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
                         <button type="button" class="doc-action-btn" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">${t('Umbenennen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
                         <button type="button" class="doc-action-btn doc-action-danger" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">${t('Löschen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
                     </span>` : ''}
@@ -2494,8 +2510,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
-    async function startGeneration(projectId, modus) {
+    async function startGeneration(projectId, modus, docId) {
         // modus 'ki_neu' (28.08.2026): nur KI-Texte ohne Hand-Text neu, Cache umgangen, 1 Credit je Bild.
+        // docId (28.08.2026): nur dieses Dokument (Knopf am Dokument), sonst das ganze Projekt.
         const btn = document.getElementById(modus === 'ki_neu' ? 'regenAllBtn' : 'generateBtn');
         // Pre-check daily limit
         if (window._dailyLimit && window._dailyLimit.remaining <= 0) {
@@ -2505,7 +2522,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         if (btn) { btn.disabled = true; btn.textContent = t('Wird gestartet...'); }
         announce(modus === 'ki_neu' ? t('Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert.') : t('Alt-Text-Generierung wird gestartet.'));
-        const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(modus === 'ki_neu' ? { modus: 'ki_neu' } : {}) });
+        const body = modus === 'ki_neu' ? { modus: 'ki_neu' } : {};
+        if (docId) body.document_id = docId;
+        const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (res.ok) { showProject(projectId); }
         else { const d = await res.json(); announce(t('Fehler: {msg}', { msg: d.detail || '' })); }
     }
@@ -2515,7 +2534,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     //  - Export-Panel hat Radio-Auswahl: "Alle Dokumente" (Default, ZIP) oder eines konkret (Einzeldatei).
     //  - Dateiname ist optional. Leer = Standardname (basierend auf Doc bzw. Projekt) auf Server-Seite.
     //  - Für Web/Grafik-Projekte (kein documents-Block gerendert) verhält sich der Export wie bisher.
-    function openExportPanel(projectId) {
+    function openExportPanel(projectId, docId) {
+        // docId (28.08.2026): vom Knopf am Dokument aus — dieses Dokument vorausgewaehlt, Auswahl bleibt aenderbar.
         // 18.08.2026 (Fable 5): echtes modales <dialog> statt Inline-Bereich.
         // showModal() liefert Fokusfalle, Escape-zum-Schliessen und inerten
         // Hintergrund nativ — derselbe Weg wie die anderen Dialoge im Tool.
@@ -2531,6 +2551,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             }
         });
         if (input) input.value = '';
+        const ziel = panel.querySelector('input[name="exportScope"][value="' + (docId ? 'doc:' + docId : 'all') + '"]');
+        if (ziel) ziel.checked = true;
         if (typeof panel.showModal === 'function') {
             panel.showModal();
         } else {

@@ -62,6 +62,7 @@
     let offeneDocs = new Set();
     let offeneSeiten = new Set();
     let zustandProjekt = null;
+    let projektStatus = '';
     let nurOffene = false;
     let nurUnsichere = false;
 
@@ -371,12 +372,20 @@
         const offen = felder.filter(f => !(f.quickinfo && f.quickinfo.trim())).length;
         const meta = '(' + t('{n} Felder, {o} offen', { n: felder.length, o: offen }) + ')';
         const vh = t('– Formular „{name}“', { name: name });
+        const docOffen = felder.filter(f => !(f.quickinfo && f.quickinfo.trim()) && !istNamenlos(f)).length;
+        const docKi = felder.filter(f => f.quelle === 'ki' && !istNamenlos(f));
+        const docKiSeiten = new Set(docKi.filter(f => f.page_number > 0).map(f => f.page_number)).size;
+        const docBusy = projektStatus === 'processing' || projektStatus === 'extracting';
         return '<div class="doc-block">'
             + '<details class="doc-section" data-doc="' + docKey + '"' + (offeneDocs.has(docKey) ? ' open' : '') + '>'
             +   '<summary class="doc-summary"><h2 class="doc-heading" id="doc_heading_' + docKey + '">' + t('Dokument {n}: {name}', { n: pos, name: name }) + ' <span class="page-count">' + meta + '</span></h2></summary>'
             +   inner
             + '</details>'
+            // Knoepfe je Dokument (Michael/Steve 28.08.2026): Alle generieren / n neu generieren + Exportieren nur fuer dieses Dokument.
             + (gast() ? '' : '<span class="doc-actions">'
+            +   (docOffen && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + t('Alle generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+                : (docKi.length && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleNeuGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + t('{n} Quickinfos neu generieren, {p} Credits', { n: docKi.length, p: docKiSeiten }) + '<span class="visually-hidden"> ' + vh + '</span></button>' : ''))
+            +   (felder.length ? '<button type="button" class="doc-action-btn" onclick="Formular.exportOeffnen(' + docKey + ')">' + t('Exportieren') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</span>') + '</div>';
@@ -579,11 +588,11 @@
         }
     }
 
-    async function alleGenerieren(projectId) {
+    async function alleGenerieren(projectId, docId) {
         const btn = document.getElementById('fGenAllBtn');
         if (btn) btn.disabled = true;
         try {
-            const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+            const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(docId ? { document_id: docId } : {}) });
             const d = await res.json().catch(() => ({}));
             if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) btn.disabled = false; return; }
             if (!d.gestartet) { announce(t('Keine offenen Felder – nichts zu generieren.')); if (btn) btn.disabled = false; return; }
@@ -592,11 +601,13 @@
         } catch (e) { announce(t('Verbindungsfehler.')); if (btn) btn.disabled = false; }
     }
 
-    async function alleNeuGenerieren(projectId) {
+    async function alleNeuGenerieren(projectId, docId) {
         const btn = document.getElementById('fGenAllBtn');
         if (btn) btn.disabled = true;
         try {
-            const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ modus: 'ki_neu' }) });
+            const body = { modus: 'ki_neu' };
+            if (docId) body.document_id = docId;
+            const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             const d = await res.json().catch(() => ({}));
             if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) btn.disabled = false; return; }
             if (!d.gestartet) { announce(t('Keine KI-Vorschläge vorhanden – nichts zu generieren.')); if (btn) btn.disabled = false; return; }
@@ -707,11 +718,14 @@
         if (!still) announce(nurOffene ? t('Nur offene Felder werden angezeigt.') : t('Alle Felder werden angezeigt.'));
     }
 
-    function exportOeffnen() {
+    function exportOeffnen(docId) {
         const panel = document.getElementById('fExportPanel');
         if (!panel) return;
         const input = document.getElementById('fExportFilename');
         if (input) input.value = '';
+        // Vom Knopf am Dokument: dieses Dokument vorauswaehlen (Auswahl bleibt aenderbar).
+        const ziel = document.querySelector('input[name="fExportScope"][value="' + (docId ? 'doc:' + docId : 'all') + '"]');
+        if (ziel) ziel.checked = true;
         if (typeof panel.showModal === 'function') panel.showModal(); else panel.setAttribute('open', '');
         announce(t('Export-Optionen geöffnet.'));
         exportPreisLaden();
@@ -798,6 +812,7 @@
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
         const project = data.project;
+        projektStatus = project.status || '';
         inReview = !gast() && !!data.in_review;
         if (gast() && data.role) window.SHARE_ROLE = data.role;
         if (zustandProjekt !== projectId) { offeneDocs = new Set(); offeneSeiten = new Set(); zustandProjekt = projectId; }

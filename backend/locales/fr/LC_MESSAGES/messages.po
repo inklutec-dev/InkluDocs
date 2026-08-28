@@ -4679,3 +4679,6 @@ msgstr "Les textes saisis à la main, par l’invité ou dans le chat restent in
 
 msgid "Feldname {name}"
 msgstr "nom de champ {name}"
+
+msgid "– Dokument „{name}“"
+msgstr "– document « {name} »"

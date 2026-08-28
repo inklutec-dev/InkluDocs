@@ -4240,3 +4240,6 @@ msgstr "Texter skrivna för hand, av gästen eller i chatten förblir oförändr
 
 msgid "Feldname {name}"
 msgstr "fältnamn {name}"
+
+msgid "– Dokument „{name}“"
+msgstr "– dokument ”{name}”"

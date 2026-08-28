@@ -5961,6 +5961,11 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
     except Exception:
         _body = {}
     modus = "ki_neu" if isinstance(_body, dict) and _body.get("modus") == "ki_neu" else "luecken"
+    # Je Dokument (Michael/Steve 28.08.2026): optional nur EIN Dokument des Projekts.
+    try:
+        document_id = int(_body.get("document_id")) if isinstance(_body, dict) and _body.get("document_id") is not None else None
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="document_id ungueltig")
     # Check daily limit (admins are exempt)
     if not user.get("is_admin"):
         _tageslimit = effektives_api_tageslimit(user)
@@ -5987,34 +5992,50 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
         conn.close()
         raise HTTPException(status_code=409, detail="Die PDF wird noch verarbeitet. Bitte warte, bis die Bilder extrahiert sind.")
 
+    doc_sql, doc_args = ("", [])
+    if document_id is not None:
+        if not conn.execute("SELECT 1 FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id)).fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+        doc_sql, doc_args = (" AND document_id = ?", [document_id])
     anzahl_ki = 0
     if modus == "ki_neu":
         anzahl_ki = conn.execute(
-            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done' AND TRIM(COALESCE(alt_text_edited,'')) = ''",
-            (project_id,)).fetchone()[0]
+            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done' AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
+            [project_id] + doc_args).fetchone()[0]
         if not anzahl_ki:
             conn.close()
             return {"ok": True, "gestartet": False, "modus": modus, "anzahl": 0}
-        conn.execute("UPDATE images SET status = 'pending' WHERE project_id = ? AND status = 'done' AND TRIM(COALESCE(alt_text_edited,'')) = ''",
-                     (project_id,))
+        conn.execute("UPDATE images SET status = 'pending' WHERE project_id = ? AND status = 'done' AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
+                     [project_id] + doc_args)
+    else:
+        anzahl_ki = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending'" + doc_sql,
+                                 [project_id] + doc_args).fetchone()[0]
     conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
     conn.commit()
     conn.close()
 
-    asyncio.create_task(_process_project(project_id, user["id"], force=(modus == "ki_neu")))
-    return {"ok": True, "gestartet": True, "modus": modus, "anzahl": anzahl_ki, "message": "Alt-Text-Generierung gestartet"}
+    asyncio.create_task(_process_project(project_id, user["id"], force=(modus == "ki_neu"), document_id=document_id))
+    return {"ok": True, "gestartet": True, "modus": modus, "anzahl": anzahl_ki, "document_id": document_id,
+            "message": "Alt-Text-Generierung gestartet"}
 
 
-async def _process_project(project_id: int, user_id: int, force: bool = False):
+async def _process_project(project_id: int, user_id: int, force: bool = False, document_id: Optional[int] = None):
     """force (28.08.2026, „Alle neu generieren“): Cache je Bild raeumen und force_regenerate
-    an die Pipeline geben — sonst kaeme fuer bereits gecachte Bilder der alte Text zurueck."""
+    an die Pipeline geben — sonst kaeme fuer bereits gecachte Bilder der alte Text zurueck.
+    document_id (28.08.2026): nur die Bilder EINES Dokuments (Knopf am Dokument)."""
     # v2.2.3: Clear duplicate cache for this project
     clear_project_cache()
     conn = get_db()
-    images = conn.execute(
-        "SELECT * FROM images WHERE project_id = ? AND status = 'pending' ORDER BY page_number, image_index",
-        (project_id,)
-    ).fetchall()
+    if document_id is not None:
+        images = conn.execute(
+            "SELECT * FROM images WHERE project_id = ? AND document_id = ? AND status = 'pending' ORDER BY page_number, image_index",
+            (project_id, document_id)).fetchall()
+    else:
+        images = conn.execute(
+            "SELECT * FROM images WHERE project_id = ? AND status = 'pending' ORDER BY page_number, image_index",
+            (project_id,)
+        ).fetchall()
 
     # processed_images zaehlt nur echte Erfolge (Steve 08.06.2026 — siehe
     # auch regenerate_image). Fehler werden separat ueber den Bild-Status

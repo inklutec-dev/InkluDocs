@@ -53,3 +53,14 @@ beiden Zahlen; die Oberfläche zeigt die barrierefreie Meldung „Der Export
 würde 8 Credits benötigen, du verfügst derzeit über 7 Credits …“ mit den
 Knöpfen „Zu Abo & Verbrauch“ und „Schließen“ (`zeigeCreditsMeldung`,
 app.html, beide Werkzeuge). Die Antwort trägt `X-Export-Credits`.
+
+## Knöpfe je Dokument (Michael/Steve 28.08.2026)
+
+Neben „Umbenennen“ und „Löschen“ trägt jedes Dokument (PDF, Word, Formular)
+zwei weitere Knöpfe: „Alle generieren“, solange das Dokument Lücken hat,
+sonst „n … neu generieren, c Credits“ (nur KI-Texte dieses Dokuments;
+`POST …/generate` bzw. `…/quickinfos/generieren` mit `document_id`), und
+„Exportieren“, das den gemeinsamen Export-Dialog mit diesem Dokument
+vorausgewählt öffnet (Preis/Guthaben passend; Auswahl bleibt änderbar). Die
+Knöpfe oben im Kopf gelten weiterhin für das ganze Projekt. Web-Werkzeug:
+ein Dokument = die Seite, daher keine Zusatzknöpfe.

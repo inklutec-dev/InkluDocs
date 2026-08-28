@@ -4682,3 +4682,6 @@ msgstr "Texte von Hand, vom Gast und aus dem Chat bleiben unverändert."
 
 msgid "Feldname {name}"
 msgstr "Feldname {name}"
+
+msgid "– Dokument „{name}“"
+msgstr "– Dokument „{name}“"

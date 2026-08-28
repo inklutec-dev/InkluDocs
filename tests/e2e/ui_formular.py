@@ -37,6 +37,11 @@ with sync_playwright() as p:
     docs = pg.locator("h2.doc-heading"); check("Dokument-Ueberschrift (h2) mit Felder-Zaehler", docs.count() == 1 and "Felder" in docs.first.inner_text(), docs.first.inner_text() if docs.count() else "")
     pg.locator("details.doc-section").first.evaluate("d=>d.open=true"); pg.wait_for_timeout(300)
     check("Hoerprobe-Klappe vorhanden", pg.locator("details.doc-hoerprobe").count() == 1)
+    da = pg.locator(".doc-block .doc-actions").first
+    check("Knoepfe je Dokument: Generieren, Exportieren, Umbenennen, Loeschen (Michael 28.08.)", da.locator("button").count() == 4 and "Exportieren" in da.inner_text() and ("Alle generieren" in da.inner_text() or "neu generieren" in da.inner_text()), da.inner_text())
+    da.locator("button:has-text('Exportieren')").click(); pg.wait_for_timeout(600)
+    check("Exportieren am Dokument oeffnet den Dialog", pg.locator("#fExportPanel").evaluate("d=>d.open") is True)
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
     pg.locator("details.doc-hoerprobe").first.evaluate("d=>d.open=true"); pg.wait_for_timeout(200)
     hp = pg.locator("details.doc-hoerprobe ol li")
     check("Hoerprobe listet 12 Felder", hp.count() == 12, hp.count())

@@ -4679,3 +4679,6 @@ msgstr "Los textos escritos a mano, por el invitado o en el chat no cambian."
 
 msgid "Feldname {name}"
 msgstr "nombre de campo {name}"
+
+msgid "– Dokument „{name}“"
+msgstr "– documento «{name}»"
