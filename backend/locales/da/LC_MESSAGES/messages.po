@@ -4242,3 +4242,15 @@ msgstr "{name} beder dig gennemgå værktøjstipsene for formularen »{projekt}�
 
 msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
 msgstr "{n} felter i {d} dokumenter, {o} uden værktøjstip."
+
+msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>)."
+msgstr "InkluAgent er en KI-assistent. Bed den om hjælp — f.eks. generere et værktøjstip til et felt, forkorte eller ensrette en tekst, slå op i dine stamdata eller opsummere gæstens bemærkninger. Angiv felter med nummer (f.eks. <em>felt 3</em>, <em>felter 1-5</em>)."
+
+msgid "z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'"
+msgstr "f.eks. 'forkort felt 3' eller 'generér et værktøjstip til felt 5'"
+
+msgid "InkluAgent hat 1 Quickinfo aktualisiert."
+msgstr "InkluAgent har opdateret 1 værktøjstip."
+
+msgid "InkluAgent hat {n} Quickinfos aktualisiert."
+msgstr "InkluAgent har opdateret {n} værktøjstips."

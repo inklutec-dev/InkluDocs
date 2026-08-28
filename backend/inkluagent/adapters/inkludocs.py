@@ -110,7 +110,7 @@ def get_project_context(project_id: int, user_id: int) -> Optional[dict]:
     conn = get_db()
     try:
         proj = conn.execute(
-            "SELECT id, filename, project_type, source_url "
+            "SELECT id, filename, project_type, source_url, tool "
             "FROM projects WHERE id = ? AND user_id = ?",
             (project_id, user_id),
         ).fetchone()
@@ -163,6 +163,7 @@ def get_project_context(project_id: int, user_id: int) -> Optional[dict]:
         "id": proj["id"],
         "filename": proj["filename"],
         "project_type": proj["project_type"],
+        "tool": proj["tool"],
         "source_url": proj["source_url"],
         "documents": documents,
         "multi_doc": multi_doc,

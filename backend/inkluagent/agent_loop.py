@@ -27,7 +27,9 @@ from typing import Any, Optional
 from . import storage
 from .providers.bedrock import BedrockProvider, BedrockProviderError
 from .tools.definitions import TOOL_DEFINITIONS, ToolExecutor
+from .tools.definitions_formular import TOOL_DEFINITIONS_FORMULAR, ToolExecutorFormular
 from .prompts.system_agent import SYSTEM_AGENT
+from .prompts.system_formular import SYSTEM_FORMULAR
 from .adapters.inkludocs import build_project_summary
 
 log = logging.getLogger(__name__)
@@ -47,6 +49,42 @@ def _detect_media_type(img_bytes: bytes) -> str:
     return "image/jpeg"
 
 
+# ─── Werkzeugsatz je Projektart (28.08.2026) ───
+# Ein Formular-Projekt (Quickinfo-Werkzeug) hat Felder statt Bilder: eigener
+# System-Prompt, eigener Werkzeugsatz, eigene Projekt-Zusammenfassung. Die
+# Bild-Werkzeuge existieren fuer den Formular-Agenten nicht (und umgekehrt),
+# damit sich die Werkzeuge nie vermischen. Neue Werkzeuge = neuer Eintrag hier.
+def _ist_formular(project: dict) -> bool:
+    return (project or {}).get("tool") == "formular"
+
+
+def _werkzeugsatz(project: dict, project_id: int, user_id: int):
+    """(tool_definitions, executor, system_prompt) fuer dieses Projekt."""
+    if _ist_formular(project):
+        return TOOL_DEFINITIONS_FORMULAR, ToolExecutorFormular(project_id=project_id, user_id=user_id), SYSTEM_FORMULAR
+    return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id), SYSTEM_AGENT
+
+
+def _formular_summary(project_id: int) -> str:
+    """Kompakter Projekt-Kontext fuer Formular-Projekte (Gegenstueck zu build_project_summary)."""
+    try:
+        from .tools.formular import list_form_fields
+        r = list_form_fields(project_id, _summary_user_id_holder.get(project_id, 0))
+    except Exception:
+        return "Formular-Projekt (Quickinfo-Werkzeug). Hol den Stand mit list_form_fields."
+    if not r.get("ok"):
+        return "Formular-Projekt (Quickinfo-Werkzeug). Hol den Stand mit list_form_fields."
+    res = r["result"]
+    p = res["project"]
+    return (f"Formular-Projekt „{p['name']}“ (Quickinfo-Werkzeug), Status {p['status']}, Sprache der Quickinfos "
+            f"{p['sprache_der_quickinfos']}: {res['feld_count']} Felder in {len(res['documents'])} Dokument(en), "
+            f"{res['offen']} ohne Quickinfo, {res['beschrieben']} beschrieben; {res['stammdaten_eintraege']} Stammdaten-Eintraege "
+            "im Konto. Details je Feld: list_form_fields / get_field_details.")
+
+
+_summary_user_id_holder: dict[int, int] = {}
+
+
 def _build_initial_messages(
     project_id: int,
     user_message: str,
@@ -61,7 +99,7 @@ def _build_initial_messages(
     messages: list[dict] = []
 
     # Projekt-Summary als erste user-Nachricht (Context-Vorgabe)
-    summary = build_project_summary(project)
+    summary = _formular_summary(project_id) if _ist_formular(project) else build_project_summary(project)
     messages.append({
         "role": "user",
         "content": f"[Projekt-Kontext]\n{summary}",
@@ -128,9 +166,10 @@ def run_agent(
     angehängt wird (thematische Leitplanke). Default None = normaler Pfad,
     System-Prompt unverändert.
     """
-    executor = ToolExecutor(project_id=project_id, user_id=user_id)
+    _summary_user_id_holder[project_id] = user_id
+    tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
     messages = _build_initial_messages(project_id, user_message, project)
-    system_text = SYSTEM_AGENT if not system_suffix else SYSTEM_AGENT + "\n\n" + system_suffix
+    system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
 
     actions_log: list[dict] = []
     image_refs_seen: set[int] = set()
@@ -140,7 +179,7 @@ def run_agent(
         try:
             payload = provider.invoke_with_tools(
                 anthropic_messages=messages,
-                tools=TOOL_DEFINITIONS,
+                tools=tool_defs,
                 system=system_text,
                 max_tokens=_DEFAULT_MAX_TOKENS,
                 temperature=0.3,
@@ -212,7 +251,18 @@ def run_agent(
                     except Exception:
                         log.exception("refresh_image-Action nicht angefuegt (img=%s)", img_id_raw)
 
-            # image_bytes-Sonderfall (view_image)
+            # Formular (28.08.2026): nach Aenderung einer Quickinfo den frischen Stand
+            # mitliefern, damit formular.js Textfeld + Badge live setzt (refresh_feld).
+            if name in ("update_quickinfo", "revert_quickinfo", "generate_quickinfo") and result.get("ok"):
+                r = result.get("result") or {}
+                actions_log.append({
+                    "type": "refresh_feld", "feld_id": r.get("feld_id"), "quickinfo": r.get("quickinfo", ""),
+                    "quelle": r.get("quelle", ""), "sicherheit": r.get("sicherheit", ""), "beleg": r.get("beleg", ""),
+                    "ki_hinweise": r.get("hinweise", []),
+                    "status": "beschrieben" if (r.get("quickinfo") or "").strip() else "offen",
+                })
+
+            # image_bytes-Sonderfall (view_image / view_field)
             img_bytes = result.pop("image_bytes", None) if isinstance(result, dict) else None
             if img_bytes:
                 pending_images.append(img_bytes)

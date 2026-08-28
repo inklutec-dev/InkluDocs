@@ -696,8 +696,12 @@
         const docsHtml = data.documents.map((d, i) => dokumentHtml(d, i + 1, felderJeDoc.get(d.id) || [], data.stammdaten_treffer || {})).join('');
         main.innerHTML = kopfHtml(project, data)
             + (gast() ? '' : uploadBlockHtml(project))
-            + '<div id="feldListe">' + (data.felder.length ? docsHtml : (gast() ? '<div class="card"><p>' + t('Dieses Formular enthält noch keine Felder.') + '</p></div>' : '')) + '</div>';
+            + '<div id="feldListe">' + (data.felder.length ? docsHtml : (gast() ? '<div class="card"><p>' + t('Dieses Formular enthält noch keine Felder.') + '</p></div>' : '')) + '</div>'
+            // InkluAgent (28.08.2026): derselbe Chat-Kasten wie bei den Alt-Texten (app.html),
+            // Variante formular — nur fuer den Besitzer, Gaeste bekommen keinen Chatbot.
+            + (!gast() && data.felder.length && typeof inkluagentSectionHtml === 'function' ? inkluagentSectionHtml(project.id, 'formular') : '');
         bindAutosave();
+        if (!gast() && data.felder.length && typeof inkluagentInit === 'function') inkluagentInit(project.id);
         if (nurOffene || nurUnsichere) filter(nurOffene, true);
         if (!gast()) setupProjectDropzone(projectId);
         if (!gast() && data.felder.length && typeof populatePromptSelect === 'function') populatePromptSelect(project.id, project.prompt_id);
@@ -727,7 +731,24 @@
         }
     }
 
-    window.Formular = { showProject, original, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher,
+    // Aktionen des InkluAgent (refresh_feld aus agent_loop.py): Textfeld + Badge + Beleg
+    // live setzen, ohne Neu-Rendern (ungespeicherte Eingaben anderer Felder bleiben).
+    function chatAktionen(actions) {
+        let n = 0;
+        (actions || []).forEach(a => {
+            if (!a || a.type !== 'refresh_feld' || !a.feld_id) return;
+            const ta = document.getElementById('quickinfo_' + a.feld_id);
+            if (!ta) return;
+            ta.value = a.quickinfo || '';
+            statusSetzen(a.feld_id, a);
+            const ind = document.getElementById('feld_saved_' + a.feld_id);
+            if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
+            n += 1;
+        });
+        if (n > 0) announce(n === 1 ? t('InkluAgent hat 1 Quickinfo aktualisiert.') : t('InkluAgent hat {n} Quickinfos aktualisiert.', { n: n }));
+    }
+
+    window.Formular = { showProject, original, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher, chatAktionen,
                         generieren, alleGenerieren, exportOeffnen, exportSchliessen, exportieren,
                         urteil, anmerkungSpeichern, anmerkungLoeschen, abschlussOeffnen, abschlussSchliessen, abschliessen };
 })();

@@ -268,6 +268,19 @@ Barrierefreiheit: Urteil-Knöpfe sind echte Buttons mit `aria-pressed`, Status
 steht als Text, Änderungen werden über `announce()` angesagt; Anmerkung als
 natives `<details>`; Abschluss als natives `<dialog>` (Fokusfang, Escape).
 
+## InkluAgent im Formular-Projekt (28.08.2026)
+
+Derselbe Chat-Kasten wie bei den Alt-Texten (Knopf „Chatbot“ unter der
+Feldliste, nur für den Besitzer), aber mit eigenem Fachteil und eigenem
+Werkzeugsatz: `backend/inkluagent/prompts/system_formular.py` und
+`backend/inkluagent/tools/formular.py` + `definitions_formular.py`. Die Weiche
+liegt in `agent_loop._werkzeugsatz` (`project.tool == "formular"`), Bild- und
+Feld-Werkzeuge können sich nicht vermischen. Speichern über den Chat läuft
+durch dieselbe Nachprüfung wie der Feld-Pass; Generieren über den Chat ist
+derselbe Feld-Pass wie der Knopf. Abrechnung wie in der Oberfläche (1 Credit
+je erzeugter oder geänderter Quickinfo, Reden ist frei). Gesamtbild und
+Kochrezept für weitere Werkzeuge: `docs/INKLUAGENT.md`.
+
 ## Grenzen (Stufe 1) und was folgt
 
 - KI-Vorschläge: Eval-Korpus mit Soll-Quickinfos (Michaels Formulare,
@@ -275,8 +288,8 @@ natives `<details>`; Abschluss als natives `<dialog>` (Fokusfang, Escape).
   textlose Seiten nicht gebaut; InkluAgent-Werkzeuge folgen.
 - Stammdaten-Treffer nur exakt (Feldname, Beschriftung); unscharfe Treffer
   und Auto-Lernen in Stufe 3.
-- Kein Chatbot-Anschluss (InkluAgent-Werkzeuge felder_lesen/quickinfo_setzen/
-  stammdaten_suchen folgen).
+- InkluAgent: „Alle offenen generieren“ läuft im Chat Feld für Feld (4–5 je Turn);
+  für Massenläufe bleibt der Knopf „Alle generieren“ der bessere Weg.
 - Gast-Ansicht: kein Nachrichten-Verlauf je Feld, keine Rücksprache-Liste in der
   Abschluss-Mail (beides Stufe 2 der Gast-Ansicht, wie bei Bildern).
 - Beschriftungs-Erkennung ist geometrisch (links/oben/rechts/innen,

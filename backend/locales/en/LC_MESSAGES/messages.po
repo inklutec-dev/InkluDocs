@@ -4551,3 +4551,15 @@ msgstr "{name} would like you to review the tooltips for the form “{projekt}�
 
 msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
 msgstr "{n} fields in {d} documents, {o} without tooltip."
+
+msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>)."
+msgstr "InkluAgent is an AI assistant. Ask it for help — e.g. generate a tooltip for a field, shorten or harmonise a text, look up your master data or summarise the guest's comments. Refer to fields by number (e.g. <em>field 3</em>, <em>fields 1-5</em>)."
+
+msgid "z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'"
+msgstr "e.g. 'shorten field 3' or 'generate a tooltip for field 5'"
+
+msgid "InkluAgent hat 1 Quickinfo aktualisiert."
+msgstr "InkluAgent updated 1 tooltip."
+
+msgid "InkluAgent hat {n} Quickinfos aktualisiert."
+msgstr "InkluAgent updated {n} tooltips."

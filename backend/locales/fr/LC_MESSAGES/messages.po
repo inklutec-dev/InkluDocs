@@ -4551,3 +4551,15 @@ msgstr "{name} vous invite à vérifier les infobulles du formulaire « {projekt
 
 msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
 msgstr "{n} champs dans {d} documents, {o} sans infobulle."
+
+msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>)."
+msgstr "InkluAgent est un assistant IA. Demandez-lui de l’aide — p. ex. générer une infobulle pour un champ, raccourcir ou harmoniser un texte, consulter vos données de référence ou résumer les remarques de l’invité. Désignez les champs par leur numéro (p. ex. <em>champ 3</em>, <em>champs 1-5</em>)."
+
+msgid "z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'"
+msgstr "p. ex. « raccourcir le champ 3 » ou « générer une infobulle pour le champ 5 »"
+
+msgid "InkluAgent hat 1 Quickinfo aktualisiert."
+msgstr "InkluAgent a mis à jour 1 infobulle."
+
+msgid "InkluAgent hat {n} Quickinfos aktualisiert."
+msgstr "InkluAgent a mis à jour {n} infobulles."

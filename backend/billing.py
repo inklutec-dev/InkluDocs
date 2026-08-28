@@ -78,6 +78,7 @@ AKTIONS_PREISE = {
     # Formularseite (reiner Text, ohne Bild), 1 Credit je Seite; Einzel-"Neu
     # generieren" ebenfalls 1. Endgueltige Preisregel mit Michael (offen).
     "quickinfo_generierung": 1,
+    "quickinfo_aenderung_chatbot": 1,  # InkluAgent aendert eine Quickinfo (28.08.2026)
 }
 
 # Zusatzpakete (Michaels Preise, bestaetigt 03.08.2026). Reine Konfiguration

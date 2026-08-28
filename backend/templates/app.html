@@ -2696,9 +2696,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     //    nun selbst die Sektion betitelt (aria-labelledby auf den Button).
     //  - Der erklärende Infotext steht jetzt UNTER dem Button — Karbes Wunsch,
     //    damit der Schalter sofort ins Auge fällt, der Text dient als Hinweis.
-    function inkluagentSectionHtml(projectId) {
+    // Variante (28.08.2026): 'formular' = Quickinfo-Werkzeug — gleicher Kasten, gleiche
+    // Bedienung, nur Einleitung und Platzhalter sprechen von Feldern statt Bildern.
+    function inkluagentSectionHtml(projectId, variante) {
+        const formular = variante === 'formular';
         return ''
-            + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '">'
+            + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">'
             +   '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
             +     t('Chatbot')
             +   '</button>'
@@ -2711,14 +2714,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // blieb woertlich im JavaScript stehen und brach das ganze
             // App-Skript mit einem SyntaxError ab. Im raw-Block nur
             // JS-Kommentare verwenden.)
-            +   t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.')
+            +   (formular
+                ? t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>).')
+                : t('Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage.'))
             +   '</p>'
             +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
             +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="polite" aria-label="' + t('Chat-Verlauf') + '"></div>'
             +     '<form id="inkluagentForm" class="inkluagent-form">'
             +       '<label for="inkluagentInput" class="visually-hidden">' + t('Nachricht an den InkluAgent') + '</label>'
             +       '<textarea id="inkluagentInput" rows="2" maxlength="5000" '
-            +         'placeholder="' + t("z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'") + '" '
+            +         'placeholder="' + (formular ? t("z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'") : t("z.B. 'Bild 3 in leichter Sprache' oder 'Generiere Alt-Text für Bild 5'")) + '" '
             +         'aria-describedby="inkluagentHint"></textarea>'
             +       '<div id="inkluagentHint" class="inkluagent-hint">' + t('Enter sendet, Shift+Enter macht einen Zeilenumbruch. Maximal 5000 Zeichen.') + '</div>'
             +       '<div class="inkluagent-controls">'
@@ -2895,6 +2900,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             if (updatedCount > 0) {
                 announce(updatedCount === 1 ? t('InkluAgent hat 1 Alt-Text aktualisiert.') : t('InkluAgent hat {n} Alt-Texte aktualisiert.', { n: updatedCount }));
             }
+            // Formular-Projekte (28.08.2026): refresh_feld-Aktionen setzt formular.js selbst um.
+            if (window.Formular && typeof Formular.chatAktionen === 'function') Formular.chatAktionen(data.actions || []);
             if (needsFullReload && typeof showProject === 'function') {
                 setTimeout(() => showProject(projectId), 800);
             }

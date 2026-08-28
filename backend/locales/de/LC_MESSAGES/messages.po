@@ -4554,3 +4554,15 @@ msgstr "{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}
 
 msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
 msgstr "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
+
+msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>)."
+msgstr "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. eine Quickinfo für ein Feld generieren, einen Text kürzer oder einheitlich formulieren, in den Stammdaten nachsehen oder die Anmerkungen des Gastes zusammenfassen. Felder per Nummer benennen (z.B. <em>Feld 3</em>, <em>Felder 1-5</em>)."
+
+msgid "z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'"
+msgstr "z.B. 'Feld 3 kürzer fassen' oder 'Generiere eine Quickinfo für Feld 5'"
+
+msgid "InkluAgent hat 1 Quickinfo aktualisiert."
+msgstr "InkluAgent hat 1 Quickinfo aktualisiert."
+
+msgid "InkluAgent hat {n} Quickinfos aktualisiert."
+msgstr "InkluAgent hat {n} Quickinfos aktualisiert."
