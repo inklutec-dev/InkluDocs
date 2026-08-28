@@ -389,6 +389,8 @@
         else if (offen === 0) { badge = t('Vollständig'); badgeCls = 'badge-done'; }
         else { badge = t('In Arbeit'); badgeCls = 'badge-pending'; }
         const unsicher = felder.filter(f => f.quelle === 'ki' && f.sicherheit === 'niedrig').length;
+        const kiFelder = felder.filter(f => f.quelle === 'ki' && !istNamenlos(f));
+        const kiSeiten = new Set(kiFelder.map(f => f.document_id + '_' + f.page_number)).size;
         const gen = data.generierung;
         let info = felder.length
             ? (gast()
@@ -411,7 +413,12 @@
                 + '</div>' : '')
             + (!gast() && felder.length ? ''
                 + '<div class="card-actions">'
-                +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>' : '')
+                // EIN Knopf (Steve 28.08.2026): „Alle generieren“, solange Felder offen sind (fuellt nur Luecken);
+                // sind alle gefuellt, wird er zu „Alle neu generieren“ (ueberschreibt nur KI-Vorschlaege — Hand, PDF,
+                // Stammdaten, Gast bleiben). Keine Rueckfrage: der Knopf nennt fuer den Screenreader Anzahl und Credits.
+                +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>'
+                    : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ', ' + kiFelder.length + ', ' + kiSeiten + ')">' + t('Alle neu generieren')
+                        + '<span class="visually-hidden"> – ' + t('{n} KI-Vorschläge werden überschrieben, {p} Credits', { n: kiFelder.length, p: kiSeiten }) + '</span></button>' : ''))
                 +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + t('Exportieren') + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf offene Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
@@ -528,6 +535,19 @@
             if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) btn.disabled = false; return; }
             if (!d.gestartet) { announce(t('Keine offenen Felder – nichts zu generieren.')); if (btn) btn.disabled = false; return; }
             announce(t('Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert.', { n: d.offen }));
+            await showProject(projectId);
+        } catch (e) { announce(t('Verbindungsfehler.')); if (btn) btn.disabled = false; }
+    }
+
+    async function alleNeuGenerieren(projectId, anzahl, seiten) {
+        const btn = document.getElementById('fGenAllBtn');
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ modus: 'ki_neu' }) });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) btn.disabled = false; return; }
+            if (!d.gestartet) { announce(t('Keine KI-Vorschläge vorhanden – nichts zu generieren.')); if (btn) btn.disabled = false; return; }
+            announce(t('Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert.', { n: d.offen }));
             await showProject(projectId);
         } catch (e) { announce(t('Verbindungsfehler.')); if (btn) btn.disabled = false; }
     }
@@ -749,6 +769,6 @@
     }
 
     window.Formular = { showProject, original, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher, chatAktionen,
-                        generieren, alleGenerieren, exportOeffnen, exportSchliessen, exportieren,
+                        generieren, alleGenerieren, alleNeuGenerieren, exportOeffnen, exportSchliessen, exportieren,
                         urteil, anmerkungSpeichern, anmerkungLoeschen, abschlussOeffnen, abschlussSchliessen, abschliessen };
 })();

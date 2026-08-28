@@ -4614,3 +4614,24 @@ msgstr "Vérifié avec : {w}"
 
 msgid "Ruft gerade auf: {w}"
 msgstr "Appel en cours : {w}"
+
+msgid "Alle neu generieren"
+msgstr "Tout régénérer"
+
+msgid "{n} KI-Vorschläge werden neu erzeugt und überschrieben. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Kosten: {p} Credits (1 je Seite). Fortfahren?"
+msgstr "{n} propositions de l’IA seront régénérées et remplacées. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés. Coût : {p} crédits (1 par page). Continuer ?"
+
+msgid "Abgebrochen."
+msgstr "Annulé."
+
+msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
+msgstr "Aucune proposition de l’IA – rien à régénérer."
+
+msgid "Neu-Generierung gestartet für {n} Felder."
+msgstr "Régénération lancée pour {n} champs."
+
+msgid "{n} KI-Vorschläge werden überschrieben, {p} Credits"
+msgstr "{n} propositions de l’IA seront remplacées, {p} crédits"
+
+msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
+msgstr "Régénération lancée pour {n} champs. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés."

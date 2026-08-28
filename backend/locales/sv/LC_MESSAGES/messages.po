@@ -4175,3 +4175,24 @@ msgstr "Kontrollerat med: {w}"
 
 msgid "Ruft gerade auf: {w}"
 msgstr "Anropar nu: {w}"
+
+msgid "Alle neu generieren"
+msgstr "Generera om alla"
+
+msgid "{n} KI-Vorschläge werden neu erzeugt und überschrieben. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Kosten: {p} Credits (1 je Seite). Fortfahren?"
+msgstr "{n} AI-förslag genereras om och skrivs över. Texter skrivna för hand, från PDF:en, från stamdata eller av gästen förblir oförändrade. Kostnad: {p} krediter (1 per sida). Fortsätt?"
+
+msgid "Abgebrochen."
+msgstr "Avbrutet."
+
+msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
+msgstr "Inga AI-förslag – inget att generera."
+
+msgid "Neu-Generierung gestartet für {n} Felder."
+msgstr "Omgenerering startad för {n} fält."
+
+msgid "{n} KI-Vorschläge werden überschrieben, {p} Credits"
+msgstr "{n} AI-förslag skrivs över, {p} krediter"
+
+msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
+msgstr "Omgenerering startad för {n} fält. Texter skrivna för hand, från PDF:en, från stamdata eller av gästen förblir oförändrade."

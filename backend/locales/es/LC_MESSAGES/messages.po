@@ -4614,3 +4614,24 @@ msgstr "Comprobado con: {w}"
 
 msgid "Ruft gerade auf: {w}"
 msgstr "Llamando a: {w}"
+
+msgid "Alle neu generieren"
+msgstr "Regenerar todo"
+
+msgid "{n} KI-Vorschläge werden neu erzeugt und überschrieben. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Kosten: {p} Credits (1 je Seite). Fortfahren?"
+msgstr "Se regenerarán y sobrescribirán {n} propuestas de la IA. Los textos escritos a mano, del PDF, de los datos maestros o del invitado no cambian. Coste: {p} créditos (1 por página). ¿Continuar?"
+
+msgid "Abgebrochen."
+msgstr "Cancelado."
+
+msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
+msgstr "No hay propuestas de la IA – nada que regenerar."
+
+msgid "Neu-Generierung gestartet für {n} Felder."
+msgstr "Regeneración iniciada para {n} campos."
+
+msgid "{n} KI-Vorschläge werden überschrieben, {p} Credits"
+msgstr "Se sobrescribirán {n} propuestas de la IA, {p} créditos"
+
+msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
+msgstr "Regeneración iniciada para {n} campos. Los textos escritos a mano, del PDF, de los datos maestros o del invitado no cambian."

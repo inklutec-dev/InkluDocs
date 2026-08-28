@@ -281,6 +281,16 @@ derselbe Feld-Pass wie der Knopf. Abrechnung wie in der Oberfläche (1 Credit
 je erzeugter oder geänderter Quickinfo, Reden ist frei). Gesamtbild und
 Kochrezept für weitere Werkzeuge: `docs/INKLUAGENT.md`.
 
+## „Alle neu generieren“ (28.08.2026)
+
+„Alle generieren“ füllt nur Lücken; sobald jedes Feld einen Text hat, wird
+derselbe Knopf zu „Alle neu generieren“ (keine Rückfrage — der Knopf nennt
+für Screenreader Anzahl der KI-Vorschläge und Credits, Muster wie das
+einzelne „Neu generieren“). Er ruft `POST …/quickinfos/generieren` mit `{"modus": "ki_neu"}`: Der
+Sammellauf fasst zusätzlich alle Felder mit `quelle = ki` an; Texte von Hand,
+aus der PDF, aus Stammdaten oder vom Gast bleiben unberührt
+(`_modus_bedingung`). 1 Credit je betroffener Seite.
+
 ## Redundanz-Regel der Nachprüfung (28.08.2026)
 
 „Gruppe: … Gruppe …“ — steht der Präfix vor dem Doppelpunkt im Satz dahinter

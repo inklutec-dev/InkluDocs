@@ -506,16 +506,25 @@ def _user_prompt(conn, project_id: int) -> str:
     return (row["prompt_text"] if row and row["prompt_text"] else "")
 
 
-async def _generiere_projekt(project_id: int, user_id: int, document_id: Optional[int]) -> None:
-    """Hintergrundlauf: je Seite ein Feld-Pass fuer die OFFENEN Felder, Kontingent
-    je Seite geprueft, 1 Credit je Seite; Fehler je Seite, nicht je Projekt."""
+def _modus_bedingung(modus: str) -> str:
+    """SQL-Bedingung, welche Felder ein Sammellauf anfasst. 'luecken' (Standard) = nur Felder
+    ohne Quickinfo; 'ki_neu' (28.08.2026, Steve: Knopf „Alle neu generieren“) = zusaetzlich alle
+    KI-Vorschlaege — Texte von Hand, aus der PDF, aus Stammdaten oder vom Gast bleiben unberuehrt."""
+    if modus == "ki_neu":
+        return "(TRIM(COALESCE(quickinfo,'')) = '' OR quelle = 'ki')"
+    return "TRIM(COALESCE(quickinfo,'')) = ''"
+
+
+async def _generiere_projekt(project_id: int, user_id: int, document_id: Optional[int], modus: str = "luecken") -> None:
+    """Hintergrundlauf: je Seite ein Feld-Pass fuer die OFFENEN Felder (modus 'ki_neu': auch
+    KI-Vorschlaege), Kontingent je Seite geprueft, 1 Credit je Seite; Fehler je Seite, nicht je Projekt."""
     st = _generierung.setdefault(project_id, {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []})
     loop = asyncio.get_running_loop()
     conn = _d.get_db()
     try:
         project = dict(conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone())
         docs = {d["id"]: dict(d) for d in conn.execute("SELECT * FROM documents WHERE project_id = ?", (project_id,)).fetchall()}
-        sql = "SELECT * FROM formularfelder WHERE project_id = ? AND TRIM(COALESCE(quickinfo,'')) = '' AND anker NOT LIKE '#%'"
+        sql = "SELECT * FROM formularfelder WHERE project_id = ? AND " + _modus_bedingung(modus) + " AND anker NOT LIKE '#%'"
         args = [project_id]
         if document_id is not None:
             sql += " AND document_id = ?"; args.append(document_id)
@@ -566,7 +575,7 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                     # Nur schreiben, wenn das Feld INZWISCHEN nicht von Hand gefuellt wurde.
                     cur = conn.execute(
                         """UPDATE formularfelder SET quickinfo = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
-                           updated_at = datetime('now') WHERE id = ? AND TRIM(COALESCE(quickinfo,'')) = ''""",
+                           updated_at = datetime('now') WHERE id = ? AND """ + _modus_bedingung(modus),
                         (v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
                     st["felder_neu"] += cur.rowcount
                 conn.commit()
@@ -771,11 +780,16 @@ def build_router(deps: Deps) -> APIRouter:
     async def quickinfos_generieren(project_id: int, request: Request, user: dict = Depends(_user)):
         """Startet den Feld-Pass fuer alle OFFENEN Felder (optional nur ein Dokument)
         im Hintergrund; das Frontend pollt GET /felder ("generierung"). Vorhandene
-        Texte werden nie ueberschrieben (Regel wie "alle generieren" bei Alt-Texten)."""
+        Texte werden nie ueberschrieben (Regel wie "alle generieren" bei Alt-Texten) —
+        AUSSER modus 'ki_neu' (Knopf „Alle neu generieren“, 28.08.2026): dann werden
+        KI-Vorschlaege ueberschrieben, Hand/PDF/Stammdaten/Gast bleiben."""
         try:
             data = await request.json()
         except Exception:
             data = {}
+        if not isinstance(data, dict):
+            data = {}
+        modus = "ki_neu" if data.get("modus") == "ki_neu" else "luecken"
         document_id = data.get("document_id") if isinstance(data, dict) else None
         try:
             document_id = int(document_id) if document_id is not None else None
@@ -789,20 +803,20 @@ def build_router(deps: Deps) -> APIRouter:
             abo = _d.billing.pruefe_kontingent(user["id"])
             if not abo.get("erlaubt", True):
                 raise HTTPException(status_code=429, detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
-            sql = "SELECT COUNT(*) FROM formularfelder WHERE project_id = ? AND TRIM(COALESCE(quickinfo,'')) = '' AND anker NOT LIKE '#%'"
+            sql = "SELECT COUNT(*) FROM formularfelder WHERE project_id = ? AND " + _modus_bedingung(modus) + " AND anker NOT LIKE '#%'"
             args = [project_id]
             if document_id is not None:
                 sql += " AND document_id = ?"; args.append(document_id)
             offen = conn.execute(sql, args).fetchone()[0]
             if not offen:
-                return {"ok": True, "gestartet": False, "offen": 0}
+                return {"ok": True, "gestartet": False, "offen": 0, "modus": modus}
             conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
             conn.commit()
         finally:
             conn.close()
         _generierung[project_id] = {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []}
-        asyncio.create_task(_generiere_projekt(project_id, user["id"], document_id))
-        return {"ok": True, "gestartet": True, "offen": offen}
+        asyncio.create_task(_generiere_projekt(project_id, user["id"], document_id, modus))
+        return {"ok": True, "gestartet": True, "offen": offen, "modus": modus}
 
     @router.post("/api/felder/{feld_id}/generieren")
     async def feld_generieren(feld_id: int, user: dict = Depends(_user)):

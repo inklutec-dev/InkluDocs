@@ -4617,3 +4617,24 @@ msgstr "Geprüft mit: {w}"
 
 msgid "Ruft gerade auf: {w}"
 msgstr "Ruft gerade auf: {w}"
+
+msgid "Alle neu generieren"
+msgstr "Alle neu generieren"
+
+msgid "{n} KI-Vorschläge werden neu erzeugt und überschrieben. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Kosten: {p} Credits (1 je Seite). Fortfahren?"
+msgstr "{n} KI-Vorschläge werden neu erzeugt und überschrieben. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Kosten: {p} Credits (1 je Seite). Fortfahren?"
+
+msgid "Abgebrochen."
+msgstr "Abgebrochen."
+
+msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
+msgstr "Keine KI-Vorschläge vorhanden – nichts zu generieren."
+
+msgid "Neu-Generierung gestartet für {n} Felder."
+msgstr "Neu-Generierung gestartet für {n} Felder."
+
+msgid "{n} KI-Vorschläge werden überschrieben, {p} Credits"
+msgstr "{n} KI-Vorschläge werden überschrieben, {p} Credits"
+
+msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
+msgstr "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
