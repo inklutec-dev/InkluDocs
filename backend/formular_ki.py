@@ -159,6 +159,18 @@ def nachpruefung(vorschlag: FeldVorschlag, feld: dict, zeilen: list[dict], seite
                 hinweise.append("Beleg liegt nicht in der Nähe des Feldes; Zuordnung aus dem Seitenbild." if mit_seitenbild
                                 else "Beleg liegt nicht in der Nähe des Feldes.")
 
+    # Redundanz (Befund Bankformular 28.08.2026, vom Chatbot gefunden): „Gruppe: … Gruppe …“ —
+    # steht der Praefix vor dem Doppelpunkt im Satz dahinter noch einmal (Kern ohne Klammer-
+    # Nummer), fliegt der Praefix; der Satz dahinter traegt die Gruppe bereits.
+    m = re.match(r"^\s*([^:]{3,60}?)\s*:\s*(.+)$", qi)
+    if m:
+        kern = re.sub(r"\[[^\]]*\]|\d+", " ", m.group(1)).lower()
+        woerter = [w for w in re.findall(r"[a-zäöüß]{4,}", kern)]
+        rest = m.group(2).lower()
+        if woerter and all(w[:5] in rest for w in woerter):
+            qi = m.group(2).strip()
+            hinweise.append("Doppelte Gruppe entfernt.")
+
     # Regel-Pruefung
     if len(qi) > MAX_QUICKINFO_LAENGE:
         qi = qi[:MAX_QUICKINFO_LAENGE].rstrip()

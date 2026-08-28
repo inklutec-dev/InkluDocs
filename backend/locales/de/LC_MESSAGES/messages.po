@@ -4566,3 +4566,54 @@ msgstr "InkluAgent hat 1 Quickinfo aktualisiert."
 
 msgid "InkluAgent hat {n} Quickinfos aktualisiert."
 msgstr "InkluAgent hat {n} Quickinfos aktualisiert."
+
+msgid "Bilderliste"
+msgstr "Bilderliste"
+
+msgid "Bild-Details"
+msgstr "Bild-Details"
+
+msgid "Bild ansehen"
+msgstr "Bild ansehen"
+
+msgid "Alt-Text-Pipeline"
+msgstr "Alt-Text-Pipeline"
+
+msgid "Alt-Text speichern"
+msgstr "Alt-Text speichern"
+
+msgid "Alt-Text zurücksetzen"
+msgstr "Alt-Text zurücksetzen"
+
+msgid "Websuche"
+msgstr "Websuche"
+
+msgid "Feldliste"
+msgstr "Feldliste"
+
+msgid "Feld-Details"
+msgstr "Feld-Details"
+
+msgid "Feld ansehen"
+msgstr "Feld ansehen"
+
+msgid "Feld-Pass"
+msgstr "Feld-Pass"
+
+msgid "Quickinfo speichern"
+msgstr "Quickinfo speichern"
+
+msgid "Quickinfo zurücksetzen"
+msgstr "Quickinfo zurücksetzen"
+
+msgid "Stammdaten suchen"
+msgstr "Stammdaten suchen"
+
+msgid "Ohne Werkzeug (aus dem Gesprächsverlauf)"
+msgstr "Ohne Werkzeug (aus dem Gesprächsverlauf)"
+
+msgid "Geprüft mit: {w}"
+msgstr "Geprüft mit: {w}"
+
+msgid "Ruft gerade auf: {w}"
+msgstr "Ruft gerade auf: {w}"

@@ -10,7 +10,7 @@ Gesprächsstil-Section (Sehr-gerne-Diskussion).
 
 # 28.08.2026: Ehrlichkeit / Gesprächsstil / Schreibstil kommen aus system_gemeinsam.py (eine Quelle
 # für alle Werkzeuge, der Formular-Agent nutzt dieselben Blöcke); Wortlaut unverändert.
-from .system_gemeinsam import GESPRAECHSSTIL, gemeinsam_ehrlichkeit, gemeinsam_schreibstil
+from .system_gemeinsam import GESPRAECHSSTIL, PRUEFEN, gemeinsam_ehrlichkeit, gemeinsam_schreibstil
 
 SYSTEM_AGENT = """Du bist InkluAgent, ein spezialisierter KI-Assistent für barrierefreie Alternativ-Texte in PDF-Dokumenten. Du arbeitest innerhalb von InkluDocs, einer Plattform für WCAG- und BITV-konforme Alt-Texte, Langbeschreibungen und barrierefreie Bildredaktion.
 
@@ -88,6 +88,8 @@ Du stützt dich NICHT auf deine eigenen früheren Text-Notizen als Ersatz für d
 Einzige Ausnahme: Die Frage betrifft das Bild gar nicht (z.B. „wie heißt das Tool zum Speichern?", „was bedeutet WCAG 1.1.1?"). Dann kein view_image nötig.
 
 """ + gemeinsam_ehrlichkeit('„Das Bild lädt nicht", „Das Tool gibt einen Fehler zurück"') + """
+
+""" + PRUEFEN + """
 
 Proaktivität
 

@@ -4124,3 +4124,54 @@ msgstr "InkluAgent uppdaterade 1 verktygstips."
 
 msgid "InkluAgent hat {n} Quickinfos aktualisiert."
 msgstr "InkluAgent uppdaterade {n} verktygstips."
+
+msgid "Bilderliste"
+msgstr "Bildlista"
+
+msgid "Bild-Details"
+msgstr "Bilddetaljer"
+
+msgid "Bild ansehen"
+msgstr "Visa bild"
+
+msgid "Alt-Text-Pipeline"
+msgstr "Alt-text-pipeline"
+
+msgid "Alt-Text speichern"
+msgstr "Spara alt-text"
+
+msgid "Alt-Text zurücksetzen"
+msgstr "Återställ alt-text"
+
+msgid "Websuche"
+msgstr "Webbsökning"
+
+msgid "Feldliste"
+msgstr "Fältlista"
+
+msgid "Feld-Details"
+msgstr "Fältdetaljer"
+
+msgid "Feld ansehen"
+msgstr "Visa fält"
+
+msgid "Feld-Pass"
+msgstr "Fältpass"
+
+msgid "Quickinfo speichern"
+msgstr "Spara verktygstips"
+
+msgid "Quickinfo zurücksetzen"
+msgstr "Återställ verktygstips"
+
+msgid "Stammdaten suchen"
+msgstr "Sök stamdata"
+
+msgid "Ohne Werkzeug (aus dem Gesprächsverlauf)"
+msgstr "Utan verktyg (från samtalen)"
+
+msgid "Geprüft mit: {w}"
+msgstr "Kontrollerat med: {w}"
+
+msgid "Ruft gerade auf: {w}"
+msgstr "Anropar nu: {w}"

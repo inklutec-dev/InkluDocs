@@ -4254,3 +4254,54 @@ msgstr "InkluAgent har opdateret 1 værktøjstip."
 
 msgid "InkluAgent hat {n} Quickinfos aktualisiert."
 msgstr "InkluAgent har opdateret {n} værktøjstips."
+
+msgid "Bilderliste"
+msgstr "Billedliste"
+
+msgid "Bild-Details"
+msgstr "Billeddetaljer"
+
+msgid "Bild ansehen"
+msgstr "Se billede"
+
+msgid "Alt-Text-Pipeline"
+msgstr "Alt-tekst-pipeline"
+
+msgid "Alt-Text speichern"
+msgstr "Gem alt-tekst"
+
+msgid "Alt-Text zurücksetzen"
+msgstr "Nulstil alt-tekst"
+
+msgid "Websuche"
+msgstr "Websøgning"
+
+msgid "Feldliste"
+msgstr "Feltliste"
+
+msgid "Feld-Details"
+msgstr "Feltdetaljer"
+
+msgid "Feld ansehen"
+msgstr "Se felt"
+
+msgid "Feld-Pass"
+msgstr "Feltgennemgang"
+
+msgid "Quickinfo speichern"
+msgstr "Gem værktøjstip"
+
+msgid "Quickinfo zurücksetzen"
+msgstr "Nulstil værktøjstip"
+
+msgid "Stammdaten suchen"
+msgstr "Søg i stamdata"
+
+msgid "Ohne Werkzeug (aus dem Gesprächsverlauf)"
+msgstr "Uden værktøj (fra samtalen)"
+
+msgid "Geprüft mit: {w}"
+msgstr "Kontrolleret med: {w}"
+
+msgid "Ruft gerade auf: {w}"
+msgstr "Kalder nu: {w}"

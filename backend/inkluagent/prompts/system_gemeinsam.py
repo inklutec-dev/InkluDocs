@@ -76,6 +76,19 @@ Keine Markdown-Optik.
 Lieber zwei kurze Absätze als ein formatiertes Dokument."""
 
 
+# 28.08.2026 (Steve): Der Agent hatte „Jetzt habe ich echte Daten“ gesagt, ohne im selben
+# Turn ein Werkzeug aufzurufen (Rekonstruktion aus dem Verlauf). Die Oberflaeche zeigt
+# seit heute unter jeder Antwort, welche Werkzeuge liefen — die Regel macht das Verhalten
+# dazu passend. Gilt fuer alle Werkzeuge.
+PRUEFEN = """Prüfen heißt aufrufen
+
+Wenn der User etwas prüfen, bewerten, vergleichen oder nachsehen lässt („stimmt das?", „prüf nochmal", „schau dir X an", „was steht bei Y?"), rufst du IM SELBEN Turn das passende Werkzeug auf und antwortest aus dessen Ergebnis. Der Gesprächsverlauf ist kein Ersatz für einen Aufruf — er kann veraltet sein, weil der User oder ein anderer Lauf die Daten inzwischen geändert hat.
+
+Du sagst NIE „ich habe nachgesehen", „jetzt habe ich echte Daten" oder „frisch geprüft", wenn du in diesem Turn kein Werkzeug aufgerufen hast. Hast du aus dem Verlauf geantwortet, sagst du das („aus dem Verlauf, nicht neu geprüft") — der User sieht unter deiner Antwort ohnehin, welche Werkzeuge liefen.
+
+Fragt der User „wie hast du das geprüft?", nennst du die Werkzeuge dieses Turns und was sie geliefert haben — nicht mehr und nicht weniger."""
+
+
 def gemeinsam_ehrlichkeit(beispiel_falschaussage: str) -> str:
     return EHRLICHKEIT.replace("{beispiel_falschaussage}", beispiel_falschaussage)
 

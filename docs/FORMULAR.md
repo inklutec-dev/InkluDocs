@@ -281,6 +281,14 @@ derselbe Feld-Pass wie der Knopf. Abrechnung wie in der Oberfläche (1 Credit
 je erzeugter oder geänderter Quickinfo, Reden ist frei). Gesamtbild und
 Kochrezept für weitere Werkzeuge: `docs/INKLUAGENT.md`.
 
+## Redundanz-Regel der Nachprüfung (28.08.2026)
+
+„Gruppe: … Gruppe …“ — steht der Präfix vor dem Doppelpunkt im Satz dahinter
+noch einmal (Wortkern ohne Klammer-Nummer), entfernt `nachpruefung()` den
+Präfix (Hinweis „Doppelte Gruppe entfernt“). Befund Bankformular: „Wirtschaftlich
+Berechtigter [1]: Unterschrift des wirtschaftlich Berechtigten [1].“ Gilt für
+Feld-Pass und InkluAgent (`update_quickinfo`).
+
 ## Seitenbild-Ausnahme im Feld-Pass (28.08.2026)
 
 Der Feld-Pass arbeitet rein mit Text und Positionen. Hat eine Seite ein Feld

@@ -7737,20 +7737,63 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
     from inkluagent.chat_engine import process_message
 
     storage.append_message(project_id, "user", message)
-    result = await asyncio.get_event_loop().run_in_executor(
-        None, process_message, project_id, message, user["id"]
-    )
-    storage.append_message(
-        project_id, "assistant", result["reply"],
-        image_refs=result.get("image_refs"),
-        intent=result.get("intent"),
-    )
-    return {
-        "reply": result["reply"],
-        "intent": result.get("intent"),
-        "image_refs": result.get("image_refs"),
-        "actions": result.get("actions", []),
-    }
+    loop = asyncio.get_running_loop()
+
+    def _antwort(result: dict) -> dict:
+        storage.append_message(
+            project_id, "assistant", result["reply"],
+            image_refs=result.get("image_refs"),
+            intent=result.get("intent"),
+            werkzeuge=result.get("werkzeuge"),
+        )
+        return {
+            "reply": result["reply"],
+            "intent": result.get("intent"),
+            "image_refs": result.get("image_refs"),
+            "actions": result.get("actions", []),
+            "werkzeuge": result.get("werkzeuge", []),
+        }
+
+    # Werkzeug-Transparenz (Steve 28.08.2026): mit Accept: application/x-ndjson streamt der
+    # Endpunkt je Werkzeugaufruf eine Zeile {"type":"tool","name":...} und am Ende
+    # {"type":"reply", ...} — die Oberflaeche zeigt live „Ruft gerade auf: …“. Ohne den
+    # Header bleibt die bisherige JSON-Antwort (API-Kunden, Demo, Tests).
+    if "application/x-ndjson" not in (request.headers.get("accept") or ""):
+        result = await loop.run_in_executor(None, process_message, project_id, message, user["id"])
+        return _antwort(result)
+
+    queue: asyncio.Queue = asyncio.Queue()
+
+    def on_tool(name, args):
+        loop.call_soon_threadsafe(queue.put_nowait, {"type": "tool", "name": name})
+
+    async def lauf():
+        try:
+            r = await loop.run_in_executor(
+                None, lambda: process_message(project_id, message, user["id"], on_tool=on_tool))
+        except Exception as e:
+            logger.exception("Chat-Stream: process_message crashte")
+            r = {"reply": "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte erneut versuchen.",
+                 "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
+        await queue.put({"type": "done", "result": r})
+
+    async def strom():
+        aufgabe = asyncio.ensure_future(lauf())
+        try:
+            while True:
+                ev = await queue.get()
+                if ev["type"] == "done":
+                    out = _antwort(ev["result"])
+                    out["type"] = "reply"
+                    yield json.dumps(out, ensure_ascii=False) + "\n"
+                    break
+                yield json.dumps(ev, ensure_ascii=False) + "\n"
+        finally:
+            if not aufgabe.done():
+                await aufgabe
+
+    return StreamingResponse(strom(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.delete("/api/projects/{project_id}/chat")

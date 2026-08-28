@@ -80,6 +80,21 @@ Formular-Einleitung; `formular.js` hängt ihn unter die Feldliste (nur Besitzer,
 Gäste bekommen keinen Chatbot) und setzt `refresh_feld`-Aktionen live um
 (Textfeld, Badge, Beleg — ohne Neu-Rendern, `Formular.chatAktionen`).
 
+## Werkzeug-Transparenz (28.08.2026)
+
+Der Chat-Endpunkt `POST /api/projects/{id}/chat` streamt mit `Accept:
+application/x-ndjson` je Werkzeugaufruf eine Zeile `{"type":"tool","name":…}`
+(Callback `on_tool` im Agent-Loop) und am Ende `{"type":"reply", …,
+"werkzeuge":[…]}`; ohne den Header bleibt die JSON-Antwort. Die Oberfläche
+zeigt während des Laufs „Ruft gerade auf: Feld-Details“ (Status-Zeile,
+aria-live) und unter jeder Antwort „Geprüft mit: Feldliste, Feld-Details“
+bzw. „Ohne Werkzeug (aus dem Gesprächsverlauf)“; die Liste wird je Antwort in
+`chat_messages.werkzeuge` gespeichert und im Verlauf wieder angezeigt.
+Passend dazu die gemeinsame Prompt-Regel „Prüfen heißt aufrufen“
+(`system_gemeinsam.PRUEFEN`): Prüf-/Bewertungsfragen lösen im selben Turn
+einen Werkzeugaufruf aus; ohne Aufruf sagt der Agent, dass er aus dem
+Verlauf antwortet.
+
 ## Ein neues Werkzeug anschließen (Kochrezept)
 
 1. `tools/<werkzeug>.py`: Funktionen `(…, project_id, user_id) -> {"ok", "result"|"error"}`,

@@ -4563,3 +4563,54 @@ msgstr "InkluAgent updated 1 tooltip."
 
 msgid "InkluAgent hat {n} Quickinfos aktualisiert."
 msgstr "InkluAgent updated {n} tooltips."
+
+msgid "Bilderliste"
+msgstr "Image list"
+
+msgid "Bild-Details"
+msgstr "Image details"
+
+msgid "Bild ansehen"
+msgstr "View image"
+
+msgid "Alt-Text-Pipeline"
+msgstr "Alt text pipeline"
+
+msgid "Alt-Text speichern"
+msgstr "Save alt text"
+
+msgid "Alt-Text zurücksetzen"
+msgstr "Reset alt text"
+
+msgid "Websuche"
+msgstr "Web search"
+
+msgid "Feldliste"
+msgstr "Field list"
+
+msgid "Feld-Details"
+msgstr "Field details"
+
+msgid "Feld ansehen"
+msgstr "View field"
+
+msgid "Feld-Pass"
+msgstr "Field pass"
+
+msgid "Quickinfo speichern"
+msgstr "Save tooltip"
+
+msgid "Quickinfo zurücksetzen"
+msgstr "Reset tooltip"
+
+msgid "Stammdaten suchen"
+msgstr "Search master data"
+
+msgid "Ohne Werkzeug (aus dem Gesprächsverlauf)"
+msgstr "No tool used (from the conversation)"
+
+msgid "Geprüft mit: {w}"
+msgstr "Checked with: {w}"
+
+msgid "Ruft gerade auf: {w}"
+msgstr "Now calling: {w}"

@@ -697,6 +697,9 @@ def _migrate_columns(conn):
         ("formularfelder", "review_status", "ALTER TABLE formularfelder ADD COLUMN review_status TEXT DEFAULT 'offen'"),
         ("formularfelder", "reviewed_at", "ALTER TABLE formularfelder ADD COLUMN reviewed_at TEXT"),
         ("formularfelder", "review_note", "ALTER TABLE formularfelder ADD COLUMN review_note TEXT DEFAULT ''"),
+        # INKLUAGENT Werkzeug-Transparenz (28.08.2026): welche Werkzeuge der Agent fuer diese
+        # Antwort aufgerufen hat (JSON-Liste der Namen, Reihenfolge = Aufrufreihenfolge).
+        ("chat_messages", "werkzeuge", "ALTER TABLE chat_messages ADD COLUMN werkzeuge TEXT"),
     ]
 
     for table, column, sql in migrations:

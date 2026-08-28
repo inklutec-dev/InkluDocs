@@ -4563,3 +4563,54 @@ msgstr "InkluAgent actualizó 1 descripción."
 
 msgid "InkluAgent hat {n} Quickinfos aktualisiert."
 msgstr "InkluAgent actualizó {n} descripciones."
+
+msgid "Bilderliste"
+msgstr "Lista de imágenes"
+
+msgid "Bild-Details"
+msgstr "Detalles de la imagen"
+
+msgid "Bild ansehen"
+msgstr "Ver imagen"
+
+msgid "Alt-Text-Pipeline"
+msgstr "Canal de texto alternativo"
+
+msgid "Alt-Text speichern"
+msgstr "Guardar texto alternativo"
+
+msgid "Alt-Text zurücksetzen"
+msgstr "Restablecer texto alternativo"
+
+msgid "Websuche"
+msgstr "Búsqueda web"
+
+msgid "Feldliste"
+msgstr "Lista de campos"
+
+msgid "Feld-Details"
+msgstr "Detalles del campo"
+
+msgid "Feld ansehen"
+msgstr "Ver campo"
+
+msgid "Feld-Pass"
+msgstr "Pase de campos"
+
+msgid "Quickinfo speichern"
+msgstr "Guardar descripción"
+
+msgid "Quickinfo zurücksetzen"
+msgstr "Restablecer descripción"
+
+msgid "Stammdaten suchen"
+msgstr "Buscar datos maestros"
+
+msgid "Ohne Werkzeug (aus dem Gesprächsverlauf)"
+msgstr "Sin herramienta (según la conversación)"
+
+msgid "Geprüft mit: {w}"
+msgstr "Comprobado con: {w}"
+
+msgid "Ruft gerade auf: {w}"
+msgstr "Llamando a: {w}"

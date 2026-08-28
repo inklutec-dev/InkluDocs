@@ -2810,7 +2810,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             }
             const data = await res.json();
             for (const m of data.messages || []) {
-                inkluagentAppendMessage(m.role, m.content);
+                inkluagentAppendMessage(m.role, m.content, m.werkzeuge);
             }
             log.scrollTop = log.scrollHeight;
         } catch (e) {
@@ -2818,7 +2818,27 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
-    function inkluagentAppendMessage(role, content) {
+    // Werkzeug-Transparenz (Steve 28.08.2026): deutsche Namen der Agenten-Werkzeuge fuer die
+    // Live-Zeile „Ruft gerade auf: …“ und die Zeile „Geprüft mit: …“ unter jeder Antwort.
+    function inkluagentWerkzeugLabel(name) {
+        const map = {
+            list_project_images: t('Bilderliste'), get_image_metadata: t('Bild-Details'), view_image: t('Bild ansehen'),
+            generate_alt_text: t('Alt-Text-Pipeline'), update_alt_text: t('Alt-Text speichern'), revert_alt_text: t('Alt-Text zurücksetzen'),
+            tavily_search: t('Websuche'),
+            list_form_fields: t('Feldliste'), get_field_details: t('Feld-Details'), view_field: t('Feld ansehen'),
+            generate_quickinfo: t('Feld-Pass'), update_quickinfo: t('Quickinfo speichern'), revert_quickinfo: t('Quickinfo zurücksetzen'),
+            search_master_data: t('Stammdaten suchen'), save_to_master_data: t('In Stammdaten übernehmen')
+        };
+        return map[name] || name;
+    }
+    function inkluagentWerkzeugText(werkzeuge) {
+        if (!Array.isArray(werkzeuge)) return '';
+        if (!werkzeuge.length) return t('Ohne Werkzeug (aus dem Gesprächsverlauf)');
+        const namen = []; werkzeuge.forEach(w => { const l = inkluagentWerkzeugLabel(w); if (namen.indexOf(l) < 0) namen.push(l); });
+        return t('Geprüft mit: {w}', { w: namen.join(', ') });
+    }
+
+    function inkluagentAppendMessage(role, content, werkzeuge) {
         const log = document.getElementById('inkluagentLog');
         if (!log) return;
         // VoiceOver (Steve 28.08.2026): jede Nachricht ist fokussierbar (tabindex -1) und
@@ -2837,6 +2857,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         contentEl.textContent = content || '';
         wrapper.appendChild(roleEl);
         wrapper.appendChild(contentEl);
+        const wtext = role === 'assistant' ? inkluagentWerkzeugText(werkzeuge) : '';
+        if (wtext) {
+            const wEl = document.createElement('div');
+            wEl.className = 'inkluagent-message-tools';
+            wEl.style.cssText = 'font-size:0.8rem;color:var(--text-muted);margin-top:0.35rem;';
+            wEl.textContent = wtext;
+            wrapper.appendChild(wEl);
+        }
         log.appendChild(wrapper);
         return wrapper;
     }
@@ -2871,9 +2899,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         sendBtn.disabled = true;
         inkluagentSetStatus(t('InkluAgent denkt nach...'), false);
         try {
+            // Stream (NDJSON, 28.08.2026): je Werkzeugaufruf eine Zeile -> Live-Zeile im Status
+            // (aria-live, VoiceOver sagt sie an), am Ende die Antwort mit Werkzeugliste.
             const res = await fetch('/api/projects/' + projectId + '/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
                 body: JSON.stringify({ message })
             });
             if (res.status === 401) { window.location.href = '/'; return; }
@@ -2883,8 +2913,31 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 inkluagentSetStatus(detail, true);
                 return;
             }
-            const data = await res.json();
-            const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'));
+            let data = null;
+            const genutzt = [];
+            if (res.body && res.body.getReader && (res.headers.get('Content-Type') || '').indexOf('x-ndjson') >= 0) {
+                const reader = res.body.getReader(); const dec = new TextDecoder(); let rest = '';
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    rest += dec.decode(value, { stream: true });
+                    let nl;
+                    while ((nl = rest.indexOf('\n')) >= 0) {
+                        const zeile = rest.slice(0, nl).trim(); rest = rest.slice(nl + 1);
+                        if (!zeile) continue;
+                        let ev; try { ev = JSON.parse(zeile); } catch (_) { continue; }
+                        if (ev.type === 'tool') {
+                            genutzt.push(ev.name);
+                            inkluagentSetStatus(t('Ruft gerade auf: {w}', { w: inkluagentWerkzeugLabel(ev.name) }), false);
+                        } else if (ev.type === 'reply') { data = ev; }
+                    }
+                }
+                if (!data && rest.trim()) { try { data = JSON.parse(rest.trim()); } catch (_) {} }
+            } else {
+                data = await res.json();
+            }
+            if (!data) { inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true); return; }
+            const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'), Array.isArray(data.werkzeuge) ? data.werkzeuge : genutzt);
             log.scrollTop = log.scrollHeight;
             inkluagentSetStatus('', false);
             // Fokus auf die Antwort statt zurueck ins Eingabefeld: der Screenreader liest sie

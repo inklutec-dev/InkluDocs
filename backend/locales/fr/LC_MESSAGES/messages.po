@@ -4563,3 +4563,54 @@ msgstr "InkluAgent a mis à jour 1 infobulle."
 
 msgid "InkluAgent hat {n} Quickinfos aktualisiert."
 msgstr "InkluAgent a mis à jour {n} infobulles."
+
+msgid "Bilderliste"
+msgstr "Liste des images"
+
+msgid "Bild-Details"
+msgstr "Détails de l’image"
+
+msgid "Bild ansehen"
+msgstr "Voir l’image"
+
+msgid "Alt-Text-Pipeline"
+msgstr "Pipeline de texte alternatif"
+
+msgid "Alt-Text speichern"
+msgstr "Enregistrer le texte alternatif"
+
+msgid "Alt-Text zurücksetzen"
+msgstr "Réinitialiser le texte alternatif"
+
+msgid "Websuche"
+msgstr "Recherche web"
+
+msgid "Feldliste"
+msgstr "Liste des champs"
+
+msgid "Feld-Details"
+msgstr "Détails du champ"
+
+msgid "Feld ansehen"
+msgstr "Voir le champ"
+
+msgid "Feld-Pass"
+msgstr "Passe des champs"
+
+msgid "Quickinfo speichern"
+msgstr "Enregistrer l’infobulle"
+
+msgid "Quickinfo zurücksetzen"
+msgstr "Réinitialiser l’infobulle"
+
+msgid "Stammdaten suchen"
+msgstr "Rechercher dans les données de référence"
+
+msgid "Ohne Werkzeug (aus dem Gesprächsverlauf)"
+msgstr "Sans outil (d’après la conversation)"
+
+msgid "Geprüft mit: {w}"
+msgstr "Vérifié avec : {w}"
+
+msgid "Ruft gerade auf: {w}"
+msgstr "Appel en cours : {w}"

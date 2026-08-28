@@ -60,7 +60,7 @@ if _AGENTIC_ENABLED:
 _HISTORY_TURNS = 30  # letzte 30 Nachrichten als Kontext mitgeben (05.05.2026 von 8 erhoeht)
 
 
-def process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None) -> dict:
+def process_message(project_id: int, user_message: str, user_id: int, system_suffix: str = None, on_tool=None) -> dict:
     """Hauptfunktion. Returns:
     {"reply": str, "intent": str, "image_refs": list[int]|None,
      "actions": list[dict]}.
@@ -82,7 +82,7 @@ def process_message(project_id: int, user_message: str, user_id: int, system_suf
     if _AGENTIC_ENABLED and _PROVIDER_NAME == "bedrock":
         from .agent_loop import run_agent
         try:
-            return run_agent(project_id, user_id, user_message, project, _provider, system_suffix=system_suffix)
+            return run_agent(project_id, user_id, user_message, project, _provider, system_suffix=system_suffix, on_tool=on_tool)
         except Exception as e:
             log.exception("agentic run_agent crashte — Fallback auf klassischen Dispatcher")
             # Fallthrough zum klassischen Pfad statt User-Fehler

@@ -175,5 +175,26 @@ class TestSeitenbildAusnahme(unittest.TestCase):
         self.assertTrue(any("Seitenbild" in h for h in v.hinweise), v.hinweise)
 
 
+class TestRedundanz(unittest.TestCase):
+    """Doppelte Gruppe (Befund 28.08.2026): Praefix vor dem Doppelpunkt fliegt, wenn er im Satz wiederkehrt."""
+
+    def _pruefe(self, text):
+        zeilen, seitentext = fk.seiten_zeilen(FIXTURE, 1)
+        felder, _ = fp.extract_formular(FIXTURE, None, 0)
+        f = next(x for x in felder if x["beschriftung"] == "Vorname")
+        return fk.nachpruefung(fk.FeldVorschlag(1, text, beleg="Vorname", sicherheit="hoch"), f, zeilen, seitentext)
+
+    def test_doppelte_gruppe_entfernt(self):
+        v = self._pruefe("Wirtschaftlich Berechtigter [1]: Unterschrift des wirtschaftlich Berechtigten [1].")
+        self.assertEqual(v.quickinfo, "Unterschrift des wirtschaftlich Berechtigten [1].")
+        self.assertIn("Doppelte Gruppe entfernt.", v.hinweise)
+
+    def test_gruppe_ohne_wiederholung_bleibt(self):
+        v = self._pruefe("Antragsteller: Vorname.")
+        self.assertEqual(v.quickinfo, "Antragsteller: Vorname.")
+        v = self._pruefe("Zahlungsweise: monatlich")
+        self.assertEqual(v.quickinfo, "Zahlungsweise: monatlich")
+
+
 if __name__ == "__main__":
     unittest.main()

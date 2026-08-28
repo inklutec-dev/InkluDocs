@@ -155,6 +155,7 @@ def run_agent(
     project: dict,
     provider: BedrockProvider,
     system_suffix: str = None,
+    on_tool=None,
 ) -> dict[str, Any]:
     """Führt den agentic Loop aus. Returns:
         {"reply": str, "intent": "agentic", "image_refs": [...] or None,
@@ -167,6 +168,10 @@ def run_agent(
     system_suffix: optionaler Text, der NUR im Demo-Modus an den System-Prompt
     angehängt wird (thematische Leitplanke). Default None = normaler Pfad,
     System-Prompt unverändert.
+    on_tool (28.08.2026, Werkzeug-Transparenz): Callback (name, args) VOR jedem
+    Werkzeugaufruf — der Chat-Endpunkt streamt daraus die Live-Zeile „Ruft gerade
+    auf: …“ an die Oberflaeche. Ergebnis enthaelt zusaetzlich "werkzeuge": Namen
+    in Aufrufreihenfolge (leer = ohne Werkzeug aus dem Verlauf geantwortet).
     """
     _summary_user_id_holder[project_id] = user_id
     tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
@@ -174,6 +179,7 @@ def run_agent(
     system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
 
     actions_log: list[dict] = []
+    werkzeuge: list[str] = []
     image_refs_seen: set[int] = set()
     last_reply_text = ""
 
@@ -219,6 +225,12 @@ def run_agent(
             tu_id = tu.get("id", "")
 
             log.info("Agent ruft Tool %s mit args=%s", name, args)
+            werkzeuge.append(name)
+            if on_tool:
+                try:
+                    on_tool(name, args)
+                except Exception:
+                    log.exception("on_tool-Callback fehlgeschlagen (ignoriert)")
             result = executor.execute(name, args)
             actions_log.append({
                 "tool": name,
@@ -325,4 +337,5 @@ def run_agent(
         "intent": "agentic",
         "image_refs": image_refs_list,
         "actions": actions_log,
+        "werkzeuge": werkzeuge,
     }
