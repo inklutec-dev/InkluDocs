@@ -704,6 +704,8 @@ def _migrate_columns(conn):
         # KI-Vorschlag bleibt erhalten, auch wenn von Hand darueber geschrieben wird —
         # Knopf „KI-Vorschlag uebernehmen“ holt ihn zurueck.
         ("formularfelder", "quickinfo_ki", "ALTER TABLE formularfelder ADD COLUMN quickinfo_ki TEXT DEFAULT ''"),
+        # Gast-Anmerkung je Rolle (Review 28.08.2026): Lektorat und Herausgeber ueberschreiben sich nicht.
+        ("feld_reviews", "note", "ALTER TABLE feld_reviews ADD COLUMN note TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:

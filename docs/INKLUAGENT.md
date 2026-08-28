@@ -36,11 +36,25 @@ sie können sich nicht vermischen. Der Chat-Verlauf ist ohnehin je Projekt getre
 `prompts/system_gemeinsam.py` hält die drei Abschnitte, die den Charakter des
 Agenten ausmachen: Ehrlichkeit gegenüber der eigenen History, Gesprächsstil,
 Schreibstil (keine Tabellen, keine Markdown-Optik, Vorschläge in Anführungszeichen).
-Beide Fach-Prompts setzen sie ein; der Alt-Text-Prompt ist dadurch byte-gleich
-zur Fassung vor dem 28.08. (belegt beim Umbau). Wer den Ton des Agenten ändern
-will, ändert ihn dort.
+Beide Fach-Prompts setzen sie ein; beim Umbau war der Alt-Text-Prompt
+byte-gleich zur Fassung vor dem 28.08. (belegt), seither kommt in beiden der
+Block „Prüfen heißt aufrufen“ (`PRUEFEN`) dazu. Wer den Ton des Agenten
+ändern will, ändert ihn dort.
+
+Grenze: Der Werkzeug-Modus braucht `INKLUAGENT_PROVIDER=bedrock` und
+`INKLUAGENT_AGENTIC=true`. Der klassische Vier-Pfad-Dispatcher in
+`chat_engine.py` (Mistral-Zeit) kennt nur Bilder; Formular-Projekte bekommen
+ohne Werkzeug-Modus oder bei einem Absturz des Loops eine klare Fehlermeldung
+statt des Bild-Dispatchers.
+
+Sicherheit gegen Prompt-Injection: Fremdtexte (Seitentext, Umfeld, Anmerkung
+des Gastes) kommen als `…_daten`-Felder mit Kennzeichnung ins Tool-Result,
+und der Formular-Prompt erklärt, dass Werkzeug-Inhalte Daten und nie
+Anweisungen sind. Im Chat abgenommene Texte tragen `quelle = chat` und
+werden von „Alle neu generieren“ nicht angefasst.
 
 Gemeinsam sind außerdem: der Loop selbst (höchstens 6 Werkzeug-Runden je Turn,
+Werkzeug-Ergebnisse auf 40.000 Zeichen gekappt mit Hinweis an das Modell,
 Bilder als image-Block im nächsten Turn, `refresh_*`-Aktionen fürs Frontend),
 die Websuche (`tavily_search`), die Kontingent-Wache (`billing.pruefe_kontingent`),
 die Abrechnungsregel „Reden ist frei, Erzeugen oder Ändern kostet 1 Credit“ und
@@ -105,4 +119,4 @@ Verlauf antwortet.
 4. `agent_loop._werkzeugsatz`: Zweig für `project.tool`; passende
    `refresh_*`-Aktion im Loop; Projekt-Zusammenfassung.
 5. Frontend: `inkluagentSectionHtml(projectId, '<variante>')` einbinden, Aktionen umsetzen.
-6. Tests: E2E-Chat-Turn in `verify_<werkzeug>.py`, Klicktest Kasten vorhanden/abwesend beim Gast.
+6. Tests: E2E-Chat-Turn in `tests/e2e/verify_<werkzeug>.py`, Klicktest Kasten vorhanden/abwesend beim Gast.

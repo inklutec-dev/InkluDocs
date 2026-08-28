@@ -7,9 +7,9 @@ tut. Diese Abschnitte stehen hier genau EINMAL und werden in jeden Fach-Prompt
 eingesetzt — eine Aenderung hier wirkt fuer alle Werkzeuge (Steves Wunsch:
 „in Zukunft den Bot generell updaten“).
 
-Wortlaut: unveraendert aus system_agent.py Version 2 (13.05.2026) herausgezogen.
-Die Bild-Fassung konkateniert diese Bloecke wieder an derselben Stelle, der
-Prompt fuer Alt-Texte ist also byte-gleich zu vorher.
+Wortlaut: unveraendert aus system_agent.py Version 2 (13.05.2026) herausgezogen;
+der Alt-Text-Prompt war nach dem Umbau byte-gleich (belegt). Seit 5d9d69a
+(28.08.2026) kommt in beiden Fach-Prompts der Block PRUEFEN dazu.
 
 Platzhalter: {beispiel_falschaussage} und {objekt} halten die zwei Stellen
 variabel, die vom Werkzeug abhaengen (Bild vs. Feld; Alt-Text vs. Quickinfo).
@@ -25,7 +25,7 @@ REGEL: Du behandelst deine eigene Vergangenheit nicht als verteidigungswürdige 
 
 Wenn ein Tool aktuell funktioniert, sagst du das — auch wenn du in einer früheren Antwort behauptet hast, es würde nicht funktionieren. Du erfindest NIEMALS technische Probleme oder Tool-Fehler, um eine frühere Aussage von dir konsistent zu halten.
 
-Stattdessen: Ruf das Tool aktiv auf, prüfe das echte Ergebnis, und melde was du wirklich siehst. Falls deine frühere Aussage falsch war, sag das kurz und sachlich („Das Bild lädt jetzt doch — ich hatte vorhin einen falschen Tool-Status angenommen.") und mach weiter.
+Stattdessen: Ruf das Tool aktiv auf, prüfe das echte Ergebnis, und melde was du wirklich siehst. Falls deine frühere Aussage falsch war, sag das kurz und sachlich ({beispiel_korrektur}) und mach weiter.
 
 Konsistenz mit dir selbst ist NICHTS wert, wenn die Konsistenz auf einer Falschaussage beruht."""
 
@@ -89,8 +89,10 @@ Du sagst NIE „ich habe nachgesehen", „jetzt habe ich echte Daten" oder „fr
 Fragt der User „wie hast du das geprüft?", nennst du die Werkzeuge dieses Turns und was sie geliefert haben — nicht mehr und nicht weniger."""
 
 
-def gemeinsam_ehrlichkeit(beispiel_falschaussage: str) -> str:
-    return EHRLICHKEIT.replace("{beispiel_falschaussage}", beispiel_falschaussage)
+def gemeinsam_ehrlichkeit(beispiel_falschaussage: str,
+                          beispiel_korrektur: str = '„Das Bild lädt jetzt doch — ich hatte vorhin einen falschen Tool-Status angenommen."') -> str:
+    return (EHRLICHKEIT.replace("{beispiel_falschaussage}", beispiel_falschaussage)
+            .replace("{beispiel_korrektur}", beispiel_korrektur))
 
 
 def gemeinsam_schreibstil(objekt: str) -> str:

@@ -195,6 +195,11 @@ class TestRedundanz(unittest.TestCase):
         v = self._pruefe("Zahlungsweise: monatlich")
         self.assertEqual(v.quickinfo, "Zahlungsweise: monatlich")
 
+    def test_kontonummer_bleibt(self):
+        # Review 28.08.2026: kein Substring-Treffer — „Konto“ in „Konto-Nr.“ darf den Praefix nicht entfernen
+        v = self._pruefe("Kontoinhaber: Konto-Nr.")
+        self.assertEqual(v.quickinfo, "Kontoinhaber: Konto-Nr.")
+
 
 if __name__ == "__main__":
     unittest.main()

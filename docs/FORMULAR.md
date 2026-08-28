@@ -344,11 +344,14 @@ Kosten: rund 1.500 Eingabe-Token je betroffener Seite.
 
 ```
 # Unit (Container)
-docker exec inkludocs-staging python3 -m unittest /app/tests/test_formular_roundtrip.py -v
-# End-to-End gegen Staging (legt Projekt an und löscht es; --behalten für Hör-/Klicktest)
-python3 /home/claude/verify_formular.py https://staging.inkludocs.inklutec.de <mail> <pw> /home/claude/testformular_inkludocs.pdf
+docker exec inkludocs-staging python3 -m unittest /app/tests/test_formular_roundtrip.py /app/tests/test_formular_ki.py -v
+# End-to-End gegen Staging (legt ein Projekt an und löscht es; --behalten für Hör-/Klicktest)
+python3 tests/e2e/verify_formular.py <basis-url> <mail> <passwort> tests/fixtures/testformular_inkludocs.pdf
 # Klicktest (Playwright + axe); zweites Argument = Gast-Token für die Gast-Ansicht
-/home/claude/.venv-pw/bin/python /home/claude/ui_formular.py <projekt-id> [gast-token]
-# alles zusammen
-bash /home/claude/formular_tests.sh
+INKLUDOCS_E2E_MAIL=… INKLUDOCS_E2E_PW=… python tests/e2e/ui_formular.py <projekt-id> [gast-token]
+# alles zusammen (Zugangsdaten aus der Umgebung, keine Geheimnisse im Repo)
+INKLUDOCS_E2E_MAIL=… INKLUDOCS_E2E_PW=… bash tests/e2e/formular_tests.sh
 ```
+
+Testkonto: ein normales Nutzerkonto auf Staging; der E2E-Lauf kostet einige
+Credits (Feld-Pass, Chat-Turns über Bedrock). Alle Testdaten sind fiktiv.

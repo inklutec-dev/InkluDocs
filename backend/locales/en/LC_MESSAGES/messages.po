@@ -4119,8 +4119,6 @@ msgstr "Label in the form: {b}"
 msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
 msgstr "The form is being processed – reading fields …"
 
-msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
-msgstr "The guest view for form projects is not available yet."
 
 msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
 msgstr "Processing the form failed. Please try the file again."
@@ -4618,20 +4616,12 @@ msgstr "Now calling: {w}"
 msgid "Alle neu generieren"
 msgstr "Regenerate all"
 
-msgid "{n} KI-Vorschläge werden neu erzeugt und überschrieben. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Kosten: {p} Credits (1 je Seite). Fortfahren?"
-msgstr "{n} AI suggestions will be regenerated and overwritten. Texts entered by hand, from the PDF, from master data or by the guest remain unchanged. Cost: {p} credits (1 per page). Continue?"
 
-msgid "Abgebrochen."
-msgstr "Cancelled."
 
 msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
 msgstr "No AI suggestions present – nothing to regenerate."
 
-msgid "Neu-Generierung gestartet für {n} Felder."
-msgstr "Regeneration started for {n} fields."
 
-msgid "{n} KI-Vorschläge werden überschrieben, {p} Credits"
-msgstr "{n} AI suggestions will be overwritten, {p} credits"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Regeneration started for {n} fields. Texts entered by hand, from the PDF, from master data or by the guest remain unchanged."
@@ -4647,3 +4637,6 @@ msgstr "AI suggestion created, {s}: “{q}” – your text stays. Apply it with
 
 msgid "KI-Vorschlag übernommen: {q}"
 msgstr "AI suggestion applied: {q}"
+
+msgid "im Chat bestätigt"
+msgstr "confirmed in chat"

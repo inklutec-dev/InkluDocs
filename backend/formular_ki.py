@@ -165,9 +165,11 @@ def nachpruefung(vorschlag: FeldVorschlag, feld: dict, zeilen: list[dict], seite
     m = re.match(r"^\s*([^:]{3,60}?)\s*:\s*(.+)$", qi)
     if m:
         kern = re.sub(r"\[[^\]]*\]|\d+", " ", m.group(1)).lower()
-        woerter = [w for w in re.findall(r"[a-zäöüß]{4,}", kern)]
-        rest = m.group(2).lower()
-        if woerter and all(w[:5] in rest for w in woerter):
+        woerter = re.findall(r"[^\W\d_]{4,}", kern)          # alle Schriften (é, ø, å), Review 28.08.
+        rest_woerter = {w[:6] for w in re.findall(r"[^\W\d_]{4,}", m.group(2).lower())}
+        # Ganze Woerter vergleichen (Stamm 6 Zeichen: Berechtigter/Berechtigten), kein Substring —
+        # „Kontoinhaber: Konto-Nr.“ bleibt stehen.
+        if woerter and all(w[:6] in rest_woerter for w in woerter):
             qi = m.group(2).strip()
             hinweise.append("Doppelte Gruppe entfernt.")
 

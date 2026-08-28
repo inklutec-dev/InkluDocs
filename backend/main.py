@@ -7768,14 +7768,18 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
         loop.call_soon_threadsafe(queue.put_nowait, {"type": "tool", "name": name})
 
     async def lauf():
+        # Review 28.08.2026: Speichern gehoert in den Lauf, nicht in den Stream — bricht der
+        # Client ab, bleibt die Antwort trotzdem im Verlauf; Fehlerantworten werden NICHT
+        # persistiert (sonst landen sie im Kontext des naechsten Turns). DB-Zugriff im Executor.
         try:
             r = await loop.run_in_executor(
                 None, lambda: process_message(project_id, message, user["id"], on_tool=on_tool))
-        except Exception as e:
+            out = await loop.run_in_executor(None, _antwort, r)
+        except Exception:
             logger.exception("Chat-Stream: process_message crashte")
-            r = {"reply": "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte erneut versuchen.",
-                 "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
-        await queue.put({"type": "done", "result": r})
+            out = {"reply": "Entschuldigung, dabei ist ein Fehler aufgetreten. Bitte erneut versuchen.",
+                   "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
+        await queue.put({"type": "done", "result": out})
 
     async def strom():
         aufgabe = asyncio.ensure_future(lauf())
@@ -7783,7 +7787,7 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
             while True:
                 ev = await queue.get()
                 if ev["type"] == "done":
-                    out = _antwort(ev["result"])
+                    out = dict(ev["result"])
                     out["type"] = "reply"
                     yield json.dumps(out, ensure_ascii=False) + "\n"
                     break

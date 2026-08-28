@@ -4119,8 +4119,6 @@ msgstr "Libellé dans le formulaire : {b}"
 msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
 msgstr "Le formulaire est en cours de traitement – lecture des champs …"
 
-msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
-msgstr "La vue invité pour les projets de formulaires n’est pas encore disponible."
 
 msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
 msgstr "Le traitement du formulaire a échoué. Veuillez réessayer avec le fichier."
@@ -4618,20 +4616,12 @@ msgstr "Appel en cours : {w}"
 msgid "Alle neu generieren"
 msgstr "Tout régénérer"
 
-msgid "{n} KI-Vorschläge werden neu erzeugt und überschrieben. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Kosten: {p} Credits (1 je Seite). Fortfahren?"
-msgstr "{n} propositions de l’IA seront régénérées et remplacées. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés. Coût : {p} crédits (1 par page). Continuer ?"
 
-msgid "Abgebrochen."
-msgstr "Annulé."
 
 msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
 msgstr "Aucune proposition de l’IA – rien à régénérer."
 
-msgid "Neu-Generierung gestartet für {n} Felder."
-msgstr "Régénération lancée pour {n} champs."
 
-msgid "{n} KI-Vorschläge werden überschrieben, {p} Credits"
-msgstr "{n} propositions de l’IA seront remplacées, {p} crédits"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Régénération lancée pour {n} champs. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés."
@@ -4647,3 +4637,6 @@ msgstr "Proposition de l’IA créée, {s} : « {q} » – votre texte reste. Re
 
 msgid "KI-Vorschlag übernommen: {q}"
 msgstr "Proposition de l’IA reprise : {q}"
+
+msgid "im Chat bestätigt"
+msgstr "confirmée dans le chat"

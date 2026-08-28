@@ -55,6 +55,7 @@
     const QUELLE = {
         pdf: () => t('vorhanden (aus der PDF)'), hand: () => t('von Hand'),
         stammdaten: () => t('aus Stammdaten'), ki: () => t('KI-Vorschlag'), gast: () => t('vom Gast bearbeitet'),
+        chat: () => t('im Chat bestätigt'),
     };
 
     // Auf/Zu-Zustand ueber Neu-Rendern hinweg (wie openDocs/openPages in app.html).
@@ -392,7 +393,7 @@
         else { badge = t('In Arbeit'); badgeCls = 'badge-pending'; }
         const unsicher = felder.filter(f => f.quelle === 'ki' && f.sicherheit === 'niedrig').length;
         const kiFelder = felder.filter(f => f.quelle === 'ki' && !istNamenlos(f));
-        const kiSeiten = new Set(kiFelder.map(f => f.document_id + '_' + f.page_number)).size;
+        const kiSeiten = new Set(kiFelder.filter(f => f.page_number > 0).map(f => f.document_id + '_' + f.page_number)).size;
         const gen = data.generierung;
         let info = felder.length
             ? (gast()
@@ -419,7 +420,7 @@
                 // sind alle gefuellt, wird er zu „Alle neu generieren“ (ueberschreibt nur KI-Vorschlaege — Hand, PDF,
                 // Stammdaten, Gast bleiben). Keine Rueckfrage: der Knopf nennt fuer den Screenreader Anzahl und Credits.
                 +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>'
-                    : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-secondary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ', ' + kiFelder.length + ', ' + kiSeiten + ')">'
+                    : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-secondary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ')">'
                         + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiSeiten }) + '</button>' : ''))
                 +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + t('Exportieren') + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf offene Felder anwenden') + '</button>'
@@ -551,7 +552,7 @@
         } catch (e) { announce(t('Verbindungsfehler.')); if (btn) btn.disabled = false; }
     }
 
-    async function alleNeuGenerieren(projectId, anzahl, seiten) {
+    async function alleNeuGenerieren(projectId) {
         const btn = document.getElementById('fGenAllBtn');
         if (btn) btn.disabled = true;
         try {

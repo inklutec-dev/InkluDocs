@@ -67,11 +67,11 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int):
     return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id), SYSTEM_AGENT
 
 
-def _formular_summary(project_id: int) -> str:
+def _formular_summary(project_id: int, user_id: int) -> str:
     """Kompakter Projekt-Kontext fuer Formular-Projekte (Gegenstueck zu build_project_summary)."""
     try:
         from .tools.formular import list_form_fields
-        r = list_form_fields(project_id, _summary_user_id_holder.get(project_id, 0))
+        r = list_form_fields(project_id, user_id)
     except Exception:
         return "Formular-Projekt (Quickinfo-Werkzeug). Hol den Stand mit list_form_fields."
     if not r.get("ok"):
@@ -84,13 +84,11 @@ def _formular_summary(project_id: int) -> str:
             "im Konto. Details je Feld: list_form_fields / get_field_details.")
 
 
-_summary_user_id_holder: dict[int, int] = {}
-
-
 def _build_initial_messages(
     project_id: int,
     user_message: str,
     project: dict,
+    user_id: int = 0,
 ) -> list[dict]:
     """Baut die Anthropic-Format messages-Liste aus storage-History + user_message.
 
@@ -101,7 +99,7 @@ def _build_initial_messages(
     messages: list[dict] = []
 
     # Projekt-Summary als erste user-Nachricht (Context-Vorgabe)
-    summary = _formular_summary(project_id) if _ist_formular(project) else build_project_summary(project)
+    summary = _formular_summary(project_id, user_id) if _ist_formular(project) else build_project_summary(project)
     messages.append({
         "role": "user",
         "content": f"[Projekt-Kontext]\n{summary}",
@@ -173,9 +171,8 @@ def run_agent(
     auf: …“ an die Oberflaeche. Ergebnis enthaelt zusaetzlich "werkzeuge": Namen
     in Aufrufreihenfolge (leer = ohne Werkzeug aus dem Verlauf geantwortet).
     """
-    _summary_user_id_holder[project_id] = user_id
     tool_defs, executor, system_base = _werkzeugsatz(project, project_id, user_id)
-    messages = _build_initial_messages(project_id, user_message, project)
+    messages = _build_initial_messages(project_id, user_message, project, user_id)
     system_text = system_base if not system_suffix else system_base + "\n\n" + system_suffix
 
     actions_log: list[dict] = []

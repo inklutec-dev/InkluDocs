@@ -488,7 +488,8 @@ def _bestaetigte_quickinfos(conn, project_id: int, ausser_feld: Optional[int] = 
     """(Beschriftung, Quickinfo) aller beschriebenen Felder des Projekts — Konsistenz-Vorgabe."""
     rows = conn.execute(
         """SELECT beschriftung, quickinfo FROM formularfelder WHERE project_id = ? AND TRIM(COALESCE(quickinfo,'')) != ''
-           AND TRIM(COALESCE(beschriftung,'')) != '' ORDER BY document_id, page_number, feld_index""", (project_id,)).fetchall()
+           AND TRIM(COALESCE(beschriftung,'')) != '' AND COALESCE(quelle,'') != 'gast'
+           ORDER BY document_id, page_number, feld_index""", (project_id,)).fetchall()
     out, gesehen = [], set()
     for r in rows:
         key = r["beschriftung"].strip().lower()
@@ -570,6 +571,7 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                 continue
             alle_vorschlaege.extend(vorschlaege)
             conn = _d.get_db()
+            geschrieben = 0
             try:
                 for v in vorschlaege:
                     # Nur schreiben, wenn das Feld INZWISCHEN nicht von Hand gefuellt wurde.
@@ -578,10 +580,13 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                            updated_at = datetime('now') WHERE id = ? AND """ + _modus_bedingung(modus),
                         (v.quickinfo, v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
                     st["felder_neu"] += cur.rowcount
+                    geschrieben += cur.rowcount
                 conn.commit()
             finally:
                 conn.close()
-            _d.billing.verbuche(user_id, "generierung", aktion="quickinfo_generierung")
+            # Review 28.08.2026: Credit nur, wenn mindestens ein Feld dieser Seite geschrieben wurde.
+            if geschrieben:
+                _d.billing.verbuche(user_id, "generierung", aktion="quickinfo_generierung")
             st["seiten_fertig"] += 1
         # Konsistenz ueber das ganze Dokument (nur KI-Texte dieses Laufs).
         if alle_vorschlaege:
@@ -698,8 +703,10 @@ def build_router(deps: Deps) -> APIRouter:
             quelle = "hand" if text else ""
             if text and text == (feld["quickinfo_original"] or ""):
                 quelle = "pdf"
-            conn.execute("UPDATE formularfelder SET quickinfo = ?, quelle = ?, updated_at = datetime('now') WHERE id = ?",
-                         (text, quelle, feld_id))
+            # Review 28.08.2026: Sicherheit/Beleg/Hinweise gehoeren zum KI-Text — bei Hand/PDF/leer leeren,
+            # sonst liefern list_form_fields/get_field_details „sicher“ zu einem ungeprueften Text.
+            conn.execute("""UPDATE formularfelder SET quickinfo = ?, quelle = ?, sicherheit = '', beleg = '', ki_hinweise = '',
+                            updated_at = datetime('now') WHERE id = ?""", (text, quelle, feld_id))
             conn.commit()
             quickinfo_ki = feld["quickinfo_ki"] or ""
         finally:
@@ -713,8 +720,8 @@ def build_router(deps: Deps) -> APIRouter:
         try:
             feld = _feld_des_nutzers(conn, feld_id, user["id"])
             text = feld["quickinfo_original"] or ""
-            conn.execute("UPDATE formularfelder SET quickinfo = ?, quelle = ?, updated_at = datetime('now') WHERE id = ?",
-                         (text, "pdf" if text else "", feld_id))
+            conn.execute("UPDATE formularfelder SET quickinfo = ?, quelle = ?, sicherheit = '', beleg = '', ki_hinweise = '', "
+                         "updated_at = datetime('now') WHERE id = ?", (text, "pdf" if text else "", feld_id))
             conn.commit()
         finally:
             conn.close()
@@ -1006,8 +1013,8 @@ def build_router(deps: Deps) -> APIRouter:
             quelle = "gast" if text else ""
             if text and text == (feld["quickinfo_original"] or ""):
                 quelle = "pdf"
-            conn.execute("UPDATE formularfelder SET quickinfo = ?, quelle = ?, updated_at = datetime('now') WHERE id = ?",
-                         (text, quelle, feld_id))
+            conn.execute("UPDATE formularfelder SET quickinfo = ?, quelle = ?, sicherheit = '', beleg = '', ki_hinweise = '', "
+                         "updated_at = datetime('now') WHERE id = ?", (text, quelle, feld_id))
             cur = conn.execute("SELECT status FROM feld_reviews WHERE feld_id = ? AND role = ?", (feld_id, role)).fetchone()
             auto_status = None
             if not cur or (cur["status"] or "offen") == "offen":
@@ -1038,15 +1045,28 @@ def build_router(deps: Deps) -> APIRouter:
         if status == "ruecksprache" and role != "lektorat":
             raise HTTPException(status_code=403, detail="Ruecksprache kann nur das Lektorat setzen.")
         comment = _sauber(data.get("comment"), 2000) if data.get("comment") else ""
+        if "comment" in data and not isinstance(data.get("comment"), (str, type(None))):
+            raise HTTPException(status_code=400, detail="comment muss Text sein.")
         conn = _d.get_db()
         try:
             _gast_feld(conn, share, feld_id)
-            conn.execute(
-                "INSERT INTO feld_reviews (feld_id, role, status, reviewed_at) VALUES (?, ?, ?, datetime('now')) "
-                "ON CONFLICT(feld_id, role) DO UPDATE SET status = excluded.status, reviewed_at = excluded.reviewed_at",
-                (feld_id, role, status))
-            conn.execute("UPDATE formularfelder SET review_status = ?, reviewed_at = datetime('now'), review_note = ? WHERE id = ?",
-                         (status, comment, feld_id))
+            # Review 28.08.2026: Anmerkung je Rolle (feld_reviews.note); der Spiegel review_note wird nur
+            # angefasst, wenn der Aufruf ein comment-Feld mitschickt — Lektorat und Herausgeber
+            # loeschen sich nicht gegenseitig die Anmerkung.
+            if "comment" in data:
+                conn.execute(
+                    "INSERT INTO feld_reviews (feld_id, role, status, reviewed_at, note) VALUES (?, ?, ?, datetime('now'), ?) "
+                    "ON CONFLICT(feld_id, role) DO UPDATE SET status = excluded.status, reviewed_at = excluded.reviewed_at, note = excluded.note",
+                    (feld_id, role, status, comment))
+                conn.execute("UPDATE formularfelder SET review_status = ?, reviewed_at = datetime('now'), review_note = ? WHERE id = ?",
+                             (status, comment, feld_id))
+            else:
+                conn.execute(
+                    "INSERT INTO feld_reviews (feld_id, role, status, reviewed_at) VALUES (?, ?, ?, datetime('now')) "
+                    "ON CONFLICT(feld_id, role) DO UPDATE SET status = excluded.status, reviewed_at = excluded.reviewed_at",
+                    (feld_id, role, status))
+                conn.execute("UPDATE formularfelder SET review_status = ?, reviewed_at = datetime('now') WHERE id = ?",
+                             (status, feld_id))
             _gast_wieder_aktiv(conn, token)
             conn.commit()
         finally:

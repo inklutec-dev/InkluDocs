@@ -3810,8 +3810,6 @@ msgstr "Etiket i formularen: {b}"
 msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
 msgstr "Formularen behandles – felter læses …"
 
-msgid "Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar."
-msgstr "Gæstevisningen for formularprojekter er endnu ikke tilgængelig."
 
 msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
 msgstr "Behandlingen af formularen mislykkedes. Prøv igen med filen."
@@ -4309,20 +4307,12 @@ msgstr "Kalder nu: {w}"
 msgid "Alle neu generieren"
 msgstr "Generér alle igen"
 
-msgid "{n} KI-Vorschläge werden neu erzeugt und überschrieben. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Kosten: {p} Credits (1 je Seite). Fortfahren?"
-msgstr "{n} KI-forslag bliver genereret igen og overskrevet. Tekster skrevet i hånden, fra PDF'en, fra stamdata eller af gæsten forbliver uændrede. Pris: {p} credits (1 pr. side). Fortsæt?"
 
-msgid "Abgebrochen."
-msgstr "Annulleret."
 
 msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
 msgstr "Ingen KI-forslag – intet at generere."
 
-msgid "Neu-Generierung gestartet für {n} Felder."
-msgstr "Genereringen er startet for {n} felter."
 
-msgid "{n} KI-Vorschläge werden überschrieben, {p} Credits"
-msgstr "{n} KI-forslag overskrives, {p} credits"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Genereringen er startet for {n} felter. Tekster skrevet i hånden, fra PDF'en, fra stamdata eller af gæsten forbliver uændrede."
@@ -4338,3 +4328,6 @@ msgstr "KI-forslag oprettet, {s}: »{q}« – din tekst bliver. Brug det med kna
 
 msgid "KI-Vorschlag übernommen: {q}"
 msgstr "KI-forslag brugt: {q}"
+
+msgid "im Chat bestätigt"
+msgstr "bekræftet i chatten"

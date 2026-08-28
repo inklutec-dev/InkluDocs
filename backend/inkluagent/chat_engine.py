@@ -79,12 +79,20 @@ def process_message(project_id: int, user_message: str, user_id: int, system_suf
 
     # Neuer agentic Pfad: Sonnet entscheidet selbst welche Tools er nutzt.
     # Klassischer 4-Pfad-Dispatcher bleibt unten als Fallback (z.B. Mistral-Provider).
+    if (project or {}).get("tool") == "formular" and not (_AGENTIC_ENABLED and _PROVIDER_NAME == "bedrock"):
+        return {"reply": "Der Assistent fuer Formular-Projekte braucht den Werkzeug-Modus (Bedrock). Bitte an den Betreiber wenden.",
+                "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
     if _AGENTIC_ENABLED and _PROVIDER_NAME == "bedrock":
         from .agent_loop import run_agent
         try:
             return run_agent(project_id, user_id, user_message, project, _provider, system_suffix=system_suffix, on_tool=on_tool)
         except Exception as e:
             log.exception("agentic run_agent crashte — Fallback auf klassischen Dispatcher")
+            # Formular-Projekte (Review 28.08.2026): der klassische Pfad kennt nur Bilder —
+            # klare Fehlermeldung statt „Welche Bilder soll ich neu generieren?“.
+            if (project or {}).get("tool") == "formular":
+                return {"reply": "Entschuldigung, der Assistent ist gerade nicht erreichbar. Bitte in einem Moment erneut versuchen.",
+                        "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
             # Fallthrough zum klassischen Pfad statt User-Fehler
 
     intent = classify_intent(user_message, _provider)
