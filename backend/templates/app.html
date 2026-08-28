@@ -2701,13 +2701,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function inkluagentSectionHtml(projectId, variante) {
         const formular = variante === 'formular';
         return ''
-            + '<section class="inkluagent-section" aria-labelledby="inkluagentHeading" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">'
-            // Ueberschrift Ebene 2 (Steve 28.08.2026): auf einer Stufe mit den Dokumenten, damit die
-            // Nachrichten (Ebene 3) in der Ueberschriftenliste unter dem Chat haengen, nicht unter dem letzten Bild/Feld.
-            +   '<h2 id="inkluagentHeading" class="section-title" style="margin:0 0 0.4rem 0;">InkluAgent</h2>'
-            +   '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
-            +     t('Chatbot')
-            +   '</button>'
+            + '<section class="inkluagent-section" aria-labelledby="inkluagentToggle" data-project-id="' + projectId + '" data-variante="' + (formular ? 'formular' : 'bilder') + '">'
+            // Akkordeon-Muster (WAI-ARIA, Steve 28.08.2026): der Auf/Zu-Knopf steht IN der Ueberschrift
+            // Ebene 2 — per Ueberschriften-Navigation anspringen und sofort druecken; die Nachrichten
+            // sind Ebene 3 darunter. Ein Wort fuer beides: „Chatbot“ (Michaels Wortwahl); „InkluAgent“
+            // bleibt Absender der Nachrichten und steht in der Einleitung.
+            +   '<h2 id="inkluagentHeading" class="section-title" style="margin:0 0 0.4rem 0;">'
+            +     '<button id="inkluagentToggle" type="button" aria-expanded="false" aria-controls="inkluagentPanel" class="inkluagent-toggle">'
+            +       t('Chatbot')
+            +     '</button>'
+            +   '</h2>'
             +   '<p class="inkluagent-intro">'
             // KI-VO Art. 50 Abs. 1 (gilt seit 02.08.2026): Menschen muessen
             // erkennen, dass sie mit einem KI-System sprechen. "Chatbot"
