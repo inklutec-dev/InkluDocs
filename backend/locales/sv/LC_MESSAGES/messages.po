@@ -603,8 +603,6 @@ msgstr "Filnamn (valfritt)"
 msgid "Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt."
 msgstr "Lämna tomt för att använda standardnamnet. Filändelsen läggs till automatiskt."
 
-msgid "Als Excel"
-msgstr "Som Excel"
 
 msgid "Als JSON"
 msgstr "Som JSON"
@@ -2620,8 +2618,8 @@ msgstr "Köp extra krediter"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
 
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON, Excel) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "En valuta för allt: krediter. En alt-text kostar 1 kredit, en sida med verktygstips 1 kredit, export av den färdiga filen 5 krediter plus 1 kredit per påbörjade 10 bilder eller fält; tabellexporter (CSV, JSON, Excel) är gratis. Alla priser är slutpriser — enligt § 19 UStG debiteras ingen moms."
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "En valuta för allt: krediter. En alt-text kostar 1 kredit, en sida med verktygstips 1 kredit, export av den färdiga filen 5 krediter plus 1 kredit per påbörjade 10 bilder eller fält; tabellexporter (CSV, JSON) är gratis. Alla priser är slutpriser — enligt § 19 UStG debiteras ingen moms."
 
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
 

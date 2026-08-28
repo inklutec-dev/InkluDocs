@@ -679,8 +679,6 @@ msgid "Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird au
 msgstr "Laisser vide pour utiliser le nom par défaut. L'extension de fichier est ajoutée automatiquement."
 
 #: templates/app.html (Phase E2, 03.07.2026)
-msgid "Als Excel"
-msgstr "En Excel"
 
 #: templates/app.html (Phase E2, 03.07.2026)
 msgid "Als JSON"
@@ -3059,8 +3057,8 @@ msgstr "Acheter des crédits supplémentaires"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
 
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON, Excel) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "Une seule monnaie pour tout : les crédits. Un texte alternatif coûte 1 crédit, une page d’infobulles 1 crédit, l’export du fichier final 5 crédits plus 1 crédit par tranche entamée de 10 images ou champs ; les exports tabulaires (CSV, JSON, Excel) sont gratuits. Tous les prix sont des prix finaux — conformément au § 19 UStG, aucune TVA n’est facturée."
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "Une seule monnaie pour tout : les crédits. Un texte alternatif coûte 1 crédit, une page d’infobulles 1 crédit, l’export du fichier final 5 crédits plus 1 crédit par tranche entamée de 10 images ou champs ; les exports tabulaires (CSV, JSON) sont gratuits. Tous les prix sont des prix finaux — conformément au § 19 UStG, aucune TVA n’est facturée."
 
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
 

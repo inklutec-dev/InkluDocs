@@ -43,7 +43,8 @@ angefangene 10 Bilder bzw. Felder der exportierten Datei; beim
 Alle-Dokumente-ZIP werden die Elemente aller Dokumente zusammengezählt, der
 Grundpreis fällt einmal an. Beispiele: 1 Feld = 6, 26 Felder = 8, 50 Felder =
 10, 100 Bilder = 15 Credits. Gilt für alle Konten (Free hat 10 Credits).
-Tabellen-Exporte (JSON, CSV, Excel, Formular-CSV) bleiben kostenlos. Beide
+Tabellen-Exporte (JSON, CSV, Formular-CSV) bleiben kostenlos; der
+Excel-Export wurde am 28.08.2026 entfernt (CSV öffnet sich in Excel). Beide
 Zahlen stehen in `billing.EXPORT_GRUNDPREIS` / `EXPORT_STAFFEL`.
 
 Vor dem Export zeigt der Dialog Preis und Guthaben

@@ -679,8 +679,6 @@ msgid "Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird au
 msgstr "Leave empty to use the default name. The file extension is added automatically."
 
 #: templates/app.html (Phase E2, 03.07.2026)
-msgid "Als Excel"
-msgstr "As Excel"
 
 #: templates/app.html (Phase E2, 03.07.2026)
 msgid "Als JSON"
@@ -3059,8 +3057,8 @@ msgstr "Buy extra credits"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
 
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON, Excel) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "One currency for everything: credits. An alt text costs 1 credit, a tooltip page 1 credit, exporting the finished file 5 credits plus 1 credit per 10 images or fields started; table exports (CSV, JSON, Excel) are free. All prices are final — no VAT is charged under § 19 UStG (German small business rule)."
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "One currency for everything: credits. An alt text costs 1 credit, a tooltip page 1 credit, exporting the finished file 5 credits plus 1 credit per 10 images or fields started; table exports (CSV, JSON) are free. All prices are final — no VAT is charged under § 19 UStG (German small business rule)."
 
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
 

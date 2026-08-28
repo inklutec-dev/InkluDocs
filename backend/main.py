@@ -6958,7 +6958,7 @@ app.include_router(formular_api.build_router(formular_api.Deps(
 )))
 
 
-# ─── Multi-Datei Export: JSON / CSV / XLSX (08.06.2026) ────────
+# ─── Multi-Datei Export: JSON / CSV (08.06.2026; XLSX am 28.08.2026 entfernt) ────────
 #
 # Diese drei Formate koennen INHALTLICH wahlweise nur ein Dokument
 # oder alle gemeinsam darstellen. Wir gehen den simplen, fuer Nutzer
@@ -7035,65 +7035,9 @@ def _build_csv_bytes(unit: dict) -> bytes:
     return output.getvalue().encode("utf-8-sig")
 
 
-def _build_xlsx_bytes(unit: dict) -> bytes:
-    from openpyxl import Workbook
-    from openpyxl.drawing.image import Image as XlImage
-    from openpyxl.styles import Font, Alignment
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Alt-Texte"
-    ws["A1"] = "Bild"
-    ws["B1"] = "Alt-Text"
-    ws["C1"] = "Langbeschreibung"
-    for cell in [ws["A1"], ws["B1"], ws["C1"]]:
-        cell.font = Font(bold=True, size=12)
-    ws.column_dimensions["A"].width = 25
-    ws.column_dimensions["B"].width = 60
-    ws.column_dimensions["C"].width = 60
-
-    for i, img in enumerate(unit["images"]):
-        row = i + 2
-        alt_text = _ausgabe_alt_text(img)
-        langbeschreibung = _ohne_fehlertext(img.get("langbeschreibung"))
-        img_path = img.get("image_path") or ""
-        img_filename = os.path.basename(img_path) if img_path else "unbekannt"
-        ws[f"A{row}"] = img_filename
-        ws[f"A{row}"].alignment = Alignment(vertical="top")
-        if img_path and os.path.exists(img_path):
-            try:
-                export_img_path = img_path
-                if img_path.lower().endswith((".webp", ".avif", ".heic", ".heif")):
-                    from PIL import Image as PILImage
-                    pil_img = PILImage.open(img_path)
-                    if pil_img.mode not in ("RGB", "L"):
-                        pil_img = pil_img.convert("RGB")
-                    png_path = img_path.rsplit(".", 1)[0] + "_export.png"
-                    pil_img.save(png_path, format="PNG")
-                    export_img_path = png_path
-                xl_img = XlImage(export_img_path)
-                max_w = 150
-                max_h = 120
-                ratio = min(max_w / xl_img.width, max_h / xl_img.height, 1.0)
-                xl_img.width = int(xl_img.width * ratio)
-                xl_img.height = int(xl_img.height * ratio)
-                ws.row_dimensions[row].height = max(xl_img.height * 0.75, 60)
-                ws.add_image(xl_img, f"A{row}")
-            except Exception:
-                pass
-        ws[f"B{row}"] = _csv_safe(alt_text or "")
-        ws[f"B{row}"].alignment = Alignment(wrap_text=True, vertical="top")
-        ws[f"C{row}"] = _csv_safe(langbeschreibung)
-        ws[f"C{row}"].alignment = Alignment(wrap_text=True, vertical="top")
-
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    return buf.getvalue()
-
 
 async def _table_export_dispatch(project_id: int, request: Request, user: dict, fmt: str):
-    """Gemeinsamer Code fuer JSON/CSV/XLSX-Export."""
+    """Gemeinsamer Code fuer JSON/CSV-Export (Excel-Export am 28.08.2026 entfernt — CSV oeffnet sich in Excel)."""
     document_id, custom_name = await _read_export_options(request)
     conn = get_db()
     project = conn.execute(
@@ -7116,10 +7060,6 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
         media = "text/csv"
         suffix = ".csv"
         single = lambda u: _build_csv_bytes(u)
-    elif fmt == "xlsx":
-        media = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        suffix = ".xlsx"
-        single = lambda u: _build_xlsx_bytes(u)
     else:
         raise HTTPException(status_code=400, detail="Unbekanntes Format")
 
@@ -7160,12 +7100,6 @@ async def export_json(project_id: int, request: Request, user: dict = Depends(ge
 async def export_csv(project_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Multi-Datei: ohne document_id alle Dokumente als ZIP, sonst Einzeldatei."""
     return await _table_export_dispatch(project_id, request, user, "csv")
-
-
-@app.post("/api/projects/{project_id}/export/xlsx")
-async def export_xlsx(project_id: int, request: Request, user: dict = Depends(get_current_user)):
-    """Multi-Datei: ohne document_id alle Dokumente als ZIP, sonst Einzeldatei."""
-    return await _table_export_dispatch(project_id, request, user, "xlsx")
 
 
 def _export_vorpruefung(user_id: int, anzahl: int) -> int:
