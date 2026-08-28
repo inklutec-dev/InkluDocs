@@ -4664,3 +4664,21 @@ msgstr "Nicht genügend Credits"
 
 msgid "Zu Abo & Verbrauch"
 msgstr "Zu Abo & Verbrauch"
+
+msgid "Feld {n}, {name}, {art}"
+msgstr "Feld {n}, {name}, {art}"
+
+msgid "ohne Feldnamen"
+msgstr "ohne Feldnamen"
+
+msgid "Beleg und Hinweise"
+msgstr "Beleg und Hinweise"
+
+msgid "Stammdaten auf alle Felder anwenden"
+msgstr "Stammdaten auf alle Felder anwenden"
+
+msgid "Texte von Hand, vom Gast und aus dem Chat bleiben unverändert."
+msgstr "Texte von Hand, vom Gast und aus dem Chat bleiben unverändert."
+
+msgid "Feldname {name}"
+msgstr "Feldname {name}"

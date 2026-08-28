@@ -4222,3 +4222,21 @@ msgstr "Inte tillräckligt med krediter"
 
 msgid "Zu Abo & Verbrauch"
 msgstr "Till Prenumeration & förbrukning"
+
+msgid "Feld {n}, {name}, {art}"
+msgstr "Fält {n}, {name}, {art}"
+
+msgid "ohne Feldnamen"
+msgstr "utan fältnamn"
+
+msgid "Beleg und Hinweise"
+msgstr "Belägg och anmärkningar"
+
+msgid "Stammdaten auf alle Felder anwenden"
+msgstr "Använd stamdata på alla fält"
+
+msgid "Texte von Hand, vom Gast und aus dem Chat bleiben unverändert."
+msgstr "Texter skrivna för hand, av gästen eller i chatten förblir oförändrade."
+
+msgid "Feldname {name}"
+msgstr "fältnamn {name}"

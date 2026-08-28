@@ -79,8 +79,9 @@ MAX_IMPORT_ZEILEN = 5000
 MAX_STAMMDATEN_JE_KONTO = 20000
 FELDARTEN = ("", "text", "checkbox", "radio", "dropdown", "liste", "button", "signatur", "unbekannt")
 # Werte von formularfelder.quelle: "" (offen), pdf, hand, stammdaten, ki, gast (28.08.: vom Gast bearbeitet).
-# Stammdaten duerfen nur "" und "stammdaten" ersetzen — nie Hand oder PDF-Original.
-QUELLEN_ERSETZBAR = ("", "stammdaten")
+# Stammdaten ersetzen beim Sammel-Anwenden "", stammdaten, pdf und ki (Michael 28.08.2026: Felder haben
+# oft „irgendwelche Inhalte“ aus der PDF) — NIE Hand-, Gast- oder Chat-Texte. „Zurueck auf Original“ holt die PDF.
+QUELLEN_ERSETZBAR = ("", "stammdaten", "pdf", "ki")
 
 
 @dataclass
@@ -248,9 +249,10 @@ def _stammdaten_laden(conn, user_id: int) -> list[dict]:
 
 def _stammdaten_anwenden(conn, project: dict, felder: list, nur_offene: bool = True) -> int:
     """Traegt Stammdaten in Felder ein (quelle 'stammdaten'). Gibt die Anzahl zurueck.
-    nur_offene=True: nur Felder ohne Quickinfo. nur_offene=False: zusaetzlich
-    Felder, deren Text selbst aus Stammdaten kam. Hand-Texte und PDF-Originale
-    werden NIE ersetzt; namenlose Felder (Anker "#n") nie befuellt."""
+    nur_offene=True: nur Felder ohne Quickinfo. nur_offene=False (Michael 28.08.2026,
+    „auf alle Felder“): zusaetzlich Felder mit Text aus Stammdaten, aus der PDF oder
+    von der KI. Hand-, Gast- und Chat-Texte werden NIE ersetzt; namenlose Felder
+    (Anker "#n") nie befuellt."""
     eintraege = _stammdaten_laden(conn, project["user_id"])
     if not eintraege:
         return 0
@@ -407,7 +409,8 @@ async def _extract_in_background(project_id: int, document_id: int, doc_index: i
         # "in jedes neue Formular importieren") — nur auf Felder ohne Quickinfo.
         project = dict(conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone())
         neue = [dict(r) for r in conn.execute("SELECT * FROM formularfelder WHERE document_id = ?", (document_id,)).fetchall()]
-        _stammdaten_anwenden(conn, project, neue, nur_offene=True)
+        # Beim Upload auch PDF-Originale ersetzen, wenn Stammdaten passen (Michael 28.08.2026).
+        _stammdaten_anwenden(conn, project, neue, nur_offene=False)
         conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
         conn.commit()
     except Exception as e:

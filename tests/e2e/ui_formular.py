@@ -46,7 +46,9 @@ with sync_playwright() as p:
     check("Seitenansicht-Klappe", pg.locator("details.page-section").first.locator("details.page-view-details").count() == 1)
     check("Seitentext-Klappe", pg.locator("details.page-section").first.locator("details.page-text-details").count() >= 1)
     h4 = pg.locator("details.page-section").first.locator("h4.image-heading")
-    check("Feld-Ueberschriften h4 'Feld N, Feldart, Seite P'", h4.count() >= 8 and h4.first.inner_text().startswith("Feld 1, Textfeld, Seite 1"), h4.first.inner_text() if h4.count() else "")
+    check("Feld-Ueberschriften h4 'Feld N, Feldname, Feldart' (Michael P1)", h4.count() >= 8 and h4.first.inner_text().startswith("Feld 1, vorname, Textfeld"), h4.first.inner_text() if h4.count() else "")
+    check("Status-Badges rechts neben der Ueberschrift (Michael P2)", pg.locator("section.feld-review").first.locator(".feld-kopf .feld-badges .badge").count() >= 1)
+    check("Kein 'Technischer Feldname' mehr im Kontext (Michael P1)", "Technischer Feldname" not in pg.locator("section.feld-review").first.locator("p.feld-kontext").inner_text())
     card = pg.locator("section.feld-review").first
     check("Kontextabsatz mit Beschriftung und Abschnitt", "Beschriftung im Formular: Vorname" in card.locator("p.feld-kontext").inner_text() and "Abschnitt: Angaben zum Kontoinhaber" in card.locator("p.feld-kontext").inner_text(), card.locator("p.feld-kontext").inner_text())
     ta = card.locator("textarea.quickinfo-field")
@@ -62,6 +64,7 @@ with sync_playwright() as p:
     print("== C. Auto-Save + Knoepfe ==")
     ta.fill("Vorname des Kontoinhabers, wie im Ausweis"); pg.wait_for_timeout(1500)
     check("Gespeichert-Anzeige sichtbar", "visible" in (card.locator(".save-indicator").get_attribute("class") or ""))
+    check("Zaehler laufen live mit (Michael P5): Kopfzeile nennt offene Felder", "ohne Quickinfo" in pg.locator("#projectHeadInfo").inner_text(), pg.locator("#projectHeadInfo").inner_text())
     pg.reload(); pg.wait_for_timeout(3000)
     pg.locator("details.doc-section").first.evaluate("d=>d.open=true"); pg.locator("details.page-section").first.evaluate("d=>d.open=true"); pg.wait_for_timeout(300)
     card = pg.locator("section.feld-review").first
@@ -98,7 +101,9 @@ with sync_playwright() as p:
     check("KI-Text im Feld (>3 Zeichen, anders als vorher)", len(text) > 3 and text != vorher, (text, nn.locator("h4").inner_text(), nn.locator("[id^=feld_msg_]").inner_text()))
     print("      KI:", text)
     check("Badge KI-Vorschlag mit Sicherheit", "KI-Vorschlag" in nn.locator("[id^=feld_status_]").inner_text(), nn.locator("[id^=feld_status_]").inner_text())
-    check("Beleg-Satz sichtbar", nn.locator("[id^=feld_beleg_]").count() == 1 and not nn.locator("[id^=feld_beleg_]").evaluate("e=>e.hidden") and len(nn.locator("[id^=feld_beleg_]").inner_text()) > 5, nn.locator("[id^=feld_beleg_]").inner_text())
+    check("Beleg als Klappe vorhanden (Michael P3), zu", nn.locator("details.feld-beleg-details").count() == 1 and not nn.locator("details.feld-beleg-details").evaluate("e=>e.hidden") and nn.locator("details.feld-beleg-details").evaluate("e=>!e.open"))
+    nn.locator("details.feld-beleg-details").evaluate("e=>e.open=true"); pg.wait_for_timeout(200)
+    check("Beleg-Satz in der Klappe", len(nn.locator("p.feld-beleg").inner_text()) > 5, nn.locator("p.feld-beleg").inner_text())
     check("Knopf heisst jetzt Neu generieren", nn.locator("button[id^=feld_gen_]").inner_text().strip() == "Neu generieren")
     check("Filter Nur unsichere vorhanden", pg.locator("#fNurUnsichere").count() == 1)
     # KI-Fach: Feld 1 (Hand-Text) -> Generieren laesst den Text stehen, Knopf 'KI-Vorschlag uebernehmen' erscheint

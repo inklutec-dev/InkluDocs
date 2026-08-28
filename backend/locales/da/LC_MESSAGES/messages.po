@@ -4352,3 +4352,21 @@ msgstr "Ikke nok credits"
 
 msgid "Zu Abo & Verbrauch"
 msgstr "Til Abonnement & forbrug"
+
+msgid "Feld {n}, {name}, {art}"
+msgstr "Felt {n}, {name}, {art}"
+
+msgid "ohne Feldnamen"
+msgstr "uden feltnavn"
+
+msgid "Beleg und Hinweise"
+msgstr "Belæg og bemærkninger"
+
+msgid "Stammdaten auf alle Felder anwenden"
+msgstr "Anvend stamdata på alle felter"
+
+msgid "Texte von Hand, vom Gast und aus dem Chat bleiben unverändert."
+msgstr "Tekster skrevet i hånden, af gæsten eller i chatten forbliver uændrede."
+
+msgid "Feldname {name}"
+msgstr "feltnavn {name}"

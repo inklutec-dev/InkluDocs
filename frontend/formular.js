@@ -67,11 +67,15 @@
 
     function feldartText(art) { return (FELDART[art] || FELDART.unbekannt)(); }
 
+    // Michael 28.08.2026 (Punkt 1): Seite raus (steht in der Klappe darueber), Feldname rein.
+    // Kurze Namen („1“, „E“ — Bankformular) werden als „Feldname 1“ vorgelesen, damit es nicht
+    // wie eine Wiederholung der Feldnummer klingt; sprechende Namen stehen fuer sich.
     function feldUeberschrift(f) {
         const art = feldartText(f.feld_art);
-        return f.page_number > 0
-            ? t('Feld {n}, {art}, Seite {p}', { n: f.feld_index, art: art, p: f.page_number })
-            : t('Feld {n}, {art}', { n: f.feld_index, art: art });
+        let name = istNamenlos(f) ? t('ohne Feldnamen') : (f.feld_name || '');
+        if (name && !istNamenlos(f) && name.length <= 2) name = t('Feldname {name}', { name: name });
+        return name ? t('Feld {n}, {name}, {art}', { n: f.feld_index, name: name, art: art })
+                    : t('Feld {n}, {art}', { n: f.feld_index, art: art });
     }
 
     // Kontextabsatz: exakt das, was auch die KI (Stufe 2) sehen wird — der
@@ -87,7 +91,6 @@
         if (f.gruppe) teile.push(t('Abschnitt: {g}', { g: escHtml(f.gruppe) }) + '.');
         if (f.optionen && f.optionen.length) teile.push(t('Optionen: {o}', { o: escHtml(f.optionen.join(', ')) }) + '.');
         if (f.seiten && f.seiten.length > 1) teile.push(t('Erscheint auf den Seiten {s}', { s: escHtml(f.seiten.join(', ')) }) + '.');
-        if (f.feld_name) teile.push(t('Technischer Feldname: {n}', { n: escHtml(f.feld_name) }) + '.');
         if (istNamenlos(f)) teile.push(t('Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden.'));
         return '<p class="feld-kontext" id="feld_kontext_' + f.id + '">' + teile.join(' ') + '</p>';
     }
@@ -104,13 +107,18 @@
 
     // Beleg-Satz + Hinweise der Nachpruefung: der Nutzer hoert, WARUM die KI so
     // formuliert hat — dieselbe Grundlage, die die Maschine geprueft hat.
+    // Michael 28.08.2026 (Punkt 3): Beleg und Hinweise nicht mehr offen unter dem Feld (bis zu 100 Felder je
+    // Seite), sondern als zugeklappte Klappe — fuer Screenreader-Nutzer bleibt die Grundlage erreichbar.
     function belegHtml(f) {
-        if (f.quelle !== 'ki') return '<p class="feld-beleg" id="feld_beleg_' + f.id + '" hidden></p>';
         const teile = [];
-        if (f.beleg) teile.push(t('Beleg: „{b}“', { b: escHtml(f.beleg) }));
-        else teile.push(t('Kein Beleg auf der Seite gefunden.'));
-        (f.ki_hinweise || []).forEach(h => teile.push(escHtml(h)));
-        return '<p class="feld-beleg" id="feld_beleg_' + f.id + '" style="font-size:0.9rem;color:var(--text-muted);margin:0.3rem 0 0;">' + teile.join(' ') + '</p>';
+        if (f.quelle === 'ki') {
+            if (f.beleg) teile.push(t('Beleg: „{b}“', { b: escHtml(f.beleg) }));
+            else teile.push(t('Kein Beleg auf der Seite gefunden.'));
+            (f.ki_hinweise || []).forEach(h => teile.push(escHtml(h)));
+        }
+        return '<details class="feld-beleg-details" id="feld_beleg_details_' + f.id + '" style="margin:0.3rem 0 0;"' + (f.quelle === 'ki' ? '' : ' hidden') + '>'
+            + '<summary style="font-size:0.9rem;color:var(--text-muted);cursor:pointer;">' + t('Beleg und Hinweise') + '</summary>'
+            + '<p class="feld-beleg" id="feld_beleg_' + f.id + '" style="font-size:0.9rem;color:var(--text-muted);margin:0.3rem 0 0;">' + teile.join(' ') + '</p></details>';
     }
 
     function feldCardHtml(f, treffer) {
@@ -139,8 +147,11 @@
               + '</div>';
         return ''
             + '<section class="image-review feld-review" id="feldcard_' + f.id + '" aria-labelledby="feld_heading_' + f.id + '" data-status="' + (offen ? 'offen' : 'beschrieben') + '" data-unsicher="' + (unsicher ? '1' : '0') + '">'
-            + '<h4 id="feld_heading_' + f.id + '" class="image-heading">' + escHtml(feldUeberschrift(f)) + '</h4>'
-            + '<div class="image-review-header">' + badges.join(' ') + '</div>'
+            // Michael 28.08.2026 (Punkt 2): Status rechts oben neben der Ueberschrift — spart eine Zeile je Feld.
+            + '<div class="image-review-header feld-kopf" style="align-items:flex-start;margin-bottom:0.4rem;">'
+            +   '<h4 id="feld_heading_' + f.id + '" class="image-heading" style="margin:0;">' + escHtml(feldUeberschrift(f)) + '</h4>'
+            +   '<span class="feld-badges" style="display:flex;gap:0.35rem;flex-wrap:wrap;justify-content:flex-end;">' + badges.join(' ') + '</span>'
+            + '</div>'
             + bild
             + kontextHtml(f)
             + '<label for="quickinfo_' + f.id + '" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Quickinfo')
@@ -405,7 +416,7 @@
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + escHtml(title) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
-            + '<div class="card-info" id="projectHeadInfo">' + info + '</div>'
+            + '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>'
             // Gast: nur Abschluss/Beenden + Filter „Nur offene Felder" — keine KI, keine
             // Stammdaten, kein Export, keine Sprach-/Prompt-Einstellungen.
             + (gast() && felder.length ? ''
@@ -423,7 +434,7 @@
                     : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-secondary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ')">'
                         + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiSeiten }) + '</button>' : ''))
                 +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + t('Exportieren') + '</button>'
-                +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf offene Felder anwenden') + '</button>'
+                +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf alle Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
                 // Gast-Ansicht (28.08.2026): Einladung wie bei Bild-Projekten — Knopf + Dialog aus app.html.
                 +   (typeof shareDialogHtml === 'function' ? shareDialogHtml(project) : '')
@@ -476,6 +487,33 @@
         }));
     }
 
+    // Michael 28.08.2026 (Punkt 5): Zaehler „n Felder, o offen“ in Seiten-/Dokument-Klappen und der
+    // Kopfzeile liefen nach dem Tippen nicht mit — jetzt bei jeder Statusaenderung nachgezogen.
+    function zaehlerAktualisieren() {
+        const zaehle = (wurzel) => {
+            const karten = wurzel.querySelectorAll('section.feld-review');
+            return { n: karten.length, o: Array.from(karten).filter(c => c.dataset.status === 'offen').length };
+        };
+        document.querySelectorAll('details.page-section').forEach(s => {
+            const z = zaehle(s); const el = s.querySelector('.page-count');
+            if (el) el.textContent = '(' + t('{n} Felder, {o} offen', { n: z.n, o: z.o }) + ')';
+        });
+        document.querySelectorAll('details.doc-section').forEach(d => {
+            const z = zaehle(d); const el = d.querySelector('.doc-heading .page-count');
+            if (el) el.textContent = '(' + t('{n} Felder, {o} offen', { n: z.n, o: z.o }) + ')';
+        });
+        const info = document.getElementById('projectHeadInfo');
+        if (info && info.dataset.docs) {
+            const z = zaehle(document.getElementById('feldListe') || document);
+            info.textContent = t('{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge.', { n: z.n, d: info.dataset.docs, o: z.o, s: info.dataset.stammdaten || 0 });
+            const badge = document.getElementById('projectStatusBadge');
+            if (badge && !badge.classList.contains('badge-processing') && !badge.classList.contains('badge-error') && z.n) {
+                badge.textContent = z.o === 0 ? t('Vollständig') : t('In Arbeit');
+                badge.className = 'badge ' + (z.o === 0 ? 'badge-done' : 'badge-pending');
+            }
+        }
+    }
+
     function statusSetzen(feldId, antwort) {
         const card = document.getElementById('feldcard_' + feldId);
         const badge = document.getElementById('feld_status_' + feldId);
@@ -496,13 +534,15 @@
             badge.className = 'badge ' + (unsicher ? 'badge-pending' : 'badge-done');
         }
         const beleg = document.getElementById('feld_beleg_' + feldId);
+        const belegDet = document.getElementById('feld_beleg_details_' + feldId);
         if (beleg) {
             if (antwort.quelle === 'ki') {
                 const teile = [antwort.beleg ? t('Beleg: „{b}“', { b: escHtml(antwort.beleg) }) : t('Kein Beleg auf der Seite gefunden.')];
                 (antwort.ki_hinweise || []).forEach(h => teile.push(escHtml(h)));
-                beleg.innerHTML = teile.join(' '); beleg.hidden = false;
-            } else { beleg.hidden = true; beleg.innerHTML = ''; }
+                beleg.innerHTML = teile.join(' '); if (belegDet) belegDet.hidden = false;
+            } else { beleg.innerHTML = ''; if (belegDet) belegDet.hidden = true; }
         }
+        zaehlerAktualisieren();
         // Beim Bearbeiten bewusst NICHT ausblenden, auch wenn der Filter „nur offene" aktiv ist (Fokus bleibt im Feld).
     }
 
@@ -636,10 +676,11 @@
     }
 
     async function stammdatenAnwenden(projectId) {
-        const res = await fetch('/api/projects/' + projectId + '/stammdaten-anwenden', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nur_offene: true }) });
+        // Michael 28.08.2026 (Punkt 4): auf ALLE Felder — ersetzt auch PDF-Originale und KI-Texte, nie Hand/Gast/Chat.
+        const res = await fetch('/api/projects/' + projectId + '/stammdaten-anwenden', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nur_offene: false }) });
         if (!res.ok) { announce(t('Stammdaten konnten nicht angewendet werden.')); return; }
         const d = await res.json();
-        announce(d.uebernommen === 1 ? t('1 Quickinfo aus Stammdaten übernommen.') : t('{n} Quickinfos aus Stammdaten übernommen.', { n: d.uebernommen }));
+        announce((d.uebernommen === 1 ? t('1 Quickinfo aus Stammdaten übernommen.') : t('{n} Quickinfos aus Stammdaten übernommen.', { n: d.uebernommen })) + ' ' + t('Texte von Hand, vom Gast und aus dem Chat bleiben unverändert.'));
         await showProject(projectId);
     }
 

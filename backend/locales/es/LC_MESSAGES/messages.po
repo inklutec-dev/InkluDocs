@@ -4661,3 +4661,21 @@ msgstr "Créditos insuficientes"
 
 msgid "Zu Abo & Verbrauch"
 msgstr "Ir a Suscripción y consumo"
+
+msgid "Feld {n}, {name}, {art}"
+msgstr "Campo {n}, {name}, {art}"
+
+msgid "ohne Feldnamen"
+msgstr "sin nombre de campo"
+
+msgid "Beleg und Hinweise"
+msgstr "Evidencia y notas"
+
+msgid "Stammdaten auf alle Felder anwenden"
+msgstr "Aplicar datos maestros a todos los campos"
+
+msgid "Texte von Hand, vom Gast und aus dem Chat bleiben unverändert."
+msgstr "Los textos escritos a mano, por el invitado o en el chat no cambian."
+
+msgid "Feldname {name}"
+msgstr "nombre de campo {name}"

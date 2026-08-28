@@ -325,6 +325,21 @@ vollständig beschrifteten Feldern laufen unverändert nur mit Text. Gilt für
 „Alle generieren“, „Generieren“ am Feld und den InkluAgent (`generate_quickinfo`).
 Kosten: rund 1.500 Eingabe-Token je betroffener Seite.
 
+## Michaels Rückmeldung 28.08.2026 (fünf Punkte, umgesetzt)
+
+1. Feld-Überschrift „Feld n, Feldname, Feldart“ — die Seite steht in der
+   Klappe darüber; der technische Feldname ist aus dem Kontextabsatz gewandert.
+   Namen mit höchstens zwei Zeichen („1“, „E“) werden als „Feldname 1“
+   vorgelesen, namenlose Felder als „ohne Feldnamen“.
+2. Status-Badges rechts oben neben der Überschrift (eine Zeile je Feld gespart).
+3. Beleg und Hinweise als zugeklappte Klappe „Beleg und Hinweise“ (nur bei
+   KI-Texten) — für Screenreader-Nutzer erreichbar, für Sehende platzsparend.
+4. Stammdaten „auf alle Felder anwenden“: ersetzt auch PDF-Originale und
+   KI-Texte (`QUELLEN_ERSETZBAR`), nie Hand/Gast/Chat; beim Upload ebenso.
+   „Zurück auf Original“ holt die PDF-Quickinfo.
+5. Zähler „n Felder, o offen“ (Seite, Dokument, Kopfzeile, Badge) laufen beim
+   Tippen live mit (`zaehlerAktualisieren`).
+
 ## Grenzen (Stufe 1) und was folgt
 
 - KI-Vorschläge: Eval-Korpus mit Soll-Quickinfos (Michaels Formulare,

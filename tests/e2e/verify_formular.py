@@ -166,7 +166,7 @@ check("Stammdaten anwenden (nachname + nachname_2)", s == 200 and b.get("ueberno
 s, b, _ = req("POST", f"/api/projects/{pid}/stammdaten-anwenden", {"nur_offene": False})
 s2, d2, _ = req("GET", f"/api/projects/{pid}/felder")
 by2 = {f["anker"]: f for f in d2.get("felder", [])}
-check("nur_offene=false ersetzt keine Hand-Texte und keine PDF-Originale", by2["vorname"]["quickinfo"] == "Vorname des Kontoinhabers" and by2["vorname"]["quelle"] == "hand" and by2["email"]["quelle"] == "pdf", (by2["vorname"]["quelle"], by2["email"]["quelle"]))
+check("nur_offene=false ersetzt keine Hand-Texte (PDF-Original email ohne Stammdaten-Treffer bleibt)", by2["vorname"]["quickinfo"] == "Vorname des Kontoinhabers" and by2["vorname"]["quelle"] == "hand" and by2["email"]["quelle"] == "pdf", (by2["vorname"]["quelle"], by2["email"]["quelle"]))
 check("Projekt ohne Serverpfade nach aussen", "original_path" not in d2.get("project", {}), list(d2.get("project", {}).keys()))
 s, b, _ = req("PATCH", f"/api/felder/{fid}", None)
 check("Ungueltiger JSON-Koerper -> 400", s == 400, s)
