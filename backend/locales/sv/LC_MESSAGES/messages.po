@@ -4196,3 +4196,15 @@ msgstr "{n} AI-förslag skrivs över, {p} krediter"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Omgenerering startad för {n} fält. Texter skrivna för hand, från PDF:en, från stamdata eller av gästen förblir oförändrade."
+
+msgid "KI-Vorschlag übernehmen"
+msgstr "Använd AI-förslag"
+
+msgid "{n} Quickinfos neu generieren, {p} Credits"
+msgstr "Generera om {n} verktygstips, {p} krediter"
+
+msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
+msgstr "AI-förslag skapat, {s}: ”{q}” – din text blir kvar. Använd det med knappen ”Använd AI-förslag”."
+
+msgid "KI-Vorschlag übernommen: {q}"
+msgstr "AI-förslag använt: {q}"

@@ -4635,3 +4635,15 @@ msgstr "{n} propositions de l’IA seront remplacées, {p} crédits"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Régénération lancée pour {n} champs. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés."
+
+msgid "KI-Vorschlag übernehmen"
+msgstr "Reprendre la proposition de l’IA"
+
+msgid "{n} Quickinfos neu generieren, {p} Credits"
+msgstr "Régénérer {n} infobulles, {p} crédits"
+
+msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
+msgstr "Proposition de l’IA créée, {s} : « {q} » – votre texte reste. Reprenez-la avec le bouton « Reprendre la proposition de l’IA »."
+
+msgid "KI-Vorschlag übernommen: {q}"
+msgstr "Proposition de l’IA reprise : {q}"

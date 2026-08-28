@@ -281,12 +281,23 @@ derselbe Feld-Pass wie der Knopf. Abrechnung wie in der Oberfläche (1 Credit
 je erzeugter oder geänderter Quickinfo, Reden ist frei). Gesamtbild und
 Kochrezept für weitere Werkzeuge: `docs/INKLUAGENT.md`.
 
+## KI-Fach: Hand-Text bleibt obenauf (28.08.2026)
+
+Wie `alt_text` / `alt_text_edited` bei Bildern: `formularfelder.quickinfo_ki`
+hält den letzten KI-Vorschlag. Sammellauf, Feld-Pass am Feld und der
+InkluAgent schreiben ihn immer mit. Liegt im Feld ein Text von Hand, aus der
+PDF, aus Stammdaten oder vom Gast, ersetzt „Neu generieren“ ihn NICHT: Der
+Vorschlag geht nur ins Fach (`uebernommen: false`), die Oberfläche sagt es an
+und zeigt „KI-Vorschlag übernehmen“ (`POST /api/felder/{id}/ki-vorschlag`,
+kostenlos). Derselbe Knopf erscheint, sobald jemand über einen KI-Text
+schreibt. „Zurück auf Original“ führt weiterhin zur PDF.
+
 ## „Alle neu generieren“ (28.08.2026)
 
 „Alle generieren“ füllt nur Lücken; sobald jedes Feld einen Text hat, wird
-derselbe Knopf zu „Alle neu generieren“ (keine Rückfrage — der Knopf nennt
-für Screenreader Anzahl der KI-Vorschläge und Credits, Muster wie das
-einzelne „Neu generieren“). Er ruft `POST …/quickinfos/generieren` mit `{"modus": "ki_neu"}`: Der
+derselbe Knopf zu „{n} Quickinfos neu generieren, {p} Credits“ (keine
+Rückfrage — die Zahl steht sichtbar im Knopf, Muster wie das einzelne
+„Neu generieren“). Er ruft `POST …/quickinfos/generieren` mit `{"modus": "ki_neu"}`: Der
 Sammellauf fasst zusätzlich alle Felder mit `quelle = ki` an; Texte von Hand,
 aus der PDF, aus Stammdaten oder vom Gast bleiben unberührt
 (`_modus_bedingung`). 1 Credit je betroffener Seite.

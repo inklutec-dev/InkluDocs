@@ -274,6 +274,8 @@ def run_agent(
                     "quelle": r.get("quelle", ""), "sicherheit": r.get("sicherheit", ""), "beleg": r.get("beleg", ""),
                     "ki_hinweise": r.get("hinweise", []),
                     "status": "beschrieben" if (r.get("quickinfo") or "").strip() else "offen",
+                    "quickinfo_ki": r.get("ki_vorschlag") or r.get("quickinfo", ""),
+                    "uebernommen": r.get("uebernommen", True),
                 })
 
             # image_bytes-Sonderfall (view_image / view_field)

@@ -4638,3 +4638,15 @@ msgstr "{n} KI-Vorschläge werden überschrieben, {p} Credits"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
+
+msgid "KI-Vorschlag übernehmen"
+msgstr "KI-Vorschlag übernehmen"
+
+msgid "{n} Quickinfos neu generieren, {p} Credits"
+msgstr "{n} Quickinfos neu generieren, {p} Credits"
+
+msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
+msgstr "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
+
+msgid "KI-Vorschlag übernommen: {q}"
+msgstr "KI-Vorschlag übernommen: {q}"

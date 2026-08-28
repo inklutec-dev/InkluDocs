@@ -154,6 +154,8 @@
                 + '<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +   (istNamenlos(f) ? '' : '<button type="button" class="btn btn-secondary btn-small" id="feld_gen_' + f.id + '" onclick="Formular.generieren(' + f.id + ')">' + (offen ? t('Generieren') : t('Neu generieren')) + '</button>')
                 +   (f.quickinfo_original ? '<button type="button" class="btn btn-secondary btn-small" id="feld_orig_' + f.id + '" onclick="Formular.original(' + f.id + ')">' + t('Zurück auf Original') + '</button>' : '')
+                // KI-Fach (28.08.2026): liegt ein anderer Text ueber dem KI-Vorschlag, holt der Knopf ihn zurueck.
+                +   '<button type="button" class="btn btn-secondary btn-small" id="feld_ki_' + f.id + '" onclick="Formular.kiVorschlag(' + f.id + ')"' + (f.quickinfo_ki && f.quickinfo_ki !== f.quickinfo ? '' : ' hidden') + '>' + t('KI-Vorschlag übernehmen') + '</button>'
                 +   '<button type="button" class="btn btn-secondary btn-small" id="feld_sd_' + f.id + '" onclick="Formular.inStammdaten(' + f.id + ')"' + (offen ? ' disabled' : '') + '>' + t('In Stammdaten übernehmen') + '</button>'
                 +   '<span id="feld_msg_' + f.id + '" role="status" aria-live="polite" style="font-size:0.85rem;"></span>'
                 + '</div>')
@@ -417,8 +419,8 @@
                 // sind alle gefuellt, wird er zu „Alle neu generieren“ (ueberschreibt nur KI-Vorschlaege — Hand, PDF,
                 // Stammdaten, Gast bleiben). Keine Rueckfrage: der Knopf nennt fuer den Screenreader Anzahl und Credits.
                 +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>'
-                    : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ', ' + kiFelder.length + ', ' + kiSeiten + ')">' + t('Alle neu generieren')
-                        + '<span class="visually-hidden"> – ' + t('{n} KI-Vorschläge werden überschrieben, {p} Credits', { n: kiFelder.length, p: kiSeiten }) + '</span></button>' : ''))
+                    : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-secondary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ', ' + kiFelder.length + ', ' + kiSeiten + ')">'
+                        + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiSeiten }) + '</button>' : ''))
                 +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + t('Exportieren') + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf offene Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
@@ -514,8 +516,18 @@
             const d = await res.json().catch(() => ({}));
             if (!res.ok) { const m = d.detail || t('Generieren fehlgeschlagen.'); if (msg) msg.textContent = m; announce(m); return; }
             const ta = document.getElementById('quickinfo_' + feldId);
+            if (d.uebernommen === false) {
+                // KI-Fach: der eigene Text bleibt, der Vorschlag wartet hinter dem Knopf.
+                kiKnopf(feldId, true);
+                const m2 = t('KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“.', { s: SICHERHEIT[d.sicherheit] ? SICHERHEIT[d.sicherheit]() : '', q: d.ki_vorschlag || '' });
+                if (msg) msg.textContent = m2;
+                announce(m2);
+                const kb = document.getElementById('feld_ki_' + feldId); if (kb) kb.focus();
+                return;
+            }
             if (ta) ta.value = d.quickinfo || '';
             statusSetzen(feldId, d);
+            kiKnopf(feldId, false);
             if (msg) msg.textContent = '';
             announce(t('Quickinfo generiert, {s}: {q}', { s: SICHERHEIT[d.sicherheit] ? SICHERHEIT[d.sicherheit]() : '', q: d.quickinfo }));
             if (ta) ta.focus();
@@ -560,6 +572,7 @@
             if (!res.ok) { announce(t('Speichern fehlgeschlagen.')); return; }
             const d = await res.json();
             statusSetzen(feldId, d);
+            if (!gast()) kiKnopf(feldId, !!(d.quickinfo_ki && d.quickinfo_ki !== d.quickinfo));
             if (gast()) {
                 // Urteil-Block bei erstmals gefuelltem Feld einblenden; Auto-Status
                 // 'in_bearbeitung' (Server) sichtbar machen, gesetztes Urteil bleibt.
@@ -570,6 +583,23 @@
             const ind = document.getElementById('feld_saved_' + feldId);
             if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
         } catch (e) { announce(t('Verbindungsfehler beim Speichern.')); }
+    }
+
+    function kiKnopf(feldId, sichtbar) {
+        const kb = document.getElementById('feld_ki_' + feldId);
+        if (kb) kb.hidden = !sichtbar;
+    }
+
+    async function kiVorschlag(feldId) {
+        const res = await fetch('/api/felder/' + feldId + '/ki-vorschlag', { method: 'POST' });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) { announce(d.detail || t('Übernahme fehlgeschlagen.')); return; }
+        const ta = document.getElementById('quickinfo_' + feldId);
+        if (ta) ta.value = d.quickinfo || '';
+        statusSetzen(feldId, d);
+        kiKnopf(feldId, false);
+        announce(t('KI-Vorschlag übernommen: {q}', { q: d.quickinfo }));
+        if (ta) ta.focus();
     }
 
     async function original(feldId) {
@@ -759,8 +789,10 @@
             if (!a || a.type !== 'refresh_feld' || !a.feld_id) return;
             const ta = document.getElementById('quickinfo_' + a.feld_id);
             if (!ta) return;
+            if (a.uebernommen === false) { kiKnopf(a.feld_id, true); n += 1; return; }
             ta.value = a.quickinfo || '';
             statusSetzen(a.feld_id, a);
+            kiKnopf(a.feld_id, !!(a.quickinfo_ki && a.quickinfo_ki !== a.quickinfo));
             const ind = document.getElementById('feld_saved_' + a.feld_id);
             if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
             n += 1;
@@ -768,7 +800,7 @@
         if (n > 0) announce(n === 1 ? t('InkluAgent hat 1 Quickinfo aktualisiert.') : t('InkluAgent hat {n} Quickinfos aktualisiert.', { n: n }));
     }
 
-    window.Formular = { showProject, original, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher, chatAktionen,
+    window.Formular = { showProject, original, kiVorschlag, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher, chatAktionen,
                         generieren, alleGenerieren, alleNeuGenerieren, exportOeffnen, exportSchliessen, exportieren,
                         urteil, anmerkungSpeichern, anmerkungLoeschen, abschlussOeffnen, abschlussSchliessen, abschliessen };
 })();

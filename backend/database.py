@@ -700,6 +700,10 @@ def _migrate_columns(conn):
         # INKLUAGENT Werkzeug-Transparenz (28.08.2026): welche Werkzeuge der Agent fuer diese
         # Antwort aufgerufen hat (JSON-Liste der Namen, Reihenfolge = Aufrufreihenfolge).
         ("chat_messages", "werkzeuge", "ALTER TABLE chat_messages ADD COLUMN werkzeuge TEXT"),
+        # KI-FACH (28.08.2026, Steve: wie alt_text/alt_text_edited bei Bildern): der letzte
+        # KI-Vorschlag bleibt erhalten, auch wenn von Hand darueber geschrieben wird —
+        # Knopf „KI-Vorschlag uebernehmen“ holt ihn zurueck.
+        ("formularfelder", "quickinfo_ki", "ALTER TABLE formularfelder ADD COLUMN quickinfo_ki TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:

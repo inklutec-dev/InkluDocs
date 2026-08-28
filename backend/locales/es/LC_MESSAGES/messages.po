@@ -4635,3 +4635,15 @@ msgstr "Se sobrescribirán {n} propuestas de la IA, {p} créditos"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Regeneración iniciada para {n} campos. Los textos escritos a mano, del PDF, de los datos maestros o del invitado no cambian."
+
+msgid "KI-Vorschlag übernehmen"
+msgstr "Usar la propuesta de la IA"
+
+msgid "{n} Quickinfos neu generieren, {p} Credits"
+msgstr "Regenerar {n} descripciones, {p} créditos"
+
+msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
+msgstr "Propuesta de la IA creada, {s}: «{q}» – su texto se mantiene. Aplíquela con el botón «Usar la propuesta de la IA»."
+
+msgid "KI-Vorschlag übernommen: {q}"
+msgstr "Propuesta de la IA aplicada: {q}"

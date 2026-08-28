@@ -4635,3 +4635,15 @@ msgstr "{n} AI suggestions will be overwritten, {p} credits"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Regeneration started for {n} fields. Texts entered by hand, from the PDF, from master data or by the guest remain unchanged."
+
+msgid "KI-Vorschlag übernehmen"
+msgstr "Use AI suggestion"
+
+msgid "{n} Quickinfos neu generieren, {p} Credits"
+msgstr "Regenerate {n} tooltips, {p} credits"
+
+msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
+msgstr "AI suggestion created, {s}: “{q}” – your text stays. Apply it with the button “Use AI suggestion”."
+
+msgid "KI-Vorschlag übernommen: {q}"
+msgstr "AI suggestion applied: {q}"

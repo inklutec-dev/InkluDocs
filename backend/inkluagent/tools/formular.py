@@ -255,17 +255,30 @@ def generate_quickinfo(feld_id: int, project_id: int, user_id: int) -> dict[str,
     if not vorschlaege:
         return {"ok": False, "error": "Die KI hat fuer dieses Feld keinen Vorschlag geliefert."}
     v = vorschlaege[0]
+    # KI-FACH (28.08.2026): Hand-/PDF-/Stammdaten-/Gast-Text bleibt obenauf, der Vorschlag geht ins Fach.
+    behalten = bool((f["quickinfo"] or "").strip()) and (f["quelle"] or "") not in ("", "ki")
     conn = get_db()
     try:
-        conn.execute("""UPDATE formularfelder SET quickinfo = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
-                        updated_at = datetime('now') WHERE id = ?""",
-                     (v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), feld_id))
+        if behalten:
+            conn.execute("""UPDATE formularfelder SET quickinfo_ki = ?, sicherheit = ?, beleg = ?, ki_hinweise = ?,
+                            updated_at = datetime('now') WHERE id = ?""",
+                         (v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), feld_id))
+        else:
+            conn.execute("""UPDATE formularfelder SET quickinfo = ?, quickinfo_ki = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
+                            updated_at = datetime('now') WHERE id = ?""",
+                         (v.quickinfo, v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), feld_id))
         conn.commit()
     finally:
         conn.close()
     billing.verbuche(user_id, "chatbot", aktion="quickinfo_generierung")
+    if behalten:
+        return {"ok": True, "result": {"feld_id": feld_id, "quickinfo": f["quickinfo"], "quelle": f["quelle"], "ki_vorschlag": v.quickinfo,
+                                       "uebernommen": False, "sicherheit": v.sicherheit, "beleg": v.beleg, "hinweise": v.hinweise,
+                                       "info": "Das Feld hat einen Text von Hand/aus der PDF/aus Stammdaten — der bleibt. Der KI-Vorschlag "
+                                               "liegt im KI-Fach; der Nutzer uebernimmt ihn ueber den Knopf „KI-Vorschlag uebernehmen“ "
+                                               "oder du speicherst ihn nach Zustimmung mit update_quickinfo."}}
     return {"ok": True, "result": {"feld_id": feld_id, "quickinfo": v.quickinfo, "sicherheit": v.sicherheit,
-                                   "beleg": v.beleg, "hinweise": v.hinweise, "quelle": "ki",
+                                   "beleg": v.beleg, "hinweise": v.hinweise, "quelle": "ki", "uebernommen": True,
                                    "info": "Quickinfo gespeichert (quelle KI). Zurueck auf Original bleibt moeglich."}}
 
 
@@ -326,9 +339,9 @@ def update_quickinfo(feld_id: int, project_id: int, user_id: int, new_quickinfo:
 
     conn = get_db()
     try:
-        conn.execute("""UPDATE formularfelder SET quickinfo = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
+        conn.execute("""UPDATE formularfelder SET quickinfo = ?, quickinfo_ki = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
                         updated_at = datetime('now') WHERE id = ? AND project_id = ?""",
-                     (text, sicherheit, beleg_txt, json.dumps(hinweise, ensure_ascii=False), feld_id, project_id))
+                     (text, text, sicherheit, beleg_txt, json.dumps(hinweise, ensure_ascii=False), feld_id, project_id))
         conn.commit()
     finally:
         conn.close()

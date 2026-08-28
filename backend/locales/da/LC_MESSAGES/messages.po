@@ -4326,3 +4326,15 @@ msgstr "{n} KI-forslag overskrives, {p} credits"
 
 msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 msgstr "Genereringen er startet for {n} felter. Tekster skrevet i hånden, fra PDF'en, fra stamdata eller af gæsten forbliver uændrede."
+
+msgid "KI-Vorschlag übernehmen"
+msgstr "Brug KI-forslag"
+
+msgid "{n} Quickinfos neu generieren, {p} Credits"
+msgstr "Generér {n} værktøjstips igen, {p} credits"
+
+msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
+msgstr "KI-forslag oprettet, {s}: »{q}« – din tekst bliver. Brug det med knappen »Brug KI-forslag«."
+
+msgid "KI-Vorschlag übernommen: {q}"
+msgstr "KI-forslag brugt: {q}"

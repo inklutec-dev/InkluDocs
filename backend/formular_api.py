@@ -574,9 +574,9 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                 for v in vorschlaege:
                     # Nur schreiben, wenn das Feld INZWISCHEN nicht von Hand gefuellt wurde.
                     cur = conn.execute(
-                        """UPDATE formularfelder SET quickinfo = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
+                        """UPDATE formularfelder SET quickinfo = ?, quickinfo_ki = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
                            updated_at = datetime('now') WHERE id = ? AND """ + _modus_bedingung(modus),
-                        (v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
+                        (v.quickinfo, v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
                     st["felder_neu"] += cur.rowcount
                 conn.commit()
             finally:
@@ -589,8 +589,8 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
             conn = _d.get_db()
             try:
                 for v in angeglichen:
-                    conn.execute("UPDATE formularfelder SET quickinfo = ?, ki_hinweise = ? WHERE id = ? AND quelle = 'ki'",
-                                 (v.quickinfo, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
+                    conn.execute("UPDATE formularfelder SET quickinfo = ?, quickinfo_ki = ?, ki_hinweise = ? WHERE id = ? AND quelle = 'ki'",
+                                 (v.quickinfo, v.quickinfo, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
                 conn.commit()
             finally:
                 conn.close()
@@ -701,9 +701,11 @@ def build_router(deps: Deps) -> APIRouter:
             conn.execute("UPDATE formularfelder SET quickinfo = ?, quelle = ?, updated_at = datetime('now') WHERE id = ?",
                          (text, quelle, feld_id))
             conn.commit()
+            quickinfo_ki = feld["quickinfo_ki"] or ""
         finally:
             conn.close()
-        return {"ok": True, "quickinfo": text, "quelle": quelle, "status": "beschrieben" if text else "offen"}
+        return {"ok": True, "quickinfo": text, "quelle": quelle, "status": "beschrieben" if text else "offen",
+                "quickinfo_ki": quickinfo_ki}
 
     @router.post("/api/felder/{feld_id}/original")
     async def feld_original(feld_id: int, user: dict = Depends(_user)):
@@ -854,17 +856,53 @@ def build_router(deps: Deps) -> APIRouter:
         if not vorschlaege:
             raise HTTPException(status_code=502, detail="Die KI hat für dieses Feld keinen Vorschlag geliefert")
         v = vorschlaege[0]
+        # KI-FACH (28.08.2026): Liegt ein Text von Hand, aus der PDF, aus Stammdaten oder vom Gast im
+        # Feld, bleibt er obenauf (wie alt_text_edited bei Bildern) — der neue KI-Vorschlag geht nur ins
+        # Fach quickinfo_ki; „KI-Vorschlag uebernehmen“ holt ihn ins Feld. KI-Texte werden ersetzt.
+        behalten = bool((feld.get("quickinfo") or "").strip()) and (feld.get("quelle") or "") not in ("", "ki")
         conn = _d.get_db()
         try:
-            conn.execute("""UPDATE formularfelder SET quickinfo = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
-                            updated_at = datetime('now') WHERE id = ?""",
-                         (v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), feld_id))
+            if behalten:
+                conn.execute("""UPDATE formularfelder SET quickinfo_ki = ?, sicherheit = ?, beleg = ?, ki_hinweise = ?,
+                                updated_at = datetime('now') WHERE id = ?""",
+                             (v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), feld_id))
+            else:
+                conn.execute("""UPDATE formularfelder SET quickinfo = ?, quickinfo_ki = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
+                                updated_at = datetime('now') WHERE id = ?""",
+                             (v.quickinfo, v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), feld_id))
             conn.commit()
         finally:
             conn.close()
         _d.billing.verbuche(user["id"], "generierung", aktion="quickinfo_generierung")
-        return {"ok": True, "quickinfo": v.quickinfo, "quelle": "ki", "status": "beschrieben",
+        if behalten:
+            return {"ok": True, "quickinfo": feld.get("quickinfo") or "", "quelle": feld.get("quelle") or "", "status": "beschrieben",
+                    "ki_vorschlag": v.quickinfo, "quickinfo_ki": v.quickinfo, "uebernommen": False,
+                    "sicherheit": v.sicherheit, "beleg": v.beleg, "ki_hinweise": v.hinweise}
+        return {"ok": True, "quickinfo": v.quickinfo, "quickinfo_ki": v.quickinfo, "quelle": "ki", "status": "beschrieben", "uebernommen": True,
                 "sicherheit": v.sicherheit, "beleg": v.beleg, "ki_hinweise": v.hinweise}
+
+    @router.post("/api/felder/{feld_id}/ki-vorschlag")
+    async def feld_ki_vorschlag(feld_id: int, user: dict = Depends(_user)):
+        """KI-FACH (28.08.2026): den gespeicherten KI-Vorschlag ins Feld uebernehmen (quelle 'ki');
+        der bisherige Hand-Text wird ersetzt — wie „Zurueck auf Original“ bei Bildern. Kostenlos."""
+        conn = _d.get_db()
+        try:
+            feld = _feld_des_nutzers(conn, feld_id, user["id"])
+            text = (feld["quickinfo_ki"] or "").strip()
+            if not text:
+                raise HTTPException(status_code=400, detail="Für dieses Feld gibt es keinen KI-Vorschlag")
+            conn.execute("UPDATE formularfelder SET quickinfo = ?, quelle = 'ki', updated_at = datetime('now') WHERE id = ?",
+                         (text, feld_id))
+            conn.commit()
+            sicherheit, beleg, hinweise = feld["sicherheit"] or "", feld["beleg"] or "", feld["ki_hinweise"] or "[]"
+        finally:
+            conn.close()
+        try:
+            hinweise = json.loads(hinweise)
+        except Exception:
+            hinweise = []
+        return {"ok": True, "quickinfo": text, "quickinfo_ki": text, "quelle": "ki", "status": "beschrieben",
+                "sicherheit": sicherheit, "beleg": beleg, "ki_hinweise": hinweise}
 
     # ---- Bilder
     def _datei_des_feldes(feld_id: int, user_id: int, spalte: str) -> str:
