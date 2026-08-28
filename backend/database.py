@@ -486,6 +486,22 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_formularfelder_project ON formularfelder(project_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_formularfelder_document ON formularfelder(document_id)")
 
+    # GAST-ANSICHT FORMULARE (28.08.2026): Pruefstatus je Feld und Rolle, Gegenstueck
+    # zu image_reviews (Rollen-Workflow 10.07.2026) — der Gast (Herausgeber/Lektorat)
+    # gibt eine Quickinfo frei oder wuenscht eine Aenderung. formularfelder.review_status
+    # spiegelt das juengste Urteil (Badge/Zaehler beim Besitzer), review_note haelt die
+    # eine Anmerkung des Gastes je Feld.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS feld_reviews (
+            feld_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'offen',
+            reviewed_at TEXT,
+            PRIMARY KEY (feld_id, role),
+            FOREIGN KEY (feld_id) REFERENCES formularfelder(id) ON DELETE CASCADE
+        )
+    ''')
+
     # Stammdaten-Bibliothek des Kontos: Beschriftung/Feldname + Feldart -> Quickinfo.
     # Wird beim Hochladen neuer Formulare angewendet und aus bestaetigten
     # Feldern gefuellt. Gehoert dem Konto (user_id), nie kontouebergreifend.
@@ -676,6 +692,11 @@ def _migrate_columns(conn):
         ("formularfelder", "sicherheit", "ALTER TABLE formularfelder ADD COLUMN sicherheit TEXT DEFAULT ''"),
         ("formularfelder", "beleg", "ALTER TABLE formularfelder ADD COLUMN beleg TEXT DEFAULT ''"),
         ("formularfelder", "ki_hinweise", "ALTER TABLE formularfelder ADD COLUMN ki_hinweise TEXT DEFAULT ''"),
+        # GAST-ANSICHT FORMULARE (28.08.2026): Spiegel des juengsten Gast-Urteils je Feld
+        # (offen/in_bearbeitung/freigegeben/zu_ueberarbeiten/ruecksprache) + Anmerkung.
+        ("formularfelder", "review_status", "ALTER TABLE formularfelder ADD COLUMN review_status TEXT DEFAULT 'offen'"),
+        ("formularfelder", "reviewed_at", "ALTER TABLE formularfelder ADD COLUMN reviewed_at TEXT"),
+        ("formularfelder", "review_note", "ALTER TABLE formularfelder ADD COLUMN review_note TEXT DEFAULT ''"),
     ]
 
     for table, column, sql in migrations:
@@ -997,7 +1018,9 @@ def delete_user_data(user_id: int):
         conn.execute("DELETE FROM image_reviews WHERE image_id IN "
                      "(SELECT id FROM images WHERE project_id = ?)", (p["id"],))
         conn.execute("DELETE FROM images WHERE project_id = ?", (p["id"],))
-        # Quickinfo-Werkzeug (27.08.2026): Formularfelder des Projekts.
+        # Quickinfo-Werkzeug (27.08.2026): Formularfelder des Projekts (+ Gast-Urteile, 28.08.).
+        conn.execute("DELETE FROM feld_reviews WHERE feld_id IN "
+                     "(SELECT id FROM formularfelder WHERE project_id = ?)", (p["id"],))
         conn.execute("DELETE FROM formularfelder WHERE project_id = ?", (p["id"],))
         # Multi-Datei (08.06.2026): Dokumente eines Projekts mit aufraeumen.
         conn.execute("DELETE FROM documents WHERE project_id = ?", (p["id"],))

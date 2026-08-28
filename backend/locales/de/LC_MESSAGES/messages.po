@@ -4533,3 +4533,24 @@ msgstr "unsicher"
 msgid "{u} KI-Vorschläge unsicher."
 msgstr "{u} KI-Vorschläge unsicher."
 
+
+msgid "Bitte Quickinfos prüfen: {projekt}"
+msgstr "Bitte Quickinfos prüfen: {projekt}"
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Quickinfos anzusehen."
+msgstr "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Quickinfos anzusehen."
+
+msgid "Dieses Formular enthält noch keine Felder."
+msgstr "Dieses Formular enthält noch keine Felder."
+
+msgid "Quickinfos: "
+msgstr "Quickinfos: "
+
+msgid "vom Gast bearbeitet"
+msgstr "vom Gast bearbeitet"
+
+msgid "{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}“ zu prüfen."
+msgstr "{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}“ zu prüfen."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
+msgstr "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."

@@ -227,6 +227,47 @@ offenen Feldern). Alle Zustandswechsel werden über `announce()` angesagt.
   Kontext ohne Feldwerte – ohne Modell), E2E `verify_formular.py` Abschnitt G
   (echte Generierung auf Staging), Klicktest.
 
+## Gast-Ansicht: Freigabe zur Prüfung (28.08.2026)
+
+Für Agenturen und Banken: Der Besitzer lädt über „Zur Prüfung freigeben“ einen
+Gast ein (Rolle Herausgeber oder Lektorat, gleicher Dialog und gleiche Mail-
+Mechanik wie bei Alt-Texten: Token + E-Mail-Gate, `sharing.py`). Der Gast sieht
+dieselbe Formular-Ansicht (`frontend/formular.js` im Gast-Modus, `window.GUEST_MODE`)
+unter `/freigabe/{token}` – Felder, Kontext, Ausschnitt, Seitenansicht, Hörprobe –
+und darf:
+
+- die Quickinfo von Hand ändern (`POST /api/freigabe/{token}/felder/{id}/quickinfo`,
+  `quelle = gast`; ohne gesetztes Urteil springt das Feld für seine Rolle auf
+  `in_bearbeitung`),
+- je Feld ein Urteil setzen: Freigeben / Änderung wünschen (`POST …/review`,
+  Status `freigegeben` / `zu_ueberarbeiten`; Lektorat zusätzlich `ruecksprache`),
+  mit EINER optionalen Anmerkung (`formularfelder.review_note`),
+- die Prüfung abschließen (`POST /api/freigabe/{token}/complete`, gemeinsam mit
+  den Bild-Freigaben in `main.py`): Zusammenfassungs-Mail an den Besitzer mit
+  Feld-Zählern und allen Anmerkungen.
+
+Der Gast darf NICHT: generieren, Stammdaten sehen oder anwenden, exportieren,
+hochladen, umbenennen, löschen. Alle Gast-Endpunkte prüfen Token + bestätigte
+Gast-Sitzung (`_require_guest` aus `main.py`, per `Deps.require_guest`) und
+liefern nur Felder DES freigegebenen Projekts; Serverpfade bleiben innen.
+
+Datenmodell: Tabelle `feld_reviews (feld_id, role, status, reviewed_at)` –
+Gegenstück zu `image_reviews`; `formularfelder.review_status` / `reviewed_at`
+spiegeln das jüngste Urteil (Badge beim Besitzer, Zähler), `review_note` die
+Anmerkung. Löschen von Dokument/Projekt/Konto räumt `feld_reviews` explizit mit
+ab (SQLite erzwingt Fremdschlüssel nicht).
+
+Besitzer-Seite: `GET /api/projects/{id}/felder` liefert `in_review`,
+`share_roles` und je Feld `reviews` + `review_note`; die Ansicht zeigt bei
+freigegebenem Projekt je Feld das Badge mit dem jüngsten Urteil (dieselben
+Begriffe wie bei Bildern: Neu, In Bearbeitung, Herausgeber Freigabe, …) und die
+Anmerkung als Klappe. `/api/review-overview` (Dashboard-Knopf „Geteilte
+Projekte“, Seite /geteilte-projekte) zählt Formular-Projekte mit.
+
+Barrierefreiheit: Urteil-Knöpfe sind echte Buttons mit `aria-pressed`, Status
+steht als Text, Änderungen werden über `announce()` angesagt; Anmerkung als
+natives `<details>`; Abschluss als natives `<dialog>` (Fokusfang, Escape).
+
 ## Grenzen (Stufe 1) und was folgt
 
 - KI-Vorschläge: Eval-Korpus mit Soll-Quickinfos (Michaels Formulare,
@@ -234,7 +275,10 @@ offenen Feldern). Alle Zustandswechsel werden über `announce()` angesagt.
   textlose Seiten nicht gebaut; InkluAgent-Werkzeuge folgen.
 - Stammdaten-Treffer nur exakt (Feldname, Beschriftung); unscharfe Treffer
   und Auto-Lernen in Stufe 3.
-- Keine Gast-Ansicht für Formular-Projekte; kein Chatbot-Anschluss.
+- Kein Chatbot-Anschluss (InkluAgent-Werkzeuge felder_lesen/quickinfo_setzen/
+  stammdaten_suchen folgen).
+- Gast-Ansicht: kein Nachrichten-Verlauf je Feld, keine Rücksprache-Liste in der
+  Abschluss-Mail (beides Stufe 2 der Gast-Ansicht, wie bei Bildern).
 - Beschriftungs-Erkennung ist geometrisch (links/oben/rechts/innen,
   Abschnitt = fette/größere Zeile oder Zeile mit Doppelpunkt); Konstanten in
   `formular_processor.py` sind an echten Kundenformularen nachzujustieren.
@@ -247,8 +291,8 @@ offenen Feldern). Alle Zustandswechsel werden über `announce()` angesagt.
 docker exec inkludocs-staging python3 -m unittest /app/tests/test_formular_roundtrip.py -v
 # End-to-End gegen Staging (legt Projekt an und löscht es; --behalten für Hör-/Klicktest)
 python3 /home/claude/verify_formular.py https://staging.inkludocs.inklutec.de <mail> <pw> /home/claude/testformular_inkludocs.pdf
-# Klicktest (Playwright + axe)
-/home/claude/.venv-pw/bin/python /home/claude/ui_formular.py <projekt-id>
+# Klicktest (Playwright + axe); zweites Argument = Gast-Token für die Gast-Ansicht
+/home/claude/.venv-pw/bin/python /home/claude/ui_formular.py <projekt-id> [gast-token]
 # alles zusammen
 bash /home/claude/formular_tests.sh
 ```

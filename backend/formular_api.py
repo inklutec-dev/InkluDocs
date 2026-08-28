@@ -78,7 +78,7 @@ MAX_IMPORT_BYTES = 1024 * 1024
 MAX_IMPORT_ZEILEN = 5000
 MAX_STAMMDATEN_JE_KONTO = 20000
 FELDARTEN = ("", "text", "checkbox", "radio", "dropdown", "liste", "button", "signatur", "unbekannt")
-# Werte von formularfelder.quelle: "" (offen), pdf, hand, stammdaten, ki.
+# Werte von formularfelder.quelle: "" (offen), pdf, hand, stammdaten, ki, gast (28.08.: vom Gast bearbeitet).
 # Stammdaten duerfen nur "" und "stammdaten" ersetzen — nie Hand oder PDF-Original.
 QUELLEN_ERSETZBAR = ("", "stammdaten")
 
@@ -94,6 +94,10 @@ class Deps:
     safe_filename_component: Callable
     doc_label: Callable
     csv_safe: Callable                 # Formel-Injection-Schutz fuer CSV-Zellen (main._csv_safe)
+    # GAST-ANSICHT (28.08.2026): Wachposten der Freigabe aus main.py — (request, token)
+    # -> shares-Zeile oder HTTPException(401); guest_session(request, token) -> dict|None.
+    require_guest: Callable = None
+    guest_session: Callable = None
 
 
 _d: Optional[Deps] = None
@@ -605,36 +609,34 @@ def build_router(deps: Deps) -> APIRouter:
             log.warning("[formular] Start-Reparatur uebersprungen: %r", e)
 
     # ---- Felder lesen
-    @router.get("/api/projects/{project_id}/felder")
-    async def felder_lesen(project_id: int, user: dict = Depends(_user)):
-        conn = _d.get_db()
-        try:
-            project = _projekt_des_nutzers(conn, project_id, user["id"])
-            docs = [dict(d) for d in conn.execute(
-                """SELECT id, doc_index, original_filename, display_name, extraction_method, created_at, hinweise
-                   FROM documents WHERE project_id = ? ORDER BY doc_index""", (project_id,)).fetchall()]
-            rows = conn.execute(
-                """SELECT f.* FROM formularfelder f LEFT JOIN documents d ON d.id = f.document_id
-                   WHERE f.project_id = ? ORDER BY COALESCE(d.doc_index, 0), f.page_number, f.feld_index""",
-                (project_id,)).fetchall()
-            felder = [_feld_dict(r) for r in rows]
-            eintraege = _stammdaten_laden(conn, user["id"])
-        finally:
-            conn.close()
+    def _lade_felder(conn, project_id: int):
+        """Dokumente + Felder eines Formular-Projekts in Anzeige-Reihenfolge, mit
+        Pruefstatus je Rolle (feld_reviews) und den aktiven Gast-Rollen der Freigaben.
+        Gemeinsame Grundlage fuer Besitzer- UND Gast-Ansicht (28.08.2026)."""
+        docs = [dict(d) for d in conn.execute(
+            """SELECT id, doc_index, original_filename, display_name, extraction_method, created_at, hinweise
+               FROM documents WHERE project_id = ? ORDER BY doc_index""", (project_id,)).fetchall()]
+        rows = conn.execute(
+            """SELECT f.* FROM formularfelder f LEFT JOIN documents d ON d.id = f.document_id
+               WHERE f.project_id = ? ORDER BY COALESCE(d.doc_index, 0), f.page_number, f.feld_index""",
+            (project_id,)).fetchall()
+        felder = [_feld_dict(r) for r in rows]
+        reviews = {}
+        for r in conn.execute(
+                """SELECT r.feld_id, r.role, r.status, r.reviewed_at FROM feld_reviews r
+                   JOIN formularfelder f ON f.id = r.feld_id WHERE f.project_id = ?""", (project_id,)).fetchall():
+            reviews.setdefault(r["feld_id"], {})[r["role"]] = {"status": r["status"], "reviewed_at": r["reviewed_at"]}
+        share_roles = [r["role"] for r in conn.execute(
+            "SELECT DISTINCT role FROM shares WHERE project_id = ? AND status IN ('active', 'completed')",
+            (project_id,)).fetchall()]
         # Seitentext nur einmal je Seite mitschicken (Bandbreite): am ersten Feld der Seite.
         gesehen = set()
         for f in felder:
+            f["reviews"] = reviews.get(f["id"], {})
             key = (f["document_id"], f["page_number"])
             if key in gesehen:
                 f["page_text"] = ""
             gesehen.add(key)
-        sprache = project.get("alt_language") or "de"
-        treffer = {}
-        if eintraege:
-            for f in felder:
-                t = _stammdaten_treffer(eintraege, f, sprache)
-                if t:
-                    treffer[f["id"]] = [{"id": e["id"], "quickinfo": e["quickinfo"], "treffer_art": e["treffer_art"]} for e in t[:3]]
         for d in docs:
             d["felder_gesamt"] = sum(1 for f in felder if f["document_id"] == d["id"])
             d["felder_offen"] = sum(1 for f in felder if f["document_id"] == d["id"] and f["status"] == "offen")
@@ -643,12 +645,35 @@ def build_router(deps: Deps) -> APIRouter:
                 d["hinweise"] = json.loads(d["hinweise"]) if d.get("hinweise") else None
             except Exception:
                 d["hinweise"] = None
+        return docs, felder, share_roles
+
+    def _projekt_aussen(project: dict) -> dict:
         # Nur, was die Ansicht braucht — keine Serverpfade (original_path) nach aussen.
-        projekt_aussen = {k: project.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type",
-                                                       "alt_language", "prompt_id", "created_at", "updated_at")}
-        projekt_aussen["hat_original"] = bool(project.get("original_path"))
-        return {"project": projekt_aussen, "documents": docs, "felder": felder, "stammdaten_treffer": treffer,
-                "stammdaten_anzahl": len(eintraege), "generierung": _generierung.get(project_id)}
+        aussen = {k: project.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type",
+                                               "alt_language", "prompt_id", "created_at", "updated_at")}
+        aussen["hat_original"] = bool(project.get("original_path"))
+        return aussen
+
+    @router.get("/api/projects/{project_id}/felder")
+    async def felder_lesen(project_id: int, user: dict = Depends(_user)):
+        conn = _d.get_db()
+        try:
+            project = _projekt_des_nutzers(conn, project_id, user["id"])
+            docs, felder, share_roles = _lade_felder(conn, project_id)
+            eintraege = _stammdaten_laden(conn, user["id"])
+        finally:
+            conn.close()
+        sprache = project.get("alt_language") or "de"
+        treffer = {}
+        if eintraege:
+            for f in felder:
+                t = _stammdaten_treffer(eintraege, f, sprache)
+                if t:
+                    treffer[f["id"]] = [{"id": e["id"], "quickinfo": e["quickinfo"], "treffer_art": e["treffer_art"]} for e in t[:3]]
+        return {"project": _projekt_aussen(project), "documents": docs, "felder": felder, "stammdaten_treffer": treffer,
+                "stammdaten_anzahl": len(eintraege), "generierung": _generierung.get(project_id),
+                # Pruef-Badges nur, wenn das Projekt ueberhaupt freigegeben wurde (wie bei Bildern).
+                "in_review": bool(share_roles), "share_roles": share_roles}
 
     # ---- Quickinfo speichern
     @router.patch("/api/felder/{feld_id}")
@@ -846,6 +871,134 @@ def build_router(deps: Deps) -> APIRouter:
     @router.get("/api/felder/{feld_id}/page-view")
     async def feld_seitenansicht(feld_id: int, user: dict = Depends(_user)):
         return FileResponse(_datei_des_feldes(feld_id, user["id"], "page_view_path"), media_type="image/png")
+
+    # ---- Gast-Ansicht (Freigabe-Link), 28.08.2026
+    # Gegenstueck zu den /api/freigabe/{token}/images/...-Endpunkten in main.py:
+    # derselbe Wachposten (Token + bestaetigte Gast-Sitzung), strikt auf DAS eine
+    # Projekt der Freigabe begrenzt. Der Gast darf lesen, die Quickinfo von Hand
+    # aendern und je Feld ein Urteil setzen (freigegeben / zu_ueberarbeiten, Lektorat
+    # zusaetzlich ruecksprache) mit EINER Anmerkung. KEINE KI, keine Stammdaten,
+    # kein Export, kein Upload, keine Serverpfade nach aussen.
+    GAST_STATUS = ("offen", "in_bearbeitung", "freigegeben", "zu_ueberarbeiten", "ruecksprache")
+
+    def _gast_share(request: Request, token: str) -> dict:
+        if not _d.require_guest:
+            raise HTTPException(status_code=404, detail="Gastzugang nicht verfuegbar")
+        return dict(_d.require_guest(request, token))
+
+    def _gast_feld(conn, share: dict, feld_id: int):
+        row = conn.execute("SELECT * FROM formularfelder WHERE id = ? AND project_id = ?",
+                           (feld_id, share["project_id"])).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Feld nicht gefunden")
+        return row
+
+    def _gast_wieder_aktiv(conn, token: str):
+        # Wieder-Einstieg (wie bei Bildern, 15.07.2026): arbeitet ein Gast nach dem
+        # Abschluss weiter, springt seine Freigabe zurueck auf 'active'.
+        conn.execute("UPDATE shares SET status = 'active' WHERE token = ? AND status = 'completed'", (token,))
+
+    @router.get("/api/freigabe/{token}/felder")
+    async def gast_felder(token: str, request: Request):
+        share = _gast_share(request, token)
+        conn = _d.get_db()
+        try:
+            project = conn.execute("SELECT * FROM projects WHERE id = ?", (share["project_id"],)).fetchone()
+            if not project or project["tool"] != "formular":
+                raise HTTPException(status_code=404, detail="Kein Formular-Projekt")
+            docs, felder, share_roles = _lade_felder(conn, share["project_id"])
+        finally:
+            conn.close()
+        return {"project": _projekt_aussen(dict(project)), "documents": docs, "felder": felder,
+                "guest": True, "role": share.get("role") or "kunde", "in_review": True,
+                "share_roles": share_roles}
+
+    def _gast_datei(request: Request, token: str, feld_id: int, spalte: str) -> str:
+        share = _gast_share(request, token)
+        conn = _d.get_db()
+        try:
+            feld = _gast_feld(conn, share, feld_id)
+        finally:
+            conn.close()
+        pfad = feld[spalte] or ""
+        wurzel = os.path.realpath(_d.results_dir) + os.sep
+        if not pfad or not os.path.realpath(pfad).startswith(wurzel) or not os.path.isfile(pfad):
+            raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+        return pfad
+
+    @router.get("/api/freigabe/{token}/felder/{feld_id}/ausschnitt")
+    async def gast_ausschnitt(token: str, feld_id: int, request: Request):
+        return FileResponse(_gast_datei(request, token, feld_id, "ausschnitt_path"), media_type="image/png")
+
+    @router.get("/api/freigabe/{token}/felder/{feld_id}/page-view")
+    async def gast_seitenansicht(token: str, feld_id: int, request: Request):
+        return FileResponse(_gast_datei(request, token, feld_id, "page_view_path"), media_type="image/png")
+
+    @router.post("/api/freigabe/{token}/felder/{feld_id}/quickinfo")
+    async def gast_quickinfo(token: str, feld_id: int, request: Request):
+        """Gast aendert die Quickinfo von Hand (quelle 'gast'). Ohne gesetztes Urteil
+        springt das Feld fuer DIESE Rolle auf 'in_bearbeitung'; ein Urteil wird nie
+        ueberschrieben (Spiegel von freigabe_save_alttext)."""
+        share = _gast_share(request, token)
+        data = await _json_body(request)
+        if "quickinfo" not in data:
+            raise HTTPException(status_code=400, detail="quickinfo fehlt")
+        text = _sauber(data.get("quickinfo"), MAX_QUICKINFO)
+        role = share.get("role") or "kunde"
+        conn = _d.get_db()
+        try:
+            feld = _gast_feld(conn, share, feld_id)
+            if (feld["anker"] or "").startswith("#"):
+                raise HTTPException(status_code=400, detail="Dieses Feld hat keinen Feldnamen und kann nicht beschrieben werden.")
+            quelle = "gast" if text else ""
+            if text and text == (feld["quickinfo_original"] or ""):
+                quelle = "pdf"
+            conn.execute("UPDATE formularfelder SET quickinfo = ?, quelle = ?, updated_at = datetime('now') WHERE id = ?",
+                         (text, quelle, feld_id))
+            cur = conn.execute("SELECT status FROM feld_reviews WHERE feld_id = ? AND role = ?", (feld_id, role)).fetchone()
+            auto_status = None
+            if not cur or (cur["status"] or "offen") == "offen":
+                conn.execute(
+                    "INSERT INTO feld_reviews (feld_id, role, status, reviewed_at) VALUES (?, ?, 'in_bearbeitung', datetime('now')) "
+                    "ON CONFLICT(feld_id, role) DO UPDATE SET status = 'in_bearbeitung', reviewed_at = datetime('now')",
+                    (feld_id, role))
+                conn.execute("UPDATE formularfelder SET review_status = 'in_bearbeitung', reviewed_at = datetime('now') WHERE id = ?",
+                             (feld_id,))
+                auto_status = "in_bearbeitung"
+            _gast_wieder_aktiv(conn, token)
+            conn.commit()
+        finally:
+            conn.close()
+        return {"ok": True, "quickinfo": text, "quelle": quelle, "status": "beschrieben" if text else "offen",
+                "auto_status": auto_status, "role": role}
+
+    @router.post("/api/freigabe/{token}/felder/{feld_id}/review")
+    async def gast_review(token: str, feld_id: int, request: Request):
+        """Gast setzt das Urteil zu einem Feld + optional die eine Anmerkung
+        (leer = Anmerkung loeschen). Spiegel von freigabe_set_review."""
+        share = _gast_share(request, token)
+        data = await _json_body(request)
+        role = share.get("role") or "kunde"
+        status = data.get("status", "offen")
+        if status not in GAST_STATUS:
+            raise HTTPException(status_code=400, detail="Ungueltiger Status.")
+        if status == "ruecksprache" and role != "lektorat":
+            raise HTTPException(status_code=403, detail="Ruecksprache kann nur das Lektorat setzen.")
+        comment = _sauber(data.get("comment"), 2000) if data.get("comment") else ""
+        conn = _d.get_db()
+        try:
+            _gast_feld(conn, share, feld_id)
+            conn.execute(
+                "INSERT INTO feld_reviews (feld_id, role, status, reviewed_at) VALUES (?, ?, ?, datetime('now')) "
+                "ON CONFLICT(feld_id, role) DO UPDATE SET status = excluded.status, reviewed_at = excluded.reviewed_at",
+                (feld_id, role, status))
+            conn.execute("UPDATE formularfelder SET review_status = ?, reviewed_at = datetime('now'), review_note = ? WHERE id = ?",
+                         (status, comment, feld_id))
+            _gast_wieder_aktiv(conn, token)
+            conn.commit()
+        finally:
+            conn.close()
+        return {"ok": True, "review_status": status, "comment": comment, "role": role}
 
     # ---- Export
     def _export_einheiten(conn, project: dict, document_id: Optional[int]) -> list[dict]:

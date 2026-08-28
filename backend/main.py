@@ -5747,7 +5747,9 @@ async def delete_document(project_id: int, document_id: int, user: dict = Depend
         conn.execute(f"DELETE FROM image_reviews WHERE image_id IN ({_ph})", _img_ids)
         conn.execute(f"DELETE FROM messages WHERE image_id IN ({_ph})", _img_ids)
     conn.execute("DELETE FROM images WHERE document_id = ? AND project_id = ?", (document_id, project_id))
-    # Quickinfo-Werkzeug (27.08.2026): Formularfelder des Dokuments.
+    # Quickinfo-Werkzeug (27.08.2026): Formularfelder des Dokuments (+ Gast-Urteile, 28.08.).
+    conn.execute("DELETE FROM feld_reviews WHERE feld_id IN "
+                 "(SELECT id FROM formularfelder WHERE document_id = ? AND project_id = ?)", (document_id, project_id))
     conn.execute("DELETE FROM formularfelder WHERE document_id = ? AND project_id = ?", (document_id, project_id))
     conn.execute("DELETE FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id))
 
@@ -5906,7 +5908,8 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
         os.remove(project["original_path"])
 
     conn.execute("DELETE FROM images WHERE project_id = ?", (project_id,))
-    # Quickinfo-Werkzeug (27.08.2026): Formularfelder mit aufraeumen.
+    # Quickinfo-Werkzeug (27.08.2026): Formularfelder mit aufraeumen (+ Gast-Urteile, 28.08.).
+    conn.execute("DELETE FROM feld_reviews WHERE feld_id IN (SELECT id FROM formularfelder WHERE project_id = ?)", (project_id,))
     conn.execute("DELETE FROM formularfelder WHERE project_id = ?", (project_id,))
     # Multi-Datei (08.06.2026): Dokument-Zeilen mit aufraeumen.
     conn.execute("DELETE FROM documents WHERE project_id = ?", (project_id,))
@@ -6911,6 +6914,11 @@ app.include_router(formular_api.build_router(formular_api.Deps(
     safe_filename_component=_safe_filename_component,
     doc_label=_doc_label,
     csv_safe=_csv_safe,
+    # Gast-Ansicht Formulare (28.08.2026): derselbe Wachposten wie bei den Bild-Freigaben.
+    # (Lambda, weil _require_guest weiter unten in dieser Datei definiert ist und
+    # zum Zeitpunkt des include_router noch nicht existiert.)
+    require_guest=lambda request, token: _require_guest(request, token),
+    guest_session=get_guest_session,
 )))
 
 
@@ -8273,12 +8281,20 @@ async def freigabe_page(token: str, request: Request):
     # als Template-Variablen (head_extra-Block) statt per String-Injektion.
     # Sprache fuer Gaeste: Cookie -> Accept-Language -> Deutsch (resolve_ui_language).
     lang = resolve_ui_language(request)
+    # Gast-Ansicht Formulare (28.08.2026): das Werkzeug des Projekts geht als
+    # window.GUEST_TOOL mit, damit das E-Mail-Gate schon vor dem Laden weiss,
+    # ob es „Alt-Texte" oder „Quickinfos" ansagt.
+    share_row = sharing.get_share(token)
+    conn = get_db()
+    tool_row = conn.execute("SELECT tool FROM projects WHERE id = ?", (share_row["project_id"],)).fetchone() if share_row else None
+    conn.close()
     return templates.TemplateResponse(
         "app.html",
         template_context(
             request, lang,
             is_staging=("staging" in BASE_URL),
             guest_mode=True, share_token=token,
+            guest_tool=((tool_row["tool"] if tool_row else "") or ""),
         ),
     )
 
@@ -8318,6 +8334,16 @@ async def freigabe_data(token: str, request: Request):
     if not project:
         conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden.")
+    if project["tool"] == "formular":
+        # Gast-Ansicht Formulare (28.08.2026): die Felder holt formular.js ueber
+        # /api/freigabe/{token}/felder; hier nur der Projektkopf OHNE Serverpfade,
+        # damit app.html die Weiche auf die Formular-Ansicht nehmen kann.
+        conn.close()
+        proj_dict = dict(project)
+        aussen = {k: proj_dict.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type",
+                                                 "alt_language", "created_at", "updated_at")}
+        return {"project": aussen, "images": [], "documents": [], "guest": True,
+                "role": (dict(share).get("role") or "kunde"), "formular": True}
     images = conn.execute(
         """SELECT i.*, (SELECT body FROM messages m WHERE m.image_id = i.id AND m.msg_type = 'review_note' LIMIT 1) AS review_note FROM images i
            LEFT JOIN documents d ON d.id = i.document_id
@@ -8655,11 +8681,14 @@ async def create_project_share(project_id: int, request: Request, user: dict = D
     if not guest_email or "@" not in guest_email:
         raise HTTPException(status_code=400, detail="Bitte eine gueltige E-Mail-Adresse angeben.")
     conn = get_db()
-    proj = conn.execute("SELECT id, name, filename FROM projects WHERE id = ? AND user_id = ?",
+    proj = conn.execute("SELECT id, name, filename, tool FROM projects WHERE id = ? AND user_id = ?",
                         (project_id, user["id"])).fetchone()
     conn.close()
     if not proj:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    # Gast-Ansicht Formulare (28.08.2026): Formular-Projekte laden zum Pruefen der
+    # Quickinfos ein, nicht der Alt-Texte — gleicher Ablauf, anderer Wortlaut.
+    ist_formular = (proj["tool"] == "formular")
     token = sharing.create_share(project_id, guest_email, user["id"], guest_name=guest_name, role=role)
     url = BASE_URL + "/freigabe/" + token
     sent = False
@@ -8674,6 +8703,9 @@ async def create_project_share(project_id: int, request: Request, user: dict = D
         greet = _('Hallo {name},').format(name=html.escape(guest_name)) if guest_name else _('Hallo,')
         if custom_message:
             intro = html.escape(custom_message).replace("\n", "<br>")
+        elif ist_formular:
+            intro = _('{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}“ zu prüfen.').format(
+                name=html.escape(owner_name), projekt=html.escape(proj_name))
         else:
             intro = _('{name} möchte Sie bitten, die Alt-Texte für das Projekt „{projekt}“ zu prüfen.').format(
                 name=html.escape(owner_name), projekt=html.escape(proj_name))
@@ -8685,7 +8717,8 @@ async def create_project_share(project_id: int, request: Request, user: dict = D
             "<p>" + _('Eingeladen von:') + " " + html.escape(owner_email) + "</p>"
             "<p>" + _('Vielen Dank!') + "</p>"
         )
-        subject = _('Bitte Alt-Texte prüfen: {projekt}').format(projekt=proj_name)
+        subject = (_('Bitte Quickinfos prüfen: {projekt}') if ist_formular
+                   else _('Bitte Alt-Texte prüfen: {projekt}')).format(projekt=proj_name)
         sent = send_email(guest_email, subject, body, bcc_admin=False,
                           reply_to=owner_email, from_name=(owner_name + " über InkluDocs"))
     return {"ok": True, "token": token, "url": url, "guest_email": guest_email, "sent": bool(sent), "role": role}
@@ -8729,21 +8762,35 @@ async def freigabe_complete(token: str, request: Request):
     role = (dict(share).get("role") or "kunde")
     # Zaehler aus der Pro-Rolle-Tabelle DIESER Rolle — der Lektor schliesst
     # seine eigene Pruefung ab, nicht die des Kunden (und umgekehrt).
-    imgs = conn.execute(
-        """SELECT COALESCE(r.status, 'offen') AS review_status FROM images i
-           LEFT JOIN image_reviews r ON r.image_id = i.id AND r.role = ?
-           WHERE i.project_id = ?""",
-        (role, pid)
-    ).fetchall()
-    notes = conn.execute(
-        "SELECT body FROM messages WHERE project_id = ? AND msg_type = 'review_note'", (pid,)
-    ).fetchall()
+    ist_formular = bool(project and project["tool"] == "formular")
+    if ist_formular:
+        # Gast-Ansicht Formulare (28.08.2026): Zaehler und Anmerkungen aus den
+        # Feld-Urteilen statt aus den Bildern; keine Ruecksprache-Liste (Stufe 1).
+        imgs = conn.execute(
+            """SELECT COALESCE(r.status, 'offen') AS review_status FROM formularfelder f
+               LEFT JOIN feld_reviews r ON r.feld_id = f.id AND r.role = ?
+               WHERE f.project_id = ?""",
+            (role, pid)
+        ).fetchall()
+        notes = conn.execute(
+            "SELECT review_note AS body FROM formularfelder WHERE project_id = ? AND COALESCE(review_note, '') <> ''", (pid,)
+        ).fetchall()
+    else:
+        imgs = conn.execute(
+            """SELECT COALESCE(r.status, 'offen') AS review_status FROM images i
+               LEFT JOIN image_reviews r ON r.image_id = i.id AND r.role = ?
+               WHERE i.project_id = ?""",
+            (role, pid)
+        ).fetchall()
+        notes = conn.execute(
+            "SELECT body FROM messages WHERE project_id = ? AND msg_type = 'review_note'", (pid,)
+        ).fetchall()
     # Etappe 3 (15.07.2026): Schliesst das LEKTORAT ab, bekommt der Besitzer die
     # Ruecksprache-Bilder als eigene Liste in der Mail (Dokument, Bild, Seite,
     # Anmerkung). Anzeige-Nummer wie im Frontend: pro Dokument fortlaufend ab 1
     # (Web/Grafik ohne Dokument behaelt image_index).
     rueck_items = []
-    if role == "lektorat":
+    if role == "lektorat" and not ist_formular:
         all_rows = conn.execute(
             """SELECT i.id, i.image_index, i.page_number, i.document_id,
                       COALESCE(d.doc_index, 0) AS doc_index,
@@ -8803,8 +8850,9 @@ async def freigabe_complete(token: str, request: Request):
         "<p>" + _('{gast} hat die Prüfung für das Projekt „{projekt}“ abgeschlossen.').format(
             gast=_mail_escape(guest), projekt=_mail_escape(pname)) + "</p>"
         + "<p><strong>" + _('Ergebnis:') + "</strong> "
-        + _('{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen.').format(
-            f=freigegeben, z=zu_ueber, r=ruecksprache, b=in_bearb, o=offen) + "</p>"
+        + ((_('Quickinfos: ') if ist_formular else "")
+           + _('{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen.').format(
+            f=freigegeben, z=zu_ueber, r=ruecksprache, b=in_bearb, o=offen)) + "</p>"
         + "<p><strong>" + _('Rolle:') + "</strong> " + (_('Lektorat') if role == "lektorat" else _('Herausgeber')) + "</p>"
         + rueck_html
         + (("<p><strong>" + _('Nachricht:') + "</strong><br>" + _mail_escape(message).replace(chr(10), "<br>") + "</p>") if message else "")
@@ -8843,6 +8891,30 @@ async def review_overview(user: dict = Depends(get_current_user)):
            ORDER BY p.updated_at DESC""",
         (user["id"],)
     ).fetchall()
+    # Gast-Ansicht Formulare (28.08.2026): Formular-Projekte haben keine Bilder —
+    # dieselben Zaehler aus formularfelder/feld_reviews, dieselbe Form fuers Frontend
+    # (Dashboard-Knopf + /geteilte-projekte), damit Formulare dort nicht unsichtbar sind.
+    form_rows = conn.execute(
+        """SELECT p.id AS id, p.name AS name, p.filename AS filename,
+                  SUM(CASE WHEN COALESCE(f.review_status,'offen')='offen' THEN 1 ELSE 0 END) AS offen,
+                  SUM(CASE WHEN f.review_status='zu_ueberarbeiten' THEN 1 ELSE 0 END) AS zu_ueberarbeiten,
+                  SUM(CASE WHEN f.review_status='freigegeben' THEN 1 ELSE 0 END) AS freigegeben,
+                  SUM(CASE WHEN EXISTS (SELECT 1 FROM feld_reviews r
+                        WHERE r.feld_id = f.id AND r.role = 'lektorat' AND r.status = 'ruecksprache')
+                      THEN 1 ELSE 0 END) AS ruecksprache,
+                  0 AS nachrichten,
+                  COUNT(f.id) AS total,
+                  (SELECT GROUP_CONCAT(DISTINCT COALESCE(NULLIF(g.guest_name,''), g.guest_email)) FROM shares g
+                    WHERE g.project_id = p.id AND g.status IN ('active','completed')) AS guests
+           FROM projects p
+           JOIN formularfelder f ON f.project_id = p.id
+           WHERE p.user_id = ? AND p.tool = 'formular'
+             AND EXISTS (SELECT 1 FROM shares s WHERE s.project_id = p.id AND s.status IN ('active','completed'))
+           GROUP BY p.id
+           ORDER BY p.updated_at DESC""",
+        (user["id"],)
+    ).fetchall()
+    rows = list(rows) + list(form_rows)
     # Geteilte-Projekte-Kasten (15.07.2026): Lese-Stand + Rollen-Status + Neu-Zaehler.
     seen_row = conn.execute("SELECT reviews_seen_until FROM users WHERE id = ?", (user["id"],)).fetchone()
     seen = seen_row["reviews_seen_until"] if seen_row and seen_row["reviews_seen_until"] else ""
@@ -8878,6 +8950,9 @@ async def review_overview(user: dict = Depends(get_current_user)):
             neu_reviews = conn.execute(
                 "SELECT COUNT(*) FROM image_reviews r JOIN images i ON i.id = r.image_id "
                 "WHERE i.project_id = ? AND r.reviewed_at > ?", (pid, seen)).fetchone()[0]
+            neu_reviews += conn.execute(
+                "SELECT COUNT(*) FROM feld_reviews r JOIN formularfelder f ON f.id = r.feld_id "
+                "WHERE f.project_id = ? AND r.reviewed_at > ?", (pid, seen)).fetchone()[0]
             neu_abschluesse = conn.execute(
                 "SELECT COUNT(*) FROM shares WHERE project_id = ? AND completed_at IS NOT NULL "
                 "AND completed_at > ?", (pid, seen)).fetchone()[0]
@@ -8888,6 +8963,9 @@ async def review_overview(user: dict = Depends(get_current_user)):
             neu_reviews = conn.execute(
                 "SELECT COUNT(*) FROM image_reviews r JOIN images i ON i.id = r.image_id "
                 "WHERE i.project_id = ?", (pid,)).fetchone()[0]
+            neu_reviews += conn.execute(
+                "SELECT COUNT(*) FROM feld_reviews r JOIN formularfelder f ON f.id = r.feld_id "
+                "WHERE f.project_id = ?", (pid,)).fetchone()[0]
             neu_abschluesse = conn.execute(
                 "SELECT COUNT(*) FROM shares WHERE project_id = ? AND status = 'completed'", (pid,)).fetchone()[0]
         d["neu"] = {"nachrichten": neu_msgs, "pruefungen": neu_reviews, "abschluesse": neu_abschluesse}

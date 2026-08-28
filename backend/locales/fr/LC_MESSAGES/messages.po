@@ -4530,3 +4530,24 @@ msgstr "incertaine"
 msgid "{u} KI-Vorschläge unsicher."
 msgstr "{u} propositions de l’IA incertaines."
 
+
+msgid "Bitte Quickinfos prüfen: {projekt}"
+msgstr "Merci de vérifier les infobulles : {projekt}"
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Quickinfos anzusehen."
+msgstr "Veuillez confirmer votre adresse e-mail pour consulter les infobulles partagées."
+
+msgid "Dieses Formular enthält noch keine Felder."
+msgstr "Ce formulaire ne contient pas encore de champs."
+
+msgid "Quickinfos: "
+msgstr "Infobulles : "
+
+msgid "vom Gast bearbeitet"
+msgstr "modifié par l’invité"
+
+msgid "{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}“ zu prüfen."
+msgstr "{name} vous invite à vérifier les infobulles du formulaire « {projekt} »."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
+msgstr "{n} champs dans {d} documents, {o} sans infobulle."

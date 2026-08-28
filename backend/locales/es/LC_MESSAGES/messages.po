@@ -4530,3 +4530,24 @@ msgstr "incierta"
 msgid "{u} KI-Vorschläge unsicher."
 msgstr "{u} sugerencias de la IA inciertas."
 
+
+msgid "Bitte Quickinfos prüfen: {projekt}"
+msgstr "Revise las descripciones de campo: {projekt}"
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Quickinfos anzusehen."
+msgstr "Confirme su dirección de correo electrónico para ver las descripciones de campo compartidas."
+
+msgid "Dieses Formular enthält noch keine Felder."
+msgstr "Este formulario aún no contiene campos."
+
+msgid "Quickinfos: "
+msgstr "Descripciones de campo: "
+
+msgid "vom Gast bearbeitet"
+msgstr "editado por el invitado"
+
+msgid "{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}“ zu prüfen."
+msgstr "{name} le pide que revise las descripciones de campo del formulario «{projekt}»."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
+msgstr "{n} campos en {d} documentos, {o} sin descripción."

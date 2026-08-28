@@ -4530,3 +4530,24 @@ msgstr "uncertain"
 msgid "{u} KI-Vorschläge unsicher."
 msgstr "{u} AI suggestions uncertain."
 
+
+msgid "Bitte Quickinfos prüfen: {projekt}"
+msgstr "Please review tooltips: {projekt}"
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Quickinfos anzusehen."
+msgstr "Please confirm your e-mail address to view the shared tooltips."
+
+msgid "Dieses Formular enthält noch keine Felder."
+msgstr "This form does not contain any fields yet."
+
+msgid "Quickinfos: "
+msgstr "Tooltips: "
+
+msgid "vom Gast bearbeitet"
+msgstr "edited by guest"
+
+msgid "{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}“ zu prüfen."
+msgstr "{name} would like you to review the tooltips for the form “{projekt}”."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
+msgstr "{n} fields in {d} documents, {o} without tooltip."

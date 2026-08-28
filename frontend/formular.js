@@ -21,9 +21,27 @@
  * Sicherheit: alle Texte aus dem Server laufen durch escHtml(); Eingaben
  * gehen als JSON an PATCH /api/felder/{id}; keine innerHTML-Zuweisung mit
  * unescapten Nutzerdaten.
+ * GAST-ANSICHT (28.08.2026): dieselbe Ansicht im Gast-Modus (window.GUEST_MODE,
+ * Freigabe-Link /freigabe/{token}). Daten kommen dann von /api/freigabe/{token}/
+ * felder; der Gast (Herausgeber/Lektorat) liest, aendert Quickinfos von Hand und
+ * setzt je Feld ein Urteil (Freigeben / Aenderung wuenschen) mit optionaler
+ * Anmerkung — KEINE KI, keine Stammdaten, kein Export, kein Upload. Der Besitzer
+ * laedt ueber „Zur Pruefung freigeben" ein (Dialog aus app.html: shareDialogHtml)
+ * und sieht danach je Feld das juengste Urteil (Badge wie bei Bildern:
+ * unifiedKeyFor/unifiedStatusLabel/unifiedStatusColor aus app.html) + Anmerkung.
  * ========================================================================== */
 (function () {
     'use strict';
+
+    // Gast-Modus: Token statt Projekt-ID, eigene Endpunkte, keine Schreibrechte
+    // ausser Quickinfo-Text und Urteil.
+    function gast() { return !!window.GUEST_MODE; }
+    function gastBasis() { return '/api/freigabe/' + encodeURIComponent(window.SHARE_TOKEN || ''); }
+    function felderUrl(key) { return gast() ? gastBasis() + '/felder' : '/api/projects/' + key + '/felder'; }
+    function ausschnittUrl(fid) { return gast() ? gastBasis() + '/felder/' + fid + '/ausschnitt' : '/api/felder/' + fid + '/ausschnitt'; }
+    function seitenansichtUrl(fid) { return gast() ? gastBasis() + '/felder/' + fid + '/page-view' : '/api/felder/' + fid + '/page-view'; }
+    function rolle() { return window.SHARE_ROLE || 'kunde'; }
+    let inReview = false;   // Besitzer: Projekt ist freigegeben -> Pruef-Badges + Anmerkungen zeigen
 
     const FELDART = {
         text: () => t('Textfeld'), checkbox: () => t('Kontrollkästchen'), radio: () => t('Auswahlknopf'),
@@ -36,7 +54,7 @@
     };
     const QUELLE = {
         pdf: () => t('vorhanden (aus der PDF)'), hand: () => t('von Hand'),
-        stammdaten: () => t('aus Stammdaten'), ki: () => t('KI-Vorschlag'),
+        stammdaten: () => t('aus Stammdaten'), ki: () => t('KI-Vorschlag'), gast: () => t('vom Gast bearbeitet'),
     };
 
     // Auf/Zu-Zustand ueber Neu-Rendern hinweg (wie openDocs/openPages in app.html).
@@ -101,15 +119,23 @@
         badges.push('<span class="badge ' + (offen || unsicher ? 'badge-pending' : 'badge-done') + '" id="feld_status_' + f.id + '">' + escHtml(statusText(f)) + '</span>');
         if (f.pflicht) badges.push('<span class="badge" style="background:#a15c00;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Pflichtfeld') + '</span>');
         if (f.ausgefuellt) badges.push('<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('bereits ausgefüllt') + '</span>');
+        // Pruef-Badge (Gast immer, Besitzer nur bei freigegebenem Projekt) — nur fuer
+        // Felder, die einen Text haben; Felder ohne Quickinfo tragen kein Urteil.
+        if ((gast() || inReview) && !offen && typeof unifiedKeyFor === 'function') {
+            const lr = latestReview(f);
+            const key = lr ? unifiedKeyFor(lr.role, lr.status) : 'neu';
+            badges.push('<span class="badge" id="feld_unibadge_' + f.id + '" style="background:' + unifiedStatusColor(key)
+                + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + unifiedStatusLabel(key)
+                + (!gast() && f.review_note ? ' ' + t('— mit Anmerkung') : '') + '</span>');
+        }
         const bild = f.hat_ausschnitt
-            ? '<img src="/api/felder/' + f.id + '/ausschnitt" alt="" class="image-preview feld-ausschnitt" loading="lazy">'
+            ? '<img src="' + ausschnittUrl(f.id) + '" alt="" class="image-preview feld-ausschnitt" loading="lazy">'
             : '';
-        const vorschlag = (treffer && treffer.length)
-            ? '<div class="feld-stammdaten-treffer" id="feld_treffer_' + f.id + '" style="margin-top:0.5rem;">'
+        const vorschlag = (gast() || !(treffer && treffer.length)) ? '' : ''
+            + '<div class="feld-stammdaten-treffer" id="feld_treffer_' + f.id + '" style="margin-top:0.5rem;">'
                 + '<span id="feld_treffer_text_' + f.id + '">' + t('Vorschlag aus deinen Stammdaten: {q}', { q: escHtml(treffer[0].quickinfo) }) + '</span> '
                 + '<button type="button" class="btn btn-secondary btn-small" onclick="Formular.ausStammdaten(' + f.id + ', ' + treffer[0].id + ')">' + t('Aus Stammdaten übernehmen') + '</button>'
-              + '</div>'
-            : '';
+              + '</div>';
         return ''
             + '<section class="image-review feld-review" id="feldcard_' + f.id + '" aria-labelledby="feld_heading_' + f.id + '" data-status="' + (offen ? 'offen' : 'beschrieben') + '" data-unsicher="' + (unsicher ? '1' : '0') + '">'
             + '<h4 id="feld_heading_' + f.id + '" class="image-heading">' + escHtml(feldUeberschrift(f)) + '</h4>'
@@ -123,13 +149,152 @@
             +   ' placeholder="' + t('Noch keine Quickinfo – hier eingeben oder aus Stammdaten übernehmen') + '">' + escHtml(f.quickinfo || '') + '</textarea>'
             + belegHtml(f)
             + vorschlag
-            + '<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
-            +   (istNamenlos(f) ? '' : '<button type="button" class="btn btn-secondary btn-small" id="feld_gen_' + f.id + '" onclick="Formular.generieren(' + f.id + ')">' + (offen ? t('Generieren') : t('Neu generieren')) + '</button>')
-            +   (f.quickinfo_original ? '<button type="button" class="btn btn-secondary btn-small" id="feld_orig_' + f.id + '" onclick="Formular.original(' + f.id + ')">' + t('Zurück auf Original') + '</button>' : '')
-            +   '<button type="button" class="btn btn-secondary btn-small" id="feld_sd_' + f.id + '" onclick="Formular.inStammdaten(' + f.id + ')"' + (offen ? ' disabled' : '') + '>' + t('In Stammdaten übernehmen') + '</button>'
-            +   '<span id="feld_msg_' + f.id + '" role="status" aria-live="polite" style="font-size:0.85rem;"></span>'
-            + '</div>'
+            + (gast() ? gastUrteilHtml(f, offen) : ''
+                + (inReview && f.review_note && typeof reviewNoteDetails === 'function' ? reviewNoteDetails(f.review_note, t('Anmerkung des Gastes anzeigen')) : '')
+                + '<div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
+                +   (istNamenlos(f) ? '' : '<button type="button" class="btn btn-secondary btn-small" id="feld_gen_' + f.id + '" onclick="Formular.generieren(' + f.id + ')">' + (offen ? t('Generieren') : t('Neu generieren')) + '</button>')
+                +   (f.quickinfo_original ? '<button type="button" class="btn btn-secondary btn-small" id="feld_orig_' + f.id + '" onclick="Formular.original(' + f.id + ')">' + t('Zurück auf Original') + '</button>' : '')
+                +   '<button type="button" class="btn btn-secondary btn-small" id="feld_sd_' + f.id + '" onclick="Formular.inStammdaten(' + f.id + ')"' + (offen ? ' disabled' : '') + '>' + t('In Stammdaten übernehmen') + '</button>'
+                +   '<span id="feld_msg_' + f.id + '" role="status" aria-live="polite" style="font-size:0.85rem;"></span>'
+                + '</div>')
             + '</section>';
+    }
+
+    // ─── Gast: Urteil je Feld (Muster: Gast-Pruefblock der Bildkarte in app.html) ───
+    // Ein Klick = Status sofort gesetzt (aria-pressed am aktiven Knopf, Ansage per
+    // announce()); die Anmerkung ist vom Status entkoppelt (natives <details>).
+    // Der Block wird auch fuer leere Felder gerendert, nur versteckt — fuellt der
+    // Gast das Feld, blendet speichern() ihn ein.
+    function eigenerStatus(f) { const r = (f.reviews || {})[rolle()]; return (r && r.status) || 'offen'; }
+    function statusLabel(status) { return (typeof unifiedStatusLabel === 'function') ? unifiedStatusLabel(unifiedKeyFor(rolle(), status)) : status; }
+    function gastUrteilHtml(f, offen) {
+        const st = eigenerStatus(f);
+        const lr = latestReview(f);
+        const anzeige = lr ? unifiedStatusLabel(unifiedKeyFor(lr.role, lr.status)) : t('Neu');
+        return '<div class="guest-review feld-urteil" id="feld_urteil_' + f.id + '" data-status="' + escHtml(st) + '"' + (offen ? ' hidden' : '') + ' style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">'
+            + '<p style="margin:0 0 0.4rem 0;font-weight:600;">' + t('Status:') + ' <span id="feld_rev_status_' + f.id + '">' + anzeige + '</span> <output id="feld_rev_saved_' + f.id + '" class="rev-saved"></output></p>'
+            + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">'
+            +   '<button type="button" class="btn btn-secondary btn-small rev-frei" id="feld_btn_frei_' + f.id + '" aria-pressed="' + (st === 'freigegeben') + '" onclick="Formular.urteil(' + f.id + ', \'freigegeben\')">' + t('Freigeben') + '</button>'
+            +   '<button type="button" class="btn btn-secondary btn-small" id="feld_btn_aend_' + f.id + '" aria-pressed="' + (st === 'zu_ueberarbeiten') + '" onclick="Formular.urteil(' + f.id + ', \'zu_ueberarbeiten\')">' + t('Änderung wünschen') + '</button>'
+            + '</div>'
+            + '<details class="guest-note-edit" id="feld_note_details_' + f.id + '" style="margin-top:0.5rem;">'
+            +   '<summary id="feld_note_summary_' + f.id + '">' + (f.review_note ? t('Anmerkung bearbeiten') : t('Anmerkung hinzufügen')) + '</summary>'
+            +   '<div style="margin-top:0.4rem;">'
+            +     '<label for="feld_note_' + f.id + '" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Anmerkung (optional)') + '</label>'
+            +     '<textarea id="feld_note_' + f.id + '" maxlength="2000" style="width:100%;min-height:60px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:0.95rem;">' + escHtml(f.review_note || '') + '</textarea>'
+            +     '<div style="margin-top:0.4rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">'
+            +       '<button type="button" class="btn btn-primary btn-small" onclick="Formular.anmerkungSpeichern(' + f.id + ')">' + t('Anmerkung speichern') + '</button>'
+            +       '<button type="button" class="btn btn-delete btn-small" onclick="Formular.anmerkungLoeschen(' + f.id + ')">' + t('Anmerkung löschen') + '</button>'
+            +       '<output id="feld_note_msg_' + f.id + '" style="font-size:0.85rem;"></output>'
+            +     '</div>'
+            +   '</div>'
+            + '</details>'
+            + '</div>';
+    }
+
+    function urteilAnzeigen(feldId, status) {
+        const cont = document.getElementById('feld_urteil_' + feldId);
+        if (cont) { cont.dataset.status = status; cont.hidden = false; }
+        const st = document.getElementById('feld_rev_status_' + feldId);
+        if (st) st.textContent = statusLabel(status);
+        const ub = document.getElementById('feld_unibadge_' + feldId);
+        if (ub && typeof unifiedKeyFor === 'function') {
+            const key = unifiedKeyFor(rolle(), status);
+            ub.textContent = unifiedStatusLabel(key); ub.style.background = unifiedStatusColor(key);
+        }
+        const bF = document.getElementById('feld_btn_frei_' + feldId);
+        const bA = document.getElementById('feld_btn_aend_' + feldId);
+        if (bF) bF.setAttribute('aria-pressed', status === 'freigegeben');
+        if (bA) bA.setAttribute('aria-pressed', status === 'zu_ueberarbeiten');
+    }
+
+    async function urteilSenden(feldId, status, anmerkung) {
+        try {
+            const r = await fetch(gastBasis() + '/felder/' + feldId + '/review', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ status: status, comment: anmerkung }) });
+            return r.ok;
+        } catch (e) { return false; }
+    }
+
+    async function urteil(feldId, status) {
+        const field = document.getElementById('feld_note_' + feldId);
+        const anmerkung = field ? field.value.trim() : '';
+        if (!(await urteilSenden(feldId, status, anmerkung))) { announce(t('Fehler beim Speichern.')); return; }
+        urteilAnzeigen(feldId, status);
+        const saved = document.getElementById('feld_rev_saved_' + feldId);
+        if (saved) { saved.textContent = t('Gespeichert.'); setTimeout(() => { saved.textContent = ''; }, 4000); }
+        announce(t('Status gesetzt: {s}', { s: statusLabel(status) }));
+    }
+
+    async function anmerkungSpeichern(feldId) {
+        const cont = document.getElementById('feld_urteil_' + feldId);
+        const status = (cont && cont.dataset.status) || 'offen';
+        const field = document.getElementById('feld_note_' + feldId);
+        const note = field ? field.value.trim() : '';
+        const msg = document.getElementById('feld_note_msg_' + feldId);
+        if (!(await urteilSenden(feldId, status, note))) { if (msg) msg.textContent = t('Fehler beim Speichern.'); announce(t('Fehler beim Speichern.')); return; }
+        if (msg) msg.textContent = note ? t('Anmerkung gespeichert.') : t('Anmerkung entfernt.');
+        const sum = document.getElementById('feld_note_summary_' + feldId);
+        if (sum) sum.textContent = note ? t('Anmerkung bearbeiten') : t('Anmerkung hinzufügen');
+        const det = document.getElementById('feld_note_details_' + feldId);
+        if (det) det.open = false;
+        if (sum) sum.focus();
+        announce(note ? t('Anmerkung gespeichert.') : t('Anmerkung entfernt.'));
+    }
+
+    async function anmerkungLoeschen(feldId) {
+        const field = document.getElementById('feld_note_' + feldId);
+        if (!field || !field.value.trim()) { announce(t('Keine Anmerkung vorhanden.')); return; }
+        field.value = '';
+        await anmerkungSpeichern(feldId);
+    }
+
+    // ─── Gast: Pruefung abschliessen (Endpunkt /api/freigabe/{token}/complete aus main.py) ───
+    function abschlussHtml() {
+        return '<button class="btn btn-primary" id="fGuestCompleteBtn" onclick="Formular.abschlussOeffnen()">' + t('Prüfung abschließen') + '</button>'
+            + '<button type="button" class="btn btn-secondary" id="guestExitBtn" onclick="guestExit()">' + t('Beenden') + '</button>'
+            + '<dialog id="fGuestCompleteDialog" aria-labelledby="fGuestCompleteHeading" class="invite-dialog">'
+            +   '<h2 id="fGuestCompleteHeading" style="margin-top:0;">' + t('Prüfung abschließen') + '</h2>'
+            +   '<label for="fGuestCompleteMsg" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Anmerkung') + '</label>'
+            +   '<textarea id="fGuestCompleteMsg" maxlength="2000" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>'
+            +   '<div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;">'
+            +     '<button class="btn btn-primary" id="fGuestCompleteSend" onclick="Formular.abschliessen()">' + t('Abschließen &amp; senden') + '</button>'
+            +     '<button class="btn btn-secondary" onclick="Formular.abschlussSchliessen()">' + t('Abbrechen') + '</button>'
+            +   '</div>'
+            +   '<output id="fGuestCompleteStatus" style="display:block;margin-top:0.5rem;"></output>'
+            + '</dialog>';
+    }
+    function abschlussOeffnen() {
+        const dlg = document.getElementById('fGuestCompleteDialog');
+        if (!dlg) return;
+        if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+        const m = document.getElementById('fGuestCompleteMsg'); if (m) m.focus();
+    }
+    function abschlussSchliessen() {
+        const dlg = document.getElementById('fGuestCompleteDialog');
+        if (dlg && typeof dlg.close === 'function') dlg.close(); else if (dlg) dlg.removeAttribute('open');
+    }
+    async function abschliessen() {
+        const main = document.getElementById('main');
+        const msgEl = document.getElementById('fGuestCompleteMsg');
+        const statusEl = document.getElementById('fGuestCompleteStatus');
+        const sendBtn = document.getElementById('fGuestCompleteSend');
+        if (sendBtn) sendBtn.disabled = true;
+        if (statusEl) statusEl.textContent = t('Wird gesendet…');
+        announce(t('Prüfung wird gesendet …'));
+        try {
+            const r = await fetch(gastBasis() + '/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ message: msgEl ? msgEl.value : '' }) });
+            if (!r.ok) { if (statusEl) statusEl.textContent = t('Fehler beim Abschließen. Bitte erneut versuchen.'); if (sendBtn) sendBtn.disabled = false; return; }
+            abschlussSchliessen();
+            main.innerHTML = '<section class="card" style="max-width:32rem;margin:1.5rem 0;">'
+                + '<h1 class="section-title" id="guestThanksHeading" tabindex="-1">' + t('Vielen Dank!') + '</h1>'
+                + '<p>' + t('Ihre Prüfung wurde an den Ersteller gesendet. Sie können dieses Fenster schließen — oder über Ihren Link jederzeit zurückkommen und Änderungen vornehmen.') + '</p>'
+                + '<div style="margin-top:1rem;"><button type="button" class="btn btn-primary" onclick="Formular.showProject(window.SHARE_TOKEN)">' + t('Zurück zum Projekt') + '</button></div></section>';
+            const h = document.getElementById('guestThanksHeading'); if (h) h.focus();
+            announce(t('Prüfung abgeschlossen und gesendet.'));
+        } catch (e) {
+            if (statusEl) statusEl.textContent = t('Netzwerkfehler. Bitte erneut versuchen.');
+            if (sendBtn) sendBtn.disabled = false;
+        }
     }
 
     // Hoerprobe: so klingt das Formular beim Durchgehen mit einem Screenreader —
@@ -170,7 +335,7 @@
         const count = t('{n} Felder, {o} offen', { n: felder.length, o: offen });
         const seitenansicht = first.hat_seitenansicht
             ? '<details class="page-view-details"><summary>' + t('Seitenansicht anzeigen') + '</summary>'
-              + '<img src="/api/felder/' + first.id + '/page-view" alt="" class="page-view-image"></details>' : '';
+              + '<img src="' + seitenansichtUrl(first.id) + '" alt="" class="page-view-image"></details>' : '';
         const seitentext = first.page_text
             ? '<details class="page-text-details"><summary>' + t('Seitentext anzeigen') + '</summary>'
               + '<div class="page-text-content" role="region" aria-label="' + t('Seitentext') + '" tabindex="0">' + escHtml(first.page_text) + '</div></details>' : '';
@@ -197,10 +362,10 @@
             +   '<summary class="doc-summary"><h2 class="doc-heading" id="doc_heading_' + docKey + '">' + t('Dokument {n}: {name}', { n: pos, name: name }) + ' <span class="page-count">' + meta + '</span></h2></summary>'
             +   inner
             + '</details>'
-            + '<span class="doc-actions">'
+            + (gast() ? '' : '<span class="doc-actions">'
             +   '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-            + '</span></div>';
+            + '</span>') + '</div>';
     }
 
     function exportScopeHtml(documents) {
@@ -226,7 +391,9 @@
         const unsicher = felder.filter(f => f.quelle === 'ki' && f.sicherheit === 'niedrig').length;
         const gen = data.generierung;
         let info = felder.length
-            ? t('{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge.', { n: felder.length, d: docs.length, o: offen, s: data.stammdaten_anzahl || 0 })
+            ? (gast()
+                ? t('{n} Felder in {d} Dokumenten, {o} ohne Quickinfo.', { n: felder.length, d: docs.length, o: offen })
+                : t('{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge.', { n: felder.length, d: docs.length, o: offen, s: data.stammdaten_anzahl || 0 }))
             : t('Noch kein Formular hochgeladen.');
         if (unsicher) info += ' ' + t('{u} KI-Vorschläge unsicher.', { u: unsicher });
         if (project.status === 'processing' && gen) { badge = t('KI generiert'); badgeCls = 'badge-processing'; info += ' ' + t('Seite {i} von {n} wird bearbeitet.', { i: Math.min(gen.seiten_fertig + 1, gen.seiten_gesamt || 1), n: gen.seiten_gesamt || 1 }); }
@@ -234,12 +401,22 @@
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + escHtml(title) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
             + '<div class="card-info" id="projectHeadInfo">' + info + '</div>'
-            + (felder.length ? ''
+            // Gast: nur Abschluss/Beenden + Filter „Nur offene Felder" — keine KI, keine
+            // Stammdaten, kein Export, keine Sprach-/Prompt-Einstellungen.
+            + (gast() && felder.length ? ''
+                + '<div class="card-actions">' + abschlussHtml()
+                +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:1.2rem;flex-wrap:wrap;"><label for="fNurOffene" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">'
+                +     '<span style="font-weight:600;">' + t('Nur offene Felder anzeigen') + '</span>'
+                +     '<input type="checkbox" id="fNurOffene"' + (nurOffene ? ' checked' : '') + ' onchange="Formular.filter(this.checked)" style="width:1.2rem;height:1.2rem;"></label></div>'
+                + '</div>' : '')
+            + (!gast() && felder.length ? ''
                 + '<div class="card-actions">'
                 +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>' : '')
                 +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + t('Exportieren') + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf offene Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
+                // Gast-Ansicht (28.08.2026): Einladung wie bei Bild-Projekten — Knopf + Dialog aus app.html.
+                +   (typeof shareDialogHtml === 'function' ? shareDialogHtml(project) : '')
                 +   '<dialog id="fExportPanel" class="invite-dialog" aria-labelledby="fExportHeading">'
                 +     '<h2 id="fExportHeading" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
                 +     '<p id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;">' + t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length }) + '</p>'
@@ -357,10 +534,19 @@
 
     async function speichern(feldId, text) {
         try {
-            const res = await fetch('/api/felder/' + feldId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quickinfo: text }) });
+            const res = gast()
+                ? await fetch(gastBasis() + '/felder/' + feldId + '/quickinfo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ quickinfo: text }) })
+                : await fetch('/api/felder/' + feldId, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quickinfo: text }) });
             if (!res.ok) { announce(t('Speichern fehlgeschlagen.')); return; }
             const d = await res.json();
             statusSetzen(feldId, d);
+            if (gast()) {
+                // Urteil-Block bei erstmals gefuelltem Feld einblenden; Auto-Status
+                // 'in_bearbeitung' (Server) sichtbar machen, gesetztes Urteil bleibt.
+                const cont = document.getElementById('feld_urteil_' + feldId);
+                if (cont) cont.hidden = d.status === 'offen';
+                if (d.auto_status) urteilAnzeigen(feldId, d.auto_status);
+            }
             const ind = document.getElementById('feld_saved_' + feldId);
             if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
         } catch (e) { announce(t('Verbindungsfehler beim Speichern.')); }
@@ -494,29 +680,32 @@
     }
 
     async function showProject(projectId, erneut) {
+        // Im Gast-Modus ist projectId der Freigabe-Token (app.html reicht ihn durch).
         const main = document.getElementById('main');
-        const res = await fetch('/api/projects/' + projectId + '/felder');
-        if (res.status === 401) { window.location.href = '/'; return; }
+        const res = await fetch(felderUrl(projectId), { credentials: 'same-origin' });
+        if (res.status === 401) { if (gast() && typeof initGuest === 'function') { return initGuest(); } window.location.href = '/'; return; }
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
         const project = data.project;
+        inReview = !gast() && !!data.in_review;
+        if (gast() && data.role) window.SHARE_ROLE = data.role;
         if (zustandProjekt !== projectId) { offeneDocs = new Set(); offeneSeiten = new Set(); zustandProjekt = projectId; }
         // currentDocProjectId (Umbenennen/Loeschen-Dialoge) setzt app.html.showProject vor der Weiche.
         const felderJeDoc = new Map();
         data.felder.forEach(f => { if (!felderJeDoc.has(f.document_id)) felderJeDoc.set(f.document_id, []); felderJeDoc.get(f.document_id).push(f); });
         const docsHtml = data.documents.map((d, i) => dokumentHtml(d, i + 1, felderJeDoc.get(d.id) || [], data.stammdaten_treffer || {})).join('');
         main.innerHTML = kopfHtml(project, data)
-            + uploadBlockHtml(project)
-            + '<div id="feldListe">' + (data.felder.length ? docsHtml : '') + '</div>';
+            + (gast() ? '' : uploadBlockHtml(project))
+            + '<div id="feldListe">' + (data.felder.length ? docsHtml : (gast() ? '<div class="card"><p>' + t('Dieses Formular enthält noch keine Felder.') + '</p></div>' : '')) + '</div>';
         bindAutosave();
         if (nurOffene || nurUnsichere) filter(nurOffene, true);
-        setupProjectDropzone(projectId);
-        if (data.felder.length && typeof populatePromptSelect === 'function') populatePromptSelect(project.id, project.prompt_id);
+        if (!gast()) setupProjectDropzone(projectId);
+        if (!gast() && data.felder.length && typeof populatePromptSelect === 'function') populatePromptSelect(project.id, project.prompt_id);
         const h1 = document.getElementById('projectName');
         if (h1 && !erneut) h1.focus();
         // Laeuft die Extraktion oder die KI-Generierung noch: weiter abfragen, ohne den
-        // Fokus zu bewegen; am Ende einmal ansagen.
-        if (project.status === 'extracting' || project.status === 'processing') {
+        // Fokus zu bewegen; am Ende einmal ansagen. (Gast: kein Polling — er sieht den Stand beim Laden.)
+        if (!gast() && (project.status === 'extracting' || project.status === 'processing')) {
             setTimeout(async () => {
                 try {
                     const r = await fetch('/api/projects/' + projectId);
@@ -539,5 +728,6 @@
     }
 
     window.Formular = { showProject, original, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher,
-                        generieren, alleGenerieren, exportOeffnen, exportSchliessen, exportieren };
+                        generieren, alleGenerieren, exportOeffnen, exportSchliessen, exportieren,
+                        urteil, anmerkungSpeichern, anmerkungLoeschen, abschlussOeffnen, abschlussSchliessen, abschliessen };
 })();

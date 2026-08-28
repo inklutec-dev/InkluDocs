@@ -11,7 +11,7 @@
 {% if guest_mode %}
 {# Gast-Modus (Freigabe-Link): Flags VOR dashboard.js und Seiten-JS setzen.
    share_token kommt nur nach is_valid_share() hierher; tojson escapt sicher. #}
-<script>window.GUEST_MODE = true; window.SHARE_TOKEN = {{ share_token|tojson }};</script>
+<script>window.GUEST_MODE = true; window.SHARE_TOKEN = {{ share_token|tojson }}; window.GUEST_TOOL = {{ (guest_tool or '')|tojson }};</script>
 {% endif %}
 {% endblock %}
 
@@ -116,7 +116,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         main.innerHTML =
             '<section class="card" aria-labelledby="gateHeading" style="max-width:32rem;margin:1.5rem 0;">'
             + '<h1 id="gateHeading" class="section-title">' + t('Freigabe ansehen') + '</h1>'
-            + '<p>' + t('Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen.') + '</p>'
+            // Gast-Ansicht Formulare (28.08.2026): bei Formular-Projekten geht es um Quickinfos.
+            + '<p>' + (window.GUEST_TOOL === 'formular'
+                ? t('Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Quickinfos anzusehen.')
+                : t('Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Alt-Texte anzusehen.')) + '</p>'
             + '<form id="gateForm" style="margin-top:1rem;">'
             + '<label for="gateEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('E-Mail-Adresse') + '</label>'
             + '<input type="email" id="gateEmail" required autocomplete="email" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
@@ -546,14 +549,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const data = await res.json();
         const project = data.project;
         // QUICKINFO-WERKZEUG (27.08.2026): Formular-Projekte haben eine eigene
-        // Ansicht (frontend/formular.js) — Felder statt Bilder. Gast-Freigabe
-        // fuer Formulare kommt in einer spaeteren Stufe.
+        // Ansicht (frontend/formular.js) — Felder statt Bilder. Gast-Ansicht seit
+        // 28.08.2026: dieselbe Ansicht im Gast-Modus (Token statt Projekt-ID).
         if (project && (project.tool === 'formular' || project.project_type === 'pdfform')) {
-            if (window.GUEST_MODE) {
-                main.innerHTML = '<div class="card"><p>' + t('Die Gast-Ansicht für Formular-Projekte ist noch nicht verfügbar.') + '</p></div>';
-                return;
-            }
-            return Formular.showProject(projectId);
+            if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';
+            return Formular.showProject(window.GUEST_MODE ? window.SHARE_TOKEN : projectId);
         }
         const images = data.images;
         const documents = data.documents || [];
@@ -596,51 +596,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 ` : ''}
                 <div class="card-actions">
                     ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + t('Alle Alt-Texte generieren') + '</button>' : ''}
-                    ${!window.GUEST_MODE && images.length > 0 ? `
-                        <button type="button" class="btn btn-secondary" id="shareOpenBtn" onclick="openShareDialog(${project.id})">${t('Zur Prüfung freigeben')}</button>
-                        <dialog id="shareDialog" aria-labelledby="shareHeading" class="invite-dialog">
-                            <div id="shareForm">
-                                <!-- GUI nach Karbe-Feedback 11.07.2026 maximal einfach: Headline
-                                     „Zur Prüfung einladen", Labels ÜBER den Feldern, Rolle als
-                                     Auswahlfeld (UI-Wort „Herausgeber", DB-Wert bleibt 'kunde'),
-                                     keine Erklärtexte, kein „Nur Link"-Knopf. -->
-                                <h2 id="shareHeading" style="margin-top:0;">${t('Zur Prüfung einladen')}</h2>
-                                <p style="font-size:0.9rem;color:var(--text-muted);margin:0 0 0.8rem;">${t('Pflichtfeld ist gekennzeichnet.')}</p>
-                                <label for="shareName" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Name (optional)')}</label>
-                                <input type="text" id="shareName" autocomplete="name" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.8rem;">
-                                <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('E-Mail-Adresse (Pflichtfeld)')}</label>
-                                <input type="email" id="shareEmail" autocomplete="email" aria-required="true" aria-describedby="shareEmailError" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
-                                <p id="shareEmailError" role="alert" style="color:var(--error,#c33);font-weight:600;margin:0.3rem 0 0;"></p>
-                                <label for="shareRole" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Rolle des Empfängers')}</label>
-                                <select id="shareRole" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
-                                    <option value="kunde" selected>${t('Herausgeber')}</option>
-                                    <option value="lektorat">${t('Lektorat')}</option>
-                                </select>
-                                <label for="shareMessage" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Nachricht (optional)')}</label>
-                                <textarea id="shareMessage" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
-                                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-                                    <button type="button" class="btn btn-primary" id="shareSendBtn" onclick="doShare(${project.id})">${t('Einladung per E-Mail senden')}</button>
-                                    <button type="button" class="btn btn-secondary" onclick="closeShareDialog()">${t('Abbrechen')}</button>
-                                </div>
-                                <output id="shareStatus" style="display:block;margin-top:0.6rem;"></output>
-                            </div>
-                            <div id="shareConfirm" hidden>
-                                <h2 id="shareConfirmHeading" tabindex="-1" style="margin-top:0;">${t('Einladung gesendet')}</h2>
-                                <p id="shareConfirmText"></p>
-                                <div id="shareConfirmLinkWrap" hidden style="margin:0.6rem 0;">
-                                    <label for="shareConfirmLink" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Einladungslink')}</label>
-                                    <input type="text" id="shareConfirmLink" readonly style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
-                                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-                                        <button type="button" class="btn btn-secondary" id="shareCopyBtn" onclick="shareCopyLink()">${t('Link kopieren')}</button>
-                                        <output id="shareCopyStatus" style="font-size:0.9rem;"></output>
-                                    </div>
-                                </div>
-                                <div style="margin-top:1rem;">
-                                    <button type="button" class="btn btn-primary" onclick="closeShareDialog()">${t('Zurück zum Projekt')}</button>
-                                </div>
-                            </div>
-                        </dialog>
-                    ` : ''}
+                    ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">${t('Prüfung abschließen')}</button>
                         <!-- Karbe A8 (17.07.2026): sichtbarer Beenden-Knopf im Kopfbereich.
@@ -1101,10 +1057,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (key === 'ruecksprache') return t('Rücksprache');
         return t('Neu');
     }
-    // Farben wie bisher pro Status-Familie (alle AA-geprueft im Bestand).
+    // Farben pro Status-Familie, weisse Schrift, alle AA-geprueft (28.08.2026):
+    // Gruen #1e7e34 = 5,1:1, Orange #b45309 = 5,0:1 (vorher var(--success)/#d97706 =
+    // 3,0 bzw. 3,2:1 — axe-Befund beim Klicktest der Formular-Gast-Ansicht).
     function unifiedStatusColor(key) {
-        return (key === 'lek_frei' || key === 'her_frei') ? 'var(--success,#2a7)'
-            : (key === 'lek_aend' || key === 'her_aend') ? '#d97706'
+        return (key === 'lek_frei' || key === 'her_frei') ? '#1e7e34'
+            : (key === 'lek_aend' || key === 'her_aend') ? '#b45309'
             : key === 'ruecksprache' ? '#6d28d9'
             : key === 'in_bearbeitung' ? '#0369a1'
             : '#64748b';
@@ -1374,6 +1332,57 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     // ─── Etappe 4: Besitzer laedt zur Pruefung ein (mailto) ───
+    // Gast-Ansicht Formulare (28.08.2026): Einladungs-Knopf + Dialog als Funktion,
+    // damit die Formular-Ansicht (frontend/formular.js) denselben Dialog nutzt.
+    // Inhalt unveraendert aus der Bild-Ansicht herausgezogen.
+    function shareDialogHtml(project) {
+        return `
+                        <button type="button" class="btn btn-secondary" id="shareOpenBtn" onclick="openShareDialog(${project.id})">${t('Zur Prüfung freigeben')}</button>
+                        <dialog id="shareDialog" aria-labelledby="shareHeading" class="invite-dialog">
+                            <div id="shareForm">
+                                <!-- GUI nach Karbe-Feedback 11.07.2026 maximal einfach: Headline
+                                     „Zur Prüfung einladen", Labels ÜBER den Feldern, Rolle als
+                                     Auswahlfeld (UI-Wort „Herausgeber", DB-Wert bleibt 'kunde'),
+                                     keine Erklärtexte, kein „Nur Link"-Knopf. -->
+                                <h2 id="shareHeading" style="margin-top:0;">${t('Zur Prüfung einladen')}</h2>
+                                <p style="font-size:0.9rem;color:var(--text-muted);margin:0 0 0.8rem;">${t('Pflichtfeld ist gekennzeichnet.')}</p>
+                                <label for="shareName" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Name (optional)')}</label>
+                                <input type="text" id="shareName" autocomplete="name" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.8rem;">
+                                <label for="shareEmail" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('E-Mail-Adresse (Pflichtfeld)')}</label>
+                                <input type="email" id="shareEmail" autocomplete="email" aria-required="true" aria-describedby="shareEmailError" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
+                                <p id="shareEmailError" role="alert" style="color:var(--error,#c33);font-weight:600;margin:0.3rem 0 0;"></p>
+                                <label for="shareRole" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Rolle des Empfängers')}</label>
+                                <select id="shareRole" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
+                                    <option value="kunde" selected>${t('Herausgeber')}</option>
+                                    <option value="lektorat">${t('Lektorat')}</option>
+                                </select>
+                                <label for="shareMessage" style="display:block;font-weight:600;margin:0.8rem 0 0.3rem;">${t('Nachricht (optional)')}</label>
+                                <textarea id="shareMessage" style="width:100%;min-height:70px;padding:0.5rem;border:1px solid var(--border);border-radius:4px;"></textarea>
+                                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                                    <button type="button" class="btn btn-primary" id="shareSendBtn" onclick="doShare(${project.id})">${t('Einladung per E-Mail senden')}</button>
+                                    <button type="button" class="btn btn-secondary" onclick="closeShareDialog()">${t('Abbrechen')}</button>
+                                </div>
+                                <output id="shareStatus" style="display:block;margin-top:0.6rem;"></output>
+                            </div>
+                            <div id="shareConfirm" hidden>
+                                <h2 id="shareConfirmHeading" tabindex="-1" style="margin-top:0;">${t('Einladung gesendet')}</h2>
+                                <p id="shareConfirmText"></p>
+                                <div id="shareConfirmLinkWrap" hidden style="margin:0.6rem 0;">
+                                    <label for="shareConfirmLink" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Einladungslink')}</label>
+                                    <input type="text" id="shareConfirmLink" readonly style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;">
+                                    <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                                        <button type="button" class="btn btn-secondary" id="shareCopyBtn" onclick="shareCopyLink()">${t('Link kopieren')}</button>
+                                        <output id="shareCopyStatus" style="font-size:0.9rem;"></output>
+                                    </div>
+                                </div>
+                                <div style="margin-top:1rem;">
+                                    <button type="button" class="btn btn-primary" onclick="closeShareDialog()">${t('Zurück zum Projekt')}</button>
+                                </div>
+                            </div>
+                        </dialog>
+        `;
+    }
+
     function openShareDialog(projectId) {
         const dlg = document.getElementById('shareDialog');
         if (!dlg) return;

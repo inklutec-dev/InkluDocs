@@ -4221,3 +4221,24 @@ msgstr "usikker"
 msgid "{u} KI-Vorschläge unsicher."
 msgstr "{u} AI-forslag usikre."
 
+
+msgid "Bitte Quickinfos prüfen: {projekt}"
+msgstr "Gennemgå venligst værktøjstips: {projekt}"
+
+msgid "Bitte bestätigen Sie Ihre E-Mail-Adresse, um die freigegebenen Quickinfos anzusehen."
+msgstr "Bekræft venligst din e-mailadresse for at se de delte værktøjstips."
+
+msgid "Dieses Formular enthält noch keine Felder."
+msgstr "Denne formular indeholder endnu ingen felter."
+
+msgid "Quickinfos: "
+msgstr "Værktøjstips: "
+
+msgid "vom Gast bearbeitet"
+msgstr "redigeret af gæsten"
+
+msgid "{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}“ zu prüfen."
+msgstr "{name} beder dig gennemgå værktøjstipsene for formularen »{projekt}«."
+
+msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
+msgstr "{n} felter i {d} dokumenter, {o} uden værktøjstip."
