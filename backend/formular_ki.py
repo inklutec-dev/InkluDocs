@@ -182,8 +182,24 @@ def nachpruefung(vorschlag: FeldVorschlag, feld: dict, zeilen: list[dict], seite
     return vorschlag
 
 
+# Zaehl-Merkmale eines Textes: Ziffern, eckige Klammern mit Nummer, Ordnungswoerter (de/en/fr/es/da/sv).
+# Unterscheiden sich zwei Quickinfos darin, meinen sie verschiedene Personen/Bloecke
+# ("Berechtigter [1]" vs. "[2]", "erster" vs. "zweiter Vertreter") — dann darf die
+# Konsistenz-Angleichung NICHT greifen (Befund Bankformular 28.08.2026: drei gleiche
+# Bloecke, die Angleichung ueberschrieb die richtigen Nummern des Modells).
+_ORDNUNG = re.compile(
+    r"\d+|\b(?:erste[rsn]?|zweite[rsn]?|dritte[rsn]?|vierte[rsn]?|fuenfte[rsn]?|fünfte[rsn]?|first|second|third|fourth|fifth|"
+    r"premier|première|deuxième|troisième|primer[oa]?|segund[oa]|tercer[oa]?|første|anden|andet|tredje|första|andra)\b", re.I)
+
+
+def _zaehlmerkmale(text: str) -> tuple:
+    return tuple(m.lower() for m in _ORDNUNG.findall(text or ""))
+
+
 def konsistenz(vorschlaege: list[FeldVorschlag], felder_by_id: dict[int, dict]) -> list[FeldVorschlag]:
-    """Gleiche Beschriftung + Feldart + Gruppe -> gleicher Wortlaut (erste Fassung gewinnt)."""
+    """Gleiche Beschriftung + Feldart + Gruppe -> gleicher Wortlaut (erste Fassung gewinnt) —
+    AUSSER die Texte unterscheiden sich in Zahlen oder Ordnungswoertern: dann bezeichnen sie
+    verschiedene Bloecke, und der Wortlaut des Modells bleibt (28.08.2026)."""
     gruppen: dict[tuple, str] = {}
     for v in vorschlaege:
         f = felder_by_id.get(v.feld_id, {})
@@ -192,6 +208,8 @@ def konsistenz(vorschlaege: list[FeldVorschlag], felder_by_id: dict[int, dict]) 
             continue
         if key in gruppen:
             if gruppen[key] != v.quickinfo:
+                if _zaehlmerkmale(gruppen[key]) != _zaehlmerkmale(v.quickinfo):
+                    continue   # andere Nummer/Ordnung = anderer Block, nicht angleichen
                 v.quickinfo = gruppen[key]
                 v.hinweise.append("Wortlaut an gleiche Beschriftung angeglichen.")
         else:

@@ -115,6 +115,40 @@ class TestBuilder(unittest.TestCase):
         self.assertIn("feld_index", prompt)
         self.assertNotIn("K-0000-TEST", prompt)
 
+class TestKonsistenzNummern(unittest.TestCase):
+    """Befund Bankformular 28.08.2026: drei gleiche Bloecke [1]/[2]/[3] — die Angleichung
+    darf Texte mit anderer Nummer/Ordnung NICHT ueberschreiben."""
+
+    def _felder(self):
+        return {1: {"beschriftung": "Nationality", "feld_art": "text", "gruppe": "activity"},
+                2: {"beschriftung": "Nationality", "feld_art": "text", "gruppe": "activity"},
+                3: {"beschriftung": "Nationality", "feld_art": "text", "gruppe": "activity"}}
+
+    def test_andere_nummer_bleibt(self):
+        vs = [fk.FeldVorschlag(1, "Staatsangehörigkeit des Berechtigten [1]."),
+              fk.FeldVorschlag(2, "Staatsangehörigkeit des Berechtigten [2]."),
+              fk.FeldVorschlag(3, "Staatsangehörigkeit des Berechtigten [3].")]
+        out = fk.konsistenz(vs, self._felder())
+        self.assertEqual([v.quickinfo for v in out], ["Staatsangehörigkeit des Berechtigten [1].",
+                                                       "Staatsangehörigkeit des Berechtigten [2].",
+                                                       "Staatsangehörigkeit des Berechtigten [3]."])
+        self.assertTrue(all(not v.hinweise for v in out))
+
+    def test_ordnungswort_bleibt(self):
+        vs = [fk.FeldVorschlag(1, "Unterschrift des ersten Vertreters."),
+              fk.FeldVorschlag(2, "Unterschrift des zweiten Vertreters.")]
+        out = fk.konsistenz(vs, {1: {"beschriftung": "Vertreter", "feld_art": "text", "gruppe": ""},
+                                 2: {"beschriftung": "Vertreter", "feld_art": "text", "gruppe": ""}})
+        self.assertEqual(out[1].quickinfo, "Unterschrift des zweiten Vertreters.")
+
+    def test_gleiche_nummer_wird_angeglichen(self):
+        vs = [fk.FeldVorschlag(1, "Wohnadresse des Berechtigten [1]."),
+              fk.FeldVorschlag(2, "Adresse des Berechtigten [1] (Wohnort).")]
+        out = fk.konsistenz(vs, {1: {"beschriftung": "Home address", "feld_art": "text", "gruppe": "x"},
+                                 2: {"beschriftung": "Home address", "feld_art": "text", "gruppe": "x"}})
+        self.assertEqual(out[1].quickinfo, "Wohnadresse des Berechtigten [1].")
+        self.assertIn("Wortlaut an gleiche Beschriftung angeglichen.", out[1].hinweise)
+
 
 if __name__ == "__main__":
     unittest.main()

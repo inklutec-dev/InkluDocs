@@ -31,6 +31,7 @@ from .tools.definitions_formular import TOOL_DEFINITIONS_FORMULAR, ToolExecutorF
 from .prompts.system_agent import SYSTEM_AGENT
 from .prompts.system_formular import SYSTEM_FORMULAR
 from .adapters.inkludocs import build_project_summary
+from .sanitize import sanitize_markdown
 
 log = logging.getLogger(__name__)
 
@@ -305,7 +306,10 @@ def run_agent(
                 "Kannst du deine Frage etwas eingrenzen?"
             )
 
-    final_reply = last_reply_text or (
+    # 28.08.2026: Markdown raus (Sonnet setzt trotz Verbot gelegentlich **fett** —
+    # das Frontend zeigt Text roh, VoiceOver liest sonst "Stern Stern"). Gleicher
+    # Filter wie im klassischen Pfad (sanitize_markdown), fuer alle Werkzeuge.
+    final_reply = sanitize_markdown(last_reply_text) or (
         "Habe gerade keine konkrete Antwort dafür. Frag mich nochmal anders?"
     )
 
