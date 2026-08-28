@@ -84,10 +84,13 @@ AKTIONS_PREISE = {
 # Zusatzpakete (Michaels Preise, bestaetigt 03.08.2026). Reine Konfiguration
 # fuer Preisseite und Online-Zahlung — der Kauf selbst kommt mit Stripe;
 # bis dahin legen Admins Pakete ueber den Rechnungsweg an.
+# 28.08.2026 (Steve + Michael, Meeting): alle Credit-MENGEN mal fuenf, Euro-Preise
+# unveraendert — der Credit wird feiner, damit eine Quickinfo (1 Credit) guenstiger
+# sein kann als ein Alt-Text. Aktionspreise folgen in einem eigenen Schritt.
 PAKET_PREISE = {
-    100: 20.00,
-    500: 87.50,
-    1000: 150.00,
+    500: 20.00,
+    2500: 87.50,
+    5000: 150.00,
 }
 
 # Abo-Stufen (Steve+Michael, 06.08.2026 — loest das Lizenzschluessel-Modell
@@ -134,11 +137,11 @@ PLAN_KONTINGENTE = {
     # free: 10 (Michaels Modell) — fuer Firmen-Domains GEBUENDELT: alle
     # Free-Konten derselben Domain teilen sich das Volumen (siehe
     # pruefe_kontingent), Freemailer werden NIE gebuendelt.
-    "free": 10,
+    "free": 50,        # 28.08.2026: mal fuenf (vorher 10)
     # single: strikt an EIN Konto gebunden, kein Teilen, kein Einladen.
-    "single": 50,
-    "team": 100,
-    "enterprise": 275,
+    "single": 250,     # vorher 50
+    "team": 500,       # vorher 100
+    "enterprise": 1375,  # vorher 275
 }
 
 # Sitz-Deckel INKLUSIVE Inhaber (Single bewusst ohne Eintrag = kein Team).

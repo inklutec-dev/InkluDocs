@@ -3784,7 +3784,7 @@ async def admin_paket_anlegen(user_id: int, request: Request,
                               user: dict = Depends(require_full_admin)):
     """Admin: Zusatz-Credit-Paket fuer ein Konto anlegen (Rechnungsweg).
 
-    Punkt 4 (04.08.2026): Preise laut billing.PAKET_PREISE (100/500/1000);
+    Punkt 4 (04.08.2026): Preise laut billing.PAKET_PREISE (500/2500/5000, seit 28.08.2026);
     andere Groessen sind fuer Kulanz erlaubt. verfall='kuendigung' (Vorgabe,
     Michaels Regel: Credits verfallen erst mit der Kuendigung) oder eine
     Monats-Zahl fuer klassische Datums-Pakete.
