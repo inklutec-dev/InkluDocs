@@ -709,12 +709,8 @@ msgid "Fehler bei der Verarbeitung."
 msgstr "Erreur pendant le traitement."
 
 #: templates/app.html (Phase E2, 03.07.2026)
-msgid "Was exportieren?"
-msgstr "Que faut-il exporter ?"
 
 #: templates/app.html (Phase E2, 03.07.2026)
-msgid "Alle Dokumente (eine ZIP-Datei)"
-msgstr "Tous les documents (un fichier ZIP)"
 
 #: templates/app.html (Phase E2, 03.07.2026)
 msgid "Dokument {n}: {name}"
@@ -3702,8 +3698,6 @@ msgid "Webseite „{name}\", {bild}"
 msgstr "Page web « {name} », {bild}"
 
 #: multi-datei-phase2 (14.08.2026)
-msgid "Alle Webseiten (eine ZIP-Datei)"
-msgstr "Toutes les pages web (un fichier ZIP)"
 
 #: multi-datei-phase2 (14.08.2026)
 msgid "Bild löschen?"
@@ -4680,3 +4674,12 @@ msgstr "nom de champ {name}"
 
 msgid "– Dokument „{name}“"
 msgstr "– document « {name} »"
+
+msgid "Ganzes Projekt exportieren"
+msgstr "Exporter tout le projet"
+
+msgid "Ganzes Projekt exportieren ({n} Dokumente)"
+msgstr "Exporter tout le projet ({n} documents)"
+
+msgid "Dokument „{name}“ exportieren"
+msgstr "Exporter le document « {name} »"

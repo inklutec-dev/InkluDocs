@@ -622,11 +622,7 @@ msgstr "Alle alternative tekster er genereret."
 msgid "Fehler bei der Verarbeitung."
 msgstr "Fejl under behandlingen."
 
-msgid "Was exportieren?"
-msgstr "Hvad skal eksporteres?"
 
-msgid "Alle Dokumente (eine ZIP-Datei)"
-msgstr "Alle dokumenter (én ZIP-fil)"
 
 msgid "Dokument {n}: {name}"
 msgstr "Dokument {n}: {name}"
@@ -3393,8 +3389,6 @@ msgid "Webseite „{name}\", {bild}"
 msgstr "Webside »{name}«, {bild}"
 
 #: multi-datei-phase2 (14.08.2026)
-msgid "Alle Webseiten (eine ZIP-Datei)"
-msgstr "Alle websider (én ZIP-fil)"
 
 #: multi-datei-phase2 (14.08.2026)
 msgid "Bild löschen?"
@@ -4371,3 +4365,12 @@ msgstr "feltnavn {name}"
 
 msgid "– Dokument „{name}“"
 msgstr "– dokument »{name}«"
+
+msgid "Ganzes Projekt exportieren"
+msgstr "Eksportér hele projektet"
+
+msgid "Ganzes Projekt exportieren ({n} Dokumente)"
+msgstr "Eksportér hele projektet ({n} dokumenter)"
+
+msgid "Dokument „{name}“ exportieren"
+msgstr "Eksportér dokumentet »{name}«"

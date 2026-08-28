@@ -61,7 +61,11 @@ Neben „Umbenennen“ und „Löschen“ trägt jedes Dokument (PDF, Word, Form
 zwei weitere Knöpfe: „Alle generieren“, solange das Dokument Lücken hat,
 sonst „n … neu generieren, c Credits“ (nur KI-Texte dieses Dokuments;
 `POST …/generate` bzw. `…/quickinfos/generieren` mit `document_id`), und
-„Exportieren“, das den gemeinsamen Export-Dialog mit diesem Dokument
-vorausgewählt öffnet (Preis/Guthaben passend; Auswahl bleibt änderbar). Die
-Knöpfe oben im Kopf gelten weiterhin für das ganze Projekt. Web-Werkzeug:
+„Exportieren“, das den Export-Dialog für genau dieses Dokument öffnet
+(Einzeldatei, Preis/Guthaben passend). Eine Auswahlliste gibt es im Dialog
+nicht mehr (Steve 28.08.2026): der Knopf entscheidet. Der Hauptknopf oben
+heißt bei mehreren Dokumenten „Ganzes Projekt exportieren“ und liefert alle
+als ZIP, bei einem Dokument „Exportieren“; die Dialog-Überschrift nennt das
+Ziel („Dokument ‚x.pdf‘ exportieren“ / „Ganzes Projekt exportieren (3
+Dokumente)“). Die Generier-Knöpfe oben gelten weiterhin für das ganze Projekt. Web-Werkzeug:
 ein Dokument = die Seite, daher keine Zusatzknöpfe.

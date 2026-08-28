@@ -63,6 +63,8 @@
     let offeneSeiten = new Set();
     let zustandProjekt = null;
     let projektStatus = '';
+    let exportZielDoc = null;     // Dokument-ID fuer den Export vom Knopf am Dokument, null = ganzes Projekt
+    let aktuelleDocs = [];
     let nurOffene = false;
     let nurUnsichere = false;
 
@@ -391,15 +393,6 @@
             + '</span>') + '</div>';
     }
 
-    function exportScopeHtml(documents) {
-        if (!documents || documents.length <= 1) return '';
-        const items = documents.map((d, i) => '<li class="export-scope-item"><label class="export-scope-label">'
-            + '<input class="export-scope-radio" type="radio" name="fExportScope" value="doc:' + d.id + '"><span>'
-            + t('Dokument {n}: {name}', { n: i + 1, name: escHtml(docDisplayName(d)) }) + '</span></label></li>').join('');
-        return '<fieldset class="export-scope-fieldset"><legend class="export-scope-legend">' + t('Was exportieren?') + '</legend><ul class="export-scope-list">'
-            + '<li class="export-scope-item"><label class="export-scope-label"><input class="export-scope-radio" type="radio" name="fExportScope" value="all" checked><span>' + t('Alle Dokumente (eine ZIP-Datei)') + '</span></label></li>'
-            + items + '</ul></fieldset>';
-    }
 
     function kopfHtml(project, data) {
         const felder = data.felder, docs = data.documents;
@@ -442,7 +435,7 @@
                 +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>'
                     : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-secondary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ')">'
                         + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiSeiten }) + '</button>' : ''))
-                +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + t('Exportieren') + '</button>'
+                +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + (docs.length > 1 ? t('Ganzes Projekt exportieren') : t('Exportieren')) + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf alle Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
                 // Gast-Ansicht (28.08.2026): Einladung wie bei Bild-Projekten — Knopf + Dialog aus app.html.
@@ -450,7 +443,6 @@
                 +   '<dialog id="fExportPanel" class="invite-dialog" aria-labelledby="fExportHeading">'
                 +     '<h2 id="fExportHeading" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
                 +     '<p id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;">' + t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length }) + '</p>'
-                +     exportScopeHtml(docs)
                 +     '<div class="form-group" style="margin-bottom:0.8rem;"><label for="fExportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Dateiname (optional)') + '</label>'
                 +       '<input type="text" id="fExportFilename" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;"></div>'
                 +     '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
@@ -723,22 +715,26 @@
         if (!panel) return;
         const input = document.getElementById('fExportFilename');
         if (input) input.value = '';
-        // Vom Knopf am Dokument: dieses Dokument vorauswaehlen (Auswahl bleibt aenderbar).
-        const ziel = document.querySelector('input[name="fExportScope"][value="' + (docId ? 'doc:' + docId : 'all') + '"]');
-        if (ziel) ziel.checked = true;
+        // Export-Ziel (Steve 28.08.2026): keine Auswahlliste — Knopf am Dokument = nur dieses Dokument,
+        // Hauptknopf = ganzes Projekt (ZIP bei mehreren Dokumenten).
+        exportZielDoc = docId || null;
+        const head = document.getElementById('fExportHeading');
+        if (head) {
+            const doc = docId ? (aktuelleDocs || []).find(d => d.id === docId) : null;
+            head.textContent = doc ? t('Dokument „{name}“ exportieren', { name: docDisplayName(doc) })
+                : ((aktuelleDocs || []).length > 1 ? t('Ganzes Projekt exportieren ({n} Dokumente)', { n: aktuelleDocs.length }) : t('Exportieren'));
+        }
         if (typeof panel.showModal === 'function') panel.showModal(); else panel.setAttribute('open', '');
         announce(t('Export-Optionen geöffnet.'));
         exportPreisLaden();
-        document.querySelectorAll('input[name="fExportScope"]').forEach(r => r.addEventListener('change', exportPreisLaden));
     }
 
     // Export-Staffel (28.08.2026): Preis und Guthaben fuer den gewaehlten Umfang in die Zusammenfassung.
     async function exportPreisLaden() {
         const el = document.getElementById('fExportSummary');
         if (!el || !zustandProjekt) return;
-        const chosen = document.querySelector('input[name="fExportScope"]:checked');
         const body = {};
-        if (chosen && /^doc:(\d+)$/.test(chosen.value)) body.document_id = Number(chosen.value.slice(4));
+        if (exportZielDoc) body.document_id = exportZielDoc;
         try {
             const res = await fetch('/api/projects/' + zustandProjekt + '/export/preis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (!res.ok) return;
@@ -770,9 +766,8 @@
 
     async function _exportieren(projectId, format) {
         const statusEl = document.getElementById('fExportStatus');
-        const chosen = document.querySelector('input[name="fExportScope"]:checked');
         const body = {};
-        if (chosen && /^doc:(\d+)$/.test(chosen.value)) body.document_id = Number(chosen.value.slice(4));
+        if (exportZielDoc) body.document_id = exportZielDoc;
         const name = (document.getElementById('fExportFilename') || {}).value || '';
         if (name.trim()) body.filename = name.trim();
         if (statusEl) statusEl.textContent = t('Wird exportiert...');
@@ -813,6 +808,7 @@
         const data = await res.json();
         const project = data.project;
         projektStatus = project.status || '';
+        aktuelleDocs = data.documents || [];
         inReview = !gast() && !!data.in_review;
         if (gast() && data.role) window.SHARE_ROLE = data.role;
         if (zustandProjekt !== projectId) { offeneDocs = new Set(); offeneSeiten = new Set(); zustandProjekt = projectId; }

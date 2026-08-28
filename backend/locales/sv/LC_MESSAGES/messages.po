@@ -625,11 +625,7 @@ msgstr "Alla alt-texter har genererats."
 msgid "Fehler bei der Verarbeitung."
 msgstr "Fel vid bearbetningen."
 
-msgid "Was exportieren?"
-msgstr "Vad ska exporteras?"
 
-msgid "Alle Dokumente (eine ZIP-Datei)"
-msgstr "Alla dokument (en ZIP-fil)"
 
 msgid "Dokument {n}: {name}"
 msgstr "Dokument {n}: {name}"
@@ -3263,8 +3259,6 @@ msgid "Webseite „{name}\", {bild}"
 msgstr "Webbsida ”{name}”, {bild}"
 
 #: multi-datei-phase2 (14.08.2026)
-msgid "Alle Webseiten (eine ZIP-Datei)"
-msgstr "Alla webbsidor (en ZIP-fil)"
 
 #: multi-datei-phase2 (14.08.2026)
 msgid "Bild löschen?"
@@ -4241,3 +4235,12 @@ msgstr "fältnamn {name}"
 
 msgid "– Dokument „{name}“"
 msgstr "– dokument ”{name}”"
+
+msgid "Ganzes Projekt exportieren"
+msgstr "Exportera hela projektet"
+
+msgid "Ganzes Projekt exportieren ({n} Dokumente)"
+msgstr "Exportera hela projektet ({n} dokument)"
+
+msgid "Dokument „{name}“ exportieren"
+msgstr "Exportera dokumentet ”{name}”"

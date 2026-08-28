@@ -629,11 +629,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
-                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${t('Exportieren')}</button>
+                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${documents.length > 1 ? t('Ganzes Projekt exportieren') : t('Exportieren')}</button>
                         <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
-                            ${renderExportScopeBlock(documents, project)}
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Dateiname (optional)')}</label>
                                 <input type="text" id="exportFilename" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
@@ -749,38 +748,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // - Bei einem einzelnen Dokument zeigen wir die Auswahl nicht (wäre redundant).
     // - "Alle Dokumente" (value=all) ist Default, wenn es mehr als ein Dokument gibt;
     //   sonst zeigt der Default direkt auf das einzelne Dokument.
-    function renderExportScopeBlock(documents, project) {
-        const esc = s => !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        if (!documents || documents.length <= 1) return '';
-        // Phase 2 (14.08.2026): Web-Projekte haben ebenfalls Dokumente — dort
-        // heißt die Einheit in der Oberfläche durchgehend „Webseite".
-        const isWeb = !!(project && (project.tool === 'web' || project.project_type === 'url'));
-        // WCAG 2.2 AA target-size (24x24px): Radios werden via .export-scope-radio
-        // CSS-Klasse vergrößert (Default-Browser-Radios sind nur 13x13).
-        // Zusätzlich genug vertikalen Abstand zwischen den Einträgen, damit
-        // die "safe clickable area" auch zwischen benachbarten Targets > 24px ist.
-        const items = documents.map((d, idx) => {
-            // Anzeige-Position (1..N) statt doc_index — konsistent zur „Dokument N"-
-            // Ueberschrift, die nach Loeschungen Luecken im doc_index vermeidet.
-            const label = isWeb
-                ? t('Webseite {n}: {name}', { n: idx + 1, name: esc(docDisplayName(d)) })
-                : t('Dokument {n}: {name}', { n: idx + 1, name: esc(docDisplayName(d)) });
-            return '<li class="export-scope-item"><label class="export-scope-label">'
-                + '<input class="export-scope-radio" type="radio" name="exportScope" value="doc:' + d.id + '">'
-                + '<span>' + label + '</span></label></li>';
-        }).join('');
-        return ''
-            + '<fieldset class="export-scope-fieldset">'
-            +   '<legend class="export-scope-legend">' + t('Was exportieren?') + '</legend>'
-            +   '<ul class="export-scope-list">'
-            +     '<li class="export-scope-item"><label class="export-scope-label">'
-            +       '<input class="export-scope-radio" type="radio" name="exportScope" value="all" checked>'
-            +       '<span>' + (isWeb ? t('Alle Webseiten (eine ZIP-Datei)') : t('Alle Dokumente (eine ZIP-Datei)')) + '</span></label></li>'
-            +     items
-            +   '</ul>'
-            + '</fieldset>';
-    }
 
     // Merkt sich pro Projekt, welche Seiten aufgeklappt sind, damit der Zustand
     // über das Neu-Rendern während der Verarbeitung (Polling) hinweg erhalten bleibt.
@@ -2543,15 +2510,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const panel = document.getElementById('exportPanel');
         const input = document.getElementById('exportFilename');
         if (!panel) return;
-        panel.querySelectorAll('input[name="exportScope"]').forEach(function (rb) {
-            if (!rb._summaryBound) {
-                rb._summaryBound = true;
-                rb.addEventListener('change', function () { loadExportSummary(projectId); });
-            }
-        });
         if (input) input.value = '';
-        const ziel = panel.querySelector('input[name="exportScope"][value="' + (docId ? 'doc:' + docId : 'all') + '"]');
-        if (ziel) ziel.checked = true;
+        exportZiel = docId ? { all: false, document_id: docId } : { all: true };
+        const head = document.getElementById('exportPanelHeading');
+        if (head) {
+            const docs = currentRenderDocs || [];
+            const doc = docId ? docs.find(d => d.id === docId) : null;
+            head.textContent = doc ? t('Dokument „{name}“ exportieren', { name: docDisplayName(doc) })
+                : (docs.length > 1 ? t('Ganzes Projekt exportieren ({n} Dokumente)', { n: docs.length }) : t('Exportieren'));
+        }
         if (typeof panel.showModal === 'function') {
             panel.showModal();
         } else {
@@ -2642,16 +2609,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (!silent) announce(t('Export abgebrochen.'));
     }
 
+    // Export-Ziel (Steve 28.08.2026): keine Auswahlliste mehr im Dialog — der Knopf entscheidet.
+    // Hauptknopf = ganzes Projekt (ZIP bei mehreren Dokumenten), Knopf am Dokument = nur dieses.
+    let exportZiel = { all: true };
     function readExportScope() {
         // Liefert { document_id?: number, all: boolean }
-        // - "all" -> alle Dokumente (Server liefert ZIP, ausser bei nur einem Dokument)
-        // - "doc:<id>" -> nur dieses Dokument (Einzeldatei)
-        const chosen = document.querySelector('input[name="exportScope"]:checked');
-        if (!chosen) return { all: true };
-        if (chosen.value === 'all') return { all: true };
-        const m = /^doc:(\d+)$/.exec(chosen.value);
-        if (m) return { all: false, document_id: Number(m[1]) };
-        return { all: true };
+        return exportZiel.document_id ? { all: false, document_id: exportZiel.document_id } : { all: true };
     }
 
     async function doExport(projectId, format) {
