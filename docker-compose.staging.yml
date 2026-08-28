@@ -18,6 +18,7 @@ services:
       # Nur STAGING: Testlaeufe des InkluEdit-Website-Einzugs brauchen mehr
       # als 100 Bilder/Tag. Auf PROD bleibt die Vorgabe 100 unangetastet.
       - DAILY_IMAGE_LIMIT=500
+      - DAILY_CHAT_LIMIT=${DAILY_CHAT_LIMIT:-100}   # Chat-Bremse je Konto/Tag (28.08.2026)
       # NUR Staging (19.08.2026): erlaubt verify_multidatei2 den Scan des
       # eigenen Test-HTTP-Servers auf 127.0.0.1. Auf Prod/Demo NIE setzen.
       - SCAN_ERLAUBE_LOOPBACK=1

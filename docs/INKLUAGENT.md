@@ -109,6 +109,18 @@ Passend dazu die gemeinsame Prompt-Regel „Prüfen heißt aufrufen“
 einen Werkzeugaufruf aus; ohne Aufruf sagt der Agent, dass er aus dem
 Verlauf antwortet.
 
+## Chat-Bremse (28.08.2026)
+
+Reden mit dem Agenten kostet keine Credits, aber Bedrock-Token. Deshalb gilt
+je Konto eine Tagesgrenze von `DAILY_CHAT_LIMIT` Nutzer-Nachrichten (Standard
+100, Umgebung; 0 sperrt den Chat), gezählt über alle Projekte des Kontos in
+`chat_messages` (`database.get_daily_chat_count`, nur `role = user`, UTC-Tag).
+Admins sind ausgenommen. Die Prüfung läuft vor dem Speichern der Nachricht;
+darüber antwortet der Endpunkt mit 429 und „Du hast die 100 Chat-Nachrichten
+für heute genutzt. Morgen geht es weiter.“ (6 Sprachen), die Oberfläche
+zeigt den Text in der Statuszeile. Die Demo hat ihre eigene Grenze je
+Besucher (`DEMO_DAILY_CHAT_LIMIT`, 12).
+
 ## Ein neues Werkzeug anschließen (Kochrezept)
 
 1. `tools/<werkzeug>.py`: Funktionen `(…, project_id, user_id) -> {"ok", "result"|"error"}`,

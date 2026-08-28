@@ -48,7 +48,7 @@ from database import (
     create_email_change_token, confirm_email_change,
     create_api_result, get_api_result, update_api_result,
     create_email_verification_token, mark_email_verified, resend_verification_token,
-    get_daily_image_count, get_daily_api_count,
+    get_daily_image_count, get_daily_chat_count, get_daily_api_count,
     set_user_language,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
@@ -110,6 +110,10 @@ NOTIFICATION_EMAIL = os.environ.get("NOTIFICATION_EMAIL", SMTP_FROM)
 # Limit ist nur noch Schutzventil gegen AWS-Drosselung und Fehlerschleifen.
 # Einzelne Grosskunden bekommen ueber users.api_tageslimit mehr.
 DAILY_IMAGE_LIMIT = int(os.environ.get("DAILY_IMAGE_LIMIT", "500"))
+# Chat-Bremse (Steve 28.08.2026): Nachrichten an den InkluAgent je Konto und Tag —
+# Reden kostet keine Credits, aber Bedrock-Token; die Grenze faengt Dauerplauderer
+# ab. Admins ausgenommen. 0 = Chat gesperrt.
+DAILY_CHAT_LIMIT = int(os.environ.get("DAILY_CHAT_LIMIT", "100"))
 
 
 def effektives_api_tageslimit(user_row) -> int:
@@ -7739,6 +7743,13 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
         raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein")
     if len(message) > 5000:
         raise HTTPException(status_code=400, detail="Nachricht zu lang (max. 5000 Zeichen)")
+    # Chat-Bremse: Tagesgrenze je Konto (Admins ausgenommen), Pruefung VOR dem Speichern
+    # der Nachricht, damit abgewiesene Versuche nicht mitzaehlen.
+    if not user.get("is_admin"):
+        _heute = get_daily_chat_count(user["id"])
+        if _heute >= DAILY_CHAT_LIMIT:
+            _ = get_gettext(resolve_ui_language(request))
+            raise HTTPException(status_code=429, detail=_('Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter.').format(n=DAILY_CHAT_LIMIT))
 
     from inkluagent import storage
     from inkluagent.chat_engine import process_message

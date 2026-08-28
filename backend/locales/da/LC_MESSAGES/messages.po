@@ -4374,3 +4374,6 @@ msgstr "Eksportér hele projektet ({n} dokumenter)"
 
 msgid "Dokument „{name}“ exportieren"
 msgstr "Eksportér dokumentet »{name}«"
+
+msgid "Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter."
+msgstr "Du har brugt dagens {n} chatbeskeder. Det fortsætter i morgen."

@@ -54,6 +54,7 @@ services:
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
       # PDFix-Lizenz (27.08.2026): aus der Env-Datei; leer = Testversion
       - PDFIX_LICENSE_USER=${PDFIX_LICENSE_USER:-}
+      - DAILY_CHAT_LIMIT=${DAILY_CHAT_LIMIT:-100}   # Chat-Bremse je Konto/Tag (28.08.2026)
       - PDFIX_LICENSE_KEY=${PDFIX_LICENSE_KEY:-}
       - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-true}
       - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}

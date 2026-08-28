@@ -1195,6 +1195,23 @@ def confirm_email_change(token: str) -> dict | None:
 
 # ─── Daily Usage Limits ──────────────────────────────────────
 
+def get_daily_chat_count(user_id: int) -> int:
+    """Chat-Bremse (28.08.2026): Nutzer-Nachrichten an den InkluAgent heute (UTC),
+    ueber alle Projekte des Kontos. Nur role='user' zaehlt — Antworten und
+    Fehlermeldungen des Agenten nicht."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            """SELECT COUNT(*) FROM chat_messages m
+               JOIN projects p ON p.id = m.project_id
+               WHERE p.user_id = ? AND m.role = 'user' AND date(m.created_at) = date('now')""",
+            (user_id,)
+        ).fetchone()
+        return row[0] if row else 0
+    finally:
+        conn.close()
+
+
 def get_daily_image_count(user_id: int) -> int:
     """Count how many images a user has processed today (UTC)."""
     conn = get_db()
