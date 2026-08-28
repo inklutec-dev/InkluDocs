@@ -66,7 +66,7 @@ AKTIONS_PREISE = {
     # kundenfreundliche Lesart; pro-Dokument waere die strengere, mit Michael
     # klaeren falls gewuenscht). Free-Konten werden bis zur Wasserzeichen-
     # Runde (Umbau-Punkt 3) bewusst NICHT verbucht.
-    "pdf_export": 5,
+    "pdf_export": 5,            # Grundpreis; tatsaechlich export_preis(anzahl) = 5 + 1 je angefangene 10 (28.08.2026)
     # Word-Werkzeug (26.08.2026): Export der Word-Datei mit Alt-Texten — gleiche
     # Regel wie PDF (pro Vorgang, nur Bezahl-Konten).
     "docx_export": 5,
@@ -148,6 +148,53 @@ PLAN_SITZE = {
 }
 
 GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export")
+
+# EXPORT-STAFFEL (Michael Karbe, 28.08.2026, fuer Bilder UND Felder gleich):
+# Grundpreis 5 Credits je Export-Vorgang + 1 Credit je ANGEFANGENE 10 Bilder
+# bzw. Felder in der exportierten Datei (beim Alle-Dokumente-ZIP zusammen-
+# gezaehlt, ein Grundpreis). Free-Konten zahlen auch (10 Credits = ein Formular
+# bis 50 Felder). Kein Wasserzeichen mehr; reicht das Guthaben nicht, wird der
+# Export verweigert (export_pruefung). Beide Zahlen hier aendern = ueberall.
+EXPORT_GRUNDPREIS = 5
+EXPORT_STAFFEL = 10
+
+
+def export_preis(anzahl: int) -> int:
+    """Credits fuer einen Export mit `anzahl` Bildern/Feldern (5 + 1 je angefangene 10)."""
+    anzahl = max(0, int(anzahl or 0))
+    return EXPORT_GRUNDPREIS + (-(-anzahl // EXPORT_STAFFEL))
+
+
+def verfuegbare_credits(user_id: int):
+    """Guthaben, das fuer eine kostenpflichtige Aktion zur Verfuegung steht:
+    Monats-Rest + Zusatz-Pakete; None = unbegrenzt (Enterprise/Admin/Enforcement aus)."""
+    z = pruefe_kontingent(user_id)
+    if z.get("rest") is None:
+        return None
+    if not ABO_ENFORCEMENT or _ist_admin(user_id):
+        return None
+    return int(z.get("rest") or 0) + int(z.get("pakete_rest") or 0)
+
+
+def _ist_admin(user_id: int) -> bool:
+    conn = get_db()
+    try:
+        r = conn.execute("SELECT is_admin FROM users WHERE id = ?", (user_id,)).fetchone()
+        return bool(r and r["is_admin"])
+    except Exception:
+        return False
+    finally:
+        conn.close()
+
+
+def export_pruefung(user_id: int, anzahl: int) -> dict:
+    """Preis + Guthaben + Entscheidung fuer einen Export.
+    {"anzahl", "preis", "verfuegbar" (None = unbegrenzt), "erlaubt", "fehlend"}"""
+    preis = export_preis(anzahl)
+    verf = verfuegbare_credits(user_id)
+    erlaubt = verf is None or verf >= preis
+    return {"anzahl": int(anzahl or 0), "preis": preis, "verfuegbar": verf, "erlaubt": erlaubt,
+            "fehlend": 0 if erlaubt else preis - int(verf or 0)}
 
 
 def sitze_fuer_plan(plan: str):

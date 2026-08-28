@@ -3059,8 +3059,8 @@ msgstr "Acheter des crédits supplémentaires"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
 
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "Une seule monnaie pour tout : les crédits. Un texte alternatif coûte 1 crédit, l’export du PDF finalisé 5 crédits. Tous les prix sont des prix finaux — conformément à l’article 19 de la loi allemande sur la TVA (UStG), aucune TVA n’est facturée."
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON, Excel) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "Une seule monnaie pour tout : les crédits. Un texte alternatif coûte 1 crédit, une page d’infobulles 1 crédit, l’export du fichier final 5 crédits plus 1 crédit par tranche entamée de 10 images ou champs ; les exports tabulaires (CSV, JSON, Excel) sont gratuits. Tous les prix sont des prix finaux — conformément au § 19 UStG, aucune TVA n’est facturée."
 
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
 
@@ -4646,3 +4646,18 @@ msgstr "Régénérer {n} textes alternatifs, {c} crédits"
 
 msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
 msgstr "La régénération des textes alternatifs de l’IA démarre. Les textes saisis à la main restent inchangés."
+
+msgid "Dieser Export kostet {p} Credits."
+msgstr "Cet export coûte {p} crédits."
+
+msgid "Dieser Export kostet {p} Credits. Du hast {v}."
+msgstr "Cet export coûte {p} crédits. Vous en avez {v}."
+
+msgid "Der Export würde {p} Credits benötigen, du verfügst derzeit über {v} Credits. Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben."
+msgstr "Cet export nécessiterait {p} crédits ; vous en avez actuellement {v}. Vous pouvez à tout moment acheter les crédits nécessaires sous forme de pack en complément de votre abonnement."
+
+msgid "Nicht genügend Credits"
+msgstr "Crédits insuffisants"
+
+msgid "Zu Abo & Verbrauch"
+msgstr "Vers Abonnement & consommation"

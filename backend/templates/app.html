@@ -2566,11 +2566,48 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 msg = t('{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}.',
                         { b: d.beschrieben, n: d.total, dek: dekTeil, s: d.uebersprungen, g: gruende.join(', ') });
             }
+            // Export-Staffel (28.08.2026): Preis und Guthaben vor dem Export ansagen.
+            if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
             region.textContent = msg;
             announce(msg);
         } catch (e) {
             region.textContent = '';
         }
+    }
+
+    // ─── Export-Staffel (Michael 28.08.2026, beide Werkzeuge) ───
+    function exportPreisText(preis, verfuegbar) {
+        return (verfuegbar === null || verfuegbar === undefined)
+            ? t('Dieser Export kostet {p} Credits.', { p: preis })
+            : t('Dieser Export kostet {p} Credits. Du hast {v}.', { p: preis, v: verfuegbar });
+    }
+    // Barrierefreie Meldung, wenn das Guthaben nicht reicht: natives Modal (Fokusfang, Escape),
+    // Text als Ueberschrift + Absatz, zwei Knoepfe — Abo & Verbrauch oder Schliessen.
+    function zeigeCreditsMeldung(detail) {
+        let dlg = document.getElementById('creditsDialog');
+        if (!dlg) {
+            dlg = document.createElement('dialog');
+            dlg.id = 'creditsDialog'; dlg.className = 'invite-dialog'; dlg.setAttribute('aria-labelledby', 'creditsHeading');
+            document.body.appendChild(dlg);
+        }
+        const preis = detail && detail.preis, verf = detail && detail.verfuegbar;
+        const text = t('Der Export würde {p} Credits benötigen, du verfügst derzeit über {v} Credits. Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben.', { p: preis, v: (verf === null || verf === undefined) ? 0 : verf });
+        dlg.innerHTML = '<h2 id="creditsHeading" tabindex="-1" style="margin-top:0;">' + t('Nicht genügend Credits') + '</h2>'
+            + '<p id="creditsText">' + escHtml(text) + '</p>'
+            + '<div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">'
+            + '<a class="btn btn-primary" href="/abo">' + t('Zu Abo & Verbrauch') + '</a>'
+            + '<button type="button" class="btn btn-secondary" id="creditsClose">' + t('Schließen') + '</button></div>';
+        dlg.querySelector('#creditsClose').addEventListener('click', () => { if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open'); });
+        if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+        const h = dlg.querySelector('#creditsHeading'); if (h) h.focus();
+        announce(text);
+    }
+    // Antwort eines Export-Aufrufs auf die Credits-Sperre pruefen (402) — true = Meldung gezeigt.
+    async function exportCreditsAbgefangen(res) {
+        if (res.status !== 402) return false;
+        let d = {}; try { d = await res.json(); } catch (e) {}
+        zeigeCreditsMeldung(d.detail || d);
+        return true;
     }
 
     function closeExportPanel(silent) {
@@ -2617,6 +2654,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
             });
+            if (await exportCreditsAbgefangen(res)) { if (statusEl) statusEl.textContent = ''; return; }
             if (res.ok) {
                 const blob = await res.blob();
                 // Dateiname aus Content-Disposition lesen, sonst Fallback aus Eingabe + Format.

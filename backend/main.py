@@ -6744,22 +6744,16 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
 
-    # Punkt 4 (04.08.2026, Michaels Modell): PDF-Export kostet 5 Credits —
-    # pro Export-VORGANG, nur fuer Bezahl-Konten. Free bleibt bis zur
-    # Wasserzeichen-Runde (Punkt 3) unverbucht: dort bekommt Free seinen
-    # Wasserzeichen-Export, erst dann waere ein Zaehlen ehrlich.
-    _abo_export = billing.pruefe_kontingent(user["id"])
-    _export_kostenpflichtig = _abo_export.get("plan") != "free"
-    if _export_kostenpflichtig and not _abo_export.get("erlaubt", True):
-        raise HTTPException(status_code=429,
-                            detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+    # Export-Staffel (Michael 28.08.2026): 5 Credits + 1 je angefangene 10 Bilder, fuer ALLE
+    # Konten (Free hat 10 Credits); reicht das Guthaben nicht, kein Export (402 + Zahlen).
+    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units))
 
     if document_id is not None or len(units) == 1:
         # Einzelne Datei zurueckgeben (direkter Download, kein ZIP).
         unit = units[0]
         output_path, info = _build_pdf_for_document(unit, output_dir,
                                                     custom_title=custom_name)
-        headers = {}
+        headers = {"X-Export-Credits": str(_preis)}
         if info.get("method"):
             headers["X-Export-Method"] = str(info["method"])
         if "tagged" in info:
@@ -6777,8 +6771,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             media_type="application/pdf",
             headers=headers,
         )
-        if _export_kostenpflichtig:
-            billing.verbuche(user["id"], "export", aktion="pdf_export")
+        billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
         return response
 
     # Alle Dokumente -> ZIP.
@@ -6805,16 +6798,15 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     }
     if aggregated_warnings:
         headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
-    # Ein Export-Vorgang = 5 Credits, auch fuer das Alle-Dokumente-ZIP
-    # (siehe billing.AKTIONS_PREISE); nur nach erfolgreichem Bau der Antwort.
+    headers["X-Export-Credits"] = str(_preis)
+    # Ein Export-Vorgang = Grundpreis + Staffel ueber ALLE Bilder des ZIPs; nur nach erfolgreichem Bau der Antwort.
     response = FileResponse(
         zip_path,
         filename=f"{zip_base}_alle_pdfs.zip",
         media_type="application/zip",
         headers=headers,
     )
-    if _export_kostenpflichtig:
-        billing.verbuche(user["id"], "export", aktion="pdf_export")
+    billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
     return response
 
 
@@ -6883,24 +6875,19 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
 
-    _abo_export = billing.pruefe_kontingent(user["id"])
-    _export_kostenpflichtig = _abo_export.get("plan") != "free"
-    if _export_kostenpflichtig and not _abo_export.get("erlaubt", True):
-        raise HTTPException(status_code=429,
-                            detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units))
 
     if document_id is not None or len(units) == 1:
         unit = units[0]
         output_path, info = _build_docx_for_document(unit, output_dir, custom_title=custom_name)
-        headers = {"X-Export-Method": "docx", "X-Export-Tagged": str(info["tagged"]),
+        headers = {"X-Export-Method": "docx", "X-Export-Credits": str(_preis), "X-Export-Tagged": str(info["tagged"]),
                    "X-Export-Total": str(info["total"])}
         if info.get("warnings"):
             headers["X-Export-Warnings"] = _warnings_header(info["warnings"])
         download_base = custom_name or _doc_label(unit["doc"])
         response = FileResponse(output_path, filename=f"inkludocs_{download_base}.docx",
                                 media_type=DOCX_MEDIA, headers=headers)
-        if _export_kostenpflichtig:
-            billing.verbuche(user["id"], "export", aktion="docx_export")
+        billing.verbuche(user["id"], "export", aktion="docx_export", credits=_preis)
         return response
 
     zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
@@ -6922,8 +6909,8 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
         headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
     response = FileResponse(zip_path, filename=f"{zip_base}_alle_word.zip",
                             media_type="application/zip", headers=headers)
-    if _export_kostenpflichtig:
-        billing.verbuche(user["id"], "export", aktion="docx_export")
+    headers["X-Export-Credits"] = str(_preis)
+    billing.verbuche(user["id"], "export", aktion="docx_export", credits=_preis)
     return response
 
 
@@ -7160,6 +7147,41 @@ async def export_xlsx(project_id: int, request: Request, user: dict = Depends(ge
     return await _table_export_dispatch(project_id, request, user, "xlsx")
 
 
+def _export_vorpruefung(user_id: int, anzahl: int) -> int:
+    """Export-Staffel (28.08.2026): Preis berechnen, Guthaben pruefen; reicht es nicht,
+    402 mit beiden Zahlen (Frontend zeigt die barrierefreie Meldung). Gibt den Preis zurueck."""
+    p = billing.export_pruefung(user_id, anzahl)
+    if not p["erlaubt"]:
+        raise HTTPException(status_code=402, detail={
+            "code": "credits_fehlen", "preis": p["preis"], "verfuegbar": p["verfuegbar"], "fehlend": p["fehlend"],
+            "text": (f"Der Export würde {p['preis']} Credits benötigen, du verfügst derzeit über {p['verfuegbar']} Credits. "
+                     "Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben.")})
+    return p["preis"]
+
+
+@app.post("/api/projects/{project_id}/export/preis")
+async def export_preis_endpoint(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Preis und Guthaben VOR dem Export (28.08.2026): zaehlt Bilder (Bild-Werkzeuge) oder
+    Felder (Formular) des gewaehlten Umfangs — ein Dokument oder alle — und liefert
+    anzahl/preis/verfuegbar/erlaubt fuer die Anzeige im Export-Dialog."""
+    document_id, _name = await _read_export_options(request)
+    conn = get_db()
+    projekt = conn.execute("SELECT id, tool FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
+    if not projekt:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    tabelle = "formularfelder" if projekt["tool"] == "formular" else "images"
+    sql = f"SELECT COUNT(*) FROM {tabelle} WHERE project_id = ?"
+    args = [project_id]
+    if document_id is not None:
+        sql += " AND document_id = ?"; args.append(document_id)
+    anzahl = conn.execute(sql, args).fetchone()[0]
+    conn.close()
+    p = billing.export_pruefung(user["id"], anzahl)
+    p["einheit"] = "felder" if tabelle == "formularfelder" else "bilder"
+    return JSONResponse(content=p)
+
+
 @app.post("/api/projects/{project_id}/export/summary")
 async def export_summary(project_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Ehrlichkeits-Zusammenfassung VOR dem Export (18.08.2026, Fable 5).
@@ -7200,6 +7222,7 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
             fehler += 1
         else:
             offen += 1
+    p = billing.export_pruefung(user["id"], total)
     return JSONResponse(content={
         "total": total,
         "beschrieben": beschrieben,
@@ -7207,6 +7230,7 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         "uebersprungen": fehler + offen,
         "fehler": fehler,
         "offen": offen,
+        "preis": p["preis"], "verfuegbar": p["verfuegbar"], "erlaubt": p["erlaubt"],
     })
 
 

@@ -2750,8 +2750,8 @@ msgstr "Køb ekstra credits"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
 
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "Én valuta til alt: credits. En alternativ tekst koster 1 credit, eksport af den færdige PDF 5 credits. Alle priser er slutpriser — i henhold til § 19 i den tyske momslov (UStG) opkræves der ingen moms."
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON, Excel) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "Én valuta til alt: credits. En alt-tekst koster 1 credit, en side med værktøjstips 1 credit, eksport af den færdige fil 5 credits plus 1 credit pr. påbegyndte 10 billeder eller felter; tabeleksporter (CSV, JSON, Excel) er gratis. Alle priser er slutpriser — i henhold til § 19 UStG opkræves ingen moms."
 
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
 
@@ -4337,3 +4337,18 @@ msgstr "Generér {n} alt-tekster igen, {c} credits"
 
 msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
 msgstr "Genereringen af KI-alt-teksterne starter. Tekster skrevet i hånden forbliver uændrede."
+
+msgid "Dieser Export kostet {p} Credits."
+msgstr "Denne eksport koster {p} credits."
+
+msgid "Dieser Export kostet {p} Credits. Du hast {v}."
+msgstr "Denne eksport koster {p} credits. Du har {v}."
+
+msgid "Der Export würde {p} Credits benötigen, du verfügst derzeit über {v} Credits. Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben."
+msgstr "Denne eksport ville kræve {p} credits; du har i øjeblikket {v} credits. Du kan til enhver tid købe de nødvendige credits som en pakke ud over dit abonnement."
+
+msgid "Nicht genügend Credits"
+msgstr "Ikke nok credits"
+
+msgid "Zu Abo & Verbrauch"
+msgstr "Til Abonnement & forbrug"

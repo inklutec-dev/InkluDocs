@@ -193,6 +193,9 @@ check("Nochmal loeschen -> 404", s == 404, s)
 s, pdf, h = req("POST", f"/api/projects/{pid}/export/formular", {"document_id": doc_id}, raw=True)
 hl = {k.lower(): v for k, v in h.items()}
 check("PDF-Export", s == 200 and pdf[:5] == b"%PDF-" and hl.get("x-export-method") == "formular", (s, hl))
+check("Export-Staffel: 12 Felder = 5 + 2 = 7 Credits (Header)", hl.get("x-export-credits") == "7", hl.get("x-export-credits"))
+s, b, _ = req("POST", f"/api/projects/{pid}/export/preis", {})
+check("Preis-Endpunkt: anzahl 12, preis 7, Einheit felder", s == 200 and b.get("anzahl") == 12 and b.get("preis") == 7 and b.get("einheit") == "felder" and "erlaubt" in b, b)
 # 7 = vorname (Hand), vorname_2 (Stammdaten), email (Original), nachname + nachname_2 (anwenden), geburtsdatum + anrede (Import)
 check("Export: 7 Quickinfos geschrieben, 12 Felder, 5 offen", hl.get("x-export-tagged") == "7" and hl.get("x-export-total") == "12" and hl.get("x-export-open") == "5", hl)
 if hl.get("x-export-writer") == "pymupdf":

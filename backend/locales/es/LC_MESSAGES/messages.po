@@ -3059,8 +3059,8 @@ msgstr "Comprar créditos adicionales"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
 
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "Una sola moneda para todo: créditos. Un texto alternativo cuesta 1 crédito, la exportación del PDF terminado 5 créditos. Todos los precios son finales — conforme al artículo 19 de la ley alemana del IVA (UStG), no se cobra IVA."
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON, Excel) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "Una moneda para todo: créditos. Un texto alternativo cuesta 1 crédito, una página de descripciones 1 crédito, la exportación del archivo final 5 créditos más 1 crédito por cada 10 imágenes o campos iniciados; las exportaciones de tablas (CSV, JSON, Excel) son gratuitas. Todos los precios son finales — según el § 19 UStG no se aplica IVA."
 
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
 
@@ -4646,3 +4646,18 @@ msgstr "Regenerar {n} textos alternativos, {c} créditos"
 
 msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
 msgstr "Se inicia la regeneración de los textos alternativos de la IA. Los textos escritos a mano no cambian."
+
+msgid "Dieser Export kostet {p} Credits."
+msgstr "Esta exportación cuesta {p} créditos."
+
+msgid "Dieser Export kostet {p} Credits. Du hast {v}."
+msgstr "Esta exportación cuesta {p} créditos. Tiene {v}."
+
+msgid "Der Export würde {p} Credits benötigen, du verfügst derzeit über {v} Credits. Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben."
+msgstr "Esta exportación requeriría {p} créditos; actualmente dispone de {v} créditos. Puede comprar en cualquier momento los créditos necesarios como paquete adicional a su suscripción."
+
+msgid "Nicht genügend Credits"
+msgstr "Créditos insuficientes"
+
+msgid "Zu Abo & Verbrauch"
+msgstr "Ir a Suscripción y consumo"

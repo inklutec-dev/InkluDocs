@@ -1148,10 +1148,15 @@ def build_router(deps: Deps) -> APIRouter:
             conn.close()
         if not einheiten:
             raise HTTPException(status_code=400, detail="Dieses Projekt enthaelt noch kein Formular")
-        abo = _d.billing.pruefe_kontingent(user["id"])
-        kostenpflichtig = abo.get("plan") != "free"
-        if kostenpflichtig and not abo.get("erlaubt", True):
-            raise HTTPException(status_code=429, detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+        # Export-Staffel (Michael 28.08.2026): 5 + 1 je angefangene 10 Felder, alle Konten (auch Free);
+        # reicht das Guthaben nicht: 402 mit beiden Zahlen, kein Export.
+        pruef = _d.billing.export_pruefung(user["id"], sum(len(e["felder"]) for e in einheiten))
+        if not pruef["erlaubt"]:
+            raise HTTPException(status_code=402, detail={
+                "code": "credits_fehlen", "preis": pruef["preis"], "verfuegbar": pruef["verfuegbar"], "fehlend": pruef["fehlend"],
+                "text": (f"Der Export würde {pruef['preis']} Credits benötigen, du verfügst derzeit über {pruef['verfuegbar']} Credits. "
+                         "Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben.")})
+        preis = pruef["preis"]
 
         # Eigener Arbeitsordner je Anfrage (parallele Exporte desselben Projekts
         # kommen sich sonst in die Quere); die Datei bleibt fuer den Download liegen,
@@ -1175,14 +1180,14 @@ def build_router(deps: Deps) -> APIRouter:
 
         headers = {"X-Export-Method": "formular", "X-Export-Writer": _ascii_header(info.get("writer") or ""),
                    "X-Export-Tagged": str(info["geschrieben"]), "X-Export-Total": str(info["gesamt"]),
-                   "X-Export-Open": str(info["offen"])}
+                   "X-Export-Open": str(info["offen"]), "X-Export-Credits": str(preis)}
         if info["warnungen"]:
             headers["X-Export-Warnings"] = json.dumps(info["warnungen"], ensure_ascii=True)
         # Antwort zuerst bauen, dann verbuchen — und nur, wenn wirklich etwas geschrieben wurde.
         response = FileResponse(out_path, filename=name, media_type="application/pdf" if einzeln else "application/zip",
                                 headers=headers)
-        if kostenpflichtig and info["geschrieben"] > 0:
-            _d.billing.verbuche(user["id"], "export", aktion="formular_export")
+        if info["geschrieben"] > 0:
+            _d.billing.verbuche(user["id"], "export", aktion="formular_export", credits=preis)
         return response
 
     @router.post("/api/projects/{project_id}/export/formular_csv")

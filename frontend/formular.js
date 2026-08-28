@@ -673,6 +673,24 @@
         if (input) input.value = '';
         if (typeof panel.showModal === 'function') panel.showModal(); else panel.setAttribute('open', '');
         announce(t('Export-Optionen geöffnet.'));
+        exportPreisLaden();
+        document.querySelectorAll('input[name="fExportScope"]').forEach(r => r.addEventListener('change', exportPreisLaden));
+    }
+
+    // Export-Staffel (28.08.2026): Preis und Guthaben fuer den gewaehlten Umfang in die Zusammenfassung.
+    async function exportPreisLaden() {
+        const el = document.getElementById('fExportSummary');
+        if (!el || !zustandProjekt) return;
+        const chosen = document.querySelector('input[name="fExportScope"]:checked');
+        const body = {};
+        if (chosen && /^doc:(\d+)$/.test(chosen.value)) body.document_id = Number(chosen.value.slice(4));
+        try {
+            const res = await fetch('/api/projects/' + zustandProjekt + '/export/preis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!res.ok) return;
+            const d = await res.json();
+            const basis = el.dataset.basis || el.textContent; el.dataset.basis = basis;
+            el.textContent = basis + ' ' + (typeof exportPreisText === 'function' ? exportPreisText(d.preis, d.verfuegbar) : '');
+        } catch (e) { /* Preis ist Komfort, kein Blocker */ }
     }
 
     function exportSchliessen(silent) {
@@ -706,6 +724,7 @@
         announce(t('Export läuft …'));
         try {
             const res = await fetch('/api/projects/' + projectId + '/export/' + format, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (typeof exportCreditsAbgefangen === 'function' && await exportCreditsAbgefangen(res)) { if (statusEl) statusEl.textContent = ''; return; }
             if (!res.ok) {
                 const e = await res.json().catch(() => ({}));
                 const m = e.detail || t('Fehler beim Export.');

@@ -14,7 +14,7 @@ echo "=== unit (Container $C)"
 sudo docker exec "$C" mkdir -p /app/tests/fixtures
 sudo docker cp "$D/tests/test_formular_roundtrip.py" "$C":/app/tests/ >/dev/null; sudo docker cp "$D/tests/test_formular_ki.py" "$C":/app/tests/ >/dev/null
 sudo docker cp "$D/tests/fixtures/testformular_inkludocs.pdf" "$C":/app/tests/fixtures/ >/dev/null
-sudo docker exec -w /app "$C" python3 -m unittest /app/tests/test_formular_roundtrip.py /app/tests/test_formular_ki.py 2>&1 | grep -E "^Ran|^OK|FAILED|Error"
+sudo docker exec -w /app "$C" python3 -m unittest /app/tests/test_formular_roundtrip.py /app/tests/test_formular_ki.py /app/tests/test_billing_export.py 2>&1 | grep -E "^Ran|^OK|FAILED|Error"
 echo "=== verify_formular (E2E, Projekt bleibt fuer Klicktest)"
 OUT=$(python3 "$D/tests/e2e/verify_formular.py" "$URL" "$INKLUDOCS_E2E_MAIL" "$INKLUDOCS_E2E_PW" "$D/tests/fixtures/testformular_inkludocs.pdf" --behalten 2>&1)
 echo "$OUT" | grep -E "FEHLT|Ergebnis|Traceback|Error" | head -20

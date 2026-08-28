@@ -124,6 +124,8 @@ with sync_playwright() as p:
     dlg = pg.locator("#fExportPanel")
     check("Export-Dialog offen (modal)", dlg.evaluate("d=>d.open") is True)
     check("Zusammenfassung nennt Felder", "Feldern" in pg.locator("#fExportSummary").inner_text(), pg.locator("#fExportSummary").inner_text())
+    pg.wait_for_timeout(800)
+    check("Zusammenfassung nennt den Export-Preis (Credits)", "Credits" in pg.locator("#fExportSummary").inner_text(), pg.locator("#fExportSummary").inner_text())
     check("Knopf 'Als PDF mit Quickinfos'", dlg.locator("button:has-text('Als PDF mit Quickinfos')").count() == 1)
     check("Knopf 'Als CSV (Feldliste)'", dlg.locator("button:has-text('Als CSV (Feldliste)')").count() == 1)
     with pg.expect_download(timeout=30000) as dl:
@@ -132,6 +134,14 @@ with sync_playwright() as p:
     check("PDF-Download", d.suggested_filename.endswith("_quickinfos.pdf"), d.suggested_filename)
     pg.wait_for_timeout(800)
     check("Dialog nach Export geschlossen", dlg.evaluate("d=>d.open") is False)
+    # Credits-Meldung (Export-Staffel 28.08.2026): barrierefreies Modal mit beiden Zahlen und zwei Knoepfen
+    pg.evaluate("zeigeCreditsMeldung({preis: 8, verfuegbar: 7})"); pg.wait_for_timeout(500)
+    cd_ = pg.locator("#creditsDialog")
+    check("Credits-Meldung offen (modal), Fokus auf Ueberschrift", cd_.evaluate("d=>d.open") is True and pg.evaluate("document.activeElement && document.activeElement.id === 'creditsHeading'"))
+    check("Credits-Meldung nennt 8 und 7 Credits", "8 Credits" in cd_.inner_text() and "7 Credits" in cd_.inner_text(), cd_.inner_text())
+    check("Knoepfe Zu Abo & Verbrauch (Link /abo) + Schliessen", cd_.locator("a[href='/abo']").count() == 1 and cd_.locator("#creditsClose").count() == 1)
+    pg.locator("#creditsClose").click(); pg.wait_for_timeout(300)
+    check("Credits-Meldung geschlossen", cd_.evaluate("d=>d.open") is False)
     pg.screenshot(path=os.path.join(SHOTS, "f_projekt.png"), full_page=False)
     print("== F. axe ==")
     pg.add_script_tag(url=AXE); pg.wait_for_timeout(500)

@@ -34,3 +34,22 @@ Sammelläufe überschreiben keine Hand-Texte (Bilder: `alt_text_edited`
 gesetzt; Felder: `quelle` hand/pdf/stammdaten/gast/chat). Beim Feld-Pass gilt
 zusätzlich: Texte, die während des Laufs von Hand gefüllt wurden, bleiben
 (`UPDATE … WHERE quickinfo leer` bzw. `quelle = ki`).
+
+## Export-Preis (Staffel, Michael Karbe 28.08.2026)
+
+Jeder Datei-Export (PDF mit Alt-Texten, Word mit Alt-Texten, PDF mit Quickinfos)
+kostet `billing.export_preis(anzahl)` = 5 Credits Grundpreis + 1 Credit je
+angefangene 10 Bilder bzw. Felder der exportierten Datei; beim
+Alle-Dokumente-ZIP werden die Elemente aller Dokumente zusammengezählt, der
+Grundpreis fällt einmal an. Beispiele: 1 Feld = 6, 26 Felder = 8, 50 Felder =
+10, 100 Bilder = 15 Credits. Gilt für alle Konten (Free hat 10 Credits).
+Tabellen-Exporte (JSON, CSV, Excel, Formular-CSV) bleiben kostenlos. Beide
+Zahlen stehen in `billing.EXPORT_GRUNDPREIS` / `EXPORT_STAFFEL`.
+
+Vor dem Export zeigt der Dialog Preis und Guthaben
+(`POST /api/projects/{id}/export/preis` bzw. `…/export/summary`). Reicht das
+Guthaben nicht (`billing.export_pruefung`), antwortet der Export mit 402 und
+beiden Zahlen; die Oberfläche zeigt die barrierefreie Meldung „Der Export
+würde 8 Credits benötigen, du verfügst derzeit über 7 Credits …“ mit den
+Knöpfen „Zu Abo & Verbrauch“ und „Schließen“ (`zeigeCreditsMeldung`,
+app.html, beide Werkzeuge). Die Antwort trägt `X-Export-Credits`.
