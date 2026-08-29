@@ -56,6 +56,7 @@ from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_a
 from docx_processor import extract_images_from_docx, extract_docx, validiere_docx, DocxFehler
 import docx_export
 import pdfua_export
+import docx_hoerprobe
 import secrets as _secrets
 # QUICKINFO-WERKZEUG (27.08.2026): PDF-Formularfelder lesen/schreiben, eigener Router
 import formular_api
@@ -6979,6 +6980,7 @@ async def export_pdfua(project_id: int, request: Request, user: dict = Depends(g
     _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units), "pdfua")
 
     sprache = (project.get("alt_language") or "de")
+    _ = get_gettext(resolve_ui_language(request))
     loop = asyncio.get_running_loop()
     pdfs: list[tuple[str, bytes]] = []
     ergebnisse: list[dict] = []
@@ -6989,16 +6991,31 @@ async def export_pdfua(project_id: int, request: Request, user: dict = Depends(g
         try:
             pdf_bytes, bericht = await loop.run_in_executor(
                 None, pdfua_export.konvertiere, docx_path, os.path.basename(docx_path))
+            # Stufe 2: Alt-Texte, die LibreOffice verliert (VML, Textfeld), aus unseren
+            # Texten nachtragen — Bilder des Textkoerpers in Dokumentreihenfolge — und
+            # danach frisch pruefen.
+            alts = [_exportable_alt_text(img) for img in unit["images"]
+                    if (img.get("docx_anker") or "").startswith("word/document.xml|")]
+            pdf_bytes, nach = await loop.run_in_executor(None, pdfua_export.alt_nachtragen, pdf_bytes, alts)
+            if nach.get("nachgetragen") or nach.get("rahmen_umgewandelt"):
+                bericht = await loop.run_in_executor(None, pdfua_export.pruefe, pdf_bytes)
         except pdfua_export.UmwandlungFehlgeschlagen as e:
             log.error("export_pdfua: %s", e)
-            raise HTTPException(status_code=502, detail=f"Die Umwandlung ist fehlgeschlagen: {e}")
-        pruefung = pdfua_export.klartext(bericht)
+            raise HTTPException(status_code=502, detail=_("Die Umwandlung ist fehlgeschlagen: {grund}").format(grund=e))
+        pruefung = pdfua_export.klartext(bericht, _)
+        try:
+            analyse = await loop.run_in_executor(None, docx_hoerprobe.analysiere, docx_path, _)
+        except Exception as e:  # noqa: BLE001
+            log.warning("export_pdfua: Hoerprobe fehlgeschlagen: %s", e)
+            analyse = {"hoerprobe": [], "pruefbericht": []}
         pdf_name = (f"{pos:02d}_{_safe_filename_component(label)}.pdf" if len(units) > 1
                     else f"inkludocs_{_safe_filename_component(label)}.pdf")
         pdfs.append((pdf_name, pdf_bytes))
         ergebnisse.append({"dokument": label, "bilder": info["total"], "alt_texte": info["tagged"],
                            "warnungen": info.get("warnings") or [], "pruefung": pruefung,
-                           "zusammenfassung": pdfua_export.zusammenfassung(pruefung)})
+                           "nachbearbeitung": nach, "hoerprobe": analyse.get("hoerprobe") or [],
+                           "pruefbericht": analyse.get("pruefbericht") or [],
+                           "zusammenfassung": pdfua_export.zusammenfassung(pruefung, _)})
 
     token = _secrets.token_hex(12)
     if len(pdfs) == 1:
@@ -7023,9 +7040,44 @@ async def export_pdfua(project_id: int, request: Request, user: dict = Depends(g
         zusammenfassung = ergebnisse[0]["zusammenfassung"]
     else:
         n_ok = sum(1 for e in ergebnisse if e["pruefung"]["bestanden"])
-        zusammenfassung = f"{n_ok} von {len(ergebnisse)} Dokumenten haben die Prüfung auf PDF/UA bestanden."
+        zusammenfassung = _("{n} von {m} Dokumenten haben die Prüfung auf PDF/UA bestanden.").format(n=n_ok, m=len(ergebnisse))
     return JSONResponse({"ok": True, "token": token, "dateiname": dateiname, "preis": _preis,
                          "bestanden": bestanden, "zusammenfassung": zusammenfassung, "dokumente": ergebnisse})
+
+
+@app.post("/api/projects/{project_id}/export/pdfua/vorschau")
+async def export_pdfua_vorschau(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Hoerprobe (was ein Screenreader liest) + Pruefbericht des Word-Dokuments, VOR der
+    Umwandlung und kostenlos — reines Lesen der Word-Datei mit unseren Alt-Texten."""
+    document_id, custom_name = await _read_export_options(request)
+    conn = get_db()
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    project = dict(project)
+    conn.close()
+    if project.get("project_type") != "docx":
+        raise HTTPException(status_code=400, detail="Die Hörprobe gibt es nur für Word-Projekte")
+    units = _load_pdf_export_units(project, user["id"], document_id)
+    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
+    os.makedirs(output_dir, exist_ok=True)
+    _ = get_gettext(resolve_ui_language(request))
+    loop = asyncio.get_running_loop()
+    dokumente = []
+    for unit in units:
+        label = _doc_label(unit["doc"])
+        docx_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
+        try:
+            analyse = await loop.run_in_executor(None, docx_hoerprobe.analysiere, docx_path, _)
+        except DocxFehler as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        dokumente.append({"dokument": label, "bilder": info["total"], "alt_texte": info["tagged"],
+                          "hoerprobe": analyse["hoerprobe"], "pruefbericht": analyse["pruefbericht"],
+                          "zahlen": analyse.get("zahlen") or {}})
+    return JSONResponse({"ok": True, "dokumente": dokumente})
 
 
 @app.get("/api/projects/{project_id}/export/pdfua/{token}")

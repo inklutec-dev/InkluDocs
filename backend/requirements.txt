@@ -26,3 +26,7 @@ boto3==1.35.50
 
 # STRIPE (06.08.2026): Online-Zahlung Abo-Modell (Checkout, Portal, Webhooks)
 stripe==11.1.0
+
+# BARRIEREFREIE PDF AUS WORD (29.08.2026): fehlende /Alt an Figure-Elementen
+# nachtragen (pdfua_export.alt_nachtragen) — qpdf ist im Wheel enthalten
+pikepdf==9.4.2

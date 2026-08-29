@@ -4290,3 +4290,371 @@ msgstr "Ladda ned PDF"
 #: Barrierefreie PDF 29.08.2026
 msgid "Die Datei konnte nicht geladen werden."
 msgstr "Filen kunde inte hämtas."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Hörprobe und Prüfbericht"
+msgstr "Lyssningsprov och kontrollrapport"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Prüfbericht des Word-Dokuments"
+msgstr "Kontrollrapport för Word-dokumentet"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Hörprobe: so liest ein Screenreader das Dokument"
+msgstr "Lyssningsprov: så läser en skärmläsare dokumentet"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Wird geprüft …"
+msgstr "Kontrollerar …"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Prüfung ist fehlgeschlagen."
+msgstr "Kontrollen misslyckades."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Keine Auffälligkeiten im Word-Dokument."
+msgstr "Inga anmärkningar i Word-dokumentet."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Hinweise zum Word-Dokument, Details im Prüfbericht."
+msgstr "{n} anmärkningar på Word-dokumentet, detaljer i kontrollrapporten."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Struktur und Lesereihenfolge"
+msgstr "Struktur och läsordning"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Inhalt ist als Struktur ausgezeichnet, ein Screenreader kann ihn in der richtigen Reihenfolge lesen."
+msgstr "Innehållet är taggat som struktur; en skärmläsare kan läsa det i rätt ordning."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Text und Sprache"
+msgstr "Text och språk"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Text ist als Text hinterlegt und die Sprache des Dokuments ist gesetzt, damit die Sprachausgabe richtig ausspricht."
+msgstr "Text är lagrad som text och dokumentets språk är satt så att talsyntesen uttalar rätt."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bilder und Grafiken"
+msgstr "Bilder och grafik"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Jedes Bild hat einen Alternativtext oder ist als Schmuckbild markiert."
+msgstr "Varje bild har en alternativtext eller är markerad som dekorativ."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschriften"
+msgstr "Rubriker"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschriften sind als Überschriften ausgezeichnet und in sinnvoller Reihenfolge."
+msgstr "Rubriker är taggade som rubriker och i rimlig ordning."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabellen"
+msgstr "Tabeller"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabellen haben Kopfzellen, damit Zellen einer Spalte zugeordnet werden können."
+msgstr "Tabeller har rubrikceller så att celler kan kopplas till en kolumn."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listen"
+msgstr "Listor"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listen sind als Listen ausgezeichnet."
+msgstr "Listor är taggade som listor."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formeln"
+msgstr "Formler"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Mathematische Formeln sind mit einem Alternativtext versehen."
+msgstr "Matematiska formler har alternativtext."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Fußnoten und Anmerkungen"
+msgstr "Fotnoter och anteckningar"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Fußnoten und Anmerkungen sind zugänglich verknüpft."
+msgstr "Fotnoter och anteckningar är tillgängligt länkade."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Optionale Inhalte"
+msgstr "Valfritt innehåll"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein- und ausblendbare Inhalte sind benannt."
+msgstr "Innehåll som kan visas eller döljas är namngivet."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eingebettete Dateien"
+msgstr "Inbäddade filer"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eingebettete Dateien sind beschrieben."
+msgstr "Inbäddade filer är beskrivna."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schriften"
+msgstr "Teckensnitt"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schriften sind eingebettet, damit Text überall gleich erscheint und vorgelesen werden kann."
+msgstr "Teckensnitt är inbäddade så att text ser likadan ut överallt och kan läsas upp."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Wiedergabe"
+msgstr "Uppspelning"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Multimedia-Inhalte sind zugänglich."
+msgstr "Multimedieinnehåll är tillgängligt."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formularfelder und Verknüpfungen"
+msgstr "Formulärfält och länkar"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formularfelder und Links haben eine Beschreibung."
+msgstr "Formulärfält och länkar har en beskrivning."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Metadaten"
+msgstr "Metadata"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument nennt sich selbst als PDF/UA."
+msgstr "Dokumentet deklarerar sig som PDF/UA."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Weitere Prüfpunkte"
+msgstr "Övriga kontrollpunkter"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Weitere technische Anforderungen sind erfüllt."
+msgstr "Övriga tekniska krav är uppfyllda."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument ist nicht als getaggte PDF gekennzeichnet."
+msgstr "Dokumentet är inte markerat som taggad PDF."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Struktur beginnt nicht mit einem Dokument-Element."
+msgstr "Strukturen börjar inte med ett dokumentelement."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Es gibt Inhalte, die weder als Struktur noch als Schmuck markiert sind — Screenreader können sie überspringen oder unpassend lesen."
+msgstr "Visst innehåll är varken markerat som struktur eller dekoration — skärmläsare kan hoppa över det eller läsa det fel."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Dokumenttitel fehlt im Dokument."
+msgstr "Dokumentet saknar titel."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Dokumenttitel fehlt in den Metadaten."
+msgstr "Dokumenttiteln saknas i metadata."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die PDF ist nicht so eingestellt, dass der Titel statt des Dateinamens angezeigt wird."
+msgstr "PDF:en är inte inställd på att visa titeln i stället för filnamnet."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Sprache des Dokuments ist nicht gesetzt."
+msgstr "Dokumentets språk är inte satt."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Bild hat keinen Alternativtext."
+msgstr "En bild saknar alternativtext."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Alternativtext eines Bildes ist ein Platzhalter."
+msgstr "Alternativtexten för en bild är en platshållare."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."
+msgstr "Rubriknivåerna är inte sammanhängande (till exempel nivå 1 följt av nivå 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Tabelle hat keine Kopfzellen."
+msgstr "En tabell saknar rubrikceller."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."
+msgstr "Celler i en tabell är inte kopplade till sina rubrikceller."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Schrift ist nicht eingebettet."
+msgstr "Ett teckensnitt är inte inbäddat."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Formularfeld oder ein Link hat keine Beschreibung."
+msgstr "Ett formulärfält eller en länk saknar beskrivning."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Link hat keinen beschreibenden Text."
+msgstr "En länk saknar beskrivande text."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "({n}-mal)"
+msgstr "({n} gånger)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})"
+msgstr "En teknisk kontrollpunkt är inte uppfylld ({beschreibung})"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "ohne Beschreibung"
+msgstr "utan beskrivning"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} weitere technische Prüfpunkte sind nicht erfüllt: {beschreibung}."
+msgstr "{n} ytterligare tekniska kontrollpunkter är inte uppfyllda: {beschreibung}."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein weiterer technischer Prüfpunkt ist nicht erfüllt: {beschreibung}."
+msgstr "Ytterligare en teknisk kontrollpunkt är inte uppfylld: {beschreibung}."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig und hat die Prüfung auf PDF/UA bestanden."
+msgstr "Din PDF är klar och har klarat PDF/UA-kontrollen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig. Die Prüfung meldet einen Bereich mit Hinweisen, den du dir ansehen solltest."
+msgstr "Din PDF är klar. Kontrollen rapporterar ett område med anmärkningar som du bör titta på."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig. Die Prüfung meldet {n} Bereiche mit Hinweisen, die du dir ansehen solltest."
+msgstr "Din PDF är klar. Kontrollen rapporterar {n} områden med anmärkningar som du bör titta på."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Dokumenten haben die Prüfung auf PDF/UA bestanden."
+msgstr "{n} av {m} dokument har klarat PDF/UA-kontrollen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Umwandlung ist fehlgeschlagen: {grund}"
+msgstr "Konverteringen misslyckades: {grund}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Dokumenttitel: {t}"
+msgstr "Dokumenttitel: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Dokumenttitel: fehlt"
+msgstr "Dokumenttitel: saknas"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Sprache: nicht gesetzt"
+msgstr "Språk: inte satt"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schmuckbild (wird nicht vorgelesen)"
+msgstr "Dekorativ bild (läses inte upp)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bild: {alt}"
+msgstr "Bild: {alt}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bild ohne Beschreibung — ein Screenreader sagt nur „Grafik“"
+msgstr "Bild utan beskrivning — en skärmläsare säger bara ”grafik”"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "… (Hörprobe gekürzt)"
+msgstr "… (lyssningsprov förkortat)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Leere Überschrift (Ebene {n})"
+msgstr "Tom rubrik (nivå {n})"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Titel: {t}"
+msgstr "Titel: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschrift Ebene {n}: {t}"
+msgstr "Rubrik nivå {n}: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listenpunkt: {t}"
+msgstr "Listpunkt: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Absatz: {t}"
+msgstr "Stycke: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabelle mit {r} Zeilen und {c} Spalten"
+msgstr "Tabell med {r} rader och {c} kolumner"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid ", Kopfzeile: {k}"
+msgstr ", rubrikrad: {k}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid ", ohne Kopfzeile"
+msgstr ", utan rubrikrad"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Dokumenttitel ist gesetzt."
+msgstr "Dokumenttiteln är satt."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt sonst nur den Dateinamen als Namen."
+msgstr "Dokumenttiteln saknas (Arkiv → Info → Titel). Annars får PDF:en bara filnamnet som namn."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Dokumentsprache ist gesetzt ({s})."
+msgstr "Dokumentspråket är satt ({s})."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Dokumentsprache ist nicht gesetzt. Screenreader wählen dann eine falsche Aussprache."
+msgstr "Dokumentspråket är inte satt. Skärmläsare väljer då fel uttal."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument nutzt keine Überschriften-Formatvorlagen. Ohne Überschriften kann niemand im Dokument springen."
+msgstr "Dokumentet använder inga rubrikformat. Utan rubriker kan ingen hoppa i dokumentet."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die erste Überschrift hat Ebene {n} statt 1."
+msgstr "Den första rubriken har nivå {n} i stället för 1."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n}-mal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+msgstr "Rubriknivån hoppar {n} gånger (till exempel från 1 till 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Einmal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+msgstr "Rubriknivån hoppar en gång (till exempel från 1 till 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Überschriften sind leer."
+msgstr "{n} rubriker är tomma."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Überschrift ist leer."
+msgstr "En rubrik är tom."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Überschriften in sauberer Reihenfolge."
+msgstr "{n} rubriker i god ordning."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Tabellen haben keine als Kopfzeile markierte erste Zeile (Tabellentools → Kopfzeile wiederholen)."
+msgstr "{n} av {m} tabeller har ingen första rad markerad som rubrikrad (Tabellverktyg → Upprepa rubrikrader)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Alle {n} Tabellen haben eine Kopfzeile."
+msgstr "Alla {n} tabeller har en rubrikrad."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Bildern haben keinen Alternativtext — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} av {m} bilder saknar alternativtext — generera i InkluDocs eller markera som dekorativa."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."
+msgstr "Alla {n} bilder har alternativtext eller är dekorativa."

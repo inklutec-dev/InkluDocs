@@ -4729,3 +4729,371 @@ msgstr "Descargar PDF"
 #: Barrierefreie PDF 29.08.2026
 msgid "Die Datei konnte nicht geladen werden."
 msgstr "No se pudo cargar el archivo."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Hörprobe und Prüfbericht"
+msgstr "Muestra de lectura e informe de comprobación"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Prüfbericht des Word-Dokuments"
+msgstr "Informe de comprobación del documento Word"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Hörprobe: so liest ein Screenreader das Dokument"
+msgstr "Muestra de lectura: así lee un lector de pantalla el documento"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Wird geprüft …"
+msgstr "Comprobando …"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Prüfung ist fehlgeschlagen."
+msgstr "La comprobación ha fallado."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Keine Auffälligkeiten im Word-Dokument."
+msgstr "Sin incidencias en el documento Word."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Hinweise zum Word-Dokument, Details im Prüfbericht."
+msgstr "{n} observaciones sobre el documento Word, detalles en el informe."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Struktur und Lesereihenfolge"
+msgstr "Estructura y orden de lectura"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Inhalt ist als Struktur ausgezeichnet, ein Screenreader kann ihn in der richtigen Reihenfolge lesen."
+msgstr "El contenido está etiquetado como estructura; un lector de pantalla puede leerlo en el orden correcto."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Text und Sprache"
+msgstr "Texto e idioma"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Text ist als Text hinterlegt und die Sprache des Dokuments ist gesetzt, damit die Sprachausgabe richtig ausspricht."
+msgstr "El texto está almacenado como texto y el idioma del documento está definido para que la voz lo pronuncie correctamente."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bilder und Grafiken"
+msgstr "Imágenes y gráficos"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Jedes Bild hat einen Alternativtext oder ist als Schmuckbild markiert."
+msgstr "Cada imagen tiene texto alternativo o está marcada como decorativa."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschriften"
+msgstr "Encabezados"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschriften sind als Überschriften ausgezeichnet und in sinnvoller Reihenfolge."
+msgstr "Los encabezados están etiquetados como tales y en un orden lógico."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabellen"
+msgstr "Tablas"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabellen haben Kopfzellen, damit Zellen einer Spalte zugeordnet werden können."
+msgstr "Las tablas tienen celdas de encabezado para poder asignar las celdas a una columna."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listen"
+msgstr "Listas"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listen sind als Listen ausgezeichnet."
+msgstr "Las listas están etiquetadas como listas."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formeln"
+msgstr "Fórmulas"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Mathematische Formeln sind mit einem Alternativtext versehen."
+msgstr "Las fórmulas matemáticas tienen texto alternativo."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Fußnoten und Anmerkungen"
+msgstr "Notas al pie y anotaciones"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Fußnoten und Anmerkungen sind zugänglich verknüpft."
+msgstr "Las notas al pie y anotaciones están enlazadas de forma accesible."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Optionale Inhalte"
+msgstr "Contenido opcional"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein- und ausblendbare Inhalte sind benannt."
+msgstr "Los contenidos que se pueden mostrar u ocultar tienen nombre."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eingebettete Dateien"
+msgstr "Archivos incrustados"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eingebettete Dateien sind beschrieben."
+msgstr "Los archivos incrustados están descritos."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schriften"
+msgstr "Fuentes"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schriften sind eingebettet, damit Text überall gleich erscheint und vorgelesen werden kann."
+msgstr "Las fuentes están incrustadas para que el texto se vea igual en todas partes y pueda leerse en voz alta."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Wiedergabe"
+msgstr "Reproducción"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Multimedia-Inhalte sind zugänglich."
+msgstr "Los contenidos multimedia son accesibles."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formularfelder und Verknüpfungen"
+msgstr "Campos de formulario y enlaces"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formularfelder und Links haben eine Beschreibung."
+msgstr "Los campos de formulario y los enlaces tienen descripción."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Metadaten"
+msgstr "Metadatos"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument nennt sich selbst als PDF/UA."
+msgstr "El documento se declara como PDF/UA."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Weitere Prüfpunkte"
+msgstr "Otras comprobaciones"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Weitere technische Anforderungen sind erfüllt."
+msgstr "Se cumplen otros requisitos técnicos."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument ist nicht als getaggte PDF gekennzeichnet."
+msgstr "El documento no está marcado como PDF etiquetado."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Struktur beginnt nicht mit einem Dokument-Element."
+msgstr "La estructura no empieza con un elemento de documento."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Es gibt Inhalte, die weder als Struktur noch als Schmuck markiert sind — Screenreader können sie überspringen oder unpassend lesen."
+msgstr "Hay contenido que no está marcado ni como estructura ni como decoración; los lectores de pantalla pueden omitirlo o leerlo fuera de lugar."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Dokumenttitel fehlt im Dokument."
+msgstr "Falta el título del documento."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Dokumenttitel fehlt in den Metadaten."
+msgstr "Falta el título del documento en los metadatos."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die PDF ist nicht so eingestellt, dass der Titel statt des Dateinamens angezeigt wird."
+msgstr "El PDF no está configurado para mostrar el título en lugar del nombre de archivo."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Sprache des Dokuments ist nicht gesetzt."
+msgstr "El idioma del documento no está definido."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Bild hat keinen Alternativtext."
+msgstr "Una imagen no tiene texto alternativo."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Alternativtext eines Bildes ist ein Platzhalter."
+msgstr "El texto alternativo de una imagen es un marcador de posición."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."
+msgstr "Los niveles de encabezado no son continuos (por ejemplo, nivel 1 seguido de nivel 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Tabelle hat keine Kopfzellen."
+msgstr "Una tabla no tiene celdas de encabezado."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."
+msgstr "Las celdas de una tabla no están asociadas a sus celdas de encabezado."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Schrift ist nicht eingebettet."
+msgstr "Una fuente no está incrustada."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Formularfeld oder ein Link hat keine Beschreibung."
+msgstr "Un campo de formulario o un enlace no tiene descripción."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Link hat keinen beschreibenden Text."
+msgstr "Un enlace no tiene texto descriptivo."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "({n}-mal)"
+msgstr "({n} veces)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})"
+msgstr "No se cumple una comprobación técnica ({beschreibung})"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "ohne Beschreibung"
+msgstr "sin descripción"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} weitere technische Prüfpunkte sind nicht erfüllt: {beschreibung}."
+msgstr "No se cumplen {n} comprobaciones técnicas más: {beschreibung}."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein weiterer technischer Prüfpunkt ist nicht erfüllt: {beschreibung}."
+msgstr "No se cumple otra comprobación técnica: {beschreibung}."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig und hat die Prüfung auf PDF/UA bestanden."
+msgstr "Tu PDF está listo y ha superado la comprobación PDF/UA."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig. Die Prüfung meldet einen Bereich mit Hinweisen, den du dir ansehen solltest."
+msgstr "Tu PDF está listo. La comprobación indica un área con observaciones que deberías revisar."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig. Die Prüfung meldet {n} Bereiche mit Hinweisen, die du dir ansehen solltest."
+msgstr "Tu PDF está listo. La comprobación indica {n} áreas con observaciones que deberías revisar."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Dokumenten haben die Prüfung auf PDF/UA bestanden."
+msgstr "{n} de {m} documentos han superado la comprobación PDF/UA."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Umwandlung ist fehlgeschlagen: {grund}"
+msgstr "La conversión ha fallado: {grund}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Dokumenttitel: {t}"
+msgstr "Título del documento: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Dokumenttitel: fehlt"
+msgstr "Título del documento: falta"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Sprache: nicht gesetzt"
+msgstr "Idioma: no definido"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schmuckbild (wird nicht vorgelesen)"
+msgstr "Imagen decorativa (no se lee)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bild: {alt}"
+msgstr "Imagen: {alt}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bild ohne Beschreibung — ein Screenreader sagt nur „Grafik“"
+msgstr "Imagen sin descripción: un lector de pantalla solo dice «gráfico»"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "… (Hörprobe gekürzt)"
+msgstr "… (muestra abreviada)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Leere Überschrift (Ebene {n})"
+msgstr "Encabezado vacío (nivel {n})"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Titel: {t}"
+msgstr "Título: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschrift Ebene {n}: {t}"
+msgstr "Encabezado nivel {n}: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listenpunkt: {t}"
+msgstr "Elemento de lista: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Absatz: {t}"
+msgstr "Párrafo: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabelle mit {r} Zeilen und {c} Spalten"
+msgstr "Tabla con {r} filas y {c} columnas"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid ", Kopfzeile: {k}"
+msgstr ", fila de encabezado: {k}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid ", ohne Kopfzeile"
+msgstr ", sin fila de encabezado"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Dokumenttitel ist gesetzt."
+msgstr "El título del documento está definido."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt sonst nur den Dateinamen als Namen."
+msgstr "Falta el título del documento (Archivo → Información → Título). De lo contrario, el PDF solo tendrá el nombre de archivo."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Dokumentsprache ist gesetzt ({s})."
+msgstr "El idioma del documento está definido ({s})."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Dokumentsprache ist nicht gesetzt. Screenreader wählen dann eine falsche Aussprache."
+msgstr "El idioma del documento no está definido. Los lectores de pantalla usarán una pronunciación incorrecta."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument nutzt keine Überschriften-Formatvorlagen. Ohne Überschriften kann niemand im Dokument springen."
+msgstr "El documento no usa estilos de encabezado. Sin encabezados nadie puede saltar por el documento."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die erste Überschrift hat Ebene {n} statt 1."
+msgstr "El primer encabezado es de nivel {n} en lugar de 1."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n}-mal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+msgstr "El nivel de encabezado salta {n} veces (por ejemplo, de 1 a 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Einmal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+msgstr "El nivel de encabezado salta una vez (por ejemplo, de 1 a 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Überschriften sind leer."
+msgstr "{n} encabezados están vacíos."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Überschrift ist leer."
+msgstr "Un encabezado está vacío."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Überschriften in sauberer Reihenfolge."
+msgstr "{n} encabezados en orden correcto."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Tabellen haben keine als Kopfzeile markierte erste Zeile (Tabellentools → Kopfzeile wiederholen)."
+msgstr "{n} de {m} tablas no tienen la primera fila marcada como encabezado (Herramientas de tabla → Repetir filas de encabezado)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Alle {n} Tabellen haben eine Kopfzeile."
+msgstr "Las {n} tablas tienen fila de encabezado."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Bildern haben keinen Alternativtext — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} de {m} imágenes no tienen texto alternativo: genéralo en InkluDocs o márcalas como decorativas."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."
+msgstr "Las {n} imágenes tienen texto alternativo o son decorativas."

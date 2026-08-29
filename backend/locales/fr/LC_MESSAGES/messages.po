@@ -4729,3 +4729,371 @@ msgstr "Télécharger le PDF"
 #: Barrierefreie PDF 29.08.2026
 msgid "Die Datei konnte nicht geladen werden."
 msgstr "Le fichier n’a pas pu être chargé."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Hörprobe und Prüfbericht"
+msgstr "Échantillon de lecture et rapport de vérification"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Prüfbericht des Word-Dokuments"
+msgstr "Rapport de vérification du document Word"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Hörprobe: so liest ein Screenreader das Dokument"
+msgstr "Échantillon de lecture : voici comment un lecteur d’écran lit le document"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Wird geprüft …"
+msgstr "Vérification en cours …"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Prüfung ist fehlgeschlagen."
+msgstr "La vérification a échoué."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Keine Auffälligkeiten im Word-Dokument."
+msgstr "Aucune anomalie dans le document Word."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Hinweise zum Word-Dokument, Details im Prüfbericht."
+msgstr "{n} remarques sur le document Word, détails dans le rapport."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Struktur und Lesereihenfolge"
+msgstr "Structure et ordre de lecture"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Inhalt ist als Struktur ausgezeichnet, ein Screenreader kann ihn in der richtigen Reihenfolge lesen."
+msgstr "Le contenu est balisé en structure ; un lecteur d’écran peut le lire dans le bon ordre."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Text und Sprache"
+msgstr "Texte et langue"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Text ist als Text hinterlegt und die Sprache des Dokuments ist gesetzt, damit die Sprachausgabe richtig ausspricht."
+msgstr "Le texte est stocké comme texte et la langue du document est définie pour une prononciation correcte."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bilder und Grafiken"
+msgstr "Images et graphiques"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Jedes Bild hat einen Alternativtext oder ist als Schmuckbild markiert."
+msgstr "Chaque image a un texte alternatif ou est marquée comme décorative."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschriften"
+msgstr "Titres"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschriften sind als Überschriften ausgezeichnet und in sinnvoller Reihenfolge."
+msgstr "Les titres sont balisés comme titres et dans un ordre cohérent."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabellen"
+msgstr "Tableaux"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabellen haben Kopfzellen, damit Zellen einer Spalte zugeordnet werden können."
+msgstr "Les tableaux ont des cellules d’en-tête pour associer les cellules à une colonne."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listen"
+msgstr "Listes"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listen sind als Listen ausgezeichnet."
+msgstr "Les listes sont balisées comme listes."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formeln"
+msgstr "Formules"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Mathematische Formeln sind mit einem Alternativtext versehen."
+msgstr "Les formules mathématiques ont un texte alternatif."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Fußnoten und Anmerkungen"
+msgstr "Notes de bas de page et annotations"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Fußnoten und Anmerkungen sind zugänglich verknüpft."
+msgstr "Les notes de bas de page et annotations sont liées de manière accessible."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Optionale Inhalte"
+msgstr "Contenu optionnel"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein- und ausblendbare Inhalte sind benannt."
+msgstr "Les contenus affichables ou masquables sont nommés."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eingebettete Dateien"
+msgstr "Fichiers incorporés"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eingebettete Dateien sind beschrieben."
+msgstr "Les fichiers incorporés sont décrits."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schriften"
+msgstr "Polices"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schriften sind eingebettet, damit Text überall gleich erscheint und vorgelesen werden kann."
+msgstr "Les polices sont incorporées pour que le texte s’affiche partout de la même façon et puisse être lu."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Wiedergabe"
+msgstr "Lecture multimédia"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Multimedia-Inhalte sind zugänglich."
+msgstr "Les contenus multimédias sont accessibles."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formularfelder und Verknüpfungen"
+msgstr "Champs de formulaire et liens"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formularfelder und Links haben eine Beschreibung."
+msgstr "Les champs de formulaire et les liens ont une description."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Metadaten"
+msgstr "Métadonnées"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument nennt sich selbst als PDF/UA."
+msgstr "Le document se déclare comme PDF/UA."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Weitere Prüfpunkte"
+msgstr "Autres points de contrôle"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Weitere technische Anforderungen sind erfüllt."
+msgstr "Les autres exigences techniques sont remplies."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument ist nicht als getaggte PDF gekennzeichnet."
+msgstr "Le document n’est pas marqué comme PDF balisé."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Struktur beginnt nicht mit einem Dokument-Element."
+msgstr "La structure ne commence pas par un élément document."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Es gibt Inhalte, die weder als Struktur noch als Schmuck markiert sind — Screenreader können sie überspringen oder unpassend lesen."
+msgstr "Certains contenus ne sont marqués ni comme structure ni comme décoration — les lecteurs d’écran peuvent les ignorer ou les lire au mauvais endroit."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Dokumenttitel fehlt im Dokument."
+msgstr "Le document n’a pas de titre."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Dokumenttitel fehlt in den Metadaten."
+msgstr "Le titre du document manque dans les métadonnées."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die PDF ist nicht so eingestellt, dass der Titel statt des Dateinamens angezeigt wird."
+msgstr "Le PDF n’est pas configuré pour afficher le titre au lieu du nom de fichier."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Sprache des Dokuments ist nicht gesetzt."
+msgstr "La langue du document n’est pas définie."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Bild hat keinen Alternativtext."
+msgstr "Une image n’a pas de texte alternatif."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Alternativtext eines Bildes ist ein Platzhalter."
+msgstr "Le texte alternatif d’une image est un texte fictif."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."
+msgstr "Les niveaux de titre ne sont pas continus (par exemple niveau 1 suivi du niveau 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Tabelle hat keine Kopfzellen."
+msgstr "Un tableau n’a pas de cellules d’en-tête."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."
+msgstr "Les cellules d’un tableau ne sont pas associées à leurs cellules d’en-tête."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Schrift ist nicht eingebettet."
+msgstr "Une police n’est pas incorporée."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Formularfeld oder ein Link hat keine Beschreibung."
+msgstr "Un champ de formulaire ou un lien n’a pas de description."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Link hat keinen beschreibenden Text."
+msgstr "Un lien n’a pas de texte descriptif."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "({n}-mal)"
+msgstr "({n} fois)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})"
+msgstr "Un point de contrôle technique n’est pas rempli ({beschreibung})"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "ohne Beschreibung"
+msgstr "sans description"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} weitere technische Prüfpunkte sind nicht erfüllt: {beschreibung}."
+msgstr "{n} autres points de contrôle techniques ne sont pas remplis : {beschreibung}."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein weiterer technischer Prüfpunkt ist nicht erfüllt: {beschreibung}."
+msgstr "Un autre point de contrôle technique n’est pas rempli : {beschreibung}."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig und hat die Prüfung auf PDF/UA bestanden."
+msgstr "Ton PDF est prêt et a réussi la vérification PDF/UA."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig. Die Prüfung meldet einen Bereich mit Hinweisen, den du dir ansehen solltest."
+msgstr "Ton PDF est prêt. La vérification signale un domaine avec des remarques à examiner."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig. Die Prüfung meldet {n} Bereiche mit Hinweisen, die du dir ansehen solltest."
+msgstr "Ton PDF est prêt. La vérification signale {n} domaines avec des remarques à examiner."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Dokumenten haben die Prüfung auf PDF/UA bestanden."
+msgstr "{n} documents sur {m} ont réussi la vérification PDF/UA."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Umwandlung ist fehlgeschlagen: {grund}"
+msgstr "La conversion a échoué : {grund}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Dokumenttitel: {t}"
+msgstr "Titre du document : {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Dokumenttitel: fehlt"
+msgstr "Titre du document : manquant"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Sprache: nicht gesetzt"
+msgstr "Langue : non définie"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schmuckbild (wird nicht vorgelesen)"
+msgstr "Image décorative (non lue)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bild: {alt}"
+msgstr "Image : {alt}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bild ohne Beschreibung — ein Screenreader sagt nur „Grafik“"
+msgstr "Image sans description — un lecteur d’écran dit seulement « graphique »"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "… (Hörprobe gekürzt)"
+msgstr "… (échantillon abrégé)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Leere Überschrift (Ebene {n})"
+msgstr "Titre vide (niveau {n})"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Titel: {t}"
+msgstr "Titre : {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschrift Ebene {n}: {t}"
+msgstr "Titre niveau {n} : {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listenpunkt: {t}"
+msgstr "Élément de liste : {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Absatz: {t}"
+msgstr "Paragraphe : {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabelle mit {r} Zeilen und {c} Spalten"
+msgstr "Tableau de {r} lignes et {c} colonnes"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid ", Kopfzeile: {k}"
+msgstr ", ligne d’en-tête : {k}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid ", ohne Kopfzeile"
+msgstr ", sans ligne d’en-tête"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Dokumenttitel ist gesetzt."
+msgstr "Le titre du document est défini."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt sonst nur den Dateinamen als Namen."
+msgstr "Le titre du document manque (Fichier → Informations → Titre). Sinon le PDF n’aura que le nom de fichier comme nom."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Dokumentsprache ist gesetzt ({s})."
+msgstr "La langue du document est définie ({s})."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Dokumentsprache ist nicht gesetzt. Screenreader wählen dann eine falsche Aussprache."
+msgstr "La langue du document n’est pas définie. Les lecteurs d’écran choisiront alors une mauvaise prononciation."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument nutzt keine Überschriften-Formatvorlagen. Ohne Überschriften kann niemand im Dokument springen."
+msgstr "Le document n’utilise pas de styles de titre. Sans titres, personne ne peut naviguer dans le document."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die erste Überschrift hat Ebene {n} statt 1."
+msgstr "Le premier titre est de niveau {n} au lieu de 1."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n}-mal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+msgstr "Le niveau de titre saute {n} fois (par exemple de 1 à 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Einmal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+msgstr "Le niveau de titre saute une fois (par exemple de 1 à 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Überschriften sind leer."
+msgstr "{n} titres sont vides."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Überschrift ist leer."
+msgstr "Un titre est vide."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Überschriften in sauberer Reihenfolge."
+msgstr "{n} titres dans un ordre correct."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Tabellen haben keine als Kopfzeile markierte erste Zeile (Tabellentools → Kopfzeile wiederholen)."
+msgstr "{n} tableaux sur {m} n’ont pas de première ligne marquée comme en-tête (Outils de tableau → Répéter les lignes d’en-tête)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Alle {n} Tabellen haben eine Kopfzeile."
+msgstr "Les {n} tableaux ont une ligne d’en-tête."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Bildern haben keinen Alternativtext — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} images sur {m} n’ont pas de texte alternatif — à générer dans InkluDocs ou à marquer comme décoratives."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."
+msgstr "Les {n} images ont un texte alternatif ou sont décoratives."

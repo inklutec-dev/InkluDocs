@@ -89,6 +89,31 @@ async def health():
     return {"ok": True, "soffice": v, "verapdf": os.path.exists("/opt/verapdf/bin")}
 
 
+@app.post("/pruefe")
+async def pruefe(datei: UploadFile = File(...)):
+    """Nur veraPDF (PDF/UA-1) fuer eine fertige PDF — z. B. nach der Nachbearbeitung in der App."""
+    data = await datei.read()
+    if len(data) > MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Datei zu gross")
+    if data[:5] != b"%PDF-":
+        raise HTTPException(status_code=400, detail="Keine PDF")
+    t0 = time.time()
+    work = tempfile.mkdtemp(prefix="p_", dir="/work")
+    try:
+        pfad = os.path.join(work, "pruefling.pdf")
+        with open(pfad, "wb") as f:
+            f.write(data)
+        async with _sem:
+            report = await asyncio.get_running_loop().run_in_executor(None, _verapdf, pfad)
+        return JSONResponse({"ok": True, "dauer_s": round(time.time() - t0, 1), "verapdf": report})
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Pruefung hat zu lange gedauert")
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Pruefung fehlgeschlagen: {e}"[:500])
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 @app.post("/pdfua")
 async def pdfua(datei: UploadFile = File(...)):
     name = os.path.basename(datei.filename or "dokument.docx")

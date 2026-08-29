@@ -4732,3 +4732,371 @@ msgstr "PDF herunterladen"
 #: Barrierefreie PDF 29.08.2026
 msgid "Die Datei konnte nicht geladen werden."
 msgstr "Die Datei konnte nicht geladen werden."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Hörprobe und Prüfbericht"
+msgstr "Hörprobe und Prüfbericht"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Prüfbericht des Word-Dokuments"
+msgstr "Prüfbericht des Word-Dokuments"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Hörprobe: so liest ein Screenreader das Dokument"
+msgstr "Hörprobe: so liest ein Screenreader das Dokument"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Wird geprüft …"
+msgstr "Wird geprüft …"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Prüfung ist fehlgeschlagen."
+msgstr "Die Prüfung ist fehlgeschlagen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Keine Auffälligkeiten im Word-Dokument."
+msgstr "Keine Auffälligkeiten im Word-Dokument."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Hinweise zum Word-Dokument, Details im Prüfbericht."
+msgstr "{n} Hinweise zum Word-Dokument, Details im Prüfbericht."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Struktur und Lesereihenfolge"
+msgstr "Struktur und Lesereihenfolge"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Inhalt ist als Struktur ausgezeichnet, ein Screenreader kann ihn in der richtigen Reihenfolge lesen."
+msgstr "Der Inhalt ist als Struktur ausgezeichnet, ein Screenreader kann ihn in der richtigen Reihenfolge lesen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Text und Sprache"
+msgstr "Text und Sprache"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Text ist als Text hinterlegt und die Sprache des Dokuments ist gesetzt, damit die Sprachausgabe richtig ausspricht."
+msgstr "Text ist als Text hinterlegt und die Sprache des Dokuments ist gesetzt, damit die Sprachausgabe richtig ausspricht."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bilder und Grafiken"
+msgstr "Bilder und Grafiken"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Jedes Bild hat einen Alternativtext oder ist als Schmuckbild markiert."
+msgstr "Jedes Bild hat einen Alternativtext oder ist als Schmuckbild markiert."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschriften"
+msgstr "Überschriften"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschriften sind als Überschriften ausgezeichnet und in sinnvoller Reihenfolge."
+msgstr "Überschriften sind als Überschriften ausgezeichnet und in sinnvoller Reihenfolge."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabellen"
+msgstr "Tabellen"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabellen haben Kopfzellen, damit Zellen einer Spalte zugeordnet werden können."
+msgstr "Tabellen haben Kopfzellen, damit Zellen einer Spalte zugeordnet werden können."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listen"
+msgstr "Listen"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listen sind als Listen ausgezeichnet."
+msgstr "Listen sind als Listen ausgezeichnet."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formeln"
+msgstr "Formeln"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Mathematische Formeln sind mit einem Alternativtext versehen."
+msgstr "Mathematische Formeln sind mit einem Alternativtext versehen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Fußnoten und Anmerkungen"
+msgstr "Fußnoten und Anmerkungen"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Fußnoten und Anmerkungen sind zugänglich verknüpft."
+msgstr "Fußnoten und Anmerkungen sind zugänglich verknüpft."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Optionale Inhalte"
+msgstr "Optionale Inhalte"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein- und ausblendbare Inhalte sind benannt."
+msgstr "Ein- und ausblendbare Inhalte sind benannt."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eingebettete Dateien"
+msgstr "Eingebettete Dateien"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eingebettete Dateien sind beschrieben."
+msgstr "Eingebettete Dateien sind beschrieben."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schriften"
+msgstr "Schriften"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schriften sind eingebettet, damit Text überall gleich erscheint und vorgelesen werden kann."
+msgstr "Schriften sind eingebettet, damit Text überall gleich erscheint und vorgelesen werden kann."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Wiedergabe"
+msgstr "Wiedergabe"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Multimedia-Inhalte sind zugänglich."
+msgstr "Multimedia-Inhalte sind zugänglich."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formularfelder und Verknüpfungen"
+msgstr "Formularfelder und Verknüpfungen"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Formularfelder und Links haben eine Beschreibung."
+msgstr "Formularfelder und Links haben eine Beschreibung."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Metadaten"
+msgstr "Metadaten"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument nennt sich selbst als PDF/UA."
+msgstr "Das Dokument nennt sich selbst als PDF/UA."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Weitere Prüfpunkte"
+msgstr "Weitere Prüfpunkte"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Weitere technische Anforderungen sind erfüllt."
+msgstr "Weitere technische Anforderungen sind erfüllt."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument ist nicht als getaggte PDF gekennzeichnet."
+msgstr "Das Dokument ist nicht als getaggte PDF gekennzeichnet."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Struktur beginnt nicht mit einem Dokument-Element."
+msgstr "Die Struktur beginnt nicht mit einem Dokument-Element."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Es gibt Inhalte, die weder als Struktur noch als Schmuck markiert sind — Screenreader können sie überspringen oder unpassend lesen."
+msgstr "Es gibt Inhalte, die weder als Struktur noch als Schmuck markiert sind — Screenreader können sie überspringen oder unpassend lesen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Dokumenttitel fehlt im Dokument."
+msgstr "Ein Dokumenttitel fehlt im Dokument."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Dokumenttitel fehlt in den Metadaten."
+msgstr "Der Dokumenttitel fehlt in den Metadaten."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die PDF ist nicht so eingestellt, dass der Titel statt des Dateinamens angezeigt wird."
+msgstr "Die PDF ist nicht so eingestellt, dass der Titel statt des Dateinamens angezeigt wird."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Sprache des Dokuments ist nicht gesetzt."
+msgstr "Die Sprache des Dokuments ist nicht gesetzt."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Bild hat keinen Alternativtext."
+msgstr "Ein Bild hat keinen Alternativtext."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Alternativtext eines Bildes ist ein Platzhalter."
+msgstr "Der Alternativtext eines Bildes ist ein Platzhalter."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."
+msgstr "Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Tabelle hat keine Kopfzellen."
+msgstr "Eine Tabelle hat keine Kopfzellen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."
+msgstr "Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Schrift ist nicht eingebettet."
+msgstr "Eine Schrift ist nicht eingebettet."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Formularfeld oder ein Link hat keine Beschreibung."
+msgstr "Ein Formularfeld oder ein Link hat keine Beschreibung."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein Link hat keinen beschreibenden Text."
+msgstr "Ein Link hat keinen beschreibenden Text."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "({n}-mal)"
+msgstr "({n}-mal)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})"
+msgstr "Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "ohne Beschreibung"
+msgstr "ohne Beschreibung"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} weitere technische Prüfpunkte sind nicht erfüllt: {beschreibung}."
+msgstr "{n} weitere technische Prüfpunkte sind nicht erfüllt: {beschreibung}."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Ein weiterer technischer Prüfpunkt ist nicht erfüllt: {beschreibung}."
+msgstr "Ein weiterer technischer Prüfpunkt ist nicht erfüllt: {beschreibung}."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig und hat die Prüfung auf PDF/UA bestanden."
+msgstr "Deine PDF ist fertig und hat die Prüfung auf PDF/UA bestanden."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig. Die Prüfung meldet einen Bereich mit Hinweisen, den du dir ansehen solltest."
+msgstr "Deine PDF ist fertig. Die Prüfung meldet einen Bereich mit Hinweisen, den du dir ansehen solltest."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Deine PDF ist fertig. Die Prüfung meldet {n} Bereiche mit Hinweisen, die du dir ansehen solltest."
+msgstr "Deine PDF ist fertig. Die Prüfung meldet {n} Bereiche mit Hinweisen, die du dir ansehen solltest."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Dokumenten haben die Prüfung auf PDF/UA bestanden."
+msgstr "{n} von {m} Dokumenten haben die Prüfung auf PDF/UA bestanden."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Umwandlung ist fehlgeschlagen: {grund}"
+msgstr "Die Umwandlung ist fehlgeschlagen: {grund}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Dokumenttitel: {t}"
+msgstr "Dokumenttitel: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Dokumenttitel: fehlt"
+msgstr "Dokumenttitel: fehlt"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Sprache: nicht gesetzt"
+msgstr "Sprache: nicht gesetzt"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Schmuckbild (wird nicht vorgelesen)"
+msgstr "Schmuckbild (wird nicht vorgelesen)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bild: {alt}"
+msgstr "Bild: {alt}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Bild ohne Beschreibung — ein Screenreader sagt nur „Grafik“"
+msgstr "Bild ohne Beschreibung — ein Screenreader sagt nur „Grafik“"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "… (Hörprobe gekürzt)"
+msgstr "… (Hörprobe gekürzt)"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Leere Überschrift (Ebene {n})"
+msgstr "Leere Überschrift (Ebene {n})"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Titel: {t}"
+msgstr "Titel: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Überschrift Ebene {n}: {t}"
+msgstr "Überschrift Ebene {n}: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Listenpunkt: {t}"
+msgstr "Listenpunkt: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Absatz: {t}"
+msgstr "Absatz: {t}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Tabelle mit {r} Zeilen und {c} Spalten"
+msgstr "Tabelle mit {r} Zeilen und {c} Spalten"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid ", Kopfzeile: {k}"
+msgstr ", Kopfzeile: {k}"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid ", ohne Kopfzeile"
+msgstr ", ohne Kopfzeile"
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Der Dokumenttitel ist gesetzt."
+msgstr "Der Dokumenttitel ist gesetzt."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt sonst nur den Dateinamen als Namen."
+msgstr "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt sonst nur den Dateinamen als Namen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Dokumentsprache ist gesetzt ({s})."
+msgstr "Die Dokumentsprache ist gesetzt ({s})."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die Dokumentsprache ist nicht gesetzt. Screenreader wählen dann eine falsche Aussprache."
+msgstr "Die Dokumentsprache ist nicht gesetzt. Screenreader wählen dann eine falsche Aussprache."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Das Dokument nutzt keine Überschriften-Formatvorlagen. Ohne Überschriften kann niemand im Dokument springen."
+msgstr "Das Dokument nutzt keine Überschriften-Formatvorlagen. Ohne Überschriften kann niemand im Dokument springen."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Die erste Überschrift hat Ebene {n} statt 1."
+msgstr "Die erste Überschrift hat Ebene {n} statt 1."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n}-mal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+msgstr "{n}-mal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Einmal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+msgstr "Einmal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Überschriften sind leer."
+msgstr "{n} Überschriften sind leer."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Eine Überschrift ist leer."
+msgstr "Eine Überschrift ist leer."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} Überschriften in sauberer Reihenfolge."
+msgstr "{n} Überschriften in sauberer Reihenfolge."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Tabellen haben keine als Kopfzeile markierte erste Zeile (Tabellentools → Kopfzeile wiederholen)."
+msgstr "{n} von {m} Tabellen haben keine als Kopfzeile markierte erste Zeile (Tabellentools → Kopfzeile wiederholen)."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Alle {n} Tabellen haben eine Kopfzeile."
+msgstr "Alle {n} Tabellen haben eine Kopfzeile."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "{n} von {m} Bildern haben keinen Alternativtext — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} von {m} Bildern haben keinen Alternativtext — in InkluDocs generieren oder als Schmuckbild markieren."
+
+#: Barrierefreie PDF Stufe 2, 29.08.2026
+msgid "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."
+msgstr "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."

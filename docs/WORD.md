@@ -263,8 +263,22 @@ mehreren Dokumenten) und wird über `GET …/export/pdfua/{token}` geladen
 (Token 24 Hex, nur der Besitzer). Preis `export_preis(anzahl, "pdfua")` =
 25 + 5 je angefangene 10 Bilder, verbucht nach gelungener Umwandlung.
 Ohne `KONVERTER_URL` antwortet der Endpunkt 503 (Prod bekommt den Dienst mit
-dem Rollout). Grenzen: LibreOffice setzt das Layout neu (nicht pixelgleich zu
-Word); Schmuckbilder werden noch nicht als Artefakt markiert (7.1-3 kann
-melden); Klartext ist bisher nur deutsch; Hörprobe und Word-Prüfbericht vor
-der Umwandlung folgen. Tests: `tests/test_pdfua_klartext.py`,
-`tests/e2e/verify_pdfua.py` (Staging).
+dem Rollout).
+
+Stufe 2 (29.08.2026 abends): (1) `pdfua_export.alt_nachtragen` trägt mit
+pikepdf fehlende `/Alt` an Figure-Elementen nach — LibreOffice verliert die
+Alt-Texte bei VML-Bildern und Bildern in Textfeldern; zugeordnet wird nur,
+wenn die Zahl der Figures genau der Zahl der Bilder im Textkörper entspricht,
+danach prüft `POST /pruefe` am Umwandler die fertige Datei erneut.
+(2) `docx_hoerprobe.analysiere` liefert die Hörprobe (was ein Screenreader
+liest: Titel, Sprache, Überschriften mit Ebene, Absätze, Listenpunkte, Bilder
+mit Alt-Text/Schmuckbild, Tabellen mit Kopfzeile) und den Prüfbericht des
+Word-Dokuments (Titel, Sprache, Überschriften-Hierarchie, Tabellen ohne
+Kopfzeile, Bilder ohne Alt-Text) — kostenlos über
+`POST /api/projects/{id}/export/pdfua/vorschau`, Knopf „Hörprobe und
+Prüfbericht“, und zusätzlich im Umwandlungsergebnis. (3) Klartext, Hörprobe und
+Prüfbericht laufen durch gettext in der Sprache des Nutzers (6 Sprachen).
+Grenzen: Layout nicht pixelgleich zu Word; Schmuckbilder werden noch nicht als
+Artefakt markiert (7.1-3 kann melden, `nachbearbeitung.dekorativ_offen`);
+Seitenvorschau für Sehende folgt. Tests: `tests/test_pdfua_klartext.py`,
+`tests/test_docx_hoerprobe.py`, `tests/e2e/verify_pdfua.py` (Staging).

@@ -48,6 +48,78 @@ class TestKlartext(unittest.TestCase):
         self.assertIn("Irgendwas Exotisches", d["Weitere Prüfpunkte"]["text"])
         self.assertIn("Bereiche mit Hinweisen", pdfua_export.zusammenfassung(k))
 
+    def test_uebersetzung(self):
+        k = pdfua_export.klartext({"compliant": False, "rules": [{"clause": "7.3", "test": 1, "description": "x", "failed": 2}]},
+                                  lambda s: "X" + s)
+        d = {p["bereich"]: p for p in k["punkte"]}
+        self.assertIn("XBilder und Grafiken", d)
+        self.assertTrue(d["XBilder und Grafiken"]["text"].startswith("XEin Bild hat keinen Alternativtext."))
+        self.assertTrue(pdfua_export.zusammenfassung(k, lambda s: "X" + s).startswith("X"))
+
+    def test_alt_nachtragen_ohne_struktur(self):
+        # Minimal-PDF ohne Strukturbaum: nichts anfassen, Bytes unveraendert
+        import pikepdf, io
+        pdf = pikepdf.new(); pdf.add_blank_page(); buf = io.BytesIO(); pdf.save(buf)
+        raw = buf.getvalue()
+        out, info = pdfua_export.alt_nachtragen(raw, ["Text"])
+        self.assertEqual(out, raw)
+        self.assertEqual(info["nachgetragen"], 0)
+        self.assertFalse(info["zugeordnet"])
+
+    def test_alt_nachtragen_mit_figures(self):
+        import pikepdf, io
+        pdf = pikepdf.new(); pdf.add_blank_page()
+        f1 = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Figure")))
+        f2 = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Figure"), Alt=pikepdf.String("schon da")))
+        f3 = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Figure")))
+        doc = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Document"), K=pikepdf.Array([f1, f2, f3])))
+        pdf.Root.StructTreeRoot = pdf.make_indirect(pikepdf.Dictionary(Type=pikepdf.Name("/StructTreeRoot"), K=pikepdf.Array([doc])))
+        buf = io.BytesIO(); pdf.save(buf)
+        out, info = pdfua_export.alt_nachtragen(buf.getvalue(), ["Erstes Bild", "egal", "dekorativ"])
+        self.assertTrue(info["zugeordnet"]); self.assertEqual(info["figures"], 3)
+        self.assertEqual(info["nachgetragen"], 1); self.assertEqual(info["dekorativ_offen"], 1)
+        p2 = pikepdf.open(io.BytesIO(out))
+        figs = pdfua_export._figures_in_reihenfolge(p2.Root.StructTreeRoot)
+        self.assertEqual([str(f.get("/Alt") or "") for f in figs], ["Erstes Bild", "schon da", ""])
+        # Zahl passt nicht -> nichts anfassen
+        out2, info2 = pdfua_export.alt_nachtragen(buf.getvalue(), ["a", "b"])
+        self.assertFalse(info2["zugeordnet"]); self.assertEqual(info2["nachgetragen"], 0)
+
+    def test_alt_nachtragen_rahmen(self):
+        # Textfeld mit Bild: LibreOffice = Figure (Rahmen) mit Figure (Bild) darin.
+        import pikepdf, io
+        pdf = pikepdf.new(); pdf.add_blank_page()
+        innen = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Figure")))
+        rahmen = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Figure"), K=pikepdf.Array([innen])))
+        doc = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Document"), K=pikepdf.Array([rahmen])))
+        pdf.Root.StructTreeRoot = pdf.make_indirect(pikepdf.Dictionary(Type=pikepdf.Name("/StructTreeRoot"), K=pikepdf.Array([doc])))
+        buf = io.BytesIO(); pdf.save(buf)
+        out, info = pdfua_export.alt_nachtragen(buf.getvalue(), ["Bild im Kasten"])
+        self.assertEqual((info["rahmen_umgewandelt"], info["figures"], info["nachgetragen"], info["zugeordnet"]), (1, 1, 1, True))
+        p2 = pikepdf.open(io.BytesIO(out))
+        d2 = p2.Root.StructTreeRoot.K[0]
+        self.assertEqual(str(d2.K[0].S), "/Div")
+        self.assertEqual(str(d2.K[0].K[0].Alt), "Bild im Kasten")
+
+    def test_alt_nachtragen_libreoffice_rahmen(self):
+        # Gemessenes LibreOffice-Muster (29.08.2026): leeres Figure (Rahmen), dann /Div > "/Frame contents" > Figure (Bild)
+        import pikepdf, io
+        pdf = pikepdf.new(); pdf.add_blank_page()
+        rahmen = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Figure")))
+        bild = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Figure")))
+        fc = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Frame contents"), K=pikepdf.Array([bild])))
+        div = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Div"), K=pikepdf.Array([fc])))
+        std = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Standard"), K=pikepdf.Array([rahmen, div])))
+        doc = pdf.make_indirect(pikepdf.Dictionary(S=pikepdf.Name("/Document"), K=pikepdf.Array([std])))
+        pdf.Root.StructTreeRoot = pdf.make_indirect(pikepdf.Dictionary(Type=pikepdf.Name("/StructTreeRoot"), K=pikepdf.Array([doc])))
+        buf = io.BytesIO(); pdf.save(buf)
+        out, info = pdfua_export.alt_nachtragen(buf.getvalue(), ["Skript oder Code"])
+        self.assertEqual((info["rahmen_umgewandelt"], info["figures"], info["nachgetragen"], info["zugeordnet"]), (1, 1, 1, True))
+        p2 = pikepdf.open(io.BytesIO(out))
+        std2 = p2.Root.StructTreeRoot.K[0].K[0]
+        self.assertEqual(str(std2.K[0].S), "/Div")
+        self.assertEqual(str(std2.K[1].K[0].K[0].Alt), "Skript oder Code")
+
     def test_leerer_bericht(self):
         k = pdfua_export.klartext({})
         self.assertFalse(k["bestanden"])

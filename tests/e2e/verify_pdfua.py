@@ -49,8 +49,17 @@ if s == 200:
     bilder = sum(int(d.get("bilder", 0)) for d in doks)
     check("Preis = 25 + 5 je angefangene 10 Bilder (alle Dokumente zusammen)", b.get("preis") == 25 + 5 * (-(-bilder // 10)), (b.get("preis"), bilder))
     check("Klartext-Punkte vorhanden (mind. 5 Kernbereiche)", all(len(d.get("pruefung", {}).get("punkte", [])) >= 5 for d in doks))
-    check("veraPDF: mindestens ein Dokument besteht PDF/UA-1", any(d.get("pruefung", {}).get("bestanden") is True for d in doks),
-          [d.get("pruefung", {}).get("regeln_fehlgeschlagen") for d in doks])
+    check("veraPDF: ALLE Dokumente bestehen PDF/UA-1 (Stufe 2: Alt-Texte nachgetragen)", all(d.get("pruefung", {}).get("bestanden") is True for d in doks),
+          [(d.get("dokument"), d.get("pruefung", {}).get("regeln_fehlgeschlagen"), d.get("nachbearbeitung")) for d in doks])
+    check("Hoerprobe + Pruefbericht im Ergebnis", all(d.get("hoerprobe") and isinstance(d.get("pruefbericht"), list) for d in doks),
+          [(len(d.get("hoerprobe") or []), len(d.get("pruefbericht") or [])) for d in doks])
+    for d in doks:
+        print("     Hoerprobe", d.get("dokument"), "->", " / ".join(d.get("hoerprobe", [])[:4])[:200])
+        for bp in d.get("pruefbericht", []):
+            print("       Pruefbericht:", bp["status"], "|", bp["text"][:120])
+    sv, bv, _ = req("POST", f"/api/projects/{PID}/export/pdfua/vorschau", {})
+    check("Vorschau-Endpunkt (kostenlos): Hoerprobe je Dokument", sv == 200 and len(bv.get("dokumente", [])) == len(doks)
+          and all(x.get("hoerprobe") for x in bv["dokumente"]), (sv, str(bv)[:200]))
     s2, datei, h = req("GET", f"/api/projects/{PID}/export/pdfua/{b['token']}", raw=True)
     if len(doks) == 1:
         check("Download liefert PDF", s2 == 200 and datei[:5] == b"%PDF-", (s2, datei[:10]))

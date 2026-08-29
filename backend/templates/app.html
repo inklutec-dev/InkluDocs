@@ -645,6 +645,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF (Beta)') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word (Beta)') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln (Beta)') + '</button>' : ''}
+                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
                                 <button class="btn btn-secondary" onclick="closeExportPanel()">${t('Abbrechen')}</button>
                             </div>
                             <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
@@ -2599,6 +2600,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     + (dok.pruefung && dok.pruefung.punkte ? dok.pruefung.punkte : []).map(p =>
                         '<li>' + escHtml(p.bereich) + ': ' + (p.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + '. ' + escHtml(p.text) + '</li>').join('')
                     + '</ul>';
+                html += pdfuaAnalyseHtml(dok);
             });
             html += '<button type="button" class="btn btn-primary" id="pdfuaDownload">' + icon('download') + t('PDF herunterladen') + '</button>';
             if (box) {
@@ -2608,6 +2610,50 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 dl.focus();
             }
             announce(d.zusammenfassung || '');
+        } catch (e) {
+            if (box) box.textContent = t('Verbindungsfehler.');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+    // Hoerprobe + Pruefbericht des Word-Dokuments (Stufe 2): als aufklappbare Bloecke,
+    // damit die Ergebnis-Region kurz bleibt und die Live-Region nicht alles vorliest.
+    function pdfuaAnalyseHtml(dok) {
+        let html = '';
+        if (dok.pruefbericht && dok.pruefbericht.length) {
+            html += '<details style="margin:0.4rem 0;"><summary>' + t('Prüfbericht des Word-Dokuments') + '</summary><ul style="margin:0.3rem 0 0.4rem;padding-left:1.2rem;">'
+                + dok.pruefbericht.map(b => '<li>' + (b.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + ': ' + escHtml(b.text) + '</li>').join('')
+                + '</ul></details>';
+        }
+        if (dok.hoerprobe && dok.hoerprobe.length) {
+            html += '<details style="margin:0.4rem 0;"><summary>' + t('Hörprobe: so liest ein Screenreader das Dokument') + '</summary>'
+                + '<div style="max-height:22rem;overflow:auto;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;" tabindex="0">'
+                + dok.hoerprobe.map(z => '<p style="margin:0.15rem 0;">' + escHtml(z) + '</p>').join('') + '</div></details>';
+        }
+        return html;
+    }
+    async function doPdfuaVorschau(projectId) {
+        const box = document.getElementById('pdfuaResult');
+        const btn = document.getElementById('pdfuaVorschauBtn');
+        const scope = readExportScope();
+        const body = {};
+        if (!scope.all && scope.document_id) body.document_id = scope.document_id;
+        if (btn) btn.disabled = true;
+        if (box) box.textContent = t('Wird geprüft …');
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/export/pdfua/vorschau', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { const m = (d && typeof d.detail === 'string') ? d.detail : t('Die Prüfung ist fehlgeschlagen.'); if (box) box.textContent = m; announce(m); return; }
+            let html = '';
+            let hinweise = 0;
+            (d.dokumente || []).forEach(dok => {
+                if ((d.dokumente || []).length > 1) html += '<h3 style="font-size:1rem;margin:0.6rem 0 0.2rem;">' + escHtml(dok.dokument) + '</h3>';
+                hinweise += (dok.pruefbericht || []).filter(b => b.status !== 'ok').length;
+                html += pdfuaAnalyseHtml(dok);
+            });
+            const satz = hinweise === 0 ? t('Keine Auffälligkeiten im Word-Dokument.') : t('{n} Hinweise zum Word-Dokument, Details im Prüfbericht.', { n: hinweise });
+            if (box) { box.innerHTML = '<p style="margin:0 0 0.4rem;"><strong>' + escHtml(satz) + '</strong></p>' + html; const s = box.querySelector('details summary'); if (s) s.focus(); }
+            announce(satz);
         } catch (e) {
             if (box) box.textContent = t('Verbindungsfehler.');
         } finally {
