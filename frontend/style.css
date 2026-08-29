@@ -552,8 +552,10 @@ input[type="file"] {
 }
 .doc-section > summary.doc-summary {
     /* Platz am rechten Rand fuer die Aktionsgruppe reservieren, damit lange
-       Dateinamen nicht unter die Buttons laufen. */
-    padding-right: 13rem;
+       Dateinamen nicht unter die Buttons laufen. 29.08.2026: Icon-Pillen sind
+       breiter (vier Knoepfe mit Symbol + Fettschrift) -> 34rem; unter 1100px
+       rutscht die Leiste unter den Kopf (siehe Media Query unten). */
+    padding-right: 34rem;
 }
 .doc-actions {
     position: absolute;
@@ -616,7 +618,7 @@ input[type="file"] {
    Fluss direkt unter den Dokument-Kopf. Die Platzreservierung am rechten Rand
    entfällt, sodass die Überschrift die volle Breite nutzt. Breakpoint passend zum
    bestehenden Sidebar-Umbruch (768px). */
-@media (max-width: 768px) {
+@media (max-width: 1100px) {
     .doc-section > summary.doc-summary {
         padding-right: 1rem;
     }
@@ -624,6 +626,7 @@ input[type="file"] {
         position: static;
         margin: 0.4rem 1rem 0.6rem;
         justify-content: flex-start;
+        flex-wrap: wrap;
     }
 }
 
