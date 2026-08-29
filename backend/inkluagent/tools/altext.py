@@ -41,8 +41,9 @@ def generate_alt_text(image_id: int, project_id: int, user_id: int) -> dict[str,
     # Abo-Etappe 2: freundliche Kontingent-Auskunft VOR der teuren Pipeline.
     # pruefe_kontingent liefert erlaubt=False nur bei ABO_ENFORCEMENT=on und
     # nie fuer Admins — ohne Enforcement greift dieser Block schlicht nie.
-    if not billing.pruefe_kontingent(user_id).get("erlaubt", True):
-        return {"ok": False, "error": "Das Monatskontingent dieses Kontos ist aufgebraucht. Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits."}
+    _wache = billing.aktion_pruefung(user_id, "bild_generierung")
+    if not _wache["erlaubt"]:
+        return {"ok": False, "error": billing.credits_fehlen_text(_wache)}
     try:
         result = _run_pipeline(image_id, project_id, user_id)
     except Exception as e:
@@ -162,8 +163,9 @@ def update_alt_text(
     """
     # Abo-Etappe 2: auch das AENDERN kostet 1 Credit (Umschreib-Schlupfloch),
     # darum dieselbe freundliche Kontingent-Wache wie bei generate_alt_text.
-    if not billing.pruefe_kontingent(user_id).get("erlaubt", True):
-        return {"ok": False, "error": "Das Monatskontingent dieses Kontos ist aufgebraucht. Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits."}
+    _wache = billing.aktion_pruefung(user_id, "alt_text_aenderung_chatbot")
+    if not _wache["erlaubt"]:
+        return {"ok": False, "error": billing.credits_fehlen_text(_wache)}
     if not _check_project_access(project_id, user_id):
         return {"ok": False, "error": "Projekt nicht gefunden oder kein Zugriff."}
 
@@ -248,8 +250,9 @@ def update_alt_text(
         result["langbeschreibung_info"] = "Langbeschreibung wurde ueberschrieben (kein Rollback-Feld vorhanden)."
 
     # Abo-Regel (Steve, 31.07.2026): "Reden ist frei — sobald der Chatbot einen
-    # Alt-Text ERZEUGT oder AENDERT, kostet es 1 Credit." Das hier ist der
-    # AENDERT-Fall (Umschreiben/Optimieren ohne Pipeline-Lauf).
+    # Alt-Text ERZEUGT oder AENDERT, kostet es." Das hier ist der AENDERT-Fall
+    # (Umschreiben/Optimieren ohne Pipeline-Lauf); Preis laut AKTIONS_PREISE
+    # (alt_text_aenderung_chatbot, seit 29.08.2026 = 5 wie ein Alt-Text).
     billing.verbuche(user_id, "chatbot", aktion="alt_text_aenderung_chatbot", image_id=image_id)
     return {"ok": True, "result": result}
 

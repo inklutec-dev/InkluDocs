@@ -3053,9 +3053,6 @@ msgstr "Buy extra credits"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
 
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "One currency for everything: credits. An alt text costs 1 credit, a tooltip page 1 credit, exporting the finished file 5 credits plus 1 credit per 10 images or fields started; table exports (CSV, JSON) are free. All prices are final — no VAT is charged under § 19 UStG (German small business rule)."
-
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
 
 msgid "Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein."
@@ -3264,12 +3261,6 @@ msgstr "When signed in you can do it directly: in “Subscription & usage” via
 
 msgid "Deine Bestellung"
 msgstr "Your order"
-
-msgid "Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung."
-msgstr "Service: {credits} credits per month. One credit equals one image description."
-
-msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung."
-msgstr "Service: {credits} credits per month for up to {plaetze} people (including you). One credit equals one image description."
 
 msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
 msgstr "Term {monate} months, payable in advance. After that the subscription renews automatically for {monate} months unless you cancel — cancellable at any time to the end of the term."
@@ -4686,3 +4677,27 @@ msgstr "Export document “{name}”"
 
 msgid "Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter."
 msgstr "You have used today’s {n} chat messages. It continues tomorrow."
+
+#: Aktionspreise 29.08.2026
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "One currency for everything: credits. An alt text costs {alt} credits, a tooltip {qi} credit per form field. Exporting the finished file costs {exp} credits plus {bild} credits per {schritt} images started (PDF, Word) or plus {feld} credit per {schritt} fields started (forms); table exports (CSV, JSON) cost {tab} credits. Talking to the InkluAgent is free; if it changes an alt text, that costs {alt} credits, a tooltip {qi} credit. All prices are final — no VAT is charged under § 19 UStG."
+
+#: Aktionspreise 29.08.2026
+msgid "Das reicht für kleine Dokumente; wer größere Formulare oder viele Bilder bearbeitet, braucht ein Abo oder ein Credit-Paket."
+msgstr "That is enough for small documents; anyone working on larger forms or many images needs a subscription or a credit package."
+
+#: Aktionspreise 29.08.2026
+msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
+msgstr "Service: {credits} credits per month for up to {plaetze} people (including you). An alt text costs {alt} credits, a tooltip {qi} credit."
+
+#: Aktionspreise 29.08.2026
+msgid "Leistung: {credits} Credits pro Monat. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
+msgstr "Service: {credits} credits per month. An alt text costs {alt} credits, a tooltip {qi} credit."
+
+#: Aktionspreise 29.08.2026
+msgid "Tabellen-Exporte (CSV, JSON) kosten {p} Credits."
+msgstr "Table exports (CSV, JSON) cost {p} credits."
+
+#: Aktionspreise 29.08.2026
+msgid "Die Feldliste als CSV kostet {p} Credits."
+msgstr "The field list as CSV costs {p} credits."

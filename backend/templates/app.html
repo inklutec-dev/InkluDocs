@@ -52,6 +52,7 @@
 {% block page_script %}
 {# QUICKINFO-WERKZEUG (27.08.2026): eigene Projektansicht fuer Formular-Projekte,
    getrennt von der Bild-/Alt-Text-Ansicht unten (siehe showProject-Weiche). #}
+<script>window.CREDIT_PREISE = {{ credit_preise|default({})|tojson }};</script>
 <script src="/static/formular.js?v={{ asset_version }}"></script>
 <script>
 // Upload-Limit vom Server (eine Quelle: MAX_UPLOAD_SIZE in main.py) — fuer
@@ -598,7 +599,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 ` : ''}
                 <div class="card-actions">
                     ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + t('Alle Alt-Texte generieren') + '</button>' : ''}
-                    ${!window.GUEST_MODE && project.status !== 'extracted' && project.status !== 'processing' && project.status !== 'extracting' && kiBilder > 0 ? '<button class="btn btn-secondary" id="regenAllBtn" onclick="startGeneration(' + project.id + ', \'ki_neu\')">' + t('{n} Alt-Texte neu generieren, {c} Credits', { n: kiBilder, c: kiBilder }) + '</button>' : ''}
+                    ${!window.GUEST_MODE && project.status !== 'extracted' && project.status !== 'processing' && project.status !== 'extracting' && kiBilder > 0 ? '<button class="btn btn-secondary" id="regenAllBtn" onclick="startGeneration(' + project.id + ', \'ki_neu\')">' + t('{n} Alt-Texte neu generieren, {c} Credits', { n: kiBilder, c: kiBilder * creditPreis('bild_generierung') }) + '</button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">${t('Prüfung abschließen')}</button>
@@ -2136,7 +2137,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             if (!isWebDoc && !docBusy && docPending > 0) {
                 docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'luecken', ${docKey})">${t('Alle generieren')}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
             } else if (!isWebDoc && !docBusy && docKi > 0) {
-                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'ki_neu', ${docKey})">${t('{n} Alt-Texte neu generieren, {c} Credits', { n: docKi, c: docKi })}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
+                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'ki_neu', ${docKey})">${t('{n} Alt-Texte neu generieren, {c} Credits', { n: docKi, c: docKi * creditPreis('bild_generierung') })}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
             }
             let innerBlocks;
             let headingText;
@@ -2477,7 +2478,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     async function startGeneration(projectId, modus, docId) {
-        // modus 'ki_neu' (28.08.2026): nur KI-Texte ohne Hand-Text neu, Cache umgangen, 1 Credit je Bild.
+        // modus 'ki_neu' (28.08.2026): nur KI-Texte ohne Hand-Text neu, Cache umgangen, Alt-Text-Preis je Bild (window.CREDIT_PREISE).
         // docId (28.08.2026): nur dieses Dokument (Knopf am Dokument), sonst das ganze Projekt.
         const btn = document.getElementById(modus === 'ki_neu' ? 'regenAllBtn' : 'generateBtn');
         // Pre-check daily limit
@@ -2492,6 +2493,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (docId) body.document_id = docId;
         const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (res.ok) { showProject(projectId); }
+        else if (await exportCreditsAbgefangen(res)) { /* Credits-Meldung gezeigt */ }
         else { const d = await res.json(); announce(t('Fehler: {msg}', { msg: d.detail || '' })); }
     }
 
@@ -2556,6 +2558,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             }
             // Export-Staffel (28.08.2026): Preis und Guthaben vor dem Export ansagen.
             if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
+            if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Tabellen-Exporte (CSV, JSON) kosten {p} Credits.', { p: d.preis_tabelle });
             region.textContent = msg;
             announce(msg);
         } catch (e) {
@@ -2563,6 +2566,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
+    // ─── Aktionspreise (29.08.2026): Preisliste aus billing.py (window.CREDIT_PREISE) ───
+    function creditPreis(aktion) {
+        const p = window.CREDIT_PREISE || {};
+        if (typeof p[aktion] === 'number') return p[aktion];
+        return ({ bild_generierung: 5, quickinfo_generierung: 1 })[aktion] || 1;
+    }
     // ─── Export-Staffel (Michael 28.08.2026, beide Werkzeuge) ───
     function exportPreisText(preis, verfuegbar) {
         return (verfuegbar === null || verfuegbar === undefined)
@@ -2590,7 +2599,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const h = dlg.querySelector('#creditsHeading'); if (h) h.focus();
         announce(text);
     }
-    // Antwort eines Export-Aufrufs auf die Credits-Sperre pruefen (402) — true = Meldung gezeigt.
+    // Antwort eines Export- oder Generier-Aufrufs auf die Credits-Sperre pruefen (402) — true = Meldung gezeigt.
     async function exportCreditsAbgefangen(res) {
         if (res.status !== 402) return false;
         let d = {}; try { d = await res.json(); } catch (e) {}

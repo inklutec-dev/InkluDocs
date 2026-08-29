@@ -545,9 +545,13 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
     felder_by_id = {f["id"]: _feld_fuer_ki(f) for f in offen}
     try:
         for (doc_id, page), felder in seiten.items():
-            abo = _d.billing.pruefe_kontingent(user_id)
-            if not abo.get("erlaubt", True):
-                st["fehler"].append("Credit-Kontingent erschöpft – Rest bleibt offen.")
+            # Aktionspreise (29.08.2026): 1 Credit je FELD — die Seite laeuft nur, wenn das
+            # Guthaben alle offenen Felder dieser Seite deckt; sonst bleibt der Rest offen.
+            wache = _d.billing.aktion_pruefung(user_id, "quickinfo_generierung", len(felder))
+            if not wache["erlaubt"]:
+                st["fehler"].append(
+                    f"Guthaben reicht nicht für Seite {page} ({wache['preis']} Credits nötig, "
+                    f"{0 if wache['verfuegbar'] is None else wache['verfuegbar']} vorhanden) – Rest bleibt offen.")
                 break
             doc = docs.get(doc_id) or {}
             try:
@@ -587,9 +591,11 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                 conn.commit()
             finally:
                 conn.close()
-            # Review 28.08.2026: Credit nur, wenn mindestens ein Feld dieser Seite geschrieben wurde.
+            # Aktionspreise (29.08.2026): 1 Credit je tatsaechlich geschriebenem Feld
+            # (Review 28.08.: nichts geschrieben = nichts verbucht).
             if geschrieben:
-                _d.billing.verbuche(user_id, "generierung", aktion="quickinfo_generierung")
+                _d.billing.verbuche(user_id, "generierung", aktion="quickinfo_generierung",
+                                    credits=_d.billing.aktion_preis("quickinfo_generierung", geschrieben))
             st["seiten_fertig"] += 1
         # Konsistenz ueber das ganze Dokument (nur KI-Texte dieses Laufs).
         if alle_vorschlaege:
@@ -812,9 +818,10 @@ def build_router(deps: Deps) -> APIRouter:
             project = _projekt_des_nutzers(conn, project_id, user["id"])
             if project.get("status") in ("extracting", "processing"):
                 raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
-            abo = _d.billing.pruefe_kontingent(user["id"])
-            if not abo.get("erlaubt", True):
-                raise HTTPException(status_code=429, detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+            # Aktionspreise (29.08.2026): mindestens ein Feld muss bezahlbar sein, sonst 402 mit Zahlen.
+            wache = _d.billing.aktion_pruefung(user["id"], "quickinfo_generierung")
+            if not wache["erlaubt"]:
+                raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Das Generieren"))
             sql = "SELECT COUNT(*) FROM formularfelder WHERE project_id = ? AND " + _modus_bedingung(modus) + " AND anker NOT LIKE '#%'"
             args = [project_id]
             if document_id is not None:
@@ -842,9 +849,10 @@ def build_router(deps: Deps) -> APIRouter:
             project = dict(conn.execute("SELECT * FROM projects WHERE id = ?", (feld["project_id"],)).fetchone())
             if project.get("status") in ("extracting", "processing"):
                 raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
-            abo = _d.billing.pruefe_kontingent(user["id"])
-            if not abo.get("erlaubt", True):
-                raise HTTPException(status_code=429, detail="Credit-Kontingent erschoepft. Bitte Credits nachbuchen oder bis zum Monatswechsel warten")
+            # Aktionspreise (29.08.2026): mindestens ein Feld muss bezahlbar sein, sonst 402 mit Zahlen.
+            wache = _d.billing.aktion_pruefung(user["id"], "quickinfo_generierung")
+            if not wache["erlaubt"]:
+                raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Das Generieren"))
             doc = dict(conn.execute("SELECT * FROM documents WHERE id = ?", (feld["document_id"],)).fetchone())
             seite_felder = [dict(r) for r in conn.execute(
                 "SELECT * FROM formularfelder WHERE document_id = ? AND page_number = ? ORDER BY feld_index",
@@ -1151,14 +1159,11 @@ def build_router(deps: Deps) -> APIRouter:
             conn.close()
         if not einheiten:
             raise HTTPException(status_code=400, detail="Dieses Projekt enthaelt noch kein Formular")
-        # Export-Staffel (Michael 28.08.2026): 5 + 1 je angefangene 10 Felder, alle Konten (auch Free);
+        # Export-Staffel (Michael 28./29.08.2026): 25 + 1 je angefangene 10 Felder, alle Konten (auch Free);
         # reicht das Guthaben nicht: 402 mit beiden Zahlen, kein Export.
-        pruef = _d.billing.export_pruefung(user["id"], sum(len(e["felder"]) for e in einheiten))
+        pruef = _d.billing.export_pruefung(user["id"], sum(len(e["felder"]) for e in einheiten), "formular")
         if not pruef["erlaubt"]:
-            raise HTTPException(status_code=402, detail={
-                "code": "credits_fehlen", "preis": pruef["preis"], "verfuegbar": pruef["verfuegbar"], "fehlend": pruef["fehlend"],
-                "text": (f"Der Export würde {pruef['preis']} Credits benötigen, du verfügst derzeit über {pruef['verfuegbar']} Credits. "
-                         "Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben.")})
+            raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(pruef, "Der Export"))
         preis = pruef["preis"]
 
         # Eigener Arbeitsordner je Anfrage (parallele Exporte desselben Projekts
@@ -1196,7 +1201,8 @@ def build_router(deps: Deps) -> APIRouter:
     @router.post("/api/projects/{project_id}/export/formular_csv")
     async def export_formular_csv(project_id: int, request: Request, user: dict = Depends(_user)):
         """Feldliste als CSV — Spalten 1-5 wie Heines Format, danach unsere
-        Zusatzspalten. Ohne Feldwerte. Kostenlos (kein Schreibvorgang)."""
+        Zusatzspalten. Ohne Feldwerte. Seit 29.08.2026 kostenpflichtig
+        (AKTIONS_PREISE formular_csv_export, fester Preis je Vorgang)."""
         document_id, custom_name = await _d.read_export_options(request)
         conn = _d.get_db()
         try:
@@ -1204,6 +1210,9 @@ def build_router(deps: Deps) -> APIRouter:
             einheiten = _export_einheiten(conn, project, document_id)
         finally:
             conn.close()
+        wache = _d.billing.aktion_pruefung(user["id"], "formular_csv_export")
+        if not wache["erlaubt"]:
+            raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Der Export"))
         cs = _d.csv_safe   # Formel-Injection-Schutz: Feldnamen/Texte stammen aus fremden PDFs
         buf = io.StringIO()
         w = csv.writer(buf, delimiter=";")
@@ -1216,8 +1225,12 @@ def build_router(deps: Deps) -> APIRouter:
                             f["page_number"] or "", cs(label), cs(f["beschriftung"] or ""), cs(f["gruppe"] or ""),
                             1 if f["pflicht"] else 0, f["quelle"] or ""])
         base = custom_name or _d.safe_filename_component(project.get("name") or "formular")
-        return Response(content="﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
-                        headers={"Content-Disposition": _content_disposition(f"{base}_quickinfos.csv")})
+        response = Response(content="﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
+                            headers={"Content-Disposition": _content_disposition(f"{base}_quickinfos.csv"),
+                                     "X-Export-Credits": str(wache["preis"])})
+        # Antwort zuerst bauen, dann verbuchen.
+        _d.billing.verbuche(user["id"], "export", aktion="formular_csv_export", credits=wache["preis"])
+        return response
 
     # ---- Stammdaten-Bibliothek
     @router.get("/api/stammdaten")

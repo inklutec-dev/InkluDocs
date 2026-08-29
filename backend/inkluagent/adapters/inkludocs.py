@@ -362,9 +362,10 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
     # statt None (Review-Befund 6, 31.07.2026): None bedeutet weiterhin
     # "Bild nicht gefunden" — die Kontingent-Sperre muessen die Aufrufer
     # aber ANSAGEN koennen, statt das Bild stumm zu ueberspringen.
-    if not billing.pruefe_kontingent(user_id).get("erlaubt", True):
-        log.info("run_pipeline_for_image: Kontingent erschoepft (user=%s, image=%s)",
-                 user_id, image_id)
+    _wache = billing.aktion_pruefung(user_id, "bild_generierung")
+    if not _wache["erlaubt"]:
+        log.info("run_pipeline_for_image: Guthaben reicht nicht (user=%s, image=%s, preis=%s, verfuegbar=%s)",
+                 user_id, image_id, _wache["preis"], _wache["verfuegbar"])
         return {"kontingent_erschoepft": True}
     conn = get_db()
     try:
@@ -430,7 +431,8 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
         conn.commit()
     finally:
         conn.close()
-    # Abo-Etappe-1: Chatbot-Generierung = 1 Credit. Dieser Adapter ist der
+    # Abo-Etappe-1: Chatbot-Generierung kostet den Alt-Text-Preis (AKTIONS_PREISE
+    # bild_generierung, seit 29.08.2026 = 5). Dieser Adapter ist der
     # gemeinsame Trichter beider Chatbot-Wege (chat_engine + Tool-Schicht);
     # laeuft mit force_regenerate, also nie aus dem Cache.
     billing.verbuche(user_id, "chatbot", image_id=image_id)

@@ -20,13 +20,14 @@ Anzeige und Export; der KI-Text bleibt darunter erhalten und lässt sich mit
    solange Lücken da sind.
 2. **Neu generieren** am Element — erzeugt einen neuen KI-Text mit
    Variation (höhere Temperatur, Cache umgangen). Ein Hand-Text bleibt
-   obenauf. 1 Credit.
+   obenauf. Bilder: 5 Credits, Felder: 1 Credit (Aktionspreise 29.08.2026).
 3. **{n} … neu generieren, {c} Credits** — derselbe Knopf wie 1, sobald
    keine Lücken mehr da sind: fasst nur KI-Texte ohne Hand-Text an
    (`POST /api/projects/{id}/generate` bzw. `…/quickinfos/generieren` mit
    `{"modus": "ki_neu"}`). Keine Rückfrage: Anzahl und Credits stehen sichtbar
-   im Knopf. Bilder: 1 Credit je Bild, Cache je Bild geräumt
-   (`force_regenerate`); Felder: 1 Credit je Seite.
+   im Knopf. Bilder: 5 Credits je Bild, Cache je Bild geräumt
+   (`force_regenerate`); Felder: 1 Credit je Feld (die Oberfläche rechnet mit
+   `window.CREDIT_PREISE` aus `billing.preise_fuer_frontend()`).
 
 ## Was nie angefasst wird
 
@@ -35,25 +36,50 @@ gesetzt; Felder: `quelle` hand/pdf/stammdaten/gast/chat). Beim Feld-Pass gilt
 zusätzlich: Texte, die während des Laufs von Hand gefüllt wurden, bleiben
 (`UPDATE … WHERE quickinfo leer` bzw. `quelle = ki`).
 
-## Export-Preis (Staffel, Michael Karbe 28.08.2026)
+## Aktionspreise (Michael Karbe, bestätigt 29.08.2026)
 
-Jeder Datei-Export (PDF mit Alt-Texten, Word mit Alt-Texten, PDF mit Quickinfos)
-kostet `billing.export_preis(anzahl)` = 5 Credits Grundpreis + 1 Credit je
-angefangene 10 Bilder bzw. Felder der exportierten Datei; beim
-Alle-Dokumente-ZIP werden die Elemente aller Dokumente zusammengezählt, der
-Grundpreis fällt einmal an. Beispiele: 1 Feld = 6, 26 Felder = 8, 50 Felder =
-10, 100 Bilder = 15 Credits. Gilt für alle Konten (Free hat 10 Credits).
-Tabellen-Exporte (JSON, CSV, Formular-CSV) bleiben kostenlos; der
-Excel-Export wurde am 28.08.2026 entfernt (CSV öffnet sich in Excel). Beide
-Zahlen stehen in `billing.EXPORT_GRUNDPREIS` / `EXPORT_STAFFEL`.
+Alle Preise stehen an EINER Stelle: `billing.AKTIONS_PREISE` (je Vorgang) und
+`billing.EXPORT_ARTEN` / `EXPORT_SCHRITT` (Export-Staffel). Stand 29.08.2026:
+
+- Alt-Text: 5 Credits je Bild — auf allen Wegen (Sammellauf, Neu generieren,
+  Public API, InkluAgent).
+- Quickinfo: 1 Credit je Feld (vorher je Seite) — Feld-Pass verbucht
+  `aktion_preis("quickinfo_generierung", geschriebene Felder)`.
+- InkluAgent: Reden ist kostenlos; ändert er einen Alt-Text 5 Credits, eine
+  Quickinfo 1 Credit.
+- Datei-Export: `billing.export_preis(anzahl, art)` = 25 Credits Grundpreis +
+  5 Credits je angefangene 10 Bilder (PDF, Word) bzw. + 1 Credit je angefangene
+  10 Felder (Formular-PDF). Beim Alle-Dokumente-ZIP werden die Elemente aller
+  Dokumente zusammengezählt, der Grundpreis fällt einmal an. Beispiele: PDF mit
+  1 Bild = 30, 26 Bilder = 40, 100 Bilder = 75; Formular mit 1 Feld = 26,
+  26 Felder = 28, 50 Felder = 30.
+- Tabellen-Export (JSON, CSV, Formular-CSV): 10 Credits je Vorgang, fester
+  Preis (`billing.TABELLEN_EXPORTE`). Die Stammdaten-CSV (eigene Bibliothek,
+  kein Dokument) bleibt kostenlos. Der Excel-Export wurde am 28.08.2026
+  entfernt (CSV öffnet sich in Excel).
+
+Gilt für alle Konten, auch Free (50 Credits): ein 26-Felder-Formular kostet
+26 + 28 = 54 Credits — wer größere Formulare braucht, braucht ein Abo oder ein
+Paket (Michaels Entscheidung 29.08.2026).
+
+Die Wache vor jeder kostenpflichtigen Aktion ist `billing.aktion_pruefung(user,
+aktion, menge)` bzw. `export_pruefung(user, anzahl, art)`: erlaubt nur, wenn das
+Guthaben (Monatsrest + Pakete, `verfuegbare_credits`) den vollen Preis deckt.
+Reicht es nicht, antworten Export und Generierung mit 402 und
+`billing.credits_fehlen_detail` (Code `credits_fehlen`, beide Zahlen); der
+InkluAgent antwortet im Chat mit `credits_fehlen_text`. Der Sammellauf prüft je
+Bild bzw. je Formularseite (Preis = offene Felder der Seite) und lässt den Rest
+offen, wenn das Guthaben nicht mehr reicht.
 
 Vor dem Export zeigt der Dialog Preis und Guthaben
-(`POST /api/projects/{id}/export/preis` bzw. `…/export/summary`). Reicht das
-Guthaben nicht (`billing.export_pruefung`), antwortet der Export mit 402 und
-beiden Zahlen; die Oberfläche zeigt die barrierefreie Meldung „Der Export
-würde 8 Credits benötigen, du verfügst derzeit über 7 Credits …“ mit den
-Knöpfen „Zu Abo & Verbrauch“ und „Schließen“ (`zeigeCreditsMeldung`,
-app.html, beide Werkzeuge). Die Antwort trägt `X-Export-Credits`.
+(`POST /api/projects/{id}/export/preis` bzw. `…/export/summary`, beide liefern
+zusätzlich `preis_tabelle` für den CSV/JSON-Satz). Reicht das Guthaben nicht,
+antwortet der Export mit 402 und beiden Zahlen; die Oberfläche zeigt die
+barrierefreie Meldung „Der Export würde 40 Credits benötigen, du verfügst
+derzeit über 37 Credits …“ mit den Knöpfen „Zu Abo & Verbrauch“ und
+„Schließen“ (`zeigeCreditsMeldung`, app.html, beide Werkzeuge; dieselbe
+Meldung bei 402 aus Generieren/Neu generieren). Jede Export-Antwort — auch
+CSV/JSON — trägt `X-Export-Credits`.
 
 ## Knöpfe je Dokument (Michael/Steve 28.08.2026)
 

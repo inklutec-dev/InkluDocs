@@ -57,7 +57,7 @@ Gemeinsam sind außerdem: der Loop selbst (höchstens 6 Werkzeug-Runden je Turn,
 Werkzeug-Ergebnisse auf 40.000 Zeichen gekappt mit Hinweis an das Modell,
 Bilder als image-Block im nächsten Turn, `refresh_*`-Aktionen fürs Frontend),
 die Websuche (`tavily_search`), die Kontingent-Wache (`billing.pruefe_kontingent`),
-die Abrechnungsregel „Reden ist frei, Erzeugen oder Ändern kostet 1 Credit“ und
+die Abrechnungsregel „Reden ist frei, Erzeugen oder Ändern kostet den Aktionspreis“ (Alt-Text 5, Quickinfo 1 Credit; `billing.AKTIONS_PREISE`, 29.08.2026) und
 die Sicherheitsregel, dass `project_id`/`user_id` nie aus den Modell-Argumenten
 kommen, sondern aus der Sitzung (ToolExecutor).
 

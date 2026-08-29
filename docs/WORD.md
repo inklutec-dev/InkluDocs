@@ -81,7 +81,7 @@ geschrieben. Anker: `"<part>|v:<shape-id>"`.
 | `backend/tools.py` | Werkzeug `word` (Status Beta). |
 | `backend/main.py` | Upload-Gate (`.docx` erlaubt, `.doc`/`.docm`/`.dotx`/`.dotm` mit klarer Meldung abgewiesen), `_handle_pdf_upload(art="docx")`, `_extract_document(art="docx")`, `POST /api/projects/{id}/export/docx`. |
 | `backend/database.py` | Migrationen `images.docx_anker TEXT`, `documents.hinweise TEXT` (JSON, 27.08.). |
-| `backend/billing.py` | Aktion `docx_export` (5 Credits pro Vorgang, nur Bezahl-Konten — gleiche Regel wie `pdf_export`). |
+| `backend/billing.py` | Aktion `docx_export` (25 Credits + 5 je angefangene 10 Bilder, alle Konten — gleiche Regel wie `pdf_export`; Aktionspreise 29.08.2026, siehe docs/GENERIERUNG.md). |
 | `backend/templates/app.html` | Upload-Block für Word, Etiketten „Abschnitt" statt „Seite", Export-Knopf „Als Word (Beta)". |
 | `tests/test_docx_roundtrip.py` | 35 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr, echte Word-Fälle). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung); dazu vier von Microsoft Word erzeugte Dateien aus dem LibreOffice-Testkorpus (`word_textfeld_bild`, `word_vml_bild`, `word_vml_kopfzeile`, `word_einfach`, `word_diagramm`, `word_smartart`, `word_excel_objekt`; MPL-2.0). |
 

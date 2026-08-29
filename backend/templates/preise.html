@@ -11,12 +11,13 @@
    (VoiceOver).
    25.08.2026: auf das oeffentliche Geruest (base_oeffentlich.html)
    umgestellt; jede Stufe ist eine Karte wie in der App. #}
-<p class="dash-sub">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.') }}</p>
+<p class="dash-sub">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.').format(alt=preis_alt, qi=preis_qi, exp=preis_export, bild=preis_export_bild, feld=preis_export_feld, schritt=export_schritt, tab=preis_tabelle) }}</p>
 
 <section class="dash-card" aria-labelledby="free-h">
     <h2 id="free-h">{{ _('Kostenlos starten') }}</h2>
     <ul>
         <li>{{ _('{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig.').format(n=free_credits) }}</li>
+        <li>{{ _('Das reicht für kleine Dokumente; wer größere Formulare oder viele Bilder bearbeitet, braucht ein Abo oder ein Credit-Paket.') }}</li>
         <li>{{ _('Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain.') }}</li>
     </ul>
 </section>

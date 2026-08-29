@@ -58,27 +58,31 @@ ABO_ENFORCEMENT = os.environ.get("ABO_ENFORCEMENT", "off").strip().lower() == "o
 # Neue Werkzeuge bekommen hier eine neue Aktions-Zeile — sonst nichts.
 
 AKTIONS_PREISE = {
-    # Aktion                          Credits
-    "bild_generierung": 1,          # alle Generierungswege
-    "alt_text_aenderung_chatbot": 1,  # Chatbot ersetzt/optimiert einen Alt-Text
-    # Michaels Modell (03.08.2026): "Der Export in PDF 5 Credits." Gezaehlt
-    # wird PRO EXPORT-VORGANG (ein Klick = 5, auch beim Alle-Dokumente-ZIP —
-    # kundenfreundliche Lesart; pro-Dokument waere die strengere, mit Michael
-    # klaeren falls gewuenscht). Free-Konten werden bis zur Wasserzeichen-
-    # Runde (Umbau-Punkt 3) bewusst NICHT verbucht.
-    "pdf_export": 5,            # Grundpreis; tatsaechlich export_preis(anzahl) = 5 + 1 je angefangene 10 (28.08.2026)
-    # Word-Werkzeug (26.08.2026): Export der Word-Datei mit Alt-Texten — gleiche
-    # Regel wie PDF (pro Vorgang, nur Bezahl-Konten).
-    "docx_export": 5,
-    # Quickinfo-Werkzeug (27.08.2026): PDF-Formular mit Quickinfos — gleiche
-    # Regel wie PDF-Export (pro Vorgang, nur Bezahl-Konten). Die CSV-Feldliste
-    # ist kostenlos (kein Schreibvorgang in die PDF).
-    "formular_export": 5,
-    # Quickinfo-Werkzeug Stufe 2 (27.08.2026): KI-Vorschlaege — EIN Aufruf je
-    # Formularseite (reiner Text, ohne Bild), 1 Credit je Seite; Einzel-"Neu
-    # generieren" ebenfalls 1. Endgueltige Preisregel mit Michael (offen).
-    "quickinfo_generierung": 1,
-    "quickinfo_aenderung_chatbot": 1,  # InkluAgent aendert eine Quickinfo (28.08.2026)
+    # AKTIONSPREISE — Michael Karbe (WhatsApp 28.08.2026), von Steve bestaetigt
+    # 29.08.2026, gebaut 29.08.2026. Hintergrund: Am 28.08. wurden alle Credit-
+    # MENGEN mal fuenf gesetzt (Free 50 / Single 250 / Team 500 / Enterprise
+    # 1375), damit der Credit fein genug ist, dass eine Quickinfo (1) guenstiger
+    # sein kann als ein Alt-Text (5). Free-Konten (50 Credits) schaffen damit
+    # kleine Dokumente; ein 26-Felder-Formular (26 + 25 + 3 = 54) braucht ein
+    # Abo oder ein Paket — so von Michael gewollt ("wer ein groesseres Formular
+    # braucht, muss ein Abo abschliessen").
+    #
+    # Aktion                            Credits
+    "bild_generierung": 5,              # Alt-Text je Bild — ALLE Wege (Sammellauf, einzeln, API, Chatbot)
+    "alt_text_aenderung_chatbot": 5,    # InkluAgent ersetzt/optimiert einen Alt-Text (Reden bleibt kostenlos)
+    "quickinfo_generierung": 1,         # Quickinfo je FELD (seit 29.08.2026; vorher je Seite)
+    "quickinfo_aenderung_chatbot": 1,   # InkluAgent aendert eine Quickinfo
+    # Datei-Exporte: GRUNDPREIS je Export-Vorgang. Dazu kommt die Staffel je
+    # angefangene EXPORT_SCHRITT Bilder/Felder aus EXPORT_ARTEN — gerechnet
+    # wird immer ueber export_preis(anzahl, art), nie ueber diese Zahl allein.
+    "pdf_export": 25,
+    "docx_export": 25,
+    "formular_export": 25,
+    # Tabellen-Exporte: fester Preis je Vorgang (seit 29.08.2026 kostenpflichtig,
+    # vorher frei). Die Stammdaten-CSV (eigene Bibliothek, kein Dokument) bleibt frei.
+    "csv_export": 10,
+    "json_export": 10,
+    "formular_csv_export": 10,
 }
 
 # Zusatzpakete (Michaels Preise, bestaetigt 03.08.2026). Reine Konfiguration
@@ -152,20 +156,51 @@ PLAN_SITZE = {
 
 GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export")
 
-# EXPORT-STAFFEL (Michael Karbe, 28.08.2026, fuer Bilder UND Felder gleich):
-# Grundpreis 5 Credits je Export-Vorgang + 1 Credit je ANGEFANGENE 10 Bilder
-# bzw. Felder in der exportierten Datei (beim Alle-Dokumente-ZIP zusammen-
-# gezaehlt, ein Grundpreis). Free-Konten zahlen auch (10 Credits = ein Formular
-# bis 50 Felder). Kein Wasserzeichen mehr; reicht das Guthaben nicht, wird der
-# Export verweigert (export_pruefung). Beide Zahlen hier aendern = ueberall.
-EXPORT_GRUNDPREIS = 5
-EXPORT_STAFFEL = 10
+# EXPORT-STAFFEL (Michael Karbe 28./29.08.2026): Grundpreis je Export-Vorgang
+# (AKTIONS_PREISE) + Staffel je ANGEFANGENE EXPORT_SCHRITT Bilder bzw. Felder
+# der exportierten Datei — PDF und Word 5 Credits je 10 Bilder, Formular-PDF
+# 1 Credit je 10 Felder. Beim Alle-Dokumente-ZIP werden die Elemente aller
+# Dokumente zusammengezaehlt, der Grundpreis faellt einmal an. Gilt fuer alle
+# Konten (auch Free); reicht das Guthaben nicht, wird der Export verweigert
+# (export_pruefung -> 402, kein Wasserzeichen). Tabellen-Exporte (CSV/JSON)
+# kosten den festen Preis aus AKTIONS_PREISE ohne Staffel (TABELLEN_EXPORTE).
+# Beispiele: PDF 1 Bild = 30, 26 Bilder = 40, 100 Bilder = 75;
+#            Formular 1 Feld = 26, 26 Felder = 28, 50 Felder = 30.
+EXPORT_ARTEN = {
+    # art        (Aktion in AKTIONS_PREISE/usage_events, Credits je angefangene EXPORT_SCHRITT Elemente)
+    "pdf":      ("pdf_export", 5),
+    "docx":     ("docx_export", 5),
+    "formular": ("formular_export", 1),
+}
+EXPORT_SCHRITT = 10
+TABELLEN_EXPORTE = {"csv": "csv_export", "json": "json_export", "formular_csv": "formular_csv_export"}
 
 
-def export_preis(anzahl: int) -> int:
-    """Credits fuer einen Export mit `anzahl` Bildern/Feldern (5 + 1 je angefangene 10)."""
+def export_aktion(art: str) -> str:
+    """Name der Aktion (usage_events.aktion) fuer eine Export-Art."""
+    return EXPORT_ARTEN[art][0]
+
+
+def export_preis(anzahl: int, art: str = "pdf") -> int:
+    """Credits fuer einen Datei-Export mit `anzahl` Bildern/Feldern:
+    Grundpreis der Art + Staffel je angefangene EXPORT_SCHRITT Elemente."""
+    aktion, staffel = EXPORT_ARTEN[art]
     anzahl = max(0, int(anzahl or 0))
-    return EXPORT_GRUNDPREIS + (-(-anzahl // EXPORT_STAFFEL))
+    return AKTIONS_PREISE[aktion] + staffel * (-(-anzahl // EXPORT_SCHRITT))
+
+
+def aktion_preis(aktion: str, menge: int = 1) -> int:
+    """Credits fuer `menge` Vorgaenge einer Aktion (z. B. 3 Alt-Texte = 15)."""
+    return AKTIONS_PREISE[aktion] * max(0, int(menge or 0))
+
+
+def preise_fuer_frontend() -> dict:
+    """Preisliste fuer die Oberflaeche (window.CREDIT_PREISE) — die Knoepfe
+    „n neu generieren, c Credits“ rechnen damit, statt Zahlen zu raten."""
+    d = dict(AKTIONS_PREISE)
+    d["export_schritt"] = EXPORT_SCHRITT
+    d["export_staffel"] = {art: s for art, (_a, s) in EXPORT_ARTEN.items()}
+    return d
 
 
 def verfuegbare_credits(user_id: int):
@@ -190,14 +225,48 @@ def _ist_admin(user_id: int) -> bool:
         conn.close()
 
 
-def export_pruefung(user_id: int, anzahl: int) -> dict:
-    """Preis + Guthaben + Entscheidung fuer einen Export.
-    {"anzahl", "preis", "verfuegbar" (None = unbegrenzt), "erlaubt", "fehlend"}"""
-    preis = export_preis(anzahl)
+def _pruefung(user_id: int, preis: int) -> dict:
+    """Gemeinsamer Kern: reicht das Guthaben fuer `preis` Credits?
+    {"preis", "verfuegbar" (None = unbegrenzt), "erlaubt", "fehlend"}"""
     verf = verfuegbare_credits(user_id)
     erlaubt = verf is None or verf >= preis
-    return {"anzahl": int(anzahl or 0), "preis": preis, "verfuegbar": verf, "erlaubt": erlaubt,
-            "fehlend": 0 if erlaubt else preis - int(verf or 0)}
+    return {"preis": int(preis), "verfuegbar": verf, "erlaubt": erlaubt,
+            "fehlend": 0 if erlaubt else int(preis) - int(verf or 0)}
+
+
+def export_pruefung(user_id: int, anzahl: int, art: str = "pdf") -> dict:
+    """Preis + Guthaben + Entscheidung fuer einen Datei-Export.
+    {"anzahl", "art", "preis", "verfuegbar" (None = unbegrenzt), "erlaubt", "fehlend"}"""
+    d = _pruefung(user_id, export_preis(anzahl, art))
+    d.update({"anzahl": int(anzahl or 0), "art": art})
+    return d
+
+
+def aktion_pruefung(user_id: int, aktion: str, menge: int = 1) -> dict:
+    """Preis + Guthaben + Entscheidung fuer `menge` Vorgaenge einer Aktion
+    (Alt-Text, Quickinfo, Chat-Aenderung, Tabellen-Export). Die Wache VOR jeder
+    kostenpflichtigen Aktion (Aktionspreise 29.08.2026): erlaubt nur, wenn das
+    Guthaben den vollen Preis deckt — nicht mehr „solange irgendetwas da ist“.
+    {"aktion", "menge", "preis", "verfuegbar", "erlaubt", "fehlend"}"""
+    d = _pruefung(user_id, aktion_preis(aktion, menge))
+    d.update({"aktion": aktion, "menge": int(menge or 0)})
+    return d
+
+
+def credits_fehlen_detail(p: dict, was: str = "Diese Aktion") -> dict:
+    """Einheitlicher 402-Body (code credits_fehlen) fuer alle Werkzeuge; die
+    Oberflaeche zeigt daraus die barrierefreie Meldung (zeigeCreditsMeldung)."""
+    verf = 0 if p.get("verfuegbar") is None else int(p["verfuegbar"])
+    return {"code": "credits_fehlen", "preis": p["preis"], "verfuegbar": p.get("verfuegbar"), "fehlend": p["fehlend"],
+            "text": (f"{was} würde {p['preis']} Credits benötigen, du verfügst derzeit über {verf} Credits. "
+                     "Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben.")}
+
+
+def credits_fehlen_text(p: dict) -> str:
+    """Kurzfassung fuer den InkluAgent (Chat-Antwort statt HTTP-Fehler)."""
+    verf = 0 if p.get("verfuegbar") is None else int(p["verfuegbar"])
+    return (f"Dafür reicht das Guthaben nicht: {p['preis']} Credits nötig, {verf} vorhanden. "
+            "Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits.")
 
 
 def sitze_fuer_plan(plan: str):
@@ -517,7 +586,11 @@ def pakete_rest(konto_id: int) -> int:
 # Kunden zuordnen (Cache-Treffer, mehrere Paesse, unterschiedliche Modelle).
 # Der Wert stammt aus den Monatsrechnungen geteilt durch die Credits und ist
 # per Umgebungsvariable anpassbar, ohne den Code zu aendern.
-KOSTEN_PRO_CREDIT_EUR = float(os.environ.get("KOSTEN_PRO_CREDIT_EUR", "0.06"))
+# 29.08.2026 (Aktionspreise): 0,06 EUR galt fuer "1 Credit = 1 Alt-Text"
+# (real ~0,043 EUR, konservativ). Seit Credits mal fuenf kostet ein Alt-Text
+# 5 Credits, der Satz JE CREDIT ist darum ein Fuenftel: 0,012 EUR. Sonst
+# zeigte der Admin-Report fuenffache KI-Kosten.
+KOSTEN_PRO_CREDIT_EUR = float(os.environ.get("KOSTEN_PRO_CREDIT_EUR", "0.012"))
 
 
 def pruefe_kontingent(user_id: int) -> dict:

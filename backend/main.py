@@ -6080,11 +6080,14 @@ async def _process_project(project_id: int, user_id: int, force: bool = False, d
         # Abo-Etappe-1: Kontingent VOR JEDEM Bild pruefen, nicht nur am Lauf-Start —
         # sonst rutscht eine 500-Bilder-PDF bei Reststand 1 komplett durch.
         # Bei ABO_ENFORCEMENT=off (Zaehl-Phase) ist erlaubt immer True.
-        _kontingent = billing.pruefe_kontingent(user_id)
-        if not _kontingent["erlaubt"]:
+        # Aktionspreise (29.08.2026): erlaubt nur, wenn das Guthaben den vollen
+        # Preis eines Alt-Texts (AKTIONS_PREISE bild_generierung) deckt.
+        _wache = billing.aktion_pruefung(user_id, "bild_generierung")
+        if not _wache["erlaubt"]:
             # Sauber beenden: restliche Bilder bleiben 'pending' und laufen nach
             # Aufstockung ueber einen erneuten Sammellauf weiter.
-            print(f"Sammellauf Projekt {project_id}: Monatskontingent erschoepft nach {processed} Bildern — Rest bleibt pending")
+            print(f"Sammellauf Projekt {project_id}: Guthaben reicht nicht mehr ({_wache['preis']} Credits je Bild, "
+                  f"{_wache['verfuegbar']} vorhanden) nach {processed} Bildern — Rest bleibt pending")
             break
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
@@ -6388,9 +6391,10 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
     data = await request.json()
     # Abo-Etappe-1: Einzel-Neu-Generieren ist eine echte neue KI-Anfrage und
     # unterliegt dem Monatskontingent (greift erst bei ABO_ENFORCEMENT=on).
-    _kontingent = billing.pruefe_kontingent(user["id"])
-    if not _kontingent["erlaubt"]:
-        raise HTTPException(status_code=429, detail="Monatskontingent erreicht. Bitte Credits nachbuchen oder den Plan wechseln (Abo & Verbrauch).")
+    _wache = billing.aktion_pruefung(user["id"], "bild_generierung")
+    if not _wache["erlaubt"]:
+        # Aktionspreise (29.08.2026): 402 + beide Zahlen, die Oberflaeche zeigt die Credits-Meldung.
+        raise HTTPException(status_code=402, detail=billing.credits_fehlen_detail(_wache, "Das Neu-Generieren"))
     image_type = data.get("image_type")  # Optional: foto, diagramm, karte, etc.
     want_long_desc = data.get("long_description", False)
 
@@ -6771,7 +6775,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
 
     # Export-Staffel (Michael 28.08.2026): 5 Credits + 1 je angefangene 10 Bilder, fuer ALLE
     # Konten (Free hat 10 Credits); reicht das Guthaben nicht, kein Export (402 + Zahlen).
-    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units))
+    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units), "pdf")
 
     if document_id is not None or len(units) == 1:
         # Einzelne Datei zurueckgeben (direkter Download, kein ZIP).
@@ -6882,7 +6886,7 @@ DOCX_MEDIA = "application/vnd.openxmlformats-officedocument.wordprocessingml.doc
 async def export_docx(project_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Word-Export: ohne document_id alle Dokumente als ZIP, mit document_id
     nur dieses Dokument als direkter Download. Kostet wie der PDF-Export
-    (billing.AKTIONS_PREISE["docx_export"]), nur fuer Bezahl-Konten."""
+    (billing.export_preis(anzahl, "docx"): Grundpreis + Staffel je angefangene 10 Bilder, alle Konten)."""
     document_id, custom_name = await _read_export_options(request)
     conn = get_db()
     project = conn.execute(
@@ -6900,7 +6904,7 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
 
-    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units))
+    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units), "docx")
 
     if document_id is not None or len(units) == 1:
         unit = units[0]
@@ -7053,6 +7057,10 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
     project = dict(project)
     conn.close()
 
+    # Aktionspreise (29.08.2026): Tabellen-Exporte kosten einen festen Preis (10 Credits);
+    # reicht das Guthaben nicht, 402 mit beiden Zahlen — kein Export.
+    _aktion, _preis = _tabellen_export_vorpruefung(user["id"], fmt)
+
     units = _load_export_units_for_table(project, document_id)
     project_name = project.get("name") or project.get("filename") or "Projekt"
 
@@ -7071,11 +7079,15 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
         unit = units[0]
         data = single(unit)
         base = custom_name or _doc_label(unit["doc"])
-        return StreamingResponse(
+        response = StreamingResponse(
             io.BytesIO(data),
             media_type=media,
-            headers={"Content-Disposition": _content_disposition(f"inkludocs_{base}{suffix}")}
+            headers={"Content-Disposition": _content_disposition(f"inkludocs_{base}{suffix}"),
+                     "X-Export-Credits": str(_preis)}
         )
+        # Antwort zuerst bauen, dann verbuchen (nur erfolgreiche Exporte kosten).
+        billing.verbuche(user["id"], "export", aktion=_aktion, credits=_preis)
+        return response
 
     # Mehrere Dokumente -> ZIP
     zip_base = custom_name or _safe_filename_component(project_name)
@@ -7087,11 +7099,14 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
         for pos, unit in enumerate(units, start=1):
             inner = f"{pos:02d}_{_doc_label(unit['doc'])}{suffix}"
             zf.writestr(inner, single(unit))
-    return FileResponse(
+    response = FileResponse(
         zip_path,
         filename=f"{zip_base}_alle_{fmt}.zip",
         media_type="application/zip",
+        headers={"X-Export-Credits": str(_preis)},
     )
+    billing.verbuche(user["id"], "export", aktion=_aktion, credits=_preis)
+    return response
 
 
 @app.post("/api/projects/{project_id}/export/json")
@@ -7106,16 +7121,33 @@ async def export_csv(project_id: int, request: Request, user: dict = Depends(get
     return await _table_export_dispatch(project_id, request, user, "csv")
 
 
-def _export_vorpruefung(user_id: int, anzahl: int) -> int:
-    """Export-Staffel (28.08.2026): Preis berechnen, Guthaben pruefen; reicht es nicht,
-    402 mit beiden Zahlen (Frontend zeigt die barrierefreie Meldung). Gibt den Preis zurueck."""
-    p = billing.export_pruefung(user_id, anzahl)
+def _export_vorpruefung(user_id: int, anzahl: int, art: str = "pdf") -> int:
+    """Export-Staffel (28./29.08.2026): Preis je Export-Art berechnen (billing.export_preis),
+    Guthaben pruefen; reicht es nicht, 402 mit beiden Zahlen (Frontend zeigt die
+    barrierefreie Meldung). Gibt den Preis zurueck."""
+    p = billing.export_pruefung(user_id, anzahl, art)
     if not p["erlaubt"]:
-        raise HTTPException(status_code=402, detail={
-            "code": "credits_fehlen", "preis": p["preis"], "verfuegbar": p["verfuegbar"], "fehlend": p["fehlend"],
-            "text": (f"Der Export würde {p['preis']} Credits benötigen, du verfügst derzeit über {p['verfuegbar']} Credits. "
-                     "Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben.")})
+        raise HTTPException(status_code=402, detail=billing.credits_fehlen_detail(p, "Der Export"))
     return p["preis"]
+
+
+def _tabellen_export_vorpruefung(user_id: int, fmt: str) -> tuple:
+    """Tabellen-Exporte (CSV/JSON, seit 29.08.2026 kostenpflichtig): fester Preis aus
+    AKTIONS_PREISE, 402 wenn das Guthaben nicht reicht. Liefert (aktion, preis)."""
+    aktion = billing.TABELLEN_EXPORTE[fmt]
+    p = billing.aktion_pruefung(user_id, aktion)
+    if not p["erlaubt"]:
+        raise HTTPException(status_code=402, detail=billing.credits_fehlen_detail(p, "Der Export"))
+    return aktion, p["preis"]
+
+
+def _export_art(project: dict) -> str:
+    """Export-Art eines Projekts fuer die Preisrechnung: formular / docx / pdf."""
+    if (project.get("tool") or "") == "formular":
+        return "formular"
+    if (project.get("project_type") or "") == "docx" or (project.get("tool") or "") == "word":
+        return "docx"
+    return "pdf"
 
 
 @app.post("/api/projects/{project_id}/export/preis")
@@ -7125,19 +7157,22 @@ async def export_preis_endpoint(project_id: int, request: Request, user: dict = 
     anzahl/preis/verfuegbar/erlaubt fuer die Anzeige im Export-Dialog."""
     document_id, _name = await _read_export_options(request)
     conn = get_db()
-    projekt = conn.execute("SELECT id, tool FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
+    projekt = conn.execute("SELECT id, tool, project_type FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
     if not projekt:
         conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    tabelle = "formularfelder" if projekt["tool"] == "formular" else "images"
+    art = _export_art(dict(projekt))
+    tabelle = "formularfelder" if art == "formular" else "images"
     sql = f"SELECT COUNT(*) FROM {tabelle} WHERE project_id = ?"
     args = [project_id]
     if document_id is not None:
         sql += " AND document_id = ?"; args.append(document_id)
     anzahl = conn.execute(sql, args).fetchone()[0]
     conn.close()
-    p = billing.export_pruefung(user["id"], anzahl)
+    p = billing.export_pruefung(user["id"], anzahl, art)
     p["einheit"] = "felder" if tabelle == "formularfelder" else "bilder"
+    # Tabellen-Export (CSV bzw. Formular-CSV) kostet einen festen Preis — fuer die Ansage im Dialog.
+    p["preis_tabelle"] = billing.AKTIONS_PREISE["formular_csv_export" if art == "formular" else "csv_export"]
     return JSONResponse(content=p)
 
 
@@ -7152,7 +7187,7 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
     document_id, _name = await _read_export_options(request)
     conn = get_db()
     projekt = conn.execute(
-        "SELECT id FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+        "SELECT id, tool, project_type FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
     ).fetchone()
     if not projekt:
         conn.close()
@@ -7181,7 +7216,7 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
             fehler += 1
         else:
             offen += 1
-    p = billing.export_pruefung(user["id"], total)
+    p = billing.export_pruefung(user["id"], total, _export_art(dict(projekt)))
     return JSONResponse(content={
         "total": total,
         "beschrieben": beschrieben,
@@ -7190,6 +7225,8 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         "fehler": fehler,
         "offen": offen,
         "preis": p["preis"], "verfuegbar": p["verfuegbar"], "erlaubt": p["erlaubt"],
+        # Tabellen-Exporte (CSV/JSON) kosten einen festen Preis — fuer die Ansage im Dialog.
+        "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],
     })
 
 
@@ -7222,9 +7259,11 @@ async def api_generate_alt_text(request: Request):
 
     # Abo-Etappe-1: API zieht aus DEMSELBEN Credit-Topf wie die App
     # (greift erst bei ABO_ENFORCEMENT=on; maschinenlesbares Fehlerformat folgt in Etappe 4).
-    _kontingent = billing.pruefe_kontingent(api_user["id"])
-    if not _kontingent["erlaubt"]:
-        raise HTTPException(status_code=429, detail="Monatskontingent erreicht. Bitte Credits nachbuchen oder den Plan wechseln.")
+    _wache = billing.aktion_pruefung(api_user["id"], "bild_generierung")
+    if not _wache["erlaubt"]:
+        raise HTTPException(status_code=429, detail=(
+            f"Nicht genügend Credits: ein Alt-Text kostet {_wache['preis']} Credits, verfügbar sind "
+            f"{0 if _wache['verfuegbar'] is None else _wache['verfuegbar']}. Bitte Credits nachbuchen oder den Plan wechseln."))
 
     content_type = request.headers.get("content-type", "")
     context_text = ""
@@ -8182,7 +8221,11 @@ async def shared_projects_page(request: Request):
 async def abo_page(request: Request):
     # Abo & Verbrauch (Etappe 2, 31.07.2026): eigene Unterseite; das
     # Template abo.html liefert der Frontend-Teil dieser Etappe.
-    return _render_protected_template(request, "abo.html")
+    # Kontingente + Aktionspreise aus billing.py (eine Preisquelle, 29.08.2026).
+    return _render_protected_template(
+        request, "abo.html",
+        plan_credits={k: v for k, v in billing.PLAN_KONTINGENTE.items() if k in ("single", "team", "enterprise")},
+        credit_preise=billing.preise_fuer_frontend())
 
 
 @app.get("/team", response_class=HTMLResponse)
@@ -8278,6 +8321,14 @@ async def preise_page(request: Request):
         "enterprise_preis_monat": _eur(billing.PLAN_PREISE_MONATLICH_EUR["enterprise"]),
         "laufzeiten": "3, 6 oder 12",
         "pakete": [(n, _eur(p)) for n, p in sorted(billing.PAKET_PREISE.items())],
+        # Aktionspreise (29.08.2026) — die Saetze auf der Preisseite ziehen mit.
+        "preis_alt": billing.AKTIONS_PREISE["bild_generierung"],
+        "preis_qi": billing.AKTIONS_PREISE["quickinfo_generierung"],
+        "preis_export": billing.AKTIONS_PREISE["pdf_export"],
+        "preis_export_bild": billing.EXPORT_ARTEN["pdf"][1],
+        "preis_export_feld": billing.EXPORT_ARTEN["formular"][1],
+        "export_schritt": billing.EXPORT_SCHRITT,
+        "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],
     })
     return templates.TemplateResponse("preise.html", ctx)
 
@@ -8317,7 +8368,8 @@ async def app_page(request: Request):
     # max_upload_mb: Upload-Limit fuer Hinweis/Fehlertext im Upload-Bereich
     # (eine Quelle, Julia-Feedback 02.07.2026).
     return _render_protected_template(request, "app.html",
-                                      max_upload_mb=MAX_UPLOAD_SIZE // (1024 * 1024))
+                                      max_upload_mb=MAX_UPLOAD_SIZE // (1024 * 1024),
+                                      credit_preise=billing.preise_fuer_frontend())
 
 
 # ============================================================

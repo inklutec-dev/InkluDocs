@@ -215,9 +215,11 @@ def view_field(feld_id: int, project_id: int, user_id: int, ganze_seite: bool = 
             "image_bytes": data}
 
 
-def _kontingent_ok(user_id: int) -> Optional[str]:
-    if not billing.pruefe_kontingent(user_id).get("erlaubt", True):
-        return "Das Monatskontingent dieses Kontos ist aufgebraucht. Unter Einstellungen → Abo & Verbrauch gibt es Zusatz-Credits."
+def _kontingent_ok(user_id: int, aktion: str = "quickinfo_generierung") -> Optional[str]:
+    """Wache auf den Aktionspreis (29.08.2026): None = darf, sonst die Chat-Antwort."""
+    wache = billing.aktion_pruefung(user_id, aktion)
+    if not wache["erlaubt"]:
+        return billing.credits_fehlen_text(wache)
     return None
 
 
@@ -299,7 +301,7 @@ def update_quickinfo(feld_id: int, project_id: int, user_id: int, new_quickinfo:
     (Beleg im Seitentext, Lage, Regeln). Ergebnis 'niedrig' wird NICHT gespeichert (ausser force=true
     nach ausdruecklichem Beharren). quelle 'ki' mit Sicherheit/Beleg — das Badge in der Oberflaeche zeigt
     „KI-Vorschlag, sicher/mittel“. 1 Credit (Aenderungs-Fall)."""
-    fehler = _kontingent_ok(user_id)
+    fehler = _kontingent_ok(user_id, "quickinfo_aenderung_chatbot")
     if fehler:
         return {"ok": False, "error": fehler}
     text = formular_api._sauber(new_quickinfo, formular_api.MAX_QUICKINFO)

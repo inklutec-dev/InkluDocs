@@ -400,7 +400,10 @@
     aktualisiereSumme();
   }
 
-  const PLAN_CREDITS = { single: 50, team: 100, enterprise: 275 };
+  const PLAN_CREDITS = {{ plan_credits|default({'single': 250, 'team': 500, 'enterprise': 1375})|tojson }};
+  const CREDIT_PREISE = {{ credit_preise|default({})|tojson }};
+  const PREIS_ALT = (typeof CREDIT_PREISE.bild_generierung === 'number') ? CREDIT_PREISE.bild_generierung : 5;
+  const PREIS_QI = (typeof CREDIT_PREISE.quickinfo_generierung === 'number') ? CREDIT_PREISE.quickinfo_generierung : 1;
   const PLAN_PLAETZE = { team: 5, enterprise: 25 };
 
   function aktualisiereSumme() {
@@ -414,8 +417,8 @@
     const credits = PLAN_CREDITS[plan];
     const plaetze = PLAN_PLAETZE[plan];
     byId('buchenLeistung').textContent = plaetze
-      ? t('Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung.', { credits: credits, plaetze: plaetze })
-      : t('Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung.', { credits: credits });
+      ? t('Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit.', { credits: credits, plaetze: plaetze, alt: PREIS_ALT, qi: PREIS_QI })
+      : t('Leistung: {credits} Credits pro Monat. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit.', { credits: credits, alt: PREIS_ALT, qi: PREIS_QI });
     // Anschluss-Regel (AGB Ziffer 7): Nach der festen Laufzeit läuft das Abo
     // als Monatsabo zur Treuekondition weiter (Effektivpreis der Laufzeit).
     const treue = PLAN_MONATSPREISE[plan].toFixed(2).replace('.', ',');

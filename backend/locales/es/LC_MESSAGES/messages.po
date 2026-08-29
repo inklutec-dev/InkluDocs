@@ -3053,9 +3053,6 @@ msgstr "Comprar créditos adicionales"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
 
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, eine Quickinfo-Seite 1 Credit, der Export der fertigen Datei 5 Credits plus 1 Credit je angefangene 10 Bilder oder Felder; Tabellen-Exporte (CSV, JSON) sind kostenlos. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "Una moneda para todo: créditos. Un texto alternativo cuesta 1 crédito, una página de descripciones 1 crédito, la exportación del archivo final 5 créditos más 1 crédito por cada 10 imágenes o campos iniciados; las exportaciones de tablas (CSV, JSON) son gratuitas. Todos los precios son finales — según el § 19 UStG no se aplica IVA."
-
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
 
 msgid "Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein."
@@ -3264,12 +3261,6 @@ msgstr "Con la sesión iniciada también es directo: en «Suscripción y consumo
 
 msgid "Deine Bestellung"
 msgstr "Tu pedido"
-
-msgid "Leistung: {credits} Credits pro Monat. Ein Credit entspricht einer Bildbeschreibung."
-msgstr "Servicio: {credits} créditos al mes. Un crédito equivale a una descripción de imagen."
-
-msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Credit entspricht einer Bildbeschreibung."
-msgstr "Servicio: {credits} créditos al mes para hasta {plaetze} personas (incluido tú). Un crédito equivale a una descripción de imagen."
 
 msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
 msgstr "Duración {monate} meses, pago por adelantado. Después la suscripción se renueva automáticamente por {monate} meses salvo cancelación: cancelable en cualquier momento con efecto al final del periodo."
@@ -4686,3 +4677,27 @@ msgstr "Exportar el documento «{name}»"
 
 msgid "Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter."
 msgstr "Has usado los {n} mensajes de chat de hoy. Mañana continúa."
+
+#: Aktionspreise 29.08.2026
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "Una moneda para todo: créditos. Un texto alternativo cuesta {alt} créditos, una descripción de campo {qi} crédito por campo de formulario. Exportar el archivo terminado cuesta {exp} créditos más {bild} créditos por cada {schritt} imágenes iniciadas (PDF, Word) o más {feld} crédito por cada {schritt} campos iniciados (formularios); las exportaciones de tablas (CSV, JSON) cuestan {tab} créditos. Hablar con el InkluAgent es gratis; si cambia un texto alternativo, cuesta {alt} créditos, una descripción de campo {qi} crédito. Todos los precios son finales — según el § 19 UStG no se cobra IVA."
+
+#: Aktionspreise 29.08.2026
+msgid "Das reicht für kleine Dokumente; wer größere Formulare oder viele Bilder bearbeitet, braucht ein Abo oder ein Credit-Paket."
+msgstr "Eso basta para documentos pequeños; quien trabaje con formularios grandes o muchas imágenes necesita una suscripción o un paquete de créditos."
+
+#: Aktionspreise 29.08.2026
+msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
+msgstr "Servicio: {credits} créditos al mes para hasta {plaetze} personas (incluido tú). Un texto alternativo cuesta {alt} créditos, una descripción de campo {qi} crédito."
+
+#: Aktionspreise 29.08.2026
+msgid "Leistung: {credits} Credits pro Monat. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
+msgstr "Servicio: {credits} créditos al mes. Un texto alternativo cuesta {alt} créditos, una descripción de campo {qi} crédito."
+
+#: Aktionspreise 29.08.2026
+msgid "Tabellen-Exporte (CSV, JSON) kosten {p} Credits."
+msgstr "Las exportaciones de tablas (CSV, JSON) cuestan {p} créditos."
+
+#: Aktionspreise 29.08.2026
+msgid "Die Feldliste als CSV kostet {p} Credits."
+msgstr "La lista de campos como CSV cuesta {p} créditos."

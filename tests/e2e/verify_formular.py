@@ -193,9 +193,9 @@ check("Nochmal loeschen -> 404", s == 404, s)
 s, pdf, h = req("POST", f"/api/projects/{pid}/export/formular", {"document_id": doc_id}, raw=True)
 hl = {k.lower(): v for k, v in h.items()}
 check("PDF-Export", s == 200 and pdf[:5] == b"%PDF-" and hl.get("x-export-method") == "formular", (s, hl))
-check("Export-Staffel: 12 Felder = 5 + 2 = 7 Credits (Header)", hl.get("x-export-credits") == "7", hl.get("x-export-credits"))
+check("Export-Staffel (Aktionspreise 29.08.): 12 Felder = 25 + 2 = 27 Credits (Header)", hl.get("x-export-credits") == "27", hl.get("x-export-credits"))
 s, b, _ = req("POST", f"/api/projects/{pid}/export/preis", {})
-check("Preis-Endpunkt: anzahl 12, preis 7, Einheit felder", s == 200 and b.get("anzahl") == 12 and b.get("preis") == 7 and b.get("einheit") == "felder" and "erlaubt" in b, b)
+check("Preis-Endpunkt: anzahl 12, preis 27, Einheit felder, Tabellenpreis 10", s == 200 and b.get("anzahl") == 12 and b.get("preis") == 27 and b.get("einheit") == "felder" and "erlaubt" in b and b.get("preis_tabelle") == 10, b)
 # 7 = vorname (Hand), vorname_2 (Stammdaten), email (Original), nachname + nachname_2 (anwenden), geburtsdatum + anrede (Import)
 check("Export: 7 Quickinfos geschrieben, 12 Felder, 5 offen", hl.get("x-export-tagged") == "7" and hl.get("x-export-total") == "12" and hl.get("x-export-open") == "5", hl)
 if hl.get("x-export-writer") == "pymupdf":
@@ -204,10 +204,11 @@ else:
     check("Export ueber PDFix (Lizenz): kein Trial-Vermerk", hl.get("x-export-writer") == "pdfix" and b"Trial version" not in pdf, hl.get("x-export-writer"))
 s, csvb, h = req("POST", f"/api/projects/{pid}/export/formular_csv", {}, raw=True)
 check("CSV-Export (ohne Werte, mit Quickinfos)", s == 200 and b"Vorname des Kontoinhabers" in csvb and b"K-0000" not in csvb, s)
+check("CSV-Export kostet 10 Credits (Header, Aktionspreise 29.08.)", {k.lower(): v for k, v in h.items()}.get("x-export-credits") == "10", h)
 s, b, _ = req("POST", f"/api/projects/{pid}/export/docx", {})
 check("Word-Export auf Formular-Projekt -> 400", s == 400, s)
 
-# G. Stufe 2: KI-Vorschlaege (echte Bedrock-Aufrufe, ~2 Seiten = 2 Credits)
+# G. Stufe 2: KI-Vorschlaege (echte Bedrock-Aufrufe; 1 Credit je geschriebenem Feld)
 # KI-Fach (28.08.2026): nachname traegt einen Stammdaten-Text -> Generieren ersetzt ihn NICHT, Vorschlag geht ins Fach
 s, b, _ = req("POST", f"/api/felder/{by['nachname']['id']}/generieren")
 check("Einzelfeld generieren (Bedrock) bei Fremdtext: Text bleibt, KI-Vorschlag im Fach", s == 200 and b.get("uebernommen") is False and b.get("quelle") == "stammdaten" and len(b.get("ki_vorschlag", "")) > 3 and b.get("sicherheit") in ("hoch", "mittel", "niedrig"), b)

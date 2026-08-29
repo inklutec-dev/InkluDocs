@@ -386,7 +386,7 @@
             // Knoepfe je Dokument (Michael/Steve 28.08.2026): Alle generieren / n neu generieren + Exportieren nur fuer dieses Dokument.
             + (gast() ? '' : '<span class="doc-actions">'
             +   (docOffen && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + t('Alle generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-                : (docKi.length && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleNeuGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + t('{n} Quickinfos neu generieren, {p} Credits', { n: docKi.length, p: docKiSeiten }) + '<span class="visually-hidden"> ' + vh + '</span></button>' : ''))
+                : (docKi.length && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleNeuGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + t('{n} Quickinfos neu generieren, {p} Credits', { n: docKi.length, p: docKi.length * qiPreis() }) + '<span class="visually-hidden"> ' + vh + '</span></button>' : ''))
             +   (felder.length ? '<button type="button" class="doc-action-btn" onclick="Formular.exportOeffnen(' + docKey + ')">' + t('Exportieren') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
@@ -434,7 +434,7 @@
                 // Stammdaten, Gast bleiben). Keine Rueckfrage: der Knopf nennt fuer den Screenreader Anzahl und Credits.
                 +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>'
                     : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-secondary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ')">'
-                        + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiSeiten }) + '</button>' : ''))
+                        + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiFelder.length * qiPreis() }) + '</button>' : ''))
                 +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + (docs.length > 1 ? t('Ganzes Projekt exportieren') : t('Exportieren')) + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf alle Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
@@ -547,6 +547,11 @@
         // Beim Bearbeiten bewusst NICHT ausblenden, auch wenn der Filter „nur offene" aktiv ist (Fokus bleibt im Feld).
     }
 
+    // Aktionspreise (29.08.2026): Quickinfo kostet je FELD (window.CREDIT_PREISE aus billing.py).
+    function qiPreis() { return (typeof creditPreis === 'function') ? creditPreis('quickinfo_generierung') : 1; }
+    // 402 = Guthaben reicht nicht: dieselbe barrierefreie Meldung wie beim Export.
+    async function creditsAbgefangen(res) { return res.status === 402 && typeof exportCreditsAbgefangen === 'function' && await exportCreditsAbgefangen(res); }
+
     async function generieren(feldId) {
         const btn = document.getElementById('feld_gen_' + feldId);
         const msg = document.getElementById('feld_msg_' + feldId);
@@ -555,6 +560,7 @@
         announce(t('Quickinfo wird generiert …'));
         try {
             const res = await fetch('/api/felder/' + feldId + '/generieren', { method: 'POST' });
+            if (await creditsAbgefangen(res)) { if (msg) msg.textContent = ''; return; }
             const d = await res.json().catch(() => ({}));
             if (!res.ok) { const m = d.detail || t('Generieren fehlgeschlagen.'); if (msg) msg.textContent = m; announce(m); return; }
             const ta = document.getElementById('quickinfo_' + feldId);
@@ -585,6 +591,7 @@
         if (btn) btn.disabled = true;
         try {
             const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(docId ? { document_id: docId } : {}) });
+            if (await creditsAbgefangen(res)) { if (btn) btn.disabled = false; return; }
             const d = await res.json().catch(() => ({}));
             if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) btn.disabled = false; return; }
             if (!d.gestartet) { announce(t('Keine offenen Felder – nichts zu generieren.')); if (btn) btn.disabled = false; return; }
@@ -600,6 +607,7 @@
             const body = { modus: 'ki_neu' };
             if (docId) body.document_id = docId;
             const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (await creditsAbgefangen(res)) { if (btn) btn.disabled = false; return; }
             const d = await res.json().catch(() => ({}));
             if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) btn.disabled = false; return; }
             if (!d.gestartet) { announce(t('Keine KI-Vorschläge vorhanden – nichts zu generieren.')); if (btn) btn.disabled = false; return; }
@@ -740,7 +748,8 @@
             if (!res.ok) return;
             const d = await res.json();
             const basis = el.dataset.basis || el.textContent; el.dataset.basis = basis;
-            el.textContent = basis + ' ' + (typeof exportPreisText === 'function' ? exportPreisText(d.preis, d.verfuegbar) : '');
+            el.textContent = basis + ' ' + (typeof exportPreisText === 'function' ? exportPreisText(d.preis, d.verfuegbar) : '')
+                + (typeof d.preis_tabelle === 'number' ? ' ' + t('Die Feldliste als CSV kostet {p} Credits.', { p: d.preis_tabelle }) : '');
         } catch (e) { /* Preis ist Komfort, kein Blocker */ }
     }
 

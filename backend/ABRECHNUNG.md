@@ -219,3 +219,28 @@ Belehrungs-Fassung 2026-08-24. Rueckabwicklung bleibt vorerst Handarbeit
 
 Tests: verify_treue.py (61 Checks, echte Stripe-Test-API, in
 alle_tests.sh); verify_stripe-Pin auf 18 Preise.
+
+## AKTIONSPREISE (Michael Karbe, bestaetigt 29.08.2026 — gebaut 29.08.2026)
+
+Eine Preisquelle: `billing.AKTIONS_PREISE` (je Vorgang), `billing.EXPORT_ARTEN` +
+`EXPORT_SCHRITT` (Export-Staffel), `billing.TABELLEN_EXPORTE` (feste Preise).
+Werte: Alt-Text 5 (alle Wege inkl. API/Chat), Quickinfo 1 je FELD, Chat-Aenderung
+Alt-Text 5 / Quickinfo 1, Datei-Export 25 + 5 je angefangene 10 Bilder (PDF/Word)
+bzw. + 1 je angefangene 10 Felder (Formular), CSV/JSON/Formular-CSV 10.
+Stammdaten-CSV bleibt frei (eigene Bibliothek). Reden mit dem InkluAgent frei.
+
+Wache: `aktion_pruefung(user, aktion, menge)` / `export_pruefung(user, anzahl, art)`
+— erlaubt nur, wenn `verfuegbare_credits` (Monatsrest + Pakete; None = unbegrenzt
+bei Enterprise/Admin/Enforcement aus) den vollen Preis deckt. Antworten: 402 mit
+`credits_fehlen_detail` (Export, Neu generieren, Formular-Generierung), 429 mit
+Zahlen (Public API), Chat-Text `credits_fehlen_text` (InkluAgent). Sammellaeufe
+pruefen je Bild bzw. je Formularseite (Preis = offene Felder) und lassen den Rest
+offen. Verbucht wird IMMER erst nach erfolgreicher Aktion (Feld-Pass: je
+geschriebenes Feld; Exporte: nach fertiger Antwort, Header `X-Export-Credits`).
+
+Oberflaeche: `window.CREDIT_PREISE` (aus `preise_fuer_frontend()`, app.html) fuer
+die Knoepfe „n … neu generieren, c Credits“; Preisseite und Abo-Seite ziehen die
+Zahlen aus billing.py (Kontext `preis_*`, `plan_credits`). AGB Ziffer 6 nennt die
+Preise als Text — bei Preisaenderung dort UND Rundmail-Text nachziehen.
+Tests: tests/test_billing_export.py (Unit), tests/e2e/verify_formular.py (Header 27
+bei 12 Feldern, CSV 10), /home/claude/verify_*.py (Pins mal fuenf).

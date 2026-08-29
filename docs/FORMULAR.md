@@ -43,7 +43,7 @@ Kurzfassung von WCAG 3.3.2 / 4.1.2 und Matterhorn-Protokoll 28 (PDF/UA):
 | `backend/pdfix_scripts/Formular_Import_Quickinfo.py` | Jörg Heines Import-Skript (Version 1.0.0.1, 19.08.2026), Standard-Schreibweg mit Lizenz (siehe Schreibweg unten). Original: `original_heine/Formulare_Import_03.py`. |
 | `backend/database.py` | Tabellen `formularfelder` und `stammdaten`; DSGVO-Löschung. |
 | `backend/tools.py` | Werkzeug `formular` (Beta). |
-| `backend/billing.py` | Aktion `formular_export` (5 Credits, nur Bezahlkonten). |
+| `backend/billing.py` | Aktion `formular_export` (25 Credits + 1 je angefangene 10 Felder, alle Konten; `formular_csv_export` 10 Credits) — Aktionspreise 29.08.2026, siehe docs/GENERIERUNG.md. |
 | `backend/main.py` | Projektanlage (`project_type` `pdfform`), Upload-Weiche, Router einhängen, Löschen von Projekt/Dokument räumt Felder und Bilddateien mit ab. |
 | `frontend/formular.js` | Projektansicht für Formular-Projekte (eigene Datei, gleiche Form wie die Bild-Ansicht). |
 | `backend/templates/stammdaten.html` | Seite „Meine Stammdaten“ (Route `/stammdaten`, Seitenleiste unter „Meine Prompts“): Liste mit Suche, Anlegen/Bearbeiten/Löschen, CSV-Import/-Export; Muster `prompts.html`. |
@@ -99,9 +99,10 @@ benutzt.
    (Feld → Bibliothek), `POST …/stammdaten-uebernehmen` (Bibliothek → Feld),
    `POST /api/projects/{id}/stammdaten-anwenden`.
 5. **Export**: `POST /api/projects/{id}/export/formular` (einzeln oder ZIP,
-   Kopfzeilen `X-Export-Tagged/Total/Open/Warnings`, 5 Credits bei
-   Bezahlkonten) und `…/export/formular_csv` (Feldliste, kostenlos; Spalten
-   1–5 wie Heines Format).
+   Kopfzeilen `X-Export-Tagged/Total/Open/Warnings/Credits`, 25 Credits + 1 je
+   angefangene 10 Felder, alle Konten) und `…/export/formular_csv` (Feldliste,
+   10 Credits; Spalten 1–5 wie Heines Format). Aktionspreise 29.08.2026, siehe
+   docs/GENERIERUNG.md.
 
 ## Schreibweg und Nachprüfung
 
@@ -209,10 +210,10 @@ offenen Feldern). Alle Zustandswechsel werden über `announce()` angesagt.
   Beschriftung + Feldart + Gruppe → gleicher Wortlaut.
 - **Endpunkte**: `POST /api/projects/{id}/quickinfos/generieren` (Hintergrund,
   nur offene Felder, nie namenlose; Status `processing`, Fortschritt in
-  `GET …/felder` → `generierung`; 1 Credit je Seite, Kontingent je Seite
-  geprüft, Fehler je Seite statt je Projekt; danach Konsistenz-Lauf) und
+  `GET …/felder` → `generierung`; 1 Credit je geschriebenem Feld, Guthaben je
+  Seite (Preis = offene Felder der Seite) geprüft, Fehler je Seite statt je Projekt; danach Konsistenz-Lauf) und
   `POST /api/felder/{id}/generieren` (überschreibt bewusst, Variation,
-  1 Credit). Beim Start werden hängende `processing`-Projekte zurückgesetzt.
+  1 Credit; 402 mit Zahlen, wenn das Guthaben nicht reicht). Beim Start werden hängende `processing`-Projekte zurückgesetzt.
 - **Spalten** `formularfelder.sicherheit`, `beleg`, `ki_hinweise` (JSON);
   `quelle = 'ki'`.
 - **Oberfläche** wie bei den Alt-Texten: „Alle generieren“ (nur Lücken),
@@ -221,8 +222,8 @@ offenen Feldern). Alle Zustandswechsel werden über `announce()` angesagt.
   Eingabefeld, Filter „Nur unsichere KI-Vorschläge“, Fortschritt im Kopf,
   Ansage am Ende; Auswahl „Sprache der Quickinfos“ und „Gespeicherte
   Prompts“ über dieselben Endpunkte wie bei den Alt-Texten.
-- **Abrechnung**: `quickinfo_generierung` 1 Credit je Seite (vorläufig, mit
-  Michael zu klären). Das Tageslimit der Bilder greift nicht.
+- **Abrechnung**: `quickinfo_generierung` 1 Credit je Feld (Michaels
+  Aktionspreise, 29.08.2026). Das Tageslimit der Bilder greift nicht.
 - **Tests**: `tests/test_formular_ki.py` (Nachprüfung, Konsistenz, Builder,
   Kontext ohne Feldwerte – ohne Modell), E2E `verify_formular.py` Abschnitt G
   (echte Generierung auf Staging), Klicktest.
@@ -300,7 +301,7 @@ Rückfrage — die Zahl steht sichtbar im Knopf, Muster wie das einzelne
 „Neu generieren“). Er ruft `POST …/quickinfos/generieren` mit `{"modus": "ki_neu"}`: Der
 Sammellauf fasst zusätzlich alle Felder mit `quelle = ki` an; Texte von Hand,
 aus der PDF, aus Stammdaten oder vom Gast bleiben unberührt
-(`_modus_bedingung`). 1 Credit je betroffener Seite.
+(`_modus_bedingung`). 1 Credit je neu geschriebenem Feld.
 
 ## Redundanz-Regel der Nachprüfung (28.08.2026)
 
