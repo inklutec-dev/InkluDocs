@@ -80,11 +80,22 @@ services:
       # Anstoss des Abo-Tageslaufs von aussen (Cron), 10.08.2026
       - TAGESLAUF_TOKEN=${TAGESLAUF_TOKEN:-}
       - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
+      # Barrierefreie PDF aus Word (29.08.2026): Umwandler-Dienst im Compose-Netz
+      - KONVERTER_URL=http://inkludocs-konverter:8090
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
       - default
       - inklucut_default
+
+  # Umwandler (29.08.2026): LibreOffice + veraPDF, nur im Compose-Netz erreichbar,
+  # kein Port nach aussen, keine Volumes (jeder Lauf raeumt sich selbst auf).
+  inkludocs-konverter:
+    build: ./konverter
+    container_name: inkludocs-konverter-staging
+    restart: unless-stopped
+    networks:
+      - default
 
 volumes:
   inkludocs_staging_data:

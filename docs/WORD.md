@@ -81,7 +81,9 @@ geschrieben. Anker: `"<part>|v:<shape-id>"`.
 | `backend/tools.py` | Werkzeug `word` (Status Beta). |
 | `backend/main.py` | Upload-Gate (`.docx` erlaubt, `.doc`/`.docm`/`.dotx`/`.dotm` mit klarer Meldung abgewiesen), `_handle_pdf_upload(art="docx")`, `_extract_document(art="docx")`, `POST /api/projects/{id}/export/docx`. |
 | `backend/database.py` | Migrationen `images.docx_anker TEXT`, `documents.hinweise TEXT` (JSON, 27.08.). |
-| `backend/billing.py` | Aktion `docx_export` (25 Credits + 5 je angefangene 10 Bilder, alle Konten — gleiche Regel wie `pdf_export`; Aktionspreise 29.08.2026, siehe docs/GENERIERUNG.md). |
+| `backend/billing.py` | Aktion `docx_export` (25 Credits + 5 je angefangene 10 Bilder, alle Konten — gleiche Regel wie `pdf_export`; Aktionspreise 29.08.2026, siehe docs/GENERIERUNG.md). `pdfua_export` gleicher Preis. |
+| `backend/pdfua_export.py` | Barrierefreie PDF aus Word (29.08.2026): Umwandler-Client, Klartext aus dem veraPDF-Bericht, Titel/Sprache in core.xml. |
+| `konverter/` | Eigener Container: LibreOffice Writer (PDF/UA-Filter) + veraPDF (PDF/UA-1), `POST /pdfua`, `GET /health`. Compose-Dienst `inkludocs-konverter`, App erreicht ihn über `KONVERTER_URL`. |
 | `backend/templates/app.html` | Upload-Block für Word, Etiketten „Abschnitt" statt „Seite", Export-Knopf „Als Word (Beta)". |
 | `tests/test_docx_roundtrip.py` | 35 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr, echte Word-Fälle). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung); dazu vier von Microsoft Word erzeugte Dateien aus dem LibreOffice-Testkorpus (`word_textfeld_bild`, `word_vml_bild`, `word_vml_kopfzeile`, `word_einfach`, `word_diagramm`, `word_smartart`, `word_excel_objekt`; MPL-2.0). |
 
@@ -241,3 +243,28 @@ Offen: Öffnungsprobe der exportierten Dateien in Microsoft Word selbst
 
 Regenerieren des Fixtures (Entwicklung, braucht python-docx):
 `python3 tests/fixtures/make_testdoc.py`.
+
+## Barrierefreie PDF aus Word (29.08.2026, Michael/Steve)
+
+Im Export-Dialog des Word-Werkzeugs gibt es den dritten Knopf „In barrierefreie
+PDF umwandeln (Beta)“. Ablauf: Word-Datei mit Alt-Texten bauen (wie „Als Word“),
+Titel und Sprache in `docProps/core.xml` nachtragen, falls leer
+(`pdfua_export.dokumenttitel_setzen`), dann `POST /pdfua` am Umwandler
+(`konverter/app.py`: LibreOffice headless mit `UseTaggedPDF` + `PDFUACompliance`
++ Lesezeichen, eigenes Profil je Lauf, höchstens zwei Läufe parallel,
+Zeitlimit), danach veraPDF gegen PDF/UA-1. Das Ergebnis kommt als JSON
+(`POST /api/projects/{id}/export/pdfua`): `zusammenfassung`, je Dokument
+`pruefung.punkte` mit Bereich (Struktur und Lesereihenfolge, Text und Sprache,
+Bilder und Grafiken, Überschriften, Tabellen …), Status ok/befund und einem
+Satz in Alltagssprache (`pdfua_export.klartext`, Regeln nach ISO 14289-1
+Klausel 7.x zusammengefasst, die häufigsten Einzelregeln übersetzt). Die
+Datei liegt unter `results/<user>/<projekt>/_export/pdfua_<token>.pdf` (ZIP bei
+mehreren Dokumenten) und wird über `GET …/export/pdfua/{token}` geladen
+(Token 24 Hex, nur der Besitzer). Preis `export_preis(anzahl, "pdfua")` =
+25 + 5 je angefangene 10 Bilder, verbucht nach gelungener Umwandlung.
+Ohne `KONVERTER_URL` antwortet der Endpunkt 503 (Prod bekommt den Dienst mit
+dem Rollout). Grenzen: LibreOffice setzt das Layout neu (nicht pixelgleich zu
+Word); Schmuckbilder werden noch nicht als Artefakt markiert (7.1-3 kann
+melden); Klartext ist bisher nur deutsch; Hörprobe und Word-Prüfbericht vor
+der Umwandlung folgen. Tests: `tests/test_pdfua_klartext.py`,
+`tests/e2e/verify_pdfua.py` (Staging).

@@ -644,9 +644,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
                                 ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF (Beta)') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word (Beta)') + '</button>' : ''}
+                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln (Beta)') + '</button>' : ''}
                                 <button class="btn btn-secondary" onclick="closeExportPanel()">${t('Abbrechen')}</button>
                             </div>
                             <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
+                            <div id="pdfuaResult" role="region" aria-label="${t('Ergebnis der Umwandlung')}" aria-live="polite" style="margin-top:0.6rem;"></div>
                         </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
@@ -2566,6 +2568,59 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
+    // ─── Barrierefreie PDF aus Word (29.08.2026): Umwandler + veraPDF, Ergebnis in Klartext ───
+    async function doPdfua(projectId) {
+        const box = document.getElementById('pdfuaResult');
+        const btn = document.getElementById('pdfuaBtn');
+        const input = document.getElementById('exportFilename');
+        const scope = readExportScope();
+        const body = {};
+        if (!scope.all && scope.document_id) body.document_id = scope.document_id;
+        const customName = (input ? input.value.trim() : '');
+        if (customName) body.filename = customName;
+        if (btn) btn.disabled = true;
+        const warte = t('Wird in PDF umgewandelt und geprüft, das dauert einen Moment …');
+        if (box) box.textContent = warte;
+        announce(warte);
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/export/pdfua', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (await exportCreditsAbgefangen(res)) { if (box) box.textContent = ''; return; }
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const m = (d && typeof d.detail === 'string') ? d.detail : t('Die Umwandlung ist fehlgeschlagen.');
+                if (box) box.textContent = m;
+                announce(m);
+                return;
+            }
+            let html = '<p style="margin:0 0 0.4rem;"><strong>' + escHtml(d.zusammenfassung || '') + '</strong></p>';
+            (d.dokumente || []).forEach(dok => {
+                if ((d.dokumente || []).length > 1) html += '<h3 style="font-size:1rem;margin:0.6rem 0 0.2rem;">' + escHtml(dok.dokument) + '</h3>';
+                html += '<ul style="margin:0.2rem 0 0.6rem;padding-left:1.2rem;">'
+                    + (dok.pruefung && dok.pruefung.punkte ? dok.pruefung.punkte : []).map(p =>
+                        '<li>' + escHtml(p.bereich) + ': ' + (p.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + '. ' + escHtml(p.text) + '</li>').join('')
+                    + '</ul>';
+            });
+            html += '<button type="button" class="btn btn-primary" id="pdfuaDownload">' + icon('download') + t('PDF herunterladen') + '</button>';
+            if (box) {
+                box.innerHTML = html;
+                const dl = box.querySelector('#pdfuaDownload');
+                dl.addEventListener('click', () => ladePdfua(projectId, d.token, d.dateiname));
+                dl.focus();
+            }
+            announce(d.zusammenfassung || '');
+        } catch (e) {
+            if (box) box.textContent = t('Verbindungsfehler.');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+    async function ladePdfua(projectId, token, name) {
+        const res = await fetch('/api/projects/' + projectId + '/export/pdfua/' + encodeURIComponent(token));
+        if (!res.ok) { announce(t('Die Datei konnte nicht geladen werden.')); return; }
+        const blob = await res.blob();
+        downloadBlob(blob, name);
+        announce(t('{name} wurde heruntergeladen.', { name: name }));
+    }
     // ─── Aktionspreise (29.08.2026): Preisliste aus billing.py (window.CREDIT_PREISE) ───
     function creditPreis(aktion) {
         const p = window.CREDIT_PREISE || {};

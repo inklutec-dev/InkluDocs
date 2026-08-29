@@ -55,6 +55,8 @@ from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_a
 # WORD-WERKZEUG (26.08.2026): .docx lesen (Bilder + Kontext) und Alt-Texte zurueckschreiben
 from docx_processor import extract_images_from_docx, extract_docx, validiere_docx, DocxFehler
 import docx_export
+import pdfua_export
+import secrets as _secrets
 # QUICKINFO-WERKZEUG (27.08.2026): PDF-Formularfelder lesen/schreiben, eigener Router
 import formular_api
 from formular_processor import validiere_formular, FormularFehler
@@ -6941,6 +6943,110 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
     headers["X-Export-Credits"] = str(_preis)
     billing.verbuche(user["id"], "export", aktion="docx_export", credits=_preis)
     return response
+
+
+# ─── BARRIEREFREIE PDF AUS WORD (29.08.2026, Michael/Steve) ────────────────
+# Word-Datei mit Alt-Texten -> Umwandler-Container (LibreOffice, PDF/UA-Filter)
+# -> veraPDF (PDF/UA-1) -> Klartext. Zwei Schritte, damit der Dialog erst das
+# Ergebnis in Alltagssprache zeigen und dann die Datei anbieten kann:
+#   POST .../export/pdfua          -> JSON {token, dateiname, dokumente[...], zusammenfassung}
+#   GET  .../export/pdfua/{token}  -> die Datei (PDF oder ZIP bei mehreren Dokumenten)
+# Preis wie der Word-Export (billing.export_preis(anzahl, "pdfua")), verbucht
+# erst nach gelungener Umwandlung. Ohne KONVERTER_URL antwortet der Endpunkt 503.
+_PDFUA_TOKEN_RE = re.compile(r"^[a-f0-9]{24}$")
+
+
+@app.post("/api/projects/{project_id}/export/pdfua")
+async def export_pdfua(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    if not pdfua_export.verfuegbar():
+        raise HTTPException(status_code=503, detail="Die Umwandlung in PDF ist auf dieser Instanz nicht eingerichtet.")
+    document_id, custom_name = await _read_export_options(request)
+    conn = get_db()
+    project = conn.execute(
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+    ).fetchone()
+    if not project:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    project = dict(project)
+    conn.close()
+    if project.get("project_type") != "docx":
+        raise HTTPException(status_code=400, detail="Die Umwandlung in PDF ist nur fuer Word-Projekte verfuegbar")
+
+    units = _load_pdf_export_units(project, user["id"], document_id)
+    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
+    os.makedirs(output_dir, exist_ok=True)
+    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units), "pdfua")
+
+    sprache = (project.get("alt_language") or "de")
+    loop = asyncio.get_running_loop()
+    pdfs: list[tuple[str, bytes]] = []
+    ergebnisse: list[dict] = []
+    for pos, unit in enumerate(units, start=1):
+        label = (custom_name if len(units) == 1 and custom_name else None) or _doc_label(unit["doc"])
+        docx_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
+        pdfua_export.dokumenttitel_setzen(docx_path, label, sprache)
+        try:
+            pdf_bytes, bericht = await loop.run_in_executor(
+                None, pdfua_export.konvertiere, docx_path, os.path.basename(docx_path))
+        except pdfua_export.UmwandlungFehlgeschlagen as e:
+            log.error("export_pdfua: %s", e)
+            raise HTTPException(status_code=502, detail=f"Die Umwandlung ist fehlgeschlagen: {e}")
+        pruefung = pdfua_export.klartext(bericht)
+        pdf_name = (f"{pos:02d}_{_safe_filename_component(label)}.pdf" if len(units) > 1
+                    else f"inkludocs_{_safe_filename_component(label)}.pdf")
+        pdfs.append((pdf_name, pdf_bytes))
+        ergebnisse.append({"dokument": label, "bilder": info["total"], "alt_texte": info["tagged"],
+                           "warnungen": info.get("warnings") or [], "pruefung": pruefung,
+                           "zusammenfassung": pdfua_export.zusammenfassung(pruefung)})
+
+    token = _secrets.token_hex(12)
+    if len(pdfs) == 1:
+        dateiname = pdfs[0][0]
+        pfad = os.path.join(output_dir, f"pdfua_{token}.pdf")
+        with open(pfad, "wb") as f:
+            f.write(pdfs[0][1])
+        media = "application/pdf"
+    else:
+        zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
+        dateiname = f"{zip_base}_alle_pdfua.zip"
+        pfad = os.path.join(output_dir, f"pdfua_{token}.zip")
+        with zipfile.ZipFile(pfad, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for name, data in pdfs:
+                zf.writestr(name, data)
+        media = "application/zip"
+    with open(os.path.join(output_dir, f"pdfua_{token}.json"), "w", encoding="utf-8") as f:
+        json.dump({"dateiname": dateiname, "pfad": pfad, "media": media}, f)
+    billing.verbuche(user["id"], "export", aktion="pdfua_export", credits=_preis)
+    bestanden = all(e["pruefung"]["bestanden"] for e in ergebnisse)
+    if len(ergebnisse) == 1:
+        zusammenfassung = ergebnisse[0]["zusammenfassung"]
+    else:
+        n_ok = sum(1 for e in ergebnisse if e["pruefung"]["bestanden"])
+        zusammenfassung = f"{n_ok} von {len(ergebnisse)} Dokumenten haben die Prüfung auf PDF/UA bestanden."
+    return JSONResponse({"ok": True, "token": token, "dateiname": dateiname, "preis": _preis,
+                         "bestanden": bestanden, "zusammenfassung": zusammenfassung, "dokumente": ergebnisse})
+
+
+@app.get("/api/projects/{project_id}/export/pdfua/{token}")
+async def export_pdfua_download(project_id: int, token: str, user: dict = Depends(get_current_user)):
+    if not _PDFUA_TOKEN_RE.match(token or ""):
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+    conn = get_db()
+    project = conn.execute("SELECT id FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
+    conn.close()
+    if not project:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id), "_export")
+    meta_pfad = os.path.join(output_dir, f"pdfua_{token}.json")
+    if not os.path.isfile(meta_pfad):
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+    with open(meta_pfad, encoding="utf-8") as f:
+        meta = json.load(f)
+    pfad = meta.get("pfad") or ""
+    if not os.path.realpath(pfad).startswith(os.path.realpath(output_dir)) or not os.path.isfile(pfad):
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+    return FileResponse(pfad, filename=meta.get("dateiname") or "inkludocs.pdf", media_type=meta.get("media") or "application/pdf")
 
 
 # ─── QUICKINFO-WERKZEUG (27.08.2026): eigener Router, eigene Tabellen ────────

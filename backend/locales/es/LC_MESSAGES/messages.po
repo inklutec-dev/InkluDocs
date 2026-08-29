@@ -4701,3 +4701,31 @@ msgstr "Las exportaciones de tablas (CSV, JSON) cuestan {p} créditos."
 #: Aktionspreise 29.08.2026
 msgid "Die Feldliste als CSV kostet {p} Credits."
 msgstr "La lista de campos como CSV cuesta {p} créditos."
+
+#: Barrierefreie PDF 29.08.2026
+msgid "In barrierefreie PDF umwandeln (Beta)"
+msgstr "Convertir en PDF accesible (beta)"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Ergebnis der Umwandlung"
+msgstr "Resultado de la conversión"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Wird in PDF umgewandelt und geprüft, das dauert einen Moment …"
+msgstr "Convirtiendo a PDF y comprobando, esto tarda un momento …"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Die Umwandlung ist fehlgeschlagen."
+msgstr "La conversión ha fallado."
+
+#: Barrierefreie PDF 29.08.2026
+msgid "in Ordnung"
+msgstr "correcto"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "PDF herunterladen"
+msgstr "Descargar PDF"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Die Datei konnte nicht geladen werden."
+msgstr "No se pudo cargar el archivo."

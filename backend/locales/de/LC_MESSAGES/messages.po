@@ -4704,3 +4704,31 @@ msgstr "Tabellen-Exporte (CSV, JSON) kosten {p} Credits."
 #: Aktionspreise 29.08.2026
 msgid "Die Feldliste als CSV kostet {p} Credits."
 msgstr "Die Feldliste als CSV kostet {p} Credits."
+
+#: Barrierefreie PDF 29.08.2026
+msgid "In barrierefreie PDF umwandeln (Beta)"
+msgstr "In barrierefreie PDF umwandeln (Beta)"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Ergebnis der Umwandlung"
+msgstr "Ergebnis der Umwandlung"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Wird in PDF umgewandelt und geprüft, das dauert einen Moment …"
+msgstr "Wird in PDF umgewandelt und geprüft, das dauert einen Moment …"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Die Umwandlung ist fehlgeschlagen."
+msgstr "Die Umwandlung ist fehlgeschlagen."
+
+#: Barrierefreie PDF 29.08.2026
+msgid "in Ordnung"
+msgstr "in Ordnung"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "PDF herunterladen"
+msgstr "PDF herunterladen"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Die Datei konnte nicht geladen werden."
+msgstr "Die Datei konnte nicht geladen werden."

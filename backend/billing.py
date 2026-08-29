@@ -78,6 +78,7 @@ AKTIONS_PREISE = {
     "pdf_export": 25,
     "docx_export": 25,
     "formular_export": 25,
+    "pdfua_export": 25,     # Word -> barrierefreie PDF (LibreOffice + veraPDF), wie Word-Export (29.08.2026)
     # Tabellen-Exporte: fester Preis je Vorgang (seit 29.08.2026 kostenpflichtig,
     # vorher frei). Die Stammdaten-CSV (eigene Bibliothek, kein Dokument) bleibt frei.
     "csv_export": 10,
@@ -170,6 +171,7 @@ EXPORT_ARTEN = {
     # art        (Aktion in AKTIONS_PREISE/usage_events, Credits je angefangene EXPORT_SCHRITT Elemente)
     "pdf":      ("pdf_export", 5),
     "docx":     ("docx_export", 5),
+    "pdfua":    ("pdfua_export", 5),
     "formular": ("formular_export", 1),
 }
 EXPORT_SCHRITT = 10

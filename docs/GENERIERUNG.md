@@ -48,7 +48,7 @@ Alle Preise stehen an EINER Stelle: `billing.AKTIONS_PREISE` (je Vorgang) und
 - InkluAgent: Reden ist kostenlos; ändert er einen Alt-Text 5 Credits, eine
   Quickinfo 1 Credit.
 - Datei-Export: `billing.export_preis(anzahl, art)` = 25 Credits Grundpreis +
-  5 Credits je angefangene 10 Bilder (PDF, Word) bzw. + 1 Credit je angefangene
+  5 Credits je angefangene 10 Bilder (PDF, Word, barrierefreie PDF aus Word) bzw. + 1 Credit je angefangene
   10 Felder (Formular-PDF). Beim Alle-Dokumente-ZIP werden die Elemente aller
   Dokumente zusammengezählt, der Grundpreis fällt einmal an. Beispiele: PDF mit
   1 Bild = 30, 26 Bilder = 40, 100 Bilder = 75; Formular mit 1 Feld = 26,

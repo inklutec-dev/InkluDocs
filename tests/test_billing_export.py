@@ -30,6 +30,8 @@ class TestAktionspreise(unittest.TestCase):
         self.assertEqual(billing.EXPORT_SCHRITT, 10)
         self.assertEqual(billing.EXPORT_ARTEN["pdf"], ("pdf_export", 5))
         self.assertEqual(billing.EXPORT_ARTEN["docx"], ("docx_export", 5))
+        self.assertEqual(billing.EXPORT_ARTEN["pdfua"], ("pdfua_export", 5))
+        self.assertEqual(billing.export_preis(2, "pdfua"), 30)
         self.assertEqual(billing.EXPORT_ARTEN["formular"], ("formular_export", 1))
         self.assertEqual(billing.TABELLEN_EXPORTE, {"csv": "csv_export", "json": "json_export",
                                                     "formular_csv": "formular_csv_export"})
@@ -77,7 +79,7 @@ class TestExportPreis(unittest.TestCase):
         d = billing.preise_fuer_frontend()
         self.assertEqual(d["bild_generierung"], 5)
         self.assertEqual(d["export_schritt"], 10)
-        self.assertEqual(d["export_staffel"], {"pdf": 5, "docx": 5, "formular": 1})
+        self.assertEqual(d["export_staffel"], {"pdf": 5, "docx": 5, "pdfua": 5, "formular": 1})
 
 
 class TestWache(unittest.TestCase):

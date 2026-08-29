@@ -4392,3 +4392,31 @@ msgstr "Tabeleksporter (CSV, JSON) koster {p} credits."
 #: Aktionspreise 29.08.2026
 msgid "Die Feldliste als CSV kostet {p} Credits."
 msgstr "Feltlisten som CSV koster {p} credits."
+
+#: Barrierefreie PDF 29.08.2026
+msgid "In barrierefreie PDF umwandeln (Beta)"
+msgstr "Konvertér til tilgængelig PDF (beta)"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Ergebnis der Umwandlung"
+msgstr "Resultat af konverteringen"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Wird in PDF umgewandelt und geprüft, das dauert einen Moment …"
+msgstr "Konverterer til PDF og kontrollerer, det tager et øjeblik …"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Die Umwandlung ist fehlgeschlagen."
+msgstr "Konverteringen mislykkedes."
+
+#: Barrierefreie PDF 29.08.2026
+msgid "in Ordnung"
+msgstr "i orden"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "PDF herunterladen"
+msgstr "Download PDF"
+
+#: Barrierefreie PDF 29.08.2026
+msgid "Die Datei konnte nicht geladen werden."
+msgstr "Filen kunne ikke hentes."
