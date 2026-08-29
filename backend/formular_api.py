@@ -99,6 +99,11 @@ class Deps:
     # -> shares-Zeile oder HTTPException(401); guest_session(request, token) -> dict|None.
     require_guest: Callable = None
     guest_session: Callable = None
+    # TAGESLIMIT (29.08.2026, Luecke 3): Wache aus main.py — (user_row) -> None | {"limit","genutzt"};
+    # tageslimit_text(tl) -> str; get_user_by_id(id) -> row (fuer den Hintergrundlauf).
+    tageslimit_wache: Callable = None
+    tageslimit_text: Callable = None
+    get_user_by_id: Callable = None
 
 
 _d: Optional[Deps] = None
@@ -543,6 +548,7 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
     st["seiten_gesamt"] = len(seiten)
     alle_vorschlaege: list = []
     felder_by_id = {f["id"]: _feld_fuer_ki(f) for f in offen}
+    lauf_user = _d.get_user_by_id(user_id) if _d.get_user_by_id else None
     try:
         for (doc_id, page), felder in seiten.items():
             # Aktionspreise (29.08.2026): 1 Credit je FELD — die Seite laeuft nur, wenn das
@@ -552,6 +558,11 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                 st["fehler"].append(
                     f"Guthaben reicht nicht für Seite {page} ({wache['preis']} Credits nötig, "
                     f"{0 if wache['verfuegbar'] is None else wache['verfuegbar']} vorhanden) – Rest bleibt offen.")
+                break
+            # Tageslimit je Seite (Luecke 3, 29.08.2026): jeder Feld-Pass ist ein KI-Aufruf.
+            tl = _d.tageslimit_wache(lauf_user) if (_d.tageslimit_wache and lauf_user) else None
+            if tl:
+                st["fehler"].append(f"Tageslimit erreicht ({tl['limit']} KI-Aufrufe pro Tag) – Rest bleibt offen.")
                 break
             doc = docs.get(doc_id) or {}
             try:
@@ -822,6 +833,10 @@ def build_router(deps: Deps) -> APIRouter:
             wache = _d.billing.aktion_pruefung(user["id"], "quickinfo_generierung")
             if not wache["erlaubt"]:
                 raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Das Generieren"))
+            # Tageslimit (Luecke 3, 29.08.2026): auch Quickinfo-Laeufe zaehlen.
+            tl = _d.tageslimit_wache(user) if _d.tageslimit_wache else None
+            if tl:
+                raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
             sql = "SELECT COUNT(*) FROM formularfelder WHERE project_id = ? AND " + _modus_bedingung(modus) + " AND anker NOT LIKE '#%'"
             args = [project_id]
             if document_id is not None:
@@ -853,6 +868,10 @@ def build_router(deps: Deps) -> APIRouter:
             wache = _d.billing.aktion_pruefung(user["id"], "quickinfo_generierung")
             if not wache["erlaubt"]:
                 raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Das Generieren"))
+            # Tageslimit (Luecke 3, 29.08.2026): auch Quickinfo-Laeufe zaehlen.
+            tl = _d.tageslimit_wache(user) if _d.tageslimit_wache else None
+            if tl:
+                raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
             doc = dict(conn.execute("SELECT * FROM documents WHERE id = ?", (feld["document_id"],)).fetchone())
             seite_felder = [dict(r) for r in conn.execute(
                 "SELECT * FROM formularfelder WHERE document_id = ? AND page_number = ? ORDER BY feld_index",

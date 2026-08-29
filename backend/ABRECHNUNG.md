@@ -244,3 +244,13 @@ Zahlen aus billing.py (Kontext `preis_*`, `plan_credits`). AGB Ziffer 6 nennt di
 Preise als Text — bei Preisaenderung dort UND Rundmail-Text nachziehen.
 Tests: tests/test_billing_export.py (Unit), tests/e2e/verify_formular.py (Header 27
 bei 12 Feldern, CSV 10), /home/claude/verify_*.py (Pins mal fuenf).
+
+## TAGESLIMIT (29.08.2026 nachts — drei Luecken geschlossen)
+`main.tageslimit_wache(user_row)` ist DIE Wache (None = darf, sonst {limit, genutzt});
+Admins in der Oberflaeche ausgenommen (Public API weiterhin ohne Ausnahme, eigener
+Zaehler api_usage). Genutzt = max(heute verarbeitete Bilder [alter Zaehler],
+`billing.tagesverbrauch_ki` = heutige usage_events bild_generierung +
+quickinfo_generierung). Eingesetzt: Start UND je Bild im Sammellauf (Luecke 1),
+Einzel-Neu-Generieren (Luecke 2, vorher gar nicht), Formular-Start und je Seite im
+Feld-Pass (Luecke 3, via Deps). Limit: users.api_tageslimit, sonst DAILY_IMAGE_LIMIT
+(Steve 29.08.: Prod = 500 wie Staging). Test: tests/e2e/verify_tageslimit_luecken.py.

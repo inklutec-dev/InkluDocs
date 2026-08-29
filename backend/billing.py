@@ -205,6 +205,27 @@ def preise_fuer_frontend() -> dict:
     return d
 
 
+def tagesverbrauch_ki(user_id: int) -> int:
+    """KI-Aufrufe des Nutzers HEUTE (UTC) aus usage_events: Alt-Text-Generierungen
+    (alle Wege) und Quickinfo-Feld-Paesse — Ereignisse, nicht Credits. Grundlage
+    fuer das Tageslimit (29.08.2026): vorher zaehlte nur, was heute HOCHGELADEN
+    wurde, Neu-Generierungen alter Bilder und Quickinfo-Laeufe gar nicht."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT COUNT(*) FROM usage_events WHERE user_id = ? "
+            "AND aktion IN ('bild_generierung', 'quickinfo_generierung') "
+            "AND date(created_at) = date('now')",
+            (user_id,),
+        ).fetchone()
+        return int(row[0] if row else 0)
+    except Exception:
+        log.exception("tagesverbrauch_ki fehlgeschlagen — 0 angenommen")
+        return 0
+    finally:
+        conn.close()
+
+
 def verfuegbare_credits(user_id: int):
     """Guthaben, das fuer eine kostenpflichtige Aktion zur Verfuegung steht:
     Monats-Rest + Zusatz-Pakete; None = unbegrenzt (Enterprise/Admin/Enforcement aus)."""

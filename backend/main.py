@@ -119,6 +119,34 @@ DAILY_IMAGE_LIMIT = int(os.environ.get("DAILY_IMAGE_LIMIT", "500"))
 DAILY_CHAT_LIMIT = int(os.environ.get("DAILY_CHAT_LIMIT", "100"))
 
 
+def tageslimit_wache(user_row, is_admin=None) -> Optional[dict]:
+    """Tageslimit VOR jeder KI-Aktion (29.08.2026, schliesst drei Luecken):
+    None = darf; sonst {"limit", "genutzt"}. Admins sind in der Oberflaeche
+    ausgenommen (wie bisher beim Start des Sammellaufs). Genutzt = das Maximum aus
+    heute verarbeiteten Bildern (alter Zaehler) und heutigen KI-Aufrufen
+    (billing.tagesverbrauch_ki) — so zaehlen auch Neu-Generierungen alter Bilder
+    und Quickinfo-Laeufe."""
+    if user_row is None:
+        return None
+    uid = int(user_row["id"])
+    # Frische Zeile aus der DB: das Sitzungs-Dict aus get_current_user traegt kein
+    # api_tageslimit (und ein veraltetes is_admin) — die Wache soll den echten Stand sehen.
+    frisch = get_user_by_id(uid) or user_row
+    admin = bool(frisch.get("is_admin")) if is_admin is None else bool(is_admin)
+    if admin:
+        return None
+    limit = effektives_api_tageslimit(frisch)
+    genutzt = max(get_daily_image_count(uid), billing.tagesverbrauch_ki(uid))
+    if genutzt >= limit:
+        return {"limit": limit, "genutzt": genutzt}
+    return None
+
+
+def tageslimit_text(tl: dict) -> str:
+    return (f"Tageslimit erreicht ({tl['limit']} Bilder pro Tag). "
+            "Das Limit wird um Mitternacht (UTC) zurueckgesetzt.")
+
+
 def effektives_api_tageslimit(user_row) -> int:
     """Missbrauchsbremse der Bild-Generierung: Tageslimit pro Konto.
 
@@ -5973,12 +6001,10 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
         document_id = int(_body.get("document_id")) if isinstance(_body, dict) and _body.get("document_id") is not None else None
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail="document_id ungueltig")
-    # Check daily limit (admins are exempt)
-    if not user.get("is_admin"):
-        _tageslimit = effektives_api_tageslimit(user)
-        daily_used = get_daily_image_count(user["id"])
-        if daily_used >= _tageslimit:
-            raise HTTPException(status_code=429, detail=f"Tageslimit erreicht ({_tageslimit} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurueckgesetzt.")
+    # Tageslimit (Admins ausgenommen) — zentrale Wache, seit 29.08.2026 auch je Bild im Lauf
+    _tl = tageslimit_wache(user)
+    if _tl:
+        raise HTTPException(status_code=429, detail=tageslimit_text(_tl))
 
     conn = get_db()
     project = conn.execute(
@@ -6079,6 +6105,7 @@ async def _process_project(project_id: int, user_id: int, force: bool = False, d
     if _up and _up["prompt_text"]:
         user_prompt = _up["prompt_text"]
 
+    _lauf_user = get_user_by_id(user_id)
     for img in images:
         # Abo-Etappe-1: Kontingent VOR JEDEM Bild pruefen, nicht nur am Lauf-Start —
         # sonst rutscht eine 500-Bilder-PDF bei Reststand 1 komplett durch.
@@ -6091,6 +6118,12 @@ async def _process_project(project_id: int, user_id: int, force: bool = False, d
             # Aufstockung ueber einen erneuten Sammellauf weiter.
             print(f"Sammellauf Projekt {project_id}: Guthaben reicht nicht mehr ({_wache['preis']} Credits je Bild, "
                   f"{_wache['verfuegbar']} vorhanden) nach {processed} Bildern — Rest bleibt pending")
+            break
+        # Tageslimit je Bild (Luecke 1, 29.08.2026): vorher nur einmal am Lauf-Start geprueft —
+        # ein 600-Bilder-Projekt lief bei Stand 490 komplett durch. Rest bleibt pending.
+        _tl = tageslimit_wache(_lauf_user)
+        if _tl:
+            print(f"Sammellauf Projekt {project_id}: Tageslimit {_tl['limit']} erreicht nach {processed} Bildern — Rest bleibt pending")
             break
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
@@ -6398,6 +6431,10 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
     if not _wache["erlaubt"]:
         # Aktionspreise (29.08.2026): 402 + beide Zahlen, die Oberflaeche zeigt die Credits-Meldung.
         raise HTTPException(status_code=402, detail=billing.credits_fehlen_detail(_wache, "Das Neu-Generieren"))
+    # Tageslimit (Luecke 2, 29.08.2026): Einzel-Neu-Generieren wurde bisher gar nicht gezaehlt.
+    _tl = tageslimit_wache(user)
+    if _tl:
+        raise HTTPException(status_code=429, detail=tageslimit_text(_tl))
     image_type = data.get("image_type")  # Optional: foto, diagramm, karte, etc.
     want_long_desc = data.get("long_description", False)
 
@@ -7121,6 +7158,9 @@ app.include_router(formular_api.build_router(formular_api.Deps(
     # zum Zeitpunkt des include_router noch nicht existiert.)
     require_guest=lambda request, token: _require_guest(request, token),
     guest_session=get_guest_session,
+    tageslimit_wache=tageslimit_wache,
+    tageslimit_text=tageslimit_text,
+    get_user_by_id=get_user_by_id,
 )))
 
 
