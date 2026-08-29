@@ -385,11 +385,11 @@
             + '</details>'
             // Knoepfe je Dokument (Michael/Steve 28.08.2026): Alle generieren / n neu generieren + Exportieren nur fuer dieses Dokument.
             + (gast() ? '' : '<span class="doc-actions">'
-            +   (docOffen && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + t('Alle generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-                : (docKi.length && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleNeuGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + t('{n} Quickinfos neu generieren, {p} Credits', { n: docKi.length, p: docKi.length * qiPreis() }) + '<span class="visually-hidden"> ' + vh + '</span></button>' : ''))
-            +   (felder.length ? '<button type="button" class="doc-action-btn" onclick="Formular.exportOeffnen(' + docKey + ')">' + t('Exportieren') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
-            +   '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-            +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            +   (docOffen && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + ico('sparkle') + t('Alle generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+                : (docKi.length && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleNeuGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + ico('refresh') + t('{n} Quickinfos neu generieren, {p} Credits', { n: docKi.length, p: docKi.length * qiPreis() }) + '<span class="visually-hidden"> ' + vh + '</span></button>' : ''))
+            +   (felder.length ? '<button type="button" class="doc-action-btn" onclick="Formular.exportOeffnen(' + docKey + ')">' + ico('download') + t('Exportieren') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
+            +   '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</span>') + '</div>';
     }
 
@@ -432,10 +432,10 @@
                 // EIN Knopf (Steve 28.08.2026): „Alle generieren“, solange Felder offen sind (fuellt nur Luecken);
                 // sind alle gefuellt, wird er zu „Alle neu generieren“ (ueberschreibt nur KI-Vorschlaege — Hand, PDF,
                 // Stammdaten, Gast bleiben). Keine Rueckfrage: der Knopf nennt fuer den Screenreader Anzahl und Credits.
-                +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + t('Alle generieren') + '</button>'
+                +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + ico('sparkle') + t('Alle generieren') + '</button>'
                     : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-secondary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ')">'
-                        + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiFelder.length * qiPreis() }) + '</button>' : ''))
-                +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + (docs.length > 1 ? t('Ganzes Projekt exportieren') : t('Exportieren')) + '</button>'
+                        + ico('refresh') + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiFelder.length * qiPreis() }) + '</button>' : ''))
+                +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + ico('download') + (docs.length > 1 ? t('Ganzes Projekt exportieren') : t('Exportieren')) + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf alle Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
                 // Gast-Ansicht (28.08.2026): Einladung wie bei Bild-Projekten — Knopf + Dialog aus app.html.
@@ -547,6 +547,8 @@
         // Beim Bearbeiten bewusst NICHT ausblenden, auch wenn der Filter „nur offene" aktiv ist (Fokus bleibt im Feld).
     }
 
+    // Dekoratives Symbol (Sprite in base_app.html); ohne Helfer schlicht kein Symbol.
+    function ico(name) { return (typeof icon === 'function') ? icon(name) : ''; }
     // Aktionspreise (29.08.2026): Quickinfo kostet je FELD (window.CREDIT_PREISE aus billing.py).
     function qiPreis() { return (typeof creditPreis === 'function') ? creditPreis('quickinfo_generierung') : 1; }
     // 402 = Guthaben reicht nicht: dieselbe barrierefreie Meldung wie beim Export.

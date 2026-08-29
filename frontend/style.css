@@ -564,20 +564,41 @@ input[type="file"] {
     z-index: 1;
 }
 .doc-action-btn {
-    /* WCAG 2.2 AA Zielgroesse: mind. 24x24px Trefferflaeche. */
-    min-height: 28px;
-    padding: 0.25rem 0.7rem;
+    /* Icon-Pille (Steve 29.08.2026): Symbol + Text, WCAG 2.2 AA Zielgroesse (>= 24px)
+       grosszuegig erfuellt; das Symbol ist Dekoration (aria-hidden), der Text der Name. */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 36px;
+    padding: 0.35rem 0.9rem 0.35rem 0.7rem;
     font-size: 0.9rem;
+    font-weight: 600;
     border: 1px solid var(--border, #ccc);
-    border-radius: 6px;
+    border-radius: 999px;
     background: var(--card-bg, #fff);
     color: var(--text, #1a1a1a);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
 }
-.doc-action-btn:hover { background: #f0f0f0; }
+.doc-action-btn:hover {
+    background: #f3f4f6;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+    transform: translateY(-1px);
+}
+.doc-action-btn:active { transform: translateY(0); }
 .doc-action-btn:focus-visible {
-    outline: 2px solid var(--focus, #c75000);
+    outline: 3px solid var(--focus, #c75000);
     outline-offset: 2px;
+}
+.doc-action-btn .ico { width: 1.1em; height: 1.1em; flex: none; color: var(--primary, #1b2a4a); }
+.doc-action-danger .ico { color: #c75000; }
+/* Symbol in den grossen Projekt-Knoepfen (.btn) */
+.btn .ico { width: 1.1em; height: 1.1em; vertical-align: -0.18em; margin-right: 0.45rem; }
+.btn-primary .ico { color: #fff; }
+@media (prefers-reduced-motion: reduce) {
+    .doc-action-btn { transition: none; }
+    .doc-action-btn:hover { transform: none; }
 }
 /* Michael 12.07.2026 (Optik 5): auch das Dokument-Loeschen im Projekt folgt dem
    einheitlichen Loeschen-Muster (weiss, oranger Rahmen + Text). */
