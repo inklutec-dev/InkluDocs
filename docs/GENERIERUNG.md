@@ -124,11 +124,22 @@ Neben „Umbenennen“ und „Löschen“ trägt jedes Dokument (PDF, Word, Form
 zwei weitere Knöpfe: „Alle generieren“, solange das Dokument Lücken hat,
 sonst „n … neu generieren, c Credits“ (nur KI-Texte dieses Dokuments;
 `POST …/generate` bzw. `…/quickinfos/generieren` mit `document_id`), und
-„Exportieren“, das den Export-Dialog für genau dieses Dokument öffnet
+„Herunterladen“, das den Dialog für genau dieses Dokument öffnet
 (Einzeldatei, Preis/Guthaben passend). Eine Auswahlliste gibt es im Dialog
 nicht mehr (Steve 28.08.2026): der Knopf entscheidet. Der Hauptknopf oben
-heißt bei mehreren Dokumenten „Ganzes Projekt exportieren“ und liefert alle
-als ZIP, bei einem Dokument „Exportieren“; die Dialog-Überschrift nennt das
-Ziel („Dokument ‚x.pdf‘ exportieren“ / „Ganzes Projekt exportieren (3
-Dokumente)“). Die Generier-Knöpfe oben gelten weiterhin für das ganze Projekt. Web-Werkzeug:
+heißt bei mehreren Dokumenten „Ganzes Projekt herunterladen“ und liefert alle
+als ZIP, bei einem Dokument „Herunterladen“; die Dialog-Überschrift nennt das
+Ziel („Dokument ‚x.pdf‘ herunterladen“ / „Ganzes Projekt herunterladen (3
+Dokumente)“).
+
+**Beschriftung (Michael Karbe / Steve 30.08.2026):** Der Knopf hieß bis dahin
+„Exportieren“. Umbenannt in „Herunterladen“ — Michaels Begründung: Die
+eigentliche Arbeit, die Alt-Texte, ist vorher schon passiert und steht in der
+Oberfläche; der Knopf holt nur noch die Datei. Deutsch ist die Quellsprache,
+die msgid selbst hat sich also geändert; alle sechs Kataloge sind mitgezogen
+(en/da „Download“, fr „Télécharger“, es „Descargar“, sv „Ladda ner“).
+Rein die Beschriftung: Preise, Ablauf und Endpunkte sind unverändert, der
+Dialog zeigt weiterhin Preis und Guthaben, bevor etwas passiert. Die
+Wortfamilie „Export“ bleibt dort stehen, wo sie den VORGANG benennt
+(„Export-Optionen“, „Dieser Export kostet {p} Credits“, „Wird exportiert…“). Die Generier-Knöpfe oben gelten weiterhin für das ganze Projekt. Web-Werkzeug:
 ein Dokument = die Seite, daher keine Zusatzknöpfe.

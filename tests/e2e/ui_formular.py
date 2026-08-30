@@ -38,13 +38,13 @@ with sync_playwright() as p:
     pg.locator("details.doc-section").first.evaluate("d=>d.open=true"); pg.wait_for_timeout(300)
     check("Hoerprobe-Klappe vorhanden", pg.locator("details.doc-hoerprobe").count() == 1)
     da = pg.locator(".doc-block .doc-actions").first
-    check("Knoepfe je Dokument: Generieren, Exportieren, Umbenennen, Loeschen (Michael 28.08.)", da.locator("button").count() == 4 and "Exportieren" in da.inner_text() and ("Alle generieren" in da.inner_text() or "neu generieren" in da.inner_text()), da.inner_text())
+    check("Knoepfe je Dokument: Generieren, Herunterladen, Umbenennen, Loeschen (Michael 28.08.)", da.locator("button").count() == 4 and "Herunterladen" in da.inner_text() and ("Alle generieren" in da.inner_text() or "neu generieren" in da.inner_text()), da.inner_text())
     check("Icon-Knoepfe (29.08.): 4 dekorative Symbole (aria-hidden, focusable=false), Namen unveraendert",
           da.locator("button svg.ico[aria-hidden='true'][focusable='false']").count() == 4
           and da.locator("button").first.evaluate("b => b.querySelector('svg').getAttribute('aria-hidden') === 'true'")
-          and "svg" not in da.locator("button:has-text('Exportieren')").evaluate("b => b.textContent"), da.inner_html()[:200])
-    da.locator("button:has-text('Exportieren')").click(); pg.wait_for_timeout(600)
-    check("Exportieren am Dokument oeffnet den Dialog", pg.locator("#fExportPanel").evaluate("d=>d.open") is True)
+          and "svg" not in da.locator("button:has-text('Herunterladen')").evaluate("b => b.textContent"), da.inner_html()[:200])
+    da.locator("button:has-text('Herunterladen')").click(); pg.wait_for_timeout(600)
+    check("Herunterladen am Dokument oeffnet den Dialog", pg.locator("#fExportPanel").evaluate("d=>d.open") is True)
     check("Dialog-Ueberschrift nennt das Dokument, keine Auswahlliste (Steve 28.08.)", pg.locator("#fExportHeading").inner_text().startswith("Dokument") and pg.locator("input[name=fExportScope]").count() == 0, pg.locator("#fExportHeading").inner_text())
     pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
     pg.locator("details.doc-hoerprobe").first.evaluate("d=>d.open=true"); pg.wait_for_timeout(200)
@@ -138,7 +138,7 @@ with sync_playwright() as p:
     pg.locator("#fExportOpenBtn").click(); pg.wait_for_timeout(800)
     dlg = pg.locator("#fExportPanel")
     check("Export-Dialog offen (modal)", dlg.evaluate("d=>d.open") is True)
-    check("Hauptknopf: ein Dokument -> Ueberschrift 'Exportieren'", pg.locator("#fExportHeading").inner_text().strip() == "Exportieren", pg.locator("#fExportHeading").inner_text())
+    check("Hauptknopf: ein Dokument -> Ueberschrift 'Herunterladen'", pg.locator("#fExportHeading").inner_text().strip() == "Herunterladen", pg.locator("#fExportHeading").inner_text())
     check("Zusammenfassung nennt Felder", "Feldern" in pg.locator("#fExportSummary").inner_text(), pg.locator("#fExportSummary").inner_text())
     pg.wait_for_timeout(800)
     check("Zusammenfassung nennt den Export-Preis (Credits)", "Credits" in pg.locator("#fExportSummary").inner_text(), pg.locator("#fExportSummary").inner_text())

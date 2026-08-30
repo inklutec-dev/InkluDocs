@@ -663,8 +663,8 @@ msgid "Abschließen &amp; senden"
 msgstr "Finish &amp; send"
 
 #: templates/app.html (Phase E2, 03.07.2026)
-msgid "Exportieren"
-msgstr "Export"
+msgid "Herunterladen"
+msgstr "Download"
 
 #: templates/app.html (Phase E2, 03.07.2026)
 msgid "Export-Optionen"
@@ -4666,14 +4666,14 @@ msgstr "field name {name}"
 msgid "– Dokument „{name}“"
 msgstr "– document “{name}”"
 
-msgid "Ganzes Projekt exportieren"
-msgstr "Export whole project"
+msgid "Ganzes Projekt herunterladen"
+msgstr "Download whole project"
 
-msgid "Ganzes Projekt exportieren ({n} Dokumente)"
-msgstr "Export whole project ({n} documents)"
+msgid "Ganzes Projekt herunterladen ({n} Dokumente)"
+msgstr "Download whole project ({n} documents)"
 
-msgid "Dokument „{name}“ exportieren"
-msgstr "Export document “{name}”"
+msgid "Dokument „{name}“ herunterladen"
+msgstr "Download document “{name}”"
 
 msgid "Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter."
 msgstr "You have used today’s {n} chat messages. It continues tomorrow."

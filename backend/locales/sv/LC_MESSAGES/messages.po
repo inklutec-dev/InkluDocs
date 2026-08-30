@@ -591,8 +591,8 @@ msgstr "Vill du meddela skaparen något mer? (valfritt)"
 msgid "Abschließen &amp; senden"
 msgstr "Slutför &amp; skicka"
 
-msgid "Exportieren"
-msgstr "Exportera"
+msgid "Herunterladen"
+msgstr "Ladda ner"
 
 msgid "Export-Optionen"
 msgstr "Exportalternativ"
@@ -4227,14 +4227,14 @@ msgstr "fältnamn {name}"
 msgid "– Dokument „{name}“"
 msgstr "– dokument ”{name}”"
 
-msgid "Ganzes Projekt exportieren"
-msgstr "Exportera hela projektet"
+msgid "Ganzes Projekt herunterladen"
+msgstr "Ladda ner hela projektet"
 
-msgid "Ganzes Projekt exportieren ({n} Dokumente)"
-msgstr "Exportera hela projektet ({n} dokument)"
+msgid "Ganzes Projekt herunterladen ({n} Dokumente)"
+msgstr "Ladda ner hela projektet ({n} dokument)"
 
-msgid "Dokument „{name}“ exportieren"
-msgstr "Exportera dokumentet ”{name}”"
+msgid "Dokument „{name}“ herunterladen"
+msgstr "Ladda ner dokumentet ”{name}”"
 
 msgid "Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter."
 msgstr "Du har använt dagens {n} chattmeddelanden. Det fortsätter i morgon."

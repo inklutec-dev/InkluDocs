@@ -588,8 +588,8 @@ msgstr "Vil du meddele forfatteren noget mere? (valgfrit)"
 msgid "Abschließen &amp; senden"
 msgstr "Afslut &amp; send"
 
-msgid "Exportieren"
-msgstr "Eksportér"
+msgid "Herunterladen"
+msgstr "Download"
 
 msgid "Export-Optionen"
 msgstr "Eksportindstillinger"
@@ -4357,14 +4357,14 @@ msgstr "feltnavn {name}"
 msgid "– Dokument „{name}“"
 msgstr "– dokument »{name}«"
 
-msgid "Ganzes Projekt exportieren"
-msgstr "Eksportér hele projektet"
+msgid "Ganzes Projekt herunterladen"
+msgstr "Download hele projektet"
 
-msgid "Ganzes Projekt exportieren ({n} Dokumente)"
-msgstr "Eksportér hele projektet ({n} dokumenter)"
+msgid "Ganzes Projekt herunterladen ({n} Dokumente)"
+msgstr "Download hele projektet ({n} dokumenter)"
 
-msgid "Dokument „{name}“ exportieren"
-msgstr "Eksportér dokumentet »{name}«"
+msgid "Dokument „{name}“ herunterladen"
+msgstr "Download dokumentet „{name}“"
 
 msgid "Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter."
 msgstr "Du har brugt dagens {n} chatbeskeder. Det fortsætter i morgen."
