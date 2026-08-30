@@ -43,6 +43,31 @@ def _verapdf_cmd(pdf_path: str) -> list:
             "-f", "ua1", "--format", "json", pdf_path]
 
 
+_VERAPDF_VERSION = None
+
+
+def _verapdf_version() -> str:
+    """Version des Pruefers, einmal ermittelt und gemerkt (Steve/Cody 30.08.2026).
+
+    Steht in /health, damit bei einem strittigen Urteil sofort sichtbar ist, WELCHER
+    Pruefer es gefaellt hat. Auf dem Server liegt ausserdem ein eigenstaendiges veraPDF
+    (Handwerkszeug, andere Version) — massgeblich ist allein das hier im Umwandler.
+    Der Aufruf startet eine JVM, deshalb nur beim ersten Mal."""
+    global _VERAPDF_VERSION
+    if _VERAPDF_VERSION is None:
+        try:
+            launcher = "/opt/verapdf/verapdf"
+            cmd = (["sh", launcher, "--version"] if os.path.exists(launcher)
+                   else ["java", "-cp", "/opt/verapdf/bin/*",
+                         "org.verapdf.apps.GreenfieldCliWrapper", "--version"])
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=60).stdout or ""
+            treffer = re.search(r"veraPDF\s+(\S+)", out)
+            _VERAPDF_VERSION = treffer.group(1) if treffer else "unbekannt"
+        except Exception as e:  # noqa: BLE001
+            _VERAPDF_VERSION = "unbekannt (%s)" % type(e).__name__
+    return _VERAPDF_VERSION
+
+
 def _verapdf(pdf_path: str) -> dict:
     p = subprocess.run(_verapdf_cmd(pdf_path), capture_output=True, text=True, timeout=VERAPDF_TIMEOUT)
     out = p.stdout.strip()
@@ -86,7 +111,8 @@ async def health():
         v = subprocess.run(["soffice", "--version"], capture_output=True, text=True, timeout=30).stdout.strip()
     except Exception as e:  # noqa: BLE001
         v = f"fehlt: {e}"
-    return {"ok": True, "soffice": v, "verapdf": os.path.exists("/opt/verapdf/bin")}
+    return {"ok": True, "soffice": v, "verapdf": os.path.exists("/opt/verapdf/bin"),
+            "verapdf_version": _verapdf_version()}
 
 
 @app.post("/pruefe")

@@ -6032,28 +6032,105 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
             raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
         doc_sql, doc_args = (" AND document_id = ?", [document_id])
     anzahl_ki = 0
+    ki_neu_ids = set()
     if modus == "ki_neu":
-        anzahl_ki = conn.execute(
-            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done' AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
-            [project_id] + doc_args).fetchone()[0]
+        # Die Bilder dieses Laufs NAMENTLICH festhalten (Steve 30.08.2026): nur so kann der
+        # Hintergrundlauf sie bei einem Abbruch wieder auf 'done' stellen. Sie am vorhandenen
+        # Alt-Text zu erkennen greift zu kurz — dekorative Bilder sind zu Recht 'done' und
+        # tragen keinen Text (auf Produktion 870 Stueck in 37 Projekten gezaehlt).
+        ki_neu_ids = {r["id"] for r in conn.execute(
+            "SELECT id FROM images WHERE project_id = ? AND status = 'done' "
+            "AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
+            [project_id] + doc_args).fetchall()}
+        anzahl_ki = len(ki_neu_ids)
         if not anzahl_ki:
             conn.close()
             return {"ok": True, "gestartet": False, "modus": modus, "anzahl": 0}
-        conn.execute("UPDATE images SET status = 'pending' WHERE project_id = ? AND status = 'done' AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
-                     [project_id] + doc_args)
     else:
         anzahl_ki = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending'" + doc_sql,
                                  [project_id] + doc_args).fetchone()[0]
+    # Guthaben pruefen (Steve 30.08.2026), sobald feststeht, dass es ueberhaupt etwas zu tun gibt.
+    # Bewusst NACH Besitz- und Zustandspruefung (sonst 402 statt 404 auf fremde Projekte) und
+    # VOR dem Umschalten auf 'pending': vorher lief der Sammellauf ohne jede Credit-Wache los,
+    # ki_neu setzte fertige Bilder zurueck, der Lauf brach am ersten Bild ab — und sie blieben
+    # als „nicht generiert" stehen, obwohl ihr Alt-Text unveraendert in der Datenbank stand.
+    if anzahl_ki:
+        _guthaben = billing.aktion_pruefung(user["id"], "bild_generierung")
+        if not _guthaben["erlaubt"]:
+            conn.close()
+            raise HTTPException(status_code=402,
+                                detail=billing.credits_fehlen_detail(_guthaben, "Das Generieren"))
+    if ki_neu_ids:
+        conn.execute("UPDATE images SET status = 'pending' WHERE id IN (%s)" % ",".join("?" * len(ki_neu_ids)),
+                     list(ki_neu_ids))
     conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
     conn.commit()
     conn.close()
 
-    asyncio.create_task(_process_project(project_id, user["id"], force=(modus == "ki_neu"), document_id=document_id))
+    asyncio.create_task(_process_project(project_id, user["id"], force=(modus == "ki_neu"),
+                                         document_id=document_id, ki_neu_ids=ki_neu_ids))
     return {"ok": True, "gestartet": True, "modus": modus, "anzahl": anzahl_ki, "document_id": document_id,
             "message": "Alt-Text-Generierung gestartet"}
 
 
-async def _process_project(project_id: int, user_id: int, force: bool = False, document_id: Optional[int] = None):
+def _ki_neu_zurueck(conn, ids: set) -> None:
+    """Stellt im Modus ki_neu stehengebliebene Bilder wieder auf 'done' (Steve 30.08.2026).
+
+    Der Start-Endpunkt setzt fuer „n neu generieren" fertige Bilder auf 'pending', damit der
+    vorhandene Sammellauf sie aufgreift. Bricht der Lauf ab (Guthaben, Tageslimit) oder
+    scheitert ein Bild, wuerden sie als „nicht generiert" stehen bleiben — ihr Alt-Text steht
+    aber unveraendert in der Datenbank. Nur solche Bilder werden zurueckgestellt; echte
+    Luecken (nie generiert, kein Text) bleiben zu Recht 'pending'.
+    Das Zusatz-AND macht den Aufruf gefahrlos und wiederholbar: im Lauf fertig gewordene
+    Bilder stehen auf 'done' und werden nicht angefasst."""
+    if not ids:
+        return
+    marken = ",".join("?" * len(ids))
+    conn.execute("UPDATE images SET status = 'done' WHERE id IN (%s) AND status = 'pending'" % marken,
+                 list(ids))
+    conn.commit()
+
+
+def _notaufraeumen(project_id: int, ki_neu_ids: set) -> None:
+    """Aufraeumen nach einem Lauf, der NICHT auf seinem normalen Weg geendet ist (Steve 30.08.2026).
+
+    Gemeint sind Ausnahmen in der Schleife und vor allem CancelledError — wenn der Container
+    waehrend eines Laufs neu gestartet oder ausgerollt wird. Bisher blieben dann zwei Dinge
+    stehen: die fuer ki_neu umgestellten Bilder auf 'pending' (genau der Fehler, der behoben
+    werden sollte) und das Projekt auf 'processing', was jeden weiteren Versuch mit 409
+    „Verarbeitung laeuft bereits" abweist — ohne Handgriff an der Datenbank kam der Nutzer da
+    nicht mehr heraus (der lifespan raeumt nichts auf). Eigene Verbindung, weil die des Laufs
+    in diesem Moment nicht mehr benutzbar sein muss. Fehler hier duerfen nichts weiterreissen."""
+    try:
+        conn = get_db()
+        try:
+            _ki_neu_zurueck(conn, ki_neu_ids)
+            processed = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
+                                     (project_id,)).fetchone()[0]
+            conn.execute("UPDATE projects SET processed_images = ?, status = 'done', "
+                         "updated_at = datetime('now') WHERE id = ?", (processed, project_id))
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as e:  # noqa: BLE001
+        print(f"Notaufraeumen fuer Projekt {project_id} fehlgeschlagen: {e}")
+
+
+async def _process_project(project_id: int, user_id: int, force: bool = False,
+                           document_id: Optional[int] = None, ki_neu_ids: Optional[set] = None):
+    """Duenner Mantel um den eigentlichen Lauf (Steve 30.08.2026): faengt AUCH den Abbruch von
+    aussen ab (CancelledError beim Container-Neustart) und raeumt auf. Der Fehler wird danach
+    weitergereicht, damit nichts stillschweigend verschwindet."""
+    ki_neu_ids = set(ki_neu_ids or ())
+    try:
+        await _process_project_lauf(project_id, user_id, force, document_id, ki_neu_ids)
+    except BaseException:
+        _notaufraeumen(project_id, ki_neu_ids)
+        raise
+
+
+async def _process_project_lauf(project_id: int, user_id: int, force: bool = False,
+                                document_id: Optional[int] = None, ki_neu_ids: Optional[set] = None):
     """force (28.08.2026, „Alle neu generieren“): Cache je Bild raeumen und force_regenerate
     an die Pipeline geben — sonst kaeme fuer bereits gecachte Bilder der alte Text zurueck.
     document_id (28.08.2026): nur die Bilder EINES Dokuments (Knopf am Dokument)."""
@@ -6069,6 +6146,12 @@ async def _process_project(project_id: int, user_id: int, force: bool = False, d
             "SELECT * FROM images WHERE project_id = ? AND status = 'pending' ORDER BY page_number, image_index",
             (project_id,)
         ).fetchall()
+
+    # ki_neu-Sicherung (Steve 30.08.2026): genau die Bilder, die der Start-Endpunkt fuer diesen
+    # Lauf von 'done' auf 'pending' umgestellt hat. Nur diese duerfen bei Abbruch oder Fehler
+    # zurueck auf 'done' — echte Luecken bleiben zu Recht 'pending'.
+    ki_neu_ids = set(ki_neu_ids or ())
+    fehlversuche = 0
 
     # processed_images zaehlt nur echte Erfolge (Steve 08.06.2026 — siehe
     # auch regenerate_image). Fehler werden separat ueber den Bild-Status
@@ -6117,13 +6200,17 @@ async def _process_project(project_id: int, user_id: int, force: bool = False, d
             # Sauber beenden: restliche Bilder bleiben 'pending' und laufen nach
             # Aufstockung ueber einen erneuten Sammellauf weiter.
             print(f"Sammellauf Projekt {project_id}: Guthaben reicht nicht mehr ({_wache['preis']} Credits je Bild, "
-                  f"{_wache['verfuegbar']} vorhanden) nach {processed} Bildern — Rest bleibt pending")
+                  f"{_wache['verfuegbar']} vorhanden) nach {processed} Bildern — "
+                  f"{'Rest wieder auf done gestellt (ki_neu)' if ki_neu_ids else 'Rest bleibt pending'}")
+            _ki_neu_zurueck(conn, ki_neu_ids)
             break
         # Tageslimit je Bild (Luecke 1, 29.08.2026): vorher nur einmal am Lauf-Start geprueft —
         # ein 600-Bilder-Projekt lief bei Stand 490 komplett durch. Rest bleibt pending.
         _tl = tageslimit_wache(_lauf_user)
         if _tl:
-            print(f"Sammellauf Projekt {project_id}: Tageslimit {_tl['limit']} erreicht nach {processed} Bildern — Rest bleibt pending")
+            print(f"Sammellauf Projekt {project_id}: Tageslimit {_tl['limit']} erreicht nach {processed} Bildern — "
+                  f"{'Rest wieder auf done gestellt (ki_neu)' if ki_neu_ids else 'Rest bleibt pending'}")
+            _ki_neu_zurueck(conn, ki_neu_ids)
             break
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
@@ -6204,8 +6291,20 @@ async def _process_project(project_id: int, user_id: int, force: bool = False, d
             # im Log (print + traceback direkt darueber), der Zustand im
             # Status. Gleiche Bauweise wie Zeile 5749 (Steve, 08.06.2026):
             # "Bild ehrlich als Fehler markieren".
-            conn.execute("UPDATE images SET status = 'error' WHERE id = ?",
-                         (img["id"],))
+            # ki_neu (Steve 30.08.2026): Hier hatte das Bild bereits einen gueltigen Alt-Text —
+            # nur der NEUE Versuch ist gescheitert. Das Bild als Fehler zu zeigen wuerde einen
+            # guten Text verstecken; der Fehlversuch steht im Log direkt darueber. Kein
+            # Widerspruch zur Lehre vom 17.08.2026: dort ging es um Texte, die durch einen
+            # Fehlertext UEBERSCHRIEBEN wurden — hier bleibt der Text unveraendert.
+            if img["id"] in ki_neu_ids:
+                # needs_review = 1 (Pruefbericht 30.08.2026): Ohne Signal saehe ein Lauf ueber
+                # 200 Bilder, bei dem die KI durchgehend ausfaellt, wie ein voller Erfolg aus.
+                # Der alte Text bleibt gueltig, das Bild bleibt fertig — aber es ist markiert.
+                conn.execute("UPDATE images SET status = 'done', needs_review = 1 WHERE id = ?", (img["id"],))
+                fehlversuche += 1
+            else:
+                conn.execute("UPDATE images SET status = 'error' WHERE id = ?",
+                             (img["id"],))
 
         conn.execute(
             "UPDATE projects SET processed_images = ? WHERE id = ?",
@@ -6213,7 +6312,18 @@ async def _process_project(project_id: int, user_id: int, force: bool = False, d
         )
         conn.commit()
 
-    conn.execute("UPDATE projects SET status = 'done', updated_at = datetime('now') WHERE id = ?", (project_id,))
+    if fehlversuche:
+        print(f"Sammellauf Projekt {project_id}: {fehlversuche} Bild(er) im ki_neu-Modus gescheitert — "
+              f"alter Text behalten, zur Pruefung markiert")
+    # Zweiter Halt fuer den geordneten Weg (Abbruch per break). Den ungeordneten Weg — Ausnahme
+    # oder Abbruch von aussen — faengt _notaufraeumen im Mantel ab. Wirkungslos, wenn alles lief.
+    _ki_neu_zurueck(conn, ki_neu_ids)
+    # Zaehler frisch zaehlen statt den mitlaufenden Wert schreiben: zurueckgestellte Bilder
+    # sind wieder 'done' und muessen mitzaehlen, sonst zeigt die Oberflaeche zu wenig an.
+    processed = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
+                             (project_id,)).fetchone()[0]
+    conn.execute("UPDATE projects SET processed_images = ?, status = 'done', "
+                 "updated_at = datetime('now') WHERE id = ?", (processed, project_id))
     conn.commit()
     conn.close()
 

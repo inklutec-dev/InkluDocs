@@ -2490,14 +2490,30 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             alert(t('Tageslimit erreicht ({n} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt.', { n: window._dailyLimit.limit }));
             return;
         }
+        // Beschriftung samt Symbol merken (30.08.2026): Seit der Start-Endpunkt bei fehlendem
+        // Guthaben 402 antwortet, ist der Fehlerfall der Normalfall fuer Konten ohne Credits —
+        // vorher kam auch ohne Guthaben ein 200, und der Zweig war praktisch unerreichbar.
+        // Ohne das Zuruecksetzen bliebe der Knopf dauerhaft auf „Wird gestartet..." und
+        // deaktiviert; ein zweiter Versuch ginge nur ueber einen Seitenneuladen.
+        const btnInhalt = btn ? btn.innerHTML : '';
         if (btn) { btn.disabled = true; btn.textContent = t('Wird gestartet...'); }
         announce(modus === 'ki_neu' ? t('Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert.') : t('Alt-Text-Generierung wird gestartet.'));
         const body = modus === 'ki_neu' ? { modus: 'ki_neu' } : {};
         if (docId) body.document_id = docId;
-        const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (res.ok) { showProject(projectId); }
-        else if (await exportCreditsAbgefangen(res)) { /* Credits-Meldung gezeigt */ }
-        else { const d = await res.json(); announce(t('Fehler: {msg}', { msg: d.detail || '' })); }
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            // Erfolg: showProject() baut die Leiste neu — der Knopf bleibt bis dahin bewusst
+            // gesperrt, sonst oeffnet ein schneller Doppelklick einen zweiten Lauf (409).
+            if (res.ok) { showProject(projectId); return; }
+            if (!(await exportCreditsAbgefangen(res))) {
+                let d = {}; try { d = await res.json(); } catch (e) {}
+                announce(t('Fehler: {msg}', { msg: d.detail || '' }));
+            }
+        } catch (e) {
+            announce(t('Fehler: {msg}', { msg: (e && e.message) ? e.message : String(e) }));
+        }
+        // Nur die Fehlerwege landen hier: Knopf wieder bedienbar, Beschriftung samt Symbol zurueck.
+        if (btn && document.body.contains(btn)) { btn.disabled = false; btn.innerHTML = btnInhalt; }
     }
 
     // ─── Export ──────────────────────────────────────
