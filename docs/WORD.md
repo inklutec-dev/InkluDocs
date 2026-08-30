@@ -84,6 +84,33 @@ geschrieben. Anker: `"<part>|v:<shape-id>"`.
 | `backend/billing.py` | Aktion `docx_export` (25 Credits + 5 je angefangene 10 Bilder, alle Konten — gleiche Regel wie `pdf_export`; Aktionspreise 29.08.2026, siehe docs/GENERIERUNG.md). `pdfua_export` gleicher Preis. |
 | `backend/pdfua_export.py` | Barrierefreie PDF aus Word (29.08.2026): Umwandler-Client, Klartext aus dem veraPDF-Bericht, Titel/Sprache in core.xml. |
 | `konverter/` | Eigener Container: LibreOffice Writer (PDF/UA-Filter) + veraPDF (PDF/UA-1), `POST /pdfua`, `GET /health`. Compose-Dienst `inkludocs-konverter`, App erreicht ihn über `KONVERTER_URL`. |
+
+### Prüfer-Version (30.08.2026)
+
+veraPDF kommt per `COPY --from=` aus dem offiziellen Image und ist auf einen
+**Digest festgenagelt**: `sha256:5ec181f5…` = veraPDF **1.31.163**, gebaut am
+26.08.2026 — genau die Version, mit der die Testdokumente aus Projekt 317
+PDF/UA-1 bestanden haben. Vorher stand dort `:latest`.
+
+Warum: Das veraPDF-Urteil ist die Qualitätsaussage, die wir dem Kunden geben
+(„besteht PDF/UA-1"). Mit `:latest` hätte ein späterer Neubau still eine andere
+Prüfer-Version gezogen, und dasselbe, **unveränderte** Dokument hätte anders
+beurteilt werden können, ohne dass es irgendwo steht.
+
+`GET /health` nennt die Version jetzt mit:
+`{"ok": true, "soffice": "LibreOffice 7.4.7.2 …", "verapdf": true,
+"verapdf_version": "1.31.163"}` — bei einem strittigen Urteil ist damit sofort
+sichtbar, wer es gefällt hat.
+
+**Hochziehen ist Handarbeit und ausdrücklich gewollt:** neuen Digest eintragen,
+Image bauen, die drei Testdokumente aus Projekt 317 durchschicken und die
+Urteile vergleichen. Zwei Dinge dabei wissen: Ein Digest ohne Tag kann auf der
+Registry aufgeräumt werden — dann schlägt der Neubau fehl (laut und sichtbar,
+kein stiller Fehler). Und auf dem Server liegt zusätzlich ein eigenständiges
+veraPDF 1.30.2 (`/opt/verapdf`, `/srv/inklutec/werkzeug/verapdf`) als
+Handwerkszeug — **maßgeblich ist allein das im Umwandler** (Steve 30.08.2026).
+LibreOffice ist 7.4.7.2 aus `debian:bookworm-slim`; ein neuerer Unterbau ist
+eine offene Frage, keine Zusage.
 | `backend/templates/app.html` | Upload-Block für Word, Etiketten „Abschnitt" statt „Seite", Export-Knopf „Als Word (Beta)". |
 | `tests/test_docx_roundtrip.py` | 35 Unit-Tests (Lesen, Schreiben, Byte-Identität, Idempotenz, Abwehr, echte Word-Fälle). Fixture `tests/fixtures/testdokument_inkludocs.docx` (fiktiv), erzeugt von `tests/fixtures/make_testdoc.py` (braucht python-docx, nur Entwicklung); dazu vier von Microsoft Word erzeugte Dateien aus dem LibreOffice-Testkorpus (`word_textfeld_bild`, `word_vml_bild`, `word_vml_kopfzeile`, `word_einfach`, `word_diagramm`, `word_smartart`, `word_excel_objekt`; MPL-2.0). |
 

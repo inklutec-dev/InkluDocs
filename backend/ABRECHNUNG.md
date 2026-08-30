@@ -245,6 +245,17 @@ Preise als Text — bei Preisaenderung dort UND Rundmail-Text nachziehen.
 Tests: tests/test_billing_export.py (Unit), tests/e2e/verify_formular.py (Header 27
 bei 12 Feldern, CSV 10), /home/claude/verify_*.py (Pins mal fuenf).
 
+## SAMMELLAUF-START (30.08.2026)
+Der Start `POST /api/projects/{id}/generate` hatte KEINE Credit-Wache, nur das
+Tageslimit. Jetzt: `billing.aktion_pruefung(user_id, "bild_generierung")` -> 402
+`credits_fehlen_detail`. Reihenfolge im Endpunkt: Tageslimit (429) -> Besitz/
+Zustand (404/409) -> Anzahl ermitteln -> Guthaben (402) -> erst DANN im Modus
+ki_neu auf pending umschalten. Grund: vorher lief der Lauf ohne Wache los,
+schaltete fertige Bilder auf pending und brach am ersten Bild ab; die Bilder
+blieben als "nicht generiert" stehen. Admins und ABO_ENFORCEMENT=off sind
+unberuehrt (verfuegbare_credits liefert None -> erlaubt). Details zum Abbruch:
+docs/GENERIERUNG.md. Test: tests/e2e/verify_ki_neu_abbruch.py.
+
 ## TAGESLIMIT (29.08.2026 nachts — drei Luecken geschlossen)
 `main.tageslimit_wache(user_row)` ist DIE Wache (None = darf, sonst {limit, genutzt});
 Admins in der Oberflaeche ausgenommen (Public API weiterhin ohne Ausnahme, eigener

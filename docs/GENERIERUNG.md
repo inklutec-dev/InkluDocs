@@ -71,6 +71,43 @@ InkluAgent antwortet im Chat mit `credits_fehlen_text`. Der Sammellauf prüft je
 Bild bzw. je Formularseite (Preis = offene Felder der Seite) und lässt den Rest
 offen, wenn das Guthaben nicht mehr reicht.
 
+### Abbruch im Modus „n neu generieren" (30.08.2026)
+
+`ki_neu` schaltet die betroffenen Bilder auf `pending`, damit der vorhandene
+Sammellauf sie aufgreift. `pending` heißt seitdem zweierlei: „nie generiert"
+und „wartet auf einen neuen Lauf". Damit aus dem zweiten bei einem Abbruch
+nicht still das erste wird:
+
+- Der **Start** prüft das Guthaben, **bevor** irgendein Bild umgeschaltet wird,
+  und antwortet mit 402 (`billing.aktion_pruefung`). Er steht nach der
+  Besitzprüfung des Projekts und feuert nur, wenn es etwas zu tun gibt; das
+  Tageslimit greift weiterhin zuerst (429).
+- Die Bilder des Laufs gehen **namentlich** an `_process_project`
+  (`ki_neu_ids`), statt dort am vorhandenen Alt-Text erkannt zu werden. Das
+  Erkennen am Text übersähe dekorative Bilder: die sind zu Recht `done` und
+  tragen keinen Text.
+- Geht das Guthaben oder das Tageslimit **mitten im Lauf** aus, stellt
+  `_ki_neu_zurueck` die noch offenen Bilder wieder auf `done` (nur die
+  übergebenen, nur die noch `pending` sind — idempotent).
+- Bricht der Lauf **von außen** ab (Ausnahme, oder `CancelledError` beim
+  Neustart des Containers), fängt der Mantel `_process_project` das ab und
+  ruft `_notaufraeumen`: zurückstellen, frisch zählen, Projekt auf `done`.
+  Ohne das bliebe das Projekt auf `processing` stehen und jeder weitere
+  Versuch liefe in 409 „Verarbeitung läuft bereits", ohne Ausweg.
+- Scheitert ein **einzelnes Bild** im Modus `ki_neu`, bleiben alter Text und
+  `done` — der Text ist ja gültig, nur der neue Versuch ist gescheitert. Das
+  Bild wird aber `needs_review = 1` gesetzt, und die Zahl der Fehlversuche
+  steht im Log. Ohne dieses Signal sähe ein Lauf über 200 Bilder bei einem
+  KI-Ausfall wie ein voller Erfolg aus.
+- Der Export war von hängengebliebenen Bildern nie betroffen:
+  `_display_alt_text` entscheidet am Text, nicht am Status. Falsch waren
+  Anzeige und Zähler.
+- Offen (bewusst): Ein zurückgestellter Lauf ist von einem vollständigen nicht
+  zu unterscheiden. Ein zweiter Lauf generiert alles erneut und verbucht es
+  erneut. Das lag schon in der Bauweise von `ki_neu`.
+
+Test: `tests/e2e/verify_ki_neu_abbruch.py` (25 Prüfungen, nur Staging).
+
 Vor dem Export zeigt der Dialog Preis und Guthaben
 (`POST /api/projects/{id}/export/preis` bzw. `…/export/summary`, beide liefern
 zusätzlich `preis_tabelle` für den CSV/JSON-Satz). Reicht das Guthaben nicht,
