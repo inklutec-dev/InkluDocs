@@ -6106,34 +6106,10 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
             conn.close()
             raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
         doc_sql, doc_args = (" AND document_id = ?", [document_id])
-    anzahl_ki = 0
-    ki_neu_ids = set()
-    if modus == "ki_neu":
-        # Die Bilder dieses Laufs NAMENTLICH festhalten (Steve 30.08.2026): nur so kann der
-        # Hintergrundlauf sie bei einem Abbruch wieder auf 'done' stellen. Sie am vorhandenen
-        # Alt-Text zu erkennen greift zu kurz — dekorative Bilder sind zu Recht 'done' und
-        # tragen keinen Text (auf Produktion 870 Stueck in 37 Projekten gezaehlt).
-        ki_neu_ids = {r["id"] for r in conn.execute(
-            "SELECT id FROM images WHERE project_id = ? AND status = 'done' "
-            "AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
-            [project_id] + doc_args).fetchall()}
-        # Fortsetzen statt doppelt zahlen (Steve 31.08.2026): Blieb beim letzten Lauf ein
-        # Rest offen (Guthaben, Tageslimit, Container-Neustart), nehmen wir NUR ihn -- sonst
-        # wuerde der Nutzer die bereits frisch generierten Bilder ein zweites Mal bezahlen.
-        # Die Schnittmenge mit den aktuellen Kandidaten haelt das dicht: der Vermerk kann nie
-        # ein Bild erreichen, das jetzt nicht ohnehin an der Reihe waere (anderes Dokument,
-        # inzwischen von Hand bearbeitet, geloescht). Ist der Rest vollstaendig abgearbeitet
-        # oder aelter als KI_NEU_REST_STUNDEN, nimmt der naechste Klick wieder alle.
-        _rest = _ki_neu_rest_lesen(conn, project_id) & ki_neu_ids
-        if _rest:
-            ki_neu_ids = _rest
-        anzahl_ki = len(ki_neu_ids)
-        if not anzahl_ki:
-            conn.close()
-            return {"ok": True, "gestartet": False, "modus": modus, "anzahl": 0}
-    else:
-        anzahl_ki = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending'" + doc_sql,
-                                 [project_id] + doc_args).fetchone()[0]
+    anzahl_ki, ki_neu_ids = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args)
+    if modus == "ki_neu" and not anzahl_ki:
+        conn.close()
+        return {"ok": True, "gestartet": False, "modus": modus, "anzahl": 0}
     # Guthaben pruefen (Steve 30.08.2026), sobald feststeht, dass es ueberhaupt etwas zu tun gibt.
     # Bewusst NACH Besitz- und Zustandspruefung (sonst 402 statt 404 auf fremde Projekte) und
     # VOR dem Umschalten auf 'pending': vorher lief der Sammellauf ohne jede Credit-Wache los,
@@ -6158,6 +6134,86 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
                                          document_id=document_id, ki_neu_ids=ki_neu_ids))
     return {"ok": True, "gestartet": True, "modus": modus, "anzahl": anzahl_ki, "document_id": document_id,
             "message": "Alt-Text-Generierung gestartet"}
+
+
+def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_args: list):
+    """Welche Bilder wuerde ein Lauf anfassen? -> (anzahl, ids)
+
+    EINE Quelle fuer den Start UND fuer die Rueckfrage davor (Michael Karbe,
+    31.08.2026). Getrennte Zaehlungen waeren hier gefaehrlich, weil die Auswahl
+    nicht offensichtlich ist:
+
+    ki_neu  = fertige Bilder ohne Hand-Text. Sie am vorhandenen Alt-Text zu
+              erkennen greift zu kurz — dekorative Bilder sind zu Recht 'done'
+              und tragen keinen Text (auf Produktion 870 Stueck in 37
+              Projekten). Bleibt vom letzten Lauf ein Rest offen (Guthaben,
+              Tageslimit, Container-Neustart), nimmt der naechste Start NUR
+              diesen Rest — sonst wuerden bereits frisch generierte Bilder ein
+              zweites Mal bezahlt. Die Schnittmenge mit den aktuellen
+              Kandidaten haelt das dicht.
+    sonst   = alles, was noch auf 'pending' steht.
+    """
+    if modus == "ki_neu":
+        ids = {r["id"] for r in conn.execute(
+            "SELECT id FROM images WHERE project_id = ? AND status = 'done' "
+            "AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
+            [project_id] + doc_args).fetchall()}
+        rest = _ki_neu_rest_lesen(conn, project_id) & ids
+        if rest:
+            ids = rest
+        return len(ids), ids
+    anzahl = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending'" + doc_sql,
+        [project_id] + doc_args).fetchone()[0]
+    return anzahl, set()
+
+
+@app.post("/api/projects/{project_id}/generate/vorschau")
+async def generate_vorschau(project_id: int, request: Request,
+                            user: dict = Depends(get_current_user)):
+    """Was wuerde ein Lauf anfassen, was kostet er, reicht das Guthaben?
+
+    Grundlage der Rueckfrage vor dem Start. AENDERT NICHTS — nur lesen.
+    Nutzt dieselbe Auswahl wie der Start (_generier_kandidaten), damit im
+    Dialog keine andere Zahl steht als hinterher berechnet wird.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    modus = "ki_neu" if data.get("modus") == "ki_neu" else "luecken"
+    document_id = data.get("document_id")
+
+    conn = get_db()
+    projekt = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?",
+                           (project_id, user["id"])).fetchone()
+    if not projekt:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+
+    doc_sql, doc_args = ("", [])
+    if document_id is not None:
+        try:
+            document_id = int(document_id)
+        except (TypeError, ValueError):
+            conn.close()
+            raise HTTPException(status_code=400, detail="document_id ungueltig")
+        if not conn.execute("SELECT 1 FROM documents WHERE id = ? AND project_id = ?",
+                            (document_id, project_id)).fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+        doc_sql, doc_args = (" AND document_id = ?", [document_id])
+
+    anzahl, _ids = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args)
+    dokumente = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?",
+                             (project_id,)).fetchone()[0]
+    conn.close()
+
+    p = billing.aktion_pruefung(user["id"], "bild_generierung", anzahl)
+    return {"modus": modus, "anzahl": anzahl, "document_id": document_id,
+            "dokumente": dokumente, "preis": p["preis"],
+            "verfuegbar": p["verfuegbar"], "fehlend": p["fehlend"],
+            "erlaubt": bool(anzahl) and p["erlaubt"]}
 
 
 # ---------------------------------------------------------------------------

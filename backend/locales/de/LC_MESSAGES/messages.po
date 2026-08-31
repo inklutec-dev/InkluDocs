@@ -5164,3 +5164,47 @@ msgstr ""
 #. Beta-Hinweis entfernt (Michael Karbe, 31.08.2026)
 msgid "Als PDF"
 msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Alt-Texte generieren"
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Ganzes Projekt"
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Ganzes Projekt, {n} Dokumente"
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Nur dieses Dokument"
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits."
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Du hast {v} Credits."
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Dein Konto hat unbegrenztes Guthaben."
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Hier gibt es nichts zu generieren."
+msgstr ""
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Abgebrochen. Es wurde nichts generiert."
+msgstr ""

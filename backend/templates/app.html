@@ -35,6 +35,19 @@
             <button type="button" class="btn btn-danger" id="docDeleteConfirm">{{ _('Löschen') }}</button>
         </div>
     </dialog>
+    <!-- Rueckfrage vor dem Generieren (Michael Karbe, 31.08.2026): Anzahl, Preis
+         und Guthaben VOR dem Start, mit Weg zurueck. Der Kostensatz haengt als
+         aria-describedby am Dialog, damit er beim Oeffnen mit angesagt wird. -->
+    <dialog id="genConfirmDialog" class="app-dialog"
+            aria-labelledby="genConfirmTitle" aria-describedby="genConfirmBody">
+        <h2 id="genConfirmTitle">{{ _('Alt-Texte generieren') }}</h2>
+        <p id="genConfirmScope" class="dialog-hint"></p>
+        <p id="genConfirmBody"></p>
+        <div class="dialog-actions">
+            <button type="button" autofocus class="btn btn-secondary" id="genConfirmCancel">{{ _('Abbrechen') }}</button>
+            <button type="button" class="btn btn-primary" id="genConfirmOk">{{ _('Generieren') }}</button>
+        </div>
+    </dialog>
     <dialog id="docRenameDialog" class="app-dialog">
         <form id="docRenameForm">
             <h2 id="docRenameTitle">{{ _('Dokument umbenennen') }}</h2>
@@ -610,8 +623,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: project.processed_images, n: project.total_images })}</p>
                 ` : ''}
                 <div class="card-actions">
-                    ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alle Alt-Texte generieren') + '</button>' : ''}
-                    ${!window.GUEST_MODE && project.status !== 'extracted' && project.status !== 'processing' && project.status !== 'extracting' && kiBilder > 0 ? '<button class="btn btn-secondary" id="regenAllBtn" onclick="startGeneration(' + project.id + ', \'ki_neu\')">' + icon('refresh') + t('{n} Alt-Texte neu generieren, {c} Credits', { n: kiBilder, c: kiBilder * creditPreis('bild_generierung') }) + '</button>' : ''}
+                    ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '</button>' : ''}
+                    ${!window.GUEST_MODE && project.status !== 'extracted' && project.status !== 'processing' && project.status !== 'extracting' && kiBilder > 0 ? '<button class="btn btn-secondary" id="regenAllBtn" onclick="startGeneration(' + project.id + ', \'ki_neu\')">' + icon('refresh') + t('Alt-Texte generieren') + '</button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">${t('Prüfung abschließen')}</button>
@@ -642,7 +655,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
-                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${documents.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen')}</button>
+                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${t('Herunterladen')}</button>
                         <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
@@ -946,6 +959,24 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         announce(texte.deleted());
         _moveFocusAfterDocChange();
     }
+
+    // Rueckfrage vor dem Generieren (31.08.2026): Abbrechen schliesst nur,
+    // Generieren startet den gemerkten Auftrag. Escape und Fokusfalle kommen
+    // vom <dialog> selbst.
+    (function () {
+        const dlg = document.getElementById('genConfirmDialog');
+        if (!dlg) return;
+        document.getElementById('genConfirmCancel').addEventListener('click', () => {
+            announce(t('Abgebrochen. Es wurde nichts generiert.'));
+            genConfirmSchliessen();
+        });
+        document.getElementById('genConfirmOk').addEventListener('click', () => {
+            const a = _genAuftrag;
+            genConfirmSchliessen();
+            if (a) generierungAusfuehren(a.projectId, a.modus, a.docId);
+        });
+        dlg.addEventListener('close', () => { _genAuftrag = null; });
+    })();
 
     // Dialog-Buttons einmalig verdrahten. Die <dialog>-Elemente stehen statisch
     // im Body (vor diesem Script), existieren hier also bereits.
@@ -2186,9 +2217,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const vhSuffixDoc = t('– Dokument „{name}“', { name: labelName });
             let docGenBtn = '';
             if (!isWebDoc && !docBusy && docPending > 0) {
-                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'luecken', ${docKey})">${icon('sparkle')}${t('Alle generieren')}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
+                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'luecken', ${docKey})">${t('Alt-Texte generieren')}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
             } else if (!isWebDoc && !docBusy && docKi > 0) {
-                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'ki_neu', ${docKey})">${icon('refresh')}${t('{n} Alt-Texte neu generieren, {c} Credits', { n: docKi, c: docKi * creditPreis('bild_generierung') })}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
+                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'ki_neu', ${docKey})">${t('Alt-Texte generieren')}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
             }
             let innerBlocks;
             let headingText;
@@ -2530,16 +2561,64 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
+    // Rueckfrage vor dem Start (Michael Karbe, 31.08.2026): „dann sollte der
+    // Hinweis auf den Verbrauch erfolgen, damit man auch abbrechen kann. Ich habe
+    // jetzt beim Testen einiges Credits verbraucht, weil ich nicht Abbrechen
+    // konnte." Anzahl und Preis kommen vom Server (/generate/vorschau) und nicht
+    // aus einer eigenen Rechnung im Browser — bei 'ki_neu' nimmt ein Lauf nach
+    // einem Abbruch nur den offenen Rest, das koennte die Seite nicht wissen.
+    let _genAuftrag = null;
+
     async function startGeneration(projectId, modus, docId) {
-        // modus 'ki_neu' (28.08.2026): nur KI-Texte ohne Hand-Text neu, Cache umgangen, Alt-Text-Preis je Bild (window.CREDIT_PREISE).
-        // docId (28.08.2026): nur dieses Dokument (Knopf am Dokument), sonst das ganze Projekt.
-        const btn = document.getElementById(modus === 'ki_neu' ? 'regenAllBtn' : 'generateBtn');
-        // Pre-check daily limit
         if (window._dailyLimit && window._dailyLimit.remaining <= 0) {
             announce(t('Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt.'));
             alert(t('Tageslimit erreicht ({n} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt.', { n: window._dailyLimit.limit }));
             return;
         }
+        let v = null;
+        try {
+            const body = { modus: modus === 'ki_neu' ? 'ki_neu' : 'luecken' };
+            if (docId) body.document_id = docId;
+            const res = await fetch('/api/projects/' + projectId + '/generate/vorschau', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body) });
+            if (res.ok) v = await res.json();
+        } catch (e) { v = null; }
+        // Ohne Vorschau (Netzfehler) nicht blockieren, sondern wie bisher starten.
+        if (!v) { generierungAusfuehren(projectId, modus, docId); return; }
+        if (!v.anzahl) { announce(t('Hier gibt es nichts zu generieren.')); return; }
+
+        const dlg = byId('genConfirmDialog');
+        byId('genConfirmScope').textContent = docId
+            ? t('Nur dieses Dokument')
+            : (v.dokumente > 1 ? t('Ganzes Projekt, {n} Dokumente', { n: v.dokumente }) : t('Ganzes Projekt'));
+        let satz = (modus === 'ki_neu')
+            ? t('{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis })
+            : t('{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+        if (v.verfuegbar === null || v.verfuegbar === undefined) {
+            satz += ' ' + t('Dein Konto hat unbegrenztes Guthaben.');
+        } else if (!v.erlaubt) {
+            satz += ' ' + t('Dein Guthaben reicht nicht: {f} Credits fehlen.', { f: v.fehlend });
+        } else {
+            satz += ' ' + t('Du hast {v} Credits.', { v: v.verfuegbar });
+        }
+        byId('genConfirmBody').textContent = satz;
+        byId('genConfirmOk').disabled = !v.erlaubt;
+        _genAuftrag = { projectId: projectId, modus: modus, docId: docId };
+        dlg.showModal();
+    }
+
+    function genConfirmSchliessen() {
+        const dlg = byId('genConfirmDialog');
+        if (dlg.open) dlg.close();
+        _genAuftrag = null;
+    }
+
+    async function generierungAusfuehren(projectId, modus, docId) {
+        // modus 'ki_neu' (28.08.2026): nur KI-Texte ohne Hand-Text neu, Cache umgangen, Alt-Text-Preis je Bild (window.CREDIT_PREISE).
+        // docId (28.08.2026): nur dieses Dokument (Knopf am Dokument), sonst das ganze Projekt.
+        // Tageslimit wurde schon in startGeneration geprueft.
+        const btn = document.getElementById(modus === 'ki_neu' ? 'regenAllBtn' : 'generateBtn');
         // Beschriftung samt Symbol merken (30.08.2026): Seit der Start-Endpunkt bei fehlendem
         // Guthaben 402 antwortet, ist der Fehlerfall der Normalfall fuer Konten ohne Credits —
         // vorher kam auch ohne Guthaben ein 200, und der Zweig war praktisch unerreichbar.
@@ -2588,7 +2667,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const docs = currentRenderDocs || [];
             const doc = docId ? docs.find(d => d.id === docId) : null;
             head.textContent = doc ? t('Dokument „{name}“ herunterladen', { name: docDisplayName(doc) })
-                : (docs.length > 1 ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: docs.length }) : t('Herunterladen'));
+                : t('Herunterladen');
         }
         if (typeof panel.showModal === 'function') {
             panel.showModal();

@@ -5161,3 +5161,47 @@ msgstr "Total: {summe} € for {monate} months — {rate} € per month."
 #. Beta-Hinweis entfernt (Michael Karbe, 31.08.2026)
 msgid "Als PDF"
 msgstr "As PDF"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Alt-Texte generieren"
+msgstr "Generate alt texts"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Ganzes Projekt"
+msgstr "Whole project"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Ganzes Projekt, {n} Dokumente"
+msgstr "Whole project, {n} documents"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Nur dieses Dokument"
+msgstr "This document only"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits."
+msgstr "{n} images have no description yet and will now be described. That costs {c} credits."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
+msgstr "{n} texts created by the AI will be created again. Your own texts stay unchanged. That costs {c} credits."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Du hast {v} Credits."
+msgstr "You have {v} credits."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
+msgstr "Your credit is not enough: {f} credits are missing."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Dein Konto hat unbegrenztes Guthaben."
+msgstr "Your account has unlimited credit."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Hier gibt es nichts zu generieren."
+msgstr "There is nothing to generate here."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Abgebrochen. Es wurde nichts generiert."
+msgstr "Cancelled. Nothing was generated."

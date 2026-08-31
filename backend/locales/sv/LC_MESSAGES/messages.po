@@ -4722,3 +4722,47 @@ msgstr "Totalpris: {summe} € för {monate} månader — {rate} € per månad.
 #. Beta-Hinweis entfernt (Michael Karbe, 31.08.2026)
 msgid "Als PDF"
 msgstr "Som PDF"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Alt-Texte generieren"
+msgstr "Generera alt-texter"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Ganzes Projekt"
+msgstr "Hela projektet"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Ganzes Projekt, {n} Dokumente"
+msgstr "Hela projektet, {n} dokument"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Nur dieses Dokument"
+msgstr "Endast detta dokument"
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits."
+msgstr "{n} bilder har ännu ingen beskrivning och beskrivs nu. Det kostar {c} credits."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
+msgstr "{n} texter som AI:n skapat genereras på nytt. Dina egna texter förblir oförändrade. Det kostar {c} credits."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Du hast {v} Credits."
+msgstr "Du har {v} credits."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
+msgstr "Ditt saldo räcker inte: {f} credits saknas."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Dein Konto hat unbegrenztes Guthaben."
+msgstr "Ditt konto har obegränsat saldo."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Hier gibt es nichts zu generieren."
+msgstr "Det finns inget att generera här."
+
+#. Rueckfrage vor dem Generieren (31.08.2026)
+msgid "Abgebrochen. Es wurde nichts generiert."
+msgstr "Avbrutet. Inget genererades."
