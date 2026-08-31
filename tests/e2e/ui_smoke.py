@@ -82,6 +82,19 @@ with sync_playwright() as p:
     page.wait_for_url("**/dashboard", timeout=20000)
     print("Angemeldet an %s" % BASE)
 
+    # Die Benutzerverwaltung ist Admins vorbehalten. Meldet sich der Test mit
+    # einem normalen Konto an, antwortet /api/admin/* korrekt mit 403 — das ist
+    # richtiges Verhalten, kein Befund. Also nur pruefen, wenn das Konto Admin ist.
+    ist_admin = page.evaluate("""async () => {
+        const r = await fetch('/api/me');
+        if (!r.ok) return false;
+        const d = await r.json();
+        return !!(d.is_admin || (d.user && d.user.is_admin));
+    }""")
+    if not ist_admin:
+        SEITEN[:] = [(p, n) for p, n in SEITEN if p != "/benutzer"]
+        print("Konto ist kein Admin — Benutzerverwaltung uebersprungen")
+
     # /app ohne Projekt leitet planmaessig aufs Dashboard. Die Projektansicht ist
     # aber die wichtigste Seite der App — deshalb mit einem echten Projekt pruefen.
     projekte = page.evaluate("""async () => {
