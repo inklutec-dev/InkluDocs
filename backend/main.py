@@ -576,7 +576,14 @@ async def login(request: Request):
         "display_name": user["display_name"],
         "is_admin": user["is_admin"],
     })
-    response.set_cookie("token", token, httponly=True, secure=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
+    # SameSite=Lax statt Strict (31.08.2026): Bei Strict schickt der Browser
+    # dieses Cookie NICHT mit, wenn man von einer fremden Seite kommt. Nach der
+    # Stripe-Zahlung fuehrt der Rueckweg auf /abo?zahlung=erfolg — der Server sah
+    # einen Gast und leitete auf die Anmeldung um, direkt nach der Zahlung.
+    # Dasselbe galt fuer jeden Link aus unseren E-Mails in die App. Lax laesst den
+    # normalen Seitenaufruf von aussen zu und blockt weiterhin fremde
+    # Formular-Absendungen und eingebettete Aufrufe.
+    response.set_cookie("token", token, httponly=True, secure=True, samesite="lax", max_age=TOKEN_EXPIRE_HOURS * 3600)
     return response
 
 
@@ -2296,6 +2303,100 @@ def _stripe_kuendigung_sync(db_user: dict, kuendigen: bool) -> None:
                                    "hinterlegt werden. Bitte in ein paar Minuten erneut versuchen")
 
 
+def _widerruf_bestaetigen(db_user: dict) -> None:
+    """Kurze Bestaetigung, dass eine Kuendigung zurueckgenommen wurde.
+
+    Gegenstueck zu _kuendigung_bestaetigen: Wer die Kuendigung widerruft, soll
+    das ebenfalls schriftlich haben — sonst widerspricht die letzte Mail im
+    Postfach dem tatsaechlichen Vertragsstand. Wirft nicht.
+    """
+    bis = (db_user.get("plan_gueltig_bis") or "")[:10]
+    mail = db_user.get("email") or ""
+    name = db_user.get("display_name") or ""
+    saetze = [f"Hallo {html.escape(name) or 'zusammen'},",
+              "du hast deine Kündigung zurückgenommen — am "
+              f"{_datum_lang(datetime.now().strftime('%Y-%m-%d'))} um "
+              f"{datetime.now().strftime('%H:%M')} Uhr."]
+    if bis:
+        saetze.append(f"Dein Abo läuft damit normal weiter und verlängert sich wieder "
+                      f"automatisch; die nächste Laufzeit beginnt am {_datum_lang(bis)}. "
+                      "Unsere frühere Bestätigung über das Vertragsende gilt nicht mehr.")
+    else:
+        saetze.append("Dein Abo läuft damit normal weiter und verlängert sich wieder "
+                      "automatisch. Unsere frühere Bestätigung über das Vertragsende "
+                      "gilt nicht mehr.")
+    saetze.append("Kündigen kannst du jederzeit wieder — im Bereich „Abo &amp; Verbrauch“.")
+    try:
+        _abo_mail(mail, "InkluDocs: Deine Kündigung ist zurückgenommen",
+                  "Kündigung zurückgenommen", saetze)
+        _abo_mail(NOTIFICATION_EMAIL,
+                  f"InkluDocs: Kündigung zurückgenommen ({mail})",
+                  "Kündigung zurückgenommen",
+                  [f"Adresse: {html.escape(mail)}",
+                   f"Name: {html.escape(name) or '(ohne)'}",
+                   f"Abo läuft weiter bis: {bis or '(unbekannt)'}"])
+    except Exception:
+        logger.exception("Bestaetigung zum Kuendigungs-Widerruf fehlgeschlagen (%s)", mail)
+
+
+def _kuendigung_bestaetigen(mail: str, name: str, art: str, hat_abo: bool,
+                            wirksam_zum, quelle: str, konto_gefunden: bool = True,
+                            zusatz: str = "") -> None:
+    """Bestaetigung in Textform an den Kunden + Notiz an den Betreiber.
+
+    EINE Quelle fuer BEIDE Kuendigungswege (Befund 31.08.2026, Steves erster
+    echter Kauf): Der oeffentliche Knopf nach § 312k verschickte diese Mail,
+    die Kuendigung in der App unter „Abo & Verbrauch" verschickte gar nichts —
+    derselbe Vorgang, zwei verschiedene Ergebnisse, und wer in der App
+    kuendigte, hatte nichts Schriftliches in der Hand. Der Kundentext ist
+    darum jetzt fuer beide Wege identisch; `quelle` benennt den Weg
+    ausschliesslich in der internen Notiz.
+
+    Wirft NICHT — ein Mailfehler darf die Kuendigung selbst nie scheitern
+    lassen; sie ist zu diesem Zeitpunkt bereits vollzogen.
+    """
+    art_text = {"ordentlich": "ordentliche Kündigung zum Laufzeitende",
+                "ausserordentlich": "außerordentliche Kündigung aus wichtigem Grund",
+                "widerruf": "Widerruf innerhalb von 14 Tagen"}[art]
+    saetze = [f"Hallo {html.escape(name) or 'zusammen'},",
+              f"deine Erklärung ist bei uns eingegangen: {art_text}, "
+              f"eingegangen am {_datum_lang(datetime.now().strftime('%Y-%m-%d'))} "
+              f"um {datetime.now().strftime('%H:%M')} Uhr."]
+    if hat_abo and wirksam_zum:
+        saetze.append(f"Dein Abo endet damit am {_datum_lang(wirksam_zum)}. Bis dahin kannst du es mit "
+                      "vollem Guthaben weiternutzen; danach läuft dein Konto im "
+                      "kostenlosen Free-Tarif weiter.")
+        saetze.append("Falls du das nicht wolltest: Im Bereich „Abo &amp; Verbrauch“ kannst du "
+                      "die Kündigung bis zum Laufzeitende mit einem Klick widerrufen.")
+    elif hat_abo:
+        saetze.append("Dein Abo endet zum Ende der laufenden Laufzeit; danach läuft dein "
+                      "Konto im kostenlosen Free-Tarif weiter.")
+    else:
+        saetze.append("Zu dieser Adresse ist bei uns kein laufendes kostenpflichtiges Abo "
+                      "hinterlegt. Wir haben deine Erklärung trotzdem festgehalten und sehen "
+                      "sie uns an — falls etwas offen ist, melden wir uns.")
+    if art == "widerruf":
+        saetze.append("Zum Widerruf melden wir uns gesondert wegen der Rückabwicklung. "
+                      "Einzelheiten stehen in unserer Widerrufsbelehrung.")
+    try:
+        _abo_mail(mail,
+                  ("InkluDocs: Dein Widerruf ist eingegangen" if art == "widerruf"
+                   else "InkluDocs: Deine Kündigung ist eingegangen"),
+                  ("Widerruf bestätigt" if art == "widerruf" else "Kündigung bestätigt"),
+                  saetze)
+        _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs: Kündigung über die {quelle} ({mail})",
+                  "Kündigung eingegangen",
+                  [f"Adresse: {html.escape(mail)}",
+                   f"Name: {html.escape(name) or '(ohne)'}",
+                   f"Art: {art_text}",
+                   f"Weg: {html.escape(quelle)}",
+                   f"Konto gefunden: {'ja' if konto_gefunden else 'nein'}; "
+                   f"laufendes Abo: {'ja, beendet zum ' + str(wirksam_zum) if hat_abo else 'nein'}",
+                   f"Anmerkung: {html.escape(zusatz) or '(keine)'}"])
+    except Exception:
+        logger.exception("Kuendigungs-Bestaetigung konnte nicht versandt werden (%s)", mail)
+
+
 @app.post("/api/abo/kuendigen")
 async def abo_kuendigen(user: dict = Depends(get_current_user)):
     """Eigenes Abo zum Laufzeitende kuendigen (auto_verlaengerung aus).
@@ -2327,6 +2428,10 @@ async def abo_kuendigen(user: dict = Depends(get_current_user)):
             _team_enddatum_mail(db_user, bis, "kuendigung")
         except Exception:
             logger.exception("Team-Enddatum-Mails nach Kuendigung fehlgeschlagen")
+    # Bestaetigung in Textform — derselbe Text wie beim oeffentlichen Knopf
+    # (Befund 31.08.2026: dieser Weg verschickte bis dahin gar nichts).
+    _kuendigung_bestaetigen(db_user.get("email") or "", db_user.get("display_name") or "",
+                            "ordentlich", True, bis, quelle="Abo-Seite in der App")
     return {"ok": True, "gueltig_bis": bis,
             "message": "Gekündigt — dein Abo läuft bis zum Laufzeitende weiter und endet dann"}
 
@@ -2468,44 +2573,10 @@ async def oeffentliche_kuendigung(request: Request):
             except Exception:
                 logger.exception("Team-Enddatum-Mails nach oeffentlicher Kuendigung fehlgeschlagen")
 
-    # Bestaetigung in Textform — Pflicht nach § 312k Abs. 4 BGB. Sie geht an
-    # die angegebene Adresse; nur dort stehen die Einzelheiten.
-    art_text = {"ordentlich": "ordentliche Kündigung zum Laufzeitende",
-                "ausserordentlich": "außerordentliche Kündigung aus wichtigem Grund",
-                "widerruf": "Widerruf innerhalb von 14 Tagen"}[art]
-    saetze = [f"Hallo {html.escape(name) or 'zusammen'},",
-              f"deine Erklärung ist bei uns eingegangen: {art_text}, "
-              f"eingegangen am {_datum_lang(datetime.now().strftime('%Y-%m-%d'))} "
-              f"um {datetime.now().strftime('%H:%M')} Uhr."]
-    if hat_abo:
-        saetze.append(f"Dein Abo endet damit am {_datum_lang(wirksam_zum)}. Bis dahin kannst du es mit "
-                      "vollem Guthaben weiternutzen; danach läuft dein Konto im "
-                      "kostenlosen Free-Tarif weiter.")
-        saetze.append("Falls du das nicht wolltest: Im Bereich „Abo &amp; Verbrauch“ kannst du "
-                      "die Kündigung bis zum Laufzeitende mit einem Klick widerrufen.")
-    else:
-        saetze.append("Zu dieser Adresse ist bei uns kein laufendes kostenpflichtiges Abo "
-                      "hinterlegt. Wir haben deine Erklärung trotzdem festgehalten und sehen "
-                      "sie uns an — falls etwas offen ist, melden wir uns.")
-    if art == "widerruf":
-        saetze.append("Zum Widerruf melden wir uns gesondert wegen der Rückabwicklung. "
-                      "Einzelheiten stehen in unserer Widerrufsbelehrung.")
-    try:
-        _abo_mail(mail,
-                  ("InkluDocs: Dein Widerruf ist eingegangen" if art == "widerruf"
-                   else "InkluDocs: Deine Kündigung ist eingegangen"),
-                  ("Widerruf bestätigt" if art == "widerruf" else "Kündigung bestätigt"),
-                  saetze)
-        _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs: Kündigung über die Kündigungsseite ({mail})",
-                  "Kündigung eingegangen",
-                  [f"Adresse: {html.escape(mail)}",
-                   f"Name: {html.escape(name) or '(ohne)'}",
-                   f"Art: {art_text}",
-                   f"Konto gefunden: {'ja' if db_user else 'nein'}; "
-                   f"laufendes Abo: {'ja, beendet zum ' + str(wirksam_zum) if hat_abo else 'nein'}",
-                   f"Anmerkung: {html.escape(zusatz) or '(keine)'}"])
-    except Exception:
-        logger.exception("Kuendigungs-Bestaetigung konnte nicht versandt werden (%s)", mail)
+    # Bestaetigung in Textform — Pflicht nach § 312k Abs. 4 BGB.
+    _kuendigung_bestaetigen(mail, name, art, hat_abo, wirksam_zum,
+                            quelle="Kündigungsseite",
+                            konto_gefunden=bool(db_user), zusatz=zusatz)
 
     if art == "widerruf":
         return {"ok": True, "meldungen": [
@@ -2615,6 +2686,10 @@ async def abo_kuendigung_widerrufen(user: dict = Depends(get_current_user)):
         conn.commit()
     finally:
         conn.close()
+    # Auch das Zuruecknehmen bestaetigen (31.08.2026): Sonst bliebe die
+    # Kuendigungsbestaetigung die letzte schriftliche Aussage beim Kunden —
+    # und die sagt, der Vertrag ende, obwohl er weiterlaeuft.
+    _widerruf_bestaetigen(db_user)
     return {"ok": True, "message": "Die Kündigung wurde zurückgenommen — dein Abo verlängert sich wieder automatisch"}
 
 
@@ -8850,8 +8925,10 @@ async def freigabe_confirm(token: str, request: Request):
     if not sharing.confirm_guest_email(token, email):
         raise HTTPException(status_code=403, detail="E-Mail stimmt nicht mit der Einladung ueberein.")
     resp = JSONResponse({"ok": True})
+    # Lax wie beim Anmelde-Cookie (31.08.2026): Gaeste kommen ueber einen Link
+    # aus ihrer Einladungsmail — also von einer fremden Seite.
     resp.set_cookie("guest_token", create_guest_token(token, email.lower()),
-                    httponly=True, secure=True, samesite="strict", max_age=TOKEN_EXPIRE_HOURS * 3600)
+                    httponly=True, secure=True, samesite="lax", max_age=TOKEN_EXPIRE_HOURS * 3600)
     return resp
 
 
