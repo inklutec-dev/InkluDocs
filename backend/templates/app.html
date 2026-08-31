@@ -2141,6 +2141,31 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 </details>`;
         };
 
+        // Platz für die Knopfleiste im Dokument-Kopf MESSEN statt raten
+        // (31.08.2026): Die Leiste ist absolut positioniert, ihre Breite hängt
+        // aber an der Beschriftung — „Alle generieren" ist schmal, „3 Alt-Texte
+        // neu generieren, 15 Credits" mehr als doppelt so breit. Eine feste
+        // Polsterung im Stylesheet passt darum immer nur für einen der Fälle;
+        // auf der Produktion verdeckte die Leiste den Dokumentnamen.
+        // Unterhalb des Umbruchpunkts steht die Leiste im normalen Fluss —
+        // dann darf nichts reserviert werden.
+        function dokumentKoepfeAusrichten() {
+            const eng = window.matchMedia('(max-width: 1100px)').matches;
+            document.querySelectorAll('.doc-block').forEach((block) => {
+                const leiste = block.querySelector('.doc-actions');
+                const kopf = block.querySelector('summary.doc-summary');
+                if (!kopf) return;
+                if (!leiste || eng) { kopf.style.paddingRight = ''; return; }
+                const breite = Math.ceil(leiste.getBoundingClientRect().width);
+                kopf.style.paddingRight = breite ? (breite + 32) + 'px' : '';
+            });
+        }
+        window.dokumentKoepfeAusrichten = dokumentKoepfeAusrichten;
+        if (!window._kopfbreiteAngemeldet) {
+            window._kopfbreiteAngemeldet = true;
+            window.addEventListener('resize', dokumentKoepfeAusrichten);
+        }
+
         const renderDocBlock = (doc, pageMap, pos) => {
             const docKey = doc.id || 0;
             // Karbe/Steve 09.06.2026: Dokumente standardmaessig ZUGEKLAPPT, damit man
@@ -2301,6 +2326,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 .join('');
         }
         list.innerHTML = html;
+        // Erst jetzt stehen die Knoepfe im Dokument und lassen sich messen.
+        dokumentKoepfeAusrichten();
 
         // Auto-save alt-text on edit
         document.querySelectorAll('.alt-text-field:not(.langtext-field)').forEach(ta => {

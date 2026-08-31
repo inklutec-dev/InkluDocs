@@ -551,10 +551,13 @@ input[type="file"] {
     max-width: none;
 }
 .doc-section > summary.doc-summary {
-    /* Platz am rechten Rand fuer die Aktionsgruppe reservieren, damit lange
-       Dateinamen nicht unter die Buttons laufen. 29.08.2026: Icon-Pillen sind
-       breiter (vier Knoepfe mit Symbol + Fettschrift) -> 34rem; unter 1100px
-       rutscht die Leiste unter den Kopf (siehe Media Query unten). */
+    /* Platz am rechten Rand fuer die Aktionsgruppe, damit lange Dateinamen
+       nicht unter die Buttons laufen. Der Wert hier ist nur der RUECKFALL:
+       Die Leiste ist je nach Beschriftung unterschiedlich breit („Alle
+       generieren" gegen „3 Alt-Texte neu generieren, 15 Credits"), darum misst
+       dokumentKoepfeAusrichten() in app.html nach dem Zeichnen die echte
+       Breite und setzt sie hier ein. Feste Werte waren zweimal falsch:
+       13rem war zu klein, 34rem passte nur mit den Icons. */
     padding-right: 32rem;
 }
 .doc-actions {
