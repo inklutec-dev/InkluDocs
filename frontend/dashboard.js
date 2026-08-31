@@ -301,6 +301,11 @@ const LEGAL_LINKS = [
   { href: '/impressum-app', oeffentlich: '/impressum', label: t('Impressum') },
   { href: '/datensicherheit', oeffentlich: '/datenschutz', label: t('Datenschutz') },
   { href: '/nutzungsbedingungen-app', oeffentlich: '/nutzungsbedingungen', label: t('Nutzungsbedingungen') },
+  // Preise: kam am 31.08.2026 mit dem Rollout in die oeffentliche Fusszeile
+  // (_fusszeile.html). Beide Listen muessen synchron bleiben
+  // (docs/SEITENGERUEST.md, geprueft von ui_geruest.py) — darum steht der
+  // Link auch hier, an derselben Stelle. Keine -app-Variante noetig.
+  { href: '/preise', label: t('Preise') },
   { href: '/widerruf-app', oeffentlich: '/widerruf', label: t('Widerrufsbelehrung') },
   // § 312k BGB verlangt, dass der Kuendigungsknopf staendig verfuegbar und
   // leicht erreichbar ist — deshalb in JEDER Fusszeile, nicht nur im Abo-Bereich.
