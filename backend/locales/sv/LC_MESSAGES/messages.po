@@ -3474,8 +3474,8 @@ msgstr "Steve Weidel är expert på AI och tillgänglighet och utvecklar med Ink
 msgid "Michael Karbe — Actino Software"
 msgstr "Michael Karbe — Actino Software"
 
-msgid "Die Actino Software GmbH wurde 1999 von Michael Karbe gegründet und arbeitet bereits seit den frühen Neunzigerjahren mit dem PDF-Format. Das Team ist auf professionelle PDF-Lösungen spezialisiert — von der automatisierten Verarbeitung über die ISO-Standards PDF/A, PDF/X und PDF/UA bis zur barrierefreien Aufbereitung von Dokumenten. Bei InkluDocs steuert Actino Vertrieb und PDF-Expertise bei."
-msgstr "Actino Software GmbH grundades 1999 av Michael Karbe och har arbetat med PDF-formatet sedan tidigt 1990-tal. Teamet är specialiserat på professionella PDF-lösningar — från automatiserad bearbetning och ISO-standarderna PDF/A, PDF/X och PDF/UA till tillgänglig bearbetning av dokument. Hos InkluDocs bidrar Actino med försäljning och PDF-expertis."
+msgid "Die Actino Software GmbH wurde 1999 von Michael Karbe gegründet und arbeitet bereits seit den frühen Neunzigerjahren mit dem PDF-Format. Das Team ist auf professionelle PDF-Lösungen spezialisiert — von der automatisierten Verarbeitung über die ISO-Standards PDF/A, PDF/X und PDF/UA bis zur barrierefreien Aufbereitung von Dokumenten."
+msgstr "Actino Software GmbH grundades 1999 av Michael Karbe och har arbetat med PDF-formatet sedan tidigt 1990-tal. Teamet är specialiserat på professionella PDF-lösningar — från automatiserad bearbetning och ISO-standarderna PDF/A, PDF/X och PDF/UA till tillgänglig bearbetning av dokument."
 
 msgid "Was uns verbindet"
 msgstr "Det som förenar oss"
