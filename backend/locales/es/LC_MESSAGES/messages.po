@@ -5097,3 +5097,10 @@ msgstr "{n} de {m} imágenes no tienen texto alternativo: genéralo en InkluDocs
 #: Barrierefreie PDF Stufe 2, 29.08.2026
 msgid "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."
 msgstr "Las {n} imágenes tienen texto alternativo o son decorativas."
+
+# Lauf-Hinweis (Steve 31.08.2026): vorzeitiges Ende eines Sammellaufs hoerbar machen.
+msgid "Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Límite diario alcanzado: {i} imágenes procesadas, {n} pendientes."
+
+msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Los créditos no alcanzaron para todas: {i} imágenes procesadas, {n} pendientes."

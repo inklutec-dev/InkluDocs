@@ -6042,6 +6042,16 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
             "SELECT id FROM images WHERE project_id = ? AND status = 'done' "
             "AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
             [project_id] + doc_args).fetchall()}
+        # Fortsetzen statt doppelt zahlen (Steve 31.08.2026): Blieb beim letzten Lauf ein
+        # Rest offen (Guthaben, Tageslimit, Container-Neustart), nehmen wir NUR ihn -- sonst
+        # wuerde der Nutzer die bereits frisch generierten Bilder ein zweites Mal bezahlen.
+        # Die Schnittmenge mit den aktuellen Kandidaten haelt das dicht: der Vermerk kann nie
+        # ein Bild erreichen, das jetzt nicht ohnehin an der Reihe waere (anderes Dokument,
+        # inzwischen von Hand bearbeitet, geloescht). Ist der Rest vollstaendig abgearbeitet
+        # oder aelter als KI_NEU_REST_STUNDEN, nimmt der naechste Klick wieder alle.
+        _rest = _ki_neu_rest_lesen(conn, project_id) & ki_neu_ids
+        if _rest:
+            ki_neu_ids = _rest
         anzahl_ki = len(ki_neu_ids)
         if not anzahl_ki:
             conn.close()
@@ -6063,7 +6073,9 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
     if ki_neu_ids:
         conn.execute("UPDATE images SET status = 'pending' WHERE id IN (%s)" % ",".join("?" * len(ki_neu_ids)),
                      list(ki_neu_ids))
-    conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
+    # Alten Hinweis wegraeumen (Steve 31.08.2026), sonst haengt die Meldung des letzten
+    # abgebrochenen Laufs am naechsten, der sauber durchlaeuft.
+    conn.execute("UPDATE projects SET status = 'processing', lauf_hinweis = NULL WHERE id = ?", (project_id,))
     conn.commit()
     conn.close()
 
@@ -6073,7 +6085,48 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
             "message": "Alt-Text-Generierung gestartet"}
 
 
-def _ki_neu_zurueck(conn, ids: set) -> None:
+# ---------------------------------------------------------------------------
+# Rest-Vermerk eines abgebrochenen ki_neu-Laufs (Steve 31.08.2026)
+# ---------------------------------------------------------------------------
+# Befund des Pruefers vom 30.08.2026: Bricht "n neu generieren" ab, weil das Guthaben
+# nicht reicht, und startet der Nutzer nach dem Aufstocken erneut, liefen die bereits
+# frisch generierten Bilder noch einmal durch die KI -- und kosteten ein zweites Mal.
+# Seit den Aktionspreisen (5 Credits je Alt-Text) faellt das ins Gewicht.
+# Loesung: Beim Abbruch merkt sich das Projekt die Bilder, die NICHT mehr an der Reihe
+# waren; der naechste Start nimmt nur diese. Laeuft ein Lauf vollstaendig durch, ist der
+# Vermerk weg und der naechste Klick nimmt wieder alle.
+KI_NEU_REST_STUNDEN = 24
+
+
+def _ki_neu_rest_lesen(conn, project_id: int) -> set:
+    """Offene Bild-IDs des letzten abgebrochenen ki_neu-Laufs; leere Menge, wenn keiner offen ist.
+
+    Bewusst defensiv: unlesbarer, fremder oder veralteter Inhalt fuehrt zur leeren Menge und
+    damit zum normalen Verhalten (alle Kandidaten). Der Vermerk ist eine Bequemlichkeit, kein
+    Zustand, auf dem etwas aufbaut. Die aufrufende Stelle schneidet die IDs IMMER gegen die
+    eigenen Kandidaten -- ein manipulierter Eintrag kann kein fremdes Bild erreichen."""
+    zeile = conn.execute("SELECT ki_neu_rest FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not zeile or not zeile["ki_neu_rest"]:
+        return set()
+    try:
+        eintrag = json.loads(zeile["ki_neu_rest"])
+        alter = (datetime.now() - datetime.fromisoformat(eintrag["ts"])).total_seconds()
+        if alter > KI_NEU_REST_STUNDEN * 3600 or alter < 0:
+            return set()
+        return {int(i) for i in eintrag["ids"]}
+    except Exception:
+        return set()
+
+
+def _ki_neu_rest_schreiben(conn, project_id: int, offene: set) -> None:
+    """Vermerk setzen oder loeschen -- eine leere Menge loescht ihn (Lauf vollstaendig)."""
+    wert = json.dumps({"ids": sorted(int(i) for i in offene),
+                       "ts": datetime.now().isoformat(timespec="seconds")}) if offene else None
+    conn.execute("UPDATE projects SET ki_neu_rest = ? WHERE id = ?", (wert, project_id))
+    conn.commit()
+
+
+def _ki_neu_zurueck(conn, ids: set, project_id: Optional[int] = None) -> None:
     """Stellt im Modus ki_neu stehengebliebene Bilder wieder auf 'done' (Steve 30.08.2026).
 
     Der Start-Endpunkt setzt fuer „n neu generieren" fertige Bilder auf 'pending', damit der
@@ -6086,9 +6139,20 @@ def _ki_neu_zurueck(conn, ids: set) -> None:
     if not ids:
         return
     marken = ",".join("?" * len(ids))
+    # Was jetzt noch 'pending' ist, hat der Lauf nicht mehr geschafft -- genau das ist der
+    # Rest (Steve 31.08.2026). VOR dem Zurueckstellen ermitteln, danach sind alle 'done'
+    # und nicht mehr unterscheidbar.
+    offene = {r["id"] for r in conn.execute(
+        "SELECT id FROM images WHERE id IN (%s) AND status = 'pending'" % marken, list(ids)).fetchall()}
     conn.execute("UPDATE images SET status = 'done' WHERE id IN (%s) AND status = 'pending'" % marken,
                  list(ids))
     conn.commit()
+    # Nur setzen, wenn wirklich etwas offen blieb (Testbefund 31.08.2026): Der geordnete
+    # Abschluss ruft diese Funktion ein zweites Mal — dann steht nichts mehr auf 'pending',
+    # und der beim Abbruch gesetzte Vermerk wuerde sofort wieder geloescht. Geloescht wird
+    # er ausschliesslich am Ende eines Laufs, der NICHT abgebrochen ist.
+    if project_id is not None and offene:
+        _ki_neu_rest_schreiben(conn, project_id, offene)
 
 
 def _notaufraeumen(project_id: int, ki_neu_ids: set) -> None:
@@ -6104,7 +6168,7 @@ def _notaufraeumen(project_id: int, ki_neu_ids: set) -> None:
     try:
         conn = get_db()
         try:
-            _ki_neu_zurueck(conn, ki_neu_ids)
+            _ki_neu_zurueck(conn, ki_neu_ids, project_id)
             processed = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
                                      (project_id,)).fetchone()[0]
             conn.execute("UPDATE projects SET processed_images = ?, status = 'done', "
@@ -6189,7 +6253,10 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
         user_prompt = _up["prompt_text"]
 
     _lauf_user = get_user_by_id(user_id)
-    for img in images:
+    # Lauf-Hinweis (Steve 31.08.2026): Grund und Zahlen eines vorzeitigen Endes, damit die
+    # Oberflaeche es ansagen kann. Der Index sagt, wie viele Bilder gar nicht mehr dran waren.
+    _abbruch, _abbruch_offen, _abbruch_erledigt = "", 0, 0
+    for _idx, img in enumerate(images):
         # Abo-Etappe-1: Kontingent VOR JEDEM Bild pruefen, nicht nur am Lauf-Start —
         # sonst rutscht eine 500-Bilder-PDF bei Reststand 1 komplett durch.
         # Bei ABO_ENFORCEMENT=off (Zaehl-Phase) ist erlaubt immer True.
@@ -6202,7 +6269,8 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
             print(f"Sammellauf Projekt {project_id}: Guthaben reicht nicht mehr ({_wache['preis']} Credits je Bild, "
                   f"{_wache['verfuegbar']} vorhanden) nach {processed} Bildern — "
                   f"{'Rest wieder auf done gestellt (ki_neu)' if ki_neu_ids else 'Rest bleibt pending'}")
-            _ki_neu_zurueck(conn, ki_neu_ids)
+            _abbruch, _abbruch_offen, _abbruch_erledigt = "credits", len(images) - _idx, processed
+            _ki_neu_zurueck(conn, ki_neu_ids, project_id)
             break
         # Tageslimit je Bild (Luecke 1, 29.08.2026): vorher nur einmal am Lauf-Start geprueft —
         # ein 600-Bilder-Projekt lief bei Stand 490 komplett durch. Rest bleibt pending.
@@ -6210,7 +6278,8 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
         if _tl:
             print(f"Sammellauf Projekt {project_id}: Tageslimit {_tl['limit']} erreicht nach {processed} Bildern — "
                   f"{'Rest wieder auf done gestellt (ki_neu)' if ki_neu_ids else 'Rest bleibt pending'}")
-            _ki_neu_zurueck(conn, ki_neu_ids)
+            _abbruch, _abbruch_offen, _abbruch_erledigt = "tageslimit", len(images) - _idx, processed
+            _ki_neu_zurueck(conn, ki_neu_ids, project_id)
             break
         conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (img["id"],))
         conn.commit()
@@ -6317,7 +6386,21 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
               f"alter Text behalten, zur Pruefung markiert")
     # Zweiter Halt fuer den geordneten Weg (Abbruch per break). Den ungeordneten Weg — Ausnahme
     # oder Abbruch von aussen — faengt _notaufraeumen im Mantel ab. Wirkungslos, wenn alles lief.
-    _ki_neu_zurueck(conn, ki_neu_ids)
+    _ki_neu_zurueck(conn, ki_neu_ids, project_id)
+    # Sichtbare Rueckmeldung (Steve 31.08.2026): Endete der Lauf frueher, steht der Grund jetzt
+    # am Projekt; der Statusabruf reicht ihn an die Oberflaeche, die ihn in der Live-Region
+    # ansagt. Vorher stand er nur im Server-Log -- im ki_neu-Modus sah der Nutzer sogar "alle
+    # fertig", weil die zurueckgestellten Bilder wieder mitzaehlen.
+    if _abbruch:
+        conn.execute("UPDATE projects SET lauf_hinweis = ? WHERE id = ?",
+                     (json.dumps({"grund": _abbruch, "erledigt": _abbruch_erledigt,
+                                  "offen": _abbruch_offen}), project_id))
+        conn.commit()
+    elif ki_neu_ids:
+        # Lief der ki_neu-Lauf bis zum Ende, ist nichts mehr offen: Vermerk wegraeumen, damit
+        # der naechste Klick wieder alle Bilder nimmt. Auch gescheiterte Bilder gelten hier als
+        # erledigt — sie haben nichts gekostet (der Fehlerzweig verbucht nicht).
+        _ki_neu_rest_schreiben(conn, project_id, set())
     # Zaehler frisch zaehlen statt den mitlaufenden Wert schreiben: zurueckgestellte Bilder
     # sind wieder 'done' und muessen mitzaehlen, sonst zeigt die Oberflaeche zu wenig an.
     processed = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
@@ -6337,10 +6420,19 @@ async def get_project_status(project_id: int, user: dict = Depends(get_current_u
     conn.close()
     if not project:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    # Lauf-Hinweis (Steve 31.08.2026): unlesbarer Inhalt wird still zu None -- ein kaputter
+    # Vermerk darf den Statusabruf nicht zerlegen, an dem die ganze Fortschrittsanzeige haengt.
+    _hinweis = None
+    try:
+        if project["lauf_hinweis"]:
+            _hinweis = json.loads(project["lauf_hinweis"])
+    except Exception:
+        _hinweis = None
     return {
         "status": project["status"],
         "total_images": project["total_images"],
         "processed_images": project["processed_images"],
+        "lauf_hinweis": _hinweis,
     }
 
 

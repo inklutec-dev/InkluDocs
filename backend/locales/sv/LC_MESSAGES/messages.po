@@ -4658,3 +4658,10 @@ msgstr "{n} av {m} bilder saknar alternativtext — generera i InkluDocs eller m
 #: Barrierefreie PDF Stufe 2, 29.08.2026
 msgid "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."
 msgstr "Alla {n} bilder har alternativtext eller är dekorativa."
+
+# Lauf-Hinweis (Steve 31.08.2026): vorzeitiges Ende eines Sammellaufs hoerbar machen.
+msgid "Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Dagsgränsen nådd: {i} bilder behandlades, {n} återstår."
+
+msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Krediterna räckte inte till alla: {i} bilder behandlades, {n} återstår."

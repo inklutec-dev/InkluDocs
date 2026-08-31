@@ -143,3 +143,44 @@ Dialog zeigt weiterhin Preis und Guthaben, bevor etwas passiert. Die
 Wortfamilie „Export“ bleibt dort stehen, wo sie den VORGANG benennt
 („Export-Optionen“, „Dieser Export kostet {p} Credits“, „Wird exportiert…“). Die Generier-Knöpfe oben gelten weiterhin für das ganze Projekt. Web-Werkzeug:
 ein Dokument = die Seite, daher keine Zusatzknöpfe.
+
+
+## Abgebrochener „n neu generieren“-Lauf wird fortgesetzt, nicht wiederholt (31.08.2026)
+
+**Vorher:** „n neu generieren“ setzt alle fertigen KI-Bilder auf `pending`, damit der
+Sammellauf sie aufgreift. Reichte das Guthaben unterwegs nicht mehr, brach der Lauf ab und
+stellte die restlichen Bilder wieder auf `done`. Startete der Nutzer nach dem Aufstocken
+erneut, waren wieder ALLE Bilder Kandidaten — auch die gerade frisch generierten. Sie liefen
+ein zweites Mal durch die KI und kosteten ein zweites Mal. Seit den Aktionspreisen (5 Credits
+je Alt-Text) fällt das ins Gewicht.
+
+**Jetzt:** Endet ein Lauf vorzeitig, merkt sich das Projekt in `projects.ki_neu_rest` die
+Bilder, die nicht mehr an der Reihe waren (JSON: `ids` + Zeitstempel `ts`). Der nächste Start
+im selben Modus nimmt nur diese.
+
+- Die IDs werden IMMER mit den aktuellen Kandidaten geschnitten. Ein Bild, das inzwischen von
+  Hand bearbeitet, gelöscht oder einem anderen Dokument zugeordnet wurde, fällt damit heraus —
+  und ein manipulierter Vermerk kann kein fremdes Bild erreichen.
+- Läuft ein Lauf vollständig durch, wird der Vermerk gelöscht: der nächste Klick nimmt wieder
+  alle Bilder. Gescheiterte Bilder gelten dabei als erledigt — sie haben nichts gekostet.
+- Der Vermerk verfällt nach `main.KI_NEU_REST_STUNDEN` (24 h), damit niemand dauerhaft daran
+  hängenbleibt.
+- Unlesbarer oder veralteter Inhalt führt zum normalen Verhalten (alle Kandidaten), nie zu
+  einem Fehler: der Vermerk ist eine Bequemlichkeit, kein Zustand, auf dem etwas aufbaut.
+
+Beteiligt: `main._ki_neu_rest_lesen`, `main._ki_neu_rest_schreiben`, `main._ki_neu_zurueck`
+(schreibt den Vermerk nur, wenn wirklich etwas offen blieb — der geordnete Abschluss ruft sie
+ein zweites Mal auf), `main.generate_alt_texts` (liest ihn).
+Test: `tests/e2e/verify_doppelkosten.py` (26 Prüfungen, u. a. „vier Bilder, vier Buchungen“).
+
+## Vorzeitiges Ende ist hörbar (31.08.2026)
+
+Ging das Guthaben oder das Tageslimit mitten im Lauf aus, stand der Grund bisher nur im
+Server-Log. Die Oberfläche meldete trotzdem „Alle Alt-Texte wurden generiert“ — im Modus
+„neu generieren“ sogar mit vollem Zähler, weil die zurückgestellten Bilder wieder als fertig
+zählen. Der Nutzer konnte nicht erkennen, dass nur ein Teil neu gemacht wurde.
+
+Jetzt schreibt der Lauf `projects.lauf_hinweis` (JSON: `grund` = `credits` oder `tageslimit`,
+`erledigt`, `offen`), `GET /api/projects/{id}/status` reicht ihn als `lauf_hinweis` weiter, und
+`app.html` sagt ihn nach dem Lauf in der Live-Region an — in allen sechs Sprachen. Ein neuer
+Start räumt den alten Hinweis weg.

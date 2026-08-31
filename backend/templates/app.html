@@ -721,7 +721,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const sData = await sRes.json();
                 if (sData.status === 'done' || sData.status === 'error') {
                     clearInterval(pollInterval); pollInterval = null;
-                    announce(sData.status === 'done' ? t('Alle Alt-Texte wurden generiert.') : t('Fehler bei der Verarbeitung.'));
+                    // Vorzeitiges Ende hoerbar machen (Steve 31.08.2026): Ging das Guthaben oder
+                    // das Tageslimit mitten im Lauf aus, meldete die Oberflaeche bisher trotzdem
+                    // "Alle Alt-Texte wurden generiert." -- im Modus "neu generieren" zaehlen die
+                    // zurueckgestellten Bilder naemlich wieder als fertig.
+                    const hinweis = sData.lauf_hinweis;
+                    if (sData.status === 'done' && hinweis && hinweis.offen) {
+                        announce(hinweis.grund === 'tageslimit'
+                            ? t('Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen })
+                            : t('Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen }));
+                    } else {
+                        announce(sData.status === 'done' ? t('Alle Alt-Texte wurden generiert.') : t('Fehler bei der Verarbeitung.'));
+                    }
                     showProject(projectId);
                 } else if (sData.processed_images > project.processed_images) {
                     showProject(projectId);

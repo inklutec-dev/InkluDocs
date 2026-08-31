@@ -265,3 +265,16 @@ quickinfo_generierung). Eingesetzt: Start UND je Bild im Sammellauf (Luecke 1),
 Einzel-Neu-Generieren (Luecke 2, vorher gar nicht), Formular-Start und je Seite im
 Feld-Pass (Luecke 3, via Deps). Limit: users.api_tageslimit, sonst DAILY_IMAGE_LIMIT
 (Steve 29.08.: Prod = 500 wie Staging). Test: tests/e2e/verify_tageslimit_luecken.py.
+
+
+## Fortsetzen kostet nicht doppelt (31.08.2026)
+
+Bricht ein Sammellauf im Modus „n neu generieren“ ab, weil das Guthaben nicht mehr reicht,
+merkt sich das Projekt die noch offenen Bilder (`projects.ki_neu_rest`). Der nächste Start
+nimmt nur diese — die bereits bezahlten Bilder werden nicht ein zweites Mal generiert und
+nicht ein zweites Mal verbucht. Details und Randfälle: `docs/GENERIERUNG.md`.
+
+Unverändert gilt: Verbucht wird ausschließlich nach echtem Erfolg. Ein gescheitertes Bild
+(except-Zweig) und ein Cache-Treffer kosten nichts; bei Exporten wird erst die Datei gebaut
+und dann verbucht. Vor jedem einzelnen Bild prüft die Wache, ob das Guthaben den vollen Preis
+deckt — nicht nur einmal am Lauf-Start.

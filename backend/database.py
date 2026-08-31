@@ -563,6 +563,14 @@ def _migrate_columns(conn):
         # lebende Projekt-Einstellung wie use_context — gilt fuer alles ab jetzt Generierte.
         ("projects", "alt_language", "ALTER TABLE projects ADD COLUMN alt_language TEXT DEFAULT 'de'"),
         ("projects", "prompt_id", "ALTER TABLE projects ADD COLUMN prompt_id INTEGER"),
+        # ki_neu-Rest (Steve 31.08.2026): offene Bild-IDs eines abgebrochenen
+        # "n neu generieren"-Laufs als JSON. Verhindert, dass beim Fortsetzen die
+        # bereits frisch generierten Bilder ein zweites Mal bezahlt werden.
+        ("projects", "ki_neu_rest", "ALTER TABLE projects ADD COLUMN ki_neu_rest TEXT"),
+        # Lauf-Hinweis (Steve 31.08.2026): warum der letzte Lauf frueher endete
+        # (Guthaben/Tageslimit) und wie viele Bilder offen blieben -- der
+        # Statusabruf reicht ihn an die Oberflaeche weiter.
+        ("projects", "lauf_hinweis", "ALTER TABLE projects ADD COLUMN lauf_hinweis TEXT"),
         # Sprache, in der der Alt-Text dieses Bildes GENERIERT wurde (fuer die
         # Vorlese-Stimme; NULL = deutscher Altbestand). Gemischte Projekte moeglich.
         ("images", "gen_language", "ALTER TABLE images ADD COLUMN gen_language TEXT"),

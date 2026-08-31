@@ -5097,3 +5097,10 @@ msgstr "{n} images sur {m} n’ont pas de texte alternatif — à générer dans
 #: Barrierefreie PDF Stufe 2, 29.08.2026
 msgid "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."
 msgstr "Les {n} images ont un texte alternatif ou sont décoratives."
+
+# Lauf-Hinweis (Steve 31.08.2026): vorzeitiges Ende eines Sammellaufs hoerbar machen.
+msgid "Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Limite quotidienne atteinte : {i} images traitées, {n} restantes."
+
+msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Les crédits n’ont pas suffi pour toutes : {i} images traitées, {n} restantes."
