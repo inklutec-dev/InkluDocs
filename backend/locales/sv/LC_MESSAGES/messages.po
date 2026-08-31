@@ -4679,3 +4679,13 @@ msgstr "Läs mer om Michael och Actino Software GmbH på %(site)s och på %(li)s
 msgid "Michaels LinkedIn-Profil"
 msgstr "Michaels LinkedIn-profil"
 
+# Preisseite Live-Betrieb (31.08.2026)
+msgid "Bestellen kannst du direkt in deinem Konto unter „Abo“ — per Karte (auch Apple Pay und Google Pay), Link, Klarna oder Amazon Pay. Dein Abo ist sofort aktiv."
+msgstr "Du kan beställa direkt i ditt konto under ”Abonnemang” – med kort (även Apple Pay och Google Pay), Link, Klarna eller Amazon Pay. Ditt abonnemang är aktivt direkt."
+
+msgid "Du möchtest lieber auf Rechnung bestellen? Dann schreib an"
+msgstr "Vill du hellre beställa mot faktura? Skriv då till"
+
+msgid "— du erhältst eine Rechnung, und wir schalten dein Abo frei."
+msgstr "– du får en faktura och vi aktiverar ditt abonnemang."
+

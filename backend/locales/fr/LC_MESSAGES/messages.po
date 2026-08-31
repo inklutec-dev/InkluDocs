@@ -5118,3 +5118,13 @@ msgstr "Pour en savoir plus sur Michael et Actino Software GmbH : %(site)s et %(
 msgid "Michaels LinkedIn-Profil"
 msgstr "le profil LinkedIn de Michael"
 
+# Preisseite Live-Betrieb (31.08.2026)
+msgid "Bestellen kannst du direkt in deinem Konto unter „Abo“ — per Karte (auch Apple Pay und Google Pay), Link, Klarna oder Amazon Pay. Dein Abo ist sofort aktiv."
+msgstr "Vous pouvez commander directement dans votre compte, rubrique « Abonnement » — par carte (y compris Apple Pay et Google Pay), Link, Klarna ou Amazon Pay. Votre abonnement est actif immédiatement."
+
+msgid "Du möchtest lieber auf Rechnung bestellen? Dann schreib an"
+msgstr "Vous préférez commander sur facture ? Écrivez à"
+
+msgid "— du erhältst eine Rechnung, und wir schalten dein Abo frei."
+msgstr "— vous recevrez une facture et nous activerons votre abonnement."
+
