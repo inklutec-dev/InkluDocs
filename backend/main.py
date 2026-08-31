@@ -6210,10 +6210,18 @@ async def generate_vorschau(project_id: int, request: Request,
     conn.close()
 
     p = billing.aktion_pruefung(user["id"], "bild_generierung", anzahl)
+    # Wie weit traegt das Guthaben? Der Start verlangt NICHT den vollen Preis:
+    # er prueft ein Bild (main.py ~6119) und dann vor jedem weiteren einzeln
+    # (~6404) — ein knappes Guthaben fuehrt also zu einem TEIL-Lauf, nicht zu
+    # einer Absage. Die Rueckfrage sagt das jetzt genauso, statt zu sperren
+    # (Steve 31.08.2026). Gesperrt wird nur, wenn nicht einmal ein Bild geht.
+    je = billing.aktion_preis("bild_generierung", 1) or 1
+    verf = p["verfuegbar"]
+    machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
     return {"modus": modus, "anzahl": anzahl, "document_id": document_id,
-            "dokumente": dokumente, "preis": p["preis"],
-            "verfuegbar": p["verfuegbar"], "fehlend": p["fehlend"],
-            "erlaubt": bool(anzahl) and p["erlaubt"]}
+            "dokumente": dokumente, "preis": p["preis"], "preis_je": je,
+            "verfuegbar": verf, "fehlend": p["fehlend"], "machbar": machbar,
+            "erlaubt": bool(anzahl) and (verf is None or machbar >= 1)}
 
 
 # ---------------------------------------------------------------------------

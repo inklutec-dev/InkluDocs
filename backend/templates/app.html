@@ -623,8 +623,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: project.processed_images, n: project.total_images })}</p>
                 ` : ''}
                 <div class="card-actions">
-                    ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '</button>' : ''}
-                    ${!window.GUEST_MODE && project.status !== 'extracted' && project.status !== 'processing' && project.status !== 'extracting' && kiBilder > 0 ? '<button class="btn btn-secondary" id="regenAllBtn" onclick="startGeneration(' + project.id + ', \'ki_neu\')">' + icon('refresh') + t('Alt-Texte generieren') + '</button>' : ''}
+                    ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
+                    ${!window.GUEST_MODE && project.status !== 'extracted' && project.status !== 'processing' && project.status !== 'extracting' && kiBilder > 0 ? '<button class="btn btn-secondary" id="regenAllBtn" onclick="startGeneration(' + project.id + ', \'ki_neu\')">' + icon('refresh') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">${t('Prüfung abschließen')}</button>
@@ -655,7 +655,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
-                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${t('Herunterladen')}</button>
+                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${t('Herunterladen')}<span class="visually-hidden"> ${t('– ganzes Projekt')}</span></button>
                         <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
@@ -2595,12 +2595,20 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         let satz = (modus === 'ki_neu')
             ? t('{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis })
             : t('{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+        // Die Wahrheit statt einer Sperre (Steve 31.08.2026): Reicht das Guthaben
+        // nicht fuer alles, laeuft die Generierung trotzdem — sie beschreibt so
+        // viele Bilder, wie sie bezahlen kann, und hoert dann auf. Genau das steht
+        // hier, damit niemand vor einer Sperre steht, die es gar nicht gibt.
         if (v.verfuegbar === null || v.verfuegbar === undefined) {
             satz += ' ' + t('Dein Konto hat unbegrenztes Guthaben.');
-        } else if (!v.erlaubt) {
-            satz += ' ' + t('Dein Guthaben reicht nicht: {f} Credits fehlen.', { f: v.fehlend });
-        } else {
+        } else if (v.machbar >= v.anzahl) {
             satz += ' ' + t('Du hast {v} Credits.', { v: v.verfuegbar });
+        } else if (v.machbar >= 1) {
+            satz += ' ' + t('Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf.',
+                            { v: v.verfuegbar, m: v.machbar, n: v.anzahl });
+        } else {
+            satz += ' ' + t('Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}.',
+                            { p: v.preis_je, v: v.verfuegbar });
         }
         byId('genConfirmBody').textContent = satz;
         byId('genConfirmOk').disabled = !v.erlaubt;

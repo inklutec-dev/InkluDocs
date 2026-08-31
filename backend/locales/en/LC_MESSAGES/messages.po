@@ -5205,3 +5205,15 @@ msgstr "There is nothing to generate here."
 #. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Abgebrochen. Es wurde nichts generiert."
 msgstr "Cancelled. Nothing was generated."
+
+#. Versteckter Zusatz an den Projekt-Knoepfen (31.08.2026)
+msgid "– ganzes Projekt"
+msgstr "– whole project"
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf."
+msgstr "You have {v} credits — enough for {m} of {n} images; after that the run stops."
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
+msgstr "Your credit is not enough: one alt text costs {p} credits, you have {v}."

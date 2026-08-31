@@ -4896,3 +4896,15 @@ msgstr "Der er intet at generere her."
 #. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Abgebrochen. Es wurde nichts generiert."
 msgstr "Afbrudt. Der blev ikke genereret noget."
+
+#. Versteckter Zusatz an den Projekt-Knoepfen (31.08.2026)
+msgid "– ganzes Projekt"
+msgstr "– hele projektet"
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf."
+msgstr "Du har {v} credits — det rækker til {m} af {n} billeder; derefter stopper kørslen."
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
+msgstr "Din saldo er ikke nok: en alternativ tekst koster {p} credits, du har {v}."

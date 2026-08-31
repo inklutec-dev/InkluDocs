@@ -5205,3 +5205,15 @@ msgstr "Il n’y a rien à générer ici."
 #. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Abgebrochen. Es wurde nichts generiert."
 msgstr "Annulé. Rien n’a été généré."
+
+#. Versteckter Zusatz an den Projekt-Knoepfen (31.08.2026)
+msgid "– ganzes Projekt"
+msgstr "– projet entier"
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf."
+msgstr "Vous avez {v} crédits — de quoi traiter {m} images sur {n} ; ensuite la génération s’arrête."
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
+msgstr "Votre solde ne suffit pas : un texte alternatif coûte {p} crédits, vous en avez {v}."

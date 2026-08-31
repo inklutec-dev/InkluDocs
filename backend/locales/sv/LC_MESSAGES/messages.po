@@ -4766,3 +4766,15 @@ msgstr "Det finns inget att generera här."
 #. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Abgebrochen. Es wurde nichts generiert."
 msgstr "Avbrutet. Inget genererades."
+
+#. Versteckter Zusatz an den Projekt-Knoepfen (31.08.2026)
+msgid "– ganzes Projekt"
+msgstr "– hela projektet"
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf."
+msgstr "Du har {v} credits — det räcker till {m} av {n} bilder; därefter stoppar körningen."
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
+msgstr "Ditt saldo räcker inte: en alt-text kostar {p} credits, du har {v}."

@@ -5205,3 +5205,15 @@ msgstr "Aquí no hay nada que generar."
 #. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Abgebrochen. Es wurde nichts generiert."
 msgstr "Cancelado. No se generó nada."
+
+#. Versteckter Zusatz an den Projekt-Knoepfen (31.08.2026)
+msgid "– ganzes Projekt"
+msgstr "– proyecto completo"
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf."
+msgstr "Tienes {v} créditos: alcanzan para {m} de {n} imágenes; después la generación se detiene."
+
+#. Teil-Lauf statt Sperre (31.08.2026)
+msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
+msgstr "Tu saldo no es suficiente: un texto alternativo cuesta {p} créditos y tienes {v}."
