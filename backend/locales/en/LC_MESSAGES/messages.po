@@ -5104,3 +5104,7 @@ msgstr "Daily limit reached: {i} images were processed, {n} were left."
 
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Not enough credits for all of them: {i} images were processed, {n} were left."
+
+# Ueber-uns-Linkzeile (31.08.2026)
+msgid "Website"
+msgstr "Website"

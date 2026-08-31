@@ -4795,3 +4795,7 @@ msgstr "Daglig grænse nået: {i} billeder blev behandlet, {n} mangler."
 
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Der var ikke credits nok til dem alle: {i} billeder blev behandlet, {n} mangler."
+
+# Ueber-uns-Linkzeile (31.08.2026)
+msgid "Website"
+msgstr "Websted"

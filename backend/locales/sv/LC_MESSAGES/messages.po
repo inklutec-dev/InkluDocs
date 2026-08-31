@@ -4665,3 +4665,7 @@ msgstr "Dagsgränsen nådd: {i} bilder behandlades, {n} återstår."
 
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Krediterna räckte inte till alla: {i} bilder behandlades, {n} återstår."
+
+# Ueber-uns-Linkzeile (31.08.2026)
+msgid "Website"
+msgstr "Webbplats"

@@ -5107,3 +5107,7 @@ msgstr "Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen."
 
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
+
+# Ueber-uns-Linkzeile (31.08.2026)
+msgid "Website"
+msgstr "Website"

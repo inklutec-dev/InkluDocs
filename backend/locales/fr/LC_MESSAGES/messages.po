@@ -5104,3 +5104,7 @@ msgstr "Limite quotidienne atteinte : {i} images traitées, {n} restantes."
 
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Les crédits n’ont pas suffi pour toutes : {i} images traitées, {n} restantes."
+
+# Ueber-uns-Linkzeile (31.08.2026)
+msgid "Website"
+msgstr "Site web"

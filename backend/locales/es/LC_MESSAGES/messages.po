@@ -5104,3 +5104,7 @@ msgstr "Límite diario alcanzado: {i} imágenes procesadas, {n} pendientes."
 
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Los créditos no alcanzaron para todas: {i} imágenes procesadas, {n} pendientes."
+
+# Ueber-uns-Linkzeile (31.08.2026)
+msgid "Website"
+msgstr "Sitio web"
