@@ -400,8 +400,14 @@
     aktualisiereSumme();
   }
 
+{% endraw %}
+  {# Diese beiden Zeilen MUESSEN ausserhalb des raw-Blocks stehen: darin
+     ersetzt Jinja nichts, das {{ }} landete woertlich im JavaScript und
+     brach das ganze Seitenskript ab (Befund 31.08.2026, eingeschleppt am
+     29.08. mit den Aktionspreisen). Gleiche Lehre wie app.html am 25.08. #}
   const PLAN_CREDITS = {{ plan_credits|default({'single': 250, 'team': 500, 'enterprise': 1375})|tojson }};
   const CREDIT_PREISE = {{ credit_preise|default({})|tojson }};
+{% raw %}
   const PREIS_ALT = (typeof CREDIT_PREISE.bild_generierung === 'number') ? CREDIT_PREISE.bild_generierung : 5;
   const PREIS_QI = (typeof CREDIT_PREISE.quickinfo_generierung === 'number') ? CREDIT_PREISE.quickinfo_generierung : 1;
   const PLAN_PLAETZE = { team: 5, enterprise: 25 };
