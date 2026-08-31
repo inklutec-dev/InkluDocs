@@ -168,11 +168,21 @@ def kunde_fuer(db_user: dict) -> str:
 # Genau die Auswahl, die Stripe fuer unsere Sessions bisher selbst getroffen
 # hat — damit sich fuer funktionierende Zahlungsarten NICHTS aendert und nur
 # die nicht freigeschalteten wegfallen.
-# Rollout 31.08.2026 (Steve): Karte (traegt Apple Pay und Google Pay mit), Link, Klarna
+# Rollout 31.08.2026 (Steve): Karte (traegt Apple Pay und Google Pay mit), Klarna
 # und Amazon Pay. SEPA-Lastschrift und PayPal bleiben in der Liste und erscheinen von allein,
 # sobald Stripe sie freischaltet (heute: sepa_debit inactive, paypal nicht vorhanden).
 # Die Exoten bancontact/eps/mb_way/satispay sind raus — sie verwirren mehr als sie nuetzen.
-GEWUENSCHTE_ZAHLUNGSARTEN = ["card", "link", "klarna", "amazon_pay", "sepa_debit", "paypal"]
+#
+# OHNE LINK (Steve, 31.08.2026 abends): Stripe Link ist keine Zahlungsart, sondern
+# Stripes Brieftasche. Sie erkennt die E-Mail-Adresse und verlangt VOR der Karte
+# einen SMS-Code („Bestaetigen Sie Ihre Identitaet"). Steve ist beim ersten echten
+# Buchungsversuch genau dort haengengeblieben — zum zweiten Mal nach dem 07.08.,
+# als Link im Testmodus deswegen schon abgeschaltet wurde. Im Live-Konto war es
+# wieder aktiv, weil die Einstellung PRO MODUS gilt.
+# Wichtig fuer spaeter: Es reicht NICHT, Link im Dashboard abzuschalten — diese
+# Liste wird als `payment_method_types` ausdruecklich mitgegeben und sticht die
+# Konto-Konfiguration. Der Schalter ist genau diese Zeile.
+GEWUENSCHTE_ZAHLUNGSARTEN = ["card", "klarna", "amazon_pay", "sepa_debit", "paypal"]
 
 _zahlungsarten_cache = None
 
