@@ -555,7 +555,7 @@ input[type="file"] {
        Dateinamen nicht unter die Buttons laufen. 29.08.2026: Icon-Pillen sind
        breiter (vier Knoepfe mit Symbol + Fettschrift) -> 34rem; unter 1100px
        rutscht die Leiste unter den Kopf (siehe Media Query unten). */
-    padding-right: 13rem;
+    padding-right: 32rem;
 }
 .doc-actions {
     position: absolute;
@@ -618,7 +618,7 @@ input[type="file"] {
    Fluss direkt unter den Dokument-Kopf. Die Platzreservierung am rechten Rand
    entfällt, sodass die Überschrift die volle Breite nutzt. Breakpoint passend zum
    bestehenden Sidebar-Umbruch (768px). */
-@media (max-width: 768px) {
+@media (max-width: 1100px) {
     .doc-section > summary.doc-summary {
         padding-right: 1rem;
     }
