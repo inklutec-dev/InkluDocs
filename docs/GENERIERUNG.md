@@ -168,7 +168,15 @@ im selben Modus nimmt nur diese.
 - Unlesbarer oder veralteter Inhalt führt zum normalen Verhalten (alle Kandidaten), nie zu
   einem Fehler: der Vermerk ist eine Bequemlichkeit, kein Zustand, auf dem etwas aufbaut.
 
-Beteiligt: `main._ki_neu_rest_lesen`, `main._ki_neu_rest_schreiben`, `main._ki_neu_zurueck`
+- Mehrere Dokumente im Projekt (31.08.2026, Prüfbefund): Der Vermerk wird fortgeschrieben,
+  nicht überschrieben — ein Lauf nimmt nur seine eigenen Bilder heraus und legt seine offenen
+  hinein. Ein Lauf in Dokument B lässt den Rest von Dokument A stehen.
+- Bewusst offen: Beim Abbruch von außen (Container-Neustart) wird der Rest korrekt vermerkt,
+  aber kein Lauf-Hinweis gesetzt — die Ansage läuft nur im laufenden Fortschritts-Poll, und
+  nach einem Neustart lädt der Nutzer die Seite ohnehin neu. Ein Hinweis beim Laden der
+  Projektansicht wäre ein eigener Umbau.
+
+Beteiligt: `main._ki_neu_rest_lesen`, `main._ki_neu_rest_pflegen`, `main._ki_neu_zurueck`
 (schreibt den Vermerk nur, wenn wirklich etwas offen blieb — der geordnete Abschluss ruft sie
 ein zweites Mal auf), `main.generate_alt_texts` (liest ihn).
 Test: `tests/e2e/verify_doppelkosten.py` (26 Prüfungen, u. a. „vier Bilder, vier Buchungen“).

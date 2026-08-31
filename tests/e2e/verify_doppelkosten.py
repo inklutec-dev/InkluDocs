@@ -228,6 +228,31 @@ try:
           uebergeben["ids"] == {BILD_IDS[0]}, uebergeben)
     stub_lauf_zuruecksetzen()
 
+    # --- 5b. Mehrere Dokumente (Pruefbefund Fable 5, 31.08.2026): ein Lauf in "Dokument B"
+    #        darf den Rest von "Dokument A" weder ueberschreiben noch loeschen
+    a_rest, b_ids = set(BILD_IDS[:2]), set(BILD_IDS[2:])
+    con.execute("UPDATE projects SET ki_neu_rest=? WHERE id=?",
+                (json.dumps({"ids": sorted(a_rest), "ts": datetime.now().isoformat(timespec="seconds")}), PID))
+    con.execute("UPDATE images SET status='pending' WHERE id IN (?,?)", tuple(b_ids))
+    con.execute("UPDATE projects SET status='processing' WHERE id=?", (PID,))
+    con.commit()
+    guthaben_auf(0)                      # B bricht sofort ab -> beide B-Bilder offen
+    main.generate_alt_text = ki_platzhalter
+    asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=b_ids))
+    main.generate_alt_text = echt_gen
+    check("Abbruch in B: Vermerk enthaelt A UND B (fortgeschrieben, nicht ueberschrieben)",
+          vermerk() == a_rest | b_ids, (vermerk(), a_rest, b_ids))
+    guthaben_auf(500)                    # B laeuft jetzt vollstaendig durch
+    con.execute("UPDATE images SET status='pending' WHERE id IN (?,?)", tuple(b_ids))
+    con.execute("UPDATE projects SET status='processing' WHERE id=?", (PID,))
+    con.commit()
+    main.generate_alt_text = ki_platzhalter
+    asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=b_ids))
+    main.generate_alt_text = echt_gen
+    check("B vollstaendig: nur B aus dem Vermerk genommen, A bleibt stehen", vermerk() == a_rest,
+          (vermerk(), a_rest))
+    con.execute("UPDATE projects SET ki_neu_rest=NULL WHERE id=?", (PID,)); con.commit()
+
     # --- 6. Luecken-Modus fuehrt keinen Vermerk (dort bleibt der Rest zu Recht pending)
     con.execute("UPDATE images SET status='pending' WHERE id=?", (BILD_IDS[0],))
     con.execute("UPDATE projects SET ki_neu_rest=NULL WHERE id=?", (PID,))

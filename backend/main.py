@@ -6118,10 +6118,18 @@ def _ki_neu_rest_lesen(conn, project_id: int) -> set:
         return set()
 
 
-def _ki_neu_rest_schreiben(conn, project_id: int, offene: set) -> None:
-    """Vermerk setzen oder loeschen -- eine leere Menge loescht ihn (Lauf vollstaendig)."""
-    wert = json.dumps({"ids": sorted(int(i) for i in offene),
-                       "ts": datetime.now().isoformat(timespec="seconds")}) if offene else None
+def _ki_neu_rest_pflegen(conn, project_id: int, lauf_ids: set, offene: set) -> None:
+    """Vermerk fortschreiben statt ueberschreiben (Pruefbefund 31.08.2026).
+
+    Ein Projekt kann mehrere Dokumente haben, und der Knopf am Dokument startet nur dessen
+    Bilder. Wuerde jeder Lauf den ganzen Vermerk ersetzen oder loeschen, verwuerfe ein Lauf in
+    Dokument B den Rest von Dokument A -- und A liesse sich spaeter nur noch doppelt bezahlt
+    fortsetzen. Deshalb: die Bilder DIESES Laufs (lauf_ids) aus dem Vermerk nehmen und die
+    jetzt offenen wieder hineinlegen; was andere Laeufe hinterlassen haben, bleibt stehen.
+    Ergibt sich eine leere Menge, ist der Vermerk weg."""
+    rest = (_ki_neu_rest_lesen(conn, project_id) - set(lauf_ids)) | set(offene)
+    wert = json.dumps({"ids": sorted(int(i) for i in rest),
+                       "ts": datetime.now().isoformat(timespec="seconds")}) if rest else None
     conn.execute("UPDATE projects SET ki_neu_rest = ? WHERE id = ?", (wert, project_id))
     conn.commit()
 
@@ -6152,7 +6160,7 @@ def _ki_neu_zurueck(conn, ids: set, project_id: Optional[int] = None) -> None:
     # und der beim Abbruch gesetzte Vermerk wuerde sofort wieder geloescht. Geloescht wird
     # er ausschliesslich am Ende eines Laufs, der NICHT abgebrochen ist.
     if project_id is not None and offene:
-        _ki_neu_rest_schreiben(conn, project_id, offene)
+        _ki_neu_rest_pflegen(conn, project_id, ids, offene)
 
 
 def _notaufraeumen(project_id: int, ki_neu_ids: set) -> None:
@@ -6400,7 +6408,7 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
         # Lief der ki_neu-Lauf bis zum Ende, ist nichts mehr offen: Vermerk wegraeumen, damit
         # der naechste Klick wieder alle Bilder nimmt. Auch gescheiterte Bilder gelten hier als
         # erledigt — sie haben nichts gekostet (der Fehlerzweig verbucht nicht).
-        _ki_neu_rest_schreiben(conn, project_id, set())
+        _ki_neu_rest_pflegen(conn, project_id, ki_neu_ids, set())
     # Zaehler frisch zaehlen statt den mitlaufenden Wert schreiben: zurueckgestellte Bilder
     # sind wieder 'done' und muessen mitzaehlen, sonst zeigt die Oberflaeche zu wenig an.
     processed = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
