@@ -98,6 +98,20 @@ PAKET_PREISE = {
     5000: 150.00,
 }
 
+
+def pakete_fuer_anzeige() -> list:
+    """Paketgroessen mit Betrag als Text fuer die Abo-Seite (Steve 31.08.2026).
+
+    abo.html hatte die Groessen hart eingetragen und zeigte nach der Verfuenffachung vom
+    28.08. noch 100/500/1000: zwei davon wies der Kauf als ungueltig ab, bei 500 stand
+    87,50 EUR am Knopf und 20 EUR in der Rechnung. Jetzt EINE Quelle: PAKET_PREISE.
+    Rueckgabe je Paket: (Groesse als Zahl, Groesse mit Tausenderpunkt, Betrag mit Euro)."""
+    out = []
+    for groesse, preis in sorted(PAKET_PREISE.items()):
+        betrag = str(int(preis)) if float(preis).is_integer() else f"{preis:.2f}".replace(".", ",")
+        out.append((groesse, f"{groesse:,}".replace(",", "."), f"{betrag} €"))
+    return out
+
 # Abo-Stufen (Steve+Michael, 06.08.2026 — loest das Lizenzschluessel-Modell
 # ab): Preise pro Monat. Gebucht wird online wahlweise als Monatsabo
 # (seit 19.08.2026, Steves Vorgabe) oder fest fuer 3/6/12 Monate; der

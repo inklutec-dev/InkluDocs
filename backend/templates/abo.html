@@ -103,9 +103,9 @@
         <div class="dash-field">
           <label for="paketWahl">{{ _('Paketgröße (Credits)') }}</label>
           <select id="paketWahl" class="dash-input">
-            <option value="100">100 — 20 €</option>
-            <option value="500">500 — 87,50 €</option>
-            <option value="1000">1000 — 150 €</option>
+            {# Pakete aus billing.PAKET_PREISE (Steve 31.08.2026) — vorher hart 100/500/1000 #}
+            {% for groesse, groesse_text, betrag in pakete %}<option value="{{ groesse }}">{{ groesse_text }} — {{ betrag }}</option>
+            {% endfor %}
           </select>
         </div>
         <button type="button" class="btn btn-secondary" id="paketBtn">{{ _('Kostenpflichtig kaufen') }}</button>

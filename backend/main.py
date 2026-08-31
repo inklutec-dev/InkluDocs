@@ -8633,7 +8633,8 @@ async def abo_page(request: Request):
     return _render_protected_template(
         request, "abo.html",
         plan_credits={k: v for k, v in billing.PLAN_KONTINGENTE.items() if k in ("single", "team", "enterprise")},
-        credit_preise=billing.preise_fuer_frontend())
+        credit_preise=billing.preise_fuer_frontend(),
+        pakete=billing.pakete_fuer_anzeige())
 
 
 @app.get("/team", response_class=HTMLResponse)
