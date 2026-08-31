@@ -168,8 +168,11 @@ def kunde_fuer(db_user: dict) -> str:
 # Genau die Auswahl, die Stripe fuer unsere Sessions bisher selbst getroffen
 # hat — damit sich fuer funktionierende Zahlungsarten NICHTS aendert und nur
 # die nicht freigeschalteten wegfallen.
-GEWUENSCHTE_ZAHLUNGSARTEN = ["card", "sepa_debit", "klarna", "paypal", "amazon_pay",
-                             "bancontact", "eps", "mb_way", "satispay"]
+# Rollout 31.08.2026 (Steve): Karte (traegt Apple Pay und Google Pay mit), Link, Klarna
+# und Amazon Pay. SEPA-Lastschrift und PayPal bleiben in der Liste und erscheinen von allein,
+# sobald Stripe sie freischaltet (heute: sepa_debit inactive, paypal nicht vorhanden).
+# Die Exoten bancontact/eps/mb_way/satispay sind raus — sie verwirren mehr als sie nuetzen.
+GEWUENSCHTE_ZAHLUNGSARTEN = ["card", "link", "klarna", "amazon_pay", "sepa_debit", "paypal"]
 
 _zahlungsarten_cache = None
 
