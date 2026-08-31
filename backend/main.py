@@ -8366,6 +8366,10 @@ def _append_link_reference(alt_text: str, context_text: str, language: str = "de
 
 NEUIGKEITEN = [
     # Neueste zuerst. Nur Eintraege, die fuer Nutzer relevant + auf Production live sind.
+    {"datum": "31.08.2026", "text": "InkluDocs geht in den regulären Betrieb. Was InkluDocs für dich erzeugt, wird in Credits abgerechnet – ein Alt-Text kostet 5 Credits, eine Quickinfo 1. Im Tarif Free bekommst du 50 Credits im Monat, mit vollem Funktionsumfang und ohne Zahlungsdaten. Wer mehr braucht, bucht Single, Team oder Enterprise oder kauft ein Credit-Paket; gekaufte Credits verfallen nie. Als Dank für die Testphase haben wir jedem Konto 250 Credits geschenkt. Die Preise stehen auf der Preisseite, dein Guthaben und dein Verbrauch unter „Abo & Verbrauch“."},
+    {"datum": "31.08.2026", "text": "Neu: Alt-Texte für Word-Dokumente. Lade eine Word-Datei hoch, lass die Bilder beschreiben, korrigiere von Hand und schreibe die Alt-Texte zurück in die Datei – sonst bleibt sie unverändert. Auf Wunsch erzeugt InkluDocs daraus außerdem eine barrierefreie PDF mit Überschriften, Lesereihenfolge, Sprache und Alt-Texten, prüft sie gegen die Norm PDF/UA-1 und sagt dir in Alltagssprache, was in Ordnung ist und was noch fehlt. Dazu eine Hörprobe, die vorführt, wie ein Screenreader dein Dokument liest. Die Umwandlung ist noch in der Beta – schreib uns, was dir auffällt."},
+    {"datum": "31.08.2026", "text": "Neu: Quickinfos für PDF-Formulare – die Texte, die ein Screenreader vorliest, wenn man in ein Feld springt. Nach dem Hochladen siehst du alle Felder und kannst sie bearbeiten; die KI schlägt auf Wunsch vor und nennt dir die Stelle im Formular, auf die sie sich stützt. Felder, die immer wiederkehren, legst du einmal als Stammdaten an und verwendest sie überall wieder. Am Ende schreibst du die Quickinfos ins PDF zurück oder exportierst sie als CSV. Zur Abnahme teilst du das Projekt wie gewohnt mit Gästen."},
+    {"datum": "31.08.2026", "text": "Weitere Verbesserungen: Der InkluAgent arbeitet jetzt selbstständig – er prüft, formuliert um und speichert nach deiner Zustimmung; unter jeder Antwort steht, welche Werkzeuge er dafür benutzt hat. Webseiten und Grafiken sammelst du wie PDFs in einem Projekt, jede als eigener Eintrag zum Umbenennen und Löschen. Die Alt-Texte wurden sprachlich überarbeitet: kürzer, konkreter, ohne Floskeln. Und der Knopf zum Herunterladen heißt jetzt auch so."},
     {"datum": "17.07.2026", "text": "Großes Update der Bildbeschreibungen: Alle 16 Bildkategorien — von Foto über Diagramm und Tabelle bis Strukturformel — liefern jetzt spürbar präzisere Texte: Kernaussage zuerst, Zahlen wortgetreu. Ein automatischer Redakteur prüft kritische Bilder zusätzlich gegen das Bild und korrigiert offensichtliche Fehler."},
     {"datum": "17.07.2026", "text": "Prüf-Workflow vereinfacht: Jedes Bild trägt genau einen Status — Neu, In Bearbeitung, Lektorat Freigabe/Änderung, Herausgeber Freigabe/Änderung — und genau danach kannst du filtern. Beim Abschluss einer Prüfung genügt eine Anmerkung."},
     {"datum": "17.07.2026", "text": "Neu: SVG-Dateien (Vektorgrafiken) können jetzt direkt hochgeladen werden — sie werden automatisch umgewandelt und durchlaufen die normale Generierung."},
@@ -8393,7 +8397,7 @@ NEUIGKEITEN = [
     {"datum": "07.04.2026", "text": "Neue Bildformate: AVIF und HEIC werden jetzt unterstützt"},
     {"datum": "06.04.2026", "text": "Tageslimit: 100 Bilder pro Tag – Anzeige im Dashboard"},
     {"datum": "06.04.2026", "text": "Registrierung offen: Konto erstellen mit E-Mail-Bestätigung"},
-    {"datum": "06.04.2026", "text": "InkluDocs unterstützen: Freiwillige Beiträge per PayPal möglich"},
+    {"datum": "06.04.2026", "text": "InkluDocs unterstützen: Freiwillige Beiträge per PayPal möglich. Diese Funktion gibt es inzwischen nicht mehr."},
 ]
 
 def _news_date_key(d):
@@ -8407,13 +8411,19 @@ def _newest_news_key():
     return max(keys) if keys else ""
 
 @app.get("/api/news")
-async def get_news(user: dict = Depends(get_current_user)):
-    """Changelog-Eintraege + kontobezogener Lese-Stand (news_seen_until, Schluessel YYYYMMDD)."""
+async def get_news(request: Request, user: dict = Depends(get_current_user)):
+    """Changelog-Eintraege + kontobezogener Lese-Stand (news_seen_until, Schluessel YYYYMMDD).
+
+    Die Texte stehen auf Deutsch in NEUIGKEITEN und werden hier in die UI-Sprache
+    uebersetzt. Aeltere Eintraege ohne Katalog-Eintrag bleiben deutsch, weil
+    gettext eine unbekannte msgid unveraendert zurueckgibt."""
+    _ = get_gettext(resolve_ui_language(request))
     conn = get_db()
     row = conn.execute("SELECT news_seen_until FROM users WHERE id = ?", (user["id"],)).fetchone()
     conn.close()
     seen = row["news_seen_until"] if row and row["news_seen_until"] else ""
-    return {"news": NEUIGKEITEN, "seen_until": seen}
+    news = [{"datum": n["datum"], "text": _(n["text"])} for n in NEUIGKEITEN]
+    return {"news": news, "seen_until": seen}
 
 @app.post("/api/news/seen")
 async def mark_news_seen(user: dict = Depends(get_current_user)):

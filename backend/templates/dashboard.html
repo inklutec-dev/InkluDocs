@@ -144,7 +144,7 @@
       list.appendChild(p);
       return;
     }
-    const RECENT = 3;
+    const RECENT = 4;
     list.appendChild(newsBuildList(_newsItems.slice(0, RECENT)));
     if (_newsItems.length > RECENT) {
       const details = document.createElement('details');

@@ -133,7 +133,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .dash-news-close:focus-visible { outline:2px solid #c75000; outline-offset:2px; }
 .dash-news-list { list-style:none; padding:0; margin:0; display:grid; gap:.6rem; }
 .dash-news-item { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:.75rem 1rem; font-size:.95rem; line-height:1.5; }
-.dash-news-date { font-weight:700; color:#c75000; margin-right:.4rem; white-space:nowrap; }
+/* 31.08.2026: Das Datum sitzt auf .dash-news-item mit dem grauen App-Grund
+   #f5f7fa — dort schafft #c75000 nur 4,27:1. Dieselbe Loesung wie in der
+   Fusszeile (10.06.2026): #b84a00, 4,87:1, gleiche Markenfarbe. Die Klappe
+   „Frühere Neuigkeiten“ liegt auf dem weissen Karten-Grund und bleibt. */
+.dash-news-date { font-weight:700; color:#b84a00; margin-right:.4rem; white-space:nowrap; }
 .dash-news-more { margin-top:.75rem; }
 .dash-news-more summary { cursor:pointer; color:#c75000; font-weight:600; padding:.3rem 0; }
 .dash-news-more summary:focus-visible { outline:2px solid #c75000; outline-offset:2px; }
