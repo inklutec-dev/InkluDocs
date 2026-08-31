@@ -4832,3 +4832,7 @@ msgstr "Nyt: hjælpetekster til PDF-formularer — de tekster, en skærmlæser l
 
 msgid "Weitere Verbesserungen: Der InkluAgent arbeitet selbstständig und nennt unter jeder Antwort seine Werkzeuge. Webseiten und Grafiken sammelst du wie PDFs, jede als eigener Eintrag zum Umbenennen und Löschen. Die Alt-Texte sind sprachlich überarbeitet, und der Knopf zum Herunterladen heißt jetzt auch so."
 msgstr "Flere forbedringer: InkluAgent arbejder selvstændigt og nævner under hvert svar de værktøjer, den har brugt. Websider og grafik samles som PDF-filer, hver som sin egen post til at omdøbe og slette. De alternative tekster er sprogligt gennemarbejdet, og knappen til download hedder nu også det."
+
+#. Free-Hinweis auf /abo, aktualisiert 31.08.2026 (Online-Zahlung ist live)
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du gleich hier unten — online oder auf Rechnung."
+msgstr "Du bruger den gratis Free-plan. Et abonnement med flere credits bestiller du lige her nedenfor — online eller mod faktura."

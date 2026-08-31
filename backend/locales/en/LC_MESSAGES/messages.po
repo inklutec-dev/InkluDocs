@@ -5141,3 +5141,7 @@ msgstr "New: tooltips for PDF forms — the texts a screen reader reads out when
 
 msgid "Weitere Verbesserungen: Der InkluAgent arbeitet selbstständig und nennt unter jeder Antwort seine Werkzeuge. Webseiten und Grafiken sammelst du wie PDFs, jede als eigener Eintrag zum Umbenennen und Löschen. Die Alt-Texte sind sprachlich überarbeitet, und der Knopf zum Herunterladen heißt jetzt auch so."
 msgstr "Further improvements: the InkluAgent works on its own and names the tools it used under every answer. Web pages and graphics are collected like PDFs, each as its own entry to rename and delete. The alt texts have been reworked linguistically, and the download button is now called that."
+
+#. Free-Hinweis auf /abo, aktualisiert 31.08.2026 (Online-Zahlung ist live)
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du gleich hier unten — online oder auf Rechnung."
+msgstr "You are on the free plan. You can book a plan with more credits right below — online or on invoice."

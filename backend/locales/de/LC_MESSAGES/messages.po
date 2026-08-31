@@ -5144,3 +5144,7 @@ msgstr ""
 
 msgid "Weitere Verbesserungen: Der InkluAgent arbeitet selbstständig und nennt unter jeder Antwort seine Werkzeuge. Webseiten und Grafiken sammelst du wie PDFs, jede als eigener Eintrag zum Umbenennen und Löschen. Die Alt-Texte sind sprachlich überarbeitet, und der Knopf zum Herunterladen heißt jetzt auch so."
 msgstr ""
+
+#. Free-Hinweis auf /abo, aktualisiert 31.08.2026 (Online-Zahlung ist live)
+msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du gleich hier unten — online oder auf Rechnung."
+msgstr ""
