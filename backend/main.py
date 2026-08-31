@@ -8644,6 +8644,12 @@ async def abo_page(request: Request):
         request, "abo.html",
         plan_credits={k: v for k, v in billing.PLAN_KONTINGENTE.items() if k in ("single", "team", "enterprise")},
         credit_preise=billing.preise_fuer_frontend(),
+        # Preise und Sitze ebenfalls aus billing.py (31.08.2026): Die Plan-Liste
+        # hatte sie abgetippt und nannte 9,95 EUR auch dann, wenn das teurere
+        # Monatsabo gewaehlt war.
+        plan_preise=billing.PLAN_PREISE_EUR,
+        plan_preise_monatlich=billing.PLAN_PREISE_MONATLICH_EUR,
+        plan_plaetze=billing.PLAN_SITZE,
         pakete=billing.pakete_fuer_anzeige())
 
 

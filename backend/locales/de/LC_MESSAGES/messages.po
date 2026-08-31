@@ -5148,3 +5148,15 @@ msgstr ""
 #. Free-Hinweis auf /abo, aktualisiert 31.08.2026 (Online-Zahlung ist live)
 msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du gleich hier unten — online oder auf Rechnung."
 msgstr ""
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "{plan} — {credits} Credits im Monat, ein Konto"
+msgstr ""
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "{plan} — {credits} Credits im Monat, bis {plaetze} Personen"
+msgstr ""
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat."
+msgstr ""

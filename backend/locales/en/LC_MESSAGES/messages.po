@@ -5145,3 +5145,15 @@ msgstr "Further improvements: the InkluAgent works on its own and names the tool
 #. Free-Hinweis auf /abo, aktualisiert 31.08.2026 (Online-Zahlung ist live)
 msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du gleich hier unten — online oder auf Rechnung."
 msgstr "You are on the free plan. You can book a plan with more credits right below — online or on invoice."
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "{plan} — {credits} Credits im Monat, ein Konto"
+msgstr "{plan} — {credits} credits a month, one account"
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "{plan} — {credits} Credits im Monat, bis {plaetze} Personen"
+msgstr "{plan} — {credits} credits a month, up to {plaetze} people"
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat."
+msgstr "Total: {summe} € for {monate} months — {rate} € per month."

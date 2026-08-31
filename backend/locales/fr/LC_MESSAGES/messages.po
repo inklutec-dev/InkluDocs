@@ -5145,3 +5145,15 @@ msgstr "Autres améliorations : l’InkluAgent travaille de façon autonome et i
 #. Free-Hinweis auf /abo, aktualisiert 31.08.2026 (Online-Zahlung ist live)
 msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du gleich hier unten — online oder auf Rechnung."
 msgstr "Tu utilises le plan Free gratuit. Un abonnement avec plus de crédits, tu le souscris juste en dessous — en ligne ou sur facture."
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "{plan} — {credits} Credits im Monat, ein Konto"
+msgstr "{plan} — {credits} crédits par mois, un compte"
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "{plan} — {credits} Credits im Monat, bis {plaetze} Personen"
+msgstr "{plan} — {credits} crédits par mois, jusqu’à {plaetze} personnes"
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat."
+msgstr "Prix total : {summe} € pour {monate} mois — {rate} € par mois."

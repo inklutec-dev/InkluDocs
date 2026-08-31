@@ -4706,3 +4706,15 @@ msgstr "Fler förbättringar: InkluAgent arbetar självständigt och anger under
 #. Free-Hinweis auf /abo, aktualisiert 31.08.2026 (Online-Zahlung ist live)
 msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du gleich hier unten — online oder auf Rechnung."
 msgstr "Du använder den kostnadsfria Free-planen. Ett abonnemang med fler credits bokar du direkt här nedanför — online eller mot faktura."
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "{plan} — {credits} Credits im Monat, ein Konto"
+msgstr "{plan} — {credits} credits i månaden, ett konto"
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "{plan} — {credits} Credits im Monat, bis {plaetze} Personen"
+msgstr "{plan} — {credits} credits i månaden, upp till {plaetze} personer"
+
+#. Plan-Liste ohne Preis (31.08.2026)
+msgid "Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat."
+msgstr "Totalpris: {summe} € för {monate} månader — {rate} € per månad."

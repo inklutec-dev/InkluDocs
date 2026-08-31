@@ -60,10 +60,13 @@
         <div id="aboBuchenTeil">
         <div class="dash-field">
           <label for="buchenPlan">{{ _('Plan') }}</label>
+          {# Beschriftung setzt planListenBeschriften() aus den billing-Werten.
+             BEWUSST OHNE PREIS: der haengt an der Laufzeit (zweite Liste) und
+             stand hier fruher falsch, sobald das Monatsabo gewaehlt war. #}
           <select id="buchenPlan" class="dash-input">
-            <option value="single">Single — 9,95 € / Monat, 250 Credits</option>
-            <option value="team">Team — 19,95 € / Monat, 500 Credits, bis 5 Nutzer</option>
-            <option value="enterprise">Enterprise — 49,95 € / Monat, 1.375 Credits, bis 25 Nutzer</option>
+            <option value="single"></option>
+            <option value="team"></option>
+            <option value="enterprise"></option>
           </select>
         </div>
         <div class="dash-field">
@@ -120,10 +123,13 @@
         <h2 id="wechselHeading">{{ _('Plan wechseln') }}</h2>
         <div class="dash-field">
           <label for="wechselPlan">{{ _('Neuer Plan') }}</label>
+          {# Beschriftung setzt planListenBeschriften() aus den billing-Werten.
+             BEWUSST OHNE PREIS: der haengt an der Laufzeit (zweite Liste) und
+             stand hier fruher falsch, sobald das Monatsabo gewaehlt war. #}
           <select id="wechselPlan" class="dash-input">
-            <option value="single">Single — 9,95 € / Monat, 250 Credits</option>
-            <option value="team">Team — 19,95 € / Monat, 500 Credits, bis 5 Nutzer</option>
-            <option value="enterprise">Enterprise — 49,95 € / Monat, 1.375 Credits, bis 25 Nutzer</option>
+            <option value="single"></option>
+            <option value="team"></option>
+            <option value="enterprise"></option>
           </select>
         </div>
         <div class="dash-field">
@@ -171,6 +177,27 @@
   // Kuendigung zum Laufzeitende, Team-Verwaltung mit Einladungen.
   // buildCreditLines() kommt aus dashboard.js (App-Shell).
   const PLAN_LABELS = { free: 'Free', single: 'Single', team: 'Team', enterprise: 'Enterprise' };
+{% endraw %}
+  {# ── Werte vom Server. EINE Quelle: billing.py ───────────────────────────
+     Diese Zeilen stehen bewusst AUSSERHALB des raw-Blocks — darin ersetzt
+     Jinja nichts, ein {{ }} landet woertlich im JavaScript und bricht das
+     GANZE Seitenskript ab (Befund 31.08.2026, gleiche Falle wie app.html am
+     25.08.). Der Waechter backend/scripts/check_templates.py prueft das jetzt.
+     Abgetippte Werte sind dreimal aus dem Ruder gelaufen: Plan-Credits
+     50/100/275, Paketgroessen 100/500/1000 und zuletzt "9,95 EUR / Monat" in
+     der Plan-Liste, obwohl das Monatsabo 11,95 EUR kostet. #}
+  const PLAN_CREDITS = {{ plan_credits|default({'single': 250, 'team': 500, 'enterprise': 1375})|tojson }};
+  const CREDIT_PREISE = {{ credit_preise|default({})|tojson }};
+  const PLAN_PREISE = {{ plan_preise|default({'single': 9.95, 'team': 19.95, 'enterprise': 49.95})|tojson }};
+  const PLAN_PREISE_MONATLICH = {{ plan_preise_monatlich|default({'single': 11.95, 'team': 23.95, 'enterprise': 59.95})|tojson }};
+  const PLAN_SITZE = {{ plan_plaetze|default({'team': 5, 'enterprise': 25})|tojson }};
+{% raw %}
+
+  // Zahlen in der Sprache der Oberflaeche ausgeben (1375 -> "1.375" bzw. "1,375").
+  function zahl(n) {
+    try { return Number(n).toLocaleString(window.LANG || 'de'); }
+    catch (e) { return String(n); }
+  }
 
   let _abo = null;
 
@@ -377,9 +404,10 @@
 
   // Stripe-Buchungsstrecke (06.08.2026): Knoepfe nur zeigen, wenn die
   // Online-Zahlung konfiguriert ist; sonst bleibt der E-Mail-Hinweis.
-  const PLAN_MONATSPREISE = { single: 9.95, team: 19.95, enterprise: 49.95 };
+  // Preise aus billing.py (Block oben) — fruher hier abgetippt.
+  const PLAN_MONATSPREISE = PLAN_PREISE;
   // Monatsabo (19.08.2026): eigener, rund 20 % hoeherer Preis ohne Bindung.
-  const PLAN_MONATSPREISE_MONATLICH = { single: 11.95, team: 23.95, enterprise: 59.95 };
+  const PLAN_MONATSPREISE_MONATLICH = PLAN_PREISE_MONATLICH;
   function monatsrate(plan, monate) {
     return monate === 1 ? PLAN_MONATSPREISE_MONATLICH[plan] : PLAN_MONATSPREISE[plan];
   }
@@ -400,27 +428,42 @@
     aktualisiereSumme();
   }
 
-{% endraw %}
-  {# Diese beiden Zeilen MUESSEN ausserhalb des raw-Blocks stehen: darin
-     ersetzt Jinja nichts, das {{ }} landete woertlich im JavaScript und
-     brach das ganze Seitenskript ab (Befund 31.08.2026, eingeschleppt am
-     29.08. mit den Aktionspreisen). Gleiche Lehre wie app.html am 25.08. #}
-  const PLAN_CREDITS = {{ plan_credits|default({'single': 250, 'team': 500, 'enterprise': 1375})|tojson }};
-  const CREDIT_PREISE = {{ credit_preise|default({})|tojson }};
-{% raw %}
   const PREIS_ALT = (typeof CREDIT_PREISE.bild_generierung === 'number') ? CREDIT_PREISE.bild_generierung : 5;
   const PREIS_QI = (typeof CREDIT_PREISE.quickinfo_generierung === 'number') ? CREDIT_PREISE.quickinfo_generierung : 1;
-  const PLAN_PLAETZE = { team: 5, enterprise: 25 };
+  const PLAN_PLAETZE = PLAN_SITZE;
+
+  // Beschriftung beider Plan-Listen: Name + Leistung, KEIN Preis. Die Credits
+  // haengen nicht an der Laufzeit, der Preis schon — deshalb steht er nur in
+  // der Zusammenfassung, die auf beide Listen reagiert.
+  function planOptionText(plan) {
+    const credits = zahl(PLAN_CREDITS[plan]);
+    const plaetze = PLAN_SITZE[plan];
+    return plaetze
+      ? t('{plan} — {credits} Credits im Monat, bis {plaetze} Personen', { plan: PLAN_LABELS[plan], credits: credits, plaetze: plaetze })
+      : t('{plan} — {credits} Credits im Monat, ein Konto', { plan: PLAN_LABELS[plan], credits: credits });
+  }
+  function planListenBeschriften() {
+    ['buchenPlan', 'wechselPlan'].forEach(function (id) {
+      const liste = byId(id);
+      if (!liste) return;
+      Array.prototype.forEach.call(liste.options, function (o) {
+        o.textContent = planOptionText(o.value);
+      });
+    });
+  }
 
   function aktualisiereSumme() {
     const plan = byId('buchenPlan').value;
     const monate = parseInt(byId('buchenLaufzeit').value, 10);
     const summe = (monatsrate(plan, monate) * monate).toFixed(2).replace('.', ',');
+    // Der Monatspreis wird ausgeschrieben, weil er sich zwischen Monatsabo und
+    // fester Laufzeit unterscheidet — frueher stand er (falsch) in der Plan-Liste.
+    const rate = monatsrate(plan, monate).toFixed(2).replace('.', ',');
     byId('buchenSumme').textContent = (monate === 1)
       ? t('Gesamtpreis: {summe} € pro Monat, monatlich kündbar.', { summe: summe })
-      : t('Gesamtpreis: {summe} € für {monate} Monate.', { summe: summe, monate: monate });
+      : t('Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat.', { summe: summe, monate: monate, rate: rate });
     // Wesentliche Merkmale ausschreiben statt nur den Preis zu nennen.
-    const credits = PLAN_CREDITS[plan];
+    const credits = zahl(PLAN_CREDITS[plan]);
     const plaetze = PLAN_PLAETZE[plan];
     byId('buchenLeistung').textContent = plaetze
       ? t('Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit.', { credits: credits, plaetze: plaetze, alt: PREIS_ALT, qi: PREIS_QI })
@@ -432,6 +475,7 @@
       ? t('Monatsabo: {summe} € werden jeweils für einen Monat im Voraus abgebucht. Das Abo verlängert sich monatlich und ist jederzeit zum Ende des laufenden Monats kündbar.', { summe: summe })
       : t('Laufzeit {monate} Monate, im Voraus zu zahlen. Wenn du nicht zum Laufzeitende kündigst, läuft das Abo danach als Monatsabo zur Treuekondition weiter: {treue} € pro Monat, jederzeit monatlich kündbar.', { monate: monate, treue: treue });
   }
+  planListenBeschriften();
   byId('buchenPlan').addEventListener('change', aktualisiereSumme);
   byId('buchenLaufzeit').addEventListener('change', aktualisiereSumme);
 
