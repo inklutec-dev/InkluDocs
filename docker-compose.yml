@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260827-lizenz
+    image: inkludocs:v4-20260831
     container_name: inkludocs
     restart: unless-stopped
     ports:
@@ -14,7 +14,7 @@ services:
       - SECRET_KEY=${SECRET_KEY:-inkludocs-production-key-2025}
       - BASE_URL=https://inkludocs.inklutec.de
       - REGISTRATION_ENABLED=true
-      - NOTIFICATION_EMAIL=support@inklutec.de
+      - NOTIFICATION_EMAIL=${NOTIFICATION_EMAIL:-support@inklutec.de}
       # SMTP
       - SMTP_SERVER=${SMTP_SERVER}
       - SMTP_PORT=${SMTP_PORT:-587}
@@ -38,6 +38,13 @@ services:
       - V4_VERIFY_KORREKTUR=on
       # Abo-/Credit-System (31.07.2026): off = nur zaehlen, on = Kontingente durchsetzen (Review-Befund 3)
       - ABO_ENFORCEMENT=${ABO_ENFORCEMENT:-off}
+      # Rollout 31.08.2026: Tageslimit ausdruecklich (wie Staging), Umwandler-Dienst, Tageslauf, Stripe
+      - DAILY_IMAGE_LIMIT=${DAILY_IMAGE_LIMIT:-500}
+      - KONVERTER_URL=http://inkludocs-konverter:8090
+      - TAGESLAUF_TOKEN=${TAGESLAUF_TOKEN:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
       - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
       - AWS_REGION=${AWS_REGION:-eu-central-1}
@@ -56,7 +63,7 @@ services:
       - PDFIX_LICENSE_USER=${PDFIX_LICENSE_USER:-}
       - DAILY_CHAT_LIMIT=${DAILY_CHAT_LIMIT:-100}   # Chat-Bremse je Konto/Tag (28.08.2026)
       - PDFIX_LICENSE_KEY=${PDFIX_LICENSE_KEY:-}
-      - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-true}
+      - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-false}
       - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
       - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
       - INKLUAGENT_BEDROCK_MODEL_TEXT=${INKLUAGENT_BEDROCK_MODEL_TEXT:-eu.anthropic.claude-sonnet-4-6}
@@ -69,6 +76,15 @@ services:
     networks:
       - default
       - inklucut_default
+
+  # Umwandler (Rollout 31.08.2026): LibreOffice + veraPDF 1.31.163 (festgenagelt), nur im
+  # Compose-Netz erreichbar, kein Port nach aussen, keine Volumes. Getestetes Staging-Image.
+  inkludocs-konverter:
+    image: inkludocs-konverter:v4-20260831
+    container_name: inkludocs-konverter
+    restart: unless-stopped
+    networks:
+      - default
 
 volumes:
   inkludocs_data:
