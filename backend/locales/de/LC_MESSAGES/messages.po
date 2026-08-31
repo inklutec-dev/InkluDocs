@@ -5160,3 +5160,7 @@ msgstr ""
 #. Plan-Liste ohne Preis (31.08.2026)
 msgid "Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat."
 msgstr ""
+
+#. Beta-Hinweis entfernt (Michael Karbe, 31.08.2026)
+msgid "Als PDF"
+msgstr ""

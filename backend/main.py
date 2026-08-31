@@ -6550,8 +6550,28 @@ async def update_alt_text(image_id: int, request: Request, user: dict = Depends(
 
 def _display_alt_text(img):
     """Frontend-Fallback in Python: User-Edit > KI-Output > Original aus Quelle.
-    Symmetrisch zur Render-Logik in app.html (textarea-value)."""
-    return img["alt_text_edited"] or img["alt_text"] or img["original_alt"]
+    Symmetrisch zur Render-Logik in app.html (anzeigeAltText).
+
+    LEEREN ZAEHLT (31.08.2026, Befund Michael Karbe): `alt_text_edited` ist
+    NULL, solange niemand das Feld angefasst hat — dann ist der Rueckfall auf
+    KI-Text bzw. Quelle richtig. Ein LEERER STRING heisst dagegen: Der Nutzer
+    hat den Text BEWUSST geloescht. Dann darf nichts zurueckkommen.
+
+    Vorher stand hier eine or-Kette. Weil "" falsy ist, holte sie den alten
+    KI-Text zurueck: Er erschien nach dem Neuladen wieder im Feld, zaehlte in
+    der Export-Zusammenfassung als vorhandene Beschreibung und wurde ueber
+    _ausgabe_alt_text sogar in die exportierte PDF geschrieben. Das Loeschen
+    hatte keine Wirkung — waehrend ein einzelnes LEERZEICHEN wirkte, weil es
+    truthy ist. Fuer Nutzer nicht durchschaubar.
+
+    Ein leeres Ergebnis fuehrt im Export dazu, dass das Bild UEBERSPRUNGEN
+    wird (_exportable_alt_text) — die PDF bleibt an der Stelle unveraendert.
+    Ein Bild ganz ohne Beschreibung auszuzeichnen ist NICHT dasselbe wie
+    "dekorativ"; das ist ein eigenes Merkmal (images.image_type)."""
+    edited = img["alt_text_edited"]
+    if edited is not None:
+        return edited
+    return img["alt_text"] or img["original_alt"]
 
 
 # 17.08.2026: Zweite Verteidigungslinie an der Systemgrenze.

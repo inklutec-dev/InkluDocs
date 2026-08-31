@@ -4848,3 +4848,7 @@ msgstr "{plan} — {credits} credits om måneden, op til {plaetze} personer"
 #. Plan-Liste ohne Preis (31.08.2026)
 msgid "Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat."
 msgstr "Samlet pris: {summe} € for {monate} måneder — {rate} € pr. måned."
+
+#. Beta-Hinweis entfernt (Michael Karbe, 31.08.2026)
+msgid "Als PDF"
+msgstr "Som PDF"

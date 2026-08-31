@@ -39,10 +39,14 @@ with sync_playwright() as p:
     check("Hoerprobe-Klappe vorhanden", pg.locator("details.doc-hoerprobe").count() == 1)
     da = pg.locator(".doc-block .doc-actions").first
     check("Knoepfe je Dokument: Generieren, Herunterladen, Umbenennen, Loeschen (Michael 28.08.)", da.locator("button").count() == 4 and "Herunterladen" in da.inner_text() and ("Alle generieren" in da.inner_text() or "neu generieren" in da.inner_text()), da.inner_text())
-    check("Icon-Knoepfe (29.08.): 4 dekorative Symbole (aria-hidden, focusable=false), Namen unveraendert",
-          da.locator("button svg.ico[aria-hidden='true'][focusable='false']").count() == 4
-          and da.locator("button").first.evaluate("b => b.querySelector('svg').getAttribute('aria-hidden') === 'true'")
-          and "svg" not in da.locator("button:has-text('Herunterladen')").evaluate("b => b.textContent"), da.inner_html()[:200])
+    # 31.08.2026 (Michael Karbe): Die Icons sind wieder raus — „Da wir nicht so
+    # viel Platz haben ... einheitlich erst einmal ueberall keine Icons in den
+    # Buttons." Die Pruefung von damals ist umgedreht statt geloescht: Sie
+    # meldet sich, falls die Symbole versehentlich zurueckkommen. Der Schalter
+    # sitzt in base_app.html (window.icon).
+    check("Keine Symbole in den Knoepfen (Michael 31.08.), Beschriftungen unveraendert",
+          da.locator("button svg").count() == 0
+          and "Herunterladen" in da.inner_text(), da.inner_html()[:200])
     da.locator("button:has-text('Herunterladen')").click(); pg.wait_for_timeout(600)
     check("Herunterladen am Dokument oeffnet den Dialog", pg.locator("#fExportPanel").evaluate("d=>d.open") is True)
     check("Dialog-Ueberschrift nennt das Dokument, keine Auswahlliste (Steve 28.08.)", pg.locator("#fExportHeading").inner_text().startswith("Dokument") and pg.locator("input[name=fExportScope]").count() == 0, pg.locator("#fExportHeading").inner_text())

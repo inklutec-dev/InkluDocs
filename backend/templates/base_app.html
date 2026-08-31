@@ -21,9 +21,15 @@
   <symbol id="ico-share" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M18 6.5a2 2 0 1 0 .01 0M6 12a2 2 0 1 0 .01 0M18 17.5a2 2 0 1 0 .01 0M8 11l8-3.5M8 13l8 3.5"/></symbol>
 </svg>
 <script>
-  // Dekoratives Symbol fuer Knoepfe: aria-hidden + focusable=false, der Text daneben bleibt der Name.
+  // ICONS AUS (31.08.2026, Michael Karbe ueber Steve): "Da wir nicht so viel
+  // Platz haben, wuerde ich die Icons aus den Buttons entfernen. Wir sollten
+  // einheitlich erst einmal ueberall keine Icons in den Buttons haben."
+  // Der Aufruf bleibt an allen Knoepfen stehen und liefert nichts — so ist ein
+  // Zurueck genau diese eine Zeile, und das Sprite oben bleibt unangetastet.
+  // Auf die Zugaenglichkeit hatte das Symbol ohnehin keinen Einfluss: Es war
+  // aria-hidden, der Knopftext war immer der zugaengliche Name.
   window.icon = function (name) {
-    return '<svg class="ico" aria-hidden="true" focusable="false" width="16" height="16"><use href="#ico-' + name + '"></use></svg>';
+    return '';
   };
 </script>
 <div class="app-shell">

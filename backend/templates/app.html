@@ -75,6 +75,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    // Anzuzeigender Alt-Text — dieselbe Regel wie main._display_alt_text.
+    // LEEREN ZAEHLT (31.08.2026): alt_text_edited === null heisst "nie
+    // bearbeitet" (Rueckfall auf KI-Text bzw. Quelle), ein LEERER STRING
+    // heisst "bewusst geloescht" — dann bleibt es leer. Vorher stand hier
+    // eine ||-Kette, die den geloeschten Text wieder hervorholte.
+    function anzeigeAltText(img) {
+        if (img.alt_text_edited !== null && img.alt_text_edited !== undefined) {
+            return img.alt_text_edited;
+        }
+        return img.alt_text || img.original_alt || '';
+    }
+
     function announce(msg) {
         liveRegion.textContent = '';
         setTimeout(() => { liveRegion.textContent = msg; }, 100);
@@ -642,7 +654,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">${t('Als JSON')}</button>
                                 <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
-                                ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF (Beta)') + '</button>' : ''}
+                                ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word (Beta)') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln (Beta)') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
@@ -1966,7 +1978,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                          mittel #a15c00 (5,2:1), niedrig #b91c1c (5,9:1). -->
                     ${!window.GUEST_MODE && img.konfidenz && img.status === 'done' ? '<span class="badge" style="background:' + (img.konfidenz === 'hoch' ? '#1e7e34' : img.konfidenz === 'niedrig' ? '#b91c1c' : '#a15c00') + ';color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Konfidenz: {k}', { k: img.konfidenz }) + '</span>' : ''}
                     ${!window.GUEST_MODE && img.context_mode && img.status === 'done' ? '<span class="badge" style="background:#1e7e34;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + (img.context_mode === 'mit' ? t('Kontext: Ja') : t('Kontext: Nein')) + '</span>' : ''}
-                    ${(window.GUEST_MODE || window._inReview) && img.status !== 'processing' && (img.alt_text_edited || img.alt_text || img.original_alt) ? unifiedReviewBadge(img) : ''}
+                    ${(window.GUEST_MODE || window._inReview) && img.status !== 'processing' && anzeigeAltText(img) ? unifiedReviewBadge(img) : ''}
                     ${img.status === 'processing' ? '<span class="badge badge-processing">' + t('Wird analysiert...') + '</span>' : ''}
                     ${img.status === 'error' ? '<span class="badge" style="background:var(--error,#c33);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Fehler') + '</span>' : ''}
                 </div>
@@ -1983,13 +1995,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 <textarea class="alt-text-field" id="alttext_${img.id}" data-image-id="${img.id}"
                     placeholder="${img.status === 'processing' ? t('Alt-Text wird generiert...') : (img.status === 'done' ? '' : t('Noch kein Alt-Text - hier eingeben oder generieren lassen'))}"
                     ${img.status === 'processing' ? 'disabled' : ''}
-                >${escHtml(img.alt_text_edited || img.alt_text || img.original_alt || '')}</textarea>
+                >${escHtml(anzeigeAltText(img))}</textarea>
                 ${img.status !== 'processing' ? `
                     <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                         ${!window.GUEST_MODE ? `<span style="font-size:0.85rem;color:var(--text-muted);">${t('Alt-Text bewerten:')}</span>
                         <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'good', this)" aria-label="${t('Alt-Text gut')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'good' ? 'background:var(--success);color:white;border-color:var(--success);' : ''}">&#128077;</button>
                         <button class="btn btn-secondary btn-small feedback-btn" onclick="sendFeedback(${img.id}, 'bad', this)" aria-label="${t('Alt-Text schlecht')}" style="font-size:1.1rem;padding:0.3rem 0.6rem;${img.feedback === 'bad' ? 'background:var(--error);color:white;border-color:var(--error);' : ''}">&#128078;</button>` : ''}
-                        ${(img.alt_text_edited || img.alt_text || img.original_alt) ? '<button class="btn btn-secondary btn-small tts-btn" data-lang="' + (img.gen_language || 'de') + '" onclick="speakAltText(' + img.id + ', this)" aria-pressed="false" style="padding:0.3rem 0.7rem;">' + t('Anhören') + '</button>' : ''}
+                        ${anzeigeAltText(img) ? '<button class="btn btn-secondary btn-small tts-btn" data-lang="' + (img.gen_language || 'de') + '" onclick="speakAltText(' + img.id + ', this)" aria-pressed="false" style="padding:0.3rem 0.7rem;">' + t('Anhören') + '</button>' : ''}
                         <span id="feedback_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
@@ -2009,7 +2021,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <!-- Etappe-3-Glaettung (15.07.2026): Die Pruefleiste wird auch fuer LEERE
                          Alt-Felder gerendert, nur versteckt. Fuellt der Gast das Feld erstmals,
                          blendet der Speicher-Handler sie sofort ein (vorher: erst nach Neuladen). -->
-                    <div class="guest-review" id="guestrev_${img.id}" data-status="${revOwnStatus(img)}" ${(img.alt_text_edited || img.alt_text || img.original_alt) ? '' : 'hidden'} style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
+                    <div class="guest-review" id="guestrev_${img.id}" data-status="${revOwnStatus(img)}" ${anzeigeAltText(img) ? '' : 'hidden'} style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--border);">
                         <!-- Karbe B1: Statuszeile zeigt den EINEN abgeleiteten Status (wie das
                              Badge oben rechts); nach eigener Aktion ist das die eigene Aktion. -->
                         <p style="margin:0 0 0.4rem 0;font-weight:600;">${t('Status:')} <span id="rev_status_${img.id}">${unifiedStatusLabel(unifiedStatusKey(img))}</span> <output id="rev_saved_${img.id}" class="rev-saved"></output></p>
