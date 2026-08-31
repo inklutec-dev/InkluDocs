@@ -5105,6 +5105,16 @@ msgstr "Daily limit reached: {i} images were processed, {n} were left."
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Not enough credits for all of them: {i} images were processed, {n} were left."
 
-# Ueber-uns-Linkzeile (31.08.2026)
-msgid "Website"
-msgstr "Website"
+# Ueber-uns-Saetze (31.08.2026)
+msgid "Mehr über Steve und seine Arbeit findest du auf %(site)s und auf %(li)s."
+msgstr "You can find out more about Steve and his work at %(site)s and on %(li)s."
+
+msgid "Steves LinkedIn-Profil"
+msgstr "Steve’s LinkedIn profile"
+
+msgid "Mehr über Michael und die Actino Software GmbH findest du auf %(site)s und auf %(li)s."
+msgstr "You can find out more about Michael and Actino Software GmbH at %(site)s and on %(li)s."
+
+msgid "Michaels LinkedIn-Profil"
+msgstr "Michael’s LinkedIn profile"
+

@@ -4666,6 +4666,16 @@ msgstr "Dagsgränsen nådd: {i} bilder behandlades, {n} återstår."
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Krediterna räckte inte till alla: {i} bilder behandlades, {n} återstår."
 
-# Ueber-uns-Linkzeile (31.08.2026)
-msgid "Website"
-msgstr "Webbplats"
+# Ueber-uns-Saetze (31.08.2026)
+msgid "Mehr über Steve und seine Arbeit findest du auf %(site)s und auf %(li)s."
+msgstr "Läs mer om Steve och hans arbete på %(site)s och på %(li)s."
+
+msgid "Steves LinkedIn-Profil"
+msgstr "Steves LinkedIn-profil"
+
+msgid "Mehr über Michael und die Actino Software GmbH findest du auf %(site)s und auf %(li)s."
+msgstr "Läs mer om Michael och Actino Software GmbH på %(site)s och på %(li)s."
+
+msgid "Michaels LinkedIn-Profil"
+msgstr "Michaels LinkedIn-profil"
+

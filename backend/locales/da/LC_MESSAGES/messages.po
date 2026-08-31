@@ -4796,6 +4796,16 @@ msgstr "Daglig grænse nået: {i} billeder blev behandlet, {n} mangler."
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Der var ikke credits nok til dem alle: {i} billeder blev behandlet, {n} mangler."
 
-# Ueber-uns-Linkzeile (31.08.2026)
-msgid "Website"
-msgstr "Websted"
+# Ueber-uns-Saetze (31.08.2026)
+msgid "Mehr über Steve und seine Arbeit findest du auf %(site)s und auf %(li)s."
+msgstr "Læs mere om Steve og hans arbejde på %(site)s og på %(li)s."
+
+msgid "Steves LinkedIn-Profil"
+msgstr "Steves LinkedIn-profil"
+
+msgid "Mehr über Michael und die Actino Software GmbH findest du auf %(site)s und auf %(li)s."
+msgstr "Læs mere om Michael og Actino Software GmbH på %(site)s og på %(li)s."
+
+msgid "Michaels LinkedIn-Profil"
+msgstr "Michaels LinkedIn-profil"
+

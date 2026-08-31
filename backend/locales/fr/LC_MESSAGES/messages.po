@@ -5105,6 +5105,16 @@ msgstr "Limite quotidienne atteinte : {i} images traitées, {n} restantes."
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Les crédits n’ont pas suffi pour toutes : {i} images traitées, {n} restantes."
 
-# Ueber-uns-Linkzeile (31.08.2026)
-msgid "Website"
-msgstr "Site web"
+# Ueber-uns-Saetze (31.08.2026)
+msgid "Mehr über Steve und seine Arbeit findest du auf %(site)s und auf %(li)s."
+msgstr "Pour en savoir plus sur Steve et son travail : %(site)s et %(li)s."
+
+msgid "Steves LinkedIn-Profil"
+msgstr "le profil LinkedIn de Steve"
+
+msgid "Mehr über Michael und die Actino Software GmbH findest du auf %(site)s und auf %(li)s."
+msgstr "Pour en savoir plus sur Michael et Actino Software GmbH : %(site)s et %(li)s."
+
+msgid "Michaels LinkedIn-Profil"
+msgstr "le profil LinkedIn de Michael"
+

@@ -5108,6 +5108,16 @@ msgstr "Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 
-# Ueber-uns-Linkzeile (31.08.2026)
-msgid "Website"
-msgstr "Website"
+# Ueber-uns-Saetze (31.08.2026)
+msgid "Mehr über Steve und seine Arbeit findest du auf %(site)s und auf %(li)s."
+msgstr "Mehr über Steve und seine Arbeit findest du auf %(site)s und auf %(li)s."
+
+msgid "Steves LinkedIn-Profil"
+msgstr "Steves LinkedIn-Profil"
+
+msgid "Mehr über Michael und die Actino Software GmbH findest du auf %(site)s und auf %(li)s."
+msgstr "Mehr über Michael und die Actino Software GmbH findest du auf %(site)s und auf %(li)s."
+
+msgid "Michaels LinkedIn-Profil"
+msgstr "Michaels LinkedIn-Profil"
+
