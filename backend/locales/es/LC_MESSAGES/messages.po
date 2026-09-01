@@ -5298,3 +5298,7 @@ msgstr "Descargado: «{name}»."
 #. Meldung nach dem Download, Ort (Steve 01.09.2026)
 msgid "Du findest die Datei bei deinen Downloads."
 msgstr "Encontrarás el archivo en tus descargas."
+
+#. Projektkopf (Michael Karbe Punkt 4, 01.09.2026)
+msgid "Projekt: {name}"
+msgstr "Proyecto: {name}"

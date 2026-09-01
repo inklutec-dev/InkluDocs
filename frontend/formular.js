@@ -420,7 +420,7 @@
         if (unsicher) info += ' ' + t('{u} KI-Vorschläge unsicher.', { u: unsicher });
         if (project.status === 'processing' && gen) { badge = t('KI generiert'); badgeCls = 'badge-processing'; info += ' ' + t('Seite {i} von {n} wird bearbeitet.', { i: Math.min(gen.seiten_fertig + 1, gen.seiten_gesamt || 1), n: gen.seiten_gesamt || 1 }); }
         return '<div class="card">'
-            + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + escHtml(title) + '</h1>'
+            + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
             + '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>'
             // Gast: nur Abschluss/Beenden + Filter „Nur offene Felder" — keine KI, keine

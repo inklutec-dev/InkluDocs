@@ -4859,3 +4859,7 @@ msgstr "Nedladdad: ”{name}”."
 #. Meldung nach dem Download, Ort (Steve 01.09.2026)
 msgid "Du findest die Datei bei deinen Downloads."
 msgstr "Du hittar filen bland dina nedladdningar."
+
+#. Projektkopf (Michael Karbe Punkt 4, 01.09.2026)
+msgid "Projekt: {name}"
+msgstr "Projekt: {name}"

@@ -4989,3 +4989,7 @@ msgstr "Downloadet: „{name}“."
 #. Meldung nach dem Download, Ort (Steve 01.09.2026)
 msgid "Du findest die Datei bei deinen Downloads."
 msgstr "Du finder filen under dine downloads."
+
+#. Projektkopf (Michael Karbe Punkt 4, 01.09.2026)
+msgid "Projekt: {name}"
+msgstr "Projekt: {name}"

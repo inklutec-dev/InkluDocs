@@ -619,12 +619,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         main.innerHTML = `
             <div class="card">
                 <div class="card-header">
-                    <h1 id="projectName" class="card-name" tabindex="-1">${escHtml(headTitle)}</h1>
+                    <h1 id="projectName" class="card-name" tabindex="-1">${t('Projekt: {name}', { name: escHtml(headTitle) })}</h1>
                     <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
                 <!-- Korb C (Steve 17.07.2026): die fruehere Gast-Rollenzeile
                      „Du prüfst dieses Projekt als …" unter der H1 ist entfallen. -->
-                <div class="card-info" id="projectHeadInfo">${headInfo}</div>
+                <!-- Statuszeile „n von m Bildern generiert | Extraktion: …" ausgeblendet (Michael Karbe
+                     Punkt 4, Steve 01.09.2026): die Zahl steht in der Rueckfrage und in der Herunterladen-
+                     Zusammenfassung. Element bleibt (updateProjectHeader schreibt hinein), nur unsichtbar. -->
+                <div class="card-info" id="projectHeadInfo" hidden>${headInfo}</div>
                 ${project.status === 'processing' ? `
                     <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="${t('Fortschritt: {p} Prozent', { p: progress })}">
                         <div class="progress-fill" style="width:${progress}%"></div>
