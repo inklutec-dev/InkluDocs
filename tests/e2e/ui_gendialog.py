@@ -116,12 +116,12 @@ with sync_playwright() as p:
           beschr_ids == "genConfirmScope genConfirmBody", repr(beschr_ids))
     check("Die Ansage beginnt mit dem Umfang",
           (ansage["beschreibung"] or "").startswith(umfang), str(ansage))
-    check("Kostensatz Erstlauf nennt die Gesamtzahl („werden beschrieben“) statt „noch keine Beschreibung“",
-          "noch keine Beschreibung" not in text, text)
+    # Generieren ueberschreibt alles (Michael Karbe/Steve 01.09.2026): Gesamtzahl + Hinweis auf Ueberschreiben.
+    check("Kostensatz: Gesamtzahl und „überschrieben“", "von der KI beschrieben" in text and "überschrieben" in text, text)
     # Einzahl (Steve 01.09.2026, gehoert: „1 davon bringen“, „1 Bilder“): kein „1 <Mehrzahl>“ im Satz.
     import re as _re
     check("Keine Einzahl-Mehrzahl-Panne im Kostensatz",
-          not _re.search(r"\b1 (davon bringen|Bilder|von der KI erzeugte Texte|Felder|KI-Vorschläge)\b", text), text)
+          not _re.search(r"\b1 (davon bringen|Texte davon|Bilder|Felder|KI-Vorschläge)\b", text), text)
     print("     Angesagt wird: %r — %r" % (ansage["name"], (ansage["beschreibung"] or "")[:90]))
     check("Fokus liegt im Dialog",
           page.evaluate("document.getElementById('genConfirmDialog').contains(document.activeElement)"))
@@ -167,21 +167,17 @@ with sync_playwright() as p:
         page.wait_for_timeout(1500)
         text_w = page.locator("#genConfirmBody").inner_text().strip()
         print("     Kostensatz (Word): %r" % text_w)
-        check("Word: Kostensatz nennt die Gesamtzahl („werden beschrieben“)",
-              "werden beschrieben" in text_w or "werden neu erzeugt" in text_w, text_w)
-        check("Word: kein „noch keine Beschreibung“ mehr", "noch keine Beschreibung" not in text_w, text_w)
+        check("Word: Kostensatz nennt Gesamtzahl und Ueberschreiben",
+              "von der KI beschrieben" in text_w and "überschrieben" in text_w, text_w)
         check("Word: keine Einzahl-Mehrzahl-Panne",
-              not _re.search(r"\b1 (davon bringen|Bilder|von der KI erzeugte Texte)\b", text_w), text_w)
-        check("Word: „bezieht ihn ein“ statt „nimmt ihn als Grundlage“", "als Grundlage" not in text_w, text_w)
+              not _re.search(r"\b1 (Texte davon|Bilder)\b", text_w), text_w)
         vorschau = page.evaluate("""async (id) => {
             const r = await fetch('/api/projects/' + id + '/generate/vorschau', {method:'POST',
-                headers:{'Content-Type':'application/json'}, body: JSON.stringify({modus:'luecken'})});
+                headers:{'Content-Type':'application/json'}, body: JSON.stringify({modus:'alle'})});
             return await r.json(); }""", WORD)
-        print("     Vorschau (Word): anzahl=%s mit_quelltext=%s" % (vorschau.get("anzahl"), vorschau.get("mit_quelltext")))
-        check("Vorschau liefert mit_quelltext", "mit_quelltext" in vorschau, str(vorschau)[:120])
-        if vorschau.get("modus") == "luecken" and vorschau.get("mit_quelltext"):
-            check("Word: mitgebrachte Texte werden im Satz genannt („davon bringen schon einen Text“)",
-                  "davon bringen schon einen Text" in text_w, text_w)
+        print("     Vorschau (Word): anzahl=%s eigene=%s modus=%s" % (vorschau.get("anzahl"), vorschau.get("eigene"), vorschau.get("modus")))
+        check("Vorschau: ein Modus „alle“, liefert eigene", vorschau.get("modus") == "alle" and "eigene" in vorschau, str(vorschau)[:120])
+        check("Vorschau zaehlt ALLE Bilder des Projekts", vorschau.get("anzahl") == page.evaluate("document.querySelectorAll('section.image-review').length"), (vorschau.get("anzahl"), page.evaluate("document.querySelectorAll('section.image-review').length")))
         page.locator("#genConfirmCancel").click()
         page.wait_for_timeout(500)
         check("Word: Abbrechen startet nichts", page.locator("#genConfirmDialog").evaluate("d => d.open") is False)

@@ -53,6 +53,7 @@ class DocxExportErgebnis:
     geschrieben: int = 0            # Bilder mit gesetztem Alt-Text
     dekorativ: int = 0              # davon als dekorativ markiert
     uebersprungen: int = 0          # Anker ohne (verwertbaren) Alt-Text
+    geleert: int = 0                # Beschreibung entfernt (leeres Feld, 01.09.2026)
     nicht_gefunden: list[str] = field(default_factory=list)   # Anker nicht im Dokument
     warnungen: list[str] = field(default_factory=list)
 
@@ -96,10 +97,12 @@ def write_alt_texts_to_docx(input_path: str, output_path: str,
     # Anker nach Part gruppieren: {"word/document.xml": {7: "text", ...}}
     je_part: dict[str, dict[str, str]] = {}
     for anker, text in alt_texts.items():
-        text = (text or "").strip()
-        if not text:
+        # 01.09.2026 (Michael Karbe): Export ist, was der Kunde sieht. None = Bild nicht
+        # anfassen; "" = Beschreibung ENTFERNEN (ein mitgebrachter Text verschwindet).
+        if text is None:
             erg.uebersprungen += 1
             continue
+        text = text.strip()
         try:
             part, kennung = anker.rsplit("|", 1)
             if not kennung.startswith("v:"):
@@ -129,6 +132,14 @@ def write_alt_texts_to_docx(input_path: str, output_path: str,
 
             def _schreibe_docpr(docpr: etree._Element, kennung: str, zaehlen: bool) -> None:
                 text = ziele[kennung]
+                if text == "":
+                    # Leeres Feld: descr weg, Dekorativ-Kennzeichen weg — die Datei traegt
+                    # keinen Alternativtext mehr (01.09.2026).
+                    docpr.attrib.pop("descr", None)
+                    _setze_dekorativ(docpr, False)
+                    if zaehlen:
+                        erg.geleert += 1
+                    return
                 if text.lower() == DEKORATIV:
                     docpr.set("descr", "")
                     _setze_dekorativ(docpr, True)
@@ -172,6 +183,11 @@ def write_alt_texts_to_docx(input_path: str, output_path: str,
                 if kennung not in ziele:
                     continue
                 text = ziele[kennung]
+                if text == "":
+                    shape.attrib.pop("alt", None)
+                    erg.geleert += 1
+                    gefunden.add(kennung)
+                    continue
                 if text.lower() == DEKORATIV:
                     shape.set("alt", "")
                     erg.dekorativ += 1

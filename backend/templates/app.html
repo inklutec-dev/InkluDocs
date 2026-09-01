@@ -587,13 +587,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         const images = data.images;
         const documents = data.documents || [];
-        // „Alle neu generieren“ (28.08.2026, wie beim Quickinfo-Werkzeug): nur KI-Texte ohne Hand-Text zaehlen.
-        // 01.09.2026: „ohne Hand-Text" heisst alt_text_edited == null (nie angefasst). Ein geleertes
-        // Feld ('') ist eine eigene Entscheidung und kein Kandidat — dieselbe Regel wie
-        // _generier_kandidaten im Backend, sonst zeigt die Seite einen Knopf ohne Lauf dahinter.
-        // Vom Autor als dekorativ gekennzeichnete Bilder (Word, 01.09.2026) fasst der Sammellauf nicht an —
-        // dieselbe Ausnahme wie _generier_kandidaten im Backend.
-        const kiBilder = images.filter(i => i.status === 'done' && i.alt_text_edited == null && !autorDekorativ(i)).length;
+        // Generieren ueberschreibt alles (Michael Karbe/Steve 01.09.2026): EIN Knopf, solange Bilder da
+        // sind und nichts laeuft; welche Bilder er anfasst, entscheidet der Server (_generier_kandidaten).
         window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt
         window._shareRoles = data.share_roles || [];  // aktive Gast-Rollen (Etappe 2: Badges + Filter)
         if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';  // Rollen-Workflow (10.07.2026)
@@ -635,8 +630,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: project.processed_images, n: project.total_images })}</p>
                 ` : ''}
                 <div class="card-actions">
-                    ${!window.GUEST_MODE && project.status === 'extracted' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
-                    ${!window.GUEST_MODE && project.status !== 'extracted' && project.status !== 'processing' && project.status !== 'extracting' && kiBilder > 0 ? '<button class="btn btn-secondary" id="regenAllBtn" onclick="startGeneration(' + project.id + ', \'ki_neu\')">' + icon('refresh') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
+                    ${!window.GUEST_MODE && images.length > 0 && project.status !== 'processing' && project.status !== 'extracting' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="guestCompleteBtn" onclick="openGuestComplete()">${t('Prüfung abschließen')}</button>
@@ -2120,6 +2114,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}" data-status="${img.status === 'done' ? 'done' : 'pending'}">${img.status === 'done' ? t('Neu generieren') : t('Generieren')}</button>
 
                         ${showLang && complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">' + t('Langbeschreibung (optional)') + '</button>' : ''}
+                        ${!window.GUEST_MODE && img.alt_text_vorher != null ? '<button class="btn btn-secondary btn-small" id="vorher_btn_' + img.id + '" onclick="vorherigenTextZurueck(' + img.id + ')">' + t('Vorherigen Text zurückholen') + '</button>' : ''}
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
@@ -2247,16 +2242,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // Knoepfe je Dokument (Michael/Steve 28.08.2026): „Alle generieren“, solange Bilder ohne Text da
             // sind; sonst „n Alt-Texte neu generieren, c Credits“ (nur KI-Texte); dazu „Exportieren“ mit
             // diesem Dokument vorausgewaehlt. Nicht im Gast-Modus, nicht waehrend der Verarbeitung.
-            const docImgsAll = Array.from(pageMap.values()).flat();
-            const docPending = docImgsAll.filter(i => i.status === 'pending').length;
-            const docKi = docImgsAll.filter(i => i.status === 'done' && i.alt_text_edited == null && !autorDekorativ(i)).length;  // wie kiBilder (01.09.2026)
             const docBusy = project && (project.status === 'processing' || project.status === 'extracting');
             const vhSuffixDoc = t('– Dokument „{name}“', { name: labelName });
+            // EIN Knopf je Dokument (01.09.2026): Generieren ueberschreibt alles.
             let docGenBtn = '';
-            if (!isWebDoc && !docBusy && docPending > 0) {
-                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'luecken', ${docKey})">${t('Alt-Texte generieren')}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
-            } else if (!isWebDoc && !docBusy && docKi > 0) {
-                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'ki_neu', ${docKey})">${t('Alt-Texte generieren')}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
+            if (!isWebDoc && !docBusy && totalImgs > 0) {
+                docGenBtn = `<button type="button" class="doc-action-btn" onclick="startGeneration(${projectId}, 'alle', ${docKey})">${t('Alt-Texte generieren')}<span class="visually-hidden"> ${vhSuffixDoc}</span></button>`;
             }
             let innerBlocks;
             let headingText;
@@ -2695,7 +2686,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             alert(t('Tageslimit erreicht ({n} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt.', { n: window._dailyLimit.limit }));
             return;
         }
-        const body = { modus: modus === 'ki_neu' ? 'ki_neu' : 'luecken' };
+        const body = { modus: 'alle' };
         if (docId) body.document_id = docId;
         const v = await generierVorschau('/api/projects/' + projectId + '/generate/vorschau', body);
         if (!v) return;
@@ -2705,23 +2696,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // „n Bilder haben noch keine Beschreibung" war falsch, sobald die Datei
         // schon Alternativtexte mitbringt (Word fast immer). Die stehen sichtbar
         // im Feld und gehen als Grundlage an die KI; der Satz sagt das jetzt.
-        // Einzahl (Steve 01.09.2026, gehoert: „1 davon bringen“, „1 Bilder“): eigene Saetze fuer 1.
-        // „bezieht ihn ein“ statt „nimmt ihn als Grundlage“: der mitgebrachte Text steht der KI
-        // als ORIGINAL-ALT im Prompt, sie prueft ihn gegen das Bild — mehr verspricht der Satz nicht.
-        let satz;
-        if (modus === 'ki_neu') {
-            satz = v.anzahl === 1
-                ? t('1 von der KI erzeugter Text wird neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { c: v.preis })
-                : t('{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
-        } else {
-            satz = v.anzahl === 1
-                ? t('1 Bild wird beschrieben. Das kostet {c} Credits.', { c: v.preis })
-                : t('{n} Bilder werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
-            if (v.mit_quelltext === 1) {
-                satz += ' ' + t('Eines davon bringt schon einen Text aus der Datei mit; die KI bezieht ihn ein.');
-            } else if (v.mit_quelltext > 1) {
-                satz += ' ' + t('{m} davon bringen schon einen Text aus der Datei mit; die KI bezieht ihn ein.', { m: v.mit_quelltext });
-            }
+        // Generieren ueberschreibt alles (Michael Karbe/Steve 01.09.2026): EIN Satz, die Gesamtzahl,
+        // und ehrlich, was verloren geht — eigene Texte werden genannt (und im Hintergrund
+        // aufgehoben: „Vorherigen Text zurueckholen" am Bild).
+        let satz = v.anzahl === 1
+            ? t('Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits.', { c: v.preis })
+            : t('Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+        if (v.eigene === 1) {
+            satz += ' ' + t('Ein Text davon stammt von dir.');
+        } else if (v.eigene > 1) {
+            satz += ' ' + t('{n} Texte davon stammen von dir.', { n: v.eigene });
         }
         // Vom Autor in der Datei als dekorativ gekennzeichnet (Word): bleibt aussen vor, kostet nichts.
         if (v.autor_dekorativ === 1) {
@@ -2741,6 +2725,26 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         });
     }
 
+    // Sicherheitsnetz (01.09.2026): den vom Sammellauf ueberschriebenen eigenen Text zurueckholen.
+    async function vorherigenTextZurueck(imageId) {
+        const btn = document.getElementById('vorher_btn_' + imageId);
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('/api/images/' + imageId + '/alt-text/zurueck', { method: 'POST' });
+            let d = {}; try { d = await res.json(); } catch (e) {}
+            if (!res.ok) { announce(t('Fehler: {msg}', { msg: d.detail || '' })); if (btn) btn.disabled = false; return; }
+            const ta = document.querySelector('.alt-text-field[data-image-id="' + imageId + '"]');
+            if (ta) { ta.value = d.alt_text || ''; }
+            if (btn) btn.remove();
+            announce(t('Vorheriger Text wiederhergestellt.'));
+            if (ta) ta.focus();
+        } catch (e) {
+            announce(t('Verbindungsfehler.'));
+            if (btn) btn.disabled = false;
+        }
+    }
+    window.vorherigenTextZurueck = vorherigenTextZurueck;
+
     function genConfirmSchliessen() {
         const dlg = byId('genConfirmDialog');
         if (dlg.open) dlg.close();
@@ -2751,7 +2755,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // modus 'ki_neu' (28.08.2026): nur KI-Texte ohne Hand-Text neu, Cache umgangen, Alt-Text-Preis je Bild (window.CREDIT_PREISE).
         // docId (28.08.2026): nur dieses Dokument (Knopf am Dokument), sonst das ganze Projekt.
         // Tageslimit wurde schon in startGeneration geprueft.
-        const btn = document.getElementById(modus === 'ki_neu' ? 'regenAllBtn' : 'generateBtn');
+        const btn = document.getElementById('generateBtn');
         // Beschriftung samt Symbol merken (30.08.2026): Seit der Start-Endpunkt bei fehlendem
         // Guthaben 402 antwortet, ist der Fehlerfall der Normalfall fuer Konten ohne Credits —
         // vorher kam auch ohne Guthaben ein 200, und der Zweig war praktisch unerreichbar.
@@ -2759,8 +2763,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // deaktiviert; ein zweiter Versuch ginge nur ueber einen Seitenneuladen.
         const btnInhalt = btn ? btn.innerHTML : '';
         if (btn) { btn.disabled = true; btn.textContent = t('Wird gestartet...'); }
-        announce(modus === 'ki_neu' ? t('Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert.') : t('Alt-Text-Generierung wird gestartet.'));
-        const body = modus === 'ki_neu' ? { modus: 'ki_neu' } : {};
+        announce(t('Alt-Text-Generierung wird gestartet.'));
+        const body = { modus: 'alle' };
         if (docId) body.document_id = docId;
         try {
             const res = await fetch('/api/projects/' + projectId + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -2842,20 +2846,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const d = await res.json();
             // Drei Gruende statt zwei (Steve 01.09.2026, gehoert: „3 noch nicht generiert“, obwohl
             // alles generiert war): dekorativ ERKANNT (KI oder Autor), bewusst geleert, nicht generiert.
-            const dekTeil = d.dekorativ ? t(', {n} als dekorativ erkannt', { n: d.dekorativ }) : '';
+            // Michael Karbe 01.09.2026: nur „mit Text / ohne Text / dekorativ" — keine Gruende. Was der
+            // Kunde im Browser sieht, kommt in die Datei; leere Felder bleiben in der Datei leer.
+            const dekTeil = d.dekorativ ? t(', {n} als dekorativ gekennzeichnet', { n: d.dekorativ }) : '';
+            const ohne = typeof d.ohne_text === 'number' ? d.ohne_text : d.uebersprungen;
+            const mit = typeof d.mit_text === 'number' ? d.mit_text : d.beschrieben;
             let msg;
-            if (d.uebersprungen === 0) {
-                msg = t('Alle {n} Bilder haben eine Beschreibung{dek}.', { n: d.total, dek: dekTeil });
+            if (ohne === 0) {
+                msg = t('Alle {n} Bilder haben einen Text{dek}.', { n: d.total, dek: dekTeil });
+            } else if (ohne === 1) {
+                msg = t('{b} von {n} Bildern haben einen Text, 1 hat keinen{dek}.', { b: mit, n: d.total, dek: dekTeil });
             } else {
-                const gruende = [];
-                if (d.fehler) gruende.push(t('{n} mit Fehler', { n: d.fehler }));
-                if (d.geleert) gruende.push(t('{n} bewusst ohne Beschreibung', { n: d.geleert }));
-                if (d.offen) gruende.push(t('{n} noch nicht generiert', { n: d.offen }));
-                msg = d.uebersprungen === 1
-                    ? t('{b} von {n} Bildern haben eine Beschreibung{dek}. 1 wird übersprungen: {g}.',
-                        { b: d.beschrieben, n: d.total, dek: dekTeil, g: gruende.join(', ') })
-                    : t('{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}.',
-                        { b: d.beschrieben, n: d.total, dek: dekTeil, s: d.uebersprungen, g: gruende.join(', ') });
+                msg = t('{b} von {n} Bildern haben einen Text, {o} haben keinen{dek}.', { b: mit, n: d.total, o: ohne, dek: dekTeil });
             }
             // Export-Staffel (28.08.2026): Preis und Guthaben vor dem Export ansagen.
             if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);

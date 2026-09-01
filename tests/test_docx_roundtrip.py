@@ -129,7 +129,9 @@ class TestDocxSchreiben(unittest.TestCase):
             if b.ort == "Kopfzeile":
                 self.alts[b.anker] = "dekorativ"
             elif b.order == 7:
-                self.alts[b.anker] = ""            # bewusst unberuehrt
+                # 01.09.2026 (Michael Karbe): None = Bild nicht anfassen; "" hiesse jetzt
+                # „Beschreibung entfernen" (siehe tests/test_export_leer.py).
+                self.alts[b.anker] = None          # bewusst unberuehrt
             else:
                 self.alts[b.anker] = f"Alt-Text {b.order} (fiktiv)"
         self.alts["word/document.xml|999"] = "Geist"
@@ -154,7 +156,7 @@ class TestDocxSchreiben(unittest.TestCase):
             soll = self.alts[b.anker]
             if soll == "dekorativ":
                 self.assertTrue(n.decorative); self.assertEqual(n.original_alt, "")
-            elif soll == "":
+            elif soll is None:                 # unberuehrt (01.09.2026: None statt "")
                 self.assertEqual(n.original_alt, b.original_alt)
             else:
                 self.assertEqual(n.original_alt, soll); self.assertFalse(n.decorative)

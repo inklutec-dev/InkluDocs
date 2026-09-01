@@ -130,12 +130,13 @@ try:
     main._process_project = stub
     asyncio.run(main.generate_alt_texts(PID, FakeRequest({"modus": "ki_neu"}), user=nutzer))
     main._process_project = echt_process
-    kandidaten = {i for i, _, _, _ in vorher[:3]}          # zwei mit Text + das dekorative
+    # 01.09.2026 (Michael Karbe/Steve): Generieren ueberschreibt ALLES — auch die nie generierte Luecke ist Kandidat.
+    kandidaten = {i for i, _, _, _ in vorher}
     check("Endpunkt uebergibt die Bilder namentlich an den Lauf", aufruf.get("ids") == kandidaten,
           (aufruf.get("ids"), kandidaten))
     check("Das DEKORATIVE Bild ohne Text ist dabei (Befund des Pruefers)",
           vorher[2][0] in aufruf.get("ids", set()), aufruf.get("ids"))
-    check("Die echte Luecke ist NICHT dabei", vorher[3][0] not in aufruf.get("ids", set()))
+    check("Die echte Luecke ist seit 01.09. DABEI (Generieren ueberschreibt alles)", vorher[3][0] in aufruf.get("ids", set()))
     check("Genau diese drei stehen jetzt auf pending",
           [s for _, s, _, _ in zustand()] == ["pending"] * 4, zustand())
 
@@ -143,15 +144,15 @@ try:
     guthaben_auf(0)
     asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=kandidaten))
     nachher = zustand()
-    check("Nach Abbruch: alle drei Kandidaten stehen wieder auf done",
-          [s for _, s, _, _ in nachher[:3]] == ["done"] * 3, nachher)
+    check("Nach Abbruch: alle vier Kandidaten stehen wieder auf done",
+          [s for _, s, _, _ in nachher] == ["done"] * 4, nachher)
     check("Nach Abbruch: auch das dekorative Bild ohne Text ist gerettet", nachher[2][1] == "done", nachher[2])
-    check("Nach Abbruch: die echte Luecke bleibt zu Recht pending", nachher[3][1] == "pending", nachher[3])
+    check("Nach Abbruch: die nie generierte Luecke steht ebenfalls auf done (Teil der Rettungsmenge seit 01.09.)", nachher[3][1] == "done", nachher[3])
     check("Nach Abbruch: kein Alt-Text veraendert",
           [t for _, _, t, _ in nachher] == [t for _, _, t, _ in vorher], (vorher, nachher))
     p = con.execute("SELECT status, processed_images FROM projects WHERE id=?", (PID,)).fetchone()
     check("Nach Abbruch: Projektstatus done (kein Dauer-409)", p["status"] == "done", dict(p))
-    check("Nach Abbruch: Zaehler frisch gezaehlt = 3", p["processed_images"] == 3, dict(p))
+    check("Nach Abbruch: Zaehler frisch gezaehlt = 4", p["processed_images"] == 4, dict(p))
 
     # --- 4. Abbruch VON AUSSEN (Container-Neustart): Notaufraeumen muss greifen
     con.execute("UPDATE images SET status='pending' WHERE id IN (%s)" % ",".join("?" * len(kandidaten)),
@@ -181,8 +182,8 @@ try:
     check("Hilfsfunktion mit leerer Menge aendert nichts", zustand() == stand)
     main._ki_neu_zurueck(con, kandidaten)
     check("Hilfsfunktion laesst fertige Bilder in Ruhe (wiederholbar)", zustand() == stand)
-    check("Hilfsfunktion fasst die echte Luecke nicht an",
-          con.execute("SELECT status FROM images WHERE id=?", (vorher[3][0],)).fetchone()["status"] == "pending")
+    check("Hilfsfunktion: die frueher offene Luecke bleibt done (gehoert seit 01.09. zur Rettungsmenge)",
+          con.execute("SELECT status FROM images WHERE id=?", (vorher[3][0],)).fetchone()["status"] == "done")
 
     # --- 5b. Reihenfolge der Wachen: Tageslimit muss VOR dem Guthaben greifen
     alt_limit = con.execute("SELECT api_tageslimit FROM users WHERE id=?", (uid,)).fetchone()["api_tageslimit"]
@@ -209,14 +210,14 @@ try:
             con.execute("DELETE FROM usage_events WHERE id=?", (ereignis_id,))
         con.commit()
 
-    # --- 6. Luecken-Modus bleibt unberuehrt
+    # --- 6. Es gibt nur noch EINEN Modus (01.09.2026): auch ohne modus im Body = alles, force an
     guthaben_auf(500)
     aufruf.clear()
     main._process_project = stub
     asyncio.run(main.generate_alt_texts(PID, FakeRequest({}), user=nutzer))
     main._process_project = echt_process
-    check("Luecken-Modus: force ist aus und die Rettungsmenge leer",
-          aufruf.get("force") is False and aufruf.get("ids") == set(), aufruf)
+    check("Ohne modus im Body: force an und Rettungsmenge = alle Kandidaten (ein Modus seit 01.09.)",
+          aufruf.get("force") is True and aufruf.get("ids") == kandidaten, aufruf)
 
 finally:
     main._process_project = echt_process

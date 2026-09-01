@@ -80,6 +80,8 @@ with open(args.csv, newline="", encoding="utf-8") as csvfile:
 
 figure_counter = 0   # zählt Figures in StructTree-Reihenfolge — MUSS der Zählung des Export-Scripts entsprechen
 applied_counter = 0  # tatsächlich gesetzte Alt-Texte
+removed_counter = 0  # entfernte Alt-Texte (Sentinel KEIN_ALT, 01.09.2026)
+KEIN_ALT = "__KEIN_ALT__"   # Konvention mit pdfix_roundtrip._build_csv_rows: Alt-Eintrag entfernen
 
 
 def _figure_page_num(elem):
@@ -91,14 +93,23 @@ def _figure_page_num(elem):
 
 
 def csvimport_struct_elem(elem):
-    global figure_counter, applied_counter
+    global figure_counter, applied_counter, removed_counter
     # Zählregel identisch zum Export-Script: nur Figures MIT Seitenzuordnung
     # bekommen eine laufende Nummer.
     if elem.GetType(True) == "Figure" and _figure_page_num(elem) >= 0:
         figure_counter += 1
         if figure_counter in alt_by_lfnr:
-            elem.SetAlt(alt_by_lfnr[figure_counter])
-            applied_counter += 1
+            wert = alt_by_lfnr[figure_counter]
+            if wert == KEIN_ALT:
+                # 01.09.2026 (Michael Karbe): „Export ist, was der Kunde sieht“ — ein
+                # bewusst leeres Feld heisst KEIN Alt-Text in der Datei, auch wenn die
+                # Quelle einen hatte. Der Eintrag wird entfernt (nicht auf "" gesetzt),
+                # damit Acrobat oder ein anderes Werkzeug spaeter frei ist.
+                elem.GetObject().RemoveKey("Alt")
+                removed_counter += 1
+            else:
+                elem.SetAlt(wert)
+                applied_counter += 1
         # Keine CSV-Zeile fuer diese Figure -> bewusst unangetastet lassen
         # (Original-Alt-Text der Quell-PDF bleibt erhalten).
 
@@ -141,7 +152,7 @@ def main():
         sys.exit(2)
 
     # Maschinenlesbares Ergebnis fuer den Wrapper (pdfix_roundtrip).
-    print("ALT_APPLIED=%d FIGURES_FOUND=%d" % (applied_counter, figure_counter))
+    print("ALT_APPLIED=%d FIGURES_FOUND=%d ALT_REMOVED=%d" % (applied_counter, figure_counter, removed_counter))
     print("fertig -", args.output)
 
 

@@ -3734,22 +3734,6 @@ msgstr "– image « {name} »"
 msgid "Bilder werden geprüft …"
 msgstr "Vérification des images …"
 
-#: export-summary (18.08.2026, Fable 5)
-msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
-msgstr "Les {n} images ont toutes une description{dek}."
-
-#: export-summary (18.08.2026, Fable 5)
-msgid "{n} mit Fehler"
-msgstr "{n} en erreur"
-
-#: export-summary (18.08.2026, Fable 5)
-msgid "{n} noch nicht generiert"
-msgstr "{n} pas encore générée(s)"
-
-#: export-summary (18.08.2026, Fable 5)
-msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
-msgstr "{b} images sur {n} ont une description{dek}. {s} seront ignorées : {g}."
-
 msgid "Monatsabo (monatlich kündbar)"
 msgstr "Abonnement mensuel (résiliable chaque mois)"
 
@@ -4616,9 +4600,6 @@ msgstr "confirmée dans le chat"
 msgid "{n} Alt-Texte neu generieren, {c} Credits"
 msgstr "Régénérer {n} textes alternatifs, {c} crédits"
 
-msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
-msgstr "La régénération des textes alternatifs de l’IA démarre. Les textes saisis à la main restent inchangés."
-
 msgid "Dieser Export kostet {p} Credits."
 msgstr "Cet export coûte {p} crédits."
 
@@ -5168,10 +5149,6 @@ msgid "Nur dieses Dokument"
 msgstr "Ce document uniquement"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
-msgstr "{n} textes créés par l’IA seront régénérés. Vos propres textes restent inchangés. Cela coûte {c} crédits."
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Du hast {v} Credits."
 msgstr "Vous avez {v} crédits."
 
@@ -5207,10 +5184,6 @@ msgstr "Votre solde ne suffit pas : un texte alternatif coûte {p} crédits, vou
 msgid "Herunterladen (Beta)"
 msgstr "Télécharger (bêta)"
 
-#. Rueckfrage Erstlauf: nur die Gesamtzahl (Michael Karbe 01.09.2026)
-msgid "{n} Bilder werden beschrieben. Das kostet {c} Credits."
-msgstr "{n} images vont être décrites. Cela coûte {c} crédits."
-
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
 msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
 msgstr "Vous avez {v} crédits — de quoi traiter {m} champs sur {n} ; ensuite la génération s’arrête."
@@ -5231,22 +5204,6 @@ msgstr "{n} champs sans info-bulle vont être décrits. Cela coûte {c} crédits
 msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
 msgstr "{n} propositions de l’IA vont être régénérées. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés. Cela coûte {c} crédits."
 
-#. Einzahl (01.09.2026)
-msgid "1 Bild wird beschrieben. Das kostet {c} Credits."
-msgstr "1 image va être décrite. Cela coûte {c} crédits."
-
-#. Mitgebrachte Texte, Mehrzahl (01.09.2026)
-msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI bezieht ihn ein."
-msgstr "{m} d’entre elles ont déjà un texte issu du fichier ; l’IA en tient compte."
-
-#. Mitgebrachte Texte, Einzahl (01.09.2026)
-msgid "Eines davon bringt schon einen Text aus der Datei mit; die KI bezieht ihn ein."
-msgstr "L’une d’elles a déjà un texte issu du fichier ; l’IA en tient compte."
-
-#. Einzahl (01.09.2026)
-msgid "1 von der KI erzeugter Text wird neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
-msgstr "1 texte généré par l’IA va être régénéré. Vos propres textes restent inchangés. Cela coûte {c} crédits."
-
 #. Einzahl Quickinfos (01.09.2026)
 msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
 msgstr "1 champ sans info-bulle va être décrit. Cela coûte {c} crédits."
@@ -5266,18 +5223,6 @@ msgstr "{n} images sont marquées comme décoratives par l’auteur et restent d
 #. Badge am Bild (01.09.2026)
 msgid "Vom Autor in der Datei als dekorativ gekennzeichnet."
 msgstr "Marquée comme décorative par l’auteur dans le fichier."
-
-#. Export-Zusammenfassung: dekorativ am Bildtyp erkannt (01.09.2026)
-msgid ", {n} als dekorativ erkannt"
-msgstr ", {n} reconnues comme décoratives"
-
-#. Export-Zusammenfassung: bewusst geleert (01.09.2026)
-msgid "{n} bewusst ohne Beschreibung"
-msgstr "{n} volontairement sans description"
-
-#. Export-Zusammenfassung, Einzahl (01.09.2026)
-msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. 1 wird übersprungen: {g}."
-msgstr "{b} images sur {n} ont une description{dek}. 1 sera ignorée : {g}."
 
 #. Abo-Seite, gekuendigtes Abo (Steve 01.09.2026)
 msgid "Ein Wechsel auf einen anderen Plan ist erst möglich, wenn du die Kündigung zurücknimmst — dann erscheint „Plan wechseln“ wieder."
@@ -5306,3 +5251,43 @@ msgstr "Projet : {name}"
 #. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
 msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
 msgstr "Une fois lancée, la génération ne peut plus être arrêtée ; elle se termine d’elle-même."
+
+#. Rueckfrage: Generieren ueberschreibt alles (Michael Karbe 01.09.2026)
+msgid "Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits."
+msgstr "Les {n} images seront décrites par l’IA ; les textes existants seront remplacés. Cela coûte {c} crédits."
+
+#. Rueckfrage, Einzahl (01.09.2026)
+msgid "Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits."
+msgstr "L’image sera décrite par l’IA ; un texte existant sera remplacé. Cela coûte {c} crédits."
+
+#. Herunterladen-Zusammenfassung (Michael Karbe 01.09.2026)
+msgid "Alle {n} Bilder haben einen Text{dek}."
+msgstr "Les {n} images ont un texte{dek}."
+
+#. Herunterladen-Zusammenfassung, Einzahl (01.09.2026)
+msgid "{b} von {n} Bildern haben einen Text, 1 hat keinen{dek}."
+msgstr "{b} images sur {n} ont un texte, 1 n’en a pas{dek}."
+
+#. Herunterladen-Zusammenfassung (01.09.2026)
+msgid "{b} von {n} Bildern haben einen Text, {o} haben keinen{dek}."
+msgstr "{b} images sur {n} ont un texte, {o} n’en ont pas{dek}."
+
+#. Herunterladen-Zusammenfassung: dekorativ (01.09.2026)
+msgid ", {n} als dekorativ gekennzeichnet"
+msgstr ", {n} marquées comme décoratives"
+
+#. Sicherheitsnetz nach dem Sammellauf (01.09.2026)
+msgid "Vorherigen Text zurückholen"
+msgstr "Rétablir le texte précédent"
+
+#. Sicherheitsnetz, Ansage (01.09.2026)
+msgid "Vorheriger Text wiederhergestellt."
+msgstr "Texte précédent rétabli."
+
+#. Rueckfrage: eigene Texte (01.09.2026)
+msgid "Ein Text davon stammt von dir."
+msgstr "L’un de ces textes est de vous."
+
+#. Rueckfrage: eigene Texte (01.09.2026)
+msgid "{n} Texte davon stammen von dir."
+msgstr "{n} de ces textes sont de vous."

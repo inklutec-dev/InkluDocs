@@ -257,22 +257,23 @@ try:
           (vermerk(), a_rest))
     con.execute("UPDATE projects SET ki_neu_rest=NULL WHERE id=?", (PID,)); con.commit()
 
-    # --- 6. Luecken-Modus fuehrt keinen Vermerk (dort bleibt der Rest zu Recht pending)
+    # --- 6. Seit 01.09.2026 gibt es nur EINEN Modus: auch ein nie generiertes (pending) Bild ist Kandidat
     con.execute("UPDATE images SET status='pending' WHERE id=?", (BILD_IDS[0],))
     con.execute("UPDATE projects SET ki_neu_rest=NULL WHERE id=?", (PID,))
     con.commit()
     main._process_project = stub_task
     asyncio.run(main.generate_alt_texts(PID, FakeRequest({}), user=nutzer))
     main._process_project = echt_process
-    check("Luecken-Modus uebergibt keine Rettungsmenge", uebergeben["ids"] == set(), uebergeben)
+    check("Ohne modus: Rettungsmenge = alle vier (ein Modus seit 01.09.)", uebergeben["ids"] == set(BILD_IDS), uebergeben)
+    # Direkter Aufruf des Laufs OHNE Rettungsmenge (wie ein Lauf vor dem Umbau): das offene Bild bleibt pending.
     guthaben_auf(0)
     main.generate_alt_text = ki_platzhalter
     asyncio.run(main._process_project(PID, uid, force=False, ki_neu_ids=set()))
     main.generate_alt_text = echt_gen
-    check("Luecken-Modus: das offene Bild bleibt pending, kein Vermerk",
+    check("Lauf ohne Rettungsmenge: das offene Bild bleibt pending, kein Vermerk",
           con.execute("SELECT status FROM images WHERE id=?", (BILD_IDS[0],)).fetchone()["status"] == "pending"
           and status_von("ki_neu_rest") is None, status_von("ki_neu_rest"))
-    check("Luecken-Modus: der Hinweis wird trotzdem gesetzt (der Nutzer soll den Grund hoeren)",
+    check("Lauf ohne Rettungsmenge: der Hinweis wird trotzdem gesetzt (der Nutzer soll den Grund hoeren)",
           json.loads(status_von("lauf_hinweis") or "null") is not None, status_von("lauf_hinweis"))
 
 finally:

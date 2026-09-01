@@ -6116,7 +6116,8 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
             raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
         doc_sql, doc_args = (" AND document_id = ?", [document_id])
     anzahl_ki, ki_neu_ids = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args)
-    if modus == "ki_neu" and not anzahl_ki:
+    modus = "alle"   # seit 01.09.2026 der einzige Modus (Michael Karbe: Generieren ueberschreibt alles)
+    if not anzahl_ki:
         conn.close()
         return {"ok": True, "gestartet": False, "modus": modus, "anzahl": 0}
     # Guthaben pruefen (Steve 30.08.2026), sobald feststeht, dass es ueberhaupt etwas zu tun gibt.
@@ -6139,59 +6140,41 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
     conn.commit()
     conn.close()
 
-    asyncio.create_task(_process_project(project_id, user["id"], force=(modus == "ki_neu"),
+    # force=True: Cache umgehen — jeder Sammellauf beschreibt neu und kostet (Michael Karbe 01.09.2026).
+    asyncio.create_task(_process_project(project_id, user["id"], force=True,
                                          document_id=document_id, ki_neu_ids=ki_neu_ids))
     return {"ok": True, "gestartet": True, "modus": modus, "anzahl": anzahl_ki, "document_id": document_id,
             "message": "Alt-Text-Generierung gestartet"}
 
 
 def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_args: list):
-    """Welche Bilder wuerde ein Lauf anfassen? -> (anzahl, ids)
+    """Welche Bilder faesst ein Sammellauf an? -> (anzahl, ids)
 
     EINE Quelle fuer den Start UND fuer die Rueckfrage davor (Michael Karbe,
-    31.08.2026). Getrennte Zaehlungen waeren hier gefaehrlich, weil die Auswahl
-    nicht offensichtlich ist:
+    31.08.2026). Seit dem 01.09.2026 (Michael Karbe/Steve: „Generieren
+    ueberschreibt alles") gibt es nur noch EINEN Modus: ALLE Bilder des Umfangs
+    — mitgebrachte Texte, eigene Texte, geleerte Felder, fertige und nie
+    generierte Bilder. Die Verantwortung liegt beim Nutzer; die Rueckfrage nennt
+    Anzahl, Preis und die Zahl der eigenen Texte, die ueberschrieben wuerden.
+    Ausnahme: vom Autor in der Datei als dekorativ gekennzeichnete Bilder (Word,
+    original_alt 'dekorativ' + Bildtyp dekorativ) — die Entscheidung des Autors
+    stoesst nur „Neu generieren" am Bild um. Bilder, die gerade verarbeitet werden,
+    bleiben aussen vor.
 
-    ki_neu  = fertige Bilder, deren Feld NIE von Hand angefasst wurde
-              (alt_text_edited IS NULL). Sie am vorhandenen Alt-Text zu
-              erkennen greift zu kurz — dekorative Bilder sind zu Recht 'done'
-              und tragen keinen Text (auf Produktion 870 Stueck in 37
-              Projekten). Bleibt vom letzten Lauf ein Rest offen (Guthaben,
-              Tageslimit, Container-Neustart), nimmt der naechste Start NUR
-              diesen Rest — sonst wuerden bereits frisch generierte Bilder ein
-              zweites Mal bezahlt. Die Schnittmenge mit den aktuellen
-              Kandidaten haelt das dicht.
-    sonst   = alles, was noch auf 'pending' steht.
-
-    BEWUSST GELEERT BLEIBT LEER (01.09.2026, Pruefbefund): Seit dem 31.08.
-    heisst ein leerer String in alt_text_edited „der Nutzer hat den Text
-    absichtlich geloescht" (siehe _display_alt_text). Bis heute zaehlte so ein
-    Bild trotzdem als ki_neu-Kandidat (TRIM(...) = ''), der Sammellauf schrieb
-    den neuen KI-Text aber nur nach alt_text und liess das leere Feld stehen:
-    Das Bild wurde bezahlt und beschrieben, der Text blieb unsichtbar und kam
-    nicht in den Export. Jetzt gilt das Loeschen als eigene Entscheidung —
-    genau das verspricht die Rueckfrage („Deine eigenen Texte bleiben
-    unveraendert"). Wer fuer ein geleertes Bild wieder einen Text will, nimmt
-    „Neu generieren" am Bild (das setzt alt_text_edited zurueck, ~6877).
-    Dieselbe Regel steht in app.html (kiBilder, docKi) — beide muessen gleich
-    zaehlen, sonst zeigt die Seite einen Knopf fuer einen Lauf ohne Kandidaten.
+    Rest eines abgebrochenen Laufs (Steve 31.08.2026): Blieb vom letzten Lauf ein
+    Rest offen (Guthaben, Tageslimit, Container-Neustart), nimmt der naechste
+    Start NUR diesen Rest — sonst wuerden bereits frisch generierte Bilder ein
+    zweites Mal bezahlt. Die Schnittmenge mit den aktuellen Kandidaten haelt das
+    dicht. `modus` bleibt aus Kompatibilitaet in der Signatur, wirkt nicht mehr.
     """
-    if modus == "ki_neu":
-        # Vom Autor als dekorativ gekennzeichnet (Word, 01.09.2026): nicht anfassen —
-        # nur „Neu generieren“ am Bild stoesst die Entscheidung des Autors um.
-        ids = {r["id"] for r in conn.execute(
-            "SELECT id FROM images WHERE project_id = ? AND status = 'done' "
-            "AND alt_text_edited IS NULL "
-            "AND NOT (original_alt = 'dekorativ' AND image_type = 'dekorativ')" + doc_sql,
-            [project_id] + doc_args).fetchall()}
-        rest = _ki_neu_rest_lesen(conn, project_id) & ids
-        if rest:
-            ids = rest
-        return len(ids), ids
-    anzahl = conn.execute(
-        "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending'" + doc_sql,
-        [project_id] + doc_args).fetchone()[0]
-    return anzahl, set()
+    ids = {r["id"] for r in conn.execute(
+        "SELECT id FROM images WHERE project_id = ? AND status IN ('done', 'pending', 'error') "
+        "AND NOT (original_alt = 'dekorativ' AND image_type = 'dekorativ')" + doc_sql,
+        [project_id] + doc_args).fetchall()}
+    rest = _ki_neu_rest_lesen(conn, project_id) & ids
+    if rest:
+        ids = rest
+    return len(ids), ids
 
 
 @app.post("/api/projects/{project_id}/generate/vorschau")
@@ -6244,12 +6227,19 @@ async def generate_vorschau(project_id: int, request: Request,
     # stand. Die Zahl hier macht den Satz ehrlich: Gesamtzahl plus „m davon bringen
     # schon einen Text mit". Ein Bild, das die Quelle als dekorativ kennzeichnet,
     # zaehlt nicht als Text.
-    mit_quelltext = 0
-    if modus != "ki_neu" and anzahl:
+    # Was wird ueberschrieben? (Michael Karbe/Steve 01.09.2026: Generieren ueberschreibt alles —
+    # die Rueckfrage sagt, wie viele EIGENE Texte dabei verloren gingen; der Sammellauf hebt sie
+    # in alt_text_vorher auf, „Vorherigen Text zurueckholen" am Bild stellt sie wieder her.)
+    mit_quelltext = eigene = 0
+    if _ids:
+        _m = ",".join("?" * len(_ids))
+        eigene = conn.execute(
+            "SELECT COUNT(*) FROM images WHERE id IN (%s) AND alt_text_edited IS NOT NULL "
+            "AND TRIM(alt_text_edited) != ''" % _m, list(_ids)).fetchone()[0]
         mit_quelltext = conn.execute(
-            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending' "
-            "AND TRIM(COALESCE(original_alt,'')) != '' AND original_alt != 'dekorativ'" + doc_sql,
-            [project_id] + doc_args).fetchone()[0]
+            "SELECT COUNT(*) FROM images WHERE id IN (%s) AND TRIM(COALESCE(original_alt,'')) != '' "
+            "AND original_alt != 'dekorativ'" % _m, list(_ids)).fetchone()[0]
+    modus = "alle"
     # Vom Autor als dekorativ gekennzeichnet (Word): laeuft nie mit — die Rueckfrage
     # sagt es, damit „8 von 9“ nicht wie ein Fehler klingt.
     autor_dekorativ = conn.execute(
@@ -6267,8 +6257,8 @@ async def generate_vorschau(project_id: int, request: Request,
     je = billing.aktion_preis("bild_generierung", 1) or 1
     verf = p["verfuegbar"]
     machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
-    return {"modus": modus, "anzahl": anzahl, "mit_quelltext": mit_quelltext, "autor_dekorativ": autor_dekorativ,
-            "document_id": document_id,
+    return {"modus": modus, "anzahl": anzahl, "mit_quelltext": mit_quelltext, "eigene": eigene,
+            "autor_dekorativ": autor_dekorativ, "document_id": document_id,
             "dokumente": dokumente, "preis": p["preis"], "preis_je": je,
             "verfuegbar": verf, "fehlend": p["fehlend"], "machbar": machbar,
             "erlaubt": bool(anzahl) and (verf is None or machbar >= 1)}
@@ -6525,9 +6515,17 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
                 if specialized_result.get("alt_text") and len(specialized_result["alt_text"]) > 10:
                     result["alt_text"] = specialized_result["alt_text"]
                     result["konfidenz"] = specialized_result.get("konfidenz", result.get("konfidenz", "mittel"))
+            # Generieren ueberschreibt alles (Michael Karbe 01.09.2026): ein eigener Text wandert
+            # nach alt_text_vorher (Sicherheitsnetz, „Vorherigen Text zurueckholen"), das Feld wird
+            # freigegeben, der KI-Text wird sichtbar. Ein bewusst geleertes Feld ('') wird ebenfalls
+            # freigegeben — Leeren und dann Generieren heisst: neu beschreiben.
             conn.execute(
                 """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?,
-                   needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done' WHERE id = ?""",
+                   needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done',
+                   alt_text_vorher = CASE WHEN alt_text_edited IS NOT NULL AND TRIM(alt_text_edited) != ''
+                                          THEN alt_text_edited ELSE alt_text_vorher END,
+                   alt_text_edited = NULL
+                   WHERE id = ?""",
                 (_append_link_reference(result["alt_text"], effective_context or "", alt_lang), result["bildtyp"], result.get("konfidenz", "mittel"), langbeschreibung,
                  1 if result.get("needs_review") else 0,
                  result.get("pipeline_steps", ""),
@@ -6661,6 +6659,27 @@ async def update_alt_text(image_id: int, request: Request, user: dict = Depends(
     conn.commit()
     conn.close()
     return {"ok": True, "status": status}
+
+
+@app.post("/api/images/{image_id}/alt-text/zurueck")
+async def alt_text_zurueckholen(image_id: int, user: dict = Depends(get_current_user)):
+    """Sicherheitsnetz (01.09.2026): den eigenen Text zurueckholen, den der letzte
+    Sammellauf ueberschrieben hat (alt_text_vorher). Der KI-Text bleibt in seinem Fach."""
+    conn = get_db()
+    img = conn.execute(
+        """SELECT i.id, i.alt_text_vorher FROM images i JOIN projects p ON i.project_id = p.id
+           WHERE i.id = ? AND p.user_id = ?""", (image_id, user["id"])).fetchone()
+    if not img:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    vorher = img["alt_text_vorher"]
+    if vorher is None:
+        conn.close()
+        raise HTTPException(status_code=409, detail="Kein vorheriger Text vorhanden")
+    conn.execute("UPDATE images SET alt_text_edited = ?, alt_text_vorher = NULL WHERE id = ?", (vorher, image_id))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "alt_text": vorher}
 
 
 def _handtext_macht_fertig(conn, image_id: int, text) -> str:
@@ -7127,22 +7146,28 @@ def _load_pdf_export_units(project: dict, user_id: int, document_id: Optional[in
 
 
 def _exportable_alt_text(img) -> Optional[str]:
-    """Alt-Text eines Bildes fuer den PDF-Export, oder None wenn das Bild
-    NICHT exportiert werden soll.
+    """Alt-Text eines Bildes fuer den Datei-Export — EXPORT IST, WAS DER KUNDE SIEHT
+    (Michael Karbe/Steve 01.09.2026).
 
-    Regel (12.06.2026): Nur Bilder mit echtem Text (oder der expliziten
-    Markierung "dekorativ") kommen in den Export. Unbearbeitete Bilder
-    (leerer Text, z.B. status='pending') werden uebersprungen — sie bleiben
-    in der PDF exakt wie im Original, inklusive eines evtl. vorhandenen
-    Original-Alt-Textes. Vorher schrieb der Export leere /Alt-Eintraege in
-    die Datei (Befund 12.06.2026: Export eines teilbearbeiteten Projekts
-    erzeugte 6 leere Alt-Texte, die Pruefwerkzeuge als Fehler werten)."""
+    Rueckgabe:
+      "dekorativ" — das Bild ist dekorativ (Text „dekorativ" ODER Bildtyp dekorativ ohne
+                    Text; vom Autor oder von der KI so eingestuft): Kennzeichen setzen.
+      Text        — der im Browser sichtbare Text (eigener Text vor KI-Text vor Quelltext).
+      ""          — das sichtbare Feld ist leer: KEIN Alt-Text in der Datei. Ein in der
+                    Quelle vorhandener Text wird ENTFERNT, damit Acrobat oder ein anderes
+                    Werkzeug spaeter frei ist (Michael: „es muss wirklich leer sein").
+      None        — technischer Fehlertext (nie nach aussen): Bild unangetastet lassen.
+
+    Bis zum 01.09. galt „leer = Bild ueberspringen, Quelle bleibt" (12.06.2026, gegen leere
+    /Alt-Eintraege). Die Export-Wege setzen "" jetzt als ENTFERNEN um: PDFix-Rueckweg ueber
+    die Sentinel-Zeile KEIN_ALT (Alt-Eintrag wird geloescht), Word-Export loescht descr,
+    PyMuPDF-Weg taggt das Bild nicht."""
     alt_text = _ausgabe_alt_text(img)
+    if alt_text == "dekorativ" or (img.get("image_type") == "dekorativ" and not (alt_text or "").strip()):
+        return "dekorativ"
     if alt_text is None:
         return None
-    if alt_text == "dekorativ" or alt_text.strip():
-        return alt_text
-    return None
+    return alt_text if alt_text.strip() else ""
 
 
 def _pdfix_lfnr_je_dokument(images: list) -> dict:
@@ -7185,7 +7210,9 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
 
     for img in images:
         alt_text = _exportable_alt_text(img)
-        if alt_text is not None and img.get("xref"):
+        # PyMuPDF-Weg: "" = Bild nicht taggen (die Quelle ist dort ungetaggt, es gibt nichts
+        # zu entfernen); PDFix-Weg: "" = Alt-Eintrag entfernen (Sentinel in der CSV).
+        if alt_text and img.get("xref"):
             alt_texts[img["xref"]] = alt_text
         if alt_text is not None and img.get("id") in lfnr_je_bild:
             alt_texts_by_lfnr[lfnr_je_bild[img["id"]]] = alt_text
@@ -7875,12 +7902,16 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
     # dekorativ = Text „dekorativ“ ODER Bildtyp dekorativ ohne Text (KI oder Autor);
     # geleert   = alt_text_edited = '' (bewusst geloescht, seit 31.08.);
     # offen     = wirklich nie generiert.
+    # Seit 01.09.2026 (Michael Karbe): nur noch „mit Text / ohne Text / dekorativ" — die
+    # Gruende (Fehler, geleert, nie generiert) interessieren den Kunden beim Herunterladen
+    # nicht; er sieht im Browser, welche Felder leer sind, und genau so kommt es in die Datei.
+    # Die alten Schluessel bleiben fuer Skripte erhalten.
     total = beschrieben = dekorativ = fehler = offen = geleert = 0
     for r in rows:
         img = dict(r)
         total += 1
-        ausgabe = _ausgabe_alt_text(img)
-        if ausgabe == "dekorativ" or (img.get("image_type") == "dekorativ" and not (ausgabe or "").strip()):
+        ausgabe = _exportable_alt_text(img)
+        if ausgabe == "dekorativ":
             dekorativ += 1
         elif ausgabe and ausgabe.strip():
             beschrieben += 1
@@ -7899,6 +7930,8 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         "fehler": fehler,
         "offen": offen,
         "geleert": geleert,
+        "mit_text": beschrieben,
+        "ohne_text": fehler + offen + geleert,
         "preis": p["preis"], "verfuegbar": p["verfuegbar"], "erlaubt": p["erlaubt"],
         # Tabellen-Exporte (CSV/JSON) kosten einen festen Preis — fuer die Ansage im Dialog.
         "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],

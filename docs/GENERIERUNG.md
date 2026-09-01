@@ -324,3 +324,42 @@ ist, das Guthaben aufgebraucht oder das Tageslimit erreicht ist. Die Rückfrage
 sagt das jetzt („Nach dem Start lässt sich der Lauf nicht mehr anhalten; er
 endet von selbst."). Ein Abbrechen-Knopf während des Laufs ist offen (eigene
 Runde: der Lauf müsste je Bild nachsehen).
+
+## KURSWECHSEL 01.09.2026 NACHMITTAG (Michael Karbe/Steve): Generieren überschreibt alles, Export = Browser
+
+Diese Regeln lösen die Abschnitte „Bewusst geleert bleibt leer", „Hand-Text
+vor dem ersten Lauf = fertig" und „drei Gründe" von heute Vormittag ab.
+
+1. **Generieren überschreibt alles.** Der Sammel-Knopf („Alt-Texte
+   generieren", Projekt oder Dokument) beschreibt ALLE Bilder des Umfangs mit
+   der KI — mitgebrachte Texte, eigene Texte, geleerte Felder, fertige und nie
+   generierte Bilder. Es gibt nur noch EINEN Modus (`modus: "alle"`, der
+   Server ignoriert andere Werte); `force=True` immer (Cache umgangen, jeder
+   Lauf kostet). Einzige Ausnahme: vom Autor in der Datei als dekorativ
+   gekennzeichnete Bilder (Word). Rest eines abgebrochenen Laufs wird weiter
+   zuerst abgearbeitet (kein Doppelkassieren). Die Rückfrage: „Alle 9 Bilder
+   werden von der KI beschrieben; vorhandene Texte werden überschrieben, 3
+   davon sind von dir geschrieben. Das kostet 45 Credits. …". Die Vorschau
+   liefert dafür `eigene`.
+2. **Sicherheitsnetz.** Ein eigener Text, den der Sammellauf überschreibt,
+   wandert nach `images.alt_text_vorher`; am Bild erscheint „Vorherigen Text
+   zurückholen" (`POST /api/images/{id}/alt-text/zurueck`).
+3. **Export ist, was der Kunde sieht.** `_exportable_alt_text`: „dekorativ"
+   (Text oder Bildtyp dekorativ ohne Text) → Kennzeichen; Text → Text; leeres
+   Feld → `""` = KEIN Alternativtext in der Datei, ein mitgebrachter Text wird
+   ENTFERNT (PDFix: Sentinel `__KEIN_ALT__` in der CSV, Import-Skript
+   `RemoveKey("Alt")`; Word: `descr` entfernt, Kennzeichen aus; PyMuPDF-Weg:
+   Bild nicht getaggt); `None` nur bei technischem Fehlertext (Bild
+   unangetastet). Grund (Michael): Acrobat oder ein anderes Werkzeug soll
+   später frei einen Text setzen können — „es muss wirklich leer sein".
+4. **Zusammenfassung ohne Gründe.** „7 von 9 Bildern haben einen Text, 2
+   haben keinen, 2 als dekorativ gekennzeichnet." (`mit_text`, `ohne_text`,
+   `dekorativ`; alte Schlüssel bleiben für Skripte).
+5. **Dekorativ bleibt dekorativ** (Steve): vom Autor oder von der KI so
+   eingestuft → Kennzeichen wie bisher; Aufheben durch den Kunden später.
+6. **Quickinfos unverändert** — die Regel gilt für Alt-Texte; das
+   Formular-Werkzeug behält seine Quellen (Hand, PDF, Stammdaten, Gast).
+
+Tests: `verify_leeren` (WYSIWYG über die Schnittstelle), `verify_ki_neu_abbruch`
+und `verify_doppelkosten` (Kandidaten = alle), `test_export_leer` (CSV-Sentinel,
+Word-descr entfernt), `ui_gendialog` (Dialogsätze), `ui_word` (Zusammenfassung).

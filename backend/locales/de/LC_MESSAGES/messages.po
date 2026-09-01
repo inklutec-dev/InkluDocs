@@ -3737,22 +3737,6 @@ msgstr ""
 msgid "Bilder werden geprüft …"
 msgstr ""
 
-#: export-summary (18.08.2026, Fable 5)
-msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
-msgstr ""
-
-#: export-summary (18.08.2026, Fable 5)
-msgid "{n} mit Fehler"
-msgstr ""
-
-#: export-summary (18.08.2026, Fable 5)
-msgid "{n} noch nicht generiert"
-msgstr ""
-
-#: export-summary (18.08.2026, Fable 5)
-msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}."
-msgstr ""
-
 msgid "Monatsabo (monatlich kündbar)"
 msgstr ""
 
@@ -4619,9 +4603,6 @@ msgstr "im Chat bestätigt"
 msgid "{n} Alt-Texte neu generieren, {c} Credits"
 msgstr "{n} Alt-Texte neu generieren, {c} Credits"
 
-msgid "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
-msgstr "Neu-Generierung der KI-Alt-Texte wird gestartet. Texte von Hand bleiben unverändert."
-
 msgid "Dieser Export kostet {p} Credits."
 msgstr "Dieser Export kostet {p} Credits."
 
@@ -5171,10 +5152,6 @@ msgid "Nur dieses Dokument"
 msgstr ""
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
-msgstr ""
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Du hast {v} Credits."
 msgstr ""
 
@@ -5210,10 +5187,6 @@ msgstr ""
 msgid "Herunterladen (Beta)"
 msgstr ""
 
-#. Rueckfrage Erstlauf: nur die Gesamtzahl (Michael Karbe 01.09.2026)
-msgid "{n} Bilder werden beschrieben. Das kostet {c} Credits."
-msgstr ""
-
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
 msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
 msgstr ""
@@ -5234,22 +5207,6 @@ msgstr ""
 msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
 msgstr ""
 
-#. Einzahl (01.09.2026)
-msgid "1 Bild wird beschrieben. Das kostet {c} Credits."
-msgstr ""
-
-#. Mitgebrachte Texte, Mehrzahl (01.09.2026)
-msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI bezieht ihn ein."
-msgstr ""
-
-#. Mitgebrachte Texte, Einzahl (01.09.2026)
-msgid "Eines davon bringt schon einen Text aus der Datei mit; die KI bezieht ihn ein."
-msgstr ""
-
-#. Einzahl (01.09.2026)
-msgid "1 von der KI erzeugter Text wird neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
-msgstr ""
-
 #. Einzahl Quickinfos (01.09.2026)
 msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
 msgstr ""
@@ -5268,18 +5225,6 @@ msgstr ""
 
 #. Badge am Bild (01.09.2026)
 msgid "Vom Autor in der Datei als dekorativ gekennzeichnet."
-msgstr ""
-
-#. Export-Zusammenfassung: dekorativ am Bildtyp erkannt (01.09.2026)
-msgid ", {n} als dekorativ erkannt"
-msgstr ""
-
-#. Export-Zusammenfassung: bewusst geleert (01.09.2026)
-msgid "{n} bewusst ohne Beschreibung"
-msgstr ""
-
-#. Export-Zusammenfassung, Einzahl (01.09.2026)
-msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. 1 wird übersprungen: {g}."
 msgstr ""
 
 #. Abo-Seite, gekuendigtes Abo (Steve 01.09.2026)
@@ -5308,4 +5253,44 @@ msgstr ""
 
 #. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
 msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
+msgstr ""
+
+#. Rueckfrage: Generieren ueberschreibt alles (Michael Karbe 01.09.2026)
+msgid "Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits."
+msgstr ""
+
+#. Rueckfrage, Einzahl (01.09.2026)
+msgid "Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits."
+msgstr ""
+
+#. Herunterladen-Zusammenfassung (Michael Karbe 01.09.2026)
+msgid "Alle {n} Bilder haben einen Text{dek}."
+msgstr ""
+
+#. Herunterladen-Zusammenfassung, Einzahl (01.09.2026)
+msgid "{b} von {n} Bildern haben einen Text, 1 hat keinen{dek}."
+msgstr ""
+
+#. Herunterladen-Zusammenfassung (01.09.2026)
+msgid "{b} von {n} Bildern haben einen Text, {o} haben keinen{dek}."
+msgstr ""
+
+#. Herunterladen-Zusammenfassung: dekorativ (01.09.2026)
+msgid ", {n} als dekorativ gekennzeichnet"
+msgstr ""
+
+#. Sicherheitsnetz nach dem Sammellauf (01.09.2026)
+msgid "Vorherigen Text zurückholen"
+msgstr ""
+
+#. Sicherheitsnetz, Ansage (01.09.2026)
+msgid "Vorheriger Text wiederhergestellt."
+msgstr ""
+
+#. Rueckfrage: eigene Texte (01.09.2026)
+msgid "Ein Text davon stammt von dir."
+msgstr ""
+
+#. Rueckfrage: eigene Texte (01.09.2026)
+msgid "{n} Texte davon stammen von dir."
 msgstr ""

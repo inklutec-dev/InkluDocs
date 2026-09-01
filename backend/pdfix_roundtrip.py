@@ -108,6 +108,9 @@ def extract_figures_pdfix(pdf_path: str, out_dir: str) -> list[dict]:
     return figures
 
 
+KEIN_ALT = "__KEIN_ALT__"   # Konvention mit pdfix_scripts/AltTag_Import_CSV.py (01.09.2026)
+
+
 def _build_csv_rows(alt_texts_by_lfnr: dict[int, str],
                     source_stem: str) -> list[list]:
     """Baut die CSV-Datenzeilen fuer das Import-Script (ohne Header).
@@ -128,11 +131,14 @@ def _build_csv_rows(alt_texts_by_lfnr: dict[int, str],
     for lfnr in sorted(alt_texts_by_lfnr):
         alt = alt_texts_by_lfnr[lfnr]
         if alt is None:
-            continue
+            continue  # nicht angefasst -> Figure unangetastet lassen
         if alt == "dekorativ":
             alt = ""
         elif not alt.strip():
-            continue  # kein Text vorhanden -> Figure unangetastet lassen
+            # 01.09.2026 (Michael Karbe): leeres Feld = KEIN Alt-Text in der Datei.
+            # Das Import-Script entfernt den Eintrag (Sentinel KEIN_ALT). Vorher wurde
+            # die Figure ausgelassen und ein Original-Text der Quelle blieb stehen.
+            alt = KEIN_ALT
         rows.append([lfnr, "", "", "", alt, source_stem])
     return rows
 

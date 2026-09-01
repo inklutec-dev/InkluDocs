@@ -556,6 +556,10 @@ def _migrate_columns(conn):
         ("images", "bbox_y1", "ALTER TABLE images ADD COLUMN bbox_y1 REAL"),
         ("images", "is_vector", "ALTER TABLE images ADD COLUMN is_vector INTEGER DEFAULT 0"),
         ("images", "konfidenz", "ALTER TABLE images ADD COLUMN konfidenz TEXT DEFAULT 'mittel'"),
+        # Sicherheitsnetz (01.09.2026, Michael Karbe/Steve: „Generieren ueberschreibt alles“):
+        # der eigene Text, den der letzte Sammellauf ueberschrieben hat — „Vorherigen Text
+        # zurueckholen“ am Bild stellt ihn wieder her.
+        ("images", "alt_text_vorher", "ALTER TABLE images ADD COLUMN alt_text_vorher TEXT"),
         # New columns for this refactoring
         ("projects", "project_type", "ALTER TABLE projects ADD COLUMN project_type TEXT DEFAULT 'pdf'"),
         ("projects", "source_url", "ALTER TABLE projects ADD COLUMN source_url TEXT"),
