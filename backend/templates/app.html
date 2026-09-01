@@ -3078,7 +3078,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const fallback = (customName || 'export') + (scope.all ? '_alle' : '') + ext;
                 downloadBlob(blob, serverName || fallback);
                 const credits = res.headers.get('X-Export-Credits');
-                const fertig = credits
+                let fertig = credits
                     ? t('Heruntergeladen: „{name}“ ({c} Credits abgebucht).', { name: serverName || fallback, c: credits })
                     : t('Heruntergeladen: „{name}“.', { name: serverName || fallback });
                 // Wo die Datei liegt, weiss die Seite nicht (Browser-Grenze) — der Satz sagt, wo man sucht (Steve 01.09.2026).

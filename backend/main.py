@@ -7043,7 +7043,9 @@ async def _read_export_options(request: Optional[Request]) -> tuple[Optional[int
     name = (body.get("filename") if isinstance(body, dict) else None) or None
     if name:
         name = str(name).strip()
-        name = re.sub(r"\.[A-Za-z0-9]{1,5}$", "", name)
+        # Nur eine wirklich eingetippte Dateiendung abschneiden (01.09.2026, Steve: „testword 01.09"
+        # wurde zu „testword 01" — der alte Ausdruck hielt „.09" fuer eine Endung).
+        name = re.sub(r"\.(pdf|docx|zip|csv|json|xlsx|txt)$", "", name, flags=re.IGNORECASE)
         name = _safe_filename_component(name)
     return doc_id, name
 
@@ -7395,9 +7397,12 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
     headers = {"X-Export-Tagged": str(total_tagged), "X-Export-Total": str(total_images)}
     if aggregated_warnings:
         headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
+    # Preis VOR dem Bauen der Antwort in die Kopfzeilen (01.09.2026): Starlette kopiert
+    # das dict beim Erzeugen — ein Eintrag danach kam nie beim Browser an, der Dialog
+    # sagte deshalb beim Word-ZIP keinen Preis (Steves Hoertest).
+    headers["X-Export-Credits"] = str(_preis)
     response = FileResponse(zip_path, filename=f"{zip_base}_alle_word.zip",
                             media_type="application/zip", headers=headers)
-    headers["X-Export-Credits"] = str(_preis)
     billing.verbuche(user["id"], "export", aktion="docx_export", credits=_preis)
     return response
 
