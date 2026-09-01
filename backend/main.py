@@ -6335,7 +6335,12 @@ def _ki_neu_rest_pflegen(conn, project_id: int, lauf_ids: set, offene: set) -> N
 
 
 def _ki_neu_zurueck(conn, ids: set, project_id: Optional[int] = None) -> None:
-    """Stellt im Modus ki_neu stehengebliebene Bilder wieder auf 'done' (Steve 30.08.2026).
+    """Stellt stehengebliebene Kandidaten eines Sammellaufs wieder auf 'done' (Steve 30.08.2026).
+
+    Seit 01.09.2026 (ein Modus, alle Bilder) enthaelt die Rettungsmenge auch nie generierte
+    Bilder: Die stehen nach Abbruch/Guthaben/Tageslimit ebenfalls auf 'done' — mit leerem Feld,
+    Knopf „Neu generieren", in der Zusammenfassung „ohne Text"; der naechste Sammellauf nimmt
+    sie ueber den Rest-Vermerk. Der Absatz darunter beschreibt die urspruengliche Lage.
 
     Der Start-Endpunkt setzt fuer „n neu generieren" fertige Bilder auf 'pending', damit der
     vorhandene Sammellauf sie aufgreift. Bricht der Lauf ab (Guthaben, Tageslimit) oder
@@ -6590,7 +6595,11 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
             # guten Text verstecken; der Fehlversuch steht im Log direkt darueber. Kein
             # Widerspruch zur Lehre vom 17.08.2026: dort ging es um Texte, die durch einen
             # Fehlertext UEBERSCHRIEBEN wurden — hier bleibt der Text unveraendert.
-            if img["id"] in ki_neu_ids:
+            # 01.09.2026 (Pruefbefund): Seit „Generieren ueberschreibt alles" liegt JEDES Bild in
+            # ki_neu_ids — die Rettung „alter Text bleibt, nur markiert" gilt nur, wenn wirklich
+            # ein Text da war. Ein nie generiertes Bild wird ehrlich als Fehler markiert.
+            _hatte_text = bool((img["alt_text"] or "").strip() or (img["alt_text_edited"] or "").strip())
+            if img["id"] in ki_neu_ids and _hatte_text:
                 # needs_review = 1 (Pruefbericht 30.08.2026): Ohne Signal saehe ein Lauf ueber
                 # 200 Bilder, bei dem die KI durchgehend ausfaellt, wie ein voller Erfolg aus.
                 # Der alte Text bleibt gueltig, das Bild bleibt fertig — aber es ist markiert.

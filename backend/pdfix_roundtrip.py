@@ -190,12 +190,16 @@ def import_alt_texts_pdfix(pdf_in: str, pdf_out: str,
     # Ergebniszeile des Scripts auswerten ("ALT_APPLIED=n FIGURES_FOUND=m").
     applied = len(rows)
     m = re.search(r"ALT_APPLIED=(\d+)", result.stdout or "")
+    m2 = re.search(r"ALT_REMOVED=(\d+)", result.stdout or "")
+    removed = int(m2.group(1)) if m2 else 0
     if m:
         applied = int(m.group(1))
-        if applied != len(rows):
+        # Sentinel-Zeilen (Alt entfernt, 01.09.2026) sind Zeilen ohne "gesetzten" Text —
+        # sie zaehlen zur Zeilensumme, nicht zu applied.
+        if applied + removed != len(rows):
             # Nach dem Konsistenz-Check des Scripts eigentlich unmoeglich —
             # falls doch, soll es im Log auffallen.
-            log.warning("PDFix-Import: %d Zeilen geschrieben, aber %d gesetzt.",
-                        len(rows), applied)
-    log.info("PDFix-Import: %d Alt-Texte gesetzt, Output=%s", applied, pdf_out)
+            log.warning("PDFix-Import: %d Zeilen geschrieben, aber %d gesetzt und %d entfernt.",
+                        len(rows), applied, removed)
+    log.info("PDFix-Import: %d Alt-Texte gesetzt, %d entfernt, Output=%s", applied, removed, pdf_out)
     return applied
