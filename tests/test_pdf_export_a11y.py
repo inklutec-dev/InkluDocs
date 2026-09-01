@@ -88,11 +88,18 @@ def _alt_entries(path):
 class TestBuildCsvRows(unittest.TestCase):
     """CSV-Zeilen fuer das PDFix-Import-Script."""
 
-    def test_leere_und_none_werden_uebersprungen(self):
+    def test_none_uebersprungen_leer_entfernt_alt(self):
+        """Seit 01.09.2026: None (nie angefasst) bekommt keine Zeile — die Figure bleibt
+        unangetastet; leer/Whitespace (bewusst geleert) bekommt eine Zeile mit dem
+        Sentinel KEIN_ALT, das Import-Script entfernt den Alt-Eintrag (Export = Browser)."""
         rows = pdfix_roundtrip._build_csv_rows(
             {1: "Text eins", 2: "", 3: None, 4: "   ", 5: "Text fuenf"}, "quelle")
-        self.assertEqual([r[0] for r in rows], [1, 5],
-                         "Nur Bilder mit echtem Text bekommen eine Zeile")
+        self.assertEqual([r[0] for r in rows], [1, 2, 4, 5])
+        by = {r[0]: r[4] for r in rows}
+        self.assertEqual(by[1], "Text eins")
+        self.assertEqual(by[2], pdfix_roundtrip.KEIN_ALT)
+        self.assertEqual(by[4], pdfix_roundtrip.KEIN_ALT)
+        self.assertEqual(by[5], "Text fuenf")
 
     def test_dekorativ_wird_leere_zeile(self):
         rows = pdfix_roundtrip._build_csv_rows({1: "dekorativ"}, "quelle")

@@ -388,16 +388,23 @@ Word-descr entfernt), `ui_gendialog` (Dialogsätze), `ui_word` (Zusammenfassung)
   (Steve: erst mal nicht, weniger Knöpfe). Backend, Spalte `alt_text_vorher`
   und Endpunkt bleiben; Einschalten über `window.VORHER_KNOPF = true` in app.html.
 
-## Dokument-Eigenschaften der exportierten PDF (Jörg Heine / Michael Karbe, 01.09.2026)
+## Dokument-Eigenschaften der exportierten PDF (seit 01.09.2026)
 
-Heines Skript `SetDocInfo_01_r.py` (Mail 01.09., Original unter
-`/home/claude/heine/`) setzt über PDFix die Info-Einträge Title, Author,
-Subject, Keywords, Creator, Producer, CreationDate. Vereinbart war vor allem
-Creator (Anwendung) und Producer (PDF erstellt mit). Umgesetzt an EINER Stelle
-für alle PDF-Ausgänge: `pdf_export.dokumentinfo_werte(verfahren)` liefert
-Creator `InkluDocs (inkludocs.de)` und Producer `InkluDocs – PDFix SDK` /
-`InkluDocs – PyMuPDF` / `InkluDocs – LibreOffice + veraPDF` (Umgebung
-`INKLUDOCS_PDF_CREATOR`, `INKLUDOCS_PDF_PRODUCER`). Author, Subject, Keywords
+Ausgangspunkt war Heines Skript `SetDocInfo_01_r.py` (Mail 01.09., Original unter
+`/home/claude/heine/`), das über PDFix die Info-Einträge Title, Author,
+Subject, Keywords, Creator, Producer, CreationDate setzt. Vereinbart war vor
+allem Creator (Anwendung) und Producer (PDF erstellt mit). Umgesetzt an EINER
+Stelle für alle PDF-Ausgänge: `pdf_export.dokumentinfo_werte(verfahren)` liefert
+Creator `inkludocs.de` und Producer `InkluDocs` — für jeden Weg dieselben Werte
+(Umgebung `INKLUDOCS_PDF_CREATOR`, `INKLUDOCS_PDF_PRODUCER`). Geschrieben wird
+in das Info-Dictionary UND — falls die Datei eines mitbringt — in das XMP-Paket
+(`xmp:CreatorTool`, `pdf:Producer`; `pdf_export.dokumentinfo_in_doc` bzw.
+`xmp_dokumentinfo`), weil Viewer wie Acrobat bei vorhandenem XMP dessen Werte
+zeigen und die Quell-PDF dort ihr Erzeuger-Werkzeug hinterlässt. Andere
+XMP-Felder bleiben unangetastet; fehlt ein Eintrag, wird keiner erfunden.
+**Regel (01.09.2026):** In den Eigenschaften steht immer nur unser Produktname,
+nie ein Werkzeug oder eine Bibliothek (kein PDFix, veraPDF, LibreOffice, PyMuPDF);
+`tests/test_dokumentinfo.py` sichert das ab. Author, Subject, Keywords
 und CreationDate des Autors bleiben unverändert (Titel wie bisher über
 `finalize_export_pdf`).
 - Alt-Text-Export (beide Wege): in `finalize_export_pdf` (Schritt 4).
@@ -406,5 +413,5 @@ und CreationDate des Autors bleiben unverändert (Titel wie bisher über
   bleibt (`test_original_ist_praefix`).
 - Barrierefreie PDF aus Word: `pdfua_export.dokumentinfo_setzen(bytes)` mit
   pikepdf (Info-Dictionary + XMP), VOR der veraPDF-Prüfung.
-Tests: `tests/test_dokumentinfo.py` (4), Beweis Staging: Export Projekt 69/85
-tragen Creator/Producer.
+Tests: `tests/test_dokumentinfo.py` (8), Beweis Staging: Export Projekt 69/85
+tragen Creator/Producer (85 auch im XMP, Quelle nannte PDFix).

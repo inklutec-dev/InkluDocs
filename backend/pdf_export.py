@@ -14,34 +14,71 @@ import os
 import re
 import fitz  # PyMuPDF
 
-# Dokument-Eigenschaften der exportierten PDF (Joerg Heine / Michael Karbe, 01.09.2026:
-# „ging hauptsaechlich um Creator (Anwendung) und Producer (PDF erstellt mit)").
+# Dokument-Eigenschaften der exportierten PDF: Creator (Anwendung) und Producer (erstellt mit).
 # EINE Quelle fuer alle PDF-Ausgaenge (Alt-Text-Export beide Wege, Formular-Export,
 # barrierefreie PDF aus Word). Author, Subject, Keywords, CreationDate bleiben die des
-# Autors. Aenderbar ueber Umgebung, ohne Code anzufassen.
-PDF_CREATOR = os.environ.get("INKLUDOCS_PDF_CREATOR", "InkluDocs (inkludocs.de)")
-PDF_PRODUCER_BASIS = os.environ.get("INKLUDOCS_PDF_PRODUCER", "InkluDocs")
-_PRODUCER_VERFAHREN = {"pdfix": "PDFix SDK", "fitz": "PyMuPDF", "libreoffice": "LibreOffice + veraPDF"}
+# Autors. Regel: In den Eigenschaften steht immer nur unser Produktname — nie ein
+# Werkzeug oder eine Bibliothek, mit der die Datei technisch geschrieben wurde.
+# Aenderbar ueber Umgebung, ohne Code anzufassen.
+PDF_CREATOR = os.environ.get("INKLUDOCS_PDF_CREATOR", "inkludocs.de")
+PDF_PRODUCER = os.environ.get("INKLUDOCS_PDF_PRODUCER", "InkluDocs")
 
 
 def dokumentinfo_werte(verfahren: str | None = None) -> dict:
-    """Creator/Producer fuer eine exportierte PDF. Producer nennt das Werkzeug, mit dem die
-    Datei geschrieben wurde (Heines Frage „PDF erstellt mit")."""
-    werkzeug = _PRODUCER_VERFAHREN.get((verfahren or "").lower())
-    producer = f"{PDF_PRODUCER_BASIS} – {werkzeug}" if werkzeug else PDF_PRODUCER_BASIS
-    return {"creator": PDF_CREATOR, "producer": producer}
+    """Creator/Producer fuer eine exportierte PDF — fuer alle Wege dieselben Werte.
+    `verfahren` (pdfix/fitz/libreoffice) wird von den Aufrufern weiter mitgegeben, hat aber
+    keinen Einfluss auf den Wortlaut: Es steht immer nur unser Produktname in der Datei."""
+    return {"creator": PDF_CREATOR, "producer": PDF_PRODUCER}
 
 
-def setze_dokumentinfo(pdf_path: str, verfahren: str | None = None) -> dict:
-    """Creator/Producer in eine fertige PDF schreiben (Info-Dictionary), Rest unangetastet.
-    Entspricht Heines SetDocInfo-Skript (PutString auf dem Info-Objekt), hier mit PyMuPDF,
-    damit alle Ausgaenge dieselbe Stelle nutzen. Atomar (Tempdatei + Austausch)."""
+def _xml_escape(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def xmp_dokumentinfo(xmp: str, werte: dict) -> str:
+    """xmp:CreatorTool und pdf:Producer in einem vorhandenen XMP-Paket ersetzen — alles
+    andere (dc:title, pdfuaid:part, Datumsangaben ...) bleibt unangetastet. Viewer wie Acrobat
+    zeigen bei vorhandenem XMP dessen Werte statt des Info-Dictionarys; die Quell-PDF bringt
+    dort oft ihr Erzeuger-Werkzeug mit. Beide Schreibweisen werden abgedeckt: als Element
+    (<xmp:CreatorTool>…</xmp:CreatorTool>) und als Attribut (xmp:CreatorTool="…").
+    Fehlt ein Eintrag, wird keiner erfunden. Ohne XMP kommt der Text unveraendert zurueck."""
+    if not xmp:
+        return xmp
+    for feld, wert in (("CreatorTool", werte["creator"]), ("Producer", werte["producer"])):
+        ersatz = _xml_escape(wert)
+        xmp = re.sub(rf"(<([\w\-]+:){feld}(?:\s[^>]*)?>)[^<]*(</\2{feld}>)",
+                     lambda m: m.group(1) + ersatz + m.group(3), xmp)
+        xmp = re.sub(rf"((?:^|\s)[\w\-]+:{feld}\s*=\s*)\"[^\"]*\"",
+                     lambda m: m.group(1) + '"' + ersatz + '"', xmp)
+    return xmp
+
+
+def dokumentinfo_in_doc(doc: "fitz.Document", verfahren: str | None = None) -> dict:
+    """Creator/Producer in ein geoeffnetes fitz-Dokument schreiben: Info-Dictionary UND —
+    falls vorhanden — XMP-Paket. EINE Stelle fuer alle fitz-basierten Ausgaenge; das
+    PDF/UA-Verfahren (pikepdf, Bytes) setzt dieselben Werte auf seinem Weg."""
     werte = dokumentinfo_werte(verfahren)
-    doc = fitz.open(pdf_path)
     meta = doc.metadata or {}
     meta["creator"] = werte["creator"]
     meta["producer"] = werte["producer"]
     doc.set_metadata(meta)
+    try:
+        xmp = doc.get_xml_metadata() or ""
+    except Exception:  # noqa: BLE001 — kein/kaputtes XMP: Info-Dictionary reicht
+        xmp = ""
+    if xmp:
+        neu = xmp_dokumentinfo(xmp, werte)
+        if neu != xmp:
+            doc.set_xml_metadata(neu)
+    return werte
+
+
+def setze_dokumentinfo(pdf_path: str, verfahren: str | None = None) -> dict:
+    """Creator/Producer in eine fertige PDF schreiben (Info-Dictionary + XMP), Rest unangetastet.
+    Entspricht Heines SetDocInfo-Skript (PutString auf dem Info-Objekt), hier mit PyMuPDF,
+    damit alle Ausgaenge dieselbe Stelle nutzen."""
+    doc = fitz.open(pdf_path)
+    werte = dokumentinfo_in_doc(doc, verfahren)
     # INKREMENTELL speichern: Die Datei wird nur ergaenzt, das Original bleibt byteweise
     # erhalten (der Formular-Export garantiert das ausdruecklich — test_original_ist_praefix;
     # so bleiben Heines PDFix-Ausgabe und die Quickinfos unangetastet). Das PDF/UA-Verfahren
@@ -639,8 +676,9 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
        c) `fallback_title` (Dateiname ohne Endung).
        Dazu ViewerPreferences /DisplayDocTitle true (PDF/UA-Anforderung:
        Anzeigeprogramme sollen den Titel statt des Dateinamens ansagen).
-       Hinweis: Geschrieben wird das Info-Dictionary; ein evtl. vorhandenes
-       XMP-Paket der Quell-PDF wird nicht angefasst (bewusste Begrenzung).
+       Hinweis: Der Titel wird ins Info-Dictionary geschrieben; im XMP-Paket
+       der Quell-PDF werden nur CreatorTool/Producer angepasst (Schritt 4),
+       alles andere bleibt (bewusste Begrenzung).
     3. Verwaiste /Alt-StructElems entfernen (siehe remove_orphaned_alt_elems).
 
     Der Dokument-INHALT bleibt unangetastet — es geht ausschliesslich um
@@ -692,12 +730,8 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
     # 3) Verwaiste Alt-Altlasten
     info["orphan_alts_removed"] = remove_orphaned_alt_elems(doc)
 
-    # 4) Dokument-Eigenschaften (Heine/Karbe 01.09.2026): Creator = InkluDocs, Producer = Weg.
-    werte = dokumentinfo_werte(verfahren)
-    meta = doc.metadata or {}
-    meta["creator"] = werte["creator"]
-    meta["producer"] = werte["producer"]
-    doc.set_metadata(meta)
+    # 4) Dokument-Eigenschaften: Creator/Producer = nur unser Produktname (Info + XMP).
+    werte = dokumentinfo_in_doc(doc, verfahren)
     info["creator"] = werte["creator"]
     info["producer"] = werte["producer"]
 
