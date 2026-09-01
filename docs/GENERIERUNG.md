@@ -363,3 +363,27 @@ vor dem ersten Lauf = fertig" und „drei Gründe" von heute Vormittag ab.
 Tests: `verify_leeren` (WYSIWYG über die Schnittstelle), `verify_ki_neu_abbruch`
 und `verify_doppelkosten` (Kandidaten = alle), `test_export_leer` (CSV-Sentinel,
 Word-descr entfernt), `ui_gendialog` (Dialogsätze), `ui_word` (Zusammenfassung).
+
+### Nachtrag 01.09.2026 nachmittags: Wortlaut nach Michael Karbe, Abbruch, Zurückholen ausgeblendet
+
+- **Rückfrage-Wortlaut** (Michaels Mail 01.09.): Dokument „Das Dokument
+  beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c}
+  Credits."; Projekt „Die Dokumente des Projekts beinhalten insgesamt {n}
+  Bilder, …"; Einzahl-Fassungen; Guthaben „Dein Konto verfügt derzeit über
+  ein Guthaben von {v} Credits." (Teil-Lauf-Sätze unverändert); danach ggf.
+  „{n} Texte davon stammen von dir."; zuletzt „Der Erstellungsprozess kann
+  bei Bedarf auch nach dem Start abgebrochen werden."
+- **Abbruch** (Michael/Steve): Während des Laufs steht im Projektkopf
+  „Generierung abbrechen" (Bilder: `POST /api/projects/{id}/generate/abbrechen`,
+  Quickinfos: `POST …/quickinfos/abbrechen`). Das Bild (bzw. die Seite), das
+  gerade in Arbeit ist, wird fertig; alle weiteren bleiben unberührt und
+  kosten nichts. Der Lauf endet über denselben geordneten Weg wie bei
+  Guthaben/Tageslimit: Rest-Vermerk, Lauf-Hinweis `grund: "abbruch"`
+  (Ansage „Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."),
+  Rückstellung. Signal: prozesslokales Set `_abbruch_gewuenscht` (main.py)
+  bzw. `_generierung[pid]["abbruch"]` (formular_api.py) — der Server läuft
+  als EIN uvicorn-Prozess (Compose-CMD ohne --workers); bei mehreren Workern
+  müsste das Signal in die Datenbank. Test: `verify_doppelkosten` Abschnitt 7.
+- **„Vorherigen Text zurückholen"** ist in der Oberfläche AUSGEBLENDET
+  (Steve: erst mal nicht, weniger Knöpfe). Backend, Spalte `alt_text_vorher`
+  und Endpunkt bleiben; Einschalten über `window.VORHER_KNOPF = true` in app.html.

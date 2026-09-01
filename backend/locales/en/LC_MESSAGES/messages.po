@@ -5149,10 +5149,6 @@ msgid "Nur dieses Dokument"
 msgstr "This document only"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "Du hast {v} Credits."
-msgstr "You have {v} credits."
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
 msgstr "Your credit is not enough: {f} credits are missing."
 
@@ -5248,18 +5244,6 @@ msgstr "You will find the file in your downloads."
 msgid "Projekt: {name}"
 msgstr "Project: {name}"
 
-#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
-msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
-msgstr "Once started, the run cannot be stopped; it ends on its own."
-
-#. Rueckfrage: Generieren ueberschreibt alles (Michael Karbe 01.09.2026)
-msgid "Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits."
-msgstr "All {n} images will be described by the AI; existing texts will be overwritten. That costs {c} credits."
-
-#. Rueckfrage, Einzahl (01.09.2026)
-msgid "Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits."
-msgstr "The image will be described by the AI; an existing text will be overwritten. That costs {c} credits."
-
 #. Herunterladen-Zusammenfassung (Michael Karbe 01.09.2026)
 msgid "Alle {n} Bilder haben einen Text{dek}."
 msgstr "All {n} images have a text{dek}."
@@ -5291,3 +5275,51 @@ msgstr "One of these texts is yours."
 #. Rueckfrage: eigene Texte (01.09.2026)
 msgid "{n} Texte davon stammen von dir."
 msgstr "{n} of these texts are yours."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr "The document contains {n} images in total; creating the alt texts requires {c} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr "The document contains 1 image; creating the alt text requires {c} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr "The project’s documents contain {n} images in total; creating the alt texts requires {c} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr "The project’s documents contain 1 image; creating the alt text requires {c} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Dein Konto verfügt derzeit über ein Guthaben von {v} Credits."
+msgstr "Your account currently has a balance of {v} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "If needed, the process can also be cancelled after it has started."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Generierung abbrechen"
+msgstr "Cancel generation"
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert …"
+msgstr "Cancellation requested …"
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach dem aktuellen Bild."
+msgstr "Cancellation requested – the run will stop after the current image."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach der aktuellen Seite."
+msgstr "Cancellation requested – the run will stop after the current page."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Es läuft gerade keine Generierung."
+msgstr "No generation is running at the moment."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Cancelled: {i} images were processed, {n} remained open."

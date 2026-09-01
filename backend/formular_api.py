@@ -33,6 +33,7 @@ Endpunkte (alle nur fuer den eingeloggten Besitzer des Projekts):
   GET    /api/felder/{fid}/page-view                  Seitenansicht mit Rahmen (PNG)
   POST   /api/projects/{pid}/quickinfos/generieren    Stufe 2: KI-Vorschlaege fuer offene Felder (Hintergrund, 1 Credit je Feld)
   POST   /api/projects/{pid}/quickinfos/vorschau      Rueckfrage davor: Anzahl, Preis, Guthaben (aendert nichts, 01.09.2026)
+  POST   /api/projects/{pid}/quickinfos/abbrechen     laufenden Feld-Pass nach der aktuellen Seite beenden (01.09.2026)
   POST   /api/felder/{fid}/generieren                 Stufe 2: ein Feld neu generieren (ueberschreibt, 1 Credit)
   POST   /api/projects/{pid}/export/formular          PDF mit Quickinfos (einzeln/ZIP), kostet Credits
   POST   /api/projects/{pid}/export/formular_csv      Feldliste als CSV (Heine-kompatibel), kostenlos
@@ -568,6 +569,10 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
     lauf_user = _d.get_user_by_id(user_id) if _d.get_user_by_id else None
     try:
         for (doc_id, page), felder in seiten.items():
+            # Abbruch durch den Nutzer (01.09.2026): vor jeder Seite nachsehen.
+            if st.get("abbruch"):
+                st["fehler"].append("Vom Nutzer abgebrochen – Rest bleibt offen.")
+                break
             # Aktionspreise (29.08.2026): 1 Credit je FELD — die Seite laeuft nur, wenn das
             # Guthaben alle offenen Felder dieser Seite deckt; sonst bleibt der Rest offen.
             wache = _d.billing.aktion_pruefung(user_id, "quickinfo_generierung", len(felder))
@@ -864,6 +869,21 @@ def build_router(deps: Deps) -> APIRouter:
         _generierung[project_id] = {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []}
         asyncio.create_task(_generiere_projekt(project_id, user["id"], document_id, modus))
         return {"ok": True, "gestartet": True, "offen": offen, "modus": modus}
+
+    @router.post("/api/projects/{project_id}/quickinfos/abbrechen")
+    async def quickinfos_abbrechen(project_id: int, user: dict = Depends(_user)):
+        """Abbruch anfordern (Michael Karbe 01.09.2026): der Feld-Pass endet nach der Seite,
+        die gerade in Arbeit ist; der Rest bleibt offen, der Grund steht in der Fehlerliste."""
+        conn = _d.get_db()
+        try:
+            project = _projekt_des_nutzers(conn, project_id, user["id"])
+        finally:
+            conn.close()
+        st = _generierung.get(project_id)
+        if project.get("status") != "processing" or not st or not st.get("laeuft"):
+            return {"ok": True, "angefordert": False, "grund": "kein Lauf"}
+        st["abbruch"] = True
+        return {"ok": True, "angefordert": True}
 
     @router.post("/api/projects/{project_id}/quickinfos/vorschau")
     async def quickinfos_vorschau(project_id: int, request: Request, user: dict = Depends(_user)):

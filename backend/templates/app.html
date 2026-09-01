@@ -628,6 +628,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <div class="progress-fill" style="width:${progress}%"></div>
                     </div>
                     <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: project.processed_images, n: project.total_images })}</p>
+                    ${!window.GUEST_MODE ? '<button type="button" class="btn btn-secondary" id="abortGenBtn" onclick="generierungAbbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button>' : ''}
                 ` : ''}
                 <div class="card-actions">
                     ${!window.GUEST_MODE && images.length > 0 && project.status !== 'processing' && project.status !== 'extracting' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
@@ -760,6 +761,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     if (sData.status === 'done' && hinweis && hinweis.offen) {
                         announce(hinweis.grund === 'tageslimit'
                             ? t('Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen })
+                            : hinweis.grund === 'abbruch'
+                            ? t('Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen })
                             : t('Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen }));
                     } else {
                         announce(sData.status === 'done' ? t('Alle Alt-Texte wurden generiert.') : t('Fehler bei der Verarbeitung.'));
@@ -2114,7 +2117,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}" data-status="${img.status === 'done' ? 'done' : 'pending'}">${img.status === 'done' ? t('Neu generieren') : t('Generieren')}</button>
 
                         ${showLang && complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">' + t('Langbeschreibung (optional)') + '</button>' : ''}
-                        ${!window.GUEST_MODE && img.alt_text_vorher != null ? '<button class="btn btn-secondary btn-small" id="vorher_btn_' + img.id + '" onclick="vorherigenTextZurueck(' + img.id + ')">' + t('Vorherigen Text zurückholen') + '</button>' : ''}
+                        ${''/* „Vorherigen Text zurückholen" (Sicherheitsnetz) ist AUSGEBLENDET (Steve 01.09.2026: erst mal nicht, weniger Knoepfe). Backend + alt_text_vorher bleiben; zum Einschalten: window.VORHER_KNOPF = true. */}${!window.GUEST_MODE && window.VORHER_KNOPF && img.alt_text_vorher != null ? '<button class="btn btn-secondary btn-small" id="vorher_btn_' + img.id + '" onclick="vorherigenTextZurueck(' + img.id + ')">' + t('Vorherigen Text zurückholen') + '</button>' : ''}
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
@@ -2648,7 +2651,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             return t('Dein Konto hat unbegrenztes Guthaben.');
         }
         if (v.machbar >= v.anzahl) {
-            return t('Du hast {v} Credits.', { v: v.verfuegbar });
+            return t('Dein Konto verfügt derzeit über ein Guthaben von {v} Credits.', { v: v.verfuegbar });
         }
         if (v.machbar >= 1) {
             return feld
@@ -2699,9 +2702,17 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Generieren ueberschreibt alles (Michael Karbe/Steve 01.09.2026): EIN Satz, die Gesamtzahl,
         // und ehrlich, was verloren geht — eigene Texte werden genannt (und im Hintergrund
         // aufgehoben: „Vorherigen Text zurueckholen" am Bild).
-        let satz = v.anzahl === 1
-            ? t('Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits.', { c: v.preis })
-            : t('Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+        // Wortlaut Michael Karbe (Mail 01.09.2026): Gesamtzahl, Preis, Guthaben, Abbruch moeglich.
+        let satz;
+        if (docId) {
+            satz = v.anzahl === 1
+                ? t('Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits.', { c: v.preis })
+                : t('Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
+        } else {
+            satz = v.anzahl === 1
+                ? t('Die Dokumente des Projekts beinhalten 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits.', { c: v.preis })
+                : t('Die Dokumente des Projekts beinhalten insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
+        }
         if (v.eigene === 1) {
             satz += ' ' + t('Ein Text davon stammt von dir.');
         } else if (v.eigene > 1) {
@@ -2714,8 +2725,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             satz += ' ' + t('{n} Bilder sind vom Autor als dekorativ gekennzeichnet und bleiben außen vor.', { n: v.autor_dekorativ });
         }
         satz += ' ' + guthabenSatz(v, 'bild');
-        // Ehrlich (Michael Karbe 01.09.2026: „schreib, wie man abbrechen kann“): Anhalten gibt es nicht.
-        satz += ' ' + t('Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst.');
+        // Seit 01.09.2026 gibt es den Abbruch (Knopf waehrend des Laufs) — der Satz stimmt jetzt.
+        satz += ' ' + t('Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden.');
         generierRueckfrage({
             titel: t('Alt-Texte generieren'),
             umfang: umfangText(docId, v.dokumente),
@@ -2724,6 +2735,23 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             onOk: () => generierungAusfuehren(projectId, modus, docId),
         });
     }
+
+    // Abbruch eines laufenden Sammellaufs (Michael Karbe 01.09.2026): der Lauf endet nach dem
+    // Bild, das gerade in Arbeit ist; die Ansage kommt ueber den Lauf-Hinweis (grund 'abbruch').
+    async function generierungAbbrechen(projectId) {
+        const btn = document.getElementById('abortGenBtn');
+        if (btn) { btn.disabled = true; btn.textContent = t('Abbruch angefordert …'); }
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/generate/abbrechen', { method: 'POST' });
+            let d = {}; try { d = await res.json(); } catch (e) {}
+            if (!res.ok) { announce(t('Fehler: {msg}', { msg: d.detail || '' })); if (btn) { btn.disabled = false; btn.textContent = t('Generierung abbrechen'); } return; }
+            announce(d.angefordert ? t('Abbruch angefordert – der Lauf endet nach dem aktuellen Bild.') : t('Es läuft gerade keine Generierung.'));
+        } catch (e) {
+            announce(t('Verbindungsfehler.'));
+            if (btn) { btn.disabled = false; btn.textContent = t('Generierung abbrechen'); }
+        }
+    }
+    window.generierungAbbrechen = generierungAbbrechen;
 
     // Sicherheitsnetz (01.09.2026): den vom Sammellauf ueberschriebenen eigenen Text zurueckholen.
     async function vorherigenTextZurueck(imageId) {

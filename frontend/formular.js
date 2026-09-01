@@ -419,10 +419,13 @@
             : t('Noch kein Formular hochgeladen.');
         if (unsicher) info += ' ' + t('{u} KI-Vorschläge unsicher.', { u: unsicher });
         if (project.status === 'processing' && gen) { badge = t('KI generiert'); badgeCls = 'badge-processing'; info += ' ' + t('Seite {i} von {n} wird bearbeitet.', { i: Math.min(gen.seiten_fertig + 1, gen.seiten_gesamt || 1), n: gen.seiten_gesamt || 1 }); }
+        // Abbruch (01.09.2026): Knopf, solange der Feld-Pass laeuft; er endet nach der aktuellen Seite.
+        const abbruchKnopf = (!gast() && project.status === 'processing')
+            ? '<p><button type="button" class="btn btn-secondary" id="fAbortBtn" onclick="Formular.abbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button></p>' : '';
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
-            + '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>'
+            + '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>' + abbruchKnopf
             // Gast: nur Abschluss/Beenden + Filter „Nur offene Felder" — keine KI, keine
             // Stammdaten, kein Export, keine Sprach-/Prompt-Einstellungen.
             + (gast() && felder.length ? ''
@@ -623,7 +626,7 @@
                 : t('{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
         }
         satz += ' ' + guthabenSatz(v, 'feld');
-        satz += ' ' + t('Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst.');
+        satz += ' ' + t('Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden.');
         generierRueckfrage({
             titel: t('Quickinfos generieren'),
             umfang: umfangText(docId, v.dokumente),
@@ -633,6 +636,17 @@
         });
     }
     function alleGenerieren(projectId, docId) { return sammellaufStarten(projectId, docId, 'luecken'); }
+
+    async function abbrechen(projectId) {
+        const btn = document.getElementById('fAbortBtn');
+        if (btn) { btn.disabled = true; btn.textContent = t('Abbruch angefordert …'); }
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/quickinfos/abbrechen', { method: 'POST' });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) { btn.disabled = false; btn.textContent = t('Generierung abbrechen'); } return; }
+            announce(d.angefordert ? t('Abbruch angefordert – der Lauf endet nach der aktuellen Seite.') : t('Es läuft gerade keine Generierung.'));
+        } catch (e) { announce(t('Verbindungsfehler.')); if (btn) { btn.disabled = false; btn.textContent = t('Generierung abbrechen'); } }
+    }
     function alleNeuGenerieren(projectId, docId) { return sammellaufStarten(projectId, docId, 'ki_neu'); }
 
     async function alleGenerierenAusfuehren(projectId, docId) {
@@ -953,6 +967,6 @@
     }
 
     window.Formular = { showProject, original, kiVorschlag, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher, chatAktionen,
-                        generieren, alleGenerieren, alleNeuGenerieren, exportOeffnen, exportSchliessen, exportieren,
+                        generieren, alleGenerieren, alleNeuGenerieren, abbrechen, exportOeffnen, exportSchliessen, exportieren,
                         urteil, anmerkungSpeichern, anmerkungLoeschen, abschlussOeffnen, abschlussSchliessen, abschliessen };
 })();

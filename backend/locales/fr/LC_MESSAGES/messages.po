@@ -5149,10 +5149,6 @@ msgid "Nur dieses Dokument"
 msgstr "Ce document uniquement"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "Du hast {v} Credits."
-msgstr "Vous avez {v} crédits."
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
 msgstr "Votre solde ne suffit pas : il manque {f} crédits."
 
@@ -5248,18 +5244,6 @@ msgstr "Vous trouverez le fichier dans vos téléchargements."
 msgid "Projekt: {name}"
 msgstr "Projet : {name}"
 
-#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
-msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
-msgstr "Une fois lancée, la génération ne peut plus être arrêtée ; elle se termine d’elle-même."
-
-#. Rueckfrage: Generieren ueberschreibt alles (Michael Karbe 01.09.2026)
-msgid "Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits."
-msgstr "Les {n} images seront décrites par l’IA ; les textes existants seront remplacés. Cela coûte {c} crédits."
-
-#. Rueckfrage, Einzahl (01.09.2026)
-msgid "Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits."
-msgstr "L’image sera décrite par l’IA ; un texte existant sera remplacé. Cela coûte {c} crédits."
-
 #. Herunterladen-Zusammenfassung (Michael Karbe 01.09.2026)
 msgid "Alle {n} Bilder haben einen Text{dek}."
 msgstr "Les {n} images ont un texte{dek}."
@@ -5291,3 +5275,51 @@ msgstr "L’un de ces textes est de vous."
 #. Rueckfrage: eigene Texte (01.09.2026)
 msgid "{n} Texte davon stammen von dir."
 msgstr "{n} de ces textes sont de vous."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr "Le document contient {n} images au total ; la création des textes alternatifs nécessite {c} crédits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr "Le document contient 1 image ; la création du texte alternatif nécessite {c} crédits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr "Les documents du projet contiennent {n} images au total ; la création des textes alternatifs nécessite {c} crédits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr "Les documents du projet contiennent 1 image ; la création du texte alternatif nécessite {c} crédits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Dein Konto verfügt derzeit über ein Guthaben von {v} Credits."
+msgstr "Votre compte dispose actuellement d’un solde de {v} crédits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "Si nécessaire, le processus peut aussi être interrompu après son lancement."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Generierung abbrechen"
+msgstr "Interrompre la génération"
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert …"
+msgstr "Interruption demandée …"
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach dem aktuellen Bild."
+msgstr "Interruption demandée – le traitement s’arrêtera après l’image en cours."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach der aktuellen Seite."
+msgstr "Interruption demandée – le traitement s’arrêtera après la page en cours."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Es läuft gerade keine Generierung."
+msgstr "Aucune génération n’est en cours."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Interrompu : {i} images ont été traitées, {n} restent en attente."

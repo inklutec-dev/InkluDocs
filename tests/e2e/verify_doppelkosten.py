@@ -276,6 +276,32 @@ try:
     check("Lauf ohne Rettungsmenge: der Hinweis wird trotzdem gesetzt (der Nutzer soll den Grund hoeren)",
           json.loads(status_von("lauf_hinweis") or "null") is not None, status_von("lauf_hinweis"))
 
+    # --- 7. Abbruch durch den Nutzer (Michael Karbe 01.09.2026): Signal vor jedem Bild, geordnetes Ende
+    # Wie der Start-Endpunkt: Kandidaten auf 'pending', Projekt auf 'processing'.
+    con.execute("UPDATE images SET status='pending' WHERE project_id=?", (PID,))
+    con.execute("UPDATE projects SET status='processing', ki_neu_rest=NULL, lauf_hinweis=NULL WHERE id=?", (PID,))
+    con.commit()
+    guthaben_auf(500)
+    vor_buchungen = buchungen()
+
+    def abbruch_platzhalter(*a, **k):
+        main._abbruch_gewuenscht.add(PID)        # nach dem ERSTEN Bild abbrechen
+        return ki_platzhalter(*a, **k)
+
+    main.generate_alt_text = abbruch_platzhalter
+    asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=set(BILD_IDS)))
+    main.generate_alt_text = echt_gen
+    hinweis = json.loads(status_von("lauf_hinweis") or "null") or {}
+    check("Abbruch: Hinweis nennt den Grund 'abbruch'", hinweis.get("grund") == "abbruch", hinweis)
+    check("Abbruch: ein Bild erledigt, drei offen", hinweis.get("erledigt") == 1 and hinweis.get("offen") == 3, hinweis)
+    check("Abbruch: genau eine Buchung (nur das bearbeitete Bild kostet)", buchungen() - vor_buchungen == 1, buchungen() - vor_buchungen)
+    check("Abbruch: alle vier Bilder wieder auf done (nichts haengt)",
+          [r["status"] for r in con.execute("SELECT status FROM images WHERE project_id=? ORDER BY id", (PID,))] == ["done"] * 4)
+    check("Abbruch: Rest-Vermerk enthaelt die drei offenen Bilder", len(vermerk()) == 3, vermerk())
+    check("Abbruch: Projekt wieder auf done, Signal geloescht",
+          status_von("status") == "done" and PID not in main._abbruch_gewuenscht, (status_von("status"), PID in main._abbruch_gewuenscht))
+    con.execute("UPDATE projects SET ki_neu_rest=NULL, lauf_hinweis=NULL WHERE id=?", (PID,)); con.commit()
+
 finally:
     main._process_project = echt_process
     main.generate_alt_text = echt_gen

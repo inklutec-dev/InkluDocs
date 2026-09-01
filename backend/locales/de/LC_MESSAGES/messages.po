@@ -5152,10 +5152,6 @@ msgid "Nur dieses Dokument"
 msgstr ""
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "Du hast {v} Credits."
-msgstr ""
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
 msgstr ""
 
@@ -5251,18 +5247,6 @@ msgstr ""
 msgid "Projekt: {name}"
 msgstr ""
 
-#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
-msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
-msgstr ""
-
-#. Rueckfrage: Generieren ueberschreibt alles (Michael Karbe 01.09.2026)
-msgid "Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits."
-msgstr ""
-
-#. Rueckfrage, Einzahl (01.09.2026)
-msgid "Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits."
-msgstr ""
-
 #. Herunterladen-Zusammenfassung (Michael Karbe 01.09.2026)
 msgid "Alle {n} Bilder haben einen Text{dek}."
 msgstr ""
@@ -5293,4 +5277,52 @@ msgstr ""
 
 #. Rueckfrage: eigene Texte (01.09.2026)
 msgid "{n} Texte davon stammen von dir."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Dein Konto verfügt derzeit über ein Guthaben von {v} Credits."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Generierung abbrechen"
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert …"
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach dem aktuellen Bild."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach der aktuellen Seite."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Es läuft gerade keine Generierung."
+msgstr ""
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr ""

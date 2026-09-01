@@ -93,7 +93,6 @@ with sync_playwright() as p:
     check("Umfang wird benannt", bool(umfang), umfang)
     check("Kostensatz nennt Anzahl und Credits",
           "Credits" in text and any(c.isdigit() for c in text), text)
-    check("Dialog sagt, dass der Lauf nicht anzuhalten ist (Michael 01.09.)", "nicht mehr anhalten" in text, text)
 
     print("== C. Was ein Screenreader ansagt ==")
     # aria-describedby darf mehrere IDs tragen (seit 01.09.2026: Umfang + Kostensatz) —
@@ -117,7 +116,8 @@ with sync_playwright() as p:
     check("Die Ansage beginnt mit dem Umfang",
           (ansage["beschreibung"] or "").startswith(umfang), str(ansage))
     # Generieren ueberschreibt alles (Michael Karbe/Steve 01.09.2026): Gesamtzahl + Hinweis auf Ueberschreiben.
-    check("Kostensatz: Gesamtzahl und „überschrieben“", "von der KI beschrieben" in text and "überschrieben" in text, text)
+    check("Kostensatz nach Michael: „beinhalten insgesamt … Bilder … benötigt … Credits“", "beinhalten insgesamt" in text and "benötigt" in text, text)
+    check("Kostensatz: Abbruch moeglich (Knopf existiert seit 01.09.)", "abgebrochen werden" in text, text)
     # Einzahl (Steve 01.09.2026, gehoert: „1 davon bringen“, „1 Bilder“): kein „1 <Mehrzahl>“ im Satz.
     import re as _re
     check("Keine Einzahl-Mehrzahl-Panne im Kostensatz",
@@ -167,8 +167,8 @@ with sync_playwright() as p:
         page.wait_for_timeout(1500)
         text_w = page.locator("#genConfirmBody").inner_text().strip()
         print("     Kostensatz (Word): %r" % text_w)
-        check("Word: Kostensatz nennt Gesamtzahl und Ueberschreiben",
-              "von der KI beschrieben" in text_w and "überschrieben" in text_w, text_w)
+        check("Word: Kostensatz nach Michael (Projekt: „Die Dokumente des Projekts beinhalten insgesamt“)",
+              "Die Dokumente des Projekts beinhalten insgesamt" in text_w and "benötigt" in text_w, text_w)
         check("Word: keine Einzahl-Mehrzahl-Panne",
               not _re.search(r"\b1 (Texte davon|Bilder)\b", text_w), text_w)
         vorschau = page.evaluate("""async (id) => {

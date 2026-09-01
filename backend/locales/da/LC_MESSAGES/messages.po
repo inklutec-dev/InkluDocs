@@ -4840,10 +4840,6 @@ msgid "Nur dieses Dokument"
 msgstr "Kun dette dokument"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "Du hast {v} Credits."
-msgstr "Du har {v} credits."
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
 msgstr "Din saldo er ikke nok: der mangler {f} credits."
 
@@ -4939,18 +4935,6 @@ msgstr "Du finder filen under dine downloads."
 msgid "Projekt: {name}"
 msgstr "Projekt: {name}"
 
-#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
-msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
-msgstr "Når kørslen er startet, kan den ikke stoppes; den slutter af sig selv."
-
-#. Rueckfrage: Generieren ueberschreibt alles (Michael Karbe 01.09.2026)
-msgid "Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits."
-msgstr "Alle {n} billeder bliver beskrevet af AI'en; eksisterende tekster bliver overskrevet. Det koster {c} credits."
-
-#. Rueckfrage, Einzahl (01.09.2026)
-msgid "Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits."
-msgstr "Billedet bliver beskrevet af AI'en; en eksisterende tekst bliver overskrevet. Det koster {c} credits."
-
 #. Herunterladen-Zusammenfassung (Michael Karbe 01.09.2026)
 msgid "Alle {n} Bilder haben einen Text{dek}."
 msgstr "Alle {n} billeder har en tekst{dek}."
@@ -4982,3 +4966,51 @@ msgstr "En af teksterne er din."
 #. Rueckfrage: eigene Texte (01.09.2026)
 msgid "{n} Texte davon stammen von dir."
 msgstr "{n} af teksterne er dine."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr "Dokumentet indeholder i alt {n} billeder; oprettelsen af de alternative tekster kræver {c} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr "Dokumentet indeholder 1 billede; oprettelsen af den alternative tekst kræver {c} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr "Projektets dokumenter indeholder i alt {n} billeder; oprettelsen af de alternative tekster kræver {c} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr "Projektets dokumenter indeholder 1 billede; oprettelsen af den alternative tekst kræver {c} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Dein Konto verfügt derzeit über ein Guthaben von {v} Credits."
+msgstr "Din konto har i øjeblikket en saldo på {v} credits."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "Om nødvendigt kan processen også afbrydes, efter den er startet."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Generierung abbrechen"
+msgstr "Afbryd generering"
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert …"
+msgstr "Afbrydelse anmodet …"
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach dem aktuellen Bild."
+msgstr "Afbrydelse anmodet – kørslen stopper efter det aktuelle billede."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach der aktuellen Seite."
+msgstr "Afbrydelse anmodet – kørslen stopper efter den aktuelle side."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Es läuft gerade keine Generierung."
+msgstr "Der kører ingen generering lige nu."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Afbrudt: {i} billeder blev behandlet, {n} forblev åbne."

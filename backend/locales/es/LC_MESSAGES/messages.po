@@ -5149,10 +5149,6 @@ msgid "Nur dieses Dokument"
 msgstr "Solo este documento"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "Du hast {v} Credits."
-msgstr "Tienes {v} créditos."
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
 msgstr "Tu saldo no es suficiente: faltan {f} créditos."
 
@@ -5248,18 +5244,6 @@ msgstr "Encontrarás el archivo en tus descargas."
 msgid "Projekt: {name}"
 msgstr "Proyecto: {name}"
 
-#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
-msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
-msgstr "Una vez iniciada, la generación no se puede detener; termina por sí sola."
-
-#. Rueckfrage: Generieren ueberschreibt alles (Michael Karbe 01.09.2026)
-msgid "Alle {n} Bilder werden von der KI beschrieben; vorhandene Texte werden überschrieben. Das kostet {c} Credits."
-msgstr "La IA describirá las {n} imágenes; los textos existentes se sobrescribirán. Cuesta {c} créditos."
-
-#. Rueckfrage, Einzahl (01.09.2026)
-msgid "Das Bild wird von der KI beschrieben; ein vorhandener Text wird überschrieben. Das kostet {c} Credits."
-msgstr "La IA describirá la imagen; un texto existente se sobrescribirá. Cuesta {c} créditos."
-
 #. Herunterladen-Zusammenfassung (Michael Karbe 01.09.2026)
 msgid "Alle {n} Bilder haben einen Text{dek}."
 msgstr "Las {n} imágenes tienen texto{dek}."
@@ -5291,3 +5275,51 @@ msgstr "Uno de esos textos es tuyo."
 #. Rueckfrage: eigene Texte (01.09.2026)
 msgid "{n} Texte davon stammen von dir."
 msgstr "{n} de esos textos son tuyos."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr "El documento contiene {n} imágenes en total; la creación de los textos alternativos requiere {c} créditos."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr "El documento contiene 1 imagen; la creación del texto alternativo requiere {c} créditos."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
+msgstr "Los documentos del proyecto contienen {n} imágenes en total; la creación de los textos alternativos requiere {c} créditos."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
+msgstr "Los documentos del proyecto contienen 1 imagen; la creación del texto alternativo requiere {c} créditos."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Dein Konto verfügt derzeit über ein Guthaben von {v} Credits."
+msgstr "Tu cuenta dispone actualmente de un saldo de {v} créditos."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "Si es necesario, el proceso también se puede cancelar después de iniciarlo."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Generierung abbrechen"
+msgstr "Cancelar la generación"
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert …"
+msgstr "Cancelación solicitada …"
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach dem aktuellen Bild."
+msgstr "Cancelación solicitada: el proceso se detendrá tras la imagen actual."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abbruch angefordert – der Lauf endet nach der aktuellen Seite."
+msgstr "Cancelación solicitada: el proceso se detendrá tras la página actual."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Es läuft gerade keine Generierung."
+msgstr "No hay ninguna generación en curso."
+
+#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Cancelado: se procesaron {i} imágenes, {n} quedaron pendientes."

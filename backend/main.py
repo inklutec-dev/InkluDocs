@@ -6147,6 +6147,27 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
             "message": "Alt-Text-Generierung gestartet"}
 
 
+# Abbruch eines laufenden Sammellaufs (Michael Karbe 01.09.2026: „Der Erstellungsprozess kann bei
+# Bedarf auch nach dem Start abgebrochen werden"). Ein Prozess, ein Set: der Endpunkt traegt die
+# Projekt-ID ein, der Lauf prueft sie vor jedem Bild und endet dann ueber denselben geordneten
+# Weg wie bei Guthaben/Tageslimit (Rest-Vermerk, Hinweis, Rueckstellung).
+_abbruch_gewuenscht: set = set()
+
+
+@app.post("/api/projects/{project_id}/generate/abbrechen")
+async def generate_abbrechen(project_id: int, user: dict = Depends(get_current_user)):
+    """Abbruch anfordern: der Lauf endet nach dem Bild, das gerade in Arbeit ist."""
+    conn = get_db()
+    p = conn.execute("SELECT status FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
+    conn.close()
+    if not p:
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    if p["status"] != "processing":
+        return {"ok": True, "angefordert": False, "grund": "kein Lauf"}
+    _abbruch_gewuenscht.add(project_id)
+    return {"ok": True, "angefordert": True}
+
+
 def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_args: list):
     """Welche Bilder faesst ein Sammellauf an? -> (anzahl, ids)
 
@@ -6443,7 +6464,16 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
     # Lauf-Hinweis (Steve 31.08.2026): Grund und Zahlen eines vorzeitigen Endes, damit die
     # Oberflaeche es ansagen kann. Der Index sagt, wie viele Bilder gar nicht mehr dran waren.
     _abbruch, _abbruch_offen, _abbruch_erledigt = "", 0, 0
+    _abbruch_gewuenscht.discard(project_id)   # kein Altsignal aus einem frueheren Lauf
     for _idx, img in enumerate(images):
+        # Abbruch durch den Nutzer (01.09.2026): vor jedem Bild nachsehen; endet ueber denselben
+        # geordneten Weg wie Guthaben/Tageslimit — Rest-Vermerk, Hinweis, Rueckstellung.
+        if project_id in _abbruch_gewuenscht:
+            _abbruch_gewuenscht.discard(project_id)
+            print(f"Sammellauf Projekt {project_id}: vom Nutzer abgebrochen nach {processed} Bildern")
+            _abbruch, _abbruch_offen, _abbruch_erledigt = "abbruch", len(images) - _idx, processed
+            _ki_neu_zurueck(conn, ki_neu_ids, project_id)
+            break
         # Abo-Etappe-1: Kontingent VOR JEDEM Bild pruefen, nicht nur am Lauf-Start —
         # sonst rutscht eine 500-Bilder-PDF bei Reststand 1 komplett durch.
         # Bei ABO_ENFORCEMENT=off (Zaehl-Phase) ist erlaubt immer True.
