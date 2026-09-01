@@ -300,5 +300,12 @@ def _schreiben_und_pruefen(input_path: str, output_path: str, tmp_path: str, out
         ziel.close()
 
     os.replace(tmp_path, output_path)
+    # Dokument-Eigenschaften (Heine/Karbe 01.09.2026): Creator InkluDocs, Producer = Weg. Darf den
+    # Export nicht scheitern lassen — die Quickinfos stehen zu diesem Zeitpunkt bereits in der PDF.
+    try:
+        import pdf_export as _pe
+        _pe.setze_dokumentinfo(output_path, "pdfix" if writer == "pdfix" else "fitz")
+    except Exception as e:  # noqa: BLE001
+        log.warning("Formular-Export: Dokument-Eigenschaften nicht gesetzt: %s", e)
     return FormularExportErgebnis(path=output_path, geschrieben=geschrieben, writer=writer,
                                   nicht_gefunden=nicht_gefunden, warnungen=warnungen)

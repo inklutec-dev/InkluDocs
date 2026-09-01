@@ -387,3 +387,24 @@ Word-descr entfernt), `ui_gendialog` (Dialogsätze), `ui_word` (Zusammenfassung)
 - **„Vorherigen Text zurückholen"** ist in der Oberfläche AUSGEBLENDET
   (Steve: erst mal nicht, weniger Knöpfe). Backend, Spalte `alt_text_vorher`
   und Endpunkt bleiben; Einschalten über `window.VORHER_KNOPF = true` in app.html.
+
+## Dokument-Eigenschaften der exportierten PDF (Jörg Heine / Michael Karbe, 01.09.2026)
+
+Heines Skript `SetDocInfo_01_r.py` (Mail 01.09., Original unter
+`/home/claude/heine/`) setzt über PDFix die Info-Einträge Title, Author,
+Subject, Keywords, Creator, Producer, CreationDate. Vereinbart war vor allem
+Creator (Anwendung) und Producer (PDF erstellt mit). Umgesetzt an EINER Stelle
+für alle PDF-Ausgänge: `pdf_export.dokumentinfo_werte(verfahren)` liefert
+Creator `InkluDocs (inkludocs.de)` und Producer `InkluDocs – PDFix SDK` /
+`InkluDocs – PyMuPDF` / `InkluDocs – LibreOffice + veraPDF` (Umgebung
+`INKLUDOCS_PDF_CREATOR`, `INKLUDOCS_PDF_PRODUCER`). Author, Subject, Keywords
+und CreationDate des Autors bleiben unverändert (Titel wie bisher über
+`finalize_export_pdf`).
+- Alt-Text-Export (beide Wege): in `finalize_export_pdf` (Schritt 4).
+- Formular-Export: `pdf_export.setze_dokumentinfo(pfad, writer)` nach dem
+  Schreiben — INKREMENTELL gespeichert, damit das Original byteweise erhalten
+  bleibt (`test_original_ist_praefix`).
+- Barrierefreie PDF aus Word: `pdfua_export.dokumentinfo_setzen(bytes)` mit
+  pikepdf (Info-Dictionary + XMP), VOR der veraPDF-Prüfung.
+Tests: `tests/test_dokumentinfo.py` (4), Beweis Staging: Export Projekt 69/85
+tragen Creator/Producer.

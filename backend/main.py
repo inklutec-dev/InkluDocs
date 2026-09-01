@@ -7308,7 +7308,8 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     try:
         from pdf_export import finalize_export_pdf
         info["a11y"] = finalize_export_pdf(output_path, title=explicit_title,
-                                           fallback_title=fallback_title)
+                                           fallback_title=fallback_title,
+                                           verfahren=info.get("method"))
     except Exception as e:
         # Der Abschluss-Schritt darf den Export nicht scheitern lassen:
         # Die Alt-Texte sind zu diesem Zeitpunkt bereits korrekt gesetzt,
@@ -7567,6 +7568,9 @@ async def export_pdfua(project_id: int, request: Request, user: dict = Depends(g
             alts = [_exportable_alt_text(img) for img in unit["images"]
                     if (img.get("docx_anker") or "").startswith("word/document.xml|")]
             pdf_bytes, nach = await loop.run_in_executor(None, pdfua_export.alt_nachtragen, pdf_bytes, alts)
+            # Dokument-Eigenschaften (Heine/Karbe 01.09.2026) VOR der veraPDF-Pruefung setzen,
+            # damit geprueft wird, was der Kunde bekommt.
+            pdf_bytes = await loop.run_in_executor(None, pdfua_export.dokumentinfo_setzen, pdf_bytes)
             if nach.get("nachgetragen") or nach.get("rahmen_umgewandelt"):
                 bericht = await loop.run_in_executor(None, pdfua_export.pruefe, pdf_bytes)
         except pdfua_export.UmwandlungFehlgeschlagen as e:

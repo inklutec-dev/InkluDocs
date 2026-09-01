@@ -150,6 +150,28 @@ def _rahmen_umwandeln(root) -> int:
     return n
 
 
+def dokumentinfo_setzen(pdf_bytes: bytes) -> bytes:
+    """Creator/Producer der barrierefreien PDF (Heine/Karbe 01.09.2026) — dieselben Werte wie
+    bei allen anderen PDF-Ausgaengen (pdf_export.dokumentinfo_werte), hier mit pikepdf, weil
+    die Datei an dieser Stelle als Bytes vorliegt. Scheitert es, bleibt die Datei wie sie ist."""
+    try:
+        import io
+        import pikepdf
+        from pdf_export import dokumentinfo_werte
+        werte = dokumentinfo_werte("libreoffice")
+        pdf = pikepdf.open(io.BytesIO(pdf_bytes))
+        with pdf.open_metadata(set_pikepdf_as_editor=False) as meta:
+            meta["xmp:CreatorTool"] = werte["creator"]
+            meta["pdf:Producer"] = werte["producer"]
+        pdf.docinfo["/Creator"] = pikepdf.String(werte["creator"])
+        pdf.docinfo["/Producer"] = pikepdf.String(werte["producer"])
+        out = io.BytesIO()
+        pdf.save(out)
+        return out.getvalue()
+    except Exception:  # noqa: BLE001
+        return pdf_bytes
+
+
 def alt_nachtragen(pdf_bytes: bytes, alts: list[Optional[str]]) -> tuple[bytes, dict]:
     """Traegt fehlende /Alt an Figure-Elementen nach.
 

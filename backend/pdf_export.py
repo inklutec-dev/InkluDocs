@@ -14,6 +14,42 @@ import os
 import re
 import fitz  # PyMuPDF
 
+# Dokument-Eigenschaften der exportierten PDF (Joerg Heine / Michael Karbe, 01.09.2026:
+# „ging hauptsaechlich um Creator (Anwendung) und Producer (PDF erstellt mit)").
+# EINE Quelle fuer alle PDF-Ausgaenge (Alt-Text-Export beide Wege, Formular-Export,
+# barrierefreie PDF aus Word). Author, Subject, Keywords, CreationDate bleiben die des
+# Autors. Aenderbar ueber Umgebung, ohne Code anzufassen.
+PDF_CREATOR = os.environ.get("INKLUDOCS_PDF_CREATOR", "InkluDocs (inkludocs.de)")
+PDF_PRODUCER_BASIS = os.environ.get("INKLUDOCS_PDF_PRODUCER", "InkluDocs")
+_PRODUCER_VERFAHREN = {"pdfix": "PDFix SDK", "fitz": "PyMuPDF", "libreoffice": "LibreOffice + veraPDF"}
+
+
+def dokumentinfo_werte(verfahren: str | None = None) -> dict:
+    """Creator/Producer fuer eine exportierte PDF. Producer nennt das Werkzeug, mit dem die
+    Datei geschrieben wurde (Heines Frage „PDF erstellt mit")."""
+    werkzeug = _PRODUCER_VERFAHREN.get((verfahren or "").lower())
+    producer = f"{PDF_PRODUCER_BASIS} – {werkzeug}" if werkzeug else PDF_PRODUCER_BASIS
+    return {"creator": PDF_CREATOR, "producer": producer}
+
+
+def setze_dokumentinfo(pdf_path: str, verfahren: str | None = None) -> dict:
+    """Creator/Producer in eine fertige PDF schreiben (Info-Dictionary), Rest unangetastet.
+    Entspricht Heines SetDocInfo-Skript (PutString auf dem Info-Objekt), hier mit PyMuPDF,
+    damit alle Ausgaenge dieselbe Stelle nutzen. Atomar (Tempdatei + Austausch)."""
+    werte = dokumentinfo_werte(verfahren)
+    doc = fitz.open(pdf_path)
+    meta = doc.metadata or {}
+    meta["creator"] = werte["creator"]
+    meta["producer"] = werte["producer"]
+    doc.set_metadata(meta)
+    # INKREMENTELL speichern: Die Datei wird nur ergaenzt, das Original bleibt byteweise
+    # erhalten (der Formular-Export garantiert das ausdruecklich — test_original_ist_praefix;
+    # so bleiben Heines PDFix-Ausgabe und die Quickinfos unangetastet). Das PDF/UA-Verfahren
+    # arbeitet auf Bytes und hat seinen eigenen Weg (pdfua_export.dokumentinfo_setzen).
+    doc.save(pdf_path, incremental=True, encryption=fitz.PDF_ENCRYPT_KEEP)
+    doc.close()
+    return werte
+
 
 def _escape_pdf_string(text: str) -> str:
     """Escape special characters for PDF string literals."""
@@ -589,7 +625,7 @@ def remove_orphaned_alt_elems(doc: fitz.Document) -> int:
 
 def finalize_export_pdf(pdf_path: str, title: str = None,
                         fallback_title: str = None,
-                        lang: str = "de-DE") -> dict:
+                        lang: str = "de-DE", verfahren: str | None = None) -> dict:
     """Gemeinsamer Abschluss-Schritt fuer beide Export-Pfade (PDFix + fitz).
 
     Erledigt drei Dinge an der fertigen Export-PDF:
@@ -655,6 +691,15 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
 
     # 3) Verwaiste Alt-Altlasten
     info["orphan_alts_removed"] = remove_orphaned_alt_elems(doc)
+
+    # 4) Dokument-Eigenschaften (Heine/Karbe 01.09.2026): Creator = InkluDocs, Producer = Weg.
+    werte = dokumentinfo_werte(verfahren)
+    meta = doc.metadata or {}
+    meta["creator"] = werte["creator"]
+    meta["producer"] = werte["producer"]
+    doc.set_metadata(meta)
+    info["creator"] = werte["creator"]
+    info["producer"] = werte["producer"]
 
     # In-place speichern: fitz kann nicht in die geoeffnete Datei schreiben,
     # daher Tempdatei + atomarer Austausch.
