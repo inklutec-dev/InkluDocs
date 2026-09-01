@@ -4450,10 +4450,6 @@ msgstr "ce formulaire"
 msgid "– Formular „{name}“"
 msgstr "– formulaire « {name} »"
 
-# QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): KI-Vorschlaege
-msgid "Alle generieren"
-msgstr "Tout générer"
-
 msgid "Beleg: „{b}“"
 msgstr "Justification : « {b} »"
 
@@ -4611,9 +4607,6 @@ msgstr "Régénération lancée pour {n} champs. Les textes saisis à la main, i
 
 msgid "KI-Vorschlag übernehmen"
 msgstr "Reprendre la proposition de l’IA"
-
-msgid "{n} Quickinfos neu generieren, {p} Credits"
-msgstr "Régénérer {n} infobulles, {p} crédits"
 
 msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
 msgstr "Proposition de l’IA créée, {s} : « {q} » – votre texte reste. Reprenez-la avec le bouton « Reprendre la proposition de l’IA »."
@@ -5179,10 +5172,6 @@ msgid "Nur dieses Dokument"
 msgstr "Ce document uniquement"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits."
-msgstr "{n} images n’ont pas encore de description et vont être décrites. Cela coûte {c} crédits."
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
 msgstr "{n} textes créés par l’IA seront régénérés. Vos propres textes restent inchangés. Cela coûte {c} crédits."
 
@@ -5217,3 +5206,35 @@ msgstr "Vous avez {v} crédits — de quoi traiter {m} images sur {n} ; ensuite 
 #. Teil-Lauf statt Sperre (31.08.2026)
 msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
 msgstr "Votre solde ne suffit pas : un texte alternatif coûte {p} crédits, vous en avez {v}."
+
+#. Word-Projekte: Beta auf dem Knopf selbst (Michael Karbe 01.09.2026)
+msgid "Herunterladen (Beta)"
+msgstr "Télécharger (bêta)"
+
+#. Rueckfrage Erstlauf: nur die Gesamtzahl (Michael Karbe 01.09.2026)
+msgid "{n} Bilder werden beschrieben. Das kostet {c} Credits."
+msgstr "{n} images vont être décrites. Cela coûte {c} crédits."
+
+#. Rueckfrage Erstlauf: mitgebrachte Texte (Word/PDF) werden erkannt (01.09.2026)
+msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage."
+msgstr "{m} d’entre elles ont déjà un texte issu du fichier ; l’IA s’en sert comme base."
+
+#. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
+msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
+msgstr "Vous avez {v} crédits — de quoi traiter {m} champs sur {n} ; ensuite la génération s’arrête."
+
+#. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
+msgid "Dein Guthaben reicht nicht: Eine Quickinfo kostet {p} Credits, du hast {v}."
+msgstr "Votre solde ne suffit pas : une info-bulle coûte {p} crédits, vous en avez {v}."
+
+#. Sammellauf-Knopf Quickinfos, Projekt und Dokument (Michael Karbe 01.09.2026)
+msgid "Quickinfos generieren"
+msgstr "Générer les info-bulles"
+
+#. Rueckfrage Quickinfos, Erstlauf (01.09.2026)
+msgid "{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits."
+msgstr "{n} champs sans info-bulle vont être décrits. Cela coûte {c} crédits."
+
+#. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
+msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
+msgstr "{n} propositions de l’IA vont être régénérées. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés. Cela coûte {c} crédits."

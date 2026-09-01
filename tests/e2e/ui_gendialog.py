@@ -15,7 +15,15 @@ Geprueft wird:
      Dialogs) — dafuer sind aria-labelledby und aria-describedby gesetzt.
   D. Abbrechen und Escape schliessen, ohne etwas zu starten.
   E. axe: 0 Verstoesse bei geoeffnetem Dialog.
+  F. (01.09.2026) Word-Projekt: „Herunterladen (Beta)" auf den Knoepfen, der
+     Kostensatz nennt die Gesamtzahl („werden beschrieben") und die
+     mitgebrachten Texte („davon bringen schon einen Text … mit").
+  G. (01.09.2026) Formular-Projekt: „Quickinfos generieren" auf beiden Ebenen,
+     derselbe Dialog mit Umfang, Anzahl, Preis; Abbrechen startet nichts.
+  H. (01.09.2026) Die Ansage beim Oeffnen enthaelt Umfang UND Kostensatz
+     (aria-describedby nennt beide).
 Es wird NICHTS generiert — der Test bricht immer ab.
+Aufruf: ui_gendialog.py [basis] [pdf-projekt] [word-projekt] [formular-projekt]
 """
 import sys
 
@@ -23,6 +31,8 @@ from playwright.sync_api import sync_playwright
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8002"
 PROJEKT = int(sys.argv[2]) if len(sys.argv) > 2 else 69
+WORD = int(sys.argv[3]) if len(sys.argv) > 3 else 320
+FORMULAR = int(sys.argv[4]) if len(sys.argv) > 4 else 326
 MAIL = "steve.weidel@inklutec.de"
 PW = "Ewigwind-2026"
 AXE = "https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js"
@@ -85,16 +95,28 @@ with sync_playwright() as p:
           "Credits" in text and any(c.isdigit() for c in text), text)
 
     print("== C. Was ein Screenreader ansagt ==")
+    # aria-describedby darf mehrere IDs tragen (seit 01.09.2026: Umfang + Kostensatz) —
+    # ein Screenreader liest sie in dieser Reihenfolge hintereinander.
     ansage = page.evaluate("""() => {
         const d = document.getElementById('genConfirmDialog');
         const name = document.getElementById(d.getAttribute('aria-labelledby'));
-        const besch = document.getElementById(d.getAttribute('aria-describedby'));
+        const teile = (d.getAttribute('aria-describedby') || '').split(/\\s+/).filter(Boolean)
+            .map(id => { const e = document.getElementById(id); return e ? e.textContent.trim() : ''; });
         return {name: name ? name.textContent.trim() : null,
-                beschreibung: besch ? besch.textContent.trim() : null};
+                beschreibung: teile.length ? teile.join(' ') : null};
     }""")
     check("Dialog hat einen Namen (aria-labelledby)", bool(ansage["name"]), str(ansage))
     check("Dialog hat eine Beschreibung (aria-describedby) mit dem Kostensatz",
           bool(ansage["beschreibung"]) and "Credits" in ansage["beschreibung"], str(ansage))
+    # H. (01.09.2026): aria-describedby nennt BEIDE Absaetze — Umfang und Kostensatz —,
+    # damit die Entscheidung „ganzes Projekt oder nur dieses Dokument?" hoerbar ist.
+    beschr_ids = page.evaluate("document.getElementById('genConfirmDialog').getAttribute('aria-describedby')")
+    check("aria-describedby nennt Umfang und Kostensatz",
+          beschr_ids == "genConfirmScope genConfirmBody", repr(beschr_ids))
+    check("Die Ansage beginnt mit dem Umfang",
+          (ansage["beschreibung"] or "").startswith(umfang), str(ansage))
+    check("Kostensatz Erstlauf nennt die Gesamtzahl („werden beschrieben“) statt „noch keine Beschreibung“",
+          "noch keine Beschreibung" not in text, text)
     print("     Angesagt wird: %r — %r" % (ansage["name"], (ansage["beschreibung"] or "")[:90]))
     check("Fokus liegt im Dialog",
           page.evaluate("document.getElementById('genConfirmDialog').contains(document.activeElement)"))
@@ -118,6 +140,87 @@ with sync_playwright() as p:
     page.keyboard.press("Escape")
     page.wait_for_timeout(600)
     check("Escape schliesst den Dialog", dlg.evaluate("d => d.open") is False)
+
+    print("== F. Word-Projekt: Beta auf dem Knopf, Gesamtzahl im Kostensatz ==")
+    page.goto("%s/app?projekt=%d" % (BASE, WORD), wait_until="networkidle")
+    page.wait_for_timeout(2500)
+    namen_w = [x.inner_text().strip().split("\n")[0]
+               for x in page.locator("button").all() if x.is_visible()]
+    dl_w = [n for n in namen_w if "erunterladen" in n]
+    print("     Herunterladen (Word): %s" % dl_w)
+    check("Word: alle Herunterladen-Knoepfe heissen „Herunterladen (Beta)“",
+          dl_w and all(n == "Herunterladen (Beta)" for n in dl_w), str(dl_w))
+    page.locator("button:has-text('Herunterladen (Beta)')").first.click()
+    page.wait_for_timeout(1200)
+    kopf_dl = page.locator("#exportPanelHeading").inner_text().strip()
+    check("Word: Dialog-Ueberschrift traegt das Beta", kopf_dl.endswith("(Beta)"), kopf_dl)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(500)
+    gen_w = page.locator("button:has-text('Alt-Texte generieren')")
+    if gen_w.count():
+        gen_w.first.click()
+        page.wait_for_timeout(1500)
+        text_w = page.locator("#genConfirmBody").inner_text().strip()
+        print("     Kostensatz (Word): %r" % text_w)
+        check("Word: Kostensatz nennt die Gesamtzahl („werden beschrieben“)",
+              "werden beschrieben" in text_w or "werden neu erzeugt" in text_w, text_w)
+        check("Word: kein „noch keine Beschreibung“ mehr", "noch keine Beschreibung" not in text_w, text_w)
+        vorschau = page.evaluate("""async (id) => {
+            const r = await fetch('/api/projects/' + id + '/generate/vorschau', {method:'POST',
+                headers:{'Content-Type':'application/json'}, body: JSON.stringify({modus:'luecken'})});
+            return await r.json(); }""", WORD)
+        print("     Vorschau (Word): anzahl=%s mit_quelltext=%s" % (vorschau.get("anzahl"), vorschau.get("mit_quelltext")))
+        check("Vorschau liefert mit_quelltext", "mit_quelltext" in vorschau, str(vorschau)[:120])
+        if vorschau.get("modus") == "luecken" and vorschau.get("mit_quelltext"):
+            check("Word: mitgebrachte Texte werden im Satz genannt („davon bringen schon einen Text“)",
+                  "davon bringen schon einen Text" in text_w, text_w)
+        page.locator("#genConfirmCancel").click()
+        page.wait_for_timeout(500)
+        check("Word: Abbrechen startet nichts", page.locator("#genConfirmDialog").evaluate("d => d.open") is False)
+    else:
+        print("     (kein Generieren-Knopf im Word-Projekt %d — Kostensatz-Pruefung uebersprungen)" % WORD)
+
+    print("== G. Formular-Projekt: Quickinfos generieren mit derselben Rueckfrage ==")
+    page.goto("%s/app?projekt=%d" % (BASE, FORMULAR), wait_until="networkidle")
+    page.wait_for_timeout(2500)
+    namen_f = [x.inner_text().strip().split("\n")[0]
+               for x in page.locator("button").all() if x.is_visible()]
+    gen_f = [n for n in namen_f if "generieren" in n.lower() and n not in ("Generieren", "Neu generieren")]
+    print("     Generieren-Knoepfe (Formular): %s" % gen_f)
+    check("Formular: Sammel-Knoepfe heissen „Quickinfos generieren“",
+          gen_f and all(n == "Quickinfos generieren" for n in gen_f), str(gen_f))
+    check("Formular: kein Preis und keine Anzahl auf den Knoepfen",
+          not any("Credits" in n or n[:1].isdigit() for n in gen_f), str(gen_f))
+    zus = page.evaluate("""() => [...document.querySelectorAll('#fGenAllBtn .visually-hidden')].map(e => e.textContent.trim())""")
+    check("Formular: Projekt-Knopf traegt den versteckten Zusatz „– ganzes Projekt“",
+          any("ganzes Projekt" in z for z in zus), str(zus))
+    if gen_f:
+        page.locator("button:has-text('Quickinfos generieren')").first.click()
+        page.wait_for_timeout(1500)
+        dlg_f = page.locator("#genConfirmDialog")
+        check("Formular: Dialog ist offen", dlg_f.evaluate("d => d.open") is True)
+        kopf_f = page.locator("#genConfirmTitle").inner_text().strip()
+        umfang_f = page.locator("#genConfirmScope").inner_text().strip()
+        text_f = page.locator("#genConfirmBody").inner_text().strip()
+        print("     Ueberschrift: %r | Umfang: %r" % (kopf_f, umfang_f))
+        print("     Kostensatz:   %r" % text_f)
+        check("Formular: Ueberschrift „Quickinfos generieren“", kopf_f == "Quickinfos generieren", kopf_f)
+        check("Formular: Umfang wird benannt", bool(umfang_f), umfang_f)
+        check("Formular: Kostensatz nennt Felder, Anzahl und Credits",
+              "Credits" in text_f and any(c.isdigit() for c in text_f) and ("Feld" in text_f or "KI-Vorschl" in text_f), text_f)
+        check("Formular: Fokus liegt im Dialog",
+              page.evaluate("document.getElementById('genConfirmDialog').contains(document.activeElement)"))
+        page.add_script_tag(url=AXE)
+        r = page.evaluate("async () => await axe.run(document, {runOnly:{type:'tag',"
+                          "values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}})")
+        check("Formular: axe 0 Verstoesse bei offenem Dialog", len(r["violations"]) == 0,
+              str([(v["id"], len(v["nodes"])) for v in r["violations"]]))
+        page.locator("#genConfirmCancel").click()
+        page.wait_for_timeout(700)
+        check("Formular: Abbrechen schliesst, nichts laeuft",
+              dlg_f.evaluate("d => d.open") is False and page.locator("text=KI generiert").count() == 0)
+    else:
+        print("     (kein Sammel-Knopf im Formular-Projekt %d — alle Felder gefuellt und keine KI-Felder?)" % FORMULAR)
 
     check("keine JavaScript-Fehler", not js_fehler, str(js_fehler[:2]))
     b.close()

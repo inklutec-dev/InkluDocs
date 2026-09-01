@@ -21,13 +21,68 @@ Anzeige und Export; der KI-Text bleibt darunter erhalten und lässt sich mit
 2. **Neu generieren** am Element — erzeugt einen neuen KI-Text mit
    Variation (höhere Temperatur, Cache umgangen). Ein Hand-Text bleibt
    obenauf. Bilder: 5 Credits, Felder: 1 Credit (Aktionspreise 29.08.2026).
-3. **{n} … neu generieren, {c} Credits** — derselbe Knopf wie 1, sobald
-   keine Lücken mehr da sind: fasst nur KI-Texte ohne Hand-Text an
-   (`POST /api/projects/{id}/generate` bzw. `…/quickinfos/generieren` mit
-   `{"modus": "ki_neu"}`). Keine Rückfrage: Anzahl und Credits stehen sichtbar
-   im Knopf. Bilder: 5 Credits je Bild, Cache je Bild geräumt
-   (`force_regenerate`); Felder: 1 Credit je Feld (die Oberfläche rechnet mit
-   `window.CREDIT_PREISE` aus `billing.preise_fuer_frontend()`).
+3. **Derselbe Knopf, sobald keine Lücken mehr da sind** — fasst nur KI-Texte
+   ohne Hand-Text an (`POST /api/projects/{id}/generate` bzw.
+   `…/quickinfos/generieren` mit `{"modus": "ki_neu"}`). Bilder: 5 Credits je
+   Bild, Cache je Bild geräumt (`force_regenerate`); Felder: 1 Credit je Feld.
+
+**Beschriftung seit 31.08./01.09.2026 (Michael Karbe):** Die Sammel-Knöpfe
+heißen in beiden Fällen gleich — „Alt-Texte generieren“ (PDF, Word) bzw.
+„Quickinfos generieren“ (Formular) — auf Projekt- und auf Dokument-Ebene,
+ohne Anzahl und ohne Preis im Knopf. Ein Screenreader unterscheidet sie am
+versteckten Zusatz „– ganzes Projekt“ / „– Dokument „x““. Anzahl, Preis und
+Guthaben nennt die Rückfrage vor dem Start (nächster Abschnitt).
+
+## Rückfrage vor jedem Sammellauf (31.08./01.09.2026)
+
+Vor jedem Sammellauf öffnet sich EIN Dialog (`#genConfirmDialog` in
+`app.html`, Funktion `generierRueckfrage()`), den alle drei Werkzeuge nutzen:
+
+- **Überschrift** = Aktion („Alt-Texte generieren“ / „Quickinfos generieren“).
+- **Umfang** („Nur dieses Dokument“ / „Ganzes Projekt, 3 Dokumente“).
+- **Kostensatz**: Erstlauf Bilder „{n} Bilder werden beschrieben. Das kostet
+  {c} Credits.“ — bewusst die GESAMTZAHL (Michael Karbe 01.09.2026: „lediglich
+  die Anzahl der Bilder angeben“). Bringt die Datei schon Alternativtexte mit
+  (Word fast immer, PDF manchmal — `images.original_alt`), folgt „{m} davon
+  bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage.“
+  Der frühere Satz „haben noch keine Beschreibung“ war an dieser Stelle
+  falsch: Die Texte stehen sichtbar im Feld, sie stammen nur nicht von der KI.
+  Erneuern: „{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen
+  Texte bleiben unverändert. …“. Felder analog („{n} Felder ohne Quickinfo …“
+  / „{n} KI-Vorschläge …“).
+- **Guthaben** (`guthabenSatz()`): unbegrenzt / reicht / „reicht für m von n,
+  danach hört der Lauf auf“ (Teil-Lauf, keine Sperre — Steve 31.08.2026) /
+  reicht nicht einmal für eins (Knopf gesperrt).
+- Umfang UND Kostensatz hängen per `aria-describedby` am Dialog und werden
+  beim Öffnen angesagt; Startfokus auf „Abbrechen“; Escape und Abbrechen
+  starten nichts. Doppelklick: ein offener Dialog blockt den zweiten Aufruf.
+
+Die Zahlen kommen vom Server, nie aus einer Rechnung im Browser:
+`POST /api/projects/{id}/generate/vorschau` bzw. `…/quickinfos/vorschau`
+(Body `{"modus": "luecken"|"ki_neu", "document_id"?}`) liefern `anzahl`,
+`mit_quelltext` (nur Bilder, Erstlauf), `dokumente`, `preis`, `preis_je`,
+`verfuegbar`, `machbar`, `erlaubt`. Beide zählen mit DERSELBEN Funktion wie
+der Start (`_generier_kandidaten` in `main.py` bzw. `formular_api.py`) —
+nach einem Abbruch nimmt `ki_neu` nur den offenen Rest, das könnte die Seite
+nicht wissen. **Antwortet die Vorschau mit einem Fehler (abgelaufene Sitzung,
+500), wird NICHT gestartet**, sondern der Fehler angesagt (Prüfbefund
+01.09.2026 — vorher lief der Lauf in dem Fall ohne Rückfrage los).
+
+**Bewusst geleert bleibt leer (01.09.2026):** `alt_text_edited = ''` heißt
+seit 31.08. „der Nutzer hat den Text absichtlich gelöscht“. So ein Bild ist
+KEIN Kandidat für den Sammellauf „neu erzeugen“ (Backend `alt_text_edited IS
+NULL`, Oberfläche `alt_text_edited == null` — beide gleich, sonst zeigt die
+Seite einen Knopf ohne Lauf dahinter). Vorher zählte es mit, der Lauf schrieb
+den neuen KI-Text aber nur nach `alt_text` und ließ das leere Feld stehen:
+bezahlt, beschrieben, unsichtbar, nicht exportiert. Wer für ein geleertes Bild
+wieder einen Text will, nimmt „Neu generieren“ am Bild (setzt
+`alt_text_edited` zurück).
+
+**Word: „Herunterladen (Beta)“ (Michael Karbe 01.09.2026):** Bei
+Word-Projekten (`project_type = docx`) tragen der Projekt-Knopf, der
+Dokument-Knopf und die Dialog-Überschrift das Beta — die Word-Ausgabe
+(docx-Rückschreiben, PDF/UA-Umwandlung) ist noch Beta, die PDF-Ausgabe
+nicht. Eine Stelle: `herunterladenName(project)` in `app.html`.
 
 ## Was nie angefasst wird
 
@@ -121,10 +176,12 @@ CSV/JSON — trägt `X-Export-Credits`.
 ## Knöpfe je Dokument (Michael/Steve 28.08.2026)
 
 Neben „Umbenennen“ und „Löschen“ trägt jedes Dokument (PDF, Word, Formular)
-zwei weitere Knöpfe: „Alle generieren“, solange das Dokument Lücken hat,
-sonst „n … neu generieren, c Credits“ (nur KI-Texte dieses Dokuments;
-`POST …/generate` bzw. `…/quickinfos/generieren` mit `document_id`), und
-„Herunterladen“, das den Dialog für genau dieses Dokument öffnet
+zwei weitere Knöpfe: „Alt-Texte generieren“ bzw. „Quickinfos generieren“
+(seit 01.09.2026 in beiden Modi gleich benannt — Lücken füllen, solange das
+Dokument Lücken hat, sonst nur KI-Texte dieses Dokuments erneuern;
+`POST …/generate` bzw. `…/quickinfos/generieren` mit `document_id`; davor
+die Rückfrage mit Anzahl und Preis), und „Herunterladen“ (Word:
+„Herunterladen (Beta)“), das den Dialog für genau dieses Dokument öffnet
 (Einzeldatei, Preis/Guthaben passend). Eine Auswahlliste gibt es im Dialog
 nicht mehr (Steve 28.08.2026): der Knopf entscheidet. Der Hauptknopf oben
 heißt bei mehreren Dokumenten „Ganzes Projekt herunterladen“ und liefert alle

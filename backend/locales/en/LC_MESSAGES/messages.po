@@ -4450,10 +4450,6 @@ msgstr "this form"
 msgid "– Formular „{name}“"
 msgstr "– form “{name}”"
 
-# QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): KI-Vorschlaege
-msgid "Alle generieren"
-msgstr "Generate all"
-
 msgid "Beleg: „{b}“"
 msgstr "Evidence: “{b}”"
 
@@ -4611,9 +4607,6 @@ msgstr "Regeneration started for {n} fields. Texts entered by hand, from the PDF
 
 msgid "KI-Vorschlag übernehmen"
 msgstr "Use AI suggestion"
-
-msgid "{n} Quickinfos neu generieren, {p} Credits"
-msgstr "Regenerate {n} tooltips, {p} credits"
 
 msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
 msgstr "AI suggestion created, {s}: “{q}” – your text stays. Apply it with the button “Use AI suggestion”."
@@ -5179,10 +5172,6 @@ msgid "Nur dieses Dokument"
 msgstr "This document only"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits."
-msgstr "{n} images have no description yet and will now be described. That costs {c} credits."
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
 msgstr "{n} texts created by the AI will be created again. Your own texts stay unchanged. That costs {c} credits."
 
@@ -5217,3 +5206,35 @@ msgstr "You have {v} credits — enough for {m} of {n} images; after that the ru
 #. Teil-Lauf statt Sperre (31.08.2026)
 msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
 msgstr "Your credit is not enough: one alt text costs {p} credits, you have {v}."
+
+#. Word-Projekte: Beta auf dem Knopf selbst (Michael Karbe 01.09.2026)
+msgid "Herunterladen (Beta)"
+msgstr "Download (beta)"
+
+#. Rueckfrage Erstlauf: nur die Gesamtzahl (Michael Karbe 01.09.2026)
+msgid "{n} Bilder werden beschrieben. Das kostet {c} Credits."
+msgstr "{n} images will be described. That costs {c} credits."
+
+#. Rueckfrage Erstlauf: mitgebrachte Texte (Word/PDF) werden erkannt (01.09.2026)
+msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage."
+msgstr "{m} of them already carry a text from the file; the AI uses it as a basis."
+
+#. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
+msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
+msgstr "You have {v} credits — enough for {m} of {n} fields; after that the run stops."
+
+#. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
+msgid "Dein Guthaben reicht nicht: Eine Quickinfo kostet {p} Credits, du hast {v}."
+msgstr "Your credit is not enough: one tooltip costs {p} credits, you have {v}."
+
+#. Sammellauf-Knopf Quickinfos, Projekt und Dokument (Michael Karbe 01.09.2026)
+msgid "Quickinfos generieren"
+msgstr "Generate tooltips"
+
+#. Rueckfrage Quickinfos, Erstlauf (01.09.2026)
+msgid "{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits."
+msgstr "{n} fields without a tooltip will be described. That costs {c} credits."
+
+#. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
+msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
+msgstr "{n} AI suggestions will be regenerated. Texts entered by hand, from the PDF, from master data or by the guest remain unchanged. That costs {c} credits."

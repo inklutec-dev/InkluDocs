@@ -293,15 +293,27 @@ und zeigt „KI-Vorschlag übernehmen“ (`POST /api/felder/{id}/ki-vorschlag`,
 kostenlos). Derselbe Knopf erscheint, sobald jemand über einen KI-Text
 schreibt. „Zurück auf Original“ führt weiterhin zur PDF.
 
-## „Alle neu generieren“ (28.08.2026)
+## „Quickinfos generieren“ – Sammellauf mit Rückfrage (28.08. / 01.09.2026)
 
-„Alle generieren“ füllt nur Lücken; sobald jedes Feld einen Text hat, wird
-derselbe Knopf zu „{n} Quickinfos neu generieren, {p} Credits“ (keine
-Rückfrage — die Zahl steht sichtbar im Knopf, Muster wie das einzelne
-„Neu generieren“). Er ruft `POST …/quickinfos/generieren` mit `{"modus": "ki_neu"}`: Der
-Sammellauf fasst zusätzlich alle Felder mit `quelle = ki` an; Texte von Hand,
-aus der PDF, aus Stammdaten oder vom Gast bleiben unberührt
-(`_modus_bedingung`). 1 Credit je neu geschriebenem Feld.
+Der Sammel-Knopf heißt auf Projekt- und Dokument-Ebene „Quickinfos
+generieren“ (Michael Karbe 01.09.2026: analog zu „Alt-Texte generieren“ bei
+PDF und Word; versteckter Zusatz „– ganzes Projekt“ / „– Formular „x““ für
+Screenreader). Solange Felder offen sind, füllt er nur Lücken; sobald jedes
+Feld einen Text hat, erneuert derselbe Knopf die KI-Vorschläge (`{"modus":
+"ki_neu"}`): zusätzlich alle Felder mit `quelle = ki`; Texte von Hand, aus der
+PDF, aus Stammdaten oder vom Gast bleiben unberührt (`_modus_bedingung`).
+1 Credit je neu geschriebenem Feld.
+
+Vor dem Start öffnet sich dieselbe Rückfrage wie bei den Alt-Texten
+(`generierRueckfrage()` in `app.html`, siehe `docs/GENERIERUNG.md`): Umfang,
+„{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits.“ bzw.
+„{n} KI-Vorschläge werden neu erzeugt. …“, Guthaben-Satz, Weg zurück. Die
+Zahlen liefert `POST /api/projects/{id}/quickinfos/vorschau` (ändert nichts),
+gezählt mit derselben Funktion wie der Start (`_generier_kandidaten` in
+`formular_api.py`). Hinweis zum Teil-Lauf: Der Lauf prüft das Guthaben JE
+SEITE (alle offenen Felder einer Seite müssen gedeckt sein), „machbar“ im
+Dialog ist deshalb eine Obergrenze. Bei einem Fehler der Vorschau wird nicht
+gestartet.
 
 ## Redundanz-Regel der Nachprüfung (28.08.2026)
 

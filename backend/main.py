@@ -6143,7 +6143,8 @@ def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_ar
     31.08.2026). Getrennte Zaehlungen waeren hier gefaehrlich, weil die Auswahl
     nicht offensichtlich ist:
 
-    ki_neu  = fertige Bilder ohne Hand-Text. Sie am vorhandenen Alt-Text zu
+    ki_neu  = fertige Bilder, deren Feld NIE von Hand angefasst wurde
+              (alt_text_edited IS NULL). Sie am vorhandenen Alt-Text zu
               erkennen greift zu kurz — dekorative Bilder sind zu Recht 'done'
               und tragen keinen Text (auf Produktion 870 Stueck in 37
               Projekten). Bleibt vom letzten Lauf ein Rest offen (Guthaben,
@@ -6152,11 +6153,24 @@ def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_ar
               zweites Mal bezahlt. Die Schnittmenge mit den aktuellen
               Kandidaten haelt das dicht.
     sonst   = alles, was noch auf 'pending' steht.
+
+    BEWUSST GELEERT BLEIBT LEER (01.09.2026, Pruefbefund): Seit dem 31.08.
+    heisst ein leerer String in alt_text_edited „der Nutzer hat den Text
+    absichtlich geloescht" (siehe _display_alt_text). Bis heute zaehlte so ein
+    Bild trotzdem als ki_neu-Kandidat (TRIM(...) = ''), der Sammellauf schrieb
+    den neuen KI-Text aber nur nach alt_text und liess das leere Feld stehen:
+    Das Bild wurde bezahlt und beschrieben, der Text blieb unsichtbar und kam
+    nicht in den Export. Jetzt gilt das Loeschen als eigene Entscheidung —
+    genau das verspricht die Rueckfrage („Deine eigenen Texte bleiben
+    unveraendert"). Wer fuer ein geleertes Bild wieder einen Text will, nimmt
+    „Neu generieren" am Bild (das setzt alt_text_edited zurueck, ~6877).
+    Dieselbe Regel steht in app.html (kiBilder, docKi) — beide muessen gleich
+    zaehlen, sonst zeigt die Seite einen Knopf fuer einen Lauf ohne Kandidaten.
     """
     if modus == "ki_neu":
         ids = {r["id"] for r in conn.execute(
             "SELECT id FROM images WHERE project_id = ? AND status = 'done' "
-            "AND TRIM(COALESCE(alt_text_edited,'')) = ''" + doc_sql,
+            "AND alt_text_edited IS NULL" + doc_sql,
             [project_id] + doc_args).fetchall()}
         rest = _ki_neu_rest_lesen(conn, project_id) & ids
         if rest:
@@ -6180,6 +6194,8 @@ async def generate_vorschau(project_id: int, request: Request,
     try:
         data = await request.json()
     except Exception:
+        data = {}
+    if not isinstance(data, dict):
         data = {}
     modus = "ki_neu" if data.get("modus") == "ki_neu" else "luecken"
     document_id = data.get("document_id")
@@ -6207,6 +6223,21 @@ async def generate_vorschau(project_id: int, request: Request,
     anzahl, _ids = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args)
     dokumente = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?",
                              (project_id,)).fetchone()[0]
+    # Mitgebrachte Texte (Michael Karbe, 01.09.2026: „Auch bei Word werden bereits
+    # vorhandene Texte nicht erkannt"): Word- und PDF-Dateien koennen je Bild schon
+    # einen Alternativtext tragen (original_alt). Der Erstlauf beschreibt diese
+    # Bilder trotzdem — der mitgebrachte Text geht als Grundlage an die KI
+    # (pdf_processor.generate_alt_text -> original_alt). Die Rueckfrage sagte aber
+    # „n Bilder haben noch keine Beschreibung", obwohl der Text sichtbar im Feld
+    # stand. Die Zahl hier macht den Satz ehrlich: Gesamtzahl plus „m davon bringen
+    # schon einen Text mit". Ein Bild, das die Quelle als dekorativ kennzeichnet,
+    # zaehlt nicht als Text.
+    mit_quelltext = 0
+    if modus != "ki_neu" and anzahl:
+        mit_quelltext = conn.execute(
+            "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending' "
+            "AND TRIM(COALESCE(original_alt,'')) != '' AND original_alt != 'dekorativ'" + doc_sql,
+            [project_id] + doc_args).fetchone()[0]
     conn.close()
 
     p = billing.aktion_pruefung(user["id"], "bild_generierung", anzahl)
@@ -6218,7 +6249,7 @@ async def generate_vorschau(project_id: int, request: Request,
     je = billing.aktion_preis("bild_generierung", 1) or 1
     verf = p["verfuegbar"]
     machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
-    return {"modus": modus, "anzahl": anzahl, "document_id": document_id,
+    return {"modus": modus, "anzahl": anzahl, "mit_quelltext": mit_quelltext, "document_id": document_id,
             "dokumente": dokumente, "preis": p["preis"], "preis_je": je,
             "verfuegbar": verf, "fehlend": p["fehlend"], "machbar": machbar,
             "erlaubt": bool(anzahl) and (verf is None or machbar >= 1)}

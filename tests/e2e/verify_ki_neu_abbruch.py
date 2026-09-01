@@ -83,16 +83,20 @@ try:
         "project_type, name, tool) VALUES (?,?,?,?,?,?,?,?,?)",
         (uid, "kineu-test.pdf", "/tmp/kineu-test.pdf", "done", 4, 3, "pdf", "ki_neu-Abbruchtest", "pdf"))
     PID = cur.lastrowid
+    # 01.09.2026: alt_text_edited = None (nie von Hand angefasst). Ein leerer String hiesse seit
+    # dem 31.08. "bewusst geleert" und ist seit dem 01.09. KEIN Kandidat fuer den Sammellauf mehr
+    # (_generier_kandidaten: alt_text_edited IS NULL). Die Fixture bildet echte Daten nach:
+    # nie bearbeitete Bilder tragen NULL.
     for i in range(2):
         con.execute("INSERT INTO images (project_id, page_number, image_index, image_path, alt_text, "
                     "alt_text_edited, image_type, status) VALUES (?,?,?,?,?,?,?,?)",
-                    (PID, 1, i, f"/tmp/kineu-{i}.png", f"Guter Alt-Text {i}", "", "foto", "done"))
+                    (PID, 1, i, f"/tmp/kineu-{i}.png", f"Guter Alt-Text {i}", None, "foto", "done"))
     con.execute("INSERT INTO images (project_id, page_number, image_index, image_path, alt_text, "
                 "alt_text_edited, image_type, status) VALUES (?,?,?,?,?,?,?,?)",
-                (PID, 1, 5, "/tmp/kineu-deko.png", "", "", "dekorativ", "done"))
+                (PID, 1, 5, "/tmp/kineu-deko.png", "", None, "dekorativ", "done"))
     con.execute("INSERT INTO images (project_id, page_number, image_index, image_path, alt_text, "
                 "alt_text_edited, image_type, status) VALUES (?,?,?,?,?,?,?,?)",
-                (PID, 1, 9, "/tmp/kineu-luecke.png", "", "", "foto", "pending"))
+                (PID, 1, 9, "/tmp/kineu-luecke.png", "", None, "foto", "pending"))
     con.commit()
     vorher = zustand()
     check("Testprojekt: 2x done mit Text, 1x dekorativ done OHNE Text, 1x echte Luecke",

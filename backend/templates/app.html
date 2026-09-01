@@ -36,10 +36,14 @@
         </div>
     </dialog>
     <!-- Rueckfrage vor dem Generieren (Michael Karbe, 31.08.2026): Anzahl, Preis
-         und Guthaben VOR dem Start, mit Weg zurueck. Der Kostensatz haengt als
-         aria-describedby am Dialog, damit er beim Oeffnen mit angesagt wird. -->
+         und Guthaben VOR dem Start, mit Weg zurueck. Umfang UND Kostensatz haengen
+         als aria-describedby am Dialog, damit beides beim Oeffnen angesagt wird
+         (01.09.2026: der Umfang fehlte in der Ansage — fuer die Entscheidung
+         „ganzes Projekt oder nur dieses Dokument?" ist er die wichtigste Zeile).
+         EIN Dialog fuer alle drei Werkzeuge (Alt-Texte PDF/Word, Quickinfos):
+         Ueberschrift und Saetze setzt generierRueckfrage() je Aufruf. -->
     <dialog id="genConfirmDialog" class="app-dialog"
-            aria-labelledby="genConfirmTitle" aria-describedby="genConfirmBody">
+            aria-labelledby="genConfirmTitle" aria-describedby="genConfirmScope genConfirmBody">
         <h2 id="genConfirmTitle">{{ _('Alt-Texte generieren') }}</h2>
         <p id="genConfirmScope" class="dialog-hint"></p>
         <p id="genConfirmBody"></p>
@@ -584,7 +588,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const images = data.images;
         const documents = data.documents || [];
         // „Alle neu generieren“ (28.08.2026, wie beim Quickinfo-Werkzeug): nur KI-Texte ohne Hand-Text zaehlen.
-        const kiBilder = images.filter(i => i.status === 'done' && !(i.alt_text_edited || '').trim()).length;
+        // 01.09.2026: „ohne Hand-Text" heisst alt_text_edited == null (nie angefasst). Ein geleertes
+        // Feld ('') ist eine eigene Entscheidung und kein Kandidat — dieselbe Regel wie
+        // _generier_kandidaten im Backend, sonst zeigt die Seite einen Knopf ohne Lauf dahinter.
+        const kiBilder = images.filter(i => i.status === 'done' && i.alt_text_edited == null).length;
         window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt
         window._shareRoles = data.share_roles || [];  // aktive Gast-Rollen (Etappe 2: Badges + Filter)
         if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';  // Rollen-Workflow (10.07.2026)
@@ -655,7 +662,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
-                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${t('Herunterladen')}<span class="visually-hidden"> ${t('– ganzes Projekt')}</span></button>
+                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${t('– ganzes Projekt')}</span></button>
                         <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
@@ -973,7 +980,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         document.getElementById('genConfirmOk').addEventListener('click', () => {
             const a = _genAuftrag;
             genConfirmSchliessen();
-            if (a) generierungAusfuehren(a.projectId, a.modus, a.docId);
+            // 01.09.2026: Der Auftrag ist eine Funktion — so nutzen Alt-Texte (PDF/Word)
+            // und Quickinfos (formular.js) denselben Dialog.
+            if (a && typeof a.onOk === 'function') a.onOk();
         });
         dlg.addEventListener('close', () => { _genAuftrag = null; });
     })();
@@ -1116,6 +1125,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     let imageFilter = { key: 'alle', projectId: null };
     let filterImages = [];   // Bilder des aktuellen Renders (Datenbasis der Zaehler)
     let currentRenderDocs = [];   // Dokumente des aktuellen Renders (fuer den Ruecksprache-Block im Abschluss)
+    let currentRenderProjectType = '';   // 'pdf' | 'docx' | ... des aktuellen Renders (Beta-Zusatz im Export-Dialog)
+
+    // Name des Herunterladen-Knopfs (Michael Karbe 01.09.2026): Word-Projekte
+    // tragen das „Beta" auf dem Knopf selbst, nicht erst im Dialog — die
+    // Word-Ausgabe (docx-Rueckschreiben, PDF/UA-Umwandlung) ist noch Beta,
+    // die PDF-Ausgabe nicht. EINE Stelle fuer Projekt-Knopf und Dokument-Knopf.
+    function herunterladenName(project) {
+        return (project && project.project_type === 'docx') ? t('Herunterladen (Beta)') : t('Herunterladen');
+    }
 
     // Korb C (17.07.2026): der fruehere Besitzer-Rollen-Umschalter (Lektorat/
     // Herausgeber-Radios, filterActiveRole/setImageFilterRole) ist ENTFERNT —
@@ -1905,6 +1923,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Doc-Reihenfolge: aus documents-Liste; was übrig bleibt (z.B. Bilder ohne document_id), kommt zum Schluss.
         const orderedDocs = Array.isArray(documents) ? documents.slice().sort((a, b) => (a.doc_index || 0) - (b.doc_index || 0)) : [];
         currentRenderDocs = orderedDocs;   // fuer rueckItemLabel() im Abschluss-Dialog
+        currentRenderProjectType = (project && project.project_type) || '';
         // WORD-WERKZEUG (26.08.2026): Word-Projekte nutzen exakt die PDF-Struktur
         // (Dokument h2 > Gruppe h3 > Bild h4). Unterschied nur im Etikett: Word hat
         // keine Seiten, page_number ist dort der Abschnitt (Ueberschrift 1).
@@ -2186,7 +2205,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const leiste = block.querySelector('.doc-actions');
                 const kopf = block.querySelector('summary.doc-summary');
                 if (!kopf) return;
-                if (!leiste || eng) { kopf.style.paddingRight = ''; return; }
+                // Unterhalb des Umbruchs regelt es die Media-Query (Leiste im Fluss).
+                if (eng) { kopf.style.paddingRight = ''; return; }
+                // Ohne Leiste (Gast-Ansicht) gibt es nichts zu reservieren — der
+                // CSS-Rueckfall von 32rem waere sonst leerer Rand (Pruefbefund 01.09.2026).
+                if (!leiste) { kopf.style.paddingRight = '1rem'; return; }
                 const breite = Math.ceil(leiste.getBoundingClientRect().width);
                 kopf.style.paddingRight = breite ? (breite + 32) + 'px' : '';
             });
@@ -2212,7 +2235,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // diesem Dokument vorausgewaehlt. Nicht im Gast-Modus, nicht waehrend der Verarbeitung.
             const docImgsAll = Array.from(pageMap.values()).flat();
             const docPending = docImgsAll.filter(i => i.status === 'pending').length;
-            const docKi = docImgsAll.filter(i => i.status === 'done' && !(i.alt_text_edited || '').trim()).length;
+            const docKi = docImgsAll.filter(i => i.status === 'done' && i.alt_text_edited == null).length;  // wie kiBilder (01.09.2026)
             const docBusy = project && (project.status === 'processing' || project.status === 'extracting');
             const vhSuffixDoc = t('– Dokument „{name}“', { name: labelName });
             let docGenBtn = '';
@@ -2279,7 +2302,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     </details>
                     ${!window.GUEST_MODE ? `<span class="doc-actions">
                         ${docGenBtn}
-                        ${!isWebDoc && totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey})">${icon('download')}${t('Herunterladen')}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
+                        ${!isWebDoc && totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
                         <button type="button" class="doc-action-btn" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">${icon('pencil')}${t('Umbenennen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
                         <button type="button" class="doc-action-btn doc-action-danger" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">${icon('trash')}${t('Löschen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
                     </span>` : ''}
@@ -2569,51 +2592,110 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // einem Abbruch nur den offenen Rest, das koennte die Seite nicht wissen.
     let _genAuftrag = null;
 
+    // ── EIN Rueckfrage-Dialog fuer alle Werkzeuge (01.09.2026) ─────────────
+    // Alt-Texte (PDF und Word, startGeneration unten) und Quickinfos
+    // (formular.js) fragen ueber dieselbe Funktion nach. Der Dialog selbst
+    // steht statisch im Template (#genConfirmDialog); Ueberschrift, Umfang und
+    // Kostensatz kommen je Aufruf mit, der Auftrag ist eine Funktion.
+    // Rueckgabe false = Dialog ist schon offen (Doppelklick, Pruefbefund 01.09.).
+    function generierRueckfrage(opts) {
+        const dlg = byId('genConfirmDialog');
+        if (!dlg || dlg.open) return false;
+        byId('genConfirmTitle').textContent = opts.titel;
+        byId('genConfirmScope').textContent = opts.umfang || '';
+        byId('genConfirmBody').textContent = opts.satz;
+        byId('genConfirmOk').disabled = !opts.erlaubt;
+        _genAuftrag = { onOk: opts.onOk };
+        dlg.showModal();
+        return true;
+    }
+    window.generierRueckfrage = generierRueckfrage;
+
+    // Umfang-Zeile: „Nur dieses Dokument" oder „Ganzes Projekt(, n Dokumente)".
+    function umfangText(docId, dokumente) {
+        return docId
+            ? t('Nur dieses Dokument')
+            : (dokumente > 1 ? t('Ganzes Projekt, {n} Dokumente', { n: dokumente }) : t('Ganzes Projekt'));
+    }
+    window.umfangText = umfangText;
+
+    // Guthaben-Satz aus der Vorschau-Antwort (anzahl, preis_je, verfuegbar, machbar).
+    // Die Wahrheit statt einer Sperre (Steve 31.08.2026): Reicht das Guthaben
+    // nicht fuer alles, laeuft die Generierung trotzdem — sie beschreibt so
+    // viele Elemente, wie sie bezahlen kann, und hoert dann auf. Genau das steht
+    // hier, damit niemand vor einer Sperre steht, die es gar nicht gibt.
+    // einheit 'bild' (Alt-Texte) oder 'feld' (Quickinfos) waehlt die Wortwahl.
+    function guthabenSatz(v, einheit) {
+        const feld = einheit === 'feld';
+        if (v.verfuegbar === null || v.verfuegbar === undefined) {
+            return t('Dein Konto hat unbegrenztes Guthaben.');
+        }
+        if (v.machbar >= v.anzahl) {
+            return t('Du hast {v} Credits.', { v: v.verfuegbar });
+        }
+        if (v.machbar >= 1) {
+            return feld
+                ? t('Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf.', { v: v.verfuegbar, m: v.machbar, n: v.anzahl })
+                : t('Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf.', { v: v.verfuegbar, m: v.machbar, n: v.anzahl });
+        }
+        return feld
+            ? t('Dein Guthaben reicht nicht: Eine Quickinfo kostet {p} Credits, du hast {v}.', { p: v.preis_je, v: v.verfuegbar })
+            : t('Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}.', { p: v.preis_je, v: v.verfuegbar });
+    }
+    window.guthabenSatz = guthabenSatz;
+
+    // Vorschau holen; bei JEDEM Fehler null — der Aufrufer sagt den Fehler an
+    // und startet NICHT (Pruefbefund 01.09.2026: vorher lief die Generierung bei
+    // 401/500 der Vorschau ohne Rueckfrage los — genau das, was die Rueckfrage
+    // verhindern soll).
+    async function generierVorschau(url, body) {
+        try {
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                           body: JSON.stringify(body) });
+            if (res.ok) return await res.json();
+            let d = {}; try { d = await res.json(); } catch (e) {}
+            announce(t('Fehler: {msg}', { msg: d.detail || (res.status + ' ' + res.statusText) }));
+        } catch (e) {
+            announce(t('Fehler: {msg}', { msg: (e && e.message) ? e.message : String(e) }));
+        }
+        return null;
+    }
+    window.generierVorschau = generierVorschau;
+
     async function startGeneration(projectId, modus, docId) {
+        if (byId('genConfirmDialog') && byId('genConfirmDialog').open) return;   // Doppelklick
         if (window._dailyLimit && window._dailyLimit.remaining <= 0) {
             announce(t('Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt.'));
             alert(t('Tageslimit erreicht ({n} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt.', { n: window._dailyLimit.limit }));
             return;
         }
-        let v = null;
-        try {
-            const body = { modus: modus === 'ki_neu' ? 'ki_neu' : 'luecken' };
-            if (docId) body.document_id = docId;
-            const res = await fetch('/api/projects/' + projectId + '/generate/vorschau', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body) });
-            if (res.ok) v = await res.json();
-        } catch (e) { v = null; }
-        // Ohne Vorschau (Netzfehler) nicht blockieren, sondern wie bisher starten.
-        if (!v) { generierungAusfuehren(projectId, modus, docId); return; }
+        const body = { modus: modus === 'ki_neu' ? 'ki_neu' : 'luecken' };
+        if (docId) body.document_id = docId;
+        const v = await generierVorschau('/api/projects/' + projectId + '/generate/vorschau', body);
+        if (!v) return;
         if (!v.anzahl) { announce(t('Hier gibt es nichts zu generieren.')); return; }
 
-        const dlg = byId('genConfirmDialog');
-        byId('genConfirmScope').textContent = docId
-            ? t('Nur dieses Dokument')
-            : (v.dokumente > 1 ? t('Ganzes Projekt, {n} Dokumente', { n: v.dokumente }) : t('Ganzes Projekt'));
-        let satz = (modus === 'ki_neu')
-            ? t('{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis })
-            : t('{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
-        // Die Wahrheit statt einer Sperre (Steve 31.08.2026): Reicht das Guthaben
-        // nicht fuer alles, laeuft die Generierung trotzdem — sie beschreibt so
-        // viele Bilder, wie sie bezahlen kann, und hoert dann auf. Genau das steht
-        // hier, damit niemand vor einer Sperre steht, die es gar nicht gibt.
-        if (v.verfuegbar === null || v.verfuegbar === undefined) {
-            satz += ' ' + t('Dein Konto hat unbegrenztes Guthaben.');
-        } else if (v.machbar >= v.anzahl) {
-            satz += ' ' + t('Du hast {v} Credits.', { v: v.verfuegbar });
-        } else if (v.machbar >= 1) {
-            satz += ' ' + t('Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf.',
-                            { v: v.verfuegbar, m: v.machbar, n: v.anzahl });
+        // Kostensatz (Michael Karbe 01.09.2026): beim Erstlauf nur die Gesamtzahl —
+        // „n Bilder haben noch keine Beschreibung" war falsch, sobald die Datei
+        // schon Alternativtexte mitbringt (Word fast immer). Die stehen sichtbar
+        // im Feld und gehen als Grundlage an die KI; der Satz sagt das jetzt.
+        let satz;
+        if (modus === 'ki_neu') {
+            satz = t('{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
         } else {
-            satz += ' ' + t('Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}.',
-                            { p: v.preis_je, v: v.verfuegbar });
+            satz = t('{n} Bilder werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+            if (v.mit_quelltext > 0) {
+                satz += ' ' + t('{m} davon bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage.', { m: v.mit_quelltext });
+            }
         }
-        byId('genConfirmBody').textContent = satz;
-        byId('genConfirmOk').disabled = !v.erlaubt;
-        _genAuftrag = { projectId: projectId, modus: modus, docId: docId };
-        dlg.showModal();
+        satz += ' ' + guthabenSatz(v, 'bild');
+        generierRueckfrage({
+            titel: t('Alt-Texte generieren'),
+            umfang: umfangText(docId, v.dokumente),
+            satz: satz,
+            erlaubt: !!v.erlaubt,
+            onOk: () => generierungAusfuehren(projectId, modus, docId),
+        });
     }
 
     function genConfirmSchliessen() {
@@ -2674,8 +2756,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (head) {
             const docs = currentRenderDocs || [];
             const doc = docId ? docs.find(d => d.id === docId) : null;
-            head.textContent = doc ? t('Dokument „{name}“ herunterladen', { name: docDisplayName(doc) })
-                : t('Herunterladen');
+            // Die Ueberschrift nennt den UMFANG (wie im Formular-Werkzeug, formular.js
+            // exportOeffnen): der Knopf heisst ueberall nur „Herunterladen" (Michael Karbe),
+            // im Dialog steht sichtbar fuer alle, was geholt wird — Dokument, ganzes
+            // Projekt mit n Dokumenten oder das eine Dokument. Wiederhergestellt
+            // 01.09.2026 (f9e344e hatte es auf „Herunterladen" gekuerzt; ui_word prueft es).
+            // Word-Projekte tragen das Beta auch hier (Michael Karbe 01.09.2026).
+            const beta = currentRenderProjectType === 'docx' ? ' (Beta)' : '';
+            head.textContent = (doc ? t('Dokument „{name}“ herunterladen', { name: docDisplayName(doc) })
+                : (docs.length > 1 ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: docs.length })
+                                   : t('Herunterladen'))) + beta;
         }
         if (typeof panel.showModal === 'function') {
             panel.showModal();

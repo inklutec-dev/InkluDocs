@@ -88,9 +88,20 @@ print("Testbild: Projekt %d, Bild %d, KI-Text %r\n" % (ziel["id"], bild["id"], (
 
 vorher = hole("/api/projects/%d/export/summary" % ziel["id"], token, {})
 print("Export-Zusammenfassung vorher: beschrieben=%s von %s\n" % (vorher.get("beschrieben"), vorher.get("total")))
+# 01.09.2026 (Pruefbefund): Ein bewusst geleertes Bild darf KEIN Kandidat fuer
+# „Alt-Texte generieren" (Modus ki_neu) mehr sein — sonst wird es bezahlt und
+# beschrieben, der Text bleibt aber unsichtbar (leeres Feld hat Vorrang).
+kand_vorher = hole("/api/projects/%d/generate/vorschau" % ziel["id"], token, {"modus": "ki_neu"})
+print("Kandidaten „neu erzeugen“ vorher: %s\n" % kand_vorher.get("anzahl"))
 
 print("== Feld leeren ==")
 hole("/api/images/%d/alt-text" % bild["id"], token, {"alt_text": ""})
+kand_nachher = hole("/api/projects/%d/generate/vorschau" % ziel["id"], token, {"modus": "ki_neu"})
+check("Geleertes Bild ist kein Kandidat mehr fuer „neu erzeugen“ (Anzahl um 1 gesunken)",
+      kand_nachher.get("anzahl") == kand_vorher.get("anzahl") - 1,
+      "%s -> %s" % (kand_vorher.get("anzahl"), kand_nachher.get("anzahl")))
+erst = hole("/api/projects/%d/generate/vorschau" % ziel["id"], token, {"modus": "luecken"})
+check("Vorschau Erstlauf liefert mit_quelltext (mitgebrachte Texte)", "mit_quelltext" in erst, str(erst)[:100])
 d = hole("/api/projects/%d" % ziel["id"], token)
 neu = [i for i in d["images"] if i["id"] == bild["id"]][0]
 check("Anzeige ist leer (kein KI-Text zurueck)",
@@ -127,6 +138,9 @@ subprocess.run(["sudo", "docker", "exec", "inkludocs-staging", "python3", "-c",
 z = hole("/api/projects/%d/export/summary" % ziel["id"], token, {})
 check("Zaehler wieder wie zu Beginn", z.get("beschrieben") == vorher.get("beschrieben"),
       "%s vs %s" % (z.get("beschrieben"), vorher.get("beschrieben")))
+kand_ende = hole("/api/projects/%d/generate/vorschau" % ziel["id"], token, {"modus": "ki_neu"})
+check("Kandidaten „neu erzeugen“ wieder wie zu Beginn", kand_ende.get("anzahl") == kand_vorher.get("anzahl"),
+      "%s vs %s" % (kand_ende.get("anzahl"), kand_vorher.get("anzahl")))
 
 print()
 print("%d/%d Pruefungen bestanden" % (ok, ok + fail))

@@ -226,8 +226,17 @@ check("KI-Vorschlag uebernehmen ohne Fach -> 400", s == 400, s)
 # Alle offenen generieren: vorher nachname_2 leeren, vorname bleibt Hand (darf nicht ueberschrieben werden)
 req("PATCH", f"/api/felder/{by['nachname_2']['id']}", {"quickinfo": ""})
 req("PATCH", f"/api/felder/{by['geburtsdatum']['id']}", {"quickinfo": ""})
+# Rueckfrage-Vorschau (01.09.2026): zaehlt mit derselben Funktion wie der Start, aendert nichts.
+s, v, _ = req("POST", f"/api/projects/{pid}/quickinfos/vorschau", {})
+check("Vorschau Sammellauf: 200 mit anzahl/preis/preis_je/erlaubt/dokumente", s == 200 and all(k in v for k in ("anzahl", "preis", "preis_je", "erlaubt", "dokumente", "machbar")), v)
+check("Vorschau: preis = anzahl x preis_je (1 Credit je Feld)", v.get("preis") == v.get("anzahl", 0) * v.get("preis_je", 0), v)
+s2, d2, _ = req("GET", f"/api/projects/{pid}/felder")
+check("Vorschau aendert nichts (Projekt bleibt extracted)", d2.get("project", {}).get("status") == "extracted", d2.get("project", {}).get("status"))
+s, bad, _ = req("POST", f"/api/projects/{pid}/quickinfos/vorschau", {"document_id": "x"})
+check("Vorschau: document_id ungueltig -> 400", s == 400, s)
 s, b, _ = req("POST", f"/api/projects/{pid}/quickinfos/generieren", {})
 check("Alle generieren gestartet", s == 200 and b.get("gestartet") is True and b.get("offen") >= 2, b)
+check("Vorschau-Anzahl = Start-Anzahl (eine Zaehlung)", v.get("anzahl") == b.get("offen"), (v.get("anzahl"), b.get("offen")))
 s, b, _ = req("POST", f"/api/projects/{pid}/quickinfos/generieren", {})
 check("Zweiter Start waehrend Lauf -> 409", s == 409, s)
 for _ in range(90):
@@ -249,6 +258,8 @@ check("Keine Feldwerte in KI-Texten", all("K-0000" not in (f.get("quickinfo") or
 
 # Alle neu generieren (modus ki_neu, 28.08.2026): nur KI-Felder, Hand/PDF bleiben
 ki_vorher = [f for f in d.get("felder", []) if f["quelle"] == "ki"]
+s, v2, _ = req("POST", f"/api/projects/{pid}/quickinfos/vorschau", {"modus": "ki_neu"})
+check("Vorschau ki_neu: zaehlt genau die KI-Felder", s == 200 and v2.get("modus") == "ki_neu" and v2.get("anzahl") == len(ki_vorher), (v2, len(ki_vorher)))
 s, b, _ = req("POST", f"/api/projects/{pid}/quickinfos/generieren", {"modus": "ki_neu"})
 check("Alle neu generieren: startet fuer genau die KI-Felder", s == 200 and b.get("gestartet") is True and b.get("modus") == "ki_neu" and b.get("offen") == len(ki_vorher), (b, len(ki_vorher)))
 for _ in range(90):

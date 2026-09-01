@@ -31,7 +31,8 @@ Endpunkte (alle nur fuer den eingeloggten Besitzer des Projekts):
   POST   /api/projects/{pid}/stammdaten-anwenden      Stammdaten auf alle offenen Felder
   GET    /api/felder/{fid}/ausschnitt                 Bildausschnitt (PNG)
   GET    /api/felder/{fid}/page-view                  Seitenansicht mit Rahmen (PNG)
-  POST   /api/projects/{pid}/quickinfos/generieren    Stufe 2: KI-Vorschlaege fuer offene Felder (Hintergrund, je Seite 1 Credit)
+  POST   /api/projects/{pid}/quickinfos/generieren    Stufe 2: KI-Vorschlaege fuer offene Felder (Hintergrund, 1 Credit je Feld)
+  POST   /api/projects/{pid}/quickinfos/vorschau      Rueckfrage davor: Anzahl, Preis, Guthaben (aendert nichts, 01.09.2026)
   POST   /api/felder/{fid}/generieren                 Stufe 2: ein Feld neu generieren (ueberschreibt, 1 Credit)
   POST   /api/projects/{pid}/export/formular          PDF mit Quickinfos (einzeln/ZIP), kostet Credits
   POST   /api/projects/{pid}/export/formular_csv      Feldliste als CSV (Heine-kompatibel), kostenlos
@@ -524,6 +525,22 @@ def _modus_bedingung(modus: str) -> str:
     return "TRIM(COALESCE(quickinfo,'')) = ''"
 
 
+def _generier_kandidaten(conn, project_id: int, modus: str, document_id: Optional[int]) -> int:
+    """Wie viele Felder wuerde ein Sammellauf anfassen?
+
+    EINE Quelle fuer den Start (quickinfos/generieren) UND die Rueckfrage davor
+    (quickinfos/vorschau, 01.09.2026, Michael Karbe: „Quickinfos generieren"
+    analog zu Word und PDF). Namenlose Felder (anker '#…') laufen nie mit —
+    dieselbe Ausnahme wie im Lauf selbst."""
+    sql = ("SELECT COUNT(*) FROM formularfelder WHERE project_id = ? AND "
+           + _modus_bedingung(modus) + " AND anker NOT LIKE '#%'")
+    args: list = [project_id]
+    if document_id is not None:
+        sql += " AND document_id = ?"
+        args.append(document_id)
+    return conn.execute(sql, args).fetchone()[0]
+
+
 async def _generiere_projekt(project_id: int, user_id: int, document_id: Optional[int], modus: str = "luecken") -> None:
     """Hintergrundlauf: je Seite ein Feld-Pass fuer die OFFENEN Felder (modus 'ki_neu': auch
     KI-Vorschlaege), Kontingent je Seite geprueft, 1 Credit je Seite; Fehler je Seite, nicht je Projekt."""
@@ -837,11 +854,7 @@ def build_router(deps: Deps) -> APIRouter:
             tl = _d.tageslimit_wache(user) if _d.tageslimit_wache else None
             if tl:
                 raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
-            sql = "SELECT COUNT(*) FROM formularfelder WHERE project_id = ? AND " + _modus_bedingung(modus) + " AND anker NOT LIKE '#%'"
-            args = [project_id]
-            if document_id is not None:
-                sql += " AND document_id = ?"; args.append(document_id)
-            offen = conn.execute(sql, args).fetchone()[0]
+            offen = _generier_kandidaten(conn, project_id, modus, document_id)
             if not offen:
                 return {"ok": True, "gestartet": False, "offen": 0, "modus": modus}
             conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
@@ -851,6 +864,50 @@ def build_router(deps: Deps) -> APIRouter:
         _generierung[project_id] = {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []}
         asyncio.create_task(_generiere_projekt(project_id, user["id"], document_id, modus))
         return {"ok": True, "gestartet": True, "offen": offen, "modus": modus}
+
+    @router.post("/api/projects/{project_id}/quickinfos/vorschau")
+    async def quickinfos_vorschau(project_id: int, request: Request, user: dict = Depends(_user)):
+        """Was wuerde ein Sammellauf anfassen, was kostet er, reicht das Guthaben?
+
+        Grundlage der Rueckfrage vor „Quickinfos generieren" (Michael Karbe,
+        01.09.2026: Knoepfe fuer Dokument und Projekt analog zu Word und PDF —
+        derselbe Dialog wie bei den Alt-Texten). AENDERT NICHTS. Zaehlt mit
+        derselben Funktion wie der Start (_generier_kandidaten), damit im Dialog
+        keine andere Zahl steht als hinterher gebucht wird.
+
+        Teil-Lauf: Der Lauf prueft das Guthaben JE SEITE (alle offenen Felder der
+        Seite muessen gedeckt sein, sonst bleibt der Rest offen). „machbar" ist
+        deshalb die Zahl der Felder, die das Guthaben zum Preis je Feld deckt —
+        eine Obergrenze; die Seitenregel kann darunter abbrechen."""
+        try:
+            data = await request.json()
+        except Exception:
+            data = {}
+        if not isinstance(data, dict):
+            data = {}
+        modus = "ki_neu" if data.get("modus") == "ki_neu" else "luecken"
+        document_id = data.get("document_id")
+        try:
+            document_id = int(document_id) if document_id is not None else None
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="document_id ungueltig")
+        conn = _d.get_db()
+        try:
+            _projekt_des_nutzers(conn, project_id, user["id"])
+            if document_id is not None and not conn.execute(
+                    "SELECT 1 FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id)).fetchone():
+                raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+            anzahl = _generier_kandidaten(conn, project_id, modus, document_id)
+            dokumente = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0]
+        finally:
+            conn.close()
+        p = _d.billing.aktion_pruefung(user["id"], "quickinfo_generierung", anzahl)
+        je = _d.billing.aktion_preis("quickinfo_generierung", 1) or 1
+        verf = p["verfuegbar"]
+        machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
+        return {"modus": modus, "anzahl": anzahl, "document_id": document_id, "dokumente": dokumente,
+                "preis": p["preis"], "preis_je": je, "verfuegbar": verf, "fehlend": p["fehlend"],
+                "machbar": machbar, "erlaubt": bool(anzahl) and (verf is None or machbar >= 1)}
 
     @router.post("/api/felder/{feld_id}/generieren")
     async def feld_generieren(feld_id: int, user: dict = Depends(_user)):

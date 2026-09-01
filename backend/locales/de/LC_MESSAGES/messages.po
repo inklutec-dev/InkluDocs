@@ -4453,10 +4453,6 @@ msgstr "dieses Formular"
 msgid "– Formular „{name}“"
 msgstr "– Formular „{name}“"
 
-# QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): KI-Vorschlaege
-msgid "Alle generieren"
-msgstr "Alle generieren"
-
 msgid "Beleg: „{b}“"
 msgstr "Beleg: „{b}“"
 
@@ -4614,9 +4610,6 @@ msgstr "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, 
 
 msgid "KI-Vorschlag übernehmen"
 msgstr "KI-Vorschlag übernehmen"
-
-msgid "{n} Quickinfos neu generieren, {p} Credits"
-msgstr "{n} Quickinfos neu generieren, {p} Credits"
 
 msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
 msgstr "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
@@ -5182,10 +5175,6 @@ msgid "Nur dieses Dokument"
 msgstr ""
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
-msgid "{n} Bilder haben noch keine Beschreibung und werden jetzt beschrieben. Das kostet {c} Credits."
-msgstr ""
-
-#. Rueckfrage vor dem Generieren (31.08.2026)
 msgid "{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
 msgstr ""
 
@@ -5219,4 +5208,36 @@ msgstr ""
 
 #. Teil-Lauf statt Sperre (31.08.2026)
 msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
+msgstr ""
+
+#. Word-Projekte: Beta auf dem Knopf selbst (Michael Karbe 01.09.2026)
+msgid "Herunterladen (Beta)"
+msgstr ""
+
+#. Rueckfrage Erstlauf: nur die Gesamtzahl (Michael Karbe 01.09.2026)
+msgid "{n} Bilder werden beschrieben. Das kostet {c} Credits."
+msgstr ""
+
+#. Rueckfrage Erstlauf: mitgebrachte Texte (Word/PDF) werden erkannt (01.09.2026)
+msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage."
+msgstr ""
+
+#. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
+msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
+msgstr ""
+
+#. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
+msgid "Dein Guthaben reicht nicht: Eine Quickinfo kostet {p} Credits, du hast {v}."
+msgstr ""
+
+#. Sammellauf-Knopf Quickinfos, Projekt und Dokument (Michael Karbe 01.09.2026)
+msgid "Quickinfos generieren"
+msgstr ""
+
+#. Rueckfrage Quickinfos, Erstlauf (01.09.2026)
+msgid "{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits."
+msgstr ""
+
+#. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
+msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
 msgstr ""

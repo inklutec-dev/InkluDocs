@@ -127,10 +127,14 @@ try:
         (uid, "doppelkosten-test.pdf", "/tmp/doppelkosten-test.pdf", "done", 4, 4, "pdf",
          "Doppelkosten-Test", "pdf"))
     PID = cur.lastrowid
+    # 01.09.2026: alt_text_edited = None (nie von Hand angefasst). Ein leerer String hiesse seit
+    # dem 31.08. "bewusst geleert" und ist seit dem 01.09. KEIN Kandidat fuer den Sammellauf mehr
+    # (_generier_kandidaten: alt_text_edited IS NULL). Die Fixture bildet echte Daten nach:
+    # nie bearbeitete Bilder tragen NULL.
     for i in range(4):
         c2 = con.execute("INSERT INTO images (project_id, page_number, image_index, image_path, alt_text, "
                          "alt_text_edited, image_type, status) VALUES (?,?,?,?,?,?,?,?)",
-                         (PID, 1, i, f"/tmp/dk-{i}.png", f"Alter Text {i}", "", "foto", "done"))
+                         (PID, 1, i, f"/tmp/dk-{i}.png", f"Alter Text {i}", None, "foto", "done"))
         BILD_IDS.append(c2.lastrowid)
     con.commit()
     check("Testprojekt mit 4 Kandidaten angelegt", len(BILD_IDS) == 4, BILD_IDS)

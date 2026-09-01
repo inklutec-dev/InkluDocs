@@ -14,9 +14,11 @@
  * docDisplayName(), openDocRename(), openDocDelete(), downloadBlob().
  *
  * Datenquelle: GET /api/projects/{id}/felder (siehe backend/formular_api.py).
- * Stufe 2 (27.08.2026): KI-Vorschlaege wie bei den Alt-Texten — "Alle generieren"
- * fuellt nur Luecken, "Generieren"/"Neu generieren" am Feld ueberschreibt bewusst,
- * "Zurueck auf Original" bleibt. Jeder KI-Text traegt Sicherheit (hoch/mittel/
+ * Stufe 2 (27.08.2026): KI-Vorschlaege wie bei den Alt-Texten — der Sammellauf
+ * ("Quickinfos generieren", Projekt oder Dokument; seit 01.09.2026 mit derselben
+ * Rueckfrage wie bei den Alt-Texten: Umfang, Anzahl, Preis, Guthaben) fuellt nur
+ * Luecken bzw. erneuert KI-Vorschlaege; "Generieren"/"Neu generieren" am Feld
+ * ueberschreibt bewusst, "Zurueck auf Original" bleibt. Jeder KI-Text traegt Sicherheit (hoch/mittel/
  * niedrig, nach Nachpruefung) und den Beleg-Satz; Filter "Nur unsichere".
  * Sicherheit: alle Texte aus dem Server laufen durch escHtml(); Eingaben
  * gehen als JSON an PATCH /api/felder/{id}; keine innerHTML-Zuweisung mit
@@ -385,8 +387,10 @@
             + '</details>'
             // Knoepfe je Dokument (Michael/Steve 28.08.2026): Alle generieren / n neu generieren + Exportieren nur fuer dieses Dokument.
             + (gast() ? '' : '<span class="doc-actions">'
-            +   (docOffen && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + ico('sparkle') + t('Alle generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-                : (docKi.length && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleNeuGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + ico('refresh') + t('{n} Quickinfos neu generieren, {p} Credits', { n: docKi.length, p: docKi.length * qiPreis() }) + '<span class="visually-hidden"> ' + vh + '</span></button>' : ''))
+            // 01.09.2026 (Michael Karbe): „Quickinfos generieren" auf beiden Ebenen, analog zu Word
+            // und PDF — Anzahl und Preis nennt die Rueckfrage, nicht der Knopf.
+            +   (docOffen && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + ico('sparkle') + t('Quickinfos generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+                : (docKi.length && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleNeuGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + ico('refresh') + t('Quickinfos generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>' : ''))
             +   (felder.length ? '<button type="button" class="doc-action-btn" onclick="Formular.exportOeffnen(' + docKey + ')">' + ico('download') + t('Herunterladen') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
@@ -429,12 +433,13 @@
                 + '</div>' : '')
             + (!gast() && felder.length ? ''
                 + '<div class="card-actions">'
-                // EIN Knopf (Steve 28.08.2026): „Alle generieren“, solange Felder offen sind (fuellt nur Luecken);
-                // sind alle gefuellt, wird er zu „Alle neu generieren“ (ueberschreibt nur KI-Vorschlaege — Hand, PDF,
-                // Stammdaten, Gast bleiben). Keine Rueckfrage: der Knopf nennt fuer den Screenreader Anzahl und Credits.
-                +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + ico('sparkle') + t('Alle generieren') + '</button>'
+                // EIN Knopf (Steve 28.08.2026): solange Felder offen sind, fuellt er nur Luecken; sind alle
+                // gefuellt, erneuert er die KI-Vorschlaege (Hand, PDF, Stammdaten, Gast bleiben).
+                // 01.09.2026 (Michael Karbe): heisst in beiden Faellen „Quickinfos generieren" — wie „Alt-Texte
+                // generieren" bei PDF und Word; Anzahl, Preis und Guthaben nennt die Rueckfrage vor dem Start.
+                +   (offen && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + ico('sparkle') + t('Quickinfos generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>'
                     : (kiFelder.length && project.status !== 'processing' ? '<button class="btn btn-secondary" id="fGenAllBtn" data-modus="ki_neu" onclick="Formular.alleNeuGenerieren(' + project.id + ')">'
-                        + ico('refresh') + t('{n} Quickinfos neu generieren, {p} Credits', { n: kiFelder.length, p: kiFelder.length * qiPreis() }) + '</button>' : ''))
+                        + ico('refresh') + t('Quickinfos generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''))
                 +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + ico('download') + (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen')) + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf alle Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
@@ -588,7 +593,40 @@
         }
     }
 
-    async function alleGenerieren(projectId, docId) {
+    // Rueckfrage vor dem Sammellauf (Michael Karbe, 01.09.2026): derselbe Dialog wie bei den
+    // Alt-Texten (generierRueckfrage in app.html) — Umfang, Anzahl, Preis, Guthaben, Weg zurueck.
+    // Anzahl und Preis kommen vom Server (/quickinfos/vorschau), der mit derselben Funktion
+    // zaehlt wie der Start. Ohne Vorschau (Fehler) wird NICHT gestartet.
+    async function sammellaufStarten(projectId, docId, modus) {
+        const dlg = document.getElementById('genConfirmDialog');
+        if (dlg && dlg.open) return;   // Doppelklick
+        if (typeof generierVorschau !== 'function' || typeof generierRueckfrage !== 'function') {
+            announce(t('Generieren fehlgeschlagen.')); return;
+        }
+        const body = { modus: modus };
+        if (docId) body.document_id = docId;
+        const v = await generierVorschau('/api/projects/' + projectId + '/quickinfos/vorschau', body);
+        if (!v) return;
+        if (!v.anzahl) {
+            announce(modus === 'ki_neu' ? t('Keine KI-Vorschläge vorhanden – nichts zu generieren.') : t('Keine offenen Felder – nichts zu generieren.'));
+            return;
+        }
+        let satz = (modus === 'ki_neu')
+            ? t('{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis })
+            : t('{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+        satz += ' ' + guthabenSatz(v, 'feld');
+        generierRueckfrage({
+            titel: t('Quickinfos generieren'),
+            umfang: umfangText(docId, v.dokumente),
+            satz: satz,
+            erlaubt: !!v.erlaubt,
+            onOk: () => (modus === 'ki_neu' ? alleNeuGenerierenAusfuehren(projectId, docId) : alleGenerierenAusfuehren(projectId, docId)),
+        });
+    }
+    function alleGenerieren(projectId, docId) { return sammellaufStarten(projectId, docId, 'luecken'); }
+    function alleNeuGenerieren(projectId, docId) { return sammellaufStarten(projectId, docId, 'ki_neu'); }
+
+    async function alleGenerierenAusfuehren(projectId, docId) {
         const btn = document.getElementById('fGenAllBtn');
         if (btn) btn.disabled = true;
         try {
@@ -602,7 +640,7 @@
         } catch (e) { announce(t('Verbindungsfehler.')); if (btn) btn.disabled = false; }
     }
 
-    async function alleNeuGenerieren(projectId, docId) {
+    async function alleNeuGenerierenAusfuehren(projectId, docId) {
         const btn = document.getElementById('fGenAllBtn');
         if (btn) btn.disabled = true;
         try {

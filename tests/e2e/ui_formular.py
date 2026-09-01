@@ -38,7 +38,8 @@ with sync_playwright() as p:
     pg.locator("details.doc-section").first.evaluate("d=>d.open=true"); pg.wait_for_timeout(300)
     check("Hoerprobe-Klappe vorhanden", pg.locator("details.doc-hoerprobe").count() == 1)
     da = pg.locator(".doc-block .doc-actions").first
-    check("Knoepfe je Dokument: Generieren, Herunterladen, Umbenennen, Loeschen (Michael 28.08.)", da.locator("button").count() == 4 and "Herunterladen" in da.inner_text() and ("Alle generieren" in da.inner_text() or "neu generieren" in da.inner_text()), da.inner_text())
+    # 01.09.2026 (Michael Karbe): der Sammel-Knopf heisst auf beiden Ebenen „Quickinfos generieren".
+    check("Knoepfe je Dokument: Quickinfos generieren, Herunterladen, Umbenennen, Loeschen (Michael 28.08./01.09.)", da.locator("button").count() == 4 and "Herunterladen" in da.inner_text() and "Quickinfos generieren" in da.inner_text(), da.inner_text())
     # 31.08.2026 (Michael Karbe): Die Icons sind wieder raus — „Da wir nicht so
     # viel Platz haben ... einheitlich erst einmal ueberall keine Icons in den
     # Buttons." Die Pruefung von damals ist umgedreht statt geloescht: Sie
@@ -102,8 +103,9 @@ with sync_playwright() as p:
         pg.wait_for_timeout(1500); leer = pg.evaluate(JS_LEER)
     nn = pg.locator("#" + leer[0])
     check("Knopf Generieren/Neu generieren vorhanden", nn.locator("button[id^=feld_gen_]").count() == 1)
-    check("Knopf Alle generieren im Kopf (offene Felder vorhanden)", pg.locator("#fGenAllBtn").count() == 1)
-    check("Kein zweiter Knopf: ein Knopf wechselt zwischen Alle generieren / Alle neu generieren", pg.locator("#fGenKiBtn").count() == 0 and pg.locator("#fGenAllBtn").inner_text().strip().startswith("Alle generieren"))
+    check("Knopf Quickinfos generieren im Kopf (offene Felder vorhanden)", pg.locator("#fGenAllBtn").count() == 1)
+    check("Kein zweiter Knopf: EIN Knopf „Quickinfos generieren“ fuer Luecken und Erneuern", pg.locator("#fGenKiBtn").count() == 0 and pg.locator("#fGenAllBtn").inner_text().strip().startswith("Quickinfos generieren"))
+    check("Sammel-Knopf ohne Preis/Anzahl (Rueckfrage nennt sie)", "Credits" not in pg.locator("#fGenAllBtn").inner_text(), pg.locator("#fGenAllBtn").inner_text())
     check("Sprache der Quickinfos + Gespeicherte Prompts vorhanden", pg.locator("#altLangSelect").count() == 1 and pg.locator("#ownPromptSelect").count() == 1)
     vorher = nn.locator("textarea.quickinfo-field").input_value()
     nn.locator("button[id^=feld_gen_]").click()
