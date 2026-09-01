@@ -355,3 +355,19 @@ eines). Die Migration ist stillgelegt (sie hatte ihre Arbeit am 08.06. getan),
 die Ordnernummern wurden von Hand repariert, und
 `tests/test_phantom_cleanup.py` hält die Migration stumm (rot gegen den alten
 Code). Dokumente werden nur noch auf Wunsch des Nutzers gelöscht.
+
+## Bekannte Lücken der barrierefreien PDF (Stand 01.09.2026, aus verify_pdfua)
+
+Mit vollständig beschrifteten Bildern meldet veraPDF für die Testdatei noch zwei
+Dinge, die NICHT am Alt-Text-Werkzeug liegen und im Prüfbericht an den Nutzer
+ehrlich erscheinen:
+1. **Vom Autor als dekorativ gekennzeichnete Bilder** werden in der PDF noch
+   nicht zu Artefakten — LibreOffice ignoriert das Word-Kennzeichen, die Figure
+   bleibt ohne Alt (`dekorativ_offen` in `nachbearbeitung`). Stufe 3: Figure →
+   Artefakt umschreiben (pikepdf, StructTree + Marked Content).
+2. **Inhalte ohne Struktur-Markierung** (Bereich „Struktur und Lesereihenfolge“,
+   z. B. Rahmen/Linien) stammen aus LibreOffice 7.4 im Konverter; neuere
+   LibreOffice-Versionen taggen sauberer → Konverter-Image prüfen.
+`tests/e2e/verify_pdfua.py` beschriftet deshalb erst alle Bilder und erwartet
+dann: kein Alt-Text-Befund für beschriebene Bilder, keine Befunde außerhalb
+dieser beiden Lücken; „vollständig bestanden“ wird nur als Info ausgegeben.
