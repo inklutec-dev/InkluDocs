@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260831j
+    image: inkludocs:v4-20260901
     container_name: inkludocs
     restart: unless-stopped
     ports:
@@ -8,6 +8,8 @@ services:
     volumes:
       - inkludocs_data:/app/data
     environment:
+      # Log-Zeilen sofort ausgeben (01.09.2026): print ist im Container sonst gepuffert, Zeitstempel im Log stimmen nicht.
+      - PYTHONUNBUFFERED=1
       # PDF_LANGBESCHREIBUNG (03.06.2026): Langbeschreibung bei PDF an/aus, Standard off. Siehe .env / backend main.py.
       - PDF_LANGBESCHREIBUNG=${PDF_LANGBESCHREIBUNG:-off}
       # Production-spezifisch
@@ -80,7 +82,7 @@ services:
   # Umwandler (Rollout 31.08.2026): LibreOffice + veraPDF 1.31.163 (festgenagelt), nur im
   # Compose-Netz erreichbar, kein Port nach aussen, keine Volumes. Getestetes Staging-Image.
   inkludocs-konverter:
-    image: inkludocs-konverter:v4-20260831
+    image: inkludocs-konverter:v4-20260901-lo262
     container_name: inkludocs-konverter
     restart: unless-stopped
     networks:
