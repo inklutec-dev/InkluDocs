@@ -454,7 +454,7 @@
                 +       '<button class="btn btn-primary" onclick="Formular.exportieren(' + project.id + ', \'formular\')">' + t('Als PDF mit Quickinfos') + '</button>'
                 +       '<button class="btn btn-secondary" onclick="Formular.exportieren(' + project.id + ', \'formular_csv\')">' + t('Als CSV (Feldliste)') + '</button>'
                 +       '<button class="btn btn-secondary" id="fExportCancelBtn" onclick="Formular.exportSchliessen()">' + t('Abbrechen') + '</button>'
-                +     '</div><span id="fExportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>'
+                +     '</div><output id="fExportStatus" style="display:block;margin-top:0.5rem;"></output>'
                 +   '</dialog>'
                 +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:1.2rem;flex-wrap:wrap;"><label for="fNurOffene" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">'
                 +     '<span style="font-weight:600;">' + t('Nur offene Felder anzeigen') + '</span>'
@@ -866,6 +866,7 @@
             let ansage = credits
                 ? t('Heruntergeladen: „{name}“ ({c} Credits abgebucht).', { name: serverName || fallback, c: credits })
                 : t('Heruntergeladen: „{name}“.', { name: serverName || fallback });
+            ansage += ' ' + t('Du findest die Datei bei deinen Downloads.');   // Browser-Grenze: Ort unbekannt (Steve 01.09.2026)
             if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
             if (statusEl) { statusEl.textContent = ansage; statusEl.setAttribute('tabindex', '-1'); }
             announce(ansage);

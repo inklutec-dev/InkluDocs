@@ -5297,3 +5297,7 @@ msgstr ""
 #. Meldung nach dem Download ohne Preis (01.09.2026)
 msgid "Heruntergeladen: „{name}“."
 msgstr ""
+
+#. Meldung nach dem Download, Ort (Steve 01.09.2026)
+msgid "Du findest die Datei bei deinen Downloads."
+msgstr ""

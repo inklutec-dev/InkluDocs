@@ -278,7 +278,9 @@ Start räumt den alten Hinweis weg.
   exportiert...“ (Steve hatte doppelt geklickt: zweimal 30 Credits). Danach
   bleibt der Dialog offen, die Statuszeile sagt „Heruntergeladen: „Datei“
   (30 Credits abgebucht).“ (Preis aus `X-Export-Credits`), bekommt den Fokus,
-  und „Abbrechen“ heißt „Zurück zum Projekt“. Ein zweiter Klick währenddessen
+  und „Abbrechen“ heißt „Zurück zum Projekt“; Zusatz „Du findest die Datei bei
+  deinen Downloads.“ (die Seite kennt den Speicherort nicht — Browser-Grenze;
+  Statuszeile ist ein natives `<output>`). Ein zweiter Klick währenddessen
   sagt „Der Export läuft bereits.“
 - **Dateiname-Feld ohne Browser-Ausfüllhilfe** (`autocomplete="off"`): Steves
   ZIP hieß nach einem alten Projekt, weil der Browser einen Verlaufseintrag

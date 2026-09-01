@@ -682,7 +682,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
                                 <button class="btn btn-secondary" id="exportCancelBtn" onclick="closeExportPanel()">${t('Abbrechen')}</button>
                             </div>
-                            <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
+                            <output id="exportStatus" style="display:block;margin-top:0.5rem;"></output>
                             <div id="pdfuaResult" role="region" aria-label="${t('Ergebnis der Umwandlung')}" aria-live="polite" style="margin-top:0.6rem;"></div>
                         </dialog>
                     ` : ''}
@@ -3081,6 +3081,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const fertig = credits
                     ? t('Heruntergeladen: „{name}“ ({c} Credits abgebucht).', { name: serverName || fallback, c: credits })
                     : t('Heruntergeladen: „{name}“.', { name: serverName || fallback });
+                // Wo die Datei liegt, weiss die Seite nicht (Browser-Grenze) — der Satz sagt, wo man sucht (Steve 01.09.2026).
+                fertig += ' ' + t('Du findest die Datei bei deinen Downloads.');
                 if (statusEl) { statusEl.textContent = fertig; statusEl.setAttribute('tabindex', '-1'); }
                 announce(fertig);
                 _exportFertig = true;
