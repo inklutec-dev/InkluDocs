@@ -5331,3 +5331,11 @@ msgstr "{n} images sur {g} restent en attente depuis l’interruption ; seules c
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
 msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
 msgstr "1 image sur {g} reste en attente depuis l’interruption ; seule celle-ci sera décrite maintenant, ce qui nécessite {c} crédits."
+
+#. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
+msgid "Bild nicht mehr vorhanden"
+msgstr "Image plus disponible"
+
+#. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
+msgid "Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu."
+msgstr "Cette image n’existe plus. Veuillez recharger la page."

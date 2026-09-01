@@ -5022,3 +5022,11 @@ msgstr "{n} af {g} billeder er stadig åbne fra den afbrudte kørsel; kun disse 
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
 msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
 msgstr "1 af {g} billeder er stadig åbent fra den afbrudte kørsel; kun dette bliver beskrevet nu, hvilket kræver {c} credits."
+
+#. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
+msgid "Bild nicht mehr vorhanden"
+msgstr "Billedet findes ikke længere"
+
+#. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
+msgid "Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu."
+msgstr "Dette billede findes ikke længere. Genindlæs venligst siden."

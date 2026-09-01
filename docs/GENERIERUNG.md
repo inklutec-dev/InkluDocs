@@ -415,3 +415,21 @@ und CreationDate des Autors bleiben unverändert (Titel wie bisher über
   pikepdf (Info-Dictionary + XMP), VOR der veraPDF-Prüfung.
 Tests: `tests/test_dokumentinfo.py` (8), Beweis Staging: Export Projekt 69/85
 tragen Creator/Producer (85 auch im XMP, Quelle nannte PDFix).
+
+## Einzel-Neu-Generieren: Fehlerpfad (01.09.2026)
+
+Prod-Befund Projekt 406: „Neu generieren“ an einem Bild antwortete 500, der Grund
+stand nur in der HTTP-Antwort, nirgends im Log — hinterher nicht mehr erklärbar.
+Seitdem:
+- Fehlt die Bilddatei (Dokument inzwischen gelöscht oder ersetzt, Altlast), kommt
+  VOR dem Lauf ein 404 mit Hinweis (`BILD_DATEI_WEG`), der Bildstatus bleibt wie
+  er war. Verschwindet die Datei WÄHREND des Laufs (`FileNotFoundError`), ebenso
+  404 und alter Status zurück statt `error`.
+- Jeder andere Fehler wird mit Grund, Rückverfolgung und Bezug (Bild, Projekt,
+  Nutzer) ins Container-Log geschrieben (`_fehler_protokoll`, mit `flush`), dann
+  wie bisher `status='error'` und 500 mit dem Fehlertext.
+- Oberfläche (`regenerateImage` in app.html): 402 zeigt die Credits-Meldung wie
+  Sammellauf/Export, 404 sagt „Dieses Bild gibt es nicht mehr. Bitte lade die
+  Seite neu.“, sonst wird der Grund des Servers mit angesagt.
+Test: `tests/e2e/verify_regenerate_datei_weg.py` (im Container, Grafik-Projekt,
+Datei wird entfernt, 404 + Status unverändert, unbekanntes Bild/Projekt 404).

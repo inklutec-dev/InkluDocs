@@ -5331,3 +5331,11 @@ msgstr "{n} de {g} imágenes siguen pendientes del proceso cancelado; solo estas
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
 msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
 msgstr "1 de {g} imágenes sigue pendiente del proceso cancelado; solo esta se describirá ahora, lo que requiere {c} créditos."
+
+#. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
+msgid "Bild nicht mehr vorhanden"
+msgstr "Imagen ya no disponible"
+
+#. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
+msgid "Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu."
+msgstr "Esta imagen ya no existe. Vuelve a cargar la página."

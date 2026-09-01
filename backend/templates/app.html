@@ -2549,9 +2549,20 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 btn.dataset.status = 'done';
                 // Projekt-Kopf (Badge + "X von Y Bildern generiert") live nachziehen.
                 updateProjectHeader(projectId);
-            } else {
+            } else if (res.status === 402) {
+                // Credits-Sperre: dieselbe Meldung wie beim Sammellauf und Export.
                 if (statusEl) statusEl.textContent = t('Fehler');
-                announce(wasDone ? t('Fehler bei der Neugenerierung') : t('Fehler bei der Generierung'));
+                zeigeCreditsMeldung(data.detail || data);
+            } else if (res.status === 404) {
+                // Bild oder Datei gibt es nicht mehr (Dokument geloescht/ersetzt) — Neuladen statt Raten.
+                if (statusEl) statusEl.textContent = t('Bild nicht mehr vorhanden');
+                announce(t('Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu.'));
+            } else {
+                // Grund des Servers mit ansagen (01.09.2026): vorher nur „Fehler“, der Nutzer
+                // erfuhr nie, warum.
+                const detail = (data && typeof data.detail === 'string') ? data.detail : '';
+                if (statusEl) statusEl.textContent = t('Fehler');
+                announce((wasDone ? t('Fehler bei der Neugenerierung') : t('Fehler bei der Generierung')) + (detail ? ': ' + detail : ''));
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = t('Verbindungsfehler');

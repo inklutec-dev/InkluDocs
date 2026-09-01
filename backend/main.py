@@ -6925,6 +6925,20 @@ async def submit_feedback(image_id: int, request: Request, user: dict = Depends(
 
 # ─── Regenerate Single Image ────────────────────────────────
 
+BILD_DATEI_WEG = ("Die Bilddatei ist nicht mehr vorhanden – das Dokument wurde inzwischen gelöscht "
+                  "oder ersetzt. Bitte die Seite neu laden.")
+
+
+def _fehler_protokoll(vorgang: str, e: BaseException, **bezug) -> None:
+    """Fehler eines Nutzer-Vorgangs mit Grund und Rueckverfolgung ins Container-Log schreiben.
+    Ein 500 ohne Logzeile ist hinterher nicht mehr zu erklaeren (Prod 01.09.2026). flush, damit
+    die Zeile nicht im gepufferten stdout haengen bleibt."""
+    import traceback
+    wo = ", ".join(f"{k}={v}" for k, v in bezug.items())
+    print(f"{vorgang} fehlgeschlagen ({wo}): {type(e).__name__}: {e}", flush=True)
+    print(traceback.format_exc(), flush=True)
+
+
 @app.post("/api/projects/{project_id}/regenerate/{image_id}")
 async def regenerate_image(project_id: int, image_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Regenerate alt-text for a single image with optional specialized prompt."""
@@ -6952,6 +6966,12 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
     if not img:
         conn.close()
         raise HTTPException(status_code=404, detail="Bild nicht gefunden")
+    # Bilddatei weg (Dokument inzwischen geloescht oder ersetzt, Altlast): ehrlich 404 statt
+    # 500, Status bleibt wie er war (01.09.2026, Prod-Befund Projekt 406).
+    if not img["image_path"] or not os.path.isfile(img["image_path"]):
+        conn.close()
+        raise HTTPException(status_code=404, detail=BILD_DATEI_WEG)
+    status_vorher = img["status"]
 
     conn.execute("UPDATE images SET status = 'processing' WHERE id = ?", (image_id,))
     conn.commit()
@@ -7046,12 +7066,23 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
             "konfidenz": result.get("konfidenz", "mittel"),
             "langbeschreibung": langbeschreibung,
         }
+    except FileNotFoundError as e:
+        # Datei ist WAEHREND des Laufs verschwunden (Dokument parallel geloescht): kein
+        # Fehlerbild, sondern alter Status zurueck und 404 — die Oberflaeche bittet um Neuladen.
+        _fehler_protokoll("Neu generieren", e, image_id=image_id, project_id=project_id, user_id=user["id"])
+        conn.execute("UPDATE images SET status = ? WHERE id = ?", (status_vorher, image_id))
+        conn.commit()
+        conn.close()
+        raise HTTPException(status_code=404, detail=BILD_DATEI_WEG)
     except Exception as e:
         # Fehlerpfad: Bild ehrlich als Fehler markieren (Steve 08.06.2026).
         # Vorher wurde status='done' gesetzt — das hat die Bild-Karte als
         # erfolgreich generiert ausgewiesen, obwohl gar nichts produziert
         # wurde. Jetzt 'error' + Pflege von processed_images (nur Erfolge),
         # damit der UI-Zaehler korrekt bleibt.
+        # Grund INS LOG (01.09.2026): Bis dahin stand der Fehlertext nur in der HTTP-Antwort —
+        # ein 500 auf Prod (Projekt 406) war hinterher nicht mehr zu erklaeren.
+        _fehler_protokoll("Neu generieren", e, image_id=image_id, project_id=project_id, user_id=user["id"])
         conn.execute("UPDATE images SET status = 'error' WHERE id = ?", (image_id,))
         processed_count = conn.execute(
             "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",

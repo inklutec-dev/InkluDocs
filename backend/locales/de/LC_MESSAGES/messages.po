@@ -5334,3 +5334,11 @@ msgstr ""
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
 msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
 msgstr ""
+
+#. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
+msgid "Bild nicht mehr vorhanden"
+msgstr ""
+
+#. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
+msgid "Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu."
+msgstr ""

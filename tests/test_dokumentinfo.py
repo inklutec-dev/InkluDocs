@@ -107,7 +107,9 @@ class Dokumentinfo(unittest.TestCase):
             raw = fh.read()
         neu = pdfua_export.dokumentinfo_setzen(raw)
         self.assertNotEqual(raw, neu)
-        p = os.path.join(self.tmp, "ua.pdf"); open(p, "wb").write(neu)
+        p = os.path.join(self.tmp, "ua.pdf")
+        with open(p, "wb") as fh:
+            fh.write(neu)
         d = fitz.open(p); m = d.metadata; d.close()
         self.assertEqual(m["creator"], "inkludocs.de")
         self.assertEqual(m["producer"], "InkluDocs")
