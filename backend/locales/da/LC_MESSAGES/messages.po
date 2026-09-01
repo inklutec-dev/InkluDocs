@@ -3426,10 +3426,6 @@ msgid "Bilder werden geprüft …"
 msgstr "Kontrollerer billeder …"
 
 #: export-summary (18.08.2026, Fable 5)
-msgid ", {n} als dekorativ markiert"
-msgstr ", {n} markeret som dekorativ"
-
-#: export-summary (18.08.2026, Fable 5)
 msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
 msgstr "Alle {n} billeder har en beskrivelse{dek}."
 
@@ -4906,10 +4902,6 @@ msgstr "Download (beta)"
 msgid "{n} Bilder werden beschrieben. Das kostet {c} Credits."
 msgstr "{n} billeder bliver beskrevet. Det koster {c} credits."
 
-#. Rueckfrage Erstlauf: mitgebrachte Texte (Word/PDF) werden erkannt (01.09.2026)
-msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage."
-msgstr "{m} af dem har allerede en tekst fra filen; AI'en bruger den som grundlag."
-
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
 msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
 msgstr "Du har {v} credits — det rækker til {m} af {n} felter; derefter stopper kørslen."
@@ -4929,3 +4921,67 @@ msgstr "{n} felter uden hjælpetekst bliver beskrevet. Det koster {c} credits."
 #. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
 msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
 msgstr "{n} AI-forslag bliver genereret igen. Tekster skrevet i hånden, fra PDF'en, fra stamdata eller af gæsten forbliver uændrede. Det koster {c} credits."
+
+#. Einzahl (01.09.2026)
+msgid "1 Bild wird beschrieben. Das kostet {c} Credits."
+msgstr "1 billede bliver beskrevet. Det koster {c} credits."
+
+#. Mitgebrachte Texte, Mehrzahl (01.09.2026)
+msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI bezieht ihn ein."
+msgstr "{m} af dem har allerede en tekst fra filen; AI'en tager den med i betragtning."
+
+#. Mitgebrachte Texte, Einzahl (01.09.2026)
+msgid "Eines davon bringt schon einen Text aus der Datei mit; die KI bezieht ihn ein."
+msgstr "Et af dem har allerede en tekst fra filen; AI'en tager den med i betragtning."
+
+#. Einzahl (01.09.2026)
+msgid "1 von der KI erzeugter Text wird neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
+msgstr "1 AI-genereret tekst bliver genereret igen. Dine egne tekster forbliver uændrede. Det koster {c} credits."
+
+#. Einzahl Quickinfos (01.09.2026)
+msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
+msgstr "1 felt uden hjælpetekst bliver beskrevet. Det koster {c} credits."
+
+#. Einzahl Quickinfos (01.09.2026)
+msgid "1 KI-Vorschlag wird neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
+msgstr "1 AI-forslag bliver genereret igen. Tekster skrevet i hånden, fra PDF'en, fra stamdata eller af gæsten forbliver uændrede. Det koster {c} credits."
+
+#. Autor-dekorativ, Einzahl (01.09.2026)
+msgid "1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor."
+msgstr "1 billede er markeret som dekorativt af forfatteren og springes over."
+
+#. Autor-dekorativ, Mehrzahl (01.09.2026)
+msgid "{n} Bilder sind vom Autor als dekorativ gekennzeichnet und bleiben außen vor."
+msgstr "{n} billeder er markeret som dekorative af forfatteren og springes over."
+
+#. Badge am Bild (01.09.2026)
+msgid "Vom Autor in der Datei als dekorativ gekennzeichnet."
+msgstr "Markeret som dekorativt af forfatteren i filen."
+
+#. Export-Zusammenfassung: dekorativ am Bildtyp erkannt (01.09.2026)
+msgid ", {n} als dekorativ erkannt"
+msgstr ", {n} genkendt som dekorative"
+
+#. Export-Zusammenfassung: bewusst geleert (01.09.2026)
+msgid "{n} bewusst ohne Beschreibung"
+msgstr "{n} bevidst uden beskrivelse"
+
+#. Export-Zusammenfassung, Einzahl (01.09.2026)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. 1 wird übersprungen: {g}."
+msgstr "{b} af {n} billeder har en beskrivelse{dek}. 1 springes over: {g}."
+
+#. Abo-Seite, gekuendigtes Abo (Steve 01.09.2026)
+msgid "Ein Wechsel auf einen anderen Plan ist erst möglich, wenn du die Kündigung zurücknimmst — dann erscheint „Plan wechseln“ wieder."
+msgstr "Du kan først skifte til en anden plan, når du trækker opsigelsen tilbage — så vises „Skift plan“ igen."
+
+#. Export-Sperre (01.09.2026)
+msgid "Der Export läuft bereits."
+msgstr "Eksporten kører allerede."
+
+#. Meldung nach dem Download (Steve 01.09.2026)
+msgid "Heruntergeladen: „{name}“ ({c} Credits abgebucht)."
+msgstr "Downloadet: „{name}“ ({c} credits trukket)."
+
+#. Meldung nach dem Download ohne Preis (01.09.2026)
+msgid "Heruntergeladen: „{name}“."
+msgstr "Downloadet: „{name}“."

@@ -3735,10 +3735,6 @@ msgid "Bilder werden geprüft …"
 msgstr "Vérification des images …"
 
 #: export-summary (18.08.2026, Fable 5)
-msgid ", {n} als dekorativ markiert"
-msgstr ", {n} marquée(s) comme décorative(s)"
-
-#: export-summary (18.08.2026, Fable 5)
 msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
 msgstr "Les {n} images ont toutes une description{dek}."
 
@@ -5215,10 +5211,6 @@ msgstr "Télécharger (bêta)"
 msgid "{n} Bilder werden beschrieben. Das kostet {c} Credits."
 msgstr "{n} images vont être décrites. Cela coûte {c} crédits."
 
-#. Rueckfrage Erstlauf: mitgebrachte Texte (Word/PDF) werden erkannt (01.09.2026)
-msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage."
-msgstr "{m} d’entre elles ont déjà un texte issu du fichier ; l’IA s’en sert comme base."
-
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
 msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
 msgstr "Vous avez {v} crédits — de quoi traiter {m} champs sur {n} ; ensuite la génération s’arrête."
@@ -5238,3 +5230,67 @@ msgstr "{n} champs sans info-bulle vont être décrits. Cela coûte {c} crédits
 #. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
 msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
 msgstr "{n} propositions de l’IA vont être régénérées. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés. Cela coûte {c} crédits."
+
+#. Einzahl (01.09.2026)
+msgid "1 Bild wird beschrieben. Das kostet {c} Credits."
+msgstr "1 image va être décrite. Cela coûte {c} crédits."
+
+#. Mitgebrachte Texte, Mehrzahl (01.09.2026)
+msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI bezieht ihn ein."
+msgstr "{m} d’entre elles ont déjà un texte issu du fichier ; l’IA en tient compte."
+
+#. Mitgebrachte Texte, Einzahl (01.09.2026)
+msgid "Eines davon bringt schon einen Text aus der Datei mit; die KI bezieht ihn ein."
+msgstr "L’une d’elles a déjà un texte issu du fichier ; l’IA en tient compte."
+
+#. Einzahl (01.09.2026)
+msgid "1 von der KI erzeugter Text wird neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
+msgstr "1 texte généré par l’IA va être régénéré. Vos propres textes restent inchangés. Cela coûte {c} crédits."
+
+#. Einzahl Quickinfos (01.09.2026)
+msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
+msgstr "1 champ sans info-bulle va être décrit. Cela coûte {c} crédits."
+
+#. Einzahl Quickinfos (01.09.2026)
+msgid "1 KI-Vorschlag wird neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
+msgstr "1 proposition de l’IA va être régénérée. Les textes saisis à la main, issus du PDF, des données de référence ou de l’invité restent inchangés. Cela coûte {c} crédits."
+
+#. Autor-dekorativ, Einzahl (01.09.2026)
+msgid "1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor."
+msgstr "1 image est marquée comme décorative par l’auteur et reste de côté."
+
+#. Autor-dekorativ, Mehrzahl (01.09.2026)
+msgid "{n} Bilder sind vom Autor als dekorativ gekennzeichnet und bleiben außen vor."
+msgstr "{n} images sont marquées comme décoratives par l’auteur et restent de côté."
+
+#. Badge am Bild (01.09.2026)
+msgid "Vom Autor in der Datei als dekorativ gekennzeichnet."
+msgstr "Marquée comme décorative par l’auteur dans le fichier."
+
+#. Export-Zusammenfassung: dekorativ am Bildtyp erkannt (01.09.2026)
+msgid ", {n} als dekorativ erkannt"
+msgstr ", {n} reconnues comme décoratives"
+
+#. Export-Zusammenfassung: bewusst geleert (01.09.2026)
+msgid "{n} bewusst ohne Beschreibung"
+msgstr "{n} volontairement sans description"
+
+#. Export-Zusammenfassung, Einzahl (01.09.2026)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. 1 wird übersprungen: {g}."
+msgstr "{b} images sur {n} ont une description{dek}. 1 sera ignorée : {g}."
+
+#. Abo-Seite, gekuendigtes Abo (Steve 01.09.2026)
+msgid "Ein Wechsel auf einen anderen Plan ist erst möglich, wenn du die Kündigung zurücknimmst — dann erscheint „Plan wechseln“ wieder."
+msgstr "Changer de formule n’est possible qu’après avoir annulé la résiliation — « Changer de formule » réapparaît alors."
+
+#. Export-Sperre (01.09.2026)
+msgid "Der Export läuft bereits."
+msgstr "L’export est déjà en cours."
+
+#. Meldung nach dem Download (Steve 01.09.2026)
+msgid "Heruntergeladen: „{name}“ ({c} Credits abgebucht)."
+msgstr "Téléchargé : « {name} » ({c} crédits débités)."
+
+#. Meldung nach dem Download ohne Preis (01.09.2026)
+msgid "Heruntergeladen: „{name}“."
+msgstr "Téléchargé : « {name} »."

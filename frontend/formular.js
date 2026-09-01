@@ -449,11 +449,11 @@
                 +     '<h2 id="fExportHeading" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
                 +     '<p id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;">' + t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length }) + '</p>'
                 +     '<div class="form-group" style="margin-bottom:0.8rem;"><label for="fExportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Dateiname (optional)') + '</label>'
-                +       '<input type="text" id="fExportFilename" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;"></div>'
+                +       '<input type="text" id="fExportFilename" autocomplete="off" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;"></div>'
                 +     '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +       '<button class="btn btn-primary" onclick="Formular.exportieren(' + project.id + ', \'formular\')">' + t('Als PDF mit Quickinfos') + '</button>'
                 +       '<button class="btn btn-secondary" onclick="Formular.exportieren(' + project.id + ', \'formular_csv\')">' + t('Als CSV (Feldliste)') + '</button>'
-                +       '<button class="btn btn-secondary" onclick="Formular.exportSchliessen()">' + t('Abbrechen') + '</button>'
+                +       '<button class="btn btn-secondary" id="fExportCancelBtn" onclick="Formular.exportSchliessen()">' + t('Abbrechen') + '</button>'
                 +     '</div><span id="fExportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>'
                 +   '</dialog>'
                 +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:1.2rem;flex-wrap:wrap;"><label for="fNurOffene" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">'
@@ -611,9 +611,17 @@
             announce(modus === 'ki_neu' ? t('Keine KI-Vorschläge vorhanden – nichts zu generieren.') : t('Keine offenen Felder – nichts zu generieren.'));
             return;
         }
-        let satz = (modus === 'ki_neu')
-            ? t('{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis })
-            : t('{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+        // Einzahl-Saetze (Steve 01.09.2026) wie bei den Alt-Texten.
+        let satz;
+        if (modus === 'ki_neu') {
+            satz = v.anzahl === 1
+                ? t('1 KI-Vorschlag wird neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits.', { c: v.preis })
+                : t('{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+        } else {
+            satz = v.anzahl === 1
+                ? t('1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits.', { c: v.preis })
+                : t('{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+        }
         satz += ' ' + guthabenSatz(v, 'feld');
         generierRueckfrage({
             titel: t('Quickinfos generieren'),
@@ -763,6 +771,10 @@
         if (!panel) return;
         const input = document.getElementById('fExportFilename');
         if (input) input.value = '';
+        // Frischer Dialog (01.09.2026): Statuszeile leer, Abbrechen heisst wieder Abbrechen.
+        exportFertig = false;
+        const s0 = document.getElementById('fExportStatus'); if (s0) s0.textContent = '';
+        const c0 = document.getElementById('fExportCancelBtn'); if (c0) c0.textContent = t('Abbrechen');
         // Export-Ziel (Steve 28.08.2026): keine Auswahlliste — Knopf am Dokument = nur dieses Dokument,
         // Hauptknopf = ganzes Projekt (ZIP bei mehreren Dokumenten).
         exportZielDoc = docId || null;
@@ -793,23 +805,34 @@
         } catch (e) { /* Preis ist Komfort, kein Blocker */ }
     }
 
+    let exportFertig = false;
     function exportSchliessen(silent) {
         const panel = document.getElementById('fExportPanel');
         if (panel && panel.open) { if (typeof panel.close === 'function') panel.close(); else panel.removeAttribute('open'); }
-        if (!silent) announce(t('Export abgebrochen.'));
+        // Nach fertigem Export heisst der Knopf „Zurück zum Projekt“ — kein Abbruch (01.09.2026).
+        if (!silent && !exportFertig) announce(t('Export abgebrochen.'));
+        exportFertig = false;
     }
 
+    // Sperre + Meldung nach dem Herunterladen wie in app.html (Steve 01.09.2026): gedrueckter
+    // Knopf heisst „Wird exportiert...“, danach bleibt der Dialog offen mit „Heruntergeladen: …“
+    // in der Statuszeile (Fokus dorthin) und „Zurück zum Projekt“ statt „Abbrechen“.
     let exportLaeuft = false;
     async function exportieren(projectId, format) {
-        if (exportLaeuft) return;   // Doppelklick-Sperre: ein Export je Dialog
+        if (exportLaeuft) { announce(t('Der Export läuft bereits.')); return; }
         exportLaeuft = true;
         const knoepfe = Array.from(document.querySelectorAll('#fExportPanel button'));
+        const aktiv = knoepfe.includes(document.activeElement) ? document.activeElement : null;
+        const aktivInhalt = aktiv ? aktiv.innerHTML : '';
         knoepfe.forEach(b => { b.disabled = true; });
+        if (aktiv) aktiv.textContent = t('Wird exportiert...');
         try {
             await _exportieren(projectId, format);
         } finally {
             exportLaeuft = false;
             knoepfe.forEach(b => { b.disabled = false; });
+            if (aktiv) aktiv.innerHTML = aktivInhalt;
+            if (exportFertig) { const s = document.getElementById('fExportStatus'); if (s) s.focus(); }
         }
     }
 
@@ -839,10 +862,16 @@
             const fallback = (body.filename || 'formular') + (format === 'formular_csv' ? '.csv' : '.pdf');
             downloadBlob(blob, serverName || fallback);
             const warn = res.headers.get('X-Export-Warnings');
-            let ansage = t('{name} wurde heruntergeladen.', { name: serverName || fallback });
+            const credits = res.headers.get('X-Export-Credits');
+            let ansage = credits
+                ? t('Heruntergeladen: „{name}“ ({c} Credits abgebucht).', { name: serverName || fallback, c: credits })
+                : t('Heruntergeladen: „{name}“.', { name: serverName || fallback });
             if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
+            if (statusEl) { statusEl.textContent = ansage; statusEl.setAttribute('tabindex', '-1'); }
             announce(ansage);
-            exportSchliessen(true);
+            exportFertig = true;
+            const cancel = document.getElementById('fExportCancelBtn');
+            if (cancel) cancel.textContent = t('Zurück zum Projekt');
         } catch (e) {
             if (statusEl) statusEl.textContent = t('Verbindungsfehler.');
         }

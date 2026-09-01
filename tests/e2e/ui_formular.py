@@ -155,7 +155,16 @@ with sync_playwright() as p:
     d = dl.value
     check("PDF-Download", d.suggested_filename.endswith("_quickinfos.pdf"), d.suggested_filename)
     pg.wait_for_timeout(800)
-    check("Dialog nach Export geschlossen", dlg.evaluate("d=>d.open") is False)
+    # 01.09.2026 (Steve: „ich hab doppelt heruntergeladen, weil ich danach nichts bekommen hab“):
+    # Der Dialog bleibt OFFEN, die Statuszeile meldet den Download mit Preis und hat den Fokus,
+    # „Abbrechen“ heisst jetzt „Zurück zum Projekt“; der Knopf schliesst ohne „abgebrochen“-Ansage.
+    check("Dialog nach Export bleibt offen mit Meldung", dlg.evaluate("d=>d.open") is True)
+    st_ = pg.locator("#fExportStatus").inner_text()
+    check("Meldung 'Heruntergeladen: „…“ (n Credits abgebucht).'", st_.startswith("Heruntergeladen:") and "Credits abgebucht" in st_, st_)
+    check("Fokus auf der Meldung", pg.evaluate("document.activeElement && document.activeElement.id") == "fExportStatus", pg.evaluate("document.activeElement && document.activeElement.id"))
+    check("Abbrechen heisst jetzt 'Zurück zum Projekt'", pg.locator("#fExportCancelBtn").inner_text().strip() == "Zurück zum Projekt", pg.locator("#fExportCancelBtn").inner_text())
+    pg.locator("#fExportCancelBtn").click(); pg.wait_for_timeout(500)
+    check("Zurück zum Projekt schliesst den Dialog", dlg.evaluate("d=>d.open") is False)
     # Credits-Meldung (Export-Staffel 28.08.2026): barrierefreies Modal mit beiden Zahlen und zwei Knoepfen
     pg.evaluate("zeigeCreditsMeldung({preis: 8, verfuegbar: 7})"); pg.wait_for_timeout(500)
     cd_ = pg.locator("#creditsDialog")

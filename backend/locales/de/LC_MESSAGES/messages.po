@@ -3738,10 +3738,6 @@ msgid "Bilder werden geprüft …"
 msgstr ""
 
 #: export-summary (18.08.2026, Fable 5)
-msgid ", {n} als dekorativ markiert"
-msgstr ""
-
-#: export-summary (18.08.2026, Fable 5)
 msgid "Alle {n} Bilder haben eine Beschreibung{dek}."
 msgstr ""
 
@@ -5218,10 +5214,6 @@ msgstr ""
 msgid "{n} Bilder werden beschrieben. Das kostet {c} Credits."
 msgstr ""
 
-#. Rueckfrage Erstlauf: mitgebrachte Texte (Word/PDF) werden erkannt (01.09.2026)
-msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage."
-msgstr ""
-
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
 msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
 msgstr ""
@@ -5240,4 +5232,68 @@ msgstr ""
 
 #. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
 msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
+msgstr ""
+
+#. Einzahl (01.09.2026)
+msgid "1 Bild wird beschrieben. Das kostet {c} Credits."
+msgstr ""
+
+#. Mitgebrachte Texte, Mehrzahl (01.09.2026)
+msgid "{m} davon bringen schon einen Text aus der Datei mit; die KI bezieht ihn ein."
+msgstr ""
+
+#. Mitgebrachte Texte, Einzahl (01.09.2026)
+msgid "Eines davon bringt schon einen Text aus der Datei mit; die KI bezieht ihn ein."
+msgstr ""
+
+#. Einzahl (01.09.2026)
+msgid "1 von der KI erzeugter Text wird neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits."
+msgstr ""
+
+#. Einzahl Quickinfos (01.09.2026)
+msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
+msgstr ""
+
+#. Einzahl Quickinfos (01.09.2026)
+msgid "1 KI-Vorschlag wird neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
+msgstr ""
+
+#. Autor-dekorativ, Einzahl (01.09.2026)
+msgid "1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor."
+msgstr ""
+
+#. Autor-dekorativ, Mehrzahl (01.09.2026)
+msgid "{n} Bilder sind vom Autor als dekorativ gekennzeichnet und bleiben außen vor."
+msgstr ""
+
+#. Badge am Bild (01.09.2026)
+msgid "Vom Autor in der Datei als dekorativ gekennzeichnet."
+msgstr ""
+
+#. Export-Zusammenfassung: dekorativ am Bildtyp erkannt (01.09.2026)
+msgid ", {n} als dekorativ erkannt"
+msgstr ""
+
+#. Export-Zusammenfassung: bewusst geleert (01.09.2026)
+msgid "{n} bewusst ohne Beschreibung"
+msgstr ""
+
+#. Export-Zusammenfassung, Einzahl (01.09.2026)
+msgid "{b} von {n} Bildern haben eine Beschreibung{dek}. 1 wird übersprungen: {g}."
+msgstr ""
+
+#. Abo-Seite, gekuendigtes Abo (Steve 01.09.2026)
+msgid "Ein Wechsel auf einen anderen Plan ist erst möglich, wenn du die Kündigung zurücknimmst — dann erscheint „Plan wechseln“ wieder."
+msgstr ""
+
+#. Export-Sperre (01.09.2026)
+msgid "Der Export läuft bereits."
+msgstr ""
+
+#. Meldung nach dem Download (Steve 01.09.2026)
+msgid "Heruntergeladen: „{name}“ ({c} Credits abgebucht)."
+msgstr ""
+
+#. Meldung nach dem Download ohne Preis (01.09.2026)
+msgid "Heruntergeladen: „{name}“."
 msgstr ""

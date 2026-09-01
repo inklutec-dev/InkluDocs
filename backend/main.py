@@ -4668,20 +4668,29 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
         is_vector = 1 if img.get("is_vector") else 0
         next_idx += 1
 
+        # Word: ein vom Autor gesetztes Dekorativ-Kennzeichen wird als original_alt
+        # "dekorativ" uebernommen — so bleibt es beim Export erhalten. Seit 01.09.2026
+        # (Michael Karbe: „dekorativ wird beim Tagging vor dem Upload entschieden“,
+        # Steve: „Autor geht vor, aber sichtbar und umstossbar“) ist so ein Bild
+        # sofort FERTIG mit Bildtyp dekorativ: Es laeuft nicht durch die KI, kostet
+        # nichts, wird in der Rueckfrage genannt und im Export uebersprungen (das
+        # Kennzeichen aus der Datei bleibt). Wer die Entscheidung des Autors fuer
+        # falsch haelt, nimmt „Neu generieren“ am Bild. Vorher lief es mit, bekam
+        # einen Text, und der Text gewann ueber das Kennzeichen.
+        autor_deko = bool(img.get("decorative_hint"))
         conn.execute(
             """INSERT INTO images (project_id, document_id, page_number, image_index, image_path, context_text,
                width, height, xref, bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-               original_alt, page_view_path, page_text, docx_anker)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               original_alt, page_view_path, page_text, docx_anker, status, image_type)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (project_id, document_id, img["page_number"], next_idx, img["image_path"],
              img["context_text"], img["width"], img["height"], img.get("xref"),
              bbox_x0, bbox_y0, bbox_x1, bbox_y1, is_vector,
-             # Word: ein vom Autor gesetztes Dekorativ-Kennzeichen wird als
-             # original_alt "dekorativ" uebernommen — so bleibt es beim Export
-             # erhalten, auch wenn der Nutzer das Bild nie generieren laesst.
-             ("dekorativ" if img.get("decorative_hint") else img.get("original_alt", "")),
+             ("dekorativ" if autor_deko else img.get("original_alt", "")),
              img.get("page_view_path", ""), img.get("page_text", ""),
-             img.get("docx_anker", ""))
+             img.get("docx_anker", ""),
+             ("done" if autor_deko else "pending"),
+             ("dekorativ" if autor_deko else "unknown"))
         )
 
     # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg merken (fitz|pdfix)
@@ -6168,9 +6177,12 @@ def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_ar
     zaehlen, sonst zeigt die Seite einen Knopf fuer einen Lauf ohne Kandidaten.
     """
     if modus == "ki_neu":
+        # Vom Autor als dekorativ gekennzeichnet (Word, 01.09.2026): nicht anfassen —
+        # nur „Neu generieren“ am Bild stoesst die Entscheidung des Autors um.
         ids = {r["id"] for r in conn.execute(
             "SELECT id FROM images WHERE project_id = ? AND status = 'done' "
-            "AND alt_text_edited IS NULL" + doc_sql,
+            "AND alt_text_edited IS NULL "
+            "AND NOT (original_alt = 'dekorativ' AND image_type = 'dekorativ')" + doc_sql,
             [project_id] + doc_args).fetchall()}
         rest = _ki_neu_rest_lesen(conn, project_id) & ids
         if rest:
@@ -6238,6 +6250,12 @@ async def generate_vorschau(project_id: int, request: Request,
             "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'pending' "
             "AND TRIM(COALESCE(original_alt,'')) != '' AND original_alt != 'dekorativ'" + doc_sql,
             [project_id] + doc_args).fetchone()[0]
+    # Vom Autor als dekorativ gekennzeichnet (Word): laeuft nie mit — die Rueckfrage
+    # sagt es, damit „8 von 9“ nicht wie ein Fehler klingt.
+    autor_dekorativ = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE project_id = ? AND original_alt = 'dekorativ' "
+        "AND image_type = 'dekorativ' AND status = 'done'" + doc_sql,
+        [project_id] + doc_args).fetchone()[0]
     conn.close()
 
     p = billing.aktion_pruefung(user["id"], "bild_generierung", anzahl)
@@ -6249,7 +6267,8 @@ async def generate_vorschau(project_id: int, request: Request,
     je = billing.aktion_preis("bild_generierung", 1) or 1
     verf = p["verfuegbar"]
     machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
-    return {"modus": modus, "anzahl": anzahl, "mit_quelltext": mit_quelltext, "document_id": document_id,
+    return {"modus": modus, "anzahl": anzahl, "mit_quelltext": mit_quelltext, "autor_dekorativ": autor_dekorativ,
+            "document_id": document_id,
             "dokumente": dokumente, "preis": p["preis"], "preis_je": je,
             "verfuegbar": verf, "fehlend": p["fehlend"], "machbar": machbar,
             "erlaubt": bool(anzahl) and (verf is None or machbar >= 1)}
@@ -7801,17 +7820,26 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         ).fetchall()
     conn.close()
 
-    total = beschrieben = dekorativ = fehler = offen = 0
+    # Drei Gruende fuers Ueberspringen (Steve 01.09.2026): Vorher zaehlte alles ohne Text
+    # als „noch nicht generiert“ — auch die von der KI als dekorativ erkannten Bilder
+    # (auf Produktion 986 Stueck, Bildtyp 'dekorativ', Text leer) und bewusst geleerte
+    # Felder. Der Kunde las „3 noch nicht generiert“, obwohl der Lauf durch war.
+    # dekorativ = Text „dekorativ“ ODER Bildtyp dekorativ ohne Text (KI oder Autor);
+    # geleert   = alt_text_edited = '' (bewusst geloescht, seit 31.08.);
+    # offen     = wirklich nie generiert.
+    total = beschrieben = dekorativ = fehler = offen = geleert = 0
     for r in rows:
         img = dict(r)
         total += 1
         ausgabe = _ausgabe_alt_text(img)
-        if ausgabe == "dekorativ":
+        if ausgabe == "dekorativ" or (img.get("image_type") == "dekorativ" and not (ausgabe or "").strip()):
             dekorativ += 1
         elif ausgabe and ausgabe.strip():
             beschrieben += 1
         elif img.get("status") == "error":
             fehler += 1
+        elif img.get("alt_text_edited") == "":
+            geleert += 1
         else:
             offen += 1
     p = billing.export_pruefung(user["id"], total, _export_art(dict(projekt)))
@@ -7819,9 +7847,10 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         "total": total,
         "beschrieben": beschrieben,
         "dekorativ": dekorativ,
-        "uebersprungen": fehler + offen,
+        "uebersprungen": fehler + offen + geleert,
         "fehler": fehler,
         "offen": offen,
+        "geleert": geleert,
         "preis": p["preis"], "verfuegbar": p["verfuegbar"], "erlaubt": p["erlaubt"],
         # Tabellen-Exporte (CSV/JSON) kosten einen festen Preis — fuer die Ansage im Dialog.
         "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],

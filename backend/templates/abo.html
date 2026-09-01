@@ -383,6 +383,17 @@
           widerruf.hidden = false;
         }
         info.appendChild(pLauf);
+        // Warum „Plan wechseln“ fehlt (Steve 01.09.2026: „ich kann gerade nicht auf ein anderes
+        // Abo erhöhen“): Bei gekündigten Online-Abos ist der Wechsel-Bereich bewusst zu
+        // (renderWechsel, Review-Befund 8) — ein Upgrade hoebe die Kündigung still auf. Das
+        // stand bisher nirgends; jetzt steht der Weg direkt beim Knopf „Kündigung zurücknehmen“.
+        if (!eigen.auto_verlaengerung && eigen.quelle === 'stripe' && abo.stripe_aktiv) {
+          const pWeg = document.createElement('p');
+          pWeg.className = 'dash-meta';
+          pWeg.id = 'gekuendigtWechselHinweis';
+          pWeg.textContent = t('Ein Wechsel auf einen anderen Plan ist erst möglich, wenn du die Kündigung zurücknimmst — dann erscheint „Plan wechseln“ wieder.');
+          info.appendChild(pWeg);
+        }
         // Vorgemerkter Plan-Wechsel (Downgrade): ehrlich ansagen, ab wann
         // welcher Plan gilt — samt Möglichkeit, das zurückzunehmen.
         if (eigen.geplanter_plan) {

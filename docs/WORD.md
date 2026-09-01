@@ -309,3 +309,35 @@ Grenzen: Layout nicht pixelgleich zu Word; Schmuckbilder werden noch nicht als
 Artefakt markiert (7.1-3 kann melden, `nachbearbeitung.dekorativ_offen`);
 Seitenvorschau für Sehende folgt. Tests: `tests/test_pdfua_klartext.py`,
 `tests/test_docx_hoerprobe.py`, `tests/e2e/verify_pdfua.py` (Staging).
+
+## Vom Autor als dekorativ gekennzeichnet (01.09.2026)
+
+Word-Autoren können ein Bild als dekorativ kennzeichnen (`adec:decorative`).
+Bis zum 01.09. wurde das Kennzeichen als `original_alt = "dekorativ"`
+mitgeführt, das Bild lief aber trotzdem durch die KI, bekam einen Text (5
+Credits), und der Text gewann über das Kennzeichen — Steves Hörtest fand es an
+der Zierlinie der Fixture („Dekoratives Gestaltungselement …“).
+
+Seit 01.09. (Michael Karbe: „ob ein Bild dekorativ ist, wird beim Tagging vor
+dem Upload entschieden“; Steve: „der Autor geht vor, aber sichtbar und mit
+einem Handgriff umstoßbar“):
+
+- Der Import legt das Bild sofort mit `status = done`, `image_type =
+  dekorativ`, leerem Text an (`main.py`, docx-Import). Es läuft nicht durch
+  die KI und kostet nichts.
+- Die Karte trägt das Badge „Vom Autor in der Datei als dekorativ
+  gekennzeichnet.“ (`autorDekorativ()` in `app.html`).
+- Sammelläufe lassen es aus (`_generier_kandidaten`: `NOT (original_alt =
+  'dekorativ' AND image_type = 'dekorativ')`; Oberfläche gleich). Die
+  Rückfrage sagt „1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt
+  außen vor.“
+- Hält der Kunde die Entscheidung für falsch: „Neu generieren“ am Bild —
+  dann beschreibt die KI es (5 Credits), der Bildtyp wird neu gesetzt, und ab
+  da ist es ein normales Bild.
+- Export: Das Bild wird übersprungen, das Kennzeichen aus der Datei bleibt
+  erhalten (wie bisher). Die Zusammenfassung zählt es unter „als dekorativ
+  erkannt“.
+
+PDF-Vergleich: PDFix filtert Artefakte beim Einlesen komplett heraus — dort
+gewinnt der Autor unsichtbar. Word ist damit die einzige Stelle, an der ein
+Autor-Irrtum sichtbar und korrigierbar ist.

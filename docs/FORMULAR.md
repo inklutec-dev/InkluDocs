@@ -383,3 +383,11 @@ INKLUDOCS_E2E_MAIL=… INKLUDOCS_E2E_PW=… bash tests/e2e/formular_tests.sh
 
 Testkonto: ein normales Nutzerkonto auf Staging; der E2E-Lauf kostet einige
 Credits (Feld-Pass, Chat-Turns über Bedrock). Alle Testdaten sind fiktiv.
+
+## Herunterladen: Sperre und Meldung (01.09.2026)
+
+Wie bei den Alt-Texten (`docs/GENERIERUNG.md`, Runde 2): Während des Exports
+sind alle Knöpfe im Dialog gesperrt, der gedrückte heißt „Wird exportiert...“;
+danach bleibt der Dialog offen, die Statuszeile sagt „Heruntergeladen: „Datei“
+(n Credits abgebucht).“ und bekommt den Fokus, „Abbrechen“ heißt „Zurück zum
+Projekt“. Das Dateiname-Feld hat `autocomplete="off"`.

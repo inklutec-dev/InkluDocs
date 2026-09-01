@@ -116,9 +116,16 @@ check("Zaehler 'beschrieben' um genau 1 gesunken",
       nachher.get("beschrieben") == vorher.get("beschrieben") - 1,
       "%s -> %s" % (vorher.get("beschrieben"), nachher.get("beschrieben")))
 check("Gesamtzahl unveraendert", nachher.get("total") == vorher.get("total"))
-check("Das Bild zaehlt jetzt als offen",
-      nachher.get("offen", 0) == vorher.get("offen", 0) + 1,
+# 01.09.2026 (Steve: „wieso noch nicht generiert, der hat doch alle generiert“): ein
+# bewusst geleertes Bild ist „bewusst ohne Beschreibung“ (geleert), NICHT „noch nicht generiert“.
+check("Das Bild zaehlt jetzt als bewusst geleert (geleert + 1)",
+      nachher.get("geleert", 0) == vorher.get("geleert", 0) + 1,
+      "%s -> %s" % (vorher.get("geleert"), nachher.get("geleert")))
+check("… und NICHT als noch nicht generiert (offen unveraendert)",
+      nachher.get("offen", 0) == vorher.get("offen", 0),
       "%s -> %s" % (vorher.get("offen"), nachher.get("offen")))
+check("uebersprungen = fehler + offen + geleert",
+      nachher.get("uebersprungen") == nachher.get("fehler", 0) + nachher.get("offen", 0) + nachher.get("geleert", 0), str(nachher))
 
 print("\n== Eigenen Text setzen ==")
 hole("/api/images/%d/alt-text" % bild["id"], token, {"alt_text": "Prüftext geleert-Fix"})

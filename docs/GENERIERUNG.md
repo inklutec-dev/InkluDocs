@@ -249,3 +249,40 @@ Jetzt schreibt der Lauf `projects.lauf_hinweis` (JSON: `grund` = `credits` oder 
 `erledigt`, `offen`), `GET /api/projects/{id}/status` reicht ihn als `lauf_hinweis` weiter, und
 `app.html` sagt ihn nach dem Lauf in der Live-Region an — in allen sechs Sprachen. Ein neuer
 Start räumt den alten Hinweis weg.
+
+## Runde 2 am 01.09.2026 (Steves Hörtest auf Staging)
+
+- **Einzahl:** „1 Bild wird beschrieben“, „Eines davon bringt schon einen Text
+  mit“, „1 von der KI erzeugter Text wird neu erzeugt“, „1 Feld ohne
+  Quickinfo“, „1 KI-Vorschlag“ — eigene msgids, weil `t()` keine Pluralformen
+  kennt. Gehört: „1 davon bringen“, „1 Bilder“.
+- **„die KI bezieht ihn ein“** statt „nimmt ihn als Grundlage“: Der
+  mitgebrachte Text steht der KI als `ORIGINAL-ALT` im Prompt (alle
+  Bausteine), nur bei funktionalen Bildern mit brauchbarem Text wird er ohne
+  KI-Aufruf übernommen. Die Fixture `testdokument_inkludocs.docx` trägt
+  absichtlich einen FALSCHEN Bestandstext („roter Kreis“ bei einer roten
+  Fläche) — die KI hat ihn zu Recht nicht übernommen.
+- **Herunterladen-Zusammenfassung mit drei Gründen** (`/export/summary`):
+  `dekorativ` zählt jetzt auch Bildtyp `dekorativ` ohne Text (KI oder Autor —
+  auf Produktion 986 Bilder, die vorher als „noch nicht generiert“ galten),
+  `geleert` = bewusst geleert (`alt_text_edited = ''`), `offen` = nie
+  generiert; `uebersprungen = fehler + offen + geleert`. Sätze: „… 2 als
+  dekorativ erkannt“, „1 bewusst ohne Beschreibung“, Einzahl „1 wird
+  übersprungen“.
+- **Vom Autor als dekorativ gekennzeichnet (Word):** siehe `docs/WORD.md`.
+  Rückfrage nennt sie („1 Bild ist vom Autor als dekorativ gekennzeichnet und
+  bleibt außen vor“, Feld `autor_dekorativ` der Vorschau), Sammelläufe lassen
+  sie aus (Backend `_generier_kandidaten`, Oberfläche `autorDekorativ()`).
+- **Export-Sperre + Meldung nach dem Herunterladen** (alle Werkzeuge): Während
+  des Exports sind alle Knöpfe im Dialog gesperrt, der gedrückte heißt „Wird
+  exportiert...“ (Steve hatte doppelt geklickt: zweimal 30 Credits). Danach
+  bleibt der Dialog offen, die Statuszeile sagt „Heruntergeladen: „Datei“
+  (30 Credits abgebucht).“ (Preis aus `X-Export-Credits`), bekommt den Fokus,
+  und „Abbrechen“ heißt „Zurück zum Projekt“. Ein zweiter Klick währenddessen
+  sagt „Der Export läuft bereits.“
+- **Dateiname-Feld ohne Browser-Ausfüllhilfe** (`autocomplete="off"`): Steves
+  ZIP hieß nach einem alten Projekt, weil der Browser einen Verlaufseintrag
+  ins optionale Feld gesetzt hatte.
+- **Abo-Seite:** Bei gekündigtem Online-Abo steht jetzt beim Knopf „Kündigung
+  zurücknehmen“, warum „Plan wechseln“ fehlt (Review-Befund 8 blieb sonst
+  unsichtbar).

@@ -591,7 +591,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // 01.09.2026: „ohne Hand-Text" heisst alt_text_edited == null (nie angefasst). Ein geleertes
         // Feld ('') ist eine eigene Entscheidung und kein Kandidat — dieselbe Regel wie
         // _generier_kandidaten im Backend, sonst zeigt die Seite einen Knopf ohne Lauf dahinter.
-        const kiBilder = images.filter(i => i.status === 'done' && i.alt_text_edited == null).length;
+        // Vom Autor als dekorativ gekennzeichnete Bilder (Word, 01.09.2026) fasst der Sammellauf nicht an —
+        // dieselbe Ausnahme wie _generier_kandidaten im Backend.
+        const kiBilder = images.filter(i => i.status === 'done' && i.alt_text_edited == null && !autorDekorativ(i)).length;
         window._inReview = !!data.in_review;  // Owner: Pruef-Badges nur bei freigegebenem Projekt
         window._shareRoles = data.share_roles || [];  // aktive Gast-Rollen (Etappe 2: Badges + Filter)
         if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';  // Rollen-Workflow (10.07.2026)
@@ -668,7 +670,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Dateiname (optional)')}</label>
-                                <input type="text" id="exportFilename" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
+                                <input type="text" id="exportFilename" autocomplete="off" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
                                 <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">${t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.')}</p>
                             </div>
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
@@ -678,7 +680,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word (Beta)') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln (Beta)') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
-                                <button class="btn btn-secondary" onclick="closeExportPanel()">${t('Abbrechen')}</button>
+                                <button class="btn btn-secondary" id="exportCancelBtn" onclick="closeExportPanel()">${t('Abbrechen')}</button>
                             </div>
                             <span id="exportStatus" role="status" aria-live="polite" style="display:block;margin-top:0.5rem;"></span>
                             <div id="pdfuaResult" role="region" aria-label="${t('Ergebnis der Umwandlung')}" aria-live="polite" style="margin-top:0.6rem;"></div>
@@ -1133,6 +1135,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // die PDF-Ausgabe nicht. EINE Stelle fuer Projekt-Knopf und Dokument-Knopf.
     function herunterladenName(project) {
         return (project && project.project_type === 'docx') ? t('Herunterladen (Beta)') : t('Herunterladen');
+    }
+
+    // Vom Autor in der Datei als dekorativ gekennzeichnet (Word-Import setzt original_alt
+    // „dekorativ“ + Bildtyp dekorativ + fertig, 01.09.2026 nach Michael Karbes Punkt 1:
+    // „dekorativ wird beim Tagging vor dem Upload entschieden“). Solche Bilder laufen nicht
+    // durch die KI und kosten nichts; „Neu generieren“ am Bild stoesst die Entscheidung um.
+    function autorDekorativ(img) {
+        return !!img && img.original_alt === 'dekorativ' && img.image_type === 'dekorativ';
     }
 
     // Korb C (17.07.2026): der fruehere Besitzer-Rollen-Umschalter (Lektorat/
@@ -2023,6 +2033,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 <div class="image-review-header">
                     <span class="image-meta">${img.width}x${img.height}px</span>
                     ${img.image_type && img.image_type !== 'unknown' ? '<span class="image-type-badge">' + t('Kategorie: {typ}', { typ: img.image_type.charAt(0).toUpperCase() + img.image_type.slice(1) }) + '</span>' : ''}
+                    ${autorDekorativ(img) ? '<span class="badge" style="background:#4b5563;color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.8rem;">' + t('Vom Autor in der Datei als dekorativ gekennzeichnet.') + '</span>' : ''}
                     <!-- Bestands-a11y-Fix 15.07.2026: Konfidenz-Farben auf AA gehoben (weisse
                          Schrift auf var(--success)/#e90 hatte < 3,5:1) — hoch #1e7e34 (5,1:1),
                          mittel #a15c00 (5,2:1), niedrig #b91c1c (5,9:1). -->
@@ -2235,7 +2246,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // diesem Dokument vorausgewaehlt. Nicht im Gast-Modus, nicht waehrend der Verarbeitung.
             const docImgsAll = Array.from(pageMap.values()).flat();
             const docPending = docImgsAll.filter(i => i.status === 'pending').length;
-            const docKi = docImgsAll.filter(i => i.status === 'done' && i.alt_text_edited == null).length;  // wie kiBilder (01.09.2026)
+            const docKi = docImgsAll.filter(i => i.status === 'done' && i.alt_text_edited == null && !autorDekorativ(i)).length;  // wie kiBilder (01.09.2026)
             const docBusy = project && (project.status === 'processing' || project.status === 'extracting');
             const vhSuffixDoc = t('– Dokument „{name}“', { name: labelName });
             let docGenBtn = '';
@@ -2679,14 +2690,29 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // „n Bilder haben noch keine Beschreibung" war falsch, sobald die Datei
         // schon Alternativtexte mitbringt (Word fast immer). Die stehen sichtbar
         // im Feld und gehen als Grundlage an die KI; der Satz sagt das jetzt.
+        // Einzahl (Steve 01.09.2026, gehoert: „1 davon bringen“, „1 Bilder“): eigene Saetze fuer 1.
+        // „bezieht ihn ein“ statt „nimmt ihn als Grundlage“: der mitgebrachte Text steht der KI
+        // als ORIGINAL-ALT im Prompt, sie prueft ihn gegen das Bild — mehr verspricht der Satz nicht.
         let satz;
         if (modus === 'ki_neu') {
-            satz = t('{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+            satz = v.anzahl === 1
+                ? t('1 von der KI erzeugter Text wird neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { c: v.preis })
+                : t('{n} von der KI erzeugte Texte werden neu erzeugt. Deine eigenen Texte bleiben unverändert. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
         } else {
-            satz = t('{n} Bilder werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
-            if (v.mit_quelltext > 0) {
-                satz += ' ' + t('{m} davon bringen schon einen Text aus der Datei mit; die KI nimmt ihn als Grundlage.', { m: v.mit_quelltext });
+            satz = v.anzahl === 1
+                ? t('1 Bild wird beschrieben. Das kostet {c} Credits.', { c: v.preis })
+                : t('{n} Bilder werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
+            if (v.mit_quelltext === 1) {
+                satz += ' ' + t('Eines davon bringt schon einen Text aus der Datei mit; die KI bezieht ihn ein.');
+            } else if (v.mit_quelltext > 1) {
+                satz += ' ' + t('{m} davon bringen schon einen Text aus der Datei mit; die KI bezieht ihn ein.', { m: v.mit_quelltext });
             }
+        }
+        // Vom Autor in der Datei als dekorativ gekennzeichnet (Word): bleibt aussen vor, kostet nichts.
+        if (v.autor_dekorativ === 1) {
+            satz += ' ' + t('1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor.');
+        } else if (v.autor_dekorativ > 1) {
+            satz += ' ' + t('{n} Bilder sind vom Autor als dekorativ gekennzeichnet und bleiben außen vor.', { n: v.autor_dekorativ });
         }
         satz += ' ' + guthabenSatz(v, 'bild');
         generierRueckfrage({
@@ -2751,6 +2777,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const input = document.getElementById('exportFilename');
         if (!panel) return;
         if (input) input.value = '';
+        // Frischer Dialog: Statuszeile leer, Abbrechen heisst wieder Abbrechen (01.09.2026).
+        _exportFertig = false;
+        const statusAlt = document.getElementById('exportStatus');
+        if (statusAlt) statusAlt.textContent = '';
+        const cancelAlt = document.getElementById('exportCancelBtn');
+        if (cancelAlt) cancelAlt.textContent = t('Abbrechen');
         exportZiel = docId ? { all: false, document_id: docId } : { all: true };
         const head = document.getElementById('exportPanelHeading');
         if (head) {
@@ -2791,15 +2823,21 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             });
             if (!res.ok) { region.textContent = ''; return; }
             const d = await res.json();
-            const dekTeil = d.dekorativ ? t(', {n} als dekorativ markiert', { n: d.dekorativ }) : '';
+            // Drei Gruende statt zwei (Steve 01.09.2026, gehoert: „3 noch nicht generiert“, obwohl
+            // alles generiert war): dekorativ ERKANNT (KI oder Autor), bewusst geleert, nicht generiert.
+            const dekTeil = d.dekorativ ? t(', {n} als dekorativ erkannt', { n: d.dekorativ }) : '';
             let msg;
             if (d.uebersprungen === 0) {
                 msg = t('Alle {n} Bilder haben eine Beschreibung{dek}.', { n: d.total, dek: dekTeil });
             } else {
                 const gruende = [];
                 if (d.fehler) gruende.push(t('{n} mit Fehler', { n: d.fehler }));
+                if (d.geleert) gruende.push(t('{n} bewusst ohne Beschreibung', { n: d.geleert }));
                 if (d.offen) gruende.push(t('{n} noch nicht generiert', { n: d.offen }));
-                msg = t('{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}.',
+                msg = d.uebersprungen === 1
+                    ? t('{b} von {n} Bildern haben eine Beschreibung{dek}. 1 wird übersprungen: {g}.',
+                        { b: d.beschrieben, n: d.total, dek: dekTeil, g: gruende.join(', ') })
+                    : t('{b} von {n} Bildern haben eine Beschreibung{dek}. {s} werden übersprungen: {g}.',
                         { b: d.beschrieben, n: d.total, dek: dekTeil, s: d.uebersprungen, g: gruende.join(', ') });
             }
             // Export-Staffel (28.08.2026): Preis und Guthaben vor dem Export ansagen.
@@ -2959,7 +2997,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             if (typeof panel.close === 'function') panel.close();
             else panel.removeAttribute('open');
         }
-        if (!silent) announce(t('Export abgebrochen.'));
+        // Nach einem fertigen Export heisst der Knopf „Zurück zum Projekt“ — dann ist
+        // Schliessen kein Abbruch (01.09.2026).
+        if (!silent && !_exportFertig) announce(t('Export abgebrochen.'));
+        _exportFertig = false;
     }
 
     // Export-Ziel (Steve 28.08.2026): keine Auswahlliste mehr im Dialog — der Knopf entscheidet.
@@ -2970,7 +3011,39 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return exportZiel.document_id ? { all: false, document_id: exportZiel.document_id } : { all: true };
     }
 
+    // Export-Sperre + Meldung nach dem Herunterladen (Steve 01.09.2026: „ich hab doppelt
+    // heruntergeladen, weil ich danach nichts bekommen hab“ — zweimal 30 Credits).
+    // Waehrend des Exports sind alle Knoepfe im Dialog gesperrt, der gedrueckte heisst
+    // „Wird exportiert...“. Danach bleibt der Dialog OFFEN: Die Statuszeile sagt
+    // „Heruntergeladen: „Datei“ (30 Credits abgebucht).“, bekommt den Fokus, und der
+    // Abbrechen-Knopf heisst „Zurück zum Projekt“. Gilt fuer alle Formate dieses Dialogs;
+    // das Formular-Werkzeug macht es in formular.js genauso.
+    let _exportLaeuft = false;
+    let _exportFertig = false;
+
     async function doExport(projectId, format) {
+        if (_exportLaeuft) { announce(t('Der Export läuft bereits.')); return; }
+        _exportLaeuft = true;
+        const panel = document.getElementById('exportPanel');
+        const knoepfe = panel ? Array.from(panel.querySelectorAll('button')) : [];
+        const aktiv = knoepfe.includes(document.activeElement) ? document.activeElement : null;
+        const aktivInhalt = aktiv ? aktiv.innerHTML : '';
+        knoepfe.forEach(b => { b.disabled = true; });
+        if (aktiv) aktiv.textContent = t('Wird exportiert...');
+        try {
+            await _doExport(projectId, format);
+        } finally {
+            _exportLaeuft = false;
+            knoepfe.forEach(b => { b.disabled = false; });
+            if (aktiv) aktiv.innerHTML = aktivInhalt;
+            if (_exportFertig) {
+                const statusEl = document.getElementById('exportStatus');
+                if (statusEl) statusEl.focus();
+            }
+        }
+    }
+
+    async function _doExport(projectId, format) {
         const filenameInput = document.getElementById('exportFilename');
         const statusEl = document.getElementById('exportStatus');
         const scope = readExportScope();
@@ -3004,8 +3077,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const ext = format === 'pdf' ? '.pdf' : format === 'docx' ? '.docx' : format === 'csv' ? '.csv' : '.json';
                 const fallback = (customName || 'export') + (scope.all ? '_alle' : '') + ext;
                 downloadBlob(blob, serverName || fallback);
-                announce(t('{name} wurde heruntergeladen.', { name: serverName || fallback }));
-                closeExportPanel(true);
+                const credits = res.headers.get('X-Export-Credits');
+                const fertig = credits
+                    ? t('Heruntergeladen: „{name}“ ({c} Credits abgebucht).', { name: serverName || fallback, c: credits })
+                    : t('Heruntergeladen: „{name}“.', { name: serverName || fallback });
+                if (statusEl) { statusEl.textContent = fertig; statusEl.setAttribute('tabindex', '-1'); }
+                announce(fertig);
+                _exportFertig = true;
+                const cancel = document.getElementById('exportCancelBtn');
+                if (cancel) cancel.textContent = t('Zurück zum Projekt');
             } else {
                 if (statusEl) statusEl.textContent = t('Fehler beim Export.');
                 announce(t('Fehler beim Export.'));

@@ -117,6 +117,10 @@ with sync_playwright() as p:
           (ansage["beschreibung"] or "").startswith(umfang), str(ansage))
     check("Kostensatz Erstlauf nennt die Gesamtzahl („werden beschrieben“) statt „noch keine Beschreibung“",
           "noch keine Beschreibung" not in text, text)
+    # Einzahl (Steve 01.09.2026, gehoert: „1 davon bringen“, „1 Bilder“): kein „1 <Mehrzahl>“ im Satz.
+    import re as _re
+    check("Keine Einzahl-Mehrzahl-Panne im Kostensatz",
+          not _re.search(r"\b1 (davon bringen|Bilder|von der KI erzeugte Texte|Felder|KI-Vorschläge)\b", text), text)
     print("     Angesagt wird: %r — %r" % (ansage["name"], (ansage["beschreibung"] or "")[:90]))
     check("Fokus liegt im Dialog",
           page.evaluate("document.getElementById('genConfirmDialog').contains(document.activeElement)"))
@@ -165,6 +169,9 @@ with sync_playwright() as p:
         check("Word: Kostensatz nennt die Gesamtzahl („werden beschrieben“)",
               "werden beschrieben" in text_w or "werden neu erzeugt" in text_w, text_w)
         check("Word: kein „noch keine Beschreibung“ mehr", "noch keine Beschreibung" not in text_w, text_w)
+        check("Word: keine Einzahl-Mehrzahl-Panne",
+              not _re.search(r"\b1 (davon bringen|Bilder|von der KI erzeugte Texte)\b", text_w), text_w)
+        check("Word: „bezieht ihn ein“ statt „nimmt ihn als Grundlage“", "als Grundlage" not in text_w, text_w)
         vorschau = page.evaluate("""async (id) => {
             const r = await fetch('/api/projects/' + id + '/generate/vorschau', {method:'POST',
                 headers:{'Content-Type':'application/json'}, body: JSON.stringify({modus:'luecken'})});
