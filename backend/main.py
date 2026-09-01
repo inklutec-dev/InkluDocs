@@ -7125,6 +7125,28 @@ def _exportable_alt_text(img) -> Optional[str]:
     return None
 
 
+def _pdfix_lfnr_je_dokument(images: list) -> dict:
+    """Laufende Nummer je Bild fuer den PDFix-Rueckweg — PRO DOKUMENT ab 1.
+
+    Befund Michael Karbe 01.09.2026 (Projekt 376, Produktion, "Fehler beim Export"):
+    Der Import (pdfix_scripts/AltTag_Import_CSV.py) zaehlt die Figures der EINEN PDF
+    von 1 bis N durch. Bisher ging images.image_index in die CSV — der ist aber
+    PROJEKTWEIT fortlaufend: das zweite Dokument beginnt bei 11, und nach dem
+    Loeschen eines Dokuments beginnt auch das erste nicht mehr bei 1. Folge:
+    "CSV referenziert laufende Nummern [11, 12], aber der StructTree enthaelt nur
+    10 zaehlbare Figures" — Abbruch ohne Speichern, bei JEDEM Mehrdokument-Projekt
+    mit PDFix-Extraktion (Produktion: 3 Projekte) und nach jedem Dokument-Loeschen.
+
+    Die Extraktion legt die Bilder eines Dokuments in der Reihenfolge der PDFix-
+    Traversierung mit aufsteigendem image_index an; Bilder einer PDF werden nie
+    einzeln geloescht (delete_document loescht nur ganze Dokumente). Der Rang
+    innerhalb des Dokuments ist deshalb genau die Figure-Nummer des Imports.
+    Rueckgabe: {image_id: laufende Nummer ab 1}."""
+    geordnet = sorted((img for img in images if img.get("image_index")),
+                      key=lambda i: int(i["image_index"]))
+    return {img["id"]: pos for pos, img in enumerate(geordnet, start=1)}
+
+
 def _build_pdf_for_document(unit: dict, output_dir: str,
                             custom_title: Optional[str] = None) -> tuple[str, dict]:
     """Erzeugt die exportierte PDF fuer EIN Dokument (alle Alt-Texte
@@ -7139,13 +7161,14 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     alt_texts = {}
     alt_texts_by_lfnr = {}
     image_metadata = []
+    lfnr_je_bild = _pdfix_lfnr_je_dokument(images)
 
     for img in images:
         alt_text = _exportable_alt_text(img)
         if alt_text is not None and img.get("xref"):
             alt_texts[img["xref"]] = alt_text
-        if alt_text is not None and img.get("image_index"):
-            alt_texts_by_lfnr[int(img["image_index"])] = alt_text
+        if alt_text is not None and img.get("id") in lfnr_je_bild:
+            alt_texts_by_lfnr[lfnr_je_bild[img["id"]]] = alt_text
         bbox = None
         if img.get("bbox_x0") is not None:
             bbox = (img["bbox_x0"], img["bbox_y0"], img["bbox_x1"], img["bbox_y1"])

@@ -288,3 +288,19 @@ Start räumt den alten Hinweis weg.
 - **Abo-Seite:** Bei gekündigtem Online-Abo steht jetzt beim Knopf „Kündigung
   zurücknehmen“, warum „Plan wechseln“ fehlt (Review-Befund 8 blieb sonst
   unsichtbar).
+
+## PDF-Export über PDFix: laufende Nummer je Dokument (01.09.2026)
+
+Befund Michael Karbe („Fehler beim Export" bei „Als PDF", Produktion Projekt
+376): Der PDFix-Rückweg (`pdfix_roundtrip.import_alt_texts_pdfix` →
+`pdfix_scripts/AltTag_Import_CSV.py`) ordnet die Alt-Texte über eine laufende
+Nummer 1..N den Figures der EINEN PDF zu. Bis zum 01.09. ging
+`images.image_index` in die CSV — der ist aber projektweit fortlaufend. Beim
+zweiten Dokument eines Projekts (Nummern ab 11) oder nach dem Löschen eines
+Dokuments (Nummern ab 3) brach der Import ab: „CSV referenziert laufende
+Nummern [11, 12], aber der StructTree enthält nur 10 zählbare Figures". Auf
+Produktion waren 6 von 23 PDFix-Projekten betroffen. Jetzt vergibt
+`_pdfix_lfnr_je_dokument()` den Rang innerhalb des Dokuments (Sortierung
+nach `image_index`), der genau der Figure-Nummer der Extraktion entspricht.
+Unit-Test `tests/test_pdfix_lfnr.py`; Beweis auf Staging: Projekt 93,
+Dokument 2 exportiert wieder.
