@@ -341,3 +341,17 @@ einem Handgriff umstoßbar“):
 PDF-Vergleich: PDFix filtert Artefakte beim Einlesen komplett heraus — dort
 gewinnt der Autor unsichtbar. Word ist damit die einzige Stelle, an der ein
 Autor-Irrtum sichtbar und korrigierbar ist.
+
+## Dokumente ohne Bilder bleiben (01.09.2026, Befund aus Steves Hörtest)
+
+Ein Word-Dokument, das nur ein Diagramm, SmartArt oder ein OLE-Objekt enthält,
+liefert 0 Bilder und Hinweise — es ist ein gültiges Dokument. Bis zum
+01.09.2026 löschte die Start-Migration „Phantom-Dokument-Cleanup" (08.06.2026,
+`database.py`) bei JEDEM Container-Start alle Dokumente ohne Bilder und
+nummerierte die übrigen neu. Folge: Steves Diagramm-Dokument verschwand beim
+Staging-Neustart, und `doc_index` passte danach nicht mehr zum Bilderordner
+(`results/<user>/<projekt>/doc<N>`; auf Staging vier Dokumente, auf Produktion
+eines). Die Migration ist stillgelegt (sie hatte ihre Arbeit am 08.06. getan),
+die Ordnernummern wurden von Hand repariert, und
+`tests/test_phantom_cleanup.py` hält die Migration stumm (rot gegen den alten
+Code). Dokumente werden nur noch auf Wunsch des Nutzers gelöscht.

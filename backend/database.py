@@ -851,51 +851,25 @@ def _migrate_columns(conn):
     except Exception as e:
         print(f"Migration warning (web documents backfill): {e}")
 
-    # Phantom-Dokument-Cleanup (08.06.2026 — Michael-Befund auf Staging):
-    # Entfernt Dokument-Zeilen, die KEINEM einzigen Bild zugeordnet sind. Solche
-    # Zeilen sind aus dem fehlerhaften ersten Backfill entstanden, als leere
-    # PDF-Projekte (kein echter Upload) faelschlich ein "Dokument 1 mit 0 Bildern"
-    # bekommen haben — das hat die echte erste PDF, die der Nutzer anschliessend
-    # hochlud, auf doc_index 2 verschoben (siehe Michael, PROJ 93).
-    #
-    # Idempotent: ohne Phantom-Treffer passiert nichts. Nach dem Loeschen werden
-    # die verbliebenen Dokumente pro betroffenem Projekt lueckenlos ab 1 in der
-    # bisherigen Reihenfolge (doc_index, id) neu nummeriert, damit die echte
-    # erste PDF wieder Dokument 1 wird. Keine UNIQUE-Constraint auf
-    # (project_id, doc_index) — Renumber kann direkt aufsteigend laufen.
-    # QUICKINFO-WERKZEUG (27.08.2026): Formular-Dokumente haben KEINE Bilder,
-    # sondern Formularfelder (Tabelle formularfelder) — sie sind keine Phantome.
-    # Ausgenommen sind alle Dokumente mit Feldern und alle Dokumente eines
-    # Formular-Projekts (auch waehrend die Extraktion noch laeuft). Ohne diese
-    # Ausnahme loeschte der Start am 27.08.2026 ein frisch gelesenes Formular.
-    try:
-        phantom_rows = conn.execute(
-            """SELECT d.id, d.project_id FROM documents d
-               WHERE NOT EXISTS (SELECT 1 FROM images i WHERE i.document_id = d.id)
-                 AND NOT EXISTS (SELECT 1 FROM formularfelder f WHERE f.document_id = d.id)
-                 AND NOT EXISTS (SELECT 1 FROM projects p WHERE p.id = d.project_id AND p.tool = 'formular')"""
-        ).fetchall()
-        if phantom_rows:
-            phantom_ids = [r["id"] for r in phantom_rows]
-            projects_to_renumber = {r["project_id"] for r in phantom_rows}
-            placeholders = ",".join("?" * len(phantom_ids))
-            conn.execute(
-                f"DELETE FROM documents WHERE id IN ({placeholders})",
-                phantom_ids,
-            )
-            for pid in projects_to_renumber:
-                remaining = conn.execute(
-                    "SELECT id FROM documents WHERE project_id = ? ORDER BY doc_index, id",
-                    (pid,),
-                ).fetchall()
-                for new_idx, row in enumerate(remaining, start=1):
-                    conn.execute(
-                        "UPDATE documents SET doc_index = ? WHERE id = ?",
-                        (new_idx, row["id"]),
-                    )
-            print(f"Migration: Phantom-Dokumente entfernt ({len(phantom_ids)} Zeilen, {len(projects_to_renumber)} Projekte renumberiert)")
-    except Exception as e:
-        print(f"Migration warning (phantom document cleanup): {e}")
+    # Phantom-Dokument-Cleanup (08.06.2026) — STILLGELEGT am 01.09.2026 (Steve/Fable 5).
+    # Die Migration loeschte bei JEDEM Start alle Dokumente ohne Bilder (ausser
+    # Formular) und nummerierte die uebrigen neu. Sie war fuer die Phantome des
+    # ersten Web-Backfills gedacht und hat ihre Arbeit am 08.06.2026 getan.
+    # Seitdem war sie eine Falle:
+    #   1. Word-Dokumente ohne lesbares Bild sind KEINE Phantome — ein Diagramm-
+    #      oder SmartArt-Dokument liefert 0 Bilder plus Hinweise (docs/WORD.md).
+    #      Steves Testdokument 2 (Projekt 491, Staging) wurde beim Staging-Neustart
+    #      am 01.09.2026 geloescht, ohne dass jemand geloescht hatte.
+    #   2. Die Neunummerierung verletzt die Regel aus delete_document: doc_index
+    #      ist der Ordnerschluessel (results/<user>/<projekt>/doc<N>). Nach dem
+    #      Umnummerieren lagen auf Staging vier Dokumente in fremden Ordnern
+    #      (Projekte 93, 320, 491), auf Produktion eines (Projekt 336); der naechste
+    #      Upload haette in einen belegten Ordner geschrieben.
+    # Nichts davon wird hier wiederholt. Dokumente werden nur noch auf Wunsch des
+    # Nutzers geloescht (delete_document, delete_image mit letztem Bild) oder wenn
+    # eine Extraktion scheitert (_extract_document). Die Ordner-Nummern der
+    # betroffenen Dokumente wurden am 01.09.2026 von Hand auf den Ordner gesetzt.
+    # Ein Test (tests/test_phantom_cleanup.py) haelt die Migration stumm.
 
     conn.commit()
 
