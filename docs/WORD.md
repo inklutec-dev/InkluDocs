@@ -356,18 +356,22 @@ die Ordnernummern wurden von Hand repariert, und
 `tests/test_phantom_cleanup.py` hält die Migration stumm (rot gegen den alten
 Code). Dokumente werden nur noch auf Wunsch des Nutzers gelöscht.
 
-## Bekannte Lücken der barrierefreien PDF (Stand 01.09.2026, aus verify_pdfua)
+## Konverter mit LibreOffice 26.2.5 (01.09.2026 abends) — Lücken geschlossen
 
-Mit vollständig beschrifteten Bildern meldet veraPDF für die Testdatei noch zwei
-Dinge, die NICHT am Alt-Text-Werkzeug liegen und im Prüfbericht an den Nutzer
-ehrlich erscheinen:
-1. **Vom Autor als dekorativ gekennzeichnete Bilder** werden in der PDF noch
-   nicht zu Artefakten — LibreOffice ignoriert das Word-Kennzeichen, die Figure
-   bleibt ohne Alt (`dekorativ_offen` in `nachbearbeitung`). Stufe 3: Figure →
-   Artefakt umschreiben (pikepdf, StructTree + Marked Content).
-2. **Inhalte ohne Struktur-Markierung** (Bereich „Struktur und Lesereihenfolge“,
-   z. B. Rahmen/Linien) stammen aus LibreOffice 7.4 im Konverter; neuere
-   LibreOffice-Versionen taggen sauberer → Konverter-Image prüfen.
-`tests/e2e/verify_pdfua.py` beschriftet deshalb erst alle Bilder und erwartet
-dann: kein Alt-Text-Befund für beschriebene Bilder, keine Befunde außerhalb
-dieser beiden Lücken; „vollständig bestanden“ wird nur als Info ausgegeben.
+Bis zum 01.09.2026 lief im Konverter das Debian-Paket LibreOffice 7.4.7 (2023).
+Mit vollständig beschrifteten Bildern blieben zwei veraPDF-Befunde, die nicht am
+Alt-Text-Werkzeug lagen: „Inhalte weder als Struktur noch als Schmuck markiert"
+(7.1-3, Rahmen/Linien) und das vom Autor als dekorativ gekennzeichnete Bild, das
+LibreOffice 7.4 als Figure ohne Alt ausgab (7.3-1).
+Seit dem Konverter-Image mit **LibreOffice 26.2.5** (TDF-Pakete, `konverter/Dockerfile`,
+`ARG LO_VERSION`) sind beide weg: Rohumwandlung der Testdatei 8 → 5 rote Regeln (nur
+noch fehlende Alt-Texte, die unsere Pipeline nachträgt), Diagramm-Datei 3 → 1
+(dc:title, setzt die Pipeline), und nach dem kompletten Weg (Alt-Texte, Titel,
+Dokument-Eigenschaften) bestehen alle Testdokumente PDF/UA-1 vollständig —
+`tests/e2e/verify_pdfua.py` 13/13, Word-Batterie unverändert grün. Umwandlungsdauer
+gleich (2–3 s), Image 2,0 GB statt 1,1 GB. Rückfall: `konverter/Dockerfile.bak-lo74-20260901`.
+Verbleibender Prüfbericht-Befund der Testdatei ist ein Autorenfehler (Tabelle ohne
+Kopfzeile) — Kandidat für eine automatische Korrektur (`w:tblHeader`).
+Vergleichsdateien: `/home/claude/lo_vergleich/{alt,neu,altpruef}` auf dem Server.
+`verify_pdfua.py` bleibt tolerant (Info statt Fehler bei „nicht vollständig"), bis der
+neue Konverter auf Produktion läuft; danach kann „vollständig bestanden" Pflicht werden.

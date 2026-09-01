@@ -7,12 +7,24 @@ FROM debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 \
     PYTHONUNBUFFERED=1 JAVA_TOOL_OPTIONS="-Xmx512m"
 
+# LibreOffice (01.09.2026): nicht mehr das Debian-Paket 7.4 (2023), sondern die aktuelle Ausgabe der
+# Document Foundation — beim barrierefreien PDF-Export (Tagging von Rahmen, Linien, dekorativen Bildern)
+# hat sich seit 7.4 viel getan. Die TDF-Pakete bringen alle Module mit; installiert wird ueber apt aus
+# den lokalen .deb-Dateien, damit die Abhaengigkeiten sauber aufgeloest werden. soffice liegt danach
+# unter /opt/libreoffice<major.minor>/program und wird nach /usr/local/bin verlinkt (app.py ruft "soffice").
+ARG LO_VERSION=26.2.5
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libreoffice-writer-nogui \
     fonts-dejavu fonts-liberation fonts-noto-core fonts-crosextra-carlito fonts-crosextra-caladea \
     default-jre-headless \
-    python3 python3-pip ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    python3 python3-pip ca-certificates curl \
+    libx11-6 libxinerama1 libxrender1 libxext6 libxrandr2 libxi6 libcairo2 libcups2 libdbus-1-3 \
+    libglib2.0-0 libsm6 libice6 libnss3 libnspr4 libfreetype6 fontconfig libxslt1.1 libxml2 libgl1 \
+    && curl -fsSL -o /tmp/lo.tar.gz "https://download.documentfoundation.org/libreoffice/stable/${LO_VERSION}/deb/x86_64/LibreOffice_${LO_VERSION}_Linux_x86-64_deb.tar.gz" \
+    && mkdir -p /tmp/lo && tar -xzf /tmp/lo.tar.gz -C /tmp/lo --strip-components=1 \
+    && apt-get install -y --no-install-recommends /tmp/lo/DEBS/*.deb \
+    && rm -rf /tmp/lo /tmp/lo.tar.gz /var/lib/apt/lists/* \
+    && ln -s /opt/libreoffice${LO_VERSION%.*}/program/soffice /usr/local/bin/soffice \
+    && soffice --version
 
 # veraPDF aus dem offiziellen Image (nur die Jars; Java kommt von Debian).
 # FESTGENAGELT auf den Digest (Steve/Cody 30.08.2026): Das veraPDF-Urteil ist die
