@@ -4665,8 +4665,8 @@ msgid "Leistung: {credits} Credits pro Monat. Ein Alt-Text kostet {alt} Credits,
 msgstr "Service: {credits} credits per month. An alt text costs {alt} credits, a tooltip {qi} credit."
 
 #: Aktionspreise 29.08.2026
-msgid "Tabellen-Exporte (CSV, JSON) kosten {p} Credits."
-msgstr "Table exports (CSV, JSON) cost {p} credits."
+msgid "Die Alternativtexte können zusätzlich als CSV oder JSON exportiert werden ({p} Credits)."
+msgstr "The alternative texts can additionally be exported as CSV or JSON ({p} credits)."
 
 #: Aktionspreise 29.08.2026
 msgid "Die Feldliste als CSV kostet {p} Credits."

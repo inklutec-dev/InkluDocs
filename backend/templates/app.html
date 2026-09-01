@@ -2904,8 +2904,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 msg = t('{b} von {n} Bildern haben einen Text, {o} haben keinen{dek}.', { b: mit, n: d.total, o: ohne, dek: dekTeil });
             }
             // Export-Staffel (28.08.2026): Preis und Guthaben vor dem Export ansagen.
+            // CSV/JSON als Zusatzangebot formuliert (Steve 01.09.2026): „Tabellen-Exporte kosten“ klang bei PDF/Word so,
+            // als würde die Datei selbst als Tabelle exportiert.
             if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
-            if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Tabellen-Exporte (CSV, JSON) kosten {p} Credits.', { p: d.preis_tabelle });
+            if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Die Alternativtexte können zusätzlich als CSV oder JSON exportiert werden ({p} Credits).', { p: d.preis_tabelle });
             region.textContent = msg;
             announce(msg);
         } catch (e) {
