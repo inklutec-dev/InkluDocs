@@ -2704,7 +2704,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // aufgehoben: „Vorherigen Text zurueckholen" am Bild).
         // Wortlaut Michael Karbe (Mail 01.09.2026): Gesamtzahl, Preis, Guthaben, Abbruch moeglich.
         let satz;
-        if (docId) {
+        if (v.rest) {
+            // Rest eines abgebrochenen Laufs: nur die offenen Bilder, ehrlich benannt (01.09.2026).
+            satz = v.anzahl === 1
+                ? t('Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits.', { g: v.gesamt, c: v.preis })
+                : t('Vom abgebrochenen Lauf sind noch {n} von {g} Bildern offen; nur diese werden jetzt beschrieben, das benötigt {c} Credits.', { n: v.anzahl, g: v.gesamt, c: v.preis });
+        } else if (docId) {
             satz = v.anzahl === 1
                 ? t('Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits.', { c: v.preis })
                 : t('Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits.', { n: v.anzahl, c: v.preis });

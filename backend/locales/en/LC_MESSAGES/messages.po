@@ -5323,3 +5323,11 @@ msgstr "No generation is running at the moment."
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
 msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Cancelled: {i} images were processed, {n} remained open."
+
+#. Rueckfrage nach Abbruch (Steve 01.09.2026)
+msgid "Vom abgebrochenen Lauf sind noch {n} von {g} Bildern offen; nur diese werden jetzt beschrieben, das benötigt {c} Credits."
+msgstr "{n} of {g} images are still open from the cancelled run; only these will be described now, which requires {c} credits."
+
+#. Rueckfrage nach Abbruch (Steve 01.09.2026)
+msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
+msgstr "1 of {g} images is still open from the cancelled run; only this one will be described now, which requires {c} credits."

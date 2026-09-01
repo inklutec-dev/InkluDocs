@@ -5014,3 +5014,11 @@ msgstr "Der kører ingen generering lige nu."
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
 msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Afbrudt: {i} billeder blev behandlet, {n} forblev åbne."
+
+#. Rueckfrage nach Abbruch (Steve 01.09.2026)
+msgid "Vom abgebrochenen Lauf sind noch {n} von {g} Bildern offen; nur diese werden jetzt beschrieben, das benötigt {c} Credits."
+msgstr "{n} af {g} billeder er stadig åbne fra den afbrudte kørsel; kun disse bliver beskrevet nu, hvilket kræver {c} credits."
+
+#. Rueckfrage nach Abbruch (Steve 01.09.2026)
+msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
+msgstr "1 af {g} billeder er stadig åbent fra den afbrudte kørsel; kun dette bliver beskrevet nu, hvilket kræver {c} credits."

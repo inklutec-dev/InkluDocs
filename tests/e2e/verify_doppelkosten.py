@@ -298,6 +298,8 @@ try:
     check("Abbruch: alle vier Bilder wieder auf done (nichts haengt)",
           [r["status"] for r in con.execute("SELECT status FROM images WHERE project_id=? ORDER BY id", (PID,))] == ["done"] * 4)
     check("Abbruch: Rest-Vermerk enthaelt die drei offenen Bilder", len(vermerk()) == 3, vermerk())
+    v_rest = asyncio.run(main.generate_vorschau(PID, FakeRequest({"modus": "alle"}), user=nutzer))
+    check("Vorschau nach Abbruch: rest=True, anzahl 3 von gesamt 4", v_rest.get("rest") is True and v_rest.get("anzahl") == 3 and v_rest.get("gesamt") == 4, v_rest)
     check("Abbruch: Projekt wieder auf done, Signal geloescht",
           status_von("status") == "done" and PID not in main._abbruch_gewuenscht, (status_von("status"), PID in main._abbruch_gewuenscht))
     con.execute("UPDATE projects SET ki_neu_rest=NULL, lauf_hinweis=NULL WHERE id=?", (PID,)); con.commit()

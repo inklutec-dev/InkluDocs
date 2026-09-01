@@ -6168,7 +6168,7 @@ async def generate_abbrechen(project_id: int, user: dict = Depends(get_current_u
     return {"ok": True, "angefordert": True}
 
 
-def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_args: list):
+def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_args: list, ohne_rest: bool = False):
     """Welche Bilder faesst ein Sammellauf an? -> (anzahl, ids)
 
     EINE Quelle fuer den Start UND fuer die Rueckfrage davor (Michael Karbe,
@@ -6192,6 +6192,8 @@ def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_ar
         "SELECT id FROM images WHERE project_id = ? AND status IN ('done', 'pending', 'error') "
         "AND NOT (original_alt = 'dekorativ' AND image_type = 'dekorativ')" + doc_sql,
         [project_id] + doc_args).fetchall()}
+    if ohne_rest:
+        return len(ids), ids
     rest = _ki_neu_rest_lesen(conn, project_id) & ids
     if rest:
         ids = rest
@@ -6237,6 +6239,10 @@ async def generate_vorschau(project_id: int, request: Request,
         doc_sql, doc_args = (" AND document_id = ?", [document_id])
 
     anzahl, _ids = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args)
+    # Gesamtzahl ohne Rest-Vermerk (Steve 01.09.2026 nach seinem Abbruch-Test): nach einem
+    # Abbruch nimmt der naechste Lauf nur die offenen Bilder — der Dialog sagt dann ehrlich
+    # „noch 4 von 9 offen; nur diese werden beschrieben“ statt „insgesamt 4 Bilder“.
+    gesamt, _alle = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args, ohne_rest=True)
     dokumente = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?",
                              (project_id,)).fetchone()[0]
     # Mitgebrachte Texte (Michael Karbe, 01.09.2026: „Auch bei Word werden bereits
@@ -6278,7 +6284,8 @@ async def generate_vorschau(project_id: int, request: Request,
     je = billing.aktion_preis("bild_generierung", 1) or 1
     verf = p["verfuegbar"]
     machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
-    return {"modus": modus, "anzahl": anzahl, "mit_quelltext": mit_quelltext, "eigene": eigene,
+    return {"modus": modus, "anzahl": anzahl, "gesamt": gesamt, "rest": anzahl < gesamt,
+            "mit_quelltext": mit_quelltext, "eigene": eigene,
             "autor_dekorativ": autor_dekorativ, "document_id": document_id,
             "dokumente": dokumente, "preis": p["preis"], "preis_je": je,
             "verfuegbar": verf, "fehlend": p["fehlend"], "machbar": machbar,
