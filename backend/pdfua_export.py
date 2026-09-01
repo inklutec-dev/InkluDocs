@@ -168,7 +168,9 @@ def dokumentinfo_setzen(pdf_bytes: bytes) -> bytes:
         out = io.BytesIO()
         pdf.save(out)
         return out.getvalue()
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
+        # Nicht stumm (Pruefer 01.09.2026): dann bliebe der Quell-Producer (LibreOffice) stehen.
+        print(f"PDF/UA: Dokument-Eigenschaften nicht gesetzt: {type(e).__name__}: {e}", flush=True)
         return pdf_bytes
 
 

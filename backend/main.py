@@ -7070,7 +7070,8 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         # Datei ist WAEHREND des Laufs verschwunden (Dokument parallel geloescht): kein
         # Fehlerbild, sondern alter Status zurueck und 404 — die Oberflaeche bittet um Neuladen.
         _fehler_protokoll("Neu generieren", e, image_id=image_id, project_id=project_id, user_id=user["id"])
-        conn.execute("UPDATE images SET status = ? WHERE id = ?", (status_vorher, image_id))
+        # Nur zuruecksetzen, wenn das Bild noch UNSER processing traegt (kein Sammellauf dazwischen).
+        conn.execute("UPDATE images SET status = ? WHERE id = ? AND status = 'processing'", (status_vorher, image_id))
         conn.commit()
         conn.close()
         raise HTTPException(status_code=404, detail=BILD_DATEI_WEG)
@@ -7094,7 +7095,9 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         )
         conn.commit()
         conn.close()
-        raise HTTPException(status_code=500, detail=f"Fehler bei der Neugenerierung: {str(e)}")
+        # Neutraler Text nach aussen (Pruefer 01.09.2026): der rohe Ausnahmetext kann interne
+        # Pfade oder Modell-Kennungen enthalten — der Grund steht im Log, nicht beim Nutzer.
+        raise HTTPException(status_code=500, detail="Fehler bei der Neugenerierung – der Grund ist im Protokoll vermerkt.")
 
 
 # ─── Export Routes ───────────────────────────────────────────
