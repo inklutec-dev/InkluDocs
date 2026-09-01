@@ -5302,3 +5302,7 @@ msgstr "You will find the file in your downloads."
 #. Projektkopf (Michael Karbe Punkt 4, 01.09.2026)
 msgid "Projekt: {name}"
 msgstr "Project: {name}"
+
+#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
+msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
+msgstr "Once started, the run cannot be stopped; it ends on its own."

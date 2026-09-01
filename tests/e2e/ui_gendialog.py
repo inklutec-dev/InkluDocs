@@ -93,6 +93,7 @@ with sync_playwright() as p:
     check("Umfang wird benannt", bool(umfang), umfang)
     check("Kostensatz nennt Anzahl und Credits",
           "Credits" in text and any(c.isdigit() for c in text), text)
+    check("Dialog sagt, dass der Lauf nicht anzuhalten ist (Michael 01.09.)", "nicht mehr anhalten" in text, text)
 
     print("== C. Was ein Screenreader ansagt ==")
     # aria-describedby darf mehrere IDs tragen (seit 01.09.2026: Umfang + Kostensatz) —

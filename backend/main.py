@@ -6657,9 +6657,29 @@ async def update_alt_text(image_id: int, request: Request, user: dict = Depends(
             "UPDATE images SET langbeschreibung = ? WHERE id = ?",
             (data.get("langbeschreibung", ""), image_id)
         )
+    status = _handtext_macht_fertig(conn, image_id, data.get("alt_text", ""))
     conn.commit()
     conn.close()
-    return {"ok": True}
+    return {"ok": True, "status": status}
+
+
+def _handtext_macht_fertig(conn, image_id: int, text) -> str:
+    """Ein von Hand gesetzter Text auf einem NIE generierten Bild macht es fertig.
+
+    Michael Karbe 01.09.2026 (Punkt 1/2) + Steve: Der Hand-Text hatte in Anzeige und
+    Export immer Vorrang — der erste Sammellauf schaute aber nur auf status 'pending'
+    und beschrieb das Bild trotzdem (5 Credits fuer einen Text, der unsichtbar unter
+    dem Hand-Text lag). Jetzt: Text (nicht leer) auf 'pending' -> 'done'. Der
+    Sammellauf laesst es damit aus, die Rueckfrage zaehlt es nicht mit. Wer doch
+    einen KI-Text will, drueckt „Neu generieren" am Bild — dieselbe Regel wie beim
+    bewussten Leeren: Entscheidungen am Bild stoesst nur ein Klick am Bild um.
+    Gibt den Status nach dem Speichern zurueck (fuer die Oberflaeche)."""
+    row = conn.execute("SELECT status FROM images WHERE id = ?", (image_id,)).fetchone()
+    status = row["status"] if row else None
+    if status == "pending" and (text or "").strip():
+        conn.execute("UPDATE images SET status = 'done' WHERE id = ?", (image_id,))
+        status = "done"
+    return status
 
 
 def _display_alt_text(img):
@@ -9235,6 +9255,7 @@ async def freigabe_save_alttext(token: str, image_id: int, request: Request):
         raise HTTPException(status_code=404, detail="Bild nicht gefunden")
     conn.execute("UPDATE images SET alt_text_edited = ? WHERE id = ?",
                  (data.get("alt_text", ""), image_id))
+    _handtext_macht_fertig(conn, image_id, data.get("alt_text", ""))   # wie beim Besitzer (01.09.2026)
     if "langbeschreibung" in data:
         conn.execute("UPDATE images SET langbeschreibung = ? WHERE id = ?",
                      (data.get("langbeschreibung", ""), image_id))

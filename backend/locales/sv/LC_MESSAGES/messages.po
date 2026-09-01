@@ -4863,3 +4863,7 @@ msgstr "Du hittar filen bland dina nedladdningar."
 #. Projektkopf (Michael Karbe Punkt 4, 01.09.2026)
 msgid "Projekt: {name}"
 msgstr "Projekt: {name}"
+
+#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
+msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
+msgstr "När körningen har startat kan den inte stoppas; den avslutas av sig själv."

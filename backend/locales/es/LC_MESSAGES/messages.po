@@ -5302,3 +5302,7 @@ msgstr "Encontrarás el archivo en tus descargas."
 #. Projektkopf (Michael Karbe Punkt 4, 01.09.2026)
 msgid "Projekt: {name}"
 msgstr "Proyecto: {name}"
+
+#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
+msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
+msgstr "Una vez iniciada, la generación no se puede detener; termina por sí sola."

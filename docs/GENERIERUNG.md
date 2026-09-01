@@ -304,3 +304,23 @@ Produktion waren 6 von 23 PDFix-Projekten betroffen. Jetzt vergibt
 nach `image_index`), der genau der Figure-Nummer der Extraktion entspricht.
 Unit-Test `tests/test_pdfix_lfnr.py`; Beweis auf Staging: Projekt 93,
 Dokument 2 exportiert wieder.
+
+## Hand-Text vor dem ersten Lauf = fertig; kein Anhalten (01.09.2026, Michael Karbe Punkt 1/2)
+
+Der Hand-Text hatte in Anzeige und Export immer Vorrang — der erste
+Sammellauf schaute aber nur auf `status = pending` und beschrieb ein von Hand
+beschriebenes Bild trotzdem (5 Credits für einen Text, der unsichtbar unter
+dem Hand-Text lag; der Dialog sagte „2 Bilder werden beschrieben", obwohl
+eins schon fertig war). Jetzt macht ein nicht leerer Hand-Text auf einem nie
+generierten Bild dieses fertig (`_handtext_macht_fertig`, Besitzer- und
+Gast-Endpunkt; die Oberfläche stellt den Knopf am Bild sofort auf „Neu
+generieren"). Der Sammellauf lässt es aus, die Rückfrage zählt es nicht mit.
+Wer doch einen KI-Text will: „Neu generieren" am Bild — dieselbe Regel wie
+beim bewussten Leeren: Was am Bild entschieden wurde, stößt nur ein Klick am
+Bild um.
+
+Einen laufenden Sammellauf kann man nicht anhalten; er endet, wenn er fertig
+ist, das Guthaben aufgebraucht oder das Tageslimit erreicht ist. Die Rückfrage
+sagt das jetzt („Nach dem Start lässt sich der Lauf nicht mehr anhalten; er
+endet von selbst."). Ein Abbrechen-Knopf während des Laufs ist offen (eigene
+Runde: der Lauf müsste je Bild nachsehen).

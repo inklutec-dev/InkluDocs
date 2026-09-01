@@ -5305,3 +5305,7 @@ msgstr ""
 #. Projektkopf (Michael Karbe Punkt 4, 01.09.2026)
 msgid "Projekt: {name}"
 msgstr ""
+
+#. Rueckfrage: kein Anhalten moeglich (Michael Karbe 01.09.2026)
+msgid "Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst."
+msgstr ""

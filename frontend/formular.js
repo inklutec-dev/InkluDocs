@@ -623,6 +623,7 @@
                 : t('{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits.', { n: v.anzahl, c: v.preis });
         }
         satz += ' ' + guthabenSatz(v, 'feld');
+        satz += ' ' + t('Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst.');
         generierRueckfrage({
             titel: t('Quickinfos generieren'),
             umfang: umfangText(docId, v.dokumente),

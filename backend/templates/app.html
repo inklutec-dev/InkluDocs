@@ -2425,6 +2425,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             }
                         } catch (e) { /* reine Anzeige, Speichern war erfolgreich */ }
                     }
+                    // Hand-Text auf nie generiertem Bild = fertig (01.09.2026): Knopf am Bild
+                    // heisst dann „Neu generieren", und der Sammellauf laesst das Bild aus.
+                    if (!window.GUEST_MODE && res.ok) {
+                        try {
+                            const d = await res.json();
+                            const rb = document.getElementById('regen_btn_' + id);
+                            if (d.status === 'done' && rb && rb.dataset.status !== 'done') {
+                                rb.dataset.status = 'done';
+                                rb.textContent = t('Neu generieren');
+                            }
+                        } catch (e) { /* reine Anzeige */ }
+                    }
                     const ind = document.getElementById('saved_' + id);
                     if (ind) { ind.classList.add('visible'); setTimeout(() => ind.classList.remove('visible'), 2000); }
                 }, 800);
@@ -2718,6 +2730,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             satz += ' ' + t('{n} Bilder sind vom Autor als dekorativ gekennzeichnet und bleiben außen vor.', { n: v.autor_dekorativ });
         }
         satz += ' ' + guthabenSatz(v, 'bild');
+        // Ehrlich (Michael Karbe 01.09.2026: „schreib, wie man abbrechen kann“): Anhalten gibt es nicht.
+        satz += ' ' + t('Nach dem Start lässt sich der Lauf nicht mehr anhalten; er endet von selbst.');
         generierRueckfrage({
             titel: t('Alt-Texte generieren'),
             umfang: umfangText(docId, v.dokumente),
