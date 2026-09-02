@@ -8878,7 +8878,7 @@ async def start_page(request: Request):
     lang = detect_language(request)
     _ = get_gettext(lang)
     basis = _oeffentliche_basis(request)
-    beschreibung = _('Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.')
+    beschreibung = _('Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.')
     json_ld = json.dumps({
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
@@ -9053,7 +9053,9 @@ async def register_page(request: Request):
     return templates.TemplateResponse(
         "register.html",
         template_context(request, lang, is_staging=("staging" in BASE_URL),
-                         nav_aktiv="/register", noindex=True),
+                         nav_aktiv="/register", noindex=True,
+                         # Untertitel nennt das Free-Kontingent (Steve 02.09.2026) — eine Wahrheit, billing.py.
+                         free_credits=billing.PLAN_KONTINGENTE["free"]),
     )
 
 @app.get("/forgot", response_class=HTMLResponse)

@@ -5030,17 +5030,17 @@ msgstr "Genereringen blev afbrudt: {n} hjælpetekster blev oprettet."
 msgid "InkluDocs Startseite"
 msgstr "InkluDocs forside"
 
-msgid "InkluDocs – KI-Alt-Texte für barrierefreie PDF-, Word- und Formulardokumente"
-msgstr "InkluDocs – AI-alternativtekster til tilgængelige PDF-, Word- og formulardokumenter"
+msgid "InkluDocs – Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+msgstr "InkluDocs – AI-alternativtekster til tilgængelige PDF, Word og formularer"
 
-msgid "Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
-msgstr "Generér alternativtekster med AI, eksportér som PDF/UA, gør Word-filer og formularer tilgængelige. InkluDocs til myndigheder, forlag, bureauer og alle, der har brug for tilgængelige dokumenter. Start gratis."
+msgid "Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
+msgstr "Generér alternativtekster med AI, kontrollér dem selv og eksportér som PDF/UA eller tilgængelig Word. Til myndigheder, forlag, bureauer og alle, der har brug for tilgængelige dokumenter. Start gratis."
 
-msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
-msgstr "AI-alternativtekster til tilgængelige PDF-, Word- og formulardokumenter"
+msgid "Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+msgstr "Hvert billede får en stemme: AI-alternativtekster til tilgængelige PDF, Word og formularer"
 
-msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten automatisch, liest den Text drumherum mit und liefert am Ende eine Datei, die Screenreader vorlesen können: als PDF/UA, als barrierefreies Word oder als Formular mit Quickinfos. Du prüfst, änderst und gibst frei."
-msgstr "InkluDocs beskriver automatisk billederne i dine dokumenter, læser teksten omkring dem og leverer til sidst en fil, som skærmlæsere kan læse op: som PDF/UA, som tilgængelig Word eller som formular med værktøjstip. Du kontrollerer, retter og godkender."
+msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI."
+msgstr "InkluDocs beskriver billederne i dine dokumenter, læser teksten omkring dem og leverer en fil, som skærmlæsere kan læse op: som PDF/UA, tilgængelig Word eller formular med værktøjstip. Hver tekst kan du rette i hånden eller finpudse i dialog med InkluAgent. Du godkender, ikke AI’en."
 
 msgid "Ohne Anmeldung ausprobieren"
 msgstr "Prøv uden login"
@@ -5051,14 +5051,14 @@ msgstr "Med en gratis konto får du {n} credits om måneden, uden betalingsoplys
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Tre værktøjer, ét mål: tilgængelige dokumenter"
 
-msgid "Ob PDF, Word oder Formular: InkluDocs übernimmt die Arbeit, die bisher niemand machen wollte, und lässt dir die Kontrolle über jedes Wort."
-msgstr "Uanset om det er PDF, Word eller formular: InkluDocs overtager det arbejde, ingen ville lave, og lader dig beholde kontrollen over hvert ord."
+msgid "Ob PDF, Word oder Formular: InkluDocs übernimmt die Fleißarbeit und lässt dir das letzte Wort."
+msgstr "Uanset om det er PDF, Word eller formular: InkluDocs klarer det tunge arbejde og lader dig få det sidste ord."
 
 msgid "Alt-Texte für PDF und Bilder"
 msgstr "Alternativtekster til PDF og billeder"
 
-msgid "Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG. Für Diagramme kommt eine Langbeschreibung dazu."
-msgstr "Upload en PDF eller enkelte billeder. AI’en genkender fotos, diagrammer, logoer og skærmbilleder, læser sidens kontekst og skriver alternativtekster efter WCAG. Diagrammer får desuden en lang beskrivelse."
+msgid "Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG 2.2. Diagramme bekommen zusätzlich eine Langbeschreibung."
+msgstr "Upload en PDF eller enkelte billeder. AI’en genkender fotos, diagrammer, logoer og skærmbilleder, læser sidens kontekst og skriver alternativtekster efter WCAG 2.2. Diagrammer får desuden en lang beskrivelse."
 
 msgid "Der Export liefert ein geprüftes PDF/UA, das Prüfwerkzeuge wie veraPDF bestehen."
 msgstr "Eksporten leverer en valideret PDF/UA, der består kontrolværktøjer som veraPDF."
@@ -5093,8 +5093,8 @@ msgstr "InkluDocs læser billedtekster, overskrifter og den omgivende tekst og f
 msgid "Prüfen und exportieren"
 msgstr "Kontrollér og eksportér"
 
-msgid "Du liest jeden Text, änderst, was dir nicht gefällt, oder lässt ihn neu schreiben. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON."
-msgstr "Du læser hver tekst, retter det, du ikke kan lide, eller får den skrevet om. Derefter eksporterer du som PDF/UA, Word, Excel, CSV eller JSON."
+msgid "Du liest jeden Text, änderst ihn von Hand oder lässt ihn vom InkluAgent verfeinern: kürzer, sachlicher, mit dem Namen aus der Bildunterschrift. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON."
+msgstr "Du læser hver tekst, retter den i hånden eller lader InkluAgent finpudse den: kortere, mere nøgternt, med navnet fra billedteksten. Derefter eksporterer du som PDF/UA, Word, Excel, CSV eller JSON."
 
 msgid "Vorher und nachher: ein Alt-Text aus InkluDocs"
 msgstr "Før og efter: en alternativtekst fra InkluDocs"
@@ -5210,8 +5210,8 @@ msgstr "PDF, Word (docx) og billeder som JPG og PNG. Output er PDF/UA, tilgænge
 msgid "Kann ich die Alt-Texte ändern?"
 msgstr "Kan jeg ændre alternativteksterne?"
 
-msgid "Ja. Jeder Text lässt sich bearbeiten, neu generieren oder mit dem InkluAgent im Gespräch anpassen. Du gibst frei, nicht die KI."
-msgstr "Ja. Hver tekst kan redigeres, genereres på ny eller tilpasses i dialog med InkluAgent. Du godkender, ikke AI’en."
+msgid "Ja, jederzeit. Jeder Text ist ein Textfeld, das du von Hand änderst. Oder du sagst dem InkluAgent, was anders sein soll, und er schreibt ihn um. Du gibst frei, nicht die KI."
+msgstr "Ja, når som helst. Hver tekst er et tekstfelt, som du retter i hånden. Eller du fortæller InkluAgent, hvad der skal ændres, og den omskriver den. Du godkender, ikke AI’en."
 
 msgid "Was passiert mit meinen Dateien?"
 msgstr "Hvad sker der med mine filer?"
@@ -5236,3 +5236,42 @@ msgstr "Gør dit næste dokument tilgængeligt"
 
 msgid "Probiere InkluDocs ohne Anmeldung aus oder lege ein kostenloses Konto an. Fragen beantworten wir über das Kontaktformular."
 msgstr "Prøv InkluDocs uden login, eller opret en gratis konto. Spørgsmål besvarer vi via kontaktformularen."
+
+msgid "Du behältst das letzte Wort"
+msgstr "Du har det sidste ord"
+
+msgid "Die KI liefert den Entwurf. Ob er passt, entscheidest du, und dafür hast du drei Werkzeuge."
+msgstr "AI’en leverer udkastet. Om det passer, afgør du, og til det har du tre værktøjer."
+
+msgid "Von Hand ändern"
+msgstr "Ret i hånden"
+
+msgid "Jeder Alt-Text und jede Langbeschreibung ist ein Textfeld. Du tippst rein, was fehlt, streichst, was zu viel ist, und speicherst."
+msgstr "Hver alternativtekst og hver lang beskrivelse er et tekstfelt. Du skriver det, der mangler, sletter det, der er for meget, og gemmer."
+
+msgid "Mit dem InkluAgent verfeinern"
+msgstr "Finpuds med InkluAgent"
+
+msgid "Der InkluAgent ist der KI-Assistent in deinem Projekt. Sag ihm, was anders sein soll: kürzer, ohne Farben, mit dem Namen der Person aus der Bildunterschrift. Er schreibt den Text um, du nimmst ihn an oder nicht."
+msgstr "InkluAgent er AI-assistenten i dit projekt. Fortæl den, hvad der skal være anderledes: kortere, uden farver, med personens navn fra billedteksten. Den omskriver teksten, du accepterer den eller lader være."
+
+msgid "Eigene Prompts und Sprache"
+msgstr "Egne prompts og sprog"
+
+msgid "Lege fest, wie InkluDocs für dein Haus schreibt: Tonfall, Länge, Fachbegriffe. Und wähle je Projekt die Sprache der Alt-Texte, unabhängig von der Sprache der Oberfläche."
+msgstr "Fastlæg, hvordan InkluDocs skriver for dit hus: tone, længde, fagudtryk. Og vælg pr. projekt alternativteksternes sprog, uafhængigt af brugerfladens sprog."
+
+msgid "In welchen Sprachen arbeitet InkluDocs?"
+msgstr "Hvilke sprog arbejder InkluDocs på?"
+
+msgid "Die Oberfläche gibt es auf Deutsch, Englisch, Französisch, Spanisch, Dänisch und Schwedisch. Die Alt-Texte schreibt die KI in der Sprache, die du je Projekt wählst."
+msgstr "Brugerfladen findes på tysk, engelsk, fransk, spansk, dansk og svensk. AI’en skriver alternativteksterne på det sprog, du vælger pr. projekt."
+
+msgid "Kostenloses Konto erstellen"
+msgstr "Opret en gratis konto"
+
+msgid "Startklar in einer Minute: {n} Credits im Monat, keine Zahlungsdaten. Danach bestätigst du nur noch deine E-Mail-Adresse."
+msgstr "Klar på et minut: {n} credits om måneden, ingen betalingsoplysninger. Bagefter bekræfter du kun din e-mailadresse."
+
+msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
+msgstr "Velkommen tilbage. Log ind, og fortsæt, hvor du slap."

@@ -5338,17 +5338,17 @@ msgstr "La génération a été interrompue : {n} info-bulles ont été créées
 msgid "InkluDocs Startseite"
 msgstr "Page d’accueil InkluDocs"
 
-msgid "InkluDocs – KI-Alt-Texte für barrierefreie PDF-, Word- und Formulardokumente"
-msgstr "InkluDocs – Textes alternatifs par IA pour des documents PDF, Word et formulaires accessibles"
+msgid "InkluDocs – Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+msgstr "InkluDocs – Textes alternatifs par IA pour PDF, Word et formulaires accessibles"
 
-msgid "Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
-msgstr "Générez des textes alternatifs par IA, exportez en PDF/UA, rendez vos fichiers Word et formulaires accessibles. InkluDocs pour les administrations, les éditeurs, les agences et tous ceux qui ont besoin de documents accessibles. Commencez gratuitement."
+msgid "Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
+msgstr "Générez des textes alternatifs par IA, vérifiez-les vous-même et exportez en PDF/UA ou en Word accessible. Pour les administrations, les éditeurs, les agences et tous ceux qui ont besoin de documents accessibles. Commencez gratuitement."
 
-msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
-msgstr "Des textes alternatifs par IA pour des documents PDF, Word et formulaires accessibles"
+msgid "Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+msgstr "Chaque image prend la parole : des textes alternatifs par IA pour des PDF, Word et formulaires accessibles"
 
-msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten automatisch, liest den Text drumherum mit und liefert am Ende eine Datei, die Screenreader vorlesen können: als PDF/UA, als barrierefreies Word oder als Formular mit Quickinfos. Du prüfst, änderst und gibst frei."
-msgstr "InkluDocs décrit automatiquement les images de vos documents, lit le texte qui les entoure et livre un fichier que les lecteurs d’écran peuvent lire : en PDF/UA, en Word accessible ou en formulaire avec infobulles. Vous vérifiez, modifiez et validez."
+msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI."
+msgstr "InkluDocs décrit les images de vos documents, lit le texte qui les entoure et livre un fichier que les lecteurs d’écran peuvent lire : en PDF/UA, en Word accessible ou en formulaire avec infobulles. Vous pouvez modifier chaque texte à la main ou l’affiner en dialoguant avec l’InkluAgent. C’est vous qui validez, pas l’IA."
 
 msgid "Ohne Anmeldung ausprobieren"
 msgstr "Essayer sans inscription"
@@ -5359,14 +5359,14 @@ msgstr "Avec un compte gratuit, vous recevez {n} crédits par mois, sans donnée
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Trois outils, un objectif : des documents accessibles"
 
-msgid "Ob PDF, Word oder Formular: InkluDocs übernimmt die Arbeit, die bisher niemand machen wollte, und lässt dir die Kontrolle über jedes Wort."
-msgstr "PDF, Word ou formulaire : InkluDocs se charge du travail que personne ne voulait faire et vous laisse le contrôle de chaque mot."
+msgid "Ob PDF, Word oder Formular: InkluDocs übernimmt die Fleißarbeit und lässt dir das letzte Wort."
+msgstr "PDF, Word ou formulaire : InkluDocs fait le gros du travail et vous laisse le dernier mot."
 
 msgid "Alt-Texte für PDF und Bilder"
 msgstr "Textes alternatifs pour PDF et images"
 
-msgid "Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG. Für Diagramme kommt eine Langbeschreibung dazu."
-msgstr "Téléversez un PDF ou des images isolées. L’IA reconnaît photos, graphiques, logos et captures d’écran, lit le contexte de la page et rédige des textes alternatifs conformes aux WCAG. Les graphiques reçoivent en plus une description longue."
+msgid "Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG 2.2. Diagramme bekommen zusätzlich eine Langbeschreibung."
+msgstr "Téléversez un PDF ou des images isolées. L’IA reconnaît photos, graphiques, logos et captures d’écran, lit le contexte de la page et rédige des textes alternatifs conformes aux WCAG 2.2. Les graphiques reçoivent en plus une description longue."
 
 msgid "Der Export liefert ein geprüftes PDF/UA, das Prüfwerkzeuge wie veraPDF bestehen."
 msgstr "L’export produit un PDF/UA validé qui passe les outils de contrôle comme veraPDF."
@@ -5401,8 +5401,8 @@ msgstr "InkluDocs lit les légendes, les titres et le texte environnant et en ti
 msgid "Prüfen und exportieren"
 msgstr "Vérifier et exporter"
 
-msgid "Du liest jeden Text, änderst, was dir nicht gefällt, oder lässt ihn neu schreiben. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON."
-msgstr "Vous lisez chaque texte, modifiez ce qui ne vous convient pas ou le faites réécrire. Puis vous exportez en PDF/UA, Word, Excel, CSV ou JSON."
+msgid "Du liest jeden Text, änderst ihn von Hand oder lässt ihn vom InkluAgent verfeinern: kürzer, sachlicher, mit dem Namen aus der Bildunterschrift. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON."
+msgstr "Vous lisez chaque texte, le modifiez à la main ou le faites affiner par l’InkluAgent : plus court, plus factuel, avec le nom tiré de la légende. Puis vous exportez en PDF/UA, Word, Excel, CSV ou JSON."
 
 msgid "Vorher und nachher: ein Alt-Text aus InkluDocs"
 msgstr "Avant et après : un texte alternatif d’InkluDocs"
@@ -5518,8 +5518,8 @@ msgstr "PDF, Word (docx) et images comme JPG et PNG. En sortie : PDF/UA, Word ac
 msgid "Kann ich die Alt-Texte ändern?"
 msgstr "Puis-je modifier les textes alternatifs ?"
 
-msgid "Ja. Jeder Text lässt sich bearbeiten, neu generieren oder mit dem InkluAgent im Gespräch anpassen. Du gibst frei, nicht die KI."
-msgstr "Oui. Chaque texte peut être modifié, régénéré ou affiné en dialoguant avec l’InkluAgent. C’est vous qui validez, pas l’IA."
+msgid "Ja, jederzeit. Jeder Text ist ein Textfeld, das du von Hand änderst. Oder du sagst dem InkluAgent, was anders sein soll, und er schreibt ihn um. Du gibst frei, nicht die KI."
+msgstr "Oui, à tout moment. Chaque texte est un champ que vous modifiez à la main. Ou vous dites à l’InkluAgent ce qui doit changer et il le réécrit. C’est vous qui validez, pas l’IA."
 
 msgid "Was passiert mit meinen Dateien?"
 msgstr "Que deviennent mes fichiers ?"
@@ -5544,3 +5544,42 @@ msgstr "Rendez votre prochain document accessible"
 
 msgid "Probiere InkluDocs ohne Anmeldung aus oder lege ein kostenloses Konto an. Fragen beantworten wir über das Kontaktformular."
 msgstr "Essayez InkluDocs sans inscription ou créez un compte gratuit. Nous répondons à vos questions via le formulaire de contact."
+
+msgid "Du behältst das letzte Wort"
+msgstr "Vous gardez le dernier mot"
+
+msgid "Die KI liefert den Entwurf. Ob er passt, entscheidest du, und dafür hast du drei Werkzeuge."
+msgstr "L’IA fournit le brouillon. C’est vous qui décidez s’il convient, et vous disposez de trois outils pour cela."
+
+msgid "Von Hand ändern"
+msgstr "Modifier à la main"
+
+msgid "Jeder Alt-Text und jede Langbeschreibung ist ein Textfeld. Du tippst rein, was fehlt, streichst, was zu viel ist, und speicherst."
+msgstr "Chaque texte alternatif et chaque description longue est un champ de texte. Vous ajoutez ce qui manque, supprimez ce qui est en trop et enregistrez."
+
+msgid "Mit dem InkluAgent verfeinern"
+msgstr "Affiner avec l’InkluAgent"
+
+msgid "Der InkluAgent ist der KI-Assistent in deinem Projekt. Sag ihm, was anders sein soll: kürzer, ohne Farben, mit dem Namen der Person aus der Bildunterschrift. Er schreibt den Text um, du nimmst ihn an oder nicht."
+msgstr "L’InkluAgent est l’assistant IA de votre projet. Dites-lui ce qui doit changer : plus court, sans couleurs, avec le nom de la personne tiré de la légende. Il réécrit le texte, vous l’acceptez ou non."
+
+msgid "Eigene Prompts und Sprache"
+msgstr "Vos propres prompts et votre langue"
+
+msgid "Lege fest, wie InkluDocs für dein Haus schreibt: Tonfall, Länge, Fachbegriffe. Und wähle je Projekt die Sprache der Alt-Texte, unabhängig von der Sprache der Oberfläche."
+msgstr "Définissez comment InkluDocs écrit pour votre organisation : ton, longueur, terminologie. Et choisissez par projet la langue des textes alternatifs, indépendamment de celle de l’interface."
+
+msgid "In welchen Sprachen arbeitet InkluDocs?"
+msgstr "Dans quelles langues InkluDocs fonctionne-t-il ?"
+
+msgid "Die Oberfläche gibt es auf Deutsch, Englisch, Französisch, Spanisch, Dänisch und Schwedisch. Die Alt-Texte schreibt die KI in der Sprache, die du je Projekt wählst."
+msgstr "L’interface existe en allemand, anglais, français, espagnol, danois et suédois. L’IA rédige les textes alternatifs dans la langue que vous choisissez par projet."
+
+msgid "Kostenloses Konto erstellen"
+msgstr "Créer un compte gratuit"
+
+msgid "Startklar in einer Minute: {n} Credits im Monat, keine Zahlungsdaten. Danach bestätigst du nur noch deine E-Mail-Adresse."
+msgstr "Prêt en une minute : {n} crédits par mois, sans données de paiement. Ensuite, il ne vous reste qu’à confirmer votre adresse e-mail."
+
+msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
+msgstr "Bon retour. Connectez-vous et reprenez là où vous vous étiez arrêté."

@@ -9,6 +9,8 @@
         (Demo ohne Anmeldung / kostenloses Konto), Hinweis „keine Zahlungsdaten“
      2. Drei Werkzeuge (PDF+Bilder, Word, Formulare)
      3. So funktioniert es (drei Schritte, nummerierte Liste)
+     3a. Du behältst das letzte Wort (Steve 02.09.: von Hand ändern, InkluAgent,
+         eigene Prompts + Ausgabesprache)
      4. Vorher / nachher — ein Alt-Text als Beispiel (vereinfacht, so
         gekennzeichnet)
      5. Für wen — vier Hauptzielgruppen UND ausdrücklich alle anderen
@@ -32,15 +34,15 @@
    ────────────────────────────────────────────────────────────────────────── #}
 {% extends "base_start.html" %}
 
-{% block title %}{{ _('InkluDocs – KI-Alt-Texte für barrierefreie PDF-, Word- und Formulardokumente') }}{% endblock %}
+{% block title %}{{ _('InkluDocs – Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}{% endblock %}
 
 {% block seo %}
-<meta name="description" content="{{ _('Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.') }}">
+<meta name="description" content="{{ _('Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.') }}">
 <link rel="canonical" href="{{ canonical }}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="InkluDocs">
-<meta property="og:title" content="{{ _('InkluDocs – KI-Alt-Texte für barrierefreie PDF-, Word- und Formulardokumente') }}">
-<meta property="og:description" content="{{ _('Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.') }}">
+<meta property="og:title" content="{{ _('InkluDocs – Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}">
+<meta property="og:description" content="{{ _('Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.') }}">
 <meta property="og:url" content="{{ canonical }}">
 <meta property="og:locale" content="{{ og_locale }}">
 <meta name="twitter:card" content="summary">
@@ -52,8 +54,8 @@
 {% block main %}
 <section class="start-hero" aria-labelledby="hero-h">
   <div class="start-inner">
-    <h1 id="hero-h">{{ _('Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente') }}</h1>
-    <p class="start-lead">{{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten automatisch, liest den Text drumherum mit und liefert am Ende eine Datei, die Screenreader vorlesen können: als PDF/UA, als barrierefreies Word oder als Formular mit Quickinfos. Du prüfst, änderst und gibst frei.') }}</p>
+    <h1 id="hero-h">{{ _('Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}</h1>
+    <p class="start-lead">{{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI.') }}</p>
     <div class="start-aktionen">
       <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung ausprobieren') }}</a>
       {% if registration_enabled %}<a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>{% endif %}
@@ -65,11 +67,11 @@
 <section class="start-abschnitt" aria-labelledby="werkzeuge-h">
   <div class="start-inner">
     <h2 id="werkzeuge-h">{{ _('Drei Werkzeuge, ein Ziel: barrierefreie Dokumente') }}</h2>
-    <p class="start-lead">{{ _('Ob PDF, Word oder Formular: InkluDocs übernimmt die Arbeit, die bisher niemand machen wollte, und lässt dir die Kontrolle über jedes Wort.') }}</p>
+    <p class="start-lead">{{ _('Ob PDF, Word oder Formular: InkluDocs übernimmt die Fleißarbeit und lässt dir das letzte Wort.') }}</p>
     <div class="start-raster">
       <article class="start-karte">
         <h3>{{ _('Alt-Texte für PDF und Bilder') }}</h3>
-        <p>{{ _('Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG. Für Diagramme kommt eine Langbeschreibung dazu.') }}</p>
+        <p>{{ _('Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG 2.2. Diagramme bekommen zusätzlich eine Langbeschreibung.') }}</p>
         <p>{{ _('Der Export liefert ein geprüftes PDF/UA, das Prüfwerkzeuge wie veraPDF bestehen.') }}</p>
       </article>
       <article class="start-karte">
@@ -98,9 +100,30 @@
       </li>
       <li>
         <h3>{{ _('Prüfen und exportieren') }}</h3>
-        <p>{{ _('Du liest jeden Text, änderst, was dir nicht gefällt, oder lässt ihn neu schreiben. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON.') }}</p>
+        <p>{{ _('Du liest jeden Text, änderst ihn von Hand oder lässt ihn vom InkluAgent verfeinern: kürzer, sachlicher, mit dem Namen aus der Bildunterschrift. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON.') }}</p>
       </li>
     </ol>
+  </div>
+</section>
+
+<section class="start-abschnitt" aria-labelledby="kontrolle-h">
+  <div class="start-inner">
+    <h2 id="kontrolle-h">{{ _('Du behältst das letzte Wort') }}</h2>
+    <p class="start-lead">{{ _('Die KI liefert den Entwurf. Ob er passt, entscheidest du, und dafür hast du drei Werkzeuge.') }}</p>
+    <div class="start-raster">
+      <article class="start-karte">
+        <h3>{{ _('Von Hand ändern') }}</h3>
+        <p>{{ _('Jeder Alt-Text und jede Langbeschreibung ist ein Textfeld. Du tippst rein, was fehlt, streichst, was zu viel ist, und speicherst.') }}</p>
+      </article>
+      <article class="start-karte">
+        <h3>{{ _('Mit dem InkluAgent verfeinern') }}</h3>
+        <p>{{ _('Der InkluAgent ist der KI-Assistent in deinem Projekt. Sag ihm, was anders sein soll: kürzer, ohne Farben, mit dem Namen der Person aus der Bildunterschrift. Er schreibt den Text um, du nimmst ihn an oder nicht.') }}</p>
+      </article>
+      <article class="start-karte">
+        <h3>{{ _('Eigene Prompts und Sprache') }}</h3>
+        <p>{{ _('Lege fest, wie InkluDocs für dein Haus schreibt: Tonfall, Länge, Fachbegriffe. Und wähle je Projekt die Sprache der Alt-Texte, unabhängig von der Sprache der Oberfläche.') }}</p>
+      </article>
+    </div>
   </div>
 </section>
 
@@ -185,7 +208,7 @@
       </details>
       <details>
         <summary>{{ _('Kann ich die Alt-Texte ändern?') }}</summary>
-        <p>{{ _('Ja. Jeder Text lässt sich bearbeiten, neu generieren oder mit dem InkluAgent im Gespräch anpassen. Du gibst frei, nicht die KI.') }}</p>
+        <p>{{ _('Ja, jederzeit. Jeder Text ist ein Textfeld, das du von Hand änderst. Oder du sagst dem InkluAgent, was anders sein soll, und er schreibt ihn um. Du gibst frei, nicht die KI.') }}</p>
       </details>
       <details>
         <summary>{{ _('Was passiert mit meinen Dateien?') }}</summary>
@@ -194,6 +217,10 @@
       <details>
         <summary>{{ _('Brauche ich Vorwissen zu Barrierefreiheit?') }}</summary>
         <p>{{ _('Nein. InkluDocs schreibt die Texte nach den Regeln der WCAG. Wer tiefer einsteigen will, legt eigene Prompts an und wählt die Sprache der Alt-Texte.') }}</p>
+      </details>
+      <details>
+        <summary>{{ _('In welchen Sprachen arbeitet InkluDocs?') }}</summary>
+        <p>{{ _('Die Oberfläche gibt es auf Deutsch, Englisch, Französisch, Spanisch, Dänisch und Schwedisch. Die Alt-Texte schreibt die KI in der Sprache, die du je Projekt wählst.') }}</p>
       </details>
       <details>
         <summary>{{ _('Gibt es eine Schnittstelle für Entwickler?') }}</summary>

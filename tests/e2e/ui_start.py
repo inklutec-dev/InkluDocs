@@ -51,15 +51,15 @@ E = env_datei()
 LOGIN_MAIL = os.environ.get("INKLUDOCS_E2E_MAIL") or E.get("INKLUDOCS_E2E_MAIL")
 LOGIN_PW = os.environ.get("INKLUDOCS_E2E_PW") or E.get("INKLUDOCS_E2E_PW")
 
-H1_DE = "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
-H1_EN = "AI alt text for accessible PDF, Word and form documents"
+H1_DE = "Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+H1_EN = "Every image gets a voice: AI alt text for accessible PDF, Word and forms"
 KOPF_NAV = [("/preise", "Preise"), ("/kontakt", "Kontakt"), ("/ueber-uns", "Über uns"),
             ("/login", "Anmelden"), ("/register", "Kostenlos starten")]
 FUSSZEILE = [("/impressum", "Impressum"), ("/datenschutz", "Datenschutz"),
              ("/nutzungsbedingungen", "Nutzungsbedingungen"), ("/preise", "Preise"),
              ("/widerruf", "Widerrufsbelehrung"), ("/kuendigen", "Vertrag kündigen"),
              ("/widerrufen", "Vertrag widerrufen")]
-KARTEN = [("/login", "Anmeldung"), ("/register", "Registrierung"),
+KARTEN = [("/login", "Anmeldung"), ("/register", "Kostenloses Konto erstellen"),
           ("/forgot", "Passwort zurücksetzen"), ("/reset", "Neues Passwort setzen")]
 
 ok = fail = 0
@@ -146,11 +146,14 @@ with sync_playwright() as p:
           h1s.count() == 1 and h1s.first.inner_text().strip() == H1_DE,
           str([x.inner_text().strip() for x in h1s.all()]))
     h2 = [x.inner_text().strip() for x in page.locator("main h2").all()]
-    check("neun Abschnitte mit H2", len(h2) == 8 and page.locator("main section").count() == 9, str(h2))
+    check("zehn Abschnitte, neun mit H2", len(h2) == 9 and page.locator("main section").count() == 10, str(h2))
     check("jeder Abschnitt hat aria-labelledby",
-          page.locator("main section[aria-labelledby]").count() == 9)
+          page.locator("main section[aria-labelledby]").count() == 10)
     check("Werkzeug-Karten als H3", page.locator("section[aria-labelledby='werkzeuge-h'] h3").count() == 3)
     check("drei Schritte als nummerierte Liste", page.locator("ol.start-schritte > li").count() == 3)
+    check("Abschnitt 'letztes Wort': von Hand aendern + InkluAgent + Prompts (Steve 02.09.)",
+          page.locator("section[aria-labelledby='kontrolle-h'] h3").count() == 3
+          and "InkluAgent" in page.locator("section[aria-labelledby='kontrolle-h']").inner_text())
     check("Vorher/Nachher vorhanden", page.locator(".start-vergleich .vorher").count() == 1
           and page.locator(".start-vergleich .nachher blockquote").count() == 1)
     check("vier Zielgruppen + Satz fuer alle anderen",
@@ -158,8 +161,8 @@ with sync_playwright() as p:
           and "Privatpersonen" in page.locator("section[aria-labelledby='zielgruppen-h']").inner_text())
     check("Preise mit Link auf /preise",
           page.locator("section[aria-labelledby='preise-h'] a[href='/preise']").count() == 1)
-    check("sechs FAQ als natives details/summary",
-          page.locator(".start-faq details > summary").count() == 6)
+    check("sieben FAQ als natives details/summary",
+          page.locator(".start-faq details > summary").count() == 7)
     check("Knopf Demo (ohne Anmeldung) x2, Knopf Konto x2",
           page.locator("main a.btn-start[href='https://demo.inkludocs.de']").count() == 2
           and page.locator("main a.btn-start[href='/register']").count() == 2)
