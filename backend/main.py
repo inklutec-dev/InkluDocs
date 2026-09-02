@@ -6136,7 +6136,14 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
                      list(ki_neu_ids))
     # Alten Hinweis wegraeumen (Steve 31.08.2026), sonst haengt die Meldung des letzten
     # abgebrochenen Laufs am naechsten, der sauber durchlaeuft.
-    conn.execute("UPDATE projects SET status = 'processing', lauf_hinweis = NULL WHERE id = ?", (project_id,))
+    # Fortschrittsanzeige (Michael Karbe 02.09.2026): processed_images stammte bis hierher noch
+    # vom LETZTEN Lauf — bis das erste Bild neu fertig war, zeigte die App „8 von 8". Jetzt beim
+    # Start auf den Ist-Stand setzen (die eben auf 'pending' gestellten Bilder zaehlen nicht mehr;
+    # Ganzprojekt-Lauf = 0). _process_project_lauf zaehlt von genau diesem Wert hoch.
+    _fertig = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
+                           (project_id,)).fetchone()[0]
+    conn.execute("UPDATE projects SET status = 'processing', lauf_hinweis = NULL, processed_images = ? WHERE id = ?",
+                 (_fertig, project_id))
     conn.commit()
     conn.close()
 

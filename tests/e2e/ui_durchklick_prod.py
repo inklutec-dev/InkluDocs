@@ -55,7 +55,7 @@ with sync_playwright() as p:
     page.on("pageerror", lambda e: js_fehler.append(str(e)))
 
     print("== Anmelden auf der PRODUKTION ==")
-    page.goto(BASE + "/", wait_until="domcontentloaded")
+    page.goto(BASE + "/login", wait_until="domcontentloaded")  # 02.09.2026: Anmeldung liegt unter /login
     page.fill("#email", env["IDOC_EMAIL"])
     page.fill("#password", env["IDOC_PW"])
     page.click("button[type=submit]")

@@ -25,7 +25,7 @@ with sync_playwright() as p:
     seite.on("console", lambda m: probleme.append(m.text) if m.type == "error" else None)
     seite.on("pageerror", lambda e: probleme.append(str(e)))
 
-    seite.goto(f"{B}/", wait_until="domcontentloaded")
+    seite.goto(f"{B}/login", wait_until="domcontentloaded")  # 02.09.2026: Anmeldung liegt unter /login
     seite.fill("input[type=email]", MAIL)
     seite.fill("input[type=password]", PW)
     seite.click("button[type=submit]")
@@ -37,7 +37,8 @@ with sync_playwright() as p:
 
     # Die beiden neuen Texte muessen in der Uebersetzungstabelle der Seite stehen
     treffer = seite.evaluate("Object.keys(window.I18N||{}).filter(k => k.indexOf('blieben offen') > -1).length")
-    check("Beide neuen Texte liegen in window.I18N", treffer == 2, treffer)
+    # 02.09.2026: dritter Text „Die Generierung wurde abgebrochen …" (Michael Punkt 2, 3fd3e2d)
+    check("Die drei Lauf-Hinweise liegen in window.I18N", treffer == 3, treffer)
 
     # Der neue Zweig wird mit einem gestellten Hinweis durchlaufen (ohne echten Lauf):
     # liefert er einen Satz mit beiden Zahlen, ist er syntaktisch und logisch gesund.

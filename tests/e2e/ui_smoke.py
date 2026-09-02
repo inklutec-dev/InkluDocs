@@ -75,7 +75,7 @@ with sync_playwright() as p:
     page.on("response", lambda r: netz.append("%d %s" % (r.status, r.url))
             if r.status >= 400 and not any(a in r.url for a in ERLAUBT_404) else None)
 
-    page.goto(BASE + "/", wait_until="domcontentloaded")
+    page.goto(BASE + "/login", wait_until="domcontentloaded")  # 02.09.2026: Anmeldung liegt unter /login
     page.fill("#email", LOGIN_MAIL)
     page.fill("#password", LOGIN_PW)
     page.click("button[type=submit]")

@@ -59,7 +59,7 @@ with sync_playwright() as p:
     page = b.new_page()
     page.on("pageerror", lambda e: js_fehler.append(str(e)))
 
-    page.goto(BASE + "/", wait_until="domcontentloaded")
+    page.goto(BASE + "/login", wait_until="domcontentloaded")  # 02.09.2026: Anmeldung liegt unter /login
     page.fill("#email", LOGIN_MAIL)
     page.fill("#password", LOGIN_PW)
     page.click("button[type=submit]")

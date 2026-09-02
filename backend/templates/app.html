@@ -627,7 +627,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="${t('Fortschritt: {p} Prozent', { p: progress })}">
                         <div class="progress-fill" style="width:${progress}%"></div>
                     </div>
-                    <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: project.processed_images, n: project.total_images })}</p>
+                    <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: laufendeNummer(project.processed_images, project.total_images), n: project.total_images })}</p>
                     ${!window.GUEST_MODE ? '<button type="button" class="btn btn-secondary" id="abortGenBtn" onclick="generierungAbbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button>' : ''}
                 ` : ''}
                 ${!window.GUEST_MODE ? `
@@ -787,10 +787,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     const info = document.getElementById('processingInfo');
                     const newP = Math.round((sData.processed_images / sData.total_images) * 100);
                     if (bar) bar.style.width = newP + '%';
-                    if (info) info.textContent = t('Bild {i} von {n} wird verarbeitet.', { i: sData.processed_images, n: sData.total_images });
+                    if (info) info.textContent = t('Bild {i} von {n} wird verarbeitet.', { i: laufendeNummer(sData.processed_images, sData.total_images), n: sData.total_images });
                 }
             }, 10000);
         }
+    }
+
+    // Fortschrittsanzeige (Michael Karbe 02.09.2026): processed_images zaehlt die FERTIGEN Bilder.
+    // Angesagt wird aber das Bild, das gerade dran ist — also fertige + 1, gedeckelt auf die
+    // Gesamtzahl (vorher stand „Bild 0 von 8" am Anfang). Der Balken bleibt bei fertig/gesamt.
+    function laufendeNummer(fertig, gesamt) {
+        const f = Number(fertig) || 0, g = Number(gesamt) || 0;
+        return g > 0 ? Math.min(f + 1, g) : 0;
     }
 
     // Multi-Datei (08.06.2026): Anzeigename eines Dokuments für Überschriften.
