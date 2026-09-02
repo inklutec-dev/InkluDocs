@@ -6150,7 +6150,7 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
 # Abbruch eines laufenden Sammellaufs (Michael Karbe 01.09.2026: „Der Erstellungsprozess kann bei
 # Bedarf auch nach dem Start abgebrochen werden"). Ein Prozess, ein Set: der Endpunkt traegt die
 # Projekt-ID ein, der Lauf prueft sie vor jedem Bild und endet dann ueber denselben geordneten
-# Weg wie bei Guthaben/Tageslimit (Rest-Vermerk, Hinweis, Rueckstellung).
+# Weg wie bei Guthaben/Tageslimit (Hinweis, Rueckstellung).
 _abbruch_gewuenscht: set = set()
 
 
@@ -6168,7 +6168,7 @@ async def generate_abbrechen(project_id: int, user: dict = Depends(get_current_u
     return {"ok": True, "angefordert": True}
 
 
-def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_args: list, ohne_rest: bool = False):
+def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_args: list):
     """Welche Bilder faesst ein Sammellauf an? -> (anzahl, ids)
 
     EINE Quelle fuer den Start UND fuer die Rueckfrage davor (Michael Karbe,
@@ -6182,21 +6182,18 @@ def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_ar
     stoesst nur „Neu generieren" am Bild um. Bilder, die gerade verarbeitet werden,
     bleiben aussen vor.
 
-    Rest eines abgebrochenen Laufs (Steve 31.08.2026): Blieb vom letzten Lauf ein
-    Rest offen (Guthaben, Tageslimit, Container-Neustart), nimmt der naechste
-    Start NUR diesen Rest — sonst wuerden bereits frisch generierte Bilder ein
-    zweites Mal bezahlt. Die Schnittmenge mit den aktuellen Kandidaten haelt das
-    dicht. `modus` bleibt aus Kompatibilitaet in der Signatur, wirkt nicht mehr.
+    Rest-Fortsetzung ABGELOEST (Michael Karbe, 02.09.2026): Auch nach einem
+    Abbruch nimmt der naechste Start wieder ALLE Bilder — „Alt-Texte generieren
+    erzeugt immer neue Alt-Texte fuer alle Bilder." Wer nach einem Abbruch nur
+    einzelne Bilder braucht, nutzt „Neu generieren" am Bild. Dass ein erneuter
+    Sammellauf bereits generierte Bilder noch einmal kostet, ist die gewollte
+    Folge; die Rueckfrage nennt Anzahl und Preis vorher. `modus` bleibt aus
+    Kompatibilitaet in der Signatur, wirkt nicht mehr.
     """
     ids = {r["id"] for r in conn.execute(
         "SELECT id FROM images WHERE project_id = ? AND status IN ('done', 'pending', 'error') "
         "AND NOT (original_alt = 'dekorativ' AND image_type = 'dekorativ')" + doc_sql,
         [project_id] + doc_args).fetchall()}
-    if ohne_rest:
-        return len(ids), ids
-    rest = _ki_neu_rest_lesen(conn, project_id) & ids
-    if rest:
-        ids = rest
     return len(ids), ids
 
 
@@ -6239,10 +6236,6 @@ async def generate_vorschau(project_id: int, request: Request,
         doc_sql, doc_args = (" AND document_id = ?", [document_id])
 
     anzahl, _ids = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args)
-    # Gesamtzahl ohne Rest-Vermerk (Steve 01.09.2026 nach seinem Abbruch-Test): nach einem
-    # Abbruch nimmt der naechste Lauf nur die offenen Bilder — der Dialog sagt dann ehrlich
-    # „noch 4 von 9 offen; nur diese werden beschrieben“ statt „insgesamt 4 Bilder“.
-    gesamt, _alle = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args, ohne_rest=True)
     dokumente = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?",
                              (project_id,)).fetchone()[0]
     # Mitgebrachte Texte (Michael Karbe, 01.09.2026: „Auch bei Word werden bereits
@@ -6284,7 +6277,7 @@ async def generate_vorschau(project_id: int, request: Request,
     je = billing.aktion_preis("bild_generierung", 1) or 1
     verf = p["verfuegbar"]
     machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
-    return {"modus": modus, "anzahl": anzahl, "gesamt": gesamt, "rest": anzahl < gesamt,
+    return {"modus": modus, "anzahl": anzahl,
             "mit_quelltext": mit_quelltext, "eigene": eigene,
             "autor_dekorativ": autor_dekorativ, "document_id": document_id,
             "dokumente": dokumente, "preis": p["preis"], "preis_je": je,
@@ -6293,52 +6286,13 @@ async def generate_vorschau(project_id: int, request: Request,
 
 
 # ---------------------------------------------------------------------------
-# Rest-Vermerk eines abgebrochenen ki_neu-Laufs (Steve 31.08.2026)
+# Rest-Vermerk (31.08.2026) — ABGELOEST am 02.09.2026 (Michael Karbe):
+# „Alt-Texte generieren erzeugt immer neue Alt-Texte fuer alle Bilder." Der
+# naechste Start nach einem Abbruch nimmt wieder alle; fuer einzelne Bilder
+# gibt es „Neu generieren" am Bild. Die Spalte projects.ki_neu_rest bleibt
+# aus Kompatibilitaet in der Datenbank stehen, wird aber weder gelesen noch
+# geschrieben.
 # ---------------------------------------------------------------------------
-# Befund des Pruefers vom 30.08.2026: Bricht "n neu generieren" ab, weil das Guthaben
-# nicht reicht, und startet der Nutzer nach dem Aufstocken erneut, liefen die bereits
-# frisch generierten Bilder noch einmal durch die KI -- und kosteten ein zweites Mal.
-# Seit den Aktionspreisen (5 Credits je Alt-Text) faellt das ins Gewicht.
-# Loesung: Beim Abbruch merkt sich das Projekt die Bilder, die NICHT mehr an der Reihe
-# waren; der naechste Start nimmt nur diese. Laeuft ein Lauf vollstaendig durch, ist der
-# Vermerk weg und der naechste Klick nimmt wieder alle.
-KI_NEU_REST_STUNDEN = 24
-
-
-def _ki_neu_rest_lesen(conn, project_id: int) -> set:
-    """Offene Bild-IDs des letzten abgebrochenen ki_neu-Laufs; leere Menge, wenn keiner offen ist.
-
-    Bewusst defensiv: unlesbarer, fremder oder veralteter Inhalt fuehrt zur leeren Menge und
-    damit zum normalen Verhalten (alle Kandidaten). Der Vermerk ist eine Bequemlichkeit, kein
-    Zustand, auf dem etwas aufbaut. Die aufrufende Stelle schneidet die IDs IMMER gegen die
-    eigenen Kandidaten -- ein manipulierter Eintrag kann kein fremdes Bild erreichen."""
-    zeile = conn.execute("SELECT ki_neu_rest FROM projects WHERE id = ?", (project_id,)).fetchone()
-    if not zeile or not zeile["ki_neu_rest"]:
-        return set()
-    try:
-        eintrag = json.loads(zeile["ki_neu_rest"])
-        alter = (datetime.now() - datetime.fromisoformat(eintrag["ts"])).total_seconds()
-        if alter > KI_NEU_REST_STUNDEN * 3600 or alter < 0:
-            return set()
-        return {int(i) for i in eintrag["ids"]}
-    except Exception:
-        return set()
-
-
-def _ki_neu_rest_pflegen(conn, project_id: int, lauf_ids: set, offene: set) -> None:
-    """Vermerk fortschreiben statt ueberschreiben (Pruefbefund 31.08.2026).
-
-    Ein Projekt kann mehrere Dokumente haben, und der Knopf am Dokument startet nur dessen
-    Bilder. Wuerde jeder Lauf den ganzen Vermerk ersetzen oder loeschen, verwuerfe ein Lauf in
-    Dokument B den Rest von Dokument A -- und A liesse sich spaeter nur noch doppelt bezahlt
-    fortsetzen. Deshalb: die Bilder DIESES Laufs (lauf_ids) aus dem Vermerk nehmen und die
-    jetzt offenen wieder hineinlegen; was andere Laeufe hinterlassen haben, bleibt stehen.
-    Ergibt sich eine leere Menge, ist der Vermerk weg."""
-    rest = (_ki_neu_rest_lesen(conn, project_id) - set(lauf_ids)) | set(offene)
-    wert = json.dumps({"ids": sorted(int(i) for i in rest),
-                       "ts": datetime.now().isoformat(timespec="seconds")}) if rest else None
-    conn.execute("UPDATE projects SET ki_neu_rest = ? WHERE id = ?", (wert, project_id))
-    conn.commit()
 
 
 def _ki_neu_zurueck(conn, ids: set, project_id: Optional[int] = None) -> None:
@@ -6347,7 +6301,7 @@ def _ki_neu_zurueck(conn, ids: set, project_id: Optional[int] = None) -> None:
     Seit 01.09.2026 (ein Modus, alle Bilder) enthaelt die Rettungsmenge auch nie generierte
     Bilder: Die stehen nach Abbruch/Guthaben/Tageslimit ebenfalls auf 'done' — mit leerem Feld,
     Knopf „Neu generieren", in der Zusammenfassung „ohne Text"; der naechste Sammellauf nimmt
-    sie ueber den Rest-Vermerk. Der Absatz darunter beschreibt die urspruengliche Lage.
+    ohnehin wieder alle Bilder (Michael Karbe, 02.09.2026). Der Absatz darunter beschreibt die urspruengliche Lage.
 
     Der Start-Endpunkt setzt fuer „n neu generieren" fertige Bilder auf 'pending', damit der
     vorhandene Sammellauf sie aufgreift. Bricht der Lauf ab (Guthaben, Tageslimit) oder
@@ -6359,20 +6313,9 @@ def _ki_neu_zurueck(conn, ids: set, project_id: Optional[int] = None) -> None:
     if not ids:
         return
     marken = ",".join("?" * len(ids))
-    # Was jetzt noch 'pending' ist, hat der Lauf nicht mehr geschafft -- genau das ist der
-    # Rest (Steve 31.08.2026). VOR dem Zurueckstellen ermitteln, danach sind alle 'done'
-    # und nicht mehr unterscheidbar.
-    offene = {r["id"] for r in conn.execute(
-        "SELECT id FROM images WHERE id IN (%s) AND status = 'pending'" % marken, list(ids)).fetchall()}
     conn.execute("UPDATE images SET status = 'done' WHERE id IN (%s) AND status = 'pending'" % marken,
                  list(ids))
     conn.commit()
-    # Nur setzen, wenn wirklich etwas offen blieb (Testbefund 31.08.2026): Der geordnete
-    # Abschluss ruft diese Funktion ein zweites Mal — dann steht nichts mehr auf 'pending',
-    # und der beim Abbruch gesetzte Vermerk wuerde sofort wieder geloescht. Geloescht wird
-    # er ausschliesslich am Ende eines Laufs, der NICHT abgebrochen ist.
-    if project_id is not None and offene:
-        _ki_neu_rest_pflegen(conn, project_id, ids, offene)
 
 
 def _notaufraeumen(project_id: int, ki_neu_ids: set) -> None:
@@ -6637,11 +6580,6 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
                      (json.dumps({"grund": _abbruch, "erledigt": _abbruch_erledigt,
                                   "offen": _abbruch_offen}), project_id))
         conn.commit()
-    elif ki_neu_ids:
-        # Lief der ki_neu-Lauf bis zum Ende, ist nichts mehr offen: Vermerk wegraeumen, damit
-        # der naechste Klick wieder alle Bilder nimmt. Auch gescheiterte Bilder gelten hier als
-        # erledigt — sie haben nichts gekostet (der Fehlerzweig verbucht nicht).
-        _ki_neu_rest_pflegen(conn, project_id, ki_neu_ids, set())
     # Zaehler frisch zaehlen statt den mitlaufenden Wert schreiben: zurueckgestellte Bilder
     # sind wieder 'done' und muessen mitzaehlen, sonst zeigt die Oberflaeche zu wenig an.
     processed = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",

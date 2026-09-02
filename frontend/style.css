@@ -1196,3 +1196,29 @@ textarea { font-family: inherit; font-size: 1rem; }
     flex: 0 0 auto;
     margin: 0; /* native Radio-Erscheinung erhalten — nur das Target vergroessern */
 }
+
+/* Lauf-Statusmeldung (Michael Karbe Punkt 2 + Steve, 02.09.2026): sichtbar fuer
+   alle, ruhige Info-Optik wie die Karten, KEIN Rot (Abbruch ist kein Fehler),
+   bleibt stehen bis zum Schliessen oder zur naechsten Generierung. */
+.lauf-meldung {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 0.75rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--text-muted);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text);
+}
+.lauf-meldung output {
+    flex: 1 1 16rem;
+    line-height: 1.5;
+}
+/* display:flex wuerde das hidden-Attribut uebersteuern — ausdruecklich ausblenden. */
+.lauf-meldung[hidden] {
+    display: none;
+}

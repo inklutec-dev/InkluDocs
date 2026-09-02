@@ -422,10 +422,14 @@
         // Abbruch (01.09.2026): Knopf, solange der Feld-Pass laeuft; er endet nach der aktuellen Seite.
         const abbruchKnopf = (!gast() && project.status === 'processing')
             ? '<p><button type="button" class="btn btn-secondary" id="fAbortBtn" onclick="Formular.abbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button></p>' : '';
+        // Sichtbare Lauf-Statusmeldung (Michael Karbe Punkt 2 + Steve, 02.09.2026) — wie bei den Bildern.
+        const laufMeldungHtml = gast() ? ''
+            : '<div id="fLaufMeldung" class="lauf-meldung" tabindex="-1" hidden><output id="fLaufMeldungText"></output>'
+            + '<button type="button" class="btn btn-secondary" onclick="Formular.meldungSchliessen()">' + t('Schließen') + '</button></div>';
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
-            + '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>' + abbruchKnopf
+            + '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>' + abbruchKnopf + laufMeldungHtml
             // Gast: nur Abschluss/Beenden + Filter „Nur offene Felder" — keine KI, keine
             // Stammdaten, kein Export, keine Sprach-/Prompt-Einstellungen.
             + (gast() && felder.length ? ''
@@ -567,6 +571,7 @@
         const msg = document.getElementById('feld_msg_' + feldId);
         if (btn) btn.disabled = true;
         if (msg) msg.textContent = t('Quickinfo wird generiert …');
+        meldungSchliessen();
         announce(t('Quickinfo wird generiert …'));
         try {
             const res = await fetch('/api/felder/' + feldId + '/generieren', { method: 'POST' });
@@ -637,6 +642,21 @@
     }
     function alleGenerieren(projectId, docId) { return sammellaufStarten(projectId, docId, 'luecken'); }
 
+    function zeigeFormularMeldung(text) {
+        const box = document.getElementById('fLaufMeldung');
+        const out = document.getElementById('fLaufMeldungText');
+        if (!box || !out) { announce(text); return; }
+        out.textContent = text;
+        box.hidden = false;
+        if (document.activeElement === document.body) box.focus();
+    }
+    function meldungSchliessen() {
+        const box = document.getElementById('fLaufMeldung');
+        const out = document.getElementById('fLaufMeldungText');
+        if (out) out.textContent = '';
+        if (box) box.hidden = true;
+    }
+
     async function abbrechen(projectId) {
         const btn = document.getElementById('fAbortBtn');
         if (btn) { btn.disabled = true; btn.textContent = t('Abbruch angefordert …'); }
@@ -652,6 +672,7 @@
     async function alleGenerierenAusfuehren(projectId, docId) {
         const btn = document.getElementById('fGenAllBtn');
         if (btn) btn.disabled = true;
+        meldungSchliessen();
         try {
             const res = await fetch('/api/projects/' + projectId + '/quickinfos/generieren', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(docId ? { document_id: docId } : {}) });
             if (await creditsAbgefangen(res)) { if (btn) btn.disabled = false; return; }
@@ -666,6 +687,7 @@
     async function alleNeuGenerierenAusfuehren(projectId, docId) {
         const btn = document.getElementById('fGenAllBtn');
         if (btn) btn.disabled = true;
+        meldungSchliessen();
         try {
             const body = { modus: 'ki_neu' };
             if (docId) body.document_id = docId;
@@ -932,13 +954,18 @@
                     if (!r.ok) return;
                     const d = await r.json();
                     if (d.project && d.project.status !== project.status) {
+                        let laufMeldung = '';
                         if (project.status === 'extracting') announce(t('Formular gelesen.'));
                         else {
                             const g = (await (await fetch('/api/projects/' + projectId + '/felder')).json()).generierung || {};
                             const f = (g.fehler || []).length ? ' ' + t('Hinweise: {w}', { w: g.fehler.join(' ') }) : '';
-                            announce(t('Generierung abgeschlossen: {n} Quickinfos neu.', { n: g.felder_neu || 0 }) + f);
+                            // Sichtbare Statusmeldung statt reiner Ansage (Michael Karbe Punkt 2, 02.09.2026).
+                            laufMeldung = (g.abbruch
+                                ? t('Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt.', { n: g.felder_neu || 0 })
+                                : t('Generierung abgeschlossen: {n} Quickinfos neu.', { n: g.felder_neu || 0 })) + f;
                         }
-                        showProject(projectId);
+                        await showProject(projectId);
+                        if (laufMeldung) zeigeFormularMeldung(laufMeldung);
                     } else {
                         showProject(projectId, true);
                     }
@@ -967,6 +994,6 @@
     }
 
     window.Formular = { showProject, original, kiVorschlag, inStammdaten, ausStammdaten, stammdatenAnwenden, filter, filterUnsicher, chatAktionen,
-                        generieren, alleGenerieren, alleNeuGenerieren, abbrechen, exportOeffnen, exportSchliessen, exportieren,
+                        generieren, alleGenerieren, alleNeuGenerieren, abbrechen, meldungSchliessen, exportOeffnen, exportSchliessen, exportieren,
                         urteil, anmerkungSpeichern, anmerkungLoeschen, abschlussOeffnen, abschlussSchliessen, abschliessen };
 })();

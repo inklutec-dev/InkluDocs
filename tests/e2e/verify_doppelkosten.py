@@ -1,26 +1,29 @@
-"""Fortsetzen eines abgebrochenen „n neu generieren" kostet nicht doppelt (Steve 31.08.2026).
+"""„Alt-Texte generieren" nimmt IMMER alle Bilder (Michael Karbe, 02.09.2026).
 
 Im Staging-Container:
     docker cp tests/e2e/verify_doppelkosten.py inkludocs-staging:/tmp/ && \
     docker exec inkludocs-staging python3 /tmp/verify_doppelkosten.py
 
-Befund des Pruefers vom 30.08.2026: Bricht der Lauf ab, weil das Guthaben nicht reicht, und
-startet der Nutzer nach dem Aufstocken erneut, liefen die bereits frisch generierten Bilder ein
-zweites Mal durch die KI — und kosteten ein zweites Mal. Seit den Aktionspreisen (5 Credits je
-Alt-Text) faellt das ins Gewicht. Seit dem 31.08. merkt sich das Projekt den Rest.
+Geschichte: Vom 31.08. bis 02.09.2026 nahm der naechste Start nach einem Abbruch
+nur die offen gebliebenen Bilder (Rest-Vermerk, gegen doppelte Kosten). Michael
+Karbe hat das am 01.09. verworfen: „Die Funktion Alt-Texte generieren erzeugt
+immer neue Alt-Texte fuer alle Bilder." Dass ein erneuter Sammellauf bereits
+generierte Bilder noch einmal kostet, ist seither die GEWOLLTE Folge — die
+Rueckfrage nennt Anzahl und Preis vorher; fuer einzelne Bilder gibt es den
+Knopf „Neu generieren" am Bild.
 
-Geprueft wird ausserdem der Lauf-Hinweis: Endet ein Lauf vorzeitig, muss der Statusabruf sagen,
-warum und wie viele Bilder offen blieben — vorher stand das nur im Server-Log und die Oberflaeche
-meldete „Alle Alt-Texte wurden generiert."
+Geprueft wird weiterhin der Lauf-Hinweis: Endet ein Lauf vorzeitig (Guthaben,
+Tageslimit, Abbruch), muss der Statusabruf Grund und Zahlen liefern — daraus
+baut die Oberflaeche die sichtbare Statusmeldung.
 
-Kein Bedrock-Aufruf: die Generierung wird durch einen Platzhalter ersetzt. Es wird ein eigenes
-Testprojekt angelegt, kein echtes Projekt angefasst.
+Kein Bedrock-Aufruf: die Generierung wird durch einen Platzhalter ersetzt. Es
+wird ein eigenes Testprojekt angelegt, kein echtes Projekt angefasst.
 
-SICHERHEITSBREMSE: laeuft nur im Staging-Container — das Skript drueckt das Guthaben eines
-echten Kontos voruebergehend auf 0 und darf nie gegen Produktion laufen.
+SICHERHEITSBREMSE: laeuft nur im Staging-Container — das Skript drueckt das
+Guthaben eines echten Kontos voruebergehend auf 0 und darf nie gegen
+Produktion laufen.
 """
 import asyncio, json, os, sqlite3, sys
-from datetime import datetime, timedelta
 
 MAIL = "steve.weidel@gmail.com"
 DB = "/app/data/inkludocs.db"
@@ -87,11 +90,6 @@ def status_von(feld):
     return con.execute(f"SELECT {feld} FROM projects WHERE id=?", (PID,)).fetchone()[feld]
 
 
-def vermerk():
-    roh = status_von("ki_neu_rest")
-    return set(json.loads(roh)["ids"]) if roh else set()
-
-
 def buchungen():
     """Verbrauchszeilen, die auf unsere Testbilder gebucht wurden."""
     marken = ",".join("?" * len(BILD_IDS))
@@ -120,17 +118,14 @@ try:
     check("Tageslimit steht dem Test nicht im Weg", main.tageslimit_wache(nutzer) is None,
           main.tageslimit_wache(nutzer))
 
-    # --- Testprojekt: 4 fertige Bilder mit KI-Text (alle Kandidaten fuer „neu generieren")
+    # --- Testprojekt: 4 fertige Bilder mit KI-Text (alle Kandidaten fuer den Sammellauf)
     cur = con.execute(
         "INSERT INTO projects (user_id, filename, original_path, status, total_images, processed_images, "
         "project_type, name, tool) VALUES (?,?,?,?,?,?,?,?,?)",
         (uid, "doppelkosten-test.pdf", "/tmp/doppelkosten-test.pdf", "done", 4, 4, "pdf",
          "Doppelkosten-Test", "pdf"))
     PID = cur.lastrowid
-    # 01.09.2026: alt_text_edited = None (nie von Hand angefasst). Ein leerer String hiesse seit
-    # dem 31.08. "bewusst geleert" und ist seit dem 01.09. KEIN Kandidat fuer den Sammellauf mehr
-    # (_generier_kandidaten: alt_text_edited IS NULL). Die Fixture bildet echte Daten nach:
-    # nie bearbeitete Bilder tragen NULL.
+    # alt_text_edited = None (nie von Hand angefasst) — die Fixture bildet echte Daten nach.
     for i in range(4):
         c2 = con.execute("INSERT INTO images (project_id, page_number, image_index, image_path, alt_text, "
                          "alt_text_edited, image_type, status) VALUES (?,?,?,?,?,?,?,?)",
@@ -139,7 +134,7 @@ try:
     con.commit()
     check("Testprojekt mit 4 Kandidaten angelegt", len(BILD_IDS) == 4, BILD_IDS)
 
-    # --- 1. Lauf mit Guthaben fuer genau ZWEI Bilder -> Abbruch nach zweien
+    # --- 1. Lauf mit Guthaben fuer genau ZWEI Bilder -> endet vorzeitig nach zweien
     guthaben_auf(2 * PREIS)
     uebergeben = {}
 
@@ -166,8 +161,8 @@ try:
     check("Alle vier stehen wieder auf 'done' (nichts haengt auf pending)",
           [r["status"] for r in con.execute("SELECT status FROM images WHERE project_id=?", (PID,))]
           == ["done"] * 4)
-    check("REST-VERMERK enthaelt genau die zwei offen gebliebenen Bilder", vermerk() == set(offen),
-          (vermerk(), offen))
+    check("KEIN Rest-Vermerk mehr (abgeloest 02.09.2026)", status_von("ki_neu_rest") is None,
+          status_von("ki_neu_rest"))
     check("Erster Lauf hat zwei Buchungen erzeugt", buchungen() == 2, buchungen())
 
     # --- 2. Lauf-Hinweis: Grund und Zahlen stehen am Projekt und kommen im Statusabruf an
@@ -179,87 +174,40 @@ try:
     check("Statusabruf liefert den Hinweis an die Oberflaeche",
           (antwort.get("lauf_hinweis") or {}).get("offen") == 2, antwort)
 
-    # --- 3. Zweiter Start nimmt NUR den Rest (das ist der eigentliche Fix)
+    # --- 3. Zweiter Start nimmt WIEDER ALLE VIER (Michaels Regel — das ist der Kern)
     guthaben_auf(500)
+    v = asyncio.run(main.generate_vorschau(PID, FakeRequest({"modus": "alle"}), user=nutzer))
+    check("Vorschau nach vorzeitigem Ende nennt wieder ALLE vier Bilder", v.get("anzahl") == 4, v)
+    check("Vorschau kennt keinen Rest mehr (Schluessel 'rest'/'gesamt' weg)",
+          "rest" not in v and "gesamt" not in v, sorted(v.keys()))
     main._process_project = stub_task
     asyncio.run(main.generate_alt_texts(PID, FakeRequest({"modus": "ki_neu"}), user=nutzer))
     main._process_project = echt_process
-    check("Zweiter Start nimmt NUR die zwei offen gebliebenen Bilder",
-          uebergeben["ids"] == set(offen), (uebergeben, offen))
+    check("Zweiter Start nimmt ALLE vier Bilder (nicht nur den Rest)",
+          uebergeben["ids"] == set(BILD_IDS), (uebergeben, offen))
     check("Alter Hinweis ist beim Neustart weggeraeumt", status_von("lauf_hinweis") is None,
           status_von("lauf_hinweis"))
 
     main.generate_alt_text = ki_platzhalter
-    asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=set(offen)))
+    asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=set(BILD_IDS)))
     main.generate_alt_text = echt_gen
 
     check("Jetzt tragen alle vier Bilder den neuen Text",
           all(t.startswith("NEU") for t in texte().values()), texte())
-    check("KEINE DOPPELTEN KOSTEN: vier Bilder, vier Buchungen", buchungen() == 4, buchungen())
-    check("Vollstaendiger Lauf loescht den Rest-Vermerk", status_von("ki_neu_rest") is None,
-          status_von("ki_neu_rest"))
+    check("GEWOLLTE Doppelkosten: 2 + 4 = sechs Buchungen (zwei Bilder zweimal bezahlt)",
+          buchungen() == 6, buchungen())
     check("Vollstaendiger Lauf setzt keinen Hinweis", status_von("lauf_hinweis") is None,
           status_von("lauf_hinweis"))
 
-    # --- 4. Nach dem vollstaendigen Lauf nimmt der naechste Klick wieder alle
+    # --- 4. Auch direkt nach einem vollen Lauf: naechster Klick nimmt wieder alle
     main._process_project = stub_task
     asyncio.run(main.generate_alt_texts(PID, FakeRequest({"modus": "ki_neu"}), user=nutzer))
     main._process_project = echt_process
-    check("Ohne Vermerk nimmt der naechste Klick wieder alle vier", uebergeben["ids"] == set(BILD_IDS),
-          uebergeben)
+    check("Naechster Klick nimmt wieder alle vier", uebergeben["ids"] == set(BILD_IDS), uebergeben)
     stub_lauf_zuruecksetzen()
 
-    # --- 5. Randfaelle des Vermerks: Verfall, Unsinn, fremde IDs
-    alt = (datetime.now() - timedelta(hours=main.KI_NEU_REST_STUNDEN + 1)).isoformat(timespec="seconds")
-    con.execute("UPDATE projects SET ki_neu_rest=? WHERE id=?",
-                (json.dumps({"ids": BILD_IDS[:1], "ts": alt}), PID))
-    con.commit()
-    check("Vermerk aelter als die Frist wird ignoriert", main._ki_neu_rest_lesen(con, PID) == set(),
-          main._ki_neu_rest_lesen(con, PID))
-
-    con.execute("UPDATE projects SET ki_neu_rest='{kaputt' WHERE id=?", (PID,))
-    con.commit()
-    check("Unlesbarer Vermerk fuehrt zum normalen Verhalten, nicht zum Absturz",
-          main._ki_neu_rest_lesen(con, PID) == set())
-
-    con.execute("UPDATE projects SET ki_neu_rest=? WHERE id=?",
-                (json.dumps({"ids": [BILD_IDS[0], 999999999], "ts": datetime.now().isoformat(timespec="seconds")}), PID))
-    con.commit()
-    main._process_project = stub_task
-    asyncio.run(main.generate_alt_texts(PID, FakeRequest({"modus": "ki_neu"}), user=nutzer))
-    main._process_project = echt_process
-    check("Fremde ID im Vermerk erreicht kein fremdes Bild (Schnittmenge greift)",
-          uebergeben["ids"] == {BILD_IDS[0]}, uebergeben)
-    stub_lauf_zuruecksetzen()
-
-    # --- 5b. Mehrere Dokumente (Pruefbefund Fable 5, 31.08.2026): ein Lauf in "Dokument B"
-    #        darf den Rest von "Dokument A" weder ueberschreiben noch loeschen
-    a_rest, b_ids = set(BILD_IDS[:2]), set(BILD_IDS[2:])
-    con.execute("UPDATE projects SET ki_neu_rest=? WHERE id=?",
-                (json.dumps({"ids": sorted(a_rest), "ts": datetime.now().isoformat(timespec="seconds")}), PID))
-    con.execute("UPDATE images SET status='pending' WHERE id IN (?,?)", tuple(b_ids))
-    con.execute("UPDATE projects SET status='processing' WHERE id=?", (PID,))
-    con.commit()
-    guthaben_auf(0)                      # B bricht sofort ab -> beide B-Bilder offen
-    main.generate_alt_text = ki_platzhalter
-    asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=b_ids))
-    main.generate_alt_text = echt_gen
-    check("Abbruch in B: Vermerk enthaelt A UND B (fortgeschrieben, nicht ueberschrieben)",
-          vermerk() == a_rest | b_ids, (vermerk(), a_rest, b_ids))
-    guthaben_auf(500)                    # B laeuft jetzt vollstaendig durch
-    con.execute("UPDATE images SET status='pending' WHERE id IN (?,?)", tuple(b_ids))
-    con.execute("UPDATE projects SET status='processing' WHERE id=?", (PID,))
-    con.commit()
-    main.generate_alt_text = ki_platzhalter
-    asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=b_ids))
-    main.generate_alt_text = echt_gen
-    check("B vollstaendig: nur B aus dem Vermerk genommen, A bleibt stehen", vermerk() == a_rest,
-          (vermerk(), a_rest))
-    con.execute("UPDATE projects SET ki_neu_rest=NULL WHERE id=?", (PID,)); con.commit()
-
-    # --- 6. Seit 01.09.2026 gibt es nur EINEN Modus: auch ein nie generiertes (pending) Bild ist Kandidat
+    # --- 5. Ein Modus: auch ein nie generiertes (pending) Bild ist Kandidat
     con.execute("UPDATE images SET status='pending' WHERE id=?", (BILD_IDS[0],))
-    con.execute("UPDATE projects SET ki_neu_rest=NULL WHERE id=?", (PID,))
     con.commit()
     main._process_project = stub_task
     asyncio.run(main.generate_alt_texts(PID, FakeRequest({}), user=nutzer))
@@ -276,8 +224,7 @@ try:
     check("Lauf ohne Rettungsmenge: der Hinweis wird trotzdem gesetzt (der Nutzer soll den Grund hoeren)",
           json.loads(status_von("lauf_hinweis") or "null") is not None, status_von("lauf_hinweis"))
 
-    # --- 7. Abbruch durch den Nutzer (Michael Karbe 01.09.2026): Signal vor jedem Bild, geordnetes Ende
-    # Wie der Start-Endpunkt: Kandidaten auf 'pending', Projekt auf 'processing'.
+    # --- 6. Abbruch durch den Nutzer (Michael Karbe 01.09.2026): Signal vor jedem Bild, geordnetes Ende
     con.execute("UPDATE images SET status='pending' WHERE project_id=?", (PID,))
     con.execute("UPDATE projects SET status='processing', ki_neu_rest=NULL, lauf_hinweis=NULL WHERE id=?", (PID,))
     con.commit()
@@ -297,12 +244,13 @@ try:
     check("Abbruch: genau eine Buchung (nur das bearbeitete Bild kostet)", buchungen() - vor_buchungen == 1, buchungen() - vor_buchungen)
     check("Abbruch: alle vier Bilder wieder auf done (nichts haengt)",
           [r["status"] for r in con.execute("SELECT status FROM images WHERE project_id=? ORDER BY id", (PID,))] == ["done"] * 4)
-    check("Abbruch: Rest-Vermerk enthaelt die drei offenen Bilder", len(vermerk()) == 3, vermerk())
-    v_rest = asyncio.run(main.generate_vorschau(PID, FakeRequest({"modus": "alle"}), user=nutzer))
-    check("Vorschau nach Abbruch: rest=True, anzahl 3 von gesamt 4", v_rest.get("rest") is True and v_rest.get("anzahl") == 3 and v_rest.get("gesamt") == 4, v_rest)
+    check("Abbruch: KEIN Rest-Vermerk geschrieben (abgeloest 02.09.2026)", status_von("ki_neu_rest") is None,
+          status_von("ki_neu_rest"))
+    v_nach = asyncio.run(main.generate_vorschau(PID, FakeRequest({"modus": "alle"}), user=nutzer))
+    check("Vorschau nach Abbruch nennt wieder ALLE vier (Michaels Regel)", v_nach.get("anzahl") == 4, v_nach)
     check("Abbruch: Projekt wieder auf done, Signal geloescht",
           status_von("status") == "done" and PID not in main._abbruch_gewuenscht, (status_von("status"), PID in main._abbruch_gewuenscht))
-    con.execute("UPDATE projects SET ki_neu_rest=NULL, lauf_hinweis=NULL WHERE id=?", (PID,)); con.commit()
+    con.execute("UPDATE projects SET lauf_hinweis=NULL WHERE id=?", (PID,)); con.commit()
 
 finally:
     main._process_project = echt_process

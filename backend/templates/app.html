@@ -630,6 +630,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: project.processed_images, n: project.total_images })}</p>
                     ${!window.GUEST_MODE ? '<button type="button" class="btn btn-secondary" id="abortGenBtn" onclick="generierungAbbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button>' : ''}
                 ` : ''}
+                ${!window.GUEST_MODE ? `
+                    <div id="laufMeldung" class="lauf-meldung" tabindex="-1" hidden>
+                        <output id="laufMeldungText"></output>
+                        <button type="button" class="btn btn-secondary" onclick="versteckeLaufMeldung()">${t('Schließen')}</button>
+                    </div>
+                ` : ''}
                 <div class="card-actions">
                     ${!window.GUEST_MODE && images.length > 0 && project.status !== 'processing' && project.status !== 'extracting' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
@@ -759,16 +765,21 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     // "Alle Alt-Texte wurden generiert." -- im Modus "neu generieren" zaehlen die
                     // zurueckgestellten Bilder naemlich wieder als fertig.
                     const hinweis = sData.lauf_hinweis;
+                    // Sichtbare Statusmeldung statt reiner Ansage (Michael Karbe Punkt 2 + Steve,
+                    // 02.09.2026): fuer alle lesbar, bleibt stehen, Schliessen-Knopf; das native
+                    // <output> (role status) sagt sie Screenreadern von selbst an.
+                    let laufText;
                     if (sData.status === 'done' && hinweis && hinweis.offen) {
-                        announce(hinweis.grund === 'tageslimit'
+                        laufText = hinweis.grund === 'tageslimit'
                             ? t('Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen })
                             : hinweis.grund === 'abbruch'
-                            ? t('Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen })
-                            : t('Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen }));
+                            ? t('Die Generierung wurde abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen })
+                            : t('Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen.', { i: hinweis.erledigt, n: hinweis.offen });
                     } else {
-                        announce(sData.status === 'done' ? t('Alle Alt-Texte wurden generiert.') : t('Fehler bei der Verarbeitung.'));
+                        laufText = sData.status === 'done' ? t('Alle Alt-Texte wurden generiert.') : t('Fehler bei der Verarbeitung.');
                     }
-                    showProject(projectId);
+                    await showProject(projectId);
+                    zeigeLaufMeldung(laufText);
                 } else if (sData.processed_images > project.processed_images) {
                     showProject(projectId);
                 } else {
@@ -2515,6 +2526,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // ist. Ein vorhandener original_alt aus dem PDF zählt nicht als KI-Lauf
     // (das Bild kommt mit status='pending' aus der Extraktion).
     async function regenerateImage(projectId, imageId) {
+        versteckeLaufMeldung();
         const typeSelect = document.getElementById('regen_type_' + imageId);
         const btn = document.getElementById('regen_btn_' + imageId);
         const statusEl = document.getElementById('regen_status_' + imageId);
@@ -2712,16 +2724,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // schon Alternativtexte mitbringt (Word fast immer). Die stehen sichtbar
         // im Feld und gehen als Grundlage an die KI; der Satz sagt das jetzt.
         // Generieren ueberschreibt alles (Michael Karbe/Steve 01.09.2026): EIN Satz, die Gesamtzahl,
-        // und ehrlich, was verloren geht — eigene Texte werden genannt (und im Hintergrund
+        // und ehrlich, was verloren geht — eigene Texte werden seit dem
+        // 02.09.2026 NICHT mehr genannt, Michael Karbe Punkt 3 (bleiben im Hintergrund
         // aufgehoben: „Vorherigen Text zurueckholen" am Bild).
         // Wortlaut Michael Karbe (Mail 01.09.2026): Gesamtzahl, Preis, Guthaben, Abbruch moeglich.
         let satz;
-        if (v.rest) {
-            // Rest eines abgebrochenen Laufs: nur die offenen Bilder, ehrlich benannt (01.09.2026).
-            satz = v.anzahl === 1
-                ? t('Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits.', { g: v.gesamt, c: v.preis })
-                : t('Vom abgebrochenen Lauf sind noch {n} von {g} Bildern offen; nur diese werden jetzt beschrieben, das benötigt {c} Credits.', { n: v.anzahl, g: v.gesamt, c: v.preis });
-        } else if (docId) {
+        if (docId) {
             satz = v.anzahl === 1
                 ? t('Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits.', { c: v.preis })
                 : t('Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
@@ -2729,11 +2737,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             satz = v.anzahl === 1
                 ? t('Die Dokumente des Projekts beinhalten 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits.', { c: v.preis })
                 : t('Die Dokumente des Projekts beinhalten insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
-        }
-        if (v.eigene === 1) {
-            satz += ' ' + t('Ein Text davon stammt von dir.');
-        } else if (v.eigene > 1) {
-            satz += ' ' + t('{n} Texte davon stammen von dir.', { n: v.eigene });
         }
         // Vom Autor in der Datei als dekorativ gekennzeichnet (Word): bleibt aussen vor, kostet nichts.
         if (v.autor_dekorativ === 1) {
@@ -2752,6 +2755,27 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             onOk: () => generierungAusfuehren(projectId, modus, docId),
         });
     }
+
+    // Sichtbare Lauf-Statusmeldung (Michael Karbe Punkt 2 + Steve, 02.09.2026): natives
+    // <output> im Projektkopf — fuer alle lesbar, mit Schliessen-Knopf; verschwindet bei
+    // jeder neuen Generierung (Sammellauf und Einzelbild) und bei jedem Neuaufbau der Seite.
+    function zeigeLaufMeldung(text) {
+        const box = document.getElementById('laufMeldung');
+        const out = document.getElementById('laufMeldungText');
+        if (!box || !out) { announce(text); return; }
+        out.textContent = text;
+        box.hidden = false;
+        // Fokus nur retten, wenn er gerade verloren ging (der Abbrechen-Knopf verschwindet
+        // mit dem Neuaufbau) — niemandem, der tippt, den Fokus stehlen.
+        if (document.activeElement === document.body) box.focus();
+    }
+    function versteckeLaufMeldung() {
+        const box = document.getElementById('laufMeldung');
+        const out = document.getElementById('laufMeldungText');
+        if (out) out.textContent = '';
+        if (box) box.hidden = true;
+    }
+    window.versteckeLaufMeldung = versteckeLaufMeldung;
 
     // Abbruch eines laufenden Sammellaufs (Michael Karbe 01.09.2026): der Lauf endet nach dem
     // Bild, das gerade in Arbeit ist; die Ansage kommt ueber den Lauf-Hinweis (grund 'abbruch').
@@ -2808,6 +2832,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // deaktiviert; ein zweiter Versuch ginge nur ueber einen Seitenneuladen.
         const btnInhalt = btn ? btn.innerHTML : '';
         if (btn) { btn.disabled = true; btn.textContent = t('Wird gestartet...'); }
+        versteckeLaufMeldung();
         announce(t('Alt-Text-Generierung wird gestartet.'));
         const body = { modus: 'alle' };
         if (docId) body.document_id = docId;

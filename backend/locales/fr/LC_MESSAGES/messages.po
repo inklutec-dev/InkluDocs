@@ -5271,13 +5271,7 @@ msgid "Vorheriger Text wiederhergestellt."
 msgstr "Texte précédent rétabli."
 
 #. Rueckfrage: eigene Texte (01.09.2026)
-msgid "Ein Text davon stammt von dir."
-msgstr "L’un de ces textes est de vous."
-
 #. Rueckfrage: eigene Texte (01.09.2026)
-msgid "{n} Texte davon stammen von dir."
-msgstr "{n} de ces textes sont de vous."
-
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
 msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
 msgstr "Le document contient {n} images au total ; la création des textes alternatifs nécessite {c} crédits."
@@ -5323,17 +5317,11 @@ msgid "Es läuft gerade keine Generierung."
 msgstr "Aucune génération n’est en cours."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
-msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
-msgstr "Interrompu : {i} images ont été traitées, {n} restent en attente."
+msgid "Die Generierung wurde abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "La génération a été interrompue : {i} images ont été traitées, {n} restent en attente."
 
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
-msgid "Vom abgebrochenen Lauf sind noch {n} von {g} Bildern offen; nur diese werden jetzt beschrieben, das benötigt {c} Credits."
-msgstr "{n} images sur {g} restent en attente depuis l’interruption ; seules celles-ci seront décrites maintenant, ce qui nécessite {c} crédits."
-
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
-msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
-msgstr "1 image sur {g} reste en attente depuis l’interruption ; seule celle-ci sera décrite maintenant, ce qui nécessite {c} crédits."
-
 #. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
 msgid "Bild nicht mehr vorhanden"
 msgstr "Image plus disponible"
@@ -5341,3 +5329,7 @@ msgstr "Image plus disponible"
 #. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
 msgid "Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu."
 msgstr "Cette image n’existe plus. Veuillez recharger la page."
+
+# Sichtbare Abbruch-Meldung Quickinfos (Michael Karbe Punkt 2, 02.09.2026)
+msgid "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
+msgstr "La génération a été interrompue : {n} info-bulles ont été créées."

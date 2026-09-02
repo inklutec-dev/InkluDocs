@@ -118,6 +118,12 @@ with sync_playwright() as p:
     # Generieren ueberschreibt alles (Michael Karbe/Steve 01.09.2026): Gesamtzahl + Hinweis auf Ueberschreiben.
     check("Kostensatz nach Michael: „beinhalten insgesamt … Bilder … benötigt … Credits“", "beinhalten insgesamt" in text and "benötigt" in text, text)
     check("Kostensatz: Abbruch moeglich (Knopf existiert seit 01.09.)", "abgebrochen werden" in text, text)
+    check("Kostensatz nennt eigene Texte NICHT mehr (Michael Punkt 3, 02.09.)",
+          "stammen von" not in text and "stammt von dir" not in text, text)
+    check("Kostensatz nennt keinen Rest eines abgebrochenen Laufs mehr (Michael Punkt 1, 02.09.)",
+          "abgebrochenen Lauf" not in text, text)
+    check("Statusmeldungs-Box vorhanden und verborgen (Michael Punkt 2, 02.09.)",
+          page.locator("#laufMeldung").count() == 1 and page.locator("#laufMeldung").is_hidden(), None)
     # Einzahl (Steve 01.09.2026, gehoert: „1 davon bringen“, „1 Bilder“): kein „1 <Mehrzahl>“ im Satz.
     import re as _re
     check("Keine Einzahl-Mehrzahl-Panne im Kostensatz",
@@ -221,6 +227,8 @@ with sync_playwright() as p:
               str([(v["id"], len(v["nodes"])) for v in r["violations"]]))
         page.locator("#genConfirmCancel").click()
         page.wait_for_timeout(700)
+        check("Formular: Statusmeldungs-Box vorhanden und verborgen (Michael Punkt 2, 02.09.)",
+              page.locator("#fLaufMeldung").count() == 1 and page.locator("#fLaufMeldung").is_hidden(), None)
         check("Formular: Abbrechen schliesst, nichts laeuft",
               dlg_f.evaluate("d => d.open") is False and page.locator("text=KI generiert").count() == 0)
     else:

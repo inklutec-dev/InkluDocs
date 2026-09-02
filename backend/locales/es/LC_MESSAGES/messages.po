@@ -5271,13 +5271,7 @@ msgid "Vorheriger Text wiederhergestellt."
 msgstr "Texto anterior recuperado."
 
 #. Rueckfrage: eigene Texte (01.09.2026)
-msgid "Ein Text davon stammt von dir."
-msgstr "Uno de esos textos es tuyo."
-
 #. Rueckfrage: eigene Texte (01.09.2026)
-msgid "{n} Texte davon stammen von dir."
-msgstr "{n} de esos textos son tuyos."
-
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
 msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
 msgstr "El documento contiene {n} imágenes en total; la creación de los textos alternativos requiere {c} créditos."
@@ -5323,17 +5317,11 @@ msgid "Es läuft gerade keine Generierung."
 msgstr "No hay ninguna generación en curso."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
-msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
-msgstr "Cancelado: se procesaron {i} imágenes, {n} quedaron pendientes."
+msgid "Die Generierung wurde abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "La generación se canceló: se procesaron {i} imágenes, {n} quedaron pendientes."
 
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
-msgid "Vom abgebrochenen Lauf sind noch {n} von {g} Bildern offen; nur diese werden jetzt beschrieben, das benötigt {c} Credits."
-msgstr "{n} de {g} imágenes siguen pendientes del proceso cancelado; solo estas se describirán ahora, lo que requiere {c} créditos."
-
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
-msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
-msgstr "1 de {g} imágenes sigue pendiente del proceso cancelado; solo esta se describirá ahora, lo que requiere {c} créditos."
-
 #. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
 msgid "Bild nicht mehr vorhanden"
 msgstr "Imagen ya no disponible"
@@ -5341,3 +5329,7 @@ msgstr "Imagen ya no disponible"
 #. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
 msgid "Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu."
 msgstr "Esta imagen ya no existe. Vuelve a cargar la página."
+
+# Sichtbare Abbruch-Meldung Quickinfos (Michael Karbe Punkt 2, 02.09.2026)
+msgid "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
+msgstr "La generación se canceló: se crearon {n} sugerencias."

@@ -4963,13 +4963,7 @@ msgid "Vorheriger Text wiederhergestellt."
 msgstr "Forrige tekst gendannet."
 
 #. Rueckfrage: eigene Texte (01.09.2026)
-msgid "Ein Text davon stammt von dir."
-msgstr "En af teksterne er din."
-
 #. Rueckfrage: eigene Texte (01.09.2026)
-msgid "{n} Texte davon stammen von dir."
-msgstr "{n} af teksterne er dine."
-
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
 msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
 msgstr "Dokumentet indeholder i alt {n} billeder; oprettelsen af de alternative tekster kræver {c} credits."
@@ -5015,17 +5009,11 @@ msgid "Es läuft gerade keine Generierung."
 msgstr "Der kører ingen generering lige nu."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
-msgid "Abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
-msgstr "Afbrudt: {i} billeder blev behandlet, {n} forblev åbne."
+msgid "Die Generierung wurde abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
+msgstr "Genereringen blev afbrudt: {i} billeder blev behandlet, {n} forblev åbne."
 
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
-msgid "Vom abgebrochenen Lauf sind noch {n} von {g} Bildern offen; nur diese werden jetzt beschrieben, das benötigt {c} Credits."
-msgstr "{n} af {g} billeder er stadig åbne fra den afbrudte kørsel; kun disse bliver beskrevet nu, hvilket kræver {c} credits."
-
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
-msgid "Vom abgebrochenen Lauf ist noch 1 von {g} Bildern offen; nur dieses wird jetzt beschrieben, das benötigt {c} Credits."
-msgstr "1 af {g} billeder er stadig åbent fra den afbrudte kørsel; kun dette bliver beskrevet nu, hvilket kræver {c} credits."
-
 #. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
 msgid "Bild nicht mehr vorhanden"
 msgstr "Billedet findes ikke længere"
@@ -5033,3 +5021,7 @@ msgstr "Billedet findes ikke længere"
 #. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
 msgid "Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu."
 msgstr "Dette billede findes ikke længere. Genindlæs venligst siden."
+
+# Sichtbare Abbruch-Meldung Quickinfos (Michael Karbe Punkt 2, 02.09.2026)
+msgid "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
+msgstr "Genereringen blev afbrudt: {n} hjælpetekster blev oprettet."
