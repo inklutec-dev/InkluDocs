@@ -25,8 +25,26 @@ import sys
 from playwright.sync_api import sync_playwright
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8002"
-LOGIN_MAIL = "steve.weidel@gmail.com"
-LOGIN_PW = "Ewigwind-2026"
+# Zugangsdaten stehen NICHT im Repo (02.09.2026): aus ~/.e2e.env oder der
+# Umgebung (INKLUDOCS_E2E_MAIL / INKLUDOCS_E2E_PW), wie in ui_start.py.
+import os as _os
+
+
+def _e2e(schluessel):
+    wert = _os.environ.get(schluessel)
+    if wert:
+        return wert
+    try:
+        for zeile in open(_os.path.expanduser("~/.e2e.env"), encoding="utf-8"):
+            if zeile.startswith(schluessel + "="):
+                return zeile.strip().split("=", 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return ""
+
+
+LOGIN_MAIL = _e2e("INKLUDOCS_E2E_MAIL")
+LOGIN_PW = _e2e("INKLUDOCS_E2E_PW")
 
 # Sollwerte = billing.py. Weichen sie ab, ist entweder billing geaendert
 # worden (dann hier nachziehen) oder die Seite tippt wieder eigene Werte.

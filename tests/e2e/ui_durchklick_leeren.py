@@ -19,8 +19,26 @@ import sys
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8002"
-MAIL = "steve.weidel@gmail.com"
-PW = "Ewigwind-2026"
+# Zugangsdaten stehen NICHT im Repo (02.09.2026): aus ~/.e2e.env oder der
+# Umgebung (INKLUDOCS_E2E_MAIL / INKLUDOCS_E2E_PW), wie in ui_start.py.
+import os as _os
+
+
+def _e2e(schluessel):
+    wert = _os.environ.get(schluessel)
+    if wert:
+        return wert
+    try:
+        for zeile in open(_os.path.expanduser("~/.e2e.env"), encoding="utf-8"):
+            if zeile.startswith(schluessel + "="):
+                return zeile.strip().split("=", 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return ""
+
+
+MAIL = _e2e("INKLUDOCS_E2E_MAIL")
+PW = _e2e("INKLUDOCS_E2E_PW")
 PROJEKT = 93
 
 ok = fail = 0

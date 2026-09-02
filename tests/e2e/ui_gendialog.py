@@ -33,8 +33,26 @@ BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8002"
 PROJEKT = int(sys.argv[2]) if len(sys.argv) > 2 else 69
 WORD = int(sys.argv[3]) if len(sys.argv) > 3 else 320
 FORMULAR = int(sys.argv[4]) if len(sys.argv) > 4 else 326
-MAIL = "steve.weidel@inklutec.de"
-PW = "Ewigwind-2026"
+# Zugangsdaten stehen NICHT im Repo (02.09.2026): aus ~/.e2e.env oder der
+# Umgebung (INKLUDOCS_E2E_MAIL / INKLUDOCS_E2E_PW), wie in ui_start.py.
+import os as _os
+
+
+def _e2e(schluessel):
+    wert = _os.environ.get(schluessel)
+    if wert:
+        return wert
+    try:
+        for zeile in open(_os.path.expanduser("~/.e2e.env"), encoding="utf-8"):
+            if zeile.startswith(schluessel + "="):
+                return zeile.strip().split("=", 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return ""
+
+
+MAIL = _e2e("INKLUDOCS_E2E_MAIL")
+PW = _e2e("INKLUDOCS_E2E_PW")
 AXE = "https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js"
 
 ok = fail = 0
