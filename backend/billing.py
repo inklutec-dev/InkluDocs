@@ -83,6 +83,7 @@ AKTIONS_PREISE = {
     # vorher frei). Die Stammdaten-CSV (eigene Bibliothek, kein Dokument) bleibt frei.
     "csv_export": 10,
     "json_export": 10,
+    "xlsx_export": 10,   # Excel-Export zurueck am 02.09.2026 (Kundenwunsch via Michael)
     "formular_csv_export": 10,
 }
 
@@ -177,7 +178,7 @@ GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export")
 # 1 Credit je 10 Felder. Beim Alle-Dokumente-ZIP werden die Elemente aller
 # Dokumente zusammengezaehlt, der Grundpreis faellt einmal an. Gilt fuer alle
 # Konten (auch Free); reicht das Guthaben nicht, wird der Export verweigert
-# (export_pruefung -> 402, kein Wasserzeichen). Tabellen-Exporte (CSV/JSON)
+# (export_pruefung -> 402, kein Wasserzeichen). Tabellen-Exporte (CSV/JSON/Excel)
 # kosten den festen Preis aus AKTIONS_PREISE ohne Staffel (TABELLEN_EXPORTE).
 # Beispiele: PDF 1 Bild = 30, 26 Bilder = 40, 100 Bilder = 75;
 #            Formular 1 Feld = 26, 26 Felder = 28, 50 Felder = 30.
@@ -189,7 +190,7 @@ EXPORT_ARTEN = {
     "formular": ("formular_export", 1),
 }
 EXPORT_SCHRITT = 10
-TABELLEN_EXPORTE = {"csv": "csv_export", "json": "json_export", "formular_csv": "formular_csv_export"}
+TABELLEN_EXPORTE = {"csv": "csv_export", "json": "json_export", "xlsx": "xlsx_export", "formular_csv": "formular_csv_export"}
 
 
 def export_aktion(art: str) -> str:

@@ -136,7 +136,7 @@ Einzige neue Abhängigkeit: `lxml` (XML-Parser ohne Entity-Auflösung).
    gesetztem Kennzeichen), `docx_anker` = `"<part>|<docPr-id>"` (VML:
    `"<part>|v:<shape-id>"`).
    Dasselbe Medium mehrfach im Dokument = mehrere Zeilen, eine Bilddatei.
-4. **Generierung, Editor, Chatbot, Gast-Review, JSON/CSV-Export:**
+4. **Generierung, Editor, Chatbot, Gast-Review, JSON/CSV/XLSX-Export:**
    unverändert — die Zeilen sehen aus wie PDF-Bilder.
 5. **Export** `POST /api/projects/{id}/export/docx` (Body wie PDF-Export:
    optional `document_id`, `filename`): ein Dokument → Download der

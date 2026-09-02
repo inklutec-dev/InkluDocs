@@ -679,6 +679,8 @@ msgid "Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird au
 msgstr "Leave empty to use the default name. The file extension is added automatically."
 
 #: templates/app.html (Phase E2, 03.07.2026)
+msgid "Als Excel"
+msgstr "As Excel"
 
 #: templates/app.html (Phase E2, 03.07.2026)
 msgid "Als JSON"
@@ -4649,8 +4651,8 @@ msgid "Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weite
 msgstr "You have used today’s {n} chat messages. It continues tomorrow."
 
 #: Aktionspreise 29.08.2026
-msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
-msgstr "One currency for everything: credits. An alt text costs {alt} credits, a tooltip {qi} credit per form field. Exporting the finished file costs {exp} credits plus {bild} credits per {schritt} images started (PDF, Word) or plus {feld} credit per {schritt} fields started (forms); table exports (CSV, JSON) cost {tab} credits. Talking to the InkluAgent is free; if it changes an alt text, that costs {alt} credits, a tooltip {qi} credit. All prices are final — no VAT is charged under § 19 UStG."
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, Excel, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "One currency for everything: credits. An alt text costs {alt} credits, a tooltip {qi} credit per form field. Exporting the finished file costs {exp} credits plus {bild} credits per {schritt} images started (PDF, Word) or plus {feld} credit per {schritt} fields started (forms); table exports (CSV, Excel, JSON) cost {tab} credits. Talking to the InkluAgent is free; if it changes an alt text, that costs {alt} credits, a tooltip {qi} credit. All prices are final — no VAT is charged under § 19 UStG."
 
 #: Aktionspreise 29.08.2026
 msgid "Das reicht für kleine Dokumente; wer größere Formulare oder viele Bilder bearbeitet, braucht ein Abo oder ein Credit-Paket."
@@ -4665,8 +4667,8 @@ msgid "Leistung: {credits} Credits pro Monat. Ein Alt-Text kostet {alt} Credits,
 msgstr "Service: {credits} credits per month. An alt text costs {alt} credits, a tooltip {qi} credit."
 
 #: Aktionspreise 29.08.2026
-msgid "Die Alternativtexte können zusätzlich als CSV oder JSON exportiert werden ({p} Credits)."
-msgstr "The alternative texts can additionally be exported as CSV or JSON ({p} credits)."
+msgid "Die Alternativtexte können zusätzlich als CSV, Excel oder JSON exportiert werden ({p} Credits)."
+msgstr "The alternative texts can additionally be exported as CSV, Excel or JSON ({p} credits)."
 
 #: Aktionspreise 29.08.2026
 msgid "Die Feldliste als CSV kostet {p} Credits."

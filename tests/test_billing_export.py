@@ -27,6 +27,8 @@ class TestAktionspreise(unittest.TestCase):
         self.assertEqual(billing.AKTIONS_PREISE["csv_export"], 10)
         self.assertEqual(billing.AKTIONS_PREISE["json_export"], 10)
         self.assertEqual(billing.AKTIONS_PREISE["formular_csv_export"], 10)
+        # Excel-Export zurueck am 02.09.2026 (Kundenwunsch via Michael): 10 wie CSV/JSON
+        self.assertEqual(billing.AKTIONS_PREISE["xlsx_export"], 10)
         self.assertEqual(billing.EXPORT_SCHRITT, 10)
         self.assertEqual(billing.EXPORT_ARTEN["pdf"], ("pdf_export", 5))
         self.assertEqual(billing.EXPORT_ARTEN["docx"], ("docx_export", 5))
@@ -34,6 +36,7 @@ class TestAktionspreise(unittest.TestCase):
         self.assertEqual(billing.export_preis(2, "pdfua"), 30)
         self.assertEqual(billing.EXPORT_ARTEN["formular"], ("formular_export", 1))
         self.assertEqual(billing.TABELLEN_EXPORTE, {"csv": "csv_export", "json": "json_export",
+                                                    "xlsx": "xlsx_export",
                                                     "formular_csv": "formular_csv_export"})
 
     def test_kontingente_mal_fuenf(self):

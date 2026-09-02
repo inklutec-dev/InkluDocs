@@ -108,10 +108,10 @@ Alle Preise stehen an EINER Stelle: `billing.AKTIONS_PREISE` (je Vorgang) und
   Dokumente zusammengezählt, der Grundpreis fällt einmal an. Beispiele: PDF mit
   1 Bild = 30, 26 Bilder = 40, 100 Bilder = 75; Formular mit 1 Feld = 26,
   26 Felder = 28, 50 Felder = 30.
-- Tabellen-Export (JSON, CSV, Formular-CSV): 10 Credits je Vorgang, fester
-  Preis (`billing.TABELLEN_EXPORTE`). Die Stammdaten-CSV (eigene Bibliothek,
-  kein Dokument) bleibt kostenlos. Der Excel-Export wurde am 28.08.2026
-  entfernt (CSV öffnet sich in Excel).
+- Tabellen-Export (JSON, CSV, Excel, Formular-CSV): 10 Credits je Vorgang,
+  fester Preis (`billing.TABELLEN_EXPORTE`). Die Stammdaten-CSV (eigene
+  Bibliothek, kein Dokument) bleibt kostenlos. Der Excel-Export war vom
+  28.08. bis 02.09.2026 entfernt und ist auf Kundenwunsch zurück.
 
 Gilt für alle Konten, auch Free (50 Credits): ein 26-Felder-Formular kostet
 26 + 28 = 54 Credits — wer größere Formulare braucht, braucht ein Abo oder ein

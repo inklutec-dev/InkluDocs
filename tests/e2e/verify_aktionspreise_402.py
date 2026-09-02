@@ -81,6 +81,8 @@ check("CSV-Export bei 7 Credits -> 402 credits_fehlen (10 noetig, 7 da, fehlend 
 check("402-Text nennt beide Zahlen", "10 Credits" in d.get("text", "") and "7 Credits" in d.get("text", ""), d.get("text"))
 r = c.post(f"/api/projects/{PID_WEB}/export/json", json={})
 check("JSON-Export bei 7 Credits -> 402", r.status_code == 402, r.status_code)
+r = c.post(f"/api/projects/{PID_WEB}/export/xlsx", json={})
+check("Excel-Export bei 7 Credits -> 402 (zurueck am 02.09.2026)", r.status_code == 402, r.status_code)
 # Ein einzelner Alt-Text (5) waere bei 7 noch erlaubt — nur rechnerisch pruefen, kein echter Bedrock-Lauf.
 w = billing.aktion_pruefung(uid, "bild_generierung")
 check("Rechnerisch: 1 Alt-Text (5) bei 7 Credits erlaubt, 2 Alt-Texte (10) nicht",
@@ -114,6 +116,18 @@ check("Verbucht: quelle export, aktion csv_export, 10 Credits", ev and ev["quell
 check("Danach 2 Credits uebrig", billing.verfuegbare_credits(uid) == 2, billing.verfuegbare_credits(uid))
 r = c.post(f"/api/projects/{PID_WEB}/export/json", json={})
 check("JSON-Export bei 2 Credits -> 402", r.status_code == 402, r.status_code)
+
+print("== C2. Excel (zurueck am 02.09.2026): 10 Credits wie CSV/JSON ==")
+v = setze_verfuegbar(12)
+check("Guthaben auf 12 gesetzt", v == 12, v)
+r = c.post(f"/api/projects/{PID_WEB}/export/xlsx", json={})
+check("Excel-Export bei 12 Credits -> 200, X-Export-Credits 10, ZIP/XLSX-Magic",
+      r.status_code == 200 and r.headers.get("x-export-credits") == "10" and r.content[:2] == b"PK", (r.status_code, r.content[:8]))
+ev = con.execute("SELECT quelle, aktion, credits FROM usage_events WHERE konto_user_id=? ORDER BY id DESC LIMIT 1", (uid,)).fetchone()
+check("Verbucht: quelle export, aktion xlsx_export, 10 Credits", ev and ev["quelle"] == "export" and ev["aktion"] == "xlsx_export" and ev["credits"] == 10, dict(ev) if ev else None)
+check("Danach 2 Credits uebrig", billing.verfuegbare_credits(uid) == 2, billing.verfuegbare_credits(uid))
+r = c.post(f"/api/projects/{PID_WEB}/export/xlsx", json={})
+check("Excel-Export bei 2 Credits -> 402", r.status_code == 402, r.status_code)
 
 print("== D. Aufraeumen ==")
 con.execute("DELETE FROM usage_events WHERE konto_user_id=? AND id > ?", (uid, START_MAX_ID))

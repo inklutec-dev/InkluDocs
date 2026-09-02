@@ -672,6 +672,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">${t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.')}</p>
                             </div>
                             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'xlsx')">${t('Als Excel')}</button>
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">${t('Als JSON')}</button>
                                 <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
                                 ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF') + '</button>' : ''}
@@ -2907,7 +2908,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // CSV/JSON als Zusatzangebot formuliert (Steve 01.09.2026): „Tabellen-Exporte kosten“ klang bei PDF/Word so,
             // als würde die Datei selbst als Tabelle exportiert.
             if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
-            if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Die Alternativtexte können zusätzlich als CSV oder JSON exportiert werden ({p} Credits).', { p: d.preis_tabelle });
+            if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Die Alternativtexte können zusätzlich als CSV, Excel oder JSON exportiert werden ({p} Credits).', { p: d.preis_tabelle });
             region.textContent = msg;
             announce(msg);
         } catch (e) {
@@ -3139,7 +3140,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (m) {
                     try { serverName = decodeURIComponent(m[1]); } catch (e) { serverName = m[1]; }
                 }
-                const ext = format === 'pdf' ? '.pdf' : format === 'docx' ? '.docx' : format === 'csv' ? '.csv' : '.json';
+                const ext = format === 'pdf' ? '.pdf' : format === 'docx' ? '.docx' : format === 'xlsx' ? '.xlsx' : format === 'csv' ? '.csv' : '.json';
                 const fallback = (customName || 'export') + (scope.all ? '_alle' : '') + ext;
                 downloadBlob(blob, serverName || fallback);
                 const credits = res.headers.get('X-Export-Credits');

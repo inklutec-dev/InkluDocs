@@ -168,11 +168,13 @@ Betroffene Routen:
 * `POST /api/projects/{id}/export`           — PDF/A-Tag-Export
 * `POST /api/projects/{id}/export/json`
 * `POST /api/projects/{id}/export/csv`
+* `POST /api/projects/{id}/export/xlsx`
 
 Die Implementierung kapselt die Erzeugung pro Dokument in den Helfern
 `_load_pdf_export_units`, `_build_pdf_for_document`,
 `_load_export_units_for_table`, `_build_json_bytes`, `_build_csv_bytes`,
-`_table_export_dispatch` (der Excel-Export `_build_xlsx_bytes` wurde am 28.08.2026 entfernt — CSV öffnet sich in Excel).
+`_build_xlsx_bytes` und `_table_export_dispatch` (Excel-Export 28.08.–02.09.2026
+entfernt, auf Kundenwunsch zurück).
 
 ### `GET /api/projects/{project_id}`
 
