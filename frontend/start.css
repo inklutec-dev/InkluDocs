@@ -1,0 +1,145 @@
+/* start.css — Stylesheet des STARTSEITEN-Gerüsts (base_start.html, 02.09.2026).
+   Gilt für die öffentliche Startseite (/) und die vier Login-Karten
+   (/login, /register, /forgot, /reset). Baut auf style.css auf und nutzt
+   ausschließlich die dortigen Farbvariablen (Navy --primary, Orange
+   --accent, Hintergrund --bg). Doku: docs/STARTSEITE.md
+
+   Barrierefreiheit (BITV 2.0 / WCAG 2.2 AA):
+   - Kontraste: Weiß auf Navy 14,2:1; Weiß auf Orange #c75000 4,6:1;
+     Fließtext #1e293b auf Weiß 15,4:1; gedämpfter Text #2d4a7a 8,9:1.
+   - Fokus immer sichtbar: 3 px Orange auf hellem Grund, 3 px Weiß auf Navy.
+   - Zielgrößen: Knöpfe und Navigationslinks mindestens 44 px hoch (2.5.8).
+   - Keine Bewegung, keine Animation, nichts Zeitgesteuertes.
+   - Layout ausschließlich über Flex/Grid — Lesereihenfolge = DOM-Reihenfolge. */
+
+/* Die Login-Karten zentrieren sich in style.css über body:has(.auth-container)
+   als Flex-Zeile. Im Startgerüst gibt es Kopf- und Fußzeile, deshalb hier
+   zurück auf einen normalen Blockfluss; zentriert wird innerhalb von main. */
+/* Skip-Link: dieselbe Regel wie .dash-skip in dashboard.css — das Startgerüst
+   lädt dashboard.css nicht, deshalb hier noch einmal (unsichtbar bis Fokus). */
+.dash-skip { position:absolute; left:-999px; top:auto; background:#fff; color:#1b2a4a; padding:.6rem 1rem; z-index:100; border-radius:0 0 6px 0; font-weight:600; }
+.dash-skip:focus { left:0; top:0; outline:3px solid var(--focus); }
+
+body:has(.start-shell) { display:block; }
+.start-shell { display:flex; flex-direction:column; min-height:100vh; }
+.start-main { flex:1; }
+
+/* ── Kopfzeile ───────────────────────────────────────────────────────── */
+.start-header {
+  background:var(--primary); color:#fff;
+  display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+  padding:.75rem 1.5rem;
+}
+.start-brand { color:#fff; text-decoration:none; font-size:1.5rem; font-weight:700; padding:.5rem 0; }
+.start-brand .brand { color:#f4a26b; } /* helleres Marken-Orange auf Navy: 7,4:1 */
+.start-nav { list-style:none; margin:0; padding:0; display:flex; align-items:center; gap:.25rem; flex-wrap:wrap; }
+.start-nav a { display:inline-block; color:#fff; text-decoration:none; padding:.7rem .9rem; border-radius:6px; min-height:44px; line-height:1.4; }
+.start-nav a:hover { text-decoration:underline; }
+.start-nav a[aria-current="page"] { font-weight:700; text-decoration:underline; text-underline-offset:.3em; }
+.start-header a:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+
+/* ── Knöpfe (Links mit Knopf-Optik; Semantik bleibt Link) ───────────── */
+.btn-start {
+  display:inline-block; text-decoration:none; font-weight:600; font-size:1.05rem;
+  padding:.8rem 1.4rem; border-radius:8px; min-height:44px; line-height:1.4;
+  border:2px solid transparent;
+}
+.btn-start-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-start-primary:hover { background:var(--accent-hover); border-color:var(--accent-hover); }
+.btn-start-secondary { background:#fff; color:var(--primary); border-color:var(--primary); }
+.btn-start-secondary:hover { background:#eef2f7; }
+/* auf Navy: Sekundärknopf als heller Rahmen */
+.start-hero .btn-start-secondary { background:transparent; color:#fff; border-color:#fff; }
+.start-hero .btn-start-secondary:hover { background:rgba(255,255,255,.12); }
+.start-nav .btn-start { padding:.6rem 1.1rem; font-size:1rem; margin-left:.5rem; }
+.btn-start:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+.start-hero .btn-start:focus-visible, .start-header .btn-start:focus-visible { outline-color:#fff; }
+.start-aktionen { display:flex; gap:.75rem; flex-wrap:wrap; margin:1.5rem 0 .75rem; }
+
+/* ── Inhaltsbreite ───────────────────────────────────────────────────── */
+.start-inner { max-width:1100px; margin:0 auto; padding:0 1.5rem; }
+.start-abschnitt { padding:3rem 0; }
+.start-abschnitt + .start-abschnitt { border-top:1px solid var(--border); }
+.start-abschnitt h2 { font-size:1.6rem; margin:0 0 .5rem; color:var(--primary); }
+.start-abschnitt h3 { font-size:1.15rem; margin:0 0 .5rem; color:var(--primary); }
+.start-lead { color:var(--text-muted); font-size:1.05rem; line-height:1.6; max-width:52rem; margin:0 0 1.5rem; }
+.start-abschnitt p { line-height:1.6; }
+.start-abschnitt a:not(.btn-start) { color:#b84a00; }
+.start-abschnitt a:not(.btn-start):focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+
+/* ── Kopfbereich (Hero) ──────────────────────────────────────────────── */
+.start-hero { background:var(--primary); color:#fff; padding:3.5rem 0 3rem; }
+.start-hero h1 { font-size:2.2rem; line-height:1.2; margin:0 0 1rem; max-width:48rem; }
+.start-hero .start-lead { color:#e6ebf3; font-size:1.15rem; max-width:48rem; }
+.start-hero .start-hinweis { color:#c9d3e3; font-size:.95rem; margin:0; }
+
+/* ── Karten und Raster ───────────────────────────────────────────────── */
+.start-raster { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem; margin:1.5rem 0 0; }
+.start-karte { background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:1.4rem 1.5rem; }
+.start-karte p { color:var(--text-muted); font-size:.95rem; margin:0; }
+.start-karte p + p { margin-top:.6rem; }
+
+/* Schritte: nummerierte Liste als Raster, Nummer groß und orange */
+.start-schritte { list-style:none; counter-reset:schritt; margin:1.5rem 0 0; padding:0;
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem; }
+.start-schritte li { counter-increment:schritt; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:1.4rem 1.5rem; }
+.start-schritte li::before { content:counter(schritt); display:block; font-size:1.6rem; font-weight:700; color:var(--accent); margin-bottom:.4rem; }
+.start-schritte h3 { margin-bottom:.4rem; }
+.start-schritte p { color:var(--text-muted); font-size:.95rem; margin:0; }
+
+/* Vorher/Nachher */
+.start-vergleich { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem; margin:1.5rem 0 1rem; }
+.start-vergleich > div { border-radius:10px; padding:1.4rem 1.5rem; border:1px solid var(--border); background:var(--card-bg); }
+.start-vergleich .nachher { border-left:6px solid var(--accent); }
+.start-vergleich .vorher { border-left:6px solid #94a3b8; }
+.start-vergleich blockquote { margin:.5rem 0 0; padding:0; font-style:normal; color:var(--text); line-height:1.6; }
+.start-klein { color:var(--text-muted); font-size:.9rem; }
+
+/* Zielgruppen */
+.start-zielgruppen { list-style:none; margin:1.5rem 0 1rem; padding:0;
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem 1.5rem; }
+.start-zielgruppen li { padding-left:1rem; border-left:4px solid var(--accent); line-height:1.6; }
+.start-zielgruppen strong { display:block; color:var(--primary); }
+
+/* Preise */
+.start-preise { margin:1rem 0 1.25rem; padding-left:1.25rem; line-height:1.7; }
+
+/* Häufige Fragen: natives details/summary */
+.start-faq { margin:1.25rem 0 0; }
+.start-faq details { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; margin-bottom:.6rem; }
+.start-faq summary { cursor:pointer; padding:.9rem 1.2rem; font-weight:600; color:var(--primary); min-height:44px; }
+.start-faq summary:focus-visible { outline:3px solid var(--focus); outline-offset:-3px; border-radius:8px; }
+.start-faq details[open] summary { border-bottom:1px solid var(--border); }
+.start-faq details p { margin:0; padding:.9rem 1.2rem 1.1rem; color:var(--text-muted); }
+
+/* Schluss */
+.start-schluss { background:#eef2f7; }
+
+/* ── Fußzeile ────────────────────────────────────────────────────────── */
+.start-footer { border-top:1px solid var(--border); padding:1.5rem; color:var(--text-muted); text-align:center; line-height:2; }
+.start-footer a { color:#b84a00; }
+.start-footer a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+
+/* ── Login-Karten im Startgerüst ─────────────────────────────────────── */
+.start-main-auth { display:flex; align-items:flex-start; justify-content:center; padding:2.5rem 1rem 3rem; }
+.start-main-auth .auth-container h1 { font-size:1.5rem; }
+/* Die Karten brachten früher eine eigene Fußzeile mit (.legal-footer);
+   im Startgerüst kommt sie vom Gerüst. */
+
+/* ── Schmale Bildschirme ─────────────────────────────────────────────── */
+@media (max-width:700px) {
+  .start-header { padding:.6rem 1rem; }
+  .start-nav .btn-start { margin-left:0; }
+  .start-hero { padding:2.5rem 0 2.25rem; }
+  .start-hero h1 { font-size:1.6rem; }
+  .start-abschnitt { padding:2.25rem 0; }
+  .start-abschnitt h2 { font-size:1.35rem; }
+  .start-inner { padding:0 1rem; }
+  .start-aktionen .btn-start { width:100%; text-align:center; }
+}
+
+/* Nutzer, die weniger Bewegung wünschen: es gibt keine — nur zur Sicherheit
+   alle Übergänge aus style.css hier neutralisieren. */
+@media (prefers-reduced-motion: reduce) {
+  .start-shell * { transition:none !important; }
+}

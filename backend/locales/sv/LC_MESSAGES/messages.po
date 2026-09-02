@@ -4895,3 +4895,214 @@ msgstr "Den här bilden finns inte längre. Ladda om sidan."
 # Sichtbare Abbruch-Meldung Quickinfos (Michael Karbe Punkt 2, 02.09.2026)
 msgid "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
 msgstr "Genereringen avbröts: {n} hjälptexter skapades."
+
+# Startseite + Startgerüst (start.html / base_start.html, 02.09.2026)
+msgid "InkluDocs Startseite"
+msgstr "InkluDocs startsida"
+
+msgid "InkluDocs – KI-Alt-Texte für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr "InkluDocs – AI-alternativtexter för tillgängliga PDF-, Word- och formulärdokument"
+
+msgid "Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
+msgstr "Skapa alternativtexter med AI, exportera som PDF/UA, gör Word-filer och formulär tillgängliga. InkluDocs för myndigheter, förlag, byråer och alla som behöver tillgängliga dokument. Börja gratis."
+
+msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr "AI-alternativtexter för tillgängliga PDF-, Word- och formulärdokument"
+
+msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten automatisch, liest den Text drumherum mit und liefert am Ende eine Datei, die Screenreader vorlesen können: als PDF/UA, als barrierefreies Word oder als Formular mit Quickinfos. Du prüfst, änderst und gibst frei."
+msgstr "InkluDocs beskriver bilderna i dina dokument automatiskt, läser texten runt omkring och levererar till slut en fil som skärmläsare kan läsa upp: som PDF/UA, som tillgänglig Word eller som formulär med verktygstips. Du granskar, ändrar och godkänner."
+
+msgid "Ohne Anmeldung ausprobieren"
+msgstr "Prova utan inloggning"
+
+msgid "{n} Credits im Monat kostenlos, keine Zahlungsdaten nötig."
+msgstr "{n} credits i månaden gratis, inga betalningsuppgifter behövs."
+
+msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
+msgstr "Tre verktyg, ett mål: tillgängliga dokument"
+
+msgid "Ob PDF, Word oder Formular: InkluDocs übernimmt die Arbeit, die bisher niemand machen wollte, und lässt dir die Kontrolle über jedes Wort."
+msgstr "PDF, Word eller formulär: InkluDocs tar över jobbet ingen ville göra och låter dig behålla kontrollen över varje ord."
+
+msgid "Alt-Texte für PDF und Bilder"
+msgstr "Alternativtexter för PDF och bilder"
+
+msgid "Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG. Für Diagramme kommt eine Langbeschreibung dazu."
+msgstr "Ladda upp en PDF eller enskilda bilder. AI:n känner igen foton, diagram, logotyper och skärmbilder, läser sidans sammanhang och skriver alternativtexter enligt WCAG. Diagram får dessutom en lång beskrivning."
+
+msgid "Der Export liefert ein geprüftes PDF/UA, das Prüfwerkzeuge wie veraPDF bestehen."
+msgstr "Exporten ger en validerad PDF/UA som klarar kontrollverktyg som veraPDF."
+
+msgid "Barrierefreie Word-Dokumente"
+msgstr "Tillgängliga Word-dokument"
+
+msgid "InkluDocs beschreibt die Bilder in deiner Word-Datei, prüft Überschriften und Tabellen und speichert das Ergebnis als barrierefreies Word oder als PDF/UA. Ohne Umweg über ein Layoutprogramm."
+msgstr "InkluDocs beskriver bilderna i din Word-fil, kontrollerar rubriker och tabeller och sparar resultatet som tillgänglig Word eller som PDF/UA. Utan omväg via ett layoutprogram."
+
+msgid "Quickinfos für Formulare"
+msgstr "Verktygstips för formulär"
+
+msgid "Für PDF-Formulare erzeugt InkluDocs die Quickinfos, die Screenreader an jedem Feld vorlesen. Deine Stammdaten wie Behördenname oder Aktenzeichen fließen automatisch mit ein."
+msgstr "För PDF-formulär skapar InkluDocs de verktygstips som skärmläsare läser upp vid varje fält. Dina grunduppgifter som myndighetsnamn eller ärendenummer tas med automatiskt."
+
+msgid "So funktioniert es"
+msgstr "Så fungerar det"
+
+msgid "Hochladen"
+msgstr "Ladda upp"
+
+msgid "PDF, Word oder Bilder in den Browser ziehen. Mehrere Dateien auf einmal sind kein Problem."
+msgstr "Dra PDF, Word eller bilder till webbläsaren. Flera filer på en gång är inget problem."
+
+msgid "Die KI beschreibt"
+msgstr "AI:n beskriver"
+
+msgid "InkluDocs liest Bildunterschriften, Überschriften und den umgebenden Text mit und formuliert daraus passende Alt-Texte. Bild für Bild, nachvollziehbar."
+msgstr "InkluDocs läser bildtexter, rubriker och den omgivande texten och formulerar passande alternativtexter. Bild för bild, spårbart."
+
+msgid "Prüfen und exportieren"
+msgstr "Granska och exportera"
+
+msgid "Du liest jeden Text, änderst, was dir nicht gefällt, oder lässt ihn neu schreiben. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON."
+msgstr "Du läser varje text, ändrar det du inte gillar eller låter skriva om den. Sedan exporterar du som PDF/UA, Word, Excel, CSV eller JSON."
+
+msgid "Vorher und nachher: ein Alt-Text aus InkluDocs"
+msgstr "Före och efter: en alternativtext från InkluDocs"
+
+msgid "Vorher"
+msgstr "Före"
+
+msgid "Dateiname statt Beschreibung. Ein Screenreader liest genau das vor, wer nicht sieht, erfährt nichts."
+msgstr "Ett filnamn i stället för en beskrivning. En skärmläsare läser upp exakt det, och den som inte ser får inget veta."
+
+msgid "Nachher"
+msgstr "Efter"
+
+msgid "Der Alt-Text, wie InkluDocs ihn schreibt:"
+msgstr "Alternativtexten så som InkluDocs skriver den:"
+
+msgid "Balkendiagramm: Anteil barrierefreier Dokumente in der Verwaltung 2023 bis 2025. Der Wert steigt von 12 Prozent über 27 Prozent auf 48 Prozent. Höchster Wert 2025."
+msgstr "Stapeldiagram: andel tillgängliga dokument i förvaltningen 2023 till 2025. Värdet stiger från 12 procent via 27 procent till 48 procent. Högsta värde 2025."
+
+msgid "Vereinfachtes Beispiel mit erfundenen Zahlen. Echte Alt-Texte richten sich nach Bildtyp, Kontext und der Sprache, die du wählst."
+msgstr "Förenklat exempel med påhittade siffror. Riktiga alternativtexter beror på bildtyp, sammanhang och det språk du väljer."
+
+msgid "Für alle, die Dokumente zugänglich machen müssen oder wollen"
+msgstr "För alla som måste eller vill göra dokument tillgängliga"
+
+msgid "Behörden und Kommunen"
+msgstr "Myndigheter och kommuner"
+
+msgid "BITV 2.0 und BFSG verlangen barrierefreie Dokumente. InkluDocs macht aus Bescheiden, Broschüren und Formularen zugängliche Dateien."
+msgstr "BITV 2.0 och den tyska tillgänglighetslagen (BFSG) kräver tillgängliga dokument. InkluDocs gör beslut, broschyrer och formulär till tillgängliga filer."
+
+msgid "Verlage und Redaktionen"
+msgstr "Förlag och redaktioner"
+
+msgid "Bildstarke Publikationen in Serie beschreiben, mit eigenen Prompts, die zu deinem Haus passen."
+msgstr "Beskriv bildrika publikationer i serie med egna promptar som passar ditt hus."
+
+msgid "Agenturen und Dienstleister"
+msgstr "Byråer och tjänsteleverantörer"
+
+msgid "Barrierefreiheit als Leistung anbieten, ohne jede Bildbeschreibung von Hand zu tippen. Mit Team-Konten und gemeinsamem Guthaben."
+msgstr "Erbjud tillgänglighet som tjänst utan att skriva varje bildbeskrivning för hand. Med teamkonton och gemensamt saldo."
+
+msgid "Hochschulen und Bildung"
+msgstr "Högskolor och utbildning"
+
+msgid "Skripte, Folien und Prüfungsunterlagen für alle Studierenden lesbar machen."
+msgstr "Gör kompendier, presentationer och tentamensmaterial läsbara för alla studenter."
+
+msgid "Und alle anderen: Selbstständige, kleine Unternehmen, Vereine und Privatpersonen, die ein einzelnes Dokument barrierefrei brauchen. Ein kostenloses Konto reicht."
+msgstr "Och alla andra: egenföretagare, små företag, föreningar och privatpersoner som behöver ett enda tillgängligt dokument. Ett gratiskonto räcker."
+
+msgid "Klein anfangen, fair bezahlen"
+msgstr "Börja smått, betala rättvist"
+
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
+msgstr "En valuta för allt: credits. En alternativtext kostar {alt} credits, ett verktygstips {qi} credit."
+
+msgid "Kostenlos: {n} Credits im Monat, voller Funktionsumfang, keine Zahlungsdaten."
+msgstr "Gratis: {n} credits i månaden, full funktionalitet, inga betalningsuppgifter."
+
+msgid "Credit-Pakete ab {preis} Euro, ohne Abo."
+msgstr "Credit-paket från {preis} euro, utan abonnemang."
+
+msgid "Abos Single, Team und Enterprise ab {preis} Euro im Monat, für Teams mit gemeinsamem Guthaben."
+msgstr "Abonnemang Single, Team och Enterprise från {preis} euro i månaden, med gemensamt saldo för team."
+
+msgid "Alle Preise ansehen"
+msgstr "Se alla priser"
+
+msgid "Alle Preise sind Endpreise, gemäß § 19 UStG ohne Umsatzsteuer."
+msgstr "Alla priser är slutpriser, utan moms enligt § 19 i den tyska momslagen (UStG)."
+
+msgid "Aus Hamburg und Euskirchen, aus eigener Erfahrung"
+msgstr "Från Hamburg och Euskirchen, av egen erfarenhet"
+
+msgid "InkluTec, Hamburg"
+msgstr "InkluTec, Hamburg"
+
+msgid "InkluDocs entwickelt Steve Weidel mit InkluTec. Er ist Experte für digitale Barrierefreiheit und KI und selbst blind. Er weiß aus dem Alltag, was ein Alt-Text leisten muss und woran unzugängliche Dokumente scheitern."
+msgstr "InkluDocs utvecklas av Steve Weidel med InkluTec. Han är expert på digital tillgänglighet och AI och är själv blind. Han vet från vardagen vad en alternativtext måste leverera och var otillgängliga dokument brister."
+
+msgid "Actino Software, Euskirchen"
+msgstr "Actino Software, Euskirchen"
+
+msgid "Die Actino Software GmbH bringt seit den frühen Neunzigerjahren PDF-Fachwissen ein, von PDF/A bis PDF/UA, und begleitet Vertrieb und Kunden."
+msgstr "Actino Software GmbH bidrar med PDF-expertis sedan det tidiga nittiotalet, från PDF/A till PDF/UA, och stöttar försäljning och kunder."
+
+msgid "Deine Dateien bleiben deine Dateien"
+msgstr "Dina filer förblir dina filer"
+
+msgid "Verarbeitung in der EU, KI-Anfragen über Rechenzentren in der EU, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
+msgstr "Behandling i EU, AI-förfrågningar via datacenter i EU, ingen användning av dina dokument för att träna AI-modeller. Du raderar projekt själv när som helst."
+
+msgid "Mehr über uns"
+msgstr "Mer om oss"
+
+msgid "Häufige Fragen"
+msgstr "Vanliga frågor"
+
+msgid "Was ist ein Credit?"
+msgstr "Vad är en credit?"
+
+msgid "Credits sind die Währung in InkluDocs. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit, ein Export je nach Umfang ein paar Credits mehr. Kostenlose Konten bekommen jeden Monat {n} Credits."
+msgstr "Credits är valutan i InkluDocs. En alternativtext kostar {alt} credits, ett verktygstips {qi} credit, en export några credits till beroende på omfång. Gratiskonton får {n} credits varje månad."
+
+msgid "Welche Dateiformate kann ich hochladen?"
+msgstr "Vilka filformat kan jag ladda upp?"
+
+msgid "PDF, Word (docx) und Bilder wie JPG und PNG. Ausgegeben werden PDF/UA, barrierefreies Word, Excel, CSV und JSON."
+msgstr "PDF, Word (docx) och bilder som JPG och PNG. Utdata är PDF/UA, tillgänglig Word, Excel, CSV och JSON."
+
+msgid "Kann ich die Alt-Texte ändern?"
+msgstr "Kan jag ändra alternativtexterna?"
+
+msgid "Ja. Jeder Text lässt sich bearbeiten, neu generieren oder mit dem InkluAgent im Gespräch anpassen. Du gibst frei, nicht die KI."
+msgstr "Ja. Varje text kan redigeras, genereras på nytt eller justeras i dialog med InkluAgent. Du godkänner, inte AI:n."
+
+msgid "Was passiert mit meinen Dateien?"
+msgstr "Vad händer med mina filer?"
+
+msgid "Sie liegen in deinem Projekt, solange du sie brauchst, und du kannst sie jederzeit löschen. Wir nutzen deine Dokumente nicht, um KI-Modelle zu trainieren. Details stehen in der Datenschutzerklärung."
+msgstr "De ligger i ditt projekt så länge du behöver dem, och du kan radera dem när som helst. Vi använder inte dina dokument för att träna AI-modeller. Detaljer finns i integritetspolicyn."
+
+msgid "Brauche ich Vorwissen zu Barrierefreiheit?"
+msgstr "Behöver jag förkunskaper om tillgänglighet?"
+
+msgid "Nein. InkluDocs schreibt die Texte nach den Regeln der WCAG. Wer tiefer einsteigen will, legt eigene Prompts an und wählt die Sprache der Alt-Texte."
+msgstr "Nej. InkluDocs skriver texterna enligt WCAG-reglerna. Vill du gå djupare skapar du egna promptar och väljer alternativtexternas språk."
+
+msgid "Gibt es eine Schnittstelle für Entwickler?"
+msgstr "Finns det ett API för utvecklare?"
+
+msgid "Ja. InkluDocs hat eine API mit eigenen Schlüsseln pro Konto. Für die Anbindung an eigene Systeme sprich uns über das Kontaktformular an."
+msgstr "Ja. InkluDocs har ett API med egna nycklar per konto. Kontakta oss via kontaktformuläret för anslutning till egna system."
+
+msgid "Mach dein nächstes Dokument barrierefrei"
+msgstr "Gör ditt nästa dokument tillgängligt"
+
+msgid "Probiere InkluDocs ohne Anmeldung aus oder lege ein kostenloses Konto an. Fragen beantworten wir über das Kontaktformular."
+msgstr "Prova InkluDocs utan inloggning eller skapa ett gratiskonto. Frågor besvarar vi via kontaktformuläret."

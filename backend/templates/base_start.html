@@ -1,0 +1,83 @@
+{# ──────────────────────────────────────────────────────────────────────────
+   base_start.html — Grundgerüst der STARTSEITE und der LOGIN-KARTEN
+   (02.09.2026). Doku: docs/STARTSEITE.md, Übersicht docs/SEITENGERUEST.md
+
+   Warum es das gibt (Steve + Michael, 02.09.2026): Die Wurzel inkludocs.de
+   war bis heute die Anmeldemaske. Wer InkluDocs nicht kannte, erfuhr dort
+   nicht, was das Werkzeug tut, für wen es ist und was es kostet — und
+   Suchmaschinen sahen nur „Anmeldung“. Jetzt ist / eine echte Startseite
+   (start.html), die Anmeldung wohnt unter /login.
+
+   Optik: BEWUSST OHNE die App-Seitenleiste von base_oeffentlich.html. Eine
+   Startseite muss erklären und überzeugen, dafür braucht sie die ganze
+   Breite und einen ruhigen Kopf. Stattdessen eine schlanke Kopfzeile in
+   Navy: Marke links, rechts Preise / Kontakt / Über uns / Anmelden und der
+   orangefarbene Knopf „Kostenlos starten“. Die Kopfzeile ist SERVERSEITIG
+   gerendert (kein dashboard.js): Sie steht ohne JavaScript im HTML, für
+   Suchmaschinen wie für Prüfskripte. Darunter main#main, unten dieselbe
+   Fußzeile wie alle öffentlichen Seiten (_fusszeile.html, eine Quelle).
+
+   Die vier Login-Karten (/login, /register, /forgot, /reset) erweitern
+   ebenfalls dieses Gerüst: Sie behalten ihr zentriertes Karten-Layout
+   (.auth-container), bekommen aber Kopf- und Fußzeile geschenkt und
+   verlieren ihre bisher von Hand getippte .legal-footer. Kontakt und Über
+   uns stehen in der Kopfzeile — deshalb rechtslinks() ohne mit_kontakt.
+
+   Barrierefreiheit (BITV 2.0 / WCAG 2.2): Skip-Link als erstes Element,
+   Landmarken header / nav (aria-label) / main / footer, genau eine H1 je
+   Seite (Thema der Seite, nicht die Marke — die steht in der Kopfzeile),
+   aria-current="page" auf dem aktiven Kopfzeilen-Eintrag, sichtbarer Fokus,
+   Zielgrößen ≥ 44 px (start.css). Staging-Hinweis nur im Fenstertitel
+   (base.html), nie in der H1.
+
+   Suchmaschinen: Block `seo` nimmt Meta-Beschreibung, canonical, Open Graph
+   und JSON-LD der jeweiligen Seite auf. Auf Staging setzt das Gerüst
+   zusätzlich noindex/nofollow, damit die Testumgebung nie im Index landet.
+
+   Blöcke:
+     title        Fenstertitel (base.html hängt auf Staging „(Testumgebung)“ an)
+     seo          Meta-/Link-Elemente im <head> (Beschreibung, canonical, OG …)
+     main_class   Zusatzklasse für main (Login-Karten: start-main-auth)
+     main         Seiteninhalt
+     page_script  Seiten-JavaScript (die Karten bringen ihres selbst mit)
+
+   Template-Variable nav_aktiv (Route setzt sie): Pfad des aktiven Eintrags
+   der Kopfzeile, z. B. "/login" — bekommt aria-current="page".
+   ────────────────────────────────────────────────────────────────────────── #}
+{% extends "base.html" %}
+{% import "_fusszeile.html" as fusszeile with context %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/start.css?v={{ asset_version }}">
+{% if is_staging or noindex %}<meta name="robots" content="noindex, nofollow">{% endif %}
+{% block seo %}{% endblock %}
+{% endblock %}
+
+{% block body %}
+<a href="#main" class="dash-skip">{{ _('Zum Hauptinhalt springen') }}</a>
+<div class="start-shell">
+  <header class="start-header">
+    <a class="start-brand" href="/" aria-label="{{ _('InkluDocs Startseite') }}"><span class="brand">Inklu</span>Docs</a>
+    <nav aria-label="{{ _('Hauptnavigation') }}">
+      <ul class="start-nav">
+        <li><a href="/preise"{% if nav_aktiv == '/preise' %} aria-current="page"{% endif %}>{{ _('Preise') }}</a></li>
+        <li><a href="/kontakt"{% if nav_aktiv == '/kontakt' %} aria-current="page"{% endif %}>{{ _('Kontakt') }}</a></li>
+        <li><a href="/ueber-uns"{% if nav_aktiv == '/ueber-uns' %} aria-current="page"{% endif %}>{{ _('Über uns') }}</a></li>
+        <li><a href="/login"{% if nav_aktiv == '/login' %} aria-current="page"{% endif %}>{{ _('Anmelden') }}</a></li>
+        {% if registration_enabled is not defined or registration_enabled %}
+        <li><a class="btn-start btn-start-primary" href="/register"{% if nav_aktiv == '/register' %} aria-current="page"{% endif %}>{{ _('Kostenlos starten') }}</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="start-main {% block main_class %}{% endblock %}" tabindex="-1">
+{% block main %}{% endblock %}
+  </main>
+
+  <footer class="start-footer">
+    {{ fusszeile.rechtslinks(' · ') }}
+  </footer>
+</div>
+{% block page_script %}{% endblock %}
+{% endblock %}

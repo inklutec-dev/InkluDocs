@@ -699,7 +699,7 @@ async def verify_email_registration(request: Request, token: str = ""):
     """Verify email address from registration link."""
     lang = resolve_ui_language(request)
     _ = get_gettext(lang)
-    zur_anmeldung = f'<p><a href="/">{_("Zur Anmeldung")}</a></p>'
+    zur_anmeldung = f'<p><a href="/login">{_("Zur Anmeldung")}</a></p>'
     if not token:
         return _auth_notice_page(lang,
             f'<p style="color:#dc2626;margin:2rem 0;">{_("Ungültiger Bestätigungslink.")}</p>' + zur_anmeldung,
@@ -723,7 +723,7 @@ async def verify_email_registration(request: Request, token: str = ""):
     return _auth_notice_page(lang,
         f'''<p style="color:#16a34a;font-size:1.2rem;margin:2rem 0;font-weight:600;">&#10003; {_("E-Mail-Adresse erfolgreich bestätigt!")}</p>
     <p>{_("Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden.")}</p>
-    <p style="margin-top:1.5rem;"><a href="/" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_("Jetzt anmelden")}</a></p>''',
+    <p style="margin-top:1.5rem;"><a href="/login" style="display:inline-block;background:#e87722;color:white;padding:0.75rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;">{_("Jetzt anmelden")}</a></p>''',
         title_suffix=_("E-Mail bestätigt"))
 
 
@@ -2101,7 +2101,7 @@ async def team_einladung_annehmen(token: str, request: Request):
     # nach dem Login fuehrt der Link aus der Mail erneut hierher.
     user = get_optional_user(request)
     if not user:
-        return RedirectResponse("/")
+        return RedirectResponse("/login")
 
     conn = get_db()
     try:
@@ -8827,28 +8827,141 @@ async def mark_news_seen(user: dict = Depends(get_current_user)):
 
 # ─── Frontend Routes ─────────────────────────────────────────
 
+# ─── Startseite + Anmeldung (02.09.2026) ─────────────────────────────────
+# Bis heute war die Wurzel (/) die Anmeldemaske. Jetzt: / = oeffentliche
+# Startseite (start.html, Geruest base_start.html), /login = Anmeldung.
+# Doku: docs/STARTSEITE.md. Demo-Instanz unveraendert (dort ist / die Demo).
+
+def _registration_enabled() -> bool:
+    return os.getenv("REGISTRATION_ENABLED", "true").lower() not in ("false", "0", "no")
+
+
+def _oeffentliche_basis(request: Request) -> str:
+    """Absolute Basis-URL fuer canonical/Sitemap: auf inkludocs.de immer die
+    Hauptdomain ohne www (eine kanonische Adresse fuer Suchmaschinen), sonst
+    der aufgerufene Host (Staging, Demo). Immer https — hinter dem Proxy kommt
+    die Anfrage per http an."""
+    host = (request.url.hostname or "").lower()
+    if host.endswith("inkludocs.de") and not host.startswith("demo."):
+        return "https://inkludocs.de"
+    return f"https://{host}" if host else BASE_URL.rstrip("/")
+
+
+_OG_LOCALES = {"de": "de_DE", "en": "en_GB", "fr": "fr_FR", "es": "es_ES", "da": "da_DK", "sv": "sv_SE"}
+
+# Oeffentliche Seiten fuer sitemap.xml (Reihenfolge = Gewicht). Login-Karten
+# und App-Seiten bewusst nicht: die tragen noindex bzw. brauchen ein Login.
+_SITEMAP_SEITEN = ("/", "/preise", "/ueber-uns", "/kontakt", "/impressum",
+                   "/datenschutz", "/nutzungsbedingungen", "/widerruf", "/avv",
+                   "/kuendigen", "/widerrufen")
+
+
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    # Demo-Instanz: die Wurzel IST die oeffentliche Demo-Seite (statt Login/Dashboard).
-    # Seit 04.07.2026 als Jinja2-Template fuenfsprachig; Sprache per Browser-
-    # Erkennung bzw. lang-Cookie — bewusst ohne Umschalter (Steve 03.07.2026).
+async def start_page(request: Request):
+    """Oeffentliche Startseite (02.09.2026, Steve + Michael): erklaert, was
+    InkluDocs tut, fuer wen es ist und was es kostet — fuer Besucher und
+    Suchmaschinen. Eingeloggte landen direkt im Dashboard."""
+    # Demo-Instanz: die Wurzel IST die oeffentliche Demo-Seite (seit 04.07.2026
+    # als Jinja2-Template; Sprache per Browser-Erkennung, ohne Umschalter).
     if demo_mod.demo_enabled():
         return templates.TemplateResponse(
             "demo.html", template_context(request, detect_language(request)))
+    if get_optional_user(request):
+        return RedirectResponse("/dashboard")
     lang = detect_language(request)
-    registration_enabled = os.getenv("REGISTRATION_ENABLED", "true").lower() not in ("false", "0", "no")
-    is_staging = "staging" in BASE_URL
+    _ = get_gettext(lang)
+    basis = _oeffentliche_basis(request)
+    beschreibung = _('Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.')
+    json_ld = json.dumps({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "InkluDocs",
+        "url": basis + "/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "inLanguage": lang,
+        "description": beschreibung,
+        "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR",
+                   "url": basis + "/preise"},
+        "provider": {"@type": "Organization", "name": "InkluTec",
+                     "url": "https://www.inklutec.de/"},
+    }, ensure_ascii=False, indent=2)
+    paket_min = min(billing.PAKET_PREISE.values()) if billing.PAKET_PREISE else None
+    ctx = template_context(
+        request, lang,
+        is_staging="staging" in BASE_URL,
+        nav_aktiv="/",
+        registration_enabled=_registration_enabled(),
+        canonical=basis + "/",
+        og_locale=_OG_LOCALES.get(lang, "de_DE"),
+        json_ld=json_ld,
+        # Zahlen aus billing.py — eine Wahrheit, wie auf der Preisseite.
+        free_credits=billing.PLAN_KONTINGENTE["free"],
+        preis_alt=billing.AKTIONS_PREISE["bild_generierung"],
+        preis_qi=billing.AKTIONS_PREISE["quickinfo_generierung"],
+        paket_min_preis=_eur_text(paket_min) if paket_min is not None else "",
+        single_preis=_eur_text(billing.PLAN_PREISE_EUR["single"]),
+    )
+    return templates.TemplateResponse("start.html", ctx)
+
+
+def _eur_text(betrag) -> str:
+    """Deutsche Komma-Schreibweise mit zwei Nachkommastellen (9,95)."""
+    return f"{float(betrag):.2f}".replace(".", ",")
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Anmeldung (bis 02.09.2026 unter /). Karte unveraendert, jetzt im
+    Startgeruest mit Kopf- und Fusszeile; noindex fuer Suchmaschinen."""
+    if demo_mod.demo_enabled():
+        return RedirectResponse("/")
+    lang = detect_language(request)
     return templates.TemplateResponse(
         "index.html",
         template_context(
             request, lang,
-            registration_enabled=registration_enabled,
-            is_staging=is_staging,
+            registration_enabled=_registration_enabled(),
+            is_staging="staging" in BASE_URL,
+            nav_aktiv="/login",
+            noindex=True,
             # Konto-Selbstloeschung (08.08.2026): Nach dem Loeschen landet man
             # hier — mit einer Bestaetigung statt eines wortlosen Rauswurfs.
             geloescht=request.query_params.get("geloescht") == "1",
         ),
     )
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt(request: Request):
+    """Suchmaschinen-Steuerung (02.09.2026). Staging: alles gesperrt (die
+    Testumgebung darf nie im Index landen). Sonst: oeffentliche Seiten frei,
+    App, API und Login-Karten ausgenommen, Verweis auf die Sitemap."""
+    from fastapi.responses import PlainTextResponse
+    if "staging" in BASE_URL:
+        return PlainTextResponse("User-agent: *\nDisallow: /\n")
+    zeilen = ["User-agent: *",
+              "Disallow: /api/", "Disallow: /app", "Disallow: /dashboard",
+              "Disallow: /projekte", "Disallow: /projekt-neu", "Disallow: /einstellungen",
+              "Disallow: /freigabe/", "Disallow: /login", "Disallow: /register",
+              "Disallow: /forgot", "Disallow: /reset", "Disallow: /set-language/",
+              "Allow: /",
+              f"Sitemap: {_oeffentliche_basis(request)}/sitemap.xml", ""]
+    return PlainTextResponse("\n".join(zeilen))
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml(request: Request):
+    """XML-Sitemap der oeffentlichen Seiten (02.09.2026)."""
+    from fastapi.responses import Response
+    basis = _oeffentliche_basis(request)
+    eintraege = "".join(
+        f"  <url><loc>{basis}{p}</loc><priority>{'1.0' if p == '/' else '0.6'}</priority></url>\n"
+        for p in _SITEMAP_SEITEN)
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           f"{eintraege}</urlset>\n")
+    return Response(content=xml, media_type="application/xml")
 
 
 # 15.06.2026: Rechtsseiten der Demo IM Demo-Rahmen (Sidebar + Footer wie das
@@ -8926,13 +9039,14 @@ async def register_page(request: Request):
         return _auth_notice_page(_lang,
             f'''<p style="margin:2rem 0;font-size:1.1rem;">{_("Die Registrierung ist derzeit geschlossen.")}</p>
         <p>{_beta}</p>
-        <p style="margin-top:2rem;"><a href="/">{_("Zurück zur Anmeldung")}</a></p>''',
+        <p style="margin-top:2rem;"><a href="/login">{_("Zurück zur Anmeldung")}</a></p>''',
             title_suffix=_("Registrierung geschlossen"))
     # Seit 03.07.2026 Jinja2-Template (i18n); Staging-Titel/-Brand kommen aus dem Template.
     lang = resolve_ui_language(request)
     return templates.TemplateResponse(
         "register.html",
-        template_context(request, lang, is_staging=("staging" in BASE_URL)),
+        template_context(request, lang, is_staging=("staging" in BASE_URL),
+                         nav_aktiv="/register", noindex=True),
     )
 
 @app.get("/forgot", response_class=HTMLResponse)
@@ -8940,7 +9054,7 @@ async def forgot_page(request: Request):
     lang = resolve_ui_language(request)
     return templates.TemplateResponse(
         "forgot.html",
-        template_context(request, lang, is_staging=("staging" in BASE_URL)),
+        template_context(request, lang, is_staging=("staging" in BASE_URL), noindex=True),
     )
 
 @app.get("/reset", response_class=HTMLResponse)
@@ -8948,7 +9062,7 @@ async def reset_page(request: Request):
     lang = resolve_ui_language(request)
     return templates.TemplateResponse(
         "reset.html",
-        template_context(request, lang, is_staging=("staging" in BASE_URL)),
+        template_context(request, lang, is_staging=("staging" in BASE_URL), noindex=True),
     )
 
 def _serve_protected_page(request: Request, filename: str):
@@ -8956,11 +9070,11 @@ def _serve_protected_page(request: Request, filename: str):
     Leitet zu / um, wenn kein gueltiges Login-Cookie vorliegt."""
     token = request.cookies.get("token")
     if not token:
-        return RedirectResponse("/")
+        return RedirectResponse("/login")
     try:
         jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
-        return RedirectResponse("/")
+        return RedirectResponse("/login")
     html = open(f"/app/frontend/{filename}").read()
     if "staging" in BASE_URL:
         html = html.replace("<title>InkluDocs</title>", "<title>InkluDocs (Testumgebung)</title>")
@@ -8988,11 +9102,11 @@ def _render_protected_template(request: Request, template_name: str, **extra):
     Sprach-Aufloesung. Fuer bereits auf i18n migrierte, eingeloggte Seiten."""
     token = request.cookies.get("token")
     if not token:
-        return RedirectResponse("/")
+        return RedirectResponse("/login")
     try:
         jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
-        return RedirectResponse("/")
+        return RedirectResponse("/login")
     lang = resolve_ui_language(request)
     return templates.TemplateResponse(
         template_name,

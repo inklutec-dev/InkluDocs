@@ -1,14 +1,12 @@
-{% extends "base.html" %}
-{% import "_fusszeile.html" as fusszeile with context %}
+{% extends "base_start.html" %}
 
 {% block title %}InkluDocs - {{ _('Anmeldung') }}{% endblock %}
 
-{% block body %}
-<main>
+{% block main_class %}start-main-auth{% endblock %}
+
+{% block main %}
     <div class="auth-container" role="region" aria-label="{{ _('Anmeldung') }}">
-        <h1>
-            <span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}
-        </h1>
+        <h1>{{ _('Anmeldung') }}</h1>
         <p class="subtitle">{{ _('Dein KI-Werkzeug für barrierefreie Dokumente und Bilder') }}</p>
         {# Konto-Selbstloeschung (08.08.2026): Bestaetigung nach dem Loeschen.
            Bewusst serverseitig gerendert und beim Laden fokussiert — so hoert
@@ -40,10 +38,6 @@
             <a href="https://demo.inkludocs.de" style="font-weight:600;">{{ _('InkluDocs ohne Anmeldung testen') }} <span aria-hidden="true">&rarr;</span></a>
         </p>
     </div>
-    <footer class="legal-footer" role="contentinfo">
-        {{ fusszeile.rechtslinks(' | ', mit_kontakt=True) }}
-    </footer>
-</main>
 <script>
     // Nach der Konto-Loeschung liegt der Fokus auf der Bestaetigung, nicht im
     // Anmeldeformular — sonst geht die Meldung fuer Screenreader unter.

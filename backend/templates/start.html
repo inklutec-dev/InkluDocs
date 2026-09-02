@@ -1,0 +1,217 @@
+{# ──────────────────────────────────────────────────────────────────────────
+   start.html — die öffentliche STARTSEITE von InkluDocs (Route /,
+   02.09.2026, Steve + Michael). Doku: docs/STARTSEITE.md
+
+   Aufbau von oben nach unten (jeder Abschnitt eine <section> mit eigener
+   H2, Karten als H3 — Überschriften-Navigation per Screenreader ergibt
+   das Inhaltsverzeichnis der Seite):
+     1. Kopfbereich (Navy): H1 = Versprechen, ein Absatz, zwei Knöpfe
+        (Demo ohne Anmeldung / kostenloses Konto), Hinweis „keine Zahlungsdaten“
+     2. Drei Werkzeuge (PDF+Bilder, Word, Formulare)
+     3. So funktioniert es (drei Schritte, nummerierte Liste)
+     4. Vorher / nachher — ein Alt-Text als Beispiel (vereinfacht, so
+        gekennzeichnet)
+     5. Für wen — vier Hauptzielgruppen UND ausdrücklich alle anderen
+        (Selbstständige, kleine Unternehmen, Vereine, Privatpersonen — Steve
+        02.09.2026: „offiziell für Behörden, aber jeder darf“)
+     6. Preise — Zahlen aus billing.py (eine Wahrheit, wie preise.html)
+     7. Wer dahintersteht — InkluTec + Actino, Datensicherheit
+     8. Häufige Fragen — natives <details>/<summary>, ohne JavaScript
+     9. Schluss mit denselben zwei Knöpfen
+
+   Texte sind auf Suchbegriffe geschrieben (Alt-Texte KI, barrierefreie PDF,
+   PDF/UA, barrierefreies Word, Quickinfos Formular, BFSG, BITV 2.0, WCAG),
+   ohne dass es beim Vorlesen künstlich klingt. Du-Form wie das Werkzeug;
+   Französisch siezt. Alle Strings sechssprachig über _().
+
+   Eingeloggte sehen diese Seite nicht: Die Route leitet sie ins Dashboard.
+   Demo-Instanz: dort bleibt / die Demo-Seite (Route prüft demo_enabled()).
+
+   Variablen (Route start_page): free_credits, preis_alt, preis_qi,
+   paket_min_preis, single_preis, canonical, registration_enabled.
+   ────────────────────────────────────────────────────────────────────────── #}
+{% extends "base_start.html" %}
+
+{% block title %}{{ _('InkluDocs – KI-Alt-Texte für barrierefreie PDF-, Word- und Formulardokumente') }}{% endblock %}
+
+{% block seo %}
+<meta name="description" content="{{ _('Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.') }}">
+<link rel="canonical" href="{{ canonical }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="InkluDocs">
+<meta property="og:title" content="{{ _('InkluDocs – KI-Alt-Texte für barrierefreie PDF-, Word- und Formulardokumente') }}">
+<meta property="og:description" content="{{ _('Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten.') }}">
+<meta property="og:url" content="{{ canonical }}">
+<meta property="og:locale" content="{{ og_locale }}">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{{ json_ld|safe }}
+</script>
+{% endblock %}
+
+{% block main %}
+<section class="start-hero" aria-labelledby="hero-h">
+  <div class="start-inner">
+    <h1 id="hero-h">{{ _('Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente') }}</h1>
+    <p class="start-lead">{{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten automatisch, liest den Text drumherum mit und liefert am Ende eine Datei, die Screenreader vorlesen können: als PDF/UA, als barrierefreies Word oder als Formular mit Quickinfos. Du prüfst, änderst und gibst frei.') }}</p>
+    <div class="start-aktionen">
+      <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung ausprobieren') }}</a>
+      {% if registration_enabled %}<a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>{% endif %}
+    </div>
+    <p class="start-hinweis">{{ _('{n} Credits im Monat kostenlos, keine Zahlungsdaten nötig.').format(n=free_credits) }}</p>
+  </div>
+</section>
+
+<section class="start-abschnitt" aria-labelledby="werkzeuge-h">
+  <div class="start-inner">
+    <h2 id="werkzeuge-h">{{ _('Drei Werkzeuge, ein Ziel: barrierefreie Dokumente') }}</h2>
+    <p class="start-lead">{{ _('Ob PDF, Word oder Formular: InkluDocs übernimmt die Arbeit, die bisher niemand machen wollte, und lässt dir die Kontrolle über jedes Wort.') }}</p>
+    <div class="start-raster">
+      <article class="start-karte">
+        <h3>{{ _('Alt-Texte für PDF und Bilder') }}</h3>
+        <p>{{ _('Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG. Für Diagramme kommt eine Langbeschreibung dazu.') }}</p>
+        <p>{{ _('Der Export liefert ein geprüftes PDF/UA, das Prüfwerkzeuge wie veraPDF bestehen.') }}</p>
+      </article>
+      <article class="start-karte">
+        <h3>{{ _('Barrierefreie Word-Dokumente') }}</h3>
+        <p>{{ _('InkluDocs beschreibt die Bilder in deiner Word-Datei, prüft Überschriften und Tabellen und speichert das Ergebnis als barrierefreies Word oder als PDF/UA. Ohne Umweg über ein Layoutprogramm.') }}</p>
+      </article>
+      <article class="start-karte">
+        <h3>{{ _('Quickinfos für Formulare') }}</h3>
+        <p>{{ _('Für PDF-Formulare erzeugt InkluDocs die Quickinfos, die Screenreader an jedem Feld vorlesen. Deine Stammdaten wie Behördenname oder Aktenzeichen fließen automatisch mit ein.') }}</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="start-abschnitt" aria-labelledby="ablauf-h">
+  <div class="start-inner">
+    <h2 id="ablauf-h">{{ _('So funktioniert es') }}</h2>
+    <ol class="start-schritte">
+      <li>
+        <h3>{{ _('Hochladen') }}</h3>
+        <p>{{ _('PDF, Word oder Bilder in den Browser ziehen. Mehrere Dateien auf einmal sind kein Problem.') }}</p>
+      </li>
+      <li>
+        <h3>{{ _('Die KI beschreibt') }}</h3>
+        <p>{{ _('InkluDocs liest Bildunterschriften, Überschriften und den umgebenden Text mit und formuliert daraus passende Alt-Texte. Bild für Bild, nachvollziehbar.') }}</p>
+      </li>
+      <li>
+        <h3>{{ _('Prüfen und exportieren') }}</h3>
+        <p>{{ _('Du liest jeden Text, änderst, was dir nicht gefällt, oder lässt ihn neu schreiben. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON.') }}</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="start-abschnitt" aria-labelledby="beispiel-h">
+  <div class="start-inner">
+    <h2 id="beispiel-h">{{ _('Vorher und nachher: ein Alt-Text aus InkluDocs') }}</h2>
+    <div class="start-vergleich">
+      <div class="vorher">
+        <h3>{{ _('Vorher') }}</h3>
+        <p class="start-klein">{{ _('Dateiname statt Beschreibung. Ein Screenreader liest genau das vor, wer nicht sieht, erfährt nichts.') }}</p>
+        <blockquote>diagramm_07.png</blockquote>
+      </div>
+      <div class="nachher">
+        <h3>{{ _('Nachher') }}</h3>
+        <p class="start-klein">{{ _('Der Alt-Text, wie InkluDocs ihn schreibt:') }}</p>
+        <blockquote>{{ _('Balkendiagramm: Anteil barrierefreier Dokumente in der Verwaltung 2023 bis 2025. Der Wert steigt von 12 Prozent über 27 Prozent auf 48 Prozent. Höchster Wert 2025.') }}</blockquote>
+      </div>
+    </div>
+    <p class="start-klein">{{ _('Vereinfachtes Beispiel mit erfundenen Zahlen. Echte Alt-Texte richten sich nach Bildtyp, Kontext und der Sprache, die du wählst.') }}</p>
+  </div>
+</section>
+
+<section class="start-abschnitt" aria-labelledby="zielgruppen-h">
+  <div class="start-inner">
+    <h2 id="zielgruppen-h">{{ _('Für alle, die Dokumente zugänglich machen müssen oder wollen') }}</h2>
+    <ul class="start-zielgruppen">
+      <li><strong>{{ _('Behörden und Kommunen') }}</strong>{{ _('BITV 2.0 und BFSG verlangen barrierefreie Dokumente. InkluDocs macht aus Bescheiden, Broschüren und Formularen zugängliche Dateien.') }}</li>
+      <li><strong>{{ _('Verlage und Redaktionen') }}</strong>{{ _('Bildstarke Publikationen in Serie beschreiben, mit eigenen Prompts, die zu deinem Haus passen.') }}</li>
+      <li><strong>{{ _('Agenturen und Dienstleister') }}</strong>{{ _('Barrierefreiheit als Leistung anbieten, ohne jede Bildbeschreibung von Hand zu tippen. Mit Team-Konten und gemeinsamem Guthaben.') }}</li>
+      <li><strong>{{ _('Hochschulen und Bildung') }}</strong>{{ _('Skripte, Folien und Prüfungsunterlagen für alle Studierenden lesbar machen.') }}</li>
+    </ul>
+    <p>{{ _('Und alle anderen: Selbstständige, kleine Unternehmen, Vereine und Privatpersonen, die ein einzelnes Dokument barrierefrei brauchen. Ein kostenloses Konto reicht.') }}</p>
+  </div>
+</section>
+
+<section class="start-abschnitt" aria-labelledby="preise-h">
+  <div class="start-inner">
+    <h2 id="preise-h">{{ _('Klein anfangen, fair bezahlen') }}</h2>
+    <p class="start-lead">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit.').format(alt=preis_alt, qi=preis_qi) }}</p>
+    <ul class="start-preise">
+      <li>{{ _('Kostenlos: {n} Credits im Monat, voller Funktionsumfang, keine Zahlungsdaten.').format(n=free_credits) }}</li>
+      <li>{{ _('Credit-Pakete ab {preis} Euro, ohne Abo.').format(preis=paket_min_preis) }}</li>
+      <li>{{ _('Abos Single, Team und Enterprise ab {preis} Euro im Monat, für Teams mit gemeinsamem Guthaben.').format(preis=single_preis) }}</li>
+    </ul>
+    <p><a href="/preise">{{ _('Alle Preise ansehen') }}</a></p>
+    <p class="start-klein">{{ _('Alle Preise sind Endpreise, gemäß § 19 UStG ohne Umsatzsteuer.') }}</p>
+  </div>
+</section>
+
+<section class="start-abschnitt" aria-labelledby="team-h">
+  <div class="start-inner">
+    <h2 id="team-h">{{ _('Aus Hamburg und Euskirchen, aus eigener Erfahrung') }}</h2>
+    <div class="start-raster">
+      <article class="start-karte">
+        <h3>{{ _('InkluTec, Hamburg') }}</h3>
+        <p>{{ _('InkluDocs entwickelt Steve Weidel mit InkluTec. Er ist Experte für digitale Barrierefreiheit und KI und selbst blind. Er weiß aus dem Alltag, was ein Alt-Text leisten muss und woran unzugängliche Dokumente scheitern.') }}</p>
+      </article>
+      <article class="start-karte">
+        <h3>{{ _('Actino Software, Euskirchen') }}</h3>
+        <p>{{ _('Die Actino Software GmbH bringt seit den frühen Neunzigerjahren PDF-Fachwissen ein, von PDF/A bis PDF/UA, und begleitet Vertrieb und Kunden.') }}</p>
+      </article>
+      <article class="start-karte">
+        <h3>{{ _('Deine Dateien bleiben deine Dateien') }}</h3>
+        <p>{{ _('Verarbeitung in der EU, KI-Anfragen über Rechenzentren in der EU, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst.') }}</p>
+      </article>
+    </div>
+    <p style="margin-top:1.25rem;"><a href="/ueber-uns">{{ _('Mehr über uns') }}</a> · <a href="/datenschutz">{{ _('Datenschutzerklärung') }}</a></p>
+  </div>
+</section>
+
+<section class="start-abschnitt" aria-labelledby="faq-h">
+  <div class="start-inner">
+    <h2 id="faq-h">{{ _('Häufige Fragen') }}</h2>
+    <div class="start-faq">
+      <details>
+        <summary>{{ _('Was ist ein Credit?') }}</summary>
+        <p>{{ _('Credits sind die Währung in InkluDocs. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit, ein Export je nach Umfang ein paar Credits mehr. Kostenlose Konten bekommen jeden Monat {n} Credits.').format(alt=preis_alt, qi=preis_qi, n=free_credits) }}</p>
+      </details>
+      <details>
+        <summary>{{ _('Welche Dateiformate kann ich hochladen?') }}</summary>
+        <p>{{ _('PDF, Word (docx) und Bilder wie JPG und PNG. Ausgegeben werden PDF/UA, barrierefreies Word, Excel, CSV und JSON.') }}</p>
+      </details>
+      <details>
+        <summary>{{ _('Kann ich die Alt-Texte ändern?') }}</summary>
+        <p>{{ _('Ja. Jeder Text lässt sich bearbeiten, neu generieren oder mit dem InkluAgent im Gespräch anpassen. Du gibst frei, nicht die KI.') }}</p>
+      </details>
+      <details>
+        <summary>{{ _('Was passiert mit meinen Dateien?') }}</summary>
+        <p>{{ _('Sie liegen in deinem Projekt, solange du sie brauchst, und du kannst sie jederzeit löschen. Wir nutzen deine Dokumente nicht, um KI-Modelle zu trainieren. Details stehen in der Datenschutzerklärung.') }}</p>
+      </details>
+      <details>
+        <summary>{{ _('Brauche ich Vorwissen zu Barrierefreiheit?') }}</summary>
+        <p>{{ _('Nein. InkluDocs schreibt die Texte nach den Regeln der WCAG. Wer tiefer einsteigen will, legt eigene Prompts an und wählt die Sprache der Alt-Texte.') }}</p>
+      </details>
+      <details>
+        <summary>{{ _('Gibt es eine Schnittstelle für Entwickler?') }}</summary>
+        <p>{{ _('Ja. InkluDocs hat eine API mit eigenen Schlüsseln pro Konto. Für die Anbindung an eigene Systeme sprich uns über das Kontaktformular an.') }}</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="start-abschnitt start-schluss" aria-labelledby="schluss-h">
+  <div class="start-inner">
+    <h2 id="schluss-h">{{ _('Mach dein nächstes Dokument barrierefrei') }}</h2>
+    <p class="start-lead">{{ _('Probiere InkluDocs ohne Anmeldung aus oder lege ein kostenloses Konto an. Fragen beantworten wir über das Kontaktformular.') }}</p>
+    <div class="start-aktionen">
+      <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung ausprobieren') }}</a>
+      {% if registration_enabled %}<a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>{% endif %}
+      <a class="btn-start btn-start-secondary" href="/kontakt">{{ _('Kontakt') }}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

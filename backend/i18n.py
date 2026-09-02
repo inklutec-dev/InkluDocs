@@ -39,7 +39,7 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 # als ?v=... an den CSS/JS-URLs (Cache-Busting): nach einem Deploy mit
 # geaenderten Dateien laden Browser garantiert die neue Version statt der
 # alten aus dem Cache (sonst z.B. gemischte Sprachen durch alte dashboard.js).
-_ASSET_FILES = ("style.css", "dashboard.css", "dashboard.js", "pwtoggle.js",
+_ASSET_FILES = ("style.css", "dashboard.css", "dashboard.js", "pwtoggle.js", "start.css",
                 "demo.css", "demo.js", "demo-shell.js")
 
 

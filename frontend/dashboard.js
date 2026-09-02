@@ -107,7 +107,7 @@ async function loadCurrentUser() {
     // Oeffentliche Seite: kein Login noetig, keine Weiterleitung — die Huelle
     // rendert gleich die oeffentliche Navigation (renderSidebar).
     if (window.OEFFENTLICH) { currentUser = null; return null; }
-    window.location.href = '/';
+    window.location.href = '/login';
     return null;
   }
   const data = await res.json();
@@ -246,7 +246,7 @@ function renderSidebar() {
     const liIn = document.createElement('li');
     liIn.className = 'app-nav-logout';
     const aIn = document.createElement('a');
-    aIn.href = '/';
+    aIn.href = '/login';
     aIn.textContent = t('Anmelden oder registrieren');
     liIn.appendChild(aIn);
     ul.appendChild(liIn);

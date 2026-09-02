@@ -5336,3 +5336,214 @@ msgstr ""
 # Sichtbare Abbruch-Meldung Quickinfos (Michael Karbe Punkt 2, 02.09.2026)
 msgid "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
 msgstr "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
+
+# Startseite + Startgerüst (start.html / base_start.html, 02.09.2026)
+msgid "InkluDocs Startseite"
+msgstr ""
+
+msgid "InkluDocs – KI-Alt-Texte für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr ""
+
+msgid "Alt-Texte per KI erzeugen, als PDF/UA exportieren, Word-Dateien und Formulare barrierefrei machen. InkluDocs für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
+msgstr ""
+
+msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr ""
+
+msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten automatisch, liest den Text drumherum mit und liefert am Ende eine Datei, die Screenreader vorlesen können: als PDF/UA, als barrierefreies Word oder als Formular mit Quickinfos. Du prüfst, änderst und gibst frei."
+msgstr ""
+
+msgid "Ohne Anmeldung ausprobieren"
+msgstr ""
+
+msgid "{n} Credits im Monat kostenlos, keine Zahlungsdaten nötig."
+msgstr ""
+
+msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
+msgstr ""
+
+msgid "Ob PDF, Word oder Formular: InkluDocs übernimmt die Arbeit, die bisher niemand machen wollte, und lässt dir die Kontrolle über jedes Wort."
+msgstr ""
+
+msgid "Alt-Texte für PDF und Bilder"
+msgstr ""
+
+msgid "Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG. Für Diagramme kommt eine Langbeschreibung dazu."
+msgstr ""
+
+msgid "Der Export liefert ein geprüftes PDF/UA, das Prüfwerkzeuge wie veraPDF bestehen."
+msgstr ""
+
+msgid "Barrierefreie Word-Dokumente"
+msgstr ""
+
+msgid "InkluDocs beschreibt die Bilder in deiner Word-Datei, prüft Überschriften und Tabellen und speichert das Ergebnis als barrierefreies Word oder als PDF/UA. Ohne Umweg über ein Layoutprogramm."
+msgstr ""
+
+msgid "Quickinfos für Formulare"
+msgstr ""
+
+msgid "Für PDF-Formulare erzeugt InkluDocs die Quickinfos, die Screenreader an jedem Feld vorlesen. Deine Stammdaten wie Behördenname oder Aktenzeichen fließen automatisch mit ein."
+msgstr ""
+
+msgid "So funktioniert es"
+msgstr ""
+
+msgid "Hochladen"
+msgstr ""
+
+msgid "PDF, Word oder Bilder in den Browser ziehen. Mehrere Dateien auf einmal sind kein Problem."
+msgstr ""
+
+msgid "Die KI beschreibt"
+msgstr ""
+
+msgid "InkluDocs liest Bildunterschriften, Überschriften und den umgebenden Text mit und formuliert daraus passende Alt-Texte. Bild für Bild, nachvollziehbar."
+msgstr ""
+
+msgid "Prüfen und exportieren"
+msgstr ""
+
+msgid "Du liest jeden Text, änderst, was dir nicht gefällt, oder lässt ihn neu schreiben. Dann exportierst du als PDF/UA, Word, Excel, CSV oder JSON."
+msgstr ""
+
+msgid "Vorher und nachher: ein Alt-Text aus InkluDocs"
+msgstr ""
+
+msgid "Vorher"
+msgstr ""
+
+msgid "Dateiname statt Beschreibung. Ein Screenreader liest genau das vor, wer nicht sieht, erfährt nichts."
+msgstr ""
+
+msgid "Nachher"
+msgstr ""
+
+msgid "Der Alt-Text, wie InkluDocs ihn schreibt:"
+msgstr ""
+
+msgid "Balkendiagramm: Anteil barrierefreier Dokumente in der Verwaltung 2023 bis 2025. Der Wert steigt von 12 Prozent über 27 Prozent auf 48 Prozent. Höchster Wert 2025."
+msgstr ""
+
+msgid "Vereinfachtes Beispiel mit erfundenen Zahlen. Echte Alt-Texte richten sich nach Bildtyp, Kontext und der Sprache, die du wählst."
+msgstr ""
+
+msgid "Für alle, die Dokumente zugänglich machen müssen oder wollen"
+msgstr ""
+
+msgid "Behörden und Kommunen"
+msgstr ""
+
+msgid "BITV 2.0 und BFSG verlangen barrierefreie Dokumente. InkluDocs macht aus Bescheiden, Broschüren und Formularen zugängliche Dateien."
+msgstr ""
+
+msgid "Verlage und Redaktionen"
+msgstr ""
+
+msgid "Bildstarke Publikationen in Serie beschreiben, mit eigenen Prompts, die zu deinem Haus passen."
+msgstr ""
+
+msgid "Agenturen und Dienstleister"
+msgstr ""
+
+msgid "Barrierefreiheit als Leistung anbieten, ohne jede Bildbeschreibung von Hand zu tippen. Mit Team-Konten und gemeinsamem Guthaben."
+msgstr ""
+
+msgid "Hochschulen und Bildung"
+msgstr ""
+
+msgid "Skripte, Folien und Prüfungsunterlagen für alle Studierenden lesbar machen."
+msgstr ""
+
+msgid "Und alle anderen: Selbstständige, kleine Unternehmen, Vereine und Privatpersonen, die ein einzelnes Dokument barrierefrei brauchen. Ein kostenloses Konto reicht."
+msgstr ""
+
+msgid "Klein anfangen, fair bezahlen"
+msgstr ""
+
+msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
+msgstr ""
+
+msgid "Kostenlos: {n} Credits im Monat, voller Funktionsumfang, keine Zahlungsdaten."
+msgstr ""
+
+msgid "Credit-Pakete ab {preis} Euro, ohne Abo."
+msgstr ""
+
+msgid "Abos Single, Team und Enterprise ab {preis} Euro im Monat, für Teams mit gemeinsamem Guthaben."
+msgstr ""
+
+msgid "Alle Preise ansehen"
+msgstr ""
+
+msgid "Alle Preise sind Endpreise, gemäß § 19 UStG ohne Umsatzsteuer."
+msgstr ""
+
+msgid "Aus Hamburg und Euskirchen, aus eigener Erfahrung"
+msgstr ""
+
+msgid "InkluTec, Hamburg"
+msgstr ""
+
+msgid "InkluDocs entwickelt Steve Weidel mit InkluTec. Er ist Experte für digitale Barrierefreiheit und KI und selbst blind. Er weiß aus dem Alltag, was ein Alt-Text leisten muss und woran unzugängliche Dokumente scheitern."
+msgstr ""
+
+msgid "Actino Software, Euskirchen"
+msgstr ""
+
+msgid "Die Actino Software GmbH bringt seit den frühen Neunzigerjahren PDF-Fachwissen ein, von PDF/A bis PDF/UA, und begleitet Vertrieb und Kunden."
+msgstr ""
+
+msgid "Deine Dateien bleiben deine Dateien"
+msgstr ""
+
+msgid "Verarbeitung in der EU, KI-Anfragen über Rechenzentren in der EU, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
+msgstr ""
+
+msgid "Mehr über uns"
+msgstr ""
+
+msgid "Häufige Fragen"
+msgstr ""
+
+msgid "Was ist ein Credit?"
+msgstr ""
+
+msgid "Credits sind die Währung in InkluDocs. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit, ein Export je nach Umfang ein paar Credits mehr. Kostenlose Konten bekommen jeden Monat {n} Credits."
+msgstr ""
+
+msgid "Welche Dateiformate kann ich hochladen?"
+msgstr ""
+
+msgid "PDF, Word (docx) und Bilder wie JPG und PNG. Ausgegeben werden PDF/UA, barrierefreies Word, Excel, CSV und JSON."
+msgstr ""
+
+msgid "Kann ich die Alt-Texte ändern?"
+msgstr ""
+
+msgid "Ja. Jeder Text lässt sich bearbeiten, neu generieren oder mit dem InkluAgent im Gespräch anpassen. Du gibst frei, nicht die KI."
+msgstr ""
+
+msgid "Was passiert mit meinen Dateien?"
+msgstr ""
+
+msgid "Sie liegen in deinem Projekt, solange du sie brauchst, und du kannst sie jederzeit löschen. Wir nutzen deine Dokumente nicht, um KI-Modelle zu trainieren. Details stehen in der Datenschutzerklärung."
+msgstr ""
+
+msgid "Brauche ich Vorwissen zu Barrierefreiheit?"
+msgstr ""
+
+msgid "Nein. InkluDocs schreibt die Texte nach den Regeln der WCAG. Wer tiefer einsteigen will, legt eigene Prompts an und wählt die Sprache der Alt-Texte."
+msgstr ""
+
+msgid "Gibt es eine Schnittstelle für Entwickler?"
+msgstr ""
+
+msgid "Ja. InkluDocs hat eine API mit eigenen Schlüsseln pro Konto. Für die Anbindung an eigene Systeme sprich uns über das Kontaktformular an."
+msgstr ""
+
+msgid "Mach dein nächstes Dokument barrierefrei"
+msgstr ""
+
+msgid "Probiere InkluDocs ohne Anmeldung aus oder lege ein kostenloses Konto an. Fragen beantworten wir über das Kontaktformular."
+msgstr ""

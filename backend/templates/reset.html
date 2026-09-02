@@ -1,14 +1,12 @@
-{% extends "base.html" %}
-{% import "_fusszeile.html" as fusszeile with context %}
+{% extends "base_start.html" %}
 
 {% block title %}InkluDocs - {{ _('Neues Passwort setzen') }}{% endblock %}
 
-{% block body %}
-    <a href="#main" class="skip-link">{{ _('Zum Hauptinhalt springen') }}</a>
-    <main id="main" tabindex="-1">
+{% block main_class %}start-main-auth{% endblock %}
+
+{% block main %}
         <div class="auth-container" role="region" aria-label="{{ _('Neues Passwort setzen') }}">
-            <h1><span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}</h1>
-            <p class="subtitle">{{ _('Neues Passwort setzen') }}</p>
+            <h1>{{ _('Neues Passwort setzen') }}</h1>
             <form id="resetForm" novalidate>
                 <div class="form-group">
                     <label for="password">{{ _('Neues Passwort (mind. 8 Zeichen)') }}</label>
@@ -23,13 +21,9 @@
                 <div id="successMsg" class="success-message" role="status" aria-live="polite"></div>
             </form>
             <div class="auth-links center">
-                <a href="/">{{ _('Zur Anmeldung') }}</a>
+                <a href="/login">{{ _('Zur Anmeldung') }}</a>
             </div>
         </div>
-    <footer class="legal-footer" role="contentinfo">
-        {{ fusszeile.rechtslinks(' | ', mit_kontakt=True) }}
-    </footer>
-    </main>
     <script>
         // Übersetzbare UI-Strings für JavaScript (von Jinja2 per Request injiziert)
         const T = {

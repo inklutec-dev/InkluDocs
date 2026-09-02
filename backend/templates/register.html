@@ -1,13 +1,12 @@
-{% extends "base.html" %}
-{% import "_fusszeile.html" as fusszeile with context %}
+{% extends "base_start.html" %}
 
 {% block title %}InkluDocs - {{ _('Registrierung') }}{% endblock %}
 
-{% block body %}
-    <a href="#main" class="skip-link">{{ _('Zum Hauptinhalt springen') }}</a>
-    <main id="main" tabindex="-1">
+{% block main_class %}start-main-auth{% endblock %}
+
+{% block main %}
         <div class="auth-container" role="region" aria-label="{{ _('Registrierung') }}">
-            <h1><span class="brand">Inklu</span>Docs{% if is_staging %} <span style="font-size:0.6em;color:#c75000;font-weight:normal;">({{ _('Testumgebung') }})</span>{% endif %}</h1>
+            <h1>{{ _('Registrierung') }}</h1>
             <p class="subtitle">{{ _('Neues Konto erstellen') }}</p>
             <form id="registerForm" novalidate>
                 <div class="form-group">
@@ -34,13 +33,9 @@
                 <div id="errorMsg" class="error-message" role="alert" aria-live="polite"></div>
             </form>
             <div class="auth-links center">
-                <a href="/">{{ _('Bereits ein Konto? Anmelden') }}</a>
+                <a href="/login">{{ _('Bereits ein Konto? Anmelden') }}</a>
             </div>
         </div>
-        <footer class="legal-footer" role="contentinfo">
-        {{ fusszeile.rechtslinks(' | ', mit_kontakt=True) }}
-    </footer>
-    </main>
     <script>
         // Übersetzbare UI-Strings für JavaScript (von Jinja2 per Request injiziert)
         const T = {
@@ -107,7 +102,7 @@
                             '<p style="color:#64748b;font-size:0.9rem;margin-top:1.5rem;">' + T.noMail + ' ' +
                             '<button type="button" id="resendBtn" style="background:none;border:none;color:#c75000;text-decoration:underline;cursor:pointer;font-size:0.9rem;padding:0;">' + T.resendLink + '</button>.</p>' +
                         '</div>' +
-                        '<p><a href="/">' + T.toLogin + '</a></p>';
+                        '<p><a href="/login">' + T.toLogin + '</a></p>';
                     const resendBtn = document.getElementById('resendBtn');
                     if (resendBtn) {
                         resendBtn.addEventListener('click', async () => {
