@@ -919,7 +919,7 @@
         // Im Gast-Modus ist projectId der Freigabe-Token (app.html reicht ihn durch).
         const main = document.getElementById('main');
         const res = await fetch(felderUrl(projectId), { credentials: 'same-origin' });
-        if (res.status === 401) { if (gast() && typeof initGuest === 'function') { return initGuest(); } window.location.href = '/'; return; }
+        if (res.status === 401) { if (gast() && typeof initGuest === 'function') { return initGuest(); } window.location.href = '/login'; return; }
         if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
         const data = await res.json();
         const project = data.project;

@@ -96,7 +96,7 @@
     let data;
     try {
       const res = await fetch('/api/prompts', { credentials: 'same-origin' });
-      if (res.status === 401) { window.location.href = '/'; return; }
+      if (res.status === 401) { window.location.href = '/login'; return; }
       data = await res.json();
     } catch (e) {
       cont.setAttribute('aria-busy', 'false');

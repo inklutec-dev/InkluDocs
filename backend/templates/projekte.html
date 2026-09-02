@@ -13,7 +13,7 @@
 
   async function loadTools() {
     const res = await fetch('/api/tools');
-    if (res.status === 401) { window.location.href = '/'; return; }
+    if (res.status === 401) { window.location.href = '/login'; return; }
     const data = await res.json();
     (data.tools || []).forEach((tool) => { toolMap[tool.key] = tool.name; });
   }
@@ -23,7 +23,7 @@
     let data;
     try {
       const res = await fetch('/api/projects');
-      if (res.status === 401) { window.location.href = '/'; return; }
+      if (res.status === 401) { window.location.href = '/login'; return; }
       data = await res.json();
     } catch (e) {
       cont.setAttribute('aria-busy', 'false');

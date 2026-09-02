@@ -132,7 +132,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Etappe-2-Fix 13.07.2026: wiederkehrende Gäste mussten vorher immer neu bestätigen.
         if (window.GUEST_MODE) { return showProject(window.SHARE_TOKEN); }
         const res = await fetch('/api/me');
-        if (res.status === 401) { window.location.href = '/'; return; }
+        if (res.status === 401) { window.location.href = '/login'; return; }
         const meData = await res.json();
         currentUser = meData.user;
         if (meData.daily_limit) window._dailyLimit = meData.daily_limit;
@@ -575,7 +575,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         highlightNav(null);
 
         const res = await fetch(_projectDataUrl(projectId));
-        if (res.status === 401) { if (window.GUEST_MODE) { return initGuest(); } window.location.href = '/'; return; }
+        if (res.status === 401) { if (window.GUEST_MODE) { return initGuest(); } window.location.href = '/login'; return; }
         const data = await res.json();
         const project = data.project;
         // QUICKINFO-WERKZEUG (27.08.2026): Formular-Projekte haben eine eigene
@@ -3363,7 +3363,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         log.textContent = '';
         try {
             const res = await fetch('/api/projects/' + projectId + '/chat/history');
-            if (res.status === 401) { window.location.href = '/'; return; }
+            if (res.status === 401) { window.location.href = '/login'; return; }
             if (!res.ok) {
                 inkluagentSetStatus(t('Verlauf konnte nicht geladen werden.'), true);
                 return;
@@ -3466,7 +3466,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
                 body: JSON.stringify({ message })
             });
-            if (res.status === 401) { window.location.href = '/'; return; }
+            if (res.status === 401) { window.location.href = '/login'; return; }
             if (!res.ok) {
                 let detail = 'HTTP ' + res.status;
                 try { const e = await res.json(); detail = e.detail || detail; } catch (_) {}

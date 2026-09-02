@@ -246,7 +246,7 @@
   async function loadUsers() {
     const cont = byId('usersContainer');
     const res = await fetch('/api/admin/users');
-    if (res.status === 401) { window.location.href = '/'; return; }
+    if (res.status === 401) { window.location.href = '/login'; return; }
     cont.setAttribute('aria-busy', 'false');
     cont.innerHTML = '';
     if (res.status === 403) {
@@ -428,7 +428,7 @@
   async function loadAdmins() {
     const cont = byId('adminsContainer');
     const res = await fetch('/api/admin/admins');
-    if (res.status === 401) { window.location.href = '/'; return; }
+    if (res.status === 401) { window.location.href = '/login'; return; }
     cont.setAttribute('aria-busy', 'false');
     cont.innerHTML = '';
     if (!res.ok) {

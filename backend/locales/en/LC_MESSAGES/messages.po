@@ -5353,8 +5353,8 @@ msgstr "InkluDocs describes the images in your documents automatically, reads th
 msgid "Ohne Anmeldung ausprobieren"
 msgstr "Try it without signing up"
 
-msgid "{n} Credits im Monat kostenlos, keine Zahlungsdaten nötig."
-msgstr "{n} credits per month for free, no payment details required."
+msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
+msgstr "With a free account you get {n} credits per month, no payment details. The demo runs without any account."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Three tools, one goal: accessible documents"

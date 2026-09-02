@@ -375,7 +375,7 @@
     let abo = null;
     try {
       const res = await fetch('/api/me');
-      if (res.status === 401) { window.location.href = '/'; return; }
+      if (res.status === 401) { window.location.href = '/login'; return; }
       abo = (await res.json()).abo || null;
     } catch (e) { abo = null; }
     renderTeamSeite(abo);

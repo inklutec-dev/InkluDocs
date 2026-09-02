@@ -73,7 +73,7 @@ function t(s, params) {
     const liOut = document.createElement("li");
     liOut.className = "app-nav-logout";
     const aOut = document.createElement("a");
-    aOut.href = "https://inkludocs.de/";
+    aOut.href = "https://inkludocs.de/login";  // 02.09.2026: / ist die Startseite, Anmeldung unter /login
     aOut.textContent = t("Anmelden oder registrieren");
     liOut.appendChild(aOut);
     ul.appendChild(liOut);

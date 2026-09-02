@@ -92,7 +92,7 @@
     try {
       res = await fetch('/api/admin/users/' + id + '/report');
     } catch (e) { res = null; }
-    if (res && res.status === 401) { window.location.href = '/'; return; }
+    if (res && res.status === 401) { window.location.href = '/login'; return; }
     inhalt.innerHTML = '';
     if (res && res.status === 403) {
       const p = document.createElement('p');

@@ -71,7 +71,7 @@
                 if (res.ok) {
                     successMsg.textContent = T.resetDone;
                     form.querySelector('button').disabled = true;
-                    setTimeout(() => { window.location.href = '/'; }, 2000);
+                    setTimeout(() => { window.location.href = '/login'; }, 2000);
                 } else {
                     errorMsg.textContent = data.detail || T.resetFailed;
                 }

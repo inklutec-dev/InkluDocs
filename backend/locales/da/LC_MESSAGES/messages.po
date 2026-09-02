@@ -5045,8 +5045,8 @@ msgstr "InkluDocs beskriver automatisk billederne i dine dokumenter, læser teks
 msgid "Ohne Anmeldung ausprobieren"
 msgstr "Prøv uden login"
 
-msgid "{n} Credits im Monat kostenlos, keine Zahlungsdaten nötig."
-msgstr "{n} credits om måneden gratis, ingen betalingsoplysninger nødvendige."
+msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
+msgstr "Med en gratis konto får du {n} credits om måneden, uden betalingsoplysninger. Demoen kører helt uden konto."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Tre værktøjer, ét mål: tilgængelige dokumenter"

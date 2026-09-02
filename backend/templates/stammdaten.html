@@ -109,7 +109,7 @@
     let data;
     try {
       const res = await fetch('/api/stammdaten', { credentials: 'same-origin' });
-      if (res.status === 401) { window.location.href = '/'; return; }
+      if (res.status === 401) { window.location.href = '/login'; return; }
       data = await res.json();
     } catch (e) { cont.setAttribute('aria-busy', 'false'); return; }
     _sd = data.stammdaten || [];

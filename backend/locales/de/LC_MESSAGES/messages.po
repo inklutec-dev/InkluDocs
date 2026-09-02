@@ -5356,7 +5356,7 @@ msgstr ""
 msgid "Ohne Anmeldung ausprobieren"
 msgstr ""
 
-msgid "{n} Credits im Monat kostenlos, keine Zahlungsdaten nötig."
+msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
 msgstr ""
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
