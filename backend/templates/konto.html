@@ -329,7 +329,8 @@
     }
     // Konto ist weg — Sitzung beenden und zur Startseite mit Abschiedsgruss.
     msg.textContent = t('Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet.');
-    setTimeout(() => { window.location.href = '/?geloescht=1'; }, 1500);
+    // 02.09.2026: Die Anmeldung (mit der Loesch-Bestaetigung) liegt jetzt unter /login, / ist die Startseite.
+    setTimeout(() => { window.location.href = '/login?geloescht=1'; }, 1500);
   });
 {% endraw %}
 </script>
