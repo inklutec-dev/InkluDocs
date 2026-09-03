@@ -330,8 +330,13 @@ def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str
     if not alt_text or not _verify_scope_matches(bildtyp):
         return None
     try:
+        # 03.09.2026 (Steve): Der Pruefpass nimmt das VALIDATE-Modell (ENV
+        # BEDROCK_MODEL_VALIDATE) — bisher lief er im Lean-Mode stillschweigend
+        # mit dem Beschreibungsmodell, der Schalter war dort wirkungslos. So kann
+        # der Pruefer ein staerkeres Modell bekommen als der Erzeuger (Premium-
+        # Weg: Cross-Model-Validator), ohne die Erzeugung zu verteuern.
         return call_mistral_with_schema(
-            model=MISTRAL_MODEL_GENERATE,
+            model=MISTRAL_MODEL_VALIDATE,
             prompt=_build_verify_prompt(alt_text, language=language, enriched_context=enriched_context),
             image_path=image_path,
             schema=VerifyOutput,

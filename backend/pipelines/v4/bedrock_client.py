@@ -197,6 +197,13 @@ def _invoke_bedrock(
     except (KeyError, ValueError) as e:
         raise BedrockCallError(f'Bedrock-Antwort nicht parsebar: {e}') from e
 
+    # Token-Messung je Aufruf (03.09.2026, Kostenrechnung je Pass): nur bei
+    # DEBUG_GEN_RAW=true, eine Zeile je Bedrock-Aufruf, Modell + Schema + Tokens.
+    if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
+        _u = payload.get('usage', {}) or {}
+        print(f"[BEDROCK-USAGE] model={model} schema={schema_name} "
+              f"in={_u.get('input_tokens', '?')} out={_u.get('output_tokens', '?')}", flush=True)
+
     # Anthropic-Antwort-Struktur: content ist Liste von Blöcken; bei tool_choice
     # ist ein Block vom Typ 'tool_use' mit dem schema-validen Input drin.
     for block in payload.get('content', []):
