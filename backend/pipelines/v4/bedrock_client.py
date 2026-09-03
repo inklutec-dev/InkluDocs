@@ -125,6 +125,89 @@ def _detect_media_type_from_bytes(image_b64: str, image_path: str) -> str:
     return _detect_media_type(image_path)
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# CONVERSE-WEG fuer fremde Modellfamilien (03.09.2026, Steve: Nova als Pruefer/
+# Erzeuger messen). Der Anthropic-Weg unten spricht das Messages-Format per
+# InvokeModel; Amazon Nova (und andere Anbieter) verstehen das nicht. Die
+# Bedrock-Converse-API ist anbieteruebergreifend: Bild + Text + Werkzeugschema,
+# das Modell antwortet mit einem toolUse-Block. Der Vertrag nach aussen bleibt
+# identisch (dict = Schema-Input), damit der Orchestrator nichts merkt.
+# Greift automatisch, wenn die Modell-ID keinen 'anthropic'-Teil hat.
+# Schema: Nova kennt kein $ref/anyOf-null — _schema_vereinfachen() loest
+# $defs auf und macht aus Optional[X] schlicht X.
+# ─────────────────────────────────────────────────────────────────────────
+def _ist_anthropic(model: str) -> bool:
+    return 'anthropic' in (model or '')
+
+
+def _schema_vereinfachen(schema: dict) -> dict:
+    import copy
+    s = copy.deepcopy(schema)
+    defs = s.pop('$defs', {}) or {}
+
+    def aufloesen(node):
+        if isinstance(node, dict):
+            if '$ref' in node:
+                name = node['$ref'].split('/')[-1]
+                return aufloesen(copy.deepcopy(defs.get(name, {})))
+            if 'anyOf' in node:
+                kandidaten = [k for k in node['anyOf'] if not (isinstance(k, dict) and k.get('type') == 'null')]
+                if len(kandidaten) == 1:
+                    rest = {k: v for k, v in node.items() if k != 'anyOf'}
+                    merged = aufloesen(kandidaten[0]); merged.update({k: v for k, v in rest.items() if k in ('description',)})
+                    return merged
+            return {k: aufloesen(v) for k, v in node.items() if k not in ('default', 'title')}
+        if isinstance(node, list):
+            return [aufloesen(x) for x in node]
+        return node
+
+    return aufloesen(s)
+
+
+def _invoke_converse(model, prompt, image_b64, image_path, schema_name, schema_dict, max_tokens, temperature=0.0, system=None) -> dict:
+    """Bedrock Converse mit Werkzeugschema (Nova & Co.). Returns dict aus toolUse.input."""
+    client = _get_client()
+    content = []
+    if image_b64:
+        mt = _detect_media_type_from_bytes(image_b64, image_path)
+        fmt = {'image/png': 'png', 'image/jpeg': 'jpeg', 'image/gif': 'gif', 'image/webp': 'webp'}.get(mt, 'png')
+        content.append({'image': {'format': fmt, 'source': {'bytes': base64.b64decode(image_b64)}}})
+    content.append({'text': prompt})
+    kwargs = {
+        'modelId': model,
+        'messages': [{'role': 'user', 'content': content}],
+        'inferenceConfig': {'maxTokens': max_tokens, 'temperature': temperature},
+        'toolConfig': {
+            'tools': [{'toolSpec': {'name': schema_name, 'description': f'Output gemaess {schema_name}-Schema',
+                                    'inputSchema': {'json': _schema_vereinfachen(schema_dict)}}}],
+            'toolChoice': {'tool': {'name': schema_name}},
+        },
+    }
+    if system:
+        kwargs['system'] = [{'text': system}]
+    try:
+        resp = client.converse(**kwargs)
+    except Exception as e:
+        # Manche Modelle koennen kein erzwungenes Einzelwerkzeug — Rueckfall auf 'any'
+        if 'toolChoice' in str(e) or 'tool choice' in str(e).lower():
+            kwargs['toolConfig']['toolChoice'] = {'any': {}}
+            try:
+                resp = client.converse(**kwargs)
+            except Exception as e2:
+                raise BedrockCallError(f'Bedrock converse fehlgeschlagen ({model}): {e2}') from e2
+        else:
+            raise BedrockCallError(f'Bedrock converse fehlgeschlagen ({model}): {e}') from e
+    if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
+        _u = resp.get('usage', {}) or {}
+        print(f"[BEDROCK-USAGE] model={model} schema={schema_name} "
+              f"in={_u.get('inputTokens', '?')} out={_u.get('outputTokens', '?')}", flush=True)
+    for block in resp.get('output', {}).get('message', {}).get('content', []):
+        tu = block.get('toolUse')
+        if tu and tu.get('name') == schema_name:
+            return tu.get('input', {})
+    raise BedrockCallError(f'Kein toolUse-Block in Converse-Antwort ({schema_name}, {model}). Raw: {str(resp.get("output"))[:300]}')
+
+
 def _invoke_bedrock(
     model: str,
     prompt: str,
@@ -145,6 +228,9 @@ def _invoke_bedrock(
     Raises:
         BedrockCallError bei AWS-/Auth-/Use-Case-Fehlern.
     """
+    if not _ist_anthropic(model):
+        return _invoke_converse(model, prompt, image_b64, image_path, schema_name, schema_dict,
+                                max_tokens, temperature=temperature, system=system)
     client = _get_client()
     body = {
         'anthropic_version': 'bedrock-2023-05-31',

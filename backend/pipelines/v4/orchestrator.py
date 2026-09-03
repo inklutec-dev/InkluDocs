@@ -1101,6 +1101,7 @@ def _run_lean_pipeline(
     # === Verify-Pass (optional per V4_VERIFY_MODE, s. Bausteine oben) ===
     verify_result = None
     verify_korrektur_applied = False
+    verify_korrektur_schritt = ''  # Korrekturwache: auch fuer Mini-Typen (logo/icon/funktional) definiert
     if effective_bildtyp not in _MINI_TYPES:
         verify_result = _run_verify_pass(
             image_path, effective_bildtyp, beschreibung.alt_text, language=language,
@@ -1117,7 +1118,6 @@ def _run_lean_pipeline(
         # wie bisher). Original + Begruendung werden geloggt (Muster wie oben);
         # der volle Verify-Output steht ohnehin in validation_result. Die
         # Langbeschreibung bleibt in beiden Faellen unangetastet.
-        verify_korrektur_schritt = ''
         if (
             verify_result is not None
             and verify_result.korrigierter_alt_text
