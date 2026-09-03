@@ -5344,14 +5344,20 @@ msgstr "InkluDocs – Textes alternatifs par IA pour PDF, Word et formulaires ac
 msgid "Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
 msgstr "Générez des textes alternatifs par IA, vérifiez-les vous-même et exportez en PDF/UA ou en Word accessible. Pour les administrations, les éditeurs, les agences et tous ceux qui ont besoin de documents accessibles. Commencez gratuitement."
 
-msgid "Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr "Chaque image prend la parole : des textes alternatifs par IA pour des PDF, Word et formulaires accessibles"
+msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
+msgstr "Un contenu. Beaucoup de personnes. Les mêmes chances."
+
+msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+msgstr "Des textes alternatifs par IA pour des PDF, Word et formulaires accessibles"
+
+msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
+msgstr "Nous rendons l'information accessible à tous, indépendamment des capacités, des appareils et des situations."
 
 msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI."
 msgstr "InkluDocs décrit les images de vos documents, lit le texte qui les entoure et livre un fichier que les lecteurs d’écran peuvent lire : en PDF/UA, en Word accessible ou en formulaire avec infobulles. Vous pouvez modifier chaque texte à la main ou l’affiner en dialoguant avec l’InkluAgent. C’est vous qui validez, pas l’IA."
 
-msgid "Ohne Anmeldung ausprobieren"
-msgstr "Essayer sans inscription"
+msgid "Ohne Anmeldung selbst erleben"
+msgstr "Le découvrir sans inscription"
 
 msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
 msgstr "Avec un compte gratuit, vous recevez {n} crédits par mois, sans données de paiement. La démo fonctionne sans aucun compte."

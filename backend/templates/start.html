@@ -5,15 +5,17 @@
    Aufbau von oben nach unten (jeder Abschnitt eine <section> mit eigener
    H2, Karten als H3 — Überschriften-Navigation per Screenreader ergibt
    das Inhaltsverzeichnis der Seite):
-     1. Kopfbereich (Navy): H1 = Versprechen, ein Absatz, zwei Knöpfe
-        (Demo ohne Anmeldung / kostenloses Konto), Hinweis „keine Zahlungsdaten“
+     1. Kopfbereich (Navy): H1 = Markensatz (Michael 03.09.: „Ein Inhalt.
+        Viele Menschen. Gleiche Chancen.“, eigene Zeile) + Versprechen mit
+        Suchbegriffen, ein Absatz, drei Knöpfe (Demo ohne Anmeldung /
+        kostenloses Konto / Anmelden), Hinweis „keine Zahlungsdaten“
      2. Drei Werkzeuge (PDF+Bilder, Word, Formulare)
      3. So funktioniert es (drei Schritte, nummerierte Liste)
      3a. Du behältst das letzte Wort (Steve 02.09.: von Hand ändern, InkluAgent,
          eigene Prompts + Ausgabesprache)
      4. Vorher / nachher — ein Alt-Text als Beispiel (vereinfacht, so
         gekennzeichnet)
-     5. Für wen — vier Hauptzielgruppen UND ausdrücklich alle anderen
+     5. Für wen — vier Hauptzielgruppen als H3 UND ausdrücklich alle anderen
         (Selbstständige, kleine Unternehmen, Vereine, Privatpersonen — Steve
         02.09.2026: „offiziell für Behörden, aber jeder darf“)
      6. Preise — Zahlen aus billing.py (eine Wahrheit, wie preise.html)
@@ -54,11 +56,12 @@
 {% block main %}
 <section class="start-hero" aria-labelledby="hero-h">
   <div class="start-inner">
-    <h1 id="hero-h">{{ _('Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}</h1>
-    <p class="start-lead">{{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI.') }}</p>
+    <h1 id="hero-h"><span class="start-claim">{{ _('Ein Inhalt. Viele Menschen. Gleiche Chancen.') }}</span> {{ _('Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}</h1>
+    <p class="start-lead">{{ _('Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen.') }} {{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI.') }}</p>
     <div class="start-aktionen">
-      <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung ausprobieren') }}</a>
+      <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung selbst erleben') }}</a>
       {% if registration_enabled %}<a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>{% endif %}
+      <a class="btn-start btn-start-secondary" href="/login">{{ _('Anmelden') }}</a>
     </div>
     <p class="start-hinweis">{{ _('Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto.').format(n=free_credits) }}</p>
   </div>
@@ -150,10 +153,10 @@
   <div class="start-inner">
     <h2 id="zielgruppen-h">{{ _('Für alle, die Dokumente zugänglich machen müssen oder wollen') }}</h2>
     <ul class="start-zielgruppen">
-      <li><strong>{{ _('Behörden und Kommunen') }}</strong>{{ _('BITV 2.0 und BFSG verlangen barrierefreie Dokumente. InkluDocs macht aus Bescheiden, Broschüren und Formularen zugängliche Dateien.') }}</li>
-      <li><strong>{{ _('Verlage und Redaktionen') }}</strong>{{ _('Bildstarke Publikationen in Serie beschreiben, mit eigenen Prompts, die zu deinem Haus passen.') }}</li>
-      <li><strong>{{ _('Agenturen und Dienstleister') }}</strong>{{ _('Barrierefreiheit als Leistung anbieten, ohne jede Bildbeschreibung von Hand zu tippen. Mit Team-Konten und gemeinsamem Guthaben.') }}</li>
-      <li><strong>{{ _('Hochschulen und Bildung') }}</strong>{{ _('Skripte, Folien und Prüfungsunterlagen für alle Studierenden lesbar machen.') }}</li>
+      <li><h3>{{ _('Behörden und Kommunen') }}</h3>{{ _('BITV 2.0 und BFSG verlangen barrierefreie Dokumente. InkluDocs macht aus Bescheiden, Broschüren und Formularen zugängliche Dateien.') }}</li>
+      <li><h3>{{ _('Verlage und Redaktionen') }}</h3>{{ _('Bildstarke Publikationen in Serie beschreiben, mit eigenen Prompts, die zu deinem Haus passen.') }}</li>
+      <li><h3>{{ _('Agenturen und Dienstleister') }}</h3>{{ _('Barrierefreiheit als Leistung anbieten, ohne jede Bildbeschreibung von Hand zu tippen. Mit Team-Konten und gemeinsamem Guthaben.') }}</li>
+      <li><h3>{{ _('Hochschulen und Bildung') }}</h3>{{ _('Skripte, Folien und Prüfungsunterlagen für alle Studierenden lesbar machen.') }}</li>
     </ul>
     <p>{{ _('Und alle anderen: Selbstständige, kleine Unternehmen, Vereine und Privatpersonen, die ein einzelnes Dokument barrierefrei brauchen. Ein kostenloses Konto reicht.') }}</p>
   </div>
@@ -235,7 +238,7 @@
     <h2 id="schluss-h">{{ _('Mach dein nächstes Dokument barrierefrei') }}</h2>
     <p class="start-lead">{{ _('Probiere InkluDocs ohne Anmeldung aus oder lege ein kostenloses Konto an. Fragen beantworten wir über das Kontaktformular.') }}</p>
     <div class="start-aktionen">
-      <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung ausprobieren') }}</a>
+      <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung selbst erleben') }}</a>
       {% if registration_enabled %}<a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>{% endif %}
       <a class="btn-start btn-start-secondary" href="/kontakt">{{ _('Kontakt') }}</a>
     </div>

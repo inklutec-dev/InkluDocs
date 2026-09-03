@@ -4906,14 +4906,20 @@ msgstr "InkluDocs – AI-alternativtexter för tillgängliga PDF, Word och formu
 msgid "Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
 msgstr "Skapa alternativtexter med AI, granska dem själv och exportera som PDF/UA eller tillgänglig Word. För myndigheter, förlag, byråer och alla som behöver tillgängliga dokument. Börja gratis."
 
-msgid "Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr "Varje bild får en röst: AI-alternativtexter för tillgängliga PDF, Word och formulär"
+msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
+msgstr "Ett innehåll. Många människor. Lika möjligheter."
+
+msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+msgstr "AI-alternativtexter för tillgängliga PDF, Word och formulär"
+
+msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
+msgstr "Vi gör information tillgänglig för alla, oberoende av förmågor, enheter och situationer."
 
 msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI."
 msgstr "InkluDocs beskriver bilderna i dina dokument, läser texten runt omkring och levererar en fil som skärmläsare kan läsa upp: som PDF/UA, tillgänglig Word eller formulär med verktygstips. Varje text kan du ändra för hand eller finslipa i dialog med InkluAgent. Du godkänner, inte AI:n."
 
-msgid "Ohne Anmeldung ausprobieren"
-msgstr "Prova utan inloggning"
+msgid "Ohne Anmeldung selbst erleben"
+msgstr "Upplev det själv utan inloggning"
 
 msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
 msgstr "Med ett gratiskonto får du {n} credits i månaden, utan betalningsuppgifter. Demon fungerar helt utan konto."

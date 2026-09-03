@@ -5344,14 +5344,20 @@ msgstr "InkluDocs – Textos alternativos con IA para PDF, Word y formularios ac
 msgid "Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
 msgstr "Genera textos alternativos con IA, revísalos tú mismo y expórtalos como PDF/UA o Word accesible. Para administraciones, editoriales, agencias y todos los que necesitan documentos accesibles. Empieza gratis."
 
-msgid "Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr "Cada imagen tiene voz: textos alternativos con IA para PDF, Word y formularios accesibles"
+msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
+msgstr "Un contenido. Muchas personas. Las mismas oportunidades."
+
+msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+msgstr "Textos alternativos con IA para PDF, Word y formularios accesibles"
+
+msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
+msgstr "Hacemos que la información sea accesible para todos, independientemente de capacidades, dispositivos y situaciones."
 
 msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI."
 msgstr "InkluDocs describe las imágenes de tus documentos, lee el texto que las rodea y entrega un archivo que los lectores de pantalla pueden leer: como PDF/UA, Word accesible o formulario con información rápida. Puedes editar cada texto a mano o afinarlo conversando con el InkluAgent. Apruebas tú, no la IA."
 
-msgid "Ohne Anmeldung ausprobieren"
-msgstr "Probar sin registro"
+msgid "Ohne Anmeldung selbst erleben"
+msgstr "Descúbrelo sin registro"
 
 msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
 msgstr "Con una cuenta gratuita recibes {n} créditos al mes, sin datos de pago. La demo funciona sin ninguna cuenta."

@@ -51,8 +51,8 @@ E = env_datei()
 LOGIN_MAIL = os.environ.get("INKLUDOCS_E2E_MAIL") or E.get("INKLUDOCS_E2E_MAIL")
 LOGIN_PW = os.environ.get("INKLUDOCS_E2E_PW") or E.get("INKLUDOCS_E2E_PW")
 
-H1_DE = "Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-H1_EN = "Every image gets a voice: AI alt text for accessible PDF, Word and forms"
+H1_DE = "Ein Inhalt. Viele Menschen. Gleiche Chancen. Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+H1_EN_TEILE = ("One document. Many people. Equal opportunities.", "AI alt text for accessible PDF, Word and forms")
 KOPF_NAV = [("/preise", "Preise"), ("/kontakt", "Kontakt"), ("/ueber-uns", "Über uns"),
             ("/login", "Anmelden"), ("/register", "Kostenlos starten")]
 FUSSZEILE = [("/impressum", "Impressum"), ("/datenschutz", "Datenschutz"),
@@ -143,7 +143,7 @@ with sync_playwright() as p:
     check("kein aria-current auf der Startseite", page.locator("header nav a[aria-current]").count() == 0)
     h1s = page.locator("h1")
     check("genau eine H1 mit dem Versprechen",
-          h1s.count() == 1 and h1s.first.inner_text().strip() == H1_DE,
+          h1s.count() == 1 and " ".join(h1s.first.inner_text().split()) == H1_DE,
           str([x.inner_text().strip() for x in h1s.all()]))
     h2 = [x.inner_text().strip() for x in page.locator("main h2").all()]
     check("zehn Abschnitte, neun mit H2", len(h2) == 9 and page.locator("main section").count() == 10, str(h2))
@@ -166,6 +166,13 @@ with sync_playwright() as p:
     check("Knopf Demo (ohne Anmeldung) x2, Knopf Konto x2",
           page.locator("main a.btn-start[href='https://demo.inkludocs.de']").count() == 2
           and page.locator("main a.btn-start[href='/register']").count() == 2)
+    check("Hero: dritter Knopf 'Anmelden' nach /login (Michael 03.09.)",
+          page.locator("section.start-hero a.btn-start[href='/login']").count() == 1
+          and page.locator("section.start-hero a.btn-start[href='/login']").inner_text().strip() == "Anmelden")
+    check("Demo-Knopf heisst 'Ohne Anmeldung selbst erleben' (Michael 03.09.)",
+          page.locator("main a.btn-start[href='https://demo.inkludocs.de']").first.inner_text().strip() == "Ohne Anmeldung selbst erleben")
+    check("Zielgruppen: vier H3 statt fettem Text (Cody 02.09.)",
+          page.locator("ul.start-zielgruppen > li > h3").count() == 4)
     check("keine Seitenleiste, kein Rest der Login-Karte",
           page.locator("#appSidebar, .auth-container, .legal-footer, .subtitle").count() == 0)
     check("Fusszeile: 7 Links wie im oeffentlichen Geruest", fusszeile(page) == FUSSZEILE, str(fusszeile(page)))
@@ -196,7 +203,7 @@ with sync_playwright() as p:
           'class="start-header"' in html and all(f'href="{h}"' in html for h, _ in FUSSZEILE))
     html_en = roh("/", {"Accept-Language": "en-GB,en;q=0.9"})
     check("Accept-Language en: html lang=en, englische H1, og:locale en_GB",
-          '<html lang="en">' in html_en and H1_EN in html_en and 'content="en_GB"' in html_en)
+          '<html lang="en">' in html_en and all(t in html_en for t in H1_EN_TEILE) and 'content="en_GB"' in html_en)
 
     print("== B. Login-Karten im Startgeruest ==")
     for pfad, h1 in KARTEN:
@@ -254,7 +261,7 @@ with sync_playwright() as p:
         page.click("#logoutBtn")
         page.wait_for_url(f"{BASE}/", timeout=15000)
         check("Abmelden landet auf der Startseite", page.url.rstrip("/") == BASE.rstrip("/")
-              and page.locator("h1").first.inner_text().strip() == H1_DE)
+              and " ".join(page.locator("h1").first.inner_text().split()) == H1_DE)
         page.goto(f"{BASE}/preise", wait_until="networkidle")
         nav = [(a.get_attribute("href"), a.inner_text().strip()) for a in page.locator("#appSidebar nav a").all()]
         check("oeffentliche Seitenleiste: 'Anmelden oder registrieren' zeigt auf /login",

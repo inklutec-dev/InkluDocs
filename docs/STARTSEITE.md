@@ -58,10 +58,17 @@ Jeder Abschnitt ist eine `<section aria-labelledby="…">` mit eigener H2;
 Karten sind H3. Die Überschriften-Navigation per Screenreader ergibt damit
 das Inhaltsverzeichnis der Seite.
 
-1. **Kopfbereich** (Navy): H1 = Versprechen, ein Absatz, Knöpfe „Ohne
-   Anmeldung ausprobieren“ (→ demo.inkludocs.de) und „Kostenlos starten“
-   (→ `/register`), Hinweis „{n} Credits im Monat kostenlos, keine
-   Zahlungsdaten nötig“.
+1. **Kopfbereich** (Navy): H1 aus zwei Zeilen — Markensatz „Ein Inhalt.
+   Viele Menschen. Gleiche Chancen.“ (Michael, 03.09.2026, als `<span
+   class="start-claim">` in der H1, damit es EINE Überschrift bleibt) und
+   darunter das Versprechen mit Suchbegriffen „Alt-Texte per KI für
+   barrierefreie PDF, Word und Formulare“. Der Absatz beginnt mit Michaels
+   Satz „Wir machen Informationen barrierefrei nutzbar, unabhängig von
+   Fähigkeiten, Geräten und Situationen.“ Drei Knöpfe: „Ohne Anmeldung
+   selbst erleben“ (→ demo.inkludocs.de), „Kostenlos starten“
+   (→ `/register`) und „Anmelden“ (→ `/login`, Michael 03.09.: Kunden
+   sollen nicht in die Kopfzeile suchen müssen). Hinweis „{n} Credits im
+   Monat kostenlos, keine Zahlungsdaten nötig“.
 2. **Drei Werkzeuge**: Alt-Texte für PDF und Bilder, barrierefreie
    Word-Dokumente, Quickinfos für Formulare.
 3. **So funktioniert es**: Hochladen, die KI beschreibt, prüfen und
@@ -69,7 +76,9 @@ das Inhaltsverzeichnis der Seite.
 4. **Vorher / nachher**: Dateiname gegen einen Alt-Text, ausdrücklich als
    vereinfachtes Beispiel mit erfundenen Zahlen gekennzeichnet.
 5. **Für wen**: Behörden und Kommunen, Verlage und Redaktionen, Agenturen
-   und Dienstleister, Hochschulen und Bildung — und der Satz für alle
+   und Dienstleister, Hochschulen und Bildung als H3 je Gruppe (bis
+   03.09. fetter Text — Codys Befund: ohne Trennzeichen las der
+   Screenreader Titel und Erklärung in einem Rutsch) — und der Satz für alle
    anderen (Selbstständige, kleine Unternehmen, Vereine, Privatpersonen).
    Steve 02.09.2026: offiziell für Behörden, nutzen darf es jeder; die
    Nutzungsbedingungen sehen Verbraucher ausdrücklich vor (Widerruf,
@@ -80,8 +89,9 @@ das Inhaltsverzeichnis der Seite.
 7. **Wer dahintersteht**: InkluTec (Steve, blind, Barrierefreiheit + KI),
    Actino Software (PDF-Fachwissen), „Deine Dateien bleiben deine Dateien“
    (EU, kein Training), Links Über uns und Datenschutzerklärung.
-8. **Häufige Fragen**: sechs native `<details>/<summary>`, kein JavaScript.
-9. **Schluss**: dieselben Knöpfe plus Kontakt.
+8. **Häufige Fragen**: sieben native `<details>/<summary>`, kein JavaScript.
+9. **Schluss**: Demo-Knopf und „Kostenlos starten“ plus Kontakt (ohne
+   „Anmelden“ — der steht nur im Kopfbereich und in der Kopfzeile).
 
 Texte sind auf Suchbegriffe geschrieben (Alt-Texte KI, barrierefreie PDF,
 PDF/UA, barrierefreies Word, Quickinfos Formular, BFSG, BITV 2.0, WCAG),

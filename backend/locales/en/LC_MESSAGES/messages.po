@@ -5344,14 +5344,20 @@ msgstr "InkluDocs – AI alt text for accessible PDF, Word and forms"
 msgid "Alt-Texte per KI erzeugen, selbst prüfen und als PDF/UA oder barrierefreies Word exportieren. Für Behörden, Verlage, Agenturen und alle, die zugängliche Dokumente brauchen. Kostenlos starten."
 msgstr "Generate alt text with AI, review it yourself and export as PDF/UA or accessible Word. For public authorities, publishers, agencies and everyone who needs accessible documents. Start for free."
 
-msgid "Jedes Bild bekommt eine Stimme: Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr "Every image gets a voice: AI alt text for accessible PDF, Word and forms"
+msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
+msgstr "One document. Many people. Equal opportunities."
+
+msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+msgstr "AI alt text for accessible PDF, Word and forms"
+
+msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
+msgstr "We make information accessible to everyone, regardless of abilities, devices and situations."
 
 msgid "InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI."
 msgstr "InkluDocs describes the images in your documents, reads the surrounding text and delivers a file that screen readers can read aloud: as PDF/UA, accessible Word or a form with tooltips. You can edit every text by hand or refine it in conversation with the InkluAgent. You approve, not the AI."
 
-msgid "Ohne Anmeldung ausprobieren"
-msgstr "Try it without signing up"
+msgid "Ohne Anmeldung selbst erleben"
+msgstr "Experience it without signing up"
 
 msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
 msgstr "With a free account you get {n} credits per month, no payment details. The demo runs without any account."
