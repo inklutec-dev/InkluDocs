@@ -5365,6 +5365,9 @@ msgstr "{n} crédits par mois, sans données de paiement."
 msgid "Du hast schon ein Konto."
 msgstr "Vous avez déjà un compte."
 
+msgid "Vier Personen stehen auf einem Weg an einem See und schauen gemeinsam auf ein Tablet; der ältere Mann rechts hält einen weißen Langstock."
+msgstr "Quatre personnes sur un chemin au bord d'un lac regardent ensemble une tablette ; l'homme âgé à droite tient une canne blanche."
+
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Trois outils, un objectif : des documents accessibles"
 

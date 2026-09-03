@@ -5057,6 +5057,9 @@ msgstr "{n} credits om måneden, uden betalingsoplysninger."
 msgid "Du hast schon ein Konto."
 msgstr "Du har allerede en konto."
 
+msgid "Vier Personen stehen auf einem Weg an einem See und schauen gemeinsam auf ein Tablet; der ältere Mann rechts hält einen weißen Langstock."
+msgstr "Fire personer står på en sti ved en sø og ser sammen på en tablet; den ældre mand til højre holder en hvid stok."
+
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Tre værktøjer, ét mål: tilgængelige dokumenter"
 

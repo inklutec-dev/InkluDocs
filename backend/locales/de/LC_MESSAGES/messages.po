@@ -5368,6 +5368,9 @@ msgstr ""
 msgid "Du hast schon ein Konto."
 msgstr ""
 
+msgid "Vier Personen stehen auf einem Weg an einem See und schauen gemeinsam auf ein Tablet; der ältere Mann rechts hält einen weißen Langstock."
+msgstr ""
+
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr ""
 

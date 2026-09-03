@@ -69,7 +69,12 @@ das Inhaltsverzeichnis der Seite.
    Fähigkeiten, Geräten und Situationen.“ Drei Knöpfe: „Ohne Anmeldung
    selbst erleben“ (→ demo.inkludocs.de), „Kostenlos starten“
    (→ `/register`) und „Anmelden“ (→ `/login`, Michael 03.09.: Kunden
-   sollen nicht in die Kopfzeile suchen müssen). Jeder Knopf hat seine
+   sollen nicht in die Kopfzeile suchen müssen). Rechts daneben Michaels
+   KI-Bild (03.09.2026, `frontend/startseite-hero-2026-09.webp` + `.jpg`
+   840 px, `<picture>`, width/height gegen Layoutsprünge; unter 900 px
+   einspaltig unter den Knöpfen). Alt-Text von InkluDocs selbst erzeugt
+   (Staging-Projekt 660), Bildnachweis im Impressum („teilweise
+   KI-generiert mit ChatGPT/OpenAI“, Personen nicht real). Jeder Knopf hat seine
    eigene Unterzeile direkt darunter („Die Demo läuft ganz ohne Konto.“,
    „{n} Credits im Monat, ohne Zahlungsdaten.“, „Du hast schon ein Konto.“)
    — Steve 03.09.: bewusst OHNE aria-describedby, der Satz steht im HTML
