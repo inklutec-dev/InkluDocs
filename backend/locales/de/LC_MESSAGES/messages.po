@@ -5362,7 +5362,13 @@ msgstr ""
 msgid "Ohne Anmeldung selbst erleben"
 msgstr ""
 
-msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
+msgid "Die Demo läuft ganz ohne Konto."
+msgstr ""
+
+msgid "{n} Credits im Monat, ohne Zahlungsdaten."
+msgstr ""
+
+msgid "Du hast schon ein Konto."
 msgstr ""
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"

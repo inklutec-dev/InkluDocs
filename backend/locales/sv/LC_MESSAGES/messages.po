@@ -4921,8 +4921,14 @@ msgstr "InkluDocs beskriver bilderna i dina dokument, läser texten runt omkring
 msgid "Ohne Anmeldung selbst erleben"
 msgstr "Upplev det själv utan inloggning"
 
-msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
-msgstr "Med ett gratiskonto får du {n} credits i månaden, utan betalningsuppgifter. Demon fungerar helt utan konto."
+msgid "Die Demo läuft ganz ohne Konto."
+msgstr "Demon fungerar helt utan konto."
+
+msgid "{n} Credits im Monat, ohne Zahlungsdaten."
+msgstr "{n} krediter i månaden, utan betalningsuppgifter."
+
+msgid "Du hast schon ein Konto."
+msgstr "Du har redan ett konto."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Tre verktyg, ett mål: tillgängliga dokument"

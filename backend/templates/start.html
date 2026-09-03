@@ -8,7 +8,7 @@
      1. Kopfbereich (Navy): H1 = Markensatz (Michael 03.09.: „Ein Inhalt.
         Viele Menschen. Gleiche Chancen.“, eigene Zeile) + Versprechen mit
         Suchbegriffen, ein Absatz, drei Knöpfe (Demo ohne Anmeldung /
-        kostenloses Konto / Anmelden), Hinweis „keine Zahlungsdaten“
+        kostenloses Konto / Anmelden), jeder mit eigener Unterzeile
      2. Drei Werkzeuge (PDF+Bilder, Word, Formulare)
      3. So funktioniert es (drei Schritte, nummerierte Liste)
      3a. Du behältst das letzte Wort (Steve 02.09.: von Hand ändern, InkluAgent,
@@ -58,12 +58,24 @@
   <div class="start-inner">
     <h1 id="hero-h"><span class="start-claim">{{ _('Ein Inhalt. Viele Menschen. Gleiche Chancen.') }}</span> {{ _('Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}</h1>
     <p class="start-lead">{{ _('Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen.') }} {{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI.') }}</p>
-    <div class="start-aktionen">
-      <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung selbst erleben') }}</a>
-      {% if registration_enabled %}<a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>{% endif %}
-      <a class="btn-start btn-start-secondary" href="/login">{{ _('Anmelden') }}</a>
+    {# Drei Paare Knopf + Unterzeile (Steve 03.09.): Der Satz steht im HTML direkt
+       hinter seinem Knopf, ohne ARIA — der Screenreader liest ihn als nächste Zeile. #}
+    <div class="start-aktionen start-aktionen-paare">
+      <div class="start-aktion">
+        <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung selbst erleben') }}</a>
+        <p class="start-hinweis">{{ _('Die Demo läuft ganz ohne Konto.') }}</p>
+      </div>
+      {% if registration_enabled %}
+      <div class="start-aktion">
+        <a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>
+        <p class="start-hinweis">{{ _('{n} Credits im Monat, ohne Zahlungsdaten.').format(n=free_credits) }}</p>
+      </div>
+      {% endif %}
+      <div class="start-aktion">
+        <a class="btn-start btn-start-secondary" href="/login">{{ _('Anmelden') }}</a>
+        <p class="start-hinweis">{{ _('Du hast schon ein Konto.') }}</p>
+      </div>
     </div>
-    <p class="start-hinweis">{{ _('Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto.').format(n=free_credits) }}</p>
   </div>
 </section>
 

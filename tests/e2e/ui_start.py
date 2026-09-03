@@ -173,6 +173,10 @@ with sync_playwright() as p:
           page.locator("main a.btn-start[href='https://demo.inkludocs.de']").first.inner_text().strip() == "Ohne Anmeldung selbst erleben")
     check("Zielgruppen: vier H3 statt fettem Text (Cody 02.09.)",
           page.locator("ul.start-zielgruppen > li > h3").count() == 4)
+    check("Hero: drei Knopf-Paare mit Unterzeile direkt nach dem Link (Steve 03.09.)",
+          page.locator("section.start-hero .start-aktion").count() == 3
+          and all(page.locator("section.start-hero .start-aktion").nth(i).locator("a.btn-start + p.start-hinweis").count() == 1 for i in range(3))
+          and "50 Credits im Monat, ohne Zahlungsdaten." in page.locator("section.start-hero .start-aktion").nth(1).inner_text())
     check("keine Seitenleiste, kein Rest der Login-Karte",
           page.locator("#appSidebar, .auth-container, .legal-footer, .subtitle").count() == 0)
     check("Fusszeile: 7 Links wie im oeffentlichen Geruest", fusszeile(page) == FUSSZEILE, str(fusszeile(page)))

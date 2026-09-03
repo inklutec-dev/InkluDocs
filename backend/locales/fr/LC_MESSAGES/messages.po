@@ -5359,8 +5359,14 @@ msgstr "InkluDocs décrit les images de vos documents, lit le texte qui les ento
 msgid "Ohne Anmeldung selbst erleben"
 msgstr "Le découvrir sans inscription"
 
-msgid "Mit einem kostenlosen Konto bekommst du {n} Credits im Monat, ohne Zahlungsdaten. Die Demo läuft ganz ohne Konto."
-msgstr "Avec un compte gratuit, vous recevez {n} crédits par mois, sans données de paiement. La démo fonctionne sans aucun compte."
+msgid "Die Demo läuft ganz ohne Konto."
+msgstr "La démo fonctionne sans aucun compte."
+
+msgid "{n} Credits im Monat, ohne Zahlungsdaten."
+msgstr "{n} crédits par mois, sans données de paiement."
+
+msgid "Du hast schon ein Konto."
+msgstr "Vous avez déjà un compte."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Trois outils, un objectif : des documents accessibles"

@@ -67,8 +67,12 @@ das Inhaltsverzeichnis der Seite.
    Fähigkeiten, Geräten und Situationen.“ Drei Knöpfe: „Ohne Anmeldung
    selbst erleben“ (→ demo.inkludocs.de), „Kostenlos starten“
    (→ `/register`) und „Anmelden“ (→ `/login`, Michael 03.09.: Kunden
-   sollen nicht in die Kopfzeile suchen müssen). Hinweis „{n} Credits im
-   Monat kostenlos, keine Zahlungsdaten nötig“.
+   sollen nicht in die Kopfzeile suchen müssen). Jeder Knopf hat seine
+   eigene Unterzeile direkt darunter („Die Demo läuft ganz ohne Konto.“,
+   „{n} Credits im Monat, ohne Zahlungsdaten.“, „Du hast schon ein Konto.“)
+   — Steve 03.09.: bewusst OHNE aria-describedby, der Satz steht im HTML
+   hinter seinem Link und wird als nächste Zeile gelesen; ARIA würde ihn
+   beim Zeilenlesen doppelt ansagen.
 2. **Drei Werkzeuge**: Alt-Texte für PDF und Bilder, barrierefreie
    Word-Dokumente, Quickinfos für Formulare.
 3. **So funktioniert es**: Hochladen, die KI beschreibt, prüfen und
