@@ -2,9 +2,13 @@
    start.html — die öffentliche STARTSEITE von InkluDocs (Route /,
    02.09.2026, Steve + Michael). Doku: docs/STARTSEITE.md
 
-   Aufbau von oben nach unten (jeder Abschnitt eine <section> mit eigener
-   H2, Karten als H3 — Überschriften-Navigation per Screenreader ergibt
-   das Inhaltsverzeichnis der Seite):
+   Aufbau von oben nach unten (jeder Abschnitt eine <section id="…"> mit
+   eigener H2, Karten als H3 — Überschriften-Navigation per Screenreader
+   ergibt das Inhaltsverzeichnis der Seite). KEIN aria-labelledby an den
+   Abschnitten (Steve 03.09.2026: semantisches HTML, ARIA nur wo nötig):
+   Beschriftete Abschnitte würden zu zehn „Region“-Landmarken, VoiceOver
+   sagte nach dem Sprunglink den H1-Text als Region statt als Überschrift
+   an. Landmarken sind nur header / nav / main / footer.
      1. Kopfbereich (Navy): H1 = Markensatz (Michael 03.09.: „Ein Inhalt.
         Viele Menschen. Gleiche Chancen.“, eigene Zeile) + Versprechen mit
         Suchbegriffen, ein Absatz, drei Knöpfe (Demo ohne Anmeldung /
@@ -54,7 +58,7 @@
 {% endblock %}
 
 {% block main %}
-<section class="start-hero" aria-labelledby="hero-h">
+<section class="start-hero" id="hero">
   <div class="start-inner">
     <h1 id="hero-h"><span class="start-claim">{{ _('Ein Inhalt. Viele Menschen. Gleiche Chancen.') }}</span> {{ _('Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}</h1>
     <p class="start-lead">{{ _('Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen.') }} {{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI.') }}</p>
@@ -79,7 +83,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt" aria-labelledby="werkzeuge-h">
+<section class="start-abschnitt" id="werkzeuge">
   <div class="start-inner">
     <h2 id="werkzeuge-h">{{ _('Drei Werkzeuge, ein Ziel: barrierefreie Dokumente') }}</h2>
     <p class="start-lead">{{ _('Ob PDF, Word oder Formular: InkluDocs übernimmt die Fleißarbeit und lässt dir das letzte Wort.') }}</p>
@@ -101,7 +105,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt" aria-labelledby="ablauf-h">
+<section class="start-abschnitt" id="ablauf">
   <div class="start-inner">
     <h2 id="ablauf-h">{{ _('So funktioniert es') }}</h2>
     <ol class="start-schritte">
@@ -121,7 +125,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt" aria-labelledby="kontrolle-h">
+<section class="start-abschnitt" id="kontrolle">
   <div class="start-inner">
     <h2 id="kontrolle-h">{{ _('Du behältst das letzte Wort') }}</h2>
     <p class="start-lead">{{ _('Die KI liefert den Entwurf. Ob er passt, entscheidest du, und dafür hast du drei Werkzeuge.') }}</p>
@@ -142,7 +146,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt" aria-labelledby="beispiel-h">
+<section class="start-abschnitt" id="beispiel">
   <div class="start-inner">
     <h2 id="beispiel-h">{{ _('Vorher und nachher: ein Alt-Text aus InkluDocs') }}</h2>
     <div class="start-vergleich">
@@ -161,7 +165,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt" aria-labelledby="zielgruppen-h">
+<section class="start-abschnitt" id="zielgruppen">
   <div class="start-inner">
     <h2 id="zielgruppen-h">{{ _('Für alle, die Dokumente zugänglich machen müssen oder wollen') }}</h2>
     <ul class="start-zielgruppen">
@@ -174,7 +178,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt" aria-labelledby="preise-h">
+<section class="start-abschnitt" id="preise">
   <div class="start-inner">
     <h2 id="preise-h">{{ _('Klein anfangen, fair bezahlen') }}</h2>
     <p class="start-lead">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit.').format(alt=preis_alt, qi=preis_qi) }}</p>
@@ -188,7 +192,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt" aria-labelledby="team-h">
+<section class="start-abschnitt" id="team">
   <div class="start-inner">
     <h2 id="team-h">{{ _('Aus Hamburg und Euskirchen, aus eigener Erfahrung') }}</h2>
     <div class="start-raster">
@@ -209,7 +213,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt" aria-labelledby="faq-h">
+<section class="start-abschnitt" id="faq">
   <div class="start-inner">
     <h2 id="faq-h">{{ _('Häufige Fragen') }}</h2>
     <div class="start-faq">
@@ -245,7 +249,7 @@
   </div>
 </section>
 
-<section class="start-abschnitt start-schluss" aria-labelledby="schluss-h">
+<section class="start-abschnitt start-schluss" id="schluss">
   <div class="start-inner">
     <h2 id="schluss-h">{{ _('Mach dein nächstes Dokument barrierefrei') }}</h2>
     <p class="start-lead">{{ _('Probiere InkluDocs ohne Anmeldung aus oder lege ein kostenloses Konto an. Fragen beantworten wir über das Kontaktformular.') }}</p>

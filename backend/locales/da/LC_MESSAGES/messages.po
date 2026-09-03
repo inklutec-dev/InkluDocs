@@ -69,6 +69,9 @@ msgstr "Sprog"
 msgid "Sprache wechseln"
 msgstr "Skift sprog"
 
+msgid "Hauptnavigation"
+msgstr "Hovednavigation"
+
 msgid "Zum Hauptinhalt springen"
 msgstr "Spring til hovedindhold"
 
@@ -146,9 +149,6 @@ msgstr "Brugeradministration"
 
 msgid "Abmelden"
 msgstr "Log ud"
-
-msgid "Hauptnavigation"
-msgstr "Hovednavigation"
 
 msgid "Hallo"
 msgstr "Hej"
@@ -5027,9 +5027,6 @@ msgid "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
 msgstr "Genereringen blev afbrudt: {n} hjælpetekster blev oprettet."
 
 # Startseite + Startgerüst (start.html / base_start.html, 02.09.2026)
-msgid "InkluDocs Startseite"
-msgstr "InkluDocs forside"
-
 msgid "InkluDocs – Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
 msgstr "InkluDocs – AI-alternativtekster til tilgængelige PDF, Word og formularer"
 

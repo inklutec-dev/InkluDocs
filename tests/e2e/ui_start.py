@@ -136,7 +136,7 @@ with sync_playwright() as p:
     check("main#main vorhanden", page.locator("main#main").count() == 1)
     check("Landmarken: header, nav mit Beschriftung, footer",
           page.locator("header.start-header").count() == 1
-          and page.locator("header.start-header nav[aria-label='Hauptnavigation']").count() == 1
+          and page.locator("header.start-header nav").count() == 1
           and page.locator("footer.start-footer").count() == 1)
     check("Marken-Link zeigt auf /", page.locator("header a.start-brand[href='/']").count() == 1)
     check("Kopfzeile: Preise, Kontakt, Ueber uns, Anmelden, Kostenlos starten", kopf_nav(page) == KOPF_NAV, str(kopf_nav(page)))
@@ -147,20 +147,22 @@ with sync_playwright() as p:
           str([x.inner_text().strip() for x in h1s.all()]))
     h2 = [x.inner_text().strip() for x in page.locator("main h2").all()]
     check("zehn Abschnitte, neun mit H2", len(h2) == 9 and page.locator("main section").count() == 10, str(h2))
-    check("jeder Abschnitt hat aria-labelledby",
-          page.locator("main section[aria-labelledby]").count() == 10)
-    check("Werkzeug-Karten als H3", page.locator("section[aria-labelledby='werkzeuge-h'] h3").count() == 3)
+    check("zehn Abschnitte mit id, KEIN aria-labelledby (Steve 03.09.: ARIA nur wo noetig)",
+          page.locator("main section[id]").count() == 10 and page.locator("main section[aria-labelledby]").count() == 0)
+    check("nur vier Landmarken: header, nav, main, footer — kein role=region, kein aria-label an nav/Marke",
+          page.locator("[role=region], section[aria-label], section[aria-labelledby], nav[aria-label], a.start-brand[aria-label]").count() == 0)
+    check("Werkzeug-Karten als H3", page.locator("section#werkzeuge h3").count() == 3)
     check("drei Schritte als nummerierte Liste", page.locator("ol.start-schritte > li").count() == 3)
     check("Abschnitt 'letztes Wort': von Hand aendern + InkluAgent + Prompts (Steve 02.09.)",
-          page.locator("section[aria-labelledby='kontrolle-h'] h3").count() == 3
-          and "InkluAgent" in page.locator("section[aria-labelledby='kontrolle-h']").inner_text())
+          page.locator("section#kontrolle h3").count() == 3
+          and "InkluAgent" in page.locator("section#kontrolle").inner_text())
     check("Vorher/Nachher vorhanden", page.locator(".start-vergleich .vorher").count() == 1
           and page.locator(".start-vergleich .nachher blockquote").count() == 1)
     check("vier Zielgruppen + Satz fuer alle anderen",
           page.locator("ul.start-zielgruppen > li").count() == 4
-          and "Privatpersonen" in page.locator("section[aria-labelledby='zielgruppen-h']").inner_text())
+          and "Privatpersonen" in page.locator("section#zielgruppen").inner_text())
     check("Preise mit Link auf /preise",
-          page.locator("section[aria-labelledby='preise-h'] a[href='/preise']").count() == 1)
+          page.locator("section#preise a[href='/preise']").count() == 1)
     check("sieben FAQ als natives details/summary",
           page.locator(".start-faq details > summary").count() == 7)
     check("Knopf Demo (ohne Anmeldung) x2, Knopf Konto x2",

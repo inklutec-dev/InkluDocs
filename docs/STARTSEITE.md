@@ -132,7 +132,9 @@ Block „Startseite + Startgerüst“ am Ende).
 
 ## Barrierefreiheit (BITV 2.0 / WCAG 2.2 AA)
 
-Skip-Link, Landmarken header/nav/main/footer, genau eine H1 je Seite,
+Skip-Link, Landmarken header/nav/main/footer (nur diese vier — Abschnitte tragen
+id, aber KEIN aria-labelledby; einziges ARIA ist aria-current="page", Steve
+03.09.2026: semantisches HTML, ARIA nur wo nötig), genau eine H1 je Seite,
 H2/H3-Hierarchie, `aria-current`, sichtbarer Fokus (3 px Orange auf hellem
 Grund, 3 px Weiß auf Navy), Zielgrößen ≥ 44 px, Kontraste (Weiß auf Navy
 14,2:1, Weiß auf Orange 4,6:1, Fließtext 15,4:1, gedämpft 8,9:1), keine

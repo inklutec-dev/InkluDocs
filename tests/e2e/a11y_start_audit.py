@@ -45,7 +45,9 @@ with sync_playwright() as p:
     check("H1 = Markensatz + Versprechen", " ".join(page.locator("h1").inner_text().split()).startswith("Ein Inhalt. Viele Menschen. Gleiche Chancen. Alt-Texte per KI"), page.locator("h1").inner_text())
     for lm in ["header","nav","main","footer"]:
         check(f"Landmarke {lm} genau einmal", page.locator(lm).count()==1, str(page.locator(lm).count()))
-    check("nav hat aria-label", bool(page.get_attribute("nav","aria-label")))
+    check("nur eine nav, daher ohne aria-label (ARIA nur wo noetig)", page.locator("nav").count()==1 and not page.get_attribute("nav","aria-label"))
+    aria = page.evaluate("() => Array.from(document.querySelectorAll('*')).flatMap(e=>Array.from(e.attributes).filter(x=>x.name.startsWith('aria-')||x.name==='role').map(x=>x.name+'='+x.value))")
+    check("ARIA auf der Seite = nur aria-current=page (Rest ist natives HTML)", set(aria) <= {"aria-current=page"}, str(sorted(set(aria))))
     # Ueberschriftenfolge
     hs = page.evaluate("() => Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6')).map(h=>[+h.tagName[1],h.innerText.trim().slice(0,40)])")
     spruenge=[(hs[i-1],hs[i]) for i in range(1,len(hs)) if hs[i][0]>hs[i-1][0]+1]

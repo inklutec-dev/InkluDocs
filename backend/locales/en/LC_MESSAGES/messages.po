@@ -73,6 +73,9 @@ msgid "Sprache wechseln"
 msgstr "Change language"
 
 # Einstellungen-Seite + Sprach-Menue (01.07.2026)
+msgid "Hauptnavigation"
+msgstr "Main navigation"
+
 msgid "Zum Hauptinhalt springen"
 msgstr "Skip to main content"
 
@@ -152,9 +155,6 @@ msgstr "User management"
 
 msgid "Abmelden"
 msgstr "Log out"
-
-msgid "Hauptnavigation"
-msgstr "Main navigation"
 
 msgid "Hallo"
 msgstr "Hello"
@@ -5335,9 +5335,6 @@ msgid "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
 msgstr "The generation was cancelled: {n} tooltips were created."
 
 # Startseite + Startgerüst (start.html / base_start.html, 02.09.2026)
-msgid "InkluDocs Startseite"
-msgstr "InkluDocs home page"
-
 msgid "InkluDocs – Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
 msgstr "InkluDocs – AI alt text for accessible PDF, Word and forms"
 

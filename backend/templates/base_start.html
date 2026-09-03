@@ -24,9 +24,14 @@
    uns stehen in der Kopfzeile — deshalb rechtslinks() ohne mit_kontakt.
 
    Barrierefreiheit (BITV 2.0 / WCAG 2.2): Skip-Link als erstes Element,
-   Landmarken header / nav (aria-label) / main / footer, genau eine H1 je
+   Landmarken header / nav / main / footer (die einzige nav der Seite
+   braucht keinen aria-label; die Marke heißt sichtbar „InkluDocs“ und
+   braucht keinen), genau eine H1 je
    Seite (Thema der Seite, nicht die Marke — die steht in der Kopfzeile),
-   aria-current="page" auf dem aktiven Kopfzeilen-Eintrag, sichtbarer Fokus,
+   aria-current="page" auf dem aktiven Kopfzeilen-Eintrag (das einzige ARIA
+   im Gerüst — HTML hat dafür nichts Eigenes; Steve 03.09.2026: ARIA nur wo
+   nötig), tabindex="-1" auf main, damit der Sprunglink in Safari den Fokus
+   wirklich setzt, sichtbarer Fokus,
    Zielgrößen ≥ 44 px (start.css). Staging-Hinweis nur im Fenstertitel
    (base.html), nie in der H1.
 
@@ -57,8 +62,8 @@
 <a href="#main" class="dash-skip">{{ _('Zum Hauptinhalt springen') }}</a>
 <div class="start-shell">
   <header class="start-header">
-    <a class="start-brand" href="/" aria-label="{{ _('InkluDocs Startseite') }}"><span class="brand">Inklu</span>Docs</a>
-    <nav aria-label="{{ _('Hauptnavigation') }}">
+    <a class="start-brand" href="/"><span class="brand">Inklu</span>Docs</a>
+    <nav>
       <ul class="start-nav">
         <li><a href="/preise"{% if nav_aktiv == '/preise' %} aria-current="page"{% endif %}>{{ _('Preise') }}</a></li>
         <li><a href="/kontakt"{% if nav_aktiv == '/kontakt' %} aria-current="page"{% endif %}>{{ _('Kontakt') }}</a></li>
