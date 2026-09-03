@@ -26,7 +26,7 @@ from prompts.components.schemas import (
     IconBeschreibungOutput,
 )
 
-from .helpers import extract_link_target_from_context, load_examples, user_hint_block
+from .helpers import bildgroesse_zeile, extract_link_target_from_context, kontext_werte, load_examples, original_alt_zeile, user_hint_block
 
 
 def build_beschreibung_prompt_logo(
@@ -50,13 +50,11 @@ def build_beschreibung_prompt_logo(
 {EVIDENZ_STUFEN_REGELN}
 
 BILDTYP: logo (erkennbares Marken-, Organisations- oder Lizenzlogo)
-BILDGRÖSSE: {width}x{height} Pixel
-ORIGINAL-ALT (falls vorhanden): {original_alt or '(keiner)'}
+{bildgroesse_zeile(width, height, label='BILDGRÖSSE')}
+{original_alt_zeile(original_alt)}
 
 KONTEXT:
-{enriched_context}
-{f'LINK-ZIEL DIESES LOGOS: {link_target}' if link_target else ''}
-{user_hint_block(user_hint)}
+{kontext_werte(enriched_context, user_hint_block(user_hint), extra=(f'LINK-ZIEL DIESES LOGOS: {link_target}' if link_target else ''))}
 
 DEIN AUFTRAG: Der blinde Nutzer muss SOFORT wissen, welche Organisation oder
 Marke das Logo repräsentiert. Sonst nichts. Kein visuelles Design, keine Farben,
@@ -118,13 +116,11 @@ def build_beschreibung_prompt_icon(
 {ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: icon (kleines funktionales Symbol — Lupe, Hamburger, Warenkorb etc.)
-BILDGRÖSSE: {width}x{height} Pixel
-ORIGINAL-ALT (falls vorhanden): {original_alt or '(keiner)'}
+{bildgroesse_zeile(width, height, label='BILDGRÖSSE')}
+{original_alt_zeile(original_alt)}
 
 KONTEXT:
-{enriched_context}
-{f'LINK-ZIEL DIESES ICONS: {link_target}' if link_target else ''}
-{user_hint_block(user_hint)}
+{kontext_werte(enriched_context, user_hint_block(user_hint), extra=(f'LINK-ZIEL DIESES ICONS: {link_target}' if link_target else ''))}
 
 DEIN AUFTRAG: Der blinde Nutzer muss SOFORT die Funktion verstehen.
 Sonst nichts. Kein visuelles Design und keine Farben — einzige Ausnahme
@@ -190,11 +186,10 @@ def build_beschreibung_prompt_funktional(
 BILDTYP: funktional (Navigations- oder Steuerungselement mit Zustands-
 information — Paginierungspfeile, Vor/Zurück, Fortschrittsanzeigen,
 Breadcrumbs)
-ORIGINAL-ALT (falls vorhanden): {original_alt or '(keiner)'}
+{original_alt_zeile(original_alt)}
 
 KONTEXT:
-{enriched_context}
-{user_hint_block(user_hint)}
+{kontext_werte(enriched_context, user_hint_block(user_hint))}
 
 DEIN AUFTRAG: Funktion und ggf. Zustand benennen.
 

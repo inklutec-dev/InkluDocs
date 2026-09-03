@@ -38,6 +38,7 @@ services:
       - V4_PASS_MODE=${V4_PASS_MODE:-lean}
       - V4_VERIFY_MODE=kritisch
       - V4_VERIFY_KORREKTUR=on
+      - V4_PROMPT_CACHE=${V4_PROMPT_CACHE:-off}  # Prompt-Caching 03.09.2026: Bilddaten ans Ende, fester Anfang mit cache_control (off = Prompts wie vorher)
       # Abo-/Credit-System (31.07.2026): off = nur zaehlen, on = Kontingente durchsetzen (Review-Befund 3)
       - ABO_ENFORCEMENT=${ABO_ENFORCEMENT:-off}
       # Rollout 31.08.2026: Tageslimit ausdruecklich (wie Staging), Umwandler-Dienst, Tageslauf, Stripe

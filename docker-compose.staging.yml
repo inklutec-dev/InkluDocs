@@ -73,6 +73,7 @@ services:
       - V4_PASS_MODE=${V4_PASS_MODE:-lean}
       - V4_VERIFY_MODE=kritisch
       - V4_VERIFY_KORREKTUR=on
+      - V4_PROMPT_CACHE=${V4_PROMPT_CACHE:-off}  # Prompt-Caching 03.09.2026: Bilddaten ans Ende, fester Anfang mit cache_control (off = Prompts wie vorher)
       - ABO_ENFORCEMENT=${ABO_ENFORCEMENT:-off}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}

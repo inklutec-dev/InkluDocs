@@ -136,6 +136,16 @@ def _detect_media_type_from_bytes(image_b64: str, image_path: str) -> str:
 # Schema: Nova kennt kein $ref/anyOf-null — _schema_vereinfachen() loest
 # $defs auf und macht aus Optional[X] schlicht X.
 # ─────────────────────────────────────────────────────────────────────────
+def _prompt_teilen(prompt: str) -> tuple[str, str]:
+    """Prompt-Caching (03.09.2026): am BILDDATEN_MARKER in festen und variablen Teil
+    teilen. Ohne Marker: alles variabel (Verhalten wie bisher)."""
+    from prompts.builders.helpers import BILDDATEN_MARKER
+    if BILDDATEN_MARKER in prompt:
+        fest, variabel = prompt.split(BILDDATEN_MARKER, 1)
+        return fest, variabel
+    return '', prompt
+
+
 def _ist_anthropic(model: str) -> bool:
     return 'anthropic' in (model or '')
 
@@ -172,7 +182,8 @@ def _invoke_converse(model, prompt, image_b64, image_path, schema_name, schema_d
         mt = _detect_media_type_from_bytes(image_b64, image_path)
         fmt = {'image/png': 'png', 'image/jpeg': 'jpeg', 'image/gif': 'gif', 'image/webp': 'webp'}.get(mt, 'png')
         content.append({'image': {'format': fmt, 'source': {'bytes': base64.b64decode(image_b64)}}})
-    content.append({'text': prompt})
+    _f, _v = _prompt_teilen(prompt)
+    content.append({'text': (_f + '\n\n' + _v) if _f else _v})  # kein Caching im Converse-Weg
     kwargs = {
         'modelId': model,
         'messages': [{'role': 'user', 'content': content}],
@@ -208,6 +219,27 @@ def _invoke_converse(model, prompt, image_b64, image_path, schema_name, schema_d
     raise BedrockCallError(f'Kein toolUse-Block in Converse-Antwort ({schema_name}, {model}). Raw: {str(resp.get("output"))[:300]}')
 
 
+def _content_bloecke(prompt: str, image_b64, image_path: str) -> list:
+    """Reihenfolge fuer Prompt-Caching (03.09.2026): [fester Text mit
+    cache_control] -> Bild -> [variabler Text]. Ohne Marker wie bisher:
+    Bild -> Text. Der Cache-Breakpoint deckt tools + system + festen Text ab."""
+    fest, variabel = _prompt_teilen(prompt)
+    bloecke = []
+    if fest:
+        bloecke.append({'type': 'text', 'text': fest, 'cache_control': {'type': 'ephemeral'}})
+    if image_b64:
+        bloecke.append({
+            'type': 'image',
+            'source': {
+                'type': 'base64',
+                'media_type': _detect_media_type_from_bytes(image_b64, image_path),
+                'data': image_b64,
+            },
+        })
+    bloecke.append({'type': 'text', 'text': variabel})
+    return bloecke
+
+
 def _invoke_bedrock(
     model: str,
     prompt: str,
@@ -240,18 +272,7 @@ def _invoke_bedrock(
         # gleicher Tool-Use-Vertrag, nur ohne Bildblock.
         'messages': [{
             'role': 'user',
-            'content': ([
-                {
-                    'type': 'image',
-                    'source': {
-                        'type': 'base64',
-                        'media_type': _detect_media_type_from_bytes(image_b64, image_path),
-                        'data': image_b64,
-                    },
-                },
-            ] if image_b64 else []) + [
-                {'type': 'text', 'text': prompt},
-            ],
+            'content': _content_bloecke(prompt, image_b64, image_path),
         }],
         'tools': [{
             'name': schema_name,
@@ -288,7 +309,8 @@ def _invoke_bedrock(
     if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
         _u = payload.get('usage', {}) or {}
         print(f"[BEDROCK-USAGE] model={model} schema={schema_name} "
-              f"in={_u.get('input_tokens', '?')} out={_u.get('output_tokens', '?')}", flush=True)
+              f"in={_u.get('input_tokens', '?')} out={_u.get('output_tokens', '?')} "
+              f"cache_read={_u.get('cache_read_input_tokens', 0) or 0} cache_write={_u.get('cache_creation_input_tokens', 0) or 0}", flush=True)
 
     # Anthropic-Antwort-Struktur: content ist Liste von Blöcken; bei tool_choice
     # ist ein Block vom Typ 'tool_use' mit dem schema-validen Input drin.

@@ -19,7 +19,7 @@ from prompts.components.roles import ROLE_INVENTARISIERER
 from prompts.components.schema_helpers import render_schema_for_prompt
 from prompts.components.schemas import BildtypTopLevel, InventarOutput
 
-from .helpers import user_hint_block
+from .helpers import bildgroesse_zeile, kontext_werte, user_hint_block
 
 
 # Bildtyp-spezifische Schwerpunkte für den Inventar-Pass.
@@ -127,12 +127,11 @@ def build_inventar_prompt(
 {ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: {bildtyp}
-BILDGRÖSSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height, label='BILDGRÖSSE')}
 {bildtyp_hinweis}
 
 KONTEXT (vom Web-Scraper, PDF-Extraktion oder API-Aufruf):
-{enriched_context or '(kein Kontext)'}
-{user_hint_block(user_hint)}
+{kontext_werte(enriched_context, user_hint_block(user_hint))}
 
 DEINE AUFGABE:
 Erstelle ein vollständiges, ehrliches Inventar dieses Bildes. Fülle JEDES Feld

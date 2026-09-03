@@ -51,7 +51,7 @@ from prompts.components.roles import ROLE_BESCHREIBER
 from prompts.components.stilregeln import STILREGELN_KERN
 from prompts.components.schemas import InventarOutput
 
-from .helpers import load_examples, user_hint_block
+from .helpers import bildgroesse_zeile, kontext_werte, load_examples, user_hint_block
 
 
 # =====================================================================
@@ -106,8 +106,7 @@ fehlender Kontext wird nicht durch Vermutungen ersetzt.
 BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen sichtbaren Werten oder
 Beschriftungen und dem Kontext gelten die sichtbaren Bildinformationen.
 
-{enriched_context if enriched_context else '(kein Kontext)'}
-{user_hint_text}"""
+{kontext_werte(enriched_context, user_hint_text)}"""
 
 
 def _render_zweck_block() -> str:
@@ -202,7 +201,7 @@ def build_beschreibung_prompt_illustration(
     return f"""{_basis_schichten()}
 
 BILDTYP: illustration (Cartoon, Vektor-Grafik, gemalte Illustration, Buch-Bild)
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -339,7 +338,7 @@ def build_beschreibung_prompt_diagramm(
     return f"""{_basis_schichten()}
 
 BILDTYP: diagramm (Balken, Linie, Kreis, gestapelt, Streu, Heatmap)
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -590,7 +589,7 @@ def build_beschreibung_prompt_tabelle(
     return f"""{_basis_schichten()}
 
 BILDTYP: tabelle (tabellarische Daten als Grafik)
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -735,7 +734,7 @@ def build_beschreibung_prompt_karte(
     return f"""{_basis_schichten()}
 
 BILDTYP: karte (Landkarte, Stadtplan, Lageplan, Übersichtskarte)
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -862,7 +861,7 @@ def build_beschreibung_prompt_infografik(
     return f"""{_basis_schichten()}
 
 BILDTYP: infografik (Schaubild, Übersichtsgrafik mit Stationen oder Schritten)
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -1003,7 +1002,7 @@ def build_beschreibung_prompt_screenshot(
     return f"""{_basis_schichten()}
 
 BILDTYP: screenshot (Bildschirmfoto einer Anwendung, Webseite oder UI)
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -1132,7 +1131,7 @@ def build_beschreibung_prompt_strukturformel(
     return f"""{_basis_schichten()}
 
 BILDTYP: strukturformel (Chemische Struktur-, Reaktions- oder Summenformel)
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 

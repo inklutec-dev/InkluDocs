@@ -50,6 +50,13 @@ class KorrekturwacheTest(unittest.TestCase):
         self.assertIsNone(korr)
         self.assertEqual(schritt, "verworfen")
 
+    def test_kuerzung_darf_fotomontage_nicht_verlieren(self):
+        lang = "Fotomontage: " + "Sehr lange Korrektur mit vielen Details. " * 12
+        with mock.patch.object(o, "_kuerze_korrektur", return_value="Drei Personen mit Huetlein stehen vor einer Pinnwand im Seminarraum."):
+            korr, schritt = o._korrektur_absichern("/nix.png", _verify(lang))
+        self.assertIsNone(korr)
+        self.assertEqual(schritt, "verworfen")
+
     def test_keine_korrektur(self):
         korr, schritt = o._korrektur_absichern("/nix.png", _verify(None))
         self.assertIsNone(korr)

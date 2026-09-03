@@ -25,7 +25,7 @@ from prompts.components.roles import ROLE_KLASSIFIKATOR
 from prompts.components.schema_helpers import render_schema_for_prompt
 from prompts.components.schemas import ClassificationOutput
 
-from .helpers import user_hint_block
+from .helpers import bilddaten_verlagert, user_hint_block
 
 
 _BILDTYP_INVENTAR = """DIE 12 TOP-LEVEL-BILDTYPEN:
@@ -143,6 +143,18 @@ def _foto_subtyp_block() -> str:
     return _FOTO_SUBTYP_MULTIPASS
 
 
+def _inputs_block(width, height, original_alt, enriched_context, user_hint) -> str:
+    """INPUTS inline — oder als Verweis, wenn die Bilddaten ans Ende wandern
+    (Prompt-Caching, siehe helpers.bilddaten_am_ende)."""
+    if bilddaten_verlagert():
+        return 'INPUTS: siehe Block BILDDATEN am Ende dieses Prompts (Bildgroesse, Original-Alt, Kontext, Nutzer-Hinweis).'
+    return f"""INPUTS:
+- Bildgroesse: {width}x{height} Pixel
+- Original-Alt vom Autor: {original_alt or '(keiner)'}
+- Kontext (Web-Scraper, PDF, API): {enriched_context or '(kein Kontext)'}
+{user_hint_block(user_hint)}"""
+
+
 def build_classification_prompt(
     enriched_context: str,
     width: int,
@@ -195,11 +207,7 @@ KRITISCH: 'bildtyp' und 'foto_subtyp' sind GETRENNTE Felder.
 
 {_BILDTYP_INVENTAR}
 
-INPUTS:
-- Bildgroesse: {width}x{height} Pixel
-- Original-Alt vom Autor: {original_alt or '(keiner)'}
-- Kontext (Web-Scraper, PDF, API): {enriched_context or '(kein Kontext)'}
-{user_hint_block(user_hint)}
+{_inputs_block(width, height, original_alt, enriched_context, user_hint)}
 
 {_ROUTING_REGELN}
 

@@ -26,10 +26,93 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 # Wurzel der Examples-Bibliothek — relativ zum builders-Modul.
 # prompts/builders/helpers.py → ../components/examples/
 _EXAMPLES_ROOT = Path(__file__).resolve().parent.parent / 'components' / 'examples'
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# PROMPT-CACHING: BILDDATEN AM ENDE (03.09.2026, Steve)
+#
+# Warum: Bedrock/Anthropic cachen nur einen unveraenderten ANFANG des Prompts.
+# Bisher stand der erste bildabhaengige Wert (BILDGROESSE) nach ~14 % des
+# Textes — fast nichts war cachefaehig, obwohl ~90 % der Eingabe-Token
+# (Regeln, Beispiele, Schema) bei jedem Bild identisch sind.
+#
+# Wie: Ist der Schalter aktiv (ContextVar, gesetzt vom Orchestrator bei
+# V4_PROMPT_CACHE=on), rendern die Builder an den bildabhaengigen Stellen
+# nur einen festen Verweis auf den Block BILDDATEN. Der Orchestrator haengt
+# den Block mit den echten Werten ans Ende — getrennt durch BILDDATEN_MARKER,
+# an dem der Bedrock-Client den Prompt in festen (cache_control) und
+# variablen Teil teilt. Der Marker erreicht das Modell nie.
+#
+# Ist der Schalter AUS (Default), ist jeder Prompt byteidentisch zu vorher.
+# Der Wortlaut aller Regeln bleibt in beiden Faellen unveraendert; nur die
+# Position der Bilddaten wandert. Qualitaet: Quertest 03.09. (24 Bilder).
+# ─────────────────────────────────────────────────────────────────────────
+BILDDATEN_MARKER = '\n\n<<<BILDDATEN>>>\n'
+_VERWEIS = 'siehe Block BILDDATEN am Ende dieses Prompts'
+_bilddaten_am_ende: ContextVar[bool] = ContextVar('bilddaten_am_ende', default=False)
+
+
+@contextmanager
+def bilddaten_am_ende(aktiv: bool = True):
+    """Innerhalb dieses Blocks rendern alle Builder Bilddaten als Verweis."""
+    token = _bilddaten_am_ende.set(bool(aktiv))
+    try:
+        yield
+    finally:
+        _bilddaten_am_ende.reset(token)
+
+
+def bilddaten_verlagert() -> bool:
+    return _bilddaten_am_ende.get()
+
+
+def bildgroesse_zeile(width, height, label: str = 'BILDGROESSE') -> str:
+    if bilddaten_verlagert():
+        return f'{label}: {_VERWEIS}'
+    return f'{label}: {width}x{height} Pixel'
+
+
+def original_alt_zeile(original_alt: str) -> str:
+    if bilddaten_verlagert():
+        return f'ORIGINAL-ALT (falls vorhanden): {_VERWEIS}'
+    return f"ORIGINAL-ALT (falls vorhanden): {original_alt or '(keiner)'}"
+
+
+def kontext_werte(enriched_context: str, user_hint_text: str, extra: str = '') -> str:
+    """Die WERTE unter einer KONTEXT-Ueberschrift (Kontexttext, ggf. Link-Zeile,
+    Nutzer-Hinweis). Die erklaerenden Regeln davor bleiben im Builder."""
+    if bilddaten_verlagert():
+        return f'({_VERWEIS})'
+    teile = [enriched_context if enriched_context else '(kein Kontext)']
+    if extra:
+        teile.append(extra)
+    teile.append(user_hint_text or '')
+    return '\n'.join(teile)
+
+
+def bilddaten_block(width, height, enriched_context: str, original_alt: str = '',
+                    user_hint: Optional[str] = None, link_zeile: str = '',
+                    mit_original_alt: bool = False) -> str:
+    """Der Block mit den echten Werten — steht nach BILDDATEN_MARKER am Ende."""
+    zeilen = ['BILDDATEN (die oben referenzierten Angaben zu diesem Bild)', '',
+              f'BILDGROESSE: {width}x{height} Pixel']
+    if mit_original_alt:
+        zeilen.append(f"ORIGINAL-ALT (falls vorhanden): {original_alt or '(keiner)'}")
+    zeilen.append('')
+    zeilen.append('KONTEXT (vom Web-Scraper, PDF-Extraktion oder API-Aufruf):')
+    zeilen.append(enriched_context if enriched_context else '(kein Kontext)')
+    if link_zeile:
+        zeilen.append(link_zeile)
+    hint = user_hint_block(user_hint)
+    if hint:
+        zeilen.append(hint.strip('\n'))
+    return '\n'.join(zeilen)
 
 
 def user_hint_block(user_hint: Optional[str]) -> str:

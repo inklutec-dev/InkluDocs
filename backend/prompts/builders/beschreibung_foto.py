@@ -37,7 +37,7 @@ from prompts.components.schema_helpers import render_schema_for_prompt
 from prompts.components.schemas import BeschreibungOutput, InventarOutput
 from prompts.components.stilregeln import STILREGELN
 
-from .helpers import load_examples, user_hint_block
+from .helpers import bildgroesse_zeile, kontext_werte, load_examples, user_hint_block
 
 
 
@@ -430,7 +430,7 @@ def build_beschreibung_prompt_foto_event(
 {ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_event
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -459,8 +459,7 @@ Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
 Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen;
 fehlender Kontext wird nicht durch Vermutungen ersetzt.
 
-{enriched_context if enriched_context else '(kein Kontext)'}
-{user_hint_text}
+{kontext_werte(enriched_context, user_hint_text)}
 
 
 {_render_zweck_block()}
@@ -581,7 +580,7 @@ def build_beschreibung_prompt_foto_personen(
 {ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_personen
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -623,8 +622,7 @@ Wenn kein oder nur wenig Kontext vorhanden ist, beschreibe
 ausschliesslich sichtbar belegbare Bildinformationen. Fehlender Kontext
 darf nicht durch Vermutungen ersetzt werden.
 
-{enriched_context if enriched_context else '(kein Kontext)'}
-{user_hint_text}
+{kontext_werte(enriched_context, user_hint_text)}
 
 
 {_render_zweck_block()}
@@ -765,7 +763,7 @@ def build_beschreibung_prompt_foto_objekte(
 {ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_objekte
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -808,8 +806,7 @@ fehlender Kontext wird nicht durch Vermutungen ersetzt.
 BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen Bild und Kontext hat das
 sichtbare Bild Vorrang.
 
-{enriched_context if enriched_context else '(kein Kontext)'}
-{user_hint_text}
+{kontext_werte(enriched_context, user_hint_text)}
 
 
 {_render_zweck_block()}
@@ -930,7 +927,7 @@ def build_beschreibung_prompt_foto_essen(
 {ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_essen
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -973,8 +970,7 @@ Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
 Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen.
 BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 
-{enriched_context if enriched_context else '(kein Kontext)'}
-{user_hint_text}
+{kontext_werte(enriched_context, user_hint_text)}
 
 
 {_render_zweck_block()}
@@ -1125,7 +1121,7 @@ def build_beschreibung_prompt_foto_landschaft(
 {ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_landschaft
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -1163,8 +1159,7 @@ Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
 Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen.
 BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 
-{enriched_context if enriched_context else '(kein Kontext)'}
-{user_hint_text}
+{kontext_werte(enriched_context, user_hint_text)}
 
 
 {_render_zweck_block()}
@@ -1306,7 +1301,7 @@ def build_beschreibung_prompt_foto_architektur(
 {ANTI_HALLUZINATION_REGELN}
 
 BILDTYP: foto_architektur
-BILDGROESSE: {width}x{height} Pixel
+{bildgroesse_zeile(width, height)}
 
 ZIEL
 
@@ -1348,8 +1343,7 @@ Kontext kann aus PDF-Text, Webseiteninhalt oder API-Aufrufen stammen. Ohne
 Kontext beschreibst du ausschliesslich sichtbar belegbare Bildinformationen.
 BILD GEWINNT GEGEN KONTEXT: bei Widerspruch hat das sichtbare Bild Vorrang.
 
-{enriched_context if enriched_context else '(kein Kontext)'}
-{user_hint_text}
+{kontext_werte(enriched_context, user_hint_text)}
 
 
 {_render_zweck_block()}

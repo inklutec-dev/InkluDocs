@@ -142,6 +142,33 @@ def _user_prompt_suffix(user_prompt: str) -> str:
 #                     pipeline_steps-Audit-Trail. Langbeschreibung bleibt unangetastet.
 from pydantic import BaseModel, Field, field_validator
 from prompts.components.stilregeln import STILREGELN_KERN  # Korrekturwache 03.09.2026: gleiche Stilregeln fuer Pruefer-Korrekturen
+from prompts.builders.helpers import (  # Prompt-Caching 03.09.2026: Bilddaten ans Ende
+    BILDDATEN_MARKER, bilddaten_am_ende, bilddaten_block, extract_link_target_from_context,
+)
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# PROMPT-CACHING (03.09.2026, Steve): ENV V4_PROMPT_CACHE=on
+# Die Builder rendern Bildgroesse/Kontext/Original-Alt/Nutzer-Hinweis nur als
+# Verweis (helpers.bilddaten_am_ende); _mit_bilddaten haengt den Block mit den
+# echten Werten hinter BILDDATEN_MARKER ans Ende. Der Bedrock-Client teilt am
+# Marker: alles davor bekommt cache_control (fester Anfang, je Bildtyp gleich),
+# alles danach (Bilddaten, Nutzer-Prompt, Sprache, Variation) bleibt variabel.
+# Default 'off' = Prompts byteidentisch zu vorher. Nur im Lean-Pfad verdrahtet.
+# ─────────────────────────────────────────────────────────────────────────
+def _prompt_cache_an() -> bool:
+    return os.environ.get('V4_PROMPT_CACHE', 'off').strip().lower() == 'on'
+
+
+def _mit_bilddaten(prompt: str, *, width: int, height: int, enriched_context: str,
+                   original_alt: str = '', user_hint=None, link_zeile: str = '',
+                   mit_original_alt: bool = False) -> str:
+    if not _prompt_cache_an():
+        return prompt
+    return prompt + BILDDATEN_MARKER + bilddaten_block(
+        width, height, enriched_context, original_alt, user_hint,
+        link_zeile=link_zeile, mit_original_alt=mit_original_alt,
+    )
 
 
 class VerifyOutput(BaseModel):
@@ -332,7 +359,9 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'Anpassungen. Ist nichts zu beanstanden, lasse beide Felder leer.\n\n'
         + STILREGELN_KERN + '\n\n'
     )
-    return _basis + _reg + f'ALT-TEXT ZUR PRUEFUNG:\n"{alt_text}"'
+    # Prompt-Caching 03.09.2026: _basis ist je Sprache fest (cachefaehig),
+    # Namensregister + Alt-Text sind je Bild variabel.
+    return _basis + (BILDDATEN_MARKER if _prompt_cache_an() else '') + _reg + f'ALT-TEXT ZUR PRUEFUNG:\n"{alt_text}"'
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -389,6 +418,13 @@ def _korrektur_absichern(image_path: str, verify_result, language: str = 'de') -
     if len(korr) <= VERIFY_KORREKTUR_MAX:
         return korr, 'uebernommen'
     kurz = _kuerze_korrektur(image_path, korr, language=language)
+    # Pflichtwoerter (Quertest 03.09.: Kuerzung liess einmal die Kennzeichnung
+    # "Fotomontage" fallen): steht ein Kennwort in der Korrektur, muss es die
+    # Kuerzung behalten — sonst gilt die Kuerzung als gescheitert.
+    _pflicht = [w for w in ('Fotomontage', 'Collage') if w.lower() in korr.lower()]
+    if kurz and any(w.lower() not in kurz.lower() for w in _pflicht):
+        log.warning('Verify-Kuerzung verwarf Pflichtwort %s — Kuerzung verworfen', _pflicht)
+        kurz = None
     if kurz and len(kurz) <= VERIFY_KORREKTUR_HART:
         log.info('Verify-Korrektur gekuerzt: %d -> %d Zeichen', len(korr), len(kurz))
         return kurz, 'gekuerzt'
@@ -972,11 +1008,16 @@ def _run_lean_pipeline(
     if image_type_override:
         classification = _classification_from_override(image_type_override, original_alt)
     else:
-        classify_prompt = build_classification_prompt(
-            enriched_context=enriched_context,
-            width=width, height=height,
-            original_alt=original_alt,
-            user_hint=user_hint,
+        with bilddaten_am_ende(_prompt_cache_an()):
+            classify_prompt = build_classification_prompt(
+                enriched_context=enriched_context,
+                width=width, height=height,
+                original_alt=original_alt,
+                user_hint=user_hint,
+            )
+        classify_prompt = _mit_bilddaten(
+            classify_prompt, width=width, height=height, enriched_context=enriched_context,
+            original_alt=original_alt, user_hint=user_hint, mit_original_alt=True,
         )
         classification = call_mistral_with_schema(
             model=MISTRAL_MODEL_CLASSIFY,
@@ -1047,13 +1088,20 @@ def _run_lean_pipeline(
     beschreibung: BeschreibungOutput | IconBeschreibungOutput
     if effective_bildtyp in _MINI_TYPES:
         # Mini-Pipelines (logo/icon/funktional): unveraendert von Multi-Pass
-        mini_prompt = build_beschreibung_prompt_mini(
-            bildtyp=effective_bildtyp,
-            classification=classification,
-            enriched_context=enriched_context,
-            width=width, height=height,
-            original_alt=original_alt,
-            user_hint=user_hint,
+        with bilddaten_am_ende(_prompt_cache_an()):
+            mini_prompt = build_beschreibung_prompt_mini(
+                bildtyp=effective_bildtyp,
+                classification=classification,
+                enriched_context=enriched_context,
+                width=width, height=height,
+                original_alt=original_alt,
+                user_hint=user_hint,
+            )
+        _lt = extract_link_target_from_context(enriched_context) if effective_bildtyp in ('logo', 'icon') else None
+        mini_prompt = _mit_bilddaten(
+            mini_prompt, width=width, height=height, enriched_context=enriched_context,
+            original_alt=original_alt, user_hint=user_hint, mit_original_alt=True,
+            link_zeile=(f"LINK-ZIEL DIESES {'LOGOS' if effective_bildtyp == 'logo' else 'ICONS'}: {_lt}" if _lt else ''),
         )
         mini_prompt += _user_prompt_suffix(user_prompt)
         mini_prompt += _language_suffix(language)
@@ -1068,13 +1116,17 @@ def _run_lean_pipeline(
         )
     else:
         # Hauptpfad: Combo-Aufruf mit Inventar+Beschreibung in einem Schritt
-        combo_prompt = build_combined_inventar_beschreibung_prompt(
-            bildtyp_top=classification.bildtyp,
-            bildtyp_effective=effective_bildtyp,
-            enriched_context=enriched_context,
-            width=width, height=height,
-            original_alt=original_alt,
-            user_hint=user_hint,
+        with bilddaten_am_ende(_prompt_cache_an()):
+            combo_prompt = build_combined_inventar_beschreibung_prompt(
+                bildtyp_top=classification.bildtyp,
+                bildtyp_effective=effective_bildtyp,
+                enriched_context=enriched_context,
+                width=width, height=height,
+                original_alt=original_alt,
+                user_hint=user_hint,
+            )
+        combo_prompt = _mit_bilddaten(
+            combo_prompt, width=width, height=height, enriched_context=enriched_context, user_hint=user_hint,
         )
         combo_prompt += _user_prompt_suffix(user_prompt)
         combo_prompt += _language_suffix(language)
