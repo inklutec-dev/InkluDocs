@@ -5365,8 +5365,8 @@ msgstr "{n} créditos al mes, sin datos de pago."
 msgid "Du hast schon ein Konto."
 msgstr "Ya tienes una cuenta."
 
-msgid "Vier Personen stehen auf einem Weg an einem See und schauen gemeinsam auf ein Tablet; der ältere Mann rechts hält einen weißen Langstock."
-msgstr "Cuatro personas en un camino junto a un lago miran juntas una tableta; el hombre mayor de la derecha sostiene un bastón blanco."
+msgid "Vier Menschen auf einem Uferweg an einem See schauen lächelnd auf Handy und Tablet; der ältere Mann rechts hält einen weißen Langstock."
+msgstr "Cuatro personas en un camino junto a un lago miran sonrientes sus móviles y una tableta; el hombre mayor de la derecha sostiene un bastón blanco."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Tres herramientas, un objetivo: documentos accesibles"

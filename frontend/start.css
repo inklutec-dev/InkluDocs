@@ -55,7 +55,7 @@ body:has(.start-shell) { display:block; }
 .btn-start:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 .start-hero .btn-start:focus-visible, .start-header .btn-start:focus-visible { outline-color:#fff; }
 .start-aktionen { display:flex; gap:.75rem; flex-wrap:wrap; margin:1.5rem 0 .75rem; }
-/* Hero: Knopf + Unterzeile als Paar, drei Paare nebeneinander */
+/* Hero: Satz über dem Knopf als Paar, drei Paare nebeneinander */
 .start-aktionen-paare { gap:1rem 1.5rem; align-items:flex-start; margin-bottom:0; }
 .start-aktion { display:flex; flex-direction:column; gap:.45rem; }
 .start-aktion .btn-start { text-align:center; }

@@ -65,33 +65,36 @@
    <div class="start-hero-text">
     <h1 id="hero-h"><span class="start-claim">{{ _('Ein Inhalt. Viele Menschen. Gleiche Chancen.') }}</span> {{ _('Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}</h1>
     <p class="start-lead">{{ _('Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen.') }} {{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI.') }}</p>
-    {# Drei Paare Knopf + Unterzeile (Steve 03.09.): Der Satz steht im HTML direkt
-       hinter seinem Knopf, ohne ARIA — der Screenreader liest ihn als nächste Zeile. #}
+    {# Drei Paare Satz + Knopf (Steve 03.09.): Der Satz steht im HTML direkt VOR
+       seinem Knopf („Du hast schon ein Konto.“ → „Anmelden“), ohne ARIA — der
+       Screenreader liest erst den Satz, dann den Link. #}
     <div class="start-aktionen start-aktionen-paare">
       <div class="start-aktion">
-        <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung selbst erleben') }}</a>
         <p class="start-hinweis">{{ _('Die Demo läuft ganz ohne Konto.') }}</p>
+        <a class="btn-start btn-start-primary" href="https://demo.inkludocs.de">{{ _('Ohne Anmeldung selbst erleben') }}</a>
       </div>
       {% if registration_enabled %}
       <div class="start-aktion">
-        <a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>
         <p class="start-hinweis">{{ _('{n} Credits im Monat, ohne Zahlungsdaten.').format(n=free_credits) }}</p>
+        <a class="btn-start btn-start-secondary" href="/register">{{ _('Kostenlos starten') }}</a>
       </div>
       {% endif %}
       <div class="start-aktion">
-        <a class="btn-start btn-start-secondary" href="/login">{{ _('Anmelden') }}</a>
         <p class="start-hinweis">{{ _('Du hast schon ein Konto.') }}</p>
+        <a class="btn-start btn-start-secondary" href="/login">{{ _('Anmelden') }}</a>
       </div>
     </div>
    </div>
    {# Bild rechts (Michael Karbe, 03.09.2026, KI-generiert, Bildnachweis im Impressum).
       Alt-Text von InkluDocs selbst erzeugt (Staging-Projekt 660) — Steve 03.09.:
-      „logischerweise ein Alternativtext von InkluDocs“. Kein Text über dem Bild. #}
+      „logischerweise ein Alternativtext von InkluDocs“ — und von Hand korrigiert
+      (Pipeline: „schauen gemeinsam auf ein Tablet“; tatsächlich Handys UND Tablet).
+      Kein Text über dem Bild. #}
    <div class="start-hero-bild">
     <picture>
       <source srcset="/static/startseite-hero-2026-09.webp" type="image/webp">
       <img src="/static/startseite-hero-2026-09.jpg" width="840" height="840" fetchpriority="high"
-           alt="{{ _('Vier Personen stehen auf einem Weg an einem See und schauen gemeinsam auf ein Tablet; der ältere Mann rechts hält einen weißen Langstock.') }}">
+           alt="{{ _('Vier Menschen auf einem Uferweg an einem See schauen lächelnd auf Handy und Tablet; der ältere Mann rechts hält einen weißen Langstock.') }}">
     </picture>
    </div>
   </div>

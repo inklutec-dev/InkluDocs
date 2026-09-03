@@ -74,12 +74,12 @@ das Inhaltsverzeichnis der Seite.
    840 px, `<picture>`, width/height gegen Layoutsprünge; unter 900 px
    einspaltig unter den Knöpfen). Alt-Text von InkluDocs selbst erzeugt
    (Staging-Projekt 660), Bildnachweis im Impressum („teilweise
-   KI-generiert mit ChatGPT/OpenAI“, Personen nicht real). Jeder Knopf hat seine
-   eigene Unterzeile direkt darunter („Die Demo läuft ganz ohne Konto.“,
-   „{n} Credits im Monat, ohne Zahlungsdaten.“, „Du hast schon ein Konto.“)
-   — Steve 03.09.: bewusst OHNE aria-describedby, der Satz steht im HTML
-   hinter seinem Link und wird als nächste Zeile gelesen; ARIA würde ihn
-   beim Zeilenlesen doppelt ansagen.
+   KI-generiert mit ChatGPT/OpenAI“, Personen nicht real); der Alt-Text ist
+   die von Hand korrigierte Pipeline-Fassung (Handys UND Tablet). Jeder Knopf
+   hat seinen eigenen Satz direkt DARÜBER („Du hast schon ein Konto.“ →
+   „Anmelden“; Steve 03.09. nachmittags: Satz vor dem Link, nicht danach).
+   Bewusst OHNE aria-describedby: der Satz steht im HTML vor seinem Link und
+   wird als eigene Zeile gelesen; ARIA würde ihn doppelt ansagen.
 2. **Drei Werkzeuge**: Alt-Texte für PDF und Bilder, barrierefreie
    Word-Dokumente, Quickinfos für Formulare.
 3. **So funktioniert es**: Hochladen, die KI beschreibt, prüfen und

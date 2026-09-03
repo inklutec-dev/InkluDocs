@@ -5365,8 +5365,8 @@ msgstr "{n} credits per month, no payment details."
 msgid "Du hast schon ein Konto."
 msgstr "You already have an account."
 
-msgid "Vier Personen stehen auf einem Weg an einem See und schauen gemeinsam auf ein Tablet; der ältere Mann rechts hält einen weißen Langstock."
-msgstr "Four people stand on a path by a lake, looking at a tablet together; the older man on the right holds a white cane."
+msgid "Vier Menschen auf einem Uferweg an einem See schauen lächelnd auf Handy und Tablet; der ältere Mann rechts hält einen weißen Langstock."
+msgstr "Four people on a lakeside path smile as they look at phones and a tablet; the older man on the right holds a white cane."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Three tools, one goal: accessible documents"

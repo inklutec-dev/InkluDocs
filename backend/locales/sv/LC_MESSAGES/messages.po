@@ -4927,8 +4927,8 @@ msgstr "{n} krediter i månaden, utan betalningsuppgifter."
 msgid "Du hast schon ein Konto."
 msgstr "Du har redan ett konto."
 
-msgid "Vier Personen stehen auf einem Weg an einem See und schauen gemeinsam auf ein Tablet; der ältere Mann rechts hält einen weißen Langstock."
-msgstr "Fyra personer står på en stig vid en sjö och tittar tillsammans på en surfplatta; den äldre mannen till höger håller en vit käpp."
+msgid "Vier Menschen auf einem Uferweg an einem See schauen lächelnd auf Handy und Tablet; der ältere Mann rechts hält einen weißen Langstock."
+msgstr "Fyra människor på en stig vid en sjö tittar leende på mobil och surfplatta; den äldre mannen till höger håller en vit käpp."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Tre verktyg, ett mål: tillgängliga dokument"
