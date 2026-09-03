@@ -270,3 +270,7 @@ Validator-Modell: Beleg im Seitentext, Beleg in Feldnähe, Regeln, Konsistenz.
 Der eigene Nutzer-Prompt (Prompt-Verwaltung) wird additiv angehängt, wie bei
 den Alt-Texten. Ebenen 1–2 der Bild-Pipeline (Rollen, geteilte Constraints)
 werden bewusst NICHT wiederverwendet — sie handeln von Bildern.
+
+## 03.09.2026 — Korrekturwache im Pruefpass (Steve, nach dem Modell-Quertest)
+
+Befund im Quertest (24 Bilder x 6 Besetzungen): Die Korrektur des Pruefers ging ungefiltert in die Datenbank — bei 400 Zeichen mitten im Wort gekappt (Koelner Dom, Umleitungsschild), und ein Pruefer schrieb Unbeteiligtes um ("brauner Metallbock" statt rotem Holzgestell). Aenderungen in pipelines/v4/orchestrator.py: (1) Verify-Prompt verlangt MINIMALEINGRIFF (nur beanstandete Stellen aendern, keine neuen Angaben) und bekommt STILREGELN_KERN (eine Quelle mit den Beschreibungs-Buildern); (2) VerifyOutput kappt nicht mehr bei 400; (3) _korrektur_absichern(): Korrektur bis VERIFY_KORREKTUR_MAX (ENV, Default 250) wird uebernommen, darueber EIN Kuerzungsaufruf mit Bild (_kuerze_korrektur, Pruefmodell), bleibt sie ueber 400 oder scheitert das Kuerzen, wird sie verworfen — Original bleibt, needs_review gesetzt. pipeline_steps traegt verify_korrektur:gekuerzt|verworfen. Ausserdem nimmt der Verify jetzt MODEL_VALIDATE (ENV BEDROCK_MODEL_VALIDATE) statt stillschweigend MODEL_GENERATE — Pruefer darf ein anderes Modell sein als der Erzeuger (Vier-Augen). Test: tests/test_verify_korrekturwache.py (7). Kosten: nur bei ueberlanger Korrektur ein Zusatzaufruf.

@@ -141,6 +141,7 @@ def _user_prompt_suffix(user_prompt: str) -> str:
 #                     Original und Begruendung landen im Log, die Anwendung im
 #                     pipeline_steps-Audit-Trail. Langbeschreibung bleibt unangetastet.
 from pydantic import BaseModel, Field, field_validator
+from prompts.components.stilregeln import STILREGELN_KERN  # Korrekturwache 03.09.2026: gleiche Stilregeln fuer Pruefer-Korrekturen
 
 
 class VerifyOutput(BaseModel):
@@ -159,8 +160,8 @@ class VerifyOutput(BaseModel):
     strittige_aussagen: list[str] = Field(default_factory=list, description='Woertlich zitierte strittige Behauptungen mit kurzem Grund')
     anmerkung: str = Field(default='')
     korrigierter_alt_text: Optional[str] = Field(
-        default=None, min_length=20, max_length=400,
-        description='Vollstaendig korrigierter Alt-Text (20-400 Zeichen), nur bei Beanstandung — sonst leer',
+        default=None, min_length=20, max_length=1500,
+        description='Vollstaendig korrigierter Alt-Text (Ziel unter 250 Zeichen, hoechstens 400), nur bei Beanstandung — sonst leer',
     )
     korrektur_begruendung: Optional[str] = Field(
         default=None,
@@ -194,9 +195,11 @@ class VerifyOutput(BaseModel):
             # statt den ganzen Verify an min_length scheitern zu lassen.
             if info.field_name == 'korrigierter_alt_text' and len(v) < 20:
                 return None
-            # Hart am Schema-Limit kappen statt Validierungsfehler (400 = alt_text-Cap).
-            if len(v) > 400:
-                return v[:400]
+            # Korrekturwache 03.09.2026: NICHT mehr bei 400 kappen (schnitt mitten im
+            # Wort ab, Quertest: Koelner Dom, Umleitungsschild). Ueberlange Korrekturen
+            # laesst die Wache _korrektur_absichern() kuerzen oder verwirft sie.
+            if len(v) > 1500:
+                return v[:1500]
         return v
 
 
@@ -317,12 +320,81 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'unvollstaendig oder eine unerkannte Montage, liefere in '
         'korrigierter_alt_text eine vollstaendig korrigierte Fassung — '
         f'ausschliesslich auf {sprach_name} (die Sprache des Original-Alt-Texts). '
+        'MINIMALEINGRIFF: Aendere NUR die beanstandeten Stellen. Alle anderen '
+        'Formulierungen des Originals uebernimmst du woertlich — du fuehrst keine '
+        'neuen Angaben ein (Material, Farbe, Art, Marke, Tageszeit, Deutung), die '
+        'du nicht selbst als Beanstandung aufgefuehrt hast, und du ergaenzt keine '
+        'Nebensaechlichkeiten. Eine Korrektur ist nie laenger als das Original plus '
+        'das, was die Beanstandung zwingend braucht. '
         'Laengen-Regime wie beim Original: einfache Motive unter 150 Zeichen, '
         'komplexe Szenen bis etwa 250, harte Obergrenze 400 — und in '
         'korrektur_begruendung kurz, was warum geaendert wurde. Keine halben '
         'Anpassungen. Ist nichts zu beanstanden, lasse beide Felder leer.\n\n'
+        + STILREGELN_KERN + '\n\n'
     )
     return _basis + _reg + f'ALT-TEXT ZUR PRUEFUNG:\n"{alt_text}"'
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# KORREKTURWACHE (Steve 03.09.2026, nach dem Modell-Quertest)
+# Befund: Die Korrektur des Pruefers ging ungefiltert in die Datenbank. Bei 400
+# Zeichen wurde mitten im Wort gekappt (Koelner Dom, Umleitungsschild), und ein
+# Pruefer schrieb Unbeteiligtes um („brauner Metallbock" statt rotem Holzgestell).
+# Die Wache: (1) Prompt verlangt Minimaleingriff + Stilregeln (oben), (2) eine
+# Korrektur ueber VERIFY_KORREKTUR_MAX Zeichen wird EINMAL vom Pruefmodell
+# nachgekuerzt (mit Bild, damit keine Fakten verloren gehen), (3) bleibt sie
+# ueber 400 Zeichen oder scheitert das Kuerzen, wird sie VERWORFEN — der
+# Original-Alt-Text bleibt, needs_review bleibt gesetzt, der Mensch liest gegen.
+# Nie wird abgeschnitten. Gilt fuer die Pipeline UND den Chatbot-Speicherweg.
+# ─────────────────────────────────────────────────────────────────────────
+VERIFY_KORREKTUR_MAX = int(os.environ.get('VERIFY_KORREKTUR_MAX', '250'))
+VERIFY_KORREKTUR_HART = 400
+
+
+class KuerzungOutput(BaseModel):
+    alt_text: str = Field(min_length=20, max_length=1500, description='Gekuerzter Alt-Text')
+
+
+def _kuerze_korrektur(image_path: str, korrektur: str, language: str = 'de') -> Optional[str]:
+    """Ein Aufruf: ueberlange Pruefer-Korrektur unter VERIFY_KORREKTUR_MAX bringen."""
+    sprach_name = _OUTPUT_LANGUAGE_NAMES.get((language or 'de').lower()) or 'Deutsch'
+    prompt = (
+        'Der folgende Alt-Text ist zu lang. Kuerze ihn auf hoechstens '
+        f'{VERIFY_KORREKTUR_MAX} Zeichen, ausschliesslich auf {sprach_name}. Behalte alle '
+        'am Bild belegten Kernfakten (Anzahlen, Namen, lesbare Texte, Wahrzeichen, '
+        'Montage-Kennzeichnung), streiche Nebensaechlichkeiten, Deutungen und '
+        'Hintergrund-Details. Fuege NICHTS Neues hinzu. Ein bis zwei Saetze, das '
+        'Wichtigste zuerst.\n\n' + STILREGELN_KERN + '\n\nALT-TEXT:\n"' + korrektur + '"'
+    )
+    try:
+        out = call_mistral_with_schema(
+            model=MISTRAL_MODEL_VALIDATE, prompt=prompt, image_path=image_path,
+            schema=KuerzungOutput, max_tokens=600, system=SYSTEM_BESCHREIBUNG,
+        )
+        return (out.alt_text or '').strip() or None
+    except Exception as e:
+        log.warning('Kuerzen der Verify-Korrektur fehlgeschlagen (ignoriert): %s', e)
+        return None
+
+
+def _korrektur_absichern(image_path: str, verify_result, language: str = 'de') -> tuple[Optional[str], str]:
+    """Wache vor der Uebernahme einer Pruefer-Korrektur.
+
+    Returns (korrektur_oder_None, schritt) mit schritt in
+    'uebernommen' | 'gekuerzt' | 'verworfen' | '' (keine Korrektur vorhanden).
+    """
+    korr = (getattr(verify_result, 'korrigierter_alt_text', None) or '').strip()
+    if not korr:
+        return None, ''
+    if len(korr) <= VERIFY_KORREKTUR_MAX:
+        return korr, 'uebernommen'
+    kurz = _kuerze_korrektur(image_path, korr, language=language)
+    if kurz and len(kurz) <= VERIFY_KORREKTUR_HART:
+        log.info('Verify-Korrektur gekuerzt: %d -> %d Zeichen', len(korr), len(kurz))
+        return kurz, 'gekuerzt'
+    log.warning('Verify-Korrektur VERWORFEN (%d Zeichen, Kuerzen %s) — Original bleibt, needs_review gesetzt',
+                len(korr), 'lieferte %d Zeichen' % len(kurz) if kurz else 'fehlgeschlagen')
+    return None, 'verworfen'
 
 
 def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = ''):
@@ -1045,20 +1117,26 @@ def _run_lean_pipeline(
         # wie bisher). Original + Begruendung werden geloggt (Muster wie oben);
         # der volle Verify-Output steht ohnehin in validation_result. Die
         # Langbeschreibung bleibt in beiden Faellen unangetastet.
+        verify_korrektur_schritt = ''
         if (
             verify_result is not None
             and verify_result.korrigierter_alt_text
             and os.environ.get('V4_VERIFY_KORREKTUR', 'off').strip().lower() == 'on'
         ):
-            log.warning(
-                'Verify-Korrektur uebernommen (%s). Original: %r — Begruendung: %s',
-                effective_bildtyp,
-                beschreibung.alt_text,
-                verify_result.korrektur_begruendung or '(keine)',
+            # Korrekturwache 03.09.2026: kuerzen oder verwerfen, nie abschneiden
+            sichere_korrektur, verify_korrektur_schritt = _korrektur_absichern(
+                image_path, verify_result, language=language,
             )
-            beschreibung.alt_text = verify_result.korrigierter_alt_text
-            needs_review = True  # wie bisher bei Beanstandung: Mensch liest gegen
-            verify_korrektur_applied = True
+            needs_review = True  # Beanstandung: Mensch liest gegen — auch bei verworfener Korrektur
+            if sichere_korrektur:
+                log.warning(
+                    'Verify-Korrektur %s (%s). Original: %r — Begruendung: %s',
+                    verify_korrektur_schritt, effective_bildtyp,
+                    beschreibung.alt_text,
+                    verify_result.korrektur_begruendung or '(keine)',
+                )
+                beschreibung.alt_text = sichere_korrektur
+                verify_korrektur_applied = True
 
     langbeschreibung = (
         beschreibung.langbeschreibung
@@ -1076,6 +1154,7 @@ def _run_lean_pipeline(
             f'lean:classified:{classification.bildtyp},combo:{effective_bildtyp}'
             + (f',verify:ok={verify_result.alt_text_belegt}' if verify_result is not None else '')
             + (',verify_korrektur:applied' if verify_korrektur_applied else '')
+            + (f',verify_korrektur:{verify_korrektur_schritt}' if verify_korrektur_schritt in ('gekuerzt', 'verworfen') else '')
         ),
         'inventar_json': None,  # Im Lean-Mode kein separates Inventar-Objekt
         'validation_result': verify_result.model_dump_json() if verify_result is not None else None,
