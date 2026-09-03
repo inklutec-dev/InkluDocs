@@ -55,7 +55,9 @@ setzen), die Marke steht in der Kopfzeile. Ihre frühere, von Hand getippte
 ## Aufbau der Startseite (`start.html`)
 
 Jeder Abschnitt ist eine `<section aria-labelledby="…">` mit eigener H2;
-Karten sind H3. Die Überschriften-Navigation per Screenreader ergibt damit
+Karten sind `<li>` in einer `<ul>` mit H3 (kein `<article>` — VoiceOver führt
+article als Orientierungspunkt, Steve 03.09.2026). Die Überschriften-Navigation
+per Screenreader ergibt damit
 das Inhaltsverzeichnis der Seite.
 
 1. **Kopfbereich** (Navy): H1 aus zwei Zeilen — Markensatz „Ein Inhalt.

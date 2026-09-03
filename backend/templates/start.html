@@ -3,7 +3,8 @@
    02.09.2026, Steve + Michael). Doku: docs/STARTSEITE.md
 
    Aufbau von oben nach unten (jeder Abschnitt eine <section id="…"> mit
-   eigener H2, Karten als H3 — Überschriften-Navigation per Screenreader
+   eigener H2, Karten als <li> mit H3 — NICHT <article>: VoiceOver führt
+   article als Orientierungspunkt, Steve 03.09.2026 — Karten als H3 — Überschriften-Navigation per Screenreader
    ergibt das Inhaltsverzeichnis der Seite). KEIN aria-labelledby an den
    Abschnitten (Steve 03.09.2026: semantisches HTML, ARIA nur wo nötig):
    Beschriftete Abschnitte würden zu zehn „Region“-Landmarken, VoiceOver
@@ -87,21 +88,21 @@
   <div class="start-inner">
     <h2 id="werkzeuge-h">{{ _('Drei Werkzeuge, ein Ziel: barrierefreie Dokumente') }}</h2>
     <p class="start-lead">{{ _('Ob PDF, Word oder Formular: InkluDocs übernimmt die Fleißarbeit und lässt dir das letzte Wort.') }}</p>
-    <div class="start-raster">
-      <article class="start-karte">
+    <ul class="start-raster">
+      <li class="start-karte">
         <h3>{{ _('Alt-Texte für PDF und Bilder') }}</h3>
         <p>{{ _('Lade ein PDF oder einzelne Bilder hoch. Die KI erkennt Fotos, Diagramme, Logos und Screenshots, liest den Kontext der Seite mit und schreibt Alternativtexte nach WCAG 2.2. Diagramme bekommen zusätzlich eine Langbeschreibung.') }}</p>
         <p>{{ _('Der Export liefert ein geprüftes PDF/UA, das Prüfwerkzeuge wie veraPDF bestehen.') }}</p>
-      </article>
-      <article class="start-karte">
+      </li>
+      <li class="start-karte">
         <h3>{{ _('Barrierefreie Word-Dokumente') }}</h3>
         <p>{{ _('InkluDocs beschreibt die Bilder in deiner Word-Datei, prüft Überschriften und Tabellen und speichert das Ergebnis als barrierefreies Word oder als PDF/UA. Ohne Umweg über ein Layoutprogramm.') }}</p>
-      </article>
-      <article class="start-karte">
+      </li>
+      <li class="start-karte">
         <h3>{{ _('Quickinfos für Formulare') }}</h3>
         <p>{{ _('Für PDF-Formulare erzeugt InkluDocs die Quickinfos, die Screenreader an jedem Feld vorlesen. Deine Stammdaten wie Behördenname oder Aktenzeichen fließen automatisch mit ein.') }}</p>
-      </article>
-    </div>
+      </li>
+    </ul>
   </div>
 </section>
 
@@ -129,20 +130,20 @@
   <div class="start-inner">
     <h2 id="kontrolle-h">{{ _('Du behältst das letzte Wort') }}</h2>
     <p class="start-lead">{{ _('Die KI liefert den Entwurf. Ob er passt, entscheidest du, und dafür hast du drei Werkzeuge.') }}</p>
-    <div class="start-raster">
-      <article class="start-karte">
+    <ul class="start-raster">
+      <li class="start-karte">
         <h3>{{ _('Von Hand ändern') }}</h3>
         <p>{{ _('Jeder Alt-Text und jede Langbeschreibung ist ein Textfeld. Du tippst rein, was fehlt, streichst, was zu viel ist, und speicherst.') }}</p>
-      </article>
-      <article class="start-karte">
+      </li>
+      <li class="start-karte">
         <h3>{{ _('Mit dem InkluAgent verfeinern') }}</h3>
         <p>{{ _('Der InkluAgent ist der KI-Assistent in deinem Projekt. Sag ihm, was anders sein soll: kürzer, ohne Farben, mit dem Namen der Person aus der Bildunterschrift. Er schreibt den Text um, du nimmst ihn an oder nicht.') }}</p>
-      </article>
-      <article class="start-karte">
+      </li>
+      <li class="start-karte">
         <h3>{{ _('Eigene Prompts und Sprache') }}</h3>
         <p>{{ _('Lege fest, wie InkluDocs für dein Haus schreibt: Tonfall, Länge, Fachbegriffe. Und wähle je Projekt die Sprache der Alt-Texte, unabhängig von der Sprache der Oberfläche.') }}</p>
-      </article>
-    </div>
+      </li>
+    </ul>
   </div>
 </section>
 
@@ -195,20 +196,20 @@
 <section class="start-abschnitt" id="team">
   <div class="start-inner">
     <h2 id="team-h">{{ _('Aus Hamburg und Euskirchen, aus eigener Erfahrung') }}</h2>
-    <div class="start-raster">
-      <article class="start-karte">
+    <ul class="start-raster">
+      <li class="start-karte">
         <h3>{{ _('InkluTec, Hamburg') }}</h3>
         <p>{{ _('InkluDocs entwickelt Steve Weidel mit InkluTec. Er ist Experte für digitale Barrierefreiheit und KI und selbst blind. Er weiß aus dem Alltag, was ein Alt-Text leisten muss und woran unzugängliche Dokumente scheitern.') }}</p>
-      </article>
-      <article class="start-karte">
+      </li>
+      <li class="start-karte">
         <h3>{{ _('Actino Software, Euskirchen') }}</h3>
         <p>{{ _('Die Actino Software GmbH bringt seit den frühen Neunzigerjahren PDF-Fachwissen ein, von PDF/A bis PDF/UA, und begleitet Vertrieb und Kunden.') }}</p>
-      </article>
-      <article class="start-karte">
+      </li>
+      <li class="start-karte">
         <h3>{{ _('Deine Dateien bleiben deine Dateien') }}</h3>
         <p>{{ _('Verarbeitung in der EU, KI-Anfragen über Rechenzentren in der EU, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst.') }}</p>
-      </article>
-    </div>
+      </li>
+    </ul>
     <p style="margin-top:1.25rem;"><a href="/ueber-uns">{{ _('Mehr über uns') }}</a> · <a href="/datenschutz">{{ _('Datenschutzerklärung') }}</a></p>
   </div>
 </section>

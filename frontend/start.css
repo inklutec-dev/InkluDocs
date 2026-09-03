@@ -81,7 +81,7 @@ body:has(.start-shell) { display:block; }
 .start-hero .start-hinweis { color:#c9d3e3; font-size:.95rem; margin:0; }
 
 /* ── Karten und Raster ───────────────────────────────────────────────── */
-.start-raster { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem; margin:1.5rem 0 0; }
+.start-raster { list-style:none; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem; margin:1.5rem 0 0; }
 .start-karte { background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:1.4rem 1.5rem; }
 .start-karte p { color:var(--text-muted); font-size:.95rem; margin:0; }
 .start-karte p + p { margin-top:.6rem; }

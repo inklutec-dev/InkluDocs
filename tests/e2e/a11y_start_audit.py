@@ -58,7 +58,7 @@ with sync_playwright() as p:
     check("keine Links/Knoepfe ineinander, keine Links in Ueberschriften", nested==0, str(nested))
     check("keine div/span mit onclick oder role=button", page.evaluate("() => document.querySelectorAll('[onclick],div[role=button],span[role=button],div[role=link],span[role=link]').length")==0)
     check("keine positiven tabindex", page.evaluate("() => document.querySelectorAll('[tabindex]:not([tabindex=\"-1\"]):not([tabindex=\"0\"])').length")==0)
-    check("Karten (article) enthalten keine Links (Karte = Text, kein Klickziel)", page.evaluate("() => document.querySelectorAll('article a').length")==0)
+    check("Karten sind li in ul (kein article = kein Orientierungspunkt), ohne Links", page.evaluate("() => document.querySelectorAll('article, [role=article]').length")==0 and page.locator("ul.start-raster > li.start-karte").count()==9 and page.evaluate("() => document.querySelectorAll('li.start-karte a').length")==0)
     check("details/summary nativ (7 FAQ)", page.locator("details > summary").count()==7)
     check("Listen: ol/ul nur mit li-Kindern", page.evaluate("() => Array.from(document.querySelectorAll('ul,ol')).every(l=>Array.from(l.children).every(c=>c.tagName==='LI'))"))
     check("Bilder: alle mit alt (oder keine Bilder)", page.evaluate("() => Array.from(document.images).every(i=>i.hasAttribute('alt'))"))
