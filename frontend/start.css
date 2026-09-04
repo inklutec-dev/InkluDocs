@@ -75,7 +75,8 @@ body:has(.start-shell) { display:block; }
 /* ── Kopfbereich (Hero) ──────────────────────────────────────────────── */
 .start-hero { background:var(--primary); color:#fff; padding:3.5rem 0 3rem; }
 /* Kopfbereich zweispaltig: Text links, Bild rechts (Michael 03.09.2026) */
-.start-hero-raster { display:grid; grid-template-columns:minmax(0,1fr) minmax(240px,360px); gap:2.5rem; align-items:center; }
+/* Grafik 25 % groesser und oben buendig mit der H1 (Michael, 04.09.2026) */
+.start-hero-raster { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,450px); gap:2.5rem; align-items:start; }
 .start-hero-bild img { display:block; width:100%; height:auto; border-radius:12px; }
 .start-hero h1 { font-size:2.4rem; font-weight:700; line-height:1.15; margin:0 0 .5rem; max-width:48rem; }
 /* Markensatz als erste Zeile der H1 (eine Überschrift, zwei Zeilen) */

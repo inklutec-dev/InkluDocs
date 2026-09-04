@@ -5595,5 +5595,6 @@ msgstr "Welcome back. Log in and pick up where you left off."
 msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
 msgstr "AI alt text for accessible PDF, Word and form documents"
 
-msgid "Infografik — KI-gestützte Barrierefreiheit für Dokumente: Ein 3D-Dokument mit Bild-Platzhalter erhält automatisch einen Alt-Text („Diagramm mit Umsatzentwicklung von 2020 bis 2024.\"). Unterstützte Formate: PDF/UA, Word und Formular. Ein Siegel bestätigt: Barrierefrei – WCAG konform."
-msgstr "Infographic — AI-powered accessibility for documents: a 3D document with an image placeholder automatically receives an alt text (\"Chart showing revenue development from 2020 to 2024.\"). Supported formats: PDF/UA, Word and forms. A seal confirms: accessible – WCAG compliant."
+
+msgid "Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“."
+msgstr "Illustration: A document with an image placeholder automatically receives an AI-generated alt text; on the left three tiles for PDF/UA, Word and forms, at the bottom right a seal reading “Accessible, WCAG compliant”."

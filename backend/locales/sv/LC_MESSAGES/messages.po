@@ -5157,5 +5157,6 @@ msgstr "Välkommen tillbaka. Logga in och fortsätt där du slutade."
 msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
 msgstr "AI-alternativtexter för tillgängliga PDF-, Word- och formulärdokument"
 
-msgid "Infografik — KI-gestützte Barrierefreiheit für Dokumente: Ein 3D-Dokument mit Bild-Platzhalter erhält automatisch einen Alt-Text („Diagramm mit Umsatzentwicklung von 2020 bis 2024.\"). Unterstützte Formate: PDF/UA, Word und Formular. Ein Siegel bestätigt: Barrierefrei – WCAG konform."
-msgstr "Infografik — AI-stödd tillgänglighet för dokument: ett 3D-dokument med en bildplatshållare får automatiskt en alternativtext („Diagram över omsättningsutvecklingen från 2020 till 2024.\"). Format som stöds: PDF/UA, Word och formulär. Ett sigill bekräftar: tillgänglig – WCAG-kompatibel."
+
+msgid "Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“."
+msgstr "Illustration: Ett dokument med en bildplatshållare får automatiskt en AI-genererad alternativtext; till vänster tre rutor för PDF/UA, Word och formulär, nere till höger ett sigill med „Tillgänglig, WCAG-kompatibel“."
