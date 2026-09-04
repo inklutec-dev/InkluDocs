@@ -58,7 +58,7 @@ body:has(.start-shell) { display:block; }
 /* Hero: Satz über dem Knopf als Paar, drei Paare nebeneinander */
 .start-aktionen-paare { gap:1rem 1.5rem; align-items:flex-end; margin-bottom:0; } /* Knöpfe unten bündig, auch wenn ein Satz umbricht */
 /* Knopfreihe als Rasterkind ueber beide Spalten (Michael 04.09.2026): drei Paare nebeneinander */
-.start-hero-raster > .start-aktionen { grid-column:1 / -1; margin-top:1.75rem; }
+.start-hero-raster > .start-aktionen { grid-area:aktionen; margin-top:.25rem; }
 .start-hero-raster > .start-aktionen .start-aktion { flex:1 1 16rem; }
 .start-hero-raster > .start-aktionen .start-hinweis { max-width:none; }
 .start-aktion { display:flex; flex-direction:column; gap:.45rem; }
@@ -80,7 +80,9 @@ body:has(.start-shell) { display:block; }
 .start-hero { background:var(--primary); color:#fff; padding:3.5rem 0 3rem; }
 /* Kopfbereich zweispaltig: Text links, Bild rechts (Michael 03.09.2026) */
 /* Grafik 25 % groesser und oben buendig mit der H1 (Michael, 04.09.2026) */
-.start-hero-raster { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,450px); gap:2.5rem; align-items:start; }
+.start-hero-raster { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,450px); grid-template-areas:"text bild" "aktionen aktionen"; gap:2.5rem; align-items:start; }
+.start-hero-text { grid-area:text; }
+.start-hero-bild { grid-area:bild; }
 .start-hero-bild img { display:block; width:100%; height:auto; border-radius:12px; }
 .start-hero h1 { font-size:2.4rem; font-weight:700; line-height:1.15; margin:0 0 .5rem; max-width:48rem; }
 .start-hero h1 .start-akzent { color:var(--accent); } /* „barrierefreie“ in Markenorange (Michael 04.09.2026); grosse fette Schrift, 3:1 reicht */
@@ -145,8 +147,7 @@ body:has(.start-shell) { display:block; }
 @media (max-width:900px) {
   .start-hero-raster { grid-template-columns:1fr; gap:1.5rem; }
   .start-hero-bild { max-width:360px; }
-  .start-hero-bild { order:3; }
-  .start-hero-raster > .start-aktionen { margin-top:.5rem; }
+  .start-hero-raster { grid-template-areas:"text" "aktionen" "bild"; }
 }
 
 /* ── Schmale Bildschirme ─────────────────────────────────────────────── */
