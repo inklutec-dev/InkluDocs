@@ -4906,8 +4906,6 @@ msgstr "Skapa alternativtexter med AI, granska dem själv och exportera som PDF/
 msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
 msgstr "Ett innehåll. Många människor. Lika möjligheter."
 
-msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr "AI-alternativtexter för tillgängliga PDF, Word och formulär"
 
 msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
 msgstr "Vi gör information tillgänglig för alla, oberoende av förmågor, enheter och situationer."
@@ -5157,3 +5155,6 @@ msgstr "Klart på en minut: {n} credits i månaden, inga betalningsuppgifter. Ef
 
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
 msgstr "Välkommen tillbaka. Logga in och fortsätt där du slutade."
+
+msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr "AI-alternativtexter för tillgängliga PDF-, Word- och formulärdokument"

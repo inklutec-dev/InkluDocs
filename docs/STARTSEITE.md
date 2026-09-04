@@ -60,11 +60,11 @@ article als Orientierungspunkt, Steve 03.09.2026). Die Überschriften-Navigation
 per Screenreader ergibt damit
 das Inhaltsverzeichnis der Seite.
 
-1. **Kopfbereich** (Navy): H1 aus zwei Zeilen — Markensatz „Ein Inhalt.
-   Viele Menschen. Gleiche Chancen.“ (Michael, 03.09.2026, als `<span
-   class="start-claim">` in der H1, damit es EINE Überschrift bleibt) und
-   darunter das Versprechen mit Suchbegriffen „Alt-Texte per KI für
-   barrierefreie PDF, Word und Formulare“. Der Absatz beginnt mit Michaels
+1. **Kopfbereich** (Navy): H1 = Versprechen mit Suchbegriffen „Alt-Texte per
+   KI für barrierefreie PDF-, Word- und Formulardokumente“ (Michaels Wunsch
+   04.09.2026, Steves ursprünglicher Wortlaut). Darunter der Markensatz „Ein
+   Inhalt. Viele Menschen. Gleiche Chancen.“ als `<p class="start-claim">`,
+   kleiner gesetzt als die H1 (vom 03.09. bis 04.09. stand er in der H1). Der Absatz beginnt mit Michaels
    Satz „Wir machen Informationen barrierefrei nutzbar, unabhängig von
    Fähigkeiten, Geräten und Situationen.“ Drei Knöpfe: „Ohne Anmeldung
    selbst erleben“ (→ demo.inkludocs.de), „Kostenlos starten“

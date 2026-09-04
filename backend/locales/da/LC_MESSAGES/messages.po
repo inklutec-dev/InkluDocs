@@ -5036,8 +5036,6 @@ msgstr "Generér alternativtekster med AI, kontrollér dem selv og eksportér so
 msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
 msgstr "Ét indhold. Mange mennesker. Lige muligheder."
 
-msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr "AI-alternativtekster til tilgængelige PDF, Word og formularer"
 
 msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
 msgstr "Vi gør information tilgængelig for alle, uanset evner, enheder og situationer."
@@ -5287,3 +5285,6 @@ msgstr "Klar på et minut: {n} credits om måneden, ingen betalingsoplysninger. 
 
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
 msgstr "Velkommen tilbage. Log ind, og fortsæt, hvor du slap."
+
+msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr "AI-alternativtekster til tilgængelige PDF-, Word- og formulardokumenter"

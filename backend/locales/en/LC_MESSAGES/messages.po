@@ -5344,8 +5344,6 @@ msgstr "Generate alt text with AI, review it yourself and export as PDF/UA or ac
 msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
 msgstr "One document. Many people. Equal opportunities."
 
-msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr "AI alt text for accessible PDF, Word and forms"
 
 msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
 msgstr "We make information accessible to everyone, regardless of abilities, devices and situations."
@@ -5595,3 +5593,6 @@ msgstr "Ready in a minute: {n} credits per month, no payment details. Afterwards
 
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
 msgstr "Welcome back. Log in and pick up where you left off."
+
+msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr "AI alt text for accessible PDF, Word and form documents"

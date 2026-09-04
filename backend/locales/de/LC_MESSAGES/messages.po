@@ -5347,8 +5347,6 @@ msgstr ""
 msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
 msgstr ""
 
-msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr ""
 
 msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
 msgstr ""
@@ -5597,4 +5595,7 @@ msgid "Startklar in einer Minute: {n} Credits im Monat, keine Zahlungsdaten. Dan
 msgstr ""
 
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
+msgstr ""
+
+msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
 msgstr ""

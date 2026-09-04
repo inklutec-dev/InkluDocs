@@ -5344,8 +5344,6 @@ msgstr "Genera textos alternativos con IA, revísalos tú mismo y expórtalos co
 msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
 msgstr "Un contenido. Muchas personas. Las mismas oportunidades."
 
-msgid "Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
-msgstr "Textos alternativos con IA para PDF, Word y formularios accesibles"
 
 msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
 msgstr "Hacemos que la información sea accesible para todos, independientemente de capacidades, dispositivos y situaciones."
@@ -5595,3 +5593,6 @@ msgstr "Listo en un minuto: {n} créditos al mes, sin datos de pago. Después so
 
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
 msgstr "Bienvenido de nuevo. Inicia sesión y continúa donde lo dejaste."
+
+msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr "Textos alternativos con IA para documentos PDF, Word y formularios accesibles"

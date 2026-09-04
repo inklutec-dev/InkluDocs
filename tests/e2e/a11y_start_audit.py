@@ -42,7 +42,8 @@ with sync_playwright() as p:
     check("html lang=de", page.get_attribute("html","lang")=="de")
     check("Fenstertitel vorhanden, nennt InkluDocs", "InkluDocs" in page.title(), page.title())
     check("genau eine H1", page.locator("h1").count()==1)
-    check("H1 = Markensatz + Versprechen", " ".join(page.locator("h1").inner_text().split()).startswith("Ein Inhalt. Viele Menschen. Gleiche Chancen. Alt-Texte per KI"), page.locator("h1").inner_text())
+    check("H1 = Versprechen mit Suchbegriffen", " ".join(page.locator("h1").inner_text().split()) == "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente", page.locator("h1").inner_text())
+    check("Markensatz als Absatz unter der H1", " ".join(page.locator("h1 + p.start-claim").inner_text().split()) == "Ein Inhalt. Viele Menschen. Gleiche Chancen.", page.locator("p.start-claim").count())
     for lm in ["header","nav","main","footer"]:
         check(f"Landmarke {lm} genau einmal", page.locator(lm).count()==1, str(page.locator(lm).count()))
     check("nur eine nav, daher ohne aria-label (ARIA nur wo noetig)", page.locator("nav").count()==1 and not page.get_attribute("nav","aria-label"))
@@ -147,9 +148,9 @@ with sync_playwright() as p:
     check("320 px: kein horizontales Scrollen", m.evaluate("() => document.documentElement.scrollWidth <= 320"), str(m.evaluate("() => document.documentElement.scrollWidth")))
     check("320 px: Hero-Knoepfe sichtbar", m.locator("section.start-hero a.btn-start").first.is_visible())
     print("=== H. Weitere Sprachen: H1 + Knoepfe")
-    for lang, claim in [("en","One document."),("fr","Un contenu."),("es","Un contenido."),("da","Ét indhold."),("sv","Ett innehåll.")]:
+    for lang, h1start, claim in [("en","AI alt text","One document."),("fr","Textes alternatifs","Un contenu."),("es","Textos alternativos","Un contenido."),("da","AI-alternativtekster","Ét indhold."),("sv","AI-alternativtexter","Ett innehåll.")]:
         pg = b.new_page(extra_http_headers={"Accept-Language": f"{lang};q=1"}); pg.goto(BASE + "/", wait_until="networkidle")
-        check(f"{lang}: html lang + H1-Markensatz uebersetzt", pg.get_attribute("html","lang")==lang and claim in pg.locator("h1").inner_text(), pg.locator("h1").inner_text()[:60]); pg.close()
+        check(f"{lang}: html lang + H1 + Markensatz uebersetzt", pg.get_attribute("html","lang")==lang and pg.locator("h1").inner_text().startswith(h1start) and claim in pg.locator("p.start-claim").inner_text(), pg.locator("h1").inner_text()[:60]); pg.close()
     b.close()
 print(f"\nERGEBNIS: {ok} ok, {fail} Fehler")
 sys.exit(1 if fail else 0)

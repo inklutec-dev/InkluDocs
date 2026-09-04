@@ -51,7 +51,7 @@ E = env_datei()
 LOGIN_MAIL = os.environ.get("INKLUDOCS_E2E_MAIL") or E.get("INKLUDOCS_E2E_MAIL")
 LOGIN_PW = os.environ.get("INKLUDOCS_E2E_PW") or E.get("INKLUDOCS_E2E_PW")
 
-H1_DE = "Ein Inhalt. Viele Menschen. Gleiche Chancen. Alt-Texte per KI für barrierefreie PDF, Word und Formulare"
+H1_DE = "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
 H1_EN_TEILE = ("One document. Many people. Equal opportunities.", "AI alt text for accessible PDF, Word and forms")
 KOPF_NAV = [("/preise", "Preise"), ("/kontakt", "Kontakt"), ("/ueber-uns", "Über uns"),
             ("/login", "Anmelden"), ("/register", "Kostenlos starten")]

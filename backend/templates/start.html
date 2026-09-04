@@ -63,7 +63,10 @@
 <section class="start-hero" id="hero">
   <div class="start-inner start-hero-raster">
    <div class="start-hero-text">
-    <h1 id="hero-h"><span class="start-claim">{{ _('Ein Inhalt. Viele Menschen. Gleiche Chancen.') }}</span> {{ _('Alt-Texte per KI für barrierefreie PDF, Word und Formulare') }}</h1>
+    <h1 id="hero-h">{{ _('Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente') }}</h1>
+    {# Markensatz (Michael) als eigener Absatz unter der H1 — Steve/Michael 04.09.2026:
+       Suchbegriffe allein in der Ueberschrift, Markensatz bleibt sichtbar. #}
+    <p class="start-claim">{{ _('Ein Inhalt. Viele Menschen. Gleiche Chancen.') }}</p>
     <p class="start-lead">{{ _('Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen.') }} {{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI.') }}</p>
     {# Drei Paare Satz + Knopf (Steve 03.09.): Der Satz steht im HTML direkt VOR
        seinem Knopf („Du hast schon ein Konto.“ → „Anmelden“), ohne ARIA — der
