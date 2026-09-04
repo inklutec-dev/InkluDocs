@@ -5598,5 +5598,6 @@ msgstr ""
 msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
 msgstr ""
 
-msgid "Infografik — KI-gestützte Barrierefreiheit für Dokumente: Ein 3D-Dokument mit Bild-Platzhalter erhält automatisch einen Alt-Text („Diagramm mit Umsatzentwicklung von 2020 bis 2024.\"). Unterstützte Formate: PDF/UA, Word und Formular. Ein Siegel bestätigt: Barrierefrei – WCAG konform."
+
+msgid "Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“."
 msgstr ""
