@@ -5154,9 +5154,10 @@ msgstr "Klart på en minut: {n} credits i månaden, inga betalningsuppgifter. Ef
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
 msgstr "Välkommen tillbaka. Logga in och fortsätt där du slutade."
 
-msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
-msgstr "AI-alternativtexter för tillgängliga PDF-, Word- och formulärdokument"
 
 
 msgid "Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“."
 msgstr "Illustration: Ett dokument med en bildplatshållare får automatiskt en AI-genererad alternativtext; till vänster tre rutor för PDF/UA, Word och formulär, nere till höger ett sigill med „Tillgänglig, WCAG-kompatibel“."
+
+msgid "Alt-Texte per KI für {a}barrierefreie{e} PDF-, Word- und Formulardokumente"
+msgstr "AI-alternativtexter för {a}tillgängliga{e} PDF-, Word- och formulärdokument"

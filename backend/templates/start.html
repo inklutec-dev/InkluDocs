@@ -63,7 +63,9 @@
 <section class="start-hero" id="hero">
   <div class="start-inner start-hero-raster">
    <div class="start-hero-text">
-    <h1 id="hero-h">{{ _('Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente') }}</h1>
+{# „barrierefreie“ orange (Michael 04.09.2026): Platzhalter {a}/{e} im msgid, damit jede
+       Sprache ihr Wort markiert; die H1 bleibt EINE Ueberschrift, der Screenreader liest den Satz. #}
+    <h1 id="hero-h">{{ _('Alt-Texte per KI für {a}barrierefreie{e} PDF-, Word- und Formulardokumente').format(a='<span class="start-akzent">', e='</span>') | safe }}</h1>
     {# Markensatz (Michael) als eigener Absatz unter der H1 — Steve/Michael 04.09.2026:
        Suchbegriffe allein in der Ueberschrift, Markensatz bleibt sichtbar. #}
     <p class="start-claim">{{ _('Ein Inhalt. Viele Menschen. Gleiche Chancen.') }}</p>

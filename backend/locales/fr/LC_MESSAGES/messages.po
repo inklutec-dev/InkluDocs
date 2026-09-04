@@ -5592,9 +5592,10 @@ msgstr "Prêt en une minute : {n} crédits par mois, sans données de paiement. 
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
 msgstr "Bon retour. Connectez-vous et reprenez là où vous vous étiez arrêté."
 
-msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
-msgstr "Textes alternatifs par IA pour des documents PDF, Word et formulaires accessibles"
 
 
 msgid "Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“."
 msgstr "Illustration : un document avec un espace réservé à l’image reçoit automatiquement un texte alternatif généré par l’IA ; à gauche trois vignettes pour PDF/UA, Word et formulaires, en bas à droite un sceau « Accessible, conforme WCAG »."
+
+msgid "Alt-Texte per KI für {a}barrierefreie{e} PDF-, Word- und Formulardokumente"
+msgstr "Textes alternatifs par IA pour des documents PDF, Word et formulaires {a}accessibles{e}"

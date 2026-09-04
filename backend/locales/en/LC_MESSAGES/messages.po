@@ -5592,9 +5592,10 @@ msgstr "Ready in a minute: {n} credits per month, no payment details. Afterwards
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
 msgstr "Welcome back. Log in and pick up where you left off."
 
-msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
-msgstr "AI alt text for accessible PDF, Word and form documents"
 
 
 msgid "Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“."
 msgstr "Illustration: A document with an image placeholder automatically receives an AI-generated alt text; on the left three tiles for PDF/UA, Word and forms, at the bottom right a seal reading “Accessible, WCAG compliant”."
+
+msgid "Alt-Texte per KI für {a}barrierefreie{e} PDF-, Word- und Formulardokumente"
+msgstr "AI alt text for {a}accessible{e} PDF, Word and form documents"
