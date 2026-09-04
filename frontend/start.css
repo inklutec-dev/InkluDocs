@@ -57,6 +57,10 @@ body:has(.start-shell) { display:block; }
 .start-aktionen { display:flex; gap:.75rem; flex-wrap:wrap; margin:1.5rem 0 .75rem; }
 /* Hero: Satz über dem Knopf als Paar, drei Paare nebeneinander */
 .start-aktionen-paare { gap:1rem 1.5rem; align-items:flex-end; margin-bottom:0; } /* Knöpfe unten bündig, auch wenn ein Satz umbricht */
+/* Knopfreihe als Rasterkind ueber beide Spalten (Michael 04.09.2026): drei Paare nebeneinander */
+.start-hero-raster > .start-aktionen { grid-column:1 / -1; margin-top:1.75rem; }
+.start-hero-raster > .start-aktionen .start-aktion { flex:1 1 16rem; }
+.start-hero-raster > .start-aktionen .start-hinweis { max-width:none; }
 .start-aktion { display:flex; flex-direction:column; gap:.45rem; }
 .start-aktion .btn-start { text-align:center; }
 .start-aktion .start-hinweis { max-width:20rem; line-height:1.4; }
@@ -141,6 +145,8 @@ body:has(.start-shell) { display:block; }
 @media (max-width:900px) {
   .start-hero-raster { grid-template-columns:1fr; gap:1.5rem; }
   .start-hero-bild { max-width:360px; }
+  .start-hero-bild { order:3; }
+  .start-hero-raster > .start-aktionen { margin-top:.5rem; }
 }
 
 /* ── Schmale Bildschirme ─────────────────────────────────────────────── */

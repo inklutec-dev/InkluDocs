@@ -70,7 +70,21 @@
        Suchbegriffe allein in der Ueberschrift, Markensatz bleibt sichtbar. #}
     <p class="start-claim">{{ _('Ein Inhalt. Viele Menschen. Gleiche Chancen.') }}</p>
     <p class="start-lead">{{ _('Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen.') }} {{ _('InkluDocs beschreibt die Bilder in deinen Dokumenten, liest den Text drumherum mit und liefert eine Datei, die Screenreader vorlesen können: als PDF/UA, barrierefreies Word oder Formular mit Quickinfos. Jeden Text kannst du von Hand ändern oder im Gespräch mit dem InkluAgent verfeinern. Du gibst frei, nicht die KI.') }}</p>
-    {# Drei Paare Satz + Knopf (Steve 03.09.): Der Satz steht im HTML direkt VOR
+   </div>
+   {# Bild rechts (Michael Karbe, 03.09.2026, KI-generiert, Bildnachweis im Impressum).
+      Alt-Text von InkluDocs selbst erzeugt (Staging-Projekt 660) — Steve 03.09.:
+      „logischerweise ein Alternativtext von InkluDocs“ — und von Hand korrigiert
+      (Pipeline: „schauen gemeinsam auf ein Tablet“; tatsächlich Handys UND Tablet).
+      Kein Text über dem Bild. #}
+   <div class="start-hero-bild">
+    <picture>
+      <source srcset="/static/startseite-hero-2026-09-04.webp" type="image/webp">
+      <img src="/static/startseite-hero-2026-09-04.jpg" width="734" height="498" fetchpriority="high"
+           alt="{{ _('Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“.') }}">
+    </picture>
+   </div>
+   {# Knopfreihe ueber beide Spalten unter Text und Grafik (Michael 04.09.2026) —
+      drei Paare Satz + Knopf (Steve 03.09.): Der Satz steht im HTML direkt VOR
        seinem Knopf („Du hast schon ein Konto.“ → „Anmelden“), ohne ARIA — der
        Screenreader liest erst den Satz, dann den Link. #}
     <div class="start-aktionen start-aktionen-paare">
@@ -89,19 +103,6 @@
         <a class="btn-start btn-start-secondary" href="/login">{{ _('Anmelden') }}</a>
       </div>
     </div>
-   </div>
-   {# Bild rechts (Michael Karbe, 03.09.2026, KI-generiert, Bildnachweis im Impressum).
-      Alt-Text von InkluDocs selbst erzeugt (Staging-Projekt 660) — Steve 03.09.:
-      „logischerweise ein Alternativtext von InkluDocs“ — und von Hand korrigiert
-      (Pipeline: „schauen gemeinsam auf ein Tablet“; tatsächlich Handys UND Tablet).
-      Kein Text über dem Bild. #}
-   <div class="start-hero-bild">
-    <picture>
-      <source srcset="/static/startseite-hero-2026-09-04.webp" type="image/webp">
-      <img src="/static/startseite-hero-2026-09-04.jpg" width="734" height="498" fetchpriority="high"
-           alt="{{ _('Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“.') }}">
-    </picture>
-   </div>
   </div>
 </section>
 
