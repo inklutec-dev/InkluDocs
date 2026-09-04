@@ -11,7 +11,10 @@
    (VoiceOver).
    25.08.2026: auf das oeffentliche Geruest (base_oeffentlich.html)
    umgestellt; jede Stufe ist eine Karte wie in der App. #}
-<p class="dash-sub">{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, Excel, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.').format(alt=preis_alt, qi=preis_qi, exp=preis_export, bild=preis_export_bild, feld=preis_export_feld, schritt=export_schritt, tab=preis_tabelle) }}</p>
+{# Einleitung als Prosa-Karte wie auf "Ueber uns" (Michael 04.09.2026 13:03) #}
+<section class="dash-card dash-prosa">
+  <p>{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, Excel, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.').format(alt=preis_alt, qi=preis_qi, exp=preis_export, bild=preis_export_bild, feld=preis_export_feld, schritt=export_schritt, tab=preis_tabelle) }}</p>
+</section>
 
 <section class="dash-card dash-prosa" aria-labelledby="free-h">
     <h2 id="free-h">{{ _('Kostenlos starten') }}</h2>
