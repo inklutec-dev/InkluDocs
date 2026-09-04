@@ -184,10 +184,10 @@ with sync_playwright() as p:
     check("Fusszeile: 7 Links wie im oeffentlichen Geruest", fusszeile(page) == FUSSZEILE, str(fusszeile(page)))
     check("Bilder haben Alt-Text (oder es gibt keine)",
           page.locator("img:not([alt])").count() == 0)
-    check("Hero-Bild: WebP-Quelle, JPEG-Rueckfall, Breite/Hoehe gesetzt, Alt-Text aus InkluDocs (Michael 03.09.)",
+    check("Hero-Bild: WebP-Quelle, JPEG-Rueckfall, Breite/Hoehe gesetzt, Alt-Text aus InkluDocs (Michael 04.09.)",
           page.locator("section.start-hero picture source[type='image/webp']").count() == 1
-          and page.locator("section.start-hero img[src$='.jpg'][width='840'][height='840']").count() == 1
-          and "Langstock" in (page.locator("section.start-hero img").get_attribute("alt") or ""))
+          and page.locator("section.start-hero img[src$='.jpg'][width='734'][height='498']").count() == 1
+          and "Infografik" in (page.locator("section.start-hero img").get_attribute("alt") or ""))
     check("Hero-Bild wird wirklich geladen (naturalWidth > 0)",
           page.locator("section.start-hero img").evaluate("i => i.complete && i.naturalWidth > 0"))
     axe_lauf(page, "/")

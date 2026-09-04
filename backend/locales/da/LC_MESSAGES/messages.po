@@ -5055,8 +5055,6 @@ msgstr "{n} credits om måneden, uden betalingsoplysninger."
 msgid "Du hast schon ein Konto."
 msgstr "Du har allerede en konto."
 
-msgid "Vier Menschen auf einem Uferweg an einem See schauen lächelnd auf Handy und Tablet; der ältere Mann rechts hält einen weißen Langstock."
-msgstr "Fire mennesker på en sti ved en sø ser smilende på mobil og tablet; den ældre mand til højre holder en hvid stok."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Tre værktøjer, ét mål: tilgængelige dokumenter"
@@ -5288,3 +5286,6 @@ msgstr "Velkommen tilbage. Log ind, og fortsæt, hvor du slap."
 
 msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
 msgstr "AI-alternativtekster til tilgængelige PDF-, Word- og formulardokumenter"
+
+msgid "Infografik — KI-gestützte Barrierefreiheit für Dokumente: Ein 3D-Dokument mit Bild-Platzhalter erhält automatisch einen Alt-Text („Diagramm mit Umsatzentwicklung von 2020 bis 2024.\"). Unterstützte Formate: PDF/UA, Word und Formular. Ein Siegel bestätigt: Barrierefrei – WCAG konform."
+msgstr "Infografik — AI-understøttet tilgængelighed for dokumenter: et 3D-dokument med en billedpladsholder får automatisk en alternativtekst („Diagram over omsætningsudviklingen fra 2020 til 2024.\"). Understøttede formater: PDF/UA, Word og formularer. Et segl bekræfter: tilgængelig – WCAG-konform."

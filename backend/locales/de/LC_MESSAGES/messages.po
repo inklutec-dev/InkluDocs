@@ -5366,8 +5366,6 @@ msgstr ""
 msgid "Du hast schon ein Konto."
 msgstr ""
 
-msgid "Vier Menschen auf einem Uferweg an einem See schauen lächelnd auf Handy und Tablet; der ältere Mann rechts hält einen weißen Langstock."
-msgstr ""
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr ""
@@ -5598,4 +5596,7 @@ msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört ha
 msgstr ""
 
 msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
+msgstr ""
+
+msgid "Infografik — KI-gestützte Barrierefreiheit für Dokumente: Ein 3D-Dokument mit Bild-Platzhalter erhält automatisch einen Alt-Text („Diagramm mit Umsatzentwicklung von 2020 bis 2024.\"). Unterstützte Formate: PDF/UA, Word und Formular. Ein Siegel bestätigt: Barrierefrei – WCAG konform."
 msgstr ""

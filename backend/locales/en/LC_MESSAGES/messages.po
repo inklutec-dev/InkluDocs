@@ -5363,8 +5363,6 @@ msgstr "{n} credits per month, no payment details."
 msgid "Du hast schon ein Konto."
 msgstr "You already have an account."
 
-msgid "Vier Menschen auf einem Uferweg an einem See schauen lächelnd auf Handy und Tablet; der ältere Mann rechts hält einen weißen Langstock."
-msgstr "Four people on a lakeside path smile as they look at phones and a tablet; the older man on the right holds a white cane."
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Three tools, one goal: accessible documents"
@@ -5596,3 +5594,6 @@ msgstr "Welcome back. Log in and pick up where you left off."
 
 msgid "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
 msgstr "AI alt text for accessible PDF, Word and form documents"
+
+msgid "Infografik — KI-gestützte Barrierefreiheit für Dokumente: Ein 3D-Dokument mit Bild-Platzhalter erhält automatisch einen Alt-Text („Diagramm mit Umsatzentwicklung von 2020 bis 2024.\"). Unterstützte Formate: PDF/UA, Word und Formular. Ein Siegel bestätigt: Barrierefrei – WCAG konform."
+msgstr "Infographic — AI-powered accessibility for documents: a 3D document with an image placeholder automatically receives an alt text (\"Chart showing revenue development from 2020 to 2024.\"). Supported formats: PDF/UA, Word and forms. A seal confirms: accessible – WCAG compliant."

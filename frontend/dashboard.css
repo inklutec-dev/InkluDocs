@@ -69,6 +69,12 @@
 .dash-card.dash-prosa p { font-size:.9rem; line-height:1.6; color:var(--text-muted); }
 .dash-card.dash-prosa p + p { margin-top:.75rem; }
 .dash-card.dash-prosa p:last-child { margin-bottom:0; }
+/* Listen in Prosa-Karten (Preise, 04.09.2026, Michael): gleiche Schrift und Groesse
+   wie der Fliesstext auf "Ueber uns". */
+.dash-card.dash-prosa ul, .dash-card.dash-prosa ol { margin:.35rem 0 0; padding-left:1.25rem; }
+.dash-card.dash-prosa li { font-size:.9rem; line-height:1.6; color:var(--text-muted); }
+.dash-card.dash-prosa li + li { margin-top:.35rem; }
+.dash-card.dash-prosa p + ul, .dash-card.dash-prosa p + ol { margin-top:.6rem; }
 
 /* Formularfelder */
 .dash-field { margin-bottom:1.25rem; }
