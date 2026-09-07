@@ -1,6 +1,6 @@
 # Standard-Builder foto_landschaft
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:962`
+- **Builder:** `prompts/builders/beschreibung_foto.py:941`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
@@ -125,8 +125,9 @@ Gewaessernamen und keine Jahreszeit, die nicht belegt sind.
 
 INVENTAR (Pass-2-Beobachtungen)
 
-Nutze diese strukturierten Beobachtungen als primaere faktische Grundlage.
-Sichtbare Bildinformationen duerfen ergaenzen, dem Inventar aber nicht
+Das Inventar enthaelt die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primaere faktische Grundlage. Sichtbare
+Bildinformationen duerfen ergaenzt werden, aber nicht dem Inventar
 widersprechen.
 
 {

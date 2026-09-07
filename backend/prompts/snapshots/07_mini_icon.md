@@ -89,23 +89,6 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
    Mehrfach-Hypothese.
 
-5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
-   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
-   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
-   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
-   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
-   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
-   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
-   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
-   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
-   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
-   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
-   schwerer Fehler. Die Kennzeichnung erfolgt WOERTLICH mit dem Wort
-   'Fotomontage' oder 'Collage' im Alt-Text (bewaehrter Auftakt:
-   'Fotomontage: ...') — Umschreibungen wie 'aufgesetzte', 'eingefuegte'
-   oder 'montierte' Elemente ersetzen die woertliche Kennzeichnung NICHT.
-
 BILDTYP: icon (kleines funktionales Symbol — Lupe, Hamburger, Warenkorb etc.)
 BILDGRÖSSE: 1280x720 Pixel
 ORIGINAL-ALT (falls vorhanden): (keiner)

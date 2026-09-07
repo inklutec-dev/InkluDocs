@@ -1,6 +1,6 @@
 # Premium-Builder foto_personen — Prompt-Modus: lean
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:426`
+- **Builder:** `prompts/builders/beschreibung_foto.py:431`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
@@ -134,10 +134,10 @@ in der knappen, natuerlichen Form der STILREGELN.
 
 INVENTAR (Pass-2-Beobachtungen)
 
-Das Inventar enthaelt die strukturierten Beobachtungen aus dem
-Analyse-Pass. Nutze diese Daten als primaere faktische Grundlage fuer
-Alt-Text und Langbeschreibung. Sichtbare Bildinformationen duerfen
-ergaenzt werden, aber nicht dem Inventar widersprechen.
+Das Inventar enthaelt die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primaere faktische Grundlage. Sichtbare
+Bildinformationen duerfen ergaenzt werden, aber nicht dem Inventar
+widersprechen.
 
 {
   "foto_subtyp": "foto_event",

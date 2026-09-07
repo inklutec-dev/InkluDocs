@@ -1,6 +1,6 @@
 # Inventar (Pass 2) — Bildtyp: foto
 
-- **Builder:** `prompts/builders/inventar.py:104`
+- **Builder:** `prompts/builders/inventar.py:84`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `full`
@@ -97,41 +97,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 BILDTYP: foto
 BILDGRÖSSE: 1280x720 Pixel
 SCHWERPUNKT FOTO:
-- Wenn Personen sichtbar: für jede Person separat Position, Haltung, Blickrichtung,
-  was sie in den Händen hält
-- PERSONEN-ZAEHLUNG (Iteration 2, ChatGPT 04.05.2026):
-  Zähle Personen einzeln und systematisch von links nach rechts.
-  Auch teilweise verdeckte Personen, Personen im Hintergrund,
-  Rückenansichten und angeschnittene Personen zählen als Personen,
-  wenn Körper, Kopf, Kleidung oder Haltung eindeutig auf eine Person
-  hinweisen.
-  Bei Unsicherheit: lieber die niedrigere SICHERE Zahl angeben und
-  einen Hinweis in halluzinations_warnung eintragen
-  (z.B. "Personenzahl unsicher, verdeckte Personen moeglich").
-  Konfidenz dann auf mittel oder niedrig setzen, damit der
-  Beschreibungs-Pass z.B. 'mindestens sieben Personen' formulieren
-  kann statt einer falschen exakten Zahl.
+- Wenn Personen sichtbar: für jede Person separat Position, Haltung, was sie in den Händen hält
+- PERSONEN-ZAEHLUNG: Zähle Personen einzeln und systematisch von links nach rechts.
+  Auch teilweise verdeckte Personen, Personen im Hintergrund, Rückenansichten und
+  angeschnittene Personen zählen, wenn Körper, Kopf, Kleidung oder Haltung eindeutig
+  auf eine Person hinweisen. Bei Unsicherheit: die niedrigere SICHERE Zahl nehmen und
+  im Text 'mindestens sieben Personen' oder 'acht in einer Reihe, dahinter weitere'
+  formulieren statt einer falschen exakten Zahl.
+- Lesbare Texte wortgetreu erfassen: Schilder, Schriftzüge, Kennzeichen, Namensschilder, Logos
 - Setting-Indikatoren benennen: Innen/Außen, Möbel, Geräte, Schilder, Catering, Bühne
-- foto_subtyp am Ende setzen nach folgenden Kriterien (in dieser Reihenfolge prüfen):
-  - foto_event: ≥2 Personen UND mindestens ein Event-Indikator sichtbar
-    (Bühne, Beamer/Projektion, Catering-Tisch, Workshop-Material auf Tischen,
-    Vortragsanordnung, Bestuhlung in Reihen, Namensschilder bei mehreren).
-    Eval-Beobachtung: Schwelle ≥2 ist Re-Review-Korrektur (vorher ≥3). Wenn
-    in Eval-Tests zwei Personen vor zufälliger Hintergrund-Bühne fälschlich
-    als foto_event klassifiziert werden, Schwelle zurück auf ≥3 oder
-    'Hintergrund-Bühne ist KEIN Indikator' präzisieren.
-  - foto_personen: Personen sichtbar, KEIN Event-Indikator
-    (Porträts, Kleingruppen, Personen in privater Tätigkeit, Familienfoto)
-  - foto_essen: Essen oder Getränk dominiert das Bild
-    (auch wenn Personen im Hintergrund — Hauptmotiv ist die Speise)
-  - foto_objekte: keine Personen, Objekte dominieren
-    (Produkte, Gegenstände, Tisch-Anrichtungen ohne Speise-Fokus)
-  - foto_landschaft: Außen-Setting ohne dominante Subjekte
-    (Natur, Stadt-Skyline, Geografie — Menschen höchstens als Staffage)
-  - foto_architektur: Gebäude oder Innenraum dominiert
-    (Bauwerk als Hauptmotiv, nicht nur Hintergrund)
-- Bei Mehrdeutigkeit: ehrliche Festlegung, keine None-Rückgabe — der
-  Beschreibungs-Pass braucht den Sub-Typ für seine Spezialregeln
 
 KONTEXT (vom Web-Scraper, PDF-Extraktion oder API-Aufruf):
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.

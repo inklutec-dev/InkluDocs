@@ -1,6 +1,6 @@
 # Daten-Builder diagramm
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:304`
+- **Builder:** `prompts/builders/beschreibung_daten.py:295`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
@@ -50,6 +50,60 @@ Was du NICHT tust:
 
 Du baust eine Brücke aus harten Inventar-Daten zu echter, anwendbarer Information.
 Jedes Wort sitzt; das Wichtigste und Belegbare steht vorne.
+
+ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
+
+1. EVIDENZ-BASIERT: Eine Aussage darf nur dann im Output stehen, wenn das Bild oder das
+   Inventar sie stützt. Plausibel klingen reicht NICHT. 'Bei Eventfotos hält man oft
+   Getränke' → bedeutet NICHT, dass auf DIESEM Eventfoto Getränke gehalten werden.
+
+2. KLAR BENENNEN, UNKLARES NEUTRAL — NIEMALS HEDGEN. Entscheide für jede Aussage:
+   - Wird die Identität oder Funktion durch sichtbare Form UND Setting/Kontext klar
+     getragen? Dann benenne sie direkt und mit Bestimmtheit.
+   - Ist sie genuin mehrdeutig (oder im Inventar als Sicherheit 'niedrig' markiert)?
+     Dann beschreibe neutral die reine visuelle Form — ohne Hedge-Wörter.
+   Es gibt nur diese zwei Wege: benannter Fakt ODER neutrale Form. Niemals ein
+   Mittelweg aus Vermutungs-Wörtern. Sind zwei Deutungen gleichermaßen
+   naheliegend, nenne beide gleichwertig ('als Katze oder Fuchs deutbar') —
+   das ist eine präzise Beschreibung der Mehrdeutigkeit, kein Hedging.
+   Beispiele:
+   - 'orange und weiße Abstimmkarten' OK, wenn das Workshop-Setting die Funktion trägt
+   - 'Boeing 777' OK, wenn der Schriftzug am Rumpf lesbar ist
+   - 'runde orangefarbene Gegenstände' OK, wenn die Funktion wirklich nicht erkennbar ist
+   - 'vermutlich Stimmkarten' / 'wirkt wie eine Dose' NICHT (Hedge statt Entscheidung)
+   - 'Medikamentendose' NICHT, wenn nur eine Zylinderform ohne weiteren Beleg sichtbar ist
+
+3. KEINE INTERAKTIONS-GESCHICHTEN: Wenn das Inventar nur 'Hund-Cartoon' + 'Laptop' listet,
+   schreibe nicht 'Hund arbeitet am Laptop'. Du erfindest eine Handlung. Erlaubt: 'Hund-
+   Cartoon, daneben ein Laptop.' Punkt.
+
+4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
+   Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
+   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
+   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
+   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
+   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
+   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
+   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
+   'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
+   Mehrfach-Hypothese.
+
+5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
+   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
+   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
+   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
+   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
+   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
+   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
+   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
+   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
+   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
+   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
+   schwerer Fehler. Die Kennzeichnung erfolgt WOERTLICH mit dem Wort
+   'Fotomontage' oder 'Collage' im Alt-Text (bewaehrter Auftakt:
+   'Fotomontage: ...') — Umschreibungen wie 'aufgesetzte', 'eingefuegte'
+   oder 'montierte' Elemente ersetzen die woertliche Kennzeichnung NICHT.
 
 BILDTYP: diagramm (Balken, Linie, Kreis, gestapelt, Streu, Heatmap)
 BILDGROESSE: 1280x720 Pixel
@@ -196,26 +250,12 @@ STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
    Partizip-Einschuebe zwischen Subjekt und Verb, keine Semikolon-Ketten,
    keine Lage-Floskeln wie "im Bildvordergrund" oder "im Bildhintergrund"
    (stattdessen natuerlich: "vor ihr", "dahinter", "auf dem Tisch").
-   GUT: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
-   aufgeklapptem Laptop vor einer hellen Wand."
-   SCHLECHT: "Anna Reimers in schwarzem Blazer, den Kopf leicht nach oben
-   links gewandt und den Mund leicht geoeffnet, sitzt vor einer hellen
-   Wand; im Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch."
+   GUT: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile
+   steigt und erreicht 2023 mit 5 den hoechsten Wert."
+   SCHLECHT: "Ein Balkendiagramm, bestehend aus vier Kategorien mit jeweils
+   drei Balken, deren Hoehen variieren; im Bildvordergrund die Legende."
 
-3. KOERPERDETAILS NUR MIT BEDEUTUNG: Kopfhaltung, Blickrichtung,
-   Mundstellung, Gestik und Mimik gehoeren NICHT in den Alt-Text — ausser
-   sie tragen die Kernaussage des Bildes (die Rednerin zeigt auf die
-   Leinwand; zwei Personen geben sich die Hand). In der Langbeschreibung
-   nur dort, wo sie die Szene wirklich nachvollziehbarer machen.
-
-4. NAME ALS SATZANFANG: Ein verwendeter Name ist das SUBJEKT des ersten
-   Satzes ("Anna Reimers, Gruenderin von Beispielwerk, sitzt an einem
-   Holztisch ..."). FALSCH ist die Etikett-Struktur "Name, Funktion: Ein
-   Mann ..." — die benannte Person wird danach NIE erneut anonym
-   eingefuehrt ("ein Mann", "eine Frau", "eine Person"); stattdessen
-   Pronomen oder Rolle ("der Gruender", "die Physikerin").
-
-5. KEINE FLOSKELN: Keine Ansage, DASS etwas gezeigt wird — verboten ist
+3. KEINE FLOSKELN: Keine Ansage, DASS etwas gezeigt wird — verboten ist
    das ganze Muster, nicht nur einzelne Woerter: "Das Bild zeigt", "Das
    Foto zeigt", "Die Aufnahme zeigt", "Auf dem Bild", "Zu sehen ist",
    "Hier sieht man" und jede sinngemaesse Variante. Das gilt fuer
@@ -229,9 +269,6 @@ STILREGELN (fuer Alt-Text UND Langbeschreibung — Stil, nicht Fakten)
    wie "laut Seitenkontext", "laut Kontext", "dem Kontext zufolge" oder
    "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt,
    ohne ihre Herkunft zu nennen.
-(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
-das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
-allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
 
 
 ALT-TEXT
@@ -411,7 +448,7 @@ Szene: Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (
 Gueltige Antwort (exakt dieses JSON-Format):
 {
   "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, erst ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
-  "langbeschreibung": "Das Liniendiagramm stellt die Entwicklung der Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. dar. Die x-Achse umfasst den Zeitraum, die y-Achse die Bevölkerung in Milliarden. Über fast den gesamten Zeitraum verläuft die Kurve nahe der Nulllinie. Ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
+  "langbeschreibung": "Liniendiagramm zur Entwicklung der Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.; die x-Achse umfasst den Zeitraum, die y-Achse die Bevölkerung in Milliarden. Über fast den gesamten Zeitraum verläuft die Kurve nahe der Nulllinie. Ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
   "verwendete_inventar_items": [
     "Liniendiagramm",
     "x-Achse: 10.000 v. Chr. bis 2000 n. Chr.",

@@ -1,6 +1,6 @@
 # Premium-Builder foto_event — Prompt-Modus: lean
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:274`
+- **Builder:** `prompts/builders/beschreibung_foto.py:288`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`

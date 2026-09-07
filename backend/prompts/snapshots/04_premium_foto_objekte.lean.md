@@ -1,6 +1,6 @@
 # Premium-Builder foto_objekte — Prompt-Modus: lean
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:604`
+- **Builder:** `prompts/builders/beschreibung_foto.py:600`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
@@ -124,9 +124,9 @@ beginnt der Text damit — nicht mit einer generischen Umschreibung.
 
 INVENTAR (Pass-2-Beobachtungen)
 
-Das Inventar enthaelt strukturierte Beobachtungen aus dem Analyse-Pass.
+Das Inventar enthaelt die strukturierten Beobachtungen aus dem Analyse-Pass.
 Nutze diese Daten als primaere faktische Grundlage. Sichtbare
-Bildinformationen duerfen ergaenzt werden, duerfen dem Inventar aber nicht
+Bildinformationen duerfen ergaenzt werden, aber nicht dem Inventar
 widersprechen.
 
 {

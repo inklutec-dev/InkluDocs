@@ -27,41 +27,15 @@ from .helpers import bildgroesse_zeile, kontext_werte, user_hint_block
 # damit das Modell weiß WORAUF zu fokussieren ist.
 BILDTYP_INVENTAR_SCHWERPUNKTE: dict[str, str] = {
     'foto': """SCHWERPUNKT FOTO:
-- Wenn Personen sichtbar: für jede Person separat Position, Haltung, Blickrichtung,
-  was sie in den Händen hält
-- PERSONEN-ZAEHLUNG (Iteration 2, ChatGPT 04.05.2026):
-  Zähle Personen einzeln und systematisch von links nach rechts.
-  Auch teilweise verdeckte Personen, Personen im Hintergrund,
-  Rückenansichten und angeschnittene Personen zählen als Personen,
-  wenn Körper, Kopf, Kleidung oder Haltung eindeutig auf eine Person
-  hinweisen.
-  Bei Unsicherheit: lieber die niedrigere SICHERE Zahl angeben und
-  einen Hinweis in halluzinations_warnung eintragen
-  (z.B. "Personenzahl unsicher, verdeckte Personen moeglich").
-  Konfidenz dann auf mittel oder niedrig setzen, damit der
-  Beschreibungs-Pass z.B. 'mindestens sieben Personen' formulieren
-  kann statt einer falschen exakten Zahl.
-- Setting-Indikatoren benennen: Innen/Außen, Möbel, Geräte, Schilder, Catering, Bühne
-- foto_subtyp am Ende setzen nach folgenden Kriterien (in dieser Reihenfolge prüfen):
-  - foto_event: ≥2 Personen UND mindestens ein Event-Indikator sichtbar
-    (Bühne, Beamer/Projektion, Catering-Tisch, Workshop-Material auf Tischen,
-    Vortragsanordnung, Bestuhlung in Reihen, Namensschilder bei mehreren).
-    Eval-Beobachtung: Schwelle ≥2 ist Re-Review-Korrektur (vorher ≥3). Wenn
-    in Eval-Tests zwei Personen vor zufälliger Hintergrund-Bühne fälschlich
-    als foto_event klassifiziert werden, Schwelle zurück auf ≥3 oder
-    'Hintergrund-Bühne ist KEIN Indikator' präzisieren.
-  - foto_personen: Personen sichtbar, KEIN Event-Indikator
-    (Porträts, Kleingruppen, Personen in privater Tätigkeit, Familienfoto)
-  - foto_essen: Essen oder Getränk dominiert das Bild
-    (auch wenn Personen im Hintergrund — Hauptmotiv ist die Speise)
-  - foto_objekte: keine Personen, Objekte dominieren
-    (Produkte, Gegenstände, Tisch-Anrichtungen ohne Speise-Fokus)
-  - foto_landschaft: Außen-Setting ohne dominante Subjekte
-    (Natur, Stadt-Skyline, Geografie — Menschen höchstens als Staffage)
-  - foto_architektur: Gebäude oder Innenraum dominiert
-    (Bauwerk als Hauptmotiv, nicht nur Hintergrund)
-- Bei Mehrdeutigkeit: ehrliche Festlegung, keine None-Rückgabe — der
-  Beschreibungs-Pass braucht den Sub-Typ für seine Spezialregeln""",
+- Wenn Personen sichtbar: für jede Person separat Position, Haltung, was sie in den Händen hält
+- PERSONEN-ZAEHLUNG: Zähle Personen einzeln und systematisch von links nach rechts.
+  Auch teilweise verdeckte Personen, Personen im Hintergrund, Rückenansichten und
+  angeschnittene Personen zählen, wenn Körper, Kopf, Kleidung oder Haltung eindeutig
+  auf eine Person hinweisen. Bei Unsicherheit: die niedrigere SICHERE Zahl nehmen und
+  im Text 'mindestens sieben Personen' oder 'acht in einer Reihe, dahinter weitere'
+  formulieren statt einer falschen exakten Zahl.
+- Lesbare Texte wortgetreu erfassen: Schilder, Schriftzüge, Kennzeichen, Namensschilder, Logos
+- Setting-Indikatoren benennen: Innen/Außen, Möbel, Geräte, Schilder, Catering, Bühne""",
 
     'illustration': """SCHWERPUNKT ILLUSTRATION:
 - Stilrichtung benennen (Cartoon, Vektor, gemalt, comic-haft etc.)
@@ -70,9 +44,15 @@ BILDTYP_INVENTAR_SCHWERPUNKTE: dict[str, str] = {
 - Halluzinations-Warnung explizit für stilisierte Darstellungen formulieren""",
 
     'diagramm': """SCHWERPUNKT DIAGRAMM:
-- Diagrammtyp (Balken, Linie, Kreis, etc.)
-- ALLE Achsenbeschriftungen, Legende, Datenpunkte als lesbare_texte erfassen
-- Wenn OCR-Text vorhanden, primär darauf stützen""",
+- Diagrammtyp (Balken, Linie, Kreis, gestapelt, Streu), Titel, Achsen, Einheiten, Legende
+- WERTE ZUERST, TREND DANACH: Lies für JEDE Kategorie und JEDE Reihe die Werte
+  einzeln an der Achse ab und notiere sie dir als Liste (zum Beispiel
+  "Hardware: 2021 2,5 / 2022 4,4 / 2023 2,0"). Erst aus dieser Liste leitest du
+  Trends, Vergleiche und Extreme ab — nie aus dem Gesamteindruck. Ein Trendwort
+  (steigt, fällt, erholt sich) ist nur erlaubt, wenn die notierten Werte es tragen.
+- Wenn keine Werte lesbar sind (keine Achse, keine Zahlen): nur Rangfolge und
+  Form beschreiben, keine Zahlen erfinden
+- ALLE Achsenbeschriftungen, Legende, Datenpunkte als lesbare Texte erfassen""",
 
     'tabelle': """SCHWERPUNKT TABELLE:
 - ALLE Spaltenköpfe wortgetreu erfassen

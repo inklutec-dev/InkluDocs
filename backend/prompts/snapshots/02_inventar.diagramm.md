@@ -1,6 +1,6 @@
 # Inventar (Pass 2) — Bildtyp: diagramm
 
-- **Builder:** `prompts/builders/inventar.py:104`
+- **Builder:** `prompts/builders/inventar.py:84`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `full`
@@ -97,9 +97,15 @@ ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 BILDTYP: diagramm
 BILDGRÖSSE: 1280x720 Pixel
 SCHWERPUNKT DIAGRAMM:
-- Diagrammtyp (Balken, Linie, Kreis, etc.)
-- ALLE Achsenbeschriftungen, Legende, Datenpunkte als lesbare_texte erfassen
-- Wenn OCR-Text vorhanden, primär darauf stützen
+- Diagrammtyp (Balken, Linie, Kreis, gestapelt, Streu), Titel, Achsen, Einheiten, Legende
+- WERTE ZUERST, TREND DANACH: Lies für JEDE Kategorie und JEDE Reihe die Werte
+  einzeln an der Achse ab und notiere sie dir als Liste (zum Beispiel
+  "Hardware: 2021 2,5 / 2022 4,4 / 2023 2,0"). Erst aus dieser Liste leitest du
+  Trends, Vergleiche und Extreme ab — nie aus dem Gesamteindruck. Ein Trendwort
+  (steigt, fällt, erholt sich) ist nur erlaubt, wenn die notierten Werte es tragen.
+- Wenn keine Werte lesbar sind (keine Achse, keine Zahlen): nur Rangfolge und
+  Form beschreiben, keine Zahlen erfinden
+- ALLE Achsenbeschriftungen, Legende, Datenpunkte als lesbare Texte erfassen
 
 KONTEXT (vom Web-Scraper, PDF-Extraktion oder API-Aufruf):
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
