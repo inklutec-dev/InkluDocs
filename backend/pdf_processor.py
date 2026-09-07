@@ -554,6 +554,7 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
 
 MAX_IMAGE_DIM = 1536  # laengste Kante fuer den Modellaufruf (Bedrock/Claude); bei niedrigerer Aufloesung halluziniert das Modell Details auf kleinen Objekten (z.B. orangefarbene Token werden zu "Getraenken"). Seit 28.04.2026 1536 statt 1024.
 MAX_IMAGE_BYTES = 4 * 1024 * 1024  # 4 MB Obergrenze fuer den Modellaufruf
+MIN_UPSCALE_DIM = int(os.environ.get("V4_UPSCALE_MIN", "800"))  # kleine Bilder bis zu dieser Kante hochskalieren; 0 = aus
 
 
 MAX_ALT_TEXT_LENGTH = 400  # Characters - enough for key info, not overwhelming for screen readers
@@ -621,6 +622,18 @@ def _resize_image_for_model(image_path: str) -> str:
     if image_path.lower().endswith((".avif", ".heic", ".heif")):
         buf = BytesIO()
         img.save(buf, format="JPEG", quality=90)
+        return base64.b64encode(buf.getvalue()).decode()
+    # Kleine Bilder hochskalieren (07.09.2026, Pruefkorpus-Befund: Word-eingebettete
+    # Bilder kommen mit 150 bis 450 px an — Distelfink 151x231, Diagramm 462x200 —
+    # und das Modell erfindet dann Details oder liest Werte falsch). Bis zur
+    # Zielkante MIN_UPSCALE_DIM mit Lanczos vergroessern, verlustfrei als PNG.
+    # Schalter V4_UPSCALE_MIN (0 = aus) fuer A/B-Messungen.
+    laengste = max(img.width, img.height)
+    if 0 < MIN_UPSCALE_DIM and 0 < laengste < MIN_UPSCALE_DIM:
+        faktor = min(4, -(-MIN_UPSCALE_DIM // laengste))  # ceil, hoechstens x4
+        img = img.resize((img.width * faktor, img.height * faktor), Image.LANCZOS)
+        buf = BytesIO()
+        img.save(buf, format="PNG")
         return base64.b64encode(buf.getvalue()).decode()
     # Resize if dimensions exceed limit
     if img.width > MAX_IMAGE_DIM or img.height > MAX_IMAGE_DIM:

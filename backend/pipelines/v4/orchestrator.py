@@ -129,7 +129,8 @@ def _user_prompt_suffix(user_prompt: str) -> str:
 #   'off' (Default) — verhaltensneutral: nur needs_review-Flag wie bisher
 #   'on'            — korrigierter_alt_text wird uebernommen + needs_review gesetzt;
 #                     Original und Begruendung landen im Log, die Anwendung im
-#                     pipeline_steps-Audit-Trail. Langbeschreibung bleibt unangetastet.
+#                     pipeline_steps-Audit-Trail. Seit 07.09.2026 prueft und korrigiert der
+#                     Pruefer auch die Langbeschreibung (korrigierte_langbeschreibung).
 from pydantic import BaseModel, Field, field_validator
 from prompts.components.stilregeln import STILREGELN_KERN  # Korrekturwache 03.09.2026: gleiche Stilregeln fuer Pruefer-Korrekturen
 from prompts.builders.helpers import (  # Prompt-Caching 03.09.2026: Bilddaten ans Ende
@@ -184,8 +185,16 @@ class VerifyOutput(BaseModel):
         default=None,
         description='Kurze Begruendung, was warum korrigiert wurde — nur zusammen mit korrigierter_alt_text',
     )
+    # 07.09.2026: Der Pruefer sieht jetzt auch die Langbeschreibung (Befund Astra/Korpus:
+    # Widersprueche zwischen Alt und Lang wurden nie gefangen).
+    langbeschreibung_belegt: bool = Field(default=True, description='True wenn JEDE konkrete Behauptung der Langbeschreibung durch das Bild gedeckt ist und sie dem Alt-Text nicht widerspricht; True auch wenn keine Langbeschreibung vorliegt')
+    strittige_lang: list[str] = Field(default_factory=list, description='Woertlich zitierte strittige Behauptungen der Langbeschreibung mit kurzem Grund (auch Widersprueche zum Alt-Text)')
+    korrigierte_langbeschreibung: Optional[str] = Field(
+        default=None, max_length=2000,
+        description='Vollstaendig korrigierte Langbeschreibung (Minimaleingriff, hoechstens 2000 Zeichen), nur bei Beanstandung — sonst leer',
+    )
 
-    @field_validator('strittige_aussagen', mode='before')
+    @field_validator('strittige_aussagen', 'strittige_lang', mode='before')
     @classmethod
     def _coerce_list(cls, v):
         if isinstance(v, str):
@@ -199,7 +208,7 @@ class VerifyOutput(BaseModel):
             return [v] if v.strip() else []
         return v
 
-    @field_validator('korrigierter_alt_text', 'korrektur_begruendung', mode='before')
+    @field_validator('korrigierter_alt_text', 'korrektur_begruendung', 'korrigierte_langbeschreibung', mode='before')
     @classmethod
     def _coerce_optional_text(cls, v, info):
         # Tolerant wie oben: Modelle liefern statt null gern '' oder ' ' —
@@ -215,13 +224,87 @@ class VerifyOutput(BaseModel):
             # Korrekturwache 03.09.2026: NICHT mehr bei 400 kappen (schnitt mitten im
             # Wort ab, Quertest: Koelner Dom, Umleitungsschild). Ueberlange Korrekturen
             # laesst die Wache _korrektur_absichern() kuerzen oder verwirft sie.
+            if info.field_name == 'korrigierte_langbeschreibung':
+                return v if len(v) <= 2000 else None  # ueberlang = verworfen, Original bleibt
             if len(v) > 1500:
                 return v[:1500]
         return v
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# DIAGRAMM-WERTE-PASS (07.09.2026, Pruefkorpus-Befund Michael/Astra)
+# Der Combo-Aufruf liest Trends aus dem Gesamteindruck und lag bei Balken-
+# diagrammen mehrfach falsch ("Hardware erholt sich", "Services stabil"). Ein
+# eigener, eng gefasster Aufruf liest NUR Werte ab (kein Text, keine Deutung)
+# und liefert sie dem Combo-Aufruf als verbindliche Faktenliste. Schalter
+# V4_DIAGRAMM_WERTE (on/off, Default on) fuer A/B-Messungen; nur fuer 'diagramm'.
+# ─────────────────────────────────────────────────────────────────────────
+class WertePunkt(BaseModel):
+    kategorie: str = Field(description='Kategorie oder Zeitpunkt auf der Achse, wortgetreu')
+    wert: str = Field(description='Abgelesener Wert als Text, z.B. "4,4" oder "61,3 %"; "unlesbar" wenn nicht ablesbar')
+
+
+class WerteReihe(BaseModel):
+    name: str = Field(description='Name der Reihe laut Legende, oder "einzige Reihe"')
+    punkte: list[WertePunkt] = Field(default_factory=list)
+
+
+class WerteOutput(BaseModel):
+    titel: str = Field(default='', description='Titel wortgetreu, leer wenn keiner')
+    diagrammtyp: str = Field(description='Balken, gruppierte Balken, gestapelte Balken, Linie, Kreis, Streu, Flaeche, sonstiges')
+    achsen: str = Field(default='', description='Achsenbeschriftungen und Einheiten wortgetreu; bei Kreisdiagrammen leer')
+    reihen: list[WerteReihe] = Field(default_factory=list)
+    lesbarkeit: str = Field(description='"gut" (Werte an Achse oder Beschriftung ablesbar), "teilweise" oder "unlesbar" (keine Achse, keine Zahlen)')
+    hinweis: str = Field(default='', description='Was nicht ablesbar war und warum, ein Satz')
+
+
+def _diagramm_werte_an() -> bool:
+    return os.environ.get('V4_DIAGRAMM_WERTE', 'on').strip().lower() == 'on'
+
+
+def _lies_diagramm_werte(image_path: str) -> Optional[WerteOutput]:
+    """Eng gefasster Ablese-Aufruf fuer Diagramme; None bei Fehler oder Schalter aus."""
+    if not _diagramm_werte_an():
+        return None
+    prompt = (
+        'Du liest ein Diagramm ab. Keine Deutung, keine Trends, kein Fliesstext — nur Daten.\n'
+        'Erfasse Titel, Diagrammtyp, Achsenbeschriftungen mit Einheiten und die Legende. Dann lies fuer '
+        'JEDE Reihe (Legende) und JEDE Kategorie oder jeden Zeitpunkt den Wert an der Achse ab, so genau '
+        'wie die Achse es erlaubt (bei einer Achse 0 bis 6 mit Schritten von 1 also auf etwa eine '
+        'Nachkommastelle). Gehe Reihe fuer Reihe und Kategorie fuer Kategorie von links nach rechts vor; '
+        'ordne Balken ueber ihre Farbe der Legende zu. Bei Kreisdiagrammen: jedes Segment mit seinem '
+        'beschrifteten Prozentwert. Ist ein Wert nicht ablesbar (keine Achse, keine Zahl), schreibe '
+        '"unlesbar" statt zu schaetzen. Erfinde keine Kategorie und keine Zahl.'
+    )
+    try:
+        return call_with_schema(
+            model=MODEL_GENERATE, prompt=prompt, image_path=image_path,
+            schema=WerteOutput, max_tokens=1500, temperature=0.0,
+        )
+    except Exception as e:
+        log.warning('Diagramm-Werte-Pass fehlgeschlagen (ignoriert): %s', e)
+        return None
+
+
+def _werte_block(w: WerteOutput) -> str:
+    zeilen = ['', '', 'ABGELESENE WERTE (Schritt 0, verbindlich)', '',
+              'Ein eigener Ablese-Schritt hat die Werte dieses Diagramms erfasst. Sie sind die '
+              'Faktengrundlage fuer JEDE Zahl und JEDES Trendwort in Alt-Text und Langbeschreibung. '
+              'Ein Trend (steigt, faellt, erholt sich, stabil) darf nur behauptet werden, wenn '
+              'diese Werte ihn tragen; bei "unlesbar" nennst du keine Zahl und keinen Trend, '
+              'sondern nur Rangfolge und Form.', '']
+    if w.titel: zeilen.append(f'Titel: {w.titel}')
+    zeilen.append(f'Diagrammtyp: {w.diagrammtyp}')
+    if w.achsen: zeilen.append(f'Achsen: {w.achsen}')
+    zeilen.append(f'Lesbarkeit: {w.lesbarkeit}' + (f' — {w.hinweis}' if w.hinweis else ''))
+    for r in w.reihen:
+        zeilen.append(f'{r.name}: ' + ' / '.join(f'{p.kategorie} {p.wert}' for p in r.punkte))
+    return '\n'.join(zeilen)
+
+
 _VERIFY_KRITISCHE_TYPEN = frozenset({'foto_personen', 'foto_event', 'foto_objekte', 'screenshot',
-                                     'foto_landschaft', 'foto_architektur'})  # +landschaft/architektur 17.07.: Wahrzeichen- und Montage-Risiko (Schwingshandl-Fall)
+                                     'foto_landschaft', 'foto_architektur',
+                                     'diagramm', 'tabelle', 'infografik', 'illustration', 'karte', 'strukturformel'})  # 07.09.2026: Datengrafiken dazu (Korpus-Befund: Diagrammwerte falsch, nie geprueft)  # +landschaft/architektur 17.07.: Wahrzeichen- und Montage-Risiko (Schwingshandl-Fall)
 
 
 def _verify_scope_matches(bildtyp: str) -> bool:
@@ -233,7 +316,7 @@ def _verify_scope_matches(bildtyp: str) -> bool:
     return False
 
 
-def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: str = '') -> str:
+def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = '') -> str:
     # Paket 3 (16.07.2026): vom reinen Widerlegen (Refuter) zum Redakteur, nach
     # dem Vorbild des InkluAgent-Modify-Musters (inkluagent/prompts/system_modify.py):
     # binaerer Punkt-fuer-Punkt-Abgleich, exaktes Nachzaehlen, dazu Vollstaendig-
@@ -347,11 +430,22 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'komplexe Szenen bis etwa 250, harte Obergrenze 400 — und in '
         'korrektur_begruendung kurz, was warum geaendert wurde. Keine halben '
         'Anpassungen. Ist nichts zu beanstanden, lasse beide Felder leer.\n\n'
+        'LANGBESCHREIBUNG: Liegt eine Langbeschreibung vor, pruefst du sie nach '
+        'denselben Regeln Satz fuer Satz gegen das Bild — Zahlen, Werte, Trends, '
+        'Namen, lesbare Texte — und zusaetzlich gegen den Alt-Text: Beide Texte '
+        'duerfen einander nicht widersprechen (eine Zahl, ein Trend, eine Anzahl '
+        'muss in beiden gleich sein). Bei Diagrammen und Tabellen liest du jeden '
+        'genannten Wert selbst an der Achse oder in der Zelle ab. Beanstandungen '
+        'kommen in strittige_lang, eine korrigierte Fassung (Minimaleingriff, '
+        'hoechstens 2000 Zeichen, gleiche Sprache) in korrigierte_langbeschreibung; '
+        'langbeschreibung_belegt=false nur bei einer konkreten falschen oder '
+        'unbelegten Aussage oder einem Widerspruch zum Alt-Text.\n\n'
         + STILREGELN_KERN + '\n\n'
     )
     # Prompt-Caching 03.09.2026: _basis ist je Sprache fest (cachefaehig),
     # Namensregister + Alt-Text sind je Bild variabel.
-    return _basis + (BILDDATEN_MARKER if _prompt_cache_an() else '') + _reg + f'ALT-TEXT ZUR PRUEFUNG:\n"{alt_text}"'
+    _lang = f'\n\nLANGBESCHREIBUNG ZUR PRUEFUNG:\n"{langbeschreibung}"' if (langbeschreibung or '').strip() else ''
+    return _basis + (BILDDATEN_MARKER if _prompt_cache_an() else '') + _reg + f'ALT-TEXT ZUR PRUEFUNG:\n"{alt_text}"' + _lang
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -423,7 +517,7 @@ def _korrektur_absichern(image_path: str, verify_result, language: str = 'de') -
     return None, 'verworfen'
 
 
-def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = ''):
+def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = ''):
     """Fuehrt den Verify-Aufruf aus. Gibt VerifyOutput oder None (Fehler/aus) zurueck."""
     if not alt_text or not _verify_scope_matches(bildtyp):
         return None
@@ -435,10 +529,11 @@ def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str
         # Weg: Cross-Model-Validator), ohne die Erzeugung zu verteuern.
         return call_with_schema(
             model=MODEL_VALIDATE,
-            prompt=_build_verify_prompt(alt_text, language=language, enriched_context=enriched_context),
+            prompt=_build_verify_prompt(alt_text, language=language, enriched_context=enriched_context,
+                                        langbeschreibung=langbeschreibung),
             image_path=image_path,
             schema=VerifyOutput,
-            max_tokens=1000,  # Paket 3: Platz fuer korrigierter_alt_text + Begruendung
+            max_tokens=2500,  # 07.09.: Platz fuer Alt- UND Lang-Korrektur
             system=SYSTEM_BESCHREIBUNG,  # gleiche Legitimation wie die Generierung
         )
     except Exception as e:  # Verify ist Sicherheitsnetz, nie Blocker
@@ -751,6 +846,7 @@ def _run_lean_pipeline(
 
     # === Beschreibung: Mini-Pipeline oder Combo ===
     beschreibung: BeschreibungOutput | IconBeschreibungOutput
+    diagramm_werte_gelesen = False
     if effective_bildtyp in _MINI_TYPES:
         # Mini-Pipelines (logo/icon/funktional): unveraendert von Multi-Pass
         with bilddaten_am_ende(_prompt_cache_an()):
@@ -793,6 +889,11 @@ def _run_lean_pipeline(
         combo_prompt = _mit_bilddaten(
             combo_prompt, width=width, height=height, enriched_context=enriched_context, user_hint=user_hint,
         )
+        if effective_bildtyp == 'diagramm':
+            _werte = _lies_diagramm_werte(image_path)
+            if _werte is not None:
+                combo_prompt += _werte_block(_werte)
+                diagramm_werte_gelesen = True
         combo_prompt += _user_prompt_suffix(user_prompt)
         combo_prompt += _language_suffix(language)
         combo_prompt += _variation_suffix(previous_alt)
@@ -818,12 +919,22 @@ def _run_lean_pipeline(
     # === Verify-Pass (optional per V4_VERIFY_MODE, s. Bausteine oben) ===
     verify_result = None
     verify_korrektur_applied = False
+    verify_lang_korrigiert = False
     verify_korrektur_schritt = ''  # Korrekturwache: auch fuer Mini-Typen (logo/icon/funktional) definiert
     if effective_bildtyp not in _MINI_TYPES:
         verify_result = _run_verify_pass(
             image_path, effective_bildtyp, beschreibung.alt_text, language=language,
             enriched_context=enriched_context,
+            langbeschreibung=(beschreibung.langbeschreibung if isinstance(beschreibung, BeschreibungOutput) else ''),
         )
+        if verify_result is not None and not verify_result.langbeschreibung_belegt:
+            log.warning('Verify-Pass: Langbeschreibung nicht voll belegt (%s): %s', effective_bildtyp, verify_result.strittige_lang)
+            needs_review = True
+            if (verify_result.korrigierte_langbeschreibung
+                    and os.environ.get('V4_VERIFY_KORREKTUR', 'off').strip().lower() == 'on'
+                    and isinstance(beschreibung, BeschreibungOutput)):
+                beschreibung.langbeschreibung = verify_result.korrigierte_langbeschreibung
+                verify_lang_korrigiert = True
         if verify_result is not None and not verify_result.alt_text_belegt:
             log.warning(
                 'Verify-Pass: Alt-Text nicht voll belegt (%s): %s',
@@ -869,8 +980,10 @@ def _run_lean_pipeline(
         'needs_review': needs_review,
         'pipeline_steps': (
             f'lean:classified:{classification.bildtyp},combo:{effective_bildtyp}'
+            + (',werte:gelesen' if diagramm_werte_gelesen else '')
             + (f',verify:ok={verify_result.alt_text_belegt}' if verify_result is not None else '')
             + (',verify_korrektur:applied' if verify_korrektur_applied else '')
+            + (',verify_lang:korrigiert' if verify_lang_korrigiert else '')
             + (f',verify_korrektur:{verify_korrektur_schritt}' if verify_korrektur_schritt in ('gekuerzt', 'verworfen') else '')
         ),
         'inventar_json': None,  # Im Lean-Mode kein separates Inventar-Objekt
