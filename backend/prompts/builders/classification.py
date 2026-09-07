@@ -18,7 +18,6 @@ vorhandene PDF-Alt-Text behalten wird.
 """
 from __future__ import annotations
 
-import os
 from typing import Optional
 
 from prompts.components.roles import ROLE_KLASSIFIKATOR
@@ -130,17 +129,12 @@ bildtyp bleibt dabei immer 'foto'):
 Wenn bildtyp NICHT 'foto' ist, lasse foto_subtyp leer (None)."""
 
 
-_FOTO_SUBTYP_MULTIPASS = """FOTO-SUBTYP (Multi-Pass-Modus):
-
-Sub-Typen fuer foto (foto_personen, foto_event etc.) werden NICHT hier
-entschieden — das macht spaeter der Inventar-Pass. Lasse foto_subtyp leer."""
-
-
 def _foto_subtyp_block() -> str:
-    """Modus-abhaengiger foto_subtyp-Block (lean=Pflicht, full=delegiert)."""
-    if os.environ.get('V4_PASS_MODE', 'full').strip().lower() == 'lean':
-        return _FOTO_SUBTYP_LEAN
-    return _FOTO_SUBTYP_MULTIPASS
+    """foto_subtyp-Block: der Klassifikator waehlt den Subtyp direkt (Lean-Weg).
+
+    Die Multi-Pass-Variante (Subtyp im Inventar-Pass) ist seit 07.09.2026 abgebaut.
+    """
+    return _FOTO_SUBTYP_LEAN
 
 
 def _inputs_block(width, height, original_alt, enriched_context, user_hint) -> str:

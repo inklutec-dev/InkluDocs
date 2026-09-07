@@ -1,12 +1,11 @@
 """Pass-Builder für die v4-Pipeline.
 
-Ein Builder pro Pass:
+Ein Builder pro Pass (Lean-Weg; der Vier-Pass-Weg fuer Mistral ist seit 07.09.2026 abgebaut):
   Pass 1: build_classification_prompt           (classification.py)
   Pass 2: build_inventar_prompt                 (inventar.py)
   Pass 3: build_beschreibung_prompt_with_inventar  (beschreibung.py — 13 Bildtypen)
           build_beschreibung_prompt_mini           (beschreibung.py — 3 Mini-Pipelines)
           handle_dekorativ_classification          (dekorativ.py — Pipeline-Endpunkt)
-  Pass 4: build_validierung_prompt              (validierung.py)
 
 Plus:
   helpers.py — user_hint_block, extract_link_target_from_context, load_examples
@@ -23,11 +22,9 @@ from .helpers import (
     Examples,
     extract_link_target_from_context,
     load_examples,
-    resolve_prompt_mode,
     user_hint_block,
 )
 from .inventar import BILDTYP_INVENTAR_SCHWERPUNKTE, build_inventar_prompt
-from .validierung import VALIDIERUNG_SPEZIAL, build_validierung_prompt
 
 __all__ = [
     # Pass 1
@@ -42,12 +39,8 @@ __all__ = [
     # Pipeline-Endpunkt für dekorativ (kein Pass 3)
     'handle_dekorativ_classification',
     'validate_dekorativ',
-    # Pass 4
-    'build_validierung_prompt',
-    'VALIDIERUNG_SPEZIAL',
     # Helpers
     'user_hint_block',
-    'resolve_prompt_mode',
     'extract_link_target_from_context',
     'load_examples',
     'Examples',

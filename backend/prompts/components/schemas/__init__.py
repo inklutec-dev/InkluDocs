@@ -27,7 +27,6 @@ from .inventar import (
     PersonInBild,
     TextInBild,
 )
-from .validierung import InventarVergleich, ValidierungOutput
 
 __all__ = [
     # classification
@@ -45,7 +44,4 @@ __all__ = [
     "AtmosphaereBeleg",
     "BeschreibungOutput",
     "IconBeschreibungOutput",
-    # validierung
-    "InventarVergleich",
-    "ValidierungOutput",
 ]

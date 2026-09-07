@@ -249,11 +249,3 @@ def load_examples(bildtyp: str) -> Examples:
         elif path.name.startswith('bad'):
             bad.append(data)
     return Examples(bildtyp=bildtyp, good_examples=good, bad_examples=bad)
-
-
-# Prompt-Modus (Uebergang 07.09.2026): Der 'full'-Modus mit den Mistral-
-# Drillbloecken ist abgebaut; es gibt nur noch die schlanke Sonnet-Fassung.
-# Die Funktion bleibt vorerst, bis die letzten Aufrufer in beschreibung_foto.py
-# aufgeloest sind, und liefert immer 'lean'.
-def resolve_prompt_mode() -> str:
-    return 'lean'

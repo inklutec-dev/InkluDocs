@@ -312,7 +312,6 @@ def render_all(out_dir: Path) -> list[Path]:
         build_classification_prompt,
         build_combined_inventar_beschreibung_prompt,
         build_inventar_prompt,
-        build_validierung_prompt,
     )
     from prompts.builders.beschreibung_daten import (
         build_beschreibung_prompt_diagramm,
@@ -344,9 +343,9 @@ def render_all(out_dir: Path) -> list[Path]:
     }
 
     # ------------------------------------------------------------------
-    # 1) Klassifikator — lean + full
+    # 1) Klassifikator
     # ------------------------------------------------------------------
-    for mode in ('lean', 'full'):
+    for mode in ('lean',):
         prev = _set_env({'V4_PASS_MODE': mode, 'V4_PROMPT_MODE': '', 'LLM_PROVIDER': 'bedrock'})
         try:
             text = build_classification_prompt(
@@ -496,11 +495,11 @@ def render_all(out_dir: Path) -> list[Path]:
         ('foto_objekte', build_beschreibung_prompt_foto_objekte, DEMO_INVENTAR_FOTO_EVENT),
     ]
     for subtyp, builder, inventar in premium_foto_builders:
-        for prompt_mode in ('lean', 'full'):
+        for prompt_mode in ('lean',):
             prev = _set_env({
                 'V4_PASS_MODE': 'full',
                 'V4_PROMPT_MODE': prompt_mode,
-                'LLM_PROVIDER': 'bedrock' if prompt_mode == 'lean' else 'mistral',
+                'LLM_PROVIDER': 'bedrock',
             })
             try:
                 text = builder(
@@ -517,7 +516,7 @@ def render_all(out_dir: Path) -> list[Path]:
                 filename=f'04_premium_{subtyp}.{prompt_mode}.md',
                 title=f'Premium-Builder {subtyp} — Prompt-Modus: {prompt_mode}',
                 builder_ref=_builder_source_link(builder),
-                mode_info={'V4_PROMPT_MODE': prompt_mode, 'LLM_PROVIDER': 'bedrock' if prompt_mode == 'lean' else 'mistral'},
+                mode_info={'V4_PROMPT_MODE': prompt_mode, 'LLM_PROVIDER': 'bedrock'},
                 demo_values={**common_demo, 'inventar': 'Workshop-Setting (4 Personen, Beamer, Catering)'},
                 prompt_text=text,
             ))
@@ -614,35 +613,6 @@ def render_all(out_dir: Path) -> list[Path]:
             builder_ref=_builder_source_link(builder),
             mode_info={'V4_PROMPT_MODE': 'lean'},
             demo_values={**common_demo, 'classification.bildtyp': classification.bildtyp, 'original_alt': orig_alt or '(leer)'},
-            prompt_text=text,
-        ))
-
-    # ------------------------------------------------------------------
-    # 8) Validierung — fuer foto_event + diagramm
-    # ------------------------------------------------------------------
-    validierung_cases = [
-        ('foto_event', DEMO_INVENTAR_FOTO_EVENT),
-        ('diagramm', DEMO_INVENTAR_GENERISCH),
-    ]
-    for bildtyp, inventar in validierung_cases:
-        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
-        try:
-            text = build_validierung_prompt(
-                bildtyp=bildtyp,
-                inventar=inventar,
-                beschreibung=DEMO_BESCHREIBUNG,
-                enriched_context=DEMO_CONTEXT_RICH,
-            )
-        finally:
-            _restore_env(prev)
-
-        written.append(_write_snapshot(
-            out_dir,
-            filename=f'08_validierung.{bildtyp}.md',
-            title=f'Validierung (Pass 4) — Bildtyp: {bildtyp}',
-            builder_ref=_builder_source_link(build_validierung_prompt),
-            mode_info={'V4_PROMPT_MODE': 'lean'},
-            demo_values={**common_demo, 'bildtyp': bildtyp},
             prompt_text=text,
         ))
 

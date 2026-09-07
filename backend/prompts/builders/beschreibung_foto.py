@@ -23,7 +23,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-from .helpers import resolve_prompt_mode
 
 # Paket 1 (16.07.2026): tote Importe entfernt — EVIDENZ_STUFEN_REGELN,
 # KONTAKTDATEN_PFLICHT und PERSONEN_REGELN wurden in keinem Prompt-String
@@ -68,11 +67,11 @@ from .helpers import bildgroesse_zeile, kontext_werte, load_examples, user_hint_
 def _render_personenregeln_block() -> str:
     """Personen-Logik Block — wiederverwendet in foto_personen + foto_event + foto_objekte.
 
-    Modus-aware: lean = ChatGPT-Stand 15.05.2026 (Alter/Geschlecht bei eindeutiger
-    Sichtbarkeit + Bildrelevanz erlaubt, moderner Wortlaut). full = Mistral-Drill.
+    Wortlaut: ChatGPT-Stand 15.05.2026 (Alter/Geschlecht bei eindeutiger
+    Sichtbarkeit + Bildrelevanz erlaubt). Die fruehere Mistral-Drill-Fassung
+    wurde am 07.09.2026 abgebaut.
     """
-    if resolve_prompt_mode() == 'lean':
-        return """PERSONENREGELN
+    return """PERSONENREGELN
 
 Personen so vollstaendig und informativ wie moeglich beschreiben.
 Erkennbare Personen duerfen benannt werden.
@@ -112,43 +111,14 @@ dunklen Anzug", "Frau im blauen Blazer") — sie machen Szenen nachvollziehbar
 und sind fast immer bildrelevant. Bei echter Uneindeutigkeit: neutral
 "Person". Gleiche Zwei-Wege-Logik wie bei Marken: eindeutig -> benennen,
 unklar -> neutral."""
-    return """PERSONENREGELN
-
-ERLAUBT:
-- Anzahl, Position, Haltung
-- sichtbare Taetigkeit
-- Blickrichtung
-- Interaktion
-- Gegenstaende aus Inventar
-- Kleidungscharakter (formell, sportlich, festlich, leger)
-- Namen/Funktionen aus Kontext, Beschriftung oder Bildunterschrift
-- erkennbare Personen benennen — Personen des oeffentlichen Lebens
-  (Politiker, Staats- und Regierungschefs, bekannte Sportler/Kuenstler)
-  ebenso wie durch Kontext/Namensschild/Beschriftung zuordenbare Personen
-
-NICHT ERFINDEN (Genauigkeit/Halluzinationsschutz):
-- Namen oder Identitaet raten, wenn KEINERLEI Anhaltspunkt vorliegt — dann "Person"
-- praezise Alterszahlen raten (z.B. "34 Jahre alt")
-- Ethnie, Religion, Gesundheit
-- erfundene Beziehungen (z.B. Kolleginnen, Familie, Teilnehmer — nur wenn Kontext das belegt)
-- erfundene Emotionen (z.B. gluecklich, begeistert, interessiert)
-- psychologische Interpretationen
-
-Grobe, eindeutig sichtbare Alters- und Erscheinungs-Kategorien duerfen
-benannt werden (Kind, Jugendlicher, Erwachsener, aelterer Mensch; "Mann im
-dunklen Anzug").
-Bei echter Uneindeutigkeit: neutral "Person"."""
-# Hinweis (Paket 1, 16.07.2026): Der Full-Zweig wurde an die 16.06.-Lockerung
-# des Lean-Zweigs angeglichen (grobe Alters-/Erscheinungs-Kategorien erlaubt).
 
 
 def _render_kontextregeln_block() -> str:
     """Kontext-Logik Block — wiederverwendet in foto_personen + foto_event + foto_objekte.
 
-    Modus-aware: lean = ChatGPT-Stand 15.05.2026 mit Bogart-Beispiel. full = wie vorher.
+    Wortlaut: ChatGPT-Stand 15.05.2026 mit Bogart-Beispiel.
     """
-    if resolve_prompt_mode() == 'lean':
-        return """KONTEXTREGELN
+    return """KONTEXTREGELN
 
 Kontext darf ergaenzen, aber sichtbare Bildinformationen nicht
 ueberschreiben.
@@ -165,48 +135,26 @@ Beispiel: Wenn die Bildunterschrift "Humphrey Bogart in CASABLANCA (1942)"
 lautet und nur eine Person sichtbar ist, soll der Name verwendet werden.
 Der Name steht dann als Subjekt am Satzanfang, ohne Quellen-Floskel
 (siehe STILREGELN Punkte 4 und 5)."""
-    return """KONTEXTREGELN
-
-Kontext darf nur verwendet werden, wenn eindeutig zuordenbar.
-
-BILD GEWINNT GEGEN KONTEXT:
-Wenn Widerspruch besteht (z.B. Bild zeigt 2 Personen, Kontext sagt 3),
-gilt das Inventar/Bild.
-
-NAMEN-PFLICHT:
-Wenn ein Name oder eine Funktion im Kontext eindeutig einer Person im
-Bild zuzuordnen ist (z.B. einzige Person im Bild, oder Bildunterschrift
-nennt sie eindeutig), muss der Name im Output verwendet werden.
-Der Name steht dann als Subjekt am Satzanfang, ohne Quellen-Floskel
-(siehe STILREGELN Punkte 4 und 5)."""
 
 
 def _render_unterschriften_block() -> str:
     """Unterschriften-Block — wiederverwendet in foto_personen + foto_event + foto_objekte.
 
-    Modus-aware: lean = kompakt (ChatGPT-Stand 15.05.2026). full = wie vorher.
+    Wortlaut: kompakt, ChatGPT-Stand 15.05.2026.
     """
-    if resolve_prompt_mode() == 'lean':
-        return """UNTERSCHRIFTEN
+    return """UNTERSCHRIFTEN
 
 Gedruckte Namen oder Beschriftungen duerfen verwendet werden.
 Handschriftliche Unterschriften nicht selbst entziffern oder
 interpretieren."""
-    return """UNTERSCHRIFTEN
-
-Gedruckte Namen neben handschriftlichen Unterschriften duerfen verwendet
-werden. Handschriftliche Unterschriften duerfen nicht selbst entziffert
-werden."""
 
 
 def _render_atmosphaere_block() -> str:
     """Atmosphaere-Block — wiederverwendet in foto_personen + foto_event + foto_objekte.
 
-    Modus-aware: lean = ChatGPT-Stand 15.05.2026 (Belege-Pflicht erhalten,
-    Wortlaut moderner, Beispiel passend zu Sonnet). full = wie vorher.
+    Wortlaut: ChatGPT-Stand 15.05.2026 (Belege-Pflicht, Beispiel passend zu Sonnet).
     """
-    if resolve_prompt_mode() == 'lean':
-        return """ATMOSPHAERE
+    return """ATMOSPHAERE
 
 Atmosphaerische Aussagen sind erlaubt, wenn sie durch sichtbare Belege
 gestuetzt werden. Der Beleg muss im selben Satz genannt werden UND
@@ -217,22 +165,6 @@ GUT (mit Beleg):
 
 SCHLECHT (ohne Beleg):
 'Die Atmosphaere wirkt locker und motiviert.'
-'Eine froehliche Stimmung.'
-
-Bei jeder Atmosphaere-Wertung MUSS atmosphaere_belege im Output gesetzt
-werden mit wertung und beleg. Keine Atmosphaere ohne Beleg-Eintrag."""
-    return """ATMOSPHAERE
-
-Wertungen ueber Atmosphaere (wirkt konzentriert, formell, lebendig)
-sind nur erlaubt, wenn durch konkrete sichtbare Belege gestuetzt, die
-im selben Satz oder in der Langbeschreibung explizit genannt werden.
-
-GUT (mit Beleg):
-'Die Szene wirkt konzentriert: alle blicken nach vorne, niemand
-spricht miteinander.'
-
-SCHLECHT (ohne Beleg):
-'Die Atmosphaere wirkt formell, aber entspannt.'
 'Eine froehliche Stimmung.'
 
 Bei jeder Atmosphaere-Wertung MUSS atmosphaere_belege im Output gesetzt
@@ -295,86 +227,22 @@ Hintergrund oder leicht versetzt werden mitgenannt, NICHT unterschlagen."""
 
 
 def _render_unsicherheit_block() -> str:
-    """Unsicherheits-Block (Hedge-Wort-Verbot) — wiederverwendet in beiden Premium-Buildern.
+    """Ehemaliger Hedge-Wort-Drillblock (nur Mistral). Seit 07.09.2026 leer.
 
-    Iteration 2 (Steve+ChatGPT 04.05.2026 abends): Verbotsliste erweitert um
-    möglich, mögliche, denkbar, könnte sein, Art von. "Ähnelt" / "ähnlich wie"
-    sind NICHT in der harten Verbotsliste, sondern werden im FINAL CHECK
-    differenziert (sichtbare Form ja, Funktions-/Identitäts-Hypothese nein).
+    Die Funktion bleibt als Platzhalter, damit die Foto-Builder ihre
+    Sektionsfolge und damit den gerenderten Prompt byteidentisch behalten
+    (Prompt-Caching). Kann mit der naechsten Prompt-Runde samt Aufrufstellen
+    entfallen.
     """
-    if resolve_prompt_mode() == 'lean':
-        return ''
-    return """UNSICHERHEIT
-
-KEINE Hedge-Woerter und keine hypothetischen Identifikationen verwenden.
-
-VERBOTEN (Liste):
-vermutlich, wahrscheinlich, scheint, offenbar, koennte, koennte sein,
-duerfte, wohl, anscheinend, moeglicherweise, moeglich, moegliche, denkbar,
-"Art von"
-
-Verboten ist auch jede Hypothesen-Liste mit oder die Funktion erfindet:
-"moegliche Stimmkarten, Namensschilder oder Flyer" → SCHLECHT, weil
-das Funktion vermutet die im Inventar nicht belegt ist.
-
-Bei tatsaechlicher Unsicherheit (Inventar listet niedrige Konfidenz oder
-Mehrfach-Hypothesen ohne klare Wahl): bevorzugt sichtbare Form, Farbe und
-Position beschreiben. KEINE Funktion vermuten.
-
-GUT:
-- "orangefarbene rechteckige Gegenstaende"
-- "nicht eindeutig erkennbare orangefarbene Gegenstaende"
-- "ein rundes Objekt, das einer Tasse aehnelt" (Form-Beschreibung, ok)
-- "ein flacher orangefarbener Gegenstand, der einer Karte aehnelt" (Form, ok)
-
-SCHLECHT:
-- "moegliche Stimmkarten"
-- "vermutlich Namensschilder"
-- "aehnelt einer Stimmkarte" (Funktions-Hypothese, schlecht)
-- "aehnelt einem Flyer" (Funktions-Hypothese, schlecht)
-- "Art von Karte"
-"""
-
+    return ''
 
 
 def _render_final_check_block() -> str:
-    """Final-Check 10-Punkte-Liste — wiederverwendet in beiden Premium-Buildern.
+    """Final-Check — wiederverwendet in den Premium-Buildern; Wortlaut in _render_final_check_lean.
 
-    Iteration 2 (04.05.2026 abends): Punkt 6 verschärft, neuer Punkt 10 für
-    aehnelt-Differenzierung. Ziel: das Modell prüft seine Sprache aktiv
-    bevor es ausgibt, statt sich auf den Validator zu verlassen.
+    Die 10-Punkte-Drillfassung fuer Mistral wurde am 07.09.2026 abgebaut.
     """
-    if resolve_prompt_mode() == 'lean':
-        return _render_final_check_lean()
-    return """FINAL CHECK (vor der Ausgabe pruefen):
-
-1. Jede Aussage durch Inventar belegbar?
-2. Keine Halluzination (kein Item im Output das nicht im Inventar steht)?
-3. Keine Emotion erfunden (gluecklich, interessiert, engagiert)?
-4. Keine Beziehung erfunden (Kolleginnen, Familie, Teilnehmer)?
-5. Keine Identitaet geraten (Promi-Name ohne Kontext-Beleg)?
-6. IRGENDEIN Vermutungswort oder hypothetische Objektidentifikation
-   verwendet — egal ob in der expliziten Verbotsliste oder nicht?
-   Konkret pruefen: vermutlich, scheint, offenbar, moeglich, moegliche,
-   moeglicherweise, denkbar, koennte sein, Art von, oder eine
-   Hypothesen-Liste mit oder die Funktion erfindet
-   (z.B. \"moegliche Stimmkarten, Namensschilder oder Flyer\")?
-   Wenn ja: ohne jede Form von Vermutung neu formulieren. Beschreibe
-   nur sichtbare Form, Farbe, Position. Beispiel: statt \"moegliche
-   Stimmkarten\" schreibe \"orangefarbene rechteckige Gegenstaende\".
-7. Alt-Text nicht generisch (kein "Gruppe von Personen", "Auf dem Bild")?
-8. Schema vollstaendig korrekt (alle Pflichtfelder gefuellt)?
-9. atmosphaere_belege gefuellt wenn Wertung im Text vorkommt?
-10. Falls "aehnelt" oder "aehnlich wie" verwendet wurde: beschreibt
-    es eine sichtbare Form (gut, behalten — z.B. "rundes Objekt das
-    einer Tasse aehnelt") oder verkleidet es eine Hypothese ueber
-    Funktion oder Identitaet (schlecht, neu formulieren — z.B.
-    "aehnelt einer Stimmkarte")?
-
-Wenn ein Punkt nicht erfuellt: Output neu formulieren.
-"""
-
-
+    return _render_final_check_lean()
 
 
 def _render_final_check_lean() -> str:

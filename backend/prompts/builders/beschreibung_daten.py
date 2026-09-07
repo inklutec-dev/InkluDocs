@@ -42,7 +42,6 @@ import os
 from typing import Optional
 
 from prompts.components.constraints import (
-    ANTI_HALLUZINATION_REGELN,
     ATMOSPHAERE_REGEL,
     EIGENNAMEN_REGELN,
     KONTAKTDATEN_PFLICHT,
@@ -64,22 +63,14 @@ from .helpers import bildgroesse_zeile, kontext_werte, load_examples, user_hint_
 
 
 def _basis_schichten() -> str:
-    """Rolle + Anti-Halluzinations-Schicht für den Prompt-Kopf.
+    """Rolle fuer den Prompt-Kopf.
 
-    Combo-Deduplizierung (Paket 4): Im Lean-Pass-Modus (V4_PASS_MODE=lean)
-    wird der Beschreibungs-Prompt ausschließlich von combo.py in den
-    kombinierten Prompt eingebaut — dort trägt der Inventar-Teil
-    (inventar.py) die ANTI_HALLUZINATION_REGELN bereits. Die Schicht hier
-    ein zweites Mal einzubauen würde sie im selben gerenderten Prompt
-    duplizieren. Im Full-Pass-Modus (Default) ist dieser Prompt der
-    eigenständige Pass 3 und trägt die Schicht selbst.
-    combo.py und alle Builder-Signaturen bleiben unverändert — die
-    Entscheidung fällt hier über dieselbe ENV, die auch der Orchestrator
-    für die Pfad-Wahl liest.
+    Die ANTI_HALLUZINATION_REGELN traegt im Lean-Weg der Inventar-Teil des
+    Combo-Prompts (inventar.py); hier stehen sie deshalb nicht noch einmal.
+    Der fruehere Full-Zweig (eigenstaendiger Pass 3 mit eigener Schicht) ist
+    seit 07.09.2026 abgebaut.
     """
-    if os.environ.get('V4_PASS_MODE', 'full').strip().lower() == 'lean':
-        return ROLE_BESCHREIBER
-    return f'{ROLE_BESCHREIBER}\n\n{ANTI_HALLUZINATION_REGELN}'
+    return ROLE_BESCHREIBER
 
 
 def _render_inventar_block(inventar_json: str) -> str:

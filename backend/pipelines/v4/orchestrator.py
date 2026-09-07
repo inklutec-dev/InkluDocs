@@ -1,27 +1,20 @@
-"""v4-Pipeline-Orchestrator: Klassifikation → Inventar → Beschreibung → Validierung.
+"""v4-Pipeline-Orchestrator: Klassifikation -> Combo (Inventar + Beschreibung) -> Pruefpass.
 
 Entry-Point ist generate_alt_text_v4() — wird vom pdf_processor.generate_alt_text-
-Wrapper gerufen wenn PIPELINE_VERSION=v4.
+Wrapper gerufen.
 
-4-Pässe-Architektur (gegen korrelierte Halluzinationen):
-  Pass 1 (Klassifikation): mistral-medium-latest, kurzer Top-Level-Pick
-  Pass 2 (Inventar):       pixtral-large-latest, forensische Bildanalyse
-  Pass 3 (Beschreibung):   mistral-large-latest, Output-Formulierung aus Inventar
-  Pass 4 (Validierung):    pixtral-large-latest, Belegtheit prüfen (Modell-Diversität!)
+Aufruf-Fluss (Lean, seit 07.09.2026 der einzige Weg; Claude ueber Amazon Bedrock):
+  Pass 1 (Klassifikation): Bildtyp + foto_subtyp in einem kurzen Aufruf
+  Pass 2 (Combo):          Inventar "im Kopf" + Beschreibung, Ausgabe = BeschreibungOutput
+  Pruefpass (optional):    V4_VERIFY_MODE off/kritisch/alle, Korrektur per V4_VERIFY_KORREKTUR
 
-Frühe Exits:
+Fruehe Exits:
   - dekorativ via handle_dekorativ_classification (Heuristik-Safety-Net)
-  - funktional + brauchbarer original_alt → direkter Pass-Through
+  - funktional + brauchbarer original_alt -> direkter Pass-Through
 
-Sub-Typ-Aktualisierung:
-  Wenn Klassifikator 'foto' wählt, übernimmt der Inventar-Pass die Sub-Typ-
-  Entscheidung (foto_event/foto_personen/...). Der effektive Bildtyp geht
-  dann an Pass 3 + Pass 4.
-
-VALIDATOR_MODE-Schalter (kompatibel mit v3.7):
-  'flag'    — Validator-Pass läuft, needs_review=true wenn nicht ok, kein Override
-  'correct' — Validator-Pass läuft, korrigierter Output wird übernommen
-  'off'     — Validator-Pass übersprungen (für Eval-Vergleiche)
+Historie: Die fruehere Vier-Pass-Pipeline (Klassifikation, Inventar, Beschreibung,
+Validierung) fuer Mistral wurde am 07.09.2026 abgebaut; letzter Stand mit ihr unter
+dem Git-Tag sicherung-vor-mistral-abdockung-20260907.
 """
 from __future__ import annotations
 
@@ -35,7 +28,6 @@ from prompts.builders import (
     build_classification_prompt,
     build_combined_inventar_beschreibung_prompt,
     build_inventar_prompt,
-    build_validierung_prompt,
     handle_dekorativ_classification,
 )
 from prompts.components.roles import SYSTEM_BESCHREIBUNG
@@ -44,8 +36,6 @@ from prompts.components.schemas import (
     BildtypEffective,
     ClassificationOutput,
     IconBeschreibungOutput,
-    InventarOutput,
-    ValidierungOutput,
 )
 
 from .llm_client import (
@@ -501,18 +491,6 @@ def _variation_suffix(previous_alt: str) -> str:
     )
 
 
-# Bildtypen die einen Inventar-Pass benötigen.
-INVENTAR_PFLICHTIG: frozenset[str] = frozenset({
-    'foto', 'illustration', 'diagramm', 'tabelle', 'karte',
-    'screenshot', 'infografik', 'strukturformel',
-})
-
-# Bildtypen die einen Validierungs-Pass benötigen (alle Inventar-pflichtigen
-# plus die Mini-Pipelines, weil auch dort Halluzinationen möglich sind).
-VALIDIERUNG_PFLICHTIG: frozenset[str] = INVENTAR_PFLICHTIG | frozenset({
-    'logo', 'icon', 'funktional',
-})
-
 # Mini-Pipeline-Typen (kein Inventar-Pass).
 _MINI_TYPES: frozenset[str] = frozenset({'logo', 'icon', 'funktional'})
 
@@ -575,298 +553,12 @@ def _classification_from_override(
     )
 
 
-def _format_pipeline_steps(
-    classification: ClassificationOutput,
-    inventar: Optional[InventarOutput],
-    beschreibung: Optional[BeschreibungOutput | IconBeschreibungOutput],
-    validierung: Optional[ValidierungOutput],
-) -> str:
-    """Audit-Trail-String — welche Pässe sind gelaufen, welche übersprungen."""
-    steps = [f'classified:{classification.bildtyp}']
-    if inventar is not None:
-        steps.append(f'inventar:konfidenz={inventar.inventar_konfidenz_gesamt}')
-    if beschreibung is not None:
-        steps.append('described')
-    if validierung is not None:
-        steps.append(f'validated:ok={validierung.validierung_ok}')
-    return ','.join(steps)
-
-
-def _run_multipass_pipeline(
-    image_path: str,
-    enriched_context: str = '',
-    image_type_override: Optional[str] = None,
-    user_hint: Optional[str] = None,
-    width: int = 0,
-    height: int = 0,
-    original_alt: str = '',
-    language: str = 'de',
-    previous_alt: str = '',
-    user_prompt: str = '',  # Eigener gespeicherter Nutzer-Prompt (Prompt-Verwaltung 06.07.2026)
-) -> dict:
-    """v4-Entry-Point. Wird vom pdf_processor.generate_alt_text gerufen wenn
-    PIPELINE_VERSION=v4.
-
-    Args:
-      image_path:          Lokaler Pfad zum Bild.
-      enriched_context:    Web-/PDF-Kontext (Titel, umliegender Text, etc.).
-      image_type_override: Manuelle Bildtyp-Wahl (überspringt Pass 1).
-                           Z.B. wenn Nutzer im Frontend einen Typ erzwingt.
-      user_hint:           Workflow-Variante 3: Nutzer-Hinweis (HOHE PRIORITÄT).
-      width, height:       Bildmaße in Pixel.
-      original_alt:        Vom Autor gesetzter alt-Text aus dem Original-PDF/HTML.
-
-    Returns:
-      dict mit dem v4-Result. Kompatibel mit v3.7-Result-Format
-      (bildtyp, alt_text, langbeschreibung, needs_review, plus v4-Audit-Felder).
-
-    Raises:
-      LLMCallError wenn ein Mistral-Call auch nach Retry fehlschlägt.
-      Der Aufrufer sollte das fangen und die Pipeline gnädig abbrechen
-      (z.B. Result mit needs_review=True und einer Fehlermeldung).
-    """
-    validator_mode = os.environ.get('VALIDATOR_MODE', 'flag').lower()
-
-    # === Pass 1: Klassifikation ===
-    if image_type_override:
-        # Frontend hat den Typ gewählt — Pass 1 überspringen.
-        classification = _classification_from_override(image_type_override, original_alt)
-    else:
-        classify_prompt = build_classification_prompt(
-            enriched_context=enriched_context,
-            width=width, height=height,
-            original_alt=original_alt,
-            user_hint=user_hint,
-        )
-        classification = call_with_schema(
-            model=MODEL_CLASSIFY,
-            prompt=classify_prompt,
-            image_path=image_path,
-            schema=ClassificationOutput,
-            max_tokens=500,  # E10-Korrektur: 5 Felder + 200-Z-Begründung + JSON-Overhead
-        )
-
-    # === Frühe Exits für simple Typen ===
-
-    # K3-Fix: dekorativ durch validate_dekorativ()-Heuristik gegenprüfen.
-    # Mini-Korrektur d: Tuple-Return spart einen zweiten Heuristik-Aufruf.
-    if classification.ist_dekorativ:
-        deko_result, corrected_type = handle_dekorativ_classification(
-            classification, image_path, width, height, original_alt,
-        )
-        if deko_result is not None:
-            return deko_result
-        # Heuristik-Override: corrected_type kommt direkt aus dem Tuple.
-        log.info(
-            'Dekorativ-Override: Klassifikator hatte dekorativ, Heuristik sagt %s',
-            corrected_type,
-        )
-        classification = ClassificationOutput(
-            bildtyp=corrected_type,
-            konfidenz='mittel',
-            ist_dekorativ=False,
-            original_alt_brauchbar=classification.original_alt_brauchbar,
-            klassifikations_begruendung=(
-                f"Heuristik-Override: Klassifikator hatte 'dekorativ' gewählt, "
-                f"validate_dekorativ() korrigierte auf '{corrected_type}'."
-            ),
-        )
-
-    # W3-Fix: classification.original_alt_brauchbar ist Schema-Feld vom Pass 1.
-    # Wenn override gesetzt war, hat _original_alt_brauchbar() es schon gesetzt.
-    if classification.bildtyp == 'funktional' and classification.original_alt_brauchbar:
-        log.info('Funktional + brauchbarer original_alt → Pass-Through ohne KI-Aufruf.')
-        return {
-            'bildtyp': 'funktional',
-            'konfidenz': classification.konfidenz,
-            'alt_text': original_alt,
-            'langbeschreibung': '',
-            'needs_review': False,
-            'pipeline_steps': 'classified:funktional,passthrough:original_alt',
-            'inventar_json': None,
-            'validation_result': None,
-        }
-
-    # === Pass 2: Inventar (nur wenn nötig) ===
-    inventar: Optional[InventarOutput] = None
-    if classification.bildtyp in INVENTAR_PFLICHTIG:
-        inventar_prompt = build_inventar_prompt(
-            bildtyp=classification.bildtyp,
-            enriched_context=enriched_context,
-            width=width, height=height,
-            user_hint=user_hint,
-        )
-        inventar = call_with_schema(
-            model=MODEL_INVENTAR,
-            prompt=inventar_prompt,
-            image_path=image_path,
-            schema=InventarOutput,
-            max_tokens=2500,
-        )
-
-    # Sub-Typ-Aktualisierung: bei foto entscheidet der Inventar-Pass den Sub-Typ.
-    effective_bildtyp: BildtypEffective
-    if (
-        classification.bildtyp == 'foto'
-        and inventar is not None
-        and inventar.foto_subtyp
-    ):
-        effective_bildtyp = inventar.foto_subtyp
-    else:
-        effective_bildtyp = classification.bildtyp
-
-    # === Pass 3: Beschreibung ===
-    # Andere Modell als Pass 2 (Pixtral) — hier Mistral Large für Reasoning-Stärke.
-    beschreibung: BeschreibungOutput | IconBeschreibungOutput
-    if effective_bildtyp in _MINI_TYPES:
-        # Mini-Pipelines: kein Inventar, nutzt classification + original_alt.
-        mini_prompt = build_beschreibung_prompt_mini(
-            bildtyp=effective_bildtyp,
-            classification=classification,
-            enriched_context=enriched_context,
-            width=width, height=height,
-            original_alt=original_alt,
-            user_hint=user_hint,
-        )
-        mini_prompt += _user_prompt_suffix(user_prompt)
-        mini_prompt += _language_suffix(language)
-        mini_prompt += _variation_suffix(previous_alt)
-        beschreibung = call_with_schema(
-            model=MODEL_GENERATE,
-            prompt=mini_prompt,
-            image_path=image_path,
-            schema=IconBeschreibungOutput,
-            max_tokens=300,
-            system=SYSTEM_BESCHREIBUNG,  # Mini-Pipelines liefern <80 Zeichen — 300 Tokens reichen.
-        )
-    else:
-        # Standard-Pfad mit Inventar.
-        if inventar is None:
-            # Sollte nicht passieren wenn INVENTAR_PFLICHTIG korrekt definiert ist.
-            raise RuntimeError(
-                f"Bildtyp '{effective_bildtyp}' braucht Inventar, aber Pass 2 wurde übersprungen."
-            )
-        besch_prompt = build_beschreibung_prompt_with_inventar(
-            bildtyp=effective_bildtyp,
-            inventar=inventar,
-            enriched_context=enriched_context,
-            width=width, height=height,
-            user_hint=user_hint,
-        )
-        besch_prompt += _user_prompt_suffix(user_prompt)
-        besch_prompt += _language_suffix(language)
-        besch_prompt += _variation_suffix(previous_alt)
-        beschreibung = call_with_schema(
-            model=MODEL_GENERATE,
-            prompt=besch_prompt,
-            image_path=image_path,
-            schema=BeschreibungOutput,
-            max_tokens=2500,
-            system=SYSTEM_BESCHREIBUNG,
-        )
-
-    # Halluzinations-Self-Check: hat das Modell Items genannt die nicht im Inventar sind?
-    # Sekundäres Sicherheitsnetz — primärer Schutz ist Pass 4.
-    needs_review_forced = False
-    if isinstance(beschreibung, BeschreibungOutput) and beschreibung.nicht_im_inventar:
-        log.warning(
-            'Self-Check-Verletzung: Beschreibung enthält Items außerhalb des Inventars: %s',
-            beschreibung.nicht_im_inventar,
-        )
-        needs_review_forced = True
-
-    # === Pass 4: Validierung ===
-    validierung: Optional[ValidierungOutput] = None
-    if (
-        classification.bildtyp in VALIDIERUNG_PFLICHTIG
-        and validator_mode != 'off'
-    ):
-        # Mini-Pipelines liefern IconBeschreibungOutput — der Validator erwartet
-        # BeschreibungOutput. Wir bauen ein kompatibles Objekt für die Validierung.
-        if isinstance(beschreibung, IconBeschreibungOutput):
-            besch_for_validation = BeschreibungOutput(
-                alt_text=beschreibung.alt_text if len(beschreibung.alt_text) >= 20
-                         else beschreibung.alt_text + ' ' * (20 - len(beschreibung.alt_text)),
-                # Padding nur fürs Schema — Validator schaut auf Inhalt, nicht Länge.
-                # TODO: ggf. eigenen Validator-Pfad für Mini-Pipelines bauen,
-                # der IconBeschreibungOutput direkt akzeptiert.
-                verwendete_inventar_items=beschreibung.verwendete_inventar_items,
-            )
-        else:
-            besch_for_validation = beschreibung
-
-        valid_prompt = build_validierung_prompt(
-            bildtyp=effective_bildtyp,
-            inventar=inventar,
-            beschreibung=besch_for_validation,
-            enriched_context=enriched_context,
-        )
-        validierung = call_with_schema(
-            model=MODEL_VALIDATE,
-            prompt=valid_prompt,
-            image_path=image_path,
-            schema=ValidierungOutput,
-            max_tokens=2500,
-        )
-
-        # 'correct'-Modus: Korrekturen anwenden auf den BeschreibungOutput-Pfad.
-        # Mini-Pipelines bekommen aktuell keine Korrektur — das wäre zu invasiv
-        # für eine 80-Zeichen-Beschreibung.
-        if (
-            validator_mode == 'correct'
-            and not validierung.validierung_ok
-            and isinstance(beschreibung, BeschreibungOutput)
-        ):
-            if validierung.korrektur_alt_text:
-                beschreibung.alt_text = validierung.korrektur_alt_text
-            if validierung.korrektur_langbeschreibung:
-                beschreibung.langbeschreibung = validierung.korrektur_langbeschreibung
-
-    # === Result zusammensetzen ===
-    needs_review = needs_review_forced
-    if validierung is not None and validierung.needs_review:
-        needs_review = True
-
-    langbeschreibung = (
-        beschreibung.langbeschreibung
-        if isinstance(beschreibung, BeschreibungOutput)
-        else ''
-    )
-
-    return {
-        'bildtyp': effective_bildtyp,
-        'konfidenz': classification.konfidenz,
-        'alt_text': beschreibung.alt_text,
-        'langbeschreibung': langbeschreibung,
-        'needs_review': needs_review,
-        'pipeline_steps': _format_pipeline_steps(
-            classification, inventar, beschreibung, validierung,
-        ),
-        'inventar_json': inventar.model_dump_json() if inventar is not None else None,
-        'validation_result': validierung.model_dump_json() if validierung is not None else None,
-    }
-
-
 # ═══════════════════════════════════════════════════════════════════════════════
-# DISPATCHER + LEAN-PIPELINE — Lean-Mode-Erweiterung (08.05.2026)
+# EINTRITTSPUNKT
 # ═══════════════════════════════════════════════════════════════════════════════
-#
-# generate_alt_text_v4() ist der oeffentliche Eintrittspunkt. Er verzweigt per
-# V4_PASS_MODE-ENV in den klassischen Multi-Pass-Modus oder den neuen Lean-Mode.
-#
-# Multi-Pass-Modus (V4_PASS_MODE=full, default):
-#   Pass 1 Klassifikation -> Pass 2 Inventar -> Pass 3 Beschreibung -> Pass 4 Validator
-#   Designed fuer Mistral-Modell-Diversitaet. Bleibt unveraendert verfuegbar
-#   und ist die richtige Wahl wenn Mistral-Provider aktiv ist (LLM_PROVIDER=mistral).
-#
-# Lean-Modus (V4_PASS_MODE=lean):
-#   Pass 1 Klassifikation (mit foto_subtyp) -> Combo Inventar+Beschreibung in einem Aufruf
-#   Designed fuer starke Modelle wie Sonnet die Inventar implizit miterledigen koennen.
-#   Empfohlen fuer LLM_PROVIDER=bedrock. Spart 1-2 Paesse, ca. 30% Kosten.
-#
-# Production (Container inkludocs ohne V4_PASS_MODE-Env): laeuft auf default 'full',
-# also unveraendert. Migration auf 'lean' nur nach Test-Phase auf Staging.
-# ═══════════════════════════════════════════════════════════════════════════════
+# generate_alt_text_v4() reicht an die Lean-Pipeline durch. Der fruehere
+# V4_PASS_MODE-Schalter (full = Vier-Pass fuer Mistral) ist seit 07.09.2026
+# abgebaut; die Variable wird nicht mehr gelesen.
 
 
 def generate_alt_text_v4(
@@ -882,31 +574,8 @@ def generate_alt_text_v4(
     previous_alt: str = '',  # bisheriger Alt-Text — nur beim Neu-Generieren gesetzt (gezielte Variation)
     user_prompt: str = '',  # Eigener gespeicherter Nutzer-Prompt (Prompt-Verwaltung 06.07.2026)
 ) -> dict:
-    """v4-Eintrittspunkt mit Mode-Dispatcher.
-
-    Wahl per ENV V4_PASS_MODE:
-      'full' (default): Multi-Pass-Pipeline (4 Paesse). Funktioniert mit Mistral.
-      'lean':           Lean-Pipeline (Klassifikation + Combo). Empfohlen mit Bedrock.
-
-    Args/Returns: identisch zu beiden Pipelines.
-    """
-    pass_mode = os.environ.get('V4_PASS_MODE', 'lean').strip().lower()
-    if pass_mode == 'lean':
-        return _run_lean_pipeline(
-            image_path=image_path,
-            enriched_context=enriched_context,
-            image_type_override=image_type_override,
-            user_hint=user_hint,
-            width=width,
-            height=height,
-            original_alt=original_alt,
-            temperature=temperature,
-            language=language,
-            previous_alt=previous_alt,
-            user_prompt=user_prompt,
-        )
-    # Default: Multi-Pass (rueckwaertskompatibel zu Mistral-Setup)
-    return _run_multipass_pipeline(
+    """v4-Eintrittspunkt: Klassifikation + Combo (+ Pruefpass). Args/Returns siehe _run_lean_pipeline."""
+    return _run_lean_pipeline(
         image_path=image_path,
         enriched_context=enriched_context,
         image_type_override=image_type_override,
@@ -914,12 +583,11 @@ def generate_alt_text_v4(
         width=width,
         height=height,
         original_alt=original_alt,
+        temperature=temperature,
         language=language,
         previous_alt=previous_alt,
         user_prompt=user_prompt,
     )
-
-
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -994,15 +662,12 @@ def _run_lean_pipeline(
     previous_alt: str = '',
     user_prompt: str = '',  # Eigener gespeicherter Nutzer-Prompt (Prompt-Verwaltung 06.07.2026)
 ) -> dict:
-    """Lean-Pipeline: 1 Klassifikations-Aufruf + 1 Combo-Hauptaufruf.
+    """Lean-Pipeline: 1 Klassifikations-Aufruf + 1 Combo-Hauptaufruf (+ Pruefpass).
 
-    Genutzt wenn V4_PASS_MODE=lean. Empfohlen mit LLM_PROVIDER=bedrock (Claude
-    Sonnet kann Inventar implizit miterledigen, separater Pass nicht noetig).
-
-    Validator-Pass ist im Lean-Mode NICHT eingebaut — Sonnet halluziniert kaum,
-    deshalb Standard-Pipeline ohne Validator. Wenn Validierung gewuenscht:
-    entweder V4_PASS_MODE=full nutzen, oder spaeter Cross-Family-Validator
-    als optionalen Premium-Tier ergaenzen.
+    Seit 07.09.2026 der einzige Weg (Claude Sonnet ueber Bedrock erledigt das
+    Inventar implizit mit). Die Belegpruefung uebernimmt der optionale
+    Pruefpass (_run_verify_pass, V4_VERIFY_MODE) mit eigenem Pruefmodell;
+    der fruehere Validator-Pass der Vier-Pass-Pipeline ist abgebaut.
     """
     # === Pass 1: Klassifikation (mit foto_subtyp dank Lean-Builder-Anweisung) ===
     if image_type_override:
