@@ -26,7 +26,7 @@ _PUNKT_2_FOTO = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh und na
    aufgeklapptem Laptop vor einer hellen Wand."
    Schlecht: "Anna Reimers in schwarzem Blazer, den Kopf leicht nach oben links
    gewandt und den Mund leicht geöffnet, sitzt vor einer hellen Wand; im
-   Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch." """
+   Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch.\""""
 
 _PUNKT_2_SACHLICH = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, ein
    bis zwei Sätze im Alt-Text. Keine Semikolon-Ketten, keine Lagefloskeln wie
@@ -34,7 +34,7 @@ _PUNKT_2_SACHLICH = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh un
    Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile steigt
    und erreicht 2023 mit 5,0 den höchsten Wert."
    Schlecht: "Ein Balkendiagramm, bestehend aus vier Kategorien mit jeweils drei
-   Balken, deren Höhen variieren; im Bildvordergrund die Legende." """
+   Balken, deren Höhen variieren; im Bildvordergrund die Legende.\""""
 
 _PUNKT_3 = """3. Körperdetails nur mit Bedeutung. Kopfhaltung, Blickrichtung, Mundstellung,
    Gestik und Mimik gehören in den Alt-Text nur, wenn sie eine Beziehung oder

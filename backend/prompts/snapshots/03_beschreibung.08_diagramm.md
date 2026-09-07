@@ -166,7 +166,7 @@ STILREGELN (Stil, nicht Fakten)
    Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile steigt
    und erreicht 2023 mit 5,0 den höchsten Wert."
    Schlecht: "Ein Balkendiagramm, bestehend aus vier Kategorien mit jeweils drei
-   Balken, deren Höhen variieren; im Bildvordergrund die Legende." 
+   Balken, deren Höhen variieren; im Bildvordergrund die Legende."
 
 3. Keine Floskeln. Keine Ansage, dass etwas gezeigt wird: nicht "Das Bild
    zeigt", "Die Aufnahme zeigt", "Zu sehen ist", "Hier sieht man" und keine

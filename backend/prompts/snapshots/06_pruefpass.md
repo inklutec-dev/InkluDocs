@@ -41,7 +41,7 @@ STILREGELN (Stil, nicht Fakten)
    aufgeklapptem Laptop vor einer hellen Wand."
    Schlecht: "Anna Reimers in schwarzem Blazer, den Kopf leicht nach oben links
    gewandt und den Mund leicht geöffnet, sitzt vor einer hellen Wand; im
-   Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch." 
+   Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch."
 
 3. Körperdetails nur mit Bedeutung. Kopfhaltung, Blickrichtung, Mundstellung,
    Gestik und Mimik gehören in den Alt-Text nur, wenn sie eine Beziehung oder
