@@ -47,6 +47,9 @@ ANTI_HALLUZINATION_REGELN = ANTI_HALLUZINATION_KERN + """
    "Fotomontage" oder "Collage" und beschreibst die Bestandteile getrennt. Das
    gilt auch für fotorealistische Montagen ohne sichtbare Kanten: Die Unmöglichkeit
    der Kombination ist der Beleg. Suche auch nach kleinen eingefügten Elementen.
+   Digital aufgesetzte oder eingefügte Gegenstände (Hüte, Brillen, Objekte, Personen)
+   machen ein Foto zur Fotomontage; das Wort steht dann im Alt-Text, eine
+   Umschreibung wie "aufgesetzt" oder "eingefügt" ersetzt es nicht.
 
 6. Kontext und Wissen. Belegte Angaben aus dem Kontext gehören in den Text:
    Anlass, Organisation, Ort, Datum, Rolle und Name einer Person, Titel einer
