@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Optional
 
 from prompts.components.constraints import (
-    ANTI_HALLUZINATION_REGELN,
+    ANTI_HALLUZINATION_KERN,
     EVIDENZ_STUFEN_REGELN,
     LIZENZ_LOGOS_REGELN,
 )
@@ -43,7 +43,7 @@ def build_beschreibung_prompt_logo(
 
     return f"""{ROLE_BESCHREIBER}
 
-{ANTI_HALLUZINATION_REGELN}
+{ANTI_HALLUZINATION_KERN}
 
 {LIZENZ_LOGOS_REGELN}
 
@@ -113,7 +113,7 @@ def build_beschreibung_prompt_icon(
 
     return f"""{ROLE_BESCHREIBER}
 
-{ANTI_HALLUZINATION_REGELN}
+{ANTI_HALLUZINATION_KERN}
 
 BILDTYP: icon (kleines funktionales Symbol — Lupe, Hamburger, Warenkorb etc.)
 {bildgroesse_zeile(width, height, label='BILDGRÖSSE')}
@@ -181,7 +181,7 @@ def build_beschreibung_prompt_funktional(
 
     return f"""{ROLE_BESCHREIBER}
 
-{ANTI_HALLUZINATION_REGELN}
+{ANTI_HALLUZINATION_KERN}
 
 BILDTYP: funktional (Navigations- oder Steuerungselement mit Zustands-
 information — Paginierungspfeile, Vor/Zurück, Fortschrittsanzeigen,

@@ -115,6 +115,47 @@ def bilddaten_block(width, height, enriched_context: str, original_alt: str = ''
     return '\n'.join(zeilen)
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# COMBO-MODUS (07.09.2026, Prompt-Zusammenbau v2)
+#
+# Der Produktionsweg ist EIN Aufruf: internes Inventar + Beschreibung. Damit
+# der zusammengesetzte Prompt keine doppelte Rolle, keine doppelte Anti-
+# Halluzinations-Schicht, kein leeres Inventar-JSON und keinen doppelten
+# Kontext mehr traegt, setzt combo.py diesen Modus: Die Builder lassen dann
+# ihren Kopf (Rolle + Regeln) weg und rendern an der Inventar-Stelle den
+# Text fuer das interne Inventar, den combo.py vorher hinterlegt hat.
+# Ausserhalb des Modus (Snapshots, Tests) rendern die Builder wie bisher.
+# ─────────────────────────────────────────────────────────────────────────
+_combo_inventar: ContextVar[Optional[str]] = ContextVar('combo_inventar', default=None)
+
+
+@contextmanager
+def combo_modus(internes_inventar_text: str):
+    """Innerhalb dieses Blocks bauen die Builder den Kategorie-Teil fuer den Combo-Prompt."""
+    token = _combo_inventar.set(internes_inventar_text)
+    try:
+        yield
+    finally:
+        _combo_inventar.reset(token)
+
+
+def im_combo() -> bool:
+    return _combo_inventar.get() is not None
+
+
+def kopf_schichten(standalone: str) -> str:
+    """Rolle + Regeln im Prompt-Kopf: leer im Combo-Modus (steht dort einmal oben)."""
+    return '' if im_combo() else standalone
+
+
+def inventar_block(inventar_json: str, einleitung: str) -> str:
+    """Inventar-Sektion: im Combo-Modus das interne Inventar, sonst das JSON des Inventar-Passes."""
+    intern = _combo_inventar.get()
+    if intern is not None:
+        return intern
+    return f"INVENTAR (Pass-2-Beobachtungen)\n\n{einleitung}\n\n{inventar_json}"
+
+
 def user_hint_block(user_hint: Optional[str]) -> str:
     """Formatiert den optionalen Nutzer-Hinweis-Block für den Prompt.
 

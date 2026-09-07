@@ -7,7 +7,7 @@ Alle 6 Builder folgen dem gleichen Aufbau (ROLE_BESCHREIBER war zwischen
 den Refactorings 05/06-2026 versehentlich aus allen 6 Buildern herausgefallen —
 am 05.07.2026 nach Fable-5-Review wieder eingesetzt, s. Desktop-Doku
 Premium-Prompt-Review-Fable5.txt):
-  ROLE_BESCHREIBER + ANTI_HALLUZINATION_REGELN + (ATMOSPHAERE_REGEL je nach Typ)
+  ROLE_BESCHREIBER + ANTI_HALLUZINATION_REGELN (im Combo-Modus einmal im Kopf des Gesamtprompts)
   + geteilte Helper-Blöcke (Personen-, Kontext-, Unterschriften-, Atmosphäre-,
     Zweck-, Kompaktheits-, Zähl-Block — siehe _render_*-Funktionen unten)
   + Bildtyp-spezifische SPEZIFITAETS-PFLICHT + VOLLSTÄNDIGKEITS-PFLICHT
@@ -16,8 +16,8 @@ Premium-Prompt-Review-Fable5.txt):
   PERSONEN_REGELN und KONTAKTDATEN_PFLICHT waren tote Importe und wurden
   entfernt — die Personen-Logik lebt in _render_personenregeln_block.)
 
-ATMOSPHAERE_REGEL gilt für foto_essen EINGESCHRÄNKT (nur visuell belegbare
-Eigenschaften, keine Geschmacks-Adjektive) — siehe Builder-Kommentar.
+foto_essen fuehrt einen eigenen, eingeschraenkten Atmosphaere-Absatz (nur visuell
+belegbare Eigenschaften, keine Geschmacks-Adjektive) — siehe Builder-Kommentar.
 """
 from __future__ import annotations
 
@@ -27,16 +27,13 @@ from typing import Optional
 # Paket 1 (16.07.2026): tote Importe entfernt — EVIDENZ_STUFEN_REGELN,
 # KONTAKTDATEN_PFLICHT und PERSONEN_REGELN wurden in keinem Prompt-String
 # dieser Datei verwendet (Regel-Inventur, Strukturbefund 2).
-from prompts.components.constraints import (
-    ANTI_HALLUZINATION_REGELN,
-    ATMOSPHAERE_REGEL,
-)
+from prompts.components.constraints import ANTI_HALLUZINATION_REGELN
 from prompts.components.roles import ROLE_BESCHREIBER
 from prompts.components.schema_helpers import render_schema_for_prompt
 from prompts.components.schemas import BeschreibungOutput, InventarOutput
 from prompts.components.stilregeln import STILREGELN
 
-from .helpers import bildgroesse_zeile, kontext_werte, load_examples, user_hint_block
+from .helpers import bildgroesse_zeile, inventar_block, kontext_werte, kopf_schichten, load_examples, user_hint_block
 
 
 
@@ -56,6 +53,23 @@ from .helpers import bildgroesse_zeile, kontext_werte, load_examples, user_hint_
 # Konzeptionell setzen die Helpers ChatGPTs "Personen als Dimension"-
 # Idee in Code um: jeder Helper ist eine Dimension die in mehreren
 # Bildtypen vorkommen kann.
+
+
+_INVENTAR_EINLEITUNG = (
+    "Das Inventar enthaelt die strukturierten Beobachtungen aus dem Analyse-Pass.\n"
+    "Nutze diese Daten als primaere faktische Grundlage. Sichtbare\n"
+    "Bildinformationen duerfen ergaenzt werden, aber nicht dem Inventar\n"
+    "widersprechen."
+)
+
+
+def _basis_schichten() -> str:
+    """Rolle + Anti-Halluzination im Prompt-Kopf; im Combo-Modus leer (steht dort einmal oben)."""
+    return kopf_schichten(f'{ROLE_BESCHREIBER}\n\n{ANTI_HALLUZINATION_REGELN}')
+
+
+def _render_inventar_block(inventar_json: str) -> str:
+    return inventar_block(inventar_json, _INVENTAR_EINLEITUNG)
 
 
 # GELOCKERT 16.06.2026 (Steve): Personen-Identifikation bewusst entschaerft.
@@ -293,9 +307,7 @@ def build_beschreibung_prompt_foto_event(
     inventar_json = inventar.model_dump_json(indent=2)
     user_hint_text = user_hint_block(user_hint)
 
-    return f"""{ROLE_BESCHREIBER}
-
-{ANTI_HALLUZINATION_REGELN}
+    return f"""{_basis_schichten()}
 
 BILDTYP: foto_event
 {bildgroesse_zeile(width, height)}
@@ -311,14 +323,7 @@ interpretierend. Nur sichtbar belegbare Informationen; nicht vermuten, nicht
 Veranstaltung, raeumliche Orientierung, praegende visuelle Elemente.
 
 
-INVENTAR (Pass-2-Beobachtungen)
-
-Das Inventar enthaelt die strukturierten Beobachtungen aus dem Analyse-Pass.
-Nutze diese Daten als primaere faktische Grundlage. Sichtbare
-Bildinformationen duerfen ergaenzt werden, aber nicht dem Inventar
-widersprechen.
-
-{inventar_json}
+{_render_inventar_block(inventar_json)}
 
 
 KONTEXT
@@ -443,9 +448,7 @@ def build_beschreibung_prompt_foto_personen(
     inventar_json = inventar.model_dump_json(indent=2)
     user_hint_text = user_hint_block(user_hint)
 
-    return f"""{ROLE_BESCHREIBER}
-
-{ANTI_HALLUZINATION_REGELN}
+    return f"""{_basis_schichten()}
 
 BILDTYP: foto_personen
 {bildgroesse_zeile(width, height)}
@@ -473,14 +476,7 @@ Person und ihre sichtbare Situation mental nachvollziehbar machen —
 in der knappen, natuerlichen Form der STILREGELN.
 
 
-INVENTAR (Pass-2-Beobachtungen)
-
-Das Inventar enthaelt die strukturierten Beobachtungen aus dem
-Analyse-Pass. Nutze diese Daten als primaere faktische Grundlage fuer
-Alt-Text und Langbeschreibung. Sichtbare Bildinformationen duerfen
-ergaenzt werden, aber nicht dem Inventar widersprechen.
-
-{inventar_json}
+{_render_inventar_block(inventar_json)}
 
 
 KONTEXT
@@ -626,9 +622,7 @@ def build_beschreibung_prompt_foto_objekte(
     halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
     halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ROLE_BESCHREIBER}
-
-{ANTI_HALLUZINATION_REGELN}
+    return f"""{_basis_schichten()}
 
 BILDTYP: foto_objekte
 {bildgroesse_zeile(width, height)}
@@ -646,14 +640,7 @@ Beschriftungen), wird uebernommen. Wo eine konkrete Benennung belegt ist,
 beginnt der Text damit — nicht mit einer generischen Umschreibung.
 
 
-INVENTAR (Pass-2-Beobachtungen)
-
-Das Inventar enthaelt strukturierte Beobachtungen aus dem Analyse-Pass.
-Nutze diese Daten als primaere faktische Grundlage. Sichtbare
-Bildinformationen duerfen ergaenzt werden, duerfen dem Inventar aber nicht
-widersprechen.
-
-{inventar_json}
+{_render_inventar_block(inventar_json)}
 
 
 HALLUZINATIONS-WARNUNGEN AUS DEM INVENTAR
@@ -790,9 +777,7 @@ def build_beschreibung_prompt_foto_essen(
     halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
     halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ROLE_BESCHREIBER}
-
-{ANTI_HALLUZINATION_REGELN}
+    return f"""{_basis_schichten()}
 
 BILDTYP: foto_essen
 {bildgroesse_zeile(width, height)}
@@ -817,13 +802,7 @@ sind oft wichtig — nenne sie. Halte den Text KOMPAKT; nicht jedes Detail
 ausschreiben.
 
 
-INVENTAR (Pass-2-Beobachtungen)
-
-Nutze diese strukturierten Beobachtungen als primaere faktische Grundlage.
-Sichtbare Bildinformationen duerfen ergaenzen, dem Inventar aber nicht
-widersprechen.
-
-{inventar_json}
+{_render_inventar_block(inventar_json)}
 
 
 HALLUZINATIONS-WARNUNGEN AUS DEM INVENTAR
@@ -984,9 +963,7 @@ def build_beschreibung_prompt_foto_landschaft(
     halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
     halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ROLE_BESCHREIBER}
-
-{ANTI_HALLUZINATION_REGELN}
+    return f"""{_basis_schichten()}
 
 BILDTYP: foto_landschaft
 {bildgroesse_zeile(width, height)}
@@ -1006,13 +983,7 @@ uebernommen. Erfinde keinen Ortsnamen, keine Region, keinen Berg- oder
 Gewaessernamen und keine Jahreszeit, die nicht belegt sind.
 
 
-INVENTAR (Pass-2-Beobachtungen)
-
-Nutze diese strukturierten Beobachtungen als primaere faktische Grundlage.
-Sichtbare Bildinformationen duerfen ergaenzen, dem Inventar aber nicht
-widersprechen.
-
-{inventar_json}
+{_render_inventar_block(inventar_json)}
 
 
 HALLUZINATIONS-WARNUNGEN AUS DEM INVENTAR
@@ -1164,9 +1135,7 @@ def build_beschreibung_prompt_foto_architektur(
     halluzinations_warnungen = inventar.halluzinations_warnung if inventar.halluzinations_warnung else []
     halluzinations_block = chr(10).join(f'- {w}' for w in halluzinations_warnungen) if halluzinations_warnungen else '(keine spezifischen Warnungen)'
 
-    return f"""{ROLE_BESCHREIBER}
-
-{ANTI_HALLUZINATION_REGELN}
+    return f"""{_basis_schichten()}
 
 BILDTYP: foto_architektur
 {bildgroesse_zeile(width, height)}
@@ -1190,13 +1159,7 @@ Erfinde nur keine FALSCHE konkrete Identitaet (keinen geratenen Namen fuer ein
 generisches Gebaeude), keinen erfundenen Architekten und kein erfundenes Baujahr.
 
 
-INVENTAR (Pass-2-Beobachtungen)
-
-Nutze diese strukturierten Beobachtungen als primaere faktische Grundlage.
-Sichtbare Bildinformationen duerfen ergaenzen, dem Inventar aber nicht
-widersprechen.
-
-{inventar_json}
+{_render_inventar_block(inventar_json)}
 
 
 HALLUZINATIONS-WARNUNGEN AUS DEM INVENTAR

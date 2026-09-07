@@ -42,15 +42,16 @@ import os
 from typing import Optional
 
 from prompts.components.constraints import (
+    ANTI_HALLUZINATION_REGELN,
     ATMOSPHAERE_REGEL,
     EIGENNAMEN_REGELN,
     KONTAKTDATEN_PFLICHT,
 )
 from prompts.components.roles import ROLE_BESCHREIBER
-from prompts.components.stilregeln import STILREGELN_KERN
+from prompts.components.stilregeln import STILREGELN_SACHLICH
 from prompts.components.schemas import InventarOutput
 
-from .helpers import bildgroesse_zeile, kontext_werte, load_examples, user_hint_block
+from .helpers import bildgroesse_zeile, inventar_block, kontext_werte, kopf_schichten, load_examples, user_hint_block
 
 
 # =====================================================================
@@ -63,26 +64,19 @@ from .helpers import bildgroesse_zeile, kontext_werte, load_examples, user_hint_
 
 
 def _basis_schichten() -> str:
-    """Rolle fuer den Prompt-Kopf.
+    """Rolle + Anti-Halluzination im Prompt-Kopf; im Combo-Modus leer (steht dort einmal oben)."""
+    return kopf_schichten(f'{ROLE_BESCHREIBER}\n\n{ANTI_HALLUZINATION_REGELN}')
 
-    Die ANTI_HALLUZINATION_REGELN traegt im Lean-Weg der Inventar-Teil des
-    Combo-Prompts (inventar.py); hier stehen sie deshalb nicht noch einmal.
-    Der fruehere Full-Zweig (eigenstaendiger Pass 3 mit eigener Schicht) ist
-    seit 07.09.2026 abgebaut.
-    """
-    return ROLE_BESCHREIBER
+
+_INVENTAR_EINLEITUNG = """Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
+Nutze diese Daten als primäre faktische Grundlage. Sichtbare
+Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
+widersprechen."""
 
 
 def _render_inventar_block(inventar_json: str) -> str:
-    """Inventar-Sektion — identisch in allen 7 Daten-Buildern."""
-    return f"""INVENTAR (Pass-2-Beobachtungen)
-
-Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
-Nutze diese Daten als primäre faktische Grundlage. Sichtbare
-Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
-widersprechen.
-
-{inventar_json}"""
+    """Inventar-Sektion aller 7 Daten-Builder; im Combo-Modus das interne Inventar."""
+    return inventar_block(inventar_json, _INVENTAR_EINLEITUNG)
 
 
 def _render_kontext_block(enriched_context: str, user_hint_text: str) -> str:
@@ -216,10 +210,7 @@ leicht auf das naheliegendste Klischee festgelegt. Genau das vermeidest du.
 {_render_kompaktheit_block('einfache Motive unter 150 Zeichen, komplexe Illustrationen bis etwa 250')}
 
 
-{STILREGELN_KERN}
-(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
-das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
-allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+{STILREGELN_SACHLICH}
 
 
 ALT-TEXT
@@ -369,10 +360,7 @@ benennen.
 {_render_kompaktheit_block('einfache Diagramme unter 150 Zeichen, komplexe bis etwa 250')}
 
 
-{STILREGELN_KERN}
-(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
-das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
-allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+{STILREGELN_SACHLICH}
 
 
 ALT-TEXT
@@ -604,10 +592,7 @@ bei Zahlen, Summen und Einheiten ist hier der Qualitätsmaßstab.
 {_render_kompaktheit_block('unter 250 Zeichen')}
 
 
-{STILREGELN_KERN}
-(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
-das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
-allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+{STILREGELN_SACHLICH}
 
 
 ALT-TEXT
@@ -749,10 +734,7 @@ nie geraten und nie aus dem Kontext 'korrigiert'.
 {_render_kompaktheit_block('unter 350 Zeichen')}
 
 
-{STILREGELN_KERN}
-(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
-das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
-allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+{STILREGELN_SACHLICH}
 
 
 ALT-TEXT
@@ -876,10 +858,7 @@ inhaltliche Struktur.
 {_render_kompaktheit_block('unter 350 Zeichen', 'etwa 1500 Zeichen')}
 
 
-{STILREGELN_KERN}
-(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
-das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
-allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+{STILREGELN_SACHLICH}
 
 
 ALT-TEXT
@@ -1016,10 +995,7 @@ die verlässlichste Informationsquelle und werden wortgetreu übernommen.
 {_render_kompaktheit_block('unter 350 Zeichen', 'etwa 1000 Zeichen')}
 
 
-{STILREGELN_KERN}
-(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
-das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
-allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+{STILREGELN_SACHLICH}
 
 
 ALT-TEXT
@@ -1146,10 +1122,7 @@ Beschriftung, nicht aus visueller Vermutung.
 {_render_kompaktheit_block('unter 250 Zeichen', 'etwa 800 Zeichen')}
 
 
-{STILREGELN_KERN}
-(Einordnung fuer Datengrafiken: Massgeblich fuer Laenge und Satzzahl ist
-das KOMPAKTHEIT-Regime dieses Builders; aus den STILREGELN gelten vor
-allem natuerlicher Satzbau, die Floskel-Verbote und Wichtigstes zuerst.)
+{STILREGELN_SACHLICH}
 
 
 ALT-TEXT

@@ -1,6 +1,14 @@
-"""Anti-Halluzinations-Regeln (höchste Priorität in allen Beschreibungs-Prompts)."""
+"""Anti-Halluzinations-Regeln (höchste Priorität in allen Beschreibungs-Prompts).
 
-ANTI_HALLUZINATION_REGELN = """ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
+Zwei Exporte (07.09.2026, Prompt-Zusammenbau v2):
+- ANTI_HALLUZINATION_KERN   — Regeln 1 bis 4 (Evidenz, Zwei-Wege-Logik, keine
+  Interaktions-Geschichten, identifizieren oder neutral). Fuer die Mini-Familie
+  (logo/icon/funktional), deren 3 bis 80 Zeichen keine Montage-Pruefung tragen.
+- ANTI_HALLUZINATION_REGELN — Kern plus Regel 5 (Fotomontagen und Collagen).
+  Fuer Foto- und Daten-Familie sowie den Combo-Prompt.
+"""
+
+ANTI_HALLUZINATION_KERN = """ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
 
 1. EVIDENZ-BASIERT: Eine Aussage darf nur dann im Output stehen, wenn das Bild oder das
    Inventar sie stützt. Plausibel klingen reicht NICHT. 'Bei Eventfotos hält man oft
@@ -35,7 +43,9 @@ ANTI_HALLUZINATION_REGELN = """ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
    solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
    Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
    'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
-   Mehrfach-Hypothese.
+   Mehrfach-Hypothese."""
+
+ANTI_HALLUZINATION_REGELN = ANTI_HALLUZINATION_KERN + """
 
 5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
    (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
