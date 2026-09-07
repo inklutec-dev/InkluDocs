@@ -60,7 +60,7 @@ VALIDATOR_ENABLED = os.environ.get("VALIDATOR_ENABLED", "true").lower() in ("tru
 # Bei PIPELINE_VERSION=v4 muss das v4-Modul beim Container-Start importierbar sein — sonst
 # Fail-Fast (uvicorn startet nicht). Begruendung: stiller Fallback auf v3_7 wuerde Audit-Trail
 # verfaelschen (Behoerden-Compliance), und ein Operator der v4 setzt muss wissen wenn v4 fehlt.
-PIPELINE_VERSION = os.environ.get("PIPELINE_VERSION", "v3_7").lower()
+PIPELINE_VERSION = os.environ.get("PIPELINE_VERSION", "v4").lower()
 _KNOWN_PIPELINE_VERSIONS = ("v3_7", "v4")
 if PIPELINE_VERSION not in _KNOWN_PIPELINE_VERSIONS:
     raise RuntimeError(

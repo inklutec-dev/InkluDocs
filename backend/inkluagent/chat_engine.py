@@ -2,9 +2,9 @@
 klassifiziert Intent, dispatched zu passendem Handler.
 
 Pfade:
-- smalltalk:        freier Chat ohne Bild (Mistral-Medium oder Pixtral)
+- smalltalk:        freier Chat ohne Bild
 - generate_fresh:   ruft InkluDocs-Pipeline pro Bild auf
-- modify_existing:  Pixtral-Single-Shot mit User-Hint, Bild + bestehender Text
+- modify_existing:  Single-Shot mit User-Hint, Bild + bestehender Text
 - set_text:         Bestaetigungs-Rueckfrage, dann DB-Update
 """
 from __future__ import annotations
@@ -17,7 +17,6 @@ from typing import Optional
 
 from . import storage
 from .router import classify_intent
-from .providers.mistral import MistralProvider, MistralProviderError
 from .providers.bedrock import BedrockProvider, BedrockProviderError
 from .adapters.inkludocs import (
     get_project_context,
@@ -40,20 +39,14 @@ from .sanitize import sanitize_markdown
 
 log = logging.getLogger(__name__)
 
-_PROVIDER_NAME = os.environ.get("INKLUAGENT_PROVIDER", "mistral").lower().strip()
-if _PROVIDER_NAME == "bedrock":
-    _provider = BedrockProvider()
-    log.info("InkluAgent: BedrockProvider aktiv (Claude via Frankfurt)")
-else:
-    _provider = MistralProvider()
-    log.info("InkluAgent: MistralProvider aktiv")
+# Seit 07.09.2026 gibt es nur noch einen Anbieter: Claude ueber Amazon Bedrock.
+# Der fruehere Schalter INKLUAGENT_PROVIDER (mistral/bedrock) ist abgebaut.
+_PROVIDER_NAME = "bedrock"
+_provider = BedrockProvider()
+log.info("InkluAgent: BedrockProvider aktiv (Claude via Frankfurt)")
 
-# Agentic-Modus (Tool-Use-Loop) — Default an wenn Bedrock-Provider, sonst aus.
-# Override via INKLUAGENT_AGENTIC=true|false.
-_AGENTIC_ENABLED = os.environ.get(
-    "INKLUAGENT_AGENTIC",
-    "true" if _PROVIDER_NAME == "bedrock" else "false",
-).lower().strip() == "true"
+# Agentic-Modus (Tool-Use-Loop) — Default an. Override via INKLUAGENT_AGENTIC=true|false.
+_AGENTIC_ENABLED = os.environ.get("INKLUAGENT_AGENTIC", "true").lower().strip() == "true"
 if _AGENTIC_ENABLED:
     log.info("InkluAgent: agentic Tool-Use-Loop aktiviert")
 
@@ -78,7 +71,7 @@ def process_message(project_id: int, user_message: str, user_id: int, system_suf
         }
 
     # Neuer agentic Pfad: Sonnet entscheidet selbst welche Tools er nutzt.
-    # Klassischer 4-Pfad-Dispatcher bleibt unten als Fallback (z.B. Mistral-Provider).
+    # Klassischer 4-Pfad-Dispatcher bleibt unten als Absturz-Fallback des Werkzeug-Modus.
     if (project or {}).get("tool") == "formular" and not (_AGENTIC_ENABLED and _PROVIDER_NAME == "bedrock"):
         return {"reply": "Der Assistent fuer Formular-Projekte braucht den Werkzeug-Modus (Bedrock). Bitte an den Betreiber wenden.",
                 "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
@@ -111,7 +104,7 @@ def process_message(project_id: int, user_message: str, user_id: int, system_suf
 
 
 def _load_history_messages(project_id: int) -> list[dict]:
-    """Lade die letzten N Nachrichten als Mistral-kompatibles Format."""
+    """Lade die letzten N Nachrichten im Chat-Nachrichtenformat."""
     full = storage.get_history(project_id, limit=200)
     recent = full[-_HISTORY_TURNS:]
     return [{"role": m["role"], "content": m["content"]} for m in recent
@@ -160,7 +153,7 @@ def _handle_smalltalk(project_id: int, user_message: str, project: dict) -> dict
     )
     try:
         reply = _provider.chat(messages=messages, max_tokens=600, temperature=0.5)
-    except (MistralProviderError, BedrockProviderError) as e:
+    except BedrockProviderError as e:
         log.error("Smalltalk-Call fehlgeschlagen: %s", e)
         reply = ("Entschuldige, ich kann gerade nicht antworten. "
                  "Bitte versuch es in einem Moment nochmal.")
@@ -358,8 +351,8 @@ def _modify_one_image(img: dict, user_message: str, project_id: int) -> str:
     try:
         raw = _provider.chat(messages=messages, images=[img_bytes],
                              max_tokens=600, temperature=0.4)
-    except (MistralProviderError, BedrockProviderError) as e:
-        return f"[Mistral-Fehler: {e}]"
+    except BedrockProviderError as e:
+        return f"[KI-Fehler: {e}]"
 
     return _parse_modify_response(raw)
 
@@ -389,9 +382,9 @@ def _parse_modify_response(raw: str) -> str:
     sanitisiert. Bei Verletzung sauberer Fallback statt rohem Text.
     """
     if not raw:
-        return "[Mistral lieferte eine leere Antwort.]"
+        return "[Das Modell lieferte eine leere Antwort.]"
     cleaned = raw.strip()
-    # Codefences abstreifen, falls Mistral sie trotz Verbot setzt
+    # Codefences abstreifen, falls das Modell sie trotz Verbot setzt
     if cleaned.startswith("```"):
         cleaned = cleaned.strip("`")
         if cleaned.lower().startswith("json"):
@@ -399,7 +392,7 @@ def _parse_modify_response(raw: str) -> str:
     try:
         data = json.loads(cleaned)
     except json.JSONDecodeError:
-        return ("[Mistral hat kein valides JSON geliefert. Antwort:\n"
+        return ("[Das Modell hat kein valides JSON geliefert. Antwort:\n"
                 + sanitize_markdown(cleaned)[:500] + "]")
     if not isinstance(data, dict):
         return "[Modify-Antwort ist kein JSON-Objekt.]"

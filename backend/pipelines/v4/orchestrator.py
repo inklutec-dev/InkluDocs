@@ -49,12 +49,12 @@ from prompts.components.schemas import (
 )
 
 from .llm_client import (
-    MODEL_CLASSIFY as MISTRAL_MODEL_CLASSIFY,
-    MODEL_GENERATE as MISTRAL_MODEL_GENERATE,
-    MODEL_INVENTAR as MISTRAL_MODEL_INVENTAR,
-    MODEL_VALIDATE as MISTRAL_MODEL_VALIDATE,
-    LLMCallError as MistralCallError,
-    call_with_schema as call_mistral_with_schema,
+    MODEL_CLASSIFY,
+    MODEL_GENERATE,
+    MODEL_INVENTAR,
+    MODEL_VALIDATE,
+    LLMCallError,
+    call_with_schema,
 )
 
 log = logging.getLogger(__name__)
@@ -396,8 +396,8 @@ def _kuerze_korrektur(image_path: str, korrektur: str, language: str = 'de') -> 
         'Wichtigste zuerst.\n\n' + STILREGELN_KERN + '\n\nALT-TEXT:\n"' + korrektur + '"'
     )
     try:
-        out = call_mistral_with_schema(
-            model=MISTRAL_MODEL_VALIDATE, prompt=prompt, image_path=image_path,
+        out = call_with_schema(
+            model=MODEL_VALIDATE, prompt=prompt, image_path=image_path,
             schema=KuerzungOutput, max_tokens=600, system=SYSTEM_BESCHREIBUNG,
         )
         return (out.alt_text or '').strip() or None
@@ -443,8 +443,8 @@ def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str
         # mit dem Beschreibungsmodell, der Schalter war dort wirkungslos. So kann
         # der Pruefer ein staerkeres Modell bekommen als der Erzeuger (Premium-
         # Weg: Cross-Model-Validator), ohne die Erzeugung zu verteuern.
-        return call_mistral_with_schema(
-            model=MISTRAL_MODEL_VALIDATE,
+        return call_with_schema(
+            model=MODEL_VALIDATE,
             prompt=_build_verify_prompt(alt_text, language=language, enriched_context=enriched_context),
             image_path=image_path,
             schema=VerifyOutput,
@@ -621,7 +621,7 @@ def _run_multipass_pipeline(
       (bildtyp, alt_text, langbeschreibung, needs_review, plus v4-Audit-Felder).
 
     Raises:
-      MistralCallError wenn ein Mistral-Call auch nach Retry fehlschlägt.
+      LLMCallError wenn ein Mistral-Call auch nach Retry fehlschlägt.
       Der Aufrufer sollte das fangen und die Pipeline gnädig abbrechen
       (z.B. Result mit needs_review=True und einer Fehlermeldung).
     """
@@ -638,8 +638,8 @@ def _run_multipass_pipeline(
             original_alt=original_alt,
             user_hint=user_hint,
         )
-        classification = call_mistral_with_schema(
-            model=MISTRAL_MODEL_CLASSIFY,
+        classification = call_with_schema(
+            model=MODEL_CLASSIFY,
             prompt=classify_prompt,
             image_path=image_path,
             schema=ClassificationOutput,
@@ -696,8 +696,8 @@ def _run_multipass_pipeline(
             width=width, height=height,
             user_hint=user_hint,
         )
-        inventar = call_mistral_with_schema(
-            model=MISTRAL_MODEL_INVENTAR,
+        inventar = call_with_schema(
+            model=MODEL_INVENTAR,
             prompt=inventar_prompt,
             image_path=image_path,
             schema=InventarOutput,
@@ -731,8 +731,8 @@ def _run_multipass_pipeline(
         mini_prompt += _user_prompt_suffix(user_prompt)
         mini_prompt += _language_suffix(language)
         mini_prompt += _variation_suffix(previous_alt)
-        beschreibung = call_mistral_with_schema(
-            model=MISTRAL_MODEL_GENERATE,
+        beschreibung = call_with_schema(
+            model=MODEL_GENERATE,
             prompt=mini_prompt,
             image_path=image_path,
             schema=IconBeschreibungOutput,
@@ -756,8 +756,8 @@ def _run_multipass_pipeline(
         besch_prompt += _user_prompt_suffix(user_prompt)
         besch_prompt += _language_suffix(language)
         besch_prompt += _variation_suffix(previous_alt)
-        beschreibung = call_mistral_with_schema(
-            model=MISTRAL_MODEL_GENERATE,
+        beschreibung = call_with_schema(
+            model=MODEL_GENERATE,
             prompt=besch_prompt,
             image_path=image_path,
             schema=BeschreibungOutput,
@@ -801,8 +801,8 @@ def _run_multipass_pipeline(
             beschreibung=besch_for_validation,
             enriched_context=enriched_context,
         )
-        validierung = call_mistral_with_schema(
-            model=MISTRAL_MODEL_VALIDATE,
+        validierung = call_with_schema(
+            model=MODEL_VALIDATE,
             prompt=valid_prompt,
             image_path=image_path,
             schema=ValidierungOutput,
@@ -890,7 +890,7 @@ def generate_alt_text_v4(
 
     Args/Returns: identisch zu beiden Pipelines.
     """
-    pass_mode = os.environ.get('V4_PASS_MODE', 'full').strip().lower()
+    pass_mode = os.environ.get('V4_PASS_MODE', 'lean').strip().lower()
     if pass_mode == 'lean':
         return _run_lean_pipeline(
             image_path=image_path,
@@ -1019,8 +1019,8 @@ def _run_lean_pipeline(
             classify_prompt, width=width, height=height, enriched_context=enriched_context,
             original_alt=original_alt, user_hint=user_hint, mit_original_alt=True,
         )
-        classification = call_mistral_with_schema(
-            model=MISTRAL_MODEL_CLASSIFY,
+        classification = call_with_schema(
+            model=MODEL_CLASSIFY,
             prompt=classify_prompt,
             image_path=image_path,
             schema=ClassificationOutput,
@@ -1106,8 +1106,8 @@ def _run_lean_pipeline(
         mini_prompt += _user_prompt_suffix(user_prompt)
         mini_prompt += _language_suffix(language)
         mini_prompt += _variation_suffix(previous_alt)
-        beschreibung = call_mistral_with_schema(
-            model=MISTRAL_MODEL_GENERATE,
+        beschreibung = call_with_schema(
+            model=MODEL_GENERATE,
             prompt=mini_prompt,
             image_path=image_path,
             schema=IconBeschreibungOutput,
@@ -1131,8 +1131,8 @@ def _run_lean_pipeline(
         combo_prompt += _user_prompt_suffix(user_prompt)
         combo_prompt += _language_suffix(language)
         combo_prompt += _variation_suffix(previous_alt)
-        beschreibung = call_mistral_with_schema(
-            model=MISTRAL_MODEL_GENERATE,
+        beschreibung = call_with_schema(
+            model=MODEL_GENERATE,
             prompt=combo_prompt,
             image_path=image_path,
             schema=BeschreibungOutput,

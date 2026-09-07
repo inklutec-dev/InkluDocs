@@ -251,14 +251,9 @@ def load_examples(bildtyp: str) -> Examples:
     return Examples(bildtyp=bildtyp, good_examples=good, bad_examples=bad)
 
 
-# V4_PROMPT_MODE-Schalter (08.05.2026):
-# 'full' = volle Mistral-Erziehung (Hedge-Wort-Verbote, harte Final-Checks).
-# 'lean' = schlank fuer Sonnet (Sonnet halluziniert kaum, braucht keine Drillregeln).
-# Default: 'lean' wenn LLM_PROVIDER=bedrock, sonst 'full'.
-# So bleibt Mistral-Pipeline ohne Aenderung voll erzieherisch, Bedrock laeuft lean.
+# Prompt-Modus (Uebergang 07.09.2026): Der 'full'-Modus mit den Mistral-
+# Drillbloecken ist abgebaut; es gibt nur noch die schlanke Sonnet-Fassung.
+# Die Funktion bleibt vorerst, bis die letzten Aufrufer in beschreibung_foto.py
+# aufgeloest sind, und liefert immer 'lean'.
 def resolve_prompt_mode() -> str:
-    explicit = os.environ.get('V4_PROMPT_MODE', '').strip().lower()
-    if explicit in ('full', 'lean'):
-        return explicit
-    provider = os.environ.get('LLM_PROVIDER', 'mistral').lower().strip()
-    return 'lean' if provider == 'bedrock' else 'full'
+    return 'lean'

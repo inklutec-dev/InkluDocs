@@ -16,8 +16,8 @@ Exit-Code:
   2  — Pipeline-Fehler (kein Test-Result)
 
 Kosten-Hinweis:
-  Jeder Test = 4 Mistral-API-Calls (Klassifikation + Inventar + Beschreibung
-  + Validierung). Bei 10 Bildern entstehen ~40 Calls, ~0.50-1.00 EUR.
+  Jeder Test = 2 bis 3 Bedrock-Aufrufe (Klassifikation + Combo, bei
+  kritischen Bildtypen ein Pruefpass). Bei 10 Bildern ~0.40-0.80 EUR.
   Bei systematischen Eval-Runs nach jedem Constraint-Update einplanen.
 """
 from __future__ import annotations
@@ -32,7 +32,7 @@ from typing import Any
 
 import json as _json_loader
 
-from pipelines.v4.mistral_client import MistralCallError
+from pipelines.v4.llm_client import LLMCallError
 from pipelines.v4.orchestrator import generate_alt_text_v4
 
 DEFAULT_MANIFEST = Path(__file__).resolve().parent / 'korpus' / 'manifest.json'
@@ -161,8 +161,8 @@ def run_single_test(entry: dict) -> TestResult:
             height=entry.get('height', 0),
             original_alt=entry.get('original_alt', ''),
         )
-    except MistralCallError as e:
-        result.pipeline_error = f'MistralCallError: {e}'
+    except LLMCallError as e:
+        result.pipeline_error = f'LLMCallError: {e}'
         result.duration_seconds = time.time() - t0
         print(f'  PIPELINE-FEHLER: {e}')
         return result
@@ -276,13 +276,8 @@ def print_summary(results: list[TestResult]) -> int:
 
 def main(argv: list[str]) -> int:
     manifest_path = Path(argv[1]) if len(argv) > 1 else DEFAULT_MANIFEST
-    # 17.08.2026: Die Startpruefung verlangte immer einen MISTRAL_API_KEY und
-    # brach deshalb seit dem Bedrock-Umstieg jeden Eval-Lauf sofort ab.
-    # Jetzt providerabhaengig: Bedrock authentifiziert ueber die AWS-Kette.
-    provider = os.environ.get('LLM_PROVIDER', 'mistral').strip().lower()
-    if provider == 'mistral' and not os.environ.get('MISTRAL_API_KEY'):
-        print('FEHLER: MISTRAL_API_KEY nicht gesetzt — Eval-Run nicht möglich.')
-        return 2
+    # Bedrock authentifiziert ueber die AWS-Schluesselkette (Env/Container);
+    # eine eigene Startpruefung ist seit dem Mistral-Abbau (07.09.2026) nicht noetig.
     results = run_manifest(manifest_path)
     return print_summary(results)
 
