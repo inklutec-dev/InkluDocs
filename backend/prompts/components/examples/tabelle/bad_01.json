@@ -1,13 +1,10 @@
 {
-  "szene": "Dasselbe Periodensystem der Elemente (Periodic_table_large.svg): 118 Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, 1) bis Oganesson (Og, 118).",
-  "alt_text": "Eine bunte Tabelle zeigt verschiedene chemische Elemente in farbigen Kästchen. Oben links steht ein Kästchen, rechts daneben viele weitere; insgesamt sind es ungefähr 120 Elemente in schönen Regenbogenfarben.",
+  "szene": "Dasselbe Periodensystem der Elemente: 118 Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, 1) bis Oganesson (Og, 118).",
+  "alt_text": "Tabelle — Periodensystem der Elemente: ungefähr 120 Elemente in farbigen Kästchen, oben links beginnt die Tabelle mit einem Kästchen, rechts daneben folgen viele weitere.",
   "fehler": [
-    "'Eine bunte Tabelle zeigt verschiedene chemische Elemente' ist eine nichtssagende Floskel-Eröffnung ohne das Präfix 'Tabelle —' und ohne Kernaussage.",
-    "'ungefähr 120 Elemente' verletzt die Zähl-Disziplin — die Tabelle belegt exakt 118; weder Wasserstoff noch Oganesson werden mit Symbol und Ordnungszahl genannt.",
-    "'Oben links steht ein Kästchen, rechts daneben viele weitere' beschreibt das Layout statt der Struktur (18 Gruppen, 7 Perioden).",
-    "'in schönen Regenbogenfarben' ist Farb-Beschreibung mit Wertung statt Inhalt — die Farbkodierung wäre nur relevant, wenn ihre Bedeutung (Elementkategorien) erklärt würde."
+    "'ungefähr 120' verschenkt die belegte exakte Zahl 118, und 'oben links, rechts daneben' beschreibt das Layout statt der Struktur aus 18 Gruppen und 7 Perioden."
   ],
-  "besser": "Mit 'Tabelle — Periodensystem der Elemente' führen, die exakten belegten Werte nennen (118 Elemente, H 1 bis Og 118), die Struktur über Gruppen und Perioden statt über Kästchen-Positionen beschreiben und Farben nur mit ihrer belegten Bedeutung erwähnen.",
+  "besser": "'118 chemische Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118)'.",
   "quelle": "Wikimedia Commons: Periodic_table_large.svg",
   "lizenz": "Wikimedia Commons, frei lizenziert"
 }

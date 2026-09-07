@@ -64,7 +64,7 @@ class KorrekturwacheTest(unittest.TestCase):
 
     def test_prompt_enthaelt_minimaleingriff_und_stilregeln(self):
         p = o._build_verify_prompt("Ein Alt-Text zur Pruefung, lang genug.")
-        self.assertIn("MINIMALEINGRIFF", p)
+        self.assertIn("Minimaleingriff", p)
         self.assertIn("STILREGELN", p)
 
 

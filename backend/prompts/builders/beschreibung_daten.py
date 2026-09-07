@@ -1,167 +1,62 @@
-"""Pass-3-Builder für Daten-Visualisierung + Spezialfälle.
+"""Builder der Datenfamilie: illustration, diagramm, tabelle, karte, infografik,
+screenshot, strukturformel.
 
-7 Builder: illustration, diagramm, tabelle, karte, infografik, screenshot,
-strukturformel. Alle haben Inventar-Pass.
+Fassung September 2026 (Prompt-Runde nach dem Prüfkorpus). Aufbau jedes Builders,
+siehe docs/PROMPT-STANDARD.md:
+  Kopf (Rolle + Belegregeln, im Combo-Aufruf einmal ganz oben)
+  BILDTYP, AUFTRAG, inneres Inventar, ALT-TEXT, LANGBESCHREIBUNG,
+  höchstens zwei besondere Regeln der Kategorie, STILREGELN, BEISPIELE, KONTEXT.
+Die Langbeschreibung ist bei Datengrafiken Pflicht (Stilregel 4 der sachlichen
+Fassung). Was für alle Bildtypen gilt, steht nur im Kopf.
 
-PAKET 4 (16.07.2026): Alle 7 Builder auf das Premium-Muster von
-beschreibung_foto.py (foto_objekte als Vorlage) gehoben:
-  ROLE_BESCHREIBER + ANTI_HALLUZINATION_REGELN (einmal pro gerendertem
-  Prompt — siehe _basis_schichten) + BILDTYP/BILDGROESSE + ZIEL + geteilte
-  Blöcke (Inventar, Kontext, Zweck, Kompaktheit — siehe _render_*-Helper)
-  + kategorie-spezifische Regeln in ruhiger Formulierung + Few-Shot via
-  load_examples + AUSGABE-SCHEMA inline + FINAL CHECK als Prüfliste.
-
-- Der frühere diagramm-Zwitter (Premium-Lean-Zweig + Mistral-Full-Fallback
-  vom 14.04.2026) ist aufgelöst: EIN Builder für beide Modi, Basis ist der
-  Premium-Lean-Zweig vom 15.05.2026. Die Full-Zweig-Pflichten (Kontaktdaten,
-  Insight-first mit konkreten Werten, Vollständigkeit der Langbeschreibung,
-  Konsistenz alt_text/langbeschreibung, keine Markdown-Tabellen) leben in
-  den Sektionen und im FINAL CHECK des einen Builders weiter.
-- Fachlich wertvolle Spezialregeln sind INHALTLICH erhalten, nur vom alten
-  KRITISCH/MUSS-Drill-Ton auf die ruhige Premium-Formulierung gebracht:
-  Bilanz-Regel + Spalten-Zuordnung (tabelle), Ortsnamen wortgetreu in
-  Originalsprache + EIGENNAMEN_REGELN (karte), OCR als Primärquelle +
-  Kontaktdaten (tabelle/infografik/screenshot), Layout-Beschreibungs-Verbot
-  (infografik), Screenreader-Notation CH3 (strukturformel), Screenshot-
-  Präfix-Regel, Diagramm-Subtypen + Trend-Vokabular, Illustration-
-  Alternativen-Form ("als X oder Y deutbar").
-- Längenregime: Richtwerte aus Paket 1 unverändert (tabelle/strukturformel
-  unter 250, karte/infografik/screenshot unter 350; Langbeschreibung etwa
-  1500/1000/800 für infografik/screenshot/strukturformel); harte Obergrenze
-  ist allein das Schema (400/2000).
-
-ATMOSPHAERE_REGEL gilt für diese Bildtypen NICHT — Daten sind objektiv,
-Wertungen über Atmosphäre haben hier keinen Platz. (Ausnahme: infografik
-EINGESCHRÄNKT bei Kampagnen-Infografiken — die Einschränkung ist seit
-Paket 4 direkt in die ATMOSPHAERE-Sektion des infografik-Builders
-integriert statt pauschal vorangestellt.)
+Gattungswort: Tabelle, Karte, Infografik, Screenshot, Strukturformel und
+Diagramm beginnen den Alt-Text mit ihrer Gattung als erstem Wort, ohne
+Gedankenstrich. Illustration beginnt wie ein Foto mit dem Motiv.
 """
 from __future__ import annotations
 
-import os
 from typing import Optional
 
 from prompts.components.constraints import (
-    KUNSTWERK_REGEL,
     ANTI_HALLUZINATION_REGELN,
     ATMOSPHAERE_REGEL,
     EIGENNAMEN_REGELN,
-    KONTAKTDATEN_PFLICHT,
+    KUNSTWERK_REGEL,
 )
 from prompts.components.roles import ROLE_BESCHREIBER
-from prompts.components.stilregeln import STILREGELN_SACHLICH
 from prompts.components.schemas import InventarOutput
+from prompts.components.stilregeln import STILREGELN, STILREGELN_SACHLICH
 
 from .helpers import bildgroesse_zeile, inventar_block, kontext_werte, kopf_schichten, load_examples, user_hint_block
 
 
-# =====================================================================
-# Geteilte Helper-Blöcke der Daten-Familie (Paket 4, 16.07.2026)
-# =====================================================================
-# Der Refactor-Plan aus der Lean-Iteration 15.05.2026 ('Helper-Kandidat'-
-# Markierungen im diagramm-Builder) ist damit umgesetzt: die in allen
-# 7 Buildern identischen Sektionen leben an EINER Stelle — Drift-Vermeidung
-# wie bei den Foto-Helpern in beschreibung_foto.py.
-
-
 def _basis_schichten() -> str:
-    """Rolle + Anti-Halluzination im Prompt-Kopf; im Combo-Modus leer (steht dort einmal oben)."""
+    """Rolle und Belegregeln im Prompt-Kopf; im Combo-Aufruf leer (stehen dort einmal oben)."""
     return kopf_schichten(f'{ROLE_BESCHREIBER}\n\n{ANTI_HALLUZINATION_REGELN}')
 
 
-_INVENTAR_EINLEITUNG = """Das Inventar enthält die strukturierten Beobachtungen aus dem Analyse-Pass.
-Nutze diese Daten als primäre faktische Grundlage. Sichtbare
-Bildinformationen dürfen ergänzt werden, dürfen dem Inventar aber nicht
-widersprechen."""
+_INVENTAR_EINLEITUNG = """Das Inventar enthält die Beobachtungen des Analyse-Schritts. Es ist die
+Grundlage jeder Aussage; sichtbare Bildinformationen dürfen ergänzt werden,
+aber nichts darf dem Inventar widersprechen."""
 
 
 def _render_inventar_block(inventar_json: str) -> str:
-    """Inventar-Sektion aller 7 Daten-Builder; im Combo-Modus das interne Inventar."""
     return inventar_block(inventar_json, _INVENTAR_EINLEITUNG)
 
 
 def _render_kontext_block(enriched_context: str, user_hint_text: str) -> str:
-    """Kontext-Sektion inkl. Bild-gewinnt-Regel — alle 7 Daten-Builder."""
-    return f"""KONTEXT
-
-Kontext kann aus PDF-Text, Webseiteninhalt, Bildunterschriften oder
-API-Aufrufen stammen. Er hilft, die Grafik fachlich einzuordnen. Ohne
-Kontext beschreibst du ausschließlich sichtbar belegbare Bildinformationen;
-fehlender Kontext wird nicht durch Vermutungen ersetzt.
-
-BILD GEWINNT GEGEN KONTEXT: Bei Widerspruch zwischen sichtbaren Werten oder
-Beschriftungen und dem Kontext gelten die sichtbaren Bildinformationen.
-
+    """Die Werte zum Kontext. Die Regeln dazu stehen in Belegregel 6."""
+    return f"""KONTEXT (Bildunterschrift, umliegender Text, Angaben des Aufrufers)
 {kontext_werte(enriched_context, user_hint_text)}"""
 
 
-def _render_zweck_block() -> str:
-    """Bild-Zweck-Block der Daten-Familie (Pendant zum Foto-Zweck-Block).
+_LESBARER_TEXT = """LESBARER TEXT
 
-    Gleiche Grenze wie in beschreibung_foto.py: der Zweck steuert die
-    GEWICHTUNG, er erlaubt keine neuen unbelegten Fakten.
-    """
-    return """BILD-ZWECK IM DOKUMENT
-
-Der Kontext zeigt, WO und WOZU die Grafik verwendet wird. Leite daraus den
-kommunikativen Zweck ab: Warum steht diese Grafik an genau dieser Stelle?
-Priorisiere die Aspekte, die diesen Zweck bedienen — dieselbe Tabelle braucht
-im Geschäftsbericht eine andere Gewichtung als im Schulbuch oder in einer
-Pressemitteilung. Der Zweck steuert nur die GEWICHTUNG und Auswahl; er erlaubt
-KEINE neuen Fakten, die Bild oder Kontext nicht belegen. Ohne Kontext: neutral
-informativ beschreiben.
-
-ANTI-REDUNDANZ ZUR BILDUNTERSCHRIFT: Wiederhole keine Details, die die
-Bildunterschrift bereits nennt — Titel, Thema und Kernaussage dagegen IMMER
-nennen (der Alt-Text muss allein verständlich sein)."""
-
-
-def _render_kompaktheit_block(alt_richtwert: str, lang_richtwert: Optional[str] = None) -> str:
-    """Kompaktheits-Block mit kategorie-eigenem Richtwert (Paket-1-Regime).
-
-    Harte Obergrenze ist allein das Schema (400/2000); die Richtwerte sind
-    Orientierung, kein Ziel.
-    """
-    if lang_richtwert:
-        lang_satz = (
-            f'Richtwert für die Langbeschreibung: {lang_richtwert}; '
-            'harte Obergrenze sind die 2000 Zeichen des Schemas.'
-        )
-    else:
-        lang_satz = 'Die Langbeschreibung nutzt maximal 2000 Zeichen (Schema-Obergrenze).'
-    return f"""KOMPAKTHEIT (Arbeitsteilung Alt-Text / Langbeschreibung)
-
-Richtwert für den Alt-Text: {alt_richtwert}. Die 400 Zeichen des Schemas sind
-eine harte Obergrenze, KEIN Ziel. Der Alt-Text trägt die Kernaussage —
-Vollständigkeit, Einzelwerte und Struktur-Tiefe gehören in die
-Langbeschreibung. {lang_satz}"""
-
-
-def _render_atmosphaere_verzicht_block(begruendung: str) -> str:
-    """Atmosphäre-Verzicht der Daten-Familie (illustration/tabelle/karte/
-    screenshot/strukturformel — diagramm und infografik haben eigene,
-    inhaltlich abweichende Sektionen)."""
-    return f"""ATMOSPHAERE
-
-{begruendung} Keine Wertungen über Stimmung oder Wirkung;
-atmosphaere_belege bleibt leer."""
-
-
-def _render_ausgabe_schema_block(alt_hinweis: str, atmosphaere_hinweis: str) -> str:
-    """AUSGABE-SCHEMA-Sektion inline (Premium-Muster statt schema_doc-Anhängsel)."""
-    return f"""AUSGABE-SCHEMA
-
-Fülle exakt das Schema BeschreibungOutput:
-- alt_text: 20 bis 400 Zeichen, {alt_hinweis}
-- langbeschreibung: maximal 2000 Zeichen, leer wenn alt_text alles
-  Wesentliche sagt
-- verwendete_inventar_items: Audit-Trail der genutzten Inventar-Items
-- nicht_verwendete_inventar_items: Audit-Trail der bewusst ausgelassenen Items
-- nicht_im_inventar: MUSS leer bleiben
-- atmosphaere_belege: {atmosphaere_hinweis}
-
-Kein Markdown im Output — Fließtext oder einfache Satzlisten, keine
-Markdown-Tabellen."""
+Lesbare Beschriftungen, Zahlen, Namen und Kontaktdaten übernimmst du wortgetreu
+mit ihren Trennzeichen und in ihrer Originalsprache. Prüfe die Zuordnung zur
+richtigen Zeile, Spalte, Fläche oder Legende. Erläuternde Absätze fasst du
+sinngemäß zusammen. Fehlende oder unleserliche Teile ergänzt du nicht; ein leeres
+Feld oder ein Strich ist keine Null."""
 
 
 def build_beschreibung_prompt_illustration(
@@ -170,15 +65,14 @@ def build_beschreibung_prompt_illustration(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder für illustration (Paket 4, 16.07.2026).
+    """illustration: Cartoon, Vektorgrafik, gemalte Illustration, Buchbild.
 
-    Cartoon, Vektor-Grafik, gemalte Illustration, Buch-Bild — höchstes
-    Fehldeutungs-Risiko (Spezies-Festlegung, erfundene Interaktionen).
-    Erhalten: Spezialwarnung für stilisierte Darstellungen, Spezies-/
-    Charakter-Regel mit der Zwei-Wege-konformen Alternativen-Form
-    ('als Katze oder Fuchs deutbar', Paket-1-Korrektur), Interaktions-Regel
-    mit Hund/Mikroskop-Beispiel, Vollständigkeits-Hinweis für Nebenelemente,
-    Spezifitäts-Anforderung an den ersten Satz.
+    Historie: Die alte Fassung verlangte, alle Inventar-Elemente aufzuzählen,
+    und verbot Stimmungsaussagen. Beides ist aufgegeben: Der Alt-Text nennt die
+    dargestellte Idee und die dafür unverzichtbaren Elemente, Stimmung folgt
+    Belegregel 4 wie bei Fotos. Die Regeln zu Beispieltexten in Sprechblasen
+    und zu Siegeln stammen aus einem Kundenbefund (Produktillustration mit
+    Muster-Alt-Text und Siegel), die Kunstwerk-Regel aus dem Distelfink-Fall.
     """
     examples = load_examples('illustration')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -186,120 +80,70 @@ def build_beschreibung_prompt_illustration(
 
     return f"""{_basis_schichten()}
 
-BILDTYP: illustration (Cartoon, Vektor-Grafik, gemalte Illustration, Buch-Bild)
+BILDTYP: illustration (Cartoon, Vektorgrafik, gemalte Illustration, Buchbild)
 {bildgroesse_zeile(width, height)}
 
-ZIEL
+AUFTRAG
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
-eine Illustration. Ziel ist ehrliche Spezifität: benenne, was die Darstellung
-klar trägt, und beschreibe neutral, was genuin mehrdeutig bleibt. Stilisierte
-Darstellungen sind die häufigste Quelle für Fehldeutungen — vereinfachte
-Cartoon-Motive werden leicht als etwas anderes gesehen, mehrdeutige Charaktere
-leicht auf das naheliegendste Klischee festgelegt. Genau das vermeidest du.
+Eine Illustration steht im Dokument, weil sie eine Idee, einen Begriff oder eine
+Aussage bildlich fasst. Dein Text nennt zuerst diese Idee, wenn Bild oder Kontext
+sie belegen (Symbolbild für Homeoffice, Produktillustration zur Erstellung von
+Alt-Texten mit KI), und dann die Elemente, die sie tragen. Stilisierte Motive sind
+die häufigste Quelle für Fehldeutungen: Ein vereinfachtes Tier wird schnell zu
+einer bestimmten Art, nebeneinander stehende Figuren und Gegenstände werden zu
+einer Handlung. Prüfe im inneren Inventar alle Elemente, bevor du auswählst;
+genannt wird nur, was die Aussage trägt. Stimmung und Wirkung darfst du wie bei
+Fotos benennen, mit dem sichtbaren Beleg im selben Satz.
 
 
 {_render_inventar_block(inventar_json)}
 
 
-{_render_kontext_block(enriched_context, user_hint_text)}
-
-
-{_render_zweck_block()}
-
-
-{_render_kompaktheit_block('einfache Motive unter 150 Zeichen, komplexe Illustrationen bis etwa 250')}
-
-
-{STILREGELN_SACHLICH}
-
-
 ALT-TEXT
 
-Der erste Satz nennt:
-- die Stilrichtung (Cartoon, Vektor, gemalt, comic-haft etc.)
-- das Hauptmotiv mit ehrlicher Spezifität
-- mindestens ein konkretes Element
+Beginnt mit dem Motiv, ohne Gattungswort vorweg: "Symbolbild für Homeoffice: Eine
+Frau am Küchentisch mit Laptop, daneben ein Kind mit Malbuch." Die Stilrichtung
+(Cartoon, Vektor, Aquarell, Comic) nennst du, wenn sie zur Aussage gehört oder das
+Motiv sonst als Foto verstanden würde. Ein Element ist unverzichtbar, wenn sein
+Weglassen Aussage, Funktion oder einen wesentlichen Unterschied der Illustration
+verändert; kleine dekorative Einzelheiten bleiben weg.
 
-VERMEIDEN: generische Einleitungen ("Das Bild zeigt", "Eine Illustration von"
-als bloße Floskel ohne Inhalt), Festlegung auf eine Deutung, die das Bild
-nicht trägt.
+Mehrdeutige Figuren beschreibst du nach Belegregel 2: die sichtbare Form oder
+zwei gleichwertige Deutungen, keine Festlegung auf das naheliegendste Klischee.
+Handlungen nur, wenn das Bild sie zeigt: Ein Hundekopf neben Laptop, Tablet und
+Mikroskop ist keine arbeitende Figur.
 
-BEISPIEL- UND PLATZHALTERTEXTE: Steht in einer Sprechblase, einem Platzhalter
-oder einer Attrappe ein Beispieltext (etwa ein Muster-Alt-Text oder ein
-Dummy-Titel), dann benennst du ihn als Beispieltext ("eine Sprechblase mit
-einem Beispiel-Alt-Text") und zitierst ihn NICHT als Inhalt des Bildes. Ein
-Siegel oder Abzeichen wird als grafisches Element benannt, nicht als
-Zertifizierung behauptet.
+
+LANGBESCHREIBUNG
+
+Pflicht bei mehr als drei bedeutungstragenden Elementen, sonst darf sie leer
+bleiben. Sie ergänzt weitere bedeutungstragende Elemente und ihre Anordnung:
+zentrale Figuren oder Gegenstände mit ihren sichtbaren Merkmalen, Nebenelemente,
+lesbare Beschriftungen, Farbklima.
+
+
+BEISPIELTEXTE UND SIEGEL
+
+Ein Text in einer Sprechblase, einem Platzhalter oder einer Attrappe ist ein
+Beispieltext. Du benennst ihn als solchen ("eine Sprechblase mit einem
+Beispiel-Alt-Text") und zitierst ihn nicht als Inhalt oder Datenangabe des
+Bildes. Ein Siegel oder Abzeichen ist ein sichtbares Element mit einer Aufschrift
+("rundes Siegel mit der Aufschrift Barrierefrei"); es belegt keine Prüfung und
+keine Zertifizierung.
 
 
 {KUNSTWERK_REGEL}
 
 
-SPEZIES- UND CHARAKTER-REGEL
-
-Wenn das Inventar bei einem Charakter Mehrfach-Hypothesen oder niedrige
-Sicherheit listet, bildet der Output diese Unsicherheit ab — ohne
-Vermutungswörter (kein 'vermutlich', 'wahrscheinlich', 'könnte'). Beschreibe
-die Form neutral; wenn zwei Deutungen naheliegend und bildrelevant sind,
-nenne beide gleichwertig als Alternativen:
-- 'stilisiertes Tier mit großen Augen, als Katze oder Fuchs deutbar'
-- 'Cartoon-Charakter mit [konkreten sichtbaren Merkmalen]'
-- NICHT: einfach die wahrscheinlichste Spezies festlegen
-- NICHT: Hedge-Formulierungen wie 'vermutlich eine Katze'
+{STILREGELN}
 
 
-INTERAKTIONEN NUR MIT BELEG
-
-Bei Illustrationen ist die Interaktions-Regel besonders wichtig: Wenn das
-Inventar nur Objekte nebeneinander listet, schreibe nicht, dass sie
-miteinander interagieren.
-- Inventar: 'Hundekopf, Mikroskop, Laptop, Tablet, Smartphone — keine Hände sichtbar'
-- FALSCH: 'Der Hund arbeitet am Laptop und hält ein Tablet.'
-- RICHTIG: 'Cartoon-Illustration eines Hundekopfes; daneben ein Mikroskop und drei
-  Geräte (Laptop, Tablet, Smartphone).'
-
-
-VOLLSTÄNDIGKEIT
-
-Bei Illustrationen werden Nebenelemente besonders häufig übersehen (z.B. das
-Mikroskop im Hund-Bild). Gehe das Inventar vollständig durch und benenne alle
-sichtbaren Elemente — auch wenn sie unscheinbar wirken.
-
-
-LANGBESCHREIBUNG
-
-Sinnvolle Reihenfolge: Stilrichtung und Hauptmotiv -> zentrale Charaktere
-oder Objekte mit ihren sichtbaren Merkmalen -> Nebenelemente vollständig ->
-lesbare Texte oder Beschriftungen -> relevanter Kontext. Fließtext, keine
-Markdown-Formatierung.
-
-
-{_render_atmosphaere_verzicht_block('Illustrationen werden sachlich beschrieben.')}
-
-
-{_render_ausgabe_schema_block('spezifisch und ehrlich', 'bleibt leer')}
-
-
-FEW-SHOT BEISPIELE
+BEISPIELE
 
 {examples.format_for_prompt()}
 
 
-FINAL CHECK
-
-1. Nennt der erste Satz Stilrichtung, Hauptmotiv und mindestens ein
-   konkretes Element?
-2. Ist jede Aussage durch Inventar oder sichtbare Bildinformation belegt?
-3. Bei mehrdeutigen Charakteren: neutrale Form oder gleichwertige
-   Alternativen ('als X oder Y deutbar') statt Festlegung oder
-   Vermutungswörtern?
-4. Keine Interaktion erfunden, die das Inventar nicht belegt?
-5. Alle Inventar-Elemente berücksichtigt — auch unscheinbare Nebenelemente?
-6. nicht_im_inventar leer?
-7. Schema vollständig korrekt (alle Pflichtfelder gefüllt)?
-
-Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
+{_render_kontext_block(enriched_context, user_hint_text)}
 """
 
 
@@ -309,20 +153,10 @@ def build_beschreibung_prompt_diagramm(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder für diagramm — EIN Builder für beide Modi (Paket 4).
+    """diagramm: Balken, Linie, Kreis, gestapelt, Streu, Heatmap.
 
-    Basis ist der Premium-Lean-Zweig der Sonnet-Iteration vom 15.05.2026
-    (Diagramm-Logik mit 6 Sub-Typen, Trend-Vokabular, Kernaussage-zuerst,
-    10-Punkte-Final-Check). Der alte Mistral-Full-Zweig vom 14.04.2026 ist
-    ersetzt — seine Pflichten leben weiter: Kontaktdaten/lesbare Texte
-    (Sektion LESBARE TEXTE), Kernaussage mit konkreten Werten (ALT-TEXT +
-    gute/schlechte Beispiele), Vollständigkeit der Langbeschreibung
-    (Struktur-Punkte 6-7), Konsistenz alt_text/langbeschreibung
-    (FINAL CHECK Punkt 3), keine Markdown-Tabellen (LESBARE TEXTE +
-    AUSGABE-SCHEMA). Neu gegenüber dem Lean-Zweig: ROLE_BESCHREIBER im
-    Prompt-Kopf (fehlte dort), Zweck- und Kompaktheits-Block; die
-    'Helper-Kandidat'-Pseudokommentare sind aus dem Modell-Text in die
-    tatsächlichen Helper-Funktionen dieses Moduls überführt.
+    Läuft der Werte-Schritt (Orchestrator), hängt er einen Block ABGELESENE WERTE
+    mit rechnerischen Kernaussagen an; der Prompt verweist darauf.
     """
     examples = load_examples('diagramm')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -333,226 +167,60 @@ def build_beschreibung_prompt_diagramm(
 BILDTYP: diagramm (Balken, Linie, Kreis, gestapelt, Streu, Heatmap)
 {bildgroesse_zeile(width, height)}
 
-ZIEL
+AUFTRAG
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung
-für ein Diagramm.
-
-Der Fokus liegt NICHT auf bloßer Bildbeschreibung, sondern auf
-verständlicher Wissensvermittlung.
-
-Das Ziel ist:
-- Trends verständlich machen
-- Vergleiche sichtbar machen
-- Rangfolgen erklären
-- Entwicklungen über Zeit beschreiben
-- die Kernaussage des Diagramms erfassbar machen
-
-Der Alt-Text soll die wichtigste Erkenntnis transportieren.
-Die Langbeschreibung liefert die vollständige nachvollziehbare Struktur.
-
-Beschreibe nicht nur, WAS sichtbar ist.
-Erkläre, welche INFORMATION das Diagramm vermittelt.
-
-KEINE Ursachenbehauptungen erfinden (wirtschaftlich, politisch, fachlich).
-KEINE Daten oder Kategorien halluzinieren — wenn unlesbar, ehrlich
-benennen.
+Ein Diagramm steht im Dokument, weil es eine Aussage über Zahlen macht. Dein Text
+vermittelt diese Aussage: Trend, Vergleich, Rangfolge, Anteil oder Wendepunkt, mit
+den Werten, die sie tragen. Zahlen zuerst, Deutung danach: Lies die Werte an der
+Achse ab und notiere sie dir als Liste, bevor du ein Trendwort schreibst. Liegt am
+Ende ein Block ABGELESENE WERTE vor, gelten dessen Zahlen und rechnerische
+Kernaussagen vor deinem Eindruck. Ohne lesbare Skala nennst du keine Zahl und
+keinen Betrag, sondern Rangfolge und Form. Keine Ursachen, keine Prognosen, keine
+Bewertung, die das Diagramm nicht enthält.
 
 
 {_render_inventar_block(inventar_json)}
 
 
-{_render_kontext_block(enriched_context, user_hint_text)}
+ALT-TEXT
+
+Diagrammtyp, Thema (Titel oder Kontext) und die eine wichtigste belegte Aussage
+mit ihrem Wert: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile
+liegt am Ende über dem Ausgangswert und erreicht 5,0." Bis zu drei Kategorien
+dürfen genannt werden, wenn sie die Aussage tragen. Keine Aufzählung aller
+Balken, keine Farben, keine Achsenbeschreibung.
+
+Trendwörter tragen eine Bedingung: "durchgehend" oder "kontinuierlich" nur, wenn
+kein Zwischenschritt widerspricht; "erholt sich" beschreibt einen Anstieg nach
+einem Rückgang; "wieder auf dem Ausgangsniveau" nur, wenn Anfangs- und Endwert
+gleich sind; bei "höchster" und "zweithöchster" nennst du die Bezugsmenge
+(Kategorie, Jahr oder ganzes Diagramm). Prozent und Prozentpunkte werden nicht
+vertauscht. Eine Summe oder Differenz darfst du nennen, wenn sie sich aus den
+abgelesenen Werten rechnerisch ergibt.
 
 
-{_render_zweck_block()}
+LANGBESCHREIBUNG
+
+Pflicht. Fließtext in dieser Reihenfolge: Diagrammtyp und Thema; Achsen,
+Einheiten, Zeitraum und Legende; die Kernaussage mit Werten; je Reihe oder
+Kategorie der Verlauf mit Anfangs-, End-, Höchst- und Tiefstwert; Extremwerte und
+Wendepunkte des ganzen Diagramms; lesbare Zusatzangaben wie Quelle oder Fußnote.
+Beziehungen zwischen Werten erklären, keine unverbundene Zahlenliste. Alle Zahlen
+im Alt-Text und in der Langbeschreibung stimmen überein.
 
 
-{_render_kompaktheit_block('einfache Diagramme unter 150 Zeichen, komplexe bis etwa 250')}
+{_LESBARER_TEXT}
 
 
 {STILREGELN_SACHLICH}
 
 
-ALT-TEXT
-
-Der Alt-Text:
-- beginnt konkret
-- nennt Diagrammtyp und Titel oder Thema
-- priorisiert 2-3 zentrale Erkenntnisse
-- nennt wichtige Werte oder Extreme
-- fasst Trends verständlich zusammen
-
-KERNAUSSAGE ZUERST:
-
-Der erste Satz soll die wichtigste Aussage des Diagramms vermitteln —
-mit konkreten Werten, wo sie die Aussage tragen.
-
-NICHT:
-- reine Aufzählung von Balken oder Linien
-- bloße Farbbeschreibung
-- isolierte Zahlenlisten ohne Zusammenhang
-
-BEVORZUGEN:
-- Trendbeschreibung
-- Rangfolge
-- Vergleich
-- Veränderung über Zeit
-- Dominanz oder Verhältnis
-
-VERMEIDEN:
-- "Das Diagramm zeigt ..."
-- "Zu sehen sind ..."
-- generische Formulierungen
-- reine Datenpunkt-Aufzählungen
-- vage Aussagen ohne Zahlenbezug ('China führt, gefolgt von den USA' —
-  besser: 'China führt mit 251,8 Mrd. Euro, Tschechien bildet mit
-  115,7 Mrd. das Schlusslicht.')
-- unbelegte Interpretationen
-
-GUTE BEISPIELE:
-- "Paid Search dominiert zunächst deutlich, fällt ab 2019 jedoch stark ab."
-- "AWS bleibt Marktführer mit 34 Prozent Marktanteil vor Azure und Google Cloud."
-- "Der Umsatz steigt über drei Jahre kontinuierlich um fast 50 Prozent."
-
-SCHLECHTE BEISPIELE:
-- "Mehrere Linien verlaufen durch das Diagramm."
-- "Verschiedene Balken mit unterschiedlichen Höhen."
-- "Das Diagramm wirkt positiv."
-
-
-LANGBESCHREIBUNG
-
-Struktur in dieser Reihenfolge:
-
-1. Diagrammtyp und Thema
-2. Achsen / Kategorien / Zeiträume
-3. Haupttrend oder Hauptstruktur
-4. Vergleich der wichtigsten Kategorien
-5. Relevante Extremwerte oder Wendepunkte
-6. Vollständige Werte oder Reihen — alle Kategorien aus
-   inventar.lesbare_texte mit ihren lesbaren Werten, bei Zeitreihen
-   Anfangs- und Endwerte
-7. Sichtbare Zusatzinformationen (Achsenbeschriftungen, Legenden-Werte)
-8. Kontext nur wenn eindeutig passend
-
-Die Langbeschreibung soll:
-- nachvollziehbar strukturiert sein
-- keine unverbundenen Zahlenlisten erzeugen
-- Beziehungen zwischen Werten erklären
-- den Verlauf verständlich machen
-
-
-DIAGRAMM-LOGIK
-
-BALKENDIAGRAMM:
-Fokus auf:
-- Vergleich
-- Rangfolge
-- größte/kleinste Kategorie
-- Unterschiede zwischen Balken
-- Veränderungen zwischen Jahren oder Gruppen
-
-LINIENDIAGRAMM:
-Fokus auf:
-- Verlauf über Zeit
-- Anstieg / Rückgang
-- Schwankungen
-- Plateaus
-- Wendepunkte
-- Volatilität
-- langfristige Trends
-
-KREISDIAGRAMM:
-Fokus auf:
-- Anteile
-- Dominanz
-- größte und kleinste Segmente
-- Verhältnis der Gruppen zueinander
-
-GESTAPELTES DIAGRAMM:
-Fokus auf:
-- Zusammensetzung
-- Veränderungen innerhalb der Gesamtmenge
-- dominante Teilbereiche
-
-STREUDIAGRAMM:
-Fokus auf:
-- Cluster
-- Ausreißer
-- Korrelationen
-- Konzentrationen sichtbarer Punkte
-
-HEATMAP / FARBSKALEN:
-Fokus auf:
-- Intensität
-- Verteilung
-- Konzentrationsbereiche
-- sichtbare Muster
-
-Trend-Vokabular darf genutzt werden wenn sichtbar belegt:
-- kontinuierlicher Anstieg
-- rückläufig
-- stagnierend
-- stark schwankend
-- Plateau
-- Spitzenwert
-- Tiefpunkt
-- deutlicher Einbruch
-- leichte Erholung
-- stabil auf Niveau X
-
-
-LESBARE TEXTE / KONTAKTDATEN
-
-Lesbare Texte aus dem Diagramm differenziert behandeln:
-
-IMMER wortgetreu übernehmen (mit originalgetreuen Trennzeichen — '02 28 / 24 25 26 27' nicht zusammenziehen):
-- URLs
-- Telefonnummern
-- Datumsangaben
-- Zahlenwerte
-- Achsenbeschriftungen
-- Kategorienamen
-
-Titel, Legenden und Beschriftungen übernehmen, wenn sie zum Verständnis
-des Diagramms beitragen.
-
-Keine Markdown-Tabellen im JSON-Output verwenden.
-
-
-ATMOSPHAERE
-
-Diagramme haben normalerweise keine Atmosphäre-Beschreibung.
-atmosphaere_belege bleibt in der Regel leer. Nur bei eindeutig
-gestalterischer Wirkung mit belegbaren visuellen Hinweisen darf eine
-sehr zurückhaltende Aussage verwendet werden.
-
-
-{_render_ausgabe_schema_block('an der Kernaussage orientiert und konkret', 'bei Diagrammen normalerweise leer')}
-
-
-FEW-SHOT BEISPIELE
+BEISPIELE
 
 {examples.format_for_prompt()}
 
 
-FINAL CHECK
-
-1. Sind alle Aussagen durch sichtbare Daten belegbar?
-2. Enthält der Alt-Text eine echte Kernaussage statt bloßer Beschreibung?
-3. Stimmen Trend-Aussagen im alt_text mit den konkreten Werten in der
-   Langbeschreibung überein?
-4. Wurden keine Ursachen oder Bedeutungen erfunden?
-5. Sind Diagrammtyp und Struktur korrekt beschrieben?
-6. Sind wichtige Werte, Extrempunkte oder Vergleiche enthalten?
-7. Wurden keine Daten oder Kategorien halluziniert?
-8. Ist nicht_im_inventar leer?
-9. Ist der Alt-Text konkret statt generisch?
-10. Ist die Langbeschreibung vollständig und nachvollziehbar strukturiert?
-
-Wenn ein Punkt nicht erfüllt ist:
-Output neu formulieren.
+{_render_kontext_block(enriched_context, user_hint_text)}
 """
 
 
@@ -562,15 +230,14 @@ def build_beschreibung_prompt_tabelle(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder für tabelle (Paket 4, 16.07.2026).
+    """tabelle: tabellarische Daten als Grafik.
 
-    Tabellarische Daten als Grafik. Erhalten (entdrillt, inhaltlich
-    unverändert): Bilanz-Regel (Zwischensummen vs. Bilanzsumme, mit
-    FALSCH/RICHTIG-Beispiel), Spalten-Zuordnung (5 Lese-Schritte),
-    Einheiten-Treue, OCR als Primärquelle, KONTAKTDATEN_PFLICHT
-    (geteiltes Constraint-Modul), Vollständigkeits-Reihenfolge der
-    Langbeschreibung inkl. 4x4-Regel, keine Markdown-Tabellen.
-    Richtwert 250 (Paket 1) unverändert.
+    Historie: Die alte Fassung war auf Bilanzen zugeschnitten (Bilanzsumme,
+    Anlage- und Umlaufvermögen, "letzte Zeile ist die Bilanzsumme") und
+    erlaubte die vollständige Übertragung nur bis vier mal vier Zellen. Jetzt
+    gilt: Summen nach Beschriftung zuordnen, überschaubare Tabellen vollständig
+    übertragen, große zusammenfassen. Der Satz zu Zeitraum-Spalten stammt aus
+    einem Kundenfall mit Anfangs- und Endbeständen.
     """
     examples = load_examples('tabelle')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -581,120 +248,63 @@ def build_beschreibung_prompt_tabelle(
 BILDTYP: tabelle (tabellarische Daten als Grafik)
 {bildgroesse_zeile(width, height)}
 
-ZIEL
+AUFTRAG
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
-eine als Grafik vorliegende Tabelle. Sehende erfassen Tabellen zuerst nach
-ihrer Kernaussage, nicht nach ihrer Form — der Alt-Text transportiert deshalb
-die wichtigste Aussage auf Basis der RICHTIGEN Endwerte, die Langbeschreibung
-macht die Struktur mit korrekter Spaltenzuordnung nachvollziehbar. Präzision
-bei Zahlen, Summen und Einheiten ist hier der Qualitätsmaßstab.
+Eine Tabelle steht im Dokument, weil sie Werte zu einem Thema geordnet
+nebeneinanderstellt. Dein Text nennt zuerst Thema, Bezugsgröße (je 100 Gramm, in
+Euro, Stand zum Jahresende) und die wichtigste Aussage: eine Gesamtsumme, wenn
+sie vorhanden und zentral ist, sonst Rangfolge, Spanne, Ausreißer oder Vergleich.
+Danach macht die Langbeschreibung die Struktur mit richtiger Zeilen- und
+Spaltenzuordnung nachvollziehbar. Genauigkeit bei Zahlen, Summen und Einheiten
+ist hier der Maßstab. Lies zuerst alle Spaltenköpfe von links nach rechts, dann
+jede Zeile, und ordne jeden Wert seiner Spalte zu, bevor du formulierst.
 
 
 {_render_inventar_block(inventar_json)}
 
 
-{_render_kontext_block(enriched_context, user_hint_text)}
+ALT-TEXT
+
+Beginnt mit dem Gattungswort und dem Thema, dann die Kernaussage mit ihrem Wert:
+"Tabelle der Nährwerte je 100 Gramm: 52 Kilokalorien, davon 12 Gramm
+Kohlenhydrate und kein Fett." Bis zu drei Werte dürfen genannt werden, wenn sie
+die Aussage tragen. Keine Aufzählung aller Zeilen, keine Beschreibung von Rahmen
+und Farben.
+
+Eine Summe ordnest du nach ihrer Beschriftung und ihrem Abschnitt zu, nicht nach
+ihrer Position: Die letzte Zeile ist nicht deshalb die Gesamtsumme, weil sie
+unten steht; Zwischensummen von Abschnitten und die Gesamtsumme unterscheidest
+du am sichtbaren Zeilentext. Fehlt eine eindeutige Beschriftung, nennst du den
+Zeilentext, ohne ihn umzudeuten. Stehen in einer Zeile Werte für zwei Zeitpunkte
+(Spalten 01.01. und 31.12., Vorjahr und Berichtsjahr), sind das verschiedene
+Werte; nenne beide mit Spaltenzuordnung und verwechsle Bewegungen dazwischen
+(Zugänge, Abgänge, Veränderung) nicht mit Beständen.
 
 
-{_render_zweck_block()}
+LANGBESCHREIBUNG
+
+Pflicht. Fließtext in dieser Reihenfolge: Thema und Bezugsgröße mit Einheit; die
+Spaltenköpfe wortgetreu; die Kernaussage; dann die Werte. Eine überschaubare
+Tabelle (bis etwa acht Zeilen und fünf Spalten) überträgst du vollständig, Zeile
+für Zeile mit Zeilenbezeichnung und Spaltenzuordnung. Größere Tabellen fasst du
+zusammen: Aufbau, Spannweite, Höchst- und Tiefstwerte, auffällige Muster und die
+Werte, die der Dokumentzweck braucht. Einheiten (Prozent, Euro, Mio., Tsd.)
+übernimmst du wie gedruckt. Fußnoten, Quelle und Stand gehören ans Ende. Alle
+Zahlen in Alt-Text und Langbeschreibung stimmen überein.
 
 
-{_render_kompaktheit_block('unter 250 Zeichen')}
+{_LESBARER_TEXT}
 
 
 {STILREGELN_SACHLICH}
 
 
-ALT-TEXT
-
-Der erste Satz:
-- beginnt mit 'Tabelle —' + Thema (aus inventar.lesbare_texte: Titel-Eintrag)
-- nennt die wichtigste Aussage, gestützt auf die richtigen
-  Endwerte bzw. die Bilanzsumme
-
-VERMEIDEN: nichtssagende Eröffnungen wie 'Eine Tabelle zeigt verschiedene
-Werte.'
-
-
-BILANZ-REGEL (bei Buchhaltungs- und Bilanztabellen)
-
-Unterscheide Abschnitts-Zwischensummen von der Gesamtsumme:
-- 'Anlagevermögen' und 'Umlaufvermögen' sind ABSCHNITTE (Zwischensummen)
-- 'Bilanzsumme', 'Bilanzsumme Aktiva', 'Gesamtsumme' oder 'Summe
-  Aktiva/Passiva' ist das GESAMTERGEBNIS
-- Die letzte Summenzeile der Tabelle ist fast immer die Bilanzsumme,
-  nicht ein Abschnittswert
-- FALSCH: 'Gesamtsumme des Umlaufvermögens beträgt X EUR' wenn X die
-  Bilanzsumme ist
-- RICHTIG: 'Bilanzsumme Aktiva beträgt X EUR' oder 'Gesamtsumme Aktiva
-  beträgt X EUR'
-
-
-SPALTEN-ZUORDNUNG
-
-So liest du die Tabelle korrekt:
-1. Lies zuerst alle Spaltenköpfe von links nach rechts
-2. Lies dann jede Zeile und ordne jeden Wert seiner exakten Spalte zu
-3. Verwechsle Zwischenwerte (Zugänge, Abschreibungen, Veränderungen)
-   nicht mit Bestands- oder Endwerten
-4. Wenn eine Zeile Werte in der Spalte '01.01.' UND '31.12.' hat, sind das
-   verschiedene Werte — nenne beide mit Spaltenzuordnung
-5. Bei Buchhaltungstabellen sind Anfangs- und Endbestand die entscheidenden
-   Werte, nicht die Bewegungen dazwischen
-
-EINHEITEN: %, EUR, Mio., Tsd. penibel übernehmen — nicht weglassen,
-nicht umformen.
-
-
-LANGBESCHREIBUNG
-
-Reihenfolge und Umfang:
-1. Gesamtsumme/Bilanzsumme zuerst nennen — sie ist die wichtigste Zahl und
-   darf nicht am Ende abgeschnitten werden
-2. Spaltenköpfe wortgetreu auflisten
-3. Alle Zeilen mit korrekter Spaltenzuordnung
-4. Spitzen- und Tiefstwerte benennen, auffällige Muster
-5. Nur bei sehr kleinen Tabellen (max 4x4) alle Werte einzeln auflisten
-6. Bei größeren Tabellen: Zusammenfassung statt vollständige Wertliste
-
-Keine Markdown-Tabellen im JSON-Output — Fließtext oder strukturierte Liste.
-
-
-OCR-TEXT ALS PRIMÄRQUELLE
-
-Wenn inventar.lesbare_texte Zellinhalte aus OCR enthält, sind diese die
-primäre Wahrheitsquelle. Bei Konflikt zwischen OCR-Werten und visueller
-Wahrnehmung: dem OCR-Text vertrauen.
-
-
-{KONTAKTDATEN_PFLICHT}
-
-
-{_render_atmosphaere_verzicht_block('Tabellen sind Daten, keine Stimmungen.')}
-
-
-{_render_ausgabe_schema_block('beginnt mit Tabelle — + Thema und Kernaussage', 'bleibt leer')}
-
-
-FEW-SHOT BEISPIELE
+BEISPIELE
 
 {examples.format_for_prompt()}
 
 
-FINAL CHECK
-
-1. Beginnt der Alt-Text mit 'Tabelle —' + Thema und der wichtigsten Aussage?
-2. Ist die letzte Summenzeile korrekt eingeordnet (Bilanzsumme/Gesamtsumme,
-   nicht als Abschnitts-Zwischensumme ausgegeben)?
-3. Ist jeder genannte Wert seiner exakten Spalte zugeordnet (keine
-   Zwischenwerte als Endwerte)?
-4. Einheiten (%, EUR, Mio., Tsd.) wortgetreu übernommen?
-5. Lesbare Kontaktdaten, URLs, Daten und Zahlen wortgetreu enthalten?
-6. Keine Markdown-Tabellen im Output?
-7. nicht_im_inventar leer?
-
-Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
+{_render_kontext_block(enriched_context, user_hint_text)}
 """
 
 
@@ -704,15 +314,13 @@ def build_beschreibung_prompt_karte(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder für karte (Paket 4, 16.07.2026).
+    """karte: Landkarte, Stadtplan, Lageplan, Übersichtskarte, thematische Karte.
 
-    Landkarte, Stadtplan, Lageplan, Übersichtskarte. Erhalten (entdrillt):
-    'Karte —'-Eröffnung mit Gebiet + Thema + räumlicher Kernaussage,
-    Ortsnamen wortgetreu in Originalsprache (Bordeaux/İstanbul/Köln),
-    EIGENNAMEN_REGELN (TURKU/Turkey — im Bild lesbarer Name schlägt Kontext),
-    Standort-Vollständigkeit + Legenden-Erklärung + Himmelsrichtungen,
-    Hintergrund-Ortsnamen-Begrenzung, Symbolik-aus-der-Legende-Regel,
-    keine erfundenen Orte/Routen. Richtwert 350 (Paket 1) unverändert.
+    Historie: Die alte Fassung kannte nur Standortkarten ("markierte Standorte
+    vollständig auflisten") und trug eine Liste von Ortsnamen-Verwechslungen
+    aus der Zeit eines anderen Bildmodells. Jetzt sind Standort-, politische,
+    historische und thematische Karten unterschieden; die Ortsnamen-Regel
+    steht in EIGENNAMEN_REGELN.
     """
     examples = load_examples('karte')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -720,103 +328,63 @@ def build_beschreibung_prompt_karte(
 
     return f"""{_basis_schichten()}
 
-BILDTYP: karte (Landkarte, Stadtplan, Lageplan, Übersichtskarte)
+BILDTYP: karte (Landkarte, Stadtplan, Lageplan, Übersichtskarte, thematische Karte)
 {bildgroesse_zeile(width, height)}
 
-ZIEL
+AUFTRAG
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
-eine Karte. Ziel ist räumliche Orientierung aus Text: Gebiet, Thema und die
-räumliche Kernaussage zuerst, dann die markierten Standorte und die Legende
-so, dass ein blinder Nutzer die Verteilung nachvollziehen kann. Ortsnamen
-sind hier heikel — sie werden wortgetreu und in Originalsprache übernommen,
-nie geraten und nie aus dem Kontext 'korrigiert'.
+Eine Karte steht im Dokument, weil sie etwas räumlich verortet: Standorte,
+Gebiete, Grenzen, Wege oder Werte je Region. Dein Text gibt räumliche
+Orientierung: zuerst Kartenthema, gezeigtes Gebiet und die Bedeutung der
+Hervorhebungen, dann die Verteilung so, dass ein Mensch ohne Bild sie
+nachvollziehen kann. Farben, Symbole und Größen bedeuten, was die Legende sagt,
+nicht, was sie im Alltag bedeuten: Rot ist keine Gefahr, ein großer Kreis steht
+für den Wert, den die Legende ihm zuweist.
 
 
 {_render_inventar_block(inventar_json)}
 
 
-{_render_kontext_block(enriched_context, user_hint_text)}
+ALT-TEXT
+
+Beginnt mit dem Gattungswort, Thema und Gebiet, dann die räumliche Kernaussage:
+"Karte der Beratungsstellen in Nordrhein-Westfalen: 14 Standorte, die meisten im
+Ruhrgebiet und entlang des Rheins, keiner im Sauerland." Bei politischen oder
+historischen Karten trägt der Alt-Text den gezeigten Zeitstand und die wichtigste
+Grenze oder Gebietsaufteilung. Eine Jahreszahl nennst du nur, wenn sie im Bild
+steht oder der Kontext sie belegt.
 
 
-{_render_zweck_block()}
+LANGBESCHREIBUNG
+
+Pflicht. Fließtext in dieser Reihenfolge: Kartenthema, Gebiet und Ausrichtung;
+die Legende mit ihren Symbolen, Farben und Größenstufen; dann die Inhalte nach
+Kartentyp. Bei Standortkarten die markierten Orte mit ihrer Kategorie aus der
+Legende, nach Lage geordnet und mit Himmelsrichtungen, wenn Norden oben liegt;
+Hintergrundorte nur zur Einordnung ("zwischen München und Stuttgart"), nicht als
+vollständige Liste. Bei politischen oder historischen Karten die Grenzen,
+Gebiete, Zugehörigkeiten und der gezeigte Zeitstand, so wie die Karte ihn
+darstellt; heutige Grenzen und Namen ersetzen ihn nicht. Bei thematischen Karten
+die Werteklassen je Region mit den Extremen. Maßstab, Quelle und Stand, wenn
+lesbar. Keine Orte und keine Wege, die die Karte nicht zeigt; Unlesbares nennst
+du unlesbar.
 
 
-{_render_kompaktheit_block('unter 350 Zeichen')}
+{EIGENNAMEN_REGELN}
+
+
+{_LESBARER_TEXT}
 
 
 {STILREGELN_SACHLICH}
 
 
-ALT-TEXT
-
-Der erste Satz:
-- beginnt mit 'Karte —' + Gebiet (Stadt, Region, Land — aus Inventar
-  oder Kontext)
-- nennt das Hauptthema (was wird dargestellt?)
-- nennt die räumliche Kernaussage (z.B. 'Konzentration im Süden',
-  'gleichmäßig verteilt', 'Cluster in den Großstädten')
-
-
-ORTSNAMEN UND EIGENNAMEN
-
-Ortsnamen in Originalsprache beibehalten:
-- 'Bordeaux' nicht 'Bordeo'
-- 'İstanbul' nicht 'Istanbul' (wenn das I-Punkt-Zeichen lesbar ist)
-- 'Köln' nicht 'Cologne' (auch wenn der Kontext englisch ist)
-
-{EIGENNAMEN_REGELN}
-
-Keine Orte oder Routen erfinden, die nicht im Inventar stehen. Bei
-verschwommenen Details: 'Details teilweise nicht lesbar' — statt zu raten.
-
-
-LANGBESCHREIBUNG
-
-Reihenfolge und Umfang:
-1. Markierte Standorte vollständig auflisten (das sind die
-   Kerninformationen einer Karte mit Markierungen)
-2. Legende explizit erklären (Symbole, Farben, Größen-Bedeutungen)
-3. Räumliche Verteilung beschreiben — mit Himmelsrichtungen statt nur
-   'oben/unten', wenn die Karte geografisch ausgerichtet ist (Norden oben)
-4. Maßstab nennen wenn lesbar
-
-HINTERGRUND-ORTSNAMEN:
-Bei Karten mit vielen Hintergrund-Städten zur Orientierung NICHT erschöpfend
-auflisten — nur die beschrifteten/markierten relevanten Standorte. Andere
-Städte erwähnen, wenn sie für die räumliche Einordnung wichtig sind
-('zwischen München und Stuttgart').
-
-SYMBOLIK AUS DER LEGENDE:
-- Rote Markierungen sind nicht automatisch 'Warnungen' oder 'Gefahren' —
-  die Bedeutung kommt aus der Legende
-- Größenunterschiede von Markern (große vs. kleine Kreise) bedeuten meist
-  unterschiedliche Werte — Legende prüfen
-
-
-{_render_atmosphaere_verzicht_block('Karten werden sachlich-räumlich beschrieben.')}
-
-
-{_render_ausgabe_schema_block('beginnt mit Karte — + Gebiet und räumlicher Kernaussage', 'bleibt leer')}
-
-
-FEW-SHOT BEISPIELE
+BEISPIELE
 
 {examples.format_for_prompt()}
 
 
-FINAL CHECK
-
-1. Beginnt der Alt-Text mit 'Karte —' + Gebiet, Hauptthema und räumlicher
-   Kernaussage?
-2. Alle Ortsnamen wortgetreu und in Originalsprache (im Bild lesbarer Name
-   schlägt Kontext)?
-3. Alle markierten Standorte in der Langbeschreibung, Legende erklärt?
-4. Symbol-Bedeutungen aus der Legende statt aus Annahmen?
-5. Keine Orte oder Routen erfunden; Unlesbares ehrlich benannt?
-6. nicht_im_inventar leer?
-
-Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
+{_render_kontext_block(enriched_context, user_hint_text)}
 """
 
 
@@ -826,17 +394,14 @@ def build_beschreibung_prompt_infografik(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder für infografik (Paket 4, 16.07.2026).
+    """infografik: Schaubild, Ablauf, Übersichtsgrafik mit Stationen oder Kennzahlen.
 
-    Schaubild, Übersichtsgrafik mit Stationen oder Schritten. Erhalten
-    (entdrillt): 'Infografik —'-Eröffnung mit Kernaussage + Datenpunkten
-    (RICHTIG/FALSCH-Beispiel), Stationen-Logik mit Beziehungen, Zahlen-
-    Vollständigkeit, das Layout-Beschreibungs-Verbot mit den inhaltlichen
-    Gegenbeispielen, OCR als Pflichtquelle, Kontaktdaten/URL-Übernahme bei
-    Behörden-Infografiken. Die ATMOSPHAERE_REGEL ist mit ihrer bestehenden
-    Einschränkung (nur Kampagnen-Infografiken mit bewusster Designwahl)
-    sauber in die ATMOSPHAERE-Sektion integriert statt pauschal
-    vorangestellt. Richtwerte 350/1500 (Paket 1) unverändert.
+    Historie: Die alte Fassung verlangte, alle Stationen und alle Zahlen zu
+    übernehmen, was bei dichten Grafiken an der Feldgrenze scheiterte
+    (Kundenfall einer Raumfahrt-Infografik). Jetzt: Umfang planen, geordnete
+    Zusammenfassung, keine Vollständigkeitsbehauptung. Die Pfeil-Regel und die
+    Siegel-Regel stammen aus der Prompt-Prüfung; das Beispiel mit "fast die
+    Hälfte (39 Prozent)" war selbst ungenau und ist Gegenbeispiel geworden.
     """
     examples = load_examples('infografik')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -844,117 +409,71 @@ def build_beschreibung_prompt_infografik(
 
     return f"""{_basis_schichten()}
 
-BILDTYP: infografik (Schaubild, Übersichtsgrafik mit Stationen oder Schritten)
+BILDTYP: infografik (Schaubild, Ablauf, Übersichtsgrafik mit Stationen, Schritten oder Kennzahlen)
 {bildgroesse_zeile(width, height)}
 
-ZIEL
+AUFTRAG
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
-eine Infografik. Infografiken übersetzen Inhalte in visuelle Anordnung — deine
-Aufgabe ist die Rückübersetzung: die inhaltliche Logik (Stationen, Schritte,
-Beziehungen, Zahlen) verständlich machen, nicht das Layout nacherzählen.
-Der Alt-Text trägt die Kernaussage, die Langbeschreibung die vollständige
-inhaltliche Struktur.
+Eine Infografik übersetzt einen Inhalt in eine visuelle Anordnung. Dein Text
+übersetzt zurück: die inhaltliche Logik aus Stationen, Verbindungen und Zahlen,
+nicht das Layout. Der Alt-Text trägt Thema und die wichtigste belegte Aussage,
+die Langbeschreibung die geordnete Zusammenfassung. Plane den Umfang, bevor du
+formulierst: Zähle im inneren Inventar Stationen und Zahlen und entscheide, was
+in 2000 Zeichen Platz hat. Was du auslässt, verdeckst du nicht durch eine
+Vollständigkeitsbehauptung; eine gesonderte vollständige Alternative erwähnst du
+nur, wenn es sie wirklich gibt.
 
 
 {_render_inventar_block(inventar_json)}
 
 
-{_render_kontext_block(enriched_context, user_hint_text)}
+ALT-TEXT
+
+Beginnt mit dem Gattungswort und dem Thema, dann die Kernaussage mit ihren
+Zahlen: "Infografik zum Ablauf der Antragstellung: vier Schritte von der
+Registrierung bis zum Bescheid, Bearbeitungszeit sechs Wochen." Zahlen exakt
+wie gedruckt: 39 Prozent, nicht "fast die Hälfte". Keine Aufzählung aller
+Stationen, keine Farben.
 
 
-{_render_zweck_block()}
+LANGBESCHREIBUNG
+
+Pflicht. Fließtext in der Ordnung, die die Grafik selbst vorgibt: chronologisch
+bei Abläufen, hierarchisch bei Gliederungen, nach Größe bei Kennzahlen. Je
+Station ihre Bezeichnung, ihre Zahlen und die Verbindung zur nächsten ("Schritt 1
+ist die Registrierung, daraus folgt Schritt 2 mit der Prüfung"; "Hauptkategorie
+A umfasst B, C und D"). Bei dichten Grafiken eine geordnete Zusammenfassung mit
+den Zahlen, die die Aussage tragen. Lesbare Zusatzangaben wie Quelle, Stand,
+Internetadresse und Kontaktdaten am Ende; für Menschen mit Screenreader sind
+sie oft der einzige Zugang. Kein Layout-Bericht ("oben links steht", "in der
+Mitte befindet sich"); eine Position nennst du nur, wenn sie inhaltlich
+bedeutet, dass etwas im Mittelpunkt steht.
 
 
-{_render_kompaktheit_block('unter 350 Zeichen', 'etwa 1500 Zeichen')}
+PFEILE, SIEGEL UND WERBEAUSSAGEN
+
+Ein Pfeil kann Reihenfolge, Verweis, Bewegung oder Ursache bedeuten. Du nennst
+nur die Bedeutung, die Beschriftung und Darstellung tragen; aus räumlicher
+Nachbarschaft folgt keine Ursache. Ein Siegel, ein Häkchen oder eine
+Werbeaussage belegt, dass die Grafik diese Aufschrift enthält, nicht, dass eine
+Prüfung stattgefunden hat: "Siegel mit der Aufschrift Klimaneutral".
+
+
+{ATMOSPHAERE_REGEL}
+
+
+{_LESBARER_TEXT}
 
 
 {STILREGELN_SACHLICH}
 
 
-ALT-TEXT
-
-Der erste Satz:
-- beginnt mit 'Infografik —' + Hauptthema (aus inventar.lesbare_texte: Titel)
-- nennt die zentrale Kernaussage mit konkreten Datenpunkten, wenn vorhanden
-
-Beispiel RICHTIG: 'Infografik — Bürokratie-Entlastung 2024: Fast die
-Hälfte (39%) entfällt auf das Wachstumschancengesetz, gefolgt von
-vier weiteren Maßnahmen mit zusammen 61%.'
-
-Beispiel FALSCH: 'Eine Infografik mit verschiedenen Daten.'
-
-
-LANGBESCHREIBUNG
-
-Reihenfolge und Umfang:
-1. Alle inhaltlichen Stationen in LOGISCHER Reihenfolge auflisten
-   (chronologisch / hierarchisch / kausal — je nach Infografik-Typ)
-2. Beziehungen zwischen Stationen benennen ('A führt zu B',
-   'X umfasst Y', 'Schritt 1 aktiviert Schritt 2')
-3. Alle konkreten Zahlen, Prozente, Mengenangaben übernehmen
-
-Fließtext oder strukturierte Liste, keine Markdown-Tabellen.
-
-
-INHALTLICH STATT LAYOUT
-
-Visuelle Layout-Beschreibungen vermeiden:
-- 'oben links steht...'
-- 'ein Pfeil zeigt von X nach Y...'
-- 'im Zentrum befindet sich...'
-- 'die linke Hälfte des Bildes zeigt...'
-
-Stattdessen inhaltlich formulieren:
-- 'Schritt 1 ist X, daraus folgt Schritt 2 mit Y'
-- 'Hauptkategorie A umfasst die Unterkategorien B, C und D'
-- 'Im Mittelpunkt steht das Konzept X' (wenn das WIRKLICH die
-  inhaltliche Botschaft ist, nicht nur die geometrische Position)
-
-
-OCR-TEXT ALS PFLICHTQUELLE
-
-Wenn inventar.lesbare_texte Beschriftungen enthält, sind diese wortgetreu
-zu übernehmen. Bei Konflikt zwischen visueller Wahrnehmung und OCR:
-dem OCR-Text vertrauen.
-
-KONTAKTDATEN UND URLS:
-Enthält inventar.lesbare_texte Einträge vom Typ 'kontaktdaten' oder 'url'
-(häufig bei Behörden-Infografiken am unteren Rand), gehören diese
-wortgetreu und mit korrekten Trennzeichen in die Beschreibung — für
-Screenreader-Nutzer sind sie oft der einzige Zugang zu dieser Information.
-
-
-ATMOSPHAERE (bei Infografiken EINGESCHRÄNKT)
-
-Bei reinen Daten-Visualisierungen bleibt atmosphaere_belege leer — Daten
-haben keine Stimmung. Nur wo eine bewusste Designwahl erkennbar Stimmung
-transportiert (z.B. eine Kampagnen-Infografik), gilt die folgende Regel:
-
-{ATMOSPHAERE_REGEL}
-
-
-{_render_ausgabe_schema_block('beginnt mit Infografik — + Hauptthema und Kernaussage', 'nur bei Kampagnen-Design mit sichtbarem Beleg, sonst leer')}
-
-
-FEW-SHOT BEISPIELE
+BEISPIELE
 
 {examples.format_for_prompt()}
 
 
-FINAL CHECK
-
-1. Beginnt der Alt-Text mit 'Infografik —' + Hauptthema und Kernaussage
-   mit Datenpunkten?
-2. Alle Stationen in logischer Reihenfolge, mit ihren Beziehungen?
-3. Alle Zahlen, Prozente und Mengenangaben übernommen?
-4. Inhaltlich statt Layout formuliert (kein 'oben links steht ...')?
-5. OCR-Beschriftungen wortgetreu; Kontaktdaten und URLs enthalten?
-6. Atmosphäre nur bei bewusster Designwahl, mit Beleg und gesetztem
-   atmosphaere_belege?
-7. nicht_im_inventar leer?
-
-Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
+{_render_kontext_block(enriched_context, user_hint_text)}
 """
 
 
@@ -964,17 +483,15 @@ def build_beschreibung_prompt_screenshot(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder für screenshot (Paket 4, 16.07.2026).
+    """screenshot: Bildschirmfoto einer Anwendung, Website oder Bedienoberfläche.
 
-    Bildschirmfoto einer Anwendung, Webseite oder UI. Erhalten (entdrillt):
-    Präfix-Regel 'Screenshot der/des …' (Paket-1-Entscheidung: die Eröffnung
-    ist EXPLIZIT erwünscht, konsistent mit den Präfixen der übrigen
-    Daten-Familie; das alte v3.7-Präfix-Verbot wurde bewusst nicht
-    übernommen), Anwendungs-Identifikation nur mit Beleg (URL/Logo/Titel,
-    sonst generischer Typ), funktionale UI-Hierarchie, wortgetreue
-    UI-Texte, KONTAKTDATEN_PFLICHT (geteiltes Constraint-Modul),
-    Dark-/Light-Mode-Hinweis, keine emotionalen Wertungen.
-    Richtwerte 350/1000 (Paket 1) unverändert.
+    Historie: Die alte Fassung beschrieb rein funktional (Anwendung, Zustand,
+    Hierarchie aller Bereiche) ohne Bezug zum Dokumentzweck und nutzte die
+    eigene Anwendung als Beispiel. Jetzt: Zustand und wichtigste Aktion in den
+    Alt-Text, Bereiche nur soweit nötig, Zweckbezug (Anleitungsschritt,
+    Fehlerbild), erfundene Anwendung Musterwerk im Beispiel. Die Regel
+    "Abbildung statt Bedienelement" stammt aus einem Prüffall, in dem ein
+    Screenshot einer Seitennavigation auf einen Pfeil verkürzt wurde.
     """
     examples = load_examples('screenshot')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -982,106 +499,66 @@ def build_beschreibung_prompt_screenshot(
 
     return f"""{_basis_schichten()}
 
-BILDTYP: screenshot (Bildschirmfoto einer Anwendung, Webseite oder UI)
+BILDTYP: screenshot (Bildschirmfoto einer Anwendung, Website oder Bedienoberfläche)
 {bildgroesse_zeile(width, height)}
 
-ZIEL
+AUFTRAG
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
-einen Screenshot. Screenshots werden funktional beschrieben: Welche Anwendung,
-welcher Zustand, welche Bedienelemente — so, dass ein blinder Nutzer versteht,
-was auf dem Bildschirm passiert und wo er wäre. Lesbare UI-Texte sind dabei
-die verlässlichste Informationsquelle und werden wortgetreu übernommen.
+Ein Screenshot steht im Dokument, weil er einen bestimmten Zustand einer
+Anwendung belegt: einen Schritt einer Anleitung, ein Fehlerbild, ein Ergebnis,
+einen Vorher-Nachher-Vergleich. Dein Text nennt Anwendung oder Website, die
+Ansicht, den gezeigten Zustand und die für diesen Zustand wichtigste sichtbare
+Aktion, und er sagt, was der Screenshot an dieser Stelle des Dokuments zeigt.
+Die Anwendung benennst du, wenn Adressleiste, Fenstertitel, Logo oder Kontext sie
+belegen; sonst den Typ ("Browserfenster", "Texteditor", "E-Mail-Programm"). Bei
+einer Adresse nennst du die sichtbare Domain, ohne zu deuten, was dahinter steht.
 
 
 {_render_inventar_block(inventar_json)}
 
 
-{_render_kontext_block(enriched_context, user_hint_text)}
+ALT-TEXT
+
+Beginnt mit dem Gattungswort, Anwendung und Ansicht, dann Zustand und Aktion:
+"Screenshot der Anwendung Musterwerk, Ansicht Projektliste: 26 Bilder, 0
+verarbeitet, Schaltfläche Alt-Texte generieren." Steht der Screenshot in einer
+Anleitung, trägt der Alt-Text den Schritt ("Schritt 3: Dialog Exportieren mit
+aktiviertem Kontrollkästchen PDF/UA"); zeigt er einen Fehler, die Fehlermeldung
+wortgetreu. Nicht die ganze Kopfzeile, nicht jedes Menü.
 
 
-{_render_zweck_block()}
+LANGBESCHREIBUNG
+
+Pflicht. Fließtext mit den Bereichen, die zum Verständnis des Zustands nötig
+sind, in funktionaler Reihenfolge: zuerst der Bereich, in dem die Aktion
+stattfindet, dann Navigation, Seitenleisten und Statusleiste, soweit sie den
+Zustand erklären. Statusmeldungen, Werte, Eingaben in Feldern, Schaltflächen und
+Beschriftungen wortgetreu; eine Adresse in der Adressleiste vollständig. Eine
+Abschrift aller Menüs und Randbereiche nur, wenn der Dokumentzweck gerade deren
+Inhalt betrifft. Hell- oder Dunkeldarstellung nur, wenn sie für das Dokument
+eine Rolle spielt.
 
 
-{_render_kompaktheit_block('unter 350 Zeichen', 'etwa 1000 Zeichen')}
+ABBILDUNG STATT BEDIENELEMENT
+
+Ein Screenshot ist ein Bild einer Oberfläche, kein bedienbares Element. Ein
+Screenshot einer Seitennavigation beschreibt die sichtbaren Seiten und den
+aktiven Zustand; er wird nicht auf die Funktion eines einzelnen Pfeils oder
+Knopfs verkürzt.
+
+
+{_LESBARER_TEXT}
 
 
 {STILREGELN_SACHLICH}
 
 
-ALT-TEXT
-
-Beginne mit 'Screenshot der/des …'. Der erste Satz:
-- nennt die Anwendung (wenn aus URL-Leiste, Titel oder Logo identifizierbar)
-  ODER den generischen Anwendungstyp ('Browser-Fenster', 'Texteditor',
-  'E-Mail-Programm')
-- nennt Zustand oder aktuelle Aktion (was ist gerade sichtbar?)
-
-Beispiel RICHTIG: 'Screenshot der InkluDocs-Web-Oberfläche, Projekt-
-Übersicht mit drei laufenden Bilduploads und einem fertig analysierten
-PDF mit 12 Bildern.'
-
-Beispiel FALSCH: 'Ein Screenshot zeigt eine Anwendung mit verschiedenen
-Elementen.'
-
-
-ANWENDUNGS-IDENTIFIKATION NUR MIT BELEG
-
-Gleiche Zwei-Wege-Logik wie bei Marken: eindeutig belegt -> benennen,
-unklar -> generisch bleiben.
-- Wenn weder URL noch Logo noch Titel die Anwendung benennen, schreibe
-  nicht 'Screenshot von Microsoft Word' — sondern 'Screenshot eines
-  Texteditors' oder generischer
-- Bei unklarer Domain in der URL: nur die sichtbare Domain nennen,
-  nicht raten, was sich dahinter verbirgt
-
-
-LANGBESCHREIBUNG
-
-Reihenfolge und Umfang:
-1. Sichtbare UI-Elemente in funktionaler Hierarchie:
-   - Hauptmenü / Navigation
-   - Hauptbereich / Inhalt
-   - Sekundär-Bereiche / Sidebars
-   - Statusleiste / Footer
-2. Lesbare Texte wortgetreu übernehmen — vor allem:
-   - URL in der Adressleiste (vollständig)
-   - Fenstertitel
-   - Buttons / Links, die der Nutzer sehen würde
-   - Statusmeldungen
-   - Eingaben in Formularfeldern
-
-DARK MODE / LIGHT MODE:
-Wenn relevant für die Beschreibung (z.B. bei UI-Tutorials), benennen.
-Sonst weglassen — meist irrelevant für die Funktion.
-
-
-{KONTAKTDATEN_PFLICHT}
-
-
-{_render_atmosphaere_verzicht_block('UI-Beschreibungen sind funktional — keine emotionalen Wertungen.')}
-
-
-{_render_ausgabe_schema_block("beginnt mit 'Screenshot der/des …' + Anwendung und Zustand", 'bleibt leer')}
-
-
-FEW-SHOT BEISPIELE
+BEISPIELE
 
 {examples.format_for_prompt()}
 
 
-FINAL CHECK
-
-1. Beginnt der Alt-Text mit 'Screenshot der/des …' + Anwendung bzw.
-   generischem Typ + Zustand?
-2. Anwendung nur benannt, wenn URL, Logo oder Titel sie belegen?
-3. Lesbare UI-Texte wortgetreu übernommen (URL, Fenstertitel, Buttons,
-   Statusmeldungen)?
-4. UI-Elemente in funktionaler Hierarchie beschrieben?
-5. Funktional beschrieben — keine emotionalen Wertungen?
-6. nicht_im_inventar leer?
-
-Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
+{_render_kontext_block(enriched_context, user_hint_text)}
 """
 
 
@@ -1091,16 +568,14 @@ def build_beschreibung_prompt_strukturformel(
     width: int, height: int,
     user_hint: Optional[str] = None,
 ) -> str:
-    """Premium-Builder für strukturformel (Paket 4, 16.07.2026).
+    """strukturformel: chemische Struktur-, Reaktions- oder Summenformel.
 
-    Chemische Struktur-, Reaktions- oder Summenformel. Erhalten (entdrillt):
-    Präfix 'Strukturformel —' / 'Reaktionsgleichung —' mit beiden
-    RICHTIG-Beispielen, die fachlichen Beschreibungs-Listen für Strukturen
-    und Reaktionen, die Screenreader-Notation (CH3 statt CH₃, Ladungen
-    explizit, Pfeile als 'reagiert zu'), die Chemie-Genauigkeitsregeln
-    (keine erfundenen Atome, unleserliche Bindungen ehrlich, Stoffnamen nur
-    aus Kontext/Beschriftung außer bei einfachsten Molekülen).
-    Richtwerte 250/800 (Paket 1) unverändert.
+    Historie: Die alte Fassung erlaubte Stoffnamen nur aus Kontext oder
+    Beschriftung (Vorsicht aus der Zeit eines schwächeren Bildmodells) und
+    nannte zugleich im Beispiel eine Summenformel, die nirgends belegt war.
+    Jetzt: eindeutig erkennbare Strukturen aus Fachwissen benennen, unsichere
+    beim Gerüst beschreiben, Summenformel nur mit Beleg, Stoffklasse und
+    Reaktionstyp als Einordnung.
     """
     examples = load_examples('strukturformel')
     inventar_json = inventar.model_dump_json(indent=2)
@@ -1108,108 +583,67 @@ def build_beschreibung_prompt_strukturformel(
 
     return f"""{_basis_schichten()}
 
-BILDTYP: strukturformel (Chemische Struktur-, Reaktions- oder Summenformel)
+BILDTYP: strukturformel (chemische Struktur-, Reaktions- oder Summenformel)
 {bildgroesse_zeile(width, height)}
 
-ZIEL
+AUFTRAG
 
-Du erstellst einen hochwertigen Alternativtext und eine Langbeschreibung für
-eine chemische Formel-Darstellung. Ziel ist fachliche Verlässlichkeit in
-screenreader-tauglicher Notation: Ein blinder Chemie-Lernender muss aus dem
-Text das Molekül oder die Reaktion korrekt rekonstruieren können. Was das Bild
-belegt, wird präzise benannt; Stoff-Identifikationen kommen aus Kontext oder
-Beschriftung, nicht aus visueller Vermutung.
+Eine Formeldarstellung steht im Dokument, weil sie den Aufbau eines Stoffs oder
+den Verlauf einer Reaktion zeigt. Dein Text muss so verlässlich sein, dass ein
+Mensch, der Chemie lernt, das Molekül oder die Reaktion daraus richtig aufbauen
+kann. Den Stoffnamen nimmst du aus Beschriftung oder Kontext; fehlt beides,
+benennst du eindeutig erkennbare Strukturen aus deinem Fachwissen
+(Acetylsalicylsäure, Koffein und Glucose sind an ihrem Gerüst erkennbar) und
+beschreibst unsichere Strukturen beim Gerüst. Eine Summenformel nennst du nur,
+wenn sie im Bild oder im Kontext steht; du erzeugst sie nicht als Wissensangabe.
+Stoffklasse (aromatische Carbonsäure, Ester, Alkaloid) und Reaktionstyp
+(Veresterung, Substitution, Addition, Redoxreaktion) ordnest du ein, wenn
+Struktur oder Kontext sie belegen.
 
 
 {_render_inventar_block(inventar_json)}
 
 
-{_render_kontext_block(enriched_context, user_hint_text)}
+ALT-TEXT
+
+Beginnt mit dem Gattungswort und dem Stoff oder der Reaktion, dann die
+wesentlichen Bausteine: "Strukturformel von Acetylsalicylsäure: Benzolring mit
+Carboxygruppe und benachbarter Acetoxygruppe." Bei Reaktionen: "Reaktionsgleichung
+der Veresterung von Essigsäure mit Ethanol zu Essigsäureethylester und Wasser,
+Schwefelsäure als Katalysator." Ohne belegten Stoffnamen beginnt der Alt-Text mit
+dem Gerüst: "Strukturformel eines Sechsrings mit zwei Hydroxygruppen".
 
 
-{_render_zweck_block()}
+LANGBESCHREIBUNG
+
+Pflicht. Bei Strukturformeln in dieser Reihenfolge: Grundgerüst (Kette, Ring,
+verzweigt, Ringsystem); Atome und Atomgruppen mit ihrer Position; Bindungstypen
+(Einfach-, Doppel-, Dreifachbindung); funktionelle Gruppen mit Namen; Ladungen
+ausgesprochen ("Natrium-Kation" oder "Na plus"); Stereochemie nur, wenn Keil-
+und Strichbindungen oder eine Angabe wie cis, trans, R oder S sie darstellen.
+Die Anordnung auf dem Papier allein belegt keine Stereochemie. Bei
+Reaktionsgleichungen: Edukte links vom Pfeil, Bedingungen über und unter dem
+Pfeil (Katalysator, Temperatur, Druck, Lösungsmittel), Produkte rechts,
+stöchiometrische Zahlen, dann der Reaktionstyp. Erfinde keine Atome und keine
+Gruppen; eine unleserliche Bindung nennst du unleserlich.
 
 
-{_render_kompaktheit_block('unter 250 Zeichen', 'etwa 800 Zeichen')}
+SCHREIBWEISE FÜR SCREENREADER
+
+Keine Hoch- und Tiefstellung: Indizes als normale Zahlen und Gruppen
+ausgeschrieben ("CH3-Gruppe", "H2O", nicht "CH₃"). Reaktionspfeile als "reagiert
+zu" oder "ergibt", Gleichgewichtspfeile als "steht im Gleichgewicht mit".
+Griechische Buchstaben und Positionsangaben ausgeschrieben ("alpha-Position",
+"Position 2").
 
 
 {STILREGELN_SACHLICH}
 
 
-ALT-TEXT
-
-Der erste Satz:
-- beginnt mit dem Präfix 'Strukturformel —' ODER 'Reaktionsgleichung —'
-- nennt den Stoffnamen, falls aus Kontext oder Beschriftung erkennbar
-- nennt die Summenformel, wenn klar lesbar
-
-Beispiel RICHTIG: 'Strukturformel — Methanol (CH3OH): Methylgruppe
-mit Hydroxylgruppe.'
-
-Beispiel RICHTIG für Reaktion: 'Reaktionsgleichung — Veresterung von
-Essigsäure mit Methanol zu Methylacetat und Wasser, katalysiert
-durch Schwefelsäure.'
-
-
-LANGBESCHREIBUNG
-
-Bei Strukturformeln:
-1. Grundgerüst beschreiben (Kette, Ring, verzweigt)
-2. Atome und Atomgruppen (CH3, OH, COOH, NH2, Aromaten etc.)
-3. Bindungstypen (Einfach-, Doppel-, Dreifach-Bindung) wenn sichtbar
-4. Funktionelle Gruppen explizit benennen
-5. Stereochemie wenn dargestellt (cis/trans, R/S)
-
-Bei Reaktionsgleichungen:
-1. Edukte (links vom Reaktionspfeil)
-2. Reaktionsbedingungen (über/unter dem Pfeil — Katalysator,
-   Temperatur, Druck, Lösungsmittel)
-3. Produkte (rechts vom Reaktionspfeil)
-4. Reaktionstyp wenn aus Kontext bekannt (Substitution, Addition,
-   Eliminierung, Redox etc.)
-
-Fließtext, keine Markdown-Formatierung.
-
-
-NOTATION (screenreader-tauglich)
-
-- Indizes als normale Zahlen ('CH3' — nicht 'CH₃', weil Screenreader
-  Indizes oft schlecht vorlesen)
-- Ladungen explizit ('Natrium-Kation' oder 'Na+')
-- Reaktionspfeile beschreiben als 'reagiert zu' oder 'ergibt'
-
-
-CHEMISCHE GENAUIGKEIT
-
-- Erfinde keine Atome oder Gruppen, die nicht im Bild sind
-- Bei unleserlichen Bindungen: 'Bindungstyp nicht eindeutig erkennbar' —
-  statt zu raten
-- Stoffnamen nur aus Kontext oder Bildbeschriftung — Strukturen visuell
-  zu identifizieren ist fehleranfällig (außer bei einfachsten Molekülen
-  wie H2O, CO2)
-
-
-{_render_atmosphaere_verzicht_block('Chemie ist objektiv.')}
-
-
-{_render_ausgabe_schema_block("beginnt mit 'Strukturformel —' oder 'Reaktionsgleichung —'", 'bleibt leer')}
-
-
-FEW-SHOT BEISPIELE
+BEISPIELE
 
 {examples.format_for_prompt()}
 
 
-FINAL CHECK
-
-1. Beginnt der Alt-Text mit 'Strukturformel —' oder 'Reaktionsgleichung —'
-   + Stoffname (falls belegt) und Summenformel (falls lesbar)?
-2. Notation screenreader-tauglich (CH3 statt CH₃, Ladungen explizit,
-   Pfeile als 'reagiert zu')?
-3. Keine Atome oder Gruppen erfunden; Unleserliches ehrlich benannt?
-4. Stoffname nur aus Kontext oder Beschriftung (außer einfachste Moleküle)?
-5. Grundgerüst und funktionelle Gruppen in der Langbeschreibung?
-6. nicht_im_inventar leer?
-
-Wenn ein Punkt nicht erfüllt ist: Output neu formulieren.
+{_render_kontext_block(enriched_context, user_hint_text)}
 """

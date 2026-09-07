@@ -1,18 +1,19 @@
 {
- "szene": "Bildschirmfoto eines E-Mail-Programms: Fenstertitel 'Postfach — Mustermail', linke Navigationsleiste mit den Einträgen 'Posteingang (3)', 'Gesendet', 'Entwürfe', 'Papierkorb'; im Hauptbereich eine geöffnete E-Mail mit Betreff 'Terminbestätigung Dienstag 10 Uhr', darüber die Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Kein Hersteller-Logo außer dem Schriftzug 'Mustermail' im Titel.",
- "alt_text": "Screenshot des E-Mail-Programms Mustermail: Im Hauptbereich ist eine E-Mail mit dem Betreff 'Terminbestätigung Dienstag 10 Uhr' geöffnet, darüber die Buttons 'Antworten', 'Weiterleiten' und 'Löschen'; die linke Navigation zeigt 'Posteingang (3)', 'Gesendet', 'Entwürfe' und 'Papierkorb'.",
- "begruendung": "Beginnt mit dem Pflicht-Präfix 'Screenshot des ...' und benennt die Anwendung nur, weil der Fenstertitel 'Mustermail' sie belegt (Zwei-Wege-Regel: belegt -> benennen, sonst generischer Typ). Nennt den Zustand (geöffnete E-Mail mit Betreff) und übernimmt alle UI-Texte wortgetreu in funktionaler Hierarchie (Hauptbereich vor Navigation). Keine emotionale Wertung wie 'aufgeräumt' oder 'modern'.",
- "prinzip": "Mit 'Screenshot der/des ...' + belegter Anwendung (oder generischem Typ) und Zustand führen; UI-Texte wortgetreu, funktional statt wertend beschreiben.",
+ "szene": "Bildschirmfoto eines E-Mail-Programms: Fenstertitel 'Postfach — Mustermail', linke Navigationsleiste mit den Einträgen 'Posteingang (3)', 'Gesendet', 'Entwürfe', 'Papierkorb'; im Hauptbereich eine geöffnete E-Mail mit Betreff 'Terminbestätigung Dienstag 10 Uhr', darüber die Buttons 'Antworten', 'Weiterleiten', 'Löschen'. Absender und Nachrichtentext nicht lesbar. Kein Hersteller-Logo außer dem Schriftzug 'Mustermail' im Titel.",
+ "alt_text": "Screenshot des E-Mail-Programms Mustermail: Eine E-Mail mit dem Betreff 'Terminbestätigung Dienstag 10 Uhr' ist geöffnet, darüber die Buttons 'Antworten', 'Weiterleiten' und 'Löschen'.",
+ "begruendung": "Die Anwendung wird benannt, weil der Fenstertitel sie belegt. Der Alt-Text trägt Zustand und die Buttons wortgetreu; Navigation, Titel und das Nichtlesbare trägt die Langbeschreibung in funktionaler Reihenfolge. Keine Wertung des Designs.",
+ "prinzip": "Mit 'Screenshot der/des' und der Anwendung führen, wenn Titel, Adresse oder Logo sie belegen, sonst mit dem Anwendungstyp; Zustand nennen, Texte wortgetreu.",
  "quelle": "fiktives Beispiel (erfundene Anwendung 'Mustermail', keine echten Nutzerdaten)",
  "lizenz": "fiktives Beispiel",
  "antwort": {
-  "alt_text": "Screenshot des E-Mail-Programms Mustermail: Im Hauptbereich ist eine E-Mail mit dem Betreff 'Terminbestätigung Dienstag 10 Uhr' geöffnet, darüber die Buttons 'Antworten', 'Weiterleiten' und 'Löschen'; die linke Navigation zeigt 'Posteingang (3)', 'Gesendet', 'Entwürfe' und 'Papierkorb'.",
-  "langbeschreibung": "",
+  "alt_text": "Screenshot des E-Mail-Programms Mustermail: Eine E-Mail mit dem Betreff 'Terminbestätigung Dienstag 10 Uhr' ist geöffnet, darüber die Buttons 'Antworten', 'Weiterleiten' und 'Löschen'.",
+  "langbeschreibung": "Der Fenstertitel lautet 'Postfach — Mustermail'. Die linke Navigationsleiste führt untereinander die Einträge 'Posteingang (3)', 'Gesendet', 'Entwürfe' und 'Papierkorb'. Rechts davon nimmt der Hauptbereich die geöffnete Nachricht ein, die drei Buttons stehen in einer Reihe über dem Nachrichtenkopf. Absender und Nachrichtentext sind nicht lesbar, ein Hersteller-Logo ist nicht zu sehen.",
   "verwendete_inventar_items": [
    "Fenstertitel 'Postfach — Mustermail'",
    "Navigation 'Posteingang (3)', 'Gesendet', 'Entwürfe', 'Papierkorb'",
    "geöffnete E-Mail 'Terminbestätigung Dienstag 10 Uhr'",
-   "Buttons 'Antworten', 'Weiterleiten', 'Löschen'"
+   "Buttons 'Antworten', 'Weiterleiten', 'Löschen'",
+   "Absender und Nachrichtentext nicht lesbar"
   ],
   "nicht_verwendete_inventar_items": [],
   "nicht_im_inventar": [],

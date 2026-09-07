@@ -1,22 +1,22 @@
 {
- "szene": "Foto durch eine Flughafen-Terminalscheibe: ein weißes Großraumflugzeug am Gate, Schriftzug 'BOEING 777' am Rumpf, Emirates-Logo und arabische Schrift am Heck, Gate-Schild 'J8', Vorfeld mit Servicefahrzeugen, bewölkter Himmel. Kein Ortsschild außer dem Gate.",
- "alt_text": "Emirates Boeing 777 am Gate, aufgenommen durch eine Terminalscheibe mit Spiegelungen. Das Großraumflugzeug steht an einer Fluggastbrücke; im Vordergrund Vorfeld mit Servicefahrzeugen und Gate-Schild 'J8', im Hintergrund bewölkter Himmel.",
- "begruendung": "Führt mit der konkretesten BELEGTEN Benennung (Emirates Boeing 777 aus Schriftzug und Lackierung) und nennt das lesbare Schild 'J8'. Der Standort (z.B. Frankfurt) wird NICHT genannt, weil im Bild nicht belegt — er käme nur in den Text, wenn ein Schild ('FRA') oder der Dokumentkontext ihn trägt, und dann eher in die Langbeschreibung.",
- "prinzip": "Benenne, was durch lesbaren Text, Logo oder Lackierung klar belegt ist. Rate keinen Ort und keine Tatsache, die nur plausibel, aber nicht belegt ist.",
+ "szene": "Foto durch eine Flughafen-Terminalscheibe mit Spiegelungen: ein weißes Großraumflugzeug an einer Fluggastbrücke, Schriftzug 'BOEING 777' am Rumpf, Schriftzug 'Beispiel Air' und ein Logo am Heck, Gate-Schild 'J8'. Auf dem Vorfeld stehen drei Servicefahrzeuge, darüber bewölkter Himmel. Kein Ortsschild außer dem Gate.",
+ "alt_text": "Eine Boeing 777 der Beispiel Air steht an der Fluggastbrücke von Gate J8, fotografiert durch eine Terminalscheibe mit Spiegelungen. Auf dem Vorfeld davor stehen drei Servicefahrzeuge.",
+ "begruendung": "Flugzeugtyp und Fluggesellschaft sind durch lesbare Schriftzüge belegt und eröffnen den Text. Der Flughafen bleibt ungenannt, weil nur das Gate lesbar ist. Die Fahrzeuge sind exakt gezählt. Die Langbeschreibung trägt die Beschriftungen und Nebendetails.",
+ "prinzip": "Benennen, was lesbarer Text, Logo oder Lackierung belegt; Ort und Umstände nicht raten, auch wenn sie plausibel sind.",
  "antwort": {
-  "alt_text": "Emirates Boeing 777 am Gate, aufgenommen durch eine Terminalscheibe mit Spiegelungen. Das Großraumflugzeug steht an einer Fluggastbrücke; im Vordergrund Vorfeld mit Servicefahrzeugen und Gate-Schild 'J8', im Hintergrund bewölkter Himmel.",
-  "langbeschreibung": "",
+  "alt_text": "Eine Boeing 777 der Beispiel Air steht an der Fluggastbrücke von Gate J8, fotografiert durch eine Terminalscheibe mit Spiegelungen. Auf dem Vorfeld davor stehen drei Servicefahrzeuge.",
+  "langbeschreibung": "Das weiße Großraumflugzeug trägt am Rumpf den Schriftzug 'BOEING 777', am Heck den Schriftzug 'Beispiel Air' und das Logo der Gesellschaft. Das Gate-Schild trägt die Bezeichnung 'J8'. Über dem Vorfeld mit den drei Servicefahrzeugen ist der Himmel bewölkt. Die Scheibe des Terminals legt Spiegelungen über das gesamte Bild. Ein Hinweis auf den Flughafen oder die Stadt ist nicht lesbar.",
   "verwendete_inventar_items": [
    "weißes Großraumflugzeug",
    "Schriftzug BOEING 777",
-   "Emirates-Logo am Heck",
+   "Schriftzug Beispiel Air und Logo am Heck",
    "Gate-Schild 'J8'",
-   "Servicefahrzeuge auf dem Vorfeld",
-   "Terminalscheibe mit Spiegelungen"
+   "Fluggastbrücke",
+   "drei Servicefahrzeuge auf dem Vorfeld",
+   "Terminalscheibe mit Spiegelungen",
+   "bewölkter Himmel"
   ],
-  "nicht_verwendete_inventar_items": [
-   "arabische Schrift am Heck"
-  ],
+  "nicht_verwendete_inventar_items": [],
   "nicht_im_inventar": [],
   "atmosphaere_belege": []
  }

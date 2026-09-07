@@ -1,11 +1,11 @@
 {
- "szene": "Eine große, lichtdurchflutete Halle mit hellem Sandboden, an den Laengsseiten niedrige Holzbanden, dahinter Sitztribünen; eine offene Dachkonstruktion aus Leimbindern, mehrere Hindernisstangen am Rand. Kein Schild, kein Ortsname, kein Kontext.",
- "alt_text": "Reithalle mit hellem Sandboden, niedrigen Holzbanden an den Laengsseiten und Sitztribünen dahinter; offene Dachkonstruktion aus Leimbindern, am Rand mehrere Hindernisstangen.",
- "begruendung": "Es ist kein bekanntes Wahrzeichen und kein Schild sichtbar — also wird kein Eigenname erfunden. Aber aus den sichtbaren Belegen (Sandboden, Banden, Hindernisstangen, Hallenmaße) laesst sich die FUNKTION eindeutig erschliessen: eine Reithalle. Das ist mehr wert als 'eine große Halle'. Kompakt, ohne jeden Leimbinder zu zaehlen.",
- "prinzip": "Wenn kein Wahrzeichen erkennbar ist, aus dem Sichtbaren die Funktion/den Bautyp erschliessen (Reithalle, Lagerhalle, Bahnhof) — auch ohne Kontext — statt nur 'ein Gebaeude' zu sagen; aber keinen konkreten Eigennamen erfinden.",
+ "szene": "Eine große, lichtdurchflutete Halle mit hellem Sandboden, an den Längsseiten niedrige Holzbanden, dahinter Sitztribünen; eine offene Dachkonstruktion aus Leimbindern, mehrere Hindernisstangen am Rand. Kein Schild, kein Ortsname, kein Kontext.",
+ "alt_text": "Reithalle mit hellem Sandboden, niedrigen Holzbanden an den Längsseiten und Sitztribünen dahinter. Das Dach ist eine offene Konstruktion aus Leimbindern, am Rand der Bahn mehrere Hindernisstangen.",
+ "begruendung": "Kein Wahrzeichen und kein Schild, also kein Eigenname. Sandboden, Banden und Hindernisstangen belegen die Funktion Reithalle, und die ist mehr wert als 'eine große Halle'.",
+ "prinzip": "Ohne Wahrzeichen aus dem Sichtbaren den Bautyp oder die Funktion erschließen, aber keinen Eigennamen erfinden.",
  "antwort": {
-  "alt_text": "Reithalle mit hellem Sandboden, niedrigen Holzbanden an den Laengsseiten und Sitztribünen dahinter; offene Dachkonstruktion aus Leimbindern, am Rand mehrere Hindernisstangen.",
-  "langbeschreibung": "",
+  "alt_text": "Reithalle mit hellem Sandboden, niedrigen Holzbanden an den Längsseiten und Sitztribünen dahinter. Das Dach ist eine offene Konstruktion aus Leimbindern, am Rand der Bahn mehrere Hindernisstangen.",
+  "langbeschreibung": "Die Halle ist lichtdurchflutet, der Boden besteht durchgehend aus hellem Sand. An beiden Längsseiten begrenzen niedrige Holzbanden die Bahn, dahinter folgen die Sitztribünen. Über allem spannt sich die offene Dachkonstruktion aus Leimbindern. Die Hindernisstangen liegen am Rand der Bahn, ein Schild oder ein Ortsname ist nicht zu sehen.",
   "verwendete_inventar_items": [
    "heller Sandboden",
    "niedrige Holzbanden",

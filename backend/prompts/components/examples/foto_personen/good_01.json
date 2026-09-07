@@ -1,23 +1,23 @@
 {
- "szene": "Schwarz-Weiß-Foto: eine Frau in dunklem, hochgeschlossenem Kleid steht an einem Labortisch mit Glaskolben und einer Messapparatur, die rechte Hand hält ein Glasgefäß, der Blick ist auf die Apparatur gerichtet. Bildunterschrift im Dokument: 'Marie Curie in ihrem Pariser Labor, um 1912'. Nur eine Person sichtbar.",
- "alt_text": "Marie Curie hält um 1912 in ihrem Pariser Labor ein Glasgefäß an einem Labortisch mit Glaskolben und einer Messapparatur.",
- "begruendung": "Namen-Pflicht erfüllt: Die Bildunterschrift benennt die einzige sichtbare Person eindeutig, also führt 'Marie Curie' als Subjekt des ersten Satzes. Der Alt-Text beantwortet knapp Wer und Situation (unter 150 Zeichen); Kleid, Haltung und Blickrichtung stehen NICHT im Alt-Text, sondern in der Langbeschreibung — Arbeitsteilung nach den STILREGELN. Ein Satz, Subjekt und Verb vorn, keine Floskel.",
- "prinzip": "Bei eindeutiger Kontext-Benennung gehört der Name in den Alt-Text — als Subjekt des ersten Satzes. Der Alt-Text bleibt die knappe Antwort auf Wer und Situation; Kleidung, Haltung und Blickrichtung trägt die Langbeschreibung.",
- "quelle": "fiktives Beispiel (historische Person des öffentlichen Lebens, Szene generisch nach dem Bogart-Muster)",
+ "szene": "Schwarz-Weiß-Foto: eine Frau in dunklem, hochgeschlossenem Kleid steht an einem Labortisch mit Glaskolben und einer Messapparatur, die rechte Hand hält ein kleines Glasgefäß, der Blick ist auf die Apparatur gerichtet. Bildunterschrift im Dokument: 'Marie Curie in ihrem Pariser Labor, um 1912'. Nur eine Person sichtbar.",
+ "alt_text": "Marie Curie steht in ihrem Labor an einem Tisch mit Glaskolben und einer Messapparatur und hält ein Glasgefäß in der rechten Hand.",
+ "begruendung": "Die Bildunterschrift benennt die einzige sichtbare Person, also ist der Name das Subjekt des ersten Satzes. Der Alt-Text sagt knapp, wer was tut, und wiederholt Ort und Jahr der Bildunterschrift nicht; Kleid, Blick und die Angaben der Unterschrift trägt die Langbeschreibung.",
+ "prinzip": "Bei eindeutiger Zuordnung ist der Name das Subjekt des ersten Satzes; der Alt-Text sagt knapp, wer was tut, Kleidung und Haltung trägt die Langbeschreibung.",
+ "quelle": "fiktives Beispiel (historische Person des öffentlichen Lebens, Szene generisch)",
  "lizenz": "fiktives Beispiel",
  "antwort": {
-  "alt_text": "Marie Curie hält um 1912 in ihrem Pariser Labor ein Glasgefäß an einem Labortisch mit Glaskolben und einer Messapparatur.",
-  "langbeschreibung": "Marie Curie steht aufrecht an einem hölzernen Labortisch, auf dem mehrere Glaskolben und eine Messapparatur aufgebaut sind. Sie trägt ein dunkles, hochgeschlossenes Kleid mit langen Ärmeln, das Haar ist hochgesteckt. Mit der rechten Hand hält sie ein kleines Glasgefäß auf Brusthöhe, der Blick ist auf die Apparatur gerichtet. Die Aufnahme entstand um 1912 in ihrem Pariser Labor.",
+  "alt_text": "Marie Curie steht in ihrem Labor an einem Tisch mit Glaskolben und einer Messapparatur und hält ein Glasgefäß in der rechten Hand.",
+  "langbeschreibung": "Auf dem Labortisch stehen mehrere Glaskolben und eine Messapparatur. Marie Curie trägt ein dunkles, hochgeschlossenes Kleid, hält das kleine Glasgefäß in der rechten Hand und blickt auf die Apparatur. Die Schwarz-Weiß-Aufnahme entstand um 1912 in ihrem Pariser Labor.",
   "verwendete_inventar_items": [
-   "eine Frau (laut Bildunterschrift Marie Curie)",
+   "eine Frau, durch die Bildunterschrift als Marie Curie belegt",
    "Labortisch",
    "Glaskolben",
    "Messapparatur",
-   "Glasgefäß in der rechten Hand"
+   "Glasgefäß in der rechten Hand",
+   "dunkles hochgeschlossenes Kleid",
+   "Blick auf die Apparatur"
   ],
-  "nicht_verwendete_inventar_items": [
-   "dunkles hochgeschlossenes Kleid (nur Langbeschreibung — kein tragendes Alt-Text-Detail)"
-  ],
+  "nicht_verwendete_inventar_items": [],
   "nicht_im_inventar": [],
   "atmosphaere_belege": []
  }

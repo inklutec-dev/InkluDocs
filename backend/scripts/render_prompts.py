@@ -39,7 +39,8 @@ from prompts.components.schemas import (  # noqa: E402
 )
 
 # ============================================================================
-# DEMO-WERTE — bewusst plausibel + bildtyp-agnostisch
+# DEMO-WERTE: je Bildtyp ein passender Kontext, damit jeder Snapshot den Prompt so
+# zeigt, wie er im Betrieb für ein Bild dieser Art aussieht. Erfundene Namen.
 # ============================================================================
 
 DEMO_DATE = datetime.date.today().isoformat()
@@ -47,173 +48,69 @@ DEMO_DATE = datetime.date.today().isoformat()
 DEMO_WIDTH = 1280
 DEMO_HEIGHT = 720
 
-# Zwei Kontext-Varianten — minimal (Frontend-Upload ohne PDF) und rich (PDF-Seite)
 DEMO_CONTEXT_MINIMAL = ''
 DEMO_CONTEXT_RICH = (
-    'Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. '
-    'Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur '
-    'barrierefreien Software-Entwicklung statt. Teilnehmende waren '
-    'Entwickler:innen aus drei Partnerunternehmen.'
+    'Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai fand bei der '
+    'Musterwerk GmbH ein eintägiger Workshop zur barrierefreien Software-Entwicklung statt. '
+    'Teilnehmende waren Entwicklerinnen und Entwickler aus drei Partnerunternehmen.'
 )
 
+DEMO_KONTEXT_JE_TYP = {
+    'foto_event': DEMO_CONTEXT_RICH,
+    'foto_personen': 'Bildunterschrift: Anna Reimers, Gründerin der Musterwerk GmbH, in ihrem Büro in Bonn.',
+    'foto_objekte': 'Produktkatalog Musterwerk, Seite 12: Handgefertigte Schalen aus der Serie Nordlicht.',
+    'foto_essen': 'Speisekarte Beispiel-Bistro: Pizza Margherita, Tomaten, Mozzarella, Basilikum.',
+    'foto_landschaft': 'Reisebericht: Wanderung im Berner Oberland, dritter Tag.',
+    'foto_architektur': 'Jahresbericht Beispiel AG: Der neue Verwaltungsbau in Hannover wurde im Mai bezogen.',
+    'illustration': 'Ratgeber Homeoffice, Kapitel 2: Den Arbeitsplatz einrichten.',
+    'diagramm': 'Abbildung 3: Umsatzentwicklung 2021 bis 2023 nach Sparten, Angaben in Millionen Euro.',
+    'tabelle': 'Tabelle 2: Nährwerte je 100 Gramm.',
+    'karte': 'Abbildung 5: Beratungsstellen in Nordrhein-Westfalen, Stand Januar.',
+    'infografik': 'Schaubild: So läuft die Antragstellung in vier Schritten.',
+    'screenshot': 'Anleitung Musterwerk Projektverwaltung, Schritt 3: Projekt anlegen.',
+    'strukturformel': 'Lehrbuch Organische Chemie, Kapitel 7: Acetylsalicylsäure.',
+}
+
 DEMO_ORIGINAL_ALT_LEER = ''
-DEMO_ORIGINAL_ALT_BRAUCHBAR = 'Workshop-Foto Inklusion 2026'
+DEMO_ORIGINAL_ALT_BRAUCHBAR = 'Workshop-Foto Inklusion'
 DEMO_ORIGINAL_ALT_UNBRAUCHBAR = 'IMG_2345.jpg'
 
 DEMO_USER_HINT_NONE = None
 DEMO_USER_HINT_SET = (
-    'Das ist unser Workshop am 5. Mai 2026 mit der Firma Acer Deutschland '
-    'als Kooperationspartner. Bitte Workshop-Charakter betonen.'
+    'Das ist unser Workshop am 5. Mai mit der Beispiel AG als Kooperationspartner. '
+    'Bitte den Workshop-Charakter betonen.'
 )
 
-# Demo-Inventar fuer Foto-Builder (Workshop-Setting, 4 Personen, Beamer, Catering)
+# Inventar nur noch für die Inventar-Snapshots (Analyse-Schritt); der Produktionsweg ist
+# der Combo-Aufruf, der kein Inventar-JSON mehr rendert.
 DEMO_INVENTAR_FOTO_EVENT = InventarOutput(
     foto_subtyp='foto_event',
     personen=[
-        PersonInBild(
-            position='vorn links',
-            haltung='stehend',
-            blickrichtung='zur Praesentation',
-            kleidungs_charakter='Business-casual',
-        ),
-        PersonInBild(
-            position='Mitte',
-            haltung='stehend',
-            blickrichtung='zur Kamera',
-            kleidungs_charakter='Business-casual',
-        ),
-        PersonInBild(
-            position='hinten rechts',
-            haltung='sitzend',
-            blickrichtung='zur Praesentation',
-            kleidungs_charakter='legere Kleidung',
-        ),
-        PersonInBild(
-            position='Mitte rechts',
-            haltung='stehend',
-            kleidungs_charakter='Business-casual',
-        ),
+        PersonInBild(position='vorn links', haltung='stehend', blickrichtung='zur Präsentation', kleidungs_charakter='geschäftlich leger'),
+        PersonInBild(position='Mitte', haltung='stehend', blickrichtung='zur Kamera', kleidungs_charakter='geschäftlich leger'),
+        PersonInBild(position='hinten rechts', haltung='sitzend', blickrichtung='zur Präsentation', kleidungs_charakter='leger'),
+        PersonInBild(position='Mitte rechts', haltung='stehend', kleidungs_charakter='geschäftlich leger'),
     ],
     objekte=[
-        ObjektInBild(
-            beschreibung='Projektionsflaeche mit hellem Lichtkegel',
-            position='Hintergrund Mitte',
-            sicherheit='hoch',
-            moegliche_identifikationen=['Beamer-Projektion'],
-        ),
-        ObjektInBild(
-            beschreibung='rechteckige weisse Karten an Personen befestigt',
-            position='auf Brusthoehe der Personen',
-            sicherheit='hoch',
-            moegliche_identifikationen=['Namensschilder'],
-        ),
-        ObjektInBild(
-            beschreibung='Tisch mit Getraenkeflaschen und Glaesern',
-            position='rechter Bildrand',
-            sicherheit='hoch',
-            moegliche_identifikationen=['Catering-Tisch'],
-        ),
+        ObjektInBild(beschreibung='Projektionsfläche mit hellem Lichtkegel', position='hinten Mitte', sicherheit='hoch', moegliche_identifikationen=['Beamer-Projektion']),
+        ObjektInBild(beschreibung='rechteckige weiße Karten an Personen befestigt', position='auf Brusthöhe der Personen', sicherheit='hoch', moegliche_identifikationen=['Namensschilder']),
+        ObjektInBild(beschreibung='Tisch mit Getränkeflaschen und Gläsern', position='rechter Bildrand', sicherheit='hoch', moegliche_identifikationen=['Catering-Tisch']),
     ],
     lesbare_texte=[
-        TextInBild(
-            inhalt='acer',
-            typ='logo',
-            vollstaendigkeit='vollständig',
-        ),
-        TextInBild(
-            inhalt='Workshop Inklusion 2026',
-            typ='überschrift',
-            vollstaendigkeit='vollständig',
-        ),
+        TextInBild(inhalt='Workshop Inklusion', typ='überschrift', vollstaendigkeit='vollständig'),
     ],
-    setting={
-        'raum_charakter': 'Seminarraum',
-        'beleuchtung': 'gedaempft, Projektionslicht',
-        'dominante_farben': 'blau, weiss, grau',
-        'ungefaehre_szene': 'Vortragssituation mit Publikum',
-    },
-    handlung='Praesentation vor stehendem und sitzendem Publikum',
-    halluzinations_warnung=[
-        'Namensschilder nicht lesbar — keine Identifikationen ableiten.',
-        'Karten an Personen nicht als Stimmkarten/Flyer interpretieren.',
-    ],
+    setting={'raum_charakter': 'Seminarraum', 'beleuchtung': 'gedämpft, Projektionslicht', 'dominante_farben': 'blau, weiß, grau', 'ungefaehre_szene': 'Vortragssituation mit Publikum'},
+    handlung='Präsentation vor stehendem und sitzendem Publikum',
+    halluzinations_warnung=['Namensschilder nicht lesbar, keine Identifikationen ableiten.'],
     inventar_konfidenz_gesamt='hoch',
 )
 
-# Generisches Inventar fuer Nicht-Foto-Builder (Diagramm-/Daten-Bildtyp)
-DEMO_INVENTAR_GENERISCH = InventarOutput(
-    foto_subtyp=None,
-    personen=[],
-    objekte=[
-        ObjektInBild(
-            beschreibung='blauer Balken mit Beschriftung 2024',
-            position='links',
-            sicherheit='hoch',
-        ),
-        ObjektInBild(
-            beschreibung='oranger Balken mit Beschriftung 2025',
-            position='Mitte',
-            sicherheit='hoch',
-        ),
-        ObjektInBild(
-            beschreibung='gruener Balken mit Beschriftung 2026',
-            position='rechts',
-            sicherheit='hoch',
-        ),
-    ],
-    lesbare_texte=[
-        TextInBild(inhalt='Umsatzentwicklung 2024-2026', typ='überschrift', vollstaendigkeit='vollständig'),
-        TextInBild(inhalt='Mio. EUR', typ='beschriftung', vollstaendigkeit='vollständig'),
-        TextInBild(inhalt='12.4', typ='zahl', vollstaendigkeit='vollständig'),
-        TextInBild(inhalt='15.7', typ='zahl', vollstaendigkeit='vollständig'),
-        TextInBild(inhalt='18.2', typ='zahl', vollstaendigkeit='vollständig'),
-    ],
-    setting={'raum_charakter': 'kein Raum (Diagramm)'},
-    handlung=None,
-    halluzinations_warnung=[],
-    inventar_konfidenz_gesamt='hoch',
-)
-
-# Demo-Classification fuer Mini-Builder (logo/icon/funktional)
-DEMO_CLASSIFICATION_LOGO = ClassificationOutput(
-    bildtyp='logo',
-    konfidenz='hoch',
-    ist_dekorativ=False,
-    original_alt_brauchbar=True,
-    klassifikations_begruendung='Erkennbares Marken-Logo der Firma Acer ohne weiteren Bildinhalt.',
-)
-
-DEMO_CLASSIFICATION_ICON = ClassificationOutput(
-    bildtyp='icon',
-    konfidenz='hoch',
-    ist_dekorativ=False,
-    original_alt_brauchbar=False,
-    klassifikations_begruendung='Kleines funktionales Symbol (Lupe) ohne Beschriftung im Bild.',
-)
-
-DEMO_CLASSIFICATION_FUNKTIONAL = ClassificationOutput(
-    bildtyp='funktional',
-    konfidenz='hoch',
-    ist_dekorativ=False,
-    original_alt_brauchbar=False,
-    klassifikations_begruendung='Pfeil-Element mit Zustand "naechste Seite" — Navigation, kein reines Icon.',
-)
-
-# Demo-Beschreibung fuer Validierungs-Builder
-DEMO_BESCHREIBUNG = BeschreibungOutput(
-    alt_text='Vier Workshop-Teilnehmende in einem Seminarraum vor einer Projektionsflaeche, im Vordergrund das Acer-Logo.',
-    langbeschreibung=(
-        'Das Bild zeigt eine Workshop-Situation in einem gedaempft beleuchteten Seminarraum. '
-        'Vier Personen in Business-casual und legerer Kleidung stehen und sitzen vor einer hellen '
-        'Projektionsflaeche im Hintergrund. An ihren Bruesten haengen weisse Namensschilder. '
-        'Am rechten Bildrand befindet sich ein Catering-Tisch mit Getraenkeflaschen und Glaesern. '
-        'Ueber dem Bild der Schriftzug "Workshop Inklusion 2026" und das Acer-Logo.'
-    ),
-    verwendete_inventar_items=['personen', 'objekte', 'lesbare_texte', 'setting'],
-    nicht_verwendete_inventar_items=[],
-    nicht_im_inventar=[],
-    atmosphaere_belege=[],
-)
+DEMO_CLASSIFICATION_LOGO = ClassificationOutput(bildtyp='logo', konfidenz='hoch', ist_dekorativ=False, original_alt_brauchbar=True,
+                                                 klassifikations_begruendung='Erkennbares Markenlogo ohne weiteren Bildinhalt.')
+DEMO_CLASSIFICATION_ICON = ClassificationOutput(bildtyp='icon', konfidenz='hoch', ist_dekorativ=False, original_alt_brauchbar=False,
+                                                 klassifikations_begruendung='Kleines funktionales Symbol (Lupe) ohne Beschriftung.')
+DEMO_CLASSIFICATION_FUNKTIONAL = ClassificationOutput(bildtyp='funktional', konfidenz='hoch', ist_dekorativ=False, original_alt_brauchbar=False,
+                                                       klassifikations_begruendung='Pfeil-Element mit Zustand nächste Seite, Navigation.')
 
 
 # ============================================================================
@@ -302,321 +199,140 @@ def _write_snapshot(
 # ============================================================================
 
 def render_all(out_dir: Path) -> list[Path]:
-    """Rendert alle Builder. Liefert Liste geschriebener Pfade."""
+    """Rendert alle Prompts, die das Modell im Betrieb sieht. Liefert die geschriebenen Pfade."""
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Lazy-Import, damit ENV-Patches beim Module-Load nicht greifen.
     from prompts.builders import (
         build_beschreibung_prompt_mini,
-        build_beschreibung_prompt_with_inventar,
         build_classification_prompt,
         build_combined_inventar_beschreibung_prompt,
         build_inventar_prompt,
     )
-    from prompts.builders.beschreibung_daten import (
-        build_beschreibung_prompt_diagramm,
-        build_beschreibung_prompt_illustration,
-        build_beschreibung_prompt_infografik,
-        build_beschreibung_prompt_karte,
-        build_beschreibung_prompt_screenshot,
-        build_beschreibung_prompt_strukturformel,
-        build_beschreibung_prompt_tabelle,
-    )
-    from prompts.builders.beschreibung_foto import (
-        build_beschreibung_prompt_foto_architektur,
-        build_beschreibung_prompt_foto_essen,
-        build_beschreibung_prompt_foto_event,
-        build_beschreibung_prompt_foto_landschaft,
-        build_beschreibung_prompt_foto_objekte,
-        build_beschreibung_prompt_foto_personen,
-    )
-    from prompts.builders.beschreibung_mini import (
-        build_beschreibung_prompt_funktional,
-        build_beschreibung_prompt_icon,
-        build_beschreibung_prompt_logo,
-    )
+    from prompts.components.roles import SYSTEM_BESCHREIBUNG
+    from pipelines.v4 import orchestrator as orch
 
     written: list[Path] = []
+    common_demo = {'width × height': f'{DEMO_WIDTH} × {DEMO_HEIGHT}'}
+    env = {'V4_PASS_MODE': 'lean', 'V4_PROMPT_MODE': '', 'LLM_PROVIDER': 'bedrock', 'V4_PROMPT_CACHE': 'off'}
 
-    common_demo = {
-        'width × height': f'{DEMO_WIDTH} × {DEMO_HEIGHT}',
-    }
+    # 0) System-Prompt (gilt für alle Beschreibungs- und Prüfaufrufe)
+    written.append(_write_snapshot(out_dir, filename='00_system.md', title='System-Prompt der Bildbeschreibung',
+                                   builder_ref='prompts/components/roles.py', mode_info={}, demo_values={},
+                                   prompt_text=SYSTEM_BESCHREIBUNG))
 
-    # ------------------------------------------------------------------
-    # 1) Klassifikator
-    # ------------------------------------------------------------------
-    for mode in ('lean',):
-        prev = _set_env({'V4_PASS_MODE': mode, 'V4_PROMPT_MODE': '', 'LLM_PROVIDER': 'bedrock'})
+    # 1) Klassifikator in drei Varianten
+    for filename, title, ctx, hint, note in (
+        ('01_classification.lean.md', 'Klassifikator', DEMO_CONTEXT_RICH, DEMO_USER_HINT_NONE, 'Dokumentkontext (Workshop-Bericht)'),
+        ('01_classification.lean.frontend-upload.md', 'Klassifikator, Einzelbild ohne Kontext', DEMO_CONTEXT_MINIMAL, DEMO_USER_HINT_NONE, '(leer)'),
+        ('01_classification.lean.mit-nutzerhinweis.md', 'Klassifikator, mit Hinweis des Nutzers', DEMO_CONTEXT_RICH, DEMO_USER_HINT_SET, 'Dokumentkontext plus Nutzerhinweis'),
+    ):
+        prev = _set_env(env)
         try:
-            text = build_classification_prompt(
-                enriched_context=DEMO_CONTEXT_RICH,
-                width=DEMO_WIDTH,
-                height=DEMO_HEIGHT,
-                original_alt=DEMO_ORIGINAL_ALT_LEER,
-                user_hint=DEMO_USER_HINT_NONE,
-            )
+            text = build_classification_prompt(enriched_context=ctx, width=DEMO_WIDTH, height=DEMO_HEIGHT,
+                                               original_alt=DEMO_ORIGINAL_ALT_LEER, user_hint=hint)
         finally:
             _restore_env(prev)
+        written.append(_write_snapshot(out_dir, filename=filename, title=title,
+                                       builder_ref=_builder_source_link(build_classification_prompt),
+                                       mode_info={'V4_PASS_MODE': 'lean'},
+                                       demo_values={**common_demo, 'Kontext': note}, prompt_text=text))
 
-        path = _write_snapshot(
-            out_dir,
-            filename=f'01_classification.{mode}.md',
-            title=f'Klassifikator — Modus: {mode}',
-            builder_ref=_builder_source_link(build_classification_prompt),
-            mode_info={'V4_PASS_MODE': mode},
-            demo_values={
-                **common_demo,
-                'enriched_context': 'rich (Workshop-PDF-Auszug)',
-                'original_alt': '(leer)',
-                'user_hint': '(keiner)',
-            },
-            prompt_text=text,
-        )
-        written.append(path)
-
-    # Klassifikator — Frontend-Upload-Variante (leerer Kontext, lean)
-    prev = _set_env({'V4_PASS_MODE': 'lean', 'V4_PROMPT_MODE': '', 'LLM_PROVIDER': 'bedrock'})
-    try:
-        text = build_classification_prompt(
-            enriched_context=DEMO_CONTEXT_MINIMAL,
-            width=DEMO_WIDTH,
-            height=DEMO_HEIGHT,
-            original_alt=DEMO_ORIGINAL_ALT_LEER,
-        )
-    finally:
-        _restore_env(prev)
-
-    written.append(_write_snapshot(
-        out_dir,
-        filename='01_classification.lean.frontend-upload.md',
-        title='Klassifikator — Modus: lean, Frontend-Einzelbild-Upload (leerer Kontext)',
-        builder_ref=_builder_source_link(build_classification_prompt),
-        mode_info={'V4_PASS_MODE': 'lean'},
-        demo_values={
-            **common_demo,
-            'enriched_context': '(leer — Frontend-Einzelbild-Upload ohne PDF)',
-            'original_alt': '(leer)',
-        },
-        prompt_text=text,
-    ))
-
-    # Klassifikator — Variante MIT Nutzer-Hinweis (zeigt die Vorrang-Ordnung
-    # des user_hint_block aus helpers.py im gerenderten Prompt)
-    prev = _set_env({'V4_PASS_MODE': 'lean', 'V4_PROMPT_MODE': '', 'LLM_PROVIDER': 'bedrock'})
-    try:
-        text = build_classification_prompt(
-            enriched_context=DEMO_CONTEXT_RICH,
-            width=DEMO_WIDTH,
-            height=DEMO_HEIGHT,
-            original_alt=DEMO_ORIGINAL_ALT_LEER,
-            user_hint=DEMO_USER_HINT_SET,
-        )
-    finally:
-        _restore_env(prev)
-
-    written.append(_write_snapshot(
-        out_dir,
-        filename='01_classification.lean.mit-nutzerhinweis.md',
-        title='Klassifikator — Modus: lean, MIT Nutzer-Hinweis (Vorrang-Ordnung)',
-        builder_ref=_builder_source_link(build_classification_prompt),
-        mode_info={'V4_PASS_MODE': 'lean'},
-        demo_values={
-            **common_demo,
-            'enriched_context': 'rich (Workshop-PDF-Auszug)',
-            'original_alt': '(leer)',
-            'user_hint': 'gesetzt (Workshop Acer Deutschland)',
-        },
-        prompt_text=text,
-    ))
-
-    # ------------------------------------------------------------------
-    # 2) Inventar — fuer foto + diagramm (kein Lean/Full-Schalter im Builder)
-    # ------------------------------------------------------------------
+    # 2) Inventar-Schritt (nur im Analyse-Modus; im Betrieb steckt er im Combo-Aufruf)
     for bildtyp in ('foto', 'diagramm'):
-        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': '', 'LLM_PROVIDER': 'bedrock'})
+        prev = _set_env(env)
         try:
-            text = build_inventar_prompt(
-                bildtyp=bildtyp,
-                enriched_context=DEMO_CONTEXT_RICH,
-                width=DEMO_WIDTH,
-                height=DEMO_HEIGHT,
-            )
+            text = build_inventar_prompt(bildtyp=bildtyp, enriched_context=DEMO_KONTEXT_JE_TYP['foto_event' if bildtyp == 'foto' else 'diagramm'],
+                                         width=DEMO_WIDTH, height=DEMO_HEIGHT)
         finally:
             _restore_env(prev)
+        written.append(_write_snapshot(out_dir, filename=f'02_inventar.{bildtyp}.md', title=f'Inventar-Schritt, Bildtyp {bildtyp}',
+                                       builder_ref=_builder_source_link(build_inventar_prompt), mode_info={},
+                                       demo_values={**common_demo, 'Bildtyp': bildtyp}, prompt_text=text))
 
-        written.append(_write_snapshot(
-            out_dir,
-            filename=f'02_inventar.{bildtyp}.md',
-            title=f'Inventar (Pass 2) — Bildtyp: {bildtyp}',
-            builder_ref=_builder_source_link(build_inventar_prompt),
-            mode_info={'V4_PASS_MODE': 'full'},
-            demo_values={**common_demo, 'bildtyp': bildtyp, 'enriched_context': 'rich'},
-            prompt_text=text,
-        ))
-
-    # ------------------------------------------------------------------
-    # 3) Combo (Lean-Mode) — fuer foto_event + diagramm
-    # ------------------------------------------------------------------
-    combo_cases = [
-        ('foto', 'foto_event'),
-        ('foto', 'foto_objekte'),
-        ('diagramm', 'diagramm'),
-    ]
-    for bildtyp_top, bildtyp_eff in combo_cases:
-        prev = _set_env({'V4_PASS_MODE': 'lean', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
+    # 3) Produktionsprompt (Combo) für alle 13 Bildtypen mit Inventar
+    top_von = {'foto_event': 'foto', 'foto_personen': 'foto', 'foto_objekte': 'foto', 'foto_essen': 'foto',
+               'foto_landschaft': 'foto', 'foto_architektur': 'foto'}
+    for i, eff in enumerate(('foto_event', 'foto_personen', 'foto_objekte', 'foto_essen', 'foto_landschaft', 'foto_architektur',
+                             'illustration', 'diagramm', 'tabelle', 'karte', 'infografik', 'screenshot', 'strukturformel'), start=1):
+        prev = _set_env(env)
         try:
-            text = build_combined_inventar_beschreibung_prompt(
-                bildtyp_top=bildtyp_top,
-                bildtyp_effective=bildtyp_eff,
-                enriched_context=DEMO_CONTEXT_RICH,
-                width=DEMO_WIDTH,
-                height=DEMO_HEIGHT,
-                original_alt=DEMO_ORIGINAL_ALT_LEER,
-            )
+            text = build_combined_inventar_beschreibung_prompt(bildtyp_top=top_von.get(eff, eff), bildtyp_effective=eff,
+                                                               enriched_context=DEMO_KONTEXT_JE_TYP[eff],
+                                                               width=DEMO_WIDTH, height=DEMO_HEIGHT)
         finally:
             _restore_env(prev)
+        written.append(_write_snapshot(out_dir, filename=f'03_beschreibung.{i:02d}_{eff}.md', title=f'Beschreibung, Bildtyp {eff}',
+                                       builder_ref=_builder_source_link(build_combined_inventar_beschreibung_prompt),
+                                       mode_info={'V4_PASS_MODE': 'lean'},
+                                       demo_values={**common_demo, 'Kontext': DEMO_KONTEXT_JE_TYP[eff]}, prompt_text=text))
 
-        written.append(_write_snapshot(
-            out_dir,
-            filename=f'03_combo.{bildtyp_eff}.md',
-            title=f'Combo (Lean-Mode Pass 2+3) — Bildtyp: {bildtyp_eff}',
-            builder_ref=_builder_source_link(build_combined_inventar_beschreibung_prompt),
-            mode_info={'V4_PASS_MODE': 'lean', 'V4_PROMPT_MODE': 'lean'},
-            demo_values={**common_demo, 'bildtyp_top': bildtyp_top, 'bildtyp_effective': bildtyp_eff},
-            prompt_text=text,
-        ))
-
-    # ------------------------------------------------------------------
-    # 4) Premium-Foto-Builder (event/personen/objekte) — lean + full Modi
-    # ------------------------------------------------------------------
-    premium_foto_builders = [
-        ('foto_event', build_beschreibung_prompt_foto_event, DEMO_INVENTAR_FOTO_EVENT),
-        ('foto_personen', build_beschreibung_prompt_foto_personen, DEMO_INVENTAR_FOTO_EVENT),
-        ('foto_objekte', build_beschreibung_prompt_foto_objekte, DEMO_INVENTAR_FOTO_EVENT),
-    ]
-    for subtyp, builder, inventar in premium_foto_builders:
-        for prompt_mode in ('lean',):
-            prev = _set_env({
-                'V4_PASS_MODE': 'full',
-                'V4_PROMPT_MODE': prompt_mode,
-                'LLM_PROVIDER': 'bedrock',
-            })
-            try:
-                text = builder(
-                    inventar=inventar,
-                    enriched_context=DEMO_CONTEXT_RICH,
-                    width=DEMO_WIDTH,
-                    height=DEMO_HEIGHT,
-                )
-            finally:
-                _restore_env(prev)
-
-            written.append(_write_snapshot(
-                out_dir,
-                filename=f'04_premium_{subtyp}.{prompt_mode}.md',
-                title=f'Premium-Builder {subtyp} — Prompt-Modus: {prompt_mode}',
-                builder_ref=_builder_source_link(builder),
-                mode_info={'V4_PROMPT_MODE': prompt_mode, 'LLM_PROVIDER': 'bedrock'},
-                demo_values={**common_demo, 'inventar': 'Workshop-Setting (4 Personen, Beamer, Catering)'},
-                prompt_text=text,
-            ))
-
-    # ------------------------------------------------------------------
-    # 5) Standard-Foto-Builder (essen/landschaft/architektur) — nur Default-Modus
-    # ------------------------------------------------------------------
-    standard_foto_builders = [
-        ('foto_essen', build_beschreibung_prompt_foto_essen),
-        ('foto_landschaft', build_beschreibung_prompt_foto_landschaft),
-        ('foto_architektur', build_beschreibung_prompt_foto_architektur),
-    ]
-    for subtyp, builder in standard_foto_builders:
-        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
+    # 4) Mini-Familie
+    for eff, cls, ctx, alt in (('logo', DEMO_CLASSIFICATION_LOGO, 'LINK-ZIEL: https://www.musterwerk.example', DEMO_ORIGINAL_ALT_BRAUCHBAR),
+                               ('icon', DEMO_CLASSIFICATION_ICON, '', DEMO_ORIGINAL_ALT_LEER),
+                               ('funktional', DEMO_CLASSIFICATION_FUNKTIONAL, 'Seite 3 von 12', DEMO_ORIGINAL_ALT_UNBRAUCHBAR)):
+        prev = _set_env(env)
         try:
-            text = builder(
-                inventar=DEMO_INVENTAR_FOTO_EVENT,
-                enriched_context=DEMO_CONTEXT_RICH,
-                width=DEMO_WIDTH,
-                height=DEMO_HEIGHT,
-            )
+            text = build_beschreibung_prompt_mini(eff, cls, ctx, 64, 64, original_alt=alt)
         finally:
             _restore_env(prev)
+        written.append(_write_snapshot(out_dir, filename=f'04_mini_{eff}.md', title=f'Beschreibung, Bildtyp {eff}',
+                                       builder_ref=_builder_source_link(build_beschreibung_prompt_mini), mode_info={},
+                                       demo_values={'width × height': '64 × 64', 'Kontext': ctx or '(leer)', 'Original-Alt': alt or '(leer)'},
+                                       prompt_text=text))
 
-        written.append(_write_snapshot(
-            out_dir,
-            filename=f'05_standard_{subtyp}.md',
-            title=f'Standard-Builder {subtyp}',
-            builder_ref=_builder_source_link(builder),
-            mode_info={'V4_PROMPT_MODE': 'lean'},
-            demo_values={**common_demo, 'inventar': 'Workshop-Setting (generisch)'},
-            prompt_text=text,
-        ))
-
-    # ------------------------------------------------------------------
-    # 6) Daten-Builder (diagramm/tabelle/karte/infografik/screenshot/strukturformel/illustration)
-    # ------------------------------------------------------------------
-    daten_builders = [
-        ('illustration', build_beschreibung_prompt_illustration),
-        ('diagramm', build_beschreibung_prompt_diagramm),
-        ('tabelle', build_beschreibung_prompt_tabelle),
-        ('karte', build_beschreibung_prompt_karte),
-        ('infografik', build_beschreibung_prompt_infografik),
-        ('screenshot', build_beschreibung_prompt_screenshot),
-        ('strukturformel', build_beschreibung_prompt_strukturformel),
-    ]
-    for bildtyp, builder in daten_builders:
-        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
-        try:
-            text = builder(
-                inventar=DEMO_INVENTAR_GENERISCH,
-                enriched_context=DEMO_CONTEXT_RICH,
-                width=DEMO_WIDTH,
-                height=DEMO_HEIGHT,
-            )
-        finally:
-            _restore_env(prev)
-
-        written.append(_write_snapshot(
-            out_dir,
-            filename=f'06_daten_{bildtyp}.md',
-            title=f'Daten-Builder {bildtyp}',
-            builder_ref=_builder_source_link(builder),
-            mode_info={'V4_PROMPT_MODE': 'lean'},
-            demo_values={**common_demo, 'inventar': 'Diagramm-Setting (3 Balken)'},
-            prompt_text=text,
-        ))
-
-    # ------------------------------------------------------------------
-    # 7) Mini-Builder (logo/icon/funktional) — brauchen ClassificationOutput
-    # ------------------------------------------------------------------
-    mini_builders = [
-        ('logo', build_beschreibung_prompt_logo, DEMO_CLASSIFICATION_LOGO, DEMO_ORIGINAL_ALT_BRAUCHBAR),
-        ('icon', build_beschreibung_prompt_icon, DEMO_CLASSIFICATION_ICON, DEMO_ORIGINAL_ALT_LEER),
-        ('funktional', build_beschreibung_prompt_funktional, DEMO_CLASSIFICATION_FUNKTIONAL, DEMO_ORIGINAL_ALT_LEER),
-    ]
-    for bildtyp, builder, classification, orig_alt in mini_builders:
-        prev = _set_env({'V4_PASS_MODE': 'full', 'V4_PROMPT_MODE': 'lean', 'LLM_PROVIDER': 'bedrock'})
-        try:
-            text = builder(
-                classification=classification,
-                enriched_context=DEMO_CONTEXT_RICH,
-                width=DEMO_WIDTH,
-                height=DEMO_HEIGHT,
-                original_alt=orig_alt,
-            )
-        finally:
-            _restore_env(prev)
-
-        written.append(_write_snapshot(
-            out_dir,
-            filename=f'07_mini_{bildtyp}.md',
-            title=f'Mini-Builder {bildtyp}',
-            builder_ref=_builder_source_link(builder),
-            mode_info={'V4_PROMPT_MODE': 'lean'},
-            demo_values={**common_demo, 'classification.bildtyp': classification.bildtyp, 'original_alt': orig_alt or '(leer)'},
-            prompt_text=text,
-        ))
+    # 5) Zusatzschritte: Werte-Ablesung, Aufzählung, Prüfpass
+    prev = _set_env(env)
+    try:
+        w = orch.WerteOutput(titel='Umsatzentwicklung', diagrammtyp='gruppierte Balken', achsen='0 bis 6, Millionen Euro', lesbarkeit='gut',
+                             reihen=[orch.WerteReihe(name='Hardware', punkte=[orch.WertePunkt(kategorie='2021', wert='2,5'), orch.WertePunkt(kategorie='2022', wert='4,4'), orch.WertePunkt(kategorie='2023', wert='2,0')]),
+                                     orch.WerteReihe(name='Mobile', punkte=[orch.WertePunkt(kategorie='2021', wert='4,5'), orch.WertePunkt(kategorie='2022', wert='2,8'), orch.WertePunkt(kategorie='2023', wert='5,0')])])
+        z = orch.ZaehlOutput(personen=[orch.ZaehlPerson(position='links', merkmal='blauer Blazer, Namensschild', sichtbarkeit='ganz'),
+                                       orch.ZaehlPerson(position='rechts', merkmal='graues Hemd, Rücken zur Kamera', sichtbarkeit='teilweise verdeckt')],
+                             gruppen=[orch.ZaehlGruppe(bezeichnung='Abstimmkarten', anzahl=6, zaehlweise='exakt')], lesbare_texte=['Workshop Inklusion'])
+        stuecke = [
+            ('05_werte_ablesung.md', 'Werte-Ablesung (Diagramm, eigener Aufruf)', orch._lies_diagramm_werte.__doc__ or '', _werte_prompt_text()),
+            ('05_werte_block.md', 'Block ABGELESENE WERTE (wird an den Beschreibungs-Prompt gehängt)', '', orch._werte_block(w).strip()),
+            ('05_zaehl_aufruf.md', 'Aufzähl-Schritt (Foto, eigener Aufruf)', '', _zaehl_prompt_text()),
+            ('05_zaehl_block.md', 'Block AUFGEZÄHLT (wird an den Beschreibungs-Prompt gehängt)', '', orch._zaehl_block(z).strip()),
+            ('06_pruefpass.md', 'Prüfpass', '', orch._build_verify_prompt(
+                'Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile liegt am Ende über dem Ausgangswert und erreicht 5,0.',
+                enriched_context=DEMO_KONTEXT_JE_TYP['diagramm'], langbeschreibung='(Langbeschreibung des Erzeugers)',
+                bildtyp='diagramm', fakten_block=orch._werte_block(w))),
+        ]
+    finally:
+        _restore_env(prev)
+    for filename, title, _doc, text in stuecke:
+        written.append(_write_snapshot(out_dir, filename=filename, title=title, builder_ref='pipelines/v4/orchestrator.py',
+                                       mode_info={}, demo_values={}, prompt_text=text))
 
     return written
+
+
+def _werte_prompt_text() -> str:
+    """Der Prompt der Werte-Ablesung, ohne Modellaufruf (gleicher Wortlaut wie in orchestrator._lies_diagramm_werte)."""
+    import inspect
+    from pipelines.v4 import orchestrator as orch
+    return _prompt_literal_aus_quelle(inspect.getsource(orch._lies_diagramm_werte))
+
+
+def _zaehl_prompt_text() -> str:
+    import inspect
+    from pipelines.v4 import orchestrator as orch
+    return _prompt_literal_aus_quelle(inspect.getsource(orch._zaehle_bild))
+
+
+def _prompt_literal_aus_quelle(quelle: str) -> str:
+    """Liest das String-Literal `prompt = (...)` aus dem Funktionsquelltext (die Aufrufe
+    selbst brauchen ein Bild und ein Modell)."""
+    import ast
+    baum = ast.parse(quelle.lstrip() if not quelle.startswith('def') else quelle)
+    for knoten in ast.walk(baum):
+        if isinstance(knoten, ast.Assign) and any(getattr(t, 'id', '') == 'prompt' for t in knoten.targets):
+            try:
+                return ast.literal_eval(knoten.value)
+            except Exception:
+                pass
+    return '(Prompt nicht als Literal auffindbar)'
 
 
 def write_index(out_dir: Path, files: list[Path]) -> Path:

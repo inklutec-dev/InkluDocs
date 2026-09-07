@@ -1,19 +1,21 @@
 {
- "szene": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr. (Wikimedia-Grafik Population_curve.svg): x-Achse Jahrtausende, y-Achse Bevölkerung in Milliarden. Die Kurve verläuft über fast den gesamten Zeitraum nahe der Nulllinie und steigt erst ab etwa 1800 steil an, bis auf rund 6 Milliarden im Jahr 2000.",
- "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, erst ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
- "begruendung": "Kernaussage zuerst: Der erste Satz transportiert die wichtigste Erkenntnis (jahrtausendelange Stagnation, dann steiler Anstieg) mit konkreten, im Diagramm belegten Werten (ab etwa 1800, rund 6 Milliarden im Jahr 2000) statt vage 'die Kurve steigt'. Diagrammtyp und Zeitraum sind benannt, Trend-Vokabular ('steil an') ist sichtbar belegt. Keine Ursachen behauptet.",
- "prinzip": "Der erste Satz trägt die Kernaussage mit konkreten Werten. Trend-Vokabular nur, wenn der Verlauf es sichtbar belegt; keine Ursachen erfinden.",
+ "szene": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: waagerechte Achse Jahre, senkrechte Achse Bevölkerung in Milliarden Menschen, eine einzige Kurve ohne Legende. Ablesbare Werte: unter 0,01 Milliarden bei 10.000 v. Chr., 0,2 Milliarden um 1 n. Chr., 0,3 Milliarden um 1000, 0,5 Milliarden um 1500, 1 Milliarde im Jahr 1800, 1,65 Milliarden im Jahr 1900, 2,5 Milliarden im Jahr 1950, 6,1 Milliarden im Jahr 2000. Kein Titel, keine Quellenangabe lesbar.",
+ "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, ab 1800 steigt sie steil an, von 1 Milliarde auf 6,1 Milliarden Menschen im Jahr 2000.",
+ "begruendung": "Der erste Satz trägt Diagrammtyp, Zeitraum und die Kernaussage mit den Werten, die sie tragen. Das Trendwort steil ist durch den Sprung von 1 auf 6,1 Milliarden in 200 Jahren gedeckt. Die Langbeschreibung liefert Achsen und den vollständigen Verlauf, ohne den Alt-Text zu wiederholen. Keine Ursachen, weil das Diagramm keine nennt.",
+ "prinzip": "Diagrammtyp, Thema und die eine Kernaussage mit ihren Werten zuerst; Trendwörter nur, wenn die abgelesenen Zahlen sie tragen; keine Ursachen.",
  "quelle": "Wikimedia Commons: Population_curve.svg",
  "lizenz": "Wikimedia Commons, frei lizenziert",
  "antwort": {
-  "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, erst ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
-  "langbeschreibung": "Liniendiagramm zur Entwicklung der Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.; die x-Achse umfasst den Zeitraum, die y-Achse die Bevölkerung in Milliarden. Über fast den gesamten Zeitraum verläuft die Kurve nahe der Nulllinie. Ab etwa 1800 steigt sie steil an und erreicht im Jahr 2000 rund 6 Milliarden Menschen.",
+  "alt_text": "Liniendiagramm zur Weltbevölkerung von 10.000 v. Chr. bis 2000 n. Chr.: Über Jahrtausende bleibt die Kurve nahe null, ab 1800 steigt sie steil an, von 1 Milliarde auf 6,1 Milliarden Menschen im Jahr 2000.",
+  "langbeschreibung": "Die waagerechte Achse reicht von 10.000 v. Chr. bis 2000 n. Chr., die senkrechte Achse gibt die Bevölkerung in Milliarden Menschen an. Die einzige Datenreihe beginnt bei 10.000 v. Chr. mit unter 0,01 Milliarden, erreicht um 1 n. Chr. 0,2 Milliarden und um 1000 0,3 Milliarden. Um 1500 liegt sie bei 0,5 Milliarden und im Jahr 1800 bei 1 Milliarde. Danach beschleunigt sich der Anstieg: 1,65 Milliarden im Jahr 1900, 2,5 Milliarden im Jahr 1950 und 6,1 Milliarden im Jahr 2000, dem Höchstwert und zugleich dem Endpunkt der Kurve. Der Tiefstwert liegt am Anfang des Zeitraums. Titel, Legende und Quellenangabe sind nicht vorhanden.",
   "verwendete_inventar_items": [
    "Liniendiagramm",
-   "x-Achse: 10.000 v. Chr. bis 2000 n. Chr.",
-   "y-Achse: Bevölkerung in Milliarden",
-   "Kurve nahe null bis etwa 1800",
-   "steiler Anstieg auf rund 6 Milliarden im Jahr 2000"
+   "Zeitraum 10.000 v. Chr. bis 2000 n. Chr.",
+   "Bevölkerung in Milliarden Menschen",
+   "Kurve nahe null bis 1800",
+   "1 Milliarde im Jahr 1800",
+   "Zwischenwerte 0,2 (1 n. Chr.), 0,3 (1000), 0,5 (1500), 1,65 (1900), 2,5 (1950) Milliarden",
+   "6,1 Milliarden im Jahr 2000"
   ],
   "nicht_verwendete_inventar_items": [],
   "nicht_im_inventar": [],

@@ -105,7 +105,7 @@ def bilddaten_block(width, height, enriched_context: str, original_alt: str = ''
     if mit_original_alt:
         zeilen.append(f"ORIGINAL-ALT (falls vorhanden): {original_alt or '(keiner)'}")
     zeilen.append('')
-    zeilen.append('KONTEXT (vom Web-Scraper, PDF-Extraktion oder API-Aufruf):')
+    zeilen.append('KONTEXT (Bildunterschrift, umliegender Text, Angaben des Aufrufers):')
     zeilen.append(enriched_context if enriched_context else '(kein Kontext)')
     if link_zeile:
         zeilen.append(link_zeile)
@@ -166,16 +166,12 @@ def user_hint_block(user_hint: Optional[str]) -> str:
     if not user_hint:
         return ''
     return (
-        '\n\nNUTZER-HINWEIS (HOHE PRIORITÄT — Nutzer sagt was über das Bild):\n'
+        '\n\nHINWEIS DES NUTZERS (hat Vorrang bei Schwerpunkt, Zweck und Wortwahl):\n'
         + user_hint
-        + '\nVorrang-Ordnung: Der Nutzer-Hinweis hat Vorrang bei FOKUS, ZWECK und '
-        + 'WORTWAHL. Er darf außerdem Wissen liefern, das dem Bild nicht anzusehen '
-        + 'ist — etwa den Bildtyp oder die Identität einer Person; solches Wissen '
-        + 'übernimmst du. Sichtbare FAKTEN kommen immer aus dem Bild — ein Hinweis '
-        + 'kann nicht behaupten, etwas sei sichtbar, was das Bild nicht zeigt. Der '
-        + 'Seitenkontext dient der Gewichtung und liefert belegte Namen und '
-        + 'Funktionen. Wenn Hinweis und Bild auseinanderliegen: Erkläre kurz im '
-        + 'Output warum.'
+        + '\nDer Hinweis darf Wissen liefern, das dem Bild nicht anzusehen ist, etwa den '
+        + 'Bildtyp oder den Namen einer Person; solches Wissen übernimmst du. Sichtbare '
+        + 'Fakten kommen immer aus dem Bild: Ein Hinweis kann nichts sichtbar machen, '
+        + 'was das Bild nicht zeigt.'
     )
 
 
@@ -231,16 +227,16 @@ class Examples:
         Alt-Text, nie mehr die Lehr-Schluessel.
         """
         if not self.good_examples and not self.bad_examples:
-            return f'(Noch keine Few-Shot-Beispiele für Bildtyp "{self.bildtyp}" kuratiert.)'
+            return f'(Für den Bildtyp "{self.bildtyp}" liegen noch keine Beispiele vor.)'
 
         lines: list[str] = []
         for i, ex in enumerate(self.good_examples, start=1):
-            lines.append(f'POSITIVES BEISPIEL {i}:')
+            lines.append(f'Gutes Beispiel {i}')
             if ex.get('szene'):
                 lines.append(f'Szene: {ex["szene"]}')
             antwort = ex.get('antwort')
             if antwort is not None:
-                lines.append('Gueltige Antwort (exakt dieses JSON-Format):')
+                lines.append('Antwort:')
                 lines.append(json.dumps(antwort, ensure_ascii=False, indent=2))
             else:
                 lines.append('Guter Alt-Text: ' + json.dumps(ex.get('alt_text', ''), ensure_ascii=False))
@@ -248,10 +244,10 @@ class Examples:
                 lines.append(f'(Merksatz: {ex["prinzip"]})')
             lines.append('')
         for i, ex in enumerate(self.bad_examples, start=1):
-            lines.append(f'ANTI-PATTERN-BEISPIEL {i} (NICHT so machen):')
+            lines.append(f'Gegenbeispiel {i}')
             if ex.get('szene'):
                 lines.append(f'Szene: {ex["szene"]}')
-            lines.append('Schlechter Alt-Text: ' + json.dumps(ex.get('alt_text', ''), ensure_ascii=False))
+            lines.append('Fehlerhafter Alt-Text: ' + json.dumps(ex.get('alt_text', ''), ensure_ascii=False))
             for fehler in ex.get('fehler', []):
                 lines.append(f'- Fehler: {fehler}')
             if ex.get('besser'):

@@ -1,22 +1,22 @@
 {
- "szene": "Heller Seminarraum: acht Personen in einer Reihe (eine neunte teils verdeckt), mehrere halten runde orange und weiße Karten hoch, Namensschilder, rotes Sofa links, Acer-Logo/Beamer und weißgedeckter Catering-Tisch im Hintergrund.",
- "alt_text": "Workshop in hellem Seminarraum: acht Personen stehen in einer Reihe, mehrere halten orange und weiße Abstimmkarten hoch; links ein rotes Sofa, im Hintergrund ein Acer-Beamer und ein Catering-Tisch.",
- "begruendung": "Führt mit der Art der Szene (Workshop) statt mit einer generischen Zählung. Benennt die Funktion 'Abstimmkarten', weil Form (hochgehaltene runde Karten) UND Setting (Workshop) sie klar tragen. Zählt exakt (acht). Fließtext, kein Markdown.",
- "prinzip": "Eine Funktion benennen, wenn Form UND Setting sie klar tragen. Mit der Szenen-Art beginnen, exakt zählen, barrierefrei schreiben (kein Markdown).",
+ "szene": "Heller Seminarraum: acht Personen stehen in einer Reihe, eine neunte steht dahinter und ist teils verdeckt. Mehrere halten runde orange und weiße Karten hoch, alle tragen Namensschilder. Links ein rotes Sofa, hinten ein Beamer auf einem Tisch und ein weiß gedeckter Catering-Tisch. Bildunterschrift im Dokument: 'Workshop der Musterwerk GmbH zur digitalen Barrierefreiheit, Bonn, 12. Mai'.",
+ "alt_text": "Workshop der Musterwerk GmbH zur digitalen Barrierefreiheit in Bonn: acht Personen stehen in einer Reihe, dahinter eine neunte teils verdeckt, mehrere halten orange und weiße Abstimmkarten hoch.",
+ "begruendung": "Die Bildunterschrift belegt Anlass, Veranstalter und Ort, also eröffnen sie den Alt-Text. Die Funktion Abstimmkarten ist durch die hochgehaltenen runden Karten und den Workshop-Rahmen getragen. Die verdeckte Person wird getrennt gezählt statt verschwiegen. Raum, Möbel und das Datum trägt die Langbeschreibung.",
+ "prinzip": "Belegten Anlass und Veranstalter zuerst, dann exakt zählen und Verdeckte getrennt nennen; eine Funktion benennen, wenn Form und Rahmen sie tragen.",
  "antwort": {
-  "alt_text": "Workshop in hellem Seminarraum: acht Personen stehen in einer Reihe, mehrere halten orange und weiße Abstimmkarten hoch; links ein rotes Sofa, im Hintergrund ein Acer-Beamer und ein Catering-Tisch.",
-  "langbeschreibung": "",
+  "alt_text": "Workshop der Musterwerk GmbH zur digitalen Barrierefreiheit in Bonn: acht Personen stehen in einer Reihe, dahinter eine neunte teils verdeckt, mehrere halten orange und weiße Abstimmkarten hoch.",
+  "langbeschreibung": "Der Seminarraum ist hell. Die acht Personen stehen nebeneinander, die neunte hinter ihnen und teilweise verdeckt. Die hochgehaltenen Karten sind rund, ein Teil orange, ein Teil weiß, und alle Personen tragen Namensschilder. Links steht ein rotes Sofa, hinter der Gruppe ein Beamer auf einem Tisch und ein weiß gedeckter Catering-Tisch. Der Workshop fand am 12. Mai statt.",
   "verwendete_inventar_items": [
    "acht Personen in einer Reihe",
+   "neunte Person dahinter, teils verdeckt",
    "orange und weiße Abstimmkarten",
-   "rotes Sofa",
-   "Acer-Beamer",
-   "Catering-Tisch"
-  ],
-  "nicht_verwendete_inventar_items": [
    "Namensschilder",
-   "neunte teils verdeckte Person"
+   "rotes Sofa",
+   "Beamer auf einem Tisch",
+   "Catering-Tisch",
+   "Bildunterschrift mit Anlass, Veranstalter, Ort und Datum"
   ],
+  "nicht_verwendete_inventar_items": [],
   "nicht_im_inventar": [],
   "atmosphaere_belege": []
  }

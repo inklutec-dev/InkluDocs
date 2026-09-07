@@ -57,6 +57,5 @@ class ClassificationOutput(BaseModel):
     # None und der Inventar-Pass entscheidet wie bisher.
     foto_subtyp: Optional[FotoSubtyp] = Field(
         None,
-        description="Lean-Mode: bei bildtyp=foto direkt den Sub-Typ mitwaehlen. "
-                    "Im Multi-Pass-Modus None (entscheidet Inventar-Pass).",
+        description="Bei bildtyp foto der Untertyp. Bei allen anderen Bildtypen leer.",
     )

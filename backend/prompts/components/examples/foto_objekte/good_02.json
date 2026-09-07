@@ -1,13 +1,13 @@
 {
- "szene": "Draufsicht auf etwa 25 handgetöpferte Gefäße, cremefarbene Innenglasur, blau-schwarze Reaktivglasur-Ränder, rosa Textiluntergrund. Die Gefäße sind leer; das Cremefarbene ist Glasur.",
- "alt_text": "Etwa 25 handgetöpferte Keramikschalen verschiedener Größen, von oben fotografiert: cremefarbene Innenglasur mit blau-grauer Sprenkelung und dunklem Rand, dicht auf einem rosa Textiltuch ausgelegt.",
- "begruendung": "Benennt das Material 'Keramik' selbstbewusst, weil Form und Glasur es klar tragen. Das helle Innere wird als GLASUR beschrieben, nicht als Inhalt — es ist nichts in den Schalen.",
- "prinzip": "Material und Typ benennen, wenn visuell klar. Innenflächen von Behältern als Oberfläche oder Glasur beschreiben. Sichtbaren Inhalt darf man nennen; nicht sichtbaren Inhalt niemals erfinden.",
+ "szene": "Draufsicht auf 25 leere Keramikschalen verschiedener Größen auf einem rosa Textiltuch, alle vollständig sichtbar: cremefarbene Innenglasur mit blau-grauer Sprenkelung, dunkler blau-schwarzer Rand. Das Cremefarbene ist Glasur, kein Inhalt. Keine Beschriftung, kein Kontext.",
+ "alt_text": "25 leere Keramikschalen verschiedener Größen stehen dicht nebeneinander auf einem rosa Textiltuch, von oben fotografiert. Die Innenglasur ist cremefarben mit blau-grauer Sprenkelung und dunklem Rand.",
+ "begruendung": "Die Zahl ist exakt, weil alle Schalen sichtbar sind. Keramik ist an Glasur und Form belegt, eine Herstellungsart nicht. Das helle Innere ist Glasur, nicht Inhalt.",
+ "prinzip": "Exakt zählen, wenn alles sichtbar ist; Material nur mit Beleg; Innenflächen von Behältern als Oberfläche beschreiben, keinen Inhalt erfinden.",
  "antwort": {
-  "alt_text": "Etwa 25 handgetöpferte Keramikschalen verschiedener Größen, von oben fotografiert: cremefarbene Innenglasur mit blau-grauer Sprenkelung und dunklem Rand, dicht auf einem rosa Textiltuch ausgelegt.",
+  "alt_text": "25 leere Keramikschalen verschiedener Größen stehen dicht nebeneinander auf einem rosa Textiltuch, von oben fotografiert. Die Innenglasur ist cremefarben mit blau-grauer Sprenkelung und dunklem Rand.",
   "langbeschreibung": "",
   "verwendete_inventar_items": [
-   "etwa 25 handgetöpferte Keramikschalen",
+   "25 leere Keramikschalen",
    "cremefarbene Innenglasur",
    "blau-graue Sprenkelung",
    "dunkler Rand",

@@ -1,19 +1,21 @@
 {
- "szene": "Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle. Deutliche Häufung der Marker im Süden um München und Stuttgart, vereinzelte Marker im Norden bei Hamburg; beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin.",
- "alt_text": "Karte — Deutschland: Verteilung von 45 Beratungsstellen mit deutlicher Konzentration im Süden um München und Stuttgart, vereinzelten Standorten im Norden bei Hamburg; große Kreise stehen laut Legende für Beratungsstellen mit Werkstatt, kleine für reine Beratungsstellen.",
- "begruendung": "Beginnt mit dem Pflicht-Präfix 'Karte —' plus Gebiet, Hauptthema und räumlicher Kernaussage (Konzentration im Süden). Ortsnamen wortgetreu in Originalsprache (München, Köln — nicht Munich, Cologne). Die Marker-Größen werden aus der Legende erklärt statt gedeutet; räumliche Lage mit Himmelsrichtungen (Süden, Norden) statt 'oben/unten'. Exakte Anzahl (45) statt 'viele'.",
- "prinzip": "Mit 'Karte —' + Gebiet und räumlicher Kernaussage führen, Symbolbedeutung ausschließlich aus der Legende, Ortsnamen wortgetreu in Originalsprache, Himmelsrichtungen statt Bildkoordinaten.",
+ "szene": "Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle; 12 große und 33 kleine Kreise. Deutliche Häufung der Marker im Süden um München und Stuttgart, weitere Marker im Westen bei Köln und im Osten bei Berlin, vereinzelte Marker im Norden bei Hamburg. Beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin. Kein Maßstab lesbar.",
+ "alt_text": "Karte — Deutschland: 45 Beratungsstellen, deutlich konzentriert im Süden um München und Stuttgart, vereinzelt im Norden bei Hamburg. Große Kreise sind Beratungsstellen mit Werkstatt, kleine reine Beratungsstellen.",
+ "begruendung": "Präfix, Gebiet und räumliche Kernaussage zuerst, die exakte Zahl statt 'viele', Ortsnamen in Originalsprache, Himmelsrichtungen statt oben und unten. Die Bedeutung der Kreise wird direkt ausgesagt, ohne Hinweis auf die Legende. Die Langbeschreibung trägt Verteilung nach Kreisgröße und die übrigen Regionen.",
+ "prinzip": "Mit 'Karte —', Gebiet und räumlicher Kernaussage führen; Symbolbedeutung aus der Legende direkt aussagen; Ortsnamen wortgetreu; Himmelsrichtungen statt Bildkoordinaten.",
  "quelle": "fiktives Beispiel (generische Standortkarte, keine echten Kundendaten)",
  "lizenz": "fiktives Beispiel",
  "antwort": {
-  "alt_text": "Karte — Deutschland: Verteilung von 45 Beratungsstellen mit deutlicher Konzentration im Süden um München und Stuttgart, vereinzelten Standorten im Norden bei Hamburg; große Kreise stehen laut Legende für Beratungsstellen mit Werkstatt, kleine für reine Beratungsstellen.",
-  "langbeschreibung": "",
+  "alt_text": "Karte — Deutschland: 45 Beratungsstellen, deutlich konzentriert im Süden um München und Stuttgart, vereinzelt im Norden bei Hamburg. Große Kreise sind Beratungsstellen mit Werkstatt, kleine reine Beratungsstellen.",
+  "langbeschreibung": "Die Karte ist nach Norden ausgerichtet. Von den 45 blauen Markierungen sind 12 große Kreise für Beratungsstellen mit Werkstatt und 33 kleine Kreise für reine Beratungsstellen. Neben den dichten Gruppen im Süden liegen weitere Markierungen im Westen bei Köln und im Osten bei Berlin. Beschriftet sind die Städte München, Stuttgart, Köln, Hamburg und Berlin. Ein Maßstab ist nicht lesbar.",
   "verwendete_inventar_items": [
-   "Deutschlandkarte",
+   "Deutschlandkarte, Norden oben",
    "45 blaue Punkt-Markierungen",
-   "Legende: große und kleine Kreise",
+   "Legende: 12 große und 33 kleine Kreise",
    "Häufung im Süden um München und Stuttgart",
-   "vereinzelte Marker im Norden bei Hamburg"
+   "Marker bei Köln und Berlin",
+   "vereinzelte Marker im Norden bei Hamburg",
+   "beschriftete Städte München, Stuttgart, Köln, Hamburg, Berlin"
   ],
   "nicht_verwendete_inventar_items": [],
   "nicht_im_inventar": [],

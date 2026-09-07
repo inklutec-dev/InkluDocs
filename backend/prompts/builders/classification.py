@@ -27,110 +27,62 @@ from prompts.components.schemas import ClassificationOutput
 from .helpers import bilddaten_verlagert, user_hint_block
 
 
-_BILDTYP_INVENTAR = """DIE 12 TOP-LEVEL-BILDTYPEN:
+_BILDTYP_INVENTAR = """DIE ZWÖLF BILDTYPEN
 
-1. foto         — Echte Fotografie (Personen, Objekte, Innen/Aussen, Pressefoto)
-2. illustration — Cartoon, Vektor-Grafik, gemalte Illustration, Buchbild
-3. diagramm     — Balken-, Linien-, Kreis-, gestapeltes Diagramm (isoliert)
-4. tabelle      — Tabellarische Daten als Grafik
-5. karte        — Landkarte, Stadtplan, Lageplan
-6. infografik   — Schaubild, Uebersicht, Plakat/Flyer mit Layout und Info
-7. screenshot   — Bildschirmfoto mit sichtbarer UI (Browser, App, Window)
-8. strukturformel — Chemische Struktur-, Reaktions-, Summenformel
-9. logo         — Alleinstehendes Marken-/Organisations-/Lizenzlogo
-10. icon        — Kleines funktionales Symbol (Lupe, Burger, Warenkorb)
-11. funktional  — Navigations-/Steuerungselement mit Zustand
-                  (Paginierung, Vor/Zurueck, Fortschrittsanzeige, Breadcrumb)
-12. dekorativ   — Reines Designelement ohne Informationswert (leerer
-                  Alt-Text) — unabhaengig von der Groesse, auch grosse
-                  Trennbanner und Farbflaechen"""
-
-
-_ROUTING_REGELN = """ROUTING-REGELN (in dieser Prioritaet):
-
-1. Bildinhalt schlaegt Dateiname und generischen Alt-Text.
-2. Kontext darf helfen, aber sichtbaren Inhalt nicht ueberschreiben.
-3. Foto eines Diagramms an Wand oder Beamer -> foto bzw. foto_event,
-   NICHT diagramm.
-4. Screenshot mit Browser/UI-Rahmen sichtbar -> screenshot,
-   auch wenn ein Diagramm darin zu sehen ist.
-   Sichtbare Browserleisten, Fensterrahmen, Toolbars, Tabs oder App-UI
-   schlagen eingebettete Inhalte.
-5. Pressefoto mit Firmenlogo im Hintergrund -> foto, NICHT logo.
-   Logo macht aus einem Bild kein logo.
-6. Alleinstehendes Markenzeichen ohne Foto-Kontext -> logo.
-7. Plakat oder Flyer mit Layout und Information -> infografik.
-   ABER: Produkt- oder Werbegrafik mit Text-Kacheln, Sprechblasen, Siegeln
-   oder Symbolen und OHNE Datenreihen, Stationen oder erklaerende Beziehungen
-   -> illustration, NICHT infografik (07.09.2026). infografik braucht Daten,
-   Prozessschritte oder erklaerte Zusammenhaenge.
-8. Kleine UI-Symbole (Lupe, Burger, Pfeil) -> icon oder funktional.
-   funktional = Element mit Zustand, icon = generisches Symbol.
-9. dekorativ haengt an der FUNKTION, nicht an der Groesse: rein
-   schmueckende Designelemente ohne Informationswert (Trennlinien,
-   Farbflaechen, Verlaeufe, abstrakte Formen-Banner, Zierrahmen,
-   Hintergrund-Texturen) sind dekorativ — auch als bildschirmbreites
-   Banner. Massgeblich ist der Kontext der Seite: Transportiert das Bild
-   an seiner Stelle Text, Navigation, Branding, ein Motiv (Personen,
-   Produkte, Orte) oder Stimmungs-/Fach-Information, ist es NICHT
-   dekorativ — ein grosses Stimmungsfoto ist Inhalt, kein Schmuck.
-   Bei sehr kleinen Bildern (<100x100 px) genau pruefen — oft, aber
-   nicht immer dekorativ. Im Zweifel NICHT dekorativ.
-10. Bei Unsicherheit zwischen zwei Typen: konfidenz=mittel/niedrig
-    und in der Begruendung beide Optionen nennen."""
+1. foto: echte Fotografie (Personen, Objekte, Räume, Landschaft, Pressefoto).
+2. illustration: Zeichnung, Cartoon, Vektorgrafik, Gemälde, Produkt- oder
+   Werbegrafik mit Symbolen, Kacheln, Sprechblasen oder Siegeln.
+3. diagramm: Balken-, Linien-, Kreis-, gestapeltes oder Streudiagramm.
+4. tabelle: tabellarische Daten als Grafik.
+5. karte: Landkarte, Stadtplan, Lageplan.
+6. infografik: Schaubild oder Plakat, das Daten, Prozessschritte oder erklärte
+   Zusammenhänge mit Layout verbindet.
+7. screenshot: Bildschirmfoto mit sichtbarer Oberfläche (Browser, App, Fenster).
+8. strukturformel: chemische Struktur-, Reaktions- oder Summenformel.
+9. logo: allein stehendes Marken-, Organisations- oder Lizenzlogo.
+10. icon: kleines funktionales Symbol (Lupe, Menü, Warenkorb).
+11. funktional: Navigations- oder Steuerelement mit Zustand (Blätterpfeile,
+    Fortschrittsanzeige, Brotkrumenpfad).
+12. dekorativ: reines Gestaltungselement ohne Informationswert (Trennlinie,
+    Farbfläche, Verlauf, Zierrahmen), unabhängig von der Größe."""
 
 
-_FOTO_SUBTYP_LEAN = """FOTO-SUBTYP (Pflichtfeld bei bildtyp=foto im Lean-Modus):
+_ROUTING_REGELN = """ENTSCHEIDUNGSREGELN (in dieser Reihenfolge)
 
-WICHTIG: foto_event, foto_personen, foto_objekte etc. sind SUB-TYPEN.
-Sie gehoeren NICHT ins Feld 'bildtyp'. Das Feld 'bildtyp' bleibt immer
-'foto'. Zusaetzlich setzt du das separate Feld 'foto_subtyp'.
+1. Der Bildinhalt entscheidet, nicht Dateiname oder vorhandener Alt-Text. Der
+   Kontext hilft, überschreibt aber nicht, was sichtbar ist.
+2. Sichtbare Browserleisten, Fensterrahmen oder App-Oberfläche machen das Bild
+   zum screenshot, auch wenn darin ein Diagramm steht.
+3. Ein Foto, auf dem ein Diagramm, ein Logo oder ein Bildschirm zu sehen ist,
+   bleibt foto.
+4. infografik braucht Daten, Prozessschritte oder erklärte Zusammenhänge. Eine
+   Produkt- oder Werbegrafik ohne diese Merkmale ist illustration.
+5. Ein allein stehendes Markenzeichen ist logo. Ein kleines Symbol ohne Zustand
+   ist icon, mit Zustand (aktiv, Seite 3 von 12, ausgegraut) funktional.
+6. dekorativ hängt an der Funktion, nicht an der Größe: Transportiert das Bild
+   an seiner Stelle ein Motiv, Text, Navigation, Branding oder Stimmung, ist es
+   nicht dekorativ. Ein verlinktes Bild und ein Bild mit Bildunterschrift sind
+   nie dekorativ. Im Zweifel nicht dekorativ.
+7. Bei Unsicherheit zwischen zwei Typen: konfidenz mittel oder niedrig und beide
+   Typen in der Begründung."""
 
-Beispiel-Output bei einem Workshop-Foto:
-  bildtyp = 'foto'
-  foto_subtyp = 'foto_event'
 
-Waehle exakt EINEN der sechs foto_subtyp-Werte:
+_FOTO_SUBTYP_LEAN = """FOTO-UNTERTYP (Pflichtfeld foto_subtyp, wenn bildtyp foto ist)
 
-foto_event:
-Mehrere Personen UND klarer Anlass- oder Veranstaltungs-Kontext.
-Indikatoren: Workshop, Schulung, Konferenz, Meeting, Buehne, Beamer,
-Namensschilder, Catering, Moderationsmaterial, Vortragssetting,
-erkennbare Veranstaltungsorganisation.
-WICHTIG: Mehrere Personen allein reichen NICHT fuer foto_event.
-Es muss mindestens ein erkennbarer Veranstaltungsindikator vorliegen.
-
-foto_personen:
-Eine oder mehrere Personen im Mittelpunkt OHNE klare Event-Indikatoren.
-Auch Gruppenfoto ohne Veranstaltungskontext gehoert hierhin.
-Mehrere Personen ohne erkennbare Veranstaltungsindikatoren bleiben
-foto_personen, nicht foto_event.
-
-foto_objekte:
-Objekte, Produkte, Werkstuecke, Material, Sammlungen oder Stillleben
-im Mittelpunkt.
-
-foto_architektur:
-Gebaeude, Raeume, Innenraeume, Fassaden, architektonische Details
-im Mittelpunkt.
-
-foto_essen:
-Speisen, Getraenke, Gerichte oder Lebensmittel im Mittelpunkt.
-
-foto_landschaft:
-Natur, Panorama, Outdoor-Szene ohne Personen- oder Architektur-Fokus.
-
-ENTSCHEIDUNGSREIHENFOLGE FUER foto_subtyp (in dieser Prioritaet pruefen,
-bildtyp bleibt dabei immer 'foto'):
-
-1. Mehrere Personen + Event-Indikatoren -> foto_subtyp = 'foto_event'
-2. Personen ohne Event-Indikatoren     -> foto_subtyp = 'foto_personen'
-3. Objekte im Mittelpunkt              -> foto_subtyp = 'foto_objekte'
-4. Architektur/Raum im Mittelpunkt     -> foto_subtyp = 'foto_architektur'
-5. Essen/Lebensmittel im Mittelpunkt   -> foto_subtyp = 'foto_essen'
-6. Natur/Landschaft im Mittelpunkt     -> foto_subtyp = 'foto_landschaft'
-
-Wenn bildtyp NICHT 'foto' ist, lasse foto_subtyp leer (None)."""
+Das Feld bildtyp bleibt "foto"; der Untertyp steht getrennt in foto_subtyp.
+- foto_event: mehrere Personen und ein erkennbarer Veranstaltungsanlass
+  (Workshop, Schulung, Konferenz, Bühne, Beamer, Namensschilder, Catering,
+  Moderationsmaterial). Mehrere Personen allein reichen nicht.
+- foto_personen: eine oder mehrere Personen im Mittelpunkt ohne
+  Veranstaltungsanlass, auch Gruppenfotos und Porträts.
+- foto_objekte: Objekte, Produkte, Werkstücke, Sammlungen, Stillleben,
+  reproduzierte Kunstwerke.
+- foto_architektur: Gebäude, Räume, Fassaden, Baudetails.
+- foto_essen: Speisen, Getränke, Lebensmittel.
+- foto_landschaft: Natur, Panorama, Außenszene ohne Personen- oder
+  Architekturfokus.
+Prüfe in dieser Reihenfolge: Personen mit Anlass, Personen ohne Anlass, Objekte,
+Architektur, Essen, Landschaft. Bei allen anderen Bildtypen bleibt foto_subtyp leer."""
 
 
 def _foto_subtyp_block() -> str:
@@ -149,7 +101,7 @@ def _inputs_block(width, height, original_alt, enriched_context, user_hint) -> s
     return f"""INPUTS:
 - Bildgroesse: {width}x{height} Pixel
 - Original-Alt vom Autor: {original_alt or '(keiner)'}
-- Kontext (Web-Scraper, PDF, API): {enriched_context or '(kein Kontext)'}
+- Kontext (Bildunterschrift, umliegender Text, Angaben des Aufrufers): {enriched_context or '(kein Kontext)'}
 {user_hint_block(user_hint)}"""
 
 
@@ -170,38 +122,11 @@ def build_classification_prompt(
 
     Output: prompt-String, der mit ClassificationOutput-Schema gerufen wird.
 
-    ACHTUNG Sync-Pflicht: Die Pixel-Schwelle im IST_DEKORATIV-Hinweis
-    (<100x100 px) muss mit _DEKORATIV_MAX_SIDE in dekorativ.py synchron
-    gehalten werden (angeglichen in Paket 1, 16.07.2026 — vorher 80x80).
+    Hinweis: dekorativ.py prüft die Entscheidung zusätzlich heuristisch.
     """
     schema_doc = render_schema_for_prompt(ClassificationOutput)
 
     return f"""{ROLE_KLASSIFIKATOR}
-
-Du bist Router fuer die InkluDocs Premium-Pipeline. Du klassifizierst Bilder
-in einen von 12 Top-Level-Typen und triffst weitere Routing-Entscheidungen.
-Du beschreibst Bilder nicht — du routest sie.
-
-OUTPUT-STRUKTUR (immer dieses JSON-Format):
-
-  {{
-    "bildtyp": "<MUSS einer der 12 Werte sein: foto, illustration, diagramm,
-                 tabelle, karte, infografik, screenshot, strukturformel,
-                 logo, icon, funktional, dekorativ>",
-    "foto_subtyp": "<NUR wenn bildtyp='foto': einer von foto_event,
-                     foto_personen, foto_objekte, foto_architektur,
-                     foto_essen, foto_landschaft. Sonst null.>",
-    "konfidenz": "<hoch | mittel | niedrig>",
-    "ist_dekorativ": <true | false>,
-    "original_alt_brauchbar": <true | false>,
-    "klassifikations_begruendung": "<ein Satz, 10-200 Zeichen>"
-  }}
-
-KRITISCH: 'bildtyp' und 'foto_subtyp' sind GETRENNTE Felder.
-- Workshop-Foto:   bildtyp='foto',  foto_subtyp='foto_event'  korrekt
-- Workshop-Foto:   bildtyp='foto_event'                       FALSCH
-- Screenshot:      bildtyp='screenshot', foto_subtyp=null     korrekt
-- Stillleben-Foto: bildtyp='foto', foto_subtyp='foto_objekte' korrekt
 
 {_BILDTYP_INVENTAR}
 
@@ -211,75 +136,25 @@ KRITISCH: 'bildtyp' und 'foto_subtyp' sind GETRENNTE Felder.
 
 {_foto_subtyp_block()}
 
-ORIGINAL_ALT_BRAUCHBAR (Boolean):
+VORHANDENER ALT-TEXT (Feld original_alt_brauchbar)
+Wahr, wenn der vom Autor gesetzte Alt-Text die Funktion oder den Inhalt sinnvoll
+benennt und zum Bild passt ("Logo Musterwerk", "Nächste Seite", "Diagramm
+Quartalsumsatz"). Falsch bei leer, "Bild", "Foto", "Grafik", Dateinamen,
+Platzhaltern und bei einem Text, der zwar sinnvoll klingt, aber eine andere
+Aktion oder einen anderen Zustand benennt als das Bild zeigt.
 
-Setze True wenn der vom Autor gesetzte original_alt eine sinnvolle
-funktionale Beschreibung enthaelt. Beispiele:
-- True:  'Logo Mercedes-Benz', 'Suche oeffnen', 'Naechste Seite',
-         'Diagramm Quartalsumsatz Q3 2025'
-- False: leer, 'Bild', 'Foto', 'Grafik', 'image001.jpg', 'IMG_2345',
-         reiner Dateiname, generischer Platzhalter
+DEKORATIV (Feld ist_dekorativ)
+Wahr nur, wenn das Bild zweifelsfrei ein reines Gestaltungselement ohne
+Informationswert ist. Sehr kleine Bilder sind oft dekorativ, aber nicht immer;
+ein kleines Bedienelement ist es nie. Im Zweifel falsch.
 
-Wenn True: die Pipeline behaelt den vorhandenen Alt-Text und spart
-den Premium-Builder-Lauf. Falsch True kostet uns Qualitaet, falsch
-False kostet Geld — beides hat Konsequenzen.
+BEGRÜNDUNG (Feld klassifikations_begruendung)
+Ein Satz mit dem Merkmal, das den Ausschlag gab ("Browserleiste und Fensterrahmen
+sprechen für screenshot."). Keine Bildbeschreibung.
 
-IST_DEKORATIV (Boolean):
-
-True NUR wenn das Bild zweifelsfrei ein reines Designelement ohne
-Informationswert ist (Trennlinie, Farbflaeche, Verlauf, abstraktes
-Schmuck-Banner, Hintergrund-Textur) — die Groesse ist dabei egal, auch
-ein bildschirmbreites Trennbanner kann dekorativ sein. Zeigt das Bild
-ein Motiv (Personen, Produkte, Orte), Text, Navigation oder Branding,
-ist es NICHT dekorativ. Im Zweifel False. Sehr kleine Bilder
-(<100x100 px) sind oft, aber nicht immer dekorativ — pruefen.
-
-KLASSIFIKATIONS_BEGRUENDUNG (10-200 Zeichen, ein Satz):
-
-Technisch und knapp. Welcher Indikator hat den Ausschlag gegeben.
-
-Gute Beispiele:
-- 'Mehrere Personen mit Namensschildern und Praesentationsumgebung
-   sprechen fuer foto_event.'
-- 'UI-Rahmen und Browserleiste sprechen fuer screenshot.'
-- 'Isoliertes Balkendiagramm ohne UI spricht fuer diagramm.'
-- 'Pressefoto mit Mercedes-Logo im Hintergrund -> foto, nicht logo.'
-
-Schlechte Beispiele (vermeiden):
-- 'Das Bild zeigt interessante Personen.' (vage, kein Routing-Grund)
-- 'Es wirkt wie ein Workshop.' (Hedge ohne Indikator)
-- 'Wahrscheinlich ein Diagramm.' (unsicher ohne Begruendung)
-- Mini-Alt-Text statt Routing-Begruendung.
-
-KONFIDENZ:
-
-Waehle hoch, mittel oder niedrig. hoch nur bei klarer Dominanz eines
-Typs. Bei mittel/niedrig nenne in der Begruendung beide moeglichen Typen.
+KONFIDENZ
+hoch nur bei klarer Dominanz eines Typs, sonst mittel oder niedrig mit beiden
+Typen in der Begründung.
 
 {schema_doc}
-
-LETZTE PRUEFUNG VOR DEINER ANTWORT (sehr wichtig):
-
-Pruefe dein JSON gegen diese Regeln, bevor du antwortest:
-
-1. 'bildtyp' MUSS exakt einer dieser 12 Werte sein:
-   foto, illustration, diagramm, tabelle, karte, infografik,
-   screenshot, strukturformel, logo, icon, funktional, dekorativ.
-
-2. 'foto_event', 'foto_personen', 'foto_objekte', 'foto_architektur',
-   'foto_essen' und 'foto_landschaft' sind KEINE gueltigen Werte fuer
-   'bildtyp'. Diese gehoeren ausschliesslich ins separate Feld
-   'foto_subtyp'.
-
-3. Bei einem Workshop-/Meeting-/Konferenz-Foto lautet die korrekte
-   Antwort:
-     bildtyp = 'foto'
-     foto_subtyp = 'foto_event'
-   Niemals: bildtyp = 'foto_event'.
-
-4. Bei allen Bildtypen ausser 'foto' ist 'foto_subtyp' = null.
-
-Wenn dein erster Entwurf bildtyp='foto_event' (oder einen anderen
-foto_*-Wert) enthaelt, korrigiere ihn JETZT: bildtyp='foto',
-foto_subtyp='foto_event'. Erst dann antworte.
 """

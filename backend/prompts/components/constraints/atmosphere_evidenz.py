@@ -1,21 +1,7 @@
-"""Atmosphäre-Regel — evidenzbasierte Wertungen (E8-Umbenennung von _VARIANTE_B)."""
+"""Atmosphäre: Verweis auf Belegregel 4. Eigener Block nur noch für Infografiken."""
 
-ATMOSPHAERE_REGEL = """ATMOSPHAERE-REGEL (evidenzbasiert, Steve-Designentscheidung):
+ATMOSPHAERE_REGEL = """ATMOSPHÄRE
 
-Wertungen über Atmosphäre, Stimmung, Charakter sind ERLAUBT — sie vermitteln blinden
-Nutzern das Erlebnis das ein Sehender hat. ABER: jede Wertung muss durch ein konkret
-sichtbares Inventar-Item gestützt sein, das im selben Satz oder in der Langbeschreibung
-genannt wird.
-
-GUT (mit Evidenz):
-  'Die Atmosphäre wirkt formell, was durch die Anzüge und die aufrechte Haltung der
-   Teilnehmer unterstrichen wird.'
-  'Die Szene wirkt konzentriert: alle blicken nach vorne, niemand spricht miteinander.'
-
-SCHLECHT (ohne Evidenz):
-  'Die Atmosphäre wirkt formell, aber entspannt.' (was belegt 'entspannt'?)
-  'Eine fröhliche Stimmung.' (was belegt 'fröhlich'?)
-  'Die Szene strahlt Professionalität aus.' (was strahlt sie aus?)
-
-Wenn keine Evidenz im Inventar, dann KEINE Wertung. Lieber faktisch und kalt als
-gefühlvoll und falsch."""
+Daten haben keine Stimmung. Eine Wertung über Wirkung oder Ton ist nur bei
+Kampagnen- und Werbegrafiken sinnvoll und dann nur mit dem sichtbaren Beleg im
+selben Satz (Belegregel 4)."""

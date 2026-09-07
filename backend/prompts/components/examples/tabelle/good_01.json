@@ -1,20 +1,23 @@
 {
- "szene": "Periodensystem der Elemente als Grafik (Wikimedia-Grafik Periodic_table_large.svg): 118 Elemente in 18 Gruppen (Spalten) und 7 Perioden (Zeilen), jede Zelle mit Elementsymbol, Ordnungszahl und Name, von Wasserstoff (H, 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide als zwei separate Zeilen unterhalb der Haupttabelle.",
- "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente, angeordnet in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide stehen als zwei separate Zeilen unterhalb der Haupttabelle.",
- "begruendung": "Beginnt mit dem Pflicht-Präfix 'Tabelle —' plus Thema und trägt die Kernaussage über die belegten Endwerte: exakt 118 Elemente, erster und letzter Eintrag mit wortgetreuen Symbolen und Ordnungszahlen (Zähl-Disziplin, keine gerundeten oder erfundenen Werte). Die Struktur (18 Gruppen, 7 Perioden, Sonderzeilen) macht die Tabelle ohne Layout-Geschwätz nachvollziehbar. Fließtext, keine Markdown-Tabelle.",
- "prinzip": "Mit 'Tabelle —' + Thema und der wichtigsten Aussage auf Basis der richtigen Endwerte führen; Zahlen, Symbole und Struktur wortgetreu und exakt übernehmen.",
+ "szene": "Periodensystem der Elemente als Grafik: 118 Elemente in 18 Gruppen (Spalten) und 7 Perioden (Zeilen), jede Zelle mit Elementsymbol, Ordnungszahl und Name, von Wasserstoff (H, 1) bis Oganesson (Og, 118). Die erste Periode enthält nur Wasserstoff und Helium (He, 2). Lanthanoide (Lanthan, La, 57 bis Lutetium, Lu, 71) und Actinoide (Actinium, Ac, 89 bis Lawrencium, Lr, 103) als zwei separate Zeilen unterhalb der Haupttabelle, aus den Perioden 6 und 7 ausgelagert. Zellen nach Elementkategorien eingefärbt, eine Legende nennt die Kategorien.",
+ "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118). Lanthanoide und Actinoide stehen als zwei eigene Zeilen unter der Haupttabelle.",
+ "begruendung": "Präfix, Thema und die Kernaussage über die belegten Endwerte: exakt 118 Elemente, erster und letzter Eintrag mit Symbol und Ordnungszahl. Die Struktur über Gruppen und Perioden statt über Kästchen. Die Langbeschreibung trägt Zellinhalt, Leserichtung, die ausgelagerten Reihen mit ihren Grenzen und die Farbkodierung.",
+ "prinzip": "Mit 'Tabelle —', Thema und der Kernaussage aus den belegten Endwerten führen; Zahlen und Symbole exakt, Struktur über Gruppen und Perioden statt Layout.",
  "quelle": "Wikimedia Commons: Periodic_table_large.svg",
  "lizenz": "Wikimedia Commons, frei lizenziert",
  "antwort": {
-  "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente, angeordnet in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118); Lanthanoide und Actinoide stehen als zwei separate Zeilen unterhalb der Haupttabelle.",
-  "langbeschreibung": "",
+  "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118). Lanthanoide und Actinoide stehen als zwei eigene Zeilen unter der Haupttabelle.",
+  "langbeschreibung": "Jede Zelle enthält Elementsymbol, Ordnungszahl und Elementname. Die 18 Gruppen bilden die Spalten, die 7 Perioden die Zeilen, und die Ordnungszahlen steigen in jeder Zeile von links nach rechts. Die erste Periode enthält nur Wasserstoff (H, 1) und Helium (He, 2). Die Lanthanoide reichen von Lanthan (La, 57) bis Lutetium (Lu, 71), die Actinoide von Actinium (Ac, 89) bis Lawrencium (Lr, 103). Beide Reihen sind aus den Perioden 6 und 7 ausgelagert. Die Zellen sind nach Elementkategorien eingefärbt, eine Legende ordnet die Farben den Kategorien zu.",
   "verwendete_inventar_items": [
    "118 Elemente",
    "18 Gruppen",
    "7 Perioden",
    "Wasserstoff (H, 1)",
+   "Helium (He, 2)",
    "Oganesson (Og, 118)",
-   "Lanthanoide und Actinoide als separate Zeilen"
+   "Lanthanoide La 57 bis Lu 71",
+   "Actinoide Ac 89 bis Lr 103",
+   "Farbkodierung mit Legende"
   ],
   "nicht_verwendete_inventar_items": [],
   "nicht_im_inventar": [],

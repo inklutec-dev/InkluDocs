@@ -1,17 +1,18 @@
 {
- "szene": "Skelettformel der Acetylsalicylsäure (Wikimedia-Grafik Aspirin-skeletal.svg): Benzolring mit zwei Substituenten — einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3) in Nachbarstellung. Bildunterschrift im Dokument: 'Aspirin (Acetylsalicylsäure)'.",
- "alt_text": "Strukturformel — Acetylsalicylsäure (Aspirin, C9H8O4): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).",
- "begruendung": "Beginnt mit dem Pflicht-Präfix 'Strukturformel —' und nennt den Stoffnamen, weil die Bildunterschrift ihn belegt — nicht aus visueller Vermutung. Screenreader-taugliche Notation durchgehalten: CH3 und C9H8O4 mit normalen Zahlen statt tiefgestellter Indizes (CH₃). Grundgerüst (Benzolring) und funktionelle Gruppen explizit benannt, keine Atome erfunden.",
- "prinzip": "Mit 'Strukturformel —' + belegtem Stoffnamen und Summenformel führen; Indizes als normale Zahlen (CH3, nicht CH₃), funktionelle Gruppen explizit, Stoffname nur aus Kontext oder Beschriftung.",
+ "szene": "Skelettformel der Acetylsalicylsäure: Benzolring als Sechseck mit drei eingezeichneten Doppelbindungen, daran zwei Substituenten in Nachbarstellung, eine Carboxygruppe (COOH) und eine Acetoxygruppe (O-CO-CH3), in beiden Gruppen eine Doppelbindung zwischen Kohlenstoff und Sauerstoff sichtbar. Keine Summenformel, keine Stereodeskriptoren. Bildunterschrift im Dokument: 'Aspirin (Acetylsalicylsäure)'.",
+ "alt_text": "Strukturformel — Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).",
+ "begruendung": "Präfix und Stoffname, weil die Bildunterschrift ihn belegt. Keine Summenformel, weil weder Bild noch Unterschrift sie liefern. Indizes als normale Zahlen. Grundgerüst und Gruppen im Alt-Text, Bindungen und Aufbau der Gruppen in der Langbeschreibung.",
+ "prinzip": "Mit 'Strukturformel —' und dem belegten Stoffnamen führen; Indizes als normale Zahlen; funktionelle Gruppen benennen, keine Atome und keine Formeln erfinden.",
  "quelle": "Wikimedia Commons: Aspirin-skeletal.svg",
  "lizenz": "Wikimedia Commons, frei lizenziert",
  "antwort": {
-  "alt_text": "Strukturformel — Acetylsalicylsäure (Aspirin, C9H8O4): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).",
-  "langbeschreibung": "",
+  "alt_text": "Strukturformel — Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).",
+  "langbeschreibung": "Das Grundgerüst ist ein Sechsring mit drei eingezeichneten Doppelbindungen. Die Carboxygruppe besteht aus einem Kohlenstoffatom mit einer Doppelbindung zu einem Sauerstoffatom und einer Einfachbindung zu einer OH-Gruppe. Die Acetoxygruppe ist über ein Sauerstoffatom an den direkt benachbarten Ringkohlenstoff gebunden, es folgen ein Kohlenstoffatom mit Doppelbindung zu Sauerstoff und eine endständige Methylgruppe CH3. Stereodeskriptoren sind nicht dargestellt.",
   "verwendete_inventar_items": [
-   "Benzolring",
+   "Benzolring mit drei Doppelbindungen",
    "Carboxygruppe (COOH)",
    "Acetoxygruppe (O-CO-CH3)",
+   "Nachbarstellung der Substituenten",
    "Bildunterschrift 'Aspirin (Acetylsalicylsäure)'"
   ],
   "nicht_verwendete_inventar_items": [],

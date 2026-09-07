@@ -1,17 +1,19 @@
 {
- "szene": "Weite Küstenlandschaft: ein langer Sandstrand im Vordergrund, dahinter die Brandung und das offene Meer bis zum Horizont, links eine niedrige, mit Gras bewachsene Düne. Schwere graue Wolken, diffuses Licht, keine Menschen. Kein Orts- oder Wegschild sichtbar.",
- "alt_text": "Weite Küstenlandschaft mit langem Sandstrand und Brandung, dahinter das offene Meer bis zum Horizont; links eine niedrige, grasbewachsene Düne unter schweren grauen Wolken.",
- "begruendung": "Führt mit der Landschaftsart (Küstenlandschaft) und benennt die belegten Hauptelemente (Sandstrand, Brandung, Meer, Düne) in räumlicher Ordnung. Nennt KEINEN Ort und keine Region, weil weder Schild noch Kontext sie belegen. Die schweren grauen Wolken werden als sichtbares Merkmal genannt; eine Atmosphäre-Wertung würde nur mit Beleg im selben Satz erfolgen ('das diffuse Licht lässt den Strand verlassen wirken').",
- "prinzip": "Mit der Landschaftsart führen, sichtbare geografische Elemente konkret benennen — aber Ortsname, Region und Gewässername nur bei Schild- oder Kontext-Beleg, sonst weglassen.",
+ "szene": "Weite Küstenlandschaft: ein langer Sandstrand vorn, dahinter die Brandung und das offene Meer bis zum Horizont, links eine niedrige, mit Gras bewachsene Düne. Schwere graue Wolken, diffuses Licht, keine Menschen, keine Gebäude. Kein Orts- oder Wegschild sichtbar.",
+ "alt_text": "Weite Küstenlandschaft unter schweren grauen Wolken: ein langer Sandstrand, dahinter Brandung und das offene Meer bis zum Horizont, links eine niedrige grasbewachsene Düne.",
+ "begruendung": "Führt mit der Landschaftsart und dem prägenden Wetter, dann die belegten Hauptelemente in räumlicher Ordnung mit 'dahinter' und 'links' statt Lagefloskeln. Kein Ort und keine Region, weil weder Schild noch Kontext sie belegen. Die Langbeschreibung trägt Tiefe, Licht und das Fehlen menschlicher Spuren.",
+ "prinzip": "Mit der Landschaftsart und dem prägenden Merkmal führen; Ortsname, Region und Gewässername nur bei Schild- oder Kontextbeleg.",
  "antwort": {
-  "alt_text": "Weite Küstenlandschaft mit langem Sandstrand und Brandung, dahinter das offene Meer bis zum Horizont; links eine niedrige, grasbewachsene Düne unter schweren grauen Wolken.",
-  "langbeschreibung": "",
+  "alt_text": "Weite Küstenlandschaft unter schweren grauen Wolken: ein langer Sandstrand, dahinter Brandung und das offene Meer bis zum Horizont, links eine niedrige grasbewachsene Düne.",
+  "langbeschreibung": "Der Sandstrand liegt vorn und reicht bis an die Wasserlinie, an der die Brandung ausläuft. Dahinter dehnt sich das Meer bis zum Horizont. Die Düne links ist niedrig und mit Gras bewachsen. Der Himmel ist von schweren grauen Wolken bedeckt, das Licht ist diffus. Menschen, Gebäude, Wege oder Schilder sind nicht zu sehen.",
   "verwendete_inventar_items": [
    "langer Sandstrand",
    "Brandung",
    "offenes Meer bis zum Horizont",
    "grasbewachsene Düne",
-   "schwere graue Wolken"
+   "schwere graue Wolken",
+   "diffuses Licht",
+   "keine Menschen, keine Gebäude"
   ],
   "nicht_verwendete_inventar_items": [],
   "nicht_im_inventar": [],

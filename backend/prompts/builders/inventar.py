@@ -6,9 +6,8 @@ foto, illustration, diagramm, tabelle, karte, screenshot, infografik, strukturfo
 Die anderen 4 Bildtypen (logo, icon, funktional, dekorativ) überspringen
 den Inventar-Pass — siehe pipelines/v4/orchestrator.py (Phase T9).
 
-W1-Korrektur (Steve, 04.05.2026): Sub-Typ-Entscheidungs-Kriterien für foto
-explizit im Prompt — vorher 'setze foto_subtyp anhand des Inventars' ohne
-Detail. Schwelle ≥2 Personen + Indikator (Re-Review-Mini-Korrektur c).
+Fassung September 2026: Die Schwerpunkte je Bildtyp werden auch vom Combo-Prompt
+(combo.py) als Anleitung für das innere Inventar verwendet.
 """
 from __future__ import annotations
 
@@ -26,58 +25,36 @@ from .helpers import bildgroesse_zeile, kontext_werte, user_hint_block
 # Werden in den Prompt eingespiegelt — ein Schwerpunkt pro Bildtyp,
 # damit das Modell weiß WORAUF zu fokussieren ist.
 BILDTYP_INVENTAR_SCHWERPUNKTE: dict[str, str] = {
-    'foto': """SCHWERPUNKT FOTO:
-- Wenn Personen sichtbar: für jede Person separat Position, Haltung, was sie in den Händen hält
-- PERSONEN-ZAEHLUNG: Zähle Personen einzeln und systematisch von links nach rechts.
-  Auch teilweise verdeckte Personen, Personen im Hintergrund, Rückenansichten und
-  angeschnittene Personen zählen, wenn Körper, Kopf, Kleidung oder Haltung eindeutig
-  auf eine Person hinweisen. Bei Unsicherheit: die niedrigere SICHERE Zahl nehmen und
-  im Text 'mindestens sieben Personen' oder 'acht in einer Reihe, dahinter weitere'
-  formulieren statt einer falschen exakten Zahl.
-- Lesbare Texte wortgetreu erfassen: Schilder, Schriftzüge, Kennzeichen, Namensschilder, Logos
-- Setting-Indikatoren benennen: Innen/Außen, Möbel, Geräte, Schilder, Catering, Bühne""",
+    'foto': """Schwerpunkt Foto: Jede Person einzeln mit Position, Haltung und dem, was sie in
+den Händen hält. Personen und Objekte von links nach rechts zählen, auch verdeckte,
+angeschnittene und Rückenansichten. Lesbare Texte wortgetreu erfassen (Schilder,
+Schriftzüge, Kennzeichen, Namensschilder, Logos). Umgebung benennen: innen oder
+außen, Möbel, Geräte, Bühne, Catering.""",
 
-    'illustration': """SCHWERPUNKT ILLUSTRATION:
-- Stilrichtung benennen (Cartoon, Vektor, gemalt, comic-haft etc.)
-- Bei Tieren/Personen: Spezies-Identifikation NUR mit hoher Sicherheit, sonst
-  Mehrfach-Hypothesen ('katzenartig oder hundeartig')
-- Halluzinations-Warnung explizit für stilisierte Darstellungen formulieren""",
+    'illustration': """Schwerpunkt Illustration: Stil (Cartoon, Vektor, gemalt), dargestellte Idee, alle
+Text-Elemente wortgetreu, Symbole und Siegel als sichtbare Elemente. Tierart oder
+Personentyp nur bei klarer Erkennbarkeit, sonst beide Deutungen.""",
 
-    'diagramm': """SCHWERPUNKT DIAGRAMM:
-- Diagrammtyp (Balken, Linie, Kreis, gestapelt, Streu), Titel, Achsen, Einheiten, Legende
-- WERTE ZUERST, TREND DANACH: Lies für JEDE Kategorie und JEDE Reihe die Werte
-  einzeln an der Achse ab und notiere sie dir als Liste (zum Beispiel
-  "Hardware: 2021 2,5 / 2022 4,4 / 2023 2,0"). Erst aus dieser Liste leitest du
-  Trends, Vergleiche und Extreme ab — nie aus dem Gesamteindruck. Ein Trendwort
-  (steigt, fällt, erholt sich) ist nur erlaubt, wenn die notierten Werte es tragen.
-- Wenn keine Werte lesbar sind (keine Achse, keine Zahlen): nur Rangfolge und
-  Form beschreiben, keine Zahlen erfinden
-- ALLE Achsenbeschriftungen, Legende, Datenpunkte als lesbare Texte erfassen""",
+    'diagramm': """Schwerpunkt Diagramm: Diagrammtyp, Titel, Achsen mit Einheit, Legende, Kategorien
+und Reihen. Werte einzeln an der Achse ablesen und als Liste notieren, bevor du
+einen Trend formulierst. Ohne lesbare Skala nur Rangfolge und Form.""",
 
-    'tabelle': """SCHWERPUNKT TABELLE:
-- ALLE Spaltenköpfe wortgetreu erfassen
-- Pro Zeile: erste Spalte (meist Bezeichnung) + alle Wertspalten
-- Summen/Bilanzsummen explizit kennzeichnen""",
+    'tabelle': """Schwerpunkt Tabelle: alle Spaltenköpfe wortgetreu, je Zeile die Bezeichnung und alle
+Werte, Summenzeilen mit ihrer Beschriftung.""",
 
-    'karte': """SCHWERPUNKT KARTE:
-- Geografisches Gebiet
-- ALLE markierten Standorte mit ihren Beschriftungen
-- Legenden-Einträge""",
+    'karte': """Schwerpunkt Karte: Gebiet, Kartenthema, alle markierten Orte mit Beschriftung,
+Legende, Maßstab oder Zeitangabe.""",
 
-    'infografik': """SCHWERPUNKT INFOGRAFIK:
-- Stationen/Schritte in logischer Reihenfolge
-- Beziehungen (Pfeile, Verbindungen)
-- Zentrale Datenpunkte""",
+    'infografik': """Schwerpunkt Infografik: Stationen oder Abschnitte in ihrer Reihenfolge,
+Verbindungen (Pfeile, Linien) mit ihrer Bedeutung, alle Zahlen und Beschriftungen
+wortgetreu.""",
 
-    'screenshot': """SCHWERPUNKT SCREENSHOT:
-- UI-Anwendung identifizieren wenn möglich (URL-Leiste, Fenstertitel, Logo)
-- Sichtbare Menüpunkte, Buttons, Eingabefelder
-- Status-Anzeigen, Statusmeldungen""",
+    'screenshot': """Schwerpunkt Screenshot: Anwendung oder Website (Fenstertitel, Adresszeile, Logo),
+gezeigter Zustand, Statusmeldungen, Werte, die wichtigste sichtbare Aktion, dann
+Menüs, Eingabefelder und Schaltflächen.""",
 
-    'strukturformel': """SCHWERPUNKT STRUKTURFORMEL:
-- Atom-Symbole, funktionelle Gruppen
-- Bindungstypen
-- Falls Reaktionsgleichung: Edukte → Bedingungen → Produkte""",
+    'strukturformel': """Schwerpunkt Strukturformel: Beschriftung und Stoffname, Atome und funktionelle
+Gruppen, Bindungstypen, bei Reaktionen Edukte, Bedingungen und Produkte.""",
 }
 
 
@@ -110,32 +87,15 @@ BILDTYP: {bildtyp}
 {bildgroesse_zeile(width, height, label='BILDGRÖSSE')}
 {bildtyp_hinweis}
 
-KONTEXT (vom Web-Scraper, PDF-Extraktion oder API-Aufruf):
+KONTEXT
 {kontext_werte(enriched_context, user_hint_block(user_hint))}
 
-DEINE AUFGABE:
-Erstelle ein vollständiges, ehrliches Inventar dieses Bildes. Fülle JEDES Feld
-des Schemas aus, auch wenn leer ([] oder None). Das ist eine bewusste Entscheidung,
-nicht Vergesslichkeit.
-
-WICHTIG für halluzinations_warnung:
-Identifiziere KONKRETE Fehlinterpretationen die für DIESES Bild wahrscheinlich wären.
-Beispiele:
-- 'Hellfarbene Glasur könnte als Flüssigkeit fehlinterpretiert werden'
-- 'Stilisierte Tierdarstellung — Spezies-Festlegung wäre Spekulation'
-- 'Personen halten kleine runde Objekte — diese sind nicht eindeutig identifizierbar'
-
-MONTAGE-CHECK:
-Achte auf Montage-Indikatoren: harte Freisteller-Kanten, widersprüchliche
-Schatten/Perspektive/Maßstäbe, Stilbruch zwischen Foto und Grafik, unmögliche
-Kombinationen. SUCHE DABEI AKTIV, Quadrant für Quadrant, auch nach KLEINEN
-eingefügten Objekten — ein winziges Bauwerk oder Objekt an einem Ort, an den
-es nicht gehört (z.B. eine Kathedrale am Grund einer Schlucht), ist ein
-Montage-Beweis; geringe Größe schützt eine Montage nicht vor der Erkennung.
-Erkennst du solche Indikatoren, trage einen Eintrag in
-halluzinations_warnung ein (z.B. 'Montage-Indikatoren sichtbar: harte
-Freisteller-Kante am Gebäude — Bild ist vermutlich eine Fotomontage, nicht als
-reales Foto beschreiben') und liste das eingefügte Objekt als eigenes Objekt.
+AUFTRAG
+Erstelle ein vollständiges Inventar dieses Bildes. Trage in halluzinations_warnung
+die Fehldeutungen ein, die bei diesem Bild naheliegen (helle Innenfläche als
+Inhalt, stilisiertes Tier als bestimmte Art, kleine runde Gegenstände als bestimmte
+Funktion). Erkennst du Montage-Hinweise, notiere sie dort ebenfalls und liste das
+eingefügte Element als eigenes Objekt.
 
 {schema_doc}
 """

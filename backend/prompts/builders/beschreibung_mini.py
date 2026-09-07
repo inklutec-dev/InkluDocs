@@ -1,32 +1,28 @@
-"""Pass-3-Builder für Mini-Pipelines: logo, icon, funktional.
+"""Builder der Mini-Familie: logo, icon, funktional.
 
-Drei Builder, alle nutzen IconBeschreibungOutput (alt_text 3-80 Zeichen,
-kein langbeschreibung-Feld) — siehe Mini-Korrektur a in beschreibung.py.
+Alle drei nutzen IconBeschreibungOutput (nur alt_text, 3 bis 80 Zeichen). Sie
+überspringen das Inventar und bekommen einen eigenen, kurzen Kopf: Die
+allgemeine Beschreiber-Rolle mit Beispielen zu Flugzeugen und Bergen passt nicht
+zu einer Ausgabe von wenigen Wörtern. Fassung September 2026.
 
-Mini-Pipelines überspringen den Inventar-Pass und gehen direkt vom
-Klassifikations-Output in den Beschreibungs-Pass. Keine Atmosphäre,
-kein Inventar — nur Funktion oder Markenname.
-
-Dekorativ ist KEIN Builder hier — siehe dekorativ.py
-(handle_dekorativ_classification gibt direkt das Result-Dict zurück).
+Dekorativ hat keinen Builder, siehe dekorativ.py.
 """
 from __future__ import annotations
 
 from typing import Optional
 
-from prompts.components.constraints import (
-    ANTI_HALLUZINATION_KERN,
-    EVIDENZ_STUFEN_REGELN,
-    LIZENZ_LOGOS_REGELN,
-)
-from prompts.components.roles import ROLE_BESCHREIBER
-from prompts.components.schema_helpers import render_schema_for_prompt
-from prompts.components.schemas import (
-    ClassificationOutput,
-    IconBeschreibungOutput,
-)
+from prompts.components.constraints import LIZENZ_LOGOS_REGELN
+from prompts.components.schemas import ClassificationOutput
 
 from .helpers import bildgroesse_zeile, extract_link_target_from_context, kontext_werte, load_examples, original_alt_zeile, user_hint_block
+
+
+ROLE_MINI = """Du schreibst Alternativtexte für kleine Bildelemente in Webseiten und Dokumenten:
+Logos, Symbole und Bedienelemente. Ein Mensch, der das Element nicht sieht, muss
+sofort wissen, wofür es steht oder was es tut. Du benennst, was belegt ist, und
+rätst nicht: Ein Name steht im Text, wenn er lesbar ist, ein weltweit eindeutiges
+Zeichen ihn trägt oder der Kontext ihn nennt. Sonst beschreibst du neutral. Keine
+Vermutungswörter, keine Farben, keine Formbeschreibung um ihrer selbst willen."""
 
 
 def build_beschreibung_prompt_logo(
@@ -36,66 +32,31 @@ def build_beschreibung_prompt_logo(
     original_alt: str = '',
     user_hint: Optional[str] = None,
 ) -> str:
-    """Logo-Builder — Markenname / Lizenz-Code, max 80 Zeichen."""
-    schema_doc = render_schema_for_prompt(IconBeschreibungOutput)
+    """Logo: Marken- oder Organisationsname, Lizenztyp, Linkziel. Höchstens 80 Zeichen."""
     examples = load_examples('logo')
     link_target = extract_link_target_from_context(enriched_context)
 
-    return f"""{ROLE_BESCHREIBER}
+    return f"""{ROLE_MINI}
 
-{ANTI_HALLUZINATION_KERN}
-
-{LIZENZ_LOGOS_REGELN}
-
-{EVIDENZ_STUFEN_REGELN}
-
-BILDTYP: logo (erkennbares Marken-, Organisations- oder Lizenzlogo)
+BILDTYP: logo (allein stehendes Marken-, Organisations- oder Lizenzlogo)
 {bildgroesse_zeile(width, height, label='BILDGRÖSSE')}
 {original_alt_zeile(original_alt)}
 
-KONTEXT:
-{kontext_werte(enriched_context, user_hint_block(user_hint), extra=(f'LINK-ZIEL DIESES LOGOS: {link_target}' if link_target else ''))}
+AUFTRAG
+Nenne die Organisation oder Marke, für die das Logo steht: "Logo Musterwerk GmbH".
+Ein lesbarer Slogan darf folgen. Ist der Name weder lesbar noch durch ein weltweit
+eindeutiges Zeichen oder den Kontext belegt, schreibe "Logo, Name nicht lesbar".
+Eigennamen und Slogans bleiben in ihrer Originalsprache. Höchstens 80 Zeichen.
+Ist ein Linkziel angegeben, ergänze es: "Logo Musterwerk GmbH, Link zur Startseite".
 
-DEIN AUFTRAG: Der blinde Nutzer muss SOFORT wissen, welche Organisation oder
-Marke das Logo repräsentiert. Sonst nichts. Kein visuelles Design, keine Farben,
-keine Formen.
+{LIZENZ_LOGOS_REGELN}
 
-FORMAT-PFLICHT:
-- Beginne mit 'Logo ' + Markenname (oder 'Lizenz-Logo' / 'Zertifizierungs-Logo'
-  bei diesen Sondertypen)
-- Optional + Slogan WENN lesbar
-- Maximal 80 Zeichen
-- Langbeschreibung leer lassen (Schema hat kein langbeschreibung-Feld)
-
-VERBOTEN:
-- Visuelle Beschreibung der Logo-Form (Wappen, Tiere, geometrische Formen, Farben)
-- Spekulation über die Bedeutung des Logos
-- 'Symbol für ...' / 'stilisiertes ...' / 'abstraktes ...'
-
-EVIDENZ-STUFEN FÜR LOGO-IDENTIFIKATION:
-- STUFE 1 (immer ok): Markenname als Text im Logo lesbar → direkt nennen
-- STUFE 2 (ok): Weltweit eindeutiges Symbol (Apple-Apfel, Mercedes-Stern,
-  Coca-Cola-Schriftzug, BMW-Spinner) + Kontext stützt → benennen
-- STUFE 3 (verboten): Logo nicht identifizierbar → 'Logo, Text nicht lesbar'
-  oder 'Logo eines nicht identifizierbaren Unternehmens'
-
-LIZENZ- UND ZERTIFIZIERUNGS-LOGOS:
-- Creative Commons: exakt mit Lizenztyp benennen (siehe LIZENZ_LOGOS_REGELN)
-- Bio-Siegel, Fair-Trade, TÜV: konkrete Variante wenn lesbar
-- Diese sind NICHT dekorativ — sie tragen rechtliche oder qualitätsbezogene
-  Information
-
-VERLINKTE LOGOS:
-Wenn LINK-ZIEL gesetzt ist, ergänze: 'Logo [Name] — Link zu [Ziel]' oder
-'Logo [Name] — Link zur Startseite' (wenn Link-Ziel die Domain selbst ist).
-
-EIGENNAMEN UND SLOGANS: Im Original belassen, nicht eindeutschen.
-
-FEW-SHOT BEISPIELE:
+BEISPIELE
 
 {examples.format_for_prompt()}
 
-{schema_doc}
+KONTEXT
+{kontext_werte(enriched_context, user_hint_block(user_hint), extra=(f'LINKZIEL DIESES LOGOS: {link_target}' if link_target else ''))}
 """
 
 
@@ -106,60 +67,35 @@ def build_beschreibung_prompt_icon(
     original_alt: str = '',
     user_hint: Optional[str] = None,
 ) -> str:
-    """Icon-Builder — kleine funktionale Symbole, alt_text 3-50 Zeichen."""
-    schema_doc = render_schema_for_prompt(IconBeschreibungOutput)
+    """Icon: die Funktion, 3 bis 50 Zeichen."""
     examples = load_examples('icon')
     link_target = extract_link_target_from_context(enriched_context)
 
-    return f"""{ROLE_BESCHREIBER}
+    return f"""{ROLE_MINI}
 
-{ANTI_HALLUZINATION_KERN}
-
-BILDTYP: icon (kleines funktionales Symbol — Lupe, Hamburger, Warenkorb etc.)
+BILDTYP: icon (kleines funktionales Symbol wie Lupe, Menü, Warenkorb, Zahnrad)
 {bildgroesse_zeile(width, height, label='BILDGRÖSSE')}
 {original_alt_zeile(original_alt)}
 
-KONTEXT:
-{kontext_werte(enriched_context, user_hint_block(user_hint), extra=(f'LINK-ZIEL DIESES ICONS: {link_target}' if link_target else ''))}
+AUFTRAG
+Nenne die Funktion, die das Symbol an dieser Stelle hat: "Suche", "Menü öffnen",
+"Warenkorb anzeigen", "Einstellungen". Eine kurze Formangabe in Klammern ist
+erlaubt, wenn sie dem Verständnis dient: "Suche (Lupe)". Die Form allein
+("Lupe", "Zahnrad-Symbol") ist keine Antwort. Kein Präfix wie "Icon" oder
+"Symbol für". 3 bis 50 Zeichen.
+Ist ein Linkziel angegeben, gilt die Form "Funktion, Link zu Ziel": "Profil, Link
+zum Benutzerkonto". Die Klammer entfällt dann.
+Belegt ist die Funktion durch die übliche Bedeutung des Symbols, den Kontext oder
+den vorhandenen Alt-Text. Ein Zustand ("Menü schließen" statt "Menü öffnen") nur,
+wenn Kontext oder Darstellung ihn zeigen. Ist die Funktion nicht erkennbar:
+"Symbol mit unbekannter Funktion".
 
-DEIN AUFTRAG: Der blinde Nutzer muss SOFORT die Funktion verstehen.
-Sonst nichts. Kein visuelles Design und keine Farben — einzige Ausnahme
-ist die kurze Formbeschreibung in runden Klammern (siehe FORMAT-PFLICHT).
-
-FORMAT-PFLICHT:
-- Die Funktion zuerst, optional gefolgt von einer kurzen Formbeschreibung
-  in runden Klammern: 'Suche (Lupe)', 'Menü öffnen (drei Striche)',
-  'Warenkorb anzeigen', 'Einstellungen (Zahnrad)', 'Hilfe'
-- KEIN Präfix 'Icon —'
-- 3-50 Zeichen (Schema-Untergrenze 3, hier max 50 für icon)
-- Langbeschreibung leer (Schema hat kein langbeschreibung-Feld)
-
-VERBOTEN:
-- Formbeschreibung als Ersatz für die Funktion oder außerhalb der
-  Klammer ('Lupe' allein, 'Zahnrad-Symbol')
-- Farben
-- 'Symbol für ...'
-- 'stilisiertes ...'
-
-VERLINKTE ICONS:
-Wenn LINK-ZIEL gesetzt: Format '[Funktion] – Link zu [Ziel]'; die
-Formbeschreibung in Klammern entfaellt dann (Platz fuer das Link-Ziel,
-max 50 Zeichen)
-- 'Suche – Link zur Suchseite'
-- 'Profil – Link zum Benutzerkonto'
-- 'Warenkorb – Link zum Warenkorb (3 Artikel)' wenn Anzahl im
-  Bild lesbar
-
-ZWEIFELSFALL:
-Wenn Funktion nicht eindeutig ableitbar (weder aus Symbol-Form noch
-aus Kontext noch aus original_alt): 'Symbol mit unbekannter Funktion'
-ist die ehrliche Antwort. NICHT raten.
-
-FEW-SHOT BEISPIELE:
+BEISPIELE
 
 {examples.format_for_prompt()}
 
-{schema_doc}
+KONTEXT
+{kontext_werte(enriched_context, user_hint_block(user_hint), extra=(f'LINKZIEL DIESES SYMBOLS: {link_target}' if link_target else ''))}
 """
 
 
@@ -170,57 +106,35 @@ def build_beschreibung_prompt_funktional(
     original_alt: str = '',
     user_hint: Optional[str] = None,
 ) -> str:
-    """Funktional-Builder — Navigations-/Steuerelemente, alt_text 3-80 Zeichen.
+    """Bedienelement: Funktion und Zustand, 3 bis 80 Zeichen.
 
-    Pipeline überspringt häufig den KI-Aufruf, wenn original_alt bereits
-    eine funktionale Beschreibung enthält (siehe Orchestrator-Frühe-Exit
-    mit classification.original_alt_brauchbar).
+    Die Pipeline überspringt diesen Aufruf oft, wenn der Klassifikator den
+    vorhandenen Alt-Text als brauchbar eingestuft hat.
     """
-    schema_doc = render_schema_for_prompt(IconBeschreibungOutput)
     examples = load_examples('funktional')
 
-    return f"""{ROLE_BESCHREIBER}
+    return f"""{ROLE_MINI}
 
-{ANTI_HALLUZINATION_KERN}
-
-BILDTYP: funktional (Navigations- oder Steuerungselement mit Zustands-
-information — Paginierungspfeile, Vor/Zurück, Fortschrittsanzeigen,
-Breadcrumbs)
+BILDTYP: funktional (Navigations- oder Steuerelement mit Zustand: Blätterpfeile,
+Vor und Zurück, Fortschrittsanzeige, Brotkrumenpfad)
 {original_alt_zeile(original_alt)}
 
-KONTEXT:
-{kontext_werte(enriched_context, user_hint_block(user_hint))}
+AUFTRAG
+Nenne Funktion und Zustand: "Nächste Seite", "Nächste Seite (von 12)", wenn die
+Zahl sichtbar ist, "Vorheriger Beitrag: Titel", wenn der Titel lesbar ist,
+"Fortschritt: 3 von 7". Ein ausgegrautes Element beschreibst du als Zustand:
+"Keine weiteren Seiten". Bei einem Brotkrumenpfad übernimmst du die lesbaren
+Stationen mit ihrem Trennzeichen: "Startseite › Themen › Barrierefreiheit".
+Ein Bild einer Seitennavigation beschreibt die sichtbaren Seiten und die aktive
+Seite, nicht nur einen Pfeil. 3 bis 80 Zeichen.
+Ein vorhandener Alt-Text wird übernommen, wenn Funktion, Ziel und Zustand zum
+Element passen. Ein sprachlich sinnvoller Text kann trotzdem die falsche Aktion
+oder einen veralteten Zustand nennen; dann schreibst du neu.
 
-DEIN AUFTRAG: Funktion und ggf. Zustand benennen.
-
-VORRANG: original_alt-Übernahme
-Wenn original_alt eine sinnvolle funktionale Beschreibung enthält
-(NICHT nur 'Bild' / 'Foto' / 'Grafik'), übernimm ihn wortgetreu oder
-mit minimaler Verbesserung. Du verschlechterst NIEMALS einen brauchbaren
-Original-Alt.
-
-FORMAT-PFLICHT WENN GENERIERT:
-- Funktionsbeschreibung in natürlichem Deutsch
-- Zustandsinformation wenn ableitbar:
-  - 'Nächste Seite' oder 'Nächste Seite (von 12)' wenn Zahl sichtbar
-  - 'Vorheriger Beitrag' oder 'Vorheriger Beitrag: [Titel]' wenn lesbar
-  - 'Fortschritt: 3 von 7' bei Fortschrittsanzeigen
-- 3-80 Zeichen (Schema-Untergrenze 3, hier max 80 für funktional)
-- Langbeschreibung leer (Schema hat kein langbeschreibung-Feld)
-
-BREADCRUMB-SPEZIFIKA:
-Bei Breadcrumb-Navigation: lesbare Pfad-Elemente getrennt durch
-'›' oder '/' je nach visueller Notation, z.B. 'Startseite › Themen
-› Barrierefreiheit'
-
-INAKTIVE / DISABLED-ZUSTÄNDE:
-Wenn Element visuell als inaktiv erkennbar (ausgegraut, geringer
-Kontrast): 'Keine vorherige Seite' / 'Keine weiteren Seiten' — als
-funktionale Beschreibung des Zustands.
-
-FEW-SHOT BEISPIELE:
+BEISPIELE
 
 {examples.format_for_prompt()}
 
-{schema_doc}
+KONTEXT
+{kontext_werte(enriched_context, user_hint_block(user_hint))}
 """

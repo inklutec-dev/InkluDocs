@@ -1,15 +1,17 @@
 {
  "szene": "Eine gewaltige gotische Kathedrale mit zwei filigranen, durchbrochenen Spitztürmen aus dunklem Stein, reich gegliederter Westfassade mit Spitzbogenportalen und Maßwerk; eindeutig die bekannte Silhouette des Kölner Doms. Davor ein gepflasterter Platz.",
- "alt_text": "Der Kölner Dom: eine gotische Kathedrale mit zwei hohen, filigran durchbrochenen Spitztürmen und reich gegliederter Westfassade mit Spitzbogenportalen, davor ein gepflasterter Platz.",
- "begruendung": "Das Bauwerk ist ein eindeutig erkennbares Wahrzeichen — die Doppelturm-Silhouette und gotische Fassade des Kölner Doms sind unverwechselbar. Darum wird es BEIM NAMEN genannt; das nutzt das Modellwissen und ist für blinde Nutzer der wertvollste Einstieg. Danach kompakt die prägenden Merkmale, ohne jedes Maßwerk-Detail auszulisten.",
- "prinzip": "Bekannte, eindeutig erkennbare Wahrzeichen beim Namen nennen — trau dich, dein Wissen zu nutzen — und dann kompakt die charakteristische Bauform ergaenzen.",
+ "alt_text": "Der Kölner Dom mit zwei filigran durchbrochenen Spitztürmen und reich gegliederter Westfassade mit Spitzbogenportalen, davor ein gepflasterter Platz.",
+ "begruendung": "Die Doppelturm-Silhouette ist ein allgemein bekanntes Wahrzeichen, darum steht der Name vorn. Danach die prägenden Merkmale in einem Satz; Material, Gliederung und Umgebung trägt die Langbeschreibung.",
+ "prinzip": "Ein eindeutig erkennbares Wahrzeichen beim Namen nennen und danach kompakt die kennzeichnende Bauform ergänzen.",
  "antwort": {
-  "alt_text": "Der Kölner Dom: eine gotische Kathedrale mit zwei hohen, filigran durchbrochenen Spitztürmen und reich gegliederter Westfassade mit Spitzbogenportalen, davor ein gepflasterter Platz.",
-  "langbeschreibung": "",
+  "alt_text": "Der Kölner Dom mit zwei filigran durchbrochenen Spitztürmen und reich gegliederter Westfassade mit Spitzbogenportalen, davor ein gepflasterter Platz.",
+  "langbeschreibung": "Die gotische Kathedrale ist aus dunklem Stein gebaut. Ihre beiden Türme stehen nebeneinander über der Westfassade und laufen in durchbrochene, spitze Helme aus. Die Fassade ist in mehrere Ebenen gegliedert, unten öffnen sich Spitzbogenportale, darüber liegt Maßwerk. Der Platz vor dem Dom ist gepflastert.",
   "verwendete_inventar_items": [
    "gotische Kathedrale (Kölner Dom)",
    "zwei filigran durchbrochene Spitztürme",
    "Westfassade mit Spitzbogenportalen",
+   "Maßwerk",
+   "dunkler Stein",
    "gepflasterter Platz"
   ],
   "nicht_verwendete_inventar_items": [],

@@ -1,65 +1,68 @@
-"""Anti-Halluzinations-Regeln (höchste Priorität in allen Beschreibungs-Prompts).
+"""Belegregeln der Bildbeschreibung (die eine Stelle für Fakten-Disziplin).
 
-Zwei Exporte (07.09.2026, Prompt-Zusammenbau v2):
-- ANTI_HALLUZINATION_KERN   — Regeln 1 bis 4 (Evidenz, Zwei-Wege-Logik, keine
-  Interaktions-Geschichten, identifizieren oder neutral). Fuer die Mini-Familie
-  (logo/icon/funktional), deren 3 bis 80 Zeichen keine Montage-Pruefung tragen.
-- ANTI_HALLUZINATION_REGELN — Kern plus Regel 5 (Fotomontagen und Collagen).
-  Fuer Foto- und Daten-Familie sowie den Combo-Prompt.
+Fassung September 2026. Zwei Exporte, weil die Mini-Familie (Logo, Icon,
+Bedienelement) mit 3 bis 80 Zeichen keine Montage-, Kontext- und Zählregeln
+braucht:
+- ANTI_HALLUZINATION_KERN   — Regeln 1 bis 4.
+- ANTI_HALLUZINATION_REGELN — Kern plus Fotomontage, Kontext und Wissen, Zählen.
+
+Diese Regeln stehen einmal im Kopf jedes Beschreibungs-Prompts. Kategorie-Teile
+wiederholen sie nicht, sondern ergänzen nur das Besondere ihres Bildtyps.
 """
 
-ANTI_HALLUZINATION_KERN = """ANTI-HALLUZINATIONS-REGELN (höchste Priorität):
+ANTI_HALLUZINATION_KERN = """BELEGREGELN
 
-1. EVIDENZ-BASIERT: Eine Aussage darf nur dann im Output stehen, wenn das Bild oder das
-   Inventar sie stützt. Plausibel klingen reicht NICHT. 'Bei Eventfotos hält man oft
-   Getränke' → bedeutet NICHT, dass auf DIESEM Eventfoto Getränke gehalten werden.
+1. Beleg. Eine Aussage steht im Text, wenn das Bild sie zeigt, der Kontext sie
+   ausdrücklich sagt oder sicheres Allgemeinwissen sie trägt. Plausibel klingen
+   reicht nicht: Dass auf Veranstaltungsfotos oft Getränke gehalten werden, sagt
+   nichts über dieses Foto.
 
-2. KLAR BENENNEN, UNKLARES NEUTRAL — NIEMALS HEDGEN. Entscheide für jede Aussage:
-   - Wird die Identität oder Funktion durch sichtbare Form UND Setting/Kontext klar
-     getragen? Dann benenne sie direkt und mit Bestimmtheit.
-   - Ist sie genuin mehrdeutig (oder im Inventar als Sicherheit 'niedrig' markiert)?
-     Dann beschreibe neutral die reine visuelle Form — ohne Hedge-Wörter.
-   Es gibt nur diese zwei Wege: benannter Fakt ODER neutrale Form. Niemals ein
-   Mittelweg aus Vermutungs-Wörtern. Sind zwei Deutungen gleichermaßen
-   naheliegend, nenne beide gleichwertig ('als Katze oder Fuchs deutbar') —
-   das ist eine präzise Beschreibung der Mehrdeutigkeit, kein Hedging.
-   Beispiele:
-   - 'orange und weiße Abstimmkarten' OK, wenn das Workshop-Setting die Funktion trägt
-   - 'Boeing 777' OK, wenn der Schriftzug am Rumpf lesbar ist
-   - 'runde orangefarbene Gegenstände' OK, wenn die Funktion wirklich nicht erkennbar ist
-   - 'vermutlich Stimmkarten' / 'wirkt wie eine Dose' NICHT (Hedge statt Entscheidung)
-   - 'Medikamentendose' NICHT, wenn nur eine Zylinderform ohne weiteren Beleg sichtbar ist
+2. Zwei Wege, kein Mittelweg. Ist eine Identität, Funktion oder Eigenschaft durch
+   sichtbare Form, lesbaren Text, Kontext oder ein unverwechselbares Design klar
+   getragen, benenne sie bestimmt ("Boeing 777", wenn der Schriftzug lesbar ist;
+   "MacBook", wenn das Gehäuse es eindeutig zeigt). Ist sie es nicht, beschreibe
+   die sichtbare Form ("runde orangefarbene Karten", "ein dunkler Laptop").
+   Vermutungswörter wie vermutlich, wahrscheinlich, könnte, scheint oder wirkt wie
+   gibt es nicht. Sind zwei Deutungen gleich naheliegend, nenne beide gleichwertig
+   ("als Katze oder Fuchs deutbar").
 
-3. KEINE INTERAKTIONS-GESCHICHTEN: Wenn das Inventar nur 'Hund-Cartoon' + 'Laptop' listet,
-   schreibe nicht 'Hund arbeitet am Laptop'. Du erfindest eine Handlung. Erlaubt: 'Hund-
-   Cartoon, daneben ein Laptop.' Punkt.
+3. Keine erfundenen Handlungen, Inhalte und Eigenschaften. Aus "Hund-Cartoon"
+   und "Laptop" wird nicht "Hund arbeitet am Laptop". Eine helle Innenfläche ist
+   keine Füllung, ein Glanz kein Material, eine Bräunung keine Zubereitungsart,
+   eine Halle mit Toren kein Lager. Was du nicht sicher siehst, lässt du weg: Ein
+   erfundenes Detail ist der schwerste Fehler, ein fehlendes keiner.
 
-4. IDENTIFIZIEREN WENN KLAR, NICHT RATEN WENN UNKLAR: Eine eindeutig erkennbare Spezies,
-   Marke oder ein Modell wird benannt (klar lesbares Logo, eindeutige Lackierung,
-   lesbarer Schriftzug). Auch ein UNVERWECHSELBARES PRODUKTDESIGN zählt als Beleg:
-   Ein Produkt, das ein durchschnittlicher sehender Mensch am Design sofort erkennt
-   (z.B. ein MacBook am charakteristischen flachen Aluminiumgehäuse), wird benannt —
-   auch ohne lesbaren Schriftzug. Gegenprobe: ein generischer dunkler Laptop ohne
-   solche Merkmale bleibt 'ein Laptop' und wird NICHT zum MacBook.
-   Ist es UNKLAR ('stilisiertes Tier, Spezies unklar'), dann NICHT
-   'Katze' oder 'Hund' raten, sondern 'Tier' bzw. die im Inventar gelistete
-   Mehrfach-Hypothese."""
+4. Wertungen nur mit Beleg im selben Satz. Stimmung, Wirkung und Charakter darfst
+   du benennen, wenn du das sichtbare Merkmal dazu nennst ("Die Runde ist
+   konzentriert: alle blicken zur Leinwand, niemand spricht"). Ohne solchen Beleg
+   keine Wertung. Kein Wort ist verboten und keines vorgeschrieben; entscheidend
+   ist der Beleg."""
 
 ANTI_HALLUZINATION_REGELN = ANTI_HALLUZINATION_KERN + """
 
-5. FOTOMONTAGEN UND COLLAGEN: Wenn Bildelemente erkennbar nicht zusammenpassen
-   (harte Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
-   Stilbruch zwischen Foto und Grafik, unmögliche Kombinationen wie ein berühmtes
-   Bauwerk in fremder Landschaft), benenne das Bild ausdrücklich als Fotomontage
-   oder Collage und beschreibe die Bestandteile getrennt. Eindeutig erkennbare
-   eingefügte Motive werden benannt (Beispiel: 'Fotomontage: der Kölner Dom steht
-   in einem Wüstencanyon'). Das gilt AUSDRÜCKLICH auch für fotorealistische
-   Montagen ohne sichtbare Kanten oder Stilbruch: Die sachliche UNMÖGLICHKEIT
-   der Kombination ist selbst der Indikator. Erkennst du ein Wahrzeichen oder
-   Objekt an einem Ort, an dem es real nicht stehen kann, dann unterdrücke die
-   Erkennung NICHT als Unsicherheit — benenne beides und kennzeichne das Bild
-   als Fotomontage. Eine Montage als reales Foto zu beschreiben ist ein
-   schwerer Fehler. Die Kennzeichnung erfolgt WOERTLICH mit dem Wort
-   'Fotomontage' oder 'Collage' im Alt-Text (bewaehrter Auftakt:
-   'Fotomontage: ...') — Umschreibungen wie 'aufgesetzte', 'eingefuegte'
-   oder 'montierte' Elemente ersetzen die woertliche Kennzeichnung NICHT."""
+5. Fotomontage und Collage. Passen Bildelemente erkennbar nicht zusammen (harte
+   Freisteller-Kanten, widersprüchliche Schatten, Perspektiven oder Maßstäbe,
+   Stilbruch zwischen Foto und Grafik, sachlich unmögliche Kombinationen wie ein
+   Wahrzeichen an einem fremden Ort), dann nennst du das Bild wörtlich
+   "Fotomontage" oder "Collage" und beschreibst die Bestandteile getrennt. Das
+   gilt auch für fotorealistische Montagen ohne sichtbare Kanten: Die Unmöglichkeit
+   der Kombination ist der Beleg. Suche auch nach kleinen eingefügten Elementen.
+
+6. Kontext und Wissen. Belegte Angaben aus dem Kontext gehören in den Text:
+   Anlass, Organisation, Ort, Datum, Rolle und Name einer Person, Titel einer
+   Grafik. Sie werden direkt ausgesagt, ohne Quellenhinweis wie "laut
+   Bildunterschrift". Der Kontext bestimmt außerdem die Gewichtung: Warum steht
+   das Bild an dieser Stelle, und welche Aspekte bedienen diesen Zweck. Der
+   Kontext erzeugt keine sichtbaren Fakten und keine Handlung, die das Bild nicht
+   zeigt. Widersprechen sich Bild und Kontext, gilt das Bild. Ein Name aus dem
+   Kontext wird nur verwendet, wenn er genau einer sichtbaren Person zuzuordnen
+   ist: nur eine Person sichtbar, oder ein genanntes Merkmal passt auf genau eine
+   Person, oder eine vollständige Reihenfolge-Liste nennt alle sichtbaren Personen.
+   Sonst bleiben Personen unbenannt.
+
+7. Zählen. Bis etwa 15 zählst du Personen und Objekte exakt und nennst die Zahl.
+   Prüfe Vordergrund, Hintergrund, Anschnitte und Verdeckungen getrennt. Die
+   Anzahl einer Reihe ist nicht die Anzahl der Szene: "acht Personen in einer
+   Reihe, dahinter zwei weitere". "Mindestens" oder "etwa" nur bei echter
+   Verdeckung, Anschnitt oder Unschärfe, und dann mit diesem Grund im Text. Bei
+   deutlich mehr als 15 genügt eine ehrliche Größenordnung."""

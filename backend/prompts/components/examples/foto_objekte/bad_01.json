@@ -1,10 +1,9 @@
 {
-  "szene": "Dieselben leeren Keramikschalen mit cremefarbener Glasur.",
-  "alt_text": "Etwa 25 Schalen, viele gefüllt mit einer cremig-weißen Substanz, daneben einzelne mit heller Flüssigkeit.",
+  "szene": "Dieselben 25 leeren Keramikschalen mit cremefarbener Innenglasur auf einem rosa Textiltuch.",
+  "alt_text": "Etwa 25 handgetöpferte Keramikschalen, viele gefüllt mit einer cremig-weißen Masse, auf einem rosa Tuch.",
   "fehler": [
-    "'gefüllt mit cremig-weißer Substanz' erfindet einen Inhalt — die Schalen sind leer, das Cremefarbene ist die Glasur (Halluzination).",
-    "'helle Flüssigkeit' deutet eine Innenfläche als Inhalt fehl.",
-    "bleibt zugleich vage beim Material (sagt nicht 'Keramik', obwohl klar belegt)."
+    "'gefüllt mit einer cremig-weißen Masse' erfindet einen Inhalt: Die Schalen sind leer, das Cremefarbene ist die Innenglasur.",
+    "'handgetöpfert' und 'etwa 25' sind unbelegt: Die Herstellungsart ist nicht sichtbar, und alle Schalen sind zählbar."
   ],
-  "besser": "Material benennen ('Keramik') und das Innere als Glasur oder Oberfläche beschreiben, ohne einen Inhalt zu erfinden. Sichtbaren Inhalt (z.B. Kaffee in einer Tasse) darf man dagegen benennen."
+  "besser": "'25 leere Keramikschalen mit cremefarbener Innenglasur auf einem rosa Textiltuch'."
 }

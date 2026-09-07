@@ -1,14 +1,14 @@
 {
- "szene": "Weißer Teller auf einem Holztisch: ein gebratenes Lachsfilet mit gebräunter Oberseite auf mehreren grünen Spargelstangen, daneben eine Zitronenspalte und eine kleine Lache heller Soße. Die Zusammensetzung der Soße ist nicht erkennbar.",
- "alt_text": "Gebratenes Lachsfilet mit gebräunter Kruste auf grünen Spargelstangen, angerichtet auf einem weißen Teller. Daneben eine Zitronenspalte und eine helle Soße; der Teller steht auf einem Holztisch.",
- "begruendung": "Führt mit der Art des Gerichts (gebratenes Lachsfilet) und der Servierform (weißer Teller). Benennt die klar erkennbaren Komponenten selbstbewusst (Lachs mit gebräunter Kruste, grüner Spargel, Zitrone), weil sie visuell eindeutig sind. Die Soße bleibt 'helle Soße', weil ihre Zusammensetzung nicht erkennbar ist — keine Rezeptur geraten. Keine Geschmackswertung. 'gebräunte Kruste' ist erlaubt, weil die Bräunung sichtbar ist.",
- "prinzip": "Mit der Art des Gerichts führen. Klar Erkennbares konkret benennen, nicht Erkennbares neutral nach Aussehen beschreiben. Visuell belegbare Eigenschaften (Bräunung) ja, Geschmacks- oder Rezeptur-Behauptungen nein.",
+ "szene": "Weißer Teller auf einem Holztisch: ein gebratenes Lachsfilet mit gebräunter Oberseite auf vier grünen Spargelstangen, daneben eine Zitronenspalte und eine kleine Lache heller Soße. Die Zusammensetzung der Soße ist nicht erkennbar, keine Kräuter sichtbar.",
+ "alt_text": "Gebratenes Lachsfilet mit gebräunter Oberseite auf vier grünen Spargelstangen, angerichtet auf einem weißen Teller auf einem Holztisch. Daneben eine Zitronenspalte und eine helle Soße.",
+ "begruendung": "Führt mit dem Gericht und der Servierform. Lachs, Spargel und Zitrone sind klar erkennbar und werden benannt, die Spargelstangen exakt gezählt. Die Soße bleibt 'helle Soße', weil ihre Zusammensetzung nicht sichtbar ist. Die Bräunung ist sichtbar, ein Geschmack nicht.",
+ "prinzip": "Mit dem Gericht führen, klar Erkennbares benennen, Unklares nach Aussehen beschreiben; Bräunung ja, Geschmack und Rezeptur nein.",
  "antwort": {
-  "alt_text": "Gebratenes Lachsfilet mit gebräunter Kruste auf grünen Spargelstangen, angerichtet auf einem weißen Teller. Daneben eine Zitronenspalte und eine helle Soße; der Teller steht auf einem Holztisch.",
+  "alt_text": "Gebratenes Lachsfilet mit gebräunter Oberseite auf vier grünen Spargelstangen, angerichtet auf einem weißen Teller auf einem Holztisch. Daneben eine Zitronenspalte und eine helle Soße.",
   "langbeschreibung": "",
   "verwendete_inventar_items": [
-   "gebratenes Lachsfilet mit gebräunter Kruste",
-   "grüne Spargelstangen",
+   "gebratenes Lachsfilet mit gebräunter Oberseite",
+   "vier grüne Spargelstangen",
    "Zitronenspalte",
    "helle Soße",
    "weißer Teller",

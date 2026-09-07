@@ -39,39 +39,30 @@ ARBEITSWEISE = """ARBEITSWEISE
 
 Du erledigst zwei Schritte in einem Aufruf.
 
-Schritt 1, internes Inventar: Bevor du schreibst, erfasst du das Bild wie ein
-forensischer Analytiker — Objekte, Personen, lesbare Texte, Setting, Form,
-Farbe, Position. Eindeutig Erkennbares benennst du konkret (lesbare Marken,
-Typen, Schriftzuege; oeffentlich bekannte Personen und Wahrzeichen), bei
-echter Unsicherheit notierst du die Mehrdeutigkeit. Dieses Inventar erscheint
-NICHT im Output; es ist die faktische Grundlage fuer jede Aussage in
-Schritt 2. Die Schemafelder verwendete_inventar_items und nicht_im_inventar
-beziehen sich auf dieses interne Inventar.
+Schritt 1, inneres Inventar: Bevor du schreibst, erfasst du das Bild vollständig:
+Objekte, Personen, lesbare Texte, Umgebung, Form, Farbe, Position, Anzahl. Dieses
+Inventar erscheint nicht in der Ausgabe. Es ist die Grundlage für jede Aussage in
+Schritt 2.
 
-Schritt 2, Beschreibung: Aus dem Inventar erzeugst du Alt-Text und
-Langbeschreibung nach den folgenden Vorgaben. Dein Output ist ausschliesslich
-das Schema BeschreibungOutput."""
+Schritt 2, Text: Aus dem Inventar schreibst du Alt-Text und Langbeschreibung nach
+den folgenden Vorgaben."""
 
 
 def _internes_inventar_text(bildtyp_top: BildtypTopLevel) -> str:
-    """Der Text, der im Kategorie-Teil an der Stelle des frueheren Inventar-JSON steht."""
+    """Der Text, der im Kategorie-Teil an der Stelle des Inventars steht."""
     schwerpunkte = BILDTYP_INVENTAR_SCHWERPUNKTE.get(bildtyp_top, '').strip()
-    teile = ['DEIN INTERNES INVENTAR (Schritt 1)', '']
+    teile = ['DEIN INNERES INVENTAR (Schritt 1)', '']
     if schwerpunkte:
         teile += [schwerpunkte, '']
-    teile += ["""HALLUZINATIONSFALLEN: Benenne dir selbst, welche Fehldeutungen bei DIESEM
-Bild naheliegen (helle Glasur als Inhalt, stilisiertes Tier als bestimmte
-Spezies, kleine runde Gegenstaende als bestimmte Funktion) — und meide sie.
-
-MONTAGE-CHECK: Suche aktiv, Quadrant fuer Quadrant, nach Montage-Indikatoren
-(harte Freisteller-Kanten, widerspruechliche Schatten, Perspektiven oder
-Massstaebe, Stilbruch zwischen Foto und Grafik, unmoegliche Kombinationen,
-auch KLEINE eingefuegte Objekte). Erkennst du solche Indikatoren, gilt Regel 5
-der Anti-Halluzinations-Regeln.
-
-Jede Aussage in Schritt 2 muss durch dieses Inventar oder das Bild gedeckt
-sein; sichtbare Bildinformationen duerfen ergaenzt werden, aber nichts darf
-dem Inventar widersprechen."""]
+    if bildtyp_top in ('foto', 'illustration'):
+        teile += ["""Benenne dir selbst, welche Fehldeutungen bei diesem Bild naheliegen (helle
+Innenfläche als Inhalt, stilisiertes Tier als bestimmte Art, kleine runde
+Gegenstände als bestimmte Funktion), und meide sie. Prüfe das Bild Viertel für
+Viertel auf Montage-Hinweise (Belegregel 5)."""]
+    else:
+        teile += ["""Benenne dir selbst, welche Fehldeutungen bei diesem Bild naheliegen (eine Zahl
+der falschen Spalte oder Reihe zugeordnet, eine Farbe nach Alltagsbedeutung statt
+nach Legende gelesen, ein Beispieltext als Datenangabe), und meide sie."""]
     return '\n'.join(teile)
 
 
