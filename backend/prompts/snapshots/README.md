@@ -1,6 +1,6 @@
 # Prompt-Snapshots — InkluDocs v4
 
-Automatisch generiert am 2026-08-21 via `python3 -m scripts.render_prompts`.
+Automatisch generiert am 2026-09-07 via `python3 -m scripts.render_prompts`.
 
 Jede Datei zeigt einen Builder mit Demo-Werten — der **gerenderte Prompt-Text**, 
 den das Modell tatsaechlich bekommt. Aenderungen an den Builder-Python-Dateien 
@@ -11,7 +11,6 @@ keine Edit-Quelle.
 
 ## Builder
 
-- [`01_classification.full.md`](./01_classification.full.md)
 - [`01_classification.lean.frontend-upload.md`](./01_classification.lean.frontend-upload.md)
 - [`01_classification.lean.md`](./01_classification.lean.md)
 - [`01_classification.lean.mit-nutzerhinweis.md`](./01_classification.lean.mit-nutzerhinweis.md)
@@ -20,11 +19,8 @@ keine Edit-Quelle.
 - [`03_combo.diagramm.md`](./03_combo.diagramm.md)
 - [`03_combo.foto_event.md`](./03_combo.foto_event.md)
 - [`03_combo.foto_objekte.md`](./03_combo.foto_objekte.md)
-- [`04_premium_foto_event.full.md`](./04_premium_foto_event.full.md)
 - [`04_premium_foto_event.lean.md`](./04_premium_foto_event.lean.md)
-- [`04_premium_foto_objekte.full.md`](./04_premium_foto_objekte.full.md)
 - [`04_premium_foto_objekte.lean.md`](./04_premium_foto_objekte.lean.md)
-- [`04_premium_foto_personen.full.md`](./04_premium_foto_personen.full.md)
 - [`04_premium_foto_personen.lean.md`](./04_premium_foto_personen.lean.md)
 - [`05_standard_foto_architektur.md`](./05_standard_foto_architektur.md)
 - [`05_standard_foto_essen.md`](./05_standard_foto_essen.md)
@@ -39,5 +35,3 @@ keine Edit-Quelle.
 - [`07_mini_funktional.md`](./07_mini_funktional.md)
 - [`07_mini_icon.md`](./07_mini_icon.md)
 - [`07_mini_logo.md`](./07_mini_logo.md)
-- [`08_validierung.diagramm.md`](./08_validierung.diagramm.md)
-- [`08_validierung.foto_event.md`](./08_validierung.foto_event.md)

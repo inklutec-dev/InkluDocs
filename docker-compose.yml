@@ -23,19 +23,7 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
-      # Altlast Ollama (Pfad seit 29.04.2026 nicht mehr aktiv)
-      - OLLAMA_URL=http://10.100.0.1:11434
-      - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
-      # Mistral - Fallback-Provider + InkluAgent
-      - MISTRAL_ENABLED=${MISTRAL_ENABLED:-true}
-      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
-      - PIPELINE_MODE=${PIPELINE_MODE:-mistral_primary}
-      - MISTRAL_MODEL_CLASSIFY=${MISTRAL_MODEL_CLASSIFY:-mistral-medium-latest}
-      - MISTRAL_MODEL_GENERATE=${MISTRAL_MODEL_GENERATE:-pixtral-large-latest}
-      - MISTRAL_MODEL_VALIDATE=${MISTRAL_MODEL_VALIDATE:-mistral-large-latest}
       # v4 + Bedrock - Defaults sind Production-Werte (Fail-Safe wenn --env-file vergessen)
-      - PIPELINE_VERSION=${PIPELINE_VERSION:-v4}
-      - V4_PASS_MODE=${V4_PASS_MODE:-lean}
       - V4_VERIFY_MODE=kritisch
       - V4_VERIFY_KORREKTUR=on
       - V4_PROMPT_CACHE=${V4_PROMPT_CACHE:-off}  # Prompt-Caching 03.09.2026: Bilddaten ans Ende, fester Anfang mit cache_control (off = Prompts wie vorher)
@@ -48,8 +36,6 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
-      - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
-      - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
       - AWS_REGION=${AWS_REGION:-eu-central-1}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -57,9 +43,6 @@ services:
       - BEDROCK_MODEL_INVENTAR=${BEDROCK_MODEL_INVENTAR:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_GENERATE=${BEDROCK_MODEL_GENERATE:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
-      # Validator
-      - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-false}
-      - VALIDATOR_MODE=${VALIDATOR_MODE:-off}
       # Features
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
       # PDFix-Lizenz (27.08.2026): aus der Env-Datei; leer = Testversion
@@ -68,7 +51,6 @@ services:
       - PDFIX_LICENSE_KEY=${PDFIX_LICENSE_KEY:-}
       - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-false}
       - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
-      - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
       - INKLUAGENT_BEDROCK_MODEL_TEXT=${INKLUAGENT_BEDROCK_MODEL_TEXT:-eu.anthropic.claude-sonnet-4-6}
       - INKLUAGENT_BEDROCK_MODEL_VISION=${INKLUAGENT_BEDROCK_MODEL_VISION:-eu.anthropic.claude-sonnet-4-6}
       - INKLUAGENT_INTENT_MODEL=${INKLUAGENT_INTENT_MODEL:-eu.anthropic.claude-haiku-4-5-20251001-v1:0}

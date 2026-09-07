@@ -1,8 +1,12 @@
 # InkluDocs Prompt-Architektur (v4)
 
-Stand: 16.07.2026 (nach Paket 1 der Prompt-Generalinspektion).
+Stand: 07.09.2026 (Mistral-Abbau; davor 16.07.2026 nach Paket 1 der Prompt-Generalinspektion).
 Zielgruppe: kuenftige Leser und Bearbeiter des Prompt-Systems.
 Alle Pfade relativ zur Backend-Wurzel.
+
+## Stand 07.09.2026: Mistral abgedockt, nur noch der Lean-Weg
+
+Am 07.09.2026 wurde alles entfernt, was nur fuer den frueheren Ausweich-Anbieter Mistral existierte: der Provider-Schalter LLM_PROVIDER, der Mistral-Client, die Vier-Pass-Pipeline (V4_PASS_MODE=full mit eigenem Inventar-Pass und Validator-Pass), der Prompt-Modus V4_PROMPT_MODE=full mit den Drill-Bloecken der Foto-Familie (Hedge-Wort-Verbotsliste, 10-Punkte-Final-Check), der Validator (prompts/builders/validierung.py, ROLE_VALIDATOR, VALIDATOR_MODE) sowie die Legacy-Pipeline v3.7 (pipelines/v3_7.py, context_engine.py, PIPELINE_VERSION). Es gibt jetzt genau einen Weg: Klassifikation, Combo-Aufruf, optionaler Pruefpass — mit Claude ueber Amazon Bedrock. Die gerenderten Produktionsprompts (03_combo.*) sind byteidentisch zum Stand davor; der letzte Stand mit Mistral liegt unter dem Git-Tag sicherung-vor-mistral-abdockung-20260907. Absaetze weiter unten, die Full-Modus, Validator oder v3.7 als vorhanden beschreiben, sind Historie.
 
 ## Die sechs Ebenen des Prompt-Geruests
 
@@ -12,7 +16,7 @@ Jeder Prompt der v4-Pipeline wird aus sechs Ebenen zusammengesetzt, von allgemei
 
 Datei: `prompts/components/roles.py`.
 
-Vier Rollen, eine pro Pass: ROLE_KLASSIFIKATOR, ROLE_INVENTARISIERER, ROLE_BESCHREIBER, ROLE_VALIDATOR, dazu SYSTEM_BESCHREIBUNG als System-Prompt der Beschreibungs-Aufrufe. Die Rollen definieren ZUSTAENDIGKEIT, nicht Einmaligkeit: Kernverbote werden bewusst mehrfach verstaerkt (Rolle plus ANTI_HALLUZINATION plus Bildtyp-Sektion plus Final Check).
+Drei Rollen: ROLE_KLASSIFIKATOR, ROLE_INVENTARISIERER, ROLE_BESCHREIBER (ROLE_VALIDATOR entfiel 07.09.2026 mit dem Validator-Pass), dazu SYSTEM_BESCHREIBUNG als System-Prompt der Beschreibungs-Aufrufe. Die Rollen definieren ZUSTAENDIGKEIT, nicht Einmaligkeit: Kernverbote werden bewusst mehrfach verstaerkt (Rolle plus ANTI_HALLUZINATION plus Bildtyp-Sektion plus Final Check).
 
 ### Ebene 2: Geteilte Constraints
 
@@ -22,10 +26,10 @@ Seit Paket 1 nur noch sechs lebende Module:
 
 - `halluzination.py` — ANTI_HALLUZINATION_REGELN, die einzige Schicht, die wirklich in ALLEN Buildern vorangestellt wird (Zwei-Wege-Logik: benennen oder neutral beschreiben, nie hedgen).
 - `atmosphere_evidenz.py` — ATMOSPHAERE_REGEL (Wertungen nur mit sichtbarem Beleg im selben Satz).
-- `eigennamen.py` — EIGENNAMEN_REGELN (im Bild lesbarer Eigenname schlaegt Kontext; aktiv im karte-Builder und Validator).
+- `eigennamen.py` — EIGENNAMEN_REGELN (im Bild lesbarer Eigenname schlaegt Kontext; aktiv im karte-Builder).
 - `evidenz_stufen.py` — EVIDENZ_STUFEN_REGELN, seit Paket 1 eingegrenzt auf Marken-/Produkt-/Text-Identifikationen; aktiv nur im logo-Builder.
 - `kontaktdaten.py` — KONTAKTDATEN_PFLICHT (lesbare Kontaktdaten wortgetreu; aktiv in tabelle und screenshot — diagramm traegt seit Paket 4 eine eigene LESBARE-TEXTE-Sektion, infografik eine eigene Kontaktdaten-/URL-Passage).
-- `lizenz_logos.py` — LIZENZ_LOGOS_REGELN (CC-Symbole, Zertifikate; aktiv in logo-Builder und Validator).
+- `lizenz_logos.py` — LIZENZ_LOGOS_REGELN (CC-Symbole, Zertifikate; aktiv im logo-Builder).
 
 ### Ebene 3: Die 17 Kategorie-Schubladen
 
@@ -38,7 +42,7 @@ Jedes Bild wird vom Klassifikator in genau eine Schublade geroutet; jede Schubla
 - Mini-Familie (3, in `beschreibung_mini.py`): logo, icon, funktional — kurze funktionale Alt-Texte ohne Langbeschreibung.
 - Sonderfall dekorativ (`dekorativ.py`): kein Prompt, reine Code-Heuristik, Ergebnis ist der WCAG-konforme leere Alt-Text.
 
-Dazu Quermodule: `classification.py` (Pass 1), `inventar.py` (Pass 2), `validierung.py` (Pass 4), `combo.py` (Lean-Mode-Wrapper), `helpers.py` (user_hint_block, load_examples, resolve_prompt_mode).
+Dazu Quermodule: `classification.py` (Pass 1), `inventar.py` (Inventar-Teil des Combo-Prompts), `combo.py` (baut Inventar- und Beschreibungs-Builder zu EINEM Prompt zusammen), `helpers.py` (user_hint_block, load_examples, Bilddaten-Block fuer das Prompt-Caching).
 
 ### Ebene 4: Schemas
 
@@ -55,31 +59,26 @@ Aktuell kuratiert: foto_architektur, foto_essen, foto_event, foto_landschaft, fo
 ### Ebene 6: Pruef-Ebene
 
 - Verify-Pass (`pipelines/v4/orchestrator.py`): optionaler Gegencheck per ENV V4_VERIFY_MODE.
-- Validator-Pass (`prompts/builders/validierung.py`): Pass 4 im Full-Modus, Verhalten per VALIDATOR_MODE (z.B. flag = needs_review setzen).
+- Der fruehere Validator-Pass (Pass 4 der Vier-Pass-Pipeline) ist seit 07.09.2026 entfernt.
 
 Die ENV-Schalter des Gesamtsystems:
 
-- PIPELINE_VERSION — `v4` (Builder-Welt) oder wörtlich `v3_7` (Legacy `context_engine.py`; jeder andere Wert bricht den Container-Start ab).
-- LLM_PROVIDER — bedrock (Claude Sonnet) oder mistral; steuert auch den Prompt-Modus-Default.
-- V4_PASS_MODE — full (4 Paesse) oder lean (2 Aufrufe).
-- V4_PROMPT_MODE — full (Mistral-Drill-Bloecke) oder lean (schlank fuer Sonnet); Default lean bei bedrock.
+- (entfernt 07.09.2026: PIPELINE_VERSION, LLM_PROVIDER, V4_PASS_MODE, V4_PROMPT_MODE, VALIDATOR_MODE — werden nicht mehr gelesen)
 - V4_VERIFY_MODE — Verify-Pass an/aus (off/kritisch/alle).
 - V4_VERIFY_KORREKTUR — off (Default) = eine mitgelieferte Redakteurs-Korrektur wird ignoriert (Flag-Verhalten wie bisher); on = Korrektur wird uebernommen (siehe Paket 3 unten). Nur im Lean-Pfad wirksam.
-- VALIDATOR_MODE — Verhalten des Validator-Passes.
+- BEDROCK_MODEL_CLASSIFY / _GENERATE / _VALIDATE — Modell je Pass (Klassifikation, Combo, Pruefpass); Staging prueft mit Opus 4.6, Produktion mit Sonnet 4.6 (Stand 07.09.2026).
 
 ## Aufruf-Fluss
 
-### Lean (2 Aufrufe, empfohlen mit LLM_PROVIDER=bedrock)
+### Lean (2 Aufrufe plus optionaler Pruefpass) — der einzige Weg
 
 1. Klassifikation (inklusive foto_subtyp).
-2. Combo-Aufruf: Inventar wird intern "im Kopf" erstellt, Output ist direkt das BeschreibungOutput-Schema. Kein Validator-Pass.
+2. Combo-Aufruf: Inventar wird intern "im Kopf" erstellt, Output ist direkt das BeschreibungOutput-Schema.
+3. Pruefpass (V4_VERIFY_MODE kritisch/alle): Gegencheck des Alt-Texts mit dem Pruefmodell, Korrektur per V4_VERIFY_KORREKTUR.
 
-### Full (4 Paesse, Default; richtige Wahl fuer Mistral)
+### Full (4 Paesse) — entfernt 07.09.2026
 
-1. Klassifikation.
-2. Inventar (forensische Bestandsaufnahme).
-3. Beschreibung (Kategorie-Builder).
-4. Validator (Beleg-Pruefung gegen das Inventar).
+Klassifikation, Inventar, Beschreibung, Validator als getrennte Aufrufe; gebaut fuer Mistral. Nur noch im Git-Verlauf.
 
 ## Temperaturen
 
@@ -116,8 +115,8 @@ Aufraeum-Runde nach der Regel-Inventur vom 16.07.2026. Jede Aenderung mit Begrue
 
 Bewusste NICHT-Aenderungen in Paket 1:
 
-- Die harte Behaelter-Wortliste im Validator (foto_objekte-Spezialblock) bleibt unveraendert, bis der A/B-Test klaert, ob Sonnet sie noch braucht.
-- Die Legacy-Engine (context_engine.py) bleibt funktional bestehen, bis der Rueckbau des v3.7-Pfads separat entschieden ist — sie ist jetzt nur klar gekennzeichnet.
+- (erledigt 07.09.2026) Die Behaelter-Wortliste im Validator ist mit dem Validator entfallen; die A/B-Sonde vom 30.06. hatte gezeigt, dass Sonnet die kurze Evidenz-Regel reicht.
+- (erledigt 07.09.2026) context_engine.py ist entfernt; extract_page_profile und is_complex_type leben in backend/seitenprofil.py.
 - Zwei Legacy-Divergenzen bleiben bewusst bestehen, bis der v3.7-Rueckbau entschieden ist: das Farben-Verbot der Legacy-Foto-Prompts (v4 nennt Farben, wo sie tragen) und die Legacy-Erlaubnis von Atmosphaere bei Screenshots (v4 verbietet sie dort). Beide gelten nur im v3.7-Pfad.
 
 ### Review-Feinschliff (16.07.2026, nach Zwei-Rollen-Review)

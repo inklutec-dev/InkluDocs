@@ -57,34 +57,22 @@ services:
       # Chatbot exakt wie in der Produktion laufen (Bedrock/Claude Sonnet).
       - PDF_LANGBESCHREIBUNG=${PDF_LANGBESCHREIBUNG:-off}
       - SECRET_KEY=${SECRET_KEY:-inkludocs-demo-key-2026}
-      - OLLAMA_URL=http://10.100.0.1:11434
-      - OLLAMA_MODEL=qwen3-vl:8b-instruct-q8_0
       - SMTP_SERVER=${SMTP_SERVER}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
       - NOTIFICATION_EMAIL=support@inklutec.de
-      - MISTRAL_ENABLED=${MISTRAL_ENABLED:-true}
-      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
-      - PIPELINE_MODE=${PIPELINE_MODE:-mistral_primary}
-      - MISTRAL_MODEL_CLASSIFY=${MISTRAL_MODEL_CLASSIFY:-mistral-medium-latest}
-      - MISTRAL_MODEL_GENERATE=${MISTRAL_MODEL_GENERATE:-pixtral-large-latest}
-      - MISTRAL_MODEL_VALIDATE=${MISTRAL_MODEL_VALIDATE:-mistral-large-latest}
-      - VALIDATOR_ENABLED=${VALIDATOR_ENABLED:-true}
-      - VALIDATOR_MODE=${VALIDATOR_MODE:-correct}
       # Demo-eigene Basis-URL (hart gesetzt, wie bei Staging).
       - BASE_URL=https://demo.inkludocs.de
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
       - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-false}
       - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
-      - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-mistral}
       - INKLUAGENT_BEDROCK_MODEL_TEXT=${INKLUAGENT_BEDROCK_MODEL_TEXT:-eu.anthropic.claude-sonnet-4-6}
       - INKLUAGENT_BEDROCK_MODEL_VISION=${INKLUAGENT_BEDROCK_MODEL_VISION:-eu.anthropic.claude-sonnet-4-6}
       - INKLUAGENT_INTENT_MODEL=${INKLUAGENT_INTENT_MODEL:-}
       - TAVILY_API_KEY=${TAVILY_API_KEY:-}
       - INKLUAGENT_AGENTIC=${INKLUAGENT_AGENTIC:-false}
-      - LLM_PROVIDER=${LLM_PROVIDER:-mistral}
       - AWS_REGION=${AWS_REGION:-eu-central-1}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
@@ -92,11 +80,8 @@ services:
       - BEDROCK_MODEL_INVENTAR=${BEDROCK_MODEL_INVENTAR:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_GENERATE=${BEDROCK_MODEL_GENERATE:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
-      - PIPELINE_VERSION=${PIPELINE_VERSION:-v3_7}
-      - V4_PASS_MODE=${V4_PASS_MODE:-full}
       - V4_VERIFY_MODE=${V4_VERIFY_MODE:-off}
       - V4_VERIFY_KORREKTUR=${V4_VERIFY_KORREKTUR:-off}
-      - V4_PROMPT_MODE=${V4_PROMPT_MODE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

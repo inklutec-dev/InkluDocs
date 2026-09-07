@@ -1,7 +1,7 @@
 # Mini-Builder icon
 
-- **Builder:** `prompts/builders/beschreibung_mini.py:104`
-- **Generiert:** 2026-08-21
+- **Builder:** `prompts/builders/beschreibung_mini.py:102`
+- **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -112,7 +112,6 @@ ORIGINAL-ALT (falls vorhanden): (keiner)
 
 KONTEXT:
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
-
 
 
 DEIN AUFTRAG: Der blinde Nutzer muss SOFORT die Funktion verstehen.

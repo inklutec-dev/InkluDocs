@@ -43,7 +43,7 @@ Block „Prüfen heißt aufrufen“ (`PRUEFEN`) dazu. Wer den Ton des Agenten
 
 Grenze: Der Werkzeug-Modus braucht `INKLUAGENT_PROVIDER=bedrock` und
 `INKLUAGENT_AGENTIC=true`. Der klassische Vier-Pfad-Dispatcher in
-`chat_engine.py` (Mistral-Zeit) kennt nur Bilder; Formular-Projekte bekommen
+`chat_engine.py` (klassischer Pfad aus der Anfangszeit) kennt nur Bilder; Formular-Projekte bekommen
 ohne Werkzeug-Modus oder bei einem Absturz des Loops eine klare Fehlermeldung
 statt des Bild-Dispatchers.
 

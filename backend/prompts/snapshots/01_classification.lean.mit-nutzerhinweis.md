@@ -1,7 +1,7 @@
 # Klassifikator — Modus: lean, MIT Nutzer-Hinweis (Vorrang-Ordnung)
 
-- **Builder:** `prompts/builders/classification.py:146`
-- **Generiert:** 2026-08-21
+- **Builder:** `prompts/builders/classification.py:152`
+- **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**

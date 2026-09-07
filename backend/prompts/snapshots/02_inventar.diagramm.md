@@ -1,7 +1,7 @@
 # Inventar (Pass 2) — Bildtyp: diagramm
 
 - **Builder:** `prompts/builders/inventar.py:104`
-- **Generiert:** 2026-08-21
+- **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `full`
 - **Demo-Werte:**

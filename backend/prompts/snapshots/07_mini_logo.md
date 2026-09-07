@@ -1,7 +1,7 @@
 # Mini-Builder logo
 
 - **Builder:** `prompts/builders/beschreibung_mini.py:32`
-- **Generiert:** 2026-08-21
+- **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
 - **Demo-Werte:**
@@ -167,7 +167,6 @@ ORIGINAL-ALT (falls vorhanden): Workshop-Foto Inklusion 2026
 
 KONTEXT:
 Workshop-Bericht: Inklusion in der digitalen Arbeitswelt. Am 5. Mai 2026 fand bei INKLUTEC ein eintaegiger Workshop zur barrierefreien Software-Entwicklung statt. Teilnehmende waren Entwickler:innen aus drei Partnerunternehmen.
-
 
 
 DEIN AUFTRAG: Der blinde Nutzer muss SOFORT wissen, welche Organisation oder
