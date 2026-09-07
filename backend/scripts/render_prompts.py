@@ -294,6 +294,15 @@ def render_all(out_dir: Path) -> list[Path]:
             ('05_werte_block.md', 'Block ABGELESENE WERTE (wird an den Beschreibungs-Prompt gehängt)', '', orch._werte_block(w).strip()),
             ('05_zaehl_aufruf.md', 'Aufzähl-Schritt (Foto, eigener Aufruf)', '', _zaehl_prompt_text()),
             ('05_zaehl_block.md', 'Block AUFGEZÄHLT (wird an den Beschreibungs-Prompt gehängt)', '', orch._zaehl_block(z).strip()),
+            ('05_faktenblatt_aufruf_tabelle.md', 'Faktenblatt Tabelle (eigener Aufruf)', '', orch._FAKTENBLATT_PROMPTS['tabelle']),
+            ('05_faktenblatt_aufruf_karte.md', 'Faktenblatt Karte (eigener Aufruf)', '', orch._FAKTENBLATT_PROMPTS['karte']),
+            ('05_faktenblatt_aufruf_infografik.md', 'Faktenblatt Infografik (eigener Aufruf)', '', orch._FAKTENBLATT_PROMPTS['infografik']),
+            ('05_faktenblatt_block.md', 'Block FAKTENBLATT (wird an den Beschreibungs-Prompt gehängt)', '', orch._faktenblatt_block(
+                orch.TabelleFakten(titel='Nährwerte je 100 Gramm', spaltenkoepfe=['Nährstoff', 'Menge'],
+                                   zeilen=[orch.TabelleZeile(bezeichnung='Energie', werte=['52 kcal']),
+                                           orch.TabelleZeile(bezeichnung='Kohlenhydrate', werte=['12 g']),
+                                           orch.TabelleZeile(bezeichnung='Fett', werte=['0 g'])],
+                                   fussnoten=['Quelle: Beispiel AG'], lesbarkeit='gut'), 'tabelle').strip()),
             ('06_pruefpass.md', 'Prüfpass', '', orch._build_verify_prompt(
                 'Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile liegt am Ende über dem Ausgangswert und erreicht 5,0.',
                 enriched_context=DEMO_KONTEXT_JE_TYP['diagramm'], langbeschreibung='(Langbeschreibung des Erzeugers)',

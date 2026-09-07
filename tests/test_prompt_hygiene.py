@@ -75,6 +75,11 @@ def _alle_prompts() -> dict[str, str]:
     z = orch.ZaehlOutput(personen=[orch.ZaehlPerson(position='links', merkmal='blauer Blazer', sichtbarkeit='ganz')],
                          gruppen=[orch.ZaehlGruppe(bezeichnung='Schalen', anzahl=26, zaehlweise='exakt')])
     p['zaehl_block'] = orch._zaehl_block(z)
+    for typ, text in orch._FAKTENBLATT_PROMPTS.items():
+        p[f'faktenblatt_aufruf:{typ}'] = text
+    f = orch.TabelleFakten(titel='Nährwerte', spaltenkoepfe=['Nährstoff', 'je 100 g'],
+                           zeilen=[orch.TabelleZeile(bezeichnung='Energie', werte=['52 kcal'])], lesbarkeit='gut')
+    p['faktenblatt_block'] = orch._faktenblatt_block(f, 'tabelle')
     return p
 
 
@@ -118,7 +123,7 @@ class PromptHygieneTest(unittest.TestCase):
         for name, text in self.prompts.items():
             ohne_titel = titel_muster.sub('', text)
             grossworte = [w for w in re.findall(r'\b[A-ZÄÖÜ]{5,}\b', ohne_titel)
-                          if w not in ('WCAG', 'UNESCO', 'BILDDATEN', 'JSON', 'PFLICHT', 'OPTIONAL', 'BILDTYP', 'BILDGRÖSSE', 'BILDGROESSE', 'ORIGINAL', 'LINKZIEL')]
+                          if w not in ('WCAG', 'UNESCO', 'BILDDATEN', 'JSON', 'PFLICHT', 'OPTIONAL', 'BILDTYP', 'BILDGRÖSSE', 'BILDGROESSE', 'ORIGINAL', 'LINKZIEL', 'ABGELESENE', 'WERTE', 'AUFGEZÄHLT', 'FAKTENBLATT')]
             self.assertLessEqual(len(grossworte), 10, f'{name}: Großschreib-Kaskade {grossworte[:15]}')
 
     def test_pflichtabschnitte_combo(self):

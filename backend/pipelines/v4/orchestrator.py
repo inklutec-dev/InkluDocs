@@ -437,6 +437,145 @@ def _zaehl_block(z: ZaehlOutput) -> str:
     return '\n'.join(zeilen)
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# FAKTENBLATT für Tabelle, Karte und Infografik (Prompt-Runde September 2026):
+# ein enger Ablese-Aufruf je Typ, der nur Struktur und lesbare Werte erfasst;
+# der Text entsteht danach aus dieser Liste. Gleiches Prinzip wie Werte-Ablesung
+# und Aufzähl-Schritt. Schalter V4_FAKTENBLATT (Default on).
+# ─────────────────────────────────────────────────────────────────────────
+class TabelleZeile(BaseModel):
+    bezeichnung: str = Field(description='Text der ersten Spalte dieser Zeile, wortgetreu')
+    werte: list[str] = Field(default_factory=list, description='Werte der Zeile in Spaltenreihenfolge, wortgetreu mit Einheit; leere Zelle als "leer"')
+
+
+class TabelleFakten(BaseModel):
+    titel: str = Field(default='', description='Tabellentitel oder Überschrift, wortgetreu; sonst leer')
+    spaltenkoepfe: list[str] = Field(default_factory=list, description='Alle Spaltenköpfe von links nach rechts, wortgetreu')
+    zeilen: list[TabelleZeile] = Field(default_factory=list, description='Alle Zeilen von oben nach unten')
+    summenzeilen: list[str] = Field(default_factory=list, description='Bezeichnungen der Zeilen, die eine Summe oder Gesamtsumme tragen')
+    fussnoten: list[str] = Field(default_factory=list, description='Fußnoten, Quelle, Stand, wortgetreu')
+    lesbarkeit: str = Field(description='"gut", "teilweise" oder "schlecht"')
+
+
+class KarteOrt(BaseModel):
+    name: str = Field(description='Beschriftung des Ortes oder Gebiets, wortgetreu')
+    kategorie: str = Field(default='', description='Legendenkategorie oder Symbol, dem der Ort zugeordnet ist')
+    lage: str = Field(default='', description='Lage auf der Karte, z. B. "Nordwesten", "Mitte", "am Fluss"')
+
+
+class KarteFakten(BaseModel):
+    titel: str = Field(default='', description='Kartentitel, wortgetreu; sonst leer')
+    gebiet: str = Field(description='Gezeigtes Gebiet, wie es die Karte selbst benennt oder wie es eindeutig erkennbar ist')
+    legende: list[str] = Field(default_factory=list, description='Legendeneinträge: Symbol oder Farbe und ihre Bedeutung, wortgetreu')
+    orte: list[KarteOrt] = Field(default_factory=list, description='Alle markierten Orte oder Gebiete')
+    zeitstand: str = Field(default='', description='Jahreszahl oder Stand, wenn auf der Karte lesbar; sonst leer')
+    lesbarkeit: str = Field(description='"gut", "teilweise" oder "schlecht"')
+
+
+class InfografikStation(BaseModel):
+    nummer: int = Field(description='Laufende Nummer in Leserichtung oder nach der Nummerierung der Grafik')
+    bezeichnung: str = Field(description='Überschrift oder Kernbegriff der Station, wortgetreu')
+    inhalt: str = Field(default='', description='Zahlen und Kernaussage der Station, wortgetreu, ein bis zwei Sätze')
+
+
+class InfografikFakten(BaseModel):
+    titel: str = Field(default='', description='Titel der Grafik, wortgetreu; sonst leer')
+    aufbau: str = Field(description='Ablauf, Gliederung, Kennzahlen-Übersicht oder Vergleich')
+    stationen: list[InfografikStation] = Field(default_factory=list, description='Alle Stationen oder Abschnitte in Reihenfolge')
+    verbindungen: list[str] = Field(default_factory=list, description='Pfeile oder Linien mit Bedeutung, z. B. "Schritt 1 führt zu Schritt 2"')
+    zahlen: list[str] = Field(default_factory=list, description='Alle Zahlen mit Bezug, wortgetreu, z. B. "39 Prozent Wachstumschancengesetz"')
+    fussnoten: list[str] = Field(default_factory=list, description='Quelle, Stand, Kontaktdaten, Internetadressen, wortgetreu')
+    lesbarkeit: str = Field(description='"gut", "teilweise" oder "schlecht"')
+
+
+_FAKTENBLATT_TYPEN = {'tabelle': TabelleFakten, 'karte': KarteFakten, 'infografik': InfografikFakten}
+
+_FAKTENBLATT_PROMPTS = {
+    'tabelle': (
+        'Du liest eine Tabelle ab. Keine Deutung, kein Fließtext, nur Daten.\n'
+        'Erfasse Titel, alle Spaltenköpfe von links nach rechts und dann jede Zeile von oben nach unten '
+        'mit Bezeichnung und allen Werten in Spaltenreihenfolge, wortgetreu mit Einheit und Trennzeichen. '
+        'Eine leere Zelle oder ein Strich ist "leer", keine Null. Zeilen, die laut ihrer Beschriftung eine '
+        'Summe tragen, nennst du unter summenzeilen. Fußnoten, Quelle und Stand wortgetreu. Erfinde keine '
+        'Zeile und keinen Wert; Unleserliches schreibst du als "unlesbar".'
+    ),
+    'karte': (
+        'Du liest eine Karte ab. Keine Deutung, kein Fließtext, nur Daten.\n'
+        'Erfasse Titel, das gezeigte Gebiet, jeden Legendeneintrag mit seiner Bedeutung und jeden markierten '
+        'Ort oder jedes markierte Gebiet mit Beschriftung, Legendenkategorie und Lage. Farben und Symbole '
+        'bedeuten, was die Legende sagt. Eine Jahreszahl oder einen Stand nur, wenn er auf der Karte lesbar '
+        'ist. Erfinde keinen Ort; Unleserliches schreibst du als "unlesbar".'
+    ),
+    'infografik': (
+        'Du liest eine Infografik ab. Keine Deutung, kein Fließtext, nur Daten.\n'
+        'Erfasse Titel und Aufbau (Ablauf, Gliederung, Kennzahlen-Übersicht, Vergleich), dann jede Station '
+        'oder jeden Abschnitt in Reihenfolge mit Bezeichnung, Zahlen und Kernaussage wortgetreu, jede Pfeil- '
+        'oder Linienverbindung mit ihrer Bedeutung, alle Zahlen mit Bezug und alle Fußnoten, Quellen, '
+        'Kontaktdaten und Internetadressen. Erfinde keine Station und keine Zahl; Unleserliches schreibst du '
+        'als "unlesbar".'
+    ),
+}
+
+
+def _faktenblatt_an() -> bool:
+    return os.environ.get('V4_FAKTENBLATT', 'on').strip().lower() == 'on'
+
+
+def _lies_faktenblatt(image_path: str, typ: str):
+    """Enger Ablese-Aufruf für tabelle, karte, infografik; None bei Fehler, Schalter aus oder fremdem Typ."""
+    schema = _FAKTENBLATT_TYPEN.get(typ)
+    if schema is None or not _faktenblatt_an():
+        return None
+    try:
+        return call_with_schema(
+            model=MODEL_GENERATE, prompt=_FAKTENBLATT_PROMPTS[typ], image_path=image_path,
+            schema=schema, max_tokens=2500, temperature=0.0,
+        )
+    except Exception as e:
+        log.warning('Faktenblatt (%s) fehlgeschlagen (ignoriert): %s', typ, e)
+        return None
+
+
+def _faktenblatt_block(f, typ: str) -> str:
+    zeilen = ['', '', 'FAKTENBLATT', '',
+              'Ein eigener Ablese-Schritt hat Struktur und lesbare Werte dieses Bildes erfasst. Diese Liste ist die '
+              'Grundlage für jede Zahl, jede Bezeichnung und jede Reihenfolge in Alt-Text und Langbeschreibung. '
+              'Vergleiche sie mit dem Bild: Widerspricht das Bild einem Eintrag eindeutig, nenne den Widerspruch '
+              'statt zu raten. Was hier "unlesbar" oder "leer" ist, bleibt es auch im Text.', '']
+    if getattr(f, 'titel', ''):
+        zeilen.append(f'Titel: {f.titel}')
+    zeilen.append(f'Lesbarkeit: {f.lesbarkeit}')
+    if typ == 'tabelle':
+        zeilen.append('Spaltenköpfe: ' + ' | '.join(f.spaltenkoepfe))
+        for z in f.zeilen:
+            zeilen.append(f'{z.bezeichnung}: ' + ' | '.join(z.werte))
+        if f.summenzeilen:
+            zeilen.append('Summenzeilen: ' + ', '.join(f.summenzeilen))
+        if f.fussnoten:
+            zeilen.append('Fußnoten: ' + ' | '.join(f.fussnoten))
+    elif typ == 'karte':
+        zeilen.append(f'Gebiet: {f.gebiet}')
+        if f.zeitstand:
+            zeilen.append(f'Zeitstand: {f.zeitstand}')
+        if f.legende:
+            zeilen.append('Legende: ' + ' | '.join(f.legende))
+        zeilen.append(f'Markierte Orte: {len(f.orte)}')
+        for o in f.orte:
+            zeilen.append(f'  - {o.name}' + (f' ({o.kategorie})' if o.kategorie else '') + (f', {o.lage}' if o.lage else ''))
+    elif typ == 'infografik':
+        zeilen.append(f'Aufbau: {f.aufbau}')
+        zeilen.append(f'Stationen: {len(f.stationen)}')
+        for st in f.stationen:
+            zeilen.append(f'  {st.nummer}. {st.bezeichnung}' + (f': {st.inhalt}' if st.inhalt else ''))
+        if f.verbindungen:
+            zeilen.append('Verbindungen: ' + ' | '.join(f.verbindungen))
+        if f.zahlen:
+            zeilen.append('Zahlen: ' + ' | '.join(f.zahlen))
+        if f.fussnoten:
+            zeilen.append('Fußnoten: ' + ' | '.join(f.fussnoten))
+    return '\n'.join(zeilen)
+
+
 _VERIFY_KRITISCHE_TYPEN = frozenset({'foto_personen', 'foto_event', 'foto_objekte', 'screenshot',
                                      'foto_landschaft', 'foto_architektur',
                                      'diagramm', 'tabelle', 'infografik', 'illustration', 'karte', 'strukturformel'})  # 07.09.2026: Datengrafiken dazu (Korpus-Befund: Diagrammwerte falsch, nie geprueft)  # +landschaft/architektur 17.07.: Wahrzeichen- und Montage-Risiko (Schwingshandl-Fall)
@@ -497,7 +636,7 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'sichtbares Merkmal sie zwingend trägt, sie im Bild lesbar sind oder das Namensregister sie '
         'nennt. Sonst setzt die Korrektur die neutrale Form.\n'
         '- Zahlen und Trendwörter bei Diagrammen und Tabellen: Lies jeden genannten Wert selbst ab. '
-        'Liegt ein Block ABGELESENE WERTE oder AUFGEZÄHLT vor, sind dessen Zahlen und rechnerische '
+        'Liegt ein Block ABGELESENE WERTE, AUFGEZÄHLT oder FAKTENBLATT vor, sind dessen Zahlen und rechnerische '
         'Kernaussagen der Maßstab; ein Trendwort, das ihnen widerspricht ("wieder auf Ausgangsniveau" '
         'bei ungleichem Anfangs- und Endwert, "zweithöchster Wert" ohne passende Bezugsmenge), ist '
         'eine Beanstandung.\n'
@@ -950,7 +1089,8 @@ def _run_lean_pipeline(
     diagramm_werte_gelesen = False
     zaehl_pass_gelaufen = False
     werte_json = None
-    fakten_block = ''  # abgelesene Werte oder Aufzaehlung, geht auch an den Pruefer
+    fakten_block = ''  # abgelesene Werte, Aufzaehlung oder Faktenblatt, geht auch an den Pruefer
+    faktenblatt_gelesen = False
     if effective_bildtyp in _MINI_TYPES:
         # Mini-Pipelines (logo/icon/funktional): unveraendert von Multi-Pass
         with bilddaten_am_ende(_prompt_cache_an()):
@@ -1003,8 +1143,16 @@ def _run_lean_pipeline(
         if effective_bildtyp in _ZAEHL_TYPEN:
             _z = _zaehle_bild(image_path)
             if _z is not None:
-                combo_prompt += _zaehl_block(_z)
+                fakten_block = _zaehl_block(_z)
+                combo_prompt += fakten_block
                 zaehl_pass_gelaufen = True
+        if effective_bildtyp in _FAKTENBLATT_TYPEN:
+            _f = _lies_faktenblatt(image_path, effective_bildtyp)
+            if _f is not None:
+                fakten_block = _faktenblatt_block(_f, effective_bildtyp)
+                combo_prompt += fakten_block
+                faktenblatt_gelesen = True
+                werte_json = _f.model_dump_json()
         combo_prompt += _user_prompt_suffix(user_prompt)
         combo_prompt += _language_suffix(language)
         combo_prompt += _variation_suffix(previous_alt)
@@ -1099,12 +1247,13 @@ def _run_lean_pipeline(
             f'lean:classified:{classification.bildtyp},combo:{effective_bildtyp}'
             + (',werte:gelesen' if diagramm_werte_gelesen else '')
             + (',zaehl:gelaufen' if zaehl_pass_gelaufen else '')
+            + (',faktenblatt:gelesen' if faktenblatt_gelesen else '')
             + (f',verify:ok={verify_result.alt_text_belegt}' if verify_result is not None else '')
             + (',verify_korrektur:applied' if verify_korrektur_applied else '')
             + (',verify_lang:korrigiert' if verify_lang_korrigiert else '')
             + (',verify:fehler' if verify_status == 'fehler' else '')
             + (f',verify_korrektur:{verify_korrektur_schritt}' if verify_korrektur_schritt in ('gekuerzt', 'verworfen') else '')
         ),
-        'inventar_json': werte_json,  # 07.09.: Ableseliste des Diagramm-Werte-Passes (sonst None)
+        'inventar_json': werte_json,  # Ableseliste (Diagramm-Werte oder Faktenblatt), sonst None
         'validation_result': verify_result.model_dump_json() if verify_result is not None else None,
     }
