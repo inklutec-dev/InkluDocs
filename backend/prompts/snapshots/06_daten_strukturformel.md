@@ -1,6 +1,6 @@
 # Daten-Builder strukturformel
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:1081`
+- **Builder:** `prompts/builders/beschreibung_daten.py:1088`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`

@@ -1,6 +1,6 @@
 # Daten-Builder karte
 
-- **Builder:** `prompts/builders/beschreibung_daten.py:694`
+- **Builder:** `prompts/builders/beschreibung_daten.py:701`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`

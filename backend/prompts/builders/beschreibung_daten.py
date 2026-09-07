@@ -225,6 +225,13 @@ VERMEIDEN: generische Einleitungen ("Das Bild zeigt", "Eine Illustration von"
 als bloße Floskel ohne Inhalt), Festlegung auf eine Deutung, die das Bild
 nicht trägt.
 
+BEISPIEL- UND PLATZHALTERTEXTE: Steht in einer Sprechblase, einem Platzhalter
+oder einer Attrappe ein Beispieltext (etwa ein Muster-Alt-Text oder ein
+Dummy-Titel), dann benennst du ihn als Beispieltext ("eine Sprechblase mit
+einem Beispiel-Alt-Text") und zitierst ihn NICHT als Inhalt des Bildes. Ein
+Siegel oder Abzeichen wird als grafisches Element benannt, nicht als
+Zertifizierung behauptet.
+
 
 {KUNSTWERK_REGEL}
 

@@ -302,6 +302,91 @@ def _werte_block(w: WerteOutput) -> str:
     return '\n'.join(zeilen)
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# AUFZAEHL-SCHRITT (07.09.2026, Pruefkorpus: Zaehlfehler in allen Varianten — „vier" statt
+# drei Personen, „ein Dutzend" statt acht bis zehn, „etwa 30" statt 26 Schalen; weder Regel
+# noch Pruefer fingen sie). Prinzip wie beim Diagramm-Werte-Pass: ein enger Aufruf, der
+# Personen und Objektgruppen AUFZAEHLT statt zaehlt (jede Person einzeln mit Position und
+# Merkmal), die Zahl folgt aus der Liste. Ergebnis geht als verbindlicher Block in den
+# Combo-Prompt. Schalter V4_ZAEHL_PASS (Default on); nur fuer Personen-, Event- und
+# Objektfotos.
+# ─────────────────────────────────────────────────────────────────────────
+class ZaehlPerson(BaseModel):
+    position: str = Field(description='Position im Bild, z.B. "links", "zweite von links", "hinten rechts", "vorne angeschnitten"')
+    merkmal: str = Field(description='Ein bis zwei sichtbare Merkmale (Kleidung, Haar, Gegenstand in der Hand)')
+    sichtbarkeit: str = Field(description='"ganz", "teilweise verdeckt" oder "angeschnitten"')
+
+
+class ZaehlGruppe(BaseModel):
+    bezeichnung: str = Field(description='Was gezaehlt wurde, z.B. "Keramikschalen", "Smartphones", "Huete"')
+    anzahl: int = Field(description='Gezaehlte Stueckzahl')
+    zaehlweise: str = Field(description='"exakt" wenn alle Stuecke klar einzeln sichtbar; "mindestens" wenn Verdeckung oder Anschnitt; "etwa" nur bei sehr vielen kleinen Stuecken')
+    hinweis: str = Field(default='', description='Warum nicht exakt, ein Halbsatz')
+
+
+class ZaehlOutput(BaseModel):
+    personen: list[ZaehlPerson] = Field(default_factory=list, description='JEDE sichtbare Person einzeln, von links nach rechts, auch Rueckenansichten und angeschnittene')
+    personen_hinweis: str = Field(default='', description='Verdeckungen oder Unsicherheiten bei Personen, ein Satz; leer wenn eindeutig')
+    gruppen: list[ZaehlGruppe] = Field(default_factory=list, description='Zaehlbare Objektgruppen, die fuer die Beschreibung relevant sind (nicht jede Kleinigkeit)')
+    lesbare_texte: list[str] = Field(default_factory=list, description='Lesbare Schriftzuege, Schilder, Kennzeichen, Buchstabe fuer Buchstabe')
+
+
+def _zaehl_pass_an() -> bool:
+    return os.environ.get('V4_ZAEHL_PASS', 'on').strip().lower() == 'on'
+
+
+_ZAEHL_TYPEN = frozenset({'foto_personen', 'foto_event', 'foto_objekte'})
+
+
+def _zaehle_bild(image_path: str) -> Optional[ZaehlOutput]:
+    """Eng gefasster Aufzaehl-Aufruf; None bei Fehler oder Schalter aus."""
+    if not _zaehl_pass_an():
+        return None
+    prompt = (
+        'Du erfasst ein Foto forensisch. Keine Beschreibung, keine Deutung, kein Fliesstext — nur eine Liste.\n'
+        'Erstens: Zaehle NICHT, sondern zaehle AUF. Gehe das Bild von links nach rechts durch und trage jede '
+        'sichtbare Person einzeln ein — mit Position und ein bis zwei Merkmalen. Auch Rueckenansichten, '
+        'teilweise verdeckte und angeschnittene Personen bekommen einen Eintrag; markiere sie als solche. '
+        'Eine Person, von der nur ein Arm oder Schatten zu sehen ist, traegst du nicht ein, sondern erwaehnst sie '
+        'im Hinweis. Gesichter interessieren nicht; identifiziere niemanden.\n'
+        'Zweitens: Fuer zaehlbare Objektgruppen, die das Bild praegen (Schalen, Geraete, Karten, Huete, Fahrzeuge), '
+        'zaehle Stueck fuer Stueck und gib an, ob die Zahl exakt ist oder wegen Verdeckung "mindestens". '
+        '"Etwa" nur bei sehr vielen kleinen Stuecken, dann mit der ehrlichen Spanne im Hinweis.\n'
+        'Drittens: Lesbare Texte Buchstabe fuer Buchstabe.\n'
+        'Was nicht sicher sichtbar ist, kommt nicht in die Liste.'
+    )
+    try:
+        return call_with_schema(
+            model=MODEL_GENERATE, prompt=prompt, image_path=image_path,
+            schema=ZaehlOutput, max_tokens=1500, temperature=0.0,
+        )
+    except Exception as e:
+        log.warning('Aufzaehl-Schritt fehlgeschlagen (ignoriert): %s', e)
+        return None
+
+
+def _zaehl_block(z: ZaehlOutput) -> str:
+    zeilen = ['', '', 'AUFGEZAEHLT (Schritt 0, verbindlich)', '',
+              'Ein eigener Aufzaehl-Schritt hat Personen, Objektgruppen und lesbare Texte dieses Bildes '
+              'einzeln erfasst. Diese Liste ist die Faktengrundlage fuer JEDE Anzahl und JEDEN lesbaren Text: '
+              'Nenne genau die Zahl, die sich aus der Liste ergibt; bei "mindestens" schreibst du "mindestens n" '
+              'oder "n in einer Reihe, dahinter weitere"; bei "etwa" die Spanne. Keine Personen und Objekte '
+              'ueber diese Liste hinaus. Lesbare Texte uebernimmst du wortgetreu.', '']
+    if z.personen:
+        zeilen.append(f'Personen: {len(z.personen)}')
+        for i, p in enumerate(z.personen, 1):
+            zeilen.append(f'  {i}. {p.position}: {p.merkmal} ({p.sichtbarkeit})')
+    else:
+        zeilen.append('Personen: keine')
+    if z.personen_hinweis:
+        zeilen.append(f'  Hinweis: {z.personen_hinweis}')
+    for g in z.gruppen:
+        zeilen.append(f'{g.bezeichnung}: {g.anzahl} ({g.zaehlweise}' + (f', {g.hinweis}' if g.hinweis else '') + ')')
+    if z.lesbare_texte:
+        zeilen.append('Lesbare Texte: ' + ' | '.join(z.lesbare_texte))
+    return '\n'.join(zeilen)
+
+
 _VERIFY_KRITISCHE_TYPEN = frozenset({'foto_personen', 'foto_event', 'foto_objekte', 'screenshot',
                                      'foto_landschaft', 'foto_architektur',
                                      'diagramm', 'tabelle', 'infografik', 'illustration', 'karte', 'strukturformel'})  # 07.09.2026: Datengrafiken dazu (Korpus-Befund: Diagrammwerte falsch, nie geprueft)  # +landschaft/architektur 17.07.: Wahrzeichen- und Montage-Risiko (Schwingshandl-Fall)
@@ -393,6 +478,12 @@ def _build_verify_prompt(alt_text: str, language: str = 'de', enriched_context: 
         'oder beide Zaehlweisen vertretbar, BEHALTE die Zahl des Erzeugers und '
         'ergaenze hoechstens das Gesamtbild.\n'
         '- Farben und eindeutige visuelle Merkmale\n'
+        '- DEUTUNGEN OHNE BELEG (07.09.2026): Rollen ("moderierende Person", "Chefin"), Anlaesse '
+        '("Karneval", "Feier"), Art- oder Gattungszusaetze ("Suesswasser-", "Amano-"), Orte, Museen, '
+        'Jahreszeiten, Tageszeiten und Materialien ("Frottee", "Metall") sind NUR belegt, wenn ein '
+        'sichtbares Merkmal sie zwingend traegt oder sie im Bild lesbar sind. Sonst sind sie eine '
+        'Beanstandung, und die Korrektur setzt die neutrale Form ("eine Person, zu der die anderen '
+        'blicken", "Garnele", "ein Tuch").\n'
         '- VOLLSTAENDIGKEIT: Fehlen zentrale, fuer die Bildfunktion wichtige '
         'Elemente (lesbarer Text, ein Wahrzeichen, praegende Objekte)?\n'
         '- MONTAGE-CHECK: Passen Bildelemente erkennbar nicht zusammen (harte '
@@ -847,6 +938,7 @@ def _run_lean_pipeline(
     # === Beschreibung: Mini-Pipeline oder Combo ===
     beschreibung: BeschreibungOutput | IconBeschreibungOutput
     diagramm_werte_gelesen = False
+    zaehl_pass_gelaufen = False
     if effective_bildtyp in _MINI_TYPES:
         # Mini-Pipelines (logo/icon/funktional): unveraendert von Multi-Pass
         with bilddaten_am_ende(_prompt_cache_an()):
@@ -894,6 +986,11 @@ def _run_lean_pipeline(
             if _werte is not None:
                 combo_prompt += _werte_block(_werte)
                 diagramm_werte_gelesen = True
+        if effective_bildtyp in _ZAEHL_TYPEN:
+            _z = _zaehle_bild(image_path)
+            if _z is not None:
+                combo_prompt += _zaehl_block(_z)
+                zaehl_pass_gelaufen = True
         combo_prompt += _user_prompt_suffix(user_prompt)
         combo_prompt += _language_suffix(language)
         combo_prompt += _variation_suffix(previous_alt)
@@ -981,6 +1078,7 @@ def _run_lean_pipeline(
         'pipeline_steps': (
             f'lean:classified:{classification.bildtyp},combo:{effective_bildtyp}'
             + (',werte:gelesen' if diagramm_werte_gelesen else '')
+            + (',zaehl:gelaufen' if zaehl_pass_gelaufen else '')
             + (f',verify:ok={verify_result.alt_text_belegt}' if verify_result is not None else '')
             + (',verify_korrektur:applied' if verify_korrektur_applied else '')
             + (',verify_lang:korrigiert' if verify_lang_korrigiert else '')

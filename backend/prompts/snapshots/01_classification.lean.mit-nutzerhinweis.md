@@ -1,6 +1,6 @@
 # Klassifikator — Modus: lean, MIT Nutzer-Hinweis (Vorrang-Ordnung)
 
-- **Builder:** `prompts/builders/classification.py:152`
+- **Builder:** `prompts/builders/classification.py:156`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
@@ -86,6 +86,10 @@ ROUTING-REGELN (in dieser Prioritaet):
    Logo macht aus einem Bild kein logo.
 6. Alleinstehendes Markenzeichen ohne Foto-Kontext -> logo.
 7. Plakat oder Flyer mit Layout und Information -> infografik.
+   ABER: Produkt- oder Werbegrafik mit Text-Kacheln, Sprechblasen, Siegeln
+   oder Symbolen und OHNE Datenreihen, Stationen oder erklaerende Beziehungen
+   -> illustration, NICHT infografik (07.09.2026). infografik braucht Daten,
+   Prozessschritte oder erklaerte Zusammenhaenge.
 8. Kleine UI-Symbole (Lupe, Burger, Pfeil) -> icon oder funktional.
    funktional = Element mit Zustand, icon = generisches Symbol.
 9. dekorativ haengt an der FUNKTION, nicht an der Groesse: rein
