@@ -32,8 +32,6 @@ def clear_project_cache():
     """Cache leeren (am Anfang jedes Projekts aufrufen)."""
     _project_image_cache.clear()
 
-from context_engine import get_prompt, clean_alt_text, remove_hedge_words
-
 # PDFIX-INTEGRATION (24.04.2026): strukturelle Figure-Extraktion fuer getaggte PDFs
 import logging as _logging
 import pdfix_roundtrip as _pdfix
@@ -41,46 +39,12 @@ _pdfix_log = _logging.getLogger("inkludocs.pdfix")
 _pipeline_log = _logging.getLogger("inkludocs.pipeline")
 # END PDFIX-INTEGRATION
 
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434")
-MODEL_NAME = os.environ.get("OLLAMA_MODEL", "qwen3-vl:8b")
-
-# v3.3 (14.04.2026): Dreistufige Mistral-Pipeline
-# Alle drei Modelle ueber Env-Variablen austauschbar, damit wir ohne Code-Aenderung
-# nachsteuern koennen wenn Qualitaetstests andere Ergebnisse zeigen.
-MISTRAL_MODEL_CLASSIFY = os.environ.get("MISTRAL_MODEL_CLASSIFY", "mistral-medium-latest")
-MISTRAL_MODEL_GENERATE = os.environ.get("MISTRAL_MODEL_GENERATE",
-                                         os.environ.get("MISTRAL_MODEL", "pixtral-large-latest"))
-MISTRAL_MODEL_VALIDATE = os.environ.get("MISTRAL_MODEL_VALIDATE", "mistral-large-latest")
-# "correct" = Validator darf ueberschreiben, "flag" = nur needs_review setzen
-VALIDATOR_MODE = os.environ.get("VALIDATOR_MODE", "correct").lower()
-VALIDATOR_ENABLED = os.environ.get("VALIDATOR_ENABLED", "true").lower() in ("true", "1", "yes")
-
-# T5 (03.05.2026, Phase A): Pipeline-Version Front-Door-Routing.
-# Default v3_7 = aktuelle dreistufige Mistral-Pipeline. v4 = neue 4-Pass-Architektur (in Bau).
-# Bei PIPELINE_VERSION=v4 muss das v4-Modul beim Container-Start importierbar sein — sonst
-# Fail-Fast (uvicorn startet nicht). Begruendung: stiller Fallback auf v3_7 wuerde Audit-Trail
-# verfaelschen (Behoerden-Compliance), und ein Operator der v4 setzt muss wissen wenn v4 fehlt.
-PIPELINE_VERSION = os.environ.get("PIPELINE_VERSION", "v4").lower()
-_KNOWN_PIPELINE_VERSIONS = ("v3_7", "v4")
-if PIPELINE_VERSION not in _KNOWN_PIPELINE_VERSIONS:
-    raise RuntimeError(
-        f"PIPELINE_VERSION={PIPELINE_VERSION!r} unbekannt. "
-        f"Gueltige Werte: {_KNOWN_PIPELINE_VERSIONS}. Container-Start abgebrochen."
-    )
-if PIPELINE_VERSION == "v4":
-    try:
-        from pipelines.v4.orchestrator import generate_alt_text_v4 as _v4_entry
-    except ImportError as e:
-        raise RuntimeError(
-            f"PIPELINE_VERSION=v4 gesetzt, aber pipelines.v4.orchestrator.generate_alt_text_v4 "
-            f"nicht importierbar: {e}. Container-Start abgebrochen."
-        ) from e
-
-# v2.2.1: Prompt fuer Dekorativ-Recheck (zweiter Qwen-Call bei unsicherer Klassifikation)
-DEKORATIV_RECHECK_PROMPT = """/no_think
-Ist dieses Bild rein dekorativ (abstrakte Form, Trennlinie, Farbverlauf, Schmuckelement) oder enthaelt es inhaltliche Information (Personen, Objekte, Text, Symbole)?
-Antworte NUR mit diesem JSON:
-{"ist_dekorativ": true} oder {"ist_dekorativ": false, "kurzbeschreibung": "Max 150 Zeichen, beschreibt was zu sehen ist"}"""
+# Pipeline-Version: seit 07.09.2026 gibt es nur noch v4 (Klassifikation + Combo +
+# Pruefpass, Claude ueber Bedrock). Die Konstante bleibt als Salz im Cache-Key,
+# damit alte v3.7-Eintraege nie als Treffer zurueckkommen. Der Import auf
+# Modulebene ist bewusst Fail-Fast: fehlt der Orchestrator, startet der Container nicht.
+PIPELINE_VERSION = "v4"
+from pipelines.v4.orchestrator import generate_alt_text_v4 as _v4_entry
 
 
 def _cluster_drawings(drawings, page_rect, gap=100, min_size=50):
@@ -297,7 +261,7 @@ def _extract_via_pdfix(pdf_path: str, output_dir: str) -> list:
     """PDFIX-INTEGRATION: Figures via PDFix-SDK extrahieren (Heines Script).
 
     Mappt das von Heines Export gelieferte Format auf die InkluDocs-Struktur,
-    die die Mistral-Pipeline erwartet. Fuer jede Figure wird ein dict geliefert
+    die die Alt-Text-Pipeline erwartet. Fuer jede Figure wird ein dict geliefert
     wie beim fitz-Pfad, damit der Downstream-Code unveraendert bleibt.
 
     Erweiterung 27.05.2026: page_view_path + page_text fuer UI-Vorschau.
@@ -588,8 +552,8 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
     return images
 
 
-MAX_IMAGE_DIM = 1536  # v3.7 (28.04.2026): erhoeht von 1024 (Qwen-Legacy) auf 1536. Mistral Large 3 / Pixtral-Large akzeptieren mehr — bei niedrigerer Aufloesung halluziniert das Modell Details auf kleinen Objekten (z.B. orangefarbene Token werden zu "Getraenken").
-MAX_IMAGE_BYTES = 4 * 1024 * 1024  # 4 MB max for Ollama
+MAX_IMAGE_DIM = 1536  # laengste Kante fuer den Modellaufruf (Bedrock/Claude); bei niedrigerer Aufloesung halluziniert das Modell Details auf kleinen Objekten (z.B. orangefarbene Token werden zu "Getraenken"). Seit 28.04.2026 1536 statt 1024.
+MAX_IMAGE_BYTES = 4 * 1024 * 1024  # 4 MB Obergrenze fuer den Modellaufruf
 
 
 MAX_ALT_TEXT_LENGTH = 400  # Characters - enough for key info, not overwhelming for screen readers
@@ -675,178 +639,17 @@ def _resize_image_for_model(image_path: str) -> str:
         return base64.b64encode(f.read()).decode()
 
 
-MIN_IMAGE_SIZE = 50  # Minimum dimension in pixels for KI analysis
-
-
-def _call_ollama(image_path: str, prompt: str) -> dict:
-    """Send an image + prompt to Ollama and return the parsed result dict."""
-    # Skip tiny images that crash Ollama (tracking pixels, spacers)
-    try:
-        with Image.open(image_path) as check_img:
-            if check_img.width < MIN_IMAGE_SIZE or check_img.height < MIN_IMAGE_SIZE:
-                return {
-                    "bildtyp": "dekorativ",
-                    "alt_text": "",
-                    "ist_dekorativ": True,
-                    "konfidenz": "hoch",
-                }
-    except Exception:
-        pass
-
-    img_b64 = _resize_image_for_model(image_path)
-
-    try:
-        response = httpx.post(
-            f"{OLLAMA_URL}/api/generate",
-            json={
-                "model": MODEL_NAME,
-                "prompt": prompt,
-                "images": [img_b64],
-                "stream": False,
-                "options": {
-                    "temperature": 0,
-                    "num_ctx": 4096,
-                    "num_predict": 4000,
-                },
-            },
-            timeout=300.0,
-        )
-        response.raise_for_status()
-        result = response.json()
-        response_text = result.get("response", "")
-        thinking_text = result.get("thinking", "")
-        text = response_text or thinking_text
-
-        # Strip <think>...</think> blocks
-        clean_text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
-        if not clean_text:
-            clean_text = text
-
-        # If response is empty but thinking has content, extract alt-text from thinking
-        if not response_text and thinking_text:
-            alt_patterns = [
-                r'"alt_text":\s*"([^"]+)"',
-                r'[Aa]lt[_-]?[Tt]ext:\s*"([^"]+)"',
-                r'[Aa]lt[_-]?[Tt]ext\s+(?:should|would|could|is|shall)\s+be\s*"([^"]+)"',
-                r'the\s+alt[_-]?\s*text\s+(?:is|should be|would be)\s*"([^"]+)"',
-                r'[Aa]lt[_-]?[Tt]ext\s+(?:waere|ist|lautet|sollte sein)\s*"([^"]+)"',
-                r'[Aa]lt[_-]?[Tt]ext[^"]*"([^"]{15,})"',
-                r'[Aa]lt[_-]?[Tt]ext:\s*(.+?)(?:\n|$)',
-            ]
-            found_alt = None
-            for pat in alt_patterns:
-                m = re.search(pat, thinking_text)
-                if m and len(m.group(1).strip()) > 10:
-                    found_alt = m.group(1).strip().strip('"').strip('.')
-                    if any(kw in found_alt.lower() for kw in ['should be', 'would be', 'the user', 'according to', 'the rules say']):
-                        found_alt = None
-                        continue
-                    break
-
-            bildtyp = "unbekannt"
-            typ_match = re.search(r'"bildtyp":\s*"([^"]+)"', thinking_text)
-            if not typ_match:
-                typ_match = re.search(r'[Bb]ildtyp[:\s]+["\']?(\w+)', thinking_text)
-            if not typ_match:
-                typ_map = {'logo': 'logo', 'foto': 'foto', 'photo': 'foto',
-                           'diagramm': 'diagramm', 'chart': 'diagramm', 'graph': 'diagramm',
-                           'tabelle': 'tabelle', 'table': 'tabelle',
-                           'screenshot': 'screenshot', 'banner': 'screenshot',
-                           'icon': 'icon', 'dekorativ': 'dekorativ', 'decorative': 'dekorativ'}
-                for keyword, typ in typ_map.items():
-                    if keyword in thinking_text.lower():
-                        bildtyp = typ
-                        break
-            if typ_match:
-                bildtyp = typ_match.group(1).strip()
-
-            if found_alt:
-                return {
-                    "bildtyp": bildtyp,
-                    "alt_text": found_alt,
-                    "ist_dekorativ": "dekorativ" in found_alt.lower() or bildtyp == "dekorativ",
-                    "raw_response": thinking_text,
-                }
-
-        # Try to parse JSON from cleaned response
-        try:
-            json_matches = list(re.finditer(r'\{[^{}]*"alt_text"[^{}]*\}', clean_text))
-            if json_matches:
-                parsed = json.loads(json_matches[-1].group())
-                alt = _combine_alt_text(parsed.get("alt_text", ""), parsed.get("langbeschreibung", ""))
-                return {
-                    "bildtyp": parsed.get("bildtyp", "unbekannt"),
-                    "alt_text": alt,
-                    "langbeschreibung": parsed.get("langbeschreibung", ""),
-                    "ist_dekorativ": parsed.get("ist_dekorativ", False),
-                    "konfidenz": parsed.get("konfidenz", "mittel"),
-                    "raw_response": text,
-                }
-            start = clean_text.find("{")
-            end = clean_text.rfind("}") + 1
-            if start >= 0 and end > start:
-                parsed = json.loads(clean_text[start:end])
-                # Classification response (has bildtyp but no alt_text)
-                if parsed.get("bildtyp") and parsed.get("alt_text") is None:
-                    return {
-                        "bildtyp": parsed["bildtyp"],
-                        "alt_text": "",
-                        "ist_dekorativ": parsed.get("ist_dekorativ", False),
-                        "konfidenz": parsed.get("konfidenz", "mittel"),
-                        "raw_response": text,
-                    }
-                # Generation response (has alt_text)
-                if parsed.get("alt_text") is not None:
-                    alt = _combine_alt_text(parsed.get("alt_text", ""), parsed.get("langbeschreibung", ""))
-                    return {
-                        "bildtyp": parsed.get("bildtyp", "unbekannt"),
-                        "alt_text": alt,
-                        "langbeschreibung": parsed.get("langbeschreibung", ""),
-                        "ist_dekorativ": parsed.get("ist_dekorativ", False),
-                        "konfidenz": parsed.get("konfidenz", "mittel"),
-                        "raw_response": text,
-                    }
-        except (json.JSONDecodeError, AttributeError):
-            pass
-
-        fallback_text = clean_text
-        for pattern in [r'```json\s*', r'\s*```', r'^\s*\{.*\}\s*$']:
-            fallback_text = re.sub(pattern, '', fallback_text, flags=re.DOTALL)
-        fallback_text = fallback_text.strip()
-
-        if not fallback_text or len(fallback_text) < 5:
-            fallback_text = clean_text.strip()
-
-        return {
-            "bildtyp": "unbekannt",
-            "alt_text": fallback_text if fallback_text else f"[Modell-Antwort konnte nicht verarbeitet werden: {text[:200]}]",
-            "ist_dekorativ": False,
-            "raw_response": text,
-        }
-    except Exception as e:
-        return {
-            "bildtyp": "fehler",
-            "alt_text": f"Fehler bei der Analyse: {str(e)}",
-            "ist_dekorativ": False,
-            "raw_response": str(e),
-        }
-
-
 def generate_alt_text(image_path: str, context: str = "", image_type: str = None,
                       width: int = 0, height: int = 0, original_alt: str = "",
                       force_regenerate: bool = False, temperature: float = 0.0,
                       language: str = "de", previous_alt: str = "",
                       user_prompt: str = "") -> dict:
-    """Front-Door — Cache-Check + Routing zur konfigurierten Pipeline-Version.
+    """Front-Door — Cache-Check, dann die v4-Pipeline.
 
-    T5 (03.05.2026, Phase A): explizites Routing v3_7|v4 ueber PIPELINE_VERSION env.
-    T6 (03.05.2026, Phase A): persistenter Content-Hash-Cache vor Pipeline-Aufruf.
+    T6 (03.05.2026): persistenter Content-Hash-Cache vor dem Pipeline-Aufruf.
       - force_regenerate=True: Cache uebersprungen, Pipeline laeuft, Result wird gecacht.
-      - force_regenerate=False: Cache-Hit liefert direkt zurueck (kein Mistral-Call).
-
-    user_hint kommt erst mit v4 (Chatbot-Modus, Sektion 8.1 der Architektur-Doku).
-    Solange v3.7 keinen user_hint kennt, ist er hier None — der Cache-Key bleibt
-    dadurch stabil mit dem zukuenftigen v4-Aufruf-Pattern.
+      - force_regenerate=False: Cache-Treffer liefert direkt zurueck (kein Modellaufruf).
+    Der Slot user_hint im Cache-Key traegt den eigenen Nutzer-Prompt (06.07.2026).
     """
     from cache import build_cache_key, get_cached, set_cached
 
@@ -865,429 +668,28 @@ def generate_alt_text(image_path: str, context: str = "", image_type: str = None
             return cached
 
     # Cache-Miss oder force_regenerate -> Pipeline rufen
-    if PIPELINE_VERSION == "v4":
-        result = _v4_entry(
-            image_path,
-            enriched_context=context,
-            image_type_override=image_type,
-            width=width,
-            height=height,
-            original_alt=original_alt,
-            temperature=temperature,
-            language=language,
-            previous_alt=previous_alt,
-            user_prompt=user_prompt,
-        )
-    else:
-        # Hinweis Ausgabesprache: der v3.7-Mistral-Fallback kennt keinen
-        # language-Parameter und liefert immer Deutsch (bewusst so belassen).
-        from pipelines.v3_7 import generate_alt_text_v3_7
-        result = generate_alt_text_v3_7(image_path, context, image_type, width, height, original_alt)
+    result = _v4_entry(
+        image_path,
+        enriched_context=context,
+        image_type_override=image_type,
+        width=width,
+        height=height,
+        original_alt=original_alt,
+        temperature=temperature,
+        language=language,
+        previous_alt=previous_alt,
+        user_prompt=user_prompt,
+    )
 
     # Auch bei force_regenerate: Cache neu befuellen, damit nachfolgende Anfragen Hits werden
     set_cached(cache_key, content_hash, PIPELINE_VERSION, image_type, None, result)
     return result
 
 
-def _call_mistral_json(image_path: str, prompt: str, model: str, max_tokens: int = 400) -> dict | None:
-    """v3.3: Generic Mistral API call returning parsed JSON dict.
-    Used for Stufe 1 (Klassifikation) and Stufe 3 (Validierung).
-    Returns None on any failure."""
-    api_key = os.environ.get("MISTRAL_API_KEY", "")
-    if not api_key:
-        return None
-
-    # Strip Qwen-specific /no_think directive
-    clean_prompt = prompt.replace("/no_think", "").strip()
-
-    try:
-        img_b64 = _resize_image_for_model(image_path)
-        response = httpx.post(
-            "https://api.mistral.ai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={
-                "model": model,
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": clean_prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}},
-                    ],
-                }],
-                "max_tokens": max_tokens,
-                "temperature": 0,
-            },
-            timeout=60.0,
-        )
-        response.raise_for_status()
-        data = response.json()
-        text = data["choices"][0]["message"]["content"]
-        # Strip code fences and control chars
-        clean = re.sub(r"```json\s*", "", text)
-        clean = re.sub(r"\s*```", "", clean)
-        clean = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", clean)
-        start = clean.find("{")
-        end = clean.rfind("}") + 1
-        if start < 0 or end <= start:
-            return None
-        try:
-            return json.loads(clean[start:end])
-        except json.JSONDecodeError:
-            return json.loads(clean[start:end].replace("\n", " ").replace("\t", " "))
-    except Exception as e:
-        print(f"Mistral JSON-Call Fehler ({model}) fuer {image_path}: {type(e).__name__}: {e}")
-        return None
-
-
-def _call_mistral_classify(image_path: str, classification_prompt: str) -> dict:
-    """v3.3 Stufe 1: Klassifikation ueber Mistral API.
-    Fallback-Default bei Fehler: bildtyp='foto' damit die Pipeline weiterlaeuft."""
-    parsed = _call_mistral_json(image_path, classification_prompt, MISTRAL_MODEL_CLASSIFY, max_tokens=200)
-    if not parsed:
-        return {
-            "bildtyp": "foto",
-            "alt_text": "",
-            "ist_dekorativ": False,
-            "konfidenz": "niedrig",
-            "original_alt_brauchbar": False,
-            "_classify_failed": True,
-        }
-    return {
-        "bildtyp": parsed.get("bildtyp", "foto"),
-        "alt_text": "",
-        "ist_dekorativ": bool(parsed.get("ist_dekorativ", False)),
-        "konfidenz": parsed.get("konfidenz", "mittel"),
-        "original_alt_brauchbar": bool(parsed.get("original_alt_brauchbar", False)),
-    }
-
-
-def _call_mistral_validate(image_path: str, alt_text: str, langbeschreibung: str = "", context: str = "") -> dict | None:
-    """v3.4 Stufe 3: Validierung des generierten Alt-Texts.
-    v3.4 (14.04.2026): Bekommt jetzt den gleichen Kontext wie der Generator,
-    damit Link-Verweise ("verweist auf: ...") nicht faelschlicherweise als
-    Halluzinationen markiert werden.
-    v3.7 (24.04.2026): Validator korrigiert jetzt auch die Langbeschreibung
-    (vorher nur Alt-Text). max_tokens auf 2000, damit Platz fuer Lang-Korrektur.
-    Returns dict mit validierung_ok/probleme/korrektur_alt_text/korrektur_langbeschreibung,
-    oder None on failure."""
-    if not VALIDATOR_ENABLED:
-        return None
-    if not alt_text or len(alt_text.strip()) < 5:
-        return None
-    from context_engine import get_validation_prompt
-    prompt = get_validation_prompt(alt_text, langbeschreibung, context=context)
-    parsed = _call_mistral_json(image_path, prompt, MISTRAL_MODEL_VALIDATE, max_tokens=2000)
-    if not parsed:
-        return None
-    # v3.7: beide Korrekturfelder; Fallback auf alten Schluessel fuer Rueckwaertskompat.
-    korrektur_alt = (parsed.get("korrektur_alt_text")
-                     or parsed.get("korrektur_vorschlag")
-                     or "").strip()
-    korrektur_lang = (parsed.get("korrektur_langbeschreibung") or "").strip()
-    return {
-        "validierung_ok": bool(parsed.get("validierung_ok", True)),
-        "probleme": parsed.get("probleme", []) or [],
-        "korrektur_alt_text": korrektur_alt,
-        "korrektur_langbeschreibung": korrektur_lang,
-    }
-
-
-def _apply_validator(image_path: str, result: dict, context: str = "") -> dict:
-    """v3.4 Stufe 3: Run validator and mutate result dict accordingly.
-    - In VALIDATOR_MODE=correct: Validator may overwrite alt_text AND langbeschreibung if he flags AND provides corrections.
-    - In VALIDATOR_MODE=flag: Validator only sets needs_review, never overwrites.
-    On validator failure: result is returned unchanged, needs_review stays False.
-    Always records pipeline_steps + validation_result on the dict.
-    v3.4 (14.04.2026): context wird an den Validator durchgereicht.
-    v3.7 (24.04.2026): Korrektur erstreckt sich jetzt auf alt_text UND langbeschreibung,
-    damit beide Felder konsistent bleiben. Fallback: wenn Validator nur Alt-Text korrigiert,
-    wird langbeschreibung geleert (lieber leer als widerspruechlich zum korrigierten Alt).
-    Plus: bei konfidenz mittel/niedrig immer needs_review=True (Bug #2)."""
-    result.setdefault("pipeline_steps", "classified,generated")
-    result.setdefault("needs_review", False)
-    result.setdefault("validation_result", "")
-
-    # Bug #2 (24.04.2026): mittel/niedrig-Konfidenz immer zur Review markieren,
-    # unabhaengig vom Validator-Ergebnis. Das ist die semantische Bedeutung des Feldes.
-    konfidenz = (result.get("konfidenz") or "").strip().lower()
-    if konfidenz in ("mittel", "niedrig"):
-        result["needs_review"] = True
-
-    alt = result.get("alt_text", "") or ""
-    lang = result.get("langbeschreibung", "") or ""
-
-    validation = _call_mistral_validate(image_path, alt, lang, context=context)
-    if validation is None:
-        result["pipeline_steps"] = "classified,generated,validation_failed"
-        return result
-
-    result["pipeline_steps"] = f"classified,generated,validated:{MISTRAL_MODEL_VALIDATE}"
-    try:
-        result["validation_result"] = json.dumps(validation, ensure_ascii=False)[:1500]
-    except Exception:
-        result["validation_result"] = ""
-
-    if validation["validierung_ok"]:
-        return result
-
-    # Probleme gefunden
-    correction_alt = validation.get("korrektur_alt_text", "").strip()
-    correction_lang = validation.get("korrektur_langbeschreibung", "").strip()
-    if VALIDATOR_MODE == "correct" and correction_alt and len(correction_alt) > 10:
-        print(f"v3.7 Validator-Korrektur fuer {image_path}:")
-        print(f"  alt: '{alt[:60]}' -> '{correction_alt[:60]}'")
-        if correction_lang:
-            print(f"  lang: '{lang[:60]}' -> '{correction_lang[:60]}'")
-        else:
-            print(f"  lang: '{lang[:60]}' -> (geleert, da Validator keine Lang-Korrektur lieferte)")
-        result["alt_text"] = correction_alt[:400]
-        # v3.7: Langbeschreibung mit korrigieren, leer als sicherer Fallback
-        result["langbeschreibung"] = correction_lang[:1500] if correction_lang else ""
-        result["needs_review"] = True  # Korrektur wurde angewendet, Mensch sollte trotzdem gegenlesen
-    else:
-        print(f"v3.7 Validator-Flag fuer {image_path}: {validation.get('probleme', [])}")
-        result["needs_review"] = True
-
-    return result
-
-
-def _call_mistral_generate(image_path: str, bildtyp: str, context: str,
-                           width: int = 0, height: int = 0,
-                           original_alt: str = "", original_alt_brauchbar: bool = False) -> dict | None:
-    """Call Mistral Pixtral API for Insight-First alt-text generation (Stufe 2).
-    v2.2: Passes image dimensions and original alt for thumbnail/improvement modes.
-    """
-    from context_engine import get_generation_prompt
-
-    api_key = os.environ.get("MISTRAL_API_KEY", "")
-    if not api_key:
-        return None
-
-    try:
-        img_b64 = _resize_image_for_model(image_path)
-        prompt = get_generation_prompt(
-            bildtyp=bildtyp, context_text=context,
-            width=width, height=height,
-            original_alt=original_alt,
-            original_alt_brauchbar=original_alt_brauchbar
-        )
-
-        response = httpx.post(
-            "https://api.mistral.ai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={
-                "model": MISTRAL_MODEL_GENERATE,
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
-                    ]
-                }],
-                "max_tokens": 2500,
-                "temperature": 0,
-            },
-            timeout=60.0
-        )
-        response.raise_for_status()
-
-        # Parse Mistral API response – handle control chars
-        try:
-            resp_data = response.json()
-        except Exception:
-            raw = response.text
-            raw = raw.replace('\r\n', '\n').replace('\r', '\n')
-            raw = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', raw)
-            resp_data = json.loads(raw)
-
-        choice = resp_data["choices"][0]
-        text = choice["message"]["content"]
-
-        # v3.7 Debug-Logging fuer Truncation-Audit (negative Bewertungen 22.-26.04.2026):
-        # finish_reason='length' = Token-Cap-Treffer; 'stop' = Modell entschied selbst.
-        # Zusammen mit completion_tokens und repr(text) klar diagnostizierbar.
-        # print() statt logger.info() weil Custom-Logger nicht konfiguriert ist
-        # und uvicorn die Default-Level auf WARN haelt.
-        if os.getenv("DEBUG_GEN_RAW", "false").lower() == "true":
-            _finish_reason = choice.get("finish_reason", "?")
-            _usage = resp_data.get("usage", {}) or {}
-            print(
-                f"[GEN-RAW] {image_path}: finish_reason={_finish_reason} "
-                f"completion_tokens={_usage.get('completion_tokens', '?')} "
-                f"text_len={len(text)} content={text!r}",
-                flush=True,
-            )
-
-        # Parse Mistral response (expects {"alt_text": "...", "langbeschreibung": "..."})
-        clean = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
-        clean = re.sub(r'```json\s*', '', clean)
-        clean = re.sub(r'\s*```', '', clean)
-        # Remove control characters that break json.loads
-        clean = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', clean)
-
-        start = clean.find("{")
-        end = clean.rfind("}") + 1
-        if start >= 0 and end > start:
-            try:
-                parsed = json.loads(clean[start:end])
-            except json.JSONDecodeError:
-                try:
-                    parsed = json.loads(clean[start:end].replace('\n', ' ').replace('\t', ' '))
-                except json.JSONDecodeError:
-                    # Bei abgeschnittenem/kaputtem JSON: Text bereinigen statt rohen JSON ausgeben
-                    fallback_text = clean[start:end]
-                    fallback_text = re.sub(r'[{}\[\]"\\]', '', fallback_text)
-                    fallback_text = re.sub(r'(alt_text|langbeschreibung)\s*:', '', fallback_text)
-                    fallback_text = re.sub(r',\s*$', '', fallback_text).strip()
-                    fallback_text = re.sub(r'\s+', ' ', fallback_text)
-                    if len(fallback_text) > 10:
-                        print(f"WARNUNG: JSON-Parse fehlgeschlagen, verwende bereinigten Fallback-Text")
-                        return {
-                            "alt_text": _combine_alt_text(fallback_text[:350], ""),
-                            "langbeschreibung": "",
-                            "ist_dekorativ": False,
-                        }
-                    parsed = {}
-            alt_text = parsed.get("alt_text", "").strip()
-            if alt_text and len(alt_text) > 5:
-                return {
-                    "alt_text": _combine_alt_text(alt_text, ""),
-                    "langbeschreibung": parsed.get("langbeschreibung", ""),
-                    "ist_dekorativ": False,
-                }
-
-        # If JSON parsing fails, use the raw text – clean up JSON artifacts
-        if len(clean) > 10:
-            cleaned_fallback = re.sub(r'[{}\[\]"\\]', '', clean)
-            cleaned_fallback = re.sub(r'(alt_text|langbeschreibung)\s*:', '', cleaned_fallback)
-            cleaned_fallback = re.sub(r'\s+', ' ', cleaned_fallback).strip()
-            return {
-                "alt_text": _combine_alt_text(cleaned_fallback[:350], ""),
-                "langbeschreibung": "",
-                "ist_dekorativ": False,
-            }
-
-        return None
-    except Exception as e:
-        print(f"Mistral API Fehler fuer {image_path}: {type(e).__name__}: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
-
-
-def _should_escalate_to_mistral(result: dict) -> bool:
-    """Decide if we should escalate to Mistral API based on Qwen result quality."""
-    MISTRAL_ENABLED = os.environ.get("MISTRAL_ENABLED", "false").lower() in ("true", "1")
-    if not MISTRAL_ENABLED:
-        return False
-
-    konfidenz = result.get("konfidenz", "mittel")
-    bildtyp = result.get("bildtyp", "")
-    alt_text = result.get("alt_text", "")
-
-    # Escalate if quality indicators suggest Qwen struggled
-    if konfidenz == "niedrig":
-        return True
-    if konfidenz == "mittel" and bildtyp in ("strukturformel", "karte", "infografik", "diagramm"):
-        return True
-    if bildtyp in ("strukturformel", "diagramm"):
-        return True
-    if "nicht lesbar" in alt_text or "nicht erkennbar" in alt_text:
-        return True
-    if len(alt_text) < 20 and bildtyp not in ("logo", "dekorativ"):
-        return True
-
-    return False
-
-
-def _call_mistral(image_path: str, context: str, image_type: str = None, qwen_result: dict = None) -> dict | None:
-    """Call Mistral Pixtral API as intelligent fallback.
-    Uses Qwen's pre-analysis as context for better results.
-    Returns result dict or None if Mistral is not configured/fails."""
-    api_key = os.environ.get("MISTRAL_API_KEY", "")
-    if not api_key:
-        return None
-
-    try:
-        img_b64 = _resize_image_for_model(image_path)
-
-        # Build enriched context with Qwen's pre-analysis
-        mistral_context = context
-        if qwen_result:
-            qwen_info = (
-                f"[Voranalyse lokales Modell] Bildtyp: {qwen_result.get('bildtyp', 'unbekannt')}, "
-                f"Vorlaeufiger Alt-Text: {qwen_result.get('alt_text', '')[:200]}. "
-                f"WICHTIG: Pruefe das Bild vollstaendig selbst. Wenn im vorlaeufigen Alt-Text 'nicht lesbar' oder 'nicht erkennbar' steht, "
-                f"versuche es trotzdem selbst zu lesen. Lies alle Texte, Zahlen und Beschriftungen direkt aus dem Bild."
-            )
-            mistral_context = f"{qwen_info}\n{context}"
-
-        prompt = get_prompt(image_type=image_type or qwen_result.get("bildtyp"), context_text=mistral_context)
-
-        response = httpx.post(
-            "https://api.mistral.ai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={
-                "model": "pixtral-large-latest",
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
-                    ]
-                }],
-                "max_tokens": 2500,
-                "temperature": 0,
-            },
-            timeout=60.0
-        )
-        response.raise_for_status()
-        text = response.json()["choices"][0]["message"]["content"]
-        return _parse_response(text)
-    except Exception as e:
-        print(f"Mistral API Fehler: {e}")
-        return None
-
-
-def _apply_postfilter(result: dict, image_hash: str = "") -> dict:
-    """v2.2.1: Apply postfilter to clean context interpretations from any alt-text.
-    Runs AFTER all generation paths (Mistral, Qwen, Dekorativ-Recheck).
-    v2.2.3: Also writes to project cache if image_hash is provided."""
-    if not result or result.get("ist_dekorativ"):
-        # Cache dekorative Ergebnisse auch
-        if image_hash and result:
-            _project_image_cache[image_hash] = result.copy()
-        return result
-    alt = result.get("alt_text", "")
-    if alt:
-        result["alt_text"] = clean_alt_text(alt)
-        # v2.2.3: Hedge-Woerter auch innerhalb des Satzes entfernen
-        result["alt_text"] = remove_hedge_words(result["alt_text"])
-    # v2.2.3: Gleicher Filter auch fuer Langbeschreibung
-    lang = result.get("langbeschreibung", "")
-    if lang:
-        result["langbeschreibung"] = clean_alt_text(lang)
-        result["langbeschreibung"] = remove_hedge_words(result["langbeschreibung"])
-        # v2.2.4: Truncation-Fix – unvollstaendige Saetze am Ende abschneiden
-        cleaned_lang = result["langbeschreibung"].strip()
-        if cleaned_lang and cleaned_lang[-1] not in '.!?)"”':
-            # Find last complete sentence
-            last_period = cleaned_lang.rfind('.')
-            last_excl = cleaned_lang.rfind('!')
-            last_paren = cleaned_lang.rfind(')')
-            cut_pos = max(last_period, last_excl, last_paren)
-            if cut_pos > len(cleaned_lang) * 0.5:
-                result["langbeschreibung"] = cleaned_lang[:cut_pos + 1]
-    # v2.2.3: Cache result for duplicate detection
-    if image_hash:
-        _project_image_cache[image_hash] = result.copy()
-    return result
-
-
 def generate_alt_text_for_image(image_path: str, context_text: str = "", image_type: str = None,
                                 width: int = 0, height: int = 0, original_alt: str = "",
                                 language: str = "de") -> dict:
-    """Generate alt-text for a standalone image. Uses the same dual-model pipeline.
+    """Generate alt-text for a standalone image. Uses the same v4 pipeline.
     v2.2: Passes through width/height/original_alt for thumbnail/improvement modes.
     """
     return generate_alt_text(image_path, context=context_text, image_type=image_type,

@@ -1,6 +1,6 @@
 """Markdown-Filter fuer InkluAgent-Antworten.
 
-Mistral-Medium produziert auch bei explizitem Verbot weiter Markdown.
+Sprachmodelle setzen trotz Verbot gelegentlich Markdown (Sternchen, Listen).
 Dieser Filter raeumt auf, BEVOR die Antwort im Frontend gezeigt wird —
 das Frontend rendert kein Markdown, sonst stehen rohe Sternchen im Text.
 

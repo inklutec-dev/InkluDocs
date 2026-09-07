@@ -1,6 +1,6 @@
 """LLM-Provider-Schnittstelle fuer InkluAgent.
 
-Ein Provider kapselt einen LLM-Anbieter (Mistral, Gemini, ...). Der
+Ein Provider kapselt einen LLM-Anbieter (Bedrock/Claude, spaeter ggf. weitere). Der
 chat_engine ruft nur diese Schnittstelle — kennt keine Provider-Details.
 """
 from abc import ABC, abstractmethod

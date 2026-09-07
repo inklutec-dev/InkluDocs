@@ -73,7 +73,7 @@ def build_cache_key(
     content_hash: str,
     image_type_override: Optional[str],
     user_hint: Optional[str],
-    pipeline_version: str = "v3_7",
+    pipeline_version: str = "v4",
     language: str = "de",
     enriched_context: str = "",
 ) -> str:

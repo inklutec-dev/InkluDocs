@@ -5232,7 +5232,7 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Keine Bilder auf dieser Seite gefunden")
 
     # Extract page profile for better context (Seitenprofil)
-    from context_engine import extract_page_profile
+    from seitenprofil import extract_page_profile
     page_profile = extract_page_profile(soup)
 
     # Projekt anlegen ODER an ein bestehendes Web-Projekt anhaengen.
@@ -6488,7 +6488,7 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
 
             # Second pass: if complex type detected, re-generate with specialized prompt
             # to get langbeschreibung automatically
-            from context_engine import is_complex_type
+            from seitenprofil import is_complex_type
             detected_type = result.get("bildtyp", "")
             langbeschreibung = result.get("langbeschreibung", "")
 

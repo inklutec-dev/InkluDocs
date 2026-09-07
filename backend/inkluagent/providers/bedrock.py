@@ -1,6 +1,6 @@
 """Bedrock-Provider für InkluAgent. Anthropic-Claude via AWS Bedrock
 Frankfurt (eu-central-1). Folgt der gleichen LLMProvider-Schnittstelle
-wie mistral.py — wird in chat_engine.py per INKLUAGENT_PROVIDER=bedrock
+einziger Provider seit dem Mistral-Abbau 07.09.2026; wird in chat_engine.py
 aktiviert.
 
 Modell-Defaults (über ENV überschreibbar):
