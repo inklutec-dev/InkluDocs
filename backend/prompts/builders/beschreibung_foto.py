@@ -27,7 +27,7 @@ from typing import Optional
 # Paket 1 (16.07.2026): tote Importe entfernt — EVIDENZ_STUFEN_REGELN,
 # KONTAKTDATEN_PFLICHT und PERSONEN_REGELN wurden in keinem Prompt-String
 # dieser Datei verwendet (Regel-Inventur, Strukturbefund 2).
-from prompts.components.constraints import ANTI_HALLUZINATION_REGELN
+from prompts.components.constraints import ANTI_HALLUZINATION_REGELN, KUNSTWERK_REGEL
 from prompts.components.roles import ROLE_BESCHREIBER
 from prompts.components.schema_helpers import render_schema_for_prompt
 from prompts.components.schemas import BeschreibungOutput, InventarOutput
@@ -538,6 +538,8 @@ Nicht jede Kleinigkeit aufzaehlen — lieber relevante Zusammenhaenge
 und visuelle Charakteristika vermitteln.
 
 
+{KUNSTWERK_REGEL}
+
 {_render_personenregeln_block()}
 
 
@@ -688,6 +690,9 @@ Der Alt-Text:
 
 VERMEIDEN (zusaetzlich zu den STILREGELN): blosse Inventarlisten, vage
 Umschreibungen fuer eindeutig Benennbares.
+
+
+{KUNSTWERK_REGEL}
 
 
 BENENNEN STATT VAGE BLEIBEN

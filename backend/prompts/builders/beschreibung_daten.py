@@ -42,6 +42,7 @@ import os
 from typing import Optional
 
 from prompts.components.constraints import (
+    KUNSTWERK_REGEL,
     ANTI_HALLUZINATION_REGELN,
     ATMOSPHAERE_REGEL,
     EIGENNAMEN_REGELN,
@@ -223,6 +224,9 @@ Der erste Satz nennt:
 VERMEIDEN: generische Einleitungen ("Das Bild zeigt", "Eine Illustration von"
 als bloße Floskel ohne Inhalt), Festlegung auf eine Deutung, die das Bild
 nicht trägt.
+
+
+{KUNSTWERK_REGEL}
 
 
 SPEZIES- UND CHARAKTER-REGEL

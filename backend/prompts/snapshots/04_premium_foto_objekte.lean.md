@@ -1,6 +1,6 @@
 # Premium-Builder foto_objekte — Prompt-Modus: lean
 
-- **Builder:** `prompts/builders/beschreibung_foto.py:600`
+- **Builder:** `prompts/builders/beschreibung_foto.py:602`
 - **Generiert:** 2026-09-07
 - **ENV / Modus:**
   - `V4_PROMPT_MODE` = `lean`
@@ -340,6 +340,22 @@ Der Alt-Text:
 
 VERMEIDEN (zusaetzlich zu den STILREGELN): blosse Inventarlisten, vage
 Umschreibungen fuer eindeutig Benennbares.
+
+
+KUNSTWERKE (Gemaelde, Zeichnung, Druckgrafik, Skulptur)
+
+Ist das Bild erkennbar ein Kunstwerk, gilt: weniger ist mehr.
+- Benenne Titel, Kuenstler und Jahr, wenn sie im Bild lesbar sind (Signatur,
+  Beschriftung) oder das Werk weltbekannt und zweifelsfrei erkennbar ist —
+  so, wie ein Sehender es auf einen Blick erkennt. Sonst beschreibe nur.
+- Dann das Motiv in ein bis zwei Saetzen: wer oder was, Haltung, unmittelbare
+  Umgebung, Farbklima. Der Alt-Text bleibt unter 200 Zeichen.
+- KEINE Detailinventur, keine Deutung von Maltechnik oder Stil, keine
+  kunsthistorische Einordnung ueber die Benennung hinaus.
+- Bei kleinen oder unscharfen Reproduktionen: Was du nicht sicher siehst,
+  laesst du weg — ein erfundener Gegenstand (eine Bank, eine Kette, ein Fenster)
+  ist der schwerste Fehler, ein fehlendes Detail keiner.
+- Details gehoeren in die Langbeschreibung nur, wenn sie eindeutig sichtbar sind.
 
 
 BENENNEN STATT VAGE BLEIBEN
