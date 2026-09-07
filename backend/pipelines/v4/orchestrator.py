@@ -286,19 +286,67 @@ def _lies_diagramm_werte(image_path: str) -> Optional[WerteOutput]:
         return None
 
 
+def _zahl(wert: str):
+    """"4,4" / "61,3 %" / "1.200" -> float oder None (unlesbar)."""
+    import re as _re
+    t = (wert or '').strip().replace('\u2212', '-')
+    m = _re.search(r'-?\d+(?:[.,]\d+)?', t.replace('.', '') if _re.search(r'\d\.\d{3}', t) else t)
+    if not m:
+        return None
+    try:
+        return float(m.group(0).replace(',', '.'))
+    except ValueError:
+        return None
+
+
+def _werte_kernaussagen(w: WerteOutput) -> list[str]:
+    """Rechnerisch abgeleitete Aussagen (07.09.2026, Astra-Befund: richtige Zahlen ergaben
+    trotzdem falsche Trendwoerter). Deterministisch, ohne Modell: Verlauf je Reihe,
+    Hoechst-/Tiefstwert, Anfang gegen Ende, Gesamt-Maximum."""
+    aus = []
+    gesamt_max = None
+    for r in w.reihen:
+        punkte = [(p.kategorie, _zahl(p.wert)) for p in r.punkte]
+        zahlen = [(k, v) for k, v in punkte if v is not None]
+        if len(zahlen) < 2:
+            continue
+        werte = [v for _, v in zahlen]
+        richtungen = []
+        for (k1, v1), (k2, v2) in zip(zahlen, zahlen[1:]):
+            if v2 > v1 * 1.02: richtungen.append('steigt')
+            elif v2 < v1 * 0.98: richtungen.append('faellt')
+            else: richtungen.append('bleibt gleich')
+        verlauf = ' / '.join(f'{k} {str(v).replace(".", ",")}' for k, v in zahlen)
+        hi = max(zahlen, key=lambda kv: kv[1]); lo = min(zahlen, key=lambda kv: kv[1])
+        start, ende = zahlen[0][1], zahlen[-1][1]
+        vergleich = ('Endwert ueber Startwert' if ende > start * 1.02 else 'Endwert unter Startwert' if ende < start * 0.98 else 'Endwert etwa auf Startwert')
+        aus.append(f'{r.name}: {verlauf}; Verlauf {" , dann ".join(richtungen)}; Hoechstwert {str(hi[1]).replace(".", ",")} ({hi[0]}), Tiefstwert {str(lo[1]).replace(".", ",")} ({lo[0]}); {vergleich}.')
+        for k, v in zahlen:
+            if gesamt_max is None or v > gesamt_max[2]:
+                gesamt_max = (r.name, k, v)
+    if gesamt_max:
+        aus.append(f'Hoechster Wert im ganzen Diagramm: {str(gesamt_max[2]).replace(".", ",")} ({gesamt_max[0]}, {gesamt_max[1]}).')
+    return aus
+
+
 def _werte_block(w: WerteOutput) -> str:
-    zeilen = ['', '', 'ABGELESENE WERTE (Schritt 0, verbindlich)', '',
-              'Ein eigener Ablese-Schritt hat die Werte dieses Diagramms erfasst. Sie sind die '
-              'Faktengrundlage fuer JEDE Zahl und JEDES Trendwort in Alt-Text und Langbeschreibung. '
-              'Ein Trend (steigt, faellt, erholt sich, stabil) darf nur behauptet werden, wenn '
-              'diese Werte ihn tragen; bei "unlesbar" nennst du keine Zahl und keinen Trend, '
-              'sondern nur Rangfolge und Form.', '']
+    zeilen = ['', '', 'ABGELESENE WERTE (Schritt 0)', '',
+              'Ein eigener Ablese-Schritt hat die Werte dieses Diagramms erfasst, dazu rechnerisch '
+              'abgeleitete Kernaussagen. Jede Zahl und jedes Trendwort (steigt, faellt, erholt sich, '
+              'stabil, hoechster Wert) in Alt-Text und Langbeschreibung muss zu dieser Liste passen; '
+              'die Kernaussagen sind aus den Zahlen berechnet und haben Vorrang vor deinem Eindruck. '
+              'Widerspricht das Bild einer abgelesenen Zahl eindeutig, nenne den Widerspruch statt '
+              'zu raten. Bei "unlesbar" nennst du keine Zahl und keinen Trend, sondern nur Rangfolge '
+              'und Form.', '']
     if w.titel: zeilen.append(f'Titel: {w.titel}')
     zeilen.append(f'Diagrammtyp: {w.diagrammtyp}')
     if w.achsen: zeilen.append(f'Achsen: {w.achsen}')
     zeilen.append(f'Lesbarkeit: {w.lesbarkeit}' + (f' — {w.hinweis}' if w.hinweis else ''))
     for r in w.reihen:
         zeilen.append(f'{r.name}: ' + ' / '.join(f'{p.kategorie} {p.wert}' for p in r.punkte))
+    kern = _werte_kernaussagen(w)
+    if kern:
+        zeilen += ['', 'RECHNERISCHE KERNAUSSAGEN (aus den abgelesenen Zahlen):'] + ['- ' + k for k in kern]
     return '\n'.join(zeilen)
 
 
@@ -610,8 +658,18 @@ def _korrektur_absichern(image_path: str, verify_result, language: str = 'de') -
 
 def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = ''):
     """Fuehrt den Verify-Aufruf aus. Gibt VerifyOutput oder None (Fehler/aus) zurueck."""
+    return _run_verify_pass_status(image_path, bildtyp, alt_text, language=language,
+                                   enriched_context=enriched_context, langbeschreibung=langbeschreibung)[0]
+
+
+def _run_verify_pass_status(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = ''):
+    """Wie _run_verify_pass, liefert zusaetzlich den Status: 'ok' | 'nicht_vorgesehen' | 'fehler'.
+
+    07.09.2026 (Astra-Befund): Bisher war None fuer 'aus', 'nicht im Scope' und 'Ausfall'
+    dasselbe — ein ausgefallener, aber vorgesehener Pruefpass endete ohne Pruefhinweis.
+    """
     if not alt_text or not _verify_scope_matches(bildtyp):
-        return None
+        return None, 'nicht_vorgesehen'
     try:
         # 03.09.2026 (Steve): Der Pruefpass nimmt das VALIDATE-Modell (ENV
         # BEDROCK_MODEL_VALIDATE) — bisher lief er im Lean-Mode stillschweigend
@@ -626,10 +684,10 @@ def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str
             schema=VerifyOutput,
             max_tokens=2500,  # 07.09.: Platz fuer Alt- UND Lang-Korrektur
             system=SYSTEM_BESCHREIBUNG,  # gleiche Legitimation wie die Generierung
-        )
+        ), 'ok'
     except Exception as e:  # Verify ist Sicherheitsnetz, nie Blocker
         log.warning('Verify-Pass fehlgeschlagen (ignoriert): %s', e)
-        return None
+        return None, 'fehler'
 
 
 def verify_alt_text_extern(image_path: str, bildtyp: str, alt_text: str,
@@ -939,6 +997,7 @@ def _run_lean_pipeline(
     beschreibung: BeschreibungOutput | IconBeschreibungOutput
     diagramm_werte_gelesen = False
     zaehl_pass_gelaufen = False
+    werte_json = None
     if effective_bildtyp in _MINI_TYPES:
         # Mini-Pipelines (logo/icon/funktional): unveraendert von Multi-Pass
         with bilddaten_am_ende(_prompt_cache_an()):
@@ -986,6 +1045,7 @@ def _run_lean_pipeline(
             if _werte is not None:
                 combo_prompt += _werte_block(_werte)
                 diagramm_werte_gelesen = True
+                werte_json = _werte.model_dump_json()
         if effective_bildtyp in _ZAEHL_TYPEN:
             _z = _zaehle_bild(image_path)
             if _z is not None:
@@ -1015,44 +1075,42 @@ def _run_lean_pipeline(
 
     # === Verify-Pass (optional per V4_VERIFY_MODE, s. Bausteine oben) ===
     verify_result = None
+    verify_status = ''
     verify_korrektur_applied = False
     verify_lang_korrigiert = False
     verify_korrektur_schritt = ''  # Korrekturwache: auch fuer Mini-Typen (logo/icon/funktional) definiert
+    korrektur_an = os.environ.get('V4_VERIFY_KORREKTUR', 'off').strip().lower() == 'on'
     if effective_bildtyp not in _MINI_TYPES:
-        verify_result = _run_verify_pass(
+        verify_result, verify_status = _run_verify_pass_status(
             image_path, effective_bildtyp, beschreibung.alt_text, language=language,
             enriched_context=enriched_context,
             langbeschreibung=(beschreibung.langbeschreibung if isinstance(beschreibung, BeschreibungOutput) else ''),
         )
+        if verify_status == 'fehler':
+            # 07.09.2026 (Astra-Befund): vorgesehene, aber ausgefallene Pruefung = Mensch liest gegen
+            needs_review = True
         if verify_result is not None and not verify_result.langbeschreibung_belegt:
             log.warning('Verify-Pass: Langbeschreibung nicht voll belegt (%s): %s', effective_bildtyp, verify_result.strittige_lang)
             needs_review = True
-            if (verify_result.korrigierte_langbeschreibung
-                    and os.environ.get('V4_VERIFY_KORREKTUR', 'off').strip().lower() == 'on'
-                    and isinstance(beschreibung, BeschreibungOutput)):
-                beschreibung.langbeschreibung = verify_result.korrigierte_langbeschreibung
-                verify_lang_korrigiert = True
         if verify_result is not None and not verify_result.alt_text_belegt:
             log.warning(
                 'Verify-Pass: Alt-Text nicht voll belegt (%s): %s',
                 effective_bildtyp, verify_result.strittige_aussagen,
             )
             needs_review = True
-        # Paket 3 (16.07.2026): Redakteurs-Korrektur nur bei explizitem Opt-in
-        # V4_VERIFY_KORREKTUR=on. Default 'off' ist verhaltensneutral (nur Flag
-        # wie bisher). Original + Begruendung werden geloggt (Muster wie oben);
-        # der volle Verify-Output steht ohnehin in validation_result. Die
-        # Langbeschreibung bleibt in beiden Faellen unangetastet.
-        if (
-            verify_result is not None
-            and verify_result.korrigierter_alt_text
-            and os.environ.get('V4_VERIFY_KORREKTUR', 'off').strip().lower() == 'on'
-        ):
-            # Korrekturwache 03.09.2026: kuerzen oder verwerfen, nie abschneiden
-            sichere_korrektur, verify_korrektur_schritt = _korrektur_absichern(
-                image_path, verify_result, language=language,
-            )
-            needs_review = True  # Beanstandung: Mensch liest gegen — auch bei verworfener Korrektur
+        # Korrekturen als PAAR (07.09.2026, Astra-Befund): Erst die Alt-Korrektur durch die
+        # Wache, dann entscheiden. Wird eine vorgeschlagene Alt-Korrektur verworfen, bleibt
+        # auch die Langbeschreibung beim Original — sonst entstuende ein Textpaar, das der
+        # Pruefer so nie gemeinsam gesehen hat. needs_review bleibt in jedem Fall gesetzt.
+        if verify_result is not None and korrektur_an:
+            alt_korr_vorgeschlagen = bool(verify_result.korrigierter_alt_text)
+            sichere_korrektur = None
+            if alt_korr_vorgeschlagen:
+                sichere_korrektur, verify_korrektur_schritt = _korrektur_absichern(
+                    image_path, verify_result, language=language,
+                )
+                needs_review = True  # Beanstandung: Mensch liest gegen — auch bei verworfener Korrektur
+            paar_ok = (not alt_korr_vorgeschlagen) or bool(sichere_korrektur)
             if sichere_korrektur:
                 log.warning(
                     'Verify-Korrektur %s (%s). Original: %r — Begruendung: %s',
@@ -1062,6 +1120,13 @@ def _run_lean_pipeline(
                 )
                 beschreibung.alt_text = sichere_korrektur
                 verify_korrektur_applied = True
+            if (paar_ok and verify_result.korrigierte_langbeschreibung
+                    and not verify_result.langbeschreibung_belegt
+                    and isinstance(beschreibung, BeschreibungOutput)):
+                beschreibung.langbeschreibung = verify_result.korrigierte_langbeschreibung
+                verify_lang_korrigiert = True
+            elif verify_result.korrigierte_langbeschreibung and not paar_ok:
+                log.warning('Verify: Lang-Korrektur NICHT uebernommen, weil die Alt-Korrektur verworfen wurde (Paar bleibt Original)')
 
     langbeschreibung = (
         beschreibung.langbeschreibung
@@ -1082,8 +1147,9 @@ def _run_lean_pipeline(
             + (f',verify:ok={verify_result.alt_text_belegt}' if verify_result is not None else '')
             + (',verify_korrektur:applied' if verify_korrektur_applied else '')
             + (',verify_lang:korrigiert' if verify_lang_korrigiert else '')
+            + (',verify:fehler' if verify_status == 'fehler' else '')
             + (f',verify_korrektur:{verify_korrektur_schritt}' if verify_korrektur_schritt in ('gekuerzt', 'verworfen') else '')
         ),
-        'inventar_json': None,  # Im Lean-Mode kein separates Inventar-Objekt
+        'inventar_json': werte_json,  # 07.09.: Ableseliste des Diagramm-Werte-Passes (sonst None)
         'validation_result': verify_result.model_dump_json() if verify_result is not None else None,
     }

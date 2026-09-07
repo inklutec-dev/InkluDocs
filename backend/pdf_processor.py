@@ -611,13 +611,16 @@ def _resize_image_for_model(image_path: str) -> str:
     # Transparente Pixel dabei auf WEISS legen — ein blosses convert("RGB")
     # macht sie schwarz, wodurch dunkle Beschriftungen transparenter PNGs
     # fuer das Modell unsichtbar werden (Befund App-Durchlauf 17.07.2026).
+    konvertiert = False  # 07.09.2026 (Astra-Befund): Modus-Konvertierung muss auch ohne Groessenaenderung ankommen
     if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
         rgba = img.convert("RGBA")
         bg = Image.new("RGB", rgba.size, (255, 255, 255))
         bg.paste(rgba, mask=rgba.split()[-1])
         img = bg
+        konvertiert = True
     elif img.mode not in ("RGB", "L"):
         img = img.convert("RGB")
+        konvertiert = True
     # Force-convert AVIF/HEIC to JPEG (Ollama and other tools cannot read these formats)
     if image_path.lower().endswith((".avif", ".heic", ".heif")):
         buf = BytesIO()
@@ -647,6 +650,13 @@ def _resize_image_for_model(image_path: str) -> str:
     if file_size > MAX_IMAGE_BYTES:
         buf = BytesIO()
         img.save(buf, format="JPEG", quality=80)
+        return base64.b64encode(buf.getvalue()).decode()
+    if konvertiert:
+        # Bis 07.09.2026 wurden hier die ORIGINALBYTES gelesen — die auf Weiss gelegte
+        # Fassung ging verloren, sobald weder Vergroesserung, Verkleinerung noch
+        # Kompression griff (transparente 900x900-PNGs kamen als RGBA beim Modell an).
+        buf = BytesIO()
+        img.save(buf, format="PNG")
         return base64.b64encode(buf.getvalue()).decode()
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
