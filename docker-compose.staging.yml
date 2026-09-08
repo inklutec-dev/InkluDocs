@@ -55,6 +55,18 @@ services:
       - BEDROCK_MODEL_INVENTAR=${BEDROCK_MODEL_INVENTAR:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_GENERATE=${BEDROCK_MODEL_GENERATE:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
+      # Anbieter je Rolle (07.09.2026): bedrock oder gemini; Rollen-Schalter optional (Kreuzmodell)
+      - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
+      - LLM_PROVIDER_CLASSIFY=${LLM_PROVIDER_CLASSIFY:-}
+      - LLM_PROVIDER_INVENTAR=${LLM_PROVIDER_INVENTAR:-}
+      - LLM_PROVIDER_GENERATE=${LLM_PROVIDER_GENERATE:-}
+      - LLM_PROVIDER_VALIDATE=${LLM_PROVIDER_VALIDATE:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_ENDPOINT=${GEMINI_ENDPOINT:-https://generativelanguage.googleapis.com/v1beta}
+      - GEMINI_MODEL_CLASSIFY=${GEMINI_MODEL_CLASSIFY:-gemini-3.8-flash}
+      - GEMINI_MODEL_INVENTAR=${GEMINI_MODEL_INVENTAR:-gemini-3.1-pro-preview}
+      - GEMINI_MODEL_GENERATE=${GEMINI_MODEL_GENERATE:-gemini-3.1-pro-preview}
+      - GEMINI_MODEL_VALIDATE=${GEMINI_MODEL_VALIDATE:-gemini-3.1-pro-preview}
       - V4_VERIFY_MODE=kritisch
       - V4_VERIFY_KORREKTUR=on
       - V4_PROMPT_CACHE=${V4_PROMPT_CACHE:-off}  # Prompt-Caching 03.09.2026: Bilddaten ans Ende, fester Anfang mit cache_control (off = Prompts wie vorher)
