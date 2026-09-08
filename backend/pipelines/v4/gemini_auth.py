@@ -4,7 +4,8 @@ GEMINI_AUTH=key (Vorgabe): Gemini Developer API mit GEMINI_API_KEY über GEMINI_
     (https://generativelanguage.googleapis.com/v1beta). Für Staging und Messungen.
 GEMINI_AUTH=vertex: Vertex AI mit einem Google-Cloud-Dienstkonto, Region festgelegt (EU):
     VERTEX_PROJECT      Google-Cloud-Projekt-ID
-    VERTEX_REGION       z. B. europe-west1 (Belgien) oder europe-west4 (Niederlande)
+    VERTEX_REGION       z. B. europe-west1 (Belgien) oder europe-west3 (Frankfurt)
+    VERTEX_REGION_MAP   optional je Modell: gemini-3.5-flash=europe-west3,gemini-2.5-pro=europe-west1
     GOOGLE_SERVICE_ACCOUNT_FILE  Pfad zur JSON-Schlüsseldatei des Dienstkontos (im Container)
     oder GOOGLE_SERVICE_ACCOUNT_JSON_B64 (Base64 der Datei, für Umgebungen ohne Datei)
 Das Zugangstoken wird aus dem Dienstkonto per signiertem JWT (RS256, cryptography) beim
@@ -31,11 +32,23 @@ def modus() -> str:
 def endpunkt(model: str) -> str:
     if modus() == 'vertex':
         projekt = os.environ['VERTEX_PROJECT']
-        region = os.environ.get('VERTEX_REGION', 'europe-west1')
+        region = _region_fuer(model)
         host = 'aiplatform.googleapis.com' if region == 'global' else f'{region}-aiplatform.googleapis.com'
         return f'https://{host}/v1/projects/{projekt}/locations/{region}/publishers/google/models/{model}:generateContent'
     basis = os.environ.get('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta').rstrip('/')
     return f'{basis}/models/{model}:generateContent'
+
+
+def _region_fuer(model: str) -> str:
+    """Region je Modell: VERTEX_REGION_MAP="gemini-3.5-flash=europe-west3,gemini-2.5-pro=europe-west1",
+    sonst VERTEX_REGION. Nötig, weil nicht jedes Modell in jeder EU-Region liegt."""
+    karte = os.environ.get('VERTEX_REGION_MAP', '')
+    for eintrag in karte.split(','):
+        if '=' in eintrag:
+            m, r = eintrag.split('=', 1)
+            if m.strip() == model:
+                return r.strip()
+    return os.environ.get('VERTEX_REGION', 'europe-west1')
 
 
 def kopfzeilen() -> dict:
