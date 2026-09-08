@@ -1,6 +1,6 @@
 {
   "szene": "Dieselbe Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion), zentrale Zahl '67% der Verpackungen werden wiederverwertet', unten URL und Bürgertelefon '02 28 / 24 25 26 27'.",
-  "alt_text": "Infografik — Recycling-Kreislauf: Oben links steht ein grünes Symbol, von dem ein Pfeil nach rechts zu einem blauen Kasten führt, in der Mitte eine große Zahl. Bei Fragen: Telefon 0228242526 27.",
+  "alt_text": "Infografik zum Recycling-Kreislauf: Oben links steht ein grünes Symbol, von dem ein Pfeil nach rechts zu einem blauen Kasten führt, in der Mitte eine große Zahl. Bei Fragen: Telefon 0228242526 27.",
   "fehler": [
     "Der Text erzählt das Layout nach (Symbol, Pfeil, Kasten, 'eine große Zahl'), statt die vier Stationen und den Wert 67% zu vermitteln.",
     "'0228242526 27' verstümmelt die Telefonnummer; Kontaktdaten werden wortgetreu mit den Trennzeichen des Originals übernommen ('02 28 / 24 25 26 27')."

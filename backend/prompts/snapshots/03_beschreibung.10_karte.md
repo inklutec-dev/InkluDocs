@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp karte
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -181,7 +181,12 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-4. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
+4. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
+   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
+   Gedankenstrich. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
+   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
+
+5. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
    bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
    Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
    Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
@@ -195,7 +200,7 @@ Gutes Beispiel 1
 Szene: Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle; 12 große und 33 kleine Kreise. Deutliche Häufung der Marker im Süden um München und Stuttgart, weitere Marker im Westen bei Köln und im Osten bei Berlin, vereinzelte Marker im Norden bei Hamburg. Beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin. Kein Maßstab lesbar.
 Antwort:
 {
-  "alt_text": "Karte — Deutschland: 45 Beratungsstellen, deutlich konzentriert im Süden um München und Stuttgart, vereinzelt im Norden bei Hamburg. Große Kreise sind Beratungsstellen mit Werkstatt, kleine reine Beratungsstellen.",
+  "alt_text": "Karte der Beratungsstellen in Deutschland: 45 Beratungsstellen, deutlich konzentriert im Süden um München und Stuttgart, vereinzelt im Norden bei Hamburg. Große Kreise sind Beratungsstellen mit Werkstatt, kleine reine Beratungsstellen.",
   "langbeschreibung": "Die Karte ist nach Norden ausgerichtet. Von den 45 blauen Markierungen sind 12 große Kreise für Beratungsstellen mit Werkstatt und 33 kleine Kreise für reine Beratungsstellen. Neben den dichten Gruppen im Süden liegen weitere Markierungen im Westen bei Köln und im Osten bei Berlin. Beschriftet sind die Städte München, Stuttgart, Köln, Hamburg und Berlin. Ein Maßstab ist nicht lesbar.",
   "verwendete_inventar_items": [
     "Deutschlandkarte, Norden oben",
@@ -214,7 +219,7 @@ Antwort:
 
 Gegenbeispiel 1
 Szene: Dieselbe Deutschlandkarte: 45 blaue Punkt-Markierungen für Beratungsstellen, Legende mit großen und kleinen Kreisen, Häufung im Süden, beschriftete Städte München, Stuttgart, Köln, Hamburg, Berlin.
-Fehlerhafter Alt-Text: "Karte — Deutschland: 45 Gefahrenstellen, vor allem im Süden um München und Stuttgart. Eine empfohlene Route verbindet die Standorte von Nord nach Süd."
+Fehlerhafter Alt-Text: "Karte der Beratungsstellen in Deutschland: 45 Gefahrenstellen, vor allem im Süden um München und Stuttgart. Eine empfohlene Route verbindet die Standorte von Nord nach Süd."
 - Fehler: 'Gefahrenstellen' deutet die Marker gegen die Legende, die Beratungsstellen ausweist, und 'eine empfohlene Route' erfindet ein Element, das die Karte nicht zeigt.
 Besser: Bedeutung aus der Legende und nur Vorhandenes: '45 Beratungsstellen, deutlich konzentriert im Süden um München und Stuttgart'.
 

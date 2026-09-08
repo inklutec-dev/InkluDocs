@@ -1,7 +1,7 @@
 # System-Prompt der Bildbeschreibung
 
 - **Builder:** `prompts/components/roles.py`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 
 ---
 

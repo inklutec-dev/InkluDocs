@@ -5,7 +5,7 @@
     "'vermutlich Paracetamol' widerspricht der Bildunterschrift, die Acetylsalicylsäure belegt, und 'NH₂-Gruppe' erfindet eine Atomgruppe, die die Formel nicht zeigt.",
     "Tiefgestellte Indizes wie CH₃ lesen Screenreader schlecht vor; die Notation ist CH3."
   ],
-  "besser": "'Strukturformel — Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).'",
+  "besser": "'Strukturformel von Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).'",
   "quelle": "Wikimedia Commons: Aspirin-skeletal.svg",
   "lizenz": "Wikimedia Commons, frei lizenziert"
 }

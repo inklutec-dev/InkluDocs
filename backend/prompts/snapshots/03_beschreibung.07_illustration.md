@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp illustration
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**

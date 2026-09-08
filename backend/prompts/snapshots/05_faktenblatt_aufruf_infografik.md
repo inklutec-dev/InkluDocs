@@ -1,7 +1,7 @@
 # Faktenblatt Infografik (eigener Aufruf)
 
 - **Builder:** `pipelines/v4/orchestrator.py`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 
 ---
 

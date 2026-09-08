@@ -1,7 +1,7 @@
 # Inventar-Schritt, Bildtyp foto
 
 - **Builder:** `prompts/builders/inventar.py:61`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 - **Demo-Werte:**
   - width × height: 1280 × 720
   - Bildtyp: foto

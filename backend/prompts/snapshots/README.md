@@ -1,6 +1,6 @@
 # Prompt-Snapshots — InkluDocs v4
 
-Automatisch generiert am 2026-09-07 via `python3 -m scripts.render_prompts`.
+Automatisch generiert am 2026-09-08 via `python3 -m scripts.render_prompts`.
 
 Jede Datei zeigt einen Builder mit Demo-Werten — der **gerenderte Prompt-Text**, 
 den das Modell tatsaechlich bekommt. Aenderungen an den Builder-Python-Dateien 

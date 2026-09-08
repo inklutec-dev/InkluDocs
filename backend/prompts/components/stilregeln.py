@@ -62,6 +62,11 @@ _LAENGE_FOTO = """6. Länge und Arbeitsteilung. Richtwert für den Alt-Text: ein
    Langbeschreibung ist Fließtext ohne Überschriften und Aufzählungszeichen,
    beginnt nicht mit einer Ansage und wiederholt den Alt-Text nicht."""
 
+_SCHREIBWEISE_SACHLICH = """5. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
+   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
+   Gedankenstrich. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
+   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt."""
+
 _LAENGE_SACHLICH = """6. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
    bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
    Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
@@ -73,4 +78,4 @@ STILREGELN_KERN = "STILREGELN (Stil, nicht Fakten)\n\n" + "\n\n".join([_PUNKT_1,
 
 STILREGELN = STILREGELN_KERN + "\n\n" + _LAENGE_FOTO
 
-STILREGELN_SACHLICH = "STILREGELN (Stil, nicht Fakten)\n\n" + "\n\n".join([_PUNKT_1, _PUNKT_2_SACHLICH, _PUNKT_5.replace("5. ", "3. "), _LAENGE_SACHLICH.replace("6. ", "4. ")])
+STILREGELN_SACHLICH = "STILREGELN (Stil, nicht Fakten)\n\n" + "\n\n".join([_PUNKT_1, _PUNKT_2_SACHLICH, _PUNKT_5.replace("5. ", "3. "), _SCHREIBWEISE_SACHLICH.replace("5. ", "4. "), _LAENGE_SACHLICH.replace("6. ", "5. ")])

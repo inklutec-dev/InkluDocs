@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp diagramm
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -178,7 +178,12 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-4. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
+4. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
+   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
+   Gedankenstrich. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
+   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
+
+5. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
    bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
    Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
    Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,

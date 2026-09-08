@@ -1,12 +1,12 @@
 {
  "szene": "Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen im Kreis angeordnet, 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion, Pfeile von Station zu Station und von 4 zurück zu 1; in der Mitte die Zahl '67% der Verpackungen werden wiederverwertet'. Am unteren Rand: 'Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27'.",
- "alt_text": "Infografik — Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
+ "alt_text": "Infografik zum Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
  "begruendung": "Präfix, Thema und die Kernaussage mit dem Datenpunkt eröffnen. Die Stationen sind inhaltlich verkettet statt als Pfeile und Kästen erzählt. Die Langbeschreibung trägt Nummerierung, Rückführung und die Kontaktdaten wortgetreu mit ihren Trennzeichen, weil sie für Screenreader-Nutzer der einzige Zugang sind.",
  "prinzip": "Mit 'Infografik —', Thema und Kernaussage mit Datenpunkt führen; Stationen inhaltlich verketten; Kontaktdaten und Adressen wortgetreu mit ihren Trennzeichen.",
  "quelle": "fiktives Beispiel (generische Behörden-Infografik, Kontaktdaten erfunden)",
  "lizenz": "fiktives Beispiel",
  "antwort": {
-  "alt_text": "Infografik — Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
+  "alt_text": "Infografik zum Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
   "langbeschreibung": "Die vier Stationen sind nummeriert: 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion. Auf die Sammlung folgt die Sortierung, danach die Aufbereitung, aus der die Neuproduktion hervorgeht, und von der Neuproduktion führt der Kreislauf zurück zur Sammlung. Die zentrale Zahl steht in der Mitte des Kreises. Am unteren Rand stehen die Hinweise 'Mehr Infos: www.beispiel-behoerde.de' und 'Bürgertelefon 02 28 / 24 25 26 27'.",
   "verwendete_inventar_items": [
    "Titel 'Recycling-Kreislauf'",

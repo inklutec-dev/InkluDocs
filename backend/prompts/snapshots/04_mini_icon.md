@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp icon
 
 - **Builder:** `prompts/builders/beschreibung.py:109`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 - **Demo-Werte:**
   - width × height: 64 × 64
   - Kontext: (leer)

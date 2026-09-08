@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp infografik
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -190,7 +190,12 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-4. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
+4. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
+   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
+   Gedankenstrich. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
+   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
+
+5. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
    bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
    Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
    Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
@@ -204,7 +209,7 @@ Gutes Beispiel 1
 Szene: Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen im Kreis angeordnet, 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion, Pfeile von Station zu Station und von 4 zurück zu 1; in der Mitte die Zahl '67% der Verpackungen werden wiederverwertet'. Am unteren Rand: 'Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27'.
 Antwort:
 {
-  "alt_text": "Infografik — Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
+  "alt_text": "Infografik zum Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
   "langbeschreibung": "Die vier Stationen sind nummeriert: 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion. Auf die Sammlung folgt die Sortierung, danach die Aufbereitung, aus der die Neuproduktion hervorgeht, und von der Neuproduktion führt der Kreislauf zurück zur Sammlung. Die zentrale Zahl steht in der Mitte des Kreises. Am unteren Rand stehen die Hinweise 'Mehr Infos: www.beispiel-behoerde.de' und 'Bürgertelefon 02 28 / 24 25 26 27'.",
   "verwendete_inventar_items": [
     "Titel 'Recycling-Kreislauf'",
@@ -222,7 +227,7 @@ Antwort:
 
 Gegenbeispiel 1
 Szene: Dieselbe Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion), zentrale Zahl '67% der Verpackungen werden wiederverwertet', unten URL und Bürgertelefon '02 28 / 24 25 26 27'.
-Fehlerhafter Alt-Text: "Infografik — Recycling-Kreislauf: Oben links steht ein grünes Symbol, von dem ein Pfeil nach rechts zu einem blauen Kasten führt, in der Mitte eine große Zahl. Bei Fragen: Telefon 0228242526 27."
+Fehlerhafter Alt-Text: "Infografik zum Recycling-Kreislauf: Oben links steht ein grünes Symbol, von dem ein Pfeil nach rechts zu einem blauen Kasten führt, in der Mitte eine große Zahl. Bei Fragen: Telefon 0228242526 27."
 - Fehler: Der Text erzählt das Layout nach (Symbol, Pfeil, Kasten, 'eine große Zahl'), statt die vier Stationen und den Wert 67% zu vermitteln.
 - Fehler: '0228242526 27' verstümmelt die Telefonnummer; Kontaktdaten werden wortgetreu mit den Trennzeichen des Originals übernommen ('02 28 / 24 25 26 27').
 Besser: Kernaussage und Stationen inhaltlich: '67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.'

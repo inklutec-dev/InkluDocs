@@ -1,6 +1,6 @@
 {
   "szene": "Dasselbe Periodensystem der Elemente: 118 Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, 1) bis Oganesson (Og, 118).",
-  "alt_text": "Tabelle — Periodensystem der Elemente: ungefähr 120 Elemente in farbigen Kästchen, oben links beginnt die Tabelle mit einem Kästchen, rechts daneben folgen viele weitere.",
+  "alt_text": "Tabelle der Periodensystem der Elemente: ungefähr 120 Elemente in farbigen Kästchen, oben links beginnt die Tabelle mit einem Kästchen, rechts daneben folgen viele weitere.",
   "fehler": [
     "'ungefähr 120' verschenkt die belegte exakte Zahl 118, und 'oben links, rechts daneben' beschreibt das Layout statt der Struktur aus 18 Gruppen und 7 Perioden."
   ],

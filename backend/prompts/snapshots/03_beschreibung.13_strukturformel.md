@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp strukturformel
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -177,7 +177,12 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-4. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
+4. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
+   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
+   Gedankenstrich. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
+   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
+
+5. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
    bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
    Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
    Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
@@ -191,7 +196,7 @@ Gutes Beispiel 1
 Szene: Skelettformel der Acetylsalicylsäure: Benzolring als Sechseck mit drei eingezeichneten Doppelbindungen, daran zwei Substituenten in Nachbarstellung, eine Carboxygruppe (COOH) und eine Acetoxygruppe (O-CO-CH3), in beiden Gruppen eine Doppelbindung zwischen Kohlenstoff und Sauerstoff sichtbar. Keine Summenformel, keine Stereodeskriptoren. Bildunterschrift im Dokument: 'Aspirin (Acetylsalicylsäure)'.
 Antwort:
 {
-  "alt_text": "Strukturformel — Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).",
+  "alt_text": "Strukturformel von Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).",
   "langbeschreibung": "Das Grundgerüst ist ein Sechsring mit drei eingezeichneten Doppelbindungen. Die Carboxygruppe besteht aus einem Kohlenstoffatom mit einer Doppelbindung zu einem Sauerstoffatom und einer Einfachbindung zu einer OH-Gruppe. Die Acetoxygruppe ist über ein Sauerstoffatom an den direkt benachbarten Ringkohlenstoff gebunden, es folgen ein Kohlenstoffatom mit Doppelbindung zu Sauerstoff und eine endständige Methylgruppe CH3. Stereodeskriptoren sind nicht dargestellt.",
   "verwendete_inventar_items": [
     "Benzolring mit drei Doppelbindungen",
@@ -211,7 +216,7 @@ Szene: Dieselbe Skelettformel der Acetylsalicylsäure: Benzolring mit Carboxygru
 Fehlerhafter Alt-Text: "Strukturformel — vermutlich Paracetamol: Sechsring mit einer CH₃-Gruppe und einer NH₂-Gruppe."
 - Fehler: 'vermutlich Paracetamol' widerspricht der Bildunterschrift, die Acetylsalicylsäure belegt, und 'NH₂-Gruppe' erfindet eine Atomgruppe, die die Formel nicht zeigt.
 - Fehler: Tiefgestellte Indizes wie CH₃ lesen Screenreader schlecht vor; die Notation ist CH3.
-Besser: 'Strukturformel — Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).'
+Besser: 'Strukturformel von Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).'
 
 
 KONTEXT (Bildunterschrift, umliegender Text, Angaben des Aufrufers)

@@ -1,6 +1,6 @@
 {
   "szene": "Dieselbe Deutschlandkarte: 45 blaue Punkt-Markierungen für Beratungsstellen, Legende mit großen und kleinen Kreisen, Häufung im Süden, beschriftete Städte München, Stuttgart, Köln, Hamburg, Berlin.",
-  "alt_text": "Karte — Deutschland: 45 Gefahrenstellen, vor allem im Süden um München und Stuttgart. Eine empfohlene Route verbindet die Standorte von Nord nach Süd.",
+  "alt_text": "Karte der Beratungsstellen in Deutschland: 45 Gefahrenstellen, vor allem im Süden um München und Stuttgart. Eine empfohlene Route verbindet die Standorte von Nord nach Süd.",
   "fehler": [
     "'Gefahrenstellen' deutet die Marker gegen die Legende, die Beratungsstellen ausweist, und 'eine empfohlene Route' erfindet ein Element, das die Karte nicht zeigt."
   ],

@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp tabelle
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-07
+- **Generiert:** 2026-09-08
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -180,7 +180,12 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-4. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
+4. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
+   Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
+   Gedankenstrich. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
+   (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
+
+5. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
    bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
    Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
    Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
@@ -194,7 +199,7 @@ Gutes Beispiel 1
 Szene: Periodensystem der Elemente als Grafik: 118 Elemente in 18 Gruppen (Spalten) und 7 Perioden (Zeilen), jede Zelle mit Elementsymbol, Ordnungszahl und Name, von Wasserstoff (H, 1) bis Oganesson (Og, 118). Die erste Periode enthält nur Wasserstoff und Helium (He, 2). Lanthanoide (Lanthan, La, 57 bis Lutetium, Lu, 71) und Actinoide (Actinium, Ac, 89 bis Lawrencium, Lr, 103) als zwei separate Zeilen unterhalb der Haupttabelle, aus den Perioden 6 und 7 ausgelagert. Zellen nach Elementkategorien eingefärbt, eine Legende nennt die Kategorien.
 Antwort:
 {
-  "alt_text": "Tabelle — Periodensystem der Elemente: 118 chemische Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118). Lanthanoide und Actinoide stehen als zwei eigene Zeilen unter der Haupttabelle.",
+  "alt_text": "Tabelle der Periodensystem der Elemente: 118 chemische Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118). Lanthanoide und Actinoide stehen als zwei eigene Zeilen unter der Haupttabelle.",
   "langbeschreibung": "Jede Zelle enthält Elementsymbol, Ordnungszahl und Elementname. Die 18 Gruppen bilden die Spalten, die 7 Perioden die Zeilen, und die Ordnungszahlen steigen in jeder Zeile von links nach rechts. Die erste Periode enthält nur Wasserstoff (H, 1) und Helium (He, 2). Die Lanthanoide reichen von Lanthan (La, 57) bis Lutetium (Lu, 71), die Actinoide von Actinium (Ac, 89) bis Lawrencium (Lr, 103). Beide Reihen sind aus den Perioden 6 und 7 ausgelagert. Die Zellen sind nach Elementkategorien eingefärbt, eine Legende ordnet die Farben den Kategorien zu.",
   "verwendete_inventar_items": [
     "118 Elemente",
@@ -215,7 +220,7 @@ Antwort:
 
 Gegenbeispiel 1
 Szene: Dasselbe Periodensystem der Elemente: 118 Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, 1) bis Oganesson (Og, 118).
-Fehlerhafter Alt-Text: "Tabelle — Periodensystem der Elemente: ungefähr 120 Elemente in farbigen Kästchen, oben links beginnt die Tabelle mit einem Kästchen, rechts daneben folgen viele weitere."
+Fehlerhafter Alt-Text: "Tabelle der Periodensystem der Elemente: ungefähr 120 Elemente in farbigen Kästchen, oben links beginnt die Tabelle mit einem Kästchen, rechts daneben folgen viele weitere."
 - Fehler: 'ungefähr 120' verschenkt die belegte exakte Zahl 118, und 'oben links, rechts daneben' beschreibt das Layout statt der Struktur aus 18 Gruppen und 7 Perioden.
 Besser: '118 chemische Elemente in 18 Gruppen und 7 Perioden, von Wasserstoff (H, Ordnungszahl 1) bis Oganesson (Og, 118)'.
 
