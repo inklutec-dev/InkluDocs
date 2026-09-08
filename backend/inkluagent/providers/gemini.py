@@ -39,15 +39,17 @@ class GeminiProviderError(BedrockProviderError):
 
 
 def _endpunkt(model: str) -> str:
-    basis = os.environ.get("GEMINI_ENDPOINT", "https://generativelanguage.googleapis.com/v1beta").rstrip("/")
-    return f"{basis}/models/{model}:generateContent"
+    from pipelines.v4 import gemini_auth
+    return gemini_auth.endpunkt(model)
 
 
 class GeminiProvider(LLMProvider):
     def __init__(self) -> None:
-        self._key = os.environ.get("GEMINI_API_KEY", "").strip()
-        if not self._key:
-            raise GeminiProviderError("GEMINI_API_KEY fehlt in der Umgebung")
+        from pipelines.v4 import gemini_auth
+        try:
+            gemini_auth.kopfzeilen()  # prüft Schlüssel bzw. Dienstkonto beim Start
+        except Exception as e:
+            raise GeminiProviderError(f"Gemini-Zugang: {e}") from e
         self._zaehler = 0
 
     # ---------------------------------------------------------------- HTTP
@@ -55,8 +57,8 @@ class GeminiProvider(LLMProvider):
         daten = json.dumps(body).encode("utf-8")
         letzter: Optional[Exception] = None
         for versuch in range(_VERSUCHE):
-            req = urllib.request.Request(_endpunkt(model), data=daten, headers={
-                "x-goog-api-key": self._key, "Content-Type": "application/json"})
+            from pipelines.v4 import gemini_auth
+            req = urllib.request.Request(_endpunkt(model), data=daten, headers=gemini_auth.kopfzeilen())
             try:
                 with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
                     return json.load(r)

@@ -39,8 +39,8 @@ class GeminiCallError(Exception):
 
 
 def _endpunkt(model: str) -> str:
-    basis = os.environ.get('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta').rstrip('/')
-    return f'{basis}/models/{model}:generateContent'
+    from . import gemini_auth
+    return gemini_auth.endpunkt(model)
 
 
 _ERLAUBTE_SCHLUESSEL = {'type', 'description', 'properties', 'required', 'items', 'enum', 'nullable',
@@ -109,9 +109,11 @@ def _prompt_ohne_marker(prompt: str) -> str:
 
 def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: str, schema_dict: dict,
                    max_tokens: int, temperature: float, system: str | None) -> dict:
-    key = os.environ.get('GEMINI_API_KEY', '').strip()
-    if not key:
-        raise GeminiCallError('GEMINI_API_KEY fehlt in der Umgebung')
+    from . import gemini_auth
+    try:
+        kopf = gemini_auth.kopfzeilen()
+    except Exception as e:
+        raise GeminiCallError(f'Gemini-Zugang: {e}') from e
     teile = [{'text': _prompt_ohne_marker(prompt)}]
     if image_b64:
         teile.append({'inlineData': {'mimeType': _media_type(image_b64), 'data': image_b64}})
@@ -129,8 +131,7 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
     daten = json.dumps(body).encode('utf-8')
     letzter: Exception | None = None
     for versuch in range(_VERSUCHE):
-        req = urllib.request.Request(_endpunkt(model), data=daten, headers={
-            'x-goog-api-key': key, 'Content-Type': 'application/json'})
+        req = urllib.request.Request(_endpunkt(model), data=daten, headers=kopf)
         try:
             with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
                 antwort = json.load(r)
