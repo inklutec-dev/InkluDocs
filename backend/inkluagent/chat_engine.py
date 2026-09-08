@@ -39,11 +39,17 @@ from .sanitize import sanitize_markdown
 
 log = logging.getLogger(__name__)
 
-# Seit 07.09.2026 gibt es nur noch einen Anbieter: Claude ueber Amazon Bedrock.
-# Der fruehere Schalter INKLUAGENT_PROVIDER (mistral/bedrock) ist abgebaut.
-_PROVIDER_NAME = "bedrock"
-_provider = BedrockProvider()
-log.info("InkluAgent: BedrockProvider aktiv (Claude via Frankfurt)")
+# Anbieter des Chatbots (08.09.2026): INKLUAGENT_PROVIDER=bedrock (Vorgabe, Claude ueber Frankfurt)
+# oder gemini (Google Gemini, gleicher Schluessel wie die Bildpipeline).
+_PROVIDER_NAME = os.environ.get("INKLUAGENT_PROVIDER", "bedrock").strip().lower()
+if _PROVIDER_NAME == "gemini":
+    from .providers.gemini import GeminiProvider
+    _provider = GeminiProvider()
+    log.info("InkluAgent: GeminiProvider aktiv")
+else:
+    _PROVIDER_NAME = "bedrock"
+    _provider = BedrockProvider()
+    log.info("InkluAgent: BedrockProvider aktiv (Claude via Frankfurt)")
 
 # Agentic-Modus (Tool-Use-Loop) — Default an. Override via INKLUAGENT_AGENTIC=true|false.
 _AGENTIC_ENABLED = os.environ.get("INKLUAGENT_AGENTIC", "true").lower().strip() == "true"
