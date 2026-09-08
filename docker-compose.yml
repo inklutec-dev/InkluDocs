@@ -43,6 +43,21 @@ services:
       - BEDROCK_MODEL_INVENTAR=${BEDROCK_MODEL_INVENTAR:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_GENERATE=${BEDROCK_MODEL_GENERATE:-eu.anthropic.claude-sonnet-4-6}
       - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
+      # Anbieter je Rolle (08.09.2026): Vorgabe bedrock; gemini erst nach Vertex-EU-Einrichtung und Freigabe
+      - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
+      - LLM_PROVIDER_CLASSIFY=${LLM_PROVIDER_CLASSIFY:-}
+      - LLM_PROVIDER_INVENTAR=${LLM_PROVIDER_INVENTAR:-}
+      - LLM_PROVIDER_GENERATE=${LLM_PROVIDER_GENERATE:-}
+      - LLM_PROVIDER_VALIDATE=${LLM_PROVIDER_VALIDATE:-}
+      - GEMINI_AUTH=${GEMINI_AUTH:-vertex}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - VERTEX_PROJECT=${VERTEX_PROJECT:-}
+      - VERTEX_REGION=${VERTEX_REGION:-europe-west1}
+      - GOOGLE_SERVICE_ACCOUNT_JSON_B64=${GOOGLE_SERVICE_ACCOUNT_JSON_B64:-}
+      - GEMINI_MODEL_CLASSIFY=${GEMINI_MODEL_CLASSIFY:-gemini-3.8-flash}
+      - GEMINI_MODEL_INVENTAR=${GEMINI_MODEL_INVENTAR:-gemini-3.1-pro-preview}
+      - GEMINI_MODEL_GENERATE=${GEMINI_MODEL_GENERATE:-gemini-3.1-pro-preview}
+      - GEMINI_MODEL_VALIDATE=${GEMINI_MODEL_VALIDATE:-gemini-3.1-pro-preview}
       # Features
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
       # PDFix-Lizenz (27.08.2026): aus der Env-Datei; leer = Testversion

@@ -1,6 +1,6 @@
 {
   "szene": "Dieselbe Skelettformel der Acetylsalicylsäure: Benzolring mit Carboxygruppe und Acetoxygruppe, Bildunterschrift 'Aspirin (Acetylsalicylsäure)'.",
-  "alt_text": "Strukturformel — vermutlich Paracetamol: Sechsring mit einer CH₃-Gruppe und einer NH₂-Gruppe.",
+  "alt_text": "Strukturformel von vermutlich Paracetamol: Sechsring mit einer CH₃-Gruppe und einer NH₂-Gruppe.",
   "fehler": [
     "'vermutlich Paracetamol' widerspricht der Bildunterschrift, die Acetylsalicylsäure belegt, und 'NH₂-Gruppe' erfindet eine Atomgruppe, die die Formel nicht zeigt.",
     "Tiefgestellte Indizes wie CH₃ lesen Screenreader schlecht vor; die Notation ist CH3."
