@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 import fitz
 
 from formular_processor import _ohne_widgets, _zeilen_der_seite  # widgetfreie Kopie, Zeilen mit Position
-from pipelines.v4 import bedrock_client
+from pipelines.v4 import llm_client
 from prompts.builders.quickinfo import build_quickinfo_prompt
 from prompts.components.schemas.quickinfo import QuickinfoSeiteOutput
 
@@ -268,14 +268,14 @@ def generiere_seite(pdf_path: str, page_number: int, felder: list[dict], *, spra
         try:
             if mit_bild:
                 log.info("Feld-Pass Seite %s: Seitenbild-Ausnahme (Feld ohne Beschriftung)", page_number)
-                out = bedrock_client.call_bedrock_with_schema(
-                    model=bedrock_client.BEDROCK_MODEL_GENERATE, prompt=prompt, image_path=seitenbild_path,
+                out = llm_client.call_with_schema(
+                    model=llm_client.MODEL_GENERATE, prompt=prompt, image_path=seitenbild_path,
                     schema=QuickinfoSeiteOutput, max_tokens=4000, temperature=temperatur, system=system)
             else:
-                out = bedrock_client.call_bedrock_text_with_schema(
-                    model=bedrock_client.BEDROCK_MODEL_GENERATE, prompt=prompt, schema=QuickinfoSeiteOutput,
+                out = llm_client.call_text_with_schema(
+                    model=llm_client.MODEL_GENERATE, prompt=prompt, schema=QuickinfoSeiteOutput,
                     max_tokens=4000, temperature=temperatur, system=system)
-        except bedrock_client.BedrockCallError as e:
+        except llm_client.LLMCallError as e:
             log.error("Feld-Pass Seite %s fehlgeschlagen: %s", page_number, e)
             raise FeldPassFehler("Die KI-Anfrage ist fehlgeschlagen. Bitte später erneut versuchen.")
         gesehen = set()
