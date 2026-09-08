@@ -67,6 +67,12 @@ services:
       - GEMINI_MODEL_INVENTAR=${GEMINI_MODEL_INVENTAR:-gemini-3.1-pro-preview}
       - GEMINI_MODEL_GENERATE=${GEMINI_MODEL_GENERATE:-gemini-3.1-pro-preview}
       - GEMINI_MODEL_VALIDATE=${GEMINI_MODEL_VALIDATE:-gemini-3.1-pro-preview}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_ENDPOINT=${OPENAI_ENDPOINT:-https://api.openai.com/v1}
+      - OPENAI_MODEL_CLASSIFY=${OPENAI_MODEL_CLASSIFY:-gpt-5.6-terra}
+      - OPENAI_MODEL_INVENTAR=${OPENAI_MODEL_INVENTAR:-gpt-5.5}
+      - OPENAI_MODEL_GENERATE=${OPENAI_MODEL_GENERATE:-gpt-5.5}
+      - OPENAI_MODEL_VALIDATE=${OPENAI_MODEL_VALIDATE:-gpt-5.6-terra}
       - V4_VERIFY_MODE=kritisch
       - V4_VERIFY_KORREKTUR=on
       - V4_PROMPT_CACHE=${V4_PROMPT_CACHE:-off}  # Prompt-Caching 03.09.2026: Bilddaten ans Ende, fester Anfang mit cache_control (off = Prompts wie vorher)
