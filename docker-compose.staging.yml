@@ -81,8 +81,11 @@ services:
       - OPENAI_MODEL_INVENTAR=${OPENAI_MODEL_INVENTAR:-gpt-5.5}
       - OPENAI_MODEL_GENERATE=${OPENAI_MODEL_GENERATE:-gpt-5.5}
       - OPENAI_MODEL_VALIDATE=${OPENAI_MODEL_VALIDATE:-gpt-5.6-terra}
-      - V4_VERIFY_MODE=kritisch
-      - V4_VERIFY_KORREKTUR=on
+      - V4_VERIFY_MODE=${V4_VERIFY_MODE:-kritisch}          # off = kein Prüfpass (Zwei-Aufruf-Variante, 08.09.2026)
+      - V4_VERIFY_KORREKTUR=${V4_VERIFY_KORREKTUR:-on}
+      - V4_ZAEHL_PASS=${V4_ZAEHL_PASS:-on}                  # Aufzähl-Schritt bei Personen-/Objektfotos
+      - V4_DIAGRAMM_WERTE=${V4_DIAGRAMM_WERTE:-on}          # Werte-Ablesung bei Diagrammen
+      - V4_FAKTENBLATT=${V4_FAKTENBLATT:-on}                # Faktenblatt bei Tabelle, Karte, Infografik
       - V4_PROMPT_CACHE=${V4_PROMPT_CACHE:-off}  # Prompt-Caching 03.09.2026: Bilddaten ans Ende, fester Anfang mit cache_control (off = Prompts wie vorher)
       - ABO_ENFORCEMENT=${ABO_ENFORCEMENT:-off}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
