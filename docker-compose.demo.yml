@@ -82,6 +82,26 @@ services:
       - BEDROCK_MODEL_VALIDATE=${BEDROCK_MODEL_VALIDATE:-eu.anthropic.claude-sonnet-4-6}
       - V4_VERIFY_MODE=${V4_VERIFY_MODE:-off}
       - V4_VERIFY_KORREKTUR=${V4_VERIFY_KORREKTUR:-off}
+      # Anbieter je Rolle (09.09.2026, wie Prod): Werte aus .env.demo; Vorgabe bedrock als Rueckfall.
+      - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
+      - LLM_PROVIDER_CLASSIFY=${LLM_PROVIDER_CLASSIFY:-}
+      - LLM_PROVIDER_INVENTAR=${LLM_PROVIDER_INVENTAR:-}
+      - LLM_PROVIDER_GENERATE=${LLM_PROVIDER_GENERATE:-}
+      - LLM_PROVIDER_VALIDATE=${LLM_PROVIDER_VALIDATE:-}
+      - GEMINI_AUTH=${GEMINI_AUTH:-vertex}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - VERTEX_PROJECT=${VERTEX_PROJECT:-}
+      - VERTEX_REGION=${VERTEX_REGION:-global}
+      - VERTEX_REGION_MAP=${VERTEX_REGION_MAP:-}
+      - GOOGLE_SERVICE_ACCOUNT_JSON_B64=${GOOGLE_SERVICE_ACCOUNT_JSON_B64:-}
+      - GEMINI_MODEL_CLASSIFY=${GEMINI_MODEL_CLASSIFY:-gemini-3.8-flash}
+      - GEMINI_MODEL_INVENTAR=${GEMINI_MODEL_INVENTAR:-gemini-3.1-pro-preview}
+      - GEMINI_MODEL_GENERATE=${GEMINI_MODEL_GENERATE:-gemini-3.1-pro-preview}
+      - GEMINI_MODEL_VALIDATE=${GEMINI_MODEL_VALIDATE:-gemini-3.1-pro-preview}
+      - V4_ZAEHL_PASS=${V4_ZAEHL_PASS:-off}
+      - V4_DIAGRAMM_WERTE=${V4_DIAGRAMM_WERTE:-off}
+      - V4_FAKTENBLATT=${V4_FAKTENBLATT:-off}
+      - V4_PROMPT_CACHE=${V4_PROMPT_CACHE:-off}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

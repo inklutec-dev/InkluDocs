@@ -52,7 +52,7 @@ function t(s, params) {
 
     const brand = document.createElement("a");
     brand.className = "app-brand";
-    brand.href = "/";
+    brand.href = "https://inkludocs.de/";  // Michael 04.09.2026: Logo fuehrt zur Startseite (seit 09.09.2026 im Repo statt In-place-Patch)
     brand.innerHTML = '<span class="brand">Inklu</span>Docs';
     host.appendChild(brand);
 
@@ -97,12 +97,7 @@ function t(s, params) {
         '<p class="dsgvo-note"><strong>' + t("DSGVO-konform – Hosting und Datenhaltung in Deutschland.") + '</strong>' +
           t(" Hosting bei Hetzner Online (Falkenstein, Deutschland). Die Bildbeschreibungen und Quickinfos erstellt das Modell Gemini von Google über Google Vertex AI; der Chat-Assistent nutzt das Modell Claude von Anthropic über Amazon Bedrock in der EU. Beide Anbieter sind vertraglich als Auftragsverarbeiter gebunden und nutzen deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.") +
         '</p>' +
-        '<div class="dash-support">' +
-          '<p class="dash-support-text">' + t("Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.") + '</p>' +
-          '<a class="dash-support-link" href="https://www.paypal.com/donate?business=steve.weidel%40gmail.com&item_name=InkluDocs+-+Freiwilliger+Beitrag&currency_code=EUR" ' +
-            'target="_blank" rel="noopener" aria-label="' + t("InkluDocs per PayPal unterstützen, öffnet in neuem Tab") + '">' + t("InkluDocs per PayPal unterstützen") + '</a>' +
-          '<p class="dash-support-note">' + t("Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen.") + '</p>' +
-        '</div>';
+        '';  // Unterstuetzungs-/PayPal-Block entfernt (Michael 04.09.2026; seit 09.09.2026 im Repo)
     });
   }
 
