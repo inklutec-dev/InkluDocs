@@ -406,7 +406,9 @@
         const gen = data.generierung;
         if (project.status !== 'processing' || !gen) return '';
         const gesamt = Number(gen.seiten_gesamt) || 0, fertig = Number(gen.seiten_fertig) || 0;
-        const prozent = gesamt > 0 ? Math.round(fertig / gesamt * 100) : 0;
+        // Die laufende Seite zaehlt als halber Schritt, damit der Balken auch bei der ersten Seite
+        // schon Bewegung zeigt (Steve 09.09.2026); fertige Seiten zaehlen voll.
+        const prozent = gesamt > 0 ? Math.round((fertig + (fertig < gesamt ? 0.5 : 0)) / gesamt * 100) : 0;
         const aktuell = gesamt > 0 ? Math.min(fertig + 1, gesamt) : 1;
         return '<section class="card" id="progressCard" aria-labelledby="progressHeading">'
             + '<h2 id="progressHeading" class="section-title">' + t('Erstellung läuft') + '</h2>'
@@ -415,6 +417,14 @@
             + '<p id="processingInfo" aria-live="polite">' + t('Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig.', { i: aktuell, n: gesamt || 1, m: Number(gen.felder_neu) || 0 }) + '</p>'
             + (gast() ? '' : '<button type="button" class="btn btn-secondary" id="fAbortBtn" onclick="Formular.abbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button>')
             + '</section>';
+    }
+
+    // Abschluss-/Abbruchmeldung des Laufs (Michael Karbe Punkt 2 + Steve, 02.09.2026): sichtbar
+    // statt nur angesagt. Seit 09.09.2026 an der Stelle der Fortschrittskarte, unter dem Upload-Feld.
+    function laufMeldungHtml() {
+        if (gast()) return '';
+        return '<div id="fLaufMeldung" class="lauf-meldung" tabindex="-1" hidden><output id="fLaufMeldungText"></output>'
+            + '<button type="button" class="btn btn-secondary" onclick="Formular.meldungSchliessen()">' + t('Schließen') + '</button></div>';
     }
 
     function kopfHtml(project, data) {
@@ -444,10 +454,9 @@
         // Abbrechen-Knopf und Fortschritt stehen seit 09.09.2026 in der eigenen Karte unter dem
         // Upload-Feld (fortschrittKarteHtml, Michael Karbe), nicht mehr im Kopf.
         const abbruchKnopf = '';
-        // Sichtbare Lauf-Statusmeldung (Michael Karbe Punkt 2 + Steve, 02.09.2026) — wie bei den Bildern.
-        const laufMeldungHtml = gast() ? ''
-            : '<div id="fLaufMeldung" class="lauf-meldung" tabindex="-1" hidden><output id="fLaufMeldungText"></output>'
-            + '<button type="button" class="btn btn-secondary" onclick="Formular.meldungSchliessen()">' + t('Schließen') + '</button></div>';
+        // Die sichtbare Lauf-Statusmeldung steht seit 09.09.2026 unter dem Upload-Feld, dort wo
+        // waehrend des Laufs die Fortschrittskarte stand (laufMeldungHtml, Michael Karbe/Steve).
+        const laufMeldungHtml = '';
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
@@ -939,6 +948,7 @@
         main.innerHTML = kopfHtml(project, data)
             + (gast() ? '' : uploadBlockHtml(project))
             + fortschrittKarteHtml(project, data)
+            + laufMeldungHtml()
             + '<div id="feldListe">' + (data.felder.length ? docsHtml : (gast() ? '<div class="card"><p>' + t('Dieses Formular enthält noch keine Felder.') + '</p></div>' : '')) + '</div>'
             // InkluAgent (28.08.2026): derselbe Chat-Kasten wie bei den Alt-Texten (app.html),
             // Variante formular — nur fuer den Besitzer, Gaeste bekommen keinen Chatbot.

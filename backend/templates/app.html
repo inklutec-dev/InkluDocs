@@ -623,12 +623,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                      Punkt 4, Steve 01.09.2026): die Zahl steht in der Rueckfrage und in der Herunterladen-
                      Zusammenfassung. Element bleibt (updateProjectHeader schreibt hinein), nur unsichtbar. -->
                 <div class="card-info" id="projectHeadInfo" hidden>${headInfo}</div>
-                ${!window.GUEST_MODE ? `
-                    <div id="laufMeldung" class="lauf-meldung" tabindex="-1" hidden>
-                        <output id="laufMeldungText"></output>
-                        <button type="button" class="btn btn-secondary" onclick="versteckeLaufMeldung()">${t('Schließen')}</button>
-                    </div>
-                ` : ''}
                 <div class="card-actions">
                     ${!window.GUEST_MODE && images.length > 0 && project.status !== 'processing' && project.status !== 'extracting' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
@@ -727,6 +721,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: laufendeNummer(project.processed_images, project.total_images), n: project.total_images })}</p>
                     ${!window.GUEST_MODE ? '<button type="button" class="btn btn-secondary" id="abortGenBtn" onclick="generierungAbbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button>' : ''}
                 </section>
+            ` : ''}
+            ${!window.GUEST_MODE ? `
+                <!-- Abschluss-/Abbruchmeldung des Laufs: seit 09.09.2026 hier, an der Stelle der
+                     Fortschrittskarte (Michael Karbe/Steve), vorher im Projektkopf. -->
+                <div id="laufMeldung" class="lauf-meldung" tabindex="-1" hidden>
+                    <output id="laufMeldungText"></output>
+                    <button type="button" class="btn btn-secondary" onclick="versteckeLaufMeldung()">${t('Schließen')}</button>
+                </div>
             ` : ''}
             ${(() => {
                 // Steve 08.06.2026 (Michael-Befund): bei PDF-Projekten sind die Dokument-
