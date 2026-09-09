@@ -193,7 +193,8 @@ STILREGELN (Stil, nicht Fakten)
    eine Obergrenze, kein Ziel. Der Alt-Text trägt die Essenz; Nebendetails,
    räumliche Ausführung und Wissenstiefe gehören in die Langbeschreibung. Die
    Langbeschreibung ist Fließtext ohne Überschriften und Aufzählungszeichen,
-   beginnt nicht mit einer Ansage und wiederholt den Alt-Text nicht.
+   beginnt nicht mit einer Ansage wie "Das Bild zeigt" und wiederholt den
+   Alt-Text nicht.
 
 
 BEISPIELE

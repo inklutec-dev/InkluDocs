@@ -60,11 +60,13 @@ _LAENGE_FOTO = """6. Länge und Arbeitsteilung. Richtwert für den Alt-Text: ein
    eine Obergrenze, kein Ziel. Der Alt-Text trägt die Essenz; Nebendetails,
    räumliche Ausführung und Wissenstiefe gehören in die Langbeschreibung. Die
    Langbeschreibung ist Fließtext ohne Überschriften und Aufzählungszeichen,
-   beginnt nicht mit einer Ansage und wiederholt den Alt-Text nicht."""
+   beginnt nicht mit einer Ansage wie "Das Bild zeigt" und wiederholt den
+   Alt-Text nicht."""
 
 _SCHREIBWEISE_SACHLICH = """5. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
    Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
-   Gedankenstrich. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
+   Gedankenstrich. Senkrechte und waagerechte Balken heißen Balkendiagramm, nicht
+   Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
    (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt."""
 
 _LAENGE_SACHLICH = """6. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
@@ -72,7 +74,9 @@ _LAENGE_SACHLICH = """6. Länge und Arbeitsteilung. Richtwert für den Alt-Text:
    Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
    Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
    Reihenfolgen und lesbare Texte in Fließtext ohne Überschriften, Tabellen und
-   Aufzählungszeichen, höchstens 2000 Zeichen. Sie wiederholt den Alt-Text nicht."""
+   Aufzählungszeichen, höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer
+   Ansage wie "Das Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem
+   Inhalt. Sie wiederholt den Alt-Text nicht."""
 
 STILREGELN_KERN = "STILREGELN (Stil, nicht Fakten)\n\n" + "\n\n".join([_PUNKT_1, _PUNKT_2_FOTO, _PUNKT_3, _PUNKT_4, _PUNKT_5])
 

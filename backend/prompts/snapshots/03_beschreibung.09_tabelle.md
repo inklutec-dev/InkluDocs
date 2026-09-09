@@ -182,7 +182,8 @@ STILREGELN (Stil, nicht Fakten)
 
 4. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
    Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
-   Gedankenstrich. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
+   Gedankenstrich. Senkrechte und waagerechte Balken heißen Balkendiagramm, nicht
+   Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
    (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
 
 5. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
@@ -190,7 +191,9 @@ STILREGELN (Stil, nicht Fakten)
    Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
    Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
    Reihenfolgen und lesbare Texte in Fließtext ohne Überschriften, Tabellen und
-   Aufzählungszeichen, höchstens 2000 Zeichen. Sie wiederholt den Alt-Text nicht.
+   Aufzählungszeichen, höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer
+   Ansage wie "Das Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem
+   Inhalt. Sie wiederholt den Alt-Text nicht.
 
 
 BEISPIELE
