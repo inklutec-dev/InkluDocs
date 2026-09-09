@@ -348,7 +348,9 @@ Kosten: rund 1.500 Eingabe-Token je betroffener Seite.
 3. Beleg und Hinweise als zugeklappte Klappe „Beleg und Hinweise“ (nur bei
    KI-Texten) — für Screenreader-Nutzer erreichbar, für Sehende platzsparend.
 4. Stammdaten „auf alle Felder anwenden“: ersetzt auch PDF-Originale und
-   KI-Texte (`QUELLEN_ERSETZBAR`), nie Hand/Gast/Chat; beim Upload ebenso.
+   KI-Texte (`QUELLEN_ERSETZBAR`), nie Hand/Gast/Chat. Beim Upload werden
+   Stammdaten seit 09.09.2026 NICHT mehr automatisch angewendet (Michael Karbe):
+   Die Übernahme geschieht nur auf Wunsch, je Feld oder gesammelt.
    „Zurück auf Original“ holt die PDF-Quickinfo.
 5. Zähler „n Felder, o offen“ (Seite, Dokument, Kopfzeile, Badge) laufen beim
    Tippen live mit (`zaehlerAktualisieren`).

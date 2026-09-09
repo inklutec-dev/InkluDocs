@@ -412,12 +412,12 @@ async def _extract_in_background(project_id: int, document_id: int, doc_index: i
         hinweise_json = json.dumps(hinweise, ensure_ascii=False) if (hinweise.get("uebersprungen") or hinweise.get("warnungen")) else ""
         conn.execute("UPDATE documents SET extraction_method = ?, hinweise = ? WHERE id = ?",
                      ("formular-pdfix" if hinweise.get("quelle_liste") == "pdfix" else "formular", hinweise_json, document_id))
-        # Stammdaten des Kontos direkt beim Hochladen anwenden (Michaels Wunsch:
-        # "in jedes neue Formular importieren") — nur auf Felder ohne Quickinfo.
-        project = dict(conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone())
-        neue = [dict(r) for r in conn.execute("SELECT * FROM formularfelder WHERE document_id = ?", (document_id,)).fetchall()]
-        # Beim Upload auch PDF-Originale ersetzen, wenn Stammdaten passen (Michael 28.08.2026).
-        _stammdaten_anwenden(conn, project, neue, nur_offene=False)
+        # Stammdaten werden beim Hochladen NICHT mehr automatisch angewendet (Michael Karbe
+        # 09.09.2026): Die Felder kommen so an, wie sie in der PDF stehen, oder leer. Die
+        # Uebernahme geschieht erst auf Wunsch des Nutzers — je Feld ueber den Vorschlag
+        # "aus deinen Stammdaten" oder gesammelt ueber POST /stammdaten-anwenden.
+        # Historie: 28.08.2026 wurden Stammdaten beim Upload sofort eingetragen und
+        # ersetzten dabei auch PDF-Originale (damals Michaels Wunsch, jetzt zurueckgenommen).
         conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
         conn.commit()
     except Exception as e:
