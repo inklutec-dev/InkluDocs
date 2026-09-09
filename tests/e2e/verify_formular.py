@@ -254,7 +254,8 @@ for _ in range(90):
 by3 = {f["anker"]: f for f in d.get("felder", [])}
 check("Generierung beendet, Status extracted", d.get("project", {}).get("status") == "extracted", (d.get("project", {}).get("status"), g))
 check("Leere Felder jetzt KI (nachname_2, geburtsdatum)", by3["nachname_2"]["quelle"] == "ki" and by3["geburtsdatum"]["quelle"] == "ki" and by3["nachname_2"]["quickinfo"], (by3["nachname_2"]["quelle"], by3["geburtsdatum"]["quelle"]))
-check("Hand-Text ersetzt (vorname -> ki, wie bei den Alt-Texten)", by3["vorname"]["quelle"] == "ki" and by3["vorname"]["quickinfo"] != "Vorname des Kontoinhabers", (by3["vorname"]["quelle"], by3["vorname"]["quickinfo"]))
+# Der Wortlaut darf gleich bleiben (die KI schreibt oft genau „Vorname des Kontoinhabers"); entscheidend ist die Quelle.
+check("Hand-Text ersetzt (vorname -> ki, wie bei den Alt-Texten)", by3["vorname"]["quelle"] == "ki" and (by3["vorname"]["quickinfo"] or "").strip() != "", (by3["vorname"]["quelle"], by3["vorname"]["quickinfo"]))
 check("PDF-Original ersetzt (email -> ki)", by3["email"]["quelle"] == "ki", by3["email"]["quelle"])
 check("Alle benannten Felder geschrieben (felder_neu = Anzahl)", g.get("felder_neu") == len(benannt), (g.get("felder_neu"), len(benannt)))
 check("Namenlose Felder unberuehrt", all(f["quelle"] != "ki" for f in d.get("felder", []) if (f.get("anker") or "").startswith("#")))
