@@ -5587,10 +5587,10 @@ msgstr "Important pour vous : nous n’utilisons pas vos contenus pour entraîne
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr "Contrat de sous-traitance au format PDF (version 1.1 du 9 septembre 2026)"
 
-#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
-msgid "1 Feld wird generiert. Das benötigt {c} Credits."
-msgstr "1 champ sera généré. Cela nécessite {c} crédits."
+#. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+msgid "Es wird 1 Quickinfo generiert. Das benötigt {c} Credits."
+msgstr "1 info-bulle sera générée. Cela nécessite {c} crédits."
 
-#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
-msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
-msgstr "{n} champs seront générés. Cela nécessite {c} crédits."
+#. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+msgid "Es werden {n} Quickinfos generiert. Das benötigt {c} Credits."
+msgstr "{n} info-bulles seront générées. Cela nécessite {c} crédits."

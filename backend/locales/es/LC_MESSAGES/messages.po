@@ -5587,10 +5587,10 @@ msgstr "Importante para ti: no usamos tus contenidos para entrenar modelos de IA
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr "Contrato de encargo del tratamiento en PDF (versión 1.1 de 9 de septiembre de 2026)"
 
-#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
-msgid "1 Feld wird generiert. Das benötigt {c} Credits."
-msgstr "Se generará 1 campo. Esto requiere {c} créditos."
+#. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+msgid "Es wird 1 Quickinfo generiert. Das benötigt {c} Credits."
+msgstr "Se generará 1 información rápida. Esto requiere {c} créditos."
 
-#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
-msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
-msgstr "Se generarán {n} campos. Esto requiere {c} créditos."
+#. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+msgid "Es werden {n} Quickinfos generiert. Das benötigt {c} Credits."
+msgstr "Se generarán {n} informaciones rápidas. Esto requiere {c} créditos."

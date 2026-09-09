@@ -5590,10 +5590,10 @@ msgstr ""
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr ""
 
-#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
-msgid "1 Feld wird generiert. Das benötigt {c} Credits."
+#. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+msgid "Es wird 1 Quickinfo generiert. Das benötigt {c} Credits."
 msgstr ""
 
-#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
-msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
+#. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+msgid "Es werden {n} Quickinfos generiert. Das benötigt {c} Credits."
 msgstr ""

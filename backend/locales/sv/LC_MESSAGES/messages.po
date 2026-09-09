@@ -5149,10 +5149,10 @@ msgstr "Viktigt för dig: vi använder inte ditt innehåll för att träna AI-mo
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr "Personuppgiftsbiträdesavtal som PDF (version 1.1 av den 9 september 2026)"
 
-#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
-msgid "1 Feld wird generiert. Das benötigt {c} Credits."
-msgstr "1 fält genereras. Det kräver {c} credits."
+#. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+msgid "Es wird 1 Quickinfo generiert. Das benötigt {c} Credits."
+msgstr "1 snabbinfo genereras. Det kräver {c} credits."
 
-#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
-msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
-msgstr "{n} fält genereras. Det kräver {c} credits."
+#. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+msgid "Es werden {n} Quickinfos generiert. Das benötigt {c} Credits."
+msgstr "{n} snabbinfon genereras. Det kräver {c} credits."

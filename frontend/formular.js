@@ -655,8 +655,8 @@
         // Wortlaut Michael Karbe/Steve 09.09.2026: kurz, Gesamtzahl, Preis; den Umfang (Dokument oder
         // Projekt) nennt die Umfangzeile des Dialogs (umfangText).
         let satz = v.anzahl === 1
-            ? t('1 Feld wird generiert. Das benötigt {c} Credits.', { c: v.preis })
-            : t('{n} Felder werden generiert. Das benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
+            ? t('Es wird 1 Quickinfo generiert. Das benötigt {c} Credits.', { c: v.preis })
+            : t('Es werden {n} Quickinfos generiert. Das benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
         satz += ' ' + guthabenSatz(v, 'feld');
         satz += ' ' + t('Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden.');
         generierRueckfrage({
