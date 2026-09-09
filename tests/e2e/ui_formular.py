@@ -126,11 +126,13 @@ with sync_playwright() as p:
     # KI-Fach: Feld 1 (Hand-Text) -> Generieren laesst den Text stehen, Knopf 'KI-Vorschlag uebernehmen' erscheint
     c1 = pg.locator("section.feld-review").first
     vorher1 = c1.locator("textarea.quickinfo-field").input_value()
-    check("KI-Knopf vorher versteckt", c1.locator("button[id^=feld_ki_]").evaluate("b=>b.hidden") is True)
+    # Seit dem Sammellauf ueber ALLE Felder (09.09.2026) kann Feld 1 schon ein KI-Fach tragen (Knopf
+    # sichtbar); entscheidend ist das Verhalten beim Generieren am Feld: Hand-Text bleibt, Meldung kommt.
+    check("Feld 1 traegt einen Hand-Text", vorher1.strip() != "", vorher1)
     c1.locator("button[id^=feld_gen_]").click()
     for _ in range(45):
         pg.wait_for_timeout(1000)
-        if c1.locator("button[id^=feld_ki_]").evaluate("b=>!b.hidden"): break
+        if "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text(): break
     check("Hand-Text bleibt nach Generieren", c1.locator("textarea.quickinfo-field").input_value() == vorher1, c1.locator("textarea.quickinfo-field").input_value())
     check("Knopf 'KI-Vorschlag uebernehmen' sichtbar + Meldung", c1.locator("button[id^=feld_ki_]").evaluate("b=>!b.hidden") and "dein Text bleibt" in c1.locator("[id^=feld_msg_]").inner_text(), c1.locator("[id^=feld_msg_]").inner_text())
     c1.locator("button[id^=feld_ki_]").click(); pg.wait_for_timeout(1000)
