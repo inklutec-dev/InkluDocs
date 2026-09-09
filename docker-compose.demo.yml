@@ -25,7 +25,7 @@ name: inkludocs-demo
 
 services:
   inkludocs-demo:
-    image: inkludocs:demo-20260909  # 09.09.2026: Prod-Build des Tages unter eigenem Tag; Patches im Repo
+    image: inkludocs:demo-20260909b  # 09.09.2026 abends: Rechtstexte (Zwischenspeicher aus, 90 Tage)
     container_name: inkludocs-demo
     restart: unless-stopped
     ports:

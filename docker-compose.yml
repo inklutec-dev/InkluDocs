@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260904
+    image: inkludocs:v4-20260909b
     container_name: inkludocs
     restart: unless-stopped
     ports:
@@ -24,8 +24,11 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
       # v4 + Bedrock - Defaults sind Production-Werte (Fail-Safe wenn --env-file vergessen)
-      - V4_VERIFY_MODE=kritisch
-      - V4_VERIFY_KORREKTUR=on
+      - V4_VERIFY_MODE=${V4_VERIFY_MODE:-kritisch}
+      - V4_VERIFY_KORREKTUR=${V4_VERIFY_KORREKTUR:-on}
+      - V4_ZAEHL_PASS=${V4_ZAEHL_PASS:-on}
+      - V4_DIAGRAMM_WERTE=${V4_DIAGRAMM_WERTE:-on}
+      - V4_FAKTENBLATT=${V4_FAKTENBLATT:-on}
       - V4_PROMPT_CACHE=${V4_PROMPT_CACHE:-off}  # Prompt-Caching 03.09.2026: Bilddaten ans Ende, fester Anfang mit cache_control (off = Prompts wie vorher)
       # Abo-/Credit-System (31.07.2026): off = nur zaehlen, on = Kontingente durchsetzen (Review-Befund 3)
       - ABO_ENFORCEMENT=${ABO_ENFORCEMENT:-off}
