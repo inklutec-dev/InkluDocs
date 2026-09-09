@@ -311,6 +311,13 @@ Umfänge „nur Lücken“ und „nur KI-Texte“ (`ki_neu`, 28.08.2026) sind Hi
 Kein Zurückholen des ersetzten Textes (bewusst, Steve 09.09.2026: dafür gibt
 es die Stammdaten). 1 Credit je geschriebenem Feld.
 
+Fortschritt und Abbruch (Michael Karbe 09.09.2026): Während des Laufs steht
+unter dem Upload-Feld eine eigene Karte „Erstellung läuft“ (H2) mit Balken
+nach Seiten, Live-Ansage „Seite i von n wird bearbeitet, m Quickinfos fertig“
+und dem Knopf „Generierung abbrechen“ (`fortschrittKarteHtml`, Gäste ohne
+Knopf). Der Abbruch wirkt sofort: vor jeder Seite und nach dem Modellaufruf
+der laufenden Seite; deren Ergebnisse werden verworfen und nicht berechnet.
+
 Vor dem Start öffnet sich dieselbe Rückfrage wie bei den Alt-Texten
 (`generierRueckfrage()` in `app.html`, siehe `docs/GENERIERUNG.md`): Umfang,
 „{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits.“ bzw.

@@ -21,7 +21,8 @@ with sync_playwright() as p:
     br = p.chromium.launch(); ctx = br.new_context(viewport={"width": 1280, "height": 900}, locale="de-DE"); pg = ctx.new_page()
     fehler_js = []
     pg.on("pageerror", lambda e: fehler_js.append(str(e)))
-    pg.goto(B + "/"); pg.fill("#email", MAIL); pg.fill("#password", PW); pg.keyboard.press("Enter"); pg.wait_for_timeout(2500)
+    # Anmeldung seit dem Startseiten-Rollout (04.09.2026) unter /login, nicht mehr unter /.
+    pg.goto(B + "/login"); pg.fill("#email", MAIL); pg.fill("#password", PW); pg.keyboard.press("Enter"); pg.wait_for_timeout(2500)
     print("== A. Werkzeugauswahl ==")
     pg.goto(B + "/projekt-neu"); pg.wait_for_timeout(1500)
     opts = pg.locator("#toolSelect option").all_text_contents()

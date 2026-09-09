@@ -398,6 +398,25 @@
     }
 
 
+    // Fortschritt als eigene Karte unter dem Upload-Feld (Michael Karbe 09.09.2026, wie bei den
+    // Alt-Texten): Balken nach Seiten, Live-Ansage mit fertigen Quickinfos, Abbrechen-Knopf.
+    // Nur waehrend der KI-Erstellung; Gaeste sehen die Karte ohne Abbrechen-Knopf. Die
+    // regelmaessige Abfrage rendert die Seite neu, damit laeuft der Balken von allein mit.
+    function fortschrittKarteHtml(project, data) {
+        const gen = data.generierung;
+        if (project.status !== 'processing' || !gen) return '';
+        const gesamt = Number(gen.seiten_gesamt) || 0, fertig = Number(gen.seiten_fertig) || 0;
+        const prozent = gesamt > 0 ? Math.round(fertig / gesamt * 100) : 0;
+        const aktuell = gesamt > 0 ? Math.min(fertig + 1, gesamt) : 1;
+        return '<section class="card" id="progressCard" aria-labelledby="progressHeading">'
+            + '<h2 id="progressHeading" class="section-title">' + t('Erstellung läuft') + '</h2>'
+            + '<div class="progress-bar" role="progressbar" aria-valuenow="' + prozent + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + t('Fortschritt: {p} Prozent', { p: prozent }) + '">'
+            +   '<div class="progress-fill" style="width:' + prozent + '%"></div></div>'
+            + '<p id="processingInfo" aria-live="polite">' + t('Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig.', { i: aktuell, n: gesamt || 1, m: Number(gen.felder_neu) || 0 }) + '</p>'
+            + (gast() ? '' : '<button type="button" class="btn btn-secondary" id="fAbortBtn" onclick="Formular.abbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button>')
+            + '</section>';
+    }
+
     function kopfHtml(project, data) {
         const felder = data.felder, docs = data.documents;
         const offen = felder.filter(f => !(f.quickinfo && f.quickinfo.trim())).length;
@@ -420,9 +439,9 @@
             : t('Noch kein Formular hochgeladen.');
         if (unsicher) info += ' ' + t('{u} KI-Vorschläge unsicher.', { u: unsicher });
         if (project.status === 'processing' && gen) { badge = t('KI generiert'); badgeCls = 'badge-processing'; info += ' ' + t('Seite {i} von {n} wird bearbeitet.', { i: Math.min(gen.seiten_fertig + 1, gen.seiten_gesamt || 1), n: gen.seiten_gesamt || 1 }); }
-        // Abbruch (01.09.2026): Knopf, solange der Feld-Pass laeuft; er endet nach der aktuellen Seite.
-        const abbruchKnopf = (!gast() && project.status === 'processing')
-            ? '<p><button type="button" class="btn btn-secondary" id="fAbortBtn" onclick="Formular.abbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button></p>' : '';
+        // Abbrechen-Knopf und Fortschritt stehen seit 09.09.2026 in der eigenen Karte unter dem
+        // Upload-Feld (fortschrittKarteHtml, Michael Karbe), nicht mehr im Kopf.
+        const abbruchKnopf = '';
         // Sichtbare Lauf-Statusmeldung (Michael Karbe Punkt 2 + Steve, 02.09.2026) — wie bei den Bildern.
         const laufMeldungHtml = gast() ? ''
             : '<div id="fLaufMeldung" class="lauf-meldung" tabindex="-1" hidden><output id="fLaufMeldungText"></output>'
@@ -667,7 +686,7 @@
             const res = await fetch('/api/projects/' + projectId + '/quickinfos/abbrechen', { method: 'POST' });
             const d = await res.json().catch(() => ({}));
             if (!res.ok) { announce(d.detail || t('Generieren fehlgeschlagen.')); if (btn) { btn.disabled = false; btn.textContent = t('Generierung abbrechen'); } return; }
-            announce(d.angefordert ? t('Abbruch angefordert – der Lauf endet nach der aktuellen Seite.') : t('Es läuft gerade keine Generierung.'));
+            announce(d.angefordert ? t('Abbruch angefordert – der Lauf endet sofort, die gerade laufende Seite wird verworfen.') : t('Es läuft gerade keine Generierung.'));
         } catch (e) { announce(t('Verbindungsfehler.')); if (btn) { btn.disabled = false; btn.textContent = t('Generierung abbrechen'); } }
     }
     // Historischer Name (bis 08.09.2026 eigener Modus „nur KI-Texte"); bleibt als Alias, damit
@@ -922,6 +941,7 @@
         const docsHtml = data.documents.map((d, i) => dokumentHtml(d, i + 1, felderJeDoc.get(d.id) || [], data.stammdaten_treffer || {})).join('');
         main.innerHTML = kopfHtml(project, data)
             + (gast() ? '' : uploadBlockHtml(project))
+            + fortschrittKarteHtml(project, data)
             + '<div id="feldListe">' + (data.felder.length ? docsHtml : (gast() ? '<div class="card"><p>' + t('Dieses Formular enthält noch keine Felder.') + '</p></div>' : '')) + '</div>'
             // InkluAgent (28.08.2026): derselbe Chat-Kasten wie bei den Alt-Texten (app.html),
             // Variante formular — nur fuer den Besitzer, Gaeste bekommen keinen Chatbot.

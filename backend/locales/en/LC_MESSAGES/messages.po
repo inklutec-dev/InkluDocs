@@ -5270,10 +5270,6 @@ msgid "Abbruch angefordert – der Lauf endet nach dem aktuellen Bild."
 msgstr "Cancellation requested – the run will stop after the current image."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
-msgid "Abbruch angefordert – der Lauf endet nach der aktuellen Seite."
-msgstr "Cancellation requested – the run will stop after the current page."
-
-#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
 msgid "Es läuft gerade keine Generierung."
 msgstr "No generation is running at the moment."
 
@@ -5596,3 +5592,11 @@ msgstr "The project’s documents contain {n} fields in total; creating the tool
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr "Generation started for {n} fields. Existing tooltips will be replaced."
+
+#. Abbruch sofort (Michael Karbe 09.09.2026)
+msgid "Abbruch angefordert – der Lauf endet sofort, die gerade laufende Seite wird verworfen."
+msgstr "Cancellation requested – the run stops immediately; the page currently in progress is discarded."
+
+#. Fortschrittskarte Formular (Michael Karbe 09.09.2026)
+msgid "Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig."
+msgstr "Processing page {i} of {n}, {m} tooltips done."

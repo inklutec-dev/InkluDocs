@@ -5270,10 +5270,6 @@ msgid "Abbruch angefordert – der Lauf endet nach dem aktuellen Bild."
 msgstr "Cancelación solicitada: el proceso se detendrá tras la imagen actual."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
-msgid "Abbruch angefordert – der Lauf endet nach der aktuellen Seite."
-msgstr "Cancelación solicitada: el proceso se detendrá tras la página actual."
-
-#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
 msgid "Es läuft gerade keine Generierung."
 msgstr "No hay ninguna generación en curso."
 
@@ -5596,3 +5592,11 @@ msgstr "Los documentos del proyecto contienen {n} campos en total; la creación 
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr "Generación iniciada para {n} campos. Las informaciones rápidas existentes se reemplazarán."
+
+#. Abbruch sofort (Michael Karbe 09.09.2026)
+msgid "Abbruch angefordert – der Lauf endet sofort, die gerade laufende Seite wird verworfen."
+msgstr "Cancelación solicitada – la ejecución se detiene de inmediato; la página en curso se descarta."
+
+#. Fortschrittskarte Formular (Michael Karbe 09.09.2026)
+msgid "Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig."
+msgstr "Procesando página {i} de {n}, {m} informaciones rápidas listas."

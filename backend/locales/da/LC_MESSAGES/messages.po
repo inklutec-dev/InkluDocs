@@ -4962,10 +4962,6 @@ msgid "Abbruch angefordert – der Lauf endet nach dem aktuellen Bild."
 msgstr "Afbrydelse anmodet – kørslen stopper efter det aktuelle billede."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
-msgid "Abbruch angefordert – der Lauf endet nach der aktuellen Seite."
-msgstr "Afbrydelse anmodet – kørslen stopper efter den aktuelle side."
-
-#. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
 msgid "Es läuft gerade keine Generierung."
 msgstr "Der kører ingen generering lige nu."
 
@@ -5288,3 +5284,11 @@ msgstr "Projektets dokumenter indeholder i alt {n} felter; oprettelsen af værkt
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr "Generering startet for {n} felter. Eksisterende værktøjstips erstattes."
+
+#. Abbruch sofort (Michael Karbe 09.09.2026)
+msgid "Abbruch angefordert – der Lauf endet sofort, die gerade laufende Seite wird verworfen."
+msgstr "Afbrydelse anmodet – kørslen stopper straks; den igangværende side kasseres."
+
+#. Fortschrittskarte Formular (Michael Karbe 09.09.2026)
+msgid "Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig."
+msgstr "Side {i} af {n} behandles, {m} værktøjstips færdige."

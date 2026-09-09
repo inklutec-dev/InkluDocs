@@ -619,6 +619,12 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
                 st["fehler"].append(f"Seite {page}: unerwarteter Fehler")
                 st["seiten_fertig"] += 1
                 continue
+            # Abbruch waehrend des Modellaufrufs (Michael Karbe 09.09.2026): die Ergebnisse dieser
+            # Seite werden verworfen und nicht berechnet — der Lauf endet beim Klick, nicht erst
+            # nach der Seite. Der eine Aufruf geht ins Leere; Kosten fuer den Kunden: keine.
+            if st.get("abbruch"):
+                st["fehler"].append(f"Vom Nutzer abgebrochen – Seite {page} wurde verworfen, Rest bleibt offen.")
+                break
             alle_vorschlaege.extend(vorschlaege)
             conn = _d.get_db()
             geschrieben = 0
@@ -885,8 +891,9 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.post("/api/projects/{project_id}/quickinfos/abbrechen")
     async def quickinfos_abbrechen(project_id: int, user: dict = Depends(_user)):
-        """Abbruch anfordern (Michael Karbe 01.09.2026): der Feld-Pass endet nach der Seite,
-        die gerade in Arbeit ist; der Rest bleibt offen, der Grund steht in der Fehlerliste."""
+        """Abbruch anfordern (Michael Karbe 01.09.2026): der Feld-Pass prueft die Anforderung vor
+        jeder Seite UND nach dem Modellaufruf der laufenden Seite (09.09.2026) — deren Ergebnisse
+        werden verworfen und nicht berechnet; der Rest bleibt offen, der Grund steht in der Fehlerliste."""
         conn = _d.get_db()
         try:
             project = _projekt_des_nutzers(conn, project_id, user["id"])
