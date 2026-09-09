@@ -290,6 +290,10 @@ tools_genutzt = [a.get("tool") for a in (b.get("actions") or []) if a.get("tool"
 check("Chat: Antwort nennt 12 Felder", s == 200 and "12" in antwort, (s, tools_genutzt, antwort[:160]))
 check("Chat: keine Bild-Werkzeuge im Formular-Projekt", not any(t.startswith(("list_project_images", "view_image", "generate_alt", "update_alt")) for t in tools_genutzt), tools_genutzt)
 print("      Chat:", antwort[:200].replace("\n", " "))
+# Feld 2 (Nachname) vorher auf einen anderen Text setzen: Seit dem Sammellauf ueber ALLE Felder (09.09.2026)
+# traegt es meist schon genau den gewuenschten Text — dann speichert der Agent zu Recht nichts, und der
+# Test waere vom Zufall abhaengig.
+req("PATCH", f"/api/felder/{by['nachname']['id']}", {"quickinfo": "Familienname (alter Text)"})
 s, b, _ = req("POST", f"/api/projects/{pid}/chat", {"message": "Setze bei Feld 2 die Quickinfo auf genau diesen Text: Nachname des Kontoinhabers. Ja, bitte direkt speichern, das ist meine Zustimmung."})
 acts = b.get("actions") or []
 refresh = [a for a in acts if a.get("type") == "refresh_feld"]
