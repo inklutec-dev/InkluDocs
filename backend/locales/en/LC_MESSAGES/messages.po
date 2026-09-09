@@ -4450,9 +4450,6 @@ msgstr "Tooltip generated, {s}: {q}"
 msgid "Quickinfo wird generiert …"
 msgstr "Generating tooltip …"
 
-msgid "Seite {i} von {n} wird bearbeitet."
-msgstr "Processing page {i} of {n}."
-
 msgid "Sprache der Quickinfos"
 msgstr "Language of the tooltips"
 

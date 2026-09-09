@@ -4450,9 +4450,6 @@ msgstr "Sugerencia generada, {s}: {q}"
 msgid "Quickinfo wird generiert …"
 msgstr "Generando sugerencia …"
 
-msgid "Seite {i} von {n} wird bearbeitet."
-msgstr "Procesando página {i} de {n}."
-
 msgid "Sprache der Quickinfos"
 msgstr "Idioma de las sugerencias"
 

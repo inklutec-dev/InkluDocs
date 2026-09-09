@@ -4142,9 +4142,6 @@ msgstr "Hjælpetekst genereret, {s}: {q}"
 msgid "Quickinfo wird generiert …"
 msgstr "Hjælpetekst genereres …"
 
-msgid "Seite {i} von {n} wird bearbeitet."
-msgstr "Side {i} af {n} behandles."
-
 msgid "Sprache der Quickinfos"
 msgstr "Hjælpeteksternes sprog"
 

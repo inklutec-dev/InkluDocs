@@ -4450,9 +4450,6 @@ msgstr "Info-bulle générée, {s} : {q}"
 msgid "Quickinfo wird generiert …"
 msgstr "Génération de l’info-bulle …"
 
-msgid "Seite {i} von {n} wird bearbeitet."
-msgstr "Traitement de la page {i} sur {n}."
-
 msgid "Sprache der Quickinfos"
 msgstr "Langue des info-bulles"
 

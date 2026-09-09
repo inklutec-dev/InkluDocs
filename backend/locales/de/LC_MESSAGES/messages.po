@@ -4453,9 +4453,6 @@ msgstr "Quickinfo generiert, {s}: {q}"
 msgid "Quickinfo wird generiert …"
 msgstr "Quickinfo wird generiert …"
 
-msgid "Seite {i} von {n} wird bearbeitet."
-msgstr "Seite {i} von {n} wird bearbeitet."
-
 msgid "Sprache der Quickinfos"
 msgstr "Sprache der Quickinfos"
 

@@ -438,7 +438,9 @@
                 : t('{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge.', { n: felder.length, d: docs.length, o: offen, s: data.stammdaten_anzahl || 0 }))
             : t('Noch kein Formular hochgeladen.');
         if (unsicher) info += ' ' + t('{u} KI-Vorschläge unsicher.', { u: unsicher });
-        if (project.status === 'processing' && gen) { badge = t('KI generiert'); badgeCls = 'badge-processing'; info += ' ' + t('Seite {i} von {n} wird bearbeitet.', { i: Math.min(gen.seiten_fertig + 1, gen.seiten_gesamt || 1), n: gen.seiten_gesamt || 1 }); }
+        // Waehrend der Erstellung nur das Badge im Kopf; der Fortschritt steht ausschliesslich in der
+        // Karte unter dem Upload-Feld (fortschrittKarteHtml), genau wie bei den Alt-Texten (Michael Karbe 09.09.2026).
+        if (project.status === 'processing' && gen) { badge = t('KI generiert'); badgeCls = 'badge-processing'; }
         // Abbrechen-Knopf und Fortschritt stehen seit 09.09.2026 in der eigenen Karte unter dem
         // Upload-Feld (fortschrittKarteHtml, Michael Karbe), nicht mehr im Kopf.
         const abbruchKnopf = '';
