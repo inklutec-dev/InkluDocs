@@ -39,8 +39,10 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 # als ?v=... an den CSS/JS-URLs (Cache-Busting): nach einem Deploy mit
 # geaenderten Dateien laden Browser garantiert die neue Version statt der
 # alten aus dem Cache (sonst z.B. gemischte Sprachen durch alte dashboard.js).
+# formular.js seit 09.09.2026 dabei: Michael Karbe sah nach einem Staging-Neubau noch das alte
+# Formular-Skript aus dem Browser-Cache, weil sich der Hash ohne diese Datei nicht aenderte.
 _ASSET_FILES = ("style.css", "dashboard.css", "dashboard.js", "pwtoggle.js", "start.css",
-                "demo.css", "demo.js", "demo-shell.js")
+                "demo.css", "demo.js", "demo-shell.js", "formular.js")
 
 
 def _compute_asset_version() -> str:

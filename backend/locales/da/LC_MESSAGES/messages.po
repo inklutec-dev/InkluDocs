@@ -171,12 +171,6 @@ msgstr "Støt InkluDocs via PayPal, åbner i en ny fane"
 msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
 msgstr "Dit bidrag hjælper med at fremme tilgængelighed på nettet."
 
-msgid "DSGVO-konform – Verarbeitung in der EU."
-msgstr "GDPR-kompatibel – databehandling i EU."
-
-msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
-msgstr " Hosting hos Hetzner Online (Falkenstein, Tyskland). AI-behandlingen sker via Amazon Bedrock (Claude-modellen fra Anthropic) i datacentre inden for EU; Amazon Bedrock deler ikke indhold med modeludbyderen og bruger det ikke til træning. Detaljer i vores privatlivspolitik."
-
 msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
 msgstr "Godt at se dig. Vælg en handling til venstre, eller åbn et projekt."
 
@@ -3611,9 +3605,6 @@ msgstr "Hvis du med InkluDocs behandler personoplysninger fra dit eget ansvarsom
 msgid "Vertrag herunterladen"
 msgstr "Hent aftalen"
 
-msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)"
-msgstr "Databehandleraftale som PDF (version 1.0 af 24. august 2026)"
-
 msgid "Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft."
 msgstr "Dokumentet er tilgængeligt udarbejdet og kontrolleret efter standarden PDF/UA-1."
 
@@ -3646,9 +3637,6 @@ msgstr "Alle anvendte underdatabehandlere med hjemsted og opgave (bilag 2)"
 
 msgid "Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte"
 msgstr "Sletning og udlevering af data ved aftalens ophør samt dokumentations- og kontrolrettigheder"
-
-msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt."
-msgstr "Vigtigt for dig: Vi bruger ikke dit indhold til at træne AI-modeller og forpligter vores leverandører kontraktligt til det samme. Behandlingen finder sted i datacentre i Tyskland og EU."
 
 msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
 msgstr "InkluAgent er en AI-assistent. Bed den om hjælp — f.eks. at generere en alternativ tekst til et billede, omskrive en eksisterende tekst til letlæst sprog eller oversætte den til et andet sprog. Angiv billeder med nummer (f.eks. <em>billede 3</em>, <em>billeder 1-5</em>). Maksimalt 10 billeder pr. forespørgsel."
@@ -5151,9 +5139,6 @@ msgstr "Actino Software GmbH bidrager med PDF-ekspertise siden de tidlige halvfe
 msgid "Deine Dateien bleiben deine Dateien"
 msgstr "Dine filer forbliver dine filer"
 
-msgid "Verarbeitung in der EU, KI-Anfragen über Rechenzentren in der EU, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
-msgstr "Behandling i EU, AI-forespørgsler via datacentre i EU, ingen brug af dine dokumenter til træning af AI-modeller. Du sletter selv projekter når som helst."
-
 msgid "Mehr über uns"
 msgstr "Mere om os"
 
@@ -5292,3 +5277,23 @@ msgstr "Afbrydelse anmodet – kørslen stopper straks; den igangværende side k
 #. Fortschrittskarte Formular (Michael Karbe 09.09.2026)
 msgid "Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig."
 msgstr "Side {i} af {n} behandles, {m} værktøjstips færdige."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "DSGVO-konform – Hosting und Datenhaltung in Deutschland."
+msgstr "GDPR-kompatibel – hosting og datalagring i Tyskland."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die Bildbeschreibungen und Quickinfos erstellt das Modell Gemini von Google über Google Vertex AI; der Chat-Assistent nutzt das Modell Claude von Anthropic über Amazon Bedrock in der EU. Beide Anbieter sind vertraglich als Auftragsverarbeiter gebunden und nutzen deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Hosting hos Hetzner Online (Falkenstein, Tyskland). Billedbeskrivelser og værktøjstips oprettes af Googles Gemini-model via Google Vertex AI; chat-assistenten bruger Anthropics Claude-model via Amazon Bedrock i EU. Begge udbydere er kontraktligt bundet som databehandlere og bruger ikke dit indhold til træning. Detaljer i vores privatlivspolitik."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Hosting und Datenhaltung in Deutschland, KI-Anbieter vertraglich als Auftragsverarbeiter gebunden, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
+msgstr "Hosting og datalagring i Tyskland, AI-udbydere kontraktligt bundet som databehandlere, ingen brug af dine dokumenter til træning af AI-modeller. Du sletter selv projekter når som helst."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Hosting und Datenhaltung finden in Deutschland statt; die KI-Verarbeitung durch Google Vertex AI kann weltweit erfolgen und ist durch das Google Cloud Data Processing Addendum mit EU-Standardvertragsklauseln abgesichert."
+msgstr "Vigtigt for dig: Vi bruger ikke dit indhold til at træne AI-modeller og forpligter vores leverandører kontraktligt til det samme. Hosting og datalagring finder sted i Tyskland; AI-behandlingen hos Google Vertex AI kan ske over hele verden og er sikret gennem Google Cloud Data Processing Addendum med EU-standardkontraktbestemmelser."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
+msgstr "Databehandleraftale som PDF (version 1.1 af 9. september 2026)"

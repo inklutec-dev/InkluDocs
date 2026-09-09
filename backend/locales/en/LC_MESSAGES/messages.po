@@ -177,12 +177,6 @@ msgstr "Support InkluDocs via PayPal, opens in a new tab"
 msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
 msgstr "Your contribution helps advance accessibility on the web."
 
-msgid "DSGVO-konform – Verarbeitung in der EU."
-msgstr "GDPR-compliant – processed in the EU."
-
-msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
-msgstr " Hosted by Hetzner Online (Falkenstein, Germany). AI processing runs via Amazon Bedrock (Claude model by Anthropic) in data centres within the EU; Amazon Bedrock does not share content with the model provider and does not use it for training. Details in our privacy policy."
-
 
 # Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
 msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
@@ -3919,9 +3913,6 @@ msgstr "If you use InkluDocs to process personal data from your own area of resp
 msgid "Vertrag herunterladen"
 msgstr "Download the agreement"
 
-msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)"
-msgstr "Data processing agreement as PDF (version 1.0 of 24 August 2026)"
-
 msgid "Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft."
 msgstr "The document is prepared accessibly and validated against the PDF/UA-1 standard."
 
@@ -3954,9 +3945,6 @@ msgstr "All sub-processors used, with location and task (Annex 2)"
 
 msgid "Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte"
 msgstr "Deletion and return of data at the end of the contract, plus rights to evidence and audits"
-
-msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt."
-msgstr "Important for you: we do not use your content to train AI models, and we contractually oblige our service providers to do the same. Processing takes place in data centres in Germany and the European Union."
 
 msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
 msgstr "The InkluAgent is an AI assistant. Ask it for help — for example to generate an alt text for an image, rewrite an existing text in plain language or translate it into another language. Refer to images by number (e.g. <em>image 3</em>, <em>images 1-5</em>). Maximum 10 images per request."
@@ -5459,9 +5447,6 @@ msgstr "Actino Software GmbH has contributed PDF expertise since the early ninet
 msgid "Deine Dateien bleiben deine Dateien"
 msgstr "Your files stay your files"
 
-msgid "Verarbeitung in der EU, KI-Anfragen über Rechenzentren in der EU, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
-msgstr "Processing in the EU, AI requests via data centres in the EU, no use of your documents to train AI models. You delete projects yourself at any time."
-
 msgid "Mehr über uns"
 msgstr "More about us"
 
@@ -5600,3 +5585,23 @@ msgstr "Cancellation requested – the run stops immediately; the page currently
 #. Fortschrittskarte Formular (Michael Karbe 09.09.2026)
 msgid "Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig."
 msgstr "Processing page {i} of {n}, {m} tooltips done."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "DSGVO-konform – Hosting und Datenhaltung in Deutschland."
+msgstr "GDPR-compliant – hosted and stored in Germany."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die Bildbeschreibungen und Quickinfos erstellt das Modell Gemini von Google über Google Vertex AI; der Chat-Assistent nutzt das Modell Claude von Anthropic über Amazon Bedrock in der EU. Beide Anbieter sind vertraglich als Auftragsverarbeiter gebunden und nutzen deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Hosted by Hetzner Online (Falkenstein, Germany). Image descriptions and tooltips are created by Google’s Gemini model via Google Vertex AI; the chat assistant uses Anthropic’s Claude model via Amazon Bedrock in the EU. Both providers are contractually bound as data processors and do not use your content for training. Details in our privacy policy."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Hosting und Datenhaltung in Deutschland, KI-Anbieter vertraglich als Auftragsverarbeiter gebunden, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
+msgstr "Hosted and stored in Germany, AI providers contractually bound as data processors, no use of your documents to train AI models. You delete projects yourself at any time."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Hosting und Datenhaltung finden in Deutschland statt; die KI-Verarbeitung durch Google Vertex AI kann weltweit erfolgen und ist durch das Google Cloud Data Processing Addendum mit EU-Standardvertragsklauseln abgesichert."
+msgstr "Important for you: we do not use your content to train AI models, and we contractually oblige our service providers to do the same. Hosting and data storage take place in Germany; AI processing by Google Vertex AI may take place worldwide and is safeguarded by the Google Cloud Data Processing Addendum with EU standard contractual clauses."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
+msgstr "Data processing agreement as PDF (version 1.1 of 9 September 2026)"

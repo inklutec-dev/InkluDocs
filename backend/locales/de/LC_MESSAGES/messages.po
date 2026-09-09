@@ -180,12 +180,6 @@ msgstr "InkluDocs per PayPal unterstützen, öffnet in neuem Tab"
 msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
 msgstr "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
 
-msgid "DSGVO-konform – Verarbeitung in der EU."
-msgstr "DSGVO-konform – Verarbeitung in der EU."
-
-msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
-msgstr " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
-
 
 # Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026)
 msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
@@ -3922,9 +3916,6 @@ msgstr ""
 msgid "Vertrag herunterladen"
 msgstr ""
 
-msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)"
-msgstr ""
-
 msgid "Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft."
 msgstr ""
 
@@ -3956,9 +3947,6 @@ msgid "Alle eingesetzten Unterauftragsverarbeiter mit Sitz und Aufgabe (Anlage 2
 msgstr ""
 
 msgid "Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte"
-msgstr ""
-
-msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt."
 msgstr ""
 
 msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
@@ -5462,9 +5450,6 @@ msgstr ""
 msgid "Deine Dateien bleiben deine Dateien"
 msgstr ""
 
-msgid "Verarbeitung in der EU, KI-Anfragen über Rechenzentren in der EU, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
-msgstr ""
-
 msgid "Mehr über uns"
 msgstr ""
 
@@ -5602,4 +5587,24 @@ msgstr ""
 
 #. Fortschrittskarte Formular (Michael Karbe 09.09.2026)
 msgid "Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig."
+msgstr ""
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "DSGVO-konform – Hosting und Datenhaltung in Deutschland."
+msgstr ""
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die Bildbeschreibungen und Quickinfos erstellt das Modell Gemini von Google über Google Vertex AI; der Chat-Assistent nutzt das Modell Claude von Anthropic über Amazon Bedrock in der EU. Beide Anbieter sind vertraglich als Auftragsverarbeiter gebunden und nutzen deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr ""
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Hosting und Datenhaltung in Deutschland, KI-Anbieter vertraglich als Auftragsverarbeiter gebunden, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
+msgstr ""
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Hosting und Datenhaltung finden in Deutschland statt; die KI-Verarbeitung durch Google Vertex AI kann weltweit erfolgen und ist durch das Google Cloud Data Processing Addendum mit EU-Standardvertragsklauseln abgesichert."
+msgstr ""
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr ""

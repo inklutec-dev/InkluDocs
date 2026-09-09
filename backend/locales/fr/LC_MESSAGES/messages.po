@@ -177,12 +177,6 @@ msgstr "Soutenir InkluDocs via PayPal, ouvre dans un nouvel onglet"
 msgid "Ihr Beitrag hilft, Barrierefreiheit im Web voranzubringen."
 msgstr "Votre contribution aide à faire progresser l'accessibilité sur le web."
 
-msgid "DSGVO-konform – Verarbeitung in der EU."
-msgstr "Conforme au RGPD – traitement dans l'UE."
-
-msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
-msgstr " Hébergement chez Hetzner Online (Falkenstein, Allemagne). Le traitement par IA s'effectue via Amazon Bedrock (modèle Claude d'Anthropic) dans des centres de données situés dans l'UE ; Amazon Bedrock ne transmet aucun contenu au fournisseur du modèle et ne l'utilise pas pour l'entraînement. Détails dans notre politique de confidentialité."
-
 
 # Startseite / Projekte / Neues Projekt (Phase C, 02.07.2026) — Erst-Uebersetzung, QA durch Muttersprachler offen
 msgid "Schön, dass du da bist. Wähle links eine Aktion oder öffne ein Projekt."
@@ -3919,9 +3913,6 @@ msgstr "Si vous traitez avec InkluDocs des données personnelles relevant de vot
 msgid "Vertrag herunterladen"
 msgstr "Télécharger le contrat"
 
-msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.0 vom 24. August 2026)"
-msgstr "Contrat de sous-traitance au format PDF (version 1.0 du 24 août 2026)"
-
 msgid "Das Dokument ist barrierefrei aufbereitet und nach der Norm PDF/UA-1 geprüft."
 msgstr "Le document est préparé de manière accessible et vérifié selon la norme PDF/UA-1."
 
@@ -3954,9 +3945,6 @@ msgstr "Tous les sous-traitants ultérieurs, avec siège et mission (annexe 2)"
 
 msgid "Löschung und Herausgabe der Daten am Vertragsende sowie Nachweis- und Kontrollrechte"
 msgstr "Suppression et restitution des données en fin de contrat, ainsi que droits de preuve et de contrôle"
-
-msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Die Verarbeitung findet in Rechenzentren in Deutschland und der Europäischen Union statt."
-msgstr "Important pour vous : nous n'utilisons pas vos contenus pour entraîner des modèles d'IA et imposons contractuellement la même chose à nos prestataires. Le traitement a lieu dans des centres de données en Allemagne et dans l'Union européenne."
 
 msgid "Der InkluAgent ist ein KI-Assistent. Bitte ihn um Hilfe — z.B. einen Alt-Text für ein Bild generieren, einen vorhandenen Text in leichter Sprache umformulieren oder in eine andere Sprache übersetzen. Bilder per Nummer benennen (z.B. <em>Bild 3</em>, <em>Bilder 1-5</em>). Maximal 10 Bilder pro Anfrage."
 msgstr "L'InkluAgent est un assistant d'IA. Demandez-lui de l'aide — par exemple générer un texte alternatif pour une image, reformuler un texte existant en langage simple ou le traduire dans une autre langue. Désignez les images par leur numéro (p. ex. <em>image 3</em>, <em>images 1-5</em>). Maximum 10 images par demande."
@@ -5459,9 +5447,6 @@ msgstr "Actino Software GmbH apporte son expertise PDF depuis le début des ann�
 msgid "Deine Dateien bleiben deine Dateien"
 msgstr "Vos fichiers restent vos fichiers"
 
-msgid "Verarbeitung in der EU, KI-Anfragen über Rechenzentren in der EU, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
-msgstr "Traitement dans l’UE, requêtes IA via des centres de données dans l’UE, aucune utilisation de vos documents pour entraîner des modèles d’IA. Vous supprimez vos projets vous-même, à tout moment."
-
 msgid "Mehr über uns"
 msgstr "En savoir plus sur nous"
 
@@ -5600,3 +5585,23 @@ msgstr "Annulation demandée – l’exécution s’arrête immédiatement ; la 
 #. Fortschrittskarte Formular (Michael Karbe 09.09.2026)
 msgid "Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig."
 msgstr "Page {i} sur {n} en cours, {m} info-bulles terminées."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "DSGVO-konform – Hosting und Datenhaltung in Deutschland."
+msgstr "Conforme au RGPD – hébergement et stockage des données en Allemagne."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Die Bildbeschreibungen und Quickinfos erstellt das Modell Gemini von Google über Google Vertex AI; der Chat-Assistent nutzt das Modell Claude von Anthropic über Amazon Bedrock in der EU. Beide Anbieter sind vertraglich als Auftragsverarbeiter gebunden und nutzen deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Hébergement chez Hetzner Online (Falkenstein, Allemagne). Les descriptions d’images et les info-bulles sont créées par le modèle Gemini de Google via Google Vertex AI ; l’assistant de discussion utilise le modèle Claude d’Anthropic via Amazon Bedrock dans l’UE. Les deux fournisseurs sont liés contractuellement en tant que sous-traitants et n’utilisent pas vos contenus pour l’entraînement. Détails dans notre politique de confidentialité."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Hosting und Datenhaltung in Deutschland, KI-Anbieter vertraglich als Auftragsverarbeiter gebunden, keine Nutzung deiner Dokumente zum Training von KI-Modellen. Du löschst Projekte jederzeit selbst."
+msgstr "Hébergement et stockage des données en Allemagne, fournisseurs d’IA liés contractuellement en tant que sous-traitants, aucune utilisation de vos documents pour entraîner des modèles d’IA. Vous supprimez vos projets vous-même, à tout moment."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Wichtig für dich: Wir nutzen deine Inhalte nicht für das Training von KI-Modellen und verpflichten unsere Dienstleister vertraglich zum Gleichen. Hosting und Datenhaltung finden in Deutschland statt; die KI-Verarbeitung durch Google Vertex AI kann weltweit erfolgen und ist durch das Google Cloud Data Processing Addendum mit EU-Standardvertragsklauseln abgesichert."
+msgstr "Important pour vous : nous n’utilisons pas vos contenus pour entraîner des modèles d’IA et imposons contractuellement la même chose à nos prestataires. L’hébergement et le stockage des données ont lieu en Allemagne ; le traitement par IA via Google Vertex AI peut avoir lieu dans le monde entier et est encadré par le Google Cloud Data Processing Addendum avec les clauses contractuelles types de l’UE."
+
+#. Rechtstexte Gemini (Steve/Michael 09.09.2026)
+msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
+msgstr "Contrat de sous-traitance au format PDF (version 1.1 du 9 septembre 2026)"

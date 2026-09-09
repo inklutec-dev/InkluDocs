@@ -348,9 +348,9 @@ function renderLegalNote() {
     const p = document.createElement('p');
     p.className = 'dsgvo-note';
     const strong = document.createElement('strong');
-    strong.textContent = t('DSGVO-konform – Verarbeitung in der EU.');
+    strong.textContent = t('DSGVO-konform – Hosting und Datenhaltung in Deutschland.');
     p.appendChild(strong);
-    p.appendChild(document.createTextNode(t(' Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.')));
+    p.appendChild(document.createTextNode(t(' Hosting bei Hetzner Online (Falkenstein, Deutschland). Die Bildbeschreibungen und Quickinfos erstellt das Modell Gemini von Google über Google Vertex AI; der Chat-Assistent nutzt das Modell Claude von Anthropic über Amazon Bedrock in der EU. Beide Anbieter sind vertraglich als Auftragsverarbeiter gebunden und nutzen deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.')));
     footer.appendChild(p);
   });
 }

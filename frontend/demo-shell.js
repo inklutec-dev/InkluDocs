@@ -94,8 +94,8 @@ function t(s, params) {
           '<a href="/demo-datenschutz">' + t("Datenschutz") + '</a> · ' +
           '<a href="/demo-nutzungsbedingungen">' + t("Nutzungsbedingungen") + '</a>' +
         '</div>' +
-        '<p class="dsgvo-note"><strong>' + t("DSGVO-konform – Verarbeitung in der EU.") + '</strong>' +
-          t(" Hosting bei Hetzner Online (Falkenstein, Deutschland). Die KI-Verarbeitung erfolgt über Amazon Bedrock (Modell Claude von Anthropic) in Rechenzentren innerhalb der EU; Amazon Bedrock gibt keine Inhalte an den Modellanbieter weiter und nutzt sie nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.") +
+        '<p class="dsgvo-note"><strong>' + t("DSGVO-konform – Hosting und Datenhaltung in Deutschland.") + '</strong>' +
+          t(" Hosting bei Hetzner Online (Falkenstein, Deutschland). Die Bildbeschreibungen und Quickinfos erstellt das Modell Gemini von Google über Google Vertex AI; der Chat-Assistent nutzt das Modell Claude von Anthropic über Amazon Bedrock in der EU. Beide Anbieter sind vertraglich als Auftragsverarbeiter gebunden und nutzen deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.") +
         '</p>' +
         '<div class="dash-support">' +
           '<p class="dash-support-text">' + t("Diese Demo ist kostenlos und wird laufend weiterentwickelt. Wenn du das Projekt unterstützen möchtest, freuen wir uns über einen freiwilligen Beitrag.") + '</p>' +
