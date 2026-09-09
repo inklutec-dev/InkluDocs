@@ -6854,7 +6854,7 @@ async def submit_feedback(image_id: int, request: Request, user: dict = Depends(
 <p><strong>Alt-Text:</strong></p>
 <blockquote style="border-left:3px solid {color};padding-left:1rem;color:#333;">{alt_text}</blockquote>
 {lang_section}
-<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs Beta-Feedback | Das bewertete Bild ist als Anhang beigefügt.</p>
+<p style="color:#64748b;font-size:0.85rem;margin-top:2rem;">InkluDocs Bewertung | Das bewertete Bild ist als Anhang beigefügt.</p>
 </body></html>"""
 
     send_email(
@@ -8764,7 +8764,7 @@ def _append_link_reference(alt_text: str, context_text: str, language: str = "de
 NEUIGKEITEN = [
     # Neueste zuerst. Nur Eintraege, die fuer Nutzer relevant + auf Production live sind.
     {"datum": "31.08.2026", "text": "InkluDocs geht in den regulären Betrieb: Alles wird jetzt in Credits abgerechnet — ein Alt-Text kostet 5, eine Quickinfo 1. Free hat 50 Credits im Monat, mehr gibt es mit Single, Team oder Enterprise und als Paket; gekaufte Credits verfallen nie. Als Dank fürs Testen sind dir 250 Credits geschenkt. Einzelheiten unter „Abo & Verbrauch“."},
-    {"datum": "31.08.2026", "text": "Neu: Alt-Texte für Word-Dokumente — hochladen, beschreiben lassen, nachbessern und zurück in die Datei schreiben; sonst bleibt sie unverändert. Auf Wunsch entsteht daraus eine barrierefreie PDF, geprüft nach PDF/UA-1, mit Bericht in Alltagssprache und einer Hörprobe. Noch in der Beta."},
+    {"datum": "31.08.2026", "text": "Neu: Alt-Texte für Word-Dokumente — hochladen, beschreiben lassen, nachbessern und zurück in die Datei schreiben; sonst bleibt sie unverändert. Auf Wunsch entsteht daraus eine barrierefreie PDF, geprüft nach PDF/UA-1, mit Bericht in Alltagssprache und einer Hörprobe."},
     {"datum": "31.08.2026", "text": "Neu: Quickinfos für PDF-Formulare — die Texte, die ein Screenreader beim Sprung in ein Feld vorliest. Nach dem Hochladen sind alle Felder bearbeitbar, die KI schlägt mit Belegstelle vor, wiederkehrende Felder liegen in deinen Stammdaten. Zurück ins PDF oder als CSV, Abnahme über den Gastzugang."},
     {"datum": "31.08.2026", "text": "Weitere Verbesserungen: Der InkluAgent arbeitet selbstständig und nennt unter jeder Antwort seine Werkzeuge. Webseiten und Grafiken sammelst du wie PDFs, jede als eigener Eintrag zum Umbenennen und Löschen. Die Alt-Texte sind sprachlich überarbeitet, und der Knopf zum Herunterladen heißt jetzt auch so."},
     {"datum": "17.07.2026", "text": "Großes Update der Bildbeschreibungen: Alle 16 Bildkategorien — von Foto über Diagramm und Tabelle bis Strukturformel — liefern jetzt spürbar präzisere Texte: Kernaussage zuerst, Zahlen wortgetreu. Ein automatischer Redakteur prüft kritische Bilder zusätzlich gegen das Bild und korrigiert offensichtliche Fehler."},

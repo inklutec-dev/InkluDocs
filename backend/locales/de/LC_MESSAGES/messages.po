@@ -3996,9 +3996,6 @@ msgstr ""
 msgid "Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
 msgstr ""
 
-msgid "Als Word (Beta)"
-msgstr ""
-
 msgid "Abschnitt {n}"
 msgstr ""
 
@@ -4678,10 +4675,6 @@ msgid "Die Feldliste als CSV kostet {p} Credits."
 msgstr "Die Feldliste als CSV kostet {p} Credits."
 
 #: Barrierefreie PDF 29.08.2026
-msgid "In barrierefreie PDF umwandeln (Beta)"
-msgstr "In barrierefreie PDF umwandeln (Beta)"
-
-#: Barrierefreie PDF 29.08.2026
 msgid "Ergebnis der Umwandlung"
 msgstr "Ergebnis der Umwandlung"
 
@@ -5108,7 +5101,7 @@ msgstr "— du erhältst eine Rechnung, und wir schalten dein Abo frei."
 msgid "InkluDocs geht in den regulären Betrieb: Alles wird jetzt in Credits abgerechnet — ein Alt-Text kostet 5, eine Quickinfo 1. Free hat 50 Credits im Monat, mehr gibt es mit Single, Team oder Enterprise und als Paket; gekaufte Credits verfallen nie. Als Dank fürs Testen sind dir 250 Credits geschenkt. Einzelheiten unter „Abo & Verbrauch“."
 msgstr ""
 
-msgid "Neu: Alt-Texte für Word-Dokumente — hochladen, beschreiben lassen, nachbessern und zurück in die Datei schreiben; sonst bleibt sie unverändert. Auf Wunsch entsteht daraus eine barrierefreie PDF, geprüft nach PDF/UA-1, mit Bericht in Alltagssprache und einer Hörprobe. Noch in der Beta."
+msgid "Neu: Alt-Texte für Word-Dokumente — hochladen, beschreiben lassen, nachbessern und zurück in die Datei schreiben; sonst bleibt sie unverändert. Auf Wunsch entsteht daraus eine barrierefreie PDF, geprüft nach PDF/UA-1, mit Bericht in Alltagssprache und einer Hörprobe."
 msgstr ""
 
 msgid "Neu: Quickinfos für PDF-Formulare — die Texte, die ein Screenreader beim Sprung in ein Feld vorliest. Nach dem Hochladen sind alle Felder bearbeitbar, die KI schlägt mit Belegstelle vor, wiederkehrende Felder liegen in deinen Stammdaten. Zurück ins PDF oder als CSV, Abnahme über den Gastzugang."
@@ -5179,10 +5172,6 @@ msgstr ""
 
 #. Teil-Lauf statt Sperre (31.08.2026)
 msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
-msgstr ""
-
-#. Word-Projekte: Beta auf dem Knopf selbst (Michael Karbe 01.09.2026)
-msgid "Herunterladen (Beta)"
 msgstr ""
 
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
@@ -5601,4 +5590,16 @@ msgid "Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen 
 msgstr ""
 
 msgid "Alt-Texte per KI für {a}barrierefreie{e} PDF-, Word- und Formulardokumente"
+msgstr ""
+
+#. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
+msgid "Als Word"
+msgstr ""
+
+#. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
+msgid "In barrierefreie PDF umwandeln"
+msgstr "In barrierefreie PDF umwandeln"
+
+#. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
+msgid "Erstellung läuft"
 msgstr ""

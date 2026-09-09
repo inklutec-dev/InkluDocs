@@ -170,19 +170,19 @@ with sync_playwright() as p:
     page.wait_for_timeout(600)
     check("Escape schliesst den Dialog", dlg.evaluate("d => d.open") is False)
 
-    print("== F. Word-Projekt: Beta auf dem Knopf, Gesamtzahl im Kostensatz ==")
+    print("== F. Word-Projekt: Knopf ohne Beta (seit 09.09.2026), Gesamtzahl im Kostensatz ==")
     page.goto("%s/app?projekt=%d" % (BASE, WORD), wait_until="networkidle")
     page.wait_for_timeout(2500)
     namen_w = [x.inner_text().strip().split("\n")[0]
                for x in page.locator("button").all() if x.is_visible()]
     dl_w = [n for n in namen_w if "erunterladen" in n]
     print("     Herunterladen (Word): %s" % dl_w)
-    check("Word: alle Herunterladen-Knoepfe heissen „Herunterladen (Beta)“",
-          dl_w and all(n == "Herunterladen (Beta)" for n in dl_w), str(dl_w))
-    page.locator("button:has-text('Herunterladen (Beta)')").first.click()
+    check("Word: alle Herunterladen-Knoepfe heissen „Herunterladen“ (ohne Beta)",
+          dl_w and all(n == "Herunterladen" for n in dl_w), str(dl_w))
+    page.locator("button:has-text('Herunterladen')").first.click()
     page.wait_for_timeout(1200)
     kopf_dl = page.locator("#exportPanelHeading").inner_text().strip()
-    check("Word: Dialog-Ueberschrift traegt das Beta", kopf_dl.endswith("(Beta)"), kopf_dl)
+    check("Word: Dialog-Ueberschrift ohne Beta", "Beta" not in kopf_dl and kopf_dl != "", kopf_dl)
     page.keyboard.press("Escape")
     page.wait_for_timeout(500)
     gen_w = page.locator("button:has-text('Alt-Texte generieren')")

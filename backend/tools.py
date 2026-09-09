@@ -88,7 +88,7 @@ TOOLS: list[Tool] = [
         name="Alt-Texte für Word-Dokumente",
         description="Word-Dokument (.docx) hochladen, die enthaltenen Bilder mit Alt-Texten versehen und die Datei mit Alt-Texten wieder herunterladen.",
         route="/app",
-        status=ToolStatus.BETA,
+        status=ToolStatus.VERFUEGBAR,  # Beta-Etikett entfällt seit 09.09.2026 (Steve)
     ),
     # QUICKINFO-WERKZEUG (27.08.2026, Steve + Michael Karbe/Joerg Heine, Actino):
     # PDF-Formulare — jedes Eingabefeld bekommt eine Quickinfo (/TU), den Text,
@@ -101,7 +101,7 @@ TOOLS: list[Tool] = [
         name="Quickinfos für PDF-Formulare",
         description="PDF-Formular hochladen, jedes Eingabefeld mit einer Quickinfo (Hilfetext für Screenreader) versehen, Stammdaten für künftige Formulare speichern und die PDF mit Quickinfos herunterladen.",
         route="/app",
-        status=ToolStatus.BETA,
+        status=ToolStatus.VERFUEGBAR,  # Beta-Etikett entfällt seit 09.09.2026 (Steve)
     ),
     Tool(
         key="pdf-a11y",

@@ -623,13 +623,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                      Punkt 4, Steve 01.09.2026): die Zahl steht in der Rueckfrage und in der Herunterladen-
                      Zusammenfassung. Element bleibt (updateProjectHeader schreibt hinein), nur unsichtbar. -->
                 <div class="card-info" id="projectHeadInfo" hidden>${headInfo}</div>
-                ${project.status === 'processing' ? `
-                    <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="${t('Fortschritt: {p} Prozent', { p: progress })}">
-                        <div class="progress-fill" style="width:${progress}%"></div>
-                    </div>
-                    <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: laufendeNummer(project.processed_images, project.total_images), n: project.total_images })}</p>
-                    ${!window.GUEST_MODE ? '<button type="button" class="btn btn-secondary" id="abortGenBtn" onclick="generierungAbbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button>' : ''}
-                ` : ''}
                 ${!window.GUEST_MODE ? `
                     <div id="laufMeldung" class="lauf-meldung" tabindex="-1" hidden>
                         <output id="laufMeldungText"></output>
@@ -682,8 +675,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">${t('Als JSON')}</button>
                                 <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
                                 ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF') + '</button>' : ''}
-                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word (Beta)') + '</button>' : ''}
-                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln (Beta)') + '</button>' : ''}
+                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word') + '</button>' : ''}
+                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
                                 <button class="btn btn-secondary" id="exportCancelBtn" onclick="closeExportPanel()">${t('Abbrechen')}</button>
                             </div>
@@ -723,6 +716,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 </div>
             </div>
             ${window.GUEST_MODE ? '' : uploadBlockHtml(project)}
+            ${project.status === 'processing' ? `
+                <!-- Fortschritt als eigene Karte unter dem Upload-Feld (Michael Karbe 08.09.2026): oben unter
+                     dem Projektnamen war er beim Scrollen aus dem Blick und hatte keinen eigenen Rahmen. -->
+                <section class="card" id="progressCard" aria-labelledby="progressHeading">
+                    <h2 id="progressHeading" class="section-title">${t('Erstellung läuft')}</h2>
+                    <div class="progress-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="${t('Fortschritt: {p} Prozent', { p: progress })}">
+                        <div class="progress-fill" style="width:${progress}%"></div>
+                    </div>
+                    <p id="processingInfo" aria-live="polite">${t('Bild {i} von {n} wird verarbeitet.', { i: laufendeNummer(project.processed_images, project.total_images), n: project.total_images })}</p>
+                    ${!window.GUEST_MODE ? '<button type="button" class="btn btn-secondary" id="abortGenBtn" onclick="generierungAbbrechen(' + project.id + ')">' + t('Generierung abbrechen') + '</button>' : ''}
+                </section>
+            ` : ''}
             ${(() => {
                 // Steve 08.06.2026 (Michael-Befund): bei PDF-Projekten sind die Dokument-
                 // Bloecke selbst die H2-Sektionen — eine zusaetzliche H2 "Bilder (N)"
@@ -784,9 +789,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     showProject(projectId);
                 } else {
                     const bar = document.querySelector('.progress-fill');
+                    const track = document.querySelector('.progress-bar');
                     const info = document.getElementById('processingInfo');
                     const newP = Math.round((sData.processed_images / sData.total_images) * 100);
                     if (bar) bar.style.width = newP + '%';
+                    if (track) { track.setAttribute('aria-valuenow', newP); track.setAttribute('aria-label', t('Fortschritt: {p} Prozent', { p: newP })); }
                     if (info) info.textContent = t('Bild {i} von {n} wird verarbeitet.', { i: laufendeNummer(sData.processed_images, sData.total_images), n: sData.total_images });
                 }
             }, 10000);
@@ -1147,14 +1154,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     let imageFilter = { key: 'alle', projectId: null };
     let filterImages = [];   // Bilder des aktuellen Renders (Datenbasis der Zaehler)
     let currentRenderDocs = [];   // Dokumente des aktuellen Renders (fuer den Ruecksprache-Block im Abschluss)
-    let currentRenderProjectType = '';   // 'pdf' | 'docx' | ... des aktuellen Renders (Beta-Zusatz im Export-Dialog)
+    let currentRenderProjectType = '';   // 'pdf' | 'docx' | ... des aktuellen Renders
 
-    // Name des Herunterladen-Knopfs (Michael Karbe 01.09.2026): Word-Projekte
-    // tragen das „Beta" auf dem Knopf selbst, nicht erst im Dialog — die
-    // Word-Ausgabe (docx-Rueckschreiben, PDF/UA-Umwandlung) ist noch Beta,
-    // die PDF-Ausgabe nicht. EINE Stelle fuer Projekt-Knopf und Dokument-Knopf.
+    // Name des Herunterladen-Knopfs: EINE Stelle fuer Projekt-Knopf und Dokument-Knopf.
+    // Historie: 01.09.2026 trugen Word-Projekte hier „(Beta)" (Michael Karbe); seit 09.09.2026
+    // entfaellt das Etikett fuer alle Projektarten (Steve).
     function herunterladenName(project) {
-        return (project && project.project_type === 'docx') ? t('Herunterladen (Beta)') : t('Herunterladen');
+        return t('Herunterladen');
     }
 
     // Vom Autor in der Datei als dekorativ gekennzeichnet (Word-Import setzt original_alt
@@ -2892,11 +2898,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // im Dialog steht sichtbar fuer alle, was geholt wird — Dokument, ganzes
             // Projekt mit n Dokumenten oder das eine Dokument. Wiederhergestellt
             // 01.09.2026 (f9e344e hatte es auf „Herunterladen" gekuerzt; ui_word prueft es).
-            // Word-Projekte tragen das Beta auch hier (Michael Karbe 01.09.2026).
-            const beta = currentRenderProjectType === 'docx' ? ' (Beta)' : '';
+            // Der „(Beta)"-Anhang für Word-Projekte entfällt seit 09.09.2026 (Steve).
             head.textContent = (doc ? t('Dokument „{name}“ herunterladen', { name: docDisplayName(doc) })
                 : (docs.length > 1 ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: docs.length })
-                                   : t('Herunterladen'))) + beta;
+                                   : t('Herunterladen')));
         }
         if (typeof panel.showModal === 'function') {
             panel.showModal();

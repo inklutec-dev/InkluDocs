@@ -3993,9 +3993,6 @@ msgstr "The Word file is being processed – extracting images …"
 msgid "Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
 msgstr "Processing the Word file failed. Please try the file again."
 
-msgid "Als Word (Beta)"
-msgstr "As Word (beta)"
-
 msgid "Abschnitt {n}"
 msgstr "Section {n}"
 
@@ -4675,10 +4672,6 @@ msgid "Die Feldliste als CSV kostet {p} Credits."
 msgstr "The field list as CSV costs {p} credits."
 
 #: Barrierefreie PDF 29.08.2026
-msgid "In barrierefreie PDF umwandeln (Beta)"
-msgstr "Convert to accessible PDF (beta)"
-
-#: Barrierefreie PDF 29.08.2026
 msgid "Ergebnis der Umwandlung"
 msgstr "Conversion result"
 
@@ -5105,8 +5098,8 @@ msgstr "— you will receive an invoice, and we will activate your subscription.
 msgid "InkluDocs geht in den regulären Betrieb: Alles wird jetzt in Credits abgerechnet — ein Alt-Text kostet 5, eine Quickinfo 1. Free hat 50 Credits im Monat, mehr gibt es mit Single, Team oder Enterprise und als Paket; gekaufte Credits verfallen nie. Als Dank fürs Testen sind dir 250 Credits geschenkt. Einzelheiten unter „Abo & Verbrauch“."
 msgstr "InkluDocs is now in regular operation: everything is billed in credits — an alt text costs 5, a tooltip 1. Free comes with 50 credits a month; more is available with Single, Team or Enterprise and as a package; purchased credits never expire. As a thank-you for testing, 250 credits are on us. Details under “Subscription & usage”."
 
-msgid "Neu: Alt-Texte für Word-Dokumente — hochladen, beschreiben lassen, nachbessern und zurück in die Datei schreiben; sonst bleibt sie unverändert. Auf Wunsch entsteht daraus eine barrierefreie PDF, geprüft nach PDF/UA-1, mit Bericht in Alltagssprache und einer Hörprobe. Noch in der Beta."
-msgstr "New: alt texts for Word documents — upload, have them described, refine them and write them back into the file; otherwise it stays unchanged. On request an accessible PDF is created from it, checked against PDF/UA-1, with a plain-language report and a listening sample. Still in beta."
+msgid "Neu: Alt-Texte für Word-Dokumente — hochladen, beschreiben lassen, nachbessern und zurück in die Datei schreiben; sonst bleibt sie unverändert. Auf Wunsch entsteht daraus eine barrierefreie PDF, geprüft nach PDF/UA-1, mit Bericht in Alltagssprache und einer Hörprobe."
+msgstr "New: alt texts for Word documents — upload, have them described, refine them and write them back into the file; otherwise it stays unchanged. On request an accessible PDF is created from it, checked against PDF/UA-1, with a plain-language report and a listening sample."
 
 msgid "Neu: Quickinfos für PDF-Formulare — die Texte, die ein Screenreader beim Sprung in ein Feld vorliest. Nach dem Hochladen sind alle Felder bearbeitbar, die KI schlägt mit Belegstelle vor, wiederkehrende Felder liegen in deinen Stammdaten. Zurück ins PDF oder als CSV, Abnahme über den Gastzugang."
 msgstr "New: tooltips for PDF forms — the texts a screen reader reads out when you move into a field. After uploading every field can be edited, the AI suggests one and names its source, and recurring fields live in your master data. Back into the PDF or as CSV, sign-off via guest access."
@@ -5177,10 +5170,6 @@ msgstr "You have {v} credits — enough for {m} of {n} images; after that the ru
 #. Teil-Lauf statt Sperre (31.08.2026)
 msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
 msgstr "Your credit is not enough: one alt text costs {p} credits, you have {v}."
-
-#. Word-Projekte: Beta auf dem Knopf selbst (Michael Karbe 01.09.2026)
-msgid "Herunterladen (Beta)"
-msgstr "Download (beta)"
 
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
 msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
@@ -5599,3 +5588,15 @@ msgstr "Illustration: A document with an image placeholder automatically receive
 
 msgid "Alt-Texte per KI für {a}barrierefreie{e} PDF-, Word- und Formulardokumente"
 msgstr "AI alt text for {a}accessible{e} PDF, Word and form documents"
+
+#. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
+msgid "Als Word"
+msgstr "As Word"
+
+#. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
+msgid "In barrierefreie PDF umwandeln"
+msgstr "Convert to accessible PDF"
+
+#. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
+msgid "Erstellung läuft"
+msgstr "Generation in progress"
