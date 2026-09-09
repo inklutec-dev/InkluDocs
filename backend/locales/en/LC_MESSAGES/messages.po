@@ -4438,9 +4438,6 @@ msgstr "Generation failed."
 msgid "Generierung abgeschlossen: {n} Quickinfos neu."
 msgstr "Generation finished: {n} new tooltips."
 
-msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
-msgstr "Generation started for {n} open fields. Existing tooltips remain unchanged."
-
 msgid "Hinweise: {w}"
 msgstr "Notes: {w}"
 
@@ -4452,9 +4449,6 @@ msgstr "AI suggestion, {s}"
 
 msgid "Kein Beleg auf der Seite gefunden."
 msgstr "No evidence found on the page."
-
-msgid "Keine offenen Felder – nichts zu generieren."
-msgstr "No open fields – nothing to generate."
 
 msgid "Nur unsichere KI-Vorschläge anzeigen"
 msgstr "Show only uncertain AI suggestions"
@@ -4576,13 +4570,7 @@ msgstr "Regenerate all"
 
 
 
-msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
-msgstr "No AI suggestions present – nothing to regenerate."
 
-
-
-msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
-msgstr "Regeneration started for {n} fields. Texts entered by hand, from the PDF, from master data or by the guest remain unchanged."
 
 msgid "KI-Vorschlag übernehmen"
 msgstr "Use AI suggestion"
@@ -5183,22 +5171,6 @@ msgstr "Your credit is not enough: one tooltip costs {p} credits, you have {v}."
 msgid "Quickinfos generieren"
 msgstr "Generate tooltips"
 
-#. Rueckfrage Quickinfos, Erstlauf (01.09.2026)
-msgid "{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits."
-msgstr "{n} fields without a tooltip will be described. That costs {c} credits."
-
-#. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
-msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
-msgstr "{n} AI suggestions will be regenerated. Texts entered by hand, from the PDF, from master data or by the guest remain unchanged. That costs {c} credits."
-
-#. Einzahl Quickinfos (01.09.2026)
-msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
-msgstr "1 field without a tooltip will be described. That costs {c} credits."
-
-#. Einzahl Quickinfos (01.09.2026)
-msgid "1 KI-Vorschlag wird neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
-msgstr "1 AI suggestion will be regenerated. Texts entered by hand, from the PDF, from master data or by the guest remain unchanged. That costs {c} credits."
-
 #. Autor-dekorativ, Einzahl (01.09.2026)
 msgid "1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor."
 msgstr "1 image is marked as decorative by the author and is left out."
@@ -5600,3 +5572,27 @@ msgstr "Convert to accessible PDF"
 #. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
 msgid "Erstellung läuft"
 msgstr "Generation in progress"
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Keine Felder – nichts zu generieren."
+msgstr "No fields – nothing to generate."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
+msgstr "The document contains 1 field; creating the tooltip requires {c} credits."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
+msgstr "The document contains {n} fields in total; creating the tooltips requires {c} credits."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
+msgstr "The project’s documents contain 1 field; creating the tooltip requires {c} credits."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
+msgstr "The project’s documents contain {n} fields in total; creating the tooltips requires {c} credits."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
+msgstr "Generation started for {n} fields. Existing tooltips will be replaced."

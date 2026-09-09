@@ -216,8 +216,8 @@ offenen Feldern). Alle Zustandswechsel werden über `announce()` angesagt.
   1 Credit; 402 mit Zahlen, wenn das Guthaben nicht reicht). Beim Start werden hängende `processing`-Projekte zurückgesetzt.
 - **Spalten** `formularfelder.sicherheit`, `beleg`, `ki_hinweise` (JSON);
   `quelle = 'ki'`.
-- **Oberfläche** wie bei den Alt-Texten: „Alle generieren“ (nur Lücken),
-  „Generieren“/„Neu generieren“ am Feld, „Zurück auf Original“; Badge
+- **Oberfläche** wie bei den Alt-Texten: „Quickinfos generieren“ (seit 09.09.2026
+  immer alle benannten Felder), „Generieren“/„Neu generieren“ am Feld, „Zurück auf Original“; Badge
   „KI-Vorschlag, sicher/mittel/unsicher“, Beleg-Satz mit Hinweisen unter dem
   Eingabefeld, Filter „Nur unsichere KI-Vorschläge“, Fortschritt im Kopf,
   Ansage am Ende; Auswahl „Sprache der Quickinfos“ und „Gespeicherte
@@ -298,11 +298,18 @@ schreibt. „Zurück auf Original“ führt weiterhin zur PDF.
 Der Sammel-Knopf heißt auf Projekt- und Dokument-Ebene „Quickinfos
 generieren“ (Michael Karbe 01.09.2026: analog zu „Alt-Texte generieren“ bei
 PDF und Word; versteckter Zusatz „– ganzes Projekt“ / „– Formular „x““ für
-Screenreader). Solange Felder offen sind, füllt er nur Lücken; sobald jedes
-Feld einen Text hat, erneuert derselbe Knopf die KI-Vorschläge (`{"modus":
-"ki_neu"}`): zusätzlich alle Felder mit `quelle = ki`; Texte von Hand, aus der
-PDF, aus Stammdaten oder vom Gast bleiben unberührt (`_modus_bedingung`).
-1 Credit je neu geschriebenem Feld.
+Screenreader). Seit 09.09.2026 (Michael Karbe: „immer für alle Felder neu
+erzeugen“, dieselbe Regel wie bei den Alt-Texten seit 01.09.2026) nimmt der
+Knopf IMMER alle benannten Felder des Umfangs: Texte aus der PDF (auch wenn
+dort nur der Feldname steht), aus Stammdaten, von der KI und von Hand werden
+ersetzt; die Rückfrage nennt Gesamtzahl, Preis und Guthaben („Das Dokument
+beinhaltet insgesamt n Felder, die Erstellung der Quickinfos benötigt n
+Credits.“). Namenlose Felder bleiben außen vor. Ein Feld, das während des
+Laufs von Hand geändert wird, bleibt unberührt (Schutz über `updated_at`).
+Ein mitgeschicktes `modus` wird ignoriert (`_modus_bedingung`); die früheren
+Umfänge „nur Lücken“ und „nur KI-Texte“ (`ki_neu`, 28.08.2026) sind Historie.
+Kein Zurückholen des ersetzten Textes (bewusst, Steve 09.09.2026: dafür gibt
+es die Stammdaten). 1 Credit je geschriebenem Feld.
 
 Vor dem Start öffnet sich dieselbe Rückfrage wie bei den Alt-Texten
 (`generierRueckfrage()` in `app.html`, siehe `docs/GENERIERUNG.md`): Umfang,
@@ -335,7 +342,7 @@ Layout wie ein Mensch, der Beleg bleibt die wörtliche Textstelle. Die
 Nachprüfung bleibt gleich streng; Hinweise nennen „Zuordnung aus dem
 Seitenbild“, betroffene Felder tragen „Seitenbild einbezogen“. Seiten mit
 vollständig beschrifteten Feldern laufen unverändert nur mit Text. Gilt für
-„Alle generieren“, „Generieren“ am Feld und den InkluAgent (`generate_quickinfo`).
+„Quickinfos generieren“, „Generieren“ am Feld und den InkluAgent (`generate_quickinfo`).
 Kosten: rund 1.500 Eingabe-Token je betroffener Seite.
 
 ## Michaels Rückmeldung 28.08.2026 (fünf Punkte, umgesetzt)
@@ -362,7 +369,7 @@ Kosten: rund 1.500 Eingabe-Token je betroffener Seite.
 - Stammdaten-Treffer nur exakt (Feldname, Beschriftung); unscharfe Treffer
   und Auto-Lernen in Stufe 3.
 - InkluAgent: „Alle offenen generieren“ läuft im Chat Feld für Feld (4–5 je Turn);
-  für Massenläufe bleibt der Knopf „Alle generieren“ der bessere Weg.
+  für Massenläufe bleibt der Knopf „Quickinfos generieren“ der bessere Weg.
 - Gast-Ansicht: kein Nachrichten-Verlauf je Feld, keine Rücksprache-Liste in der
   Abschluss-Mail (beides Stufe 2 der Gast-Ansicht, wie bei Bildern).
 - Beschriftungs-Erkennung ist geometrisch (links/oben/rechts/innen,

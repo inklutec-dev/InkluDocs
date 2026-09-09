@@ -31,7 +31,7 @@ Endpunkte (alle nur fuer den eingeloggten Besitzer des Projekts):
   POST   /api/projects/{pid}/stammdaten-anwenden      Stammdaten auf alle offenen Felder
   GET    /api/felder/{fid}/ausschnitt                 Bildausschnitt (PNG)
   GET    /api/felder/{fid}/page-view                  Seitenansicht mit Rahmen (PNG)
-  POST   /api/projects/{pid}/quickinfos/generieren    Stufe 2: KI-Vorschlaege fuer offene Felder (Hintergrund, 1 Credit je Feld)
+  POST   /api/projects/{pid}/quickinfos/generieren    Stufe 2: KI-Vorschlaege fuer ALLE benannten Felder (Hintergrund, 1 Credit je Feld, seit 09.09.2026)
   POST   /api/projects/{pid}/quickinfos/vorschau      Rueckfrage davor: Anzahl, Preis, Guthaben (aendert nichts, 01.09.2026)
   POST   /api/projects/{pid}/quickinfos/abbrechen     laufenden Feld-Pass nach der aktuellen Seite beenden (01.09.2026)
   POST   /api/felder/{fid}/generieren                 Stufe 2: ein Feld neu generieren (ueberschreibt, 1 Credit)
@@ -518,12 +518,18 @@ def _user_prompt(conn, project_id: int) -> str:
 
 
 def _modus_bedingung(modus: str) -> str:
-    """SQL-Bedingung, welche Felder ein Sammellauf anfasst. 'luecken' (Standard) = nur Felder
-    ohne Quickinfo; 'ki_neu' (28.08.2026, Steve: Knopf „Alle neu generieren“) = zusaetzlich alle
-    KI-Vorschlaege — Texte von Hand, aus der PDF, aus Stammdaten oder vom Gast bleiben unberuehrt."""
-    if modus == "ki_neu":
-        return "(TRIM(COALESCE(quickinfo,'')) = '' OR quelle = 'ki')"
-    return "TRIM(COALESCE(quickinfo,'')) = ''"
+    """SQL-Bedingung, welche Felder ein Sammellauf anfasst.
+
+    Seit 09.09.2026 (Michael Karbe: „immer fuer alle Felder neu erzeugen", dieselbe Regel wie
+    „Alt-Texte generieren" seit 01.09.2026) gibt es nur noch EINEN Umfang: alle benannten
+    Felder des Projekts bzw. Dokuments. Ersetzt werden Texte aus der PDF (auch wenn dort nur
+    der Feldname steht), aus Stammdaten, von der KI und von Hand; die Rueckfrage nennt Anzahl
+    und Preis vorher, die Verantwortung liegt beim Nutzer. Namenlose Felder (anker '#…')
+    schliessen die Aufrufer weiterhin aus. Der Parameter `modus` bleibt aus Kompatibilitaet
+    in der Signatur (aeltere Oberflaechen schicken 'luecken' oder 'ki_neu'), wirkt aber nicht
+    mehr. Historie: 'luecken' = nur leere Felder, 'ki_neu' (28.08.2026) = zusaetzlich KI-Texte.
+    """
+    return "1 = 1"
 
 
 def _generier_kandidaten(conn, project_id: int, modus: str, document_id: Optional[int]) -> int:
@@ -542,9 +548,12 @@ def _generier_kandidaten(conn, project_id: int, modus: str, document_id: Optiona
     return conn.execute(sql, args).fetchone()[0]
 
 
-async def _generiere_projekt(project_id: int, user_id: int, document_id: Optional[int], modus: str = "luecken") -> None:
-    """Hintergrundlauf: je Seite ein Feld-Pass fuer die OFFENEN Felder (modus 'ki_neu': auch
-    KI-Vorschlaege), Kontingent je Seite geprueft, 1 Credit je Seite; Fehler je Seite, nicht je Projekt."""
+async def _generiere_projekt(project_id: int, user_id: int, document_id: Optional[int], modus: str = "alle") -> None:
+    """Hintergrundlauf: je Seite ein Feld-Pass fuer ALLE benannten Felder des Umfangs
+    (seit 09.09.2026, siehe _modus_bedingung), Kontingent je Seite geprueft, 1 Credit je
+    geschriebenem Feld; Fehler je Seite, nicht je Projekt. Ein Feld, das WAEHREND des Laufs
+    von Hand geaendert wurde (updated_at weicht vom Stand beim Start ab), wird nicht
+    ueberschrieben — die Handarbeit gewinnt, das Feld kostet dann auch nichts."""
     st = _generierung.setdefault(project_id, {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []})
     loop = asyncio.get_running_loop()
     conn = _d.get_db()
@@ -566,6 +575,7 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
     st["seiten_gesamt"] = len(seiten)
     alle_vorschlaege: list = []
     felder_by_id = {f["id"]: _feld_fuer_ki(f) for f in offen}
+    stand_by_id = {f["id"]: (f.get("updated_at") or "") for f in offen}   # Schutz gegen Handarbeit waehrend des Laufs
     lauf_user = _d.get_user_by_id(user_id) if _d.get_user_by_id else None
     try:
         for (doc_id, page), felder in seiten.items():
@@ -614,11 +624,13 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
             geschrieben = 0
             try:
                 for v in vorschlaege:
-                    # Nur schreiben, wenn das Feld INZWISCHEN nicht von Hand gefuellt wurde.
+                    # Nur schreiben, wenn das Feld seit dem Start des Laufs nicht angefasst wurde
+                    # (Handarbeit waehrend des Laufs gewinnt; siehe Docstring).
                     cur = conn.execute(
                         """UPDATE formularfelder SET quickinfo = ?, quickinfo_ki = ?, quelle = 'ki', sicherheit = ?, beleg = ?, ki_hinweise = ?,
-                           updated_at = datetime('now') WHERE id = ? AND """ + _modus_bedingung(modus),
-                        (v.quickinfo, v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id))
+                           updated_at = datetime('now') WHERE id = ? AND COALESCE(updated_at, '') = ?""",
+                        (v.quickinfo, v.quickinfo, v.sicherheit, v.beleg, json.dumps(v.hinweise, ensure_ascii=False), v.feld_id,
+                         stand_by_id.get(v.feld_id, "")))
                     st["felder_neu"] += cur.rowcount
                     geschrieben += cur.rowcount
                 conn.commit()
@@ -829,18 +841,19 @@ def build_router(deps: Deps) -> APIRouter:
     # ---- Stufe 2: KI-Vorschlaege
     @router.post("/api/projects/{project_id}/quickinfos/generieren")
     async def quickinfos_generieren(project_id: int, request: Request, user: dict = Depends(_user)):
-        """Startet den Feld-Pass fuer alle OFFENEN Felder (optional nur ein Dokument)
-        im Hintergrund; das Frontend pollt GET /felder ("generierung"). Vorhandene
-        Texte werden nie ueberschrieben (Regel wie "alle generieren" bei Alt-Texten) —
-        AUSSER modus 'ki_neu' (Knopf „Alle neu generieren“, 28.08.2026): dann werden
-        KI-Vorschlaege ueberschrieben, Hand/PDF/Stammdaten/Gast bleiben."""
+        """Startet den Feld-Pass fuer ALLE benannten Felder (optional nur ein Dokument)
+        im Hintergrund; das Frontend pollt GET /felder ("generierung"). Seit 09.09.2026
+        (Michael Karbe) werden vorhandene Texte ersetzt — aus der PDF, aus Stammdaten,
+        von der KI und von Hand — genau wie bei „Alt-Texte generieren"; die Rueckfrage
+        (quickinfos/vorschau) nennt Anzahl und Preis vorher. Ein mitgeschicktes `modus`
+        wird aus Kompatibilitaet angenommen, aber ignoriert (siehe _modus_bedingung)."""
         try:
             data = await request.json()
         except Exception:
             data = {}
         if not isinstance(data, dict):
             data = {}
-        modus = "ki_neu" if data.get("modus") == "ki_neu" else "luecken"
+        modus = "alle"
         document_id = data.get("document_id") if isinstance(data, dict) else None
         try:
             document_id = int(document_id) if document_id is not None else None
@@ -905,7 +918,7 @@ def build_router(deps: Deps) -> APIRouter:
             data = {}
         if not isinstance(data, dict):
             data = {}
-        modus = "ki_neu" if data.get("modus") == "ki_neu" else "luecken"
+        modus = "alle"   # seit 09.09.2026 nur noch ein Umfang; `modus` im Koerper wird ignoriert
         document_id = data.get("document_id")
         try:
             document_id = int(document_id) if document_id is not None else None

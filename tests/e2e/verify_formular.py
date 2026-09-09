@@ -223,19 +223,25 @@ s, b, _ = req("POST", f"/api/felder/{by['nachname']['id']}/generieren")   # jetz
 check("Einzelfeld generieren bei KI-Text: ersetzt (uebernommen)", s == 200 and b.get("uebernommen") is True and b.get("quelle") == "ki", b)
 s, b, _ = req("POST", f"/api/felder/{by['anschrift']['id']}/ki-vorschlag")
 check("KI-Vorschlag uebernehmen ohne Fach -> 400", s == 400, s)
-# Alle offenen generieren: vorher nachname_2 leeren, vorname bleibt Hand (darf nicht ueberschrieben werden)
+# Sammellauf (seit 09.09.2026, Michael Karbe: IMMER alle benannten Felder, wie bei den Alt-Texten):
+# vorname (Hand) und email (PDF) werden ersetzt, nachname_2 und geburtsdatum vorher geleert.
 req("PATCH", f"/api/felder/{by['nachname_2']['id']}", {"quickinfo": ""})
 req("PATCH", f"/api/felder/{by['geburtsdatum']['id']}", {"quickinfo": ""})
+s2, d2, _ = req("GET", f"/api/projects/{pid}/felder")
+benannt = [f for f in d2.get("felder", []) if not (f.get("anker") or "").startswith("#")]
 # Rueckfrage-Vorschau (01.09.2026): zaehlt mit derselben Funktion wie der Start, aendert nichts.
 s, v, _ = req("POST", f"/api/projects/{pid}/quickinfos/vorschau", {})
 check("Vorschau Sammellauf: 200 mit anzahl/preis/preis_je/erlaubt/dokumente", s == 200 and all(k in v for k in ("anzahl", "preis", "preis_je", "erlaubt", "dokumente", "machbar")), v)
+check("Vorschau: anzahl = alle benannten Felder (auch Hand/PDF/KI)", v.get("anzahl") == len(benannt) and v.get("modus") == "alle", (v.get("anzahl"), len(benannt), v.get("modus")))
 check("Vorschau: preis = anzahl x preis_je (1 Credit je Feld)", v.get("preis") == v.get("anzahl", 0) * v.get("preis_je", 0), v)
+s, v_alt, _ = req("POST", f"/api/projects/{pid}/quickinfos/vorschau", {"modus": "ki_neu"})
+check("Alter Parameter modus wird ignoriert (gleiche Anzahl, modus alle)", s == 200 and v_alt.get("anzahl") == v.get("anzahl") and v_alt.get("modus") == "alle", v_alt)
 s2, d2, _ = req("GET", f"/api/projects/{pid}/felder")
 check("Vorschau aendert nichts (Projekt bleibt extracted)", d2.get("project", {}).get("status") == "extracted", d2.get("project", {}).get("status"))
 s, bad, _ = req("POST", f"/api/projects/{pid}/quickinfos/vorschau", {"document_id": "x"})
 check("Vorschau: document_id ungueltig -> 400", s == 400, s)
 s, b, _ = req("POST", f"/api/projects/{pid}/quickinfos/generieren", {})
-check("Alle generieren gestartet", s == 200 and b.get("gestartet") is True and b.get("offen") >= 2, b)
+check("Alle generieren gestartet", s == 200 and b.get("gestartet") is True and b.get("offen") == len(benannt) and b.get("modus") == "alle", b)
 check("Vorschau-Anzahl = Start-Anzahl (eine Zaehlung)", v.get("anzahl") == b.get("offen"), (v.get("anzahl"), b.get("offen")))
 s, b, _ = req("POST", f"/api/projects/{pid}/quickinfos/generieren", {})
 check("Zweiter Start waehrend Lauf -> 409", s == 409, s)
@@ -247,30 +253,18 @@ for _ in range(90):
         break
 by3 = {f["anker"]: f for f in d.get("felder", [])}
 check("Generierung beendet, Status extracted", d.get("project", {}).get("status") == "extracted", (d.get("project", {}).get("status"), g))
-check("Offene Felder jetzt KI (nachname_2, geburtsdatum)", by3["nachname_2"]["quelle"] == "ki" and by3["geburtsdatum"]["quelle"] == "ki" and by3["nachname_2"]["quickinfo"], (by3["nachname_2"]["quelle"], by3["geburtsdatum"]["quelle"]))
-check("Hand-Text nicht ueberschrieben (vorname)", by3["vorname"]["quelle"] == "hand" and by3["vorname"]["quickinfo"] == "Vorname des Kontoinhabers")
-check("PDF-Original nicht ueberschrieben (email)", by3["email"]["quelle"] == "pdf")
+check("Leere Felder jetzt KI (nachname_2, geburtsdatum)", by3["nachname_2"]["quelle"] == "ki" and by3["geburtsdatum"]["quelle"] == "ki" and by3["nachname_2"]["quickinfo"], (by3["nachname_2"]["quelle"], by3["geburtsdatum"]["quelle"]))
+check("Hand-Text ersetzt (vorname -> ki, wie bei den Alt-Texten)", by3["vorname"]["quelle"] == "ki" and by3["vorname"]["quickinfo"] != "Vorname des Kontoinhabers", (by3["vorname"]["quelle"], by3["vorname"]["quickinfo"]))
+check("PDF-Original ersetzt (email -> ki)", by3["email"]["quelle"] == "ki", by3["email"]["quelle"])
+check("Alle benannten Felder geschrieben (felder_neu = Anzahl)", g.get("felder_neu") == len(benannt), (g.get("felder_neu"), len(benannt)))
+check("Namenlose Felder unberuehrt", all(f["quelle"] != "ki" for f in d.get("felder", []) if (f.get("anker") or "").startswith("#")))
 check("Sicherheit/Beleg gespeichert", by3["nachname_2"]["sicherheit"] in ("hoch", "mittel", "niedrig") and isinstance(by3["nachname_2"]["ki_hinweise"], list), by3["nachname_2"].get("sicherheit"))
 print("      geburtsdatum ->", repr(by3["geburtsdatum"]["quickinfo"]), "|", by3["geburtsdatum"]["sicherheit"], "| Beleg:", repr(by3["geburtsdatum"]["beleg"]))
 print("      Lauf:", g)
 check("Generierungs-Fehlerliste leer", not (g.get("fehler") or []), g.get("fehler"))
 check("Keine Feldwerte in KI-Texten", all("K-0000" not in (f.get("quickinfo") or "") + (f.get("beleg") or "") for f in d.get("felder", [])))
-
-# Alle neu generieren (modus ki_neu, 28.08.2026): nur KI-Felder, Hand/PDF bleiben
-ki_vorher = [f for f in d.get("felder", []) if f["quelle"] == "ki"]
-s, v2, _ = req("POST", f"/api/projects/{pid}/quickinfos/vorschau", {"modus": "ki_neu"})
-check("Vorschau ki_neu: zaehlt genau die KI-Felder", s == 200 and v2.get("modus") == "ki_neu" and v2.get("anzahl") == len(ki_vorher), (v2, len(ki_vorher)))
-s, b, _ = req("POST", f"/api/projects/{pid}/quickinfos/generieren", {"modus": "ki_neu"})
-check("Alle neu generieren: startet fuer genau die KI-Felder", s == 200 and b.get("gestartet") is True and b.get("modus") == "ki_neu" and b.get("offen") == len(ki_vorher), (b, len(ki_vorher)))
-for _ in range(90):
-    time.sleep(2)
-    s, d, _ = req("GET", f"/api/projects/{pid}/felder")
-    g = d.get("generierung") or {}
-    if d.get("project", {}).get("status") != "processing" and not g.get("laeuft", False):
-        break
-by5 = {f["anker"]: f for f in d.get("felder", [])}
-check("Alle neu generieren: Hand- und PDF-Texte unberuehrt", by5["vorname"]["quelle"] == "hand" and by5["email"]["quelle"] == "pdf", (by5["vorname"]["quelle"], by5["email"]["quelle"]))
-check("Alle neu generieren: KI-Felder neu (felder_neu = Anzahl KI-Felder)", g.get("felder_neu") == len(ki_vorher), (g, len(ki_vorher)))
+# Hand-Text fuer den Klicktest wiederherstellen (ui_formular prueft „Hand-Text bleibt nach Generieren am Feld").
+req("PATCH", f"/api/felder/{by['vorname']['id']}", {"quickinfo": "Vorname des Kontoinhabers"})
 
 # Fuer den Klicktest (--behalten) wieder zwei Felder oeffnen (Alle-generieren-Knopf, Filter, Hoerprobe)
 req("PATCH", f"/api/felder/{by['nachname_2']['id']}", {"quickinfo": ""})

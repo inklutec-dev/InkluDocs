@@ -4441,9 +4441,6 @@ msgstr "Generieren fehlgeschlagen."
 msgid "Generierung abgeschlossen: {n} Quickinfos neu."
 msgstr "Generierung abgeschlossen: {n} Quickinfos neu."
 
-msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
-msgstr "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
-
 msgid "Hinweise: {w}"
 msgstr "Hinweise: {w}"
 
@@ -4455,9 +4452,6 @@ msgstr "KI-Vorschlag, {s}"
 
 msgid "Kein Beleg auf der Seite gefunden."
 msgstr "Kein Beleg auf der Seite gefunden."
-
-msgid "Keine offenen Felder – nichts zu generieren."
-msgstr "Keine offenen Felder – nichts zu generieren."
 
 msgid "Nur unsichere KI-Vorschläge anzeigen"
 msgstr "Nur unsichere KI-Vorschläge anzeigen"
@@ -4579,13 +4573,7 @@ msgstr "Alle neu generieren"
 
 
 
-msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
-msgstr "Keine KI-Vorschläge vorhanden – nichts zu generieren."
 
-
-
-msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
-msgstr "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
 
 msgid "KI-Vorschlag übernehmen"
 msgstr "KI-Vorschlag übernehmen"
@@ -5186,22 +5174,6 @@ msgstr ""
 msgid "Quickinfos generieren"
 msgstr ""
 
-#. Rueckfrage Quickinfos, Erstlauf (01.09.2026)
-msgid "{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits."
-msgstr ""
-
-#. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
-msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
-msgstr ""
-
-#. Einzahl Quickinfos (01.09.2026)
-msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
-msgstr ""
-
-#. Einzahl Quickinfos (01.09.2026)
-msgid "1 KI-Vorschlag wird neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
-msgstr ""
-
 #. Autor-dekorativ, Einzahl (01.09.2026)
 msgid "1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor."
 msgstr ""
@@ -5602,4 +5574,28 @@ msgstr "In barrierefreie PDF umwandeln"
 
 #. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
 msgid "Erstellung läuft"
+msgstr ""
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Keine Felder – nichts zu generieren."
+msgstr ""
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
+msgstr ""
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
+msgstr ""
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
+msgstr ""
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
+msgstr ""
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr ""

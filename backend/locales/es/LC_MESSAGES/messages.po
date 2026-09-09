@@ -4438,9 +4438,6 @@ msgstr "Error al generar."
 msgid "Generierung abgeschlossen: {n} Quickinfos neu."
 msgstr "Generación finalizada: {n} sugerencias nuevas."
 
-msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
-msgstr "Generación iniciada para {n} campos abiertos. Las sugerencias existentes no cambian."
-
 msgid "Hinweise: {w}"
 msgstr "Avisos: {w}"
 
@@ -4452,9 +4449,6 @@ msgstr "Sugerencia de la IA, {s}"
 
 msgid "Kein Beleg auf der Seite gefunden."
 msgstr "No se encontró evidencia en la página."
-
-msgid "Keine offenen Felder – nichts zu generieren."
-msgstr "No hay campos abiertos – nada que generar."
 
 msgid "Nur unsichere KI-Vorschläge anzeigen"
 msgstr "Mostrar solo sugerencias inciertas de la IA"
@@ -4576,13 +4570,7 @@ msgstr "Regenerar todo"
 
 
 
-msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
-msgstr "No hay propuestas de la IA – nada que regenerar."
 
-
-
-msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
-msgstr "Regeneración iniciada para {n} campos. Los textos escritos a mano, del PDF, de los datos maestros o del invitado no cambian."
 
 msgid "KI-Vorschlag übernehmen"
 msgstr "Usar la propuesta de la IA"
@@ -5183,22 +5171,6 @@ msgstr "Tu saldo no es suficiente: una sugerencia cuesta {p} créditos y tienes 
 msgid "Quickinfos generieren"
 msgstr "Generar sugerencias"
 
-#. Rueckfrage Quickinfos, Erstlauf (01.09.2026)
-msgid "{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits."
-msgstr "Se describirán {n} campos sin sugerencia. Cuesta {c} créditos."
-
-#. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
-msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
-msgstr "Se regenerarán {n} propuestas de la IA. Los textos escritos a mano, del PDF, de los datos maestros o del invitado no cambian. Cuesta {c} créditos."
-
-#. Einzahl Quickinfos (01.09.2026)
-msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
-msgstr "Se describirá 1 campo sin sugerencia. Cuesta {c} créditos."
-
-#. Einzahl Quickinfos (01.09.2026)
-msgid "1 KI-Vorschlag wird neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
-msgstr "Se regenerará 1 propuesta de la IA. Los textos escritos a mano, del PDF, de los datos maestros o del invitado no cambian. Cuesta {c} créditos."
-
 #. Autor-dekorativ, Einzahl (01.09.2026)
 msgid "1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor."
 msgstr "1 imagen está marcada como decorativa por el autor y se deja fuera."
@@ -5600,3 +5572,27 @@ msgstr "Convertir en PDF accesible"
 #. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
 msgid "Erstellung läuft"
 msgstr "Creación en curso"
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Keine Felder – nichts zu generieren."
+msgstr "No hay campos – nada que generar."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
+msgstr "El documento contiene 1 campo; la creación de la información rápida requiere {c} créditos."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
+msgstr "El documento contiene {n} campos en total; la creación de las informaciones rápidas requiere {c} créditos."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
+msgstr "Los documentos del proyecto contienen 1 campo; la creación de la información rápida requiere {c} créditos."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
+msgstr "Los documentos del proyecto contienen {n} campos en total; la creación de las informaciones rápidas requiere {c} créditos."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
+msgstr "Generación iniciada para {n} campos. Las informaciones rápidas existentes se reemplazarán."

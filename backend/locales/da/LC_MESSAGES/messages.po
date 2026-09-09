@@ -4130,9 +4130,6 @@ msgstr "Generering mislykkedes."
 msgid "Generierung abgeschlossen: {n} Quickinfos neu."
 msgstr "Generering afsluttet: {n} nye hjælpetekster."
 
-msgid "Generierung gestartet für {n} offene Felder. Vorhandene Quickinfos bleiben unverändert."
-msgstr "Generering startet for {n} åbne felter. Eksisterende hjælpetekster forbliver uændrede."
-
 msgid "Hinweise: {w}"
 msgstr "Bemærkninger: {w}"
 
@@ -4144,9 +4141,6 @@ msgstr "AI-forslag, {s}"
 
 msgid "Kein Beleg auf der Seite gefunden."
 msgstr "Intet belæg fundet på siden."
-
-msgid "Keine offenen Felder – nichts zu generieren."
-msgstr "Ingen åbne felter – intet at generere."
 
 msgid "Nur unsichere KI-Vorschläge anzeigen"
 msgstr "Vis kun usikre AI-forslag"
@@ -4268,13 +4262,7 @@ msgstr "Generér alle igen"
 
 
 
-msgid "Keine KI-Vorschläge vorhanden – nichts zu generieren."
-msgstr "Ingen KI-forslag – intet at generere."
 
-
-
-msgid "Neu-Generierung gestartet für {n} Felder. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert."
-msgstr "Genereringen er startet for {n} felter. Tekster skrevet i hånden, fra PDF'en, fra stamdata eller af gæsten forbliver uændrede."
 
 msgid "KI-Vorschlag übernehmen"
 msgstr "Brug KI-forslag"
@@ -4875,22 +4863,6 @@ msgstr "Din saldo er ikke nok: en hjælpetekst koster {p} credits, du har {v}."
 msgid "Quickinfos generieren"
 msgstr "Generér hjælpetekster"
 
-#. Rueckfrage Quickinfos, Erstlauf (01.09.2026)
-msgid "{n} Felder ohne Quickinfo werden beschrieben. Das kostet {c} Credits."
-msgstr "{n} felter uden hjælpetekst bliver beskrevet. Det koster {c} credits."
-
-#. Rueckfrage Quickinfos, KI-Vorschlaege erneuern (01.09.2026)
-msgid "{n} KI-Vorschläge werden neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
-msgstr "{n} AI-forslag bliver genereret igen. Tekster skrevet i hånden, fra PDF'en, fra stamdata eller af gæsten forbliver uændrede. Det koster {c} credits."
-
-#. Einzahl Quickinfos (01.09.2026)
-msgid "1 Feld ohne Quickinfo wird beschrieben. Das kostet {c} Credits."
-msgstr "1 felt uden hjælpetekst bliver beskrevet. Det koster {c} credits."
-
-#. Einzahl Quickinfos (01.09.2026)
-msgid "1 KI-Vorschlag wird neu erzeugt. Texte von Hand, aus der PDF, aus Stammdaten und vom Gast bleiben unverändert. Das kostet {c} Credits."
-msgstr "1 AI-forslag bliver genereret igen. Tekster skrevet i hånden, fra PDF'en, fra stamdata eller af gæsten forbliver uændrede. Det koster {c} credits."
-
 #. Autor-dekorativ, Einzahl (01.09.2026)
 msgid "1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor."
 msgstr "1 billede er markeret som dekorativt af forfatteren og springes over."
@@ -5292,3 +5264,27 @@ msgstr "Konvertér til tilgængelig PDF"
 #. Beta-Etikett entfernt / Fortschrittskarte (Steve, Michael Karbe, 09.09.2026)
 msgid "Erstellung läuft"
 msgstr "Oprettelse i gang"
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Keine Felder – nichts zu generieren."
+msgstr "Ingen felter – intet at generere."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
+msgstr "Dokumentet indeholder 1 felt; oprettelsen af værktøjstippet kræver {c} credits."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
+msgstr "Dokumentet indeholder i alt {n} felter; oprettelsen af værktøjstippene kræver {c} credits."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
+msgstr "Projektets dokumenter indeholder 1 felt; oprettelsen af værktøjstippet kræver {c} credits."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
+msgstr "Projektets dokumenter indeholder i alt {n} felter; oprettelsen af værktøjstippene kræver {c} credits."
+
+#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
+msgstr "Generering startet for {n} felter. Eksisterende værktøjstips erstattes."
