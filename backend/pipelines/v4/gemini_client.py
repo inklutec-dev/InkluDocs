@@ -114,18 +114,25 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
         kopf = gemini_auth.kopfzeilen()
     except Exception as e:
         raise GeminiCallError(f'Gemini-Zugang: {e}') from e
-    teile = [{'text': _prompt_ohne_marker(prompt)}]
+    from .anbieter_profil import profil
+    p = profil('gemini')
+    text_teil = {'text': _prompt_ohne_marker(prompt)}
     if image_b64:
-        teile.append({'inlineData': {'mimeType': _media_type(image_b64), 'data': image_b64}})
+        bild_teil = {'inlineData': {'mimeType': _media_type(image_b64), 'data': image_b64}}
+        teile = [bild_teil, text_teil] if p.bild_zuerst else [text_teil, bild_teil]
+    else:
+        teile = [text_teil]
     body = {
         'contents': [{'role': 'user', 'parts': teile}],
         'generationConfig': {
-            'temperature': temperature,
+            'temperature': temperature if p.temperatur is None else p.temperatur,
             'maxOutputTokens': max(int(max_tokens) * 2, 2000),  # Schema-JSON ist ausführlicher als Tool-Use
             'responseMimeType': 'application/json',
             'responseSchema': _schema_fuer_gemini(schema_dict),
         },
     }
+    if p.bildaufloesung and image_b64:
+        body['generationConfig']['mediaResolution'] = p.bildaufloesung
     if system:
         body['systemInstruction'] = {'parts': [{'text': system}]}
     daten = json.dumps(body).encode('utf-8')
@@ -186,6 +193,17 @@ def call_gemini_text_with_schema(model: str, prompt: str, schema: Type[T], max_t
     return _mit_validierung(model, prompt, None, schema, max_tokens, temperature, system)
 
 
+def _max_len(schema: Type[BaseModel], feld) -> str:
+    try:
+        info = schema.model_fields[str(feld)]
+        for m in info.metadata:
+            if getattr(m, 'max_length', None):
+                return str(m.max_length)
+    except Exception:
+        pass
+    return '?'
+
+
 def _mit_validierung(model, prompt, img_b64, schema, max_tokens, temperature, system):
     schema_dict = schema.model_json_schema()
     schema_name = schema.__name__
@@ -194,9 +212,19 @@ def _mit_validierung(model, prompt, img_b64, schema, max_tokens, temperature, sy
         return schema.model_validate(raw)
     except ValidationError as e:
         log.warning('Schema-Verstoß (Gemini) bei %s: %s — Retry mit Hinweis.', schema_name, e)
-        retry_prompt = (prompt + '\n\n--- KORREKTUR ---\n'
-                        + f'Die vorherige Antwort verletzte das Schema: {e}\n'
-                        + 'Liefere die Antwort exakt nach Schema, jedes Pflichtfeld ausgefüllt.')
+        # Gemini erzwingt keine Zeichengrenzen im Schema (minLength/maxLength werden nicht
+        # übertragen). Bei Überlänge bekommt das Modell eine gezielte Kürzungsanweisung,
+        # statt nur der Fehlermeldung.
+        zu_lang = [err.get('loc', ('?',))[0] for err in e.errors() if err.get('type') == 'string_too_long']
+        if zu_lang:
+            grenzen = ', '.join(f'{feld} höchstens {_max_len(schema, feld)} Zeichen' for feld in zu_lang)
+            hinweis = (f'Die vorherige Antwort war zu lang ({grenzen}). Kürze die betroffenen Felder: '
+                       'behalte alle belegten Kernfakten, streiche Nebendetails und Wiederholungen, '
+                       'füge nichts Neues hinzu.')
+        else:
+            hinweis = (f'Die vorherige Antwort verletzte das Schema: {e}\n'
+                       'Liefere die Antwort exakt nach Schema, jedes Pflichtfeld ausgefüllt.')
+        retry_prompt = prompt + '\n\n--- KORREKTUR ---\n' + hinweis
         retry_raw = _invoke_gemini(model, retry_prompt, img_b64, schema_name, schema_dict, max_tokens, temperature, system)
         try:
             return schema.model_validate(retry_raw)

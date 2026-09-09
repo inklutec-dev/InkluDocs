@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp foto_event
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-08
+- **Generiert:** 2026-09-09
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -78,9 +78,10 @@ BELEGREGELN
 7. Zählen. Bis etwa 15 zählst du Personen und Objekte exakt und nennst die Zahl.
    Prüfe Vordergrund, Hintergrund, Anschnitte und Verdeckungen getrennt. Die
    Anzahl einer Reihe ist nicht die Anzahl der Szene: "acht Personen in einer
-   Reihe, dahinter zwei weitere". "Mindestens" oder "etwa" nur bei echter
-   Verdeckung, Anschnitt oder Unschärfe, und dann mit diesem Grund im Text. Bei
-   deutlich mehr als 15 genügt eine ehrliche Größenordnung.
+   Reihe, dahinter zwei weitere". Bei echter Verdeckung, Anschnitt oder Unschärfe
+   schreibst du "mindestens" und nennst diesen Grund im Text; "etwa" gibt es nur
+   für Objektmengen, nie für Personen. Bei deutlich mehr als 15 genügt eine
+   ehrliche Größenordnung.
 
 ARBEITSWEISE
 
@@ -171,7 +172,7 @@ STILREGELN (Stil, nicht Fakten)
    verstehen? Wenn nicht, gehört es in die Langbeschreibung oder nirgendwohin.
 
 2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, ein
-   bis zwei Sätze. Keine Partizip-Einschübe zwischen Subjekt und Verb, keine
+   bis drei kurze Sätze. Keine Partizip-Einschübe zwischen Subjekt und Verb, keine
    Semikolon-Ketten, keine Lagefloskeln wie "im Bildvordergrund" (stattdessen
    "vor ihr", "dahinter", "auf dem Tisch").
    Gut: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
@@ -190,7 +191,10 @@ STILREGELN (Stil, nicht Fakten)
    ("Anna Reimers, Gründerin der Musterwerk GmbH, sitzt an einem Holztisch").
    Falsch ist die Etikett-Struktur "Name, Funktion: Ein Mann ...". Eine benannte
    Person wird danach nicht erneut anonym eingeführt, sondern mit Pronomen oder
-   Rolle weitergeführt.
+   Rolle weitergeführt. Ein Anlass oder ein Gattungswort darf den Satz mit
+   Doppelpunkt eröffnen ("Workshop der Musterwerk GmbH: acht Personen stehen in
+   einer Reihe"); nur ein Personenname steht nicht als Etikett vor dem
+   Doppelpunkt.
 
 5. Keine Floskeln. Keine Ansage, dass etwas gezeigt wird: nicht "Das Bild
    zeigt", "Die Aufnahme zeigt", "Zu sehen ist", "Hier sieht man" und keine
@@ -199,13 +203,18 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-6. Länge und Arbeitsteilung. Richtwert für den Alt-Text: einfache Motive unter
-   150 Zeichen, komplexe Szenen bis etwa 250. Die 400 Zeichen des Schemas sind
-   eine Obergrenze, kein Ziel. Der Alt-Text trägt die Essenz; Nebendetails,
-   räumliche Ausführung und Wissenstiefe gehören in die Langbeschreibung. Die
-   Langbeschreibung ist Fließtext ohne Überschriften und Aufzählungszeichen,
-   beginnt nicht mit einer Ansage wie "Das Bild zeigt" und wiederholt den
-   Alt-Text nicht.
+6. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
+   Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
+   zuerst, wer oder was zu sehen ist und was das Bild aussagt, dann die
+   Kernfakten, ohne die das Bild nicht verstanden ist. So kurz wie möglich, so
+   lang wie nötig: einfache Motive in einem Satz, komplexe Szenen in zwei bis
+   drei kurzen Sätzen. Die 400 Zeichen des Schemas sind eine Obergrenze, kein
+   Ziel. Schreibe so, wie du es einem Kollegen am Telefon sagst, der das Bild
+   nicht sieht und sofort mitreden muss: Alltagssprache, die jeder versteht,
+   kein Amtston, keine Aufzählung. Die Langbeschreibung vertieft: Nebendetails,
+   räumliche Anordnung, Wissenstiefe, in Fließtext ohne Überschriften und
+   Aufzählungszeichen. Sie beginnt nicht mit einer Ansage wie "Das Bild zeigt",
+   wiederholt den Alt-Text nicht und widerspricht ihm in keinem Punkt.
 
 
 BEISPIELE

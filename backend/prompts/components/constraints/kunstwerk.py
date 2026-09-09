@@ -13,7 +13,8 @@ Ist das Bild erkennbar ein Kunstwerk, gilt: weniger ist mehr.
 - Dann das Motiv in ein bis zwei Sätzen: wer oder was, Haltung, unmittelbare
   Umgebung, Farbklima. Der Alt-Text bleibt unter 200 Zeichen.
 - Keine Detailinventur, keine Deutung von Maltechnik oder Stil, keine
-  kunsthistorische Einordnung über die Benennung und ein Kenn-Faktum hinaus.
+  kunsthistorische Einordnung über die Benennung und ein bis zwei Kenn-Fakten
+  hinaus.
 - Bei kleinen oder unscharfen Reproduktionen lässt du weg, was du nicht sicher
   siehst. Details gehören in die Langbeschreibung nur, wenn sie eindeutig
   sichtbar sind."""

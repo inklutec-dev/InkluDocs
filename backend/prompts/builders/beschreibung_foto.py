@@ -154,8 +154,8 @@ Einzelperson in einer Situation, kleine Gruppe. Der Text beantwortet, wer zu seh
 ist, in welcher belegten Rolle und was die Person sichtbar tut oder in welcher
 Situation sie ist. Die Rolle kommt aus dem Kontext (Gründerin der Musterwerk GmbH,
 Referentin des Workshops) und steht im ersten Satz. Zu einer zweifelsfrei
-benannten Person des öffentlichen Lebens darf ein einzelnes Kenn-Faktum stehen
-(Amt und Zeitraum), nicht mehr.
+benannten Person des öffentlichen Lebens dürfen ein bis zwei Kenn-Fakten stehen
+(Amt und Zeitraum).
 
 
 {_render_inventar_block(inventar_json)}
@@ -421,8 +421,8 @@ ORTE UND NAMEN
 
 Ein Name ist auf genau drei Wegen belegt: lesbar im Bild (Schild, Tafel),
 ausdrücklich im Kontext, oder als weltbekanntes Wahrzeichen mit eindeutiger,
-unverwechselbarer Silhouette (Matterhorn, Uluru, Golden Gate Bridge); dazu darf
-ein einzelnes Kenn-Faktum stehen. Passen mehrere Orte plausibel auf das Motiv,
+unverwechselbarer Silhouette (Matterhorn, Uluru, Golden Gate Bridge); dazu dürfen
+ein bis zwei Kenn-Fakten stehen. Passen mehrere Orte plausibel auf das Motiv,
 beschreibst du es ohne Eigennamen: "Bergpanorama mit hohen, schneebedeckten
 Gipfeln", nicht "die Alpen". Ein erkannter Bergname rechtfertigt keine geratene
 Aufnahmeposition, Route, Region oder Ortschaft. Schnee, gelbe Bäume, warmes Licht
@@ -479,7 +479,7 @@ ALT-TEXT
 
 Beginne mit dem Namen oder dem Bautyp und dem prägenden Merkmal: "Reithalle mit
 hellem Sandboden und Holzbanden", "Bürogebäude mit Glasfassade". Zu einem
-benannten Wahrzeichen höchstens ein Kenn-Faktum. Ist die Perspektive wichtig,
+benannten Wahrzeichen ein bis zwei Kenn-Fakten. Ist die Perspektive wichtig,
 steht sie ohne Ansage vorn: "Blick von Südwesten auf den Dom". Dann Material und
 die zwei bis drei markantesten Elemente (Dachform, Turm, Portal, Fassadenraster);
 ein Gerüst, eine Baustelle oder eine Beschädigung nennst du, weil sie das Bild von

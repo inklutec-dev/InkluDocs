@@ -1,8 +1,8 @@
 {
  "szene": "Deutschlandkarte mit 45 blauen Punkt-Markierungen für Beratungsstellen, Norden oben. Legende: großer Kreis = Beratungsstelle mit Werkstatt, kleiner Kreis = reine Beratungsstelle; 12 große und 33 kleine Kreise. Deutliche Häufung der Marker im Süden um München und Stuttgart, weitere Marker im Westen bei Köln und im Osten bei Berlin, vereinzelte Marker im Norden bei Hamburg. Beschriftete Städte: München, Stuttgart, Köln, Hamburg, Berlin. Kein Maßstab lesbar.",
  "alt_text": "Karte der Beratungsstellen in Deutschland: 45 Beratungsstellen, deutlich konzentriert im Süden um München und Stuttgart, vereinzelt im Norden bei Hamburg. Große Kreise sind Beratungsstellen mit Werkstatt, kleine reine Beratungsstellen.",
- "begruendung": "Präfix, Gebiet und räumliche Kernaussage zuerst, die exakte Zahl statt 'viele', Ortsnamen in Originalsprache, Himmelsrichtungen statt oben und unten. Die Bedeutung der Kreise wird direkt ausgesagt, ohne Hinweis auf die Legende. Die Langbeschreibung trägt Verteilung nach Kreisgröße und die übrigen Regionen.",
- "prinzip": "Mit 'Karte —', Gebiet und räumlicher Kernaussage führen; Symbolbedeutung aus der Legende direkt aussagen; Ortsnamen wortgetreu; Himmelsrichtungen statt Bildkoordinaten.",
+ "begruendung": "Gattungswort,Gebiet und räumliche Kernaussage zuerst, die exakte Zahl statt 'viele', Ortsnamen in Originalsprache, Himmelsrichtungen statt oben und unten. Die Bedeutung der Kreise wird direkt ausgesagt, ohne Hinweis auf die Legende. Die Langbeschreibung trägt Verteilung nach Kreisgröße und die übrigen Regionen.",
+ "prinzip": "Mit dem Gattungswort Karte im Satz, Gebiet und räumlicher Kernaussage führen; Symbolbedeutung aus der Legende direkt aussagen; Ortsnamen wortgetreu; Himmelsrichtungen statt Bildkoordinaten.",
  "quelle": "fiktives Beispiel (generische Standortkarte, keine echten Kundendaten)",
  "lizenz": "fiktives Beispiel",
  "antwort": {

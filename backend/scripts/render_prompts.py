@@ -314,6 +314,17 @@ def render_all(out_dir: Path) -> list[Path]:
         written.append(_write_snapshot(out_dir, filename=filename, title=title, builder_ref='pipelines/v4/orchestrator.py',
                                        mode_info={}, demo_values={}, prompt_text=text))
 
+    # 6) Anbieter-Profile: der Zusatzblock je Anbieter (leer = kein Zusatz), siehe pipelines/v4/anbieter_profil.py
+    from pipelines.v4.anbieter_profil import PROFILE
+    for name, p in PROFILE.items():
+        if p.prompt_zusatz:
+            written.append(_write_snapshot(out_dir, filename=f'07_anbieter_zusatz.{name}.md',
+                                           title=f'Anbieter-Zusatz {name} (wird an den Beschreibungs-Prompt gehängt)',
+                                           builder_ref='pipelines/v4/anbieter_profil.py', mode_info={},
+                                           demo_values={'Temperatur': p.temperatur if p.temperatur is not None else '(Aufrufer)',
+                                                        'Bild zuerst': p.bild_zuerst, 'Bildauflösung': p.bildaufloesung or '(Vorgabe)'},
+                                           prompt_text=p.prompt_zusatz))
+
     return written
 
 

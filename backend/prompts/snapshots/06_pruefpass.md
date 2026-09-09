@@ -1,7 +1,7 @@
 # Prüfpass
 
 - **Builder:** `pipelines/v4/orchestrator.py`
-- **Generiert:** 2026-09-08
+- **Generiert:** 2026-09-09
 
 ---
 
@@ -34,7 +34,7 @@ STILREGELN (Stil, nicht Fakten)
    verstehen? Wenn nicht, gehört es in die Langbeschreibung oder nirgendwohin.
 
 2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, ein
-   bis zwei Sätze. Keine Partizip-Einschübe zwischen Subjekt und Verb, keine
+   bis drei kurze Sätze. Keine Partizip-Einschübe zwischen Subjekt und Verb, keine
    Semikolon-Ketten, keine Lagefloskeln wie "im Bildvordergrund" (stattdessen
    "vor ihr", "dahinter", "auf dem Tisch").
    Gut: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
@@ -53,7 +53,10 @@ STILREGELN (Stil, nicht Fakten)
    ("Anna Reimers, Gründerin der Musterwerk GmbH, sitzt an einem Holztisch").
    Falsch ist die Etikett-Struktur "Name, Funktion: Ein Mann ...". Eine benannte
    Person wird danach nicht erneut anonym eingeführt, sondern mit Pronomen oder
-   Rolle weitergeführt.
+   Rolle weitergeführt. Ein Anlass oder ein Gattungswort darf den Satz mit
+   Doppelpunkt eröffnen ("Workshop der Musterwerk GmbH: acht Personen stehen in
+   einer Reihe"); nur ein Personenname steht nicht als Etikett vor dem
+   Doppelpunkt.
 
 5. Keine Floskeln. Keine Ansage, dass etwas gezeigt wird: nicht "Das Bild
    zeigt", "Die Aufnahme zeigt", "Zu sehen ist", "Hier sieht man" und keine

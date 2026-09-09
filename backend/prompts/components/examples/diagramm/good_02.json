@@ -1,0 +1,25 @@
+{
+ "szene": "Gruppiertes Balkendiagramm mit dem Titel 'Stromerzeugung nach Quelle 2020 bis 2023', senkrechte Achse in Terawattstunden von 0 bis 200, waagerechte Achse die Jahre 2020 bis 2023, Legende mit drei Reihen: Wind (blau), Solar (gelb), Kohle (grau). Ablesbare Werte: Wind 130, 115, 125, 140; Solar 50, 48, 60, 62; Kohle 135, 165, 180, 130. Quelle unten: 'Beispiel AG, Jahresbericht'.",
+ "alt_text": "Balkendiagramm zur Stromerzeugung 2020 bis 2023 nach Quelle in Terawattstunden: Wind ist 2023 mit 140 die größte Quelle, Kohle fällt nach einem Hoch von 180 im Jahr 2022 auf 130. Solar wächst stetig von 50 auf 62.",
+ "begruendung": "Der Alt-Text trägt allein: Diagrammtyp, Thema, Zeitraum und Einheit, dann die Gesamtaussage und jede der drei Reihen mit Richtung und dem Wert, der sie trägt. Der Einbruch von Wind 2021 und die Zwischenwerte stehen in der Langbeschreibung. 'Stetig' ist belegt, weil kein Zwischenwert von Solar fällt. Keine Farben im Alt-Text, weil die Legende die Reihen benennt.",
+ "prinzip": "Gesamtaussage zuerst, dann jede Reihe mit Richtung und tragendem Wert; keine Reihe fehlt; Trendwörter nur, wenn die Zahlen sie tragen; Zwischenwerte in die Langbeschreibung.",
+ "quelle": "fiktives Beispiel (erfundene Werte)",
+ "lizenz": "fiktives Beispiel",
+ "antwort": {
+  "alt_text": "Balkendiagramm zur Stromerzeugung 2020 bis 2023 nach Quelle in Terawattstunden: Wind ist 2023 mit 140 die größte Quelle, Kohle fällt nach einem Hoch von 180 im Jahr 2022 auf 130. Solar wächst stetig von 50 auf 62.",
+  "langbeschreibung": "Die waagerechte Achse trägt die Jahre 2020 bis 2023, die senkrechte Achse die Erzeugung in Terawattstunden von 0 bis 200. Die Legende nennt drei Reihen: Wind in Blau, Solar in Gelb, Kohle in Grau. Wind beginnt 2020 bei 130, sinkt 2021 auf 115 und steigt über 125 im Jahr 2022 auf 140 im Jahr 2023, den Höchstwert der Reihe. Solar steigt von 50 über 48 und 60 auf 62 und bleibt in allen Jahren die kleinste Quelle. Kohle liegt 2020 bei 135, steigt 2021 auf 165 und 2022 auf 180, den höchsten Wert des ganzen Diagramms, und fällt 2023 auf 130, den tiefsten Wert der Reihe. Damit liegt Wind 2023 erstmals vor Kohle. Quelle laut Fußzeile: Beispiel AG, Jahresbericht.",
+  "verwendete_inventar_items": [
+   "gruppiertes Balkendiagramm",
+   "Titel Stromerzeugung nach Quelle 2020 bis 2023",
+   "Einheit Terawattstunden",
+   "Wind 130, 115, 125, 140",
+   "Solar 50, 48, 60, 62",
+   "Kohle 135, 165, 180, 130",
+   "Legende Wind blau, Solar gelb, Kohle grau",
+   "Quelle Beispiel AG, Jahresbericht"
+  ],
+  "nicht_verwendete_inventar_items": [],
+  "nicht_im_inventar": [],
+  "atmosphaere_belege": []
+ }
+}

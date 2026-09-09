@@ -1,8 +1,8 @@
 {
  "szene": "Skelettformel der Acetylsalicylsäure: Benzolring als Sechseck mit drei eingezeichneten Doppelbindungen, daran zwei Substituenten in Nachbarstellung, eine Carboxygruppe (COOH) und eine Acetoxygruppe (O-CO-CH3), in beiden Gruppen eine Doppelbindung zwischen Kohlenstoff und Sauerstoff sichtbar. Keine Summenformel, keine Stereodeskriptoren. Bildunterschrift im Dokument: 'Aspirin (Acetylsalicylsäure)'.",
  "alt_text": "Strukturformel von Acetylsalicylsäure (Aspirin): Benzolring mit zwei benachbarten Substituenten, einer Carboxygruppe (COOH) und einer Acetoxygruppe (O-CO-CH3).",
- "begruendung": "Präfix und Stoffname, weil die Bildunterschrift ihn belegt. Keine Summenformel, weil weder Bild noch Unterschrift sie liefern. Indizes als normale Zahlen. Grundgerüst und Gruppen im Alt-Text, Bindungen und Aufbau der Gruppen in der Langbeschreibung.",
- "prinzip": "Mit 'Strukturformel —' und dem belegten Stoffnamen führen; Indizes als normale Zahlen; funktionelle Gruppen benennen, keine Atome und keine Formeln erfinden.",
+ "begruendung": "Gattungswort und Stoffname, weil die Bildunterschrift ihn belegt. Keine Summenformel, weil weder Bild noch Unterschrift sie liefern. Indizes als normale Zahlen. Grundgerüst und Gruppen im Alt-Text, Bindungen und Aufbau der Gruppen in der Langbeschreibung.",
+ "prinzip": "Mit dem Gattungswort Strukturformel im Satz und dem belegten Stoffnamen führen; Indizes als normale Zahlen; funktionelle Gruppen benennen, keine Atome und keine Formeln erfinden.",
  "quelle": "Wikimedia Commons: Aspirin-skeletal.svg",
  "lizenz": "Wikimedia Commons, frei lizenziert",
  "antwort": {

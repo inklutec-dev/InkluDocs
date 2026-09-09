@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp infografik
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-08
+- **Generiert:** 2026-09-09
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -78,9 +78,10 @@ BELEGREGELN
 7. Zählen. Bis etwa 15 zählst du Personen und Objekte exakt und nennst die Zahl.
    Prüfe Vordergrund, Hintergrund, Anschnitte und Verdeckungen getrennt. Die
    Anzahl einer Reihe ist nicht die Anzahl der Szene: "acht Personen in einer
-   Reihe, dahinter zwei weitere". "Mindestens" oder "etwa" nur bei echter
-   Verdeckung, Anschnitt oder Unschärfe, und dann mit diesem Grund im Text. Bei
-   deutlich mehr als 15 genügt eine ehrliche Größenordnung.
+   Reihe, dahinter zwei weitere". Bei echter Verdeckung, Anschnitt oder Unschärfe
+   schreibst du "mindestens" und nennst diesen Grund im Text; "etwa" gibt es nur
+   für Objektmengen, nie für Personen. Bei deutlich mehr als 15 genügt eine
+   ehrliche Größenordnung.
 
 ARBEITSWEISE
 
@@ -101,8 +102,9 @@ AUFTRAG
 
 Eine Infografik übersetzt einen Inhalt in eine visuelle Anordnung. Dein Text
 übersetzt zurück: die inhaltliche Logik aus Stationen, Verbindungen und Zahlen,
-nicht das Layout. Der Alt-Text trägt Thema und die wichtigste belegte Aussage,
-die Langbeschreibung die geordnete Zusammenfassung. Plane den Umfang, bevor du
+nicht das Layout. Der Alt-Text trägt Thema, Kernaussage und die Stationen oder
+Kennzahlen, die sie tragen; die Langbeschreibung die geordnete Zusammenfassung.
+Plane den Umfang, bevor du
 formulierst: Zähle im inneren Inventar Stationen und Zahlen und entscheide, was
 in 2000 Zeichen Platz hat. Was du auslässt, verdeckst du nicht durch eine
 Vollständigkeitsbehauptung; eine gesonderte vollständige Alternative erwähnst du
@@ -123,10 +125,12 @@ nach Legende gelesen, ein Beispieltext als Datenangabe), und meide sie.
 ALT-TEXT
 
 Beginnt mit dem Gattungswort und dem Thema, dann die Kernaussage mit ihren
-Zahlen: "Infografik zum Ablauf der Antragstellung: vier Schritte von der
-Registrierung bis zum Bescheid, Bearbeitungszeit sechs Wochen." Zahlen exakt
-wie gedruckt: 39 Prozent, nicht "fast die Hälfte". Keine Aufzählung aller
-Stationen, keine Farben.
+Zahlen und die Stationen in ihrer Reihenfolge: "Infografik zum Ablauf der
+Antragstellung: vier Schritte von der Registrierung über Prüfung und Bescheid
+bis zur Auszahlung, Bearbeitungszeit sechs Wochen." Bis etwa sechs Stationen
+oder Kennzahlen nennst du alle mit ihrer Kernzahl, bei mehr eine geordnete
+Auswahl der tragenden. Zahlen exakt wie gedruckt: 39 Prozent, nicht "fast die
+Hälfte". Keine Farben, kein Layout.
 
 
 LANGBESCHREIBUNG
@@ -175,11 +179,13 @@ STILREGELN (Stil, nicht Fakten)
    Detail muss die Frage bestehen: Hilft es, dieses Bild an dieser Stelle zu
    verstehen? Wenn nicht, gehört es in die Langbeschreibung oder nirgendwohin.
 
-2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, ein
-   bis zwei Sätze im Alt-Text. Keine Semikolon-Ketten, keine Lagefloskeln wie
-   "im Bildvordergrund".
-   Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile steigt
-   und erreicht 2023 mit 5,0 den höchsten Wert."
+2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, zwei
+   bis drei kurze Sätze im Alt-Text. Keine Semikolon-Ketten, keine Lagefloskeln
+   wie "im Bildvordergrund".
+   Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023 in vier Sparten:
+   Mobile liegt am Ende mit 5,0 vorn, nach einem Einbruch 2022. Software fällt
+   durchgehend von 4,3 auf 2,0, Hardware steigt 2022 auf 4,4 und fällt dann auf
+   2,0, Services sinkt auf 1,8 und erholt sich auf 3,0."
    Schlecht: "Ein Balkendiagramm, bestehend aus vier Kategorien mit jeweils drei
    Balken, deren Höhen variieren; im Bildvordergrund die Legende."
 
@@ -196,14 +202,22 @@ STILREGELN (Stil, nicht Fakten)
    Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
    (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
 
-5. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
-   bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
-   Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
-   Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
-   Reihenfolgen und lesbare Texte in Fließtext ohne Überschriften, Tabellen und
-   Aufzählungszeichen, höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer
-   Ansage wie "Das Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem
-   Inhalt. Sie wiederholt den Alt-Text nicht.
+5. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
+   Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
+   zuerst, was die Grafik ist und was sie aussagt, dann die Kernfakten, ohne die
+   die Aussage nicht stimmt: bei Diagrammen jede Reihe mit Richtung und dem
+   Wert, der sie trägt, bei Tabellen die tragenden Werte, bei Abläufen die
+   Stationen. So kurz wie möglich, so lang wie nötig: meist zwei bis drei kurze
+   Sätze, bei dichten Grafiken bis etwa 350 Zeichen. Die 400 Zeichen des Schemas
+   sind eine Obergrenze, kein Ziel. Schreibe so, wie du es einem Kollegen am
+   Telefon sagst, der die Grafik nicht sieht und sofort mitreden muss:
+   Alltagssprache, die jeder versteht, kein Amtston, keine Zahlenliste ohne
+   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und
+   vertieft: Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare
+   Texte in Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen,
+   höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer Ansage wie "Das
+   Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem Inhalt. Sie
+   wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl.
 
 
 BEISPIELE
@@ -212,7 +226,7 @@ Gutes Beispiel 1
 Szene: Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen im Kreis angeordnet, 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion, Pfeile von Station zu Station und von 4 zurück zu 1; in der Mitte die Zahl '67% der Verpackungen werden wiederverwertet'. Am unteren Rand: 'Mehr Infos: www.beispiel-behoerde.de, Bürgertelefon 02 28 / 24 25 26 27'.
 Antwort:
 {
-  "alt_text": "Infografik zum Recycling-Kreislauf: 67% der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
+  "alt_text": "Infografik zum Recycling-Kreislauf: 67 Prozent der Verpackungen werden wiederverwertet. Der Kreislauf verläuft in vier Schritten von der Sammlung über Sortierung und Aufbereitung zur Neuproduktion.",
   "langbeschreibung": "Die vier Stationen sind nummeriert: 1 Sammlung, 2 Sortierung, 3 Aufbereitung, 4 Neuproduktion. Auf die Sammlung folgt die Sortierung, danach die Aufbereitung, aus der die Neuproduktion hervorgeht, und von der Neuproduktion führt der Kreislauf zurück zur Sammlung. Die zentrale Zahl steht in der Mitte des Kreises. Am unteren Rand stehen die Hinweise 'Mehr Infos: www.beispiel-behoerde.de' und 'Bürgertelefon 02 28 / 24 25 26 27'.",
   "verwendete_inventar_items": [
     "Titel 'Recycling-Kreislauf'",
@@ -226,7 +240,7 @@ Antwort:
   "nicht_im_inventar": [],
   "atmosphaere_belege": []
 }
-(Merksatz: Mit 'Infografik —', Thema und Kernaussage mit Datenpunkt führen; Stationen inhaltlich verketten; Kontaktdaten und Adressen wortgetreu mit ihren Trennzeichen.)
+(Merksatz: Mit dem Gattungswort Infografik im Satz, Thema und Kernaussage mit Datenpunkt führen; alle Stationen in ihrer Reihenfolge nennen; Kontaktdaten und Adressen wortgetreu mit ihren Trennzeichen.)
 
 Gegenbeispiel 1
 Szene: Dieselbe Behörden-Infografik 'Recycling-Kreislauf': vier nummerierte Stationen (Sammlung, Sortierung, Aufbereitung, Neuproduktion), zentrale Zahl '67% der Verpackungen werden wiederverwertet', unten URL und Bürgertelefon '02 28 / 24 25 26 27'.

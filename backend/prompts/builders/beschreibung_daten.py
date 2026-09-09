@@ -6,7 +6,7 @@ siehe docs/PROMPT-STANDARD.md:
   Kopf (Rolle + Belegregeln, im Combo-Aufruf einmal ganz oben)
   BILDTYP, AUFTRAG, inneres Inventar, ALT-TEXT, LANGBESCHREIBUNG,
   höchstens zwei besondere Regeln der Kategorie, STILREGELN, BEISPIELE, KONTEXT.
-Die Langbeschreibung ist bei Datengrafiken Pflicht (Stilregel 4 der sachlichen
+Die Langbeschreibung ist bei Datengrafiken Pflicht (Stilregel 5 der sachlichen
 Fassung). Was für alle Bildtypen gilt, steht nur im Kopf.
 
 Gattungswort: Tabelle, Karte, Infografik, Screenshot, Strukturformel und
@@ -184,11 +184,15 @@ Bewertung, die das Diagramm nicht enthält.
 
 ALT-TEXT
 
-Diagrammtyp, Thema (Titel oder Kontext) und die eine wichtigste belegte Aussage
-mit ihrem Wert: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile
-liegt am Ende über dem Ausgangswert und erreicht 5,0." Bis zu drei Kategorien
-dürfen genannt werden, wenn sie die Aussage tragen. Keine Aufzählung aller
-Balken, keine Farben, keine Achsenbeschreibung.
+Diagrammtyp, Thema (Titel oder Kontext) und Zeitraum, dann die Gesamtaussage,
+dann jede Reihe oder Kategorie mit ihrer Richtung und dem Wert, der sie trägt:
+"Balkendiagramm zur Umsatzentwicklung 2021 bis 2023 in vier Sparten: Mobile
+liegt am Ende mit 5,0 vorn, nach einem Einbruch 2022. Software fällt durchgehend
+von 4,3 auf 2,0, Hardware steigt 2022 auf 4,4 und fällt dann auf 2,0, Services
+sinkt auf 1,8 und erholt sich auf 3,0." Keine Reihe fehlt; bei mehr als etwa
+sechs Reihen nennst du Spanne und Ausreißer statt jeder Reihe. Nicht jeden
+Zwischenwert, keine Achsenbeschreibung; eine Farbe nur, wenn sie eine Reihe ohne
+Legende kenntlich macht.
 
 Trendwörter tragen eine Bedingung: "durchgehend" oder "kontinuierlich" nur, wenn
 kein Zwischenschritt widerspricht; "erholt sich" beschreibt einen Anstieg nach
@@ -265,11 +269,13 @@ jede Zeile, und ordne jeden Wert seiner Spalte zu, bevor du formulierst.
 
 ALT-TEXT
 
-Beginnt mit dem Gattungswort und dem Thema, dann die Kernaussage mit ihrem Wert:
-"Tabelle der Nährwerte je 100 Gramm: 52 Kilokalorien, davon 12 Gramm
-Kohlenhydrate und kein Fett." Bis zu drei Werte dürfen genannt werden, wenn sie
-die Aussage tragen. Keine Aufzählung aller Zeilen, keine Beschreibung von Rahmen
-und Farben.
+Beginnt mit dem Gattungswort und dem Thema, dann Bezugsgröße und Kernaussage
+mit ihren Werten: "Tabelle der Nährwerte je 100 Gramm: 52 Kilokalorien, davon
+12 Gramm Kohlenhydrate, 0,3 Gramm Eiweiß und kein Fett." Eine überschaubare
+Tabelle (bis etwa fünf Zeilen) trägt der Alt-Text mit allen Werten; eine größere
+mit Gesamtsumme, Spanne, Höchst- und Tiefstwert und den Werten, die der
+Dokumentzweck braucht. Keine Beschreibung von Rahmen und Zellfarben; eine Farbe
+nennst du, wenn sie eine Bedeutung trägt (rot markierte Zeile).
 
 Eine Summe ordnest du nach ihrer Beschriftung und ihrem Abschnitt zu, nicht nach
 ihrer Position: Die letzte Zeile ist nicht deshalb die Gesamtsumme, weil sie
@@ -416,8 +422,9 @@ AUFTRAG
 
 Eine Infografik übersetzt einen Inhalt in eine visuelle Anordnung. Dein Text
 übersetzt zurück: die inhaltliche Logik aus Stationen, Verbindungen und Zahlen,
-nicht das Layout. Der Alt-Text trägt Thema und die wichtigste belegte Aussage,
-die Langbeschreibung die geordnete Zusammenfassung. Plane den Umfang, bevor du
+nicht das Layout. Der Alt-Text trägt Thema, Kernaussage und die Stationen oder
+Kennzahlen, die sie tragen; die Langbeschreibung die geordnete Zusammenfassung.
+Plane den Umfang, bevor du
 formulierst: Zähle im inneren Inventar Stationen und Zahlen und entscheide, was
 in 2000 Zeichen Platz hat. Was du auslässt, verdeckst du nicht durch eine
 Vollständigkeitsbehauptung; eine gesonderte vollständige Alternative erwähnst du
@@ -430,10 +437,12 @@ nur, wenn es sie wirklich gibt.
 ALT-TEXT
 
 Beginnt mit dem Gattungswort und dem Thema, dann die Kernaussage mit ihren
-Zahlen: "Infografik zum Ablauf der Antragstellung: vier Schritte von der
-Registrierung bis zum Bescheid, Bearbeitungszeit sechs Wochen." Zahlen exakt
-wie gedruckt: 39 Prozent, nicht "fast die Hälfte". Keine Aufzählung aller
-Stationen, keine Farben.
+Zahlen und die Stationen in ihrer Reihenfolge: "Infografik zum Ablauf der
+Antragstellung: vier Schritte von der Registrierung über Prüfung und Bescheid
+bis zur Auszahlung, Bearbeitungszeit sechs Wochen." Bis etwa sechs Stationen
+oder Kennzahlen nennst du alle mit ihrer Kernzahl, bei mehr eine geordnete
+Auswahl der tragenden. Zahlen exakt wie gedruckt: 39 Prozent, nicht "fast die
+Hälfte". Keine Farben, kein Layout.
 
 
 LANGBESCHREIBUNG

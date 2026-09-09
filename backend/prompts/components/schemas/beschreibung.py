@@ -3,10 +3,9 @@ from pydantic import BaseModel, Field
 
 
 class AtmosphaereBeleg(BaseModel):
-    """W4-Fix: eine Wertung/Atmosphäre-Aussage mit ihrem visuellen Beleg.
+    """Eine Wertung/Atmosphäre-Aussage mit ihrem visuellen Beleg (Belegregel 4).
 
-    Wird vom Beschreibungs-Pass befüllt; vom Validierungs-Pass geprüft
-    (referenziert das Inventar — Belege müssen dort wiederzufinden sein).
+    Wird vom Beschreibungs-Aufruf befüllt; der Beleg muss im Bild sichtbar sein.
 
     Davor: list[dict] (untyped) — Strict Mode konnte die innere Struktur
     nicht erzwingen, Modell hätte beliebige dict-Schemas zurückgeben können.
@@ -39,31 +38,35 @@ class BeschreibungOutput(BaseModel):
     alt_text: str = Field(
         ..., min_length=20, max_length=400,
         description=(
-            "Kernaussage. Erste Information bild-spezifisch "
-            "(siehe SPEZIFITAETS_PFLICHT)."
+            "Alt-Text: ersetzt das Bild allein. Was es ist, was es aussagt, die "
+            "Kernfakten. 20 bis 400 Zeichen."
         ),
     )
 
     langbeschreibung: str = Field(
         "", max_length=2000,
-        description="Vertiefung. Leer wenn alt_text alles wesentliche sagt.",
+        description=(
+            "Vertiefung: Aufbau, alle Werte, Reihenfolgen, lesbare Texte. Pflicht bei "
+            "Datengrafiken; sonst leer, wenn der Alt-Text alles Wesentliche sagt. "
+            "Höchstens 2000 Zeichen."
+        ),
     )
 
     verwendete_inventar_items: list[str] = Field(
         ...,
-        description="Welche Inventar-Items wurden im Output verwendet? Audit-Trail.",
+        description="Elemente deines inneren Inventars, die im Text verwendet wurden (Stichworte).",
     )
 
     nicht_verwendete_inventar_items: list[str] = Field(
         default_factory=list,
-        description="Welche bewusst weggelassen, weil unwichtig? (Kein Fehler.)",
+        description="Elemente des inneren Inventars, die bewusst weggelassen wurden (kein Fehler).",
     )
 
     nicht_im_inventar: list[str] = Field(
         default_factory=list,
         description=(
-            "MUSS LEER SEIN. Wenn Items im Output stehen die nicht im Inventar sind, "
-            "hier auflisten — Pipeline schlägt dann Alarm. Halluzinations-Self-Check."
+            "Aussagen im Text, die nicht auf dein inneres Inventar zurückgehen. "
+            "Selbstprüfung, im Regelfall leer."
         ),
     )
 

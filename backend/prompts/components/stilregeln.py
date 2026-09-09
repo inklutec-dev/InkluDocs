@@ -19,7 +19,7 @@ _PUNKT_1 = """1. Wichtigstes zuerst. Führe mit der Information, wegen der das B
    verstehen? Wenn nicht, gehört es in die Langbeschreibung oder nirgendwohin."""
 
 _PUNKT_2_FOTO = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, ein
-   bis zwei Sätze. Keine Partizip-Einschübe zwischen Subjekt und Verb, keine
+   bis drei kurze Sätze. Keine Partizip-Einschübe zwischen Subjekt und Verb, keine
    Semikolon-Ketten, keine Lagefloskeln wie "im Bildvordergrund" (stattdessen
    "vor ihr", "dahinter", "auf dem Tisch").
    Gut: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
@@ -28,11 +28,13 @@ _PUNKT_2_FOTO = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh und na
    gewandt und den Mund leicht geöffnet, sitzt vor einer hellen Wand; im
    Bildvordergrund ein aufgeklapptes Laptop auf einem Holztisch.\""""
 
-_PUNKT_2_SACHLICH = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, ein
-   bis zwei Sätze im Alt-Text. Keine Semikolon-Ketten, keine Lagefloskeln wie
-   "im Bildvordergrund".
-   Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile steigt
-   und erreicht 2023 mit 5,0 den höchsten Wert."
+_PUNKT_2_SACHLICH = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, zwei
+   bis drei kurze Sätze im Alt-Text. Keine Semikolon-Ketten, keine Lagefloskeln
+   wie "im Bildvordergrund".
+   Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023 in vier Sparten:
+   Mobile liegt am Ende mit 5,0 vorn, nach einem Einbruch 2022. Software fällt
+   durchgehend von 4,3 auf 2,0, Hardware steigt 2022 auf 4,4 und fällt dann auf
+   2,0, Services sinkt auf 1,8 und erholt sich auf 3,0."
    Schlecht: "Ein Balkendiagramm, bestehend aus vier Kategorien mit jeweils drei
    Balken, deren Höhen variieren; im Bildvordergrund die Legende.\""""
 
@@ -46,7 +48,10 @@ _PUNKT_4 = """4. Name als Satzanfang. Ein verwendeter Name ist das Subjekt des e
    ("Anna Reimers, Gründerin der Musterwerk GmbH, sitzt an einem Holztisch").
    Falsch ist die Etikett-Struktur "Name, Funktion: Ein Mann ...". Eine benannte
    Person wird danach nicht erneut anonym eingeführt, sondern mit Pronomen oder
-   Rolle weitergeführt."""
+   Rolle weitergeführt. Ein Anlass oder ein Gattungswort darf den Satz mit
+   Doppelpunkt eröffnen ("Workshop der Musterwerk GmbH: acht Personen stehen in
+   einer Reihe"); nur ein Personenname steht nicht als Etikett vor dem
+   Doppelpunkt."""
 
 _PUNKT_5 = """5. Keine Floskeln. Keine Ansage, dass etwas gezeigt wird: nicht "Das Bild
    zeigt", "Die Aufnahme zeigt", "Zu sehen ist", "Hier sieht man" und keine
@@ -55,13 +60,18 @@ _PUNKT_5 = """5. Keine Floskeln. Keine Ansage, dass etwas gezeigt wird: nicht "D
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt."""
 
-_LAENGE_FOTO = """6. Länge und Arbeitsteilung. Richtwert für den Alt-Text: einfache Motive unter
-   150 Zeichen, komplexe Szenen bis etwa 250. Die 400 Zeichen des Schemas sind
-   eine Obergrenze, kein Ziel. Der Alt-Text trägt die Essenz; Nebendetails,
-   räumliche Ausführung und Wissenstiefe gehören in die Langbeschreibung. Die
-   Langbeschreibung ist Fließtext ohne Überschriften und Aufzählungszeichen,
-   beginnt nicht mit einer Ansage wie "Das Bild zeigt" und wiederholt den
-   Alt-Text nicht."""
+_LAENGE_FOTO = """6. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
+   Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
+   zuerst, wer oder was zu sehen ist und was das Bild aussagt, dann die
+   Kernfakten, ohne die das Bild nicht verstanden ist. So kurz wie möglich, so
+   lang wie nötig: einfache Motive in einem Satz, komplexe Szenen in zwei bis
+   drei kurzen Sätzen. Die 400 Zeichen des Schemas sind eine Obergrenze, kein
+   Ziel. Schreibe so, wie du es einem Kollegen am Telefon sagst, der das Bild
+   nicht sieht und sofort mitreden muss: Alltagssprache, die jeder versteht,
+   kein Amtston, keine Aufzählung. Die Langbeschreibung vertieft: Nebendetails,
+   räumliche Anordnung, Wissenstiefe, in Fließtext ohne Überschriften und
+   Aufzählungszeichen. Sie beginnt nicht mit einer Ansage wie "Das Bild zeigt",
+   wiederholt den Alt-Text nicht und widerspricht ihm in keinem Punkt."""
 
 _SCHREIBWEISE_SACHLICH = """5. Schreibweise. Das Gattungswort steht als normales Wort im Satz ("Tabelle der
    Nährwerte je 100 Gramm:", "Karte der Beratungsstellen:"), nicht als Etikett mit
@@ -69,14 +79,22 @@ _SCHREIBWEISE_SACHLICH = """5. Schreibweise. Das Gattungswort steht als normales
    Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
    (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt."""
 
-_LAENGE_SACHLICH = """6. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
-   bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
-   Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
-   Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
-   Reihenfolgen und lesbare Texte in Fließtext ohne Überschriften, Tabellen und
-   Aufzählungszeichen, höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer
-   Ansage wie "Das Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem
-   Inhalt. Sie wiederholt den Alt-Text nicht."""
+_LAENGE_SACHLICH = """6. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
+   Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
+   zuerst, was die Grafik ist und was sie aussagt, dann die Kernfakten, ohne die
+   die Aussage nicht stimmt: bei Diagrammen jede Reihe mit Richtung und dem
+   Wert, der sie trägt, bei Tabellen die tragenden Werte, bei Abläufen die
+   Stationen. So kurz wie möglich, so lang wie nötig: meist zwei bis drei kurze
+   Sätze, bei dichten Grafiken bis etwa 350 Zeichen. Die 400 Zeichen des Schemas
+   sind eine Obergrenze, kein Ziel. Schreibe so, wie du es einem Kollegen am
+   Telefon sagst, der die Grafik nicht sieht und sofort mitreden muss:
+   Alltagssprache, die jeder versteht, kein Amtston, keine Zahlenliste ohne
+   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und
+   vertieft: Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare
+   Texte in Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen,
+   höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer Ansage wie "Das
+   Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem Inhalt. Sie
+   wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl."""
 
 STILREGELN_KERN = "STILREGELN (Stil, nicht Fakten)\n\n" + "\n\n".join([_PUNKT_1, _PUNKT_2_FOTO, _PUNKT_3, _PUNKT_4, _PUNKT_5])
 

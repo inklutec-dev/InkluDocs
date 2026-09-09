@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp screenshot
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-08
+- **Generiert:** 2026-09-09
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -78,9 +78,10 @@ BELEGREGELN
 7. Zählen. Bis etwa 15 zählst du Personen und Objekte exakt und nennst die Zahl.
    Prüfe Vordergrund, Hintergrund, Anschnitte und Verdeckungen getrennt. Die
    Anzahl einer Reihe ist nicht die Anzahl der Szene: "acht Personen in einer
-   Reihe, dahinter zwei weitere". "Mindestens" oder "etwa" nur bei echter
-   Verdeckung, Anschnitt oder Unschärfe, und dann mit diesem Grund im Text. Bei
-   deutlich mehr als 15 genügt eine ehrliche Größenordnung.
+   Reihe, dahinter zwei weitere". Bei echter Verdeckung, Anschnitt oder Unschärfe
+   schreibst du "mindestens" und nennst diesen Grund im Text; "etwa" gibt es nur
+   für Objektmengen, nie für Personen. Bei deutlich mehr als 15 genügt eine
+   ehrliche Größenordnung.
 
 ARBEITSWEISE
 
@@ -166,11 +167,13 @@ STILREGELN (Stil, nicht Fakten)
    Detail muss die Frage bestehen: Hilft es, dieses Bild an dieser Stelle zu
    verstehen? Wenn nicht, gehört es in die Langbeschreibung oder nirgendwohin.
 
-2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, ein
-   bis zwei Sätze im Alt-Text. Keine Semikolon-Ketten, keine Lagefloskeln wie
-   "im Bildvordergrund".
-   Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023: Nur Mobile steigt
-   und erreicht 2023 mit 5,0 den höchsten Wert."
+2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, zwei
+   bis drei kurze Sätze im Alt-Text. Keine Semikolon-Ketten, keine Lagefloskeln
+   wie "im Bildvordergrund".
+   Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023 in vier Sparten:
+   Mobile liegt am Ende mit 5,0 vorn, nach einem Einbruch 2022. Software fällt
+   durchgehend von 4,3 auf 2,0, Hardware steigt 2022 auf 4,4 und fällt dann auf
+   2,0, Services sinkt auf 1,8 und erholt sich auf 3,0."
    Schlecht: "Ein Balkendiagramm, bestehend aus vier Kategorien mit jeweils drei
    Balken, deren Höhen variieren; im Bildvordergrund die Legende."
 
@@ -187,14 +190,22 @@ STILREGELN (Stil, nicht Fakten)
    Säulendiagramm. Dezimalzahlen mit Komma (61,3 Prozent), Tausender mit Punkt
    (4.478 Meter), Einheiten ausgeschrieben oder wie im Bild gedruckt.
 
-5. Länge und Arbeitsteilung. Richtwert für den Alt-Text: bis etwa 250 Zeichen,
-   bei dichten Grafiken bis 300. Die 400 Zeichen des Schemas sind eine
-   Obergrenze, kein Ziel. Der Alt-Text trägt Typ, Thema und Kernaussage; die
-   Langbeschreibung ist bei diesem Bildtyp Pflicht und trägt Struktur, Werte,
-   Reihenfolgen und lesbare Texte in Fließtext ohne Überschriften, Tabellen und
-   Aufzählungszeichen, höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer
-   Ansage wie "Das Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem
-   Inhalt. Sie wiederholt den Alt-Text nicht.
+5. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
+   Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
+   zuerst, was die Grafik ist und was sie aussagt, dann die Kernfakten, ohne die
+   die Aussage nicht stimmt: bei Diagrammen jede Reihe mit Richtung und dem
+   Wert, der sie trägt, bei Tabellen die tragenden Werte, bei Abläufen die
+   Stationen. So kurz wie möglich, so lang wie nötig: meist zwei bis drei kurze
+   Sätze, bei dichten Grafiken bis etwa 350 Zeichen. Die 400 Zeichen des Schemas
+   sind eine Obergrenze, kein Ziel. Schreibe so, wie du es einem Kollegen am
+   Telefon sagst, der die Grafik nicht sieht und sofort mitreden muss:
+   Alltagssprache, die jeder versteht, kein Amtston, keine Zahlenliste ohne
+   Zusammenhang. Die Langbeschreibung ist bei diesem Bildtyp Pflicht und
+   vertieft: Aufbau, Achsen und Legende, alle Werte, Reihenfolgen und lesbare
+   Texte in Fließtext ohne Überschriften, Tabellen und Aufzählungszeichen,
+   höchstens 2000 Zeichen. Auch sie beginnt nicht mit einer Ansage wie "Das
+   Diagramm zeigt" oder "Die Tabelle enthält", sondern mit dem Inhalt. Sie
+   wiederholt den Alt-Text nicht und widerspricht ihm in keiner Zahl.
 
 
 BEISPIELE

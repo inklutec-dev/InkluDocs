@@ -38,6 +38,7 @@ from prompts.components.schemas import (
     IconBeschreibungOutput,
 )
 
+from .anbieter_profil import prompt_zusatz_block
 from .llm_client import (
     MODEL_CLASSIFY,
     MODEL_GENERATE,
@@ -45,6 +46,7 @@ from .llm_client import (
     MODEL_VALIDATE,
     LLMCallError,
     call_with_schema,
+    get_provider_name,
 )
 
 log = logging.getLogger(__name__)
@@ -76,11 +78,12 @@ def _language_suffix(language: str) -> str:
         f"langbeschreibung ausschließlich auf {name} — fließend und idiomatisch, "
         "keine wörtliche Übersetzung aus dem Deutschen. Das gilt AUSDRÜCKLICH "
         "auch für alle in den Regeln vorgegebenen Schlagwörter, Gattungs-Präfixe "
-        "und festen Wendungen: aus 'Tabelle — ' wird auf Englisch 'Table — ', "
-        "aus 'Karte — ' 'Map — ', aus 'Infografik — ' 'Infographic — ', aus "
-        "'Screenshot der …' 'Screenshot of …', aus 'Fotomontage:' 'Photo "
-        "montage:', aus 'Logo X — Link zur Startseite' 'Logo X — link to the "
-        "homepage', aus 'Menü öffnen (drei Striche)' 'Open menu (three lines)' — "
+        "und festen Wendungen: aus 'Tabelle der Nährwerte:' wird auf Englisch "
+        "'Table of nutritional values:', aus 'Karte der Beratungsstellen:' 'Map of "
+        "advice centres:', aus 'Infografik zum Recycling-Kreislauf:' 'Infographic "
+        "on the recycling cycle:', aus 'Screenshot der …' 'Screenshot of …', aus "
+        "'Fotomontage:' 'Photo montage:', aus 'Logo X, Link zur Startseite' 'Logo X, "
+        "link to the homepage', aus 'Menü öffnen (drei Striche)' 'Open menu (three lines)' — "
         "sinngemäß ebenso in jeder anderen Zielsprache. In alt_text und "
         "langbeschreibung steht KEIN deutsches Wort, außer es ist im Bild "
         "lesbar oder ein Eigenname. Alle obigen Regeln "
@@ -1154,6 +1157,7 @@ def _run_lean_pipeline(
                 combo_prompt += fakten_block
                 faktenblatt_gelesen = True
                 werte_json = _f.model_dump_json()
+        combo_prompt += prompt_zusatz_block(get_provider_name())  # Feinschliff je Anbieter (anbieter_profil.py)
         combo_prompt += _user_prompt_suffix(user_prompt)
         combo_prompt += _language_suffix(language)
         combo_prompt += _variation_suffix(previous_alt)

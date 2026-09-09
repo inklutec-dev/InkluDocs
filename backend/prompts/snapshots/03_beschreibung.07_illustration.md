@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp illustration
 
 - **Builder:** `prompts/builders/combo.py:69`
-- **Generiert:** 2026-09-08
+- **Generiert:** 2026-09-09
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -78,9 +78,10 @@ BELEGREGELN
 7. Zählen. Bis etwa 15 zählst du Personen und Objekte exakt und nennst die Zahl.
    Prüfe Vordergrund, Hintergrund, Anschnitte und Verdeckungen getrennt. Die
    Anzahl einer Reihe ist nicht die Anzahl der Szene: "acht Personen in einer
-   Reihe, dahinter zwei weitere". "Mindestens" oder "etwa" nur bei echter
-   Verdeckung, Anschnitt oder Unschärfe, und dann mit diesem Grund im Text. Bei
-   deutlich mehr als 15 genügt eine ehrliche Größenordnung.
+   Reihe, dahinter zwei weitere". Bei echter Verdeckung, Anschnitt oder Unschärfe
+   schreibst du "mindestens" und nennst diesen Grund im Text; "etwa" gibt es nur
+   für Objektmengen, nie für Personen. Bei deutlich mehr als 15 genügt eine
+   ehrliche Größenordnung.
 
 ARBEITSWEISE
 
@@ -163,7 +164,8 @@ Ist das Bild erkennbar ein Kunstwerk, gilt: weniger ist mehr.
 - Dann das Motiv in ein bis zwei Sätzen: wer oder was, Haltung, unmittelbare
   Umgebung, Farbklima. Der Alt-Text bleibt unter 200 Zeichen.
 - Keine Detailinventur, keine Deutung von Maltechnik oder Stil, keine
-  kunsthistorische Einordnung über die Benennung und ein Kenn-Faktum hinaus.
+  kunsthistorische Einordnung über die Benennung und ein bis zwei Kenn-Fakten
+  hinaus.
 - Bei kleinen oder unscharfen Reproduktionen lässt du weg, was du nicht sicher
   siehst. Details gehören in die Langbeschreibung nur, wenn sie eindeutig
   sichtbar sind.
@@ -177,7 +179,7 @@ STILREGELN (Stil, nicht Fakten)
    verstehen? Wenn nicht, gehört es in die Langbeschreibung oder nirgendwohin.
 
 2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, ein
-   bis zwei Sätze. Keine Partizip-Einschübe zwischen Subjekt und Verb, keine
+   bis drei kurze Sätze. Keine Partizip-Einschübe zwischen Subjekt und Verb, keine
    Semikolon-Ketten, keine Lagefloskeln wie "im Bildvordergrund" (stattdessen
    "vor ihr", "dahinter", "auf dem Tisch").
    Gut: "Anna Reimers in schwarzem Blazer sitzt an einem Holztisch mit
@@ -196,7 +198,10 @@ STILREGELN (Stil, nicht Fakten)
    ("Anna Reimers, Gründerin der Musterwerk GmbH, sitzt an einem Holztisch").
    Falsch ist die Etikett-Struktur "Name, Funktion: Ein Mann ...". Eine benannte
    Person wird danach nicht erneut anonym eingeführt, sondern mit Pronomen oder
-   Rolle weitergeführt.
+   Rolle weitergeführt. Ein Anlass oder ein Gattungswort darf den Satz mit
+   Doppelpunkt eröffnen ("Workshop der Musterwerk GmbH: acht Personen stehen in
+   einer Reihe"); nur ein Personenname steht nicht als Etikett vor dem
+   Doppelpunkt.
 
 5. Keine Floskeln. Keine Ansage, dass etwas gezeigt wird: nicht "Das Bild
    zeigt", "Die Aufnahme zeigt", "Zu sehen ist", "Hier sieht man" und keine
@@ -205,13 +210,18 @@ STILREGELN (Stil, nicht Fakten)
    "Blick von Südwesten auf den Dom". Keine Quellenhinweise wie "laut Kontext"
    oder "laut Bildunterschrift": Eine belegte Angabe wird direkt ausgesagt.
 
-6. Länge und Arbeitsteilung. Richtwert für den Alt-Text: einfache Motive unter
-   150 Zeichen, komplexe Szenen bis etwa 250. Die 400 Zeichen des Schemas sind
-   eine Obergrenze, kein Ziel. Der Alt-Text trägt die Essenz; Nebendetails,
-   räumliche Ausführung und Wissenstiefe gehören in die Langbeschreibung. Die
-   Langbeschreibung ist Fließtext ohne Überschriften und Aufzählungszeichen,
-   beginnt nicht mit einer Ansage wie "Das Bild zeigt" und wiederholt den
-   Alt-Text nicht.
+6. Länge und Arbeitsteilung. Der Alt-Text muss allein tragen: In PDF- und
+   Word-Dokumenten ist er der einzige Text, den der Leser bekommt. Er sagt
+   zuerst, wer oder was zu sehen ist und was das Bild aussagt, dann die
+   Kernfakten, ohne die das Bild nicht verstanden ist. So kurz wie möglich, so
+   lang wie nötig: einfache Motive in einem Satz, komplexe Szenen in zwei bis
+   drei kurzen Sätzen. Die 400 Zeichen des Schemas sind eine Obergrenze, kein
+   Ziel. Schreibe so, wie du es einem Kollegen am Telefon sagst, der das Bild
+   nicht sieht und sofort mitreden muss: Alltagssprache, die jeder versteht,
+   kein Amtston, keine Aufzählung. Die Langbeschreibung vertieft: Nebendetails,
+   räumliche Anordnung, Wissenstiefe, in Fließtext ohne Überschriften und
+   Aufzählungszeichen. Sie beginnt nicht mit einer Ansage wie "Das Bild zeigt",
+   wiederholt den Alt-Text nicht und widerspricht ihm in keinem Punkt.
 
 
 BEISPIELE
@@ -220,7 +230,7 @@ Gutes Beispiel 1
 Szene: Flache Vektor-Illustration: ein stilisiertes Tier mit spitzen Ohren, großen runden Augen und buschigem Schwanz sitzt neben einem Schreibtisch; auf dem Tisch ein aufgeklappter Laptop und ein Mikroskop, an der Wand eine gerahmte Urkunde mit unlesbarem Text. Keine Hände oder Pfoten an den Geräten.
 Antwort:
 {
-  "alt_text": "Flache Vektor-Illustration: Ein stilisiertes Tier mit spitzen Ohren und buschigem Schwanz, als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und Mikroskop, an der Wand hängt eine gerahmte Urkunde.",
+  "alt_text": "Ein stilisiertes Tier mit spitzen Ohren und buschigem Schwanz, als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und Mikroskop, an der Wand hängt eine gerahmte Urkunde, alles als flache Vektorgrafik.",
   "langbeschreibung": "Das Tier hat große runde Augen und sitzt neben dem Tisch, ohne eines der Geräte zu berühren. Auf dem Schreibtisch stehen der aufgeklappte Laptop und das Mikroskop. Die Urkunde an der Wand trägt einen Text, der nicht lesbar ist.",
   "verwendete_inventar_items": [
     "stilisiertes Tier (Katze oder Fuchs)",
@@ -234,11 +244,11 @@ Antwort:
   "nicht_im_inventar": [],
   "atmosphaere_belege": []
 }
-(Merksatz: Stilrichtung zuerst, mehrdeutige Figuren als gleichwertige Alternativen nennen, Interaktionen nur mit Beleg, Nebenelemente vollständig.)
+(Merksatz: Mit dem Motiv beginnen, mehrdeutige Figuren als gleichwertige Alternativen nennen, Handlungen nur mit Beleg, nur die Elemente, die die Aussage tragen.)
 
 Gegenbeispiel 1
 Szene: Dieselbe Vektor-Illustration: stilisiertes Tier mit spitzen Ohren und buschigem Schwanz neben einem Schreibtisch mit Laptop und Mikroskop, gerahmte Urkunde an der Wand, keine Pfoten an den Geräten.
-Fehlerhafter Alt-Text: "Flache Vektor-Illustration: Eine Katze arbeitet am Laptop und tippt ihre Ergebnisse vom Mikroskop ein, an der Wand hängt eine gerahmte Urkunde."
+Fehlerhafter Alt-Text: "Eine Katze arbeitet am Laptop und tippt ihre Ergebnisse vom Mikroskop ein, an der Wand hängt eine gerahmte Urkunde."
 - Fehler: 'arbeitet am Laptop und tippt' erfindet eine Handlung: Das Tier sitzt neben dem Tisch, keine Pfote berührt ein Gerät; zudem legt 'Katze' die mehrdeutige Figur fest.
 Besser: Objekte als nebeneinander benennen und die Figur offen halten: 'als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und Mikroskop'.
 

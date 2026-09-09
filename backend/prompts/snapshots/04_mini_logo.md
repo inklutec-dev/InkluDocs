@@ -1,7 +1,7 @@
 # Beschreibung, Bildtyp logo
 
 - **Builder:** `prompts/builders/beschreibung.py:109`
-- **Generiert:** 2026-09-08
+- **Generiert:** 2026-09-09
 - **Demo-Werte:**
   - width × height: 64 × 64
   - Kontext: LINK-ZIEL: https://www.musterwerk.example

@@ -1,6 +1,6 @@
 # Prompt-Snapshots — InkluDocs v4
 
-Automatisch generiert am 2026-09-08 via `python3 -m scripts.render_prompts`.
+Automatisch generiert am 2026-09-09 via `python3 -m scripts.render_prompts`.
 
 Jede Datei zeigt einen Builder mit Demo-Werten — der **gerenderte Prompt-Text**, 
 den das Modell tatsaechlich bekommt. Aenderungen an den Builder-Python-Dateien 
@@ -42,3 +42,4 @@ keine Edit-Quelle.
 - [`05_zaehl_aufruf.md`](./05_zaehl_aufruf.md)
 - [`05_zaehl_block.md`](./05_zaehl_block.md)
 - [`06_pruefpass.md`](./06_pruefpass.md)
+- [`07_anbieter_zusatz.gemini.md`](./07_anbieter_zusatz.gemini.md)

@@ -1,7 +1,7 @@
 # Faktenblatt Karte (eigener Aufruf)
 
 - **Builder:** `pipelines/v4/orchestrator.py`
-- **Generiert:** 2026-09-08
+- **Generiert:** 2026-09-09
 
 ---
 

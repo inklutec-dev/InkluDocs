@@ -1,7 +1,7 @@
 # Klassifikator
 
-- **Builder:** `prompts/builders/classification.py:108`
-- **Generiert:** 2026-09-08
+- **Builder:** `prompts/builders/classification.py:112`
+- **Generiert:** 2026-09-09
 - **ENV / Modus:**
   - `V4_PASS_MODE` = `lean`
 - **Demo-Werte:**
@@ -18,9 +18,12 @@ Bild nicht.
 
 DIE ZWÖLF BILDTYPEN
 
-1. foto: echte Fotografie (Personen, Objekte, Räume, Landschaft, Pressefoto).
-2. illustration: Zeichnung, Cartoon, Vektorgrafik, Gemälde, Produkt- oder
-   Werbegrafik mit Symbolen, Kacheln, Sprechblasen oder Siegeln.
+1. foto: echte Fotografie (Personen, Objekte, Räume, Landschaft, Pressefoto),
+   auch die Reproduktion eines Kunstwerks (Gemälde, künstlerische Zeichnung,
+   Druckgrafik, Skulptur).
+2. illustration: Gebrauchsgrafik, die eine Idee oder Aussage bildlich fasst:
+   Zeichnung, Cartoon, Vektorgrafik, Produkt- oder Werbegrafik mit Symbolen,
+   Kacheln, Sprechblasen oder Siegeln. Ein Kunstwerk ist foto.
 3. diagramm: Balken-, Linien-, Kreis-, gestapeltes oder Streudiagramm.
 4. tabelle: tabellarische Daten als Grafik.
 5. karte: Landkarte, Stadtplan, Lageplan.
@@ -45,8 +48,9 @@ ENTSCHEIDUNGSREGELN (in dieser Reihenfolge)
 
 1. Der Bildinhalt entscheidet, nicht Dateiname oder vorhandener Alt-Text. Der
    Kontext hilft, überschreibt aber nicht, was sichtbar ist.
-2. Sichtbare Browserleisten, Fensterrahmen oder App-Oberfläche machen das Bild
-   zum screenshot, auch wenn darin ein Diagramm steht.
+2. Ist das Bild selbst eine Bildschirmaufnahme (Browserleiste, Fensterrahmen
+   oder App-Oberfläche füllen das Bild, keine Kameraperspektive, kein
+   Gerätegehäuse), ist es screenshot, auch wenn darin ein Diagramm steht.
 3. Ein Foto, auf dem ein Diagramm, ein Logo oder ein Bildschirm zu sehen ist,
    bleibt foto.
 4. infografik braucht Daten, Prozessschritte oder erklärte Zusammenhänge. Eine
@@ -69,7 +73,7 @@ Das Feld bildtyp bleibt "foto"; der Untertyp steht getrennt in foto_subtyp.
 - foto_personen: eine oder mehrere Personen im Mittelpunkt ohne
   Veranstaltungsanlass, auch Gruppenfotos und Porträts.
 - foto_objekte: Objekte, Produkte, Werkstücke, Sammlungen, Stillleben,
-  reproduzierte Kunstwerke.
+  Kunstwerke (Gemälde, Zeichnung, Druckgrafik, Skulptur).
 - foto_architektur: Gebäude, Räume, Fassaden, Baudetails.
 - foto_essen: Speisen, Getränke, Lebensmittel.
 - foto_landschaft: Natur, Panorama, Außenszene ohne Personen- oder
@@ -86,8 +90,8 @@ Aktion oder einen anderen Zustand benennt als das Bild zeigt.
 
 DEKORATIV (Feld ist_dekorativ)
 Wahr nur, wenn das Bild zweifelsfrei ein reines Gestaltungselement ohne
-Informationswert ist. Sehr kleine Bilder sind oft dekorativ, aber nicht immer;
-ein kleines Bedienelement ist es nie. Im Zweifel falsch.
+Informationswert ist. Die Größe ist kein Kriterium; ein kleines Bedienelement
+ist nie dekorativ. Im Zweifel falsch.
 
 BEGRÜNDUNG (Feld klassifikations_begruendung)
 Ein Satz mit dem Merkmal, das den Ausschlag gab ("Browserleiste und Fensterrahmen

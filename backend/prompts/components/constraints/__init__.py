@@ -12,19 +12,19 @@ prompts/builders/beschreibung_foto.py (_render_zweck_block) weiter.
 """
 from .atmosphere_evidenz import ATMOSPHAERE_REGEL
 from .eigennamen import EIGENNAMEN_REGELN
-from .evidenz_stufen import EVIDENZ_STUFEN_REGELN
 from .halluzination import ANTI_HALLUZINATION_KERN, ANTI_HALLUZINATION_REGELN
 from .kunstwerk import KUNSTWERK_REGEL
-from .kontaktdaten import KONTAKTDATEN_PFLICHT
 from .lizenz_logos import LIZENZ_LOGOS_REGELN
+
+# Entfernt (Prompt-Pruefung 09.09.2026): kontaktdaten.py (KONTAKTDATEN_PFLICHT,
+# von keinem Builder mehr eingebunden; Inhalt lebt in _LESBARER_TEXT der
+# Datenfamilie) und evidenz_stufen.py (leere Konstante seit Paket 1).
 
 __all__ = [
     'ATMOSPHAERE_REGEL',
     'EIGENNAMEN_REGELN',
-    'EVIDENZ_STUFEN_REGELN',
     'ANTI_HALLUZINATION_KERN',
     'ANTI_HALLUZINATION_REGELN',
     'KUNSTWERK_REGEL',
-    'KONTAKTDATEN_PFLICHT',
     'LIZENZ_LOGOS_REGELN',
 ]

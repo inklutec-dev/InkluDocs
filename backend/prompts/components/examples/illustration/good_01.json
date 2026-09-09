@@ -1,12 +1,12 @@
 {
  "szene": "Flache Vektor-Illustration: ein stilisiertes Tier mit spitzen Ohren, großen runden Augen und buschigem Schwanz sitzt neben einem Schreibtisch; auf dem Tisch ein aufgeklappter Laptop und ein Mikroskop, an der Wand eine gerahmte Urkunde mit unlesbarem Text. Keine Hände oder Pfoten an den Geräten.",
- "alt_text": "Flache Vektor-Illustration: Ein stilisiertes Tier mit spitzen Ohren und buschigem Schwanz, als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und Mikroskop, an der Wand hängt eine gerahmte Urkunde.",
- "begruendung": "Stilrichtung und Hauptmotiv eröffnen. Die Mehrdeutigkeit der Figur wird als gleichwertige Alternative gelöst, nicht mit einem Vermutungswort. Das Tier sitzt neben dem Tisch und arbeitet nicht; Augen und den unlesbaren Text trägt die Langbeschreibung.",
- "prinzip": "Stilrichtung zuerst, mehrdeutige Figuren als gleichwertige Alternativen nennen, Interaktionen nur mit Beleg, Nebenelemente vollständig.",
+ "alt_text": "Ein stilisiertes Tier mit spitzen Ohren und buschigem Schwanz, als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und Mikroskop, an der Wand hängt eine gerahmte Urkunde, alles als flache Vektorgrafik.",
+ "begruendung": "Das Hauptmotiv eröffnet, die Stilrichtung steht am Ende. Die Mehrdeutigkeit der Figur wird als gleichwertige Alternative gelöst, nicht mit einem Vermutungswort. Das Tier sitzt neben dem Tisch und arbeitet nicht; Augen und den unlesbaren Text trägt die Langbeschreibung.",
+ "prinzip": "Mit dem Motiv beginnen, mehrdeutige Figuren als gleichwertige Alternativen nennen, Handlungen nur mit Beleg, nur die Elemente, die die Aussage tragen.",
  "quelle": "fiktives Beispiel (generische Szene)",
  "lizenz": "fiktives Beispiel",
  "antwort": {
-  "alt_text": "Flache Vektor-Illustration: Ein stilisiertes Tier mit spitzen Ohren und buschigem Schwanz, als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und Mikroskop, an der Wand hängt eine gerahmte Urkunde.",
+  "alt_text": "Ein stilisiertes Tier mit spitzen Ohren und buschigem Schwanz, als Katze oder Fuchs deutbar, sitzt neben einem Schreibtisch mit aufgeklapptem Laptop und Mikroskop, an der Wand hängt eine gerahmte Urkunde, alles als flache Vektorgrafik.",
   "langbeschreibung": "Das Tier hat große runde Augen und sitzt neben dem Tisch, ohne eines der Geräte zu berühren. Auf dem Schreibtisch stehen der aufgeklappte Laptop und das Mikroskop. Die Urkunde an der Wand trägt einen Text, der nicht lesbar ist.",
   "verwendete_inventar_items": [
    "stilisiertes Tier (Katze oder Fuchs)",

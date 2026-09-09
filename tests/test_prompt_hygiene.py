@@ -46,7 +46,9 @@ ALTLASTEN = [
     r'\bAcer\b', r'\bbudni\b',
 ]
 FIKTIVE_MARKEN_AUSNAHMEN = ('Musterwerk', 'Beispiel AG', 'Beispiel Air')
-LAENGEN_MAX_WOERTER = {'combo': 2000, 'mini': 700, 'klassifikator': 800, 'verify': 1200}
+# combo: 2400 seit 09.09.2026 (Stilregel Länge mit Telefon-Maßstab, Doppelpunkt-Klarstellung,
+# zweites Diagramm-Beispiel mit drei Reihen; vorher lag foto_personen bei 1995, diagramm jetzt bei 2287).
+LAENGEN_MAX_WOERTER = {'combo': 2400, 'mini': 700, 'klassifikator': 800, 'verify': 1200}
 
 
 def _combo(effektiv: str, kontext: str = 'Abbildung 3: Beispiel') -> str:

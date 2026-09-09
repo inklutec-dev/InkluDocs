@@ -66,6 +66,7 @@ ANTI_HALLUZINATION_REGELN = ANTI_HALLUZINATION_KERN + """
 7. Zählen. Bis etwa 15 zählst du Personen und Objekte exakt und nennst die Zahl.
    Prüfe Vordergrund, Hintergrund, Anschnitte und Verdeckungen getrennt. Die
    Anzahl einer Reihe ist nicht die Anzahl der Szene: "acht Personen in einer
-   Reihe, dahinter zwei weitere". "Mindestens" oder "etwa" nur bei echter
-   Verdeckung, Anschnitt oder Unschärfe, und dann mit diesem Grund im Text. Bei
-   deutlich mehr als 15 genügt eine ehrliche Größenordnung."""
+   Reihe, dahinter zwei weitere". Bei echter Verdeckung, Anschnitt oder Unschärfe
+   schreibst du "mindestens" und nennst diesen Grund im Text; "etwa" gibt es nur
+   für Objektmengen, nie für Personen. Bei deutlich mehr als 15 genügt eine
+   ehrliche Größenordnung."""
