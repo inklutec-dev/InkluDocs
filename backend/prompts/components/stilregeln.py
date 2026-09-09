@@ -31,10 +31,10 @@ _PUNKT_2_FOTO = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh und na
 _PUNKT_2_SACHLICH = """2. Natürlicher Satzbau. Subjekt und Verb stehen früh und nah beieinander, zwei
    bis drei kurze Sätze im Alt-Text. Keine Semikolon-Ketten, keine Lagefloskeln
    wie "im Bildvordergrund".
-   Gut: "Balkendiagramm zur Umsatzentwicklung 2021 bis 2023 in vier Sparten:
-   Mobile liegt am Ende mit 5,0 vorn, nach einem Einbruch 2022. Software fällt
-   durchgehend von 4,3 auf 2,0, Hardware steigt 2022 auf 4,4 und fällt dann auf
-   2,0, Services sinkt auf 1,8 und erholt sich auf 3,0."
+   Gut: "Balkendiagramm zum Umsatz der Musterwerk GmbH 2021 bis 2023 in drei
+   Sparten, in Millionen Euro: Service liegt am Ende mit 6,2 vorn, nach einem
+   Einbruch 2022. Produkte fallen durchgehend von 5,1 auf 3,4, Lizenzen steigen
+   von 2,0 auf 2,8."
    Schlecht: "Ein Balkendiagramm, bestehend aus vier Kategorien mit jeweils drei
    Balken, deren Höhen variieren; im Bildvordergrund die Legende.\""""
 

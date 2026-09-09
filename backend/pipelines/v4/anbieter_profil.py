@@ -53,7 +53,10 @@ GEMINI_ZUSATZ = """BESONDERE SORGFALT
   Dämmerung; ein Raum mit Flipcharts ist ein Raum mit Flipcharts, kein Seminar,
   solange der Kontext es nicht sagt.
 - Orte, Bauwerke, Fachbegriffe (korinthische Säule, Balkendiagramm), Künstler
-  und Jahr stehen im Alt-Text, nicht nur in der Langbeschreibung."""
+  und Jahr stehen im Alt-Text, nicht nur in der Langbeschreibung.
+- Sind Objekte am Bildrand angeschnitten oder teils verdeckt, ist die Zahl
+  keine exakte Zahl: "mindestens 23 Schalen, einige am Rand angeschnitten"
+  (Belegregel 7)."""
 
 
 PROFILE: dict[str, AnbieterProfil] = {

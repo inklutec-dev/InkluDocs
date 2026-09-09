@@ -1,8 +1,19 @@
 # InkluDocs Prompt-Architektur (v4)
 
-Stand: 07.09.2026 (Mistral-Abbau; davor 16.07.2026 nach Paket 1 der Prompt-Generalinspektion).
+Stand: 09.09.2026 (Gemini-Umstellung und Prompt-Pruefung; davor 07.09.2026 Mistral-Abbau, 16.07.2026 Paket 1 der Prompt-Generalinspektion).
 Zielgruppe: kuenftige Leser und Bearbeiter des Prompt-Systems.
 Alle Pfade relativ zur Backend-Wurzel.
+
+## Stand 09.09.2026: Alt-Text traegt allein, Anbieter-Profil, Widersprueche behoben
+
+Anlass: Umstellung des Erzeugers auf Gemini 3.1 Pro (Vertex, global) nach dem Modellvergleich vom 08.09. und eine vollstaendige Pruefung des Geruests auf Widersprueche (Bericht auf Steves Desktop, `InkluDocs-Pruefbericht-Prompt-Geruest-2026-09-09.txt`).
+
+1. Grundsatz Alt-Text: PDF- und Word-Dokumente zeigen keine Langbeschreibung. Der Alt-Text muss deshalb allein tragen: was das Bild ist, was es aussagt, dann die Kernfakten, ohne die die Aussage nicht stimmt (bei Diagrammen jede Reihe mit Richtung und tragendem Wert, bei Tabellen bis etwa fuenf Zeilen alle Werte, bei Infografiken alle Stationen bis etwa sechs). Massstab: so kurz wie moeglich, so lang wie noetig, "wie am Telefon einem Kollegen, der sofort mitreden muss". Die Langbeschreibung wird weiter IMMER erzeugt, vertieft und darf dem Alt-Text in keiner Zahl widersprechen (Stilregel Laenge in stilregeln.py, Systemprompt in roles.py, ALT-TEXT-Abschnitte von diagramm/tabelle/infografik). Die frueheren Deckel "bis zu drei Kategorien", "bis zu drei Werte", "keine Aufzaehlung aller Stationen" sind entfallen.
+2. Anbieter: Es gibt wieder einen Provider-Schalter. `pipelines/v4/llm_client.py` waehlt je Rolle (CLASSIFY, INVENTAR, GENERATE, VALIDATE) zwischen Bedrock (Claude), Gemini (`gemini_client.py`, Vertex oder Entwickler-API) und OpenAI (`openai_client.py`); ENV LLM_PROVIDER und LLM_PROVIDER_<ROLLE>. Die Prompts bleiben anbieterneutral. Was ein Anbieter zusaetzlich braucht, steht in `pipelines/v4/anbieter_profil.py`: Aufrufparameter (Temperatur, Bild vor Text, Bildaufloesung) und ein kurzer Prompt-Zusatz, den der Orchestrator an den Combo-Prompt haengt (Snapshot `07_anbieter_zusatz.<anbieter>.md`). Fuer Messungen sind die Felder per ENV V4_PROFIL_* uebersteuerbar. Ein neuer Anbieter bekommt ein Profil, keinen Umbau. Gemini erzwingt keine Zeichengrenzen im Schema; bei Ueberlaenge bekommt das Modell eine gezielte Kuerzungsanweisung im Wiederholungsaufruf.
+3. Widersprueche behoben: Kunstwerk eindeutig foto/foto_objekte (vorher auch illustration); Screenshot-Regel gilt nur fuer die Bildschirmaufnahme selbst; Groesse ist kein Dekorativ-Kriterium; Belegregel 7 erlaubt "etwa" nur fuer Objektmengen (wie der Zaehlblock); Stilregel 4 erlaubt den Doppelpunkt nach Anlass oder Gattungswort; Kenn-Fakten: ein bis zwei, auch bei Personen des oeffentlichen Lebens, Bildwerte nicht gedeckelt; Sprach-Zusatz ohne Gedankenstrich-Etiketten; Schema-Feldtexte ohne Verweise auf Inventar-Pass und SPEZIFITAETS_PFLICHT; Beispiel-Merksaetze ohne Gedankenstrich, Illustration beginnt mit dem Motiv, neues Diagramm-Beispiel mit drei Reihen; tote Module kontaktdaten.py und evidenz_stufen.py entfernt.
+4. Chatbot (InkluAgent) hat einen eigenen Schalter INKLUAGENT_PROVIDER (bedrock/gemini, `inkluagent/router.py`) und bindet STILREGELN aus derselben Quelle ein.
+
+Absaetze weiter unten, die "nur Bedrock", sechs Constraint-Module oder zwoelf Beispieldateien nennen, sind Historie.
 
 ## Stand 07.09.2026: Mistral abgedockt, nur noch der Lean-Weg
 
@@ -22,14 +33,15 @@ Drei Rollen: ROLE_KLASSIFIKATOR, ROLE_INVENTARISIERER, ROLE_BESCHREIBER (ROLE_VA
 
 Verzeichnis: `prompts/components/constraints/`.
 
-Seit Paket 1 nur noch sechs lebende Module:
+Seit 09.09.2026 fuenf lebende Module:
 
-- `halluzination.py` — ANTI_HALLUZINATION_REGELN, die einzige Schicht, die wirklich in ALLEN Buildern vorangestellt wird (Zwei-Wege-Logik: benennen oder neutral beschreiben, nie hedgen).
-- `atmosphere_evidenz.py` — ATMOSPHAERE_REGEL (Wertungen nur mit sichtbarem Beleg im selben Satz).
+- `halluzination.py` — ANTI_HALLUZINATION_REGELN (Belegregeln 1 bis 7), die einzige Schicht, die wirklich in ALLEN Buildern vorangestellt wird (Zwei-Wege-Logik: benennen oder neutral beschreiben, nie hedgen).
+- `atmosphere_evidenz.py` — ATMOSPHAERE_REGEL ("Daten haben keine Stimmung"; aktiv im infografik-Builder).
 - `eigennamen.py` — EIGENNAMEN_REGELN (im Bild lesbarer Eigenname schlaegt Kontext; aktiv im karte-Builder).
-- `evidenz_stufen.py` — EVIDENZ_STUFEN_REGELN, seit Paket 1 eingegrenzt auf Marken-/Produkt-/Text-Identifikationen; aktiv nur im logo-Builder.
-- `kontaktdaten.py` — KONTAKTDATEN_PFLICHT (lesbare Kontaktdaten wortgetreu; aktiv in tabelle und screenshot — diagramm traegt seit Paket 4 eine eigene LESBARE-TEXTE-Sektion, infografik eine eigene Kontaktdaten-/URL-Passage).
+- `kunstwerk.py` — KUNSTWERK_REGEL (Titel, Kuenstler, Jahr; weniger ist mehr; aktiv in foto_objekte, foto_personen, illustration).
 - `lizenz_logos.py` — LIZENZ_LOGOS_REGELN (CC-Symbole, Zertifikate; aktiv im logo-Builder).
+
+Entfernt 09.09.2026: `kontaktdaten.py` (von keinem Builder mehr eingebunden; der Inhalt lebt in der Sektion LESBARER TEXT der Datenfamilie) und `evidenz_stufen.py` (leere Konstante seit Paket 1).
 
 ### Ebene 3: Die 17 Kategorie-Schubladen
 
@@ -54,7 +66,7 @@ Pydantic-Modelle erzwingen die Output-Struktur: BeschreibungOutput (alt_text 20 
 
 Verzeichnis: `prompts/components/examples/<bildtyp>/` mit `good_*.json` und `bad_*.json`, geladen ueber `helpers.load_examples`.
 
-Aktuell kuratiert: foto_architektur, foto_essen, foto_event, foto_landschaft, foto_objekte (12 Dateien). Fehlende Ordner erzeugen einen ehrlichen Platzhalter-Hinweis im Prompt.
+Stand 09.09.2026: 16 Ordner mit 36 Dateien (alle 13 Inventar-Bildtypen sowie logo, icon, funktional). Fehlende Ordner erzeugen einen ehrlichen Platzhalter-Hinweis im Prompt. Gute Beispiele zeigen die vollstaendige Antwort im Ausgabeschema plus einen Merksatz; Gegenbeispiele genau einen lehrreichen Fehler. Beispiele halten die heutigen Stilregeln selbst ein (Hygiene-Test).
 
 ### Ebene 6: Pruef-Ebene
 
@@ -63,10 +75,15 @@ Aktuell kuratiert: foto_architektur, foto_essen, foto_event, foto_landschaft, fo
 
 Die ENV-Schalter des Gesamtsystems:
 
-- (entfernt 07.09.2026: PIPELINE_VERSION, LLM_PROVIDER, V4_PASS_MODE, V4_PROMPT_MODE, VALIDATOR_MODE — werden nicht mehr gelesen)
+- (entfernt 07.09.2026: PIPELINE_VERSION, V4_PASS_MODE, V4_PROMPT_MODE, VALIDATOR_MODE — werden nicht mehr gelesen)
+- LLM_PROVIDER (bedrock/gemini/openai, Vorgabe bedrock) und LLM_PROVIDER_CLASSIFY/_INVENTAR/_GENERATE/_VALIDATE — Anbieter je Rolle (seit 07.09.2026 abends wieder, siehe Stand 09.09.).
+- GEMINI_MODEL_* / OPENAI_MODEL_* — Modellkennungen je Rolle fuer Gemini und OpenAI; GEMINI_AUTH (vertex/api), VERTEX_PROJECT, VERTEX_REGION (global oder EU-Region), VERTEX_REGION_MAP (Region je Modell).
+- V4_PROFIL_TEMPERATUR / V4_PROFIL_BILD_ZUERST / V4_PROFIL_BILDAUFLOESUNG / V4_PROFIL_ZUSATZ — Uebersteuerung des Anbieter-Profils fuer Messungen (anbieter_profil.py).
+- V4_DIAGRAMM_WERTE, V4_ZAEHL_PASS, V4_FAKTENBLATT — Zusatzschritte (Werte-Ablesung, Aufzaehlung, Faktenblatt) an/aus; auf Staging seit 08.09. aus (Zwei-Aufruf-Variante).
+- V4_PROMPT_CACHE — Bilddaten ans Ende fuer das Bedrock-Prompt-Caching; bei Gemini wirkungslos.
 - V4_VERIFY_MODE — Verify-Pass an/aus (off/kritisch/alle).
 - V4_VERIFY_KORREKTUR — off (Default) = eine mitgelieferte Redakteurs-Korrektur wird ignoriert (Flag-Verhalten wie bisher); on = Korrektur wird uebernommen (siehe Paket 3 unten). Nur im Lean-Pfad wirksam.
-- BEDROCK_MODEL_CLASSIFY / _GENERATE / _VALIDATE — Modell je Pass (Klassifikation, Combo, Pruefpass); Staging prueft mit Opus 4.6, Produktion mit Sonnet 4.6 (Stand 07.09.2026).
+- BEDROCK_MODEL_CLASSIFY / _GENERATE / _VALIDATE — Claude-Modell je Pass (Klassifikation, Combo, Pruefpass), wirksam wenn die Rolle auf bedrock steht.
 
 ## Aufruf-Fluss
 
@@ -82,7 +99,7 @@ Klassifikation, Inventar, Beschreibung, Validator als getrennte Aufrufe; gebaut 
 
 ## Temperaturen
 
-Definiert in `main.py`: GENERATION_TEMPERATURE = 0.3 fuer den Normalbetrieb (Bulk-Verarbeitung), REGENERATE_TEMPERATURE = 0.5 fuer das Einzel-Neu-Generieren (bewusste Variation). Die Client-Defaults in `pipelines/v4/` stehen auf 0.0 und werden von main.py ueberstimmt.
+Definiert in `main.py`: GENERATION_TEMPERATURE = 0.3 fuer den Normalbetrieb (Bulk-Verarbeitung), REGENERATE_TEMPERATURE = 0.5 fuer das Einzel-Neu-Generieren (bewusste Variation). Die Client-Defaults in `pipelines/v4/` stehen auf 0.0 und werden von main.py ueberstimmt. Ein Anbieter-Profil (anbieter_profil.py) kann die Temperatur fuer seinen Client fest vorgeben (Gemini 3 ist laut Google auf 1,0 abgestimmt; ob das bei uns besser ist, entscheidet die Messung vom 09.09.).
 
 ## Prompts rendern (lesbar machen)
 
