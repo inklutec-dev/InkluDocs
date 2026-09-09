@@ -5559,22 +5559,6 @@ msgid "Keine Felder – nichts zu generieren."
 msgstr "No fields – nothing to generate."
 
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr "The document contains 1 field; creating the tooltip requires {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr "The document contains {n} fields in total; creating the tooltips requires {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr "The project’s documents contain 1 field; creating the tooltip requires {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr "The project’s documents contain {n} fields in total; creating the tooltips requires {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr "Generation started for {n} fields. Existing tooltips will be replaced."
 
@@ -5605,3 +5589,11 @@ msgstr "Important for you: we do not use your content to train AI models, and we
 #. Rechtstexte Gemini (Steve/Michael 09.09.2026)
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr "Data processing agreement as PDF (version 1.1 of 9 September 2026)"
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "1 Feld wird generiert. Das benötigt {c} Credits."
+msgstr "1 field will be generated. This requires {c} credits."
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
+msgstr "{n} fields will be generated. This requires {c} credits."

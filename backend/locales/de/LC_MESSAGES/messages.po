@@ -5562,22 +5562,6 @@ msgid "Keine Felder – nichts zu generieren."
 msgstr ""
 
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr ""
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr ""
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr ""
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr ""
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr ""
 
@@ -5607,4 +5591,12 @@ msgstr ""
 
 #. Rechtstexte Gemini (Steve/Michael 09.09.2026)
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
+msgstr ""
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "1 Feld wird generiert. Das benötigt {c} Credits."
+msgstr ""
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
 msgstr ""

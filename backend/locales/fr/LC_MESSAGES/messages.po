@@ -5559,22 +5559,6 @@ msgid "Keine Felder – nichts zu generieren."
 msgstr "Aucun champ – rien à générer."
 
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr "Le document contient 1 champ ; la création de l’info-bulle nécessite {c} crédits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr "Le document contient {n} champs au total ; la création des info-bulles nécessite {c} crédits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr "Les documents du projet contiennent 1 champ ; la création de l’info-bulle nécessite {c} crédits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr "Les documents du projet contiennent {n} champs au total ; la création des info-bulles nécessite {c} crédits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr "Génération lancée pour {n} champs. Les info-bulles existantes seront remplacées."
 
@@ -5605,3 +5589,11 @@ msgstr "Important pour vous : nous n’utilisons pas vos contenus pour entraîne
 #. Rechtstexte Gemini (Steve/Michael 09.09.2026)
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr "Contrat de sous-traitance au format PDF (version 1.1 du 9 septembre 2026)"
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "1 Feld wird generiert. Das benötigt {c} Credits."
+msgstr "1 champ sera généré. Cela nécessite {c} crédits."
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
+msgstr "{n} champs seront générés. Cela nécessite {c} crédits."

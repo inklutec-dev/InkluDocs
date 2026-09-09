@@ -5121,22 +5121,6 @@ msgid "Keine Felder – nichts zu generieren."
 msgstr "Inga fält – inget att generera."
 
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr "Dokumentet innehåller 1 fält; att skapa snabbinfon kräver {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr "Dokumentet innehåller totalt {n} fält; att skapa snabbinfona kräver {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr "Projektets dokument innehåller 1 fält; att skapa snabbinfon kräver {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr "Projektets dokument innehåller totalt {n} fält; att skapa snabbinfona kräver {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr "Generering startad för {n} fält. Befintliga snabbinfon ersätts."
 
@@ -5167,3 +5151,11 @@ msgstr "Viktigt för dig: vi använder inte ditt innehåll för att träna AI-mo
 #. Rechtstexte Gemini (Steve/Michael 09.09.2026)
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr "Personuppgiftsbiträdesavtal som PDF (version 1.1 av den 9 september 2026)"
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "1 Feld wird generiert. Das benötigt {c} Credits."
+msgstr "1 fält genereras. Det kräver {c} credits."
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
+msgstr "{n} fält genereras. Det kräver {c} credits."

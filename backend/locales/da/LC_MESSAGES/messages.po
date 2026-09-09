@@ -5251,22 +5251,6 @@ msgid "Keine Felder – nichts zu generieren."
 msgstr "Ingen felter – intet at generere."
 
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr "Dokumentet indeholder 1 felt; oprettelsen af værktøjstippet kræver {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr "Dokumentet indeholder i alt {n} felter; oprettelsen af værktøjstippene kræver {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits."
-msgstr "Projektets dokumenter indeholder 1 felt; oprettelsen af værktøjstippet kræver {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
-msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits."
-msgstr "Projektets dokumenter indeholder i alt {n} felter; oprettelsen af værktøjstippene kræver {c} credits."
-
-#. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr "Generering startet for {n} felter. Eksisterende værktøjstips erstattes."
 
@@ -5297,3 +5281,11 @@ msgstr "Vigtigt for dig: Vi bruger ikke dit indhold til at træne AI-modeller og
 #. Rechtstexte Gemini (Steve/Michael 09.09.2026)
 msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr "Databehandleraftale som PDF (version 1.1 af 9. september 2026)"
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "1 Feld wird generiert. Das benötigt {c} Credits."
+msgstr "1 felt genereres. Det kræver {c} credits."
+
+#. Rueckfrage Quickinfos (Michael Karbe/Steve 09.09.2026)
+msgid "{n} Felder werden generiert. Das benötigt {c} Credits."
+msgstr "{n} felter genereres. Det kræver {c} credits."

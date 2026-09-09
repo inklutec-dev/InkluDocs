@@ -641,16 +641,11 @@
             return;
         }
         // Einzahl-Saetze (Steve 01.09.2026) wie bei den Alt-Texten.
-        let satz;
-        if (docId) {
-            satz = v.anzahl === 1
-                ? t('Das Dokument beinhaltet 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits.', { c: v.preis })
-                : t('Das Dokument beinhaltet insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
-        } else {
-            satz = v.anzahl === 1
-                ? t('Die Dokumente des Projekts beinhalten 1 Feld, die Erstellung der Quickinfo benötigt {c} Credits.', { c: v.preis })
-                : t('Die Dokumente des Projekts beinhalten insgesamt {n} Felder, die Erstellung der Quickinfos benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
-        }
+        // Wortlaut Michael Karbe/Steve 09.09.2026: kurz, Gesamtzahl, Preis; den Umfang (Dokument oder
+        // Projekt) nennt die Umfangzeile des Dialogs (umfangText).
+        let satz = v.anzahl === 1
+            ? t('1 Feld wird generiert. Das benötigt {c} Credits.', { c: v.preis })
+            : t('{n} Felder werden generiert. Das benötigt {c} Credits.', { n: v.anzahl, c: v.preis });
         satz += ' ' + guthabenSatz(v, 'feld');
         satz += ' ' + t('Der Erstellungsprozess kann bei Bedarf auch nach dem Start abgebrochen werden.');
         generierRueckfrage({
