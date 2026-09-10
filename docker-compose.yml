@@ -75,6 +75,12 @@ services:
       - INKLUAGENT_INTENT_MODEL=${INKLUAGENT_INTENT_MODEL:-eu.anthropic.claude-haiku-4-5-20251001-v1:0}
       - TAVILY_API_KEY=${TAVILY_API_KEY:-}
       - INKLUAGENT_AGENTIC=${INKLUAGENT_AGENTIC:-true}
+      # Chatbot-Anbieter (10.09.2026): bedrock (Vorgabe) oder gemini; Gemini-Modelle/Denkstufe/Temperatur optional
+      - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
+      - INKLUAGENT_GEMINI_MODEL_TEXT=${INKLUAGENT_GEMINI_MODEL_TEXT:-gemini-3.1-pro-preview}
+      - INKLUAGENT_GEMINI_MODEL_VISION=${INKLUAGENT_GEMINI_MODEL_VISION:-gemini-3.1-pro-preview}
+      - INKLUAGENT_GEMINI_THINKING=${INKLUAGENT_GEMINI_THINKING:-}
+      - INKLUAGENT_GEMINI_TEMPERATURE=${INKLUAGENT_GEMINI_TEMPERATURE:-1.0}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
