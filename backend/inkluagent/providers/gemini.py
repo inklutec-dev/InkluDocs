@@ -161,7 +161,7 @@ class GeminiProvider(LLMProvider):
             body["systemInstruction"] = {"parts": [{"text": "\n\n".join(system_chunks)}]}
         antwort = self._aufruf(chosen, body)
         try:
-            return "".join(p.get("text", "") for p in antwort["candidates"][0]["content"]["parts"])
+            return "".join(p.get("text", "") for p in antwort["candidates"][0]["content"]["parts"] if not p.get("thought"))
         except (KeyError, IndexError, TypeError) as e:
             raise GeminiProviderError(f"Unerwartetes Gemini-Antwortformat: {e}; raw: {str(antwort)[:300]}") from e
 
@@ -190,6 +190,8 @@ class GeminiProvider(LLMProvider):
             raise GeminiProviderError(f"Keine Antwort von Gemini: {grund or e}; raw: {str(antwort)[:300]}") from e
         content: list[dict] = []
         for p in parts:
+            if p.get("thought"):
+                continue  # Gedanken-Zusammenfassungen (thought=true) sind kein Antworttext (10.09.2026: landeten sonst im Chat)
             if "functionCall" in p:
                 self._zaehler += 1
                 fc = p["functionCall"]
