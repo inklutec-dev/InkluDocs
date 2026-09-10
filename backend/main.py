@@ -3136,18 +3136,96 @@ async def stripe_webhook(request: Request):
                 _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Stripe-Buchung: {target['email']}",
                           "Neue Online-Buchung",
                           [f"{html.escape(target['email'])} hat {PLAN_ANZEIGENAMEN.get(plan, plan)} "
-                           f"für {monate} Monate über Stripe gebucht (gültig bis {str(gueltig_bis)[:10]})."])
+                           f"für {monate} Monate über Stripe gebucht (gültig bis {str(gueltig_bis)[:10]})."
+                           + (" Zahlung per Lastschrift, Eingang steht noch aus; das Abo ist bereits frei."
+                              if obj.get("payment_status") == "unpaid" else "")])
             elif obj.get("mode") == "payment" and meta.get("idoc_paket"):
                 groesse = int(meta["idoc_paket"])
                 # Steves Regel (24.08.2026): GEKAUFTE Pakete verfallen nie
                 # und sind immer nutzbar — auch fuer Free-Konten. Datums-
                 # Verfall gibt es nur noch fuer Kulanz-Geschenke (Admin-Weg).
-                billing.schenke_credits(user_id, groesse, notiz="Stripe-Kauf",
+                # SEPA-Lastschrift (10.09.2026, Steve): Credits SOFORT freigeben, auch wenn die
+                # Zahlung noch aussteht (payment_status unpaid, Eingang nach ~5 Werktagen).
+                # Die Session-ID steht in der Notiz, damit checkout.session.async_payment_failed
+                # das Paket wiederfindet und auf 0 setzt (Rueckläufer-Regel unten).
+                ausstehend = (obj.get("payment_status") == "unpaid")
+                notiz = f"Stripe-Kauf {obj.get('id') or ''}" + (" (Lastschrift ausstehend)" if ausstehend else "")
+                billing.schenke_credits(user_id, groesse, notiz=notiz.strip(),
                                         quelle="stripe", verfall_monate=None)
                 _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Stripe-Paketkauf: {target['email']}",
                           "Credit-Paket gekauft",
                           [f"{html.escape(target['email'])} hat {groesse} Zusatz-Credits über "
-                           "Stripe gekauft."])
+                           "Stripe gekauft."
+                           + (" Zahlung per Lastschrift, Eingang steht noch aus (bis zu 14 Tage); "
+                              "die Credits sind bereits freigegeben." if ausstehend else "")])
+        elif typ == "checkout.session.async_payment_succeeded":
+            # Verzögerte Zahlungsart (SEPA-Lastschrift): das Geld ist jetzt wirklich da.
+            # Leistung wurde schon bei checkout.session.completed erbracht — hier nur Vermerk.
+            meta = obj.get("metadata") or {}
+            user_id = int(meta.get("idoc_user_id") or 0)
+            target = get_user_by_id(user_id) if user_id else None
+            if target:
+                conn = get_db()
+                try:
+                    conn.execute("UPDATE quota_pakete SET notiz = REPLACE(notiz, '(Lastschrift ausstehend)', '(Lastschrift eingegangen)') "
+                                 "WHERE user_id = ? AND notiz LIKE ?", (user_id, f"%{obj.get('id') or 'cs_none'}%"))
+                    conn.commit()
+                finally:
+                    conn.close()
+                was = "Abo" if obj.get("mode") == "subscription" else f"Credit-Paket ({meta.get('idoc_paket') or '?'} Credits)"
+                _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Lastschrift eingegangen: {target['email']}",
+                          "Lastschrift eingegangen",
+                          [f"Die Lastschrift von {html.escape(target['email'])} für {was} ist bei Stripe eingegangen."])
+        elif typ == "checkout.session.async_payment_failed":
+            # RÜCKLÄUFER-REGEL (Steve 10.09.2026): Credits waren sofort frei — jetzt geht die
+            # Lastschrift nicht durch (falsche IBAN, Widerspruch, keine Deckung; bis 14 Tage
+            # nach dem Kauf). Paket auf 0 setzen (verbrauchte Credits bleiben verbraucht — das
+            # ist unser Risiko), Abo sofort beenden, Kunde und support@ informieren.
+            meta = obj.get("metadata") or {}
+            user_id = int(meta.get("idoc_user_id") or 0)
+            target = get_user_by_id(user_id) if user_id else None
+            if not target:
+                logger.warning("Stripe-Webhook: unbekanntes Konto in %s", typ)
+                return {"ok": True}
+            sid = obj.get("id") or "cs_none"
+            conn = get_db()
+            try:
+                if obj.get("mode") == "subscription":
+                    conn.execute("UPDATE users SET auto_verlaengerung = 0, plan_gueltig_bis = date('now') "
+                                 "WHERE id = ? AND plan != 'free'", (user_id,))
+                    was = "das Abo"
+                else:
+                    row = conn.execute("SELECT id, groesse, verbleibend FROM quota_pakete WHERE user_id = ? AND notiz LIKE ?",
+                                       (user_id, f"%{sid}%")).fetchone()
+                    if row:
+                        conn.execute("UPDATE quota_pakete SET verbleibend = 0, "
+                                     "notiz = notiz || ' — Rücklastschrift, Paket gesperrt' WHERE id = ?", (row["id"],))
+                        was = (f"das Credit-Paket ({row['groesse']} Credits, davon {row['groesse'] - row['verbleibend']} "
+                               f"schon verbraucht)")
+                    else:
+                        was = "ein Credit-Paket (Paket nicht gefunden — bitte im Dashboard prüfen)"
+                conn.commit()
+            finally:
+                conn.close()
+            grund = ((obj.get("payment_intent") or {}) if isinstance(obj.get("payment_intent"), dict) else {}).get("last_payment_error") or {}
+            grund_text = grund.get("message") or ""
+            logger.warning("Stripe: Lastschrift gescheitert (user=%s, session=%s, %s)", user_id, sid, was)
+            try:
+                send_email(target["email"], "InkluDocs: Deine Lastschrift konnte nicht eingezogen werden",
+                           "<html><body style=\"font-family:Arial,sans-serif;font-size:15px;color:#222;\">"
+                           "<p>Hallo,</p><p>deine Bank hat die Lastschrift für " + html.escape(was) +
+                           " bei InkluDocs nicht eingelöst. Die dazugehörigen Credits beziehungsweise das Abo sind deshalb "
+                           "nicht mehr freigeschaltet.</p><p>Du kannst die Bestellung unter Einstellungen → Abo & Verbrauch erneut "
+                           "auslösen, zum Beispiel per Karte. Wenn die Lastschrift aus deiner Sicht korrekt war, melde dich bitte "
+                           "kurz bei uns.</p>" + _MAIL_FUSS + "</body></html>", bcc_admin=False)
+            except Exception:
+                logger.exception("Kundenmail zur Rücklastschrift fehlgeschlagen (user=%s)", user_id)
+            _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs RÜCKLASTSCHRIFT: {target['email']}",
+                      "Lastschrift gescheitert",
+                      [f"Die Lastschrift von {html.escape(target['email'])} für {html.escape(was)} ist gescheitert"
+                       + (f" ({html.escape(grund_text)})" if grund_text else "") + ".",
+                       "Paket auf 0 gesetzt beziehungsweise Abo beendet, Kunde per Mail informiert. "
+                       "Stripe berechnet für Rückläufer eine Gebühr — bitte im Dashboard prüfen."])
         elif typ == "invoice.paid":
             # DIE letzte Wahrheit fuer Stripe-Abos (Review-Befunde 2 und 4,
             # 07.08.2026): Jede bezahlte Abo-Rechnung setzt Plan, Laufzeit

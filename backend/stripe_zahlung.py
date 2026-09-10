@@ -326,6 +326,34 @@ def portal_url(kunde: str, base_url: str) -> str:
     return s.url
 
 
+# Ereignisse, die der Webhook braucht. Die beiden async_payment-Ereignisse kamen am
+# 10.09.2026 mit der SEPA-Lastschrift dazu (verzögerte Zahlungsart: Erfolg oder Rückläufer
+# erst Tage nach dem Checkout).
+WEBHOOK_EREIGNISSE = ["checkout.session.completed",
+                      "checkout.session.async_payment_succeeded",
+                      "checkout.session.async_payment_failed",
+                      "invoice.paid",
+                      "customer.subscription.updated",
+                      "customer.subscription.deleted"]
+
+
+def ergaenze_webhook_ereignisse(base_url: str) -> str:
+    """Bestehenden Endpunkt auf WEBHOOK_EREIGNISSE bringen (10.09.2026, SEPA).
+
+    Rueckgabe: kurzer Statustext. Legt keinen Endpunkt neu an (das macht
+    sichere_webhook_endpunkt), aendert nur die Ereignisliste des vorhandenen.
+    """
+    ziel = f"{base_url}/api/stripe/webhook"
+    for ep in stripe.WebhookEndpoint.list(limit=20).data:
+        if ep.url == ziel:
+            fehlend = [e for e in WEBHOOK_EREIGNISSE if e not in (ep.enabled_events or [])]
+            if not fehlend:
+                return f"{ep.id}: alle Ereignisse schon aktiv"
+            stripe.WebhookEndpoint.modify(ep.id, enabled_events=WEBHOOK_EREIGNISSE)
+            return f"{ep.id}: ergaenzt um {', '.join(fehlend)}"
+    return "kein Endpunkt fuer " + ziel
+
+
 def sichere_webhook_endpunkt(base_url: str):
     """Webhook-Endpunkt in Stripe anlegen, falls er fehlt.
 
@@ -339,9 +367,7 @@ def sichere_webhook_endpunkt(base_url: str):
             return ziel, None
     ep = stripe.WebhookEndpoint.create(
         url=ziel,
-        enabled_events=["checkout.session.completed", "invoice.paid",
-                        "customer.subscription.updated",
-                        "customer.subscription.deleted"],
+        enabled_events=WEBHOOK_EREIGNISSE,
         description="InkluDocs Abo-Freischaltung",
     )
     return ziel, ep.secret
