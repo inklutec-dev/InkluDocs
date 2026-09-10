@@ -7,6 +7,7 @@ Tool-Aufruf abdecken.
 from __future__ import annotations
 
 import logging
+import os
 import sqlite3
 
 import billing  # Abo-/Credit-System Etappe 1
@@ -99,12 +100,19 @@ def _verify_gegen_bild(image_id: int, project_id: int, alt_text: str) -> Optiona
 
     try:
         from pipelines.v4.orchestrator import verify_alt_text_extern
+        # INKLUAGENT_VERIFY (10.09.2026): on (Vorgabe) = Bild-Pruefung beim Chat-Speichern fuer ALLE Bildtypen,
+        # unabhaengig vom Pipeline-Pruefpass (V4_VERIFY_MODE); pipeline = wie der Pipeline-Schalter; off = aus.
+        # Der Chat-Speicherweg ist der letzte Schritt vor der Datenbank, deshalb eigenes Sicherheitsnetz.
+        chat_verify = os.environ.get("INKLUAGENT_VERIFY", "on").strip().lower()
+        if chat_verify == "off":
+            return None
         pruef = verify_alt_text_extern(
             row["image_path"],
             row["image_type"] or "",
             alt_text,
             language=(row["gen_language"] or row["alt_language"] or "de"),
             enriched_context=row["context_text"] or "",
+            erzwingen=(chat_verify != "pipeline"),
         )
     except Exception:
         log.exception("Chatbot-Verify fehlgeschlagen (ignoriert, kein Blocker)")

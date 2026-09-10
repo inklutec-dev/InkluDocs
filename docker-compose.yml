@@ -77,6 +77,7 @@ services:
       - INKLUAGENT_AGENTIC=${INKLUAGENT_AGENTIC:-true}
       # Chatbot-Anbieter (10.09.2026): bedrock (Vorgabe) oder gemini; Gemini-Modelle/Denkstufe/Temperatur optional
       - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
+      - INKLUAGENT_VERIFY=${INKLUAGENT_VERIFY:-on}
       - INKLUAGENT_GEMINI_MODEL_TEXT=${INKLUAGENT_GEMINI_MODEL_TEXT:-gemini-3.1-pro-preview}
       - INKLUAGENT_GEMINI_MODEL_VISION=${INKLUAGENT_GEMINI_MODEL_VISION:-gemini-3.1-pro-preview}
       - INKLUAGENT_GEMINI_THINKING=${INKLUAGENT_GEMINI_THINKING:-}

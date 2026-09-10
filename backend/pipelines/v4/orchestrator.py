@@ -749,20 +749,22 @@ def _korrektur_absichern(image_path: str, verify_result, language: str = 'de') -
     return None, 'verworfen'
 
 
-def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = '', fakten_block: str = ''):
-    """Fuehrt den Verify-Aufruf aus. Gibt VerifyOutput oder None (Fehler/aus) zurueck."""
+def _run_verify_pass(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = '', fakten_block: str = '', erzwingen: bool = False):
+    """Fuehrt den Verify-Aufruf aus. Gibt VerifyOutput oder None (Fehler/aus) zurueck.
+    erzwingen=True (10.09.2026): Pruefung unabhaengig von V4_VERIFY_MODE fuer alle Bildtypen — genutzt vom
+    Chatbot-Speicherweg, der ein eigenes Sicherheitsnetz hat (INKLUAGENT_VERIFY)."""
     return _run_verify_pass_status(image_path, bildtyp, alt_text, language=language,
                                    enriched_context=enriched_context, langbeschreibung=langbeschreibung,
-                                   fakten_block=fakten_block)[0]
+                                   fakten_block=fakten_block, erzwingen=erzwingen)[0]
 
 
-def _run_verify_pass_status(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = '', fakten_block: str = ''):
+def _run_verify_pass_status(image_path: str, bildtyp: str, alt_text: str, language: str = 'de', enriched_context: str = '', langbeschreibung: str = '', fakten_block: str = '', erzwingen: bool = False):
     """Wie _run_verify_pass, liefert zusaetzlich den Status: 'ok' | 'nicht_vorgesehen' | 'fehler'.
 
     07.09.2026 (Astra-Befund): Bisher war None fuer 'aus', 'nicht im Scope' und 'Ausfall'
     dasselbe — ein ausgefallener, aber vorgesehener Pruefpass endete ohne Pruefhinweis.
     """
-    if not alt_text or not _verify_scope_matches(bildtyp):
+    if not alt_text or (not erzwingen and not _verify_scope_matches(bildtyp)):
         return None, 'nicht_vorgesehen'
     try:
         # 03.09.2026 (Steve): Der Pruefpass nimmt das VALIDATE-Modell (ENV
@@ -786,7 +788,7 @@ def _run_verify_pass_status(image_path: str, bildtyp: str, alt_text: str, langua
 
 
 def verify_alt_text_extern(image_path: str, bildtyp: str, alt_text: str,
-                           language: str = 'de', enriched_context: str = ''):
+                           language: str = 'de', enriched_context: str = '', erzwingen: bool = False):
     """Oeffentlicher Einstieg fuer den Redakteurs-Check AUSSERHALB der Pipeline.
 
     Qualitaetsrunde 21.08.2026: Der InkluAgent-Speicherweg (update_alt_text)
@@ -797,7 +799,7 @@ def verify_alt_text_extern(image_path: str, bildtyp: str, alt_text: str,
     nie Blocker).
     """
     return _run_verify_pass(image_path, bildtyp, alt_text,
-                            language=language, enriched_context=enriched_context)
+                            language=language, enriched_context=enriched_context, erzwingen=erzwingen)
 
 
 def _variation_suffix(previous_alt: str) -> str:
