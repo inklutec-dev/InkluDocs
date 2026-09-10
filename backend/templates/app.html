@@ -593,9 +593,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         window._shareRoles = data.share_roles || [];  // aktive Gast-Rollen (Etappe 2: Badges + Filter)
         if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';  // Rollen-Workflow (10.07.2026)
 
-        // Balken: fertige Bilder voll, das laufende Bild als halber Schritt (Steve 10.09.2026, wie beim
-        // Formular seit 09.09.) — sonst stand der Balken bei einem einzelnen Bild bis zum Ende auf 0 %.
-        const progress = fortschrittProzent(project.processed_images, project.total_images, project.status);
+        const progress = project.total_images > 0 ? Math.round((project.processed_images / project.total_images) * 100) : 0;
         const extractionText = (project.project_type === 'pdf')
             ? (project.extraction_method === 'pdfix' ? 'Strukturell (PDFix)' : 'Heuristisch (PyMuPDF)')
             : (project.project_type === 'docx' ? 'Word (OOXML)' : null);
@@ -795,7 +793,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     const bar = document.querySelector('.progress-fill');
                     const track = document.querySelector('.progress-bar');
                     const info = document.getElementById('processingInfo');
-                    const newP = fortschrittProzent(sData.processed_images, sData.total_images, sData.status);
+                    const newP = Math.round((sData.processed_images / sData.total_images) * 100);
                     if (bar) bar.style.width = newP + '%';
                     if (track) { track.setAttribute('aria-valuenow', newP); track.setAttribute('aria-label', t('Fortschritt: {p} Prozent', { p: newP })); }
                     if (info) info.textContent = t('Bild {i} von {n} wird verarbeitet.', { i: laufendeNummer(sData.processed_images, sData.total_images), n: sData.total_images });
@@ -807,13 +805,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Fortschrittsanzeige (Michael Karbe 02.09.2026): processed_images zaehlt die FERTIGEN Bilder.
     // Angesagt wird aber das Bild, das gerade dran ist — also fertige + 1, gedeckelt auf die
     // Gesamtzahl (vorher stand „Bild 0 von 8" am Anfang). Der Balken bleibt bei fertig/gesamt.
-    function fortschrittProzent(fertig, gesamt, status) {
-        const f = Number(fertig) || 0, g = Number(gesamt) || 0;
-        if (g <= 0) return 0;
-        const halb = (status === 'processing' && f < g) ? 0.5 : 0;
-        return Math.min(100, Math.round((f + halb) / g * 100));
-    }
-
     function laufendeNummer(fertig, gesamt) {
         const f = Number(fertig) || 0, g = Number(gesamt) || 0;
         return g > 0 ? Math.min(f + 1, g) : 0;
