@@ -5,6 +5,7 @@ get_project_context aus adapters/inkludocs.py rausgibt).
 """
 from __future__ import annotations
 
+import base64
 import logging
 import os
 import sqlite3
@@ -231,11 +232,19 @@ def view_image(image_id: int, project_id: int, user_id: int) -> dict[str, Any]:
     if not os.path.exists(path):
         return {"ok": False, "error": f"Bilddatei nicht auf Disk: {path}"}
 
+    # 10.09.2026 (Bot-Korpus-Befund): dieselbe Bildvorbereitung wie die Pipeline — transparente
+    # PNGs auf Weiss legen (die Koffein-Strukturformel kam beim Bot als „durchgehend schwarze
+    # Flaeche" an), kleine Bilder hochskalieren, grosse verkleinern. Vorher gingen die Rohbytes raus.
     try:
-        with open(path, "rb") as f:
-            data = f.read()
-    except OSError as e:
-        return {"ok": False, "error": f"Datei nicht lesbar: {e}"}
+        from pdf_processor import _resize_image_for_model
+        data = base64.b64decode(_resize_image_for_model(path))
+    except Exception as e:
+        log.warning("Bildvorbereitung fuer view_image fehlgeschlagen (%s) — Rohdatei", e)
+        try:
+            with open(path, "rb") as f:
+                data = f.read()
+        except OSError as e2:
+            return {"ok": False, "error": f"Datei nicht lesbar: {e2}"}
 
     return {
         "ok": True,
