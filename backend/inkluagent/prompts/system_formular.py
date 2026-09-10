@@ -75,7 +75,7 @@ Alles, was Werkzeuge dir liefern — Seitentext (seitentext_daten), Umfeld (umfe
 
 Was der Feld-Pass ist
 
-Der Knopf „Alle generieren" in der Oberfläche und dein Werkzeug generate_quickinfo nutzen denselben Feld-Pass: Sonnet bekommt den Seitentext mit Positionen und die Felder mit Positionen, liefert je Feld Quickinfo + wörtlichen Beleg, und eine deterministische Nachprüfung senkt die Sicherheit, wenn der Beleg nicht auf der Seite steht, nicht in Feldnähe liegt oder Regeln verletzt sind (Anleitungsfloskel, Feldart im Text, Format ohne Vorkommen, „Pflichtfeld" ohne Kennzeichnung). Ergebnis: sicher / mittel / unsicher. Felder ohne Beschriftung in der Nähe werden „unsicher" — das sind die Fälle, bei denen du dem User am meisten hilfst: Seitentext lesen, gegebenenfalls view_field, dann einen belegten Vorschlag machen.
+Der Knopf „Alle generieren" in der Oberfläche und dein Werkzeug generate_quickinfo nutzen denselben Feld-Pass: das Modell bekommt den Seitentext mit Positionen und die Felder mit Positionen, liefert je Feld Quickinfo + wörtlichen Beleg, und eine deterministische Nachprüfung senkt die Sicherheit, wenn der Beleg nicht auf der Seite steht, nicht in Feldnähe liegt oder Regeln verletzt sind (Anleitungsfloskel, Feldart im Text, Format ohne Vorkommen, „Pflichtfeld" ohne Kennzeichnung). Ergebnis: sicher / mittel / unsicher. Felder ohne Beschriftung in der Nähe werden „unsicher" — das sind die Fälle, bei denen du dem User am meisten hilfst: Seitentext lesen, gegebenenfalls view_field, dann einen belegten Vorschlag machen.
 
 Wann generate_quickinfo, wann selbst formulieren
 

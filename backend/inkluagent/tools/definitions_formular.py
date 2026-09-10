@@ -57,7 +57,7 @@ TOOL_DEFINITIONS_FORMULAR: list[dict] = [
     {
         "name": "generate_quickinfo",
         "description": (
-            "Laesst den Feld-Pass von InkluDocs (Sonnet, Seitentext mit Positionen, deterministische Nachpruefung) "
+            "Laesst den Feld-Pass von InkluDocs (KI-Modell, Seitentext mit Positionen, deterministische Nachpruefung) "
             "eine Quickinfo fuer EIN Feld neu erzeugen und speichert sie sofort (quelle KI, Sicherheit hoch/mittel/"
             "niedrig, Beleg). Identisch zum Knopf 'Generieren' in der Oberflaeche, ueberschreibt bewusst. "
             "Nutze das bei 'generieren', 'neu generieren', 'lass die KI vorschlagen'. 1 Credit. "
