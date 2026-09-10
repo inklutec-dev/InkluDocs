@@ -56,12 +56,12 @@ def _entgleist(text: str, finish: str) -> bool:
     zeilen = [z.strip() for z in text.splitlines() if z.strip()]
     if finish == "MAX_TOKENS" and len(text) > 3000:
         return True
-    if len(zeilen) >= 12:
+    if len(zeilen) >= 16:
         anfaenge: dict[str, int] = {}
         for z in zeilen:
             k = z[:14]
             anfaenge[k] = anfaenge.get(k, 0) + 1
-        if max(anfaenge.values()) >= 8:
+        if max(anfaenge.values()) >= 12:
             return True
     woerter = text.split()
     if 0 < len(woerter) <= 2 and len(text) < 25:
@@ -78,7 +78,7 @@ def _gekuerzt(text: str) -> str:
         if not k:
             continue
         gesehen[k] = gesehen.get(k, 0) + 1
-        if gesehen[k] >= 4:
+        if gesehen[k] >= 6:
             return "\n".join(zeilen[:i]).strip()[:1500] or "Entschuldigung, die Antwort ist nicht sauber zustande gekommen. Bitte die Frage noch einmal stellen."
     return text[:1500]
 
