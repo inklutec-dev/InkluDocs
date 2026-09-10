@@ -25,7 +25,7 @@ name: inkludocs-demo
 
 services:
   inkludocs-demo:
-    image: inkludocs:demo-20260909b  # 09.09.2026 abends: Rechtstexte (Zwischenspeicher aus, 90 Tage)
+    image: inkludocs:demo-20260910  # 10.09.2026: Chatbot Gemini (Flash), Chat-Pruefung, Kontext-Fix, SEPA-Regel
     container_name: inkludocs-demo
     restart: unless-stopped
     ports:
@@ -74,6 +74,7 @@ services:
       # Chatbot-Anbieter (10.09.2026): bedrock (Vorgabe) oder gemini
       - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
       - INKLUAGENT_VERIFY=${INKLUAGENT_VERIFY:-on}
+      - KOSTEN_PRO_CREDIT_EUR=${KOSTEN_PRO_CREDIT_EUR:-0.012}
       - INKLUAGENT_GEMINI_MODEL_TEXT=${INKLUAGENT_GEMINI_MODEL_TEXT:-gemini-3.1-pro-preview}
       - INKLUAGENT_GEMINI_MODEL_VISION=${INKLUAGENT_GEMINI_MODEL_VISION:-gemini-3.1-pro-preview}
       - INKLUAGENT_GEMINI_THINKING=${INKLUAGENT_GEMINI_THINKING:-}

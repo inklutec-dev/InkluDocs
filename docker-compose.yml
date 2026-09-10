@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260909b
+    image: inkludocs:v4-20260910
     container_name: inkludocs
     restart: unless-stopped
     ports:
@@ -78,6 +78,7 @@ services:
       # Chatbot-Anbieter (10.09.2026): bedrock (Vorgabe) oder gemini; Gemini-Modelle/Denkstufe/Temperatur optional
       - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
       - INKLUAGENT_VERIFY=${INKLUAGENT_VERIFY:-on}
+      - KOSTEN_PRO_CREDIT_EUR=${KOSTEN_PRO_CREDIT_EUR:-0.012}
       - INKLUAGENT_GEMINI_MODEL_TEXT=${INKLUAGENT_GEMINI_MODEL_TEXT:-gemini-3.1-pro-preview}
       - INKLUAGENT_GEMINI_MODEL_VISION=${INKLUAGENT_GEMINI_MODEL_VISION:-gemini-3.1-pro-preview}
       - INKLUAGENT_GEMINI_THINKING=${INKLUAGENT_GEMINI_THINKING:-}
