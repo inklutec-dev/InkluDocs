@@ -397,6 +397,16 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
 
     from pdf_processor import generate_alt_text
 
+    # 10.09.2026 (Steve): Neu-Generieren ueber den Bot soll wie der Knopf in der Oberflaeche
+    # VARIIEREN — gleiche Fakten, andere Formulierung. Bisher fehlten hier die beiden Hebel des
+    # Knopfs (main.py regenerate_image): der bisherige Text als Abgrenzungs-Vorlage (previous_alt,
+    # _variation_suffix im Orchestrator) und die hoehere Temperatur REGENERATE_TEMPERATURE.
+    try:
+        from main import REGENERATE_TEMPERATURE as _regen_temp
+    except Exception:
+        _regen_temp = 0.5
+    _bisher = (img["alt_text_edited"] if "alt_text_edited" in img.keys() else None) or img["alt_text"] or ""
+
     result = generate_alt_text(
         img["image_path"],
         img["context_text"] or "",
@@ -405,7 +415,9 @@ def run_pipeline_for_image(image_id: int, project_id: int, user_id: int) -> Opti
         img["height"] or 0,
         img["original_alt"] or "",
         True,  # force_regenerate
+        temperature=_regen_temp,
         language=(img["alt_language"] or "de"),  # Projekt-Ausgabesprache (03.07.2026)
+        previous_alt=_bisher,
         user_prompt=user_prompt,
     )
 
