@@ -28,6 +28,14 @@ def classify_intent(user_message: str, provider) -> Intent:
     Bei Fehlern oder unklarer Antwort: Fallback 'smalltalk'.
     """
     intent_model = os.environ.get("INKLUAGENT_INTENT_MODEL", "").strip() or None
+    # 10.09.2026: Modellkennung nur weiterreichen, wenn sie zum aktiven Provider passt — sonst
+    # wuerde z. B. eine Bedrock-Haiku-Kennung an Gemini gehen (404) und jede Absicht wuerde Smalltalk.
+    if intent_model:
+        provider_name = type(provider).__name__.lower()
+        ist_gemini_modell = intent_model.lower().startswith("gemini")
+        if ("gemini" in provider_name) != ist_gemini_modell:
+            log.info("INKLUAGENT_INTENT_MODEL %r passt nicht zum Provider %s — Provider-Vorgabe genutzt", intent_model, provider_name)
+            intent_model = None
     try:
         raw = provider.chat(
             messages=[

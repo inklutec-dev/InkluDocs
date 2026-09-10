@@ -52,6 +52,8 @@ else:
     log.info("InkluAgent: BedrockProvider aktiv (Claude via Frankfurt)")
 
 # Agentic-Modus (Tool-Use-Loop) — Default an. Override via INKLUAGENT_AGENTIC=true|false.
+# Provider, die den Werkzeug-Modus koennen (invoke_with_tools + Bildbloecke): beide.
+_WERKZEUG_PROVIDER = ("bedrock", "gemini")
 _AGENTIC_ENABLED = os.environ.get("INKLUAGENT_AGENTIC", "true").lower().strip() == "true"
 if _AGENTIC_ENABLED:
     log.info("InkluAgent: agentic Tool-Use-Loop aktiviert")
@@ -76,12 +78,13 @@ def process_message(project_id: int, user_message: str, user_id: int, system_suf
             "actions": [],
         }
 
-    # Neuer agentic Pfad: Sonnet entscheidet selbst welche Tools er nutzt.
+    # Werkzeug-Modus: das Modell entscheidet selbst, welche Werkzeuge es nutzt (Bedrock/Claude seit
+    # 12.05.2026, Gemini seit 10.09.2026 — beide Provider liefern invoke_with_tools).
     # Klassischer 4-Pfad-Dispatcher bleibt unten als Absturz-Fallback des Werkzeug-Modus.
-    if (project or {}).get("tool") == "formular" and not (_AGENTIC_ENABLED and _PROVIDER_NAME == "bedrock"):
-        return {"reply": "Der Assistent fuer Formular-Projekte braucht den Werkzeug-Modus (Bedrock). Bitte an den Betreiber wenden.",
+    if (project or {}).get("tool") == "formular" and not (_AGENTIC_ENABLED and _PROVIDER_NAME in _WERKZEUG_PROVIDER):
+        return {"reply": "Der Assistent fuer Formular-Projekte braucht den Werkzeug-Modus. Bitte an den Betreiber wenden.",
                 "intent": "error", "image_refs": None, "actions": [], "werkzeuge": []}
-    if _AGENTIC_ENABLED and _PROVIDER_NAME == "bedrock":
+    if _AGENTIC_ENABLED and _PROVIDER_NAME in _WERKZEUG_PROVIDER:
         from .agent_loop import run_agent
         try:
             return run_agent(project_id, user_id, user_message, project, _provider, system_suffix=system_suffix, on_tool=on_tool)

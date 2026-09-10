@@ -30,6 +30,9 @@ log = logging.getLogger(__name__)
 
 _DEFAULT_MODEL_TEXT = os.environ.get("INKLUAGENT_GEMINI_MODEL_TEXT", "gemini-3.1-pro-preview")
 _DEFAULT_MODEL_VISION = os.environ.get("INKLUAGENT_GEMINI_MODEL_VISION", "gemini-3.1-pro-preview")
+# Denkstufe fuer den Chat (10.09.2026): leer = Vorgabe des Modells (Gemini 3: mittel). Werte low|medium|high.
+# Denk-Tokens werden als Ausgabe abgerechnet — fuer Kostenmessungen umschaltbar.
+_THINKING_LEVEL = os.environ.get("INKLUAGENT_GEMINI_THINKING", "").strip().lower()
 _HTTP_TIMEOUT = 180
 _VERSUCHE = 3
 
@@ -167,6 +170,8 @@ class GeminiProvider(LLMProvider):
         chosen = model or _DEFAULT_MODEL_TEXT
         body: dict = {"contents": self._contents(anthropic_messages),
                       "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens + 2048}}
+        if _THINKING_LEVEL in ("low", "medium", "high"):
+            body["generationConfig"]["thinkingConfig"] = {"thinkingLevel": _THINKING_LEVEL.upper()}
         werkzeuge = self._werkzeuge(tools)
         if werkzeuge:
             body["tools"] = werkzeuge
@@ -175,7 +180,8 @@ class GeminiProvider(LLMProvider):
         antwort = self._aufruf(chosen, body)
         if os.getenv("DEBUG_GEN_RAW", "false").lower() == "true":
             u = antwort.get("usageMetadata", {}) or {}
-            print(f"[GEMINI-USAGE] model={chosen} schema=agent in={u.get('promptTokenCount', '?')} out={u.get('candidatesTokenCount', '?')}", flush=True)
+            print(f"[GEMINI-USAGE] model={chosen} schema=agent in={u.get('promptTokenCount', '?')} out={u.get('candidatesTokenCount', '?')} "
+                  f"denk={u.get('thoughtsTokenCount', 0)}", flush=True)
         try:
             parts = antwort["candidates"][0]["content"].get("parts", [])
             finish = antwort["candidates"][0].get("finishReason", "")

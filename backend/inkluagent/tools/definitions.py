@@ -75,8 +75,8 @@ TOOL_DEFINITIONS: list[dict] = [
         "description": (
             "Ruft die InkluDocs-Pipeline auf, um einen neuen Alt-Text + Langbeschreibung "
             "für ein Bild komplett neu zu generieren (force_regenerate=True, umgeht Cache). "
-            "Nutze das wenn der User explizit 'neu generieren' will. Die Pipeline ist "
-            "Claude Sonnet 4.6 via Bedrock und nutzt die Premium-Builder. Dauer ~15-30 Sek."
+            "Nutze das wenn der User explizit 'neu generieren' will. Die Pipeline ist dieselbe "
+            "wie beim Upload (mehrstufig, mit Bildtyp-Erkennung und Stilregeln). Dauer ~15-30 Sek."
         ),
         "input_schema": {
             "type": "object",
