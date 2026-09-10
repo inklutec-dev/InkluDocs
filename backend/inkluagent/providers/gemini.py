@@ -33,6 +33,10 @@ _DEFAULT_MODEL_VISION = os.environ.get("INKLUAGENT_GEMINI_MODEL_VISION", "gemini
 # Denkstufe fuer den Chat (10.09.2026): leer = Vorgabe des Modells (Gemini 3: mittel). Werte low|medium|high.
 # Denk-Tokens werden als Ausgabe abgerechnet — fuer Kostenmessungen umschaltbar.
 _THINKING_LEVEL = os.environ.get("INKLUAGENT_GEMINI_THINKING", "").strip().lower()
+# Temperatur (10.09.2026): Google empfiehlt fuer Gemini 3 ausdruecklich die Vorgabe 1.0 — niedrigere Werte
+# fuehren zu Schleifen und Entgleisungen (auf Staging gesehen: 6.000 Tokens erfundene Metadaten bei 0.3).
+# Der Aufrufer-Wert (agent_loop: 0.3) wird deshalb ignoriert; Override nur per Umgebung.
+_TEMPERATUR = float(os.environ.get("INKLUAGENT_GEMINI_TEMPERATURE", "1.0") or "1.0")
 _HTTP_TIMEOUT = 180
 _VERSUCHE = 3
 
@@ -44,6 +48,39 @@ class GeminiProviderError(BedrockProviderError):
 def _endpunkt(model: str) -> str:
     from pipelines.v4 import gemini_auth
     return gemini_auth.endpunkt(model)
+
+
+def _entgleist(text: str, finish: str) -> bool:
+    """Erkennt Schleifen/Entgleisungen: Ausgabelimit erreicht, viele Zeilen mit gleichem Anfang,
+    oder eine Nicht-Antwort aus ein, zwei Woertern (auf Staging: 'proposal.')."""
+    zeilen = [z.strip() for z in text.splitlines() if z.strip()]
+    if finish == "MAX_TOKENS" and len(text) > 3000:
+        return True
+    if len(zeilen) >= 12:
+        anfaenge: dict[str, int] = {}
+        for z in zeilen:
+            k = z[:14]
+            anfaenge[k] = anfaenge.get(k, 0) + 1
+        if max(anfaenge.values()) >= 8:
+            return True
+    woerter = text.split()
+    if 0 < len(woerter) <= 2 and len(text) < 25:
+        return True
+    return False
+
+
+def _gekuerzt(text: str) -> str:
+    """Schneidet eine entgleiste Antwort vor der ersten Wiederholung ab."""
+    zeilen = text.splitlines()
+    gesehen: dict[str, int] = {}
+    for i, z in enumerate(zeilen):
+        k = z.strip()[:14]
+        if not k:
+            continue
+        gesehen[k] = gesehen.get(k, 0) + 1
+        if gesehen[k] >= 4:
+            return "\n".join(zeilen[:i]).strip()[:1500] or "Entschuldigung, die Antwort ist nicht sauber zustande gekommen. Bitte die Frage noch einmal stellen."
+    return text[:1500]
 
 
 class GeminiProvider(LLMProvider):
@@ -97,6 +134,10 @@ class GeminiProvider(LLMProvider):
                     teile.append({"text": b["text"]})
             elif typ == "image":
                 src = b.get("source", {})
+                if teile and "functionResponse" in teile[-1]:
+                    # Bild gehoert zum Werkzeugergebnis davor (view_image / view_field) — als solches markieren,
+                    # damit das Modell es nicht fuer eine neue Nutzereingabe haelt.
+                    teile.append({"text": "Das folgende Bild ist das Ergebnis des Werkzeugaufrufs (view_image / view_field):"})
                 teile.append({"inlineData": {"mimeType": src.get("media_type", "image/jpeg"), "data": src.get("data", "")}})
             elif typ == "tool_use":
                 namen[b.get("id", "")] = b.get("name", "")
@@ -156,7 +197,7 @@ class GeminiProvider(LLMProvider):
                 bloecke.append({"type": "text", "text": m.get("content", "")})
                 rest[letzter_user] = {"role": "user", "content": bloecke}
         body: dict = {"contents": self._contents(rest),
-                      "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens + 2048}}
+                      "generationConfig": {"temperature": _TEMPERATUR if temperature > 0 else 0.0, "maxOutputTokens": max_tokens + 2048}}
         if system_chunks:
             body["systemInstruction"] = {"parts": [{"text": "\n\n".join(system_chunks)}]}
         antwort = self._aufruf(chosen, body)
@@ -169,7 +210,7 @@ class GeminiProvider(LLMProvider):
                           model: Optional[str] = None, max_tokens: int = 4096, temperature: float = 0.3) -> dict[str, Any]:
         chosen = model or _DEFAULT_MODEL_TEXT
         body: dict = {"contents": self._contents(anthropic_messages),
-                      "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens + 2048}}
+                      "generationConfig": {"temperature": _TEMPERATUR, "maxOutputTokens": max_tokens + 2048}}
         if _THINKING_LEVEL in ("low", "medium", "high"):
             body["generationConfig"]["thinkingConfig"] = {"thinkingLevel": _THINKING_LEVEL.upper()}
         werkzeuge = self._werkzeuge(tools)
@@ -177,17 +218,29 @@ class GeminiProvider(LLMProvider):
             body["tools"] = werkzeuge
         if system:
             body["systemInstruction"] = {"parts": [{"text": system}]}
-        antwort = self._aufruf(chosen, body)
-        if os.getenv("DEBUG_GEN_RAW", "false").lower() == "true":
-            u = antwort.get("usageMetadata", {}) or {}
-            print(f"[GEMINI-USAGE] model={chosen} schema=agent in={u.get('promptTokenCount', '?')} out={u.get('candidatesTokenCount', '?')} "
-                  f"denk={u.get('thoughtsTokenCount', 0)}", flush=True)
-        try:
-            parts = antwort["candidates"][0]["content"].get("parts", [])
-            finish = antwort["candidates"][0].get("finishReason", "")
-        except (KeyError, IndexError, TypeError) as e:
-            grund = (antwort.get("promptFeedback") or {}).get("blockReason")
-            raise GeminiProviderError(f"Keine Antwort von Gemini: {grund or e}; raw: {str(antwort)[:300]}") from e
+        debug = os.getenv("DEBUG_GEN_RAW", "false").lower() == "true"
+        for versuch in range(2):
+            antwort = self._aufruf(chosen, body)
+            try:
+                parts = antwort["candidates"][0]["content"].get("parts", [])
+                finish = antwort["candidates"][0].get("finishReason", "")
+            except (KeyError, IndexError, TypeError) as e:
+                grund = (antwort.get("promptFeedback") or {}).get("blockReason")
+                raise GeminiProviderError(f"Keine Antwort von Gemini: {grund or e}; raw: {str(antwort)[:300]}") from e
+            if debug:
+                u = antwort.get("usageMetadata", {}) or {}
+                arten = ["call" if "functionCall" in p else ("denk" if p.get("thought") else ("text" if p.get("text") else "?")) for p in parts]
+                print(f"[GEMINI-USAGE] model={chosen} schema=agent in={u.get('promptTokenCount', '?')} out={u.get('candidatesTokenCount', '?')} "
+                      f"denk={u.get('thoughtsTokenCount', 0)} finish={finish} parts={','.join(arten)}", flush=True)
+            text_roh = "".join(p.get("text", "") for p in parts if p.get("text") and not p.get("thought"))
+            hat_call = any("functionCall" in p for p in parts)
+            if not hat_call and _entgleist(text_roh, finish):
+                log.warning("Gemini-Antwort entgleist (Versuch %d, finish=%s, %d Zeichen) — %s", versuch + 1, finish, len(text_roh),
+                            "wiederhole" if versuch == 0 else "kuerze")
+                if versuch == 0:
+                    continue
+                parts = [{"text": _gekuerzt(text_roh)}]
+            break
         content: list[dict] = []
         for p in parts:
             if p.get("thought"):
