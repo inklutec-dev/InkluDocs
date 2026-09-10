@@ -5086,6 +5086,39 @@ _LINK_PREFIX_PATTERNS = [
 _LINK_GENERIC_LABELS = {"", "read", "more", "mehr", "weiter", "weiterlesen", "lesen"}
 
 
+def _kachel_ueberschrift(img_tag):
+    """Überschrift der eigenen Kachel eines Bildes (Web-Einlese, 10.09.2026).
+
+    Sucht den nächsten Container (article, li, figure oder div mit Klasse), der wie eine Kachel
+    aussieht: höchstens 3 Bilder und höchstens 1.200 Zeichen Text. Darin die Überschrift, die dem
+    Bild am nächsten steht — bevorzugt die erste NACH dem Bild (Produktkacheln), sonst die letzte
+    davor. Liefert None, wenn keine passende Kachel oder keine Überschrift gefunden wird; der
+    Aufrufer fällt dann auf find_previous zurück.
+    """
+    headings = ["h1", "h2", "h3", "h4", "h5", "h6"]
+    for container in img_tag.parents:
+        if container is None or container.name in ("html", "body", "main", "head"):
+            break
+        ist_kandidat = container.name in ("article", "li", "figure") or (container.name == "div" and container.get("class"))
+        if not ist_kandidat:
+            continue
+        if len(container.find_all("img")) > 3 or len(container.get_text(strip=True)) > 1200:
+            break  # zu groß für eine Kachel — größere Container erst recht
+        hs = container.find_all(headings)
+        if not hs:
+            continue  # kleiner Wrapper ohne Überschrift, eine Ebene höher weitersuchen
+        if len(hs) == 1:
+            return hs[0]
+        nach = img_tag.find_next(headings)
+        if nach is not None and any(nach is h for h in hs):
+            return nach
+        vor = img_tag.find_previous(headings)
+        if vor is not None and any(vor is h for h in hs):
+            return vor
+        return hs[0]
+    return None
+
+
 def _clean_link_label(label: str) -> str:
     """Strip generic 'Read more'-prefixes that WordPress screen-reader-text spans
     leak into link text (e.g. '<span class=\"screen-reader-text\">Read</span>:
@@ -5412,10 +5445,14 @@ async def scan_url(request: Request, user: dict = Depends(get_current_user)):
                         context_parts.append(f"[Link-URL] {link_href}")
 
             # Improved context search: go beyond direct parent
-            # 1. Nearest heading before the image
-            prev_heading = img_tag.find_previous(["h1", "h2", "h3", "h4"])
-            if prev_heading:
-                context_parts.append(f"[Ueberschrift] {prev_heading.get_text(strip=True)[:150]}")
+            # 1. Überschrift: zuerst die der EIGENEN Kachel (10.09.2026, Budni-Befund: bei Produkt-
+            #    kacheln steht der Produktname UNTER dem Bild — find_previous griff die Überschrift der
+            #    Nachbarkachel). Kachel = nächster Container article/li/figure oder div mit Klasse, der
+            #    klein genug ist, um eine Kachel zu sein; darin die Überschrift, die dem Bild am
+            #    nächsten steht. Sonst wie bisher die nächste Überschrift vor dem Bild.
+            heading_tag = _kachel_ueberschrift(img_tag) or img_tag.find_previous(["h1", "h2", "h3", "h4"])
+            if heading_tag:
+                context_parts.append(f"[Ueberschrift] {heading_tag.get_text(strip=True)[:150]}")
 
             # 2. Parent article/section (WordPress wrappers)
             content_parent = img_tag.find_parent(["article", "section"]) or img_tag.find_parent("div", class_=True)
