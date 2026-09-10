@@ -134,11 +134,15 @@ class GeminiProvider(LLMProvider):
                     teile.append({"text": b["text"]})
             elif typ == "image":
                 src = b.get("source", {})
-                if teile and "functionResponse" in teile[-1]:
-                    # Bild gehoert zum Werkzeugergebnis davor (view_image / view_field) — als solches markieren,
-                    # damit das Modell es nicht fuer eine neue Nutzereingabe haelt.
-                    teile.append({"text": "Das folgende Bild ist das Ergebnis des Werkzeugaufrufs (view_image / view_field):"})
-                teile.append({"inlineData": {"mimeType": src.get("media_type", "image/jpeg"), "data": src.get("data", "")}})
+                bild = {"inlineData": {"mimeType": src.get("media_type", "image/jpeg"), "data": src.get("data", "")}}
+                fr = next((x for x in reversed(teile) if "functionResponse" in x), None)
+                if fr is not None:
+                    # Bild gehoert zum Werkzeugergebnis (view_image / view_field): als multimodale Function-Response
+                    # (functionResponse.parts) mitgeben, nicht als lose Nutzereingabe — sonst echot Gemini 3
+                    # Bruchstuecke des Werkzeugergebnisses in den Antworttext (Staging 10.09.2026).
+                    fr["functionResponse"].setdefault("parts", []).append(bild)
+                else:
+                    teile.append(bild)
             elif typ == "tool_use":
                 namen[b.get("id", "")] = b.get("name", "")
                 roh = b.get("_gemini_part")
