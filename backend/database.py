@@ -571,6 +571,10 @@ def init_db():
                    a.zusammenfassung, a.bericht, a.preis, a.token, a.created_at
             FROM ausgaben a LEFT JOIN projects p ON p.id = a.project_id
         ''')
+        # Zaehler fortfuehren, damit neue Eintraege keine alten ids wiederverwenden (Chat-Anhaenge
+        # verweisen auf ausgabe_id).
+        conn.execute("INSERT OR REPLACE INTO sqlite_sequence (name, seq) "
+                     "SELECT 'ablage', MAX(seq) FROM sqlite_sequence WHERE name IN ('ausgaben', 'ablage')")
         conn.execute("DROP TABLE ausgaben")
 
     # Backward-compatible migrations using ALTER TABLE with try/except

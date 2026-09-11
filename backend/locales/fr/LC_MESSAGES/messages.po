@@ -6186,3 +6186,8 @@ msgstr "Archives"
 msgid "Eintrag lesen"
 msgstr "Lire l’entrée"
 
+
+# Fusszeilen-Hinweis (11.09.2026): Chat-Assistent auf Gemini
+msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Bildbeschreibungen, Quickinfos und der Chat-Assistent nutzen das Modell Gemini von Google über Google Vertex AI. Google ist vertraglich als Auftragsverarbeiter gebunden und nutzt deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
+msgstr " Hébergement chez Hetzner Online (Falkenstein, Allemagne). Les descriptions d’images, les info-bulles et l’assistant de discussion utilisent le modèle Gemini de Google via Google Vertex AI. Google est lié contractuellement en tant que sous-traitant et n’utilise pas vos contenus pour l’entraînement. Détails dans notre politique de confidentialité."
+

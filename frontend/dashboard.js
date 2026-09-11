@@ -343,6 +343,7 @@ function renderLegalLinks() {
 
 // DSGVO-Hinweis in jede Dashboard-Fußzeile (zentral gepflegt, gleicher Text wie auf /app).
 // Idempotent. /app hat .legal-footer (eigener Hinweis) und wird hier nicht getroffen.
+// 11.09.2026: Chat-Assistent laeuft seit 10.09. ebenfalls auf Gemini (Vertex) — der Hinweis nannte noch Claude/Bedrock.
 function renderLegalNote() {
   document.querySelectorAll('.dash-footer').forEach((footer) => {
     if (footer.querySelector('.dsgvo-note')) return;
@@ -351,7 +352,7 @@ function renderLegalNote() {
     const strong = document.createElement('strong');
     strong.textContent = t('DSGVO-konform – Hosting und Datenhaltung in Deutschland.');
     p.appendChild(strong);
-    p.appendChild(document.createTextNode(t(' Hosting bei Hetzner Online (Falkenstein, Deutschland). Die Bildbeschreibungen und Quickinfos erstellt das Modell Gemini von Google über Google Vertex AI; der Chat-Assistent nutzt das Modell Claude von Anthropic über Amazon Bedrock in der EU. Beide Anbieter sind vertraglich als Auftragsverarbeiter gebunden und nutzen deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.')));
+    p.appendChild(document.createTextNode(t(' Hosting bei Hetzner Online (Falkenstein, Deutschland). Bildbeschreibungen, Quickinfos und der Chat-Assistent nutzen das Modell Gemini von Google über Google Vertex AI. Google ist vertraglich als Auftragsverarbeiter gebunden und nutzt deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung.')));
     footer.appendChild(p);
   });
 }
