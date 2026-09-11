@@ -5597,3 +5597,107 @@ msgstr ""
 #. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
 msgid "Es werden {n} Quickinfos generiert. Das benötigt {c} Credits."
 msgstr ""
+
+# Meine Ausgaben (11.09.2026): Regal fuer fertige Umwandlungen, Reiter im Projektkopf, Dashboard
+msgid "Alle Ausgaben anzeigen"
+msgstr "Alle Ausgaben anzeigen"
+
+msgid "Alle Projekte"
+msgstr "Alle Projekte"
+
+msgid "Ausgabe gelöscht."
+msgstr "Ausgabe gelöscht."
+
+msgid "Ausgaben ({n})"
+msgstr "Ausgaben ({n})"
+
+msgid "Ausgaben konnten nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Ausgaben konnten nicht geladen werden. Bitte später erneut versuchen."
+
+msgid "Ausgaben: {name}"
+msgstr "Ausgaben: {name}"
+
+msgid "Bericht konnte nicht geladen werden."
+msgstr "Bericht konnte nicht geladen werden."
+
+msgid "Bericht lesen"
+msgstr "Bericht lesen"
+
+msgid "Datei nicht mehr verfügbar (Aufbewahrungsfrist abgelaufen), der Bericht bleibt."
+msgstr "Datei nicht mehr verfügbar (Aufbewahrungsfrist abgelaufen), der Bericht bleibt."
+
+msgid "Datei verfügbar bis {datum}"
+msgstr "Datei verfügbar bis {datum}"
+
+msgid "Dieses Projekt hat noch keine Ausgaben. Wandle es über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier."
+msgstr "Dieses Projekt hat noch keine Ausgaben. Wandle es über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier."
+
+msgid "Dokumente"
+msgstr "Dokumente"
+
+msgid "Fertige Umwandlungen mit Bericht und Download. Dateien bleiben {n} Tage verfügbar, der Bericht bleibt beim Projekt."
+msgstr "Fertige Umwandlungen mit Bericht und Download. Dateien bleiben {n} Tage verfügbar, der Bericht bleibt beim Projekt."
+
+msgid "Hörprobe lesen"
+msgstr "Hörprobe lesen"
+
+msgid "Meine Ausgaben"
+msgstr "Meine Ausgaben"
+
+msgid "Neueste Ausgaben"
+msgstr "Neueste Ausgaben"
+
+msgid "Noch keine Ausgaben. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier."
+msgstr "Noch keine Ausgaben. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier."
+
+msgid "PDF und Bericht liegen jetzt unter „Meine Ausgaben“. Die Datei bleibt dort {n} Tage verfügbar, der Bericht bleibt beim Projekt."
+msgstr "PDF und Bericht liegen jetzt unter „Meine Ausgaben“. Die Datei bleibt dort {n} Tage verfügbar, der Bericht bleibt beim Projekt."
+
+msgid "Projekt"
+msgstr "Projekt"
+
+msgid "Projektbereiche"
+msgstr "Projektbereiche"
+
+msgid "Prüfung: bestanden"
+msgstr "Prüfung: bestanden"
+
+msgid "Prüfung: ein Bereich mit Hinweisen"
+msgstr "Prüfung: ein Bereich mit Hinweisen"
+
+msgid "Prüfung: {n} Bereiche mit Hinweisen"
+msgstr "Prüfung: {n} Bereiche mit Hinweisen"
+
+msgid "Vorschau der ersten Seite von {name}"
+msgstr "Vorschau der ersten Seite von {name}"
+
+msgid "Wirklich löschen?"
+msgstr "Wirklich löschen?"
+
+msgid "ZIP herunterladen"
+msgstr "ZIP herunterladen"
+
+msgid "Zu meinen Ausgaben"
+msgstr "Zu meinen Ausgaben"
+
+msgid "Zum Projekt"
+msgstr "Zum Projekt"
+
+msgid "{dokument} — {datum}, {zeit}"
+msgstr "{dokument} — {datum}, {zeit}"
+
+msgid "{name} ({n})"
+msgstr "{name} ({n})"
+
+msgid "{n} Ausgaben geladen."
+msgstr "{n} Ausgaben geladen."
+
+msgid "{projekt} · {art} · {datum}"
+msgstr "{projekt} · {art} · {datum}"
+
+msgid "{projekt} – alle Dokumente"
+msgstr "{projekt} – alle Dokumente"
+
+msgid "über den Chatbot"
+msgstr "über den Chatbot"
+

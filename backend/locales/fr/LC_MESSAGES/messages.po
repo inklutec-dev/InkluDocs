@@ -5594,3 +5594,107 @@ msgstr "1 info-bulle sera générée. Cela nécessite {c} crédits."
 #. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
 msgid "Es werden {n} Quickinfos generiert. Das benötigt {c} Credits."
 msgstr "{n} info-bulles seront générées. Cela nécessite {c} crédits."
+
+# Meine Ausgaben (11.09.2026): Regal fuer fertige Umwandlungen, Reiter im Projektkopf, Dashboard
+msgid "Alle Ausgaben anzeigen"
+msgstr "Afficher toutes les sorties"
+
+msgid "Alle Projekte"
+msgstr "Tous les projets"
+
+msgid "Ausgabe gelöscht."
+msgstr "Sortie supprimée."
+
+msgid "Ausgaben ({n})"
+msgstr "Sorties ({n})"
+
+msgid "Ausgaben konnten nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Les sorties n’ont pas pu être chargées. Veuillez réessayer plus tard."
+
+msgid "Ausgaben: {name}"
+msgstr "Sorties : {name}"
+
+msgid "Bericht konnte nicht geladen werden."
+msgstr "Le rapport n’a pas pu être chargé."
+
+msgid "Bericht lesen"
+msgstr "Lire le rapport"
+
+msgid "Datei nicht mehr verfügbar (Aufbewahrungsfrist abgelaufen), der Bericht bleibt."
+msgstr "Fichier plus disponible (délai de conservation expiré), le rapport reste."
+
+msgid "Datei verfügbar bis {datum}"
+msgstr "Fichier disponible jusqu’au {datum}"
+
+msgid "Dieses Projekt hat noch keine Ausgaben. Wandle es über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier."
+msgstr "Ce projet n’a pas encore de sortie. Convertissez-le en PDF accessible via « Télécharger », le résultat apparaîtra ici."
+
+msgid "Dokumente"
+msgstr "Documents"
+
+msgid "Fertige Umwandlungen mit Bericht und Download. Dateien bleiben {n} Tage verfügbar, der Bericht bleibt beim Projekt."
+msgstr "Conversions terminées avec rapport et téléchargement. Les fichiers restent disponibles {n} jours, le rapport reste avec le projet."
+
+msgid "Hörprobe lesen"
+msgstr "Lire l’aperçu audio"
+
+msgid "Meine Ausgaben"
+msgstr "Mes sorties"
+
+msgid "Neueste Ausgaben"
+msgstr "Dernières sorties"
+
+msgid "Noch keine Ausgaben. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier."
+msgstr "Aucune sortie pour l’instant. Convertissez un projet Word en PDF accessible via « Télécharger », le résultat apparaîtra ici."
+
+msgid "PDF und Bericht liegen jetzt unter „Meine Ausgaben“. Die Datei bleibt dort {n} Tage verfügbar, der Bericht bleibt beim Projekt."
+msgstr "Le PDF et le rapport sont maintenant dans « Mes sorties ». Le fichier y reste disponible {n} jours, le rapport reste avec le projet."
+
+msgid "Projekt"
+msgstr "Projet"
+
+msgid "Projektbereiche"
+msgstr "Sections du projet"
+
+msgid "Prüfung: bestanden"
+msgstr "Vérification : réussie"
+
+msgid "Prüfung: ein Bereich mit Hinweisen"
+msgstr "Vérification : une zone avec des remarques"
+
+msgid "Prüfung: {n} Bereiche mit Hinweisen"
+msgstr "Vérification : {n} zones avec des remarques"
+
+msgid "Vorschau der ersten Seite von {name}"
+msgstr "Aperçu de la première page de {name}"
+
+msgid "Wirklich löschen?"
+msgstr "Vraiment supprimer ?"
+
+msgid "ZIP herunterladen"
+msgstr "Télécharger le ZIP"
+
+msgid "Zu meinen Ausgaben"
+msgstr "Vers mes sorties"
+
+msgid "Zum Projekt"
+msgstr "Vers le projet"
+
+msgid "{dokument} — {datum}, {zeit}"
+msgstr "{dokument} — {datum}, {zeit}"
+
+msgid "{name} ({n})"
+msgstr "{name} ({n})"
+
+msgid "{n} Ausgaben geladen."
+msgstr "{n} sorties chargées."
+
+msgid "{projekt} · {art} · {datum}"
+msgstr "{projekt} · {art} · {datum}"
+
+msgid "{projekt} – alle Dokumente"
+msgstr "{projekt} – tous les documents"
+
+msgid "über den Chatbot"
+msgstr "via le chatbot"
+

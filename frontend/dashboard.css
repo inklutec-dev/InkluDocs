@@ -185,3 +185,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    bekommen dieselbe Breite wie die Eingabefelder. */
 .dash-main .error-message { text-align: left; }
 .dash-main textarea.dash-input { max-width: 480px; }
+
+/* Meine Ausgaben (11.09.2026): Reiter im Projektkopf + Karten auf der Ausgaben-Seite */
+.proj-tabs ul { list-style:none; display:flex; gap:.5rem; padding:0; margin:.6rem 0 .2rem; flex-wrap:wrap; }
+.proj-tabs a { display:inline-block; padding:.35rem .9rem; border:1px solid var(--border); border-radius:6px; text-decoration:none; color:var(--text); font-weight:600; background:var(--card-bg); }
+.proj-tabs a[aria-current="page"] { background:#c75000; color:#fff; border-color:#c75000; }
+.proj-tabs a:hover, .proj-tabs a:focus { text-decoration:underline; }
+.proj-tabs a:focus-visible { outline:2px solid #c75000; outline-offset:2px; }
+.ausgabe-karte { display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-start; }
+.ausgabe-karte .ausgabe-text { flex:1 1 18rem; min-width:0; }
+.ausgabe-vorschau { max-width:150px; height:auto; border:1px solid var(--border); border-radius:4px; display:block; background:#fff; }
+.ausgabe-aktionen { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-top:.6rem; }
+.ausgabe-details { margin:.5rem 0 0; }
+.ausgabe-details summary { cursor:pointer; font-weight:600; }
+.ausgabe-details ul { margin:.3rem 0 .4rem; padding-left:1.2rem; }
+.ausgabe-hoerprobe { max-height:22rem; overflow:auto; padding:.4rem .6rem; border:1px solid var(--border); border-radius:6px; }
+.ausgabe-hoerprobe p { margin:.15rem 0; }
+.ausgaben-filter { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin:0 0 1.2rem; }
+.ausgaben-filter select { padding:.4rem; border:1px solid var(--border); border-radius:4px; font-size:.95rem; }

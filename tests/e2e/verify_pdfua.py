@@ -98,6 +98,41 @@ if s == 200:
         namen = zipfile.ZipFile(io.BytesIO(datei)).namelist() if s2 == 200 and datei[:2] == b"PK" else []
         check("Download liefert ZIP mit einer PDF je Dokument", s2 == 200 and len(namen) == len(doks) and all(n.endswith(".pdf") for n in namen), (s2, namen))
         check("Dateiname endet auf _alle_pdfua.zip", str(b.get("dateiname", "")).endswith("_alle_pdfua.zip"), b.get("dateiname"))
+    # ─── Meine Ausgaben (11.09.2026): die Umwandlung legt einen Eintrag im Regal an ───
+    aid = b.get("ausgabe_id")
+    check("Antwort traegt ausgabe_id + ausgaben_anzahl + aufbewahrung_tage", isinstance(aid, int) and isinstance(b.get("ausgaben_anzahl"), int) and b.get("aufbewahrung_tage", 0) >= 1, (aid, b.get("ausgaben_anzahl"), b.get("aufbewahrung_tage")))
+    sa, la, _ = req("GET", f"/api/ausgaben?projekt={PID}")
+    eintraege = la.get("ausgaben") or []
+    meiner = [a for a in eintraege if a.get("id") == aid]
+    check("Liste des Projekts enthaelt den neuen Eintrag (neuester zuerst)", sa == 200 and meiner and eintraege[0].get("id") == aid, (sa, [a.get("id") for a in eintraege][:5]))
+    check("Projektfilter in der Antwort (projekt.id, projekte[])", (la.get("projekt") or {}).get("id") == PID and any(p.get("id") == PID for p in la.get("projekte") or []), (la.get("projekt"), la.get("projekte")))
+    if meiner:
+        a = meiner[0]
+        check("Eintrag: Datei verfuegbar, Vorschau da, Dateiname/Zusammenfassung gesetzt", a.get("datei_verfuegbar") is True and a.get("vorschau") is True and a.get("dateiname") == b.get("dateiname") and a.get("zusammenfassung"), a)
+        check("Eintrag: dokumente_anzahl = Zahl der umgewandelten Dokumente, Ausloeser Knopf", a.get("dokumente_anzahl") == len(doks) and a.get("ausloeser") == "knopf", (a.get("dokumente_anzahl"), a.get("ausloeser")))
+        check("Eintrag: Dokumentname bei einem Dokument, sonst alle_dokumente", (a.get("dokument") and not a.get("alle_dokumente")) if len(doks) == 1 else a.get("alle_dokumente") is True, (a.get("dokument"), a.get("alle_dokumente")))
+        se, e, _ = req("GET", f"/api/ausgaben/{aid}")
+        ber = (e.get("ausgabe") or {}).get("bericht") or []
+        check("Einzelabruf liefert vollen Bericht (pruefung.punkte, hoerprobe, pruefbericht je Dokument)", se == 200 and len(ber) == len(doks) and all(d.get("pruefung", {}).get("punkte") and d.get("hoerprobe") and isinstance(d.get("pruefbericht"), list) for d in ber), (se, [list(d.keys()) for d in ber]))
+        sd, datei2, hd = req("GET", f"/api/ausgaben/{aid}/datei", raw=True)
+        check("Datei aus dem Regal = gleiche Datei wie der Token-Download", sd == 200 and datei2 == datei, (sd, len(datei2) if isinstance(datei2, bytes) else datei2, len(datei)))
+        check("Content-Disposition mit Dateiname", "attachment" in (hd.get("content-disposition") or hd.get("Content-Disposition") or ""), hd)
+        sv2, png, hv = req("GET", f"/api/ausgaben/{aid}/vorschau", raw=True)
+        check("Vorschau liefert PNG", sv2 == 200 and isinstance(png, bytes) and png[:8] == b"\x89PNG\r\n\x1a\n", (sv2, png[:8] if isinstance(png, bytes) else png))
+    sg, lg, _ = req("GET", "/api/ausgaben")
+    check("Gesamtliste (alle Projekte) enthaelt den Eintrag, projekt = null", sg == 200 and any(a.get("id") == aid for a in lg.get("ausgaben") or []) and lg.get("projekt") is None, (sg, lg.get("projekt")))
+    sf, _, _ = req("GET", "/api/ausgaben/999999999", raw=True)
+    check("Unbekannte Ausgabe -> 404", sf == 404, sf)
+    sp, _, _ = req("GET", "/api/ausgaben?projekt=999999999", raw=True)
+    check("Fremdes/unbekanntes Projekt im Filter -> 404", sp == 404, sp)
+    # Loeschen: nur den eigenen Testeintrag; aeltere Eintraege des Projekts bleiben stehen.
+    if aid:
+        sl, bl, _ = req("DELETE", f"/api/ausgaben/{aid}")
+        check("Loeschen des Eintrags -> ok", sl == 200 and bl.get("ok") is True, (sl, bl))
+        sl2, _, _ = req("GET", f"/api/ausgaben/{aid}/datei", raw=True)
+        check("Nach dem Loeschen: Datei 404", sl2 == 404, sl2)
+        sl3, ll, _ = req("GET", f"/api/ausgaben?projekt={PID}")
+        check("Nach dem Loeschen: Eintrag nicht mehr in der Liste", sl3 == 200 and not any(a.get("id") == aid for a in ll.get("ausgaben") or []), sl3)
     s3, _, _ = req("GET", f"/api/projects/{PID}/export/pdfua/deadbeefdeadbeefdeadbeef", raw=True)
     check("Fremder/unbekannter Token -> 404", s3 == 404, s3)
     s4, _, _ = req("GET", f"/api/projects/{PID}/export/pdfua/../../etc/passwd", raw=True)

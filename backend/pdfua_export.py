@@ -411,3 +411,26 @@ def dokumenttitel_setzen(docx_path: str, titel: str, sprache: Optional[str] = No
         return True
     except Exception:  # noqa: BLE001
         return False
+
+
+# ---------------------------------------------------------------------------
+# Vorschaubild (Meine Ausgaben, 11.09.2026)
+# ---------------------------------------------------------------------------
+
+def vorschau_png(pdf_bytes: bytes, breite: int = 480) -> Optional[bytes]:
+    """Erste Seite der fertigen PDF als PNG (fuer Sehende auf der Ausgaben-Seite;
+    das Gegenstueck fuer Screenreader ist die Hoerprobe). PyMuPDF liegt im
+    App-Image (Seitenansicht des PDF-Werkzeugs). Scheitert das Rendern, gibt es
+    kein Bild — die Ausgabe selbst bleibt davon unberuehrt."""
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        if doc.page_count < 1:
+            return None
+        seite = doc[0]
+        zoom = max(0.2, min(3.0, float(breite) / max(1.0, seite.rect.width)))
+        pix = seite.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
+        return pix.tobytes("png")
+    except Exception as e:  # noqa: BLE001
+        print(f"PDF/UA: Vorschaubild nicht erzeugt: {type(e).__name__}: {e}", flush=True)
+        return None

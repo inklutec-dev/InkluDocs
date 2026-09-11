@@ -375,3 +375,46 @@ Kopfzeile) — Kandidat für eine automatische Korrektur (`w:tblHeader`).
 Vergleichsdateien: `/home/claude/lo_vergleich/{alt,neu,altpruef}` auf dem Server.
 `verify_pdfua.py` bleibt tolerant (Info statt Fehler bei „nicht vollständig"), bis der
 neue Konverter auf Produktion läuft; danach kann „vollständig bestanden" Pflicht werden.
+
+
+## Meine Ausgaben — das Regal für fertige Umwandlungen (11.09.2026)
+
+Bis zum 10.09. war das Ergebnis einer Umwandlung flüchtig: Bericht und
+Download-Knopf lebten in der Live-Region des Export-Bereichs, die Datei nur
+hinter dem Token. Seit dem 11.09. legt jede Umwandlung einen Eintrag in der
+Tabelle `ausgaben` an (database.py): Projekt, Dokument (NULL = alle Dokumente,
+ZIP), Datei, Vorschaubild der ersten Seite (`pdfua_export.vorschau_png`,
+PyMuPDF), Bericht als JSON (Klartext je Bereich, Hörprobe, Prüfbericht des
+Word-Dokuments), Auslöser (`knopf`; `bot` folgt mit den Chatbot-Werkzeugen),
+Preis, Token, Aufbewahrung. Die Projektansicht bleibt die Werkstatt, die Seite
+`/ausgaben` ist das Regal — eine Seite, drei Eingänge:
+
+1. Seitenleiste „Meine Ausgaben" (alle Projekte, Filter nach Projekt).
+2. Projektkopf: Reiter „Dokumente | Ausgaben (n)" (`/ausgaben?projekt=<id>`),
+   nur beim Besitzer und nur bei Word-Projekten oder wenn schon Ausgaben da sind.
+3. Export-Bereich: nach der Umwandlung wie bisher Ergebnis + „PDF herunterladen",
+   dazu „Zu meinen Ausgaben" (`#ausgabe-<id>` setzt den Fokus auf den Eintrag).
+
+Dashboard: Abschnitt „Neueste Ausgaben" (letzte fünf), verborgen ohne Einträge.
+
+Endpunkte (main.py, Block „MEINE AUSGABEN"): `GET /api/ausgaben[?projekt=]`
+(Liste ohne Berichte + Projektliste für den Filter), `GET /api/ausgaben/{id}`
+(mit vollem Bericht), `GET …/datei`, `GET …/vorschau` (PNG),
+`DELETE /api/ausgaben/{id}`. `GET /api/projects/{id}` liefert `ausgaben_anzahl`;
+`POST …/export/pdfua` zusätzlich `ausgabe_id`, `ausgaben_anzahl`,
+`aufbewahrung_tage`. Projekt löschen räumt die Einträge mit ab.
+
+Aufbewahrung: `AUSGABEN_TAGE` (Vorgabe 30). Nach Ablauf löscht
+`_ausgaben_aufraeumen` beim Laden der Liste Datei und Vorschau, der Eintrag
+mit Bericht bleibt („Datei nicht mehr verfügbar, der Bericht bleibt"). Die
+Frist ist eine offene Entscheidung (Steve/Michael) und gehört in den
+Datenschutztext, sobald sie steht.
+
+Barrierefreiheit der Seite: H1, Zurück-Link direkt darunter, je Eintrag eine H2
+„Dokument — Datum, Uhrzeit", Bericht und Hörprobe als `<details>` (werden erst
+beim Aufklappen geladen), Löschen ohne Browser-Dialog (Rückfrage mit zwei
+Knöpfen im Eintrag). Vorschau für Sehende = Bild der ersten Seite, für
+Screenreader = Hörprobe — derselbe Eintrag, zwei Sinne. Tests:
+`tests/test_ausgaben.py` (Unit), `tests/e2e/verify_pdfua.py` (E2E, Abschnitt
+„Meine Ausgaben"). Konzept: Desktop
+„InkluDocs-Konzept-Ausgaben-und-Bot-Werkzeuge-2026-09-11.txt" (Bauschritt 1 von 4).

@@ -1,0 +1,276 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Meine Ausgaben') }} · InkluDocs{% endblock %}
+{% block main %}
+      {# MEINE AUSGABEN (11.09.2026, Steve + Fable 5): das Regal fuer fertige Umwandlungen.
+         Die Projektansicht bleibt die Werkstatt (Bilder, Alt-Texte); hier liegen die
+         Ergebnisse: Datei, Bericht, Hoerprobe, Vorschaubild. EINE Seite, drei Eingaenge:
+         Seitenleiste, Reiter „Ausgaben (n)" im Projektkopf (?projekt=), Link im Export-
+         Bereich nach der Umwandlung (#ausgabe-<id>). Aufbau: H1, Zurueck-Link, Filter,
+         je Eintrag eine H2 mit Dokument und Datum — Screenreader springen von H2 zu H2,
+         Sehende sehen Karten mit Vorschaubild links und Knoepfen rechts. #}
+      <h1 id="ausgabenTitel" tabindex="-1">{{ _('Meine Ausgaben') }}</h1>
+      <p class="dash-sub" id="ausgabenIntro" style="margin-bottom:0.8rem;"></p>
+      <p class="dash-sub" id="ausgabenZurueck" style="margin-bottom:1rem;"></p>
+      <form class="ausgaben-filter" id="ausgabenFilter" hidden>
+        <label for="projektFilter" style="font-weight:600;">{{ _('Projekt') }}</label>
+        <select id="projektFilter"><option value="">{{ _('Alle Projekte') }}</option></select>
+      </form>
+      <div id="ausgabenContainer" aria-busy="true">
+        <p class="dash-sub">{{ _('Wird geladen ...') }}</p>
+      </div>
+{% endblock %}
+{% block page_script %}
+<script>
+{% raw %}
+  const PROJEKT = new URLSearchParams(window.location.search).get('projekt');
+  const _berichtCache = {};
+
+  // DB-Zeitstempel (UTC) -> Datum in Oberflaechensprache + lokale Uhrzeit (wie geteilte_projekte.html).
+  function ausgabeDatumZeit(s) {
+    const d = String(s || '');
+    if (d.length < 10) return { datum: '', zeit: '' };
+    const dt = d.length >= 16
+      ? new Date(Date.UTC(+d.substring(0, 4), +d.substring(5, 7) - 1, +d.substring(8, 10), +d.substring(11, 13), +d.substring(14, 16)))
+      : new Date(Date.UTC(+d.substring(0, 4), +d.substring(5, 7) - 1, +d.substring(8, 10)));
+    const p = (n) => String(n).padStart(2, '0');
+    return { datum: formatDate(dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate())),
+             zeit: p(dt.getHours()) + ':' + p(dt.getMinutes()) };
+  }
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function pruefSatz(a) {
+    if (a.bestanden) return t('Prüfung: bestanden');
+    if (a.hinweise === 1) return t('Prüfung: ein Bereich mit Hinweisen');
+    return t('Prüfung: {n} Bereiche mit Hinweisen', { n: a.hinweise });
+  }
+  function dokumentName(a) {
+    return a.dokument || t('{projekt} – alle Dokumente', { projekt: a.projekt });
+  }
+
+  // Bericht (Klartext je Bereich), Pruefbericht des Word-Dokuments und Hoerprobe werden
+  // erst beim Aufklappen geladen — die Liste bleibt schlank, die Live-Region ruhig.
+  async function ladeBericht(id) {
+    if (_berichtCache[id]) return _berichtCache[id];
+    const res = await fetch('/api/ausgaben/' + id);
+    if (!res.ok) throw new Error('bericht');
+    const d = await res.json();
+    _berichtCache[id] = (d.ausgabe && d.ausgabe.bericht) || [];
+    return _berichtCache[id];
+  }
+  function fuelleBericht(box, dokumente) {
+    box.innerHTML = '';
+    dokumente.forEach((dok) => {
+      if (dokumente.length > 1) box.appendChild(el('h3', null, dok.dokument));
+      const ul = el('ul');
+      ((dok.pruefung && dok.pruefung.punkte) || []).forEach((p) => {
+        ul.appendChild(el('li', null, p.bereich + ': ' + (p.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + '. ' + p.text));
+      });
+      box.appendChild(ul);
+      if (dok.pruefbericht && dok.pruefbericht.length) {
+        const det = el('details', 'ausgabe-details');
+        det.appendChild(el('summary', null, t('Prüfbericht des Word-Dokuments')));
+        const ul2 = el('ul');
+        dok.pruefbericht.forEach((b) => ul2.appendChild(el('li', null, (b.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + ': ' + b.text)));
+        det.appendChild(ul2);
+        box.appendChild(det);
+      }
+    });
+  }
+  function fuelleHoerprobe(box, dokumente) {
+    box.innerHTML = '';
+    dokumente.forEach((dok) => {
+      if (dokumente.length > 1) box.appendChild(el('h3', null, dok.dokument));
+      const wrap = el('div', 'ausgabe-hoerprobe');
+      wrap.setAttribute('tabindex', '0');
+      (dok.hoerprobe || []).forEach((z) => wrap.appendChild(el('p', null, z)));
+      box.appendChild(wrap);
+    });
+  }
+  function detailsMitLader(id, titel, fueller) {
+    const det = el('details', 'ausgabe-details');
+    det.appendChild(el('summary', null, titel));
+    const box = el('div');
+    det.appendChild(box);
+    det.addEventListener('toggle', async () => {
+      if (!det.open || box.dataset.geladen) return;
+      box.textContent = t('Wird geladen ...');
+      try {
+        fueller(box, await ladeBericht(id));
+        box.dataset.geladen = '1';
+      } catch (e) {
+        box.textContent = t('Bericht konnte nicht geladen werden.');
+      }
+    });
+    return det;
+  }
+
+  // Loeschen ohne Browser-Dialog: der Knopf wird zur Rueckfrage mit zwei Knoepfen.
+  function loeschKnopf(a, li) {
+    const wrap = el('span');
+    const btn = el('button', 'btn btn-secondary', t('Löschen'));
+    btn.type = 'button';
+    btn.addEventListener('click', () => {
+      wrap.innerHTML = '';
+      const frage = el('span', null, t('Wirklich löschen?') + ' ');
+      const ja = el('button', 'btn btn-secondary', t('Ja, löschen'));
+      ja.type = 'button';
+      const nein = el('button', 'btn btn-secondary', t('Abbrechen'));
+      nein.type = 'button';
+      ja.addEventListener('click', async () => {
+        try {
+          const res = await fetch('/api/ausgaben/' + a.id, { method: 'DELETE' });
+          if (!res.ok) throw new Error('x');
+          const next = li.nextElementSibling || li.previousElementSibling;
+          li.remove();
+          announce(t('Ausgabe gelöscht.'));
+          const rest = document.querySelectorAll('#ausgabenContainer li.dash-item').length;
+          if (rest === 0) { laden(); return; }
+          const ziel = next ? next.querySelector('h2') : byId('ausgabenTitel');
+          if (ziel) { ziel.setAttribute('tabindex', '-1'); ziel.focus(); }
+        } catch (e) {
+          announce(t('Löschen fehlgeschlagen.'));
+          wrap.innerHTML = ''; wrap.appendChild(btn);
+        }
+      });
+      nein.addEventListener('click', () => { wrap.innerHTML = ''; wrap.appendChild(btn); btn.focus(); });
+      wrap.appendChild(frage); wrap.appendChild(ja); wrap.appendChild(nein);
+      ja.focus();
+    });
+    wrap.appendChild(btn);
+    return wrap;
+  }
+
+  function eintrag(a, gefiltert) {
+    const li = el('li', 'dash-item');
+    li.id = 'ausgabe-' + a.id;
+    const dz = ausgabeDatumZeit(a.created_at);
+    const h2 = el('h2', null, t('{dokument} — {datum}, {zeit}', { dokument: dokumentName(a), datum: dz.datum, zeit: dz.zeit }));
+    li.appendChild(h2);
+    const karte = el('div', 'ausgabe-karte');
+    if (a.vorschau) {
+      const img = document.createElement('img');
+      img.className = 'ausgabe-vorschau';
+      img.src = '/api/ausgaben/' + a.id + '/vorschau';
+      img.alt = t('Vorschau der ersten Seite von {name}', { name: dokumentName(a) });
+      img.loading = 'lazy';
+      karte.appendChild(img);
+    }
+    const text = el('div', 'ausgabe-text');
+    const metaTeile = [];
+    if (!gefiltert) metaTeile.push(a.projekt);
+    metaTeile.push(a.art_label);
+    if (a.ausloeser === 'bot') metaTeile.push(t('über den Chatbot'));
+    text.appendChild(el('p', 'dash-meta', metaTeile.join(' · ')));
+    const summe = el('p', null);
+    summe.style.margin = '.3rem 0 0';
+    const strong = el('strong', null, pruefSatz(a));
+    summe.appendChild(strong);
+    if (a.zusammenfassung) summe.appendChild(document.createTextNode(' ' + a.zusammenfassung));
+    text.appendChild(summe);
+    const aktionen = el('div', 'ausgabe-aktionen');
+    if (a.datei_verfuegbar) {
+      const dl = document.createElement('a');
+      dl.className = 'btn btn-primary';
+      dl.href = '/api/ausgaben/' + a.id + '/datei';
+      dl.setAttribute('download', a.dateiname || '');
+      dl.textContent = (a.media === 'application/zip') ? t('ZIP herunterladen') : t('PDF herunterladen');
+      aktionen.appendChild(dl);
+      if (a.datei_bis) {
+        const bis = ausgabeDatumZeit(a.datei_bis);
+        aktionen.appendChild(el('span', 'dash-meta', t('Datei verfügbar bis {datum}', { datum: bis.datum })));
+      }
+    } else {
+      aktionen.appendChild(el('span', 'dash-meta', t('Datei nicht mehr verfügbar (Aufbewahrungsfrist abgelaufen), der Bericht bleibt.')));
+    }
+    const zum = document.createElement('a');
+    zum.className = 'btn btn-secondary';
+    zum.href = '/app?projekt=' + encodeURIComponent(a.project_id);
+    zum.textContent = t('Zum Projekt');
+    aktionen.appendChild(zum);
+    aktionen.appendChild(loeschKnopf(a, li));
+    text.appendChild(aktionen);
+    text.appendChild(detailsMitLader(a.id, t('Bericht lesen'), fuelleBericht));
+    text.appendChild(detailsMitLader(a.id, t('Hörprobe lesen'), fuelleHoerprobe));
+    karte.appendChild(text);
+    li.appendChild(karte);
+    return li;
+  }
+
+  function render(data) {
+    const cont = byId('ausgabenContainer');
+    cont.setAttribute('aria-busy', 'false');
+    cont.innerHTML = '';
+    byId('ausgabenIntro').textContent = t('Fertige Umwandlungen mit Bericht und Download. Dateien bleiben {n} Tage verfügbar, der Bericht bleibt beim Projekt.', { n: data.aufbewahrung_tage || 30 });
+    const zur = byId('ausgabenZurueck');
+    zur.innerHTML = '';
+    const back = document.createElement('a');
+    back.className = 'btn btn-secondary';
+    if (data.projekt) {
+      byId('ausgabenTitel').textContent = t('Ausgaben: {name}', { name: data.projekt.name });
+      document.title = t('Ausgaben: {name}', { name: data.projekt.name }) + ' · InkluDocs';
+      back.href = '/app?projekt=' + encodeURIComponent(data.projekt.id);
+      back.textContent = t('Zurück zum Projekt');
+    } else {
+      back.href = '/dashboard';
+      back.textContent = t('Zurück zur Startseite');
+    }
+    zur.appendChild(back);
+    // Filter: nur wenn es Ausgaben in mehr als einem Projekt gibt oder gerade gefiltert wird.
+    const form = byId('ausgabenFilter');
+    const sel = byId('projektFilter');
+    sel.querySelectorAll('option:not([value=""])').forEach((o) => o.remove());
+    (data.projekte || []).forEach((p) => {
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = t('{name} ({n})', { name: p.name, n: p.anzahl });
+      if (data.projekt && String(data.projekt.id) === String(p.id)) o.selected = true;
+      sel.appendChild(o);
+    });
+    form.hidden = !((data.projekte || []).length > 1 || data.projekt);
+    const liste = data.ausgaben || [];
+    if (liste.length === 0) {
+      const p = el('p', 'dash-empty', data.projekt
+        ? t('Dieses Projekt hat noch keine Ausgaben. Wandle es über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier.')
+        : t('Noch keine Ausgaben. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier.'));
+      cont.appendChild(p);
+      return;
+    }
+    const ul = el('ul', 'dash-list');
+    liste.forEach((a) => ul.appendChild(eintrag(a, !!data.projekt)));
+    cont.appendChild(ul);
+  }
+
+  async function laden() {
+    let data;
+    try {
+      const res = await fetch('/api/ausgaben' + (PROJEKT ? '?projekt=' + encodeURIComponent(PROJEKT) : ''));
+      if (res.status === 401) { window.location.href = '/login'; return; }
+      if (!res.ok) throw new Error('x');
+      data = await res.json();
+    } catch (e) {
+      const cont = byId('ausgabenContainer');
+      cont.setAttribute('aria-busy', 'false');
+      cont.innerHTML = '';
+      cont.appendChild(el('p', 'dash-empty', t('Ausgaben konnten nicht geladen werden. Bitte später erneut versuchen.')));
+      return;
+    }
+    render(data);
+    announce(t('{n} Ausgaben geladen.', { n: (data.ausgaben || []).length }));
+    // Sprungmarke aus dem Export-Bereich (#ausgabe-<id>): Fokus auf die H2 des Eintrags.
+    if (window.location.hash && window.location.hash.startsWith('#ausgabe-')) {
+      const ziel = document.querySelector(window.location.hash + ' h2');
+      if (ziel) { ziel.setAttribute('tabindex', '-1'); ziel.focus(); ziel.scrollIntoView({ block: 'start' }); }
+    }
+  }
+  byId('projektFilter').addEventListener('change', (e) => {
+    const v = e.target.value;
+    window.location.href = v ? ('/ausgaben?projekt=' + encodeURIComponent(v)) : '/ausgaben';
+  });
+  laden();
+{% endraw %}
+</script>
+{% endblock %}

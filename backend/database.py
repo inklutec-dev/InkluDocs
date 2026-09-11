@@ -524,6 +524,40 @@ def init_db():
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_stammdaten_user ON stammdaten(user_id)")
 
+    # MEINE AUSGABEN (11.09.2026, Steve + Fable 5): Regal fuer fertige Umwandlungen.
+    # Bisher war das Ergebnis einer PDF/UA-Umwandlung fluechtig (Live-Region im
+    # Export-Bereich, Datei nur ueber ein Token). Jetzt legt jede Umwandlung einen
+    # Eintrag an: Datei, Bericht (Klartext + Hoerprobe + Pruefbericht als JSON),
+    # Vorschaubild der ersten Seite, Ausloeser (Knopf oder Chatbot). Die DATEI hat
+    # eine Aufbewahrungsfrist (datei_bis, AUSGABEN_TAGE), der BERICHT bleibt beim
+    # Projekt bis das Projekt geloescht wird. document_id NULL = alle Dokumente (ZIP).
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS ausgaben (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            project_id INTEGER NOT NULL,
+            document_id INTEGER,
+            art TEXT NOT NULL DEFAULT 'pdfua',
+            ausloeser TEXT DEFAULT 'knopf',
+            dateiname TEXT DEFAULT '',
+            datei_pfad TEXT DEFAULT '',
+            media TEXT DEFAULT 'application/pdf',
+            vorschau_pfad TEXT DEFAULT '',
+            audio_pfad TEXT DEFAULT '',
+            bestanden INTEGER DEFAULT 0,
+            zusammenfassung TEXT DEFAULT '',
+            bericht TEXT DEFAULT '[]',
+            preis INTEGER DEFAULT 0,
+            token TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now')),
+            datei_bis TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ausgaben_user ON ausgaben(user_id, created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ausgaben_project ON ausgaben(project_id)")
+
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 
