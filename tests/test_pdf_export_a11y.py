@@ -193,11 +193,41 @@ class TestFinalizeExportPdf(unittest.TestCase):
         self.assertFalse(info["lang_set"], "Sprachangabe des Autors muss erhalten bleiben")
         self.assertIn("en-US", self._catalog_key(self.out, "Lang")[1])
 
-    def test_titel_prioritaet_explizit_gewinnt(self):
-        finalize_export_pdf(self.out, title="Mein Exportname", fallback_title="dateiname")
+    def test_titel_dokumentname_ohne_quelltitel(self):
+        info = finalize_export_pdf(self.out, title="Dokumentname aus InkluDocs", fallback_title="dateiname")
+        self.assertEqual(info["title_source"], "dokumentname")
         doc = fitz.open(self.out)
-        self.assertEqual(doc.metadata.get("title"), "Mein Exportname")
+        self.assertEqual(doc.metadata.get("title"), "Dokumentname aus InkluDocs")
         doc.close()
+
+    def _setze_quelltitel(self, titel):
+        doc = fitz.open(self.out)
+        meta = dict(doc.metadata); meta["title"] = titel; doc.set_metadata(meta)
+        tmp2 = self.out + ".tmp"; doc.save(tmp2); doc.close(); os.replace(tmp2, self.out)
+
+    def test_titel_quelle_gewinnt_ueber_dokumentname(self):
+        # 11.09.2026 (Michael Karbe/Steve): ein echter Titel der Quelle wird NICHT mehr ueberschrieben.
+        self._setze_quelltitel("Autorentitel")
+        info = finalize_export_pdf(self.out, title="Dokumentname", fallback_title="dateiname")
+        self.assertFalse(info["title_set"]); self.assertEqual(info["title_source"], "quelle")
+        doc = fitz.open(self.out); self.assertEqual(doc.metadata.get("title"), "Autorentitel"); doc.close()
+
+    def test_titel_gleich_dateiname_ist_kein_titel(self):
+        self._setze_quelltitel("bescheid_final_v3.pdf")
+        info = finalize_export_pdf(self.out, title=None, fallback_title="bescheid_final_v3",
+                                   fallback_heading="Bescheid über Wohngeld", filename_base="bescheid_final_v3")
+        self.assertEqual(info["title_source"], "ueberschrift")
+        doc = fitz.open(self.out); self.assertEqual(doc.metadata.get("title"), "Bescheid über Wohngeld"); doc.close()
+
+    def test_titel_dateiname_nur_als_letzter_ausweg(self):
+        info = finalize_export_pdf(self.out, fallback_title="dateiname", fallback_heading=None)
+        self.assertEqual(info["title_source"], "dateiname")
+
+    def test_erste_ueberschrift_aus_lesezeichen(self):
+        from pdf_export import erste_ueberschrift
+        doc = fitz.open(self.out); doc.set_toc([[1, "Jahresbericht 2026 (fiktiv)", 1]])
+        tmp2 = self.out + ".tmp"; doc.save(tmp2); doc.close(); os.replace(tmp2, self.out)
+        self.assertEqual(erste_ueberschrift(self.out), "Jahresbericht 2026 (fiktiv)")
 
     def test_titel_vorhandener_bleibt_ohne_expliziten(self):
         doc = fitz.open(self.out)

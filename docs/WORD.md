@@ -425,3 +425,13 @@ Abschnitt „Word-Projekte“. Die Umwandlung im Export-Bereich und im Chat lauf
 dieselbe Funktion `_pdfua_umwandeln_sync` (Auslöser `knopf` bzw. `bot`); Word-Ausgaben
 des Bots haben `art = docx` (kein veraPDF, Hinweise aus dem Word-Prüfbericht) und
 erscheinen im Regal mit „Word herunterladen“.
+
+Dokumenttitel (11.09.2026, Michael Karbe/Steve): Ein Dateiname ist kein Titel. Das Feld
+„Dateiname (optional)“ im Export-Dialog bestimmt seit heute NUR den Dateinamen — bei Word
+und PDF. Titel-Reihenfolge in beiden Werkzeugen: vorhandener brauchbarer Titel der Quelle
+(nicht leer, nicht „Untitled“, nicht der Dateiname) → in InkluDocs vergebener Dokumentname
+→ erste Überschrift aus dem Inhalt (Word: Vorlage „Titel“/Überschrift 1; PDF: erstes
+Lesezeichen, sonst größte Zeile auf Seite 1) → Dateiname ohne Endung, dann mit Warnung im
+Export-Dialog bzw. Hinweis im Prüfbericht. Code: `pdf_export.finalize_export_pdf`
+(`title_source`), `pdf_export.erste_ueberschrift`, `pdfua_export.titel_aus_inhalt`.
+Ein eigenes Feld „Dokumenttitel“ im Dialog ist bewusst zurückgestellt (Steve 11.09.).

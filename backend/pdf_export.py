@@ -660,9 +660,25 @@ def remove_orphaned_alt_elems(doc: fitz.Document) -> int:
     return len(orphans)
 
 
+def _titel_brauchbar(titel: str, filename_base: str | None) -> bool:
+    """Ein vorhandener Titel zaehlt nur, wenn er ein Titel ist: nicht leer, nicht „Untitled“,
+    nicht der Dateiname (mit oder ohne .pdf). PAC/veraPDF-Praxis: Titel = Dateiname ist ein
+    Befund, kein Titel (Michael Karbe 11.09.2026)."""
+    t = (titel or "").strip()
+    if not t or t.lower() in ("untitled", "unbenannt", "ohne titel", "document", "dokument"):
+        return False
+    if filename_base:
+        fb = filename_base.strip().lower()
+        if t.lower() in (fb, fb + ".pdf", fb + ".docx"):
+            return False
+    return True
+
+
 def finalize_export_pdf(pdf_path: str, title: str = None,
                         fallback_title: str = None,
-                        lang: str = "de-DE", verfahren: str | None = None) -> dict:
+                        lang: str = "de-DE", verfahren: str | None = None,
+                        fallback_heading: str | None = None,
+                        filename_base: str | None = None) -> dict:
     """Gemeinsamer Abschluss-Schritt fuer beide Export-Pfade (PDFix + fitz).
 
     Erledigt drei Dinge an der fertigen Export-PDF:
@@ -670,10 +686,15 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
        Sprache hat; eine vorhandene Angabe des Autors bleibt erhalten.
        Aktuell konstant de-DE, da die Pipeline deutsche Texte erzeugt
        (bei kuenftiger Mehrsprachigkeit hier parametrisieren).
-    2. Dokumenttitel setzen (WCAG 2.4.2) — Prioritaet:
-       a) `title` (vom Nutzer vergebener Name: Export-Name oder Umbenennung),
-       b) vorhandener Titel der Quell-PDF (wird respektiert),
-       c) `fallback_title` (Dateiname ohne Endung).
+    2. Dokumenttitel setzen (WCAG 2.4.2 / PDF/UA 7.1) — Prioritaet seit 11.09.2026
+       (Michael Karbe/Steve: ein Dateiname ist kein Titel; die Fassung vom 12.06.
+       liess den eingetippten Export-Namen sogar einen echten Titel ueberschreiben):
+       a) vorhandener Titel der Quell-PDF, wenn brauchbar (_titel_brauchbar),
+       b) `title` = der in InkluDocs vergebene Dokumentname (display_name),
+       c) `fallback_heading` = erste Ueberschrift aus dem Inhalt (Lesezeichen/Tags),
+       d) `fallback_title` = Dateiname ohne Endung (letzter Ausweg, info title_source
+          = "dateiname", damit der Export-Dialog darauf hinweisen kann).
+       Der Export-Dateiname aus dem Dialog kommt hier NIE an.
        Dazu ViewerPreferences /DisplayDocTitle true (PDF/UA-Anforderung:
        Anzeigeprogramme sollen den Titel statt des Dateinamens ansagen).
        Hinweis: Der Titel wird ins Info-Dictionary geschrieben; im XMP-Paket
@@ -687,7 +708,7 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
     Gibt ein Info-Dict zurueck: {lang_set, title_set, orphan_alts_removed}.
     """
     doc = fitz.open(pdf_path)
-    info = {"lang_set": False, "title_set": False, "orphan_alts_removed": 0}
+    info = {"lang_set": False, "title_set": False, "orphan_alts_removed": 0, "title_source": ""}
     cat = doc.pdf_catalog()
 
     # 1) Dokumentsprache
@@ -701,10 +722,14 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
     meta = doc.metadata or {}
     existing_title = (meta.get("title") or "").strip()
     new_title = None
-    if title and title.strip():
-        new_title = title.strip()
-    elif (not existing_title or existing_title.lower() == "untitled") and fallback_title:
-        new_title = fallback_title.strip()
+    if _titel_brauchbar(existing_title, filename_base):
+        info["title_source"] = "quelle"
+    elif title and title.strip():
+        new_title = title.strip(); info["title_source"] = "dokumentname"
+    elif fallback_heading and fallback_heading.strip():
+        new_title = fallback_heading.strip()[:250]; info["title_source"] = "ueberschrift"
+    elif fallback_title and fallback_title.strip():
+        new_title = fallback_title.strip(); info["title_source"] = "dateiname"
     if new_title and new_title != existing_title:
         meta["title"] = new_title
         doc.set_metadata(meta)
@@ -742,3 +767,39 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
     doc.close()
     os.replace(tmp_path, pdf_path)
     return info
+
+
+def erste_ueberschrift(pdf_path: str) -> str | None:
+    """Erste Ueberschrift aus dem Inhalt einer PDF als Titel-Ersatz (11.09.2026): erstes
+    Lesezeichen der obersten Ebene, sonst das erste H1/H2-Strukturelement (getaggte PDF).
+    None, wenn beides fehlt — dann bleibt nur der Dateiname."""
+    try:
+        doc = fitz.open(pdf_path)
+    except Exception:  # noqa: BLE001
+        return None
+    try:
+        for lvl, titel, _seite in (doc.get_toc(simple=True) or []):
+            t = (titel or "").strip()
+            if lvl == 1 and 2 <= len(t) <= 250:
+                return t
+        # Getaggte PDF: erstes H1/H2 ueber die Seitentexte mit Struktur (fitz liefert
+        # keinen Strukturbaum; Naeherung: erste Zeile in groesster Schrift auf Seite 1).
+        if doc.page_count:
+            seite = doc[0]
+            zeilen = []
+            for block in seite.get_text("dict").get("blocks", []):
+                for line in block.get("lines", []):
+                    text = "".join(sp.get("text", "") for sp in line.get("spans", [])).strip()
+                    groesse = max((sp.get("size", 0) for sp in line.get("spans", [])), default=0)
+                    if 2 <= len(text) <= 120:
+                        zeilen.append((groesse, text))
+            if zeilen:
+                groesste = max(g for g, _ in zeilen)
+                normal = sorted(g for g, _ in zeilen)[len(zeilen) // 2]
+                if groesste >= normal * 1.4:
+                    return next(t for g, t in zeilen if g == groesste)
+    except Exception:  # noqa: BLE001
+        return None
+    finally:
+        doc.close()
+    return None

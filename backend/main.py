@@ -7341,8 +7341,10 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     """Erzeugt die exportierte PDF fuer EIN Dokument (alle Alt-Texte
     eingebettet). Gibt (output_path, header_info) zurueck. Header_info
     enthaelt die gleichen Metriken wie der Single-Export davor.
-    custom_title: vom Nutzer beim Export vergebener Name — wird als
-    PDF-Dokumenttitel uebernommen (siehe finalize_export_pdf)."""
+    custom_title: wird seit 11.09.2026 NICHT mehr als Dokumenttitel verwendet
+    (ein Dateiname ist kein Titel — Michael Karbe/Steve); der Parameter bleibt
+    fuer Aufrufer erhalten und wird ignoriert. Titel-Reihenfolge siehe
+    pdf_export.finalize_export_pdf."""
     doc = unit["doc"]
     images = unit["images"]
     extraction_method = doc.get("extraction_method") or "fitz"
@@ -7404,17 +7406,25 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
 
     # Gemeinsamer Abschluss fuer BEIDE Pfade (12.06.2026): Dokumentsprache,
     # Dokumenttitel (WCAG 3.1.1 / 2.4.2) und verwaiste /Alt-Altlasten der
-    # Quell-PDF entfernen. Titel-Prioritaet: Export-Name des Nutzers >
-    # Umbenennung in InkluDocs (display_name) > vorhandener Titel der
-    # Quell-PDF > Dateiname ohne Endung. Der Dokument-Inhalt bleibt unberuehrt.
-    explicit_title = (custom_title or "").strip() or (doc.get("display_name") or "").strip() or None
+    # Quell-PDF entfernen. Titel-Prioritaet seit 11.09.2026 (Michael Karbe/Steve,
+    # gleich wie beim Word-Werkzeug): vorhandener brauchbarer Titel der Quell-PDF >
+    # Dokumentname in InkluDocs (display_name) > erste Ueberschrift aus dem Inhalt >
+    # Dateiname ohne Endung (mit Warnung). Der Export-Dateiname aus dem Dialog ist
+    # nur noch der Dateiname. Der Dokument-Inhalt bleibt unberuehrt.
+    explicit_title = (doc.get("display_name") or "").strip() or None
     fallback_title = re.sub(r"\.pdf$", "", (doc.get("original_filename") or "").strip(),
                             flags=re.IGNORECASE) or None
     try:
-        from pdf_export import finalize_export_pdf
+        from pdf_export import finalize_export_pdf, erste_ueberschrift
         info["a11y"] = finalize_export_pdf(output_path, title=explicit_title,
                                            fallback_title=fallback_title,
-                                           verfahren=info.get("method"))
+                                           verfahren=info.get("method"),
+                                           fallback_heading=erste_ueberschrift(output_path),
+                                           filename_base=fallback_title)
+        if info["a11y"].get("title_source") == "dateiname":
+            info.setdefault("warnings", []).append(
+                "Kein Dokumenttitel gefunden: Die PDF traegt den Dateinamen als Titel. "
+                "Besser: Dokument in InkluDocs umbenennen oder in der Quelle einen Titel setzen.")
     except Exception as e:
         # Der Abschluss-Schritt darf den Export nicht scheitern lassen:
         # Die Alt-Texte sind zu diesem Zeitpunkt bereits korrekt gesetzt,
@@ -7673,7 +7683,10 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
         docx_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
         # Titel aus dem INHALT (Michael Karbe 11.09.2026): vorher wurde der eingetippte Dateiname
         # („456“) zum PDF-Titel. Jetzt: Vorlage „Titel“ -> erste Überschrift 1 -> Dokumentname.
-        pdf_titel = pdfua_export.titel_aus_inhalt(docx_path) or _doc_label(unit["doc"])
+        # Reihenfolge wie beim PDF-Werkzeug (11.09.2026): Titel der Quelle (dokumenttitel_setzen
+        # laesst einen vorhandenen stehen) > Dokumentname in InkluDocs > erste Ueberschrift > Dateiname.
+        pdf_titel = ((unit["doc"].get("display_name") or "").strip()
+                     or pdfua_export.titel_aus_inhalt(docx_path) or _doc_label(unit["doc"]))
         pdfua_export.dokumenttitel_setzen(docx_path, pdf_titel, sprache)
         try:
             pdf_bytes, bericht = pdfua_export.konvertiere(docx_path, os.path.basename(docx_path))
@@ -7761,7 +7774,8 @@ def _pdfua_vorschau_sync(project: dict, user_id: int, document_id: Optional[int]
         docx_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
         try:
             # Titel-Ersatz wie bei der Umwandlung, damit Vorschau und Ergebnis dasselbe sagen (11.09.2026).
-            analyse = docx_hoerprobe.analysiere(docx_path, _, titel_ersatz=(pdfua_export.titel_aus_inhalt(docx_path) or label))
+            analyse = docx_hoerprobe.analysiere(docx_path, _, titel_ersatz=((unit["doc"].get("display_name") or "").strip()
+                                                                          or pdfua_export.titel_aus_inhalt(docx_path) or label))
         except DocxFehler as e:
             raise HTTPException(status_code=400, detail=str(e))
         try:
