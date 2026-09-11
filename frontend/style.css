@@ -986,6 +986,8 @@ input[type="file"] {
     background: var(--bg);
     margin-bottom: 1rem;
 }
+/* Fokusring, wenn der scrollbare Verlauf per Tab erreicht wird (11.09.2026) */
+.inkluagent-log:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
 .inkluagent-log:empty::before {
     content: 'Noch keine Nachrichten in diesem Projekt. Schreib eine Nachricht ins Eingabefeld unten.';
     display: block;
