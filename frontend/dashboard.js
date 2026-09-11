@@ -169,7 +169,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: t('Startseite') },
   { href: '/projekt-neu', label: t('Neues Projekt anlegen') },
   { href: '/projekte', label: t('Meine Projekte') },
-  { href: '/ausgaben', label: t('Meine Ausgaben') },   // Regal fuer fertige Umwandlungen (11.09.2026)
+  { href: '/ablage', label: t('Meine Ablage') },   // Sicherung der barrierefreien Office-Dokumente inkl. Pruefbericht (11.09.2026)
   // 25.08.2026 (Michael): „Meine Prompts“ wie „Meine Projekte“.
   { href: '/prompts', label: t('Meine Prompts') },
   // QUICKINFO-WERKZEUG (27.08.2026): Stammdaten-Bibliothek fuer Formularfelder, gleiche Stelle wie die Prompts.

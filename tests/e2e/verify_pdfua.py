@@ -100,7 +100,7 @@ if s == 200:
         check("Dateiname endet auf _alle_pdfua.zip", str(b.get("dateiname", "")).endswith("_alle_pdfua.zip"), b.get("dateiname"))
     # ─── Meine Ausgaben (11.09.2026): die Umwandlung legt einen Eintrag im Regal an ───
     aid = b.get("ausgabe_id")
-    check("Antwort traegt ausgabe_id + ausgaben_anzahl + aufbewahrung_tage", isinstance(aid, int) and isinstance(b.get("ausgaben_anzahl"), int) and b.get("aufbewahrung_tage", 0) >= 1, (aid, b.get("ausgaben_anzahl"), b.get("aufbewahrung_tage")))
+    check("Antwort traegt ausgabe_id + ausgaben_anzahl (Ablage, unbegrenzt: kein aufbewahrung_tage mehr)", isinstance(aid, int) and isinstance(b.get("ausgaben_anzahl"), int) and "aufbewahrung_tage" not in b, (aid, b.get("ausgaben_anzahl")))
     sa, la, _ = req("GET", f"/api/ausgaben?projekt={PID}")
     eintraege = la.get("ausgaben") or []
     meiner = [a for a in eintraege if a.get("id") == aid]
@@ -113,7 +113,7 @@ if s == 200:
         check("Eintrag: Dokumentname bei einem Dokument, sonst alle_dokumente", (a.get("dokument") and not a.get("alle_dokumente")) if len(doks) == 1 else a.get("alle_dokumente") is True, (a.get("dokument"), a.get("alle_dokumente")))
         se, e, _ = req("GET", f"/api/ausgaben/{aid}")
         ber = (e.get("ausgabe") or {}).get("bericht") or []
-        check("Einzelabruf liefert vollen Bericht (pruefung.punkte, hoerprobe, pruefbericht je Dokument)", se == 200 and len(ber) == len(doks) and all(d.get("pruefung", {}).get("punkte") and d.get("hoerprobe") and isinstance(d.get("pruefbericht"), list) for d in ber), (se, [list(d.keys()) for d in ber]))
+        check("Einzelabruf liefert Bericht NUR mit Befunden (keine ok-Punkte; Hoerprobe da)", se == 200 and len(ber) == len(doks) and all(isinstance(d.get("pruefung", {}).get("punkte"), list) and d.get("hoerprobe") and isinstance(d.get("pruefbericht"), list) and not any(p.get("status") == "ok" for p in d["pruefung"]["punkte"]) and not any(x.get("status") == "ok" for x in d["pruefbericht"]) for d in ber), (se, [list(d.keys()) for d in ber]))
         sd, datei2, hd = req("GET", f"/api/ausgaben/{aid}/datei", raw=True)
         check("Datei aus dem Regal = gleiche Datei wie der Token-Download", sd == 200 and datei2 == datei, (sd, len(datei2) if isinstance(datei2, bytes) else datei2, len(datei)))
         check("Content-Disposition mit Dateiname", "attachment" in (hd.get("content-disposition") or hd.get("Content-Disposition") or ""), hd)

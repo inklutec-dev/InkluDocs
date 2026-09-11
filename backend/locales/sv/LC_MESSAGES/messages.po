@@ -5665,3 +5665,86 @@ msgstr "Börja med dina egna dokument och ta reda på hur mycket av arbetet med 
 msgid "Vorführung vereinbaren"
 msgstr "Boka en demonstration"
 
+
+# Meine Ablage (Besprechung 11.09.2026): Umbenennung, nur Befunde, unbegrenzt, ueberlebt Projekt-Loeschen
+msgid "Meine Ablage"
+msgstr "Mitt arkiv"
+
+msgid "Sicherung deiner barrierefreien Office-Dokumente inklusive Prüfbericht."
+msgstr "Säkerhetskopia av dina tillgängliga Office-dokument inklusive kontrollrapport."
+
+msgid "Keine Befunde im Word-Dokument."
+msgstr "Inga fynd i Word-dokumentet."
+
+msgid "Ein Befund im Word-Dokument."
+msgstr "Ett fynd i Word-dokumentet."
+
+msgid "{n} Befunde im Word-Dokument."
+msgstr "{n} fynd i Word-dokumentet."
+
+msgid "PDF/UA bestanden, keine Befunde."
+msgstr "PDF/UA godkänd, inga fynd."
+
+msgid "Ein Bereich mit Befunden."
+msgstr "Ett område med fynd."
+
+msgid "{n} Bereiche mit Befunden."
+msgstr "{n} områden med fynd."
+
+msgid "Barrierefreie PDF"
+msgstr "Tillgänglig PDF"
+
+msgid "Keine Befunde."
+msgstr "Inga fynd."
+
+msgid "Befunde in der PDF:"
+msgstr "Fynd i PDF:en:"
+
+msgid "Befunde im Word-Dokument:"
+msgstr "Fynd i Word-dokumentet:"
+
+msgid "{art}: {dokument} — {datum}, {zeit}"
+msgstr "{art}: {dokument} — {datum}, {zeit}"
+
+msgid "{projekt} (Projekt gelöscht)"
+msgstr "{projekt} (projekt raderat)"
+
+msgid "Datei nicht mehr vorhanden, der Bericht bleibt."
+msgstr "Filen finns inte längre, rapporten finns kvar."
+
+msgid "Ablage: {name}"
+msgstr "Arkiv: {name}"
+
+msgid "Für dieses Projekt liegt noch nichts in der Ablage. Wandle es über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "Inget från det här projektet finns i arkivet ännu. Omvandla det till en tillgänglig PDF via ”Ladda ner” eller exportera det som Word, så visas det här."
+
+msgid "Die Ablage ist noch leer. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "Arkivet är fortfarande tomt. Omvandla ett Word-projekt till en tillgänglig PDF via ”Ladda ner” eller exportera det som Word, så visas det här."
+
+msgid "Die Ablage konnte nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Arkivet kunde inte läsas in. Försök igen senare."
+
+msgid "{n} Einträge geladen."
+msgstr "{n} poster inlästa."
+
+msgid "Neu in der Ablage"
+msgstr "Nytt i arkivet"
+
+msgid "Ablage öffnen"
+msgstr "Öppna arkivet"
+
+msgid "Ablage ({n})"
+msgstr "Arkiv ({n})"
+
+msgid "Zur Ablage"
+msgstr "Till arkivet"
+
+msgid "PDF und Prüfbericht liegen jetzt in deiner Ablage."
+msgstr "PDF och kontrollrapport finns nu i ditt arkiv."
+
+msgid "Ablage"
+msgstr "Arkiv"
+
+msgid "Eintrag lesen"
+msgstr "Läs post"
+

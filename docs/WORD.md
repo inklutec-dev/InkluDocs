@@ -437,3 +437,38 @@ Lesezeichen, sonst größte Zeile auf Seite 1) → Dateiname ohne Endung, dann m
 Export-Dialog bzw. Hinweis im Prüfbericht. Code: `pdf_export.finalize_export_pdf`
 (`title_source`), `pdf_export.erste_ueberschrift`, `pdfua_export.titel_aus_inhalt`.
 Ein eigenes Feld „Dokumenttitel“ im Dialog ist bewusst zurückgestellt (Steve 11.09.).
+
+
+## Meine Ablage (Besprechung Steve + Michael, 11.09.2026 nachmittags — löst „Meine Ausgaben“ ab)
+
+Entscheidungen und Umsetzung:
+
+- **Name:** „Meine Ablage“ (Seitenleiste, Seite `/ablage`, Knopf „Ablage (n)“ rechts neben
+  „Herunterladen“ im Projekt; die Reiterleiste vom Vormittag ist weg). Einleitung: „Sicherung
+  deiner barrierefreien Office-Dokumente inklusive Prüfbericht.“ Kein Zurück-Knopf (Weg über die
+  Seitenleiste). `/ausgaben` leitet dauerhaft auf `/ablage` um (Links in alten Chat-Antworten).
+  Die API-Pfade `/api/ausgaben…` und die Werkzeugnamen des Chatbots bleiben (interne Namen).
+- **Aufbewahrung unbegrenzt:** keine Frist mehr, kein `datei_bis`, kein `AUSGABEN_TAGE`, kein
+  „verfügbar bis“. Gelöscht wird nur einzeln in der Ablage oder mit dem Konto.
+- **Einträge überleben das Löschen des Projekts:** neue Tabelle `ablage` OHNE Fremdschlüssel auf
+  `projects` (die alte `ausgaben` hatte `ON DELETE CASCADE`; Übernahme der Zeilen mit gleichen
+  ids beim Start, dann `DROP`). Dateien liegen in `results/<user>/_ablage/` statt im
+  Projektordner (`_pdfua_umwandeln_sync`, `_word_export_ausgabe_sync`, `_word_export_in_ablage`);
+  der Token-Sofortdownload zeigt auf denselben Pfad. Beim Löschen des Projekts setzt
+  `_ablage_projekt_geloescht` `projekt_geloescht = 1`, hält den Projektnamen als Text
+  (`projekt_name`) und löst `document_id`. Altbestand vom Vormittag holt
+  `_ablage_dateien_einsammeln` beim Laden der Liste und vor dem Löschen eines Projekts in den
+  Ablage-Ordner. Die Oberfläche zeigt „(Projekt gelöscht)“ und keinen „Zum Projekt“-Link.
+- **Knopf „Als Word“ legt ebenfalls einen Eintrag an** (`art = docx`, Auslöser Knopf), damit
+  händischer Export und Chatbot gleich sind (Steve). Der Sofort-Download bleibt.
+- **Nur Befunde** (Michael: „was gut war, ist nicht so wichtig“): Export-Dialog, Ablage-Seite,
+  Dashboard und Einzelabruf (`_nur_befunde`) zeigen nur Punkte mit Status Befund; ohne Befund
+  ein Satz („PDF/UA bestanden, keine Befunde.“ / „Keine Befunde im Word-Dokument.“). Der Chatbot
+  hat dieselbe Regel im Prompt. Gespeichert bleibt der volle Bericht.
+- **Art in der Überschrift** des Eintrags („Barrierefreie PDF: Dokument — Datum, Uhrzeit“),
+  weil im Regal nicht zu erkennen war, ob PDF oder Word (Michael).
+- Sicherheit: Dateien werden nur aus dem Nutzer-Ordner ausgeliefert (Präfixprüfung mit
+  Trenner, `_ablage_pfad_ok`); jeder Zugriff prüft `user_id`.
+- Tests: `tests/e2e/verify_ablage.py` (Knopf-Export → Eintrag, nur Befunde, Umleitung,
+  Projekt löschen → Einträge und Dateien bleiben, einzeln löschen), `verify_pdfua.py`,
+  `ui_ausgaben.py`, `ui_chat_ausgaben.py` angepasst. 27 Texte × 6 Sprachen.

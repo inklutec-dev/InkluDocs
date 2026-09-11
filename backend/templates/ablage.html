@@ -1,16 +1,17 @@
 {% extends "base_app.html" %}
-{% block title %}{{ _('Meine Ausgaben') }} · InkluDocs{% endblock %}
+{% block title %}{{ _('Meine Ablage') }} · InkluDocs{% endblock %}
 {% block main %}
-      {# MEINE AUSGABEN (11.09.2026, Steve + Fable 5): das Regal fuer fertige Umwandlungen.
-         Die Projektansicht bleibt die Werkstatt (Bilder, Alt-Texte); hier liegen die
-         Ergebnisse: Datei, Bericht, Hoerprobe, Vorschaubild. EINE Seite, drei Eingaenge:
-         Seitenleiste, Reiter „Ausgaben (n)" im Projektkopf (?projekt=), Link im Export-
-         Bereich nach der Umwandlung (#ausgabe-<id>). Aufbau: H1, Zurueck-Link, Filter,
-         je Eintrag eine H2 mit Dokument und Datum — Screenreader springen von H2 zu H2,
+      {# MEINE ABLAGE (11.09.2026, Steve + Michael; vormittags „Meine Ausgaben“): Sicherung der
+         barrierefreien Office-Dokumente inklusive Pruefbericht. Die Projektansicht bleibt die
+         Werkstatt; hier liegen die Ergebnisse: Datei, Bericht, Hoerprobe, Vorschaubild. EINE
+         Seite, drei Eingaenge: Seitenleiste, Knopf „Ablage (n)“ neben Herunterladen (?projekt=),
+         Link im Export-Bereich / Chat-Anhang (#ausgabe-<id>). Besprechung 11.09.: kein
+         Zurueck-Knopf (Weg ueber die Seitenleiste), Aufbewahrung unbegrenzt, Eintraege ueberleben
+         das Loeschen des Projekts, Berichte zeigen nur Befunde. Aufbau: H1, Einleitung, Filter,
+         je Eintrag eine H2 „Art: Dokument — Datum“ — Screenreader springen von H2 zu H2,
          Sehende sehen Karten mit Vorschaubild links und Knoepfen rechts. #}
-      <h1 id="ausgabenTitel" tabindex="-1">{{ _('Meine Ausgaben') }}</h1>
-      <p class="dash-sub" id="ausgabenIntro" style="margin-bottom:0.8rem;"></p>
-      <p class="dash-sub" id="ausgabenZurueck" style="margin-bottom:1rem;"></p>
+      <h1 id="ausgabenTitel" tabindex="-1">{{ _('Meine Ablage') }}</h1>
+      <p class="dash-sub" id="ausgabenIntro" style="margin-bottom:1rem;">{{ _('Sicherung deiner barrierefreien Office-Dokumente inklusive Prüfbericht.') }}</p>
       <form class="ausgaben-filter" id="ausgabenFilter" hidden>
         <label for="projektFilter" style="font-weight:600;">{{ _('Projekt') }}</label>
         <select id="projektFilter"><option value="">{{ _('Alle Projekte') }}</option></select>
@@ -43,18 +44,18 @@
     return e;
   }
   function pruefSatz(a) {
+    // Besprechung 11.09.: nur sagen, was auffaellt. Ohne Befund ein kurzer Satz.
     if (a.art === 'docx') {
-      // Word-Ausgabe: kein veraPDF, die Hinweise kommen aus dem Pruefbericht des Word-Dokuments.
-      if (a.hinweise === 0) return t('Word-Prüfbericht: keine Auffälligkeiten');
-      return t('Word-Prüfbericht: {n} Hinweise', { n: a.hinweise });
+      if (a.hinweise === 0) return t('Keine Befunde im Word-Dokument.');
+      return a.hinweise === 1 ? t('Ein Befund im Word-Dokument.') : t('{n} Befunde im Word-Dokument.', { n: a.hinweise });
     }
-    if (a.bestanden) return t('Prüfung: bestanden');
-    if (a.hinweise === 1) return t('Prüfung: ein Bereich mit Hinweisen');
-    return t('Prüfung: {n} Bereiche mit Hinweisen', { n: a.hinweise });
+    if (a.bestanden) return t('PDF/UA bestanden, keine Befunde.');
+    if (a.hinweise === 1) return t('Ein Bereich mit Befunden.');
+    return t('{n} Bereiche mit Befunden.', { n: a.hinweise });
   }
   // Art der Ausgabe in der Sprache der Oberflaeche (der Server liefert nur den Schluessel).
   function artLabel(a) {
-    if (a.art === 'pdfua') return t('Barrierefreie PDF (PDF/UA)');
+    if (a.art === 'pdfua') return t('Barrierefreie PDF');
     if (a.art === 'docx') return t('Word mit Alt-Texten');
     return a.art_label || a.art;
   }
@@ -76,21 +77,23 @@
     box.innerHTML = '';
     dokumente.forEach((dok) => {
       if (dokumente.length > 1) box.appendChild(el('h3', null, dok.dokument));
-      const punkte = (dok.pruefung && dok.pruefung.punkte) || [];
+      const punkte = ((dok.pruefung && dok.pruefung.punkte) || []).filter((p) => p.status !== 'ok');
+      const wordBefunde = (dok.pruefbericht || []).filter((b) => b.status !== 'ok');
+      if (!punkte.length && !wordBefunde.length) {
+        box.appendChild(el('p', null, t('Keine Befunde.')));
+        return;
+      }
       if (punkte.length) {
+        box.appendChild(el('p', null, t('Befunde in der PDF:')));
         const ul = el('ul');
-        punkte.forEach((p) => {
-          ul.appendChild(el('li', null, p.bereich + ': ' + (p.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + '. ' + p.text));
-        });
+        punkte.forEach((p) => ul.appendChild(el('li', null, p.bereich + ': ' + p.text)));
         box.appendChild(ul);
       }
-      if (dok.pruefbericht && dok.pruefbericht.length) {
-        const det = el('details', 'ausgabe-details');
-        det.appendChild(el('summary', null, t('Prüfbericht des Word-Dokuments')));
+      if (wordBefunde.length) {
+        box.appendChild(el('p', null, t('Befunde im Word-Dokument:')));
         const ul2 = el('ul');
-        dok.pruefbericht.forEach((b) => ul2.appendChild(el('li', null, (b.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + ': ' + b.text)));
-        det.appendChild(ul2);
-        box.appendChild(det);
+        wordBefunde.forEach((b) => ul2.appendChild(el('li', null, b.text)));
+        box.appendChild(ul2);
       }
     });
   }
@@ -140,7 +143,7 @@
           if (!res.ok) throw new Error('x');
           const next = li.nextElementSibling || li.previousElementSibling;
           li.remove();
-          announce(t('Ausgabe gelöscht.'));
+          announce(t('Eintrag gelöscht.'));
           const rest = document.querySelectorAll('#ausgabenContainer li.dash-item').length;
           if (rest === 0) { laden(); return; }
           const ziel = next ? next.querySelector('h2') : byId('ausgabenTitel');
@@ -162,7 +165,8 @@
     const li = el('li', 'dash-item');
     li.id = 'ausgabe-' + a.id;
     const dz = ausgabeDatumZeit(a.created_at);
-    const h2 = el('h2', null, t('{dokument} — {datum}, {zeit}', { dokument: dokumentName(a), datum: dz.datum, zeit: dz.zeit }));
+    // Art in der Ueberschrift (Michael 11.09.: im Regal war nicht zu sehen, ob PDF oder Word).
+    const h2 = el('h2', null, t('{art}: {dokument} — {datum}, {zeit}', { art: artLabel(a), dokument: dokumentName(a), datum: dz.datum, zeit: dz.zeit }));
     li.appendChild(h2);
     const karte = el('div', 'ausgabe-karte');
     if (a.vorschau) {
@@ -175,8 +179,9 @@
     }
     const text = el('div', 'ausgabe-text');
     const metaTeile = [];
-    if (!gefiltert) metaTeile.push(a.projekt);
-    metaTeile.push(artLabel(a));
+    if (!gefiltert) metaTeile.push(a.projekt_geloescht ? t('{projekt} (Projekt gelöscht)', { projekt: a.projekt }) : a.projekt);
+    else if (a.projekt_geloescht) metaTeile.push(t('Projekt gelöscht'));
+    metaTeile.push(a.dateiname);
     if (a.ausloeser === 'bot') metaTeile.push(t('über den Chatbot'));
     text.appendChild(el('p', 'dash-meta', metaTeile.join(' · ')));
     const summe = el('p', null);
@@ -193,18 +198,16 @@
       dl.setAttribute('download', a.dateiname || '');
       dl.textContent = (a.media === 'application/zip') ? t('ZIP herunterladen') : (a.art === 'docx' ? t('Word herunterladen') : t('PDF herunterladen'));
       aktionen.appendChild(dl);
-      if (a.datei_bis) {
-        const bis = ausgabeDatumZeit(a.datei_bis);
-        aktionen.appendChild(el('span', 'dash-meta', t('Datei verfügbar bis {datum}', { datum: bis.datum })));
-      }
     } else {
-      aktionen.appendChild(el('span', 'dash-meta', t('Datei nicht mehr verfügbar (Aufbewahrungsfrist abgelaufen), der Bericht bleibt.')));
+      aktionen.appendChild(el('span', 'dash-meta', t('Datei nicht mehr vorhanden, der Bericht bleibt.')));
     }
-    const zum = document.createElement('a');
-    zum.className = 'btn btn-secondary';
-    zum.href = '/app?projekt=' + encodeURIComponent(a.project_id);
-    zum.textContent = t('Zum Projekt');
-    aktionen.appendChild(zum);
+    if (!a.projekt_geloescht) {
+      const zum = document.createElement('a');
+      zum.className = 'btn btn-secondary';
+      zum.href = '/app?projekt=' + encodeURIComponent(a.project_id);
+      zum.textContent = t('Zum Projekt');
+      aktionen.appendChild(zum);
+    }
     aktionen.appendChild(loeschKnopf(a, li));
     text.appendChild(aktionen);
     text.appendChild(detailsMitLader(a.id, t('Bericht lesen'), fuelleBericht, 'ausgabe-bericht'));
@@ -218,21 +221,12 @@
     const cont = byId('ausgabenContainer');
     cont.setAttribute('aria-busy', 'false');
     cont.innerHTML = '';
-    byId('ausgabenIntro').textContent = t('Fertige Umwandlungen mit Bericht und Download. Dateien bleiben {n} Tage verfügbar, der Bericht bleibt beim Projekt.', { n: data.aufbewahrung_tage || 30 });
-    const zur = byId('ausgabenZurueck');
-    zur.innerHTML = '';
-    const back = document.createElement('a');
-    back.className = 'btn btn-secondary';
+    // Kein Zurueck-Knopf (Besprechung 11.09.): der Weg geht ueber die Seitenleiste.
     if (data.projekt) {
-      byId('ausgabenTitel').textContent = t('Ausgaben: {name}', { name: data.projekt.name });
-      document.title = t('Ausgaben: {name}', { name: data.projekt.name }) + ' · InkluDocs';
-      back.href = '/app?projekt=' + encodeURIComponent(data.projekt.id);
-      back.textContent = t('Zurück zum Projekt');
-    } else {
-      back.href = '/dashboard';
-      back.textContent = t('Zurück zur Startseite');
+      const name = data.projekt.geloescht ? t('{projekt} (Projekt gelöscht)', { projekt: data.projekt.name }) : data.projekt.name;
+      byId('ausgabenTitel').textContent = t('Ablage: {name}', { name: name });
+      document.title = t('Ablage: {name}', { name: name }) + ' · InkluDocs';
     }
-    zur.appendChild(back);
     // Filter: nur wenn es Ausgaben in mehr als einem Projekt gibt oder gerade gefiltert wird.
     const form = byId('ausgabenFilter');
     const sel = byId('projektFilter');
@@ -240,7 +234,7 @@
     (data.projekte || []).forEach((p) => {
       const o = document.createElement('option');
       o.value = p.id;
-      o.textContent = t('{name} ({n})', { name: p.name, n: p.anzahl });
+      o.textContent = t('{name} ({n})', { name: p.geloescht ? t('{projekt} (Projekt gelöscht)', { projekt: p.name }) : p.name, n: p.anzahl });
       if (data.projekt && String(data.projekt.id) === String(p.id)) o.selected = true;
       sel.appendChild(o);
     });
@@ -248,8 +242,8 @@
     const liste = data.ausgaben || [];
     if (liste.length === 0) {
       const p = el('p', 'dash-empty', data.projekt
-        ? t('Dieses Projekt hat noch keine Ausgaben. Wandle es über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier.')
-        : t('Noch keine Ausgaben. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier.'));
+        ? t('Für dieses Projekt liegt noch nichts in der Ablage. Wandle es über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier.')
+        : t('Die Ablage ist noch leer. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier.'));
       cont.appendChild(p);
       return;
     }
@@ -269,11 +263,11 @@
       const cont = byId('ausgabenContainer');
       cont.setAttribute('aria-busy', 'false');
       cont.innerHTML = '';
-      cont.appendChild(el('p', 'dash-empty', t('Ausgaben konnten nicht geladen werden. Bitte später erneut versuchen.')));
+      cont.appendChild(el('p', 'dash-empty', t('Die Ablage konnte nicht geladen werden. Bitte später erneut versuchen.')));
       return;
     }
     render(data);
-    announce(t('{n} Ausgaben geladen.', { n: (data.ausgaben || []).length }));
+    announce(t('{n} Einträge geladen.', { n: (data.ausgaben || []).length }));
     // Sprungmarke aus dem Export-Bereich (#ausgabe-<id>): Fokus auf die H2 des Eintrags.
     if (window.location.hash && window.location.hash.startsWith('#ausgabe-')) {
       const ziel = document.querySelector(window.location.hash + ' h2');
@@ -282,7 +276,7 @@
   }
   byId('projektFilter').addEventListener('change', (e) => {
     const v = e.target.value;
-    window.location.href = v ? ('/ausgaben?projekt=' + encodeURIComponent(v)) : '/ausgaben';
+    window.location.href = v ? ('/ablage?projekt=' + encodeURIComponent(v)) : '/ablage';
   });
   laden();
 {% endraw %}

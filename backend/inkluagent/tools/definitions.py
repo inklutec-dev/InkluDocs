@@ -215,7 +215,7 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
             "und prüft sie (veraPDF). Kostet Credits. ZWEI SCHRITTE: Erster Aufruf OHNE bestaetigt liefert nur "
             "Preis und Guthaben (rueckfrage_noetig) — nenne dem Nutzer den Preis und frage. Erst nach seinem "
             "klaren Ja erneut mit bestaetigt=true aufrufen. Ergebnis: ausgabe_id, Zusammenfassung, Bereiche mit "
-            "Hinweisen; die Datei liegt unter „Meine Ausgaben“ und der Nutzer sieht unter deiner Antwort einen "
+            "Hinweisen; die Datei liegt in der Ablage und der Nutzer sieht unter deiner Antwort einen "
             "Download-Knopf. Ohne document_id alle Dokumente (ZIP)."
         ),
         "input_schema": {"type": "object", "properties": {
@@ -226,7 +226,7 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
     {
         "name": "exportiere_word",
         "description": (
-            "Gibt die Word-Datei mit den aktuellen Alt-Texten aus (Eintrag unter „Meine Ausgaben“, Download-Knopf "
+            "Gibt die Word-Datei mit den aktuellen Alt-Texten aus (Eintrag in der Ablage, Download-Knopf "
             "unter deiner Antwort). Kostet Credits. Gleiche zwei Schritte wie konvertiere_zu_pdfua: erst ohne "
             "bestaetigt (Preis nennen, fragen), dann mit bestaetigt=true."
         ),
@@ -253,7 +253,7 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
         "name": "liste_ausgaben",
         "description": (
             "Alle fertigen Ausgaben dieses Projekts (barrierefreie PDFs, Word-Dateien) mit Datum, Prüfstand und "
-            "Verfügbarkeit der Datei — das Regal „Meine Ausgaben“. Keine Args."
+            "Verfügbarkeit der Datei — die Ablage. Keine Args."
         ),
         "input_schema": {"type": "object", "properties": {}, "required": []},
     },

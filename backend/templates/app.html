@@ -658,7 +658,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${t('– ganzes Projekt')}</span></button>
                         <!-- Meine Ausgaben (Steve/Michael 11.09.2026 Besprechung): kein Reiter mehr im Projektkopf, sondern ein
                              Link in Knopf-Optik direkt rechts neben „Herunterladen“ — fuehrt ins Regal, gefiltert auf dieses Projekt. -->
-                        ${(project.project_type === 'docx' || (data.ausgaben_anzahl || 0) > 0) ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ausgaben?projekt=' + project.id + '">' + t('Ausgaben ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : ''}
+                        ${(project.project_type === 'docx' || (data.ausgaben_anzahl || 0) > 0) ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : ''}
                         <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
@@ -2983,23 +2983,25 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 announce(m);
                 return;
             }
+            // Besprechung 11.09. (Michael): nur Befunde zeigen, Positives weglassen.
             let html = '<p style="margin:0 0 0.4rem;"><strong>' + escHtml(d.zusammenfassung || '') + '</strong></p>';
             (d.dokumente || []).forEach(dok => {
                 if ((d.dokumente || []).length > 1) html += '<h3 style="font-size:1rem;margin:0.6rem 0 0.2rem;">' + escHtml(dok.dokument) + '</h3>';
-                html += '<ul style="margin:0.2rem 0 0.6rem;padding-left:1.2rem;">'
-                    + (dok.pruefung && dok.pruefung.punkte ? dok.pruefung.punkte : []).map(p =>
-                        '<li>' + escHtml(p.bereich) + ': ' + (p.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + '. ' + escHtml(p.text) + '</li>').join('')
-                    + '</ul>';
+                const befunde = (dok.pruefung && dok.pruefung.punkte ? dok.pruefung.punkte : []).filter(p => p.status !== 'ok');
+                if (befunde.length) {
+                    html += '<ul style="margin:0.2rem 0 0.6rem;padding-left:1.2rem;">'
+                        + befunde.map(p => '<li>' + escHtml(p.bereich) + ': ' + escHtml(p.text) + '</li>').join('') + '</ul>';
+                }
                 html += pdfuaAnalyseHtml(dok);
             });
             html += '<button type="button" class="btn btn-primary" id="pdfuaDownload">' + icon('download') + t('PDF herunterladen') + '</button>';
             // Meine Ausgaben (11.09.2026): das Ergebnis liegt jetzt dauerhaft im Regal — Link dorthin
             // (dritter Eingang) und Reiter-Zaehler im Projektkopf nachziehen.
             if (d.ausgabe_id) {
-                html += ' <a class="btn btn-secondary" id="pdfuaAusgabenLink" href="/ausgaben?projekt=' + projectId + '#ausgabe-' + d.ausgabe_id + '">' + t('Zu meinen Ausgaben') + '</a>';
-                html += '<p style="margin:0.5rem 0 0;">' + escHtml(t('PDF und Bericht liegen jetzt unter „Meine Ausgaben“. Die Datei bleibt dort {n} Tage verfügbar, der Bericht bleibt beim Projekt.', { n: d.aufbewahrung_tage || 30 })) + '</p>';
+                html += ' <a class="btn btn-secondary" id="pdfuaAusgabenLink" href="/ablage?projekt=' + projectId + '#ausgabe-' + d.ausgabe_id + '">' + t('Zur Ablage') + '</a>';
+                html += '<p style="margin:0.5rem 0 0;">' + escHtml(t('PDF und Prüfbericht liegen jetzt in deiner Ablage.')) + '</p>';
                 const tab = document.getElementById('ausgabenTab');
-                if (tab && typeof d.ausgaben_anzahl === 'number') tab.textContent = t('Ausgaben ({n})', { n: d.ausgaben_anzahl });
+                if (tab && typeof d.ausgaben_anzahl === 'number') tab.textContent = t('Ablage ({n})', { n: d.ausgaben_anzahl });
             }
             if (box) {
                 box.innerHTML = html;
@@ -3018,10 +3020,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // damit die Ergebnis-Region kurz bleibt und die Live-Region nicht alles vorliest.
     function pdfuaAnalyseHtml(dok) {
         let html = '';
+        // Nur Befunde (Besprechung 11.09.); ohne Befund ein Satz statt einer Liste von „in Ordnung“.
+        const wordBefunde = (dok.pruefbericht || []).filter(b => b.status !== 'ok');
         if (dok.pruefbericht && dok.pruefbericht.length) {
-            html += '<details style="margin:0.4rem 0;"><summary>' + t('Prüfbericht des Word-Dokuments') + '</summary><ul style="margin:0.3rem 0 0.4rem;padding-left:1.2rem;">'
-                + dok.pruefbericht.map(b => '<li>' + (b.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + ': ' + escHtml(b.text) + '</li>').join('')
-                + '</ul></details>';
+            html += '<details style="margin:0.4rem 0;"><summary>' + t('Prüfbericht des Word-Dokuments') + '</summary>'
+                + (wordBefunde.length
+                    ? '<ul style="margin:0.3rem 0 0.4rem;padding-left:1.2rem;">' + wordBefunde.map(b => '<li>' + escHtml(b.text) + '</li>').join('') + '</ul>'
+                    : '<p style="margin:0.3rem 0 0.4rem;">' + t('Keine Befunde im Word-Dokument.') + '</p>')
+                + '</details>';
         }
         if (dok.hoerprobe && dok.hoerprobe.length) {
             html += '<details style="margin:0.4rem 0;"><summary>' + t('Hörprobe: so liest ein Screenreader das Dokument') + '</summary>'
@@ -3049,7 +3055,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 hinweise += (dok.pruefbericht || []).filter(b => b.status !== 'ok').length;
                 html += pdfuaAnalyseHtml(dok);
             });
-            const satz = hinweise === 0 ? t('Keine Auffälligkeiten im Word-Dokument.') : t('{n} Hinweise zum Word-Dokument, Details im Prüfbericht.', { n: hinweise });
+            const satz = hinweise === 0 ? t('Keine Befunde im Word-Dokument.') : (hinweise === 1 ? t('Ein Befund im Word-Dokument.') : t('{n} Befunde im Word-Dokument.', { n: hinweise }));
             if (box) { box.innerHTML = '<p style="margin:0 0 0.4rem;"><strong>' + escHtml(satz) + '</strong></p>' + html; const s = box.querySelector('details summary'); if (s) s.focus(); }
             announce(satz);
         } catch (e) {
@@ -3407,7 +3413,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             generate_quickinfo: t('Feld-Pass'), update_quickinfo: t('Quickinfo speichern'), revert_quickinfo: t('Quickinfo zurücksetzen'),
             search_master_data: t('Stammdaten suchen'), save_to_master_data: t('In Stammdaten übernehmen'),
             pruefe_word_dokument: t('Word-Prüfbericht'), konvertiere_zu_pdfua: t('In barrierefreie PDF umwandeln'),
-            exportiere_word: t('Word exportieren'), liste_ausgaben: t('Meine Ausgaben'), lies_ausgabe: t('Ausgabe lesen'),
+            exportiere_word: t('Word exportieren'), liste_ausgaben: t('Ablage'), lies_ausgabe: t('Eintrag lesen'),
             analysiere_word_struktur: t('Struktur-Lektor')
         };
         return map[name] || name;
@@ -3437,11 +3443,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const zu = document.createElement('a');
                 zu.className = 'btn btn-secondary';
                 zu.href = a.ausgaben_url;
-                zu.textContent = t('Zu meinen Ausgaben');
+                zu.textContent = t('Zur Ablage');
                 box.appendChild(zu);
             }
             const tab = document.getElementById('ausgabenTab');
-            if (tab && typeof a.ausgaben_anzahl === 'number') tab.textContent = t('Ausgaben ({n})', { n: a.ausgaben_anzahl });
+            if (tab && typeof a.ausgaben_anzahl === 'number') tab.textContent = t('Ablage ({n})', { n: a.ausgaben_anzahl });
         });
         return box.children.length ? box : null;
     }

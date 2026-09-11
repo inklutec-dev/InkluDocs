@@ -6136,6 +6136,9 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
         conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
 
+    # Ablage (11.09.2026): Altbestand-Dateien aus dem Projektordner erst in den Ablage-Ordner holen,
+    # sonst nimmt rmtree sie gleich mit.
+    _ablage_dateien_einsammeln(user["id"])
     # Delete files
     project_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id))
     if os.path.exists(project_dir):
@@ -6147,8 +6150,9 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
     # Quickinfo-Werkzeug (27.08.2026): Formularfelder mit aufraeumen (+ Gast-Urteile, 28.08.).
     conn.execute("DELETE FROM feld_reviews WHERE feld_id IN (SELECT id FROM formularfelder WHERE project_id = ?)", (project_id,))
     conn.execute("DELETE FROM formularfelder WHERE project_id = ?", (project_id,))
-    # Meine Ausgaben (11.09.2026): Eintraege mit loeschen; die Dateien lagen unter _export im Projektordner.
-    conn.execute("DELETE FROM ausgaben WHERE project_id = ?", (project_id,))
+    # Ablage (Besprechung 11.09.2026, Steve): Eintraege BLEIBEN — Dateien liegen im Nutzer-Ordner
+    # _ablage, hier nur Projektname als Momentaufnahme festhalten und als geloescht markieren.
+    _ablage_projekt_geloescht(conn, user["id"], project)
     # Multi-Datei (08.06.2026): Dokument-Zeilen mit aufraeumen.
     conn.execute("DELETE FROM documents WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
@@ -7603,6 +7607,7 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
         response = FileResponse(output_path, filename=f"inkludocs_{download_base}.docx",
                                 media_type=DOCX_MEDIA, headers=headers)
         billing.verbuche(user["id"], "export", aktion="docx_export", credits=_preis)
+        _word_export_in_ablage(user["id"], project, unit, output_path, f"inkludocs_{download_base}.docx", DOCX_MEDIA, info, _preis, resolve_ui_language(request))
         return response
 
     zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
@@ -7629,7 +7634,38 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
     response = FileResponse(zip_path, filename=f"{zip_base}_alle_word.zip",
                             media_type="application/zip", headers=headers)
     billing.verbuche(user["id"], "export", aktion="docx_export", credits=_preis)
+    _word_export_in_ablage(user["id"], project, None, zip_path, f"{zip_base}_alle_word.zip", "application/zip",
+                           {"total": total_images, "tagged": total_tagged, "warnings": aggregated_warnings}, _preis, resolve_ui_language(request))
     return response
+
+
+def _word_export_in_ablage(user_id: int, project: dict, unit: Optional[dict], quelle: str, dateiname: str, media: str,
+                           info: dict, preis: int, ui_lang: str) -> None:
+    """Knopf „Als Word“ legt seit der Besprechung 11.09.2026 (Steve: haendisch und Chatbot gleich) eine Kopie in
+    der Ablage ab — Datei + Word-Pruefbericht/Hoerprobe. Scheitert das, bleibt der Download davon unberuehrt."""
+    try:
+        token = _secrets.token_hex(12)
+        ziel = os.path.join(_ablage_dir(user_id), f"word_{token}" + (".zip" if media == "application/zip" else ".docx"))
+        shutil.copyfile(quelle, ziel)
+        _ = get_gettext(ui_lang)
+        ergebnisse = []
+        if unit is not None:
+            try:
+                analyse = docx_hoerprobe.analysiere(quelle, _)
+            except Exception:  # noqa: BLE001
+                analyse = {"hoerprobe": [], "pruefbericht": []}
+            ergebnisse.append({"dokument": _doc_label(unit["doc"]), "bilder": info.get("total"), "alt_texte": info.get("tagged"),
+                               "warnungen": info.get("warnings") or [], "hoerprobe": analyse.get("hoerprobe") or [],
+                               "pruefbericht": analyse.get("pruefbericht") or []})
+        hinweise = sum(1 for e in ergebnisse for b in e["pruefbericht"] if b.get("status") != "ok")
+        try:
+            doc_id = int(unit["doc"]["id"]) if unit is not None else None
+        except (KeyError, TypeError, ValueError):
+            doc_id = None
+        _ausgabe_anlegen(user_id, project, doc_id, "knopf", dateiname, ziel, media, token, preis, hinweise == 0,
+                         _("Word-Datei mit {n} Alt-Texten erzeugt.").format(n=int(info.get("tagged") or 0)), ergebnisse, None, art="docx")
+    except Exception as e:  # noqa: BLE001
+        log.warning("Word-Export: Ablage-Eintrag nicht angelegt: %s", e)
 
 
 # ─── BARRIEREFREIE PDF AUS WORD (29.08.2026, Michael/Steve) ────────────────
@@ -7723,16 +7759,19 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
                            "zusammenfassung": pdfua_export.zusammenfassung(pruefung, _)})
 
     token = _secrets.token_hex(12)
+    # Ablage (Besprechung 11.09.2026): die Datei liegt im Nutzer-Ordner _ablage, NICHT im Projektordner —
+    # so ueberlebt sie das Loeschen des Projekts. Der Token-Sofortdownload zeigt auf denselben Pfad.
+    ablage_dir = _ablage_dir(user_id)
     if len(pdfs) == 1:
         dateiname = pdfs[0][0]
-        pfad = os.path.join(output_dir, f"pdfua_{token}.pdf")
+        pfad = os.path.join(ablage_dir, f"pdfua_{token}.pdf")
         with open(pfad, "wb") as f:
             f.write(pdfs[0][1])
         media = "application/pdf"
     else:
         zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
         dateiname = f"{zip_base}_alle_pdfua.zip"
-        pfad = os.path.join(output_dir, f"pdfua_{token}.zip")
+        pfad = os.path.join(ablage_dir, f"pdfua_{token}.zip")
         with zipfile.ZipFile(pfad, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             for name, data in pdfs:
                 zf.writestr(name, data)
@@ -7756,8 +7795,7 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
                                   _preis, bestanden, zusammenfassung, ergebnisse, pdfs[0][1])
     return {"ok": True, "token": token, "dateiname": dateiname, "media": media, "preis": _preis,
             "bestanden": bestanden, "zusammenfassung": zusammenfassung, "dokumente": ergebnisse,
-            "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"]),
-            "aufbewahrung_tage": AUSGABEN_TAGE}
+            "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"])}
 
 
 def _pdfua_vorschau_sync(project: dict, user_id: int, document_id: Optional[int], ui_lang: str) -> dict:
@@ -7801,13 +7839,14 @@ def _word_export_ausgabe_sync(project: dict, user_id: int, document_id: Optional
     _preis = _export_vorpruefung(user_id, sum(len(u["images"]) for u in units), "docx")
     _ = get_gettext(ui_lang)
     token = _secrets.token_hex(12)
+    ablage_dir = _ablage_dir(user_id)
     ergebnisse: list[dict] = []
     gesamt_tagged = 0
     if len(units) == 1:
         unit = units[0]
         label = custom_name or _doc_label(unit["doc"])
         out_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
-        pfad = os.path.join(output_dir, f"word_{token}.docx")
+        pfad = os.path.join(ablage_dir, f"word_{token}.docx")
         shutil.copyfile(out_path, pfad)
         dateiname = f"inkludocs_{_safe_filename_component(label)}.docx"
         media = DOCX_MEDIA
@@ -7823,7 +7862,7 @@ def _word_export_ausgabe_sync(project: dict, user_id: int, document_id: Optional
     else:
         zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
         dateiname = f"{zip_base}_alle_word.zip"
-        pfad = os.path.join(output_dir, f"word_{token}.zip")
+        pfad = os.path.join(ablage_dir, f"word_{token}.zip")
         media = "application/zip"
         with zipfile.ZipFile(pfad, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             for pos, unit in enumerate(units, start=1):
@@ -7850,8 +7889,7 @@ def _word_export_ausgabe_sync(project: dict, user_id: int, document_id: Optional
                                   _preis, hinweise == 0, zusammenfassung, ergebnisse, None, art="docx")
     return {"ok": True, "dateiname": dateiname, "media": media, "preis": _preis, "alt_texte": gesamt_tagged,
             "hinweise": hinweise, "zusammenfassung": zusammenfassung, "dokumente": ergebnisse,
-            "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"]),
-            "aufbewahrung_tage": AUSGABEN_TAGE}
+            "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"])}
 
 
 @app.post("/api/projects/{project_id}/export/pdfua")
@@ -7891,34 +7929,42 @@ async def export_pdfua_download(project_id: int, token: str, user: dict = Depend
     with open(meta_pfad, encoding="utf-8") as f:
         meta = json.load(f)
     pfad = meta.get("pfad") or ""
-    if not os.path.realpath(pfad).startswith(os.path.realpath(output_dir)) or not os.path.isfile(pfad):
+    erlaubt = (os.path.realpath(output_dir), os.path.realpath(_ablage_dir(user["id"])))
+    if not any(os.path.realpath(pfad).startswith(w + os.sep) for w in erlaubt) or not os.path.isfile(pfad):
         raise HTTPException(status_code=404, detail="Datei nicht gefunden")
     return FileResponse(pfad, filename=meta.get("dateiname") or "inkludocs.pdf", media_type=meta.get("media") or "application/pdf")
 
 
-# ─── MEINE AUSGABEN (11.09.2026, Steve + Fable 5) ──────────────────────────
-# Das Regal fuer fertige Umwandlungen. Bisher war das Ergebnis einer PDF/UA-
-# Umwandlung fluechtig: Bericht in der Live-Region des Export-Bereichs, Datei nur
-# ueber ein Token. Jetzt legt jede Umwandlung (Knopf oder spaeter Chatbot) einen
-# Eintrag in der Tabelle `ausgaben` an — mit Datei, Bericht (Klartext, Hoerprobe,
-# Pruefbericht), Vorschaubild der ersten Seite und Ausloeser. EINE Seite, drei
-# Eingaenge: Seitenleiste „Meine Ausgaben", Reiter „Ausgaben (n)" im Projektkopf
-# (?projekt=), Link im Export-Bereich nach der Umwandlung.
-# Aufbewahrung: die DATEI (PDF/ZIP + Vorschau) faellt nach AUSGABEN_TAGE weg
-# (Vorgabe 30, Entscheidung Steve/Michael offen), der BERICHT bleibt beim Projekt.
+# ─── MEINE ABLAGE (11.09.2026, Steve + Michael; vormittags „Meine Ausgaben“) ───────
+# Sicherung der barrierefreien Office-Dokumente inklusive Pruefbericht. Jede Umwandlung
+# (Knopf oder Chatbot) und jeder Word-Export legen einen Eintrag in `ablage` an: Datei,
+# Bericht (Klartext, Hoerprobe, Pruefbericht), Vorschaubild der ersten Seite, Ausloeser.
+# ENTSCHEIDUNGEN aus der Besprechung 11.09.: Aufbewahrung UNBEGRENZT; Eintraege UEBERLEBEN
+# das Loeschen des Projekts (Dateien liegen in results/<user>/_ablage/, nicht im Projekt-
+# ordner; Projektname als Momentaufnahme); geloescht wird nur einzeln in der Ablage.
+# Eingaenge: Seitenleiste „Meine Ablage“, Knopf „Ablage (n)“ neben „Herunterladen“ im
+# Projekt (?projekt=), Link im Export-Bereich / Chat-Anhang nach der Umwandlung.
+# Die API-Pfade heissen weiter /api/ausgaben (interne Namen, Chat-Verlauf, Werkzeuge).
 #   GET    /api/ausgaben?projekt=ID   -> Liste (alle Projekte oder eines) + Projektliste fuer den Filter
 #   GET    /api/ausgaben/{id}         -> ein Eintrag mit vollem Bericht (Klartext, Hoerprobe, Pruefbericht)
-#   GET    /api/ausgaben/{id}/datei   -> die Datei (404, wenn die Frist abgelaufen ist)
+#   GET    /api/ausgaben/{id}/datei   -> die Datei
 #   GET    /api/ausgaben/{id}/vorschau-> PNG der ersten Seite
 #   DELETE /api/ausgaben/{id}         -> Eintrag samt Dateien loeschen
-AUSGABEN_TAGE = max(1, int(os.environ.get("AUSGABEN_TAGE", "30") or 30))
 _AUSGABE_ART_LABEL = {"pdfua": "Barrierefreie PDF (PDF/UA)", "docx": "Word mit Alt-Texten"}
+
+
+def _ablage_dir(user_id: int) -> str:
+    """Eigener Ordner je Nutzer — unabhaengig vom Projektordner, damit Eintraege das Loeschen
+    des Projekts ueberleben (Steve 11.09.2026)."""
+    d = os.path.join(RESULTS_DIR, str(user_id), "_ablage")
+    os.makedirs(d, exist_ok=True)
+    return d
 
 
 def _ausgaben_anzahl(project_id: int) -> int:
     conn = get_db()
     try:
-        row = conn.execute("SELECT COUNT(*) AS n FROM ausgaben WHERE project_id = ?", (project_id,)).fetchone()
+        row = conn.execute("SELECT COUNT(*) AS n FROM ablage WHERE project_id = ? AND projekt_geloescht = 0", (project_id,)).fetchone()
         return int(row["n"] if row else 0)
     finally:
         conn.close()
@@ -7927,8 +7973,9 @@ def _ausgaben_anzahl(project_id: int) -> int:
 def _ausgabe_anlegen(user_id: int, project: dict, document_id: Optional[int], ausloeser: str,
                      dateiname: str, pfad: str, media: str, token: str, preis: int, bestanden: bool,
                      zusammenfassung: str, ergebnisse: list, pdf_erste: Optional[bytes], art: str = "pdfua") -> int:
-    """Eintrag in `ausgaben` anlegen; Vorschaubild der ersten Seite daneben ablegen (nur PDF).
-    Laeuft im Executor (Rendern + DB), Rueckgabe = id des Eintrags. art: pdfua | docx."""
+    """Eintrag in `ablage` anlegen; Vorschaubild der ersten Seite daneben ablegen (nur PDF).
+    Laeuft im Executor (Rendern + DB), Rueckgabe = id des Eintrags. art: pdfua | docx.
+    Die Datei liegt bereits im Ablage-Ordner (Aufrufer schreibt sie dorthin)."""
     vorschau = ""
     try:
         png = pdfua_export.vorschau_png(pdf_erste) if pdf_erste else None
@@ -7937,43 +7984,63 @@ def _ausgabe_anlegen(user_id: int, project: dict, document_id: Optional[int], au
             with open(vorschau, "wb") as f:
                 f.write(png)
     except Exception as e:  # noqa: BLE001
-        log.warning("Ausgabe: Vorschaubild nicht abgelegt: %s", e)
+        log.warning("Ablage: Vorschaubild nicht abgelegt: %s", e)
         vorschau = ""
-    datei_bis = (datetime.utcnow() + timedelta(days=AUSGABEN_TAGE)).strftime("%Y-%m-%d %H:%M:%S")
+    projekt_name = (project.get("name") or "").strip() or (project.get("filename") or "")
     conn = get_db()
     try:
         cur = conn.execute(
-            """INSERT INTO ausgaben (user_id, project_id, document_id, art, ausloeser, dateiname, datei_pfad,
-                                     media, vorschau_pfad, bestanden, zusammenfassung, bericht, preis, token, datei_bis)
+            """INSERT INTO ablage (user_id, project_id, projekt_name, document_id, art, ausloeser, dateiname, datei_pfad,
+                                   media, vorschau_pfad, bestanden, zusammenfassung, bericht, preis, token)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (user_id, project["id"], document_id, art, ausloeser, dateiname, pfad, media, vorschau,
+            (user_id, project["id"], projekt_name, document_id, art, ausloeser, dateiname, pfad, media, vorschau,
              1 if bestanden else 0, zusammenfassung, json.dumps(ergebnisse, ensure_ascii=False),
-             int(preis or 0), token, datei_bis))
+             int(preis or 0), token))
         conn.commit()
         return int(cur.lastrowid)
     finally:
         conn.close()
 
 
-def _ausgaben_aufraeumen(user_id: int) -> int:
-    """Abgelaufene Dateien (datei_bis < jetzt) loeschen, Eintrag mit Bericht behalten.
-    Wird beim Laden der Liste aufgerufen — reicht, weil nur der Besitzer die Dateien holt."""
-    jetzt = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+def _ablage_projekt_geloescht(conn, user_id: int, project) -> None:
+    """Beim Loeschen eines Projekts: Eintraege behalten, Projektname als Text festhalten,
+    Dokumentbezug loesen (documents-Zeilen fallen weg)."""
+    name = (project["name"] if "name" in project.keys() else "") or ""
+    name = name.strip() or (project["filename"] if "filename" in project.keys() else "") or ""
+    conn.execute(
+        "UPDATE ablage SET projekt_geloescht = 1, projekt_name = CASE WHEN projekt_name = '' THEN ? ELSE projekt_name END, "
+        "document_id = NULL WHERE project_id = ? AND user_id = ?",
+        (name, project["id"], user_id))
+
+
+def _ablage_dateien_einsammeln(user_id: int) -> int:
+    """Eintraege vom Vormittag des 11.09. (Dateien noch unter results/<user>/<projekt>/_export/) in den
+    Ablage-Ordner holen — einmalig je Eintrag, beim Laden der Liste. Rueckgabe: Anzahl verschoben."""
+    ziel_dir = os.path.realpath(_ablage_dir(user_id))
     conn = get_db()
     try:
-        rows = conn.execute(
-            "SELECT id, datei_pfad, vorschau_pfad FROM ausgaben WHERE user_id = ? AND datei_pfad != '' AND datei_bis IS NOT NULL AND datei_bis < ?",
-            (user_id, jetzt)).fetchall()
+        rows = conn.execute("SELECT id, datei_pfad, vorschau_pfad FROM ablage WHERE user_id = ? AND datei_pfad != ''",
+                            (user_id,)).fetchall()
         n = 0
         for r in rows:
-            for pf in (r["datei_pfad"], r["vorschau_pfad"]):
+            neu = {}
+            for spalte in ("datei_pfad", "vorschau_pfad"):
+                pf = r[spalte] or ""
+                if not pf or os.path.realpath(pf).startswith(ziel_dir):
+                    continue
+                if not os.path.isfile(pf):
+                    neu[spalte] = ""
+                    continue
+                ziel = os.path.join(ziel_dir, os.path.basename(pf))
                 try:
-                    if pf and os.path.isfile(pf):
-                        os.remove(pf)
-                except OSError:
-                    pass
-            conn.execute("UPDATE ausgaben SET datei_pfad = '', vorschau_pfad = '' WHERE id = ?", (r["id"],))
-            n += 1
+                    shutil.move(pf, ziel)
+                    neu[spalte] = ziel
+                except OSError as e:
+                    log.warning("Ablage: Datei nicht verschoben (%s): %s", pf, e)
+            if neu:
+                conn.execute("UPDATE ablage SET " + ", ".join(f"{k} = ?" for k in neu) + " WHERE id = ?",
+                             (*neu.values(), r["id"]))
+                n += 1
         if n:
             conn.commit()
         return n
@@ -7981,32 +8048,35 @@ def _ausgaben_aufraeumen(user_id: int) -> int:
         conn.close()
 
 
+_ABLAGE_SELECT = """SELECT a.*, p.name AS project_name, p.filename AS project_filename,
+                           d.display_name AS doc_display_name, d.original_filename AS doc_original_filename
+                    FROM ablage a LEFT JOIN projects p ON p.id = a.project_id
+                    LEFT JOIN documents d ON d.id = a.document_id"""
+
+
 def _ausgabe_row(user_id: int, ausgabe_id: int):
     conn = get_db()
     try:
-        return conn.execute(
-            """SELECT a.*, p.name AS project_name, p.filename AS project_filename,
-                      d.display_name AS doc_display_name, d.original_filename AS doc_original_filename
-               FROM ausgaben a JOIN projects p ON p.id = a.project_id
-               LEFT JOIN documents d ON d.id = a.document_id
-               WHERE a.id = ? AND a.user_id = ?""", (ausgabe_id, user_id)).fetchone()
+        return conn.execute(_ABLAGE_SELECT + " WHERE a.id = ? AND a.user_id = ?", (ausgabe_id, user_id)).fetchone()
     finally:
         conn.close()
 
 
 def _ausgabe_dict(r, mit_bericht: bool = False) -> dict:
-    """Eintrag fuer die Oberflaeche. Ohne Bericht bleibt die Liste schlank; den
-    vollen Bericht (Hoerprobe kann hunderte Zeilen haben) holt GET /api/ausgaben/{id}."""
+    """Eintrag fuer die Oberflaeche. Ohne Bericht bleibt die Liste schlank; den vollen Bericht
+    (Hoerprobe kann hunderte Zeilen haben) holt GET /api/ausgaben/{id}.
+    Besprechung 11.09.: nur BEFUNDE zaehlen und zeigen — Positives faellt weg (Michael)."""
     try:
         bericht = json.loads(r["bericht"] or "[]")
     except Exception:  # noqa: BLE001
         bericht = []
     if r["art"] == "docx":
-        # Word-Ausgabe (Chatbot, 11.09.2026): keine veraPDF-Pruefung — Hinweise = Pruefbericht des Word-Dokuments.
         hinweise = sum(1 for d in bericht for b in (d.get("pruefbericht") or []) if b.get("status") != "ok")
     else:
         hinweise = sum(1 for d in bericht for p in ((d.get("pruefung") or {}).get("punkte") or []) if p.get("status") != "ok")
-    projektname = (r["project_name"] or "").strip() or (r["project_filename"] or "")
+    geloescht = bool(r["projekt_geloescht"])
+    projektname = ((r["project_name"] or "").strip() or (r["project_filename"] or "")) if not geloescht else (r["projekt_name"] or "")
+    projektname = projektname or (r["projekt_name"] or "")
     if r["document_id"]:
         dok = (r["doc_display_name"] or "").strip() or (r["doc_original_filename"] or "").strip()
         dok = re.sub(r"\.(pdf|docx)$", "", dok, flags=re.IGNORECASE) or None
@@ -8014,7 +8084,7 @@ def _ausgabe_dict(r, mit_bericht: bool = False) -> dict:
         dok = None
     datei_da = bool(r["datei_pfad"]) and os.path.isfile(r["datei_pfad"])
     out = {
-        "id": r["id"], "project_id": r["project_id"], "projekt": projektname,
+        "id": r["id"], "project_id": r["project_id"], "projekt": projektname, "projekt_geloescht": geloescht,
         "document_id": r["document_id"], "dokument": dok,
         "alle_dokumente": r["document_id"] is None,
         "art": r["art"], "art_label": _AUSGABE_ART_LABEL.get(r["art"], r["art"]),
@@ -8022,12 +8092,27 @@ def _ausgabe_dict(r, mit_bericht: bool = False) -> dict:
         "dateiname": r["dateiname"], "media": r["media"],
         "bestanden": bool(r["bestanden"]), "zusammenfassung": r["zusammenfassung"] or "",
         "hinweise": hinweise, "dokumente_anzahl": len(bericht),
-        "preis": r["preis"], "created_at": r["created_at"], "datei_bis": r["datei_bis"],
+        "preis": r["preis"], "created_at": r["created_at"],
         "datei_verfuegbar": datei_da,
         "vorschau": bool(r["vorschau_pfad"]) and os.path.isfile(r["vorschau_pfad"]),
     }
     if mit_bericht:
-        out["bericht"] = bericht
+        # Nur Befunde (Besprechung 11.09.): ok-Punkte aus Klartext und Pruefbericht entfernen.
+        out["bericht"] = _nur_befunde(bericht)
+    return out
+
+
+def _nur_befunde(bericht: list) -> list:
+    """Bericht ohne die ok-Punkte (Michael 11.09.: „was gut war, ist nicht so wichtig“)."""
+    out = []
+    for d in bericht:
+        e = dict(d)
+        if isinstance(e.get("pruefung"), dict):
+            pr = dict(e["pruefung"])
+            pr["punkte"] = [p for p in (pr.get("punkte") or []) if p.get("status") != "ok"]
+            e["pruefung"] = pr
+        e["pruefbericht"] = [b for b in (e.get("pruefbericht") or []) if b.get("status") != "ok"]
+        out.append(e)
     return out
 
 
@@ -8035,13 +8120,8 @@ def _ausgaben_des_projekts(user_id: int, project_id: int) -> list[dict]:
     """Eintraege eines Projekts (neueste zuerst), ohne Berichte — fuer das Chatbot-Werkzeug liste_ausgaben."""
     conn = get_db()
     try:
-        rows = conn.execute(
-            """SELECT a.*, p.name AS project_name, p.filename AS project_filename,
-                      d.display_name AS doc_display_name, d.original_filename AS doc_original_filename
-               FROM ausgaben a JOIN projects p ON p.id = a.project_id
-               LEFT JOIN documents d ON d.id = a.document_id
-               WHERE a.user_id = ? AND a.project_id = ?
-               ORDER BY a.created_at DESC, a.id DESC""", (user_id, project_id)).fetchall()
+        rows = conn.execute(_ABLAGE_SELECT + " WHERE a.user_id = ? AND a.project_id = ? ORDER BY a.created_at DESC, a.id DESC",
+                            (user_id, project_id)).fetchall()
     finally:
         conn.close()
     return [_ausgabe_dict(r) for r in rows]
@@ -8049,7 +8129,7 @@ def _ausgaben_des_projekts(user_id: int, project_id: int) -> list[dict]:
 
 @app.get("/api/ausgaben")
 async def ausgaben_liste(projekt: Optional[int] = None, user: dict = Depends(get_current_user)):
-    _ausgaben_aufraeumen(user["id"])
+    _ablage_dateien_einsammeln(user["id"])
     conn = get_db()
     try:
         params: list = [user["id"]]
@@ -8058,76 +8138,83 @@ async def ausgaben_liste(projekt: Optional[int] = None, user: dict = Depends(get
         if projekt is not None:
             pr = conn.execute("SELECT id, name, filename FROM projects WHERE id = ? AND user_id = ?",
                               (projekt, user["id"])).fetchone()
-            if not pr:
-                raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-            projekt_info = {"id": pr["id"], "name": (pr["name"] or "").strip() or (pr["filename"] or "")}
+            if pr:
+                projekt_info = {"id": pr["id"], "name": (pr["name"] or "").strip() or (pr["filename"] or ""), "geloescht": False}
+            else:
+                alt = conn.execute("SELECT projekt_name FROM ablage WHERE project_id = ? AND user_id = ? LIMIT 1",
+                                   (projekt, user["id"])).fetchone()
+                if not alt:
+                    raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+                projekt_info = {"id": projekt, "name": alt["projekt_name"] or "", "geloescht": True}
             filter_sql = " AND a.project_id = ?"
             params.append(projekt)
-        rows = conn.execute(
-            f"""SELECT a.*, p.name AS project_name, p.filename AS project_filename,
-                       d.display_name AS doc_display_name, d.original_filename AS doc_original_filename
-                FROM ausgaben a JOIN projects p ON p.id = a.project_id
-                LEFT JOIN documents d ON d.id = a.document_id
-                WHERE a.user_id = ?{filter_sql}
-                ORDER BY a.created_at DESC, a.id DESC""", params).fetchall()
+        rows = conn.execute(_ABLAGE_SELECT + f" WHERE a.user_id = ?{filter_sql} ORDER BY a.created_at DESC, a.id DESC",
+                            params).fetchall()
         projekte = conn.execute(
-            """SELECT p.id, p.name, p.filename, COUNT(a.id) AS n FROM ausgaben a
-               JOIN projects p ON p.id = a.project_id WHERE a.user_id = ?
-               GROUP BY p.id ORDER BY MAX(a.created_at) DESC""", (user["id"],)).fetchall()
+            """SELECT a.project_id AS id, COALESCE(NULLIF(TRIM(p.name), ''), p.filename, a.projekt_name) AS name,
+                      MAX(a.projekt_geloescht) AS geloescht, COUNT(a.id) AS n
+               FROM ablage a LEFT JOIN projects p ON p.id = a.project_id WHERE a.user_id = ?
+               GROUP BY a.project_id ORDER BY MAX(a.created_at) DESC""", (user["id"],)).fetchall()
     finally:
         conn.close()
     return {"ok": True, "ausgaben": [_ausgabe_dict(r) for r in rows],
-            "projekte": [{"id": p["id"], "name": (p["name"] or "").strip() or (p["filename"] or ""), "anzahl": p["n"]} for p in projekte],
-            "projekt": projekt_info, "aufbewahrung_tage": AUSGABEN_TAGE}
+            "projekte": [{"id": p["id"], "name": p["name"] or "", "anzahl": p["n"], "geloescht": bool(p["geloescht"])} for p in projekte],
+            "projekt": projekt_info}
 
 
 @app.get("/api/ausgaben/{ausgabe_id}")
 async def ausgabe_lesen(ausgabe_id: int, user: dict = Depends(get_current_user)):
     r = _ausgabe_row(user["id"], ausgabe_id)
     if not r:
-        raise HTTPException(status_code=404, detail="Ausgabe nicht gefunden")
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
     return {"ok": True, "ausgabe": _ausgabe_dict(r, mit_bericht=True)}
+
+
+def _ablage_pfad_ok(user_id: int, pfad: str) -> bool:
+    """Datei darf nur aus dem Ablage-Ordner des Nutzers kommen — oder (Altbestand vom Vormittag des
+    11.09., bis _ablage_dateien_einsammeln lief) aus dessen Projektordnern. Praefix mit Trenner, damit
+    results/1 nicht results/10 freigibt."""
+    if not pfad or not os.path.isfile(pfad):
+        return False
+    rp = os.path.realpath(pfad)
+    wurzeln = (os.path.realpath(_ablage_dir(user_id)), os.path.realpath(os.path.join(RESULTS_DIR, str(user_id))))
+    return any(rp.startswith(w + os.sep) for w in wurzeln)
 
 
 @app.get("/api/ausgaben/{ausgabe_id}/datei")
 async def ausgabe_datei(ausgabe_id: int, user: dict = Depends(get_current_user)):
     r = _ausgabe_row(user["id"], ausgabe_id)
     if not r:
-        raise HTTPException(status_code=404, detail="Ausgabe nicht gefunden")
-    pfad = r["datei_pfad"] or ""
-    wurzel = os.path.join(RESULTS_DIR, str(user["id"]), str(r["project_id"]), "_export")
-    if not pfad or not os.path.realpath(pfad).startswith(os.path.realpath(wurzel)) or not os.path.isfile(pfad):
-        raise HTTPException(status_code=404, detail="Die Datei ist nicht mehr verfügbar (Aufbewahrungsfrist abgelaufen). Der Bericht bleibt.")
-    return FileResponse(pfad, filename=r["dateiname"] or "inkludocs.pdf", media_type=r["media"] or "application/pdf")
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    if not _ablage_pfad_ok(user["id"], r["datei_pfad"] or ""):
+        raise HTTPException(status_code=404, detail="Die Datei ist nicht mehr vorhanden. Der Bericht bleibt.")
+    return FileResponse(r["datei_pfad"], filename=r["dateiname"] or "inkludocs.pdf", media_type=r["media"] or "application/pdf")
 
 
 @app.get("/api/ausgaben/{ausgabe_id}/vorschau")
 async def ausgabe_vorschau(ausgabe_id: int, user: dict = Depends(get_current_user)):
     r = _ausgabe_row(user["id"], ausgabe_id)
     if not r:
-        raise HTTPException(status_code=404, detail="Ausgabe nicht gefunden")
-    pfad = r["vorschau_pfad"] or ""
-    wurzel = os.path.join(RESULTS_DIR, str(user["id"]), str(r["project_id"]), "_export")
-    if not pfad or not os.path.realpath(pfad).startswith(os.path.realpath(wurzel)) or not os.path.isfile(pfad):
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    if not _ablage_pfad_ok(user["id"], r["vorschau_pfad"] or ""):
         raise HTTPException(status_code=404, detail="Vorschau nicht gefunden")
-    return FileResponse(pfad, media_type="image/png")
+    return FileResponse(r["vorschau_pfad"], media_type="image/png")
 
 
 @app.delete("/api/ausgaben/{ausgabe_id}")
 async def ausgabe_loeschen(ausgabe_id: int, user: dict = Depends(get_current_user)):
     r = _ausgabe_row(user["id"], ausgabe_id)
     if not r:
-        raise HTTPException(status_code=404, detail="Ausgabe nicht gefunden")
-    wurzel = os.path.realpath(os.path.join(RESULTS_DIR, str(user["id"]), str(r["project_id"]), "_export"))
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
     for pf in (r["datei_pfad"], r["vorschau_pfad"], r["audio_pfad"]):
         try:
-            if pf and os.path.realpath(pf).startswith(wurzel) and os.path.isfile(pf):
+            if pf and _ablage_pfad_ok(user["id"], pf):
                 os.remove(pf)
         except OSError:
             pass
-    # Token-Metadatei des Sofort-Downloads mit weg (sonst bliebe ein toter Verweis liegen).
-    if r["token"]:
-        meta = os.path.join(wurzel, f"pdfua_{r['token']}.json")
+    # Token-Metadatei des Sofort-Downloads mit weg (liegt im Projektordner, sonst toter Verweis).
+    if r["token"] and r["project_id"]:
+        meta = os.path.join(RESULTS_DIR, str(user["id"]), str(r["project_id"]), "_export", f"pdfua_{r['token']}.json")
         try:
             if os.path.isfile(meta):
                 os.remove(meta)
@@ -8135,7 +8222,7 @@ async def ausgabe_loeschen(ausgabe_id: int, user: dict = Depends(get_current_use
             pass
     conn = get_db()
     try:
-        conn.execute("DELETE FROM ausgaben WHERE id = ? AND user_id = ?", (ausgabe_id, user["id"]))
+        conn.execute("DELETE FROM ablage WHERE id = ? AND user_id = ?", (ausgabe_id, user["id"]))
         conn.commit()
     finally:
         conn.close()
@@ -9633,11 +9720,19 @@ async def shared_projects_page(request: Request):
     return _render_protected_template(request, "geteilte_projekte.html")
 
 
-@app.get("/ausgaben", response_class=HTMLResponse)
-async def ausgaben_page(request: Request):
-    """Meine Ausgaben (11.09.2026): das Regal fuer fertige Umwandlungen — eine Seite,
-    drei Eingaenge (Seitenleiste, Reiter im Projektkopf mit ?projekt=, Link im Export-Bereich)."""
-    return _render_protected_template(request, "ausgaben.html")
+@app.get("/ablage", response_class=HTMLResponse)
+async def ablage_page(request: Request):
+    """Meine Ablage (11.09.2026, vormittags „Ausgaben“): Sicherung der barrierefreien Office-Dokumente
+    inklusive Pruefbericht — eine Seite, drei Eingaenge (Seitenleiste, Knopf im Projekt mit ?projekt=,
+    Link im Export-Bereich / Chat-Anhang)."""
+    return _render_protected_template(request, "ablage.html")
+
+
+@app.get("/ausgaben")
+async def ausgaben_weiterleitung(request: Request):
+    """Alter Pfad vom Vormittag des 11.09. (Links in gespeicherten Chat-Antworten) -> /ablage."""
+    ziel = "/ablage" + (("?" + request.url.query) if request.url.query else "")
+    return RedirectResponse(ziel, status_code=301)
 
 
 @app.get("/abo", response_class=HTMLResponse)

@@ -6103,3 +6103,86 @@ msgstr "Empieza con tus propios documentos y descubre cuánto del trabajo para d
 msgid "Vorführung vereinbaren"
 msgstr "Concertar una demostración"
 
+
+# Meine Ablage (Besprechung 11.09.2026): Umbenennung, nur Befunde, unbegrenzt, ueberlebt Projekt-Loeschen
+msgid "Meine Ablage"
+msgstr "Mi archivo"
+
+msgid "Sicherung deiner barrierefreien Office-Dokumente inklusive Prüfbericht."
+msgstr "Copia de tus documentos de Office accesibles, incluido el informe de comprobación."
+
+msgid "Keine Befunde im Word-Dokument."
+msgstr "Sin hallazgos en el documento de Word."
+
+msgid "Ein Befund im Word-Dokument."
+msgstr "Un hallazgo en el documento de Word."
+
+msgid "{n} Befunde im Word-Dokument."
+msgstr "{n} hallazgos en el documento de Word."
+
+msgid "PDF/UA bestanden, keine Befunde."
+msgstr "PDF/UA superado, sin hallazgos."
+
+msgid "Ein Bereich mit Befunden."
+msgstr "Un área con hallazgos."
+
+msgid "{n} Bereiche mit Befunden."
+msgstr "{n} áreas con hallazgos."
+
+msgid "Barrierefreie PDF"
+msgstr "PDF accesible"
+
+msgid "Keine Befunde."
+msgstr "Sin hallazgos."
+
+msgid "Befunde in der PDF:"
+msgstr "Hallazgos en el PDF:"
+
+msgid "Befunde im Word-Dokument:"
+msgstr "Hallazgos en el documento de Word:"
+
+msgid "{art}: {dokument} — {datum}, {zeit}"
+msgstr "{art}: {dokument} — {datum}, {zeit}"
+
+msgid "{projekt} (Projekt gelöscht)"
+msgstr "{projekt} (proyecto eliminado)"
+
+msgid "Datei nicht mehr vorhanden, der Bericht bleibt."
+msgstr "El archivo ya no está disponible; el informe se mantiene."
+
+msgid "Ablage: {name}"
+msgstr "Archivo: {name}"
+
+msgid "Für dieses Projekt liegt noch nichts in der Ablage. Wandle es über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "Aún no hay nada de este proyecto en el archivo. Conviértelo en un PDF accesible mediante «Descargar» o expórtalo como Word y aparecerá aquí."
+
+msgid "Die Ablage ist noch leer. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "El archivo aún está vacío. Convierte un proyecto de Word en un PDF accesible mediante «Descargar» o expórtalo como Word y aparecerá aquí."
+
+msgid "Die Ablage konnte nicht geladen werden. Bitte später erneut versuchen."
+msgstr "No se pudo cargar el archivo. Inténtalo de nuevo más tarde."
+
+msgid "{n} Einträge geladen."
+msgstr "{n} entradas cargadas."
+
+msgid "Neu in der Ablage"
+msgstr "Nuevo en el archivo"
+
+msgid "Ablage öffnen"
+msgstr "Abrir el archivo"
+
+msgid "Ablage ({n})"
+msgstr "Archivo ({n})"
+
+msgid "Zur Ablage"
+msgstr "Ir al archivo"
+
+msgid "PDF und Prüfbericht liegen jetzt in deiner Ablage."
+msgstr "El PDF y el informe de comprobación están ahora en tu archivo."
+
+msgid "Ablage"
+msgstr "Archivo"
+
+msgid "Eintrag lesen"
+msgstr "Leer la entrada"
+

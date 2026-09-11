@@ -524,18 +524,22 @@ def init_db():
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_stammdaten_user ON stammdaten(user_id)")
 
-    # MEINE AUSGABEN (11.09.2026, Steve + Fable 5): Regal fuer fertige Umwandlungen.
-    # Bisher war das Ergebnis einer PDF/UA-Umwandlung fluechtig (Live-Region im
-    # Export-Bereich, Datei nur ueber ein Token). Jetzt legt jede Umwandlung einen
-    # Eintrag an: Datei, Bericht (Klartext + Hoerprobe + Pruefbericht als JSON),
-    # Vorschaubild der ersten Seite, Ausloeser (Knopf oder Chatbot). Die DATEI hat
-    # eine Aufbewahrungsfrist (datei_bis, AUSGABEN_TAGE), der BERICHT bleibt beim
-    # Projekt bis das Projekt geloescht wird. document_id NULL = alle Dokumente (ZIP).
+    # MEINE ABLAGE (11.09.2026, Steve + Michael, Besprechung): Sicherung der barrierefreien
+    # Office-Dokumente inklusive Pruefbericht. Jede Umwandlung (Knopf oder Chatbot) legt einen
+    # Eintrag an: Datei, Bericht (Klartext + Hoerprobe + Pruefbericht als JSON), Vorschaubild,
+    # Ausloeser. ENTSCHEIDUNGEN: Aufbewahrung UNBEGRENZT (kein datei_bis mehr); Eintraege
+    # UEBERLEBEN das Loeschen des Projekts (deshalb KEIN Fremdschluessel auf projects und ein
+    # eigener Ordner je Nutzer results/<user>/_ablage/ statt des Projektordners); geloescht wird
+    # nur einzeln in der Ablage oder mit dem Konto. projekt_name = Momentaufnahme fuer die
+    # Anzeige nach dem Loeschen, projekt_geloescht = 1 dann. document_id NULL = alle Dokumente.
+    # Vormals Tabelle `ausgaben` (Vormittag 11.09., mit FK ON DELETE CASCADE) — wird unten uebernommen.
     conn.execute('''
-        CREATE TABLE IF NOT EXISTS ausgaben (
+        CREATE TABLE IF NOT EXISTS ablage (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
-            project_id INTEGER NOT NULL,
+            project_id INTEGER,
+            projekt_name TEXT DEFAULT '',
+            projekt_geloescht INTEGER DEFAULT 0,
             document_id INTEGER,
             art TEXT NOT NULL DEFAULT 'pdfua',
             ausloeser TEXT DEFAULT 'knopf',
@@ -550,13 +554,24 @@ def init_db():
             preis INTEGER DEFAULT 0,
             token TEXT DEFAULT '',
             created_at TEXT DEFAULT (datetime('now')),
-            datei_bis TEXT,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ''')
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_ausgaben_user ON ausgaben(user_id, created_at)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_ausgaben_project ON ausgaben(project_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ablage_user ON ablage(user_id, created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ablage_project ON ablage(project_id)")
+    # Uebernahme aus `ausgaben` (nur Staging, Vormittag 11.09.2026): ids bleiben, damit die
+    # Anhaenge im Chat-Verlauf (ausgabe_id) weiter stimmen. Danach faellt die alte Tabelle weg.
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='ausgaben'").fetchone():
+        conn.execute('''
+            INSERT OR IGNORE INTO ablage (id, user_id, project_id, projekt_name, document_id, art, ausloeser, dateiname,
+                                          datei_pfad, media, vorschau_pfad, audio_pfad, bestanden, zusammenfassung, bericht,
+                                          preis, token, created_at)
+            SELECT a.id, a.user_id, a.project_id, COALESCE(NULLIF(TRIM(p.name), ''), p.filename, ''), a.document_id, a.art,
+                   a.ausloeser, a.dateiname, a.datei_pfad, a.media, a.vorschau_pfad, a.audio_pfad, a.bestanden,
+                   a.zusammenfassung, a.bericht, a.preis, a.token, a.created_at
+            FROM ausgaben a LEFT JOIN projects p ON p.id = a.project_id
+        ''')
+        conn.execute("DROP TABLE ausgaben")
 
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)

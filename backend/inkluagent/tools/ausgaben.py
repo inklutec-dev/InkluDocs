@@ -1,10 +1,10 @@
-"""Werkzeuge „Meine Ausgaben" fuer den Chatbot (Schritt 2, 11.09.2026, Steve + Fable 5).
+"""Werkzeuge „Meine Ablage" fuer den Chatbot (Schritt 2, 11.09.2026, Steve + Fable 5).
 
 Der InkluAgent kann ein Word-Projekt zu Ende bringen: Pruefbericht und Hoerprobe lesen,
 in eine barrierefreie PDF umwandeln (Umwandler + veraPDF), die Word-Datei mit Alt-Texten
 ausgeben, das Regal lesen. Alles laeuft ueber DIESELBEN Kernfunktionen wie der
 Export-Bereich (main._pdfua_umwandeln_sync, _pdfua_vorschau_sync, _word_export_ausgabe_sync)
-— ein Weg, zwei Bediener. Jede Umwandlung landet als Eintrag unter „Meine Ausgaben"
+— ein Weg, zwei Bediener. Jede Umwandlung landet als Eintrag unter „Meine Ablage"
 (ausloeser 'bot'); die Oberflaeche zeigt unter der Antwort den Download-Knopf (Anhang).
 
 Zwei Regeln, die der SERVER durchsetzt (nicht nur der Prompt):
@@ -70,7 +70,7 @@ def _anhang(art: str, r: dict, project_id: int) -> dict:
     return {
         "art": art, "ausgabe_id": r["ausgabe_id"], "dateiname": r.get("dateiname") or "",
         "download_url": f"/api/ausgaben/{r['ausgabe_id']}/datei",
-        "ausgaben_url": f"/ausgaben?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
+        "ausgaben_url": f"/ablage?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
         "project_id": project_id, "ausgaben_anzahl": r.get("ausgaben_anzahl"),
         "label": ("zip" if ist_zip else art),
     }
@@ -140,17 +140,17 @@ def konvertiere_zu_pdfua(project_id: int, user_id: int, document_id: Optional[in
         "bestanden": r["bestanden"], "zusammenfassung": r["zusammenfassung"],
         "dokumente": [_doc_kurz(d) for d in r.get("dokumente") or []],
         "download_url": f"/api/ausgaben/{r['ausgabe_id']}/datei",
-        "ausgaben_url": f"/ausgaben?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
+        "ausgaben_url": f"/ablage?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
         "ausgaben_anzahl": r.get("ausgaben_anzahl"), "aufbewahrung_tage": r.get("aufbewahrung_tage"),
         "hinweis": ("Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen; die Datei liegt "
-                    "ausserdem unter „Meine Ausgaben“ (Reiter Ausgaben im Projekt). Fasse das Ergebnis in Worten "
+                    "ausserdem unter „Meine Ablage“ (Knopf „Ablage“ neben Herunterladen). Fasse das Ergebnis in Worten "
                     "zusammen: bestanden oder welche Bereiche Hinweise haben, und was der Nutzer dagegen tun kann."),
     }, "anhang": _anhang("pdfua", r, project_id)}
 
 
 def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = None,
                     bestaetigt: bool = False) -> dict[str, Any]:
-    """Word-Datei mit den aktuellen Alt-Texten ausgeben (Eintrag unter Meine Ausgaben).
+    """Word-Datei mit den aktuellen Alt-Texten ausgeben (Eintrag unter Meine Ablage).
     Kostenpflichtig: ohne bestaetigt=true nur Preis + Guthaben."""
     m = _main()
     try:
@@ -167,20 +167,20 @@ def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = 
                        "pruefbericht_hinweise": [b.get("text") for b in (d.get("pruefbericht") or []) if b.get("status") != "ok"],
                        "warnungen": d.get("warnungen") or []} for d in r.get("dokumente") or []],
         "download_url": f"/api/ausgaben/{r['ausgabe_id']}/datei",
-        "ausgaben_url": f"/ausgaben?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
+        "ausgaben_url": f"/ablage?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
         "ausgaben_anzahl": r.get("ausgaben_anzahl"),
-        "hinweis": "Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen; die Datei liegt ausserdem unter „Meine Ausgaben“.",
+        "hinweis": "Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen; die Datei liegt ausserdem unter „Meine Ablage“.",
     }, "anhang": _anhang("docx", r, project_id)}
 
 
 def liste_ausgaben(project_id: int, user_id: int) -> dict[str, Any]:
-    """Alle Eintraege unter Meine Ausgaben fuer dieses Projekt (neueste zuerst)."""
+    """Alle Eintraege unter Meine Ablage fuer dieses Projekt (neueste zuerst)."""
     m = _main()
     try:
         m._pdfua_projekt_laden(project_id, user_id, meldung="Ausgaben gibt es nur fuer Word-Projekte")
     except HTTPException as e:
         return _fehler(e)
-    m._ausgaben_aufraeumen(user_id)
+    m._ablage_dateien_einsammeln(user_id)
     eintraege = m._ausgaben_des_projekts(user_id, project_id)
     kurz = [{"ausgabe_id": a["id"], "art": a["art"], "dokument": a["dokument"] or "alle Dokumente",
              "erstellt": a["created_at"], "ausloeser": a["ausloeser"], "bestanden": a["bestanden"],
@@ -189,8 +189,8 @@ def liste_ausgaben(project_id: int, user_id: int) -> dict[str, Any]:
              "download_url": f"/api/ausgaben/{a['id']}/datei" if a["datei_verfuegbar"] else None}
             for a in eintraege]
     return {"ok": True, "result": {"anzahl": len(kurz), "ausgaben": kurz,
-                                   "ausgaben_url": f"/ausgaben?projekt={project_id}",
-                                   "hinweis": "Details (Bericht, Hoerprobe) je Eintrag mit lies_ausgabe(ausgabe_id, teil)."}}
+                                   "ausgaben_url": f"/ablage?projekt={project_id}",
+                                   "hinweis": "Details (Befunde, Hoerprobe) je Eintrag mit lies_ausgabe(ausgabe_id, teil)."}}
 
 
 def lies_ausgabe(project_id: int, user_id: int, ausgabe_id: int, teil: str = "bericht") -> dict[str, Any]:

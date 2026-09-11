@@ -6103,3 +6103,86 @@ msgstr "Commencez avec vos propres documents et découvrez quelle part du travai
 msgid "Vorführung vereinbaren"
 msgstr "Demander une démonstration"
 
+
+# Meine Ablage (Besprechung 11.09.2026): Umbenennung, nur Befunde, unbegrenzt, ueberlebt Projekt-Loeschen
+msgid "Meine Ablage"
+msgstr "Mes archives"
+
+msgid "Sicherung deiner barrierefreien Office-Dokumente inklusive Prüfbericht."
+msgstr "Sauvegarde de vos documents Office accessibles, rapport de vérification compris."
+
+msgid "Keine Befunde im Word-Dokument."
+msgstr "Aucun constat dans le document Word."
+
+msgid "Ein Befund im Word-Dokument."
+msgstr "Un constat dans le document Word."
+
+msgid "{n} Befunde im Word-Dokument."
+msgstr "{n} constats dans le document Word."
+
+msgid "PDF/UA bestanden, keine Befunde."
+msgstr "PDF/UA validé, aucun constat."
+
+msgid "Ein Bereich mit Befunden."
+msgstr "Une zone avec des constats."
+
+msgid "{n} Bereiche mit Befunden."
+msgstr "{n} zones avec des constats."
+
+msgid "Barrierefreie PDF"
+msgstr "PDF accessible"
+
+msgid "Keine Befunde."
+msgstr "Aucun constat."
+
+msgid "Befunde in der PDF:"
+msgstr "Constats dans le PDF :"
+
+msgid "Befunde im Word-Dokument:"
+msgstr "Constats dans le document Word :"
+
+msgid "{art}: {dokument} — {datum}, {zeit}"
+msgstr "{art} : {dokument} — {datum}, {zeit}"
+
+msgid "{projekt} (Projekt gelöscht)"
+msgstr "{projekt} (projet supprimé)"
+
+msgid "Datei nicht mehr vorhanden, der Bericht bleibt."
+msgstr "Fichier plus disponible, le rapport reste."
+
+msgid "Ablage: {name}"
+msgstr "Archives : {name}"
+
+msgid "Für dieses Projekt liegt noch nichts in der Ablage. Wandle es über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "Rien de ce projet n’est encore dans les archives. Convertissez-le en PDF accessible via « Télécharger » ou exportez-le en Word, il apparaîtra ici."
+
+msgid "Die Ablage ist noch leer. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "Les archives sont encore vides. Convertissez un projet Word en PDF accessible via « Télécharger » ou exportez-le en Word, il apparaîtra ici."
+
+msgid "Die Ablage konnte nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Les archives n’ont pas pu être chargées. Veuillez réessayer plus tard."
+
+msgid "{n} Einträge geladen."
+msgstr "{n} entrées chargées."
+
+msgid "Neu in der Ablage"
+msgstr "Nouveau dans les archives"
+
+msgid "Ablage öffnen"
+msgstr "Ouvrir les archives"
+
+msgid "Ablage ({n})"
+msgstr "Archives ({n})"
+
+msgid "Zur Ablage"
+msgstr "Vers les archives"
+
+msgid "PDF und Prüfbericht liegen jetzt in deiner Ablage."
+msgstr "Le PDF et le rapport de vérification sont maintenant dans vos archives."
+
+msgid "Ablage"
+msgstr "Archives"
+
+msgid "Eintrag lesen"
+msgstr "Lire l’entrée"
+

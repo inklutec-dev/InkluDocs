@@ -1,4 +1,4 @@
-"""Zusatz zum Alt-Text-Prompt fuer WORD-Projekte (Schritt 2 „Meine Ausgaben", 11.09.2026).
+"""Zusatz zum Alt-Text-Prompt fuer WORD-Projekte (Schritt 2 „Meine Ablage", 11.09.2026; vormittags „Ausgaben").
 
 Wird in agent_loop._werkzeugsatz an SYSTEM_AGENT angehaengt, wenn das Projekt ein
 Word-Projekt ist (project_type docx). Beschreibt die fuenf zusaetzlichen Werkzeuge
@@ -18,7 +18,7 @@ Dieses Projekt ist ein Word-Projekt. Zusätzlich zu den Bild-Werkzeugen hast du 
 * analysiere_word_struktur
     Struktur-Lektor: Gliederung, Absatz-Auszug mit Formatvorlage, Fettung und Schriftgröße, und Befunde — Zeilen, die wie Überschriften aussehen, aber keine sind; getippte Listen; Leerabsätze als Abstand; Großbuchstaben; Linktexte ohne Ziel; Layout- und verschachtelte Tabellen. Kostenlos.
 * liste_ausgaben
-    Zeigt alle fertigen Ausgaben dieses Projekts (Regal „Meine Ausgaben“).
+    Zeigt alle Einträge dieses Projekts in der Ablage (barrierefreie PDFs, Word-Dateien).
 * lies_ausgabe
     Liest zu einer Ausgabe den Bericht (teil=bericht), den Prüfbericht des Word-Dokuments (teil=pruefbericht) oder die vollständige Hörprobe (teil=hoerprobe).
 
@@ -27,7 +27,7 @@ Reihenfolge, wenn der Nutzer „mach das Dokument fertig“, „wandle um“, �
 1. pruefe_word_dokument aufrufen. Fehlen Alt-Texte (bilder_ohne_alt_text > 0), sag das zuerst und biete an, sie zu erzeugen (generate_alt_text je Bild oder der Knopf „Alt-Texte generieren“ in der Oberfläche). Wandle nicht um, solange Bilder ohne Alt-Text sind — außer der Nutzer will es ausdrücklich trotzdem.
 2. konvertiere_zu_pdfua OHNE bestaetigt aufrufen. Du bekommst Preis und Guthaben zurück. Nenne dem Nutzer den Preis in Credits und frage, ob du umwandeln sollst. Ein klares Ja („ja“, „mach“, „umwandeln“, „los“) ist die Zustimmung; unklare Aussagen sind keine.
 3. Erst nach dem Ja konvertiere_zu_pdfua mit bestaetigt=true aufrufen. Das dauert einige Sekunden.
-4. Fasse das Ergebnis in Worten zusammen: bestanden oder nicht, welche Bereiche Hinweise haben und was das bedeutet („Ein Bild hat keinen Alternativtext“ heißt: Bild N beschriften und erneut umwandeln). Sag dem Nutzer, dass unter deiner Antwort ein Knopf zum Herunterladen steht und dass die Datei mit Bericht unter „Meine Ausgaben“ liegt (Reiter „Ausgaben“ im Projekt).
+4. Fasse das Ergebnis in Worten zusammen: nur das, was auffällt — welche Befunde es gibt und was der Nutzer dagegen tut. Zähle nicht auf, was in Ordnung ist; ohne Befund reicht ein Satz („PDF/UA bestanden, keine Befunde.“). Was ein Befund bedeutet, erklärst du kurz („Ein Bild hat keinen Alternativtext“ heißt: Bild N beschriften und erneut umwandeln). Sag dem Nutzer, dass unter deiner Antwort ein Knopf zum Herunterladen steht und dass die Datei mit Bericht in der Ablage liegt (Knopf „Ablage“ neben „Herunterladen“, Seitenleiste „Meine Ablage“).
 
 Dieselbe Rückfrage-Regel gilt für exportiere_word: erst ohne bestaetigt (Preis nennen, fragen), dann mit bestaetigt=true.
 

@@ -19,7 +19,7 @@
       {# Meine Ausgaben (11.09.2026): die letzten fertigen Umwandlungen; der Abschnitt
          bleibt verborgen, solange es keine gibt (kein leerer Kasten fuer Neue). #}
       <section class="dash-section" aria-labelledby="ausgaben-h" id="ausgabenSection" hidden>
-        <h2 id="ausgaben-h">{{ _('Neueste Ausgaben') }}</h2>
+        <h2 id="ausgaben-h">{{ _('Neu in der Ablage') }}</h2>
         <div id="ausgabenContainer"></div>
       </section>
 {% endblock %}
@@ -278,19 +278,19 @@
       li.className = 'dash-item';
       const h3 = document.createElement('h3');
       const link = document.createElement('a');
-      link.href = '/ausgaben?projekt=' + encodeURIComponent(a.project_id) + '#ausgabe-' + a.id;
+      link.href = '/ablage?projekt=' + encodeURIComponent(a.project_id) + '#ausgabe-' + a.id;
       link.textContent = a.dokument || t('{projekt} – alle Dokumente', { projekt: a.projekt });
       h3.appendChild(link);
       const meta = document.createElement('p');
       meta.className = 'dash-meta';
       const dz = ausgabeDatum(a.created_at);
-      meta.textContent = t('{projekt} · {art} · {datum}', { projekt: a.projekt, art: (a.art === 'pdfua' ? t('Barrierefreie PDF (PDF/UA)') : (a.art === 'docx' ? t('Word mit Alt-Texten') : a.art_label)), datum: dz });
+      meta.textContent = t('{projekt} · {art} · {datum}', { projekt: a.projekt_geloescht ? t('{projekt} (Projekt gelöscht)', { projekt: a.projekt }) : a.projekt, art: (a.art === 'pdfua' ? t('Barrierefreie PDF') : (a.art === 'docx' ? t('Word mit Alt-Texten') : a.art_label)), datum: dz });
       const summe = document.createElement('p');
       summe.className = 'dash-sub';
       summe.style.margin = '.2rem 0 0';
       summe.textContent = a.art === 'docx'
-        ? (a.hinweise === 0 ? t('Word-Prüfbericht: keine Auffälligkeiten') : t('Word-Prüfbericht: {n} Hinweise', { n: a.hinweise }))
-        : (a.bestanden ? t('Prüfung: bestanden') : (a.hinweise === 1 ? t('Prüfung: ein Bereich mit Hinweisen') : t('Prüfung: {n} Bereiche mit Hinweisen', { n: a.hinweise })));
+        ? (a.hinweise === 0 ? t('Keine Befunde im Word-Dokument.') : (a.hinweise === 1 ? t('Ein Befund im Word-Dokument.') : t('{n} Befunde im Word-Dokument.', { n: a.hinweise })))
+        : (a.bestanden ? t('PDF/UA bestanden, keine Befunde.') : (a.hinweise === 1 ? t('Ein Bereich mit Befunden.') : t('{n} Bereiche mit Befunden.', { n: a.hinweise })));
       li.appendChild(h3); li.appendChild(meta); li.appendChild(summe);
       ul.appendChild(li);
     });
@@ -298,8 +298,8 @@
     const all = document.createElement('p');
     all.style.marginTop = '1rem';
     const allLink = document.createElement('a');
-    allLink.href = '/ausgaben';
-    allLink.textContent = t('Alle Ausgaben anzeigen');
+    allLink.href = '/ablage';
+    allLink.textContent = t('Ablage öffnen');
     allLink.className = 'btn btn-secondary';
     all.appendChild(allLink);
     cont.appendChild(all);

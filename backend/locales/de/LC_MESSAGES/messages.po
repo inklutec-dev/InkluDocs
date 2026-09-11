@@ -6106,3 +6106,86 @@ msgstr "Starte mit deinen eigenen Dokumenten und finde heraus, wie viel der Arbe
 msgid "Vorführung vereinbaren"
 msgstr "Vorführung vereinbaren"
 
+
+# Meine Ablage (Besprechung 11.09.2026): Umbenennung, nur Befunde, unbegrenzt, ueberlebt Projekt-Loeschen
+msgid "Meine Ablage"
+msgstr "Meine Ablage"
+
+msgid "Sicherung deiner barrierefreien Office-Dokumente inklusive Prüfbericht."
+msgstr "Sicherung deiner barrierefreien Office-Dokumente inklusive Prüfbericht."
+
+msgid "Keine Befunde im Word-Dokument."
+msgstr "Keine Befunde im Word-Dokument."
+
+msgid "Ein Befund im Word-Dokument."
+msgstr "Ein Befund im Word-Dokument."
+
+msgid "{n} Befunde im Word-Dokument."
+msgstr "{n} Befunde im Word-Dokument."
+
+msgid "PDF/UA bestanden, keine Befunde."
+msgstr "PDF/UA bestanden, keine Befunde."
+
+msgid "Ein Bereich mit Befunden."
+msgstr "Ein Bereich mit Befunden."
+
+msgid "{n} Bereiche mit Befunden."
+msgstr "{n} Bereiche mit Befunden."
+
+msgid "Barrierefreie PDF"
+msgstr "Barrierefreie PDF"
+
+msgid "Keine Befunde."
+msgstr "Keine Befunde."
+
+msgid "Befunde in der PDF:"
+msgstr "Befunde in der PDF:"
+
+msgid "Befunde im Word-Dokument:"
+msgstr "Befunde im Word-Dokument:"
+
+msgid "{art}: {dokument} — {datum}, {zeit}"
+msgstr "{art}: {dokument} — {datum}, {zeit}"
+
+msgid "{projekt} (Projekt gelöscht)"
+msgstr "{projekt} (Projekt gelöscht)"
+
+msgid "Datei nicht mehr vorhanden, der Bericht bleibt."
+msgstr "Datei nicht mehr vorhanden, der Bericht bleibt."
+
+msgid "Ablage: {name}"
+msgstr "Ablage: {name}"
+
+msgid "Für dieses Projekt liegt noch nichts in der Ablage. Wandle es über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "Für dieses Projekt liegt noch nichts in der Ablage. Wandle es über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+
+msgid "Die Ablage ist noch leer. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "Die Ablage ist noch leer. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+
+msgid "Die Ablage konnte nicht geladen werden. Bitte später erneut versuchen."
+msgstr "Die Ablage konnte nicht geladen werden. Bitte später erneut versuchen."
+
+msgid "{n} Einträge geladen."
+msgstr "{n} Einträge geladen."
+
+msgid "Neu in der Ablage"
+msgstr "Neu in der Ablage"
+
+msgid "Ablage öffnen"
+msgstr "Ablage öffnen"
+
+msgid "Ablage ({n})"
+msgstr "Ablage ({n})"
+
+msgid "Zur Ablage"
+msgstr "Zur Ablage"
+
+msgid "PDF und Prüfbericht liegen jetzt in deiner Ablage."
+msgstr "PDF und Prüfbericht liegen jetzt in deiner Ablage."
+
+msgid "Ablage"
+msgstr "Ablage"
+
+msgid "Eintrag lesen"
+msgstr "Eintrag lesen"
+

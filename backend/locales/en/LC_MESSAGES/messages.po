@@ -6103,3 +6103,86 @@ msgstr "Start with your own documents and find out how much of the work for acce
 msgid "Vorführung vereinbaren"
 msgstr "Arrange a demonstration"
 
+
+# Meine Ablage (Besprechung 11.09.2026): Umbenennung, nur Befunde, unbegrenzt, ueberlebt Projekt-Loeschen
+msgid "Meine Ablage"
+msgstr "My archive"
+
+msgid "Sicherung deiner barrierefreien Office-Dokumente inklusive Prüfbericht."
+msgstr "Your accessible Office documents, saved together with their check report."
+
+msgid "Keine Befunde im Word-Dokument."
+msgstr "No findings in the Word document."
+
+msgid "Ein Befund im Word-Dokument."
+msgstr "One finding in the Word document."
+
+msgid "{n} Befunde im Word-Dokument."
+msgstr "{n} findings in the Word document."
+
+msgid "PDF/UA bestanden, keine Befunde."
+msgstr "PDF/UA passed, no findings."
+
+msgid "Ein Bereich mit Befunden."
+msgstr "One area with findings."
+
+msgid "{n} Bereiche mit Befunden."
+msgstr "{n} areas with findings."
+
+msgid "Barrierefreie PDF"
+msgstr "Accessible PDF"
+
+msgid "Keine Befunde."
+msgstr "No findings."
+
+msgid "Befunde in der PDF:"
+msgstr "Findings in the PDF:"
+
+msgid "Befunde im Word-Dokument:"
+msgstr "Findings in the Word document:"
+
+msgid "{art}: {dokument} — {datum}, {zeit}"
+msgstr "{art}: {dokument} — {datum}, {zeit}"
+
+msgid "{projekt} (Projekt gelöscht)"
+msgstr "{projekt} (project deleted)"
+
+msgid "Datei nicht mehr vorhanden, der Bericht bleibt."
+msgstr "File no longer available; the report remains."
+
+msgid "Ablage: {name}"
+msgstr "Archive: {name}"
+
+msgid "Für dieses Projekt liegt noch nichts in der Ablage. Wandle es über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "Nothing from this project is in the archive yet. Convert it into an accessible PDF via “Download” or export it as Word, and it will appear here."
+
+msgid "Die Ablage ist noch leer. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um oder exportiere es als Word, dann erscheint es hier."
+msgstr "The archive is still empty. Convert a Word project into an accessible PDF via “Download” or export it as Word, and it will appear here."
+
+msgid "Die Ablage konnte nicht geladen werden. Bitte später erneut versuchen."
+msgstr "The archive could not be loaded. Please try again later."
+
+msgid "{n} Einträge geladen."
+msgstr "{n} entries loaded."
+
+msgid "Neu in der Ablage"
+msgstr "New in the archive"
+
+msgid "Ablage öffnen"
+msgstr "Open archive"
+
+msgid "Ablage ({n})"
+msgstr "Archive ({n})"
+
+msgid "Zur Ablage"
+msgstr "Go to archive"
+
+msgid "PDF und Prüfbericht liegen jetzt in deiner Ablage."
+msgstr "PDF and check report are now in your archive."
+
+msgid "Ablage"
+msgstr "Archive"
+
+msgid "Eintrag lesen"
+msgstr "Read entry"
+
