@@ -51,8 +51,8 @@ E = env_datei()
 LOGIN_MAIL = os.environ.get("INKLUDOCS_E2E_MAIL") or E.get("INKLUDOCS_E2E_MAIL")
 LOGIN_PW = os.environ.get("INKLUDOCS_E2E_PW") or E.get("INKLUDOCS_E2E_PW")
 
-H1_DE = "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente"
-H1_EN_TEILE = ("One document. Many people. Equal opportunities.", "AI alt text for accessible PDF, Word and forms")
+H1_DE = "Barrierefreie Dokumente. Automatisiert."
+H1_EN_TEILE = ("One document. Many people. Equal opportunities.", "documents. Automated.")
 KOPF_NAV = [("/preise", "Preise"), ("/kontakt", "Kontakt"), ("/ueber-uns", "Über uns"),
             ("/login", "Anmelden"), ("/register", "Kostenlos starten")]
 FUSSZEILE = [("/impressum", "Impressum"), ("/datenschutz", "Datenschutz"),
@@ -146,13 +146,19 @@ with sync_playwright() as p:
           h1s.count() == 1 and " ".join(h1s.first.inner_text().split()) == H1_DE,
           str([x.inner_text().strip() for x in h1s.all()]))
     h2 = [x.inner_text().strip() for x in page.locator("main h2").all()]
-    check("zehn Abschnitte, neun mit H2", len(h2) == 9 and page.locator("main section").count() == 10, str(h2))
-    check("zehn Abschnitte mit id, KEIN aria-labelledby (Steve 03.09.: ARIA nur wo noetig)",
-          page.locator("main section[id]").count() == 10 and page.locator("main section[aria-labelledby]").count() == 0)
+    check("sechzehn Abschnitte, fuenfzehn mit H2 (2. Fassung 11.09.2026)", len(h2) == 15 and page.locator("main section").count() == 16, str(h2))
+    check("sechzehn Abschnitte mit id, KEIN aria-labelledby (Steve 03.09.: ARIA nur wo noetig)",
+          page.locator("main section[id]").count() == 16 and page.locator("main section[aria-labelledby]").count() == 0)
     check("nur vier Landmarken: header, nav, main, footer — kein role=region, kein aria-label an nav/Marke",
           page.locator("[role=region], section[aria-label], section[aria-labelledby], nav[aria-label], a.start-brand[aria-label]").count() == 0)
     check("Werkzeug-Karten als H3", page.locator("section#werkzeuge h3").count() == 3)
-    check("drei Schritte als nummerierte Liste", page.locator("ol.start-schritte > li").count() == 3)
+    check("sechs Schritte als nummerierte Liste (Michael 10.09.)", page.locator("ol.start-schritte > li").count() == 6)
+    check("Kette Word -> PDF/UA als nummerierte Liste mit 6 Stationen", page.locator("ol.start-kette > li").count() == 6)
+    check("Vertrauenszeile: vier Punkte, EU-Satz als Hosting (Steve 10.09.)", page.locator("section.start-hero ul.start-vertrauen > li").count() == 4 and "Hosting in der EU" in page.locator("ul.start-vertrauen").inner_text() and "Verarbeitung in der EU" not in page.locator("main").inner_text())
+    check("Werkzeuge: drei Kicker ueber den H3 (KI-gestuetzte Beschreibungen / Word zu PDF/UA / Barrierefreie Formulare)", page.locator("section#werkzeuge p.start-kicker").count() == 3)
+    check("Schluss: Vorfuehrung vereinbaren -> /kontakt (Michael 11.09.)", page.locator("section#schluss a.btn-start[href='/kontakt']").inner_text().strip() == "Vorführung vereinbaren")
+    check("Markensatz unter der H1: Ein Dokument. Viele Menschen. Gleiche Chancen.", page.locator("section.start-hero p.start-claim").inner_text().strip() == "Ein Dokument. Viele Menschen. Gleiche Chancen.")
+    check("Standards nennen BITV 2.0 (Steve 10.09.)", "BITV 2.0" in page.locator("section#standards").inner_text())
     check("Abschnitt 'letztes Wort': von Hand aendern + InkluAgent + Prompts (Steve 02.09.)",
           page.locator("section#kontrolle h3").count() == 3
           and "InkluAgent" in page.locator("section#kontrolle").inner_text())
@@ -163,8 +169,8 @@ with sync_playwright() as p:
           and "Privatpersonen" in page.locator("section#zielgruppen").inner_text())
     check("Preise mit Link auf /preise",
           page.locator("section#preise a[href='/preise']").count() == 1)
-    check("sieben FAQ als natives details/summary",
-          page.locator(".start-faq details > summary").count() == 7)
+    check("zehn FAQ als natives details/summary (7 + 3 neue, 11.09.)",
+          page.locator(".start-faq details > summary").count() == 10)
     check("Knopf Demo (ohne Anmeldung) x2, Knopf Konto x2",
           page.locator("main a.btn-start[href='https://demo.inkludocs.de']").count() == 2
           and page.locator("main a.btn-start[href='/register']").count() == 2)

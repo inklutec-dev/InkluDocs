@@ -169,3 +169,48 @@ Angefasste Dateien liegen als `*.bak-pre-startseite-20260902` daneben
 `base_start.html`, `start.html`, `start.css`, `tests/e2e/ui_start.py`,
 diese Doku. Rückweg = Sicherungen zurückkopieren, neue Dateien entfernen,
 Staging neu bauen.
+
+
+## 2. Fassung der Texte (Michael Karbe 10.09.2026, abgestimmt per Mail 10./11.09., eingebaut 11.09.2026)
+
+Michael hat die Texte neu geschrieben („Barrierefreiheit ist unser Thema und
+nicht nur Alt-Texte“, Angebot in drei Kategorien). Steves Durchgang vom 10.09.
+und Michaels Antwort vom 11.09. ergaben diese Abmachungen, alle umgesetzt:
+
+- **H1** = Michaels Zeile „Barrierefreie Dokumente. Automatisiert.“ (Akzent auf
+  „Barrierefreie“), direkt darunter der gekürzte Satz mit den Formaten
+  (Alt-Texte, Quickinfos, Word zu PDF/UA), dann der Markensatz „Ein Dokument.
+  Viele Menschen. Gleiche Chancen.“ (Steve: auf InkluDocs in Ordnung).
+  Seitentitel und Meta-Beschreibung bleiben bei den Suchbegriffen; die
+  Meta-Beschreibung ist auf ~150 Zeichen gekürzt.
+- **EU-Satz** (der einzige Stopper): kein „Verarbeitung in der EU“. Vertrauenszeile
+  „Hosting in der EU“, Abschnitt Datenschutz mit Hosting/Datenhaltung in der
+  EU, kein Training, kein Zwischenspeicher, Google Cloud EMEA Dublin mit
+  EU-Standardvertragsklauseln; FAQ „Werden meine Dokumente in der EU
+  verarbeitet?“ sagt ehrlich, dass das Modell auch außerhalb rechnen kann und
+  eine wählbare Region in Arbeit ist. Erst mit dem Modellschalter darf mit
+  EU-Verarbeitung geworben werden.
+- **Knöpfe oben** bleiben (Demo „Ohne Anmeldung selbst erleben“, „Kostenlos
+  starten“, „Anmelden“). **Unten** „Vorführung vereinbaren“ → `/kontakt`
+  (Michael: kostenlose Vorführung; „Demo“ heißt auf der Seite nur die Demo
+  zum Selbermachen).
+- **Abschnitte** (16 statt 10): Werkzeuge mit Kickern (KI-gestützte
+  Beschreibungen / Word zu PDF/UA / Barrierefreie Formulare), Warum InkluDocs,
+  sechs Schritte, „KI, die mehr als nur das Bild versteht“ (fünf Karten),
+  Kontrolle, „Von Word zum validierten PDF/UA“ (Kette als `<ol
+  class="start-kette">`), Vorher/nachher, Für wen (vier B2B-Gruppen + Satz für
+  alle anderen, Steve 02.09.), Webanwendung/Teams/API (API: Zugang über
+  Kontakt), Preise („ab … Euro im Monat bei Jahreslaufzeit“), Datenschutz,
+  InkluTec + Actino, Standards mit BITV 2.0 (Steve), FAQ (7 alte + 3 neue),
+  Schluss.
+- Kleinkram beim Einbau: Arbeitsnummern der Überschriften weg, Doppel-
+  Überschriften zusammengelegt, „Die KI macht den Vorschlag. Du triffst die
+  Entscheidung.“ als Merksatz, Sprachfehler korrigiert, „Alt-Text“ und
+  „Alternativtext“ gemischt (beide Suchbegriffe).
+- Neue CSS-Klassen in `start.css`: `.start-vertrauen`, `.start-kicker`,
+  `.start-merksatz`, `.start-kette`, `.start-liste`, `.start-standards`;
+  Hero-Raster um die Zeile `vertrauen` ergänzt.
+- 111 neue msgids × 6 Sprachen (Block „Startseite 2. Fassung“ am Ende der
+  Kataloge). Tests `ui_start.py` und `a11y_start_audit.py` nachgezogen (16
+  Abschnitte, 6 Schritte, 10 FAQ, 19 Karten, Kette, Vertrauenszeile, Kicker,
+  Vorführung, neue H1/Markensatz in sechs Sprachen).

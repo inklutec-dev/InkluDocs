@@ -5460,3 +5460,338 @@ msgstr "{n} af {m} billeder i brødteksten har ingen alternativ tekst (sidehoved
 msgid "Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt)."
 msgstr "Alle {n} billeder i brødteksten har alternativ tekst eller er dekorative (sidehoved og sidefod ikke talt med)."
 
+
+# Startseite 2. Fassung (Michael Karbe 10.09.2026, abgestimmt 11.09.2026)
+msgid "Alt-Texte per KI, Word zu PDF/UA und Quickinfos für Formulare. Selbst prüfen, dann exportieren. Für Behörden, Verlage und Agenturen. Kostenlos starten."
+msgstr "AI-alternativtekster, Word til PDF/UA og hjælpetekster til formularer. Tjek selv, eksportér derefter. For myndigheder, forlag og bureauer. Start gratis."
+
+msgid "{a}Barrierefreie{e} Dokumente. Automatisiert."
+msgstr "{a}Tilgængelige{e} dokumenter. Automatiseret."
+
+msgid "Erstelle barrierefreie Dokumente schneller und besser, mit KI und Automatisierung. Alt-Texte für Bilder, Quickinfos für Formularfelder, Word zu PDF/UA mit Validierung – direkt im Browser."
+msgstr "Lav tilgængelige dokumenter hurtigere og bedre med AI og automatisering. Alternativtekster til billeder, hjælpetekster til formularfelter, Word til PDF/UA med validering – direkte i browseren."
+
+msgid "Ein Dokument. Viele Menschen. Gleiche Chancen."
+msgstr "Ét dokument. Mange mennesker. Lige muligheder."
+
+msgid "Keine Installation"
+msgstr "Ingen installation"
+
+msgid "Hosting in der EU"
+msgstr "Hosting i EU"
+
+msgid "Menschliche Kontrolle"
+msgstr "Menneskelig kontrol"
+
+msgid "PDF/UA-Validierung"
+msgstr "PDF/UA-validering"
+
+msgid "KI-gestützte Beschreibungen"
+msgstr "AI-understøttede beskrivelser"
+
+msgid "Aussagekräftige Alternativtexte erstellen"
+msgstr "Lav sigende alternativtekster"
+
+msgid "InkluDocs analysiert Bilder, Grafiken und Tabellen im Kontext des Dokuments und erstellt mit KI automatisch aussagekräftige Kurz- und Langbeschreibungen. Alle Texte werden zur Prüfung, Korrektur und Freigabe im Browser angezeigt. Du bestätigst jedes Ergebnis, bevor es verwendet wird."
+msgstr "InkluDocs analyserer billeder, grafik og tabeller i dokumentets kontekst og laver automatisk sigende korte og lange beskrivelser med AI. Alle tekster vises i browseren til kontrol, rettelse og godkendelse. Du bekræfter hvert resultat, før det bruges."
+
+msgid "Word zu PDF/UA"
+msgstr "Word til PDF/UA"
+
+msgid "Barrierefreie PDF aus Word erstellen"
+msgstr "Lav tilgængelig PDF fra Word"
+
+msgid "Sichere deine Office-Dateien ohne zusätzliches Add-in als standardkonforme PDF/UA – einschließlich Validierung. Umwandlung und Aufbereitung für Barrierefreiheit laufen automatisch. Fehler im Dokument werden zur Korrektur ausführlich und verständlich beschrieben."
+msgstr "Gem dine Office-filer som standardkonform PDF/UA uden ekstra tilføjelsesprogram – inklusive validering. Konvertering og klargøring til tilgængelighed sker automatisk. Fejl i dokumentet beskrives udførligt og forståeligt, så de kan rettes."
+
+msgid "Barrierefreie Formulare"
+msgstr "Tilgængelige formularer"
+
+msgid "PDF-Formulare einfacher nutzbar machen"
+msgstr "Gør PDF-formularer nemmere at bruge"
+
+msgid "Für PDF-Formulare erzeugt InkluDocs automatisch die Quickinfos, die Screenreader zu jedem Formularfeld vorlesen. Erzeuge die Texte per KI, prüfe den Stand direkt im Browser, stimme die genaue Formulierung ab und sichere die Beschreibungen zur Wiederverwendung für weitere Formulare."
+msgstr "Til PDF-formularer laver InkluDocs automatisk de hjælpetekster, som skærmlæsere læser op for hvert formularfelt. Lav teksterne med AI, tjek status direkte i browseren, afstem den præcise formulering og gem beskrivelserne til genbrug i andre formularer."
+
+msgid "Warum InkluDocs?"
+msgstr "Hvorfor InkluDocs?"
+
+msgid "Barrierefreiheit sollte die Dokumentenproduktion nicht ausbremsen. Barrierefreie Dokumente von Hand zu erstellen kostet Zeit und erfordert Fachwissen. InkluDocs automatisiert wiederkehrende Aufgaben und gibt Fachleuten gleichzeitig die volle Kontrolle über das Ergebnis."
+msgstr "Tilgængelighed bør ikke bremse dokumentproduktionen. At lave tilgængelige dokumenter i hånden koster tid og kræver fagviden. InkluDocs automatiserer tilbagevendende opgaver og giver samtidig fagfolk fuld kontrol over resultatet."
+
+msgid "Wiederkehrende Aufgaben automatisieren"
+msgstr "Automatisér tilbagevendende opgaver"
+
+msgid "Überlasse zeitaufwendige Arbeiten rund um die Barrierefreiheit der KI und der Automatisierung."
+msgstr "Overlad det tidskrævende tilgængelighedsarbejde til AI og automatisering."
+
+msgid "Die Kontrolle behalten"
+msgstr "Behold kontrollen"
+
+msgid "Prüfe, bearbeite und bestätige jedes Ergebnis vor der Veröffentlichung."
+msgstr "Tjek, redigér og bekræft hvert resultat før offentliggørelse."
+
+msgid "Validierte Dokumente erstellen"
+msgstr "Lav validerede dokumenter"
+
+msgid "Erstelle Dokumente nach etablierten Standards für Barrierefreiheit und validiere das technische Ergebnis."
+msgstr "Lav dokumenter efter etablerede tilgængelighedsstandarder og validér det tekniske resultat."
+
+msgid "Vom Dokument zum barrierefreien Dokument"
+msgstr "Fra dokument til tilgængeligt dokument"
+
+msgid "Hochladen, analysieren, optimieren, prüfen, validieren, herunterladen: sechs Schritte, jeder nachvollziehbar."
+msgstr "Upload, analysér, optimér, tjek, validér, download: seks trin, alle gennemskuelige."
+
+msgid "Lade PDF- und Word-Dokumente oder Bilder hoch oder gib eine URL ein."
+msgstr "Upload PDF- og Word-dokumenter eller billeder, eller indtast en URL."
+
+msgid "Analysieren"
+msgstr "Analysér"
+
+msgid "InkluDocs zeigt Bilder, Alt-Texte, Formularfelder, Quickinfos, Seiten und Textinhalte im Kontext an."
+msgstr "InkluDocs viser billeder, alternativtekster, formularfelter, hjælpetekster, sider og tekstindhold i kontekst."
+
+msgid "Optimieren"
+msgstr "Optimér"
+
+msgid "KI, der InkluAgent und automatisierte Prozesse erstellen oder verbessern die Inhalte, die ein barrierefreies Dokument braucht."
+msgstr "AI, InkluAgent og automatiserede processer laver eller forbedrer det indhold, et tilgængeligt dokument har brug for."
+
+msgid "Prüfen"
+msgstr "Tjek"
+
+msgid "Prüfe und bearbeite die Ergebnisse selbst oder lade Kollegen oder Experten für Barrierefreiheit zur Kontrolle ein."
+msgstr "Tjek og redigér resultaterne selv, eller invitér kolleger eller tilgængelighedseksperter til at kontrollere dem."
+
+msgid "Validieren"
+msgstr "Validér"
+
+msgid "Das Dokument wird automatisch gegen die geltenden technischen Anforderungen geprüft."
+msgstr "Dokumentet kontrolleres automatisk mod de gældende tekniske krav."
+
+msgid "Lade das fertige barrierefreie Dokument herunter oder eine Liste der Beschreibungen samt Bildern."
+msgstr "Download det færdige tilgængelige dokument eller en liste over beskrivelserne sammen med billederne."
+
+msgid "KI, die mehr als nur das Bild versteht"
+msgstr "AI, der forstår mere end bare billedet"
+
+msgid "Ein guter Alternativtext beschreibt nicht einfach, was auf einem Bild zu sehen ist. Er vermittelt, was im Kontext des Dokuments relevant ist."
+msgstr "En god alternativtekst beskriver ikke bare, hvad der er på et billede. Den formidler, hvad der er relevant i dokumentets kontekst."
+
+msgid "Kontextbezogen"
+msgstr "Kontekstbaseret"
+
+msgid "InkluDocs berücksichtigt die umgebenden Inhalte des Dokuments: Bildunterschrift, Überschrift, den Absatz davor und danach."
+msgstr "InkluDocs tager højde for det omgivende indhold i dokumentet: billedtekst, overskrift, afsnittet før og efter."
+
+msgid "Unterschiedliche Inhaltstypen"
+msgstr "Forskellige indholdstyper"
+
+msgid "Fotos, Diagramme, Infografiken, Karten, Logos und Screenshots werden unterschiedlich behandelt."
+msgstr "Fotos, diagrammer, infografikker, kort, logoer og skærmbilleder behandles forskelligt."
+
+msgid "Individuelle Vorgaben"
+msgstr "Egne retningslinjer"
+
+msgid "Organisationen legen Terminologie, Schreibstil und eigene Anforderungen fest."
+msgstr "Organisationer fastlægger terminologi, skrivestil og egne krav."
+
+msgid "Mehrsprachig"
+msgstr "Flersproget"
+
+msgid "Beschreibungen entstehen in der Sprache, die das Dokument braucht."
+msgstr "Beskrivelser laves på det sprog, dokumentet har brug for."
+
+msgid "Kurz- und Langbeschreibungen"
+msgstr "Korte og lange beskrivelser"
+
+msgid "Je nach Inhalt genau der passende Detailgrad: ein kompakter Alt-Text, bei Diagrammen dazu eine Langbeschreibung."
+msgstr "Præcis den rette detaljeringsgrad efter indholdet: en kompakt alternativtekst, og til diagrammer desuden en lang beskrivelse."
+
+msgid "Die KI macht den Vorschlag. Du triffst die Entscheidung."
+msgstr "AI’en kommer med forslaget. Du træffer beslutningen."
+
+msgid "Der Mensch behält die Kontrolle"
+msgstr "Mennesket beholder kontrollen"
+
+msgid "Du entscheidest, nicht die KI. Barrierefreiheit erfordert menschliches Urteilsvermögen. Deshalb verbindet InkluDocs Automatisierung mit menschlicher Kontrolle: Jedes Ergebnis kann geprüft, bearbeitet und bestätigt werden, bevor es Teil des fertigen Dokuments wird."
+msgstr "Du bestemmer, ikke AI’en. Tilgængelighed kræver menneskelig dømmekraft. Derfor forbinder InkluDocs automatisering med menneskelig kontrol: Hvert resultat kan tjekkes, redigeres og bekræftes, før det bliver en del af det færdige dokument."
+
+msgid "Jeder Alternativtext und jede Langbeschreibung ist ein Textfeld. Du ergänzt, was fehlt, streichst, was zu viel ist, und speicherst das Ergebnis."
+msgstr "Hver alternativtekst og hver lang beskrivelse er et tekstfelt. Du tilføjer, hvad der mangler, sletter, hvad der er for meget, og gemmer resultatet."
+
+msgid "Der InkluAgent ist der KI-Assistent in deinem Projekt. Sag ihm einfach, was anders sein soll: kürzer, ohne Farben oder mit dem Namen der Person aus der Bildunterschrift. Er schreibt den Text entsprechend um, und du entscheidest, ob du ihn übernimmst."
+msgstr "InkluAgent er AI-assistenten i dit projekt. Sig bare, hvad der skal være anderledes: kortere, uden farver eller med navnet på personen fra billedteksten. Den omskriver teksten tilsvarende, og du bestemmer, om du vil bruge den."
+
+msgid "Lege fest, wie InkluDocs für dein Unternehmen oder deine Organisation schreibt: Tonfall, Länge und Fachbegriffe. Wähle für jedes Projekt die Sprache der Alternativtexte, unabhängig von der Sprache der Benutzeroberfläche."
+msgstr "Fastlæg, hvordan InkluDocs skriver for din virksomhed eller organisation: tone, længde og fagudtryk. Vælg for hvert projekt sproget for alternativteksterne, uafhængigt af brugerfladens sprog."
+
+msgid "Von Word zum validierten PDF/UA"
+msgstr "Fra Word til valideret PDF/UA"
+
+msgid "Erstelle dein Dokument wie gewohnt in Microsoft Word. InkluDocs kümmert sich um die technischen Anforderungen für ein barrierefreies PDF."
+msgstr "Lav dit dokument som sædvanligt i Microsoft Word. InkluDocs tager sig af de tekniske krav til en tilgængelig PDF."
+
+msgid "Word-Datei (DOCX)"
+msgstr "Word-fil (DOCX)"
+
+msgid "Analyse der Barrierefreiheit"
+msgstr "Tilgængelighedsanalyse"
+
+msgid "Automatische Optimierung"
+msgstr "Automatisk optimering"
+
+msgid "PDF/UA-Erstellung"
+msgstr "PDF/UA-oprettelse"
+
+msgid "Validierung"
+msgstr "Validering"
+
+msgid "Barrierefreies PDF"
+msgstr "Tilgængelig PDF"
+
+msgid "InkluDocs erstellt nicht einfach nur ein getaggtes PDF. Das erzeugte Dokument wird anschließend gegen die Anforderungen des Standards PDF/UA validiert, und du bekommst den Prüfbericht in verständlicher Sprache."
+msgstr "InkluDocs laver ikke bare en tagget PDF. Det oprettede dokument valideres derefter mod kravene i PDF/UA-standarden, og du får kontrolrapporten i et forståeligt sprog."
+
+msgid "Vorher und nachher: ein Alternativtext aus InkluDocs"
+msgstr "Før og efter: en alternativtekst fra InkluDocs"
+
+msgid "Dateiname statt Beschreibung. Ein Screenreader liest genau das vor – wer das Bild nicht sehen kann, erfährt nichts über seinen Inhalt."
+msgstr "Et filnavn i stedet for en beskrivelse. En skærmlæser læser præcis det op – den, der ikke kan se billedet, får intet at vide om indholdet."
+
+msgid "Der Alternativtext, wie InkluDocs ihn erstellt:"
+msgstr "Alternativteksten, som InkluDocs laver den:"
+
+msgid "Vereinfachtes Beispiel mit erfundenen Zahlen. Echte Alternativtexte richten sich nach Bildtyp, Kontext und der von dir gewählten Sprache."
+msgstr "Forenklet eksempel med opdigtede tal. Rigtige alternativtekster afhænger af billedtype, kontekst og det sprog, du vælger."
+
+msgid "Für alle, die barrierefreie Dokumente erstellen"
+msgstr "For alle, der laver tilgængelige dokumenter"
+
+msgid "Agenturen und Dienstleister für Barrierefreiheit"
+msgstr "Bureauer og leverandører af tilgængelighed"
+
+msgid "Erstelle barrierefreie Dokumente für Kunden schneller und verarbeite auch größere Dokumentenmengen."
+msgstr "Lav tilgængelige dokumenter til kunder hurtigere, og håndtér også større dokumentmængder."
+
+msgid "Redaktionen und Kommunikationsteams"
+msgstr "Redaktioner og kommunikationsteams"
+
+msgid "Erstelle barrierefreie Dokumente, ohne selbst zum PDF-Experten werden zu müssen."
+msgstr "Lav tilgængelige dokumenter uden selv at skulle blive PDF-ekspert."
+
+msgid "Verlage"
+msgstr "Forlag"
+
+msgid "Integriere Barrierefreiheit in bestehende Publikations- und Dokumentenworkflows."
+msgstr "Integrér tilgængelighed i eksisterende publikations- og dokumentworkflows."
+
+msgid "Behörden und Organisationen"
+msgstr "Myndigheder og organisationer"
+
+msgid "Erstelle barrierefreie Dokumente einheitlich und nach definierten Standards, wie BITV 2.0 und BFSG es verlangen."
+msgstr "Lav tilgængelige dokumenter ensartet og efter definerede standarder, som BITV 2.0 og den tyske tilgængelighedslov (BFSG) kræver."
+
+msgid "Vom einzelnen Dokument zur automatisierten Produktion"
+msgstr "Fra det enkelte dokument til automatiseret produktion"
+
+msgid "Nutze InkluDocs interaktiv im Browser oder integriere die Funktionen für Barrierefreiheit direkt in deine eigenen Dokumentenprozesse."
+msgstr "Brug InkluDocs interaktivt i browseren, eller integrér tilgængelighedsfunktionerne direkte i dine egne dokumentprocesser."
+
+msgid "Webanwendung"
+msgstr "Webapplikation"
+
+msgid "Für Redaktionen und einzelne Dokumente: hochladen, prüfen, exportieren."
+msgstr "Til redaktioner og enkelte dokumenter: upload, tjek, eksportér."
+
+msgid "Teams"
+msgstr "Teams"
+
+msgid "Für gemeinsame Prüfung und Freigabe, mit Team-Konten und gemeinsamem Guthaben."
+msgstr "Til fælles kontrol og godkendelse, med teamkonti og fælles saldo."
+
+msgid "API"
+msgstr "API"
+
+msgid "Für die automatisierte Dokumentenverarbeitung und die Integration in bestehende Anwendungen. Den Zugang richten wir gemeinsam ein, sprich uns über das Kontaktformular an."
+msgstr "Til automatiseret dokumentbehandling og integration i eksisterende applikationer. Adgangen sætter vi op sammen med dig – kontakt os via kontaktformularen."
+
+msgid "Abos Single, Team und Enterprise ab {preis} Euro im Monat bei Jahreslaufzeit, für Teams mit gemeinsamem Guthaben."
+msgstr "Abonnementer Single, Team og Enterprise fra {preis} euro om måneden ved årlig binding, til teams med fælles saldo."
+
+msgid "Datenschutz und Sicherheit"
+msgstr "Databeskyttelse og sikkerhed"
+
+msgid "Deine Dokumente bleiben deine Dokumente."
+msgstr "Dine dokumenter forbliver dine dokumenter."
+
+msgid "Hosting und Datenhaltung in der EU"
+msgstr "Hosting og datalagring i EU"
+
+msgid "Kein Training von KI-Modellen mit deinen Dokumenten"
+msgstr "Ingen træning af AI-modeller med dine dokumenter"
+
+msgid "Verschlüsselte Übertragung, kein Zwischenspeicher beim KI-Anbieter"
+msgstr "Krypteret overførsel, ingen mellemlagring hos AI-udbyderen"
+
+msgid "Löschung der Dokumente nach definierten Aufbewahrungsregeln, jederzeit auch selbst"
+msgstr "Sletning af dokumenter efter definerede opbevaringsregler, eller selv når som helst"
+
+msgid "Die KI-Anfragen laufen über Google Cloud EMEA in Dublin als Auftragsverarbeiter mit EU-Standardvertragsklauseln. Was genau wo verarbeitet wird, steht in der Datenschutzerklärung."
+msgstr "AI-forespørgsler kører via Google Cloud EMEA i Dublin som databehandler med EU-standardkontraktbestemmelser. Hvad der præcist behandles hvor, står i privatlivspolitikken."
+
+msgid "Entwickelt mit Erfahrung in Barrierefreiheit und PDF-Technologie"
+msgstr "Udviklet med erfaring i tilgængelighed og PDF-teknologi"
+
+msgid "Barrierefreiheit aus erster Hand"
+msgstr "Tilgængelighed på første hånd"
+
+msgid "InkluDocs wird gemeinsam mit Experten für Barrierefreiheit von InkluTec entwickelt, die selbst assistive Technologien nutzen. So konzentrieren wir uns auf das, was Dokumente für Menschen wirklich nutzbar macht – und nicht nur darauf, technische Anforderungen zu erfüllen."
+msgstr "InkluDocs udvikles sammen med tilgængelighedseksperter fra InkluTec, som selv bruger hjælpeteknologi. Sådan holder vi fokus på det, der virkelig gør dokumenter brugbare for mennesker – og ikke kun på at opfylde tekniske krav."
+
+msgid "Mehr als 30 Jahre PDF-Technologie"
+msgstr "Mere end 30 års PDF-teknologi"
+
+msgid "Actino Software beschäftigt sich seit mehr als drei Jahrzehnten mit professionellen PDF-Technologien, Standards und automatisierten Dokumentenprozessen."
+msgstr "Actino Software har i mere end tre årtier arbejdet med professionelle PDF-teknologier, standarder og automatiserede dokumentprocesser."
+
+msgid "Wir kennen PDF. Wir kennen Barrierefreiheit aus Anwendersicht."
+msgstr "Vi kender PDF. Vi kender tilgængelighed fra brugerens side."
+
+msgid "Auf etablierten Standards aufgebaut"
+msgstr "Bygget på etablerede standarder"
+
+msgid "InkluDocs unterstützt Organisationen dabei, Anforderungen an die Barrierefreiheit auf Grundlage etablierter Standards wie WCAG, PDF/UA, EN 301 549 und BITV 2.0 umzusetzen."
+msgstr "InkluDocs hjælper organisationer med at opfylde tilgængelighedskrav på grundlag af etablerede standarder som WCAG, PDF/UA, EN 301 549 og BITV 2.0."
+
+msgid "Denn eine Software allein kann nicht garantieren, dass ein Dokument in jeder Hinsicht barrierefrei ist. Deshalb hast du bei InkluDocs immer das letzte Wort."
+msgstr "For software alene kan ikke garantere, at et dokument er tilgængeligt i enhver henseende. Derfor har du altid det sidste ord i InkluDocs."
+
+msgid "Wie wird aus meinem Word-Dokument eine barrierefreie PDF?"
+msgstr "Hvordan bliver mit Word-dokument til en tilgængelig PDF?"
+
+msgid "Du lädst die Word-Datei hoch, InkluDocs beschreibt die Bilder und prüft die Struktur. Mit einem Klick entsteht daraus eine PDF/UA, die automatisch validiert wird. Den Prüfbericht liest du in verständlicher Sprache, nicht als Normtext."
+msgstr "Du uploader Word-filen, InkluDocs beskriver billederne og tjekker strukturen. Med ét klik bliver den til en PDF/UA, som valideres automatisk. Kontrolrapporten læser du i et forståeligt sprog, ikke som normtekst."
+
+msgid "Werden meine Dokumente in der EU verarbeitet?"
+msgstr "Behandles mine dokumenter i EU?"
+
+msgid "Hosting und Datenhaltung liegen in der EU. Die KI-Anfragen laufen über Google Cloud mit EU-Standardvertragsklauseln; das Modell selbst kann dabei auch außerhalb der EU rechnen. Deine Dokumente werden nicht zum Training genutzt. Eine wählbare Verarbeitungsregion ist in Arbeit."
+msgstr "Hosting og datalagring ligger i EU. AI-forespørgsler kører via Google Cloud med EU-standardkontraktbestemmelser; selve modellen kan også regne uden for EU. Dine dokumenter bruges ikke til træning. En valgbar behandlingsregion er under udarbejdelse."
+
+msgid "Kann ich mir InkluDocs zeigen lassen?"
+msgstr "Kan jeg få InkluDocs vist?"
+
+msgid "Ja. Melde dich über das Kontaktformular, dann vereinbaren wir eine kostenlose Vorführung."
+msgstr "Ja. Kontakt os via kontaktformularen, så aftaler vi en gratis fremvisning."
+
+msgid "Bereit, Barrierefreiheit bei Dokumenten einfacher zu machen?"
+msgstr "Klar til at gøre tilgængelighed i dokumenter nemmere?"
+
+msgid "Starte mit deinen eigenen Dokumenten und finde heraus, wie viel der Arbeit für barrierefreie Dokumente InkluDocs automatisieren kann. Oder lass dir InkluDocs in einer kostenlosen Vorführung zeigen."
+msgstr "Start med dine egne dokumenter, og find ud af, hvor meget af arbejdet med tilgængelige dokumenter InkluDocs kan automatisere. Eller lad os vise dig InkluDocs i en gratis fremvisning."
+
+msgid "Vorführung vereinbaren"
+msgstr "Aftal en fremvisning"
+

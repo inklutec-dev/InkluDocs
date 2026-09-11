@@ -42,8 +42,8 @@ with sync_playwright() as p:
     check("html lang=de", page.get_attribute("html","lang")=="de")
     check("Fenstertitel vorhanden, nennt InkluDocs", "InkluDocs" in page.title(), page.title())
     check("genau eine H1", page.locator("h1").count()==1)
-    check("H1 = Versprechen mit Suchbegriffen", " ".join(page.locator("h1").inner_text().split()) == "Alt-Texte per KI für barrierefreie PDF-, Word- und Formulardokumente", page.locator("h1").inner_text())
-    check("Markensatz als Absatz unter der H1", " ".join(page.locator("h1 + p.start-claim").inner_text().split()) == "Ein Inhalt. Viele Menschen. Gleiche Chancen.", page.locator("p.start-claim").count())
+    check("H1 = Barrierefreie Dokumente. Automatisiert. (Michael/Steve 10./11.09.)", " ".join(page.locator("h1").inner_text().split()) == "Barrierefreie Dokumente. Automatisiert.", page.locator("h1").inner_text())
+    check("Markensatz als Absatz im Kopfbereich", " ".join(page.locator("section.start-hero p.start-claim").inner_text().split()) == "Ein Dokument. Viele Menschen. Gleiche Chancen.", page.locator("p.start-claim").count())
     for lm in ["header","nav","main","footer"]:
         check(f"Landmarke {lm} genau einmal", page.locator(lm).count()==1, str(page.locator(lm).count()))
     check("nur eine nav, daher ohne aria-label (ARIA nur wo noetig)", page.locator("nav").count()==1 and not page.get_attribute("nav","aria-label"))
@@ -59,8 +59,8 @@ with sync_playwright() as p:
     check("keine Links/Knoepfe ineinander, keine Links in Ueberschriften", nested==0, str(nested))
     check("keine div/span mit onclick oder role=button", page.evaluate("() => document.querySelectorAll('[onclick],div[role=button],span[role=button],div[role=link],span[role=link]').length")==0)
     check("keine positiven tabindex", page.evaluate("() => document.querySelectorAll('[tabindex]:not([tabindex=\"-1\"]):not([tabindex=\"0\"])').length")==0)
-    check("Karten sind li in ul (kein article = kein Orientierungspunkt), ohne Links", page.evaluate("() => document.querySelectorAll('article, [role=article]').length")==0 and page.locator("ul.start-raster > li.start-karte").count()==9 and page.evaluate("() => document.querySelectorAll('li.start-karte a').length")==0)
-    check("details/summary nativ (7 FAQ)", page.locator("details > summary").count()==7)
+    check("Karten sind li in ul (kein article = kein Orientierungspunkt), ohne Links", page.evaluate("() => document.querySelectorAll('article, [role=article]').length")==0 and page.locator("ul.start-raster > li.start-karte").count()==19 and page.evaluate("() => document.querySelectorAll('li.start-karte a').length")==0)
+    check("details/summary nativ (10 FAQ)", page.locator("details > summary").count()==10)
     check("Listen: ol/ul nur mit li-Kindern", page.evaluate("() => Array.from(document.querySelectorAll('ul,ol')).every(l=>Array.from(l.children).every(c=>c.tagName==='LI'))"))
     check("Bilder: alle mit alt (oder keine Bilder)", page.evaluate("() => Array.from(document.images).every(i=>i.hasAttribute('alt'))"))
     check("kein aria-hidden auf fokussierbaren Elementen", page.evaluate("() => document.querySelectorAll('[aria-hidden=true] a, [aria-hidden=true] button').length")==0)
@@ -148,7 +148,7 @@ with sync_playwright() as p:
     check("320 px: kein horizontales Scrollen", m.evaluate("() => document.documentElement.scrollWidth <= 320"), str(m.evaluate("() => document.documentElement.scrollWidth")))
     check("320 px: Hero-Knoepfe sichtbar", m.locator("section.start-hero a.btn-start").first.is_visible())
     print("=== H. Weitere Sprachen: H1 + Knoepfe")
-    for lang, h1start, claim in [("en","AI alt text","One document."),("fr","Textes alternatifs","Un contenu."),("es","Textos alternativos","Un contenido."),("da","AI-alternativtekster","Ét indhold."),("sv","AI-alternativtexter","Ett innehåll.")]:
+    for lang, h1start, claim in [("en","Accessible documents","One document."),("fr","Documents accessibles","Un document."),("es","Documentos accesibles","Un documento."),("da","Tilgængelige dokumenter","Ét dokument."),("sv","Tillgängliga dokument","Ett dokument.")]:
         pg = b.new_page(extra_http_headers={"Accept-Language": f"{lang};q=1"}); pg.goto(BASE + "/", wait_until="networkidle")
         check(f"{lang}: html lang + H1 + Markensatz uebersetzt", pg.get_attribute("html","lang")==lang and pg.locator("h1").inner_text().startswith(h1start) and claim in pg.locator("p.start-claim").inner_text(), pg.locator("h1").inner_text()[:60]); pg.close()
     b.close()
