@@ -47,8 +47,8 @@ s, datei, h = req("POST", f"/api/projects/{PID}/export/docx", {"document_id": do
 check("Word-Export per Knopf liefert Datei", s == 200 and datei[:2] == b"PK", s)
 s, l1, _ = req("GET", f"/api/ausgaben?projekt={PID}")
 docx_eintraege = [a for a in (l1.get("ausgaben") or []) if a.get("art") == "docx" and a.get("ausloeser") == "knopf"]
-check("Word-Export per Knopf legt Ablage-Eintrag an (art=docx, ausloeser=knopf, Datei verfuegbar)", docx_eintraege and docx_eintraege[0].get("datei_verfuegbar"), l1.get("ausgaben"))
-aid_docx = docx_eintraege[0]["id"] if docx_eintraege else None
+check("Word-Export per Knopf legt KEINEN Ablage-Eintrag an (Schalter ABLAGE_WORD aus, Steve 11.09.)", not docx_eintraege, l1.get("ausgaben"))
+aid_docx = None
 check("Liste ohne aufbewahrung_tage, Eintraege ohne datei_bis", "aufbewahrung_tage" not in l1 and all("datei_bis" not in a for a in l1.get("ausgaben") or []))
 
 # 3. Einzelabruf: nur Befunde
@@ -66,7 +66,7 @@ check("Projekt geloescht", s == 200, (s, b))
 s, l2, _ = req("GET", f"/api/ausgaben?projekt={PID}")
 check("Ablage-Liste des geloeschten Projekts weiterhin abrufbar (projekt.geloescht=true)", s == 200 and (l2.get("projekt") or {}).get("geloescht") is True, (s, l2.get("projekt")))
 ids = [a.get("id") for a in l2.get("ausgaben") or []]
-check("PDF- und Word-Eintrag ueberleben das Loeschen", aid_pdf in ids and (aid_docx in ids if aid_docx else True), ids)
+check("PDF-Eintrag ueberlebt das Loeschen", aid_pdf in ids, ids)
 pdf_e = next((a for a in l2.get("ausgaben") or [] if a.get("id") == aid_pdf), {})
 check("Eintrag traegt projekt_geloescht + Projektname als Text, Dokumentbezug geloest", pdf_e.get("projekt_geloescht") is True and pdf_e.get("projekt") and pdf_e.get("document_id") is None, pdf_e)
 s, d, _ = req("GET", f"/api/ausgaben/{aid_pdf}/datei", raw=True)

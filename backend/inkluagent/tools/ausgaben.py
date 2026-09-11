@@ -150,8 +150,9 @@ def konvertiere_zu_pdfua(project_id: int, user_id: int, document_id: Optional[in
 
 def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = None,
                     bestaetigt: bool = False) -> dict[str, Any]:
-    """Word-Datei mit den aktuellen Alt-Texten ausgeben (Eintrag unter Meine Ablage).
-    Kostenpflichtig: ohne bestaetigt=true nur Preis + Guthaben."""
+    """Word-Datei mit den aktuellen Alt-Texten ausgeben — Download-Knopf unter der Antwort, KEIN Ablage-
+    Eintrag (Steve 11.09.: Ablage nur fuer umgewandelte PDFs). Kostenpflichtig: ohne bestaetigt=true nur
+    Preis + Guthaben."""
     m = _main()
     try:
         project = m._pdfua_projekt_laden(project_id, user_id, meldung="Der Word-Export ist nur fuer Word-Projekte verfuegbar")
@@ -161,16 +162,19 @@ def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = 
     except HTTPException as e:
         return _fehler(e)
     return {"ok": True, "result": {
-        "ausgabe_id": r["ausgabe_id"], "dateiname": r["dateiname"], "preis": r["preis"],
+        "dateiname": r["dateiname"], "preis": r["preis"],
         "alt_texte": r["alt_texte"], "hinweise": r["hinweise"], "zusammenfassung": r["zusammenfassung"],
         "dokumente": [{"dokument": d.get("dokument"), "bilder": d.get("bilder"), "alt_texte": d.get("alt_texte"),
                        "pruefbericht_hinweise": [b.get("text") for b in (d.get("pruefbericht") or []) if b.get("status") != "ok"],
                        "warnungen": d.get("warnungen") or []} for d in r.get("dokumente") or []],
-        "download_url": f"/api/ausgaben/{r['ausgabe_id']}/datei",
-        "ausgaben_url": f"/ablage?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
-        "ausgaben_anzahl": r.get("ausgaben_anzahl"),
-        "hinweis": "Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen; die Datei liegt ausserdem unter „Meine Ablage“.",
-    }, "anhang": _anhang("docx", r, project_id)}
+        "download_url": r["download_url"],
+        "hinweis": ("Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen der Word-Datei"
+                    + (" und einen Link in die Ablage." if r.get("ausgabe_id") else ". Sie liegt nicht in der Ablage (dort nur umgewandelte PDFs).")
+                    + " Nenne nur die Befunde des Word-Pruefberichts, nicht das Gute."),
+    }, "anhang": dict({"art": "docx", "dateiname": r.get("dateiname") or "", "download_url": r["download_url"],
+                       "project_id": project_id, "label": ("zip" if r.get("media") == "application/zip" else "docx")},
+                      **({"ausgabe_id": r["ausgabe_id"], "ausgaben_url": f"/ablage?projekt={project_id}#ausgabe-{r['ausgabe_id']}",
+                          "ausgaben_anzahl": r.get("ausgaben_anzahl")} if r.get("ausgabe_id") else {}))}
 
 
 def liste_ausgaben(project_id: int, user_id: int) -> dict[str, Any]:

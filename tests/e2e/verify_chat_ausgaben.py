@@ -101,10 +101,15 @@ s, b = chat("Gib mir das Word-Dokument mit den Alt-Texten.")
 check("5 Word: Werkzeug exportiere_word (Rueckfrage)", s == 200 and "exportiere_word" in (b.get("werkzeuge") or []) and not b.get("anhang"), (b.get("werkzeuge"), b.get("anhang")))
 s, b = chat("Ja.")
 anh2 = b.get("anhang") or []
-check("5 Word: nach Ja Anhang art=docx", len(anh2) == 1 and anh2[0].get("art") == "docx", anh2)
+check("5 Word: nach Ja Anhang art=docx mit Token-Download, ohne Ablage-Verweis (Schalter ABLAGE_WORD aus)", len(anh2) == 1 and anh2[0].get("art") == "docx" and "/export/pdfua/" in anh2[0].get("download_url", "") and not anh2[0].get("ausgaben_url"), anh2)
+if anh2:
+    r = urllib.request.Request(URL + anh2[0]["download_url"])
+    with op.open(r, timeout=120) as resp:
+        wd = resp.read()
+    check("5 Word: Datei aus dem Anhang ladbar (docx/zip)", wd[:2] == b"PK", wd[:4])
 s, l3 = req("GET", f"/api/ausgaben?projekt={PID}")
 w = [a for a in (l3.get("ausgaben") or []) if a.get("art") == "docx"]
-check("5 Word: Eintrag art=docx im Regal, Dateiname .docx oder .zip", w and (w[0].get("dateiname", "").endswith(".docx") or w[0].get("dateiname", "").endswith(".zip")), w[:1])
+check("5 Word: KEIN Eintrag in der Ablage (Steve 11.09.: nur umgewandelte PDFs; Schalter ABLAGE_WORD=on wuerde ihn anlegen)", not w, w[:1])
 
 # 6. Aufraeumen: Testeintraege loeschen
 for a in (l3.get("ausgaben") or []):

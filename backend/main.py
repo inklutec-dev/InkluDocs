@@ -7607,7 +7607,17 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
         response = FileResponse(output_path, filename=f"inkludocs_{download_base}.docx",
                                 media_type=DOCX_MEDIA, headers=headers)
         billing.verbuche(user["id"], "export", aktion="docx_export", credits=_preis)
-        _word_export_in_ablage(user["id"], project, unit, output_path, f"inkludocs_{download_base}.docx", DOCX_MEDIA, info, _preis, resolve_ui_language(request))
+        if ABLAGE_WORD:
+            _ = get_gettext(resolve_ui_language(request))
+            try:
+                analyse = docx_hoerprobe.analysiere(output_path, _)
+            except Exception:  # noqa: BLE001
+                analyse = {"hoerprobe": [], "pruefbericht": []}
+            _word_in_ablage_wenn_an(user["id"], project, unit, output_path, f"inkludocs_{download_base}.docx", DOCX_MEDIA,
+                                    [{"dokument": _doc_label(unit["doc"]), "bilder": info["total"], "alt_texte": info["tagged"],
+                                      "warnungen": info.get("warnings") or [], "hoerprobe": analyse.get("hoerprobe") or [],
+                                      "pruefbericht": analyse.get("pruefbericht") or []}], _preis, "knopf",
+                                    _("Word-Datei mit {n} Alt-Texten erzeugt.").format(n=int(info.get("tagged") or 0)))
         return response
 
     zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
@@ -7634,38 +7644,11 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
     response = FileResponse(zip_path, filename=f"{zip_base}_alle_word.zip",
                             media_type="application/zip", headers=headers)
     billing.verbuche(user["id"], "export", aktion="docx_export", credits=_preis)
-    _word_export_in_ablage(user["id"], project, None, zip_path, f"{zip_base}_alle_word.zip", "application/zip",
-                           {"total": total_images, "tagged": total_tagged, "warnings": aggregated_warnings}, _preis, resolve_ui_language(request))
+    if ABLAGE_WORD:
+        _ = get_gettext(resolve_ui_language(request))
+        _word_in_ablage_wenn_an(user["id"], project, None, zip_path, f"{zip_base}_alle_word.zip", "application/zip", [],
+                                _preis, "knopf", _("Word-Datei mit {n} Alt-Texten erzeugt.").format(n=total_tagged))
     return response
-
-
-def _word_export_in_ablage(user_id: int, project: dict, unit: Optional[dict], quelle: str, dateiname: str, media: str,
-                           info: dict, preis: int, ui_lang: str) -> None:
-    """Knopf „Als Word“ legt seit der Besprechung 11.09.2026 (Steve: haendisch und Chatbot gleich) eine Kopie in
-    der Ablage ab — Datei + Word-Pruefbericht/Hoerprobe. Scheitert das, bleibt der Download davon unberuehrt."""
-    try:
-        token = _secrets.token_hex(12)
-        ziel = os.path.join(_ablage_dir(user_id), f"word_{token}" + (".zip" if media == "application/zip" else ".docx"))
-        shutil.copyfile(quelle, ziel)
-        _ = get_gettext(ui_lang)
-        ergebnisse = []
-        if unit is not None:
-            try:
-                analyse = docx_hoerprobe.analysiere(quelle, _)
-            except Exception:  # noqa: BLE001
-                analyse = {"hoerprobe": [], "pruefbericht": []}
-            ergebnisse.append({"dokument": _doc_label(unit["doc"]), "bilder": info.get("total"), "alt_texte": info.get("tagged"),
-                               "warnungen": info.get("warnings") or [], "hoerprobe": analyse.get("hoerprobe") or [],
-                               "pruefbericht": analyse.get("pruefbericht") or []})
-        hinweise = sum(1 for e in ergebnisse for b in e["pruefbericht"] if b.get("status") != "ok")
-        try:
-            doc_id = int(unit["doc"]["id"]) if unit is not None else None
-        except (KeyError, TypeError, ValueError):
-            doc_id = None
-        _ausgabe_anlegen(user_id, project, doc_id, "knopf", dateiname, ziel, media, token, preis, hinweise == 0,
-                         _("Word-Datei mit {n} Alt-Texten erzeugt.").format(n=int(info.get("tagged") or 0)), ergebnisse, None, art="docx")
-    except Exception as e:  # noqa: BLE001
-        log.warning("Word-Export: Ablage-Eintrag nicht angelegt: %s", e)
 
 
 # ─── BARRIEREFREIE PDF AUS WORD (29.08.2026, Michael/Steve) ────────────────
@@ -7828,25 +7811,25 @@ def _pdfua_vorschau_sync(project: dict, user_id: int, document_id: Optional[int]
 
 def _word_export_ausgabe_sync(project: dict, user_id: int, document_id: Optional[int], custom_name: Optional[str],
                               ui_lang: str, ausloeser: str = "bot") -> dict:
-    """Word-Datei mit Alt-Texten als EINTRAG in Meine Ausgaben (Chatbot-Werkzeug exportiere_word,
-    11.09.2026). Der Knopf „Als Word“ im Export-Bereich bleibt ein Sofort-Download ohne Eintrag;
-    der Bot kann keinen Browser-Download ausloesen, also legt er die Datei ins Regal und die
-    Oberflaeche zeigt unter seiner Antwort den Knopf. Preis wie der Word-Export (docx_export).
-    Bericht = Pruefbericht + Hoerprobe des Word-Dokuments (keine veraPDF-Pruefung, keine PDF)."""
+    """Word-Datei mit Alt-Texten fuer den CHATBOT (Werkzeug exportiere_word, 11.09.2026): der Bot kann
+    keinen Browser-Download ausloesen, also entsteht die Datei im Projekt-Exportordner mit einem Token,
+    und die Oberflaeche zeigt unter seiner Antwort den Knopf (gleicher Token-Weg wie der Sofort-Download
+    der PDF/UA). KEIN Ablage-Eintrag (Steve 11.09. nachmittags: in der Ablage liegen nur die
+    umgewandelten PDFs samt Pruefbericht; Word-Dateien wuerden bei vielen Kunden zu viel).
+    Preis wie der Word-Export (docx_export). Bericht = Word-Pruefbericht + Hoerprobe, nur fuer die Antwort."""
     units = _load_pdf_export_units(project, user_id, document_id)
     output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
     _preis = _export_vorpruefung(user_id, sum(len(u["images"]) for u in units), "docx")
     _ = get_gettext(ui_lang)
     token = _secrets.token_hex(12)
-    ablage_dir = _ablage_dir(user_id)
     ergebnisse: list[dict] = []
     gesamt_tagged = 0
     if len(units) == 1:
         unit = units[0]
         label = custom_name or _doc_label(unit["doc"])
         out_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
-        pfad = os.path.join(ablage_dir, f"word_{token}.docx")
+        pfad = os.path.join(output_dir, f"word_{token}.docx")
         shutil.copyfile(out_path, pfad)
         dateiname = f"inkludocs_{_safe_filename_component(label)}.docx"
         media = DOCX_MEDIA
@@ -7862,7 +7845,7 @@ def _word_export_ausgabe_sync(project: dict, user_id: int, document_id: Optional
     else:
         zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
         dateiname = f"{zip_base}_alle_word.zip"
-        pfad = os.path.join(ablage_dir, f"word_{token}.zip")
+        pfad = os.path.join(output_dir, f"word_{token}.zip")
         media = "application/zip"
         with zipfile.ZipFile(pfad, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             for pos, unit in enumerate(units, start=1):
@@ -7878,18 +7861,18 @@ def _word_export_ausgabe_sync(project: dict, user_id: int, document_id: Optional
                 ergebnisse.append({"dokument": label, "bilder": info["total"], "alt_texte": info["tagged"],
                                    "warnungen": info.get("warnings") or [], "hoerprobe": analyse.get("hoerprobe") or [],
                                    "pruefbericht": analyse.get("pruefbericht") or []})
+    # Token-Metadatei wie beim PDF/UA-Sofortdownload: GET /api/projects/{id}/export/pdfua/{token} liefert die Datei.
+    with open(os.path.join(output_dir, f"pdfua_{token}.json"), "w", encoding="utf-8") as f:
+        json.dump({"dateiname": dateiname, "pfad": pfad, "media": media}, f)
     billing.verbuche(user_id, "export", aktion="docx_export", credits=_preis)
     hinweise = sum(1 for e in ergebnisse for b in e["pruefbericht"] if b.get("status") != "ok")
     zusammenfassung = _("Word-Datei mit {n} Alt-Texten erzeugt.").format(n=gesamt_tagged)
-    try:
-        _doc_id = int(units[0]["doc"]["id"]) if len(units) == 1 else None
-    except (KeyError, TypeError, ValueError, IndexError):
-        _doc_id = None
-    ausgabe_id = _ausgabe_anlegen(user_id, project, _doc_id, ausloeser, dateiname, pfad, media, token,
-                                  _preis, hinweise == 0, zusammenfassung, ergebnisse, None, art="docx")
-    return {"ok": True, "dateiname": dateiname, "media": media, "preis": _preis, "alt_texte": gesamt_tagged,
+    ausgabe_id = _word_in_ablage_wenn_an(user_id, project, units[0] if len(units) == 1 else None, pfad, dateiname, media,
+                                         ergebnisse, _preis, ausloeser, zusammenfassung)
+    return {"ok": True, "token": token, "dateiname": dateiname, "media": media, "preis": _preis, "alt_texte": gesamt_tagged,
             "hinweise": hinweise, "zusammenfassung": zusammenfassung, "dokumente": ergebnisse,
-            "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"])}
+            "download_url": f"/api/projects/{project['id']}/export/pdfua/{token}",
+            "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"]) if ausgabe_id else None}
 
 
 @app.post("/api/projects/{project_id}/export/pdfua")
@@ -7951,6 +7934,32 @@ async def export_pdfua_download(project_id: int, token: str, user: dict = Depend
 #   GET    /api/ausgaben/{id}/vorschau-> PNG der ersten Seite
 #   DELETE /api/ausgaben/{id}         -> Eintrag samt Dateien loeschen
 _AUSGABE_ART_LABEL = {"pdfua": "Barrierefreie PDF (PDF/UA)", "docx": "Word mit Alt-Texten"}
+# Word-Dateien in der Ablage? Steve 11.09. nachmittags: nein (Speicher bei vielen Kunden), nur umgewandelte
+# PDFs — aber als Schalter, falls Michael es doch will. on = Knopf „Als Word“ und Chatbot legen zusaetzlich
+# einen Ablage-Eintrag an.
+ABLAGE_WORD = os.environ.get("ABLAGE_WORD", "off").strip().lower() in ("on", "1", "true", "yes")
+
+
+def _word_in_ablage_wenn_an(user_id: int, project: dict, unit: Optional[dict], quelle: str, dateiname: str, media: str,
+                            ergebnisse: list, preis: int, ausloeser: str, zusammenfassung: str) -> Optional[int]:
+    """Nur bei ABLAGE_WORD=on: Kopie der Word-Datei in den Ablage-Ordner + Eintrag (art docx).
+    Scheitert das, bleibt der Download davon unberuehrt. Rueckgabe: ausgabe_id oder None."""
+    if not ABLAGE_WORD:
+        return None
+    try:
+        token = _secrets.token_hex(12)
+        ziel = os.path.join(_ablage_dir(user_id), f"word_{token}" + (".zip" if media == "application/zip" else ".docx"))
+        shutil.copyfile(quelle, ziel)
+        hinweise = sum(1 for e in ergebnisse for b in (e.get("pruefbericht") or []) if b.get("status") != "ok")
+        try:
+            doc_id = int(unit["doc"]["id"]) if unit is not None else None
+        except (KeyError, TypeError, ValueError):
+            doc_id = None
+        return _ausgabe_anlegen(user_id, project, doc_id, ausloeser, dateiname, ziel, media, token, preis, hinweise == 0,
+                                zusammenfassung, ergebnisse, None, art="docx")
+    except Exception as e:  # noqa: BLE001
+        log.warning("Word-Export: Ablage-Eintrag nicht angelegt: %s", e)
+        return None
 
 
 def _ablage_dir(user_id: int) -> str:

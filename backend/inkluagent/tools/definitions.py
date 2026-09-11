@@ -226,8 +226,8 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
     {
         "name": "exportiere_word",
         "description": (
-            "Gibt die Word-Datei mit den aktuellen Alt-Texten aus (Eintrag in der Ablage, Download-Knopf "
-            "unter deiner Antwort). Kostet Credits. Gleiche zwei Schritte wie konvertiere_zu_pdfua: erst ohne "
+            "Gibt die Word-Datei mit den aktuellen Alt-Texten aus (Download-Knopf unter deiner Antwort; "
+            "kein Eintrag in der Ablage — dort liegen nur umgewandelte PDFs). Kostet Credits. Gleiche zwei Schritte wie konvertiere_zu_pdfua: erst ohne "
             "bestaetigt (Preis nennen, fragen), dann mit bestaetigt=true."
         ),
         "input_schema": {"type": "object", "properties": {

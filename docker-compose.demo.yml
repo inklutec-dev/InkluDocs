@@ -74,6 +74,7 @@ services:
       # Chatbot-Anbieter (10.09.2026): bedrock (Vorgabe) oder gemini
       - INKLUAGENT_PROVIDER=${INKLUAGENT_PROVIDER:-bedrock}
       - INKLUAGENT_VERIFY=${INKLUAGENT_VERIFY:-on}
+      - ABLAGE_WORD=${ABLAGE_WORD:-off}   # Word-Dateien zusaetzlich in die Ablage (Steve 11.09.: aus)
       - KOSTEN_PRO_CREDIT_EUR=${KOSTEN_PRO_CREDIT_EUR:-0.012}
       - INKLUAGENT_GEMINI_MODEL_TEXT=${INKLUAGENT_GEMINI_MODEL_TEXT:-gemini-3.1-pro-preview}
       - INKLUAGENT_GEMINI_MODEL_VISION=${INKLUAGENT_GEMINI_MODEL_VISION:-gemini-3.1-pro-preview}

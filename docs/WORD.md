@@ -459,8 +459,15 @@ Entscheidungen und Umsetzung:
   (`projekt_name`) und löst `document_id`. Altbestand vom Vormittag holt
   `_ablage_dateien_einsammeln` beim Laden der Liste und vor dem Löschen eines Projekts in den
   Ablage-Ordner. Die Oberfläche zeigt „(Projekt gelöscht)“ und keinen „Zum Projekt“-Link.
-- **Knopf „Als Word“ legt ebenfalls einen Eintrag an** (`art = docx`, Auslöser Knopf), damit
-  händischer Export und Chatbot gleich sind (Steve). Der Sofort-Download bleibt.
+- **Word-Dateien in der Ablage: Schalter `ABLAGE_WORD` (Vorgabe `off`)** — Steve, 11.09.
+  nachmittags: Word-Dateien wären bei vielen Kunden zu viel Speicher, in der Ablage liegen nur
+  die umgewandelten PDFs samt Prüfbericht; Michael könnte es anders wollen, deshalb ein Schalter
+  statt Rückbau. Bei `off`: Knopf „Als Word“ = Sofort-Download, Chatbot legt seine Word-Datei
+  mit Token im Projekt-Exportordner ab und zeigt den Download-Knopf unter der Antwort (Token-Weg
+  wie der PDF/UA-Sofortdownload). Bei `on`: zusätzlich ein Ablage-Eintrag (`art = docx`) bei
+  Knopf und Chatbot (`_word_in_ablage_wenn_an`). Der Word-Prüfbericht geht so oder so nicht
+  verloren: Bei jeder Umwandlung hängen veraPDF-Bericht, Word-Prüfbericht und Hörprobe am
+  selben PDF-Eintrag.
 - **Nur Befunde** (Michael: „was gut war, ist nicht so wichtig“): Export-Dialog, Ablage-Seite,
   Dashboard und Einzelabruf (`_nur_befunde`) zeigen nur Punkte mit Status Befund; ohne Befund
   ein Satz („PDF/UA bestanden, keine Befunde.“ / „Keine Befunde im Word-Dokument.“). Der Chatbot

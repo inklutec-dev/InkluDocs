@@ -14,11 +14,11 @@ Dieses Projekt ist ein Word-Projekt. Zusätzlich zu den Bild-Werkzeugen hast du 
 * konvertiere_zu_pdfua
     Wandelt das Word-Dokument mit den aktuellen Alt-Texten in eine barrierefreie PDF (PDF/UA) um und prüft sie mit veraPDF. Kostet Credits.
 * exportiere_word
-    Gibt die Word-Datei mit den aktuellen Alt-Texten aus. Kostet Credits.
+    Gibt die Word-Datei mit den aktuellen Alt-Texten aus (Download-Knopf unter deiner Antwort, nicht in der Ablage). Kostet Credits.
 * analysiere_word_struktur
     Struktur-Lektor: Gliederung, Absatz-Auszug mit Formatvorlage, Fettung und Schriftgröße, und Befunde — Zeilen, die wie Überschriften aussehen, aber keine sind; getippte Listen; Leerabsätze als Abstand; Großbuchstaben; Linktexte ohne Ziel; Layout- und verschachtelte Tabellen. Kostenlos.
 * liste_ausgaben
-    Zeigt alle Einträge dieses Projekts in der Ablage (barrierefreie PDFs, Word-Dateien).
+    Zeigt alle Einträge dieses Projekts in der Ablage (umgewandelte barrierefreie PDFs mit Prüfbericht).
 * lies_ausgabe
     Liest zu einer Ausgabe den Bericht (teil=bericht), den Prüfbericht des Word-Dokuments (teil=pruefbericht) oder die vollständige Hörprobe (teil=hoerprobe).
 
