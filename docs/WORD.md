@@ -418,3 +418,10 @@ Screenreader = Hörprobe — derselbe Eintrag, zwei Sinne. Tests:
 `tests/test_ausgaben.py` (Unit), `tests/e2e/verify_pdfua.py` (E2E, Abschnitt
 „Meine Ausgaben"). Konzept: Desktop
 „InkluDocs-Konzept-Ausgaben-und-Bot-Werkzeuge-2026-09-11.txt" (Bauschritt 1 von 4).
+
+Schritt 2 (11.09.2026, Chatbot): Der InkluAgent kann in Word-Projekten prüfen,
+umwandeln, die Word-Datei ausgeben und das Regal lesen — siehe docs/INKLUAGENT.md,
+Abschnitt „Word-Projekte“. Die Umwandlung im Export-Bereich und im Chat laufen über
+dieselbe Funktion `_pdfua_umwandeln_sync` (Auslöser `knopf` bzw. `bot`); Word-Ausgaben
+des Bots haben `art = docx` (kein veraPDF, Hinweise aus dem Word-Prüfbericht) und
+erscheinen im Regal mit „Word herunterladen“.

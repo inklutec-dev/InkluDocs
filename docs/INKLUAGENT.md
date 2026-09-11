@@ -132,3 +132,32 @@ Besucher (`DEMO_DAILY_CHAT_LIMIT`, 12).
    `refresh_*`-Aktion im Loop; Projekt-Zusammenfassung.
 5. Frontend: `inkluagentSectionHtml(projectId, '<variante>')` einbinden, Aktionen umsetzen.
 6. Tests: E2E-Chat-Turn in `tests/e2e/verify_<werkzeug>.py`, Klicktest Kasten vorhanden/abwesend beim Gast.
+
+
+## Word-Projekte: der Bot macht das Dokument fertig (Meine Ausgaben, Schritt 2, 11.09.2026)
+
+Für Word-Projekte (`project_type == "docx"`) hängt `agent_loop._werkzeugsatz` an den
+Bild-Werkzeugsatz fünf weitere Werkzeuge (`tools/definitions.py::TOOL_DEFINITIONS_WORD`,
+Handler in `tools/ausgaben.py`) und an `SYSTEM_AGENT` den Zusatz
+`prompts/system_ausgaben.py`:
+
+- `pruefe_word_dokument` — Prüfbericht + Hörprobe-Auszug, kostenlos (`main._pdfua_vorschau_sync`).
+- `konvertiere_zu_pdfua` — barrierefreie PDF + veraPDF (`main._pdfua_umwandeln_sync`, Auslöser `bot`).
+- `exportiere_word` — Word mit Alt-Texten als Eintrag (`main._word_export_ausgabe_sync`).
+- `liste_ausgaben`, `lies_ausgabe(teil=bericht|pruefbericht|hoerprobe|alles)` — das Regal lesen.
+
+Die Kernfunktionen sind DIESELBEN wie im Export-Bereich (ein Weg, zwei Bediener). Zwei
+Regeln setzt der Server durch, nicht nur der Prompt: kostenpflichtige Werkzeuge liefern
+ohne `bestaetigt=true` nur Preis und Guthaben zurück (`rueckfrage_noetig`), und der
+Projekt-/Nutzerkontext kommt aus der Sitzung. `main` wird in `tools/ausgaben.py` zur
+Laufzeit importiert (main lädt die Agenten-Module selbst erst in den Endpunkten).
+
+Anhang: Umwandlung und Word-Export geben im Werkzeug-Ergebnis ein Feld `anhang`
+zurück (Download-URL, Ausgaben-URL, `ausgabe_id`, Zähler). `agent_loop` nimmt es aus
+dem tool_result (das Modell sieht es nicht) und hängt es an die Antwort
+(`result["anhang"]`, dazu `actions[{type: anhang}]`). `main._antwort` speichert es in
+`chat_messages.anhang` (neue Spalte), die Oberfläche zeigt unter der Antwort die Knöpfe
+„PDF/ZIP/Word herunterladen“ und „Zu meinen Ausgaben“ (`inkluagentAnhangEl` in app.html)
+und zieht den Reiter-Zähler nach. Tests: `tests/e2e/verify_chat_ausgaben.py` (API,
+LLM-gesteuert: Prüfen → Rückfrage ohne Eintrag → Ja → Anhang → Hörprobe → Word-Export),
+`tests/e2e/ui_chat_ausgaben.py` (Playwright: Knöpfe unter der Antwort, axe).

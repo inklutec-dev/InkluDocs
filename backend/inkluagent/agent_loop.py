@@ -29,6 +29,8 @@ from .providers.bedrock import BedrockProvider, BedrockProviderError
 from .tools.definitions import TOOL_DEFINITIONS, ToolExecutor
 from .tools.definitions_formular import TOOL_DEFINITIONS_FORMULAR, ToolExecutorFormular
 from .prompts.system_agent import SYSTEM_AGENT
+from .prompts.system_ausgaben import SYSTEM_AUSGABEN
+from .tools.definitions import TOOL_DEFINITIONS_WORD
 from .prompts.system_formular import SYSTEM_FORMULAR
 from .adapters.inkludocs import build_project_summary
 from .sanitize import sanitize_markdown
@@ -64,6 +66,11 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int):
     """(tool_definitions, executor, system_prompt) fuer dieses Projekt."""
     if _ist_formular(project):
         return TOOL_DEFINITIONS_FORMULAR, ToolExecutorFormular(project_id=project_id, user_id=user_id), SYSTEM_FORMULAR
+    # Word-Projekte (11.09.2026, Meine Ausgaben Schritt 2): Bild-Werkzeuge + Pruefen/Umwandeln/Word-Export/Regal.
+    if (project or {}).get("project_type") == "docx":
+        return (TOOL_DEFINITIONS + TOOL_DEFINITIONS_WORD,
+                ToolExecutor(project_id=project_id, user_id=user_id, word=True),
+                SYSTEM_AGENT + "\n\n" + SYSTEM_AUSGABEN)
     return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id), SYSTEM_AGENT
 
 
@@ -177,6 +184,7 @@ def run_agent(
 
     actions_log: list[dict] = []
     werkzeuge: list[str] = []
+    anhaenge: list[dict] = []   # Download-Knoepfe unter der Antwort (Meine Ausgaben, 11.09.2026)
     image_refs_seen: set[int] = set()
     last_reply_text = ""
 
@@ -275,6 +283,13 @@ def run_agent(
                     "uebernommen": r.get("uebernommen", True),
                 })
 
+            # anhang-Sonderfall (konvertiere_zu_pdfua / exportiere_word, 11.09.2026): Download-Knopf fuer die
+            # Oberflaeche — aus dem tool_result nehmen (das Modell braucht ihn nicht), an die Antwort haengen.
+            anhang = result.pop("anhang", None) if isinstance(result, dict) else None
+            if anhang and result.get("ok"):
+                anhaenge.append(anhang)
+                actions_log.append(dict({"type": "anhang"}, **anhang))
+
             # image_bytes-Sonderfall (view_image / view_field)
             img_bytes = result.pop("image_bytes", None) if isinstance(result, dict) else None
             if img_bytes:
@@ -337,4 +352,5 @@ def run_agent(
         "image_refs": image_refs_list,
         "actions": actions_log,
         "werkzeuge": werkzeuge,
+        "anhang": anhaenge,
     }

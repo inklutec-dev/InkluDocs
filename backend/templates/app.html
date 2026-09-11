@@ -3395,7 +3395,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             }
             const data = await res.json();
             for (const m of data.messages || []) {
-                inkluagentAppendMessage(m.role, m.content, m.werkzeuge);
+                inkluagentAppendMessage(m.role, m.content, m.werkzeuge, m.anhang);
             }
             log.scrollTop = log.scrollHeight;
         } catch (e) {
@@ -3412,7 +3412,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             tavily_search: t('Websuche'),
             list_form_fields: t('Feldliste'), get_field_details: t('Feld-Details'), view_field: t('Feld ansehen'),
             generate_quickinfo: t('Feld-Pass'), update_quickinfo: t('Quickinfo speichern'), revert_quickinfo: t('Quickinfo zurücksetzen'),
-            search_master_data: t('Stammdaten suchen'), save_to_master_data: t('In Stammdaten übernehmen')
+            search_master_data: t('Stammdaten suchen'), save_to_master_data: t('In Stammdaten übernehmen'),
+            pruefe_word_dokument: t('Word-Prüfbericht'), konvertiere_zu_pdfua: t('In barrierefreie PDF umwandeln'),
+            exportiere_word: t('Word exportieren'), liste_ausgaben: t('Meine Ausgaben'), lies_ausgabe: t('Ausgabe lesen')
         };
         return map[name] || name;
     }
@@ -3423,7 +3425,34 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return t('Geprüft mit: {w}', { w: namen.join(', ') });
     }
 
-    function inkluagentAppendMessage(role, content, werkzeuge) {
+    // Meine Ausgaben (11.09.2026): Download-Knopf + Link ins Regal unter einer Bot-Antwort, wenn der Bot
+    // umgewandelt oder exportiert hat (anhang aus dem Werkzeug-Ergebnis, im Verlauf mitgespeichert).
+    function inkluagentAnhangEl(anhang) {
+        const box = document.createElement('div');
+        box.className = 'inkluagent-message-anhang';
+        box.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-top:0.5rem;';
+        (anhang || []).forEach(a => {
+            if (!a || !a.download_url) return;
+            const dl = document.createElement('a');
+            dl.className = 'btn btn-primary';
+            dl.href = a.download_url;
+            dl.setAttribute('download', a.dateiname || '');
+            dl.textContent = a.label === 'zip' ? t('ZIP herunterladen') : (a.art === 'docx' ? t('Word herunterladen') : t('PDF herunterladen'));
+            box.appendChild(dl);
+            if (a.ausgaben_url) {
+                const zu = document.createElement('a');
+                zu.className = 'btn btn-secondary';
+                zu.href = a.ausgaben_url;
+                zu.textContent = t('Zu meinen Ausgaben');
+                box.appendChild(zu);
+            }
+            const tab = document.getElementById('ausgabenTab');
+            if (tab && typeof a.ausgaben_anzahl === 'number') tab.textContent = t('Ausgaben ({n})', { n: a.ausgaben_anzahl });
+        });
+        return box.children.length ? box : null;
+    }
+
+    function inkluagentAppendMessage(role, content, werkzeuge, anhang) {
         const log = document.getElementById('inkluagentLog');
         if (!log) return;
         // VoiceOver (Steve 28.08.2026): jede Nachricht ist fokussierbar (tabindex -1) und
@@ -3442,6 +3471,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         contentEl.textContent = content || '';
         wrapper.appendChild(roleEl);
         wrapper.appendChild(contentEl);
+        if (role === 'assistant' && Array.isArray(anhang) && anhang.length) {
+            const aEl = inkluagentAnhangEl(anhang);
+            if (aEl) wrapper.appendChild(aEl);
+        }
         const wtext = role === 'assistant' ? inkluagentWerkzeugText(werkzeuge) : '';
         if (wtext) {
             const wEl = document.createElement('div');
@@ -3522,7 +3555,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 data = await res.json();
             }
             if (!data) { inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true); return; }
-            const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'), Array.isArray(data.werkzeuge) ? data.werkzeuge : genutzt);
+            const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'), Array.isArray(data.werkzeuge) ? data.werkzeuge : genutzt, data.anhang);
             log.scrollTop = log.scrollHeight;
             inkluagentSetStatus('', false);
             // Fokus auf die Antwort statt zurueck ins Eingabefeld: der Screenreader liest sie

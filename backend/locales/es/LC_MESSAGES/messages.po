@@ -5701,3 +5701,29 @@ msgstr "mediante el chatbot"
 msgid "Barrierefreie PDF (PDF/UA)"
 msgstr "PDF accesible (PDF/UA)"
 
+
+# Meine Ausgaben Schritt 2 (11.09.2026): Chatbot-Werkzeuge, Word-Ausgaben
+msgid "Word-Prüfbericht"
+msgstr "Informe de comprobación de Word"
+
+msgid "Word exportieren"
+msgstr "Exportar Word"
+
+msgid "Ausgabe lesen"
+msgstr "Leer la salida"
+
+msgid "Word herunterladen"
+msgstr "Descargar Word"
+
+msgid "Word mit Alt-Texten"
+msgstr "Word con textos alternativos"
+
+msgid "Word-Prüfbericht: keine Auffälligkeiten"
+msgstr "Informe de Word: sin observaciones"
+
+msgid "Word-Prüfbericht: {n} Hinweise"
+msgstr "Informe de Word: {n} observaciones"
+
+msgid "Word-Datei mit {n} Alt-Texten erzeugt."
+msgstr "Archivo de Word creado con {n} textos alternativos."
+

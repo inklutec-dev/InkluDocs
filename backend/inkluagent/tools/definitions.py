@@ -13,6 +13,7 @@ from typing import Any, Callable
 from . import project as project_tools
 from . import altext as altext_tools
 from . import search as search_tools
+from . import ausgaben as ausgaben_tools
 
 
 TOOL_DEFINITIONS: list[dict] = [
@@ -190,6 +191,73 @@ TOOL_DEFINITIONS: list[dict] = [
 ]
 
 
+# ─── Word-Projekte: Meine Ausgaben (Schritt 2, 11.09.2026) ───
+# Nur fuer Word-Projekte (project_type docx) an TOOL_DEFINITIONS angehaengt (agent_loop._werkzeugsatz).
+# Kostenpflichtige Werkzeuge verlangen bestaetigt=true — der SERVER liefert beim ersten Aufruf nur
+# Preis + Guthaben zurueck, die Rueckfrage an den Nutzer ist damit erzwungen, nicht nur erbeten.
+TOOL_DEFINITIONS_WORD: list[dict] = [
+    {
+        "name": "pruefe_word_dokument",
+        "description": (
+            "Prüfbericht des Word-Dokuments mit den aktuellen Alt-Texten (Titel, Sprache, Überschriften-"
+            "Hierarchie, Tabellenköpfe, Bilder ohne Alt-Text) plus ein Auszug der Hörprobe (was ein "
+            "Screenreader liest). Kostenlos. Immer der erste Schritt vor einer Umwandlung. Ohne document_id "
+            "alle Dokumente des Projekts."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "document_id": {"type": "integer", "description": "Optional: nur dieses Dokument (documents[].id aus list_project_images)."},
+        }, "required": []},
+    },
+    {
+        "name": "konvertiere_zu_pdfua",
+        "description": (
+            "Wandelt das Word-Dokument mit den aktuellen Alt-Texten in eine barrierefreie PDF (PDF/UA) um "
+            "und prüft sie (veraPDF). Kostet Credits. ZWEI SCHRITTE: Erster Aufruf OHNE bestaetigt liefert nur "
+            "Preis und Guthaben (rueckfrage_noetig) — nenne dem Nutzer den Preis und frage. Erst nach seinem "
+            "klaren Ja erneut mit bestaetigt=true aufrufen. Ergebnis: ausgabe_id, Zusammenfassung, Bereiche mit "
+            "Hinweisen; die Datei liegt unter „Meine Ausgaben“ und der Nutzer sieht unter deiner Antwort einen "
+            "Download-Knopf. Ohne document_id alle Dokumente (ZIP)."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "document_id": {"type": "integer", "description": "Optional: nur dieses Dokument."},
+            "bestaetigt": {"type": "boolean", "description": "true NUR nach ausdrücklichem Ja des Nutzers zum genannten Preis. Standard false."},
+        }, "required": []},
+    },
+    {
+        "name": "exportiere_word",
+        "description": (
+            "Gibt die Word-Datei mit den aktuellen Alt-Texten aus (Eintrag unter „Meine Ausgaben“, Download-Knopf "
+            "unter deiner Antwort). Kostet Credits. Gleiche zwei Schritte wie konvertiere_zu_pdfua: erst ohne "
+            "bestaetigt (Preis nennen, fragen), dann mit bestaetigt=true."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "document_id": {"type": "integer", "description": "Optional: nur dieses Dokument."},
+            "bestaetigt": {"type": "boolean", "description": "true NUR nach ausdrücklichem Ja des Nutzers. Standard false."},
+        }, "required": []},
+    },
+    {
+        "name": "liste_ausgaben",
+        "description": (
+            "Alle fertigen Ausgaben dieses Projekts (barrierefreie PDFs, Word-Dateien) mit Datum, Prüfstand und "
+            "Verfügbarkeit der Datei — das Regal „Meine Ausgaben“. Keine Args."
+        ),
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
+    {
+        "name": "lies_ausgabe",
+        "description": (
+            "Liest zu einer Ausgabe (ausgabe_id aus liste_ausgaben oder konvertiere_zu_pdfua) den Bericht: "
+            "teil=bericht (Prüfung je Bereich in Klartext + Prüfbericht des Word-Dokuments), teil=pruefbericht "
+            "(nur Word-Prüfbericht), teil=hoerprobe (vollständige Hörprobe, Zeile für Zeile), teil=alles."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "ausgabe_id": {"type": "integer", "description": "Die ausgabe_id."},
+            "teil": {"type": "string", "enum": ["bericht", "pruefbericht", "hoerprobe", "alles"], "description": "Standard bericht."},
+        }, "required": ["ausgabe_id"]},
+    },
+]
+
+
 class ToolExecutor:
     """Führt Tool-Calls aus mit injected Project-/User-Context.
 
@@ -198,9 +266,10 @@ class ToolExecutor:
     Claude-Args, damit kein Cross-Projekt-Zugriff möglich ist.
     """
 
-    def __init__(self, project_id: int, user_id: int) -> None:
+    def __init__(self, project_id: int, user_id: int, word: bool = False) -> None:
         self.project_id = project_id
         self.user_id = user_id
+        self.word = word   # Word-Projekt: Werkzeuge „Meine Ausgaben“ freigeschaltet (11.09.2026)
 
     def execute(self, name: str, args: dict) -> dict[str, Any]:
         try:
@@ -213,7 +282,7 @@ class ToolExecutor:
 
     def _handlers(self) -> dict[str, Callable[[dict], dict]]:
         p, u = self.project_id, self.user_id
-        return {
+        handlers: dict[str, Callable[[dict], dict]] = {
             "list_project_images": lambda _a: project_tools.list_project_images(p, u),
             "get_image_metadata": lambda a: project_tools.get_image_metadata(int(a["image_id"]), p, u),
             "view_image": lambda a: project_tools.view_image(int(a["image_id"]), p, u),
@@ -233,3 +302,14 @@ class ToolExecutor:
                 include_domains=a.get("include_domains"),
             ),
         }
+        if self.word:
+            def _doc(a):
+                return int(a["document_id"]) if a.get("document_id") not in (None, "", 0) else None
+            handlers.update({
+                "pruefe_word_dokument": lambda a: ausgaben_tools.pruefe_word_dokument(p, u, _doc(a)),
+                "konvertiere_zu_pdfua": lambda a: ausgaben_tools.konvertiere_zu_pdfua(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False))),
+                "exportiere_word": lambda a: ausgaben_tools.exportiere_word(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False))),
+                "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
+                "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
+            })
+        return handlers

@@ -43,13 +43,20 @@
     return e;
   }
   function pruefSatz(a) {
+    if (a.art === 'docx') {
+      // Word-Ausgabe: kein veraPDF, die Hinweise kommen aus dem Pruefbericht des Word-Dokuments.
+      if (a.hinweise === 0) return t('Word-Prüfbericht: keine Auffälligkeiten');
+      return t('Word-Prüfbericht: {n} Hinweise', { n: a.hinweise });
+    }
     if (a.bestanden) return t('Prüfung: bestanden');
     if (a.hinweise === 1) return t('Prüfung: ein Bereich mit Hinweisen');
     return t('Prüfung: {n} Bereiche mit Hinweisen', { n: a.hinweise });
   }
   // Art der Ausgabe in der Sprache der Oberflaeche (der Server liefert nur den Schluessel).
   function artLabel(a) {
-    return a.art === 'pdfua' ? t('Barrierefreie PDF (PDF/UA)') : (a.art_label || a.art);
+    if (a.art === 'pdfua') return t('Barrierefreie PDF (PDF/UA)');
+    if (a.art === 'docx') return t('Word mit Alt-Texten');
+    return a.art_label || a.art;
   }
   function dokumentName(a) {
     return a.dokument || t('{projekt} – alle Dokumente', { projekt: a.projekt });
@@ -69,11 +76,14 @@
     box.innerHTML = '';
     dokumente.forEach((dok) => {
       if (dokumente.length > 1) box.appendChild(el('h3', null, dok.dokument));
-      const ul = el('ul');
-      ((dok.pruefung && dok.pruefung.punkte) || []).forEach((p) => {
-        ul.appendChild(el('li', null, p.bereich + ': ' + (p.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + '. ' + p.text));
-      });
-      box.appendChild(ul);
+      const punkte = (dok.pruefung && dok.pruefung.punkte) || [];
+      if (punkte.length) {
+        const ul = el('ul');
+        punkte.forEach((p) => {
+          ul.appendChild(el('li', null, p.bereich + ': ' + (p.status === 'ok' ? t('in Ordnung') : t('Hinweis')) + '. ' + p.text));
+        });
+        box.appendChild(ul);
+      }
       if (dok.pruefbericht && dok.pruefbericht.length) {
         const det = el('details', 'ausgabe-details');
         det.appendChild(el('summary', null, t('Prüfbericht des Word-Dokuments')));
@@ -181,7 +191,7 @@
       dl.className = 'btn btn-primary';
       dl.href = '/api/ausgaben/' + a.id + '/datei';
       dl.setAttribute('download', a.dateiname || '');
-      dl.textContent = (a.media === 'application/zip') ? t('ZIP herunterladen') : t('PDF herunterladen');
+      dl.textContent = (a.media === 'application/zip') ? t('ZIP herunterladen') : (a.art === 'docx' ? t('Word herunterladen') : t('PDF herunterladen'));
       aktionen.appendChild(dl);
       if (a.datei_bis) {
         const bis = ausgabeDatumZeit(a.datei_bis);

@@ -7633,31 +7633,39 @@ async def export_docx(project_id: int, request: Request, user: dict = Depends(ge
 _PDFUA_TOKEN_RE = re.compile(r"^[a-f0-9]{24}$")
 
 
-@app.post("/api/projects/{project_id}/export/pdfua")
-async def export_pdfua(project_id: int, request: Request, user: dict = Depends(get_current_user)):
-    if not pdfua_export.verfuegbar():
-        raise HTTPException(status_code=503, detail="Die Umwandlung in PDF ist auf dieser Instanz nicht eingerichtet.")
-    document_id, custom_name = await _read_export_options(request)
+def _pdfua_projekt_laden(project_id: int, user_id: int, meldung: str = "Die Umwandlung in PDF ist nur fuer Word-Projekte verfuegbar") -> dict:
+    """Word-Projekt des Besitzers laden (404 fremd/unbekannt, 400 kein Word-Projekt).
+    Gemeinsam fuer Export-Bereich und Chatbot-Werkzeuge (Schritt 2, 11.09.2026)."""
     conn = get_db()
     project = conn.execute(
-        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)
     ).fetchone()
+    conn.close()
     if not project:
-        conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
     project = dict(project)
-    conn.close()
     if project.get("project_type") != "docx":
-        raise HTTPException(status_code=400, detail="Die Umwandlung in PDF ist nur fuer Word-Projekte verfuegbar")
+        raise HTTPException(status_code=400, detail=meldung)
+    return project
 
-    units = _load_pdf_export_units(project, user["id"], document_id)
-    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
+
+def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int], custom_name: Optional[str],
+                          ui_lang: str, ausloeser: str = "knopf") -> dict:
+    """Kern der Umwandlung, SYNCHRON (laeuft im Executor): Word mit Alt-Texten bauen ->
+    Umwandler (LibreOffice) -> Alt-Texte nachtragen -> Dokument-Eigenschaften -> veraPDF ->
+    Klartext + Hoerprobe -> Datei + Token -> Credits -> Eintrag in Meine Ausgaben.
+    EINE Funktion fuer beide Wege: Export-Bereich (Knopf, ausloeser knopf) und Chatbot
+    (Werkzeug konvertiere_zu_pdfua, ausloeser bot). HTTPException wie am Endpunkt
+    (402 Guthaben, 404 Dokument, 502 Umwandler, 503 nicht eingerichtet)."""
+    if not pdfua_export.verfuegbar():
+        raise HTTPException(status_code=503, detail="Die Umwandlung in PDF ist auf dieser Instanz nicht eingerichtet.")
+    units = _load_pdf_export_units(project, user_id, document_id)
+    output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
-    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units), "pdfua")
+    _preis = _export_vorpruefung(user_id, sum(len(u["images"]) for u in units), "pdfua")
 
     sprache = (project.get("alt_language") or "de")
-    _ = get_gettext(resolve_ui_language(request))
-    loop = asyncio.get_running_loop()
+    _ = get_gettext(ui_lang)
     pdfs: list[tuple[str, bytes]] = []
     ergebnisse: list[dict] = []
     for pos, unit in enumerate(units, start=1):
@@ -7665,25 +7673,24 @@ async def export_pdfua(project_id: int, request: Request, user: dict = Depends(g
         docx_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
         pdfua_export.dokumenttitel_setzen(docx_path, label, sprache)
         try:
-            pdf_bytes, bericht = await loop.run_in_executor(
-                None, pdfua_export.konvertiere, docx_path, os.path.basename(docx_path))
+            pdf_bytes, bericht = pdfua_export.konvertiere(docx_path, os.path.basename(docx_path))
             # Stufe 2: Alt-Texte, die LibreOffice verliert (VML, Textfeld), aus unseren
             # Texten nachtragen — Bilder des Textkoerpers in Dokumentreihenfolge — und
             # danach frisch pruefen.
             alts = [_exportable_alt_text(img) for img in unit["images"]
                     if (img.get("docx_anker") or "").startswith("word/document.xml|")]
-            pdf_bytes, nach = await loop.run_in_executor(None, pdfua_export.alt_nachtragen, pdf_bytes, alts)
+            pdf_bytes, nach = pdfua_export.alt_nachtragen(pdf_bytes, alts)
             # Dokument-Eigenschaften (Heine/Karbe 01.09.2026) VOR der veraPDF-Pruefung setzen,
             # damit geprueft wird, was der Kunde bekommt.
-            pdf_bytes = await loop.run_in_executor(None, pdfua_export.dokumentinfo_setzen, pdf_bytes)
+            pdf_bytes = pdfua_export.dokumentinfo_setzen(pdf_bytes)
             if nach.get("nachgetragen") or nach.get("rahmen_umgewandelt"):
-                bericht = await loop.run_in_executor(None, pdfua_export.pruefe, pdf_bytes)
+                bericht = pdfua_export.pruefe(pdf_bytes)
         except pdfua_export.UmwandlungFehlgeschlagen as e:
             log.error("export_pdfua: %s", e)
             raise HTTPException(status_code=502, detail=_("Die Umwandlung ist fehlgeschlagen: {grund}").format(grund=e))
         pruefung = pdfua_export.klartext(bericht, _)
         try:
-            analyse = await loop.run_in_executor(None, docx_hoerprobe.analysiere, docx_path, _)
+            analyse = docx_hoerprobe.analysiere(docx_path, _)
         except Exception as e:  # noqa: BLE001
             log.warning("export_pdfua: Hoerprobe fehlgeschlagen: %s", e)
             analyse = {"hoerprobe": [], "pruefbericht": []}
@@ -7713,7 +7720,7 @@ async def export_pdfua(project_id: int, request: Request, user: dict = Depends(g
         media = "application/zip"
     with open(os.path.join(output_dir, f"pdfua_{token}.json"), "w", encoding="utf-8") as f:
         json.dump({"dateiname": dateiname, "pfad": pfad, "media": media}, f)
-    billing.verbuche(user["id"], "export", aktion="pdfua_export", credits=_preis)
+    billing.verbuche(user_id, "export", aktion="pdfua_export", credits=_preis)
     bestanden = all(e["pruefung"]["bestanden"] for e in ergebnisse)
     if len(ergebnisse) == 1:
         zusammenfassung = ergebnisse[0]["zusammenfassung"]
@@ -7726,48 +7733,125 @@ async def export_pdfua(project_id: int, request: Request, user: dict = Depends(g
         _doc_id = int(units[0]["doc"]["id"]) if len(units) == 1 else None
     except (KeyError, TypeError, ValueError, IndexError):
         _doc_id = None
-    ausgabe_id = await loop.run_in_executor(
-        None, _ausgabe_anlegen, user["id"], project, _doc_id, "knopf", dateiname, pfad, media, token,
-        _preis, bestanden, zusammenfassung, ergebnisse, pdfs[0][1])
-    return JSONResponse({"ok": True, "token": token, "dateiname": dateiname, "preis": _preis,
-                         "bestanden": bestanden, "zusammenfassung": zusammenfassung, "dokumente": ergebnisse,
-                         "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"]),
-                         "aufbewahrung_tage": AUSGABEN_TAGE})
+    ausgabe_id = _ausgabe_anlegen(user_id, project, _doc_id, ausloeser, dateiname, pfad, media, token,
+                                  _preis, bestanden, zusammenfassung, ergebnisse, pdfs[0][1])
+    return {"ok": True, "token": token, "dateiname": dateiname, "media": media, "preis": _preis,
+            "bestanden": bestanden, "zusammenfassung": zusammenfassung, "dokumente": ergebnisse,
+            "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"]),
+            "aufbewahrung_tage": AUSGABEN_TAGE}
 
 
-@app.post("/api/projects/{project_id}/export/pdfua/vorschau")
-async def export_pdfua_vorschau(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+def _pdfua_vorschau_sync(project: dict, user_id: int, document_id: Optional[int], ui_lang: str) -> dict:
     """Hoerprobe (was ein Screenreader liest) + Pruefbericht des Word-Dokuments, VOR der
-    Umwandlung und kostenlos — reines Lesen der Word-Datei mit unseren Alt-Texten."""
-    document_id, custom_name = await _read_export_options(request)
-    conn = get_db()
-    project = conn.execute(
-        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
-    ).fetchone()
-    if not project:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    project = dict(project)
-    conn.close()
-    if project.get("project_type") != "docx":
-        raise HTTPException(status_code=400, detail="Die Hörprobe gibt es nur für Word-Projekte")
-    units = _load_pdf_export_units(project, user["id"], document_id)
-    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
+    Umwandlung und kostenlos — reines Lesen der Word-Datei mit unseren Alt-Texten.
+    Synchron; gemeinsam fuer den Knopf „Hoerprobe und Pruefbericht“ und das Chatbot-Werkzeug."""
+    units = _load_pdf_export_units(project, user_id, document_id)
+    output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
-    _ = get_gettext(resolve_ui_language(request))
-    loop = asyncio.get_running_loop()
+    _ = get_gettext(ui_lang)
     dokumente = []
     for unit in units:
         label = _doc_label(unit["doc"])
         docx_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
         try:
-            analyse = await loop.run_in_executor(None, docx_hoerprobe.analysiere, docx_path, _)
+            analyse = docx_hoerprobe.analysiere(docx_path, _)
         except DocxFehler as e:
             raise HTTPException(status_code=400, detail=str(e))
-        dokumente.append({"dokument": label, "bilder": info["total"], "alt_texte": info["tagged"],
+        try:
+            _doc_id = int(unit["doc"]["id"])
+        except (KeyError, TypeError, ValueError):
+            _doc_id = None
+        dokumente.append({"dokument": label, "document_id": _doc_id, "bilder": info["total"], "alt_texte": info["tagged"],
                           "hoerprobe": analyse["hoerprobe"], "pruefbericht": analyse["pruefbericht"],
                           "zahlen": analyse.get("zahlen") or {}})
-    return JSONResponse({"ok": True, "dokumente": dokumente})
+    return {"ok": True, "dokumente": dokumente}
+
+
+def _word_export_ausgabe_sync(project: dict, user_id: int, document_id: Optional[int], custom_name: Optional[str],
+                              ui_lang: str, ausloeser: str = "bot") -> dict:
+    """Word-Datei mit Alt-Texten als EINTRAG in Meine Ausgaben (Chatbot-Werkzeug exportiere_word,
+    11.09.2026). Der Knopf „Als Word“ im Export-Bereich bleibt ein Sofort-Download ohne Eintrag;
+    der Bot kann keinen Browser-Download ausloesen, also legt er die Datei ins Regal und die
+    Oberflaeche zeigt unter seiner Antwort den Knopf. Preis wie der Word-Export (docx_export).
+    Bericht = Pruefbericht + Hoerprobe des Word-Dokuments (keine veraPDF-Pruefung, keine PDF)."""
+    units = _load_pdf_export_units(project, user_id, document_id)
+    output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export")
+    os.makedirs(output_dir, exist_ok=True)
+    _preis = _export_vorpruefung(user_id, sum(len(u["images"]) for u in units), "docx")
+    _ = get_gettext(ui_lang)
+    token = _secrets.token_hex(12)
+    ergebnisse: list[dict] = []
+    gesamt_tagged = 0
+    if len(units) == 1:
+        unit = units[0]
+        label = custom_name or _doc_label(unit["doc"])
+        out_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
+        pfad = os.path.join(output_dir, f"word_{token}.docx")
+        shutil.copyfile(out_path, pfad)
+        dateiname = f"inkludocs_{_safe_filename_component(label)}.docx"
+        media = DOCX_MEDIA
+        gesamt_tagged = int(info.get("tagged", 0) or 0)
+        try:
+            analyse = docx_hoerprobe.analysiere(out_path, _)
+        except Exception as e:  # noqa: BLE001
+            log.warning("exportiere_word: Hoerprobe fehlgeschlagen: %s", e)
+            analyse = {"hoerprobe": [], "pruefbericht": []}
+        ergebnisse.append({"dokument": label, "bilder": info["total"], "alt_texte": info["tagged"],
+                           "warnungen": info.get("warnings") or [], "hoerprobe": analyse.get("hoerprobe") or [],
+                           "pruefbericht": analyse.get("pruefbericht") or []})
+    else:
+        zip_base = custom_name or _safe_filename_component(project.get("name") or project.get("filename") or "projekt")
+        dateiname = f"{zip_base}_alle_word.zip"
+        pfad = os.path.join(output_dir, f"word_{token}.zip")
+        media = "application/zip"
+        with zipfile.ZipFile(pfad, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for pos, unit in enumerate(units, start=1):
+                label = _doc_label(unit["doc"])
+                out_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
+                zf.write(out_path, arcname=f"{pos:02d}_{label}.docx")
+                gesamt_tagged += int(info.get("tagged", 0) or 0)
+                try:
+                    analyse = docx_hoerprobe.analysiere(out_path, _)
+                except Exception as e:  # noqa: BLE001
+                    log.warning("exportiere_word: Hoerprobe fehlgeschlagen: %s", e)
+                    analyse = {"hoerprobe": [], "pruefbericht": []}
+                ergebnisse.append({"dokument": label, "bilder": info["total"], "alt_texte": info["tagged"],
+                                   "warnungen": info.get("warnings") or [], "hoerprobe": analyse.get("hoerprobe") or [],
+                                   "pruefbericht": analyse.get("pruefbericht") or []})
+    billing.verbuche(user_id, "export", aktion="docx_export", credits=_preis)
+    hinweise = sum(1 for e in ergebnisse for b in e["pruefbericht"] if b.get("status") != "ok")
+    zusammenfassung = _("Word-Datei mit {n} Alt-Texten erzeugt.").format(n=gesamt_tagged)
+    try:
+        _doc_id = int(units[0]["doc"]["id"]) if len(units) == 1 else None
+    except (KeyError, TypeError, ValueError, IndexError):
+        _doc_id = None
+    ausgabe_id = _ausgabe_anlegen(user_id, project, _doc_id, ausloeser, dateiname, pfad, media, token,
+                                  _preis, hinweise == 0, zusammenfassung, ergebnisse, None, art="docx")
+    return {"ok": True, "dateiname": dateiname, "media": media, "preis": _preis, "alt_texte": gesamt_tagged,
+            "hinweise": hinweise, "zusammenfassung": zusammenfassung, "dokumente": ergebnisse,
+            "ausgabe_id": ausgabe_id, "ausgaben_anzahl": _ausgaben_anzahl(project["id"]),
+            "aufbewahrung_tage": AUSGABEN_TAGE}
+
+
+@app.post("/api/projects/{project_id}/export/pdfua")
+async def export_pdfua(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    document_id, custom_name = await _read_export_options(request)
+    project = _pdfua_projekt_laden(project_id, user["id"])
+    ui_lang = resolve_ui_language(request)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(
+        None, _pdfua_umwandeln_sync, project, user["id"], document_id, custom_name, ui_lang, "knopf")
+    return JSONResponse(result)
+
+
+@app.post("/api/projects/{project_id}/export/pdfua/vorschau")
+async def export_pdfua_vorschau(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    document_id, custom_name = await _read_export_options(request)
+    project = _pdfua_projekt_laden(project_id, user["id"], meldung="Die Hörprobe gibt es nur für Word-Projekte")
+    ui_lang = resolve_ui_language(request)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _pdfua_vorschau_sync, project, user["id"], document_id, ui_lang)
+    return JSONResponse(result)
 
 
 @app.get("/api/projects/{project_id}/export/pdfua/{token}")
@@ -7807,7 +7891,7 @@ async def export_pdfua_download(project_id: int, token: str, user: dict = Depend
 #   GET    /api/ausgaben/{id}/vorschau-> PNG der ersten Seite
 #   DELETE /api/ausgaben/{id}         -> Eintrag samt Dateien loeschen
 AUSGABEN_TAGE = max(1, int(os.environ.get("AUSGABEN_TAGE", "30") or 30))
-_AUSGABE_ART_LABEL = {"pdfua": "Barrierefreie PDF (PDF/UA)"}
+_AUSGABE_ART_LABEL = {"pdfua": "Barrierefreie PDF (PDF/UA)", "docx": "Word mit Alt-Texten"}
 
 
 def _ausgaben_anzahl(project_id: int) -> int:
@@ -7821,12 +7905,12 @@ def _ausgaben_anzahl(project_id: int) -> int:
 
 def _ausgabe_anlegen(user_id: int, project: dict, document_id: Optional[int], ausloeser: str,
                      dateiname: str, pfad: str, media: str, token: str, preis: int, bestanden: bool,
-                     zusammenfassung: str, ergebnisse: list, pdf_erste: bytes) -> int:
-    """Eintrag in `ausgaben` anlegen; Vorschaubild der ersten Seite daneben ablegen.
-    Laeuft im Executor (Rendern + DB), Rueckgabe = id des Eintrags."""
+                     zusammenfassung: str, ergebnisse: list, pdf_erste: Optional[bytes], art: str = "pdfua") -> int:
+    """Eintrag in `ausgaben` anlegen; Vorschaubild der ersten Seite daneben ablegen (nur PDF).
+    Laeuft im Executor (Rendern + DB), Rueckgabe = id des Eintrags. art: pdfua | docx."""
     vorschau = ""
     try:
-        png = pdfua_export.vorschau_png(pdf_erste)
+        png = pdfua_export.vorschau_png(pdf_erste) if pdf_erste else None
         if png:
             vorschau = os.path.splitext(pfad)[0] + "_s1.png"
             with open(vorschau, "wb") as f:
@@ -7840,8 +7924,8 @@ def _ausgabe_anlegen(user_id: int, project: dict, document_id: Optional[int], au
         cur = conn.execute(
             """INSERT INTO ausgaben (user_id, project_id, document_id, art, ausloeser, dateiname, datei_pfad,
                                      media, vorschau_pfad, bestanden, zusammenfassung, bericht, preis, token, datei_bis)
-               VALUES (?, ?, ?, 'pdfua', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (user_id, project["id"], document_id, ausloeser, dateiname, pfad, media, vorschau,
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (user_id, project["id"], document_id, art, ausloeser, dateiname, pfad, media, vorschau,
              1 if bestanden else 0, zusammenfassung, json.dumps(ergebnisse, ensure_ascii=False),
              int(preis or 0), token, datei_bis))
         conn.commit()
@@ -7896,7 +7980,11 @@ def _ausgabe_dict(r, mit_bericht: bool = False) -> dict:
         bericht = json.loads(r["bericht"] or "[]")
     except Exception:  # noqa: BLE001
         bericht = []
-    hinweise = sum(1 for d in bericht for p in ((d.get("pruefung") or {}).get("punkte") or []) if p.get("status") != "ok")
+    if r["art"] == "docx":
+        # Word-Ausgabe (Chatbot, 11.09.2026): keine veraPDF-Pruefung — Hinweise = Pruefbericht des Word-Dokuments.
+        hinweise = sum(1 for d in bericht for b in (d.get("pruefbericht") or []) if b.get("status") != "ok")
+    else:
+        hinweise = sum(1 for d in bericht for p in ((d.get("pruefung") or {}).get("punkte") or []) if p.get("status") != "ok")
     projektname = (r["project_name"] or "").strip() or (r["project_filename"] or "")
     if r["document_id"]:
         dok = (r["doc_display_name"] or "").strip() or (r["doc_original_filename"] or "").strip()
@@ -7920,6 +8008,22 @@ def _ausgabe_dict(r, mit_bericht: bool = False) -> dict:
     if mit_bericht:
         out["bericht"] = bericht
     return out
+
+
+def _ausgaben_des_projekts(user_id: int, project_id: int) -> list[dict]:
+    """Eintraege eines Projekts (neueste zuerst), ohne Berichte — fuer das Chatbot-Werkzeug liste_ausgaben."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """SELECT a.*, p.name AS project_name, p.filename AS project_filename,
+                      d.display_name AS doc_display_name, d.original_filename AS doc_original_filename
+               FROM ausgaben a JOIN projects p ON p.id = a.project_id
+               LEFT JOIN documents d ON d.id = a.document_id
+               WHERE a.user_id = ? AND a.project_id = ?
+               ORDER BY a.created_at DESC, a.id DESC""", (user_id, project_id)).fetchall()
+    finally:
+        conn.close()
+    return [_ausgabe_dict(r) for r in rows]
 
 
 @app.get("/api/ausgaben")
@@ -8958,11 +9062,14 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
     loop = asyncio.get_running_loop()
 
     def _antwort(result: dict) -> dict:
+        # anhang (11.09.2026, Meine Ausgaben): Download-Knoepfe unter der Antwort (Umwandlung/Word-Export
+        # durch den Bot) — wird mitgespeichert, damit der Verlauf sie nach einem Neuladen noch zeigt.
         storage.append_message(
             project_id, "assistant", result["reply"],
             image_refs=result.get("image_refs"),
             intent=result.get("intent"),
             werkzeuge=result.get("werkzeuge"),
+            anhang=result.get("anhang") or None,
         )
         return {
             "reply": result["reply"],
@@ -8970,6 +9077,7 @@ async def chat_send_message(project_id: int, request: Request, user: dict = Depe
             "image_refs": result.get("image_refs"),
             "actions": result.get("actions", []),
             "werkzeuge": result.get("werkzeuge", []),
+            "anhang": result.get("anhang") or [],
         }
 
     # Werkzeug-Transparenz (Steve 28.08.2026): mit Accept: application/x-ndjson streamt der

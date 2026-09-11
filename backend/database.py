@@ -673,6 +673,9 @@ def _migrate_columns(conn):
         ("users", "plan_laufzeit_monate", "ALTER TABLE users ADD COLUMN plan_laufzeit_monate INTEGER"),
         ("users", "auto_verlaengerung", "ALTER TABLE users ADD COLUMN auto_verlaengerung INTEGER DEFAULT 1"),
         ("users", "team_name", "ALTER TABLE users ADD COLUMN team_name TEXT DEFAULT ''"),
+        # Meine Ausgaben, Schritt 2 (11.09.2026): Download-Knoepfe unter einer Bot-Antwort
+        # (Umwandlung/Word-Export durch den Chatbot) als JSON-Liste, damit der Verlauf sie zeigt.
+        ("chat_messages", "anhang", "ALTER TABLE chat_messages ADD COLUMN anhang TEXT"),
         # Missbrauchsbremse API (11.08.2026, Steve): Tageslimit der Bild-
         # Generierung pro KONTO einstellbar (NULL = globaler Standard
         # DAILY_IMAGE_LIMIT, 0 = gesperrt). Fuer Betreiber-Konten mit

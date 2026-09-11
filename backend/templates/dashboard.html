@@ -284,11 +284,13 @@
       const meta = document.createElement('p');
       meta.className = 'dash-meta';
       const dz = ausgabeDatum(a.created_at);
-      meta.textContent = t('{projekt} · {art} · {datum}', { projekt: a.projekt, art: (a.art === 'pdfua' ? t('Barrierefreie PDF (PDF/UA)') : a.art_label), datum: dz });
+      meta.textContent = t('{projekt} · {art} · {datum}', { projekt: a.projekt, art: (a.art === 'pdfua' ? t('Barrierefreie PDF (PDF/UA)') : (a.art === 'docx' ? t('Word mit Alt-Texten') : a.art_label)), datum: dz });
       const summe = document.createElement('p');
       summe.className = 'dash-sub';
       summe.style.margin = '.2rem 0 0';
-      summe.textContent = a.bestanden ? t('Prüfung: bestanden') : (a.hinweise === 1 ? t('Prüfung: ein Bereich mit Hinweisen') : t('Prüfung: {n} Bereiche mit Hinweisen', { n: a.hinweise }));
+      summe.textContent = a.art === 'docx'
+        ? (a.hinweise === 0 ? t('Word-Prüfbericht: keine Auffälligkeiten') : t('Word-Prüfbericht: {n} Hinweise', { n: a.hinweise }))
+        : (a.bestanden ? t('Prüfung: bestanden') : (a.hinweise === 1 ? t('Prüfung: ein Bereich mit Hinweisen') : t('Prüfung: {n} Bereiche mit Hinweisen', { n: a.hinweise })));
       li.appendChild(h3); li.appendChild(meta); li.appendChild(summe);
       ul.appendChild(li);
     });

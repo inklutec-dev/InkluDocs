@@ -16,16 +16,18 @@ def append_message(
     image_refs: Optional[list[int]] = None,
     intent: Optional[str] = None,
     werkzeuge: Optional[list[str]] = None,
+    anhang: Optional[list[dict]] = None,
 ) -> int:
     """werkzeuge (28.08.2026): Namen der aufgerufenen Werkzeuge in Reihenfolge — None = unbekannt
-    (Altbestand), [] = ausdruecklich ohne Werkzeug geantwortet."""
+    (Altbestand), [] = ausdruecklich ohne Werkzeug geantwortet.
+    anhang (11.09.2026): Download-Knoepfe unter der Antwort (Meine Ausgaben), None = keine."""
     if role not in _VALID_ROLES:
         raise ValueError(f"Ungueltige Rolle: {role!r}")
     conn = get_db()
     try:
         cursor = conn.execute(
-            "INSERT INTO chat_messages (project_id, role, content, image_refs, intent, werkzeuge) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO chat_messages (project_id, role, content, image_refs, intent, werkzeuge, anhang) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 project_id,
                 role,
@@ -33,6 +35,7 @@ def append_message(
                 json.dumps(image_refs) if image_refs else None,
                 intent,
                 json.dumps(werkzeuge) if werkzeuge is not None else None,
+                json.dumps(anhang, ensure_ascii=False) if anhang else None,
             ),
         )
         conn.commit()
@@ -45,7 +48,7 @@ def get_history(project_id: int, limit: int = 200) -> list[dict]:
     conn = get_db()
     try:
         rows = conn.execute(
-            "SELECT id, role, content, image_refs, intent, created_at, werkzeuge "
+            "SELECT id, role, content, image_refs, intent, created_at, werkzeuge, anhang "
             "FROM chat_messages WHERE project_id = ? "
             "ORDER BY created_at ASC, id ASC LIMIT ?",
             (project_id, limit),
@@ -61,6 +64,7 @@ def get_history(project_id: int, limit: int = 200) -> list[dict]:
             "intent": r["intent"],
             "created_at": r["created_at"],
             "werkzeuge": (json.loads(r["werkzeuge"]) if r["werkzeuge"] else None),
+            "anhang": (json.loads(r["anhang"]) if r["anhang"] else []),
         }
         for r in rows
     ]
