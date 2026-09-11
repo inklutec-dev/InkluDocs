@@ -390,8 +390,10 @@ Preis, Token, Aufbewahrung. Die Projektansicht bleibt die Werkstatt, die Seite
 `/ausgaben` ist das Regal — eine Seite, drei Eingänge:
 
 1. Seitenleiste „Meine Ausgaben" (alle Projekte, Filter nach Projekt).
-2. Projektkopf: Reiter „Dokumente | Ausgaben (n)" (`/ausgaben?projekt=<id>`),
-   nur beim Besitzer und nur bei Word-Projekten oder wenn schon Ausgaben da sind.
+2. Projekt: Knopf-Link „Ausgaben (n)" rechts neben „Herunterladen" (`/ausgaben?projekt=<id>`),
+   nur beim Besitzer und nur bei Word-Projekten oder wenn schon Ausgaben da sind
+   (bis 11.09. mittags eine Reiterleiste „Dokumente | Ausgaben" unter der H1 — Steve/Michael:
+   „Dokumente" tat nichts, Reiter raus, Ausgaben in die Aktionszeile).
 3. Export-Bereich: nach der Umwandlung wie bisher Ergebnis + „PDF herunterladen",
    dazu „Zu meinen Ausgaben" (`#ausgabe-<id>` setzt den Fokus auf den Eintrag).
 

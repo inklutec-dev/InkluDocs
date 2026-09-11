@@ -617,16 +617,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     <h1 id="projectName" class="card-name" tabindex="-1">${t('Projekt: {name}', { name: escHtml(headTitle) })}</h1>
                     <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
-                ${!window.GUEST_MODE && (project.project_type === 'docx' || (data.ausgaben_anzahl || 0) > 0) ? `
-                <!-- Meine Ausgaben (11.09.2026, Steve): zwei Reiter unter der H1 — „Dokumente" (diese
-                     Werkstatt-Ansicht) und „Ausgaben (n)" (das Regal, eigene Unterseite /ausgaben?projekt=).
-                     Als nav mit Liste: Screenreader hoeren zwei Eintraege, Sehende sehen zwei Reiter. -->
-                <nav class="proj-tabs" aria-label="${t('Projektbereiche')}">
-                    <ul>
-                        <li><a href="/app?projekt=${project.id}" aria-current="page">${t('Dokumente')}</a></li>
-                        <li><a href="/ausgaben?projekt=${project.id}" id="ausgabenTab">${t('Ausgaben ({n})', { n: data.ausgaben_anzahl || 0 })}</a></li>
-                    </ul>
-                </nav>` : ''}
                 <!-- Korb C (Steve 17.07.2026): die fruehere Gast-Rollenzeile
                      „Du prüfst dieses Projekt als …" unter der H1 ist entfallen. -->
                 <!-- Statuszeile „n von m Bildern generiert | Extraktion: …" ausgeblendet (Michael Karbe
@@ -666,6 +656,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${t('– ganzes Projekt')}</span></button>
+                        <!-- Meine Ausgaben (Steve/Michael 11.09.2026 Besprechung): kein Reiter mehr im Projektkopf, sondern ein
+                             Link in Knopf-Optik direkt rechts neben „Herunterladen“ — fuehrt ins Regal, gefiltert auf dieses Projekt. -->
+                        ${(project.project_type === 'docx' || (data.ausgaben_anzahl || 0) > 0) ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ausgaben?projekt=' + project.id + '">' + t('Ausgaben ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : ''}
                         <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
