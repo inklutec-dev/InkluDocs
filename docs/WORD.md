@@ -479,3 +479,10 @@ Entscheidungen und Umsetzung:
 - Tests: `tests/e2e/verify_ablage.py` (Knopf-Export → Eintrag, nur Befunde, Umleitung,
   Projekt löschen → Einträge und Dateien bleiben, einzeln löschen), `verify_pdfua.py`,
   `ui_ausgaben.py`, `ui_chat_ausgaben.py` angepasst. 27 Texte × 6 Sprachen.
+
+Hinweis-Klappe (Michael Karbe 11.09.2026, Omnidocs-Deckblatt „Coverpage Background“ & Co.): Formen,
+Textfeld-Rahmen und Gruppen ohne Bild sind Gestaltung, ein Screenreader überspringt sie wie Word
+selbst — sie erscheinen NICHT mehr in der Klappe „n Elemente ohne Alt-Text“, sondern werden nur
+gezählt (`DocxErgebnis.schmuck`, `hinweise.schmuck`). In der Klappe bleiben nur Elemente, die
+einen Alt-Text brauchen und die Stufe 2 noch nicht beschreibt: Diagramm, SmartArt, Vektorgrafik,
+eingebettete Objekte, verknüpfte/unlesbare Bilder. Bei Michaels Dokument ist die Klappe damit leer.

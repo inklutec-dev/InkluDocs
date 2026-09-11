@@ -175,7 +175,8 @@ class DocxErgebnis:
     titel: str = ""
     ueberschriften: list[str] = field(default_factory=list)
     volltext_zeichen: int = 0
-    uebersprungen: list[dict] = field(default_factory=list)   # {anker, art, grund, name, format, ort, abschnitt, seite}
+    uebersprungen: list[dict] = field(default_factory=list)   # {anker, art, grund, name, format, ort, abschnitt, seite} — braucht Alt-Text, noch nicht unterstuetzt
+    schmuck: list[dict] = field(default_factory=list)         # Formen, Textfeld-Rahmen, Gruppen ohne Bild: Gestaltung, nie ein Alt-Text (11.09.2026)
     warnungen: list[str] = field(default_factory=list)
     seiten_bekannt: bool = False    # True, wenn das Dokument Seitenmarken traegt
     seiten_quelle: str = ""         # "word" (lastRenderedPageBreak) | "umbrueche" | ""
@@ -633,13 +634,19 @@ def analysiere_docx(docx_path: str, output_dir: str | None = None, praefix: str 
             def _uebersprungen(anker: str, art: str, el: etree._Element, name: str = "", fmt: str = "") -> None:
                 _k, _c, ort_, abschnitt_ = _kontext_fuer(el, absaetze, index_von, styles, label, erg.titel)
                 grund = _ART_GRUND.get(art, art) + (f" ({fmt})" if fmt else "")
+                eintrag = {"anker": anker, "art": art, "grund": grund, "name": name, "format": fmt, "ort": ort_,
+                           "abschnitt": abschnitt_, "seite": seiten[id(el)][1] if id(el) in seiten else 1}
+                if art in ("textfeld", "form", "gruppe"):
+                    # Michael Karbe 11.09.2026 (Omnidocs-Deckblatt: „Coverpage Background“ & Co.): Formen,
+                    # Textfeld-Rahmen und Gruppen ohne Bild sind Gestaltung — ein Screenreader ueberspringt sie
+                    # wie Word selbst, es gibt fuer sie nie einen Alt-Text. Sie gehoeren NICHT in die Klappe
+                    # „Elemente ohne Alt-Text“; wir zaehlen sie nur (Text IM Textfeld wird normal gelesen).
+                    eintrag["grund"] += " – Gestaltung, kein Alt-Text nötig"
+                    erg.schmuck.append(eintrag)
+                    return
                 if art in ("diagramm", "smartart", "vektor", "ole"):
-                    grund += " – wird noch nicht unterstützt"
-                elif art in ("textfeld", "form", "gruppe"):
-                    grund += " – enthält kein eigenes Bild"
-                erg.uebersprungen.append({"anker": anker, "art": art, "grund": grund, "name": name,
-                                          "format": fmt, "ort": ort_, "abschnitt": abschnitt_,
-                                          "seite": seiten[id(el)][1] if id(el) in seiten else 1})
+                    eintrag["grund"] += " – wird noch nicht unterstützt"
+                erg.uebersprungen.append(eintrag)
 
             # Eingebettete Objekte (w:object, z. B. Excel-Diagramm als OLE) sind keine Bilder
             for n_obj, obj in enumerate(root.iter(f"{{{NS['w']}}}object"), start=1):
@@ -744,7 +751,7 @@ def extract_docx(docx_path: str, output_dir: str, project_id: int) -> tuple[list
     {"uebersprungen": [...], "warnungen": [...], "seiten": "word"|"umbrueche"|""}."""
     erg = analysiere_docx(docx_path, output_dir, praefix=f"p{project_id}")
     return _bilder_als_dicts(erg), {"uebersprungen": erg.uebersprungen, "warnungen": erg.warnungen,
-                                   "seiten": erg.seiten_quelle}
+                                   "seiten": erg.seiten_quelle, "schmuck": len(erg.schmuck)}
 
 
 def extract_images_from_docx(docx_path: str, output_dir: str, project_id: int) -> list[dict]:

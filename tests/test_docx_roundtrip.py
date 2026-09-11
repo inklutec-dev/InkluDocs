@@ -193,7 +193,8 @@ class TestEchteWordDokumente(unittest.TestCase):
         self.assertEqual(b.anker, "word/document.xml|3")
         self.assertEqual(b.ort, "Textfeld")
         self.assertFalse(b.vml)
-        self.assertEqual([u["anker"] for u in erg.uebersprungen], ["word/document.xml|1"])  # das Textfeld
+        self.assertEqual(erg.uebersprungen, [])                                          # 11.09.: Textfeld-Rahmen = Schmuck
+        self.assertEqual([u["anker"] for u in erg.schmuck], ["word/document.xml|1"])   # das Textfeld, nur gezaehlt
 
     def test_fallback_bekommt_denselben_alt_text(self):
         out, r = self._export(FIX_TEXTFELD, {"word/document.xml|3": "Bild im Textfeld"})
@@ -304,12 +305,16 @@ class TestEchteWordDokumente(unittest.TestCase):
         self.assertEqual((erg.seiten_quelle, erg.bilder[0].seite), ("word", 2))
 
     # --- uebersprungene Elemente mit Art/Ort/Seite (27.08.2026)
-    def test_textfeld_wird_als_uebersprungen_gemeldet(self):
+    def test_textfeld_ist_schmuck_nicht_uebersprungen(self):
+        # 11.09.2026 (Michael Karbe): Formen/Textfeld-Rahmen sind Gestaltung -> nicht in der Klappe, nur gezaehlt.
         erg = dp.analysiere_docx(FIX_TEXTFELD, self.tmp)
-        u = erg.uebersprungen[0]
+        self.assertEqual(erg.uebersprungen, [])
+        u = erg.schmuck[0]
         self.assertEqual((u["art"], u["ort"], u["abschnitt"], u["seite"]), ("textfeld", "Text", 1, 1))
         self.assertEqual(u["name"], "Text Box 2")
-        self.assertIn("Textfeld", u["grund"])
+        self.assertIn("Gestaltung", u["grund"])
+        bilder, hinweise = dp.extract_docx(FIX_TEXTFELD, self.tmp, 1)
+        self.assertEqual((hinweise["uebersprungen"], hinweise["schmuck"]), ([], 1))
 
     @unittest.skipUnless(os.path.isfile(FIX_DIAGRAMM) and os.path.isfile(FIX_SMARTART) and os.path.isfile(FIX_OLE),
                          "Fixtures Diagramm/SmartArt/OLE fehlen")

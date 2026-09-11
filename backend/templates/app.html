@@ -2204,7 +2204,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             let h = doc.hinweise;
             if (!h) return '';
             if (typeof h === 'string') { try { h = JSON.parse(h); } catch (e) { return ''; } }
-            const list = Array.isArray(h.uebersprungen) ? h.uebersprungen : [];
+            // 11.09.2026 (Michael Karbe): Formen, Textfeld-Rahmen, Gruppen sind Gestaltung, kein Alt-Text noetig —
+            // der Leser traegt sie nicht mehr ein; fuer aeltere Projekte (Hinweise vom Upload) hier ebenfalls ausfiltern.
+            const list = (Array.isArray(h.uebersprungen) ? h.uebersprungen : []).filter(u => !['textfeld', 'form', 'gruppe'].includes(u.art));
             if (!list.length) return '';
             const seitenModus = doc.extraction_method === 'docx-seiten';
             const artLabel = (u) => ({
