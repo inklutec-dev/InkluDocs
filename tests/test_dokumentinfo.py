@@ -55,7 +55,10 @@ class Dokumentinfo(unittest.TestCase):
         d = fitz.open(self.pdf); m = d.metadata; d.close()
         self.assertEqual(m["creator"], "inkludocs.de")
         self.assertEqual(m["producer"], "InkluDocs")
-        self.assertEqual(m["title"], "Test")
+        # 11.09.2026: Die Fixture traegt einen echten Titel — der bleibt, ein uebergebener Name
+        # (frueher: Export-Dateiname) ueberschreibt ihn nicht mehr (Michael Karbe/Steve).
+        self.assertEqual(m["title"], "Kontoeröffnung Musterbank (fiktives Testformular InkluDocs)")
+        self.assertEqual(info["title_source"], "quelle")
 
     def _mit_xmp(self, path):
         """Fixture mit einem XMP-Paket versehen, wie es eine Quell-PDF mitbringt (Element- und
