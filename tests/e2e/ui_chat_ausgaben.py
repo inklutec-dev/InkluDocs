@@ -30,6 +30,13 @@ os.makedirs("/home/claude/shots", exist_ok=True)
 with sync_playwright() as p:
     br = p.chromium.launch(); ctx = br.new_context(viewport={"width": 1280, "height": 900}, locale="de-DE"); pg = ctx.new_page()
     pg.goto(B + "/login"); pg.fill("#email", MAIL); pg.fill("#password", PW); pg.keyboard.press("Enter"); pg.wait_for_timeout(2500)
+    # Alle Bilder ohne Text beschriften (wie verify_chat_ausgaben): sonst weigert sich der Bot zu Recht,
+    # vor der Umwandlung zu fragen, und schlaegt erst Alt-Texte vor (Prompt-Regel 1). Gleiche Sitzung wie der Browser.
+    proj = pg.request.get(B + f"/api/projects/{PID}").json()
+    for i in proj.get("images") or []:
+        if not (i.get("alt_text_edited") or i.get("alt_text")) and i.get("original_alt") != "dekorativ":
+            pg.request.post(B + f"/api/images/{i['id']}/alt-text", data={"alt_text": f"Testtext für Bild {i['id']} (fiktiv, E2E)"})
+    pg.request.delete(B + f"/api/projects/{PID}/chat")
     pg.goto(B + f"/app?projekt={PID}"); pg.wait_for_timeout(3500)
     vorher = int(re.search(r"\((\d+)\)", pg.locator("#ausgabenTab").inner_text()).group(1))
     pg.locator("#inkluagentToggle").click(); pg.wait_for_timeout(1200)
