@@ -140,7 +140,7 @@ body:has(.start-shell) { display:block; }
 
 /* Zielgruppen */
 .start-zielgruppen { list-style:none; margin:1.5rem 0 1rem; padding:0;
-  display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem 1.5rem; }
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:1rem 1.5rem; } /* vier Gruppen als 2×2 (11.09.2026), unter 800 px eine Spalte */
 .start-zielgruppen li { padding-left:1rem; border-left:4px solid var(--accent); line-height:1.6; }
 .start-zielgruppen h3 { margin:0 0 .25rem; }
 
@@ -177,6 +177,7 @@ body:has(.start-shell) { display:block; }
 
 /* ── Schmale Bildschirme ─────────────────────────────────────────────── */
 @media (max-width:700px) {
+  .start-zielgruppen { grid-template-columns:1fr; }
   .start-header { padding:.6rem 1rem; }
   .start-nav .btn-start { margin-left:0; }
   .start-hero { padding:2.5rem 0 2.25rem; }
