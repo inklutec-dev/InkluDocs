@@ -5730,3 +5730,41 @@ msgstr "Archivo de Word creado con {n} textos alternativos."
 msgid "Struktur-Lektor"
 msgstr "Revisor de estructura"
 
+
+# Michaels Testrunde 11.09.2026: Titel aus Inhalt, Sprach-Abgleich, Link-Beschreibungen, Bilder im Textkoerper
+msgid "Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments."
+msgstr "La estructura de las tablas es técnicamente correcta. El informe de comprobación del documento de Word indica si la primera fila está marcada como encabezado."
+
+msgid "Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."
+msgstr "Un enlace no tiene descripción; un lector de pantalla solo dice «enlace»."
+
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt ersatzweise „{t}“ als Titel."
+msgstr "Falta el título del documento (Archivo → Información → Título). El PDF usará «{t}» como título en su lugar."
+
+msgid "Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache)."
+msgstr "El idioma del documento es {s}, pero el texto parece estar en {name}; los lectores de pantalla lo pronunciarían mal (Revisar → Idioma)."
+
+msgid "Deutsch"
+msgstr "alemán"
+
+msgid "Englisch"
+msgstr "inglés"
+
+msgid "Dänisch"
+msgstr "danés"
+
+msgid "Französisch"
+msgstr "francés"
+
+msgid "Spanisch"
+msgstr "español"
+
+msgid "Schwedisch"
+msgstr "sueco"
+
+msgid "{n} von {m} Bildern im Textkörper haben keinen Alternativtext (Kopf- und Fußzeilen nicht mitgezählt) — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} de {m} imágenes del cuerpo del texto no tienen texto alternativo (encabezados y pies no contados); genéralo en InkluDocs o márcalas como decorativas."
+
+msgid "Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt)."
+msgstr "Las {n} imágenes del cuerpo del texto tienen texto alternativo o son decorativas (encabezados y pies no contados)."
+

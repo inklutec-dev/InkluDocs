@@ -5730,3 +5730,41 @@ msgstr "Word file created with {n} alt texts."
 msgid "Struktur-Lektor"
 msgstr "Structure editor"
 
+
+# Michaels Testrunde 11.09.2026: Titel aus Inhalt, Sprach-Abgleich, Link-Beschreibungen, Bilder im Textkoerper
+msgid "Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments."
+msgstr "The table structure is technically fine. Whether the first row is marked as a header row is stated in the Word document check report."
+
+msgid "Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."
+msgstr "A link has no description — a screen reader only says “link”."
+
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt ersatzweise „{t}“ als Titel."
+msgstr "The document title is missing (File → Info → Title). The PDF will use “{t}” as its title instead."
+
+msgid "Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache)."
+msgstr "The document language is set to {s}, but the text appears to be {name} — screen readers would pronounce it wrongly (Review → Language)."
+
+msgid "Deutsch"
+msgstr "German"
+
+msgid "Englisch"
+msgstr "English"
+
+msgid "Dänisch"
+msgstr "Danish"
+
+msgid "Französisch"
+msgstr "French"
+
+msgid "Spanisch"
+msgstr "Spanish"
+
+msgid "Schwedisch"
+msgstr "Swedish"
+
+msgid "{n} von {m} Bildern im Textkörper haben keinen Alternativtext (Kopf- und Fußzeilen nicht mitgezählt) — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} of {m} images in the body text have no alternative text (headers and footers not counted) — generate them in InkluDocs or mark them as decorative."
+
+msgid "Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt)."
+msgstr "All {n} images in the body text have alternative text or are decorative (headers and footers not counted)."
+

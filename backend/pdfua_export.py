@@ -257,7 +257,7 @@ def _bereiche(_):
         ("7.2", _("Text und Sprache"), _("Text ist als Text hinterlegt und die Sprache des Dokuments ist gesetzt, damit die Sprachausgabe richtig ausspricht.")),
         ("7.3", _("Bilder und Grafiken"), _("Jedes Bild hat einen Alternativtext oder ist als Schmuckbild markiert.")),
         ("7.4", _("Überschriften"), _("Überschriften sind als Überschriften ausgezeichnet und in sinnvoller Reihenfolge.")),
-        ("7.5", _("Tabellen"), _("Tabellen haben Kopfzellen, damit Zellen einer Spalte zugeordnet werden können.")),
+        ("7.5", _("Tabellen"), _("Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments.")),
         ("7.6", _("Listen"), _("Listen sind als Listen ausgezeichnet.")),
         ("7.7", _("Formeln"), _("Mathematische Formeln sind mit einem Alternativtext versehen.")),
         ("7.9", _("Fußnoten und Anmerkungen"), _("Fußnoten und Anmerkungen sind zugänglich verknüpft.")),
@@ -283,6 +283,10 @@ def _regeln_klartext(_):
         ("7.3", 1): _("Ein Bild hat keinen Alternativtext."),
         ("7.3", 2): _("Der Alternativtext eines Bildes ist ein Platzhalter."),
         ("7.4", 1): _("Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."),
+        # veraPDF meldet die Ueberschriften-Regel unter Klausel 7.4.2 (Michael Karbe 11.09.2026, vorher roher englischer Text)
+        ("7.4.2", 1): _("Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."),
+        ("7.18.1", 2): _("Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."),
+        ("7.18.5", 2): _("Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."),
         ("7.5", 1): _("Eine Tabelle hat keine Kopfzellen."),
         ("7.5", 2): _("Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."),
         ("7.16", 1): _("Eine Schrift ist nicht eingebettet."),
@@ -434,3 +438,77 @@ def vorschau_png(pdf_bytes: bytes, breite: int = 480) -> Optional[bytes]:
     except Exception as e:  # noqa: BLE001
         print(f"PDF/UA: Vorschaubild nicht erzeugt: {type(e).__name__}: {e}", flush=True)
         return None
+
+
+# ---------------------------------------------------------------------------
+# Michael Karbes Testrunde 11.09.2026 (Omnidocs-Dokument): drei Nachbesserungen
+# ---------------------------------------------------------------------------
+
+def titel_aus_inhalt(docx_path: str) -> str:
+    """Dokumenttitel aus dem INHALT: erster Absatz mit Vorlage „Titel“, sonst erste
+    Überschrift 1, sonst leer. Vorher wurde der im Export-Dialog eingetippte DATEINAME
+    („456“) zum PDF-Titel — ein Dateiname ist kein Titel."""
+    try:
+        import zipfile
+        from docx_processor import NS, _styles, _pstyle, _heading_level, _text, _lese_xml
+        with zipfile.ZipFile(docx_path) as zf:
+            st = _styles(zf)
+            doc = _lese_xml(zf, "word/document.xml")
+            erste_h1 = ""
+            for p in doc.iter("{%s}p" % NS["w"]):
+                lvl = _heading_level(_pstyle(p), st)
+                if lvl is None:
+                    continue
+                t = _text(p).strip()
+                if not t:
+                    continue
+                if lvl == 0:
+                    return t[:250]
+                if lvl == 1 and not erste_h1:
+                    erste_h1 = t
+            return erste_h1[:250]
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def links_beschriften(pdf_bytes: bytes) -> tuple[bytes, int]:
+    """Link-Anmerkungen ohne /Contents bekommen eine Beschreibung (PDF/UA 7.18.1-2, 7.18.5-2).
+    LibreOffice schreibt Hyperlinks als Link-Annotationen ohne Contents — bei Michaels
+    Testdokument 32 Befunde. Beschreibung = Ziel-Adresse (URI) bzw. „Verweis im Dokument“.
+    Der eigentliche Linktext waere besser; er steht nicht an der Annotation, sondern im
+    Inhaltsstrom (spaeter). Rueckgabe (Bytes, Anzahl beschrifteter Links)."""
+    try:
+        import io
+        import pikepdf
+        pdf = pikepdf.open(io.BytesIO(pdf_bytes))
+        n = 0
+        for page in pdf.pages:
+            annots = page.obj.get("/Annots")
+            if annots is None:
+                continue
+            for a in annots:
+                try:
+                    if not isinstance(a, pikepdf.Dictionary) or a.get("/Subtype") != pikepdf.Name("/Link"):
+                        continue
+                    if str(a.get("/Contents") or "").strip():
+                        continue
+                    beschreibung = ""
+                    aktion = a.get("/A")
+                    if isinstance(aktion, pikepdf.Dictionary):
+                        uri = aktion.get("/URI")
+                        if uri is not None:
+                            beschreibung = str(uri)
+                    if not beschreibung:
+                        beschreibung = "Verweis im Dokument"
+                    a["/Contents"] = pikepdf.String(beschreibung[:500])
+                    n += 1
+                except Exception:  # noqa: BLE001
+                    continue
+        if not n:
+            return pdf_bytes, 0
+        out = io.BytesIO()
+        pdf.save(out)
+        return out.getvalue(), n
+    except Exception as e:  # noqa: BLE001
+        print(f"PDF/UA: Link-Beschreibungen nicht gesetzt: {type(e).__name__}: {e}", flush=True)
+        return pdf_bytes, 0

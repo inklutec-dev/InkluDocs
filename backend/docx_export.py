@@ -139,6 +139,10 @@ def write_alt_texts_to_docx(input_path: str, output_path: str,
                     _setze_dekorativ(docpr, False)
                     if zaehlen:
                         erg.geleert += 1
+                        # 11.09.2026 (Michael Karbe, Omnidocs-Dokument): ein geleertes Bild ist GEFUNDEN —
+                        # vorher fehlte diese Zeile, und jedes leere Feld erschien in der Warnung
+                        # „n Bild(er) wurden im Dokument nicht mehr gefunden“.
+                        gefunden.add(kennung)
                     return
                 if text.lower() == DEKORATIV:
                     docpr.set("descr", "")

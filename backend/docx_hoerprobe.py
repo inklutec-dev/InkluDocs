@@ -115,8 +115,35 @@ def _tabelle(tbl: etree._Element) -> dict:
     return {"zeilen": len(zeilen), "spalten": spalten, "kopf": kopf, "kopfzellen": kopfzellen}
 
 
-def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet) -> dict:
-    """Liefert {"hoerprobe": [zeilen], "pruefbericht": [{"status","text"}], "titel", "sprache"}."""
+# Sprach-Abgleich (Michael Karbe 11.09.2026: Dokument auf da-DK gestellt, Text englisch —
+# der Pruefbericht sagte „Sprache gesetzt“, der Screenreader haette daenisch ausgesprochen).
+# Kleine Stoppwort-Zaehlung ueber den Anfang des Textes; nur bei klarem Abstand ein Hinweis.
+_SPRACH_MARKER = {
+    "de": {"der", "die", "das", "und", "nicht", "mit", "ist", "ein", "eine", "auf", "für", "wird", "sind", "auch", "werden", "sich", "dem", "den", "von", "zu"},
+    "en": {"the", "and", "with", "is", "are", "for", "this", "that", "of", "to", "in", "you", "your", "not", "be", "as", "it", "on", "have", "will"},
+    "da": {"og", "det", "er", "til", "af", "en", "at", "for", "med", "på", "som", "den", "der", "ikke", "kan", "skal", "har", "også", "eller", "være"},
+    "fr": {"le", "la", "les", "et", "des", "est", "pour", "dans", "une", "que", "qui", "pas", "sur", "vous", "avec", "sont", "ce", "cette", "par", "plus"},
+    "es": {"el", "la", "los", "las", "y", "es", "para", "que", "con", "una", "por", "del", "se", "no", "en", "más", "como", "son", "este", "esta"},
+    "sv": {"och", "att", "det", "är", "för", "som", "med", "den", "till", "inte", "av", "ett", "kan", "på", "har", "eller", "ska", "vi", "de", "från"},
+}
+_SPRACH_NAMEN = {"de": "Deutsch", "en": "Englisch", "da": "Dänisch", "fr": "Französisch", "es": "Spanisch", "sv": "Schwedisch"}
+
+
+def _text_sprache(text: str) -> tuple[str, int, int]:
+    """(Sprachkuerzel, Treffer, Treffer der zweitbesten) ueber die ersten ~600 Woerter."""
+    woerter = re.findall(r"[a-zA-ZäöüÄÖÜßæøåÆØÅéèêàçñ]+", text.lower())[:600]
+    if len(woerter) < 40:
+        return "", 0, 0
+    punkte = {k: sum(1 for w in woerter if w in m) for k, m in _SPRACH_MARKER.items()}
+    best = max(punkte, key=punkte.get)
+    rest = sorted(punkte.values(), reverse=True)
+    return best, rest[0], (rest[1] if len(rest) > 1 else 0)
+
+
+def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet, titel_ersatz: str = "") -> dict:
+    """Liefert {"hoerprobe": [zeilen], "pruefbericht": [{"status","text"}], "titel", "sprache"}.
+    titel_ersatz (11.09.2026): was die PDF als Titel bekommt, wenn im Dokument keiner steht
+    (erste Ueberschrift / Dokumentname) — damit Vorschau und Umwandlung dasselbe sagen."""
     try:
         zf = zipfile.ZipFile(docx_path)
     except zipfile.BadZipFile:
@@ -138,6 +165,7 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet) -> dict:
         hoer.append(_("Sprache: {s}").format(s=sprache) if sprache else _("Sprache: nicht gesetzt"))
 
         letzte_ebene = 0
+        texte: list[str] = []      # Rohtext fuer den Sprach-Abgleich (unabhaengig von der UI-Sprache)
         n_ueberschriften = 0
         n_absaetze = 0
         n_bilder = 0
@@ -168,6 +196,8 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet) -> dict:
                 break
             if el.tag == f"{{{W}}}p":
                 text = _text(el).strip()
+                if text and len(texte) < 400:
+                    texte.append(text)
                 ebene = _heading_level(_pstyle(el), styles)
                 if ebene is not None:
                     n_ueberschriften += 1
@@ -209,10 +239,21 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet) -> dict:
         def hinweis(text):
             befunde.append({"status": "befund", "text": text})
 
-        (ok if titel else hinweis)(_("Der Dokumenttitel ist gesetzt.") if titel else
-                                  _("Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt sonst nur den Dateinamen als Namen."))
-        (ok if sprache else hinweis)(_("Die Dokumentsprache ist gesetzt ({s}).").format(s=sprache) if sprache else
-                                    _("Die Dokumentsprache ist nicht gesetzt. Screenreader wählen dann eine falsche Aussprache."))
+        if titel:
+            ok(_("Der Dokumenttitel ist gesetzt."))
+        elif titel_ersatz:
+            hinweis(_("Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt ersatzweise „{t}“ als Titel.").format(t=titel_ersatz))
+        else:
+            hinweis(_("Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt sonst nur den Dateinamen als Namen."))
+        if not sprache:
+            hinweis(_("Die Dokumentsprache ist nicht gesetzt. Screenreader wählen dann eine falsche Aussprache."))
+        else:
+            erkannt, treffer, zweite = _text_sprache(" ".join(texte))
+            deklariert = sprache.split("-")[0].lower()
+            if erkannt and erkannt != deklariert and treffer >= 12 and treffer >= 2 * max(zweite, 1) and deklariert in _SPRACH_NAMEN:
+                hinweis(_("Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache).").format(s=sprache, name=_(_SPRACH_NAMEN[erkannt])))
+            else:
+                ok(_("Die Dokumentsprache ist gesetzt ({s}).").format(s=sprache))
         if n_ueberschriften == 0 and n_absaetze > 5:
             hinweis(_("Das Dokument nutzt keine Überschriften-Formatvorlagen. Ohne Überschriften kann niemand im Dokument springen."))
         else:
@@ -232,10 +273,12 @@ def analysiere(docx_path: str, _: Callable[[str], str] = _identitaet) -> dict:
             else:
                 ok(_("Alle {n} Tabellen haben eine Kopfzeile.").format(n=n_tabellen))
         if n_bilder:
+            # „im Textkörper“ (11.09.2026): die Hoerprobe liest Kopf-/Fusszeilen nicht — sonst passen die
+            # Zahlen nicht zur Bildliste des Projekts (Michael: 10 im Projekt, 9 hier, 4 in der PDF).
             if n_bilder_ohne:
-                hinweis(_("{n} von {m} Bildern haben keinen Alternativtext — in InkluDocs generieren oder als Schmuckbild markieren.").format(n=n_bilder_ohne, m=n_bilder))
+                hinweis(_("{n} von {m} Bildern im Textkörper haben keinen Alternativtext (Kopf- und Fußzeilen nicht mitgezählt) — in InkluDocs generieren oder als Schmuckbild markieren.").format(n=n_bilder_ohne, m=n_bilder))
             else:
-                ok(_("Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder.").format(n=n_bilder))
+                ok(_("Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt).").format(n=n_bilder))
     return {"hoerprobe": hoer, "pruefbericht": befunde, "titel": titel, "sprache": sprache,
             "zahlen": {"ueberschriften": n_ueberschriften, "absaetze": n_absaetze, "bilder": n_bilder,
                        "bilder_ohne_alt": n_bilder_ohne, "dekorativ": n_dekorativ, "tabellen": n_tabellen,

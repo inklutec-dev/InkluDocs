@@ -5422,3 +5422,41 @@ msgstr "Word-fil oprettet med {n} alt-tekster."
 msgid "Struktur-Lektor"
 msgstr "Strukturlæser"
 
+
+# Michaels Testrunde 11.09.2026: Titel aus Inhalt, Sprach-Abgleich, Link-Beschreibungen, Bilder im Textkoerper
+msgid "Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments."
+msgstr "Tabelstrukturen er teknisk i orden. Om første række er markeret som kolonneoverskrift, står i Word-dokumentets kontrolrapport."
+
+msgid "Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."
+msgstr "Et link har ingen beskrivelse — en skærmlæser siger kun „link“."
+
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt ersatzweise „{t}“ als Titel."
+msgstr "Dokumenttitlen mangler (Filer → Oplysninger → Titel). PDF’en får i stedet „{t}“ som titel."
+
+msgid "Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache)."
+msgstr "Dokumentsproget er sat til {s}, men teksten ser ud til at være {name} — skærmlæsere ville udtale den forkert (Gennemse → Sprog)."
+
+msgid "Deutsch"
+msgstr "tysk"
+
+msgid "Englisch"
+msgstr "engelsk"
+
+msgid "Dänisch"
+msgstr "dansk"
+
+msgid "Französisch"
+msgstr "fransk"
+
+msgid "Spanisch"
+msgstr "spansk"
+
+msgid "Schwedisch"
+msgstr "svensk"
+
+msgid "{n} von {m} Bildern im Textkörper haben keinen Alternativtext (Kopf- und Fußzeilen nicht mitgezählt) — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} af {m} billeder i brødteksten har ingen alternativ tekst (sidehoved og sidefod ikke talt med) — generér i InkluDocs eller markér som dekorative."
+
+msgid "Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt)."
+msgstr "Alle {n} billeder i brødteksten har alternativ tekst eller er dekorative (sidehoved og sidefod ikke talt med)."
+

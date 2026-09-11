@@ -7671,7 +7671,10 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
     for pos, unit in enumerate(units, start=1):
         label = (custom_name if len(units) == 1 and custom_name else None) or _doc_label(unit["doc"])
         docx_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
-        pdfua_export.dokumenttitel_setzen(docx_path, label, sprache)
+        # Titel aus dem INHALT (Michael Karbe 11.09.2026): vorher wurde der eingetippte Dateiname
+        # („456“) zum PDF-Titel. Jetzt: Vorlage „Titel“ -> erste Überschrift 1 -> Dokumentname.
+        pdf_titel = pdfua_export.titel_aus_inhalt(docx_path) or _doc_label(unit["doc"])
+        pdfua_export.dokumenttitel_setzen(docx_path, pdf_titel, sprache)
         try:
             pdf_bytes, bericht = pdfua_export.konvertiere(docx_path, os.path.basename(docx_path))
             # Stufe 2: Alt-Texte, die LibreOffice verliert (VML, Textfeld), aus unseren
@@ -7680,10 +7683,13 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
             alts = [_exportable_alt_text(img) for img in unit["images"]
                     if (img.get("docx_anker") or "").startswith("word/document.xml|")]
             pdf_bytes, nach = pdfua_export.alt_nachtragen(pdf_bytes, alts)
+            # Links ohne Beschreibung (7.18.1-2/7.18.5-2, Michael 11.09.2026: 32 Befunde) beschriften.
+            pdf_bytes, n_links = pdfua_export.links_beschriften(pdf_bytes)
+            nach["links_beschriftet"] = n_links
             # Dokument-Eigenschaften (Heine/Karbe 01.09.2026) VOR der veraPDF-Pruefung setzen,
             # damit geprueft wird, was der Kunde bekommt.
             pdf_bytes = pdfua_export.dokumentinfo_setzen(pdf_bytes)
-            if nach.get("nachgetragen") or nach.get("rahmen_umgewandelt"):
+            if nach.get("nachgetragen") or nach.get("rahmen_umgewandelt") or n_links:
                 bericht = pdfua_export.pruefe(pdf_bytes)
         except pdfua_export.UmwandlungFehlgeschlagen as e:
             log.error("export_pdfua: %s", e)
@@ -7754,7 +7760,8 @@ def _pdfua_vorschau_sync(project: dict, user_id: int, document_id: Optional[int]
         label = _doc_label(unit["doc"])
         docx_path, info = _build_docx_for_document(unit, output_dir, custom_title=label)
         try:
-            analyse = docx_hoerprobe.analysiere(docx_path, _)
+            # Titel-Ersatz wie bei der Umwandlung, damit Vorschau und Ergebnis dasselbe sagen (11.09.2026).
+            analyse = docx_hoerprobe.analysiere(docx_path, _, titel_ersatz=(pdfua_export.titel_aus_inhalt(docx_path) or label))
         except DocxFehler as e:
             raise HTTPException(status_code=400, detail=str(e))
         try:

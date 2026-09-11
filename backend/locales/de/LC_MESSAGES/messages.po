@@ -5733,3 +5733,41 @@ msgstr "Word-Datei mit {n} Alt-Texten erzeugt."
 msgid "Struktur-Lektor"
 msgstr "Struktur-Lektor"
 
+
+# Michaels Testrunde 11.09.2026: Titel aus Inhalt, Sprach-Abgleich, Link-Beschreibungen, Bilder im Textkoerper
+msgid "Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments."
+msgstr "Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments."
+
+msgid "Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."
+msgstr "Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."
+
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt ersatzweise „{t}“ als Titel."
+msgstr "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt ersatzweise „{t}“ als Titel."
+
+msgid "Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache)."
+msgstr "Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache)."
+
+msgid "Deutsch"
+msgstr "Deutsch"
+
+msgid "Englisch"
+msgstr "Englisch"
+
+msgid "Dänisch"
+msgstr "Dänisch"
+
+msgid "Französisch"
+msgstr "Französisch"
+
+msgid "Spanisch"
+msgstr "Spanisch"
+
+msgid "Schwedisch"
+msgstr "Schwedisch"
+
+msgid "{n} von {m} Bildern im Textkörper haben keinen Alternativtext (Kopf- und Fußzeilen nicht mitgezählt) — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} von {m} Bildern im Textkörper haben keinen Alternativtext (Kopf- und Fußzeilen nicht mitgezählt) — in InkluDocs generieren oder als Schmuckbild markieren."
+
+msgid "Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt)."
+msgstr "Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt)."
+

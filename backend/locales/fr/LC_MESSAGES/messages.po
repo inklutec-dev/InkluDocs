@@ -5730,3 +5730,41 @@ msgstr "Fichier Word créé avec {n} textes alternatifs."
 msgid "Struktur-Lektor"
 msgstr "Lecteur de structure"
 
+
+# Michaels Testrunde 11.09.2026: Titel aus Inhalt, Sprach-Abgleich, Link-Beschreibungen, Bilder im Textkoerper
+msgid "Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments."
+msgstr "La structure des tableaux est techniquement correcte. Le rapport de vérification du document Word indique si la première ligne est marquée comme en-tête."
+
+msgid "Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."
+msgstr "Un lien n’a pas de description — un lecteur d’écran ne lit que « lien »."
+
+msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt ersatzweise „{t}“ als Titel."
+msgstr "Le titre du document manque (Fichier → Informations → Titre). Le PDF utilisera « {t} » comme titre à la place."
+
+msgid "Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache)."
+msgstr "La langue du document est {s}, mais le texte semble être en {name} — les lecteurs d’écran le prononceraient mal (Révision → Langue)."
+
+msgid "Deutsch"
+msgstr "allemand"
+
+msgid "Englisch"
+msgstr "anglais"
+
+msgid "Dänisch"
+msgstr "danois"
+
+msgid "Französisch"
+msgstr "français"
+
+msgid "Spanisch"
+msgstr "espagnol"
+
+msgid "Schwedisch"
+msgstr "suédois"
+
+msgid "{n} von {m} Bildern im Textkörper haben keinen Alternativtext (Kopf- und Fußzeilen nicht mitgezählt) — in InkluDocs generieren oder als Schmuckbild markieren."
+msgstr "{n} des {m} images du corps du texte n’ont pas de texte alternatif (en-têtes et pieds de page non comptés) — à générer dans InkluDocs ou à marquer comme décoratives."
+
+msgid "Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt)."
+msgstr "Les {n} images du corps du texte ont un texte alternatif ou sont décoratives (en-têtes et pieds de page non comptés)."
+
