@@ -196,6 +196,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .ausgabe-karte .ausgabe-text { flex:1 1 18rem; min-width:0; }
 .ausgabe-vorschau { max-width:150px; height:auto; border:1px solid var(--border); border-radius:4px; display:block; background:#fff; }
 .ausgabe-aktionen { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-top:.6rem; }
+/* Primaer-Knopf als Link in einer Karte: .dash-item a.btn setzt sonst die dunkle Textfarbe auf Orange (axe color-contrast, Klicktest 11.09.) */
+.dash-item a.btn.btn-primary { color:#fff; }
+.dash-item a.btn.btn-primary:hover, .dash-item a.btn.btn-primary:focus { color:#fff; }
 .ausgabe-details { margin:.5rem 0 0; }
 .ausgabe-details summary { cursor:pointer; font-weight:600; }
 .ausgabe-details ul { margin:.3rem 0 .4rem; padding-left:1.2rem; }

@@ -47,6 +47,10 @@
     if (a.hinweise === 1) return t('Prüfung: ein Bereich mit Hinweisen');
     return t('Prüfung: {n} Bereiche mit Hinweisen', { n: a.hinweise });
   }
+  // Art der Ausgabe in der Sprache der Oberflaeche (der Server liefert nur den Schluessel).
+  function artLabel(a) {
+    return a.art === 'pdfua' ? t('Barrierefreie PDF (PDF/UA)') : (a.art_label || a.art);
+  }
   function dokumentName(a) {
     return a.dokument || t('{projekt} – alle Dokumente', { projekt: a.projekt });
   }
@@ -90,8 +94,8 @@
       box.appendChild(wrap);
     });
   }
-  function detailsMitLader(id, titel, fueller) {
-    const det = el('details', 'ausgabe-details');
+  function detailsMitLader(id, titel, fueller, klasse) {
+    const det = el('details', 'ausgabe-details ' + klasse);
     det.appendChild(el('summary', null, titel));
     const box = el('div');
     det.appendChild(box);
@@ -162,7 +166,7 @@
     const text = el('div', 'ausgabe-text');
     const metaTeile = [];
     if (!gefiltert) metaTeile.push(a.projekt);
-    metaTeile.push(a.art_label);
+    metaTeile.push(artLabel(a));
     if (a.ausloeser === 'bot') metaTeile.push(t('über den Chatbot'));
     text.appendChild(el('p', 'dash-meta', metaTeile.join(' · ')));
     const summe = el('p', null);
@@ -193,8 +197,8 @@
     aktionen.appendChild(zum);
     aktionen.appendChild(loeschKnopf(a, li));
     text.appendChild(aktionen);
-    text.appendChild(detailsMitLader(a.id, t('Bericht lesen'), fuelleBericht));
-    text.appendChild(detailsMitLader(a.id, t('Hörprobe lesen'), fuelleHoerprobe));
+    text.appendChild(detailsMitLader(a.id, t('Bericht lesen'), fuelleBericht, 'ausgabe-bericht'));
+    text.appendChild(detailsMitLader(a.id, t('Hörprobe lesen'), fuelleHoerprobe, 'ausgabe-hoerprobe-details'));
     karte.appendChild(text);
     li.appendChild(karte);
     return li;

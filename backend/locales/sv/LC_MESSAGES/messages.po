@@ -5260,3 +5260,6 @@ msgstr "{projekt} – alla dokument"
 msgid "über den Chatbot"
 msgstr "via chattboten"
 
+msgid "Barrierefreie PDF (PDF/UA)"
+msgstr "Tillgänglig PDF (PDF/UA)"
+

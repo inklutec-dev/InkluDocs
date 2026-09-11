@@ -284,7 +284,7 @@
       const meta = document.createElement('p');
       meta.className = 'dash-meta';
       const dz = ausgabeDatum(a.created_at);
-      meta.textContent = t('{projekt} · {art} · {datum}', { projekt: a.projekt, art: a.art_label, datum: dz });
+      meta.textContent = t('{projekt} · {art} · {datum}', { projekt: a.projekt, art: (a.art === 'pdfua' ? t('Barrierefreie PDF (PDF/UA)') : a.art_label), datum: dz });
       const summe = document.createElement('p');
       summe.className = 'dash-sub';
       summe.style.margin = '.2rem 0 0';
