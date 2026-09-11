@@ -5730,3 +5730,6 @@ msgstr "Word-Prüfbericht: {n} Hinweise"
 msgid "Word-Datei mit {n} Alt-Texten erzeugt."
 msgstr "Word-Datei mit {n} Alt-Texten erzeugt."
 
+msgid "Struktur-Lektor"
+msgstr "Struktur-Lektor"
+

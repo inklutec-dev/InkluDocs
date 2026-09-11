@@ -223,3 +223,43 @@ def lies_ausgabe(project_id: int, user_id: int, ausgabe_id: int, teil: str = "be
         "download_url": f"/api/ausgaben/{a['id']}/datei" if a["datei_verfuegbar"] else None,
         "teil": teil, "dokumente": doks,
     }}
+
+
+def analysiere_word_struktur(project_id: int, user_id: int, document_id: Optional[int] = None) -> dict[str, Any]:
+    """Struktur-Lektor, Lesestufe (11.09.2026): Absatz-Auszug mit Formatvorlage/Fettung/Groesse,
+    Gliederung, Tabellen und deterministische Befunde (Ueberschrift ohne Vorlage, getippte Liste,
+    Leerabsaetze, Grossbuchstaben, Linktexte, Layouttabellen). Kostenlos, kein KI-Aufruf im Werkzeug."""
+    m = _main()
+    try:
+        project = m._pdfua_projekt_laden(project_id, user_id, meldung="Den Struktur-Lektor gibt es nur für Word-Projekte")
+        units = m._load_pdf_export_units(project, user_id, document_id)
+    except HTTPException as e:
+        return _fehler(e)
+    import os
+    import docx_struktur
+    output_dir = os.path.join(m.RESULTS_DIR, str(user_id), str(project["id"]), "_export")
+    os.makedirs(output_dir, exist_ok=True)
+    doks = []
+    for unit in units:
+        label = m._doc_label(unit["doc"])
+        try:
+            docx_path, _info = m._build_docx_for_document(unit, output_dir, custom_title=label)
+            st = docx_struktur.analysiere_struktur(docx_path)
+        except Exception as e:  # noqa: BLE001
+            log.exception("analysiere_word_struktur: %s", e)
+            doks.append({"dokument": label, "fehler": f"Struktur nicht lesbar: {e}"})
+            continue
+        try:
+            doc_id = int(unit["doc"]["id"])
+        except (KeyError, TypeError, ValueError):
+            doc_id = None
+        doks.append({"dokument": label, "document_id": doc_id, "titel": st["titel"],
+                     "standard_schriftgroesse_pt": st["standard_schriftgroesse"], "zahlen": st["zahlen"],
+                     "gliederung": st["gliederung"], "tabellen": st["tabellen"], "befunde": st["befunde"],
+                     "absaetze": st["absaetze"], "auszug_gekuerzt": st["auszug_gekuerzt"]})
+    return {"ok": True, "result": {"dokumente": doks, "hinweis": (
+        "Befunde mit sicherheit=hoch sind aus dem Dokument belegt — nenne sie als Tatsache mit Absatznummer und "
+        "Textanfang. Befunde mit sicherheit=mittel sind Vermutungen aus der Optik — nenne sie als Vermutung und frage, "
+        "ob es eine Überschrift sein soll. Du darfst aus dem Absatz-Auszug eigene Beobachtungen ergänzen, gekennzeichnet "
+        "als Einschätzung. Umbauen kannst du nichts; sag, was der Nutzer in Word tut (Formatvorlage zuweisen, echte "
+        "Liste anlegen). Bewertung am Ende in einem Satz: gut aufgebaut / brauchbar mit n Stellen / ohne Struktur.")}}

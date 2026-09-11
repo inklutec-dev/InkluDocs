@@ -59,6 +59,11 @@ check("1 Pruefen: Werkzeug pruefe_word_dokument", s == 200 and "pruefe_word_doku
 check("1 Pruefen: Antwort nennt Titel/Überschrift/Bild oder Hinweis", any(w in (b.get("reply") or "") for w in ("Überschrift", "Titel", "Bild", "Hinweis", "Prüfbericht")), (b.get("reply") or "")[:200])
 check("1 Pruefen: kein Anhang, keine Umwandlung", not b.get("anhang") and "konvertiere_zu_pdfua" not in (b.get("werkzeuge") or []))
 
+# 1b. Struktur-Lektor (kostenlos)
+s, b = chat("Bewerte bitte den Aufbau des Dokuments: Ist es für Screenreader gut strukturiert?")
+check("1b Struktur: Werkzeug analysiere_word_struktur", s == 200 and "analysiere_word_struktur" in (b.get("werkzeuge") or []), b.get("werkzeuge"))
+check("1b Struktur: Antwort mit Gesamturteil und Absatzbezug", any(w in (b.get("reply") or "") for w in ("aufgebaut", "Struktur", "strukturiert")) and "Absatz" in (b.get("reply") or ""), (b.get("reply") or "")[:300])
+
 # 2. Umwandeln verlangen -> serverseitige Rueckfrage (kein Eintrag ohne bestaetigt)
 s, b = chat("Wandle das Dokument jetzt in eine barrierefreie PDF um.")
 check("2 Umwandeln: Werkzeug konvertiere_zu_pdfua aufgerufen", s == 200 and "konvertiere_zu_pdfua" in (b.get("werkzeuge") or []), b.get("werkzeuge"))

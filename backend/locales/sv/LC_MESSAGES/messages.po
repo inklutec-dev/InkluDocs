@@ -5289,3 +5289,6 @@ msgstr "Word-kontrollrapport: {n} anmärkningar"
 msgid "Word-Datei mit {n} Alt-Texten erzeugt."
 msgstr "Word-fil skapad med {n} alt-texter."
 
+msgid "Struktur-Lektor"
+msgstr "Strukturgranskare"
+

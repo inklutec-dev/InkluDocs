@@ -5727,3 +5727,6 @@ msgstr "Word check report: {n} notes"
 msgid "Word-Datei mit {n} Alt-Texten erzeugt."
 msgstr "Word file created with {n} alt texts."
 
+msgid "Struktur-Lektor"
+msgstr "Structure editor"
+

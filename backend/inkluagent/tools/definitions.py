@@ -236,6 +236,20 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
         }, "required": []},
     },
     {
+        "name": "analysiere_word_struktur",
+        "description": (
+            "Struktur-Lektor (Lesestufe): prüft, ob die Struktur, die ein Screenreader bekommt, der Struktur entspricht, "
+            "die ein Sehender sieht. Liefert Gliederung, Absatz-Auszug (Formatvorlage, fett, Schriftgröße, Liste, Tabelle) "
+            "und Befunde mit Absatznummer, Sicherheit (hoch = belegt, mittel = Vermutung) und Vorschlag: fette/größere "
+            "Zeilen ohne Überschriften-Vorlage, getippte Listen, Leerabsätze als Abstand, Großbuchstaben, Linktexte, "
+            "Layouttabellen, verschachtelte Tabellen. Kostenlos. Nutze es, wenn der Nutzer den Aufbau bewerten lassen "
+            "will („ist das Dokument gut strukturiert?“, „bewerte den Aufbau“). Ohne document_id alle Dokumente."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "document_id": {"type": "integer", "description": "Optional: nur dieses Dokument."},
+        }, "required": []},
+    },
+    {
         "name": "liste_ausgaben",
         "description": (
             "Alle fertigen Ausgaben dieses Projekts (barrierefreie PDFs, Word-Dateien) mit Datum, Prüfstand und "
@@ -309,6 +323,7 @@ class ToolExecutor:
                 "pruefe_word_dokument": lambda a: ausgaben_tools.pruefe_word_dokument(p, u, _doc(a)),
                 "konvertiere_zu_pdfua": lambda a: ausgaben_tools.konvertiere_zu_pdfua(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False))),
                 "exportiere_word": lambda a: ausgaben_tools.exportiere_word(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False))),
+                "analysiere_word_struktur": lambda a: ausgaben_tools.analysiere_word_struktur(p, u, _doc(a)),
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
             })

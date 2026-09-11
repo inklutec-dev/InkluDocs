@@ -161,3 +161,12 @@ dem tool_result (das Modell sieht es nicht) und hängt es an die Antwort
 und zieht den Reiter-Zähler nach. Tests: `tests/e2e/verify_chat_ausgaben.py` (API,
 LLM-gesteuert: Prüfen → Rückfrage ohne Eintrag → Ja → Anhang → Hörprobe → Word-Export),
 `tests/e2e/ui_chat_ausgaben.py` (Playwright: Knöpfe unter der Antwort, axe).
+
+Struktur-Lektor, Lesestufe (11.09.2026): `analysiere_word_struktur` (Handler in
+`tools/ausgaben.py`, Parser `backend/docx_struktur.py`) liefert Gliederung,
+Absatz-Auszug (Formatvorlage, fett, Schriftgröße, Liste, Tabelle) und deterministische
+Befunde mit Absatznummer, Sicherheit (hoch = aus dem XML belegt, mittel = Vermutung aus
+der Optik) und Vorschlag: Überschrift ohne Vorlage, getippte Liste, Leerabsätze,
+Großbuchstaben, manuelle Umbrüche, Linktext ohne Ziel, Layout-/verschachtelte Tabelle,
+keine Überschriften. Kein KI-Aufruf im Werkzeug; das Modell ordnet ein und formuliert.
+Umbau (Formatvorlagen zuweisen) ist die nächste Stufe. Test: `tests/test_docx_struktur.py`.

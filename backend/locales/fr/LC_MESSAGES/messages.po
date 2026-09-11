@@ -5727,3 +5727,6 @@ msgstr "Rapport Word : {n} remarques"
 msgid "Word-Datei mit {n} Alt-Texten erzeugt."
 msgstr "Fichier Word créé avec {n} textes alternatifs."
 
+msgid "Struktur-Lektor"
+msgstr "Lecteur de structure"
+
