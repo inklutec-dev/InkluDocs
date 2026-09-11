@@ -49,7 +49,8 @@ def _ui_lang(user_id: int) -> str:
 def _fehler(e: HTTPException) -> dict[str, Any]:
     d = e.detail
     if isinstance(d, dict):
-        d = d.get("meldung") or d.get("detail") or str(d)
+        # 402 aus billing.credits_fehlen_detail: {"code","preis","verfuegbar","fehlend","text"}
+        d = d.get("text") or d.get("meldung") or d.get("detail") or str(d)
     return {"ok": False, "error": str(d)}
 
 
