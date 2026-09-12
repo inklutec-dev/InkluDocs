@@ -141,6 +141,25 @@ class TestZaehlerReparatur(unittest.TestCase):
         self.assertEqual(c.execute("SELECT COUNT(*) FROM sqlite_sequence").fetchone()[0], 0)
 
 
+class TestProjektLoeschen(unittest.TestCase):
+    def test_delete_project_loescht_chat_verlauf_ausdruecklich(self):
+        """Steve 12.09.2026: Beim Projekt-Loeschen muss der Chat-Verlauf mit weg — ausdruecklich, nicht nur per Cascade."""
+        main_py = os.path.join(os.path.dirname(database.__file__), "main.py")
+        src = open(main_py, encoding="utf-8").read()
+        i = src.index("async def delete_project(")
+        j = src.index("\nasync def ", i + 10)
+        block = src[i:j]
+        for t in ("chat_messages", "messages", "shares", "documents", "images", "projects"):
+            self.assertIn(f"DELETE FROM {t} WHERE", block, t)
+
+    def test_cascade_und_pragma_greifen_auch(self):
+        """Zweiter Weg: Fremdschluessel mit ON DELETE CASCADE und foreign_keys=ON (get_db)."""
+        src = open(database.__file__, encoding="utf-8").read()
+        self.assertIn('PRAGMA foreign_keys=ON', src)
+        i = src.index("CREATE TABLE IF NOT EXISTS chat_messages")
+        self.assertIn("ON DELETE CASCADE", src[i:i + 600])
+
+
 class TestKontoLoeschen(unittest.TestCase):
     def test_delete_user_data_loescht_ablage(self):
         src = open(database.__file__, encoding="utf-8").read()

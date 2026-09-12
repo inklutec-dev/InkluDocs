@@ -6155,6 +6155,12 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
     _ablage_projekt_geloescht(conn, user["id"], project)
     # Multi-Datei (08.06.2026): Dokument-Zeilen mit aufraeumen.
     conn.execute("DELETE FROM documents WHERE project_id = ?", (project_id,))
+    # Chat-Verlauf, Gast-Freigaben und Nachrichten (Steve 12.09.2026: „muss mit weg“). Sie fallen
+    # ueber ON DELETE CASCADE + PRAGMA foreign_keys=ON ohnehin (Prod/Staging 12.09.: 0 Waisen),
+    # hier trotzdem ausdruecklich — wie in delete_user_data, damit nichts am Pragma haengt.
+    conn.execute("DELETE FROM chat_messages WHERE project_id = ?", (project_id,))
+    conn.execute("DELETE FROM messages WHERE project_id = ?", (project_id,))
+    conn.execute("DELETE FROM shares WHERE project_id = ?", (project_id,))
     conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
     conn.commit()
     conn.close()
