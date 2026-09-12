@@ -152,6 +152,19 @@ class TestProjektLoeschen(unittest.TestCase):
         for t in ("chat_messages", "messages", "shares", "documents", "images", "projects"):
             self.assertIn(f"DELETE FROM {t} WHERE", block, t)
 
+    def test_delete_project_loescht_anhang_dateien(self):
+        """Steve 12.09.2026: Anhaenge (Bot-Exporte unter results/<user>/<projekt>/_export, Original-Upload) muessen mit weg.
+        Der Loeschpfad entfernt den ganzen Projektordner und den Upload; die Anhang-Angaben im Chat haengen an chat_messages."""
+        main_py = os.path.join(os.path.dirname(database.__file__), "main.py")
+        src = open(main_py, encoding="utf-8").read()
+        i = src.index("async def delete_project(")
+        block = src[i:src.index("\nasync def ", i + 10)]
+        self.assertIn("shutil.rmtree(project_dir)", block)
+        self.assertIn('os.remove(project["original_path"])', block)
+        self.assertIn('str(project_id))', block)
+        # Bot-Anhaenge liegen im Projektordner (_export), nicht daneben:
+        self.assertIn('str(project["id"]), "_export")', src)
+
     def test_cascade_und_pragma_greifen_auch(self):
         """Zweiter Weg: Fremdschluessel mit ON DELETE CASCADE und foreign_keys=ON (get_db)."""
         src = open(database.__file__, encoding="utf-8").read()
