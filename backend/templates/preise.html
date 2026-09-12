@@ -13,7 +13,24 @@
    umgestellt; jede Stufe ist eine Karte wie in der App. #}
 {# Einleitung als Prosa-Karte wie auf "Ueber uns" (Michael 04.09.2026 13:03) #}
 <section class="dash-card dash-prosa">
-  <p>{{ _('Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, Excel, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.').format(alt=preis_alt, qi=preis_qi, exp=preis_export, bild=preis_export_bild, feld=preis_export_feld, schritt=export_schritt, tab=preis_tabelle) }}</p>
+  <p>{{ _('Eine Währung für alles: Credits. Vor jeder Aktion zeigt InkluDocs, was sie kostet. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet.') }}</p>
+</section>
+
+{# Preise je Aktion als Liste (Michael Karbe, WhatsApp 12.09.2026 10:41: „die aktuellen Preise
+   für einen Alt-Text, für die Quickinfo und das Herunterladen auflisten“). Zahlen aus billing.py
+   ueber die Route /preise; das Beispiel rechnet billing.export_preis(26, "pdf"). #}
+<section class="dash-card dash-prosa" aria-labelledby="aktionen-h">
+    <h2 id="aktionen-h">{{ _('Was eine Aktion kostet') }}</h2>
+    <ul>
+        <li>{{ _('Alt-Text: {alt} Credits je Bild — egal ob im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert.').format(alt=preis_alt) }}</li>
+        <li>{{ _('Quickinfo: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert.').format(qi=preis_qi) }}</li>
+        <li>{{ _('Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits.').format(exp=preis_export, bild=preis_export_bild, schritt=export_schritt, beispiel=beispiel_pdf_26) }}</li>
+        <li>{{ _('Word in barrierefreie PDF umwandeln: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder — wie das Herunterladen als PDF.').format(exp=preis_pdfua, bild=preis_pdfua_bild, schritt=export_schritt) }}</li>
+        <li>{{ _('Herunterladen als Formular-PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder.').format(exp=preis_export_formular, feld=preis_export_feld, schritt=export_schritt) }}</li>
+        <li>{{ _('Tabelle herunterladen (CSV, Excel, JSON): {tab} Credits je Datei.').format(tab=preis_tabelle) }}</li>
+        <li>{{ _('Mit dem InkluAgent reden: kostenlos.') }}</li>
+    </ul>
+    <p>{{ _('Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden.') }}</p>
 </section>
 
 <section class="dash-card dash-prosa" aria-labelledby="free-h">

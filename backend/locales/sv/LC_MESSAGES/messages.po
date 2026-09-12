@@ -5753,3 +5753,35 @@ msgstr "Läs post"
 msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Bildbeschreibungen, Quickinfos und der Chat-Assistent nutzen das Modell Gemini von Google über Google Vertex AI. Google ist vertraglich als Auftragsverarbeiter gebunden und nutzt deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 msgstr " Hosting hos Hetzner Online (Falkenstein, Tyskland). Bildbeskrivningar, snabbinfon och chattassistenten använder Googles Gemini-modell via Google Vertex AI. Google är avtalsmässigt bundet som personuppgiftsbiträde och använder inte ditt innehåll för träning. Mer information finns i vår integritetspolicy."
 
+
+# Preisseite: Preise je Aktion (Michael Karbe, WhatsApp 12.09.2026)
+msgid "Eine Währung für alles: Credits. Vor jeder Aktion zeigt InkluDocs, was sie kostet. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "En valuta för allt: credits. Före varje åtgärd visar InkluDocs vad den kostar. Alla priser är slutpriser — enligt § 19 UStG (tysk momslag) tas ingen moms ut."
+
+msgid "Was eine Aktion kostet"
+msgstr "Vad en åtgärd kostar"
+
+msgid "Alt-Text: {alt} Credits je Bild — egal ob im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert."
+msgstr "Alt-text: {alt} credits per bild — oavsett om det sker i en samlad körning, enskilt, via API:et eller när InkluAgent ändrar en alt-text."
+
+msgid "Quickinfo: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert."
+msgstr "Snabbinfo: {qi} credit per formulärfält — även när InkluAgent ändrar en snabbinfo."
+
+msgid "Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr "Ladda ner som PDF eller Word: {exp} credits plus {bild} credits per påbörjade {schritt} bilder. Exempel: en PDF med 26 bilder kostar {beispiel} credits."
+
+msgid "Word in barrierefreie PDF umwandeln: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder — wie das Herunterladen als PDF."
+msgstr "Omvandla Word till tillgänglig PDF: {exp} credits plus {bild} credits per påbörjade {schritt} bilder — som nedladdning som PDF."
+
+msgid "Herunterladen als Formular-PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Ladda ner som formulär-PDF: {exp} credits plus {feld} credit per påbörjade {schritt} fält."
+
+msgid "Tabelle herunterladen (CSV, Excel, JSON): {tab} Credits je Datei."
+msgstr "Ladda ner tabell (CSV, Excel, JSON): {tab} credits per fil."
+
+msgid "Mit dem InkluAgent reden: kostenlos."
+msgstr "Att prata med InkluAgent: gratis."
+
+msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
+msgstr "Appen anger priset igen före varje åtgärd, innan några credits dras."
+

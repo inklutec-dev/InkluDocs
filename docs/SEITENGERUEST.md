@@ -181,3 +181,14 @@ in eine IIFE `(() => { … })();` packen und die globalen Helfer nutzen.
   Kündigung im neuen Gerüst.
 - `verify_recht.py`: Pflichtlinks im rohen HTML (ohne JavaScript).
 - `backend/scripts/check_i18n.py`: Vollständigkeit der Übersetzungen.
+
+## Preisseite: Preise je Aktion (12.09.2026)
+
+Michael Karbe (WhatsApp 12.09.2026): „Wir sagen immer, was die Aktion kostet, eine Übersicht wäre
+für die Kunden hilfreich.“ `preise.html` hat deshalb vor den Tarif-Karten den Abschnitt
+„Was eine Aktion kostet“ (`aria-labelledby="aktionen-h"`) als Liste: Alt-Text, Quickinfo,
+Herunterladen als PDF/Word (mit Beispiel 26 Bilder), Word → barrierefreie PDF, Formular-PDF,
+Tabellen-Export, InkluAgent. Alle Zahlen kommen aus `billing.py` über die Route `/preise` in
+`main.py` (`preis_*`, `beispiel_pdf_26 = billing.export_preis(26, "pdf")`) — eine Preisänderung
+bleibt eine Konfigurationszeile. Die Einleitung darüber ist auf zwei Sätze gekürzt (Credits,
+§ 19 UStG). Texte in den sechs Katalogen. Test: `tests/e2e/ui_preise.py` (de + en, axe, JS-Fehler).

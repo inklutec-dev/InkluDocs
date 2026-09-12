@@ -6191,3 +6191,35 @@ msgstr "Lire l’entrée"
 msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Bildbeschreibungen, Quickinfos und der Chat-Assistent nutzen das Modell Gemini von Google über Google Vertex AI. Google ist vertraglich als Auftragsverarbeiter gebunden und nutzt deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 msgstr " Hébergement chez Hetzner Online (Falkenstein, Allemagne). Les descriptions d’images, les info-bulles et l’assistant de discussion utilisent le modèle Gemini de Google via Google Vertex AI. Google est lié contractuellement en tant que sous-traitant et n’utilise pas vos contenus pour l’entraînement. Détails dans notre politique de confidentialité."
 
+
+# Preisseite: Preise je Aktion (Michael Karbe, WhatsApp 12.09.2026)
+msgid "Eine Währung für alles: Credits. Vor jeder Aktion zeigt InkluDocs, was sie kostet. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr "Une seule monnaie pour tout : les crédits. Avant chaque action, InkluDocs indique ce qu’elle coûte. Tous les prix sont des prix finaux — conformément au § 19 UStG (loi allemande sur la TVA), aucune TVA n’est facturée."
+
+msgid "Was eine Aktion kostet"
+msgstr "Ce que coûte une action"
+
+msgid "Alt-Text: {alt} Credits je Bild — egal ob im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert."
+msgstr "Texte alternatif : {alt} crédits par image — en lot, individuellement, via l’API ou lorsque l’InkluAgent modifie un texte alternatif."
+
+msgid "Quickinfo: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert."
+msgstr "Info-bulle : {qi} crédit par champ de formulaire — également lorsque l’InkluAgent modifie une info-bulle."
+
+msgid "Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr "Téléchargement en PDF ou Word : {exp} crédits plus {bild} crédits par tranche entamée de {schritt} images. Exemple : un PDF de 26 images coûte {beispiel} crédits."
+
+msgid "Word in barrierefreie PDF umwandeln: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder — wie das Herunterladen als PDF."
+msgstr "Convertir Word en PDF accessible : {exp} crédits plus {bild} crédits par tranche entamée de {schritt} images — comme le téléchargement en PDF."
+
+msgid "Herunterladen als Formular-PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Téléchargement en PDF de formulaire : {exp} crédits plus {feld} crédit par tranche entamée de {schritt} champs."
+
+msgid "Tabelle herunterladen (CSV, Excel, JSON): {tab} Credits je Datei."
+msgstr "Télécharger un tableau (CSV, Excel, JSON) : {tab} crédits par fichier."
+
+msgid "Mit dem InkluAgent reden: kostenlos."
+msgstr "Discuter avec l’InkluAgent : gratuit."
+
+msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
+msgstr "L’application rappelle le prix avant chaque action, avant que des crédits soient débités."
+

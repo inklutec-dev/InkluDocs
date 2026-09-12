@@ -6194,3 +6194,35 @@ msgstr "Eintrag lesen"
 msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Bildbeschreibungen, Quickinfos und der Chat-Assistent nutzen das Modell Gemini von Google über Google Vertex AI. Google ist vertraglich als Auftragsverarbeiter gebunden und nutzt deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 msgstr " Hosting bei Hetzner Online (Falkenstein, Deutschland). Bildbeschreibungen, Quickinfos und der Chat-Assistent nutzen das Modell Gemini von Google über Google Vertex AI. Google ist vertraglich als Auftragsverarbeiter gebunden und nutzt deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 
+
+# Preisseite: Preise je Aktion (Michael Karbe, WhatsApp 12.09.2026)
+msgid "Eine Währung für alles: Credits. Vor jeder Aktion zeigt InkluDocs, was sie kostet. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+msgstr ""
+
+msgid "Was eine Aktion kostet"
+msgstr ""
+
+msgid "Alt-Text: {alt} Credits je Bild — egal ob im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert."
+msgstr ""
+
+msgid "Quickinfo: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert."
+msgstr ""
+
+msgid "Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr ""
+
+msgid "Word in barrierefreie PDF umwandeln: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder — wie das Herunterladen als PDF."
+msgstr ""
+
+msgid "Herunterladen als Formular-PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr ""
+
+msgid "Tabelle herunterladen (CSV, Excel, JSON): {tab} Credits je Datei."
+msgstr ""
+
+msgid "Mit dem InkluAgent reden: kostenlos."
+msgstr ""
+
+msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
+msgstr ""
+

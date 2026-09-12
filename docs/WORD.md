@@ -486,3 +486,19 @@ selbst — sie erscheinen NICHT mehr in der Klappe „n Elemente ohne Alt-Text�
 gezählt (`DocxErgebnis.schmuck`, `hinweise.schmuck`). In der Klappe bleiben nur Elemente, die
 einen Alt-Text brauchen und die Stufe 2 noch nicht beschreibt: Diagramm, SmartArt, Vektorgrafik,
 eingebettete Objekte, verknüpfte/unlesbare Bilder. Bei Michaels Dokument ist die Klappe damit leer.
+
+## Export-Dialog: Abbrechen unten rechts, „Zur Ablage“ daneben (12.09.2026)
+
+Michael Karbe nach seinem realen Test (Mail 12.09.2026, 01:49): „Den Button zum Abbrechen im
+Dialog zum Herunterladen bitte nach unten rechts neben den Button für die Ablage.“ Umgesetzt in
+`app.html`: Der Dialog `#exportPanel` hat eine eigene Fußzeile `#exportFooter` (Flex, rechtsbündig)
+mit dem Knopf `#exportCancelBtn`. Nach einer erfolgreichen Umwandlung hängt `doPdfua` den Link
+`#pdfuaAusgabenLink` („Zur Ablage“) per DOM-API direkt vor den Abbrechen-Knopf in diese Fußzeile;
+in der Ergebnisbox `#pdfuaResult` bleiben Zusammenfassung, Befunde, „PDF herunterladen“ und der
+Satz „PDF und Prüfbericht liegen jetzt in deiner Ablage.“ `openExportPanel` leert Ergebnisbox und
+Link beim nächsten Öffnen, `doPdfua` entfernt einen alten Link vor dem Start. Die Reihenfolge im
+Tab-Kreis ist damit: Formate → Umwandeln → Hörprobe → (Ergebnis) → Zur Ablage → Abbrechen.
+Geprüft in `tests/e2e/ui_ausgaben.py` (Fußzeile, Link direkt vor dem Knopf, Abbrechen letzter Knopf).
+Michaels Befund zur Sache selbst: Word korrigiert, neu hochgeladen, Umwandlung ohne Befund, veraPDF
+und PAC fehlerfrei — der Weg funktioniert. Word-Dateien bleiben laut Michael vorerst nicht in der
+Ablage (`ABLAGE_WORD` bleibt aus).

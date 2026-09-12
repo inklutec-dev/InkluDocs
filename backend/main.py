@@ -9863,6 +9863,12 @@ async def preise_page(request: Request):
         "preis_export_feld": billing.EXPORT_ARTEN["formular"][1],
         "export_schritt": billing.EXPORT_SCHRITT,
         "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],
+        # Preisliste je Aktion (Michael Karbe 12.09.2026): jede Zeile nennt ihre eigene
+        # Aktion aus billing.py, damit eine spaetere Preisaenderung an EINER Stelle bleibt.
+        "preis_export_formular": billing.AKTIONS_PREISE["formular_export"],
+        "preis_pdfua": billing.AKTIONS_PREISE["pdfua_export"],
+        "preis_pdfua_bild": billing.EXPORT_ARTEN["pdfua"][1],
+        "beispiel_pdf_26": billing.export_preis(26, "pdf"),
     })
     return templates.TemplateResponse("preise.html", ctx)
 

@@ -41,6 +41,10 @@ with sync_playwright() as p:
     check("Ergebnis mit Download-Knopf", pg.locator("#pdfuaDownload").count() == 1)
     link = pg.locator("#pdfuaAusgabenLink")
     check("Link „Zur Ablage“ mit #ausgabe-<id>", link.count() == 1 and re.search(r"/ablage\?projekt=\d+#ausgabe-\d+", link.get_attribute("href") or ""), link.get_attribute("href") if link.count() else "")
+    # Michael Karbe (Mail 12.09.2026): Abbrechen unten rechts, „Zur Ablage“ direkt links daneben — beide in der Dialog-Fusszeile.
+    check("„Zur Ablage“ und „Abbrechen“ stehen zusammen unten rechts (exportFooter, Link direkt vor dem Knopf)", pg.evaluate("() => { const a = document.getElementById('pdfuaAusgabenLink'), b = document.getElementById('exportCancelBtn'), f = document.getElementById('exportFooter'); return !!(a && b && f && a.parentElement === f && b.parentElement === f && a.nextElementSibling === b && getComputedStyle(f).justifyContent === 'flex-end'); }"))
+    check("Abbrechen ist der letzte Knopf im Dialog", pg.evaluate("() => { const bs = document.querySelectorAll('#exportPanel button'); return bs[bs.length - 1].id === 'exportCancelBtn'; }"))
+    check("Kein „Zur Ablage“ mehr in der Ergebnisbox", pg.locator("#pdfuaResult a").count() == 0)
     check("Satz „liegen jetzt in deiner Ablage“, kein Aufbewahrungs-Satz, keine „in Ordnung“-Zeilen", "in deiner Ablage" in pg.locator("#pdfuaResult").inner_text() and "Tage" not in pg.locator("#pdfuaResult").inner_text() and "in Ordnung" not in pg.locator("#pdfuaResult").inner_text())
     tab_txt = pg.locator("#ausgabenTab").inner_text().strip()
     check("Ablage-Zaehler um 1 erhoeht", tab_txt == f"Ablage ({vorher + 1})", (tab_txt, vorher))

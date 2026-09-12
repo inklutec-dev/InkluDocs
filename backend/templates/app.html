@@ -675,10 +675,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
-                                <button class="btn btn-secondary" id="exportCancelBtn" onclick="closeExportPanel()">${t('Abbrechen')}</button>
                             </div>
                             <output id="exportStatus" style="display:block;margin-top:0.5rem;"></output>
                             <div id="pdfuaResult" role="region" aria-label="${t('Ergebnis der Umwandlung')}" aria-live="polite" style="margin-top:0.6rem;"></div>
+                            <!-- Fusszeile des Dialogs (Michael Karbe, Mail 12.09.2026): „Abbrechen“ steht unten rechts;
+                                 nach einer Umwandlung kommt „Zur Ablage“ direkt links daneben (doPdfua haengt den Link hier ein). -->
+                            <div id="exportFooter" style="margin-top:0.8rem;display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
+                                <button class="btn btn-secondary" id="exportCancelBtn" onclick="closeExportPanel()">${t('Abbrechen')}</button>
+                            </div>
                         </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
@@ -2895,6 +2899,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (statusAlt) statusAlt.textContent = '';
         const cancelAlt = document.getElementById('exportCancelBtn');
         if (cancelAlt) cancelAlt.textContent = t('Abbrechen');
+        // Ergebnis der letzten Umwandlung samt „Zur Ablage“-Link (Fusszeile) gehoert nicht in den naechsten Dialog (12.09.2026).
+        const ergebnisAlt = document.getElementById('pdfuaResult');
+        if (ergebnisAlt) ergebnisAlt.textContent = '';
+        const ablageLinkAlt = document.getElementById('pdfuaAusgabenLink');
+        if (ablageLinkAlt) ablageLinkAlt.remove();
         exportZiel = docId ? { all: false, document_id: docId } : { all: true };
         const head = document.getElementById('exportPanelHeading');
         if (head) {
@@ -2972,6 +2981,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const customName = (input ? input.value.trim() : '');
         if (customName) body.filename = customName;
         if (btn) btn.disabled = true;
+        // Ein „Zur Ablage“-Link einer frueheren Umwandlung zeigt auf den alten Eintrag — weg damit, bevor es losgeht (12.09.2026).
+        const ablageLinkAlt = document.getElementById('pdfuaAusgabenLink');
+        if (ablageLinkAlt) ablageLinkAlt.remove();
         const warte = t('Wird in PDF umgewandelt und geprüft, das dauert einen Moment …');
         if (box) box.textContent = warte;
         announce(warte);
@@ -3000,8 +3012,19 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // Meine Ausgaben (11.09.2026): das Ergebnis liegt jetzt dauerhaft im Regal — Link dorthin
             // (dritter Eingang) und Reiter-Zaehler im Projektkopf nachziehen.
             if (d.ausgabe_id) {
-                html += ' <a class="btn btn-secondary" id="pdfuaAusgabenLink" href="/ablage?projekt=' + projectId + '#ausgabe-' + d.ausgabe_id + '">' + t('Zur Ablage') + '</a>';
                 html += '<p style="margin:0.5rem 0 0;">' + escHtml(t('PDF und Prüfbericht liegen jetzt in deiner Ablage.')) + '</p>';
+                // Michael Karbe (12.09.2026): „Zur Ablage“ steht unten rechts im Dialog, direkt neben „Abbrechen“ —
+                // deshalb in der Dialog-Fusszeile (exportFooter), nicht in der Ergebnisbox. Kein innerHTML: href kommt aus Zahlen.
+                const fuss = document.getElementById('exportFooter');
+                if (fuss) {
+                    const altLink = document.getElementById('pdfuaAusgabenLink');
+                    if (altLink) altLink.remove();
+                    const a = document.createElement('a');
+                    a.className = 'btn btn-secondary'; a.id = 'pdfuaAusgabenLink';
+                    a.href = '/ablage?projekt=' + encodeURIComponent(projectId) + '#ausgabe-' + encodeURIComponent(d.ausgabe_id);
+                    a.textContent = t('Zur Ablage');
+                    fuss.insertBefore(a, document.getElementById('exportCancelBtn'));
+                }
                 const tab = document.getElementById('ausgabenTab');
                 if (tab && typeof d.ausgaben_anzahl === 'number') tab.textContent = t('Ablage ({n})', { n: d.ausgaben_anzahl });
             }
