@@ -571,11 +571,13 @@ def init_db():
                    a.zusammenfassung, a.bericht, a.preis, a.token, a.created_at
             FROM ausgaben a LEFT JOIN projects p ON p.id = a.project_id
         ''')
-        # Zaehler fortfuehren, damit neue Eintraege keine alten ids wiederverwenden (Chat-Anhaenge
-        # verweisen auf ausgabe_id).
-        conn.execute("INSERT OR REPLACE INTO sqlite_sequence (name, seq) "
-                     "SELECT 'ablage', MAX(seq) FROM sqlite_sequence WHERE name IN ('ausgaben', 'ablage')")
         conn.execute("DROP TABLE ausgaben")
+    # Zaehler fortfuehren, damit neue Eintraege keine alten ids wiederverwenden (Chat-Anhaenge verweisen
+    # auf ausgabe_id). Review 12.09.2026: sqlite_sequence hat KEINEN Unique-Schluessel — das fruehere
+    # INSERT OR REPLACE legte eine zweite 'ablage'-Zeile an, und SQLite nahm die erste (alte) —
+    # genau die Wiederverwendung, die verhindert werden sollte. Jetzt: genau EINE Zeile mit dem
+    # Hoechstwert aus allen Kandidaten (alte ausgaben-/ablage-Zeilen, hoechste vorhandene id). Idempotent.
+    _ablage_zaehler_reparieren(conn)
 
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
@@ -588,9 +590,29 @@ def init_db():
     _cache_init_schema()
 
 
+def _ablage_zaehler_reparieren(conn) -> None:
+    """Genau eine sqlite_sequence-Zeile fuer `ablage` mit dem Hoechstwert (siehe init_db)."""
+    if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='sqlite_sequence'").fetchone():
+        return
+    seqs = [int(r[0] or 0) for r in conn.execute(
+        "SELECT seq FROM sqlite_sequence WHERE name IN ('ausgaben', 'ablage')").fetchall()]
+    max_id = conn.execute("SELECT COALESCE(MAX(id), 0) FROM ablage").fetchone()[0] or 0
+    ziel = max(seqs + [int(max_id)])
+    zeilen = conn.execute("SELECT COUNT(*) FROM sqlite_sequence WHERE name = 'ablage'").fetchone()[0]
+    if zeilen == 1 and seqs and max(seqs) == ziel and len(seqs) == 1:
+        return
+    if ziel <= 0:
+        return
+    conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('ausgaben', 'ablage')")
+    conn.execute("INSERT INTO sqlite_sequence (name, seq) VALUES ('ablage', ?)", (ziel,))
+
+
 def _migrate_columns(conn):
     """Add new columns to existing tables. Uses try/except for idempotency."""
     migrations = [
+        # Ablage (Review 12.09.2026): Dokumentname als Momentaufnahme, damit ein Einzeldokument-Eintrag
+        # nach dem Loeschen des Projekts nicht als „alle Dokumente“ erscheint.
+        ("ablage", "dokument_name", "ALTER TABLE ablage ADD COLUMN dokument_name TEXT DEFAULT ''"),
         # Abo-/Credit-System Etappe 1 (31.07.2026)
         ("users", "plan", "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'"),
         # Abo-Etappe 2 (31.07.2026): Team-Toepfe — Mitglieder zeigen auf den
@@ -1092,6 +1114,9 @@ def delete_user_data(user_id: int):
     conn.execute("DELETE FROM user_prompts WHERE user_id = ?", (user_id,))
     # Quickinfo-Werkzeug (27.08.2026): Stammdaten-Bibliothek des Kontos.
     conn.execute("DELETE FROM stammdaten WHERE user_id = ?", (user_id,))
+    # Meine Ablage (11.09.2026): Eintraege des Kontos ausdruecklich loeschen (Dateien unter
+    # results/<user>/_ablage raeumt der Endpunkt mit dem Nutzerordner weg) — Review 12.09.2026.
+    conn.execute("DELETE FROM ablage WHERE user_id = ?", (user_id,))
     # Abrechnungsspuren: sowohl die eigenen Buchungen als auch die, die in
     # SEINEN Topf gelaufen sind (Team-Inhaber) — sonst rechnet billing spaeter
     # gegen ein Konto, das es nicht mehr gibt.

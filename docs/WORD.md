@@ -502,3 +502,32 @@ Geprüft in `tests/e2e/ui_ausgaben.py` (Fußzeile, Link direkt vor dem Knopf, Ab
 Michaels Befund zur Sache selbst: Word korrigiert, neu hochgeladen, Umwandlung ohne Befund, veraPDF
 und PAC fehlerfrei — der Weg funktioniert. Word-Dateien bleiben laut Michael vorerst nicht in der
 Ablage (`ABLAGE_WORD` bleibt aus).
+
+## Review-Fixes 12.09.2026 (Prüfung der Arbeit vom 11.09. durch einen zweiten Fable-5-Agenten)
+
+Befund 1 (mittel): `bestaetigt=true` kam als reines Modell-Argument — eine Anweisung im Dokumenttext
+(Hörprobe, Struktur-Lektor liefern Absatztexte ans Modell) hätte eine Umwandlung oder einen Word-
+Export ohne Zustimmung auslösen und eigenes Guthaben verbrauchen können. Fix in
+`inkluagent/tools/ausgaben.py` (`_freigabe`, `_angebot_merken`, `_angebot_einloesen`): Der Server
+legt beim Preisaufruf ein Angebot ab (Nutzer, Projekt, Art, Dokument, Preis, Turn). `bestaetigt=true`
+gilt nur, wenn das Angebot aus einer FRÜHEREN Nutzer-Nachricht stammt (ToolExecutor bekommt je
+Nachricht eine `turn_id`), höchstens 15 Minuten alt ist und der Preis unverändert ist; danach ist es
+verbraucht. Je Nachricht höchstens eine kostenpflichtige Aktion (`ToolExecutor.kostenpflichtig`).
+Abgelehnte Zustimmungen liefern die Kostenvorschau mit Grund als `hinweis`, der Bot fragt dann.
+Befund 2: Die Migration des id-Zählers (`INSERT OR REPLACE INTO sqlite_sequence`) konnte eine zweite
+`ablage`-Zeile anlegen (kein Unique-Schlüssel) — SQLite nähme dann die erste, alte. Jetzt
+`_ablage_zaehler_reparieren` in `database.py`: genau eine Zeile mit dem Höchstwert, bei jedem Start,
+idempotent. Staging hatte am 12.09. eine saubere Zeile (37 bei max id 36).
+Befund 3: Nach dem Löschen eines Projekts wurde jeder Einzeldokument-Eintrag als „alle Dokumente“
+angezeigt (document_id auf NULL). Neue Spalte `ablage.dokument_name` als Momentaufnahme (beim
+Anlegen und noch einmal beim Projekt-Löschen, solange `documents` da ist); `_ausgabe_dict` leitet
+`dokument`/`alle_dokumente` daraus ab.
+Befund 4: `delete_user_data` löscht `ablage`-Zeilen jetzt ausdrücklich (vorher nur über den
+Fremdschlüssel). `_ui_lang` im Bot-Werkzeug nutzt `database.DB_PATH` statt eines festen Pfads.
+Als sauber bestätigt: Zugriffskontrolle aller /api/ausgaben-Endpunkte und Bot-Werkzeuge (user_id
+aus der Sitzung), Gastausschluss, Pfade (Dateinamen nie aus Eingaben, realpath-Prüfung), SQL
+parametrisiert, XSS (DOM-API/escHtml), Konto-Löschung nimmt results/<user> samt _ablage mit.
+Offen, nicht aus diesen Commits: Guthaben-Prüfung und Buchung liegen bei allen Exporten zeitlich
+auseinander (zwei parallele Exporte am Guthabenrand könnten ins Minus buchen); `delete_project`
+löscht `chat_messages` nicht; bei `ABLAGE_WORD=on` zieht der Knopf-Export den Ablage-Zähler nicht
+nach und die Hörprobe-Analyse läuft synchron. Tests: `tests/test_ablage_review.py` (14).

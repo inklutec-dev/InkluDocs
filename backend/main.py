@@ -7998,12 +7998,19 @@ def _ausgabe_anlegen(user_id: int, project: dict, document_id: Optional[int], au
     projekt_name = (project.get("name") or "").strip() or (project.get("filename") or "")
     conn = get_db()
     try:
+        # Dokumentname als Momentaufnahme (Review 12.09.2026): ueberlebt das Loeschen des Projekts.
+        dokument_name = ""
+        if document_id:
+            d = conn.execute("SELECT display_name, original_filename FROM documents WHERE id = ? AND project_id = ?",
+                             (document_id, project["id"])).fetchone()
+            if d:
+                dokument_name = (d["display_name"] or "").strip() or (d["original_filename"] or "").strip()
         cur = conn.execute(
-            """INSERT INTO ablage (user_id, project_id, projekt_name, document_id, art, ausloeser, dateiname, datei_pfad,
-                                   media, vorschau_pfad, bestanden, zusammenfassung, bericht, preis, token)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (user_id, project["id"], projekt_name, document_id, art, ausloeser, dateiname, pfad, media, vorschau,
-             1 if bestanden else 0, zusammenfassung, json.dumps(ergebnisse, ensure_ascii=False),
+            """INSERT INTO ablage (user_id, project_id, projekt_name, document_id, dokument_name, art, ausloeser, dateiname,
+                                   datei_pfad, media, vorschau_pfad, bestanden, zusammenfassung, bericht, preis, token)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (user_id, project["id"], projekt_name, document_id, dokument_name, art, ausloeser, dateiname, pfad, media,
+             vorschau, 1 if bestanden else 0, zusammenfassung, json.dumps(ergebnisse, ensure_ascii=False),
              int(preis or 0), token))
         conn.commit()
         return int(cur.lastrowid)
@@ -8016,6 +8023,12 @@ def _ablage_projekt_geloescht(conn, user_id: int, project) -> None:
     Dokumentbezug loesen (documents-Zeilen fallen weg)."""
     name = (project["name"] if "name" in project.keys() else "") or ""
     name = name.strip() or (project["filename"] if "filename" in project.keys() else "") or ""
+    # Dokumentname nachtragen, solange die documents-Zeilen noch da sind (Review 12.09.2026).
+    conn.execute(
+        "UPDATE ablage SET dokument_name = COALESCE((SELECT COALESCE(NULLIF(TRIM(d.display_name), ''), d.original_filename, '') "
+        "FROM documents d WHERE d.id = ablage.document_id), dokument_name) "
+        "WHERE project_id = ? AND user_id = ? AND document_id IS NOT NULL AND COALESCE(dokument_name, '') = ''",
+        (project["id"], user_id))
     conn.execute(
         "UPDATE ablage SET projekt_geloescht = 1, projekt_name = CASE WHEN projekt_name = '' THEN ? ELSE projekt_name END, "
         "document_id = NULL WHERE project_id = ? AND user_id = ?",
@@ -8088,14 +8101,16 @@ def _ausgabe_dict(r, mit_bericht: bool = False) -> dict:
     projektname = projektname or (r["projekt_name"] or "")
     if r["document_id"]:
         dok = (r["doc_display_name"] or "").strip() or (r["doc_original_filename"] or "").strip()
-        dok = re.sub(r"\.(pdf|docx)$", "", dok, flags=re.IGNORECASE) or None
     else:
-        dok = None
+        # Momentaufnahme (Review 12.09.2026): Einzeldokument-Eintrag bleibt nach Projekt-Loeschen ein Einzeldokument.
+        dok = (r["dokument_name"] if "dokument_name" in r.keys() else "") or ""
+        dok = dok.strip()
+    dok = re.sub(r"\.(pdf|docx)$", "", dok, flags=re.IGNORECASE) or None
     datei_da = bool(r["datei_pfad"]) and os.path.isfile(r["datei_pfad"])
     out = {
         "id": r["id"], "project_id": r["project_id"], "projekt": projektname, "projekt_geloescht": geloescht,
         "document_id": r["document_id"], "dokument": dok,
-        "alle_dokumente": r["document_id"] is None,
+        "alle_dokumente": dok is None,
         "art": r["art"], "art_label": _AUSGABE_ART_LABEL.get(r["art"], r["art"]),
         "ausloeser": r["ausloeser"] or "knopf",
         "dateiname": r["dateiname"], "media": r["media"],

@@ -8,6 +8,7 @@ angeben (image_id, query, ...).
 """
 from __future__ import annotations
 
+import uuid
 from typing import Any, Callable
 
 from . import project as project_tools
@@ -284,6 +285,10 @@ class ToolExecutor:
         self.project_id = project_id
         self.user_id = user_id
         self.word = word   # Word-Projekt: Werkzeuge „Meine Ausgaben“ freigeschaltet (11.09.2026)
+        # Ein Executor je Nutzer-Nachricht (agent_loop): turn_id trennt Preisauskunft und Zustimmung,
+        # kostenpflichtig zaehlt bezahlte Aktionen dieser Nachricht (Review 12.09.2026, ausgaben._freigabe).
+        self.turn_id = uuid.uuid4().hex
+        self.kostenpflichtig = 0
 
     def execute(self, name: str, args: dict) -> dict[str, Any]:
         try:
@@ -321,8 +326,8 @@ class ToolExecutor:
                 return int(a["document_id"]) if a.get("document_id") not in (None, "", 0) else None
             handlers.update({
                 "pruefe_word_dokument": lambda a: ausgaben_tools.pruefe_word_dokument(p, u, _doc(a)),
-                "konvertiere_zu_pdfua": lambda a: ausgaben_tools.konvertiere_zu_pdfua(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False))),
-                "exportiere_word": lambda a: ausgaben_tools.exportiere_word(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False))),
+                "konvertiere_zu_pdfua": lambda a: ausgaben_tools.konvertiere_zu_pdfua(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                "exportiere_word": lambda a: ausgaben_tools.exportiere_word(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
                 "analysiere_word_struktur": lambda a: ausgaben_tools.analysiere_word_struktur(p, u, _doc(a)),
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),

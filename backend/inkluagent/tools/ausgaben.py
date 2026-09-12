@@ -7,9 +7,15 @@ Export-Bereich (main._pdfua_umwandeln_sync, _pdfua_vorschau_sync, _word_export_a
 — ein Weg, zwei Bediener. Jede Umwandlung landet als Eintrag unter „Meine Ablage"
 (ausloeser 'bot'); die Oberflaeche zeigt unter der Antwort den Download-Knopf (Anhang).
 
-Zwei Regeln, die der SERVER durchsetzt (nicht nur der Prompt):
+Drei Regeln, die der SERVER durchsetzt (nicht nur der Prompt):
 - Kostenpflichtige Werkzeuge verlangen bestaetigt=true. Der erste Aufruf liefert nur
   Preis und Guthaben (rueckfrage_noetig) — der Bot muss den Nutzer fragen.
+- Zustimmung in zwei Schritten (Review 12.09.2026, Fable 5): bestaetigt=true gilt NUR, wenn
+  derselbe Server vorher ein Angebot (Nutzer, Projekt, Art, Dokument, Preis) abgelegt hat,
+  dieses Angebot aus einer FRUEHEREN Nutzer-Nachricht stammt (anderer Turn), hoechstens
+  15 Minuten alt ist und der Preis unveraendert ist. Je Nutzer-Nachricht hoechstens EINE
+  kostenpflichtige Aktion. Grund: bestaetigt kommt als Modell-Argument — eine Anweisung im
+  Dokumenttext (Prompt-Injection ueber Hoerprobe/Struktur) darf keine Credits ausgeben koennen.
 - Projekt- und Nutzerkontext kommen aus der Sitzung (ToolExecutor), nie aus Modell-Argumenten.
 
 main wird zur Laufzeit importiert (sys.modules), weil main die Agenten-Module selbst erst
@@ -20,13 +26,83 @@ from __future__ import annotations
 import importlib
 import logging
 import sqlite3
+import time
+import uuid
 from typing import Any, Optional
 
 from fastapi import HTTPException
 
 log = logging.getLogger(__name__)
 
-_DB_PATH = "/app/data/inkludocs.db"
+
+def _db_path() -> str:
+    # Gleicher Pfad wie database.DB_PATH (INKLUDOCS_DB), kein fester /app-Pfad (Review 12.09.2026).
+    try:
+        return importlib.import_module("database").DB_PATH
+    except Exception:  # noqa: BLE001
+        return "/app/data/inkludocs.db"
+
+
+# Angebote fuer kostenpflichtige Werkzeuge: Schluessel (user_id, project_id, art, document_id) ->
+# {"preis", "turn", "zeit"}. Im Prozess gehalten — die Zustimmung muss ohnehin binnen Minuten kommen.
+_ANGEBOTE: dict[tuple, dict] = {}
+_ANGEBOT_GUELTIG_S = 15 * 60
+_KOSTENPFLICHTIG_JE_TURN = 1
+
+
+def _angebot_merken(schluessel: tuple, preis: int, turn_id: str) -> None:
+    jetzt = time.time()
+    for k in [k for k, a in _ANGEBOTE.items() if jetzt - a["zeit"] > _ANGEBOT_GUELTIG_S]:
+        _ANGEBOTE.pop(k, None)
+    _ANGEBOTE[schluessel] = {"preis": int(preis or 0), "turn": turn_id, "zeit": jetzt}
+
+
+def _angebot_einloesen(schluessel: tuple, preis: int, turn_id: str) -> Optional[str]:
+    """None = Zustimmung gueltig (Angebot wird verbraucht). Sonst der Grund, warum nicht."""
+    a = _ANGEBOTE.get(schluessel)
+    if not a or time.time() - a["zeit"] > _ANGEBOT_GUELTIG_S:
+        _ANGEBOTE.pop(schluessel, None)
+        return ("Es liegt kein gueltiges Angebot vor: erst OHNE bestaetigt aufrufen, dem Nutzer Preis und Guthaben "
+                "nennen und auf sein Ja warten.")
+    if a["turn"] == turn_id:
+        return ("Die Zustimmung muss vom Nutzer in einer eigenen, spaeteren Nachricht kommen — nicht in derselben "
+                "Nachricht wie die Preisauskunft. Nenne den Preis und warte auf sein Ja.")
+    if a["preis"] != int(preis or 0):
+        _ANGEBOTE.pop(schluessel, None)
+        return "Der Preis hat sich seit der Auskunft geaendert. Nenne dem Nutzer den neuen Preis und frage erneut."
+    _ANGEBOTE.pop(schluessel, None)
+    return None
+
+
+def _turn_id(turn) -> str:
+    return getattr(turn, "turn_id", None) or uuid.uuid4().hex
+
+
+def _freigabe(m, project: dict, user_id: int, document_id: Optional[int], art: str,
+              bestaetigt: bool, turn) -> Optional[dict]:
+    """Server-Rueckfrage fuer kostenpflichtige Werkzeuge. Liefert die Kostenvorschau (= Antwort an das
+    Modell, keine Aktion), oder None, wenn die Aktion jetzt ausgefuehrt werden darf."""
+    vorschau = _kosten_vorschau(m, project, user_id, document_id, art)
+    schluessel = (int(user_id), int(project["id"]), art, document_id)
+    tid = _turn_id(turn)
+    if not bestaetigt:
+        if vorschau.get("erlaubt"):
+            _angebot_merken(schluessel, vorschau.get("preis") or 0, tid)
+        return vorschau
+    if getattr(turn, "kostenpflichtig", 0) >= _KOSTENPFLICHTIG_JE_TURN:
+        vorschau["hinweis"] = ("In dieser Nachricht wurde schon eine kostenpflichtige Aktion ausgefuehrt. Mehr als eine je "
+                               "Nachricht laesst der Server nicht zu — sag dem Nutzer, was erledigt ist, und frage fuer "
+                               "das Weitere neu.")
+        return vorschau
+    if not vorschau.get("erlaubt"):
+        return vorschau
+    grund = _angebot_einloesen(schluessel, vorschau.get("preis") or 0, tid)
+    if grund:
+        vorschau["hinweis"] = grund
+        return vorschau
+    if turn is not None and hasattr(turn, "kostenpflichtig"):
+        turn.kostenpflichtig += 1
+    return None
 _HOERPROBE_AUSZUG = 40      # Zeilen, die pruefe_word_dokument direkt mitliefert
 _HOERPROBE_MAX = 400        # Zeilen je Dokument bei lies_ausgabe(teil=hoerprobe)
 
@@ -36,7 +112,7 @@ def _main():
 
 
 def _ui_lang(user_id: int) -> str:
-    conn = sqlite3.connect(_DB_PATH)
+    conn = sqlite3.connect(_db_path())
     try:
         row = conn.execute("SELECT language FROM users WHERE id = ?", (user_id,)).fetchone()
         return (row[0] if row and row[0] else "de")
@@ -124,14 +200,16 @@ def _kosten_vorschau(m, project: dict, user_id: int, document_id: Optional[int],
 
 
 def konvertiere_zu_pdfua(project_id: int, user_id: int, document_id: Optional[int] = None,
-                         bestaetigt: bool = False) -> dict[str, Any]:
+                         bestaetigt: bool = False, turn=None) -> dict[str, Any]:
     """Word-Projekt in eine barrierefreie PDF (PDF/UA) umwandeln und pruefen. Kostenpflichtig:
-    ohne bestaetigt=true nur Preis + Guthaben (Rueckfrage)."""
+    ohne bestaetigt=true nur Preis + Guthaben (Rueckfrage); bestaetigt=true nur mit gueltigem
+    Angebot aus einer frueheren Nachricht (siehe _freigabe). `turn` = ToolExecutor der Nachricht."""
     m = _main()
     try:
         project = m._pdfua_projekt_laden(project_id, user_id)
-        if not bestaetigt:
-            return {"ok": True, "result": _kosten_vorschau(m, project, user_id, document_id, "pdfua")}
+        vorschau = _freigabe(m, project, user_id, document_id, "pdfua", bestaetigt, turn)
+        if vorschau is not None:
+            return {"ok": True, "result": vorschau}
         r = m._pdfua_umwandeln_sync(project, user_id, document_id, None, _ui_lang(user_id), "bot")
     except HTTPException as e:
         return _fehler(e)
@@ -149,15 +227,16 @@ def konvertiere_zu_pdfua(project_id: int, user_id: int, document_id: Optional[in
 
 
 def exportiere_word(project_id: int, user_id: int, document_id: Optional[int] = None,
-                    bestaetigt: bool = False) -> dict[str, Any]:
+                    bestaetigt: bool = False, turn=None) -> dict[str, Any]:
     """Word-Datei mit den aktuellen Alt-Texten ausgeben — Download-Knopf unter der Antwort, KEIN Ablage-
     Eintrag (Steve 11.09.: Ablage nur fuer umgewandelte PDFs). Kostenpflichtig: ohne bestaetigt=true nur
     Preis + Guthaben."""
     m = _main()
     try:
         project = m._pdfua_projekt_laden(project_id, user_id, meldung="Der Word-Export ist nur fuer Word-Projekte verfuegbar")
-        if not bestaetigt:
-            return {"ok": True, "result": _kosten_vorschau(m, project, user_id, document_id, "docx")}
+        vorschau = _freigabe(m, project, user_id, document_id, "docx", bestaetigt, turn)
+        if vorschau is not None:
+            return {"ok": True, "result": vorschau}
         r = m._word_export_ausgabe_sync(project, user_id, document_id, None, _ui_lang(user_id), "bot")
     except HTTPException as e:
         return _fehler(e)
