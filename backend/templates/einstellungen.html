@@ -23,24 +23,23 @@
 
       {# Ab 31.07.2026 ist diese Seite eine reine Uebersicht: ausser der
          Sprachwahl steht hier kein Bedienelement und keine Kontoangabe mehr,
-         nur h2 + Satz + Link auf die jeweilige Unterseite. #}
+         nur h2 + Satz. Seit 14.09.2026 (Michael Karbe, Mail „Einstellungen“) ist
+         der Kartentitel selbst der Link zur Unterseite — orange wie die
+         Projekttitel auf „Meine Projekte“; die Link-Zeile darunter entfaellt. #}
       <section class="dash-card" aria-labelledby="konto-h">
-        <h2 id="konto-h">{{ _('E-Mail & Passwort') }}</h2>
+        <h2 id="konto-h"><a href="/konto">{{ _('E-Mail & Passwort') }}</a></h2>
         <p class="dash-meta">{{ _('Deine Anmeldedaten änderst du auf einer eigenen Seite.') }}</p>
-        <p><a href="/konto">{{ _('E-Mail & Passwort öffnen') }}</a></p>
       </section>
 
       <section class="dash-card" aria-labelledby="abo-h">
-        <h2 id="abo-h">{{ _('Abo & Verbrauch') }}</h2>
+        <h2 id="abo-h"><a href="/abo">{{ _('Abo & Verbrauch') }}</a></h2>
         <p class="dash-meta">{{ _('Deinen Plan, deinen Credit-Verbrauch und dein Team findest du auf einer eigenen Seite.') }}</p>
-        <p><a href="/abo">{{ _('Abo & Verbrauch öffnen') }}</a></p>
       </section>
 
       {# Die Schluessel-Verwaltung selbst liegt seit 31.07.2026 auf
          /api-schluessel — hier bleibt nur der Verweis. #}
       <section class="dash-card" aria-labelledby="api-h">
-        <h2 id="api-h">{{ _('API-Schluessel') }}</h2>
+        <h2 id="api-h"><a href="/api-schluessel">{{ _('API-Schluessel') }}</a></h2>
         <p class="dash-meta">{{ _('Deine Schlüssel für die Programmier-Schnittstelle verwaltest du auf einer eigenen Seite.') }}</p>
-        <p><a href="/api-schluessel">{{ _('API-Schlüssel öffnen') }}</a></p>
       </section>
 {% endblock %}

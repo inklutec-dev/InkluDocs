@@ -10,6 +10,21 @@
       /* Trennlinien im Herunterladen-Dialog (Michael Karbe, Mail 12.09.2026, Punkte 7+8):
          unter der Knopfreihe (Word-Projekte) und ueber der Pruefbericht-Klappe. Rein optisch, aria-hidden. */
       dialog.invite-dialog hr.export-trenner { border: 0; border-top: 1px solid var(--border); margin: 0.8rem 0 0.4rem; }
+      /* Hinweistexte unter Feldern (Upload, URL) in derselben Groesse und Farbe wie die Hinweise in den
+         Herunterladen-Dialogen (Michael Karbe, Mail 14.09.2026, Punkt 1: 16px war zu gross gegen 13,6px). */
+      .feld-hinweis { color: var(--text-muted); font-size: 0.85rem; margin: 0.4rem 0 0; }
+      /* Pruefbericht und Hoerprobe im Word-Dialog in Infotext-Groesse (Michael 14.09.2026, Punkt 3: „ruhigeres Bild“);
+         Knoepfe behalten ihre eigene Groesse (.btn). */
+      #pdfuaResult { font-size: 0.9rem; }
+      /* Dokumentsymbol rechts oben im Herunterladen-Dialog (Michael 14.09.2026, Punkt 7): neutrales Blatt mit
+         Kuerzel, rein dekorativ (aria-hidden) — der Dialogtitel sagt schon, was geholt wird. */
+      dialog.invite-dialog { position: relative; }
+      .export-doc-icon { position: absolute; top: 1.1rem; right: 1.25rem; width: 2.4rem; height: 3rem; }
+      .export-doc-icon svg { width: 100%; height: 100%; display: block; }
+      .export-doc-icon .blatt { fill: #fff; stroke: var(--primary, #1d4ed8); stroke-width: 1.6; }
+      .export-doc-icon .ecke { fill: none; stroke: var(--primary, #1d4ed8); stroke-width: 1.6; }
+      .export-doc-icon text { font: 700 9px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; fill: var(--primary, #1d4ed8); text-anchor: middle; }
+      dialog.invite-dialog h2.mit-doc-icon { padding-right: 3.2rem; }
     </style>
 {% if guest_mode %}
 {# Gast-Modus (Freigabe-Link): Flags VOR dashboard.js und Seiten-JS setzen.
@@ -235,7 +250,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<label for="projUpload" class="upload-btn">' + t('PDF-Datei auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
                 + '</div>'
-                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
+                + '<p id="projUploadHint" class="feld-hinweis">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'word') {
@@ -252,7 +267,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<label for="projUpload" class="upload-btn">' + t('Word-Datei auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
                 + '</div>'
-                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
+                + '<p id="projUploadHint" class="feld-hinweis">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'formular') {
@@ -269,7 +284,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<label for="projUpload" class="upload-btn">' + t('PDF-Formular auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
                 + '</div>'
-                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + hint + '</p>'
+                + '<p id="projUploadHint" class="feld-hinweis">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'grafik') {
@@ -279,7 +294,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<label for="projUpload" class="upload-btn">' + t('Bilddateien auswählen') + '</label>'
                 + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
                 + '</div>'
-                + '<p id="projUploadHint" style="color:var(--text-muted);margin-top:0.4rem;">' + t('Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen.') + ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 }) + '</p>'
+                + '<p id="projUploadHint" class="feld-hinweis">' + t('Du kannst mehrere Bilder auswählen oder hierher ziehen und jederzeit weitere hinzufügen.') + ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 }) + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'web') {
@@ -290,7 +305,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             return '<section class="card" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + t('Webseite hinzufügen') + '</h2>'
                 + '<label for="projScanUrl" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Adresse der Webseite') + '</label>'
                 + '<input type="url" id="projScanUrl" aria-describedby="projScanHint" style="width:100%;padding:0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;">'
-                + '<p id="projScanHint" style="color:var(--text-muted);margin-top:0.4rem;">' + t('z. B. www.beispiel.de oder https://www.beispiel.de – die Bilder dieser Seite werden geladen. Du kannst danach weitere Seiten hinzufügen.') + '</p>'
+                + '<p id="projScanHint" class="feld-hinweis">' + t('z. B. www.beispiel.de oder https://www.beispiel.de – die Bilder dieser Seite werden geladen. Du kannst danach weitere Seiten hinzufügen.') + '</p>'
                 + '<button class="btn btn-primary" id="projScanBtn" style="margin-top:0.6rem;" onclick="scanInProject(' + project.id + ')">' + t('Seite scannen') + '</button>'
                 + '<p id="projScanStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
@@ -663,7 +678,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                              Link in Knopf-Optik direkt rechts neben „Herunterladen“ — fuehrt ins Regal, gefiltert auf dieses Projekt. -->
                         ${(project.project_type === 'docx' || (data.ausgaben_anzahl || 0) > 0) ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : ''}
                         <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
-                            <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
+                            ${exportDocIconHtml(exportDocKuerzel(project))}
+                            <h2 id="exportPanelHeading" class="${exportDocKuerzel(project) ? 'mit-doc-icon' : ''}" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <!-- Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld. -->
@@ -1177,6 +1193,22 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // entfaellt das Etikett fuer alle Projektarten (Steve).
     function herunterladenName(project) {
         return t('Herunterladen');
+    }
+
+    // Dokumentsymbol fuer den Herunterladen-Dialog (Michael Karbe, Mail 14.09.2026, Punkt 7: „rechts oben das
+    // PDF- oder Word-Icon … jedes Bild lockert auch“). Neutrales Blatt mit Eselsohr und Kuerzel — keine Markenlogos.
+    // Kuerzel: PDF (PDF-Projekte und Formulare), DOCX (Word). Bilder-/Web-Projekte haben kein Dokument → kein Symbol.
+    function exportDocIconHtml(kuerzel) {
+        if (!kuerzel) return '';
+        return '<span class="export-doc-icon" aria-hidden="true"><svg viewBox="0 0 32 40" focusable="false">'
+            + '<path class="blatt" d="M4 2h16l8 8v28H4z"/><path class="ecke" d="M20 2v8h8"/>'
+            + '<text x="16" y="30">' + kuerzel + '</text></svg></span>';
+    }
+    function exportDocKuerzel(project) {
+        const typ = (project && project.project_type) || '';
+        if (typ === 'pdf' || typ === 'pdfform' || (project && project.tool === 'formular')) return 'PDF';
+        if (typ === 'docx') return 'DOCX';
+        return '';
     }
 
     // Vom Autor in der Datei als dekorativ gekennzeichnet (Word-Import setzt original_alt
@@ -2354,7 +2386,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     </details>
                     ${!window.GUEST_MODE ? `<span class="doc-actions">
                         ${docGenBtn}
-                        ${!isWebDoc && totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
+                        ${totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
                         <button type="button" class="doc-action-btn" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">${icon('pencil')}${t('Umbenennen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
                         <button type="button" class="doc-action-btn doc-action-danger" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" data-doc-count="${totalImgs}" onclick="openDocDelete(event)">${icon('trash')}${t('Löschen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
                     </span>` : ''}
@@ -2922,9 +2954,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // Alt-Texte herunterladen" — der Dialog bietet das Dokument (PDF/Word) und die
             // Alt-Texte als Tabelle. Bei mehreren Dokumenten im Projekt bleibt die Anzahl stehen,
             // dort steht kein Dateiname. Historie: 01.09. Dokumentname (f9e344e), 09.09. Beta weg.
+            // Bilder- und Web-Projekte liefern nur die Alt-Texte als Tabelle (kein Dokument) — Michael 14.09.2026, Punkt 6.
+            const nurTabellen = !(currentRenderProjectType === 'pdf' || currentRenderProjectType === 'docx');
             head.textContent = (!doc && docs.length > 1)
                 ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: docs.length })
-                : t('Dokument / Alt-Texte herunterladen');
+                : (nurTabellen ? t('Alt-Texte herunterladen') : t('Dokument / Alt-Texte herunterladen'));
         }
         if (typeof panel.showModal === 'function') {
             panel.showModal();
@@ -2968,8 +3002,17 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // Export-Staffel (28.08.2026): Preis und Guthaben vor dem Export ansagen.
             // CSV/JSON als Zusatzangebot formuliert (Steve 01.09.2026): „Tabellen-Exporte kosten“ klang bei PDF/Word so,
             // als würde die Datei selbst als Tabelle exportiert.
-            if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
-            if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Die Alternativtexte können zusätzlich als CSV, Excel oder JSON exportiert werden ({p} Credits).', { p: d.preis_tabelle });
+            // Bilder- und Web-Projekte haben nur Tabellen-Exporte (Michael Karbe 14.09.2026, Punkt 6): vorher stand hier
+            // der PDF-Preis („Dieser Export kostet 30 Credits“) und „zusätzlich als CSV“, obwohl es keine PDF gibt.
+            const nurTabellen = !(currentRenderProjectType === 'pdf' || currentRenderProjectType === 'docx');
+            if (nurTabellen) {
+                if (typeof d.preis_tabelle === 'number') msg += ' ' + ((d.verfuegbar === null || d.verfuegbar === undefined)
+                    ? t('Der Export als CSV, Excel oder JSON kostet {p} Credits.', { p: d.preis_tabelle })
+                    : t('Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}.', { p: d.preis_tabelle, v: d.verfuegbar }));
+            } else {
+                if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
+                if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Die Alternativtexte können zusätzlich als CSV, Excel oder JSON exportiert werden ({p} Credits).', { p: d.preis_tabelle });
+            }
             region.textContent = msg;
             announce(msg);
         } catch (e) {

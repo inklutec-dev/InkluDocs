@@ -5809,3 +5809,12 @@ msgstr "Ladda ner dokument / snabbinfo"
 
 msgid "Prüfbericht lesen"
 msgstr "Läs kontrollrapport"
+
+msgid "Alt-Texte herunterladen"
+msgstr "Ladda ner alt-texter"
+
+msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits."
+msgstr "Export som CSV, Excel eller JSON kostar {p} krediter."
+
+msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}."
+msgstr "Export som CSV, Excel eller JSON kostar {p} krediter. Du har {v}."

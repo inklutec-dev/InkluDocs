@@ -6247,3 +6247,12 @@ msgstr "Download document / tooltips"
 
 msgid "Prüfbericht lesen"
 msgstr "Read check report"
+
+msgid "Alt-Texte herunterladen"
+msgstr "Download alt texts"
+
+msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits."
+msgstr "Exporting as CSV, Excel or JSON costs {p} credits."
+
+msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}."
+msgstr "Exporting as CSV, Excel or JSON costs {p} credits. You have {v}."

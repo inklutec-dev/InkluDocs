@@ -482,11 +482,16 @@
                 // Gast-Ansicht (28.08.2026): Einladung wie bei Bild-Projekten — Knopf + Dialog aus app.html.
                 +   (typeof shareDialogHtml === 'function' ? shareDialogHtml(project) : '')
                 +   '<dialog id="fExportPanel" class="invite-dialog" aria-labelledby="fExportHeading">'
-                +     '<h2 id="fExportHeading" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
-                +     '<p id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;">' + t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length }) + '</p>'
+                // Michael Karbe (Mail 14.09.2026, Punkt 7): Dokumentsymbol rechts oben wie im Bilder-Dialog (app.html exportDocIconHtml).
+                +     (typeof exportDocIconHtml === 'function' ? exportDocIconHtml('PDF') : '')
+                +     '<h2 id="fExportHeading" class="mit-doc-icon" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
+                // Michael Karbe (Mail 14.09.2026, Punkt 5): Infotext in derselben grauen Box wie im Bilder-Dialog (#exportSummary).
+                +     '<div id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;">' + t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length }) + '</div>'
                 // Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld (wie app.html).
                 +     '<div class="form-group" style="margin-bottom:0.8rem;"><label for="fExportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">' + t('Dateiname (optional)') + '</label>'
-                +       '<input type="text" id="fExportFilename" autocomplete="off" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;"></div>'
+                +       '<input type="text" id="fExportFilename" autocomplete="off" aria-describedby="fExportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
+                // Michael Karbe (Mail 14.09.2026, Punkt 2): derselbe Hinweis wie im Bilder-Dialog, was bei leerem Feld passiert.
+                +       '<p id="fExportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">' + t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.') + '</p></div>'
                 +     '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +       '<button class="btn btn-primary" onclick="Formular.exportieren(' + project.id + ', \'formular\')">' + t('Als PDF mit Quickinfos') + '</button>'
                 +       '<button class="btn btn-secondary" onclick="Formular.exportieren(' + project.id + ', \'formular_csv\')">' + t('Als CSV (Feldliste)') + '</button>'

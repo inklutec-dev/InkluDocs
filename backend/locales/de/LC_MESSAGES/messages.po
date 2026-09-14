@@ -6250,3 +6250,12 @@ msgstr "Dokument / Quickinfos herunterladen"
 
 msgid "Prüfbericht lesen"
 msgstr "Prüfbericht lesen"
+
+msgid "Alt-Texte herunterladen"
+msgstr "Alt-Texte herunterladen"
+
+msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits."
+msgstr "Der Export als CSV, Excel oder JSON kostet {p} Credits."
+
+msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}."
+msgstr "Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}."

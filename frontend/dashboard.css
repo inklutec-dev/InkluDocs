@@ -63,6 +63,10 @@
 /* Karten-Block (Einstellungen) */
 .dash-card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1.25rem 1.5rem; margin-bottom:1.25rem; max-width:640px; }
 .dash-card h2 { margin-top:0; }
+/* Einstellungen (Michael Karbe, Mail 14.09.2026): Kartentitel ist der Link zur Unterseite — orange wie die
+   Projekttitel auf „Meine Projekte“ (.dash-item h2 a), die frühere Link-Zeile darunter entfällt. */
+.dash-card h2 a { color:#c75000; text-decoration:none; }
+.dash-card h2 a:hover, .dash-card h2 a:focus { text-decoration:underline; }
 /* Fliesstext-Karten (Ueber uns): Schrift wie die Prompt-Beschreibungen
    (Michael, 25.08.2026) — .9rem, gedaempft, Zeilenabstand 1.6.
    Kontrast text-muted auf card-bg = 8,9:1 (wie .dash-intro-box). */
@@ -201,6 +205,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .dash-item a.btn.btn-primary:hover, .dash-item a.btn.btn-primary:focus { color:#fff; }
 .ausgabe-details { margin:.5rem 0 0; }
 .ausgabe-details summary { cursor:pointer; font-weight:600; }
+/* Pruefbericht und Hoerprobe in Infotext-Groesse (Michael Karbe, Mail 14.09.2026, Punkt 4 — wie im Word-Dialog). */
+.ausgabe-details > div { font-size:.9rem; }
 .ausgabe-details ul { margin:.3rem 0 .4rem; padding-left:1.2rem; }
 .ausgabe-hoerprobe { max-height:22rem; overflow:auto; padding:.4rem .6rem; border:1px solid var(--border); border-radius:6px; }
 .ausgabe-hoerprobe p { margin:.15rem 0; }

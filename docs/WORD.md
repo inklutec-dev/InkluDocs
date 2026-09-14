@@ -482,6 +482,15 @@ Entscheidungen und Umsetzung:
   herunterladen (n Dokumente)“). Im Word-Dialog trennt eine Linie (`hr.export-trenner`,
   aria-hidden) die Knopfreihe vom Ergebnis und eine zweite steht über der Prüfbericht-Klappe;
   „PDF herunterladen“ hat 3pt mehr Luft, das Label „Dateiname“ ebenfalls (beide Dialoge).
+- **Optik-Runde 2 (14.09.2026, Michael Karbe, Mails „Anpassungen GUI“ + „Einstellungen“):** Hinweise
+  unter Upload- und URL-Feld in Dialog-Hinweisgröße (`.feld-hinweis`, 0,85rem); Formular-Dialog mit
+  grauer Info-Box, Hinweis unter dem Dateinamen (`#fExportFilenameHint`) und PDF-Symbol; Prüfbericht
+  und Hörprobe in Infotext-Größe (`#pdfuaResult` 0,9rem, Ablage `.ausgabe-details > div`); Web- und
+  Bilder-Projekte: „Herunterladen“ auch an der Webseiten-Karte, Dialogtitel „Alt-Texte herunterladen“,
+  Zusammenfassung nennt nur den Tabellenpreis (kein PDF-Preis mehr); Dokumentsymbol rechts oben im
+  Herunterladen-Dialog (`exportDocIconHtml`: neutrales Blatt mit „PDF“/„DOCX“, aria-hidden, keine
+  Markenlogos; Bilder-/Web-Projekte ohne Symbol); Einstellungen: Kartentitel = Link (orange wie
+  Projekttitel), Link-Zeile darunter entfällt.
 - Sicherheit: Dateien werden nur aus dem Nutzer-Ordner ausgeliefert (Präfixprüfung mit
   Trenner, `_ablage_pfad_ok`); jeder Zugriff prüft `user_id`.
 - Tests: `tests/e2e/verify_ablage.py` (Knopf-Export → Eintrag, nur Befunde, Umleitung,

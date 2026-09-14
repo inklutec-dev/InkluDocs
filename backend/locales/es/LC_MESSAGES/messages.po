@@ -6247,3 +6247,12 @@ msgstr "Descargar el documento / las informaciones rápidas"
 
 msgid "Prüfbericht lesen"
 msgstr "Leer el informe de comprobación"
+
+msgid "Alt-Texte herunterladen"
+msgstr "Descargar los textos alternativos"
+
+msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits."
+msgstr "La exportación como CSV, Excel o JSON cuesta {p} créditos."
+
+msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}."
+msgstr "La exportación como CSV, Excel o JSON cuesta {p} créditos. Tiene {v}."

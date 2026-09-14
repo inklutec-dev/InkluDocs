@@ -152,6 +152,10 @@ with sync_playwright() as p:
     # Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label „Dateiname“ und Feld (0.3rem + 3pt = 8.8px bei 16px).
     check("Label „Dateiname“ hat 3pt mehr Abstand zum Feld (margin-bottom ≈ 8.8px)", 8.5 <= pg.locator("label[for=fExportFilename]").evaluate("l => parseFloat(getComputedStyle(l).marginBottom)") <= 9.1, pg.locator("label[for=fExportFilename]").evaluate("l => getComputedStyle(l).marginBottom"))
     check("Zusammenfassung nennt Felder", "Feldern" in pg.locator("#fExportSummary").inner_text(), pg.locator("#fExportSummary").inner_text())
+    # Michael Karbe (Mail 14.09.2026): Infotext in grauer Box (Punkt 5), Hinweis unter dem Dateinamen (Punkt 2), PDF-Symbol (Punkt 7).
+    check("Infotext steht in einer grauen Box wie im Bilder-Dialog (Michael 14.09.)", pg.locator("#fExportSummary").evaluate("e => getComputedStyle(e).backgroundColor") not in ("rgba(0, 0, 0, 0)", "transparent"), pg.locator("#fExportSummary").evaluate("e => getComputedStyle(e).backgroundColor"))
+    check("Hinweis unter dem Dateinamen vorhanden und mit dem Feld verknuepft (Michael 14.09.)", pg.locator("#fExportFilenameHint").inner_text().startswith("Leer lassen") and pg.locator("#fExportFilename").get_attribute("aria-describedby") == "fExportFilenameHint", pg.locator("#fExportFilenameHint").inner_text() if pg.locator("#fExportFilenameHint").count() else "fehlt")
+    check("Dokumentsymbol PDF rechts oben, fuer Screenreader verborgen (Michael 14.09.)", pg.locator("#fExportPanel .export-doc-icon[aria-hidden=true]").count() == 1 and "PDF" in pg.locator("#fExportPanel .export-doc-icon").inner_text(), pg.locator("#fExportPanel .export-doc-icon").count())
     pg.wait_for_timeout(800)
     check("Zusammenfassung nennt den Export-Preis (Credits)", "Credits" in pg.locator("#fExportSummary").inner_text(), pg.locator("#fExportSummary").inner_text())
     check("Knopf 'Als PDF mit Quickinfos'", dlg.locator("button:has-text('Als PDF mit Quickinfos')").count() == 1)
