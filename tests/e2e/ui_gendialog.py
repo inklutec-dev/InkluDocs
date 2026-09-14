@@ -234,8 +234,10 @@ with sync_playwright() as p:
         print("     Kostensatz:   %r" % text_f)
         check("Formular: Ueberschrift „Quickinfos generieren“", kopf_f == "Quickinfos generieren", kopf_f)
         check("Formular: Umfang wird benannt", bool(umfang_f), umfang_f)
-        check("Formular: Kostensatz nennt Felder, Anzahl und Credits",
-              "Credits" in text_f and any(c.isdigit() for c in text_f) and ("Feld" in text_f or "KI-Vorschl" in text_f), text_f)
+        # Seit 09.09.2026 (1cbc819) lautet der Satz „Es werden n Quickinfos generiert. Das benötigt c Credits.“ —
+        # der Test hing noch am alten Wort „Felder“ (aufgefallen 14.09.2026).
+        check("Formular: Kostensatz nennt Quickinfos/Felder, Anzahl und Credits",
+              "Credits" in text_f and any(c.isdigit() for c in text_f) and ("Quickinfo" in text_f or "Feld" in text_f or "KI-Vorschl" in text_f), text_f)
         check("Formular: Fokus liegt im Dialog",
               page.evaluate("document.getElementById('genConfirmDialog').contains(document.activeElement)"))
         page.add_script_tag(url=AXE)
