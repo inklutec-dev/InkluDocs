@@ -32,6 +32,8 @@ GEMINI_MODEL_VALIDATE = os.environ.get('GEMINI_MODEL_VALIDATE', 'gemini-3.1-pro-
 
 _HTTP_TIMEOUT = 180
 _VERSUCHE = 3
+# Denk-Reserve über der Ausgabegrenze (Gemini 3.x: thoughtsTokenCount zählt gegen maxOutputTokens), siehe _invoke_gemini.
+_DENKRESERVE = int(os.environ.get('GEMINI_DENKRESERVE', '8000'))
 
 
 class GeminiCallError(Exception):
@@ -126,7 +128,12 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
         'contents': [{'role': 'user', 'parts': teile}],
         'generationConfig': {
             'temperature': temperature if p.temperatur is None else p.temperatur,
-            'maxOutputTokens': max(int(max_tokens) * 2, 2000),  # Schema-JSON ist ausführlicher als Tool-Use
+            # Schema-JSON ist ausführlicher als Tool-Use (×2, mindestens 2000) PLUS Denk-Reserve: Gemini 3.x
+            # denkt vor der Antwort, und diese Denk-Tokens zählen gegen maxOutputTokens. Ohne Reserve blieb bei
+            # komplexen Grafiken (Prod 14.09.2026, Kundenlauf, 13 von 234 Bildern) nach ~1.900 Denk-Tokens nur
+            # Platz für ~30 Ausgabe-Tokens → finishReason=MAX_TOKENS, abgeschnittenes JSON, immer an derselben
+            # Stelle (mit dem echten Klassifikator-Prompt auf Staging nachgestellt). GEMINI_DENKRESERVE: Tokens.
+            'maxOutputTokens': max(int(max_tokens) * 2, 2000) + _DENKRESERVE,
             'responseMimeType': 'application/json',
             'responseSchema': _schema_fuer_gemini(schema_dict),
         },
@@ -169,7 +176,8 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
         if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
             u = antwort.get('usageMetadata', {}) or {}
             print(f"[GEMINI-USAGE] model={model} schema={schema_name} in={u.get('promptTokenCount', '?')} "
-                  f"out={u.get('candidatesTokenCount', '?')} cached={u.get('cachedContentTokenCount', 0)}", flush=True)
+                  f"out={u.get('candidatesTokenCount', '?')} denk={u.get('thoughtsTokenCount', 0)} "
+                  f"cached={u.get('cachedContentTokenCount', 0)}", flush=True)
         try:
             return _antwort_auswerten(antwort, model, schema_name)
         except _AntwortUnbrauchbar as e:

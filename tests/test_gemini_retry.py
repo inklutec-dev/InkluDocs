@@ -108,6 +108,22 @@ class TestGeminiWiederholung(unittest.TestCase):
         self.assertEqual(ergebnis, {"kategorie": "foto"})
         self.assertEqual(n, 1)
 
+    def test_denkreserve_in_maxoutputtokens(self):
+        """Gemini 3.x: Denk-Tokens zaehlen gegen maxOutputTokens. Ohne Reserve blieb bei komplexen
+        Grafiken nur Platz fuer ~30 Ausgabe-Tokens (Prod 14.09.2026, finishReason=MAX_TOKENS)."""
+        gesehen = {}
+        class _U(_Urlopen):
+            def __call__(self, req, timeout=None):
+                gesehen["body"] = json.loads(req.data.decode("utf-8"))
+                return super().__call__(req, timeout)
+        u = _U([_antwort('{"kategorie": "foto"}')])
+        with mock.patch("pipelines.v4.gemini_client.urllib.request.urlopen", u):
+            gc._invoke_gemini("gemini-3.8-flash", "Prompt", None, "ClassificationOutput",
+                              {"type": "object", "properties": {}}, 600, 0.0, None)
+        mx = gesehen["body"]["generationConfig"]["maxOutputTokens"]
+        self.assertEqual(mx, max(600 * 2, 2000) + gc._DENKRESERVE)
+        self.assertGreaterEqual(mx, 2000 + 4000, "Denkreserve muss deutlich ueber 2000 liegen")
+
     def test_transportfehler_weiterhin_wiederholt(self):
         import urllib.error
         fehler = urllib.error.HTTPError("https://gemini.invalid/x", 503, "busy", {}, io.BytesIO(b"busy"))
