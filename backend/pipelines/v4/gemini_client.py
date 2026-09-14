@@ -136,13 +136,18 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
     if system:
         body['systemInstruction'] = {'parts': [{'text': system}]}
     daten = json.dumps(body).encode('utf-8')
+    # Wiederholung (bis _VERSUCHE) bei Transportfehlern UND bei unbrauchbarer Antwort (abgeschnittenes
+    # oder leeres JSON). Bis 14.09.2026 wurde nur der Transport wiederholt; eine abgeschnittene
+    # Antwort führte sofort zum Bildfehler — auf Prod 13 von 234 Bildern eines Kundenlaufs
+    # („Unterminated string“ vom Flash-Klassifikator nach ~90 Zeichen). Ein zweiter Aufruf mit
+    # demselben Prompt liefert in der Regel eine vollständige Antwort. Nicht wiederholt wird eine
+    # Sperre durch Gemini (promptFeedback.blockReason) — die kommt beim zweiten Mal genauso.
     letzter: Exception | None = None
     for versuch in range(_VERSUCHE):
         req = urllib.request.Request(_endpunkt(model), data=daten, headers=kopf)
         try:
             with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
                 antwort = json.load(r)
-            break
         except urllib.error.HTTPError as e:
             text = ''
             try:
@@ -160,23 +165,51 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
                 time.sleep(4 * (versuch + 1))
                 continue
             raise letzter from e
-    else:
-        raise letzter or GeminiCallError('Gemini-Aufruf fehlgeschlagen')
 
-    if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
-        u = antwort.get('usageMetadata', {}) or {}
-        print(f"[GEMINI-USAGE] model={model} schema={schema_name} in={u.get('promptTokenCount', '?')} "
-              f"out={u.get('candidatesTokenCount', '?')} cached={u.get('cachedContentTokenCount', 0)}", flush=True)
+        if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
+            u = antwort.get('usageMetadata', {}) or {}
+            print(f"[GEMINI-USAGE] model={model} schema={schema_name} in={u.get('promptTokenCount', '?')} "
+                  f"out={u.get('candidatesTokenCount', '?')} cached={u.get('cachedContentTokenCount', 0)}", flush=True)
+        try:
+            return _antwort_auswerten(antwort, model, schema_name)
+        except _AntwortUnbrauchbar as e:
+            letzter = GeminiCallError(str(e))
+            if versuch < _VERSUCHE - 1:
+                log.warning('Gemini-Antwort unbrauchbar (%s, %s), Versuch %d von %d: %s — Wiederholung.',
+                            model, schema_name, versuch + 1, _VERSUCHE, str(e)[:200])
+                time.sleep(4 * (versuch + 1))
+                continue
+            raise letzter from e
+    raise letzter or GeminiCallError('Gemini-Aufruf fehlgeschlagen')
+
+
+class _AntwortUnbrauchbar(Exception):
+    """Antwort kam an, ist aber nicht verwertbar (leer, abgeschnitten, kein JSON) — wiederholbar."""
+
+
+def _antwort_auswerten(antwort: dict, model: str, schema_name: str) -> dict:
+    """Kandidatentext aus der Gemini-Antwort holen und als JSON lesen.
+
+    Wirft _AntwortUnbrauchbar (wiederholbar) bei fehlendem Kandidaten ohne Sperrgrund, leerem Text
+    oder unlesbarem JSON; GeminiCallError (endgültig) bei einer Sperre durch Gemini (blockReason).
+    Der finishReason (z. B. MAX_TOKENS, SAFETY, RECITATION) steht in jeder Meldung, damit die Ursache
+    im Log erkennbar ist."""
+    kandidaten = antwort.get('candidates') or []
+    kandidat = kandidaten[0] if kandidaten else {}
+    finish = kandidat.get('finishReason')
+    sperre = (antwort.get('promptFeedback') or {}).get('blockReason')
+    if sperre:
+        raise GeminiCallError(f'Gemini hat die Anfrage gesperrt ({model}, {schema_name}): {sperre}; raw: {str(antwort)[:300]}')
     try:
-        kandidat = antwort['candidates'][0]
         text = ''.join(p.get('text', '') for p in kandidat['content']['parts'])
-    except (KeyError, IndexError) as e:
-        grund = (antwort.get('promptFeedback') or {}).get('blockReason') or (antwort.get('candidates') or [{}])[0].get('finishReason')
-        raise GeminiCallError(f'Keine Antwort von Gemini ({model}, {schema_name}): {grund or e}; raw: {str(antwort)[:300]}')
+    except (KeyError, IndexError, TypeError) as e:
+        raise _AntwortUnbrauchbar(f'Keine Antwort von Gemini ({model}, {schema_name}): {finish or e}; raw: {str(antwort)[:300]}')
+    if not text.strip():
+        raise _AntwortUnbrauchbar(f'Leere Antwort von Gemini ({model}, {schema_name}): finishReason={finish}; raw: {str(antwort)[:300]}')
     try:
         return json.loads(text)
     except json.JSONDecodeError as e:
-        raise GeminiCallError(f'Gemini-Antwort kein JSON ({model}, {schema_name}): {e}; text: {text[:300]}')
+        raise _AntwortUnbrauchbar(f'Gemini-Antwort kein JSON ({model}, {schema_name}, finishReason={finish}): {e}; text: {text[:300]}')
 
 
 def call_gemini_with_schema(model: str, prompt: str, image_path: str, schema: Type[T], max_tokens: int = 1500,
