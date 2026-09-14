@@ -20,7 +20,7 @@
          Kuerzel, rein dekorativ (aria-hidden) — der Dialogtitel sagt schon, was geholt wird. */
       dialog.invite-dialog { position: relative; }
       /* Blatt endet oberhalb der grauen Info-Box (H2 eine Zeile ≈ 2,4rem + Dialog-Innenabstand); Kuerzel passt bei 7px in 32 Einheiten. */
-      .export-doc-icon { position: absolute; top: 0.95rem; right: 1.25rem; width: 1.8rem; height: 2.25rem; }
+      .export-doc-icon { position: absolute; top: 0.8rem; right: 1.25rem; width: 2rem; height: 2.5rem; }
       .export-doc-icon svg { width: 100%; height: 100%; display: block; overflow: visible; }
       .export-doc-icon .blatt { fill: #fff; stroke: var(--primary, #1d4ed8); stroke-width: 1.6; }
       .export-doc-icon .ecke { fill: none; stroke: var(--primary, #1d4ed8); stroke-width: 1.6; }
@@ -3051,7 +3051,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // Besprechung 11.09. (Michael): nur Befunde zeigen, Positives weglassen.
             let html = '<p style="margin:0 0 0.4rem;"><strong>' + escHtml(d.zusammenfassung || '') + '</strong></p>';
             (d.dokumente || []).forEach(dok => {
-                if ((d.dokumente || []).length > 1) html += '<h3 style="font-size:1rem;margin:0.6rem 0 0.2rem;">' + escHtml(dok.dokument) + '</h3>';
+                if ((d.dokumente || []).length > 1) html += '<h3 style="font-size:0.95rem;margin:0.6rem 0 0.2rem;">' + escHtml(dok.dokument) + '</h3>';
                 const befunde = (dok.pruefung && dok.pruefung.punkte ? dok.pruefung.punkte : []).filter(p => p.status !== 'ok');
                 if (befunde.length) {
                     html += '<ul style="margin:0.2rem 0 0.6rem;padding-left:1.2rem;">'
@@ -3130,7 +3130,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             let html = '';
             let hinweise = 0;
             (d.dokumente || []).forEach(dok => {
-                if ((d.dokumente || []).length > 1) html += '<h3 style="font-size:1rem;margin:0.6rem 0 0.2rem;">' + escHtml(dok.dokument) + '</h3>';
+                if ((d.dokumente || []).length > 1) html += '<h3 style="font-size:0.95rem;margin:0.6rem 0 0.2rem;">' + escHtml(dok.dokument) + '</h3>';
                 hinweise += (dok.pruefbericht || []).filter(b => b.status !== 'ok').length;
                 html += pdfuaAnalyseHtml(dok);
             });
