@@ -19,11 +19,12 @@
       /* Dokumentsymbol rechts oben im Herunterladen-Dialog (Michael 14.09.2026, Punkt 7): neutrales Blatt mit
          Kuerzel, rein dekorativ (aria-hidden) — der Dialogtitel sagt schon, was geholt wird. */
       dialog.invite-dialog { position: relative; }
-      .export-doc-icon { position: absolute; top: 1.1rem; right: 1.25rem; width: 2.4rem; height: 3rem; }
-      .export-doc-icon svg { width: 100%; height: 100%; display: block; }
+      /* Blatt endet oberhalb der grauen Info-Box (H2 eine Zeile ≈ 2,4rem + Dialog-Innenabstand); Kuerzel passt bei 7px in 32 Einheiten. */
+      .export-doc-icon { position: absolute; top: 0.95rem; right: 1.25rem; width: 1.8rem; height: 2.25rem; }
+      .export-doc-icon svg { width: 100%; height: 100%; display: block; overflow: visible; }
       .export-doc-icon .blatt { fill: #fff; stroke: var(--primary, #1d4ed8); stroke-width: 1.6; }
       .export-doc-icon .ecke { fill: none; stroke: var(--primary, #1d4ed8); stroke-width: 1.6; }
-      .export-doc-icon text { font: 700 9px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; fill: var(--primary, #1d4ed8); text-anchor: middle; }
+      .export-doc-icon text { font: 700 7px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; fill: var(--primary, #1d4ed8); text-anchor: middle; letter-spacing: -0.2px; }
       dialog.invite-dialog h2.mit-doc-icon { padding-right: 3.2rem; }
     </style>
 {% if guest_mode %}
@@ -1202,7 +1203,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (!kuerzel) return '';
         return '<span class="export-doc-icon" aria-hidden="true"><svg viewBox="0 0 32 40" focusable="false">'
             + '<path class="blatt" d="M4 2h16l8 8v28H4z"/><path class="ecke" d="M20 2v8h8"/>'
-            + '<text x="16" y="30">' + kuerzel + '</text></svg></span>';
+            + '<text x="16" y="29">' + kuerzel + '</text></svg></span>';
     }
     function exportDocKuerzel(project) {
         const typ = (project && project.project_type) || '';
