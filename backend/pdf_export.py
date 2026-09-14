@@ -366,14 +366,16 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
 
                 page_figures[page_num].append((mcid, fig_xref, img_info, content_range))
 
-        doc_elem_obj = doc.xref_object(doc_elem_xref)
-        k_match = re.search(r'/K\s*\[(.*?)\]', doc_elem_obj, re.DOTALL)
-        if k_match:
-            existing_kids = k_match.group(1).strip()
-            new_kids_str = " ".join(f"{x} 0 R" for x in figure_xrefs)
-            updated_kids = f"{existing_kids} {new_kids_str}"
-            updated_obj = doc_elem_obj[:k_match.start(1)] + updated_kids + doc_elem_obj[k_match.end(1):]
-            doc.update_object(doc_elem_xref, updated_obj)
+        # Neue Figure-Elemente als Kinder des Dokument-Knotens einhaengen. Bis 14.09.2026 wurde nur
+        # ein INLINE-Array (/K [ ... ]) erkannt; bei /K als Referenz auf ein Array-Objekt (InDesign,
+        # Prod-Kundendokument Projekt 430) oder als Einzelkind blieben die Figures ohne Eltern-Eintrag —
+        # unerreichbar im Tag-Baum, und finalize_export_pdf raeumte sie als „verwaist“ wieder weg:
+        # Export ohne Alt-Texte bei Meldung „234 getaggt“.
+        if not _figures_einhaengen(doc, doc_elem_xref, figure_xrefs):
+            warnings.append(
+                "Die Alt-Texte konnten nicht in den Tag-Baum der PDF eingehaengt werden "
+                "(unbekannte Form des /K-Eintrags am Dokument-Knoten)."
+            )
 
         if parent_tree_xref:
             pt_obj = doc.xref_object(parent_tree_xref)
@@ -520,14 +522,64 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
             doc.xref_set_key(page.xref, "Contents", f"{new_xref} 0 R")
 
     tagged_count = 0
+    alle_figuren = []
     for page_num, figs in page_figures.items():
         for mcid, fig_xref, img_info, content_range in figs:
+            alle_figuren.append(fig_xref)
             if not img_info["is_vector"] or content_range is not None:
                 tagged_count += 1
 
+    # Kontrolle (14.09.2026): Jedes geschriebene Figure-Element muss vom StructTreeRoot aus erreichbar
+    # sein — sonst liest kein Screenreader den Alt-Text, und die Zaehlung „getaggt“ waere eine Luege.
+    root_info = doc.xref_get_key(cat_xref, "StructTreeRoot")
+    erreichbar = set()
+    if root_info[0] == "xref":
+        erreichbar = _collect_reachable_struct_elems(doc, int(root_info[1].split()[0]))
+    unerreichbar = [x for x in alle_figuren if x not in erreichbar]
+    if unerreichbar:
+        warnings.append(
+            f"{len(unerreichbar)} von {len(alle_figuren)} Alt-Texten haengen nicht im Tag-Baum der PDF "
+            "und werden von Screenreadern nicht vorgelesen."
+        )
+        tagged_count = max(0, tagged_count - len(unerreichbar))
+
     doc.save(output_path)
     doc.close()
-    return {"path": output_path, "tagged_count": tagged_count, "warnings": warnings}
+    return {"path": output_path, "tagged_count": tagged_count, "warnings": warnings,
+            "figure_xrefs": alle_figuren, "unreachable_figures": unerreichbar}
+
+
+def _figures_einhaengen(doc: fitz.Document, doc_elem_xref: int, figure_xrefs: list) -> bool:
+    """Haengt neue StructElem-xrefs als Kinder an den Dokument-Knoten — in jeder Form, die /K haben kann:
+    inline-Array, Referenz auf ein Array-Objekt, einzelne Referenz (ein Kind) oder gar kein /K.
+    Liefert False, wenn die Form nicht erkannt wurde (dann wird nichts veraendert)."""
+    if not figure_xrefs:
+        return True
+    neu = " ".join(f"{x} 0 R" for x in figure_xrefs)
+    k_info = doc.xref_get_key(doc_elem_xref, "K")
+    typ, wert = k_info[0], (k_info[1] or "").strip()
+    if typ == "array":
+        # inline: /K [ a 0 R b 0 R ]  ->  Eintraege anhaengen
+        doc.xref_set_key(doc_elem_xref, "K", wert.rstrip()[:-1].rstrip() + " " + neu + " ]")
+        return True
+    if typ == "xref":
+        ziel = int(wert.split()[0])
+        ziel_obj = doc.xref_object(ziel, compressed=True).strip()
+        if ziel_obj.startswith("["):
+            # Referenz auf ein Array-Objekt (InDesign): das Array-Objekt selbst erweitern
+            doc.update_object(ziel, ziel_obj.rstrip()[:-1].rstrip() + " " + neu + " ]")
+            return True
+        # Einzelnes Kind-Element: zu einem Array machen
+        doc.xref_set_key(doc_elem_xref, "K", f"[ {ziel} 0 R {neu} ]")
+        return True
+    if typ in ("null", "") or not wert:
+        doc.xref_set_key(doc_elem_xref, "K", f"[ {neu} ]")
+        return True
+    if typ in ("int", "dict"):
+        # MCID-Zahl oder MCR-Dict als einziges Kind: mit in ein Array nehmen
+        doc.xref_set_key(doc_elem_xref, "K", f"[ {wert} {neu} ]")
+        return True
+    return False
 
 
 # ─── Abschluss-Schritt fuer beide Export-Pfade (12.06.2026) ──────────────────
@@ -553,13 +605,23 @@ def _collect_reachable_struct_elems(doc: fitz.Document, root_xref: int) -> set:
         k_info = doc.xref_get_key(xref, "K")
         if k_info[0] == "null":
             continue
-        for ref in _XREF_REF_RE.findall(k_info[1]):
-            child = int(ref)
+        kandidaten = [int(r) for r in _XREF_REF_RE.findall(k_info[1])]
+        gesehen_arrays = set()
+        while kandidaten:
+            child = kandidaten.pop()
             if child in reachable:
                 continue
             try:
                 obj = doc.xref_object(child, compressed=True)
             except Exception:
+                continue
+            # /K darf auch auf ein REINES Array-Objekt zeigen (/K 11 0 R -> [ a 0 R b 0 R ]).
+            # Das Array ist kein StructElem, seine Eintraege sind aber Kinder — sie werden
+            # weiterverfolgt (14.09.2026; vorher endete die Suche hier, und der Abschluss-Schritt
+            # haette alle /Alt-Elemente darunter fuer Waisen gehalten).
+            if obj.lstrip().startswith("[") and child not in gesehen_arrays:
+                gesehen_arrays.add(child)
+                kandidaten.extend(int(r) for r in _XREF_REF_RE.findall(obj))
                 continue
             # Nur echte StructElems weiterverfolgen (erkennbar am /S-Typ).
             # MCR-/OBJR-Verweise und Seiten-Objekte haben kein /S und fallen
@@ -591,7 +653,7 @@ def _parent_tree_node_xrefs(doc: fitz.Document, root_xref: int) -> list:
     return nodes
 
 
-def remove_orphaned_alt_elems(doc: fitz.Document) -> int:
+def remove_orphaned_alt_elems(doc: fitz.Document, schonen: set | None = None) -> int:
     """Entfernt verwaiste StructElems mit /Alt-Eintrag aus der PDF.
 
     Hintergrund (Befund 12.06.2026, Demo-Infografik): Erstellungsprogramme
@@ -626,8 +688,9 @@ def remove_orphaned_alt_elems(doc: fitz.Document) -> int:
         return 0
 
     orphans = []
+    schonen = schonen or set()
     for xref in range(1, doc.xref_length()):
-        if xref in reachable:
+        if xref in reachable or xref in schonen:
             continue
         try:
             obj = doc.xref_object(xref, compressed=True)
@@ -678,8 +741,11 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
                         fallback_title: str = None,
                         lang: str = "de-DE", verfahren: str | None = None,
                         fallback_heading: str | None = None,
-                        filename_base: str | None = None) -> dict:
+                        filename_base: str | None = None,
+                        schonen: set | None = None) -> dict:
     """Gemeinsamer Abschluss-Schritt fuer beide Export-Pfade (PDFix + fitz).
+    `schonen`: xrefs, die Schritt 3 nie entfernen darf (die vom fitz-Export selbst
+    geschriebenen Figure-Elemente, 14.09.2026).
 
     Erledigt drei Dinge an der fertigen Export-PDF:
     1. Dokumentsprache setzen (WCAG 3.1.1) — nur wenn die PDF noch KEINE
@@ -753,7 +819,7 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
         doc.xref_set_key(cat, "ViewerPreferences", "<< /DisplayDocTitle true >>")
 
     # 3) Verwaiste Alt-Altlasten
-    info["orphan_alts_removed"] = remove_orphaned_alt_elems(doc)
+    info["orphan_alts_removed"] = remove_orphaned_alt_elems(doc, schonen=schonen)
 
     # 4) Dokument-Eigenschaften: Creator/Producer = nur unser Produktname (Info + XMP).
     werte = dokumentinfo_in_doc(doc, verfahren)

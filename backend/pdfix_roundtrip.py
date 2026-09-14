@@ -71,6 +71,9 @@ def extract_figures_pdfix(pdf_path: str, out_dir: str) -> list[dict]:
     if not os.path.exists(csv_path):
         raise RuntimeError(f"PDFix-Export lief, aber CSV fehlt: {csv_path}")
     figures: list[dict] = []
+    # Felder koennen sehr lang sein (ActualText/Alt ganzer Seiten, Prod 14.09.2026: > 131072 Zeichen,
+    # csv-Vorgabe) — sonst „field larger than field limit“ und stiller Rueckfall auf fitz.
+    csv.field_size_limit(min(sys.maxsize, 2**31 - 1))
     with open(csv_path, encoding="utf-8") as f:
         for row in csv.reader(f, delimiter=";"):
             if not row or row[0] in ("laufende Nummer", ""):

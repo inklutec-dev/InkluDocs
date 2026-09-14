@@ -7388,6 +7388,7 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     base = doc.get("original_filename") or f"dokument_{doc.get('doc_index', 1)}.pdf"
     output_path = os.path.join(output_dir, f"inkludocs_{_safe_filename_component(base, base)}")
     info: dict = {}
+    schonen: set = set()  # xrefs der selbst geschriebenen Figure-Elemente (fitz-Weg), fuer finalize_export_pdf
 
     if extraction_method == "pdfix":
         try:
@@ -7410,6 +7411,8 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
             info["method"] = "fitz"
             info["tagged"] = result.get("tagged_count", 0)
             info["total"] = len(alt_texts)
+            # Die eigenen Figure-Elemente duerfen im Abschluss nie als „verwaist“ entfernt werden (14.09.2026).
+            schonen = set(result.get("figure_xrefs") or [])
             warnings = result.get("warnings") or []
             if warnings:
                 info["warnings"] = warnings
@@ -7430,7 +7433,8 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
                                            fallback_title=fallback_title,
                                            verfahren=info.get("method"),
                                            fallback_heading=erste_ueberschrift(output_path),
-                                           filename_base=fallback_title)
+                                           filename_base=fallback_title,
+                                           schonen=schonen)
         if info["a11y"].get("title_source") == "dateiname":
             info.setdefault("warnings", []).append(
                 "Kein Dokumenttitel gefunden: Die PDF traegt den Dateinamen als Titel. "
