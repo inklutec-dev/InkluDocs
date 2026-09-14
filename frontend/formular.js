@@ -482,9 +482,9 @@
                 // Gast-Ansicht (28.08.2026): Einladung wie bei Bild-Projekten — Knopf + Dialog aus app.html.
                 +   (typeof shareDialogHtml === 'function' ? shareDialogHtml(project) : '')
                 +   '<dialog id="fExportPanel" class="invite-dialog" aria-labelledby="fExportHeading">'
-                // Michael Karbe (Mail 14.09.2026, Punkt 7): Dokumentsymbol rechts oben wie im Bilder-Dialog (app.html exportDocIconHtml).
-                +     (typeof exportDocIconHtml === 'function' ? exportDocIconHtml('PDF') : '')
-                +     '<h2 id="fExportHeading" class="mit-doc-icon" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
+                // Michael Karbe (Mails 14.09.2026): Formular-Symbol rechts oben in Schrifthoehe der Ueberschrift (app.html exportDocIconHtml).
+                +     '<div class="export-kopf"><h2 id="fExportHeading" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
+                +       (typeof exportDocIconHtml === 'function' ? exportDocIconHtml('formular') : '') + '</div>'
                 // Michael Karbe (Mail 14.09.2026, Punkt 5): Infotext in derselben grauen Box wie im Bilder-Dialog (#exportSummary).
                 +     '<div id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;">' + t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length }) + '</div>'
                 // Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld (wie app.html).

@@ -491,6 +491,12 @@ Entscheidungen und Umsetzung:
   Herunterladen-Dialog (`exportDocIconHtml`: neutrales Blatt mit „PDF“/„DOCX“, aria-hidden, keine
   Markenlogos; Bilder-/Web-Projekte ohne Symbol); Einstellungen: Kartentitel = Link (orange wie
   Projekttitel), Link-Zeile darunter entfällt.
+- **Michaels Icons (14.09.2026, 13:00, Mail „Neue Icons für PDF, Word und Forms“):** drei Grafiken
+  (`frontend/icon-pdf.png` rot, `icon-word.png` blau, `icon-formular.png` grün; aus Michaels PNGs
+  freigestellt, 256 px, Zuordnung nach dem Bild — seine Dateinamen waren vertauscht). Sie ersetzen
+  das selbstgezeichnete Blatt im Herunterladen-Dialog (`.export-kopf`: Überschrift und Icon in einer
+  Zeile, Icon exakt in Schrifthöhe der H2 = 1,25rem, `alt=""`) und die SVG-Platzhalter der
+  Startseiten-Karten „Drei Werkzeuge“ (`start.css`, 52 px).
 - Sicherheit: Dateien werden nur aus dem Nutzer-Ordner ausgeliefert (Präfixprüfung mit
   Trenner, `_ablage_pfad_ok`); jeder Zugriff prüft `user_id`.
 - Tests: `tests/e2e/verify_ablage.py` (Knopf-Export → Eintrag, nur Befunde, Umleitung,

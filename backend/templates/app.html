@@ -16,16 +16,13 @@
       /* Pruefbericht und Hoerprobe im Word-Dialog in Infotext-Groesse (Michael 14.09.2026, Punkt 3: „ruhigeres Bild“);
          Knoepfe behalten ihre eigene Groesse (.btn). */
       #pdfuaResult { font-size: 0.9rem; }
-      /* Dokumentsymbol rechts oben im Herunterladen-Dialog (Michael 14.09.2026, Punkt 7): neutrales Blatt mit
-         Kuerzel, rein dekorativ (aria-hidden) — der Dialogtitel sagt schon, was geholt wird. */
-      dialog.invite-dialog { position: relative; }
-      /* Blatt endet oberhalb der grauen Info-Box (H2 eine Zeile ≈ 2,4rem + Dialog-Innenabstand); Kuerzel passt bei 7px in 32 Einheiten. */
-      .export-doc-icon { position: absolute; top: 0.8rem; right: 1.25rem; width: 2rem; height: 2.5rem; }
-      .export-doc-icon svg { width: 100%; height: 100%; display: block; overflow: visible; }
-      .export-doc-icon .blatt { fill: #fff; stroke: var(--primary, #1d4ed8); stroke-width: 1.6; }
-      .export-doc-icon .ecke { fill: none; stroke: var(--primary, #1d4ed8); stroke-width: 1.6; }
-      .export-doc-icon text { font: 700 7px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; fill: var(--primary, #1d4ed8); text-anchor: middle; letter-spacing: -0.2px; }
-      dialog.invite-dialog h2.mit-doc-icon { padding-right: 3.2rem; }
+      /* Dokumentsymbol rechts oben im Herunterladen-Dialog (Michael Karbe 14.09.2026, Mails „Anpassungen GUI“ Punkt 7 +
+         „Neue Icons“): Michaels Grafiken (/static/icon-pdf.png, icon-word.png, icon-formular.png, dieselben wie auf der
+         Startseite), in einer Zeile mit der Ueberschrift und genau in deren Schrifthoehe (H2 = 1,25rem), damit sich eine
+         ausgerichtete Ansicht ergibt. Rein dekorativ (alt="", aria-hidden) — der Dialogtitel sagt schon, was geholt wird. */
+      .export-kopf { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.6rem; }
+      .export-kopf h2 { margin: 0 !important; }
+      .export-doc-icon { flex: none; height: 1.25rem; width: auto; display: block; }
     </style>
 {% if guest_mode %}
 {# Gast-Modus (Freigabe-Link): Flags VOR dashboard.js und Seiten-JS setzen.
@@ -679,8 +676,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                              Link in Knopf-Optik direkt rechts neben „Herunterladen“ — fuehrt ins Regal, gefiltert auf dieses Projekt. -->
                         ${(project.project_type === 'docx' || (data.ausgaben_anzahl || 0) > 0) ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : ''}
                         <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
-                            ${exportDocIconHtml(exportDocKuerzel(project))}
-                            <h2 id="exportPanelHeading" class="${exportDocKuerzel(project) ? 'mit-doc-icon' : ''}" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
+                            <div class="export-kopf">
+                                <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
+                                ${exportDocIconHtml(exportDocKuerzel(project))}
+                            </div>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
                             <div class="form-group" style="margin-bottom:0.8rem;">
                                 <!-- Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld. -->
@@ -1199,16 +1198,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Dokumentsymbol fuer den Herunterladen-Dialog (Michael Karbe, Mail 14.09.2026, Punkt 7: „rechts oben das
     // PDF- oder Word-Icon … jedes Bild lockert auch“). Neutrales Blatt mit Eselsohr und Kuerzel — keine Markenlogos.
     // Kuerzel: PDF (PDF-Projekte und Formulare), DOCX (Word). Bilder-/Web-Projekte haben kein Dokument → kein Symbol.
+    // Seit Michaels Mail „Neue Icons für PDF, Word und Forms“ (14.09.2026, 13:00): seine drei Grafiken statt des
+    // selbstgezeichneten Blatts. Datei-Zuordnung nach dem Bild, nicht nach Michaels Dateinamen (die waren vertauscht):
+    // Rot = PDF, Blau = Word, Gruen = Formular. Kuerzel: 'pdf' | 'word' | 'formular' | '' (Bilder/Web: kein Dokument).
     function exportDocIconHtml(kuerzel) {
         if (!kuerzel) return '';
-        return '<span class="export-doc-icon" aria-hidden="true"><svg viewBox="0 0 32 40" focusable="false">'
-            + '<path class="blatt" d="M4 2h16l8 8v28H4z"/><path class="ecke" d="M20 2v8h8"/>'
-            + '<text x="16" y="29">' + kuerzel + '</text></svg></span>';
+        return '<img class="export-doc-icon" src="/static/icon-' + kuerzel + '.png" alt="" aria-hidden="true" width="256" height="256">';
     }
     function exportDocKuerzel(project) {
         const typ = (project && project.project_type) || '';
-        if (typ === 'pdf' || typ === 'pdfform' || (project && project.tool === 'formular')) return 'PDF';
-        if (typ === 'docx') return 'DOCX';
+        if (project && project.tool === 'formular' || typ === 'pdfform') return 'formular';
+        if (typ === 'pdf') return 'pdf';
+        if (typ === 'docx') return 'word';
         return '';
     }
 
