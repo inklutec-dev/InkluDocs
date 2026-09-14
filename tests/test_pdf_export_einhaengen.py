@@ -188,3 +188,38 @@ class TestVorhandeneTagsUndArtefakte(unittest.TestCase):
             a = doc.xref_get_key(fig, "Alt")[1]
             self.assertIn("Rotes Quadrat", a); self.assertIn("Blaues Quadrat", a)
             doc.close()
+
+
+class TestLesereihenfolge(unittest.TestCase):
+    def test_neues_figure_steht_bei_seiner_seite_nicht_am_ende(self):
+        """Zwei Seiten mit je einem Absatz; Bild auf Seite 1 in einem Artefakt-Block. Das neue Figure muss
+        in der Kinderliste des Dokuments VOR dem Absatz von Seite 2 stehen (14.09.2026: vorher am Ende)."""
+        with tempfile.TemporaryDirectory() as d:
+            q, z = os.path.join(d, "q.pdf"), os.path.join(d, "z.pdf")
+            doc = fitz.open(); doc.new_page(width=200, height=200); doc.new_page(width=200, height=200)
+            pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 8, 8), 0); pix.set_rect(pix.irect, (30, 200, 30))
+            doc[0].insert_image(fitz.Rect(20, 20, 120, 120), pixmap=pix)
+            name = doc[0].get_images(full=True)[0][7]; xref = doc[0].get_images(full=True)[0][0]
+            roh = doc[0].read_contents().decode("latin-1")
+            bild = __import__("re").search(rf"(q\s[\s\S]*?/{name}\s+Do\s*Q)", roh).group(1)
+            x1, x2 = doc[0].xref, doc[1].xref
+            _inhalt_ersetzen(doc, doc[0], "/P <</MCID 0>> BDC\nBT ET\nEMC\n/Artifact BDC\n" + bild + "\nEMC\n")
+            _inhalt_ersetzen(doc, doc[1], "/P <</MCID 0>> BDC\nBT ET\nEMC\n")
+            root = doc.get_new_xref(); dok = doc.get_new_xref(); a1 = doc.get_new_xref(); a2 = doc.get_new_xref(); pt = doc.get_new_xref()
+            doc.update_object(a1, f"<< /Type /StructElem /S /P /P {dok} 0 R /Pg {x1} 0 R /K 0 >>")
+            doc.update_object(a2, f"<< /Type /StructElem /S /P /P {dok} 0 R /Pg {x2} 0 R /K 0 >>")
+            doc.update_object(dok, f"<< /Type /StructElem /S /Document /P {root} 0 R /K [ {a1} 0 R {a2} 0 R ] >>")
+            doc.update_object(pt, f"<< /Nums [ 0 [ {a1} 0 R ] 1 [ {a2} 0 R ] ] >>")
+            doc.update_object(root, f"<< /Type /StructTreeRoot /K {dok} 0 R /ParentTree {pt} 0 R /ParentTreeNextKey 2 >>")
+            doc.xref_set_key(doc.pdf_catalog(), "StructTreeRoot", f"{root} 0 R")
+            doc.xref_set_key(x1, "StructParents", "0"); doc.xref_set_key(x2, "StructParents", "1")
+            doc.save(q); doc.close()
+            r = pdf_export.write_alt_texts_to_pdf(q, z, {xref: "Gruenes Quadrat"},
+                                                  [{"xref": xref, "page_number": 1, "is_vector": False, "bbox": None, "alt_text": "Gruenes Quadrat", "image_path": None}])
+            self.assertEqual(r["tagged_count"], 1, r)
+            doc = fitz.open(z)
+            kinder = [int(m) for m in __import__("re").findall(r"(\d+)\s+0\s+R", doc.xref_get_key(dok, "K")[1])]
+            fig = r["figure_xrefs"][0]
+            self.assertEqual(kinder, [a1, fig, a2], f"Figure muss zwischen Absatz Seite 1 und Absatz Seite 2 stehen: {kinder}")
+            self.assertEqual(doc.xref_get_key(fig, "P")[1], f"{dok} 0 R")
+            doc.close()

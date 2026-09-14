@@ -509,8 +509,10 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
     umschliessende /Figure-BDC nehmen, ueber ParentTree (StructParents -> MCID) zum StructElem aufloesen,
     /Alt dort setzen. Inhaltsstrom bleibt unveraendert.
 
-    Rueckgabe: (uebernommen: {(page_num, xref_bild): elem_xref}, warnungen)."""
-    uebernommen, warnungen = {}, []
+    Rueckgabe: (uebernommen: {(page_num, xref_bild): elem_xref}, warnungen, neu_bloecke: {page_xref: [elem, ...]}) —
+    neu_bloecke sind die fuer verwaiste Figure-Bloecke angelegten Elemente, die der Aufrufer noch nach Seite
+    in den Dokument-Knoten einhaengt."""
+    uebernommen, warnungen, neu_bloecke = {}, [], {}
     # Nur Elemente, die vom StructTreeRoot aus erreichbar sind — ein Original-Tag, das selbst schon eine
     # Waise ist (InDesign-Altlast, Prod-Dokument 430: 1 von 300), bekommt wie bisher ein eigenes Tag.
     erreichbar = _collect_reachable_struct_elems(doc, struct_root_xref)
@@ -563,10 +565,10 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
                 doc.update_object(neu_elem,
                     f"<< /Type /StructElem /S /Figure /P {doc_elem_xref} 0 R /Pg {page.xref} 0 R "
                     f"/Alt {_pdf_string(img_info['alt_text'])} /K {mcid} >>")
-                if pt[0] == "xref" and _figures_einhaengen(doc, doc_elem_xref, [neu_elem]) \
-                        and _parenttree_setzen(doc, int(pt[1].split()[0]), int(sp[1]), mcid, neu_elem):
+                if pt[0] == "xref" and _parenttree_setzen(doc, int(pt[1].split()[0]), int(sp[1]), mcid, neu_elem):
                     belegt[neu_elem] = img_info["alt_text"].strip()
                     uebernommen[(page_num, img_info["xref"])] = neu_elem
+                    neu_bloecke.setdefault(page.xref, []).append(neu_elem)
                     erreichbar.add(neu_elem)
                     continue
                 doc.update_object(neu_elem, "null")
@@ -594,7 +596,7 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
             doc.xref_set_key(elem, "Alt", _pdf_string(img_info["alt_text"]))
             belegt[elem] = img_info["alt_text"].strip()
             uebernommen[(page_num, img_info["xref"])] = elem
-    return uebernommen, warnungen
+    return uebernommen, warnungen, neu_bloecke
 
 
 def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, image_metadata: list = None) -> dict:
@@ -727,10 +729,10 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
             )
             has_existing_structure = False
 
-    uebernommen = {}
+    uebernommen, neu_bloecke = {}, {}
     if has_existing_structure:
         # Zuerst: Bilder, die schon in einem Figure-Tag des Dokuments liegen, bekommen ihren Alt-Text DORT.
-        uebernommen, w_ueb = _vorhandene_figures_uebernehmen(doc, struct_root_xref, page_images, doc_elem_xref)
+        uebernommen, w_ueb, neu_bloecke = _vorhandene_figures_uebernehmen(doc, struct_root_xref, page_images, doc_elem_xref)
         warnings.extend(w_ueb)
         if uebernommen:
             print(f"Vorhandene Figure-Tags uebernommen: {len(uebernommen)}")
@@ -842,7 +844,13 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
         # Prod-Kundendokument Projekt 430) oder als Einzelkind blieben die Figures ohne Eltern-Eintrag —
         # unerreichbar im Tag-Baum, und finalize_export_pdf raeumte sie als „verwaist“ wieder weg:
         # Export ohne Alt-Texte bei Meldung „234 getaggt“.
-        if not _figures_einhaengen(doc, doc_elem_xref, figure_xrefs):
+        figures_je_seite: dict = {pg: list(figs) for pg, figs in neu_bloecke.items()}
+        neu_bloecke = {}
+        for page_num in sorted(page_figures.keys()):
+            eigene = [f[1] for f in page_figures[page_num] if f[1] in figure_xrefs]
+            if eigene:
+                figures_je_seite.setdefault(doc[page_num].xref, []).extend(eigene)
+        if not _figures_nach_seite_einhaengen(doc, doc_elem_xref, figures_je_seite, struct_root_xref):
             warnings.append(
                 "Die Alt-Texte konnten nicht in den Tag-Baum der PDF eingehaengt werden "
                 "(unbekannte Form des /K-Eintrags am Dokument-Knoten)."
@@ -868,6 +876,10 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
                         "Alt-Texte als nicht getaggt werten."
                     )
 
+    elif has_existing_structure and neu_bloecke:
+        if not _figures_nach_seite_einhaengen(doc, doc_elem_xref, neu_bloecke, struct_root_xref):
+            warnings.append("Elemente fuer verwaiste Figure-Bloecke konnten nicht eingehaengt werden.")
+        neu_bloecke = {}
     elif not has_existing_structure:
         # --- CREATE new structure (PDF had no tags) ---
         print("No existing structure, creating new StructTreeRoot...")
@@ -1027,6 +1039,218 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
     doc.close()
     return {"path": output_path, "tagged_count": tagged_count, "warnings": warnings,
             "figure_xrefs": alle_figuren, "unreachable_figures": unerreichbar}
+
+
+def _seiten_eines_elements(doc: fitz.Document, xref: int, seiten: set, tiefe: int = 0, gesehen: set | None = None) -> None:
+    """Sammelt alle Seiten-xrefs (/Pg), die im Teilbaum eines Elements vorkommen."""
+    gesehen = gesehen if gesehen is not None else set()
+    if xref in gesehen or tiefe > 80:
+        return
+    gesehen.add(xref)
+    try:
+        obj = doc.xref_object(xref, compressed=True)
+    except Exception:
+        return
+    for m in re.finditer(r"/Pg\s+(\d+)\s+0\s+R", obj):
+        seiten.add(int(m.group(1)))
+    k = doc.xref_get_key(xref, "K")
+    if k[0] == "null":
+        return
+    kand = [int(r) for r in _XREF_REF_RE.findall(k[1])]
+    while kand:
+        ch = kand.pop(0)
+        try:
+            o = doc.xref_object(ch, compressed=True)
+        except Exception:
+            continue
+        if o.lstrip().startswith("["):
+            kand = [int(r) for r in _XREF_REF_RE.findall(o)] + kand
+            continue
+        if "/StructElem" in o or _STRUCT_ELEM_RE.search(o):
+            _seiten_eines_elements(doc, ch, seiten, tiefe + 1, gesehen)
+
+
+def _letztes_element_je_seite(doc: fitz.Document, struct_root_xref: int) -> dict:
+    """{page_xref: elem_xref} — das in LESEREIHENFOLGE letzte Strukturelement, das auf der Seite liegt
+    (eigenes /Pg oder MCR-/Pg in /K). Anker fuer das Einfuegen neuer Figures als Geschwister."""
+    reihe: list = []          # (xref, page_xref) in Lesereihenfolge
+    gesehen: set = set()
+    stapel = [(struct_root_xref, 0)]
+    # iterativ in Vorordnung, Kinder in Originalreihenfolge
+    while stapel:
+        xref, tiefe = stapel.pop()
+        if xref in gesehen or tiefe > 80:
+            continue
+        gesehen.add(xref)
+        try:
+            obj = doc.xref_object(xref, compressed=True)
+        except Exception:
+            continue
+        if xref != struct_root_xref:
+            for m in re.finditer(r"/Pg\s+(\d+)\s+0\s+R", obj):
+                reihe.append((xref, int(m.group(1))))
+                break
+        k = doc.xref_get_key(xref, "K")
+        if k[0] == "null":
+            continue
+        kinder = []
+        kand = [int(r) for r in _XREF_REF_RE.findall(k[1])]
+        while kand:
+            ch = kand.pop(0)
+            try:
+                o = doc.xref_object(ch, compressed=True)
+            except Exception:
+                continue
+            if o.lstrip().startswith("["):
+                kand = [int(r) for r in _XREF_REF_RE.findall(o)] + kand
+                continue
+            if "/StructElem" in o or _STRUCT_ELEM_RE.search(o):
+                kinder.append(ch)
+        for ch in reversed(kinder):
+            stapel.append((ch, tiefe + 1))
+    # Anker je Seite: das letzte Element der Seite VOR dem ersten Element einer spaeteren Seite —
+    # InDesign fuehrt Reste einer Seite (Fusszeilen, Rahmenfortsetzungen) oft erst nach der naechsten
+    # Seite im Baum; „letztes Element der Seite“ allein setzte unsere Figures dann hinter die Folgeseite.
+    nummer = {pg.xref: pg.number for pg in doc}
+    letztes: dict = {}
+    for page_xref in set(px for _, px in reihe):
+        nr = nummer.get(page_xref)
+        if nr is None:
+            continue
+        erstes_spaeter = next((i for i, (_, px) in enumerate(reihe) if nummer.get(px, -1) > nr), len(reihe))
+        kandidaten = [i for i, (_, px) in enumerate(reihe) if px == page_xref and i < erstes_spaeter]
+        if kandidaten:
+            letztes[page_xref] = reihe[max(kandidaten)][0]
+        elif erstes_spaeter > 0:
+            # Doppelseiten-Fall (rechte Seite steht im Baum vor der linken): direkt vor die Folgeseite,
+            # also hinter das Element, das der Folgeseite vorausgeht
+            letztes[page_xref] = reihe[erstes_spaeter - 1][0]
+        else:
+            erste = next((i for i, (_, px) in enumerate(reihe) if px == page_xref), None)
+            if erste is not None:
+                letztes[page_xref] = reihe[erste][0]
+    return letztes
+
+
+def _als_geschwister_einfuegen(doc: fitz.Document, anker_xref: int, neu_xrefs: list) -> bool:
+    """Fuegt neue Elemente direkt HINTER anker_xref in die Kinderliste von dessen Elternelement ein und
+    setzt ihr /P auf dieses Elternelement. False, wenn die Kinderliste nicht in bekannter Form vorliegt."""
+    if not neu_xrefs:
+        return True
+    p = doc.xref_get_key(anker_xref, "P")
+    if p[0] != "xref":
+        return False
+    eltern = int(p[1].split()[0])
+    k = doc.xref_get_key(eltern, "K")
+    if k[0] == "array":
+        text, ziel_obj = k[1], None
+    elif k[0] == "xref":
+        ziel_obj = int(k[1].split()[0])
+        if ziel_obj == anker_xref:
+            # Einzelkind: Kinderliste daraus machen
+            doc.xref_set_key(eltern, "K", "[ " + f"{anker_xref} 0 R " + " ".join(f"{x} 0 R" for x in neu_xrefs) + " ]")
+            for x in neu_xrefs:
+                doc.xref_set_key(x, "P", f"{eltern} 0 R")
+            return True
+        text = doc.xref_object(ziel_obj, compressed=True).strip()
+        if not text.startswith("["):
+            return False
+    else:
+        return False
+    m = re.search(rf"(?<![0-9]){anker_xref}\s+0\s+R", text)
+    if not m:
+        return False
+    neu = " " + " ".join(f"{x} 0 R" for x in neu_xrefs)
+    text = text[:m.end()] + neu + text[m.end():]
+    if ziel_obj is None:
+        doc.xref_set_key(eltern, "K", text)
+    else:
+        doc.update_object(ziel_obj, text)
+    for x in neu_xrefs:
+        doc.xref_set_key(x, "P", f"{eltern} 0 R")
+    return True
+
+
+def _figures_nach_seite_einhaengen(doc: fitz.Document, doc_elem_xref: int, figures_je_seite: dict,
+                                   struct_root_xref: int | None = None) -> bool:
+    """Neue Figure-Elemente an der Stelle ihrer Seite einhaengen: bevorzugt als Geschwister hinter dem letzten
+    Element der Seite (Lesereihenfolge bleibt seitengenau); sonst ueber die Kinderliste des Dokument-Knotens."""
+    if struct_root_xref is not None and figures_je_seite:
+        letztes = _letztes_element_je_seite(doc, struct_root_xref)
+        rest: dict = {}
+        for page_xref, figs in figures_je_seite.items():
+            anker = letztes.get(page_xref)
+            if anker is None or anker in figs or not _als_geschwister_einfuegen(doc, anker, figs):
+                rest[page_xref] = figs
+                log.info("Figure-Einfuegen als Geschwister nicht moeglich (Seite xref %s, Anker %s) — Dokument-Knoten", page_xref, anker)
+        if not rest:
+            return True
+        figures_je_seite = rest
+    return _figures_nach_dokumentknoten_einhaengen(doc, doc_elem_xref, figures_je_seite)
+
+
+def _figures_nach_dokumentknoten_einhaengen(doc: fitz.Document, doc_elem_xref: int, figures_je_seite: dict) -> bool:
+    """Haengt neue Figure-Elemente in die Kinderliste des Dokument-Knotens an der Stelle ihrer SEITE ein —
+    hinter dem letzten Kind, das diese Seite beruehrt (14.09.2026: angehaengt am Ende laesen Screenreader
+    sie erst nach der letzten Seite). figures_je_seite: {page_xref: [fig_xref, ...]} in Seitenreihenfolge.
+    Fallback bei unbekannter Kinderform: _figures_einhaengen (ans Ende)."""
+    alle = [x for figs in figures_je_seite.values() for x in figs]
+    if not alle:
+        return True
+    k = doc.xref_get_key(doc_elem_xref, "K")
+    if k[0] == "array":
+        kinder = [int(r) for r in _XREF_REF_RE.findall(k[1])]; ziel_obj = None
+        if len(kinder) != len(re.findall(r"\S+\s+0\s+R|(?<![\d/])\d+(?![\s\d]*0\s+R)", k[1].strip()[1:-1])):
+            return _figures_einhaengen(doc, doc_elem_xref, alle)   # gemischte Kinder (MCIDs): nicht umsortieren
+    elif k[0] == "xref":
+        ziel_obj = int(k[1].split()[0])
+        o = doc.xref_object(ziel_obj, compressed=True).strip()
+        if not o.startswith("["):
+            # einzelnes Kind (z. B. /Part): dort weitersuchen, sonst ans Ende
+            kk = doc.xref_get_key(ziel_obj, "K")
+            if kk[0] in ("array", "xref"):
+                return _figures_nach_dokumentknoten_einhaengen(doc, ziel_obj, figures_je_seite)
+            return _figures_einhaengen(doc, doc_elem_xref, alle)
+        kinder = [int(r) for r in _XREF_REF_RE.findall(o)]
+    else:
+        return _figures_einhaengen(doc, doc_elem_xref, alle)
+    if not kinder:
+        return _figures_einhaengen(doc, doc_elem_xref, alle)
+    # Seiten je Kind (in Reihenfolge) — teuer, aber nur einmal je Export
+    seiten_je_kind = []
+    for kind in kinder:
+        seiten: set = set()
+        _seiten_eines_elements(doc, kind, seiten)
+        seiten_je_kind.append(seiten)
+    seiten_reihenfolge = {pg.xref: pg.number for pg in doc}
+    # Einfuegeposition (Index in der ALTEN Kinderliste) je Seite bestimmen
+    einfuegungen: dict = {}   # pos -> [fig_xref, ...]
+    for page_xref, figs in sorted(figures_je_seite.items(), key=lambda kv: seiten_reihenfolge.get(kv[0], 10**9)):
+        pos = None
+        for i in range(len(seiten_je_kind) - 1, -1, -1):
+            if page_xref in seiten_je_kind[i]:
+                pos = i + 1          # hinter dem letzten Kind dieser Seite
+                break
+        if pos is None:
+            # kein Kind dieser Seite: vor das erste Kind einer SPAETEREN Seite (sonst ans Ende)
+            nr = seiten_reihenfolge.get(page_xref, 10**9)
+            pos = len(kinder)
+            for i, sj in enumerate(seiten_je_kind):
+                if sj and min(seiten_reihenfolge.get(x, 10**9) for x in sj) > nr:
+                    pos = i
+                    break
+        einfuegungen.setdefault(pos, []).extend(figs)
+    neu = []
+    for i in range(len(kinder) + 1):
+        neu.extend(einfuegungen.get(i, []))
+        if i < len(kinder):
+            neu.append(kinder[i])
+    text = "[ " + " ".join(f"{x} 0 R" for x in neu) + " ]"
+    if ziel_obj is None:
+        doc.xref_set_key(doc_elem_xref, "K", text)
+    else:
+        doc.update_object(ziel_obj, text)
+    return True
 
 
 def _figures_einhaengen(doc: fitz.Document, doc_elem_xref: int, figure_xrefs: list) -> bool:
