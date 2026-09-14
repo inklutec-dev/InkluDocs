@@ -7362,10 +7362,26 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     alt_texts = {}
     alt_texts_by_lfnr = {}
     image_metadata = []
+    info: dict = {}
     lfnr_je_bild = _pdfix_lfnr_je_dokument(images)
+
+    # Seitenlayout-Eintraege (fitz-Ersatzweg, 14.09.2026): seitengrosse Vektorbereiche mit Fotos darin sind
+    # keine Bilder — im Export uebergehen, ohne die Projektdaten anzufassen. Dieselbe Regel wie in der
+    # Extraktion (pdf_processor._ist_seitenlayout); Altprojekte tragen solche Eintraege noch.
+    layout_xrefs = set()
+    if extraction_method != "pdfix":
+        try:
+            from pdf_export import layout_vektorbilder
+            layout_xrefs = layout_vektorbilder(doc["original_path"], images)
+        except Exception as e:
+            print(f"Layout-Pruefung uebersprungen: {e}")
+    if layout_xrefs:
+        info["layoutbereiche"] = len(layout_xrefs)
 
     for img in images:
         alt_text = _exportable_alt_text(img)
+        if img.get("xref") in layout_xrefs:
+            continue
         # PyMuPDF-Weg: "" = Bild nicht taggen (die Quelle ist dort ungetaggt, es gibt nichts
         # zu entfernen); PDFix-Weg: "" = Alt-Eintrag entfernen (Sentinel in der CSV).
         if alt_text and img.get("xref"):
@@ -7387,7 +7403,6 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
     os.makedirs(output_dir, exist_ok=True)
     base = doc.get("original_filename") or f"dokument_{doc.get('doc_index', 1)}.pdf"
     output_path = os.path.join(output_dir, f"inkludocs_{_safe_filename_component(base, base)}")
-    info: dict = {}
     schonen: set = set()  # xrefs der selbst geschriebenen Figure-Elemente (fitz-Weg), fuer finalize_export_pdf
 
     if extraction_method == "pdfix":

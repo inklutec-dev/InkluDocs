@@ -183,6 +183,38 @@ def _find_vector_graphic_range(content_str: str, bbox: tuple, page_height: float
 _BDC_RE = re.compile(r"/(\w+)\s*(<<[^>]*?/MCID\s+(\d+)[^>]*?>>|<<.*?>>|/\w+)?\s*BDC|\bBMC\b|\bEMC\b", re.DOTALL)
 
 
+def layout_vektorbilder(pdf_path: str, images: list) -> set:
+    """xrefs der Vektor-„Bilder“, die Seitenlayout sind (Regel pdf_processor._ist_seitenlayout: mindestens die halbe
+    Seite UND Fotos darin). Fuer den Export von Projekten, die vor dem 14.09.2026 extrahiert wurden."""
+    from pdf_processor import _ist_seitenlayout
+    vektor = [i for i in images if i.get("is_vector") and i.get("bbox_x0") is not None]
+    if not vektor:
+        return set()
+    doc = fitz.open(pdf_path)
+    raster_je_seite: dict = {}
+    treffer = set()
+    try:
+        for img in vektor:
+            pn = int(img.get("page_number") or 1) - 1
+            if pn < 0 or pn >= len(doc):
+                continue
+            page = doc[pn]
+            if pn not in raster_je_seite:
+                flaechen = []
+                for info in page.get_images(full=True):
+                    try:
+                        flaechen.extend(page.get_image_rects(info[0]))
+                    except Exception:
+                        pass
+                raster_je_seite[pn] = flaechen
+            r = fitz.Rect(img["bbox_x0"], img["bbox_y0"], img["bbox_x1"], img["bbox_y1"])
+            if _ist_seitenlayout(r, page.rect, raster_je_seite[pn]):
+                treffer.add(img["xref"])
+    finally:
+        doc.close()
+    return treffer
+
+
 def _markierte_bereiche(content_str: str) -> list:
     """Alle Marked-Content-Bereiche eines Inhaltsstroms als (start, end, tag, mcid) — verschachtelt,
     innere Bereiche stehen mit kleinerem Umfang in der Liste. mcid ist None bei BMC oder BDC ohne MCID."""

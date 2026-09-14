@@ -47,6 +47,26 @@ PIPELINE_VERSION = "v4"
 from pipelines.v4.orchestrator import generate_alt_text_v4 as _v4_entry
 
 
+LAYOUT_SEITENANTEIL = float(os.environ.get("V4_LAYOUT_SEITENANTEIL", "0.5"))
+
+
+def _ist_seitenlayout(cluster_rect, page_rect, raster_areas) -> bool:
+    """Vektorbereich = Seitenlayout (kein Bild)? — mindestens LAYOUT_SEITENANTEIL der Seite UND mindestens ein
+    Rasterbild darin. 14.09.2026, Prod-Dokument 430 (InDesign-Jahresbericht): Die Clusterbildung fasste Rahmen,
+    Linien und Farbflaechen zu seitengrossen Bereichen zusammen; die KI beschrieb daraufhin ganze Seiten
+    („Zeitschriftenseite mit Text und zwei Fotos“) — 20 von 62 Vektorbildern, je 5 Credits, im Export
+    ueberfluessig neben den ohnehin einzeln beschriebenen Fotos. Gemessen: die Regel trifft alle Seitenlayouts
+    und kein echtes Bild (Organisationsplan, Anfahrtskarte, Diagramme, Kontaktkaesten bleiben — sie enthalten
+    keine Fotos oder sind kleiner als die halbe Seite)."""
+    seite = page_rect.width * page_rect.height
+    if seite <= 0:
+        return False
+    r = cluster_rect & page_rect
+    if r.is_empty or (r.width * r.height) / seite < LAYOUT_SEITENANTEIL:
+        return False
+    return any(not (r & ra).is_empty for ra in raster_areas)
+
+
 def _cluster_drawings(drawings, page_rect, gap=100, min_size=50):
     """Group nearby vector drawings into clusters, return significant bounding boxes."""
     if not drawings:
@@ -507,6 +527,10 @@ def extract_images_from_pdf(pdf_path: str, output_dir: str, project_id: int) -> 
                             overlaps_raster = True
                             break
                 if overlaps_raster:
+                    continue
+                if _ist_seitenlayout(cluster_rect, page.rect, raster_areas):
+                    print(f"Vektorbereich auf Seite {page_num + 1} uebersprungen: Seitenlayout "
+                          f"({int(cluster_rect.width)}x{int(cluster_rect.height)}, enthaelt Fotos)")
                     continue
 
                 # Render this region as a PNG image

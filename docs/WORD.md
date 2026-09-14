@@ -509,6 +509,15 @@ Entscheidungen und Umsetzung:
   in jeder `/K`-Form eingehängt, Erreichbarkeit geprüft, Schonliste im Abschluss. Messung am
   Kundendokument (veraPDF): 224/234 Texte, „Figure ohne Alt“ 249→126, ungetaggter Inhalt
   10471→10113, keine neue Regel verletzt. Tests `tests/test_pdf_export_einhaengen.py` (7).
+- **Seitenlayout ist kein Bild (14.09.2026):** Die Clusterbildung der Vektor-Extraktion (`_cluster_drawings`,
+  Abstand 100, Rand 60) fasste in InDesign-PDFs Rahmen, Linien und Farbflächen zu seitengroßen Bereichen
+  zusammen; die KI beschrieb daraufhin ganze Seiten (Kundendokument 430: 21 von 62 Vektorbildern, je 5
+  Credits, im Export überflüssig neben den einzeln beschriebenen Fotos, teils gar nicht taggbar). Regel
+  `pdf_processor._ist_seitenlayout` (≥ `V4_LAYOUT_SEITENANTEIL` = 0,5 der Seite UND mindestens ein
+  Rasterbild darin): in der Extraktion übersprungen; im Export für Altprojekte über
+  `pdf_export.layout_vektorbilder` still übergangen (`info["layoutbereiche"]`), Projektdaten unverändert.
+  Gemessen: trifft alle 21 Seitenlayouts, kein echtes Bild (Organisationsplan, Anfahrtskarte, Diagramme,
+  Kontaktkästen bleiben). Test `tests/test_vektor_layout.py`.
 - Sicherheit: Dateien werden nur aus dem Nutzer-Ordner ausgeliefert (Präfixprüfung mit
   Trenner, `_ablage_pfad_ok`); jeder Zugriff prüft `user_id`.
 - Tests: `tests/e2e/verify_ablage.py` (Knopf-Export → Eintrag, nur Befunde, Umleitung,
