@@ -1214,7 +1214,7 @@ def _figures_nach_seite_einhaengen(doc: fitz.Document, doc_elem_xref: int, figur
             anker = letztes.get(page_xref)
             if anker is None or anker in figs or not _als_geschwister_einfuegen(doc, anker, figs):
                 rest[page_xref] = figs
-                log.info("Figure-Einfuegen als Geschwister nicht moeglich (Seite xref %s, Anker %s) — Dokument-Knoten", page_xref, anker)
+                print(f"Figure-Einfuegen als Geschwister nicht moeglich (Seite xref {page_xref}, Anker {anker}) — Dokument-Knoten")
         if not rest:
             return True
         figures_je_seite = rest

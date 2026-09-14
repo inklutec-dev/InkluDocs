@@ -223,3 +223,28 @@ class TestLesereihenfolge(unittest.TestCase):
             self.assertEqual(kinder, [a1, fig, a2], f"Figure muss zwischen Absatz Seite 1 und Absatz Seite 2 stehen: {kinder}")
             self.assertEqual(doc.xref_get_key(fig, "P")[1], f"{dok} 0 R")
             doc.close()
+
+
+class TestRueckfallOhneAnker(unittest.TestCase):
+    def test_seite_ohne_element_faellt_auf_dokumentknoten_zurueck(self):
+        """Seite 2 hat im Tag-Baum kein Element (kein Anker): das neue Figure muss trotzdem eingehaengt werden
+        (Rueckfall Dokument-Knoten). 14.09.2026: dieser Zweig rief ein nicht definiertes `log` auf."""
+        with tempfile.TemporaryDirectory() as d:
+            q, z = os.path.join(d, "q.pdf"), os.path.join(d, "z.pdf")
+            doc = fitz.open(); doc.new_page(width=200, height=200); doc.new_page(width=200, height=200)
+            pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 8, 8), 0); pix.set_rect(pix.irect, (30, 30, 200))
+            doc[1].insert_image(fitz.Rect(20, 20, 120, 120), pixmap=pix)
+            xref = doc[1].get_images(full=True)[0][0]
+            x1, x2 = doc[0].xref, doc[1].xref
+            _inhalt_ersetzen(doc, doc[0], "/P <</MCID 0>> BDC\nBT ET\nEMC\n")
+            root = doc.get_new_xref(); dok = doc.get_new_xref(); a1 = doc.get_new_xref(); pt = doc.get_new_xref()
+            doc.update_object(a1, f"<< /Type /StructElem /S /P /P {dok} 0 R /Pg {x1} 0 R /K 0 >>")
+            doc.update_object(dok, f"<< /Type /StructElem /S /Document /P {root} 0 R /K [ {a1} 0 R ] >>")
+            doc.update_object(pt, f"<< /Nums [ 0 [ {a1} 0 R ] ] >>")
+            doc.update_object(root, f"<< /Type /StructTreeRoot /K {dok} 0 R /ParentTree {pt} 0 R /ParentTreeNextKey 1 >>")
+            doc.xref_set_key(doc.pdf_catalog(), "StructTreeRoot", f"{root} 0 R"); doc.xref_set_key(x1, "StructParents", "0")
+            doc.save(q); doc.close()
+            r = pdf_export.write_alt_texts_to_pdf(q, z, {xref: "Blaues Quadrat"},
+                                                  [{"xref": xref, "page_number": 2, "is_vector": False, "bbox": None, "alt_text": "Blaues Quadrat", "image_path": None}])
+            self.assertEqual(r["tagged_count"], 1, r)
+            self.assertEqual(r["unreachable_figures"], [], r)
