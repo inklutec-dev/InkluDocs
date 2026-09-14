@@ -26,12 +26,14 @@ with sync_playwright() as p:
     check("Abschnitt „Was eine Aktion kostet“ mit H2", sek.count() == 1 and pg.locator("#aktionen-h").inner_text().strip() == "Was eine Aktion kostet")
     items = [li.inner_text().strip() for li in sek.locator("ul > li").all()]
     check("7 Listenpunkte", len(items) == 7, items)
-    check("Alt-Text 5 Credits je Bild", any(i.startswith("Alt-Text: 5 Credits je Bild") for i in items), items[:1])
-    check("Quickinfo 1 Credit je Formularfeld", any(i.startswith("Quickinfo: 1 Credit je Formularfeld") for i in items), items[1:2])
-    check("Herunterladen PDF/Word 25 plus 5 je 10 Bilder, Beispiel 26 Bilder = 40", any("Herunterladen als PDF oder Word: 25 Credits plus 5 Credits je angefangene 10 Bilder" in i and "26 Bildern kostet 40 Credits" in i for i in items), items[2:3])
+    # Wortlaut seit 14.09.2026 (Michael Karbe, Mail 12.09.): „per KI“ + „Eingabe von Hand: kostenlos“,
+    # „Übernahme … in das Dokument/Formular“, Tabellen-Export beschreibt den Inhalt (Excel mit Bildern).
+    check("Alt-Text per KI 5 Credits je Bild + Eingabe von Hand kostenlos", any(i.startswith("Alt-Text per KI: 5 Credits je Bild") and i.endswith("Eingabe von Hand: kostenlos.") for i in items), items[:1])
+    check("Quickinfo per KI 1 Credit je Formularfeld + Eingabe von Hand kostenlos", any(i.startswith("Quickinfo per KI: 1 Credit je Formularfeld") and i.endswith("Eingabe von Hand: kostenlos.") for i in items), items[1:2])
+    check("Übernahme Alt-Texte + Herunterladen PDF/Word 25 plus 5 je 10 Bilder, Beispiel 26 Bilder = 40", any(i.startswith("Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: 25 Credits plus 5 Credits je angefangene 10 Bilder") and "26 Bildern kostet 40 Credits" in i for i in items), items[2:3])
     check("Word in barrierefreie PDF 25 plus 5 je 10 Bilder", any(i.startswith("Word in barrierefreie PDF umwandeln: 25 Credits plus 5 Credits je angefangene 10 Bilder") for i in items), items[3:4])
-    check("Formular-PDF 25 plus 1 je 10 Felder", any(i.startswith("Herunterladen als Formular-PDF: 25 Credits plus 1 Credit je angefangene 10 Felder") for i in items), items[4:5])
-    check("Tabelle 10 Credits je Datei", any(i.startswith("Tabelle herunterladen (CSV, Excel, JSON): 10 Credits je Datei") for i in items), items[5:6])
+    check("Übernahme Quickinfos + Formular-PDF 25 plus 1 je 10 Felder", any(i.startswith("Übernahme der Quickinfos in das Formular und Herunterladen als PDF: 25 Credits plus 1 Credit je angefangene 10 Felder") for i in items), items[4:5])
+    check("Tabelle mit Alt-Texten/Quickinfos (Excel mit Bildern) 10 Credits je Datei", any(i.startswith("Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): 10 Credits je Datei") for i in items), items[5:6])
     check("InkluAgent reden kostenlos", any(i == "Mit dem InkluAgent reden: kostenlos." for i in items), items[6:7])
     check("Einleitung nennt Credits und § 19 UStG", "§ 19 UStG" in pg.locator("main").inner_text() and "Eine Währung für alles: Credits." in pg.locator("main").inner_text())
     check("Liste steht VOR „Kostenlos starten“", pg.evaluate("() => document.getElementById('aktionen-h').compareDocumentPosition(document.getElementById('free-h')) & Node.DOCUMENT_POSITION_FOLLOWING") != 0)
@@ -43,7 +45,7 @@ with sync_playwright() as p:
     pg.goto(B + "/preise", wait_until="networkidle"); pg.wait_for_timeout(500)
     check("H2 „What an action costs“", pg.locator("#aktionen-h").inner_text().strip() == "What an action costs", pg.locator("#aktionen-h").inner_text())
     items_en = [li.inner_text().strip() for li in pg.locator("section[aria-labelledby='aktionen-h'] ul > li").all()]
-    check("Englisch: 7 Punkte, Alt text 5 credits, Beispiel 40", len(items_en) == 7 and items_en[0].startswith("Alt text: 5 credits per image") and "26 images costs 40 credits" in items_en[2], items_en[:3])
+    check("Englisch: 7 Punkte, Alt text by AI 5 credits, Beispiel 40", len(items_en) == 7 and items_en[0].startswith("Alt text by AI: 5 credits per image") and "26 images costs 40 credits" in items_en[2], items_en[:3])
     check("Keine deutschen Reste in der Liste", not any(re.search(r"\bCredits je\b|Herunterladen", i) for i in items_en), items_en)
     check("keine JavaScript-Fehler", not js, js[:2])
     br.close()

@@ -6223,3 +6223,27 @@ msgstr "Talking to the InkluAgent: free."
 msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
 msgstr "The app states the price again before every action, before any credits are deducted."
 
+
+msgid "Alt-Text per KI: {alt} Credits je Bild — im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert. Eingabe von Hand: kostenlos."
+msgstr "Alt text by AI: {alt} credits per image — in a batch run, individually, via the API or when the InkluAgent changes an alt text. Typing it yourself: free."
+
+msgid "Quickinfo per KI: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert. Eingabe von Hand: kostenlos."
+msgstr "Tooltip by AI: {qi} credit per form field — also when the InkluAgent changes a tooltip. Typing it yourself: free."
+
+msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr "Writing the alt texts into the document and downloading it as PDF or Word: {exp} credits plus {bild} credits per {schritt} images or part thereof. Example: a PDF with 26 images costs {beispiel} credits."
+
+msgid "Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Writing the tooltips into the form and downloading it as PDF: {exp} credits plus {feld} credit per {schritt} fields or part thereof."
+
+msgid "Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): {tab} Credits je Datei."
+msgstr "Creating and downloading a table of alt texts or tooltips (CSV, JSON, Excel — Excel with images): {tab} credits per file."
+
+msgid "Dokument / Alt-Texte herunterladen"
+msgstr "Download document / alt texts"
+
+msgid "Dokument / Quickinfos herunterladen"
+msgstr "Download document / tooltips"
+
+msgid "Prüfbericht lesen"
+msgstr "Read check report"

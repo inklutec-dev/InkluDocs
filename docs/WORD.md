@@ -474,6 +474,14 @@ Entscheidungen und Umsetzung:
   hat dieselbe Regel im Prompt. Gespeichert bleibt der volle Bericht.
 - **Art in der Überschrift** des Eintrags („Barrierefreie PDF: Dokument — Datum, Uhrzeit“),
   weil im Regal nicht zu erkennen war, ob PDF oder Word (Michael).
+- **Optik-Runde 14.09.2026** (Michael Karbe, Mail 12.09., zehn Punkte): In der Ablage steht
+  über dem Knopf „PDF herunterladen“ kein Befund-Satz mehr (zu viel Text; der Bericht steht in
+  der Klappe, die jetzt „Prüfbericht lesen“ heißt; die Kurzzeile bleibt im Dashboard). Der
+  Herunterladen-Dialog heißt ohne Dokumentname „Dokument / Alt-Texte herunterladen“ (Formulare:
+  „Dokument / Quickinfos herunterladen“; bei mehreren Dokumenten weiter „Ganzes Projekt
+  herunterladen (n Dokumente)“). Im Word-Dialog trennt eine Linie (`hr.export-trenner`,
+  aria-hidden) die Knopfreihe vom Ergebnis und eine zweite steht über der Prüfbericht-Klappe;
+  „PDF herunterladen“ hat 3pt mehr Luft, das Label „Dateiname“ ebenfalls (beide Dialoge).
 - Sicherheit: Dateien werden nur aus dem Nutzer-Ordner ausgeliefert (Präfixprüfung mit
   Trenner, `_ablage_pfad_ok`); jeder Zugriff prüft `user_id`.
 - Tests: `tests/e2e/verify_ablage.py` (Knopf-Export → Eintrag, nur Befunde, Umleitung,

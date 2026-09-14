@@ -5785,3 +5785,27 @@ msgstr "Att prata med InkluAgent: gratis."
 msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
 msgstr "Appen anger priset igen före varje åtgärd, innan några credits dras."
 
+
+msgid "Alt-Text per KI: {alt} Credits je Bild — im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert. Eingabe von Hand: kostenlos."
+msgstr "Alt-text via AI: {alt} credits per bild — i en samlad körning, enskilt, via API:et eller när InkluAgent ändrar en alt-text. Manuell inmatning: gratis."
+
+msgid "Quickinfo per KI: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert. Eingabe von Hand: kostenlos."
+msgstr "Snabbinfo via AI: {qi} credit per formulärfält — även när InkluAgent ändrar en snabbinfo. Manuell inmatning: gratis."
+
+msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr "Överföring av alt-texterna till dokumentet och nedladdning som PDF eller Word: {exp} credits plus {bild} credits per påbörjade {schritt} bilder. Exempel: en PDF med 26 bilder kostar {beispiel} credits."
+
+msgid "Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Överföring av snabbinfon till formuläret och nedladdning som PDF: {exp} credits plus {feld} credit per påbörjade {schritt} fält."
+
+msgid "Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): {tab} Credits je Datei."
+msgstr "Skapa och ladda ner en tabell med alt-texter eller snabbinfo (CSV, JSON, Excel — Excel med bilder): {tab} credits per fil."
+
+msgid "Dokument / Alt-Texte herunterladen"
+msgstr "Ladda ner dokument / alt-texter"
+
+msgid "Dokument / Quickinfos herunterladen"
+msgstr "Ladda ner dokument / snabbinfo"
+
+msgid "Prüfbericht lesen"
+msgstr "Läs kontrollrapport"

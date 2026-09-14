@@ -6226,3 +6226,27 @@ msgstr ""
 msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
 msgstr ""
 
+
+msgid "Alt-Text per KI: {alt} Credits je Bild — im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert. Eingabe von Hand: kostenlos."
+msgstr "Alt-Text per KI: {alt} Credits je Bild — im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert. Eingabe von Hand: kostenlos."
+
+msgid "Quickinfo per KI: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert. Eingabe von Hand: kostenlos."
+msgstr "Quickinfo per KI: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert. Eingabe von Hand: kostenlos."
+
+msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr "Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+
+msgid "Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+
+msgid "Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): {tab} Credits je Datei."
+msgstr "Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): {tab} Credits je Datei."
+
+msgid "Dokument / Alt-Texte herunterladen"
+msgstr "Dokument / Alt-Texte herunterladen"
+
+msgid "Dokument / Quickinfos herunterladen"
+msgstr "Dokument / Quickinfos herunterladen"
+
+msgid "Prüfbericht lesen"
+msgstr "Prüfbericht lesen"

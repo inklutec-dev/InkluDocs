@@ -43,16 +43,6 @@
     if (text !== undefined && text !== null) e.textContent = text;
     return e;
   }
-  function pruefSatz(a) {
-    // Besprechung 11.09.: nur sagen, was auffaellt. Ohne Befund ein kurzer Satz.
-    if (a.art === 'docx') {
-      if (a.hinweise === 0) return t('Keine Befunde im Word-Dokument.');
-      return a.hinweise === 1 ? t('Ein Befund im Word-Dokument.') : t('{n} Befunde im Word-Dokument.', { n: a.hinweise });
-    }
-    if (a.bestanden) return t('PDF/UA bestanden, keine Befunde.');
-    if (a.hinweise === 1) return t('Ein Bereich mit Befunden.');
-    return t('{n} Bereiche mit Befunden.', { n: a.hinweise });
-  }
   // Art der Ausgabe in der Sprache der Oberflaeche (der Server liefert nur den Schluessel).
   function artLabel(a) {
     if (a.art === 'pdfua') return t('Barrierefreie PDF');
@@ -184,12 +174,10 @@
     metaTeile.push(a.dateiname);
     if (a.ausloeser === 'bot') metaTeile.push(t('über den Chatbot'));
     text.appendChild(el('p', 'dash-meta', metaTeile.join(' · ')));
-    const summe = el('p', null);
-    summe.style.margin = '.3rem 0 0';
-    const strong = el('strong', null, pruefSatz(a));
-    summe.appendChild(strong);
-    if (a.zusammenfassung) summe.appendChild(document.createTextNode(' ' + a.zusammenfassung));
-    text.appendChild(summe);
+    // Kein Befund-Satz ueber dem Herunterladen-Knopf (Michael Karbe, Mail 12.09.2026, Punkt 10): zu viel
+    // Text, der Pruefbericht steht in der Klappe „Pruefbericht lesen“ darunter. Bis 13.09. stand hier
+    // „PDF/UA bestanden, keine Befunde.“ / „n Bereiche mit Befunden.“ + a.zusammenfassung (pruefSatz);
+    // die Kurzzeile gibt es weiter im Dashboard-Abschnitt „Neueste Ablage“ (dashboard.html).
     const aktionen = el('div', 'ausgabe-aktionen');
     if (a.datei_verfuegbar) {
       const dl = document.createElement('a');
@@ -210,7 +198,7 @@
     }
     aktionen.appendChild(loeschKnopf(a, li));
     text.appendChild(aktionen);
-    text.appendChild(detailsMitLader(a.id, t('Bericht lesen'), fuelleBericht, 'ausgabe-bericht'));
+    text.appendChild(detailsMitLader(a.id, t('Prüfbericht lesen'), fuelleBericht, 'ausgabe-bericht'));
     text.appendChild(detailsMitLader(a.id, t('Hörprobe lesen'), fuelleHoerprobe, 'ausgabe-hoerprobe-details'));
     karte.appendChild(text);
     li.appendChild(karte);

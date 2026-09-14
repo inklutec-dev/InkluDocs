@@ -6223,3 +6223,27 @@ msgstr "Discuter avec l’InkluAgent : gratuit."
 msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
 msgstr "L’application rappelle le prix avant chaque action, avant que des crédits soient débités."
 
+
+msgid "Alt-Text per KI: {alt} Credits je Bild — im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert. Eingabe von Hand: kostenlos."
+msgstr "Texte alternatif par IA : {alt} crédits par image — en lot, individuellement, via l’API ou lorsque l’InkluAgent modifie un texte alternatif. Saisie manuelle : gratuite."
+
+msgid "Quickinfo per KI: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert. Eingabe von Hand: kostenlos."
+msgstr "Info-bulle par IA : {qi} crédit par champ de formulaire — également lorsque l’InkluAgent modifie une info-bulle. Saisie manuelle : gratuite."
+
+msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr "Intégration des textes alternatifs dans le document et téléchargement en PDF ou Word : {exp} crédits plus {bild} crédits par tranche entamée de {schritt} images. Exemple : un PDF de 26 images coûte {beispiel} crédits."
+
+msgid "Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Intégration des info-bulles dans le formulaire et téléchargement en PDF : {exp} crédits plus {feld} crédit par tranche entamée de {schritt} champs."
+
+msgid "Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): {tab} Credits je Datei."
+msgstr "Création et téléchargement d’un tableau des textes alternatifs ou des info-bulles (CSV, JSON, Excel — Excel avec images) : {tab} crédits par fichier."
+
+msgid "Dokument / Alt-Texte herunterladen"
+msgstr "Télécharger le document / les textes alternatifs"
+
+msgid "Dokument / Quickinfos herunterladen"
+msgstr "Télécharger le document / les info-bulles"
+
+msgid "Prüfbericht lesen"
+msgstr "Lire le rapport de vérification"

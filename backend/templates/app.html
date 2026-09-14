@@ -7,6 +7,9 @@
         border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
       dialog.invite-dialog::backdrop { background: rgba(0,0,0,0.5); }
       dialog.invite-dialog :focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+      /* Trennlinien im Herunterladen-Dialog (Michael Karbe, Mail 12.09.2026, Punkte 7+8):
+         unter der Knopfreihe (Word-Projekte) und ueber der Pruefbericht-Klappe. Rein optisch, aria-hidden. */
+      dialog.invite-dialog hr.export-trenner { border: 0; border-top: 1px solid var(--border); margin: 0.8rem 0 0.4rem; }
     </style>
 {% if guest_mode %}
 {# Gast-Modus (Freigabe-Link): Flags VOR dashboard.js und Seiten-JS setzen.
@@ -663,7 +666,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
                             <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
                             <div class="form-group" style="margin-bottom:0.8rem;">
-                                <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">${t('Dateiname (optional)')}</label>
+                                <!-- Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld. -->
+                                <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">${t('Dateiname (optional)')}</label>
                                 <input type="text" id="exportFilename" autocomplete="off" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
                                 <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">${t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.')}</p>
                             </div>
@@ -676,6 +680,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
                             </div>
+                            <!-- Michael Karbe (Mail 12.09.2026, Punkt 7): im Word-Dialog eine Trennlinie unter der Knopfreihe,
+                                 damit Ergebnis und Pruefbericht sichtbar abgesetzt sind. Nur Word-Projekte haben die Umwandlung. -->
+                            ${project.project_type === 'docx' ? '<hr class="export-trenner" aria-hidden="true">' : ''}
                             <output id="exportStatus" style="display:block;margin-top:0.5rem;"></output>
                             <div id="pdfuaResult" role="region" aria-label="${t('Ergebnis der Umwandlung')}" aria-live="polite" style="margin-top:0.6rem;"></div>
                             <!-- Fusszeile des Dialogs (Michael Karbe, Mail 12.09.2026): „Abbrechen“ steht unten rechts;
@@ -2909,15 +2916,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (head) {
             const docs = currentRenderDocs || [];
             const doc = docId ? docs.find(d => d.id === docId) : null;
-            // Die Ueberschrift nennt den UMFANG (wie im Formular-Werkzeug, formular.js
-            // exportOeffnen): der Knopf heisst ueberall nur „Herunterladen" (Michael Karbe),
-            // im Dialog steht sichtbar fuer alle, was geholt wird — Dokument, ganzes
-            // Projekt mit n Dokumenten oder das eine Dokument. Wiederhergestellt
-            // 01.09.2026 (f9e344e hatte es auf „Herunterladen" gekuerzt; ui_word prueft es).
-            // Der „(Beta)"-Anhang für Word-Projekte entfällt seit 09.09.2026 (Steve).
-            head.textContent = (doc ? t('Dokument „{name}“ herunterladen', { name: docDisplayName(doc) })
-                : (docs.length > 1 ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: docs.length })
-                                   : t('Herunterladen')));
+            // Die Ueberschrift nennt, WAS geholt wird (wie im Formular-Werkzeug, formular.js
+            // exportOeffnen): der Knopf heisst ueberall nur „Herunterladen" (Michael Karbe).
+            // Seit 14.09.2026 (Michael, Mail 12.09., Punkt 4) ohne Dokumentname: „Dokument /
+            // Alt-Texte herunterladen" — der Dialog bietet das Dokument (PDF/Word) und die
+            // Alt-Texte als Tabelle. Bei mehreren Dokumenten im Projekt bleibt die Anzahl stehen,
+            // dort steht kein Dateiname. Historie: 01.09. Dokumentname (f9e344e), 09.09. Beta weg.
+            head.textContent = (!doc && docs.length > 1)
+                ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: docs.length })
+                : t('Dokument / Alt-Texte herunterladen');
         }
         if (typeof panel.showModal === 'function') {
             panel.showModal();
@@ -3008,7 +3015,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 }
                 html += pdfuaAnalyseHtml(dok);
             });
-            html += '<button type="button" class="btn btn-primary" id="pdfuaDownload">' + icon('download') + t('PDF herunterladen') + '</button>';
+            // Michael Karbe (Mail 12.09.2026, Punkt 9): 3 Punkte mehr Luft ueber „PDF herunterladen“.
+            html += '<button type="button" class="btn btn-primary" id="pdfuaDownload" style="margin-top:3pt;">' + icon('download') + t('PDF herunterladen') + '</button>';
             // Meine Ausgaben (11.09.2026): das Ergebnis liegt jetzt dauerhaft im Regal — Link dorthin
             // (dritter Eingang) und Reiter-Zaehler im Projektkopf nachziehen.
             if (d.ausgabe_id) {
@@ -3048,6 +3056,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Nur Befunde (Besprechung 11.09.); ohne Befund ein Satz statt einer Liste von „in Ordnung“.
         const wordBefunde = (dok.pruefbericht || []).filter(b => b.status !== 'ok');
         if (dok.pruefbericht && dok.pruefbericht.length) {
+            // Michael Karbe (Mail 12.09.2026, Punkt 8): Trennlinie oberhalb der Pruefbericht-Anzeige.
+            html += '<hr class="export-trenner" aria-hidden="true">';
             html += '<details style="margin:0.4rem 0;"><summary>' + t('Prüfbericht des Word-Dokuments') + '</summary>'
                 + (wordBefunde.length
                     ? '<ul style="margin:0.3rem 0 0.4rem;padding-left:1.2rem;">' + wordBefunde.map(b => '<li>' + escHtml(b.text) + '</li>').join('') + '</ul>'

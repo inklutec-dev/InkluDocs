@@ -5915,3 +5915,27 @@ msgstr "At tale med InkluAgent: gratis."
 msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
 msgstr "Appen nævner prisen igen før hver handling, før der trækkes credits."
 
+
+msgid "Alt-Text per KI: {alt} Credits je Bild — im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert. Eingabe von Hand: kostenlos."
+msgstr "Alt-tekst via AI: {alt} credits pr. billede — samlet, enkeltvis, via API’et eller når InkluAgent ændrer en alt-tekst. Manuel indtastning: gratis."
+
+msgid "Quickinfo per KI: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert. Eingabe von Hand: kostenlos."
+msgstr "Quickinfo via AI: {qi} credit pr. formularfelt — også når InkluAgent ændrer en quickinfo. Manuel indtastning: gratis."
+
+msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr "Overførsel af alt-teksterne til dokumentet og download som PDF eller Word: {exp} credits plus {bild} credits pr. påbegyndte {schritt} billeder. Eksempel: en PDF med 26 billeder koster {beispiel} credits."
+
+msgid "Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Overførsel af quickinfoerne til formularen og download som PDF: {exp} credits plus {feld} credit pr. påbegyndte {schritt} felter."
+
+msgid "Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): {tab} Credits je Datei."
+msgstr "Opret og download en tabel med alt-tekster eller quickinfoer (CSV, JSON, Excel — Excel med billeder): {tab} credits pr. fil."
+
+msgid "Dokument / Alt-Texte herunterladen"
+msgstr "Download dokument / alt-tekster"
+
+msgid "Dokument / Quickinfos herunterladen"
+msgstr "Download dokument / quickinfoer"
+
+msgid "Prüfbericht lesen"
+msgstr "Læs kontrolrapport"

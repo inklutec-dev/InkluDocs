@@ -192,3 +192,11 @@ Tabellen-Export, InkluAgent. Alle Zahlen kommen aus `billing.py` über die Route
 `main.py` (`preis_*`, `beispiel_pdf_26 = billing.export_preis(26, "pdf")`) — eine Preisänderung
 bleibt eine Konfigurationszeile. Die Einleitung darüber ist auf zwei Sätze gekürzt (Credits,
 § 19 UStG). Texte in den sechs Katalogen. Test: `tests/e2e/ui_preise.py` (de + en, axe, JS-Fehler).
+
+Wortlaut seit 14.09.2026 (Michael Karbe, Mail 12.09.): Alt-Text und Quickinfo heißen „per KI“ und
+enden mit „Eingabe von Hand: kostenlos.“ (die KI ist kein Muss); das Herunterladen heißt „Übernahme
+der Alt-Texte in das Dokument …“ bzw. „Übernahme der Quickinfos in das Formular …“ (die Übernahme
+ist die Leistung); der Tabellen-Export beschreibt den Inhalt („Tabelle mit Alt-Texten oder
+Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern)“; nur der
+Excel-Export bettet Bilder ein). Der Chat-Punkt („kostenlos“) bleibt, bis Steve und Michael
+über einen Preis je Nachricht entschieden haben.

@@ -6223,3 +6223,27 @@ msgstr "Hablar con el InkluAgent: gratis."
 msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
 msgstr "La aplicación vuelve a indicar el precio antes de cada acción, antes de descontar créditos."
 
+
+msgid "Alt-Text per KI: {alt} Credits je Bild — im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert. Eingabe von Hand: kostenlos."
+msgstr "Texto alternativo por IA: {alt} créditos por imagen, en lote, individualmente, a través de la API o cuando el InkluAgent cambia un texto alternativo. Introducirlo a mano: gratis."
+
+msgid "Quickinfo per KI: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert. Eingabe von Hand: kostenlos."
+msgstr "Información rápida por IA: {qi} crédito por campo de formulario, también cuando el InkluAgent cambia una información rápida. Introducirla a mano: gratis."
+
+msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
+msgstr "Incorporación de los textos alternativos al documento y descarga como PDF o Word: {exp} créditos más {bild} créditos por cada {schritt} imágenes o fracción. Ejemplo: un PDF con 26 imágenes cuesta {beispiel} créditos."
+
+msgid "Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
+msgstr "Incorporación de las informaciones rápidas al formulario y descarga como PDF: {exp} créditos más {feld} crédito por cada {schritt} campos o fracción."
+
+msgid "Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): {tab} Credits je Datei."
+msgstr "Crear y descargar una tabla con los textos alternativos o las informaciones rápidas (CSV, JSON, Excel; Excel con imágenes): {tab} créditos por archivo."
+
+msgid "Dokument / Alt-Texte herunterladen"
+msgstr "Descargar el documento / los textos alternativos"
+
+msgid "Dokument / Quickinfos herunterladen"
+msgstr "Descargar el documento / las informaciones rápidas"
+
+msgid "Prüfbericht lesen"
+msgstr "Leer el informe de comprobación"

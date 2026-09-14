@@ -51,7 +51,8 @@ with sync_playwright() as p:
           and "Herunterladen" in da.inner_text(), da.inner_html()[:200])
     da.locator("button:has-text('Herunterladen')").click(); pg.wait_for_timeout(600)
     check("Herunterladen am Dokument oeffnet den Dialog", pg.locator("#fExportPanel").evaluate("d=>d.open") is True)
-    check("Dialog-Ueberschrift nennt das Dokument, keine Auswahlliste (Steve 28.08.)", pg.locator("#fExportHeading").inner_text().startswith("Dokument") and pg.locator("input[name=fExportScope]").count() == 0, pg.locator("#fExportHeading").inner_text())
+    # Seit 14.09.2026 (Michael Karbe, Mail 12.09., Punkt 5): fester Titel ohne Dokumentname.
+    check("Dialog-Ueberschrift „Dokument / Quickinfos herunterladen“ ohne Dateiname, keine Auswahlliste", pg.locator("#fExportHeading").inner_text().strip() == "Dokument / Quickinfos herunterladen" and pg.locator("input[name=fExportScope]").count() == 0, pg.locator("#fExportHeading").inner_text())
     pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
     pg.locator("details.doc-hoerprobe").first.evaluate("d=>d.open=true"); pg.wait_for_timeout(200)
     hp = pg.locator("details.doc-hoerprobe ol li")
@@ -147,7 +148,9 @@ with sync_playwright() as p:
     pg.locator("#fExportOpenBtn").click(); pg.wait_for_timeout(800)
     dlg = pg.locator("#fExportPanel")
     check("Export-Dialog offen (modal)", dlg.evaluate("d=>d.open") is True)
-    check("Hauptknopf: ein Dokument -> Ueberschrift 'Herunterladen'", pg.locator("#fExportHeading").inner_text().strip() == "Herunterladen", pg.locator("#fExportHeading").inner_text())
+    check("Hauptknopf: ein Dokument -> Ueberschrift „Dokument / Quickinfos herunterladen“ (Michael 12.09.)", pg.locator("#fExportHeading").inner_text().strip() == "Dokument / Quickinfos herunterladen", pg.locator("#fExportHeading").inner_text())
+    # Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label „Dateiname“ und Feld (0.3rem + 3pt = 8.8px bei 16px).
+    check("Label „Dateiname“ hat 3pt mehr Abstand zum Feld (margin-bottom ≈ 8.8px)", 8.5 <= pg.locator("label[for=fExportFilename]").evaluate("l => parseFloat(getComputedStyle(l).marginBottom)") <= 9.1, pg.locator("label[for=fExportFilename]").evaluate("l => getComputedStyle(l).marginBottom"))
     check("Zusammenfassung nennt Felder", "Feldern" in pg.locator("#fExportSummary").inner_text(), pg.locator("#fExportSummary").inner_text())
     pg.wait_for_timeout(800)
     check("Zusammenfassung nennt den Export-Preis (Credits)", "Credits" in pg.locator("#fExportSummary").inner_text(), pg.locator("#fExportSummary").inner_text())

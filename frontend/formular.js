@@ -484,7 +484,8 @@
                 +   '<dialog id="fExportPanel" class="invite-dialog" aria-labelledby="fExportHeading">'
                 +     '<h2 id="fExportHeading" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
                 +     '<p id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;">' + t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length }) + '</p>'
-                +     '<div class="form-group" style="margin-bottom:0.8rem;"><label for="fExportFilename" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Dateiname (optional)') + '</label>'
+                // Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld (wie app.html).
+                +     '<div class="form-group" style="margin-bottom:0.8rem;"><label for="fExportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">' + t('Dateiname (optional)') + '</label>'
                 +       '<input type="text" id="fExportFilename" autocomplete="off" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;"></div>'
                 +     '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +       '<button class="btn btn-primary" onclick="Formular.exportieren(' + project.id + ', \'formular\')">' + t('Als PDF mit Quickinfos') + '</button>'
@@ -830,9 +831,12 @@
         exportZielDoc = docId || null;
         const head = document.getElementById('fExportHeading');
         if (head) {
-            const doc = docId ? (aktuelleDocs || []).find(d => d.id === docId) : null;
-            head.textContent = doc ? t('Dokument „{name}“ herunterladen', { name: docDisplayName(doc) })
-                : ((aktuelleDocs || []).length > 1 ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: aktuelleDocs.length }) : t('Herunterladen'));
+            // Seit 14.09.2026 (Michael Karbe, Mail 12.09., Punkt 5) ohne Dokumentname: „Dokument / Quickinfos
+            // herunterladen" — der Dialog bietet das Formular als PDF und die Quickinfos als Feldliste.
+            // Bei mehreren Dokumenten im Projekt bleibt die Anzahl stehen (kein Dateiname). Wie app.html.
+            head.textContent = (!docId && (aktuelleDocs || []).length > 1)
+                ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: aktuelleDocs.length })
+                : t('Dokument / Quickinfos herunterladen');
         }
         if (typeof panel.showModal === 'function') panel.showModal(); else panel.setAttribute('open', '');
         announce(t('Export-Optionen geöffnet.'));
