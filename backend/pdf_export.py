@@ -273,12 +273,29 @@ def _umhuellung_planen(content_str: str, bereiche: list, start: int, end: int, m
     return start, end, ersatz, n, eltern_mcid
 
 
-def _innerstes_figure(bereiche: list, start: int, end: int):
-    """Kleinster /Figure-Bereich mit MCID, der [start, end] vollstaendig enthaelt — oder None."""
+def _figure_tags(doc: fitz.Document, struct_root_xref: int) -> set:
+    """Alle Strukturtypen, die „Figure“ bedeuten: Figure selbst plus RoleMap-Eintraege darauf
+    (InDesign schreibt z. B. /PlacedGraphic /Figure). 14.09.2026."""
+    tags = {"Figure"}
+    rm = doc.xref_get_key(struct_root_xref, "RoleMap")
+    text = ""
+    if rm[0] == "dict":
+        text = rm[1]
+    elif rm[0] == "xref":
+        text = doc.xref_object(int(rm[1].split()[0]), compressed=True)
+    for eigen, ziel in re.findall(r"/(\w+)\s*/(\w+)", text):
+        if ziel in tags and eigen != "Type":
+            tags.add(eigen)
+    return tags
+
+
+def _innerstes_figure(bereiche: list, start: int, end: int, figure_tags: set | None = None):
+    """Kleinster Figure-Bereich (auch RoleMap-Typen) mit MCID, der [start, end] vollstaendig enthaelt."""
+    figure_tags = figure_tags or {"Figure"}
     beste = None
     for b in bereiche:
         b_start, b_end, tag, mcid = b[0], b[1], b[2], b[3]
-        if tag == "Figure" and mcid is not None and b_start <= start and end <= b_end:
+        if tag in figure_tags and mcid is not None and b_start <= start and end <= b_end:
             if beste is None or (b_end - b_start) < (beste[1] - beste[0]):
                 beste = b
     return beste
@@ -388,7 +405,101 @@ def _parenttree_anhaengen(doc: fitz.Document, pt_root_xref: int, struct_parents:
     return False
 
 
-def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, page_images: dict) -> tuple:
+def _mcid_index_aus_baum(doc: fitz.Document, erreichbar: set) -> dict:
+    """{(page_xref, mcid): elem_xref} aus den /K-Eintraegen aller erreichbaren Elemente — Ersatz fuer
+    fehlende ParentTree-Eintraege (Prod-Dokument 430: drei Fotos mit „null“ im ParentTree)."""
+    index = {}
+    for x in erreichbar:
+        try:
+            obj = doc.xref_object(x, compressed=True)
+        except Exception:
+            continue
+        pg = re.search(r"/Pg\s+(\d+)\s+0\s+R", obj)
+        k = doc.xref_get_key(x, "K")
+        if k[0] == "int" and pg:
+            index[(int(pg.group(1)), int(k[1]))] = x
+        elif k[0] in ("array", "dict"):
+            text = k[1]
+            for m in re.finditer(r"<<[^<>]*?/MCID\s+(\d+)[^<>]*?>>", text):
+                pgm = re.search(r"/Pg\s+(\d+)\s+0\s+R", m.group(0))
+                seite = int(pgm.group(1)) if pgm else (int(pg.group(1)) if pg else None)
+                if seite is not None:
+                    index[(seite, int(m.group(1)))] = x
+            if k[0] == "array" and pg:
+                for m in re.finditer(r"(?<![\d/])(\d+)(?![\s\d]*0\s+R)", re.sub(r"<<.*?>>", " ", text)):
+                    index.setdefault((int(pg.group(1)), int(m.group(1))), x)
+    return index
+
+
+def _parenttree_setzen(doc: fitz.Document, pt_root_xref: int, struct_parents: int, mcid: int, ref: int) -> bool:
+    """Setzt im ParentTree-Array einer Seite den Eintrag fuer eine VORHANDENE MCID (null ersetzen oder
+    am Ende anhaengen). Fuer Marked-Content-Bloecke, die im Original kein Strukturelement mehr haben."""
+    stapel, gesehen = [pt_root_xref], set()
+    token = re.compile(r"\s*(\d+)\s*(\d+\s+0\s+R|\[(?:[^\[\]]|\[[^\]]*\])*\])", re.DOTALL)
+    while stapel:
+        node = stapel.pop()
+        if node in gesehen:
+            continue
+        gesehen.add(node)
+        kids = doc.xref_get_key(node, "Kids")
+        if kids[0] == "array":
+            stapel.extend(int(r) for r in _XREF_REF_RE.findall(kids[1]))
+        nums = doc.xref_get_key(node, "Nums")
+        if nums[0] == "array":
+            text, nums_obj = nums[1], None
+        elif nums[0] == "xref":
+            nums_obj = int(nums[1].split()[0]); text = doc.xref_object(nums_obj, compressed=True)
+        else:
+            continue
+        pos, treffer = (text.find("[") + 1 if text.lstrip().startswith("[") else 0), None
+        while True:
+            mt = token.match(text, pos)
+            if not mt:
+                break
+            if int(mt.group(1)) == struct_parents:
+                treffer = mt
+                break
+            pos = mt.end()
+        if not treffer:
+            continue
+        wert = treffer.group(2)
+        if wert.startswith("["):
+            eintraege = re.findall(r"\d+\s+0\s+R|null", wert[1:-1])
+            if mcid < len(eintraege):
+                if eintraege[mcid] != "null":
+                    return False
+                eintraege[mcid] = f"{ref} 0 R"
+            elif mcid == len(eintraege):
+                eintraege.append(f"{ref} 0 R")
+            else:
+                return False
+            neu = "[ " + " ".join(eintraege) + " ]"
+            text = text[:treffer.start(2)] + neu + text[treffer.end(2):]
+            if nums_obj is None:
+                doc.xref_set_key(node, "Nums", text)
+            else:
+                doc.update_object(nums_obj, text)
+            return True
+        ziel = int(wert.split()[0])
+        obj = doc.xref_object(ziel, compressed=True).strip()
+        if not obj.startswith("["):
+            return False
+        eintraege = re.findall(r"\d+\s+0\s+R|null", obj[1:-1])
+        if mcid < len(eintraege):
+            if eintraege[mcid] != "null":
+                return False
+            eintraege[mcid] = f"{ref} 0 R"
+        elif mcid == len(eintraege):
+            eintraege.append(f"{ref} 0 R")
+        else:
+            return False
+        doc.update_object(ziel, "[ " + " ".join(eintraege) + " ]")
+        return True
+    return False
+
+
+def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, page_images: dict,
+                                    doc_elem_xref: int | None = None) -> tuple:
     """Traegt Alt-Texte in VORHANDENE Figure-Elemente des Dokuments ein (wie der PDFix-Weg), statt neue
     Figure-Tags um die Zeichenbefehle zu legen.
 
@@ -403,6 +514,8 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
     # Nur Elemente, die vom StructTreeRoot aus erreichbar sind — ein Original-Tag, das selbst schon eine
     # Waise ist (InDesign-Altlast, Prod-Dokument 430: 1 von 300), bekommt wie bisher ein eigenes Tag.
     erreichbar = _collect_reachable_struct_elems(doc, struct_root_xref)
+    figure_tags = _figure_tags(doc, struct_root_xref)
+    index_baum = None   # erst bei Bedarf aufbauen (teuer)
     for page_num in sorted(page_images.keys()):
         page = doc[page_num]
         content = page.read_contents()
@@ -413,8 +526,6 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
         if sp[0] != "int":
             continue
         elemente = _parenttree_elemente(doc, struct_root_xref, int(sp[1]))
-        if not elemente:
-            continue
         bereiche = _markierte_bereiche(content_str)
         if not bereiche:
             continue
@@ -434,20 +545,40 @@ def _vorhandene_figures_uebernehmen(doc: fitz.Document, struct_root_xref: int, p
                 if not m:
                     continue
                 start, end = m.start(), m.end()
-            fig = _innerstes_figure(bereiche, start, end)
+            fig = _innerstes_figure(bereiche, start, end, figure_tags)
             if not fig:
                 continue
             mcid = fig[3]
-            if mcid >= len(elemente) or elemente[mcid] is None:
+            elem = elemente[mcid] if mcid < len(elemente) else None
+            if elem is None:
+                # ParentTree-Eintrag fehlt (null): Element ueber den Tag-Baum suchen
+                if index_baum is None:
+                    index_baum = _mcid_index_aus_baum(doc, erreichbar)
+                elem = index_baum.get((page.xref, mcid))
+            if elem is None and doc_elem_xref is not None and fig[2] == "Figure":
+                # Figure-Block ohne Strukturelement (InDesign-Altlast): Element fuer die VORHANDENE MCID
+                # anlegen, am Dokument-Knoten einhaengen, ParentTree-Eintrag setzen — Inhalt bleibt unangetastet.
+                pt = doc.xref_get_key(struct_root_xref, "ParentTree")
+                neu_elem = doc.get_new_xref()
+                doc.update_object(neu_elem,
+                    f"<< /Type /StructElem /S /Figure /P {doc_elem_xref} 0 R /Pg {page.xref} 0 R "
+                    f"/Alt {_pdf_string(img_info['alt_text'])} /K {mcid} >>")
+                if pt[0] == "xref" and _figures_einhaengen(doc, doc_elem_xref, [neu_elem]) \
+                        and _parenttree_setzen(doc, int(pt[1].split()[0]), int(sp[1]), mcid, neu_elem):
+                    belegt[neu_elem] = img_info["alt_text"].strip()
+                    uebernommen[(page_num, img_info["xref"])] = neu_elem
+                    erreichbar.add(neu_elem)
+                    continue
+                doc.update_object(neu_elem, "null")
                 continue
-            elem = elemente[mcid]
-            if elem not in erreichbar:
-                continue  # verwaistes Original-Tag (InDesign-Altlast): eigenes Tag wie bisher
+            if elem is None or elem not in erreichbar:
+                continue  # kein Element bzw. verwaistes Original-Tag: eigenes Tag wie bisher
             try:
                 obj = doc.xref_object(elem, compressed=True)
             except Exception:
                 continue
-            if not re.search(r"/S\s*/Figure\b", obj):
+            s_typ = re.search(r"/S\s*/(\w+)", obj)
+            if not s_typ or s_typ.group(1) not in figure_tags:
                 continue
             if elem in belegt:
                 # Zweites Bild im selben Figure-Tag (Collage): Texte im EINEN Tag zusammenfuehren statt ein
@@ -599,7 +730,7 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
     uebernommen = {}
     if has_existing_structure:
         # Zuerst: Bilder, die schon in einem Figure-Tag des Dokuments liegen, bekommen ihren Alt-Text DORT.
-        uebernommen, w_ueb = _vorhandene_figures_uebernehmen(doc, struct_root_xref, page_images)
+        uebernommen, w_ueb = _vorhandene_figures_uebernehmen(doc, struct_root_xref, page_images, doc_elem_xref)
         warnings.extend(w_ueb)
         if uebernommen:
             print(f"Vorhandene Figure-Tags uebernommen: {len(uebernommen)}")
@@ -627,6 +758,7 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
 
         figure_xrefs = []
         page_figures = {}
+        index_baum_merge = None
 
         for page_num in sorted(page_images.keys()):
             page = doc[page_num]
@@ -680,6 +812,10 @@ def write_alt_texts_to_pdf(input_path: str, output_path: str, alt_texts: dict, i
                 if plan[4] is not None:
                     # Kind des umschliessenden Elements (z. B. Absatz), nicht des Dokument-Knotens
                     kandidat = elemente_seite[plan[4]] if plan[4] < len(elemente_seite) else None
+                    if not kandidat:
+                        if index_baum_merge is None:
+                            index_baum_merge = _mcid_index_aus_baum(doc, _collect_reachable_struct_elems(doc, struct_root_xref))
+                        kandidat = index_baum_merge.get((page.xref, plan[4]))
                     if not kandidat:
                         warnings.append(f"Bild auf Seite {page_num + 1}: umschliessendes Element nicht aufloesbar, nicht getaggt.")
                         continue
