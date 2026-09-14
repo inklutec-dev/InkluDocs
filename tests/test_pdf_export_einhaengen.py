@@ -92,3 +92,99 @@ class TestFigureEinhaengen(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _inhalt_ersetzen(doc, page, text: str) -> None:
+    """Seiteninhalt durch EINEN neuen Strom ersetzen (fitz legt nach insert_image mehrere an)."""
+    neu = doc.get_new_xref(); doc.update_object(neu, "<< >>"); doc.update_stream(neu, text.encode("latin-1"))
+    doc.xref_set_key(page.xref, "Contents", f"{neu} 0 R")
+
+
+def _pdf_getaggt_mit_inhalt(pfad: str, inhalt_vorlage: str, k_elem: str = "0") -> tuple:
+    """Seite mit Rasterbild und selbst geschriebenem Inhaltsstrom (Marked Content), Tag-Baum
+    Root -> Document -> Figure (MCID 0) plus ParentTree-Eintrag. Liefert (bild_xref, figure_xref)."""
+    doc = fitz.open()
+    page = doc.new_page(width=200, height=200)
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 8, 8), 0); pix.set_rect(pix.irect, (30, 30, 200))
+    page.insert_image(fitz.Rect(20, 20, 120, 120), pixmap=pix)
+    xref = page.get_images(full=True)[0][0]; name = page.get_images(full=True)[0][7]
+    roh = page.read_contents().decode("latin-1")
+    m = __import__("re").search(rf"(q\s[\s\S]*?/{name}\s+Do\s*Q)", roh)
+    neu = inhalt_vorlage.replace("{BILD}", m.group(1))
+    _inhalt_ersetzen(doc, page, neu)
+    root = doc.get_new_xref(); dokument = doc.get_new_xref(); figur = doc.get_new_xref(); pt = doc.get_new_xref(); arr = doc.get_new_xref()
+    doc.update_object(figur, f"<< /Type /StructElem /S /Figure /P {dokument} 0 R /Pg {page.xref} 0 R /K {k_elem} >>")
+    doc.update_object(dokument, f"<< /Type /StructElem /S /Document /P {root} 0 R /K [ {figur} 0 R ] >>")
+    doc.update_object(arr, f"[ {figur} 0 R ]")
+    doc.update_object(pt, f"<< /Nums [ 0 {arr} 0 R ] >>")
+    doc.update_object(root, f"<< /Type /StructTreeRoot /K {dokument} 0 R /ParentTree {pt} 0 R /ParentTreeNextKey 1 >>")
+    doc.xref_set_key(doc.pdf_catalog(), "StructTreeRoot", f"{root} 0 R")
+    doc.xref_set_key(page.xref, "StructParents", "0")
+    doc.save(pfad); doc.close()
+    return xref, figur
+
+
+class TestVorhandeneTagsUndArtefakte(unittest.TestCase):
+    def test_bild_in_vorhandenem_figure_bekommt_dort_den_alt(self):
+        """Bild liegt in /Figure <</MCID 0>> BDC ... EMC des Originals -> /Alt am vorhandenen Element, kein neues."""
+        with tempfile.TemporaryDirectory() as d:
+            q, z = os.path.join(d, "q.pdf"), os.path.join(d, "z.pdf")
+            xref, figur = _pdf_getaggt_mit_inhalt(q, "/Figure <</MCID 0>> BDC\n{BILD}\nEMC\n")
+            r = pdf_export.write_alt_texts_to_pdf(q, z, {xref: "Blaues Quadrat"},
+                                                  [{"xref": xref, "page_number": 1, "is_vector": False, "bbox": None, "alt_text": "Blaues Quadrat", "image_path": None}])
+            self.assertEqual(r["tagged_count"], 1, r)
+            self.assertEqual(r["figure_xrefs"], [figur], r)
+            doc = fitz.open(z)
+            self.assertIn("Blaues Quadrat", doc.xref_get_key(figur, "Alt")[1])
+            self.assertEqual(sum(1 for x in range(1, doc.xref_length()) if "/S /Figure" in doc.xref_object(x, compressed=True).replace("/S/Figure", "/S /Figure")), 1)
+            self.assertNotIn("/MCID 1", doc[0].read_contents().decode("latin-1"), "Inhaltsstrom darf nicht veraendert sein")
+            doc.close()
+
+    def test_bild_im_artefakt_wird_herausgeloest_und_marker_bleiben_balanciert(self):
+        """Bild liegt in einem /Artifact-Block: Artefakt wird davor geschlossen, Figure eingefuegt, danach
+        wieder geoeffnet; BDC/EMC bleiben balanciert; ParentTree bekommt den Eintrag."""
+        with tempfile.TemporaryDirectory() as d:
+            q, z = os.path.join(d, "q.pdf"), os.path.join(d, "z.pdf")
+            xref, figur = _pdf_getaggt_mit_inhalt(q, "/Figure <</MCID 0>> BDC\n0 0 m 1 1 l S\nEMC\n/Artifact <</Type /Pagination>> BDC\n{BILD}\n0 0 m 2 2 l S\nEMC\n")
+            r = pdf_export.write_alt_texts_to_pdf(q, z, {xref: "Blaues Quadrat"},
+                                                  [{"xref": xref, "page_number": 1, "is_vector": False, "bbox": None, "alt_text": "Blaues Quadrat", "image_path": None}])
+            self.assertEqual(r["tagged_count"], 1, r)
+            self.assertEqual(r["unreachable_figures"], [], r)
+            doc = fitz.open(z)
+            cs = doc[0].read_contents().decode("latin-1")
+            self.assertEqual(cs.count("BDC"), cs.count("EMC"), cs)
+            self.assertIn("/Figure <</MCID 1>> BDC", cs)
+            self.assertEqual(cs.count("/Artifact <</Type /Pagination>> BDC"), 2, "Artefakt vor und nach dem Bild wieder geoeffnet")
+            root = int(doc.xref_get_key(doc.pdf_catalog(), "StructTreeRoot")[1].split()[0])
+            eintraege = pdf_export._parenttree_elemente(doc, root, 0)
+            self.assertEqual(len(eintraege), 2); self.assertEqual(eintraege[1], r["figure_xrefs"][0])
+            f = pdf_export.finalize_export_pdf(z, title="Test", schonen=set(r["figure_xrefs"]))
+            self.assertEqual(f["orphan_alts_removed"], 0)
+            doc.close()
+
+    def test_zwei_bilder_in_einem_figure_werden_zusammengefuehrt(self):
+        with tempfile.TemporaryDirectory() as d:
+            q, z = os.path.join(d, "q.pdf"), os.path.join(d, "z.pdf")
+            doc = fitz.open(); page = doc.new_page(width=200, height=200)
+            for i, farbe in enumerate([(200, 0, 0), (0, 0, 200)]):
+                pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 8, 8), 0); pix.set_rect(pix.irect, farbe)
+                page.insert_image(fitz.Rect(20 + 90 * i, 20, 100 + 90 * i, 100), pixmap=pix)
+            infos = page.get_images(full=True); doc.save(q); doc.close()
+            # Tag-Baum + Inhalt ueber die Hilfsfunktion nachbauen (beide Bilder in EINEM Figure-Block)
+            doc = fitz.open(q); page = doc[0]; roh = page.read_contents().decode("latin-1")
+            _inhalt_ersetzen(doc, page, "/Figure <</MCID 0>> BDC\n" + roh + "\nEMC\n")
+            root = doc.get_new_xref(); dok = doc.get_new_xref(); fig = doc.get_new_xref(); pt = doc.get_new_xref()
+            doc.update_object(fig, f"<< /Type /StructElem /S /Figure /P {dok} 0 R /Pg {page.xref} 0 R /K 0 >>")
+            doc.update_object(dok, f"<< /Type /StructElem /S /Document /P {root} 0 R /K [ {fig} 0 R ] >>")
+            doc.update_object(pt, f"<< /Nums [ 0 [ {fig} 0 R ] ] >>")
+            doc.update_object(root, f"<< /Type /StructTreeRoot /K {dok} 0 R /ParentTree {pt} 0 R /ParentTreeNextKey 1 >>")
+            doc.xref_set_key(doc.pdf_catalog(), "StructTreeRoot", f"{root} 0 R"); doc.xref_set_key(page.xref, "StructParents", "0")
+            doc.save(z + ".src.pdf"); doc.close()
+            alt = {infos[0][0]: "Rotes Quadrat", infos[1][0]: "Blaues Quadrat"}
+            meta = [{"xref": x, "page_number": 1, "is_vector": False, "bbox": None, "alt_text": a, "image_path": None} for x, a in alt.items()]
+            r = pdf_export.write_alt_texts_to_pdf(z + ".src.pdf", z, alt, meta)
+            self.assertEqual(r["tagged_count"], 2, r)
+            doc = fitz.open(z)
+            a = doc.xref_get_key(fig, "Alt")[1]
+            self.assertIn("Rotes Quadrat", a); self.assertIn("Blaues Quadrat", a)
+            doc.close()

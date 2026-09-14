@@ -497,6 +497,18 @@ Entscheidungen und Umsetzung:
   das selbstgezeichnete Blatt im Herunterladen-Dialog (`.export-kopf`: Überschrift und Icon in einer
   Zeile, Icon exakt in Schrifthöhe der H2 = 1,25rem, `alt=""`) und die SVG-Platzhalter der
   Startseiten-Karten „Drei Werkzeuge“ (`start.css`, 52 px).
+- **PDF-Export, Ersatzweg ohne PDFix — Umbau 14.09.2026 (Prod-Kundendokument 430, InDesign):**
+  (1) Bilder, die im Original schon in einem `/Figure`-Block liegen, bekommen den Alt-Text am
+  VORHANDENEN Element (`_vorhandene_figures_uebernehmen`: Inhaltsstrom → innerstes Figure-BDC →
+  ParentTree → StructElem), zwei Bilder im selben Tag (Collage) werden zu einem Alt-Text
+  zusammengeführt; (2) sonst wird ein neues Figure angelegt — aber nur mit gültiger Umhüllung
+  (`_umhuellung_planen`: Bereich an Marker-Grenzen ausrichten, Artefakt-Marker im Bereich aufheben,
+  fremde getaggte Blöcke aussparen → mehrere MCIDs je Figure, umschließendes Artefakt teilen, Bild in
+  fremder Struktur wird Kind dieses Elements); ohne gültigen Plan kein Element, sondern Warnung;
+  (3) ParentTree-Einträge über echten Number-Tree-Durchlauf (`_parenttree_anhaengen`), (4) Figures
+  in jeder `/K`-Form eingehängt, Erreichbarkeit geprüft, Schonliste im Abschluss. Messung am
+  Kundendokument (veraPDF): 224/234 Texte, „Figure ohne Alt“ 249→126, ungetaggter Inhalt
+  10471→10113, keine neue Regel verletzt. Tests `tests/test_pdf_export_einhaengen.py` (7).
 - Sicherheit: Dateien werden nur aus dem Nutzer-Ordner ausgeliefert (Präfixprüfung mit
   Trenner, `_ablage_pfad_ok`); jeder Zugriff prüft `user_id`.
 - Tests: `tests/e2e/verify_ablage.py` (Knopf-Export → Eintrag, nur Befunde, Umleitung,
