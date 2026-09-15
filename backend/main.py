@@ -7460,6 +7460,27 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
         # Sprache/Titel/Aufraeumen sind Zusatznutzen. Fehler aber loggen.
         print(f"WARNUNG: finalize_export_pdf fehlgeschlagen fuer {output_path}: {e}")
 
+    # Export-Abnahme (15.09.2026): Die fertige Datei wird mit pikepdf unabhaengig nachgemessen —
+    # gleich fuer PDFix-Weg und Ersatzweg: Seitenzahl, Strukturbaum, keine Waisen, Marker-Balance,
+    # gemeldete Texte wirklich erreichbar. Befund = Warnung im Dialog + Logzeile fuer Nexus.
+    # Die Abnahme darf den Export nie scheitern lassen.
+    try:
+        from export_abnahme import abnahme_pdf, abnahme_loggen
+        quelle_texte = alt_texts_by_lfnr.values() if extraction_method == "pdfix" else alt_texts.values()
+        geschrieben = [t for t in quelle_texte if t and t != "dekorativ"]
+        info["abnahme"] = abnahme_pdf(output_path, doc.get("original_path"), geschrieben,
+                                      erwartet_getaggt=info.get("tagged"))
+        abnahme_loggen(info["abnahme"], projekt=doc.get("project_id"), dokument=doc.get("id"),
+                       verfahren=info.get("method"), datei=output_path)
+        if not info["abnahme"]["ok"]:
+            info.setdefault("warnings", []).append(
+                "Abnahme der Export-Datei nicht bestanden: " + "; ".join(info["abnahme"]["befunde"])
+                + ". Bitte die Datei pruefen, bevor Sie sie weitergeben; wir sehen uns den Fall an.")
+    except Exception as e:
+        print(f"EXPORT-ABNAHME NICHT MOEGLICH projekt={doc.get('project_id')} dokument={doc.get('id')}: {e}")
+        info.setdefault("warnings", []).append(
+            "Die automatische Abnahme der Export-Datei konnte nicht laufen. Bitte die Datei pruefen.")
+
     return output_path, info
 
 
