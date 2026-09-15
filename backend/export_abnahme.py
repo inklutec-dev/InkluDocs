@@ -14,6 +14,10 @@ Regeln (jede Verletzung = Befund, Abnahme nicht bestanden):
   4. Auf keiner Seite sind BDC/BMC- und EMC-Marker unbalanciert.
   5. Mindestens so viele der geschriebenen Texte stehen erreichbar in der Datei, wie der
      Export als „getaggt“ meldet (die Zaehlung im Dialog sagt die Wahrheit).
+  6. Lesereihenfolge: Die Seiten der Bild-Elemente steigen in Baumreihenfolge an. Kleine
+     Ruecksprünge (Doppelseiten, InDesign-Reihenfolge) sind erlaubt, ein Ruecksprung um mehr als
+     LESEREIHENFOLGE_TOLERANZ_SEITEN Seiten ist ein Befund (Rollout d am 14.09.: neue Elemente
+     hingen am Baumende, ein Screenreader haette sie nach der letzten Seite vorgelesen).
 
 Die Abnahme aendert die Datei nie. Sie darf den Export nicht scheitern lassen (Aufrufer faengt
 Ausnahmen); ihr Ergebnis geht als Warnung in den Export-Dialog und als Logzeile
@@ -29,22 +33,41 @@ import pikepdf
 
 PREFIX = 60  # Zeichen, ueber die ein geschriebener Text mit dem /Alt in der Datei verglichen wird
 MAX_SEITEN_IM_BEFUND = 10
+LESEREIHENFOLGE_TOLERANZ_SEITEN = 8  # Doppelseiten/InDesign-Reihenfolge: Kundendokument 14.09. hatte 84->80
 
 
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", (text or "")).strip()
 
 
-def _figures_erreichbar(pdf: pikepdf.Pdf) -> tuple[int, int, list[str]]:
-    """Zaehlt Figure-Elemente, die vom StructTreeRoot aus ueber /K erreichbar sind.
-    Rueckgabe: (figures gesamt, figures mit /Alt, Liste der Alt-Texte)."""
+def _seite_von(el: pikepdf.Dictionary, seiten: dict) -> Optional[int]:
+    """Seitenindex (1-basiert) eines Strukturelements: /Pg am Element, sonst /Pg eines MCR-Kindes."""
+    pg = el.get("/Pg")
+    if isinstance(pg, pikepdf.Dictionary) and pg.objgen in seiten:
+        return seiten[pg.objgen]
+    k = el.get("/K")
+    kinder = list(k) if isinstance(k, pikepdf.Array) else ([k] if k is not None else [])
+    for kind in kinder:
+        if isinstance(kind, pikepdf.Dictionary) and str(kind.get("/Type", "")) == "/MCR":
+            pg = kind.get("/Pg")
+            if isinstance(pg, pikepdf.Dictionary) and pg.objgen in seiten:
+                return seiten[pg.objgen]
+    return None
+
+
+def _figures_erreichbar(pdf: pikepdf.Pdf) -> tuple[int, int, list[str], list[int]]:
+    """Laeuft den Strukturbaum vom StructTreeRoot in DOKUMENTREIHENFOLGE ab (Tiefensuche, Kinder
+    in ihrer Reihenfolge). Rueckgabe: (figures gesamt, figures mit /Alt, Alt-Texte,
+    Seitenindex je Figure-mit-Alt in Baumreihenfolge; None-Seiten ausgelassen)."""
     root = pdf.Root.get("/StructTreeRoot")
     if root is None:
-        return 0, 0, []
+        return 0, 0, [], []
+    seiten = {p.obj.objgen: i for i, p in enumerate(pdf.pages, start=1)}
     gesehen: set = set()
     figures = 0
     mit_alt = 0
     alts: list[str] = []
+    folge: list[int] = []
     stapel = [root]
     while stapel:
         el = stapel.pop()
@@ -59,13 +82,19 @@ def _figures_erreichbar(pdf: pikepdf.Pdf) -> tuple[int, int, list[str]]:
                 if "/Alt" in el:
                     mit_alt += 1
                     alts.append(_norm(str(el.Alt)))
+                    seite = _seite_von(el, seiten)
+                    if seite is not None:
+                        folge.append(seite)
             k = el.get("/K")
-            if k is not None:
+            if isinstance(k, pikepdf.Array):
+                for x in reversed(list(k)):
+                    stapel.append(x)
+            elif k is not None:
                 stapel.append(k)
         elif isinstance(el, pikepdf.Array):
-            for x in el:
+            for x in reversed(list(el)):
                 stapel.append(x)
-    return figures, mit_alt, alts
+    return figures, mit_alt, alts, folge
 
 
 def _figures_mit_alt_gesamt(pdf: pikepdf.Pdf) -> int:
@@ -139,7 +168,7 @@ def abnahme_pdf(export_pfad: str, original_pfad: Optional[str],
         if texte and erwartet > 0 and not hat_baum:
             befunde.append("Kein Strukturbaum in der Datei, obwohl Alt-Texte geschrieben wurden")
 
-        figures, mit_alt, alts = _figures_erreichbar(pdf)
+        figures, mit_alt, alts, folge = _figures_erreichbar(pdf)
         gesamt = _figures_mit_alt_gesamt(pdf)
         kz["figures"] = figures
         kz["figures_mit_alt"] = mit_alt
@@ -156,6 +185,15 @@ def abnahme_pdf(export_pfad: str, original_pfad: Optional[str],
             mehr = "" if len(unbal) <= MAX_SEITEN_IM_BEFUND else f" und {len(unbal) - MAX_SEITEN_IM_BEFUND} weitere"
             befunde.append(f"Marker unbalanciert auf Seite(n) {zeige}{mehr}")
 
+        gross = [(folge[i - 1], folge[i]) for i in range(1, len(folge))
+                 if folge[i] < folge[i - 1] - LESEREIHENFOLGE_TOLERANZ_SEITEN]
+        kz["ruecksprünge_klein"] = sum(1 for i in range(1, len(folge)) if folge[i] < folge[i - 1]) - len(gross)
+        kz["ruecksprünge_gross"] = len(gross)
+        if gross:
+            zeige = ", ".join(f"{a}->{b}" for a, b in gross[:MAX_SEITEN_IM_BEFUND])
+            befunde.append(f"Lesereihenfolge: {len(gross)} Bild-Element(e) springen um mehr als "
+                           f"{LESEREIHENFOLGE_TOLERANZ_SEITEN} Seiten zurueck ({zeige})")
+
         gefunden = sum(1 for t in texte if any(t[:PREFIX] in a for a in alts))
         kz["texte_gefunden"] = gefunden
         if gefunden < erwartet:
@@ -171,6 +209,7 @@ def abnahme_loggen(ergebnis: dict, projekt=None, dokument=None, verfahren=None, 
     zeile = (f"EXPORT-ABNAHME {status} projekt={projekt} dokument={dokument} verfahren={verfahren} "
              f"seiten={kz.get('seiten')}/{kz.get('seiten_original')} figures_alt={kz.get('figures_mit_alt')} "
              f"waisen={kz.get('waisen')} unbalanciert={kz.get('seiten_unbalanciert')} "
+             f"ruecksprung={kz.get('ruecksprünge_gross')} "
              f"texte={kz.get('texte_gefunden')}/{kz.get('erwartet_getaggt')}")
     if ergebnis.get("befunde"):
         zeile += " befunde=" + " | ".join(ergebnis["befunde"])

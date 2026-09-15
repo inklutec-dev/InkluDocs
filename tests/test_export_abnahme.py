@@ -111,6 +111,33 @@ class TestAbnahme(unittest.TestCase):
             self.assertTrue(a["ok"], a)
             self.assertEqual(a["kennzahlen"]["texte_geschrieben"], 1)
 
+    def test_lesereihenfolge_ruecksprung(self):
+        """Zwei Bilder: das Element fuer Seite 20 steht im Baum VOR dem fuer Seite 1 -> Befund;
+        ein kleiner Ruecksprung (Seite 3 vor Seite 2) bleibt erlaubt."""
+        with tempfile.TemporaryDirectory() as d:
+            for name, seiten_folge, erwartet_ok in (("gross.pdf", [20, 1], False), ("klein.pdf", [3, 2], True)):
+                pfad = os.path.join(d, name)
+                doc = fitz.open()
+                for _ in range(20):
+                    doc.new_page(width=100, height=100)
+                root = doc.get_new_xref(); dok = doc.get_new_xref()
+                figs = []
+                for s_nr in seiten_folge:
+                    f = doc.get_new_xref()
+                    doc.update_object(f, f"<< /Type /StructElem /S /Figure /P {dok} 0 R /Pg {doc[s_nr - 1].xref} 0 R /Alt (Bild Seite {s_nr}) >>")
+                    figs.append(f)
+                doc.update_object(dok, f"<< /Type /StructElem /S /Document /P {root} 0 R /K [ {' '.join(f'{f} 0 R' for f in figs)} ] >>")
+                doc.update_object(root, f"<< /Type /StructTreeRoot /K {dok} 0 R >>")
+                doc.xref_set_key(doc.pdf_catalog(), "StructTreeRoot", f"{root} 0 R")
+                doc.save(pfad); doc.close()
+                a = abnahme_pdf(pfad, pfad, [f"Bild Seite {s}" for s in seiten_folge], erwartet_getaggt=2)
+                self.assertEqual(a["ok"], erwartet_ok, a)
+                if not erwartet_ok:
+                    self.assertTrue(any("Lesereihenfolge" in b and "20->1" in b for b in a["befunde"]), a)
+                    self.assertEqual(a["kennzahlen"]["ruecksprünge_gross"], 1)
+                else:
+                    self.assertEqual(a["kennzahlen"]["ruecksprünge_klein"], 1)
+
     def test_kaputte_datei(self):
         with tempfile.TemporaryDirectory() as d:
             z = os.path.join(d, "kaputt.pdf")

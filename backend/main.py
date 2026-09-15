@@ -7518,7 +7518,11 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         unit = units[0]
         output_path, info = _build_pdf_for_document(unit, output_dir,
                                                     custom_title=custom_name)
-        headers = {"X-Export-Credits": str(_preis)}
+        # Export-Abnahme nicht bestanden (15.09.2026, Steve): der Kunde bekommt Datei + Hinweis, zahlt aber nichts.
+        _berechnet = _preis if info.get("abnahme", {}).get("ok", True) else 0
+        if not _berechnet:
+            info.setdefault("warnings", []).append("Dieser Export wurde wegen des Befunds nicht berechnet.")
+        headers = {"X-Export-Credits": str(_berechnet)}
         if info.get("method"):
             headers["X-Export-Method"] = str(info["method"])
         if "tagged" in info:
@@ -7536,7 +7540,8 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             media_type="application/pdf",
             headers=headers,
         )
-        billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
+        if _berechnet:
+            billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_berechnet)
         return response
 
     # Alle Dokumente -> ZIP.
@@ -7545,6 +7550,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     aggregated_warnings: list[str] = []
     total_tagged = 0
     total_images = 0
+    _abnahme_ok = True
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         # Nummerierung nach Anzeige-Position (1..N), passend zur „Dokument N"-
         # Anzeige im Frontend — NICHT nach doc_index, der nach Loeschungen Luecken
@@ -7557,13 +7563,19 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             total_images += int(info.get("total", 0) or 0)
             for w in info.get("warnings", []) or []:
                 aggregated_warnings.append(f"[{inner}] {w}")
+            if not info.get("abnahme", {}).get("ok", True):
+                _abnahme_ok = False
+    # Export-Abnahme nicht bestanden (15.09.2026): eine Datei mit Befund -> der ganze Export ist kostenlos.
+    _berechnet = _preis if _abnahme_ok else 0
+    if not _berechnet:
+        aggregated_warnings.append("Dieser Export wurde wegen des Befunds nicht berechnet.")
     headers = {
         "X-Export-Tagged": str(total_tagged),
         "X-Export-Total": str(total_images),
     }
     if aggregated_warnings:
         headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
-    headers["X-Export-Credits"] = str(_preis)
+    headers["X-Export-Credits"] = str(_berechnet)
     # Ein Export-Vorgang = Grundpreis + Staffel ueber ALLE Bilder des ZIPs; nur nach erfolgreichem Bau der Antwort.
     response = FileResponse(
         zip_path,
@@ -7571,7 +7583,8 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         media_type="application/zip",
         headers=headers,
     )
-    billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
+    if _berechnet:
+        billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_berechnet)
     return response
 
 

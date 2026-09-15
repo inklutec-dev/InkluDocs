@@ -3286,7 +3286,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     : t('Heruntergeladen: „{name}“.', { name: serverName || fallback });
                 // Wo die Datei liegt, weiss die Seite nicht (Browser-Grenze) — der Satz sagt, wo man sucht (Steve 01.09.2026).
                 fertig += ' ' + t('Du findest die Datei bei deinen Downloads.');
-                if (statusEl) { statusEl.textContent = fertig; statusEl.setAttribute('tabindex', '-1'); }
+                // Hinweise des Exports (Titel-Rueckfall, Warnungen des Schreibwegs, Export-Abnahme) — bis 15.09.2026
+                // kamen sie nur im Formular-Dialog an, hier wurden sie verworfen.
+                const warn = res.headers.get('X-Export-Warnings');
+                if (warn) { try { const w = JSON.parse(warn); if (w.length) fertig += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
                 announce(fertig);
                 _exportFertig = true;
                 const cancel = document.getElementById('exportCancelBtn');
