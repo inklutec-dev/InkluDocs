@@ -779,6 +779,9 @@ def _migrate_columns(conn):
         # Elemente (Diagramm, SmartArt, Textfeld, Vektorgrafik, OLE ...) mit Art,
         # Ort und Seite/Abschnitt, Warnungen, Seitenquelle. PDF: leer.
         ("documents", "hinweise", "ALTER TABLE documents ADD COLUMN hinweise TEXT DEFAULT ''"),
+        # PDF ohne Tags (15.09.2026, Michael Karbe): 1 = Strukturbaum vorhanden, 0 = keiner, NULL = noch nicht
+        # bestimmt (Altbestand; wird beim ersten Bedarf nachgetragen). Ohne Tags kein PDF-Download.
+        ("documents", "getaggt", "ALTER TABLE documents ADD COLUMN getaggt INTEGER"),
         # QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): Ergebnis des Feld-Passes je Feld —
         # Sicherheit (hoch/mittel/niedrig, nach Nachpruefung), Beleg (woertliche
         # Textstelle der Seite) und Hinweise fuer den Bearbeiter (JSON-Liste).

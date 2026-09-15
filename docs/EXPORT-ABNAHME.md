@@ -69,3 +69,19 @@ Die Testdateien liegen nicht im Image (`/app/tests` fehlt), daher vorher hineink
 
 - Word-Weg nach PDF/UA (`export_pdfua`) hat noch keine Abnahme.
 - Inhaltlicher Abgleich je Bild (richtiger Text am richtigen Bild) — heute nur Seite und Anzahl.
+
+## PDF ohne Tags: kein PDF-Download (15.09.2026, Michael Karbe, Steve einverstanden)
+
+Ohne Strukturbaum gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen. Der
+bisherige Ersatzweg legte für solche Dateien einen Baum nur aus Figures an und setzte `MarkInfo/Marked`,
+der Fließtext blieb ungetaggt: Acrobat behandelt die Datei dann als getaggt und liest nur die Bilder.
+Das macht die Datei für blinde Leser schlechter als das Original.
+
+- `pdf_export.pdf_hat_tags(pfad)` (pikepdf): StructTreeRoot mit Kindern.
+- `documents.getaggt` (1/0, NULL = Altbestand, wird bei Bedarf bestimmt und nachgetragen), gesetzt am Ende
+  der Extraktion für PDF-Dokumente.
+- `POST /export/summary` liefert `pdf_moeglich` und `pdf_grund` (`ungetaggt`); der Dialog blendet den
+  PDF-Knopf aus und zeigt den Hinweissatz. Tabellen-Exporte bleiben.
+- `POST /export` lehnt ungetaggte Dokumente mit 422 ab (Begründung nennt die Dokumente), auch im ZIP.
+- Der Weg zurück zum PDF-Download für ungetaggte Dateien ist das Taggen der ganzen Datei: PDFix
+  Auto-Tag (`doc.AddTags`, Lizenz fehlt noch) oder das Grundtagging des Ersatzwegs (geplant).

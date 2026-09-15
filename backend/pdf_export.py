@@ -30,6 +30,27 @@ PDF_METADATEN_SETZEN = (os.environ.get("INKLUDOCS_PDF_METADATEN", "an") or "an")
 CREATOR_MAXLAENGE = 100
 
 
+def pdf_hat_tags(pfad: str) -> bool:
+    """Hat die PDF einen Strukturbaum mit Inhalt? (pikepdf, unabhaengig von PDFix.)
+    Michael Karbe 15.09.2026: Ohne Tags gibt es keinen Ort, an dem Alt-Texte fuer Screenreader
+    verlaesslich landen; ein Teil-Baum nur aus Figures macht die Datei fuer Acrobat sogar schlechter.
+    Fehler beim Oeffnen zaehlen als „keine Tags“."""
+    try:
+        import pikepdf
+        with pikepdf.open(pfad) as pdf:
+            root = pdf.Root.get("/StructTreeRoot")
+            if root is None:
+                return False
+            k = root.get("/K")
+            if k is None:
+                return False
+            if isinstance(k, pikepdf.Array):
+                return len(k) > 0
+            return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def creator_normieren(creator: str | None) -> str | None:
     """Vom Konto hinterlegter Ersteller: eine Zeile, max. 100 Zeichen; leer = Vorgabe."""
     if not creator:

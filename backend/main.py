@@ -4822,6 +4822,10 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
          json.dumps(hinweise, ensure_ascii=False) if hinweise and (hinweise.get("uebersprungen") or hinweise.get("warnungen")) else "",
          document_id)
     )
+    if art != "docx":
+        # PDF ohne Tags (Michael Karbe 15.09.2026): beim Upload festhalten; entscheidet ueber den PDF-Download.
+        from pdf_export import pdf_hat_tags
+        conn.execute("UPDATE documents SET getaggt = ? WHERE id = ?", (1 if pdf_hat_tags(file_path) else 0, document_id))
     # Projekt-Summe = Summe ueber alle Dokumente. extraction_method des Projekts
     # bleibt der des ersten Dokuments (Anzeige im Kopf) — bei Mischfaellen sind
     # die Methoden je Dokument im UI sichtbar.
@@ -5890,10 +5894,15 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     # wurde (Steve 20.06.) -> Solo-Arbeit ohne Einladung bleibt frei von Pruef-Badges.
     # share_roles traegt dieselbe Information pro Rolle; der bool bleibt fuer
     # Bestands-Codepfade erhalten.
+    doc_dicts = [dict(d) for d in documents]
+    if _is_pdf:
+        for d in doc_dicts:
+            if d.get("getaggt") is None and (d.get("original_path") or "").lower().endswith(".pdf"):
+                _dokument_getaggt(d)
     return {
         "project": proj_dict,
         "images": image_dicts,
-        "documents": [dict(d) for d in documents],
+        "documents": doc_dicts,
         "show_langbeschreibung": (not _is_pdf) or pdf_langbeschreibung_enabled(),
         "in_review": bool(share_roles),
         "share_roles": share_roles,
@@ -7383,6 +7392,36 @@ def _pdfix_lfnr_je_dokument(images: list) -> dict:
     return {img["id"]: pos for pos, img in enumerate(geordnet, start=1)}
 
 
+def _dokument_getaggt(doc: dict) -> bool:
+    """getaggt aus der Zeile; Altbestand (NULL) wird jetzt bestimmt und nachgetragen."""
+    if doc.get("getaggt") is not None:
+        return bool(doc["getaggt"])
+    from pdf_export import pdf_hat_tags
+    wert = pdf_hat_tags(doc.get("original_path") or "")
+    try:
+        conn = get_db()
+        conn.execute("UPDATE documents SET getaggt = ? WHERE id = ?", (1 if wert else 0, doc.get("id")))
+        conn.commit()
+        conn.close()
+    except Exception:  # noqa: BLE001
+        pass
+    doc["getaggt"] = 1 if wert else 0
+    return wert
+
+
+UNGETAGGT_HINWEIS = ("Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte fuer Screenreader "
+                     "verlaesslich landen; deshalb bieten wir dafuer keinen PDF-Download an. Die Alt-Texte stehen als "
+                     "Excel, CSV und JSON bereit.")
+
+
+def _ungetaggte_pruefen(units: list) -> None:
+    """PDF-Export nur fuer getaggte PDFs (Michael Karbe 15.09.2026): sonst 422 mit Begruendung."""
+    ohne = [u["doc"] for u in units if not _dokument_getaggt(u["doc"])]
+    if ohne:
+        namen = ", ".join(_doc_label(d) for d in ohne)
+        raise HTTPException(status_code=422, detail=f"{UNGETAGGT_HINWEIS} Betroffen: {namen}.")
+
+
 def _build_pdf_for_document(unit: dict, output_dir: str,
                             custom_title: Optional[str] = None,
                             creator: Optional[str] = None) -> tuple[str, dict]:
@@ -7552,6 +7591,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     conn.close()
 
     units = _load_pdf_export_units(project, user["id"], document_id)
+    _ungetaggte_pruefen(units)   # PDF ohne Tags: kein PDF-Download (15.09.2026)
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
     _creator = _pdf_creator_fuer(user["id"])   # Ersteller aus dem Konto (14.09.2026)
@@ -8678,6 +8718,14 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
     if not projekt:
         conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    # PDF ohne Tags (15.09.2026): der Dialog blendet den PDF-Knopf aus, wenn ein betroffenes Dokument keine Tags hat.
+    pdf_moeglich, pdf_grund = True, ""
+    if projekt["project_type"] == "pdf":
+        dq = "SELECT * FROM documents WHERE project_id = ?" + (" AND id = ?" if document_id is not None else "")
+        dargs = (project_id, document_id) if document_id is not None else (project_id,)
+        ohne = [dict(d) for d in conn.execute(dq, dargs).fetchall() if not _dokument_getaggt(dict(d))]
+        if ohne:
+            pdf_moeglich, pdf_grund = False, "ungetaggt"
     if document_id is not None:
         rows = conn.execute(
             "SELECT * FROM images WHERE project_id = ? AND document_id = ?",
@@ -8729,6 +8777,7 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         "preis": p["preis"], "verfuegbar": p["verfuegbar"], "erlaubt": p["erlaubt"],
         # Tabellen-Exporte (CSV/JSON) kosten einen festen Preis — fuer die Ansage im Dialog.
         "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],
+        "pdf_moeglich": pdf_moeglich, "pdf_grund": pdf_grund,
     })
 
 

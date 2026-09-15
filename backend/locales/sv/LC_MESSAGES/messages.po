@@ -5836,3 +5836,6 @@ msgstr "Skaparen har sparats."
 
 msgid "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änderst du auf einer eigenen Seite."
 msgstr "Dina inloggningsuppgifter och skaparnamnet för exporterade PDF-filer ändrar du på en egen sida."
+
+msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
+msgstr "Den här PDF-filen har inga taggar. Utan taggar finns ingen plats där alternativtexter tillförlitligt når skärmläsare, därför finns ingen PDF-nedladdning. Alternativtexterna finns som Excel, CSV och JSON."

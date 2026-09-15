@@ -6274,3 +6274,6 @@ msgstr "El creador se ha guardado."
 
 msgid "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änderst du auf einer eigenen Seite."
 msgstr "Sus datos de acceso y el nombre del creador de los PDF exportados se cambian en una página propia."
+
+msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
+msgstr "Este PDF no tiene etiquetas. Sin etiquetas no hay ningún lugar donde los textos alternativos lleguen de forma fiable a los lectores de pantalla, por eso no hay descarga en PDF. Los textos alternativos están disponibles como Excel, CSV y JSON."

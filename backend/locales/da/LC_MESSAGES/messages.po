@@ -5966,3 +5966,6 @@ msgstr "Ophavsprogrammet er gemt."
 
 msgid "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änderst du auf einer eigenen Seite."
 msgstr "Dine loginoplysninger og ophavsnavnet for eksporterede PDF'er ændrer du på en separat side."
+
+msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
+msgstr "Denne PDF har ingen tags. Uden tags findes der intet sted, hvor alternative tekster pålideligt når skærmlæsere, derfor er der ingen PDF-download. De alternative tekster findes som Excel, CSV og JSON."

@@ -6277,3 +6277,6 @@ msgstr "Ersteller wurde gespeichert."
 
 msgid "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änderst du auf einer eigenen Seite."
 msgstr "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änderst du auf einer eigenen Seite."
+
+msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
+msgstr "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."

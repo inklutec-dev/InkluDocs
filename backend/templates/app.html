@@ -691,11 +691,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'xlsx')">${t('Als Excel')}</button>
                                 <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">${t('Als JSON')}</button>
                                 <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
-                                ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF') + '</button>' : ''}
+                                ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" id="exportPdfBtn" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln') + '</button>' : ''}
                                 ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
                             </div>
+                            ${project.project_type === 'pdf' ? '<p id="exportPdfHinweis" hidden style="margin:0.5rem 0 0 0;color:var(--text-muted);font-size:0.9rem;">' + t('Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit.') + '</p>' : ''}
                             <!-- Michael Karbe (Mail 12.09.2026, Punkt 7): im Word-Dialog eine Trennlinie unter der Knopfreihe,
                                  damit Ergebnis und Pruefbericht sichtbar abgesetzt sind. Nur Word-Projekte haben die Umwandlung. -->
                             ${project.project_type === 'docx' ? '<hr class="export-trenner" aria-hidden="true">' : ''}
@@ -2986,6 +2987,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             });
             if (!res.ok) { region.textContent = ''; return; }
             const d = await res.json();
+            // PDF ohne Tags (Michael Karbe 15.09.2026): Knopf weg, Satz hin — der Server entscheidet (pdf_moeglich).
+            const pdfBtn = document.getElementById('exportPdfBtn');
+            const pdfHinweis = document.getElementById('exportPdfHinweis');
+            if (pdfBtn) pdfBtn.hidden = (d.pdf_moeglich === false);
+            if (pdfHinweis) pdfHinweis.hidden = !(d.pdf_moeglich === false);
             // Drei Gruende statt zwei (Steve 01.09.2026, gehoert: „3 noch nicht generiert“, obwohl
             // alles generiert war): dekorativ ERKANNT (KI oder Autor), bewusst geleert, nicht generiert.
             // Michael Karbe 01.09.2026: nur „mit Text / ohne Text / dekorativ" — keine Gruende. Was der

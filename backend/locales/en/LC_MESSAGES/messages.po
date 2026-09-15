@@ -6274,3 +6274,6 @@ msgstr "Creator has been saved."
 
 msgid "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änderst du auf einer eigenen Seite."
 msgstr "You change your login details and the creator name for exported PDFs on a separate page."
+
+msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
+msgstr "This PDF has no tags. Without tags there is no place where alt texts reliably reach screen readers, so there is no PDF download for it. The alt texts are available as Excel, CSV and JSON."

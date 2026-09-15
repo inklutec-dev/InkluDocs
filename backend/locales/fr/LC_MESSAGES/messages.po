@@ -6274,3 +6274,6 @@ msgstr "Le créateur a été enregistré."
 
 msgid "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änderst du auf einer eigenen Seite."
 msgstr "Vous modifiez vos identifiants et le nom du créateur des PDF exportés sur une page dédiée."
+
+msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
+msgstr "Ce PDF n'a pas de balises. Sans balises, il n'existe aucun emplacement où les textes alternatifs atteignent de façon fiable les lecteurs d'écran ; il n'y a donc pas de téléchargement PDF. Les textes alternatifs sont disponibles en Excel, CSV et JSON."
