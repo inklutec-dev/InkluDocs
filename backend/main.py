@@ -5841,7 +5841,7 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     ).fetchall()
     documents = conn.execute(
         """SELECT id, doc_index, original_filename, display_name, extraction_method,
-                  total_images, created_at, source_url, page_text, hinweise
+                  total_images, created_at, source_url, page_text, hinweise, getaggt, original_path
            FROM documents WHERE project_id = ? ORDER BY doc_index""",
         (project_id,)
     ).fetchall()
@@ -5895,10 +5895,10 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     # share_roles traegt dieselbe Information pro Rolle; der bool bleibt fuer
     # Bestands-Codepfade erhalten.
     doc_dicts = [dict(d) for d in documents]
-    if _is_pdf:
-        for d in doc_dicts:
-            if d.get("getaggt") is None and (d.get("original_path") or "").lower().endswith(".pdf"):
-                _dokument_getaggt(d)
+    for d in doc_dicts:
+        if _is_pdf and d.get("getaggt") is None and (d.get("original_path") or "").lower().endswith(".pdf"):
+            _dokument_getaggt(d)   # Altbestand: jetzt bestimmen und nachtragen
+        d.pop("original_path", None)   # Serverpfad bleibt im Haus
     return {
         "project": proj_dict,
         "images": image_dicts,
