@@ -20,7 +20,9 @@ Regeln (jede Verletzung = Befund, Abnahme nicht bestanden):
      hingen am Baumende, ein Screenreader haette sie nach der letzten Seite vorgelesen).
   7. veraPDF (PDF/UA-1) ueber den Konverter-Dienst: Der Export darf keine Regel verletzen, die das
      Original nicht verletzt, und keine Regel haeufiger verletzen als das Original („nicht schlechter
-     als die Quelle“). Fand am 14.09. „tagged content inside Artifact“ und doppelte Figures, die die
+     als die Quelle“). Ausgenommen sind die Dokument-Metadaten-Regeln (VERAPDF_METADATEN_REGELN:
+     PDF/UA-Kennung, Metadata-Strom, dc:title, ViewerPreferences): Sie sind Sache des spaeteren
+     PDF/UA-Werkzeugs und tauchen als Folge auf, sobald ein Metadata-Strom ueberhaupt existiert. Fand am 14.09. „tagged content inside Artifact“ und doppelte Figures, die die
      Regeln 1-6 nicht sehen. Ist der Konverter nicht erreichbar, ist das KEIN Befund (Kennzahl
      verapdf = „nicht moeglich“, Logzeile), damit ein Ausfall des Pruefdienstes den Export nicht sperrt.
 
@@ -44,6 +46,10 @@ except Exception:  # noqa: BLE001 — Abnahme muss auch ohne Konverter-Modul lad
 PREFIX = 60  # Zeichen, ueber die ein geschriebener Text mit dem /Alt in der Datei verglichen wird
 MAX_SEITEN_IM_BEFUND = 10
 VERAPDF_MAX_BYTES = 60 * 1024 * 1024  # Grenze des Konverters (MAX_UPLOAD_BYTES)
+# Dokument-Metadaten-Regeln (nicht Inhalt/Tagging): 5-1 PDF/UA-Kennung, 7.1-8 Metadata-Strom, 7.1-9 dc:title,
+# 7.1-10 ViewerPreferences. Korpus 15.09.: Sobald finalize einen Metadata-Strom anlegt, verschwindet 7.1-8 und
+# 5-1/7.1-9 erscheinen — eine Folge, keine Verschlechterung des Inhalts.
+VERAPDF_METADATEN_REGELN = {("5", 1), ("7.1", 8), ("7.1", 9), ("7.1", 10)}
 LESEREIHENFOLGE_TOLERANZ_SEITEN = 8  # Doppelseiten/InDesign-Reihenfolge: Kundendokument 14.09. hatte 84->80
 
 
@@ -66,6 +72,20 @@ def _seite_von(el: pikepdf.Dictionary, seiten: dict) -> Optional[int]:
     return None
 
 
+def _ist_figure(el: pikepdf.Dictionary, rolemap: dict) -> bool:
+    """/S ist Figure — direkt oder ueber die RoleMap (InDesign: PlacedGraphic -> Figure; Rollout c 14.09.)."""
+    s = str(el.get("/S", ""))
+    if s == "/Figure":
+        return True
+    gesehen = set()
+    while s in rolemap and s not in gesehen:
+        gesehen.add(s)
+        s = rolemap[s]
+        if s == "/Figure":
+            return True
+    return False
+
+
 def _figures_erreichbar(pdf: pikepdf.Pdf) -> tuple[int, int, list[str], list[int]]:
     """Laeuft den Strukturbaum vom StructTreeRoot in DOKUMENTREIHENFOLGE ab (Tiefensuche, Kinder
     in ihrer Reihenfolge). Rueckgabe: (figures gesamt, figures mit /Alt, Alt-Texte,
@@ -74,6 +94,8 @@ def _figures_erreichbar(pdf: pikepdf.Pdf) -> tuple[int, int, list[str], list[int
     if root is None:
         return 0, 0, [], []
     seiten = {p.obj.objgen: i for i, p in enumerate(pdf.pages, start=1)}
+    rm = root.get("/RoleMap")
+    rolemap = {str(k): str(v) for k, v in rm.items()} if isinstance(rm, pikepdf.Dictionary) else {}
     gesehen: set = set()
     figures = 0
     mit_alt = 0
@@ -88,7 +110,7 @@ def _figures_erreichbar(pdf: pikepdf.Pdf) -> tuple[int, int, list[str], list[int
                 if og in gesehen:
                     continue
                 gesehen.add(og)
-            if str(el.get("/S", "")) == "/Figure":
+            if _ist_figure(el, rolemap):
                 figures += 1
                 if "/Alt" in el:
                     mit_alt += 1
@@ -109,10 +131,13 @@ def _figures_erreichbar(pdf: pikepdf.Pdf) -> tuple[int, int, list[str], list[int
 
 
 def _figures_mit_alt_gesamt(pdf: pikepdf.Pdf) -> int:
-    """Alle Figure-Objekte mit /Alt in der Datei — auch unerreichbare (Waisen)."""
+    """Alle Figure-Objekte (auch ueber RoleMap) mit /Alt in der Datei — auch unerreichbare (Waisen)."""
+    root = pdf.Root.get("/StructTreeRoot")
+    rm = root.get("/RoleMap") if root is not None else None
+    rolemap = {str(k): str(v) for k, v in rm.items()} if isinstance(rm, pikepdf.Dictionary) else {}
     n = 0
     for o in pdf.objects:
-        if isinstance(o, pikepdf.Dictionary) and str(o.get("/S", "")) == "/Figure" and "/Alt" in o:
+        if isinstance(o, pikepdf.Dictionary) and "/Alt" in o and "/S" in o and _ist_figure(o, rolemap):
             n += 1
     return n
 
@@ -182,6 +207,8 @@ def verapdf_vergleich(original_pfad: Optional[str], export_pfad: str) -> dict:
     erg["regeln_original"] = len(vor)
     erg["regeln_export"] = len(nach)
     for schluessel, n in nach.items():
+        if (str(schluessel[0]), int(schluessel[1] or 0)) in VERAPDF_METADATEN_REGELN:
+            continue
         if schluessel not in vor:
             erg["neu"].append(f"{schluessel[0]}-{schluessel[1]} ({n}x)")
         elif n > vor[schluessel]:

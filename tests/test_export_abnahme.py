@@ -174,6 +174,32 @@ class TestAbnahme(unittest.TestCase):
             self.assertEqual(v["neu"], [], v)
             self.assertEqual(v["schlechter"], [], v)
 
+    def test_rolemap_placedgraphic_zaehlt_als_figure(self):
+        """InDesign: /S /PlacedGraphic mit RoleMap -> Figure (Korpus-Fund 15.09.: sonst falscher Befund „5 von 6“)."""
+        with tempfile.TemporaryDirectory() as d:
+            pfad = os.path.join(d, "rm.pdf")
+            doc = fitz.open(); page = doc.new_page()
+            root = doc.get_new_xref(); dok = doc.get_new_xref(); f = doc.get_new_xref()
+            doc.update_object(f, f"<< /Type /StructElem /S /PlacedGraphic /P {dok} 0 R /Pg {page.xref} 0 R /Alt (Platzierte Grafik) >>")
+            doc.update_object(dok, f"<< /Type /StructElem /S /Document /P {root} 0 R /K [ {f} 0 R ] >>")
+            doc.update_object(root, f"<< /Type /StructTreeRoot /K {dok} 0 R /RoleMap << /PlacedGraphic /Figure >> >>")
+            doc.xref_set_key(doc.pdf_catalog(), "StructTreeRoot", f"{root} 0 R")
+            doc.save(pfad); doc.close()
+            a = abnahme_pdf(pfad, pfad, ["Platzierte Grafik"], erwartet_getaggt=1, verapdf=False)
+            self.assertTrue(a["ok"], a)
+            self.assertEqual(a["kennzahlen"]["figures_mit_alt"], 1)
+            self.assertEqual(a["kennzahlen"]["waisen"], 0)
+
+    def test_verapdf_metadatenregeln_ausgenommen(self):
+        vor = {("7.1", 8): 1}
+        nach = {("5", 1): 1, ("7.1", 9): 1}   # Folge eines neuen Metadata-Stroms, kein Inhaltsbefund
+        with tempfile.TemporaryDirectory() as d:
+            q, z = os.path.join(d, "q.pdf"), os.path.join(d, "z.pdf")
+            xref = _quelle_mit_bild(q); _export(q, z, xref, "Blaues Quadrat")
+            with mock.patch.object(export_abnahme, "_verapdf_regeln", side_effect=[vor, nach]):
+                a = abnahme_pdf(z, q, ["Blaues Quadrat"], erwartet_getaggt=1, verapdf=True)
+            self.assertTrue(a["ok"], a)
+
     def test_kaputte_datei(self):
         with tempfile.TemporaryDirectory() as d:
             z = os.path.join(d, "kaputt.pdf")
