@@ -1,6 +1,6 @@
 # Export-Abnahme
 
-Stand: 15.09.2026. Modul `backend/export_abnahme.py`, Tests `tests/test_export_abnahme.py`,
+Stand: 15.09.2026 (Teil 3: Befund = kein Export). Modul `backend/export_abnahme.py`, Tests `tests/test_export_abnahme.py` und `tests/test_export_abnahme_endpunkt.py`,
 Einbau in `backend/main.py` (`_build_pdf_for_document`, `export_pdf`).
 
 ## Zweck
@@ -30,10 +30,19 @@ Die Abnahme ändert die Datei nie und wirft keine Ausnahme nach außen; der Aufr
 
 ## Folgen eines Befunds
 
-- Warnung im Export-Dialog (Kopfzeile `X-Export-Warnings`, Anzeige in `app.html` und
-  `formular.js`).
-- **Keine Credits**: `X-Export-Credits: 0`, `billing.verbuche` wird übersprungen. Beim ZIP
-  reicht eine Datei mit Befund, dann ist der ganze Export kostenlos.
+Grundsatz (Steve, 15.09.2026): **Ein gelieferter Export wird immer bezahlt. Eine Datei mit
+Befund verlässt das Haus nicht.**
+
+- Der Export wird verweigert: HTTP 422 mit Begründung (die Befunde im Klartext), die Datei
+  wird gelöscht, `billing.verbuche` wird nicht erreicht. Beim ZIP reicht eine Datei mit
+  Befund, dann gibt es kein ZIP.
+- Der Dialog (`app.html`, `formular.js`) zeigt die Server-Begründung; der Kunde stößt den
+  Export erneut an. Bleibt der Befund, ist es ein Fall für uns (Logzeile, Nexus-Alarm).
+- Fällt die **Abnahme selbst** aus (Ausnahme im Prüfmodul), wird die Datei geliefert und
+  berechnet, mit dem Hinweis „automatische Abnahme konnte nicht laufen“ und der Logzeile
+  `EXPORT-ABNAHME NICHT MOEGLICH`.
+- Warnungen des Schreibwegs (Titel-Rückfall, übersprungene Sonderfälle) kommen weiter über
+  `X-Export-Warnings` in den Dialog; sie sind kein Befund.
 - Logzeile für Nexus:
   `EXPORT-ABNAHME ok|FEHLGESCHLAGEN projekt= dokument= verfahren= seiten=a/b figures_alt= waisen= unbalanciert= ruecksprung= texte=gefunden/erwartet [befunde=...] datei=`
   Läuft die Abnahme selbst nicht: `EXPORT-ABNAHME NICHT MOEGLICH projekt= dokument=: <Fehler>`.
@@ -43,7 +52,8 @@ Die Abnahme ändert die Datei nie und wirft keine Ausnahme nach außen; der Aufr
 
     docker exec inkludocs-staging mkdir -p /app/tests
     docker cp tests/test_export_abnahme.py inkludocs-staging:/app/tests/
-    docker exec -w /app inkludocs-staging python3 -m unittest tests.test_export_abnahme -v
+    docker cp tests/test_export_abnahme_endpunkt.py inkludocs-staging:/app/tests/
+    docker exec -w /app inkludocs-staging python3 -m unittest tests.test_export_abnahme tests.test_export_abnahme_endpunkt -v
     python3 /home/claude/export_probe.py 69 114 123     # echte API-Exporte, Kopfzeilen
     docker logs --since 10m inkludocs-staging 2>&1 | grep EXPORT-ABNAHME
 

@@ -7472,14 +7472,22 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
                                       erwartet_getaggt=info.get("tagged"))
         abnahme_loggen(info["abnahme"], projekt=doc.get("project_id"), dokument=doc.get("id"),
                        verfahren=info.get("method"), datei=output_path)
-        if not info["abnahme"]["ok"]:
-            info.setdefault("warnings", []).append(
-                "Abnahme der Export-Datei nicht bestanden: " + "; ".join(info["abnahme"]["befunde"])
-                + ". Bitte die Datei pruefen, bevor Sie sie weitergeben; wir sehen uns den Fall an.")
     except Exception as e:
+        # Die Abnahme selbst ist ausgefallen (nicht die Datei): Export liefern, Hinweis + Logzeile.
         print(f"EXPORT-ABNAHME NICHT MOEGLICH projekt={doc.get('project_id')} dokument={doc.get('id')}: {e}")
         info.setdefault("warnings", []).append(
             "Die automatische Abnahme der Export-Datei konnte nicht laufen. Bitte die Datei pruefen.")
+    if info.get("abnahme") and not info["abnahme"]["ok"]:
+        # Befund = KEIN Export (Steve 15.09.2026): keine Datei, keine Credits; der Kunde stoesst neu an,
+        # das Team ist ueber die Logzeile informiert. Eine fehlerhafte Datei verlaesst das Haus nicht.
+        try:
+            os.remove(output_path)
+        except OSError:
+            pass
+        raise HTTPException(status_code=422, detail=(
+            "Die Export-Datei hat die automatische Pruefung nicht bestanden und wurde nicht ausgeliefert "
+            "(" + "; ".join(info["abnahme"]["befunde"]) + "). Es wurden keine Credits berechnet. "
+            "Bitte den Export erneut anstossen; wir sind informiert und sehen uns den Fall an."))
 
     return output_path, info
 
@@ -7518,11 +7526,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         unit = units[0]
         output_path, info = _build_pdf_for_document(unit, output_dir,
                                                     custom_title=custom_name)
-        # Export-Abnahme nicht bestanden (15.09.2026, Steve): der Kunde bekommt Datei + Hinweis, zahlt aber nichts.
-        _berechnet = _preis if info.get("abnahme", {}).get("ok", True) else 0
-        if not _berechnet:
-            info.setdefault("warnings", []).append("Dieser Export wurde wegen des Befunds nicht berechnet.")
-        headers = {"X-Export-Credits": str(_berechnet)}
+        headers = {"X-Export-Credits": str(_preis)}
         if info.get("method"):
             headers["X-Export-Method"] = str(info["method"])
         if "tagged" in info:
@@ -7540,8 +7544,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             media_type="application/pdf",
             headers=headers,
         )
-        if _berechnet:
-            billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_berechnet)
+        billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
         return response
 
     # Alle Dokumente -> ZIP.
@@ -7550,7 +7553,6 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     aggregated_warnings: list[str] = []
     total_tagged = 0
     total_images = 0
-    _abnahme_ok = True
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         # Nummerierung nach Anzeige-Position (1..N), passend zur „Dokument N"-
         # Anzeige im Frontend — NICHT nach doc_index, der nach Loeschungen Luecken
@@ -7563,19 +7565,13 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             total_images += int(info.get("total", 0) or 0)
             for w in info.get("warnings", []) or []:
                 aggregated_warnings.append(f"[{inner}] {w}")
-            if not info.get("abnahme", {}).get("ok", True):
-                _abnahme_ok = False
-    # Export-Abnahme nicht bestanden (15.09.2026): eine Datei mit Befund -> der ganze Export ist kostenlos.
-    _berechnet = _preis if _abnahme_ok else 0
-    if not _berechnet:
-        aggregated_warnings.append("Dieser Export wurde wegen des Befunds nicht berechnet.")
     headers = {
         "X-Export-Tagged": str(total_tagged),
         "X-Export-Total": str(total_images),
     }
     if aggregated_warnings:
         headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
-    headers["X-Export-Credits"] = str(_berechnet)
+    headers["X-Export-Credits"] = str(_preis)
     # Ein Export-Vorgang = Grundpreis + Staffel ueber ALLE Bilder des ZIPs; nur nach erfolgreichem Bau der Antwort.
     response = FileResponse(
         zip_path,
@@ -7583,8 +7579,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         media_type="application/zip",
         headers=headers,
     )
-    if _berechnet:
-        billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_berechnet)
+    billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
     return response
 
 

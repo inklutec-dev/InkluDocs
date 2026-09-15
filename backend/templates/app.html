@@ -3295,8 +3295,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const cancel = document.getElementById('exportCancelBtn');
                 if (cancel) cancel.textContent = t('Zurück zum Projekt');
             } else {
-                if (statusEl) statusEl.textContent = t('Fehler beim Export.');
-                announce(t('Fehler beim Export.'));
+                // Serverseitige Begruendung anzeigen (z. B. Export-Abnahme nicht bestanden, 15.09.2026) — wie im Formular-Dialog.
+                const e = await res.json().catch(() => ({}));
+                const m = (e && typeof e.detail === 'string' && e.detail) ? e.detail : t('Fehler beim Export.');
+                if (statusEl) { statusEl.textContent = m; statusEl.setAttribute('tabindex', '-1'); }
+                announce(m);
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = t('Verbindungsfehler.');
