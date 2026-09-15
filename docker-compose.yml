@@ -3,11 +3,20 @@ services:
     image: inkludocs:v4-20260914f
     container_name: inkludocs
     restart: unless-stopped
+    # 15.09.2026 (Steve, nach dem Vorfall vom 14.09.): Logs ins System-Journal — sie ueberleben den
+    # Container-Neubau beim Rollout (Verlauf: journalctl CONTAINER_NAME=<dienst> --since "..."; docker logs
+    # zeigt weiterhin den laufenden Container). Zeitzone Berlin fuer Log- und Mail-Zeiten; die Datenbank
+    # bleibt UTC (SQLite datetime('now')), beim Vergleich +2 h (Sommer) / +1 h (Winter) rechnen.
+    logging:
+      driver: journald
+      options:
+        tag: "{{.Name}}"
     ports:
       - "127.0.0.1:8001:8001"
     volumes:
       - inkludocs_data:/app/data
     environment:
+      - TZ=Europe/Berlin
       # Log-Zeilen sofort ausgeben (01.09.2026): print ist im Container sonst gepuffert, Zeitstempel im Log stimmen nicht.
       - PYTHONUNBUFFERED=1
       # PDF_LANGBESCHREIBUNG (03.06.2026): Langbeschreibung bei PDF an/aus, Standard off. Siehe .env / backend main.py.

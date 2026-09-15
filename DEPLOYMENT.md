@@ -83,3 +83,15 @@ Hinweis (13.06.2026): Im Repo lag bei Einrichtung KEINE `.env.prod` mehr — die
 laufende Production-Instanz traegt ihre Konfiguration im Container. `compose-prod.sh up`
 wuerde daher mangels `.env.prod` fehlschlagen, bis die Datei wiederhergestellt ist.
 (Separat zu pruefen, nicht Teil der Demo.)
+
+## Logs und Zeitzone (15.09.2026)
+
+Alle drei App-Dienste (`inkludocs`, `inkludocs-demo`, `inkludocs-staging`) loggen ins System-Journal
+(`logging: driver: journald`, Tag = Containername) und laufen mit `TZ=Europe/Berlin`.
+
+- Verlauf über Container-Neubauten hinweg: `sudo journalctl CONTAINER_NAME=inkludocs --since "2026-09-14 15:00" -o short-iso`
+- Laufender Container wie bisher: `sudo docker logs --since 1h inkludocs`
+- Die Datenbank speichert weiter UTC (SQLite `datetime(now)`). Log- und Mail-Zeiten sind Berliner Zeit.
+  Beim Abgleich Datenbank gegen Log: Sommer +2 h, Winter +1 h.
+- Anlass: Am 14.09. gingen mit sechs Rollouts die Logs des Tages verloren (21× HTTP 429 nicht mehr prüfbar),
+  und Uhrzeiten wurden im Bericht um zwei Stunden falsch notiert.

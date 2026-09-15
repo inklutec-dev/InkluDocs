@@ -10,11 +10,20 @@ services:
     build: .
     container_name: inkludocs-staging
     restart: unless-stopped
+    # 15.09.2026 (Steve, nach dem Vorfall vom 14.09.): Logs ins System-Journal — sie ueberleben den
+    # Container-Neubau beim Rollout (Verlauf: journalctl CONTAINER_NAME=<dienst> --since "..."; docker logs
+    # zeigt weiterhin den laufenden Container). Zeitzone Berlin fuer Log- und Mail-Zeiten; die Datenbank
+    # bleibt UTC (SQLite datetime('now')), beim Vergleich +2 h (Sommer) / +1 h (Winter) rechnen.
+    logging:
+      driver: journald
+      options:
+        tag: "{{.Name}}"
     ports:
       - "127.0.0.1:8002:8001"
     volumes:
       - inkludocs_staging_data:/app/data
     environment:
+      - TZ=Europe/Berlin
       # Nur STAGING: Testlaeufe des InkluEdit-Website-Einzugs brauchen mehr
       # als 100 Bilder/Tag. Auf PROD bleibt die Vorgabe 100 unangetastet.
       - DAILY_IMAGE_LIMIT=500
