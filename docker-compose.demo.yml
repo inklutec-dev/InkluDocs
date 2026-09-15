@@ -25,7 +25,7 @@ name: inkludocs-demo
 
 services:
   inkludocs-demo:
-    image: inkludocs:demo-20260910  # 10.09.2026: Chatbot Gemini (Flash), Chat-Pruefung, Kontext-Fix, SEPA-Regel
+    image: inkludocs:demo-20260914f  # 14.09.2026: Ablage, Bot-Werkzeuge, Startseite 2, Optik-Runden, Icons, Gemini-Denkreserve, Export-Fix, Ersatzweg wie PDFix, Lesereihenfolge, Seitenlayout kein Bild, log-Fix (f)
     container_name: inkludocs-demo
     restart: unless-stopped
     ports:
