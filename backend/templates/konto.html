@@ -34,6 +34,22 @@
         </form>
       </section>
 
+      {# Ersteller (Creator) in exportierten PDFs (Michael Karbe 14.09.2026, Kunde Jens):
+         steht in den Dokument-Eigenschaften jeder exportierten PDF; leer = inkludocs.de. #}
+      <section class="dash-card" aria-labelledby="creator-h">
+        <h2 id="creator-h">{{ _('Dokument-Eigenschaften') }}</h2>
+        <p class="dash-meta">{{ _('Dieser Name steht in jeder exportierten PDF als Ersteller, zum Beispiel der Name deines Unternehmens. Leer lassen für die Vorgabe inkludocs.de.') }}</p>
+        <form id="changeCreatorForm">
+          <div class="dash-field">
+            <label for="pdf_creator">{{ _('Ersteller in exportierten PDFs') }}</label>
+            <input type="text" id="pdf_creator" class="dash-input" maxlength="100" autocomplete="organization" placeholder="inkludocs.de">
+          </div>
+          <button type="submit" class="btn btn-primary">{{ _('Ersteller speichern') }}</button>
+          <span id="creatorMsg" role="status" aria-live="polite" style="margin-left:.75rem;"></span>
+          <span id="creatorErr" role="alert" style="margin-left:.75rem;color:var(--error);"></span>
+        </form>
+      </section>
+
       <section class="dash-card" aria-labelledby="mail-h">
         <h2 id="mail-h">{{ _('E-Mail-Adresse') }}</h2>
         {# Ehrliche Erwartung setzen: Der Wechsel passiert NICHT beim Absenden,
@@ -146,7 +162,34 @@
     zeigeKontoZeile();
     // Feld mit dem aktuellen Namen vorbelegen — Aendern statt Neutippen.
     byId('display_name').value = _konto.name;
+    byId('pdf_creator').value = u.pdf_creator || '';
   })();
+
+  byId('changeCreatorForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = byId('pdf_creator');
+    const msg = byId('creatorMsg');
+    const err = byId('creatorErr');
+    msg.textContent = ''; msg.style.color = '';
+    err.textContent = '';
+    let res;
+    try {
+      res = await fetch('/api/change-pdfcreator', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pdf_creator: input.value }),
+      });
+    } catch (e) {
+      err.textContent = t('Fehler');
+      return;
+    }
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) {
+      input.value = d.pdf_creator || '';
+      msg.textContent = t('Ersteller wurde gespeichert.');
+      msg.style.color = 'var(--success)';
+    } else {
+      err.textContent = d.detail || t('Fehler');
+    }
+  });
 
   byId('changeNameForm').addEventListener('submit', async (e) => {
     e.preventDefault();

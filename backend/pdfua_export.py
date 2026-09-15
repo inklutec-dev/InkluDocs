@@ -150,15 +150,17 @@ def _rahmen_umwandeln(root) -> int:
     return n
 
 
-def dokumentinfo_setzen(pdf_bytes: bytes) -> bytes:
+def dokumentinfo_setzen(pdf_bytes: bytes, creator: str | None = None) -> bytes:
     """Creator/Producer der barrierefreien PDF (Heine/Karbe 01.09.2026) — dieselben Werte wie
     bei allen anderen PDF-Ausgaengen (pdf_export.dokumentinfo_werte), hier mit pikepdf, weil
     die Datei an dieser Stelle als Bytes vorliegt. Scheitert es, bleibt die Datei wie sie ist."""
     try:
         import io
         import pikepdf
-        from pdf_export import dokumentinfo_werte
-        werte = dokumentinfo_werte("libreoffice")
+        from pdf_export import dokumentinfo_werte, PDF_METADATEN_SETZEN
+        if not PDF_METADATEN_SETZEN:   # Staging-Pruefung (Michael 14.09.2026): Datei bleibt, wie sie ist
+            return pdf_bytes
+        werte = dokumentinfo_werte("libreoffice", creator)
         pdf = pikepdf.open(io.BytesIO(pdf_bytes))
         with pdf.open_metadata(set_pikepdf_as_editor=False) as meta:
             meta["xmp:CreatorTool"] = werte["creator"]

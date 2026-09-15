@@ -13,6 +13,11 @@ sys.path.insert(0, "/app")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 import fitz  # noqa: E402
 import pdf_export  # noqa: E402
+
+# Diese Tests beschreiben das Prod-Verhalten (Schalter an). Auf Staging steht INKLUDOCS_PDF_METADATEN=aus
+# (Michael Karbe 14.09.2026, Producer-Pruefung) — hier ausdruecklich einschalten; der Schalter selbst wird
+# in tests/test_pdf_creator.py geprueft.
+pdf_export.PDF_METADATEN_SETZEN = True
 import pdfua_export  # noqa: E402
 
 FIX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "testformular_inkludocs.pdf")

@@ -32,12 +32,13 @@ class XlsxExport(unittest.TestCase):
         ]}
         ws = _lade(unit).active
         self.assertEqual(ws.title, "Alt-Texte")
-        self.assertEqual([ws["A1"].value, ws["B1"].value, ws["C1"].value],
-                         ["Bild", "Alt-Text", "Langbeschreibung"])
+        self.assertEqual([ws["A1"].value, ws["B1"].value, ws["C1"].value, ws["D1"].value],
+                         ["Bild", "Seite", "Alt-Text", "Langbeschreibung"])
+        self.assertIsNone(ws["B2"].value)   # kein page_number -> Zelle leer
         self.assertEqual(ws["A2"].value, "bild_eins.png")
-        self.assertEqual(ws["B2"].value, "Ein rotes Haus")
-        self.assertEqual(ws["C2"].value, "Ein rotes Haus mit zwei Fenstern.")
-        self.assertEqual(ws["B3"].value, "Blauer Kreis")
+        self.assertEqual(ws["C2"].value, "Ein rotes Haus")
+        self.assertEqual(ws["D2"].value, "Ein rotes Haus mit zwei Fenstern.")
+        self.assertEqual(ws["C3"].value, "Blauer Kreis")
 
     def test_formel_injection_entschaerft(self):
         unit = {"images": [
@@ -46,8 +47,8 @@ class XlsxExport(unittest.TestCase):
              "langbeschreibung": "+SUMME(A1:A9)"},
         ]}
         ws = _lade(unit).active
-        self.assertTrue(str(ws["B2"].value).startswith("'="), ws["B2"].value)
-        self.assertTrue(str(ws["C2"].value).startswith("'+"), ws["C2"].value)
+        self.assertTrue(str(ws["C2"].value).startswith("'="), ws["C2"].value)
+        self.assertTrue(str(ws["D2"].value).startswith("'+"), ws["D2"].value)
 
     def test_geleertes_bild_bleibt_leer(self):
         # Geleerter Alt-Text ('' seit 01.09.2026 = NULL-Regel; _ausgabe_alt_text
@@ -58,8 +59,8 @@ class XlsxExport(unittest.TestCase):
              "langbeschreibung": None},
         ]}
         ws = _lade(unit).active
-        self.assertIn(ws["B2"].value, (None, ""))
         self.assertIn(ws["C2"].value, (None, ""))
+        self.assertIn(ws["D2"].value, (None, ""))
 
     def test_fehlertext_geht_nicht_nach_aussen(self):
         unit = {"images": [
@@ -69,9 +70,25 @@ class XlsxExport(unittest.TestCase):
              "langbeschreibung": "Traceback (most recent call last): kaputt"},
         ]}
         ws = _lade(unit).active
-        self.assertIn(ws["B2"].value, (None, ""))
         self.assertIn(ws["C2"].value, (None, ""))
+        self.assertIn(ws["D2"].value, (None, ""))
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class XlsxSeitenzahl(unittest.TestCase):
+    def test_seite_aus_page_number(self):
+        """Kunde Jens ueber Michael Karbe (14.09.2026): Seitenzahl im Excel-Export."""
+        unit = {"images": [
+            {"image_path": "/nirgends/a.png", "alt_text": "Eins", "status": "done", "alt_text_edited": None,
+             "original_alt": None, "langbeschreibung": "", "page_number": 3},
+            {"image_path": "/nirgends/b.png", "alt_text": "Zwei", "status": "done", "alt_text_edited": None,
+             "original_alt": None, "langbeschreibung": "", "page_number": None},
+        ]}
+        ws = _lade(unit).active
+        self.assertEqual(ws["B1"].value, "Seite")
+        self.assertEqual(ws["B2"].value, 3)
+        self.assertIsNone(ws["B3"].value)
+        self.assertEqual(ws["C2"].value, "Eins")

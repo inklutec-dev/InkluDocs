@@ -1215,7 +1215,8 @@ def build_router(deps: Deps) -> APIRouter:
             einheiten.append({"doc": d, "felder": felder})
         return einheiten
 
-    def _pdf_fuer_dokument(einheit: dict, output_dir: str, custom_title: Optional[str]) -> tuple[str, dict]:
+    def _pdf_fuer_dokument(einheit: dict, output_dir: str, custom_title: Optional[str],
+                           creator: Optional[str] = None) -> tuple[str, dict]:
         """Synchron (laeuft im Executor): Originalpfad pruefen, Quickinfos schreiben."""
         doc = einheit["doc"]
         src = doc.get("original_path") or ""
@@ -1226,19 +1227,33 @@ def build_router(deps: Deps) -> APIRouter:
         base = custom_title or _d.doc_label(doc)
         out_path = os.path.join(output_dir, "inkludocs_" + _d.safe_filename_component(base) + "_quickinfos.pdf")
         try:
-            erg = formular_export.write_quickinfos_to_pdf(src, out_path, quickinfos)
+            erg = formular_export.write_quickinfos_to_pdf(src, out_path, quickinfos, creator=creator)
         except formular_export.FormularExportFehler as e:
             raise HTTPException(status_code=500, detail=str(e))
         return out_path, {"geschrieben": erg.geschrieben, "writer": erg.writer, "gesamt": len(einheit["felder"]),
                           "offen": sum(1 for f in einheit["felder"] if not (f["quickinfo"] or "").strip()),
                           "warnungen": erg.warnungen}
 
+    def _creator_fuer(user_id) -> Optional[str]:
+        """Ersteller (Creator) aus dem Konto des Projektinhabers (Michael Karbe 14.09.2026); None = Vorgabe."""
+        try:
+            conn = _d.get_db()
+            try:
+                row = conn.execute("SELECT pdf_creator FROM users WHERE id = ?", (user_id,)).fetchone()
+            finally:
+                conn.close()
+            from pdf_export import creator_normieren
+            return creator_normieren(row["pdf_creator"] if row else None)
+        except Exception:  # noqa: BLE001 — Metadaten duerfen den Export nie scheitern lassen
+            return None
+
     def _export_bauen(einheiten: list, work_dir: str, custom_name: Optional[str], project: dict,
                       einzeln: bool) -> tuple[str, str, dict]:
         """Synchron (Executor): erzeugt PDF oder ZIP in work_dir. Liefert (Pfad, Download-Name, Info)."""
+        creator = _creator_fuer(project.get("user_id"))
         if einzeln:
             einheit = einheiten[0]
-            out_path, info = _pdf_fuer_dokument(einheit, work_dir, custom_name)
+            out_path, info = _pdf_fuer_dokument(einheit, work_dir, custom_name, creator)
             name = f"inkludocs_{custom_name or _d.doc_label(einheit['doc'])}_quickinfos.pdf"
             return out_path, name, info
         zip_base = custom_name or _d.safe_filename_component(project.get("name") or project.get("filename") or "projekt")
@@ -1246,7 +1261,7 @@ def build_router(deps: Deps) -> APIRouter:
         warnungen, gesamt, geschrieben, offen = [], 0, 0, 0
         with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             for pos, einheit in enumerate(einheiten, start=1):
-                out_path, info = _pdf_fuer_dokument(einheit, work_dir, None)
+                out_path, info = _pdf_fuer_dokument(einheit, work_dir, None, creator)
                 inner = f"{pos:02d}_{_d.doc_label(einheit['doc'])}_quickinfos.pdf"
                 zf.write(out_path, arcname=inner)
                 gesamt += info["gesamt"]; geschrieben += info["geschrieben"]; offen += info["offen"]

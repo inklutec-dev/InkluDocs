@@ -101,6 +101,9 @@ services:
       - TAGESLAUF_TOKEN=${TAGESLAUF_TOKEN:-}
       # Barrierefreie PDF aus Word (29.08.2026): Umwandler-Dienst im Compose-Netz
       - KONVERTER_URL=http://inkludocs-konverter:8090
+      # Michael Karbe 14.09.2026: auf Staging Creator/Producer NICHT setzen, damit sichtbar bleibt, was
+      # LibreOffice/PDFix/PyMuPDF von sich aus eintragen (Prod setzt immer nur den Produktnamen).
+      - INKLUDOCS_PDF_METADATEN=aus
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

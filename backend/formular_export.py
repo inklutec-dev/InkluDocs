@@ -200,7 +200,8 @@ def _schreibe_mit_pymupdf(input_path: str, tmp_path: str, zu_schreiben: dict[str
 
 
 def write_quickinfos_to_pdf(input_path: str, output_path: str,
-                            quickinfos: dict[str, str]) -> FormularExportErgebnis:
+                            quickinfos: dict[str, str],
+                            creator: str | None = None) -> FormularExportErgebnis:
     """Schreibt Quickinfos in eine Kopie der PDF. quickinfos: Anker -> Text.
     Leere Texte werden uebersprungen (Feld bleibt wie im Original)."""
     zu_schreiben = {k: v for k, v in quickinfos.items()
@@ -218,7 +219,8 @@ def write_quickinfos_to_pdf(input_path: str, output_path: str,
     tmp_path = _temp_pfad(out_dir, "_export_", ".pdf.tmp")
 
     try:
-        return _schreiben_und_pruefen(input_path, output_path, tmp_path, out_dir, zu_schreiben, warnungen)
+        return _schreiben_und_pruefen(input_path, output_path, tmp_path, out_dir, zu_schreiben, warnungen,
+                                      creator=creator)
     finally:
         try:
             if os.path.exists(tmp_path):
@@ -228,7 +230,8 @@ def write_quickinfos_to_pdf(input_path: str, output_path: str,
 
 
 def _schreiben_und_pruefen(input_path: str, output_path: str, tmp_path: str, out_dir: str,
-                           zu_schreiben: dict[str, str], warnungen: list) -> FormularExportErgebnis:
+                           zu_schreiben: dict[str, str], warnungen: list,
+                           creator: str | None = None) -> FormularExportErgebnis:
     if not zu_schreiben:
         shutil.copyfile(input_path, tmp_path)
         os.replace(tmp_path, output_path)
@@ -304,7 +307,7 @@ def _schreiben_und_pruefen(input_path: str, output_path: str, tmp_path: str, out
     # Export nicht scheitern lassen — die Quickinfos stehen zu diesem Zeitpunkt bereits in der PDF.
     try:
         import pdf_export as _pe
-        _pe.setze_dokumentinfo(output_path, "pdfix" if writer == "pdfix" else "fitz")
+        _pe.setze_dokumentinfo(output_path, "pdfix" if writer == "pdfix" else "fitz", creator)
     except Exception as e:  # noqa: BLE001
         log.warning("Formular-Export: Dokument-Eigenschaften nicht gesetzt: %s", e)
     return FormularExportErgebnis(path=output_path, geschrieben=geschrieben, writer=writer,

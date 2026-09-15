@@ -752,6 +752,9 @@ def _migrate_columns(conn):
         # den Neustart — billing.monats_verbrauch zaehlt ab hier frisch
         # (wirkt nur im Monat der Umstellung, danach gilt wieder der Monatsanfang).
         ("users", "kontingent_reset_am", "ALTER TABLE users ADD COLUMN kontingent_reset_am TEXT"),
+        # Ersteller (Creator) in exportierten PDFs je Konto (Michael Karbe 14.09.2026, Kunde Jens):
+        # leer = Vorgabe inkludocs.de; sonst z. B. der Name des Unternehmens.
+        ("users", "pdf_creator", "ALTER TABLE users ADD COLUMN pdf_creator TEXT"),
         # Multi-Datei Phase 2 (14.08.2026): Web-Projekte bekommen die Dokument-
         # Ebene (eine gescannte Adresse = eine "Webseite"), Grafik-Projekte
         # Umbenennen/Loeschen pro Bild.

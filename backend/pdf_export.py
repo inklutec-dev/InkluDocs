@@ -22,13 +22,29 @@ import fitz  # PyMuPDF
 # Aenderbar ueber Umgebung, ohne Code anzufassen.
 PDF_CREATOR = os.environ.get("INKLUDOCS_PDF_CREATOR", "inkludocs.de")
 PDF_PRODUCER = os.environ.get("INKLUDOCS_PDF_PRODUCER", "InkluDocs")
+# Schalter (Michael Karbe 14.09.2026): INKLUDOCS_PDF_METADATEN=aus laesst Creator/Producer der Datei
+# unangetastet — auf Staging, um zu pruefen, was LibreOffice/PDFix/PyMuPDF von sich aus eintragen.
+# Vorgabe „an“ (Prod: immer nur unser Produktname).
+PDF_METADATEN_SETZEN = (os.environ.get("INKLUDOCS_PDF_METADATEN", "an") or "an").strip().lower() \
+    not in ("aus", "0", "false", "nein", "off")
+CREATOR_MAXLAENGE = 100
 
 
-def dokumentinfo_werte(verfahren: str | None = None) -> dict:
+def creator_normieren(creator: str | None) -> str | None:
+    """Vom Konto hinterlegter Ersteller: eine Zeile, max. 100 Zeichen; leer = Vorgabe."""
+    if not creator:
+        return None
+    t = re.sub(r"[\r\n\t]+", " ", str(creator)).strip()
+    return t[:CREATOR_MAXLAENGE] or None
+
+
+def dokumentinfo_werte(verfahren: str | None = None, creator: str | None = None) -> dict:
     """Creator/Producer fuer eine exportierte PDF — fuer alle Wege dieselben Werte.
     `verfahren` (pdfix/fitz/libreoffice) wird von den Aufrufern weiter mitgegeben, hat aber
-    keinen Einfluss auf den Wortlaut: Es steht immer nur unser Produktname in der Datei."""
-    return {"creator": PDF_CREATOR, "producer": PDF_PRODUCER}
+    keinen Einfluss auf den Wortlaut: Es steht immer nur unser Produktname in der Datei.
+    `creator`: vom Konto hinterlegter Ersteller (Michael Karbe 14.09.2026, Kunde Jens: eigenes
+    Unternehmen als Creator) — ersetzt die Vorgabe; der Producer bleibt InkluDocs."""
+    return {"creator": creator_normieren(creator) or PDF_CREATOR, "producer": PDF_PRODUCER}
 
 
 def _xml_escape(text: str) -> str:
@@ -53,12 +69,17 @@ def xmp_dokumentinfo(xmp: str, werte: dict) -> str:
     return xmp
 
 
-def dokumentinfo_in_doc(doc: "fitz.Document", verfahren: str | None = None) -> dict:
+def dokumentinfo_in_doc(doc: "fitz.Document", verfahren: str | None = None,
+                        creator: str | None = None) -> dict:
     """Creator/Producer in ein geoeffnetes fitz-Dokument schreiben: Info-Dictionary UND —
     falls vorhanden — XMP-Paket. EINE Stelle fuer alle fitz-basierten Ausgaenge; das
-    PDF/UA-Verfahren (pikepdf, Bytes) setzt dieselben Werte auf seinem Weg."""
-    werte = dokumentinfo_werte(verfahren)
+    PDF/UA-Verfahren (pikepdf, Bytes) setzt dieselben Werte auf seinem Weg.
+    Bei INKLUDOCS_PDF_METADATEN=aus wird nichts geschrieben; zurueck kommt, was in der Datei steht."""
     meta = doc.metadata or {}
+    if not PDF_METADATEN_SETZEN:
+        return {"creator": meta.get("creator") or "", "producer": meta.get("producer") or "",
+                "unveraendert": True}
+    werte = dokumentinfo_werte(verfahren, creator)
     meta["creator"] = werte["creator"]
     meta["producer"] = werte["producer"]
     doc.set_metadata(meta)
@@ -73,12 +94,16 @@ def dokumentinfo_in_doc(doc: "fitz.Document", verfahren: str | None = None) -> d
     return werte
 
 
-def setze_dokumentinfo(pdf_path: str, verfahren: str | None = None) -> dict:
+def setze_dokumentinfo(pdf_path: str, verfahren: str | None = None,
+                       creator: str | None = None) -> dict:
     """Creator/Producer in eine fertige PDF schreiben (Info-Dictionary + XMP), Rest unangetastet.
     Entspricht Heines SetDocInfo-Skript (PutString auf dem Info-Objekt), hier mit PyMuPDF,
     damit alle Ausgaenge dieselbe Stelle nutzen."""
     doc = fitz.open(pdf_path)
-    werte = dokumentinfo_in_doc(doc, verfahren)
+    werte = dokumentinfo_in_doc(doc, verfahren, creator)
+    if werte.get("unveraendert"):
+        doc.close()
+        return werte
     # INKREMENTELL speichern: Die Datei wird nur ergaenzt, das Original bleibt byteweise
     # erhalten (der Formular-Export garantiert das ausdruecklich — test_original_ist_praefix;
     # so bleiben Heines PDFix-Ausgabe und die Quickinfos unangetastet). Das PDF/UA-Verfahren
@@ -1478,7 +1503,8 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
                         lang: str = "de-DE", verfahren: str | None = None,
                         fallback_heading: str | None = None,
                         filename_base: str | None = None,
-                        schonen: set | None = None) -> dict:
+                        schonen: set | None = None,
+                        creator: str | None = None) -> dict:
     """Gemeinsamer Abschluss-Schritt fuer beide Export-Pfade (PDFix + fitz).
     `schonen`: xrefs, die Schritt 3 nie entfernen darf (die vom fitz-Export selbst
     geschriebenen Figure-Elemente, 14.09.2026).
@@ -1558,7 +1584,7 @@ def finalize_export_pdf(pdf_path: str, title: str = None,
     info["orphan_alts_removed"] = remove_orphaned_alt_elems(doc, schonen=schonen)
 
     # 4) Dokument-Eigenschaften: Creator/Producer = nur unser Produktname (Info + XMP).
-    werte = dokumentinfo_in_doc(doc, verfahren)
+    werte = dokumentinfo_in_doc(doc, verfahren, creator)
     info["creator"] = werte["creator"]
     info["producer"] = werte["producer"]
 

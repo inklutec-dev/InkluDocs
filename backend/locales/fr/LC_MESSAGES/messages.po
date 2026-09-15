@@ -6256,3 +6256,21 @@ msgstr "L’export en CSV, Excel ou JSON coûte {p} crédits."
 
 msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}."
 msgstr "L’export en CSV, Excel ou JSON coûte {p} crédits. Vous en avez {v}."
+
+msgid "Dokument-Eigenschaften"
+msgstr "Propriétés du document"
+
+msgid "Dieser Name steht in jeder exportierten PDF als Ersteller, zum Beispiel der Name deines Unternehmens. Leer lassen für die Vorgabe inkludocs.de."
+msgstr "Ce nom figure dans chaque PDF exporté comme créateur, par exemple le nom de votre entreprise. Laissez vide pour la valeur par défaut inkludocs.de."
+
+msgid "Ersteller in exportierten PDFs"
+msgstr "Créateur dans les PDF exportés"
+
+msgid "Ersteller speichern"
+msgstr "Enregistrer le créateur"
+
+msgid "Ersteller wurde gespeichert."
+msgstr "Le créateur a été enregistré."
+
+msgid "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änderst du auf einer eigenen Seite."
+msgstr "Vous modifiez vos identifiants et le nom du créateur des PDF exportés sur une page dédiée."

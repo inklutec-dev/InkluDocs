@@ -824,6 +824,7 @@ async def me(user: dict = Depends(get_current_user)):
             "display_name": db_user["display_name"],
             "is_admin": db_user["is_admin"],
             "admin_level": db_user.get("admin_level", "full"),
+            "pdf_creator": db_user.get("pdf_creator") or "",
         },
         # deprecated: altes Tages-Limit — bleibt bis zur Frontend-Umstellung
         # auf den "abo"-Block mitgeliefert, danach entfernen.
@@ -1131,6 +1132,34 @@ async def change_displayname(request: Request, user: dict = Depends(get_current_
     conn.commit()
     conn.close()
     return {"ok": True, "message": "Name wurde geaendert", "display_name": new_name}
+
+
+def _pdf_creator_fuer(user_id: int) -> Optional[str]:
+    """Vom Konto hinterlegter Ersteller (Creator) fuer exportierte PDFs; None = Vorgabe."""
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT pdf_creator FROM users WHERE id = ?", (user_id,)).fetchone()
+    finally:
+        conn.close()
+    from pdf_export import creator_normieren
+    return creator_normieren(row["pdf_creator"] if row else None)
+
+
+@app.post("/api/change-pdfcreator")
+async def change_pdfcreator(request: Request, user: dict = Depends(get_current_user)):
+    """Ersteller (Creator) in exportierten PDFs (Michael Karbe 14.09.2026, Kunde Jens): eine Zeile,
+    max. 100 Zeichen, leer = Vorgabe inkludocs.de. Der Producer bleibt immer InkluDocs."""
+    data = await request.json()
+    from pdf_export import creator_normieren, CREATOR_MAXLAENGE
+    roh = str(data.get("pdf_creator") or "")
+    if len(roh.strip()) > CREATOR_MAXLAENGE:
+        raise HTTPException(status_code=400, detail=f"Der Ersteller darf maximal {CREATOR_MAXLAENGE} Zeichen lang sein")
+    wert = creator_normieren(roh)
+    conn = get_db()
+    conn.execute("UPDATE users SET pdf_creator = ? WHERE id = ?", (wert, user["id"]))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "pdf_creator": wert or ""}
 
 
 # ─── Password Reset ──────────────────────────────────────────
@@ -7347,7 +7376,8 @@ def _pdfix_lfnr_je_dokument(images: list) -> dict:
 
 
 def _build_pdf_for_document(unit: dict, output_dir: str,
-                            custom_title: Optional[str] = None) -> tuple[str, dict]:
+                            custom_title: Optional[str] = None,
+                            creator: Optional[str] = None) -> tuple[str, dict]:
     """Erzeugt die exportierte PDF fuer EIN Dokument (alle Alt-Texte
     eingebettet). Gibt (output_path, header_info) zurueck. Header_info
     enthaelt die gleichen Metriken wie der Single-Export davor.
@@ -7449,7 +7479,7 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
                                            verfahren=info.get("method"),
                                            fallback_heading=erste_ueberschrift(output_path),
                                            filename_base=fallback_title,
-                                           schonen=schonen)
+                                           schonen=schonen, creator=creator)
         if info["a11y"].get("title_source") == "dateiname":
             info.setdefault("warnings", []).append(
                 "Kein Dokumenttitel gefunden: Die PDF traegt den Dateinamen als Titel. "
@@ -7516,6 +7546,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     units = _load_pdf_export_units(project, user["id"], document_id)
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
+    _creator = _pdf_creator_fuer(user["id"])   # Ersteller aus dem Konto (14.09.2026)
 
     # Export-Staffel (Michael 28.08.2026): 5 Credits + 1 je angefangene 10 Bilder, fuer ALLE
     # Konten (Free hat 10 Credits); reicht das Guthaben nicht, kein Export (402 + Zahlen).
@@ -7525,7 +7556,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         # Einzelne Datei zurueckgeben (direkter Download, kein ZIP).
         unit = units[0]
         output_path, info = _build_pdf_for_document(unit, output_dir,
-                                                    custom_title=custom_name)
+                                                    custom_title=custom_name, creator=_creator)
         headers = {"X-Export-Credits": str(_preis)}
         if info.get("method"):
             headers["X-Export-Method"] = str(info["method"])
@@ -7558,7 +7589,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         # Anzeige im Frontend — NICHT nach doc_index, der nach Loeschungen Luecken
         # haben kann.
         for pos, unit in enumerate(units, start=1):
-            out_path, info = _build_pdf_for_document(unit, output_dir)
+            out_path, info = _build_pdf_for_document(unit, output_dir, creator=_creator)
             inner = f"{pos:02d}_{_doc_label(unit['doc'])}.pdf"
             zf.write(out_path, arcname=inner)
             total_tagged += int(info.get("tagged", 0) or 0)
@@ -7774,7 +7805,7 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
             nach["links_beschriftet"] = n_links
             # Dokument-Eigenschaften (Heine/Karbe 01.09.2026) VOR der veraPDF-Pruefung setzen,
             # damit geprueft wird, was der Kunde bekommt.
-            pdf_bytes = pdfua_export.dokumentinfo_setzen(pdf_bytes)
+            pdf_bytes = pdfua_export.dokumentinfo_setzen(pdf_bytes, creator=_pdf_creator_fuer(user_id))
             if nach.get("nachgetragen") or nach.get("rahmen_umgewandelt") or n_links:
                 bericht = pdfua_export.pruefe(pdf_bytes)
         except pdfua_export.UmwandlungFehlgeschlagen as e:
@@ -8419,14 +8450,18 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "Alt-Texte"
+    # Spalte „Seite“ (Kunde Jens ueber Michael Karbe, 14.09.2026): Seitenzahl des Bildes im
+    # Dokument; bei Bild-, Web- und Word-Projekten ohne Seite bleibt die Zelle leer.
     ws["A1"] = "Bild"
-    ws["B1"] = "Alt-Text"
-    ws["C1"] = "Langbeschreibung"
-    for cell in [ws["A1"], ws["B1"], ws["C1"]]:
+    ws["B1"] = "Seite"
+    ws["C1"] = "Alt-Text"
+    ws["D1"] = "Langbeschreibung"
+    for cell in [ws["A1"], ws["B1"], ws["C1"], ws["D1"]]:
         cell.font = Font(bold=True, size=12)
     ws.column_dimensions["A"].width = 25
-    ws.column_dimensions["B"].width = 60
+    ws.column_dimensions["B"].width = 8
     ws.column_dimensions["C"].width = 60
+    ws.column_dimensions["D"].width = 60
 
     for i, img in enumerate(unit["images"]):
         row = i + 2
@@ -8457,10 +8492,13 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
                 ws.add_image(xl_img, f"A{row}")
             except Exception:
                 pass
-        ws[f"B{row}"] = _csv_safe(alt_text or "")
-        ws[f"B{row}"].alignment = Alignment(wrap_text=True, vertical="top")
-        ws[f"C{row}"] = _csv_safe(langbeschreibung)
+        seite = img.get("page_number")
+        ws[f"B{row}"] = int(seite) if seite not in (None, "", 0) else None
+        ws[f"B{row}"].alignment = Alignment(vertical="top")
+        ws[f"C{row}"] = _csv_safe(alt_text or "")
         ws[f"C{row}"].alignment = Alignment(wrap_text=True, vertical="top")
+        ws[f"D{row}"] = _csv_safe(langbeschreibung)
+        ws[f"D{row}"].alignment = Alignment(wrap_text=True, vertical="top")
 
     buf = io.BytesIO()
     wb.save(buf)
