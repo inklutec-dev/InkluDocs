@@ -25,7 +25,7 @@ name: inkludocs-demo
 
 services:
   inkludocs-demo:
-    image: inkludocs:demo-20260914f  # 14.09.2026: Ablage, Bot-Werkzeuge, Startseite 2, Optik-Runden, Icons, Gemini-Denkreserve, Export-Fix, Ersatzweg wie PDFix, Lesereihenfolge, Seitenlayout kein Bild, log-Fix (f)
+    image: inkludocs:demo-20260915  # 15.09.2026: Export-Abnahme (7 Regeln, Befund = kein Export), Michaels Punkte (Excel-Aufbau, Ersteller je Konto), kein PDF-Download fuer ungetaggte PDFs, log-Alias, Journal-Logs + TZ Berlin
     container_name: inkludocs-demo
     restart: unless-stopped
     # 15.09.2026 (Steve, nach dem Vorfall vom 14.09.): Logs ins System-Journal — sie ueberleben den
