@@ -18,6 +18,11 @@ Regeln (jede Verletzung = Befund, Abnahme nicht bestanden):
      Ruecksprünge (Doppelseiten, InDesign-Reihenfolge) sind erlaubt, ein Ruecksprung um mehr als
      LESEREIHENFOLGE_TOLERANZ_SEITEN Seiten ist ein Befund (Rollout d am 14.09.: neue Elemente
      hingen am Baumende, ein Screenreader haette sie nach der letzten Seite vorgelesen).
+  7. veraPDF (PDF/UA-1) ueber den Konverter-Dienst: Der Export darf keine Regel verletzen, die das
+     Original nicht verletzt, und keine Regel haeufiger verletzen als das Original („nicht schlechter
+     als die Quelle“). Fand am 14.09. „tagged content inside Artifact“ und doppelte Figures, die die
+     Regeln 1-6 nicht sehen. Ist der Konverter nicht erreichbar, ist das KEIN Befund (Kennzahl
+     verapdf = „nicht moeglich“, Logzeile), damit ein Ausfall des Pruefdienstes den Export nicht sperrt.
 
 Die Abnahme aendert die Datei nie. Sie darf den Export nicht scheitern lassen (Aufrufer faengt
 Ausnahmen); ihr Ergebnis geht als Warnung in den Export-Dialog und als Logzeile
@@ -31,8 +36,14 @@ from typing import Iterable, Optional
 
 import pikepdf
 
+try:
+    import pdfua_export as _pdfua  # Konverter-Anbindung (KONVERTER_URL), liefert veraPDF-Berichte
+except Exception:  # noqa: BLE001 — Abnahme muss auch ohne Konverter-Modul laden
+    _pdfua = None
+
 PREFIX = 60  # Zeichen, ueber die ein geschriebener Text mit dem /Alt in der Datei verglichen wird
 MAX_SEITEN_IM_BEFUND = 10
+VERAPDF_MAX_BYTES = 60 * 1024 * 1024  # Grenze des Konverters (MAX_UPLOAD_BYTES)
 LESEREIHENFOLGE_TOLERANZ_SEITEN = 8  # Doppelseiten/InDesign-Reihenfolge: Kundendokument 14.09. hatte 84->80
 
 
@@ -140,13 +151,53 @@ def _seitenzahl(pfad: Optional[str]) -> Optional[int]:
         return None
 
 
+def _verapdf_regeln(pfad: str) -> Optional[dict]:
+    """veraPDF-Regelverstoesse einer Datei als {(clause, test): failed}; None, wenn nicht pruefbar."""
+    if _pdfua is None or not _pdfua.verfuegbar():
+        return None
+    if os.path.getsize(pfad) > VERAPDF_MAX_BYTES:
+        return None
+    with open(pfad, "rb") as f:
+        bericht = _pdfua.pruefe(f.read())
+    return {(r.get("clause"), r.get("test")): int(r.get("failed") or 0) for r in bericht.get("rules") or []}
+
+
+def verapdf_vergleich(original_pfad: Optional[str], export_pfad: str) -> dict:
+    """Regel 7: Export gegen Original. Rueckgabe {"moeglich": bool, "neu": [...], "schlechter": [...],
+    "regeln_original": n, "regeln_export": n, "grund": str}."""
+    erg = {"moeglich": False, "neu": [], "schlechter": [], "regeln_original": None, "regeln_export": None, "grund": ""}
+    if not original_pfad or not os.path.isfile(original_pfad):
+        erg["grund"] = "kein Original"
+        return erg
+    try:
+        vor = _verapdf_regeln(original_pfad)
+        nach = _verapdf_regeln(export_pfad)
+    except Exception as e:  # noqa: BLE001 — Pruefdienst-Ausfall ist kein Befund
+        erg["grund"] = f"veraPDF nicht moeglich: {e}"[:200]
+        return erg
+    if vor is None or nach is None:
+        erg["grund"] = "Konverter nicht eingerichtet oder Datei zu gross"
+        return erg
+    erg["moeglich"] = True
+    erg["regeln_original"] = len(vor)
+    erg["regeln_export"] = len(nach)
+    for schluessel, n in nach.items():
+        if schluessel not in vor:
+            erg["neu"].append(f"{schluessel[0]}-{schluessel[1]} ({n}x)")
+        elif n > vor[schluessel]:
+            erg["schlechter"].append(f"{schluessel[0]}-{schluessel[1]} ({vor[schluessel]}->{n})")
+    return erg
+
+
 def abnahme_pdf(export_pfad: str, original_pfad: Optional[str],
                 geschriebene_texte: Iterable[str],
-                erwartet_getaggt: Optional[int] = None) -> dict:
+                erwartet_getaggt: Optional[int] = None,
+                verapdf: bool = True) -> dict:
     """Misst die exportierte Datei. Rueckgabe:
     {"ok": bool, "befunde": [str], "kennzahlen": {...}}.
     geschriebene_texte: die Alt-Texte, die der Export schreiben sollte (ohne "" und ohne "dekorativ").
-    erwartet_getaggt: was der Export als geschrieben meldet; None = alle geschriebenen Texte."""
+    erwartet_getaggt: was der Export als geschrieben meldet; None = alle geschriebenen Texte.
+    verapdf: Regel 7 ueber den Konverter ausfuehren (Tests ohne Konverter setzen False)."""
     texte = [_norm(t) for t in geschriebene_texte if t and _norm(t) and _norm(t) != "dekorativ"]
     erwartet = len(texte) if erwartet_getaggt is None else max(0, min(int(erwartet_getaggt), len(texte)))
     befunde: list[str] = []
@@ -199,6 +250,21 @@ def abnahme_pdf(export_pfad: str, original_pfad: Optional[str],
         if gefunden < erwartet:
             befunde.append(f"Nur {gefunden} von {erwartet} als getaggt gemeldeten Texten stehen erreichbar in der Datei")
 
+    # Regel 7 ausserhalb des with-Blocks (Datei ist zu, der Konverter liest sie frisch)
+    if verapdf:
+        v = verapdf_vergleich(original_pfad, export_pfad)
+        if v["moeglich"]:
+            kz["verapdf"] = f"{v['regeln_export']}/{v['regeln_original']}"
+            if v["neu"]:
+                befunde.append("veraPDF: neue Regelverletzung(en) gegenueber dem Original: " + ", ".join(v["neu"][:8]))
+            if v["schlechter"]:
+                befunde.append("veraPDF: Regel(n) haeufiger verletzt als im Original: " + ", ".join(v["schlechter"][:8]))
+        else:
+            kz["verapdf"] = "nicht moeglich"
+            kz["verapdf_grund"] = v["grund"]
+    else:
+        kz["verapdf"] = "uebersprungen"
+
     return {"ok": not befunde, "befunde": befunde, "kennzahlen": kz}
 
 
@@ -209,7 +275,7 @@ def abnahme_loggen(ergebnis: dict, projekt=None, dokument=None, verfahren=None, 
     zeile = (f"EXPORT-ABNAHME {status} projekt={projekt} dokument={dokument} verfahren={verfahren} "
              f"seiten={kz.get('seiten')}/{kz.get('seiten_original')} figures_alt={kz.get('figures_mit_alt')} "
              f"waisen={kz.get('waisen')} unbalanciert={kz.get('seiten_unbalanciert')} "
-             f"ruecksprung={kz.get('ruecksprünge_gross')} "
+             f"ruecksprung={kz.get('ruecksprünge_gross')} verapdf={kz.get('verapdf')} "
              f"texte={kz.get('texte_gefunden')}/{kz.get('erwartet_getaggt')}")
     if ergebnis.get("befunde"):
         zeile += " befunde=" + " | ".join(ergebnis["befunde"])

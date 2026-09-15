@@ -1,6 +1,6 @@
 # Export-Abnahme
 
-Stand: 15.09.2026 (Teil 3: Befund = kein Export). Modul `backend/export_abnahme.py`, Tests `tests/test_export_abnahme.py` und `tests/test_export_abnahme_endpunkt.py`,
+Stand: 15.09.2026 (Teil 4: veraPDF als Regel 7). Modul `backend/export_abnahme.py`, Tests `tests/test_export_abnahme.py` und `tests/test_export_abnahme_endpunkt.py`,
 Einbau in `backend/main.py` (`_build_pdf_for_document`, `export_pdf`).
 
 ## Zweck
@@ -26,6 +26,12 @@ Oberfläche hätte „234 getaggt“ gemeldet.
    `LESEREIHENFOLGE_TOLERANZ_SEITEN` (8) sind erlaubt (Doppelseiten, InDesign-Reihenfolge),
    größere sind ein Befund.
 
+7. veraPDF (PDF/UA-1) über den Konverter-Dienst (`KONVERTER_URL`, `POST /pruefe`): Der Export
+   darf keine Regel verletzen, die das Original nicht verletzt, und keine Regel häufiger als das
+   Original. Ist der Konverter nicht erreichbar oder die Datei größer als 60 MB, wird die Regel
+   übersprungen (Kennzahl `verapdf = nicht moeglich`), das ist kein Befund. Laufzeit: 48 MB /
+   132 Seiten in 6 s je Datei.
+
 Die Abnahme ändert die Datei nie und wirft keine Ausnahme nach außen; der Aufrufer fängt alles.
 
 ## Folgen eines Befunds
@@ -44,7 +50,7 @@ Befund verlässt das Haus nicht.**
 - Warnungen des Schreibwegs (Titel-Rückfall, übersprungene Sonderfälle) kommen weiter über
   `X-Export-Warnings` in den Dialog; sie sind kein Befund.
 - Logzeile für Nexus:
-  `EXPORT-ABNAHME ok|FEHLGESCHLAGEN projekt= dokument= verfahren= seiten=a/b figures_alt= waisen= unbalanciert= ruecksprung= texte=gefunden/erwartet [befunde=...] datei=`
+  `EXPORT-ABNAHME ok|FEHLGESCHLAGEN projekt= dokument= verfahren= seiten=a/b figures_alt= waisen= unbalanciert= ruecksprung= verapdf=export/original texte=gefunden/erwartet [befunde=...] datei=`
   Läuft die Abnahme selbst nicht: `EXPORT-ABNAHME NICHT MOEGLICH projekt= dokument=: <Fehler>`.
   Der Nexus-Stundencheck greift `EXPORT-ABNAHME FEHLGESCHLAGEN` und `EXPORT-ABNAHME NICHT MOEGLICH`.
 
@@ -61,7 +67,5 @@ Die Testdateien liegen nicht im Image (`/app/tests` fehlt), daher vorher hineink
 
 ## Nicht abgedeckt (offen)
 
-- veraPDF-Vergleich Original gegen Export (fand am 14.09. „tagged content inside Artifact“);
-  braucht Java + veraPDF im Image.
 - Word-Weg nach PDF/UA (`export_pdfua`) hat noch keine Abnahme.
 - Inhaltlicher Abgleich je Bild (richtiger Text am richtigen Bild) — heute nur Seite und Anzahl.
