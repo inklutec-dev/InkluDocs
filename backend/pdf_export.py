@@ -34,7 +34,7 @@ def creator_normieren(creator: str | None) -> str | None:
     """Vom Konto hinterlegter Ersteller: eine Zeile, max. 100 Zeichen; leer = Vorgabe."""
     if not creator:
         return None
-    t = re.sub(r"[\r\n\t]+", " ", str(creator)).strip()
+    t = re.sub(r"[\x00-\x1f\x7f]+", " ", str(creator)).strip()
     return t[:CREATOR_MAXLAENGE] or None
 
 

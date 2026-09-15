@@ -32,6 +32,9 @@ import stripe_zahlung  # Online-Zahlung (06.08.2026): inert ohne STRIPE_SECRET_K
 # Abo-System (06.08.2026): Fehler in Mail-/Tageslauf-Pfaden landen im Log,
 # nie beim Nutzer — gleiche Nie-Crashen-Philosophie wie billing.
 logger = logging.getLogger("inkludocs")
+# Alias (15.09.2026, pyflakes-Fund): der Word-PDF/UA-Weg und die Ablage rufen `log.*` — ohne den Alias
+# waere jeder Fehlerzweig dort ein NameError (500 statt der gemeinten Meldung) gewesen.
+log = logger
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -1149,7 +1152,12 @@ def _pdf_creator_fuer(user_id: int) -> Optional[str]:
 async def change_pdfcreator(request: Request, user: dict = Depends(get_current_user)):
     """Ersteller (Creator) in exportierten PDFs (Michael Karbe 14.09.2026, Kunde Jens): eine Zeile,
     max. 100 Zeichen, leer = Vorgabe inkludocs.de. Der Producer bleibt immer InkluDocs."""
-    data = await request.json()
+    try:
+        data = await request.json()
+        if not isinstance(data, dict):
+            raise ValueError("kein Objekt")
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail="Ungueltige Anfrage")
     from pdf_export import creator_normieren, CREATOR_MAXLAENGE
     roh = str(data.get("pdf_creator") or "")
     if len(roh.strip()) > CREATOR_MAXLAENGE:
@@ -8492,8 +8500,11 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
                 ws.add_image(xl_img, f"A{row}")
             except Exception:
                 pass
-        seite = img.get("page_number")
-        ws[f"B{row}"] = int(seite) if seite not in (None, "", 0) else None
+        try:
+            seite = int(img.get("page_number") or 0) or None
+        except (TypeError, ValueError):
+            seite = None
+        ws[f"B{row}"] = seite
         ws[f"B{row}"].alignment = Alignment(vertical="top")
         ws[f"C{row}"] = _csv_safe(alt_text or "")
         ws[f"C{row}"].alignment = Alignment(wrap_text=True, vertical="top")
