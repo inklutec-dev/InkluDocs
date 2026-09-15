@@ -8458,27 +8458,29 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "Alt-Texte"
-    # Spalte „Seite“ (Kunde Jens ueber Michael Karbe, 14.09.2026): Seitenzahl des Bildes im
-    # Dokument; bei Bild-, Web- und Word-Projekten ohne Seite bleibt die Zelle leer.
-    ws["A1"] = "Bild"
+    # Aufbau (Michael Karbe 15.09.2026): laufende Nummer ab 1 | Seite (leer bei Bild-, Web-, Word-Projekten
+    # ohne Seite) | Bild ohne Dateinamen | Alt-Text | Langbeschreibung.
+    ws["A1"] = "Nr"
     ws["B1"] = "Seite"
-    ws["C1"] = "Alt-Text"
-    ws["D1"] = "Langbeschreibung"
-    for cell in [ws["A1"], ws["B1"], ws["C1"], ws["D1"]]:
+    ws["C1"] = "Bild"
+    ws["D1"] = "Alt-Text"
+    ws["E1"] = "Langbeschreibung"
+    for cell in [ws["A1"], ws["B1"], ws["C1"], ws["D1"], ws["E1"]]:
         cell.font = Font(bold=True, size=12)
-    ws.column_dimensions["A"].width = 25
+    ws.column_dimensions["A"].width = 6
     ws.column_dimensions["B"].width = 8
-    ws.column_dimensions["C"].width = 60
+    ws.column_dimensions["C"].width = 25
     ws.column_dimensions["D"].width = 60
+    ws.column_dimensions["E"].width = 60
 
     for i, img in enumerate(unit["images"]):
         row = i + 2
         alt_text = _ausgabe_alt_text(img)
         langbeschreibung = _ohne_fehlertext(img.get("langbeschreibung"))
         img_path = img.get("image_path") or ""
-        img_filename = os.path.basename(img_path) if img_path else "unbekannt"
-        ws[f"A{row}"] = img_filename
+        ws[f"A{row}"] = i + 1
         ws[f"A{row}"].alignment = Alignment(vertical="top")
+        ws[f"C{row}"].alignment = Alignment(vertical="top")
         if img_path and os.path.exists(img_path):
             try:
                 export_img_path = img_path
@@ -8497,7 +8499,7 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
                 xl_img.width = int(xl_img.width * ratio)
                 xl_img.height = int(xl_img.height * ratio)
                 ws.row_dimensions[row].height = max(xl_img.height * 0.75, 60)
-                ws.add_image(xl_img, f"A{row}")
+                ws.add_image(xl_img, f"C{row}")
             except Exception:
                 pass
         try:
@@ -8506,10 +8508,10 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
             seite = None
         ws[f"B{row}"] = seite
         ws[f"B{row}"].alignment = Alignment(vertical="top")
-        ws[f"C{row}"] = _csv_safe(alt_text or "")
-        ws[f"C{row}"].alignment = Alignment(wrap_text=True, vertical="top")
-        ws[f"D{row}"] = _csv_safe(langbeschreibung)
+        ws[f"D{row}"] = _csv_safe(alt_text or "")
         ws[f"D{row}"].alignment = Alignment(wrap_text=True, vertical="top")
+        ws[f"E{row}"] = _csv_safe(langbeschreibung)
+        ws[f"E{row}"].alignment = Alignment(wrap_text=True, vertical="top")
 
     buf = io.BytesIO()
     wb.save(buf)

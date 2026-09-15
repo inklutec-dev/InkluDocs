@@ -136,5 +136,20 @@
    "warnungen": 0
   },
   "pdfix": null
+ },
+ "08_indesign_ohne_tags.pdf": {
+  "fitz": {
+   "bilder": 39,
+   "abnahme_ok": true,
+   "figures_mit_alt": 38,
+   "texte_gefunden": 38,
+   "waisen": 0,
+   "unbalanciert": 0,
+   "ruecksprung": 0,
+   "verapdf_neu": 0,
+   "verapdf_schlechter": 0,
+   "warnungen": 0
+  },
+  "pdfix": null
  }
 }
