@@ -2,6 +2,8 @@
 werden wiederholt, eine Sperre durch Gemini nicht. Anlass: Prod-Kundenlauf mit 13 von 234
 Bildern auf Fehler, weil der Flash-Klassifikator abgeschnittenes JSON lieferte und der Client
 nur Transportfehler wiederholte.
+16.09.2026: HTTP 429 (Kapazitaet bei Google knapp) bekommt vier Versuche mit 10/20/40 s Pause;
+Anlass: Prod 15.09.2026, 2 von 140 Bildern nach 4 + 8 s aufgegeben.
     docker exec inkludocs-staging python3 -m unittest /app/tests/test_gemini_retry.py -v
 """
 import io
@@ -130,6 +132,46 @@ class TestGeminiWiederholung(unittest.TestCase):
         ergebnis, n = self._aufruf([fehler, _antwort('{"kategorie": "foto"}')])
         self.assertEqual(ergebnis, {"kategorie": "foto"})
         self.assertEqual(n, 2)
+
+    def _http(self, code, text=b"x"):
+        import urllib.error
+        return urllib.error.HTTPError("https://gemini.invalid/x", code, "err", {}, io.BytesIO(text))
+
+    def _pausen(self):
+        return [c.args[0] for c in gc.time.sleep.call_args_list]
+
+    def test_transportfehler_drei_versuche_kurze_pausen(self):
+        """5xx: unveraendert drei Versuche mit 4 s und 8 s Pause."""
+        with self.assertRaises(gc.GeminiCallError):
+            self._aufruf([self._http(503)] * 3)
+        self.assertEqual(self._pausen(), [4, 8])
+
+    def test_kontingent_429_vier_versuche_lange_pausen(self):
+        """429 „Resource exhausted“ (Prod 15.09.2026, 2 von 140 Bildern): ein Versuch mehr,
+        Pausen 10/20/40 s statt 4/8 s — die Kapazitaetsdelle dauert Minuten, nicht Sekunden."""
+        ergebnis, n = self._aufruf([self._http(429, b"Resource exhausted")] * 3
+                                   + [_antwort('{"kategorie": "foto"}')])
+        self.assertEqual(ergebnis, {"kategorie": "foto"})
+        self.assertEqual(n, 4)
+        self.assertEqual(self._pausen(), [10, 20, 40])
+
+    def test_kontingent_429_nach_vier_versuchen_fehler(self):
+        with self.assertRaises(gc.GeminiCallError) as cm:
+            self._aufruf([self._http(429, b"Resource exhausted")] * 4)
+        self.assertIn("429", str(cm.exception))
+        self.assertEqual(self._pausen(), [10, 20, 40])
+
+    def test_kontingent_429_dann_transportfehler_mischung(self):
+        """Pausen richten sich nach dem jeweiligen Fehler, der Zaehler laeuft gemeinsam."""
+        ergebnis, n = self._aufruf([self._http(429), self._http(503), _antwort('{"kategorie": "foto"}')])
+        self.assertEqual(ergebnis, {"kategorie": "foto"})
+        self.assertEqual(n, 3)
+        self.assertEqual(self._pausen(), [10, 8])
+
+    def test_400_wird_nicht_wiederholt(self):
+        with self.assertRaises(gc.GeminiCallError):
+            self._aufruf([self._http(400)])
+        self.assertEqual(self._pausen(), [])
 
 
 if __name__ == "__main__":

@@ -31,7 +31,14 @@ GEMINI_MODEL_GENERATE = os.environ.get('GEMINI_MODEL_GENERATE', 'gemini-3.1-pro-
 GEMINI_MODEL_VALIDATE = os.environ.get('GEMINI_MODEL_VALIDATE', 'gemini-3.1-pro-preview')
 
 _HTTP_TIMEOUT = 180
-_VERSUCHE = 3
+# Pausen in Sekunden vor dem nächsten Versuch. Transportfehler (5xx, Netz) und unbrauchbare
+# Antworten: kurz, 4 s dann 8 s. HTTP 429 („Resource exhausted“, Kapazität bei Google knapp):
+# das dauert Minuten, nicht Sekunden — Prod 15.09.2026 23:34/23:39 gab die Pipeline bei 2 von
+# 140 Bildern eines Kundenlaufs nach 4 + 8 s auf, die Bilder davor und danach liefen durch.
+# Deshalb bei 429 ein Versuch mehr und deutlich längere Pausen (10, 20, 40 s = bis 70 s).
+_PAUSEN_TRANSPORT = (4, 8)
+_PAUSEN_KONTINGENT = (10, 20, 40)
+_VERSUCHE = len(_PAUSEN_TRANSPORT) + 1  # Versuche bei Transportfehler/unbrauchbarer Antwort (3)
 # Denk-Reserve über der Ausgabegrenze (Gemini 3.x: thoughtsTokenCount zählt gegen maxOutputTokens), siehe _invoke_gemini.
 _DENKRESERVE = int(os.environ.get('GEMINI_DENKRESERVE', '8000'))
 
@@ -109,6 +116,12 @@ def _prompt_ohne_marker(prompt: str) -> str:
     return prompt.replace(BILDDATEN_MARKER, '\n\n') if BILDDATEN_MARKER in prompt else prompt
 
 
+def _pause_vor_wiederholung(versuch: int, kontingent: bool) -> int | None:
+    """Sekunden Pause vor dem nächsten Versuch; None = aufgeben. `versuch` zählt ab 0."""
+    pausen = _PAUSEN_KONTINGENT if kontingent else _PAUSEN_TRANSPORT
+    return pausen[versuch] if versuch < len(pausen) else None
+
+
 def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: str, schema_dict: dict,
                    max_tokens: int, temperature: float, system: str | None) -> dict:
     from . import gemini_auth
@@ -149,8 +162,10 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
     # („Unterminated string“ vom Flash-Klassifikator nach ~90 Zeichen). Ein zweiter Aufruf mit
     # demselben Prompt liefert in der Regel eine vollständige Antwort. Nicht wiederholt wird eine
     # Sperre durch Gemini (promptFeedback.blockReason) — die kommt beim zweiten Mal genauso.
+    # HTTP 429 bekommt eigene, längere Pausen (_PAUSEN_KONTINGENT), siehe dort.
     letzter: Exception | None = None
-    for versuch in range(_VERSUCHE):
+    versuch = 0
+    while True:
         req = urllib.request.Request(_endpunkt(model), data=daten, headers=kopf)
         try:
             with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as r:
@@ -162,16 +177,24 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
             except Exception:
                 pass
             letzter = GeminiCallError(f'Gemini HTTP {e.code} ({model}): {text}')
-            if e.code in (429, 500, 502, 503, 504) and versuch < _VERSUCHE - 1:
-                time.sleep(4 * (versuch + 1))
-                continue
-            raise letzter from e
+            pause = None
+            if e.code in (429, 500, 502, 503, 504):
+                pause = _pause_vor_wiederholung(versuch, kontingent=(e.code == 429))
+            if pause is None:
+                raise letzter from e
+            log.warning('Gemini HTTP %d (%s, %s), Versuch %d — Wiederholung in %d s.',
+                        e.code, model, schema_name, versuch + 1, pause)
+            time.sleep(pause)
+            versuch += 1
+            continue
         except Exception as e:
             letzter = GeminiCallError(f'Gemini-Aufruf fehlgeschlagen ({model}): {e}')
-            if versuch < _VERSUCHE - 1:
-                time.sleep(4 * (versuch + 1))
-                continue
-            raise letzter from e
+            pause = _pause_vor_wiederholung(versuch, kontingent=False)
+            if pause is None:
+                raise letzter from e
+            time.sleep(pause)
+            versuch += 1
+            continue
 
         if os.getenv('DEBUG_GEN_RAW', 'false').lower() == 'true':
             u = antwort.get('usageMetadata', {}) or {}
@@ -182,13 +205,13 @@ def _invoke_gemini(model: str, prompt: str, image_b64: str | None, schema_name: 
             return _antwort_auswerten(antwort, model, schema_name)
         except _AntwortUnbrauchbar as e:
             letzter = GeminiCallError(str(e))
-            if versuch < _VERSUCHE - 1:
-                log.warning('Gemini-Antwort unbrauchbar (%s, %s), Versuch %d von %d: %s — Wiederholung.',
-                            model, schema_name, versuch + 1, _VERSUCHE, str(e)[:200])
-                time.sleep(4 * (versuch + 1))
-                continue
-            raise letzter from e
-    raise letzter or GeminiCallError('Gemini-Aufruf fehlgeschlagen')
+            pause = _pause_vor_wiederholung(versuch, kontingent=False)
+            if pause is None:
+                raise letzter from e
+            log.warning('Gemini-Antwort unbrauchbar (%s, %s), Versuch %d von %d: %s — Wiederholung.',
+                        model, schema_name, versuch + 1, _VERSUCHE, str(e)[:200])
+            time.sleep(pause)
+            versuch += 1
 
 
 class _AntwortUnbrauchbar(Exception):
