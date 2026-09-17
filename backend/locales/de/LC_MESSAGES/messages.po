@@ -6682,3 +6682,6 @@ msgstr "Schlüssel verwalten"
 
 msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
 msgstr "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
+
+msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
+msgstr "Ein Aufruf in diesem Monat über {k} Schlüssel."

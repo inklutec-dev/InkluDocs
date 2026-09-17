@@ -6241,3 +6241,6 @@ msgstr "Hantera nycklar"
 
 msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
 msgstr "Med API-nycklar kopplar andra program upp sig mot InkluDocs: enskilda bilder och hela dokument. Vägledningen finns i API-dokumentationen."
+
+msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
+msgstr "Ett anrop denna månad via {k} nycklar."

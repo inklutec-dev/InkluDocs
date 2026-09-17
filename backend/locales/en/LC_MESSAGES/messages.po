@@ -6679,3 +6679,6 @@ msgstr "Manage keys"
 
 msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
 msgstr "With API keys, other applications connect to InkluDocs: single images and whole documents. The guide is in the API documentation."
+
+msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
+msgstr "One call this month via {k} keys."

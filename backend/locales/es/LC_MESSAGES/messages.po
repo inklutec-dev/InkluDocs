@@ -6679,3 +6679,6 @@ msgstr "Gestionar claves"
 
 msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
 msgstr "Con claves de API, otras aplicaciones se conectan a InkluDocs: imágenes sueltas y documentos completos. La guía está en la documentación de la API."
+
+msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
+msgstr "Una llamada este mes mediante {k} claves."

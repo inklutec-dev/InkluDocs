@@ -279,7 +279,10 @@
     const cont = byId('apiContainer');
     const p = document.createElement('p');
     p.className = 'dash-sub';
-    p.textContent = t('{n} Aufrufe in diesem Monat über {k} Schlüssel.', { n: (data.summary || {}).calls_month || 0, k: data.keys_count });
+    const n = (data.summary || {}).calls_month || 0;
+    p.textContent = n === 1
+      ? t('Ein Aufruf in diesem Monat über {k} Schlüssel.', { k: data.keys_count })
+      : t('{n} Aufrufe in diesem Monat über {k} Schlüssel.', { n: n, k: data.keys_count });
     const links = document.createElement('p');
     links.className = 'dash-actions';
     const a1 = document.createElement('a'); a1.className = 'btn btn-secondary'; a1.href = '/api-schluessel'; a1.textContent = t('Schlüssel verwalten');

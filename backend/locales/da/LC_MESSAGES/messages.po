@@ -6371,3 +6371,6 @@ msgstr "Administrér nøgler"
 
 msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
 msgstr "Med API-nøgler kobler andre programmer sig på InkluDocs: enkeltbilleder og hele dokumenter. Vejledningen står i API-dokumentationen."
+
+msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
+msgstr "Ét kald denne måned via {k} nøgler."
