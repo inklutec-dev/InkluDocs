@@ -19,13 +19,14 @@
   .api-doc h2 { margin-top: 0; }
   .api-doc h3 { font-size: 1.05rem; margin: 1.25rem 0 .5rem; }
   .api-doc pre { background: #1e293b; color: #e2e8f0; padding: 1rem 1.2rem; border-radius: 8px; overflow-x: auto; font-size: .88rem; line-height: 1.5; }
+  .api-doc pre:focus-visible { outline: 3px solid #c75000; outline-offset: 2px; }
   .api-doc code { font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace; }
   .api-doc p code, .api-doc li code, .api-doc td code { background: #e2e8f0; color: #1b2a4a; padding: .1rem .35rem; border-radius: 3px; font-size: .9em; }
   .api-doc table { width: 100%; border-collapse: collapse; margin: .75rem 0 1rem; }
   .api-doc th, .api-doc td { text-align: left; vertical-align: top; padding: .5rem .6rem; border-bottom: 1px solid var(--border); }
   .api-doc th { background: #1b2a4a; color: #fff; font-weight: 600; }
   .api-doc .badge { display: inline-block; padding: .15rem .55rem; border-radius: 4px; font-size: .8rem; font-weight: 700; color: #fff; margin-right: .35rem; }
-  .api-doc .b-post { background: #16a34a; } .api-doc .b-get { background: #2563eb; } .api-doc .b-patch { background: #7c3aed; } .api-doc .b-delete { background: #b91c1c; }
+  .api-doc .b-post { background: #1e7e34; } .api-doc .b-get { background: #2563eb; } .api-doc .b-patch { background: #7c3aed; } .api-doc .b-delete { background: #b91c1c; }
   .api-doc .hinweis { padding: .8rem 1rem; background: #fff7ed; border-left: 4px solid #c75000; border-radius: 0 4px 4px 0; margin: 1rem 0; }
   .api-doc nav ul { columns: 2; column-gap: 2rem; padding-left: 1.2rem; }
   @media (max-width: 720px) { .api-doc nav ul { columns: 1; } }
@@ -57,7 +58,7 @@
 <section class="dash-card" aria-labelledby="h-auth">
   <h2 id="h-auth">{{ _('Authentifizierung') }}</h2>
   <p>{{ _('Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen.') }}</p>
-  <pre><code>X-API-Key: idocs_deinSchluesselHier</code></pre>
+  <pre tabindex="0"><code>X-API-Key: idocs_deinSchluesselHier</code></pre>
   <p>{{ _('Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server.') }}</p>
 </section>
 
@@ -69,7 +70,7 @@
   <p>{{ _('Antworten sind JSON (UTF-8), außer bei Datei-Downloads. Zeitstempel sind UTC im Format JJJJ-MM-TT HH:MM:SS. Längere Arbeiten (Extraktion, Generierung) laufen im Hintergrund: Du bekommst sofort eine Antwort mit Status 202 und fragst den Stand ab, bis der Status „ready“ oder „done“ ist. Frage nicht öfter als alle fünf Sekunden ab.') }}</p>
   <h3>{{ _('Fehlerformat') }}</h3>
   <p>{{ _('Fehler kommen immer als JSON mit einem stabilen, maschinenlesbaren Code und einer Meldung für Menschen. Zeige in deinem Produkt die Meldung an und verzweige im Code über den Code.') }}</p>
-  <pre><code>{% raw %}{
+  <pre tabindex="0"><code>{% raw %}{
   "error": { "code": "credits_fehlen", "message": "…", "status": 402,
              "preis": 25, "verfuegbar": 3, "fehlend": 22 },
   "detail": "…"
@@ -94,7 +95,7 @@
       <tr><td><code>image_type</code></td><td>{{ _('Nein') }}</td><td>{{ _('Hinweis auf den Bildtyp: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle.') }}</td></tr>
     </tbody>
   </table>
-  <pre><code>{% raw %}{
+  <pre tabindex="0"><code>{% raw %}{
   "result_id": "abc123xyz",
   "alt_text": "…", "langbeschreibung": "…",
   "bildtyp": "foto", "konfidenz": "hoch", "processing_time_ms": 1234
@@ -149,7 +150,7 @@
     </tbody>
   </table>
   <h3>{{ _('Status und Zähler') }}</h3>
-  <pre><code>{% raw %}{
+  <pre tabindex="0"><code>{% raw %}{
   "id": 812, "kind": "pdf", "status": "done", "language": "de",
   "counts": { "items": 48, "with_text": 46, "without_text": 2, "decorative": 0,
               "done": 46, "pending": 0, "failed": 2 },
@@ -160,7 +161,7 @@
 }{% endraw %}</code></pre>
   <p>{{ _('Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat; ohne Tags gibt es keinen PDF-Export, nur Textlisten.') }}</p>
   <h3>{{ _('Einträge') }}</h3>
-  <pre><code>{% raw %}{
+  <pre tabindex="0"><code>{% raw %}{
   "id": 5031, "type": "image", "page": 3, "index": 7,
   "status": "done", "text_status": "mit_text",
   "alt_text": "…", "alt_text_ki": "…", "alt_text_edited": null,
@@ -223,12 +224,12 @@
 <section class="dash-card" aria-labelledby="h-beispiele">
   <h2 id="h-beispiele">{{ _('Beispiele') }}</h2>
   <h3>{{ _('Einzelbild mit curl') }}</h3>
-  <pre><code>curl -X POST {{ base_url }}/api/v1/alt-text \
+  <pre tabindex="0"><code>curl -X POST {{ base_url }}/api/v1/alt-text \
   -H "X-API-Key: idocs_deinSchluessel" \
   -F "file=@foto.jpg" \
   -F "context=Jahresbericht 2025, Kapitel Umsatz"</code></pre>
   <h3>{{ _('Dokument von Anfang bis Ende mit curl') }}</h3>
-  <pre><code># 1) anlegen
+  <pre tabindex="0"><code># 1) anlegen
 curl -X POST {{ base_url }}/api/v1/documents \
   -H "X-API-Key: idocs_deinSchluessel" \
   -F "file=@heft.pdf" -F "language=de"
@@ -245,7 +246,7 @@ curl -X PATCH {{ base_url }}/api/v1/documents/812/items/5031 \
 curl -X POST {{ base_url }}/api/v1/documents/812/export/pdf \
   -H "X-API-Key: idocs_deinSchluessel" -o heft_barrierefrei.pdf</code></pre>
   <h3>{{ _('Dokument mit Python') }}</h3>
-  <pre><code>import time, requests
+  <pre tabindex="0"><code>import time, requests
 
 B = "{{ base_url }}"
 H = {"X-API-Key": "idocs_deinSchluessel"}
@@ -269,7 +270,7 @@ items = requests.get(f"{B}/api/v1/documents/{doc['id']}/items", headers=H).json(
 pdf = requests.post(f"{B}/api/v1/documents/{doc['id']}/export/pdf", headers=H)
 open("heft_barrierefrei.pdf", "wb").write(pdf.content)</code></pre>
   <h3>{{ _('Freigabe-Link für die Prüfansicht (JavaScript)') }}</h3>
-  <pre><code>const res = await fetch(`${B}/api/v1/documents/${id}/review-link`, {
+  <pre tabindex="0"><code>const res = await fetch(`${B}/api/v1/documents/${id}/review-link`, {
   method: 'POST',
   headers: { 'X-API-Key': KEY, 'Content-Type': 'application/json' },
   body: JSON.stringify({ guest_email: 'lektorat@beispiel.de', role: 'lektorat', notify: true }),
