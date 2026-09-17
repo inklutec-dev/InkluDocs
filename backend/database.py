@@ -1452,16 +1452,34 @@ def list_api_keys(user_id: int) -> list[dict]:
 
 
 def delete_api_key(user_id: int, key_id: int) -> bool:
-    """Delete an API key. Returns True if deleted, False if not found."""
+    """Delete an API key. Returns True if deleted, False if not found.
+
+    17.09.2026: api_usage und api_results haengen per Fremdschluessel am Schluessel — bisher
+    scheiterte das Loeschen eines je benutzten Schluessels mit IntegrityError (500 in der
+    Oberflaeche). Jetzt gehen Verbrauchsprotokoll und gespeicherte Einzelbild-Ergebnisse
+    dieses Schluessels in DERSELBEN Transaktion mit (ein geloeschter Schluessel laesst
+    nichts zurueck); Credits-Buchungen (usage_events) sind davon unberuehrt."""
     conn = get_db()
-    cursor = conn.execute(
-        "DELETE FROM api_keys WHERE id = ? AND user_id = ?",
-        (key_id, user_id)
-    )
-    conn.commit()
-    deleted = cursor.rowcount > 0
-    conn.close()
-    return deleted
+    try:
+        conn.isolation_level = None
+        conn.execute("BEGIN IMMEDIATE")
+        besitz = conn.execute("SELECT 1 FROM api_keys WHERE id = ? AND user_id = ?", (key_id, user_id)).fetchone()
+        if not besitz:
+            conn.execute("ROLLBACK")
+            return False
+        conn.execute("DELETE FROM api_usage WHERE api_key_id = ?", (key_id,))
+        conn.execute("DELETE FROM api_results WHERE api_key_id = ?", (key_id,))
+        conn.execute("DELETE FROM api_keys WHERE id = ? AND user_id = ?", (key_id, user_id))
+        conn.execute("COMMIT")
+        return True
+    except Exception:
+        try:
+            conn.execute("ROLLBACK")
+        except Exception:
+            pass
+        raise
+    finally:
+        conn.close()
 
 
 def rename_api_key(user_id: int, key_id: int, new_name: str) -> bool:

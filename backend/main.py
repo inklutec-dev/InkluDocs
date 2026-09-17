@@ -63,6 +63,7 @@ import docx_hoerprobe
 import secrets as _secrets
 # QUICKINFO-WERKZEUG (27.08.2026): PDF-Formularfelder lesen/schreiben, eigener Router
 import formular_api
+import api_dokumente_v1   # Public API v1: Dokumente (17.09.2026)
 from formular_processor import validiere_formular, FormularFehler
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
 from i18n import get_templates, detect_language, template_context, get_gettext, SUPPORTED_LANGUAGES
@@ -4174,7 +4175,7 @@ async def create_project(request: Request, user: dict = Depends(get_current_user
         raise HTTPException(status_code=400, detail="Unbekanntes oder nicht verfuegbares Werkzeug")
     # project_type ist der Datentyp der Quelle (Anzeige-/Verzweigungslogik im Frontend);
     # "docx" = Word-Werkzeug (26.08.2026), "pdfform" = Quickinfo-Werkzeug (27.08.2026).
-    project_type = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx", "formular": "pdfform"}.get(tool)
+    project_type = TOOL_PROJECT_TYPE.get(tool)
     if not project_type:
         raise HTTPException(status_code=400, detail="Fuer dieses Werkzeug ist das Anlegen noch nicht verfuegbar")
     conn = get_db()
@@ -4186,6 +4187,10 @@ async def create_project(request: Request, user: dict = Depends(get_current_user
     conn.commit()
     conn.close()
     return {"ok": True, "project_id": project_id, "tool": tool, "project_type": project_type}
+
+
+# Werkzeug -> Datentyp der Quelle (EINE Stelle fuer App und Public API v1, 17.09.2026).
+TOOL_PROJECT_TYPE = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx", "formular": "pdfform"}
 
 
 @app.patch("/api/projects/{project_id}")
@@ -8411,6 +8416,25 @@ app.include_router(formular_api.build_router(formular_api.Deps(
     tageslimit_wache=tageslimit_wache,
     tageslimit_text=tageslimit_text,
     get_user_by_id=get_user_by_id,
+)))
+
+# Public API v1 — Dokumente (17.09.2026): duenne Schicht ueber den App-Routen, siehe api_dokumente_v1.py.
+# Die Ziel-Routen werden erst beim Aufruf per Pfad nachgeschlagen; deshalb darf dieser Router hier
+# haengen, obwohl einige Ziele (Freigaben) weiter unten in dieser Datei definiert sind.
+app.include_router(api_dokumente_v1.build_router(api_dokumente_v1.Deps(
+    app=app,
+    get_api_user=get_api_user,
+    check_api_rate_limit=check_api_rate_limit,
+    log_api_usage=log_api_usage,
+    get_db=get_db,
+    billing=billing,
+    display_alt_text=_display_alt_text,
+    exportable_alt_text=_exportable_alt_text,
+    image_extensions=IMAGE_EXTENSIONS,
+    alt_text_languages=ALT_TEXT_LANGUAGES,
+    tool_project_type=TOOL_PROJECT_TYPE,
+    is_valid_tool_key=is_valid_tool_key,
+    base_url=BASE_URL.rstrip("/"),
 )))
 
 
