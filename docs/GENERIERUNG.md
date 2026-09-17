@@ -497,3 +497,28 @@ Test: `tests/e2e/ui_filter_stand.py <projekt-id>` (Playwright, Staging) mit
 ein fertiges Bild vorübergehend auf `error`). Bewusst offen (Steve 17.09.2026,
 mit Michael zu klären): Sprunglink „Zum ersten Treffer“ hinter der
 Ergebniszeile und Sprung aus der Laufmeldung.
+
+### Fassung 2 am selben Tag (17.09.2026, 12:22, Michael Karbe): Chips „Alle / Offen / Alt-Text“
+
+Michael nach dem ersten Blick: „Alle, Offen und Alt-Text. Wir müssen dies von der
+KI entkoppeln. Es gibt entweder einen Text oder nicht. Ob mit KI generiert oder
+nicht, spielt hier keine Rolle. Die gleiche Kontrolle, die wir auch beim
+Herunterladen machen.“ Die Status-Chips „Noch nicht generiert“/„Fehlgeschlagen“
+von heute Vormittag sind damit ersetzt:
+
+- **Offen** — das sichtbare Feld ist leer, egal warum (nie generiert,
+  fehlgeschlagen, zurückgestellt, bewusst geleert). Den Grund nennt weiterhin
+  das Abzeichen an der Karte („Fehler“).
+- **Alt-Text** — im Feld steht Text (eigener Text vor KI-Text vor Quelltext,
+  genau wie angezeigt und exportiert).
+- **Dekorativ** (Text „dekorativ“ oder Bildtyp dekorativ ohne Text) hat keinen
+  Chip und erscheint nur unter „Alle“, wie es auch der Herunterladen-Dialog
+  weder als „mit Text“ noch als „ohne Text“ zählt.
+
+Regel im Code: `textstand()` in `app.html` spiegelt `main._exportable_alt_text`
+(Grundlage der Zählung `mit_text`/`ohne_text` in `/export/summary`). Die
+Laufmeldung verweist jetzt auf den Filter „Offen“. Übersetzungen „Offen“ und
+der Hinweissatz neu in sechs Katalogen; „Noch nicht generiert“/„Fehlgeschlagen“
+bleiben als Katalogeinträge ohne Verwendung. Test `ui_filter_stand.py` auf die
+neue Regel umgestellt (Zähler und Sichtbarkeit gegen die Serverdaten, neun
+Fälle für `textstand`, Zähler nach Einzel-Generieren).

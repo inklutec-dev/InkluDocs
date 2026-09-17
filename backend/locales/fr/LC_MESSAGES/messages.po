@@ -6298,3 +6298,9 @@ msgstr "{n} images ont échoué."
 
 msgid "Zu finden über den Filter „Fehlgeschlagen“."
 msgstr "À retrouver via le filtre « Échec »."
+
+msgid "Offen"
+msgstr "À faire"
+
+msgid "Zu finden über den Filter „Offen“."
+msgstr "À retrouver via le filtre « À faire »."

@@ -6298,3 +6298,9 @@ msgstr "{n} images failed."
 
 msgid "Zu finden über den Filter „Fehlgeschlagen“."
 msgstr "Find them with the “Failed” filter."
+
+msgid "Offen"
+msgstr "Open"
+
+msgid "Zu finden über den Filter „Offen“."
+msgstr "Find them with the “Open” filter."

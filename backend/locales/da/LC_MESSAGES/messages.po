@@ -5990,3 +5990,9 @@ msgstr "{n} billeder mislykkedes."
 
 msgid "Zu finden über den Filter „Fehlgeschlagen“."
 msgstr "Find dem via filteret „Mislykket“."
+
+msgid "Offen"
+msgstr "Åben"
+
+msgid "Zu finden über den Filter „Offen“."
+msgstr "Find dem via filteret „Åben“."

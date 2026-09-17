@@ -1191,8 +1191,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // ─── Bilder-Filterleiste (Rollen-Workflow Etappe 2, 13.07.2026) ───
     // Seit 17.09.2026 in JEDEM Projekt mit Bildern (Michael Karbe 16.09.2026, Steve 17.09.2026:
     // Jens musste nach einem Lauf mit zwei Fehlerbildern die Luecken von Hand suchen).
-    // Grundchips ueberall: „Alle", „Noch nicht generiert", „Fehlgeschlagen" (Bearbeitungsstand,
-    // aus images.status). Die sechs Pruefstatus-Chips kommen NUR bei Gaesten und bei Besitzern
+    // Grundchips ueberall: „Alle", „Offen", „Alt-Text" — dieselbe Regel wie die Zaehlung im
+    // Herunterladen-Dialog (Michael Karbe 17.09.2026 12:22: „Es gibt entweder einen Text oder nicht.
+    // Ob mit KI generiert oder nicht, spielt keine Rolle."). Die sechs Pruefstatus-Chips kommen NUR bei Gaesten und bei Besitzern
     // geteilter Projekte (window._inReview) hinzu — Solo-Projekte haben keine Pruefstatus
     // (Steve-Entscheidung 10.07.2026 bleibt insoweit bestehen).
     //
@@ -1248,35 +1249,30 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return (r && r.status) || 'offen';
     }
 
-    // Bearbeitungsstand eines Bildes fuer die Grundchips (17.09.2026):
-    //   'fehlgeschlagen'    — images.status 'error': die KI-Anfrage ist gescheitert (z. B. 429 bei
-    //                         Google, Projekt 432 am 15.09.2026); die Karte traegt das rote Abzeichen.
-    //   'nicht_generiert'   — images.status 'pending' (nie dran gewesen oder nach Abbruch, leerem
-    //                         Guthaben, Tageslimit zurueckgestellt) ODER fertig ohne jeden Text, den
-    //                         nie jemand angefasst hat (alt_text_edited null; Altbestand, leere
-    //                         KI-Antwort). Ein vom Kunden bewusst GELEERTES Feld (alt_text_edited ''
-    //                         seit 31.08.2026) zaehlt NICHT — das ist eine Hand-Aenderung in
-    //                         Eigenverantwortung, kein Fehler (Steve/Michael 17.09.2026).
-    //   'generiert'         — alles andere (auch 'processing' waehrend des Laufs).
-    function bearbeitungsstand(img) {
-        if (img.status === 'error') return 'fehlgeschlagen';
-        if (img.status === 'pending') return 'nicht_generiert';
-        if (img.status !== 'processing' && !anzeigeAltText(img)
-            && (img.alt_text_edited === null || img.alt_text_edited === undefined)) return 'nicht_generiert';
-        return 'generiert';
+    // Textstand eines Bildes fuer die Grundchips — Spiegel von main._exportable_alt_text, also
+    // EXAKT die Zaehlung „n von m Bildern haben einen Text" im Herunterladen-Dialog (Michael Karbe
+    // 17.09.2026, 12:22; loest die erste Fassung von heute Vormittag mit Status-Chips ab):
+    //   'dekorativ' — Text „dekorativ" ODER Bildtyp dekorativ ohne Text: kein Chip, nur unter „Alle".
+    //   'mit_text'  — im Feld steht Text (eigener Text vor KI-Text vor Quelltext, wie angezeigt).
+    //   'offen'     — das sichtbare Feld ist leer, egal warum (nie generiert, fehlgeschlagen,
+    //                 zurueckgestellt, bewusst geleert). Das Abzeichen an der Karte nennt den Grund.
+    function textstand(img) {
+        const t = anzeigeAltText(img) || '';
+        if (t === 'dekorativ' || (img.image_type === 'dekorativ' && !t.trim())) return 'dekorativ';
+        return t.trim() ? 'mit_text' : 'offen';
     }
 
     // Ein Bild gegen einen Filter-Schluessel pruefen. Die frueheren Besitzer-
     // Zusatzfilter 'ohne_alt'/'fehler' waren am 17.07.2026 entfernt worden (Korb C —
-    // Steve: nie benutzt); seit 17.09.2026 gibt es sie in neuer Form als
-    // 'nicht_generiert'/'fehlgeschlagen' (siehe bearbeitungsstand). Die
+    // Steve: nie benutzt); seit 17.09.2026 gibt es 'offen'/'mit_text' nach der
+    // Herunterladen-Regel (siehe textstand). Die
     // Rücksprache-Schluessel bleiben fuer die Reaktivierung via RUECKSPRACHE_UI
     // erhalten (Chips sind bei false weg).
     // Karbe B2 (17.07.2026): Pruefstatus-Chips matchen den EINEN abgeleiteten
     // Anzeige-Status (juengstes Ereignis) — identisch zum Badge an der Karte.
     function imageMatchesKey(img, key) {
         if (key === 'alle') return true;
-        if (key === 'nicht_generiert' || key === 'fehlgeschlagen') return bearbeitungsstand(img) === key;
+        if (key === 'offen' || key === 'mit_text') return textstand(img) === key;
         if (key === 'lek_ruecksprache') return roleReviewStatus(img, 'lektorat') === 'ruecksprache';
         if (key === 'ruecksprache') return roleReviewStatus(img, revRole()) === 'ruecksprache';
         return unifiedStatusKey(img) === key;
@@ -1291,18 +1287,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function filterChipLabel(key) {
         if (key === 'lek_ruecksprache') return t('Rücksprache des Lektorats');
         if (key === 'alle') return t('Alle');
-        if (key === 'nicht_generiert') return t('Noch nicht generiert');
-        if (key === 'fehlgeschlagen') return t('Fehlgeschlagen');
+        if (key === 'offen') return t('Offen');
+        if (key === 'mit_text') return t('Alt-Text');
         return unifiedStatusLabel(key);   // die 6 Michael-Status + Rücksprache
     }
 
-    // Chip-Auswahl: Grundchips „Alle", „Noch nicht generiert", „Fehlgeschlagen" in jedem
+    // Chip-Auswahl: Grundchips „Alle", „Offen", „Alt-Text" in jedem
     // Projekt (17.09.2026). Bei Gaesten und Besitzern geteilter Projekte folgen dieselben
     // 6 Pruefstatus (Karbe B2 + Korb C, 17.07.2026). Alle Chips sind IMMER sichtbar
     // (auch mit Zaehler 0), damit die Leiste fuer Screenreader-Nutzer vorhersagbar
     // bleibt; die Rücksprache-Chips erscheinen nur bei RUECKSPRACHE_UI=true.
     function filterChipKeys() {
-        const keys = ['alle', 'nicht_generiert', 'fehlgeschlagen'];
+        const keys = ['alle', 'offen', 'mit_text'];
         if (window.GUEST_MODE || window._inReview) {
             keys.push('neu', 'in_bearbeitung', 'lek_frei', 'lek_aend', 'her_frei', 'her_aend');
         }
@@ -1356,7 +1352,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         fs.innerHTML = filterLegendHtml() + filterChipsHtml();
     }
 
-    // Nach dem Einzel-Generieren (17.09.2026) den Bearbeitungsstand in den Filterdaten
+    // Nach dem Einzel-Generieren (17.09.2026) Status und Text in den Filterdaten
     // nachziehen, damit die Zaehler der Grundchips ohne Neuaufbau stimmen. Die Karte
     // selbst bleibt sichtbar (auch wenn sie den aktiven Chip nicht mehr trifft) — sonst
     // verschwaende sie unter dem Fokus des Nutzers; siehe updateFilterDataStatus.
@@ -2699,7 +2695,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 btn.dataset.status = 'done';
                 // Projekt-Kopf (Badge + "X von Y Bildern generiert") live nachziehen.
                 updateProjectHeader(projectId);
-                // Filter-Zaehler („Noch nicht generiert"/„Fehlgeschlagen") live nachziehen (17.09.2026).
+                // Filter-Zaehler („Offen"/„Alt-Text") live nachziehen (17.09.2026).
                 updateFilterImageStatus(imageId, 'done', data.alt_text);
             } else if (res.status === 402) {
                 // Credits-Sperre: dieselbe Meldung wie beim Sammellauf und Export.
@@ -2920,7 +2916,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const satz = n === 1
             ? t('Ein Bild ist fehlgeschlagen.')
             : t('{n} Bilder sind fehlgeschlagen.', { n: n });
-        return satz + ' ' + t('Zu finden über den Filter „Fehlgeschlagen“.');
+        return satz + ' ' + t('Zu finden über den Filter „Offen“.');
     }
     function versteckeLaufMeldung() {
         const box = document.getElementById('laufMeldung');

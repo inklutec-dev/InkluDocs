@@ -5860,3 +5860,9 @@ msgstr "{n} bilder misslyckades."
 
 msgid "Zu finden über den Filter „Fehlgeschlagen“."
 msgstr "Hittas via filtret ”Misslyckad”."
+
+msgid "Offen"
+msgstr "Öppen"
+
+msgid "Zu finden über den Filter „Offen“."
+msgstr "Hittas via filtret ”Öppen”."
