@@ -38,8 +38,9 @@ Immer `{"error": {"code", "message", "status", …}, "detail": "…"}`. Codes st
 
 Schreibende Aufrufe (POST/PATCH/DELETE) laufen durch `check_api_rate_limit` (60/min,
 1.000/Tag je Schlüssel); lesende (Status, Items, Datei) nicht, damit Polling nicht zählt.
-Tageslimit je Konto und Credits prüfen die delegierten App-Routen. Jeder Aufruf schreibt eine
-Zeile in `api_usage` (`model_used = "v1.documents.<op>"`), Grundlage von
+Tageslimit je Konto und Credits prüfen die delegierten App-Routen. Jeder schreibende Aufruf und
+jeder Fehler schreibt eine Zeile in `api_usage` (`model_used = "v1.documents.<op>"`; reines Lesen
+wie Status-Polling nicht, sonst bläht es Statistik und Tabelle auf), Grundlage von
 `database.get_api_key_stats` (Seite „API-Schlüssel“, Dashboard-Kachel, Endpunkt
 `GET /api/api-keys/stats`). Exporte lassen sich keinem Schlüssel zuordnen; die Kachel nennt
 deshalb nur Bild-Credits der über den Schlüssel angelegten Dokumente.

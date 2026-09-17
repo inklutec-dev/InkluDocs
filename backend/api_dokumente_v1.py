@@ -198,8 +198,8 @@ def _name(wert, fallback: str) -> str:
 # ---------------------------------------------------------------- Aufruf-Mantel
 async def _sicher(request: Request, op: str, schreibend: bool, fn: Callable, *args):
     """Auth -> (Rate-Limit bei schreibenden Aufrufen) -> fn(user, ...) -> Antwort + Kopfzeilen;
-    HTTPException -> Fehler-JSON; alles andere -> 500 mit Protokoll. Jeder Aufruf wird in
-    api_usage vermerkt (Verbrauchsanzeige je Schluessel)."""
+    HTTPException -> Fehler-JSON; alles andere -> 500 mit Protokoll. Schreibende Aufrufe und alle
+    Fehler landen in api_usage (Verbrauchsanzeige je Schluessel); reines Lesen nicht."""
     try:
         user = _d.get_api_user(request)
     except HTTPException as e:
@@ -221,7 +221,11 @@ async def _sicher(request: Request, op: str, schreibend: bool, fn: Callable, *ar
         if rate:
             antwort.headers["X-RateLimit-Remaining-Minute"] = str(rate["minute_remaining"])
             antwort.headers["X-RateLimit-Remaining-Day"] = str(rate["day_remaining"])
-        _protokoll(key_id, user["id"], op, True, "")
+        # Verbrauchsprotokoll (17.09.2026): nur schreibende Aufrufe zaehlen als „Aufrufe" — lesende
+        # (Status-Polling alle 5 s, Items, Bilddatei) wuerden die Statistik und api_usage aufblaehen.
+        # Fehler werden immer vermerkt (auch bei GET), damit die Fehlerquote stimmt.
+        if schreibend:
+            _protokoll(key_id, user["id"], op, True, "")
         return antwort
     except HTTPException as e:
         _protokoll(key_id, user["id"], op, False, f"{e.status_code}: {str(e.detail)[:300]}")
