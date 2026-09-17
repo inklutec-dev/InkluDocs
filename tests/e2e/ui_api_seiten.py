@@ -28,7 +28,7 @@ with sync_playwright() as p:
     sichtbar = s.evaluate("!document.getElementById('apiSection').hidden")
     check("Dashboard: API-Kachel genau dann sichtbar, wenn Schluessel existieren", sichtbar == (hat_keys > 0), (hat_keys, sichtbar))
     if sichtbar:
-        check("Dashboard: Kachel nennt Aufrufe und zwei Wege", "Aufrufe" in s.locator("#apiContainer").inner_text() and s.locator("#apiContainer a").count() == 2, s.locator("#apiContainer").inner_text())
+        check("Dashboard: Kachel nennt Aufrufe und zwei Wege", "Aufruf" in s.locator("#apiContainer").inner_text() and s.locator("#apiContainer a").count() == 2, s.locator("#apiContainer").inner_text())
     # Der 401 von /api/me gehoert zur oeffentlichen Huelle (dashboard.js prueft die Anmeldung; auch auf /preise so).
     echte = [x for x in probleme if "401" not in x]
     check("Keine Skriptfehler (401 von /api/me ist die anonyme Huelle)", not echte, echte[:3])
