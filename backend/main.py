@@ -385,7 +385,9 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="InkluDocs", lifespan=lifespan)
+# Swagger UI (/docs), ReDoc und /openapi.json sind AUS (17.09.2026): sie zeigten oeffentlich alle 173 Routen
+# inklusive Admin- und App-Endpunkte. Die oeffentliche API ist unter /api/v1/docs von Hand dokumentiert.
+app = FastAPI(title="InkluDocs", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://inkludocs.inklutec.de", "https://staging.inkludocs.inklutec.de"],
@@ -9119,6 +9121,7 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <li><a href="#patch-result">Ergebnis bearbeiten (PATCH)</a></li>
 <li><a href="#errors">Fehler-Codes</a></li>
 <li><a href="#ratelimit">Rate-Limits</a></li>
+<li><a href="#kosten">Kosten (Credits)</a></li>
 <li><a href="#examples">Beispiele</a></li>
 </ul>
 </nav>
@@ -9217,21 +9220,25 @@ footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border
 <tr><td><code>401</code></td><td>Ungueltiger oder fehlender API-Key</td></tr>
 <tr><td><code>404</code></td><td>Ergebnis nicht gefunden (falsche result_id oder falscher API-Key)</td></tr>
 <tr><td><code>413</code></td><td>Bild zu gross (max. 10 MB)</td></tr>
-<tr><td><code>429</code></td><td>Rate-Limit ueberschritten</td></tr>
+<tr><td><code>429</code></td><td>Rate-Limit ueberschritten oder nicht genuegend Credits (die Meldung nennt den Grund)</td></tr>
 <tr><td><code>500</code></td><td>Interner Serverfehler</td></tr>
 </tbody>
 </table>
 
 <h2 id="ratelimit">Rate-Limits</h2>
-<p>Pro API-Schluessel gelten folgende Limits:</p>
+<p>Es gelten zwei Arten von Limits:</p>
 <ul>
-<li><strong>100 Bilder pro Tag</strong> (Alt-Text-Generierung, Reset um Mitternacht UTC)</li>
-<li><strong>60 Anfragen pro Minute</strong></li>
+<li>Je API-Schluessel: <strong>60 Anfragen pro Minute</strong> und <strong>1.000 Anfragen pro Tag</strong> (gleitendes Fenster).</li>
+<li>Je Konto: <strong>500 generierte Alt-Texte pro Tag</strong> ueber die API, unabhaengig von der Zahl der Schluessel (Reset um Mitternacht UTC). Die App hat ein eigenes Tageskontingent. Fuer hoehere Mengen sprich uns an, das Kontingent laesst sich je Konto anpassen.</li>
 </ul>
 <p>Die verbleibenden Anfragen werden in Response-Headern mitgeteilt:</p>
 <pre><code>X-RateLimit-Remaining-Minute: 58
 X-RateLimit-Remaining-Day: 997</code></pre>
 <p>Bei Ueberschreitung erhaeltst du HTTP <code>429</code> mit einem <code>Retry-After</code> Header.</p>
+
+<h2 id="kosten">Kosten (Credits)</h2>
+<p>Die API zieht aus demselben Credit-Guthaben wie die App. Jeder erfolgreich generierte Alt-Text (<code>POST /api/v1/alt-text</code>) kostet <strong>5 Credits</strong>; Langbeschreibung und Bildtyp sind darin enthalten. Das Abrufen (<code>GET</code>) und Bearbeiten (<code>PATCH</code>) eines Ergebnisses kostet nichts. Schlaegt die Generierung fehl, werden keine Credits abgezogen; ein Treffer im Zwischenspeicher (dasselbe Bild mit demselben Kontext wurde kuerzlich schon beschrieben) ebenfalls nicht.</p>
+<p>Reicht das Guthaben nicht, antwortet die API mit HTTP <code>429</code> und einer Meldung, die den Preis und die verfuegbaren Credits nennt. Credits gibt es ueber die Tarife und Pakete unter <a href="%%BASE_URL%%/preise">%%BASE_URL%%/preise</a>; den Verbrauch siehst du in der App im Dashboard.</p>
 
 <h2 id="examples">Beispiele</h2>
 
