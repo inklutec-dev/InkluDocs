@@ -25,7 +25,7 @@ name: inkludocs-demo
 
 services:
   inkludocs-demo:
-    image: inkludocs:demo-20260917  # 17.09.2026: 429-Wartezeit 10/20/40 s, Filterleiste in jedem Projekt, ehrliche Laufmeldung, Platzhalter
+    image: inkludocs:demo-20260917b  # 17.09.2026 nachmittags: Filter-Chips Alle / Offen / Alt-Text (Michael)
     container_name: inkludocs-demo
     restart: unless-stopped
     # 15.09.2026 (Steve, nach dem Vorfall vom 14.09.): Logs ins System-Journal — sie ueberleben den
