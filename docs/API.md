@@ -37,7 +37,9 @@ Immer `{"error": {"code", "message", "status", …}, "detail": "…"}`. Codes st
 ## Limits und Kosten
 
 Schreibende Aufrufe (POST/PATCH/DELETE) laufen durch `check_api_rate_limit` (60/min,
-1.000/Tag je Schlüssel); lesende (Status, Items, Datei) nicht, damit Polling nicht zählt.
+1.000/Tag je Schlüssel); lesende (Status, Items, Datei) haben eine eigene Bremse
+(`LESE_LIMIT_MINUTE` = 300/min je Schlüssel), damit Polling nicht ins Schreib-Limit zählt,
+Endlosschleifen aber gestoppt werden.
 Tageslimit je Konto und Credits prüfen die delegierten App-Routen. Jeder schreibende Aufruf und
 jeder Fehler schreibt eine Zeile in `api_usage` (`model_used = "v1.documents.<op>"`; reines Lesen
 wie Status-Polling nicht, sonst bläht es Statistik und Tabelle auf), Grundlage von

@@ -6682,3 +6682,6 @@ msgstr "Con claves de API, otras aplicaciones se conectan a InkluDocs: imágenes
 
 msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
 msgstr "Una llamada este mes mediante {k} claves."
+
+msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter."
+msgstr "Por clave: {minute} peticiones de escritura por minuto y {tag} al día (ventana deslizante). Las llamadas de lectura como estado y elementos no cuentan ahí, pero tienen su propio límite de {lesen} por minuto; una consulta cada cinco segundos queda muy por debajo."

@@ -9111,6 +9111,7 @@ async def api_docs(request: Request):
         "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],
         "limit_minute": API_RATE_LIMIT_MINUTE,
         "limit_tag": API_RATE_LIMIT_DAY,
+        "limit_lesen": api_dokumente_v1.LESE_LIMIT_MINUTE,
         "tageslimit": DAILY_IMAGE_LIMIT,
     })
     return templates.TemplateResponse("api_docs.html", ctx)

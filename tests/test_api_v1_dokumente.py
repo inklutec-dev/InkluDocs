@@ -94,6 +94,19 @@ class FehlerformatTest(unittest.TestCase):
         self.assertEqual(v1._text_status({**leer, "image_type": "dekorativ"}), "dekorativ")
 
 
+class LeseBremseTest(unittest.TestCase):
+    def test_lesende_aufrufe_haben_eigene_grenze(self):
+        from fastapi import HTTPException
+        v1._lese_fenster.pop(-99, None)
+        for _ in range(v1.LESE_LIMIT_MINUTE):
+            v1._lese_bremse(-99)
+        with self.assertRaises(HTTPException) as cm:
+            v1._lese_bremse(-99)
+        self.assertEqual(cm.exception.status_code, 429)
+        self.assertEqual(cm.exception.headers.get("Retry-After"), "60")
+        v1._lese_fenster.pop(-99, None)
+
+
 class SchluesselLoeschenTest(unittest.TestCase):
     """Vorher: IntegrityError, sobald api_usage/api_results am Schluessel hingen (17.09.2026)."""
 

@@ -6685,3 +6685,6 @@ msgstr "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder
 
 msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
 msgstr "Ein Aufruf in diesem Monat über {k} Schlüssel."
+
+msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter."
+msgstr "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter."

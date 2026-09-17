@@ -6374,3 +6374,6 @@ msgstr "Med API-nøgler kobler andre programmer sig på InkluDocs: enkeltbillede
 
 msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
 msgstr "Ét kald denne måned via {k} nøgler."
+
+msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter."
+msgstr "Pr. nøgle: {minute} skrivende forespørgsler pr. minut og {tag} pr. dag (glidende vindue). Læsende kald som status og poster tæller ikke med der, men har deres egen grænse på {lesen} pr. minut; en forespørgsel hvert femte sekund ligger langt under."

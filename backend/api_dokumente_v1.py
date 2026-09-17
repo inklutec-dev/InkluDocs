@@ -17,7 +17,8 @@ Werkzeug nach Dateityp: .pdf -> pdf (oder formular, wenn tool=formular), .docx -
 Bilddatei -> grafik, JSON {url} -> web. Jedes Dokument hat dieselbe Gestalt: id, kind,
 status, counts, items. Ein Item ist ein Bild (type image) oder ein Formularfeld (type field).
 
-Endpunkte (alle mit Kopfzeile X-API-Key; * = schreibend, zaehlt im Minuten-/Tageslimit je Schluessel):
+Endpunkte (alle mit Kopfzeile X-API-Key; * = schreibend, zaehlt im Minuten-/Tageslimit je Schluessel;
+lesende Aufrufe haben eine eigene Bremse von LESE_LIMIT_MINUTE pro Minute):
   POST   /api/v1/documents                          * Datei (multipart) oder {url} (JSON) -> 202/201
   GET    /api/v1/documents                            eigene Dokumente, ?limit=&offset=
   GET    /api/v1/documents/{id}                       Status, Zaehler, Fortschritt
@@ -82,6 +83,24 @@ class Deps:
 
 _d: Optional[Deps] = None
 _routen: dict = {}
+
+# Lesende Aufrufe (Status-Polling, Items, Bilddatei) laufen NICHT durch das Minuten-/Tageslimit der
+# schreibenden Aufrufe, brauchen aber eine eigene, grosszuegige Bremse: jeder Aufruf prueft den
+# Schluessel in der Datenbank. 300 pro Minute je Schluessel = ein Poll alle 200 ms — weit ueber der
+# empfohlenen Abfrage alle fuenf Sekunden, aber eine Grenze fuer Endlosschleifen.
+LESE_LIMIT_MINUTE = 300
+_lese_fenster: dict = {}
+
+
+def _lese_bremse(key_id: int) -> None:
+    import time as _time
+    jetzt = _time.time()
+    liste = [t for t in _lese_fenster.get(key_id, []) if jetzt - t < 60]
+    if len(liste) >= LESE_LIMIT_MINUTE:
+        raise HTTPException(status_code=429, detail=f"Rate-Limit ueberschritten: max. {LESE_LIMIT_MINUTE} lesende Anfragen pro Minute.",
+                            headers={"Retry-After": "60", "X-RateLimit-Limit": str(LESE_LIMIT_MINUTE), "X-RateLimit-Remaining": "0"})
+    liste.append(jetzt)
+    _lese_fenster[key_id] = liste
 
 # ---------------------------------------------------------------- Fehlerformat
 _CODES = {400: "bad_request", 401: "unauthorized", 402: "payment_required", 403: "forbidden",
@@ -209,6 +228,8 @@ async def _sicher(request: Request, op: str, schreibend: bool, fn: Callable, *ar
     try:
         if schreibend:
             rate = _d.check_api_rate_limit(key_id)
+        else:
+            _lese_bremse(key_id)
         ergebnis = await fn(user, *args)
         if isinstance(ergebnis, Response):
             antwort = ergebnis

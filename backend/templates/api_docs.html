@@ -203,7 +203,7 @@
 <section class="dash-card" aria-labelledby="h-limits">
   <h2 id="h-limits">{{ _('Rate-Limits') }}</h2>
   <ul>
-    <li>{{ _('Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen nicht mit, damit du in Ruhe abfragen kannst.').format(minute=limit_minute, tag=limit_tag) }}</li>
+    <li>{{ _('Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter.').format(minute=limit_minute, tag=limit_tag, lesen=limit_lesen) }}</li>
     <li>{{ _('Je Konto: {n} generierte Texte pro Tag über die API, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen.').format(n=tageslimit) }}</li>
   </ul>
   <p>{{ _('Die verbleibenden Anfragen stehen in den Kopfzeilen X-RateLimit-Remaining-Minute und X-RateLimit-Remaining-Day; bei Überschreitung kommt HTTP 429 mit Retry-After.') }}</p>
