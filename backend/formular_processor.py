@@ -168,8 +168,15 @@ def validiere_formular(pdf_path: str) -> int:
 
 def _pdfix_feldliste(pdf_path: str, work_dir: str) -> list[dict]:
     """Ruft Heines Export-Skript auf (Subprocess) und liest die CSV.
-    Spalten: Nummer;Name;Quickinfo;Type-Nr;Type;Value;Seite
-    (Value ist bei uns nur "kein Wert"/"Wert vorhanden", siehe Skriptkopf)."""
+    Spalten: Nummer;Name;Quickinfo;Type-Nr;Type;Value;Seite;left;bottom2;right;top;Anzahl Felder mit identischem Namen
+    (Value ist bei uns nur "kein Wert"/"Wert vorhanden", siehe Skriptkopf). Seit Heines Version
+    1.0.0.2 vom 17.09.2026 ist "Nummer" die sichtbare Reihenfolge (je Seite von oben nach unten,
+    links nach rechts) — sie wird zu feld_index und bestimmt mit page_number Anzeige und Export
+    (ORDER BY page_number, feld_index in formular_api; Michael Karbe 16.09.2026). Die Seite kennt
+    Heines Skript nur, wenn die PDF ein /P am Feld traegt (bei vielen PDFs leer, dann sortiert es
+    seitenuebergreifend nach top); page_number kommt bei uns aus PyMuPDF (_widgets_je_name), und
+    weil Heines Nummer innerhalb jeder Seite monoton in top ist, bleibt die Anzeige richtig.
+    Die Rechteck-Spalten werden hier nicht gelesen (Geometrie kommt aus PyMuPDF)."""
     if not _PDFIX_AVAILABLE:
         raise RuntimeError("pdfix-sdk nicht installiert")
     os.makedirs(work_dir, exist_ok=True)
@@ -450,6 +457,16 @@ def analysiere_formular(pdf_path: str, output_dir: Optional[str] = None,
             pdfix_liste = [{"nummer": i + 1, "name": n, "quickinfo": widgets[n]["tu"],
                             "feld_art": widgets[n]["feld_art"], "ausgefuellt": widgets[n]["ausgefuellt"],
                             "seiten": widgets[n]["seiten"]} for i, n in enumerate(namen)]
+
+        # Nummer = Anzeigeposition (17.09.2026, Heines Export-Skript Version 1.0.0.2): Heines Sortierung
+        # ordnet je Seite von oben nach unten und links nach rechts, kennt die Seite aber nur bei PDFs
+        # mit /P am Feld (sonst leer) — unsere Seite kommt aus PyMuPDF. Deshalb hier nach (Seite aus
+        # PyMuPDF, Heines Nummer) sortieren und 1..n durchnummerieren: So sind die Ueberschrift
+        # „Feld N", das Prompt-Kuerzel „F<n>" und die CSV-Spalte Nummer lueckenlos in der sichtbaren
+        # Reihenfolge (Michael Karbe 16.09.2026). Innerhalb einer Seite bleibt Heines Reihenfolge.
+        pdfix_liste.sort(key=lambda e: ((widgets.get(e["name"]) or {}).get("page") or 0, int(e["nummer"])))
+        for _pos, _e in enumerate(pdfix_liste, start=1):
+            _e["nummer"] = _pos
 
         # Alle Seitenzugriffe (Text, Bilder) laufen ueber die widgetfreie Kopie.
         lese = _ohne_widgets(doc)

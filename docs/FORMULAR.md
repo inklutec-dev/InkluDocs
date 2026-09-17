@@ -407,3 +407,31 @@ sind alle Knöpfe im Dialog gesperrt, der gedrückte heißt „Wird exportiert..
 danach bleibt der Dialog offen, die Statuszeile sagt „Heruntergeladen: „Datei“
 (n Credits abgebucht).“ und bekommt den Fokus, „Abbrechen“ heißt „Zurück zum
 Projekt“. Das Dateiname-Feld hat `autocomplete="off"`.
+
+## Heines Export-Skript Version 1.0.0.2 vom 17.09.2026 (Reihenfolge der Quickinfos)
+
+Michael Karbe (WhatsApp 16.09.2026): Die Reihenfolge der Quickinfos entsprach nicht der
+sichtbaren Reihenfolge der Felder. Jörg Heine hat sein Export-Skript erweitert
+(`Formulare_Export_08.py`, per Mail an steve.weidel@inklutec.de 17.09.2026): Rechteck je Feld
+(left, bottom, right, top), Anzahl der Felder mit identischem Namen, und eine Sortierung je
+Seite von oben nach unten (Toleranz 5 Punkt) und links nach rechts mit Neunummerierung.
+
+**Regel für Zulieferungen (Steve 17.09.2026):** Heines Skript ist die Vorlage; InkluDocs
+trägt nur einen markierten Aufsatz für den Serverbetrieb darauf.
+- Original unverändert: `backend/pdfix_scripts/original_heine/Formulare_Export_08.py`.
+- Betriebsfassung: `backend/pdfix_scripts/Formular_Export_Quickinfo.py`, mechanisch erzeugt
+  mit `tests/werkzeuge/baue_betriebsfassung.py` (Kopfblock, `# InkluDocs-Original: <Zeile>`
+  für ersetzte Zeilen, `# InkluDocs` an ergänzten Zeilen). Betriebslogik (Lizenz,
+  Datenschutz-Maskierung des Feldwerts, Surrogate, Absicherung leerer Seiten/Rechtecke) liegt
+  in `backend/pdfix_scripts/inkludocs_betrieb.py`.
+- `tests/test_pdfix_skript_drift.py` rechnet die Markierungen heraus und verlangt Byte-
+  Gleichheit mit dem Original. Ändert jemand Heines Logik, schlägt der Test an.
+- Neue Fassung von Heine = neue Datei unter original_heine, Betriebsfassung neu erzeugen,
+  Drift-Test, Vergleich alt/neu (`vergleich_export.py` im Container), Formular-Tests.
+
+**Wirkung:** `Nummer` aus der CSV wird `feld_index`; Anzeige und Export sortieren nach
+`page_number` (aus PyMuPDF) und dann `feld_index`. Heines Seitenermittlung liefert bei PDFs
+ohne `/P` am Feld eine leere Seite (war schon vorher so); seine Sortierung läuft dann
+seitenübergreifend nach `top`, ist aber innerhalb jeder Seite monoton — zusammen mit
+unserer Seite aus PyMuPDF stimmt die Reihenfolge. Bestehende Formularprojekte behalten ihre
+alte Nummerierung; erst ein neuer Upload bekommt die neue.

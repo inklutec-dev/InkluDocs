@@ -1,58 +1,14 @@
-# =============================================================================
-#  Formular_Export_Quickinfo.py — InkluDocs Quickinfo-Werkzeug (PDF-Formulare)
-# =============================================================================
-#  HERKUNFT / PROVENANCE:
-#
-#  Dies ist Joerg Heines Skript "Formulare_Export_08.py" (Actino Software GmbH,
-#  heine@actino.de), Version 1.0.0.2 vom 17.09.2026, gesendet an
-#  steve.weidel@inklutec.de ("Script fuer den Export der QuickInfo bei
-#  Formularfeldern"). Das unveraenderte Original liegt daneben unter
-#  original_heine/Formulare_Export_08.py. Neu gegenueber Formulare_Export_07_r.py
-#  (25.08.2026): Rechteck je Feld (left, bottom, right, top), Anzahl der Felder
-#  mit identischem Namen, und die Sortierung je Seite von oben nach unten
-#  (Toleranz 5) und links nach rechts mit fortlaufender Neunummerierung —
-#  Michael Karbe 16.09.2026: die Reihenfolge der Quickinfos soll der sichtbaren
-#  Reihenfolge der Felder entsprechen.
-#
-#  REGEL (Steve 17.09.2026): Heines Skript ist die Vorlage, wir tragen nur einen
-#  markierten Aufsatz fuer den Serverbetrieb darauf. Diese Datei entsteht
-#  mechanisch aus dem Original (tests/werkzeuge/baue_betriebsfassung.py), und
-#  tests/test_pdfix_skript_drift.py prueft, dass sie ohne die markierten Zeilen
-#  byteidentisch mit dem Original ist. Markierungen:
-#    "# InkluDocs-Original: <Zeile>"  ersetzt genau diese Originalzeile
-#    "... # InkluDocs"                 von uns ergaenzte Zeile
-#  Die Betriebslogik selbst steht in inkludocs_betrieb.py.
-#
-#  Anpassungen (seit 27.08.2026, heute unveraendert uebernommen):
-#    1. input("Druecke ENTER") entfaellt (kein stdin auf dem Server).
-#    2. CSV-Pfad als Parameter -c/--csv; -o/--output nicht mehr Pflicht.
-#    3. DATENSCHUTZ: Spalte "Value" nur "kein Wert" / "Wert vorhanden".
-#    4. Lizenz ueber PDFIX_LICENSE_USER/PDFIX_LICENSE_KEY; Ergebniszeile FIELDS_FOUND=n.
-#    5. Ungepaarte UTF-16-Surrogate in Name/Quickinfo werden ersetzt.
-#    6. aufseiten/auf1seite/Rechteck vor der Verzweigung initialisiert; im
-#       Kids-Zweig page.Release() je Seite.
-#    7. doc.Close(); Fehlermeldung + Exit-Code 2, wenn die PDF nicht zu oeffnen ist.
-#    8. NEU 17.09.2026: Vor Heines Sortierung werden leere Seiten-/Rechteckwerte
-#       auf 0 gesetzt (sonst ValueError in int()), siehe seiten_absichern.
-#
-#  CSV-Format (Semikolon, UTF-8):
-#    Nummer;Name;Quickinfo;Type-Nr;Type;Value;Seite;left;bottom2;right;top;Anzahl Felder mit identischem Namen
-#  formular_processor.py liest die ersten sieben Spalten ueber feste Positionen.
-# =============================================================================
-# === InkluDocs-Kopf Ende ===
 
 # 17.09.2026
 # Version 1.0.0.2
 
-# InkluDocs-Original: input("Drücke ENTER, um fortzufahren...")
+input("Drücke ENTER, um fortzufahren...")
 
 import os
 import csv
 import time
 import math
 import copy
-import sys  # InkluDocs: fuer stderr/Exit-Code
-import inkludocs_betrieb as betrieb  # InkluDocs: Betriebshelfer (Lizenz, Datenschutz, CSV-Sicherheit)
 
 start = time.time()
 
@@ -62,7 +18,6 @@ import uuid
 from pathlib import Path
 
 pdfix = GetPdfix()
-betrieb.lizenz_aktivieren(pdfix)  # InkluDocs: Lizenz aus der Umgebung
 
 # fieldarray = [["Nummer", "Name", "Quickinfo", "Type-Nr", "Type", "Value"]]
 fieldarray = [["Nummer", "Name", "Quickinfo", "Type-Nr", "Type", "Value", "Seite","left","bottom2" ,"right","top","Anzahl Felder mit identischem Namen"]]
@@ -70,16 +25,13 @@ fieldarray = [["Nummer", "Name", "Quickinfo", "Type-Nr", "Type", "Value", "Seite
 def main():
     parser = argparse.ArgumentParser(description="Process a PDF file.")
     parser.add_argument('-i', '--input', required=True, help='Path to input PDF file')
-# InkluDocs-Original:     parser.add_argument('-o', '--output', required=True, help='Path to output PDF file')
-    parser.add_argument('-o', '--output', required=False, help='(unbenutzt, Kompatibilitaet)')  # InkluDocs
-    parser.add_argument('-c', '--csv', required=True, help='Pfad der zu schreibenden CSV')  # InkluDocs
+    parser.add_argument('-o', '--output', required=True, help='Path to output PDF file')
 
     args = parser.parse_args()
 
     global aaadatei
     aaadatei = args.input
     doc = pdfix.OpenDoc(args.input, "")
-    if not doc: sys.exit(betrieb.pdf_nicht_geoeffnet(pdfix))  # InkluDocs: klare Meldung statt AttributeError
 
     print("------------------------")
     num_fields = doc.GetNumFormFields()
@@ -113,7 +65,6 @@ def main():
         field_dict = feld1.GetObject()       
         kids = field_dict.GetArray("Kids")
         
-        aufseiten = ""; auf1seite = ""; left = bottom = right = top = 0; anzfelder = 0  # InkluDocs: in jedem Zweig definiert
         if kids is not None:
             # print("kids is not none - ",feld1.GetFullName())
             anzfelder = kids.GetNumObjects()
@@ -143,7 +94,6 @@ def main():
                                 if auf1seite == "":
                                     # der erste Treffer wird gespeichert
                                     auf1seite = auf1seite+str(page_num + 1)       
-                page.Release()  # InkluDocs: Seite wieder freigeben (Speicher bei grossen Formularen)
 
         else:  
             # print("kids is none - ",feld1.GetFullName())
@@ -167,12 +117,10 @@ def main():
                 page.Release()
                 
         feldwert = feld1.GetValue()
-# InkluDocs-Original:         if feldwert == "" :
-# InkluDocs-Original:             feldwert = "kein Wert"        
-        feldwert = betrieb.feldwert_maskieren(feldwert)  # InkluDocs (Datenschutz): nie der Wert selbst
+        if feldwert == "" :
+            feldwert = "kein Wert"        
         
-# InkluDocs-Original:         fieldarray.append([(ff+1), feld1.GetFullName(), feld1.GetTooltip(), feld1.GetType(), feldart, feldwert,auf1seite, left, bottom , right, top, anzfelder])
-        fieldarray.append([(ff+1), betrieb.sauber(feld1.GetFullName()), betrieb.sauber(feld1.GetTooltip()), feld1.GetType(), feldart, feldwert,auf1seite, left, bottom , right, top, anzfelder])  # InkluDocs: Surrogate-sicher
+        fieldarray.append([(ff+1), feld1.GetFullName(), feld1.GetTooltip(), feld1.GetType(), feldart, feldwert,auf1seite, left, bottom , right, top, anzfelder])
 
     pfad3 = Path(""+args.input).parent
       
@@ -187,9 +135,6 @@ def main():
 
     global pfad5
     pfad5 = str(pfad3)+"\\"+filename2   
-    global pfadcsv  # InkluDocs
-    pfadcsv = args.csv  # InkluDocs: CSV-Pfad aus -c statt Windows-Pfad neben der PDF
-    doc.Close()  # InkluDocs
    
 import argparse 
     
@@ -199,7 +144,6 @@ main()
 
 kopf = fieldarray[0]
 daten = fieldarray[1:]
-daten = betrieb.seiten_absichern(daten)  # InkluDocs: leere Seite/Rechteck -> 0 statt ValueError
 
 # Sortierung zunächst nach Seite und top
 daten.sort(key=lambda x: (int(x[6]), -int(x[10])))
@@ -244,8 +188,8 @@ for i in range(1, len(fieldarray)):
     fieldarray[i][0] = i
 
     
-# InkluDocs-Original: pfadcsv = r"C:\Daten\20260709_Formularfelder\Formular_array.csv"
-# InkluDocs-Original: pfadcsv = pfad5+"_formulararray.csv"
+pfadcsv = r"C:\Daten\20260709_Formularfelder\Formular_array.csv"
+pfadcsv = pfad5+"_formulararray.csv"
 with open(pfadcsv, mode="w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file, delimiter=";")
     writer.writerows(fieldarray)
@@ -255,5 +199,4 @@ print()
 
 end = time.time()
 print("Dauer:", round((end - start), 2), "Sekunden")
-print("FIELDS_FOUND=%d" % (len(fieldarray) - 1))  # InkluDocs: Ergebniszeile fuer den Wrapper
 
