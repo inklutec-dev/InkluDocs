@@ -22,6 +22,13 @@
         <h2 id="ausgaben-h">{{ _('Neu in der Ablage') }}</h2>
         <div id="ausgabenContainer"></div>
       </section>
+
+      {# API (17.09.2026, Steve): Verbrauch ueber die Schluessel des Kontos; verborgen, solange
+         es keinen Schluessel gibt (kein leerer Kasten fuer Konten ohne Anbindung). #}
+      <section class="dash-section" aria-labelledby="api-h" id="apiSection" hidden>
+        <h2 id="api-h">{{ _('API') }}</h2>
+        <div id="apiContainer"></div>
+      </section>
 {% endblock %}
 {% block dialogs %}
 <div id="newsPanel" class="dash-news-panel" role="dialog" aria-modal="true" aria-labelledby="newsPanelTitle" hidden>
@@ -260,6 +267,28 @@
     btn.hidden = false;
   }
 
+  // ─── API (17.09.2026): Aufrufe dieses Monats ueber alle Schluessel, mit Wegen zu Verwaltung und Doku ───
+  async function loadApiStats() {
+    let data;
+    try {
+      const res = await fetch('/api/api-keys/stats');
+      if (!res.ok) return;
+      data = await res.json();
+    } catch (e) { return; }
+    if (!data || !data.keys_count) return;
+    const cont = byId('apiContainer');
+    const p = document.createElement('p');
+    p.className = 'dash-sub';
+    p.textContent = t('{n} Aufrufe in diesem Monat über {k} Schlüssel.', { n: (data.summary || {}).calls_month || 0, k: data.keys_count });
+    const links = document.createElement('p');
+    links.className = 'dash-actions';
+    const a1 = document.createElement('a'); a1.className = 'btn btn-secondary'; a1.href = '/api-schluessel'; a1.textContent = t('Schlüssel verwalten');
+    const a2 = document.createElement('a'); a2.className = 'btn btn-secondary'; a2.href = '/api/v1/docs'; a2.textContent = t('Zur API-Dokumentation');
+    links.appendChild(a1); links.appendChild(document.createTextNode(' ')); links.appendChild(a2);
+    cont.appendChild(p); cont.appendChild(links);
+    byId('apiSection').hidden = false;
+  }
+
   // ─── Meine Ausgaben (11.09.2026): die letzten fuenf fertigen Umwandlungen ───
   async function loadAusgaben() {
     let data;
@@ -320,6 +349,7 @@
     await loadSharedProjects();
     await loadRecent();
     await loadAusgaben();
+    await loadApiStats();
   })();
 {% endraw %}
 </script>

@@ -7,7 +7,15 @@
       <p class="dash-sub">
         <a class="btn btn-secondary" href="/einstellungen">{{ _('Zurück zu den Einstellungen') }}</a>
       </p>
-      <p class="dash-meta">{{ _('Mit API-Schluesseln koennen externe Anwendungen Alt-Texte generieren.') }}</p>
+      <p class="dash-meta">{{ _('Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation.') }}
+        <a href="/api/v1/docs">{{ _('Zur API-Dokumentation') }}</a></p>
+
+      {# Verbrauch ueber die API (17.09.2026, Steve): Summe ueber alle Schluessel des Kontos.
+         Exporte lassen sich keinem Schluessel zuordnen und fehlen bewusst (siehe get_api_key_stats). #}
+      <section class="dash-card" aria-labelledby="apiUsageHeading">
+        <h2 id="apiUsageHeading">{{ _('Verbrauch über die API') }}</h2>
+        <ul id="apiUsageList" style="list-style:none;padding:0;margin:.5rem 0 0;"></ul>
+      </section>
 
       {# 1:1 aus einstellungen.html uebernommen (31.07.2026). Aus den frueheren
          h3 werden h2: Die umschliessende h2 "API-Schluessel" faellt weg, weil
@@ -81,10 +89,39 @@
   // API-Schluessel-Verwaltung, 31.07.2026 unveraendert aus einstellungen.html
   // hierher verschoben (eigene Unterseite). Endpunkte und Verhalten gleich.
 
+  // Verbrauch je Schluessel (17.09.2026): eine Abfrage, Summe oben, Zeile je Schluessel unten.
+  let _apiStats = { keys: {}, summary: null };
+  async function loadApiStats() {
+    try {
+      const res = await fetch('/api/api-keys/stats');
+      if (!res.ok) return;
+      _apiStats = await res.json();
+    } catch (e) { return; }
+    const ul = byId('apiUsageList');
+    if (!ul) return;
+    ul.innerHTML = '';
+    const s = _apiStats.summary || {};
+    const zeilen = [
+      [t('Aufrufe in diesem Monat'), s.calls_month || 0],
+      [t('Aufrufe heute'), s.calls_today || 0],
+      [t('Dokumente über die API angelegt'), s.documents || 0],
+      [t('Credits für Bilder dieser Dokumente'), s.credits_images || 0],
+      [t('Letzter Aufruf'), s.last_call ? formatDate(s.last_call) : t('noch keiner')],
+    ];
+    zeilen.forEach(([label, wert]) => {
+      const li = document.createElement('li');
+      li.style.cssText = 'padding:.3rem 0;border-bottom:1px solid var(--border);';
+      const b = document.createElement('strong'); b.textContent = label + ': ';
+      li.appendChild(b); li.appendChild(document.createTextNode(String(wert)));
+      ul.appendChild(li);
+    });
+  }
+
   async function loadApiKeys() {
     const list = byId('apiKeyList');
     const countEl = byId('apiKeyCount');
     if (!list) return;
+    await loadApiStats();
     const res = await fetch('/api/api-keys');
     if (!res.ok) return;
     const data = await res.json();
@@ -117,6 +154,16 @@
         used.className = 'dash-meta'; used.style.marginLeft = '.5rem';
         used.textContent = t('Zuletzt verwendet: {datum}', { datum: formatDate(k.last_used) });
         info.appendChild(used);
+      }
+      const st = (_apiStats.keys || {})[String(k.id)];
+      if (st) {
+        const use = document.createElement('span');
+        use.className = 'dash-meta'; use.style.cssText = 'display:block;margin-top:.2rem;';
+        const teile = [t('Aufrufe: {n}', { n: st.calls_total }), t('heute {n}', { n: st.calls_today }),
+                       t('Dokumente: {n}', { n: st.documents }), t('Credits: {n}', { n: st.credits_images })];
+        if (st.calls_total > 0 && st.errors_total > 0) teile.push(t('Fehlerquote: {p} %', { p: st.error_rate }));
+        use.textContent = teile.join(' · ');
+        info.appendChild(use);
       }
       const editBtn = document.createElement('button');
       editBtn.className = 'btn btn-secondary btn-small';

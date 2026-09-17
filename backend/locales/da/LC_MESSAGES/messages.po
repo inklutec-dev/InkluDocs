@@ -5996,3 +5996,378 @@ msgstr "Åben"
 
 msgid "Zu finden über den Filter „Offen“."
 msgstr "Find dem via filteret „Åben“."
+
+msgid "Dokumentation"
+msgstr "Dokumentation"
+
+msgid "InkluDocs API – Dokumentation"
+msgstr "InkluDocs API – Dokumentation"
+
+msgid "Worum es geht"
+msgstr "Hvad det handler om"
+
+msgid "Die InkluDocs-API macht alles, was die App kann, für andere Anwendungen verfügbar: Alt-Texte für einzelne Bilder, und ganze Dokumente (PDF, Word, Formular-PDF, Bildsammlung, Webseite) hochladen, beschreiben lassen, korrigieren und barrierefrei exportieren. Du brauchst nur ein InkluDocs-Konto und einen API-Schlüssel; Oberfläche und Anzeige baust du in deinem Produkt, oder du verlinkst unsere Prüfansicht."
+msgstr "InkluDocs-API’en stiller alt, hvad appen kan, til rådighed for andre programmer: alternative tekster til enkelte billeder, og hele dokumenter (PDF, Word, PDF-formularer, billedsamlinger, websider), der kan uploades, beskrives, rettes og eksporteres tilgængeligt. Du skal blot bruge en InkluDocs-konto og en API-nøgle; brugerfladen bygger du i dit eget produkt, eller du linker til vores gennemsynsvisning."
+
+msgid "Basis-Adresse"
+msgstr "Basisadresse"
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Inhaltsverzeichnis"
+msgstr "Indholdsfortegnelse"
+
+msgid "Authentifizierung"
+msgstr "Godkendelse"
+
+msgid "Grundsätze: Versionierung, Antworten, Fehler"
+msgstr "Principper: versionering, svar, fejl"
+
+msgid "Einzelbilder"
+msgstr "Enkeltbilleder"
+
+msgid "Drei Wege der Einbindung"
+msgstr "Tre måder at integrere på"
+
+msgid "Fehler-Codes"
+msgstr "Fejlkoder"
+
+msgid "Rate-Limits"
+msgstr "Hastighedsgrænser"
+
+msgid "Kosten (Credits)"
+msgstr "Omkostninger (credits)"
+
+msgid "Beispiele"
+msgstr "Eksempler"
+
+msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
+msgstr "Hver forespørgsel bærer din nøgle i headeren X-API-Key. Nøgler opretter du i appen under „Indstillinger“ → „API-nøgler“; der ser du også forbruget pr. nøgle. En nøgle gælder for din konto; du kan oprette flere (fx én pr. program) og slette hver enkelt for sig."
+
+msgid "Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server."
+msgstr "Behandl nøglen som en adgangskode: aldrig i browserkode eller offentlige repositories, kun på din server."
+
+msgid "Versionierung"
+msgstr "Versionering"
+
+msgid "Alle Pfade beginnen mit /api/v1/. Innerhalb von v1 kommen neue Felder und Endpunkte nur hinzu; vorhandene Felder werden nicht umbenannt oder entfernt. Änderungen, die bestehende Anbindungen brechen würden, erscheinen als neue Version (/api/v2/), und v1 läuft dann mindestens zwölf Monate weiter. Jede Antwort trägt die Kopfzeile X-API-Version."
+msgstr "Alle stier begynder med /api/v1/. Inden for v1 kommer nye felter og endepunkter kun til; eksisterende felter omdøbes eller fjernes ikke. Ændringer, der ville bryde eksisterende integrationer, kommer som en ny version (/api/v2/), og v1 kører derefter mindst tolv måneder videre. Hvert svar bærer headeren X-API-Version."
+
+msgid "Antworten"
+msgstr "Svar"
+
+msgid "Antworten sind JSON (UTF-8), außer bei Datei-Downloads. Zeitstempel sind UTC im Format JJJJ-MM-TT HH:MM:SS. Längere Arbeiten (Extraktion, Generierung) laufen im Hintergrund: Du bekommst sofort eine Antwort mit Status 202 und fragst den Stand ab, bis der Status „ready“ oder „done“ ist. Frage nicht öfter als alle fünf Sekunden ab."
+msgstr "Svar er JSON (UTF-8), undtagen ved filoverførsler. Tidsstempler er UTC i formatet ÅÅÅÅ-MM-DD TT:MM:SS. Længere opgaver (udtræk, generering) kører i baggrunden: Du får straks et svar med status 202 og spørger til status, indtil den er „ready“ eller „done“. Spørg ikke oftere end hvert femte sekund."
+
+msgid "Fehlerformat"
+msgstr "Fejlformat"
+
+msgid "Fehler kommen immer als JSON mit einem stabilen, maschinenlesbaren Code und einer Meldung für Menschen. Zeige in deinem Produkt die Meldung an und verzweige im Code über den Code."
+msgstr "Fejl kommer altid som JSON med en stabil, maskinlæsbar kode og en besked til mennesker. Vis beskeden i dit produkt, og forgren i din kode ud fra koden."
+
+msgid "Codes"
+msgstr "Koder"
+
+msgid "Aufbewahrung"
+msgstr "Opbevaring"
+
+msgid "Dokumente bleiben in deinem Konto, bis du sie löschst (in der App oder per API), genau wie Projekte in der App. Ergebnisse der Einzelbild-Schnittstelle bleiben mit ihrer result_id abrufbar, solange der Schlüssel besteht; wird ein Schlüssel gelöscht, gehen sein Verbrauchsprotokoll und seine Einzelbild-Ergebnisse mit."
+msgstr "Dokumenter bliver i din konto, indtil du sletter dem (i appen eller via API’en), ligesom projekter i appen. Resultater fra enkeltbillede-grænsefladen kan hentes via deres result_id, så længe nøglen findes; slettes en nøgle, følger dens forbrugslog og dens enkeltbillede-resultater med."
+
+msgid "Für ein einzelnes Bild, zum Beispiel aus einer Mediathek oder einem Redaktionssystem: Bild hin, Alt-Text zurück."
+msgstr "Til et enkelt billede, fx fra et mediebibliotek eller et redaktionssystem: billede ind, alternativ tekst ud."
+
+msgid "Alt-Text für ein Bild erzeugen"
+msgstr "Generér en alternativ tekst til et billede"
+
+msgid "Zwei Formate: Datei-Upload (multipart/form-data, Feld file) oder JSON mit image_base64. Weitere Felder in beiden Fällen:"
+msgstr "To formater: filupload (multipart/form-data, feltet file) eller JSON med image_base64. Yderligere felter i begge tilfælde:"
+
+msgid "Parameter für Einzelbilder"
+msgstr "Parametre for enkeltbilleder"
+
+msgid "Parameter"
+msgstr "Parameter"
+
+msgid "Pflicht"
+msgstr "Påkrævet"
+
+msgid "Bedeutung"
+msgstr "Betydning"
+
+msgid "Ja"
+msgstr "Ja"
+
+msgid "Bilddatei (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), höchstens 10 MB; Base64 wahlweise mit Data-URI-Präfix."
+msgstr "Billedfil (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), højst 10 MB; Base64 valgfrit med data-URI-præfiks."
+
+msgid "Nein"
+msgstr "Nej"
+
+msgid "Umgebungstext für ein besseres Ergebnis: Bildunterschrift, Seitentitel, umgebender Absatz."
+msgstr "Omgivende tekst for et bedre resultat: billedtekst, sidetitel, omgivende afsnit."
+
+msgid "Sprache des Textes: de, en, fr, es, da, sv. Standard de."
+msgstr "Tekstens sprog: de, en, fr, es, da, sv. Standard de."
+
+msgid "Hinweis auf den Bildtyp: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle."
+msgstr "Hint om billedtypen: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle."
+
+msgid "Ergebnis später abrufen"
+msgstr "Hent et resultat senere"
+
+msgid "Ergebnis korrigieren: JSON mit alt_text und/oder langbeschreibung"
+msgstr "Ret et resultat: JSON med alt_text og/eller langbeschreibung"
+
+msgid "Ein Dokument ist eine Datei oder eine Webadresse, die InkluDocs in Einträge zerlegt: Bilder (bei PDF, Word, Bildsammlung, Webseite) oder Formularfelder (bei Formular-PDF). Jeder Eintrag bekommt einen Text; am Ende holst du das fertige Dokument oder die Textliste ab."
+msgstr "Et dokument er en fil eller en webadresse, som InkluDocs deler op i poster: billeder (PDF, Word, billedsamling, webside) eller formularfelter (PDF-formular). Hver post får en tekst; til sidst henter du det færdige dokument eller tekstlisten."
+
+msgid "Ablauf in fünf Schritten"
+msgstr "Forløbet i fem trin"
+
+msgid "Dokument anlegen: Datei oder Adresse schicken, Antwort ist eine id und der Status „extracting“ (oder gleich „ready“)."
+msgstr "Opret dokumentet: send en fil eller en adresse; svaret er et id og status „extracting“ (eller straks „ready“)."
+
+msgid "Status abfragen, bis „ready“: Jetzt sind die Einträge bekannt, counts.items sagt, wie viele."
+msgstr "Spørg til status, indtil „ready“: nu kendes posterne, counts.items siger hvor mange."
+
+msgid "Generieren starten: Die KI beschreibt alle Einträge im Hintergrund. Status abfragen, bis „done“."
+msgstr "Start genereringen: AI’en beskriver alle poster i baggrunden. Spørg til status, indtil „done“."
+
+msgid "Einträge lesen und bei Bedarf korrigieren, oder einen Freigabe-Link für unsere Prüfansicht erzeugen."
+msgstr "Læs posterne og ret dem efter behov, eller opret et gennemsynslink til vores gennemsynsvisning."
+
+msgid "Exportieren: barrierefreie PDF, Word mit Alt-Texten, PDF/UA aus Word, oder die Textliste als Excel, CSV oder JSON."
+msgstr "Eksportér: tilgængelig PDF, Word med alternative tekster, PDF/UA fra Word, eller tekstlisten som Excel, CSV eller JSON."
+
+msgid "Endpunkte"
+msgstr "Endepunkter"
+
+msgid "Endpunkte für Dokumente"
+msgstr "Endepunkter for dokumenter"
+
+msgid "Aufruf"
+msgstr "Kald"
+
+msgid "Dokument anlegen: Datei (multipart, Feld file) oder JSON mit url. Antwort 202 (wird extrahiert) oder 201 (schon bereit)."
+msgstr "Opret et dokument: fil (multipart, feltet file) eller JSON med url. Svar 202 (udtrækkes) eller 201 (allerede klar)."
+
+msgid "Eigene Dokumente auflisten (limit, offset)."
+msgstr "List dine dokumenter (limit, offset)."
+
+msgid "Status, Zähler, Fortschritt, Hinweis zum letzten Lauf."
+msgstr "Status, tællere, fremdrift, note om seneste kørsel."
+
+msgid "Sammellauf starten (alle Einträge, optional nur document_id). Antwort 202."
+msgstr "Start en samlet kørsel (alle poster, valgfrit kun document_id). Svar 202."
+
+msgid "Laufenden Sammellauf nach dem aktuellen Eintrag beenden."
+msgstr "Stop den kørende kørsel efter den aktuelle post."
+
+msgid "Alle Einträge mit Texten, Status und Bild-Adresse."
+msgstr "Alle poster med tekster, status og billedadresse."
+
+msgid "Die Bilddatei eines Eintrags, zum Anzeigen in deinem Produkt."
+msgstr "Billedfilen for en post, til visning i dit produkt."
+
+msgid "Text von Hand setzen: alt_text und/oder langbeschreibung (Bilder) bzw. quickinfo (Felder). Ein leerer Text heißt bewusst leer."
+msgstr "Sæt en tekst manuelt: alt_text og/eller langbeschreibung (billeder) eller quickinfo (felter). En tom tekst betyder bevidst tom."
+
+msgid "Einen Eintrag neu beschreiben lassen (optional image_type)."
+msgstr "Få en post beskrevet igen (valgfrit image_type)."
+
+msgid "Export: pdf, docx, pdfua, xlsx, csv, json; für Formulare formular und formular_csv. Antwort ist die Datei; bei pdfua ein Bericht mit download_url."
+msgstr "Eksport: pdf, docx, pdfua, xlsx, csv, json; for formularer formular og formular_csv. Svaret er filen; ved pdfua en rapport med download_url."
+
+msgid "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify)."
+msgstr "Opret et gennemsynslink til vores gennemsynsvisning (guest_email, role kunde eller lektorat, notify)."
+
+msgid "Freigaben des Dokuments auflisten."
+msgstr "List dokumentets gennemsynslinks."
+
+msgid "Freigabe zurückziehen (token)."
+msgstr "Tilbagekald et gennemsynslink (token)."
+
+msgid "Dokument samt Dateien und Texten löschen."
+msgstr "Slet dokumentet med filer og tekster."
+
+msgid "Dokument anlegen"
+msgstr "Opret et dokument"
+
+msgid "Parameter beim Anlegen"
+msgstr "Parametre ved oprettelse"
+
+msgid "Ja (Datei)"
+msgstr "Ja (fil)"
+
+msgid "PDF, DOCX oder Bilddatei, höchstens 50 MB. Das Werkzeug ergibt sich aus der Endung."
+msgstr "PDF, DOCX eller billedfil, højst 50 MB. Værktøjet følger af filendelsen."
+
+msgid "Ja (JSON)"
+msgstr "Ja (JSON)"
+
+msgid "Webadresse; InkluDocs lädt die Bilder der Seite."
+msgstr "Webadresse; InkluDocs henter sidens billeder."
+
+msgid "Erzwingt ein Werkzeug: pdf, word, grafik, formular. Nötig nur für Formular-PDFs (tool=formular)."
+msgstr "Tvinger et værktøj: pdf, word, grafik, formular. Kun nødvendigt for PDF-formularer (tool=formular)."
+
+msgid "Anzeigename in der App (Standard: Dateiname)."
+msgstr "Visningsnavn i appen (standard: filnavn)."
+
+msgid "Sprache der Texte: de, en, fr, es, da, sv."
+msgstr "Teksternes sprog: de, en, fr, es, da, sv."
+
+msgid "true (Standard): die KI bekommt den Text der Seite als Zusammenhang; false: nur das Bild."
+msgstr "true (standard): AI’en får sidens tekst som sammenhæng; false: kun billedet."
+
+msgid "Status und Zähler"
+msgstr "Status og tællere"
+
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat; ohne Tags gibt es keinen PDF-Export, nur Textlisten."
+msgstr "Status: uploaded, extracting, ready, generating, done, error. with_text og without_text følger samme regel som appens download-dialog: det tæller, om feltet indeholder tekst, uanset om den er fra AI’en, manuel eller fra kilden. Dekorative billeder har ingen tekst og tæller ikke som åbne. Ved PDF’er siger tagged, om filen har tags; uden tags er der ingen PDF-eksport, kun tekstlister."
+
+msgid "Einträge"
+msgstr "Poster"
+
+msgid "alt_text ist der sichtbare Text (eigener Text vor KI-Text vor Quelltext), alt_text_ki der letzte KI-Vorschlag, alt_text_edited der von Hand gesetzte Text (null = nie angefasst, leer = bewusst geleert). needs_review markiert Vorschläge, die die KI selbst als unsicher einstuft. Bei Formularen heißen die Felder quickinfo, quickinfo_ki, quickinfo_original."
+msgstr "alt_text er den synlige tekst (egen tekst før AI-tekst før kildetekst), alt_text_ki det seneste AI-forslag, alt_text_edited den manuelt satte tekst (null = aldrig rørt, tom = bevidst tømt). needs_review markerer forslag, som AI’en selv vurderer som usikre. Ved formularer hedder felterne quickinfo, quickinfo_ki, quickinfo_original."
+
+msgid "Nur Daten: Du zeigst Bilder und Texte in deiner eigenen Oberfläche und schreibst Korrekturen per PATCH zurück. Voller Gestaltungsspielraum."
+msgstr "Kun data: Du viser billeder og tekster i din egen brugerflade og skriver rettelser tilbage via PATCH. Fuld designfrihed."
+
+msgid "Daten plus Prüfansicht: Du zeigst Status und Download, und für die Korrektur öffnest du per review-link unsere geprüfte, barrierefreie Gast-Ansicht mit Bild, Alt-Text, Langbeschreibung, Filtern und Vorlesen. Der schnellste Weg in Betrieb."
+msgstr "Data plus gennemsynsvisning: Du viser status og download, og til rettelser åbner du via review-link vores testede, tilgængelige gæstevisning med billede, alternativ tekst, lang beskrivelse, filtre og oplæsning. Den hurtigste vej i drift."
+
+msgid "Vollautomatisch: Kein Mensch schaut hin; du legst an, startest, wartest auf „done“ und holst den Export ab, zum Beispiel nachts für ein Dokumentenarchiv."
+msgstr "Fuldautomatisk: Ingen kigger; du opretter, starter, venter på „done“ og henter eksporten, fx om natten til et dokumentarkiv."
+
+msgid "HTTP-Fehler-Codes"
+msgstr "HTTP-fejlkoder"
+
+msgid "Fehlender oder ungültiger Parameter, unbekanntes Format oder Werkzeug."
+msgstr "Manglende eller ugyldig parameter, ukendt format eller værktøj."
+
+msgid "Schlüssel fehlt, ist ungültig oder gelöscht."
+msgstr "Nøgle mangler, er ugyldig eller slettet."
+
+msgid "Guthaben reicht nicht (Code credits_fehlen mit preis, verfuegbar, fehlend)."
+msgstr "Ikke nok credits (kode credits_fehlen med preis, verfuegbar, fehlend)."
+
+msgid "Dokument, Eintrag oder Ergebnis nicht gefunden, oder es gehört einem anderen Konto."
+msgstr "Dokument, post eller resultat ikke fundet, eller det tilhører en anden konto."
+
+msgid "Für dieses Dokument läuft gerade eine Verarbeitung; später erneut versuchen."
+msgstr "Der kører en behandling for dette dokument; prøv igen senere."
+
+msgid "Datei zu groß."
+msgstr "Filen er for stor."
+
+msgid "Falscher Inhaltstyp: multipart/form-data oder application/json erwartet."
+msgstr "Forkert indholdstype: multipart/form-data eller application/json forventet."
+
+msgid "Export-Abnahme nicht bestanden: Die Datei wird nicht ausgegeben, die Meldung nennt den Befund."
+msgstr "Eksportkontrol ikke bestået: Filen udleveres ikke; beskeden nævner fundet."
+
+msgid "Rate-Limit oder Tageslimit erreicht (Kopfzeile Retry-After); bei der Einzelbild-Schnittstelle auch fehlendes Guthaben."
+msgstr "Hastighedsgrænse eller dagsgrænse nået (header Retry-After); på enkeltbillede-grænsefladen også manglende credits."
+
+msgid "Interner Fehler, Umwandler nicht erreichbar oder Zeitüberschreitung."
+msgstr "Intern fejl, konverter utilgængelig eller timeout."
+
+msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen nicht mit, damit du in Ruhe abfragen kannst."
+msgstr "Pr. nøgle: {minute} skrivende forespørgsler pr. minut og {tag} pr. dag (glidende vindue). Læsende kald som status og poster tæller ikke med, så du kan spørge i ro og mag."
+
+msgid "Je Konto: {n} generierte Texte pro Tag über die API, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+msgstr "Pr. konto: {n} genererede tekster pr. dag via API’en, uanset antal nøgler (nulstilles ved midnat UTC). Ved større mængder så kontakt os; kvoten kan tilpasses pr. konto."
+
+msgid "Die verbleibenden Anfragen stehen in den Kopfzeilen X-RateLimit-Remaining-Minute und X-RateLimit-Remaining-Day; bei Überschreitung kommt HTTP 429 mit Retry-After."
+msgstr "De resterende forespørgsler står i headerne X-RateLimit-Remaining-Minute og X-RateLimit-Remaining-Day; ved overskridelse kommer HTTP 429 med Retry-After."
+
+msgid "Die API zieht aus demselben Credit-Guthaben wie die App, zu denselben Preisen. Abgerechnet wird nur, was gelungen ist: Fehlschläge, Abbrüche und Treffer im Zwischenspeicher kosten nichts. Lesen, Status, Korrigieren und Freigabe-Links sind kostenlos."
+msgstr "API’en trækker på samme credit-saldo som appen, til samme priser. Der afregnes kun for det, der lykkes: fejl, afbrydelser og cache-træf koster intet. Læsning, status, rettelser og gennemsynslinks er gratis."
+
+msgid "Alt-Text je Bild (Einzelbild oder im Dokument): {n} Credits."
+msgstr "Alternativ tekst pr. billede (enkeltbillede eller i dokument): {n} credits."
+
+msgid "Quickinfo je Formularfeld: {n} Credit."
+msgstr "Quickinfo pr. formularfelt: {n} credit."
+
+msgid "Dokument-Export (pdf, docx, pdfua, formular): {grund} Credits plus {staffel} je angefangene {schritt} Einträge."
+msgstr "Dokumenteksport (pdf, docx, pdfua, formular): {grund} credits plus {staffel} pr. påbegyndte {schritt} poster."
+
+msgid "Textliste (xlsx, csv, json, formular_csv): {n} Credits je Export."
+msgstr "Tekstliste (xlsx, csv, json, formular_csv): {n} credits pr. eksport."
+
+msgid "Reicht das Guthaben nicht, antwortet die API mit 402 (Dokumente) bzw. 429 (Einzelbilder) und nennt Preis und verfügbare Credits. Credits gibt es über die Tarife und Pakete unter"
+msgstr "Rækker saldoen ikke, svarer API’en med 402 (dokumenter) eller 429 (enkeltbilleder) og nævner pris og tilgængelige credits. Credits fås via tariffer og pakker på"
+
+msgid "Den Verbrauch je Schlüssel siehst du in der App unter „API-Schlüssel“."
+msgstr "Forbruget pr. nøgle ser du i appen under „API-nøgler“."
+
+msgid "Einzelbild mit curl"
+msgstr "Enkeltbillede med curl"
+
+msgid "Dokument von Anfang bis Ende mit curl"
+msgstr "Et dokument fra start til slut med curl"
+
+msgid "Dokument mit Python"
+msgstr "Et dokument med Python"
+
+msgid "Freigabe-Link für die Prüfansicht (JavaScript)"
+msgstr "Gennemsynslink til gennemsynsvisningen (JavaScript)"
+
+msgid "Die API nutzt dieselbe KI-Pipeline und dieselbe Export-Abnahme wie die App. Je mehr Zusammenhang die KI bekommt (context bei Einzelbildern, use_context bei Dokumenten), desto besser die Texte. Keine KI ist fehlerfrei: Plane in deinem Produkt einen Prüfschritt ein, entweder mit eigenen Feldern oder mit unserer Prüfansicht."
+msgstr "API’en bruger samme AI-pipeline og samme eksportkontrol som appen. Jo mere sammenhæng AI’en får (context ved enkeltbilleder, use_context ved dokumenter), desto bedre tekster. Ingen AI er fejlfri: Planlæg et gennemsynstrin i dit produkt, enten med egne felter eller med vores gennemsynsvisning."
+
+msgid "Fragen zur Anbindung"
+msgstr "Spørgsmål om integration"
+
+msgid "Verbrauch über die API"
+msgstr "Forbrug via API’en"
+
+msgid "Aufrufe in diesem Monat"
+msgstr "Kald denne måned"
+
+msgid "Aufrufe heute"
+msgstr "Kald i dag"
+
+msgid "Dokumente über die API angelegt"
+msgstr "Dokumenter oprettet via API’en"
+
+msgid "Credits für Bilder dieser Dokumente"
+msgstr "Credits for billeder i disse dokumenter"
+
+msgid "Letzter Aufruf"
+msgstr "Seneste kald"
+
+msgid "noch keiner"
+msgstr "ingen endnu"
+
+msgid "Aufrufe: {n}"
+msgstr "Kald: {n}"
+
+msgid "heute {n}"
+msgstr "i dag {n}"
+
+msgid "Dokumente: {n}"
+msgstr "Dokumenter: {n}"
+
+msgid "Credits: {n}"
+msgstr "Credits: {n}"
+
+msgid "Fehlerquote: {p} %"
+msgstr "Fejlrate: {p} %"
+
+msgid "Zur API-Dokumentation"
+msgstr "Til API-dokumentationen"
+
+msgid "{n} Aufrufe in diesem Monat über {k} Schlüssel."
+msgstr "{n} kald denne måned via {k} nøgler."
+
+msgid "Schlüssel verwalten"
+msgstr "Administrér nøgler"
+
+msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
+msgstr "Med API-nøgler kobler andre programmer sig på InkluDocs: enkeltbilleder og hele dokumenter. Vejledningen står i API-dokumentationen."

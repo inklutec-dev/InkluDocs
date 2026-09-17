@@ -782,6 +782,8 @@ def _migrate_columns(conn):
         # PDF ohne Tags (15.09.2026, Michael Karbe): 1 = Strukturbaum vorhanden, 0 = keiner, NULL = noch nicht
         # bestimmt (Altbestand; wird beim ersten Bedarf nachgetragen). Ohne Tags kein PDF-Download.
         ("documents", "getaggt", "ALTER TABLE documents ADD COLUMN getaggt INTEGER"),
+        # Public API v1 Dokumente (17.09.2026): welcher Schluessel hat das Projekt angelegt (Verbrauch je Schluessel).
+        ("projects", "api_key_id", "ALTER TABLE projects ADD COLUMN api_key_id INTEGER"),
         # QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): Ergebnis des Feld-Passes je Feld —
         # Sicherheit (hoch/mittel/niedrig, nach Nachpruefung), Beleg (woertliche
         # Textstelle der Seite) und Hinweise fuer den Bearbeiter (JSON-Liste).
@@ -1555,6 +1557,47 @@ def get_api_usage_stats(user_id: int) -> dict:
         "last_call": last_call,
         "success_rate": round(success_count / total * 100, 1) if total > 0 else 0,
     }
+
+
+def get_api_key_stats(user_id: int) -> dict:
+    """Verbrauch je API-Schluessel (17.09.2026): Aufrufe gesamt/heute/Monat, Fehlerquote, letzter
+    Aufruf, ueber den Schluessel angelegte Dokumente (projects.api_key_id) und die Credits fuer
+    Bilder dieser Dokumente (usage_events ueber images.project_id). Exporte lassen sich keinem
+    Schluessel zuordnen und fehlen hier bewusst. Nur Schluessel des eigenen Kontos."""
+    conn = get_db()
+    try:
+        keys = conn.execute("SELECT id, name, created_at, last_used, is_active FROM api_keys WHERE user_id = ? ORDER BY created_at DESC",
+                            (user_id,)).fetchall()
+        aus = {}
+        summe = {"calls_total": 0, "calls_today": 0, "calls_month": 0, "errors_total": 0, "documents": 0, "credits_images": 0, "last_call": None}
+        for k in keys:
+            kid = k["id"]
+            z = conn.execute(
+                """SELECT COUNT(*) AS gesamt,
+                          SUM(CASE WHEN date(timestamp) = date('now') THEN 1 ELSE 0 END) AS heute,
+                          SUM(CASE WHEN timestamp >= date('now', 'start of month') THEN 1 ELSE 0 END) AS monat,
+                          SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS fehler,
+                          MAX(timestamp) AS letzter
+                   FROM api_usage WHERE api_key_id = ?""", (kid,)).fetchone()
+            dok = conn.execute("SELECT COUNT(*) FROM projects WHERE api_key_id = ? AND user_id = ?", (kid, user_id)).fetchone()[0]
+            cr = conn.execute(
+                """SELECT COALESCE(SUM(e.credits), 0) FROM usage_events e
+                   JOIN images i ON i.id = e.image_id JOIN projects p ON p.id = i.project_id
+                   WHERE p.api_key_id = ? AND p.user_id = ? AND e.aktion = 'bild_generierung'""", (kid, user_id)).fetchone()[0]
+            eintrag = {"id": kid, "name": k["name"], "created_at": k["created_at"], "last_used": k["last_used"],
+                       "is_active": bool(k["is_active"]),
+                       "calls_total": int(z["gesamt"] or 0), "calls_today": int(z["heute"] or 0), "calls_month": int(z["monat"] or 0),
+                       "errors_total": int(z["fehler"] or 0), "last_call": z["letzter"],
+                       "documents": int(dok or 0), "credits_images": int(cr or 0)}
+            eintrag["error_rate"] = round(eintrag["errors_total"] * 100.0 / eintrag["calls_total"], 1) if eintrag["calls_total"] else 0.0
+            aus[str(kid)] = eintrag
+            for f in ("calls_total", "calls_today", "calls_month", "errors_total", "documents", "credits_images"):
+                summe[f] += eintrag[f]
+            if eintrag["last_call"] and (summe["last_call"] is None or eintrag["last_call"] > summe["last_call"]):
+                summe["last_call"] = eintrag["last_call"]
+    finally:
+        conn.close()
+    return {"keys_count": len(keys), "keys": aus, "summary": summe}
 
 
 def create_api_result(result_id: str, user_id: int, api_key_id: int,

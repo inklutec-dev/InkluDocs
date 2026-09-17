@@ -53,6 +53,7 @@ from database import (
     create_email_verification_token, mark_email_verified, resend_verification_token,
     get_daily_image_count, get_daily_chat_count, get_daily_api_count,
     set_user_language,
+    get_api_key_stats,
 )
 from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_alt_text_for_image, clear_project_cache
 # WORD-WERKZEUG (26.08.2026): .docx lesen (Bilder + Kontext) und Alt-Texte zurueckschreiben
@@ -9085,242 +9086,34 @@ async def api_usage_stats(user: dict = Depends(get_current_user)):
     return stats
 
 
+@app.get("/api/api-keys/stats")
+async def api_keys_stats(user: dict = Depends(get_current_user)):
+    """Verbrauch je API-Schluessel fuer die Seite „API-Schluessel" und die Dashboard-Kachel
+    (17.09.2026, Steve: „Anzeige im Dashboard fuer die API"). Nur eigene Schluessel."""
+    return get_api_key_stats(user["id"])
+
+
 # ─── API Documentation ──────────────────────────────────────
 
 @app.get("/api/v1/docs", response_class=HTMLResponse)
-async def api_docs():
-    """Accessible API documentation page (WCAG 2.2 AA)."""
-    base = BASE_URL.rstrip("/")
-    return """<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>InkluDocs API – Dokumentation</title>
-<style>
-:root { --primary: #1b2a4a; --accent: #e87722; --bg: #f8f9fa; --text: #1e293b; --muted: #64748b; --border: #e2e8f0; --code-bg: #1e293b; --code-text: #e2e8f0; }
-*, *::before, *::after { box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg); margin: 0; padding: 0; line-height: 1.6; }
-a { color: var(--accent); }
-a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
-.container { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
-h1 { color: var(--primary); font-size: 1.8rem; margin-bottom: 0.5rem; }
-h1 span { color: var(--accent); }
-h2 { color: var(--primary); font-size: 1.3rem; margin-top: 2.5rem; padding-bottom: 0.3rem; border-bottom: 2px solid var(--accent); }
-h3 { color: var(--primary); font-size: 1.1rem; margin-top: 1.5rem; }
-.badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; }
-.badge-post { background: #16a34a; color: white; }
-.badge-get { background: #2563eb; color: white; }
-pre { background: var(--code-bg); color: var(--code-text); padding: 1.2rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem; line-height: 1.5; }
-code { font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace; }
-p code, li code { background: #e2e8f0; color: var(--primary); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
-th { background: var(--primary); color: white; font-weight: 600; }
-tr:nth-child(even) { background: rgba(0,0,0,0.02); }
-.note { padding: 1rem; background: #fff7ed; border-left: 4px solid var(--accent); border-radius: 0 4px 4px 0; margin: 1rem 0; }
-footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-@media (prefers-color-scheme: dark) {
-    :root { --bg: #0f172a; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; --code-bg: #1e293b; }
-    p code, li code { background: #334155; color: #e2e8f0; }
-    tr:nth-child(even) { background: rgba(255,255,255,0.03); }
-    .note { background: #1c1917; }
-}
-</style>
-</head>
-<body>
-<main class="container" role="main">
-<h1><span>Inklu</span>Docs API</h1>
-<p style="color:var(--muted);">Version 1.0 &ndash; Alt-Text-Generierung fuer Bilder</p>
-
-<nav aria-label="Inhaltsverzeichnis">
-<h2 id="nav">Inhalt</h2>
-<ul>
-<li><a href="#auth">Authentifizierung</a></li>
-<li><a href="#endpoint">Endpoint</a></li>
-<li><a href="#request">Request</a></li>
-<li><a href="#response">Response</a></li>
-<li><a href="#get-result">Ergebnis abrufen (GET)</a></li>
-<li><a href="#patch-result">Ergebnis bearbeiten (PATCH)</a></li>
-<li><a href="#errors">Fehler-Codes</a></li>
-<li><a href="#ratelimit">Rate-Limits</a></li>
-<li><a href="#kosten">Kosten (Credits)</a></li>
-<li><a href="#examples">Beispiele</a></li>
-</ul>
-</nav>
-
-<h2 id="auth">Authentifizierung</h2>
-<p>Alle API-Anfragen erfordern einen gueltigen API-Schluessel im <code>X-API-Key</code> Header.</p>
-<p>API-Schluessel kannst du in der <a href="/app">InkluDocs-App</a> unter <strong>Einstellungen</strong> erstellen.</p>
-<pre><code>X-API-Key: idocs_deinSchluesselHier</code></pre>
-
-<h2 id="endpoint">Endpoint</h2>
-<p><span class="badge badge-post">POST</span> <code>/api/v1/alt-text</code></p>
-<p>Generiert einen barrierefreien Alt-Text fuer ein hochgeladenes Bild.</p>
-
-<h2 id="request">Request</h2>
-<p>Der Endpoint akzeptiert zwei Formate:</p>
-
-<h3>Option A: Datei-Upload (Multipart)</h3>
-<p>Content-Type: <code>multipart/form-data</code></p>
-<table>
-<caption class="sr-only">Request-Parameter Multipart</caption>
-<thead><tr><th scope="col">Parameter</th><th scope="col">Typ</th><th scope="col">Pflicht</th><th scope="col">Beschreibung</th></tr></thead>
-<tbody>
-<tr><td><code>file</code></td><td>Datei</td><td>Ja</td><td>Bilddatei (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC). Max. 10 MB.</td></tr>
-<tr><td><code>context</code></td><td>Text</td><td>Nein</td><td>Umgebungstext fuer bessere Beschreibung (z.B. Bildunterschrift, Seitentitel).</td></tr>
-<tr><td><code>language</code></td><td>Text</td><td>Nein</td><td>Sprache des Alt-Texts. Standard: <code>de</code></td></tr>
-<tr><td><code>image_type</code></td><td>Text</td><td>Nein</td><td>Hinweis auf Bildtyp: <code>foto</code>, <code>diagramm</code>, <code>logo</code>, <code>icon</code>, <code>karte</code>, <code>screenshot</code>, <code>infografik</code>, <code>tabelle</code></td></tr>
-</tbody>
-</table>
-
-<h3>Option B: Base64 (JSON)</h3>
-<p>Content-Type: <code>application/json</code></p>
-<table>
-<caption class="sr-only">Request-Parameter JSON</caption>
-<thead><tr><th scope="col">Parameter</th><th scope="col">Typ</th><th scope="col">Pflicht</th><th scope="col">Beschreibung</th></tr></thead>
-<tbody>
-<tr><td><code>image_base64</code></td><td>String</td><td>Ja</td><td>Bild als Base64-String. Data-URI-Prefix optional (z.B. <code>data:image/png;base64,...</code>).</td></tr>
-<tr><td><code>context</code></td><td>String</td><td>Nein</td><td>Umgebungstext fuer bessere Beschreibung.</td></tr>
-<tr><td><code>language</code></td><td>String</td><td>Nein</td><td>Sprache des Alt-Texts. Standard: <code>de</code></td></tr>
-<tr><td><code>image_type</code></td><td>String</td><td>Nein</td><td>Hinweis auf Bildtyp.</td></tr>
-</tbody>
-</table>
-
-<h2 id="response">Response</h2>
-<p>Content-Type: <code>application/json</code></p>
-<pre><code>{
-  "result_id": "abc123xyz",
-  "alt_text": "Beschreibung des Bildes",
-  "langbeschreibung": "Ausfuehrliche Beschreibung...",
-  "bildtyp": "foto",
-  "konfidenz": "hoch",
-  "processing_time_ms": 1234
-}</code></pre>
-
-<table>
-<caption class="sr-only">Response-Felder</caption>
-<thead><tr><th scope="col">Feld</th><th scope="col">Beschreibung</th></tr></thead>
-<tbody>
-<tr><td><code>result_id</code></td><td>Eindeutige ID dieses Ergebnisses – fuer GET und PATCH</td></tr>
-<tr><td><code>alt_text</code></td><td>Der generierte Alt-Text (kurz, fuer das alt-Attribut)</td></tr>
-<tr><td><code>langbeschreibung</code></td><td>Ausfuehrliche Beschreibung (fuer aria-describedby oder Langtext)</td></tr>
-<tr><td><code>bildtyp</code></td><td>Erkannter Bildtyp (foto, diagramm, logo, etc.)</td></tr>
-<tr><td><code>konfidenz</code></td><td>Vertrauen in die Erkennung: hoch, mittel, niedrig</td></tr>
-<tr><td><code>processing_time_ms</code></td><td>Verarbeitungszeit in Millisekunden</td></tr>
-</tbody>
-</table>
-
-<h2 id="get-result">Ergebnis abrufen</h2>
-<p><span class="badge badge-get">GET</span> <code>/api/v1/alt-text/{result_id}</code></p>
-<p>Ruft ein gespeichertes Ergebnis anhand seiner <code>result_id</code> ab. Erfordert denselben <code>X-API-Key</code> wie beim Erstellen.</p>
-<pre><code>curl %%BASE_URL%%/api/v1/alt-text/abc123xyz \\
-  -H "X-API-Key: idocs_deinSchluessel"</code></pre>
-<p>Response-Felder: <code>result_id</code>, <code>alt_text</code>, <code>langbeschreibung</code>, <code>bildtyp</code>, <code>konfidenz</code>, <code>created_at</code>, <code>updated_at</code></p>
-
-<h2 id="patch-result">Ergebnis bearbeiten</h2>
-<p><span class="badge" style="background:#7c3aed;color:white;">PATCH</span> <code>/api/v1/alt-text/{result_id}</code></p>
-<p>Aendert den Alt-Text und/oder die Langbeschreibung eines gespeicherten Ergebnisses. Mindestens eines der Felder muss angegeben werden.</p>
-<pre><code>curl -X PATCH %%BASE_URL%%/api/v1/alt-text/abc123xyz \\
-  -H "X-API-Key: idocs_deinSchluessel" \\
-  -H "Content-Type: application/json" \\
-  -d '{"alt_text": "Mein korrigierter Alt-Text"}'</code></pre>
-<table>
-<caption class="sr-only">PATCH Request-Felder</caption>
-<thead><tr><th scope="col">Feld</th><th scope="col">Typ</th><th scope="col">Beschreibung</th></tr></thead>
-<tbody>
-<tr><td><code>alt_text</code></td><td>String</td><td>Neuer Alt-Text (optional, aber mindestens eines der beiden Felder)</td></tr>
-<tr><td><code>langbeschreibung</code></td><td>String</td><td>Neue Langbeschreibung (optional)</td></tr>
-</tbody>
-</table>
-
-<h2 id="errors">Fehler-Codes</h2>
-<table>
-<caption class="sr-only">HTTP-Fehler-Codes</caption>
-<thead><tr><th scope="col">Code</th><th scope="col">Bedeutung</th></tr></thead>
-<tbody>
-<tr><td><code>400</code></td><td>Kein Bild mitgeschickt, ungueltiges Format oder fehlendes JSON-Feld</td></tr>
-<tr><td><code>401</code></td><td>Ungueltiger oder fehlender API-Key</td></tr>
-<tr><td><code>404</code></td><td>Ergebnis nicht gefunden (falsche result_id oder falscher API-Key)</td></tr>
-<tr><td><code>413</code></td><td>Bild zu gross (max. 10 MB)</td></tr>
-<tr><td><code>429</code></td><td>Rate-Limit ueberschritten oder nicht genuegend Credits (die Meldung nennt den Grund)</td></tr>
-<tr><td><code>500</code></td><td>Interner Serverfehler</td></tr>
-</tbody>
-</table>
-
-<h2 id="ratelimit">Rate-Limits</h2>
-<p>Es gelten zwei Arten von Limits:</p>
-<ul>
-<li>Je API-Schluessel: <strong>60 Anfragen pro Minute</strong> und <strong>1.000 Anfragen pro Tag</strong> (gleitendes Fenster).</li>
-<li>Je Konto: <strong>500 generierte Alt-Texte pro Tag</strong> ueber die API, unabhaengig von der Zahl der Schluessel (Reset um Mitternacht UTC). Die App hat ein eigenes Tageskontingent. Fuer hoehere Mengen sprich uns an, das Kontingent laesst sich je Konto anpassen.</li>
-</ul>
-<p>Die verbleibenden Anfragen werden in Response-Headern mitgeteilt:</p>
-<pre><code>X-RateLimit-Remaining-Minute: 58
-X-RateLimit-Remaining-Day: 997</code></pre>
-<p>Bei Ueberschreitung erhaeltst du HTTP <code>429</code> mit einem <code>Retry-After</code> Header.</p>
-
-<h2 id="kosten">Kosten (Credits)</h2>
-<p>Die API zieht aus demselben Credit-Guthaben wie die App. Jeder erfolgreich generierte Alt-Text (<code>POST /api/v1/alt-text</code>) kostet <strong>5 Credits</strong>; Langbeschreibung und Bildtyp sind darin enthalten. Das Abrufen (<code>GET</code>) und Bearbeiten (<code>PATCH</code>) eines Ergebnisses kostet nichts. Schlaegt die Generierung fehl, werden keine Credits abgezogen; ein Treffer im Zwischenspeicher (dasselbe Bild mit demselben Kontext wurde kuerzlich schon beschrieben) ebenfalls nicht.</p>
-<p>Reicht das Guthaben nicht, antwortet die API mit HTTP <code>429</code> und einer Meldung, die den Preis und die verfuegbaren Credits nennt. Credits gibt es ueber die Tarife und Pakete unter <a href="%%BASE_URL%%/preise">%%BASE_URL%%/preise</a>; den Verbrauch siehst du in der App im Dashboard.</p>
-
-<h2 id="examples">Beispiele</h2>
-
-<h3>Einfacher Aufruf mit curl</h3>
-<pre><code>curl -X POST %%BASE_URL%%/api/v1/alt-text \\
-  -H "X-API-Key: idocs_deinSchluessel" \\
-  -F "file=@foto.jpg"</code></pre>
-
-<h3>Mit Kontext fuer bessere Ergebnisse</h3>
-<pre><code>curl -X POST %%BASE_URL%%/api/v1/alt-text \\
-  -H "X-API-Key: idocs_deinSchluessel" \\
-  -F "file=@diagramm.png" \\
-  -F "context=Jahresbericht 2025, Kapitel Umsatzentwicklung" \\
-  -F "image_type=diagramm"</code></pre>
-
-<h3>Python-Beispiel</h3>
-<pre><code>import requests
-
-response = requests.post(
-    "%%BASE_URL%%/api/v1/alt-text",
-    headers={"X-API-Key": "idocs_deinSchluessel"},
-    files={"file": open("bild.jpg", "rb")},
-    data={"context": "Produktseite eines Online-Shops"},
-)
-
-data = response.json()
-print(data["alt_text"])</code></pre>
-
-<h3>JavaScript/Node.js-Beispiel</h3>
-<pre><code>const form = new FormData();
-form.append('file', fs.createReadStream('bild.jpg'));
-form.append('context', 'Blog-Artikel ueber Barrierefreiheit');
-
-const res = await fetch('%%BASE_URL%%/api/v1/alt-text', {
-    method: 'POST',
-    headers: { 'X-API-Key': 'idocs_deinSchluessel' },
-    body: form,
-});
-
-const data = await res.json();
-console.log(data.alt_text);</code></pre>
-
-<h3>Base64-Beispiel (JSON)</h3>
-<pre><code>curl -X POST %%BASE_URL%%/api/v1/alt-text \\
-  -H "X-API-Key: idocs_deinSchluessel" \\
-  -H "Content-Type: application/json" \\
-  -d '{"image_base64": "data:image/jpeg;base64,/9j/4AAQ...", "context": "Startseite"}'</code></pre>
-
-<div class="note" role="note">
-<p><strong>Hinweis:</strong> Die API generiert Alt-Texte mit der gleichen KI-Pipeline wie die Web-App. Fuer beste Ergebnisse sende moeglichst viel Kontext im <code>context</code>-Feld mit (z.B. Seitentitel, umgebender Text, Bildunterschrift).</p>
-</div>
-
-<footer>
-<p>InkluDocs API v1.0 &ndash; <a href="mailto:kontakt@inklutec.de">kontakt@inklutec.de</a> &ndash; <a href="/">Zurueck zu InkluDocs</a></p>
-</footer>
-</main>
-</body>
-</html>""".replace("%%BASE_URL%%", base)
+async def api_docs(request: Request):
+    """Oeffentliche API-Dokumentation (WCAG 2.2 AA). Seit 17.09.2026 ein Jinja-Template im
+    oeffentlichen Geruest mit den sechs Sprachkatalogen der App (vorher eine deutsche
+    HTML-Zeichenkette hier in main.py). Zahlen kommen aus billing/Konstanten, nie aus dem Text."""
+    ctx = template_context(request, resolve_ui_language(request), is_staging="staging" in BASE_URL)
+    ctx.update({
+        "base_url": BASE_URL.rstrip("/"),
+        "preis_alt": billing.AKTIONS_PREISE["bild_generierung"],
+        "preis_qi": billing.AKTIONS_PREISE["quickinfo_generierung"],
+        "preis_export": billing.AKTIONS_PREISE["pdf_export"],
+        "preis_export_bild": billing.EXPORT_ARTEN["pdf"][1],
+        "export_schritt": billing.EXPORT_SCHRITT,
+        "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],
+        "limit_minute": API_RATE_LIMIT_MINUTE,
+        "limit_tag": API_RATE_LIMIT_DAY,
+        "tageslimit": DAILY_IMAGE_LIMIT,
+    })
+    return templates.TemplateResponse("api_docs.html", ctx)
 
 
 # ─── InkluAgent (Chatbot pro Projekt) ────────────────────────

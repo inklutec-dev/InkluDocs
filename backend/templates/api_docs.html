@@ -1,0 +1,285 @@
+{% extends "base_oeffentlich.html" %}
+{# ──────────────────────────────────────────────────────────────────────────
+   api_docs.html — Dokumentation der Public API v1 (17.09.2026).
+
+   Bis 17.09.2026 war die Doku eine deutsche HTML-Zeichenkette in main.py
+   (api_docs). Jetzt ein Template im öffentlichen Gerüst mit denselben
+   Übersetzungskatalogen wie die App (Steve: „in alle sechs Sprachen, wie im
+   Tool“). Sprache wie überall: Kontoeinstellung → Cookie → Browser → Deutsch.
+   Zahlen (Preise, Limits) kommen aus der Route, nie aus dem Text.
+   Codebeispiele bleiben bewusst unübersetzt (sie sind Code).
+   ────────────────────────────────────────────────────────────────────────── #}
+{% block title %}InkluDocs API – {{ _('Dokumentation') }}{% endblock %}
+{% block seitentitel %}{{ _('InkluDocs API – Dokumentation') }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+  .api-doc { font-size: .95rem; line-height: 1.6; }
+  .api-doc h2 { margin-top: 0; }
+  .api-doc h3 { font-size: 1.05rem; margin: 1.25rem 0 .5rem; }
+  .api-doc pre { background: #1e293b; color: #e2e8f0; padding: 1rem 1.2rem; border-radius: 8px; overflow-x: auto; font-size: .88rem; line-height: 1.5; }
+  .api-doc code { font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace; }
+  .api-doc p code, .api-doc li code, .api-doc td code { background: #e2e8f0; color: #1b2a4a; padding: .1rem .35rem; border-radius: 3px; font-size: .9em; }
+  .api-doc table { width: 100%; border-collapse: collapse; margin: .75rem 0 1rem; }
+  .api-doc th, .api-doc td { text-align: left; vertical-align: top; padding: .5rem .6rem; border-bottom: 1px solid var(--border); }
+  .api-doc th { background: #1b2a4a; color: #fff; font-weight: 600; }
+  .api-doc .badge { display: inline-block; padding: .15rem .55rem; border-radius: 4px; font-size: .8rem; font-weight: 700; color: #fff; margin-right: .35rem; }
+  .api-doc .b-post { background: #16a34a; } .api-doc .b-get { background: #2563eb; } .api-doc .b-patch { background: #7c3aed; } .api-doc .b-delete { background: #b91c1c; }
+  .api-doc .hinweis { padding: .8rem 1rem; background: #fff7ed; border-left: 4px solid #c75000; border-radius: 0 4px 4px 0; margin: 1rem 0; }
+  .api-doc nav ul { columns: 2; column-gap: 2rem; padding-left: 1.2rem; }
+  @media (max-width: 720px) { .api-doc nav ul { columns: 1; } }
+</style>
+{% endblock %}
+
+{% block main %}
+<div class="api-doc">
+
+<section class="dash-card" aria-labelledby="h-intro">
+  <h2 id="h-intro">{{ _('Worum es geht') }}</h2>
+  <p>{{ _('Die InkluDocs-API macht alles, was die App kann, für andere Anwendungen verfügbar: Alt-Texte für einzelne Bilder, und ganze Dokumente (PDF, Word, Formular-PDF, Bildsammlung, Webseite) hochladen, beschreiben lassen, korrigieren und barrierefrei exportieren. Du brauchst nur ein InkluDocs-Konto und einen API-Schlüssel; Oberfläche und Anzeige baust du in deinem Produkt, oder du verlinkst unsere Prüfansicht.') }}</p>
+  <p>{{ _('Basis-Adresse') }}: <code>{{ base_url }}</code> · {{ _('Version') }}: <code>v1</code></p>
+  <nav aria-label="{{ _('Inhaltsverzeichnis') }}">
+    <ul>
+      <li><a href="#h-auth">{{ _('Authentifizierung') }}</a></li>
+      <li><a href="#h-grund">{{ _('Grundsätze: Versionierung, Antworten, Fehler') }}</a></li>
+      <li><a href="#h-bild">{{ _('Einzelbilder') }}</a></li>
+      <li><a href="#h-dok">{{ _('Dokumente') }}</a></li>
+      <li><a href="#h-wege">{{ _('Drei Wege der Einbindung') }}</a></li>
+      <li><a href="#h-fehler">{{ _('Fehler-Codes') }}</a></li>
+      <li><a href="#h-limits">{{ _('Rate-Limits') }}</a></li>
+      <li><a href="#h-kosten">{{ _('Kosten (Credits)') }}</a></li>
+      <li><a href="#h-beispiele">{{ _('Beispiele') }}</a></li>
+    </ul>
+  </nav>
+</section>
+
+<section class="dash-card" aria-labelledby="h-auth">
+  <h2 id="h-auth">{{ _('Authentifizierung') }}</h2>
+  <p>{{ _('Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen.') }}</p>
+  <pre><code>X-API-Key: idocs_deinSchluesselHier</code></pre>
+  <p>{{ _('Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server.') }}</p>
+</section>
+
+<section class="dash-card" aria-labelledby="h-grund">
+  <h2 id="h-grund">{{ _('Grundsätze: Versionierung, Antworten, Fehler') }}</h2>
+  <h3>{{ _('Versionierung') }}</h3>
+  <p>{{ _('Alle Pfade beginnen mit /api/v1/. Innerhalb von v1 kommen neue Felder und Endpunkte nur hinzu; vorhandene Felder werden nicht umbenannt oder entfernt. Änderungen, die bestehende Anbindungen brechen würden, erscheinen als neue Version (/api/v2/), und v1 läuft dann mindestens zwölf Monate weiter. Jede Antwort trägt die Kopfzeile X-API-Version.') }}</p>
+  <h3>{{ _('Antworten') }}</h3>
+  <p>{{ _('Antworten sind JSON (UTF-8), außer bei Datei-Downloads. Zeitstempel sind UTC im Format JJJJ-MM-TT HH:MM:SS. Längere Arbeiten (Extraktion, Generierung) laufen im Hintergrund: Du bekommst sofort eine Antwort mit Status 202 und fragst den Stand ab, bis der Status „ready“ oder „done“ ist. Frage nicht öfter als alle fünf Sekunden ab.') }}</p>
+  <h3>{{ _('Fehlerformat') }}</h3>
+  <p>{{ _('Fehler kommen immer als JSON mit einem stabilen, maschinenlesbaren Code und einer Meldung für Menschen. Zeige in deinem Produkt die Meldung an und verzweige im Code über den Code.') }}</p>
+  <pre><code>{% raw %}{
+  "error": { "code": "credits_fehlen", "message": "…", "status": 402,
+             "preis": 25, "verfuegbar": 3, "fehlend": 22 },
+  "detail": "…"
+}{% endraw %}</code></pre>
+  <p>{{ _('Codes') }}: <code>unauthorized</code>, <code>not_found</code>, <code>bad_request</code>, <code>unsupported_media_type</code>, <code>payload_too_large</code>, <code>conflict</code>, <code>payment_required</code>, <code>credits_fehlen</code>, <code>rate_limited</code>, <code>unprocessable</code>, <code>upstream_error</code>, <code>unavailable</code>, <code>internal_error</code>.</p>
+  <h3>{{ _('Aufbewahrung') }}</h3>
+  <p>{{ _('Dokumente bleiben in deinem Konto, bis du sie löschst (in der App oder per API), genau wie Projekte in der App. Ergebnisse der Einzelbild-Schnittstelle bleiben mit ihrer result_id abrufbar, solange der Schlüssel besteht; wird ein Schlüssel gelöscht, gehen sein Verbrauchsprotokoll und seine Einzelbild-Ergebnisse mit.') }}</p>
+</section>
+
+<section class="dash-card" aria-labelledby="h-bild">
+  <h2 id="h-bild">{{ _('Einzelbilder') }}</h2>
+  <p>{{ _('Für ein einzelnes Bild, zum Beispiel aus einer Mediathek oder einem Redaktionssystem: Bild hin, Alt-Text zurück.') }}</p>
+  <p><span class="badge b-post">POST</span><code>/api/v1/alt-text</code> – {{ _('Alt-Text für ein Bild erzeugen') }}</p>
+  <p>{{ _('Zwei Formate: Datei-Upload (multipart/form-data, Feld file) oder JSON mit image_base64. Weitere Felder in beiden Fällen:') }}</p>
+  <table>
+    <caption class="sr-only">{{ _('Parameter für Einzelbilder') }}</caption>
+    <thead><tr><th scope="col">{{ _('Parameter') }}</th><th scope="col">{{ _('Pflicht') }}</th><th scope="col">{{ _('Bedeutung') }}</th></tr></thead>
+    <tbody>
+      <tr><td><code>file</code> / <code>image_base64</code></td><td>{{ _('Ja') }}</td><td>{{ _('Bilddatei (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), höchstens 10 MB; Base64 wahlweise mit Data-URI-Präfix.') }}</td></tr>
+      <tr><td><code>context</code></td><td>{{ _('Nein') }}</td><td>{{ _('Umgebungstext für ein besseres Ergebnis: Bildunterschrift, Seitentitel, umgebender Absatz.') }}</td></tr>
+      <tr><td><code>language</code></td><td>{{ _('Nein') }}</td><td>{{ _('Sprache des Textes: de, en, fr, es, da, sv. Standard de.') }}</td></tr>
+      <tr><td><code>image_type</code></td><td>{{ _('Nein') }}</td><td>{{ _('Hinweis auf den Bildtyp: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle.') }}</td></tr>
+    </tbody>
+  </table>
+  <pre><code>{% raw %}{
+  "result_id": "abc123xyz",
+  "alt_text": "…", "langbeschreibung": "…",
+  "bildtyp": "foto", "konfidenz": "hoch", "processing_time_ms": 1234
+}{% endraw %}</code></pre>
+  <p><span class="badge b-get">GET</span><code>/api/v1/alt-text/{result_id}</code> – {{ _('Ergebnis später abrufen') }}</p>
+  <p><span class="badge b-patch">PATCH</span><code>/api/v1/alt-text/{result_id}</code> – {{ _('Ergebnis korrigieren: JSON mit alt_text und/oder langbeschreibung') }}</p>
+</section>
+
+<section class="dash-card" aria-labelledby="h-dok">
+  <h2 id="h-dok">{{ _('Dokumente') }}</h2>
+  <p>{{ _('Ein Dokument ist eine Datei oder eine Webadresse, die InkluDocs in Einträge zerlegt: Bilder (bei PDF, Word, Bildsammlung, Webseite) oder Formularfelder (bei Formular-PDF). Jeder Eintrag bekommt einen Text; am Ende holst du das fertige Dokument oder die Textliste ab.') }}</p>
+  <h3>{{ _('Ablauf in fünf Schritten') }}</h3>
+  <ol>
+    <li>{{ _('Dokument anlegen: Datei oder Adresse schicken, Antwort ist eine id und der Status „extracting“ (oder gleich „ready“).') }}</li>
+    <li>{{ _('Status abfragen, bis „ready“: Jetzt sind die Einträge bekannt, counts.items sagt, wie viele.') }}</li>
+    <li>{{ _('Generieren starten: Die KI beschreibt alle Einträge im Hintergrund. Status abfragen, bis „done“.') }}</li>
+    <li>{{ _('Einträge lesen und bei Bedarf korrigieren, oder einen Freigabe-Link für unsere Prüfansicht erzeugen.') }}</li>
+    <li>{{ _('Exportieren: barrierefreie PDF, Word mit Alt-Texten, PDF/UA aus Word, oder die Textliste als Excel, CSV oder JSON.') }}</li>
+  </ol>
+  <h3>{{ _('Endpunkte') }}</h3>
+  <table>
+    <caption class="sr-only">{{ _('Endpunkte für Dokumente') }}</caption>
+    <thead><tr><th scope="col">{{ _('Aufruf') }}</th><th scope="col">{{ _('Bedeutung') }}</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents</code></td><td>{{ _('Dokument anlegen: Datei (multipart, Feld file) oder JSON mit url. Antwort 202 (wird extrahiert) oder 201 (schon bereit).') }}</td></tr>
+      <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents</code></td><td>{{ _('Eigene Dokumente auflisten (limit, offset).') }}</td></tr>
+      <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}</code></td><td>{{ _('Status, Zähler, Fortschritt, Hinweis zum letzten Lauf.') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/generate</code></td><td>{{ _('Sammellauf starten (alle Einträge, optional nur document_id). Antwort 202.') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/generate/cancel</code></td><td>{{ _('Laufenden Sammellauf nach dem aktuellen Eintrag beenden.') }}</td></tr>
+      <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/items</code></td><td>{{ _('Alle Einträge mit Texten, Status und Bild-Adresse.') }}</td></tr>
+      <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/items/{item_id}/file</code></td><td>{{ _('Die Bilddatei eines Eintrags, zum Anzeigen in deinem Produkt.') }}</td></tr>
+      <tr><td><span class="badge b-patch">PATCH</span><code>/api/v1/documents/{id}/items/{item_id}</code></td><td>{{ _('Text von Hand setzen: alt_text und/oder langbeschreibung (Bilder) bzw. quickinfo (Felder). Ein leerer Text heißt bewusst leer.') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/items/{item_id}/generate</code></td><td>{{ _('Einen Eintrag neu beschreiben lassen (optional image_type).') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/export/{format}</code></td><td>{{ _('Export: pdf, docx, pdfua, xlsx, csv, json; für Formulare formular und formular_csv. Antwort ist die Datei; bei pdfua ein Bericht mit download_url.') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/review-link</code></td><td>{{ _('Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify).') }}</td></tr>
+      <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/review-links</code></td><td>{{ _('Freigaben des Dokuments auflisten.') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/review-links/revoke</code></td><td>{{ _('Freigabe zurückziehen (token).') }}</td></tr>
+      <tr><td><span class="badge b-delete">DELETE</span><code>/api/v1/documents/{id}</code></td><td>{{ _('Dokument samt Dateien und Texten löschen.') }}</td></tr>
+    </tbody>
+  </table>
+  <h3>{{ _('Dokument anlegen') }}</h3>
+  <table>
+    <caption class="sr-only">{{ _('Parameter beim Anlegen') }}</caption>
+    <thead><tr><th scope="col">{{ _('Parameter') }}</th><th scope="col">{{ _('Pflicht') }}</th><th scope="col">{{ _('Bedeutung') }}</th></tr></thead>
+    <tbody>
+      <tr><td><code>file</code></td><td>{{ _('Ja (Datei)') }}</td><td>{{ _('PDF, DOCX oder Bilddatei, höchstens 50 MB. Das Werkzeug ergibt sich aus der Endung.') }}</td></tr>
+      <tr><td><code>url</code></td><td>{{ _('Ja (JSON)') }}</td><td>{{ _('Webadresse; InkluDocs lädt die Bilder der Seite.') }}</td></tr>
+      <tr><td><code>tool</code></td><td>{{ _('Nein') }}</td><td>{{ _('Erzwingt ein Werkzeug: pdf, word, grafik, formular. Nötig nur für Formular-PDFs (tool=formular).') }}</td></tr>
+      <tr><td><code>name</code></td><td>{{ _('Nein') }}</td><td>{{ _('Anzeigename in der App (Standard: Dateiname).') }}</td></tr>
+      <tr><td><code>language</code></td><td>{{ _('Nein') }}</td><td>{{ _('Sprache der Texte: de, en, fr, es, da, sv.') }}</td></tr>
+      <tr><td><code>use_context</code></td><td>{{ _('Nein') }}</td><td>{{ _('true (Standard): die KI bekommt den Text der Seite als Zusammenhang; false: nur das Bild.') }}</td></tr>
+    </tbody>
+  </table>
+  <h3>{{ _('Status und Zähler') }}</h3>
+  <pre><code>{% raw %}{
+  "id": 812, "kind": "pdf", "status": "done", "language": "de",
+  "counts": { "items": 48, "with_text": 46, "without_text": 2, "decorative": 0,
+              "done": 46, "pending": 0, "failed": 2 },
+  "progress": { "processed": 46, "total": 48 },
+  "run_note": null,
+  "documents": [ { "id": 901, "filename": "heft.pdf", "items": 48, "tagged": true } ],
+  "review_links": 0
+}{% endraw %}</code></pre>
+  <p>{{ _('Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat; ohne Tags gibt es keinen PDF-Export, nur Textlisten.') }}</p>
+  <h3>{{ _('Einträge') }}</h3>
+  <pre><code>{% raw %}{
+  "id": 5031, "type": "image", "page": 3, "index": 7,
+  "status": "done", "text_status": "mit_text",
+  "alt_text": "…", "alt_text_ki": "…", "alt_text_edited": null,
+  "langbeschreibung": "…", "bildtyp": "foto", "konfidenz": "hoch",
+  "needs_review": false, "file_url": "…/items/5031/file"
+}{% endraw %}</code></pre>
+  <p>{{ _('alt_text ist der sichtbare Text (eigener Text vor KI-Text vor Quelltext), alt_text_ki der letzte KI-Vorschlag, alt_text_edited der von Hand gesetzte Text (null = nie angefasst, leer = bewusst geleert). needs_review markiert Vorschläge, die die KI selbst als unsicher einstuft. Bei Formularen heißen die Felder quickinfo, quickinfo_ki, quickinfo_original.') }}</p>
+</section>
+
+<section class="dash-card" aria-labelledby="h-wege">
+  <h2 id="h-wege">{{ _('Drei Wege der Einbindung') }}</h2>
+  <ul>
+    <li>{{ _('Nur Daten: Du zeigst Bilder und Texte in deiner eigenen Oberfläche und schreibst Korrekturen per PATCH zurück. Voller Gestaltungsspielraum.') }}</li>
+    <li>{{ _('Daten plus Prüfansicht: Du zeigst Status und Download, und für die Korrektur öffnest du per review-link unsere geprüfte, barrierefreie Gast-Ansicht mit Bild, Alt-Text, Langbeschreibung, Filtern und Vorlesen. Der schnellste Weg in Betrieb.') }}</li>
+    <li>{{ _('Vollautomatisch: Kein Mensch schaut hin; du legst an, startest, wartest auf „done“ und holst den Export ab, zum Beispiel nachts für ein Dokumentenarchiv.') }}</li>
+  </ul>
+</section>
+
+<section class="dash-card" aria-labelledby="h-fehler">
+  <h2 id="h-fehler">{{ _('Fehler-Codes') }}</h2>
+  <table>
+    <caption class="sr-only">{{ _('HTTP-Fehler-Codes') }}</caption>
+    <thead><tr><th scope="col">HTTP</th><th scope="col">{{ _('Bedeutung') }}</th></tr></thead>
+    <tbody>
+      <tr><td><code>400</code></td><td>{{ _('Fehlender oder ungültiger Parameter, unbekanntes Format oder Werkzeug.') }}</td></tr>
+      <tr><td><code>401</code></td><td>{{ _('Schlüssel fehlt, ist ungültig oder gelöscht.') }}</td></tr>
+      <tr><td><code>402</code></td><td>{{ _('Guthaben reicht nicht (Code credits_fehlen mit preis, verfuegbar, fehlend).') }}</td></tr>
+      <tr><td><code>404</code></td><td>{{ _('Dokument, Eintrag oder Ergebnis nicht gefunden, oder es gehört einem anderen Konto.') }}</td></tr>
+      <tr><td><code>409</code></td><td>{{ _('Für dieses Dokument läuft gerade eine Verarbeitung; später erneut versuchen.') }}</td></tr>
+      <tr><td><code>413</code></td><td>{{ _('Datei zu groß.') }}</td></tr>
+      <tr><td><code>415</code></td><td>{{ _('Falscher Inhaltstyp: multipart/form-data oder application/json erwartet.') }}</td></tr>
+      <tr><td><code>422</code></td><td>{{ _('Export-Abnahme nicht bestanden: Die Datei wird nicht ausgegeben, die Meldung nennt den Befund.') }}</td></tr>
+      <tr><td><code>429</code></td><td>{{ _('Rate-Limit oder Tageslimit erreicht (Kopfzeile Retry-After); bei der Einzelbild-Schnittstelle auch fehlendes Guthaben.') }}</td></tr>
+      <tr><td><code>500</code>–<code>504</code></td><td>{{ _('Interner Fehler, Umwandler nicht erreichbar oder Zeitüberschreitung.') }}</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="dash-card" aria-labelledby="h-limits">
+  <h2 id="h-limits">{{ _('Rate-Limits') }}</h2>
+  <ul>
+    <li>{{ _('Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen nicht mit, damit du in Ruhe abfragen kannst.').format(minute=limit_minute, tag=limit_tag) }}</li>
+    <li>{{ _('Je Konto: {n} generierte Texte pro Tag über die API, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen.').format(n=tageslimit) }}</li>
+  </ul>
+  <p>{{ _('Die verbleibenden Anfragen stehen in den Kopfzeilen X-RateLimit-Remaining-Minute und X-RateLimit-Remaining-Day; bei Überschreitung kommt HTTP 429 mit Retry-After.') }}</p>
+</section>
+
+<section class="dash-card" aria-labelledby="h-kosten">
+  <h2 id="h-kosten">{{ _('Kosten (Credits)') }}</h2>
+  <p>{{ _('Die API zieht aus demselben Credit-Guthaben wie die App, zu denselben Preisen. Abgerechnet wird nur, was gelungen ist: Fehlschläge, Abbrüche und Treffer im Zwischenspeicher kosten nichts. Lesen, Status, Korrigieren und Freigabe-Links sind kostenlos.') }}</p>
+  <ul>
+    <li>{{ _('Alt-Text je Bild (Einzelbild oder im Dokument): {n} Credits.').format(n=preis_alt) }}</li>
+    <li>{{ _('Quickinfo je Formularfeld: {n} Credit.').format(n=preis_qi) }}</li>
+    <li>{{ _('Dokument-Export (pdf, docx, pdfua, formular): {grund} Credits plus {staffel} je angefangene {schritt} Einträge.').format(grund=preis_export, staffel=preis_export_bild, schritt=export_schritt) }}</li>
+    <li>{{ _('Textliste (xlsx, csv, json, formular_csv): {n} Credits je Export.').format(n=preis_tabelle) }}</li>
+  </ul>
+  <p>{{ _('Reicht das Guthaben nicht, antwortet die API mit 402 (Dokumente) bzw. 429 (Einzelbilder) und nennt Preis und verfügbare Credits. Credits gibt es über die Tarife und Pakete unter') }} <a href="{{ base_url }}/preise">{{ base_url }}/preise</a>. {{ _('Den Verbrauch je Schlüssel siehst du in der App unter „API-Schlüssel“.') }}</p>
+</section>
+
+<section class="dash-card" aria-labelledby="h-beispiele">
+  <h2 id="h-beispiele">{{ _('Beispiele') }}</h2>
+  <h3>{{ _('Einzelbild mit curl') }}</h3>
+  <pre><code>curl -X POST {{ base_url }}/api/v1/alt-text \
+  -H "X-API-Key: idocs_deinSchluessel" \
+  -F "file=@foto.jpg" \
+  -F "context=Jahresbericht 2025, Kapitel Umsatz"</code></pre>
+  <h3>{{ _('Dokument von Anfang bis Ende mit curl') }}</h3>
+  <pre><code># 1) anlegen
+curl -X POST {{ base_url }}/api/v1/documents \
+  -H "X-API-Key: idocs_deinSchluessel" \
+  -F "file=@heft.pdf" -F "language=de"
+# 2) Status, bis "ready"
+curl {{ base_url }}/api/v1/documents/812 -H "X-API-Key: idocs_deinSchluessel"
+# 3) generieren, dann Status bis "done"
+curl -X POST {{ base_url }}/api/v1/documents/812/generate -H "X-API-Key: idocs_deinSchluessel"
+# 4) Einträge lesen, einen korrigieren
+curl {{ base_url }}/api/v1/documents/812/items -H "X-API-Key: idocs_deinSchluessel"
+curl -X PATCH {{ base_url }}/api/v1/documents/812/items/5031 \
+  -H "X-API-Key: idocs_deinSchluessel" -H "Content-Type: application/json" \
+  -d '{"alt_text": "Zwei Kinder auf einem roten Fahrrad vor dem Rathaus"}'
+# 5) exportieren
+curl -X POST {{ base_url }}/api/v1/documents/812/export/pdf \
+  -H "X-API-Key: idocs_deinSchluessel" -o heft_barrierefrei.pdf</code></pre>
+  <h3>{{ _('Dokument mit Python') }}</h3>
+  <pre><code>import time, requests
+
+B = "{{ base_url }}"
+H = {"X-API-Key": "idocs_deinSchluessel"}
+
+with open("heft.pdf", "rb") as f:
+    doc = requests.post(f"{B}/api/v1/documents", headers=H,
+                        files={"file": f}, data={"language": "de"}).json()
+
+def warte(status_ziel):
+    while True:
+        d = requests.get(f"{B}/api/v1/documents/{doc['id']}", headers=H).json()
+        if d["status"] in status_ziel or d["status"] == "error":
+            return d
+        time.sleep(5)
+
+warte({"ready"})
+requests.post(f"{B}/api/v1/documents/{doc['id']}/generate", headers=H)
+d = warte({"done"})
+print(d["counts"])
+items = requests.get(f"{B}/api/v1/documents/{doc['id']}/items", headers=H).json()["items"]
+pdf = requests.post(f"{B}/api/v1/documents/{doc['id']}/export/pdf", headers=H)
+open("heft_barrierefrei.pdf", "wb").write(pdf.content)</code></pre>
+  <h3>{{ _('Freigabe-Link für die Prüfansicht (JavaScript)') }}</h3>
+  <pre><code>const res = await fetch(`${B}/api/v1/documents/${id}/review-link`, {
+  method: 'POST',
+  headers: { 'X-API-Key': KEY, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ guest_email: 'lektorat@beispiel.de', role: 'lektorat', notify: true }),
+});
+const { url } = await res.json();   // Link in deinem Produkt anzeigen</code></pre>
+  <div class="hinweis" role="note">
+    <p>{{ _('Die API nutzt dieselbe KI-Pipeline und dieselbe Export-Abnahme wie die App. Je mehr Zusammenhang die KI bekommt (context bei Einzelbildern, use_context bei Dokumenten), desto besser die Texte. Keine KI ist fehlerfrei: Plane in deinem Produkt einen Prüfschritt ein, entweder mit eigenen Feldern oder mit unserer Prüfansicht.') }}</p>
+  </div>
+  <p>{{ _('Fragen zur Anbindung') }}: <a href="mailto:support@inkludocs.de">support@inkludocs.de</a></p>
+</section>
+
+</div>
+{% endblock %}

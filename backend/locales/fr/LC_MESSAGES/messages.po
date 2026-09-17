@@ -6304,3 +6304,378 @@ msgstr "À faire"
 
 msgid "Zu finden über den Filter „Offen“."
 msgstr "À retrouver via le filtre « À faire »."
+
+msgid "Dokumentation"
+msgstr "Documentation"
+
+msgid "InkluDocs API – Dokumentation"
+msgstr "API InkluDocs – Documentation"
+
+msgid "Worum es geht"
+msgstr "De quoi il s’agit"
+
+msgid "Die InkluDocs-API macht alles, was die App kann, für andere Anwendungen verfügbar: Alt-Texte für einzelne Bilder, und ganze Dokumente (PDF, Word, Formular-PDF, Bildsammlung, Webseite) hochladen, beschreiben lassen, korrigieren und barrierefrei exportieren. Du brauchst nur ein InkluDocs-Konto und einen API-Schlüssel; Oberfläche und Anzeige baust du in deinem Produkt, oder du verlinkst unsere Prüfansicht."
+msgstr "L’API InkluDocs met tout ce que l’application sait faire à la disposition d’autres applications : des textes alternatifs pour des images isolées, et des documents entiers (PDF, Word, formulaires PDF, jeux d’images, pages web) à envoyer, décrire, corriger et exporter de façon accessible. Il vous suffit d’un compte InkluDocs et d’une clé d’API ; l’interface se construit dans votre produit, ou vous renvoyez vers notre vue de relecture."
+
+msgid "Basis-Adresse"
+msgstr "Adresse de base"
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Inhaltsverzeichnis"
+msgstr "Sommaire"
+
+msgid "Authentifizierung"
+msgstr "Authentification"
+
+msgid "Grundsätze: Versionierung, Antworten, Fehler"
+msgstr "Principes : versions, réponses, erreurs"
+
+msgid "Einzelbilder"
+msgstr "Images isolées"
+
+msgid "Drei Wege der Einbindung"
+msgstr "Trois façons d’intégrer"
+
+msgid "Fehler-Codes"
+msgstr "Codes d’erreur"
+
+msgid "Rate-Limits"
+msgstr "Limites de débit"
+
+msgid "Kosten (Credits)"
+msgstr "Coûts (crédits)"
+
+msgid "Beispiele"
+msgstr "Exemples"
+
+msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
+msgstr "Chaque requête porte votre clé dans l’en-tête X-API-Key. Vous créez les clés dans l’application sous « Paramètres » → « Clés d’API » ; vous y voyez aussi la consommation par clé. Une clé vaut pour votre compte ; vous pouvez en créer plusieurs (par exemple une par application) et supprimer chacune séparément."
+
+msgid "Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server."
+msgstr "Traitez la clé comme un mot de passe : jamais dans du code navigateur ni dans des dépôts publics, uniquement sur votre serveur."
+
+msgid "Versionierung"
+msgstr "Gestion des versions"
+
+msgid "Alle Pfade beginnen mit /api/v1/. Innerhalb von v1 kommen neue Felder und Endpunkte nur hinzu; vorhandene Felder werden nicht umbenannt oder entfernt. Änderungen, die bestehende Anbindungen brechen würden, erscheinen als neue Version (/api/v2/), und v1 läuft dann mindestens zwölf Monate weiter. Jede Antwort trägt die Kopfzeile X-API-Version."
+msgstr "Tous les chemins commencent par /api/v1/. Au sein de v1, les champs et points de terminaison ne font que s’ajouter ; les champs existants ne sont ni renommés ni supprimés. Les changements qui casseraient des intégrations existantes paraissent dans une nouvelle version (/api/v2/), et v1 continue alors au moins douze mois. Chaque réponse porte l’en-tête X-API-Version."
+
+msgid "Antworten"
+msgstr "Réponses"
+
+msgid "Antworten sind JSON (UTF-8), außer bei Datei-Downloads. Zeitstempel sind UTC im Format JJJJ-MM-TT HH:MM:SS. Längere Arbeiten (Extraktion, Generierung) laufen im Hintergrund: Du bekommst sofort eine Antwort mit Status 202 und fragst den Stand ab, bis der Status „ready“ oder „done“ ist. Frage nicht öfter als alle fünf Sekunden ab."
+msgstr "Les réponses sont en JSON (UTF-8), sauf pour les téléchargements de fichiers. Les horodatages sont en UTC au format AAAA-MM-JJ HH:MM:SS. Les travaux longs (extraction, génération) tournent en arrière-plan : vous recevez aussitôt une réponse avec le statut 202 et interrogez l’état jusqu’à ce que le statut soit « ready » ou « done ». N’interrogez pas plus souvent que toutes les cinq secondes."
+
+msgid "Fehlerformat"
+msgstr "Format des erreurs"
+
+msgid "Fehler kommen immer als JSON mit einem stabilen, maschinenlesbaren Code und einer Meldung für Menschen. Zeige in deinem Produkt die Meldung an und verzweige im Code über den Code."
+msgstr "Les erreurs arrivent toujours en JSON avec un code stable lisible par machine et un message lisible par un humain. Affichez le message dans votre produit et branchez votre code sur le code."
+
+msgid "Codes"
+msgstr "Codes"
+
+msgid "Aufbewahrung"
+msgstr "Conservation"
+
+msgid "Dokumente bleiben in deinem Konto, bis du sie löschst (in der App oder per API), genau wie Projekte in der App. Ergebnisse der Einzelbild-Schnittstelle bleiben mit ihrer result_id abrufbar, solange der Schlüssel besteht; wird ein Schlüssel gelöscht, gehen sein Verbrauchsprotokoll und seine Einzelbild-Ergebnisse mit."
+msgstr "Les documents restent dans votre compte jusqu’à ce que vous les supprimiez (dans l’application ou via l’API), comme les projets de l’application. Les résultats de l’interface image isolée restent accessibles par leur result_id tant que la clé existe ; si une clé est supprimée, son journal de consommation et ses résultats d’images isolées disparaissent avec elle."
+
+msgid "Für ein einzelnes Bild, zum Beispiel aus einer Mediathek oder einem Redaktionssystem: Bild hin, Alt-Text zurück."
+msgstr "Pour une image isolée, par exemple issue d’une médiathèque ou d’un système éditorial : image envoyée, texte alternatif rendu."
+
+msgid "Alt-Text für ein Bild erzeugen"
+msgstr "Générer un texte alternatif pour une image"
+
+msgid "Zwei Formate: Datei-Upload (multipart/form-data, Feld file) oder JSON mit image_base64. Weitere Felder in beiden Fällen:"
+msgstr "Deux formats : envoi de fichier (multipart/form-data, champ file) ou JSON avec image_base64. Autres champs dans les deux cas :"
+
+msgid "Parameter für Einzelbilder"
+msgstr "Paramètres pour images isolées"
+
+msgid "Parameter"
+msgstr "Paramètre"
+
+msgid "Pflicht"
+msgstr "Obligatoire"
+
+msgid "Bedeutung"
+msgstr "Signification"
+
+msgid "Ja"
+msgstr "Oui"
+
+msgid "Bilddatei (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), höchstens 10 MB; Base64 wahlweise mit Data-URI-Präfix."
+msgstr "Fichier image (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), 10 Mo au plus ; Base64 avec ou sans préfixe data URI."
+
+msgid "Nein"
+msgstr "Non"
+
+msgid "Umgebungstext für ein besseres Ergebnis: Bildunterschrift, Seitentitel, umgebender Absatz."
+msgstr "Texte environnant pour un meilleur résultat : légende, titre de page, paragraphe voisin."
+
+msgid "Sprache des Textes: de, en, fr, es, da, sv. Standard de."
+msgstr "Langue du texte : de, en, fr, es, da, sv. Par défaut de."
+
+msgid "Hinweis auf den Bildtyp: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle."
+msgstr "Indication du type d’image : foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle."
+
+msgid "Ergebnis später abrufen"
+msgstr "Récupérer un résultat plus tard"
+
+msgid "Ergebnis korrigieren: JSON mit alt_text und/oder langbeschreibung"
+msgstr "Corriger un résultat : JSON avec alt_text et/ou langbeschreibung"
+
+msgid "Ein Dokument ist eine Datei oder eine Webadresse, die InkluDocs in Einträge zerlegt: Bilder (bei PDF, Word, Bildsammlung, Webseite) oder Formularfelder (bei Formular-PDF). Jeder Eintrag bekommt einen Text; am Ende holst du das fertige Dokument oder die Textliste ab."
+msgstr "Un document est un fichier ou une adresse web qu’InkluDocs décompose en éléments : images (PDF, Word, jeu d’images, page web) ou champs de formulaire (formulaire PDF). Chaque élément reçoit un texte ; à la fin vous récupérez le document terminé ou la liste des textes."
+
+msgid "Ablauf in fünf Schritten"
+msgstr "Le déroulement en cinq étapes"
+
+msgid "Dokument anlegen: Datei oder Adresse schicken, Antwort ist eine id und der Status „extracting“ (oder gleich „ready“)."
+msgstr "Créer le document : envoyer un fichier ou une adresse ; la réponse est un id et le statut « extracting » (ou directement « ready »)."
+
+msgid "Status abfragen, bis „ready“: Jetzt sind die Einträge bekannt, counts.items sagt, wie viele."
+msgstr "Interroger le statut jusqu’à « ready » : les éléments sont alors connus, counts.items dit combien."
+
+msgid "Generieren starten: Die KI beschreibt alle Einträge im Hintergrund. Status abfragen, bis „done“."
+msgstr "Lancer la génération : l’IA décrit tous les éléments en arrière-plan. Interroger le statut jusqu’à « done »."
+
+msgid "Einträge lesen und bei Bedarf korrigieren, oder einen Freigabe-Link für unsere Prüfansicht erzeugen."
+msgstr "Lire les éléments et les corriger au besoin, ou créer un lien de relecture vers notre vue de relecture."
+
+msgid "Exportieren: barrierefreie PDF, Word mit Alt-Texten, PDF/UA aus Word, oder die Textliste als Excel, CSV oder JSON."
+msgstr "Exporter : PDF accessible, Word avec textes alternatifs, PDF/UA depuis Word, ou la liste des textes en Excel, CSV ou JSON."
+
+msgid "Endpunkte"
+msgstr "Points de terminaison"
+
+msgid "Endpunkte für Dokumente"
+msgstr "Points de terminaison pour les documents"
+
+msgid "Aufruf"
+msgstr "Appel"
+
+msgid "Dokument anlegen: Datei (multipart, Feld file) oder JSON mit url. Antwort 202 (wird extrahiert) oder 201 (schon bereit)."
+msgstr "Créer un document : fichier (multipart, champ file) ou JSON avec url. Réponse 202 (extraction en cours) ou 201 (déjà prêt)."
+
+msgid "Eigene Dokumente auflisten (limit, offset)."
+msgstr "Lister vos documents (limit, offset)."
+
+msgid "Status, Zähler, Fortschritt, Hinweis zum letzten Lauf."
+msgstr "Statut, compteurs, progression, note sur la dernière exécution."
+
+msgid "Sammellauf starten (alle Einträge, optional nur document_id). Antwort 202."
+msgstr "Lancer un traitement groupé (tous les éléments, ou seulement document_id). Réponse 202."
+
+msgid "Laufenden Sammellauf nach dem aktuellen Eintrag beenden."
+msgstr "Arrêter le traitement en cours après l’élément actuel."
+
+msgid "Alle Einträge mit Texten, Status und Bild-Adresse."
+msgstr "Tous les éléments avec textes, statut et adresse d’image."
+
+msgid "Die Bilddatei eines Eintrags, zum Anzeigen in deinem Produkt."
+msgstr "Le fichier image d’un élément, à afficher dans votre produit."
+
+msgid "Text von Hand setzen: alt_text und/oder langbeschreibung (Bilder) bzw. quickinfo (Felder). Ein leerer Text heißt bewusst leer."
+msgstr "Saisir un texte à la main : alt_text et/ou langbeschreibung (images) ou quickinfo (champs). Un texte vide signifie volontairement vide."
+
+msgid "Einen Eintrag neu beschreiben lassen (optional image_type)."
+msgstr "Faire décrire un élément à nouveau (image_type en option)."
+
+msgid "Export: pdf, docx, pdfua, xlsx, csv, json; für Formulare formular und formular_csv. Antwort ist die Datei; bei pdfua ein Bericht mit download_url."
+msgstr "Export : pdf, docx, pdfua, xlsx, csv, json ; pour les formulaires formular et formular_csv. La réponse est le fichier ; pour pdfua un rapport avec download_url."
+
+msgid "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify)."
+msgstr "Créer un lien de relecture vers notre vue de relecture (guest_email, role kunde ou lektorat, notify)."
+
+msgid "Freigaben des Dokuments auflisten."
+msgstr "Lister les liens de relecture du document."
+
+msgid "Freigabe zurückziehen (token)."
+msgstr "Révoquer un lien de relecture (token)."
+
+msgid "Dokument samt Dateien und Texten löschen."
+msgstr "Supprimer le document avec ses fichiers et textes."
+
+msgid "Dokument anlegen"
+msgstr "Créer un document"
+
+msgid "Parameter beim Anlegen"
+msgstr "Paramètres à la création"
+
+msgid "Ja (Datei)"
+msgstr "Oui (fichier)"
+
+msgid "PDF, DOCX oder Bilddatei, höchstens 50 MB. Das Werkzeug ergibt sich aus der Endung."
+msgstr "PDF, DOCX ou fichier image, 50 Mo au plus. L’outil découle de l’extension."
+
+msgid "Ja (JSON)"
+msgstr "Oui (JSON)"
+
+msgid "Webadresse; InkluDocs lädt die Bilder der Seite."
+msgstr "Adresse web ; InkluDocs charge les images de la page."
+
+msgid "Erzwingt ein Werkzeug: pdf, word, grafik, formular. Nötig nur für Formular-PDFs (tool=formular)."
+msgstr "Impose un outil : pdf, word, grafik, formular. Nécessaire seulement pour les formulaires PDF (tool=formular)."
+
+msgid "Anzeigename in der App (Standard: Dateiname)."
+msgstr "Nom affiché dans l’application (par défaut : nom du fichier)."
+
+msgid "Sprache der Texte: de, en, fr, es, da, sv."
+msgstr "Langue des textes : de, en, fr, es, da, sv."
+
+msgid "true (Standard): die KI bekommt den Text der Seite als Zusammenhang; false: nur das Bild."
+msgstr "true (par défaut) : l’IA reçoit le texte de la page comme contexte ; false : seulement l’image."
+
+msgid "Status und Zähler"
+msgstr "Statut et compteurs"
+
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat; ohne Tags gibt es keinen PDF-Export, nur Textlisten."
+msgstr "Statut : uploaded, extracting, ready, generating, done, error. with_text et without_text suivent la même règle que la boîte de téléchargement de l’application : ce qui compte, c’est si le champ contient un texte, qu’il vienne de l’IA, de la main ou de la source. Les images décoratives n’ont pas de texte et ne comptent pas comme ouvertes. Pour les PDF, tagged indique si le fichier est balisé ; sans balises, pas d’export PDF, seulement des listes de textes."
+
+msgid "Einträge"
+msgstr "Éléments"
+
+msgid "alt_text ist der sichtbare Text (eigener Text vor KI-Text vor Quelltext), alt_text_ki der letzte KI-Vorschlag, alt_text_edited der von Hand gesetzte Text (null = nie angefasst, leer = bewusst geleert). needs_review markiert Vorschläge, die die KI selbst als unsicher einstuft. Bei Formularen heißen die Felder quickinfo, quickinfo_ki, quickinfo_original."
+msgstr "alt_text est le texte visible (texte propre avant texte IA avant texte source), alt_text_ki la dernière proposition de l’IA, alt_text_edited le texte saisi à la main (null = jamais touché, vide = volontairement vidé). needs_review marque les propositions que l’IA juge elle-même incertaines. Pour les formulaires, les champs s’appellent quickinfo, quickinfo_ki, quickinfo_original."
+
+msgid "Nur Daten: Du zeigst Bilder und Texte in deiner eigenen Oberfläche und schreibst Korrekturen per PATCH zurück. Voller Gestaltungsspielraum."
+msgstr "Données seules : vous affichez images et textes dans votre propre interface et renvoyez les corrections via PATCH. Liberté totale de conception."
+
+msgid "Daten plus Prüfansicht: Du zeigst Status und Download, und für die Korrektur öffnest du per review-link unsere geprüfte, barrierefreie Gast-Ansicht mit Bild, Alt-Text, Langbeschreibung, Filtern und Vorlesen. Der schnellste Weg in Betrieb."
+msgstr "Données plus vue de relecture : vous affichez le statut et le téléchargement, et pour la correction vous ouvrez via review-link notre vue invité accessible et éprouvée, avec image, texte alternatif, description longue, filtres et lecture à voix haute. Le chemin le plus rapide vers la mise en service."
+
+msgid "Vollautomatisch: Kein Mensch schaut hin; du legst an, startest, wartest auf „done“ und holst den Export ab, zum Beispiel nachts für ein Dokumentenarchiv."
+msgstr "Entièrement automatique : personne ne regarde ; vous créez, lancez, attendez « done » et récupérez l’export, par exemple la nuit pour une archive de documents."
+
+msgid "HTTP-Fehler-Codes"
+msgstr "Codes d’erreur HTTP"
+
+msgid "Fehlender oder ungültiger Parameter, unbekanntes Format oder Werkzeug."
+msgstr "Paramètre manquant ou invalide, format ou outil inconnu."
+
+msgid "Schlüssel fehlt, ist ungültig oder gelöscht."
+msgstr "Clé absente, invalide ou supprimée."
+
+msgid "Guthaben reicht nicht (Code credits_fehlen mit preis, verfuegbar, fehlend)."
+msgstr "Crédits insuffisants (code credits_fehlen avec preis, verfuegbar, fehlend)."
+
+msgid "Dokument, Eintrag oder Ergebnis nicht gefunden, oder es gehört einem anderen Konto."
+msgstr "Document, élément ou résultat introuvable, ou appartenant à un autre compte."
+
+msgid "Für dieses Dokument läuft gerade eine Verarbeitung; später erneut versuchen."
+msgstr "Un traitement est en cours pour ce document ; réessayez plus tard."
+
+msgid "Datei zu groß."
+msgstr "Fichier trop volumineux."
+
+msgid "Falscher Inhaltstyp: multipart/form-data oder application/json erwartet."
+msgstr "Mauvais type de contenu : multipart/form-data ou application/json attendu."
+
+msgid "Export-Abnahme nicht bestanden: Die Datei wird nicht ausgegeben, die Meldung nennt den Befund."
+msgstr "Contrôle d’export non réussi : le fichier n’est pas fourni, le message décrit le constat."
+
+msgid "Rate-Limit oder Tageslimit erreicht (Kopfzeile Retry-After); bei der Einzelbild-Schnittstelle auch fehlendes Guthaben."
+msgstr "Limite de débit ou limite journalière atteinte (en-tête Retry-After) ; sur l’interface image isolée, aussi crédits insuffisants."
+
+msgid "Interner Fehler, Umwandler nicht erreichbar oder Zeitüberschreitung."
+msgstr "Erreur interne, convertisseur injoignable ou délai dépassé."
+
+msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen nicht mit, damit du in Ruhe abfragen kannst."
+msgstr "Par clé : {minute} requêtes en écriture par minute et {tag} par jour (fenêtre glissante). Les appels en lecture comme le statut et les éléments ne comptent pas, pour que vous puissiez interroger tranquillement."
+
+msgid "Je Konto: {n} generierte Texte pro Tag über die API, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+msgstr "Par compte : {n} textes générés par jour via l’API, quel que soit le nombre de clés (remise à zéro à minuit UTC). Pour des volumes supérieurs, contactez-nous ; le quota s’ajuste par compte."
+
+msgid "Die verbleibenden Anfragen stehen in den Kopfzeilen X-RateLimit-Remaining-Minute und X-RateLimit-Remaining-Day; bei Überschreitung kommt HTTP 429 mit Retry-After."
+msgstr "Les requêtes restantes figurent dans les en-têtes X-RateLimit-Remaining-Minute et X-RateLimit-Remaining-Day ; en cas de dépassement, HTTP 429 avec Retry-After."
+
+msgid "Die API zieht aus demselben Credit-Guthaben wie die App, zu denselben Preisen. Abgerechnet wird nur, was gelungen ist: Fehlschläge, Abbrüche und Treffer im Zwischenspeicher kosten nichts. Lesen, Status, Korrigieren und Freigabe-Links sind kostenlos."
+msgstr "L’API puise dans le même solde de crédits que l’application, aux mêmes prix. Seul ce qui réussit est facturé : échecs, annulations et résultats en cache ne coûtent rien. Lecture, statut, corrections et liens de relecture sont gratuits."
+
+msgid "Alt-Text je Bild (Einzelbild oder im Dokument): {n} Credits."
+msgstr "Texte alternatif par image (isolée ou dans un document) : {n} crédits."
+
+msgid "Quickinfo je Formularfeld: {n} Credit."
+msgstr "Info-bulle par champ de formulaire : {n} crédit."
+
+msgid "Dokument-Export (pdf, docx, pdfua, formular): {grund} Credits plus {staffel} je angefangene {schritt} Einträge."
+msgstr "Export de document (pdf, docx, pdfua, formular) : {grund} crédits plus {staffel} par tranche entamée de {schritt} éléments."
+
+msgid "Textliste (xlsx, csv, json, formular_csv): {n} Credits je Export."
+msgstr "Liste des textes (xlsx, csv, json, formular_csv) : {n} crédits par export."
+
+msgid "Reicht das Guthaben nicht, antwortet die API mit 402 (Dokumente) bzw. 429 (Einzelbilder) und nennt Preis und verfügbare Credits. Credits gibt es über die Tarife und Pakete unter"
+msgstr "Si le solde ne suffit pas, l’API répond 402 (documents) ou 429 (images isolées) et indique le prix et les crédits disponibles. Les crédits s’obtiennent via les tarifs et les packs sur"
+
+msgid "Den Verbrauch je Schlüssel siehst du in der App unter „API-Schlüssel“."
+msgstr "Vous voyez la consommation par clé dans l’application sous « Clés d’API »."
+
+msgid "Einzelbild mit curl"
+msgstr "Image isolée avec curl"
+
+msgid "Dokument von Anfang bis Ende mit curl"
+msgstr "Un document de bout en bout avec curl"
+
+msgid "Dokument mit Python"
+msgstr "Un document avec Python"
+
+msgid "Freigabe-Link für die Prüfansicht (JavaScript)"
+msgstr "Lien de relecture pour la vue de relecture (JavaScript)"
+
+msgid "Die API nutzt dieselbe KI-Pipeline und dieselbe Export-Abnahme wie die App. Je mehr Zusammenhang die KI bekommt (context bei Einzelbildern, use_context bei Dokumenten), desto besser die Texte. Keine KI ist fehlerfrei: Plane in deinem Produkt einen Prüfschritt ein, entweder mit eigenen Feldern oder mit unserer Prüfansicht."
+msgstr "L’API utilise le même pipeline d’IA et le même contrôle d’export que l’application. Plus l’IA reçoit de contexte (context pour les images isolées, use_context pour les documents), meilleurs sont les textes. Aucune IA n’est infaillible : prévoyez une étape de relecture dans votre produit, avec vos propres champs ou avec notre vue de relecture."
+
+msgid "Fragen zur Anbindung"
+msgstr "Questions sur l’intégration"
+
+msgid "Verbrauch über die API"
+msgstr "Consommation via l’API"
+
+msgid "Aufrufe in diesem Monat"
+msgstr "Appels ce mois-ci"
+
+msgid "Aufrufe heute"
+msgstr "Appels aujourd’hui"
+
+msgid "Dokumente über die API angelegt"
+msgstr "Documents créés via l’API"
+
+msgid "Credits für Bilder dieser Dokumente"
+msgstr "Crédits pour les images de ces documents"
+
+msgid "Letzter Aufruf"
+msgstr "Dernier appel"
+
+msgid "noch keiner"
+msgstr "aucun pour l’instant"
+
+msgid "Aufrufe: {n}"
+msgstr "Appels : {n}"
+
+msgid "heute {n}"
+msgstr "aujourd’hui {n}"
+
+msgid "Dokumente: {n}"
+msgstr "Documents : {n}"
+
+msgid "Credits: {n}"
+msgstr "Crédits : {n}"
+
+msgid "Fehlerquote: {p} %"
+msgstr "Taux d’erreur : {p} %"
+
+msgid "Zur API-Dokumentation"
+msgstr "Vers la documentation de l’API"
+
+msgid "{n} Aufrufe in diesem Monat über {k} Schlüssel."
+msgstr "{n} appels ce mois-ci via {k} clés."
+
+msgid "Schlüssel verwalten"
+msgstr "Gérer les clés"
+
+msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
+msgstr "Avec des clés d’API, d’autres applications se connectent à InkluDocs : images isolées et documents entiers. Le guide se trouve dans la documentation de l’API."

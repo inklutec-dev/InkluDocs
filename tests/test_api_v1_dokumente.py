@@ -118,5 +118,39 @@ class SchluesselLoeschenTest(unittest.TestCase):
             conn.execute("DELETE FROM api_keys WHERE id = ?", (kid,)); conn.commit(); conn.close()
 
 
+class VerbrauchTest(unittest.TestCase):
+    """Verbrauch je Schluessel (17.09.2026): Zaehler, Dokument-Zuordnung, Endpunkt nur mit Login."""
+
+    def test_stats_endpunkt_braucht_login(self):
+        self.assertEqual(TestClient(main.app).get("/api/api-keys/stats").status_code, 401)
+
+    def test_stats_zaehlen_aufrufe_und_dokumente(self):
+        import database
+        conn = database.get_db()
+        uid = conn.execute("SELECT id FROM users ORDER BY id LIMIT 1").fetchone()[0]
+        conn.close()
+        kid, roh = database.create_api_key(uid, "unittest-stats (fiktiv)")
+        pid = None
+        try:
+            database.log_api_usage(kid, uid, model_used="v1.documents.create", success=True)
+            database.log_api_usage(kid, uid, model_used="v1.documents.export", success=False, error_message="422")
+            conn = database.get_db()
+            cur = conn.execute("INSERT INTO projects (user_id, name, filename, original_path, status, project_type, tool, api_key_id) "
+                               "VALUES (?, 'unittest (fiktiv)', 'x.pdf', '', 'neu', 'pdf', 'pdf', ?)", (uid, kid))
+            pid = cur.lastrowid; conn.commit(); conn.close()
+            st = database.get_api_key_stats(uid)
+            k = st["keys"][str(kid)]
+            self.assertEqual((k["calls_total"], k["calls_today"], k["errors_total"], k["documents"]), (2, 2, 1, 1))
+            self.assertEqual(k["error_rate"], 50.0)
+            self.assertGreaterEqual(st["summary"]["calls_today"], 2)
+            self.assertTrue(st["keys_count"] >= 1)
+        finally:
+            conn = database.get_db()
+            if pid:
+                conn.execute("DELETE FROM projects WHERE id = ?", (pid,))
+            conn.execute("DELETE FROM api_usage WHERE api_key_id = ?", (kid,)); conn.execute("DELETE FROM api_keys WHERE id = ?", (kid,))
+            conn.commit(); conn.close()
+
+
 if __name__ == "__main__":
     unittest.main()

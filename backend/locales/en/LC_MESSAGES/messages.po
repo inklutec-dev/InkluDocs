@@ -6304,3 +6304,378 @@ msgstr "Open"
 
 msgid "Zu finden über den Filter „Offen“."
 msgstr "Find them with the “Open” filter."
+
+msgid "Dokumentation"
+msgstr "Documentation"
+
+msgid "InkluDocs API – Dokumentation"
+msgstr "InkluDocs API – Documentation"
+
+msgid "Worum es geht"
+msgstr "What this is about"
+
+msgid "Die InkluDocs-API macht alles, was die App kann, für andere Anwendungen verfügbar: Alt-Texte für einzelne Bilder, und ganze Dokumente (PDF, Word, Formular-PDF, Bildsammlung, Webseite) hochladen, beschreiben lassen, korrigieren und barrierefrei exportieren. Du brauchst nur ein InkluDocs-Konto und einen API-Schlüssel; Oberfläche und Anzeige baust du in deinem Produkt, oder du verlinkst unsere Prüfansicht."
+msgstr "The InkluDocs API makes everything the app can do available to other applications: alt texts for single images, and whole documents (PDF, Word, PDF forms, image sets, web pages) to upload, describe, correct and export accessibly. All you need is an InkluDocs account and an API key; you build the interface in your own product, or you link to our review view."
+
+msgid "Basis-Adresse"
+msgstr "Base address"
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Inhaltsverzeichnis"
+msgstr "Table of contents"
+
+msgid "Authentifizierung"
+msgstr "Authentication"
+
+msgid "Grundsätze: Versionierung, Antworten, Fehler"
+msgstr "Principles: versioning, responses, errors"
+
+msgid "Einzelbilder"
+msgstr "Single images"
+
+msgid "Drei Wege der Einbindung"
+msgstr "Three ways to integrate"
+
+msgid "Fehler-Codes"
+msgstr "Error codes"
+
+msgid "Rate-Limits"
+msgstr "Rate limits"
+
+msgid "Kosten (Credits)"
+msgstr "Costs (credits)"
+
+msgid "Beispiele"
+msgstr "Examples"
+
+msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
+msgstr "Every request carries your key in the X-API-Key header. You create keys in the app under “Settings” → “API keys”, where you also see usage per key. A key belongs to your account; you can create several (for example one per application) and delete each one individually."
+
+msgid "Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server."
+msgstr "Treat the key like a password: never in browser code or public repositories, only on your server."
+
+msgid "Versionierung"
+msgstr "Versioning"
+
+msgid "Alle Pfade beginnen mit /api/v1/. Innerhalb von v1 kommen neue Felder und Endpunkte nur hinzu; vorhandene Felder werden nicht umbenannt oder entfernt. Änderungen, die bestehende Anbindungen brechen würden, erscheinen als neue Version (/api/v2/), und v1 läuft dann mindestens zwölf Monate weiter. Jede Antwort trägt die Kopfzeile X-API-Version."
+msgstr "All paths start with /api/v1/. Within v1, new fields and endpoints are only ever added; existing fields are never renamed or removed. Changes that would break existing integrations appear as a new version (/api/v2/), and v1 then keeps running for at least twelve months. Every response carries the X-API-Version header."
+
+msgid "Antworten"
+msgstr "Responses"
+
+msgid "Antworten sind JSON (UTF-8), außer bei Datei-Downloads. Zeitstempel sind UTC im Format JJJJ-MM-TT HH:MM:SS. Längere Arbeiten (Extraktion, Generierung) laufen im Hintergrund: Du bekommst sofort eine Antwort mit Status 202 und fragst den Stand ab, bis der Status „ready“ oder „done“ ist. Frage nicht öfter als alle fünf Sekunden ab."
+msgstr "Responses are JSON (UTF-8), except for file downloads. Timestamps are UTC in the format YYYY-MM-DD HH:MM:SS. Longer jobs (extraction, generation) run in the background: you get an immediate response with status 202 and poll the state until the status is “ready” or “done”. Do not poll more often than every five seconds."
+
+msgid "Fehlerformat"
+msgstr "Error format"
+
+msgid "Fehler kommen immer als JSON mit einem stabilen, maschinenlesbaren Code und einer Meldung für Menschen. Zeige in deinem Produkt die Meldung an und verzweige im Code über den Code."
+msgstr "Errors always come as JSON with a stable, machine-readable code and a human-readable message. Show the message in your product and branch in your code on the code."
+
+msgid "Codes"
+msgstr "Codes"
+
+msgid "Aufbewahrung"
+msgstr "Retention"
+
+msgid "Dokumente bleiben in deinem Konto, bis du sie löschst (in der App oder per API), genau wie Projekte in der App. Ergebnisse der Einzelbild-Schnittstelle bleiben mit ihrer result_id abrufbar, solange der Schlüssel besteht; wird ein Schlüssel gelöscht, gehen sein Verbrauchsprotokoll und seine Einzelbild-Ergebnisse mit."
+msgstr "Documents stay in your account until you delete them (in the app or via the API), just like projects in the app. Results of the single-image endpoint remain retrievable by their result_id as long as the key exists; when a key is deleted, its usage log and its single-image results go with it."
+
+msgid "Für ein einzelnes Bild, zum Beispiel aus einer Mediathek oder einem Redaktionssystem: Bild hin, Alt-Text zurück."
+msgstr "For a single image, for example from a media library or a content management system: image in, alt text out."
+
+msgid "Alt-Text für ein Bild erzeugen"
+msgstr "Generate an alt text for an image"
+
+msgid "Zwei Formate: Datei-Upload (multipart/form-data, Feld file) oder JSON mit image_base64. Weitere Felder in beiden Fällen:"
+msgstr "Two formats: file upload (multipart/form-data, field file) or JSON with image_base64. Further fields in both cases:"
+
+msgid "Parameter für Einzelbilder"
+msgstr "Parameters for single images"
+
+msgid "Parameter"
+msgstr "Parameter"
+
+msgid "Pflicht"
+msgstr "Required"
+
+msgid "Bedeutung"
+msgstr "Meaning"
+
+msgid "Ja"
+msgstr "Yes"
+
+msgid "Bilddatei (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), höchstens 10 MB; Base64 wahlweise mit Data-URI-Präfix."
+msgstr "Image file (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), at most 10 MB; Base64 optionally with a data URI prefix."
+
+msgid "Nein"
+msgstr "No"
+
+msgid "Umgebungstext für ein besseres Ergebnis: Bildunterschrift, Seitentitel, umgebender Absatz."
+msgstr "Surrounding text for a better result: caption, page title, surrounding paragraph."
+
+msgid "Sprache des Textes: de, en, fr, es, da, sv. Standard de."
+msgstr "Language of the text: de, en, fr, es, da, sv. Default de."
+
+msgid "Hinweis auf den Bildtyp: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle."
+msgstr "Hint for the image type: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle."
+
+msgid "Ergebnis später abrufen"
+msgstr "Retrieve a result later"
+
+msgid "Ergebnis korrigieren: JSON mit alt_text und/oder langbeschreibung"
+msgstr "Correct a result: JSON with alt_text and/or langbeschreibung"
+
+msgid "Ein Dokument ist eine Datei oder eine Webadresse, die InkluDocs in Einträge zerlegt: Bilder (bei PDF, Word, Bildsammlung, Webseite) oder Formularfelder (bei Formular-PDF). Jeder Eintrag bekommt einen Text; am Ende holst du das fertige Dokument oder die Textliste ab."
+msgstr "A document is a file or a web address that InkluDocs breaks down into items: images (for PDF, Word, image sets, web pages) or form fields (for PDF forms). Every item gets a text; at the end you fetch the finished document or the text list."
+
+msgid "Ablauf in fünf Schritten"
+msgstr "The flow in five steps"
+
+msgid "Dokument anlegen: Datei oder Adresse schicken, Antwort ist eine id und der Status „extracting“ (oder gleich „ready“)."
+msgstr "Create the document: send a file or an address; the response is an id and the status “extracting” (or “ready” right away)."
+
+msgid "Status abfragen, bis „ready“: Jetzt sind die Einträge bekannt, counts.items sagt, wie viele."
+msgstr "Poll the status until “ready”: now the items are known, counts.items tells you how many."
+
+msgid "Generieren starten: Die KI beschreibt alle Einträge im Hintergrund. Status abfragen, bis „done“."
+msgstr "Start generation: the AI describes all items in the background. Poll the status until “done”."
+
+msgid "Einträge lesen und bei Bedarf korrigieren, oder einen Freigabe-Link für unsere Prüfansicht erzeugen."
+msgstr "Read the items and correct them if needed, or create a review link for our review view."
+
+msgid "Exportieren: barrierefreie PDF, Word mit Alt-Texten, PDF/UA aus Word, oder die Textliste als Excel, CSV oder JSON."
+msgstr "Export: accessible PDF, Word with alt texts, PDF/UA from Word, or the text list as Excel, CSV or JSON."
+
+msgid "Endpunkte"
+msgstr "Endpoints"
+
+msgid "Endpunkte für Dokumente"
+msgstr "Endpoints for documents"
+
+msgid "Aufruf"
+msgstr "Call"
+
+msgid "Dokument anlegen: Datei (multipart, Feld file) oder JSON mit url. Antwort 202 (wird extrahiert) oder 201 (schon bereit)."
+msgstr "Create a document: file (multipart, field file) or JSON with url. Response 202 (being extracted) or 201 (already ready)."
+
+msgid "Eigene Dokumente auflisten (limit, offset)."
+msgstr "List your documents (limit, offset)."
+
+msgid "Status, Zähler, Fortschritt, Hinweis zum letzten Lauf."
+msgstr "Status, counts, progress, note on the last run."
+
+msgid "Sammellauf starten (alle Einträge, optional nur document_id). Antwort 202."
+msgstr "Start a batch run (all items, optionally only document_id). Response 202."
+
+msgid "Laufenden Sammellauf nach dem aktuellen Eintrag beenden."
+msgstr "Stop the running batch after the current item."
+
+msgid "Alle Einträge mit Texten, Status und Bild-Adresse."
+msgstr "All items with texts, status and image address."
+
+msgid "Die Bilddatei eines Eintrags, zum Anzeigen in deinem Produkt."
+msgstr "The image file of an item, for display in your product."
+
+msgid "Text von Hand setzen: alt_text und/oder langbeschreibung (Bilder) bzw. quickinfo (Felder). Ein leerer Text heißt bewusst leer."
+msgstr "Set a text by hand: alt_text and/or langbeschreibung (images) or quickinfo (fields). An empty text means deliberately empty."
+
+msgid "Einen Eintrag neu beschreiben lassen (optional image_type)."
+msgstr "Have an item described again (optionally image_type)."
+
+msgid "Export: pdf, docx, pdfua, xlsx, csv, json; für Formulare formular und formular_csv. Antwort ist die Datei; bei pdfua ein Bericht mit download_url."
+msgstr "Export: pdf, docx, pdfua, xlsx, csv, json; for forms formular and formular_csv. The response is the file; for pdfua a report with download_url."
+
+msgid "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify)."
+msgstr "Create a review link for our review view (guest_email, role kunde or lektorat, notify)."
+
+msgid "Freigaben des Dokuments auflisten."
+msgstr "List the document’s review links."
+
+msgid "Freigabe zurückziehen (token)."
+msgstr "Revoke a review link (token)."
+
+msgid "Dokument samt Dateien und Texten löschen."
+msgstr "Delete the document with its files and texts."
+
+msgid "Dokument anlegen"
+msgstr "Create a document"
+
+msgid "Parameter beim Anlegen"
+msgstr "Parameters when creating"
+
+msgid "Ja (Datei)"
+msgstr "Yes (file)"
+
+msgid "PDF, DOCX oder Bilddatei, höchstens 50 MB. Das Werkzeug ergibt sich aus der Endung."
+msgstr "PDF, DOCX or image file, at most 50 MB. The tool follows from the extension."
+
+msgid "Ja (JSON)"
+msgstr "Yes (JSON)"
+
+msgid "Webadresse; InkluDocs lädt die Bilder der Seite."
+msgstr "Web address; InkluDocs loads the page’s images."
+
+msgid "Erzwingt ein Werkzeug: pdf, word, grafik, formular. Nötig nur für Formular-PDFs (tool=formular)."
+msgstr "Forces a tool: pdf, word, grafik, formular. Only needed for PDF forms (tool=formular)."
+
+msgid "Anzeigename in der App (Standard: Dateiname)."
+msgstr "Display name in the app (default: file name)."
+
+msgid "Sprache der Texte: de, en, fr, es, da, sv."
+msgstr "Language of the texts: de, en, fr, es, da, sv."
+
+msgid "true (Standard): die KI bekommt den Text der Seite als Zusammenhang; false: nur das Bild."
+msgstr "true (default): the AI gets the page text as context; false: only the image."
+
+msgid "Status und Zähler"
+msgstr "Status and counts"
+
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat; ohne Tags gibt es keinen PDF-Export, nur Textlisten."
+msgstr "Status: uploaded, extracting, ready, generating, done, error. with_text and without_text follow the same rule as the app’s download dialog: what counts is whether the field contains text, whether from the AI, by hand or from the source. Decorative images have no text and do not count as open. For PDFs, tagged says whether the file has tags; without tags there is no PDF export, only text lists."
+
+msgid "Einträge"
+msgstr "Items"
+
+msgid "alt_text ist der sichtbare Text (eigener Text vor KI-Text vor Quelltext), alt_text_ki der letzte KI-Vorschlag, alt_text_edited der von Hand gesetzte Text (null = nie angefasst, leer = bewusst geleert). needs_review markiert Vorschläge, die die KI selbst als unsicher einstuft. Bei Formularen heißen die Felder quickinfo, quickinfo_ki, quickinfo_original."
+msgstr "alt_text is the visible text (own text before AI text before source text), alt_text_ki the latest AI suggestion, alt_text_edited the text set by hand (null = never touched, empty = deliberately cleared). needs_review marks suggestions the AI itself rates as uncertain. For forms the fields are called quickinfo, quickinfo_ki, quickinfo_original."
+
+msgid "Nur Daten: Du zeigst Bilder und Texte in deiner eigenen Oberfläche und schreibst Korrekturen per PATCH zurück. Voller Gestaltungsspielraum."
+msgstr "Data only: you show images and texts in your own interface and write corrections back via PATCH. Full design freedom."
+
+msgid "Daten plus Prüfansicht: Du zeigst Status und Download, und für die Korrektur öffnest du per review-link unsere geprüfte, barrierefreie Gast-Ansicht mit Bild, Alt-Text, Langbeschreibung, Filtern und Vorlesen. Der schnellste Weg in Betrieb."
+msgstr "Data plus review view: you show status and download, and for corrections you open our tested, accessible guest view via review-link, with image, alt text, long description, filters and read-aloud. The fastest way to go live."
+
+msgid "Vollautomatisch: Kein Mensch schaut hin; du legst an, startest, wartest auf „done“ und holst den Export ab, zum Beispiel nachts für ein Dokumentenarchiv."
+msgstr "Fully automatic: nobody looks; you create, start, wait for “done” and fetch the export, for example overnight for a document archive."
+
+msgid "HTTP-Fehler-Codes"
+msgstr "HTTP error codes"
+
+msgid "Fehlender oder ungültiger Parameter, unbekanntes Format oder Werkzeug."
+msgstr "Missing or invalid parameter, unknown format or tool."
+
+msgid "Schlüssel fehlt, ist ungültig oder gelöscht."
+msgstr "Key missing, invalid or deleted."
+
+msgid "Guthaben reicht nicht (Code credits_fehlen mit preis, verfuegbar, fehlend)."
+msgstr "Insufficient credits (code credits_fehlen with preis, verfuegbar, fehlend)."
+
+msgid "Dokument, Eintrag oder Ergebnis nicht gefunden, oder es gehört einem anderen Konto."
+msgstr "Document, item or result not found, or it belongs to another account."
+
+msgid "Für dieses Dokument läuft gerade eine Verarbeitung; später erneut versuchen."
+msgstr "A job is currently running for this document; try again later."
+
+msgid "Datei zu groß."
+msgstr "File too large."
+
+msgid "Falscher Inhaltstyp: multipart/form-data oder application/json erwartet."
+msgstr "Wrong content type: multipart/form-data or application/json expected."
+
+msgid "Export-Abnahme nicht bestanden: Die Datei wird nicht ausgegeben, die Meldung nennt den Befund."
+msgstr "Export check failed: the file is not delivered; the message names the finding."
+
+msgid "Rate-Limit oder Tageslimit erreicht (Kopfzeile Retry-After); bei der Einzelbild-Schnittstelle auch fehlendes Guthaben."
+msgstr "Rate limit or daily limit reached (Retry-After header); on the single-image endpoint also insufficient credits."
+
+msgid "Interner Fehler, Umwandler nicht erreichbar oder Zeitüberschreitung."
+msgstr "Internal error, converter unreachable or timeout."
+
+msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen nicht mit, damit du in Ruhe abfragen kannst."
+msgstr "Per key: {minute} writing requests per minute and {tag} per day (sliding window). Reading calls such as status and items do not count, so you can poll freely."
+
+msgid "Je Konto: {n} generierte Texte pro Tag über die API, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+msgstr "Per account: {n} generated texts per day via the API, regardless of the number of keys (reset at midnight UTC). For higher volumes talk to us; the quota can be adjusted per account."
+
+msgid "Die verbleibenden Anfragen stehen in den Kopfzeilen X-RateLimit-Remaining-Minute und X-RateLimit-Remaining-Day; bei Überschreitung kommt HTTP 429 mit Retry-After."
+msgstr "The remaining requests are in the headers X-RateLimit-Remaining-Minute and X-RateLimit-Remaining-Day; when exceeded you get HTTP 429 with Retry-After."
+
+msgid "Die API zieht aus demselben Credit-Guthaben wie die App, zu denselben Preisen. Abgerechnet wird nur, was gelungen ist: Fehlschläge, Abbrüche und Treffer im Zwischenspeicher kosten nichts. Lesen, Status, Korrigieren und Freigabe-Links sind kostenlos."
+msgstr "The API draws on the same credit balance as the app, at the same prices. Only what succeeds is charged: failures, cancellations and cache hits cost nothing. Reading, status, corrections and review links are free."
+
+msgid "Alt-Text je Bild (Einzelbild oder im Dokument): {n} Credits."
+msgstr "Alt text per image (single image or within a document): {n} credits."
+
+msgid "Quickinfo je Formularfeld: {n} Credit."
+msgstr "Quick info per form field: {n} credit."
+
+msgid "Dokument-Export (pdf, docx, pdfua, formular): {grund} Credits plus {staffel} je angefangene {schritt} Einträge."
+msgstr "Document export (pdf, docx, pdfua, formular): {grund} credits plus {staffel} per started {schritt} items."
+
+msgid "Textliste (xlsx, csv, json, formular_csv): {n} Credits je Export."
+msgstr "Text list (xlsx, csv, json, formular_csv): {n} credits per export."
+
+msgid "Reicht das Guthaben nicht, antwortet die API mit 402 (Dokumente) bzw. 429 (Einzelbilder) und nennt Preis und verfügbare Credits. Credits gibt es über die Tarife und Pakete unter"
+msgstr "If the balance is insufficient, the API responds with 402 (documents) or 429 (single images) and names the price and available credits. Credits are available through the plans and packages at"
+
+msgid "Den Verbrauch je Schlüssel siehst du in der App unter „API-Schlüssel“."
+msgstr "You can see usage per key in the app under “API keys”."
+
+msgid "Einzelbild mit curl"
+msgstr "Single image with curl"
+
+msgid "Dokument von Anfang bis Ende mit curl"
+msgstr "A document from start to finish with curl"
+
+msgid "Dokument mit Python"
+msgstr "A document with Python"
+
+msgid "Freigabe-Link für die Prüfansicht (JavaScript)"
+msgstr "Review link for the review view (JavaScript)"
+
+msgid "Die API nutzt dieselbe KI-Pipeline und dieselbe Export-Abnahme wie die App. Je mehr Zusammenhang die KI bekommt (context bei Einzelbildern, use_context bei Dokumenten), desto besser die Texte. Keine KI ist fehlerfrei: Plane in deinem Produkt einen Prüfschritt ein, entweder mit eigenen Feldern oder mit unserer Prüfansicht."
+msgstr "The API uses the same AI pipeline and the same export check as the app. The more context the AI gets (context for single images, use_context for documents), the better the texts. No AI is flawless: plan a review step in your product, either with your own fields or with our review view."
+
+msgid "Fragen zur Anbindung"
+msgstr "Questions about integration"
+
+msgid "Verbrauch über die API"
+msgstr "Usage via the API"
+
+msgid "Aufrufe in diesem Monat"
+msgstr "Calls this month"
+
+msgid "Aufrufe heute"
+msgstr "Calls today"
+
+msgid "Dokumente über die API angelegt"
+msgstr "Documents created via the API"
+
+msgid "Credits für Bilder dieser Dokumente"
+msgstr "Credits for images of these documents"
+
+msgid "Letzter Aufruf"
+msgstr "Last call"
+
+msgid "noch keiner"
+msgstr "none yet"
+
+msgid "Aufrufe: {n}"
+msgstr "Calls: {n}"
+
+msgid "heute {n}"
+msgstr "today {n}"
+
+msgid "Dokumente: {n}"
+msgstr "Documents: {n}"
+
+msgid "Credits: {n}"
+msgstr "Credits: {n}"
+
+msgid "Fehlerquote: {p} %"
+msgstr "Error rate: {p} %"
+
+msgid "Zur API-Dokumentation"
+msgstr "To the API documentation"
+
+msgid "{n} Aufrufe in diesem Monat über {k} Schlüssel."
+msgstr "{n} calls this month via {k} keys."
+
+msgid "Schlüssel verwalten"
+msgstr "Manage keys"
+
+msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
+msgstr "With API keys, other applications connect to InkluDocs: single images and whole documents. The guide is in the API documentation."

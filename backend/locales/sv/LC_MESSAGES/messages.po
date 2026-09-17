@@ -5866,3 +5866,378 @@ msgstr "Öppen"
 
 msgid "Zu finden über den Filter „Offen“."
 msgstr "Hittas via filtret ”Öppen”."
+
+msgid "Dokumentation"
+msgstr "Dokumentation"
+
+msgid "InkluDocs API – Dokumentation"
+msgstr "InkluDocs API – Dokumentation"
+
+msgid "Worum es geht"
+msgstr "Vad det handlar om"
+
+msgid "Die InkluDocs-API macht alles, was die App kann, für andere Anwendungen verfügbar: Alt-Texte für einzelne Bilder, und ganze Dokumente (PDF, Word, Formular-PDF, Bildsammlung, Webseite) hochladen, beschreiben lassen, korrigieren und barrierefrei exportieren. Du brauchst nur ein InkluDocs-Konto und einen API-Schlüssel; Oberfläche und Anzeige baust du in deinem Produkt, oder du verlinkst unsere Prüfansicht."
+msgstr "InkluDocs API gör allt som appen kan tillgängligt för andra program: alternativtexter för enskilda bilder, och hela dokument (PDF, Word, PDF-formulär, bildsamlingar, webbsidor) som laddas upp, beskrivs, korrigeras och exporteras tillgängligt. Du behöver bara ett InkluDocs-konto och en API-nyckel; gränssnittet bygger du i din egen produkt, eller så länkar du till vår granskningsvy."
+
+msgid "Basis-Adresse"
+msgstr "Basadress"
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Inhaltsverzeichnis"
+msgstr "Innehåll"
+
+msgid "Authentifizierung"
+msgstr "Autentisering"
+
+msgid "Grundsätze: Versionierung, Antworten, Fehler"
+msgstr "Principer: versionering, svar, fel"
+
+msgid "Einzelbilder"
+msgstr "Enskilda bilder"
+
+msgid "Drei Wege der Einbindung"
+msgstr "Tre sätt att integrera"
+
+msgid "Fehler-Codes"
+msgstr "Felkoder"
+
+msgid "Rate-Limits"
+msgstr "Hastighetsgränser"
+
+msgid "Kosten (Credits)"
+msgstr "Kostnader (credits)"
+
+msgid "Beispiele"
+msgstr "Exempel"
+
+msgid "Jede Anfrage trägt deinen Schlüssel in der Kopfzeile X-API-Key. Schlüssel legst du in der App unter „Einstellungen“ → „API-Schlüssel“ an; dort siehst du auch den Verbrauch je Schlüssel. Ein Schlüssel gilt für dein Konto, du kannst mehrere anlegen (zum Beispiel einen je Anwendung) und jeden einzeln löschen."
+msgstr "Varje anrop bär din nyckel i huvudet X-API-Key. Nycklar skapar du i appen under ”Inställningar” → ”API-nycklar”; där ser du också förbrukningen per nyckel. En nyckel gäller för ditt konto; du kan skapa flera (till exempel en per program) och radera var och en för sig."
+
+msgid "Behandle den Schlüssel wie ein Passwort: nie in Browser-Code oder öffentlichen Repositories, immer nur auf deinem Server."
+msgstr "Behandla nyckeln som ett lösenord: aldrig i webbläsarkod eller offentliga repositorier, bara på din server."
+
+msgid "Versionierung"
+msgstr "Versionering"
+
+msgid "Alle Pfade beginnen mit /api/v1/. Innerhalb von v1 kommen neue Felder und Endpunkte nur hinzu; vorhandene Felder werden nicht umbenannt oder entfernt. Änderungen, die bestehende Anbindungen brechen würden, erscheinen als neue Version (/api/v2/), und v1 läuft dann mindestens zwölf Monate weiter. Jede Antwort trägt die Kopfzeile X-API-Version."
+msgstr "Alla sökvägar börjar med /api/v1/. Inom v1 tillkommer nya fält och slutpunkter bara; befintliga fält byter aldrig namn och tas inte bort. Ändringar som skulle bryta befintliga integrationer kommer som en ny version (/api/v2/), och v1 fortsätter då i minst tolv månader. Varje svar bär huvudet X-API-Version."
+
+msgid "Antworten"
+msgstr "Svar"
+
+msgid "Antworten sind JSON (UTF-8), außer bei Datei-Downloads. Zeitstempel sind UTC im Format JJJJ-MM-TT HH:MM:SS. Längere Arbeiten (Extraktion, Generierung) laufen im Hintergrund: Du bekommst sofort eine Antwort mit Status 202 und fragst den Stand ab, bis der Status „ready“ oder „done“ ist. Frage nicht öfter als alle fünf Sekunden ab."
+msgstr "Svar är JSON (UTF-8), utom vid filnedladdningar. Tidsstämplar är UTC i formatet ÅÅÅÅ-MM-DD HH:MM:SS. Längre arbeten (extrahering, generering) körs i bakgrunden: du får genast ett svar med status 202 och frågar efter status tills den är ”ready” eller ”done”. Fråga inte oftare än var femte sekund."
+
+msgid "Fehlerformat"
+msgstr "Felformat"
+
+msgid "Fehler kommen immer als JSON mit einem stabilen, maschinenlesbaren Code und einer Meldung für Menschen. Zeige in deinem Produkt die Meldung an und verzweige im Code über den Code."
+msgstr "Fel kommer alltid som JSON med en stabil, maskinläsbar kod och ett meddelande för människor. Visa meddelandet i din produkt och förgrena i din kod utifrån koden."
+
+msgid "Codes"
+msgstr "Koder"
+
+msgid "Aufbewahrung"
+msgstr "Lagring"
+
+msgid "Dokumente bleiben in deinem Konto, bis du sie löschst (in der App oder per API), genau wie Projekte in der App. Ergebnisse der Einzelbild-Schnittstelle bleiben mit ihrer result_id abrufbar, solange der Schlüssel besteht; wird ein Schlüssel gelöscht, gehen sein Verbrauchsprotokoll und seine Einzelbild-Ergebnisse mit."
+msgstr "Dokument stannar i ditt konto tills du raderar dem (i appen eller via API:et), precis som projekt i appen. Resultat från gränssnittet för enskilda bilder kan hämtas via sitt result_id så länge nyckeln finns; raderas en nyckel följer dess förbrukningslogg och dess enskilda bildresultat med."
+
+msgid "Für ein einzelnes Bild, zum Beispiel aus einer Mediathek oder einem Redaktionssystem: Bild hin, Alt-Text zurück."
+msgstr "För en enskild bild, till exempel från ett mediebibliotek eller ett redaktionssystem: bild in, alternativtext ut."
+
+msgid "Alt-Text für ein Bild erzeugen"
+msgstr "Skapa en alternativtext för en bild"
+
+msgid "Zwei Formate: Datei-Upload (multipart/form-data, Feld file) oder JSON mit image_base64. Weitere Felder in beiden Fällen:"
+msgstr "Två format: filuppladdning (multipart/form-data, fältet file) eller JSON med image_base64. Ytterligare fält i båda fallen:"
+
+msgid "Parameter für Einzelbilder"
+msgstr "Parametrar för enskilda bilder"
+
+msgid "Parameter"
+msgstr "Parameter"
+
+msgid "Pflicht"
+msgstr "Obligatorisk"
+
+msgid "Bedeutung"
+msgstr "Betydelse"
+
+msgid "Ja"
+msgstr "Ja"
+
+msgid "Bilddatei (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), höchstens 10 MB; Base64 wahlweise mit Data-URI-Präfix."
+msgstr "Bildfil (JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, SVG), högst 10 MB; Base64 valfritt med data-URI-prefix."
+
+msgid "Nein"
+msgstr "Nej"
+
+msgid "Umgebungstext für ein besseres Ergebnis: Bildunterschrift, Seitentitel, umgebender Absatz."
+msgstr "Omgivande text för ett bättre resultat: bildtext, sidtitel, omgivande stycke."
+
+msgid "Sprache des Textes: de, en, fr, es, da, sv. Standard de."
+msgstr "Textens språk: de, en, fr, es, da, sv. Standard de."
+
+msgid "Hinweis auf den Bildtyp: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle."
+msgstr "Ledtråd om bildtypen: foto, diagramm, logo, icon, karte, screenshot, infografik, tabelle."
+
+msgid "Ergebnis später abrufen"
+msgstr "Hämta ett resultat senare"
+
+msgid "Ergebnis korrigieren: JSON mit alt_text und/oder langbeschreibung"
+msgstr "Korrigera ett resultat: JSON med alt_text och/eller langbeschreibung"
+
+msgid "Ein Dokument ist eine Datei oder eine Webadresse, die InkluDocs in Einträge zerlegt: Bilder (bei PDF, Word, Bildsammlung, Webseite) oder Formularfelder (bei Formular-PDF). Jeder Eintrag bekommt einen Text; am Ende holst du das fertige Dokument oder die Textliste ab."
+msgstr "Ett dokument är en fil eller en webbadress som InkluDocs delar upp i poster: bilder (PDF, Word, bildsamling, webbsida) eller formulärfält (PDF-formulär). Varje post får en text; till sist hämtar du det färdiga dokumentet eller textlistan."
+
+msgid "Ablauf in fünf Schritten"
+msgstr "Flödet i fem steg"
+
+msgid "Dokument anlegen: Datei oder Adresse schicken, Antwort ist eine id und der Status „extracting“ (oder gleich „ready“)."
+msgstr "Skapa dokumentet: skicka en fil eller en adress; svaret är ett id och status ”extracting” (eller direkt ”ready”)."
+
+msgid "Status abfragen, bis „ready“: Jetzt sind die Einträge bekannt, counts.items sagt, wie viele."
+msgstr "Fråga efter status tills ”ready”: nu är posterna kända, counts.items säger hur många."
+
+msgid "Generieren starten: Die KI beschreibt alle Einträge im Hintergrund. Status abfragen, bis „done“."
+msgstr "Starta genereringen: AI:n beskriver alla poster i bakgrunden. Fråga efter status tills ”done”."
+
+msgid "Einträge lesen und bei Bedarf korrigieren, oder einen Freigabe-Link für unsere Prüfansicht erzeugen."
+msgstr "Läs posterna och korrigera vid behov, eller skapa en granskningslänk till vår granskningsvy."
+
+msgid "Exportieren: barrierefreie PDF, Word mit Alt-Texten, PDF/UA aus Word, oder die Textliste als Excel, CSV oder JSON."
+msgstr "Exportera: tillgänglig PDF, Word med alternativtexter, PDF/UA från Word, eller textlistan som Excel, CSV eller JSON."
+
+msgid "Endpunkte"
+msgstr "Slutpunkter"
+
+msgid "Endpunkte für Dokumente"
+msgstr "Slutpunkter för dokument"
+
+msgid "Aufruf"
+msgstr "Anrop"
+
+msgid "Dokument anlegen: Datei (multipart, Feld file) oder JSON mit url. Antwort 202 (wird extrahiert) oder 201 (schon bereit)."
+msgstr "Skapa ett dokument: fil (multipart, fältet file) eller JSON med url. Svar 202 (extraheras) eller 201 (redan klart)."
+
+msgid "Eigene Dokumente auflisten (limit, offset)."
+msgstr "Lista dina dokument (limit, offset)."
+
+msgid "Status, Zähler, Fortschritt, Hinweis zum letzten Lauf."
+msgstr "Status, räknare, förlopp, notering om senaste körningen."
+
+msgid "Sammellauf starten (alle Einträge, optional nur document_id). Antwort 202."
+msgstr "Starta en samlad körning (alla poster, valfritt bara document_id). Svar 202."
+
+msgid "Laufenden Sammellauf nach dem aktuellen Eintrag beenden."
+msgstr "Avbryt den pågående körningen efter aktuell post."
+
+msgid "Alle Einträge mit Texten, Status und Bild-Adresse."
+msgstr "Alla poster med texter, status och bildadress."
+
+msgid "Die Bilddatei eines Eintrags, zum Anzeigen in deinem Produkt."
+msgstr "Bildfilen för en post, för visning i din produkt."
+
+msgid "Text von Hand setzen: alt_text und/oder langbeschreibung (Bilder) bzw. quickinfo (Felder). Ein leerer Text heißt bewusst leer."
+msgstr "Ange en text för hand: alt_text och/eller langbeschreibung (bilder) eller quickinfo (fält). En tom text betyder avsiktligt tom."
+
+msgid "Einen Eintrag neu beschreiben lassen (optional image_type)."
+msgstr "Låt en post beskrivas på nytt (valfritt image_type)."
+
+msgid "Export: pdf, docx, pdfua, xlsx, csv, json; für Formulare formular und formular_csv. Antwort ist die Datei; bei pdfua ein Bericht mit download_url."
+msgstr "Export: pdf, docx, pdfua, xlsx, csv, json; för formulär formular och formular_csv. Svaret är filen; vid pdfua en rapport med download_url."
+
+msgid "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify)."
+msgstr "Skapa en granskningslänk till vår granskningsvy (guest_email, role kunde eller lektorat, notify)."
+
+msgid "Freigaben des Dokuments auflisten."
+msgstr "Lista dokumentets granskningslänkar."
+
+msgid "Freigabe zurückziehen (token)."
+msgstr "Återkalla en granskningslänk (token)."
+
+msgid "Dokument samt Dateien und Texten löschen."
+msgstr "Radera dokumentet med filer och texter."
+
+msgid "Dokument anlegen"
+msgstr "Skapa ett dokument"
+
+msgid "Parameter beim Anlegen"
+msgstr "Parametrar vid skapande"
+
+msgid "Ja (Datei)"
+msgstr "Ja (fil)"
+
+msgid "PDF, DOCX oder Bilddatei, höchstens 50 MB. Das Werkzeug ergibt sich aus der Endung."
+msgstr "PDF, DOCX eller bildfil, högst 50 MB. Verktyget följer av filändelsen."
+
+msgid "Ja (JSON)"
+msgstr "Ja (JSON)"
+
+msgid "Webadresse; InkluDocs lädt die Bilder der Seite."
+msgstr "Webbadress; InkluDocs hämtar sidans bilder."
+
+msgid "Erzwingt ein Werkzeug: pdf, word, grafik, formular. Nötig nur für Formular-PDFs (tool=formular)."
+msgstr "Tvingar ett verktyg: pdf, word, grafik, formular. Behövs bara för PDF-formulär (tool=formular)."
+
+msgid "Anzeigename in der App (Standard: Dateiname)."
+msgstr "Visningsnamn i appen (standard: filnamn)."
+
+msgid "Sprache der Texte: de, en, fr, es, da, sv."
+msgstr "Texternas språk: de, en, fr, es, da, sv."
+
+msgid "true (Standard): die KI bekommt den Text der Seite als Zusammenhang; false: nur das Bild."
+msgstr "true (standard): AI:n får sidans text som sammanhang; false: bara bilden."
+
+msgid "Status und Zähler"
+msgstr "Status och räknare"
+
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat; ohne Tags gibt es keinen PDF-Export, nur Textlisten."
+msgstr "Status: uploaded, extracting, ready, generating, done, error. with_text och without_text följer samma regel som appens nedladdningsdialog: det som räknas är om fältet innehåller text, oavsett om den kommer från AI:n, för hand eller från källan. Dekorativa bilder har ingen text och räknas inte som öppna. För PDF säger tagged om filen har taggar; utan taggar finns ingen PDF-export, bara textlistor."
+
+msgid "Einträge"
+msgstr "Poster"
+
+msgid "alt_text ist der sichtbare Text (eigener Text vor KI-Text vor Quelltext), alt_text_ki der letzte KI-Vorschlag, alt_text_edited der von Hand gesetzte Text (null = nie angefasst, leer = bewusst geleert). needs_review markiert Vorschläge, die die KI selbst als unsicher einstuft. Bei Formularen heißen die Felder quickinfo, quickinfo_ki, quickinfo_original."
+msgstr "alt_text är den synliga texten (egen text före AI-text före källtext), alt_text_ki det senaste AI-förslaget, alt_text_edited den text som angetts för hand (null = aldrig rörd, tom = avsiktligt tömd). needs_review markerar förslag som AI:n själv bedömer som osäkra. För formulär heter fälten quickinfo, quickinfo_ki, quickinfo_original."
+
+msgid "Nur Daten: Du zeigst Bilder und Texte in deiner eigenen Oberfläche und schreibst Korrekturen per PATCH zurück. Voller Gestaltungsspielraum."
+msgstr "Bara data: du visar bilder och texter i ditt eget gränssnitt och skriver tillbaka korrigeringar via PATCH. Full designfrihet."
+
+msgid "Daten plus Prüfansicht: Du zeigst Status und Download, und für die Korrektur öffnest du per review-link unsere geprüfte, barrierefreie Gast-Ansicht mit Bild, Alt-Text, Langbeschreibung, Filtern und Vorlesen. Der schnellste Weg in Betrieb."
+msgstr "Data plus granskningsvy: du visar status och nedladdning, och för korrigering öppnar du via review-link vår testade, tillgängliga gästvy med bild, alternativtext, lång beskrivning, filter och uppläsning. Snabbaste vägen till drift."
+
+msgid "Vollautomatisch: Kein Mensch schaut hin; du legst an, startest, wartest auf „done“ und holst den Export ab, zum Beispiel nachts für ein Dokumentenarchiv."
+msgstr "Helautomatiskt: ingen tittar; du skapar, startar, väntar på ”done” och hämtar exporten, till exempel nattetid för ett dokumentarkiv."
+
+msgid "HTTP-Fehler-Codes"
+msgstr "HTTP-felkoder"
+
+msgid "Fehlender oder ungültiger Parameter, unbekanntes Format oder Werkzeug."
+msgstr "Saknad eller ogiltig parameter, okänt format eller verktyg."
+
+msgid "Schlüssel fehlt, ist ungültig oder gelöscht."
+msgstr "Nyckel saknas, är ogiltig eller raderad."
+
+msgid "Guthaben reicht nicht (Code credits_fehlen mit preis, verfuegbar, fehlend)."
+msgstr "Otillräckliga credits (kod credits_fehlen med preis, verfuegbar, fehlend)."
+
+msgid "Dokument, Eintrag oder Ergebnis nicht gefunden, oder es gehört einem anderen Konto."
+msgstr "Dokument, post eller resultat hittades inte, eller tillhör ett annat konto."
+
+msgid "Für dieses Dokument läuft gerade eine Verarbeitung; später erneut versuchen."
+msgstr "En bearbetning pågår för detta dokument; försök igen senare."
+
+msgid "Datei zu groß."
+msgstr "Filen är för stor."
+
+msgid "Falscher Inhaltstyp: multipart/form-data oder application/json erwartet."
+msgstr "Fel innehållstyp: multipart/form-data eller application/json förväntas."
+
+msgid "Export-Abnahme nicht bestanden: Die Datei wird nicht ausgegeben, die Meldung nennt den Befund."
+msgstr "Exportkontrollen underkänd: filen levereras inte; meddelandet anger fyndet."
+
+msgid "Rate-Limit oder Tageslimit erreicht (Kopfzeile Retry-After); bei der Einzelbild-Schnittstelle auch fehlendes Guthaben."
+msgstr "Hastighetsgräns eller dagsgräns nådd (huvudet Retry-After); på gränssnittet för enskilda bilder även otillräckliga credits."
+
+msgid "Interner Fehler, Umwandler nicht erreichbar oder Zeitüberschreitung."
+msgstr "Internt fel, konverteraren kan inte nås eller tidsgräns överskriden."
+
+msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen nicht mit, damit du in Ruhe abfragen kannst."
+msgstr "Per nyckel: {minute} skrivande anrop per minut och {tag} per dag (glidande fönster). Läsande anrop som status och poster räknas inte, så att du kan fråga i lugn och ro."
+
+msgid "Je Konto: {n} generierte Texte pro Tag über die API, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+msgstr "Per konto: {n} genererade texter per dag via API:et, oavsett antal nycklar (nollställs vid midnatt UTC). För större volymer, kontakta oss; kvoten kan anpassas per konto."
+
+msgid "Die verbleibenden Anfragen stehen in den Kopfzeilen X-RateLimit-Remaining-Minute und X-RateLimit-Remaining-Day; bei Überschreitung kommt HTTP 429 mit Retry-After."
+msgstr "Återstående anrop står i huvudena X-RateLimit-Remaining-Minute och X-RateLimit-Remaining-Day; vid överskridande kommer HTTP 429 med Retry-After."
+
+msgid "Die API zieht aus demselben Credit-Guthaben wie die App, zu denselben Preisen. Abgerechnet wird nur, was gelungen ist: Fehlschläge, Abbrüche und Treffer im Zwischenspeicher kosten nichts. Lesen, Status, Korrigieren und Freigabe-Links sind kostenlos."
+msgstr "API:et drar från samma credit-saldo som appen, till samma priser. Bara det som lyckas debiteras: misslyckanden, avbrott och cacheträffar kostar inget. Läsning, status, korrigeringar och granskningslänkar är gratis."
+
+msgid "Alt-Text je Bild (Einzelbild oder im Dokument): {n} Credits."
+msgstr "Alternativtext per bild (enskild eller i dokument): {n} credits."
+
+msgid "Quickinfo je Formularfeld: {n} Credit."
+msgstr "Snabbinfo per formulärfält: {n} credit."
+
+msgid "Dokument-Export (pdf, docx, pdfua, formular): {grund} Credits plus {staffel} je angefangene {schritt} Einträge."
+msgstr "Dokumentexport (pdf, docx, pdfua, formular): {grund} credits plus {staffel} per påbörjade {schritt} poster."
+
+msgid "Textliste (xlsx, csv, json, formular_csv): {n} Credits je Export."
+msgstr "Textlista (xlsx, csv, json, formular_csv): {n} credits per export."
+
+msgid "Reicht das Guthaben nicht, antwortet die API mit 402 (Dokumente) bzw. 429 (Einzelbilder) und nennt Preis und verfügbare Credits. Credits gibt es über die Tarife und Pakete unter"
+msgstr "Räcker saldot inte svarar API:et med 402 (dokument) eller 429 (enskilda bilder) och anger pris och tillgängliga credits. Credits finns via prisplaner och paket på"
+
+msgid "Den Verbrauch je Schlüssel siehst du in der App unter „API-Schlüssel“."
+msgstr "Förbrukningen per nyckel ser du i appen under ”API-nycklar”."
+
+msgid "Einzelbild mit curl"
+msgstr "Enskild bild med curl"
+
+msgid "Dokument von Anfang bis Ende mit curl"
+msgstr "Ett dokument från början till slut med curl"
+
+msgid "Dokument mit Python"
+msgstr "Ett dokument med Python"
+
+msgid "Freigabe-Link für die Prüfansicht (JavaScript)"
+msgstr "Granskningslänk till granskningsvyn (JavaScript)"
+
+msgid "Die API nutzt dieselbe KI-Pipeline und dieselbe Export-Abnahme wie die App. Je mehr Zusammenhang die KI bekommt (context bei Einzelbildern, use_context bei Dokumenten), desto besser die Texte. Keine KI ist fehlerfrei: Plane in deinem Produkt einen Prüfschritt ein, entweder mit eigenen Feldern oder mit unserer Prüfansicht."
+msgstr "API:et använder samma AI-pipeline och samma exportkontroll som appen. Ju mer sammanhang AI:n får (context för enskilda bilder, use_context för dokument), desto bättre texter. Ingen AI är felfri: planera ett granskningssteg i din produkt, antingen med egna fält eller med vår granskningsvy."
+
+msgid "Fragen zur Anbindung"
+msgstr "Frågor om integrationen"
+
+msgid "Verbrauch über die API"
+msgstr "Förbrukning via API:et"
+
+msgid "Aufrufe in diesem Monat"
+msgstr "Anrop denna månad"
+
+msgid "Aufrufe heute"
+msgstr "Anrop i dag"
+
+msgid "Dokumente über die API angelegt"
+msgstr "Dokument skapade via API:et"
+
+msgid "Credits für Bilder dieser Dokumente"
+msgstr "Credits för bilder i dessa dokument"
+
+msgid "Letzter Aufruf"
+msgstr "Senaste anrop"
+
+msgid "noch keiner"
+msgstr "inget ännu"
+
+msgid "Aufrufe: {n}"
+msgstr "Anrop: {n}"
+
+msgid "heute {n}"
+msgstr "i dag {n}"
+
+msgid "Dokumente: {n}"
+msgstr "Dokument: {n}"
+
+msgid "Credits: {n}"
+msgstr "Credits: {n}"
+
+msgid "Fehlerquote: {p} %"
+msgstr "Felfrekvens: {p} %"
+
+msgid "Zur API-Dokumentation"
+msgstr "Till API-dokumentationen"
+
+msgid "{n} Aufrufe in diesem Monat über {k} Schlüssel."
+msgstr "{n} anrop denna månad via {k} nycklar."
+
+msgid "Schlüssel verwalten"
+msgstr "Hantera nycklar"
+
+msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
+msgstr "Med API-nycklar kopplar andra program upp sig mot InkluDocs: enskilda bilder och hela dokument. Vägledningen finns i API-dokumentationen."

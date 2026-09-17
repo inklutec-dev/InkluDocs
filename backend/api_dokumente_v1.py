@@ -379,7 +379,8 @@ def _werkzeug_fuer(ext: str, gewuenscht: Optional[str]) -> str:
     raise HTTPException(status_code=400, detail="Nur PDF-, Word- und Bilddateien erlaubt (PDF, DOCX, JPG, PNG, GIF, SVG, WebP, HEIC, BMP, TIFF)")
 
 
-def _projekt_anlegen(user_id: int, name: str, tool: str, language: Optional[str], use_context: Optional[bool]) -> int:
+def _projekt_anlegen(user_id: int, name: str, tool: str, language: Optional[str], use_context: Optional[bool],
+                     api_key_id: Optional[int] = None) -> int:
     if not _d.is_valid_tool_key(tool):
         raise HTTPException(status_code=400, detail="Dieses Werkzeug ist auf dieser Instanz nicht verfuegbar")
     project_type = _d.tool_project_type.get(tool)
@@ -388,8 +389,8 @@ def _projekt_anlegen(user_id: int, name: str, tool: str, language: Optional[str]
     conn = _d.get_db()
     try:
         cur = conn.execute(
-            "INSERT INTO projects (user_id, name, filename, original_path, status, project_type, tool) VALUES (?, ?, ?, '', 'neu', ?, ?)",
-            (user_id, name, name, project_type, tool))
+            "INSERT INTO projects (user_id, name, filename, original_path, status, project_type, tool, api_key_id) VALUES (?, ?, ?, '', 'neu', ?, ?, ?)",
+            (user_id, name, name, project_type, tool, api_key_id))
         pid = cur.lastrowid
         if language:
             conn.execute("UPDATE projects SET alt_language = ? WHERE id = ?", (language, pid))
@@ -423,6 +424,8 @@ async def _documents_create(user: dict, request: Request):
         pid = int(erg["project_id"])
         conn = _d.get_db()
         try:
+            # Verbrauch je Schluessel (17.09.2026): das Web-Projekt dem Schluessel zuordnen.
+            conn.execute("UPDATE projects SET api_key_id = ? WHERE id = ? AND user_id = ?", (user.get("api_key_id"), pid, user["id"]))
             if data.get("name"):
                 conn.execute("UPDATE projects SET name = ? WHERE id = ? AND user_id = ?", (_name(data.get("name"), url), pid, user["id"]))
             if language:
@@ -446,7 +449,7 @@ async def _documents_create(user: dict, request: Request):
     language = _sprache(form.get("language"))
     use_context = _als_bool(form.get("use_context"))
     name = _name(form.get("name"), os.path.basename(filename))
-    pid = _projekt_anlegen(user["id"], name, tool, language, use_context)
+    pid = _projekt_anlegen(user["id"], name, tool, language, use_context, api_key_id=user.get("api_key_id"))
     try:
         await _route("POST", "/api/upload")(file=datei, project_id=pid, user=user)
     except HTTPException:
