@@ -6280,3 +6280,24 @@ msgstr "Deine Anmeldedaten und den Ersteller-Namen für exportierte PDFs änders
 
 msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
 msgstr "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
+
+msgid "Noch nicht generiert"
+msgstr "Noch nicht generiert"
+
+msgid "Fehlgeschlagen"
+msgstr "Fehlgeschlagen"
+
+msgid "Nach Bearbeitungsstand filtern"
+msgstr "Nach Bearbeitungsstand filtern"
+
+msgid "{done} von {total} Alt-Texten generiert."
+msgstr "{done} von {total} Alt-Texten generiert."
+
+msgid "Ein Bild ist fehlgeschlagen."
+msgstr "Ein Bild ist fehlgeschlagen."
+
+msgid "{n} Bilder sind fehlgeschlagen."
+msgstr "{n} Bilder sind fehlgeschlagen."
+
+msgid "Zu finden über den Filter „Fehlgeschlagen“."
+msgstr "Zu finden über den Filter „Fehlgeschlagen“."

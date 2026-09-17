@@ -5969,3 +5969,24 @@ msgstr "Dine loginoplysninger og ophavsnavnet for eksporterede PDF'er ændrer du
 
 msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
 msgstr "Denne PDF har ingen tags. Uden tags findes der intet sted, hvor alternative tekster pålideligt når skærmlæsere, derfor er der ingen PDF-download. De alternative tekster findes som Excel, CSV og JSON."
+
+msgid "Noch nicht generiert"
+msgstr "Endnu ikke genereret"
+
+msgid "Fehlgeschlagen"
+msgstr "Mislykket"
+
+msgid "Nach Bearbeitungsstand filtern"
+msgstr "Filtrer efter behandlingsstatus"
+
+msgid "{done} von {total} Alt-Texten generiert."
+msgstr "{done} af {total} alternative tekster genereret."
+
+msgid "Ein Bild ist fehlgeschlagen."
+msgstr "Ét billede mislykkedes."
+
+msgid "{n} Bilder sind fehlgeschlagen."
+msgstr "{n} billeder mislykkedes."
+
+msgid "Zu finden über den Filter „Fehlgeschlagen“."
+msgstr "Find dem via filteret „Mislykket“."

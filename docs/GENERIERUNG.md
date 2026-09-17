@@ -433,3 +433,67 @@ Seitdem:
   Seite neu.“, sonst wird der Grund des Servers mit angesagt.
 Test: `tests/e2e/verify_regenerate_datei_weg.py` (im Container, Grafik-Projekt,
 Datei wird entfernt, 404 + Status unverändert, unbekanntes Bild/Projekt 404).
+
+## Filterleiste in jedem Projekt + ehrliche Laufmeldung (17.09.2026)
+
+Anlass: Jens' Lauf vom 15.09.2026 (Projekt 432, 140 Bilder) endete mit zwei
+Fehlerbildern (HTTP 429 bei Google). Die Oberfläche meldete trotzdem „Alle
+Alt-Texte wurden generiert.“, und es gab in Solo-Projekten keinen Filter, um
+die beiden Karten zu finden (Michael Karbe, WhatsApp 16.09.2026; Steve 17.09.2026).
+
+**Filterleiste (`renderImageFilterBar` in `app.html`)** erscheint jetzt in
+jedem Projekt mit Bildern, nicht mehr nur bei Gästen und geteilten Projekten.
+Gleiche Technik wie bisher: Fieldset mit Radio-Chips und Zählern, Karten werden
+per `hidden` ausgeblendet (kein Neuaufbau, ungespeicherte Eingaben bleiben),
+Ergebniszeile „n von m Bildern angezeigt“ wird angesagt. Legende jetzt
+„Nach Bearbeitungsstand filtern“.
+
+Grundchips überall, abgeleitet aus `images.status` (`bearbeitungsstand()`):
+
+- **Alle**
+- **Noch nicht generiert** — Status `pending` (nie dran gewesen oder nach
+  Abbruch, leerem Guthaben, Tageslimit zurückgestellt) oder fertig ohne
+  jeden Text, den nie jemand angefasst hat (`alt_text_edited` NULL).
+- **Fehlgeschlagen** — Status `error` (KI-Anfrage gescheitert; die Karte
+  trägt das rote Abzeichen und den Hinweis „Bitte auf Generieren klicken“).
+
+Ein vom Kunden **bewusst geleertes** Feld (`alt_text_edited = ''`, seit
+31.08.2026) zählt bewusst NICHT als „Noch nicht generiert“: das ist eine
+Hand-Änderung in Eigenverantwortung, kein Fehler (Steve/Michael 17.09.2026).
+Chips „Händisch geändert“, „Dekorativ“, „Zur Prüfung empfohlen“ sind
+bewusst zurückgestellt (Steve 17.09.2026: bei Bedarf nachrüsten).
+
+Bei Gästen und Besitzern geteilter Projekte (`window._inReview`) folgen
+hinter den Grundchips wie bisher die sechs Prüfstatus-Chips (Neu, In
+Bearbeitung, Lektorat Freigabe/Änderung, Herausgeber Freigabe/Änderung).
+Fällt die Freigabe weg, während ein Prüfchip aktiv ist, springt der Filter
+auf „Alle“ zurück (sonst blieben alle Karten versteckt).
+
+Nach **Einzel-Generieren** zieht `updateFilterImageStatus()` den Stand in
+den Filterdaten nach (Erfolg → `done`, 5xx → `error`), damit die Zähler ohne
+Neuaufbau stimmen; die Karte bleibt sichtbar (Fokus-Schutz wie bei
+`updateFilterDataStatus`).
+
+**Laufmeldung** (Poll-Ende in `showProject`): Endet der Sammellauf mit
+Fehlerbildern, lautet die Meldung jetzt „138 von 140 Alt-Texten generiert.
+2 Bilder sind fehlgeschlagen. Zu finden über den Filter „Fehlgeschlagen“.“
+(bzw. „Ein Bild ist fehlgeschlagen.“). Bei vorzeitigem Ende (Guthaben,
+Tageslimit, Abbruch) bleibt der bisherige Satz und der Fehler-Satz wird
+angehängt. Ohne Fehlerbilder unverändert „Alle Alt-Texte wurden generiert.“
+Die Zahlen kommen aus den frisch gerenderten Bildern (`countByStatus`),
+derselben Quelle wie der Projektkopf.
+
+**Platzhalter im Alt-Text-Feld** (Michael Karbe 16.09.2026): „Noch kein
+Alt-Text - hier eingeben oder generieren lassen“ steht jetzt immer, wenn das
+Feld leer ist — auch nach Generieren und Leeren. Vorher fehlte er bei Status
+`done`.
+
+Übersetzungen: sieben neue Texte in allen sechs Katalogen
+(`backend/scripts/check_i18n.py` grün). Der frühere Legendentext „Nach
+Prüfstatus filtern“ ist nicht mehr in Gebrauch, die Katalogeinträge bleiben.
+
+Test: `tests/e2e/ui_filter_stand.py <projekt-id>` (Playwright, Staging) mit
+`tests/e2e/setup_ui_filter_stand.py <projekt-id> auf|ab` im Container (stellt
+ein fertiges Bild vorübergehend auf `error`). Bewusst offen (Steve 17.09.2026,
+mit Michael zu klären): Sprunglink „Zum ersten Treffer“ hinter der
+Ergebniszeile und Sprung aus der Laufmeldung.

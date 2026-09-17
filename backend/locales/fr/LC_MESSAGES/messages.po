@@ -6277,3 +6277,24 @@ msgstr "Vous modifiez vos identifiants et le nom du créateur des PDF exportés 
 
 msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
 msgstr "Ce PDF n'a pas de balises. Sans balises, il n'existe aucun emplacement où les textes alternatifs atteignent de façon fiable les lecteurs d'écran ; il n'y a donc pas de téléchargement PDF. Les textes alternatifs sont disponibles en Excel, CSV et JSON."
+
+msgid "Noch nicht generiert"
+msgstr "Pas encore généré"
+
+msgid "Fehlgeschlagen"
+msgstr "Échec"
+
+msgid "Nach Bearbeitungsstand filtern"
+msgstr "Filtrer par état de traitement"
+
+msgid "{done} von {total} Alt-Texten generiert."
+msgstr "{done} textes alternatifs sur {total} générés."
+
+msgid "Ein Bild ist fehlgeschlagen."
+msgstr "Une image a échoué."
+
+msgid "{n} Bilder sind fehlgeschlagen."
+msgstr "{n} images ont échoué."
+
+msgid "Zu finden über den Filter „Fehlgeschlagen“."
+msgstr "À retrouver via le filtre « Échec »."

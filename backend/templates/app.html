@@ -817,6 +817,20 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         laufText = sData.status === 'done' ? t('Alle Alt-Texte wurden generiert.') : t('Fehler bei der Verarbeitung.');
                     }
                     await showProject(projectId);
+                    // Ehrliche Meldung (Michael Karbe 16.09./Steve 17.09.2026): Der Sammellauf endet auch
+                    // dann mit Projektstatus 'done', wenn einzelne Bilder gescheitert sind (Status 'error',
+                    // z. B. 429 bei Google) — bisher hiess es trotzdem „Alle Alt-Texte wurden generiert."
+                    // (Projekt 432, 15.09.2026). Die Zahlen kommen aus den frisch gerenderten Bildern
+                    // (filterImages), dieselbe Quelle wie der Projektkopf.
+                    const fehlgeschlagen = countByStatus(filterImages, 'error');
+                    if (sData.status === 'done' && fehlgeschlagen > 0) {
+                        const generiert = countByStatus(filterImages, 'done');
+                        const gesamt = filterImages.length;
+                        laufText = (hinweis && hinweis.offen)
+                            ? laufText + ' ' + fehlgeschlagenSatz(fehlgeschlagen)
+                            : t('{done} von {total} Alt-Texten generiert.', { done: generiert, total: gesamt })
+                              + ' ' + fehlgeschlagenSatz(fehlgeschlagen);
+                    }
                     zeigeLaufMeldung(laufText);
                 } else if (sData.processed_images > project.processed_images) {
                     showProject(projectId);
@@ -1175,9 +1189,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     // ─── Bilder-Filterleiste (Rollen-Workflow Etappe 2, 13.07.2026) ───
-    // Sichtbar NUR fuer Gaeste (immer) und fuer Besitzer geteilter Projekte
-    // (window._inReview). Solo-Arbeit ohne Einladung bleibt bewusst filterfrei
-    // (Steve-Entscheidung 10.07.2026) — dort gibt es keine Pruefstatus.
+    // Seit 17.09.2026 in JEDEM Projekt mit Bildern (Michael Karbe 16.09.2026, Steve 17.09.2026:
+    // Jens musste nach einem Lauf mit zwei Fehlerbildern die Luecken von Hand suchen).
+    // Grundchips ueberall: „Alle", „Noch nicht generiert", „Fehlgeschlagen" (Bearbeitungsstand,
+    // aus images.status). Die sechs Pruefstatus-Chips kommen NUR bei Gaesten und bei Besitzern
+    // geteilter Projekte (window._inReview) hinzu — Solo-Projekte haben keine Pruefstatus
+    // (Steve-Entscheidung 10.07.2026 bleibt insoweit bestehen).
     //
     // Technik: natives fieldset + Radio-Chips mit Zaehlern, KEIN ARIA-Widget.
     // Filtern blendet Karten per hidden-Attribut aus (KEIN Re-Render, damit
@@ -1231,14 +1248,35 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return (r && r.status) || 'offen';
     }
 
+    // Bearbeitungsstand eines Bildes fuer die Grundchips (17.09.2026):
+    //   'fehlgeschlagen'    — images.status 'error': die KI-Anfrage ist gescheitert (z. B. 429 bei
+    //                         Google, Projekt 432 am 15.09.2026); die Karte traegt das rote Abzeichen.
+    //   'nicht_generiert'   — images.status 'pending' (nie dran gewesen oder nach Abbruch, leerem
+    //                         Guthaben, Tageslimit zurueckgestellt) ODER fertig ohne jeden Text, den
+    //                         nie jemand angefasst hat (alt_text_edited null; Altbestand, leere
+    //                         KI-Antwort). Ein vom Kunden bewusst GELEERTES Feld (alt_text_edited ''
+    //                         seit 31.08.2026) zaehlt NICHT — das ist eine Hand-Aenderung in
+    //                         Eigenverantwortung, kein Fehler (Steve/Michael 17.09.2026).
+    //   'generiert'         — alles andere (auch 'processing' waehrend des Laufs).
+    function bearbeitungsstand(img) {
+        if (img.status === 'error') return 'fehlgeschlagen';
+        if (img.status === 'pending') return 'nicht_generiert';
+        if (img.status !== 'processing' && !anzeigeAltText(img)
+            && (img.alt_text_edited === null || img.alt_text_edited === undefined)) return 'nicht_generiert';
+        return 'generiert';
+    }
+
     // Ein Bild gegen einen Filter-Schluessel pruefen. Die frueheren Besitzer-
-    // Zusatzfilter 'ohne_alt'/'fehler' sind entfernt (Korb C, 17.07.2026 —
-    // Steve: nie benutzt). Die Rücksprache-Schluessel bleiben fuer die
-    // Reaktivierung via RUECKSPRACHE_UI erhalten (Chips sind bei false weg).
-    // Karbe B2 (17.07.2026): Status-Chips matchen den EINEN abgeleiteten
+    // Zusatzfilter 'ohne_alt'/'fehler' waren am 17.07.2026 entfernt worden (Korb C —
+    // Steve: nie benutzt); seit 17.09.2026 gibt es sie in neuer Form als
+    // 'nicht_generiert'/'fehlgeschlagen' (siehe bearbeitungsstand). Die
+    // Rücksprache-Schluessel bleiben fuer die Reaktivierung via RUECKSPRACHE_UI
+    // erhalten (Chips sind bei false weg).
+    // Karbe B2 (17.07.2026): Pruefstatus-Chips matchen den EINEN abgeleiteten
     // Anzeige-Status (juengstes Ereignis) — identisch zum Badge an der Karte.
     function imageMatchesKey(img, key) {
         if (key === 'alle') return true;
+        if (key === 'nicht_generiert' || key === 'fehlgeschlagen') return bearbeitungsstand(img) === key;
         if (key === 'lek_ruecksprache') return roleReviewStatus(img, 'lektorat') === 'ruecksprache';
         if (key === 'ruecksprache') return roleReviewStatus(img, revRole()) === 'ruecksprache';
         return unifiedStatusKey(img) === key;
@@ -1253,22 +1291,31 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function filterChipLabel(key) {
         if (key === 'lek_ruecksprache') return t('Rücksprache des Lektorats');
         if (key === 'alle') return t('Alle');
+        if (key === 'nicht_generiert') return t('Noch nicht generiert');
+        if (key === 'fehlgeschlagen') return t('Fehlgeschlagen');
         return unifiedStatusLabel(key);   // die 6 Michael-Status + Rücksprache
     }
 
-    // Chip-Auswahl (Karbe B2 + Korb C, 17.07.2026): Gast UND Besitzer sehen
-    // exakt dieselben 6 Status + „Alle" (Zaehler bleiben). Alle Chips sind IMMER
-    // sichtbar (auch mit Zaehler 0), damit die Leiste fuer Screenreader-Nutzer
-    // vorhersagbar bleibt. Die frueheren Besitzer-Zusatzchips „Ohne Alt-Text"/
-    // „Fehler" sind entfernt (Steve: nie benutzt); die Rücksprache-Chips
-    // erscheinen nur noch bei RUECKSPRACHE_UI=true.
+    // Chip-Auswahl: Grundchips „Alle", „Noch nicht generiert", „Fehlgeschlagen" in jedem
+    // Projekt (17.09.2026). Bei Gaesten und Besitzern geteilter Projekte folgen dieselben
+    // 6 Pruefstatus (Karbe B2 + Korb C, 17.07.2026). Alle Chips sind IMMER sichtbar
+    // (auch mit Zaehler 0), damit die Leiste fuer Screenreader-Nutzer vorhersagbar
+    // bleibt; die Rücksprache-Chips erscheinen nur bei RUECKSPRACHE_UI=true.
     function filterChipKeys() {
-        const keys = ['alle', 'neu', 'in_bearbeitung', 'lek_frei', 'lek_aend', 'her_frei', 'her_aend'];
+        const keys = ['alle', 'nicht_generiert', 'fehlgeschlagen'];
+        if (window.GUEST_MODE || window._inReview) {
+            keys.push('neu', 'in_bearbeitung', 'lek_frei', 'lek_aend', 'her_frei', 'her_aend');
+        }
         if (RUECKSPRACHE_UI && window.GUEST_MODE) {
             if (revRole() === 'lektorat') keys.push('ruecksprache');
             else if (filterCount('lek_ruecksprache') > 0) keys.push('lek_ruecksprache');
         }
         return keys;
+    }
+
+    // Legende des Fieldsets — EINE Stelle fuer Erstaufbau und Zaehler-Neuaufbau.
+    function filterLegendHtml() {
+        return '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Bearbeitungsstand filtern') + '</legend>';
     }
 
     function filterChipsHtml() {
@@ -1284,14 +1331,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function renderImageFilterBar(images, project) {
         filterImages = images || [];
         if (!filterImages.length) return '';
-        if (!window.GUEST_MODE && !window._inReview) return '';
         // Projektwechsel setzt den Filter zurueck; Re-Render desselben Projekts
-        // (Polling, Upload) behaelt die aktive Auswahl.
+        // (Polling, Upload) behaelt die aktive Auswahl. Ein Schluessel, den es in
+        // diesem Projekt nicht (mehr) gibt (Freigabe beendet → Pruefchips weg), faellt
+        // auf „Alle" zurueck, sonst blieben alle Karten versteckt.
         if (imageFilter.projectId !== project.id) imageFilter = { key: 'alle', projectId: project.id };
+        if (filterChipKeys().indexOf(imageFilter.key) === -1) imageFilter.key = 'alle';
         return '<section class="card image-filter" id="imageFilterBar" aria-labelledby="filterHeading">'
             + '<h2 id="filterHeading" class="section-title">' + t('Bilder filtern') + '</h2>'
             + '<fieldset class="filter-fieldset" id="filterStatusFieldset" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;margin:0;">'
-            + '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Prüfstatus filtern') + '</legend>'
+            + filterLegendHtml()
             + filterChipsHtml()
             + '</fieldset>'
             + '<p id="filterResult" style="margin:0.5rem 0 0;color:var(--text-muted);"></p>'
@@ -1304,7 +1353,25 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function rebuildFilterChips() {
         const fs = document.getElementById('filterStatusFieldset');
         if (!fs) return;
-        fs.innerHTML = '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Prüfstatus filtern') + '</legend>' + filterChipsHtml();
+        fs.innerHTML = filterLegendHtml() + filterChipsHtml();
+    }
+
+    // Nach dem Einzel-Generieren (17.09.2026) den Bearbeitungsstand in den Filterdaten
+    // nachziehen, damit die Zaehler der Grundchips ohne Neuaufbau stimmen. Die Karte
+    // selbst bleibt sichtbar (auch wenn sie den aktiven Chip nicht mehr trifft) — sonst
+    // verschwaende sie unter dem Fokus des Nutzers; siehe updateFilterDataStatus.
+    function updateFilterImageStatus(imageId, status, altText) {
+        for (const img of filterImages) {
+            if (img.id === Number(imageId)) {
+                img.status = status;
+                if (status === 'done') {
+                    img.alt_text = altText || '';
+                    img.alt_text_edited = null;   // Server setzt alt_text_edited beim Generieren zurueck
+                }
+                break;
+            }
+        }
+        rebuildFilterChips();
     }
 
     // Nach einer Statusaenderung nur DATEN + ZAEHLER aktualisieren, die Sichtbarkeit
@@ -2130,8 +2197,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ${t('Alt-Text')}
                     <span class="save-indicator" id="saved_${img.id}">${t('Gespeichert')}</span>
                 </label>
+                <!-- Platzhalter (Michael Karbe 16.09.2026): IMMER, wenn das Feld leer ist — auch nach
+                     Generieren + Leeren. Ein Platzhalter erscheint im Browser ohnehin nur bei leerem
+                     Feld; die fruehere Ausnahme fuer status 'done' liess das Feld dann stumm. -->
                 <textarea class="alt-text-field" id="alttext_${img.id}" data-image-id="${img.id}"
-                    placeholder="${img.status === 'processing' ? t('Alt-Text wird generiert...') : (img.status === 'done' ? '' : t('Noch kein Alt-Text - hier eingeben oder generieren lassen'))}"
+                    placeholder="${img.status === 'processing' ? t('Alt-Text wird generiert...') : t('Noch kein Alt-Text - hier eingeben oder generieren lassen')}"
                     ${img.status === 'processing' ? 'disabled' : ''}
                 >${escHtml(anzeigeAltText(img))}</textarea>
                 ${img.status !== 'processing' ? `
@@ -2629,6 +2699,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 btn.dataset.status = 'done';
                 // Projekt-Kopf (Badge + "X von Y Bildern generiert") live nachziehen.
                 updateProjectHeader(projectId);
+                // Filter-Zaehler („Noch nicht generiert"/„Fehlgeschlagen") live nachziehen (17.09.2026).
+                updateFilterImageStatus(imageId, 'done', data.alt_text);
             } else if (res.status === 402) {
                 // Credits-Sperre: dieselbe Meldung wie beim Sammellauf und Export.
                 if (statusEl) statusEl.textContent = t('Fehler');
@@ -2643,6 +2715,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const detail = (data && typeof data.detail === 'string') ? data.detail : '';
                 if (statusEl) statusEl.textContent = t('Fehler');
                 announce((wasDone ? t('Fehler bei der Neugenerierung') : t('Fehler bei der Generierung')) + (detail ? ': ' + detail : ''));
+                // Bei 5xx hat der Server das Bild als 'error' vermerkt (Fehlerpfad seit 08.06.2026):
+                // Projekt-Kopf und Filter-Zaehler nachziehen (17.09.2026). Bei 4xx blieb der Status.
+                if (res.status >= 500) {
+                    updateProjectHeader(projectId);
+                    updateFilterImageStatus(imageId, 'error');
+                }
             }
         } catch (err) {
             if (statusEl) statusEl.textContent = t('Verbindungsfehler');
@@ -2835,6 +2913,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Fokus nur retten, wenn er gerade verloren ging (der Abbrechen-Knopf verschwindet
         // mit dem Neuaufbau) — niemandem, der tippt, den Fokus stehlen.
         if (document.activeElement === document.body) box.focus();
+    }
+    // Satz zu gescheiterten Bildern fuer die Laufmeldung (17.09.2026), mit Hinweis auf den
+    // Filter-Chip, ueber den die Karten zu finden sind.
+    function fehlgeschlagenSatz(n) {
+        const satz = n === 1
+            ? t('Ein Bild ist fehlgeschlagen.')
+            : t('{n} Bilder sind fehlgeschlagen.', { n: n });
+        return satz + ' ' + t('Zu finden über den Filter „Fehlgeschlagen“.');
     }
     function versteckeLaufMeldung() {
         const box = document.getElementById('laufMeldung');

@@ -6277,3 +6277,24 @@ msgstr "Sus datos de acceso y el nombre del creador de los PDF exportados se cam
 
 msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
 msgstr "Este PDF no tiene etiquetas. Sin etiquetas no hay ningún lugar donde los textos alternativos lleguen de forma fiable a los lectores de pantalla, por eso no hay descarga en PDF. Los textos alternativos están disponibles como Excel, CSV y JSON."
+
+msgid "Noch nicht generiert"
+msgstr "Aún no generado"
+
+msgid "Fehlgeschlagen"
+msgstr "Fallido"
+
+msgid "Nach Bearbeitungsstand filtern"
+msgstr "Filtrar por estado de procesamiento"
+
+msgid "{done} von {total} Alt-Texten generiert."
+msgstr "{done} de {total} textos alternativos generados."
+
+msgid "Ein Bild ist fehlgeschlagen."
+msgstr "Una imagen ha fallado."
+
+msgid "{n} Bilder sind fehlgeschlagen."
+msgstr "{n} imágenes han fallado."
+
+msgid "Zu finden über den Filter „Fehlgeschlagen“."
+msgstr "Se encuentran con el filtro «Fallido»."

@@ -5839,3 +5839,24 @@ msgstr "Dina inloggningsuppgifter och skaparnamnet för exporterade PDF-filer ä
 
 msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
 msgstr "Den här PDF-filen har inga taggar. Utan taggar finns ingen plats där alternativtexter tillförlitligt når skärmläsare, därför finns ingen PDF-nedladdning. Alternativtexterna finns som Excel, CSV och JSON."
+
+msgid "Noch nicht generiert"
+msgstr "Inte genererad ännu"
+
+msgid "Fehlgeschlagen"
+msgstr "Misslyckad"
+
+msgid "Nach Bearbeitungsstand filtern"
+msgstr "Filtrera efter bearbetningsstatus"
+
+msgid "{done} von {total} Alt-Texten generiert."
+msgstr "{done} av {total} alternativtexter genererade."
+
+msgid "Ein Bild ist fehlgeschlagen."
+msgstr "En bild misslyckades."
+
+msgid "{n} Bilder sind fehlgeschlagen."
+msgstr "{n} bilder misslyckades."
+
+msgid "Zu finden über den Filter „Fehlgeschlagen“."
+msgstr "Hittas via filtret ”Misslyckad”."

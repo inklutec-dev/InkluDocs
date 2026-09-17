@@ -6277,3 +6277,24 @@ msgstr "You change your login details and the creator name for exported PDFs on 
 
 msgid "Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit."
 msgstr "This PDF has no tags. Without tags there is no place where alt texts reliably reach screen readers, so there is no PDF download for it. The alt texts are available as Excel, CSV and JSON."
+
+msgid "Noch nicht generiert"
+msgstr "Not yet generated"
+
+msgid "Fehlgeschlagen"
+msgstr "Failed"
+
+msgid "Nach Bearbeitungsstand filtern"
+msgstr "Filter by processing state"
+
+msgid "{done} von {total} Alt-Texten generiert."
+msgstr "{done} of {total} alt texts generated."
+
+msgid "Ein Bild ist fehlgeschlagen."
+msgstr "One image failed."
+
+msgid "{n} Bilder sind fehlgeschlagen."
+msgstr "{n} images failed."
+
+msgid "Zu finden über den Filter „Fehlgeschlagen“."
+msgstr "Find them with the “Failed” filter."
