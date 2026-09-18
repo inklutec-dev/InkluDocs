@@ -6929,3 +6929,12 @@ msgstr "El formato se conserva por completo: solo se sustituye el texto. Se trad
 
 msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
 msgstr "Ya está todo traducido a este idioma. Los párrafos corregidos a mano permanecen intactos."
+
+msgid "Alle {n} Absätze angezeigt."
+msgstr "Se muestran todos los {n} párrafos."
+
+msgid "Mit Hinweis"
+msgstr "Con nota"
+
+msgid "Nach Übersetzungsstand filtern"
+msgstr "Filtrar por estado de traducción"

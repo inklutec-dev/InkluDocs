@@ -199,14 +199,32 @@
         if (box) box.hidden = true;
     }
 
-    function filterFieldsetHtml() {
-        const chips = [['alle', t('Alle')], ['hinweis', t('Nur mit Hinweis')], ['offen', t('Nur noch nicht übersetzt')]];
-        return '<fieldset class="filter-fieldset" id="segFilterFieldset" style="flex-basis:100%;margin-top:0.6rem;border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;">'
-            + '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Absätze filtern') + '</legend>'
-            + '<div style="display:flex;gap:1rem;flex-wrap:wrap;">'
-            + chips.map(([k, label]) => '<label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;">'
-                + '<input type="radio" name="segFilter" value="' + k + '"' + (filterModus === k ? ' checked' : '') + ' onchange="Uebersetzen.filter(this.value)">' + label + '</label>').join('')
-            + '</div><p id="segFilterStatus" role="status" aria-live="polite" style="margin:0.3rem 0 0;font-size:0.9rem;"></p></fieldset>';
+    // Filter wie „Bilder filtern“ in app.html: eigene Karte mit H2, Fieldset mit Legende, Chips
+    // (label.filter-chip) mit Zaehler, Statuszeile unter dem Fieldset (Michael/Steve 18.09.2026).
+    function filterZaehler(k) {
+        const ue = aktuelleSegmente.filter(x => x.uebersetzbar);
+        if (k === 'hinweis') return aktuelleSegmente.filter(x => x.hinweis).length;
+        if (k === 'offen') return ue.filter(x => !istFertig(x)).length;
+        return aktuelleSegmente.length;
+    }
+    function filterChipsHtml() {
+        const chips = [['alle', t('Alle')], ['hinweis', t('Mit Hinweis')], ['offen', t('Noch nicht übersetzt')]];
+        return chips.map(([k, label]) => '<label class="filter-chip"><input type="radio" name="segFilter" value="' + k + '"'
+            + (filterModus === k ? ' checked' : '') + ' onchange="Uebersetzen.filter(this.value)"> ' + label + ' (' + filterZaehler(k) + ')</label>').join('');
+    }
+    function filterKarteHtml() {
+        if (!aktuelleSegmente.length) return '';
+        return '<section class="card image-filter" id="segFilterBar" aria-labelledby="segFilterHeading">'
+            + '<h2 id="segFilterHeading" class="section-title">' + t('Absätze filtern') + '</h2>'
+            + '<fieldset class="filter-fieldset" id="segFilterFieldset" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;margin:0;">'
+            +   '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Übersetzungsstand filtern') + '</legend>' + filterChipsHtml()
+            + '</fieldset>'
+            + '<p id="segFilterStatus" role="status" aria-live="polite" style="margin:0.5rem 0 0;color:var(--text-muted);"></p>'
+            + '</section>';
+    }
+    function rebuildFilterChips() {
+        const fs = document.getElementById('segFilterFieldset');
+        if (fs) fs.innerHTML = '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Übersetzungsstand filtern') + '</legend>' + filterChipsHtml();
     }
 
     function kopfHtml(project, data) {
@@ -235,17 +253,19 @@
         // die Hinweise des letzten Laufs — bleiben auch nach Neuladen sichtbar (kein In-Memory-Stand).
         const serverHinweis = (!busy && project.lauf_hinweis)
             ? '<p class="feld-hinweis" id="projectLaufHinweis" role="status" style="margin:0.4rem 0 0;">' + escHtml(project.lauf_hinweis) + '</p>' : '';
+        // Keine Statuszeile unter dem Projektnamen (Michael Karbe Punkt 4, Steve 01.09.2026 — wie bei
+        // Word und PDF): die Zahlen stehen am Dokument, in der Rueckfrage und im Herunterladen-Dialog.
+        // Nur ein Hinweis vom Server (fehlgeschlagene Segmentierung, Lauf-Hinweise) erscheint hier.
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
-            + '<div class="card-info" id="projectHeadInfo">' + info + '</div>' + serverHinweis
+            + '<div class="card-info" id="projectHeadInfo" data-info="' + escHtml(info) + '"></div>' + serverHinweis
             + (ue.length ? ''
                 + '<div class="card-actions">'
                 +   (!busy ? '<button class="btn btn-primary" id="uStartBtn" onclick="Uebersetzen.laufOeffnen()">' + ico('sparkle') + t('Übersetzen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
                 +   (fertig && !busy ? '<button class="btn btn-primary" id="uExportOpenBtn" onclick="Uebersetzen.exportOeffnen()">' + ico('download') + (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen')) + '</button>' : '')
                 +   laufDialogHtml(project)
                 +   exportDialogHtml(project)
-                +   filterFieldsetHtml()
                 + '</div>' : '')
             + '</div>';
     }
@@ -253,10 +273,11 @@
     // ─── Dialog „Übersetzen“: Zielsprache, zwei Schalter, Rueckfrage mit Umfang und Preis ───
     function laufDialogHtml(project) {
         const vorgabe = einstellungen.zielsprache || 'en-gb';
-        return '<dialog id="uLaufDialog" class="invite-dialog" aria-labelledby="uLaufHeading">'
-            + '<div class="export-kopf"><h2 id="uLaufHeading" style="margin:0 0 0.6rem 0;">' + t('Übersetzen') + '</h2>'
-            +   (typeof exportDocIconHtml === 'function' ? exportDocIconHtml('word') : '') + '</div>'
-            + '<p id="uLaufUmfang" style="margin:0 0 0.6rem 0;font-weight:600;"></p>'
+        // Gleiche Form wie die Rueckfrage der anderen Werkzeuge (#genConfirmDialog in app.html):
+        // Ueberschrift, Umfang als Hinweiszeile, Text als Absatz, Abbrechen links / Start rechts.
+        return '<dialog id="uLaufDialog" class="app-dialog" aria-labelledby="uLaufHeading" aria-describedby="uLaufUmfang uLaufSummary">'
+            + '<h2 id="uLaufHeading">' + t('Übersetzen') + '</h2>'
+            + '<p id="uLaufUmfang" class="dialog-hint"></p>'
             + '<div class="form-group" style="margin-bottom:0.8rem;"><label for="uZielsprache" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">' + t('Zielsprache') + '</label>'
             +   '<select id="uZielsprache" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.95rem;min-width:14rem;">'
             +     zielsprachen.map(z => '<option value="' + escHtml(z.code) + '"' + (z.code === vorgabe ? ' selected' : '') + '>' + escHtml(z.name) + '</option>').join('')
@@ -265,11 +286,11 @@
             +   '<label style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;"><input type="checkbox" id="uAltTexte"' + (einstellungen.alt_texte === false ? '' : ' checked') + ' style="width:1.2rem;height:1.2rem;"><span>' + t('Alternativtexte der Bilder mitübersetzen') + '</span></label>'
             +   '<label style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;"><input type="checkbox" id="uSpracheSetzen"' + (einstellungen.sprache_setzen === false ? '' : ' checked') + ' style="width:1.2rem;height:1.2rem;"><span>' + t('Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)') + '</span></label>'
             + '</div>'
-            + '<div id="uLaufSummary" role="status" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>'
-            + '<p style="margin:0 0 0.8rem 0;font-size:0.9rem;color:var(--text-muted);">' + t('Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben.') + '</p>'
-            + '<div id="uLaufFooter" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;">'
-            +   '<button class="btn btn-primary" id="uLaufOk" onclick="Uebersetzen.laufStarten(' + project.id + ')">' + t('Übersetzung starten') + '</button>'
-            +   '<button class="btn btn-secondary" id="uLaufCancel" onclick="Uebersetzen.laufSchliessen()">' + t('Abbrechen') + '</button>'
+            + '<p id="uLaufSummary" role="status"></p>'
+            + '<p class="dialog-hint" style="margin:0 0 0.8rem 0;">' + t('Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben.') + '</p>'
+            + '<div class="dialog-actions">'
+            +   '<button type="button" class="btn btn-secondary" id="uLaufCancel" onclick="Uebersetzen.laufSchliessen()">' + t('Abbrechen') + '</button>'
+            +   '<button type="button" class="btn btn-primary" id="uLaufOk" onclick="Uebersetzen.laufStarten(' + project.id + ')">' + t('Übersetzung starten') + '</button>'
             + '</div><output id="uLaufStatus" style="display:block;margin-top:0.5rem;"></output>'
             + '</dialog>';
     }
@@ -368,10 +389,14 @@
             + '<div class="form-group" style="margin-bottom:0.8rem;"><label for="uExportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">' + t('Dateiname (optional)') + '</label>'
             +   '<input type="text" id="uExportFilename" autocomplete="off" aria-describedby="uExportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
             +   '<p id="uExportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">' + t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.') + '</p></div>'
-            + '<div id="uExportFooter" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;">'
-            +   '<button class="btn btn-primary" id="uExportBtn" onclick="Uebersetzen.exportieren(' + project.id + ')">' + t('Als Word herunterladen') + '</button>'
-            +   '<button class="btn btn-secondary" id="uExportCancelBtn" onclick="Uebersetzen.exportSchliessen()">' + t('Abbrechen') + '</button>'
+            + '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
+            +   '<button type="button" class="btn btn-primary" id="uExportBtn" onclick="Uebersetzen.exportieren(' + project.id + ')">' + t('Als Word herunterladen') + '</button>'
             + '</div><output id="uExportStatus" style="display:block;margin-top:0.5rem;" tabindex="-1"></output>'
+            // Abbrechen unten rechts in eigener Fusszeile mit Trennlinie (Michael Karbe 12.09.2026, wie app.html #exportFooter).
+            + '<hr class="export-trenner" aria-hidden="true">'
+            + '<div id="uExportFooter" style="display:flex;justify-content:flex-end;">'
+            +   '<button type="button" class="btn btn-secondary" id="uExportCancelBtn" onclick="Uebersetzen.exportSchliessen()">' + t('Abbrechen') + '</button>'
+            + '</div>'
             + '</dialog>';
     }
 
@@ -477,6 +502,7 @@
         const s = aktuelleSegmente.find(x => x.id === segId);
         if (s) { s.status = d.status; s.hinweis = d.hinweis || ''; s.uebersetzung = d.uebersetzung || ''; }
         zaehlerAktualisieren();
+        rebuildFilterChips();
     }
 
     function zaehlerAktualisieren() {
@@ -499,7 +525,7 @@
         document.querySelectorAll('details.page-section').forEach(s => { s.hidden = nur && s.querySelectorAll('.seg-review:not([hidden])').length === 0; });
         document.querySelectorAll('.doc-block').forEach(b => { b.hidden = nur && b.querySelectorAll('.seg-review:not([hidden])').length === 0; });
         const st = document.getElementById('segFilterStatus');
-        const text = filterModus === 'alle' ? t('Alle Absätze werden angezeigt.')
+        const text = filterModus === 'alle' ? t('Alle {n} Absätze angezeigt.', { n: sichtbar })
             : (filterModus === 'hinweis' ? t('{n} Absätze mit Hinweis werden angezeigt.', { n: sichtbar }) : t('{n} noch nicht übersetzte Absätze werden angezeigt.', { n: sichtbar }));
         if (st) st.textContent = text;
         if (!still) announce(text);
@@ -556,15 +582,16 @@
         const docsHtml = aktuelleDocs.map((d, i) => dokumentHtml(d, i + 1, segsJeDoc.get(d.id) || [])).join('');
         main.innerHTML = kopfHtml(project, data)
             + uploadBlockHtml(project)
+            + filterKarteHtml()
             + fortschrittKarteHtml(project, data)
             + laufMeldungHtml()
             + '<div id="segListe">' + docsHtml + '</div>';
         bindAutosave();
+        filter(filterModus, true);
         // Waehrend des Laufs keine Handkorrektur (Review M6a): der Lauf ueberschreibt sonst oder verwirft.
         if (project.status === 'processing' || project.status === 'extracting') {
             document.querySelectorAll('.seg-ziel').forEach(ta => { ta.disabled = true; });
         }
-        if (filterModus !== 'alle') filter(filterModus, true);
         setupProjectDropzone(projectId);
         const h1 = document.getElementById('projectName');
         if (h1 && !erneut) h1.focus();

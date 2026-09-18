@@ -6491,3 +6491,12 @@ msgstr "Formateringen bevaras helt: endast texten byts ut. Det som fortfarande s
 
 msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
 msgstr "Allt är redan översatt till detta språk. Manuellt rättade stycken lämnas orörda."
+
+msgid "Alle {n} Absätze angezeigt."
+msgstr "Alla {n} stycken visas."
+
+msgid "Mit Hinweis"
+msgstr "Med anmärkning"
+
+msgid "Nach Übersetzungsstand filtern"
+msgstr "Filtrera efter översättningsstatus"

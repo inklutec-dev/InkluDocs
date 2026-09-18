@@ -6929,3 +6929,12 @@ msgstr "La mise en forme est entièrement conservée : seul le texte est remplac
 
 msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
 msgstr "Tout est déjà traduit dans cette langue. Les paragraphes corrigés à la main restent intacts."
+
+msgid "Alle {n} Absätze angezeigt."
+msgstr "Tous les {n} paragraphes affichés."
+
+msgid "Mit Hinweis"
+msgstr "Avec remarque"
+
+msgid "Nach Übersetzungsstand filtern"
+msgstr "Filtrer par état de traduction"

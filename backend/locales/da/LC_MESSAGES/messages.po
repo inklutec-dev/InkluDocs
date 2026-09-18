@@ -6621,3 +6621,12 @@ msgstr "Formateringen bevares fuldstændigt: kun teksten udskiftes. Det, der sta
 
 msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
 msgstr "Alt er allerede oversat til dette sprog. Manuelt rettede afsnit forbliver urørt."
+
+msgid "Alle {n} Absätze angezeigt."
+msgstr "Alle {n} afsnit vist."
+
+msgid "Mit Hinweis"
+msgstr "Med bemærkning"
+
+msgid "Nach Übersetzungsstand filtern"
+msgstr "Filtrer efter oversættelsesstatus"

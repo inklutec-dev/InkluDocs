@@ -6932,3 +6932,12 @@ msgstr "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgeta
 
 msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
 msgstr "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
+
+msgid "Alle {n} Absätze angezeigt."
+msgstr "Alle {n} Absätze angezeigt."
+
+msgid "Mit Hinweis"
+msgstr "Mit Hinweis"
+
+msgid "Nach Übersetzungsstand filtern"
+msgstr "Nach Übersetzungsstand filtern"

@@ -6929,3 +6929,12 @@ msgstr "Formatting is fully preserved: only the text is replaced. Whatever is st
 
 msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
 msgstr "Everything is already translated into this language. Manually corrected paragraphs are left untouched."
+
+msgid "Alle {n} Absätze angezeigt."
+msgstr "All {n} paragraphs shown."
+
+msgid "Mit Hinweis"
+msgstr "With a note"
+
+msgid "Nach Übersetzungsstand filtern"
+msgstr "Filter by translation state"
