@@ -144,6 +144,19 @@ with httpx.Client(base_url=B, timeout=180) as c:
     check("Export formular_csv", r.status_code == 200 and "csv" in r.headers.get("content-type", ""), (r.status_code, r.headers.get("content-type")))
     r = c.post(f"/api/v1/documents/{fid}/export/xlsx", headers=H)
     check("xlsx bei Formular: 400", r.status_code == 400, r.text)
+    r = c.post(f"/api/v1/documents/{fid}/generate", headers=H, json={})
+    check("Formular ohne scope: 400 (scope=all erforderlich, Review M3)", r.status_code == 400 and "scope=all" in r.json()["error"]["message"], r.text[:200])
+    r = c.post(f"/api/v1/documents/{fid}/generate", headers=H, json={"scope": "open"})
+    check("Formular scope=open: 400", r.status_code == 400, r.text[:200])
+    # Review N4: ungueltiger Prompt beim Anlegen darf kein Projekt zuruecklassen
+    r0 = c.get("/api/v1/documents", headers=H); vorher = len(r0.json()["documents"])
+    with open(os.path.join(FIX, "word_einfach.docx"), "rb") as f:
+        r = c.post("/api/v1/documents", headers=H, files={"file": ("x.docx", f, "application/octet-stream")}, data={"prompt_id": "999999999"})
+    check("Anlegen mit fremder prompt_id: 404", r.status_code == 404, r.text[:200])
+    r1 = c.get("/api/v1/documents", headers=H)
+    check("Kein verwaistes Projekt nach abgelehntem Anlegen", len(r1.json()["documents"]) == vorher, (vorher, len(r1.json()["documents"])))
+    r = c.post("/api/v1/documents", headers=H, json={"url": "https://example.com/", "prompt": "a", "prompt_id": 1})
+    check("prompt und prompt_id zugleich: 400", r.status_code == 400, r.text[:200])
 
     # 5) Aufraeumen (auch den ueber die API angelegten Prompt der Kategorie „API“)
     for pid_ in list(angelegt):

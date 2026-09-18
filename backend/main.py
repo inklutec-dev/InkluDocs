@@ -6320,9 +6320,15 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
     # alles" gilt dort unveraendert. Partner, die nachts Archive durchlaufen lassen, holen damit
     # Fehlschlaege nach, ohne fertige Bilder erneut zu bezahlen (api_dokumente_v1: scope=open).
     if isinstance(_body, dict) and _body.get("nur_offen"):
+        # „Offen“ = ohne fertigen Text: nie generiert (pending), fehlgeschlagen (error) oder nach einer
+        # Abbruch-Rettung (_ki_neu_zurueck stellt Reste auf 'done' mit leerem Feld). NIE ein Bild mit
+        # eigenem Text (alt_text_edited) — der Partner hat entschieden (Review 18.09.2026, M1/M2).
         offen = {r["id"] for r in conn.execute(
-            "SELECT id FROM images WHERE project_id = ? AND status IN ('pending', 'error')" + doc_sql,
-            [project_id] + doc_args).fetchall()}
+            "SELECT id FROM images WHERE project_id = ?"
+            " AND (alt_text_edited IS NULL OR TRIM(alt_text_edited) = '')"
+            " AND (status IN ('pending', 'error')"
+            "      OR (status = 'done' AND COALESCE(TRIM(alt_text), '') = '' AND COALESCE(TRIM(original_alt), '') = ''))"
+            + doc_sql, [project_id] + doc_args).fetchall()}
         ki_neu_ids = ki_neu_ids & offen
         anzahl_ki = len(ki_neu_ids)
         modus = "offen"
@@ -6897,8 +6903,10 @@ def _handtext_macht_fertig(conn, image_id: int, text) -> str:
     Gibt den Status nach dem Speichern zurueck (fuer die Oberflaeche)."""
     row = conn.execute("SELECT status FROM images WHERE id = ?", (image_id,)).fetchone()
     status = row["status"] if row else None
-    if status == "pending" and (text or "").strip():
-        conn.execute("UPDATE images SET status = 'done' WHERE id = ?", (image_id,))
+    # 18.09.2026 (Review M1): auch ein FEHLGESCHLAGENES Bild ist mit eigenem Text fertig — sonst
+    # bleibt das Fehler-Badge, und scope=open der API wuerde es erneut beschreiben.
+    if status in ("pending", "error") and (text or "").strip():
+        conn.execute("UPDATE images SET status = 'done', fehler_grund = '' WHERE id = ?", (image_id,))
         status = "done"
     return status
 
@@ -7089,20 +7097,26 @@ def _fehler_kurz(e: BaseException) -> str:
     """Kurzer, nutzertauglicher Grund eines Fehlschlags je Bild (18.09.2026, Steve/API-Pruefung).
     Landet in images.fehler_grund, in der API als `error` und in der Bildkarte als Hinweis.
     Keine Innereien (Traceback, Schluessel, Pfade) — die stehen im Log."""
-    text = f"{type(e).__name__}: {e}"
-    t = text.lower()
-    if "429" in t or "resource exhausted" in t or "kontingent" in t:
-        return "KI-Dienst überlastet (429) – bitte später erneut versuchen."
-    if "timeout" in t or "timed out" in t or "504" in t:
+    # Erst der Typ (Review 18.09.2026, N6: Zahlen wie „429“ stehen auch in Pfaden), dann Muster.
+    if isinstance(e, (FileNotFoundError, PermissionError)):
+        return "Die Bilddatei fehlt oder ist nicht lesbar."
+    if isinstance(e, TimeoutError):
         return "Zeitüberschreitung beim KI-Dienst – bitte erneut versuchen."
+    t = f"{type(e).__name__}: {e}".lower()
+    code = re.search(r"\bhttp (429|502|503|504)\b|\b(429|502|503|504)\b(?=[^/\d]|$)", t)
+    code = next((g for g in code.groups() if g), None) if code else None
+    if code == "429" or "resource exhausted" in t or "kontingent" in t:
+        return "KI-Dienst überlastet (429) – bitte später erneut versuchen."
+    if "timeout" in t or "timed out" in t or code == "504":
+        return "Zeitüberschreitung beim KI-Dienst – bitte erneut versuchen."
+    if isinstance(e, ConnectionError) or code in ("502", "503") or "connection" in t or "verbindung" in t:
+        return "KI-Dienst nicht erreichbar – bitte später erneut versuchen."
+    if "cannot identify" in t or "image file" in t or "decompression" in t or "unlesbar" in t or isinstance(e, OSError):
+        return "Die Bilddatei konnte nicht gelesen werden."
     if "schema" in t or "validation" in t or "kein json" in t or "unbrauchbar" in t:
         return "Die KI-Antwort war unbrauchbar – bitte erneut versuchen."
     if "gesperrt" in t or "blockreason" in t or "safety" in t:
         return "Die KI hat das Bild abgelehnt (Inhaltsfilter)."
-    if "cannot identify" in t or "image file" in t or "decompression" in t or "unlesbar" in t:
-        return "Die Bilddatei konnte nicht gelesen werden."
-    if "502" in t or "503" in t or "connection" in t or "verbindung" in t:
-        return "KI-Dienst nicht erreichbar – bitte später erneut versuchen."
     return "Unerwarteter Fehler bei der Generierung – bitte erneut versuchen."
 
 

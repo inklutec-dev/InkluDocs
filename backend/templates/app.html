@@ -2270,7 +2270,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 ${img.status === 'error' ? `
                     <p class="image-error-hint" style="color:var(--error,#c33);font-weight:600;margin:0.5rem 0;" role="status">
                         ${t('Beim Generieren ist ein Fehler aufgetreten. Bitte auf „Generieren" klicken, um es erneut zu versuchen.')}${img.fehler_grund ? ' ' + t('Grund: {g}', { g: escHtml(img.fehler_grund) }) : ''}
-                    </p>` : ''}
+                    </p>` : (img.fehler_grund && img.needs_review ? `
+                    <p class="image-error-hint" style="color:var(--text-muted);margin:0.5rem 0;" role="status">
+                        ${t('Der letzte neue Versuch ist fehlgeschlagen, der vorhandene Text bleibt.')} ${t('Grund: {g}', { g: escHtml(img.fehler_grund) })}
+                    </p>` : '')}
                 <img src="${imgFileUrl(img.id)}" alt="${t('Extrahiertes Bild')}${(img.page_number > 0 && isPdfProject) ? ' ' + (wordAbschnitt(img.document_id) ? t('aus Abschnitt {p}', { p: img.page_number }) : t('von Seite {p}', { p: img.page_number })) : ''}" class="image-preview" loading="lazy">
                 <label for="alttext_${img.id}" style="display:block;font-weight:600;margin-bottom:0.3rem;">
                     ${t('Alt-Text')}

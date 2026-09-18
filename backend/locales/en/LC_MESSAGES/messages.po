@@ -6983,3 +6983,15 @@ msgstr "Original"
 
 msgid "{art} {n}"
 msgstr "{art} {n}"
+
+msgid "Der letzte neue Versuch ist fehlgeschlagen, der vorhandene Text bleibt."
+msgstr "The last new attempt failed; the existing text remains."
+
+msgid "Einträge mit eigenem Text (alt_text_edited) fasst open nie an; ein per PATCH gesetzter Text macht auch einen fehlgeschlagenen Eintrag fertig. Bei Formularen muss scope=all ausdrücklich mitgegeben werden, sonst 400."
+msgstr "open never touches entries with your own text (alt_text_edited); a text set via PATCH also completes a failed entry. For forms, scope=all must be given explicitly, otherwise 400."
+
+msgid "Nimmt auch language, use_context, prompt_id oder prompt an; sie gelten danach für das ganze Dokument."
+msgstr "Also accepts language, use_context, prompt_id or prompt; they then apply to the whole document."
+
+msgid "error kann auch bei status done stehen: Dann ist ein erneuter Versuch gescheitert, der vorhandene Text ist geblieben und needs_review ist gesetzt."
+msgstr "error can also appear with status done: then a renewed attempt failed, the existing text remained and needs_review is set."
