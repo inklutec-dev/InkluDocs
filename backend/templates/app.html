@@ -1202,7 +1202,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // ungespeicherte Textfeld-Eingaben anderer Karten nie verloren gehen);
     // leere Seiten-/Dokument-Gruppen werden mit ausgeblendet. Der Filter-
     // Zustand ueberlebt das Neu-Rendern beim Polling (imageFilter pro Projekt).
-    let imageFilter = { key: 'alle', projectId: null };
+    // Zwei Felder seit 17.09.2026 abends (Michael Karbe 18:39): „Nach Bearbeitungsstand filtern"
+    // (Alle / Offen / Alt-Text, in jedem Projekt) und „Nach Freigabestatus filtern" (Alle + die sechs
+    // Pruefstatus, nur bei Gaesten und geteilten Projekten), beide in der Karte „Bilder filtern".
+    // Die Auswahl beider Felder wirkt zusammen (UND): „Offen" + „Lektorat Aenderung" zeigt genau die
+    // Bilder, die beides erfuellen.
+    let imageFilter = { stand: 'alle', pruef: 'alle', projectId: null };
     let filterImages = [];   // Bilder des aktuellen Renders (Datenbasis der Zaehler)
     let currentRenderDocs = [];   // Dokumente des aktuellen Renders (fuer den Ruecksprache-Block im Abschluss)
     let currentRenderProjectType = '';   // 'pdf' | 'docx' | ... des aktuellen Renders
@@ -1284,6 +1289,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return n;
     }
 
+    // Beide Felder zusammen (UND).
+    function imageMatchesFilter(img) {
+        return imageMatchesKey(img, imageFilter.stand) && imageMatchesKey(img, imageFilter.pruef);
+    }
+
     function filterChipLabel(key) {
         if (key === 'lek_ruecksprache') return t('Rücksprache des Lektorats');
         if (key === 'alle') return t('Alle');
@@ -1292,16 +1302,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return unifiedStatusLabel(key);   // die 6 Michael-Status + Rücksprache
     }
 
-    // Chip-Auswahl: Grundchips „Alle", „Offen", „Alt-Text" in jedem
-    // Projekt (17.09.2026). Bei Gaesten und Besitzern geteilter Projekte folgen dieselben
-    // 6 Pruefstatus (Karbe B2 + Korb C, 17.07.2026). Alle Chips sind IMMER sichtbar
-    // (auch mit Zaehler 0), damit die Leiste fuer Screenreader-Nutzer vorhersagbar
-    // bleibt; die Rücksprache-Chips erscheinen nur bei RUECKSPRACHE_UI=true.
-    function filterChipKeys() {
-        const keys = ['alle', 'offen', 'mit_text'];
-        if (window.GUEST_MODE || window._inReview) {
-            keys.push('neu', 'in_bearbeitung', 'lek_frei', 'lek_aend', 'her_frei', 'her_aend');
-        }
+    // Feld 1 (Bearbeitungsstand): in jedem Projekt dieselben drei Chips (17.09.2026).
+    function standChipKeys() {
+        return ['alle', 'offen', 'mit_text'];
+    }
+
+    // Feld 2 (Freigabestatus): nur bei Gaesten und Besitzern geteilter Projekte — „Alle" + die sechs
+    // Pruefstatus (Karbe B2 + Korb C, 17.07.2026). Alle Chips sind IMMER sichtbar (auch mit Zaehler 0),
+    // damit die Leiste fuer Screenreader-Nutzer vorhersagbar bleibt; die Rücksprache-Chips erscheinen
+    // nur bei RUECKSPRACHE_UI=true. Leere Liste = Feld wird nicht gezeigt.
+    function pruefChipKeys() {
+        if (!(window.GUEST_MODE || window._inReview)) return [];
+        const keys = ['alle', 'neu', 'in_bearbeitung', 'lek_frei', 'lek_aend', 'her_frei', 'her_aend'];
         if (RUECKSPRACHE_UI && window.GUEST_MODE) {
             if (revRole() === 'lektorat') keys.push('ruecksprache');
             else if (filterCount('lek_ruecksprache') > 0) keys.push('lek_ruecksprache');
@@ -1309,18 +1321,35 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return keys;
     }
 
-    // Legende des Fieldsets — EINE Stelle fuer Erstaufbau und Zaehler-Neuaufbau.
-    function filterLegendHtml() {
-        return '<legend style="font-weight:600;padding:0 0.3rem;">' + t('Nach Bearbeitungsstand filtern') + '</legend>';
+    // Kompatibilitaet (Skripte/Tests): alle sichtbaren Schluessel beider Felder.
+    function filterChipKeys() {
+        return standChipKeys().concat(pruefChipKeys());
     }
 
-    function filterChipsHtml() {
-        return filterChipKeys().map(function (k) {
-            return '<label class="filter-chip"><input type="radio" name="imgFilterStatus" value="' + k + '"'
-                + (imageFilter.key === k ? ' checked' : '')
-                + ' onchange="setImageFilterKey(this.value)"> '
+    function filterLegendHtml(feld) {
+        const text = feld === 'pruef' ? t('Nach Freigabestatus filtern') : t('Nach Bearbeitungsstand filtern');
+        return '<legend style="font-weight:600;padding:0 0.3rem;">' + text + '</legend>';
+    }
+
+    // Radios EINES Feldes: eigener Gruppenname je Feld, damit beide Auswahlen nebeneinander bestehen.
+    function filterChipsHtml(feld) {
+        const keys = feld === 'pruef' ? pruefChipKeys() : standChipKeys();
+        const gruppe = feld === 'pruef' ? 'imgFilterPruef' : 'imgFilterStand';
+        const aktiv = imageFilter[feld];
+        return keys.map(function (k) {
+            return '<label class="filter-chip"><input type="radio" name="' + gruppe + '" value="' + k + '"'
+                + (aktiv === k ? ' checked' : '')
+                + ' onchange="setImageFilter(\'' + feld + '\', this.value)"> '
                 + filterChipLabel(k) + ' (' + filterCount(k) + ')</label>';
         }).join('');
+    }
+
+    function filterFieldsetHtml(feld) {
+        if (feld === 'pruef' && !pruefChipKeys().length) return '';
+        const id = feld === 'pruef' ? 'filterPruefFieldset' : 'filterStandFieldset';
+        const abstand = feld === 'pruef' ? 'margin:0.6rem 0 0;' : 'margin:0;';
+        return '<fieldset class="filter-fieldset" id="' + id + '" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;' + abstand + '">'
+            + filterLegendHtml(feld) + filterChipsHtml(feld) + '</fieldset>';
     }
 
     // Gesamte Leiste als HTML (wird in showProject vor der Bilderliste eingesetzt).
@@ -1331,14 +1360,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // (Polling, Upload) behaelt die aktive Auswahl. Ein Schluessel, den es in
         // diesem Projekt nicht (mehr) gibt (Freigabe beendet → Pruefchips weg), faellt
         // auf „Alle" zurueck, sonst blieben alle Karten versteckt.
-        if (imageFilter.projectId !== project.id) imageFilter = { key: 'alle', projectId: project.id };
-        if (filterChipKeys().indexOf(imageFilter.key) === -1) imageFilter.key = 'alle';
+        if (imageFilter.projectId !== project.id) imageFilter = { stand: 'alle', pruef: 'alle', projectId: project.id };
+        if (standChipKeys().indexOf(imageFilter.stand) === -1) imageFilter.stand = 'alle';
+        if (pruefChipKeys().indexOf(imageFilter.pruef) === -1) imageFilter.pruef = 'alle';
         return '<section class="card image-filter" id="imageFilterBar" aria-labelledby="filterHeading">'
             + '<h2 id="filterHeading" class="section-title">' + t('Bilder filtern') + '</h2>'
-            + '<fieldset class="filter-fieldset" id="filterStatusFieldset" style="border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.8rem;margin:0;">'
-            + filterLegendHtml()
-            + filterChipsHtml()
-            + '</fieldset>'
+            + filterFieldsetHtml('stand')
+            + filterFieldsetHtml('pruef')
             + '<p id="filterResult" style="margin:0.5rem 0 0;color:var(--text-muted);"></p>'
             + '</section>';
     }
@@ -1347,9 +1375,19 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Bewusst NICHT die ganze Leiste ersetzen: der Fokus koennte gerade auf
     // einem Element ausserhalb des Fieldsets liegen und wuerde sonst verloren gehen.
     function rebuildFilterChips() {
-        const fs = document.getElementById('filterStatusFieldset');
-        if (!fs) return;
-        fs.innerHTML = filterLegendHtml() + filterChipsHtml();
+        const stand = document.getElementById('filterStandFieldset');
+        if (stand) stand.innerHTML = filterLegendHtml('stand') + filterChipsHtml('stand');
+        let pruef = document.getElementById('filterPruefFieldset');
+        if (pruefChipKeys().length) {
+            if (!pruef && stand) {   // Freigabe kam waehrend der Sitzung dazu: Feld 2 nachziehen
+                stand.insertAdjacentHTML('afterend', filterFieldsetHtml('pruef'));
+            } else if (pruef) {
+                pruef.innerHTML = filterLegendHtml('pruef') + filterChipsHtml('pruef');
+            }
+        } else if (pruef) {
+            pruef.remove();
+            imageFilter.pruef = 'alle';
+        }
     }
 
     // Nach dem Einzel-Generieren (17.09.2026) Status und Text in den Filterdaten
@@ -1392,9 +1430,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         rebuildFilterChips();
     }
 
-    function setImageFilterKey(key) {
-        imageFilter.key = key;
+    function setImageFilter(feld, key) {
+        imageFilter[feld === 'pruef' ? 'pruef' : 'stand'] = key;
         applyImageFilter(true);
+    }
+    // Kompatibilitaet: alter Einzel-Setter wirkt auf das passende Feld.
+    function setImageFilterKey(key) {
+        setImageFilter(standChipKeys().indexOf(key) !== -1 ? 'stand' : 'pruef', key);
     }
 
     // Wendet den aktiven Filter auf die gerenderte Liste an (hidden-Attribut).
@@ -1407,7 +1449,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         for (const img of filterImages) {
             const card = document.getElementById('imgcard_' + img.id);
             if (!card) continue;
-            const match = imageMatchesKey(img, imageFilter.key);
+            const match = imageMatchesFilter(img);
             card.hidden = !match;
             if (match) visible += 1;
         }
@@ -1418,7 +1460,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         document.querySelectorAll('#imageList .doc-block').forEach(function (b) {
             b.hidden = !b.querySelector('section.image-review:not([hidden])');
         });
-        const msg = (imageFilter.key === 'alle')
+        const msg = (imageFilter.stand === 'alle' && imageFilter.pruef === 'alle')
             ? t('Alle {n} Bilder angezeigt.', { n: filterImages.length })
             : t('{n} von {m} Bildern angezeigt.', { n: visible, m: filterImages.length });
         const res = document.getElementById('filterResult');

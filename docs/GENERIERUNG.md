@@ -522,3 +522,15 @@ der Hinweissatz neu in sechs Katalogen; „Noch nicht generiert“/„Fehlgeschl
 bleiben als Katalogeinträge ohne Verwendung. Test `ui_filter_stand.py` auf die
 neue Regel umgestellt (Zähler und Sichtbarkeit gegen die Serverdaten, neun
 Fälle für `textstand`, Zähler nach Einzel-Generieren).
+
+### Nachtrag 17.09.2026 abends (Michael Karbe 18:39): zwei Filterfelder
+
+Mit drei Grundchips plus sechs Prüfchips wurde die Leiste in geteilten Projekten lang.
+Michaels Vorschlag, umgesetzt: In der Karte „Bilder filtern“ stehen jetzt zwei Fieldsets —
+„Nach Bearbeitungsstand filtern“ (Alle / Offen / Alt-Text, in jedem Projekt) und darunter
+„Nach Freigabestatus filtern“ (Alle + die sechs Prüfstatus, nur bei Gästen und geteilten
+Projekten). Beide Auswahlen wirken zusammen (UND): „Offen“ + „Lektorat Änderung“ zeigt genau
+die Bilder, die beides erfüllen. Eigene Radiogruppen (`imgFilterStand`, `imgFilterPruef`),
+Zustand `imageFilter = {stand, pruef}`; fällt die Freigabe weg, verschwindet Feld 2 und
+sein Filter springt auf „Alle“. Formular-Karten heißen seit demselben Abend „Feld 1: Textfeld,
+vorname“ (Nummer mit Doppelpunkt, dann Feldart, dann Name — Michael 18:28).

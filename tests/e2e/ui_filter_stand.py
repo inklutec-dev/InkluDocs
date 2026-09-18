@@ -67,17 +67,18 @@ with sync_playwright() as p:
 
     # 1) Filterleiste im Solo-Projekt
     check("Filterleiste ist da (Solo-Projekt)", seite.locator("#imageFilterBar").count() == 1)
-    keys = seite.evaluate("Array.from(document.querySelectorAll('input[name=imgFilterStatus]')).map(i => i.value)")
+    keys = seite.evaluate("Array.from(document.querySelectorAll('input[name=imgFilterStand]')).map(i => i.value)")
     check("Genau drei Grundchips: alle, offen, mit_text", keys == ["alle", "offen", "mit_text"], keys)
-    legende = seite.locator("#filterStatusFieldset legend").inner_text().strip()
+    legende = seite.locator("#filterStandFieldset legend").inner_text().strip()
     check("Legende heisst „Nach Bearbeitungsstand filtern“", "Bearbeitungsstand" in legende, legende)
-    check("Chip „Alle“ vorgewaehlt", seite.locator("input[name=imgFilterStatus][value=alle]").is_checked())
+    check("Solo-Projekt: kein Feld „Nach Freigabestatus filtern“", seite.locator("#filterPruefFieldset").count() == 0)
+    check("Chip „Alle“ vorgewaehlt", seite.locator("input[name=imgFilterStand][value=alle]").is_checked())
     check("Zaehler Alle = Bilderzahl", chip_count(seite, "alle") == gesamt, (chip_count(seite, "alle"), gesamt))
     check("Zaehler Offen = Bilder ohne Text (Herunterladen-Regel)", chip_count(seite, "offen") == len(offen_ids), (chip_count(seite, "offen"), len(offen_ids)))
     check("Zaehler Alt-Text = Bilder mit Text", chip_count(seite, "mit_text") == len(mit_ids), (chip_count(seite, "mit_text"), len(mit_ids)))
 
     # 2) Filtern per Chip
-    seite.check("input[name=imgFilterStatus][value=offen]")
+    seite.check("input[name=imgFilterStand][value=offen]")
     seite.wait_for_timeout(300)
     sicht = sichtbare_karten(seite)
     check("Chip Offen zeigt genau die Bilder ohne Text", sorted(sicht) == sorted(offen_ids), (sicht, offen_ids))
@@ -85,14 +86,14 @@ with sync_playwright() as p:
     check("Ergebniszeile nennt n von m", re.search(r"\b%d\b.*\b%d\b" % (len(offen_ids), gesamt), erg) is not None, erg)
     check("Fehlerkarte traegt Abzeichen „Fehler“", seite.locator(f"#imgcard_{ERR_ID} .badge", has_text="Fehler").count() >= 1)
 
-    seite.check("input[name=imgFilterStatus][value=mit_text]")
+    seite.check("input[name=imgFilterStand][value=mit_text]")
     seite.wait_for_timeout(300)
     check("Chip Alt-Text zeigt genau die Bilder mit Text", sorted(sichtbare_karten(seite)) == sorted(mit_ids), (sichtbare_karten(seite), mit_ids))
 
-    seite.check("input[name=imgFilterStatus][value=alle]")
+    seite.check("input[name=imgFilterStand][value=alle]")
     seite.wait_for_timeout(300)
     check("Chip Alle zeigt wieder alle Karten", len(sichtbare_karten(seite)) == gesamt, len(sichtbare_karten(seite)))
-    check("Fokus blieb auf dem Radio (kein Kontextwechsel)", seite.evaluate("document.activeElement && document.activeElement.name === 'imgFilterStatus'"))
+    check("Fokus blieb auf dem Radio (kein Kontextwechsel)", seite.evaluate("document.activeElement && document.activeElement.name === 'imgFilterStand'"))
 
     # 3) Platzhalter immer bei leerem Feld
     ohne = seite.evaluate("Array.from(document.querySelectorAll('textarea.alt-text-field')).filter(t => !t.disabled && !(t.getAttribute('placeholder')||'').trim()).length")
@@ -126,8 +127,8 @@ with sync_playwright() as p:
     check("Karte bleibt beim Zaehler-Update sichtbar", f"imgcard_{off_id}" in sichtbare_karten(seite))
 
     # 6) Geteiltes Projekt: Pruefchips folgen hinter den Grundchips (nur Client-Flag)
-    keys_shared = seite.evaluate("() => { window._inReview = true; rebuildFilterChips(); const k = Array.from(document.querySelectorAll('input[name=imgFilterStatus]')).map(i => i.value); window._inReview = false; rebuildFilterChips(); return k; }")
-    check("Mit Freigabe: 3 Grundchips + 6 Pruefchips", keys_shared == ["alle", "offen", "mit_text", "neu", "in_bearbeitung", "lek_frei", "lek_aend", "her_frei", "her_aend"], keys_shared)
+    keys_shared = seite.evaluate("() => { window._inReview = true; rebuildFilterChips(); const s = Array.from(document.querySelectorAll('input[name=imgFilterStand]')).map(i => i.value); const p = Array.from(document.querySelectorAll('input[name=imgFilterPruef]')).map(i => i.value); const leg = (document.querySelector('#filterPruefFieldset legend') || {}).textContent || ''; window._inReview = false; rebuildFilterChips(); const weg = !document.getElementById('filterPruefFieldset'); return { s, p, leg, weg }; }")
+    check("Mit Freigabe: Feld 1 unveraendert, Feld 2 „Nach Freigabestatus filtern“ mit Alle + 6 Pruefchips", keys_shared["s"] == ["alle", "offen", "mit_text"] and keys_shared["p"] == ["alle", "neu", "in_bearbeitung", "lek_frei", "lek_aend", "her_frei", "her_aend"] and "Freigabestatus" in keys_shared["leg"] and keys_shared["weg"], keys_shared)
 
     # 7) Laufmeldung-Saetze und Uebersetzungen
     s1 = seite.evaluate("fehlgeschlagenSatz(1)")

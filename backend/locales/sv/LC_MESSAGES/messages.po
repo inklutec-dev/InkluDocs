@@ -6247,3 +6247,12 @@ msgstr "Ett anrop denna månad via {k} nycklar."
 
 msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter."
 msgstr "Per nyckel: {minute} skrivande anrop per minut och {tag} per dag (glidande fönster). Läsande anrop som status och poster räknas inte där, men har en egen gräns på {lesen} per minut; en fråga var femte sekund ligger långt under."
+
+msgid "Nach Freigabestatus filtern"
+msgstr "Filtrera efter granskningsstatus"
+
+msgid "Feld {n}: {art}, {name}"
+msgstr "Fält {n}: {art}, {name}"
+
+msgid "Feld {n}: {art}"
+msgstr "Fält {n}: {art}"

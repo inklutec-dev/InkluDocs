@@ -63,7 +63,7 @@ with sync_playwright() as p:
     check("Seitenansicht-Klappe", pg.locator("details.page-section").first.locator("details.page-view-details").count() == 1)
     check("Seitentext-Klappe", pg.locator("details.page-section").first.locator("details.page-text-details").count() >= 1)
     h4 = pg.locator("details.page-section").first.locator("h4.image-heading")
-    check("Feld-Ueberschriften h4 'Feld N, Feldname, Feldart' (Michael P1)", h4.count() >= 8 and h4.first.inner_text().startswith("Feld 1, vorname, Textfeld"), h4.first.inner_text() if h4.count() else "")
+    check("Feld-Ueberschriften h4 'Feld N: Feldart, Feldname' (Michael P1 + 17.09.)", h4.count() >= 8 and h4.first.inner_text().startswith("Feld 1: Textfeld, vorname"), h4.first.inner_text() if h4.count() else "")
     check("Status-Badges rechts neben der Ueberschrift (Michael P2)", pg.locator("section.feld-review").first.locator(".feld-kopf .feld-badges .badge").count() >= 1)
     check("Kein 'Technischer Feldname' mehr im Kontext (Michael P1)", "Technischer Feldname" not in pg.locator("section.feld-review").first.locator("p.feld-kontext").inner_text())
     card = pg.locator("section.feld-review").first

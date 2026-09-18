@@ -79,8 +79,10 @@
         const art = feldartText(f.feld_art);
         let name = istNamenlos(f) ? t('ohne Feldnamen') : (f.feld_name || '');
         if (name && !istNamenlos(f) && name.length <= 2) name = t('Feldname {name}', { name: name });
-        return name ? t('Feld {n}, {name}, {art}', { n: f.feld_index, name: name, art: art })
-                    : t('Feld {n}, {art}', { n: f.feld_index, art: art });
+        // Michael Karbe 17.09.2026 (18:28): wie bei den Bildern „Feld 1:" mit Doppelpunkt, danach erst die
+        // Feldart, dann der Feldname — liest sich besser als Name vor Art.
+        return name ? t('Feld {n}: {art}, {name}', { n: f.feld_index, art: art, name: name })
+                    : t('Feld {n}: {art}', { n: f.feld_index, art: art });
     }
 
     // Kontextabsatz: exakt das, was auch die KI (Stufe 2) sehen wird — der

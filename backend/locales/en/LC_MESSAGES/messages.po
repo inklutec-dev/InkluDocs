@@ -6685,3 +6685,12 @@ msgstr "One call this month via {k} keys."
 
 msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter."
 msgstr "Per key: {minute} writing requests per minute and {tag} per day (sliding window). Reading calls such as status and items do not count there, but have their own limit of {lesen} per minute; polling every five seconds stays far below it."
+
+msgid "Nach Freigabestatus filtern"
+msgstr "Filter by review status"
+
+msgid "Feld {n}: {art}, {name}"
+msgstr "Field {n}: {art}, {name}"
+
+msgid "Feld {n}: {art}"
+msgstr "Field {n}: {art}"

@@ -6685,3 +6685,12 @@ msgstr "Un appel ce mois-ci via {k} clés."
 
 msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter."
 msgstr "Par clé : {minute} requêtes en écriture par minute et {tag} par jour (fenêtre glissante). Les appels en lecture comme le statut et les éléments n’y comptent pas, mais ont leur propre limite de {lesen} par minute ; une interrogation toutes les cinq secondes reste bien en dessous."
+
+msgid "Nach Freigabestatus filtern"
+msgstr "Filtrer par statut de validation"
+
+msgid "Feld {n}: {art}, {name}"
+msgstr "Champ {n} : {art}, {name}"
+
+msgid "Feld {n}: {art}"
+msgstr "Champ {n} : {art}"
