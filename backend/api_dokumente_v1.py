@@ -448,6 +448,12 @@ async def _documents_create(user: dict, request: Request):
         language = _sprache(data.get("language"))
         use_context = _als_bool(data.get("use_context"))
         _prompt_daten = {k: data.get(k) for k in ("prompt_id", "prompt") if data.get(k) not in (None, "")}
+        if _prompt_daten:
+            conn = _d.get_db()
+            try:
+                _lauf_einstellungen_pruefen(conn, user["id"], _prompt_daten)   # vor dem Anlegen (Review N4)
+            finally:
+                conn.close()
         # Web-Werkzeug: die App-Route legt das Projekt selbst an und laedt die Bilder synchron.
         erg = await _route("POST", "/api/scan-url")(request=_Body({"url": url}, request), user=user)
         pid = int(erg["project_id"])
@@ -480,8 +486,14 @@ async def _documents_create(user: dict, request: Request):
     language = _sprache(form.get("language"))
     use_context = _als_bool(form.get("use_context"))
     name = _name(form.get("name"), os.path.basename(filename))
-    pid = _projekt_anlegen(user["id"], name, tool, language, use_context, api_key_id=user.get("api_key_id"))
     _prompt_daten = {k: form.get(k) for k in ("prompt_id", "prompt") if form.get(k) not in (None, "")}
+    if _prompt_daten:
+        conn = _d.get_db()
+        try:
+            _lauf_einstellungen_pruefen(conn, user["id"], _prompt_daten)   # vor dem Anlegen (Review N4)
+        finally:
+            conn.close()
+    pid = _projekt_anlegen(user["id"], name, tool, language, use_context, api_key_id=user.get("api_key_id"))
     if _prompt_daten:
         conn = _d.get_db()
         try:
@@ -524,6 +536,35 @@ async def _documents_get(user: dict, project_id: int):
 
 
 PROMPT_TEXT_MAX = 4000   # wie main.PROMPT_TEXT_MAX
+API_PROMPTS_MAX = 50     # gespeicherte Prompts der Kategorie „API“ je Konto (Review 18.09.2026, N5)
+
+
+def _prompt_text_norm(text) -> str:
+    """Freier Prompt: Steuerzeichen raus, Whitespace zusammengezogen — so ist „gleicher Text“ auch bei
+    abweichenden Leerzeichen dieselbe gespeicherte Zeile (Review N5)."""
+    t = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", str(text))
+    return re.sub(r"[ \t]+", " ", t).strip()
+
+
+def _lauf_einstellungen_pruefen(conn, user_id: int, data: dict) -> None:
+    """Reine Pruefung (kein Schreiben) — VOR dem Anlegen eines Projekts aufrufen, damit ein
+    ungueltiger Prompt kein leeres Projekt zuruecklaesst (Review 18.09.2026, N4, N9)."""
+    _sprache(data.get("language"))
+    prompt_id, prompt = data.get("prompt_id"), data.get("prompt")
+    if prompt_id not in (None, "") and prompt is not None:
+        raise HTTPException(status_code=400, detail="Bitte entweder prompt_id oder prompt angeben, nicht beides")
+    if prompt_id not in (None, ""):
+        try:
+            pid = int(prompt_id)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="prompt_id ungültig")
+        if pid and not conn.execute("SELECT 1 FROM user_prompts WHERE id = ? AND user_id = ?", (pid, user_id)).fetchone():
+            raise HTTPException(status_code=404, detail="prompt_id nicht gefunden (nur eigene gespeicherte Prompts)")
+    if prompt is not None:
+        if not isinstance(prompt, str):
+            raise HTTPException(status_code=400, detail="prompt muss ein Text sein")
+        if len(_prompt_text_norm(prompt)) > PROMPT_TEXT_MAX:
+            raise HTTPException(status_code=400, detail=f"prompt darf höchstens {PROMPT_TEXT_MAX} Zeichen lang sein")
 
 
 def _lauf_einstellungen_anwenden(conn, user_id: int, project_id: int, data: dict) -> dict:
@@ -532,6 +573,7 @@ def _lauf_einstellungen_anwenden(conn, user_id: int, project_id: int, data: dict
     prompt_id: gespeicherter Prompt des Kontos („Meine Prompts“). prompt: freier Text — wird als
     gespeicherter Prompt in der Kategorie „API“ angelegt (gleicher Text = gleiche Zeile), damit
     Kontoinhaber ihn in der App sehen und der Lauf ihn wie jeden eigenen Prompt nutzt."""
+    _lauf_einstellungen_pruefen(conn, user_id, data)
     gesetzt = {}
     language = _sprache(data.get("language"))
     use_context = _als_bool(data.get("use_context"))
@@ -557,9 +599,7 @@ def _lauf_einstellungen_anwenden(conn, user_id: int, project_id: int, data: dict
             conn.execute("UPDATE projects SET prompt_id = ? WHERE id = ? AND user_id = ?", (prompt_id, project_id, user_id))
             gesetzt["prompt_id"] = prompt_id
     elif prompt is not None:
-        text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", str(prompt)).strip()
-        if len(text) > PROMPT_TEXT_MAX:
-            raise HTTPException(status_code=400, detail=f"prompt darf höchstens {PROMPT_TEXT_MAX} Zeichen lang sein")
+        text = _prompt_text_norm(prompt)
         if not text:
             conn.execute("UPDATE projects SET prompt_id = NULL WHERE id = ? AND user_id = ?", (project_id, user_id))
             gesetzt["prompt_id"] = None
@@ -569,7 +609,18 @@ def _lauf_einstellungen_anwenden(conn, user_id: int, project_id: int, data: dict
             if row:
                 pid = row["id"]
             else:
-                name = ("API: " + re.sub(r"\s+", " ", text)[:60]).strip()
+                # Obergrenze je Konto (Review N5): aelteste API-Prompts, die kein Projekt mehr nutzt, raeumen.
+                anzahl = conn.execute("SELECT COUNT(*) FROM user_prompts WHERE user_id = ? AND category = 'API'", (user_id,)).fetchone()[0]
+                if anzahl >= API_PROMPTS_MAX:
+                    alte = conn.execute(
+                        """SELECT id FROM user_prompts WHERE user_id = ? AND category = 'API'
+                           AND NOT EXISTS (SELECT 1 FROM projects p WHERE p.prompt_id = user_prompts.id)
+                           ORDER BY created_at, id LIMIT ?""", (user_id, anzahl - API_PROMPTS_MAX + 1)).fetchall()
+                    for a in alte:
+                        conn.execute("DELETE FROM user_prompts WHERE id = ?", (a["id"],))
+                    if anzahl - len(alte) >= API_PROMPTS_MAX:
+                        raise HTTPException(status_code=400, detail=f"Höchstens {API_PROMPTS_MAX} API-Prompts je Konto; bitte prompt_id eines gespeicherten Prompts nutzen")
+                name = ("API: " + text[:60]).strip()
                 cur = conn.execute("INSERT INTO user_prompts (user_id, name, description, category, prompt_text) VALUES (?, ?, ?, 'API', ?)",
                                    (user_id, name, "Über die API mitgegebener Prompt", text))
                 pid = cur.lastrowid
@@ -593,6 +644,15 @@ async def _documents_generate(user: dict, request: Request, project_id: int):
     conn = _d.get_db()
     try:
         p = _projekt(conn, project_id, user["id"])
+        if _ist_formular(p) and "scope" in data and scope != "all":
+            # Review 18.09.2026 (M3): Formulare kennen nur „alle benannten Felder“ — statt still alles
+            # zu berechnen, sagen wir es. Ohne scope im Body lehnen wir ebenfalls ab (Vorgabe waere open).
+            raise HTTPException(status_code=400, detail="Formulare: scope=all erforderlich (der Lauf beschreibt alle benannten Felder)")
+        if _ist_formular(p) and "scope" not in data:
+            raise HTTPException(status_code=400, detail="Formulare: bitte scope=all angeben (der Lauf beschreibt alle benannten Felder und ersetzt vorhandene Quickinfos)")
+        if p.get("status") in ("processing", "extracting"):
+            # Review N7: Einstellungen nicht setzen, wenn ohnehin kein Lauf startet.
+            raise HTTPException(status_code=409, detail="Für dieses Dokument läuft gerade eine Verarbeitung")
         gesetzt = _lauf_einstellungen_anwenden(conn, user["id"], project_id, data)
     finally:
         conn.close()

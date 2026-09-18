@@ -105,6 +105,27 @@ class FehlergrundUndEinstellungenTest(unittest.TestCase):
         self.assertIn("Unerwarteter", main._fehler_kurz(KeyError("x")))
         for e in (RuntimeError("secret sk-123 /app/data/uploads/9/x.pdf"),):
             self.assertNotIn("sk-123", main._fehler_kurz(e)); self.assertNotIn("/app/", main._fehler_kurz(e))
+        # Review 18.09. (N6): Zahlen in Pfaden sind keine HTTP-Codes; Typ geht vor Text
+        self.assertIn("fehlt", main._fehler_kurz(FileNotFoundError("No such file: /app/data/uploads/4290/p429_1.png")))
+        self.assertIn("nicht erreichbar", main._fehler_kurz(ConnectionResetError("reset by peer")))
+        self.assertIn("429", main._fehler_kurz(RuntimeError("Gemini HTTP 429 (gemini-3.1-pro-preview): quota")))
+        self.assertIn("Unerwarteter", main._fehler_kurz(RuntimeError("Bild 5031 in Ordner 429x")))
+
+    def test_pruefung_vor_dem_anlegen(self):
+        import sqlite3
+        conn = sqlite3.connect(":memory:"); conn.row_factory = sqlite3.Row
+        conn.executescript("CREATE TABLE user_prompts (id INTEGER PRIMARY KEY, user_id INT, name TEXT, description TEXT, category TEXT, prompt_text TEXT, created_at TEXT DEFAULT (datetime('now')));")
+        alt_d = v1._d
+        class D: alt_text_languages = ("de", "en")
+        v1._d = D()
+        try:
+            for data in ({"prompt_id": 1, "prompt": "x"}, {"prompt": 123}, {"prompt": "x" * 4001}, {"prompt_id": "abc"}, {"language": "xx"}):
+                with self.assertRaises(Exception, msg=str(data)):
+                    v1._lauf_einstellungen_pruefen(conn, 1, data)
+            v1._lauf_einstellungen_pruefen(conn, 1, {"prompt": "ok", "language": "en"})   # kein Fehler
+            self.assertEqual(v1._prompt_text_norm("  Kurz   bitte \t hier "), "Kurz bitte hier")
+        finally:
+            v1._d = alt_d
 
     def test_item_traegt_error_nur_bei_fehler(self):
         basis = {"id": 1, "status": "done", "alt_text": "x", "alt_text_edited": None, "original_alt": "", "image_type": "foto", "fehler_grund": ""}

@@ -128,7 +128,7 @@
       <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/items</code></td><td>{{ _('Alle Einträge mit Texten, Status und Bild-Adresse.') }}</td></tr>
       <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/items/{item_id}/file</code></td><td>{{ _('Die Bilddatei eines Eintrags, zum Anzeigen in deinem Produkt.') }}</td></tr>
       <tr><td><span class="badge b-patch">PATCH</span><code>/api/v1/documents/{id}/items/{item_id}</code></td><td>{{ _('Text von Hand setzen: alt_text und/oder langbeschreibung (Bilder) bzw. quickinfo (Felder). Ein leerer Text heißt bewusst leer.') }}</td></tr>
-      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/items/{item_id}/generate</code></td><td>{{ _('Einen Eintrag neu beschreiben lassen (optional image_type).') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/items/{item_id}/generate</code></td><td>{{ _('Einen Eintrag neu beschreiben lassen (optional image_type).') }} {{ _('Nimmt auch language, use_context, prompt_id oder prompt an; sie gelten danach für das ganze Dokument.') }}</td></tr>
       <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/export/{format}</code></td><td>{{ _('Export: pdf, docx, pdfua, xlsx, csv, json; für Formulare formular und formular_csv. Antwort ist die Datei; bei pdfua ein Bericht mit download_url.') }}</td></tr>
       <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/review-link</code></td><td>{{ _('Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify).') }}</td></tr>
       <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/review-links</code></td><td>{{ _('Freigaben des Dokuments auflisten.') }}</td></tr>
@@ -157,7 +157,7 @@
     <caption class="sr-only">{{ _('Parameter beim Start') }}</caption>
     <thead><tr><th scope="col">{{ _('Parameter') }}</th><th scope="col">{{ _('Pflicht') }}</th><th scope="col">{{ _('Bedeutung') }}</th></tr></thead>
     <tbody>
-      <tr><td><code>scope</code></td><td>{{ _('Nein') }}</td><td>{{ _('open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all.') }}</td></tr>
+      <tr><td><code>scope</code></td><td>{{ _('Nein') }}</td><td>{{ _('open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all.') }} {{ _('Einträge mit eigenem Text (alt_text_edited) fasst open nie an; ein per PATCH gesetzter Text macht auch einen fehlgeschlagenen Eintrag fertig. Bei Formularen muss scope=all ausdrücklich mitgegeben werden, sonst 400.') }}</td></tr>
       <tr><td><code>document_id</code></td><td>{{ _('Nein') }}</td><td>{{ _('Nur ein Dokument des Projekts.') }}</td></tr>
     </tbody>
   </table>
@@ -185,6 +185,7 @@
   <p>{{ _('GET …/items lässt sich filtern: ?status=failed (auch pending, generating, done) und ?text_status=offen (auch mit_text, dekorativ). count zählt die gelieferten, total alle Einträge.') }}</p>
   <h3 id="h-failed">{{ _('Fehlgeschlagene Einträge') }}</h3>
   <p>{{ _('Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in lauf_hinweis am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt.') }}</p>
+  <p>{{ _('error kann auch bei status done stehen: Dann ist ein erneuter Versuch gescheitert, der vorhandene Text ist geblieben und needs_review ist gesetzt.') }}</p>
   <p>{{ _('So holst du Fehlschläge nach: POST …/generate ohne scope (oder scope=open) beschreibt nur die offenen Einträge, fertige bleiben unberührt und kosten nichts. Einzelne Einträge: POST …/items/{item_id}/generate. Credits fallen nur für Einträge an, die einen Text bekommen haben. Erst wenn nichts mehr offen ist, nimmt scope=all wieder alle Einträge.') }}</p>
   <pre tabindex="0"><code>{% raw %}GET /api/v1/documents/812/items?status=failed
 { "count": 2, "total": 48, "items": [
