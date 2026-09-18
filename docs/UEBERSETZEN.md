@@ -72,7 +72,7 @@ Inhaltsverzeichnis) werden übersetzt; ein Hinweis rät, in Word F9 zu drücken.
 | `backend/uebersetzung.py` | Kern: `segmentiere_docx()` (Segmente mit Stücken, Marken, Trennern, Kontext, Ort, Abschnitt), `text_mit_marken()`, `marken_zerlegen()`, `uebersetze_batch()` (Gemini über `llm_client.call_text_with_schema`, Schema `UebersetzungBatchOutput`, Korrekturversuch, Ersatzweg), `schreibe_uebersetzung()` (byteidentischer Rückschreiber, Sprachkennung), `strukturvergleich()`, `credits_fuer()`, `ZIELSPRACHEN` (22 Einträge mit regionalen Varianten: Englisch GB/USA/Australien, Deutsch DE/AT/CH, Französisch FR/CH, Spanisch Spanien/Lateinamerika, Portugiesisch PT/BR, Niederländisch NL/BE; Kennung = Word-Sprachkennung, Modell bekommt Schreibweise/Datumsformat der Variante). |
 | `backend/uebersetzung_api.py` | Router: Lesen (mit `?leicht=1` nur der Stand), Vorschau, Lauf (Pakete je Dokument, Guthaben und Tageslimit je Paket, Abbruch, Handarbeit während des Laufs gewinnt), Handkorrektur, Export (einzeln/ZIP, im Executor; nicht übersetzte Dokumente werden beim Ganzprojekt-Export ausgelassen und benannt). Segmentierung **lazy** beim ersten Öffnen der Ansicht (`_segmente_sicherstellen`), damit Word-Projekte ohne Übersetzungswunsch nichts kosten. Anschlusspunkte für andere Oberflächen und den Chatbot: `segmentiere_und_speichere()`, `uebersetzungsstand()`, `bot_starten()`, `bot_export()`, `lauf_starten()`, `export_vorbereiten()` + `export_bauen()`. Beim Start werden alte `project_type = docx-uebersetzung` auf `docx` gehoben. |
 | `backend/database.py` | Tabelle `uebersetzung_segmente`; Löschung bei Konto/Projekt/Dokument. |
-| `backend/tools.py` | Werkzeug `uebersetzen` „Dokumente übersetzen“ (Beta). |
+| `backend/tools.py` | Werkzeug `word` heißt „Word-Dokumente“ (Alt-Texte, Übersetzung, Word/PDF-Export). Kennung `uebersetzen` bleibt gültig (alte Projekte, API), ist aber `sichtbar=False`: kein eigener Eintrag im Anlege-Menü (Steve 18.09.2026: „Wir nehmen nur das eine Werkzeug“). |
 | `backend/billing.py` | Aktion `uebersetzung` (1 Credit je 100 Wörter), zählt im Tageslimit. |
 | `backend/main.py` | `TOOL_PROJECT_TYPE["uebersetzen"] = "docx"` (derselbe Dateityp wie das Word-Werkzeug), Upload über den Word-Pfad (Übersetzen-Projekte nehmen nur .docx; 409 während eines Laufs), Router, Löschpfade. |
 | `frontend/uebersetzen.js` | Ansicht „Übersetzung“: H1 Projekt (mit Ansichts-Wahl), H2 Dokument, H3 Abschnitt (behält den Titel), H4 nur „{Art} {n}“ (Michael 18.09.); je Absatz Original als schreibgeschütztes Feld mit Label, Textarea „Übersetzung“ (Auto-Save 800 ms), Status-Badge, Hinweis; Filterkarte „Absätze filtern“ mit Zählern; Dialog „Übersetzen“ wie die Rückfrage der anderen Werkzeuge (Abbrechen links, Start rechts); Export-Dialog mit Fußzeile; Fortschritt über leichtes Polling (`?leicht=1`) ohne Neuaufbau der Seite; keine Statuszeile unter dem Projektnamen (wie Word). |
@@ -118,8 +118,9 @@ durch die Liste); erst „Öffnen“ wechselt, sagt den Wechsel an und schreibt
 `?ansicht=…` in die Adresse, so dass Browser-Zurück und Lesezeichen funktionieren.
 Laufende Auto-Speicherungen werden vor dem Wechsel abgewartet.
 
-- Beide Werkzeuge (`word`, `uebersetzen`) führen zu demselben Projekttyp; das Werkzeug
-  bestimmt nur die Start-Ansicht. Das Dashboard und die Projektliste bleiben unverändert.
+- Im Anlege-Menü gibt es nur noch „Word-Dokumente“ (Kennung `word`). Die Kennung
+  `uebersetzen` bleibt für bestehende Projekte und die API gültig und bestimmt nur die
+  Start-Ansicht. Dashboard und Projektliste bleiben unverändert.
 - Die Ansichten selbst sind unverändert: die Alt-Text-Ansicht ist das Word-Werkzeug wie
   bisher (Bilderkarten, Filter, Upload-Block, Chatbot, Herunterladen-Dialog mit PDF/UA);
   die Übersetzungs-Ansicht ist `uebersetzen.js`.

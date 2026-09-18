@@ -1,4 +1,7 @@
-# Word-Werkzeug: Alt-Texte für Word-Dokumente (.docx)
+# Word-Werkzeug „Word-Dokumente“: Alt-Texte für Word-Dokumente (.docx)
+
+> Seit 18.09.2026 heißt das Werkzeug im Anlege-Menü „Word-Dokumente“ und hat zwei Ansichten:
+> „Alt-Texte“ (dieses Dokument) und „Übersetzung“ (docs/UEBERSETZEN.md, Abschnitt „Testumbau bei Word“).
 
 **Stand:** 27.08.2026, Stufe 1 (Alt-Texte) nach Härtetest mit echten Word-Dateien und Seitenerkennung. Autor: Claude (InkluTec), Vorgaben Steve Weidel und Michael Karbe.
 

@@ -4193,7 +4193,7 @@ async def create_project(request: Request, user: dict = Depends(get_current_user
 
 # Werkzeug -> Datentyp der Quelle (EINE Stelle fuer App und Public API v1, 17.09.2026).
 TOOL_PROJECT_TYPE = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx", "formular": "pdfform",
-                     # Testumbau 18.09.2026 (Steve): „Dokumente uebersetzen" ist ein Eingang in ein Word-Projekt
+                     # Testumbau 18.09.2026 (Steve): Kennung „uebersetzen" (API-Eingang, alte Projekte) ist ein Word-Projekt
                      # (Dateityp docx) mit Startansicht Uebersetzung — dieselben Faehigkeiten wie „word".
                      "uebersetzen": uebersetzung_api.PROJECT_TYPE}
 
@@ -4543,6 +4543,7 @@ async def list_tools(user: dict = Depends(get_current_user)):
                 "status": t.status.value,
                 "status_label": t.status_label,
                 "is_available": t.is_available,
+                "sichtbar": t.sichtbar,  # False: nicht im Anlege-Menue (Name bleibt fuer Projektlisten)
             }
             for t in TOOLS
         ]
@@ -4605,7 +4606,7 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
         f.write(content)
 
     if project_id is not None and uebersetzung_api.ist_uebersetzungsprojekt(project_id, user["id"]):
-        # Eingang „Dokumente uebersetzen" (Testumbau 18.09.2026): nur Word-Dateien; der Upload laeuft dann
+        # Kennung „uebersetzen" (Testumbau 18.09.2026): nur Word-Dateien; der Upload laeuft dann
         # wie im Word-Werkzeug (Bilder extrahieren), die Uebersetzungs-Segmente entstehen bei Bedarf.
         if not is_docx:
             try:
@@ -4682,7 +4683,7 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
             raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
         erwartet_tool = ("word", "uebersetzen") if art == "docx" else ("pdf",)
         if art == "docx" and proj["tool"] == "uebersetzen":
-            # Eingang „Dokumente uebersetzen" (Testumbau 18.09.2026): waehrend eines Laufs (Uebersetzung oder
+            # Kennung „uebersetzen" (Testumbau 18.09.2026): waehrend eines Laufs (Uebersetzung oder
             # Alt-Texte) wuerde ein Upload den Projektstatus umschreiben und den Lauf entkoppeln (Review M2b).
             _st = conn.execute("SELECT status FROM projects WHERE id = ?", (project_id,)).fetchone()
             if _st and _st["status"] in ("processing", "extracting"):

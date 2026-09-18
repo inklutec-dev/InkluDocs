@@ -30,6 +30,7 @@
     sel.innerHTML = '';
     const tools = data.tools || [];
     tools.forEach((tool) => {
+      if (tool.sichtbar === false) return;  // z. B. „uebersetzen": Kennung gilt, Eintrag nicht im Menue (18.09.2026)
       const opt = document.createElement('option');
       if (tool.is_available) {
         opt.value = tool.key;
@@ -41,7 +42,7 @@
       }
       sel.appendChild(opt);
     });
-    const firstAvail = tools.find((tool) => tool.is_available);
+    const firstAvail = tools.find((tool) => tool.is_available && tool.sichtbar !== false);
     if (firstAvail) sel.value = firstAvail.key;
   }
 

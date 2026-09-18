@@ -42,7 +42,7 @@ with sync_playwright() as p:
     print("== A. Werkzeugauswahl ==")
     pg.goto(B + "/projekt-neu"); pg.wait_for_timeout(1500)
     opts = pg.locator("#toolSelect option").all_text_contents()
-    check("„Dokumente übersetzen“ im Auswahlmenue", any("Dokumente übersetzen" in o for o in opts), opts)
+    check("EIN Werkzeug „Word-Dokumente“ im Auswahlmenue, kein „Dokumente übersetzen“ mehr (Steve 18.09.)", any(o.strip() == "Word-Dokumente" for o in opts) and not any("übersetzen" in o for o in opts), opts)
     zweitdokumente_loeschen(pg); pg.goto(B + f"/app?projekt={PID}"); pg.wait_for_timeout(3000)
     print("== B. Ansicht ==")
     pg.goto(B + f"/app?projekt={PID}"); pg.wait_for_timeout(3500)

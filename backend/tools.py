@@ -11,7 +11,9 @@ EIN NEUES WERKZEUG HINZUFÜGEN:
 Mehr ist nicht nötig – Dashboard und Anlege-Dialog ziehen automatisch nach.
 
 Ein Werkzeug entfernen: Eintrag löschen. Ein Werkzeug vorübergehend sperren,
-ohne es zu verbergen: Status auf IN_VORBEREITUNG setzen.
+ohne es zu verbergen: Status auf IN_VORBEREITUNG setzen. Ein Werkzeug aus dem
+Anlege-Menü nehmen, aber die Kennung für alte Projekte und die API behalten:
+sichtbar=False.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -42,6 +44,7 @@ class Tool:
     description: str  # ein Satz Erklärung
     route: str        # Ziel-Adresse der Arbeitsfläche ("" wenn noch keine)
     status: ToolStatus
+    sichtbar: bool = True  # False: nicht im Anlege-Menü, Kennung bleibt gültig (alte Projekte, API)
 
     @property
     def is_available(self) -> bool:
@@ -81,12 +84,16 @@ TOOLS: list[Tool] = [
     ),
     # WORD-WERKZEUG (26.08.2026, Steve + Michael): eigenes Werkzeug, NICHT ins
     # PDF-Werkzeug (Entscheidung 14.08.2026). Backend: docx_processor.py (lesen)
-    # + docx_export.py (zurueckschreiben), Doku docs/WORD.md. Beta, bis echte
-    # Kundendokumente durch sind (Vektorgrafiken/SmartArt kommen in Stufe 2).
+    # + docx_export.py (zurueckschreiben), Doku docs/WORD.md.
+    # TESTUMBAU 18.09.2026 (Steve): Projekt = Dateityp, Faehigkeit = Ansicht. Ein Word-
+    # Projekt hat die Ansichten „Alt-Texte" und „Uebersetzung" (Zeile „Ansicht" im
+    # Projektkopf, app.html ansichtWahlHtml). Deshalb heisst das Werkzeug nach der
+    # Datei-Art „Word-Dokumente", nicht mehr nach einer Faehigkeit (Steve 18.09.2026:
+    # „Wir nehmen nur das eine Werkzeug"). Doku docs/UEBERSETZEN.md, Abschnitt Testumbau.
     Tool(
         key="word",
-        name="Alt-Texte für Word-Dokumente",
-        description="Word-Dokument (.docx) hochladen, die enthaltenen Bilder mit Alt-Texten versehen und die Datei mit Alt-Texten wieder herunterladen.",
+        name="Word-Dokumente",
+        description="Word-Datei (.docx) hochladen, die Bilder mit Alt-Texten versehen, den Text übersetzen lassen und die Datei als Word oder barrierefreie PDF herunterladen.",
         route="/app",
         status=ToolStatus.VERFUEGBAR,  # Beta-Etikett entfällt seit 09.09.2026 (Steve)
     ),
@@ -103,19 +110,20 @@ TOOLS: list[Tool] = [
         route="/app",
         status=ToolStatus.VERFUEGBAR,  # Beta-Etikett entfällt seit 09.09.2026 (Steve)
     ),
-    # UEBERSETZEN-WERKZEUG (18.09.2026, Steve; Anlass Mark Hounschild): ganzes
-    # Word-Dokument in eine andere Sprache, Struktur und Formatierung bleiben
-    # byteidentisch — nur Textknoten, Alt-Texte, Titel und Sprachkennung aendern
-    # sich. Eigenes Werkzeug mit EINER Ansicht (Steve: kein Umschalter im
-    # Word-Werkzeug). Kern uebersetzung.py (Segmente/Marken/Rueckschreiber),
-    # Router uebersetzung_api.py, Ansicht frontend/uebersetzen.js, Doku
-    # docs/UEBERSETZEN.md. Beta, bis echte Kundendokumente durch sind.
+    # UEBERSETZEN (18.09.2026, Anlass Mark Hounschild): Kern uebersetzung.py (Segmente/
+    # Marken/byteidentischer Rueckschreiber), Router uebersetzung_api.py, Ansicht
+    # frontend/uebersetzen.js, Doku docs/UEBERSETZEN.md. Seit dem Testumbau 18.09.2026
+    # KEIN eigener Eintrag im Anlege-Menue mehr (sichtbar=False): Uebersetzen ist die
+    # Ansicht „Uebersetzung" jedes Word-Projekts. Die Kennung bleibt fuer bestehende
+    # Projekte und die Public API gueltig; ein so angelegtes Projekt ist ein Word-Projekt
+    # (Dateityp docx), das in der Ansicht Uebersetzung startet.
     Tool(
         key="uebersetzen",
-        name="Dokumente übersetzen",
-        description="Word-Dokument (.docx) hochladen, den gesamten Text in eine andere Sprache übersetzen lassen und die Datei mit unveränderter Formatierung wieder herunterladen.",
+        name="Word-Dokumente (Start: Übersetzung)",
+        description="Wie „Word-Dokumente“, öffnet nach dem Anlegen die Ansicht Übersetzung. Nur über die API anlegbar.",
         route="/app",
-        status=ToolStatus.BETA,
+        status=ToolStatus.VERFUEGBAR,
+        sichtbar=False,
     ),
     Tool(
         key="pdf-a11y",
