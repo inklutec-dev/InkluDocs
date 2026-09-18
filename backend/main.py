@@ -6647,6 +6647,17 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
         doc_sql, doc_args = (" AND document_id = ?", [document_id])
     anzahl_ki, ki_neu_ids = _generier_kandidaten(conn, project_id, modus, doc_sql, doc_args)
     modus = "alle"   # seit 01.09.2026 der einzige Modus (Michael Karbe: Generieren ueberschreibt alles)
+    # PUBLIC API (18.09.2026, Steve): {"nur_offen": true} = nur Bilder OHNE fertigen Text (nie generiert
+    # oder fehlgeschlagen). Die Oberflaeche schickt das nie — Michaels Regel „Generieren ueberschreibt
+    # alles" gilt dort unveraendert. Partner, die nachts Archive durchlaufen lassen, holen damit
+    # Fehlschlaege nach, ohne fertige Bilder erneut zu bezahlen (api_dokumente_v1: scope=open).
+    if isinstance(_body, dict) and _body.get("nur_offen"):
+        offen = {r["id"] for r in conn.execute(
+            "SELECT id FROM images WHERE project_id = ? AND status IN ('pending', 'error')" + doc_sql,
+            [project_id] + doc_args).fetchall()}
+        ki_neu_ids = ki_neu_ids & offen
+        anzahl_ki = len(ki_neu_ids)
+        modus = "offen"
     if not anzahl_ki:
         conn.close()
         return {"ok": True, "gestartet": False, "modus": modus, "anzahl": 0}
@@ -7049,6 +7060,7 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
             conn.execute(
                 """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?, langbeschreibung = ?,
                    needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done',
+                   fehler_grund = '',
                    alt_text_vorher = CASE WHEN alt_text_edited IS NOT NULL AND TRIM(alt_text_edited) != ''
                                           THEN alt_text_edited ELSE alt_text_vorher END,
                    alt_text_edited = NULL
@@ -7095,11 +7107,12 @@ async def _process_project_lauf(project_id: int, user_id: int, force: bool = Fal
                 # needs_review = 1 (Pruefbericht 30.08.2026): Ohne Signal saehe ein Lauf ueber
                 # 200 Bilder, bei dem die KI durchgehend ausfaellt, wie ein voller Erfolg aus.
                 # Der alte Text bleibt gueltig, das Bild bleibt fertig — aber es ist markiert.
-                conn.execute("UPDATE images SET status = 'done', needs_review = 1 WHERE id = ?", (img["id"],))
+                conn.execute("UPDATE images SET status = 'done', needs_review = 1, fehler_grund = ? WHERE id = ?",
+                             (_fehler_kurz(e), img["id"]))
                 fehlversuche += 1
             else:
-                conn.execute("UPDATE images SET status = 'error' WHERE id = ?",
-                             (img["id"],))
+                conn.execute("UPDATE images SET status = 'error', fehler_grund = ? WHERE id = ?",
+                             (_fehler_kurz(e), img["id"]))
 
         conn.execute(
             "UPDATE projects SET processed_images = ? WHERE id = ?",
@@ -7409,6 +7422,27 @@ BILD_DATEI_WEG = ("Die Bilddatei ist nicht mehr vorhanden – das Dokument wurde
                   "oder ersetzt. Bitte die Seite neu laden.")
 
 
+def _fehler_kurz(e: BaseException) -> str:
+    """Kurzer, nutzertauglicher Grund eines Fehlschlags je Bild (18.09.2026, Steve/API-Pruefung).
+    Landet in images.fehler_grund, in der API als `error` und in der Bildkarte als Hinweis.
+    Keine Innereien (Traceback, Schluessel, Pfade) — die stehen im Log."""
+    text = f"{type(e).__name__}: {e}"
+    t = text.lower()
+    if "429" in t or "resource exhausted" in t or "kontingent" in t:
+        return "KI-Dienst überlastet (429) – bitte später erneut versuchen."
+    if "timeout" in t or "timed out" in t or "504" in t:
+        return "Zeitüberschreitung beim KI-Dienst – bitte erneut versuchen."
+    if "schema" in t or "validation" in t or "kein json" in t or "unbrauchbar" in t:
+        return "Die KI-Antwort war unbrauchbar – bitte erneut versuchen."
+    if "gesperrt" in t or "blockreason" in t or "safety" in t:
+        return "Die KI hat das Bild abgelehnt (Inhaltsfilter)."
+    if "cannot identify" in t or "image file" in t or "decompression" in t or "unlesbar" in t:
+        return "Die Bilddatei konnte nicht gelesen werden."
+    if "502" in t or "503" in t or "connection" in t or "verbindung" in t:
+        return "KI-Dienst nicht erreichbar – bitte später erneut versuchen."
+    return "Unerwarteter Fehler bei der Generierung – bitte erneut versuchen."
+
+
 def _fehler_protokoll(vorgang: str, e: BaseException, **bezug) -> None:
     """Fehler eines Nutzer-Vorgangs mit Grund und Rueckverfolgung ins Container-Log schreiben.
     Ein 500 ohne Logzeile ist hinterher nicht mehr zu erklaeren (Prod 01.09.2026). flush, damit
@@ -7510,7 +7544,8 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         conn.execute(
             """UPDATE images SET alt_text = ?, image_type = ?, konfidenz = ?,
                langbeschreibung = ?, alt_text_edited = NULL,
-               needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done' WHERE id = ?""",
+               needs_review = ?, pipeline_steps = ?, validation_result = ?, context_mode = ?, gen_language = ?, status = 'done',
+               fehler_grund = '' WHERE id = ?""",
             (_append_link_reference(result["alt_text"], regen_context or "", regen_lang), result["bildtyp"], result.get("konfidenz", "mittel"),
              langbeschreibung,
              1 if result.get("needs_review") else 0,
@@ -7564,7 +7599,7 @@ async def regenerate_image(project_id: int, image_id: int, request: Request, use
         # Grund INS LOG (01.09.2026): Bis dahin stand der Fehlertext nur in der HTTP-Antwort —
         # ein 500 auf Prod (Projekt 406) war hinterher nicht mehr zu erklaeren.
         _fehler_protokoll("Neu generieren", e, image_id=image_id, project_id=project_id, user_id=user["id"])
-        conn.execute("UPDATE images SET status = 'error' WHERE id = ?", (image_id,))
+        conn.execute("UPDATE images SET status = 'error', fehler_grund = ? WHERE id = ?", (_fehler_kurz(e), image_id))
         processed_count = conn.execute(
             "SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'",
             (project_id,)

@@ -705,6 +705,9 @@ def _migrate_columns(conn):
         ("users", "admin_level", "ALTER TABLE users ADD COLUMN admin_level TEXT DEFAULT 'full'"),
         # v3.3 (14.04.2026): Dreistufige Pipeline mit Validator
         ("images", "needs_review", "ALTER TABLE images ADD COLUMN needs_review INTEGER DEFAULT 0"),
+        # 18.09.2026 (Steve, API-Pruefung): Grund des letzten Fehlschlags je Bild — vorher nur im
+        # Server-Log; Partner ueber die API und die Bildkarte sehen jetzt, WARUM ein Bild scheiterte.
+        ("images", "fehler_grund", "ALTER TABLE images ADD COLUMN fehler_grund TEXT DEFAULT ''"),
         ("images", "pipeline_steps", "ALTER TABLE images ADD COLUMN pipeline_steps TEXT DEFAULT ''"),
         ("images", "validation_result", "ALTER TABLE images ADD COLUMN validation_result TEXT DEFAULT ''"),
         # PDFIX-INTEGRATION (24.04.2026): Extraktionsweg pro Projekt festhalten

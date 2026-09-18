@@ -94,6 +94,53 @@ class FehlerformatTest(unittest.TestCase):
         self.assertEqual(v1._text_status({**leer, "image_type": "dekorativ"}), "dekorativ")
 
 
+class FehlergrundUndEinstellungenTest(unittest.TestCase):
+    """18.09.2026 (Steve, API-Pruefung): Fehlergrund je Bild, scope, Einstellungen je Lauf."""
+
+    def test_fehler_kurz_liefert_nutzertaugliche_gruende(self):
+        self.assertIn("429", main._fehler_kurz(RuntimeError("Gemini HTTP 429 (x): Resource exhausted")))
+        self.assertIn("Zeitüberschreitung", main._fehler_kurz(TimeoutError("timed out")))
+        self.assertIn("unbrauchbar", main._fehler_kurz(ValueError("Schema verletzt auch nach Retry")))
+        self.assertIn("gelesen", main._fehler_kurz(OSError("cannot identify image file")))
+        self.assertIn("Unerwarteter", main._fehler_kurz(KeyError("x")))
+        for e in (RuntimeError("secret sk-123 /app/data/uploads/9/x.pdf"),):
+            self.assertNotIn("sk-123", main._fehler_kurz(e)); self.assertNotIn("/app/", main._fehler_kurz(e))
+
+    def test_item_traegt_error_nur_bei_fehler(self):
+        basis = {"id": 1, "status": "done", "alt_text": "x", "alt_text_edited": None, "original_alt": "", "image_type": "foto", "fehler_grund": ""}
+        self.assertIsNone(v1._bild_item(5, basis)["error"])
+        self.assertEqual(v1._bild_item(5, {**basis, "status": "error", "fehler_grund": "KI-Dienst überlastet (429)"})["error"], "KI-Dienst überlastet (429)")
+        self.assertEqual(v1._bild_item(5, {**basis, "status": "error", "fehler_grund": ""})["error"], None)
+
+    def test_einstellungen_je_lauf(self):
+        import sqlite3
+        conn = sqlite3.connect(":memory:"); conn.row_factory = sqlite3.Row
+        conn.executescript("""CREATE TABLE projects (id INTEGER PRIMARY KEY, user_id INT, alt_language TEXT, use_context INT DEFAULT 1, prompt_id INT);
+            CREATE TABLE user_prompts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INT, name TEXT, description TEXT, category TEXT, prompt_text TEXT);
+            INSERT INTO projects (id, user_id, alt_language) VALUES (7, 1, 'de');
+            INSERT INTO user_prompts (user_id, name, description, category, prompt_text) VALUES (2, 'fremd', '', '', 'x');""")
+        alt_d = v1._d
+        class D: alt_text_languages = ("de", "en", "fr", "es", "da", "sv")
+        v1._d = D()
+        try:
+            g = v1._lauf_einstellungen_anwenden(conn, 1, 7, {"language": "en", "use_context": False, "prompt": "Kurz bitte."})
+            self.assertEqual(g["language"], "en"); self.assertIs(g["use_context"], False); self.assertTrue(g["prompt_id"])
+            row = conn.execute("SELECT alt_language, use_context, prompt_id FROM projects WHERE id = 7").fetchone()
+            self.assertEqual((row[0], row[1]), ("en", 0))
+            up = conn.execute("SELECT category, prompt_text, name FROM user_prompts WHERE id = ?", (row[2],)).fetchone()
+            self.assertEqual((up[0], up[1]), ("API", "Kurz bitte.")); self.assertTrue(up[2].startswith("API: "))
+            g2 = v1._lauf_einstellungen_anwenden(conn, 1, 7, {"prompt": "Kurz bitte."})
+            self.assertEqual(g2["prompt_id"], row[2])   # gleicher Text = gleiche Zeile
+            with self.assertRaises(Exception):
+                v1._lauf_einstellungen_anwenden(conn, 1, 7, {"prompt_id": 1})   # fremder Prompt -> 404
+            with self.assertRaises(Exception):
+                v1._lauf_einstellungen_anwenden(conn, 1, 7, {"prompt": "x" * 5000})   # zu lang -> 400
+            g3 = v1._lauf_einstellungen_anwenden(conn, 1, 7, {"prompt_id": 0})
+            self.assertIsNone(g3["prompt_id"])
+        finally:
+            v1._d = alt_d
+
+
 class LeseBremseTest(unittest.TestCase):
     def test_lesende_aufrufe_haben_eigene_grenze(self):
         from fastapi import HTTPException

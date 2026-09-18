@@ -147,8 +147,21 @@
       <tr><td><code>name</code></td><td>{{ _('Nein') }}</td><td>{{ _('Anzeigename in der App (Standard: Dateiname).') }}</td></tr>
       <tr><td><code>language</code></td><td>{{ _('Nein') }}</td><td>{{ _('Sprache der Texte: de, en, fr, es, da, sv.') }}</td></tr>
       <tr><td><code>use_context</code></td><td>{{ _('Nein') }}</td><td>{{ _('true (Standard): die KI bekommt den Text der Seite als Zusammenhang; false: nur das Bild.') }}</td></tr>
+      <tr><td><code>prompt_id</code></td><td>{{ _('Nein') }}</td><td>{{ _('Ein in InkluDocs gespeicherter eigener Prompt des Kontos (Meine Prompts). 0 hebt den Prompt auf.') }}</td></tr>
+      <tr><td><code>prompt</code></td><td>{{ _('Nein') }}</td><td>{{ _('Eigener Prompt als Text (bis 4.000 Zeichen). Er wird als gespeicherter Prompt in der Kategorie „API“ angelegt und wie in der App zusätzlich zu unseren Regeln an die KI gegeben.') }}</td></tr>
     </tbody>
   </table>
+  <h3>{{ _('Parameter beim Start der Generierung') }}</h3>
+  <p>{{ _('POST …/generate nimmt dieselben Einstellungen je Lauf an: language, use_context, prompt_id oder prompt (sie gelten ab diesem Lauf für das Dokument), dazu document_id und scope.') }}</p>
+  <table>
+    <caption class="sr-only">{{ _('Parameter beim Start') }}</caption>
+    <thead><tr><th scope="col">{{ _('Parameter') }}</th><th scope="col">{{ _('Pflicht') }}</th><th scope="col">{{ _('Bedeutung') }}</th></tr></thead>
+    <tbody>
+      <tr><td><code>scope</code></td><td>{{ _('Nein') }}</td><td>{{ _('open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all.') }}</td></tr>
+      <tr><td><code>document_id</code></td><td>{{ _('Nein') }}</td><td>{{ _('Nur ein Dokument des Projekts.') }}</td></tr>
+    </tbody>
+  </table>
+  <p>{{ _('Die Antwort nennt scope, queued_items (wie viele Einträge der Lauf anfasst) und settings (was gesetzt wurde). Gibt es bei scope=open nichts Offenes, kommt 200 mit started=false und einem Hinweis; nichts wird berechnet.') }}</p>
   <h3>{{ _('Status und Zähler') }}</h3>
   <pre tabindex="0"><code>{% raw %}{
   "id": 812, "kind": "pdf", "status": "done", "language": "de",
@@ -169,6 +182,17 @@
   "needs_review": false, "file_url": "…/items/5031/file"
 }{% endraw %}</code></pre>
   <p>{{ _('alt_text ist der sichtbare Text (eigener Text vor KI-Text vor Quelltext), alt_text_ki der letzte KI-Vorschlag, alt_text_edited der von Hand gesetzte Text (null = nie angefasst, leer = bewusst geleert). needs_review markiert Vorschläge, die die KI selbst als unsicher einstuft. Bei Formularen heißen die Felder quickinfo, quickinfo_ki, quickinfo_original.') }}</p>
+  <p>{{ _('GET …/items lässt sich filtern: ?status=failed (auch pending, generating, done) und ?text_status=offen (auch mit_text, dekorativ). count zählt die gelieferten, total alle Einträge.') }}</p>
+  <h3 id="h-failed">{{ _('Fehlgeschlagene Einträge') }}</h3>
+  <p>{{ _('Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in lauf_hinweis am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt.') }}</p>
+  <p>{{ _('So holst du Fehlschläge nach: POST …/generate ohne scope (oder scope=open) beschreibt nur die offenen Einträge, fertige bleiben unberührt und kosten nichts. Einzelne Einträge: POST …/items/{item_id}/generate. Credits fallen nur für Einträge an, die einen Text bekommen haben. Erst wenn nichts mehr offen ist, nimmt scope=all wieder alle Einträge.') }}</p>
+  <pre tabindex="0"><code>{% raw %}GET /api/v1/documents/812/items?status=failed
+{ "count": 2, "total": 48, "items": [
+  { "id": 5031, "status": "failed", "text_status": "offen",
+    "error": "KI-Dienst überlastet (429) – bitte später erneut versuchen.", … } ] }
+
+POST /api/v1/documents/812/generate            → { "started": true, "scope": "open", "queued_items": 2, … }
+POST /api/v1/documents/812/generate  {"scope": "all", "language": "en"}   → alle 48 neu, auf Englisch{% endraw %}</code></pre>
 </section>
 
 <section class="dash-card" aria-labelledby="h-wege">
