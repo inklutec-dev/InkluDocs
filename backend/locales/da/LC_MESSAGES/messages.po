@@ -6669,3 +6669,9 @@ msgstr "Sådan indhenter du fejl: POST …/generate uden scope (eller scope=open
 
 msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
 msgstr "open (standard): kun poster uden færdig tekst, altså aldrig genererede og fejlede. all: beskriv alle poster på ny, eksisterende tekster erstattes og hver post koster igen. Formularer kender kun all."
+
+msgid "Original"
+msgstr "Original"
+
+msgid "{art} {n}"
+msgstr "{art} {n}"

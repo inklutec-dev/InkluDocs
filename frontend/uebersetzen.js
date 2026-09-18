@@ -62,11 +62,13 @@
         return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s;
     }
 
+    // Michael Karbe (Mail 18.09.2026, Punkt 2): nur „Absatz 20“ — der Inhalt steht im Feld darunter.
+    // Die Abschnitts-Klappen (H3) behalten ihren Titel, damit man aus der Übersicht das Kapitel findet.
     function segUeberschrift(s) {
         const art = s.art === 'absatz'
             ? (s.ueberschrift_ebene === 0 ? t('Titel') : (s.ueberschrift_ebene ? t('Überschrift') : t('Absatz')))
             : (ART[s.art] || ART.absatz)();
-        return t('{art} {n}: {anfang}', { art: art, n: s.position, anfang: anfang(s.original, 60) });
+        return t('{art} {n}', { art: art, n: s.position });
     }
 
     function segCardHtml(s) {
@@ -82,7 +84,11 @@
             +   '<h4 id="seg_heading_' + s.id + '" class="image-heading" style="margin:0;">' + escHtml(segUeberschrift(s)) + '</h4>'
             +   '<span style="display:flex;gap:0.35rem;flex-wrap:wrap;justify-content:flex-end;">' + badges.join(' ') + '</span>'
             + '</div>'
-            + '<p class="seg-original" id="seg_original_' + s.id + '"><span style="font-weight:600;">' + t('Original:') + '</span> ' + escHtml(s.original) + '</p>'
+            // Michael Karbe (Mail 18.09.2026, Punkt 1): Original wie die Übersetzung — Label und darunter ein
+            // Feld mit dem nicht bearbeitbaren Text. readonly (nicht disabled): bleibt per Tastatur erreichbar,
+            // Screenreader lesen es als „schreibgeschützt“, der Text lässt sich markieren und kopieren.
+            + '<label for="seg_original_' + s.id + '" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Original') + '</label>'
+            + '<textarea class="alt-text-field seg-original" id="seg_original_' + s.id + '" readonly aria-readonly="true">' + escHtml(s.original) + '</textarea>'
             + (s.uebersetzbar ? ''
                 + '<label for="seg_ziel_' + s.id + '" style="display:block;font-weight:600;margin-bottom:0.3rem;">' + t('Übersetzung')
                 +   ' <span class="save-indicator" id="seg_saved_' + s.id + '">' + t('Gespeichert') + '</span></label>'

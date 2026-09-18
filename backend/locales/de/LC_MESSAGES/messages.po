@@ -6980,3 +6980,9 @@ msgstr "So holst du Fehlschläge nach: POST …/generate ohne scope (oder scope=
 
 msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
 msgstr "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
+
+msgid "Original"
+msgstr "Original"
+
+msgid "{art} {n}"
+msgstr "{art} {n}"

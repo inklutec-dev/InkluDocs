@@ -811,6 +811,14 @@ input[type="file"] {
     border-color: var(--focus);
     box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.25);
 }
+/* Übersetzen-Werkzeug (Michael Karbe 18.09.2026): Originaltext als schreibgeschütztes Feld in derselben
+   Form wie die Übersetzung — leicht grau hinterlegt, damit Sehende „nicht bearbeitbar“ erkennen; der
+   Fokusrahmen bleibt (Tastatur, Kopieren). Kontrast des Textes bleibt bei var(--text) auf hellem Grau ≥ 4,5:1. */
+.alt-text-field[readonly] {
+    background: var(--bg-muted, #f3f4f6);
+    color: var(--text, #1f2937);
+    resize: none;
+}
 .image-type-badge {
     display: inline-block;
     padding: 0.2rem 0.5rem;

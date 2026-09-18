@@ -6977,3 +6977,9 @@ msgstr "Cómo recuperar fallos: POST …/generate sin scope (o scope=open) descr
 
 msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
 msgstr "open (predeterminado): solo entradas sin texto terminado, es decir, nunca generadas y fallidas. all: describir de nuevo todas las entradas, los textos existentes se sustituyen y cada entrada se cobra de nuevo. Los formularios solo conocen all."
+
+msgid "Original"
+msgstr "Original"
+
+msgid "{art} {n}"
+msgstr "{art} {n}"

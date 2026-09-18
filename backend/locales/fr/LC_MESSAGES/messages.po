@@ -6977,3 +6977,9 @@ msgstr "Pour rattraper les échecs : POST …/generate sans scope (ou scope=open
 
 msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
 msgstr "open (par défaut) : uniquement les entrées sans texte terminé, c’est-à-dire jamais générées et en échec. all : décrire à nouveau toutes les entrées, les textes existants sont remplacés et chaque entrée est facturée à nouveau. Les formulaires ne connaissent que all."
+
+msgid "Original"
+msgstr "Original"
+
+msgid "{art} {n}"
+msgstr "{art} {n}"

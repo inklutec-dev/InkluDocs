@@ -6539,3 +6539,9 @@ msgstr "Så hämtar du upp misslyckanden: POST …/generate utan scope (eller sc
 
 msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
 msgstr "open (standard): endast poster utan färdig text, alltså aldrig genererade och misslyckade. all: beskriv alla poster på nytt, befintliga texter ersätts och varje post debiteras igen. Formulär känner bara till all."
+
+msgid "Original"
+msgstr "Original"
+
+msgid "{art} {n}"
+msgstr "{art} {n}"

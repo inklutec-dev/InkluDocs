@@ -6977,3 +6977,9 @@ msgstr "How to catch up on failures: POST …/generate without scope (or scope=o
 
 msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
 msgstr "open (default): only entries without a finished text, i.e. never generated and failed ones. all: describe all entries anew, existing texts are replaced and every entry is charged again. Forms only know all."
+
+msgid "Original"
+msgstr "Original"
+
+msgid "{art} {n}"
+msgstr "{art} {n}"
