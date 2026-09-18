@@ -6923,3 +6923,9 @@ msgstr "Iniciar la traducción"
 
 msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
 msgstr "Traducción {sprache}: {f} de {n} párrafos listos."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben."
+msgstr "El formato se conserva por completo: solo se sustituye el texto. Se traduce lo que aún falta en este idioma; los párrafos corregidos a mano se mantienen."
+
+msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
+msgstr "Ya está todo traducido a este idioma. Los párrafos corregidos a mano permanecen intactos."

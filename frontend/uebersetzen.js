@@ -39,6 +39,7 @@
     let laufZielDoc = null;
     let exportFertig = false;
     let exportLaeuft = false;
+    let pollTimer = null;             // Review 18.09.2026 (M6): Timer merken, beim Projektwechsel stoppen
 
     function ico(name) { return (typeof icon === 'function') ? icon(name) : ''; }
     function sprachName(code) { const z = zielsprachen.find(s => s.code === code); return z ? z.name : (code || ''); }
@@ -174,7 +175,7 @@
             + '<div class="progress-bar" role="progressbar" aria-valuenow="' + prozent + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + t('Fortschritt: {p} Prozent', { p: prozent }) + '">'
             +   '<div class="progress-fill" style="width:' + prozent + '%"></div></div>'
             + '<p id="processingInfo" aria-live="polite">' + t('{f} von {n} Absätzen übersetzt.', { f: Number(l.segmente_fertig) || 0, n: Number(l.segmente_gesamt) || 0 }) + '</p>'
-            + '<button type="button" class="btn btn-secondary" id="uAbortBtn" onclick="Uebersetzen.abbrechen(' + project.id + ')">' + t('Übersetzung abbrechen') + '</button>'
+            + '<button type="button" class="btn btn-secondary" id="uAbortBtn" onclick="Uebersetzen.abbrechen(' + project.id + ')"' + (l.abbruch ? ' disabled' : '') + '>' + (l.abbruch ? t('Abbruch angefordert …') : t('Übersetzung abbrechen')) + '</button>'
             + '</section>';
     }
 
@@ -230,10 +231,14 @@
         if (ue.length && ziel) info += ' ' + t('Übersetzung {sprache}: {f} von {n} Absätzen fertig.', { sprache: ziel, f: fertig, n: ue.length });
         if (hinweise) info += ' ' + (hinweise === 1 ? t('1 Absatz mit Hinweis.') : t('{h} Absätze mit Hinweis.', { h: hinweise }));
         const busy = project.status === 'processing' || project.status === 'extracting';
+        // Hinweis vom Server (Review 18.09.2026, M7): Grund einer fehlgeschlagenen Segmentierung oder
+        // die Hinweise des letzten Laufs — bleiben auch nach Neuladen sichtbar (kein In-Memory-Stand).
+        const serverHinweis = (!busy && project.lauf_hinweis)
+            ? '<p class="feld-hinweis" id="projectLaufHinweis" role="status" style="margin:0.4rem 0 0;">' + escHtml(project.lauf_hinweis) + '</p>' : '';
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
-            + '<div class="card-info" id="projectHeadInfo">' + info + '</div>'
+            + '<div class="card-info" id="projectHeadInfo">' + info + '</div>' + serverHinweis
             + (ue.length ? ''
                 + '<div class="card-actions">'
                 +   (!busy ? '<button class="btn btn-primary" id="uStartBtn" onclick="Uebersetzen.laufOeffnen()">' + ico('sparkle') + t('Übersetzen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
@@ -247,7 +252,7 @@
 
     // ─── Dialog „Übersetzen“: Zielsprache, zwei Schalter, Rueckfrage mit Umfang und Preis ───
     function laufDialogHtml(project) {
-        const vorgabe = einstellungen.zielsprache || 'en';
+        const vorgabe = einstellungen.zielsprache || 'en-gb';
         return '<dialog id="uLaufDialog" class="invite-dialog" aria-labelledby="uLaufHeading">'
             + '<div class="export-kopf"><h2 id="uLaufHeading" style="margin:0 0 0.6rem 0;">' + t('Übersetzen') + '</h2>'
             +   (typeof exportDocIconHtml === 'function' ? exportDocIconHtml('word') : '') + '</div>'
@@ -261,7 +266,7 @@
             +   '<label style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;"><input type="checkbox" id="uSpracheSetzen"' + (einstellungen.sprache_setzen === false ? '' : ' checked') + ' style="width:1.2rem;height:1.2rem;"><span>' + t('Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)') + '</span></label>'
             + '</div>'
             + '<div id="uLaufSummary" role="status" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>'
-            + '<p style="margin:0 0 0.8rem 0;font-size:0.9rem;color:var(--text-muted);">' + t('Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben.') + '</p>'
+            + '<p style="margin:0 0 0.8rem 0;font-size:0.9rem;color:var(--text-muted);">' + t('Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben.') + '</p>'
             + '<div id="uLaufFooter" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;">'
             +   '<button class="btn btn-primary" id="uLaufOk" onclick="Uebersetzen.laufStarten(' + project.id + ')">' + t('Übersetzung starten') + '</button>'
             +   '<button class="btn btn-secondary" id="uLaufCancel" onclick="Uebersetzen.laufSchliessen()">' + t('Abbrechen') + '</button>'
@@ -282,12 +287,26 @@
         const st = document.getElementById('uLaufStatus'); if (st) st.textContent = '';
         if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
         announce(t('Übersetzen: Einstellungen geöffnet.'));
-        const body = {}; if (docId) body.document_id = docId;
+        await laufVorschau(docId);
+        const sel = document.getElementById('uZielsprache');
+        if (sel) { sel.onchange = () => laufVorschau(laufZielDoc); sel.focus(); }
+        const alt = document.getElementById('uAltTexte'); if (alt) alt.onchange = () => laufVorschau(laufZielDoc);
+    }
+
+    // Vorschau mit den aktuellen Einstellungen (Review M1/N4: nur, was der Lauf wirklich anfasst).
+    async function laufVorschau(docId) {
+        const sum = document.getElementById('uLaufSummary');
+        const ok = document.getElementById('uLaufOk');
+        const body = {
+            zielsprache: (document.getElementById('uZielsprache') || {}).value || '',
+            alt_texte: !!(document.getElementById('uAltTexte') || {}).checked,
+        };
+        if (docId) body.document_id = docId;
         try {
             const res = await fetch('/api/projects/' + zustandProjekt + '/uebersetzung/vorschau', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             const v = await res.json().catch(() => ({}));
             if (!res.ok) { if (sum) sum.textContent = v.detail || t('Vorschau fehlgeschlagen.'); return; }
-            if (!v.anzahl) { if (sum) sum.textContent = t('Hier gibt es nichts zu übersetzen.'); return; }
+            if (!v.anzahl) { if (sum) sum.textContent = t('In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet.'); if (ok) ok.disabled = true; return; }
             let satz = v.anzahl === 1
                 ? t('Es wird 1 Absatz mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter).', { w: v.woerter, c: v.preis, j: v.woerter_je_credit })
                 : t('Es werden {n} Absätze mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter).', { n: v.anzahl, w: v.woerter, c: v.preis, j: v.woerter_je_credit });
@@ -298,7 +317,6 @@
             satz += ' ' + t('Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden.');
             if (sum) sum.textContent = satz;
             if (ok) ok.disabled = !v.erlaubt;
-            const sel = document.getElementById('uZielsprache'); if (sel) sel.focus();
         } catch (e) { if (sum) sum.textContent = t('Verbindungsfehler.'); }
     }
 
@@ -411,7 +429,9 @@
             }
             const blob = await res.blob();
             const cd = res.headers.get('Content-Disposition') || '';
-            const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd);
+            // filename* (UTF-8) zuerst, sonst der ASCII-Ersatzname (Review 18.09.2026, N10: „Fußzeile“ → „Fuzeile“).
+            const mStar = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+            const m = mStar || /filename="?([^";]+)"?/i.exec(cd);
             let serverName = null;
             if (m) { try { serverName = decodeURIComponent(m[1]); } catch (e) { serverName = m[1]; } }
             const fallback = (body.filename || 'uebersetzung') + '.docx';
@@ -499,7 +519,26 @@
         }));
     }
 
+    function pollStoppen() { if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; } }
+
+    // Fortschritt in place (Review 18.09.2026, M6): kein Neuaufbau von #main alle 2,5 s —
+    // VoiceOver behaelt Fokus und Position, die Live-Region bleibt dasselbe Element.
+    function fortschrittAktualisieren(l) {
+        if (!l) return;
+        const gesamt = Number(l.pakete_gesamt) || 0, fertig = Number(l.pakete_fertig) || 0;
+        const prozent = gesamt > 0 ? Math.round((fertig + (fertig < gesamt ? 0.5 : 0)) / gesamt * 100) : 0;
+        const bar = document.querySelector('#progressCard .progress-bar');
+        const fill = document.querySelector('#progressCard .progress-fill');
+        const info = document.getElementById('processingInfo');
+        const btn = document.getElementById('uAbortBtn');
+        if (bar) { bar.setAttribute('aria-valuenow', prozent); bar.setAttribute('aria-label', t('Fortschritt: {p} Prozent', { p: prozent })); }
+        if (fill) fill.style.width = prozent + '%';
+        if (info) info.textContent = t('{f} von {n} Absätzen übersetzt.', { f: Number(l.segmente_fertig) || 0, n: Number(l.segmente_gesamt) || 0 });
+        if (btn && l.abbruch) { btn.disabled = true; btn.textContent = t('Abbruch angefordert …'); }
+    }
+
     async function showProject(projectId, erneut) {
+        pollStoppen();
         const main = document.getElementById('main');
         const res = await fetch('/api/projects/' + projectId + '/uebersetzung', { credentials: 'same-origin' });
         if (res.status === 401) { window.location.href = '/login'; return; }
@@ -521,20 +560,31 @@
             + laufMeldungHtml()
             + '<div id="segListe">' + docsHtml + '</div>';
         bindAutosave();
+        // Waehrend des Laufs keine Handkorrektur (Review M6a): der Lauf ueberschreibt sonst oder verwirft.
+        if (project.status === 'processing' || project.status === 'extracting') {
+            document.querySelectorAll('.seg-ziel').forEach(ta => { ta.disabled = true; });
+        }
         if (filterModus !== 'alle') filter(filterModus, true);
         setupProjectDropzone(projectId);
         const h1 = document.getElementById('projectName');
         if (h1 && !erneut) h1.focus();
         if (project.status === 'extracting' || project.status === 'processing') {
-            setTimeout(async () => {
+            const docsVorher = aktuelleDocs.length;
+            const tick = async () => {
+                if (zustandProjekt !== projectId) return;   // Nutzer ist weitergegangen
                 try {
-                    const r = await fetch('/api/projects/' + projectId + '/uebersetzung');
-                    if (!r.ok) return;
+                    const r = await fetch('/api/projects/' + projectId + '/uebersetzung?leicht=1');
+                    if (!r.ok) { pollTimer = setTimeout(tick, 2500); return; }
                     const d = await r.json();
+                    if (zustandProjekt !== projectId) return;
                     if (d.project && d.project.status !== project.status) {
                         let meldung = '';
-                        if (project.status === 'extracting') announce(t('Dokument gelesen.'));
-                        else {
+                        if (project.status === 'extracting') {
+                            // Dokumentbestand vergleichen (Review M7): verschwindet das Dokument, ist die
+                            // Segmentierung gescheitert — der Grund steht am Projekt (lauf_hinweis).
+                            if ((d.dokumente || 0) <= docsVorher || d.project.status === 'error') meldung = d.project.lauf_hinweis || t('Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.');
+                            else announce(t('Dokument gelesen.'));
+                        } else {
                             const l = d.lauf || {};
                             const f = (l.fehler || []).length ? ' ' + t('Hinweise: {w}', { w: l.fehler.join(' ') }) : '';
                             meldung = (l.abbruch
@@ -544,10 +594,12 @@
                         await showProject(projectId);
                         if (meldung) zeigeMeldung(meldung);
                     } else {
-                        showProject(projectId, true);
+                        fortschrittAktualisieren(d.lauf);
+                        pollTimer = setTimeout(tick, 2500);
                     }
-                } catch (e) { /* naechster Versuch beim naechsten Aufruf */ }
-            }, 2500);
+                } catch (e) { pollTimer = setTimeout(tick, 2500); }
+            };
+            pollTimer = setTimeout(tick, 2500);
         }
     }
 

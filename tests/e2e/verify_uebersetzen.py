@@ -121,19 +121,21 @@ check("Absätze gelesen (>= 12 übersetzbare)", len(ue) >= 12, len(ue))
 check("Alt-Text/Bildtitel/Dokumenttitel als Segmente", any(x["art"] == "dokumenttitel" for x in segs), [x["art"] for x in segs])
 check("Kopfzeile als Ort erkannt", any(x["ort"] == "Kopfzeile" for x in segs))
 check("Keine Serverpfade/Marken-Innereien nach außen", all("stuecke" not in x and "original_path" not in x for x in segs) and "original_path" not in data["project"])
-check("Zielsprachen-Liste mitgeliefert (>= 10)", len(data.get("zielsprachen", [])) >= 10)
+check("Zielsprachen-Liste mit Varianten (>= 20, en-gb/en/en-au)", len(data.get("zielsprachen", [])) >= 20 and {z["code"] for z in data["zielsprachen"]} >= {"en-gb", "en", "en-au", "pt-br", "es-419"})
 check("Hinweise je Dokument als Objekt", isinstance(data["documents"][0].get("hinweise"), dict))
 
 # D Vorschau + Lauf
 s, v, _ = req("POST", f"/api/projects/{pid}/uebersetzung/vorschau", {})
 check("Vorschau: Anzahl, Wörter, Preis", s == 200 and v["anzahl"] == len(ue) and v["woerter"] > 0 and v["preis"] >= 1, v)
 check("Vorschau: Preis = ceil(Wörter/100)", v["preis"] == -(-v["woerter"] // v["woerter_je_credit"]), v)
-s, b, _ = req("POST", f"/api/projects/{pid}/uebersetzung/starten", {"zielsprache": "en", "alt_texte": True, "sprache_setzen": True})
+s, b, _ = req("POST", f"/api/projects/{pid}/uebersetzung/starten", {"zielsprache": "en-gb", "alt_texte": True, "sprache_setzen": True})
 check("Lauf gestartet", s == 200 and b.get("gestartet") is True, b)
 s, b2, _ = req("POST", f"/api/projects/{pid}/uebersetzung/starten", {"zielsprache": "en"})
 check("Zweiter Start während des Laufs -> 409", s == 409, b2)
 s, b3, _ = req("POST", f"/api/projects/{pid}/export/uebersetzung", {})
 check("Export während des Laufs -> 409", s == 409, b3)
+s, b4, _ = req("POST", "/api/upload", {"project_id": pid}, {"file": (os.path.basename(FIX), fix, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")})
+check("Upload während des Laufs -> 409 (Review M2b)", s == 409, b4)
 data = warte(pid, "processing", 600)
 check("Lauf beendet", data is not None)
 segs = data["segmente"]; ue = [x for x in segs if x["uebersetzbar"]]
@@ -143,7 +145,7 @@ check("Übersetzungen englisch (Stichprobe)", any("Accessible" in x["uebersetzun
 check("Formatierung nicht zusammengelegt (keine Ersatzwege)", all(x["status"] == "fertig" for x in fertig), [x["anker"] for x in fertig if x["status"] != "fertig"])
 lauf = data.get("lauf") or {}
 check("Lauf-Status: Credits verbucht (>= 1)", lauf.get("credits", 0) >= 1, lauf)
-check("Kopf-Info: Einstellungen des Laufs gespeichert", data["project"].get("einstellungen", {}).get("zielsprache") == "en", data["project"].get("einstellungen"))
+check("Kopf-Info: Einstellungen des Laufs gespeichert", data["project"].get("einstellungen", {}).get("zielsprache") == "en-gb", data["project"].get("einstellungen"))
 
 # E Handkorrektur
 ziel = next(x for x in ue if x["art"] == "absatz" and x["ueberschrift_ebene"] is None and x["ort"] == "Text")
@@ -153,6 +155,14 @@ s, b, _ = req("PATCH", f"/api/uebersetzung/segmente/{ziel['id']}", {"falsch": 1}
 check("PATCH ohne Feld -> 400", s == 400, b)
 s, b, _ = req("PATCH", f"/api/uebersetzung/segmente/999999999", {"uebersetzung": "x"})
 check("Fremdes/unbekanntes Segment -> 404", s == 404, b)
+
+# E2 Zweiter Lauf in derselben Sprache: nichts zu tun, Handkorrektur bleibt (Review M1)
+s, v2, _ = req("POST", f"/api/projects/{pid}/uebersetzung/vorschau", {"zielsprache": "en-gb"})
+check("Vorschau gleiche Sprache: 0 Absätze (alles fertig, Hand ausgenommen)", s == 200 and v2["anzahl"] == 0, v2)
+s, b, _ = req("POST", f"/api/projects/{pid}/uebersetzung/starten", {"zielsprache": "en-gb"})
+check("Start gleiche Sprache: nicht gestartet, keine Credits", s == 200 and b.get("gestartet") is False, b)
+s, v3, _ = req("POST", f"/api/projects/{pid}/uebersetzung/vorschau", {"zielsprache": "fr"})
+check("Vorschau andere Sprache: alle außer Handkorrektur", s == 200 and v3["anzahl"] == len(ue) - 1, (v3.get("anzahl"), len(ue)))
 
 # F Export + Ruecklesen
 s, raw, h = req("POST", f"/api/projects/{pid}/export/uebersetzung", {"filename": "Vortrag EN (fiktiv)"}, raw=True)
@@ -167,8 +177,9 @@ with zipfile.ZipFile(io.BytesIO(raw)) as zf:
     st = zf.read("word/styles.xml").decode("utf-8")
     core = zf.read("docProps/core.xml").decode("utf-8")
     kopf = texte(raw, "word/header1.xml")
-check("Sprachkennung en-US in styles.xml", 'w:val="en-US"' in st)
-check("dc:language en-US in core.xml", "en-US" in core)
+check("Sprachkennung en-GB in styles.xml", 'w:val="en-GB"' in st)
+check("dc:language en-GB in core.xml", "en-GB" in core)
+check("Britische Schreibweise (organisation/colour o. ä.) oder keine US-Form", not re.search(r"\b(color|organization|center)\b", " ".join(en_texte), re.I), [t for t in en_texte if re.search(r"\b(color|organization|center)\b", t, re.I)])
 check("Dokumenttitel übersetzt", "Accessible" in core or "accessible" in core, re.findall(r"<dc:title>(.*?)</dc:title>", core))
 check("Kopfzeile übersetzt", kopf and "Lecture" in kopf[0] or "lecture" in (kopf[0] if kopf else ""), kopf)
 # Struktur: Original und Export haben dieselben Zip-Mitglieder, Bilder byteidentisch

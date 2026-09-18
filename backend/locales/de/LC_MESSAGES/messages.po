@@ -6926,3 +6926,9 @@ msgstr "Übersetzung starten"
 
 msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
 msgstr "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben."
+msgstr "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben."
+
+msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
+msgstr "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."

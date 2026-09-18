@@ -69,7 +69,7 @@ Inhaltsverzeichnis) werden übersetzt; ein Hinweis rät, in Word F9 zu drücken.
 
 | Datei | Aufgabe |
 |---|---|
-| `backend/uebersetzung.py` | Kern: `segmentiere_docx()` (Segmente mit Stücken, Marken, Trennern, Kontext, Ort, Abschnitt), `text_mit_marken()`, `marken_zerlegen()`, `uebersetze_batch()` (Gemini über `llm_client.call_text_with_schema`, Schema `UebersetzungBatchOutput`, Korrekturversuch, Ersatzweg), `schreibe_uebersetzung()` (byteidentischer Rückschreiber, Sprachkennung), `strukturvergleich()`, `credits_fuer()`, `ZIELSPRACHEN` (14). |
+| `backend/uebersetzung.py` | Kern: `segmentiere_docx()` (Segmente mit Stücken, Marken, Trennern, Kontext, Ort, Abschnitt), `text_mit_marken()`, `marken_zerlegen()`, `uebersetze_batch()` (Gemini über `llm_client.call_text_with_schema`, Schema `UebersetzungBatchOutput`, Korrekturversuch, Ersatzweg), `schreibe_uebersetzung()` (byteidentischer Rückschreiber, Sprachkennung), `strukturvergleich()`, `credits_fuer()`, `ZIELSPRACHEN` (22 Einträge mit regionalen Varianten: Englisch GB/USA/Australien, Deutsch DE/AT/CH, Französisch FR/CH, Spanisch Spanien/Lateinamerika, Portugiesisch PT/BR, Niederländisch NL/BE; Kennung = Word-Sprachkennung, Modell bekommt Schreibweise/Datumsformat der Variante). |
 | `backend/uebersetzung_api.py` | Router: Upload-Handler + Hintergrund-Segmentierung, Lesen, Vorschau, Lauf (Pakete je Dokument, Guthaben und Tageslimit je Paket, Abbruch, Handarbeit während des Laufs gewinnt), Handkorrektur, Export (einzeln/ZIP, im Executor). Anschlusspunkte: `segmentiere_und_speichere()`, `lauf_starten()`, `export_vorbereiten()` + `export_bauen()`. |
 | `backend/database.py` | Tabelle `uebersetzung_segmente`; Löschung bei Konto/Projekt/Dokument. |
 | `backend/tools.py` | Werkzeug `uebersetzen` „Dokumente übersetzen“ (Beta). |
@@ -78,8 +78,8 @@ Inhaltsverzeichnis) werden übersetzt; ein Hinweis rät, in Word F9 zu drücken.
 | `frontend/uebersetzen.js` | Ansicht: H1 Projekt, H2 Dokument, H3 Abschnitt (nach Überschrift 1; dazu Kopfzeile, Fußzeile, Fußnoten, Bilder, Dokumenttitel), H4 „{Art} {n}: {Anfang}“; je Absatz Original als Text, Textarea „Übersetzung“ (Auto-Save 800 ms), Status-Badge, Hinweis; Filter-Fieldset Alle / Nur mit Hinweis / Nur noch nicht übersetzt; Dialog „Übersetzen“ (Zielsprache, zwei Schalter, Rückfrage mit Wörtern/Credits/Guthaben); Export-Dialog; Fortschrittskarte mit Abbrechen; Laufmeldung. |
 | `backend/templates/app.html` | Skript eingebunden, Upload-Block, Weiche in `showProject`, Wartetexte, Dialogtexte Umbenennen/Löschen (`uebdoc`). |
 | `backend/locales/*` | 76 Texte × 6 Sprachen. |
-| `tests/test_uebersetzung_kern.py` | 17 Unit-Tests ohne Modell (Marken, Whitespace, Ersatzweg, Rundreise über alle Word-Fixtures, Sprache, Idempotenz, XXE). |
-| `tests/e2e/verify_uebersetzen.py` | 44 End-to-End-Prüfungen gegen Staging mit echtem Modell (Negativfälle, Lauf, 409 während des Laufs, Handkorrektur, Export, Rücklesen: Fettung/Link/Tabelle erhalten, Sprachkennung, Fremdzugriff mit Zweitkonto). |
+| `tests/test_uebersetzung_kern.py` | 23 Unit-Tests ohne Modell (Marken, Whitespace, Ersatzweg, Rundreise über alle Word-Fixtures, Sprache, Idempotenz, XXE) plus die Regressionsfälle des Reviews vom 18.09. (Ersatzweg leert feste Stücke, Streu-Token, Textfeld-Fallback, styles ohne docDefaults, Sprachkennung, Titel gekappt). |
+| `tests/e2e/verify_uebersetzen.py` | 49 End-to-End-Prüfungen gegen Staging mit echtem Modell (Negativfälle, Lauf, 409 während des Laufs, Handkorrektur, Export, Rücklesen: Fettung/Link/Tabelle erhalten, Sprachkennung, Fremdzugriff mit Zweitkonto). |
 | `tests/e2e/ui_uebersetzen.py` | Klicktest (Playwright + axe): Werkzeugauswahl, Ansicht, Filter, Dialoge, Download, Tastaturweg. |
 | `tests/fixtures/testvortrag_inkludocs.docx` | Fiktiver Vortrag mit Fettung/Kursiv mitten im Satz, Hyperlink, Liste, Tabelle, Kopfzeile (Generator `make_testvortrag.py`, braucht python-docx). |
 
@@ -130,6 +130,7 @@ Inhaltsverzeichnis) werden übersetzt; ein Hinweis rät, in Word F9 zu drücken.
 
 ## Grenzen und was folgt
 
+- Sprachvarianten (Steve 18.09.2026): „Welches Englisch?“ ist keine Kleinigkeit (colour/color, Datumsformat). Vorgabe im Dialog ist Englisch (Großbritannien); der Test prüft, dass keine US-Schreibweise entsteht.
 - Word-Sprachkennung der Quelle ist oft falsch (Vorlagen mit en-US); das Modell erkennt die
   Ausgangssprache selbst, die Oberfläche zeigt nur die Zielsprache.
 - Text in Bildern, Diagrammen und SmartArt wird nicht übersetzt.
@@ -148,3 +149,28 @@ INKLUDOCS_E2E_MAIL=… INKLUDOCS_E2E_PW=… python3 tests/e2e/verify_uebersetzen
 # Klicktest (Playwright + axe)
 INKLUDOCS_E2E_MAIL=… INKLUDOCS_E2E_PW=… /home/claude/.venv-pw/bin/python tests/e2e/ui_uebersetzen.py <projekt-id>
 ```
+
+## Unabhängiges Review 18.09.2026 (zweiter Agent, 1 kritisch / 7 mittel / 12 niedrig) — Stand
+
+Behoben: K1 Ersatzweg und Handkorrektur leerten feste Stücke nicht (Zahlen/Feldergebnisse
+standen doppelt im Absatz); M1 Lauf überschrieb Handkorrekturen und berechnete schon fertige
+Absätze erneut (jetzt: nur was in der Zielsprache fehlt, `quelle = hand` nie); M2 Doppelstart
+(atomares Status-Update), Upload während des Laufs (409), Abrechnung nur für tatsächlich
+geschriebene Segmente; M3 Textfelder doppelt (mc:Fallback wird nicht segmentiert, sondern aus
+mc:Choice gespiegelt); M4 verrutschte Marken/Token im Stück landeten im Dokument; M5 Export-500
+bei styles.xml ohne docDefaults; M6 Oberfläche baute #main alle 2,5 s neu (jetzt leichter
+Statusabruf `?leicht=1`, Fortschritt in place, Timer stoppt beim Projektwechsel, Textfelder
+während des Laufs gesperrt); M7 gescheiterte Segmentierung ohne Grund (jetzt `lauf_hinweis`
+als JSON, Anzeige im Kopf); N1 Titel/Sprachkennung in den Datenblock bzw. validiert; N2
+Längengrenzen auch für Alt-Texte/Titel; N3 Export nach reiner Handübersetzung (Sprache aus
+Projekt, kein „None“ im Namen); N4 erstes Paket muss bezahlbar sein, Fortschritt ohne
+abgewählte Alt-Texte; N5 Arbeitsordner bei Export-Fehler weg; N6 ZIP-Namen eindeutig; N7
+Abbruchzustand bleibt sichtbar; N8 einsame Surrogate → 400; N9 Waisen-Upload beim Start-
+Aufräumen gelöscht; N10 Download-Name aus `filename*`; N11 Arabisch: Hinweis zur
+Schreibrichtung; H8 `total_images` bleibt 0.
+
+Offen (bewusst, repo-weite Muster): H2 „Gespeichert“ im Label (wie formular.js); H4
+Guthabenprüfung und Buchung nicht atomar; H5 Originale angehängter Dokumente beim Projekt-
+Löschen; N12 Quelltext, der selbst „[[1]]“ enthält (sehr selten). Als sauber bestätigt:
+Zugriffskontrolle, SQL, Pfade, XML/Zip, Header, XSS, Abrechnungspfade, Nebenläufigkeit,
+Logs, Barrierefreiheit.

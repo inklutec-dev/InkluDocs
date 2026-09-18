@@ -6923,3 +6923,9 @@ msgstr "Lancer la traduction"
 
 msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
 msgstr "Traduction {sprache} : {f} paragraphes sur {n} terminés."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben."
+msgstr "La mise en forme est entièrement conservée : seul le texte est remplacé. Ce qui manque encore dans cette langue est traduit ; les paragraphes corrigés à la main sont conservés."
+
+msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
+msgstr "Tout est déjà traduit dans cette langue. Les paragraphes corrigés à la main restent intacts."

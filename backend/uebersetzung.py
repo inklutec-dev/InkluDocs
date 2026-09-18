@@ -62,7 +62,7 @@ from typing import Callable, Optional
 from lxml import etree
 from pydantic import BaseModel, Field
 
-from docx_processor import (NS, DocxFehler, _pruefe_zip, _lese_xml, _drawing_kennungen, _vml_bilder,
+from docx_processor import (NS, DocxFehler, _pruefe_zip, _lese_xml, _drawing_kennungen, _vml_bilder, _in_fallback,
                             _heading_level, _pstyle, _styles, _dokumenttitel, _teile_in_reihenfolge)
 
 log = logging.getLogger(__name__)
@@ -74,6 +74,10 @@ T_RPR, T_TAB, T_BR, T_CR = f"{{{W}}}rPr", f"{{{W}}}tab", f"{{{W}}}br", f"{{{W}}}
 T_PROOF, T_DRAWING, T_PICT = f"{{{W}}}proofErr", f"{{{W}}}drawing", f"{{{W}}}pict"
 T_INSTR, T_FLDSIMPLE, T_LANG = f"{{{W}}}instrText", f"{{{W}}}fldSimple", f"{{{W}}}lang"
 T_TC, T_TXBX = f"{{{W}}}tc", f"{{{W}}}txbxContent"
+T_ALTCONTENT, T_CHOICE, T_FALLBACK = f"{{{NS['mc']}}}AlternateContent", f"{{{NS['mc']}}}Choice", f"{{{NS['mc']}}}Fallback"
+MAX_TITEL_ZEICHEN = 2000        # Alt-Texte, Bildtitel, Dokumenttitel
+_SPRACHKENNUNG_RE = re.compile(r"^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$")
+_TOKEN = ("[TAB]", "[BR]", "[BILD]")
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 
 # ---------------------------------------------------------------- Grenzen (Abwehr, nicht Fachlichkeit)
@@ -84,24 +88,35 @@ BATCH_SEGMENTE = 30           # Absaetze je Modellaufruf
 BATCH_ZEICHEN = 6000          # Zeichen je Modellaufruf (Quelltext mit Marken)
 WOERTER_JE_CREDIT = 100       # Abrechnung: 1 Credit je angefangene 100 Woerter (Vorschlag 18.09.2026)
 
-# Zielsprachen: Kennung -> (Name fuer die Oberflaeche, Word-Sprachkennung, Name fuer das Modell)
+# Zielsprachen: Kennung -> (Name fuer die Oberflaeche, Word-Sprachkennung, Anweisung fuer das Modell).
+# Varianten (Steve 18.09.2026: "welches Englisch?"): Sprachen mit regional verschiedener Schreibweise
+# bekommen eigene Eintraege; die Kennung ist die Word-Sprachkennung in Kleinbuchstaben (en-gb), damit
+# w:lang und dc:language exakt die Variante tragen und ein Screenreader die passende Stimme waehlt.
+# Die Modell-Anweisung nennt Schreibweise, Datums- und Zahlenformat der Variante.
 ZIELSPRACHEN: dict[str, tuple[str, str, str]] = {
-    "de": ("Deutsch", "de-DE", "German"),
-    "en": ("Englisch", "en-US", "English"),
-    "fr": ("Französisch", "fr-FR", "French"),
-    "es": ("Spanisch", "es-ES", "Spanish"),
+    "de": ("Deutsch (Deutschland)", "de-DE", "German as used in Germany (ß, Standard German spelling, dates like 18.09.2026)"),
+    "de-at": ("Deutsch (Österreich)", "de-AT", "German as used in Austria (Austrian vocabulary such as Jänner, ß)"),
+    "de-ch": ("Deutsch (Schweiz)", "de-CH", "German as used in Switzerland (ss instead of ß, Swiss vocabulary, apostrophe as thousands separator)"),
+    "en-gb": ("Englisch (Großbritannien)", "en-GB", "British English (colour, organisation, centre, -ise; dates like 18 September 2026 / DD/MM/YYYY)"),
+    "en": ("Englisch (USA)", "en-US", "American English (color, organization, center, -ize; dates like September 18, 2026 / MM/DD/YYYY)"),
+    "en-au": ("Englisch (Australien)", "en-AU", "Australian English (British spelling: colour, organisation, -ise; dates DD/MM/YYYY)"),
+    "fr": ("Französisch (Frankreich)", "fr-FR", "French as used in France (espace fine insécable avant : ; ? !, dates like 18 septembre 2026)"),
+    "fr-ch": ("Französisch (Schweiz)", "fr-CH", "French as used in Switzerland (septante, huitante, nonante; no space before : ; ? !)"),
+    "es": ("Spanisch (Spanien)", "es-ES", "Spanish as used in Spain (vosotros, European vocabulary such as ordenador, coche)"),
+    "es-419": ("Spanisch (Lateinamerika)", "es-MX", "Latin American Spanish (ustedes instead of vosotros; vocabulary such as computadora, carro)"),
+    "pt": ("Portugiesisch (Portugal)", "pt-PT", "European Portuguese (Portugal spelling and vocabulary, e.g. comboio, ecrã)"),
+    "pt-br": ("Portugiesisch (Brasilien)", "pt-BR", "Brazilian Portuguese (Brazilian spelling and vocabulary, e.g. trem, tela; você)"),
     "da": ("Dänisch", "da-DK", "Danish"),
     "sv": ("Schwedisch", "sv-SE", "Swedish"),
     "it": ("Italienisch", "it-IT", "Italian"),
-    "nl": ("Niederländisch", "nl-NL", "Dutch"),
+    "nl": ("Niederländisch (Niederlande)", "nl-NL", "Dutch as used in the Netherlands"),
+    "nl-be": ("Niederländisch (Belgien)", "nl-BE", "Dutch as used in Belgium (Flemish vocabulary and register)"),
     "pl": ("Polnisch", "pl-PL", "Polish"),
-    "pt": ("Portugiesisch", "pt-PT", "Portuguese"),
     "tr": ("Türkisch", "tr-TR", "Turkish"),
     "uk": ("Ukrainisch", "uk-UA", "Ukrainian"),
     "ru": ("Russisch", "ru-RU", "Russian"),
-    "ar": ("Arabisch", "ar-SA", "Arabic"),
+    "ar": ("Arabisch", "ar-SA", "Modern Standard Arabic"),
 }
-_RTL = {"ar"}
 
 _MARKE_AUF = "[[{n}]]"
 _MARKE_ZU = "[[/{n}]]"
@@ -301,11 +316,11 @@ def _sprache_der_datei(zf: zipfile.ZipFile) -> str:
         if "word/styles.xml" in zf.namelist():
             for lang in _lese_xml(zf, "word/styles.xml").iter(T_LANG):
                 v = lang.get(f"{{{W}}}val")
-                if v:
+                if v and _SPRACHKENNUNG_RE.match(v):
                     return v
         for lang in _lese_xml(zf, "word/document.xml").iter(T_LANG):
             v = lang.get(f"{{{W}}}val")
-            if v:
+            if v and _SPRACHKENNUNG_RE.match(v):
                 return v
     except Exception:  # noqa: BLE001
         pass
@@ -343,6 +358,11 @@ def segmentiere_docx(docx_path: str) -> Segmentierung:
             erg.teile.append(part)
             melde, aktuell = _kontext_sammler()
             for n, p in enumerate(root.iter(T_P)):
+                if _in_fallback(p):
+                    # mc:Fallback = Kopie des mc:Choice-Inhalts fuer alte Word-Versionen (Textfelder).
+                    # Nicht als Segment (sonst doppelt uebersetzt und doppelt berechnet); der
+                    # Rueckschreiber spiegelt den Text des Choice-Absatzes (_fallback_spiegeln).
+                    continue
                 _laeufe_zusammenfassen(p)
                 stuecke, trenner, _knoten = _stuecke_des_absatzes(p)
                 text = "".join(stuecke)
@@ -385,7 +405,7 @@ def segmentiere_docx(docx_path: str) -> Segmentierung:
                 if docpr is None:
                     continue
                 for attr, art in (("descr", "alt"), ("title", "titel")):
-                    wert = (docpr.get(attr) or "").strip()
+                    wert = (docpr.get(attr) or "").strip()[:MAX_TITEL_ZEICHEN]
                     if wert and _BUCHSTABE_RE.search(wert):
                         erg.segmente.append(Segment(anker=f"{part}|{art}:{kennung}", part=part, art=art, stuecke=[wert],
                                                     marken=[0], kontext=kontext_fuer_bild(label), ort=label,
@@ -393,17 +413,22 @@ def segmentiere_docx(docx_path: str) -> Segmentierung:
                         erg.woerter += _woerter(wert)
             for _pict, shape, _idata, sid in _vml_bilder(root):
                 for attr, art in (("alt", "alt"), ("title", "titel")):
-                    wert = (shape.get(attr) or "").strip()
+                    wert = (shape.get(attr) or "").strip()[:MAX_TITEL_ZEICHEN]
                     if wert and _BUCHSTABE_RE.search(wert):
                         erg.segmente.append(Segment(anker=f"{part}|{art}:v:{sid}", part=part, art=art, stuecke=[wert],
                                                     marken=[0], kontext=kontext_fuer_bild(label), ort=label,
                                                     woerter=_woerter(wert)))
                         erg.woerter += _woerter(wert)
+        erg.titel = erg.titel[:MAX_TITEL_ZEICHEN]
         if erg.titel and _BUCHSTABE_RE.search(erg.titel):
             erg.segmente.append(Segment(anker="docProps/core.xml|dc:title", part="docProps/core.xml", art="dokumenttitel",
                                         stuecke=[erg.titel], marken=[0], kontext="", ort="Dokumenteigenschaften",
                                         woerter=_woerter(erg.titel)))
             erg.woerter += _woerter(erg.titel)
+        # Grenzen gelten fuer ALLE Segmente, auch Alt-Texte und Titel (Review 18.09.2026, N2).
+        if len(erg.segmente) > MAX_SEGMENTE or erg.woerter > MAX_WOERTER:
+            raise DocxFehler("Das Dokument ist zu umfangreich für eine Übersetzung in einem Lauf "
+                             f"(mehr als {MAX_SEGMENTE} Absätze oder {MAX_WOERTER} Wörter).")
         if hat_toc:
             erg.hinweise.append("Das Dokument enthält ein Inhaltsverzeichnis. Nach dem Öffnen in Word einmal F9 "
                                 "drücken (Felder aktualisieren), damit Seitenzahlen und Einträge neu berechnet werden.")
@@ -451,7 +476,18 @@ def marken_zerlegen(text: str, seg: Segment) -> Optional[dict[int, str]]:
             rest = rest.replace(s, " ", 1)
     if _BUCHSTABE_RE.search(rest):
         return None         # Text ausserhalb der Marken -> wuerde beim Schreiben verloren gehen
-    return {n - 1: t for n, t in gefunden.items()}
+    return {n - 1: _ohne_token(t) for n, t in gefunden.items()}
+
+
+def _ohne_token(text: str) -> str:
+    """Verrutschte Marken oder Trenner-Token INNERHALB eines Stuecks duerfen nie ins Dokument
+    (Review 18.09.2026): Marken weg, Token zu Leerzeichen, Doppel-Leerzeichen glaetten."""
+    if "[[" not in text and "[" not in text:
+        return text
+    text = _MARKE_IRGENDEINE_RE.sub("", text)
+    for tok in _TOKEN:
+        text = text.replace(tok, " ")
+    return re.sub(r"[ \t]{2,}", " ", text)
 
 
 _SCHLUSSZEICHEN = ".,;:!?)]}»“”’…"     # davor nie ein Leerzeichen einfuegen
@@ -504,7 +540,10 @@ def ersatz_zusammenlegen(seg: Segment, uebersetzung: str) -> dict[int, str]:
     for tok in ("[TAB]", "[BR]", "[BILD]"):
         text = text.replace(tok, " ")
     text = re.sub(r"[ \t]{2,}", " ", text).strip()
-    out = {i: "" for i in seg.marken}
+    # ALLE Stuecke leeren, auch die festen (Zahlen, Symbole, Feldergebnisse) — sonst stuenden sie
+    # nach dem zusammengelegten Text noch einmal im Absatz (Review 18.09.2026, K1: „Phone: 030 123456
+    # (switchboard) 030 123456“). Der Handtext ersetzt den ganzen Absatz.
+    out = {i: "" for i in range(len(seg.stuecke))}
     if seg.marken:
         erstes = seg.marken[0]
         orig = seg.stuecke[erstes]
@@ -546,13 +585,14 @@ SYSTEM_PROMPT = (
 
 def _prompt(batch: list[tuple[int, Segment]], ziel: str, quelle: str, titel: str) -> str:
     zname = ZIELSPRACHEN.get(ziel, (ziel, ziel, ziel))[2]
-    zeilen = [f"Zielsprache: {zname} ({ZIELSPRACHEN.get(ziel, ('', ziel, ''))[1]}).",
+    zeilen = [f"Zielsprache: {zname}. Sprachkennung: {ZIELSPRACHEN.get(ziel, ('', ziel, ''))[1]}. "
+              "Halte Schreibweise, Vokabular sowie Datums- und Zahlenformate dieser Variante konsequent ein.",
               f"Ausgangssprache: {quelle or 'automatisch erkennen'}."]
-    if titel:
-        zeilen.append(f"Dokumenttitel (Kontext): {titel}")
     zeilen.append("Übersetze jedes Segment. Der Kontext (Abschnitt, Absatzart) hilft dir bei Begriffen und "
                   "Register und wird NICHT mit übersetzt.\n")
     zeilen.append("===DOKUMENT===")
+    if titel:
+        zeilen.append(f"Dokumenttitel (nur Kontext): {titel[:200]}\n")
     for nr, seg in batch:
         meta = []
         if seg.art == "absatz":
@@ -730,6 +770,7 @@ def schreibe_uebersetzung(input_path: str, output_path: str, ziele: dict[str, di
                             else:
                                 erg.warnungen.append(f"{part}|{kennung}: Stück {idx} nicht mehr vorhanden.")
                         gefunden.add(kennung); geaendert = True
+                    _fallback_spiegeln(root)
                 # Alt-Texte / Titel
                 bild_ziele = {k: v for k, v in ziele_part.items() if k.startswith(("alt:", "titel:"))}
                 if bild_ziele:
@@ -754,6 +795,10 @@ def schreibe_uebersetzung(input_path: str, output_path: str, ziele: dict[str, di
                         if docpr is not None:
                             docpr.set(attr, stk.get(0, ""))
                             gefunden.add(k); geaendert = True
+                            # mc:Fallback-Duplikat (gleiche docPr-id) bekommt denselben Text — wie docx_export.
+                            for fb in root.iter(f"{{{NS['wp']}}}docPr"):
+                                if fb is not docpr and fb.get("id") == docpr.get("id") and _in_fallback(fb):
+                                    fb.set(attr, stk.get(0, ""))
                 if lang_tag:
                     geaendert = _sprache_setzen(root, part, lang_tag) or geaendert
             for k in ziele_part:
@@ -790,6 +835,35 @@ def schreibe_uebersetzung(input_path: str, output_path: str, ziele: dict[str, di
         erg.warnungen.append(f"{len(erg.nicht_gefunden)} Absätze wurden im Dokument nicht mehr gefunden "
                              "(Datei zwischenzeitlich geändert?) und blieben unübersetzt.")
     return erg
+
+
+def _fallback_spiegeln(root: etree._Element) -> None:
+    """Textfelder liegen doppelt vor: mc:Choice (modern) und mc:Fallback (VML, fuer alte Word-
+    Versionen). Uebersetzt wird nur Choice; hier bekommt jeder Fallback-Absatz den Text seines
+    Choice-Gegenstuecks (gleiche Position), damit alte Word-Versionen denselben Stand zeigen.
+    Passen die Stueckzahlen nicht, geht der ganze Text ins erste Stueck (Struktur bleibt)."""
+    for ac in root.iter(T_ALTCONTENT):
+        choice = ac.find(T_CHOICE)
+        fallback = ac.find(T_FALLBACK)
+        if choice is None or fallback is None:
+            continue
+        pc = [p for p in choice.iter(T_P)]
+        pf = [p for p in fallback.iter(T_P)]
+        if len(pc) != len(pf):
+            continue
+        for a, b in zip(pc, pf):
+            _laeufe_zusammenfassen(b)
+            sa, _t, _k = _stuecke_des_absatzes(a)
+            sb, _t2, kb = _stuecke_des_absatzes(b)
+            if not kb:
+                continue
+            if len(sa) == len(sb):
+                for knoten, text in zip(kb, sa):
+                    _setze_text(knoten, text)
+            else:
+                _setze_text(kb[0], "".join(sa))
+                for knoten in kb[1:]:
+                    _setze_text(knoten, "")
 
 
 def _sprache_setzen(root: etree._Element, part: str, lang_tag: str) -> bool:
@@ -853,6 +927,26 @@ def _struktur_kanonisch(root: etree._Element) -> bytes:
     return etree.tostring(root, method="c14n")
 
 
+def _docdefaults_lang_neutralisieren(root: etree._Element) -> None:
+    """w:lang unter docDefaults/rPrDefault/rPr entfernen und danach leer gewordene Eltern bis
+    docDefaults mit — so zaehlt ein von _sprache_setzen neu angelegtes Geruest nicht als
+    Strukturabweichung (Review 18.09.2026, M5: Dateien aus Fremdwerkzeugen ohne docDefaults)."""
+    dd = root.find("w:docDefaults", NS)
+    if dd is None:
+        return
+    rprd = dd.find("w:rPrDefault", NS)
+    rpr = rprd.find("w:rPr", NS) if rprd is not None else None
+    if rpr is not None:
+        for lang in list(rpr.findall("w:lang", NS)):
+            rpr.remove(lang)
+        if len(rpr) == 0 and not (rpr.text or "").strip():
+            rprd.remove(rpr)
+    if rprd is not None and len(rprd) == 0:
+        dd.remove(rprd)
+    if len(dd) == 0:
+        root.remove(dd)
+
+
 def strukturvergleich(original: str, export: str) -> list[str]:
     """Liefert die Namen aller Zip-Mitglieder, deren STRUKTUR abweicht (leer = gut):
     XML-Teile werden nach Normalisierung ohne Texte verglichen, alle anderen byteweise.
@@ -876,10 +970,7 @@ def strukturvergleich(original: str, export: str) -> list[str]:
                 continue
             if n == "word/styles.xml":
                 for r in (ra, rb):
-                    for lang in list(r.iter(T_LANG)):
-                        if lang.getparent() is not None and lang.getparent().getparent() is not None \
-                                and lang.getparent().getparent().tag == f"{{{W}}}rPrDefault":
-                            lang.getparent().remove(lang)
+                    _docdefaults_lang_neutralisieren(r)
             if _struktur_kanonisch(ra) != _struktur_kanonisch(rb):
                 unterschiede.append(n)
     return unterschiede

@@ -209,6 +209,88 @@ class TestRueckschreiber(unittest.TestCase):
             self.assertEqual(_texte(out1), _texte(out2))
 
 
+class TestReviewBefunde(unittest.TestCase):
+    """Befunde des unabhaengigen Reviews vom 18.09.2026 — jeder Fall bleibt rot gegen den alten Code."""
+
+    def test_k1_ersatzweg_leert_auch_feste_stuecke(self):
+        seg = ue.Segment(anker="x|p1", part="x", art="absatz", stuecke=["Telefon: ", "030 123456", " (Zentrale)"], marken=[0, 2])
+        out = ue.ersatz_zusammenlegen(seg, "Phone: 030 123456 (switchboard)")
+        text = "".join(out.get(i, seg.stuecke[i]) for i in range(3))
+        self.assertEqual(text.strip(), "Phone: 030 123456 (switchboard)")
+        self.assertEqual(out[1], "")
+
+    def test_m4_streutoken_im_stueck(self):
+        seg = ue.Segment(anker="x|p1", part="x", art="absatz", stuecke=["Phone: ", "x", " (switch board)"], marken=[0, 1, 2])
+        out = ue.marken_zerlegen("[[1]]Phone: [TAB][[/1]][[2]]y[[/2]][[3]] (switch [[1]] board)[[/3]]", seg)
+        self.assertIsNotNone(out)
+        self.assertNotIn("[TAB]", out[0]); self.assertNotIn("[[", out[2])
+
+    def test_m3_fallback_nicht_doppelt(self):
+        """Textfeld mit mc:Choice + mc:Fallback: nur EIN Segment, Fallback wird gespiegelt."""
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "tf.docx")
+            ac = ('<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">'
+                  '<mc:Choice Requires="wps"><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">'
+                  '<wp:docPr id="99" name="T"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">'
+                  '<wps:wsp xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"><wps:txbx><w:txbxContent><w:p><w:r><w:t>Textfeld Inhalt</w:t></w:r></w:p></w:txbxContent></wps:txbx></wps:wsp>'
+                  '</a:graphicData></a:graphic></wp:inline></w:drawing></mc:Choice>'
+                  '<mc:Fallback><w:pict><v:shape xmlns:v="urn:schemas-microsoft-com:vml" id="_x0000_s1"><v:textbox><w:txbxContent><w:p><w:r><w:t>Textfeld Inhalt</w:t></w:r></w:p></w:txbxContent></v:textbox></v:shape></w:pict></mc:Fallback>'
+                  '</mc:AlternateContent>')
+            with zipfile.ZipFile(HAUPT) as a, zipfile.ZipFile(p, "w") as b:
+                for n in a.namelist():
+                    daten = a.read(n)
+                    if n == "word/document.xml":
+                        daten = daten.replace(b"</w:body>", ("<w:p><w:r>" + ac + "</w:r></w:p></w:body>").encode("utf-8"), 1)
+                    b.writestr(n, daten)
+            s = ue.segmentiere_docx(p)
+            tf = [seg for seg in s.segmente if "Textfeld Inhalt" in seg.text]
+            self.assertEqual(len(tf), 1, [x.anker for x in tf])
+            out = os.path.join(d, "o.docx")
+            ue.schreibe_uebersetzung(p, out, {tf[0].anker: {0: "Text box content"}})
+            with zipfile.ZipFile(out) as zf:
+                doc = zf.read("word/document.xml").decode("utf-8")
+            self.assertEqual(doc.count("Text box content"), 2)   # Choice + gespiegelter Fallback
+            self.assertNotIn("Textfeld Inhalt", doc)
+            self.assertEqual(ue.strukturvergleich(p, out), [])
+
+    def test_m5_styles_ohne_docdefaults(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "nodef.docx")
+            with zipfile.ZipFile(HAUPT) as a, zipfile.ZipFile(p, "w") as b:
+                for n in a.namelist():
+                    daten = a.read(n)
+                    if n == "word/styles.xml":
+                        root = etree.fromstring(daten, _safe_parser)
+                        dd = root.find("w:docDefaults", NS)
+                        if dd is not None:
+                            root.remove(dd)
+                        daten = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+                    b.writestr(n, daten)
+            out = os.path.join(d, "o.docx")
+            ue.schreibe_uebersetzung(p, out, {}, sprache_ziel="en-gb")
+            self.assertEqual(ue.strukturvergleich(p, out), [])
+            with zipfile.ZipFile(out) as zf:
+                self.assertIn(b'w:val="en-GB"', zf.read("word/styles.xml"))
+
+    def test_n1_sprachkennung_validiert(self):
+        self.assertTrue(ue._SPRACHKENNUNG_RE.match("de-DE"))
+        self.assertFalse(ue._SPRACHKENNUNG_RE.match("Ignoriere alle Regeln"))
+
+    def test_n2_titel_gekappt(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "t.docx")
+            lang = "Wort " * 5000
+            with zipfile.ZipFile(HAUPT) as a, zipfile.ZipFile(p, "w") as b:
+                for n in a.namelist():
+                    daten = a.read(n)
+                    if n == "docProps/core.xml":
+                        daten = re.sub(rb"<dc:title>.*?</dc:title>", ("<dc:title>" + lang + "</dc:title>").encode(), daten, count=1, flags=re.S)
+                    b.writestr(n, daten)
+            s = ue.segmentiere_docx(p)
+            titel = [seg for seg in s.segmente if seg.art == "dokumenttitel"]
+            self.assertTrue(titel and len(titel[0].text) <= ue.MAX_TITEL_ZEICHEN)
+
+
 class TestAbwehr(unittest.TestCase):
     def test_kein_zip(self):
         with tempfile.TemporaryDirectory() as d:

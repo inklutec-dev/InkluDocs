@@ -6923,3 +6923,9 @@ msgstr "Start translation"
 
 msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
 msgstr "Translation {sprache}: {f} of {n} paragraphs done."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben."
+msgstr "Formatting is fully preserved: only the text is replaced. Whatever is still missing in this language gets translated; manually corrected paragraphs are kept."
+
+msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
+msgstr "Everything is already translated into this language. Manually corrected paragraphs are left untouched."

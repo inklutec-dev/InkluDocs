@@ -6615,3 +6615,9 @@ msgstr "Start oversættelse"
 
 msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
 msgstr "Oversættelse {sprache}: {f} af {n} afsnit færdige."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Übersetzt wird, was in dieser Sprache noch fehlt; von Hand korrigierte Absätze bleiben."
+msgstr "Formateringen bevares fuldstændigt: kun teksten udskiftes. Det, der stadig mangler på dette sprog, oversættes; manuelt rettede afsnit bevares."
+
+msgid "In dieser Sprache ist schon alles übersetzt. Von Hand korrigierte Absätze bleiben unangetastet."
+msgstr "Alt er allerede oversat til dette sprog. Manuelt rettede afsnit forbliver urørt."

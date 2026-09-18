@@ -151,7 +151,15 @@ async def handle_upload(file_path: str, filename: str, user: dict, project_id: i
         raise HTTPException(status_code=400, detail=str(e))
     conn = _d.get_db()
     try:
-        _projekt_des_nutzers(conn, project_id, user["id"])
+        proj = _projekt_des_nutzers(conn, project_id, user["id"])
+        if proj.get("status") in ("extracting", "processing"):
+            # Review 18.09.2026 (M2b): ein Upload mitten im Lauf wuerde den Projektstatus
+            # umschreiben und den Lauf entkoppeln.
+            try:
+                os.unlink(file_path)
+            except OSError:
+                pass
+            raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung. Bitte warten.")
         is_append = bool(conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0])
         if is_append:
             conn.execute("UPDATE projects SET status = 'extracting' WHERE id = ?", (project_id,))
@@ -178,7 +186,9 @@ def _segmentierung_fehlgeschlagen(project_id: int, document_id: int, file_path: 
     try:
         conn.execute("DELETE FROM uebersetzung_segmente WHERE document_id = ?", (document_id,))
         conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
-        conn.execute("UPDATE projects SET status = ? WHERE id = ?", ("extracted" if is_append else "error", project_id))
+        # Grund sichtbar am Projekt (Review 18.09.2026, M7) — JSON wie bei den Alt-Text-Laeufen.
+        conn.execute("UPDATE projects SET status = ?, lauf_hinweis = ? WHERE id = ?",
+                     ("extracted" if is_append else "error", json.dumps({"grund": _lesbarer_grund(grund)}, ensure_ascii=False), project_id))
         conn.commit()
     finally:
         conn.close()
@@ -188,6 +198,14 @@ def _segmentierung_fehlgeschlagen(project_id: int, document_id: int, file_path: 
             os.unlink(file_path)
     except OSError:
         pass
+
+
+def _lesbarer_grund(grund: str) -> str:
+    """DocxFehler tragen nutzertaugliche Saetze; alles andere wird zu einem allgemeinen Satz."""
+    m = re.search(r"DocxFehler\('(.+?)'\)", grund)
+    if m:
+        return m.group(1)
+    return "Das Dokument konnte nicht gelesen werden. Bitte die Datei in Word öffnen, als .docx speichern und erneut hochladen."
 
 
 def segmentiere_und_speichere(conn, project_id: int, document_id: int, seg: ue.Segmentierung) -> int:
@@ -205,8 +223,8 @@ def segmentiere_und_speichere(conn, project_id: int, document_id: int, seg: ue.S
         n += 1
     hinweise = {"hinweise": seg.hinweise, "quellsprache": seg.quellsprache, "titel": seg.titel,
                 "woerter": seg.woerter, "absaetze": seg.absaetze, "teile": seg.teile}
-    conn.execute("UPDATE documents SET hinweise = ?, total_images = ? WHERE id = ?",
-                 (json.dumps(hinweise, ensure_ascii=False), seg.absaetze, document_id))
+    # total_images bleibt 0: andere Ansichten (Dashboard) lesen die Spalte als Bilderzahl (Review H8).
+    conn.execute("UPDATE documents SET hinweise = ? WHERE id = ?", (json.dumps(hinweise, ensure_ascii=False), document_id))
     return n
 
 
@@ -220,7 +238,7 @@ async def _segmentiere_im_hintergrund(project_id: int, document_id: int, file_pa
     conn = _d.get_db()
     try:
         segmentiere_und_speichere(conn, project_id, document_id, seg)
-        conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
+        conn.execute("UPDATE projects SET status = 'extracted', lauf_hinweis = NULL WHERE id = ?", (project_id,))
         conn.commit()
     except Exception as e:
         conn.close()
@@ -237,8 +255,18 @@ def haengende_laeufe_zuruecksetzen() -> int:
     try:
         conn.execute(f"UPDATE projects SET status = 'extracted' WHERE tool = '{TOOL_KEY}' AND status = 'processing'")
         rows = conn.execute(f"SELECT id FROM projects WHERE tool = '{TOOL_KEY}' AND status = 'extracting'").fetchall()
+        wurzel = os.path.realpath(_d.upload_dir) + os.sep
         for r in rows:
             pid = r["id"]
+            waisen = conn.execute("""SELECT original_path FROM documents WHERE project_id = ? AND NOT EXISTS
+                                     (SELECT 1 FROM uebersetzung_segmente s WHERE s.document_id = documents.id)""", (pid,)).fetchall()
+            for w in waisen:   # Upload-Datei des nie fertig gelesenen Dokuments (Review N9)
+                pfad = w["original_path"] or ""
+                try:
+                    if pfad and os.path.realpath(pfad).startswith(wurzel) and os.path.isfile(pfad):
+                        os.unlink(pfad)
+                except OSError:
+                    pass
             conn.execute("""DELETE FROM documents WHERE project_id = ? AND NOT EXISTS
                             (SELECT 1 FROM uebersetzung_segmente s WHERE s.document_id = documents.id)""", (pid,))
             hat = conn.execute("SELECT COUNT(*) FROM uebersetzung_segmente WHERE project_id = ?", (pid,)).fetchone()[0]
@@ -299,17 +327,32 @@ def _projekt_aussen(project: dict) -> dict:
         aussen["einstellungen"] = json.loads(project.get("ki_neu_rest") or "{}")   # Zielsprache/Schalter des letzten Laufs
     except Exception:
         aussen["einstellungen"] = {}
+    try:
+        h = json.loads(project.get("lauf_hinweis") or "null")
+        aussen["lauf_hinweis"] = (h or {}).get("grund") if isinstance(h, dict) else None
+    except Exception:
+        aussen["lauf_hinweis"] = None
     return aussen
 
 
 # --------------------------------------------------------------------------- Lauf
 
-def _kandidaten(conn, project_id: int, document_id: Optional[int]) -> list[dict]:
-    sql = "SELECT * FROM uebersetzung_segmente WHERE project_id = ? AND uebersetzbar = 1"
+def _kandidaten(conn, project_id: int, document_id: Optional[int], ziel: Optional[str] = None,
+                alt_texte: bool = True) -> list[dict]:
+    """Segmente, die ein Lauf anfasst (Review 18.09.2026, M1): uebersetzbar, NIE von Hand korrigiert,
+    und nicht schon fertig in derselben Zielsprache (sonst zahlt der Kunde nach einem Abbruch wegen
+    Guthaben alles noch einmal). Eine andere Zielsprache uebersetzt alles neu. Ohne `ziel`
+    (Vorschau ohne Sprache) zaehlt alles Nicht-Handkorrigierte."""
+    sql = "SELECT * FROM uebersetzung_segmente WHERE project_id = ? AND uebersetzbar = 1 AND COALESCE(quelle, '') != 'hand'"
     args: list = [project_id]
     if document_id is not None:
         sql += " AND document_id = ?"
         args.append(document_id)
+    if ziel:
+        sql += " AND NOT (status IN ('fertig', 'zusammengelegt') AND zielsprache = ?)"
+        args.append(ziel)
+    if not alt_texte:
+        sql += " AND art NOT IN ('alt', 'titel')"
     return [dict(r) for r in conn.execute(sql + " ORDER BY document_id, position", args).fetchall()]
 
 
@@ -333,16 +376,22 @@ def _einstellungen_pruefen(data: dict) -> dict:
             "sprache_setzen": bool(data.get("sprache_setzen", True))}
 
 
-def _vorschau(conn, user_id: int, project_id: int, document_id: Optional[int]) -> dict:
-    kand = _kandidaten(conn, project_id, document_id)
+def _vorschau(conn, user_id: int, project_id: int, document_id: Optional[int], ziel: Optional[str] = None,
+              alt_texte: bool = True) -> dict:
+    kand = _kandidaten(conn, project_id, document_id, ziel, alt_texte)
     woerter = sum(int(k["woerter"] or 0) for k in kand)
     preis = ue.credits_fuer(woerter)
     verf = _d.billing.verfuegbare_credits(user_id)
     dokumente = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0]
     machbar = len(kand) if verf is None else (len(kand) if verf >= preis else int(len(kand) * (verf / preis)) if preis else 0)
-    return {"anzahl": len(kand), "woerter": woerter, "preis": preis, "preis_je": 1,
+    # Erstes Paket muss bezahlbar sein (Review N4): der Lauf bricht sonst vor dem ersten Aufruf ab.
+    erstes = 0
+    if kand:
+        nummeriert = [(k["id"], _segment_aus_zeile(k)) for k in kand]
+        erstes = ue.credits_fuer(sum(seg.woerter for _n, seg in ue._batches(nummeriert)[0]))
+    return {"anzahl": len(kand), "woerter": woerter, "preis": preis, "preis_je": 1, "erstes_paket": erstes,
             "woerter_je_credit": ue.WOERTER_JE_CREDIT, "verfuegbar": verf,
-            "erlaubt": verf is None or verf >= 1, "machbar": machbar, "dokumente": dokumente}
+            "erlaubt": verf is None or verf >= max(1, erstes), "machbar": machbar, "dokumente": dokumente}
 
 
 async def lauf_starten(project_id: int, user: dict, einstellungen: dict, document_id: Optional[int]) -> dict:
@@ -352,18 +401,22 @@ async def lauf_starten(project_id: int, user: dict, einstellungen: dict, documen
         project = _projekt_des_nutzers(conn, project_id, user["id"])
         if project.get("status") in ("extracting", "processing"):
             raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
-        v = _vorschau(conn, user["id"], project_id, document_id)
+        v = _vorschau(conn, user["id"], project_id, document_id, einstellungen["zielsprache"], einstellungen.get("alt_texte", True))
         if not v["anzahl"]:
             return {"ok": True, "gestartet": False, "anzahl": 0}
-        wache = _d.billing.aktion_pruefung(user["id"], AKTION, 1)
+        wache = _d.billing.aktion_pruefung(user["id"], AKTION, max(1, v["erstes_paket"]))
         if not wache["erlaubt"]:
             raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Das Übersetzen"))
         tl = _d.tageslimit_wache(user) if _d.tageslimit_wache else None
         if tl:
             raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
-        conn.execute("UPDATE projects SET status = 'processing', ki_neu_rest = ?, lauf_hinweis = '' WHERE id = ?",
-                     (json.dumps(einstellungen), project_id))
+        # Atomar (Review 18.09.2026, M2a): zwei gleichzeitige Starts -> nur einer gewinnt.
+        cur = conn.execute("UPDATE projects SET status = 'processing', ki_neu_rest = ?, lauf_hinweis = NULL "
+                           "WHERE id = ? AND status NOT IN ('processing', 'extracting')",
+                           (json.dumps(einstellungen), project_id))
         conn.commit()
+        if not cur.rowcount:
+            raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
     finally:
         conn.close()
     _lauf[project_id] = {"laeuft": True, "pakete_gesamt": 0, "pakete_fertig": 0, "segmente_fertig": 0,
@@ -379,12 +432,11 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
     ziel = einstellungen["zielsprache"]
     conn = _d.get_db()
     try:
-        kand = _kandidaten(conn, project_id, document_id)
-        if not einstellungen.get("alt_texte", True):
-            kand = [k for k in kand if k["art"] not in ("alt", "titel")]
+        kand = _kandidaten(conn, project_id, document_id, ziel, einstellungen.get("alt_texte", True))
         docs = {d["id"]: dict(d) for d in conn.execute("SELECT * FROM documents WHERE project_id = ?", (project_id,)).fetchall()}
     finally:
         conn.close()
+    st["segmente_gesamt"] = len(kand)
     stand_by_id = {k["id"]: (k.get("updated_at") or "") for k in kand}
     lauf_user = _d.get_user_by_id(user_id) if _d.get_user_by_id else None
     # Pakete je Dokument (Kontext/Titel je Dokument)
@@ -397,6 +449,9 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
         for b in ue._batches(nummeriert):
             pakete.append((did, b))
     st["pakete_gesamt"] = len(pakete)
+    if ziel == "ar":
+        st["fehler"].append("Arabisch: Die Schreibrichtung der Absätze bleibt in der Datei links-nach-rechts; "
+                            "bitte in Word über „Absatz > Textrichtung“ auf rechts-nach-links umstellen.")
     try:
         for did, batch in pakete:
             if st.get("abbruch"):
@@ -430,26 +485,29 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
                 st["fehler"].append("Vom Nutzer abgebrochen – das laufende Paket wurde verworfen.")
                 break
             conn = _d.get_db()
-            geschrieben = 0
+            geschrieben_ids: set[int] = set()
             try:
                 by_nr = {nr: seg for nr, seg in batch}
                 for e in ergebnisse:
                     seg = by_nr[e.nr]
                     text = "".join(e.ziel_stuecke.get(i, seg.stuecke[i]) for i in range(len(seg.stuecke))) if e.ziel_stuecke else ""
+                    # Nur schreiben, wenn das Segment seit dem Start nicht angefasst wurde (Handarbeit gewinnt).
                     cur = conn.execute(
                         """UPDATE uebersetzung_segmente SET uebersetzung = ?, ziel_stuecke = ?, status = ?, quelle = 'ki', hinweis = ?,
-                           zielsprache = ?, updated_at = datetime('now') WHERE id = ? AND COALESCE(updated_at, '') = ?""",
+                           zielsprache = ?, updated_at = datetime('now') WHERE id = ? AND COALESCE(updated_at, '') = ?
+                           AND COALESCE(quelle, '') != 'hand'""",
                         (text, json.dumps({str(k): v for k, v in e.ziel_stuecke.items()}, ensure_ascii=False), e.status,
                          e.hinweis, ziel, e.nr, stand_by_id.get(e.nr, "")))
                     if cur.rowcount and e.status != "fehler":
-                        geschrieben += 1
+                        geschrieben_ids.add(e.nr)
                 conn.commit()
             finally:
                 conn.close()
-            st["segmente_fertig"] += geschrieben
-            if geschrieben:
-                # Preis anteilig nach tatsaechlich geschriebenen Segmenten (nichts geschrieben = nichts verbucht)
-                anteil = ue.credits_fuer(sum(seg.woerter for nr, seg in batch if any(r.nr == nr and r.status != "fehler" for r in ergebnisse)))
+            st["segmente_fertig"] += len(geschrieben_ids)
+            if geschrieben_ids:
+                # Preis NUR fuer tatsaechlich geschriebene Segmente (Review 18.09.2026, M2c) —
+                # nichts geschrieben = nichts verbucht.
+                anteil = ue.credits_fuer(sum(seg.woerter for nr, seg in batch if nr in geschrieben_ids))
                 if anteil:
                     _d.billing.verbuche(user_id, "sammellauf", aktion=AKTION, credits=anteil)
                     st["credits"] += anteil
@@ -459,7 +517,7 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
         try:
             hinweis = " ".join(st["fehler"])[:1000]
             conn.execute("UPDATE projects SET status = 'extracted', lauf_hinweis = ? WHERE id = ? AND status = 'processing'",
-                         (hinweis, project_id))
+                         (json.dumps({"grund": hinweis}, ensure_ascii=False) if hinweis else None, project_id))
             conn.commit()
         finally:
             conn.close()
@@ -498,10 +556,16 @@ def export_vorbereiten(conn, project: dict, document_id: Optional[int]) -> list[
             sprache = sprache or r["zielsprache"]
         if not ziele:
             raise HTTPException(status_code=400, detail=f"„{_d.doc_label(doc)}“ ist noch nicht übersetzt.")
-        sprache = sprache or einst.get("zielsprache")
-        auftraege.append({"doc_id": doc["id"], "doc_index": doc["doc_index"], "src": src, "ziele": ziele, "sprache": sprache,
-                          "name": f"{_d.doc_label(doc)}_{sprache}.docx",
-                          "sprache_setzen": einst.get("sprache_setzen", True)})
+        sprache = sprache or einst.get("zielsprache") or ""
+        name = f"{_d.doc_label(doc)}_{sprache or 'uebersetzt'}.docx"
+        auftraege.append({"doc_id": doc["id"], "doc_index": doc["doc_index"], "src": src, "ziele": ziele,
+                          "sprache": sprache or None, "name": name,
+                          "sprache_setzen": bool(sprache) and einst.get("sprache_setzen", True)})
+    # Gleiche Anzeigenamen (Review N6): Dokumentnummer anhaengen, sonst ueberschreiben sich ZIP-Mitglieder.
+    namen = [a["name"] for a in auftraege]
+    for a in auftraege:
+        if namen.count(a["name"]) > 1:
+            a["name"] = a["name"][:-5] + f"_dok{a['doc_index']}.docx"
     return auftraege
 
 
@@ -510,7 +574,7 @@ def export_bauen(auftraege: list[dict], ziel_dir: str) -> list[tuple[str, str, d
     Rueckgabe [(dateipfad, anzeigename, info)]. Bricht ab, wenn die Struktur abweicht."""
     out = []
     for a in auftraege:
-        pfad = os.path.join(ziel_dir, f"doc{a['doc_index']}_{a['sprache']}.docx")
+        pfad = os.path.join(ziel_dir, f"doc{a['doc_index']}.docx")
         erg = ue.schreibe_uebersetzung(a["src"], pfad, a["ziele"], sprache_ziel=a["sprache"] if a["sprache_setzen"] else None)
         abweichung = ue.strukturvergleich(a["src"], pfad)
         if abweichung:
@@ -536,10 +600,16 @@ def build_router(deps: Deps) -> APIRouter:
             log.warning("[uebersetzung] Start-Reparatur übersprungen: %r", e)
 
     @router.get("/api/projects/{project_id}/uebersetzung")
-    async def lesen(project_id: int, user: dict = Depends(_user)):
+    async def lesen(project_id: int, request: Request, user: dict = Depends(_user)):
+        """?leicht=1 (Review 18.09.2026, M6): nur Status, Lauf und Dokumentzahl fuer das Polling —
+        keine Segmente (bei grossen Dokumenten sonst Megabytes alle 2,5 s)."""
+        leicht = request.query_params.get("leicht") == "1"
         conn = _d.get_db()
         try:
             project = _projekt_des_nutzers(conn, project_id, user["id"])
+            if leicht:
+                n_docs = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0]
+                return {"project": _projekt_aussen(project), "dokumente": n_docs, "lauf": _lauf.get(project_id)}
             docs, segmente = _lade(conn, project_id)
         finally:
             conn.close()
@@ -557,10 +627,14 @@ def build_router(deps: Deps) -> APIRouter:
             document_id = int(document_id) if document_id is not None else None
         except (TypeError, ValueError):
             raise HTTPException(status_code=400, detail="document_id ungültig")
+        ziel = str((data.get("zielsprache") if isinstance(data, dict) else "") or "").strip().lower()
+        if ziel and ziel not in ue.ZIELSPRACHEN:
+            ziel = ""
+        alt_texte = bool(data.get("alt_texte", True)) if isinstance(data, dict) else True
         conn = _d.get_db()
         try:
             _projekt_des_nutzers(conn, project_id, user["id"])
-            return _vorschau(conn, user["id"], project_id, document_id)
+            return _vorschau(conn, user["id"], project_id, document_id, ziel or None, alt_texte)
         finally:
             conn.close()
 
@@ -594,13 +668,22 @@ def build_router(deps: Deps) -> APIRouter:
         if "uebersetzung" not in data:
             raise HTTPException(status_code=400, detail="uebersetzung fehlt")
         text = _sauber(data.get("uebersetzung"), MAX_HANDTEXT)
+        try:
+            text.encode("utf-8", "strict")
+        except UnicodeEncodeError:
+            raise HTTPException(status_code=400, detail="Der Text enthält ungültige Zeichen")
         conn = _d.get_db()
         try:
             row = conn.execute(
-                """SELECT s.* FROM uebersetzung_segmente s JOIN projects p ON p.id = s.project_id
+                """SELECT s.*, p.ki_neu_rest AS projekt_einstellungen FROM uebersetzung_segmente s JOIN projects p ON p.id = s.project_id
                    WHERE s.id = ? AND p.user_id = ?""", (segment_id, user["id"])).fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Absatz nicht gefunden")
+            try:
+                projekt_ziel = (json.loads(row["projekt_einstellungen"] or "{}")).get("zielsprache") or ""
+            except Exception:
+                projekt_ziel = ""
+            zielsprache = row["zielsprache"] or projekt_ziel
             seg = _segment_aus_zeile(dict(row))
             if not seg.uebersetzbar:
                 raise HTTPException(status_code=400, detail="Dieser Absatz enthält keinen übersetzbaren Text")
@@ -615,9 +698,10 @@ def build_router(deps: Deps) -> APIRouter:
                 ziel, status, hinweis, quelle = {}, "offen", "", ""
             conn.execute(
                 """UPDATE uebersetzung_segmente SET uebersetzung = ?, ziel_stuecke = ?, status = ?, quelle = ?, hinweis = ?,
-                   updated_at = datetime('now') WHERE id = ?""",
+                   zielsprache = ?, updated_at = datetime('now') WHERE id = ?""",
                 ("".join(ziel.get(i, seg.stuecke[i]) for i in range(len(seg.stuecke))) if ziel else "",
-                 json.dumps({str(k): v for k, v in ziel.items()}, ensure_ascii=False), status, quelle, hinweis, segment_id))
+                 json.dumps({str(k): v for k, v in ziel.items()}, ensure_ascii=False), status, quelle, hinweis,
+                 zielsprache if ziel else (row["zielsprache"] or ""), segment_id))
             conn.commit()
         finally:
             conn.close()
@@ -638,7 +722,11 @@ def build_router(deps: Deps) -> APIRouter:
         os.makedirs(ziel_dir, exist_ok=True)
         arbeits = tempfile.mkdtemp(prefix="u_", dir=ziel_dir)
         loop = asyncio.get_running_loop()
-        dateien = await loop.run_in_executor(None, export_bauen, auftraege, arbeits)
+        try:
+            dateien = await loop.run_in_executor(None, export_bauen, auftraege, arbeits)
+        except Exception:
+            shutil.rmtree(arbeits, ignore_errors=True)   # halbfertige Dateien nicht liegen lassen (Review N5)
+            raise
         _alte_arbeitsordner_aufraeumen(ziel_dir, behalten=arbeits)
         warnungen = [w for _p, _n, info in dateien for w in info.get("warnungen", [])]
         kopf = {"X-Export-Total": str(len(dateien)), "X-Export-Warnings": json.dumps(warnungen, ensure_ascii=True)}
