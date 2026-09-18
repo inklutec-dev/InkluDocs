@@ -25,7 +25,7 @@ name: inkludocs-demo
 
 services:
   inkludocs-demo:
-    image: inkludocs:demo-20260917b  # 17.09.2026 nachmittags: Filter-Chips Alle / Offen / Alt-Text (Michael)
+    image: inkludocs:demo-20260918  # 18.09.2026: Dokument-API v1, Filter in zwei Feldern, Heine-Skript 1.0.0.2
     container_name: inkludocs-demo
     restart: unless-stopped
     # 15.09.2026 (Steve, nach dem Vorfall vom 14.09.): Logs ins System-Journal — sie ueberleben den

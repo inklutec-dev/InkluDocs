@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260917b
+    image: inkludocs:v4-20260918
     container_name: inkludocs
     restart: unless-stopped
     # 15.09.2026 (Steve, nach dem Vorfall vom 14.09.): Logs ins System-Journal — sie ueberleben den
