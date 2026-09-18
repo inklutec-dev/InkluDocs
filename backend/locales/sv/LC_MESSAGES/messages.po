@@ -6303,9 +6303,6 @@ msgstr "Körningen kan även avbrytas efter start."
 msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
 msgstr "Formateringen bevaras helt: endast texten byts ut. Befintliga översättningar ersätts, manuellt rättade stycken behålls."
 
-msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
-msgstr "Word-filen bearbetas – stycken läses …"
-
 msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
 msgstr "Översättningen avbröts: {n} stycken översattes."
 
@@ -6567,14 +6564,32 @@ msgstr "Alternativtexter"
 msgid "Ansicht"
 msgstr "Vy"
 
-msgid "Ansicht Alt-Texte wird geöffnet."
-msgstr "Vyn Alternativtexter öppnas."
-
-msgid "Ansicht Übersetzung wird geöffnet."
-msgstr "Vyn Översättning öppnas."
-
 msgid "Diese Ansicht ist schon geöffnet."
 msgstr "Den här vyn är redan öppen."
 
 msgid "Öffnen"
 msgstr "Öppna"
+
+msgid "Wird übersetzt …"
+msgstr "Översätter …"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Übersetzung."
+msgstr "Förlopp och avbryt finns i vyn Översättning."
+
+msgid "Die Word-Datei wird gelesen …"
+msgstr "Word-filen läses …"
+
+msgid "Ansicht Übersetzung geöffnet."
+msgstr "Vyn Översättning öppnad."
+
+msgid "Ansicht Alt-Texte geöffnet."
+msgstr "Vyn Alt-texter öppnad."
+
+msgid "Alt-Texte werden erstellt"
+msgstr "Alt-texter skapas"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte."
+msgstr "Förlopp och avbryt finns i vyn Alt-texter."
+
+msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
+msgstr "Skapandet av alt-texter är klart."

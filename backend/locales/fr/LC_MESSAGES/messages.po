@@ -6741,9 +6741,6 @@ msgstr "Le traitement peut aussi être annulé après le démarrage."
 msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
 msgstr "La mise en forme est entièrement conservée : seul le texte est remplacé. Les traductions existantes sont remplacées, les paragraphes corrigés à la main sont conservés."
 
-msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
-msgstr "Le fichier Word est en cours de traitement – lecture des paragraphes …"
-
 msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
 msgstr "La traduction a été annulée : {n} paragraphes ont été traduits."
 
@@ -7005,14 +7002,32 @@ msgstr "Textes alternatifs"
 msgid "Ansicht"
 msgstr "Vue"
 
-msgid "Ansicht Alt-Texte wird geöffnet."
-msgstr "Ouverture de la vue Textes alternatifs."
-
-msgid "Ansicht Übersetzung wird geöffnet."
-msgstr "Ouverture de la vue Traduction."
-
 msgid "Diese Ansicht ist schon geöffnet."
 msgstr "Cette vue est déjà ouverte."
 
 msgid "Öffnen"
 msgstr "Ouvrir"
+
+msgid "Wird übersetzt …"
+msgstr "Traduction en cours …"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Übersetzung."
+msgstr "La progression et l’annulation se trouvent dans la vue Traduction."
+
+msgid "Die Word-Datei wird gelesen …"
+msgstr "Lecture du fichier Word …"
+
+msgid "Ansicht Übersetzung geöffnet."
+msgstr "Vue Traduction ouverte."
+
+msgid "Ansicht Alt-Texte geöffnet."
+msgstr "Vue Textes alternatifs ouverte."
+
+msgid "Alt-Texte werden erstellt"
+msgstr "Création des textes alternatifs"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte."
+msgstr "La progression et l’annulation se trouvent dans la vue Textes alternatifs."
+
+msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
+msgstr "La création des textes alternatifs est terminée."

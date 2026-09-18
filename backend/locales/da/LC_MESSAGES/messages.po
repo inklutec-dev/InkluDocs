@@ -6433,9 +6433,6 @@ msgstr "Kørslen kan også afbrydes efter start."
 msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
 msgstr "Formateringen bevares fuldstændigt: kun teksten udskiftes. Eksisterende oversættelser erstattes, manuelt rettede afsnit bevares."
 
-msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
-msgstr "Word-filen behandles – afsnit læses …"
-
 msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
 msgstr "Oversættelsen blev afbrudt: {n} afsnit blev oversat."
 
@@ -6697,14 +6694,32 @@ msgstr "Alternative tekster"
 msgid "Ansicht"
 msgstr "Visning"
 
-msgid "Ansicht Alt-Texte wird geöffnet."
-msgstr "Visningen Alternative tekster åbnes."
-
-msgid "Ansicht Übersetzung wird geöffnet."
-msgstr "Visningen Oversættelse åbnes."
-
 msgid "Diese Ansicht ist schon geöffnet."
 msgstr "Denne visning er allerede åben."
 
 msgid "Öffnen"
 msgstr "Åbn"
+
+msgid "Wird übersetzt …"
+msgstr "Oversætter …"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Übersetzung."
+msgstr "Fremskridt og annullering findes i visningen Oversættelse."
+
+msgid "Die Word-Datei wird gelesen …"
+msgstr "Word-filen læses …"
+
+msgid "Ansicht Übersetzung geöffnet."
+msgstr "Visningen Oversættelse åbnet."
+
+msgid "Ansicht Alt-Texte geöffnet."
+msgstr "Visningen Alt-tekster åbnet."
+
+msgid "Alt-Texte werden erstellt"
+msgstr "Alt-tekster oprettes"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte."
+msgstr "Fremskridt og annullering findes i visningen Alt-tekster."
+
+msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
+msgstr "Oprettelsen af alt-tekster er afsluttet."

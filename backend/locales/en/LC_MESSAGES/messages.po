@@ -6741,9 +6741,6 @@ msgstr "The run can also be cancelled after it has started."
 msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
 msgstr "Formatting is fully preserved: only the text is replaced. Existing translations are replaced, manually corrected paragraphs are kept."
 
-msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
-msgstr "The Word file is being processed – paragraphs are being read …"
-
 msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
 msgstr "The translation was cancelled: {n} paragraphs were translated."
 
@@ -7005,14 +7002,32 @@ msgstr "Alt texts"
 msgid "Ansicht"
 msgstr "View"
 
-msgid "Ansicht Alt-Texte wird geöffnet."
-msgstr "Opening the Alt texts view."
-
-msgid "Ansicht Übersetzung wird geöffnet."
-msgstr "Opening the Translation view."
-
 msgid "Diese Ansicht ist schon geöffnet."
 msgstr "This view is already open."
 
 msgid "Öffnen"
 msgstr "Open"
+
+msgid "Wird übersetzt …"
+msgstr "Translating …"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Übersetzung."
+msgstr "Progress and cancel are in the Translation view."
+
+msgid "Die Word-Datei wird gelesen …"
+msgstr "Reading the Word file …"
+
+msgid "Ansicht Übersetzung geöffnet."
+msgstr "Translation view opened."
+
+msgid "Ansicht Alt-Texte geöffnet."
+msgstr "Alt-text view opened."
+
+msgid "Alt-Texte werden erstellt"
+msgstr "Alt texts are being created"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte."
+msgstr "Progress and cancel are in the Alt-text view."
+
+msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
+msgstr "Alt-text creation has finished."

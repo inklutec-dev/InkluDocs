@@ -93,7 +93,9 @@ Inhaltsverzeichnis) werden übersetzt; ein Hinweis rät, in Word F9 zu drücken.
    „Übersetzung“ (lazy); Übersetzen-Projekte weisen andere Dateitypen mit Meldung ab.
 3. **Segmente** in `uebersetzung_segmente` (Position im Lesefluss: Haupttext, dann
    Kopf-/Fußzeilen, Fuß-/Endnoten; Alt-Texte/Bildtitel/Dokumenttitel als eigene Segmente).
-   `documents.hinweise` trägt Quellsprache, Wörter, Absätze, Hinweise (z. B. Inhaltsverzeichnis).
+   `documents.hinweise["uebersetzung"]` trägt Quellsprache, Wörter, Absätze, Hinweise (z. B.
+   Inhaltsverzeichnis) und bei gescheiterter Segmentierung den Grund (`fehler`); die Word-
+   Hinweise (übersprungene Elemente) liegen im selben JSON daneben.
 4. **Rückfrage** `POST …/uebersetzung/vorschau`: Absätze, Wörter, Preis, Guthaben.
 5. **Lauf** `POST …/uebersetzung/starten {zielsprache, alt_texte, sprache_setzen, document_id?}`:
    Pakete zu höchstens 30 Absätzen / 6.000 Zeichen, ein Modellaufruf je Paket
@@ -116,7 +118,9 @@ Ausklappliste (`<select>`) mit „Alt-Texte“ und „Übersetzung“ plus Knopf
 Die Auswahl allein wechselt nichts (WCAG 3.2.2, Screenreader-Nutzer blättern mit Pfeilen
 durch die Liste); erst „Öffnen“ wechselt, sagt den Wechsel an und schreibt
 `?ansicht=…` in die Adresse, so dass Browser-Zurück und Lesezeichen funktionieren.
-Laufende Auto-Speicherungen werden vor dem Wechsel abgewartet.
+Vor dem Wechsel bekommt das Auto-Speichern (800 ms nach der letzten Eingabe) einen kurzen
+Vorsprung; der laufende PATCH geht durch den Neuaufbau nicht verloren. Nach dem Wechsel liegt der
+Fokus auf der H1 der neuen Ansicht, dann kommt die Ansage.
 
 - Im Anlege-Menü gibt es nur noch „Word-Dokumente“ (Kennung `word`). Die Kennung
   `uebersetzen` bleibt für bestehende Projekte und die API gültig und bestimmt nur die
@@ -132,6 +136,17 @@ Laufende Auto-Speicherungen werden vor dem Wechsel abgewartet.
 - **Erweiterbar**: eine neue Fähigkeit (z. B. „Aufbereitung“) ist ein Eintrag in der
   Optionsliste von `ansichtWahlHtml()` plus ein Zweig in der Weiche von `showProject`.
 - **Rückweg**: alles in einem Commit; bei Ablehnung genügt `git revert`.
+- **Zwei Ansichten, ein Status**: `projects.status = processing` gilt für Übersetzung UND
+  Alt-Text-Lauf. `lauf_art` (`uebersetzung` | `alttexte` | null, aus `ki_neu_rest`) steht im
+  Projekt-JSON, in `/status` und im leichten Stand; jede Ansicht zeigt Fortschritt und
+  Abbrechen nur für ihren eigenen Lauf und verweist sonst auf die andere Ansicht. Uploads
+  sind während einer Übersetzung und während des Lesens gesperrt (409), damit kein zweiter
+  Lauf entsteht. Der Chatbot hängt in beiden Ansichten unter der Liste.
+- **Segmentierung** läuft im Executor (nie auf dem Event-Loop) unter einem Projekt-Lock;
+  `UNIQUE(document_id, anker)` + `INSERT OR IGNORE` verhindern doppelte Absätze, wenn Ansicht
+  und Chatbot dasselbe Projekt gleichzeitig zum ersten Mal öffnen.
+- **Start-Reparatur** setzt beim Serverstart nur Status zurück (hängende Übersetzung →
+  `extracted`, hängendes Lesen → `extracted`/`error`) und löscht nie Dokumente oder Dateien.
 
 Regressionsbatterie nach dem Umbau (18.09.2026, Staging): 290 Unit-Tests grün; E2E
 Formular 112, Word 54, PDF/UA 29, Chatbot-Werkzeuge 23 + 12, Ablage 19 + 43, Gast 7 + 6,
@@ -142,6 +157,26 @@ in die Statuszeile schreibt und den Fokus dorthin setzt (Ursache: beim Einbau de
 Export-Warnungen versehentlich entfernt; nicht vom Umbau). Drei Klicktests hatten
 veraltete Annahmen (Autor-dekorative Bilder seit 01.09., Feldzustand im Formular-Test)
 und setzen ihren Ausgangszustand jetzt selbst.
+
+### Unabhängiger Review 2 (18.09.2026, Commit 756ae93) — 15 Befunde, alle behoben
+
+1 kritisch: Start-Reparatur löschte Dokumente ohne Segmente (seit lazy Segmentierung der
+Normalfall) samt Original → nur noch Status. Mittel: Polling der Übersetzungs-Ansicht lief
+nach dem Wechsel weiter und schrieb in die Alt-Text-Ansicht → `pollStoppen` exportiert, im
+`showProject` von app.html aufgerufen, Tick prüft, ob die Ansicht noch steht; beide
+Ansichten deuteten `processing` als eigenen Lauf → `lauf_art`; Upload-Sperre während einer
+Übersetzung galt nur für Kennung `uebersetzen` → für alle Word-Projekte, dazu In-Memory-Wache
+in `lauf_starten`, Lauf-Ende schreibt `lauf_hinweis` unabhängig vom Status; Segmentierung
+blockierte den Event-Loop und konnte doppelt laufen → Executor + Lock + UNIQUE; Fokus nach
+Wechsel auf „Alt-Texte“ landete auf body → H1. Niedrig: Chatbot meldete „schon alles
+übersetzt“ bei 0 Absätzen; Docstring/unbenutzte Spalte; tote `docx-uebersetzung`-Zweige und
+leere Live-Region `ansichtStatus`; `bot_starten` ohne `cancel` beim Timeout → 503;
+Übersetzungs-Export umging die Dialog-Sperre (Doppelklick) und zählte projektweit →
+Sperre, Umfang zur Klickzeit, Stand je Dokument; `<=` beim Dokumentvergleich; fehlendes
+Original eines nicht übersetzten Dokuments brach den Export ab; Texte/Doku (409-Grund je
+Lauf-Art, Kopfkommentar); Ansicht-Zeile in beiden Ansichten an derselben Stelle (nach den
+Hauptknöpfen). Als sauber bestätigt: Zugriffskontrolle, Gastmodus, XSS, SQL, Pfade,
+Abrechnung, Migration, Löschpfade, Kataloge, Browser-Zurück.
 
 ## Sicherheit
 

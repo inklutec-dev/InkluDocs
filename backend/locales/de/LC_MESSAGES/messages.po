@@ -6744,9 +6744,6 @@ msgstr "Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden."
 msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
 msgstr "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
 
-msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
-msgstr "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
-
 msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
 msgstr "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
 
@@ -7008,14 +7005,32 @@ msgstr "Alt-Texte"
 msgid "Ansicht"
 msgstr "Ansicht"
 
-msgid "Ansicht Alt-Texte wird geöffnet."
-msgstr "Ansicht Alt-Texte wird geöffnet."
-
-msgid "Ansicht Übersetzung wird geöffnet."
-msgstr "Ansicht Übersetzung wird geöffnet."
-
 msgid "Diese Ansicht ist schon geöffnet."
 msgstr "Diese Ansicht ist schon geöffnet."
 
 msgid "Öffnen"
 msgstr "Öffnen"
+
+msgid "Wird übersetzt …"
+msgstr "Wird übersetzt …"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Übersetzung."
+msgstr "Fortschritt und Abbrechen findest du in der Ansicht Übersetzung."
+
+msgid "Die Word-Datei wird gelesen …"
+msgstr "Die Word-Datei wird gelesen …"
+
+msgid "Ansicht Übersetzung geöffnet."
+msgstr "Ansicht Übersetzung geöffnet."
+
+msgid "Ansicht Alt-Texte geöffnet."
+msgstr "Ansicht Alt-Texte geöffnet."
+
+msgid "Alt-Texte werden erstellt"
+msgstr "Alt-Texte werden erstellt"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte."
+msgstr "Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte."
+
+msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
+msgstr "Die Erstellung der Alt-Texte ist abgeschlossen."

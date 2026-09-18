@@ -375,6 +375,13 @@ def uebersetze_dokument(project_id: int, user_id: int, zielsprache: str, bestaet
     except HTTPException as e:
         return _fehler(e)
     sprache_name = ue.ue.ZIELSPRACHEN[zielsprache][0]
+    if not v.get("anzahl") and not (v.get("stand") or {}).get("absaetze"):
+        # Nichts zu uebersetzen, weil es keine Absaetze gibt (kein Dokument, Original fehlt/unlesbar) —
+        # NICHT „schon alles uebersetzt“ (Review 2, Befund 7).
+        return {"ok": True, "result": {"gestartet": False, "anzahl": 0, "zielsprache": zielsprache, "sprache_name": sprache_name,
+                                       "stand": v.get("stand"),
+                                       "hinweis": "Es gibt keine übersetzbaren Absätze: entweder ist noch kein Word-Dokument im Projekt, "
+                                                  "oder die Datei konnte nicht gelesen werden. Bitte dem Nutzer sagen, er soll ein Word-Dokument hochladen."}}
     if not v.get("anzahl"):
         return {"ok": True, "result": {"gestartet": False, "anzahl": 0, "zielsprache": zielsprache, "sprache_name": sprache_name,
                                        "stand": v.get("stand"),

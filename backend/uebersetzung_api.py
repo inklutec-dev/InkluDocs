@@ -42,6 +42,7 @@ import os
 import re
 import shutil
 import tempfile
+import threading
 import urllib.parse
 import zipfile
 from dataclasses import dataclass
@@ -84,6 +85,29 @@ class Deps:
 _d: Optional[Deps] = None
 # Laufstatus je Projekt (nur im Prozess; nach Neustart setzt _startup den Status zurueck).
 _lauf: dict[int, dict] = {}
+# Segmentierung je Projekt nur einmal gleichzeitig (Review 2, Befund 5): Ansicht (Executor) und
+# Chatbot (Executor-Thread) koennen dasselbe Projekt zur selben Zeit zum ersten Mal oeffnen.
+_seg_locks: dict[int, threading.Lock] = {}
+_seg_locks_wache = threading.Lock()
+
+
+def _seg_lock(project_id: int) -> threading.Lock:
+    with _seg_locks_wache:
+        return _seg_locks.setdefault(project_id, threading.Lock())
+
+
+def lauf_art(project: dict) -> Optional[str]:
+    """Welcher Vorgang laeuft gerade an diesem Projekt? 'uebersetzung' (Lauf dieses Moduls: die
+    Lauf-Einstellungen mit Zielsprache stehen in ki_neu_rest), 'alttexte' (Sammellauf des Word-
+    Werkzeugs) oder None. Beide Ansichten teilen sich projects.status = 'processing' und duerfen nur
+    auf ihren eigenen Lauf reagieren (Review 2, Befund 3)."""
+    if project.get("status") != "processing":
+        return None
+    try:
+        einst = json.loads(project.get("ki_neu_rest") or "{}")
+    except Exception:
+        einst = {}
+    return "uebersetzung" if isinstance(einst, dict) and einst.get("zielsprache") else "alttexte"
 
 
 def _user(request: Request) -> dict:
@@ -149,7 +173,7 @@ def segmentiere_und_speichere(conn, project_id: int, document_id: int, seg: ue.S
     n = 0
     for pos, s in enumerate(seg.segmente, start=1):
         conn.execute(
-            """INSERT INTO uebersetzung_segmente
+            """INSERT OR IGNORE INTO uebersetzung_segmente
                (project_id, document_id, position, anker, art, ort, abschnitt, abschnitt_titel, kontext, stil,
                 ueberschrift_ebene, uebersetzbar, woerter, stuecke, marken, trenner, original, uebersetzung, ziel_stuecke, status, quelle, hinweis)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', '{}', 'offen', '', '')""",
@@ -174,37 +198,81 @@ def segmentiere_und_speichere(conn, project_id: int, document_id: int, seg: ue.S
 
 def _segmente_sicherstellen(conn, project: dict) -> int:
     """Fähigkeit „Übersetzen“ an einem Word-Projekt: Dokumente ohne Segmente werden JETZT aus dem
-    Original segmentiert (schnell: Zip lesen, kein Modell). Rueckgabe = Zahl der neu segmentierten
-    Dokumente. Dokumente, deren Original fehlt oder unlesbar ist, bekommen einen Hinweis und bleiben ohne."""
+    Original segmentiert (Zip lesen, kein Modell). Rueckgabe = Zahl der neu segmentierten Dokumente.
+    Dokumente, deren Original fehlt oder unlesbar ist, bekommen documents.hinweise["uebersetzung"]["fehler"]
+    (die Ansicht zeigt den Grund) und bleiben ohne Segmente.
+    Laeuft unter einem Projekt-Lock; aus Request-Handlern ueber _segmente_sicherstellen_async aufrufen
+    (Executor), damit der Event-Loop nicht blockiert (Review 2, Befund 5)."""
     wurzel = os.path.realpath(_d.upload_dir) + os.sep
     neu = 0
-    docs = conn.execute("SELECT id, original_path, hinweise FROM documents WHERE project_id = ?", (project["id"],)).fetchall()
-    for d in docs:
-        if conn.execute("SELECT 1 FROM uebersetzung_segmente WHERE document_id = ? LIMIT 1", (d["id"],)).fetchone():
-            continue
-        src = d["original_path"] or ""
-        if not src.lower().endswith(".docx") or not os.path.realpath(src).startswith(wurzel) or not os.path.isfile(src):
-            continue
-        try:
-            seg = ue.segmentiere_docx(src)
-        except Exception as e:  # noqa: BLE001
-            log.warning("[uebersetzung] Segmentierung von Dokument %s fehlgeschlagen: %r", d["id"], e)
-            continue
-        segmentiere_und_speichere(conn, project["id"], d["id"], seg)
-        neu += 1
-    if neu:
+    with _seg_lock(project["id"]):
+        docs = conn.execute("SELECT id, original_path, hinweise FROM documents WHERE project_id = ?", (project["id"],)).fetchall()
+        for d in docs:
+            if conn.execute("SELECT 1 FROM uebersetzung_segmente WHERE document_id = ? LIMIT 1", (d["id"],)).fetchone():
+                continue
+            src = d["original_path"] or ""
+            fehler = ""
+            if not src.lower().endswith(".docx") or not os.path.realpath(src).startswith(wurzel) or not os.path.isfile(src):
+                fehler = "Die Originaldatei ist nicht mehr vorhanden; das Dokument kann nicht übersetzt werden."
+            else:
+                try:
+                    seg = ue.segmentiere_docx(src)
+                except Exception as e:  # noqa: BLE001
+                    log.warning("[uebersetzung] Segmentierung von Dokument %s fehlgeschlagen: %r", d["id"], e)
+                    fehler = "Die Word-Datei konnte nicht gelesen werden; das Dokument kann nicht übersetzt werden."
+            if fehler:
+                _dokument_fehler_merken(conn, d, fehler)
+                continue
+            segmentiere_und_speichere(conn, project["id"], d["id"], seg)
+            neu += 1
         conn.commit()
     return neu
 
 
-def uebersetzungsstand(conn, project_id: int) -> dict:
-    """Kurzer Stand fuer Kopfzeile, Export-Dialog und Chatbot: Zielsprache, fertig/gesamt, Hinweise."""
-    row = conn.execute(
-        """SELECT COUNT(*) AS gesamt,
-                  SUM(CASE WHEN status IN ('fertig','zusammengelegt','hand') THEN 1 ELSE 0 END) AS fertig,
-                  SUM(CASE WHEN hinweis != '' THEN 1 ELSE 0 END) AS hinweise,
-                  MAX(zielsprache) AS zielsprache
-           FROM uebersetzung_segmente WHERE project_id = ? AND uebersetzbar = 1""", (project_id,)).fetchone()
+def _dokument_fehler_merken(conn, doc, fehler: str) -> None:
+    """Grund einer fehlgeschlagenen Segmentierung in documents.hinweise["uebersetzung"] ablegen
+    (bleibt nach Neuladen sichtbar; Word-Hinweise im selben JSON bleiben erhalten)."""
+    try:
+        alt = json.loads(doc["hinweise"]) if doc["hinweise"] else {}
+        if not isinstance(alt, dict):
+            alt = {}
+    except Exception:
+        alt = {}
+    vorher = alt.get("uebersetzung") if isinstance(alt.get("uebersetzung"), dict) else {}
+    if vorher.get("fehler") == fehler:
+        return
+    alt["uebersetzung"] = {**vorher, "fehler": fehler, "hinweise": vorher.get("hinweise", []),
+                           "quellsprache": vorher.get("quellsprache", ""), "titel": vorher.get("titel", ""),
+                           "woerter": 0, "absaetze": 0, "teile": []}
+    conn.execute("UPDATE documents SET hinweise = ? WHERE id = ?", (json.dumps(alt, ensure_ascii=False), doc["id"]))
+
+
+def _segmente_in_thread(project: dict) -> int:
+    conn = _d.get_db()
+    try:
+        return _segmente_sicherstellen(conn, project)
+    finally:
+        conn.close()
+
+
+async def _segmente_sicherstellen_async(project: dict) -> int:
+    """Request-Handler: Segmentierung im Executor, nicht auf dem Event-Loop."""
+    return await asyncio.get_running_loop().run_in_executor(None, _segmente_in_thread, project)
+
+
+def uebersetzungsstand(conn, project_id: int, document_id: Optional[int] = None) -> dict:
+    """Kurzer Stand fuer Kopfzeile, Export-Dialog und Chatbot: Zielsprache, fertig/gesamt, Hinweise.
+    Mit document_id nur dieses Dokument (Export-Dialog eines einzelnen Dokuments, Review 2, Befund 11)."""
+    sql = """SELECT COUNT(*) AS gesamt,
+                    SUM(CASE WHEN status IN ('fertig','zusammengelegt','hand') THEN 1 ELSE 0 END) AS fertig,
+                    SUM(CASE WHEN hinweis != '' THEN 1 ELSE 0 END) AS hinweise,
+                    MAX(zielsprache) AS zielsprache
+             FROM uebersetzung_segmente WHERE project_id = ? AND uebersetzbar = 1"""
+    args: list = [project_id]
+    if document_id is not None:
+        sql += " AND document_id = ?"
+        args.append(document_id)
+    row = conn.execute(sql, args).fetchone()
     gesamt = int(row["gesamt"] or 0)
     ziel = row["zielsprache"] or ""
     return {"absaetze": gesamt, "fertig": int(row["fertig"] or 0), "hinweise": int(row["hinweise"] or 0),
@@ -213,30 +281,21 @@ def uebersetzungsstand(conn, project_id: int) -> dict:
 
 
 def haengende_laeufe_zuruecksetzen() -> int:
+    """Beim Serverstart: Laeufe, die ein Neustart abgeschnitten hat, auf einen ruhigen Status setzen.
+    NUR Status — nie Dokumente oder Dateien loeschen (Review 2, Befund 1: seit der lazy Segmentierung
+    sind Dokumente ohne Segmente der Normalfall, ein Loeschen traefe Alt-Texte und Originale)."""
     conn = _d.get_db()
     try:
-        # Nur Laeufe DIESES Moduls: processing-Word-Projekte mit Lauf-Einstellungen (ki_neu_rest = JSON mit zielsprache).
-        conn.execute("UPDATE projects SET status = 'extracted' WHERE tool IN ('word', 'uebersetzen') AND status = 'processing' "
-                     "AND COALESCE(ki_neu_rest, '') LIKE '%zielsprache%'")
-        rows = conn.execute(f"SELECT id FROM projects WHERE tool = '{TOOL_KEY}' AND status = 'extracting'").fetchall()
-        wurzel = os.path.realpath(_d.upload_dir) + os.sep
+        # Uebersetzungslaeufe: processing-Word-Projekte mit Lauf-Einstellungen (ki_neu_rest = JSON mit zielsprache).
+        n = conn.execute("UPDATE projects SET status = 'extracted' WHERE tool IN ('word', 'uebersetzen') AND status = 'processing' "
+                         "AND COALESCE(ki_neu_rest, '') LIKE '%zielsprache%'").rowcount
+        # Haengende Extraktion (Word-Weg): 'extracted', wenn Dokumente da sind, sonst 'error'.
+        rows = conn.execute("SELECT id FROM projects WHERE tool IN ('word', 'uebersetzen') AND status = 'extracting'").fetchall()
         for r in rows:
-            pid = r["id"]
-            waisen = conn.execute("""SELECT original_path FROM documents WHERE project_id = ? AND NOT EXISTS
-                                     (SELECT 1 FROM uebersetzung_segmente s WHERE s.document_id = documents.id)""", (pid,)).fetchall()
-            for w in waisen:   # Upload-Datei des nie fertig gelesenen Dokuments (Review N9)
-                pfad = w["original_path"] or ""
-                try:
-                    if pfad and os.path.realpath(pfad).startswith(wurzel) and os.path.isfile(pfad):
-                        os.unlink(pfad)
-                except OSError:
-                    pass
-            conn.execute("""DELETE FROM documents WHERE project_id = ? AND NOT EXISTS
-                            (SELECT 1 FROM uebersetzung_segmente s WHERE s.document_id = documents.id)""", (pid,))
-            hat = conn.execute("SELECT COUNT(*) FROM uebersetzung_segmente WHERE project_id = ?", (pid,)).fetchone()[0]
-            conn.execute("UPDATE projects SET status = ? WHERE id = ?", ("extracted" if hat else "error", pid))
+            hat = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (r["id"],)).fetchone()[0]
+            conn.execute("UPDATE projects SET status = ? WHERE id = ?", ("extracted" if hat else "error", r["id"]))
         conn.commit()
-        return len(rows)
+        return n + len(rows)
     finally:
         conn.close()
 
@@ -290,6 +349,7 @@ def _projekt_aussen(project: dict) -> dict:
     aussen = {k: project.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type", "alt_language",
                                            "created_at", "updated_at", "lauf_hinweis")}
     aussen["hat_original"] = bool(project.get("original_path"))
+    aussen["lauf_art"] = lauf_art(project)
     try:
         aussen["einstellungen"] = json.loads(project.get("ki_neu_rest") or "{}")   # Zielsprache/Schalter des letzten Laufs
     except Exception:
@@ -366,9 +426,11 @@ async def lauf_starten(project_id: int, user: dict, einstellungen: dict, documen
     conn = _d.get_db()
     try:
         project = _projekt_des_nutzers(conn, project_id, user["id"])
-        if project.get("status") in ("extracting", "processing"):
+        # Auch der In-Memory-Stand zaehlt (Review 2, Befund 4): ein Upload waehrend des Laufs setzt
+        # projects.status auf extracted, der Lauf ist aber noch unterwegs.
+        if project.get("status") in ("extracting", "processing") or (_lauf.get(project_id) or {}).get("laeuft"):
             raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
-        _segmente_sicherstellen(conn, project)
+        await _segmente_sicherstellen_async(project)
         v = _vorschau(conn, user["id"], project_id, document_id, einstellungen["zielsprache"], einstellungen.get("alt_texte", True))
         if not v["anzahl"]:
             return {"ok": True, "gestartet": False, "anzahl": 0}
@@ -485,8 +547,11 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
         conn = _d.get_db()
         try:
             hinweis = " ".join(st["fehler"])[:1000]
-            conn.execute("UPDATE projects SET status = 'extracted', lauf_hinweis = ? WHERE id = ? AND status = 'processing'",
+            # lauf_hinweis immer schreiben; den Status nur, wenn er noch unserer ist (ein Upload zwischendurch
+            # darf seinen eigenen Status behalten — Review 2, Befund 4).
+            conn.execute("UPDATE projects SET lauf_hinweis = ? WHERE id = ?",
                          (json.dumps({"grund": hinweis}, ensure_ascii=False) if hinweis else None, project_id))
+            conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ? AND status = 'processing'", (project_id,))
             conn.commit()
         finally:
             conn.close()
@@ -516,7 +581,11 @@ def bot_starten(user: dict, project_id: int, zielsprache: str, alt_texte: bool =
         raise HTTPException(status_code=503, detail="Übersetzung nicht bereit")
     einst = _einstellungen_pruefen({"zielsprache": zielsprache, "alt_texte": alt_texte, "sprache_setzen": True})
     fut = asyncio.run_coroutine_threadsafe(lauf_starten(project_id, user, einst, None), _loop)
-    return fut.result(timeout=60)
+    try:
+        return fut.result(timeout=60)
+    except TimeoutError:   # concurrent.futures.TimeoutError ist seit 3.11 dasselbe Objekt
+        fut.cancel()       # sonst startet der Lauf noch, nachdem der Kunde „Fehler“ gehoert hat (Review 2, Befund 10)
+        raise HTTPException(status_code=503, detail="Der Server ist gerade ausgelastet; bitte in einer Minute noch einmal versuchen.")
 
 
 def bot_stand(user_id: int, project_id: int) -> dict:
@@ -537,8 +606,7 @@ def bot_export(user_id: int, project_id: int) -> dict:
     conn = _d.get_db()
     try:
         project = _projekt_des_nutzers(conn, project_id, user_id)
-        if project.get("status") in ("extracting", "processing"):
-            raise HTTPException(status_code=409, detail="Bitte warten, bis die Übersetzung fertig ist")
+        _export_wartezeit_pruefen(project)
         auftraege = export_vorbereiten(conn, project, None)
     finally:
         conn.close()
@@ -572,6 +640,17 @@ def bot_export(user_id: int, project_id: int) -> dict:
 
 # --------------------------------------------------------------------------- Export
 
+def _export_wartezeit_pruefen(project: dict) -> None:
+    """409 mit dem passenden Grund: Uebersetzung, Alt-Text-Lauf oder Extraktion (Review 2, Befund 14)."""
+    art = lauf_art(project)
+    if art == "uebersetzung":
+        raise HTTPException(status_code=409, detail="Bitte warten, bis die Übersetzung fertig ist")
+    if art == "alttexte":
+        raise HTTPException(status_code=409, detail="Bitte warten, bis die Erstellung der Alt-Texte fertig ist")
+    if project.get("status") == "extracting":
+        raise HTTPException(status_code=409, detail="Bitte warten, bis das Dokument gelesen ist")
+
+
 def export_vorbereiten(conn, project: dict, document_id: Optional[int]) -> list[dict]:
     """Liest alles, was der Export braucht, auf der Anfrage-Verbindung (SQLite-Verbindungen
     duerfen nicht in den Executor-Thread): je Dokument Quelle, Ziele, Sprache."""
@@ -587,7 +666,6 @@ def export_vorbereiten(conn, project: dict, document_id: Optional[int]) -> list[
     auftraege = []
     ausgelassen: list[str] = []
     for doc in docs:
-        src = _originalpfad(doc)
         rows = conn.execute(
             """SELECT anker, ziel_stuecke, status, zielsprache FROM uebersetzung_segmente
                WHERE document_id = ? AND status IN ('fertig', 'zusammengelegt', 'hand')""", (doc["id"],)).fetchall()
@@ -608,6 +686,7 @@ def export_vorbereiten(conn, project: dict, document_id: Optional[int]) -> list[
                 raise HTTPException(status_code=400, detail=f"„{_d.doc_label(doc)}“ ist noch nicht übersetzt.")
             ausgelassen.append(f"„{_d.doc_label(doc)}“ ist noch nicht übersetzt und wurde ausgelassen.")
             continue
+        src = _originalpfad(doc)   # erst jetzt (Review 2, Befund 13): ein fehlendes Original eines nicht uebersetzten Dokuments bricht nichts ab
         sprache = sprache or einst.get("zielsprache") or ""
         name = f"{_d.doc_label(doc)}_{sprache or 'uebersetzt'}.docx"
         auftraege.append({"doc_id": doc["id"], "doc_index": doc["doc_index"], "src": src, "ziele": ziele,
@@ -674,10 +753,19 @@ def build_router(deps: Deps) -> APIRouter:
             project = _projekt_des_nutzers(conn, project_id, user["id"])
             if leicht:
                 n_docs = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0]
+                doc_id = request.query_params.get("document_id")
+                try:
+                    doc_id = int(doc_id) if doc_id else None
+                except ValueError:
+                    doc_id = None
                 return {"project": _projekt_aussen(project), "dokumente": n_docs, "lauf": _lauf.get(project_id),
-                        "stand": uebersetzungsstand(conn, project_id)}
-            if project.get("status") not in ("extracting",):
-                _segmente_sicherstellen(conn, project)
+                        "stand": uebersetzungsstand(conn, project_id, doc_id)}
+        finally:
+            conn.close()
+        if project.get("status") not in ("extracting",):
+            await _segmente_sicherstellen_async(project)
+        conn = _d.get_db()
+        try:
             docs, segmente = _lade(conn, project_id)
         finally:
             conn.close()
@@ -702,7 +790,11 @@ def build_router(deps: Deps) -> APIRouter:
         conn = _d.get_db()
         try:
             project = _projekt_des_nutzers(conn, project_id, user["id"])
-            _segmente_sicherstellen(conn, project)
+        finally:
+            conn.close()
+        await _segmente_sicherstellen_async(project)
+        conn = _d.get_db()
+        try:
             return _vorschau(conn, user["id"], project_id, document_id, ziel or None, alt_texte)
         finally:
             conn.close()
@@ -782,8 +874,7 @@ def build_router(deps: Deps) -> APIRouter:
         conn = _d.get_db()
         try:
             project = _projekt_des_nutzers(conn, project_id, user["id"])
-            if project.get("status") in ("extracting", "processing"):
-                raise HTTPException(status_code=409, detail="Bitte warten, bis die Übersetzung fertig ist")
+            _export_wartezeit_pruefen(project)
             auftraege = export_vorbereiten(conn, project, document_id)
         finally:
             conn.close()

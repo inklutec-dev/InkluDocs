@@ -1,11 +1,13 @@
 /* =============================================================================
  * uebersetzen.js — Übersetzen-Werkzeug (Word-Dokumente), Projektansicht
  * =============================================================================
- * 18.09.2026, Steve + Fable 5 (Anlass: Mark Hounschild). Eigene Ansicht fuer
- * Uebersetzungsprojekte (Eingang "uebersetzen" oder Ansicht „Übersetzung“ eines Word-Projekts, project_type "docx"),
- * bewusst getrennt von der Bild-/Alt-Text-Ansicht in app.html — ein Absatz ist kein
- * Bild, und Steve wollte KEINE Doppel-Listen in einem Werkzeug („überladen“):
- * EIN Werkzeug, EINE Aufgabe, EINE Ansicht.
+ * 18.09.2026, Steve + Fable 5 (Anlass: Mark Hounschild). Seit dem Testumbau vom selben
+ * Tag ist dies die Ansicht „Übersetzung“ JEDES Word-Projekts (Werkzeug „Word-Dokumente“,
+ * project_type "docx"); die Ansicht „Alt-Texte“ liegt in app.html. Gewechselt wird ueber die
+ * Zeile „Ansicht“ im Projektkopf (app.html: ansichtWahlHtml/wechsleAnsicht, ?ansicht=…).
+ * Es ist immer nur EINE Ansicht sichtbar — keine Doppel-Listen („überladen“, Steve).
+ * Beide Ansichten teilen sich projects.status; welcher Lauf gerade laeuft, sagt
+ * project.lauf_art ('uebersetzung' | 'alttexte' | null), und jede Ansicht reagiert nur auf ihren.
  *
  * Die FORM ist dieselbe wie bei den Alt-Texten und Quickinfos: H1 Projekt, H2 Dokument
  * (klappbar), H3 Abschnitt (klappbar, nach Ueberschrift 1), H4 Absatz; je Absatz das
@@ -22,6 +24,8 @@
  * Sicherheit: alle Texte aus dem Server laufen durch escHtml(); Eingaben gehen als JSON
  * an PATCH /api/uebersetzung/segmente/{id}; keine innerHTML-Zuweisung mit unescapten
  * Nutzerdaten; kein Gast-Modus (Uebersetzungen werden nicht freigegeben).
+ * Chatbot (InkluAgent) haengt wie in der Alt-Text-Ansicht unter der Liste (inkluagentSectionHtml/
+ * inkluagentInit aus app.html) und kann Uebersetzung, Stand und Export bedienen.
  * ========================================================================== */
 (function () {
     'use strict';
@@ -142,7 +146,8 @@
 
     function hinweiseHtml(doc) {
         const h = doc.hinweise || {};
-        const items = (h.hinweise || []).map(x => '<li>' + escHtml(x) + '</li>');
+        // Grund einer gescheiterten Segmentierung zuerst (Review 2, Befund 8): sonst steht „0 Absätze“ ohne Erklaerung.
+        const items = (h.fehler ? [h.fehler] : []).concat(h.hinweise || []).map(x => '<li>' + escHtml(x) + '</li>');
         if (!items.length) return '';
         return '<details class="page-text-details doc-hinweise"><summary>' + t('{n} Hinweise zu diesem Dokument', { n: items.length }) + '</summary>'
             + '<div class="page-text-content" role="region" aria-label="' + t('Hinweise') + '" tabindex="0"><ul>' + items.join('') + '</ul></div></details>';
@@ -173,7 +178,12 @@
     // Fortschritt als eigene Karte unter dem Upload-Feld (wie Alt-Texte und Quickinfos).
     function fortschrittKarteHtml(project, data) {
         const l = data.lauf;
-        if (project.status !== 'processing' || !l) return '';
+        if (project.status === 'processing' && project.lauf_art !== 'uebersetzung') {
+            return '<section class="card" id="alttexteLaeuftCard" aria-labelledby="alttexteLaeuftHeading">'
+                + '<h2 id="alttexteLaeuftHeading" class="section-title">' + t('Alt-Texte werden erstellt') + '</h2>'
+                + '<p>' + t('Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte.') + '</p></section>';
+        }
+        if (project.status !== 'processing' || !l || !l.laeuft) return '';
         const gesamt = Number(l.pakete_gesamt) || 0, fertig = Number(l.pakete_fertig) || 0;
         const prozent = gesamt > 0 ? Math.round((fertig + (fertig < gesamt ? 0.5 : 0)) / gesamt * 100) : 0;
         return '<section class="card" id="progressCard" aria-labelledby="progressHeading">'
@@ -242,7 +252,8 @@
         const title = (project.name && project.name.trim()) ? project.name : project.filename;
         let badge, badgeCls;
         if (project.status === 'extracting') { badge = t('Wird gelesen'); badgeCls = 'badge-processing'; }
-        else if (project.status === 'processing') { badge = t('Wird übersetzt'); badgeCls = 'badge-processing'; }
+        else if (project.status === 'processing' && project.lauf_art === 'uebersetzung') { badge = t('Wird übersetzt'); badgeCls = 'badge-processing'; }
+        else if (project.status === 'processing') { badge = t('Alt-Texte werden generiert...'); badgeCls = 'badge-processing'; }
         else if (project.status === 'error') { badge = t('Fehler'); badgeCls = 'badge-error'; }
         else if (!ue.length) { badge = t('Neu'); badgeCls = 'badge-pending'; }
         else if (fertig >= ue.length) { badge = t('Vollständig'); badgeCls = 'badge-done'; }
@@ -266,8 +277,6 @@
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
             + '<div class="card-info" id="projectHeadInfo" data-info="' + escHtml(info) + '"></div>' + serverHinweis
-            // Ansichts-Wahl (Testumbau 18.09.2026): dieselbe Zeile wie in der Alt-Text-Ansicht (app.html).
-            + (typeof ansichtWahlHtml === 'function' ? '<div class="card-actions">' + ansichtWahlHtml(project, 'uebersetzung') + '</div>' : '')
             + (ue.length ? ''
                 + '<div class="card-actions">'
                 +   (!busy ? '<button class="btn btn-primary" id="uStartBtn" onclick="Uebersetzen.laufOeffnen()">' + ico('sparkle') + t('Übersetzen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
@@ -275,6 +284,9 @@
                 +   laufDialogHtml(project)
                 +   exportDialogHtml(project)
                 + '</div>' : '')
+            // Ansichts-Wahl (Testumbau 18.09.2026): dieselbe Zeile und dieselbe Stelle wie in der Alt-Text-Ansicht
+            // (NACH den Hauptknoepfen, Review 2, Befund 15 — gleiche Tab-Reihenfolge in beiden Ansichten).
+            + (typeof ansichtWahlHtml === 'function' ? '<div class="card-actions">' + ansichtWahlHtml(project, 'uebersetzung') + '</div>' : '')
             + '</div>';
     }
 
@@ -593,8 +605,10 @@
             + filterKarteHtml()
             + fortschrittKarteHtml(project, data)
             + laufMeldungHtml()
-            + '<div id="segListe">' + docsHtml + '</div>';
+            + '<div id="segListe">' + docsHtml + '</div>'
+            + (typeof inkluagentSectionHtml === 'function' ? inkluagentSectionHtml(projectId) : '');
         bindAutosave();
+        if (typeof inkluagentInit === 'function') inkluagentInit(projectId);
         filter(filterModus, true);
         // Waehrend des Laufs keine Handkorrektur (Review M6a): der Lauf ueberschreibt sonst oder verwirft.
         if (project.status === 'processing' || project.status === 'extracting') {
@@ -605,8 +619,10 @@
         if (h1 && !erneut) h1.focus();
         if (project.status === 'extracting' || project.status === 'processing') {
             const docsVorher = aktuelleDocs.length;
+            const eigenerLauf = project.lauf_art === 'uebersetzung';
             const tick = async () => {
                 if (zustandProjekt !== projectId) return;   // Nutzer ist weitergegangen
+                if (!document.getElementById('segListe')) { pollStoppen(); return; }   // Ansicht gewechselt (Review 2, Befund 2)
                 try {
                     const r = await fetch('/api/projects/' + projectId + '/uebersetzung?leicht=1');
                     if (!r.ok) { pollTimer = setTimeout(tick, 2500); return; }
@@ -617,8 +633,10 @@
                         if (project.status === 'extracting') {
                             // Dokumentbestand vergleichen (Review M7): verschwindet das Dokument, ist die
                             // Segmentierung gescheitert — der Grund steht am Projekt (lauf_hinweis).
-                            if ((d.dokumente || 0) <= docsVorher || d.project.status === 'error') meldung = d.project.lauf_hinweis || t('Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.');
+                            if ((d.dokumente || 0) < docsVorher || d.project.status === 'error') meldung = d.project.lauf_hinweis || t('Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.');
                             else announce(t('Dokument gelesen.'));
+                        } else if (!eigenerLauf) {
+                            announce(t('Die Erstellung der Alt-Texte ist abgeschlossen.'));
                         } else {
                             const l = d.lauf || {};
                             const f = (l.fehler || []).length ? ' ' + t('Hinweise: {w}', { w: l.fehler.join(' ') }) : '';
@@ -629,7 +647,7 @@
                         await showProject(projectId);
                         if (meldung) zeigeMeldung(meldung);
                     } else {
-                        fortschrittAktualisieren(d.lauf);
+                        if (eigenerLauf) fortschrittAktualisieren(d.lauf);
                         pollTimer = setTimeout(tick, 2500);
                     }
                 } catch (e) { pollTimer = setTimeout(tick, 2500); }
@@ -639,5 +657,5 @@
     }
 
     window.Uebersetzen = { showProject, laufOeffnen, laufSchliessen, laufStarten, abbrechen, meldungSchliessen,
-                           exportOeffnen, exportSchliessen, exportieren, filter };
+                           exportOeffnen, exportSchliessen, exportieren, filter, pollStoppen };
 })();

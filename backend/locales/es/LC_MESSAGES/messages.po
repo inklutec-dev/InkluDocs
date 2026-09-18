@@ -6741,9 +6741,6 @@ msgstr "El proceso también puede cancelarse después de iniciarse."
 msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
 msgstr "El formato se conserva por completo: solo se sustituye el texto. Las traducciones existentes se reemplazan; los párrafos corregidos a mano se mantienen."
 
-msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
-msgstr "El archivo Word se está procesando: se leen los párrafos …"
-
 msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
 msgstr "La traducción se canceló: se tradujeron {n} párrafos."
 
@@ -7005,14 +7002,32 @@ msgstr "Textos alternativos"
 msgid "Ansicht"
 msgstr "Vista"
 
-msgid "Ansicht Alt-Texte wird geöffnet."
-msgstr "Abriendo la vista Textos alternativos."
-
-msgid "Ansicht Übersetzung wird geöffnet."
-msgstr "Abriendo la vista Traducción."
-
 msgid "Diese Ansicht ist schon geöffnet."
 msgstr "Esta vista ya está abierta."
 
 msgid "Öffnen"
 msgstr "Abrir"
+
+msgid "Wird übersetzt …"
+msgstr "Traduciendo …"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Übersetzung."
+msgstr "El progreso y cancelar están en la vista Traducción."
+
+msgid "Die Word-Datei wird gelesen …"
+msgstr "Leyendo el archivo de Word …"
+
+msgid "Ansicht Übersetzung geöffnet."
+msgstr "Vista Traducción abierta."
+
+msgid "Ansicht Alt-Texte geöffnet."
+msgstr "Vista Textos alternativos abierta."
+
+msgid "Alt-Texte werden erstellt"
+msgstr "Se están creando los textos alternativos"
+
+msgid "Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte."
+msgstr "El progreso y cancelar están en la vista Textos alternativos."
+
+msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
+msgstr "La creación de los textos alternativos ha terminado."

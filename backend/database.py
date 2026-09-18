@@ -567,6 +567,15 @@ def init_db():
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_uebersetzung_project ON uebersetzung_segmente(project_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_uebersetzung_document ON uebersetzung_segmente(document_id)")
+    # Ein Anker je Dokument nur einmal (Review 2, Befund 5): zwei gleichzeitige Erst-Segmentierungen
+    # (Ansicht + Chatbot) duerfen keine doppelten Absaetze erzeugen; der Schreiber nutzt INSERT OR IGNORE.
+    try:
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_uebersetzung_anker ON uebersetzung_segmente(document_id, anker)")
+    except sqlite3.OperationalError:
+        # Altbestand mit Doppeln (nur durch die Race moeglich): Doppel entfernen, aeltere Zeile bleibt.
+        conn.execute("""DELETE FROM uebersetzung_segmente WHERE id NOT IN
+                        (SELECT MIN(id) FROM uebersetzung_segmente GROUP BY document_id, anker)""")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_uebersetzung_anker ON uebersetzung_segmente(document_id, anker)")
 
     # MEINE ABLAGE (11.09.2026, Steve + Michael, Besprechung): Sicherung der barrierefreien
     # Office-Dokumente inklusive Pruefbericht. Jede Umwandlung (Knopf oder Chatbot) legt einen

@@ -4682,17 +4682,21 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
             conn.close()
             raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
         erwartet_tool = ("word", "uebersetzen") if art == "docx" else ("pdf",)
-        if art == "docx" and proj["tool"] == "uebersetzen":
-            # Kennung „uebersetzen" (Testumbau 18.09.2026): waehrend eines Laufs (Uebersetzung oder
-            # Alt-Texte) wuerde ein Upload den Projektstatus umschreiben und den Lauf entkoppeln (Review M2b).
-            _st = conn.execute("SELECT status FROM projects WHERE id = ?", (project_id,)).fetchone()
-            if _st and _st["status"] in ("processing", "extracting"):
+        if art == "docx":
+            # Word-Projekte (Testumbau 18.09.2026, Review 2 Befund 4): Waehrend einer UEBERSETZUNG oder einer
+            # laufenden Extraktion wuerde ein Upload den Projektstatus umschreiben und den Lauf entkoppeln
+            # (zweiter Lauf moeglich, Hinweise verloren) — gilt fuer beide Kennungen (word, uebersetzen).
+            # Ein Alt-Text-Sammellauf blockt wie bei PDF nicht (Bestandsverhalten Multi-Datei).
+            _st = dict(conn.execute("SELECT status, ki_neu_rest FROM projects WHERE id = ?", (project_id,)).fetchone() or {})
+            _ueb = uebersetzung_api.lauf_art(_st) == "uebersetzung" or bool((uebersetzung_api._lauf.get(project_id) or {}).get("laeuft"))
+            if _ueb or _st.get("status") == "extracting" or (proj["tool"] == "uebersetzen" and _st.get("status") == "processing"):
                 conn.close()
                 try:
                     os.unlink(file_path)   # keine Waise auf der Platte
                 except OSError:
                     pass
-                raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung. Bitte warten.")
+                raise HTTPException(status_code=409, detail=("Bitte warten, bis die Übersetzung fertig ist." if _ueb
+                                                             else "Für dieses Projekt läuft gerade eine Verarbeitung. Bitte warten."))
         if proj["tool"] not in erwartet_tool:
             conn.close()
             raise HTTPException(status_code=400, detail=("Dieses Projekt ist kein Word-Projekt" if art == "docx" else "Dieses Projekt ist kein PDF-Projekt"))
@@ -5922,6 +5926,9 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     # Schalter PDF_LANGBESCHREIBUNG (Standard aus): Langbeschreibung im Frontend nur zeigen,
     # wenn kein PDF-Projekt ODER der Schalter an ist (siehe pdf_langbeschreibung_enabled).
     proj_dict = dict(project)
+    # Welcher Lauf laeuft (Testumbau 18.09.2026): 'uebersetzung' | 'alttexte' | None — beide Word-Ansichten
+    # teilen sich projects.status und reagieren nur auf ihren eigenen Lauf (Review 2, Befund 3).
+    proj_dict["lauf_art"] = uebersetzung_api.lauf_art(proj_dict)
     _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
     # Review-Status nur zeigen, wenn das Projekt ueberhaupt zur Pruefung freigegeben
     # wurde (Steve 20.06.) -> Solo-Arbeit ohne Einladung bleibt frei von Pruef-Badges.
@@ -6850,6 +6857,7 @@ async def get_project_status(project_id: int, user: dict = Depends(get_current_u
         "total_images": project["total_images"],
         "processed_images": project["processed_images"],
         "lauf_hinweis": _hinweis,
+        "lauf_art": uebersetzung_api.lauf_art(dict(project)),
     }
 
 

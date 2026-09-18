@@ -221,22 +221,26 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             + '<select id="ansichtSelect" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">'
             + optionen.map(([k, l]) => '<option value="' + k + '"' + (k === aktuell ? ' selected' : '') + '>' + l + '</option>').join('')
             + '</select>'
-            + '<button type="button" class="btn btn-secondary btn-small" id="ansichtOeffnen" onclick="wechsleAnsicht(' + project.id + ')">' + t('Öffnen') + '</button>'
-            + '<span id="ansichtStatus" role="status" aria-live="polite" style="font-size:0.9rem;"></span></div>';
+            + '<button type="button" class="btn btn-secondary btn-small" id="ansichtOeffnen" onclick="wechsleAnsicht(' + project.id + ')">' + t('Öffnen') + '</button></div>';
     }
     window.ansichtWahlHtml = ansichtWahlHtml;
     async function wechsleAnsicht(projectId) {
         const sel = document.getElementById('ansichtSelect');
         const ziel = sel ? sel.value : 'alttexte';
         if (ziel === aktuelleAnsicht(currentProjectFuerAnsicht || {})) { announce(t('Diese Ansicht ist schon geöffnet.')); return; }
-        // Laufende Auto-Speicherungen (800 ms) erst abwarten, damit nichts verloren geht.
+        // Auto-Speichern (800 ms nach der letzten Eingabe) einen Moment Vorsprung geben; der PATCH selbst
+        // laeuft im Hintergrund weiter und geht durch den Neuaufbau der Ansicht nicht verloren.
         await new Promise(r => setTimeout(r, 900));
         const url = new URL(window.location.href);
         url.searchParams.set('projekt', projectId);
         url.searchParams.set('ansicht', ziel);
         history.pushState({ projekt: projectId, ansicht: ziel }, '', url.toString());
-        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung wird geöffnet.') : t('Ansicht Alt-Texte wird geöffnet.'));
         await showProject(projectId);
+        // Fokus einheitlich auf die H1 der neuen Ansicht (Review 2, Befund 6), danach die Ansage —
+        // sonst landet VoiceOver nach dem Wechsel auf „Alt-Texte“ auf dem Seitenanfang.
+        const h1 = document.getElementById('projectName');
+        if (h1) h1.focus();
+        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : t('Ansicht Alt-Texte geöffnet.'));
     }
     window.wechsleAnsicht = wechsleAnsicht;
     let currentProjectFuerAnsicht = null;
@@ -499,8 +503,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (data.status === 'extracting' && data.document_id) {
                     // Async-Upload: Der Server hat die PDF angenommen und
                     // extrahiert im Hintergrund — Status zeigen und pollen.
-                    const wartetext = data.project_type === 'docx-uebersetzung'
-                        ? t('Die Word-Datei wird verarbeitet – Absätze werden gelesen …')
+                    // Word: Ansage je Ansicht (Testumbau 18.09.2026) — in der Uebersetzungs-Ansicht geht es um Absaetze.
+                    const inUebersetzung = data.project_type === 'docx' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'uebersetzung';
+                    const wartetext = inUebersetzung
+                        ? t('Die Word-Datei wird gelesen …')
                         : data.project_type === 'docx'
                         ? t('Die Word-Datei wird verarbeitet – Bilder werden extrahiert …')
                         : (data.project_type === 'pdfform'
@@ -512,7 +518,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     if (!ergebnis.ok) {
                         const meldung = ergebnis.timeout
                             ? t('Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste.')
-                            : ((data.project_type === 'docx' || data.project_type === 'docx-uebersetzung')
+                            : (data.project_type === 'docx'
                                 ? t('Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')
                                 : (data.project_type === 'pdfform'
                                     ? t('Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')
@@ -558,8 +564,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 // dass ein neues Dokument unten angelegt wurde. Nach einer
                 // Nachpruefungs-Rettung gibt es keine Server-Antwort (data=null) —
                 // die Erfolgs-Ansage kam dann schon aus dem Rettungspfad.
-                if (data && data.project_type === 'docx-uebersetzung') {
-                    // Uebersetzen: Zahlen liest die Uebersetzungs-Ansicht selbst aus (Absaetze statt Bilder).
+                if (data && data.project_type === 'docx' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'uebersetzung') {
+                    // Uebersetzungs-Ansicht: Zahlen liest die Ansicht selbst aus (Absaetze statt Bilder).
                     announce(data.appended ? t('Dokument hinzugefügt als Dokument {d}.', { d: data.doc_index }) : t('Dokument gelesen.'));
                 } else if (data && data.project_type === 'pdfform') {
                     // Formular: Zahlen liest die Formular-Ansicht selbst aus (Felder statt Bilder).
@@ -601,6 +607,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const done = countByStatus(images, 'done');
         const failed = countByStatus(images, 'error');
         const tried = done + failed;
+        if (project.status === 'processing' && project.lauf_art === 'uebersetzung') return { label: t('Wird übersetzt …'), cls: 'badge-processing' };
         if (project.status === 'processing') return { label: t('Alt-Texte werden generiert...'), cls: 'badge-processing' };
         if (project.status === 'neu') return { label: t('Neu'), cls: 'badge-ready' };
         if (total > 0 && done >= total) return { label: t('Fertig'), cls: 'badge-done' };
@@ -653,6 +660,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
 
     async function showProject(projectId) {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        if (window.Uebersetzen && Uebersetzen.pollStoppen) Uebersetzen.pollStoppen();   // Polling der Uebersetzungs-Ansicht endet mit ihr (Review 2, Befund 2)
         // Aktuelles Projekt merken, damit die Dokument-Aktionen (Umbenennen/
         // Löschen) wissen, gegen welches Projekt sie arbeiten.
         currentDocProjectId = projectId;
@@ -819,7 +827,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 </div>
             </div>
             ${window.GUEST_MODE ? '' : uploadBlockHtml(project)}
-            ${project.status === 'processing' ? `
+            ${project.status === 'processing' && project.lauf_art === 'uebersetzung' ? `
+                <!-- Uebersetzung laeuft (Testumbau 18.09.2026): Fortschritt und Abbrechen gehoeren zur Ansicht Uebersetzung. -->
+                <section class="card" id="uebersetzungLaeuftCard" aria-labelledby="uebersetzungLaeuftHeading">
+                    <h2 id="uebersetzungLaeuftHeading" class="section-title">${t('Übersetzung läuft')}</h2>
+                    <p>${t('Fortschritt und Abbrechen findest du in der Ansicht Übersetzung.')}</p>
+                </section>
+            ` : ''}
+            ${project.status === 'processing' && project.lauf_art !== 'uebersetzung' ? `
                 <!-- Fortschritt als eigene Karte unter dem Upload-Feld (Michael Karbe 08.09.2026): oben unter
                      dem Projektnamen war er beim Scrollen aus dem Blick und hatte keinen eigenen Rahmen. -->
                 <section class="card" id="progressCard" aria-labelledby="progressHeading">
@@ -870,7 +885,17 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         inkluagentInit(projectId);
         setupProjectDropzone(projectId);
 
-        if (!window.GUEST_MODE && project.status === 'processing') {
+        if (!window.GUEST_MODE && project.status === 'processing' && project.lauf_art === 'uebersetzung') {
+            // Waehrend einer Uebersetzung nur auf ihr Ende warten (Status wird wieder 'extracted'), dann neu zeichnen.
+            pollInterval = setInterval(async () => {
+                try {
+                    const sRes = await fetch('/api/projects/' + projectId + '/status');
+                    const sData = await sRes.json();
+                    if (sData.status !== 'processing') { clearInterval(pollInterval); pollInterval = null; await showProject(projectId); }
+                } catch (e) { /* naechster Tick */ }
+            }, 3000);
+        }
+        if (!window.GUEST_MODE && project.status === 'processing' && project.lauf_art !== 'uebersetzung') {
             pollInterval = setInterval(async () => {
                 const sRes = await fetch('/api/projects/' + projectId + '/status');
                 const sData = await sRes.json();
@@ -3152,7 +3177,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         slot.innerHTML = '';
         if (!istWordDateityp(currentProjectFuerAnsicht || {})) return;
         try {
-            const r = await fetch('/api/projects/' + projectId + '/uebersetzung?leicht=1');
+            // Mit vorausgewaehltem Dokument zaehlt nur dieses Dokument (Review 2, Befund 11).
+            const r = await fetch('/api/projects/' + projectId + '/uebersetzung?leicht=1' + (docId ? '&document_id=' + encodeURIComponent(docId) : ''));
             if (!r.ok) return;
             const d = await r.json();
             const st = d.stand || {};
@@ -3160,20 +3186,31 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const b = document.createElement('button');
             b.type = 'button'; b.className = 'btn btn-secondary'; b.id = 'exportUebersetzungBtn';
             b.textContent = t('Als Word, {sprache}', { sprache: st.sprache_name || st.zielsprache });
-            b.addEventListener('click', () => doExportUebersetzung(projectId, docId));
+            b.addEventListener('click', () => doExportUebersetzung(projectId));
             slot.appendChild(b);
         } catch (e) { /* Knopf ist Komfort */ }
     }
-    async function doExportUebersetzung(projectId, docId) {
+    async function doExportUebersetzung(projectId) {
+        // Gleiche Sperre wie die anderen Formate (Review 2, Befund 11): kein Doppelklick = zwei Downloads,
+        // Knoepfe gesperrt, danach „Zurück zum Projekt“ und Fokus auf der Meldung.
+        if (_exportLaeuft) { announce(t('Der Export läuft bereits.')); return; }
+        _exportLaeuft = true;
+        const panel = document.getElementById('exportPanel');
+        const knoepfe = panel ? Array.from(panel.querySelectorAll('button')) : [];
+        const aktiv = knoepfe.includes(document.activeElement) ? document.activeElement : null;
+        const aktivInhalt = aktiv ? aktiv.innerHTML : '';
+        knoepfe.forEach(b => { b.disabled = true; });
+        if (aktiv) aktiv.textContent = t('Wird exportiert...');
         const statusEl = document.getElementById('exportStatus');
+        const scope = readExportScope();   // Umfang zur Klickzeit, wie bei den anderen Formaten
         const body = {};
-        if (docId) body.document_id = docId;
+        if (!scope.all && scope.document_id) body.document_id = scope.document_id;
         const name = (document.getElementById('exportFilename') || {}).value || '';
         if (name.trim()) body.filename = name.trim();
         if (statusEl) statusEl.textContent = t('Wird exportiert...');
         try {
             const res = await fetch('/api/projects/' + projectId + '/export/uebersetzung', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            if (!res.ok) { const e = await res.json().catch(() => ({})); const m = e.detail || t('Fehler beim Export.'); if (statusEl) statusEl.textContent = m; announce(m); return; }
+            if (!res.ok) { const e = await res.json().catch(() => ({})); const m = e.detail || t('Fehler beim Export.'); if (statusEl) { statusEl.textContent = m; statusEl.setAttribute('tabindex', '-1'); } announce(m); return; }
             const blob = await res.blob();
             const cd = res.headers.get('Content-Disposition') || '';
             const mStar = /filename\*=UTF-8''([^;]+)/i.exec(cd);
@@ -3181,10 +3218,21 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             let serverName = null;
             if (m) { try { serverName = decodeURIComponent(m[1]); } catch (e) { serverName = m[1]; } }
             downloadBlob(blob, serverName || 'uebersetzung.docx');
-            const ansage = t('Heruntergeladen: „{name}“.', { name: serverName || 'uebersetzung.docx' }) + ' ' + t('Du findest die Datei bei deinen Downloads.');
-            if (statusEl) { statusEl.textContent = ansage; statusEl.setAttribute('tabindex', '-1'); statusEl.focus(); }
+            let ansage = t('Heruntergeladen: „{name}“.', { name: serverName || 'uebersetzung.docx' }) + ' ' + t('Du findest die Datei bei deinen Downloads.');
+            const warn = res.headers.get('X-Export-Warnings');
+            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
+            if (statusEl) { statusEl.textContent = ansage; statusEl.setAttribute('tabindex', '-1'); }
             announce(ansage);
+            _exportFertig = true;
+            const cancel = document.getElementById('exportCancelBtn');
+            if (cancel) cancel.textContent = t('Zurück zum Projekt');
         } catch (e) { if (statusEl) statusEl.textContent = t('Verbindungsfehler.'); }
+        finally {
+            _exportLaeuft = false;
+            knoepfe.forEach(b => { b.disabled = false; });
+            if (aktiv) aktiv.innerHTML = aktivInhalt;
+            if (_exportFertig && statusEl) statusEl.focus();
+        }
     }
 
     function openExportPanel(projectId, docId) {
