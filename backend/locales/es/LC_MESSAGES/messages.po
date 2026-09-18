@@ -6938,3 +6938,42 @@ msgstr "Con nota"
 
 msgid "Nach Übersetzungsstand filtern"
 msgstr "Filtrar por estado de traducción"
+
+msgid "Die Antwort nennt scope, queued_items (wie viele Einträge der Lauf anfasst) und settings (was gesetzt wurde). Gibt es bei scope=open nichts Offenes, kommt 200 mit started=false und einem Hinweis; nichts wird berechnet."
+msgstr "La respuesta indica scope, queued_items (cuántas entradas toca el proceso) y settings (lo que se aplicó). Si con scope=open no hay nada abierto, recibes 200 con started=false y una nota; no se cobra nada."
+
+msgid "Eigener Prompt als Text (bis 4.000 Zeichen). Er wird als gespeicherter Prompt in der Kategorie „API“ angelegt und wie in der App zusätzlich zu unseren Regeln an die KI gegeben."
+msgstr "Tu propio prompt como texto (hasta 4.000 caracteres). Se guarda como prompt en la categoría «API» y se entrega a la IA junto con nuestras reglas, igual que en la aplicación."
+
+msgid "Ein in InkluDocs gespeicherter eigener Prompt des Kontos (Meine Prompts). 0 hebt den Prompt auf."
+msgstr "Un prompt guardado de la cuenta en InkluDocs (Mis prompts). 0 quita el prompt."
+
+msgid "Fehlgeschlagene Einträge"
+msgstr "Entradas fallidas"
+
+msgid "GET …/items lässt sich filtern: ?status=failed (auch pending, generating, done) und ?text_status=offen (auch mit_text, dekorativ). count zählt die gelieferten, total alle Einträge."
+msgstr "GET …/items se puede filtrar: ?status=failed (también pending, generating, done) y ?text_status=offen (también mit_text, dekorativ). count cuenta las devueltas, total todas las entradas."
+
+msgid "Grund: {g}"
+msgstr "Motivo: {g}"
+
+msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in lauf_hinweis am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+msgstr "Si la IA no puede describir una imagen, la entrada mantiene el estado failed, el campo error indica el motivo en lenguaje llano (por ejemplo «servicio de IA sobrecargado (429)» o «No se pudo leer el archivo de imagen»), y counts.failed en el documento lo contabiliza. Si un proceso completo termina antes (créditos, límite diario, cancelación), el motivo está en lauf_hinweis en el documento. Las interrupciones temporales del servicio de IA las reintenta InkluDocs con tiempo de espera antes de marcar una entrada como failed."
+
+msgid "Nur ein Dokument des Projekts."
+msgstr "Solo un documento del proyecto."
+
+msgid "POST …/generate nimmt dieselben Einstellungen je Lauf an: language, use_context, prompt_id oder prompt (sie gelten ab diesem Lauf für das Dokument), dazu document_id und scope."
+msgstr "POST …/generate acepta los mismos ajustes por proceso: language, use_context, prompt_id o prompt (se aplican al documento a partir de este proceso), además de document_id y scope."
+
+msgid "Parameter beim Start"
+msgstr "Parámetros al iniciar"
+
+msgid "Parameter beim Start der Generierung"
+msgstr "Parámetros al iniciar la generación"
+
+msgid "So holst du Fehlschläge nach: POST …/generate ohne scope (oder scope=open) beschreibt nur die offenen Einträge, fertige bleiben unberührt und kosten nichts. Einzelne Einträge: POST …/items/{item_id}/generate. Credits fallen nur für Einträge an, die einen Text bekommen haben. Erst wenn nichts mehr offen ist, nimmt scope=all wieder alle Einträge."
+msgstr "Cómo recuperar fallos: POST …/generate sin scope (o scope=open) describe solo las entradas abiertas; las terminadas quedan intactas y no cuestan nada. Entradas individuales: POST …/items/{item_id}/generate. Los créditos solo se cobran por entradas que recibieron un texto. Solo cuando no queda nada abierto, scope=all vuelve a tomar todas las entradas."
+
+msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
+msgstr "open (predeterminado): solo entradas sin texto terminado, es decir, nunca generadas y fallidas. all: describir de nuevo todas las entradas, los textos existentes se sustituyen y cada entrada se cobra de nuevo. Los formularios solo conocen all."

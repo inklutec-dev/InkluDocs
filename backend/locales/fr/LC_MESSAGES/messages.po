@@ -6938,3 +6938,42 @@ msgstr "Avec remarque"
 
 msgid "Nach Übersetzungsstand filtern"
 msgstr "Filtrer par état de traduction"
+
+msgid "Die Antwort nennt scope, queued_items (wie viele Einträge der Lauf anfasst) und settings (was gesetzt wurde). Gibt es bei scope=open nichts Offenes, kommt 200 mit started=false und einem Hinweis; nichts wird berechnet."
+msgstr "La réponse indique scope, queued_items (combien d’entrées le traitement concerne) et settings (ce qui a été appliqué). S’il n’y a rien d’ouvert avec scope=open, vous recevez 200 avec started=false et une indication ; rien n’est facturé."
+
+msgid "Eigener Prompt als Text (bis 4.000 Zeichen). Er wird als gespeicherter Prompt in der Kategorie „API“ angelegt und wie in der App zusätzlich zu unseren Regeln an die KI gegeben."
+msgstr "Votre propre prompt sous forme de texte (jusqu’à 4 000 caractères). Il est enregistré comme prompt sauvegardé dans la catégorie « API » et transmis à l’IA en plus de nos règles, comme dans l’application."
+
+msgid "Ein in InkluDocs gespeicherter eigener Prompt des Kontos (Meine Prompts). 0 hebt den Prompt auf."
+msgstr "Un prompt enregistré du compte dans InkluDocs (Mes prompts). 0 supprime le prompt."
+
+msgid "Fehlgeschlagene Einträge"
+msgstr "Entrées en échec"
+
+msgid "GET …/items lässt sich filtern: ?status=failed (auch pending, generating, done) und ?text_status=offen (auch mit_text, dekorativ). count zählt die gelieferten, total alle Einträge."
+msgstr "GET …/items peut être filtré : ?status=failed (aussi pending, generating, done) et ?text_status=offen (aussi mit_text, dekorativ). count compte les entrées renvoyées, total toutes les entrées."
+
+msgid "Grund: {g}"
+msgstr "Raison : {g}"
+
+msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in lauf_hinweis am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+msgstr "Si l’IA ne peut pas décrire une image, l’entrée garde le statut failed, le champ error indique la raison en langage courant (par exemple « service IA surchargé (429) » ou « Le fichier image n’a pas pu être lu »), et counts.failed sur le document le comptabilise. Si tout un traitement s’arrête plus tôt (crédits, limite journalière, annulation), la raison se trouve dans lauf_hinweis sur le document. Les perturbations passagères du service IA sont réessayées par InkluDocs avec un délai avant qu’une entrée ne soit considérée comme failed."
+
+msgid "Nur ein Dokument des Projekts."
+msgstr "Un seul document du projet."
+
+msgid "POST …/generate nimmt dieselben Einstellungen je Lauf an: language, use_context, prompt_id oder prompt (sie gelten ab diesem Lauf für das Dokument), dazu document_id und scope."
+msgstr "POST …/generate accepte les mêmes paramètres par traitement : language, use_context, prompt_id ou prompt (ils s’appliquent au document à partir de ce traitement), plus document_id et scope."
+
+msgid "Parameter beim Start"
+msgstr "Paramètres au démarrage"
+
+msgid "Parameter beim Start der Generierung"
+msgstr "Paramètres au lancement de la génération"
+
+msgid "So holst du Fehlschläge nach: POST …/generate ohne scope (oder scope=open) beschreibt nur die offenen Einträge, fertige bleiben unberührt und kosten nichts. Einzelne Einträge: POST …/items/{item_id}/generate. Credits fallen nur für Einträge an, die einen Text bekommen haben. Erst wenn nichts mehr offen ist, nimmt scope=all wieder alle Einträge."
+msgstr "Pour rattraper les échecs : POST …/generate sans scope (ou scope=open) ne décrit que les entrées ouvertes ; les entrées terminées restent intactes et ne coûtent rien. Entrées individuelles : POST …/items/{item_id}/generate. Les crédits ne sont facturés que pour les entrées ayant reçu un texte. Ce n’est que lorsque plus rien n’est ouvert que scope=all reprend toutes les entrées."
+
+msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
+msgstr "open (par défaut) : uniquement les entrées sans texte terminé, c’est-à-dire jamais générées et en échec. all : décrire à nouveau toutes les entrées, les textes existants sont remplacés et chaque entrée est facturée à nouveau. Les formulaires ne connaissent que all."

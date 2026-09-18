@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
@@ -299,6 +300,8 @@ def _bild_item(project_id: int, img: dict) -> dict:
         "bildtyp": img.get("image_type") or "",
         "konfidenz": img.get("konfidenz") or "",
         "needs_review": bool(img.get("needs_review")),
+        # 18.09.2026 (Steve): Grund des letzten Fehlschlags (images.fehler_grund), sonst null.
+        "error": (img.get("fehler_grund") or None) if (img.get("status") == "error" or img.get("fehler_grund")) else None,
         "language": img.get("gen_language") or None,
         "file_url": f"{_d.base_url}/api/v1/documents/{project_id}/items/{img['id']}/file",
     }
@@ -444,6 +447,7 @@ async def _documents_create(user: dict, request: Request):
             raise HTTPException(status_code=400, detail="Feld 'url' fehlt (oder eine Datei als multipart/form-data hochladen)")
         language = _sprache(data.get("language"))
         use_context = _als_bool(data.get("use_context"))
+        _prompt_daten = {k: data.get(k) for k in ("prompt_id", "prompt") if data.get(k) not in (None, "")}
         # Web-Werkzeug: die App-Route legt das Projekt selbst an und laedt die Bilder synchron.
         erg = await _route("POST", "/api/scan-url")(request=_Body({"url": url}, request), user=user)
         pid = int(erg["project_id"])
@@ -458,6 +462,8 @@ async def _documents_create(user: dict, request: Request):
             if use_context is not None:
                 conn.execute("UPDATE projects SET use_context = ? WHERE id = ? AND user_id = ?", (1 if use_context else 0, pid, user["id"]))
             conn.commit()
+            if _prompt_daten:
+                _lauf_einstellungen_anwenden(conn, user["id"], pid, _prompt_daten)
         finally:
             conn.close()
         return await _dokument_status(user, pid), 201
@@ -475,6 +481,13 @@ async def _documents_create(user: dict, request: Request):
     use_context = _als_bool(form.get("use_context"))
     name = _name(form.get("name"), os.path.basename(filename))
     pid = _projekt_anlegen(user["id"], name, tool, language, use_context, api_key_id=user.get("api_key_id"))
+    _prompt_daten = {k: form.get(k) for k in ("prompt_id", "prompt") if form.get(k) not in (None, "")}
+    if _prompt_daten:
+        conn = _d.get_db()
+        try:
+            _lauf_einstellungen_anwenden(conn, user["id"], pid, _prompt_daten)
+        finally:
+            conn.close()
     try:
         await _route("POST", "/api/upload")(file=datei, project_id=pid, user=user)
     except HTTPException:
@@ -510,25 +523,96 @@ async def _documents_get(user: dict, project_id: int):
     return await _dokument_status(user, project_id)
 
 
+PROMPT_TEXT_MAX = 4000   # wie main.PROMPT_TEXT_MAX
+
+
+def _lauf_einstellungen_anwenden(conn, user_id: int, project_id: int, data: dict) -> dict:
+    """Sprache, Kontext und eigener Prompt je Lauf (18.09.2026, Steve + Michael): dieselben
+    Projekt-Einstellungen wie in der App, hier beim Start mitgegeben. Rueckgabe = was gesetzt wurde.
+    prompt_id: gespeicherter Prompt des Kontos („Meine Prompts“). prompt: freier Text — wird als
+    gespeicherter Prompt in der Kategorie „API“ angelegt (gleicher Text = gleiche Zeile), damit
+    Kontoinhaber ihn in der App sehen und der Lauf ihn wie jeden eigenen Prompt nutzt."""
+    gesetzt = {}
+    language = _sprache(data.get("language"))
+    use_context = _als_bool(data.get("use_context"))
+    if language:
+        conn.execute("UPDATE projects SET alt_language = ? WHERE id = ? AND user_id = ?", (language, project_id, user_id))
+        gesetzt["language"] = language
+    if use_context is not None:
+        conn.execute("UPDATE projects SET use_context = ? WHERE id = ? AND user_id = ?", (1 if use_context else 0, project_id, user_id))
+        gesetzt["use_context"] = use_context
+    prompt_id = data.get("prompt_id")
+    prompt = data.get("prompt")
+    if prompt_id not in (None, ""):
+        try:
+            prompt_id = int(prompt_id)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="prompt_id ungültig")
+        if prompt_id == 0:
+            conn.execute("UPDATE projects SET prompt_id = NULL WHERE id = ? AND user_id = ?", (project_id, user_id))
+            gesetzt["prompt_id"] = None
+        else:
+            if not conn.execute("SELECT 1 FROM user_prompts WHERE id = ? AND user_id = ?", (prompt_id, user_id)).fetchone():
+                raise HTTPException(status_code=404, detail="prompt_id nicht gefunden (nur eigene gespeicherte Prompts)")
+            conn.execute("UPDATE projects SET prompt_id = ? WHERE id = ? AND user_id = ?", (prompt_id, project_id, user_id))
+            gesetzt["prompt_id"] = prompt_id
+    elif prompt is not None:
+        text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", str(prompt)).strip()
+        if len(text) > PROMPT_TEXT_MAX:
+            raise HTTPException(status_code=400, detail=f"prompt darf höchstens {PROMPT_TEXT_MAX} Zeichen lang sein")
+        if not text:
+            conn.execute("UPDATE projects SET prompt_id = NULL WHERE id = ? AND user_id = ?", (project_id, user_id))
+            gesetzt["prompt_id"] = None
+        else:
+            row = conn.execute("SELECT id FROM user_prompts WHERE user_id = ? AND category = 'API' AND prompt_text = ?",
+                               (user_id, text)).fetchone()
+            if row:
+                pid = row["id"]
+            else:
+                name = ("API: " + re.sub(r"\s+", " ", text)[:60]).strip()
+                cur = conn.execute("INSERT INTO user_prompts (user_id, name, description, category, prompt_text) VALUES (?, ?, ?, 'API', ?)",
+                                   (user_id, name, "Über die API mitgegebener Prompt", text))
+                pid = cur.lastrowid
+            conn.execute("UPDATE projects SET prompt_id = ? WHERE id = ? AND user_id = ?", (pid, project_id, user_id))
+            gesetzt["prompt_id"] = pid
+    conn.commit()
+    return gesetzt
+
+
 async def _documents_generate(user: dict, request: Request, project_id: int):
+    """Sammellauf. scope (18.09.2026, Steve): "open" (Vorgabe) = nur Eintraege ohne fertigen Text —
+    nie generierte und fehlgeschlagene; "all" = alle Eintraege neu (kostet alle erneut). Dazu je Lauf
+    language, use_context, prompt_id oder prompt. Formulare kennen nur "all" (alle benannten Felder)."""
     data = await _json_body(request)
+    scope = str(data.get("scope") or "open").strip().lower()
+    if scope not in ("open", "all"):
+        raise HTTPException(status_code=400, detail="scope: open oder all")
     body = {}
     if data.get("document_id") is not None:
         body["document_id"] = data.get("document_id")
     conn = _d.get_db()
     try:
         p = _projekt(conn, project_id, user["id"])
+        gesetzt = _lauf_einstellungen_anwenden(conn, user["id"], project_id, data)
     finally:
         conn.close()
     if _ist_formular(p):
         erg = await _route("POST", "/api/projects/{project_id}/quickinfos/generieren")(project_id=project_id, request=_Body(body, request), user=user)
         anzahl = erg.get("offen", 0)
+        scope = "all"
     else:
+        if scope == "open":
+            body["nur_offen"] = True
         erg = await _route("POST", "/api/projects/{project_id}/generate")(project_id=project_id, request=_Body(body, request), user=user)
         anzahl = erg.get("anzahl", 0)
     status = await _dokument_status(user, project_id)
     status["started"] = bool(erg.get("gestartet"))
     status["queued_items"] = int(anzahl or 0)
+    status["scope"] = scope
+    if gesetzt:
+        status["settings"] = gesetzt
+    if not status["started"] and scope == "open":
+        status["hint"] = "Keine offenen Einträge. Mit scope=all werden alle Einträge neu beschrieben (kostet erneut Credits)."
     return status, (202 if status["started"] else 200)
 
 
@@ -543,7 +627,17 @@ async def _documents_cancel(user: dict, project_id: int):
     return {"id": project_id, "cancel_requested": bool(erg.get("angefordert")), "reason": erg.get("grund")}
 
 
-async def _items_list(user: dict, project_id: int):
+async def _items_list(user: dict, project_id: int, request: Optional[Request] = None):
+    """?status=pending|generating|done|failed und ?text_status=offen|mit_text|dekorativ (18.09.2026)
+    filtern die Liste; `count` ist die Zahl der zurueckgegebenen, `total` die Zahl aller Eintraege."""
+    filt_status = filt_text = ""
+    if request is not None:
+        filt_status = (request.query_params.get("status") or "").strip().lower()
+        filt_text = (request.query_params.get("text_status") or "").strip().lower()
+        if filt_status and filt_status not in ("pending", "generating", "done", "failed"):
+            raise HTTPException(status_code=400, detail="status: pending, generating, done oder failed")
+        if filt_text and filt_text not in ("offen", "mit_text", "dekorativ"):
+            raise HTTPException(status_code=400, detail="text_status: offen, mit_text oder dekorativ")
     conn = _d.get_db()
     try:
         p = _projekt(conn, project_id, user["id"])
@@ -555,7 +649,12 @@ async def _items_list(user: dict, project_id: int):
     else:
         erg = await _route("GET", "/api/projects/{project_id}")(project_id=project_id, user=user)
         items = [_bild_item(project_id, img) for img in erg.get("images", [])]
-    return {"id": project_id, "kind": p.get("project_type"), "count": len(items), "items": items}
+    total = len(items)
+    if filt_status:
+        items = [i for i in items if i.get("status") == filt_status]
+    if filt_text:
+        items = [i for i in items if i.get("text_status") == filt_text]
+    return {"id": project_id, "kind": p.get("project_type"), "count": len(items), "total": total, "items": items}
 
 
 async def _item_file(user: dict, project_id: int, item_id: int):
@@ -619,6 +718,12 @@ async def _item_generate(user: dict, request: Request, project_id: int, item_id:
         _item_gehoert_zum_dokument(conn, p, item_id)
     finally:
         conn.close()
+    if data.get("language") is not None or data.get("prompt_id") not in (None, "") or data.get("prompt") is not None or data.get("use_context") is not None:
+        conn = _d.get_db()
+        try:
+            _lauf_einstellungen_anwenden(conn, user["id"], project_id, data)
+        finally:
+            conn.close()
     if _ist_formular(p):
         await _route("POST", "/api/felder/{feld_id}/generieren")(feld_id=item_id, user=user)
     else:
@@ -741,7 +846,7 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.get("/api/v1/documents/{project_id}/items")
     async def v1_items_list(project_id: int, request: Request):
-        return await _sicher(request, "items", False, _items_list, project_id)
+        return await _sicher(request, "items", False, _items_list, project_id, request)
 
     @router.get("/api/v1/documents/{project_id}/items/{item_id}/file")
     async def v1_item_file(project_id: int, item_id: int, request: Request):

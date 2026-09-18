@@ -66,8 +66,26 @@ with httpx.Client(base_url=B, timeout=180) as c:
     check("Zweiter Start waehrend des Laufs: 409 conflict", r2.status_code == 409 and r2.json()["error"]["code"] == "conflict", r2.text)
     d = warte(c, pid, ("done",), 600)
     check("Lauf fertig: status done, with_text > 0", d["status"] == "done" and d["counts"]["with_text"] > 0, d.get("counts"))
+    # 2b) scope/Einstellungen (18.09.2026): open = nichts offen -> nicht gestartet, keine Kosten; all + language + prompt
+    r = c.post(f"/api/v1/documents/{pid}/generate", headers=H, json={"scope": "open"})
+    check("scope=open ohne offene Eintraege: 200, started false, Hinweis", r.status_code == 200 and r.json().get("started") is False and "scope=all" in (r.json().get("hint") or ""), r.text[:200])
+    r = c.post(f"/api/v1/documents/{pid}/generate", headers=H, json={"scope": "hexerei"})
+    check("scope unbekannt: 400", r.status_code == 400, r.text[:200])
+    r = c.post(f"/api/v1/documents/{pid}/generate", headers=H, json={"scope": "all", "prompt_id": 999999999})
+    check("prompt_id fremd: 404, kein Start", r.status_code == 404, r.text[:200])
+    r = c.get(f"/api/v1/documents/{pid}/items", headers=H, params={"status": "failed"})
+    check("items?status=failed: count 0, total = alle", r.status_code == 200 and r.json()["count"] == 0 and r.json()["total"] == d["counts"]["items"], r.text[:200])
+    r = c.get(f"/api/v1/documents/{pid}/items", headers=H, params={"status": "kaputt"})
+    check("items?status ungueltig: 400", r.status_code == 400, r.text[:200])
     r = c.get(f"/api/v1/documents/{pid}/items", headers=H)
     items = r.json()["items"]
+    check("Item traegt Feld error (null bei Erfolg)", all("error" in i and i["error"] is None for i in items), [i.get("error") for i in items][:3])
+    erstes = items[0]["id"]
+    r = c.post(f"/api/v1/documents/{pid}/items/{erstes}/generate", headers=H, json={"language": "en", "prompt": "Beschreibe in höchstens acht Wörtern. (API-Test, fiktiv)"})
+    check("Einzel-Generate mit language+prompt: 200, Text englisch/kurz", r.status_code == 200 and r.json().get("language") == "en" and r.json().get("alt_text"), r.text[:300])
+    r = c.get(f"/api/v1/documents/{pid}", headers=H)
+    check("Dokument nach Einzel-Generate: language en (Einstellung gilt ab jetzt)", r.json().get("language") == "en", r.json().get("language"))
+    items = c.get(f"/api/v1/documents/{pid}/items", headers=H).json()["items"]   # frischer Stand nach dem Einzel-Generate
     check("Items: Bilder mit alt_text und file_url", r.status_code == 200 and items and all(i["type"] == "image" and "alt_text" in i and i["file_url"] for i in items), r.text[:300])
     it = next((i for i in items if i["text_status"] == "mit_text"), items[0])
     vorher = it["alt_text"]
@@ -127,12 +145,15 @@ with httpx.Client(base_url=B, timeout=180) as c:
     r = c.post(f"/api/v1/documents/{fid}/export/xlsx", headers=H)
     check("xlsx bei Formular: 400", r.status_code == 400, r.text)
 
-    # 5) Aufraeumen
+    # 5) Aufraeumen (auch den ueber die API angelegten Prompt der Kategorie „API“)
     for pid_ in list(angelegt):
         r = c.delete(f"/api/v1/documents/{pid_}", headers=H)
         check(f"Loeschen {pid_}", r.status_code == 200 and r.json()["deleted"], r.text)
         r = c.get(f"/api/v1/documents/{pid_}", headers=H)
         check(f"Nach dem Loeschen 404 ({pid_})", r.status_code == 404, r.text)
+
+    # Der Test-Prompt ist ein gespeicherter Prompt des Kontos; ueber die App-Session ist er unter „Meine Prompts“
+    # (Kategorie API) sichtbar — bleibt bewusst stehen, damit ein Mensch ihn dort sehen kann (Michael 18.09.).
 
 print(f"Ergebnis: {ok} OK, {fehler} FEHLER")
 sys.exit(1 if fehler else 0)

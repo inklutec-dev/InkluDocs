@@ -6500,3 +6500,42 @@ msgstr "Med anmärkning"
 
 msgid "Nach Übersetzungsstand filtern"
 msgstr "Filtrera efter översättningsstatus"
+
+msgid "Die Antwort nennt scope, queued_items (wie viele Einträge der Lauf anfasst) und settings (was gesetzt wurde). Gibt es bei scope=open nichts Offenes, kommt 200 mit started=false und einem Hinweis; nichts wird berechnet."
+msgstr "Svaret anger scope, queued_items (hur många poster körningen berör) och settings (vad som sattes). Finns inget öppet vid scope=open får du 200 med started=false och ett tips; inget debiteras."
+
+msgid "Eigener Prompt als Text (bis 4.000 Zeichen). Er wird als gespeicherter Prompt in der Kategorie „API“ angelegt und wie in der App zusätzlich zu unseren Regeln an die KI gegeben."
+msgstr "Din egen prompt som text (upp till 4 000 tecken). Den sparas som en sparad prompt i kategorin ”API” och ges till AI:n utöver våra regler, precis som i appen."
+
+msgid "Ein in InkluDocs gespeicherter eigener Prompt des Kontos (Meine Prompts). 0 hebt den Prompt auf."
+msgstr "En sparad prompt för kontot i InkluDocs (Mina prompts). 0 tar bort prompten."
+
+msgid "Fehlgeschlagene Einträge"
+msgstr "Misslyckade poster"
+
+msgid "GET …/items lässt sich filtern: ?status=failed (auch pending, generating, done) und ?text_status=offen (auch mit_text, dekorativ). count zählt die gelieferten, total alle Einträge."
+msgstr "GET …/items kan filtreras: ?status=failed (även pending, generating, done) och ?text_status=offen (även mit_text, dekorativ). count räknar de levererade, total alla poster."
+
+msgid "Grund: {g}"
+msgstr "Orsak: {g}"
+
+msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in lauf_hinweis am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+msgstr "Kan AI:n inte beskriva en bild behåller posten status failed, fältet error anger orsaken på vanligt språk (till exempel ”AI-tjänsten överbelastad (429)” eller ”Bildfilen kunde inte läsas”), och counts.failed på dokumentet räknar den. Avslutas en hel körning tidigare (krediter, dagsgräns, avbrott) står orsaken i lauf_hinweis på dokumentet. Tillfälliga störningar hos AI-tjänsten försöker InkluDocs själv igen med väntetid innan en post räknas som failed."
+
+msgid "Nur ein Dokument des Projekts."
+msgstr "Endast ett dokument i projektet."
+
+msgid "POST …/generate nimmt dieselben Einstellungen je Lauf an: language, use_context, prompt_id oder prompt (sie gelten ab diesem Lauf für das Dokument), dazu document_id und scope."
+msgstr "POST …/generate tar samma inställningar per körning: language, use_context, prompt_id eller prompt (de gäller för dokumentet från och med denna körning), plus document_id och scope."
+
+msgid "Parameter beim Start"
+msgstr "Parametrar vid start"
+
+msgid "Parameter beim Start der Generierung"
+msgstr "Parametrar vid start av generering"
+
+msgid "So holst du Fehlschläge nach: POST …/generate ohne scope (oder scope=open) beschreibt nur die offenen Einträge, fertige bleiben unberührt und kosten nichts. Einzelne Einträge: POST …/items/{item_id}/generate. Credits fallen nur für Einträge an, die einen Text bekommen haben. Erst wenn nichts mehr offen ist, nimmt scope=all wieder alle Einträge."
+msgstr "Så hämtar du upp misslyckanden: POST …/generate utan scope (eller scope=open) beskriver bara de öppna posterna; färdiga förblir orörda och kostar inget. Enskilda poster: POST …/items/{item_id}/generate. Krediter debiteras bara för poster som fått en text. Först när inget längre är öppet tar scope=all alla poster igen."
+
+msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
+msgstr "open (standard): endast poster utan färdig text, alltså aldrig genererade och misslyckade. all: beskriv alla poster på nytt, befintliga texter ersätts och varje post debiteras igen. Formulär känner bara till all."
