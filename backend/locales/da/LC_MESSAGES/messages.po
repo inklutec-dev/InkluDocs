@@ -6386,3 +6386,232 @@ msgstr "Felt {n}: {art}, {name}"
 
 msgid "Feld {n}: {art}"
 msgstr "Felt {n}: {art}"
+
+# Uebersetzen-Werkzeug (18.09.2026)
+msgid "1 Absatz mit Hinweis."
+msgstr "1 afsnit med en bemærkning."
+
+msgid "Abbruch angefordert – der Lauf endet nach dem laufenden Paket."
+msgstr "Afbrydelse anmodet – kørslen stopper efter det aktuelle parti."
+
+msgid "Abbruch fehlgeschlagen."
+msgstr "Afbrydelse mislykkedes."
+
+msgid "Absatz"
+msgstr "Afsnit"
+
+msgid "Abschnitt {n}: {titel}"
+msgstr "Afsnit {n}: {titel}"
+
+msgid "Absätze filtern"
+msgstr "Filtrer afsnit"
+
+msgid "Alle Absätze werden angezeigt."
+msgstr "Alle afsnit vises."
+
+msgid "Als Word herunterladen"
+msgstr "Download som Word"
+
+msgid "Alternativtexte der Bilder mitübersetzen"
+msgstr "Oversæt også billedernes alternative tekster"
+
+msgid "Alternativtexte und Titel der Bilder"
+msgstr "Alternative tekster og titler på billederne"
+
+msgid "Bereit"
+msgstr "Klar"
+
+msgid "Bildtitel"
+msgstr "Billedtitel"
+
+msgid "Dein Guthaben reicht nicht: Der Lauf braucht mindestens 1 Credit, du hast {v}."
+msgstr "Din saldo rækker ikke: kørslen kræver mindst 1 kredit, du har {v}."
+
+msgid "Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "Kørslen kan også afbrydes efter start."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
+msgstr "Formateringen bevares fuldstændigt: kun teksten udskiftes. Eksisterende oversættelser erstattes, manuelt rettede afsnit bevares."
+
+msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
+msgstr "Word-filen behandles – afsnit læses …"
+
+msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
+msgstr "Oversættelsen blev afbrudt: {n} afsnit blev oversat."
+
+msgid "Dieser Absatz enthält keinen übersetzbaren Text (Zahlen oder Zeichen) und bleibt unverändert."
+msgstr "Dette afsnit indeholder ingen oversættelig tekst (tal eller tegn) og forbliver uændret."
+
+msgid "Dokument gelesen."
+msgstr "Dokument læst."
+
+msgid "Dokument hinzugefügt als Dokument {d}."
+msgstr "Dokument tilføjet som dokument {d}."
+
+msgid "Dokumenteigenschaften"
+msgstr "Dokumentegenskaber"
+
+msgid "Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)"
+msgstr "Sæt dokumentsproget i filen til målsproget (så skærmlæsere læser korrekt op)"
+
+msgid "Dokumenttitel"
+msgstr "Dokumenttitel"
+
+msgid "Du hast {v} Credits — es reicht für etwa {m} von {n} Absätzen, danach hört der Lauf auf."
+msgstr "Du har {v} kreditter — det rækker til cirka {m} af {n} afsnit, derefter stopper kørslen."
+
+msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten."
+msgstr "Du kan til enhver tid uploade flere Word-filer. De indsættes i listen nedenfor; allerede oversatte afsnit bevares."
+
+msgid "Endnote"
+msgstr "Slutnote"
+
+msgid "Endnoten"
+msgstr "Slutnoter"
+
+msgid "Es läuft gerade keine Übersetzung."
+msgstr "Der kører ingen oversættelse lige nu."
+
+msgid "Es werden {n} Absätze mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "{n} afsnit med {w} ord oversættes. Det kræver {c} kreditter (1 kredit pr. påbegyndte {j} ord)."
+
+msgid "Es wird 1 Absatz mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "1 afsnit med {w} ord oversættes. Det kræver {c} kreditter (1 kredit pr. påbegyndte {j} ord)."
+
+msgid "Fußnote"
+msgstr "Fodnote"
+
+msgid "Fußnoten"
+msgstr "Fodnoter"
+
+msgid "Ganzes Projekt, {n} Dokumente als ZIP."
+msgstr "Hele projektet, {n} dokumenter som ZIP."
+
+msgid "Hier gibt es nichts zu übersetzen."
+msgstr "Der er intet at oversætte her."
+
+msgid "Keine Übersetzung erhalten"
+msgstr "Ingen oversættelse modtaget"
+
+msgid "Möchtest du das Dokument „{name}\" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette dokumentet „{name}“ med 1 afsnit? Det kan ikke fortrydes."
+
+msgid "Möchtest du das Dokument „{name}\" mit {n} Absätzen wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vil du virkelig slette dokumentet „{name}“ med {n} afsnit? Det kan ikke fortrydes."
+
+msgid "Noch kein Dokument hochgeladen."
+msgstr "Intet dokument uploadet endnu."
+
+msgid "Noch keine Übersetzung – wird beim Lauf gefüllt oder hier von Hand eingeben"
+msgstr "Ingen oversættelse endnu – udfyldes af kørslen eller indtast her manuelt"
+
+msgid "Noch nicht übersetzt"
+msgstr "Ikke oversat endnu"
+
+msgid "Nur dieses Dokument."
+msgstr "Kun dette dokument."
+
+msgid "Nur mit Hinweis"
+msgstr "Kun med bemærkning"
+
+msgid "Nur noch nicht übersetzt"
+msgstr "Kun ikke oversat endnu"
+
+msgid "Original:"
+msgstr "Original:"
+
+msgid "Start fehlgeschlagen."
+msgstr "Start mislykkedes."
+
+msgid "Titel"
+msgstr "Titel"
+
+msgid "Umfang wird ermittelt …"
+msgstr "Omfang beregnes …"
+
+msgid "Von Hand korrigiert"
+msgstr "Rettet manuelt"
+
+msgid "Vorschau fehlgeschlagen."
+msgstr "Forhåndsvisning mislykkedes."
+
+msgid "Wird gestartet …"
+msgstr "Starter …"
+
+msgid "Wird übersetzt"
+msgstr "Oversættes"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert."
+msgstr "Vælg et Word-dokument (.docx) eller træk det hertil. Teksten læses afsnit for afsnit; formatering og struktur forbliver uændret ved oversættelsen."
+
+msgid "Zielsprache"
+msgstr "Målsprog"
+
+msgid "{art} {n}: {anfang}"
+msgstr "{art} {n}: {anfang}"
+
+msgid "{f} von {n} Absätzen sind übersetzt{sprache}. Nicht übersetzte Absätze bleiben in der Ausgangssprache. Struktur und Formatierung der Datei bleiben unverändert. Das Herunterladen kostet keine Credits."
+msgstr "{f} af {n} afsnit er oversat{sprache}. Ikke-oversatte afsnit forbliver på kildesproget. Filens struktur og formatering forbliver uændret. Download koster ingen kreditter."
+
+msgid "{f} von {n} Absätzen übersetzt."
+msgstr "{f} af {n} afsnit oversat."
+
+msgid "{h} Absätze mit Hinweis."
+msgstr "{h} afsnit med en bemærkning."
+
+msgid "{n} Absätze mit Hinweis werden angezeigt."
+msgstr "{n} afsnit med bemærkning vises."
+
+msgid "{n} Absätze mit {w} Wörtern in {d} Dokumenten."
+msgstr "{n} afsnit med {w} ord i {d} dokumenter."
+
+msgid "{n} Absätze, {f} übersetzt"
+msgstr "{n} afsnit, {f} oversat"
+
+msgid "{n} Absätze, {w} Wörter, {f} übersetzt"
+msgstr "{n} afsnit, {w} ord, {f} oversat"
+
+msgid "{n} Hinweise zu diesem Dokument"
+msgstr "{n} bemærkninger til dette dokument"
+
+msgid "{n} noch nicht übersetzte Absätze werden angezeigt."
+msgstr "{n} endnu ikke oversatte afsnit vises."
+
+msgid "Überschrift"
+msgstr "Overskrift"
+
+msgid "Übersetzen"
+msgstr "Oversæt"
+
+msgid "Übersetzen: Einstellungen geöffnet."
+msgstr "Oversæt: indstillinger åbnet."
+
+msgid "Übersetzt"
+msgstr "Oversat"
+
+msgid "Übersetzt, Formatierung zusammengelegt"
+msgstr "Oversat, formatering sammenlagt"
+
+msgid "Übersetzung"
+msgstr "Oversættelse"
+
+msgid "Übersetzung abbrechen"
+msgstr "Afbryd oversættelse"
+
+msgid "Übersetzung abgeschlossen: {n} Absätze übersetzt, {c} Credits verbraucht."
+msgstr "Oversættelse afsluttet: {n} afsnit oversat, {c} kreditter brugt."
+
+msgid "Übersetzung gestartet: {n} Absätze nach {sprache}."
+msgstr "Oversættelse startet: {n} afsnit til {sprache}."
+
+msgid "Übersetzung herunterladen"
+msgstr "Download oversættelse"
+
+msgid "Übersetzung läuft"
+msgstr "Oversættelse i gang"
+
+msgid "Übersetzung starten"
+msgstr "Start oversættelse"
+
+msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
+msgstr "Oversættelse {sprache}: {f} af {n} afsnit færdige."

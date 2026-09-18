@@ -6694,3 +6694,232 @@ msgstr "Champ {n} : {art}, {name}"
 
 msgid "Feld {n}: {art}"
 msgstr "Champ {n} : {art}"
+
+# Uebersetzen-Werkzeug (18.09.2026)
+msgid "1 Absatz mit Hinweis."
+msgstr "1 paragraphe avec une remarque."
+
+msgid "Abbruch angefordert – der Lauf endet nach dem laufenden Paket."
+msgstr "Annulation demandée – le traitement s’arrête après le lot en cours."
+
+msgid "Abbruch fehlgeschlagen."
+msgstr "Échec de l’annulation."
+
+msgid "Absatz"
+msgstr "Paragraphe"
+
+msgid "Abschnitt {n}: {titel}"
+msgstr "Section {n} : {titel}"
+
+msgid "Absätze filtern"
+msgstr "Filtrer les paragraphes"
+
+msgid "Alle Absätze werden angezeigt."
+msgstr "Tous les paragraphes sont affichés."
+
+msgid "Als Word herunterladen"
+msgstr "Télécharger en Word"
+
+msgid "Alternativtexte der Bilder mitübersetzen"
+msgstr "Traduire aussi les textes alternatifs des images"
+
+msgid "Alternativtexte und Titel der Bilder"
+msgstr "Textes alternatifs et titres des images"
+
+msgid "Bereit"
+msgstr "Prêt"
+
+msgid "Bildtitel"
+msgstr "Titre de l’image"
+
+msgid "Dein Guthaben reicht nicht: Der Lauf braucht mindestens 1 Credit, du hast {v}."
+msgstr "Votre solde est insuffisant : le traitement nécessite au moins 1 crédit, vous en avez {v}."
+
+msgid "Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "Le traitement peut aussi être annulé après le démarrage."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
+msgstr "La mise en forme est entièrement conservée : seul le texte est remplacé. Les traductions existantes sont remplacées, les paragraphes corrigés à la main sont conservés."
+
+msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
+msgstr "Le fichier Word est en cours de traitement – lecture des paragraphes …"
+
+msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
+msgstr "La traduction a été annulée : {n} paragraphes ont été traduits."
+
+msgid "Dieser Absatz enthält keinen übersetzbaren Text (Zahlen oder Zeichen) und bleibt unverändert."
+msgstr "Ce paragraphe ne contient pas de texte traduisible (chiffres ou symboles) et reste inchangé."
+
+msgid "Dokument gelesen."
+msgstr "Document lu."
+
+msgid "Dokument hinzugefügt als Dokument {d}."
+msgstr "Document ajouté comme document {d}."
+
+msgid "Dokumenteigenschaften"
+msgstr "Propriétés du document"
+
+msgid "Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)"
+msgstr "Définir la langue du document dans le fichier sur la langue cible (pour une lecture correcte par les lecteurs d’écran)"
+
+msgid "Dokumenttitel"
+msgstr "Titre du document"
+
+msgid "Du hast {v} Credits — es reicht für etwa {m} von {n} Absätzen, danach hört der Lauf auf."
+msgstr "Vous avez {v} crédits — cela suffit pour environ {m} paragraphes sur {n}, ensuite le traitement s’arrête."
+
+msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten."
+msgstr "Vous pouvez ajouter d’autres fichiers Word à tout moment. Ils sont insérés dans la liste ci-dessous ; les paragraphes déjà traduits sont conservés."
+
+msgid "Endnote"
+msgstr "Note de fin"
+
+msgid "Endnoten"
+msgstr "Notes de fin"
+
+msgid "Es läuft gerade keine Übersetzung."
+msgstr "Aucune traduction n’est en cours."
+
+msgid "Es werden {n} Absätze mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "{n} paragraphes contenant {w} mots seront traduits. Cela nécessite {c} crédits (1 crédit par tranche de {j} mots entamée)."
+
+msgid "Es wird 1 Absatz mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "1 paragraphe contenant {w} mots sera traduit. Cela nécessite {c} crédits (1 crédit par tranche de {j} mots entamée)."
+
+msgid "Fußnote"
+msgstr "Note de bas de page"
+
+msgid "Fußnoten"
+msgstr "Notes de bas de page"
+
+msgid "Ganzes Projekt, {n} Dokumente als ZIP."
+msgstr "Projet entier, {n} documents en ZIP."
+
+msgid "Hier gibt es nichts zu übersetzen."
+msgstr "Il n’y a rien à traduire ici."
+
+msgid "Keine Übersetzung erhalten"
+msgstr "Aucune traduction reçue"
+
+msgid "Möchtest du das Dokument „{name}\" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Voulez-vous vraiment supprimer le document « {name} » avec 1 paragraphe ? Cette action est irréversible."
+
+msgid "Möchtest du das Dokument „{name}\" mit {n} Absätzen wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Voulez-vous vraiment supprimer le document « {name} » avec {n} paragraphes ? Cette action est irréversible."
+
+msgid "Noch kein Dokument hochgeladen."
+msgstr "Aucun document téléversé pour le moment."
+
+msgid "Noch keine Übersetzung – wird beim Lauf gefüllt oder hier von Hand eingeben"
+msgstr "Pas encore de traduction – remplie par le traitement ou à saisir ici à la main"
+
+msgid "Noch nicht übersetzt"
+msgstr "Pas encore traduit"
+
+msgid "Nur dieses Dokument."
+msgstr "Uniquement ce document."
+
+msgid "Nur mit Hinweis"
+msgstr "Uniquement avec remarque"
+
+msgid "Nur noch nicht übersetzt"
+msgstr "Uniquement pas encore traduits"
+
+msgid "Original:"
+msgstr "Original :"
+
+msgid "Start fehlgeschlagen."
+msgstr "Échec du démarrage."
+
+msgid "Titel"
+msgstr "Titre"
+
+msgid "Umfang wird ermittelt …"
+msgstr "Calcul de l’étendue …"
+
+msgid "Von Hand korrigiert"
+msgstr "Corrigé à la main"
+
+msgid "Vorschau fehlgeschlagen."
+msgstr "Échec de l’aperçu."
+
+msgid "Wird gestartet …"
+msgstr "Démarrage …"
+
+msgid "Wird übersetzt"
+msgstr "Traduction en cours"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert."
+msgstr "Choisissez un document Word (.docx) ou glissez-le ici. Le texte est lu paragraphe par paragraphe ; la mise en forme et la structure restent inchangées lors de la traduction."
+
+msgid "Zielsprache"
+msgstr "Langue cible"
+
+msgid "{art} {n}: {anfang}"
+msgstr "{art} {n} : {anfang}"
+
+msgid "{f} von {n} Absätzen sind übersetzt{sprache}. Nicht übersetzte Absätze bleiben in der Ausgangssprache. Struktur und Formatierung der Datei bleiben unverändert. Das Herunterladen kostet keine Credits."
+msgstr "{f} paragraphes sur {n} sont traduits{sprache}. Les paragraphes non traduits restent dans la langue source. La structure et la mise en forme du fichier restent inchangées. Le téléchargement ne coûte aucun crédit."
+
+msgid "{f} von {n} Absätzen übersetzt."
+msgstr "{f} paragraphes sur {n} traduits."
+
+msgid "{h} Absätze mit Hinweis."
+msgstr "{h} paragraphes avec une remarque."
+
+msgid "{n} Absätze mit Hinweis werden angezeigt."
+msgstr "{n} paragraphes avec remarque sont affichés."
+
+msgid "{n} Absätze mit {w} Wörtern in {d} Dokumenten."
+msgstr "{n} paragraphes contenant {w} mots dans {d} documents."
+
+msgid "{n} Absätze, {f} übersetzt"
+msgstr "{n} paragraphes, {f} traduits"
+
+msgid "{n} Absätze, {w} Wörter, {f} übersetzt"
+msgstr "{n} paragraphes, {w} mots, {f} traduits"
+
+msgid "{n} Hinweise zu diesem Dokument"
+msgstr "{n} remarques sur ce document"
+
+msgid "{n} noch nicht übersetzte Absätze werden angezeigt."
+msgstr "{n} paragraphes pas encore traduits sont affichés."
+
+msgid "Überschrift"
+msgstr "Titre"
+
+msgid "Übersetzen"
+msgstr "Traduire"
+
+msgid "Übersetzen: Einstellungen geöffnet."
+msgstr "Traduire : paramètres ouverts."
+
+msgid "Übersetzt"
+msgstr "Traduit"
+
+msgid "Übersetzt, Formatierung zusammengelegt"
+msgstr "Traduit, mise en forme fusionnée"
+
+msgid "Übersetzung"
+msgstr "Traduction"
+
+msgid "Übersetzung abbrechen"
+msgstr "Annuler la traduction"
+
+msgid "Übersetzung abgeschlossen: {n} Absätze übersetzt, {c} Credits verbraucht."
+msgstr "Traduction terminée : {n} paragraphes traduits, {c} crédits utilisés."
+
+msgid "Übersetzung gestartet: {n} Absätze nach {sprache}."
+msgstr "Traduction lancée : {n} paragraphes vers {sprache}."
+
+msgid "Übersetzung herunterladen"
+msgstr "Télécharger la traduction"
+
+msgid "Übersetzung läuft"
+msgstr "Traduction en cours"
+
+msgid "Übersetzung starten"
+msgstr "Lancer la traduction"
+
+msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
+msgstr "Traduction {sprache} : {f} paragraphes sur {n} terminés."

@@ -6694,3 +6694,232 @@ msgstr "Campo {n}: {art}, {name}"
 
 msgid "Feld {n}: {art}"
 msgstr "Campo {n}: {art}"
+
+# Uebersetzen-Werkzeug (18.09.2026)
+msgid "1 Absatz mit Hinweis."
+msgstr "1 párrafo con una nota."
+
+msgid "Abbruch angefordert – der Lauf endet nach dem laufenden Paket."
+msgstr "Cancelación solicitada: el proceso se detiene tras el lote actual."
+
+msgid "Abbruch fehlgeschlagen."
+msgstr "La cancelación ha fallado."
+
+msgid "Absatz"
+msgstr "Párrafo"
+
+msgid "Abschnitt {n}: {titel}"
+msgstr "Sección {n}: {titel}"
+
+msgid "Absätze filtern"
+msgstr "Filtrar párrafos"
+
+msgid "Alle Absätze werden angezeigt."
+msgstr "Se muestran todos los párrafos."
+
+msgid "Als Word herunterladen"
+msgstr "Descargar como Word"
+
+msgid "Alternativtexte der Bilder mitübersetzen"
+msgstr "Traducir también los textos alternativos de las imágenes"
+
+msgid "Alternativtexte und Titel der Bilder"
+msgstr "Textos alternativos y títulos de las imágenes"
+
+msgid "Bereit"
+msgstr "Listo"
+
+msgid "Bildtitel"
+msgstr "Título de la imagen"
+
+msgid "Dein Guthaben reicht nicht: Der Lauf braucht mindestens 1 Credit, du hast {v}."
+msgstr "Tu saldo no es suficiente: el proceso necesita al menos 1 crédito, tienes {v}."
+
+msgid "Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "El proceso también puede cancelarse después de iniciarse."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
+msgstr "El formato se conserva por completo: solo se sustituye el texto. Las traducciones existentes se reemplazan; los párrafos corregidos a mano se mantienen."
+
+msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
+msgstr "El archivo Word se está procesando: se leen los párrafos …"
+
+msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
+msgstr "La traducción se canceló: se tradujeron {n} párrafos."
+
+msgid "Dieser Absatz enthält keinen übersetzbaren Text (Zahlen oder Zeichen) und bleibt unverändert."
+msgstr "Este párrafo no contiene texto traducible (números o símbolos) y permanece sin cambios."
+
+msgid "Dokument gelesen."
+msgstr "Documento leído."
+
+msgid "Dokument hinzugefügt als Dokument {d}."
+msgstr "Documento añadido como documento {d}."
+
+msgid "Dokumenteigenschaften"
+msgstr "Propiedades del documento"
+
+msgid "Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)"
+msgstr "Establecer el idioma del documento en el archivo al idioma de destino (para que los lectores de pantalla lo lean correctamente)"
+
+msgid "Dokumenttitel"
+msgstr "Título del documento"
+
+msgid "Du hast {v} Credits — es reicht für etwa {m} von {n} Absätzen, danach hört der Lauf auf."
+msgstr "Tienes {v} créditos: alcanzan para unos {m} de {n} párrafos, después el proceso se detiene."
+
+msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten."
+msgstr "Puedes subir más archivos Word en cualquier momento. Se añaden a la lista de abajo; los párrafos ya traducidos se conservan."
+
+msgid "Endnote"
+msgstr "Nota final"
+
+msgid "Endnoten"
+msgstr "Notas finales"
+
+msgid "Es läuft gerade keine Übersetzung."
+msgstr "No hay ninguna traducción en curso."
+
+msgid "Es werden {n} Absätze mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "Se traducirán {n} párrafos con {w} palabras. Esto requiere {c} créditos (1 crédito por cada {j} palabras o fracción)."
+
+msgid "Es wird 1 Absatz mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "Se traducirá 1 párrafo con {w} palabras. Esto requiere {c} créditos (1 crédito por cada {j} palabras o fracción)."
+
+msgid "Fußnote"
+msgstr "Nota al pie"
+
+msgid "Fußnoten"
+msgstr "Notas al pie"
+
+msgid "Ganzes Projekt, {n} Dokumente als ZIP."
+msgstr "Proyecto completo, {n} documentos como ZIP."
+
+msgid "Hier gibt es nichts zu übersetzen."
+msgstr "Aquí no hay nada que traducir."
+
+msgid "Keine Übersetzung erhalten"
+msgstr "No se recibió traducción"
+
+msgid "Möchtest du das Dokument „{name}\" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "¿Seguro que quieres eliminar el documento «{name}» con 1 párrafo? Esto no se puede deshacer."
+
+msgid "Möchtest du das Dokument „{name}\" mit {n} Absätzen wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "¿Seguro que quieres eliminar el documento «{name}» con {n} párrafos? Esto no se puede deshacer."
+
+msgid "Noch kein Dokument hochgeladen."
+msgstr "Aún no se ha subido ningún documento."
+
+msgid "Noch keine Übersetzung – wird beim Lauf gefüllt oder hier von Hand eingeben"
+msgstr "Aún sin traducción: se rellena en el proceso o escríbela aquí a mano"
+
+msgid "Noch nicht übersetzt"
+msgstr "Aún no traducido"
+
+msgid "Nur dieses Dokument."
+msgstr "Solo este documento."
+
+msgid "Nur mit Hinweis"
+msgstr "Solo con nota"
+
+msgid "Nur noch nicht übersetzt"
+msgstr "Solo aún no traducidos"
+
+msgid "Original:"
+msgstr "Original:"
+
+msgid "Start fehlgeschlagen."
+msgstr "El inicio ha fallado."
+
+msgid "Titel"
+msgstr "Título"
+
+msgid "Umfang wird ermittelt …"
+msgstr "Determinando el alcance …"
+
+msgid "Von Hand korrigiert"
+msgstr "Corregido a mano"
+
+msgid "Vorschau fehlgeschlagen."
+msgstr "La vista previa ha fallado."
+
+msgid "Wird gestartet …"
+msgstr "Iniciando …"
+
+msgid "Wird übersetzt"
+msgstr "Traduciendo"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert."
+msgstr "Elige un documento Word (.docx) o arrástralo aquí. El texto se lee párrafo a párrafo; el formato y la estructura permanecen sin cambios al traducir."
+
+msgid "Zielsprache"
+msgstr "Idioma de destino"
+
+msgid "{art} {n}: {anfang}"
+msgstr "{art} {n}: {anfang}"
+
+msgid "{f} von {n} Absätzen sind übersetzt{sprache}. Nicht übersetzte Absätze bleiben in der Ausgangssprache. Struktur und Formatierung der Datei bleiben unverändert. Das Herunterladen kostet keine Credits."
+msgstr "{f} de {n} párrafos están traducidos{sprache}. Los párrafos no traducidos permanecen en el idioma original. La estructura y el formato del archivo no cambian. La descarga no cuesta créditos."
+
+msgid "{f} von {n} Absätzen übersetzt."
+msgstr "{f} de {n} párrafos traducidos."
+
+msgid "{h} Absätze mit Hinweis."
+msgstr "{h} párrafos con una nota."
+
+msgid "{n} Absätze mit Hinweis werden angezeigt."
+msgstr "Se muestran {n} párrafos con nota."
+
+msgid "{n} Absätze mit {w} Wörtern in {d} Dokumenten."
+msgstr "{n} párrafos con {w} palabras en {d} documentos."
+
+msgid "{n} Absätze, {f} übersetzt"
+msgstr "{n} párrafos, {f} traducidos"
+
+msgid "{n} Absätze, {w} Wörter, {f} übersetzt"
+msgstr "{n} párrafos, {w} palabras, {f} traducidos"
+
+msgid "{n} Hinweise zu diesem Dokument"
+msgstr "{n} notas sobre este documento"
+
+msgid "{n} noch nicht übersetzte Absätze werden angezeigt."
+msgstr "Se muestran {n} párrafos aún no traducidos."
+
+msgid "Überschrift"
+msgstr "Encabezado"
+
+msgid "Übersetzen"
+msgstr "Traducir"
+
+msgid "Übersetzen: Einstellungen geöffnet."
+msgstr "Traducir: ajustes abiertos."
+
+msgid "Übersetzt"
+msgstr "Traducido"
+
+msgid "Übersetzt, Formatierung zusammengelegt"
+msgstr "Traducido, formato fusionado"
+
+msgid "Übersetzung"
+msgstr "Traducción"
+
+msgid "Übersetzung abbrechen"
+msgstr "Cancelar la traducción"
+
+msgid "Übersetzung abgeschlossen: {n} Absätze übersetzt, {c} Credits verbraucht."
+msgstr "Traducción finalizada: {n} párrafos traducidos, {c} créditos consumidos."
+
+msgid "Übersetzung gestartet: {n} Absätze nach {sprache}."
+msgstr "Traducción iniciada: {n} párrafos a {sprache}."
+
+msgid "Übersetzung herunterladen"
+msgstr "Descargar la traducción"
+
+msgid "Übersetzung läuft"
+msgstr "Traducción en curso"
+
+msgid "Übersetzung starten"
+msgstr "Iniciar la traducción"
+
+msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
+msgstr "Traducción {sprache}: {f} de {n} párrafos listos."

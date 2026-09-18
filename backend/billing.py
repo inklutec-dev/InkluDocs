@@ -72,6 +72,10 @@ AKTIONS_PREISE = {
     "alt_text_aenderung_chatbot": 5,    # InkluAgent ersetzt/optimiert einen Alt-Text (Reden bleibt kostenlos)
     "quickinfo_generierung": 1,         # Quickinfo je FELD (seit 29.08.2026; vorher je Seite)
     "quickinfo_aenderung_chatbot": 1,   # InkluAgent aendert eine Quickinfo
+    # UEBERSETZEN (18.09.2026, Vorschlag Claude, Steve hat nicht widersprochen): 1 Credit je
+    # angefangene 100 Woerter (uebersetzung.WOERTER_JE_CREDIT); die Menge ist die Zahl der
+    # Credits, verbucht je fertigem Paket. Der Export der uebersetzten Datei ist kostenlos.
+    "uebersetzung": 1,
     # Datei-Exporte: GRUNDPREIS je Export-Vorgang. Dazu kommt die Staffel je
     # angefangene EXPORT_SCHRITT Bilder/Felder aus EXPORT_ARTEN — gerechnet
     # wird immer ueber export_preis(anzahl, art), nie ueber diese Zahl allein.
@@ -229,7 +233,7 @@ def tagesverbrauch_ki(user_id: int) -> int:
     try:
         row = conn.execute(
             "SELECT COUNT(*) FROM usage_events WHERE user_id = ? "
-            "AND aktion IN ('bild_generierung', 'quickinfo_generierung') "
+            "AND aktion IN ('bild_generierung', 'quickinfo_generierung', 'uebersetzung') "
             "AND date(created_at) = date('now')",
             (user_id,),
         ).fetchone()

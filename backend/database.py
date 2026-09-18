@@ -524,6 +524,50 @@ def init_db():
     ''')
     conn.execute("CREATE INDEX IF NOT EXISTS idx_stammdaten_user ON stammdaten(user_id)")
 
+    # UEBERSETZEN-WERKZEUG (18.09.2026, Steve; Anlass Mark Hounschild): ein Eintrag je
+    # Segment (Absatz, Alt-Text, Bildtitel, Dokumenttitel) eines Word-Dokuments. Eigene
+    # Tabelle, kein Bild (wie formularfelder). stuecke/marken/trenner sind die
+    # Innereien des Kerns (uebersetzung.py): Texte der Textknoten, welche davon ans
+    # Modell gehen, Tabs/Umbrueche/Bilder dazwischen. original/uebersetzung sind die
+    # Lesefassungen fuer Oberflaeche und Chatbot, ziel_stuecke das, was der
+    # Rueckschreiber setzt (Stueck-Index -> Text). status: offen | fertig |
+    # zusammengelegt (Ersatzweg, Formatierung im Absatz vereinheitlicht) | hand |
+    # fehler. quelle: ki | hand. Loeschen von Dokument/Projekt/Konto raeumt sie mit ab.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS uebersetzung_segmente (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            document_id INTEGER NOT NULL,
+            position INTEGER NOT NULL,
+            anker TEXT NOT NULL,
+            art TEXT DEFAULT 'absatz',
+            ort TEXT DEFAULT 'Text',
+            abschnitt INTEGER DEFAULT 1,
+            abschnitt_titel TEXT DEFAULT '',
+            kontext TEXT DEFAULT '',
+            stil TEXT DEFAULT '',
+            ueberschrift_ebene INTEGER,
+            uebersetzbar INTEGER DEFAULT 1,
+            woerter INTEGER DEFAULT 0,
+            stuecke TEXT DEFAULT '[]',
+            marken TEXT DEFAULT '[]',
+            trenner TEXT DEFAULT '{}',
+            original TEXT DEFAULT '',
+            uebersetzung TEXT DEFAULT '',
+            ziel_stuecke TEXT DEFAULT '{}',
+            zielsprache TEXT DEFAULT '',
+            status TEXT DEFAULT 'offen',
+            quelle TEXT DEFAULT '',
+            hinweis TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_uebersetzung_project ON uebersetzung_segmente(project_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_uebersetzung_document ON uebersetzung_segmente(document_id)")
+
     # MEINE ABLAGE (11.09.2026, Steve + Michael, Besprechung): Sicherung der barrierefreien
     # Office-Dokumente inklusive Pruefbericht. Jede Umwandlung (Knopf oder Chatbot) legt einen
     # Eintrag an: Datei, Bericht (Klartext + Hoerprobe + Pruefbericht als JSON), Vorschaubild,
@@ -1103,6 +1147,8 @@ def delete_user_data(user_id: int):
         conn.execute("DELETE FROM feld_reviews WHERE feld_id IN "
                      "(SELECT id FROM formularfelder WHERE project_id = ?)", (p["id"],))
         conn.execute("DELETE FROM formularfelder WHERE project_id = ?", (p["id"],))
+        # Uebersetzen-Werkzeug (18.09.2026): Absaetze des Projekts.
+        conn.execute("DELETE FROM uebersetzung_segmente WHERE project_id = ?", (p["id"],))
         # Multi-Datei (08.06.2026): Dokumente eines Projekts mit aufraeumen.
         conn.execute("DELETE FROM documents WHERE project_id = ?", (p["id"],))
         conn.execute("DELETE FROM chat_messages WHERE project_id = ?", (p["id"],))

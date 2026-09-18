@@ -6697,3 +6697,232 @@ msgstr "Feld {n}: {art}, {name}"
 
 msgid "Feld {n}: {art}"
 msgstr "Feld {n}: {art}"
+
+# Uebersetzen-Werkzeug (18.09.2026)
+msgid "1 Absatz mit Hinweis."
+msgstr "1 Absatz mit Hinweis."
+
+msgid "Abbruch angefordert – der Lauf endet nach dem laufenden Paket."
+msgstr "Abbruch angefordert – der Lauf endet nach dem laufenden Paket."
+
+msgid "Abbruch fehlgeschlagen."
+msgstr "Abbruch fehlgeschlagen."
+
+msgid "Absatz"
+msgstr "Absatz"
+
+msgid "Abschnitt {n}: {titel}"
+msgstr "Abschnitt {n}: {titel}"
+
+msgid "Absätze filtern"
+msgstr "Absätze filtern"
+
+msgid "Alle Absätze werden angezeigt."
+msgstr "Alle Absätze werden angezeigt."
+
+msgid "Als Word herunterladen"
+msgstr "Als Word herunterladen"
+
+msgid "Alternativtexte der Bilder mitübersetzen"
+msgstr "Alternativtexte der Bilder mitübersetzen"
+
+msgid "Alternativtexte und Titel der Bilder"
+msgstr "Alternativtexte und Titel der Bilder"
+
+msgid "Bereit"
+msgstr "Bereit"
+
+msgid "Bildtitel"
+msgstr "Bildtitel"
+
+msgid "Dein Guthaben reicht nicht: Der Lauf braucht mindestens 1 Credit, du hast {v}."
+msgstr "Dein Guthaben reicht nicht: Der Lauf braucht mindestens 1 Credit, du hast {v}."
+
+msgid "Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
+msgstr "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
+
+msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
+msgstr "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
+
+msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
+msgstr "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
+
+msgid "Dieser Absatz enthält keinen übersetzbaren Text (Zahlen oder Zeichen) und bleibt unverändert."
+msgstr "Dieser Absatz enthält keinen übersetzbaren Text (Zahlen oder Zeichen) und bleibt unverändert."
+
+msgid "Dokument gelesen."
+msgstr "Dokument gelesen."
+
+msgid "Dokument hinzugefügt als Dokument {d}."
+msgstr "Dokument hinzugefügt als Dokument {d}."
+
+msgid "Dokumenteigenschaften"
+msgstr "Dokumenteigenschaften"
+
+msgid "Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)"
+msgstr "Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)"
+
+msgid "Dokumenttitel"
+msgstr "Dokumenttitel"
+
+msgid "Du hast {v} Credits — es reicht für etwa {m} von {n} Absätzen, danach hört der Lauf auf."
+msgstr "Du hast {v} Credits — es reicht für etwa {m} von {n} Absätzen, danach hört der Lauf auf."
+
+msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten."
+msgstr "Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten."
+
+msgid "Endnote"
+msgstr "Endnote"
+
+msgid "Endnoten"
+msgstr "Endnoten"
+
+msgid "Es läuft gerade keine Übersetzung."
+msgstr "Es läuft gerade keine Übersetzung."
+
+msgid "Es werden {n} Absätze mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "Es werden {n} Absätze mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+
+msgid "Es wird 1 Absatz mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "Es wird 1 Absatz mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+
+msgid "Fußnote"
+msgstr "Fußnote"
+
+msgid "Fußnoten"
+msgstr "Fußnoten"
+
+msgid "Ganzes Projekt, {n} Dokumente als ZIP."
+msgstr "Ganzes Projekt, {n} Dokumente als ZIP."
+
+msgid "Hier gibt es nichts zu übersetzen."
+msgstr "Hier gibt es nichts zu übersetzen."
+
+msgid "Keine Übersetzung erhalten"
+msgstr "Keine Übersetzung erhalten"
+
+msgid "Möchtest du das Dokument „{name}\" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Möchtest du das Dokument „{name}\" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen."
+
+msgid "Möchtest du das Dokument „{name}\" mit {n} Absätzen wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Möchtest du das Dokument „{name}\" mit {n} Absätzen wirklich löschen? Das lässt sich nicht rückgängig machen."
+
+msgid "Noch kein Dokument hochgeladen."
+msgstr "Noch kein Dokument hochgeladen."
+
+msgid "Noch keine Übersetzung – wird beim Lauf gefüllt oder hier von Hand eingeben"
+msgstr "Noch keine Übersetzung – wird beim Lauf gefüllt oder hier von Hand eingeben"
+
+msgid "Noch nicht übersetzt"
+msgstr "Noch nicht übersetzt"
+
+msgid "Nur dieses Dokument."
+msgstr "Nur dieses Dokument."
+
+msgid "Nur mit Hinweis"
+msgstr "Nur mit Hinweis"
+
+msgid "Nur noch nicht übersetzt"
+msgstr "Nur noch nicht übersetzt"
+
+msgid "Original:"
+msgstr "Original:"
+
+msgid "Start fehlgeschlagen."
+msgstr "Start fehlgeschlagen."
+
+msgid "Titel"
+msgstr "Titel"
+
+msgid "Umfang wird ermittelt …"
+msgstr "Umfang wird ermittelt …"
+
+msgid "Von Hand korrigiert"
+msgstr "Von Hand korrigiert"
+
+msgid "Vorschau fehlgeschlagen."
+msgstr "Vorschau fehlgeschlagen."
+
+msgid "Wird gestartet …"
+msgstr "Wird gestartet …"
+
+msgid "Wird übersetzt"
+msgstr "Wird übersetzt"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert."
+msgstr "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert."
+
+msgid "Zielsprache"
+msgstr "Zielsprache"
+
+msgid "{art} {n}: {anfang}"
+msgstr "{art} {n}: {anfang}"
+
+msgid "{f} von {n} Absätzen sind übersetzt{sprache}. Nicht übersetzte Absätze bleiben in der Ausgangssprache. Struktur und Formatierung der Datei bleiben unverändert. Das Herunterladen kostet keine Credits."
+msgstr "{f} von {n} Absätzen sind übersetzt{sprache}. Nicht übersetzte Absätze bleiben in der Ausgangssprache. Struktur und Formatierung der Datei bleiben unverändert. Das Herunterladen kostet keine Credits."
+
+msgid "{f} von {n} Absätzen übersetzt."
+msgstr "{f} von {n} Absätzen übersetzt."
+
+msgid "{h} Absätze mit Hinweis."
+msgstr "{h} Absätze mit Hinweis."
+
+msgid "{n} Absätze mit Hinweis werden angezeigt."
+msgstr "{n} Absätze mit Hinweis werden angezeigt."
+
+msgid "{n} Absätze mit {w} Wörtern in {d} Dokumenten."
+msgstr "{n} Absätze mit {w} Wörtern in {d} Dokumenten."
+
+msgid "{n} Absätze, {f} übersetzt"
+msgstr "{n} Absätze, {f} übersetzt"
+
+msgid "{n} Absätze, {w} Wörter, {f} übersetzt"
+msgstr "{n} Absätze, {w} Wörter, {f} übersetzt"
+
+msgid "{n} Hinweise zu diesem Dokument"
+msgstr "{n} Hinweise zu diesem Dokument"
+
+msgid "{n} noch nicht übersetzte Absätze werden angezeigt."
+msgstr "{n} noch nicht übersetzte Absätze werden angezeigt."
+
+msgid "Überschrift"
+msgstr "Überschrift"
+
+msgid "Übersetzen"
+msgstr "Übersetzen"
+
+msgid "Übersetzen: Einstellungen geöffnet."
+msgstr "Übersetzen: Einstellungen geöffnet."
+
+msgid "Übersetzt"
+msgstr "Übersetzt"
+
+msgid "Übersetzt, Formatierung zusammengelegt"
+msgstr "Übersetzt, Formatierung zusammengelegt"
+
+msgid "Übersetzung"
+msgstr "Übersetzung"
+
+msgid "Übersetzung abbrechen"
+msgstr "Übersetzung abbrechen"
+
+msgid "Übersetzung abgeschlossen: {n} Absätze übersetzt, {c} Credits verbraucht."
+msgstr "Übersetzung abgeschlossen: {n} Absätze übersetzt, {c} Credits verbraucht."
+
+msgid "Übersetzung gestartet: {n} Absätze nach {sprache}."
+msgstr "Übersetzung gestartet: {n} Absätze nach {sprache}."
+
+msgid "Übersetzung herunterladen"
+msgstr "Übersetzung herunterladen"
+
+msgid "Übersetzung läuft"
+msgstr "Übersetzung läuft"
+
+msgid "Übersetzung starten"
+msgstr "Übersetzung starten"
+
+msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
+msgstr "Übersetzung {sprache}: {f} von {n} Absätzen fertig."

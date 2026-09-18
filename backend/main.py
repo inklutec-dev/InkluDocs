@@ -64,6 +64,7 @@ import docx_hoerprobe
 import secrets as _secrets
 # QUICKINFO-WERKZEUG (27.08.2026): PDF-Formularfelder lesen/schreiben, eigener Router
 import formular_api
+import uebersetzung_api
 import api_dokumente_v1   # Public API v1: Dokumente (17.09.2026)
 from formular_processor import validiere_formular, FormularFehler
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
@@ -4191,7 +4192,8 @@ async def create_project(request: Request, user: dict = Depends(get_current_user
 
 
 # Werkzeug -> Datentyp der Quelle (EINE Stelle fuer App und Public API v1, 17.09.2026).
-TOOL_PROJECT_TYPE = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx", "formular": "pdfform"}
+TOOL_PROJECT_TYPE = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx", "formular": "pdfform",
+                     "uebersetzen": uebersetzung_api.PROJECT_TYPE}   # 18.09.2026: Uebersetzen-Werkzeug
 
 
 @app.patch("/api/projects/{project_id}")
@@ -4600,6 +4602,15 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
     with open(file_path, "wb") as f:
         f.write(content)
 
+    if project_id is not None and uebersetzung_api.ist_uebersetzungsprojekt(project_id, user["id"]):
+        # UEBERSETZEN-WERKZEUG (18.09.2026): nur Word-Dateien; Vorpruefung + Segmentierung im Router.
+        if not is_docx:
+            try:
+                os.unlink(file_path)
+            except OSError:
+                pass
+            raise HTTPException(status_code=400, detail="In ein Übersetzungsprojekt können nur Word-Dateien (.docx) hochgeladen werden.")
+        return await uebersetzung_api.handle_upload(file_path, filename, user, project_id)
     if project_id is not None and not is_pdf and formular_api.ist_formular_projekt(project_id, user["id"]):
         # Formular-Projekte nehmen nur PDF an — abweisen, bevor eine Waise auf der Platte bleibt.
         try:
@@ -6041,6 +6052,8 @@ async def delete_document(project_id: int, document_id: int, user: dict = Depend
     conn.execute("DELETE FROM feld_reviews WHERE feld_id IN "
                  "(SELECT id FROM formularfelder WHERE document_id = ? AND project_id = ?)", (document_id, project_id))
     conn.execute("DELETE FROM formularfelder WHERE document_id = ? AND project_id = ?", (document_id, project_id))
+    # Uebersetzen-Werkzeug (18.09.2026): Absaetze des Dokuments.
+    conn.execute("DELETE FROM uebersetzung_segmente WHERE document_id = ? AND project_id = ?", (document_id, project_id))
     conn.execute("DELETE FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id))
 
     # Projekt-Zaehler aus dem Ist-Stand neu berechnen. processed_images zaehlt
@@ -6204,6 +6217,8 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
     # Quickinfo-Werkzeug (27.08.2026): Formularfelder mit aufraeumen (+ Gast-Urteile, 28.08.).
     conn.execute("DELETE FROM feld_reviews WHERE feld_id IN (SELECT id FROM formularfelder WHERE project_id = ?)", (project_id,))
     conn.execute("DELETE FROM formularfelder WHERE project_id = ?", (project_id,))
+    # Uebersetzen-Werkzeug (18.09.2026): Absaetze des Projekts.
+    conn.execute("DELETE FROM uebersetzung_segmente WHERE project_id = ?", (project_id,))
     # Ablage (Besprechung 11.09.2026, Steve): Eintraege BLEIBEN — Dateien liegen im Nutzer-Ordner
     # _ablage, hier nur Projektname als Momentaufnahme festhalten und als geloescht markieren.
     _ablage_projekt_geloescht(conn, user["id"], project)
@@ -8414,6 +8429,22 @@ app.include_router(formular_api.build_router(formular_api.Deps(
     # zum Zeitpunkt des include_router noch nicht existiert.)
     require_guest=lambda request, token: _require_guest(request, token),
     guest_session=get_guest_session,
+    tageslimit_wache=tageslimit_wache,
+    tageslimit_text=tageslimit_text,
+    get_user_by_id=get_user_by_id,
+)))
+
+# ─── UEBERSETZEN-WERKZEUG (18.09.2026): eigener Router, eigene Tabelle ──────
+# Alle Uebersetzungs-Endpunkte liegen in uebersetzung_api.py (Kern: uebersetzung.py).
+app.include_router(uebersetzung_api.build_router(uebersetzung_api.Deps(
+    get_current_user=get_current_user,
+    get_db=get_db,
+    upload_dir=UPLOAD_DIR,
+    results_dir=RESULTS_DIR,
+    billing=billing,
+    read_export_options=_read_export_options,
+    safe_filename_component=_safe_filename_component,
+    doc_label=_doc_label,
     tageslimit_wache=tageslimit_wache,
     tageslimit_text=tageslimit_text,
     get_user_by_id=get_user_by_id,

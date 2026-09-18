@@ -6694,3 +6694,232 @@ msgstr "Field {n}: {art}, {name}"
 
 msgid "Feld {n}: {art}"
 msgstr "Field {n}: {art}"
+
+# Uebersetzen-Werkzeug (18.09.2026)
+msgid "1 Absatz mit Hinweis."
+msgstr "1 paragraph with a note."
+
+msgid "Abbruch angefordert – der Lauf endet nach dem laufenden Paket."
+msgstr "Cancellation requested – the run stops after the current batch."
+
+msgid "Abbruch fehlgeschlagen."
+msgstr "Cancellation failed."
+
+msgid "Absatz"
+msgstr "Paragraph"
+
+msgid "Abschnitt {n}: {titel}"
+msgstr "Section {n}: {titel}"
+
+msgid "Absätze filtern"
+msgstr "Filter paragraphs"
+
+msgid "Alle Absätze werden angezeigt."
+msgstr "All paragraphs are shown."
+
+msgid "Als Word herunterladen"
+msgstr "Download as Word"
+
+msgid "Alternativtexte der Bilder mitübersetzen"
+msgstr "Also translate the images’ alt texts"
+
+msgid "Alternativtexte und Titel der Bilder"
+msgstr "Alt texts and titles of the images"
+
+msgid "Bereit"
+msgstr "Ready"
+
+msgid "Bildtitel"
+msgstr "Image title"
+
+msgid "Dein Guthaben reicht nicht: Der Lauf braucht mindestens 1 Credit, du hast {v}."
+msgstr "Your balance is not sufficient: the run needs at least 1 credit, you have {v}."
+
+msgid "Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "The run can also be cancelled after it has started."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
+msgstr "Formatting is fully preserved: only the text is replaced. Existing translations are replaced, manually corrected paragraphs are kept."
+
+msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
+msgstr "The Word file is being processed – paragraphs are being read …"
+
+msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
+msgstr "The translation was cancelled: {n} paragraphs were translated."
+
+msgid "Dieser Absatz enthält keinen übersetzbaren Text (Zahlen oder Zeichen) und bleibt unverändert."
+msgstr "This paragraph contains no translatable text (numbers or symbols) and remains unchanged."
+
+msgid "Dokument gelesen."
+msgstr "Document read."
+
+msgid "Dokument hinzugefügt als Dokument {d}."
+msgstr "Document added as document {d}."
+
+msgid "Dokumenteigenschaften"
+msgstr "Document properties"
+
+msgid "Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)"
+msgstr "Set the document language in the file to the target language (so screen readers read it correctly)"
+
+msgid "Dokumenttitel"
+msgstr "Document title"
+
+msgid "Du hast {v} Credits — es reicht für etwa {m} von {n} Absätzen, danach hört der Lauf auf."
+msgstr "You have {v} credits — enough for about {m} of {n} paragraphs, then the run stops."
+
+msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten."
+msgstr "You can upload more Word files at any time. They are added to the list below; already translated paragraphs are kept."
+
+msgid "Endnote"
+msgstr "Endnote"
+
+msgid "Endnoten"
+msgstr "Endnotes"
+
+msgid "Es läuft gerade keine Übersetzung."
+msgstr "No translation is currently running."
+
+msgid "Es werden {n} Absätze mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "{n} paragraphs with {w} words will be translated. This requires {c} credits (1 credit per {j} words or part thereof)."
+
+msgid "Es wird 1 Absatz mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "1 paragraph with {w} words will be translated. This requires {c} credits (1 credit per {j} words or part thereof)."
+
+msgid "Fußnote"
+msgstr "Footnote"
+
+msgid "Fußnoten"
+msgstr "Footnotes"
+
+msgid "Ganzes Projekt, {n} Dokumente als ZIP."
+msgstr "Whole project, {n} documents as a ZIP."
+
+msgid "Hier gibt es nichts zu übersetzen."
+msgstr "There is nothing to translate here."
+
+msgid "Keine Übersetzung erhalten"
+msgstr "No translation received"
+
+msgid "Möchtest du das Dokument „{name}\" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the document “{name}” with 1 paragraph? This cannot be undone."
+
+msgid "Möchtest du das Dokument „{name}\" mit {n} Absätzen wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Do you really want to delete the document “{name}” with {n} paragraphs? This cannot be undone."
+
+msgid "Noch kein Dokument hochgeladen."
+msgstr "No document uploaded yet."
+
+msgid "Noch keine Übersetzung – wird beim Lauf gefüllt oder hier von Hand eingeben"
+msgstr "No translation yet – filled in by the run or enter it here by hand"
+
+msgid "Noch nicht übersetzt"
+msgstr "Not translated yet"
+
+msgid "Nur dieses Dokument."
+msgstr "Only this document."
+
+msgid "Nur mit Hinweis"
+msgstr "Only with a note"
+
+msgid "Nur noch nicht übersetzt"
+msgstr "Only not yet translated"
+
+msgid "Original:"
+msgstr "Original:"
+
+msgid "Start fehlgeschlagen."
+msgstr "Start failed."
+
+msgid "Titel"
+msgstr "Title"
+
+msgid "Umfang wird ermittelt …"
+msgstr "Determining scope …"
+
+msgid "Von Hand korrigiert"
+msgstr "Corrected by hand"
+
+msgid "Vorschau fehlgeschlagen."
+msgstr "Preview failed."
+
+msgid "Wird gestartet …"
+msgstr "Starting …"
+
+msgid "Wird übersetzt"
+msgstr "Translating"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert."
+msgstr "Choose a Word document (.docx) or drag it here. The text is read paragraph by paragraph; formatting and structure remain unchanged when translating."
+
+msgid "Zielsprache"
+msgstr "Target language"
+
+msgid "{art} {n}: {anfang}"
+msgstr "{art} {n}: {anfang}"
+
+msgid "{f} von {n} Absätzen sind übersetzt{sprache}. Nicht übersetzte Absätze bleiben in der Ausgangssprache. Struktur und Formatierung der Datei bleiben unverändert. Das Herunterladen kostet keine Credits."
+msgstr "{f} of {n} paragraphs are translated{sprache}. Untranslated paragraphs remain in the source language. Structure and formatting of the file remain unchanged. Downloading costs no credits."
+
+msgid "{f} von {n} Absätzen übersetzt."
+msgstr "{f} of {n} paragraphs translated."
+
+msgid "{h} Absätze mit Hinweis."
+msgstr "{h} paragraphs with a note."
+
+msgid "{n} Absätze mit Hinweis werden angezeigt."
+msgstr "{n} paragraphs with a note are shown."
+
+msgid "{n} Absätze mit {w} Wörtern in {d} Dokumenten."
+msgstr "{n} paragraphs with {w} words in {d} documents."
+
+msgid "{n} Absätze, {f} übersetzt"
+msgstr "{n} paragraphs, {f} translated"
+
+msgid "{n} Absätze, {w} Wörter, {f} übersetzt"
+msgstr "{n} paragraphs, {w} words, {f} translated"
+
+msgid "{n} Hinweise zu diesem Dokument"
+msgstr "{n} notes on this document"
+
+msgid "{n} noch nicht übersetzte Absätze werden angezeigt."
+msgstr "{n} not yet translated paragraphs are shown."
+
+msgid "Überschrift"
+msgstr "Heading"
+
+msgid "Übersetzen"
+msgstr "Translate"
+
+msgid "Übersetzen: Einstellungen geöffnet."
+msgstr "Translate: settings opened."
+
+msgid "Übersetzt"
+msgstr "Translated"
+
+msgid "Übersetzt, Formatierung zusammengelegt"
+msgstr "Translated, formatting merged"
+
+msgid "Übersetzung"
+msgstr "Translation"
+
+msgid "Übersetzung abbrechen"
+msgstr "Cancel translation"
+
+msgid "Übersetzung abgeschlossen: {n} Absätze übersetzt, {c} Credits verbraucht."
+msgstr "Translation finished: {n} paragraphs translated, {c} credits used."
+
+msgid "Übersetzung gestartet: {n} Absätze nach {sprache}."
+msgstr "Translation started: {n} paragraphs into {sprache}."
+
+msgid "Übersetzung herunterladen"
+msgstr "Download translation"
+
+msgid "Übersetzung läuft"
+msgstr "Translation in progress"
+
+msgid "Übersetzung starten"
+msgstr "Start translation"
+
+msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
+msgstr "Translation {sprache}: {f} of {n} paragraphs done."

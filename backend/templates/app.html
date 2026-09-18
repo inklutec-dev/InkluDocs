@@ -87,6 +87,7 @@
    getrennt von der Bild-/Alt-Text-Ansicht unten (siehe showProject-Weiche). #}
 <script>window.CREDIT_PREISE = {{ credit_preise|default({})|tojson }};</script>
 <script src="/static/formular.js?v={{ asset_version }}"></script>
+<script src="/static/uebersetzen.js?v={{ asset_version }}"></script>
 <script>
 // Upload-Limit vom Server (eine Quelle: MAX_UPLOAD_SIZE in main.py) — fuer
 // Groessen-Hinweis und Fehlertext im Upload-Bereich (Julia-Feedback 02.07.2026).
@@ -268,6 +269,23 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<p id="projUploadHint" class="feld-hinweis">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
+        if (tool === 'uebersetzen') {
+            // UEBERSETZEN-WERKZEUG (18.09.2026): gleicher Block wie Word, Wortlaut Uebersetzung.
+            const hasExisting = project.status !== 'neu' && !!(project.hat_original || project.original_path);
+            const heading = hasExisting ? t('Weitere Word-Datei hinzufügen') : t('Word-Datei hinzufügen');
+            const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
+            const hint = hasExisting
+                ? t('Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten.') + sizeHint
+                : t('Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert.') + sizeHint;
+            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
+                + '<div class="dropzone-inner">'
+                + '<input type="file" id="projUpload" accept=".docx" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
+                + '<label for="projUpload" class="upload-btn">' + t('Word-Datei auswählen') + '</label>'
+                + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
+                + '</div>'
+                + '<p id="projUploadHint" class="feld-hinweis">' + hint + '</p>'
+                + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
+        }
         if (tool === 'formular') {
             // QUICKINFO-WERKZEUG (27.08.2026): gleicher Block wie PDF, Wortlaut Formular.
             const hasExisting = project.status !== 'neu' && !!(project.hat_original || project.original_path);
@@ -436,7 +454,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (data.status === 'extracting' && data.document_id) {
                     // Async-Upload: Der Server hat die PDF angenommen und
                     // extrahiert im Hintergrund — Status zeigen und pollen.
-                    const wartetext = data.project_type === 'docx'
+                    const wartetext = data.project_type === 'docx-uebersetzung'
+                        ? t('Die Word-Datei wird verarbeitet – Absätze werden gelesen …')
+                        : data.project_type === 'docx'
                         ? t('Die Word-Datei wird verarbeitet – Bilder werden extrahiert …')
                         : (data.project_type === 'pdfform'
                             ? t('Das Formular wird verarbeitet – Felder werden gelesen …')
@@ -447,7 +467,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     if (!ergebnis.ok) {
                         const meldung = ergebnis.timeout
                             ? t('Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste.')
-                            : (data.project_type === 'docx'
+                            : ((data.project_type === 'docx' || data.project_type === 'docx-uebersetzung')
                                 ? t('Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')
                                 : (data.project_type === 'pdfform'
                                     ? t('Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')
@@ -493,7 +513,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 // dass ein neues Dokument unten angelegt wurde. Nach einer
                 // Nachpruefungs-Rettung gibt es keine Server-Antwort (data=null) —
                 // die Erfolgs-Ansage kam dann schon aus dem Rettungspfad.
-                if (data && data.project_type === 'pdfform') {
+                if (data && data.project_type === 'docx-uebersetzung') {
+                    // Uebersetzen: Zahlen liest die Uebersetzungs-Ansicht selbst aus (Absaetze statt Bilder).
+                    announce(data.appended ? t('Dokument hinzugefügt als Dokument {d}.', { d: data.doc_index }) : t('Dokument gelesen.'));
+                } else if (data && data.project_type === 'pdfform') {
                     // Formular: Zahlen liest die Formular-Ansicht selbst aus (Felder statt Bilder).
                     announce(data.appended ? t('Formular hinzugefügt als Dokument {d}.', { d: data.doc_index }) : t('Formular gelesen.'));
                 } else if (data && data.appended && data.doc_index) {
@@ -600,6 +623,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (project && (project.tool === 'formular' || project.project_type === 'pdfform')) {
             if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';
             return Formular.showProject(window.GUEST_MODE ? window.SHARE_TOKEN : projectId);
+        }
+        // UEBERSETZEN-WERKZEUG (18.09.2026): eigene Ansicht (frontend/uebersetzen.js), Absaetze statt Bilder.
+        if (project && project.tool === 'uebersetzen' && !window.GUEST_MODE) {
+            return Uebersetzen.showProject(projectId);
         }
         const images = data.images;
         const documents = data.documents || [];
@@ -929,6 +956,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             deleted: () => t('Formular gelöscht.'),
             renamed: () => t('Formular umbenannt.'),
         },
+        // UEBERSETZEN-WERKZEUG (18.09.2026): Word-Dokument mit Absaetzen statt Bildern.
+        uebdoc: {
+            deleteTitle: () => t('Dokument löschen?'),
+            renameTitle: () => t('Dokument umbenennen'),
+            renameLabel: () => t('Neuer Name des Dokuments'),
+            renameHint: () => t('Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden. Der Name erscheint auch im Export-Dateinamen.'),
+            fallbackName: () => t('dieses Dokument'),
+            deleted: () => t('Dokument gelöscht.'),
+            renamed: () => t('Dokument umbenannt.'),
+        },
         img: {
             deleteTitle: () => t('Bild löschen?'),
             renameTitle: () => t('Bild umbenennen'),
@@ -991,6 +1028,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         let body;
         if (_docActionKind === 'img') {
             body = t('Möchtest du das Bild „{name}" wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name });
+        } else if (_docActionKind === 'uebdoc') {
+            body = count === 1
+                ? t('Möchtest du das Dokument „{name}" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name })
+                : t('Möchtest du das Dokument „{name}" mit {n} Absätzen wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name, n: count });
         } else if (_docActionKind === 'formdoc') {
             body = count === 1
                 ? t('Möchtest du das Formular „{name}" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen.', { name: name })

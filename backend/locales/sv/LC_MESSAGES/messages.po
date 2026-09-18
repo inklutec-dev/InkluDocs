@@ -6256,3 +6256,232 @@ msgstr "Fält {n}: {art}, {name}"
 
 msgid "Feld {n}: {art}"
 msgstr "Fält {n}: {art}"
+
+# Uebersetzen-Werkzeug (18.09.2026)
+msgid "1 Absatz mit Hinweis."
+msgstr "1 stycke med en anmärkning."
+
+msgid "Abbruch angefordert – der Lauf endet nach dem laufenden Paket."
+msgstr "Avbrott begärt – körningen stoppar efter aktuellt paket."
+
+msgid "Abbruch fehlgeschlagen."
+msgstr "Avbrottet misslyckades."
+
+msgid "Absatz"
+msgstr "Stycke"
+
+msgid "Abschnitt {n}: {titel}"
+msgstr "Avsnitt {n}: {titel}"
+
+msgid "Absätze filtern"
+msgstr "Filtrera stycken"
+
+msgid "Alle Absätze werden angezeigt."
+msgstr "Alla stycken visas."
+
+msgid "Als Word herunterladen"
+msgstr "Ladda ner som Word"
+
+msgid "Alternativtexte der Bilder mitübersetzen"
+msgstr "Översätt även bildernas alternativtexter"
+
+msgid "Alternativtexte und Titel der Bilder"
+msgstr "Alternativtexter och titlar för bilderna"
+
+msgid "Bereit"
+msgstr "Klar"
+
+msgid "Bildtitel"
+msgstr "Bildtitel"
+
+msgid "Dein Guthaben reicht nicht: Der Lauf braucht mindestens 1 Credit, du hast {v}."
+msgstr "Ditt saldo räcker inte: körningen kräver minst 1 kredit, du har {v}."
+
+msgid "Der Lauf kann bei Bedarf auch nach dem Start abgebrochen werden."
+msgstr "Körningen kan även avbrytas efter start."
+
+msgid "Die Formatierung bleibt vollständig erhalten: Nur der Text wird ausgetauscht. Vorhandene Übersetzungen werden ersetzt, von Hand korrigierte Absätze bleiben."
+msgstr "Formateringen bevaras helt: endast texten byts ut. Befintliga översättningar ersätts, manuellt rättade stycken behålls."
+
+msgid "Die Word-Datei wird verarbeitet – Absätze werden gelesen …"
+msgstr "Word-filen bearbetas – stycken läses …"
+
+msgid "Die Übersetzung wurde abgebrochen: {n} Absätze wurden übersetzt."
+msgstr "Översättningen avbröts: {n} stycken översattes."
+
+msgid "Dieser Absatz enthält keinen übersetzbaren Text (Zahlen oder Zeichen) und bleibt unverändert."
+msgstr "Detta stycke innehåller ingen översättbar text (siffror eller tecken) och förblir oförändrat."
+
+msgid "Dokument gelesen."
+msgstr "Dokument läst."
+
+msgid "Dokument hinzugefügt als Dokument {d}."
+msgstr "Dokument tillagt som dokument {d}."
+
+msgid "Dokumenteigenschaften"
+msgstr "Dokumentegenskaper"
+
+msgid "Dokumentsprache in der Datei auf die Zielsprache setzen (damit Screenreader richtig vorlesen)"
+msgstr "Ställ in dokumentspråket i filen till målspråket (så att skärmläsare läser upp korrekt)"
+
+msgid "Dokumenttitel"
+msgstr "Dokumenttitel"
+
+msgid "Du hast {v} Credits — es reicht für etwa {m} von {n} Absätzen, danach hört der Lauf auf."
+msgstr "Du har {v} krediter — det räcker till ungefär {m} av {n} stycken, sedan stoppar körningen."
+
+msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten."
+msgstr "Du kan när som helst ladda upp fler Word-filer. De läggs till i listan nedan; redan översatta stycken behålls."
+
+msgid "Endnote"
+msgstr "Slutnot"
+
+msgid "Endnoten"
+msgstr "Slutnoter"
+
+msgid "Es läuft gerade keine Übersetzung."
+msgstr "Ingen översättning pågår just nu."
+
+msgid "Es werden {n} Absätze mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "{n} stycken med {w} ord översätts. Det kräver {c} krediter (1 kredit per påbörjade {j} ord)."
+
+msgid "Es wird 1 Absatz mit {w} Wörtern übersetzt. Das benötigt {c} Credits (1 Credit je angefangene {j} Wörter)."
+msgstr "1 stycke med {w} ord översätts. Det kräver {c} krediter (1 kredit per påbörjade {j} ord)."
+
+msgid "Fußnote"
+msgstr "Fotnot"
+
+msgid "Fußnoten"
+msgstr "Fotnoter"
+
+msgid "Ganzes Projekt, {n} Dokumente als ZIP."
+msgstr "Hela projektet, {n} dokument som ZIP."
+
+msgid "Hier gibt es nichts zu übersetzen."
+msgstr "Det finns inget att översätta här."
+
+msgid "Keine Übersetzung erhalten"
+msgstr "Ingen översättning mottagen"
+
+msgid "Möchtest du das Dokument „{name}\" mit 1 Absatz wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen ta bort dokumentet ”{name}” med 1 stycke? Det går inte att ångra."
+
+msgid "Möchtest du das Dokument „{name}\" mit {n} Absätzen wirklich löschen? Das lässt sich nicht rückgängig machen."
+msgstr "Vill du verkligen ta bort dokumentet ”{name}” med {n} stycken? Det går inte att ångra."
+
+msgid "Noch kein Dokument hochgeladen."
+msgstr "Inget dokument uppladdat ännu."
+
+msgid "Noch keine Übersetzung – wird beim Lauf gefüllt oder hier von Hand eingeben"
+msgstr "Ingen översättning ännu – fylls i av körningen eller skriv in här för hand"
+
+msgid "Noch nicht übersetzt"
+msgstr "Inte översatt ännu"
+
+msgid "Nur dieses Dokument."
+msgstr "Endast detta dokument."
+
+msgid "Nur mit Hinweis"
+msgstr "Endast med anmärkning"
+
+msgid "Nur noch nicht übersetzt"
+msgstr "Endast inte översatta ännu"
+
+msgid "Original:"
+msgstr "Original:"
+
+msgid "Start fehlgeschlagen."
+msgstr "Start misslyckades."
+
+msgid "Titel"
+msgstr "Titel"
+
+msgid "Umfang wird ermittelt …"
+msgstr "Omfattning beräknas …"
+
+msgid "Von Hand korrigiert"
+msgstr "Rättat för hand"
+
+msgid "Vorschau fehlgeschlagen."
+msgstr "Förhandsvisningen misslyckades."
+
+msgid "Wird gestartet …"
+msgstr "Startar …"
+
+msgid "Wird übersetzt"
+msgstr "Översätts"
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert."
+msgstr "Välj ett Word-dokument (.docx) eller dra det hit. Texten läses stycke för stycke; formatering och struktur förblir oförändrade vid översättningen."
+
+msgid "Zielsprache"
+msgstr "Målspråk"
+
+msgid "{art} {n}: {anfang}"
+msgstr "{art} {n}: {anfang}"
+
+msgid "{f} von {n} Absätzen sind übersetzt{sprache}. Nicht übersetzte Absätze bleiben in der Ausgangssprache. Struktur und Formatierung der Datei bleiben unverändert. Das Herunterladen kostet keine Credits."
+msgstr "{f} av {n} stycken är översatta{sprache}. Oöversatta stycken förblir på källspråket. Filens struktur och formatering förblir oförändrade. Nedladdningen kostar inga krediter."
+
+msgid "{f} von {n} Absätzen übersetzt."
+msgstr "{f} av {n} stycken översatta."
+
+msgid "{h} Absätze mit Hinweis."
+msgstr "{h} stycken med en anmärkning."
+
+msgid "{n} Absätze mit Hinweis werden angezeigt."
+msgstr "{n} stycken med anmärkning visas."
+
+msgid "{n} Absätze mit {w} Wörtern in {d} Dokumenten."
+msgstr "{n} stycken med {w} ord i {d} dokument."
+
+msgid "{n} Absätze, {f} übersetzt"
+msgstr "{n} stycken, {f} översatta"
+
+msgid "{n} Absätze, {w} Wörter, {f} übersetzt"
+msgstr "{n} stycken, {w} ord, {f} översatta"
+
+msgid "{n} Hinweise zu diesem Dokument"
+msgstr "{n} anmärkningar om detta dokument"
+
+msgid "{n} noch nicht übersetzte Absätze werden angezeigt."
+msgstr "{n} ännu inte översatta stycken visas."
+
+msgid "Überschrift"
+msgstr "Rubrik"
+
+msgid "Übersetzen"
+msgstr "Översätt"
+
+msgid "Übersetzen: Einstellungen geöffnet."
+msgstr "Översätt: inställningar öppnade."
+
+msgid "Übersetzt"
+msgstr "Översatt"
+
+msgid "Übersetzt, Formatierung zusammengelegt"
+msgstr "Översatt, formatering sammanslagen"
+
+msgid "Übersetzung"
+msgstr "Översättning"
+
+msgid "Übersetzung abbrechen"
+msgstr "Avbryt översättning"
+
+msgid "Übersetzung abgeschlossen: {n} Absätze übersetzt, {c} Credits verbraucht."
+msgstr "Översättning klar: {n} stycken översatta, {c} krediter förbrukade."
+
+msgid "Übersetzung gestartet: {n} Absätze nach {sprache}."
+msgstr "Översättning startad: {n} stycken till {sprache}."
+
+msgid "Übersetzung herunterladen"
+msgstr "Ladda ner översättning"
+
+msgid "Übersetzung läuft"
+msgstr "Översättning pågår"
+
+msgid "Übersetzung starten"
+msgstr "Starta översättning"
+
+msgid "Übersetzung {sprache}: {f} von {n} Absätzen fertig."
+msgstr "Översättning {sprache}: {f} av {n} stycken klara."

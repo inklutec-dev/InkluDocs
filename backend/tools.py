@@ -103,6 +103,20 @@ TOOLS: list[Tool] = [
         route="/app",
         status=ToolStatus.VERFUEGBAR,  # Beta-Etikett entfällt seit 09.09.2026 (Steve)
     ),
+    # UEBERSETZEN-WERKZEUG (18.09.2026, Steve; Anlass Mark Hounschild): ganzes
+    # Word-Dokument in eine andere Sprache, Struktur und Formatierung bleiben
+    # byteidentisch — nur Textknoten, Alt-Texte, Titel und Sprachkennung aendern
+    # sich. Eigenes Werkzeug mit EINER Ansicht (Steve: kein Umschalter im
+    # Word-Werkzeug). Kern uebersetzung.py (Segmente/Marken/Rueckschreiber),
+    # Router uebersetzung_api.py, Ansicht frontend/uebersetzen.js, Doku
+    # docs/UEBERSETZEN.md. Beta, bis echte Kundendokumente durch sind.
+    Tool(
+        key="uebersetzen",
+        name="Dokumente übersetzen",
+        description="Word-Dokument (.docx) hochladen, den gesamten Text in eine andere Sprache übersetzen lassen und die Datei mit unveränderter Formatierung wieder herunterladen.",
+        route="/app",
+        status=ToolStatus.BETA,
+    ),
     Tool(
         key="pdf-a11y",
         name="Barrierefreie PDFs erstellen",
