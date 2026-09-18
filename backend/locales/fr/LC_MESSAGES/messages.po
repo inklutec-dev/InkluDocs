@@ -6995,3 +6995,24 @@ msgstr "Accepte aussi language, use_context, prompt_id ou prompt ; ils s’appli
 
 msgid "error kann auch bei status done stehen: Dann ist ein erneuter Versuch gescheitert, der vorhandene Text ist geblieben und needs_review ist gesetzt."
 msgstr "error peut aussi apparaître avec le statut done : une nouvelle tentative a alors échoué, le texte existant est resté et needs_review est défini."
+
+msgid "Als Word, {sprache}"
+msgstr "En Word, {sprache}"
+
+msgid "Alt-Texte"
+msgstr "Textes alternatifs"
+
+msgid "Ansicht"
+msgstr "Vue"
+
+msgid "Ansicht Alt-Texte wird geöffnet."
+msgstr "Ouverture de la vue Textes alternatifs."
+
+msgid "Ansicht Übersetzung wird geöffnet."
+msgstr "Ouverture de la vue Traduction."
+
+msgid "Diese Ansicht ist schon geöffnet."
+msgstr "Cette vue est déjà ouverte."
+
+msgid "Öffnen"
+msgstr "Ouvrir"

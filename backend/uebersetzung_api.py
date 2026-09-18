@@ -1,6 +1,7 @@
 """Uebersetzen-Werkzeug: Schnittstellen (API), Upload, Hintergrundlauf, Export (18.09.2026).
 
-Eigener Router mit eigener Tabelle (uebersetzung_segmente) — wie das Quickinfo-Werkzeug
+Eigener Router mit eigener Tabelle (uebersetzung_segmente); seit dem Testumbau 18.09.2026 eine FÄHIGKEIT
+jedes Word-Projekts (Segmente bei Bedarf aus dem Original, Upload über den Word-Weg) — wie das Quickinfo-Werkzeug
 (formular_api.py) bewusst KEINE Wiederverwendung der Bild-/Alt-Text-Tabellen: ein
 Absatz ist kein Bild. Der Kern (uebersetzung.py) kennt keine Werkzeuge, nur Segmente;
 dieser Router ist der erste Anschluss. Weitere Anschluesse (PowerPoint, Chatbot,
@@ -50,13 +51,18 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 
 import uebersetzung as ue
-from docx_processor import DocxFehler, validiere_docx
 
 log = logging.getLogger(__name__)
 
 MAX_HANDTEXT = 20000
 TOOL_KEY = "uebersetzen"
-PROJECT_TYPE = "docx-uebersetzung"
+# TESTUMBAU „Projekt = Dateityp, Fähigkeiten = Ansichten“ (Steve 18.09.2026): Übersetzen ist eine
+# FÄHIGKEIT jedes Word-Projekts (tool word ODER uebersetzen, project_type docx). Die Segmente entstehen
+# bei Bedarf aus dem Original (_segmente_sicherstellen); Uploads laufen für beide Eingänge über den
+# Word-Weg (Bilder + lazy Segmente). Der Chatbot bedient dieselben Funktionen (inkluagent/tools/ausgaben.py).
+PROJECT_TYPE = "docx"
+WORD_TOOLS = ("word", "uebersetzen")
+_loop = None   # Event-Loop des Servers (fuer Chatbot-Werkzeuge aus dem Executor-Thread)
 AKTION = "uebersetzung"               # billing.AKTIONS_PREISE["uebersetzung"] = 1 (je 100 Woerter)
 
 
@@ -110,8 +116,8 @@ def _projekt_des_nutzers(conn, project_id: int, user_id: int) -> dict:
     p = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
     if not p:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    if p["tool"] != TOOL_KEY:
-        raise HTTPException(status_code=400, detail="Dieses Projekt ist kein Übersetzungsprojekt")
+    if p["tool"] not in WORD_TOOLS and (p["project_type"] or "") != "docx":
+        raise HTTPException(status_code=400, detail="Übersetzen gibt es nur für Word-Projekte")
     return dict(p)
 
 
@@ -138,76 +144,6 @@ def zielsprachen_aussen() -> list[dict]:
 
 # --------------------------------------------------------------------------- Upload + Segmentierung
 
-async def handle_upload(file_path: str, filename: str, user: dict, project_id: int) -> dict:
-    """Spiegel von formular_api.handle_upload: Dokumentzeile anlegen, sofort antworten,
-    Segmentierung im Hintergrund (das Frontend pollt)."""
-    try:
-        validiere_docx(file_path)
-    except DocxFehler as e:
-        try:
-            os.unlink(file_path)
-        except OSError:
-            pass
-        raise HTTPException(status_code=400, detail=str(e))
-    conn = _d.get_db()
-    try:
-        proj = _projekt_des_nutzers(conn, project_id, user["id"])
-        if proj.get("status") in ("extracting", "processing"):
-            # Review 18.09.2026 (M2b): ein Upload mitten im Lauf wuerde den Projektstatus
-            # umschreiben und den Lauf entkoppeln.
-            try:
-                os.unlink(file_path)
-            except OSError:
-                pass
-            raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung. Bitte warten.")
-        is_append = bool(conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0])
-        if is_append:
-            conn.execute("UPDATE projects SET status = 'extracting' WHERE id = ?", (project_id,))
-        else:
-            conn.execute("UPDATE projects SET filename = ?, original_path = ?, status = 'extracting' WHERE id = ?",
-                         (filename, file_path, project_id))
-        doc_index = (conn.execute("SELECT COALESCE(MAX(doc_index), 0) FROM documents WHERE project_id = ?",
-                                  (project_id,)).fetchone()[0] or 0) + 1
-        cur = conn.execute(
-            """INSERT INTO documents (project_id, doc_index, original_filename, original_path, extraction_method, total_images)
-               VALUES (?, ?, ?, ?, 'uebersetzung', 0)""", (project_id, doc_index, filename, file_path))
-        document_id = cur.lastrowid
-        conn.commit()
-    finally:
-        conn.close()
-    asyncio.create_task(_segmentiere_im_hintergrund(project_id, document_id, file_path, is_append))
-    return {"ok": True, "project_id": project_id, "document_id": document_id, "doc_index": doc_index,
-            "filename": filename, "project_type": PROJECT_TYPE, "appended": is_append, "status": "extracting"}
-
-
-def _segmentierung_fehlgeschlagen(project_id: int, document_id: int, file_path: str, is_append: bool, grund: str) -> None:
-    log.error("[uebersetzung] Segmentierung fehlgeschlagen (Projekt %s, Dokument %s): %s", project_id, document_id, grund)
-    conn = _d.get_db()
-    try:
-        conn.execute("DELETE FROM uebersetzung_segmente WHERE document_id = ?", (document_id,))
-        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
-        # Grund sichtbar am Projekt (Review 18.09.2026, M7) — JSON wie bei den Alt-Text-Laeufen.
-        conn.execute("UPDATE projects SET status = ?, lauf_hinweis = ? WHERE id = ?",
-                     ("extracted" if is_append else "error", json.dumps({"grund": _lesbarer_grund(grund)}, ensure_ascii=False), project_id))
-        conn.commit()
-    finally:
-        conn.close()
-    wurzel = os.path.realpath(_d.upload_dir) + os.sep
-    try:
-        if file_path and os.path.realpath(file_path).startswith(wurzel) and os.path.isfile(file_path):
-            os.unlink(file_path)
-    except OSError:
-        pass
-
-
-def _lesbarer_grund(grund: str) -> str:
-    """DocxFehler tragen nutzertaugliche Saetze; alles andere wird zu einem allgemeinen Satz."""
-    m = re.search(r"DocxFehler\('(.+?)'\)", grund)
-    if m:
-        return m.group(1)
-    return "Das Dokument konnte nicht gelesen werden. Bitte die Datei in Word öffnen, als .docx speichern und erneut hochladen."
-
-
 def segmentiere_und_speichere(conn, project_id: int, document_id: int, seg: ue.Segmentierung) -> int:
     """Segmente eines Dokuments in die Tabelle schreiben (Anschlusspunkt fuer andere Werkzeuge)."""
     n = 0
@@ -223,37 +159,65 @@ def segmentiere_und_speichere(conn, project_id: int, document_id: int, seg: ue.S
         n += 1
     hinweise = {"hinweise": seg.hinweise, "quellsprache": seg.quellsprache, "titel": seg.titel,
                 "woerter": seg.woerter, "absaetze": seg.absaetze, "teile": seg.teile}
-    # total_images bleibt 0: andere Ansichten (Dashboard) lesen die Spalte als Bilderzahl (Review H8).
-    conn.execute("UPDATE documents SET hinweise = ? WHERE id = ?", (json.dumps(hinweise, ensure_ascii=False), document_id))
+    # Hinweise des Word-Werkzeugs (uebersprungene Elemente) in derselben Spalte nicht ueberschreiben.
+    row = conn.execute("SELECT hinweise FROM documents WHERE id = ?", (document_id,)).fetchone()
+    try:
+        alt = json.loads(row["hinweise"] or "{}") if row and row["hinweise"] else {}
+    except Exception:
+        alt = {}
+    if not isinstance(alt, dict):
+        alt = {}
+    alt["uebersetzung"] = hinweise
+    conn.execute("UPDATE documents SET hinweise = ? WHERE id = ?", (json.dumps(alt, ensure_ascii=False), document_id))
     return n
 
 
-async def _segmentiere_im_hintergrund(project_id: int, document_id: int, file_path: str, is_append: bool):
-    loop = asyncio.get_running_loop()
-    try:
-        seg = await loop.run_in_executor(None, ue.segmentiere_docx, file_path)
-    except Exception as e:
-        _segmentierung_fehlgeschlagen(project_id, document_id, file_path, is_append, repr(e))
-        return
-    conn = _d.get_db()
-    try:
-        segmentiere_und_speichere(conn, project_id, document_id, seg)
-        conn.execute("UPDATE projects SET status = 'extracted', lauf_hinweis = NULL WHERE id = ?", (project_id,))
+def _segmente_sicherstellen(conn, project: dict) -> int:
+    """Fähigkeit „Übersetzen“ an einem Word-Projekt: Dokumente ohne Segmente werden JETZT aus dem
+    Original segmentiert (schnell: Zip lesen, kein Modell). Rueckgabe = Zahl der neu segmentierten
+    Dokumente. Dokumente, deren Original fehlt oder unlesbar ist, bekommen einen Hinweis und bleiben ohne."""
+    wurzel = os.path.realpath(_d.upload_dir) + os.sep
+    neu = 0
+    docs = conn.execute("SELECT id, original_path, hinweise FROM documents WHERE project_id = ?", (project["id"],)).fetchall()
+    for d in docs:
+        if conn.execute("SELECT 1 FROM uebersetzung_segmente WHERE document_id = ? LIMIT 1", (d["id"],)).fetchone():
+            continue
+        src = d["original_path"] or ""
+        if not src.lower().endswith(".docx") or not os.path.realpath(src).startswith(wurzel) or not os.path.isfile(src):
+            continue
+        try:
+            seg = ue.segmentiere_docx(src)
+        except Exception as e:  # noqa: BLE001
+            log.warning("[uebersetzung] Segmentierung von Dokument %s fehlgeschlagen: %r", d["id"], e)
+            continue
+        segmentiere_und_speichere(conn, project["id"], d["id"], seg)
+        neu += 1
+    if neu:
         conn.commit()
-    except Exception as e:
-        conn.close()
-        conn = None
-        _segmentierung_fehlgeschlagen(project_id, document_id, file_path, is_append, "DB-Phase: " + repr(e))
-        return
-    finally:
-        if conn is not None:
-            conn.close()
+    return neu
+
+
+def uebersetzungsstand(conn, project_id: int) -> dict:
+    """Kurzer Stand fuer Kopfzeile, Export-Dialog und Chatbot: Zielsprache, fertig/gesamt, Hinweise."""
+    row = conn.execute(
+        """SELECT COUNT(*) AS gesamt,
+                  SUM(CASE WHEN status IN ('fertig','zusammengelegt','hand') THEN 1 ELSE 0 END) AS fertig,
+                  SUM(CASE WHEN hinweis != '' THEN 1 ELSE 0 END) AS hinweise,
+                  MAX(zielsprache) AS zielsprache
+           FROM uebersetzung_segmente WHERE project_id = ? AND uebersetzbar = 1""", (project_id,)).fetchone()
+    gesamt = int(row["gesamt"] or 0)
+    ziel = row["zielsprache"] or ""
+    return {"absaetze": gesamt, "fertig": int(row["fertig"] or 0), "hinweise": int(row["hinweise"] or 0),
+            "zielsprache": ziel, "sprache_name": ue.ZIELSPRACHEN.get(ziel, (ziel, "", ""))[0] if ziel else "",
+            "vorhanden": bool(gesamt and int(row["fertig"] or 0))}
 
 
 def haengende_laeufe_zuruecksetzen() -> int:
     conn = _d.get_db()
     try:
-        conn.execute(f"UPDATE projects SET status = 'extracted' WHERE tool = '{TOOL_KEY}' AND status = 'processing'")
+        # Nur Laeufe DIESES Moduls: processing-Word-Projekte mit Lauf-Einstellungen (ki_neu_rest = JSON mit zielsprache).
+        conn.execute("UPDATE projects SET status = 'extracted' WHERE tool IN ('word', 'uebersetzen') AND status = 'processing' "
+                     "AND COALESCE(ki_neu_rest, '') LIKE '%zielsprache%'")
         rows = conn.execute(f"SELECT id FROM projects WHERE tool = '{TOOL_KEY}' AND status = 'extracting'").fetchall()
         wurzel = os.path.realpath(_d.upload_dir) + os.sep
         for r in rows:
@@ -308,9 +272,12 @@ def _lade(conn, project_id: int):
     segmente = [_segment_dict(r) for r in rows]
     for d in docs:
         try:
-            d["hinweise"] = json.loads(d["hinweise"]) if d.get("hinweise") else {}
+            h = json.loads(d["hinweise"]) if d.get("hinweise") else {}
         except Exception:
-            d["hinweise"] = {}
+            h = {}
+        # Segmentierungs-Hinweise liegen seit dem Testumbau unter "uebersetzung" (Word-Werkzeug nutzt
+        # dieselbe Spalte fuer uebersprungene Elemente); alte Zeilen haben sie noch oben.
+        d["hinweise"] = h.get("uebersetzung") if isinstance(h.get("uebersetzung"), dict) else h
         eigene = [s for s in segmente if s["document_id"] == d["id"]]
         d["absaetze"] = sum(1 for s in eigene if s["uebersetzbar"])
         d["woerter"] = sum(s["woerter"] for s in eigene if s["uebersetzbar"])
@@ -401,6 +368,7 @@ async def lauf_starten(project_id: int, user: dict, einstellungen: dict, documen
         project = _projekt_des_nutzers(conn, project_id, user["id"])
         if project.get("status") in ("extracting", "processing"):
             raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
+        _segmente_sicherstellen(conn, project)
         v = _vorschau(conn, user["id"], project_id, document_id, einstellungen["zielsprache"], einstellungen.get("alt_texte", True))
         if not v["anzahl"]:
             return {"ok": True, "gestartet": False, "anzahl": 0}
@@ -471,6 +439,7 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
             doc = docs.get(did) or {}
             try:
                 h = json.loads(doc.get("hinweise") or "{}")
+                h = h.get("uebersetzung") if isinstance(h.get("uebersetzung"), dict) else h
             except Exception:
                 h = {}
             try:
@@ -524,6 +493,83 @@ async def _uebersetze_projekt(project_id: int, user_id: int, einstellungen: dict
         st["laeuft"] = False
 
 
+# --------------------------------------------------------------------------- Chatbot-Anschluss (sync aus Executor)
+
+def bot_vorschau(user_id: int, project_id: int, zielsprache: str, alt_texte: bool = True) -> dict:
+    """Fuer den InkluAgent: Umfang und Preis eines Laufs (kein Schreiben)."""
+    if zielsprache not in ue.ZIELSPRACHEN:
+        raise HTTPException(status_code=400, detail="Unbekannte Zielsprache")
+    conn = _d.get_db()
+    try:
+        project = _projekt_des_nutzers(conn, project_id, user_id)
+        _segmente_sicherstellen(conn, project)
+        v = _vorschau(conn, user_id, project_id, None, zielsprache, alt_texte)
+        v["stand"] = uebersetzungsstand(conn, project_id)
+        return v
+    finally:
+        conn.close()
+
+
+def bot_starten(user: dict, project_id: int, zielsprache: str, alt_texte: bool = True) -> dict:
+    """Fuer den InkluAgent (laeuft im Executor-Thread): Lauf auf dem Server-Loop starten."""
+    if _loop is None:
+        raise HTTPException(status_code=503, detail="Übersetzung nicht bereit")
+    einst = _einstellungen_pruefen({"zielsprache": zielsprache, "alt_texte": alt_texte, "sprache_setzen": True})
+    fut = asyncio.run_coroutine_threadsafe(lauf_starten(project_id, user, einst, None), _loop)
+    return fut.result(timeout=60)
+
+
+def bot_stand(user_id: int, project_id: int) -> dict:
+    conn = _d.get_db()
+    try:
+        _projekt_des_nutzers(conn, project_id, user_id)
+        st = uebersetzungsstand(conn, project_id)
+    finally:
+        conn.close()
+    st["lauf"] = _lauf.get(project_id)
+    return st
+
+
+def bot_export(user_id: int, project_id: int) -> dict:
+    """Uebersetzte Word-Datei fuer den Chatbot: Datei mit Token im Projekt-Exportordner, Download ueber
+    GET /api/projects/{id}/export/pdfua/{token} (gleicher Token-Weg wie der Word-Export des Bots)."""
+    import secrets
+    conn = _d.get_db()
+    try:
+        project = _projekt_des_nutzers(conn, project_id, user_id)
+        if project.get("status") in ("extracting", "processing"):
+            raise HTTPException(status_code=409, detail="Bitte warten, bis die Übersetzung fertig ist")
+        auftraege = export_vorbereiten(conn, project, None)
+    finally:
+        conn.close()
+    ziel_dir = os.path.join(_d.results_dir, str(user_id), str(project_id), "_export")
+    os.makedirs(ziel_dir, exist_ok=True)
+    arbeits = tempfile.mkdtemp(prefix="u_", dir=ziel_dir)
+    try:
+        dateien = export_bauen(auftraege, arbeits)
+    except Exception:
+        shutil.rmtree(arbeits, ignore_errors=True)
+        raise
+    token = secrets.token_hex(12)
+    if len(dateien) == 1:
+        pfad, name, _info = dateien[0]
+        media = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ziel = os.path.join(ziel_dir, f"uebersetzung_{token}.docx")
+        shutil.copyfile(pfad, ziel)
+    else:
+        name = f"{_d.safe_filename_component(project.get('name') or 'projekt')}_uebersetzt.zip"
+        media = "application/zip"
+        ziel = os.path.join(ziel_dir, f"uebersetzung_{token}.zip")
+        with zipfile.ZipFile(ziel, "w", zipfile.ZIP_DEFLATED) as z:
+            for pfad, n, _info in dateien:
+                z.write(pfad, n)
+    with open(os.path.join(ziel_dir, f"pdfua_{token}.json"), "w", encoding="utf-8") as f:
+        json.dump({"dateiname": name, "pfad": ziel, "media": media}, f)
+    _alte_arbeitsordner_aufraeumen(ziel_dir, behalten=arbeits)
+    return {"dateiname": name, "media": media, "download_url": f"/api/projects/{project_id}/export/pdfua/{token}",
+            "dokumente": len(dateien), "warnungen": [w for _p, _n, info in dateien for w in info.get("warnungen", [])]}
+
+
 # --------------------------------------------------------------------------- Export
 
 def export_vorbereiten(conn, project: dict, document_id: Optional[int]) -> list[dict]:
@@ -539,6 +585,7 @@ def export_vorbereiten(conn, project: dict, document_id: Optional[int]) -> list[
     except Exception:
         einst = {}
     auftraege = []
+    ausgelassen: list[str] = []
     for doc in docs:
         src = _originalpfad(doc)
         rows = conn.execute(
@@ -555,17 +602,26 @@ def export_vorbereiten(conn, project: dict, document_id: Optional[int]) -> list[
                 ziele[r["anker"]] = stk
             sprache = sprache or r["zielsprache"]
         if not ziele:
-            raise HTTPException(status_code=400, detail=f"„{_d.doc_label(doc)}“ ist noch nicht übersetzt.")
+            # Mehrere Dokumente, nicht alle uebersetzt (Klicktest 18.09.2026): das Dokument auslassen und
+            # sagen, statt den ganzen Export abzubrechen. Ein EINZELN angefordertes Dokument bleibt ein 400.
+            if document_id is not None or len(docs) == 1:
+                raise HTTPException(status_code=400, detail=f"„{_d.doc_label(doc)}“ ist noch nicht übersetzt.")
+            ausgelassen.append(f"„{_d.doc_label(doc)}“ ist noch nicht übersetzt und wurde ausgelassen.")
+            continue
         sprache = sprache or einst.get("zielsprache") or ""
         name = f"{_d.doc_label(doc)}_{sprache or 'uebersetzt'}.docx"
         auftraege.append({"doc_id": doc["id"], "doc_index": doc["doc_index"], "src": src, "ziele": ziele,
                           "sprache": sprache or None, "name": name,
                           "sprache_setzen": bool(sprache) and einst.get("sprache_setzen", True)})
     # Gleiche Anzeigenamen (Review N6): Dokumentnummer anhaengen, sonst ueberschreiben sich ZIP-Mitglieder.
+    if not auftraege:
+        raise HTTPException(status_code=400, detail="Noch kein Dokument dieses Projekts ist übersetzt.")
     namen = [a["name"] for a in auftraege]
     for a in auftraege:
         if namen.count(a["name"]) > 1:
             a["name"] = a["name"][:-5] + f"_dok{a['doc_index']}.docx"
+    if ausgelassen:
+        auftraege[0]["warnungen_vorab"] = ausgelassen
     return auftraege
 
 
@@ -581,7 +637,7 @@ def export_bauen(auftraege: list[dict], ziel_dir: str) -> list[tuple[str, str, d
             # Darf nicht passieren — lieber Fehler als eine Datei mit veraenderter Struktur ausliefern.
             log.error("[uebersetzung] Strukturabweichung beim Export (Dokument %s): %s", a["doc_id"], abweichung)
             raise HTTPException(status_code=500, detail="Die Struktur der übersetzten Datei weicht vom Original ab. Der Export wurde abgebrochen.")
-        out.append((pfad, a["name"], {"geschrieben": erg.geschrieben, "warnungen": erg.warnungen}))
+        out.append((pfad, a["name"], {"geschrieben": erg.geschrieben, "warnungen": list(a.get("warnungen_vorab", [])) + erg.warnungen}))
     return out
 
 
@@ -594,8 +650,17 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.on_event("startup")
     async def _startup():
+        global _loop
+        _loop = asyncio.get_running_loop()
         try:
             haengende_laeufe_zuruecksetzen()
+            # Testumbau 18.09.2026: fruehere Uebersetzungsprojekte tragen project_type docx wie jedes Word-Projekt.
+            conn = _d.get_db()
+            try:
+                conn.execute("UPDATE projects SET project_type = 'docx' WHERE project_type = 'docx-uebersetzung'")
+                conn.commit()
+            finally:
+                conn.close()
         except Exception as e:
             log.warning("[uebersetzung] Start-Reparatur übersprungen: %r", e)
 
@@ -609,7 +674,10 @@ def build_router(deps: Deps) -> APIRouter:
             project = _projekt_des_nutzers(conn, project_id, user["id"])
             if leicht:
                 n_docs = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0]
-                return {"project": _projekt_aussen(project), "dokumente": n_docs, "lauf": _lauf.get(project_id)}
+                return {"project": _projekt_aussen(project), "dokumente": n_docs, "lauf": _lauf.get(project_id),
+                        "stand": uebersetzungsstand(conn, project_id)}
+            if project.get("status") not in ("extracting",):
+                _segmente_sicherstellen(conn, project)
             docs, segmente = _lade(conn, project_id)
         finally:
             conn.close()
@@ -633,7 +701,8 @@ def build_router(deps: Deps) -> APIRouter:
         alt_texte = bool(data.get("alt_texte", True)) if isinstance(data, dict) else True
         conn = _d.get_db()
         try:
-            _projekt_des_nutzers(conn, project_id, user["id"])
+            project = _projekt_des_nutzers(conn, project_id, user["id"])
+            _segmente_sicherstellen(conn, project)
             return _vorschau(conn, user["id"], project_id, document_id, ziel or None, alt_texte)
         finally:
             conn.close()

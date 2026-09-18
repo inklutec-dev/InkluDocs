@@ -18,6 +18,15 @@ def check(n, c, i=""):
     if c: ok += 1; print("  OK ", n)
     else: fehler += 1; print("  FEHLT", n, "--", i)
 
+
+def zweitdokumente_loeschen(pg):
+    """Nur das erste Dokument bleibt: der B2-Block laedt ein zweites hoch, der Test muss wiederholbar sein."""
+    r = pg.request.get(B + f"/api/projects/{PID}")
+    if not r.ok: return
+    docs = sorted(r.json().get("documents", []), key=lambda d: d.get("doc_index", 0))
+    for d in docs[1:]:
+        pg.request.delete(B + f"/api/projects/{PID}/documents/{d['id']}")
+
 def axe(pg, name):
     pg.add_script_tag(url=AXE); pg.wait_for_timeout(500)
     r = pg.evaluate("async () => { const r = await axe.run(document, {runOnly: ['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']}); return r.violations.map(v => ({id: v.id, impact: v.impact, n: v.nodes.length, html: v.nodes.slice(0,2).map(x => x.html.slice(0,120))})); }")
@@ -34,6 +43,7 @@ with sync_playwright() as p:
     pg.goto(B + "/projekt-neu"); pg.wait_for_timeout(1500)
     opts = pg.locator("#toolSelect option").all_text_contents()
     check("„Dokumente übersetzen“ im Auswahlmenue", any("Dokumente übersetzen" in o for o in opts), opts)
+    zweitdokumente_loeschen(pg); pg.goto(B + f"/app?projekt={PID}"); pg.wait_for_timeout(3000)
     print("== B. Ansicht ==")
     pg.goto(B + f"/app?projekt={PID}"); pg.wait_for_timeout(3500)
     main = pg.locator("main")
@@ -43,8 +53,8 @@ with sync_playwright() as p:
     check("Upload-Block: Weitere Word-Datei hinzufuegen", pg.locator("#addHeading").inner_text().strip() == "Weitere Word-Datei hinzufügen", pg.locator("#addHeading").inner_text())
     check("Dateiauswahl akzeptiert .docx", pg.locator("#projUpload").get_attribute("accept") == ".docx")
     check("Kein 'Bilder' und kein 'Alt-Texte generieren' in der Ansicht", "Alt-Texte generieren" not in main.inner_text() and "Bilder filtern" not in main.inner_text())
-    ca = pg.locator(".card-actions").first
-    check("Knoepfe: Uebersetzen + Herunterladen", "Übersetzen" in ca.inner_text() and "Herunterladen" in ca.inner_text(), ca.inner_text()[:200])
+    ca_text = " ".join(pg.locator(".card-actions").all_inner_texts())
+    check("Knoepfe: Uebersetzen + Herunterladen", "Übersetzen" in ca_text and "Herunterladen" in ca_text, ca_text[:200])
     fs = pg.locator("fieldset#segFilterFieldset")
     check("Filter als eigene Karte 'Absätze filtern' mit Fieldset, Legende, 3 Chips mit Zaehler, Statuszeile", pg.locator("#segFilterBar h2").inner_text().strip() == "Absätze filtern" and fs.locator("legend").inner_text().strip() == "Nach Übersetzungsstand filtern" and fs.locator("label.filter-chip").count() == 3 and "(" in fs.locator("label.filter-chip").first.inner_text() and "angezeigt" in pg.locator("#segFilterStatus").inner_text(), (fs.locator("label.filter-chip").first.inner_text(), pg.locator("#segFilterStatus").inner_text()))
     docs = pg.locator("h2.doc-heading"); check("Dokument-Ueberschrift (h2) mit Absatz-Zaehler", docs.count() == 1 and "Absätze" in docs.first.inner_text(), docs.first.inner_text() if docs.count() else "")
@@ -68,6 +78,10 @@ with sync_playwright() as p:
     check("Textarea hat sichtbares Label 'Übersetzung'", card.locator("label[for=" + (ta.get_attribute("id") or "x") + "]").count() == 1)
     check("Status-Badge 'Übersetzt' oder 'Von Hand korrigiert'", card.locator(".badge").first.inner_text() in ("Übersetzt", "Von Hand korrigiert", "Übersetzt, Formatierung zusammengelegt"), card.locator(".badge").first.inner_text())
     check("Uebersetzung gefuellt und nicht gleich dem Original", ta.input_value().strip() and ta.input_value().strip() != orig.input_value().strip(), ta.input_value()[:60])
+    fs = pg.locator("fieldset#segFilterFieldset")
+    card = pg.locator("section.seg-review:has(textarea.seg-ziel)").nth(2)
+    card.evaluate("c => c.closest('details').open = true"); pg.wait_for_timeout(200)
+    ta = card.locator("textarea.seg-ziel")
     print("== C. Handkorrektur (Auto-Save) ==")
     alt = ta.input_value()
     ta.fill("Manually corrected via click test (fictional)."); pg.wait_for_timeout(1400)
@@ -120,6 +134,39 @@ with sync_playwright() as p:
     for _ in range(12):
         pg.keyboard.press("Tab"); ziele.append(pg.evaluate("(document.activeElement.id || document.activeElement.tagName + ':' + (document.activeElement.textContent||'').trim().slice(0,25))"))
     check("Tab-Reihenfolge erreicht Uebersetzen, Herunterladen und die Filter-Radios", any("uStartBtn" in z for z in ziele) and any("uExportOpenBtn" in z for z in ziele) and any("INPUT" in z or "segFilter" in z for z in ziele), ziele)
+    print("== B2. Ansichts-Wahl (Testumbau 18.09.) ==")
+    # Fuer die Alt-Text-Ansicht braucht das Projekt ein Dokument MIT Bildern: fiktives Testdokument dazuladen.
+    BILDDOC = os.environ.get("INKLUDOCS_E2E_BILDDOC", "/home/claude/work/repo/tests/fixtures/testdokument_inkludocs.docx")
+    if pg.locator("h2.doc-heading").count() < 2 and os.path.isfile(BILDDOC):
+        pg.set_input_files("#projUpload", BILDDOC); pg.wait_for_timeout(12000)
+        pg.goto(B + f"/app?projekt={PID}"); pg.wait_for_timeout(3500)
+    check("Zweites Dokument (mit Bildern) im Projekt", pg.locator("h2.doc-heading").count() >= 2, pg.locator("h2.doc-heading").count())
+    sel = pg.locator("#ansichtSelect")
+    check("Ansichts-Wahl: Ausklappliste mit Label + Knopf Oeffnen, aktuell Uebersetzung", sel.count() == 1 and pg.locator("label[for=ansichtSelect]").inner_text().strip() == "Ansicht" and sel.input_value() == "uebersetzung" and pg.locator("#ansichtOeffnen").count() == 1, sel.input_value() if sel.count() else "")
+    pg.select_option("#ansichtSelect", "alttexte"); pg.wait_for_timeout(300)
+    check("Pfeil/Auswahl allein wechselt NICHT (WCAG 3.2.2)", pg.locator("#segFilterBar").count() == 1)
+    pg.locator("#ansichtOeffnen").click(); pg.wait_for_timeout(2500)
+    check("Oeffnen wechselt zur Alt-Text-Ansicht (Bilder filtern, Sprache der Alt-Texte, Adresse ?ansicht=alttexte)", pg.locator("#imageFilterBar").count() == 1 and pg.locator("#altLangSelect").count() == 1 and "ansicht=alttexte" in pg.url and pg.locator("#segFilterBar").count() == 0, (pg.url, pg.locator("#imageFilterBar").count(), pg.locator("#altLangSelect").count()))
+    check("Alt-Text-Ansicht unveraendert: Bilderkarten, Filterkarte, Upload-Block, Chatbot", pg.locator("section.image-review").count() >= 1 and pg.locator("#projUploadZone").count() == 1 and pg.locator(".inkluagent-section").count() == 1)
+    check("Alt-Text-Ansicht hat dieselbe Ansichts-Wahl", pg.locator("#ansichtSelect").count() == 1 and pg.locator("#ansichtSelect").input_value() == "alttexte")
+    pg.locator(".card-actions button:has-text('Herunterladen')").first.click(); pg.wait_for_timeout(1500)
+    check("Herunterladen-Dialog der Alt-Text-Ansicht bietet „Als Word, Englisch (Großbritannien)“", pg.locator("#exportUebersetzungBtn").count() == 1 and "Großbritannien" in pg.locator("#exportUebersetzungBtn").inner_text(), pg.locator("#exportUebersetzungBtn").inner_text() if pg.locator("#exportUebersetzungBtn").count() else "")
+    axe(pg, "Alt-Text-Ansicht mit Export-Dialog")
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
+    pg.go_back(); pg.wait_for_timeout(2500)
+    check("Browser Zurueck fuehrt in die Uebersetzungs-Ansicht", pg.locator("#segFilterBar").count() == 1, pg.url)
+    if pg.locator("#segFilterBar").count() == 0:
+        pg.goto(B + f"/app?projekt={PID}&ansicht=uebersetzung"); pg.wait_for_timeout(3000)
+    # Ganzprojekt-Export mit einem nicht uebersetzten Dokument: Download laeuft, das Dokument wird ausgelassen und benannt.
+    pg.locator("#uExportOpenBtn").click(); pg.wait_for_timeout(600)
+    with pg.expect_download(timeout=60000) as dl2:
+        pg.locator("#uExportBtn").click()
+    pg.wait_for_timeout(800)
+    st = pg.locator("#uExportStatus").inner_text()
+    check("Export mit nicht uebersetztem 2. Dokument: Download + Hinweis 'ausgelassen'", dl2.value.suggested_filename.endswith(".docx") and "ausgelassen" in st, (dl2.value.suggested_filename, st[:160]))
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
+    zweitdokumente_loeschen(pg); pg.goto(B + f"/app?projekt={PID}&ansicht=uebersetzung"); pg.wait_for_timeout(3000)
+    check("Aufgeraeumt: wieder ein Dokument", pg.locator("h2.doc-heading").count() == 1, pg.locator("h2.doc-heading").count())
     pg.screenshot(path=os.path.join(SHOTS, "ui_uebersetzen.png"), full_page=True)
     axe(pg, "Projektansicht")
     check("Keine JavaScript-Fehler", not fehler_js, fehler_js)

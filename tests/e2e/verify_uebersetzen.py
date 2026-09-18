@@ -97,7 +97,7 @@ check("Werkzeug „uebersetzen“ in der Liste, anlegbar", werkzeug and werkzeug
 
 # B Projekt + Negativfaelle
 s, b, _ = req("POST", "/api/projects", {"name": "E2E Übersetzen (fiktiv)", "tool": "uebersetzen"})
-check("Projekt angelegt (project_type docx-uebersetzung)", s == 200 and b.get("project_type") == "docx-uebersetzung", b)
+check("Projekt angelegt (Eingang uebersetzen = Word-Projekt, project_type docx)", s == 200 and b.get("project_type") == "docx", b)
 pid = b["project_id"]
 s, b, _ = req("POST", "/api/upload", {"project_id": pid}, {"file": ("x.pdf", b"%PDF-1.4 nicht wirklich", "application/pdf")})
 check("PDF in Übersetzungsprojekt -> 400", s == 400, b)
@@ -210,6 +210,43 @@ cj.clear()
 s, b, _ = req("GET", f"/api/projects/{pid}/uebersetzung")
 check("Ohne Login -> 401", s == 401, s)
 req("POST", "/api/login", {"email": MAIL, "password": PW})
+
+# H2 Testumbau (18.09.2026): Uebersetzen als Faehigkeit eines WORD-Projekts + Chatbot
+s, b, _ = req("POST", "/api/projects", {"name": "E2E Word+Übersetzen (fiktiv)", "tool": "word"})
+wid = b["project_id"]
+s, b, _ = req("POST", "/api/upload", {"project_id": wid}, {"file": (os.path.basename(FIX), fix, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")})
+check("Word-Projekt: Upload ueber den Word-Weg (project_type docx)", s == 200 and b.get("project_type") == "docx", b)
+for _ in range(40):
+    time.sleep(3); s, pj, _ = req("GET", f"/api/projects/{wid}")
+    if s == 200 and pj["project"]["status"] != "extracting": break
+check("Word-Projekt: Bilder extrahiert (Alt-Text-Ansicht funktioniert)", pj["project"]["status"] == "extracted", pj["project"]["status"])
+s, d2, _ = req("GET", f"/api/projects/{wid}/uebersetzung")
+check("Word-Projekt: Uebersetzungs-Ansicht liefert Segmente bei Bedarf (lazy)", s == 200 and len([x for x in d2["segmente"] if x["uebersetzbar"]]) >= 12, (s, len(d2.get("segmente", []))))
+s, d3, _ = req("GET", f"/api/projects/{wid}/uebersetzung?leicht=1")
+check("leicht: stand ohne Uebersetzung (vorhanden false)", s == 200 and d3["stand"]["vorhanden"] is False, d3.get("stand"))
+s, b, _ = req("POST", f"/api/projects/{wid}/uebersetzung/starten", {"zielsprache": "en-gb"})
+check("Word-Projekt: Uebersetzung gestartet", s == 200 and b.get("gestartet") is True, b)
+warte(wid, "processing", 600)
+s, d3, _ = req("GET", f"/api/projects/{wid}/uebersetzung?leicht=1")
+check("leicht: stand nach Lauf (vorhanden true, Sprache Englisch (Großbritannien))", d3["stand"]["vorhanden"] is True and "Großbritannien" in d3["stand"]["sprache_name"], d3.get("stand"))
+s, raw2, h2 = req("POST", f"/api/projects/{wid}/export/uebersetzung", {}, raw=True)
+check("Word-Projekt: Export der Uebersetzung", s == 200 and raw2[:2] == b"PK", s)
+s, raw3, h3 = req("POST", f"/api/projects/{wid}/export/docx", {}, raw=True)
+check("Word-Projekt: Word-Export (Alt-Texte) weiter moeglich", s == 200 and raw3[:2] == b"PK", s)
+# Chatbot (Gemini/Bedrock, ein Turn, ohne Kosten): Stand abfragen -> Werkzeug uebersetzung_stand
+req("DELETE", f"/api/projects/{wid}/chat")
+s, cb, _ = req("POST", f"/api/projects/{wid}/chat", {"message": "Wie ist der Stand der Übersetzung dieses Dokuments? Nur nachsehen, nichts starten."})
+check("Chatbot: Werkzeug uebersetzung_stand genutzt", s == 200 and "uebersetzung_stand" in (cb.get("werkzeuge") or []), (s, cb.get("werkzeuge"), (cb.get("reply") or "")[:120]))
+s, cb, _ = req("POST", f"/api/projects/{wid}/chat", {"message": "Gib mir bitte die übersetzte Word-Datei."})
+anh = (cb.get("anhang") or [None])[0] if isinstance(cb.get("anhang"), list) else cb.get("anhang")
+check("Chatbot: exportiere_uebersetzung mit Download-Anhang", s == 200 and "exportiere_uebersetzung" in (cb.get("werkzeuge") or []) and (anh or {}).get("download_url"), (s, cb.get("werkzeuge"), cb.get("anhang")))
+if (anh or {}).get("download_url"):
+    s, dl, hd = req("GET", anh["download_url"], raw=True)
+    check("Chatbot-Anhang laedt die docx", s == 200 and dl[:2] == b"PK", s)
+if not BEHALTEN:
+    req("DELETE", f"/api/projects/{wid}")
+else:
+    print(f"INFO  Word-Projekt {wid} bleibt (--behalten)")
 
 # I Aufraeumen
 if BEHALTEN:

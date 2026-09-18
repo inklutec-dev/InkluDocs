@@ -6557,3 +6557,24 @@ msgstr "Tar även language, use_context, prompt_id eller prompt; de gäller där
 
 msgid "error kann auch bei status done stehen: Dann ist ein erneuter Versuch gescheitert, der vorhandene Text ist geblieben und needs_review ist gesetzt."
 msgstr "error kan även stå vid status done: då misslyckades ett nytt försök, den befintliga texten behölls och needs_review är satt."
+
+msgid "Als Word, {sprache}"
+msgstr "Som Word, {sprache}"
+
+msgid "Alt-Texte"
+msgstr "Alternativtexter"
+
+msgid "Ansicht"
+msgstr "Vy"
+
+msgid "Ansicht Alt-Texte wird geöffnet."
+msgstr "Vyn Alternativtexter öppnas."
+
+msgid "Ansicht Übersetzung wird geöffnet."
+msgstr "Vyn Översättning öppnas."
+
+msgid "Diese Ansicht ist schon geöffnet."
+msgstr "Den här vyn är redan öppen."
+
+msgid "Öffnen"
+msgstr "Öppna"

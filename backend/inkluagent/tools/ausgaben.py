@@ -346,3 +346,104 @@ def analysiere_word_struktur(project_id: int, user_id: int, document_id: Optiona
         "ob es eine Überschrift sein soll. Du darfst aus dem Absatz-Auszug eigene Beobachtungen ergänzen, gekennzeichnet "
         "als Einschätzung. Umbauen kannst du nichts; sag, was der Nutzer in Word tut (Formatvorlage zuweisen, echte "
         "Liste anlegen). Bewertung am Ende in einem Satz: gut aufgebaut / brauchbar mit n Stellen / ohne Struktur.")}}
+
+
+# ─── Übersetzen als Fähigkeit des Word-Projekts (Testumbau 18.09.2026, Steve + Michael) ──────────
+# Dieselben Kernfunktionen wie die Übersetzungs-Ansicht (uebersetzung_api.bot_*): Vorschau, Lauf,
+# Stand, Datei. Gleiche Zwei-Schritt-Zustimmung wie bei der Umwandlung (Angebot je Nutzer/Projekt/
+# Zielsprache, erst ohne bestaetigt, dann mit).
+
+def _ueb():
+    return importlib.import_module("uebersetzung_api")
+
+
+def _lauf_user(user_id: int) -> dict:
+    m = _main()
+    u = m.get_user_by_id(user_id)
+    return dict(u) if u else {"id": user_id}
+
+
+def uebersetze_dokument(project_id: int, user_id: int, zielsprache: str, bestaetigt: bool = False,
+                        alt_texte: bool = True, turn=None) -> dict[str, Any]:
+    """Startet die Übersetzung des ganzen Projekts in die Zielsprache (Kennung aus ZIELSPRACHEN).
+    Erster Aufruf ohne bestaetigt: Umfang, Preis, Guthaben; mit bestaetigt=true nach dem Ja des Nutzers:
+    Lauf im Hintergrund, Ergebnis über uebersetzung_stand."""
+    ue = _ueb()
+    zielsprache = str(zielsprache or "").strip().lower()
+    try:
+        v = ue.bot_vorschau(user_id, project_id, zielsprache, alt_texte)
+    except HTTPException as e:
+        return _fehler(e)
+    sprache_name = ue.ue.ZIELSPRACHEN[zielsprache][0]
+    if not v.get("anzahl"):
+        return {"ok": True, "result": {"gestartet": False, "anzahl": 0, "zielsprache": zielsprache, "sprache_name": sprache_name,
+                                       "stand": v.get("stand"),
+                                       "hinweis": "In dieser Sprache ist schon alles übersetzt (von Hand korrigierte Absätze bleiben). "
+                                                  "Der Nutzer kann die Datei herunterladen (exportiere_uebersetzung) oder eine andere Sprache wählen."}}
+    schluessel = (int(user_id), int(project_id), f"uebersetzung:{zielsprache}", None)
+    tid = _turn_id(turn)
+    vorschau = {"rueckfrage_noetig": True, "zielsprache": zielsprache, "sprache_name": sprache_name,
+                "absaetze": v["anzahl"], "woerter": v["woerter"], "preis": v["preis"], "verfuegbar": v["verfuegbar"],
+                "erlaubt": bool(v["erlaubt"]), "woerter_je_credit": v["woerter_je_credit"],
+                "hinweis": ("Nenne dem Nutzer Zielsprache, Absätze, Wörter und Preis in Credits (1 Credit je angefangene "
+                            f"{v['woerter_je_credit']} Wörter; Guthaben nennen, wenn nicht unbegrenzt) und frage, ob du übersetzen sollst. "
+                            "Erst nach ausdrücklichem Ja erneut mit bestaetigt=true aufrufen."
+                            if v["erlaubt"] else "Das Guthaben reicht nicht. Sag dem Nutzer Preis und Guthaben und verweise auf Abo & Verbrauch.")}
+    if not bestaetigt:
+        if v["erlaubt"]:
+            _angebot_merken(schluessel, v["preis"], tid)
+        return {"ok": True, "result": vorschau}
+    if getattr(turn, "kostenpflichtig", 0) >= _KOSTENPFLICHTIG_JE_TURN:
+        vorschau["hinweis"] = ("In dieser Nachricht wurde schon eine kostenpflichtige Aktion ausgeführt. Mehr als eine je "
+                               "Nachricht lässt der Server nicht zu — sag dem Nutzer, was erledigt ist, und frage für das Weitere neu.")
+        return {"ok": True, "result": vorschau}
+    if not v["erlaubt"]:
+        return {"ok": True, "result": vorschau}
+    grund = _angebot_einloesen(schluessel, v["preis"], tid)
+    if grund:
+        vorschau["hinweis"] = grund
+        return {"ok": True, "result": vorschau}
+    if turn is not None and hasattr(turn, "kostenpflichtig"):
+        turn.kostenpflichtig += 1
+    try:
+        erg = ue.bot_starten(_lauf_user(user_id), project_id, zielsprache, alt_texte)
+    except HTTPException as e:
+        return _fehler(e)
+    return {"ok": True, "result": {
+        "gestartet": bool(erg.get("gestartet")), "anzahl": erg.get("anzahl"), "woerter": erg.get("woerter"),
+        "preis": erg.get("preis"), "zielsprache": zielsprache, "sprache_name": sprache_name,
+        "hinweis": ("Die Übersetzung läuft im Hintergrund (etwa eine halbe Minute je 30 Absätze). Sag dem Nutzer, dass sie "
+                    "läuft, und dass du mit uebersetzung_stand nachsehen kannst; danach exportiere_uebersetzung für die Datei. "
+                    "Die Übersetzung ist auch in der Ansicht „Übersetzung“ des Projekts zu sehen und zu korrigieren."),
+    }}
+
+
+def uebersetzung_stand(project_id: int, user_id: int) -> dict[str, Any]:
+    """Stand der Übersetzung: Zielsprache, fertige/gesamte Absätze, Hinweise, laufender Lauf."""
+    ue = _ueb()
+    try:
+        st = ue.bot_stand(user_id, project_id)
+    except HTTPException as e:
+        return _fehler(e)
+    lauf = st.pop("lauf", None) or {}
+    st["laeuft"] = bool(lauf.get("laeuft"))
+    if lauf:
+        st["lauf"] = {"pakete_fertig": lauf.get("pakete_fertig"), "pakete_gesamt": lauf.get("pakete_gesamt"),
+                      "segmente_fertig": lauf.get("segmente_fertig"), "segmente_gesamt": lauf.get("segmente_gesamt"),
+                      "credits": lauf.get("credits"), "fehler": lauf.get("fehler") or []}
+    return {"ok": True, "result": st}
+
+
+def exportiere_uebersetzung(project_id: int, user_id: int) -> dict[str, Any]:
+    """Übersetzte Word-Datei ausgeben (kostenlos, Download-Knopf unter der Antwort; keine Ablage)."""
+    ue = _ueb()
+    try:
+        r = ue.bot_export(user_id, project_id)
+    except HTTPException as e:
+        return _fehler(e)
+    return {"ok": True, "result": {"dateiname": r["dateiname"], "dokumente": r["dokumente"], "warnungen": r["warnungen"],
+                                   "download_url": r["download_url"],
+                                   "hinweis": "Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen der übersetzten Word-Datei. "
+                                              "Struktur und Formatierung sind unverändert, nur der Text, die Alt-Texte, der Titel und die Dokumentsprache."},
+            "anhang": {"art": "docx", "dateiname": r["dateiname"], "download_url": r["download_url"], "project_id": project_id,
+                       "label": "zip" if r["media"] == "application/zip" else "docx"}}

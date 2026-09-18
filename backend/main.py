@@ -4193,7 +4193,9 @@ async def create_project(request: Request, user: dict = Depends(get_current_user
 
 # Werkzeug -> Datentyp der Quelle (EINE Stelle fuer App und Public API v1, 17.09.2026).
 TOOL_PROJECT_TYPE = {"pdf": "pdf", "web": "url", "grafik": "images", "word": "docx", "formular": "pdfform",
-                     "uebersetzen": uebersetzung_api.PROJECT_TYPE}   # 18.09.2026: Uebersetzen-Werkzeug
+                     # Testumbau 18.09.2026 (Steve): „Dokumente uebersetzen" ist ein Eingang in ein Word-Projekt
+                     # (Dateityp docx) mit Startansicht Uebersetzung — dieselben Faehigkeiten wie „word".
+                     "uebersetzen": uebersetzung_api.PROJECT_TYPE}
 
 
 @app.patch("/api/projects/{project_id}")
@@ -4603,14 +4605,14 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
         f.write(content)
 
     if project_id is not None and uebersetzung_api.ist_uebersetzungsprojekt(project_id, user["id"]):
-        # UEBERSETZEN-WERKZEUG (18.09.2026): nur Word-Dateien; Vorpruefung + Segmentierung im Router.
+        # Eingang „Dokumente uebersetzen" (Testumbau 18.09.2026): nur Word-Dateien; der Upload laeuft dann
+        # wie im Word-Werkzeug (Bilder extrahieren), die Uebersetzungs-Segmente entstehen bei Bedarf.
         if not is_docx:
             try:
                 os.unlink(file_path)
             except OSError:
                 pass
             raise HTTPException(status_code=400, detail="In ein Übersetzungsprojekt können nur Word-Dateien (.docx) hochgeladen werden.")
-        return await uebersetzung_api.handle_upload(file_path, filename, user, project_id)
     if project_id is not None and not is_pdf and formular_api.ist_formular_projekt(project_id, user["id"]):
         # Formular-Projekte nehmen nur PDF an — abweisen, bevor eine Waise auf der Platte bleibt.
         try:
@@ -4678,8 +4680,19 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
         if not proj:
             conn.close()
             raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-        erwartet_tool = "word" if art == "docx" else "pdf"
-        if proj["tool"] != erwartet_tool:
+        erwartet_tool = ("word", "uebersetzen") if art == "docx" else ("pdf",)
+        if art == "docx" and proj["tool"] == "uebersetzen":
+            # Eingang „Dokumente uebersetzen" (Testumbau 18.09.2026): waehrend eines Laufs (Uebersetzung oder
+            # Alt-Texte) wuerde ein Upload den Projektstatus umschreiben und den Lauf entkoppeln (Review M2b).
+            _st = conn.execute("SELECT status FROM projects WHERE id = ?", (project_id,)).fetchone()
+            if _st and _st["status"] in ("processing", "extracting"):
+                conn.close()
+                try:
+                    os.unlink(file_path)   # keine Waise auf der Platte
+                except OSError:
+                    pass
+                raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung. Bitte warten.")
+        if proj["tool"] not in erwartet_tool:
             conn.close()
             raise HTTPException(status_code=400, detail=("Dieses Projekt ist kein Word-Projekt" if art == "docx" else "Dieses Projekt ist kein PDF-Projekt"))
         # Multi-Datei: Anhaengen ist ab jetzt erlaubt — kein 409 mehr bei total_images > 0.

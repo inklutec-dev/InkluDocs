@@ -2,7 +2,7 @@
  * uebersetzen.js — Übersetzen-Werkzeug (Word-Dokumente), Projektansicht
  * =============================================================================
  * 18.09.2026, Steve + Fable 5 (Anlass: Mark Hounschild). Eigene Ansicht fuer
- * Uebersetzungsprojekte (tool "uebersetzen", project_type "docx-uebersetzung"),
+ * Uebersetzungsprojekte (Eingang "uebersetzen" oder Ansicht „Übersetzung“ eines Word-Projekts, project_type "docx"),
  * bewusst getrennt von der Bild-/Alt-Text-Ansicht in app.html — ein Absatz ist kein
  * Bild, und Steve wollte KEINE Doppel-Listen in einem Werkzeug („überladen“):
  * EIN Werkzeug, EINE Aufgabe, EINE Ansicht.
@@ -266,6 +266,8 @@
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
             + '<div class="card-info" id="projectHeadInfo" data-info="' + escHtml(info) + '"></div>' + serverHinweis
+            // Ansichts-Wahl (Testumbau 18.09.2026): dieselbe Zeile wie in der Alt-Text-Ansicht (app.html).
+            + (typeof ansichtWahlHtml === 'function' ? '<div class="card-actions">' + ansichtWahlHtml(project, 'uebersetzung') + '</div>' : '')
             + (ue.length ? ''
                 + '<div class="card-actions">'
                 +   (!busy ? '<button class="btn btn-primary" id="uStartBtn" onclick="Uebersetzen.laufOeffnen()">' + ico('sparkle') + t('Übersetzen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')

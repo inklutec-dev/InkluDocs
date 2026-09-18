@@ -250,6 +250,36 @@ TOOL_DEFINITIONS_WORD: list[dict] = [
             "document_id": {"type": "integer", "description": "Optional: nur dieses Dokument."},
         }, "required": []},
     },
+    # Übersetzen als Fähigkeit des Word-Projekts (Testumbau 18.09.2026).
+    {
+        "name": "uebersetze_dokument",
+        "description": (
+            "Übersetzt das ganze Word-Dokument (alle Dokumente des Projekts) in eine Zielsprache; Struktur und Formatierung "
+            "bleiben unverändert, Alt-Texte werden mitübersetzt, die Dokumentsprache wird gesetzt. Kostet Credits (1 je "
+            "angefangene 100 Wörter). ZWEI SCHRITTE wie konvertiere_zu_pdfua: erst OHNE bestaetigt (Umfang, Preis, Guthaben "
+            "nennen und fragen), nach dem Ja mit bestaetigt=true. Läuft im Hintergrund; Stand über uebersetzung_stand, Datei "
+            "über exportiere_uebersetzung. Zielsprachen: en-gb, en, en-au, de, de-at, de-ch, fr, fr-ch, es, es-419, pt, pt-br, "
+            "da, sv, it, nl, nl-be, pl, tr, uk, ru, ar. Sagt der Nutzer nur „Englisch“, nimm en-gb und sag ihm das."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "zielsprache": {"type": "string", "description": "Kennung der Zielsprache, z. B. en-gb, en, fr, es-419."},
+            "alt_texte": {"type": "boolean", "description": "Alt-Texte der Bilder mitübersetzen. Standard true."},
+            "bestaetigt": {"type": "boolean", "description": "true NUR nach ausdrücklichem Ja des Nutzers zum genannten Preis. Standard false."},
+        }, "required": ["zielsprache"]},
+    },
+    {
+        "name": "uebersetzung_stand",
+        "description": "Stand der Übersetzung dieses Projekts: Zielsprache, fertige und gesamte Absätze, Hinweise, ob ein Lauf läuft. Kostenlos.",
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
+    {
+        "name": "exportiere_uebersetzung",
+        "description": (
+            "Gibt die übersetzte Word-Datei aus (Download-Knopf unter deiner Antwort; kostenlos, keine Ablage). Nur sinnvoll, "
+            "wenn uebersetzung_stand fertig > 0 meldet und kein Lauf mehr läuft."
+        ),
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
     {
         "name": "liste_ausgaben",
         "description": (
@@ -329,6 +359,9 @@ class ToolExecutor:
                 "konvertiere_zu_pdfua": lambda a: ausgaben_tools.konvertiere_zu_pdfua(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
                 "exportiere_word": lambda a: ausgaben_tools.exportiere_word(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
                 "analysiere_word_struktur": lambda a: ausgaben_tools.analysiere_word_struktur(p, u, _doc(a)),
+                "uebersetze_dokument": lambda a: ausgaben_tools.uebersetze_dokument(p, u, str(a.get("zielsprache") or ""), bestaetigt=bool(a.get("bestaetigt", False)), alt_texte=bool(a.get("alt_texte", True)), turn=self),
+                "uebersetzung_stand": lambda _a: ausgaben_tools.uebersetzung_stand(p, u),
+                "exportiere_uebersetzung": lambda _a: ausgaben_tools.exportiere_uebersetzung(p, u),
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
             })

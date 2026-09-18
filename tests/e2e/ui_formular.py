@@ -27,6 +27,14 @@ with sync_playwright() as p:
     pg.goto(B + "/projekt-neu"); pg.wait_for_timeout(1500)
     opts = pg.locator("#toolSelect option").all_text_contents()
     check("Quickinfo-Werkzeug im Auswahlmenue", any("Quickinfos" in o for o in opts), opts)
+    # Definierter Ausgangszustand (18.09.2026): Der Test selbst uebernimmt am Ende den KI-Vorschlag fuer Feld 1
+    # (quelle = ki); der Badge-Check in B erwartet aber einen Handtext. Deshalb Feld 1 vorab von Hand setzen.
+    _r = pg.request.get(B + f"/api/projects/{PID}/felder")
+    if _r.ok:
+        _felder = sorted(_r.json().get("felder") or [], key=lambda f: f.get("feld_index", 0))
+        if _felder: pg.request.patch(B + f"/api/felder/{_felder[0]['id']}", data={"quickinfo": "Vorname des Kontoinhabers (Ausgangszustand Klicktest)"})
+        # ... und die letzten zwei Felder leeren, damit „Nur offene“ und „Generieren“ etwas zu tun haben.
+        for _f in _felder[-2:]: pg.request.patch(B + f"/api/felder/{_f['id']}", data={"quickinfo": ""})
     print("== B. Formular-Ansicht ==")
     pg.goto(B + f"/app?projekt={PID}"); pg.wait_for_timeout(3500)
     main = pg.locator("main")

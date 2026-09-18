@@ -70,25 +70,27 @@ Inhaltsverzeichnis) werden übersetzt; ein Hinweis rät, in Word F9 zu drücken.
 | Datei | Aufgabe |
 |---|---|
 | `backend/uebersetzung.py` | Kern: `segmentiere_docx()` (Segmente mit Stücken, Marken, Trennern, Kontext, Ort, Abschnitt), `text_mit_marken()`, `marken_zerlegen()`, `uebersetze_batch()` (Gemini über `llm_client.call_text_with_schema`, Schema `UebersetzungBatchOutput`, Korrekturversuch, Ersatzweg), `schreibe_uebersetzung()` (byteidentischer Rückschreiber, Sprachkennung), `strukturvergleich()`, `credits_fuer()`, `ZIELSPRACHEN` (22 Einträge mit regionalen Varianten: Englisch GB/USA/Australien, Deutsch DE/AT/CH, Französisch FR/CH, Spanisch Spanien/Lateinamerika, Portugiesisch PT/BR, Niederländisch NL/BE; Kennung = Word-Sprachkennung, Modell bekommt Schreibweise/Datumsformat der Variante). |
-| `backend/uebersetzung_api.py` | Router: Upload-Handler + Hintergrund-Segmentierung, Lesen, Vorschau, Lauf (Pakete je Dokument, Guthaben und Tageslimit je Paket, Abbruch, Handarbeit während des Laufs gewinnt), Handkorrektur, Export (einzeln/ZIP, im Executor). Anschlusspunkte: `segmentiere_und_speichere()`, `lauf_starten()`, `export_vorbereiten()` + `export_bauen()`. |
+| `backend/uebersetzung_api.py` | Router: Lesen (mit `?leicht=1` nur der Stand), Vorschau, Lauf (Pakete je Dokument, Guthaben und Tageslimit je Paket, Abbruch, Handarbeit während des Laufs gewinnt), Handkorrektur, Export (einzeln/ZIP, im Executor; nicht übersetzte Dokumente werden beim Ganzprojekt-Export ausgelassen und benannt). Segmentierung **lazy** beim ersten Öffnen der Ansicht (`_segmente_sicherstellen`), damit Word-Projekte ohne Übersetzungswunsch nichts kosten. Anschlusspunkte für andere Oberflächen und den Chatbot: `segmentiere_und_speichere()`, `uebersetzungsstand()`, `bot_starten()`, `bot_export()`, `lauf_starten()`, `export_vorbereiten()` + `export_bauen()`. Beim Start werden alte `project_type = docx-uebersetzung` auf `docx` gehoben. |
 | `backend/database.py` | Tabelle `uebersetzung_segmente`; Löschung bei Konto/Projekt/Dokument. |
 | `backend/tools.py` | Werkzeug `uebersetzen` „Dokumente übersetzen“ (Beta). |
 | `backend/billing.py` | Aktion `uebersetzung` (1 Credit je 100 Wörter), zählt im Tageslimit. |
-| `backend/main.py` | `TOOL_PROJECT_TYPE["uebersetzen"] = "docx-uebersetzung"`, Upload-Weiche (nur .docx), Router, Löschpfade. |
-| `frontend/uebersetzen.js` | Ansicht: H1 Projekt, H2 Dokument, H3 Abschnitt (nach Überschrift 1; dazu Kopfzeile, Fußzeile, Fußnoten, Bilder, Dokumenttitel), H4 „{Art} {n}: {Anfang}“; je Absatz Original als Text, Textarea „Übersetzung“ (Auto-Save 800 ms), Status-Badge, Hinweis; Filter-Fieldset Alle / Nur mit Hinweis / Nur noch nicht übersetzt; Dialog „Übersetzen“ (Zielsprache, zwei Schalter, Rückfrage mit Wörtern/Credits/Guthaben); Export-Dialog; Fortschrittskarte mit Abbrechen; Laufmeldung. |
-| `backend/templates/app.html` | Skript eingebunden, Upload-Block, Weiche in `showProject`, Wartetexte, Dialogtexte Umbenennen/Löschen (`uebdoc`). |
-| `backend/locales/*` | 76 Texte × 6 Sprachen. |
+| `backend/main.py` | `TOOL_PROJECT_TYPE["uebersetzen"] = "docx"` (derselbe Dateityp wie das Word-Werkzeug), Upload über den Word-Pfad (Übersetzen-Projekte nehmen nur .docx; 409 während eines Laufs), Router, Löschpfade. |
+| `frontend/uebersetzen.js` | Ansicht „Übersetzung“: H1 Projekt (mit Ansichts-Wahl), H2 Dokument, H3 Abschnitt (behält den Titel), H4 nur „{Art} {n}“ (Michael 18.09.); je Absatz Original als schreibgeschütztes Feld mit Label, Textarea „Übersetzung“ (Auto-Save 800 ms), Status-Badge, Hinweis; Filterkarte „Absätze filtern“ mit Zählern; Dialog „Übersetzen“ wie die Rückfrage der anderen Werkzeuge (Abbrechen links, Start rechts); Export-Dialog mit Fußzeile; Fortschritt über leichtes Polling (`?leicht=1`) ohne Neuaufbau der Seite; keine Statuszeile unter dem Projektnamen (wie Word). |
+| `backend/templates/app.html` | Skript eingebunden, Upload-Block, **Ansichts-Wahl** `ansichtWahlHtml()` (natives `<label>` + `<select id="ansichtSelect">` + Knopf „Öffnen“; nur bei Word-Dateityp, nie im Gastmodus), `wechsleAnsicht()` (wartet laufende Auto-Speicherung ab, `history.pushState`, Ansage), `popstate`, Weiche in `showProject` über `aktuelleAnsicht()`; Export-Dialog der Alt-Text-Ansicht bekommt den Knopf „Als Word, {Sprache}“, sobald eine Übersetzung existiert; Wartetexte; Dialogtexte Umbenennen/Löschen (`uebdoc`). |
+| `backend/locales/*` | ~90 Texte × 6 Sprachen (Werkzeug, Ansichts-Wahl, Chatbot-Antworten). |
+| `backend/inkluagent/tools/ausgaben.py`, `definitions.py`, `prompts/system_ausgaben.py` | Chatbot-Werkzeuge `uebersetze_dokument` (Angebot → Bestätigung → Lauf), `uebersetzung_stand`, `exportiere_uebersetzung` (Anhang unter der Antwort). |
 | `tests/test_uebersetzung_kern.py` | 23 Unit-Tests ohne Modell (Marken, Whitespace, Ersatzweg, Rundreise über alle Word-Fixtures, Sprache, Idempotenz, XXE) plus die Regressionsfälle des Reviews vom 18.09. (Ersatzweg leert feste Stücke, Streu-Token, Textfeld-Fallback, styles ohne docDefaults, Sprachkennung, Titel gekappt). |
-| `tests/e2e/verify_uebersetzen.py` | 49 End-to-End-Prüfungen gegen Staging mit echtem Modell (Negativfälle, Lauf, 409 während des Laufs, Handkorrektur, Export, Rücklesen: Fettung/Link/Tabelle erhalten, Sprachkennung, Fremdzugriff mit Zweitkonto). |
-| `tests/e2e/ui_uebersetzen.py` | Klicktest (Playwright + axe): Werkzeugauswahl, Ansicht, Filter, Dialoge, Download, Tastaturweg. |
+| `tests/e2e/verify_uebersetzen.py` | 62 End-to-End-Prüfungen gegen Staging mit echtem Modell (Negativfälle, Lauf, 409 während des Laufs, Handkorrektur, Export, Rücklesen: Fettung/Link/Tabelle erhalten, Sprachkennung, Fremdzugriff mit Zweitkonto, Word-Projekt mit lazy Segmentierung, leichter Stand, Chatbot-Werkzeuge). |
+| `tests/e2e/ui_uebersetzen.py` | Klicktest (Playwright + axe, 56 Prüfungen): Werkzeugauswahl, Ansicht, Filter, Dialoge, Download, Tastaturweg, Ansichts-Wechsel in beide Richtungen (Auswahl allein wechselt nicht, WCAG 3.2.2), Browser-Zurück, Ganzprojekt-Export mit nicht übersetztem Zweitdokument; räumt das Zweitdokument selbst weg. |
 | `tests/fixtures/testvortrag_inkludocs.docx` | Fiktiver Vortrag mit Fettung/Kursiv mitten im Satz, Hyperlink, Liste, Tabelle, Kopfzeile (Generator `make_testvortrag.py`, braucht python-docx). |
 
 ## Datenfluss
 
-1. **Projekt anlegen** mit Werkzeug `uebersetzen`.
-2. **Upload** `.docx` → `validiere_docx` im Request (400 mit Meldung), Dokumentzeile
-   `extraction_method = uebersetzung`, Antwort `extracting`, Segmentierung im Hintergrund.
-   Andere Dateitypen werden mit Meldung abgewiesen.
+1. **Projekt anlegen** mit Werkzeug `uebersetzen` **oder** `word` — beide sind Dateityp `docx`
+   und haben dieselben zwei Ansichten (siehe „Testumbau bei Word“).
+2. **Upload** `.docx` über den Word-Pfad (`validiere_docx`, Bilder werden ausgelesen).
+   Die Segmentierung für die Übersetzung geschieht erst beim ersten Öffnen der Ansicht
+   „Übersetzung“ (lazy); Übersetzen-Projekte weisen andere Dateitypen mit Meldung ab.
 3. **Segmente** in `uebersetzung_segmente` (Position im Lesefluss: Haupttext, dann
    Kopf-/Fußzeilen, Fuß-/Endnoten; Alt-Texte/Bildtitel/Dokumenttitel als eigene Segmente).
    `documents.hinweise` trägt Quellsprache, Wörter, Absätze, Hinweise (z. B. Inhaltsverzeichnis).
@@ -105,6 +107,40 @@ Inhaltsverzeichnis) werden übersetzt; ein Hinweis rät, in Word F9 zu drücken.
 7. **Export** `POST …/export/uebersetzung {document_id?, filename?}`: je Dokument die
    übersetzte Datei (Name `<Dokument>_<Sprache>.docx`), mehrere als ZIP; kostenlos;
    Strukturvergleich vor der Auslieferung.
+
+## Testumbau bei Word: Projekt = Dateityp, Fähigkeit = Ansicht (18.09.2026, Steve)
+
+Ein Word-Projekt ist eine Datei mit mehreren Fähigkeiten. Statt eines weiteren Werkzeugs
+mit eigener Projektliste gibt es im Projektkopf die Zeile **„Ansicht“**: eine native
+Ausklappliste (`<select>`) mit „Alt-Texte“ und „Übersetzung“ plus Knopf **„Öffnen“**.
+Die Auswahl allein wechselt nichts (WCAG 3.2.2, Screenreader-Nutzer blättern mit Pfeilen
+durch die Liste); erst „Öffnen“ wechselt, sagt den Wechsel an und schreibt
+`?ansicht=…` in die Adresse, so dass Browser-Zurück und Lesezeichen funktionieren.
+Laufende Auto-Speicherungen werden vor dem Wechsel abgewartet.
+
+- Beide Werkzeuge (`word`, `uebersetzen`) führen zu demselben Projekttyp; das Werkzeug
+  bestimmt nur die Start-Ansicht. Das Dashboard und die Projektliste bleiben unverändert.
+- Die Ansichten selbst sind unverändert: die Alt-Text-Ansicht ist das Word-Werkzeug wie
+  bisher (Bilderkarten, Filter, Upload-Block, Chatbot, Herunterladen-Dialog mit PDF/UA);
+  die Übersetzungs-Ansicht ist `uebersetzen.js`.
+- Der Export bleibt, wo er ist: im Herunterladen-Dialog der Alt-Text-Ansicht erscheint
+  zusätzlich „Als Word, {Sprache}“, sobald eine Übersetzung vorhanden ist.
+- **Gastmodus**: keine Ansichts-Wahl, keine Übersetzungs-Ansicht, keine Übersetzungs-
+  Endpunkte unter `/api/freigabe/…` — Gäste prüfen weiter nur Alt-Texte.
+- **PDF, Web, Grafik, Formular**: unverändert, keine Ansichts-Wahl.
+- **Erweiterbar**: eine neue Fähigkeit (z. B. „Aufbereitung“) ist ein Eintrag in der
+  Optionsliste von `ansichtWahlHtml()` plus ein Zweig in der Weiche von `showProject`.
+- **Rückweg**: alles in einem Commit; bei Ablehnung genügt `git revert`.
+
+Regressionsbatterie nach dem Umbau (18.09.2026, Staging): 290 Unit-Tests grün; E2E
+Formular 112, Word 54, PDF/UA 29, Chatbot-Werkzeuge 23 + 12, Ablage 19 + 43, Gast 7 + 6,
+Smoke 119, Dialoge 41, Formular-Klick 82, Word-Klick 32, API v1 54, Übersetzen 62 + 56 —
+alle ohne Fehler. Dabei gefunden und behoben: seit Commit b9b21a8 (15.09.) fehlte im
+Herunterladen-Dialog (PDF/Word/Excel) die Zeile, die nach dem Download „Heruntergeladen: …“
+in die Statuszeile schreibt und den Fokus dorthin setzt (Ursache: beim Einbau der
+Export-Warnungen versehentlich entfernt; nicht vom Umbau). Drei Klicktests hatten
+veraltete Annahmen (Autor-dekorative Bilder seit 01.09., Feldzustand im Formular-Test)
+und setzen ihren Ausgangszustand jetzt selbst.
 
 ## Sicherheit
 
@@ -142,7 +178,7 @@ Inhaltsverzeichnis) werden übersetzt; ein Hinweis rät, in Word F9 zu drücken.
 ## Tests
 
 ```
-# Unit (Container, 17 Tests; Fixtures vorher nach /app/tests/fixtures kopieren)
+# Unit (Container, 23 Tests; Fixtures vorher nach /app/tests/fixtures kopieren)
 docker exec -w /app inkludocs-staging python3 -m unittest /app/tests/test_uebersetzung_kern.py -v
 # End-to-End gegen Staging (echtes Modell, wenige Credits; --behalten für den Klicktest)
 INKLUDOCS_E2E_MAIL=… INKLUDOCS_E2E_PW=… python3 tests/e2e/verify_uebersetzen.py --behalten

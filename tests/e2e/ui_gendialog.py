@@ -201,7 +201,10 @@ with sync_playwright() as p:
             return await r.json(); }""", WORD)
         print("     Vorschau (Word): anzahl=%s eigene=%s modus=%s" % (vorschau.get("anzahl"), vorschau.get("eigene"), vorschau.get("modus")))
         check("Vorschau: ein Modus „alle“, liefert eigene", vorschau.get("modus") == "alle" and "eigene" in vorschau, str(vorschau)[:120])
-        check("Vorschau zaehlt ALLE Bilder des Projekts", vorschau.get("anzahl") == page.evaluate("document.querySelectorAll('section.image-review').length"), (vorschau.get("anzahl"), page.evaluate("document.querySelectorAll('section.image-review').length")))
+        # Seit 01.09.2026 (Runde 2 nach Steves Hoertest): vom Autor als dekorativ gekennzeichnete Bilder laufen nie mit
+        # und werden als autor_dekorativ gemeldet — Karten = anzahl + autor_dekorativ.
+        _karten = page.evaluate("document.querySelectorAll('section.image-review').length")
+        check("Vorschau zaehlt ALLE Bilder des Projekts ausser Autor-dekorativ", vorschau.get("anzahl", 0) + vorschau.get("autor_dekorativ", 0) == _karten, (vorschau.get("anzahl"), vorschau.get("autor_dekorativ"), _karten))
         page.locator("#genConfirmCancel").click()
         page.wait_for_timeout(500)
         check("Word: Abbrechen startet nichts", page.locator("#genConfirmDialog").evaluate("d => d.open") is False)

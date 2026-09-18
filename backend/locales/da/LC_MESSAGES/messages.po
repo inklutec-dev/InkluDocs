@@ -6687,3 +6687,24 @@ msgstr "Tager også language, use_context, prompt_id eller prompt; de gælder de
 
 msgid "error kann auch bei status done stehen: Dann ist ein erneuter Versuch gescheitert, der vorhandene Text ist geblieben und needs_review ist gesetzt."
 msgstr "error kan også stå ved status done: så mislykkedes et nyt forsøg, den eksisterende tekst blev bevaret og needs_review er sat."
+
+msgid "Als Word, {sprache}"
+msgstr "Som Word, {sprache}"
+
+msgid "Alt-Texte"
+msgstr "Alternative tekster"
+
+msgid "Ansicht"
+msgstr "Visning"
+
+msgid "Ansicht Alt-Texte wird geöffnet."
+msgstr "Visningen Alternative tekster åbnes."
+
+msgid "Ansicht Übersetzung wird geöffnet."
+msgstr "Visningen Oversættelse åbnes."
+
+msgid "Diese Ansicht ist schon geöffnet."
+msgstr "Denne visning er allerede åben."
+
+msgid "Öffnen"
+msgstr "Åbn"
