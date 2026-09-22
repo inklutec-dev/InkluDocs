@@ -260,7 +260,7 @@ def liste_ausgaben(project_id: int, user_id: int) -> dict[str, Any]:
     """Alle Eintraege unter Meine Ablage fuer dieses Projekt (neueste zuerst)."""
     m = _main()
     try:
-        m._pdfua_projekt_laden(project_id, user_id, meldung="Ausgaben gibt es nur fuer Word-Projekte")
+        m._require_project_owned(project_id, user_id)   # Ablage gibt es fuer Word- UND PDF-Projekte (22.09.2026)
     except HTTPException as e:
         return _fehler(e)
     m._ablage_dateien_einsammeln(user_id)

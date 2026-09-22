@@ -442,3 +442,81 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
     if ausgabe_id:
         out["anhang"] = _ausg._anhang("pdf", r, project_id)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Kleine Werkzeuge (22.09.2026, Steve: „alles, was man auch händisch machen kann“)
+# ---------------------------------------------------------------------------
+
+def dokument_umbenennen(project_id: int, user_id: int, document_id: Optional[int], name: str) -> dict[str, Any]:
+    """Anzeigename eines Dokuments (wie der Knopf „Umbenennen“); leer = zurueck auf den Dateinamen."""
+    name = (name or "").strip()
+    if len(name) > 200:
+        return {"ok": False, "error": "Der Anzeigename darf höchstens 200 Zeichen haben"}
+    conn = _get_db()
+    try:
+        _projekt(conn, project_id, user_id)
+        doc = _dokument(conn, project_id, document_id)
+        conn.execute("UPDATE documents SET display_name = ? WHERE id = ? AND project_id = ?", (name or None, doc["id"], project_id))
+        conn.commit()
+    except HTTPException as e:
+        return _fehler(e)
+    finally:
+        conn.close()
+    return {"ok": True, "result": {"document_id": doc["id"], "alter_name": _name(doc), "neuer_name": name or doc.get("original_filename"),
+                                   "hinweis": "Die Karte in der Ansicht „Dokument“ zeigt den neuen Namen nach dem nächsten Laden."}}
+
+
+def dokument_loeschen(project_id: int, user_id: int, document_id: Optional[int], bestaetigt: bool = False, turn=None) -> dict[str, Any]:
+    """Dokument samt Bildern, Feldern und Dateien loeschen (main._dokument_loeschen_sync, wie der Knopf).
+    Unumkehrbar — deshalb dieselbe Zwei-Schritt-Freigabe wie bei kostenpflichtigen Aktionen: erst ohne
+    bestaetigt (Rueckfrage), Ja in eigener Nachricht, dann bestaetigt=true."""
+    conn = _get_db()
+    try:
+        _projekt(conn, project_id, user_id)
+        doc = _dokument(conn, project_id, document_id)
+        bilder = conn.execute("SELECT COUNT(*) FROM images WHERE document_id = ?", (doc["id"],)).fetchone()[0]
+        felder = conn.execute("SELECT COUNT(*) FROM formularfelder WHERE document_id = ?", (doc["id"],)).fetchone()[0]
+    except HTTPException as e:
+        return _fehler(e)
+    finally:
+        conn.close()
+    vorschau = {"document_id": doc["id"], "dokument": _name(doc), "bilder": int(bilder or 0), "felder": int(felder or 0)}
+    grund = _freigabe(user_id, project_id, "loeschen", doc["id"], 0, True, bestaetigt, turn)
+    if grund == "rueckfrage":
+        vorschau.update({"rueckfrage_noetig": True, "hinweis": (
+            "Löschen ist unumkehrbar: Dokument, Bilder mit Alt-Texten, Felder mit Quickinfos und Dateien sind danach weg "
+            "(Einträge in der Ablage bleiben). Sag dem Nutzer, was gelöscht würde, und frage. Erst nach ausdrücklichem Ja "
+            "in einer eigenen Nachricht erneut mit bestaetigt=true aufrufen.")})
+        return {"ok": True, "result": vorschau}
+    if grund:
+        vorschau.update({"rueckfrage_noetig": True, "hinweis": grund})
+        return {"ok": True, "result": vorschau}
+    try:
+        r = _main()._dokument_loeschen_sync(user_id, project_id, doc["id"])
+    except HTTPException as e:
+        return _fehler(e)
+    return {"ok": True, "result": {"geloescht": True, "dokument": _name(doc), "verbleibende_dokumente": r.get("remaining_documents"),
+                                   "verbleibende_bilder": r.get("remaining_images"),
+                                   "hinweis": "Sag dem Nutzer, dass das Dokument gelöscht ist und wie viele Dokumente das Projekt noch hat."}}
+
+
+def alt_sprache_setzen(project_id: int, user_id: int, sprache: str) -> dict[str, Any]:
+    """Sprache der Alt-Texte des Projekts (wie der Sprachwähler „Sprache der Alt-Texte“): gilt für alles, was ab
+    jetzt erzeugt wird; vorhandene Texte bleiben."""
+    m = _main()
+    lang = (sprache or "").strip().lower()[:5]
+    if lang not in m.ALT_TEXT_LANGUAGES:
+        return {"ok": False, "error": "Unbekannte Sprache. Möglich: " + ", ".join(sorted(m.ALT_TEXT_LANGUAGES))}
+    conn = _get_db()
+    try:
+        project = _projekt(conn, project_id, user_id)
+        conn.execute("UPDATE projects SET alt_language = ? WHERE id = ? AND user_id = ?", (lang, project_id, user_id))
+        conn.commit()
+    except HTTPException as e:
+        return _fehler(e)
+    finally:
+        conn.close()
+    return {"ok": True, "result": {"vorher": project.get("alt_language") or "de", "jetzt": lang,
+                                   "hinweis": "Gilt für Alt-Texte und Quickinfos, die ab jetzt erzeugt werden; vorhandene Texte bleiben, wie sie sind."}}
+

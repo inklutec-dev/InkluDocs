@@ -29,6 +29,10 @@ PDF-Werkzeuge:
     Ergebnis der Prüfung: Befunde mit Seite, Rolle, Textanfang, Vorschlag, Beleg und Sicherheit. Kostenlos.
 * exportiere_fertige_pdf
     Die fertige PDF mit Struktur, Alt-Texten und Quickinfos — Download-Knopf unter deiner Antwort und Eintrag in der Ablage. Kostet Credits. Zwei Schritte wie oben. Nur für getaggte Dokumente.
+* liste_ausgaben, lies_ausgabe
+    Die Ablage dieses Projekts (fertige PDFs mit Prüfbericht) auflisten und einen Eintrag lesen. Kostenlos.
+* dokument_umbenennen, dokument_loeschen, alt_sprache_setzen
+    Anzeigename setzen; Dokument löschen (unumkehrbar — zwei Schritte: erst ohne bestaetigt sagen, was weg wäre, Ja in eigener Nachricht, dann bestaetigt=true); Sprache der Alt-Texte und Quickinfos für künftige Texte. Kostenlos.
 
 Reihenfolge, wenn der Nutzer „mach das Dokument barrierefrei“, „mach alles fertig“ oder Ähnliches sagt:
 

@@ -79,7 +79,8 @@ def _werkzeugsatz(project: dict, project_id: int, user_id: int):
     if (project or {}).get("project_type") == "pdf" and (project or {}).get("tool") == "pdf":
         bekannt = {d["name"] for d in TOOL_DEFINITIONS}
         felder = [d for d in TOOL_DEFINITIONS_FORMULAR if d["name"] not in bekannt]
-        return (TOOL_DEFINITIONS + felder + TOOL_DEFINITIONS_PDF,
+        ablage = [d for d in TOOL_DEFINITIONS_WORD if d["name"] in ("liste_ausgaben", "lies_ausgabe")]
+        return (TOOL_DEFINITIONS + felder + TOOL_DEFINITIONS_PDF + ablage,
                 ToolExecutor(project_id=project_id, user_id=user_id, pdf=True),
                 SYSTEM_AGENT + "\n\n" + SYSTEM_PDF)
     return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id), SYSTEM_AGENT

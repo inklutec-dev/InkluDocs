@@ -91,4 +91,34 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
             "bestaetigt": {"type": "boolean", "description": "true NUR nach ausdrücklichem Ja des Nutzers zum genannten Preis. Standard false."},
         }, "required": []},
     },
+    {
+        "name": "dokument_umbenennen",
+        "description": "Anzeigename eines Dokuments setzen (wie der Knopf „Umbenennen“). Leerer Name = zurück auf den Dateinamen. Kostenlos.",
+        "input_schema": {"type": "object", "properties": {
+            "document_id": {"type": "integer", "description": "Optional bei einem Dokument."},
+            "name": {"type": "string", "description": "Der neue Anzeigename (höchstens 200 Zeichen)."},
+        }, "required": ["name"]},
+    },
+    {
+        "name": "dokument_loeschen",
+        "description": (
+            "Dokument samt Bildern, Alt-Texten, Feldern, Quickinfos und Dateien aus dem Projekt löschen — unumkehrbar. "
+            "ZWEI SCHRITTE wie bei kostenpflichtigen Werkzeugen: erst OHNE bestaetigt (sagt, was gelöscht würde; frage den "
+            "Nutzer), erst nach seinem klaren Ja in einer eigenen Nachricht mit bestaetigt=true."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "document_id": {"type": "integer", "description": "Optional bei einem Dokument; Pflicht bei mehreren."},
+            "bestaetigt": {"type": "boolean", "description": "true NUR nach ausdrücklichem Ja des Nutzers. Standard false."},
+        }, "required": []},
+    },
+    {
+        "name": "alt_sprache_setzen",
+        "description": (
+            "Sprache der Alt-Texte und Quickinfos dieses Projekts setzen (de, en, da, fr, es, sv …) — gilt für alles, was ab "
+            "jetzt erzeugt wird; vorhandene Texte bleiben. Kostenlos."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "sprache": {"type": "string", "description": "Sprachkürzel, z. B. de, en, fr."},
+        }, "required": ["sprache"]},
+    },
 ]

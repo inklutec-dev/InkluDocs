@@ -166,6 +166,27 @@ s, b = chat(pid, "Welche Formularfelder hat das Dokument?")
 check("11 Felder: list_form_fields oder dokument_stand", any(w in (b.get("werkzeuge") or []) for w in ("list_form_fields", "dokument_stand")), b.get("werkzeuge"))
 check("11 Felder: Antwort sagt keine Felder", any(w in (b.get("reply") or "").lower() for w in ("keine", "kein", "0 ")), (b.get("reply") or "")[:200])
 
+# 12. Ablage im PDF-Projekt
+s, b = chat(pid, "Was liegt in der Ablage dieses Projekts?")
+check("12 Ablage: liste_ausgaben", "liste_ausgaben" in (b.get("werkzeuge") or []), b.get("werkzeuge"))
+check("12 Ablage: Antwort nennt die PDF", "pdf" in (b.get("reply") or "").lower(), (b.get("reply") or "")[:200])
+
+# 13. Umbenennen
+s, b = chat(pid, "Benenne das Dokument bitte in „Naturschutzbericht 2025“ um.")
+check("13 Umbenennen: dokument_umbenennen", "dokument_umbenennen" in (b.get("werkzeuge") or []), b.get("werkzeuge"))
+s, d = req("GET", f"/api/projects/{pid}")
+check("13 Umbenennen: display_name gesetzt", (d.get("documents") or [{}])[0].get("display_name") == "Naturschutzbericht 2025", (d.get("documents") or [{}])[0].get("display_name"))
+
+# 14. Loeschen: Rueckfrage, dann Ja
+s, b = chat(pid, "Lösche das Dokument aus dem Projekt.")
+check("14 Loeschen: dokument_loeschen (Rueckfrage)", "dokument_loeschen" in (b.get("werkzeuge") or []), b.get("werkzeuge"))
+s, d = req("GET", f"/api/projects/{pid}")
+check("14 Loeschen: Dokument noch da ohne Ja", len(d.get("documents") or []) == 1, len(d.get("documents") or []))
+s, b = chat(pid, "Ja, löschen.")
+check("15 Ja: dokument_loeschen erneut", "dokument_loeschen" in (b.get("werkzeuge") or []), b.get("werkzeuge"))
+s, d = req("GET", f"/api/projects/{pid}")
+check("15 Ja: Dokument geloescht", len(d.get("documents") or []) == 0, len(d.get("documents") or []))
+
 if not BEHALTEN:
     req("DELETE", f"/api/projects/{pid}")
 print(f"\nErgebnis: {ok} OK, {fehler} FEHLT (Projekt {pid})")

@@ -6044,9 +6044,11 @@ async def rename_document(project_id: int, document_id: int, request: Request, u
     return {"ok": True, "display_name": name or None}
 
 
-@app.delete("/api/projects/{project_id}/documents/{document_id}")
-async def delete_document(project_id: int, document_id: int, user: dict = Depends(get_current_user)):
-    """Multi-Datei (10.06.2026): Ein einzelnes Dokument (eine hochgeladene PDF)
+def _dokument_loeschen_sync(user_id: int, project_id: int, document_id: int) -> dict:
+    """Kernfunktion (22.09.2026): Knopf „Löschen“ UND Chatbot-Werkzeug dokument_loeschen rufen dieselbe
+    Funktion — ein Weg, zwei Bediener.
+
+    Multi-Datei (10.06.2026): Ein einzelnes Dokument (eine hochgeladene PDF)
     samt seiner Bilder aus einem Projekt entfernen.
 
     Hintergrund (Michael Karbe, 09.06.2026): Da im Werkzeug stets die KOMPLETTE
@@ -6066,7 +6068,7 @@ async def delete_document(project_id: int, document_id: int, user: dict = Depend
     """
     conn = get_db()
     project = conn.execute(
-        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)
     ).fetchone()
     if not project:
         conn.close()
@@ -6082,7 +6084,7 @@ async def delete_document(project_id: int, document_id: int, user: dict = Depend
 
     # Dateien entfernen: der eigene Bild-/Vorschau-Ordner doc<N> und die
     # hochgeladene Quell-PDF. Best-effort — fehlende Dateien sind kein Fehler.
-    doc_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project_id), f"doc{doc['doc_index']}")
+    doc_dir = os.path.join(RESULTS_DIR, str(user_id), str(project_id), f"doc{doc['doc_index']}")
     if os.path.isdir(doc_dir):
         shutil.rmtree(doc_dir, ignore_errors=True)
     src_pdf = doc.get("original_path") or ""
@@ -6161,6 +6163,12 @@ async def delete_document(project_id: int, document_id: int, user: dict = Depend
         "remaining_images": remaining_images,
         "remaining_documents": remaining_docs,
     }
+
+
+@app.delete("/api/projects/{project_id}/documents/{document_id}")
+async def delete_document(project_id: int, document_id: int, user: dict = Depends(get_current_user)):
+    """Knopf „Löschen“: siehe _dokument_loeschen_sync."""
+    return _dokument_loeschen_sync(user["id"], project_id, document_id)
 
 
 def _require_non_pdf_project(conn, project_id: int, user_id: int) -> dict:
