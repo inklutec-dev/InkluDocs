@@ -7298,3 +7298,27 @@ msgstr "{n} Bilder gefunden, {u} Alt-Texte übernommen."
 #: PDF-Tagging Ansicht Dokument (22.09.2026)
 msgid "Dokumente ({n})"
 msgstr "Dokumente ({n})"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Quickinfos"
+msgstr "Quickinfos"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Ansicht Quickinfos geöffnet."
+msgstr "Ansicht Quickinfos geöffnet."
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Quickinfos bearbeiten"
+msgstr "Quickinfos bearbeiten"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Formularfelder"
+msgstr "Formularfelder"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "{n} Felder"
+msgstr "{n} Felder"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."
+msgstr "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."

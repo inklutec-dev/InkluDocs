@@ -36,7 +36,7 @@ with sync_playwright() as p:
     s2.on("pageerror", lambda e: probleme2.append(str(e)))
     s2.goto(f"{B}/login", wait_until="domcontentloaded"); s2.fill("input[type=email]", MAIL); s2.fill("input[type=password]", PW)
     s2.click("button[type=submit]"); s2.wait_for_load_state("networkidle")
-    s2.goto(f"{B}/app?projekt={PID}", wait_until="networkidle"); s2.wait_for_timeout(2000)
+    s2.goto(f"{B}/app?projekt={PID}&ansicht=alttexte", wait_until="networkidle"); s2.wait_for_timeout(2000)
     ks2 = s2.evaluate("[Array.from(document.querySelectorAll('input[name=imgFilterStand]')).map(i => i.value), Array.from(document.querySelectorAll('input[name=imgFilterPruef]')).map(i => i.value)]")
     check("Besitzer mit Freigabe: zwei Felder", ks2[0] == ERW_S and ks2[1] == ERW_P, ks2)
     check("Besitzer: keine Skriptfehler", not probleme2, probleme2[:3])

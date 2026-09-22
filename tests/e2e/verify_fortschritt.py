@@ -113,7 +113,7 @@ with sync_playwright() as p:
         s0 = status()
         check("direkt nach dem Start: processed_images = 0 (nicht die Zahl des letzten Laufs)",
               s0["processed_images"] == 0 and s0["status"] == "processing", s0)
-        page.goto(f"{BASE}/app?projekt={PROJEKT}", wait_until="networkidle")
+        page.goto(f"{BASE}/app?projekt={PROJEKT}&ansicht=alttexte", wait_until="networkidle")
         page.wait_for_timeout(1500)
         info = page.locator("#processingInfo")
         text = info.inner_text() if info.count() else ""

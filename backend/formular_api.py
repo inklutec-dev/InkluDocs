@@ -184,7 +184,8 @@ def _projekt_des_nutzers(conn, project_id: int, user_id: int) -> dict:
     p = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
     if not p:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    if p["tool"] != "formular":
+    # Station „Quickinfos“ (22.09.2026): auch PDF-Projekte (Werkzeug „PDF-Dokumente“), deren Dateien Felder haben.
+    if p["tool"] not in ("formular", "pdf"):
         raise HTTPException(status_code=400, detail="Dieses Projekt ist kein Formular-Projekt")
     return dict(p)
 
@@ -384,6 +385,24 @@ async def _extract_in_background(project_id: int, document_id: int, doc_index: i
 
     conn = _d.get_db()
     try:
+        felder_eintragen(conn, project_id, document_id, felder, hinweise)
+        conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
+        conn.commit()
+    except Exception as e:
+        conn.close()
+        conn = None
+        _extraktion_fehlgeschlagen(project_id, document_id, file_path, out_dir, is_append, "DB-Phase: " + repr(e))
+        return
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def felder_eintragen(conn, project_id: int, document_id: int, felder: list, hinweise: dict, methode_setzen: bool = True) -> int:
+    """Formularfelder eines Dokuments in die Tabelle schreiben (kein commit — macht der Aufrufer).
+    methode_setzen=False fuer PDF-Projekte (22.09.2026): dort bleibt documents.extraction_method der
+    Bild-Weg (pdfix/fitz); die Feldquelle steht in den Hinweisen. Rueckgabe: Anzahl Felder."""
+    if True:
         seiten_mit_text: set = set()
         for f in felder:
             # Seitentext nur am ersten Feld jeder Seite speichern (Bandbreite und
@@ -410,24 +429,45 @@ async def _extract_in_background(project_id: int, document_id: int, doc_index: i
                  1 if f.get("ausgefuellt") else 0, quickinfo, quickinfo, "pdf" if quickinfo.strip() else "",
                  f.get("ausschnitt_path") or "", f.get("page_view_path") or "", page_text))
         hinweise_json = json.dumps(hinweise, ensure_ascii=False) if (hinweise.get("uebersprungen") or hinweise.get("warnungen")) else ""
-        conn.execute("UPDATE documents SET extraction_method = ?, hinweise = ? WHERE id = ?",
-                     ("formular-pdfix" if hinweise.get("quelle_liste") == "pdfix" else "formular", hinweise_json, document_id))
+        if methode_setzen:
+            conn.execute("UPDATE documents SET extraction_method = ?, hinweise = ? WHERE id = ?",
+                         ("formular-pdfix" if hinweise.get("quelle_liste") == "pdfix" else "formular", hinweise_json, document_id))
+        elif hinweise_json:
+            conn.execute("UPDATE documents SET hinweise = COALESCE(NULLIF(hinweise, ''), ?) WHERE id = ?", (hinweise_json, document_id))
         # Stammdaten werden beim Hochladen NICHT mehr automatisch angewendet (Michael Karbe
         # 09.09.2026): Die Felder kommen so an, wie sie in der PDF stehen, oder leer. Die
         # Uebernahme geschieht erst auf Wunsch des Nutzers — je Feld ueber den Vorschlag
         # "aus deinen Stammdaten" oder gesammelt ueber POST /stammdaten-anwenden.
         # Historie: 28.08.2026 wurden Stammdaten beim Upload sofort eingetragen und
         # ersetzten dabei auch PDF-Originale (damals Michaels Wunsch, jetzt zurueckgenommen).
-        conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
+        return len(felder)
+
+
+def felder_fuer_dokument_extrahieren(project_id: int, document_id: int, doc_index: int, file_path: str, user_id: int) -> int:
+    """Station „Quickinfos“ in PDF-Projekten (22.09.2026): Felder einer PDF lesen und eintragen, SYNCHRON
+    (Aufrufer: main._extract_document im Executor, nach der Bildextraktion). Ein Fehler loescht NICHTS —
+    das Dokument bleibt mit seinen Bildern bestehen, es gibt dann nur keine Quickinfo-Station. Rueckgabe:
+    Anzahl Felder (0 = keine Felder oder Fehler)."""
+    out_dir = os.path.join(_d.results_dir, str(user_id), str(project_id), f"doc{doc_index}")
+    os.makedirs(out_dir, exist_ok=True)
+    try:
+        felder, hinweise = extract_formular(file_path, out_dir, project_id)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[formular] Feldextraktion im PDF-Projekt %s (Dokument %s) uebersprungen: %r", project_id, document_id, e)
+        return 0
+    if not felder:
+        return 0
+    conn = _d.get_db()
+    try:
+        conn.execute("DELETE FROM formularfelder WHERE document_id = ?", (document_id,))
+        n = felder_eintragen(conn, project_id, document_id, felder, hinweise, methode_setzen=False)
         conn.commit()
-    except Exception as e:
-        conn.close()
-        conn = None
-        _extraktion_fehlgeschlagen(project_id, document_id, file_path, out_dir, is_append, "DB-Phase: " + repr(e))
-        return
+        return n
+    except Exception as e:  # noqa: BLE001
+        log.exception("[formular] Felder im PDF-Projekt %s (Dokument %s) nicht eingetragen: %r", project_id, document_id, e)
+        return 0
     finally:
-        if conn is not None:
-            conn.close()
+        conn.close()
 
 
 def haengende_extraktionen_zuruecksetzen() -> int:
@@ -727,6 +767,9 @@ def build_router(deps: Deps) -> APIRouter:
         aussen = {k: project.get(k) for k in ("id", "name", "filename", "status", "tool", "project_type",
                                                "alt_language", "prompt_id", "created_at", "updated_at")}
         aussen["hat_original"] = bool(project.get("original_path"))
+        aussen["letzte_ansicht"] = project.get("letzte_ansicht") or ""
+        # Ansichts-Wahl (22.09.2026): PDF-Projekte zeigen „Quickinfos“ nur, wenn Felder da sind.
+        aussen["hat_felder"] = int(project.get("hat_felder") or 0)
         return aussen
 
     @router.get("/api/projects/{project_id}/felder")
@@ -735,6 +778,7 @@ def build_router(deps: Deps) -> APIRouter:
         try:
             project = _projekt_des_nutzers(conn, project_id, user["id"])
             docs, felder, share_roles = _lade_felder(conn, project_id)
+            project["hat_felder"] = len(felder)
             eintraege = _stammdaten_laden(conn, user["id"])
         finally:
             conn.close()

@@ -62,22 +62,25 @@ class Tool:
 # werden die routes auf /app/pdf, /app/web, /app/grafik umgestellt.
 TOOLS: list[Tool] = [
     Tool(
+        # WERKZEUGE NACH DATEIART (22.09.2026, Steve): „PDF-Dokumente“ hat die Stationen Dokument
+        # (Tagging/Barrierefrei machen, Pruefung, Download — frontend/dokument.js), Alt-Texte (app.html) und
+        # Quickinfos (formular.js, nur bei PDFs mit Formularfeldern). Doku docs/TAGGING.md.
         key="pdf",
-        name="Alt-Texte für PDFs",
-        description="PDF-Dokument hochladen und enthaltene Bilder mit barrierefreien Alt-Texten versehen.",
+        name="PDF-Dokumente",
+        description="PDF hochladen, barrierefrei machen (Tagging mit Struktur, Sprache und PDF/UA-Prüfung), die Bilder mit Alt-Texten und Formularfelder mit Quickinfos versehen, die fertige PDF herunterladen.",
         route="/app",
         status=ToolStatus.VERFUEGBAR,
     ),
     Tool(
         key="web",
-        name="Alt-Texte für Webseiten",
+        name="Webseiten",
         description="Eine Webseite über ihre Adresse scannen und ihre Bilder mit Alt-Texten versehen.",
         route="/app",
         status=ToolStatus.VERFUEGBAR,  # scharfgeschaltet 04.06.2026: scan_url an Projekte angebunden
     ),
     Tool(
         key="grafik",
-        name="Alt-Texte für Grafiken",
+        name="Grafiken",
         description="Einzelne Bilder hochladen und mit barrierefreien Alt-Texten versehen.",
         route="/app",
         status=ToolStatus.VERFUEGBAR,
@@ -104,11 +107,15 @@ TOOLS: list[Tool] = [
     # formular_processor.py, Schreiber formular_export.py, Doku docs/FORMULAR.md.
     # Beta, bis echte Kundenformulare durch sind (KI-Vorschlaege = Stufe 2).
     Tool(
+        # Seit 22.09.2026 (Steve) KEIN eigener Eintrag im Anlege-Menue mehr (sichtbar=False): Quickinfos
+        # sind die Station „Quickinfos“ jedes PDF-Projekts mit Formularfeldern. Die Kennung bleibt fuer
+        # bestehende Formular-Projekte (eigene Ansicht formular.js, project_type pdfform) und die API gueltig.
         key="formular",
         name="Quickinfos für PDF-Formulare",
         description="PDF-Formular hochladen, jedes Eingabefeld mit einer Quickinfo (Hilfetext für Screenreader) versehen, Stammdaten für künftige Formulare speichern und die PDF mit Quickinfos herunterladen.",
         route="/app",
         status=ToolStatus.VERFUEGBAR,  # Beta-Etikett entfällt seit 09.09.2026 (Steve)
+        sichtbar=False,
     ),
     # UEBERSETZEN (18.09.2026, Anlass Mark Hounschild): Kern uebersetzung.py (Segmente/
     # Marken/byteidentischer Rueckschreiber), Router uebersetzung_api.py, Ansicht
@@ -125,13 +132,8 @@ TOOLS: list[Tool] = [
         status=ToolStatus.VERFUEGBAR,
         sichtbar=False,
     ),
-    Tool(
-        key="pdf-a11y",
-        name="Barrierefreie PDFs erstellen",
-        description="Aus bestehenden Dokumenten barrierefreie, getaggte PDFs erzeugen.",
-        route="",
-        status=ToolStatus.IN_VORBEREITUNG,
-    ),
+    # „Barrierefreie PDFs erstellen“ (Platzhalter pdf-a11y, in Vorbereitung) entfaellt seit 22.09.2026 (Steve):
+    # die Funktion steckt in „PDF-Dokumente“ (Tagging) und „Word-Dokumente“ (Umwandlung).
     # Sammel-Werkzeug vor der Aufteilung. Nicht mehr wählbar, nur als Anzeige-
     # Label fuer evtl. nicht zugeordnete Altprojekte (Migration deckt alle ab).
     Tool(

@@ -181,3 +181,22 @@ Rückfrage, Lauf bis fertig, Bericht, Download, Wechsel der Ansichten, axe).
 Offen: Startansicht, Ansicht „Dokument“ auch für Word und Formulare (dann „Quickinfos“ als
 dritte Ansicht), Knopf „Komplett barrierefrei machen“ (Kette Tagging → Alt-Texte → Quickinfos),
 Ablage-Eintrag nach dem Tagging, Namen der Ansichten (Steve klärt mit Michael).
+
+## Station „Quickinfos“ und Werkzeugliste nach Dateiart (22.09.2026, Steves Go)
+
+- **Werkzeugliste** (`backend/tools.py`): „PDF-Dokumente“ (Stationen Dokument, Alt-Texte, Quickinfos),
+  „Word-Dokumente“, „Webseiten“, „Grafiken“. Die Kennung `formular` bleibt gültig (alte Projekte,
+  API), ist aber nicht mehr im Anlege-Menü (`sichtbar=False`); der Platzhalter „Barrierefreie PDFs
+  erstellen“ (`pdf-a11y`) entfällt. Namen sind Anzeigetexte und jederzeit änderbar.
+- **PDF-Projekt mit Formularfeldern:** Beim Upload liest `_extract_document` nach den Bildern
+  zusätzlich die Felder (`formular_api.felder_fuer_dokument_extrahieren`, nur Werkzeug `pdf`, nur
+  wenn `validiere_formular` Felder meldet). Ein Fehler dort löscht nichts; es gibt dann nur keine
+  Station. `documents.extraction_method` bleibt der Bild-Weg. `/api/projects/{id}` und
+  `dokument-ansicht` liefern `hat_felder` bzw. `felder` je Dokument; die Ansichts-Wahl zeigt
+  „Quickinfos“ nur bei `hat_felder > 0`, die Karte den Knopf „Quickinfos bearbeiten“.
+- **Quickinfo-Ansicht = formular.js** (`Formular.showProject`), unverändert in Form und Funktion;
+  die Formular-Endpunkte akzeptieren jetzt Projekte mit Werkzeug `pdf` (`_projekt_des_nutzers`).
+  Eigenständige Formular-Projekte (`pdfform`) laufen wie bisher ohne Ansichts-Wahl.
+- Offen: Gast-Prüfung der Quickinfos in PDF-Projekten (Freigabe öffnet heute die Alt-Text-Prüfung),
+  Chatbot-Werkzeugsatz je Ansicht (heute nach `project.tool`), Kette „Komplett barrierefrei machen“.
+- Tests: `tests/e2e/verify_pdf_quickinfos.py` (API), `tests/e2e/ui_pdf_quickinfos.py` (Klick).

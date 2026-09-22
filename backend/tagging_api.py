@@ -138,7 +138,7 @@ def _struktur(doc: dict) -> dict:
 
 
 _PROJEKT_FELDER = ("id", "name", "filename", "status", "tool", "project_type", "total_images", "processed_images",
-                   "alt_language", "use_context", "prompt_id", "created_at", "updated_at", "lauf_hinweis")
+                   "alt_language", "use_context", "prompt_id", "created_at", "updated_at", "lauf_hinweis", "letzte_ansicht")
 
 
 def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
@@ -151,12 +151,15 @@ def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
         eintrag = {k: d.get(k) for k in ("id", "doc_index", "original_filename", "display_name", "total_images",
                                           "extraction_method", "created_at", "hinweise")}
         eintrag["getaggt"] = (None if d.get("getaggt") is None else bool(d.get("getaggt")))
+        eintrag["felder"] = int(conn.execute("SELECT COUNT(*) FROM formularfelder WHERE document_id = ?", (d["id"],)).fetchone()[0] or 0)
         eintrag["seiten"] = _seiten(d)
         eintrag["struktur"] = _struktur(d)
         eintrag["tagging"] = stand(conn, project, d, user_id)
         aussen.append(eintrag)
+    projekt_aussen = {k: project.get(k) for k in _PROJEKT_FELDER}
+    projekt_aussen["hat_felder"] = sum(e["felder"] for e in aussen)
     return {
-        "project": {k: project.get(k) for k in _PROJEKT_FELDER},
+        "project": projekt_aussen,
         "documents": aussen,
         "ausgaben_anzahl": (_d.ausgaben_anzahl(project["id"]) if _d.ausgaben_anzahl else 0),
     }

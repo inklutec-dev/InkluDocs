@@ -71,7 +71,7 @@ with sync_playwright() as p:
 
     ziel_projekt = feld = None
     for pid, pname in projekte:
-        page.goto("%s/app?projekt=%s" % (BASE, pid), wait_until="networkidle")
+        page.goto("%s/app?projekt=%s&ansicht=alttexte" % (BASE, pid), wait_until="networkidle")
         page.wait_for_timeout(2500)
         page.evaluate("document.querySelectorAll('main details').forEach(d => d.open = true)")
         page.wait_for_timeout(1200)

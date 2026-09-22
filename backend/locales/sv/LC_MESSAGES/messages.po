@@ -6857,3 +6857,27 @@ msgstr "{n} bilder hittade, {u} alt-texter överförda."
 #: PDF-Tagging Ansicht Dokument (22.09.2026)
 msgid "Dokumente ({n})"
 msgstr "Dokument ({n})"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Quickinfos"
+msgstr "Snabbinfo"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Ansicht Quickinfos geöffnet."
+msgstr "Vyn Snabbinfo öppnad."
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Quickinfos bearbeiten"
+msgstr "Redigera snabbinfo"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Formularfelder"
+msgstr "Formulärfält"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "{n} Felder"
+msgstr "{n} fält"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."
+msgstr "Välj ett PDF-formulär eller dra det hit. Fälten läses och får snabbinfo; bilder får alt-texter."

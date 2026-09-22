@@ -7295,3 +7295,27 @@ msgstr "{n} images trouvées, {u} textes alternatifs repris."
 #: PDF-Tagging Ansicht Dokument (22.09.2026)
 msgid "Dokumente ({n})"
 msgstr "Documents ({n})"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Quickinfos"
+msgstr "Info-bulles"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Ansicht Quickinfos geöffnet."
+msgstr "Vue Info-bulles ouverte."
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Quickinfos bearbeiten"
+msgstr "Modifier les info-bulles"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Formularfelder"
+msgstr "Champs de formulaire"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "{n} Felder"
+msgstr "{n} champs"
+
+#: Station Quickinfos im PDF-Projekt (22.09.2026)
+msgid "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."
+msgstr "Choisissez un formulaire PDF ou déposez-le ici. Les champs sont lus et reçoivent des info-bulles ; les images reçoivent des textes alternatifs."

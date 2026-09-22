@@ -37,7 +37,7 @@ with sync_playwright() as p:
         if not (i.get("alt_text_edited") or i.get("alt_text")) and i.get("original_alt") != "dekorativ":
             pg.request.post(B + f"/api/images/{i['id']}/alt-text", data={"alt_text": f"Testtext für Bild {i['id']} (fiktiv, E2E)"})
     pg.request.delete(B + f"/api/projects/{PID}/chat")
-    pg.goto(B + f"/app?projekt={PID}"); pg.wait_for_timeout(3500)
+    pg.goto(B + f"/app?projekt={PID}&ansicht=alttexte"); pg.wait_for_timeout(3500)
     vorher = int(re.search(r"\((\d+)\)", pg.locator("#ausgabenTab").inner_text()).group(1))
     pg.locator("#inkluagentToggle").click(); pg.wait_for_timeout(1200)
     print("== A. Umwandlung im Chat ==")

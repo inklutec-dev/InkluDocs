@@ -4531,6 +4531,34 @@ async def set_prompt_setting(project_id: int, request: Request, user: dict = Dep
     return {"ok": True, "prompt_id": prompt_id}
 
 
+# ANSICHTEN (22.09.2026, Steve): Der Wechsel ueber die Ansichts-Wahl merkt sich die Ansicht am Projekt;
+# beim naechsten Oeffnen ohne ?ansicht startet das Projekt dort (auf jedem Geraet). Erlaubte Werte je
+# Dateityp wie in app.html aktuelleAnsicht(): PDF dokument|alttexte, Word alttexte|uebersetzung.
+ANSICHTEN_JE_TYP = {"pdf": ("dokument", "alttexte", "quickinfos"), "docx": ("alttexte", "uebersetzung")}
+
+
+@app.post("/api/projects/{project_id}/ansicht")
+async def set_ansicht(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    ansicht = str((body or {}).get("ansicht") or "").strip().lower()
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT id, project_type FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        erlaubt = ANSICHTEN_JE_TYP.get(row["project_type"] or "", ())
+        if ansicht not in erlaubt:
+            raise HTTPException(status_code=400, detail="Unbekannte Ansicht")
+        conn.execute("UPDATE projects SET letzte_ansicht = ? WHERE id = ?", (ansicht, project_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "ansicht": ansicht}
+
+
 @app.get("/api/tools")
 async def list_tools(user: dict = Depends(get_current_user)):
     """Liefert die im Dashboard angebotenen Werkzeuge (Quelle: tools.py)."""
@@ -4873,6 +4901,25 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
         conn.close()
         return
 
+    # Station „Quickinfos“ (22.09.2026): Hat die PDF Formularfelder, werden sie zusaetzlich gelesen
+    # (formular_api.felder_fuer_dokument_extrahieren). Kein Feld, kein Formular oder ein Fehler: kein Befund,
+    # das Dokument bleibt mit seinen Bildern; die Ansicht „Quickinfos“ erscheint dann nicht.
+    felder_anzahl = 0
+    if art == "pdf":
+        try:
+            conn0 = get_db()
+            try:
+                tool0 = (conn0.execute("SELECT tool FROM projects WHERE id = ?", (project_id,)).fetchone() or {"tool": ""})["tool"]
+            finally:
+                conn0.close()
+            if tool0 == "pdf" and validiere_formular(file_path) > 0:
+                felder_anzahl = await loop.run_in_executor(
+                    None, formular_api.felder_fuer_dokument_extrahieren, project_id, document_id, doc_index, file_path, user_id)
+        except FormularFehler:
+            felder_anzahl = 0
+        except Exception as e:  # noqa: BLE001
+            print(f"[upload] Feldextraktion uebersprungen (Projekt {project_id}, Dokument {document_id}): {e}")
+            felder_anzahl = 0
     conn = get_db()
     extraction_method = _bilder_uebernehmen(conn, project_id, document_id, images, art, file_path, hinweise)
     # Projekt-Summe = Summe ueber alle Dokumente. extraction_method des Projekts
@@ -5942,6 +5989,8 @@ async def get_project(project_id: int, user: dict = Depends(get_current_user)):
     # teilen sich projects.status und reagieren nur auf ihren eigenen Lauf (Review 2, Befund 3).
     proj_dict["lauf_art"] = uebersetzung_api.lauf_art(proj_dict)
     _is_pdf = (proj_dict.get("tool") == "pdf" or proj_dict.get("project_type") == "pdf")
+    # Ansichts-Wahl (22.09.2026): „Quickinfos“ nur, wenn eine Datei des Projekts Formularfelder hat.
+    proj_dict["hat_felder"] = _felder_anzahl(project_id) if _is_pdf else 0
     # Review-Status nur zeigen, wenn das Projekt ueberhaupt zur Pruefung freigegeben
     # wurde (Steve 20.06.) -> Solo-Arbeit ohne Einladung bleibt frei von Pruef-Badges.
     # share_roles traegt dieselbe Information pro Rolle; der bool bleibt fuer
@@ -7496,6 +7545,17 @@ def _pdfix_lfnr_je_dokument(images: list) -> dict:
     geordnet = sorted((img for img in images if img.get("image_index")),
                       key=lambda i: int(i["image_index"]))
     return {img["id"]: pos for pos, img in enumerate(geordnet, start=1)}
+
+
+def _felder_anzahl(project_id: int) -> int:
+    """Anzahl Formularfelder eines Projekts (Station „Quickinfos“ in PDF-Projekten, 22.09.2026)."""
+    conn = get_db()
+    try:
+        return int(conn.execute("SELECT COUNT(*) FROM formularfelder WHERE project_id = ?", (project_id,)).fetchone()[0] or 0)
+    except Exception:  # noqa: BLE001
+        return 0
+    finally:
+        conn.close()
 
 
 def _dokument_getaggt(doc: dict) -> bool:

@@ -83,7 +83,7 @@ with sync_playwright() as p:
     check("Anmeldung", "/dashboard" in page.url)
 
     print("\n== Projekt %d öffnen ==" % PROJEKT)
-    page.goto("%s/app?projekt=%d" % (BASE, PROJEKT), wait_until="networkidle")
+    page.goto("%s/app?projekt=%d&ansicht=alttexte" % (BASE, PROJEKT), wait_until="networkidle")
     page.wait_for_timeout(2500)
     # Dokument- und Seiten-Klappen öffnen, sonst sind die Felder unsichtbar.
     page.evaluate("document.querySelectorAll('main details').forEach(d => d.open = true)")

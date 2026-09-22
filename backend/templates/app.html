@@ -210,12 +210,22 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function istPdfDateityp(project) {
         return !!(project && project.tool === 'pdf' && project.project_type === 'pdf');
     }
-    // Ansicht aus der Adresse; Vorgabe je Eingang: „uebersetzen" startet in der Uebersetzung, „word" bei den Alt-Texten.
-    // PDF: „dokument“ (frontend/dokument.js) oder „alttexte“; Start bleibt vorerst „alttexte“ (Entscheidung Steve/Michael offen).
+    // Ansicht: 1. aus der Adresse (?ansicht=), 2. die am Projekt gemerkte (projects.letzte_ansicht, gesetzt bei
+    // jedem Wechsel ueber die Ansichts-Wahl), 3. Startansicht des Dateityps — PDF „dokument“ (Steve 22.09.2026),
+    // Word „alttexte“, Eingang „uebersetzen“ startet in der Uebersetzung.
+    function ansichtenFuer(project) {
+        // Quickinfos (22.09.2026): nur, wenn eine Datei des Projekts Formularfelder hat (project.hat_felder).
+        if (istPdfDateityp(project)) return project.hat_felder ? ['dokument', 'alttexte', 'quickinfos'] : ['dokument', 'alttexte'];
+        if (istWordDateityp(project)) return ['alttexte', 'uebersetzung'];
+        return ['alttexte'];
+    }
     function aktuelleAnsicht(project) {
+        const erlaubt = ansichtenFuer(project);
         const a = new URLSearchParams(window.location.search).get('ansicht');
-        if (istPdfDateityp(project)) return (a === 'dokument' || a === 'alttexte') ? a : 'alttexte';
-        if (a === 'uebersetzung' || a === 'alttexte') return a;
+        if (a && erlaubt.includes(a)) return a;
+        const gemerkt = project && project.letzte_ansicht;
+        if (gemerkt && erlaubt.includes(gemerkt)) return gemerkt;
+        if (istPdfDateityp(project)) return 'dokument';
         return project && project.tool === 'uebersetzen' ? 'uebersetzung' : 'alttexte';
     }
     // Die Zeile „Ansicht" im Projektkopf: Ausklappliste wie „Sprache der Alt-Texte" plus Knopf „Oeffnen".
@@ -223,9 +233,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // jedem Schritt einen Seitenwechsel. Gleiche Funktion fuer beide Ansichten (uebersetzen.js ruft sie auch).
     function ansichtWahlHtml(project, aktuell) {
         if (!(istWordDateityp(project) || istPdfDateityp(project)) || window.GUEST_MODE) return '';
-        const optionen = istPdfDateityp(project)
-            ? [['dokument', t('Dokument')], ['alttexte', t('Alt-Texte')]]
-            : [['alttexte', t('Alt-Texte')], ['uebersetzung', t('Übersetzung')]];
+        const namen = { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos') };
+        const optionen = ansichtenFuer(project).map(k => [k, namen[k]]);
         return '<div class="ansicht-wahl" style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
             + '<label for="ansichtSelect" style="font-weight:600;">' + t('Ansicht') + '</label>'
             + '<select id="ansichtSelect" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">'
@@ -245,12 +254,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         url.searchParams.set('projekt', projectId);
         url.searchParams.set('ansicht', ziel);
         history.pushState({ projekt: projectId, ansicht: ziel }, '', url.toString());
+        // Gemerkte Ansicht am Projekt (22.09.2026): das naechste Oeffnen ohne ?ansicht startet hier.
+        if (currentProjectFuerAnsicht) currentProjectFuerAnsicht.letzte_ansicht = ziel;
+        fetch('/api/projects/' + projectId + '/ansicht', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ansicht: ziel }) }).catch(() => {});
         await showProject(projectId);
         // Fokus einheitlich auf die H1 der neuen Ansicht (Review 2, Befund 6), danach die Ansage —
         // sonst landet VoiceOver nach dem Wechsel auf „Alt-Texte“ auf dem Seitenanfang.
         const h1 = document.getElementById('projectName');
         if (h1) h1.focus();
-        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : t('Ansicht Alt-Texte geöffnet.')));
+        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : t('Ansicht Alt-Texte geöffnet.'))));
     }
     window.wechsleAnsicht = wechsleAnsicht;
     let currentProjectFuerAnsicht = null;
@@ -294,6 +306,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         let tool = project.tool;
         if (tool === 'word' && aktuelleAnsicht(project) === 'uebersetzung') tool = 'uebersetzen';
         const inDokument = tool === 'pdf' && aktuelleAnsicht(project) === 'dokument';
+        const inQuickinfos = tool === 'pdf' && aktuelleAnsicht(project) === 'quickinfos';
         if (tool === 'pdf') {
             // Multi-Datei Phase 1 (08.06.2026, Steve): PDF hinzufügen-Knopf bleibt
             // immer sichtbar — analog zum URL-Feld beim Web-Werkzeug. Damit kann der
@@ -303,7 +316,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const heading = hasExisting ? t('Weitere PDF hinzufügen') : t('PDF hinzufügen');
             // Julia-Feedback 02.07.2026: maximale Dateigroesse direkt am Upload-Feld.
             const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
-            const hint = inDokument
+            const hint = inQuickinfos
+                ? t('Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte.') + sizeHint
+                : inDokument
                 ? (hasExisting
                     ? t('Du kannst jederzeit weitere PDF hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte bleiben erhalten.') + sizeHint
                     : t('Wähle ein PDF-Dokument oder ziehe es hierher. Danach kannst du es barrierefrei machen (Tagging) und Alt-Texte erzeugen.') + sizeHint)
@@ -524,10 +539,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     // Word: Ansage je Ansicht (Testumbau 18.09.2026) — in der Uebersetzungs-Ansicht geht es um Absaetze.
                     const inUebersetzung = data.project_type === 'docx' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'uebersetzung';
                     const inDokument = data.project_type === 'pdf' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'dokument';
+                    const inQuickinfos = data.project_type === 'pdf' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'quickinfos';
                     const wartetext = inUebersetzung
                         ? t('Die Word-Datei wird gelesen …')
                         : inDokument
                         ? t('Die PDF wird gelesen …')
+                        : inQuickinfos
+                        ? t('Das Formular wird verarbeitet – Felder werden gelesen …')
                         : data.project_type === 'docx'
                         ? t('Die Word-Datei wird verarbeitet – Bilder werden extrahiert …')
                         : (data.project_type === 'pdfform'
@@ -591,6 +609,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 } else if (data && data.project_type === 'pdf' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'dokument') {
                     // Ansicht „Dokument“ (22.09.2026): die Karte zeigt Seiten, Stand und Bilder selbst.
                     announce(data.appended ? t('Dokument hinzugefügt als Dokument {d}.', { d: data.doc_index }) : t('Dokument gelesen.'));
+                } else if (data && data.project_type === 'pdf' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'quickinfos') {
+                    announce(data.appended ? t('Formular hinzugefügt als Dokument {d}.', { d: data.doc_index }) : t('Formular gelesen.'));
                 } else if (data && data.project_type === 'pdfform') {
                     // Formular: Zahlen liest die Formular-Ansicht selbst aus (Felder statt Bilder).
                     announce(data.appended ? t('Formular hinzugefügt als Dokument {d}.', { d: data.doc_index }) : t('Formular gelesen.'));
@@ -701,6 +721,17 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const data = await res.json();
         const project = data.project;
         currentProjectFuerAnsicht = project;
+        // Die aufgeloeste Ansicht (Adresse -> gemerkt -> Start) in die Adresse schreiben, ohne neuen
+        // Verlaufseintrag: So fuehrt „Zurueck“ im Browser immer zur vorherigen Ansicht, auch wenn das Projekt
+        // inzwischen eine andere Ansicht gemerkt hat (22.09.2026).
+        if (!window.GUEST_MODE && project && ansichtenFuer(project).length > 1) {
+            const u = new URL(window.location.href);
+            const ziel = aktuelleAnsicht(project);
+            if (u.searchParams.get('projekt') === String(project.id) && u.searchParams.get('ansicht') !== ziel) {
+                u.searchParams.set('ansicht', ziel);
+                history.replaceState(history.state, '', u.toString());
+            }
+        }
         // QUICKINFO-WERKZEUG (27.08.2026): Formular-Projekte haben eine eigene
         // Ansicht (frontend/formular.js) — Felder statt Bilder. Gast-Ansicht seit
         // 28.08.2026: dieselbe Ansicht im Gast-Modus (Token statt Projekt-ID).
@@ -718,6 +749,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // PDF-Projekt, Ansicht „Dokument“ (22.09.2026): Drehscheibe fuer Tagging, Bericht, Download (frontend/dokument.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'dokument') {
             return Dokument.showProject(projectId);
+        }
+        // PDF-Projekt, Station „Quickinfos“ (22.09.2026): dieselbe Ansicht wie das Formular-Werkzeug (formular.js).
+        if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'quickinfos') {
+            return Formular.showProject(projectId);
         }
         const images = data.images;
         const documents = data.documents || [];

@@ -48,7 +48,7 @@ with sync_playwright() as p:
     seite.fill("input[type=password]", PW)
     seite.click("button[type=submit]")
     seite.wait_for_load_state("networkidle")
-    seite.goto(f"{B}/app?projekt={PID}", wait_until="networkidle")
+    seite.goto(f"{B}/app?projekt={PID}&ansicht=alttexte", wait_until="networkidle")
     seite.wait_for_timeout(2500)
     check("Bild-Ansicht geladen, keine Skriptfehler", not probleme, probleme[:3])
 

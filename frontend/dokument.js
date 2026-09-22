@@ -125,11 +125,13 @@
             +   '<dt>' + t('Sprache') + '</dt><dd>' + esc((d.struktur && d.struktur.lang) || t('nicht gesetzt')) + '</dd>'
             +   '<dt>' + t('Struktur') + '</dt><dd>' + esc(strukturText(d.struktur)) + '</dd>'
             +   '<dt>' + t('Bilder') + '</dt><dd>' + bilderZeile + '</dd>'
+            +   ((d.felder || 0) > 0 ? '<dt>' + t('Formularfelder') + '</dt><dd>' + t('{n} Felder', { n: d.felder }) + '</dd>' : '')
             + '</dl>'
             + (tg.modus === 'testmodus' && !tg.laeuft ? '<p class="feld-hinweis">' + t('Das Tagging läuft im Testmodus von PDFix, bis die Freischaltung in der Lizenz vorliegt.') + '</p>' : '')
             + '<div class="ausgabe-aktionen">'
             +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
             +   ((d.total_images || 0) > 0 ? '<button type="button" class="btn btn-secondary" onclick="Dokument.zurAnsicht(' + project.id + ', \'alttexte\')">' + t('Alt-Texte bearbeiten') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
+            +   ((d.felder || 0) > 0 ? '<button type="button" class="btn btn-secondary" onclick="Dokument.zurAnsicht(' + project.id + ', \'quickinfos\')">' + t('Quickinfos bearbeiten') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   (tg.status === 'fertig' && !tg.laeuft ? '<a class="btn btn-secondary" href="/api/projects/' + project.id + '/documents/' + d.id + '/tagging/datei">' + ico('download') + t('Getaggte PDF herunterladen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'

@@ -122,7 +122,7 @@ with sync_playwright() as p:
         return (Array.isArray(d) ? d : (d.projects || [])).map(p => p.id);
     }""")
     if projekte:
-        SEITEN[:] = [("/app?projekt=%d" % projekte[0], n) if p == "/app" else (p, n)
+        SEITEN[:] = [("/app?projekt=%d&ansicht=alttexte" % projekte[0], n) if p == "/app" else (p, n)
                      for p, n in SEITEN]
         print("Projektansicht wird mit Projekt %d geprueft" % projekte[0])
     else:

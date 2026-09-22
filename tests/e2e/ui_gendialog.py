@@ -79,7 +79,7 @@ with sync_playwright() as p:
     page.fill("#password", PW)
     page.click("button[type=submit]")
     page.wait_for_url("**/dashboard", timeout=20000)
-    page.goto("%s/app?projekt=%d" % (BASE, PROJEKT), wait_until="networkidle")
+    page.goto("%s/app?projekt=%d&ansicht=alttexte" % (BASE, PROJEKT), wait_until="networkidle")
     page.wait_for_timeout(2500)
 
     print("== A. Knopfnamen ==")
@@ -171,7 +171,7 @@ with sync_playwright() as p:
     check("Escape schliesst den Dialog", dlg.evaluate("d => d.open") is False)
 
     print("== F. Word-Projekt: Knopf ohne Beta (seit 09.09.2026), Gesamtzahl im Kostensatz ==")
-    page.goto("%s/app?projekt=%d" % (BASE, WORD), wait_until="networkidle")
+    page.goto("%s/app?projekt=%d&ansicht=alttexte" % (BASE, WORD), wait_until="networkidle")
     page.wait_for_timeout(2500)
     namen_w = [x.inner_text().strip().split("\n")[0]
                for x in page.locator("button").all() if x.is_visible()]
@@ -212,7 +212,7 @@ with sync_playwright() as p:
         print("     (kein Generieren-Knopf im Word-Projekt %d — Kostensatz-Pruefung uebersprungen)" % WORD)
 
     print("== G. Formular-Projekt: Quickinfos generieren mit derselben Rueckfrage ==")
-    page.goto("%s/app?projekt=%d" % (BASE, FORMULAR), wait_until="networkidle")
+    page.goto("%s/app?projekt=%d&ansicht=alttexte" % (BASE, FORMULAR), wait_until="networkidle")
     page.wait_for_timeout(2500)
     namen_f = [x.inner_text().strip().split("\n")[0]
                for x in page.locator("button").all() if x.is_visible()]

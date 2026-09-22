@@ -844,6 +844,9 @@ def _migrate_columns(conn):
         ("documents", "tagging_status", "ALTER TABLE documents ADD COLUMN tagging_status TEXT DEFAULT ''"),
         ("documents", "tagging_bericht", "ALTER TABLE documents ADD COLUMN tagging_bericht TEXT DEFAULT ''"),
         ("documents", "roh_path", "ALTER TABLE documents ADD COLUMN roh_path TEXT DEFAULT ''"),
+        # ANSICHTEN (22.09.2026, Steve): zuletzt ueber die Ansichts-Wahl geoeffnete Ansicht je Projekt
+        # ('' = Startansicht des Dateityps: PDF „dokument“, Word „alttexte“ bzw. „uebersetzung“).
+        ("projects", "letzte_ansicht", "ALTER TABLE projects ADD COLUMN letzte_ansicht TEXT DEFAULT ''"),
         # Public API v1 Dokumente (17.09.2026): welcher Schluessel hat das Projekt angelegt (Verbrauch je Schluessel).
         ("projects", "api_key_id", "ALTER TABLE projects ADD COLUMN api_key_id INTEGER"),
         # QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): Ergebnis des Feld-Passes je Feld —

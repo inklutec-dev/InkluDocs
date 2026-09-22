@@ -517,6 +517,10 @@
                 +     '<label for="ownPromptSelect" style="font-weight:600;">' + t('Gespeicherte Prompts') + '</label>'
                 +     '<select id="ownPromptSelect" onchange="setPromptSetting(' + project.id + ', this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;"><option value="">' + t('Kein eigener Prompt') + '</option></select></div>'
                 + '</div>' : '')
+            
+            // Ansichts-Wahl (22.09.2026): bei PDF-Projekten die Stationen Dokument / Alt-Texte / Quickinfos;
+            // fuer eigenstaendige Formular-Projekte (pdfform) liefert ansichtWahlHtml() leer.
+            + (!gast() && typeof ansichtWahlHtml === 'function' ? '<div class="card-actions">' + ansichtWahlHtml(project, 'quickinfos') + '</div>' : '')
             + '</div>';
     }
 
