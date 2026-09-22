@@ -45,7 +45,7 @@
   }
   // Art der Ausgabe in der Sprache der Oberflaeche (der Server liefert nur den Schluessel).
   function artLabel(a) {
-    if (a.art === 'pdfua') return t('Barrierefreie PDF');
+    if (a.art === 'pdfua' || a.art === 'pdf') return t('Barrierefreie PDF');
     if (a.art === 'docx') return t('Word mit Alt-Texten');
     return a.art_label || a.art;
   }

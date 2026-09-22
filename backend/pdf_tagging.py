@@ -231,6 +231,11 @@ def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str) -> dict:
         behalten.append(aktion)
     if not sprache_gesetzt:
         raise TaggingFehler("Die Voreinstellung enthaelt keinen Sprachschritt")
+    # Web-Links (22.09.2026, aus der Befehlsliste des SDK): Adressen und Mailadressen im Text werden
+    # klickbare, getaggte Links — sonst liest ein Screenreader nur die Zeichenkette.
+    behalten.append({"name": "create_web_links", "title": "Create Web Links (InkluDocs)", "params": [
+        {"name": "url_regex", "value": "^(((http(s)?|ftp):\\/\\/)|(mailto:)|www.)[^\\s\\/$.?#].[^\\s]*"},
+        {"name": "url_prefix", "value": ""}, {"name": "url", "value": ""}]})
     konfig["actions"] = behalten
     konfig["title"] = "Make Accessible (InkluDocs)"
     with open(ziel_pfad, "w", encoding="utf-8") as f:

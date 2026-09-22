@@ -216,3 +216,22 @@ Laufmeldung); nach einem Neustart gilt eine laufende Kette als abgebrochen. Die 
 nach dem Tagging neu bestimmt (Struktur-Extraktion), die Rückfrage sagt das. Test:
 `tests/e2e/verify_kette.py` (echte Modellaufrufe). Offen: Ablage-Eintrag am Ende, Zusammenfassung
 mehrsprachig (heute deutsch aus dem Server).
+
+## Fertige PDF und Ablage (Stufe 1, 22.09.2026)
+
+- **Ein Export für alles:** `main._build_pdf_for_document` schreibt nach den Alt-Texten auch die
+  Quickinfos des Dokuments in dieselbe Datei (`_quickinfos_in_export`, Schreiber
+  `formular_export.write_quickinfos_to_pdf`); danach wie bisher Sprache/Titel/Abschluss und Abnahme.
+  Der PDF-Export („Als PDF“ in der Alt-Text-Ansicht, Knopf „Fertige PDF herunterladen“ auf der
+  Karte der Dokument-Ansicht) liefert damit Struktur, Alt-Texte und Quickinfos in einer PDF.
+- **Ablage:** Jeder PDF-Export (Einzeldokument, im ZIP je Dokument) legt einen Ablage-Eintrag an
+  (`_pdf_in_ablage`, `art = pdf`): Kopie im Ablage-Ordner, PDF/UA-Prüfung über den Konverter
+  (Ausfall = Hinweis), Zusammenfassung, Vorschaubild, Preis am ersten Eintrag. Antwort-Header
+  `X-Ausgabe-Id`. Der rohe Tagging-Download (`…/tagging/datei`) bleibt als Endpunkt, ist aber
+  nicht mehr auf der Karte.
+- **Tagging-Konfiguration:** zusätzlich „Create Web Links“ (Adressen im Text werden Links).
+  Getestet ohne Wirkung: „Überschriften-Ebenen aus dem Stil“ und „sequential headings“ ändern
+  nichts am Fehler „nummerierte Überschrift als Liste“ (die Elemente sind schon als Liste getaggt);
+  das bleibt Aufgabe der Korrektur (Stufe 2) oder von Docling.
+- Tests: `tests/e2e/verify_export_komplett.py`, Klicktest `ui_dokument.py` (echter Download,
+  Statuszeile, Ablage-Eintrag).

@@ -132,7 +132,7 @@
             +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
             +   ((d.total_images || 0) > 0 ? '<button type="button" class="btn btn-secondary" onclick="Dokument.zurAnsicht(' + project.id + ', \'alttexte\')">' + t('Alt-Texte bearbeiten') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   ((d.felder || 0) > 0 ? '<button type="button" class="btn btn-secondary" onclick="Dokument.zurAnsicht(' + project.id + ', \'quickinfos\')">' + t('Quickinfos bearbeiten') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
-            +   (tg.status === 'fertig' && !tg.laeuft ? '<a class="btn btn-secondary" href="/api/projects/' + project.id + '/documents/' + d.id + '/tagging/datei">' + ico('download') + t('Getaggte PDF herunterladen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
+            +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="Dokument.exportieren(' + project.id + ', ' + d.id + ')">' + ico('download') + t('Fertige PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</div>'
@@ -366,6 +366,54 @@
         if (ol) { const reihe = ['tagging', 'alttexte', 'quickinfos']; ol.innerHTML = reihe.map(r => { const st = (k.schritte || {})[r] || {}; return '<li>' + esc(SCHRITT_NAMEN[r]()) + ': ' + esc((SCHRITT_STATUS[st.status] || SCHRITT_STATUS.offen)()) + '</li>'; }).join(''); }
     }
 
+    // ─── Fertige PDF herunterladen (22.09.2026): derselbe Export wie „Als PDF“ in der Alt-Text-Ansicht
+    // (Struktur + Alt-Texte + Quickinfos), die Datei landet zusaetzlich in der Ablage. ───
+    async function exportieren(projectId, docId) {
+        const btn = document.getElementById('dok_export_' + docId);
+        const out = document.getElementById('dok_status_' + docId);
+        if (btn) btn.disabled = true;
+        if (out) out.textContent = t('Wird exportiert...');
+        announce(t('Export läuft …'));
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document_id: docId }) });
+            if (res.status === 402) {
+                const e = await res.json().catch(() => ({}));
+                if (out) out.textContent = '';
+                if (typeof zeigeCreditsMeldung === 'function') zeigeCreditsMeldung(e.detail); else announce((e.detail && e.detail.text) || t('Dafür reicht das Guthaben nicht.'));
+                return;
+            }
+            if (!res.ok) {
+                const e = await res.json().catch(() => ({}));
+                const m = (e.detail && (e.detail.text || e.detail)) || t('Fehler beim Export.');
+                if (out) out.textContent = typeof m === 'string' ? m : t('Fehler beim Export.');
+                announce(out ? out.textContent : '');
+                return;
+            }
+            const blob = await res.blob();
+            const cd = res.headers.get('Content-Disposition') || '';
+            const mStar = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+            const m = mStar || /filename="?([^";]+)"?/i.exec(cd);
+            let name = null;
+            if (m) { try { name = decodeURIComponent(m[1]); } catch (e) { name = m[1]; } }
+            name = name || 'inkludocs.pdf';
+            downloadBlob(blob, name);
+            const credits = res.headers.get('X-Export-Credits');
+            let ansage = t('Heruntergeladen: „{name}“.', { name: name }) + ' ' + t('Die Datei liegt auch in deiner Ablage.');
+            if (credits) ansage += ' ' + t('{c} Credits verbraucht.', { c: credits });
+            const warn = res.headers.get('X-Export-Warnings');
+            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
+            announce(ansage);
+            await showProject(projectId, true);   // Ablage-Zaehler im Kopf
+            const o2 = document.getElementById('dok_status_' + docId);
+            if (o2) { o2.textContent = ansage; o2.setAttribute('tabindex', '-1'); o2.focus(); }
+        } catch (e) {
+            if (out) out.textContent = t('Verbindungsfehler.');
+        } finally {
+            const b2 = document.getElementById('dok_export_' + docId);
+            if (b2) b2.disabled = false;
+        }
+    }
+
     // ─── Ansicht wechseln (Knopf „Alt-Texte bearbeiten“) ───
     function zurAnsicht(projectId, ziel) {
         const sel = document.getElementById('ansichtSelect');
@@ -474,5 +522,5 @@
     }
 
     window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, zurAnsicht, meldungSchliessen, pollStoppen,
-                        ketteOeffnen, ketteSchliessen, ketteStarten };
+                        ketteOeffnen, ketteSchliessen, ketteStarten, exportieren };
 })();

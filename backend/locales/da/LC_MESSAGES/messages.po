@@ -7123,3 +7123,19 @@ msgstr "ingen formularfelter i dette projekt"
 #: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
 msgid "nicht verfügbar: {grund}"
 msgstr "ikke tilgængelig: {grund}"
+
+#: Fertige PDF + Ablage (22.09.2026)
+msgid "Fertige PDF herunterladen"
+msgstr "Download færdig PDF"
+
+#: Fertige PDF + Ablage (22.09.2026)
+msgid "mit Alt-Texten und Quickinfos, kommt in die Ablage"
+msgstr "med alt-tekster og quickinfos, gemmes i arkivet"
+
+#: Fertige PDF + Ablage (22.09.2026)
+msgid "Die Datei liegt auch in deiner Ablage."
+msgstr "Filen ligger også i dit arkiv."
+
+#: Fertige PDF + Ablage (22.09.2026)
+msgid "{c} Credits verbraucht."
+msgstr "{c} credits brugt."

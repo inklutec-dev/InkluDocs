@@ -104,7 +104,7 @@ with sync_playwright() as p:
     check("Vorschaubild mit Alt-Text", pg.locator("section.dok-karte img.ausgabe-vorschau").first.get_attribute("alt").startswith("Vorschau der ersten Seite"))
     check("Knopf „Barrierefrei machen“ mit Seiten und Credits im Namen", pg.locator("button[id^=dok_tag_]").count() == 1 and "2 Seiten, 2 Credits" in pg.locator("button[id^=dok_tag_]").first.inner_text())
     check("Knoepfe Alt-Texte bearbeiten / Umbenennen / Löschen", pg.locator("section.dok-karte button:has-text('Alt-Texte bearbeiten')").count() == 1 and pg.locator("section.dok-karte button:has-text('Umbenennen')").count() == 1 and pg.locator("section.dok-karte button:has-text('Löschen')").count() == 1)
-    check("Noch kein Download-Link (ungetaggt)", pg.locator("section.dok-karte a:has-text('Getaggte PDF herunterladen')").count() == 0)
+    check("Noch kein Knopf „Fertige PDF herunterladen“ (ungetaggt)", pg.locator("section.dok-karte button:has-text('Fertige PDF herunterladen')").count() == 0)
     axe(pg, "Ansicht Dokument vor dem Lauf")
 
     print("== B. Rueckfrage und Lauf ==")
@@ -136,17 +136,28 @@ with sync_playwright() as p:
     h3 = pg.locator("section.dok-karte h3").first.inner_text()
     check("Badge jetzt „Getaggt …“", "Getaggt" in h3, h3)
     check("Knopf heisst jetzt „Neu taggen“", pg.locator("button[id^=dok_tag_]").first.inner_text().startswith("Neu taggen"))
-    check("Download-Link „Getaggte PDF herunterladen“", pg.locator("section.dok-karte a:has-text('Getaggte PDF herunterladen')").count() == 1)
+    check("Knopf „Fertige PDF herunterladen“ nach dem Tagging", pg.locator("section.dok-karte button:has-text('Fertige PDF herunterladen')").count() == 1)
     pg.click("details.dok-bericht > summary")
     pg.wait_for_timeout(300)
     ber = pg.locator("details.dok-bericht").first.inner_text()
     check("Bericht: Sprache de-DE, Struktur, PDF/UA-Prüfung", "de-DE" in ber and "Struktur" in ber and "PDF/UA" in ber, ber[:300])
     dl = pg.locator("section.dok-karte dl.dok-meta").first.inner_text()
     check("Beschreibungsliste nach dem Lauf: Sprache de-DE, 1 Bild", "de-DE" in dl and "1 Bilder" in dl, dl)
-    href = pg.locator("section.dok-karte a:has-text('Getaggte PDF herunterladen')").first.get_attribute("href")
-    r = pg.request.get(B + href)
-    check("Download liefert PDF", r.ok and r.body()[:5] == b"%PDF-", r.status)
-    pg.click("#dkLaufMeldung button")
+    with pg.expect_download(timeout=60000) as dl_info:
+        pg.click("section.dok-karte button:has-text('Fertige PDF herunterladen')")
+    dl = dl_info.value
+    pfad = dl.path()
+    check("Fertige PDF heruntergeladen (Datei beginnt mit %PDF)", pfad is not None and open(pfad, "rb").read(5) == b"%PDF-", dl.suggested_filename)
+    pg.wait_for_timeout(2500)
+    st = pg.locator("output.dok-status").first.inner_text()
+    check("Statuszeile nennt Download und Ablage", "Heruntergeladen" in st and "Ablage" in st, st)
+    check("Ablage-Knopf im Kopf zeigt einen Eintrag", "Ablage (1)" in (pg.locator("#ausgabenTab").inner_text() if pg.locator("#ausgabenTab").count() else ""), pg.locator("#ausgabenTab").count())
+    r = pg.request.get(B + f"/api/ausgaben?projekt={pid}")
+    eintraege = r.json().get("ausgaben", []) if r.ok else []
+    check("Ablage-Eintrag art pdf mit Datei und Bericht", len(eintraege) == 1 and eintraege[0].get("art") == "pdf" and eintraege[0].get("datei_verfuegbar") is True, eintraege[:1])
+    # Nach dem Export wurde die Ansicht neu gezeichnet; die Laufmeldung des Taggings ist dann schon zu.
+    if pg.locator("#dkLaufMeldung:not([hidden]) button").count():
+        pg.click("#dkLaufMeldung button")
     axe(pg, "Ansicht Dokument nach dem Lauf")
 
     print("== C. Wechsel zur Ansicht Alt-Texte und zurueck ==")

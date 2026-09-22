@@ -7431,3 +7431,19 @@ msgstr "no hay campos de formulario en este proyecto"
 #: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
 msgid "nicht verfügbar: {grund}"
 msgstr "no disponible: {grund}"
+
+#: Fertige PDF + Ablage (22.09.2026)
+msgid "Fertige PDF herunterladen"
+msgstr "Descargar PDF final"
+
+#: Fertige PDF + Ablage (22.09.2026)
+msgid "mit Alt-Texten und Quickinfos, kommt in die Ablage"
+msgstr "con textos alternativos e información rápida, se guarda en el archivo"
+
+#: Fertige PDF + Ablage (22.09.2026)
+msgid "Die Datei liegt auch in deiner Ablage."
+msgstr "El archivo también está en tu archivo."
+
+#: Fertige PDF + Ablage (22.09.2026)
+msgid "{c} Credits verbraucht."
+msgstr "{c} créditos consumidos."

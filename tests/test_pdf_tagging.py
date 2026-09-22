@@ -60,8 +60,9 @@ class KonfigTest(unittest.TestCase):
             info = pdf_tagging.konfig_erzeugen("de-DE", True, ziel)
             k = json.load(open(ziel, encoding="utf-8"))
         namen = [a["name"] for a in k["actions"]]
-        # 4x Set Alt (Figure/Formula) + 1x Decorative-Rueckfall fuer Anmerkungen entfallen, Form bleibt
-        self.assertEqual(info["schritte"], 37 - 5)
+        # 4x Set Alt (Figure/Formula) + 1x Decorative-Rueckfall fuer Anmerkungen entfallen, Form bleibt; + Web-Links
+        self.assertEqual(info["schritte"], 37 - 5 + 1)
+        self.assertEqual(k["actions"][-1]["name"], "create_web_links")
         self.assertEqual(len(info["entfernt"]), 5)
         set_alt = [a for a in k["actions"] if a["name"] == "set_alt"]
         self.assertEqual(len(set_alt), 1)

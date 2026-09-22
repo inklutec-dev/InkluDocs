@@ -7631,6 +7631,59 @@ def _ungetaggte_pruefen(units: list) -> None:
         raise HTTPException(status_code=422, detail=f"{UNGETAGGT_HINWEIS} Betroffen: {namen}.")
 
 
+def _quickinfos_in_export(doc: dict, output_path: str, creator: Optional[str]) -> dict:
+    """Quickinfos des Dokuments (formularfelder) in die eben gebaute Export-PDF schreiben — derselbe
+    Schreiber wie beim Quickinfo-Export (formular_export.write_quickinfos_to_pdf). Kein Feld mit Text:
+    nichts zu tun. Rueckgabe: {"geschrieben": n, "warnungen": [...]}."""
+    conn = get_db()
+    try:
+        felder = [dict(r) for r in conn.execute("SELECT anker, quickinfo FROM formularfelder WHERE document_id = ?",
+                                                (doc.get("id"),)).fetchall()]
+    finally:
+        conn.close()
+    qi = {f["anker"]: (f["quickinfo"] or "") for f in felder if (f.get("quickinfo") or "").strip()}
+    if not qi:
+        return {"geschrieben": 0}
+    import formular_export
+    tmp = output_path + ".qi.pdf"
+    erg = formular_export.write_quickinfos_to_pdf(output_path, tmp, qi, creator=creator)
+    os.replace(tmp, output_path)
+    return {"geschrieben": int(erg.geschrieben), "warnungen": list(erg.warnungen or [])}
+
+
+def _pdf_in_ablage(user_id: int, project: dict, unit: dict, quelle: str, dateiname: str, preis: int, ausloeser: str) -> Optional[int]:
+    """Ablage-Eintrag fuer eine exportierte, getaggte PDF (22.09.2026, Steve: „dann wird sie fertig abgelegt“):
+    Kopie in den Ablage-Ordner, PDF/UA-Pruefung ueber den Konverter (Ausfall = Hinweis, kein Fehler),
+    Eintrag mit Bericht und Vorschaubild. Scheitert das, bleibt der Download unberuehrt."""
+    try:
+        token = _secrets.token_hex(12)
+        ziel = os.path.join(_ablage_dir(user_id), f"pdf_{token}.pdf")
+        shutil.copyfile(quelle, ziel)
+        with open(ziel, "rb") as f:
+            data = f.read()
+        pruefung = None
+        try:
+            if pdfua_export.verfuegbar():
+                pruefung = pdfua_export.klartext(pdfua_export.pruefe(data))
+        except Exception as e:  # noqa: BLE001
+            log.warning("PDF-Export: PDF/UA-Pruefung fuer die Ablage nicht moeglich: %s", e)
+        if pruefung is None:
+            pruefung = {"bestanden": False, "profil": "PDF/UA-1", "regeln_fehlgeschlagen": 0, "punkte": [], "nicht_geprueft": True}
+            zusammenfassung = "Die PDF ist fertig. Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar)."
+        else:
+            zusammenfassung = pdfua_export.zusammenfassung(pruefung)
+        ergebnisse = [{"dokument": _doc_label(unit["doc"]), "pruefung": pruefung, "zusammenfassung": zusammenfassung, "hoerprobe": []}]
+        try:
+            doc_id = int(unit["doc"]["id"])
+        except (KeyError, TypeError, ValueError):
+            doc_id = None
+        return _ausgabe_anlegen(user_id, project, doc_id, ausloeser, dateiname, ziel, "application/pdf", token, preis,
+                                bool(pruefung.get("bestanden")), zusammenfassung, ergebnisse, data, art="pdf")
+    except Exception as e:  # noqa: BLE001
+        log.warning("PDF-Export: Ablage-Eintrag nicht angelegt: %s", e)
+        return None
+
+
 def _build_pdf_for_document(unit: dict, output_dir: str,
                             custom_title: Optional[str] = None,
                             creator: Optional[str] = None) -> tuple[str, dict]:
@@ -7717,6 +7770,14 @@ def _build_pdf_for_document(unit: dict, output_dir: str,
             warnings = result.get("warnings") or []
             if warnings:
                 info["warnings"] = warnings
+
+    # Quickinfos (22.09.2026, Station „Quickinfos“ im PDF-Projekt): Hat das Dokument Formularfelder mit
+    # Quickinfo, kommen sie in DIESELBE Datei — eine fertige PDF mit Struktur, Alt-Texten und Quickinfos.
+    try:
+        info["quickinfos"] = _quickinfos_in_export(doc, output_path, creator)
+    except Exception as e:  # noqa: BLE001 — Quickinfos duerfen den Alt-Text-Export nie scheitern lassen
+        print(f"WARNUNG: Quickinfos im Export nicht geschrieben ({output_path}): {e}")
+        info.setdefault("warnings", []).append("Die Quickinfos konnten nicht in die PDF geschrieben werden.")
 
     # Gemeinsamer Abschluss fuer BEIDE Pfade (12.06.2026): Dokumentsprache,
     # Dokumenttitel (WCAG 3.1.1 / 2.4.2) und verwaiste /Alt-Altlasten der
@@ -7833,6 +7894,11 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             headers=headers,
         )
         billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
+        # Ablage (22.09.2026): die fertige PDF bleibt mit Bericht und Vorschau erhalten.
+        ausgabe_id = await asyncio.get_running_loop().run_in_executor(
+            None, _pdf_in_ablage, user["id"], project, unit, output_path, f"inkludocs_{download_base}.pdf", _preis, "knopf")
+        if ausgabe_id:
+            response.headers["X-Ausgabe-Id"] = str(ausgabe_id)   # nach dem Bau der Antwort: direkt am Response
         return response
 
     # Alle Dokumente -> ZIP.
@@ -7849,6 +7915,9 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             out_path, info = _build_pdf_for_document(unit, output_dir, creator=_creator)
             inner = f"{pos:02d}_{_doc_label(unit['doc'])}.pdf"
             zf.write(out_path, arcname=inner)
+            # Ablage (22.09.2026): je Dokument ein Eintrag (der Preis steht am ersten, die anderen tragen 0).
+            await asyncio.get_running_loop().run_in_executor(
+                None, _pdf_in_ablage, user["id"], project, unit, out_path, inner, (_preis if pos == 1 else 0), "knopf")
             total_tagged += int(info.get("tagged", 0) or 0)
             total_images += int(info.get("total", 0) or 0)
             for w in info.get("warnings", []) or []:
@@ -8275,7 +8344,8 @@ async def export_pdfua_download(project_id: int, token: str, user: dict = Depend
 #   GET    /api/ausgaben/{id}/datei   -> die Datei
 #   GET    /api/ausgaben/{id}/vorschau-> PNG der ersten Seite
 #   DELETE /api/ausgaben/{id}         -> Eintrag samt Dateien loeschen
-_AUSGABE_ART_LABEL = {"pdfua": "Barrierefreie PDF (PDF/UA)", "docx": "Word mit Alt-Texten"}
+_AUSGABE_ART_LABEL = {"pdfua": "Barrierefreie PDF (PDF/UA)", "docx": "Word mit Alt-Texten",
+                      "pdf": "Barrierefreie PDF (getaggt, mit Alt-Texten und Quickinfos)"}
 # Word-Dateien in der Ablage? Steve 11.09. nachmittags: nein (Speicher bei vielen Kunden), nur umgewandelte
 # PDFs — aber als Schalter, falls Michael es doch will. on = Knopf „Als Word“ und Chatbot legen zusaetzlich
 # einen Ablage-Eintrag an.
