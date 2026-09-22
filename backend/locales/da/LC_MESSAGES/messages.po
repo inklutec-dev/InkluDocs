@@ -7327,3 +7327,99 @@ msgstr "uden quickinfo"
 #: Strukturlesung + Hoerprobe PDF (22.09.2026)
 msgid "Link"
 msgstr "Link"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit hoch"
+msgstr "Høj sikkerhed"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit mittel"
+msgstr "Middel sikkerhed"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit niedrig"
+msgstr "Lav sikkerhed"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Rolle"
+msgstr "Rolle"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Ebene"
+msgstr "Niveau"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Reihenfolge"
+msgstr "Rækkefølge"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Fehlt"
+msgstr "Mangler"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sonstiges"
+msgstr "Andet"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "{n} Befunde ({h} hoch, {m} mittel, {l} niedrig), {s} Seiten geprüft am {zeit}."
+msgstr "{n} fund ({h} høj, {m} middel, {l} lav), {s} sider kontrolleret {zeit}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Keine Befunde: Tags und Seitenbild passen zusammen ({s} Seiten geprüft am {zeit})."
+msgstr "Ingen fund: tags og sidebillede passer sammen ({s} sider kontrolleret {zeit})."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Vorschlag: {v}."
+msgstr "Forslag: {v}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Beleg: {b}"
+msgstr "Belæg: {b}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung ändert nichts an der Datei. Sie ersetzt keinen Test mit einem echten Screenreader."
+msgstr "Kontrollen ændrer ikke filen. Den erstatter ikke en test med en rigtig skærmlæser."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Erneut prüfen"
+msgstr "Kontrollér igen"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung starten"
+msgstr "Start kontrol"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Automatische Prüfung"
+msgstr "Automatisk kontrol"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "{n} Befunde"
+msgstr "{n} fund"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag."
+msgstr "En AI-model sammenligner for hver side sidebilledet med tags og melder kun det, den kan belægge: overskrifter som listepunkter, forkerte niveauer, tabeller uden overskriftsrække, alt-tekster, der ikke passer til billedet, synlig tekst uden tag."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung läuft … Seite {a} von {b}."
+msgstr "Kontrol kører … side {a} af {b}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung konnte nicht gestartet werden: {grund}"
+msgstr "Kontrollen kunne ikke startes: {grund}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung gestartet, {n} Seiten."
+msgstr "Kontrol startet, {n} sider."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "Kontrollen af „{name}“ mislykkedes: {grund}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung von „{name}“ fertig: {n} Befunde."
+msgstr "Kontrol af „{name}“ færdig: {n} fund."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung von „{name}“ fertig: keine Befunde."
+msgstr "Kontrol af „{name}“ færdig: ingen fund."

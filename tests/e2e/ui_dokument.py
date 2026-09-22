@@ -187,6 +187,31 @@ with sync_playwright() as p:
     pg.wait_for_timeout(800)
     check("Zurück zum Projekt fuehrt in die Ansicht Dokument", pg.locator("section.dok-karte").count() == 1 and "ansicht=dokument" in pg.url, pg.url)
 
+    print("== B3. Automatische Pruefung (Schritt 5, 22.09.) ==")
+    check("Klappe „Automatische Prüfung“ vorhanden", pg.locator("details.dok-pruefung > summary").count() == 1)
+    pg.click("details.dok-pruefung > summary")
+    pg.wait_for_timeout(300)
+    kn = pg.locator("button[id^=dok_pruef_]")
+    check("Knopf „Prüfung starten“ mit Seiten und Credits", kn.count() == 1 and "2 Seiten, 4 Credits" in kn.first.inner_text(), kn.first.inner_text() if kn.count() else "")
+    kn.first.click()
+    pg.wait_for_timeout(1500)
+    st = pg.locator("output[id^=dok_pruef_status_]").first.inner_text()
+    check("Statuszeile „Prüfung läuft“ und Fokus darauf", "Prüfung läuft" in st and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_pruef_status_"), st)
+    fertig = False
+    for _ in range(90):
+        pg.wait_for_timeout(2000)
+        if pg.locator("#dkLaufMeldung:not([hidden])").count() and "Prüfung" in pg.locator("#dkLaufMeldungText").inner_text():
+            fertig = True
+            break
+    meld = pg.locator("#dkLaufMeldungText").inner_text() if fertig else ""
+    check("Laufmeldung „Prüfung … fertig“", fertig and "fertig" in meld, meld)
+    check("Klappe bleibt offen, Bericht sichtbar", pg.locator("details.dok-pruefung[open]").count() == 1 and ("Befunde" in pg.locator("details.dok-pruefung").inner_text()), pg.locator("details.dok-pruefung").inner_text()[:300])
+    check("Knopf heisst jetzt „Erneut prüfen“", pg.locator("button[id^=dok_pruef_]").first.inner_text().startswith("Erneut prüfen"))
+    print("   Bericht:", pg.locator("details.dok-pruefung").inner_text()[:600].replace("\n", " | "))
+    axe(pg, "Ansicht Dokument mit Prüfbericht")
+    if pg.locator("#dkLaufMeldung:not([hidden]) button").count():
+        pg.click("#dkLaufMeldung button")
+
     print("== C. Wechsel zur Ansicht Alt-Texte und zurueck ==")
     pg.click("section.dok-karte button:has-text('Alt-Texte bearbeiten')")
     pg.wait_for_selector("#imageFilterBar", timeout=15000)

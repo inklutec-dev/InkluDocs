@@ -79,6 +79,9 @@ AKTIONS_PREISE = {
     # PDF-TAGGING (22.09.2026): Credits je SEITE, verbucht je erfolgreichem Lauf (tagging_api.py).
     # VORLAEUFIGER Preis (Steve 22.09.: „preislich reden wir nochmal“; PDFix nennt ~1 Cent je Seite).
     "pdf_tagging": 1,
+    # AUTOMATISCHE PRUEFUNG getaggter PDFs je SEITE (Schritt 5, 22.09.2026) — VORLAEUFIG, Steve:
+    # „wird sicherlich mit Credits berechnet, Preis sehen wir dann“. Nur diese Zahl aendern.
+    "pdf_pruefung": 2,
     # Datei-Exporte: GRUNDPREIS je Export-Vorgang. Dazu kommt die Staffel je
     # angefangene EXPORT_SCHRITT Bilder/Felder aus EXPORT_ARTEN — gerechnet
     # wird immer ueber export_preis(anzahl, art), nie ueber diese Zahl allein.
@@ -177,7 +180,7 @@ PLAN_SITZE = {
     "enterprise": 25,
 }
 
-GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export", "tagging")
+GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export", "tagging", "pruefung")
 
 # EXPORT-STAFFEL (Michael Karbe 28./29.08.2026): Grundpreis je Export-Vorgang
 # (AKTIONS_PREISE) + Staffel je ANGEFANGENE EXPORT_SCHRITT Bilder bzw. Felder

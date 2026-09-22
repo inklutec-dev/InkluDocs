@@ -844,6 +844,9 @@ def _migrate_columns(conn):
         ("documents", "tagging_status", "ALTER TABLE documents ADD COLUMN tagging_status TEXT DEFAULT ''"),
         ("documents", "tagging_bericht", "ALTER TABLE documents ADD COLUMN tagging_bericht TEXT DEFAULT ''"),
         ("documents", "roh_path", "ALTER TABLE documents ADD COLUMN roh_path TEXT DEFAULT ''"),
+        # AUTOMATISCHE PRUEFUNG (Schritt 5, 22.09.2026, pdf_pruefung.py): Stand + Bericht (JSON) je Dokument.
+        ("documents", "pruefung_status", "ALTER TABLE documents ADD COLUMN pruefung_status TEXT DEFAULT ''"),
+        ("documents", "pruefung_bericht", "ALTER TABLE documents ADD COLUMN pruefung_bericht TEXT DEFAULT ''"),
         # ANSICHTEN (22.09.2026, Steve): zuletzt ueber die Ansichts-Wahl geoeffnete Ansicht je Projekt
         # ('' = Startansicht des Dateityps: PDF „dokument“, Word „alttexte“ bzw. „uebersetzung“).
         ("projects", "letzte_ansicht", "ALTER TABLE projects ADD COLUMN letzte_ansicht TEXT DEFAULT ''"),

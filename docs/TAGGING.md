@@ -267,3 +267,35 @@ NVDA-Protokoll auf einem Windows-Server ist als Premium-Stufe vorgemerkt.
   Artefakte (ausgeblendete Inhalte) sind absichtlich nicht dabei — genau wie im Screenreader.
 - Tests: `tests/test_pdf_struktur.py` (Hörprobe, HTML, Escaping, Cache), `tests/e2e/verify_struktur.py`
   (getaggtes Formular: Felder, Tabelle, Seite, Rechte), Klicktest `ui_dokument.py` Abschnitt B2.
+
+## Automatische Prüfung (Schritt 5, erste Fassung, 22.09.2026, Steves Go)
+
+Steves Rahmen: Gemini 3.1 Pro, Qualität vor Kosten; das Modell zieht die Infos aus dem Tagging UND
+schaut sich die Seite optisch an; es darf nichts „korrigieren“, was richtig ist; die Prüfung wird mit
+Credits berechnet (Preis vorläufig 2 je Seite, `billing.AKTIONS_PREISE["pdf_pruefung"]`).
+Warum der Schritt nötig ist: veraPDF prüft die Form (jedes Element getaggt, Alt-Text da, Sprache
+gesetzt), nicht den Inhalt der Tags. „1. Ausgangslage“ als Listenpunkt statt Überschrift besteht
+veraPDF; ein Screenreader-Nutzer verliert die Überschriften-Navigation.
+
+- **Modul `backend/pdf_pruefung.py`:** `MODELL` (EINE Stelle, ENV `PDF_PRUEFUNG_MODEL`, sonst
+  `llm_client.MODEL_GENERATE`; Modellrouter später), `seitenbild()` (PyMuPDF 110 dpi, Cache
+  `<pdf>.pruef_p<n>.png`), `zeilen_fuer_seite()` (Strukturliste `E<id> ROLLE: Text`, Alt-Texte, Felder),
+  `nachpruefung()` (Kennung muss auf der Seite existieren, sonst „niedrig“ + Hinweis; Doppelmeldungen
+  weg), `pruefe_dokument()` (bis `MAX_SEITEN` = 60; Seitenfehler werden Hinweise, alle Seiten
+  fehlgeschlagen = Fehler).
+- **Prompt:** `prompts/builders/pdf_pruefung.py` (Prüfauftrag 1–7: Rollen, Ebenen, Reihenfolge,
+  Tabellen, Grafiken, Fehlt, Sprache; Regel „im Zweifel kein Befund“; Strukturliste als Datenblock),
+  Schema `prompts/components/schemas/pdf_pruefung.py` (`PruefSeiteOutput`: befunde mit element, art,
+  befund, vorschlag, beleg, sicherheit; zusammenfassung).
+- **Endpunkte** `GET/POST /api/projects/{id}/documents/{doc}/pruefung`: nur getaggte Dokumente (400),
+  409 bei laufender Prüfung oder laufendem Tagging, 402 Guthaben, 429 Tageslimit; Lauf im Executor,
+  Stand in `documents.pruefung_status/pruefung_bericht`, Fortschritt (Seite a von b) über
+  `dokument-ansicht` → `tagging.pruefung`. Credits erst nach erfolgreichem Lauf (Quelle `pruefung`).
+- **Karte:** Klappe „Automatische Prüfung“ mit Erklärung, Knopf „Prüfung starten“ / „Erneut prüfen“
+  (Seiten und Credits im Namen), Statuszeile (output, Fokus beim Start), Bericht als nummerierte
+  Liste: Seite, Rolle, Text, Befund, Vorschlag, Beleg, Sicherheit-Badge; Hinweise; Satz „ändert nichts
+  an der Datei, ersetzt keinen echten Screenreader-Test“. Laufmeldung am Ende wie beim Tagging.
+- **Noch nicht:** Korrektur über PDFix-Befehle (rename/move tags) — erst nach dem Messlauf mit zehn
+  echten Dokumenten und nur für Befunde mit hoher Sicherheit; Chatbot-Werkzeug; Preisentscheidung.
+- Tests: `tests/test_pdf_pruefung.py` (Nachprüfung, Strukturliste, Bericht mit Modell-Attrappe),
+  `tests/e2e/verify_pruefung.py` (echter Modelllauf), Klicktest `ui_dokument.py` Abschnitt B3.

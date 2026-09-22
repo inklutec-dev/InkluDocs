@@ -7635,3 +7635,99 @@ msgstr "without tooltip"
 #: Strukturlesung + Hoerprobe PDF (22.09.2026)
 msgid "Link"
 msgstr "Link"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit hoch"
+msgstr "High confidence"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit mittel"
+msgstr "Medium confidence"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit niedrig"
+msgstr "Low confidence"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Rolle"
+msgstr "Role"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Ebene"
+msgstr "Level"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Reihenfolge"
+msgstr "Order"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Fehlt"
+msgstr "Missing"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sonstiges"
+msgstr "Other"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "{n} Befunde ({h} hoch, {m} mittel, {l} niedrig), {s} Seiten geprüft am {zeit}."
+msgstr "{n} findings ({h} high, {m} medium, {l} low), {s} pages checked on {zeit}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Keine Befunde: Tags und Seitenbild passen zusammen ({s} Seiten geprüft am {zeit})."
+msgstr "No findings: tags and page image match ({s} pages checked on {zeit})."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Vorschlag: {v}."
+msgstr "Suggestion: {v}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Beleg: {b}"
+msgstr "Evidence: {b}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung ändert nichts an der Datei. Sie ersetzt keinen Test mit einem echten Screenreader."
+msgstr "The check does not change the file. It does not replace a test with a real screen reader."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Erneut prüfen"
+msgstr "Check again"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung starten"
+msgstr "Start check"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Automatische Prüfung"
+msgstr "Automatic check"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "{n} Befunde"
+msgstr "{n} findings"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag."
+msgstr "An AI model compares the page image with the tags for each page and reports only what it can prove: headings tagged as list items, wrong levels, tables without a header row, alt texts that do not match the image, visible text without a tag."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung läuft … Seite {a} von {b}."
+msgstr "Check running … page {a} of {b}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung konnte nicht gestartet werden: {grund}"
+msgstr "The check could not be started: {grund}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung gestartet, {n} Seiten."
+msgstr "Check started, {n} pages."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "The check of “{name}” failed: {grund}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung von „{name}“ fertig: {n} Befunde."
+msgstr "Check of “{name}” finished: {n} findings."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung von „{name}“ fertig: keine Befunde."
+msgstr "Check of “{name}” finished: no findings."

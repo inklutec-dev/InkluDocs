@@ -7638,3 +7638,99 @@ msgstr "ohne Quickinfo"
 #: Strukturlesung + Hoerprobe PDF (22.09.2026)
 msgid "Link"
 msgstr "Link"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit hoch"
+msgstr "Sicherheit hoch"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit mittel"
+msgstr "Sicherheit mittel"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit niedrig"
+msgstr "Sicherheit niedrig"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Rolle"
+msgstr "Rolle"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Ebene"
+msgstr "Ebene"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Reihenfolge"
+msgstr "Reihenfolge"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Fehlt"
+msgstr "Fehlt"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sonstiges"
+msgstr "Sonstiges"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "{n} Befunde ({h} hoch, {m} mittel, {l} niedrig), {s} Seiten geprüft am {zeit}."
+msgstr "{n} Befunde ({h} hoch, {m} mittel, {l} niedrig), {s} Seiten geprüft am {zeit}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Keine Befunde: Tags und Seitenbild passen zusammen ({s} Seiten geprüft am {zeit})."
+msgstr "Keine Befunde: Tags und Seitenbild passen zusammen ({s} Seiten geprüft am {zeit})."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Vorschlag: {v}."
+msgstr "Vorschlag: {v}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Beleg: {b}"
+msgstr "Beleg: {b}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung ändert nichts an der Datei. Sie ersetzt keinen Test mit einem echten Screenreader."
+msgstr "Die Prüfung ändert nichts an der Datei. Sie ersetzt keinen Test mit einem echten Screenreader."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Erneut prüfen"
+msgstr "Erneut prüfen"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung starten"
+msgstr "Prüfung starten"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Automatische Prüfung"
+msgstr "Automatische Prüfung"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "{n} Befunde"
+msgstr "{n} Befunde"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag."
+msgstr "Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung läuft … Seite {a} von {b}."
+msgstr "Prüfung läuft … Seite {a} von {b}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung konnte nicht gestartet werden: {grund}"
+msgstr "Die Prüfung konnte nicht gestartet werden: {grund}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung gestartet, {n} Seiten."
+msgstr "Prüfung gestartet, {n} Seiten."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "Die Prüfung von „{name}“ ist fehlgeschlagen: {grund}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung von „{name}“ fertig: {n} Befunde."
+msgstr "Prüfung von „{name}“ fertig: {n} Befunde."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung von „{name}“ fertig: keine Befunde."
+msgstr "Prüfung von „{name}“ fertig: keine Befunde."

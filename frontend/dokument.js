@@ -35,6 +35,7 @@
     let laufZielDoc = null;
     let laufAktiv = false;
     let offeneBerichte = new Set();
+    let offenePruefungen = new Set();   // Automatische Pruefung: Klappen, die offen bleiben sollen
 
     function ico(name) { return (typeof icon === 'function') ? icon(name) : ''; }
     function esc(s) { return (typeof escHtml === 'function') ? escHtml(s == null ? '' : String(s)) : String(s == null ? '' : s); }
@@ -132,6 +133,88 @@
         }
     }
 
+    // ─── Automatische Pruefung (Schritt 5, erste Fassung, 22.09.2026): ein KI-Modell vergleicht je Seite
+    // Seitenbild und Tags und meldet nur Befunde mit Beleg und Sicherheit. Aendert nichts an der Datei.
+    function sicherheitText(s) {
+        return s === 'hoch' ? t('Sicherheit hoch') : (s === 'mittel' ? t('Sicherheit mittel') : t('Sicherheit niedrig'));
+    }
+    function artText(a) {
+        const m = { rolle: t('Rolle'), ebene: t('Ebene'), reihenfolge: t('Reihenfolge'), tabelle: t('Tabelle'), grafik: t('Grafik'), fehlt: t('Fehlt'), sprache: t('Sprache'), sonstiges: t('Sonstiges') };
+        return m[a] || a;
+    }
+    function pruefBerichtHtml(pr) {
+        const b = pr.bericht || {};
+        if (pr.status === 'fehler') return '<p class="feld-hinweis">' + t('Fehler: {grund}', { grund: esc(b.fehler || t('unbekannt')) }) + '</p>';
+        if (pr.status !== 'fertig') return '';
+        const befunde = b.befunde || [];
+        const anz = b.anzahl || {};
+        let s = '<p>' + (befunde.length
+            ? t('{n} Befunde ({h} hoch, {m} mittel, {l} niedrig), {s} Seiten geprüft am {zeit}.', { n: befunde.length, h: anz.hoch || 0, m: anz.mittel || 0, l: anz.niedrig || 0, s: b.seiten_geprueft || 0, zeit: esc(b.zeit || '') })
+            : t('Keine Befunde: Tags und Seitenbild passen zusammen ({s} Seiten geprüft am {zeit}).', { s: b.seiten_geprueft || 0, zeit: esc(b.zeit || '') })) + '</p>';
+        if (befunde.length) {
+            s += '<ol class="dok-befunde">' + befunde.map(f => '<li>'
+                + '<strong>' + t('Seite {n}', { n: f.seite }) + (f.typ ? ', ' + esc(f.typ) : '') + (f.text ? ' „' + esc(f.text) + '“' : '') + ':</strong> '
+                + esc(f.befund)
+                + (f.vorschlag ? ' ' + t('Vorschlag: {v}.', { v: esc(f.vorschlag) }) : '')
+                + (f.beleg ? ' ' + t('Beleg: {b}', { b: esc(f.beleg) }) : '')
+                + ' <span class="badge ' + (f.sicherheit === 'hoch' ? 'badge-ok' : (f.sicherheit === 'mittel' ? 'badge-warn' : 'badge-muted')) + '">' + sicherheitText(f.sicherheit) + '</span>'
+                + ' <span class="visually-hidden">' + artText(f.art) + '</span>'
+                + (f.hinweis ? ' <em>' + esc(f.hinweis) + '</em>' : '')
+                + '</li>').join('') + '</ol>';
+        }
+        if ((b.hinweise || []).length) s += '<ul>' + b.hinweise.map(h => '<li>' + esc(h) + '</li>').join('') + '</ul>';
+        s += '<p class="feld-hinweis">' + t('Die Prüfung ändert nichts an der Datei. Sie ersetzt keinen Test mit einem echten Screenreader.') + '</p>';
+        return s;
+    }
+    function pruefungHtml(project, d) {
+        if (d.getaggt !== true) return '';
+        const tg = d.tagging || {};
+        const pr = tg.pruefung || {};
+        const busy = tg.laeuft || pr.laeuft || !!(project.kette && project.kette.laeuft);
+        const vh = t('– Dokument „{name}“', { name: esc(docDisplayName(d)) });
+        const knopf = pr.status === 'fertig' ? t('Erneut prüfen') : t('Prüfung starten');
+        const offen = offenePruefungen.has(d.id) || pr.laeuft;
+        return '<details class="page-text-details dok-pruefung" data-doc="' + d.id + '"' + (offen ? ' open' : '') + '>'
+            + '<summary>' + t('Automatische Prüfung') + (pr.status === 'fertig' && pr.bericht && pr.bericht.befunde ? ' (' + t('{n} Befunde', { n: pr.bericht.befunde.length }) + ')' : '') + '</summary>'
+            + '<div class="page-text-content" role="region" aria-label="' + t('Automatische Prüfung') + '" tabindex="0">'
+            + '<p>' + t('Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag.') + '</p>'
+            + (!busy && pr.seiten ? '<p><button type="button" class="btn btn-secondary" id="dok_pruef_' + d.id + '" onclick="Dokument.pruefungStarten(' + project.id + ', ' + d.id + ')">' + ico('sparkle') + knopf + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: pr.seiten, c: pr.preis || 0 }) + '</span></button></p>' : '')
+            + '<output id="dok_pruef_status_' + d.id + '" class="dok-status" style="display:block;" tabindex="-1">' + (pr.laeuft ? t('Prüfung läuft … Seite {a} von {b}.', { a: pr.seite || 0, b: pr.seiten || 0 }) : '') + '</output>'
+            + pruefBerichtHtml(pr)
+            + '</div></details>';
+    }
+    async function pruefungStarten(projectId, docId) {
+        const knopf = document.getElementById('dok_pruef_' + docId);
+        if (knopf) knopf.disabled = true;
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/pruefung', { method: 'POST', credentials: 'same-origin' });
+            const j = await r.json().catch(() => ({}));
+            if (r.status === 402 && j.detail && typeof zeigeCreditsMeldung === 'function') { zeigeCreditsMeldung(j.detail); if (knopf) knopf.disabled = false; return; }
+            if (!r.ok) {
+                const grund = (j.detail && (j.detail.text || j.detail)) || t('unbekannter Fehler');
+                announce(t('Die Prüfung konnte nicht gestartet werden: {grund}', { grund: grund }));
+                if (knopf) knopf.disabled = false;
+                return;
+            }
+            offenePruefungen.add(docId);
+            await showProject(projectId, true);
+            const out = document.getElementById('dok_pruef_status_' + docId);
+            if (out) out.focus();
+            announce(t('Prüfung gestartet, {n} Seiten.', { n: j.seiten || 0 }));
+        } catch (e) {
+            announce(t('Die Prüfung konnte nicht gestartet werden: {grund}', { grund: String(e) }));
+            if (knopf) knopf.disabled = false;
+        }
+    }
+    function pruefAbschlussText(d) {
+        const pr = (d.tagging && d.tagging.pruefung) || {};
+        const b = pr.bericht || {};
+        const name = docDisplayName(d);
+        if (pr.status === 'fehler') return t('Die Prüfung von „{name}“ ist fehlgeschlagen: {grund}', { name: name, grund: b.fehler || t('unbekannter Fehler') });
+        const n = (b.befunde || []).length;
+        return n ? t('Prüfung von „{name}“ fertig: {n} Befunde.', { name: name, n: n }) : t('Prüfung von „{name}“ fertig: keine Befunde.', { name: name });
+    }
+
     function karteHtml(project, d, pos) {
         const name = esc(docDisplayName(d));
         const tg = d.tagging || {};
@@ -169,6 +252,7 @@
             + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;">' + (tg.laeuft ? t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.') : '') + '</output>'
             + berichtHtml(d)
             + hoerprobeHtml(project, d)
+            + pruefungHtml(project, d)
             + '</div></div></section>';
     }
 
@@ -495,7 +579,7 @@
         const data = await res.json();
         const project = data.project;
         aktuelleDaten = data;
-        if (zustandProjekt !== projectId) { offeneBerichte = new Set(); zustandProjekt = projectId; }
+        if (zustandProjekt !== projectId) { offeneBerichte = new Set(); offenePruefungen = new Set(); zustandProjekt = projectId; }
         const docs = data.documents || [];
         main.innerHTML = kopfHtml(project, data)
             + uploadBlockHtml(project)
@@ -510,13 +594,18 @@
             if (el.open) offeneBerichte.add(k); else offeneBerichte.delete(k);
         }));
         document.querySelectorAll('details.dok-hoerprobe').forEach(el => el.addEventListener('toggle', () => { if (el.open) hoerprobeLaden(el); }));
+        document.querySelectorAll('details.dok-pruefung').forEach(el => el.addEventListener('toggle', () => {
+            const k = Number(el.dataset.doc);
+            if (el.open) offenePruefungen.add(k); else offenePruefungen.delete(k);
+        }));
         if (typeof inkluagentInit === 'function') inkluagentInit(projectId);
         setupProjectDropzone(projectId);
         const h1 = document.getElementById('projectName');
         if (h1 && !erneut) h1.focus();
         const laufende = docs.filter(d => d.tagging && d.tagging.laeuft).map(d => d.id);
+        const pruefende = docs.filter(d => d.tagging && d.tagging.pruefung && d.tagging.pruefung.laeuft).map(d => d.id);
         const ketteLief = !!(project.kette && project.kette.laeuft);
-        if (laufende.length || ketteLief || project.status === 'extracting' || project.status === 'processing') {
+        if (laufende.length || pruefende.length || ketteLief || project.status === 'extracting' || project.status === 'processing') {
             const tick = async () => {
                 if (zustandProjekt !== projectId) return;
                 if (!document.getElementById('dokListe')) { pollStoppen(); return; }   // Ansicht gewechselt
@@ -534,6 +623,21 @@
                         zeigeMeldung(t('Komplett barrierefrei machen ist fertig.') + ' ' + (k2.zusammenfassung || ''));
                         return;
                     }
+                    // Automatische Pruefung: Fortschritt in der Statuszeile, am Ende neu zeichnen + melden
+                    const pruefFertig = (d2.documents || []).filter(x => pruefende.includes(x.id) && !(x.tagging && x.tagging.pruefung && x.tagging.pruefung.laeuft));
+                    if (pruefFertig.length) {
+                        await showProject(projectId, true);
+                        zeigeMeldung(pruefFertig.map(pruefAbschlussText).join(' '));
+                        return;
+                    }
+                    (d2.documents || []).forEach(x => {
+                        const pr = x.tagging && x.tagging.pruefung;
+                        const out = document.getElementById('dok_pruef_status_' + x.id);
+                        if (pr && pr.laeuft && out) {
+                            const txt = t('Prüfung läuft … Seite {a} von {b}.', { a: pr.seite || 0, b: pr.seiten || 0 });
+                            if (out.textContent !== txt) out.textContent = txt;
+                        }
+                    });
                     const jetzt = (d2.documents || []).filter(x => x.tagging && x.tagging.laeuft).map(x => x.id);
                     const fertigGeworden = (d2.documents || []).filter(x => laufende.includes(x.id) && !(x.tagging && x.tagging.laeuft));
                     const statusWechsel = d2.project.status !== project.status;
@@ -554,5 +658,5 @@
     }
 
     window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, zurAnsicht, meldungSchliessen, pollStoppen,
-                        ketteOeffnen, ketteSchliessen, ketteStarten, exportieren };
+                        ketteOeffnen, ketteSchliessen, ketteStarten, exportieren, pruefungStarten };
 })();

@@ -7635,3 +7635,99 @@ msgstr "sin información rápida"
 #: Strukturlesung + Hoerprobe PDF (22.09.2026)
 msgid "Link"
 msgstr "Enlace"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit hoch"
+msgstr "Confianza alta"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit mittel"
+msgstr "Confianza media"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sicherheit niedrig"
+msgstr "Confianza baja"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Rolle"
+msgstr "Rol"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Ebene"
+msgstr "Nivel"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Reihenfolge"
+msgstr "Orden"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Fehlt"
+msgstr "Falta"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Sonstiges"
+msgstr "Otros"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "{n} Befunde ({h} hoch, {m} mittel, {l} niedrig), {s} Seiten geprüft am {zeit}."
+msgstr "{n} hallazgos ({h} alta, {m} media, {l} baja), {s} páginas comprobadas el {zeit}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Keine Befunde: Tags und Seitenbild passen zusammen ({s} Seiten geprüft am {zeit})."
+msgstr "Sin hallazgos: las etiquetas y la imagen de la página coinciden ({s} páginas comprobadas el {zeit})."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Vorschlag: {v}."
+msgstr "Propuesta: {v}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Beleg: {b}"
+msgstr "Evidencia: {b}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung ändert nichts an der Datei. Sie ersetzt keinen Test mit einem echten Screenreader."
+msgstr "La comprobación no modifica el archivo. No sustituye una prueba con un lector de pantalla real."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Erneut prüfen"
+msgstr "Comprobar de nuevo"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung starten"
+msgstr "Iniciar comprobación"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Automatische Prüfung"
+msgstr "Comprobación automática"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "{n} Befunde"
+msgstr "{n} hallazgos"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag."
+msgstr "Un modelo de IA compara en cada página la imagen con las etiquetas y solo informa de lo que puede demostrar: encabezados etiquetados como elementos de lista, niveles incorrectos, tablas sin fila de encabezado, textos alternativos que no coinciden con la imagen, texto visible sin etiqueta."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung läuft … Seite {a} von {b}."
+msgstr "Comprobación en curso … página {a} de {b}."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung konnte nicht gestartet werden: {grund}"
+msgstr "No se pudo iniciar la comprobación: {grund}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung gestartet, {n} Seiten."
+msgstr "Comprobación iniciada, {n} páginas."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Die Prüfung von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "La comprobación de «{name}» ha fallado: {grund}"
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung von „{name}“ fertig: {n} Befunde."
+msgstr "Comprobación de «{name}» terminada: {n} hallazgos."
+
+#: Automatische Pruefung PDF (22.09.2026)
+msgid "Prüfung von „{name}“ fertig: keine Befunde."
+msgstr "Comprobación de «{name}» terminada: sin hallazgos."

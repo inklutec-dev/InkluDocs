@@ -33,6 +33,7 @@ from typing import Callable, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
+import pdf_pruefung
 import pdf_struktur
 import pdf_tagging
 
@@ -40,6 +41,8 @@ log = logging.getLogger(__name__)
 
 AKTION = "pdf_tagging"      # billing.AKTIONS_PREISE["pdf_tagging"] = Credits je Seite
 QUELLE = "tagging"          # usage_events.quelle
+AKTION_PRUEFUNG = "pdf_pruefung"   # Automatische Pruefung je Seite (Schritt 5, 22.09.2026, vorlaeufiger Preis)
+QUELLE_PRUEFUNG = "pruefung"
 STATUS_LAEUFT, STATUS_FERTIG, STATUS_FEHLER = "laeuft", "fertig", "fehler"
 TAGGING_PROJEKTE = ("pdf",)                 # project_type
 TAGGING_WERKZEUGE = ("pdf", "formular")     # tool
@@ -58,10 +61,13 @@ class Deps:
     get_gettext: Callable = None               # (lang) -> _
     resolve_ui_language: Callable = None       # (request) -> lang
     ausgaben_anzahl: Callable = None           # (project_id) -> int (Zaehler „Ablage (n)“ im Projektkopf)
+    tageslimit_wache: Callable = None          # (user) -> None | {"limit", "genutzt"}  (Automatische Pruefung = KI-Aktion)
+    tageslimit_text: Callable = None           # (tl) -> str
 
 
 _d: Optional[Deps] = None
 _laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "project_id": id}
+_pruefung_laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "seite": n, "seiten": m}
 
 
 def _user():
@@ -91,6 +97,35 @@ def _bericht(doc: dict) -> dict:
         return b if isinstance(b, dict) else {}
     except Exception:  # noqa: BLE001
         return {}
+
+
+def _pruef_bericht(doc: dict) -> dict:
+    try:
+        b = json.loads(doc.get("pruefung_bericht") or "{}")
+        return b if isinstance(b, dict) else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def pruefung_stand(conn, doc: dict, user_id: int, seiten: int) -> dict:
+    """Stand der AUTOMATISCHEN PRUEFUNG (Schritt 5, 22.09.2026) fuer die Karte: Status, Preis, Bericht."""
+    zu_pruefen = min(seiten, pdf_pruefung.MAX_SEITEN) if seiten else 0
+    pruefung = _d.billing.aktion_pruefung(user_id, AKTION_PRUEFUNG, zu_pruefen) if zu_pruefen else None
+    status = doc.get("pruefung_status") or ""
+    laeuft = doc["id"] in _pruefung_laeuft or status == STATUS_LAEUFT
+    fortschritt = _pruefung_laeuft.get(doc["id"]) or {}
+    return {
+        "status": (STATUS_LAEUFT if laeuft else status),
+        "laeuft": laeuft,
+        "seite": fortschritt.get("seite", 0),
+        "seiten": zu_pruefen,
+        "preis": (pruefung or {}).get("preis", 0),
+        "verfuegbar_credits": (pruefung or {}).get("verfuegbar"),
+        "erlaubt": bool((pruefung or {}).get("erlaubt")) if pruefung else False,
+        "fehlend": (pruefung or {}).get("fehlend", 0),
+        "modell": pdf_pruefung.MODELL,
+        "bericht": _pruef_bericht(doc),
+    }
 
 
 def _seiten(doc: dict) -> int:
@@ -126,6 +161,7 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
         "neu_taggen": bool(doc.get("roh_path")),
         "bericht": _bericht(doc),
         "projekt_status": project.get("status"),
+        "pruefung": pruefung_stand(conn, doc, user_id, seiten),
     }
 
 
@@ -497,10 +533,56 @@ def lauf_synchron(project_id: int, document_id: int, user_id: int, sprache_vorga
     return {"status": ("fertig" if d2.get("tagging_status") == STATUS_FERTIG else "fehler"), "grund": b.get("fehler", ""), "bericht": b}
 
 
+def _pruefung_sync(project_id: int, document_id: int, user_id: int, preis: int, ui_lang: str) -> None:
+    """AUTOMATISCHE PRUEFUNG eines Dokuments (im Executor): Strukturlesung -> pdf_pruefung.pruefe_dokument
+    (ein Modellaufruf je Seite mit Seitenbild) -> Bericht speichern -> Credits. Aendert die Datei nicht."""
+    conn = _d.get_db()
+    try:
+        doc = dict(conn.execute("SELECT * FROM documents WHERE id = ?", (document_id,)).fetchone())
+    finally:
+        conn.close()
+    pfad = doc.get("original_path") or ""
+    name = doc.get("display_name") or doc.get("original_filename") or ""
+    bericht: dict = {}
+    status = STATUS_FERTIG
+    try:
+        struktur = pdf_struktur.lesen(pfad, os.path.dirname(pfad))
+
+        def fortschritt(seite, seiten):
+            if document_id in _pruefung_laeuft:
+                _pruefung_laeuft[document_id].update({"seite": seite, "seiten": seiten})
+
+        bericht = pdf_pruefung.pruefe_dokument(pfad, struktur, os.path.dirname(pfad), sprache_ausgabe=(ui_lang or "de"),
+                                               dokument_name=name, fortschritt=fortschritt)
+        _d.billing.verbuche(user_id, QUELLE_PRUEFUNG, AKTION_PRUEFUNG, credits=preis)
+        log.info("[pruefung] Dokument %s: %s Seiten, %s Befunde (%s), %s Credits, %ss", document_id,
+                 bericht.get("seiten_geprueft"), len(bericht.get("befunde") or []), bericht.get("anzahl"), preis, bericht.get("dauer_s"))
+    except Exception as e:  # noqa: BLE001
+        status = STATUS_FEHLER
+        bekannt = isinstance(e, (pdf_pruefung.PruefFehler, pdf_struktur.StrukturFehler))
+        if not bekannt:
+            log.exception("[pruefung] Dokument %s fehlgeschlagen", document_id)
+        bericht = {"fehler": (str(e) if bekannt else "Unerwarteter Fehler bei der Prüfung"), "zeit": time.strftime("%Y-%m-%d %H:%M:%S")}
+    finally:
+        _pruefung_laeuft.pop(document_id, None)
+        conn = _d.get_db()
+        try:
+            conn.execute("UPDATE documents SET pruefung_status = ?, pruefung_bericht = ? WHERE id = ?",
+                         (status, json.dumps(bericht, ensure_ascii=False), document_id))
+            conn.commit()
+        finally:
+            conn.close()
+
+
 def haengende_laeufe_zuruecksetzen() -> None:
     """Nach einem Neustart: Laeufe, die noch 'laeuft' tragen, sind abgebrochen."""
     conn = _d.get_db()
     try:
+        # Automatische Pruefung (Schritt 5)
+        for r in conn.execute("SELECT id FROM documents WHERE pruefung_status = ?", (STATUS_LAEUFT,)).fetchall():
+            conn.execute("UPDATE documents SET pruefung_status = ?, pruefung_bericht = ? WHERE id = ?",
+                         (STATUS_FEHLER, json.dumps({"fehler": "Der Server wurde während der Prüfung neu gestartet", "zeit": time.strftime("%Y-%m-%d %H:%M:%S")}), r["id"]))
+        conn.commit()
         rows = conn.execute("SELECT id, project_id FROM documents WHERE tagging_status = ?", (STATUS_LAEUFT,)).fetchall()
         for r in rows:
             conn.execute("UPDATE documents SET tagging_status = ?, tagging_bericht = ? WHERE id = ?",
@@ -608,6 +690,52 @@ def build_router(deps: Deps) -> APIRouter:
         lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else "de"
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, struktur_daten, project_id, document_id, user["id"], lang, bool(erneuern), False)
+
+    @router.get("/api/projects/{project_id}/documents/{document_id}/pruefung")
+    async def pruefung_lesen(project_id: int, document_id: int, user: dict = Depends(_user())):
+        """Stand der automatischen Pruefung (Status, Preis, Bericht)."""
+        conn = _d.get_db()
+        try:
+            _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+            return pruefung_stand(conn, doc, user["id"], _seiten(doc))
+        finally:
+            conn.close()
+
+    @router.post("/api/projects/{project_id}/documents/{document_id}/pruefung")
+    async def pruefung_starten(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):
+        """AUTOMATISCHE PRUEFUNG starten (Schritt 5, 22.09.2026): nur getaggte Dokumente, nicht waehrend
+        Tagging oder laufender Pruefung, Guthaben-Wache (402), Tageslimit (429). Laeuft im Executor;
+        die Karte fragt den Stand ueber dokument-ansicht ab."""
+        conn = _d.get_db()
+        try:
+            _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+            if doc.get("getaggt") is not True and doc.get("getaggt") != 1:
+                raise HTTPException(status_code=400, detail="Erst „Barrierefrei machen“ ausführen, dann prüfen")
+            if document_id in _pruefung_laeuft or doc.get("pruefung_status") == STATUS_LAEUFT:
+                raise HTTPException(status_code=409, detail="Die Prüfung läuft bereits")
+            if document_id in _laeuft or doc.get("tagging_status") == STATUS_LAEUFT:
+                raise HTTPException(status_code=409, detail="Das Tagging läuft noch")
+            seiten = _seiten(doc)
+            if seiten <= 0:
+                raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")
+            zu_pruefen = min(seiten, pdf_pruefung.MAX_SEITEN)
+            pruefung = _d.billing.aktion_pruefung(user["id"], AKTION_PRUEFUNG, zu_pruefen)
+            if not pruefung["erlaubt"]:
+                raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(pruefung, "Die automatische Prüfung"))
+            if _d.tageslimit_wache:
+                tl = _d.tageslimit_wache(user)
+                if tl:
+                    raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
+            _pruefung_laeuft[document_id] = {"seit": time.time(), "seite": 0, "seiten": zu_pruefen}
+            conn.execute("UPDATE documents SET pruefung_status = ?, pruefung_bericht = ? WHERE id = ?",
+                         (STATUS_LAEUFT, json.dumps({"gestartet": time.strftime("%Y-%m-%d %H:%M:%S")}), document_id))
+            conn.commit()
+        finally:
+            conn.close()
+        ui_lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else "de"
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, _pruefung_sync, project_id, document_id, user["id"], int(pruefung["preis"]), ui_lang)
+        return {"status": STATUS_LAEUFT, "document_id": document_id, "seiten": zu_pruefen, "preis": int(pruefung["preis"])}
 
     @router.get("/api/projects/{project_id}/documents/{document_id}/tagging/datei")
     async def datei(project_id: int, document_id: int, user: dict = Depends(_user())):

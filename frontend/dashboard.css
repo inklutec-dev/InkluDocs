@@ -217,6 +217,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .struktur-inhalt figure { margin:.6rem 0; padding:.4rem .6rem; border-left:3px solid var(--border); }
 .struktur-inhalt pre { white-space:pre-wrap; }
 .struktur-rolle { font-weight:600; }
+.dok-befunde li { margin:.35rem 0; }
+.badge-muted { background:#e5e7eb; color:#374151; }
 .struktur-seite { color:#555; font-size:.9rem; margin:.9rem 0 .3rem; }
 .struktur-leer { color:#555; font-style:italic; }
 .ausgaben-filter { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin:0 0 1.2rem; }
