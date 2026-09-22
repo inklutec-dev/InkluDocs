@@ -15,6 +15,7 @@ from . import project as project_tools
 from . import altext as altext_tools
 from . import search as search_tools
 from . import ausgaben as ausgaben_tools
+from . import pdf as pdf_tools   # PDF-Werkzeuge (Werkzeugsatz nach Dateiart, 22.09.2026)
 
 
 TOOL_DEFINITIONS: list[dict] = [
@@ -311,10 +312,11 @@ class ToolExecutor:
     Claude-Args, damit kein Cross-Projekt-Zugriff möglich ist.
     """
 
-    def __init__(self, project_id: int, user_id: int, word: bool = False) -> None:
+    def __init__(self, project_id: int, user_id: int, word: bool = False, pdf: bool = False) -> None:
         self.project_id = project_id
         self.user_id = user_id
         self.word = word   # Word-Projekt: Werkzeuge „Meine Ausgaben“ freigeschaltet (11.09.2026)
+        self.pdf = pdf     # PDF-Projekt: Feld-Werkzeuge + PDF-Werkzeuge (Werkzeugsatz nach Dateiart, 22.09.2026)
         # Ein Executor je Nutzer-Nachricht (agent_loop): turn_id trennt Preisauskunft und Zustimmung,
         # kostenpflichtig zaehlt bezahlte Aktionen dieser Nachricht (Review 12.09.2026, ausgaben._freigabe).
         self.turn_id = uuid.uuid4().hex
@@ -364,5 +366,23 @@ class ToolExecutor:
                 "exportiere_uebersetzung": lambda _a: ausgaben_tools.exportiere_uebersetzung(p, u),
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
+            })
+        if self.pdf:
+            # Werkzeugsatz nach Dateiart (22.09.2026): EIN Gespraech je PDF-Projekt ueber alle drei Stationen —
+            # Bild-Werkzeuge + Feld-Werkzeuge (Quickinfos) + PDF-Werkzeuge (Tagging, Kette, Hoerprobe, Pruefung, Export).
+            from .definitions_formular import ToolExecutorFormular   # spaet: definitions_formular importiert dieses Modul
+
+            def _doc(a):
+                return int(a["document_id"]) if a.get("document_id") not in (None, "", 0) else None
+            for name, h in ToolExecutorFormular(project_id=p, user_id=u)._handlers().items():
+                handlers.setdefault(name, h)
+            handlers.update({
+                "dokument_stand": lambda a: pdf_tools.dokument_stand(p, u, _doc(a)),
+                "barrierefrei_machen": lambda a: pdf_tools.barrierefrei_machen(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                "komplett_barrierefrei_machen": lambda a: pdf_tools.komplett_barrierefrei_machen(p, u, bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                "hoerprobe_lesen": lambda a: pdf_tools.hoerprobe_lesen(p, u, _doc(a), von=int(a.get("von") or 1), anzahl=int(a.get("anzahl") or 80)),
+                "pruefung_starten": lambda a: pdf_tools.pruefung_starten(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                "pruefbericht_lesen": lambda a: pdf_tools.pruefbericht_lesen(p, u, _doc(a)),
+                "exportiere_fertige_pdf": lambda a: pdf_tools.exportiere_fertige_pdf(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
             })
         return handlers

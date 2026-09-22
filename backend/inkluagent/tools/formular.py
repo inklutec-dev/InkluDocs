@@ -56,7 +56,8 @@ FELDART_TEXT = {"text": "Textfeld", "checkbox": "Kontrollkästchen", "radio": "A
 # --------------------------------------------------------------------------- Zugriff / Helfer
 
 def _projekt(conn, project_id: int, user_id: int):
-    return conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ? AND tool = 'formular'",
+    # Feld-Werkzeuge gelten fuer Formular-Projekte UND PDF-Projekte mit Feldern (Station Quickinfos, 22.09.2026).
+    return conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ? AND tool IN ('formular', 'pdf')",
                         (project_id, user_id)).fetchone()
 
 

@@ -299,3 +299,32 @@ veraPDF; ein Screenreader-Nutzer verliert die Überschriften-Navigation.
   echten Dokumenten und nur für Befunde mit hoher Sicherheit; Chatbot-Werkzeug; Preisentscheidung.
 - Tests: `tests/test_pdf_pruefung.py` (Nachprüfung, Strukturliste, Bericht mit Modell-Attrappe),
   `tests/e2e/verify_pruefung.py` (echter Modelllauf), Klicktest `ui_dokument.py` Abschnitt B3.
+
+## Chatbot: EIN Werkzeugsatz für PDF-Projekte (22.09.2026, Steves Go)
+
+Steves Frage: „Kann der Chatbot über die Ansichten arbeiten?“ Befund: Der Verlauf hängt schon immer am
+Projekt (chat_messages.project_id), nicht an der Ansicht. Die Lücke war der Werkzeugsatz: er hing am
+Projekttyp, und PDF-Projekte bekamen nur die Bild-Werkzeuge. Jetzt (Michaels Wunsch vom 18.09.,
+„Werkzeugsatz nach Dateiart“):
+
+- `agent_loop._werkzeugsatz`: PDF-Projekt (project_type pdf, tool pdf) = Bild-Werkzeuge + Feld-Werkzeuge
+  (Quickinfos, `definitions_formular`) + PDF-Werkzeuge (`tools/definitions_pdf.py`), Executor
+  `ToolExecutor(pdf=True)`, Systemprompt `SYSTEM_AGENT + prompts/system_pdf.SYSTEM_PDF`. Alte
+  Formular-Projekte (tool formular) und Word-Projekte unverändert. Neue Dateiarten (PowerPoint …) = ein
+  weiterer Zweig hier, ein Definitions-Modul, ein Prompt-Zusatz.
+- `tools/pdf.py`: `dokument_stand` (kostenlos, erster Schritt), `barrierefrei_machen`,
+  `komplett_barrierefrei_machen` (Kette, `kette_api.starten_von_aussen` auf der Hauptschleife),
+  `hoerprobe_lesen` (seitenweise), `pruefung_starten`, `pruefbericht_lesen`, `exportiere_fertige_pdf`
+  (Anhang unter der Antwort + Ablage-Eintrag, Auslöser `bot`). Dieselben Kernfunktionen wie die
+  Oberfläche; Rückfrage in zwei Schritten mit derselben Angebots-Logik wie bei Word
+  (`ausgaben._angebot_merken/_angebot_einloesen`): erst ohne `bestaetigt` nur Preis + Guthaben, Ja in
+  eigener Nachricht, 15 Minuten, Preis unverändert, eine bezahlte Aktion je Nachricht.
+- Lange Läufe (Tagging, Kette, Prüfung) starten im Hintergrund (Thread bzw. Hauptschleife); der Bot
+  meldet „läuft“ und liest den Stand mit `dokument_stand`. Er behauptet nie, etwas sei fertig, was das
+  Werkzeug nicht als fertig gemeldet hat.
+- `tools/formular._projekt` erlaubt jetzt `tool IN ('formular','pdf')`, damit die Feld-Werkzeuge im
+  PDF-Projekt arbeiten.
+- Tests: `tests/e2e/verify_chat_pdf.py` (LLM-gesteuert: Stand, Tagging mit Rückfrage und Ja, Hörprobe,
+  Prüfung mit Rückfrage, Bericht, fertige PDF mit Anhang und Ablage; Quickinfo-Werkzeug im PDF-Projekt).
+- Später: Chat als Seitenleiste außerhalb des Hauptbereichs (bleibt beim Ansichtswechsel stehen; eigener
+  Landmark, Fokus-Regeln, Live-Region), Kennung je Nachricht, aus welcher Ansicht sie kam.

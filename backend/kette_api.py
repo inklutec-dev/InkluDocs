@@ -53,6 +53,7 @@ class Deps:
 
 _d: Optional[Deps] = None
 _laeuft: dict[int, dict] = {}
+_loop: Optional[asyncio.AbstractEventLoop] = None   # Hauptschleife (fuer Starts aus Threads, z. B. Chatbot)
 
 
 def _user():
@@ -259,6 +260,39 @@ def zusammenfassung(stand: dict) -> str:
     return " ".join(teile) or "Nichts zu tun."
 
 
+def starten_von_aussen(project_id: int, user_id: int, ui_lang: str) -> dict:
+    """Kette aus einem Thread starten (Chatbot-Werkzeug komplett_barrierefrei_machen, 22.09.2026): dieselben
+    Wachen wie POST /kette (laeuft, Projektstatus, nichts zu tun, Guthaben, Tageslimit), dann _kette auf der
+    Hauptschleife. Wirft HTTPException wie der Endpunkt."""
+    conn = _d.get_db()
+    try:
+        project = _projekt(conn, project_id, user_id)
+        user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if project_id in _laeuft or _stand(project).get("laeuft"):
+            raise HTTPException(status_code=409, detail="Die Kette läuft bereits")
+        if project.get("status") in ("extracting", "processing"):
+            raise HTTPException(status_code=409, detail="Das Projekt wird gerade verarbeitet. Bitte warte, bis der Lauf fertig ist.")
+        plan = vorschau(conn, project, user_id)
+    finally:
+        conn.close()
+    if plan["nichts_zu_tun"]:
+        return {"gestartet": False, "grund": "nichts_zu_tun", "plan": plan}
+    if not plan["erlaubt"]:
+        fehlend = max(0, plan["gesamt"] - int(plan["verfuegbar"] or 0))
+        raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(
+            {"preis": plan["gesamt"], "verfuegbar": plan["verfuegbar"], "fehlend": fehlend}, "Komplett barrierefrei machen"))
+    if (plan["alttexte"]["bilder"] or plan["quickinfos"]["felder"]) and _d.tageslimit_wache and user is not None:
+        tl = _d.tageslimit_wache(dict(user))
+        if tl:
+            raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
+    if _loop is None:
+        raise HTTPException(status_code=503, detail="Die Kette kann gerade nicht gestartet werden")
+    sprache = project.get("alt_language") or (dict(user).get("language") if user is not None else None) or "de"
+    _laeuft[project_id] = {"laeuft": True}
+    asyncio.run_coroutine_threadsafe(_kette(project_id, user_id, plan, ui_lang or "", sprache), _loop)
+    return {"gestartet": True, "plan": plan}
+
+
 def haengende_ketten_zuruecksetzen() -> None:
     conn = _d.get_db()
     try:
@@ -290,6 +324,8 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.on_event("startup")
     async def _startup():
+        global _loop
+        _loop = asyncio.get_running_loop()
         try:
             haengende_ketten_zuruecksetzen()
         except Exception as e:  # noqa: BLE001
