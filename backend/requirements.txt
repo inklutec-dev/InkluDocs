@@ -18,7 +18,10 @@ Jinja2>=3.1.4
 Babel>=2.16.0
 
 # PDFIX-INTEGRATION (24.04.2026): strukturelle Figure-Extraktion fuer getaggte PDFs
-pdfix-sdk==8.7.10
+# 22.09.2026: 8.7.10 -> 9.3.0 fuer Joerg Heines Skript Make_Accessible (eingebaute Aktion
+# make_accessible braucht PsCommand.GetNumCustomActions, ab SDK 8.8.0). Regression der vier
+# Skripte (AltTag Export/Import, Formular Export/Import) unter 9.3.0 identisch (Testlauf 22.09.).
+pdfix-sdk==9.3.0
 
 # WORD-WERKZEUG (26.08.2026): .docx lesen/schreiben direkt im OOXML-Zip
 # (docx_processor.py / docx_export.py). lxml = sicherer XML-Parser ohne Entities.
