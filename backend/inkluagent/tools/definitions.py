@@ -280,6 +280,8 @@ class ToolExecutor:
                 "dokument_umbenennen": lambda a: pdf_tools.dokument_umbenennen(p, u, _doc(a), str(a.get("name") or "")),
                 "dokument_loeschen": lambda a: pdf_tools.dokument_loeschen(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
                 "alt_sprache_setzen": lambda a: pdf_tools.alt_sprache_setzen(p, u, str(a.get("sprache") or "")),
+                "korrektur_anwenden": lambda a: pdf_tools.korrektur_anwenden(p, u, _doc(a), erneut_pruefen=bool(a.get("erneut_pruefen", False)), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                "korrektur_rueckgaengig": lambda a: pdf_tools.korrektur_rueckgaengig(p, u, _doc(a)),
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
             })

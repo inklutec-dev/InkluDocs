@@ -7734,3 +7734,91 @@ msgstr "Prüfung von „{name}“ fertig: {n} Befunde."
 #: Automatische Pruefung PDF (22.09.2026)
 msgid "Prüfung von „{name}“ fertig: keine Befunde."
 msgstr "Prüfung von „{name}“ fertig: keine Befunde."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Automatisch korrigierbar"
+msgstr "Automatisch korrigierbar"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Messung: {m}"
+msgstr "Messung: {m}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Doppelbeleg: {b}"
+msgstr "Doppelbeleg: {b}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur läuft …"
+msgstr "Korrektur läuft …"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde tragen den Doppelbeleg: Modell und Messung zeigen dieselbe Richtung. Nur diese werden automatisch korrigiert, alle anderen bleiben Hinweise. Vor der Korrektur wird eine Sicherung angelegt."
+msgstr "{n} Befunde tragen den Doppelbeleg: Modell und Messung zeigen dieselbe Richtung. Nur diese werden automatisch korrigiert, alle anderen bleiben Hinweise. Vor der Korrektur wird eine Sicherung angelegt."
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde korrigieren"
+msgstr "{n} Befunde korrigieren"
+
+#: Korrektur PDF (22.09.2026)
+msgid "kostenlos"
+msgstr "kostenlos"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrigieren und erneut prüfen"
+msgstr "Korrigieren und erneut prüfen"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{c} Credits"
+msgstr "{c} Credits"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Dieser Prüfbericht stammt von vor der Korrektur ({zeit}). „Erneut prüfen“ zeigt den neuen Stand."
+msgstr "Dieser Prüfbericht stammt von vor der Korrektur ({zeit}). „Erneut prüfen“ zeigt den neuen Stand."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur fehlgeschlagen: {grund}"
+msgstr "Korrektur fehlgeschlagen: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur vom {zeit}: {n} Änderungen"
+msgstr "Korrektur vom {zeit}: {n} Änderungen"
+
+#: Korrektur PDF (22.09.2026)
+msgid "nicht gefunden"
+msgstr "nicht gefunden"
+
+#: Korrektur PDF (22.09.2026)
+msgid "PDF/UA-Prüfung nach der Korrektur: {s}"
+msgstr "PDF/UA-Prüfung nach der Korrektur: {s}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur rückgängig machen"
+msgstr "Korrektur rückgängig machen"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur konnte nicht gestartet werden: {grund}"
+msgstr "Die Korrektur konnte nicht gestartet werden: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet, danach folgt die Prüfung."
+msgstr "Korrektur gestartet, danach folgt die Prüfung."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet."
+msgstr "Korrektur gestartet."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Rückgängig nicht möglich: {grund}"
+msgstr "Rückgängig nicht möglich: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder."
+msgstr "Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "Die Korrektur von „{name}“ ist fehlgeschlagen: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
+msgstr "Korrektur von „{name}“ fertig: {n} Änderungen."

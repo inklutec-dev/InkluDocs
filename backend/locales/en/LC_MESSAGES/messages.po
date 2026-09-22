@@ -7731,3 +7731,91 @@ msgstr "Check of “{name}” finished: {n} findings."
 #: Automatische Pruefung PDF (22.09.2026)
 msgid "Prüfung von „{name}“ fertig: keine Befunde."
 msgstr "Check of “{name}” finished: no findings."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Automatisch korrigierbar"
+msgstr "Auto-correctable"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Messung: {m}"
+msgstr "Measurement: {m}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Doppelbeleg: {b}"
+msgstr "Double evidence: {b}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur läuft …"
+msgstr "Correction running …"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde tragen den Doppelbeleg: Modell und Messung zeigen dieselbe Richtung. Nur diese werden automatisch korrigiert, alle anderen bleiben Hinweise. Vor der Korrektur wird eine Sicherung angelegt."
+msgstr "{n} findings carry double evidence: model and measurement point the same way. Only these are corrected automatically, all others remain notes. A backup is created before the correction."
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde korrigieren"
+msgstr "Correct {n} findings"
+
+#: Korrektur PDF (22.09.2026)
+msgid "kostenlos"
+msgstr "free of charge"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrigieren und erneut prüfen"
+msgstr "Correct and check again"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{c} Credits"
+msgstr "{c} credits"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Dieser Prüfbericht stammt von vor der Korrektur ({zeit}). „Erneut prüfen“ zeigt den neuen Stand."
+msgstr "This check report dates from before the correction ({zeit}). “Check again” shows the new state."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur fehlgeschlagen: {grund}"
+msgstr "Correction failed: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur vom {zeit}: {n} Änderungen"
+msgstr "Correction of {zeit}: {n} changes"
+
+#: Korrektur PDF (22.09.2026)
+msgid "nicht gefunden"
+msgstr "not found"
+
+#: Korrektur PDF (22.09.2026)
+msgid "PDF/UA-Prüfung nach der Korrektur: {s}"
+msgstr "PDF/UA check after the correction: {s}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur rückgängig machen"
+msgstr "Undo correction"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur konnte nicht gestartet werden: {grund}"
+msgstr "The correction could not be started: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet, danach folgt die Prüfung."
+msgstr "Correction started, the check follows."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet."
+msgstr "Correction started."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Rückgängig nicht möglich: {grund}"
+msgstr "Undo not possible: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder."
+msgstr "The correction was undone. The check report applies again."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "The correction of “{name}” failed: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
+msgstr "Correction of “{name}” finished: {n} changes."

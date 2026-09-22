@@ -7423,3 +7423,91 @@ msgstr "Kontrol af „{name}“ færdig: {n} fund."
 #: Automatische Pruefung PDF (22.09.2026)
 msgid "Prüfung von „{name}“ fertig: keine Befunde."
 msgstr "Kontrol af „{name}“ færdig: ingen fund."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Automatisch korrigierbar"
+msgstr "Kan rettes automatisk"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Messung: {m}"
+msgstr "Måling: {m}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Doppelbeleg: {b}"
+msgstr "Dobbelt belæg: {b}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur läuft …"
+msgstr "Rettelse kører …"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde tragen den Doppelbeleg: Modell und Messung zeigen dieselbe Richtung. Nur diese werden automatisch korrigiert, alle anderen bleiben Hinweise. Vor der Korrektur wird eine Sicherung angelegt."
+msgstr "{n} fund har dobbelt belæg: model og måling peger samme vej. Kun disse rettes automatisk, alle andre forbliver henvisninger. Der laves en sikkerhedskopi før rettelsen."
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde korrigieren"
+msgstr "Ret {n} fund"
+
+#: Korrektur PDF (22.09.2026)
+msgid "kostenlos"
+msgstr "gratis"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrigieren und erneut prüfen"
+msgstr "Ret og kontrollér igen"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{c} Credits"
+msgstr "{c} credits"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Dieser Prüfbericht stammt von vor der Korrektur ({zeit}). „Erneut prüfen“ zeigt den neuen Stand."
+msgstr "Denne kontrolrapport er fra før rettelsen ({zeit}). „Kontrollér igen“ viser den nye tilstand."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur fehlgeschlagen: {grund}"
+msgstr "Rettelse mislykkedes: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur vom {zeit}: {n} Änderungen"
+msgstr "Rettelse fra {zeit}: {n} ændringer"
+
+#: Korrektur PDF (22.09.2026)
+msgid "nicht gefunden"
+msgstr "ikke fundet"
+
+#: Korrektur PDF (22.09.2026)
+msgid "PDF/UA-Prüfung nach der Korrektur: {s}"
+msgstr "PDF/UA-kontrol efter rettelsen: {s}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur rückgängig machen"
+msgstr "Fortryd rettelse"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur konnte nicht gestartet werden: {grund}"
+msgstr "Rettelsen kunne ikke startes: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet, danach folgt die Prüfung."
+msgstr "Rettelse startet, derefter følger kontrollen."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet."
+msgstr "Rettelse startet."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Rückgängig nicht möglich: {grund}"
+msgstr "Fortryd ikke muligt: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder."
+msgstr "Rettelsen er fortrudt. Kontrolrapporten gælder igen."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "Rettelsen af „{name}“ mislykkedes: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
+msgstr "Rettelse af „{name}“ færdig: {n} ændringer."

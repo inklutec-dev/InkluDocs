@@ -48,7 +48,7 @@ def testpdf() -> bytes:
     p.insert_image(fitz.Rect(50, y + 20, 250, y + 150), pixmap=pix)
     p.insert_text((50, y + 170), "Abbildung 1: Testbild mit Farbverlauf.", fontsize=10)
     p2 = d.new_page(width=595, height=842)
-    p2.insert_text((50, 70), "2. Ausblick", fontsize=14)
+    p2.insert_text((50, 70), "2. Ausblick", fontsize=14, fontname="hebo")
     p2.insert_text((50, 100), "Absatz des Ausblicks mit der Planung fuer das kommende Jahr.", fontsize=10)
     out = d.tobytes()
     d.close()
@@ -209,6 +209,30 @@ with sync_playwright() as p:
     check("Knopf heisst jetzt „Erneut prüfen“", pg.locator("button[id^=dok_pruef_]").first.inner_text().startswith("Erneut prüfen"))
     print("   Bericht:", pg.locator("details.dok-pruefung").inner_text()[:600].replace("\n", " | "))
     axe(pg, "Ansicht Dokument mit Prüfbericht")
+    # Korrektur (Stufe 2): nur, wenn Befunde mit Doppelbeleg da sind (Modellurteil, nicht garantiert)
+    if pg.locator("button[id^=dok_korr_]").count():
+        print("== B4. Korrektur mit Doppelbeleg ==")
+        kn = pg.locator("button[id^=dok_korr_]").first
+        check("Knopf „n Befunde korrigieren“ nennt kostenlos", "kostenlos" in kn.inner_text(), kn.inner_text())
+        check("Zweiter Knopf „Korrigieren und erneut prüfen“ mit Credits", pg.locator("button[id^=dok_korr2_]").count() == 1 and "Credits" in pg.locator("button[id^=dok_korr2_]").first.inner_text())
+        kn.click()
+        fertig = False
+        for _ in range(30):
+            pg.wait_for_timeout(2000)
+            if pg.locator("#dkLaufMeldung:not([hidden])").count() and "Korrektur" in pg.locator("#dkLaufMeldungText").inner_text():
+                fertig = True
+                break
+        check("Laufmeldung „Korrektur … fertig: n Änderungen“", fertig and "Änderungen" in pg.locator("#dkLaufMeldungText").inner_text(), pg.locator("#dkLaufMeldungText").inner_text() if fertig else "")
+        txt = pg.locator("details.dok-pruefung").inner_text()
+        check("Korrektur-Block mit Änderungen, Hinweis „von vor der Korrektur“, Rückgängig-Knopf", "Korrektur vom" in txt and "vor der Korrektur" in txt and pg.locator("button[id^=dok_korr_undo_]").count() == 1, txt[-400:])
+        axe(pg, "Ansicht Dokument nach Korrektur")
+        pg.click("button[id^=dok_korr_undo_]")
+        pg.wait_for_timeout(2500)
+        check("Rückgängig: Meldung und Knopf zum Korrigieren wieder da", "rückgängig" in (pg.locator("#dkLaufMeldungText").inner_text() if pg.locator("#dkLaufMeldung:not([hidden])").count() else "").lower() and pg.locator("button[id^=dok_korr_]").count() >= 1, pg.locator("details.dok-pruefung").inner_text()[-300:])
+        if pg.locator("#dkLaufMeldung:not([hidden]) button").count():
+            pg.click("#dkLaufMeldung button")
+    else:
+        print("   (keine Befunde mit Doppelbeleg in diesem Lauf — Korrektur-Teil uebersprungen)")
     if pg.locator("#dkLaufMeldung:not([hidden]) button").count():
         pg.click("#dkLaufMeldung button")
 

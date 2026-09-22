@@ -92,6 +92,28 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
         }, "required": []},
     },
     {
+        "name": "korrektur_anwenden",
+        "description": (
+            "Korrigiert die Befunde der automatischen Prüfung, die den DOPPELBELEG tragen (Modell und Messung der PDF zeigen "
+            "dieselbe Richtung): Rollen wie Absatz→Überschrift, Adresszeile→Absatz, Kopfzelle→Datenzelle. Alle anderen Befunde "
+            "bleiben Hinweise. Kostenlos; vorher wird eine Sicherung angelegt (Rückweg: korrektur_rueckgaengig). ZWEI SCHRITTE: "
+            "erst OHNE bestaetigt (liefert die Liste der Änderungen; nennen und fragen), nach dem Ja mit bestaetigt=true. "
+            "erneut_pruefen=true hängt die bezahlte Nachprüfung an (Preis wie pruefung_starten) — nur, wenn der Nutzer das will."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "document_id": {"type": "integer", "description": "Optional bei einem Dokument."},
+            "erneut_pruefen": {"type": "boolean", "description": "Nachprüfung direkt anhängen (kostet Credits). Standard false."},
+            "bestaetigt": {"type": "boolean", "description": "true NUR nach ausdrücklichem Ja des Nutzers. Standard false."},
+        }, "required": []},
+    },
+    {
+        "name": "korrektur_rueckgaengig",
+        "description": "Macht die letzte automatische Korrektur rückgängig (Sicherung wiederherstellen); der Prüfbericht gilt danach wieder. Kostenlos.",
+        "input_schema": {"type": "object", "properties": {
+            "document_id": {"type": "integer", "description": "Optional bei einem Dokument."},
+        }, "required": []},
+    },
+    {
         "name": "dokument_umbenennen",
         "description": "Anzeigename eines Dokuments setzen (wie der Knopf „Umbenennen“). Leerer Name = zurück auf den Dateinamen. Kostenlos.",
         "input_schema": {"type": "object", "properties": {

@@ -328,3 +328,41 @@ Projekttyp, und PDF-Projekte bekamen nur die Bild-Werkzeuge. Jetzt (Michaels Wun
   Prüfung mit Rückfrage, Bericht, fertige PDF mit Anhang und Ablage; Quickinfo-Werkzeug im PDF-Projekt).
 - Später: Chat als Seitenleiste außerhalb des Hauptbereichs (bleibt beim Ansichtswechsel stehen; eigener
   Landmark, Fokus-Regeln, Live-Region), Kennung je Nachricht, aus welcher Ansicht sie kam.
+
+## Messwerte, Doppelbeleg und Korrektur (Stufe 2, 22.09.2026, Steves Go)
+
+Steves Frage „bist du dir sicher?“ und sein Wunsch: nur reparieren, was wirklich falsch ist, jedes Dokument
+sieht anders aus, der Kunde wählt, was er bezahlt.
+
+- **Messwerte** (`backend/pdf_messung.py`, PyMuPDF, deterministisch): je Textzeile Schriftgröße, fett,
+  Lage, „allein“ (eigener Block mit Luft darüber und darunter), je Seite die Fließtextgröße; je Element über
+  den normalisierten Textanfang zugeordnet, dazu die Zahl der Textzeilen im Element (zusammengezogene
+  Zellen). Stehen in der Strukturliste des Prompts (`[16 pt fett, allein]`) und im Bericht (`messung`).
+- **Doppelbeleg** (`pdf_pruefung.doppelbeleg`): ein Befund ist `auto` (automatisch korrigierbar) nur, wenn
+  das Modell „hoch“ sagt UND eine unabhängige Quelle dieselbe Richtung zeigt: Absatz→Überschrift nur bei
+  allein stehend und hervorgehoben (≥ 1,15 × Fließtext oder fett); Überschrift→Absatz nur bei nicht
+  hervorgehoben; Kopfzelle→Datenzelle nur aus der Tabellenlage (Wert rechts neben einer Kopfzelle, oder
+  Zahl in einer Datenzeile unter einer Kopfzeile). Alles andere bleibt Hinweis (`doppelbeleg` erklärt warum).
+- **Ebene aus Schriftgröße** (`ebenen_aus_groesse`): Das Modell entscheidet „ist eine Überschrift“, die
+  Messung „welche Ebene“ — Rang der Größe im Dokument zusammen mit den vorhandenen Überschriften
+  (24 pt = H1, 16 pt = H2, 11 pt = H3). Messlauf Rechnungen: Modell schlug H1 vor, Messung setzte H3.
+- **Korrektur** (`backend/pdf_korrektur.py` + eigenes Skript `pdfix_scripts/Korrektur_Anwenden.py`): nur
+  `SetType` auf Elemente, die über die Objektnummer (`obj`, Strukturlesung Version 2) gefunden werden;
+  Sicherung `<pdf>.vor_korrektur.pdf` vorher, veraPDF danach, Bericht in `documents.korrektur_bericht`,
+  Prüfbericht bekommt `korrigiert_am` („von vor der Korrektur“). Kostenlos. `rueckgaengig()` stellt die
+  Sicherung her (Zeitstempel auf jetzt, damit die Zwischenspeicher neu lesen).
+- **Endpunkte:** `POST …/documents/{doc}/korrektur` (Body `erneut_pruefen`: hängt die bezahlte
+  Nachprüfung an — 402/429 wie bei der Prüfung; 400 ohne Prüfung oder ohne Doppelbeleg; 409 schon
+  korrigiert oder Lauf aktiv), `POST …/korrektur/rueckgaengig`. Stand in `pruefung.korrektur`.
+- **Karte:** je Befund Badge „Automatisch korrigierbar“, Messung und Doppelbeleg; Knöpfe „n Befunde
+  korrigieren (kostenlos)“ und „Korrigieren und erneut prüfen (c Credits)“; Korrektur-Block mit Änderungen,
+  veraPDF danach, „Korrektur rückgängig machen“; Hinweis, wenn der Prüfbericht von vor der Korrektur stammt.
+- **Chatbot:** `korrektur_anwenden` (Zwei-Schritt, nennt die Änderungen, fragt nach der Nachprüfung),
+  `korrektur_rueckgaengig`; `pruefbericht_lesen` liefert Messung, Doppelbeleg und Korrektur-Stand.
+- **Messlauf Rechnungen (Projekt 953 auf Staging):** eigene Rechnung 10 Befunde, 8 mit Doppelbeleg, 8
+  korrigiert in 1,6 s (Adresszeilen → P, Rechnungsnummer → H2, Zwischenüberschriften → H3, drei Kopfzellen
+  → Werte); Haunschild 3 Befunde, 1 korrigiert. Hinweise blieben: fette erste Adresszeile (Messung und
+  Modell uneins), zusammengezogene Zahlungszellen (kein Umbenennen — nächste Stufe: Tabelle aus der
+  Zeilenlage neu setzen).
+- Tests: `tests/test_pdf_messung.py`, Doppelbeleg in `tests/test_pdf_pruefung.py`, `tests/e2e/verify_korrektur.py`,
+  Klicktest `ui_dokument.py` Abschnitt B4 (nur bei Doppelbeleg-Befunden).

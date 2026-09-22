@@ -97,7 +97,7 @@ class DokumentTest(unittest.TestCase):
             self.assertEqual(b["seiten"], 2)
             self.assertEqual(b["seiten_geprueft"], 1)
             self.assertEqual(len(b["befunde"]), 1)
-            self.assertEqual(b["anzahl"], {"hoch": 1, "mittel": 0, "niedrig": 0})
+            self.assertEqual(b["anzahl"], {"hoch": 1, "mittel": 0, "niedrig": 0, "auto": 0})
             self.assertEqual(b["hinweise"], ["Seite 2: KI-Anfrage fehlgeschlagen"])
             self.assertEqual(b["je_seite"][0]["zusammenfassung"], "Eine Abweichung.")
             self.assertTrue(os.path.isfile(os.path.join(d, "t.pdf.pruef_p1.png")))   # Seitenbild gecacht

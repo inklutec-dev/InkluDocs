@@ -7293,3 +7293,91 @@ msgstr "Kontroll av ”{name}” klar: {n} fynd."
 #: Automatische Pruefung PDF (22.09.2026)
 msgid "Prüfung von „{name}“ fertig: keine Befunde."
 msgstr "Kontroll av ”{name}” klar: inga fynd."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Automatisch korrigierbar"
+msgstr "Kan rättas automatiskt"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Messung: {m}"
+msgstr "Mätning: {m}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Doppelbeleg: {b}"
+msgstr "Dubbelt belägg: {b}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur läuft …"
+msgstr "Rättning pågår …"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde tragen den Doppelbeleg: Modell und Messung zeigen dieselbe Richtung. Nur diese werden automatisch korrigiert, alle anderen bleiben Hinweise. Vor der Korrektur wird eine Sicherung angelegt."
+msgstr "{n} fynd har dubbelt belägg: modell och mätning pekar åt samma håll. Bara dessa rättas automatiskt, alla andra förblir anmärkningar. En säkerhetskopia skapas före rättningen."
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde korrigieren"
+msgstr "Rätta {n} fynd"
+
+#: Korrektur PDF (22.09.2026)
+msgid "kostenlos"
+msgstr "kostnadsfritt"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrigieren und erneut prüfen"
+msgstr "Rätta och kontrollera igen"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{c} Credits"
+msgstr "{c} krediter"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Dieser Prüfbericht stammt von vor der Korrektur ({zeit}). „Erneut prüfen“ zeigt den neuen Stand."
+msgstr "Den här kontrollrapporten är från före rättningen ({zeit}). ”Kontrollera igen” visar det nya läget."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur fehlgeschlagen: {grund}"
+msgstr "Rättning misslyckades: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur vom {zeit}: {n} Änderungen"
+msgstr "Rättning från {zeit}: {n} ändringar"
+
+#: Korrektur PDF (22.09.2026)
+msgid "nicht gefunden"
+msgstr "hittades inte"
+
+#: Korrektur PDF (22.09.2026)
+msgid "PDF/UA-Prüfung nach der Korrektur: {s}"
+msgstr "PDF/UA-kontroll efter rättningen: {s}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur rückgängig machen"
+msgstr "Ångra rättning"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur konnte nicht gestartet werden: {grund}"
+msgstr "Rättningen kunde inte startas: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet, danach folgt die Prüfung."
+msgstr "Rättning startad, därefter följer kontrollen."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet."
+msgstr "Rättning startad."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Rückgängig nicht möglich: {grund}"
+msgstr "Ångra inte möjligt: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder."
+msgstr "Rättningen har ångrats. Kontrollrapporten gäller igen."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "Rättningen av ”{name}” misslyckades: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
+msgstr "Rättning av ”{name}” klar: {n} ändringar."

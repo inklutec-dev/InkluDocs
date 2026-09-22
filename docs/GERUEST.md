@@ -76,6 +76,15 @@ Die sechs Bausteine:
 - Chatbot: `tools/pdf.py` (pruefung_starten, pruefbericht_lesen)
 - Tests und Doku: `tests/test_pdf_pruefung.py`, `tests/e2e/verify_pruefung.py`, `docs/TAGGING.md`
 
+## Korrektur (PDF, Stufe 2)
+
+- Kern: `backend/pdf_messung.py` (Messwerte), `backend/pdf_korrektur.py`, `backend/pdfix_scripts/Korrektur_Anwenden.py`
+- Endpunkte: in `tagging_api.py` (`…/korrektur`, `…/korrektur/rueckgaengig`)
+- Oberfläche: `frontend/dokument.js` (Korrektur-Block in der Klappe „Automatische Prüfung“)
+- Prompt und Schema: keine (Doppelbeleg ist deterministisch: `pdf_pruefung.doppelbeleg`, `ebenen_aus_groesse`)
+- Chatbot: `tools/pdf.py` (korrektur_anwenden, korrektur_rueckgaengig)
+- Tests und Doku: `tests/test_pdf_messung.py`, `tests/e2e/verify_korrektur.py`, `docs/TAGGING.md`
+
 ## Querschnitt
 
 - Abrechnung: `backend/billing.py` (AKTIONS_PREISE: eine Zeile je kostenpflichtiger Aktion, GUELTIGE_QUELLEN)

@@ -847,6 +847,8 @@ def _migrate_columns(conn):
         # AUTOMATISCHE PRUEFUNG (Schritt 5, 22.09.2026, pdf_pruefung.py): Stand + Bericht (JSON) je Dokument.
         ("documents", "pruefung_status", "ALTER TABLE documents ADD COLUMN pruefung_status TEXT DEFAULT ''"),
         ("documents", "pruefung_bericht", "ALTER TABLE documents ADD COLUMN pruefung_bericht TEXT DEFAULT ''"),
+        # KORREKTUR (Stufe 2, 22.09.2026, pdf_korrektur.py): Bericht der letzten automatischen Korrektur (JSON).
+        ("documents", "korrektur_bericht", "ALTER TABLE documents ADD COLUMN korrektur_bericht TEXT DEFAULT ''"),
         # ANSICHTEN (22.09.2026, Steve): zuletzt ueber die Ansichts-Wahl geoeffnete Ansicht je Projekt
         # ('' = Startansicht des Dateityps: PDF „dokument“, Word „alttexte“ bzw. „uebersetzung“).
         ("projects", "letzte_ansicht", "ALTER TABLE projects ADD COLUMN letzte_ansicht TEXT DEFAULT ''"),

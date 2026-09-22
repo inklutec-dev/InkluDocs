@@ -35,6 +35,7 @@ _SCRIPT_DIR = Path(__file__).parent / "pdfix_scripts"
 _SCRIPT = _SCRIPT_DIR / "Struktur_Export.py"
 _TIMEOUT_SECONDS = int(os.environ.get("PDFIX_STRUKTUR_TIMEOUT", "180"))
 MAX_ZEILE = 400
+STRUKTUR_VERSION = 2   # Cache-Version: 2 = mit Objektnummern (obj) je Element; aeltere Caches werden neu gelesen
 
 
 class StrukturFehler(Exception):
@@ -69,7 +70,7 @@ def lesen(pdf_pfad: str, arbeitsordner: str, erneuern: bool = False) -> dict:
         try:
             with open(cache, encoding="utf-8") as f:
                 d = json.load(f)
-            if isinstance(d, dict) and "elemente" in d:
+            if isinstance(d, dict) and "elemente" in d and (d.get("info") or {}).get("version") == STRUKTUR_VERSION:
                 return d
         except Exception:  # noqa: BLE001
             pass

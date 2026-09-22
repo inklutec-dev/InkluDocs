@@ -142,6 +142,76 @@
         const m = { rolle: t('Rolle'), ebene: t('Ebene'), reihenfolge: t('Reihenfolge'), tabelle: t('Tabelle'), grafik: t('Grafik'), fehlt: t('Fehlt'), sprache: t('Sprache'), sonstiges: t('Sonstiges') };
         return m[a] || a;
     }
+    // ─── Korrektur (Stufe 2, 22.09.2026): nur Befunde mit Doppelbeleg (Modell + Messung), kostenlos, mit Rückweg;
+    // die Nachprüfung ist ein eigener, bezahlter Knopf (Steve: der Kunde wählt).
+    function korrekturHtml(project, d, pr) {
+        const ko = pr.korrektur || {};
+        const kb = ko.bericht || {};
+        const busy = (d.tagging && d.tagging.laeuft) || pr.laeuft || ko.laeuft || !!(project.kette && project.kette.laeuft);
+        const vh = t('– Dokument „{name}“', { name: esc(docDisplayName(d)) });
+        let s = '';
+        if (ko.laeuft) s += '<p><output class="dok-status">' + t('Korrektur läuft …') + '</output></p>';
+        if (pr.status === 'fertig' && ko.verfuegbar && ko.auto_befunde > 0 && !ko.korrigiert_am && !busy) {
+            s += '<p>' + t('{n} Befunde tragen den Doppelbeleg: Modell und Messung zeigen dieselbe Richtung. Nur diese werden automatisch korrigiert, alle anderen bleiben Hinweise. Vor der Korrektur wird eine Sicherung angelegt.', { n: ko.auto_befunde }) + '</p>'
+                + '<p><button type="button" class="btn btn-primary" id="dok_korr_' + d.id + '" onclick="Dokument.korrekturStarten(' + project.id + ', ' + d.id + ', false)">' + ico('sparkle') + t('{n} Befunde korrigieren', { n: ko.auto_befunde }) + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos') + '</span></button> '
+                + '<button type="button" class="btn btn-secondary" id="dok_korr2_' + d.id + '" onclick="Dokument.korrekturStarten(' + project.id + ', ' + d.id + ', true)">' + t('Korrigieren und erneut prüfen') + '<span class="visually-hidden"> ' + vh + ', ' + t('{c} Credits', { c: pr.preis || 0 }) + '</span></button></p>';
+        }
+        if (ko.korrigiert_am) s += '<p class="feld-hinweis">' + t('Dieser Prüfbericht stammt von vor der Korrektur ({zeit}). „Erneut prüfen“ zeigt den neuen Stand.', { zeit: esc(ko.korrigiert_am) }) + '</p>';
+        if (kb.fehler) s += '<p class="feld-hinweis">' + t('Korrektur fehlgeschlagen: {grund}', { grund: esc(kb.fehler) }) + (kb.zeit ? ' (' + esc(kb.zeit) + ')' : '') + '</p>';
+        if (kb.zeit && !kb.fehler) {
+            s += '<h5>' + t('Korrektur vom {zeit}: {n} Änderungen', { zeit: esc(kb.zeit), n: kb.anzahl || 0 }) + '</h5><ul class="dok-befunde">'
+                + (kb.angewendet || []).map(a => '<li>' + t('Seite {n}', { n: a.seite }) + ': ' + esc(a.typ_vorher || '?') + ' → ' + esc(a.typ_nachher || '?') + (a.text ? ' „' + esc(a.text) + '“' : '')
+                    + (a.status !== 'angewendet' ? ' <em>' + t('nicht gefunden') + '</em>' : '') + (a.begruendung ? ' <span class="dok-messung">' + esc(a.begruendung) + '</span>' : '') + '</li>').join('') + '</ul>';
+            if (kb.verapdf) s += '<p>' + t('PDF/UA-Prüfung nach der Korrektur: {s}', { s: esc(kb.verapdf.zusammenfassung || '') }) + '</p>';
+            if (ko.sicherung && !busy) s += '<p><button type="button" class="btn btn-secondary" id="dok_korr_undo_' + d.id + '" onclick="Dokument.korrekturRueckgaengig(' + project.id + ', ' + d.id + ')">' + t('Korrektur rückgängig machen') + '<span class="visually-hidden"> ' + vh + '</span></button></p>';
+        }
+        return s;
+    }
+    async function korrekturStarten(projectId, docId, erneut) {
+        const k1 = document.getElementById('dok_korr_' + docId);
+        const k2 = document.getElementById('dok_korr2_' + docId);
+        if (k1) k1.disabled = true;
+        if (k2) k2.disabled = true;
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/korrektur', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ erneut_pruefen: !!erneut }) });
+            const j = await r.json().catch(() => ({}));
+            if (r.status === 402 && j.detail && typeof zeigeCreditsMeldung === 'function') { zeigeCreditsMeldung(j.detail); if (k1) k1.disabled = false; if (k2) k2.disabled = false; return; }
+            if (!r.ok) {
+                announce(t('Die Korrektur konnte nicht gestartet werden: {grund}', { grund: (j.detail && (j.detail.text || j.detail)) || t('unbekannter Fehler') }));
+                if (k1) k1.disabled = false; if (k2) k2.disabled = false;
+                return;
+            }
+            offenePruefungen.add(docId);
+            await showProject(projectId, true);
+            announce(erneut ? t('Korrektur gestartet, danach folgt die Prüfung.') : t('Korrektur gestartet.'));
+        } catch (e) {
+            announce(t('Die Korrektur konnte nicht gestartet werden: {grund}', { grund: String(e) }));
+            if (k1) k1.disabled = false; if (k2) k2.disabled = false;
+        }
+    }
+    async function korrekturRueckgaengig(projectId, docId) {
+        const k = document.getElementById('dok_korr_undo_' + docId);
+        if (k) k.disabled = true;
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/korrektur/rueckgaengig', { method: 'POST', credentials: 'same-origin' });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) { announce(t('Rückgängig nicht möglich: {grund}', { grund: (j.detail && (j.detail.text || j.detail)) || t('unbekannter Fehler') })); if (k) k.disabled = false; return; }
+            offenePruefungen.add(docId);
+            await showProject(projectId, true);
+            zeigeMeldung(t('Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder.'));
+        } catch (e) {
+            announce(t('Rückgängig nicht möglich: {grund}', { grund: String(e) }));
+            if (k) k.disabled = false;
+        }
+    }
+    function korrAbschlussText(d) {
+        const pr = (d.tagging && d.tagging.pruefung) || {};
+        const kb = (pr.korrektur && pr.korrektur.bericht) || {};
+        const name = docDisplayName(d);
+        if (kb.fehler) return t('Die Korrektur von „{name}“ ist fehlgeschlagen: {grund}', { name: name, grund: kb.fehler });
+        return t('Korrektur von „{name}“ fertig: {n} Änderungen.', { name: name, n: kb.anzahl || 0 });
+    }
+
     function pruefBerichtHtml(pr) {
         const b = pr.bericht || {};
         if (pr.status === 'fehler') return '<p class="feld-hinweis">' + t('Fehler: {grund}', { grund: esc(b.fehler || t('unbekannt')) }) + '</p>';
@@ -158,7 +228,10 @@
                 + (f.vorschlag ? ' ' + t('Vorschlag: {v}.', { v: esc(f.vorschlag) }) : '')
                 + (f.beleg ? ' ' + t('Beleg: {b}', { b: esc(f.beleg) }) : '')
                 + ' <span class="badge ' + (f.sicherheit === 'hoch' ? 'badge-ok' : (f.sicherheit === 'mittel' ? 'badge-warn' : 'badge-muted')) + '">' + sicherheitText(f.sicherheit) + '</span>'
+                + (f.auto ? ' <span class="badge badge-ok">' + t('Automatisch korrigierbar') + '</span>' : '')
                 + ' <span class="visually-hidden">' + artText(f.art) + '</span>'
+                + (f.messung ? ' <span class="dok-messung">' + t('Messung: {m}', { m: esc(f.messung) }) + '</span>' : '')
+                + (f.auto && f.doppelbeleg ? ' <span class="dok-messung">' + t('Doppelbeleg: {b}', { b: esc(f.doppelbeleg) }) + '</span>' : '')
                 + (f.hinweis ? ' <em>' + esc(f.hinweis) + '</em>' : '')
                 + '</li>').join('') + '</ol>';
         }
@@ -181,6 +254,7 @@
             + (!busy && pr.seiten ? '<p><button type="button" class="btn btn-secondary" id="dok_pruef_' + d.id + '" onclick="Dokument.pruefungStarten(' + project.id + ', ' + d.id + ')">' + ico('sparkle') + knopf + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: pr.seiten, c: pr.preis || 0 }) + '</span></button></p>' : '')
             + '<output id="dok_pruef_status_' + d.id + '" class="dok-status" style="display:block;" tabindex="-1">' + (pr.laeuft ? t('Prüfung läuft … Seite {a} von {b}.', { a: pr.seite || 0, b: pr.seiten || 0 }) : '') + '</output>'
             + pruefBerichtHtml(pr)
+            + korrekturHtml(project, d, pr)
             + '</div></details>';
     }
     async function pruefungStarten(projectId, docId) {
@@ -604,8 +678,9 @@
         if (h1 && !erneut) h1.focus();
         const laufende = docs.filter(d => d.tagging && d.tagging.laeuft).map(d => d.id);
         const pruefende = docs.filter(d => d.tagging && d.tagging.pruefung && d.tagging.pruefung.laeuft).map(d => d.id);
+        const korrigierende = docs.filter(d => d.tagging && d.tagging.pruefung && d.tagging.pruefung.korrektur && d.tagging.pruefung.korrektur.laeuft).map(d => d.id);
         const ketteLief = !!(project.kette && project.kette.laeuft);
-        if (laufende.length || pruefende.length || ketteLief || project.status === 'extracting' || project.status === 'processing') {
+        if (laufende.length || pruefende.length || korrigierende.length || ketteLief || project.status === 'extracting' || project.status === 'processing') {
             const tick = async () => {
                 if (zustandProjekt !== projectId) return;
                 if (!document.getElementById('dokListe')) { pollStoppen(); return; }   // Ansicht gewechselt
@@ -624,6 +699,13 @@
                         return;
                     }
                     // Automatische Pruefung: Fortschritt in der Statuszeile, am Ende neu zeichnen + melden
+                    // Korrektur fertig: neu zeichnen und melden (laeuft danach die Nachpruefung, uebernimmt der neue Poll)
+                    const korrFertig = (d2.documents || []).filter(x => korrigierende.includes(x.id) && !(x.tagging && x.tagging.pruefung && x.tagging.pruefung.korrektur && x.tagging.pruefung.korrektur.laeuft));
+                    if (korrFertig.length) {
+                        await showProject(projectId, true);
+                        zeigeMeldung(korrFertig.map(korrAbschlussText).join(' '));
+                        return;
+                    }
                     const pruefFertig = (d2.documents || []).filter(x => pruefende.includes(x.id) && !(x.tagging && x.tagging.pruefung && x.tagging.pruefung.laeuft));
                     if (pruefFertig.length) {
                         await showProject(projectId, true);
@@ -658,5 +740,5 @@
     }
 
     window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, zurAnsicht, meldungSchliessen, pollStoppen,
-                        ketteOeffnen, ketteSchliessen, ketteStarten, exportieren, pruefungStarten };
+                        ketteOeffnen, ketteSchliessen, ketteStarten, exportieren, pruefungStarten, korrekturStarten, korrekturRueckgaengig };
 })();

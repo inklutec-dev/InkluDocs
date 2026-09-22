@@ -7731,3 +7731,91 @@ msgstr "Comprobación de «{name}» terminada: {n} hallazgos."
 #: Automatische Pruefung PDF (22.09.2026)
 msgid "Prüfung von „{name}“ fertig: keine Befunde."
 msgstr "Comprobación de «{name}» terminada: sin hallazgos."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Automatisch korrigierbar"
+msgstr "Corregible automáticamente"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Messung: {m}"
+msgstr "Medición: {m}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Doppelbeleg: {b}"
+msgstr "Doble evidencia: {b}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur läuft …"
+msgstr "Corrección en curso …"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde tragen den Doppelbeleg: Modell und Messung zeigen dieselbe Richtung. Nur diese werden automatisch korrigiert, alle anderen bleiben Hinweise. Vor der Korrektur wird eine Sicherung angelegt."
+msgstr "{n} hallazgos tienen doble evidencia: modelo y medición apuntan en la misma dirección. Solo estos se corrigen automáticamente, los demás quedan como indicaciones. Antes de la corrección se crea una copia de seguridad."
+
+#: Korrektur PDF (22.09.2026)
+msgid "{n} Befunde korrigieren"
+msgstr "Corregir {n} hallazgos"
+
+#: Korrektur PDF (22.09.2026)
+msgid "kostenlos"
+msgstr "gratis"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrigieren und erneut prüfen"
+msgstr "Corregir y comprobar de nuevo"
+
+#: Korrektur PDF (22.09.2026)
+msgid "{c} Credits"
+msgstr "{c} créditos"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Dieser Prüfbericht stammt von vor der Korrektur ({zeit}). „Erneut prüfen“ zeigt den neuen Stand."
+msgstr "Este informe de comprobación es anterior a la corrección ({zeit}). «Comprobar de nuevo» muestra el estado nuevo."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur fehlgeschlagen: {grund}"
+msgstr "Corrección fallida: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur vom {zeit}: {n} Änderungen"
+msgstr "Corrección del {zeit}: {n} cambios"
+
+#: Korrektur PDF (22.09.2026)
+msgid "nicht gefunden"
+msgstr "no encontrado"
+
+#: Korrektur PDF (22.09.2026)
+msgid "PDF/UA-Prüfung nach der Korrektur: {s}"
+msgstr "Comprobación PDF/UA tras la corrección: {s}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur rückgängig machen"
+msgstr "Deshacer la corrección"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur konnte nicht gestartet werden: {grund}"
+msgstr "No se pudo iniciar la corrección: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet, danach folgt die Prüfung."
+msgstr "Corrección iniciada, después sigue la comprobación."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur gestartet."
+msgstr "Corrección iniciada."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Rückgängig nicht möglich: {grund}"
+msgstr "No se puede deshacer: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder."
+msgstr "La corrección se ha deshecho. El informe de comprobación vuelve a ser válido."
+
+#: Korrektur PDF (22.09.2026)
+msgid "Die Korrektur von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "La corrección de «{name}» ha fallado: {grund}"
+
+#: Korrektur PDF (22.09.2026)
+msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
+msgstr "Corrección de «{name}» terminada: {n} cambios."

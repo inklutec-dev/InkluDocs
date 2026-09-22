@@ -52,7 +52,10 @@ REGELN FÜR JEDEN BEFUND (verbindlich):
   Im Zweifel: kein Befund. Eine leere Befundliste ist ein gutes Ergebnis.
 - Keine Stilfragen, keine Rechtschreibung, keine inhaltliche Bewertung, keine Empfehlungen zu Farben.
 - Kennung EXAKT aus der Strukturliste übernehmen (E…); erfinde keine Kennungen.
-- Beleg: nenne, was du auf der Seite siehst (Größe, Fettdruck, Lage, Nummerierung, Text).
+- Beleg: nenne, was du auf der Seite siehst (Größe, Fettdruck, Lage, Nummerierung, Text). Stehen in der
+  Strukturliste Messwerte in eckigen Klammern (Schriftgröße, fett/normal, allein/im Block, Zeilenzahl), dann
+  sind das Messungen aus der PDF — nutze sie als Beleg und nenne sie. Ein Element mit mehreren Textzeilen,
+  die auf der Seite getrennte Zeilen oder Zellen sind, ist ein Befund (art=tabelle oder reihenfolge).
 - Sicherheit „hoch“ nur, wenn Bild und Regel eindeutig sind; sonst „mittel“ oder „niedrig“.
 - Ein Befund je Element; fasse gleichartige Fälle nicht zusammen, sondern melde jedes Element.
 - Text ist auf 200 Zeichen je Element gekürzt; das ist keine Abweichung."""

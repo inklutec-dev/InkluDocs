@@ -185,6 +185,10 @@ def _walk(elem, tiefe, pfad, out, max_text, zaehler, im_text=False):
                     n += 1
         return
     eintrag = {"id": pfad, "typ": typ, "tiefe": tiefe}
+    try:
+        eintrag["obj"] = elem.GetObject().GetId()   # Objektnummer: Anker fuer Korrektur_Anwenden.py (22.09.2026)
+    except Exception:  # noqa: BLE001
+        pass
     deep = typ in ("TH", "TD", "LI", "Lbl", "LBody", "Caption", "Note", "TOCI", "Formula", "Figure", "Form") and typ not in _CONTAINER
     text, seite = _text(elem, deep=deep, max_text=max_text)
     if typ in _CONTAINER and typ not in ("LBody",):
@@ -285,7 +289,7 @@ def main():
                 t = z["id"].count(".") + 1
                 spalten = max(spalten, sum(1 for f in nach if f["id"].startswith(z["id"] + ".") and f["id"].count(".") == t and f["typ"] in ("TH", "TD")))
             e["zeilen"], e["spalten"] = len(zeilen), spalten
-        info = {"seiten": _doc.GetNumPages(), "elemente": len(out), "dauer_s": round(time.time() - t0, 2)}
+        info = {"seiten": _doc.GetNumPages(), "elemente": len(out), "dauer_s": round(time.time() - t0, 2), "version": 2}
         try:
             info["lang"] = _sauber(_doc.GetLang() or "")
         except Exception:  # noqa: BLE001

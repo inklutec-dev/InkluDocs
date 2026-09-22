@@ -34,6 +34,7 @@ from typing import Callable, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
+import pdf_korrektur
 import pdf_pruefung
 import pdf_struktur
 import pdf_tagging
@@ -69,6 +70,7 @@ class Deps:
 _d: Optional[Deps] = None
 _laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "project_id": id}
 _pruefung_laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "seite": n, "seiten": m}
+_korrektur_laeuft: dict[int, dict] = {}  # document_id -> {"seit": ts}  (Korrektur, ggf. mit Nachpruefung)
 # Sicherheitsdurchgang 22.09.2026: Starts kommen aus dem Endpunkt (Hauptschleife) UND aus Chatbot-Threads.
 # Pruefen-und-Markieren laeuft deshalb atomar unter einer Sperre — sonst koennten zwei Starts denselben
 # Lauf doppelt anstossen und doppelt abrechnen.
@@ -141,14 +143,40 @@ def _pruef_bericht(doc: dict) -> dict:
         return {}
 
 
+def _korr_bericht(doc: dict) -> dict:
+    try:
+        b = json.loads(doc.get("korrektur_bericht") or "{}")
+        return b if isinstance(b, dict) else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def korrektur_stand(doc: dict, pruef_bericht: dict) -> dict:
+    """Stand der KORREKTUR (Stufe 2, 22.09.2026): laeuft, letzter Bericht, Zahl der Befunde mit Doppelbeleg,
+    Sicherung vorhanden (Rueckweg), ob der Pruefbericht von VOR der Korrektur stammt."""
+    kb = _korr_bericht(doc)
+    auto = [b for b in (pruef_bericht.get("befunde") or []) if b.get("auto")]
+    pfad = doc.get("original_path") or ""
+    return {
+        "laeuft": doc["id"] in _korrektur_laeuft,
+        "verfuegbar": pdf_korrektur.verfuegbar(),
+        "auto_befunde": len(auto),
+        "korrigiert_am": pruef_bericht.get("korrigiert_am") or "",
+        "bericht": kb,
+        "sicherung": bool(pfad and os.path.isfile(pdf_korrektur.sicherung_pfad(pfad))),
+    }
+
+
 def pruefung_stand(conn, doc: dict, user_id: int, seiten: int) -> dict:
-    """Stand der AUTOMATISCHEN PRUEFUNG (Schritt 5, 22.09.2026) fuer die Karte: Status, Preis, Bericht."""
+    """Stand der AUTOMATISCHEN PRUEFUNG (Schritt 5, 22.09.2026) fuer die Karte: Status, Preis, Bericht, Korrektur."""
     zu_pruefen = min(seiten, pdf_pruefung.MAX_SEITEN) if seiten else 0
     pruefung = _d.billing.aktion_pruefung(user_id, AKTION_PRUEFUNG, zu_pruefen) if zu_pruefen else None
     status = doc.get("pruefung_status") or ""
     laeuft = doc["id"] in _pruefung_laeuft or status == STATUS_LAEUFT
     fortschritt = _pruefung_laeuft.get(doc["id"]) or {}
+    pb = _pruef_bericht(doc)
     return {
+        "korrektur": korrektur_stand(doc, pb),
         "status": (STATUS_LAEUFT if laeuft else status),
         "laeuft": laeuft,
         "seite": fortschritt.get("seite", 0),
@@ -158,8 +186,44 @@ def pruefung_stand(conn, doc: dict, user_id: int, seiten: int) -> dict:
         "erlaubt": bool((pruefung or {}).get("erlaubt")) if pruefung else False,
         "fehlend": (pruefung or {}).get("fehlend", 0),
         "modell": pdf_pruefung.MODELL,
-        "bericht": _pruef_bericht(doc),
+        "bericht": pb,
     }
+
+
+def _korrektur_sync(project_id: int, document_id: int, user_id: int, erneut: bool, preis: int, ui_lang: str) -> None:
+    """KORREKTUR (im Executor): Befunde mit Doppelbeleg ueber Korrektur_Anwenden.py ausfuehren (Sicherung vorher),
+    Bericht speichern, Pruefbericht als „von vor der Korrektur“ markieren; optional direkt die Nachpruefung
+    (bezahlt, pruefung_markieren + _pruefung_sync)."""
+    conn = _d.get_db()
+    try:
+        doc = dict(conn.execute("SELECT * FROM documents WHERE id = ?", (document_id,)).fetchone())
+    finally:
+        conn.close()
+    pfad = doc.get("original_path") or ""
+    pb = _pruef_bericht(doc)
+    uebers = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None
+    try:
+        kb = pdf_korrektur.anwenden(pfad, pb.get("befunde") or [], uebers)
+        pb["korrigiert_am"] = kb["zeit"]
+        log.info("[korrektur] Dokument %s: %s Änderungen in %ss", document_id, kb.get("anzahl"), kb.get("dauer_s"))
+    except Exception as e:  # noqa: BLE001
+        bekannt = isinstance(e, pdf_korrektur.KorrekturFehler)
+        if not bekannt:
+            log.exception("[korrektur] Dokument %s fehlgeschlagen", document_id)
+        kb = {"fehler": (str(e) if bekannt else "Unerwarteter Fehler bei der Korrektur"), "zeit": time.strftime("%Y-%m-%d %H:%M:%S")}
+        erneut = False
+    finally:
+        _korrektur_laeuft.pop(document_id, None)
+    conn = _d.get_db()
+    try:
+        conn.execute("UPDATE documents SET korrektur_bericht = ?, pruefung_bericht = ? WHERE id = ?",
+                     (json.dumps(kb, ensure_ascii=False), json.dumps(pb, ensure_ascii=False), document_id))
+        conn.commit()
+        gestartet = erneut and pruefung_markieren(conn, document_id, min(_seiten(doc), pdf_pruefung.MAX_SEITEN))
+    finally:
+        conn.close()
+    if gestartet:
+        _pruefung_sync(project_id, document_id, user_id, preis, ui_lang)
 
 
 def _seiten(doc: dict) -> int:
@@ -762,6 +826,75 @@ def build_router(deps: Deps) -> APIRouter:
         loop = asyncio.get_running_loop()
         loop.run_in_executor(None, _pruefung_sync, project_id, document_id, user["id"], int(pruefung["preis"]), ui_lang)
         return {"status": STATUS_LAEUFT, "document_id": document_id, "seiten": zu_pruefen, "preis": int(pruefung["preis"])}
+
+    @router.post("/api/projects/{project_id}/documents/{document_id}/korrektur")
+    async def korrektur_starten(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):
+        """KORREKTUR der Befunde mit Doppelbeleg (Stufe 2, 22.09.2026). Kostenlos (mechanisch). Body
+        {"erneut_pruefen": true} haengt die bezahlte Nachpruefung an (Preis wie Pruefung, 402 bei Guthaben)."""
+        try:
+            data = await request.json()
+        except Exception:  # noqa: BLE001
+            data = {}
+        erneut = bool((data or {}).get("erneut_pruefen"))
+        conn = _d.get_db()
+        try:
+            _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+            if not pdf_korrektur.verfuegbar():
+                raise HTTPException(status_code=503, detail="Die Korrektur ist auf diesem Server nicht eingerichtet")
+            pb = _pruef_bericht(doc)
+            if doc.get("pruefung_status") != STATUS_FERTIG or not pb.get("befunde"):
+                raise HTTPException(status_code=400, detail="Erst die automatische Prüfung ausführen")
+            if pb.get("korrigiert_am"):
+                raise HTTPException(status_code=409, detail="Dieser Prüfbericht wurde schon korrigiert. Erst erneut prüfen.")
+            if not any(b.get("auto") for b in pb["befunde"]):
+                raise HTTPException(status_code=400, detail="Kein Befund mit Doppelbeleg — nichts automatisch zu korrigieren")
+            if document_id in _korrektur_laeuft or document_id in _pruefung_laeuft or document_id in _laeuft \
+                    or doc.get("tagging_status") == STATUS_LAEUFT or doc.get("pruefung_status") == STATUS_LAEUFT:
+                raise HTTPException(status_code=409, detail="Für dieses Dokument läuft gerade ein anderer Lauf")
+            preis = 0
+            if erneut:
+                zu_pruefen = min(_seiten(doc), pdf_pruefung.MAX_SEITEN)
+                pruefung = _d.billing.aktion_pruefung(user["id"], AKTION_PRUEFUNG, zu_pruefen)
+                if not pruefung["erlaubt"]:
+                    raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(pruefung, "Die Nachprüfung"))
+                if _d.tageslimit_wache:
+                    tl = _d.tageslimit_wache(user)
+                    if tl:
+                        raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
+                preis = int(pruefung["preis"])
+            with _start_lock:
+                if document_id in _korrektur_laeuft:
+                    raise HTTPException(status_code=409, detail="Die Korrektur läuft bereits")
+                _korrektur_laeuft[document_id] = {"seit": time.time()}
+        finally:
+            conn.close()
+        ui_lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else "de"
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, _korrektur_sync, project_id, document_id, user["id"], erneut, preis, ui_lang)
+        return {"gestartet": True, "document_id": document_id, "erneut_pruefen": erneut, "preis_nachpruefung": preis}
+
+    @router.post("/api/projects/{project_id}/documents/{document_id}/korrektur/rueckgaengig")
+    async def korrektur_rueckgaengig(project_id: int, document_id: int, user: dict = Depends(_user())):
+        """Rueckweg: Sicherung von vor der letzten Korrektur wiederherstellen; Korrektur-Bericht und die
+        Markierung im Pruefbericht werden entfernt (der Pruefbericht gilt dann wieder)."""
+        conn = _d.get_db()
+        try:
+            _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+            if document_id in _korrektur_laeuft or document_id in _pruefung_laeuft or document_id in _laeuft:
+                raise HTTPException(status_code=409, detail="Für dieses Dokument läuft gerade ein Lauf")
+            pfad = doc.get("original_path") or ""
+            try:
+                pdf_korrektur.rueckgaengig(pfad)
+            except pdf_korrektur.KorrekturFehler as e:
+                raise HTTPException(status_code=400, detail=str(e))
+            pb = _pruef_bericht(doc)
+            pb.pop("korrigiert_am", None)
+            conn.execute("UPDATE documents SET korrektur_bericht = '', pruefung_bericht = ? WHERE id = ?",
+                         (json.dumps(pb, ensure_ascii=False), document_id))
+            conn.commit()
+        finally:
+            conn.close()
+        return {"ok": True, "document_id": document_id}
 
     @router.get("/api/projects/{project_id}/documents/{document_id}/tagging/datei")
     async def datei(project_id: int, document_id: int, user: dict = Depends(_user())):
