@@ -6088,11 +6088,21 @@ def _dokument_loeschen_sync(user_id: int, project_id: int, document_id: int) -> 
     if os.path.isdir(doc_dir):
         shutil.rmtree(doc_dir, ignore_errors=True)
     src_pdf = doc.get("original_path") or ""
-    if src_pdf and os.path.exists(src_pdf):
-        try:
-            os.remove(src_pdf)
-        except OSError:
-            pass
+    # Tagging (22.09.2026): original_path zeigt nach dem Tagging auf die getaggte Fassung, roh_path auf die
+    # Kundendatei; daneben liegen Nebendateien der Strukturlesung und Pruefung (<pdf>.struktur.json,
+    # <pdf>.pruef_p<n>.png). Alles mit entfernen — nur innerhalb des Upload-Ordners (Realpath-Schutz).
+    import glob as _glob
+    _uploads = os.path.realpath(UPLOAD_DIR) + os.sep
+    for basis in {src_pdf, doc.get("roh_path") or ""}:
+        if not basis:
+            continue
+        for p in [basis] + _glob.glob(_glob.escape(basis) + ".*"):
+            rp = os.path.realpath(p)
+            if rp.startswith(_uploads) and os.path.isfile(rp):
+                try:
+                    os.remove(rp)
+                except OSError:
+                    pass
 
     # Multi-Datei Phase 2 (14.08.2026): Web-Dokumente haben KEINEN doc<N>-
     # Ordner — ihre Bilddateien liegen flach im Projektordner (web_<idx>.*).
@@ -6303,6 +6313,22 @@ async def delete_project(project_id: int, user: dict = Depends(get_current_user)
         shutil.rmtree(project_dir)
     if project["original_path"] and os.path.exists(project["original_path"]):
         os.remove(project["original_path"])
+    # Sicherheitsdurchgang 22.09.2026: bisher blieb bei Mehrdatei-Projekten jede weitere hochgeladene Datei
+    # liegen (Staging: 133 verwaiste PDFs). Jetzt je Dokument original_path, roh_path (Rohfassung vor dem
+    # Tagging) und Nebendateien (<pdf>.struktur.json, <pdf>.pruef_p<n>.png) entfernen — nur im Upload-Ordner.
+    import glob as _glob
+    _uploads = os.path.realpath(UPLOAD_DIR) + os.sep
+    for drow in conn.execute("SELECT original_path, roh_path FROM documents WHERE project_id = ?", (project_id,)).fetchall():
+        for basis in {drow["original_path"] or "", drow["roh_path"] or ""}:
+            if not basis:
+                continue
+            for pfad in [basis] + _glob.glob(_glob.escape(basis) + ".*"):
+                rp = os.path.realpath(pfad)
+                if rp.startswith(_uploads) and os.path.isfile(rp):
+                    try:
+                        os.remove(rp)
+                    except OSError:
+                        pass
 
     conn.execute("DELETE FROM images WHERE project_id = ?", (project_id,))
     # Quickinfo-Werkzeug (27.08.2026): Formularfelder mit aufraeumen (+ Gast-Urteile, 28.08.).

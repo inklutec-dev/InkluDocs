@@ -26,6 +26,7 @@ import asyncio
 import json
 import logging
 import os
+import threading
 import time
 from dataclasses import dataclass
 from typing import Callable, Optional
@@ -68,6 +69,39 @@ class Deps:
 _d: Optional[Deps] = None
 _laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "project_id": id}
 _pruefung_laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "seite": n, "seiten": m}
+# Sicherheitsdurchgang 22.09.2026: Starts kommen aus dem Endpunkt (Hauptschleife) UND aus Chatbot-Threads.
+# Pruefen-und-Markieren laeuft deshalb atomar unter einer Sperre — sonst koennten zwei Starts denselben
+# Lauf doppelt anstossen und doppelt abrechnen.
+_start_lock = threading.Lock()
+
+
+def tagging_markieren(conn, project_id: int, document_id: int) -> bool:
+    """Atomar: laeuft das Tagging schon? Sonst Dokument + Projekt als laufend markieren. True = gestartet."""
+    with _start_lock:
+        row = conn.execute("SELECT tagging_status FROM documents WHERE id = ?", (document_id,)).fetchone()
+        if document_id in _laeuft or (row and row["tagging_status"] == STATUS_LAEUFT):
+            return False
+        _laeuft[document_id] = {"seit": time.time(), "project_id": project_id}
+        conn.execute("UPDATE documents SET tagging_status = ?, tagging_bericht = ? WHERE id = ?",
+                     (STATUS_LAEUFT, json.dumps({"gestartet": time.strftime("%Y-%m-%d %H:%M:%S")}), document_id))
+        conn.execute("UPDATE projects SET status = 'extracting' WHERE id = ?", (project_id,))
+        conn.commit()
+        return True
+
+
+def pruefung_markieren(conn, document_id: int, zu_pruefen: int) -> bool:
+    """Atomar: laeuft Pruefung oder Tagging schon? Sonst Pruefung als laufend markieren. True = gestartet."""
+    with _start_lock:
+        row = conn.execute("SELECT pruefung_status, tagging_status FROM documents WHERE id = ?", (document_id,)).fetchone()
+        if document_id in _pruefung_laeuft or (row and row["pruefung_status"] == STATUS_LAEUFT):
+            return False
+        if document_id in _laeuft or (row and row["tagging_status"] == STATUS_LAEUFT):
+            return False
+        _pruefung_laeuft[document_id] = {"seit": time.time(), "seite": 0, "seiten": zu_pruefen}
+        conn.execute("UPDATE documents SET pruefung_status = ?, pruefung_bericht = ? WHERE id = ?",
+                     (STATUS_LAEUFT, json.dumps({"gestartet": time.strftime("%Y-%m-%d %H:%M:%S")}), document_id))
+        conn.commit()
+        return True
 
 
 def _user():
@@ -516,11 +550,8 @@ def lauf_synchron(project_id: int, document_id: int, user_id: int, sprache_vorga
         if not pruefung["erlaubt"]:
             return {"status": "fehler", "grund": "Das Guthaben reicht nicht für das Tagging"}
         status_vorher = project.get("status") or "extracted"
-        _laeuft[document_id] = {"seit": time.time(), "project_id": project_id}
-        conn.execute("UPDATE documents SET tagging_status = ?, tagging_bericht = ? WHERE id = ?",
-                     (STATUS_LAEUFT, json.dumps({"gestartet": time.strftime("%Y-%m-%d %H:%M:%S")}), document_id))
-        conn.execute("UPDATE projects SET status = 'extracting' WHERE id = ?", (project_id,))
-        conn.commit()
+        if not tagging_markieren(conn, project_id, document_id):
+            return {"status": "fehler", "grund": "Das Tagging läuft bereits"}
     finally:
         conn.close()
     _lauf_sync(project_id, document_id, user_id, int(pruefung["preis"]), sprache_vorgabe, status_vorher, ui_lang)
@@ -640,11 +671,8 @@ def build_router(deps: Deps) -> APIRouter:
             if not pruefung["erlaubt"]:
                 raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(pruefung, "Das Tagging"))
             status_vorher = project.get("status") or "extracted"
-            _laeuft[document_id] = {"seit": time.time(), "project_id": project_id}
-            conn.execute("UPDATE documents SET tagging_status = ?, tagging_bericht = ? WHERE id = ?",
-                         (STATUS_LAEUFT, json.dumps({"gestartet": time.strftime("%Y-%m-%d %H:%M:%S")}), document_id))
-            conn.execute("UPDATE projects SET status = 'extracting' WHERE id = ?", (project_id,))
-            conn.commit()
+            if not tagging_markieren(conn, project_id, document_id):
+                raise HTTPException(status_code=409, detail="Das Tagging läuft bereits")
         finally:
             conn.close()
         sprache = (project.get("alt_language") or user.get("language") or "de")
@@ -726,10 +754,8 @@ def build_router(deps: Deps) -> APIRouter:
                 tl = _d.tageslimit_wache(user)
                 if tl:
                     raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
-            _pruefung_laeuft[document_id] = {"seit": time.time(), "seite": 0, "seiten": zu_pruefen}
-            conn.execute("UPDATE documents SET pruefung_status = ?, pruefung_bericht = ? WHERE id = ?",
-                         (STATUS_LAEUFT, json.dumps({"gestartet": time.strftime("%Y-%m-%d %H:%M:%S")}), document_id))
-            conn.commit()
+            if not pruefung_markieren(conn, document_id, zu_pruefen):
+                raise HTTPException(status_code=409, detail="Die Prüfung oder das Tagging läuft bereits")
         finally:
             conn.close()
         ui_lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else "de"

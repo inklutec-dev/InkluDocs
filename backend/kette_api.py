@@ -18,6 +18,7 @@ Nur Besitzer, nur PDF-Projekte (Werkzeug pdf), nie im Gastweg.
 from __future__ import annotations
 
 import asyncio
+import threading
 import json
 import logging
 import time
@@ -53,7 +54,8 @@ class Deps:
 
 _d: Optional[Deps] = None
 _laeuft: dict[int, dict] = {}
-_loop: Optional[asyncio.AbstractEventLoop] = None   # Hauptschleife (fuer Starts aus Threads, z. B. Chatbot)
+_loop: Optional[asyncio.AbstractEventLoop] = None
+_start_lock = threading.Lock()   # Start aus Endpunkt UND Chatbot-Thread: pruefen-und-markieren atomar (22.09.2026)   # Hauptschleife (fuer Starts aus Threads, z. B. Chatbot)
 
 
 def _user():
@@ -288,7 +290,10 @@ def starten_von_aussen(project_id: int, user_id: int, ui_lang: str) -> dict:
     if _loop is None:
         raise HTTPException(status_code=503, detail="Die Kette kann gerade nicht gestartet werden")
     sprache = project.get("alt_language") or (dict(user).get("language") if user is not None else None) or "de"
-    _laeuft[project_id] = {"laeuft": True}
+    with _start_lock:
+        if project_id in _laeuft:
+            raise HTTPException(status_code=409, detail="Die Kette läuft bereits")
+        _laeuft[project_id] = {"laeuft": True}
     asyncio.run_coroutine_threadsafe(_kette(project_id, user_id, plan, ui_lang or "", sprache), _loop)
     return {"gestartet": True, "plan": plan}
 
@@ -364,7 +369,10 @@ def build_router(deps: Deps) -> APIRouter:
                 raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
         ui_lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else ""
         sprache = project.get("alt_language") or user.get("language") or "de"
-        _laeuft[project_id] = {"laeuft": True}
+        with _start_lock:
+            if project_id in _laeuft:
+                raise HTTPException(status_code=409, detail="Die Kette läuft bereits")
+            _laeuft[project_id] = {"laeuft": True}
         asyncio.create_task(_kette(project_id, user["id"], plan, ui_lang, sprache))
         return {"gestartet": True, "plan": plan}
 
