@@ -7447,3 +7447,191 @@ msgstr "Le fichier est aussi dans votre classeur."
 #: Fertige PDF + Ablage (22.09.2026)
 msgid "{c} Credits verbraucht."
 msgstr "{c} crédits utilisés."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Strukturansicht öffnen"
+msgstr "Ouvrir la vue de structure"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Hörprobe – was ein Screenreader aus den Tags bekommt"
+msgstr "Aperçu audio – ce qu'un lecteur d'écran obtient des balises"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Hörprobe wird geladen …"
+msgstr "Chargement de l'aperçu audio …"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Hörprobe konnte nicht geladen werden."
+msgstr "L'aperçu audio n'a pas pu être chargé."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Strukturansicht"
+msgstr "Vue de structure"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Diese Seite zeigt genau das, was in den Tags der PDF steht, als Webseite: Überschriften, Absätze, Listen, Tabellen, Grafiken mit Alt-Text und Formularfelder in Lesereihenfolge. Was hier fehlt oder falsch ist, fehlt auch im Screenreader."
+msgstr "Cette page montre exactement ce que contiennent les balises du PDF, sous forme de page web : titres, paragraphes, listes, tableaux, images avec texte alternatif et champs de formulaire dans l'ordre de lecture. Ce qui manque ou est faux ici manque aussi dans le lecteur d'écran."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Elemente"
+msgstr "Éléments"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Zusammenfassung"
+msgstr "Résumé"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Inhalt in Lesereihenfolge"
+msgstr "Contenu dans l'ordre de lecture"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die PDF hat noch keine Tags. Erst „Barrierefrei machen“ ausführen."
+msgstr "Le PDF n'a pas encore de balises. Lancez d'abord « Rendre accessible »."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Datei fehlt"
+msgstr "Le fichier manque"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Strukturlesung ist auf diesem Server nicht eingerichtet"
+msgstr "La lecture de structure n'est pas configurée sur ce serveur"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Strukturlesung hat zu lange gedauert"
+msgstr "La lecture de structure a pris trop de temps"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die PDF hat keinen Strukturbaum (keine Tags)"
+msgstr "Le PDF n'a pas d'arbre de structure (pas de balises)"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Struktur konnte nicht gelesen werden"
+msgstr "La structure n'a pas pu être lue"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Seiten: {n}"
+msgstr "Pages : {n}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "— Seite {n} —"
+msgstr "— Page {n} —"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Überschrift: {t}"
+msgstr "Titre : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "(leer)"
+msgstr "(vide)"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Absatz ohne Text"
+msgstr "Paragraphe sans texte"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Liste mit {n} Einträgen"
+msgstr "Liste de {n} éléments"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Zeile: {t}"
+msgstr "Ligne : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Leere Zeile"
+msgstr "Ligne vide"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Kopfzeile: {t}"
+msgstr "Ligne d'en-tête : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Grafik: {t}"
+msgstr "Image : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formel: {t}"
+msgstr "Formule : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Grafik mit Ersatztext: {t}"
+msgstr "Image avec texte de remplacement : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Grafik ohne Alt-Text"
+msgstr "Image sans texte alternatif"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formel ohne Alt-Text"
+msgstr "Formule sans texte alternatif"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formularfeld {name}: {t}"
+msgstr "Champ de formulaire {name} : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "ohne Namen"
+msgstr "sans nom"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formularfeld {name} ohne Quickinfo"
+msgstr "Champ de formulaire {name} sans info-bulle"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Link: {t}"
+msgstr "Lien : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "(ohne Text)"
+msgstr "(sans texte)"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Bildunterschrift: {t}"
+msgstr "Légende : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Fußnote: {t}"
+msgstr "Note de bas de page : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Eintrag: {t}"
+msgstr "Entrée : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Zitat: {t}"
+msgstr "Citation : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Code: {t}"
+msgstr "Code : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "{typ}: {t}"
+msgstr "{typ} : {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "{typ} (ohne Text)"
+msgstr "{typ} (sans texte)"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Zusammenfassung: {u} Überschriften, {l} Listen, {t} Tabellen, {b} Grafiken ({o} ohne Alt-Text), {f} Formularfelder."
+msgstr "Résumé : {u} titres, {l} listes, {t} tableaux, {b} images ({o} sans texte alternatif), {f} champs de formulaire."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Grafik"
+msgstr "Image"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "ohne Alt-Text"
+msgstr "sans texte alternatif"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formularfeld"
+msgstr "Champ de formulaire"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "ohne Quickinfo"
+msgstr "sans info-bulle"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Link"
+msgstr "Lien"

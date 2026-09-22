@@ -160,6 +160,33 @@ with sync_playwright() as p:
         pg.click("#dkLaufMeldung button")
     axe(pg, "Ansicht Dokument nach dem Lauf")
 
+    print("== B2. Hoerprobe und Strukturansicht (22.09.) ==")
+    check("Link „Strukturansicht öffnen“ nach dem Tagging", pg.locator("section.dok-karte a:has-text('Strukturansicht öffnen')").count() == 1)
+    check("Klappe „Hörprobe lesen“ vorhanden", pg.locator("details.dok-hoerprobe > summary").count() == 1)
+    pg.click("details.dok-hoerprobe > summary")
+    hp = ""
+    for _ in range(20):
+        pg.wait_for_timeout(1000)
+        hp = pg.locator("details.dok-hoerprobe .ausgabe-hoerprobe").inner_text()
+        if "wird geladen" not in hp:
+            break
+    check("Hörprobe geladen: Sprache, Seiten, Zusammenfassung, Grafik", all(k in hp for k in ("Sprache", "Seiten", "Zusammenfassung", "Grafik")), hp[:300])
+    check("Hörprobe nennt die Seiten in Lesereihenfolge", "Seite 1" in hp and "Seite 2" in hp, hp[:300])
+    axe(pg, "Ansicht Dokument mit offener Hörprobe")
+    pg.click("section.dok-karte a:has-text('Strukturansicht öffnen')")
+    pg.wait_for_selector("h1#strukturTitel", timeout=30000)
+    pg.wait_for_timeout(500)
+    check("Strukturansicht: Adresse /struktur/<projekt>/<dokument>", f"/struktur/{pid}/" in pg.url, pg.url)
+    check("Strukturansicht: H1 mit Dokumentname", pg.locator("h1#strukturTitel").inner_text().startswith("Strukturansicht: klicktest_roh.pdf"), pg.locator("h1#strukturTitel").inner_text())
+    check("Strukturansicht: Inhalt mit Absaetzen und Grafik", pg.locator("#strukturInhalt p").count() >= 3 and pg.locator("#strukturInhalt figure").count() >= 1, pg.locator("#strukturInhalt p").count())
+    check("Strukturansicht: genau eine H1, Hörprobe als H2", pg.locator("h1").count() == 1 and pg.locator("h2#strukturHoerprobe").count() == 1)
+    check("Strukturansicht: kein Skript-Text im Inhalt", "<script" not in pg.locator("#strukturInhalt").inner_html().lower())
+    axe(pg, "Strukturansicht")
+    pg.click("#strukturZurueck")
+    pg.wait_for_selector("section.dok-karte", timeout=15000)
+    pg.wait_for_timeout(800)
+    check("Zurück zum Projekt fuehrt in die Ansicht Dokument", pg.locator("section.dok-karte").count() == 1 and "ansicht=dokument" in pg.url, pg.url)
+
     print("== C. Wechsel zur Ansicht Alt-Texte und zurueck ==")
     pg.click("section.dok-karte button:has-text('Alt-Texte bearbeiten')")
     pg.wait_for_selector("#imageFilterBar", timeout=15000)

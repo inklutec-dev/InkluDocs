@@ -33,6 +33,7 @@ from typing import Callable, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
+import pdf_struktur
 import pdf_tagging
 
 log = logging.getLogger(__name__)
@@ -169,6 +170,49 @@ def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
         "documents": aussen,
         "ausgaben_anzahl": (_d.ausgaben_anzahl(project["id"]) if _d.ausgaben_anzahl else 0),
     }
+
+
+def felder_quickinfos(conn, document_id: int) -> dict:
+    """{Feldname: Quickinfo} aus der Datenbank — ergaenzt die /TU-Werte der Datei, solange die Quickinfos
+    noch nicht exportiert sind (Hoerprobe zeigt dann schon den Stand der Werkstatt)."""
+    rows = conn.execute(
+        "SELECT feld_name, quickinfo FROM formularfelder WHERE document_id = ? AND COALESCE(quickinfo, '') <> ''",
+        (document_id,)).fetchall()
+    return {r["feld_name"]: r["quickinfo"] for r in rows if r["feld_name"]}
+
+
+def struktur_daten(project_id: int, document_id: int, user_id: int, ui_lang: str, erneuern: bool = False,
+                   mit_html: bool = False) -> dict:
+    """Strukturlesung (pdf_struktur, eigenes PDFix-Skript) + Hoerprobe (+ HTML fuer die Seite /struktur).
+    Synchron, laeuft im Executor. 404 ueber _projekt_und_dokument, wenn das Dokument nicht dem Nutzer gehoert."""
+    conn = _d.get_db()
+    try:
+        _project, doc = _projekt_und_dokument(conn, project_id, document_id, user_id)
+        quickinfos = felder_quickinfos(conn, document_id)
+    finally:
+        conn.close()
+    _ = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else (lambda s: s)
+    name = doc.get("display_name") or doc.get("original_filename") or f"Dokument {document_id}"
+    aussen = {"document_id": document_id, "name": name, "seite_url": f"/struktur/{project_id}/{document_id}"}
+    if doc.get("getaggt") is False or doc.get("getaggt") == 0:
+        aussen.update({"verfuegbar": False, "grund": _("Die PDF hat noch keine Tags. Erst „Barrierefrei machen“ ausführen.")})
+        return aussen
+    pfad = doc.get("original_path") or ""
+    try:
+        struktur = pdf_struktur.lesen(pfad, os.path.dirname(pfad), erneuern=erneuern)
+    except pdf_struktur.StrukturFehler as e:
+        aussen.update({"verfuegbar": False, "grund": _(str(e))})
+        return aussen
+    zeilen = pdf_struktur.hoerprobe(struktur, _, quickinfos)
+    aussen.update({
+        "verfuegbar": True,
+        "info": struktur.get("info") or {},
+        "zusammenfassung": (zeilen[2] if len(zeilen) > 2 else ""),
+        "hoerprobe": zeilen,
+    })
+    if mit_html:
+        aussen["html"] = pdf_struktur.html_ansicht(struktur, _, quickinfos, ebene_versatz=1)
+    return aussen
 
 
 def _vorschau_pfad(doc: dict, user_id: int, project_id: int) -> Optional[str]:
@@ -556,6 +600,14 @@ def build_router(deps: Deps) -> APIRouter:
         if not pfad:
             raise HTTPException(status_code=404, detail="Vorschau nicht gefunden")
         return FileResponse(pfad, media_type="image/png")
+
+    @router.get("/api/projects/{project_id}/documents/{document_id}/struktur")
+    async def struktur(project_id: int, document_id: int, request: Request, erneuern: int = 0, user: dict = Depends(_user())):
+        """Hoerprobe der getaggten Fassung (Zeilen in Lesereihenfolge) fuer die Karte in der Ansicht „Dokument“.
+        ?erneuern=1 liest die Datei neu statt aus dem Cache."""
+        lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else "de"
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, struktur_daten, project_id, document_id, user["id"], lang, bool(erneuern), False)
 
     @router.get("/api/projects/{project_id}/documents/{document_id}/tagging/datei")
     async def datei(project_id: int, document_id: int, user: dict = Depends(_user())):

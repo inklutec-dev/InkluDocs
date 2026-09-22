@@ -7450,3 +7450,191 @@ msgstr "Die Datei liegt auch in deiner Ablage."
 #: Fertige PDF + Ablage (22.09.2026)
 msgid "{c} Credits verbraucht."
 msgstr "{c} Credits verbraucht."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Strukturansicht öffnen"
+msgstr "Strukturansicht öffnen"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Hörprobe – was ein Screenreader aus den Tags bekommt"
+msgstr "Hörprobe – was ein Screenreader aus den Tags bekommt"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Hörprobe wird geladen …"
+msgstr "Hörprobe wird geladen …"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Hörprobe konnte nicht geladen werden."
+msgstr "Die Hörprobe konnte nicht geladen werden."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Strukturansicht"
+msgstr "Strukturansicht"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Diese Seite zeigt genau das, was in den Tags der PDF steht, als Webseite: Überschriften, Absätze, Listen, Tabellen, Grafiken mit Alt-Text und Formularfelder in Lesereihenfolge. Was hier fehlt oder falsch ist, fehlt auch im Screenreader."
+msgstr "Diese Seite zeigt genau das, was in den Tags der PDF steht, als Webseite: Überschriften, Absätze, Listen, Tabellen, Grafiken mit Alt-Text und Formularfelder in Lesereihenfolge. Was hier fehlt oder falsch ist, fehlt auch im Screenreader."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Elemente"
+msgstr "Elemente"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Zusammenfassung"
+msgstr "Zusammenfassung"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Inhalt in Lesereihenfolge"
+msgstr "Inhalt in Lesereihenfolge"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die PDF hat noch keine Tags. Erst „Barrierefrei machen“ ausführen."
+msgstr "Die PDF hat noch keine Tags. Erst „Barrierefrei machen“ ausführen."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Datei fehlt"
+msgstr "Die Datei fehlt"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Strukturlesung ist auf diesem Server nicht eingerichtet"
+msgstr "Die Strukturlesung ist auf diesem Server nicht eingerichtet"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Strukturlesung hat zu lange gedauert"
+msgstr "Die Strukturlesung hat zu lange gedauert"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die PDF hat keinen Strukturbaum (keine Tags)"
+msgstr "Die PDF hat keinen Strukturbaum (keine Tags)"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Die Struktur konnte nicht gelesen werden"
+msgstr "Die Struktur konnte nicht gelesen werden"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Seiten: {n}"
+msgstr "Seiten: {n}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "— Seite {n} —"
+msgstr "— Seite {n} —"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Überschrift: {t}"
+msgstr "Überschrift: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "(leer)"
+msgstr "(leer)"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Absatz ohne Text"
+msgstr "Absatz ohne Text"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Liste mit {n} Einträgen"
+msgstr "Liste mit {n} Einträgen"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Zeile: {t}"
+msgstr "Zeile: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Leere Zeile"
+msgstr "Leere Zeile"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Kopfzeile: {t}"
+msgstr "Kopfzeile: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Grafik: {t}"
+msgstr "Grafik: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formel: {t}"
+msgstr "Formel: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Grafik mit Ersatztext: {t}"
+msgstr "Grafik mit Ersatztext: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Grafik ohne Alt-Text"
+msgstr "Grafik ohne Alt-Text"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formel ohne Alt-Text"
+msgstr "Formel ohne Alt-Text"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formularfeld {name}: {t}"
+msgstr "Formularfeld {name}: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "ohne Namen"
+msgstr "ohne Namen"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formularfeld {name} ohne Quickinfo"
+msgstr "Formularfeld {name} ohne Quickinfo"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Link: {t}"
+msgstr "Link: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "(ohne Text)"
+msgstr "(ohne Text)"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Bildunterschrift: {t}"
+msgstr "Bildunterschrift: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Fußnote: {t}"
+msgstr "Fußnote: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Eintrag: {t}"
+msgstr "Eintrag: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Zitat: {t}"
+msgstr "Zitat: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Code: {t}"
+msgstr "Code: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "{typ}: {t}"
+msgstr "{typ}: {t}"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "{typ} (ohne Text)"
+msgstr "{typ} (ohne Text)"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Zusammenfassung: {u} Überschriften, {l} Listen, {t} Tabellen, {b} Grafiken ({o} ohne Alt-Text), {f} Formularfelder."
+msgstr "Zusammenfassung: {u} Überschriften, {l} Listen, {t} Tabellen, {b} Grafiken ({o} ohne Alt-Text), {f} Formularfelder."
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Grafik"
+msgstr "Grafik"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "ohne Alt-Text"
+msgstr "ohne Alt-Text"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Formularfeld"
+msgstr "Formularfeld"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "ohne Quickinfo"
+msgstr "ohne Quickinfo"
+
+#: Strukturlesung + Hoerprobe PDF (22.09.2026)
+msgid "Link"
+msgstr "Link"

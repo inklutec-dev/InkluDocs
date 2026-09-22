@@ -1,0 +1,34 @@
+{% extends "base_app.html" %}
+{% block title %}{{ _('Strukturansicht') }} · InkluDocs{% endblock %}
+{% block main %}
+      {# STRUKTURANSICHT EINER GETAGGTEN PDF (22.09.2026, Steve: „HTML ist keine PDF“ — die Seite zeigt
+         genau das, was in den Tags der PDF steht, als navigierbare Webseite; ein Screenreader-Nutzer
+         springt von Ueberschrift zu Ueberschrift, hoert Tabellen als Tabellen und Grafiken mit ihrem
+         Alt-Text. Quelle: pdf_struktur.html_ansicht (alles escaped, PDF-H1 wird h2, damit die Seite
+         ihre eine H1 behaelt). Darunter die Hoerprobe (Zeilen in Lesereihenfolge, wie beim Word-Weg).
+         Nur der Besitzer des Projekts; Route in main.py (/struktur/<projekt>/<dokument>). #}
+      <h1 id="strukturTitel" tabindex="-1">{{ _('Strukturansicht') }}: {{ daten.name }}</h1>
+      <p class="dash-sub">{{ _('Diese Seite zeigt genau das, was in den Tags der PDF steht, als Webseite: Überschriften, Absätze, Listen, Tabellen, Grafiken mit Alt-Text und Formularfelder in Lesereihenfolge. Was hier fehlt oder falsch ist, fehlt auch im Screenreader.') }}</p>
+      <p><a href="{{ projekt_url }}" class="btn btn-secondary" id="strukturZurueck">{{ _('Zurück zum Projekt') }}</a></p>
+      {% if not daten.verfuegbar %}
+      <p class="feld-hinweis" id="strukturGrund">{{ daten.grund }}</p>
+      {% else %}
+      <dl class="dok-meta">
+        <dt>{{ _('Seiten') }}</dt><dd>{{ daten.info.seiten }}</dd>
+        <dt>{{ _('Sprache') }}</dt><dd>{{ daten.info.lang or _('nicht gesetzt') }}</dd>
+        <dt>{{ _('Elemente') }}</dt><dd>{{ daten.info.elemente }}</dd>
+        <dt>{{ _('Zusammenfassung') }}</dt><dd>{{ daten.zusammenfassung }}</dd>
+      </dl>
+      <section class="struktur-inhalt" id="strukturInhalt" aria-label="{{ _('Inhalt in Lesereihenfolge') }}">
+{{ daten.html|safe }}
+      </section>
+      <h2 id="strukturHoerprobe" style="margin-top:1.5rem">{{ _('Hörprobe') }}</h2>
+      <details class="ausgabe-details">
+        <summary>{{ _('Hörprobe lesen') }}</summary>
+        <div class="ausgabe-hoerprobe" tabindex="0">
+          {% for z in daten.hoerprobe %}<p>{{ z }}</p>
+          {% endfor %}
+        </div>
+      </details>
+      {% endif %}
+{% endblock %}

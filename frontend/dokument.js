@@ -103,6 +103,35 @@
             + '<div class="page-text-content" role="region" aria-label="' + t('Bericht zum Tagging') + '" tabindex="0"><ul>' + zeilen.join('') + '</ul>' + pruef + '</div></details>';
     }
 
+    // ─── Hoerprobe (22.09.2026): Zeilen in Lesereihenfolge aus den Tags, erst beim Aufklappen geladen
+    // (eigenes PDFix-Skript pdfix_scripts/Struktur_Export.py, Modul pdf_struktur.py). Die Strukturansicht
+    // ist eine eigene Seite (/struktur/<projekt>/<dokument>), damit Ueberschriftensprünge durch die PDF gehen.
+    function hoerprobeHtml(project, d) {
+        if (d.getaggt !== true) return '';
+        return '<details class="page-text-details dok-hoerprobe" data-doc="' + d.id + '" data-projekt="' + project.id + '">'
+            + '<summary>' + t('Hörprobe lesen') + '</summary>'
+            + '<div class="page-text-content ausgabe-hoerprobe" role="region" aria-label="' + t('Hörprobe – was ein Screenreader aus den Tags bekommt') + '" tabindex="0" id="dok_hoerprobe_' + d.id + '"><p>' + t('Hörprobe wird geladen …') + '</p></div></details>';
+    }
+
+    async function hoerprobeLaden(el) {
+        if (el.dataset.geladen) return;
+        el.dataset.geladen = '1';
+        const box = el.querySelector('.ausgabe-hoerprobe');
+        try {
+            const r = await fetch('/api/projects/' + el.dataset.projekt + '/documents/' + el.dataset.doc + '/struktur', { credentials: 'same-origin' });
+            const j = r.ok ? await r.json() : null;
+            if (!j || !j.verfuegbar) {
+                box.innerHTML = '<p>' + esc((j && j.grund) || t('Die Hörprobe konnte nicht geladen werden.')) + '</p>';
+                delete el.dataset.geladen;
+                return;
+            }
+            box.innerHTML = (j.hoerprobe || []).map(z => '<p>' + esc(z) + '</p>').join('');
+        } catch (e) {
+            box.innerHTML = '<p>' + t('Die Hörprobe konnte nicht geladen werden.') + '</p>';
+            delete el.dataset.geladen;
+        }
+    }
+
     function karteHtml(project, d, pos) {
         const name = esc(docDisplayName(d));
         const tg = d.tagging || {};
@@ -133,11 +162,13 @@
             +   ((d.total_images || 0) > 0 ? '<button type="button" class="btn btn-secondary" onclick="Dokument.zurAnsicht(' + project.id + ', \'alttexte\')">' + t('Alt-Texte bearbeiten') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   ((d.felder || 0) > 0 ? '<button type="button" class="btn btn-secondary" onclick="Dokument.zurAnsicht(' + project.id + ', \'quickinfos\')">' + t('Quickinfos bearbeiten') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="Dokument.exportieren(' + project.id + ', ' + d.id + ')">' + ico('download') + t('Fertige PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
+            +   (d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</div>'
             + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;">' + (tg.laeuft ? t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.') : '') + '</output>'
             + berichtHtml(d)
+            + hoerprobeHtml(project, d)
             + '</div></div></section>';
     }
 
@@ -478,6 +509,7 @@
             const k = Number(el.dataset.doc);
             if (el.open) offeneBerichte.add(k); else offeneBerichte.delete(k);
         }));
+        document.querySelectorAll('details.dok-hoerprobe').forEach(el => el.addEventListener('toggle', () => { if (el.open) hoerprobeLaden(el); }));
         if (typeof inkluagentInit === 'function') inkluagentInit(projectId);
         setupProjectDropzone(projectId);
         const h1 = document.getElementById('projectName');

@@ -235,3 +235,35 @@ mehrsprachig (heute deutsch aus dem Server).
   das bleibt Aufgabe der Korrektur (Stufe 2) oder von Docling.
 - Tests: `tests/e2e/verify_export_komplett.py`, Klicktest `ui_dokument.py` (echter Download,
   Statuszeile, Ablage-Eintrag).
+
+## Strukturlesung, Hörprobe und Strukturansicht (22.09.2026, Steves Go)
+
+Steves Vorgabe: kein PDF-Viewer im Browser (nicht verlässlich), sondern das, was in den Tags steht,
+selbst lesen und hörbar machen. Der echte Test bleibt Acrobat + Screenreader beim Kunden; ein
+NVDA-Protokoll auf einem Windows-Server ist als Premium-Stufe vorgemerkt.
+
+- **Eigenes PDFix-Skript** `backend/pdfix_scripts/Struktur_Export.py` (kein Heine-Skript, die Regel
+  „Original unverändert“ gilt hier nicht): läuft den Tag-Baum in Lesereihenfolge ab und schreibt je
+  Element `id` (Pfad im Baum), `typ`, `tiefe`, `seite`, `text` (über MCIDs wie im Alt-Text-Export, mit
+  Heuristik für Einzelzeichen-PDFs), `alt`, `actual`, `lang`, bei Tabellen `zeilen`/`spalten`, bei
+  Formularfeldern `feldname`/`quickinfo` (OBJR → Anmerkung → `/T`/`/TU`, bei Optionsfeldern vom
+  Elternfeld). Elemente mit gesammeltem Text (LI, TD, TH, Caption, Note, Figure, Form) werden nicht
+  weiter abgestiegen (sonst stünde der Text doppelt). Aufruf `-i <pdf> -o <json>`, Exit 3 = keine Tags.
+- **Modul `backend/pdf_struktur.py`:** `lesen()` (Subprocess, Cache `<pdf>.struktur.json` im
+  Upload-Ordner, gültig solange die PDF nicht neuer ist), `hoerprobe()` (Zeilen wie beim Word-Weg:
+  „Überschrift Ebene 1: …“, „Liste mit n Einträgen“, „Tabelle mit r Zeilen und c Spalten“, „Kopfzeile:
+  … | …“, „Grafik: Alt-Text“ / „Grafik ohne Alt-Text“, „Formularfeld vorname: Quickinfo“, Seitenmarken,
+  Zusammenfassung als dritte Zeile), `html_ansicht()` (semantisches HTML: h1–h6 mit Versatz, p, ul/li,
+  table/th/td, figure, Formularfelder als Absätze mit Rolle; alles escaped).
+- **Endpunkt** `GET /api/projects/{id}/documents/{doc}/struktur` (`?erneuern=1` liest neu): `verfuegbar`,
+  `grund` (ungetaggt / keine Tags / Zeitüberschreitung), `info` (Seiten, Sprache, Elemente), `hoerprobe`,
+  `zusammenfassung`, `seite_url`. Quickinfos aus der Datenbank ergänzen die `/TU`-Werte der Datei.
+- **Seite** `/struktur/{projekt}/{dokument}` (`templates/struktur.html`, nur Besitzer, sonst Login/404):
+  H1 „Strukturansicht: Name“, Einleitung (ehrlich: was hier fehlt, fehlt auch im Screenreader), „Zurück
+  zum Projekt“, Kennzahlen, Inhalt als Webseite (PDF-H1 wird h2), Hörprobe als Klappe.
+- **Karte in der Ansicht „Dokument“:** Link „Strukturansicht öffnen“ und Klappe „Hörprobe lesen“ (lädt
+  erst beim Aufklappen), beides nur bei getaggten Dokumenten.
+- **Grenzen:** Verschachtelte Listen erscheinen flach; Text wird je Element auf 600 Zeichen gekürzt;
+  Artefakte (ausgeblendete Inhalte) sind absichtlich nicht dabei — genau wie im Screenreader.
+- Tests: `tests/test_pdf_struktur.py` (Hörprobe, HTML, Escaping, Cache), `tests/e2e/verify_struktur.py`
+  (getaggtes Formular: Felder, Tabelle, Seite, Rechte), Klicktest `ui_dokument.py` Abschnitt B2.

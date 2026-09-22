@@ -210,5 +210,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .ausgabe-details ul { margin:.3rem 0 .4rem; padding-left:1.2rem; }
 .ausgabe-hoerprobe { max-height:22rem; overflow:auto; padding:.4rem .6rem; border:1px solid var(--border); border-radius:6px; }
 .ausgabe-hoerprobe p { margin:.15rem 0; }
+/* Strukturansicht einer getaggten PDF (22.09.2026, templates/struktur.html) */
+.struktur-inhalt { border:1px solid var(--border); border-radius:6px; padding:.8rem 1rem; margin-top:1rem; }
+.struktur-inhalt table { border-collapse:collapse; margin:.6rem 0; }
+.struktur-inhalt th, .struktur-inhalt td { border:1px solid var(--border); padding:.3rem .5rem; text-align:left; vertical-align:top; }
+.struktur-inhalt figure { margin:.6rem 0; padding:.4rem .6rem; border-left:3px solid var(--border); }
+.struktur-inhalt pre { white-space:pre-wrap; }
+.struktur-rolle { font-weight:600; }
+.struktur-seite { color:#555; font-size:.9rem; margin:.9rem 0 .3rem; }
+.struktur-leer { color:#555; font-style:italic; }
 .ausgaben-filter { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin:0 0 1.2rem; }
 .ausgaben-filter select { padding:.4rem; border:1px solid var(--border); border-radius:4px; font-size:.95rem; }

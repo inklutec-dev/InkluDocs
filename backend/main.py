@@ -10050,6 +10050,24 @@ async def ablage_page(request: Request):
     return _render_protected_template(request, "ablage.html")
 
 
+@app.get("/struktur/{project_id}/{document_id}", response_class=HTMLResponse)
+async def struktur_seite(project_id: int, document_id: int, request: Request):
+    """Strukturansicht einer getaggten PDF (22.09.2026, Steve: „HTML ist keine PDF“ — die Seite zeigt genau
+    das, was in den Tags steht, als navigierbare Webseite, darunter die Hoerprobe). Nur der Besitzer;
+    Daten aus tagging_api.struktur_daten (pdf_struktur.py), Vorlage templates/struktur.html."""
+    user = get_optional_user(request)
+    if not user:
+        return RedirectResponse("/login")
+    lang = resolve_ui_language(request)
+    loop = asyncio.get_running_loop()
+    daten = await loop.run_in_executor(None, tagging_api.struktur_daten, project_id, document_id, user["id"], lang, False, True)
+    return templates.TemplateResponse(
+        "struktur.html",
+        template_context(request, lang, is_staging=("staging" in BASE_URL), daten=daten,
+                         projekt_url=f"/app?projekt={project_id}&ansicht=dokument"),
+    )
+
+
 @app.get("/ausgaben")
 async def ausgaben_weiterleitung(request: Request):
     """Alter Pfad vom Vormittag des 11.09. (Links in gespeicherten Chat-Antworten) -> /ablage."""
