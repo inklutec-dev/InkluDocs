@@ -66,6 +66,7 @@ import secrets as _secrets
 import formular_api
 import uebersetzung_api
 import tagging_api  # PDF-Tagging (22.09.2026)
+import kette_api    # Kette „Komplett barrierefrei machen“ (22.09.2026)
 import api_dokumente_v1   # Public API v1: Dokumente (17.09.2026)
 from formular_processor import validiere_formular, FormularFehler
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
@@ -6472,6 +6473,48 @@ async def generate_abbrechen(project_id: int, user: dict = Depends(get_current_u
     return {"ok": True, "angefordert": True}
 
 
+async def alttexte_lauf_fuer_kette(project_id: int, user_id: int) -> dict:
+    """Sammellauf fuer ALLE Bilder, abgewartet (Kette „Komplett barrierefrei machen“, 22.09.2026).
+    Dieselben Schritte wie POST /generate (Modus alle): Kandidaten, auf 'pending', Projekt 'processing',
+    _process_project mit force=True. Rueckgabe: {"gestartet", "anzahl", "fertig", "fehlgeschlagen", "hinweis"}."""
+    conn = get_db()
+    try:
+        anzahl, ids = _generier_kandidaten(conn, project_id, "alle", "", [])
+        if not anzahl:
+            return {"gestartet": False, "anzahl": 0, "fertig": 0, "fehlgeschlagen": 0, "hinweis": ""}
+        conn.execute("UPDATE images SET status = 'pending' WHERE id IN (%s)" % ",".join("?" * len(ids)), list(ids))
+        _fertig = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'", (project_id,)).fetchone()[0]
+        conn.execute("UPDATE projects SET status = 'processing', lauf_hinweis = NULL, processed_images = ? WHERE id = ?", (_fertig, project_id))
+        conn.commit()
+    finally:
+        conn.close()
+    await _process_project(project_id, user_id, force=True, document_id=None, ki_neu_ids=ids)
+    conn = get_db()
+    try:
+        marken = ",".join("?" * len(ids))
+        fertig = conn.execute("SELECT COUNT(*) FROM images WHERE id IN (%s) AND status = 'done' AND COALESCE(TRIM(alt_text), '') <> ''" % marken, list(ids)).fetchone()[0]
+        fehl = conn.execute("SELECT COUNT(*) FROM images WHERE id IN (%s) AND status = 'error'" % marken, list(ids)).fetchone()[0]
+        hinweis = ""
+        row = conn.execute("SELECT lauf_hinweis, status FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if row and row["lauf_hinweis"]:
+            try:
+                h = json.loads(row["lauf_hinweis"]) if isinstance(row["lauf_hinweis"], str) else row["lauf_hinweis"]
+                if isinstance(h, dict) and h.get("offen"):
+                    hinweis = {"tageslimit": "Tageslimit erreicht", "abbruch": "abgebrochen"}.get(h.get("grund"), "Guthaben reichte nicht") + f": {h.get('offen')} Bilder blieben offen"
+            except Exception:  # noqa: BLE001
+                hinweis = ""
+        conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ? AND status = 'processing'", (project_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"gestartet": True, "anzahl": anzahl, "fertig": int(fertig), "fehlgeschlagen": int(fehl), "hinweis": hinweis}
+
+
+def alttexte_kandidaten(conn, project_id: int) -> int:
+    """Zaehlung fuer die Rueckfrage der Kette (dieselbe wie /generate/vorschau, ganzes Projekt)."""
+    return _generier_kandidaten(conn, project_id, "alle", "", [])[0]
+
+
 def _generier_kandidaten(conn, project_id: int, modus: str, doc_sql: str, doc_args: list):
     """Welche Bilder faesst ein Sammellauf an? -> (anzahl, ids)
 
@@ -8606,6 +8649,23 @@ app.include_router(tagging_api.build_router(tagging_api.Deps(
     get_gettext=get_gettext,
     resolve_ui_language=lambda r: resolve_ui_language(r),   # steht weiter unten in der Datei, daher spaet aufgeloest
     ausgaben_anzahl=lambda pid: _ausgaben_anzahl(pid),
+)))
+
+# ─── KETTE „Komplett barrierefrei machen“ (22.09.2026): Tagging -> Alt-Texte -> Quickinfos in einem Lauf ─────
+app.include_router(kette_api.build_router(kette_api.Deps(
+    get_current_user=get_current_user,
+    get_db=get_db,
+    billing=billing,
+    tageslimit_wache=tageslimit_wache,
+    tageslimit_text=tageslimit_text,
+    dokument_getaggt=_dokument_getaggt,
+    seitenzahl=lambda doc: tagging_api._seiten(doc),
+    tagging_lauf=tagging_api.lauf_synchron,
+    alttexte_kandidaten=alttexte_kandidaten,
+    alttexte_lauf=alttexte_lauf_fuer_kette,
+    quickinfos_kandidaten=formular_api.quickinfos_kandidaten,
+    quickinfos_lauf=formular_api.quickinfos_lauf_fuer_kette,
+    resolve_ui_language=lambda r: resolve_ui_language(r),
 )))
 
 # Public API v1 — Dokumente (17.09.2026): duenne Schicht ueber den App-Routen, siehe api_dokumente_v1.py.

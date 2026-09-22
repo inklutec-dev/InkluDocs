@@ -7319,3 +7319,115 @@ msgstr "{n} champs"
 #: Station Quickinfos im PDF-Projekt (22.09.2026)
 msgid "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."
 msgstr "Choisissez un formulaire PDF ou déposez-le ici. Les champs sont lus et reçoivent des info-bulles ; les images reçoivent des textes alternatifs."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen"
+msgstr "Rendre entièrement accessible"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen läuft"
+msgstr "Mise en accessibilité complète en cours"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen ist fertig."
+msgstr "La mise en accessibilité complète est terminée."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Barrierefrei machen (Tagging)"
+msgstr "Rendre accessible (balisage)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Schritt {i} von {n}: {name}"
+msgstr "Étape {i} sur {n} : {name}"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "{f} von {n}"
+msgstr "{f} sur {n}"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "wartet"
+msgstr "en attente"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "wird ausgeführt"
+msgstr "en cours"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "fertig"
+msgstr "terminé"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "mit Hinweisen"
+msgstr "avec remarques"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "fehlgeschlagen"
+msgstr "échoué"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "übersprungen (nichts zu tun)"
+msgstr "ignoré (rien à faire)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Stationen laufen nacheinander: erst das Tagging, dann Alt-Texte für alle Bilder, dann Quickinfos für alle Felder. Vorhandene Texte werden dabei neu erzeugt, wie bei „Alt-Texte generieren“. Die Zahl der Bilder kann sich nach dem Tagging ändern; jede Station bucht ihre Credits selbst."
+msgstr "Les étapes s'enchaînent : d'abord le balisage, puis les textes alternatifs pour toutes les images, puis les info-bulles pour tous les champs. Les textes existants sont régénérés, comme avec « Générer les textes alternatifs ». Le nombre d'images peut changer après le balisage ; chaque étape facture ses propres crédits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Alles starten"
+msgstr "Tout démarrer"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Umfang konnte nicht ermittelt werden."
+msgstr "L'étendue n'a pas pu être déterminée."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Tagging: {n} Dokumente, {s} Seiten, {c} Credits"
+msgstr "Balisage : {n} documents, {s} pages, {c} crédits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "({n} Dokumente sind schon getaggt)"
+msgstr "({n} documents sont déjà balisés)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Alt-Texte: {n} Bilder, {c} Credits"
+msgstr "Textes alternatifs : {n} images, {c} crédits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Quickinfos: {n} Felder, {c} Credits"
+msgstr "Info-bulles : {n} champs, {c} crédits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Gesamt: {c} Credits."
+msgstr "Total : {c} crédits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Gesamt: {c} Credits. Verfügbar: {v} Credits."
+msgstr "Total : {c} crédits. Disponible : {v} crédits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Nichts zu tun: alle Dokumente sind getaggt, alle Bilder und Felder beschrieben."
+msgstr "Rien à faire : tous les documents sont balisés, toutes les images et tous les champs décrits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Kette konnte nicht gestartet werden."
+msgstr "La chaîne n'a pas pu démarrer."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Kette läuft. Du wirst benachrichtigt, sobald alles fertig ist."
+msgstr "La chaîne est en cours. Vous serez averti lorsque tout sera terminé."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Das kann einige Minuten dauern. Du kannst die Seite offen lassen; am Ende erscheint eine Meldung."
+msgstr "Cela peut prendre quelques minutes. Vous pouvez laisser la page ouverte ; un message apparaîtra à la fin."
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "Diese Ansicht ist nicht verfügbar: {grund}"
+msgstr "Cette vue n'est pas disponible : {grund}"
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "keine Formularfelder in diesem Projekt"
+msgstr "aucun champ de formulaire dans ce projet"
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "nicht verfügbar: {grund}"
+msgstr "non disponible : {grund}"

@@ -213,14 +213,22 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Ansicht: 1. aus der Adresse (?ansicht=), 2. die am Projekt gemerkte (projects.letzte_ansicht, gesetzt bei
     // jedem Wechsel ueber die Ansichts-Wahl), 3. Startansicht des Dateityps — PDF „dokument“ (Steve 22.09.2026),
     // Word „alttexte“, Eingang „uebersetzen“ startet in der Uebersetzung.
+    // Alle Stationen des Dateityps — immer dieselbe Liste fuer jedes Projekt dieses Typs (Steve 22.09.2026).
     function ansichtenFuer(project) {
-        // Quickinfos (22.09.2026): nur, wenn eine Datei des Projekts Formularfelder hat (project.hat_felder).
-        if (istPdfDateityp(project)) return project.hat_felder ? ['dokument', 'alttexte', 'quickinfos'] : ['dokument', 'alttexte'];
+        if (istPdfDateityp(project)) return ['dokument', 'alttexte', 'quickinfos'];
         if (istWordDateityp(project)) return ['alttexte', 'uebersetzung'];
         return ['alttexte'];
     }
+    // Warum eine Station gerade nicht waehlbar ist ('' = verfuegbar). Quickinfos brauchen Formularfelder.
+    function ansichtGesperrtWeil(project, ansicht) {
+        if (ansicht === 'quickinfos' && !(project && project.hat_felder)) return t('keine Formularfelder in diesem Projekt');
+        return '';
+    }
+    function verfuegbareAnsichten(project) {
+        return ansichtenFuer(project).filter(a => !ansichtGesperrtWeil(project, a));
+    }
     function aktuelleAnsicht(project) {
-        const erlaubt = ansichtenFuer(project);
+        const erlaubt = verfuegbareAnsichten(project);
         const a = new URLSearchParams(window.location.search).get('ansicht');
         if (a && erlaubt.includes(a)) return a;
         const gemerkt = project && project.letzte_ansicht;
@@ -234,11 +242,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function ansichtWahlHtml(project, aktuell) {
         if (!(istWordDateityp(project) || istPdfDateityp(project)) || window.GUEST_MODE) return '';
         const namen = { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos') };
-        const optionen = ansichtenFuer(project).map(k => [k, namen[k]]);
+        // Alle Stationen stehen in der Liste; nicht verfuegbare sind ausgegraut und nennen den Grund im Namen
+        // (Screenreader lesen „nicht verfügbar“ bei disabled mit, der Grund steht als Text dabei).
+        const optionen = ansichtenFuer(project).map(k => [k, namen[k], ansichtGesperrtWeil(project, k)]);
         return '<div class="ansicht-wahl" style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
             + '<label for="ansichtSelect" style="font-weight:600;">' + t('Ansicht') + '</label>'
             + '<select id="ansichtSelect" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">'
-            + optionen.map(([k, l]) => '<option value="' + k + '"' + (k === aktuell ? ' selected' : '') + '>' + l + '</option>').join('')
+            + optionen.map(([k, l, grund]) => '<option value="' + k + '"' + (k === aktuell ? ' selected' : '') + (grund ? ' disabled' : '') + '>' + l + (grund ? ' (' + t('nicht verfügbar: {grund}', { grund: grund }) + ')' : '') + '</option>').join('')
             + '</select>'
             + '<button type="button" class="btn btn-secondary btn-small" id="ansichtOeffnen" onclick="wechsleAnsicht(' + project.id + ')">' + t('Öffnen') + '</button></div>';
     }
@@ -246,6 +256,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     async function wechsleAnsicht(projectId) {
         const sel = document.getElementById('ansichtSelect');
         const ziel = sel ? sel.value : 'alttexte';
+        const grund = ansichtGesperrtWeil(currentProjectFuerAnsicht || {}, ziel);
+        if (grund) { announce(t('Diese Ansicht ist nicht verfügbar: {grund}', { grund: grund })); return; }
         if (ziel === aktuelleAnsicht(currentProjectFuerAnsicht || {})) { announce(t('Diese Ansicht ist schon geöffnet.')); return; }
         // Auto-Speichern (800 ms nach der letzten Eingabe) einen Moment Vorsprung geben; der PATCH selbst
         // laeuft im Hintergrund weiter und geht durch den Neuaufbau der Ansicht nicht verloren.

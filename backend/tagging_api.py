@@ -158,6 +158,12 @@ def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
         aussen.append(eintrag)
     projekt_aussen = {k: project.get(k) for k in _PROJEKT_FELDER}
     projekt_aussen["hat_felder"] = sum(e["felder"] for e in aussen)
+    # Kette „Komplett barrierefrei machen“ (22.09.2026): Stand fuer die Statuskarte der Ansicht.
+    try:
+        kette = json.loads(project.get("kette_json") or "{}")
+        projekt_aussen["kette"] = kette if isinstance(kette, dict) else {}
+    except Exception:  # noqa: BLE001
+        projekt_aussen["kette"] = {}
     return {
         "project": projekt_aussen,
         "documents": aussen,
@@ -408,6 +414,43 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
             conn.close()
     finally:
         _laeuft.pop(document_id, None)
+
+
+def lauf_synchron(project_id: int, document_id: int, user_id: int, sprache_vorgabe: str, ui_lang: str) -> dict:
+    """Tagging EINES Dokuments synchron (Kette „Komplett barrierefrei machen“, 22.09.2026): dieselbe
+    Buchfuehrung wie POST .../tagging (Status, Projekt 'extracting', Guthaben-Wache), dann _lauf_sync.
+    Laeuft im Executor. Rueckgabe: {"status": "fertig"|"fehler", "grund": ..., "bericht": ...}."""
+    conn = _d.get_db()
+    try:
+        project = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
+        doc = conn.execute("SELECT * FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id)).fetchone()
+        if not project or not doc:
+            return {"status": "fehler", "grund": "Dokument nicht gefunden"}
+        project, doc = dict(project), dict(doc)
+        if document_id in _laeuft or doc.get("tagging_status") == STATUS_LAEUFT:
+            return {"status": "fehler", "grund": "Das Tagging läuft bereits"}
+        seiten = _seiten(doc)
+        if seiten <= 0 or seiten > pdf_tagging.MAX_SEITEN:
+            return {"status": "fehler", "grund": "Die PDF konnte nicht gelesen werden oder hat zu viele Seiten"}
+        pruefung = _d.billing.aktion_pruefung(user_id, AKTION, seiten)
+        if not pruefung["erlaubt"]:
+            return {"status": "fehler", "grund": "Das Guthaben reicht nicht für das Tagging"}
+        status_vorher = project.get("status") or "extracted"
+        _laeuft[document_id] = {"seit": time.time(), "project_id": project_id}
+        conn.execute("UPDATE documents SET tagging_status = ?, tagging_bericht = ? WHERE id = ?",
+                     (STATUS_LAEUFT, json.dumps({"gestartet": time.strftime("%Y-%m-%d %H:%M:%S")}), document_id))
+        conn.execute("UPDATE projects SET status = 'extracting' WHERE id = ?", (project_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    _lauf_sync(project_id, document_id, user_id, int(pruefung["preis"]), sprache_vorgabe, status_vorher, ui_lang)
+    conn = _d.get_db()
+    try:
+        d2 = dict(conn.execute("SELECT tagging_status, tagging_bericht FROM documents WHERE id = ?", (document_id,)).fetchone() or {})
+    finally:
+        conn.close()
+    b = _bericht(d2)
+    return {"status": ("fertig" if d2.get("tagging_status") == STATUS_FERTIG else "fehler"), "grund": b.get("fehler", ""), "bericht": b}
 
 
 def haengende_laeufe_zuruecksetzen() -> None:

@@ -7322,3 +7322,115 @@ msgstr "{n} Felder"
 #: Station Quickinfos im PDF-Projekt (22.09.2026)
 msgid "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."
 msgstr "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen"
+msgstr "Komplett barrierefrei machen"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen läuft"
+msgstr "Komplett barrierefrei machen läuft"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen ist fertig."
+msgstr "Komplett barrierefrei machen ist fertig."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Barrierefrei machen (Tagging)"
+msgstr "Barrierefrei machen (Tagging)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Schritt {i} von {n}: {name}"
+msgstr "Schritt {i} von {n}: {name}"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "{f} von {n}"
+msgstr "{f} von {n}"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "wartet"
+msgstr "wartet"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "wird ausgeführt"
+msgstr "wird ausgeführt"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "fertig"
+msgstr "fertig"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "mit Hinweisen"
+msgstr "mit Hinweisen"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "fehlgeschlagen"
+msgstr "fehlgeschlagen"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "übersprungen (nichts zu tun)"
+msgstr "übersprungen (nichts zu tun)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Stationen laufen nacheinander: erst das Tagging, dann Alt-Texte für alle Bilder, dann Quickinfos für alle Felder. Vorhandene Texte werden dabei neu erzeugt, wie bei „Alt-Texte generieren“. Die Zahl der Bilder kann sich nach dem Tagging ändern; jede Station bucht ihre Credits selbst."
+msgstr "Die Stationen laufen nacheinander: erst das Tagging, dann Alt-Texte für alle Bilder, dann Quickinfos für alle Felder. Vorhandene Texte werden dabei neu erzeugt, wie bei „Alt-Texte generieren“. Die Zahl der Bilder kann sich nach dem Tagging ändern; jede Station bucht ihre Credits selbst."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Alles starten"
+msgstr "Alles starten"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Umfang konnte nicht ermittelt werden."
+msgstr "Umfang konnte nicht ermittelt werden."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Tagging: {n} Dokumente, {s} Seiten, {c} Credits"
+msgstr "Tagging: {n} Dokumente, {s} Seiten, {c} Credits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "({n} Dokumente sind schon getaggt)"
+msgstr "({n} Dokumente sind schon getaggt)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Alt-Texte: {n} Bilder, {c} Credits"
+msgstr "Alt-Texte: {n} Bilder, {c} Credits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Quickinfos: {n} Felder, {c} Credits"
+msgstr "Quickinfos: {n} Felder, {c} Credits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Gesamt: {c} Credits."
+msgstr "Gesamt: {c} Credits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Gesamt: {c} Credits. Verfügbar: {v} Credits."
+msgstr "Gesamt: {c} Credits. Verfügbar: {v} Credits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Nichts zu tun: alle Dokumente sind getaggt, alle Bilder und Felder beschrieben."
+msgstr "Nichts zu tun: alle Dokumente sind getaggt, alle Bilder und Felder beschrieben."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Kette konnte nicht gestartet werden."
+msgstr "Die Kette konnte nicht gestartet werden."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Kette läuft. Du wirst benachrichtigt, sobald alles fertig ist."
+msgstr "Die Kette läuft. Du wirst benachrichtigt, sobald alles fertig ist."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Das kann einige Minuten dauern. Du kannst die Seite offen lassen; am Ende erscheint eine Meldung."
+msgstr "Das kann einige Minuten dauern. Du kannst die Seite offen lassen; am Ende erscheint eine Meldung."
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "Diese Ansicht ist nicht verfügbar: {grund}"
+msgstr "Diese Ansicht ist nicht verfügbar: {grund}"
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "keine Formularfelder in diesem Projekt"
+msgstr "keine Formularfelder in diesem Projekt"
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "nicht verfügbar: {grund}"
+msgstr "nicht verfügbar: {grund}"

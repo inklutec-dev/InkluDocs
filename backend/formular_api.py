@@ -470,6 +470,35 @@ def felder_fuer_dokument_extrahieren(project_id: int, document_id: int, doc_inde
         conn.close()
 
 
+async def quickinfos_lauf_fuer_kette(project_id: int, user_id: int) -> dict:
+    """Feld-Pass fuer ALLE benannten Felder, abgewartet (Kette „Komplett barrierefrei machen“, 22.09.2026).
+    Dieselbe Auswahl und derselbe Lauf wie POST quickinfos/generieren, nur ohne HTTP-Antwort davor."""
+    conn = _d.get_db()
+    try:
+        offen = _generier_kandidaten(conn, project_id, "alle", None)
+        if not offen:
+            return {"gestartet": False, "offen": 0, "felder_neu": 0, "fehler": []}
+        conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    _generierung[project_id] = {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []}
+    await _generiere_projekt(project_id, user_id, None, "alle")
+    st = _generierung.get(project_id) or {}
+    conn = _d.get_db()
+    try:
+        conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ? AND status = 'processing'", (project_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"gestartet": True, "offen": offen, "felder_neu": int(st.get("felder_neu") or 0), "fehler": list(st.get("fehler") or [])}
+
+
+def quickinfos_kandidaten(conn, project_id: int) -> int:
+    """Zaehlung fuer die Rueckfrage der Kette (dieselbe wie quickinfos/vorschau)."""
+    return _generier_kandidaten(conn, project_id, "alle", None)
+
+
 def haengende_extraktionen_zuruecksetzen() -> int:
     """Beim Start: Formular-Projekte, die (z. B. durch einen Neustart mitten in der
     Extraktion) auf 'extracting' stehen geblieben sind, auf 'extracted' bzw.

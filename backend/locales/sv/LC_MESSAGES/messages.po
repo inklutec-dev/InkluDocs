@@ -6881,3 +6881,115 @@ msgstr "{n} fält"
 #: Station Quickinfos im PDF-Projekt (22.09.2026)
 msgid "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."
 msgstr "Välj ett PDF-formulär eller dra det hit. Fälten läses och får snabbinfo; bilder får alt-texter."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen"
+msgstr "Gör helt tillgänglig"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen läuft"
+msgstr "Gör helt tillgänglig pågår"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen ist fertig."
+msgstr "Gör helt tillgänglig är klar."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Barrierefrei machen (Tagging)"
+msgstr "Gör tillgänglig (taggning)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Schritt {i} von {n}: {name}"
+msgstr "Steg {i} av {n}: {name}"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "{f} von {n}"
+msgstr "{f} av {n}"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "wartet"
+msgstr "väntar"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "wird ausgeführt"
+msgstr "pågår"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "fertig"
+msgstr "klar"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "mit Hinweisen"
+msgstr "med anmärkningar"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "fehlgeschlagen"
+msgstr "misslyckades"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "übersprungen (nichts zu tun)"
+msgstr "överhoppad (inget att göra)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Stationen laufen nacheinander: erst das Tagging, dann Alt-Texte für alle Bilder, dann Quickinfos für alle Felder. Vorhandene Texte werden dabei neu erzeugt, wie bei „Alt-Texte generieren“. Die Zahl der Bilder kann sich nach dem Tagging ändern; jede Station bucht ihre Credits selbst."
+msgstr "Stationerna körs efter varandra: först taggning, sedan alt-texter för alla bilder, sedan snabbinfo för alla fält. Befintliga texter skapas på nytt, som vid ”Generera alt-texter”. Antalet bilder kan ändras efter taggningen; varje station bokför sina egna krediter."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Alles starten"
+msgstr "Starta allt"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Umfang konnte nicht ermittelt werden."
+msgstr "Omfattningen kunde inte beräknas."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Tagging: {n} Dokumente, {s} Seiten, {c} Credits"
+msgstr "Taggning: {n} dokument, {s} sidor, {c} krediter"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "({n} Dokumente sind schon getaggt)"
+msgstr "({n} dokument är redan taggade)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Alt-Texte: {n} Bilder, {c} Credits"
+msgstr "Alt-texter: {n} bilder, {c} krediter"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Quickinfos: {n} Felder, {c} Credits"
+msgstr "Snabbinfo: {n} fält, {c} krediter"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Gesamt: {c} Credits."
+msgstr "Totalt: {c} krediter."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Gesamt: {c} Credits. Verfügbar: {v} Credits."
+msgstr "Totalt: {c} krediter. Tillgängligt: {v} krediter."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Nichts zu tun: alle Dokumente sind getaggt, alle Bilder und Felder beschrieben."
+msgstr "Inget att göra: alla dokument är taggade, alla bilder och fält beskrivna."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Kette konnte nicht gestartet werden."
+msgstr "Kedjan kunde inte startas."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Kette läuft. Du wirst benachrichtigt, sobald alles fertig ist."
+msgstr "Kedjan pågår. Du meddelas när allt är klart."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Das kann einige Minuten dauern. Du kannst die Seite offen lassen; am Ende erscheint eine Meldung."
+msgstr "Det kan ta några minuter. Du kan låta sidan vara öppen; i slutet visas ett meddelande."
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "Diese Ansicht ist nicht verfügbar: {grund}"
+msgstr "Den här vyn är inte tillgänglig: {grund}"
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "keine Formularfelder in diesem Projekt"
+msgstr "inga formulärfält i detta projekt"
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "nicht verfügbar: {grund}"
+msgstr "inte tillgänglig: {grund}"

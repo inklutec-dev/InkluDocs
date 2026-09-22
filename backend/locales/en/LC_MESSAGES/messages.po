@@ -7319,3 +7319,115 @@ msgstr "{n} fields"
 #: Station Quickinfos im PDF-Projekt (22.09.2026)
 msgid "Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte."
 msgstr "Choose a PDF form or drag it here. The fields are read and get quick infos; images get alt texts."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen"
+msgstr "Make fully accessible"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen läuft"
+msgstr "Make fully accessible is running"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Komplett barrierefrei machen ist fertig."
+msgstr "Make fully accessible is done."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Barrierefrei machen (Tagging)"
+msgstr "Make accessible (tagging)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Schritt {i} von {n}: {name}"
+msgstr "Step {i} of {n}: {name}"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "{f} von {n}"
+msgstr "{f} of {n}"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "wartet"
+msgstr "waiting"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "wird ausgeführt"
+msgstr "running"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "fertig"
+msgstr "done"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "mit Hinweisen"
+msgstr "with notes"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "fehlgeschlagen"
+msgstr "failed"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "übersprungen (nichts zu tun)"
+msgstr "skipped (nothing to do)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Stationen laufen nacheinander: erst das Tagging, dann Alt-Texte für alle Bilder, dann Quickinfos für alle Felder. Vorhandene Texte werden dabei neu erzeugt, wie bei „Alt-Texte generieren“. Die Zahl der Bilder kann sich nach dem Tagging ändern; jede Station bucht ihre Credits selbst."
+msgstr "The stations run one after another: tagging first, then alt texts for all images, then quick infos for all fields. Existing texts are regenerated, as with “Generate alt texts”. The number of images can change after tagging; each station charges its own credits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Alles starten"
+msgstr "Start everything"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Umfang konnte nicht ermittelt werden."
+msgstr "The scope could not be determined."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Tagging: {n} Dokumente, {s} Seiten, {c} Credits"
+msgstr "Tagging: {n} documents, {s} pages, {c} credits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "({n} Dokumente sind schon getaggt)"
+msgstr "({n} documents are already tagged)"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Alt-Texte: {n} Bilder, {c} Credits"
+msgstr "Alt texts: {n} images, {c} credits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Quickinfos: {n} Felder, {c} Credits"
+msgstr "Quick infos: {n} fields, {c} credits"
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Gesamt: {c} Credits."
+msgstr "Total: {c} credits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Gesamt: {c} Credits. Verfügbar: {v} Credits."
+msgstr "Total: {c} credits. Available: {v} credits."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Nichts zu tun: alle Dokumente sind getaggt, alle Bilder und Felder beschrieben."
+msgstr "Nothing to do: all documents are tagged, all images and fields described."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Kette konnte nicht gestartet werden."
+msgstr "The chain could not be started."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Die Kette läuft. Du wirst benachrichtigt, sobald alles fertig ist."
+msgstr "The chain is running. You will be notified when everything is done."
+
+#: Kette Komplett barrierefrei machen (22.09.2026)
+msgid "Das kann einige Minuten dauern. Du kannst die Seite offen lassen; am Ende erscheint eine Meldung."
+msgstr "This can take a few minutes. You can leave the page open; a message appears at the end."
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "Diese Ansicht ist nicht verfügbar: {grund}"
+msgstr "This view is not available: {grund}"
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "keine Formularfelder in diesem Projekt"
+msgstr "no form fields in this project"
+
+#: Ansichts-Wahl ausgegraute Stationen (22.09.2026)
+msgid "nicht verfügbar: {grund}"
+msgstr "not available: {grund}"

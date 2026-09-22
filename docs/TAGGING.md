@@ -200,3 +200,19 @@ Ablage-Eintrag nach dem Tagging, Namen der Ansichten (Steve klärt mit Michael).
 - Offen: Gast-Prüfung der Quickinfos in PDF-Projekten (Freigabe öffnet heute die Alt-Text-Prüfung),
   Chatbot-Werkzeugsatz je Ansicht (heute nach `project.tool`), Kette „Komplett barrierefrei machen“.
 - Tests: `tests/e2e/verify_pdf_quickinfos.py` (API), `tests/e2e/ui_pdf_quickinfos.py` (Klick).
+
+## Kette „Komplett barrierefrei machen“ (22.09.2026, Steves Go)
+
+`backend/kette_api.py`. Ein Knopf im Kopf der Ansicht „Dokument“ arbeitet die Stationen
+nacheinander ab: Tagging für jede Datei ohne Struktur (`tagging_api.lauf_synchron`), Alt-Texte für
+alle Bilder (`main.alttexte_lauf_fuer_kette`, derselbe Lauf wie „Alt-Texte generieren“), Quickinfos
+für alle benannten Felder (`formular_api.quickinfos_lauf_fuer_kette`). Eine Rückfrage vorher
+(`GET /api/projects/{id}/kette`: Umfang und Preis je Station aus denselben Zählungen wie die
+Einzelstationen, Gesamtpreis, Guthaben), Start mit `POST` (402 wenn das Guthaben nicht für alles
+reicht, 409 wenn etwas läuft, 429 Tageslimit). Jede Station bucht ihre Credits selbst. Eine
+gescheiterte Station stoppt die Kette nicht; die Gründe stehen in der Zusammenfassung. Stand in
+`projects.kette_json` (Statuskarte in der Ansicht, Polling alle 2,5 s nur in der Karte, am Ende
+Laufmeldung); nach einem Neustart gilt eine laufende Kette als abgebrochen. Die Zahl der Bilder wird
+nach dem Tagging neu bestimmt (Struktur-Extraktion), die Rückfrage sagt das. Test:
+`tests/e2e/verify_kette.py` (echte Modellaufrufe). Offen: Ablage-Eintrag am Ende, Zusammenfassung
+mehrsprachig (heute deutsch aus dem Server).

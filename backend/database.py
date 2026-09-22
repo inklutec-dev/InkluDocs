@@ -847,6 +847,8 @@ def _migrate_columns(conn):
         # ANSICHTEN (22.09.2026, Steve): zuletzt ueber die Ansichts-Wahl geoeffnete Ansicht je Projekt
         # ('' = Startansicht des Dateityps: PDF „dokument“, Word „alttexte“ bzw. „uebersetzung“).
         ("projects", "letzte_ansicht", "ALTER TABLE projects ADD COLUMN letzte_ansicht TEXT DEFAULT ''"),
+        # KETTE „Komplett barrierefrei machen“ (22.09.2026, kette_api.py): Stand des Laufs als JSON.
+        ("projects", "kette_json", "ALTER TABLE projects ADD COLUMN kette_json TEXT DEFAULT ''"),
         # Public API v1 Dokumente (17.09.2026): welcher Schluessel hat das Projekt angelegt (Verbrauch je Schluessel).
         ("projects", "api_key_id", "ALTER TABLE projects ADD COLUMN api_key_id INTEGER"),
         # QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): Ergebnis des Feld-Passes je Feld —

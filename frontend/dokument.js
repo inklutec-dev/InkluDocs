@@ -106,7 +106,7 @@
     function karteHtml(project, d, pos) {
         const name = esc(docDisplayName(d));
         const tg = d.tagging || {};
-        const busy = project.status === 'processing' || project.status === 'extracting' || tg.laeuft;
+        const busy = project.status === 'processing' || project.status === 'extracting' || tg.laeuft || !!(project.kette && project.kette.laeuft);
         const vh = t('– Dokument „{name}“', { name: name });
         const preis = tg.preis || 0;
         const seiten = d.seiten || tg.seiten || 0;
@@ -145,9 +145,12 @@
     function kopfHtml(project, data) {
         const title = (project.name && project.name.trim()) ? project.name : project.filename;
         const docs = data.documents || [];
+        const kette = project.kette || {};
         const laeuft = docs.some(d => d.tagging && d.tagging.laeuft);
+        const busy = laeuft || !!kette.laeuft || project.status === 'extracting' || project.status === 'processing';
         let badge, cls;
-        if (laeuft) { badge = t('Wird barrierefrei gemacht …'); cls = 'badge-processing'; }
+        if (kette.laeuft) { badge = t('Komplett barrierefrei machen läuft'); cls = 'badge-processing'; }
+        else if (laeuft) { badge = t('Wird barrierefrei gemacht …'); cls = 'badge-processing'; }
         else if (project.status === 'extracting') { badge = t('Wird gelesen'); cls = 'badge-processing'; }
         else if (project.status === 'processing') { badge = t('Alt-Texte werden generiert...'); cls = 'badge-processing'; }
         else if (project.status === 'error') { badge = t('Fehler'); cls = 'badge-error'; }
@@ -159,8 +162,11 @@
             + '<span class="badge ' + cls + '" id="projectStatusBadge">' + badge + '</span></div>'
             + '<div class="card-info" id="projectHeadInfo" hidden></div>'
             + '<div class="card-actions">'
+            // Kette (22.09.2026, Steve + Michael): ein Knopf fuer alle Stationen — Tagging, Alt-Texte, Quickinfos.
+            +   (docs.length && !busy ? '<button class="btn btn-primary" id="dkKetteBtn" onclick="Dokument.ketteOeffnen(' + project.id + ')">' + ico('sparkle') + t('Komplett barrierefrei machen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
             +   ((data.ausgaben_anzahl || 0) > 0 ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : '')
             +   laufDialogHtml(project)
+            +   ketteDialogHtml(project)
             + '</div>'
             + (typeof ansichtWahlHtml === 'function' ? '<div class="card-actions">' + ansichtWahlHtml(project, 'dokument') + '</div>' : '')
             + '</div>';
@@ -247,6 +253,119 @@
         }
     }
 
+    // ─── Kette „Komplett barrierefrei machen“ (22.09.2026) ───
+    const SCHRITT_NAMEN = { tagging: () => t('Barrierefrei machen (Tagging)'), alttexte: () => t('Alt-Texte'), quickinfos: () => t('Quickinfos') };
+    const SCHRITT_STATUS = {
+        offen: () => t('wartet'), laeuft: () => t('wird ausgeführt'), fertig: () => t('fertig'), teilweise: () => t('mit Hinweisen'),
+        fehler: () => t('fehlgeschlagen'), uebersprungen: () => t('übersprungen (nichts zu tun)'),
+    };
+    function ketteDialogHtml(project) {
+        return '<dialog id="dkKetteDialog" class="app-dialog" aria-labelledby="dkKetteHeading" aria-describedby="dkKettePlan dkKetteSummary">'
+            + '<h2 id="dkKetteHeading">' + t('Komplett barrierefrei machen') + '</h2>'
+            + '<ol id="dkKettePlan" class="dialog-hint" style="padding-left:1.4rem;"></ol>'
+            + '<p id="dkKetteSummary" role="status"></p>'
+            + '<p class="dialog-hint" style="margin:0 0 0.8rem 0;">' + t('Die Stationen laufen nacheinander: erst das Tagging, dann Alt-Texte für alle Bilder, dann Quickinfos für alle Felder. Vorhandene Texte werden dabei neu erzeugt, wie bei „Alt-Texte generieren“. Die Zahl der Bilder kann sich nach dem Tagging ändern; jede Station bucht ihre Credits selbst.') + '</p>'
+            + '<div class="dialog-actions">'
+            +   '<button type="button" class="btn btn-secondary" id="dkKetteCancel" onclick="Dokument.ketteSchliessen()">' + t('Abbrechen') + '</button>'
+            +   '<button type="button" class="btn btn-primary" id="dkKetteOk" onclick="Dokument.ketteStarten(' + project.id + ')">' + t('Alles starten') + '</button>'
+            + '</div><output id="dkKetteStatus" style="display:block;margin-top:0.5rem;"></output>'
+            + '</dialog>';
+    }
+    async function ketteOeffnen(projectId) {
+        const dlg = document.getElementById('dkKetteDialog');
+        if (!dlg) return;
+        const plan = document.getElementById('dkKettePlan');
+        const summary = document.getElementById('dkKetteSummary');
+        const status = document.getElementById('dkKetteStatus');
+        const ok = document.getElementById('dkKetteOk');
+        if (plan) plan.innerHTML = '';
+        if (summary) summary.textContent = t('Umfang wird ermittelt …');
+        if (status) status.textContent = '';
+        if (ok) ok.disabled = true;
+        dlg.showModal();
+        const cancel = document.getElementById('dkKetteCancel');
+        if (cancel) cancel.focus();
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/kette');
+            const v = await res.json();
+            if (!res.ok) { if (summary) summary.textContent = (v.detail && (v.detail.text || v.detail)) || t('Umfang konnte nicht ermittelt werden.'); return; }
+            const zeilen = [];
+            zeilen.push(t('Tagging: {n} Dokumente, {s} Seiten, {c} Credits', { n: v.tagging.dokumente, s: v.tagging.seiten, c: v.tagging.preis })
+                + (v.tagging.schon_getaggt ? ' ' + t('({n} Dokumente sind schon getaggt)', { n: v.tagging.schon_getaggt }) : ''));
+            zeilen.push(t('Alt-Texte: {n} Bilder, {c} Credits', { n: v.alttexte.bilder, c: v.alttexte.preis }));
+            zeilen.push(t('Quickinfos: {n} Felder, {c} Credits', { n: v.quickinfos.felder, c: v.quickinfos.preis }));
+            if (plan) plan.innerHTML = zeilen.map(z => '<li>' + esc(z) + '</li>').join('');
+            let satz = v.verfuegbar == null ? t('Gesamt: {c} Credits.', { c: v.gesamt }) : t('Gesamt: {c} Credits. Verfügbar: {v} Credits.', { c: v.gesamt, v: v.verfuegbar });
+            if (v.nichts_zu_tun) satz = t('Nichts zu tun: alle Dokumente sind getaggt, alle Bilder und Felder beschrieben.');
+            else if (!v.erlaubt) satz += ' ' + t('Dafür reicht das Guthaben nicht.');
+            if (summary) summary.textContent = satz;
+            if (ok) ok.disabled = !v.erlaubt || v.nichts_zu_tun || v.laeuft;
+        } catch (e) {
+            if (summary) summary.textContent = t('Verbindungsfehler.');
+        }
+    }
+    function ketteSchliessen() {
+        const dlg = document.getElementById('dkKetteDialog');
+        if (dlg && dlg.open) dlg.close();
+        const btn = document.getElementById('dkKetteBtn');
+        if (btn) btn.focus();
+    }
+    async function ketteStarten(projectId) {
+        const status = document.getElementById('dkKetteStatus');
+        const ok = document.getElementById('dkKetteOk');
+        if (ok) ok.disabled = true;
+        if (status) status.textContent = t('Wird gestartet …');
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/kette', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+            const data = await res.json().catch(() => ({}));
+            if (res.status === 402) {
+                ketteSchliessen();
+                if (typeof zeigeCreditsMeldung === 'function') zeigeCreditsMeldung(data.detail); else announce((data.detail && data.detail.text) || t('Dafür reicht das Guthaben nicht.'));
+                return;
+            }
+            if (!res.ok || !data.gestartet) {
+                const m = (data.detail && (data.detail.text || data.detail)) || t('Die Kette konnte nicht gestartet werden.');
+                if (status) status.textContent = typeof m === 'string' ? m : t('Die Kette konnte nicht gestartet werden.');
+                announce(status ? status.textContent : '');
+                if (ok) ok.disabled = false;
+                return;
+            }
+            ketteSchliessen();
+            announce(t('Die Kette läuft. Du wirst benachrichtigt, sobald alles fertig ist.'));
+            await showProject(projectId, true);
+            const card = document.getElementById('ketteCard');
+            if (card) { card.setAttribute('tabindex', '-1'); card.focus(); }
+        } catch (e) {
+            if (status) status.textContent = t('Verbindungsfehler.');
+            if (ok) ok.disabled = false;
+        }
+    }
+    function ketteSchrittText(k) {
+        const reihe = ['tagging', 'alttexte', 'quickinfos'];
+        const i = Math.max(0, reihe.indexOf(k.schritt));
+        const s = (k.schritte || {})[k.schritt] || {};
+        let text = t('Schritt {i} von {n}: {name}', { i: i + 1, n: reihe.length, name: SCHRITT_NAMEN[k.schritt] ? SCHRITT_NAMEN[k.schritt]() : k.schritt });
+        if (s.geplant) text += ' (' + t('{f} von {n}', { f: s.fertig || 0, n: s.geplant }) + ')';
+        return text;
+    }
+    function ketteKarteHtml(project) {
+        const k = project.kette || {};
+        if (!k.laeuft) return '';
+        const reihe = ['tagging', 'alttexte', 'quickinfos'];
+        return '<section class="card" id="ketteCard" aria-labelledby="ketteHeading">'
+            + '<h2 id="ketteHeading" class="section-title">' + t('Komplett barrierefrei machen läuft') + '</h2>'
+            + '<p id="ketteSchritt" aria-live="polite">' + esc(ketteSchrittText(k)) + '</p>'
+            + '<ol id="ketteListe" style="padding-left:1.4rem;">' + reihe.map(r => { const st = (k.schritte || {})[r] || {}; return '<li>' + esc(SCHRITT_NAMEN[r]()) + ': ' + esc((SCHRITT_STATUS[st.status] || SCHRITT_STATUS.offen)()) + '</li>'; }).join('') + '</ol>'
+            + '<p class="feld-hinweis">' + t('Das kann einige Minuten dauern. Du kannst die Seite offen lassen; am Ende erscheint eine Meldung.') + '</p>'
+            + '</section>';
+    }
+    function ketteAktualisieren(k) {
+        const p = document.getElementById('ketteSchritt');
+        if (p) { const neu = ketteSchrittText(k); if (p.textContent !== neu) p.textContent = neu; }
+        const ol = document.getElementById('ketteListe');
+        if (ol) { const reihe = ['tagging', 'alttexte', 'quickinfos']; ol.innerHTML = reihe.map(r => { const st = (k.schritte || {})[r] || {}; return '<li>' + esc(SCHRITT_NAMEN[r]()) + ': ' + esc((SCHRITT_STATUS[st.status] || SCHRITT_STATUS.offen)()) + '</li>'; }).join(''); }
+    }
+
     // ─── Ansicht wechseln (Knopf „Alt-Texte bearbeiten“) ───
     function zurAnsicht(projectId, ziel) {
         const sel = document.getElementById('ansichtSelect');
@@ -301,6 +420,7 @@
         const docs = data.documents || [];
         main.innerHTML = kopfHtml(project, data)
             + uploadBlockHtml(project)
+            + ketteKarteHtml(project)
             + laufMeldungHtml()
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
             + (docs.length ? '' : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen.') + '</p>')
@@ -315,7 +435,8 @@
         const h1 = document.getElementById('projectName');
         if (h1 && !erneut) h1.focus();
         const laufende = docs.filter(d => d.tagging && d.tagging.laeuft).map(d => d.id);
-        if (laufende.length || project.status === 'extracting' || project.status === 'processing') {
+        const ketteLief = !!(project.kette && project.kette.laeuft);
+        if (laufende.length || ketteLief || project.status === 'extracting' || project.status === 'processing') {
             const tick = async () => {
                 if (zustandProjekt !== projectId) return;
                 if (!document.getElementById('dokListe')) { pollStoppen(); return; }   // Ansicht gewechselt
@@ -324,6 +445,15 @@
                     if (!r.ok) { pollTimer = setTimeout(tick, 2500); return; }
                     const d2 = await r.json();
                     if (zustandProjekt !== projectId) return;
+                    // Kette: waehrend des Laufs nur die Statuskarte fortschreiben (kein Neuaufbau, Fokus bleibt);
+                    // am Ende einmal neu zeichnen und die Zusammenfassung melden.
+                    if (ketteLief) {
+                        const k2 = (d2.project && d2.project.kette) || {};
+                        if (k2.laeuft) { ketteAktualisieren(k2); pollTimer = setTimeout(tick, 2500); return; }
+                        await showProject(projectId, true);
+                        zeigeMeldung(t('Komplett barrierefrei machen ist fertig.') + ' ' + (k2.zusammenfassung || ''));
+                        return;
+                    }
                     const jetzt = (d2.documents || []).filter(x => x.tagging && x.tagging.laeuft).map(x => x.id);
                     const fertigGeworden = (d2.documents || []).filter(x => laufende.includes(x.id) && !(x.tagging && x.tagging.laeuft));
                     const statusWechsel = d2.project.status !== project.status;
@@ -343,5 +473,6 @@
         }
     }
 
-    window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, zurAnsicht, meldungSchliessen, pollStoppen };
+    window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, zurAnsicht, meldungSchliessen, pollStoppen,
+                        ketteOeffnen, ketteSchliessen, ketteStarten };
 })();
