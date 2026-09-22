@@ -8545,6 +8545,7 @@ app.include_router(tagging_api.build_router(tagging_api.Deps(
     doc_label=_doc_label,
     get_gettext=get_gettext,
     resolve_ui_language=lambda r: resolve_ui_language(r),   # steht weiter unten in der Datei, daher spaet aufgeloest
+    ausgaben_anzahl=lambda pid: _ausgaben_anzahl(pid),
 )))
 
 # Public API v1 — Dokumente (17.09.2026): duenne Schicht ueber den App-Routen, siehe api_dokumente_v1.py.

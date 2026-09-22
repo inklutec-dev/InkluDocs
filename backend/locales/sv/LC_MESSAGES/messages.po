@@ -6593,3 +6593,267 @@ msgstr "Förlopp och avbryt finns i vyn Alt-texter."
 
 msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
 msgstr "Skapandet av alt-texter är klart."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokument"
+msgstr "Dokument"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Ansicht Dokument geöffnet."
+msgstr "Vyn Dokument öppnad."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF wird gelesen …"
+msgstr "PDF-filen läses …"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Du kannst jederzeit weitere PDF hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte bleiben erhalten."
+msgstr "Du kan när som helst ladda upp fler PDF-filer. Varje fil får ett eget kort i listan nedan; befintliga alt-texter behålls."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wähle ein PDF-Dokument oder ziehe es hierher. Danach kannst du es barrierefrei machen (Tagging) und Alt-Texte erzeugen."
+msgstr "Välj ett PDF-dokument eller dra det hit. Därefter kan du göra det tillgängligt (taggning) och skapa alt-texter."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wird barrierefrei gemacht …"
+msgstr "Görs tillgänglig …"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Letzter Lauf fehlgeschlagen"
+msgstr "Senaste körningen misslyckades"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt, PDF/UA-Prüfung bestanden"
+msgstr "Taggad, PDF/UA-kontroll godkänd"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt, PDF/UA-Prüfung mit Hinweisen"
+msgstr "Taggad, PDF/UA-kontroll med anmärkningar"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt"
+msgstr "Taggad"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt (vom Ersteller)"
+msgstr "Taggad (av upphovsmannen)"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Ungetaggt"
+msgstr "Otaggad"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Unbekannt"
+msgstr "Okänd"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "keine Struktur"
+msgstr "ingen struktur"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Überschriften"
+msgstr "{n} rubriker"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Listen"
+msgstr "{n} listor"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Tabellen"
+msgstr "{n} tabeller"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Elemente"
+msgstr "{n} element"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Fehler: {grund}"
+msgstr "Fel: {grund}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "unbekannt"
+msgstr "okänt"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt am {zeit} in {s} Sekunden, {n} Seiten."
+msgstr "Taggad {zeit} på {s} sekunder, {n} sidor."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "aus dem Text erkannt"
+msgstr "identifierad från texten"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "aus dem Dokument übernommen"
+msgstr "hämtad från dokumentet"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Projektsprache angenommen"
+msgstr "projektspråk antaget"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumentsprache {lang} ({quelle})."
+msgstr "Dokumentspråk {lang} ({quelle})."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Struktur: {s}"
+msgstr "Struktur: {s}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Vorher: {s}"
+msgstr "Före: {s}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumenttitel: {titel}"
+msgstr "Dokumenttitel: {titel}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder über die Struktur gefunden, {u} Alt-Texte aus dem vorherigen Stand übernommen."
+msgstr "{n} bilder hittade via strukturen, {u} alt-texter överförda från föregående läge."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller, solange das Tagging nicht in der Lizenz freigeschaltet ist."
+msgstr "Testläge: Filen bär “Trial version of PDFix SDK” som producent tills taggning är aktiverad i licensen."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "PDF/UA-Prüfung"
+msgstr "PDF/UA-kontroll"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Bestanden."
+msgstr "Godkänd."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Mit Hinweisen."
+msgstr "Med anmärkningar."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "In Ordnung"
+msgstr "I ordning"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar)."
+msgstr "PDF/UA-kontrollen var inte möjlig (kontrolltjänsten kunde inte nås)."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Bericht zum Tagging"
+msgstr "Rapport om taggning"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Neu taggen"
+msgstr "Tagga igen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Barrierefrei machen"
+msgstr "Gör tillgänglig"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder, {m} mit Alt-Text"
+msgstr "{n} bilder, {m} med alt-text"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "keine Bilder gefunden"
+msgstr "inga bilder hittades"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Stand"
+msgstr "Status"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Seiten"
+msgstr "Sidor"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "nicht gesetzt"
+msgstr "inte angivet"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Struktur"
+msgstr "Struktur"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging läuft im Testmodus von PDFix, bis die Freischaltung in der Lizenz vorliegt."
+msgstr "Taggningen körs i PDFix testläge tills den aktiveras i licensen."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Seiten, {c} Credits"
+msgstr "{n} sidor, {c} krediter"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Alt-Texte bearbeiten"
+msgstr "Redigera alt-texter"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggte PDF herunterladen"
+msgstr "Ladda ner taggad PDF"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern."
+msgstr "Görs tillgänglig … Det kan ta några minuter för stora filer."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Alle Dokumente getaggt"
+msgstr "Alla dokument taggade"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokument „{name}“: {n} Seiten."
+msgstr "Dokument ”{name}”: {n} sidor."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Preis: {c} Credits (1 Credit je Seite)."
+msgstr "Pris: {c} krediter (1 kredit per sida)."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Preis: {c} Credits (1 Credit je Seite). Verfügbar: {v} Credits."
+msgstr "Pris: {c} krediter (1 kredit per sida). Tillgängligt: {v} krediter."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Dokument wird aus der ursprünglichen Datei neu getaggt; Alt-Texte bleiben erhalten."
+msgstr "Dokumentet taggas om från originalfilen; alt-texter behålls."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller."
+msgstr "Testläge: Filen bär “Trial version of PDFix SDK” som producent."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Tagging starten"
+msgstr "Starta taggning"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dafür reicht das Guthaben nicht: {c} Credits nötig, {v} vorhanden."
+msgstr "Krediterna räcker inte: {c} behövs, {v} finns."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dafür reicht das Guthaben nicht."
+msgstr "Krediterna räcker inte för detta."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging konnte nicht gestartet werden."
+msgstr "Taggningen kunde inte startas."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging läuft. Du wirst benachrichtigt, sobald es fertig ist."
+msgstr "Taggningen pågår. Du meddelas när den är klar."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF bekommt eine Struktur (Überschriften, Absätze, Listen, Tabellen, Bilder), Titel, Sprache, Lesezeichen und die PDF/UA-Kennung. Der sichtbare Inhalt bleibt unverändert. Danach werden die Bilder neu über die Struktur gefunden; vorhandene Alt-Texte bleiben erhalten."
+msgstr "PDF-filen får en struktur (rubriker, stycken, listor, tabeller, bilder), titel, språk, bokmärken och PDF/UA-märkningen. Det synliga innehållet förblir oförändrat. Därefter hittas bilderna på nytt via strukturen; befintliga alt-texter behålls."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "Taggningen av ”{name}” misslyckades: {grund}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "unbekannter Fehler"
+msgstr "okänt fel"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "„{name}“ ist getaggt: {struktur}."
+msgstr "”{name}” är taggad: {struktur}."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder gefunden, {u} Alt-Texte übernommen."
+msgstr "{n} bilder hittade, {u} alt-texter överförda."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumente ({n})"
+msgstr "Dokument ({n})"

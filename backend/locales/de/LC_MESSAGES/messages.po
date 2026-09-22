@@ -7034,3 +7034,267 @@ msgstr "Fortschritt und Abbrechen findest du in der Ansicht Alt-Texte."
 
 msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
 msgstr "Die Erstellung der Alt-Texte ist abgeschlossen."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokument"
+msgstr "Dokument"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Ansicht Dokument geöffnet."
+msgstr "Ansicht Dokument geöffnet."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF wird gelesen …"
+msgstr "Die PDF wird gelesen …"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Du kannst jederzeit weitere PDF hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte bleiben erhalten."
+msgstr "Du kannst jederzeit weitere PDF hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte bleiben erhalten."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wähle ein PDF-Dokument oder ziehe es hierher. Danach kannst du es barrierefrei machen (Tagging) und Alt-Texte erzeugen."
+msgstr "Wähle ein PDF-Dokument oder ziehe es hierher. Danach kannst du es barrierefrei machen (Tagging) und Alt-Texte erzeugen."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wird barrierefrei gemacht …"
+msgstr "Wird barrierefrei gemacht …"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Letzter Lauf fehlgeschlagen"
+msgstr "Letzter Lauf fehlgeschlagen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt, PDF/UA-Prüfung bestanden"
+msgstr "Getaggt, PDF/UA-Prüfung bestanden"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt, PDF/UA-Prüfung mit Hinweisen"
+msgstr "Getaggt, PDF/UA-Prüfung mit Hinweisen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt"
+msgstr "Getaggt"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt (vom Ersteller)"
+msgstr "Getaggt (vom Ersteller)"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Ungetaggt"
+msgstr "Ungetaggt"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Unbekannt"
+msgstr "Unbekannt"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "keine Struktur"
+msgstr "keine Struktur"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Überschriften"
+msgstr "{n} Überschriften"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Listen"
+msgstr "{n} Listen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Tabellen"
+msgstr "{n} Tabellen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Elemente"
+msgstr "{n} Elemente"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Fehler: {grund}"
+msgstr "Fehler: {grund}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "unbekannt"
+msgstr "unbekannt"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt am {zeit} in {s} Sekunden, {n} Seiten."
+msgstr "Getaggt am {zeit} in {s} Sekunden, {n} Seiten."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "aus dem Text erkannt"
+msgstr "aus dem Text erkannt"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "aus dem Dokument übernommen"
+msgstr "aus dem Dokument übernommen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Projektsprache angenommen"
+msgstr "Projektsprache angenommen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumentsprache {lang} ({quelle})."
+msgstr "Dokumentsprache {lang} ({quelle})."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Struktur: {s}"
+msgstr "Struktur: {s}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Vorher: {s}"
+msgstr "Vorher: {s}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumenttitel: {titel}"
+msgstr "Dokumenttitel: {titel}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder über die Struktur gefunden, {u} Alt-Texte aus dem vorherigen Stand übernommen."
+msgstr "{n} Bilder über die Struktur gefunden, {u} Alt-Texte aus dem vorherigen Stand übernommen."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller, solange das Tagging nicht in der Lizenz freigeschaltet ist."
+msgstr "Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller, solange das Tagging nicht in der Lizenz freigeschaltet ist."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "PDF/UA-Prüfung"
+msgstr "PDF/UA-Prüfung"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Bestanden."
+msgstr "Bestanden."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Mit Hinweisen."
+msgstr "Mit Hinweisen."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "In Ordnung"
+msgstr "In Ordnung"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar)."
+msgstr "Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar)."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Bericht zum Tagging"
+msgstr "Bericht zum Tagging"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Neu taggen"
+msgstr "Neu taggen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Barrierefrei machen"
+msgstr "Barrierefrei machen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder, {m} mit Alt-Text"
+msgstr "{n} Bilder, {m} mit Alt-Text"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "keine Bilder gefunden"
+msgstr "keine Bilder gefunden"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Stand"
+msgstr "Stand"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Seiten"
+msgstr "Seiten"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "nicht gesetzt"
+msgstr "nicht gesetzt"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Struktur"
+msgstr "Struktur"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging läuft im Testmodus von PDFix, bis die Freischaltung in der Lizenz vorliegt."
+msgstr "Das Tagging läuft im Testmodus von PDFix, bis die Freischaltung in der Lizenz vorliegt."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Seiten, {c} Credits"
+msgstr "{n} Seiten, {c} Credits"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Alt-Texte bearbeiten"
+msgstr "Alt-Texte bearbeiten"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggte PDF herunterladen"
+msgstr "Getaggte PDF herunterladen"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern."
+msgstr "Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Alle Dokumente getaggt"
+msgstr "Alle Dokumente getaggt"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokument „{name}“: {n} Seiten."
+msgstr "Dokument „{name}“: {n} Seiten."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Preis: {c} Credits (1 Credit je Seite)."
+msgstr "Preis: {c} Credits (1 Credit je Seite)."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Preis: {c} Credits (1 Credit je Seite). Verfügbar: {v} Credits."
+msgstr "Preis: {c} Credits (1 Credit je Seite). Verfügbar: {v} Credits."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Dokument wird aus der ursprünglichen Datei neu getaggt; Alt-Texte bleiben erhalten."
+msgstr "Das Dokument wird aus der ursprünglichen Datei neu getaggt; Alt-Texte bleiben erhalten."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller."
+msgstr "Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Tagging starten"
+msgstr "Tagging starten"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dafür reicht das Guthaben nicht: {c} Credits nötig, {v} vorhanden."
+msgstr "Dafür reicht das Guthaben nicht: {c} Credits nötig, {v} vorhanden."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dafür reicht das Guthaben nicht."
+msgstr "Dafür reicht das Guthaben nicht."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging konnte nicht gestartet werden."
+msgstr "Das Tagging konnte nicht gestartet werden."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging läuft. Du wirst benachrichtigt, sobald es fertig ist."
+msgstr "Das Tagging läuft. Du wirst benachrichtigt, sobald es fertig ist."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF bekommt eine Struktur (Überschriften, Absätze, Listen, Tabellen, Bilder), Titel, Sprache, Lesezeichen und die PDF/UA-Kennung. Der sichtbare Inhalt bleibt unverändert. Danach werden die Bilder neu über die Struktur gefunden; vorhandene Alt-Texte bleiben erhalten."
+msgstr "Die PDF bekommt eine Struktur (Überschriften, Absätze, Listen, Tabellen, Bilder), Titel, Sprache, Lesezeichen und die PDF/UA-Kennung. Der sichtbare Inhalt bleibt unverändert. Danach werden die Bilder neu über die Struktur gefunden; vorhandene Alt-Texte bleiben erhalten."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "Das Tagging von „{name}“ ist fehlgeschlagen: {grund}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "unbekannter Fehler"
+msgstr "unbekannter Fehler"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "„{name}“ ist getaggt: {struktur}."
+msgstr "„{name}“ ist getaggt: {struktur}."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder gefunden, {u} Alt-Texte übernommen."
+msgstr "{n} Bilder gefunden, {u} Alt-Texte übernommen."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumente ({n})"
+msgstr "Dokumente ({n})"

@@ -7031,3 +7031,267 @@ msgstr "El progreso y cancelar están en la vista Textos alternativos."
 
 msgid "Die Erstellung der Alt-Texte ist abgeschlossen."
 msgstr "La creación de los textos alternativos ha terminado."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokument"
+msgstr "Documento"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Ansicht Dokument geöffnet."
+msgstr "Vista Documento abierta."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF wird gelesen …"
+msgstr "Se está leyendo el PDF …"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Du kannst jederzeit weitere PDF hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte bleiben erhalten."
+msgstr "Puedes subir más PDF en cualquier momento. Cada archivo recibe su propia tarjeta en la lista de abajo; los textos alternativos existentes se conservan."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wähle ein PDF-Dokument oder ziehe es hierher. Danach kannst du es barrierefrei machen (Tagging) und Alt-Texte erzeugen."
+msgstr "Elige un documento PDF o arrástralo aquí. Después puedes hacerlo accesible (etiquetado) y crear textos alternativos."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wird barrierefrei gemacht …"
+msgstr "Haciéndolo accesible …"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Letzter Lauf fehlgeschlagen"
+msgstr "Última ejecución fallida"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt, PDF/UA-Prüfung bestanden"
+msgstr "Etiquetado, comprobación PDF/UA superada"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt, PDF/UA-Prüfung mit Hinweisen"
+msgstr "Etiquetado, comprobación PDF/UA con observaciones"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt"
+msgstr "Etiquetado"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt (vom Ersteller)"
+msgstr "Etiquetado (por el autor)"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Ungetaggt"
+msgstr "Sin etiquetar"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Unbekannt"
+msgstr "Desconocido"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "keine Struktur"
+msgstr "sin estructura"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Überschriften"
+msgstr "{n} encabezados"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Listen"
+msgstr "{n} listas"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Tabellen"
+msgstr "{n} tablas"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Elemente"
+msgstr "{n} elementos"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Fehler: {grund}"
+msgstr "Error: {grund}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "unbekannt"
+msgstr "desconocido"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggt am {zeit} in {s} Sekunden, {n} Seiten."
+msgstr "Etiquetado el {zeit} en {s} segundos, {n} páginas."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "aus dem Text erkannt"
+msgstr "detectada en el texto"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "aus dem Dokument übernommen"
+msgstr "tomada del documento"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Projektsprache angenommen"
+msgstr "idioma del proyecto asumido"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumentsprache {lang} ({quelle})."
+msgstr "Idioma del documento {lang} ({quelle})."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Struktur: {s}"
+msgstr "Estructura: {s}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Vorher: {s}"
+msgstr "Antes: {s}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumenttitel: {titel}"
+msgstr "Título del documento: {titel}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder über die Struktur gefunden, {u} Alt-Texte aus dem vorherigen Stand übernommen."
+msgstr "{n} imágenes encontradas mediante la estructura, {u} textos alternativos conservados del estado anterior."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller, solange das Tagging nicht in der Lizenz freigeschaltet ist."
+msgstr "Modo de prueba: el archivo lleva “Trial version of PDFix SDK” como productor hasta que el etiquetado se active en la licencia."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "PDF/UA-Prüfung"
+msgstr "Comprobación PDF/UA"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Bestanden."
+msgstr "Superada."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Mit Hinweisen."
+msgstr "Con observaciones."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "In Ordnung"
+msgstr "Correcto"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar)."
+msgstr "La comprobación PDF/UA no fue posible (servicio de comprobación no disponible)."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Bericht zum Tagging"
+msgstr "Informe del etiquetado"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Neu taggen"
+msgstr "Volver a etiquetar"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Barrierefrei machen"
+msgstr "Hacer accesible"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder, {m} mit Alt-Text"
+msgstr "{n} imágenes, {m} con texto alternativo"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "keine Bilder gefunden"
+msgstr "no se encontraron imágenes"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Stand"
+msgstr "Estado"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Seiten"
+msgstr "Páginas"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "nicht gesetzt"
+msgstr "no definido"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Struktur"
+msgstr "Estructura"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging läuft im Testmodus von PDFix, bis die Freischaltung in der Lizenz vorliegt."
+msgstr "El etiquetado se ejecuta en modo de prueba de PDFix hasta que se active en la licencia."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Seiten, {c} Credits"
+msgstr "{n} páginas, {c} créditos"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Alt-Texte bearbeiten"
+msgstr "Editar textos alternativos"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Getaggte PDF herunterladen"
+msgstr "Descargar PDF etiquetado"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern."
+msgstr "Haciéndolo accesible … Esto puede tardar unos minutos con archivos grandes."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Alle Dokumente getaggt"
+msgstr "Todos los documentos etiquetados"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokument „{name}“: {n} Seiten."
+msgstr "Documento “{name}”: {n} páginas."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Preis: {c} Credits (1 Credit je Seite)."
+msgstr "Precio: {c} créditos (1 crédito por página)."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Preis: {c} Credits (1 Credit je Seite). Verfügbar: {v} Credits."
+msgstr "Precio: {c} créditos (1 crédito por página). Disponibles: {v} créditos."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Dokument wird aus der ursprünglichen Datei neu getaggt; Alt-Texte bleiben erhalten."
+msgstr "El documento se vuelve a etiquetar a partir del archivo original; los textos alternativos se conservan."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller."
+msgstr "Modo de prueba: el archivo lleva “Trial version of PDFix SDK” como productor."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Tagging starten"
+msgstr "Iniciar etiquetado"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dafür reicht das Guthaben nicht: {c} Credits nötig, {v} vorhanden."
+msgstr "Saldo insuficiente: se necesitan {c} créditos, {v} disponibles."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dafür reicht das Guthaben nicht."
+msgstr "Saldo insuficiente para esto."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging konnte nicht gestartet werden."
+msgstr "No se pudo iniciar el etiquetado."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging läuft. Du wirst benachrichtigt, sobald es fertig ist."
+msgstr "El etiquetado está en curso. Se te avisará cuando termine."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Die PDF bekommt eine Struktur (Überschriften, Absätze, Listen, Tabellen, Bilder), Titel, Sprache, Lesezeichen und die PDF/UA-Kennung. Der sichtbare Inhalt bleibt unverändert. Danach werden die Bilder neu über die Struktur gefunden; vorhandene Alt-Texte bleiben erhalten."
+msgstr "El PDF recibe una estructura (encabezados, párrafos, listas, tablas, imágenes), título, idioma, marcadores y el identificador PDF/UA. El contenido visible no cambia. Después, las imágenes se localizan de nuevo mediante la estructura; los textos alternativos existentes se conservan."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Das Tagging von „{name}“ ist fehlgeschlagen: {grund}"
+msgstr "El etiquetado de “{name}” ha fallado: {grund}"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "unbekannter Fehler"
+msgstr "error desconocido"
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "„{name}“ ist getaggt: {struktur}."
+msgstr "“{name}” está etiquetado: {struktur}."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "{n} Bilder gefunden, {u} Alt-Texte übernommen."
+msgstr "{n} imágenes encontradas, {u} textos alternativos conservados."
+
+#: PDF-Tagging Ansicht Dokument (22.09.2026)
+msgid "Dokumente ({n})"
+msgstr "Documentos ({n})"

@@ -6,8 +6,8 @@ laufen die bekannten Wege (Alt-Texte über den Strukturbaum, Export mit AltTag_I
 der getaggten Datei.
 
 Beteiligte: Steve Weidel (InkluTec), Michael Karbe (Actino, Produkt), Jörg Heine (Actino,
-Skript), PDFix (SDK und eingebaute Aktion). Stand der Oberfläche: noch keine (Schritt 4 des
-Bauplans, Ansicht „Dokument“ wird mit Steve besprochen). Backend, Endpunkte und Tests: hier.
+Skript), PDFix (SDK und eingebaute Aktion). Backend, Endpunkte, Oberfläche (Ansicht
+„Dokument“, Abschnitt unten) und Tests: hier.
 
 ## Worum es geht
 
@@ -89,9 +89,11 @@ Konten, also keinen Aufruf.
    Prüfdienstes ist kein Fehler.
 5. Bilder des Dokuments **neu extrahieren** (jetzt über den Strukturbaum, `extraction_method`
    pdfix), in **einer Transaktion**: alte Bildzeilen löschen, neue eintragen
-   (`main._bilder_uebernehmen`, derselbe Code wie beim Upload), vorhandene Alt-Texte lagegenau
-   übernehmen (gleiche Seite, Rechteck-Überlappung ≥ 0,5; Alt-Text, Handtext,
-   Langbeschreibung, Bildtyp, Status, Bewertung), Dokument umhängen (`original_path` →
+   (`main._bilder_uebernehmen`, derselbe Code wie beim Upload), vorhandene Alt-Texte übernehmen
+   (`alt_texte_uebernehmen`: gleiche Seite UND Rechteck-Überlappung ≥ 0,5 bei Seitenkoordinaten,
+   sonst Bild-Hash dHash mit Abstand ≤ 12 — der PDFix-Weg speichert als bbox nur die Bildmaße —,
+   sonst Eindeutigkeit „ein altes Bild mit Text, ein neues Bild auf der Seite“; übernommen werden
+   Alt-Text, Handtext, Langbeschreibung, Bildtyp, Status, Bewertung), Dokument umhängen (`original_path` →
    getaggte Datei, `roh_path` bleibt/wird gesetzt, `getaggt = 1`, Bericht), Projekt auf
    `extracted` mit neuen Zählern.
 6. Alte Bilddateien, die kein neuer Eintrag nutzt, werden gelöscht. Credits werden **nur jetzt**
@@ -101,7 +103,7 @@ Konten, also keinen Aufruf.
    Server-Neustart gelten `laeuft`-Dokumente als abgebrochen (Start-Reparatur).
 
 Neu-Taggen setzt immer auf `roh_path` auf (nie auf eine schon getaggte Fassung), die
-Alt-Texte werden wieder lagegenau übernommen.
+Alt-Texte werden nach denselben Regeln wieder übernommen (E2E `verify_tagging_uebernahme.py`).
 
 ## Preis
 
@@ -138,3 +140,44 @@ python3 tests/e2e/verify_tagging.py https://staging.inkludocs.inklutec.de <mail>
 Regression der bestehenden PDFix-Skripte beim SDK-Update 8.7.10 → 9.3.0 (22.09.2026): Alt-Text-
 Export/Import und Formular-Export/Import liefern unter 9.3.0 identische CSVs, Alt-Texte und
 Quickinfos (Vergleich Container 8.7.10 gegen venv 9.3.0 auf denselben Dateien).
+
+## Oberfläche: Ansicht „Dokument“ (Schritt 4, 22.09.2026)
+
+Ein PDF-Projekt (Werkzeug `pdf`) hat jetzt zwei Ansichten wie ein Word-Projekt: **„Dokument“**
+(`frontend/dokument.js`) und **„Alt-Texte“** (app.html). Die Zeile „Ansicht“ im Projektkopf
+listet „Dokument“ ganz oben (Michael 21.09.); Adresse `?ansicht=dokument`, Browser-Zurück geht.
+**Startansicht bleibt vorerst „Alt-Texte“** (eine Zeile in `aktuelleAnsicht()`, Entscheidung
+Steve/Michael offen). Formulare behalten ihre eigene Ansicht (formular.js), Web/Grafik haben keine
+Ansichten. Gäste sehen keine Ansichts-Wahl.
+
+Aufbau (Screenreader-Kette): H1 Projekt · Ansichts-Wahl (select + Knopf „Öffnen“) · H2 „PDF
+hinzufügen“ (Upload, Wortlaut je Ansicht) · H2 „Dokumente (n)“ · je Datei eine Karte
+(`section.dok-karte`, wie die Ablage): Vorschaubild der ersten Seite mit Alt-Text, H3 „Dokument
+n: Name“ mit Stand-Badge, Beschreibungsliste (Stand, Seiten, Sprache, Struktur, Bilder),
+Knöpfe „Barrierefrei machen“ / „Neu taggen“ (im Namen: Seiten und Credits), „Alt-Texte
+bearbeiten“ (wechselt die Ansicht), „Getaggte PDF herunterladen“ (nach dem Lauf), „Umbenennen“,
+„Löschen“, ein `<output>` je Karte für den Laufstatus, darunter die Klappe „Bericht lesen“
+(Zeit, Sprache mit Quelle, Struktur vorher/nachher, Titel, Bilder/Übernahme, Hinweise,
+Testmodus, PDF/UA-Prüfpunkte). Rückfrage als `<dialog id="dkLaufDialog">` (Umfang, Preis,
+Guthaben, Neu-Taggen-Hinweis, Testmodus-Hinweis; Abbrechen links / Start rechts; 402 → die
+gemeinsame Credits-Meldung). Während eines Laufs pollt die Ansicht alle 2,5 s, aktualisiert nur
+bei Zustandswechsel, und meldet das Ende in der Laufmeldung (Fokus, `<output>`).
+
+Endpunkte dazu (tagging_api.py): `GET /api/projects/{id}/dokument-ansicht` (Projekt ohne
+Serverpfade, je Dokument Anzeige-Felder, Seiten, Struktur, Tagging-Stand, Ablage-Zähler) und
+`GET /api/projects/{id}/documents/{doc}/vorschau` (PNG der ersten Seite: Seitenansicht aus der
+Extraktion, sonst eigenes Rendering, gecacht).
+
+Weitere Änderungen in app.html: `istPdfDateityp()`, `aktuelleAnsicht()` für PDF, Optionen der
+Ansichts-Wahl je Dateityp, Ansage „Ansicht Dokument geöffnet.“, Weiche in `showProject`,
+Upload-Wartetext „Die PDF wird gelesen …“ und Abschluss-Ansage in der Dokument-Ansicht, Fokus
+auf die H3 der neuen Karte, Upload-Hinweistext je Ansicht (behebt auch: in der
+Übersetzungs-Ansicht eines Word-Projekts stand noch „Daraus werden die Bilder extrahiert“, Steve
+22.09.), Status-Badge „Wird gelesen“ bei Projektstatus `extracting`.
+
+Klicktest: `tests/e2e/ui_dokument.py` (legt sein Projekt selbst an; Upload in der Ansicht,
+Rückfrage, Lauf bis fertig, Bericht, Download, Wechsel der Ansichten, axe).
+
+Offen: Startansicht, Ansicht „Dokument“ auch für Word und Formulare (dann „Quickinfos“ als
+dritte Ansicht), Knopf „Komplett barrierefrei machen“ (Kette Tagging → Alt-Texte → Quickinfos),
+Ablage-Eintrag nach dem Tagging, Namen der Ansichten (Steve klärt mit Michael).

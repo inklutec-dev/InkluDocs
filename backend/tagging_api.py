@@ -56,6 +56,7 @@ class Deps:
     doc_label: Callable                        # (doc) -> Dateinamensbestandteil
     get_gettext: Callable = None               # (lang) -> _
     resolve_ui_language: Callable = None       # (request) -> lang
+    ausgaben_anzahl: Callable = None           # (project_id) -> int (Zaehler „Ablage (n)“ im Projektkopf)
 
 
 _d: Optional[Deps] = None
@@ -125,6 +126,65 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
         "bericht": _bericht(doc),
         "projekt_status": project.get("status"),
     }
+
+
+def _struktur(doc: dict) -> dict:
+    """Kennzahlen der Arbeitsdatei fuer die Ansicht „Dokument“ (pikepdf, ohne PDFix): Sprache, Titel, Elemente."""
+    try:
+        s = pdf_tagging.tag_statistik(doc.get("original_path") or "")
+        return {k: s.get(k) for k in ("lang", "titel", "elemente", "ueberschriften", "listen", "tabellen", "bilder", "absaetze", "lesezeichen", "testmodus")}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+_PROJEKT_FELDER = ("id", "name", "filename", "status", "tool", "project_type", "total_images", "processed_images",
+                   "alt_language", "use_context", "prompt_id", "created_at", "updated_at", "lauf_hinweis")
+
+
+def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
+    """Alles fuer die Ansicht „Dokument“ (frontend/dokument.js) in einem Aufruf: Projekt (ohne Serverpfade),
+    je Dokument Anzeige-Felder, Seiten, Struktur und der Tagging-Stand."""
+    docs = [dict(r) for r in conn.execute(
+        "SELECT * FROM documents WHERE project_id = ? ORDER BY doc_index", (project["id"],)).fetchall()]
+    aussen = []
+    for d in docs:
+        eintrag = {k: d.get(k) for k in ("id", "doc_index", "original_filename", "display_name", "total_images",
+                                          "extraction_method", "created_at", "hinweise")}
+        eintrag["getaggt"] = (None if d.get("getaggt") is None else bool(d.get("getaggt")))
+        eintrag["seiten"] = _seiten(d)
+        eintrag["struktur"] = _struktur(d)
+        eintrag["tagging"] = stand(conn, project, d, user_id)
+        aussen.append(eintrag)
+    return {
+        "project": {k: project.get(k) for k in _PROJEKT_FELDER},
+        "documents": aussen,
+        "ausgaben_anzahl": (_d.ausgaben_anzahl(project["id"]) if _d.ausgaben_anzahl else 0),
+    }
+
+
+def _vorschau_pfad(doc: dict, user_id: int, project_id: int) -> Optional[str]:
+    """PNG der ersten Seite: die Seitenansicht aus der Extraktion, sonst ein eigenes Rendering (gecacht)."""
+    img_dir = os.path.join(_d.results_dir, str(user_id), str(project_id), f"doc{doc.get('doc_index') or 1}")
+    vorhanden = os.path.join(img_dir, "p1_seitenansicht.png")
+    if os.path.isfile(vorhanden):
+        return vorhanden
+    quelle = doc.get("original_path") or ""
+    if not os.path.isfile(quelle):
+        return None
+    ziel = os.path.join(img_dir, "_vorschau_p1.png")
+    try:
+        if os.path.isfile(ziel) and os.path.getmtime(ziel) >= os.path.getmtime(quelle):
+            return ziel
+        import fitz
+        os.makedirs(img_dir, exist_ok=True)
+        with fitz.open(quelle) as pdf:
+            if len(pdf) == 0:
+                return None
+            pdf[0].get_pixmap(dpi=96).save(ziel)
+        return ziel
+    except Exception as e:  # noqa: BLE001
+        log.warning("[tagging] Vorschau fuer Dokument %s nicht moeglich: %r", doc.get("id"), e)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -421,6 +481,35 @@ def build_router(deps: Deps) -> APIRouter:
         loop.run_in_executor(None, _lauf_sync, project_id, document_id, user["id"], int(pruefung["preis"]), sprache, status_vorher, ui_lang)
         return {"gestartet": True, "document_id": document_id, "seiten": seiten, "preis": int(pruefung["preis"]),
                 "modus": pdf_tagging.lizenz_modus()}
+
+    @router.get("/api/projects/{project_id}/dokument-ansicht")
+    async def ansicht(project_id: int, user: dict = Depends(_user())):
+        """Datenquelle der Ansicht „Dokument“ (nur Besitzer, nur PDF-Projekte)."""
+        conn = _d.get_db()
+        try:
+            project = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
+            if not project:
+                raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+            project = dict(project)
+            if project.get("project_type") not in TAGGING_PROJEKTE or project.get("tool") not in TAGGING_WERKZEUGE:
+                raise HTTPException(status_code=400, detail="Die Ansicht Dokument gibt es nur für PDF-Projekte")
+            return dokument_ansicht(conn, project, user["id"])
+        finally:
+            conn.close()
+
+    @router.get("/api/projects/{project_id}/documents/{document_id}/vorschau")
+    async def vorschau(project_id: int, document_id: int, user: dict = Depends(_user())):
+        """PNG der ersten Seite fuer die Karte in der Ansicht „Dokument“."""
+        conn = _d.get_db()
+        try:
+            _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+        finally:
+            conn.close()
+        loop = asyncio.get_running_loop()
+        pfad = await loop.run_in_executor(None, _vorschau_pfad, doc, user["id"], project_id)
+        if not pfad:
+            raise HTTPException(status_code=404, detail="Vorschau nicht gefunden")
+        return FileResponse(pfad, media_type="image/png")
 
     @router.get("/api/projects/{project_id}/documents/{document_id}/tagging/datei")
     async def datei(project_id: int, document_id: int, user: dict = Depends(_user())):
