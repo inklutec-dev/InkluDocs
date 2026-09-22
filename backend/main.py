@@ -65,6 +65,7 @@ import secrets as _secrets
 # QUICKINFO-WERKZEUG (27.08.2026): PDF-Formularfelder lesen/schreiben, eigener Router
 import formular_api
 import uebersetzung_api
+import tagging_api  # PDF-Tagging (22.09.2026)
 import api_dokumente_v1   # Public API v1: Dokumente (17.09.2026)
 from formular_processor import validiere_formular, FormularFehler
 import sharing  # Gastzugang / Projekt-Freigabe (19.06.2026)
@@ -4763,47 +4764,13 @@ async def _handle_pdf_upload(file_path: str, filename: str, user: dict, project_
     }
 
 
-async def _extract_document(project_id: int, document_id: int, doc_index: int,
-                            file_path: str, user_id: int, is_append: bool,
-                            art: str = "pdf"):
-    """Hintergrund-Extraktion einer hochgeladenen PDF (ausgelagert 04.07.2026).
-
-    Der frueher synchrone Teil von _handle_pdf_upload, unveraendert in der
-    Logik: Bilder extrahieren, images-Zeilen anlegen, Zaehler und Status
-    fortschreiben. fitz/PDFix blockieren -> Executor-Thread, damit der
-    Event-Loop (und damit die ganze App) waehrenddessen bedienbar bleibt.
-
-    Fehlerpfad: documents-Zeile entfernen (das Verschwinden ist das Signal
-    fuer das pollende Frontend) und den Projektstatus zuruecksetzen —
-    'error' beim ersten Dokument, 'extracted' beim Anhaengen (die alten
-    Dokumente sind unberuehrt; frueher blieb das Projekt hier faelschlich
-    auf 'extracting' haengen, weil nur der HTTP-Fehler die Info trug).
-    """
-    img_dir = os.path.join(RESULTS_DIR, str(user_id), str(project_id), f"doc{doc_index}")
-    os.makedirs(img_dir, exist_ok=True)
-    loop = asyncio.get_event_loop()
-    try:
-        hinweise: dict = {}
-        if art == "docx":
-            # 27.08.2026: uebersprungene Elemente + Warnungen kommen als Hinweise mit
-            images, hinweise = await loop.run_in_executor(
-                None, extract_docx, file_path, img_dir, project_id)
-        else:
-            images = await loop.run_in_executor(
-                None, extract_images_from_pdf, file_path, img_dir, project_id)
-    except Exception as e:
-        print(f"[upload] Extraktion fehlgeschlagen (Projekt {project_id}, Dokument {document_id}): {e}")
-        conn = get_db()
-        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
-        if is_append:
-            conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
-        else:
-            conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
-        conn.commit()
-        conn.close()
-        return
-
-    conn = get_db()
+def _bilder_uebernehmen(conn, project_id: int, document_id: int, images: list, art: str,
+                        file_path: str, hinweise: Optional[dict] = None) -> str:
+    """Extrahierte Bilder als images-Zeilen anlegen und das Dokument fortschreiben (extraction_method,
+    total_images, hinweise, getaggt). Ausgelagert 22.09.2026 aus _extract_document, unveraendert in der
+    Logik, damit das PDF-Tagging (tagging_api.py) die Bilder eines Dokuments mit demselben Code neu
+    eintragen kann. Rueckgabe: extraction_method des Dokuments. Kein commit — macht der Aufrufer."""
+    hinweise = hinweise or {}
     # Naechsten image_index fortlaufen lassen, damit alte Projekte weiter
     # konsistent durchnummeriert bleiben. Das pro-Dokument-Nummer-Feld leistet
     # die Anzeige im Frontend (dort einfach Position innerhalb des Dokuments).
@@ -4863,6 +4830,51 @@ async def _extract_document(project_id: int, document_id: int, doc_index: int,
         # PDF ohne Tags (Michael Karbe 15.09.2026): beim Upload festhalten; entscheidet ueber den PDF-Download.
         from pdf_export import pdf_hat_tags
         conn.execute("UPDATE documents SET getaggt = ? WHERE id = ?", (1 if pdf_hat_tags(file_path) else 0, document_id))
+    return extraction_method
+
+
+async def _extract_document(project_id: int, document_id: int, doc_index: int,
+                            file_path: str, user_id: int, is_append: bool,
+                            art: str = "pdf"):
+    """Hintergrund-Extraktion einer hochgeladenen PDF (ausgelagert 04.07.2026).
+
+    Der frueher synchrone Teil von _handle_pdf_upload, unveraendert in der
+    Logik: Bilder extrahieren, images-Zeilen anlegen, Zaehler und Status
+    fortschreiben. fitz/PDFix blockieren -> Executor-Thread, damit der
+    Event-Loop (und damit die ganze App) waehrenddessen bedienbar bleibt.
+
+    Fehlerpfad: documents-Zeile entfernen (das Verschwinden ist das Signal
+    fuer das pollende Frontend) und den Projektstatus zuruecksetzen —
+    'error' beim ersten Dokument, 'extracted' beim Anhaengen (die alten
+    Dokumente sind unberuehrt; frueher blieb das Projekt hier faelschlich
+    auf 'extracting' haengen, weil nur der HTTP-Fehler die Info trug).
+    """
+    img_dir = os.path.join(RESULTS_DIR, str(user_id), str(project_id), f"doc{doc_index}")
+    os.makedirs(img_dir, exist_ok=True)
+    loop = asyncio.get_event_loop()
+    try:
+        hinweise: dict = {}
+        if art == "docx":
+            # 27.08.2026: uebersprungene Elemente + Warnungen kommen als Hinweise mit
+            images, hinweise = await loop.run_in_executor(
+                None, extract_docx, file_path, img_dir, project_id)
+        else:
+            images = await loop.run_in_executor(
+                None, extract_images_from_pdf, file_path, img_dir, project_id)
+    except Exception as e:
+        print(f"[upload] Extraktion fehlgeschlagen (Projekt {project_id}, Dokument {document_id}): {e}")
+        conn = get_db()
+        conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+        if is_append:
+            conn.execute("UPDATE projects SET status = 'extracted' WHERE id = ?", (project_id,))
+        else:
+            conn.execute("UPDATE projects SET status = 'error' WHERE id = ?", (project_id,))
+        conn.commit()
+        conn.close()
+        return
+
+    conn = get_db()
+    extraction_method = _bilder_uebernehmen(conn, project_id, document_id, images, art, file_path, hinweise)
     # Projekt-Summe = Summe ueber alle Dokumente. extraction_method des Projekts
     # bleibt der des ersten Dokuments (Anzeige im Kopf) — bei Mischfaellen sind
     # die Methoden je Dokument im UI sichtbar.
@@ -8519,6 +8531,20 @@ app.include_router(uebersetzung_api.build_router(uebersetzung_api.Deps(
     tageslimit_wache=tageslimit_wache,
     tageslimit_text=tageslimit_text,
     get_user_by_id=get_user_by_id,
+)))
+
+# ─── PDF-TAGGING (22.09.2026): „Barrierefrei machen“ mit PDFix (Joerg Heines Make_Accessible) ──────
+# Endpunkte + Hintergrundlauf in tagging_api.py, Kern in pdf_tagging.py, Skript pdfix_scripts/Make_Accessible.py.
+app.include_router(tagging_api.build_router(tagging_api.Deps(
+    get_current_user=get_current_user,
+    get_db=get_db,
+    results_dir=RESULTS_DIR,
+    billing=billing,
+    extract_images_from_pdf=extract_images_from_pdf,
+    bilder_uebernehmen=_bilder_uebernehmen,
+    doc_label=_doc_label,
+    get_gettext=get_gettext,
+    resolve_ui_language=lambda r: resolve_ui_language(r),   # steht weiter unten in der Datei, daher spaet aufgeloest
 )))
 
 # Public API v1 — Dokumente (17.09.2026): duenne Schicht ueber den App-Routen, siehe api_dokumente_v1.py.

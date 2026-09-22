@@ -129,6 +129,12 @@ _SPRACH_MARKER = {
 _SPRACH_NAMEN = {"de": "Deutsch", "en": "Englisch", "da": "Dänisch", "fr": "Französisch", "es": "Spanisch", "sv": "Schwedisch"}
 
 
+def erkenne_sprache(text: str) -> tuple[str, int, int]:
+    """Oeffentlicher Name der Spracherkennung (22.09.2026, auch fuer das PDF-Tagging, pdf_tagging.py):
+    (Sprachkuerzel oder "", Treffer, Treffer der zweitbesten Sprache)."""
+    return _text_sprache(text)
+
+
 def _text_sprache(text: str) -> tuple[str, int, int]:
     """(Sprachkuerzel, Treffer, Treffer der zweitbesten) ueber die ersten ~600 Woerter."""
     woerter = re.findall(r"[a-zA-ZäöüÄÖÜßæøåÆØÅéèêàçñ]+", text.lower())[:600]

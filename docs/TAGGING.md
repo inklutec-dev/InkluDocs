@@ -1,0 +1,140 @@
+# PDF-Tagging: „Barrierefrei machen“ mit PDFix (22.09.2026)
+
+Ungetaggte oder schlecht getaggte PDFs bekommen einen Strukturbaum (Überschriften, Absätze,
+Listen, Tabellen, Figures), Titel, Sprache, Lesezeichen und die PDF/UA-1-Kennung. Danach
+laufen die bekannten Wege (Alt-Texte über den Strukturbaum, Export mit AltTag_Import) auf
+der getaggten Datei.
+
+Beteiligte: Steve Weidel (InkluTec), Michael Karbe (Actino, Produkt), Jörg Heine (Actino,
+Skript), PDFix (SDK und eingebaute Aktion). Stand der Oberfläche: noch keine (Schritt 4 des
+Bauplans, Ansicht „Dokument“ wird mit Steve besprochen). Backend, Endpunkte und Tests: hier.
+
+## Worum es geht
+
+- Jörg Heines Skript `Make_Accessible_01.py` (Mail 21.09.2026 an kontakt@) lädt die in PDFix
+  eingebaute Aktion `make_accessible` und führt sie aus. Original unverändert unter
+  `backend/pdfix_scripts/original_heine/Make_Accessible_01.py`, Betriebsfassung
+  `backend/pdfix_scripts/Make_Accessible.py` (mechanisch erzeugt mit
+  `tests/werkzeuge/baue_make_accessible.py`, Drift-Test `tests/test_pdfix_skript_drift.py`).
+  Regel wie bei den Formular-Skripten (Steve 17.09.): Heines Skript ist die Vorlage, wir tragen
+  nur markierte Zeilen auf (`# InkluDocs`).
+- Die Aktion ist eine JSON-Konfiguration mit 37 Teilschritten (Version 0.7.3, 13.08.2026).
+  Die aus SDK 9.3.0 exportierte Voreinstellung liegt unverändert unter
+  `backend/pdfix_scripts/make_accessible_pdfix_default.json`; ein Test vergleicht sie mit der
+  im SDK eingebauten Fassung (Drift-Wache bei SDK-Updates).
+- `backend/pdf_tagging.py` erzeugt je Lauf eine angepasste Konfiguration und ruft das Skript als
+  Subprocess auf (Zeitlimit `PDFIX_TAGGING_TIMEOUT`, Standard 600 s; Obergrenze
+  `PDFIX_TAGGING_MAX_SEITEN`, Standard 500).
+- `backend/tagging_api.py`: Endpunkte, Hintergrundlauf, Neu-Extraktion der Bilder, Übernahme
+  vorhandener Alt-Texte, Credits.
+
+## Was wir an der PDFix-Voreinstellung ändern (und warum)
+
+1. **Dokumentsprache.** PDFix erkennt keine Sprache; der Schritt „Set Document Language“ trägt
+   fest `en-US` ein, wenn nichts gesetzt ist. Wir erkennen die Sprache aus dem Text (dieselbe
+   Erkennung wie im Word-Prüfbericht, `docx_hoerprobe.erkenne_sprache`, sechs Sprachen) und
+   setzen sie als BCP-47-Wert (`de-DE`, `en-US`, `da-DK`, `fr-FR`, `es-ES`, `sv-SE`).
+   Regel: Text sicher erkannt (mindestens 20 Treffer, doppelt so viele wie die zweitbeste
+   Sprache) → diese Sprache; weicht die im Dokument gesetzte Sprache ab, wird sie ersetzt
+   (Hinweis im Bericht). Nicht sicher erkannt → vorhandene Dokumentsprache bleibt; fehlt auch
+   die, gilt die Projektsprache (Hinweis im Bericht).
+2. **Keine Alt-Texte von PDFix.** Vier Schritte „Set Alt“ für Figure/Formula kopieren
+   Bildunterschriften oder Nachbarabsätze in den Alt-Text oder schreiben das feste Wort
+   „Decorative“ hinein. PDFix schaut das Bild nie an. Diese Schritte entfallen, ebenso der
+   „Decorative“-Rückfall für Anmerkungen (Set Annotation Contents, Auto-generated). Die
+   Alt-Texte schreibt InkluDocs über die Ansicht „Alt-Texte“ und den Export. „Set Alt“ für
+   Formularfelder (aus dem zugehörigen Inhalt) bleibt.
+3. Alles andere bleibt: Aufräumen, Tags hinzufügen, Tabellen und Überschriften reparieren,
+   Titel (Title-Tag → H1 → Info → Dateiname, nie überschreiben), Lesezeichen aus H1–H3,
+   PDF/UA-1-Kennung.
+
+## Lizenz und Testmodus (wichtig für Prod)
+
+Stand 22.09.2026 ist der Teilschritt `add_tags` in der Actino-Lizenz **nicht** freigeschaltet.
+Mit aktivierter Lizenz bricht die Aktion bei ungetaggten PDFs ab („Invalid initial element
+type or initial element parent“). **Ohne** Lizenz läuft das SDK im Testmodus und taggt; die
+Datei trägt dann „Trial version of PDFix SDK | www.pdfix.net“ als Producer (kein sichtbares
+Wasserzeichen im Seiteninhalt gefunden).
+
+Deshalb aktiviert `inkludocs_betrieb.lizenz_fuer_tagging` die Lizenz **nur bei
+`PDFIX_TAGGING_LIZENZ=on`**. Alle anderen Skripte (Export, Import, Formulare) aktivieren sie
+immer. Der Bericht nennt den Modus (`modus`, `testmodus`), die Oberfläche soll ihn zeigen.
+**Prod bekommt das Tagging erst, wenn Actino/PDFix den Schritt freischalten** (Michael Karbe
+klärt mit Joseph, Seitenpreis). WhatsApp an Michael mit diesem Stand: 22.09.2026.
+
+## Endpunkte (nur Besitzer, nur PDF-Projekte: Werkzeuge `pdf` und `formular`)
+
+- `GET /api/projects/{id}/documents/{doc}/tagging` → Stand: `status` (leer | laeuft | fertig |
+  fehler), `getaggt`, `seiten`, `preis`, `verfuegbar_credits`, `erlaubt`, `fehlend`,
+  `hat_alt_texte`, `neu_taggen` (roh_path vorhanden), `modus`, `bericht`, `projekt_status`.
+- `POST /api/projects/{id}/documents/{doc}/tagging` → startet den Lauf. 400 kein PDF /
+  zu viele Seiten, 402 Credits (`credits_fehlen`-Body wie überall), 409 läuft bereits oder
+  Projekt in Verarbeitung, 503 nicht eingerichtet. Antwort `{gestartet, seiten, preis, modus}`.
+- `GET /api/projects/{id}/documents/{doc}/tagging/datei` → das getaggte PDF (nur bei
+  `fertig`), Dateiname `<Dokument>_getaggt.pdf`.
+
+Kein Gastweg, keine Public-API-Route (folgt mit der Oberfläche). In der Demo gibt es keine
+Konten, also keinen Aufruf.
+
+## Ablauf eines Laufs (tagging_api._lauf_sync, im Executor)
+
+1. Projekt auf `extracting` (Generierung und Export warten, wie beim Upload), Dokument auf
+   `laeuft`.
+2. Quelle = `roh_path` (unveränderte Kundendatei), sonst `original_path`. Ziel =
+   `<Stamm>_getaggt.pdf` im selben Upload-Ordner (der Export liest nur von dort). Der Lauf
+   schreibt erst eine `.tmp.pdf`.
+3. `pdf_tagging.taggen`: Sprache bestimmen, Konfiguration schreiben, Skript ausführen, Ergebnis
+   prüfen (Strukturbaum vorhanden), Tag-Statistik vorher/nachher.
+4. veraPDF (PDF/UA-1) über den Konverter-Dienst, in Klartext wie beim Word-Weg. Ausfall des
+   Prüfdienstes ist kein Fehler.
+5. Bilder des Dokuments **neu extrahieren** (jetzt über den Strukturbaum, `extraction_method`
+   pdfix), in **einer Transaktion**: alte Bildzeilen löschen, neue eintragen
+   (`main._bilder_uebernehmen`, derselbe Code wie beim Upload), vorhandene Alt-Texte lagegenau
+   übernehmen (gleiche Seite, Rechteck-Überlappung ≥ 0,5; Alt-Text, Handtext,
+   Langbeschreibung, Bildtyp, Status, Bewertung), Dokument umhängen (`original_path` →
+   getaggte Datei, `roh_path` bleibt/wird gesetzt, `getaggt = 1`, Bericht), Projekt auf
+   `extracted` mit neuen Zählern.
+6. Alte Bilddateien, die kein neuer Eintrag nutzt, werden gelöscht. Credits werden **nur jetzt**
+   verbucht (`usage_events` Quelle `tagging`, Aktion `pdf_tagging`, Preis je Seite).
+7. Fehler: Dokument `fehler` mit nutzertauglichem Grund (nie Pfade oder Tracebacks), Projekt
+   zurück auf den vorherigen Status, Temp-Datei weg, Bilder und Datei unverändert. Nach einem
+   Server-Neustart gelten `laeuft`-Dokumente als abgebrochen (Start-Reparatur).
+
+Neu-Taggen setzt immer auf `roh_path` auf (nie auf eine schon getaggte Fassung), die
+Alt-Texte werden wieder lagegenau übernommen.
+
+## Preis
+
+`billing.AKTIONS_PREISE["pdf_tagging"] = 1` Credit je Seite — **vorläufig** (Steve 22.09.:
+„preislich reden wir nochmal“; PDFix nennt ~1 Cent je Seite als eigene Kosten). Die Wache
+vor dem Lauf verlangt das volle Guthaben, verbucht wird nach Erfolg.
+
+## Bekannte Grenzen (Stand 22.09.2026)
+
+- Auto-Tagging macht Fehler, die wir schon gesehen haben: nummerierte Überschriften
+  („1. Ausgangslage“) werden Listenpunkte; nur die Schriftgröße entscheidet. Der Tagging-Schritt
+  hat ein Feld `template` (PDFix-Tagging-Vorlagen mit Regeln), das bei Jörg leer ist → Frage an
+  Jörg. Die zweite Stufe (Bauplan Schritt 5) ist die KI-Korrektur nach dem Tagging (Modell
+  sieht Seitenbild und Tag-Liste, ändert über die SDK-Funktionen SetType/MoveChild nur bei
+  hoher Sicherheit).
+- „Make Accessible Docling“ (KI-Layoutanalyse von PDFix) meldet bei uns „Invalid input
+  parameter“ → braucht Einrichtung, Frage an Jörg.
+- Der Titel-Rückfall auf den Dateinamen nimmt den Servernamen der Datei; bei Dokumenten ohne
+  H1 und ohne Info-Titel entsteht so ein technischer Titel (KI-Korrektur später).
+- Prod: siehe Lizenz und Testmodus.
+
+## Tests
+
+```
+# Unit (Container): Konfiguration, Sprache, Übernahme, Lauf im Testmodus, Drift der Voreinstellung
+docker cp tests/test_pdf_tagging.py inkludocs-staging:/app/tests/ && \
+docker exec -w /app inkludocs-staging python3 -m unittest /app/tests/test_pdf_tagging.py -v
+# Drift-Test der Betriebsfassung (Original + markierte Zeilen)
+docker exec -w /app inkludocs-staging python3 -m unittest /app/tests/test_pdfix_skript_drift.py
+# End-to-End gegen Staging (Projekt anlegen, ungetaggtes PDF hochladen, taggen, prüfen, Datei laden):
+python3 tests/e2e/verify_tagging.py https://staging.inkludocs.inklutec.de <mail> <pw> [--behalten]
+```
+
+Regression der bestehenden PDFix-Skripte beim SDK-Update 8.7.10 → 9.3.0 (22.09.2026): Alt-Text-
+Export/Import und Formular-Export/Import liefern unter 9.3.0 identische CSVs, Alt-Texte und
+Quickinfos (Vergleich Container 8.7.10 gegen venv 9.3.0 auf denselben Dateien).

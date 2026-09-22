@@ -23,6 +23,19 @@ def lizenz_aktivieren(pdfix) -> None:
         print("PDFix-Lizenz: Fehler bei der Aktivierung: " + repr(e), file=sys.stderr)
 
 
+def lizenz_fuer_tagging(pdfix) -> None:
+    """PDF-Tagging (22.09.2026, Make_Accessible.py): Der Teilschritt add_tags ist in der Actino-Lizenz
+    (Stand 22.09.2026) NICHT freigeschaltet — mit aktivierter Lizenz bricht die Aktion bei ungetaggten
+    PDFs ab ("Invalid initial element type"), ohne Lizenz taggt das SDK im Testmodus (Producer
+    "Trial version of PDFix SDK"). Darum wird die Lizenz hier NUR bei PDFIX_TAGGING_LIZENZ=on aktiviert
+    (sobald Actino/PDFix das Tagging freischalten). Alle anderen Skripte aktivieren sie immer."""
+    an = os.environ.get("PDFIX_TAGGING_LIZENZ", "off").strip().lower() in ("on", "1", "true", "yes")
+    if an:
+        lizenz_aktivieren(pdfix)
+    else:
+        print("PDFix-Tagging im Testmodus (PDFIX_TAGGING_LIZENZ ist nicht gesetzt)", file=sys.stderr)
+
+
 def pdf_nicht_geoeffnet(pdfix) -> int:
     """Klare Meldung + Exit-Code 2 statt AttributeError, wenn OpenDoc None liefert."""
     print("PDF konnte nicht geoeffnet werden: " + str(pdfix.GetError()), file=sys.stderr)

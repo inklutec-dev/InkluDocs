@@ -11,7 +11,9 @@ KANDIDATEN = ("/app/pdfix_scripts", os.path.join(os.path.dirname(HERE), "backend
 SKRIPTE = os.path.join(next(k for k in KANDIDATEN if os.path.isdir(k)))
 KOPF_ENDE = "# === InkluDocs-Kopf Ende ==="
 ORIGINAL_MARKER = "# InkluDocs-Original: "
-PAARE = [("Formular_Export_Quickinfo.py", "original_heine/Formulare_Export_08.py")]
+PAARE = [("Formular_Export_Quickinfo.py", "original_heine/Formulare_Export_08.py"),
+         # PDF-Tagging (22.09.2026): Heines Make_Accessible_01.py vom 21.09.2026
+         ("Make_Accessible.py", "original_heine/Make_Accessible_01.py")]
 
 
 def rekonstruiere(betrieb: str) -> str:
@@ -52,6 +54,18 @@ class DriftTest(unittest.TestCase):
                         "betrieb.seiten_absichern(daten)", "FIELDS_FOUND", "pfadcsv = args.csv", "doc.Close()"):
             self.assertTrue(any(pflicht in z for z in markiert), pflicht)
         self.assertFalse(any('input("Drücke ENTER' in z and not z.startswith(ORIGINAL_MARKER) for z in nach_kopf))
+
+    def test_make_accessible_markierte_zeilen(self):
+        """PDF-Tagging (22.09.2026): genau vier Ergaenzungen — Betriebsimport, Parameter -k, Konfigurationspfad, Lizenzschalter."""
+        with open(os.path.join(SKRIPTE, "Make_Accessible.py"), encoding="utf-8") as f:
+            zeilen = f.read().split("\n")
+        nach_kopf = zeilen[zeilen.index(KOPF_ENDE) + 1:]
+        markiert = [z for z in nach_kopf if "# InkluDocs" in z and not z.startswith(ORIGINAL_MARKER)]
+        self.assertEqual(len(markiert), 4, markiert)
+        for pflicht in ("import inkludocs_betrieb as betrieb", "'-k', '--konfig'", "commandPath = args.konfig",
+                        "betrieb.lizenz_fuer_tagging(pdfix)"):
+            self.assertTrue(any(pflicht in z for z in markiert), pflicht)
+        self.assertEqual(sum(1 for z in nach_kopf if z.startswith(ORIGINAL_MARKER)), 1)
 
     def test_betriebshelfer(self):
         import sys

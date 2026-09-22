@@ -76,6 +76,9 @@ AKTIONS_PREISE = {
     # angefangene 100 Woerter (uebersetzung.WOERTER_JE_CREDIT); die Menge ist die Zahl der
     # Credits, verbucht je fertigem Paket. Der Export der uebersetzten Datei ist kostenlos.
     "uebersetzung": 1,
+    # PDF-TAGGING (22.09.2026): Credits je SEITE, verbucht je erfolgreichem Lauf (tagging_api.py).
+    # VORLAEUFIGER Preis (Steve 22.09.: „preislich reden wir nochmal“; PDFix nennt ~1 Cent je Seite).
+    "pdf_tagging": 1,
     # Datei-Exporte: GRUNDPREIS je Export-Vorgang. Dazu kommt die Staffel je
     # angefangene EXPORT_SCHRITT Bilder/Felder aus EXPORT_ARTEN — gerechnet
     # wird immer ueber export_preis(anzahl, art), nie ueber diese Zahl allein.
@@ -174,7 +177,7 @@ PLAN_SITZE = {
     "enterprise": 25,
 }
 
-GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export")
+GUELTIGE_QUELLEN = ("sammellauf", "einzeln", "api", "chatbot", "export", "tagging")
 
 # EXPORT-STAFFEL (Michael Karbe 28./29.08.2026): Grundpreis je Export-Vorgang
 # (AKTIONS_PREISE) + Staffel je ANGEFANGENE EXPORT_SCHRITT Bilder bzw. Felder

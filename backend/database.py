@@ -838,6 +838,12 @@ def _migrate_columns(conn):
         # PDF ohne Tags (15.09.2026, Michael Karbe): 1 = Strukturbaum vorhanden, 0 = keiner, NULL = noch nicht
         # bestimmt (Altbestand; wird beim ersten Bedarf nachgetragen). Ohne Tags kein PDF-Download.
         ("documents", "getaggt", "ALTER TABLE documents ADD COLUMN getaggt INTEGER"),
+        # PDF-TAGGING (22.09.2026, tagging_api.py): Stand des Laufs ('' | laeuft | fertig | fehler), Bericht als
+        # JSON (Seiten, Sprache, Tag-Statistik, veraPDF, Bilder, Fehlergrund) und die unveraenderte Kundendatei
+        # (roh_path), sobald original_path auf die getaggte Fassung zeigt. Neu-Taggen setzt auf roh_path auf.
+        ("documents", "tagging_status", "ALTER TABLE documents ADD COLUMN tagging_status TEXT DEFAULT ''"),
+        ("documents", "tagging_bericht", "ALTER TABLE documents ADD COLUMN tagging_bericht TEXT DEFAULT ''"),
+        ("documents", "roh_path", "ALTER TABLE documents ADD COLUMN roh_path TEXT DEFAULT ''"),
         # Public API v1 Dokumente (17.09.2026): welcher Schluessel hat das Projekt angelegt (Verbrauch je Schluessel).
         ("projects", "api_key_id", "ALTER TABLE projects ADD COLUMN api_key_id INTEGER"),
         # QUICKINFO-WERKZEUG Stufe 2 (27.08.2026): Ergebnis des Feld-Passes je Feld —
