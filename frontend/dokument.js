@@ -221,7 +221,20 @@
         let s = '<p>' + (befunde.length
             ? t('{n} Befunde ({h} hoch, {m} mittel, {l} niedrig), {s} Seiten geprüft am {zeit}.', { n: befunde.length, h: anz.hoch || 0, m: anz.mittel || 0, l: anz.niedrig || 0, s: b.seiten_geprueft || 0, zeit: esc(b.zeit || '') })
             : t('Keine Befunde: Tags und Seitenbild passen zusammen ({s} Seiten geprüft am {zeit}).', { s: b.seiten_geprueft || 0, zeit: esc(b.zeit || '') })) + '</p>';
-        if (befunde.length) {
+        const eb = pr.einheitsbericht;
+        if (eb && eb.anzahl) {
+            // EINHEITSBERICHT (23.09.2026): PDF/UA-Befunde (mit Seiten) und KI-Befunde in EINER Liste, nur Probleme
+            s += '<p>' + t('Alle Befunde in einer Liste, technische Prüfung (PDF/UA) und KI-Prüfung, nach Seiten sortiert: {n}.', { n: eb.anzahl }) + '</p>';
+            s += '<ol class="dok-befunde">' + eb.eintraege.map(e => '<li>'
+                + '<strong>' + (e.seiten.length ? (e.seiten.length > 1 ? t('Seiten {n}', { n: e.seiten.join(', ') }) : t('Seite {n}', { n: e.seiten[0] })) : t('Dokument'))
+                + ' – ' + (e.quelle === 'pdfua' ? t('PDF/UA-Prüfung') : t('KI-Prüfung')) + (e.element ? ', ' + esc(e.element) : '') + (e.quelle === 'pdfua' && e.bereich ? ', ' + esc(e.bereich) : '') + ':</strong> '
+                + esc(e.text)
+                + (e.vorschlag ? ' ' + t('Vorschlag: {v}.', { v: esc(e.vorschlag) }) : '')
+                + (e.sicherheit ? ' <span class="badge ' + (e.sicherheit === 'hoch' ? 'badge-ok' : (e.sicherheit === 'mittel' ? 'badge-warn' : 'badge-muted')) + '">' + sicherheitText(e.sicherheit) + '</span>' : '')
+                + (e.auto ? ' <span class="badge badge-ok">' + t('Automatisch korrigierbar') + '</span>' : '')
+                + '</li>').join('') + '</ol>';
+            s += '<p><a class="btn btn-secondary" href="/api/projects/' + pr.projectId + '/documents/' + pr.docId + '/pruefung/befunde.csv" download>' + t('Befunde als CSV herunterladen') + '</a></p>';
+        } else if (befunde.length) {
             s += '<ol class="dok-befunde">' + befunde.map(f => '<li>'
                 + '<strong>' + t('Seite {n}', { n: f.seite }) + (f.typ ? ', ' + esc(f.typ) : '') + (f.text ? ' „' + esc(f.text) + '“' : '') + ':</strong> '
                 + esc(f.befund)
@@ -253,7 +266,7 @@
             + '<p>' + t('Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag.') + '</p>'
             + (!busy && pr.seiten ? '<p><button type="button" class="btn btn-secondary" id="dok_pruef_' + d.id + '" onclick="Dokument.pruefungStarten(' + project.id + ', ' + d.id + ')">' + ico('sparkle') + knopf + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: pr.seiten, c: pr.preis || 0 }) + '</span></button></p>' : '')
             + '<output id="dok_pruef_status_' + d.id + '" class="dok-status" style="display:block;" tabindex="-1">' + (pr.laeuft ? t('Prüfung läuft … Seite {a} von {b}.', { a: pr.seite || 0, b: pr.seiten || 0 }) : '') + '</output>'
-            + pruefBerichtHtml(pr)
+            + pruefBerichtHtml(Object.assign({ projectId: project.id, docId: d.id }, pr))
             + korrekturHtml(project, d, pr)
             + '</div></details>';
     }

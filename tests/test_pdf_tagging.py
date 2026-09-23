@@ -311,5 +311,34 @@ class LaufTest(unittest.TestCase):
             self.assertIn("Set Document Language (de-DE)", json.dumps(bericht["konfig"]) + "Set Document Language (de-DE)")
 
 
+class EinheitsberichtTest(unittest.TestCase):
+    """23.09.2026 (Michaels Punkte 6/7/10/12): PDF/UA- und KI-Befunde in EINER Liste, nur Probleme, CSV."""
+
+    def test_einheitsbericht_und_csv(self):
+        import tagging_api
+        doc = {"pruefung_status": "fertig", "korrektur_bericht": "", "tagging_bericht": json.dumps({"verapdf": {
+            "bestanden": False, "punkte": [
+                {"bereich": "Formularfelder und Verknüpfungen", "status": "befund", "text": "Ein Link hat keine Beschreibung. (Seite 15)", "seiten": [15], "regeln": ["7.18.5-2"]},
+                {"bereich": "Struktur und Lesereihenfolge", "status": "ok", "text": "gut", "regeln": []}]}})}
+        pb = {"befunde": [{"seite": 2, "typ": "P", "text": "Titel", "art": "rolle", "befund": "Absatz statt Überschrift",
+                           "vorschlag": "H1", "sicherheit": "hoch", "auto": True}]}
+        eb = tagging_api.einheitsbericht(doc, pb)
+        self.assertEqual(eb["anzahl"], 2)                       # „In Ordnung“ faellt weg
+        self.assertEqual([e["quelle"] for e in eb["eintraege"]], ["ki", "pdfua"])   # Seite 2 vor Seite 15
+        self.assertEqual(eb["eintraege"][1]["seiten"], [15])
+        self.assertTrue(eb["ki_vorhanden"]); self.assertTrue(eb["pdfua_vorhanden"]); self.assertFalse(eb["pdfua_bestanden"])
+        csv_text = tagging_api.einheitsbericht_csv(doc, pb)
+        self.assertTrue(csv_text.startswith("﻿Quelle;Seiten;Bereich;Element;Befund;Vorschlag;Sicherheit;Regeln"))
+        self.assertIn("KI-Prüfung;2;rolle;P „Titel“;Absatz statt Überschrift;H1;hoch;", csv_text)
+        self.assertIn("PDF/UA-Prüfung;15;Formularfelder und Verknüpfungen;;", csv_text)
+
+    def test_einheitsbericht_nach_korrektur_nimmt_juengsten_pdfua_stand(self):
+        import tagging_api
+        doc = {"pruefung_status": "", "tagging_bericht": json.dumps({"verapdf": {"bestanden": False, "punkte": [{"bereich": "A", "status": "befund", "text": "alt", "seiten": [], "regeln": []}]}}),
+               "korrektur_bericht": json.dumps({"verapdf": {"bestanden": True, "punkte": []}})}
+        eb = tagging_api.einheitsbericht(doc, {})
+        self.assertEqual(eb["anzahl"], 0); self.assertTrue(eb["pdfua_bestanden"]); self.assertFalse(eb["ki_vorhanden"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -85,8 +85,16 @@ def _verapdf(pdf_path: str) -> dict:
     for r in det.get("ruleSummaries", []) or []:
         if r.get("ruleStatus") != "FAILED":
             continue
+        # Seiten je Regel (23.09.2026, Michaels Punkt 7): veraPDF nennt je Check einen Kontextpfad wie
+        # "root/document[0]/pages[14](...)/..." — 0-basiert, hier als Seitenzahl 1-basiert.
+        seiten = set()
+        for c in r.get("checks", []) or []:
+            m = re.search(r"pages\[(\d+)\]", str(c.get("context") or ""))
+            if m:
+                seiten.add(int(m.group(1)) + 1)
         rules.append({"clause": str(r.get("clause") or ""), "test": r.get("testNumber"),
-                      "description": r.get("description") or "", "failed": int(r.get("failedChecks") or 0)})
+                      "description": r.get("description") or "", "failed": int(r.get("failedChecks") or 0),
+                      "pages": sorted(seiten)[:500]})
     rules.sort(key=lambda x: (tuple(int(t) if t.isdigit() else 0 for t in x["clause"].split(".")), x["test"] or 0))
     return {"compliant": bool(vr.get("compliant")), "profile": vr.get("profileName") or "PDF/UA-1",
             "passed_checks": det.get("passedChecks"), "failed_checks": det.get("failedChecks"),

@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 import pdf_korrektur
 import pdf_pruefung
@@ -167,6 +167,54 @@ def korrektur_stand(doc: dict, pruef_bericht: dict) -> dict:
     }
 
 
+def _verapdf_stand(doc: dict) -> dict:
+    """Juengster PDF/UA-Bericht: nach der Korrektur (korrektur_bericht.verapdf), sonst der vom Tagging."""
+    kb = _korr_bericht(doc)
+    if isinstance(kb.get("verapdf"), dict):
+        return kb["verapdf"]
+    tb = _bericht(doc)
+    return tb.get("verapdf") if isinstance(tb.get("verapdf"), dict) else {}
+
+
+def einheitsbericht(doc: dict, pruef_bericht: dict) -> dict:
+    """EINHEITSBERICHT (23.09.2026, Michaels Punkte 6/7/10/12): technische Befunde (veraPDF, mit Seiten) und
+    KI-Befunde in EINER Liste, nur Probleme, nach Seite sortiert. Grundlage fuer Anzeige und CSV."""
+    v = _verapdf_stand(doc)
+    eintraege = []
+    for p in v.get("punkte") or []:
+        if p.get("status") != "befund":
+            continue
+        eintraege.append({"quelle": "pdfua", "seiten": list(p.get("seiten") or []), "bereich": p.get("bereich") or "",
+                          "element": "", "text": p.get("text") or "", "vorschlag": "", "sicherheit": "",
+                          "auto": False, "regeln": list(p.get("regeln") or [])})
+    for f in pruef_bericht.get("befunde") or []:
+        element = (f.get("typ") or "")
+        if f.get("text"):
+            element = (element + " „" + f["text"] + "“").strip()
+        eintraege.append({"quelle": "ki", "seiten": [f["seite"]] if f.get("seite") else [], "bereich": f.get("art") or "",
+                          "element": element, "text": f.get("befund") or "", "vorschlag": f.get("vorschlag") or "",
+                          "sicherheit": f.get("sicherheit") or "", "auto": bool(f.get("auto")), "regeln": []})
+    eintraege.sort(key=lambda e: (min(e["seiten"]) if e["seiten"] else 0, 0 if e["quelle"] == "pdfua" else 1))
+    return {"eintraege": eintraege, "anzahl": len(eintraege),
+            "pdfua_vorhanden": bool(v), "pdfua_bestanden": bool(v.get("bestanden")) if v else None,
+            "ki_vorhanden": (doc.get("pruefung_status") or "") == STATUS_FERTIG}
+
+
+def einheitsbericht_csv(doc: dict, pruef_bericht: dict) -> str:
+    """CSV (Semikolon, UTF-8 mit BOM fuer Excel) der gemeinsamen Befundliste (Michaels Punkt 12)."""
+    import csv
+    import io
+    eb = einheitsbericht(doc, pruef_bericht)
+    buf = io.StringIO()
+    w = csv.writer(buf, delimiter=";", lineterminator="\r\n")
+    w.writerow(["Quelle", "Seiten", "Bereich", "Element", "Befund", "Vorschlag", "Sicherheit", "Regeln"])
+    for e in eb["eintraege"]:
+        w.writerow(["PDF/UA-Prüfung" if e["quelle"] == "pdfua" else "KI-Prüfung",
+                    ", ".join(str(s) for s in e["seiten"]), e["bereich"], e["element"], e["text"],
+                    e["vorschlag"], e["sicherheit"], ", ".join(e["regeln"])])
+    return "\ufeff" + buf.getvalue()
+
+
 def pruefung_stand(conn, doc: dict, user_id: int, seiten: int) -> dict:
     """Stand der AUTOMATISCHEN PRUEFUNG (Schritt 5, 22.09.2026) fuer die Karte: Status, Preis, Bericht, Korrektur."""
     zu_pruefen = min(seiten, pdf_pruefung.MAX_SEITEN) if seiten else 0
@@ -187,6 +235,7 @@ def pruefung_stand(conn, doc: dict, user_id: int, seiten: int) -> dict:
         "fehlend": (pruefung or {}).get("fehlend", 0),
         "modell": pdf_pruefung.MODELL,
         "bericht": pb,
+        "einheitsbericht": einheitsbericht(doc, pb),
     }
 
 
@@ -792,6 +841,19 @@ def build_router(deps: Deps) -> APIRouter:
             return pruefung_stand(conn, doc, user["id"], _seiten(doc))
         finally:
             conn.close()
+
+    @router.get("/api/projects/{project_id}/documents/{document_id}/pruefung/befunde.csv")
+    async def befunde_csv(project_id: int, document_id: int, user: dict = Depends(_user())):
+        """Gemeinsame Befundliste (PDF/UA + KI) als CSV zum Weiterarbeiten mit eigenen Werkzeugen (23.09.2026)."""
+        conn = _d.get_db()
+        try:
+            _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+        finally:
+            conn.close()
+        csv_text = einheitsbericht_csv(doc, _pruef_bericht(doc))
+        name = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in (_d.doc_label(doc) or "dokument"))[:80]
+        return Response(content=csv_text.encode("utf-8"), media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": f'attachment; filename="{name}_befunde.csv"'})
 
     @router.post("/api/projects/{project_id}/documents/{document_id}/pruefung")
     async def pruefung_starten(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):

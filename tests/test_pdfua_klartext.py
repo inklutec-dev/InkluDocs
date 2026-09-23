@@ -145,5 +145,29 @@ class TestKlartext(unittest.TestCase):
         os.unlink(pfad)
 
 
+class SeitenUndDoppelungenTest(unittest.TestCase):
+    """23.09.2026 (Michaels Punkt 7): Seitenangabe aus veraPDF, jede Aussage nur einmal, 7.18.5-1 verständlich."""
+
+    def test_seiten_und_keine_doppelungen(self):
+        k = pdfua_export.klartext({"compliant": False, "rules": [
+            {"clause": "7.18.5", "test": 1, "description": "Links shall be tagged", "failed": 1, "pages": [15]},
+            {"clause": "7.18.5", "test": 2, "description": "Links shall contain", "failed": 1, "pages": [15]},
+            {"clause": "7.18.1", "test": 2, "description": "annot", "failed": 1, "pages": [15]},
+            {"clause": "7.3", "test": 1, "description": "x", "failed": 2, "pages": [3, 10]}]})
+        d = {p["bereich"]: p for p in k["punkte"]}
+        t = d["Formularfelder und Verknüpfungen"]["text"]
+        self.assertEqual(t.count("Ein Link hat keine Beschreibung"), 1)
+        self.assertIn("nicht als Link getaggt", t)
+        self.assertTrue(t.endswith("(Seite 15)"), t)
+        self.assertEqual(d["Formularfelder und Verknüpfungen"]["seiten"], [15])
+        self.assertTrue(d["Bilder und Grafiken"]["text"].endswith("(Seiten 3, 10)"))
+
+    def test_ohne_seiten_kein_zusatz(self):
+        k = pdfua_export.klartext({"compliant": False, "rules": [{"clause": "7.3", "test": 1, "description": "x", "failed": 1}]})
+        d = {p["bereich"]: p for p in k["punkte"]}
+        self.assertEqual(d["Bilder und Grafiken"]["text"], "Ein Bild hat keinen Alternativtext.")
+        self.assertEqual(d["Bilder und Grafiken"]["seiten"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

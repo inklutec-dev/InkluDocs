@@ -288,6 +288,7 @@ def _regeln_klartext(_):
         # veraPDF meldet die Ueberschriften-Regel unter Klausel 7.4.2 (Michael Karbe 11.09.2026, vorher roher englischer Text)
         ("7.4.2", 1): _("Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."),
         ("7.18.1", 2): _("Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."),
+        ("7.18.5", 1): _("Ein Link ist nicht als Link getaggt — ein Screenreader überliest ihn."),
         ("7.18.5", 2): _("Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."),
         ("7.5", 1): _("Eine Tabelle hat keine Kopfzellen."),
         ("7.5", 2): _("Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."),
@@ -308,6 +309,15 @@ def _bereich(clause: str, bereiche, _):
         if clause == praefix or clause.startswith(praefix + "."):
             return praefix, name, gut
     return "7.x", _("Weitere Prüfpunkte"), _("Weitere technische Anforderungen sind erfüllt.")
+
+
+def _seiten_text(seiten: list, _: Callable[[str], str]) -> str:
+    """„ (Seite 15)“ / „ (Seiten 3, 15)“ — leer, wenn veraPDF keine Seite nennt (23.09.2026, Michaels Punkt 7)."""
+    if not seiten:
+        return ""
+    if len(seiten) == 1:
+        return " " + _("(Seite {s})").format(s=seiten[0])
+    return " " + _("(Seiten {s})").format(s=", ".join(str(s) for s in seiten))
 
 
 def klartext(verapdf: dict, _: Callable[[str], str] = _identitaet) -> dict:
@@ -337,18 +347,22 @@ def klartext(verapdf: dict, _: Callable[[str], str] = _identitaet) -> dict:
             punkte.append({"bereich": name, "status": "ok", "text": gut, "regeln": []})
             continue
         saetze = []
+        seiten: set = set()
         for r in betroffen:
             s = regeln_kt.get((str(r.get("clause")), r.get("test")))
             n = int(r.get("failed") or 0)
+            seiten.update(int(x) for x in (r.get("pages") or []) if str(x).isdigit())
             if s:
                 if n > 1:
                     s = s + " " + _("({n}-mal)").format(n=n)
-                saetze.append(s)
             else:
-                saetze.append(_("Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})").format(
+                s = (_("Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})").format(
                     beschreibung=(r.get("description") or _("ohne Beschreibung"))[:160])
                     + (" " + _("({n}-mal)").format(n=n) if n > 1 else "") + ".")
-        punkte.append({"bereich": name, "status": "befund", "text": " ".join(saetze),
+            if s not in saetze:      # gleiche Aussage nur einmal (Michaels Punkt 7, 23.09.2026)
+                saetze.append(s)
+        text = " ".join(saetze) + _seiten_text(sorted(seiten), _)
+        punkte.append({"bereich": name, "status": "befund", "text": text, "seiten": sorted(seiten),
                        "regeln": [f"{r.get('clause')}-{r.get('test')}" for r in betroffen]})
     rest = [r for p, rs in je_bereich.items() for r in rs if p == "7.x"]
     if rest:
