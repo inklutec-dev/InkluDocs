@@ -28,6 +28,7 @@ llm_client.MODEL_GENERATE). Fortschritt je Seite ueber Callback. Wirft StrukturF
 from __future__ import annotations
 
 import collections
+import concurrent.futures
 import html as html_mod
 import json
 import logging
@@ -35,6 +36,7 @@ import os
 import re
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -49,6 +51,7 @@ log = logging.getLogger(__name__)
 WEG_ENV = "PDF_TAGGING_WEG"
 MODELL = os.environ.get("PDF_STRUKTUR_MODEL") or llm_client.MODEL_GENERATE
 DPI = int(os.environ.get("PDF_STRUKTUR_DPI", "110"))
+PARALLEL = int(os.environ.get("PDF_STRUKTUR_PARALLEL", "4"))   # gleichzeitige Seitenaufrufe an das Modell
 HINTERGRUND_ANTEIL = float(os.environ.get("PDF_STRUKTUR_HINTERGRUND_ANTEIL", "0.6"))
 MAX_ZEILEN_JE_SEITE = 400
 _SCRIPT_DIR = Path(__file__).parent / "pdfix_scripts"
@@ -78,6 +81,11 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").replace("\xad", "")).strip()
 
 
+def druckbar(text: str) -> bool:
+    """Hat die Zeile mindestens ein sichtbares Zeichen? Formulare setzen z. B. \\x08 als Platzhalter (Mannheimer 23.09.)."""
+    return any(ch.isprintable() and not ch.isspace() for ch in (text or ""))
+
+
 def struktur_html(pdf_pfad: str) -> list[dict]:
     """Je Seite: {seite, breite, hoehe, fliesstext, zeilen[{id, block, text, size, bold, bbox_pdf, top, left}],
     bilder[{id, bbox_pdf, breite, hoehe, top, left}], html}. bbox_pdf = (l, b, r, t) mit Ursprung unten links."""
@@ -96,8 +104,8 @@ def struktur_html(pdf_pfad: str) -> list[dict]:
                     if not spans:
                         continue
                     text = _norm("".join(s["text"] for s in l["spans"]))
-                    if not text:
-                        continue
+                    if not druckbar(text):
+                        continue   # nur Steuerzeichen (z. B. \x08 als Platzhalter in Formularen, Mannheimer-Antrag 23.09.)
                     size = round(max(s["size"] for s in spans), 1)
                     bold = any((s.get("flags", 0) & 16) or "bold" in (s.get("font") or "").lower() or "black" in (s.get("font") or "").lower() for s in spans)
                     x0, y0, x1, y1 = l["bbox"]
@@ -119,6 +127,44 @@ def struktur_html(pdf_pfad: str) -> list[dict]:
                     continue   # Winzlinge und ganzseitige Hintergruende sind keine Bilder fuer die Zuordnung
                 bilder.append({"id": f"s{pno}b{len(bilder) + 1}", "bbox_pdf": [round(x0, 1), round(hoehe - y1, 1), round(x1, 1), round(hoehe - y0, 1)],
                                "breite": round(x1 - x0), "hoehe": round(y1 - y0), "top": round(y0), "left": round(x0)})
+            # VEKTORGRAFIK-KANDIDATEN (23.09.2026): komplexe Zeichnungen (Kurven oder viele Linien) werden zu Gruppen
+            # zusammengefasst und als Bild-Kandidat ins HTML gegeben (Diagramm, Logo, Illustration); einfache Rechtecke
+            # und Linien (Kaestchen, Rahmen, Tabellenlinien) sind keine Bilder und werden beim Schreiben Artefakt.
+            try:
+                zeichnungen = page.get_drawings()
+            except Exception:  # noqa: BLE001
+                zeichnungen = []
+            gruppen = []
+            for dr in zeichnungen:
+                items = dr.get("items") or []
+                komplex = any(it[0] == "c" for it in items) or len(items) > 8
+                r = dr.get("rect")
+                if not komplex or r is None or r.width < 3 or r.height < 3:
+                    continue
+                g = fitz.Rect(r)
+                for vorhandene in gruppen:
+                    if (vorhandene + (-6, -6, 6, 6)).intersects(g):
+                        vorhandene |= g
+                        break
+                else:
+                    gruppen.append(g)
+            zusammen = True
+            while zusammen:
+                zusammen = False
+                for i in range(len(gruppen)):
+                    for j in range(i + 1, len(gruppen)):
+                        if (gruppen[i] + (-6, -6, 6, 6)).intersects(gruppen[j]):
+                            gruppen[i] |= gruppen[j]; del gruppen[j]; zusammen = True; break
+                    if zusammen:
+                        break
+            for g in gruppen:
+                flaeche = g.width * g.height
+                if flaeche < 0.004 * breite * hoehe or flaeche > HINTERGRUND_ANTEIL * breite * hoehe or g.width < 20 or g.height < 20:
+                    continue
+                if any(fitz.Rect(b["bbox_pdf"][0], hoehe - b["bbox_pdf"][3], b["bbox_pdf"][2], hoehe - b["bbox_pdf"][1]).intersects(g) for b in bilder):
+                    continue   # liegt auf einem Rasterbild: das Rasterbild vertritt die Stelle
+                bilder.append({"id": f"s{pno}b{len(bilder) + 1}", "bbox_pdf": [round(g.x0, 1), round(hoehe - g.y1, 1), round(g.x1, 1), round(hoehe - g.y0, 1)],
+                               "breite": round(g.width), "hoehe": round(g.height), "top": round(g.y0), "left": round(g.x0), "vektor": True})
             felder = []
             try:
                 for w in page.widgets():
@@ -146,7 +192,8 @@ def _html_der_seite(s: dict) -> str:
     if letzter is not None:
         teile.append("</div>")
     for b in s["bilder"]:
-        teile.append(f'<img id="{b["id"]}" data-top="{b["top"]}" data-left="{b["left"]}" data-breite="{b["breite"]}" data-hoehe="{b["hoehe"]}" alt="">')
+        teile.append(f'<img id="{b["id"]}" data-top="{b["top"]}" data-left="{b["left"]}" data-breite="{b["breite"]}" data-hoehe="{b["hoehe"]}"'
+                     + (' data-art="vektorzeichnung"' if b.get("vektor") else '') + ' alt="">')
     teile.append("</section>")
     return "\n".join(teile)
 
@@ -322,6 +369,41 @@ def listen_erkennen(s: dict, rollen: Optional[dict] = None) -> list[list[dict]]:
 # C: Plan + Schreiben (PDFix im Unterprozess)
 # ---------------------------------------------------------------------------
 
+def rollen_gruppen(s: dict, rollen: dict) -> list[dict]:
+    """Ueberschriften und Bildunterschriften als GRUPPEN (23.09.2026, Mannheimer-/Ritterturnier-Titel): direkt
+    aufeinanderfolgende Zeilen mit derselben Rolle und demselben Stil, hoechstens eine Zeilenhoehe Abstand, sind EIN
+    Element (ein Titel ueber drei Zeilen ist eine Ueberschrift, nicht drei). Rueckgabe: [{bbox (Vereinigung), tag, zeilen}]."""
+    gruppen: list[dict] = []
+    for z in sorted(s["zeilen"], key=lambda z: (z["top"], z["left"])):
+        r = rollen.get(z["id"])
+        if not (r and (_ROLLE_H.fullmatch(r) or r == "Caption")):
+            continue
+        l, b, rr, t = z["bbox_pdf"]
+        hoehe = max(t - b, 1.0)
+        g = next((gg for gg in reversed(gruppen) if gg["tag"] == r and gg["stil"] == (z["size"], z["bold"])
+                  and 0 <= gg["bbox"][1] - t <= 1.0 * hoehe and abs(gg["bbox"][0] - l) <= 40), None)
+        if g:
+            g["bbox"] = [min(g["bbox"][0], l), min(g["bbox"][1], b), max(g["bbox"][2], rr), max(g["bbox"][3], t)]
+            g["zeilen_ids"].append(z["id"]); g["zeilen"] += 1
+            continue
+        gruppen.append({"bbox": [l, b, rr, t], "tag": r, "stil": (z["size"], z["bold"]), "zeilen": 1, "zeilen_ids": [z["id"]]})
+    # Getrennt wird nur, wenn in DERSELBEN Spalte (waagerechte Ueberlappung) eine andere Zeile zwischen den Zeilen der
+    # Gruppe steht; Nachbarspalten (z. B. „GS-Nr.:“ rechts neben einem Formulartitel) trennen nicht.
+    ergebnis = []
+    for g in gruppen:
+        l, b, r, t = g["bbox"]
+        eigene = set(g["zeilen_ids"])
+        dazwischen = [z for z in s["zeilen"] if z["id"] not in eigene and b < (z["bbox_pdf"][1] + z["bbox_pdf"][3]) / 2 < t
+                      and z["bbox_pdf"][0] < r and z["bbox_pdf"][2] > l]
+        if g["zeilen"] > 1 and dazwischen:
+            for i in g["zeilen_ids"]:
+                z = next(zz for zz in s["zeilen"] if zz["id"] == i)
+                ergebnis.append({"bbox": list(z["bbox_pdf"]), "tag": g["tag"], "zeilen": 1})
+        else:
+            ergebnis.append({"bbox": g["bbox"], "tag": g["tag"], "zeilen": g["zeilen"]})
+    return ergebnis
+
+
 def plan_erzeugen(seiten: list[dict], rollen: dict, bilder: dict, tabellen: dict, sprache: str) -> dict:
     plan = {"sprache": sprache, "hintergrund_anteil": HINTERGRUND_ANTEIL, "seiten": []}
     for s in seiten:
@@ -341,13 +423,12 @@ def plan_erzeugen(seiten: list[dict], rollen: dict, bilder: dict, tabellen: dict
                 eintrag["artefakte"].append(z["bbox_pdf"])
                 continue
             eintrag["zeilen"].append(z["bbox_pdf"])
-            if r and (_ROLLE_H.fullmatch(r) or r == "Caption"):
-                eintrag["rollen"].append({"bbox": z["bbox_pdf"], "tag": r})
+        eintrag["rollen"] = rollen_gruppen(s, rollen)
         for b in s["bilder"]:
             u = bilder.get(b["id"]) or {"inhaltlich": True, "alt": ""}
             # Alt bleibt LEER: der Export (pdfua_export.alt_nachtragen) fuellt nur leere /Alt — die Alt-Texte der
             # Pipeline (Ansicht „Alt-Texte“, vom Nutzer geprueft) sind besser als der kurze Modell-Vorschlag hier.
-            eintrag["bilder"].append({"bbox": b["bbox_pdf"], "alt": "", "artefakt": not u.get("inhaltlich", True)})
+            eintrag["bilder"].append({"bbox": b["bbox_pdf"], "alt": "", "artefakt": not u.get("inhaltlich", True), "vektor": bool(b.get("vektor"))})
         plan["seiten"].append(eintrag)
     return plan
 
@@ -440,43 +521,59 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
         raise StrukturFehler("Die PDF konnte nicht gelesen werden")
     if not any(s["zeilen"] for s in seiten):
         raise StrukturFehler("Die PDF enthält keinen lesbaren Text (gescannt?) — der Weg „Struktur zuerst“ braucht eine Textebene")
-    # B
+    # B — Seiten PARALLEL (23.09.2026: 100-Seiten-Dokumente; Drosselung 429 faengt der Gemini-Client mit Wartezeit ab)
     t_modell = time.time()
     zuordnungen: dict = {}
-    fehlgeschlagen = 0
+    fehler_seiten: dict = {}
+    zu_fragen = [s for s in seiten if s["zeilen"] or s["bilder"]]
     for s in seiten:
-        if not s["zeilen"] and not s["bilder"]:
+        if not (s["zeilen"] or s["bilder"]):
             zuordnungen[s["seite"]] = {"zeilen": [], "bilder": [], "hat_tabelle": False}
-            continue
-        try:
-            bild = seitenbild(pdf_in, s["seite"], arbeitsordner)
-            zuordnungen[s["seite"]] = zuordnung_je_seite(s, len(seiten), bild, sprache_dokument=sprache.get("lang") or "", dokument_name=dokument_name)
-        except llm_client.LLMCallError as e:
-            log.error("[struktur] Seite %s: KI-Anfrage fehlgeschlagen: %s", s["seite"], e)
-            fehlgeschlagen += 1
-            hinweise.append(f"Seite {s['seite']}: KI-Zuordnung fehlgeschlagen, Seite ohne Überschriften-Vorgabe getaggt")
-        except Exception as e:  # noqa: BLE001
-            log.warning("[struktur] Seite %s: Seitenbild/Zuordnung nicht moeglich: %r", s["seite"], e)
-            fehlgeschlagen += 1
-            hinweise.append(f"Seite {s['seite']}: KI-Zuordnung nicht möglich, Seite ohne Überschriften-Vorgabe getaggt")
+    fertig = [0]
+    sperre = threading.Lock()
+
+    def _eine_seite(s: dict):
+        bild = seitenbild(pdf_in, s["seite"], arbeitsordner)
+        return zuordnung_je_seite(s, len(seiten), bild, sprache_dokument=sprache.get("lang") or "", dokument_name=dokument_name)
+
+    def _melden():
+        with sperre:
+            fertig[0] += 1
+            stand = fertig[0]
         if fortschritt:
             try:
-                fortschritt(s["seite"], len(seiten))
+                fortschritt(stand, len(zu_fragen))
             except Exception:  # noqa: BLE001
                 pass
-    # Zweiter Anlauf fuer Seiten ohne Zuordnung (meist Drosselung des Anbieters, 23.09.2026: Seite 6 im API-Lauf)
-    offen = [s for s in seiten if s["seite"] not in zuordnungen and (s["zeilen"] or s["bilder"])]
-    if offen and fehlgeschlagen < len(seiten):
+
+    def _runde(liste: list):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, PARALLEL)) as pool:
+            auftraege = {pool.submit(_eine_seite, s): s for s in liste}
+            for f in concurrent.futures.as_completed(auftraege):
+                s = auftraege[f]
+                try:
+                    zuordnungen[s["seite"]] = f.result()
+                    fehler_seiten.pop(s["seite"], None)
+                except Exception as e:  # noqa: BLE001
+                    log.warning("[struktur] Seite %s: KI-Zuordnung fehlgeschlagen: %r", s["seite"], e)
+                    fehler_seiten[s["seite"]] = e
+                _melden()
+
+    _runde(zu_fragen)
+    # Zweiter Anlauf fuer Seiten ohne Zuordnung (meist Drosselung des Anbieters), nacheinander
+    offen = [s for s in zu_fragen if s["seite"] in fehler_seiten]
+    if offen and len(offen) < len(zu_fragen):
         time.sleep(8)
         for s in offen:
             try:
-                bild = seitenbild(pdf_in, s["seite"], arbeitsordner)
-                zuordnungen[s["seite"]] = zuordnung_je_seite(s, len(seiten), bild, sprache_dokument=sprache.get("lang") or "", dokument_name=dokument_name)
-                fehlgeschlagen -= 1
-                hinweise = [h for h in hinweise if not h.startswith(f"Seite {s['seite']}: KI-Zuordnung")]
+                zuordnungen[s["seite"]] = _eine_seite(s)
+                fehler_seiten.pop(s["seite"], None)
             except Exception as e:  # noqa: BLE001
                 log.warning("[struktur] Seite %s: auch der zweite Anlauf schlug fehl: %r", s["seite"], e)
-    if fehlgeschlagen and fehlgeschlagen >= len(seiten):
+    fehlgeschlagen = len(fehler_seiten)
+    for seite in sorted(fehler_seiten):
+        hinweise.append(f"Seite {seite}: KI-Zuordnung fehlgeschlagen, Seite ohne Überschriften-Vorgabe getaggt")
+    if zu_fragen and fehlgeschlagen >= len(zu_fragen):
         raise StrukturFehler("Die KI-Anfrage ist fehlgeschlagen. Bitte später erneut versuchen.")
     modell_dauer = round(time.time() - t_modell, 1)
     # B2
@@ -499,8 +596,10 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
     if not pdf_hat_tags(pdf_out):
         raise StrukturFehler("Es wurde keine Struktur erzeugt")
     nachher = pdf_tagging.tag_statistik(pdf_out)
-    if stat.get("zeilen_ohne_element"):
-        hinweise.append(f"{stat['zeilen_ohne_element']} Textzeilen konnten keinem Element zugeordnet werden — bitte in der Hörprobe prüfen")
+    zeilen_gesamt = sum(len(e["zeilen"]) for e in plan["seiten"])
+    ohne = int(stat.get("zeilen_ohne_element") or 0)
+    if ohne:
+        hinweise.append(f"{ohne} von {zeilen_gesamt} Textzeilen konnten keinem Element zugeordnet werden — bitte in der Hörprobe prüfen")
     if np_["vergessene_bilder"]:
         hinweise.append(f"{np_['vergessene_bilder']} Bilder ohne KI-Urteil wurden als inhaltlich getaggt")
     zaehl = collections.Counter(rollen.values())
@@ -526,5 +625,6 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
             "listen": sum(len(e["listen"]) for e in plan["seiten"]),
             "listenpunkte_umbrochen": sum(1 for e in plan["seiten"] for l in e["listen"] for pkt in l if len(pkt["bboxes"]) > 1),
             "geschrieben": {k: stat.get(k) for k in ("rollen", "artefakte", "bilder", "tabellen", "hintergrund", "zeilen_ohne_element")},
+            "zeilen_gesamt": zeilen_gesamt, "zeilen_ohne_element": ohne, "seiten_parallel": PARALLEL,
         },
     }

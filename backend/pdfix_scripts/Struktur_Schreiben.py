@@ -180,7 +180,8 @@ def main():
             #    Feldern), ist keine Tabelle: dann wird die Tabellenerkennung fuer diese Seite abgeschaltet.
             tabellen_vorgabe = []
             echte, unechte = 0, 0
-            if vorgabe.get("tabellen", True) and vorgabe.get("zeilen"):
+            modell_tabelle = bool(vorgabe.get("tabellen", True))
+            if vorgabe.get("zeilen"):
                 _template_setzen(pdfix, doc, vorlage, {})
                 pm1 = page.AcquirePageMap()
                 pm1.CreateElements()
@@ -196,7 +197,8 @@ def main():
                                 cell = tb.GetCell(rr, cc)
                                 if cell and PdeCell(cell.obj).GetHeader():
                                     koepfe.add((rr, cc))
-                        kandidaten.append(((bb.left, bb.bottom, bb.right, bb.top), tb.GetNumRows(), tb.GetNumCols(), koepfe))
+                        raster = bool(tb.GetTableType() & kTableGraphic)
+                        kandidaten.append(((bb.left, bb.bottom, bb.right, bb.top), tb.GetNumRows(), tb.GetNumCols(), koepfe, raster))
                     for i in range(el.GetNumChildren()):
                         c2 = el.GetChild(i)
                         if c2 and c2.GetType() not in (kPdeWord, kPdeTextRun, kPdeTextLine):
@@ -216,7 +218,7 @@ def main():
                 def _drin(tb, box):
                     return tb[0] - 2 <= (box[0] + box[2]) / 2 <= tb[2] + 2 and tb[1] - 2 <= (box[1] + box[3]) / 2 <= tb[3] + 2
 
-                for (tb, r1, c1, koepfe) in kandidaten:
+                for (tb, r1, c1, koepfe, raster) in kandidaten:
                     # Formularfelder im Kandidaten: ein Formular ist keine Tabelle
                     if sum(1 for f in felder if _drin(tb, f)) >= 2:
                         unechte += 1
@@ -232,6 +234,12 @@ def main():
                         continue
                     volle = sum(1 for rr in range(nr) if sum(1 for cc in range(nc) if (rr, cc) in zellen) >= 2)
                     if volle < 0.5 * nr:
+                        unechte += 1
+                        continue
+                    # Ohne Linienraster und ohne Zustimmung des Modells nur bei eindeutiger Geometrie (mind. 3 Zeilen,
+                    # 3 Spalten, fast jede Zeile mehrfach gefuellt): Gemini uebersah die Beitragstabelle des
+                    # Mannheimer-Antrags (23.09.); Fliesstext in Spalten erfuellt das nicht.
+                    if not raster and not modell_tabelle and not (nr >= 3 and nc >= 3 and volle >= 0.8 * nr):
                         unechte += 1
                         continue
                     echte += 1
@@ -253,6 +261,18 @@ def main():
                         if cm is not None:
                             cm.AddTag("Artifact", d, False)   # NIE mit None als Objekt (Absturz)
                         stat["hintergrund"] += 1
+                elif typ in (kPdsPagePath, kPdsPageShading) and plan.get("vektor_artefakt", True) and not any(
+                        b.get("vektor") and not b.get("artefakt") and _mitte_drin(bb, b["bbox"], rand=4.0) for b in plan_bilder):
+                    # VEKTORGRAFIK (Kaestchen, Rahmen, Linien, Flaechen) ist kein Bild (23.09.2026, Mannheimer-Antrag):
+                    # sonst haelt PDFix einen Rahmen mit Text darin fuer ein Bild und haengt den Text hinein.
+                    # Tabellenrahmen sind schon im Vordurchgang (Pass 1) erkannt; die Zellen kommen aus unseren Zeilen.
+                    o.SetStateFlags(kStateExclude)
+                    d = doc.CreateDictObject(False)
+                    d.PutName("Type", "Layout")
+                    cm = o.GetContentMark()
+                    if cm is not None:
+                        cm.AddTag("Artifact", d, False)
+                    stat["vektor"] = stat.get("vektor", 0) + 1
                 elif typ == kPdsPageImage and (bb.right - bb.left) > 20 and (bb.top - bb.bottom) > 20:
                     treffer = None
                     for b in plan_bilder:
@@ -272,9 +292,11 @@ def main():
                     else:
                         eigene_bilder.append((o, (bb.left, bb.bottom, bb.right, bb.top)))
             # 2. Tabellenerkennung je Seite: aus, wenn das Modell keine Tabelle sieht oder nur unechte Kandidaten da sind
-            keine_tabellen = (not vorgabe.get("tabellen", True)) or (unechte > 0 and echte == 0)
+            # 2. Eigene Tabellenerkennung von PDFix im Hauptdurchgang nur, wenn das Modell eine Tabelle sieht und wir
+            #    keinen Kandidaten verworfen haben, ohne einen zu uebernehmen (sonst kaemen die verworfenen zurueck).
+            keine_tabellen = (not modell_tabelle) or (unechte > 0 and echte == 0)
             _template_setzen(pdfix, doc, vorlage, {"text_table_detect": "0", "graphic_table_detect": "0", "form_table_detect": "0"} if keine_tabellen else {})
-            if keine_tabellen and unechte:
+            if unechte:
                 stat["tabellen_verworfen"] = unechte
             pm = page.AcquirePageMap()
             for (tb, r1, c1, koepfe, nr, nc, zellen) in tabellen_vorgabe:
@@ -297,6 +319,16 @@ def main():
                     pc.SetColNum(cc)
                     pc.SetHeader((rr, cc) in koepfe if gleich and koepfe else (rr == 0 if nc >= 3 else cc == 0))
                 stat["tabellen_vorgegeben"] = stat.get("tabellen_vorgegeben", 0) + 1
+            # 3a. Ueberschriften/Bildunterschriften ueber mehrere Zeilen als EIN initiales Element mit Rolle
+            for r in vorgabe.get("rollen") or []:
+                if int(r.get("zeilen") or 1) < 2 or r.get("tag") not in _ERLAUBT:
+                    continue
+                e = pm.CreateElement(kPdeText, None)
+                if e:
+                    e.SetBBox(_rect(*r["bbox"]))
+                    e.SetFlags(kElemInitial | kElemNoSplit)
+                    e.SetTag(r["tag"])
+                    stat["mehrzeilig"] = stat.get("mehrzeilig", 0) + 1
             # 3. initiale Artefakte
             for box in vorgabe.get("artefakte") or []:
                 e = pm.CreateElement(kPdeText, None)

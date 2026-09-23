@@ -209,10 +209,16 @@ def einheitsbericht_csv(doc: dict, pruef_bericht: dict) -> str:
     buf = io.StringIO()
     w = csv.writer(buf, delimiter=";", lineterminator="\r\n")
     w.writerow(["Quelle", "Seiten", "Bereich", "Element", "Befund", "Vorschlag", "Sicherheit", "Regeln"])
+    def _sicher(wert) -> str:
+        """CSV-/Formel-Injektion verhindern: Zellen, die in Excel/LibreOffice als Formel starten wuerden
+        (=, +, -, @, Tab, CR), bekommen ein fuehrendes Hochkomma. Der Text stammt teils aus fremden PDFs."""
+        t = str(wert or "")
+        return "'" + t if t[:1] in ("=", "+", "-", "@", "\t", "\r") else t
+
     for e in eb["eintraege"]:
-        w.writerow(["PDF/UA-Prüfung" if e["quelle"] == "pdfua" else "KI-Prüfung",
+        w.writerow([_sicher(x) for x in ("PDF/UA-Prüfung" if e["quelle"] == "pdfua" else "KI-Prüfung",
                     ", ".join(str(s) for s in e["seiten"]), e["bereich"], e["element"], e["text"],
-                    e["vorschlag"], e["sicherheit"], ", ".join(e["regeln"])])
+                    e["vorschlag"], e["sicherheit"], ", ".join(e["regeln"]))])
     return "\ufeff" + buf.getvalue()
 
 
@@ -320,6 +326,11 @@ def urteil(doc: dict, struktur: dict, pruef: dict, verapdf: dict) -> dict:
     # Struktur unbrauchbar: fast leerer Baum oder ohne eine einzige Ueberschrift bei mehreren Seiten
     if elemente < 3 or (seiten >= 2 and ueberschriften == 0 and elemente >= 20):
         return {"stufe": "neu_taggen", "aktion": "tagging", "technisch": technisch, "ki_hoch": ki_hoch}
+    # Vollstaendigkeit (Weg „Struktur zuerst“): mehr als 2 % der Textzeilen ohne Element -> nie „in Ordnung“
+    sb = ((_bericht(doc).get("struktur") or {}) if isinstance(_bericht(doc), dict) else {})
+    ohne, gesamt_z = int(sb.get("zeilen_ohne_element") or 0), int(sb.get("zeilen_gesamt") or 0)
+    if gesamt_z and ohne > max(2, 0.02 * gesamt_z):
+        return {"stufe": "unvollstaendig", "aktion": "hoerprobe", "technisch": technisch, "ki_hoch": ki_hoch, "zeilen_ohne": ohne, "zeilen_gesamt": gesamt_z}
     if ki_fertig:
         if ki_hoch == 0 and technisch is not False:
             return {"stufe": "in_ordnung", "aktion": "export", "technisch": technisch, "ki_hoch": 0}

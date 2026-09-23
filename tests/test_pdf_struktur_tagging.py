@@ -99,7 +99,7 @@ class NachpruefungUndStilprofilTest(unittest.TestCase):
         plan = st.plan_erzeugen(seiten, rollen, bilder, {1: False, 2: True}, "de-DE")
         self.assertEqual(plan["sprache"], "de-DE")
         s1, s2 = plan["seiten"]
-        self.assertEqual(s1["rollen"], [{"bbox": seiten[0]["zeilen"][0]["bbox_pdf"], "tag": "H1"}])
+        self.assertEqual(s1["rollen"], [{"bbox": list(seiten[0]["zeilen"][0]["bbox_pdf"]), "tag": "H1", "zeilen": 1}])
         self.assertEqual(s1["bilder"][0]["artefakt"], True)
         self.assertFalse(s1["tabellen"]); self.assertTrue(s2["tabellen"])
         self.assertEqual(len(s2["artefakte"]), 1)                # Kolumnentitel
@@ -140,6 +140,50 @@ class ListenTest(unittest.TestCase):
         plan = st.plan_erzeugen([dict(s, breite=595, hoehe=842, fliesstext=10, bilder=[])], {"s1z1": "H2"}, {}, {}, "de-DE")
         self.assertEqual(len(plan["seiten"][0]["listen"]), 2)
         self.assertEqual(len(plan["seiten"][0]["listen"][0][2]["bboxes"]), 3)
+
+
+class FormularUndVektorTest(unittest.TestCase):
+    """23.09.2026 (Mannheimer-Antrag): Steuerzeichen, mehrzeilige Ueberschriften, Vektorgruppen."""
+
+    def test_druckbar(self):
+        self.assertFalse(st.druckbar("\x08"))
+        self.assertFalse(st.druckbar("  \x08 "))
+        self.assertTrue(st.druckbar("Euro"))
+
+    def _z(self, n, top, left, text, size=12.3, bold=False, rechts=None):
+        return {"id": f"s1z{n}", "block": n, "text": text, "size": size, "bold": bold,
+                "bbox_pdf": [left, 800 - top, rechts or left + 230, 812 - top], "top": top, "left": left}
+
+    def test_mehrzeiliger_titel_mit_nachbarspalte(self):
+        z = self._z
+        s = {"seite": 1, "zeilen": [z(1, 100, 48, "Antrag auf Haus- und Grundbesitzerhaftpflicht-"), z(2, 101, 382, "GS-Nr.:", 6.1, rechts=400),
+                                    z(3, 115, 48, "versicherung ausschließlich oder überwiegend"), z(4, 116, 382, "VS-Nr.:", 6.1, rechts=400),
+                                    z(5, 130, 48, "gewerblich genutzter Gebäude."), z(6, 160, 48, "Nicht versicherbar sind …", 8.5)]}
+        g = st.rollen_gruppen(s, {"s1z1": "H1", "s1z3": "H1", "s1z5": "H1"})
+        self.assertEqual(len(g), 1)
+        self.assertEqual((g[0]["tag"], g[0]["zeilen"]), ("H1", 3))
+
+    def test_absatz_dazwischen_trennt(self):
+        z = self._z
+        s = {"seite": 1, "zeilen": [z(1, 100, 48, "Kapitel A"), z(2, 113, 48, "ein Absatz dazwischen", 10), z(3, 126, 48, "Kapitel B")]}
+        g = st.rollen_gruppen(s, {"s1z1": "H2", "s1z3": "H2"})
+        self.assertEqual([x["zeilen"] for x in g], [1, 1])
+
+    def test_vektorgruppen_nur_komplexe_zeichnungen(self):
+        import fitz
+        with tempfile.TemporaryDirectory() as t:
+            pfad = os.path.join(t, "v.pdf")
+            d = fitz.open(); p = d.new_page(width=595, height=842)
+            p.insert_text((50, 60), "Diagramm und Kästchen", fontsize=12)
+            p.draw_rect(fitz.Rect(50, 100, 62, 112))                     # Ankreuzkästchen: einfach -> kein Bild
+            sh = p.new_shape()
+            for i in range(12):                                           # Kurvendiagramm: komplex -> Bildkandidat
+                sh.draw_bezier((100 + i * 10, 400), (105 + i * 10, 300), (110 + i * 10, 350), (120 + i * 10, 380))
+            sh.finish(); sh.commit(); d.save(pfad); d.close()
+            seiten = st.struktur_html(pfad)
+        vek = [b for b in seiten[0]["bilder"] if b.get("vektor")]
+        self.assertEqual(len(vek), 1)
+        self.assertIn('data-art="vektorzeichnung"', seiten[0]["html"])
 
 
 class KonfigStrukturTest(unittest.TestCase):

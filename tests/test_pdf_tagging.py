@@ -329,6 +329,12 @@ class UrteilTest(unittest.TestCase):
         u = ta.urteil({"getaggt": 1}, {"elemente": 50, "ueberschriften": 4}, pr_befunde, {"bestanden": True})
         self.assertEqual((u["stufe"], u["aktion"], u["ki_hoch"]), ("verbesserungen", "korrektur", 5))
         self.assertEqual(ta.urteil({"getaggt": 1, "tagging_status": "laeuft"}, {}, pr_leer, {})["stufe"], "laeuft")
+        # Vollstaendigkeit (Struktur zuerst): >2 % Zeilen ohne Element -> unvollstaendig, auch wenn alles andere gut ist
+        d = {"getaggt": 1, "tagging_bericht": json.dumps({"struktur": {"zeilen_ohne_element": 12, "zeilen_gesamt": 300}})}
+        u = ta.urteil(d, {"elemente": 50, "ueberschriften": 4}, pr_ok, {"bestanden": True})
+        self.assertEqual((u["stufe"], u["zeilen_ohne"]), ("unvollstaendig", 12))
+        d2 = {"getaggt": 1, "tagging_bericht": json.dumps({"struktur": {"zeilen_ohne_element": 2, "zeilen_gesamt": 300}})}
+        self.assertEqual(ta.urteil(d2, {"elemente": 50, "ueberschriften": 4}, pr_ok, {"bestanden": True})["stufe"], "in_ordnung")
 
 
 class EinheitsberichtTest(unittest.TestCase):
@@ -351,6 +357,15 @@ class EinheitsberichtTest(unittest.TestCase):
         self.assertTrue(csv_text.startswith("﻿Quelle;Seiten;Bereich;Element;Befund;Vorschlag;Sicherheit;Regeln"))
         self.assertIn("KI-Prüfung;2;rolle;P „Titel“;Absatz statt Überschrift;H1;hoch;", csv_text)
         self.assertIn("PDF/UA-Prüfung;15;Formularfelder und Verknüpfungen;;", csv_text)
+
+    def test_csv_formel_injektion_entschaerft(self):
+        import tagging_api
+        doc = {"pruefung_status": "fertig", "korrektur_bericht": "", "tagging_bericht": "{}"}
+        pb = {"befunde": [{"seite": 1, "typ": "P", "text": "=HYPERLINK(\"http://x\")", "art": "rolle", "befund": "@SUM(1)", "vorschlag": "+1", "sicherheit": "hoch"}]}
+        csv_text = tagging_api.einheitsbericht_csv(doc, pb)
+        self.assertIn("'@SUM(1)", csv_text)
+        self.assertIn(";'+1;", csv_text)
+        self.assertNotIn(";=HYPERLINK", csv_text)
 
     def test_einheitsbericht_nach_korrektur_nimmt_juengsten_pdfua_stand(self):
         import tagging_api

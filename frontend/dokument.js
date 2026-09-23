@@ -310,6 +310,7 @@
         let text = '', cls = 'badge-muted';
         if (u.stufe === 'ungetaggt') { text = t('Keine Struktur: Die PDF muss barrierefrei gemacht werden.'); cls = 'badge-warn'; }
         else if (u.stufe === 'neu_taggen') { text = t('Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen.'); cls = 'badge-warn'; }
+        else if (u.stufe === 'unvollstaendig') { text = t('Struktur unvollständig: {n} von {g} Textzeilen haben kein Element. Bitte die Hörprobe prüfen.', { n: u.zeilen_ohne, g: u.zeilen_gesamt }); cls = 'badge-warn'; }
         else if (u.stufe === 'in_ordnung') { text = t('In Ordnung: Struktur geprüft, nichts zu tun. Export möglich.'); cls = 'badge-ok'; }
         else if (u.stufe === 'verbesserungen') { text = (u.ki_hoch != null ? t('Verbesserungen möglich: {n} sichere Befunde, {tech}.', { n: u.ki_hoch, tech: tech }) : t('Verbesserungen möglich: {tech}. KI-Prüfung starten.', { tech: tech })); cls = 'badge-warn'; }
         else if (u.stufe === 'pruefung_empfohlen') { text = t('{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt.', { tech: tech.charAt(0).toUpperCase() + tech.slice(1) }); cls = 'badge-muted'; }
