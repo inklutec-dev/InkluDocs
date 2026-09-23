@@ -211,10 +211,19 @@ def main():
                 page.Release()
                 page = doc.AcquirePage(pno)
                 felder = [tuple(f) for f in (vorgabe.get("felder") or [])]
+                struktur_boxen = [r["bbox"] for r in (vorgabe.get("rollen") or [])] + [bb for liste in (vorgabe.get("listen") or []) for pkt in liste for bb in (pkt.get("bboxes") or [])]
+
+                def _drin(tb, box):
+                    return tb[0] - 2 <= (box[0] + box[2]) / 2 <= tb[2] + 2 and tb[1] - 2 <= (box[1] + box[3]) / 2 <= tb[3] + 2
+
                 for (tb, r1, c1, koepfe) in kandidaten:
                     # Formularfelder im Kandidaten: ein Formular ist keine Tabelle
-                    im_kandidaten = sum(1 for f in felder if tb[0] - 2 <= (f[0] + f[2]) / 2 <= tb[2] + 2 and tb[1] - 2 <= (f[1] + f[3]) / 2 <= tb[3] + 2)
-                    if im_kandidaten >= 2:
+                    if sum(1 for f in felder if _drin(tb, f)) >= 2:
+                        unechte += 1
+                        continue
+                    # Ueberschriften oder Listenpunkte im Kandidaten (unsere eigene Struktur): zwei Aufzaehlungsspalten
+                    # nebeneinander sind keine Tabelle (Ritterturnier S. 2, 23.09.2026)
+                    if any(_drin(tb, box) for box in struktur_boxen):
                         unechte += 1
                         continue
                     nr, nc, zellen = _zellen_aus_zeilen(tb, vorgabe.get("zeilen") or [])
