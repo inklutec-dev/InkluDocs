@@ -277,7 +277,9 @@ def plan_erzeugen(seiten: list[dict], rollen: dict, bilder: dict, tabellen: dict
                 eintrag["rollen"].append({"bbox": z["bbox_pdf"], "tag": r})
         for b in s["bilder"]:
             u = bilder.get(b["id"]) or {"inhaltlich": True, "alt": ""}
-            eintrag["bilder"].append({"bbox": b["bbox_pdf"], "alt": u.get("alt") or "", "artefakt": not u.get("inhaltlich", True)})
+            # Alt bleibt LEER: der Export (pdfua_export.alt_nachtragen) fuellt nur leere /Alt — die Alt-Texte der
+            # Pipeline (Ansicht „Alt-Texte“, vom Nutzer geprueft) sind besser als der kurze Modell-Vorschlag hier.
+            eintrag["bilder"].append({"bbox": b["bbox_pdf"], "alt": "", "artefakt": not u.get("inhaltlich", True)})
         plan["seiten"].append(eintrag)
     return plan
 
