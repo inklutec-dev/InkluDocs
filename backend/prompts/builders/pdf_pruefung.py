@@ -44,7 +44,11 @@ REGELN = """PRÜFAUFTRAG (in dieser Reihenfolge, nur was das Bild belegt):
    Diagramm ohne Figure-Eintrag? Rein schmückende Linien und Flächen sind KEIN Befund.
 6. FEHLT: Gibt es sichtbaren Text mit Informationswert (Absätze, Überschriften, Beschriftungen), der in
    der Strukturliste nicht vorkommt? Kopf- und Fußzeilen mit Seitenzahl gelten als Artefakt und sind
-   kein Befund.
+   kein Befund. Ebenso KEIN Befund (Michael Karbe 23.09.2026, Steve 23.09.2026): der auf jeder Seite
+   wiederholte Kolumnentitel (Buch- oder Kapiteltitel oben), ein auf mehreren Seiten wiederholtes Logo
+   oder Verlagszeichen, die Verlags- oder Adresszeile unten — sie sind absichtlich Artefakt, damit ein
+   Screenreader sie nicht auf jeder Seite erneut vorliest. Der Kolumnentitel ist auch keine fehlende
+   Überschrift.
 7. SPRACHE: Nur melden, wenn die Seite sichtbar in einer anderen Sprache ist als angegeben.
 
 REGELN FÜR JEDEN BEFUND (verbindlich):
