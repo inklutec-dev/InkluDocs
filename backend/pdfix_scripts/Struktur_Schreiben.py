@@ -210,13 +210,16 @@ def main():
                         stat["artefakte"] += 1
                     else:
                         eigene_bilder.append((o, (bb.left, bb.bottom, bb.right, bb.top)))
-            # 2. Tabellenerkennung je Seite
-            _template_setzen(pdfix, doc, vorlage, {} if vorgabe.get("tabellen", True) else {"text_table_detect": "0", "graphic_table_detect": "0"})
-            pm = page.AcquirePageMap()
-            # 9. Pass 1: Tabellenrahmen + Kopfzellen von PDFix, dann Karte leeren; Zellen kommen aus unseren Zeilen
+            # 9. Pass 1 (eigene Seitenkarte): Tabellenrahmen + Kopfzellen von PDFix; die Zellen kommen aus unseren
+            #    Zeilen. Ein „Tabellen“-Kandidat, dessen Zeilen meist nur EINE Zelle haben (Formular, Beschriftungen mit
+            #    Feldern), ist keine Tabelle: dann wird die Tabellenerkennung fuer diese Seite abgeschaltet.
             tabellen_vorgabe = []
+            echte, unechte = 0, 0
             if vorgabe.get("tabellen", True) and vorgabe.get("zeilen"):
-                pm.CreateElements()
+                _template_setzen(pdfix, doc, vorlage, {})
+                pm1 = page.AcquirePageMap()
+                pm1.CreateElements()
+                kandidaten = []
 
                 def _sammeln(el):
                     if el.GetType() == kPdeTable:
@@ -228,20 +231,45 @@ def main():
                                 cell = tb.GetCell(rr, cc)
                                 if cell and PdeCell(cell.obj).GetHeader():
                                     koepfe.add((rr, cc))
-                        tabellen_vorgabe.append(((bb.left, bb.bottom, bb.right, bb.top), tb.GetNumRows(), tb.GetNumCols(), koepfe))
+                        kandidaten.append(((bb.left, bb.bottom, bb.right, bb.top), tb.GetNumRows(), tb.GetNumCols(), koepfe))
                     for i in range(el.GetNumChildren()):
                         c2 = el.GetChild(i)
                         if c2 and c2.GetType() not in (kPdeWord, kPdeTextRun, kPdeTextLine):
                             _sammeln(c2)
 
-                root1 = pm.GetElement()
+                root1 = pm1.GetElement()
                 if root1:
                     _sammeln(root1)
-                pm.RemoveElements()
-            for (tb, r1, c1, koepfe) in tabellen_vorgabe:
-                nr, nc, zellen = _zellen_aus_zeilen(tb, vorgabe.get("zeilen") or [])
-                if nr < 2 or nc < 2:
-                    continue
+                pm1.RemoveElements()
+                pm1.Release()
+                # Seite neu holen: die Vorlage (Template) wirkt nur auf eine frisch angelegte Seitenkarte
+                page.Release()
+                page = doc.AcquirePage(pno)
+                content = page.GetContent()
+                felder = [tuple(f) for f in (vorgabe.get("felder") or [])]
+                for (tb, r1, c1, koepfe) in kandidaten:
+                    # Formularfelder im Kandidaten: ein Formular ist keine Tabelle
+                    im_kandidaten = sum(1 for f in felder if tb[0] - 2 <= (f[0] + f[2]) / 2 <= tb[2] + 2 and tb[1] - 2 <= (f[1] + f[3]) / 2 <= tb[3] + 2)
+                    if im_kandidaten >= 2:
+                        unechte += 1
+                        continue
+                    nr, nc, zellen = _zellen_aus_zeilen(tb, vorgabe.get("zeilen") or [])
+                    if nr < 2 or nc < 2:
+                        unechte += 1
+                        continue
+                    volle = sum(1 for rr in range(nr) if sum(1 for cc in range(nc) if (rr, cc) in zellen) >= 2)
+                    if volle < 0.5 * nr:
+                        unechte += 1
+                        continue
+                    echte += 1
+                    tabellen_vorgabe.append((tb, r1, c1, koepfe, nr, nc, zellen))
+            # 2. Tabellenerkennung je Seite: aus, wenn das Modell keine Tabelle sieht oder nur unechte Kandidaten da sind
+            keine_tabellen = (not vorgabe.get("tabellen", True)) or (unechte > 0 and echte == 0)
+            _template_setzen(pdfix, doc, vorlage, {"text_table_detect": "0", "graphic_table_detect": "0", "form_table_detect": "0"} if keine_tabellen else {})
+            if keine_tabellen and unechte:
+                stat["tabellen_verworfen"] = unechte
+            pm = page.AcquirePageMap()
+            for (tb, r1, c1, koepfe, nr, nc, zellen) in tabellen_vorgabe:
                 T = pm.CreateElement(kPdeTable, None)
                 if not T:
                     continue

@@ -119,8 +119,15 @@ def struktur_html(pdf_pfad: str) -> list[dict]:
                     continue   # Winzlinge und ganzseitige Hintergruende sind keine Bilder fuer die Zuordnung
                 bilder.append({"id": f"s{pno}b{len(bilder) + 1}", "bbox_pdf": [round(x0, 1), round(hoehe - y1, 1), round(x1, 1), round(hoehe - y0, 1)],
                                "breite": round(x1 - x0), "hoehe": round(y1 - y0), "top": round(y0), "left": round(x0)})
+            felder = []
+            try:
+                for w in page.widgets():
+                    r = w.rect
+                    felder.append([round(r.x0, 1), round(hoehe - r.y1, 1), round(r.x1, 1), round(hoehe - r.y0, 1)])
+            except Exception:  # noqa: BLE001
+                pass
             seiten.append({"seite": pno, "breite": breite, "hoehe": hoehe, "fliesstext": fliesstext,
-                           "zeilen": zeilen, "bilder": bilder})
+                           "zeilen": zeilen, "bilder": bilder, "felder": felder})
             seiten[-1]["html"] = _html_der_seite(seiten[-1])
     return seiten
 
@@ -307,7 +314,8 @@ def plan_erzeugen(seiten: list[dict], rollen: dict, bilder: dict, tabellen: dict
     plan = {"sprache": sprache, "hintergrund_anteil": HINTERGRUND_ANTEIL, "seiten": []}
     for s in seiten:
         pno = s["seite"]
-        eintrag = {"seite": pno, "artefakte": [], "rollen": [], "bilder": [], "tabellen": tabellen.get(pno, True), "zeilen": [], "listen": []}
+        eintrag = {"seite": pno, "artefakte": [], "rollen": [], "bilder": [], "tabellen": tabellen.get(pno, True), "zeilen": [], "listen": [],
+                   "felder": list(s.get("felder") or [])}
         listen_ids: set = set()
         for liste in listen_erkennen(s):
             punkte = []
