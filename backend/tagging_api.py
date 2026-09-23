@@ -37,6 +37,7 @@ from fastapi.responses import FileResponse, Response
 import pdf_korrektur
 import pdf_pruefung
 import pdf_struktur
+import pdf_struktur_tagging
 import pdf_tagging
 
 log = logging.getLogger(__name__)
@@ -568,7 +569,16 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
     uebers = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None
     bericht: dict = {}
     try:
-        bericht = pdf_tagging.taggen(quelle, ziel_tmp, sprache_vorgabe, arbeitsordner=os.path.dirname(ziel))
+        if pdf_struktur_tagging.aktiv():
+            # Weg „Struktur zuerst“ (23.09.2026, Steves Go): KI-Zuordnung je Seite, Stilprofil, PDFix schreibt den Baum.
+            def fortschritt(seite, seiten):
+                if document_id in _laeuft:
+                    _laeuft[document_id].update({"seite": seite, "seiten": seiten})
+
+            bericht = pdf_struktur_tagging.taggen(quelle, ziel_tmp, sprache_vorgabe, arbeitsordner=os.path.dirname(ziel),
+                                                  fortschritt=fortschritt, dokument_name=doc.get("display_name") or doc.get("original_filename") or "")
+        else:
+            bericht = pdf_tagging.taggen(quelle, ziel_tmp, sprache_vorgabe, arbeitsordner=os.path.dirname(ziel))
         bericht["verapdf"] = pdf_tagging.verapdf(ziel_tmp, uebers)
         # Bilder des Dokuments neu extrahieren — jetzt ueber den Strukturbaum.
         img_dir = os.path.join(_d.results_dir, str(user_id), str(project_id), f"doc{doc.get('doc_index') or 1}")

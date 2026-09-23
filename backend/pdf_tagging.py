@@ -206,8 +206,11 @@ def _params(aktion: dict) -> dict:
     return {p.get("name"): str(p.get("value")) for p in (aktion.get("params") or []) if isinstance(p, dict)}
 
 
-def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str) -> dict:
+def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str, struktur_vorgegeben: bool = False) -> dict:
     """Schreibt die Lauf-Konfiguration (Voreinstellung + unsere Aenderungen) nach ziel_pfad.
+    struktur_vorgegeben=True (Weg „Struktur zuerst“, pdf_struktur_tagging, 23.09.2026): der Baum steht schon —
+    add_tags (Strukturerkennung) und fix_headings (fuellt Ebenenspruenge mit LEEREN H-Tags, die ein Screenreader
+    als „Ueberschrift, leer“ liest) entfallen; alle technischen Schritte bleiben.
     Rueckgabe: {"entfernt": [Titel...], "sprache": lang, "schritte": n}"""
     if not re.fullmatch(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*", lang or ""):
         raise TaggingFehler("Ungueltige Sprachangabe")
@@ -218,6 +221,9 @@ def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str) -> dict:
         name = aktion.get("name")
         p = _params(aktion)
         if any(name == n and bed(p) for n, bed in _ENTFAELLT):
+            entfernt.append(aktion.get("title") or name)
+            continue
+        if struktur_vorgegeben and name in ("add_tags", "fix_headings"):
             entfernt.append(aktion.get("title") or name)
             continue
         if name == "set_language":

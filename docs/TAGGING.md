@@ -366,3 +366,21 @@ sieht anders aus, der Kunde wählt, was er bezahlt.
   Zeilenlage neu setzen).
 - Tests: `tests/test_pdf_messung.py`, Doppelbeleg in `tests/test_pdf_pruefung.py`, `tests/e2e/verify_korrektur.py`,
   Klicktest `ui_dokument.py` Abschnitt B4 (nur bei Doppelbeleg-Befunden).
+
+## Weg „Struktur zuerst“ (23.09.2026, Steves Go) — `PDF_TAGGING_WEG=struktur`
+
+Statt PDFix die Struktur raten zu lassen und hinterher zu flicken, wird die Struktur VORHER bestimmt und PDFix schreibt sie nur noch. Modul `backend/pdf_struktur_tagging.py`, eigenes PDFix-Skript `backend/pdfix_scripts/Struktur_Schreiben.py` (kein Heine-Skript), Prompt `prompts/builders/pdf_struktur.py`, Schema `prompts/components/schemas/pdf_struktur.py`.
+
+Ablauf je Dokument (in `tagging_api._lauf_sync`, wenn `PDF_TAGGING_WEG=struktur`):
+
+1. **Struktur-HTML** rein rechnerisch aus der PDF (PyMuPDF): je Textzeile Kennung `s<Seite>z<n>`, Schriftgröße, Fettdruck, Lage; je Bild `s<Seite>b<n>`. Keine KI.
+2. **Zuordnung** durch das Modell, ein Aufruf je Seite mit Seitenbild: nur Überschriften, Artefakte (Kolumnentitel, Seitenzahl, Verlagszeile), Bildunterschriften; je Bild inhaltlich oder Schmuck; hat die Seite eine Tabelle. Das Modell wählt nur Kennung und Rolle, es schreibt keinen Text.
+3. **Nachprüfung + Stilprofil**: unbekannte Kennungen fallen weg, vergessene Bilder gelten als inhaltlich. Die Überschriften-EBENE kommt nicht vom Modell (seitenlokal), sondern aus dem Stil dokumentweit (Größe, fett), Titelseiten-Stile schieben nichts nach unten; Klammer-Pass in Lesereihenfolge: kein Ebenensprung, gleicher Stil im selben Abschnitt = gleiche Ebene.
+4. **Schreiben** (`Struktur_Schreiben.py`): ganzseitige Form-XObjects (Hintergrund) von der Erkennung ausschließen und als Artefakt markieren (sonst hängt PDFix den Text darauf in ein Bild), Tabellenerkennung je Seite über die Vorlage, Artefakte und Schmuckbilder als initiale Elemente, `CreateElements`, Rollen per `SetTag`, Bilder als Figure (Alt bleibt leer, der Export trägt ihn nach), Tabellen mit Kopfspalte, `AddTags`. Seiteninhalt bleibt byteweise gleich.
+5. **Technische Schritte**: Jörgs Make Accessible mit `konfig_erzeugen(..., struktur_vorgegeben=True)` — ohne `add_tags` und ohne `fix_headings` (füllt Sprünge mit LEEREN H-Tags, die ein Screenreader als „Überschrift, leer“ liest).
+
+Bericht wie beim PDFix-Weg plus `weg: "struktur"` und `struktur: {modell, modell_dauer_s, ueberschriften, artefakte, bilder_inhaltlich, bilder_schmuck, verworfen, stilprofil, geklammert, geschrieben}`; Hinweise nennen Zeilen ohne Element (Vollständigkeit) und Seiten ohne KI-Zuordnung.
+
+Ergebnis am Ritterturnier (Michael Karbe, 15 Seiten): veraPDF PDF/UA-1 ohne Befund, 39 Überschriften ohne Sprung und ohne leere Tags, verlorener Text von Seite 3 im Baum; KI-Gegenprobe 40 statt 76 Befunde (Rest: Alt-Text-Platzhalter, umbrochene Listenpunkte, verschmolzene Bilder).
+
+Grenzen (23.09.): gescannte PDFs ohne Textebene gehen nicht (Fehlermeldung); Text ÜBER Bildern landet bei PDFix im Bild; benachbarte Zeichnungen werden zu einer Figure verschmolzen; Listen mit umbrochenen Zeilen zerfallen; Tabellen erkennt weiterhin PDFix. Testmodus verfälscht PDFix-Text mit „*“, daher läuft aller Textabgleich über PyMuPDF. Schalter/Env: `PDF_TAGGING_WEG`, `PDF_STRUKTUR_MODEL`, `PDF_STRUKTUR_DPI`, `PDF_STRUKTUR_HINTERGRUND_ANTEIL`, `PDFIX_STRUKTUR_TIMEOUT`. Tests: `tests/test_pdf_struktur_tagging.py` (Struktur-HTML, Nachprüfung, Stilprofil, Plan, Konfiguration, Schreibweg mit Modell-Ersatz).

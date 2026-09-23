@@ -1,0 +1,158 @@
+"""Tests fuer den Tagging-Weg „Struktur zuerst“ (pdf_struktur_tagging, 23.09.2026).
+
+Deterministische Teile ohne Modell und ohne PDFix: Struktur-HTML aus einer PDF, Nachpruefung,
+Stilprofil mit Klammer-Pass, Plan. Der Schreibweg (PDFix) laeuft nur, wenn das SDK da ist
+(Container), mit einem Modell-Ersatz (mock) statt Gemini.
+"""
+import json
+import os
+import sys
+import tempfile
+import unittest
+from unittest import mock
+
+HIER = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(HIER), "backend"))
+sys.path.insert(0, os.path.dirname(HIER))
+
+import pdf_struktur_tagging as st  # noqa: E402
+import pdf_tagging  # noqa: E402
+
+FIXTURE = os.path.join(HIER, "fixtures", "testformular_inkludocs.pdf")
+
+
+def _seiten_fixtur():
+    """Zwei Seiten mit Stilen: 54 pt Titel (nur Titelseite), 15.6 pt Kapitel, 11.7 pt Zwischen."""
+    def z(pno, n, size, bold, top, text):
+        return {"id": f"s{pno}z{n}", "block": n, "text": text, "size": size, "bold": bold,
+                "bbox_pdf": [50, 800 - top, 300, 812 - top], "top": top, "left": 50}
+    return [
+        {"seite": 1, "breite": 595, "hoehe": 842, "fliesstext": 12, "zeilen": [
+            z(1, 1, 54, True, 100, "Titel"), z(1, 2, 24, True, 160, "Untertitel"), z(1, 3, 12, False, 300, "Text")],
+         "bilder": [{"id": "s1b1", "bbox_pdf": [300, 100, 500, 300], "breite": 200, "hoehe": 200, "top": 542, "left": 300}]},
+        {"seite": 2, "breite": 595, "hoehe": 842, "fliesstext": 12, "zeilen": [
+            z(2, 1, 12, False, 30, "Kolumnentitel"), z(2, 2, 15.6, True, 80, "Kapitel"), z(2, 3, 11.7, True, 120, "Zwischen A"),
+            z(2, 4, 12, False, 140, "Absatz"), z(2, 5, 11.7, True, 200, "Zwischen B"), z(2, 6, 15.6, True, 300, "Kapitel 2"),
+            z(2, 7, 11.7, True, 340, "Zwischen C"), z(2, 8, 9, False, 800, "3")],
+         "bilder": []},
+    ]
+
+
+class StrukturHtmlTest(unittest.TestCase):
+    def test_html_aus_pdf(self):
+        seiten = st.struktur_html(FIXTURE)
+        self.assertGreaterEqual(len(seiten), 1)
+        s = seiten[0]
+        self.assertTrue(s["zeilen"], "Fixtur hat Textzeilen")
+        self.assertEqual(s["zeilen"][0]["id"], "s1z1")
+        self.assertIn('<section data-seite="1"', s["html"])
+        self.assertIn('id="s1z1"', s["html"])
+        for z in s["zeilen"]:
+            l, b, r, t = z["bbox_pdf"]
+            self.assertLess(l, r); self.assertLess(b, t)      # PDF-Koordinaten, Ursprung unten links
+        self.assertGreater(s["fliesstext"], 0)
+
+
+class NachpruefungUndStilprofilTest(unittest.TestCase):
+    def test_nachpruefung_verwirft_unbekannte_und_ergaenzt_bilder(self):
+        seiten = _seiten_fixtur()
+        zu = {1: {"zeilen": [{"id": "s1z1", "rolle": "H1"}, {"id": "s1z9", "rolle": "H2"}, {"id": "s2z2", "rolle": "H1"}],
+                  "bilder": [], "hat_tabelle": False},
+              2: {"zeilen": [{"id": "s2z1", "rolle": "Artefakt"}, {"id": "s2z2", "rolle": "H1"}], "bilder": [], "hat_tabelle": True}}
+        n = st.nachpruefung(seiten, zu)
+        self.assertEqual(n["rollen"], {"s1z1": "H1", "s2z1": "Artefakt", "s2z2": "H1"})
+        self.assertEqual(len(n["verworfen"]), 2)                 # s1z9 gibt es nicht, s2z2 gehoert nicht zu Seite 1
+        self.assertEqual(n["bilder"]["s1b1"], {"inhaltlich": True, "alt": ""})   # vergessenes Bild -> inhaltlich
+        self.assertEqual(n["vergessene_bilder"], 1)
+        self.assertEqual(n["tabellen"], {1: False, 2: True})
+
+    def test_stilprofil_ebenen_aus_groesse_ohne_sprung(self):
+        seiten = _seiten_fixtur()
+        # Modell: seitenlokale Ebenen (auf Seite 2 ist 15.6 pt „H1“), Titelseite 54 pt H1, Untertitel H2
+        rollen = {"s1z1": "H1", "s1z2": "H2", "s2z1": "Artefakt", "s2z2": "H1", "s2z3": "H2", "s2z5": "H2", "s2z6": "H1", "s2z7": "H2", "s2z8": "Artefakt"}
+        sp = st.stilprofil(seiten, rollen)
+        r = sp["rollen"]
+        self.assertEqual(r["s1z1"], "H1")                        # groesster Stil = H1
+        self.assertEqual(r["s1z2"], "H2")                        # Untertitel nur auf Titelseite: Ebene des naechsten wiederkehrenden Stils
+        self.assertEqual(r["s2z2"], "H2")                        # 15.6 pt Kapitel = H2 (schiebt nicht nach unten)
+        self.assertEqual(r["s2z3"], "H3"); self.assertEqual(r["s2z5"], "H3")   # 11.7 pt = H3, beide gleich
+        self.assertEqual(r["s2z6"], "H2"); self.assertEqual(r["s2z7"], "H3")
+        self.assertEqual(r["s2z1"], "Artefakt"); self.assertEqual(r["s2z8"], "Artefakt")
+        self.assertIn("54 pt fett = H1", sp["profil"])
+        folge = [int(r[z][1]) for z in ("s1z1", "s1z2", "s2z2", "s2z3", "s2z5", "s2z6", "s2z7")]
+        self.assertTrue(all(b <= a + 1 for a, b in zip(folge, folge[1:])), folge)   # nie ein Sprung
+
+    def test_klammer_pass_hebt_zu_tiefe_ebene_an(self):
+        seiten = _seiten_fixtur()
+        # Nur 11.7 pt direkt nach dem Titel (kein 15.6 davor): H3 waere ein Sprung -> H2
+        rollen = {"s1z1": "H1", "s2z2": "H1", "s2z3": "H2"}
+        seiten[1]["zeilen"][1]["size"] = 11.7   # s2z2 auch 11.7 pt
+        sp = st.stilprofil(seiten, rollen)
+        self.assertEqual(sp["rollen"]["s2z2"], "H2")
+        self.assertEqual(sp["rollen"]["s2z3"], "H2")
+        self.assertGreaterEqual(sp["geklammert"], 0)
+
+    def test_plan(self):
+        seiten = _seiten_fixtur()
+        rollen = {"s1z1": "H1", "s2z1": "Artefakt", "s2z2": "H2"}
+        bilder = {"s1b1": {"inhaltlich": False, "alt": ""}}
+        plan = st.plan_erzeugen(seiten, rollen, bilder, {1: False, 2: True}, "de-DE")
+        self.assertEqual(plan["sprache"], "de-DE")
+        s1, s2 = plan["seiten"]
+        self.assertEqual(s1["rollen"], [{"bbox": seiten[0]["zeilen"][0]["bbox_pdf"], "tag": "H1"}])
+        self.assertEqual(s1["bilder"][0]["artefakt"], True)
+        self.assertFalse(s1["tabellen"]); self.assertTrue(s2["tabellen"])
+        self.assertEqual(len(s2["artefakte"]), 1)                # Kolumnentitel
+        self.assertEqual(len(s2["zeilen"]), len(seiten[1]["zeilen"]) - 1)   # Artefakt-Zeile nicht in der Vollstaendigkeitsliste
+
+
+class KonfigStrukturTest(unittest.TestCase):
+    def test_konfig_ohne_strukturerkennung(self):
+        with tempfile.TemporaryDirectory() as t:
+            ziel = os.path.join(t, "k.json")
+            pdf_tagging.konfig_erzeugen("de-DE", False, ziel, struktur_vorgegeben=True)
+            k = json.load(open(ziel, encoding="utf-8"))
+        namen = [a["name"] for a in k["actions"]]
+        self.assertNotIn("add_tags", namen)
+        self.assertNotIn("fix_headings", namen)                  # fuellt Spruenge mit LEEREN Tags — nicht bei vorgegebener Struktur
+        self.assertIn("tag_annot", namen); self.assertIn("set_language", namen); self.assertIn("set_pdf_ua_standard", namen)
+        self.assertLess(namen.index("create_web_links"), namen.index("tag_annot"))
+
+
+@unittest.skipUnless(st.verfuegbar(), "PDFix-Skripte nicht eingerichtet")
+class SchreibwegTest(unittest.TestCase):
+    """Ganzer Weg auf der Fixtur mit Modell-Ersatz: erste Zeile wird H1, alles andere Absatz."""
+
+    def test_taggen_mit_modell_ersatz(self):
+        seiten = st.struktur_html(FIXTURE)
+        erste = seiten[0]["zeilen"][0]["id"]
+
+        class _Out:
+            def __init__(self, d):
+                self._d = d
+
+            def model_dump(self):
+                return self._d
+
+        def fake_call(model, prompt, image_path, schema, max_tokens, temperature, system):
+            import re
+            m = re.search(r"Seite (\d+) von \d+", prompt)
+            pno = int(m.group(1)) if m else 1
+            zeilen = [{"id": erste, "rolle": "H1", "beleg": "Test"}] if pno == 1 else []
+            return _Out({"zeilen": zeilen, "bilder": [], "hat_tabelle": False, "zusammenfassung": "Test"})
+
+        with tempfile.TemporaryDirectory() as t, mock.patch.object(st.llm_client, "call_with_schema", side_effect=fake_call):
+            out = os.path.join(t, "fertig.pdf")
+            b = st.taggen(FIXTURE, out, "de", arbeitsordner=t, fortschritt=lambda a, b_: None)
+            self.assertTrue(os.path.isfile(out))
+            self.assertEqual(b["weg"], "struktur")
+            self.assertGreaterEqual(b["nachher"]["ueberschriften"], 1)
+            self.assertEqual(b["struktur"]["ueberschriften"], 1)
+            self.assertEqual(b["struktur"]["geschrieben"]["rollen"], 1)
+            self.assertNotIn("fix_headings", [a for a in b["konfig"].get("entfernt", [])])   # nur Info: Bericht traegt konfig
+            from pdf_export import pdf_hat_tags
+            self.assertTrue(pdf_hat_tags(out))
+
+
+if __name__ == "__main__":
+    unittest.main()
