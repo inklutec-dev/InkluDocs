@@ -62,7 +62,10 @@ class KonfigTest(unittest.TestCase):
         namen = [a["name"] for a in k["actions"]]
         # 4x Set Alt (Figure/Formula) + 1x Decorative-Rueckfall fuer Anmerkungen entfallen, Form bleibt; + Web-Links
         self.assertEqual(info["schritte"], 37 - 5 + 1)
-        self.assertEqual(k["actions"][-1]["name"], "create_web_links")
+        # 23.09.2026: Web-Links VOR tag_annot/set_annot_contents, sonst bleibt der neue Link ungetaggt (Michaels Befund 10)
+        self.assertIn("create_web_links", namen)
+        self.assertLess(namen.index("create_web_links"), namen.index("tag_annot"))
+        self.assertLess(namen.index("create_web_links"), namen.index("set_annot_contents"))
         self.assertEqual(len(info["entfernt"]), 5)
         set_alt = [a for a in k["actions"] if a["name"] == "set_alt"]
         self.assertEqual(len(set_alt), 1)

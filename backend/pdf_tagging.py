@@ -233,9 +233,15 @@ def konfig_erzeugen(lang: str, overwrite_lang: bool, ziel_pfad: str) -> dict:
         raise TaggingFehler("Die Voreinstellung enthaelt keinen Sprachschritt")
     # Web-Links (22.09.2026, aus der Befehlsliste des SDK): Adressen und Mailadressen im Text werden
     # klickbare, getaggte Links — sonst liest ein Screenreader nur die Zeichenkette.
-    behalten.append({"name": "create_web_links", "title": "Create Web Links (InkluDocs)", "params": [
+    # 23.09.2026 (Michaels Befund 10, „Ritterturnier“ S. 15): Der Schritt muss VOR tag_annot und set_annot_contents
+    # stehen — sonst bleibt der neu erzeugte Link ungetaggt und ohne Contents (veraPDF 7.18.1-2, 7.18.5-1, 7.18.5-2).
+    web_links = {"name": "create_web_links", "title": "Create Web Links (InkluDocs)", "params": [
         {"name": "url_regex", "value": "^(((http(s)?|ftp):\\/\\/)|(mailto:)|www.)[^\\s\\/$.?#].[^\\s]*"},
-        {"name": "url_prefix", "value": ""}, {"name": "url", "value": ""}]})
+        {"name": "url_prefix", "value": ""}, {"name": "url", "value": ""}]}
+    pos = next((i for i, a in enumerate(behalten) if a.get("name") == "tag_annot"), None)
+    if pos is None:
+        raise TaggingFehler("Die Voreinstellung enthaelt keinen Schritt zum Taggen von Anmerkungen")
+    behalten.insert(pos, web_links)
     konfig["actions"] = behalten
     konfig["title"] = "Make Accessible (InkluDocs)"
     with open(ziel_pfad, "w", encoding="utf-8") as f:
