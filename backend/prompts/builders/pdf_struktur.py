@@ -42,7 +42,9 @@ REGELN (verbindlich):
 - Caption: eine Bildunterschrift direkt unter oder über einem Bild.
 - Bilder: jedes <img> genau einmal einordnen. Inhaltlich sind Illustrationen mit Motiv, Fotos, Diagramme,
   Vorlagen zum Ausschneiden, Logos mit Text. Schmuck sind nur Rahmen, Hintergründe, Linien und Zierleisten
-  ohne Aussage. Im Zweifel inhaltlich. Inhaltliche Bilder bekommen einen kurzen Alt-Text-Vorschlag.
+  ohne Aussage. Im Zweifel inhaltlich. Alt-Texte schreibst du hier NICHT (die entstehen in einem eigenen Schritt).
+  Ein <img data-art="vektorzeichnung"> ist eine gezeichnete Grafik (Diagramm, Logo, Illustration); inhaltlich,
+  wenn sie eine Aussage trägt.
 - hat_tabelle: true bei einem Raster aus Zeilen und Spalten ODER bei Beschriftung-Wert-Paaren in zwei Spalten
   (Impressum, Steckbrief). Aufzählungen, Text in Kästen und FORMULARE (Beschriftungen mit Eingabefeldern) sind
   KEINE Tabelle.
@@ -72,7 +74,7 @@ Das Bild zeigt diese Seite. Das STRUKTUR-HTML enthält die Zeilen und Bilder die
 {html}
 ===== ENDE STRUKTUR-HTML =====
 
-Schreibe beleg und alt in der Sprache des Dokuments, jeweils kurz.
+Schreibe beleg als kurzes Stichwort in der Sprache des Dokuments.
 
 {render_schema_for_prompt(StrukturSeiteOutput)}"""
     return SYSTEM_STRUKTUR, prompt

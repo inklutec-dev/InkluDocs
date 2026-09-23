@@ -28,6 +28,7 @@ import logging
 import os
 import threading
 import time
+import urllib.parse
 from dataclasses import dataclass
 from typing import Callable, Optional
 
@@ -71,7 +72,9 @@ class Deps:
 _d: Optional[Deps] = None
 _laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "project_id": id}
 _pruefung_laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "seite": n, "seiten": m}
-_korrektur_laeuft: dict[int, dict] = {}  # document_id -> {"seit": ts}  (Korrektur, ggf. mit Nachpruefung)
+_korrektur_laeuft: dict[int, dict] = {}
+_upload_pruefung_laeuft: set = set()      # document_id: veraPDF nach Upload laeuft im Hintergrund
+_upload_pruefung_sperre = threading.Lock()  # document_id -> {"seit": ts}  (Korrektur, ggf. mit Nachpruefung)
 # Sicherheitsdurchgang 22.09.2026: Starts kommen aus dem Endpunkt (Hauptschleife) UND aus Chatbot-Threads.
 # Pruefen-und-Markieren laeuft deshalb atomar unter einer Sperre — sonst koennten zwei Starts denselben
 # Lauf doppelt anstossen und doppelt abrechnen.
@@ -300,16 +303,37 @@ def _verapdf_beim_upload(conn, doc: dict) -> None:
     pfad = doc.get("original_path") or ""
     if not pfad or not os.path.isfile(pfad):
         return
-    v = pdf_tagging.verapdf(pfad, None)
-    bericht = {"quelle": "upload", "zeit": time.strftime("%Y-%m-%d %H:%M:%S"), "verapdf": v}
-    doc["tagging_bericht"] = json.dumps(bericht, ensure_ascii=False)
-    conn.execute("UPDATE documents SET tagging_bericht = ? WHERE id = ?", (doc["tagging_bericht"], doc["id"]))
-    conn.commit()
+    doc_id = doc["id"]
+    with _upload_pruefung_sperre:
+        if doc_id in _upload_pruefung_laeuft:
+            return
+        _upload_pruefung_laeuft.add(doc_id)
+
+    def _im_hintergrund():
+        # Pruefbericht 23.09.2026, Befund 5: veraPDF (synchrones httpx, bis 300 s) darf die Ereignisschleife nicht
+        # blockieren — die Ansicht zeigt das Urteil ab dem naechsten Aufruf.
+        try:
+            v = pdf_tagging.verapdf(pfad, None)
+            bericht = json.dumps({"quelle": "upload", "zeit": time.strftime("%Y-%m-%d %H:%M:%S"), "verapdf": v}, ensure_ascii=False)
+            c = _d.get_db()
+            try:
+                c.execute("UPDATE documents SET tagging_bericht = ? WHERE id = ? AND COALESCE(tagging_bericht, '') = '' "
+                          "AND COALESCE(tagging_status, '') = ''", (bericht, doc_id))
+                c.commit()
+            finally:
+                c.close()
+        except Exception as e:  # noqa: BLE001
+            log.warning("[tagging] veraPDF nach Upload nicht moeglich (Dokument %s): %r", doc_id, e)
+        finally:
+            with _upload_pruefung_sperre:
+                _upload_pruefung_laeuft.discard(doc_id)
+
+    threading.Thread(target=_im_hintergrund, name=f"verapdf-upload-{doc_id}", daemon=True).start()
 
 
 def urteil(doc: dict, struktur: dict, pruef: dict, verapdf: dict) -> dict:
     """GESAMTURTEIL an EINER Stelle (Steve 23.09.2026): stufe + Satz + empfohlene Aktion.
-    stufen: ungetaggt | neu_taggen | verbesserungen | pruefung_empfohlen | in_ordnung | laeuft"""
+    stufen: ungetaggt | neu_taggen | unvollstaendig | verbesserungen | pruefung_empfohlen | in_ordnung | laeuft"""
     getaggt = doc.get("getaggt")
     if doc.get("tagging_status") == STATUS_LAEUFT or pruef.get("laeuft"):
         return {"stufe": "laeuft", "aktion": "", "technisch": None, "ki_hoch": None}
@@ -360,6 +384,7 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
         "getaggt": (None if doc.get("getaggt") is None else bool(doc.get("getaggt"))),
         "status": (STATUS_LAEUFT if laeuft else status),
         "laeuft": laeuft,
+        "fortschritt": ({k: (_laeuft.get(doc["id"]) or {}).get(k) for k in ("seite", "seiten")} if laeuft and (_laeuft.get(doc["id"]) or {}).get("seiten") else None),
         "seiten": seiten,
         "preis": (pruefung or {}).get("preis", 0),
         "verfuegbar_credits": (pruefung or {}).get("verfuegbar"),
@@ -664,7 +689,8 @@ def _lauf_sync(project_id: int, document_id: int, user_id: int, preis: int, spra
             bericht["bilder"] = {"vorher": len(alte), "nachher": len(images), "uebernommen": uebernommen, "methode": methode}
             conn.execute(
                 "UPDATE documents SET original_path = ?, roh_path = COALESCE(NULLIF(roh_path, ''), ?), getaggt = 1, "
-                "tagging_status = ?, tagging_bericht = ? WHERE id = ?",
+                "tagging_status = ?, tagging_bericht = ?, korrektur_bericht = '', pruefung_status = '', pruefung_bericht = '' "
+                "WHERE id = ?",   # neue Datei: alte Pruef-/Korrekturstaende gelten nicht mehr (Pruefbericht Befund 9)
                 (ziel, quelle, STATUS_FERTIG, json.dumps(bericht, ensure_ascii=False), document_id))
             gesamt = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ?", (project_id,)).fetchone()[0]
             fertig = conn.execute("SELECT COUNT(*) FROM images WHERE project_id = ? AND status = 'done'", (project_id,)).fetchone()[0]
@@ -927,9 +953,11 @@ def build_router(deps: Deps) -> APIRouter:
         finally:
             conn.close()
         csv_text = einheitsbericht_csv(doc, _pruef_bericht(doc))
-        name = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in (_d.doc_label(doc) or "dokument"))[:80]
+        name = (_d.doc_label(doc) or "dokument").replace("/", "_").replace("\\", "_")[:80] + "_befunde.csv"
+        ascii_name = name.encode("ascii", "ignore").decode("ascii").replace('"', "") or "befunde.csv"
+        # RFC 6266 (Pruefbericht Befund 14): Kopfzeilen sind latin-1, Namen mit Ł/Č/CJK brachen sonst mit 500 ab
         return Response(content=csv_text.encode("utf-8"), media_type="text/csv; charset=utf-8",
-                        headers={"Content-Disposition": f'attachment; filename="{name}_befunde.csv"'})
+                        headers={"Content-Disposition": "attachment; filename=\"%s\"; filename*=UTF-8''%s" % (ascii_name, urllib.parse.quote(name))})
 
     @router.post("/api/projects/{project_id}/documents/{document_id}/pruefung")
     async def pruefung_starten(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):

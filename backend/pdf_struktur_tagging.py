@@ -36,6 +36,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -60,8 +61,9 @@ _TIMEOUT_SECONDS = int(os.environ.get("PDFIX_STRUKTUR_TIMEOUT", "600"))
 _ROLLE_H = re.compile(r"H[1-6]")
 
 
-class StrukturFehler(Exception):
-    """Nutzertauglicher Grund (nie Pfade, Tracebacks oder Schluessel)."""
+class StrukturFehler(pdf_tagging.TaggingFehler):
+    """Nutzertauglicher Grund (nie Pfade, Tracebacks oder Schluessel). Erbt von TaggingFehler, damit
+    tagging_api._lauf_sync den Grund an den Nutzer weitergibt (Pruefbericht 23.09.2026, Befund 6)."""
 
 
 def aktiv() -> bool:
@@ -86,17 +88,78 @@ def druckbar(text: str) -> bool:
     return any(ch.isprintable() and not ch.isspace() for ch in (text or ""))
 
 
+def _pdf_bbox(rect, rueck) -> list:
+    """PyMuPDF-Rechteck (Ursprung oben links, CropBox und /Rotate eingerechnet) -> PDF-Benutzerkoordinaten
+    [l, b, r, t] (Ursprung unten links, wie PDFix sie erwartet). rueck = ~page.transformation_matrix.
+    Pruefbericht 23.09.2026, Befund 1: vorher hoehe - y, falsch bei versetzter CropBox und gedrehten Seiten."""
+    import fitz
+    r = fitz.Rect(rect) * rueck
+    r.normalize()
+    return [round(r.x0, 1), round(r.y0, 1), round(r.x1, 1), round(r.y1, 1)]
+
+
+MIN_ZEICHNUNGEN_GROSSE_GRAFIK = 40   # ab so vielen komplexen Zeichnungen ist eine (fast) seitenfuellende Gruppe Inhalt
+MAX_ZEICHNUNGEN_JE_SEITE = 4000   # darueber (technische Zeichnung, Karte) keine Vektorgruppen suchen (Rechenzeit)
+
+
+def vektor_gruppen(rechtecke: list, abstand: float = 6.0, mit_anzahl: bool = False) -> list:
+    """Rechtecke, die sich (mit Abstand) beruehren, zu Gruppen vereinigen — ueber ein Raster und Union-Find,
+    also etwa linear statt kubisch (Pruefbericht Befund 2 + 13: vorher ging „|=“ ins Leere und die Schleife begann
+    nach jeder Verschmelzung von vorn). Rueckgabe: Liste vereinigter fitz.Rect; mit_anzahl=True: Liste von
+    (fitz.Rect, Zahl der Zeichnungen in der Gruppe)."""
+    import fitz
+    n = len(rechtecke)
+    eltern = list(range(n))
+
+    def wurzel(i):
+        while eltern[i] != i:
+            eltern[i] = eltern[eltern[i]]
+            i = eltern[i]
+        return i
+
+    zelle = 24.0
+    raster: dict = {}
+    grossen = [fitz.Rect(r) + (-abstand, -abstand, abstand, abstand) for r in rechtecke]
+    for i, g in enumerate(grossen):
+        for cx in range(int(g.x0 // zelle), int(g.x1 // zelle) + 1):
+            for cy in range(int(g.y0 // zelle), int(g.y1 // zelle) + 1):
+                raster.setdefault((cx, cy), []).append(i)
+    for kandidaten in raster.values():
+        for a in range(len(kandidaten)):
+            for b in range(a + 1, len(kandidaten)):
+                i, j = kandidaten[a], kandidaten[b]
+                if grossen[i].intersects(rechtecke[j]):
+                    wi, wj = wurzel(i), wurzel(j)
+                    if wi != wj:
+                        eltern[wj] = wi
+    gruppen: dict = {}
+    anzahl: dict = {}
+    for i, r in enumerate(rechtecke):
+        w = wurzel(i)
+        gruppen[w] = (gruppen[w] | fitz.Rect(r)) if w in gruppen else fitz.Rect(r)
+        anzahl[w] = anzahl.get(w, 0) + 1
+    if mit_anzahl:
+        return [(g, anzahl[w]) for w, g in gruppen.items()]
+    return list(gruppen.values())
+
+
 def struktur_html(pdf_pfad: str) -> list[dict]:
     """Je Seite: {seite, breite, hoehe, fliesstext, zeilen[{id, block, text, size, bold, bbox_pdf, top, left}],
-    bilder[{id, bbox_pdf, breite, hoehe, top, left}], html}. bbox_pdf = (l, b, r, t) mit Ursprung unten links."""
+    bilder[{id, bbox_pdf, breite, hoehe, top, left, vektor?}], felder, html}. bbox_pdf = (l, b, r, t) in
+    PDF-Benutzerkoordinaten (Ursprung unten links, CropBox/Rotate beruecksichtigt); top/left sind Anzeige-
+    koordinaten (oben links) und dienen nur der Lesereihenfolge."""
     import fitz
     seiten: list[dict] = []
     with fitz.open(pdf_pfad) as d:
         for pno, page in enumerate(d, 1):
             hoehe, breite = page.rect.height, page.rect.width
+            rueck = ~page.transformation_matrix
             zeilen: list[dict] = []
             gewicht: dict = {}
+            voll = False
             for bi, b in enumerate(page.get_text("dict").get("blocks", [])):
+                if voll:
+                    break   # Pruefbericht Befund 11: das Zeilenlimit gilt fuer die ganze Seite
                 if b.get("type") != 0:
                     continue
                 for l in b.get("lines", []):
@@ -110,13 +173,14 @@ def struktur_html(pdf_pfad: str) -> list[dict]:
                     bold = any((s.get("flags", 0) & 16) or "bold" in (s.get("font") or "").lower() or "black" in (s.get("font") or "").lower() for s in spans)
                     x0, y0, x1, y1 = l["bbox"]
                     zeilen.append({"id": f"s{pno}z{len(zeilen) + 1}", "block": bi, "text": text, "size": size, "bold": bool(bold),
-                                   "bbox_pdf": [round(x0, 1), round(hoehe - y1, 1), round(x1, 1), round(hoehe - y0, 1)],
-                                   "top": round(y0), "left": round(x0)})
+                                   "bbox_pdf": _pdf_bbox(l["bbox"], rueck), "top": round(y0), "left": round(x0)})
                     gewicht[size] = gewicht.get(size, 0) + len(text)
                     if len(zeilen) >= MAX_ZEILEN_JE_SEITE:
+                        voll = True
                         break
             fliesstext = max(gewicht.items(), key=lambda kv: kv[1])[0] if gewicht else 0.0
             bilder: list[dict] = []
+            raster_rects: list = []
             try:
                 infos = page.get_image_info()
             except Exception:  # noqa: BLE001
@@ -125,7 +189,8 @@ def struktur_html(pdf_pfad: str) -> list[dict]:
                 x0, y0, x1, y1 = info["bbox"]
                 if (x1 - x0) < 20 or (y1 - y0) < 20 or (x1 - x0) * (y1 - y0) > HINTERGRUND_ANTEIL * breite * hoehe:
                     continue   # Winzlinge und ganzseitige Hintergruende sind keine Bilder fuer die Zuordnung
-                bilder.append({"id": f"s{pno}b{len(bilder) + 1}", "bbox_pdf": [round(x0, 1), round(hoehe - y1, 1), round(x1, 1), round(hoehe - y0, 1)],
+                raster_rects.append(fitz.Rect(info["bbox"]))
+                bilder.append({"id": f"s{pno}b{len(bilder) + 1}", "bbox_pdf": _pdf_bbox(info["bbox"], rueck),
                                "breite": round(x1 - x0), "hoehe": round(y1 - y0), "top": round(y0), "left": round(x0)})
             # VEKTORGRAFIK-KANDIDATEN (23.09.2026): komplexe Zeichnungen (Kurven oder viele Linien) werden zu Gruppen
             # zusammengefasst und als Bild-Kandidat ins HTML gegeben (Diagramm, Logo, Illustration); einfache Rechtecke
@@ -134,42 +199,34 @@ def struktur_html(pdf_pfad: str) -> list[dict]:
                 zeichnungen = page.get_drawings()
             except Exception:  # noqa: BLE001
                 zeichnungen = []
-            gruppen = []
-            for dr in zeichnungen:
-                items = dr.get("items") or []
-                komplex = any(it[0] == "c" for it in items) or len(items) > 8
-                r = dr.get("rect")
-                if not komplex or r is None or r.width < 3 or r.height < 3:
-                    continue
-                g = fitz.Rect(r)
-                for vorhandene in gruppen:
-                    if (vorhandene + (-6, -6, 6, 6)).intersects(g):
-                        vorhandene |= g
-                        break
-                else:
-                    gruppen.append(g)
-            zusammen = True
-            while zusammen:
-                zusammen = False
-                for i in range(len(gruppen)):
-                    for j in range(i + 1, len(gruppen)):
-                        if (gruppen[i] + (-6, -6, 6, 6)).intersects(gruppen[j]):
-                            gruppen[i] |= gruppen[j]; del gruppen[j]; zusammen = True; break
-                    if zusammen:
-                        break
-            for g in gruppen:
+            komplexe = []
+            if len(zeichnungen) <= MAX_ZEICHNUNGEN_JE_SEITE:
+                for dr in zeichnungen:
+                    items = dr.get("items") or []
+                    r = dr.get("rect")
+                    if r is None:
+                        continue
+                    r = fitz.Rect(r) & page.rect   # nur der sichtbare Teil (Anschnitt ueber den Seitenrand zaehlt nicht)
+                    if r.is_empty or r.width < 3 or r.height < 3 or r.width * r.height > 0.3 * breite * hoehe:
+                        continue   # grosse Einzelzeichnung = Flaeche/Hintergrund, kein Diagramm-Baustein (Hofor 23.09.)
+                    if any(it[0] == "c" for it in items) or len(items) > 8:
+                        komplexe.append(r)
+            for g, n_zeichnungen in vektor_gruppen(komplexe, mit_anzahl=True):
                 flaeche = g.width * g.height
-                if flaeche < 0.004 * breite * hoehe or flaeche > HINTERGRUND_ANTEIL * breite * hoehe or g.width < 20 or g.height < 20:
+                if flaeche < 0.004 * breite * hoehe or g.width < 20 or g.height < 20:
                     continue
-                if any(fitz.Rect(b["bbox_pdf"][0], hoehe - b["bbox_pdf"][3], b["bbox_pdf"][2], hoehe - b["bbox_pdf"][1]).intersects(g) for b in bilder):
-                    continue   # liegt auf einem Rasterbild: das Rasterbild vertritt die Stelle
-                bilder.append({"id": f"s{pno}b{len(bilder) + 1}", "bbox_pdf": [round(g.x0, 1), round(hoehe - g.y1, 1), round(g.x1, 1), round(hoehe - g.y0, 1)],
+                if flaeche > HINTERGRUND_ANTEIL * breite * hoehe and n_zeichnungen < MIN_ZEICHNUNGEN_GROSSE_GRAFIK:
+                    continue   # grosse Gruppe aus wenigen Formen = Hintergrund/Zierrahmen; aus vielen Pfaden dagegen
+                               # eine ganzseitige Karte oder ein Diagramm (Hofor S. 11, Versorgungskarte, 23.09.)
+                if any((rr & g).get_area() >= 0.5 * g.get_area() for rr in raster_rects):
+                    continue   # ein Rasterbild deckt die Zeichnung ueberwiegend ab und vertritt sie; kleine eingebettete
+                               # Bildstuecke (Symbole, Beschriftungskaestchen) machen ein Diagramm NICHT ueberfluessig (Hofor 23.09.)
+                bilder.append({"id": f"s{pno}b{len(bilder) + 1}", "bbox_pdf": _pdf_bbox(g, rueck),
                                "breite": round(g.width), "hoehe": round(g.height), "top": round(g.y0), "left": round(g.x0), "vektor": True})
             felder = []
             try:
                 for w in page.widgets():
-                    r = w.rect
-                    felder.append([round(r.x0, 1), round(hoehe - r.y1, 1), round(r.x1, 1), round(hoehe - r.y0, 1)])
+                    felder.append(_pdf_bbox(w.rect, rueck))
             except Exception:  # noqa: BLE001
                 pass
             seiten.append({"seite": pno, "breite": breite, "hoehe": hoehe, "fliesstext": fliesstext,
@@ -212,6 +269,14 @@ def seitenbild(pdf_pfad: str, seite: int, ordner: str) -> str:
     with fitz.open(pdf_pfad) as pdf:
         pdf[seite - 1].get_pixmap(dpi=DPI).save(ziel)
     return ziel
+
+
+def _seitenbilder_loeschen(pfade: dict) -> None:
+    for p in pfade.values():
+        try:
+            os.remove(p)
+        except OSError:
+            pass
 
 
 def zuordnung_je_seite(s: dict, seiten_gesamt: int, bild_pfad: str, sprache_dokument: str = "",
@@ -294,11 +359,23 @@ def stilprofil(seiten: list[dict], rollen: dict) -> dict:
     vorher = 0
     geklammert = 0
     letzte_eff: dict = {}   # Stil -> zuletzt vergebene Ebene im laufenden Abschnitt
+    vergeben: dict = {}     # zid -> Ebene (fuer ueberlappende Ueberschriften)
+
+    def _ueberlappt(a, b):
+        return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
     for zid in reihenfolge:
         z = ids_text[zid]
         stil = (z["size"], z["bold"])
         e = min(6, ebene[stil])
-        if stil in letzte_eff:
+        # Ueberlappt der Rahmen eine schon vergebene Ueberschrift derselben Seite, ist es optisch EINE Ueberschrift
+        # (Hofor-Titelseite: „Årsrapport“ im Glyphenrahmen von „2025“): gleiche Ebene. Sonst haengt die Folge von
+        # der Lesereihenfolge ab, und PDFix ordnet solche Zeilen anders als wir (Ebene 2, 1, 3 = Sprung).
+        seite_z = zid.split("z")[0]
+        partner = [v for k, v in vergeben.items() if k.split("z")[0] == seite_z and _ueberlappt(ids_text[k]["bbox_pdf"], z["bbox_pdf"])]
+        if partner:
+            e = min(partner)
+        elif stil in letzte_eff:
             e = letzte_eff[stil]
         elif e > vorher + 1:
             e = vorher + 1
@@ -308,6 +385,7 @@ def stilprofil(seiten: list[dict], rollen: dict) -> dict:
                 del letzte_eff[t_]
         letzte_eff[stil] = e
         rollen[zid] = f"H{e}"
+        vergeben[zid] = e
         vorher = e
     return {"rollen": rollen, "profil": profil, "geklammert": geklammert}
 
@@ -318,7 +396,13 @@ def stilprofil(seiten: list[dict], rollen: dict) -> dict:
 
 # Aufzaehlungszeichen ODER Nummer/Buchstabe mit Punkt/Klammer, danach Leerraum und KEINE Ziffer (sonst waere „23.09.2026“ ein
 # Listenpunkt, Korpus-Lauf 23.09.: Rechnungen zeigten „Liste mit 1 Eintraegen“ fuer Datumszeilen).
-_AUFZAEHLUNG = re.compile(r"^(?:[\u2022\u25a0\u25cf\u25cb\u25aa\u2013\u2014\-\*\u2043\u25ba\u27a2\u2713\u2714]\s*(?=\S)|(?:\d{1,3}[.)]|[a-zA-Z][.)]|\(\d{1,3}\))\s+(?!\d))")
+# Pruefbericht Befund 15: Bindestrich/Sternchen/Gedankenstrich nur MIT Leerraum danach (\u201e-5 %\u201c ist kein Punkt);
+# Einzelbuchstabe nur, wenn nicht eine Abkuerzung folgt (\u201ez. B.\u201c, \u201ed. h.\u201c, \u201eu. a.\u201c, \u201eA. M\u00fcller\u201c mit Grossbuchstabe).
+_AUFZAEHLUNG = re.compile(r"^(?:[\u2022\u25a0\u25cf\u25cb\u25aa\u2043\u25ba\u27a2\u2713\u2714]\s*(?=\S)"
+                          r"|[\-\*\u2013\u2014]\s+(?=\S)"
+                          r"|(?:\d{1,3}[.)]|\(\d{1,3}\))\s+(?!\d)"
+                          r"|[a-z][.)]\s+(?![a-zA-Z\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc]\.)(?=[a-z\u00e4\u00f6\u00fc\u00df(\u201e\"])"
+                          r"|[A-Z]\)\s+(?=\S))")
 _SATZENDE = re.compile(r"[.!?:;]\s*$")
 LISTEN_EINZUG_MIN = 4.0      # Fortsetzungszeile: mindestens so viel weiter rechts als das Aufzaehlungszeichen
 LISTEN_ABSTAND_MAX = 2.2     # ... und hoechstens so viele Zeilenhoehen unter der letzten Zeile des Punktes
@@ -347,13 +431,19 @@ def listen_erkennen(s: dict, rollen: Optional[dict] = None) -> list[list[dict]]:
                      "size": z["size"], "bold": z["bold"]}
             akt.append(punkt)
             continue
-        dicht = punkt is not None and (punkt["unten"] - z["bbox_pdf"][3]) <= LISTEN_ABSTAND_MAX * hoehe
+        # Pruefbericht Befund 8: nur Zeilen UNTER dem Punkt (Abstand >= 0) und in derselben Spalte (waagerechte
+        # Ueberlappung) sind Fortsetzung — sonst haengt sich bei zweispaltigem Satz die Nachbarspalte an.
+        abstand = punkt["unten"] - z["bbox_pdf"][3] if punkt is not None else -1
+        gleiche_spalte = punkt is not None and z["bbox_pdf"][0] < max(bb[2] for bb in punkt["bboxes"]) and z["bbox_pdf"][2] > min(bb[0] for bb in punkt["bboxes"])
+        dicht = punkt is not None and gleiche_spalte and -0.5 <= abstand <= LISTEN_ABSTAND_MAX * hoehe
         haengend = punkt is not None and z["left"] >= punkt["x0"] + LISTEN_EINZUG_MIN
         # gleicher Stil = gleiche Schriftgroesse (Fettdruck nicht: bei „(1) …“-Absaetzen ist oft nur die Nummer fett;
         # Ueberschriften werden ueber ihre Rolle abgefangen, AVV-Nachlauf 23.09.)
         gleicher_stil = punkt is not None and abs(z["size"] - punkt["size"]) <= 0.6
         # Fortsetzung: gleicher Stil UND (haengender Einzug ODER dicht darunter und der Punkt endet nicht mit Satzzeichen)
         # (Korpus-Lauf 23.09.: AVV mit „(1) …“-Absaetzen ohne Einzug zerfiel in 36 Listen mit je einem Punkt)
+        if punkt is not None and not gleiche_spalte:
+            continue   # Zeile einer anderen Spalte: beruehrt die laufende Liste nicht (Pruefbericht Befund 8)
         if dicht and gleicher_stil and (haengend or not _SATZENDE.search(punkt["letzter_text"])):
             punkt["ids"].append(z["id"]); punkt["bboxes"].append(list(z["bbox_pdf"])); punkt["unten"] = z["bbox_pdf"][1]; punkt["letzter_text"] = z["text"]
             continue
@@ -444,8 +534,9 @@ def _grund_aus_ausgabe(stdout: str, stderr: str) -> str:
 
 def schreiben(pdf_in: str, pdf_out: str, plan: dict, arbeitsordner: str) -> dict:
     """Struktur_Schreiben.py ausfuehren; Rueckgabe: dessen Statistik (rollen, artefakte, bilder, tabellen, zeilen_ohne_element)."""
-    plan_pfad = os.path.join(arbeitsordner, f"_struktur_plan_{int(time.time())}.json")
-    with open(plan_pfad, "w", encoding="utf-8") as f:
+    # eindeutiger Name (Pruefbericht Befund 10: parallele Laeufe desselben Nutzers teilen den Upload-Ordner)
+    fd, plan_pfad = tempfile.mkstemp(prefix="_struktur_plan_", suffix=".json", dir=arbeitsordner)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(plan, f, ensure_ascii=False)
     cmd = [sys.executable, str(_SCRIPT), "-i", pdf_in, "-o", pdf_out, "-k", plan_pfad]
     try:
@@ -471,7 +562,8 @@ def schreiben(pdf_in: str, pdf_out: str, plan: dict, arbeitsordner: str) -> dict
 # ---------------------------------------------------------------------------
 
 def technische_schritte(pdf_in: str, pdf_out: str, sprache: dict, arbeitsordner: str) -> dict:
-    konfig_pfad = os.path.join(arbeitsordner, f"_make_accessible_struktur_{int(time.time())}.json")
+    fd, konfig_pfad = tempfile.mkstemp(prefix="_make_accessible_struktur_", suffix=".json", dir=arbeitsordner)
+    os.close(fd)
     konfig = pdf_tagging.konfig_erzeugen(sprache["lang"], sprache["overwrite"], konfig_pfad, struktur_vorgegeben=True)
     cmd = [sys.executable, str(pdf_tagging._SCRIPT), "-i", pdf_in, "-o", pdf_out, "-k", konfig_pfad]
     try:
@@ -531,9 +623,19 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
             zuordnungen[s["seite"]] = {"zeilen": [], "bilder": [], "hat_tabelle": False}
     fertig = [0]
     sperre = threading.Lock()
+    # Seitenbilder VORAB im Hauptthread (Pruefbericht Befund 7: PyMuPDF ist nicht threadsicher); nur die
+    # Modellaufrufe laufen parallel. Die Bilder werden am Ende geloescht (Befund 19: Kundendaten, Plattenplatz).
+    bilder_pfade: dict = {}
+    for s in zu_fragen:
+        try:
+            bilder_pfade[s["seite"]] = seitenbild(pdf_in, s["seite"], arbeitsordner)
+        except Exception as e:  # noqa: BLE001
+            log.warning("[struktur] Seite %s: Seitenbild nicht moeglich: %r", s["seite"], e)
 
     def _eine_seite(s: dict):
-        bild = seitenbild(pdf_in, s["seite"], arbeitsordner)
+        bild = bilder_pfade.get(s["seite"])
+        if not bild:
+            raise StrukturFehler("Seitenbild fehlt")
         return zuordnung_je_seite(s, len(seiten), bild, sprache_dokument=sprache.get("lang") or "", dokument_name=dokument_name)
 
     def _melden():
@@ -559,10 +661,15 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
                     fehler_seiten[s["seite"]] = e
                 _melden()
 
-    _runde(zu_fragen)
-    # Zweiter Anlauf fuer Seiten ohne Zuordnung (meist Drosselung des Anbieters), nacheinander
+    try:
+        _runde(zu_fragen)
+    except BaseException:
+        _seitenbilder_loeschen(bilder_pfade)
+        raise
+    # Zweiter Anlauf fuer Seiten ohne Zuordnung (meist Drosselung des Anbieters), nacheinander — auch wenn in der
+    # ersten Runde ALLE Seiten scheiterten (Befund 18: ein einseitiges Dokument scheiterte sonst am ersten 429)
     offen = [s for s in zu_fragen if s["seite"] in fehler_seiten]
-    if offen and len(offen) < len(zu_fragen):
+    if offen:
         time.sleep(8)
         for s in offen:
             try:
@@ -570,6 +677,7 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
                 fehler_seiten.pop(s["seite"], None)
             except Exception as e:  # noqa: BLE001
                 log.warning("[struktur] Seite %s: auch der zweite Anlauf schlug fehl: %r", s["seite"], e)
+    _seitenbilder_loeschen(bilder_pfade)
     fehlgeschlagen = len(fehler_seiten)
     for seite in sorted(fehler_seiten):
         hinweise.append(f"Seite {seite}: KI-Zuordnung fehlgeschlagen, Seite ohne Überschriften-Vorgabe getaggt")

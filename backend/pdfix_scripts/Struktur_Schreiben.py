@@ -108,6 +108,27 @@ def _zellen_aus_zeilen(tb, zeilen):
     return len(reihen), len(sx), zellen
 
 
+def _grosses_formular_mit_text(page, grenze: float) -> bool:
+    """Gibt es ein Form-XObject ueber der Flaechengrenze, das Textobjekte enthaelt (auch verschachtelt)?"""
+    def hat_text(content, tiefe=0):
+        for j in range(content.GetNumObjects()):
+            o = content.GetObject(j)
+            t = o.GetObjectType()
+            if t == kPdsPageText:
+                return True
+            if t == kPdsPageForm and tiefe < 4 and hat_text(PdsForm(o.obj).GetContent(), tiefe + 1):
+                return True
+        return False
+    c = page.GetContent()
+    for i in range(c.GetNumObjects()):
+        o = c.GetObject(i)
+        if o.GetObjectType() == kPdsPageForm:
+            bb = o.GetBBox()
+            if (bb.right - bb.left) * (bb.top - bb.bottom) > grenze and hat_text(PdsForm(o.obj).GetContent()):
+                return True
+    return False
+
+
 def _daten(b: bytearray):
     return (ctypes.c_ubyte * len(b)).from_buffer(b)
 
@@ -174,7 +195,17 @@ def main():
                 continue
             crop = page.GetCropBox()
             breite, hoehe = crop.right - crop.left, crop.top - crop.bottom
-            stat = {"seite": pno + 1, "hintergrund": 0, "artefakte": 0, "rollen": 0, "bilder": 0, "tabellen": 0, "zeilen_ohne_element": 0}
+            # Grosses Form-XObject MIT Text (LaTeX \\includepdf, Ausschiessen, Druckertreiber packen die ganze Seite
+            # hinein): nicht als Hintergrund ausschliessen, sondern auflösen, damit Text Text bleibt; Bild und
+            # Pfade darin behandeln die Regeln unten (Pruefbericht 23.09.2026, Befund 4).
+            if _grosses_formular_mit_text(page, anteil * breite * hoehe):
+                page.FlattenFormXObjects()
+                page.Release()
+                page = doc.AcquirePage(pno)
+                stat_aufgeloest = True
+            else:
+                stat_aufgeloest = False
+            stat = {"seite": pno + 1, "formulare_aufgeloest": int(stat_aufgeloest), "hintergrund": 0, "artefakte": 0, "rollen": 0, "bilder": 0, "tabellen": 0, "zeilen_ohne_element": 0}
             # 9. Pass 1 (eigene Seitenkarte): Tabellenrahmen + Kopfzellen von PDFix; die Zellen kommen aus unseren
             #    Zeilen. Ein „Tabellen“-Kandidat, dessen Zeilen meist nur EINE Zelle haben (Formular, Beschriftungen mit
             #    Feldern), ist keine Tabelle: dann wird die Tabellenerkennung fuer diese Seite abgeschaltet.
@@ -262,7 +293,8 @@ def main():
                             cm.AddTag("Artifact", d, False)   # NIE mit None als Objekt (Absturz)
                         stat["hintergrund"] += 1
                 elif typ in (kPdsPagePath, kPdsPageShading) and plan.get("vektor_artefakt", True) and not any(
-                        b.get("vektor") and not b.get("artefakt") and _mitte_drin(bb, b["bbox"], rand=4.0) for b in plan_bilder):
+                        b.get("vektor") and not b.get("artefakt") and _mitte_drin(_rect(*b["bbox"]), (bb.left, bb.bottom, bb.right, bb.top), rand=4.0)
+                        for b in plan_bilder):   # Pfad liegt im Diagramm (Pruefbericht 23.09., Befund 3: war verkehrt herum)
                     # VEKTORGRAFIK (Kaestchen, Rahmen, Linien, Flaechen) ist kein Bild (23.09.2026, Mannheimer-Antrag):
                     # sonst haelt PDFix einen Rahmen mit Text darin fuer ein Bild und haengt den Text hinein.
                     # Tabellenrahmen sind schon im Vordurchgang (Pass 1) erkannt; die Zellen kommen aus unseren Zeilen.
@@ -273,6 +305,15 @@ def main():
                     if cm is not None:
                         cm.AddTag("Artifact", d, False)
                     stat["vektor"] = stat.get("vektor", 0) + 1
+                elif typ == kPdsPageImage and (bb.right - bb.left) * (bb.top - bb.bottom) > anteil * breite * hoehe:
+                    # ganzseitiges Rasterbild = Hintergrund (auch nach dem Aufloesen eines Formulars)
+                    o.SetStateFlags(kStateExclude)
+                    d = doc.CreateDictObject(False)
+                    d.PutName("Type", "Layout")
+                    cm = o.GetContentMark()
+                    if cm is not None:
+                        cm.AddTag("Artifact", d, False)
+                    stat["hintergrund"] += 1
                 elif typ == kPdsPageImage and (bb.right - bb.left) > 20 and (bb.top - bb.bottom) > 20:
                     treffer = None
                     for b in plan_bilder:
@@ -319,9 +360,21 @@ def main():
                     pc.SetColNum(cc)
                     pc.SetHeader((rr, cc) in koepfe if gleich and koepfe else (rr == 0 if nc >= 3 else cc == 0))
                 stat["tabellen_vorgegeben"] = stat.get("tabellen_vorgegeben", 0) + 1
-            # 3a. Ueberschriften/Bildunterschriften ueber mehrere Zeilen als EIN initiales Element mit Rolle
-            for r in vorgabe.get("rollen") or []:
-                if int(r.get("zeilen") or 1) < 2 or r.get("tag") not in _ERLAUBT:
+            # 3a. Ueberschriften/Bildunterschriften ueber mehrere Zeilen als EIN initiales Element mit Rolle — ebenso
+            #     Rollen, deren Rahmen sich mit einer anderen Rolle ueberschneiden (Hofor-Titelseite 23.09.: „Årsrapport“
+            #     liegt im Glyphenrahmen der 242-pt-Ziffern „2025“; ohne Vorgabe verschmolz PDFix beide, die H2 ging
+            #     verloren und es entstand ein Ebenensprung). Kleinste zuerst, damit die grosse nicht die kleine schluckt.
+            rollen_v = [r for r in (vorgabe.get("rollen") or []) if r.get("tag") in _ERLAUBT]
+            rahmen = [_rect(*r["bbox"]) for r in rollen_v]
+
+            def _schneidet(a, b):
+                return a.left < b.right and b.left < a.right and a.bottom < b.top and b.bottom < a.top
+
+            ueberlapp = {i for i in range(len(rollen_v)) for j in range(len(rollen_v))
+                         if i != j and _schneidet(rahmen[i], rahmen[j])}
+            for i in sorted(range(len(rollen_v)), key=lambda i: (rahmen[i].right - rahmen[i].left) * (rahmen[i].top - rahmen[i].bottom)):
+                r = rollen_v[i]
+                if int(r.get("zeilen") or 1) < 2 and i not in ueberlapp:
                     continue
                 e = pm.CreateElement(kPdeText, None)
                 if e:

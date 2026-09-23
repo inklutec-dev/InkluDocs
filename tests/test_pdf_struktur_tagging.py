@@ -186,6 +186,95 @@ class FormularUndVektorTest(unittest.TestCase):
         self.assertIn('data-art="vektorzeichnung"', seiten[0]["html"])
 
 
+class PruefberichtTest(unittest.TestCase):
+    """Befunde des unabhaengigen Pruefberichts 23.09.2026 (Nummern im Namen)."""
+
+    def _pdf(self, t, name, bau):
+        import fitz
+        pfad = os.path.join(t, name)
+        d = fitz.open(); bau(d); d.save(pfad); d.close()
+        return pfad
+
+    def test_b1_koordinaten_cropbox_und_rotate(self):
+        import fitz
+        with tempfile.TemporaryDirectory() as t:
+            def bau(d):
+                p = d.new_page(width=595, height=842)
+                p.insert_text((100, 200), "Referenzzeile", fontsize=12)   # Grundlinie y=200 von oben -> PDF y ~ 642
+            ref = st.struktur_html(self._pdf(t, "ref.pdf", bau))[0]["zeilen"][0]["bbox_pdf"]
+            def bau_crop(d):
+                bau(d); d[0].set_cropbox(fitz.Rect(50, 50, 545, 792))
+            crop = st.struktur_html(self._pdf(t, "crop.pdf", bau_crop))[0]["zeilen"][0]["bbox_pdf"]
+            def bau_rot(d):
+                bau(d); d[0].set_rotation(90)
+            rot = st.struktur_html(self._pdf(t, "rot.pdf", bau_rot))[0]["zeilen"][0]["bbox_pdf"]
+        for a, b in ((ref, crop), (ref, rot)):
+            for x, y in zip(a, b):
+                self.assertAlmostEqual(x, y, delta=1.0, msg=f"{a} vs {b}")   # immer dieselben PDF-Benutzerkoordinaten
+        self.assertGreater(ref[1], 600)                                      # Ursprung unten links
+
+    def test_b2_vektorgruppe_aus_mehreren_pfaden(self):
+        import fitz
+        rechts = [fitz.Rect(100 + i * 12, 300, 110 + i * 12, 400) for i in range(10)]   # 10 Balken, je 2 pt Luecke
+        g = st.vektor_gruppen(rechts)
+        self.assertEqual(len(g), 1)
+        self.assertEqual((round(g[0].x0), round(g[0].x1)), (100, 218))
+        self.assertEqual(len(st.vektor_gruppen([fitz.Rect(0, 0, 10, 10), fitz.Rect(100, 100, 110, 110)])), 2)
+
+    def test_ganzseitige_karte_bleibt_grafik(self):
+        """Hofor S. 11 (23.09.): eine seitenfuellende Gruppe aus VIELEN Pfaden ist eine Karte/ein Diagramm, eine aus
+        WENIGEN Formen ein Hintergrund."""
+        import fitz
+        with tempfile.TemporaryDirectory() as t:
+            def karte(d):
+                p = d.new_page(width=595, height=842)
+                for i in range(10):
+                    for j in range(13):
+                        p.draw_circle((30 + i * 55, 40 + j * 58), 30)   # 130 beruehrende Kurven, ~550 x 760 pt
+                p.insert_text((40, 20), "Versorgungsgebiet", fontsize=10)
+            def hintergrund(d):
+                p = d.new_page(width=595, height=842)
+                for i in range(5):
+                    for j in range(7):
+                        p.draw_circle((50 + i * 110, 60 + j * 115), 58)   # 35 grosse Kreise = Zierflaeche
+                p.insert_text((40, 20), "Text", fontsize=10)
+            k = st.struktur_html(self._pdf(t, "karte.pdf", karte))[0]["bilder"]
+            h = st.struktur_html(self._pdf(t, "hg.pdf", hintergrund))[0]["bilder"]
+        self.assertEqual([b.get("vektor") for b in k], [True])
+        self.assertEqual(h, [])
+        g = st.vektor_gruppen([fitz.Rect(0, 0, 10, 10), fitz.Rect(12, 0, 22, 10)], mit_anzahl=True)
+        self.assertEqual([n for _, n in g], [2])
+
+    def test_ueberlappende_ueberschriften_gleiche_ebene(self):
+        """Hofor-Titelseite (23.09.): „Årsrapport“ liegt im Glyphenrahmen von „2025“. Beide sind optisch EINE
+        Ueberschrift und bekommen dieselbe Ebene — sonst entsteht je nach Lesereihenfolge ein Sprung (2, 1, 3)."""
+        def z(pno, n, size, bold, box, top):
+            return {"id": f"s{pno}z{n}", "block": n, "text": "x", "size": size, "bold": bold, "bbox_pdf": box, "top": top, "left": box[0]}
+        seiten = [{"seite": 1, "zeilen": [z(1, 1, 242, True, [357, 33, 811, 308], 290), z(1, 2, 19, False, [709, 281, 790, 303], 292)]},
+                  {"seite": 2, "zeilen": [z(2, 1, 15, True, [480, 490, 590, 508], 90)]},
+                  {"seite": 3, "zeilen": [z(3, 1, 15, True, [480, 490, 590, 508], 90)]}]
+        r = st.stilprofil(seiten, {"s1z1": "H1", "s1z2": "H1", "s2z1": "H1", "s3z1": "H1"})["rollen"]
+        self.assertEqual((r["s1z1"], r["s1z2"], r["s2z1"]), ("H1", "H1", "H2"))
+
+    def test_b8_zweispaltige_liste(self):
+        def z(n, top, left, text, rechts):
+            return {"id": f"s1z{n}", "block": n, "text": text, "size": 10, "bold": False,
+                    "bbox_pdf": [left, 800 - top, rechts, 812 - top], "top": top, "left": left}
+        s = {"seite": 1, "zeilen": [z(1, 100, 50, "• Punkt links", 250), z(2, 100, 320, "Text der rechten Spalte", 540),
+                                    z(3, 114, 60, "Fortsetzung links", 250)]}
+        l = st.listen_erkennen(s)
+        self.assertEqual([pkt["ids"] for pkt in l[0]], [["s1z1", "s1z3"]])   # rechte Spalte gehoert nicht dazu
+
+    def test_b6_fehler_erreichen_den_nutzer(self):
+        self.assertTrue(issubclass(st.StrukturFehler, pdf_tagging.TaggingFehler))
+
+    def test_b15_abkuerzungen_keine_listenpunkte(self):
+        for text in ("z. B. so", "d. h. also", "u. a. Text", "A. Müller schreibt", "-5 % Rabatt"):
+            self.assertIsNone(st._AUFZAEHLUNG.match(text), text)
+        for text in ("• Punkt", "- Punkt", "1. Erster", "(2) Zweiter", "a) klein", "A) Überschwemmung"):
+            self.assertIsNotNone(st._AUFZAEHLUNG.match(text), text)
+
+
 class KonfigStrukturTest(unittest.TestCase):
     def test_konfig_ohne_strukturerkennung(self):
         with tempfile.TemporaryDirectory() as t:
@@ -229,9 +318,36 @@ class SchreibwegTest(unittest.TestCase):
             self.assertGreaterEqual(b["nachher"]["ueberschriften"], 1)
             self.assertEqual(b["struktur"]["ueberschriften"], 1)
             self.assertEqual(b["struktur"]["geschrieben"]["rollen"], 1)
-            self.assertNotIn("fix_headings", [a for a in b["konfig"].get("entfernt", [])])   # nur Info: Bericht traegt konfig
+            self.assertTrue(any("heading" in (x or "").lower() for x in b["konfig"].get("entfernt", [])))   # fix_headings entfernt
             from pdf_export import pdf_hat_tags
             self.assertTrue(pdf_hat_tags(out))
+
+
+    def test_b4_ganze_seite_in_einem_formular(self):
+        """LaTeX \\includepdf / Ausschiessen: die ganze Seite steckt in einem Form-XObject -> Text muss Text bleiben."""
+        import fitz
+        with tempfile.TemporaryDirectory() as t:
+            quelle = os.path.join(t, "q.pdf"); ziel_q = os.path.join(t, "formular.pdf")
+            d = fitz.open(); p = d.new_page(width=595, height=842)
+            p.insert_text((72, 100), "Kapitel Eins", fontsize=18)
+            p.insert_text((72, 140), "Ein Absatz mit Inhalt, der vorgelesen werden muss.", fontsize=11)
+            d.save(quelle); d.close()
+            src = fitz.open(quelle); dz = fitz.open(); pz = dz.new_page(width=595, height=842)
+            pz.show_pdf_page(pz.rect, src, 0); dz.save(ziel_q); dz.close(); src.close()
+
+            class _Out:
+                def __init__(self, d): self._d = d
+                def model_dump(self): return self._d
+            seiten = st.struktur_html(ziel_q); erste = seiten[0]["zeilen"][0]["id"]
+            def fake_call(model, prompt, image_path, schema, max_tokens, temperature, system):
+                return _Out({"zeilen": [{"id": erste, "rolle": "H1", "beleg": "groß"}], "bilder": [], "hat_tabelle": False})
+            with mock.patch.object(st.llm_client, "call_with_schema", side_effect=fake_call):
+                out = os.path.join(t, "fertig.pdf")
+                b = st.taggen(ziel_q, out, "de", arbeitsordner=t)
+            self.assertEqual(b["struktur"]["zeilen_ohne_element"], 0)
+            self.assertGreaterEqual(b["nachher"]["ueberschriften"], 1)
+            self.assertGreaterEqual(b["nachher"]["absaetze"], 1)
+            self.assertFalse([f for f in os.listdir(t) if ".struktur_p" in f])   # Seitenbilder aufgeraeumt (Befund 19)
 
 
 if __name__ == "__main__":

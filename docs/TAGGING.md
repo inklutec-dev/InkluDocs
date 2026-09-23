@@ -111,7 +111,10 @@ Alt-Texte werden nach denselben Regeln wieder übernommen (E2E `verify_tagging_u
 „preislich reden wir nochmal“; PDFix nennt ~1 Cent je Seite als eigene Kosten). Die Wache
 vor dem Lauf verlangt das volle Guthaben, verbucht wird nach Erfolg.
 
-## Bekannte Grenzen (Stand 22.09.2026)
+## Bekannte Grenzen (Stand 22.09.2026, PDFix-Weg)
+
+Gilt für den reinen PDFix-Weg (`PDF_TAGGING_WEG` nicht gesetzt). Der Weg „Struktur zuerst“ löst die Überschriften-Fehler und hat eigene Grenzen, siehe dort.
+
 
 - Auto-Tagging macht Fehler, die wir schon gesehen haben: nummerierte Überschriften
   („1. Ausgangslage“) werden Listenpunkte; nur die Schriftgröße entscheidet. Der Tagging-Schritt
@@ -376,14 +379,14 @@ Ablauf je Dokument (in `tagging_api._lauf_sync`, wenn `PDF_TAGGING_WEG=struktur`
 1. **Struktur-HTML** rein rechnerisch aus der PDF (PyMuPDF): je Textzeile Kennung `s<Seite>z<n>`, Schriftgröße, Fettdruck, Lage; je Bild `s<Seite>b<n>`. Keine KI.
 2. **Zuordnung** durch das Modell, ein Aufruf je Seite mit Seitenbild: nur Überschriften, Artefakte (Kolumnentitel, Seitenzahl, Verlagszeile), Bildunterschriften; je Bild inhaltlich oder Schmuck; hat die Seite eine Tabelle. Das Modell wählt nur Kennung und Rolle, es schreibt keinen Text.
 3. **Nachprüfung + Stilprofil**: unbekannte Kennungen fallen weg, vergessene Bilder gelten als inhaltlich. Die Überschriften-EBENE kommt nicht vom Modell (seitenlokal), sondern aus dem Stil dokumentweit (Größe, fett), Titelseiten-Stile schieben nichts nach unten; Klammer-Pass in Lesereihenfolge: kein Ebenensprung, gleicher Stil im selben Abschnitt = gleiche Ebene.
-4. **Schreiben** (`Struktur_Schreiben.py`): ganzseitige Form-XObjects (Hintergrund) von der Erkennung ausschließen und als Artefakt markieren (sonst hängt PDFix den Text darauf in ein Bild), Tabellenerkennung je Seite über die Vorlage, Artefakte und Schmuckbilder als initiale Elemente, `CreateElements`, Rollen per `SetTag`, Bilder als Figure (Alt bleibt leer, der Export trägt ihn nach), Tabellen mit Kopfspalte, `AddTags`. Seiteninhalt bleibt byteweise gleich.
+4. **Schreiben** (`Struktur_Schreiben.py`): ganzseitige Form-XObjects (Hintergrund) von der Erkennung ausschließen und als Artefakt markieren (sonst hängt PDFix den Text darauf in ein Bild), Pfade/Schattierungen und Schmuckbilder im Inhalt als Artefakt markieren (Stand abends, siehe unten), Tabellen aus dem Vordurchgang mit Zellen aus unseren Zeilen, Listen, mehrzeilige oder überlappende Rollen und Artefakt-Zeilen als initiale Elemente, `CreateElements`, übrige Rollen per `SetTag`, Bilder als Figure (Alt bleibt leer, der Export trägt ihn nach), Tabellenköpfe: erkannte Kopfzeile/-spalte, sonst erste Zeile ab 3 Spalten, sonst erste Spalte; `AddTags`. Seiteninhalt bleibt byteweise gleich.
 5. **Technische Schritte**: Jörgs Make Accessible mit `konfig_erzeugen(..., struktur_vorgegeben=True)` — ohne `add_tags` und ohne `fix_headings` (füllt Sprünge mit LEEREN H-Tags, die ein Screenreader als „Überschrift, leer“ liest).
 
 Bericht wie beim PDFix-Weg plus `weg: "struktur"` und `struktur: {modell, modell_dauer_s, ueberschriften, artefakte, bilder_inhaltlich, bilder_schmuck, verworfen, stilprofil, geklammert, geschrieben}`; Hinweise nennen Zeilen ohne Element (Vollständigkeit) und Seiten ohne KI-Zuordnung.
 
 Ergebnis am Ritterturnier (Michael Karbe, 15 Seiten): veraPDF PDF/UA-1 ohne Befund, 39 Überschriften ohne Sprung und ohne leere Tags, verlorener Text von Seite 3 im Baum; KI-Gegenprobe 40 statt 76 Befunde (Rest: Alt-Text-Platzhalter, umbrochene Listenpunkte, verschmolzene Bilder).
 
-Grenzen (23.09.): gescannte PDFs ohne Textebene gehen nicht (Fehlermeldung); Text ÜBER Bildern landet bei PDFix im Bild; benachbarte Zeichnungen werden zu einer Figure verschmolzen; Listen mit umbrochenen Zeilen zerfallen; Tabellen erkennt weiterhin PDFix. Testmodus verfälscht PDFix-Text mit „*“, daher läuft aller Textabgleich über PyMuPDF. Schalter/Env: `PDF_TAGGING_WEG`, `PDF_STRUKTUR_MODEL`, `PDF_STRUKTUR_DPI`, `PDF_STRUKTUR_HINTERGRUND_ANTEIL`, `PDFIX_STRUKTUR_TIMEOUT`. Tests: `tests/test_pdf_struktur_tagging.py` (Struktur-HTML, Nachprüfung, Stilprofil, Plan, Konfiguration, Schreibweg mit Modell-Ersatz).
+Grenzen (Stand 23.09. abends): gescannte PDFs ohne Textebene gehen nicht (Fehlermeldung); Text ÜBER Bildern und Beschriftungen in Karten/Diagrammen landen bei PDFix im Bild (gelesen wird der Alt-Text — für Karten muss er die Beschriftung tragen); benachbarte Zeichnungen werden zu einer Figure verschmolzen; verschachtelte Listen erscheinen flach; Tabellen-KANDIDATEN findet PDFix, ob sie übernommen werden und welche Zellen sie haben, bestimmen wir. Testmodus verfälscht PDFix-Text mit „*“, daher läuft aller Textabgleich über PyMuPDF. Schalter/Env: `PDF_TAGGING_WEG`, `PDF_STRUKTUR_MODEL`, `PDF_STRUKTUR_DPI`, `PDF_STRUKTUR_HINTERGRUND_ANTEIL`, `PDF_STRUKTUR_PARALLEL` (gleichzeitige Modellaufrufe, Vorgabe 4), `PDFIX_STRUKTUR_TIMEOUT`. Tests: `tests/test_pdf_struktur_tagging.py` (Struktur-HTML, Nachprüfung, Stilprofil, Plan, Konfiguration, Schreibweg mit Modell-Ersatz).
 
 ### Formulare, Vektorgrafik, Tabellen, mehrzeilige Überschriften (23.09.2026 abends, Mannheimer-Antrag)
 
@@ -398,3 +401,10 @@ Anlass: Der Mannheimer-Antrag (Versicherungsformular, 6 Seiten) lief technisch d
 - **CSV-Export:** Zellen, die mit `=`, `+`, `-`, `@`, Tab oder CR beginnen, bekommen ein Hochkomma (Formel-Injektion; Text stammt aus fremden PDFs).
 
 Messung (gleiche Gemini-Zuordnung, nur Schreibweg geändert): Mannheimer 96 → 0 Scheingrafiken, 23 → 0 Grafiken mit Text, 35 → 0 Zeilen ohne Element, Titel eine H1, 4 Tabellen (Beitragsermittlung als Tabelle); Infografik Diagramm bleibt Figure; Hofor-Bericht 7 Tabellen, 20 Grafiken (18 Fotos + Diagramme); Ritterturnier unverändert. Tests: `FormularUndVektorTest`, `UrteilTest`, `test_csv_formel_injektion_entschaerft`.
+
+### Diagramme, Karten und überlappende Überschriften (23.09.2026 nachts, Hofor-Bericht)
+
+- **Vektorgruppen:** einzelne Zeichnungen werden auf den sichtbaren Seitenteil beschnitten; eine Einzelzeichnung über 30 % der Seite ist Fläche/Hintergrund und kein Diagramm-Baustein. Eine Gruppe entfällt nur, wenn ein Rasterbild sie zu mindestens 50 % abdeckt (dann vertritt das Foto sie); kleine eingebettete Bildstücke machen ein Diagramm nicht überflüssig.
+- **Ganzseitige Karten/Diagramme:** Eine Gruppe über `PDF_STRUKTUR_HINTERGRUND_ANTEIL` (60 %) der Seite gilt nur dann als Hintergrund, wenn sie aus weniger als `MIN_ZEICHNUNGEN_GROSSE_GRAFIK` (40) komplexen Zeichnungen besteht. Hofor S. 11 (Versorgungskarte): vorher rund 50 Ortsnamen als lose Absätze, jetzt zwei Karten-Figures.
+- **Überlappende Überschriften:** Rollen, deren Rahmen sich überschneiden (Hofor-Titel: „Årsrapport“ im Glyphenrahmen der 242-pt-Ziffern „2025“), legt `Struktur_Schreiben.py` als initiale Elemente an, kleinste zuerst — sonst verschmolz PDFix beide und eine Überschrift ging verloren. Das Stilprofil gibt überlappenden Überschriften derselben Seite dieselbe Ebene, damit die Folge nicht von der Lesereihenfolge abhängt (vorher 2, 1, 3 = Sprung).
+- Messung danach (gleiche Gemini-Zuordnung): Mannheimer, Infografik, Ritterturnier unverändert; Hofor 1 Vektorkarte, 14 Grafiken, 23 Überschriften; alle vier ohne Ebenensprung. Tests: `test_ganzseitige_karte_bleibt_grafik`, `test_ueberlappende_ueberschriften_gleiche_ebene`.

@@ -22,7 +22,7 @@ class StrukturZeile(BaseModel):
                          "höchste Ebene, die auf dieser Seite vorkommt); Artefakt = Kolumnentitel (auf jeder Seite wiederholter "
                          "Buch- oder Kapiteltitel), Seitenzahl, Verlags- oder Fußzeile, Schmucktext ohne Informationswert; "
                          "Caption = Bildunterschrift. Normale Absätze und Listenpunkte NICHT nennen, sie bleiben Text.")
-    beleg: str = Field("", max_length=200, description="Was auf der Seite sichtbar ist (Größe, Fettdruck, Lage), in einem Halbsatz.")
+    beleg: str = Field("", max_length=80, description="Stichwort, was auf der Seite sichtbar ist (z. B. „groß, fett, allein“).")
 
 
 class StrukturBild(BaseModel):
@@ -31,7 +31,6 @@ class StrukturBild(BaseModel):
     inhaltlich: bool = Field(..., description="true = das Bild trägt Inhalt (Illustration mit Motiv, Foto, Diagramm, Vorlage zum Ausschneiden, "
                                               "Logo mit Text); false = reiner Schmuck ohne Aussage (Rahmen, Hintergrund, Linie, Zierleiste). "
                                               "Im Zweifel true.")
-    alt: str = Field("", max_length=300, description="Kurzer Alt-Text-Vorschlag für inhaltliche Bilder in der Sprache des Dokuments; leer bei Schmuck.")
 
 
 class StrukturSeiteOutput(BaseModel):

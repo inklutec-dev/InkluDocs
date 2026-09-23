@@ -38,9 +38,10 @@ def _verapdf_cmd(pdf_path: str) -> list:
     """veraPDF-Aufruf: Launcher-Skript aus dem Image; Java kommt von Debian."""
     launcher = "/opt/verapdf/verapdf"
     if os.path.exists(launcher):
-        return ["sh", launcher, "-f", "ua1", "--format", "json", pdf_path]
+        return ["sh", launcher, "-f", "ua1", "--format", "json", "--maxfailuresdisplayed", "100000", pdf_path]
     return ["java", "-cp", "/opt/verapdf/bin/*", "org.verapdf.apps.GreenfieldCliWrapper",
-            "-f", "ua1", "--format", "json", pdf_path]
+            "-f", "ua1", "--format", "json", "--maxfailuresdisplayed", "100000", pdf_path]
+    # --maxfailuresdisplayed: sonst nur 100 Checks je Regel -> Seitenliste unvollstaendig (Pruefbericht Befund 16)
 
 
 _VERAPDF_VERSION = None
