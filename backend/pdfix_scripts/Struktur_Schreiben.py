@@ -175,41 +175,6 @@ def main():
             crop = page.GetCropBox()
             breite, hoehe = crop.right - crop.left, crop.top - crop.bottom
             stat = {"seite": pno + 1, "hintergrund": 0, "artefakte": 0, "rollen": 0, "bilder": 0, "tabellen": 0, "zeilen_ohne_element": 0}
-            # 1. Hintergrund-Formulare ausschliessen + Artefakt-Marke; Bildobjekte aus dem Plan ausschliessen
-            content = page.GetContent()
-            plan_bilder = list(vorgabe.get("bilder") or [])
-            eigene_bilder = []   # (PdsPageObject, bbox) -> nach AddTags als Figure
-            for i in range(content.GetNumObjects()):
-                o = content.GetObject(i)
-                typ = o.GetObjectType()
-                bb = o.GetBBox()
-                if typ == kPdsPageForm:
-                    if (bb.right - bb.left) * (bb.top - bb.bottom) > anteil * breite * hoehe:
-                        o.SetStateFlags(kStateExclude)
-                        d = doc.CreateDictObject(False)
-                        d.PutName("Type", "Layout")
-                        cm = o.GetContentMark()
-                        if cm is not None:
-                            cm.AddTag("Artifact", d, False)   # NIE mit None als Objekt (Absturz)
-                        stat["hintergrund"] += 1
-                elif typ == kPdsPageImage and (bb.right - bb.left) > 20 and (bb.top - bb.bottom) > 20:
-                    treffer = None
-                    for b in plan_bilder:
-                        if _mitte_drin(bb, b["bbox"], rand=6.0):
-                            treffer = b
-                            break
-                    if treffer is None:
-                        continue   # nicht im Plan (z. B. Winzling): PDFix entscheidet
-                    o.SetStateFlags(kStateExclude)
-                    if treffer.get("artefakt"):
-                        d = doc.CreateDictObject(False)
-                        d.PutName("Type", "Layout")
-                        cm = o.GetContentMark()
-                        if cm is not None:
-                            cm.AddTag("Artifact", d, False)
-                        stat["artefakte"] += 1
-                    else:
-                        eigene_bilder.append((o, (bb.left, bb.bottom, bb.right, bb.top)))
             # 9. Pass 1 (eigene Seitenkarte): Tabellenrahmen + Kopfzellen von PDFix; die Zellen kommen aus unseren
             #    Zeilen. Ein „Tabellen“-Kandidat, dessen Zeilen meist nur EINE Zelle haben (Formular, Beschriftungen mit
             #    Feldern), ist keine Tabelle: dann wird die Tabellenerkennung fuer diese Seite abgeschaltet.
@@ -245,7 +210,6 @@ def main():
                 # Seite neu holen: die Vorlage (Template) wirkt nur auf eine frisch angelegte Seitenkarte
                 page.Release()
                 page = doc.AcquirePage(pno)
-                content = page.GetContent()
                 felder = [tuple(f) for f in (vorgabe.get("felder") or [])]
                 for (tb, r1, c1, koepfe) in kandidaten:
                     # Formularfelder im Kandidaten: ein Formular ist keine Tabelle
@@ -263,6 +227,41 @@ def main():
                         continue
                     echte += 1
                     tabellen_vorgabe.append((tb, r1, c1, koepfe, nr, nc, zellen))
+            # 1. Hintergrund-Formulare ausschliessen + Artefakt-Marke; Bildobjekte aus dem Plan ausschliessen
+            content = page.GetContent()
+            plan_bilder = list(vorgabe.get("bilder") or [])
+            eigene_bilder = []   # (PdsPageObject, bbox) -> nach AddTags als Figure
+            for i in range(content.GetNumObjects()):
+                o = content.GetObject(i)
+                typ = o.GetObjectType()
+                bb = o.GetBBox()
+                if typ == kPdsPageForm:
+                    if (bb.right - bb.left) * (bb.top - bb.bottom) > anteil * breite * hoehe:
+                        o.SetStateFlags(kStateExclude)
+                        d = doc.CreateDictObject(False)
+                        d.PutName("Type", "Layout")
+                        cm = o.GetContentMark()
+                        if cm is not None:
+                            cm.AddTag("Artifact", d, False)   # NIE mit None als Objekt (Absturz)
+                        stat["hintergrund"] += 1
+                elif typ == kPdsPageImage and (bb.right - bb.left) > 20 and (bb.top - bb.bottom) > 20:
+                    treffer = None
+                    for b in plan_bilder:
+                        if _mitte_drin(bb, b["bbox"], rand=6.0):
+                            treffer = b
+                            break
+                    if treffer is None:
+                        continue   # nicht im Plan (z. B. Winzling): PDFix entscheidet
+                    o.SetStateFlags(kStateExclude)
+                    if treffer.get("artefakt"):
+                        d = doc.CreateDictObject(False)
+                        d.PutName("Type", "Layout")
+                        cm = o.GetContentMark()
+                        if cm is not None:
+                            cm.AddTag("Artifact", d, False)
+                        stat["artefakte"] += 1
+                    else:
+                        eigene_bilder.append((o, (bb.left, bb.bottom, bb.right, bb.top)))
             # 2. Tabellenerkennung je Seite: aus, wenn das Modell keine Tabelle sieht oder nur unechte Kandidaten da sind
             keine_tabellen = (not vorgabe.get("tabellen", True)) or (unechte > 0 and echte == 0)
             _template_setzen(pdfix, doc, vorlage, {"text_table_detect": "0", "graphic_table_detect": "0", "form_table_detect": "0"} if keine_tabellen else {})
