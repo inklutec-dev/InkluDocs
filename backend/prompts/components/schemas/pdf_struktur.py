@@ -41,4 +41,3 @@ class StrukturSeiteOutput(BaseModel):
     hat_tabelle: bool = Field(..., description="true, wenn die Seite sichtbar eine Tabelle enthält: ein Raster aus Zeilen und Spalten ODER "
                                                "Beschriftung-Wert-Paare in zwei Spalten (wie ein Impressum). Aufzählungen und Text in "
                                                "Kästen sind KEINE Tabelle.")
-    zusammenfassung: str = Field("", max_length=600, description="Ein bis zwei Sätze: was die Seite zeigt.")

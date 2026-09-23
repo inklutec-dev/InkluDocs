@@ -175,7 +175,7 @@ class SchreibwegTest(unittest.TestCase):
             m = re.search(r"Seite (\d+) von \d+", prompt)
             pno = int(m.group(1)) if m else 1
             zeilen = [{"id": erste, "rolle": "H1", "beleg": "Test"}] if pno == 1 else []
-            return _Out({"zeilen": zeilen, "bilder": [], "hat_tabelle": False, "zusammenfassung": "Test"})
+            return _Out({"zeilen": zeilen, "bilder": [], "hat_tabelle": False})
 
         with tempfile.TemporaryDirectory() as t, mock.patch.object(st.llm_client, "call_with_schema", side_effect=fake_call):
             out = os.path.join(t, "fertig.pdf")

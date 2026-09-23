@@ -172,7 +172,7 @@ def zuordnung_je_seite(s: dict, seiten_gesamt: int, bild_pfad: str, sprache_doku
     system, prompt = build_struktur_prompt(s["html"], seite=s["seite"], seiten_gesamt=seiten_gesamt,
                                            fliesstext=s["fliesstext"], sprache_dokument=sprache_dokument, dokument_name=dokument_name)
     out = llm_client.call_with_schema(model=modell or MODELL, prompt=prompt, image_path=bild_pfad, schema=StrukturSeiteOutput,
-                                      max_tokens=8000, temperature=0.0, system=system)   # 3000 reichte nicht: Denken + Antwort -> MAX_TOKENS (23.09.)
+                                      max_tokens=3000, temperature=0.0, system=system)   # Schleifen kamen vom Freitextfeld zusammenfassung (entfernt 23.09.), nicht vom Limit
     return out.model_dump()
 
 

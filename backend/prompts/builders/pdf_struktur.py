@@ -72,7 +72,7 @@ Das Bild zeigt diese Seite. Das STRUKTUR-HTML enthält die Zeilen und Bilder die
 {html}
 ===== ENDE STRUKTUR-HTML =====
 
-Schreibe beleg, alt und zusammenfassung in der Sprache des Dokuments.
+Schreibe beleg und alt in der Sprache des Dokuments, jeweils kurz.
 
 {render_schema_for_prompt(StrukturSeiteOutput)}"""
     return SYSTEM_STRUKTUR, prompt
