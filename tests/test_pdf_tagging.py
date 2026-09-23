@@ -311,6 +311,26 @@ class LaufTest(unittest.TestCase):
             self.assertIn("Set Document Language (de-DE)", json.dumps(bericht["konfig"]) + "Set Document Language (de-DE)")
 
 
+class UrteilTest(unittest.TestCase):
+    """GESAMTURTEIL (23.09.2026): ein Satz je Dokument."""
+
+    def test_stufen(self):
+        import tagging_api as ta
+        pr_leer = {"status": "", "laeuft": False, "seiten": 15, "bericht": {}}
+        self.assertEqual(ta.urteil({"getaggt": 0}, {}, pr_leer, {})["stufe"], "ungetaggt")
+        self.assertEqual(ta.urteil({"getaggt": 1}, {"elemente": 366, "ueberschriften": 0}, pr_leer, {})["stufe"], "neu_taggen")   # Ritterturnier aus InDesign
+        self.assertEqual(ta.urteil({"getaggt": 1}, {"elemente": 2, "ueberschriften": 0}, pr_leer, {})["stufe"], "neu_taggen")
+        self.assertEqual(ta.urteil({"getaggt": 1}, {"elemente": 50, "ueberschriften": 4}, pr_leer, {"bestanden": True})["stufe"], "pruefung_empfohlen")
+        self.assertEqual(ta.urteil({"getaggt": 1}, {"elemente": 50, "ueberschriften": 4}, pr_leer, {"bestanden": False})["stufe"], "verbesserungen")
+        pr_ok = {"status": "fertig", "laeuft": False, "seiten": 3, "bericht": {"anzahl": {"hoch": 0, "mittel": 1, "niedrig": 0, "auto": 0}}}
+        u = ta.urteil({"getaggt": 1}, {"elemente": 50, "ueberschriften": 4}, pr_ok, {"bestanden": True})
+        self.assertEqual((u["stufe"], u["aktion"]), ("in_ordnung", "export"))
+        pr_befunde = {"status": "fertig", "laeuft": False, "seiten": 3, "bericht": {"anzahl": {"hoch": 5, "mittel": 0, "niedrig": 0, "auto": 2}}}
+        u = ta.urteil({"getaggt": 1}, {"elemente": 50, "ueberschriften": 4}, pr_befunde, {"bestanden": True})
+        self.assertEqual((u["stufe"], u["aktion"], u["ki_hoch"]), ("verbesserungen", "korrektur", 5))
+        self.assertEqual(ta.urteil({"getaggt": 1, "tagging_status": "laeuft"}, {}, pr_leer, {})["stufe"], "laeuft")
+
+
 class EinheitsberichtTest(unittest.TestCase):
     """23.09.2026 (Michaels Punkte 6/7/10/12): PDF/UA- und KI-Befunde in EINER Liste, nur Probleme, CSV."""
 

@@ -284,8 +284,57 @@ def _seiten(doc: dict) -> int:
         return 0
 
 
+def _verapdf_beim_upload(conn, doc: dict) -> None:
+    """GESAMTURTEIL (23.09.2026, Steve): Eine hochgeladene PDF MIT Tags bekommt einmalig eine PDF/UA-Pruefung
+    (veraPDF, kostenlos, Sekunden), damit die Karte sofort sagen kann, ob etwas zu tun ist. Ergebnis im
+    tagging_bericht mit quelle=upload; kein Tagging-Lauf. Ein Ausfall des Pruefdienstes wird nicht wiederholt
+    (Merker), damit die Ansicht nicht bei jedem Aufruf wartet."""
+    if not doc.get("getaggt") or doc.get("tagging_status") or doc.get("tagging_bericht"):
+        return
+    pfad = doc.get("original_path") or ""
+    if not pfad or not os.path.isfile(pfad):
+        return
+    v = pdf_tagging.verapdf(pfad, None)
+    bericht = {"quelle": "upload", "zeit": time.strftime("%Y-%m-%d %H:%M:%S"), "verapdf": v}
+    doc["tagging_bericht"] = json.dumps(bericht, ensure_ascii=False)
+    conn.execute("UPDATE documents SET tagging_bericht = ? WHERE id = ?", (doc["tagging_bericht"], doc["id"]))
+    conn.commit()
+
+
+def urteil(doc: dict, struktur: dict, pruef: dict, verapdf: dict) -> dict:
+    """GESAMTURTEIL an EINER Stelle (Steve 23.09.2026): stufe + Satz + empfohlene Aktion.
+    stufen: ungetaggt | neu_taggen | verbesserungen | pruefung_empfohlen | in_ordnung | laeuft"""
+    getaggt = doc.get("getaggt")
+    if doc.get("tagging_status") == STATUS_LAEUFT or pruef.get("laeuft"):
+        return {"stufe": "laeuft", "aktion": "", "technisch": None, "ki_hoch": None}
+    if not getaggt:
+        return {"stufe": "ungetaggt", "aktion": "tagging", "technisch": None, "ki_hoch": None}
+    elemente = int(struktur.get("elemente") or 0)
+    ueberschriften = int(struktur.get("ueberschriften") or 0)
+    seiten = int(pruef.get("seiten") or 0)
+    technisch = (bool(verapdf.get("bestanden")) if verapdf else None)
+    pb = pruef.get("bericht") or {}
+    ki_fertig = pruef.get("status") == STATUS_FERTIG and isinstance(pb.get("anzahl"), dict)
+    ki_hoch = int((pb.get("anzahl") or {}).get("hoch") or 0) if ki_fertig else None
+    ki_auto = int((pb.get("anzahl") or {}).get("auto") or 0) if ki_fertig else 0
+    # Struktur unbrauchbar: fast leerer Baum oder ohne eine einzige Ueberschrift bei mehreren Seiten
+    if elemente < 3 or (seiten >= 2 and ueberschriften == 0 and elemente >= 20):
+        return {"stufe": "neu_taggen", "aktion": "tagging", "technisch": technisch, "ki_hoch": ki_hoch}
+    if ki_fertig:
+        if ki_hoch == 0 and technisch is not False:
+            return {"stufe": "in_ordnung", "aktion": "export", "technisch": technisch, "ki_hoch": 0}
+        return {"stufe": "verbesserungen", "aktion": ("korrektur" if ki_auto else "bericht"), "technisch": technisch, "ki_hoch": ki_hoch}
+    if technisch is False:
+        return {"stufe": "verbesserungen", "aktion": "pruefung", "technisch": False, "ki_hoch": None}
+    return {"stufe": "pruefung_empfohlen", "aktion": "pruefung", "technisch": technisch, "ki_hoch": None}
+
+
 def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
     """Alles, was die Ansicht „Dokument“ zum Tagging braucht."""
+    try:
+        _verapdf_beim_upload(conn, doc)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[tagging] veraPDF beim Upload nicht moeglich: %r", e)
     seiten = _seiten(doc)
     pruefung = _d.billing.aktion_pruefung(user_id, AKTION, seiten) if seiten else None
     alt = conn.execute(
@@ -311,6 +360,12 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
         "projekt_status": project.get("status"),
         "pruefung": pruefung_stand(conn, doc, user_id, seiten),
     }
+
+
+def stand_mit_urteil(conn, project: dict, doc: dict, user_id: int, struktur: dict) -> dict:
+    s = stand(conn, project, doc, user_id)
+    s["urteil"] = urteil(doc, struktur, s["pruefung"], _verapdf_stand(doc))
+    return s
 
 
 def _struktur(doc: dict) -> dict:
@@ -339,7 +394,7 @@ def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
         eintrag["felder"] = int(conn.execute("SELECT COUNT(*) FROM formularfelder WHERE document_id = ?", (d["id"],)).fetchone()[0] or 0)
         eintrag["seiten"] = _seiten(d)
         eintrag["struktur"] = _struktur(d)
-        eintrag["tagging"] = stand(conn, project, d, user_id)
+        eintrag["tagging"] = stand_mit_urteil(conn, project, d, user_id, eintrag["struktur"])
         aussen.append(eintrag)
     projekt_aussen = {k: project.get(k) for k in _PROJEKT_FELDER}
     projekt_aussen["hat_felder"] = sum(e["felder"] for e in aussen)

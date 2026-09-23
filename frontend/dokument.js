@@ -302,6 +302,20 @@
         return n ? t('Prüfung von „{name}“ fertig: {n} Befunde.', { name: name, n: n }) : t('Prüfung von „{name}“ fertig: keine Befunde.', { name: name });
     }
 
+    // GESAMTURTEIL (23.09.2026, Steve): ein Satz je Dokument, was zu tun ist — statt veraPDF und KI-Befunde selbst zu deuten.
+    function urteilHtml(project, d, tg, busy) {
+        const u = tg.urteil;
+        if (!u || u.stufe === 'laeuft') return '';
+        const tech = u.technisch === true ? t('technisch in Ordnung (PDF/UA)') : (u.technisch === false ? t('technisch mit Befunden (PDF/UA)') : t('technische Prüfung fehlt'));
+        let text = '', cls = 'badge-muted';
+        if (u.stufe === 'ungetaggt') { text = t('Keine Struktur: Die PDF muss barrierefrei gemacht werden.'); cls = 'badge-warn'; }
+        else if (u.stufe === 'neu_taggen') { text = t('Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen.'); cls = 'badge-warn'; }
+        else if (u.stufe === 'in_ordnung') { text = t('In Ordnung: Struktur geprüft, nichts zu tun. Export möglich.'); cls = 'badge-ok'; }
+        else if (u.stufe === 'verbesserungen') { text = (u.ki_hoch != null ? t('Verbesserungen möglich: {n} sichere Befunde, {tech}.', { n: u.ki_hoch, tech: tech }) : t('Verbesserungen möglich: {tech}. KI-Prüfung starten.', { tech: tech })); cls = 'badge-warn'; }
+        else if (u.stufe === 'pruefung_empfohlen') { text = t('{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt.', { tech: tech.charAt(0).toUpperCase() + tech.slice(1) }); cls = 'badge-muted'; }
+        return '<p class="dok-urteil" id="dok_urteil_' + d.id + '"><span class="badge ' + cls + '">' + t('Urteil') + '</span> ' + text + '</p>';
+    }
+
     function karteHtml(project, d, pos) {
         const name = esc(docDisplayName(d));
         const tg = d.tagging || {};
@@ -326,6 +340,7 @@
             +   '<dt>' + t('Bilder') + '</dt><dd>' + bilderZeile + '</dd>'
             +   ((d.felder || 0) > 0 ? '<dt>' + t('Formularfelder') + '</dt><dd>' + t('{n} Felder', { n: d.felder }) + '</dd>' : '')
             + '</dl>'
+            + urteilHtml(project, d, tg, busy)
             + (tg.modus === 'testmodus' && !tg.laeuft ? '<p class="feld-hinweis">' + t('Das Tagging läuft im Testmodus von PDFix, bis die Freischaltung in der Lizenz vorliegt.') + '</p>' : '')
             + '<div class="ausgabe-aktionen">'
             +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')

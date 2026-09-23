@@ -222,6 +222,8 @@ async def _kette(project_id: int, user_id: int, plan: dict, ui_lang: str, sprach
     except asyncio.CancelledError:
         stand["schritt"] = "fehler"
         stand["zusammenfassung"] = "Die Kette wurde durch einen Neustart des Servers abgebrochen."
+
+        stand["zusammenfassung"] = (stand["zusammenfassung"] + " Bitte Alt-Texte und Quickinfos in den Ansichten prüfen, dann exportieren.").strip()   # Steve 23.09.2026
         raise
     except Exception as e:  # noqa: BLE001
         log.exception("[kette] Projekt %s", project_id)
