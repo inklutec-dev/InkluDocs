@@ -302,7 +302,9 @@ def listen_erkennen(s: dict, rollen: Optional[dict] = None) -> list[list[dict]]:
             continue
         dicht = punkt is not None and (punkt["unten"] - z["bbox_pdf"][3]) <= LISTEN_ABSTAND_MAX * hoehe
         haengend = punkt is not None and z["left"] >= punkt["x0"] + LISTEN_EINZUG_MIN
-        gleicher_stil = punkt is not None and abs(z["size"] - punkt["size"]) <= 0.6 and z["bold"] == punkt["bold"]
+        # gleicher Stil = gleiche Schriftgroesse (Fettdruck nicht: bei „(1) …“-Absaetzen ist oft nur die Nummer fett;
+        # Ueberschriften werden ueber ihre Rolle abgefangen, AVV-Nachlauf 23.09.)
+        gleicher_stil = punkt is not None and abs(z["size"] - punkt["size"]) <= 0.6
         # Fortsetzung: gleicher Stil UND (haengender Einzug ODER dicht darunter und der Punkt endet nicht mit Satzzeichen)
         # (Korpus-Lauf 23.09.: AVV mit „(1) …“-Absaetzen ohne Einzug zerfiel in 36 Listen mit je einem Punkt)
         if dicht and gleicher_stil and (haengend or not _SATZENDE.search(punkt["letzter_text"])):
