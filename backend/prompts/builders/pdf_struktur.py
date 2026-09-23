@@ -44,7 +44,8 @@ REGELN (verbindlich):
   Vorlagen zum Ausschneiden, Logos mit Text. Schmuck sind nur Rahmen, Hintergründe, Linien und Zierleisten
   ohne Aussage. Im Zweifel inhaltlich. Inhaltliche Bilder bekommen einen kurzen Alt-Text-Vorschlag.
 - hat_tabelle: true bei einem Raster aus Zeilen und Spalten ODER bei Beschriftung-Wert-Paaren in zwei Spalten
-  (Impressum, Steckbrief). Aufzählungen und Text in Kästen sind KEINE Tabelle.
+  (Impressum, Steckbrief). Aufzählungen, Text in Kästen und FORMULARE (Beschriftungen mit Eingabefeldern) sind
+  KEINE Tabelle.
 - Kennungen EXAKT übernehmen, keine erfinden. Im Zweifel keine Zuordnung: eine nicht genannte Zeile bleibt
   ein normaler Absatz, das ist kein Fehler."""
 

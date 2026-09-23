@@ -18,6 +18,10 @@
 #       Tabellen: erste Spalte als Kopfzellen;
 #    6. Vollstaendigkeit: jede Vorgabezeile, die kein Textelement trifft, wird gezaehlt (zeilen_ohne_element);
 #    7. AddTags in das Document-Element;
+#    9. TABELLENZELLEN AUS UNSEREN ZEILEN (23.09.2026, Tabellentest Rechnung): Pass 1 laesst PDFix die Tabellen-
+#       RAHMEN finden; die ZELLEN kommen dann aus den Zeilen des Struktur-HTML (Zeilenbaender x Spaltencluster) und
+#       werden als initiale kPdeTable/kPdeCell vorgegeben — zusammengezogene Zellen (IBAN+BIC+Verwendungszweck in
+#       einer Zelle) sind damit getrennt. Kopfzellen: wie PDFix in Pass 1, sonst Kopfzeile ab 3 Spalten, sonst Kopfspalte.
 #    8. BILDER JE OBJEKT (23.09.2026, Bildtest): Bildobjekte, die im Plan stehen, werden VOR der Erkennung
 #       ausgeschlossen (sonst haengt PDFix Text darauf ins Bild und verschmilzt Nachbarbilder) und NACH AddTags
 #       je Objekt als eigene Figure (AddNewChild + AddPageObject) in Lesereihenfolge eingehaengt; Schmuckbilder
@@ -64,6 +68,44 @@ def _walk(el, fn):
         c = el.GetChild(i)
         if c and c.GetType() not in (kPdeWord, kPdeTextRun, kPdeTextLine):
             _walk(c, fn)
+
+
+def _zellen_aus_zeilen(tb, zeilen):
+    """(zeilen_n, spalten_n, {(r, c): [bbox...]}) fuer Zeilen-Rahmen innerhalb des Tabellenrahmens tb=(l,b,r,t)."""
+    drin = [z for z in zeilen if tb[0] - 2 <= z[0] and z[2] <= tb[2] + 2 and tb[1] - 2 <= z[1] and z[3] <= tb[3] + 2]
+    if len(drin) < 2:
+        return 0, 0, {}
+    drin.sort(key=lambda z: (-z[3], z[0]))
+    baender = []
+    for z in drin:
+        if baender and abs(baender[-1][0] - z[3]) < 4:
+            baender[-1][1].append(z)
+        else:
+            baender.append([z[3], [z]])
+    spalten = []
+    for x in sorted(set(round(z[0]) for z in drin)):
+        if spalten and x - spalten[-1][-1] < 15:
+            spalten[-1].append(x)
+        else:
+            spalten.append([x])
+    sx = [s[0] for s in spalten]
+
+    def _spalte(z):
+        return max(i for i, x in enumerate(sx) if z[0] >= x - 2)
+
+    # Ein Zeilenband ohne Eintrag in der ERSTEN Spalte setzt die Zelle(n) der Zeile darueber fort
+    # (umbrochene Beschreibung in einer Rechnungsposition) — es wird keine eigene Tabellenzeile.
+    reihen = []
+    for _top, zs in baender:
+        if reihen and not any(_spalte(z) == 0 for z in zs):
+            reihen[-1].extend(zs)
+        else:
+            reihen.append(list(zs))
+    zellen = {}
+    for r, zs in enumerate(reihen):
+        for z in zs:
+            zellen.setdefault((r, _spalte(z)), []).append(z)
+    return len(reihen), len(sx), zellen
 
 
 def _daten(b: bytearray):
@@ -171,6 +213,54 @@ def main():
             # 2. Tabellenerkennung je Seite
             _template_setzen(pdfix, doc, vorlage, {} if vorgabe.get("tabellen", True) else {"text_table_detect": "0", "graphic_table_detect": "0"})
             pm = page.AcquirePageMap()
+            # 9. Pass 1: Tabellenrahmen + Kopfzellen von PDFix, dann Karte leeren; Zellen kommen aus unseren Zeilen
+            tabellen_vorgabe = []
+            if vorgabe.get("tabellen", True) and vorgabe.get("zeilen"):
+                pm.CreateElements()
+
+                def _sammeln(el):
+                    if el.GetType() == kPdeTable:
+                        bb = el.GetBBox()
+                        tb = PdeTable(el.obj)
+                        koepfe = set()
+                        for rr in range(tb.GetNumRows()):
+                            for cc in range(tb.GetNumCols()):
+                                cell = tb.GetCell(rr, cc)
+                                if cell and PdeCell(cell.obj).GetHeader():
+                                    koepfe.add((rr, cc))
+                        tabellen_vorgabe.append(((bb.left, bb.bottom, bb.right, bb.top), tb.GetNumRows(), tb.GetNumCols(), koepfe))
+                    for i in range(el.GetNumChildren()):
+                        c2 = el.GetChild(i)
+                        if c2 and c2.GetType() not in (kPdeWord, kPdeTextRun, kPdeTextLine):
+                            _sammeln(c2)
+
+                root1 = pm.GetElement()
+                if root1:
+                    _sammeln(root1)
+                pm.RemoveElements()
+            for (tb, r1, c1, koepfe) in tabellen_vorgabe:
+                nr, nc, zellen = _zellen_aus_zeilen(tb, vorgabe.get("zeilen") or [])
+                if nr < 2 or nc < 2:
+                    continue
+                T = pm.CreateElement(kPdeTable, None)
+                if not T:
+                    continue
+                T.SetBBox(_rect(*tb))
+                T.SetFlags(kElemInitial)
+                PdeTable(T.obj).SetNumRows(nr)
+                PdeTable(T.obj).SetNumCols(nc)
+                gleich = (nr == r1 and nc == c1)
+                for (rr, cc), zs in sorted(zellen.items()):
+                    cell = pm.CreateElement(kPdeCell, T)
+                    if not cell:
+                        continue
+                    cell.SetBBox(_rect(min(z[0] for z in zs), min(z[1] for z in zs), max(z[2] for z in zs), max(z[3] for z in zs)))
+                    cell.SetFlags(kElemInitial | kElemNoSplit)
+                    pc = PdeCell(cell.obj)
+                    pc.SetRowNum(rr)
+                    pc.SetColNum(cc)
+                    pc.SetHeader((rr, cc) in koepfe if gleich and koepfe else (rr == 0 if nc >= 3 else cc == 0))
+                stat["tabellen_vorgegeben"] = stat.get("tabellen_vorgegeben", 0) + 1
             # 3. initiale Artefakte
             for box in vorgabe.get("artefakte") or []:
                 e = pm.CreateElement(kPdeText, None)
@@ -231,11 +321,12 @@ def main():
                 elif t == kPdeTable:
                     tb = PdeTable(el.obj)
                     stat["tabellen"] += 1
-                    for rr in range(tb.GetNumRows()):
-                        for cc in range(tb.GetNumCols()):
-                            cell = tb.GetCell(rr, cc)
-                            if cell:
-                                PdeCell(cell.obj).SetHeader(cc == 0)
+                    if not tabellen_vorgabe:   # ohne Vorgabe: Kopfspalte als Rueckfall
+                        for rr in range(tb.GetNumRows()):
+                            for cc in range(tb.GetNumCols()):
+                                cell = tb.GetCell(rr, cc)
+                                if cell:
+                                    PdeCell(cell.obj).SetHeader(cc == 0)
 
             root = pm.GetElement()
             if root:

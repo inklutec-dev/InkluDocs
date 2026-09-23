@@ -119,6 +119,13 @@ class ListenTest(unittest.TestCase):
             z(8, 240, 52, "1. Erster Schritt"), z(9, 254, 52, "2. Zweiter Schritt")]}
         listen = st.listen_erkennen(s)
         self.assertEqual(len(listen), 2)
+        # Datum ist kein Listenpunkt; „(1) …“-Absaetze ohne Einzug: Folgezeile ohne Satzende gehoert dazu, naechste Nummer bleibt in derselben Liste
+        s2 = {"seite": 1, "zeilen": [z(1, 100, 50, "Datum: 23.09.2026"), z(2, 114, 50, "23.09.2026 Lieferung"),
+                                    z(3, 140, 50, "(1) Der Auftragnehmer verarbeitet Daten nur"), z(4, 154, 50, "im Auftrag des Verantwortlichen."),
+                                    z(5, 168, 50, "(2) Weisungen erfolgen schriftlich.")]}
+        l2 = st.listen_erkennen(s2)
+        self.assertEqual(len(l2), 1)
+        self.assertEqual([pkt["ids"] for pkt in l2[0]], [["s1z3", "s1z4"], ["s1z5"]])
         self.assertEqual([len(pkt["ids"]) for pkt in listen[0]], [1, 1, 3])      # dritter Punkt mit zwei Fortsetzungszeilen
         self.assertEqual(listen[0][2]["ids"], ["s1z4", "s1z5", "s1z6"])
         self.assertEqual([pkt["ids"] for pkt in listen[1]], [["s1z8"], ["s1z9"]])

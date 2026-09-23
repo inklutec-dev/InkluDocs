@@ -262,7 +262,10 @@ def stilprofil(seiten: list[dict], rollen: dict) -> dict:
 # B3: Listen deterministisch aus dem Struktur-HTML (23.09.2026, Listentest Seite 4 Ritterturnier)
 # ---------------------------------------------------------------------------
 
-_AUFZAEHLUNG = re.compile(r"^(?:[\u2022\u25a0\u25cf\u25cb\u25aa\u2013\u2014\-\*\u2043\u25ba\u27a2\u2713\u2714]|\d{1,3}[.)]|[a-zA-Z][.)]|\(\d{1,3}\))\s*")
+# Aufzaehlungszeichen ODER Nummer/Buchstabe mit Punkt/Klammer, danach Leerraum und KEINE Ziffer (sonst waere „23.09.2026“ ein
+# Listenpunkt, Korpus-Lauf 23.09.: Rechnungen zeigten „Liste mit 1 Eintraegen“ fuer Datumszeilen).
+_AUFZAEHLUNG = re.compile(r"^(?:[\u2022\u25a0\u25cf\u25cb\u25aa\u2013\u2014\-\*\u2043\u25ba\u27a2\u2713\u2714]\s*(?=\S)|(?:\d{1,3}[.)]|[a-zA-Z][.)]|\(\d{1,3}\))\s+(?!\d))")
+_SATZENDE = re.compile(r"[.!?:;]\s*$")
 LISTEN_EINZUG_MIN = 4.0      # Fortsetzungszeile: mindestens so viel weiter rechts als das Aufzaehlungszeichen
 LISTEN_ABSTAND_MAX = 2.2     # ... und hoechstens so viele Zeilenhoehen unter der letzten Zeile des Punktes
 
@@ -278,11 +281,15 @@ def listen_erkennen(s: dict) -> list[list[dict]]:
     for z in zeilen:
         hoehe = max(z["bbox_pdf"][3] - z["bbox_pdf"][1], 1.0)
         if _AUFZAEHLUNG.match(z["text"]) and len(z["text"]) > 1:
-            punkt = {"ids": [z["id"]], "bboxes": [list(z["bbox_pdf"])], "x0": z["left"], "unten": z["bbox_pdf"][1]}
+            punkt = {"ids": [z["id"]], "bboxes": [list(z["bbox_pdf"])], "x0": z["left"], "unten": z["bbox_pdf"][1], "letzter_text": z["text"]}
             akt.append(punkt)
             continue
-        if punkt is not None and z["left"] >= punkt["x0"] + LISTEN_EINZUG_MIN and (punkt["unten"] - z["bbox_pdf"][3]) <= LISTEN_ABSTAND_MAX * hoehe:
-            punkt["ids"].append(z["id"]); punkt["bboxes"].append(list(z["bbox_pdf"])); punkt["unten"] = z["bbox_pdf"][1]
+        dicht = punkt is not None and (punkt["unten"] - z["bbox_pdf"][3]) <= LISTEN_ABSTAND_MAX * hoehe
+        haengend = punkt is not None and z["left"] >= punkt["x0"] + LISTEN_EINZUG_MIN
+        # Fortsetzung: haengender Einzug ODER dicht darunter und der Punkt endet nicht mit Satzzeichen
+        # (Korpus-Lauf 23.09.: AVV mit „(1) …“-Absaetzen ohne Einzug zerfiel in 36 Listen mit je einem Punkt)
+        if dicht and (haengend or not _SATZENDE.search(punkt["letzter_text"])):
+            punkt["ids"].append(z["id"]); punkt["bboxes"].append(list(z["bbox_pdf"])); punkt["unten"] = z["bbox_pdf"][1]; punkt["letzter_text"] = z["text"]
             continue
         if akt:
             listen.append(akt)
