@@ -17,7 +17,11 @@
 #       Bilder: SetTag("Figure") + SetAlt (nur wenn vorgegeben; leer bleibt leer, der Export traegt Alt-Texte nach);
 #       Tabellen: erste Spalte als Kopfzellen;
 #    6. Vollstaendigkeit: jede Vorgabezeile, die kein Textelement trifft, wird gezaehlt (zeilen_ohne_element);
-#    7. AddTags in das Document-Element.
+#    7. AddTags in das Document-Element;
+#    8. BILDER JE OBJEKT (23.09.2026, Bildtest): Bildobjekte, die im Plan stehen, werden VOR der Erkennung
+#       ausgeschlossen (sonst haengt PDFix Text darauf ins Bild und verschmilzt Nachbarbilder) und NACH AddTags
+#       je Objekt als eigene Figure (AddNewChild + AddPageObject) in Lesereihenfolge eingehaengt; Schmuckbilder
+#       werden im Inhalt als Artefakt markiert. Alt bleibt leer (Export/Pipeline).
 #
 #  Aufruf: python3 Struktur_Schreiben.py -i <pdf> -o <pdf_out> -k <plan.json>
 #     plan.json (Listen: "listen": [[{"bboxes": [[l,b,r,t], ...]}, ...], ...] — je Liste die Punkte, je Punkt seine
@@ -129,21 +133,41 @@ def main():
             crop = page.GetCropBox()
             breite, hoehe = crop.right - crop.left, crop.top - crop.bottom
             stat = {"seite": pno + 1, "hintergrund": 0, "artefakte": 0, "rollen": 0, "bilder": 0, "tabellen": 0, "zeilen_ohne_element": 0}
-            # 1. Hintergrund-Formulare ausschliessen + Artefakt-Marke
+            # 1. Hintergrund-Formulare ausschliessen + Artefakt-Marke; Bildobjekte aus dem Plan ausschliessen
             content = page.GetContent()
+            plan_bilder = list(vorgabe.get("bilder") or [])
+            eigene_bilder = []   # (PdsPageObject, bbox) -> nach AddTags als Figure
             for i in range(content.GetNumObjects()):
                 o = content.GetObject(i)
-                if o.GetObjectType() != kPdsPageForm:
-                    continue
+                typ = o.GetObjectType()
                 bb = o.GetBBox()
-                if (bb.right - bb.left) * (bb.top - bb.bottom) > anteil * breite * hoehe:
+                if typ == kPdsPageForm:
+                    if (bb.right - bb.left) * (bb.top - bb.bottom) > anteil * breite * hoehe:
+                        o.SetStateFlags(kStateExclude)
+                        d = doc.CreateDictObject(False)
+                        d.PutName("Type", "Layout")
+                        cm = o.GetContentMark()
+                        if cm is not None:
+                            cm.AddTag("Artifact", d, False)   # NIE mit None als Objekt (Absturz)
+                        stat["hintergrund"] += 1
+                elif typ == kPdsPageImage and (bb.right - bb.left) > 20 and (bb.top - bb.bottom) > 20:
+                    treffer = None
+                    for b in plan_bilder:
+                        if _mitte_drin(bb, b["bbox"], rand=6.0):
+                            treffer = b
+                            break
+                    if treffer is None:
+                        continue   # nicht im Plan (z. B. Winzling): PDFix entscheidet
                     o.SetStateFlags(kStateExclude)
-                    d = doc.CreateDictObject(False)
-                    d.PutName("Type", "Layout")
-                    cm = o.GetContentMark()
-                    if cm is not None:
-                        cm.AddTag("Artifact", d, False)   # NIE mit None als Objekt (Absturz)
-                    stat["hintergrund"] += 1
+                    if treffer.get("artefakt"):
+                        d = doc.CreateDictObject(False)
+                        d.PutName("Type", "Layout")
+                        cm = o.GetContentMark()
+                        if cm is not None:
+                            cm.AddTag("Artifact", d, False)
+                        stat["artefakte"] += 1
+                    else:
+                        eigene_bilder.append((o, (bb.left, bb.bottom, bb.right, bb.top)))
             # 2. Tabellenerkennung je Seite
             _template_setzen(pdfix, doc, vorlage, {} if vorgabe.get("tabellen", True) else {"text_table_detect": "0", "graphic_table_detect": "0"})
             pm = page.AcquirePageMap()
@@ -154,13 +178,7 @@ def main():
                     e.SetBBox(_rect(box[0] - 3, box[1] - 3, box[2] + 3, box[3] + 3))
                     e.SetFlags(kElemInitial | kElemArtifact)
                     stat["artefakte"] += 1
-            for b in vorgabe.get("bilder") or []:
-                if b.get("artefakt"):
-                    e = pm.CreateElement(kPdeImage, None)
-                    if e:
-                        e.SetBBox(_rect(*b["bbox"]))
-                        e.SetFlags(kElemInitial | kElemArtifact)
-                        stat["artefakte"] += 1
+            # (Schmuckbilder sind oben bereits als Artefakt im Inhalt markiert)
             # 3b. Listen vorgeben (Aufzaehlungszeichen + Einzug aus dem Struktur-HTML)
             for liste in vorgabe.get("listen") or []:
                 alle = [bb for pkt in liste for bb in (pkt.get("bboxes") or [])]
@@ -225,6 +243,34 @@ def main():
             stat["zeilen_ohne_element"] = sum(1 for g in getroffen if not g)
             # 7. Tags schreiben
             pm.AddTags(doc_el, False, PdfTagsParams())
+            # 8. Bilder je Objekt als eigene Figure in Lesereihenfolge (vor dem ersten Kind, das unter der Bildoberkante beginnt)
+            for (o, bb) in sorted(eigene_bilder, key=lambda x: (-x[1][3], x[1][0])):
+                idx = doc_el.GetNumChildren()
+                for k in range(doc_el.GetNumChildren()):
+                    if doc_el.GetChildType(k) != kPdsStructChildElement:
+                        continue
+                    kind = tree.GetStructElementFromObject(doc_el.GetChildObject(k))
+                    if kind is None:
+                        continue
+                    try:
+                        seite_kind = kind.GetPageNumber(0)
+                    except Exception:  # noqa: BLE001
+                        seite_kind = -1
+                    if seite_kind != pno:
+                        if seite_kind > pno:
+                            idx = k
+                            break
+                        continue
+                    try:
+                        cb = kind.GetBBox(pno)
+                    except Exception:  # noqa: BLE001
+                        continue
+                    if cb is not None and cb.top < bb[3] - 1.0:
+                        idx = k
+                        break
+                fig = doc_el.AddNewChild("Figure", idx)
+                if fig is not None and fig.AddPageObject(o, -1):
+                    stat["bilder"] += 1
             pm.Release()
             page.Release()
             ergebnis["seiten"].append(stat)

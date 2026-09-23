@@ -439,6 +439,18 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
                 fortschritt(s["seite"], len(seiten))
             except Exception:  # noqa: BLE001
                 pass
+    # Zweiter Anlauf fuer Seiten ohne Zuordnung (meist Drosselung des Anbieters, 23.09.2026: Seite 6 im API-Lauf)
+    offen = [s for s in seiten if s["seite"] not in zuordnungen and (s["zeilen"] or s["bilder"])]
+    if offen and fehlgeschlagen < len(seiten):
+        time.sleep(8)
+        for s in offen:
+            try:
+                bild = seitenbild(pdf_in, s["seite"], arbeitsordner)
+                zuordnungen[s["seite"]] = zuordnung_je_seite(s, len(seiten), bild, sprache_dokument=sprache.get("lang") or "", dokument_name=dokument_name)
+                fehlgeschlagen -= 1
+                hinweise = [h for h in hinweise if not h.startswith(f"Seite {s['seite']}: KI-Zuordnung")]
+            except Exception as e:  # noqa: BLE001
+                log.warning("[struktur] Seite %s: auch der zweite Anlauf schlug fehl: %r", s["seite"], e)
     if fehlgeschlagen and fehlgeschlagen >= len(seiten):
         raise StrukturFehler("Die KI-Anfrage ist fehlgeschlagen. Bitte später erneut versuchen.")
     modell_dauer = round(time.time() - t_modell, 1)
