@@ -20,7 +20,10 @@
 #    7. AddTags in das Document-Element.
 #
 #  Aufruf: python3 Struktur_Schreiben.py -i <pdf> -o <pdf_out> -k <plan.json>
-#     plan.json: {"sprache": "de-DE", "hintergrund_anteil": 0.6, "seiten": [
+#     plan.json (Listen: "listen": [[{"bboxes": [[l,b,r,t], ...]}, ...], ...] — je Liste die Punkte, je Punkt seine
+#       Zeilen; sie werden VOR CreateElements als kPdeList mit kPdeText-Kindern (kElemInitial|kElemNoSplit) vorgegeben,
+#       so bleibt ein umbrochener Punkt EIN Listeneintrag, Listentest 23.09.2026):
+#                {"sprache": "de-DE", "hintergrund_anteil": 0.6, "seiten": [
 #        {"seite": 1, "artefakte": [[l,b,r,t], ...], "rollen": [{"bbox": [l,b,r,t], "tag": "H2"}, ...],
 #         "bilder": [{"bbox": [l,b,r,t], "alt": "", "artefakt": false}, ...], "tabellen": true,
 #         "zeilen": [[l,b,r,t], ...]}]}   (PDF-Koordinaten, Ursprung unten links)
@@ -158,6 +161,25 @@ def main():
                         e.SetBBox(_rect(*b["bbox"]))
                         e.SetFlags(kElemInitial | kElemArtifact)
                         stat["artefakte"] += 1
+            # 3b. Listen vorgeben (Aufzaehlungszeichen + Einzug aus dem Struktur-HTML)
+            for liste in vorgabe.get("listen") or []:
+                alle = [bb for pkt in liste for bb in (pkt.get("bboxes") or [])]
+                if not alle:
+                    continue
+                L = pm.CreateElement(kPdeList, None)
+                if not L:
+                    continue
+                L.SetBBox(_rect(min(b[0] for b in alle), min(b[1] for b in alle), max(b[2] for b in alle), max(b[3] for b in alle)))
+                L.SetFlags(kElemInitial)
+                for pkt in liste:
+                    bbs = pkt.get("bboxes") or []
+                    if not bbs:
+                        continue
+                    e = pm.CreateElement(kPdeText, L)
+                    if e:
+                        e.SetBBox(_rect(min(b[0] for b in bbs), min(b[1] for b in bbs), max(b[2] for b in bbs), max(b[3] for b in bbs)))
+                        e.SetFlags(kElemInitial | kElemNoSplit)
+                        stat["listenpunkte"] = stat.get("listenpunkte", 0) + 1
             # 4. Layout
             pm.CreateElements()
             # 5. Rollen, Bilder, Tabellen; 6. Vollstaendigkeit

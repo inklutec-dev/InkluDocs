@@ -106,6 +106,27 @@ class NachpruefungUndStilprofilTest(unittest.TestCase):
         self.assertEqual(len(s2["zeilen"]), len(seiten[1]["zeilen"]) - 1)   # Artefakt-Zeile nicht in der Vollstaendigkeitsliste
 
 
+class ListenTest(unittest.TestCase):
+    def test_listen_mit_umbruch(self):
+        def z(n, top, left, text):
+            return {"id": f"s1z{n}", "block": n, "text": text, "size": 10, "bold": False,
+                    "bbox_pdf": [left, 800 - top, 300, 812 - top], "top": top, "left": left}
+        s = {"seite": 1, "zeilen": [
+            z(1, 100, 50, "Material"),
+            z(2, 120, 52, "■ Seile"), z(3, 134, 52, "■ kleine Kästen"),
+            z(4, 148, 52, "■ Die Hindernisse sind:"), z(5, 162, 62, "Mauersprung und Hochtiefsprung"), z(6, 176, 62, "hintereinander."),
+            z(7, 210, 50, "Ein normaler Absatz danach."),
+            z(8, 240, 52, "1. Erster Schritt"), z(9, 254, 52, "2. Zweiter Schritt")]}
+        listen = st.listen_erkennen(s)
+        self.assertEqual(len(listen), 2)
+        self.assertEqual([len(pkt["ids"]) for pkt in listen[0]], [1, 1, 3])      # dritter Punkt mit zwei Fortsetzungszeilen
+        self.assertEqual(listen[0][2]["ids"], ["s1z4", "s1z5", "s1z6"])
+        self.assertEqual([pkt["ids"] for pkt in listen[1]], [["s1z8"], ["s1z9"]])
+        plan = st.plan_erzeugen([dict(s, breite=595, hoehe=842, fliesstext=10, bilder=[])], {"s1z1": "H2"}, {}, {}, "de-DE")
+        self.assertEqual(len(plan["seiten"][0]["listen"]), 2)
+        self.assertEqual(len(plan["seiten"][0]["listen"][0][2]["bboxes"]), 3)
+
+
 class KonfigStrukturTest(unittest.TestCase):
     def test_konfig_ohne_strukturerkennung(self):
         with tempfile.TemporaryDirectory() as t:

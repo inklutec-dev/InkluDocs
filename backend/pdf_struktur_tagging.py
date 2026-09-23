@@ -259,6 +259,40 @@ def stilprofil(seiten: list[dict], rollen: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# B3: Listen deterministisch aus dem Struktur-HTML (23.09.2026, Listentest Seite 4 Ritterturnier)
+# ---------------------------------------------------------------------------
+
+_AUFZAEHLUNG = re.compile(r"^(?:[\u2022\u25a0\u25cf\u25cb\u25aa\u2013\u2014\-\*\u2043\u25ba\u27a2\u2713\u2714]|\d{1,3}[.)]|[a-zA-Z][.)]|\(\d{1,3}\))\s*")
+LISTEN_EINZUG_MIN = 4.0      # Fortsetzungszeile: mindestens so viel weiter rechts als das Aufzaehlungszeichen
+LISTEN_ABSTAND_MAX = 2.2     # ... und hoechstens so viele Zeilenhoehen unter der letzten Zeile des Punktes
+
+
+def listen_erkennen(s: dict) -> list[list[dict]]:
+    """Listen einer Seite ohne KI: Zeile mit Aufzaehlungszeichen oder Nummer = Listenpunkt; eingerueckte
+    Folgezeilen dicht darunter = Fortsetzung desselben Punktes (der Umbruch, den PDFix als eigenen Absatz taggt).
+    Eine nicht eingerueckte Zeile ohne Zeichen beendet die Liste. Rueckgabe: [[{ids, bboxes}, ...], ...]."""
+    zeilen = sorted(s.get("zeilen") or [], key=lambda z: (z["top"], z["left"]))
+    listen: list[list[dict]] = []
+    akt: list[dict] = []
+    punkt: Optional[dict] = None
+    for z in zeilen:
+        hoehe = max(z["bbox_pdf"][3] - z["bbox_pdf"][1], 1.0)
+        if _AUFZAEHLUNG.match(z["text"]) and len(z["text"]) > 1:
+            punkt = {"ids": [z["id"]], "bboxes": [list(z["bbox_pdf"])], "x0": z["left"], "unten": z["bbox_pdf"][1]}
+            akt.append(punkt)
+            continue
+        if punkt is not None and z["left"] >= punkt["x0"] + LISTEN_EINZUG_MIN and (punkt["unten"] - z["bbox_pdf"][3]) <= LISTEN_ABSTAND_MAX * hoehe:
+            punkt["ids"].append(z["id"]); punkt["bboxes"].append(list(z["bbox_pdf"])); punkt["unten"] = z["bbox_pdf"][1]
+            continue
+        if akt:
+            listen.append(akt)
+        akt, punkt = [], None
+    if akt:
+        listen.append(akt)
+    return [l for l in listen if l]
+
+
+# ---------------------------------------------------------------------------
 # C: Plan + Schreiben (PDFix im Unterprozess)
 # ---------------------------------------------------------------------------
 
@@ -266,7 +300,16 @@ def plan_erzeugen(seiten: list[dict], rollen: dict, bilder: dict, tabellen: dict
     plan = {"sprache": sprache, "hintergrund_anteil": HINTERGRUND_ANTEIL, "seiten": []}
     for s in seiten:
         pno = s["seite"]
-        eintrag = {"seite": pno, "artefakte": [], "rollen": [], "bilder": [], "tabellen": tabellen.get(pno, True), "zeilen": []}
+        eintrag = {"seite": pno, "artefakte": [], "rollen": [], "bilder": [], "tabellen": tabellen.get(pno, True), "zeilen": [], "listen": []}
+        listen_ids: set = set()
+        for liste in listen_erkennen(s):
+            punkte = []
+            for pkt in liste:
+                if any(rollen.get(i) for i in pkt["ids"]):
+                    continue   # Zeilen mit Rolle (Ueberschrift/Artefakt) sind keine Listenpunkte
+                punkte.append({"bboxes": pkt["bboxes"]}); listen_ids.update(pkt["ids"])
+            if punkte:
+                eintrag["listen"].append(punkte)
         for z in s["zeilen"]:
             r = rollen.get(z["id"])
             if r == "Artefakt":
@@ -443,6 +486,8 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
             "bilder_inhaltlich": sum(1 for b in np_["bilder"].values() if b["inhaltlich"]),
             "bilder_schmuck": sum(1 for b in np_["bilder"].values() if not b["inhaltlich"]),
             "verworfen": len(np_["verworfen"]), "stilprofil": sp["profil"], "geklammert": sp["geklammert"],
+            "listen": sum(len(e["listen"]) for e in plan["seiten"]),
+            "listenpunkte_umbrochen": sum(1 for e in plan["seiten"] for l in e["listen"] for pkt in l if len(pkt["bboxes"]) > 1),
             "geschrieben": {k: stat.get(k) for k in ("rollen", "artefakte", "bilder", "tabellen", "hintergrund", "zeilen_ohne_element")},
         },
     }
