@@ -73,6 +73,7 @@ services:
       - GEMINI_MODEL_VALIDATE=${GEMINI_MODEL_VALIDATE:-gemini-3.1-pro-preview}
       # Features
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
+      - PDF_TAGGING_WEG=${PDF_TAGGING_WEG:-pdfix}   # Tagging-Weg: struktur (KI-Zuordnung, PDFix schreibt) | pdfix (23.09.2026)
       # PDFix-Lizenz (27.08.2026): aus der Env-Datei; leer = Testversion
       - PDFIX_LICENSE_USER=${PDFIX_LICENSE_USER:-}
       - DAILY_CHAT_LIMIT=${DAILY_CHAT_LIMIT:-100}   # Chat-Bremse je Konto/Tag (28.08.2026)

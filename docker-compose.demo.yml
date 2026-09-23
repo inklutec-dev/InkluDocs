@@ -75,6 +75,7 @@ services:
       # Demo-eigene Basis-URL (hart gesetzt, wie bei Staging).
       - BASE_URL=https://demo.inkludocs.de
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
+      - PDF_TAGGING_WEG=${PDF_TAGGING_WEG:-pdfix}   # Tagging-Weg: struktur (KI-Zuordnung, PDFix schreibt) | pdfix (23.09.2026)
       - DEBUG_GEN_RAW=${DEBUG_GEN_RAW:-false}
       - INKLUAGENT_ENABLED=${INKLUAGENT_ENABLED:-true}
       - INKLUAGENT_BEDROCK_MODEL_TEXT=${INKLUAGENT_BEDROCK_MODEL_TEXT:-eu.anthropic.claude-sonnet-4-6}

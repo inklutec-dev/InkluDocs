@@ -44,6 +44,7 @@ services:
       - BASE_URL=https://staging.inkludocs.inklutec.de
       # PDFIX-INTEGRATION (24.04.2026): Kill-Switch, default OFF. Fuer Staging auf true.
       - PDFIX_ENABLED=${PDFIX_ENABLED:-true}
+      - PDF_TAGGING_WEG=${PDF_TAGGING_WEG:-pdfix}   # Tagging-Weg: struktur (KI-Zuordnung, PDFix schreibt) | pdfix (23.09.2026)
       # PDFix-Lizenz (27.08.2026): aus .env.staging; leer = Testversion wie bisher
       - PDFIX_LICENSE_USER=${PDFIX_LICENSE_USER:-}
       - PDFIX_LICENSE_KEY=${PDFIX_LICENSE_KEY:-}
