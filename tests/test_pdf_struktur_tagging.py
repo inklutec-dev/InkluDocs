@@ -126,6 +126,14 @@ class ListenTest(unittest.TestCase):
         l2 = st.listen_erkennen(s2)
         self.assertEqual(len(l2), 1)
         self.assertEqual([pkt["ids"] for pkt in l2[0]], [["s1z3", "s1z4"], ["s1z5"]])
+        # Eine Ueberschrift (Rolle) oder eine Zeile in anderem Stil direkt unter einem Punkt ist keine Fortsetzung
+        s3 = {"seite": 1, "zeilen": [z(1, 100, 52, "■ Station 6: Kegeln (kegeln)"),
+                                    dict(z(2, 114, 50, "Materialliste für alle Stationen"), size=15.6, bold=True),
+                                    z(3, 140, 52, "■ Seile")]}
+        l3 = st.listen_erkennen(s3, {"s1z2": "H2"})
+        self.assertEqual([[pkt["ids"] for pkt in l] for l in l3], [[["s1z1"]], [["s1z3"]]])
+        l3b = st.listen_erkennen(s3)   # ohne Rolle: anderer Stil reicht
+        self.assertEqual([[pkt["ids"] for pkt in l] for l in l3b], [[["s1z1"]], [["s1z3"]]])
         self.assertEqual([len(pkt["ids"]) for pkt in listen[0]], [1, 1, 3])      # dritter Punkt mit zwei Fortsetzungszeilen
         self.assertEqual(listen[0][2]["ids"], ["s1z4", "s1z5", "s1z6"])
         self.assertEqual([pkt["ids"] for pkt in listen[1]], [["s1z8"], ["s1z9"]])

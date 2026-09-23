@@ -277,25 +277,35 @@ LISTEN_EINZUG_MIN = 4.0      # Fortsetzungszeile: mindestens so viel weiter rech
 LISTEN_ABSTAND_MAX = 2.2     # ... und hoechstens so viele Zeilenhoehen unter der letzten Zeile des Punktes
 
 
-def listen_erkennen(s: dict) -> list[list[dict]]:
+def listen_erkennen(s: dict, rollen: Optional[dict] = None) -> list[list[dict]]:
     """Listen einer Seite ohne KI: Zeile mit Aufzaehlungszeichen oder Nummer = Listenpunkt; eingerueckte
     Folgezeilen dicht darunter = Fortsetzung desselben Punktes (der Umbruch, den PDFix als eigenen Absatz taggt).
     Eine nicht eingerueckte Zeile ohne Zeichen beendet die Liste. Rueckgabe: [[{ids, bboxes}, ...], ...]."""
     zeilen = sorted(s.get("zeilen") or [], key=lambda z: (z["top"], z["left"]))
+    rollen = rollen or {}
     listen: list[list[dict]] = []
     akt: list[dict] = []
     punkt: Optional[dict] = None
     for z in zeilen:
         hoehe = max(z["bbox_pdf"][3] - z["bbox_pdf"][1], 1.0)
+        if rollen.get(z["id"]):
+            # Ueberschrift/Artefakt/Bildunterschrift beendet jede Liste und ist nie Fortsetzung (Ritterturnier S. 2:
+            # „Materialliste …“ wurde sonst an „Station 6 …“ angehaengt)
+            if akt:
+                listen.append(akt)
+            akt, punkt = [], None
+            continue
         if _AUFZAEHLUNG.match(z["text"]) and len(z["text"]) > 1:
-            punkt = {"ids": [z["id"]], "bboxes": [list(z["bbox_pdf"])], "x0": z["left"], "unten": z["bbox_pdf"][1], "letzter_text": z["text"]}
+            punkt = {"ids": [z["id"]], "bboxes": [list(z["bbox_pdf"])], "x0": z["left"], "unten": z["bbox_pdf"][1], "letzter_text": z["text"],
+                     "size": z["size"], "bold": z["bold"]}
             akt.append(punkt)
             continue
         dicht = punkt is not None and (punkt["unten"] - z["bbox_pdf"][3]) <= LISTEN_ABSTAND_MAX * hoehe
         haengend = punkt is not None and z["left"] >= punkt["x0"] + LISTEN_EINZUG_MIN
-        # Fortsetzung: haengender Einzug ODER dicht darunter und der Punkt endet nicht mit Satzzeichen
+        gleicher_stil = punkt is not None and abs(z["size"] - punkt["size"]) <= 0.6 and z["bold"] == punkt["bold"]
+        # Fortsetzung: gleicher Stil UND (haengender Einzug ODER dicht darunter und der Punkt endet nicht mit Satzzeichen)
         # (Korpus-Lauf 23.09.: AVV mit „(1) …“-Absaetzen ohne Einzug zerfiel in 36 Listen mit je einem Punkt)
-        if dicht and (haengend or not _SATZENDE.search(punkt["letzter_text"])):
+        if dicht and gleicher_stil and (haengend or not _SATZENDE.search(punkt["letzter_text"])):
             punkt["ids"].append(z["id"]); punkt["bboxes"].append(list(z["bbox_pdf"])); punkt["unten"] = z["bbox_pdf"][1]; punkt["letzter_text"] = z["text"]
             continue
         if akt:
@@ -317,11 +327,9 @@ def plan_erzeugen(seiten: list[dict], rollen: dict, bilder: dict, tabellen: dict
         eintrag = {"seite": pno, "artefakte": [], "rollen": [], "bilder": [], "tabellen": tabellen.get(pno, True), "zeilen": [], "listen": [],
                    "felder": list(s.get("felder") or [])}
         listen_ids: set = set()
-        for liste in listen_erkennen(s):
+        for liste in listen_erkennen(s, rollen):
             punkte = []
             for pkt in liste:
-                if any(rollen.get(i) for i in pkt["ids"]):
-                    continue   # Zeilen mit Rolle (Ueberschrift/Artefakt) sind keine Listenpunkte
                 punkte.append({"bboxes": pkt["bboxes"]}); listen_ids.update(pkt["ids"])
             if punkte:
                 eintrag["listen"].append(punkte)
