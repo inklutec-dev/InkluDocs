@@ -322,14 +322,15 @@ def _einzeln(regeln: list, regeln_kt: dict, _: Callable[[str], str]) -> list:
         if not s:
             s = " ".join(str(r.get("description") or _("ohne Beschreibung")).split())[:240].rstrip(".")
         n = int(r.get("failed") or 0)
-        e = je_satz.setdefault(s, {"n": 0, "seiten": set()})
+        e = je_satz.setdefault(s, {"n": 0, "seiten": set(), "regeln": []})
         e["n"] += n
+        e["regeln"].append(f"{r.get('clause')}-{r.get('test')}")
         e["seiten"].update(int(x) for x in (r.get("pages") or []) if str(x).isdigit())
     out = []
     for s, e in je_satz.items():
         t = s + ((" " + _("({n}-mal)").format(n=e["n"])) if e["n"] > 1 else "")
         seiten = sorted(e["seiten"])
-        out.append({"text": t + _seiten_text(seiten, _), "seiten": seiten})
+        out.append({"text": t + _seiten_text(seiten, _), "seiten": seiten, "regeln": e["regeln"]})
     return out
 
 

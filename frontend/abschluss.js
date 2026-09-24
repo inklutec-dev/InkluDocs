@@ -23,6 +23,8 @@
     let offeneDokumente = new Set();
     let geschlosseneDokumente = new Set();
     const details = {};     // docId -> volle Daten (Probleme, Hörprobe)
+    const laedt = new Set();   // docIds, deren Details gerade geladen werden (kein doppelter Abruf)
+    let pollTimer = null;      // solange eine Prüfdatei gebaut wird (auch aus einem anderen Tab)
     const ansicht = {};     // docId -> { filter: 'alle' | 'probleme', seite: n }
 
     function ico(name) { return (typeof icon === 'function') ? icon(name) : ''; }
@@ -35,14 +37,16 @@
         const p = d.pruefdatei;
         if (!p) return t('Noch keine Prüfdatei');
         if (!p.aktuell) return t('Prüfdatei nicht mehr aktuell');
+        if (p.anzahl_probleme == null) return t('Prüfdatei wird erstellt …');
         const n = p.anzahl_probleme || 0;
-        return n ? t('{n} Problemstellen', { n: n }) : t('Keine Problemstellen gefunden');
+        return n ? anzahlProbleme(n) : t('Keine Problemstellen gefunden');
     }
     function standKlasse(d) {
         if (!d.getaggt || !d.pruefdatei || !d.pruefdatei.aktuell) return 'badge-ready';
         return (d.pruefdatei.anzahl_probleme || 0) ? 'badge-processing' : 'badge-done';
     }
     function metaZeile(bez, wert) { return '<li>' + bez + ': <span>' + wert + '</span></li>'; }
+    function anzahlProbleme(n) { return n === 1 ? t('1 Problemstelle') : t('{n} Problemstellen', { n: n }); }
 
     // ─── Karte je Dokument ───
     function karteOffen(d, anzahl) {
@@ -62,7 +66,8 @@
                 + metaZeile(t('Prüfdatei'), p ? t('erstellt am {zeit}', { zeit: esc(p.erstellt_am || '') }) : t('noch nicht erstellt'))
                 + (p ? metaZeile(t('Stand'), p.aktuell ? t('aktuell') : t('nicht mehr aktuell — seitdem wurden Alt-Texte, Quickinfos oder die Datei geändert')) : '')
                 + (p ? metaZeile(t('PDF/UA-Prüfung'), p.verapdf_moeglich ? (p.bestanden ? t('bestanden') : t('mit Hinweisen')) : t('nicht möglich (Prüfdienst nicht erreichbar)')) : '')
-                + (p ? metaZeile(t('Problemstellen'), esc(p.anzahl_probleme || 0)) : '')
+                + (p && p.anzahl_probleme != null ? metaZeile(t('Problemstellen'), esc(p.anzahl_probleme)) : '')
+                + (p && p.vollstaendigkeit_geprueft === false ? metaZeile(t('Vollständigkeit'), t('nicht geprüft')) : '')
                 + '</ul>';
         }
         const erstellenText = !p ? t('Prüfdatei erstellen') : t('Prüfdatei neu erstellen');
@@ -81,9 +86,10 @@
             + meta
             + (p ? '<p class="feld-hinweis">' + t('Geprüft wird die fertige Datei, genau die PDF, die du herunterlädst. Das Erstellen der Prüfdatei ist kostenlos; Credits kostet erst das Herunterladen.') + '</p>'
                  : (d.getaggt ? '<p class="feld-hinweis">' + t('Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos.') + '</p>' : ''))
+            + (p && !p.aktuell ? '<p class="feld-hinweis"><strong>' + t('Die Prüfdatei ist nicht mehr aktuell.') + '</strong> ' + t('Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst.') + '</p>' : '')
             + aktionen
             + '<output id="ab_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (d.laeuft ? t('Prüfdatei wird erstellt …') : '') + '</output>'
-            + '<div class="ab-detail" id="ab_detail_' + d.id + '">' + (p && details[d.id] ? detailHtml(project, details[d.id]) : (p ? '<p>' + t('Wird geladen …') + '</p>' : '')) + '</div>'
+            + '<div class="ab-detail" id="ab_detail_' + d.id + '">' + (d.laeuft ? '' : (p && details[d.id] ? detailHtml(project, details[d.id]) : (p ? '<p>' + t('Wird geladen …') + '</p>' : ''))) + '</div>'
             + '</div></details></section>';
     }
 
@@ -130,7 +136,9 @@
                 + (p.seite ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '</button>' : '') + '</li>').join('') + '</ol></details>';
         }
         // Kopf der Hörprobe (Sprache, Seiten, Zusammenfassung)
-        if (hp.kopf && hp.kopf.length) s += '<ul class="dok-meta ab-kopf">' + hp.kopf.map(k => '<li>' + esc(k) + '</li>').join('') + '</ul>';
+        // Kopf der Hörprobe: Sprache und Zusammenfassung (die Seitenzahl steht schon oben an der Karte)
+        const kopf = (hp.kopf || []).filter((k, i) => i !== 1);
+        if (kopf.length) s += '<ul class="dok-meta ab-kopf">' + kopf.map(k => '<li>' + esc(k) + '</li>').join('') + '</ul>';
         // Seitenansicht
         if (!seiten.length) {
             s += '<p>' + (z.filter === 'probleme' ? t('Keine Seite mit Problemstellen.') : t('Die Hörprobe ist leer.')) + '</p>';
@@ -140,11 +148,11 @@
         const seiteDaten = hp.seiten.find(x => x.seite === z.seite) || { zeilen: [] };
         const pSeite = problemeDerSeite(d, z.seite);
         s += '<section class="ab-seite" id="ab_seite_' + d.id + '">'
-            + '<h4 id="ab_seite_heading_' + d.id + '" tabindex="-1">' + t('Seite {n} von {m}', { n: z.seite, m: hp.seiten.length }) + (pSeite.length ? ' – ' + t('{n} Problemstellen', { n: pSeite.length }) : '') + '</h4>'
+            + '<h4 id="ab_seite_heading_' + d.id + '" tabindex="-1">' + t('Seite {n} von {m}', { n: z.seite, m: hp.seiten.length }) + (pSeite.length ? ' – ' + anzahlProbleme(pSeite.length) : '') + '</h4>'
             + '<div class="ab-seitennav">'
             + '<button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.blaettern(' + project.id + ', ' + d.id + ', -1)"' + (idx <= 0 ? ' disabled' : '') + '>' + t('Vorherige Seite') + '</button>'
             + '<label for="ab_seitenwahl_' + d.id + '">' + t('Gehe zu Seite') + '</label>'
-            + '<select id="ab_seitenwahl_' + d.id + '">' + seiten.map(n => { const k = problemeDerSeite(d, n).length; return '<option value="' + n + '"' + (n === z.seite ? ' selected' : '') + '>' + t('Seite {n}', { n: n }) + (k ? ' (' + t('{n} Problemstellen', { n: k }) + ')' : '') + '</option>'; }).join('') + '</select>'
+            + '<select id="ab_seitenwahl_' + d.id + '">' + seiten.map(n => { const k = problemeDerSeite(d, n).length; return '<option value="' + n + '"' + (n === z.seite ? ' selected' : '') + '>' + t('Seite {n}', { n: n }) + (k ? ' (' + anzahlProbleme(k) + ')' : '') + '</option>'; }).join('') + '</select>'
             + '<button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', Number(document.getElementById(\'ab_seitenwahl_' + d.id + '\').value))">' + t('Öffnen') + '</button>'
             + '<button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.blaettern(' + project.id + ', ' + d.id + ', 1)"' + (idx >= seiten.length - 1 ? ' disabled' : '') + '>' + t('Nächste Seite') + '</button>'
             + '</div>'
@@ -167,6 +175,8 @@
         if (fokus) { const h = document.getElementById(fokus); if (h) h.focus(); }
     }
     async function detailLaden(projectId, docId) {
+        if (laedt.has(docId)) return;
+        laedt.add(docId);
         try {
             const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/abschluss', { credentials: 'same-origin' });
             if (!r.ok) throw new Error(String(r.status));
@@ -175,6 +185,8 @@
         } catch (e) {
             const box = document.getElementById('ab_detail_' + docId);
             if (box) box.innerHTML = '<p>' + t('Die Prüfung konnte nicht geladen werden.') + '</p>';
+        } finally {
+            laedt.delete(docId);
         }
     }
 
@@ -222,8 +234,7 @@
         const btn = document.getElementById('ab_erstellen_' + docId);
         const out = document.getElementById('ab_status_' + docId);
         if (btn) btn.disabled = true;
-        if (out) out.textContent = t('Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern.');
-        announce(t('Prüfdatei wird erstellt.'));
+        if (out) { out.textContent = t('Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern.'); out.focus(); }
         try {
             const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/abschluss', { method: 'POST', credentials: 'same-origin' });
             const j = await r.json().catch(() => ({}));
@@ -238,9 +249,10 @@
             await showProject(projectId, true);
             const o2 = document.getElementById('ab_status_' + docId);
             const n = (j.probleme || []).length;
-            const text = t('Prüfdatei erstellt.') + ' ' + (n ? t('{n} Problemstellen gefunden.', { n: n }) : t('Keine Problemstellen gefunden.'));
-            if (o2) { o2.textContent = text; o2.focus(); }
-            announce(text);
+            const text = (j.neu_gebaut === false ? t('Die Prüfdatei ist schon aktuell.') : t('Prüfdatei erstellt.')) + ' '
+                + (n ? (n === 1 ? t('1 Problemstelle gefunden.') : t('{n} Problemstellen gefunden.', { n: n })) : t('Keine Problemstellen gefunden.'));
+            // Die Statuszeile ist ein <output> (Live-Region) und bekommt den Fokus — keine zusaetzliche announce()
+            if (o2) { o2.textContent = text; o2.focus(); } else { announce(text); }
         } catch (e) {
             if (out) out.textContent = t('Verbindungsfehler.');
             if (btn) btn.disabled = false;
@@ -277,16 +289,14 @@
         const btn = document.getElementById('ab_export_' + docId);
         const out = document.getElementById('ab_status_' + docId);
         if (btn) btn.disabled = true;
-        if (out) out.textContent = t('Wird exportiert...');
-        announce(t('Export läuft …'));
+        if (out) out.textContent = t('Wird exportiert...'); else announce(t('Export läuft …'));
         try {
             const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document_id: docId }) });
             const ansage = await herunterladenAntwort(res, out);
             if (ansage) {
                 await showProject(projectId, true);
                 const o2 = document.getElementById('ab_status_' + docId);
-                if (o2) { o2.textContent = ansage; o2.focus(); }
-                announce(ansage);
+                if (o2) { o2.textContent = ansage; o2.focus(); } else { announce(ansage); }
             }
         } catch (e) {
             if (out) out.textContent = t('Verbindungsfehler.');
@@ -299,16 +309,14 @@
         const btn = document.getElementById('abAlleBtn');
         const out = document.getElementById('abAlleStatus');
         if (btn) btn.disabled = true;
-        if (out) out.textContent = t('Wird exportiert...');
-        announce(t('Export läuft …'));
+        if (out) out.textContent = t('Wird exportiert...'); else announce(t('Export läuft …'));
         try {
             const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
             const ansage = await herunterladenAntwort(res, out);
             if (ansage) {
                 await showProject(projectId, true);
                 const o2 = document.getElementById('abAlleStatus');
-                if (o2) { o2.textContent = ansage; o2.focus(); }
-                announce(ansage);
+                if (o2) { o2.textContent = ansage; o2.focus(); } else { announce(ansage); }
             }
         } catch (e) {
             if (out) out.textContent = t('Verbindungsfehler.');
@@ -320,6 +328,9 @@
 
     // ─── Ansicht ───
     async function showProject(projectId, erneut) {
+        projectId = Number(projectId);   // Adresse liefert Text, Knoepfe eine Zahl — ohne das ging der Zustand verloren
+        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+        if (typeof vorlesenStopp === 'function') vorlesenStopp();
         const main = document.getElementById('main');
         const res = await fetch('/api/projects/' + projectId + '/abschluss', { credentials: 'same-origin' });
         if (res.status === 401) { window.location.href = '/login'; return; }
@@ -328,9 +339,11 @@
         const project = data.project;
         if (zustandProjekt !== projectId) {
             offeneDokumente = new Set(); geschlosseneDokumente = new Set(); zustandProjekt = projectId;
-            Object.keys(details).forEach(k => delete details[k]);
             Object.keys(ansicht).forEach(k => delete ansicht[k]);
         }
+        // Details beim Oeffnen der Ansicht frisch laden (eine KI-Pruefung in der Ansicht Dokument kann die Liste
+        // geaendert haben); beim Neuzeichnen nach einer Aktion bleiben sie.
+        if (!erneut) Object.keys(details).forEach(k => delete details[k]);
         const docs = data.documents || [];
         const title = (project.name && project.name.trim()) ? project.name : project.filename;
         const alleGetaggt = docs.length > 1 && docs.every(d => d.getaggt);
@@ -365,6 +378,13 @@
         });
         const h1 = document.getElementById('projectName');
         if (h1 && !erneut) h1.focus();
+        // Laeuft ein Bau (auch aus einem anderen Tab), die Ansicht nachziehen, bis er fertig ist
+        if (docs.some(d => d.laeuft)) {
+            pollTimer = setTimeout(() => {
+                pollTimer = null;
+                if (document.getElementById('abListe')) showProject(projectId, true);
+            }, 3000);
+        }
     }
 
     function listeGeklappt(docId, offen) { zustand(docId).listeOffen = !!offen; }

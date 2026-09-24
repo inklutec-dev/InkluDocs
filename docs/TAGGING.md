@@ -508,3 +508,21 @@ Kunde bekommt (derselbe Bau wie der Export, `main._build_pdf_for_document`: Stru
 KI-basierte Prüfung: wieder sichtbar als „KI-basierte Prüfung (experimentell)“ mit Hinweis „Wir arbeiten noch an dieser
 Prüfung …“ (Michael 24.09.). Tests: ui_dokument, ui_pdf_quickinfos, ui_uebersetzen, ui_gast_word_testumbau angepasst,
 tests/test_pdfua_klartext.py (neu: `test_einzeln_je_regel_ohne_einleitung`).
+
+## Prüfbericht 24.09.2026 (zwei unabhängige Code-Prüfungen der heutigen Änderungen) — behoben
+
+Server: eigener kleiner Executor für den kostenlosen Prüfdatei-Bau (2 Plätze), höchstens ein Bau je Nutzer (429) und
+Dokument (409), kein Neubau bei unverändertem Fingerabdruck (`neu_gebaut: false`), Obergrenze `PDFIX_TAGGING_MAX_SEITEN`,
+Eigentumsprüfung vor dem Sperren; während des Baus liest keine Anfrage die halbfertige Datei; eindeutige Temp-Datei in
+`pdf_struktur.lesen` (vorher konnten sich zwei gleichzeitige Lesungen überschreiben); gescheiterte Vollständigkeitsprüfung
+wird als Problemstelle gemeldet statt still „nichts fehlt“; Probleme/Hörprobe nur aus der Datei (keine Quickinfos aus der
+Datenbank); Fingerabdruck mit Anzeigename, Ersteller, Bau-Version und Quickinfos je Feld-Anker; Seitenbilder höchstens
+2000 px (Schutz vor riesigen MediaBoxen), atomar gespeichert; `_einzeln` liefert die Regeln je Zeile; Wortmuster für alle
+Alphabete; Hörprobe enthält alle Seiten, auch solche ohne Vorlesetext.
+Oberfläche: Projekt-ID vereinheitlicht (Text aus der Adresse vs. Zahl aus Knöpfen — sonst gingen Klapp-, Filter- und
+Seitenzustand beim ersten Neuzeichnen verloren), kein doppelter Detail-Abruf, Vorlesen ohne Lookbehind (Safari < 16.4
+hätte sonst das ganze Skript abgelehnt), Lauf-Zähler gegen Doppelstart und verspätete onerror, Vorlesen endet bei jedem
+Ansichtswechsel, keine Doppel-Ansagen (Status-`output` mit Fokus statt zusätzlichem `announce`), Nachladen während eines
+Baus, Einzahl „1 Problemstelle“, Hinweis bei nicht aktueller Prüfdatei, Seitenzahl nicht doppelt, toter Code entfernt
+(`Dokument.exportieren`, `Dokument.zurAnsicht`, Kopf-Rückfall), `t()` ersetzt Platzhalter per Funktion (`$&` in Namen).
+Station in H1 und Seitentitel („Abschlussprüfung – Projekt: …“, Steve 24.09.2026).

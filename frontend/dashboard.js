@@ -23,7 +23,8 @@ function t(s, params) {
   var out = (window.I18N && window.I18N[s]) || s;
   if (params) {
     Object.keys(params).forEach(function (k) {
-      out = out.replace('{' + k + '}', params[k]);
+      // Ersetzung ueber eine Funktion: sonst deuten $&, $1 … in Namen/Texten als Ersetzungsmuster (Pruefbericht 24.09.2026)
+      out = out.replace('{' + k + '}', function () { return String(params[k]); });
     });
   }
   return out;

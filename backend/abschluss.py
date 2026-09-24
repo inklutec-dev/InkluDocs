@@ -27,9 +27,12 @@ import re
 import time
 from typing import Callable, Optional
 
-# Buchstaben und Ziffern getrennt: im Baum zusammengeklebte Woerter („Unterrichtsideen1./2. Klasse“) sollen die
-# sichtbare Zeile „Unterrichtsideen“ trotzdem finden (Ritterturnier 24.09.2026).
-_WORT = re.compile(r"[A-Za-zÄÖÜäöüßÅÆØåæøÉÈÊéèêÀÂàâÇçÑñ]{3,}|\d{3,}")
+# Buchstaben (jedes Alphabet) und Ziffern getrennt: im Baum zusammengeklebte Woerter („Unterrichtsideen1./2. Klasse“)
+# sollen die sichtbare Zeile „Unterrichtsideen“ trotzdem finden (Ritterturnier 24.09.2026); kyrillische, griechische
+# und alle anderen Buchstaben zaehlen mit (Pruefbericht 24.09.2026).
+_WORT = re.compile(r"[^\W\d_]{3,}|\d{3,}")
+# Version des Pruefdatei-Baus: steigt, wenn sich der Bau aendert — alte Pruefdateien gelten dann als nicht aktuell.
+ABSCHLUSS_VERSION = 2
 _NUR_ZAHL = re.compile(r"^[\s\d\W]{1,8}$")
 VOLLSTAENDIG_ANTEIL = 0.6
 MAX_FEHLEND_JE_SEITE = 12
@@ -44,20 +47,22 @@ def pfade(results_dir: str, user_id: int, project_id: int, doc_id: int) -> tuple
     return ordner, os.path.join(ordner, f"doc{int(doc_id)}.pdf"), os.path.join(ordner, f"doc{int(doc_id)}.json")
 
 
-def fingerabdruck(doc: dict, alt_texte: list, quickinfos: dict) -> str:
-    """Stand, aus dem die Prüfdatei gebaut ist: Arbeitsdatei (Pfad, Größe, Zeit), Alt-Texte, Quickinfos."""
+def fingerabdruck(doc: dict, alt_texte: list, quickinfos: list, ersteller: str = "") -> str:
+    """Stand, aus dem die Prüfdatei gebaut ist — alles, was in die fertige Datei eingeht: Arbeitsdatei (Pfad, Größe,
+    Zeit in ns), Anzeigename (wird Dokumenttitel), Ersteller des Kontos, Alt-Texte je Bild, Quickinfos je Feld-Anker,
+    Version des Baus. quickinfos: [(anker, text)] — je Feld, nicht je Name (Optionsgruppen teilen sich Namen)."""
     pfad = doc.get("original_path") or ""
     try:
         st = os.stat(pfad)
-        datei = f"{pfad}|{st.st_size}|{int(st.st_mtime)}"
+        datei = f"{pfad}|{st.st_size}|{st.st_mtime_ns}"
     except OSError:
         datei = pfad
     h = hashlib.sha256()
-    h.update(datei.encode("utf-8", "replace"))
+    h.update(f"v{ABSCHLUSS_VERSION}\x1e{datei}\x1e{doc.get('display_name') or ''}\x1e{ersteller or ''}".encode("utf-8", "replace"))
     for img_id, text in sorted(alt_texte, key=lambda x: x[0]):
         h.update(f"\x1e{img_id}\x1f{text if text is not None else '<leer>'}".encode("utf-8", "replace"))
-    for name in sorted(quickinfos):
-        h.update(f"\x1d{name}\x1f{quickinfos[name]}".encode("utf-8", "replace"))
+    for anker, text in sorted(quickinfos, key=lambda x: str(x[0])):
+        h.update(f"\x1d{anker}\x1f{text or ''}".encode("utf-8", "replace"))
     return h.hexdigest()
 
 
@@ -178,6 +183,10 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
                              _: Callable[[str], str] = _identitaet, quickinfos: Optional[dict] = None) -> list[dict]:
     """Eine Liste, nach Seite sortiert: {seite, seiten, art, quelle, text}."""
     out = []
+    if meta.get("vollstaendigkeit_geprueft") is False:
+        # ehrlich sagen, dass ein Teil der Pruefung nicht lief — sonst sieht „keine fehlenden Zeilen“ wie ein Ergebnis aus
+        out.append({"seite": 0, "seiten": [], "art": "hinweis", "quelle": _("Vollständigkeit"),
+                    "text": _("Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen.")})
     for p in ((meta.get("verapdf") or {}).get("punkte") or []):
         if p.get("status") != "befund":
             continue
@@ -205,9 +214,11 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
     return out
 
 
-def hoerprobe_seiten(zeilen: list[str], _: Callable[[str], str] = _identitaet) -> dict:
+def hoerprobe_seiten(zeilen: list[str], _: Callable[[str], str] = _identitaet, seiten_gesamt: int = 0) -> dict:
     """Die Hörprobe (pdf_struktur.hoerprobe) nach Seiten gegliedert: {kopf: [Sprache, Seiten, Zusammenfassung],
-    seiten: [{seite, zeilen}]}. Zeilen vor der ersten Seitenmarke gehören zur Seite 1."""
+    seiten: [{seite, zeilen}]}. Zeilen vor der ersten Seitenmarke gehören zur Seite 1. Mit seiten_gesamt stehen ALLE
+    Seiten 1..n in der Liste, auch die, auf denen ein Screenreader nichts vorliest (reine Bildseiten ohne Alt-Text —
+    gerade die gehoeren in die Pruefung; Pruefbericht 24.09.2026)."""
     kopf = zeilen[:3]
     seiten: list = []
     aktuell = {"seite": 1, "zeilen": []}
@@ -226,6 +237,10 @@ def hoerprobe_seiten(zeilen: list[str], _: Callable[[str], str] = _identitaet) -
     zusammen: dict = collections.OrderedDict()
     for s in seiten:
         zusammen.setdefault(s["seite"], []).extend(s["zeilen"])
+    if seiten_gesamt:
+        for n in range(1, int(seiten_gesamt) + 1):
+            zusammen.setdefault(n, [])
+        return {"kopf": kopf, "seiten": [{"seite": k, "zeilen": zusammen[k]} for k in sorted(zusammen)]}
     return {"kopf": kopf, "seiten": [{"seite": k, "zeilen": v} for k, v in zusammen.items() if v]}
 
 

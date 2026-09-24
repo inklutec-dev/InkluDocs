@@ -7982,8 +7982,14 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
 # nichts und landet nicht in der Ablage; Credits und Ablage-Eintrag kommen wie bisher erst mit dem
 # Herunterladen (/api/projects/{id}/export). Logik und Ablage der Pruefdatei: abschluss.py.
 
-_abschluss_laeuft: set = set()
+_abschluss_laeuft: set = set()          # Dokument-IDs, deren Pruefdatei gerade gebaut wird
+_abschluss_nutzer: dict = {}            # user_id -> Dokument-ID: hoechstens EIN Bau je Nutzer gleichzeitig
 _abschluss_lock = threading.Lock()
+# Eigener kleiner Rechenbereich (Pruefbericht 24.09.2026): der kostenlose Bau (Export, veraPDF, Strukturlesung) darf den
+# gemeinsamen Executor nicht fuellen, sonst warten alle anderen run_in_executor-Endpunkte.
+import concurrent.futures as _cf   # noqa: E402
+_abschluss_executor = _cf.ThreadPoolExecutor(max_workers=2, thread_name_prefix="abschluss")
+ABSCHLUSS_BILD_MAX_PX = 2000            # laengste Seite eines Seitenbilds (Schutz vor riesigen MediaBoxen)
 
 
 def _abschluss_projekt(project_id: int, user_id: int) -> dict:
@@ -8000,30 +8006,41 @@ def _abschluss_projekt(project_id: int, user_id: int) -> dict:
     return project
 
 
+def _abschluss_dokument_gehoert(project_id: int, document_id: int) -> bool:
+    conn = get_db()
+    try:
+        return conn.execute("SELECT 1 FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id)).fetchone() is not None
+    finally:
+        conn.close()
+
+
 def _abschluss_stand(project: dict, unit: dict, user_id: int) -> dict:
     doc = unit["doc"]
     conn = get_db()
     try:
-        quickinfos = tagging_api.felder_quickinfos(conn, doc["id"])
+        quickinfos = [(r["anker"] or r["feld_name"] or r["id"], r["quickinfo"] or "")
+                      for r in conn.execute("SELECT id, anker, feld_name, quickinfo FROM formularfelder WHERE document_id = ?", (doc["id"],)).fetchall()]
     finally:
         conn.close()
     alt = [(i["id"], _exportable_alt_text(i)) for i in unit["images"]]
     ordner, pdf, meta_pfad = abschluss.pfade(RESULTS_DIR, user_id, project["id"], doc["id"])
     meta = abschluss.meta_lesen(meta_pfad) if os.path.isfile(pdf) else None
-    return {"fingerabdruck": abschluss.fingerabdruck(doc, alt, quickinfos), "meta": meta, "pdf": pdf,
-            "meta_pfad": meta_pfad, "ordner": ordner, "quickinfos": quickinfos}
+    return {"fingerabdruck": abschluss.fingerabdruck(doc, alt, quickinfos, _pdf_creator_fuer(user_id) or ""),
+            "meta": meta, "pdf": pdf, "meta_pfad": meta_pfad, "ordner": ordner}
 
 
 def _abschluss_dokument(project: dict, unit: dict, user_id: int, _, voll: bool) -> dict:
-    """Karte je Dokument; voll=True mit Problemen und Hoerprobe (nach Seiten)."""
+    """Karte je Dokument; voll=True mit Problemen und Hoerprobe (nach Seiten). Probleme und Hoerprobe kommen NUR aus
+    der Pruefdatei (keine Quickinfos aus der Datenbank): gezeigt wird, was der Kunde wirklich bekommt."""
     doc = unit["doc"]
     st = _abschluss_stand(project, unit, user_id)
     meta = st["meta"]
+    laeuft = doc["id"] in _abschluss_laeuft
     aussen = {
         "id": doc["id"], "doc_index": doc.get("doc_index"), "display_name": doc.get("display_name"),
         "original_filename": doc.get("original_filename"), "getaggt": _dokument_getaggt(doc),
         "seiten": tagging_api._seiten(doc), "bilder": len(unit["images"]),
-        "laeuft": doc["id"] in _abschluss_laeuft,
+        "laeuft": laeuft,
         "pruefdatei": None,
     }
     if not meta:
@@ -8034,32 +8051,42 @@ def _abschluss_dokument(project: dict, unit: dict, user_id: int, _, voll: bool) 
         "aktuell": meta.get("fingerabdruck") == st["fingerabdruck"],
         "verapdf_moeglich": verapdf_kt is not None,
         "bestanden": bool(verapdf_kt and verapdf_kt.get("bestanden")),
+        "vollstaendigkeit_geprueft": meta.get("vollstaendigkeit_geprueft", True),
         "hinweise": meta.get("warnungen") or [],
+        "anzahl_probleme": None,
     }
+    if laeuft:
+        # waehrend des Baus nichts aus der halb fertigen Datei lesen (Strukturlesung wuerde parallel laufen)
+        return aussen
     struktur = None
     try:
         struktur = tagging_api.pdf_struktur.lesen(st["pdf"], st["ordner"])
     except tagging_api.pdf_struktur.StrukturFehler as e:
         aussen["pruefdatei"]["struktur_fehler"] = _(str(e))
     meta_kt = dict(meta, verapdf=verapdf_kt)
-    probleme = abschluss.probleme_zusammenstellen(meta_kt, struktur, (tagging_api._pruef_bericht(doc) or {}).get("befunde") or [],
-                                                  _, st["quickinfos"])
+    probleme = abschluss.probleme_zusammenstellen(meta_kt, struktur, (tagging_api._pruef_bericht(doc) or {}).get("befunde") or [], _, None)
     aussen["pruefdatei"]["anzahl_probleme"] = len(probleme)
     if voll:
         aussen["sprache"] = ((struktur or {}).get("info") or {}).get("lang") or ""
         aussen["probleme"] = probleme
-        aussen["hoerprobe"] = (abschluss.hoerprobe_seiten(tagging_api.pdf_struktur.hoerprobe(struktur, _, st["quickinfos"]), _)
+        aussen["hoerprobe"] = (abschluss.hoerprobe_seiten(tagging_api.pdf_struktur.hoerprobe(struktur, _, None), _,
+                                                          int(((struktur.get("info") or {}).get("seiten")) or aussen["seiten"] or 0))
                                if struktur else {"kopf": [], "seiten": []})
     return aussen
 
 
-def _abschluss_bauen(project: dict, user_id: int, document_id: int) -> None:
-    """Pruefdatei bauen (synchron, im Executor): Export-Bau, veraPDF, Strukturlesung, Vollstaendigkeit."""
+def _abschluss_bauen(project: dict, user_id: int, document_id: int) -> bool:
+    """Pruefdatei bauen (synchron, im eigenen Executor): Export-Bau, veraPDF, Strukturlesung, Vollstaendigkeit.
+    Rueckgabe False, wenn die vorhandene Pruefdatei schon zum aktuellen Stand passt (kein Neubau noetig)."""
     units = _load_pdf_export_units(project, user_id, document_id)
     unit = units[0]
     if not _dokument_getaggt(unit["doc"]):
         raise HTTPException(status_code=422, detail=UNGETAGGT_HINWEIS)
+    if tagging_api._seiten(unit["doc"]) > tagging_api.pdf_tagging.MAX_SEITEN:
+        raise HTTPException(status_code=400, detail=f"Die PDF hat mehr als {tagging_api.pdf_tagging.MAX_SEITEN} Seiten")
     st = _abschluss_stand(project, unit, user_id)
+    if st["meta"] and st["meta"].get("fingerabdruck") == st["fingerabdruck"]:
+        return False
     os.makedirs(st["ordner"], exist_ok=True)
     bau = os.path.join(st["ordner"], f"_bau_{int(document_id)}")
     os.makedirs(bau, exist_ok=True)
@@ -8075,16 +8102,19 @@ def _abschluss_bauen(project: dict, user_id: int, document_id: int) -> None:
                 verapdf_roh = pdfua_export.pruefe(f.read())
     except Exception as e:  # noqa: BLE001
         log.warning("Abschlusspruefung: PDF/UA-Pruefung nicht moeglich: %s", e)
-    fehlend = []
+    fehlend, geprueft = [], True
     try:
         struktur = tagging_api.pdf_struktur.lesen(st["pdf"], st["ordner"], erneuern=True)
         fehlend = abschluss.fehlende_zeilen(st["pdf"], struktur)
     except Exception as e:  # noqa: BLE001
+        geprueft = False
         log.warning("Abschlusspruefung: Strukturlesung/Vollstaendigkeit nicht moeglich: %s", e)
     abschluss.meta_schreiben(st["meta_pfad"], {
-        "version": 1, "erstellt_am": abschluss.jetzt(), "fingerabdruck": st["fingerabdruck"],
-        "verapdf_roh": verapdf_roh, "fehlend": fehlend, "warnungen": info.get("warnings") or [],
+        "version": abschluss.ABSCHLUSS_VERSION, "erstellt_am": abschluss.jetzt(), "fingerabdruck": st["fingerabdruck"],
+        "verapdf_roh": verapdf_roh, "fehlend": fehlend, "vollstaendigkeit_geprueft": geprueft,
+        "warnungen": info.get("warnings") or [],
     })
+    return True
 
 
 @app.get("/api/projects/{project_id}/abschluss")
@@ -8093,9 +8123,10 @@ async def abschluss_ansicht(project_id: int, request: Request, user: dict = Depe
     der Pruefdatei (aktuell, bestanden, Zahl der Probleme)."""
     project = _abschluss_projekt(project_id, user["id"])
     _ = get_gettext(resolve_ui_language(request))
-    units = await asyncio.get_running_loop().run_in_executor(None, _load_pdf_export_units, project, user["id"], None)
+    loop = asyncio.get_running_loop()
+    units = await loop.run_in_executor(None, _load_pdf_export_units, project, user["id"], None)
     docs = [u for u in units if u["doc"].get("id") is not None]
-    aussen = [await asyncio.get_running_loop().run_in_executor(None, _abschluss_dokument, project, u, user["id"], _, False) for u in docs]
+    aussen = [await loop.run_in_executor(None, _abschluss_dokument, project, u, user["id"], _, False) for u in docs]
     conn = get_db()
     try:
         felder = conn.execute("SELECT COUNT(*) FROM formularfelder f JOIN documents d ON d.id = f.document_id WHERE d.project_id = ?", (project_id,)).fetchone()[0]
@@ -8118,34 +8149,40 @@ async def abschluss_dokument(project_id: int, document_id: int, request: Request
 
 @app.post("/api/projects/{project_id}/documents/{document_id}/abschluss")
 async def abschluss_erstellen(project_id: int, document_id: int, request: Request, user: dict = Depends(get_current_user)):
-    """Pruefdatei (neu) erstellen: kostenlos, ohne Ablage-Eintrag. 409, wenn schon ein Bau fuer das Dokument laeuft."""
+    """Pruefdatei (neu) erstellen: kostenlos, ohne Ablage-Eintrag. Nur ein Bau je Dokument (409) und je Nutzer (429)
+    gleichzeitig; passt die vorhandene Pruefdatei schon zum Stand, wird nicht neu gebaut ("neu_gebaut": false)."""
     project = _abschluss_projekt(project_id, user["id"])
+    if not _abschluss_dokument_gehoert(project_id, document_id):
+        raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
     _ = get_gettext(resolve_ui_language(request))
     with _abschluss_lock:
         if document_id in _abschluss_laeuft:
             raise HTTPException(status_code=409, detail="Die Prüfdatei wird gerade erstellt")
+        if user["id"] in _abschluss_nutzer:
+            raise HTTPException(status_code=429, detail="Es wird schon eine Prüfdatei erstellt. Bitte warte, bis sie fertig ist.")
         _abschluss_laeuft.add(document_id)
+        _abschluss_nutzer[user["id"]] = document_id
     loop = asyncio.get_running_loop()
     try:
-        await loop.run_in_executor(None, _abschluss_bauen, project, user["id"], document_id)
+        neu = await loop.run_in_executor(_abschluss_executor, _abschluss_bauen, project, user["id"], document_id)
     finally:
         with _abschluss_lock:
             _abschluss_laeuft.discard(document_id)
+            _abschluss_nutzer.pop(user["id"], None)
     units = await loop.run_in_executor(None, _load_pdf_export_units, project, user["id"], document_id)
-    return await loop.run_in_executor(None, _abschluss_dokument, project, units[0], user["id"], _, True)
+    aussen = await loop.run_in_executor(None, _abschluss_dokument, project, units[0], user["id"], _, True)
+    aussen["neu_gebaut"] = bool(neu)
+    return aussen
 
 
 @app.get("/api/projects/{project_id}/documents/{document_id}/abschluss/seite/{seite}")
 async def abschluss_seitenbild(project_id: int, document_id: int, seite: int, user: dict = Depends(get_current_user)):
-    """Seitenbild der Pruefdatei (PNG, gecacht), fuer die seitenweise Ansicht."""
+    """Seitenbild der Pruefdatei (PNG, 80 dpi, laengste Seite hoechstens ABSCHLUSS_BILD_MAX_PX, gecacht)."""
     project = _abschluss_projekt(project_id, user["id"])
+    if not _abschluss_dokument_gehoert(project_id, document_id):
+        raise HTTPException(status_code=404, detail="Keine Prüfdatei")
     _o, pdf, _m = abschluss.pfade(RESULTS_DIR, user["id"], project["id"], document_id)
-    conn = get_db()
-    try:
-        gehoert = conn.execute("SELECT 1 FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id)).fetchone()
-    finally:
-        conn.close()
-    if not gehoert or not os.path.isfile(pdf):
+    if not os.path.isfile(pdf) or document_id in _abschluss_laeuft:
         raise HTTPException(status_code=404, detail="Keine Prüfdatei")
     ziel = pdf[:-4] + f"_s{int(seite)}.png"
 
@@ -8156,7 +8193,12 @@ async def abschluss_seitenbild(project_id: int, document_id: int, seite: int, us
         with fitz.open(pdf) as d:
             if not 1 <= seite <= len(d):
                 return None
-            d[seite - 1].get_pixmap(dpi=80).save(ziel)
+            page = d[seite - 1]
+            laengste = max(page.rect.width, page.rect.height) or 1
+            zoom = min(80 / 72, ABSCHLUSS_BILD_MAX_PX / laengste)
+            tmp = ziel + f".{threading.get_ident()}.tmp.png"
+            page.get_pixmap(matrix=fitz.Matrix(zoom, zoom)).save(tmp)
+            os.replace(tmp, ziel)
         return ziel
 
     pfad = await asyncio.get_running_loop().run_in_executor(None, _rendern)

@@ -8119,3 +8119,25 @@ msgstr "non indiqué"
 
 msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
 msgstr "{u} textes alternatifs repris de la version précédente."
+
+#: Abschlussprüfung nach Prüfbericht 24.09.2026
+msgid "1 Problemstelle"
+msgstr "1 point problématique"
+
+msgid "1 Problemstelle gefunden."
+msgstr "1 point problématique trouvé."
+
+msgid "nicht geprüft"
+msgstr "non vérifiée"
+
+msgid "Die Prüfdatei ist nicht mehr aktuell."
+msgstr "Le fichier de contrôle est obsolète."
+
+msgid "Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Recréez-le pour vérifier exactement le fichier que vous téléchargez."
+
+msgid "Die Prüfdatei ist schon aktuell."
+msgstr "Le fichier de contrôle est déjà à jour."
+
+msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
+msgstr "L’exhaustivité n’a pas pu être vérifiée. Veuillez parcourir vous-même l’aperçu audio."

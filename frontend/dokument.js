@@ -40,6 +40,8 @@
     // wir arbeiten noch daran“). Das Urteil bleibt aus (Feedback 24.09.2026, Punkt 6: Anwender bilden sich ihr Urteil).
     const ZEIGE_KI_PRUEFUNG = true;
     const ZEIGE_URTEIL = false;
+    // Kette „Komplett barrierefrei machen“ und Ablage-Knopf im Kopf (Feedback 24.09.2026, Punkt 1: vorerst aus)
+    const ZEIGE_PROJEKT_KNOEPFE = false;
 
     let zustandProjekt = null;
     let aktuelleDaten = null;
@@ -398,43 +400,21 @@
     }
 
     // ─── Kopf ───
+    // Projektkopf wie in allen Ansichten (app.html projektKopfHtml): Name + Dateityp-Symbol + Ansichts-Knoepfe; keine
+    // Laufstatus-Anzeige oben rechts (Michael Karbe, Mail 22.09.2026, Punkt 9) — der Stand steht an jedem Dokument.
+    // Das Feld „Funktionen und Einstellungen“ (Kette „Komplett barrierefrei machen“, Ablage) ist aus (ZEIGE_PROJEKT_KNOEPFE,
+    // Feedback 24.09.2026, Punkt 1). Die Dialoge liegen ausserhalb der Felder (showModal).
     function kopfHtml(project, data) {
         const title = (project.name && project.name.trim()) ? project.name : project.filename;
         const docs = data.documents || [];
         const kette = project.kette || {};
-        const laeuft = docs.some(d => d.tagging && d.tagging.laeuft);
-        const busy = laeuft || !!kette.laeuft || project.status === 'extracting' || project.status === 'processing';
-        let badge, cls;
-        if (kette.laeuft) { badge = t('Komplett barrierefrei machen läuft'); cls = 'badge-processing'; }
-        else if (laeuft) { badge = t('Wird barrierefrei gemacht …'); cls = 'badge-processing'; }
-        else if (project.status === 'extracting') { badge = t('Wird gelesen'); cls = 'badge-processing'; }
-        else if (project.status === 'processing') { badge = t('Alt-Texte werden generiert...'); cls = 'badge-processing'; }
-        else if (project.status === 'error') { badge = t('Fehler'); cls = 'badge-error'; }
-        else if (!docs.length) { badge = t('Neu'); cls = 'badge-ready'; }
-        else if (docs.every(d => d.getaggt === true)) { badge = t('Alle Dokumente getaggt'); cls = 'badge-done'; }
-        else { badge = t('Bereit'); cls = 'badge-ready'; }
-        // Knoepfe fuer das ganze Projekt im eigenen Feld unter dem Kopf (Michael Karbe, Mail 21.09.2026).
-        // Kette (22.09.2026, Steve + Michael): ein Knopf fuer alle Stationen — Tagging, Alt-Texte, Quickinfos.
-        // Feld „Funktionen und Einstellungen“ mit „Komplett barrierefrei machen“ und „Ablage“ entfaellt (Michael Karbe,
-        // Feedback 24.09.2026, Punkt 1: erst einzelne PDF; zur Ablage kommt man ueber das Dashboard). Code bleibt fuer spaeter.
-        const ZEIGE_PROJEKT_KNOEPFE = false;
+        const busy = docs.some(d => d.tagging && d.tagging.laeuft) || !!kette.laeuft || project.status === 'extracting' || project.status === 'processing';
         const aktionen = !ZEIGE_PROJEKT_KNOEPFE ? '' : (docs.length && !busy ? '<button class="btn btn-primary" id="dkKetteBtn" onclick="Dokument.ketteOeffnen(' + project.id + ')">' + ico('sparkle') + t('Komplett barrierefrei machen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
             + ((data.ausgaben_anzahl || 0) > 0 ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : '');
-        // Projektkopf wie in allen Ansichten (app.html projektKopfHtml): Name + Dateityp-Symbol + Ansichts-Wahl;
-        // die Laufstatus-Anzeige oben rechts entfaellt (Michael Karbe, Mail 22.09.2026, Punkt 9), der Stand
-        // steht an jedem Dokument. Die beiden Dialoge liegen ausserhalb der Felder (werden per showModal geoeffnet).
-        if (typeof projektKopfHtml === 'function') {
-            return projektKopfHtml(project, 'dokument', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
-                + funktionenKarteHtml(aktionen)
-                + laufDialogHtml(project)
-                + ketteDialogHtml(project);
-        }
-        return '<div class="card">'
-            + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: esc(title) }) + '</h1>'
-            + '<span class="badge ' + cls + '" id="projectStatusBadge">' + badge + '</span></div>'
-            + '<div class="card-info" id="projectHeadInfo" hidden></div>'
-            + '<div class="card-actions">' + aktionen + laufDialogHtml(project) + ketteDialogHtml(project) + '</div>'
-            + '</div>';
+        return projektKopfHtml(project, 'dokument', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
+            + funktionenKarteHtml(aktionen)
+            + laufDialogHtml(project)
+            + (ZEIGE_PROJEKT_KNOEPFE ? ketteDialogHtml(project) : '');
     }
 
     // ─── Rueckfrage vor dem Lauf ───
@@ -631,59 +611,6 @@
         if (ol) { const reihe = ['tagging', 'alttexte', 'quickinfos']; ol.innerHTML = reihe.map(r => { const st = (k.schritte || {})[r] || {}; return '<li>' + esc(SCHRITT_NAMEN[r]()) + ': ' + esc((SCHRITT_STATUS[st.status] || SCHRITT_STATUS.offen)()) + '</li>'; }).join(''); }
     }
 
-    // ─── Fertige PDF herunterladen (22.09.2026): derselbe Export wie „Als PDF“ in der Alt-Text-Ansicht
-    // (Struktur + Alt-Texte + Quickinfos), die Datei landet zusaetzlich in der Ablage. ───
-    async function exportieren(projectId, docId) {
-        const btn = document.getElementById('dok_export_' + docId);
-        const out = document.getElementById('dok_status_' + docId);
-        if (btn) btn.disabled = true;
-        if (out) out.textContent = t('Wird exportiert...');
-        announce(t('Export läuft …'));
-        try {
-            const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document_id: docId }) });
-            if (res.status === 402) {
-                const e = await res.json().catch(() => ({}));
-                if (out) out.textContent = '';
-                if (typeof zeigeCreditsMeldung === 'function') zeigeCreditsMeldung(e.detail); else announce((e.detail && e.detail.text) || t('Dafür reicht das Guthaben nicht.'));
-                return;
-            }
-            if (!res.ok) {
-                const e = await res.json().catch(() => ({}));
-                const m = (e.detail && (e.detail.text || e.detail)) || t('Fehler beim Export.');
-                if (out) out.textContent = typeof m === 'string' ? m : t('Fehler beim Export.');
-                announce(out ? out.textContent : '');
-                return;
-            }
-            const blob = await res.blob();
-            const cd = res.headers.get('Content-Disposition') || '';
-            const mStar = /filename\*=UTF-8''([^;]+)/i.exec(cd);
-            const m = mStar || /filename="?([^";]+)"?/i.exec(cd);
-            let name = null;
-            if (m) { try { name = decodeURIComponent(m[1]); } catch (e) { name = m[1]; } }
-            name = name || 'inkludocs.pdf';
-            downloadBlob(blob, name);
-            const credits = res.headers.get('X-Export-Credits');
-            let ansage = t('Heruntergeladen: „{name}“.', { name: name }) + ' ' + t('Die Datei liegt auch in deiner Ablage.');
-            if (credits) ansage += ' ' + t('{c} Credits verbraucht.', { c: credits });
-            const warn = res.headers.get('X-Export-Warnings');
-            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
-            announce(ansage);
-            await showProject(projectId, true);   // Ablage-Zaehler im Kopf
-            const o2 = document.getElementById('dok_status_' + docId);
-            if (o2) { o2.textContent = ansage; o2.setAttribute('tabindex', '-1'); o2.focus(); }
-        } catch (e) {
-            if (out) out.textContent = t('Verbindungsfehler.');
-        } finally {
-            const b2 = document.getElementById('dok_export_' + docId);
-            if (b2) b2.disabled = false;
-        }
-    }
-
-    // ─── Ansicht wechseln (Knopf „Alt-Texte bearbeiten“) ───
-    function zurAnsicht(projectId, ziel) {
-        if (typeof wechsleAnsicht === 'function') wechsleAnsicht(projectId, ziel);
-    }
-
     // ─── Laufmeldung (wie Alt-Texte/Uebersetzung) ───
     function laufMeldungHtml() {
         return '<div id="dkLaufMeldung" class="lauf-meldung" tabindex="-1" hidden><output id="dkLaufMeldungText"></output>'
@@ -719,6 +646,7 @@
     }
 
     async function showProject(projectId, erneut) {
+        projectId = Number(projectId);   // Adresse liefert Text, Knoepfe eine Zahl — ohne das ging der Klapp-Zustand verloren
         pollStoppen();
         const main = document.getElementById('main');
         const res = await fetch('/api/projects/' + projectId + '/dokument-ansicht', { credentials: 'same-origin' });
@@ -827,6 +755,8 @@
         }
     }
 
-    window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, zurAnsicht, meldungSchliessen, pollStoppen,
-                        ketteOeffnen, ketteSchliessen, ketteStarten, exportieren, pruefungStarten, korrekturStarten, korrekturRueckgaengig };
+    // exportieren/zurAnsicht entfielen am 24.09.2026: Herunterladen macht die Abschlusspruefung (abschluss.js), der
+    // Ansichtswechsel laeuft ueber die Ansichts-Knoepfe (app.html ansichtWahlHtml).
+    window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, meldungSchliessen, pollStoppen,
+                        ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig };
 })();

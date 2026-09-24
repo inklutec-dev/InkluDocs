@@ -8122,3 +8122,25 @@ msgstr "nicht angegeben"
 
 msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
 msgstr "{u} Alt-Texte aus dem vorherigen Stand übernommen."
+
+#: Abschlussprüfung nach Prüfbericht 24.09.2026
+msgid "1 Problemstelle"
+msgstr "1 Problemstelle"
+
+msgid "1 Problemstelle gefunden."
+msgstr "1 Problemstelle gefunden."
+
+msgid "nicht geprüft"
+msgstr "nicht geprüft"
+
+msgid "Die Prüfdatei ist nicht mehr aktuell."
+msgstr "Die Prüfdatei ist nicht mehr aktuell."
+
+msgid "Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst."
+
+msgid "Die Prüfdatei ist schon aktuell."
+msgstr "Die Prüfdatei ist schon aktuell."
+
+msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
+msgstr "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."

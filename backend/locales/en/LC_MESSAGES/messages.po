@@ -8119,3 +8119,25 @@ msgstr "not specified"
 
 msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
 msgstr "{u} alt texts carried over from the previous version."
+
+#: Abschlussprüfung nach Prüfbericht 24.09.2026
+msgid "1 Problemstelle"
+msgstr "1 problem spot"
+
+msgid "1 Problemstelle gefunden."
+msgstr "1 problem spot found."
+
+msgid "nicht geprüft"
+msgstr "not checked"
+
+msgid "Die Prüfdatei ist nicht mehr aktuell."
+msgstr "The check file is out of date."
+
+msgid "Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Recreate it so that you check exactly the file you download."
+
+msgid "Die Prüfdatei ist schon aktuell."
+msgstr "The check file is already up to date."
+
+msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
+msgstr "Completeness could not be checked. Please go through the listening sample yourself."

@@ -193,7 +193,7 @@ def einheitsbericht(doc: dict, pruef_bericht: dict) -> dict:
         for e in (p.get("einzeln") or [{"text": p.get("text") or "", "seiten": list(p.get("seiten") or [])}]):
             eintraege.append({"quelle": "pdfua", "seiten": list(e.get("seiten") or []), "bereich": p.get("bereich") or "",
                               "element": "", "text": e.get("text") or "", "vorschlag": "", "sicherheit": "",
-                              "auto": False, "regeln": list(p.get("regeln") or [])})
+                              "auto": False, "regeln": list(e.get("regeln") or p.get("regeln") or [])})
     for f in pruef_bericht.get("befunde") or []:
         element = (f.get("typ") or "")
         if f.get("text"):

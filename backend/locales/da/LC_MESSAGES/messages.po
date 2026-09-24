@@ -7811,3 +7811,25 @@ msgstr "ikke angivet"
 
 msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
 msgstr "{u} alt-tekster overtaget fra den tidligere version."
+
+#: Abschlussprüfung nach Prüfbericht 24.09.2026
+msgid "1 Problemstelle"
+msgstr "1 problemsted"
+
+msgid "1 Problemstelle gefunden."
+msgstr "1 problemsted fundet."
+
+msgid "nicht geprüft"
+msgstr "ikke kontrolleret"
+
+msgid "Die Prüfdatei ist nicht mehr aktuell."
+msgstr "Kontrolfilen er ikke længere aktuel."
+
+msgid "Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Opret den igen, så du kontrollerer præcis den fil, du downloader."
+
+msgid "Die Prüfdatei ist schon aktuell."
+msgstr "Kontrolfilen er allerede aktuel."
+
+msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
+msgstr "Fuldstændigheden kunne ikke kontrolleres. Gennemgå selv lytteprøven."

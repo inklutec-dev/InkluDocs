@@ -8119,3 +8119,25 @@ msgstr "no indicado"
 
 msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
 msgstr "{u} textos alternativos conservados de la versión anterior."
+
+#: Abschlussprüfung nach Prüfbericht 24.09.2026
+msgid "1 Problemstelle"
+msgstr "1 punto problemático"
+
+msgid "1 Problemstelle gefunden."
+msgstr "Se encontró 1 punto problemático."
+
+msgid "nicht geprüft"
+msgstr "no revisada"
+
+msgid "Die Prüfdatei ist nicht mehr aktuell."
+msgstr "El archivo de revisión está desactualizado."
+
+msgid "Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst."
+msgstr "Vuelve a crearlo para revisar exactamente el archivo que descargas."
+
+msgid "Die Prüfdatei ist schon aktuell."
+msgstr "El archivo de revisión ya está actualizado."
+
+msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
+msgstr "No se pudo comprobar la integridad. Revisa tú mismo la muestra de audio."

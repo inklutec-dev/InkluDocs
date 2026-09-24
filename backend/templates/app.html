@@ -286,9 +286,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // wechselt ohne Neuladen. Nicht verfuegbare Ansichten (Quickinfos ohne Felder) sind kein Link, sondern ausgegrauter
     // Text mit dem Grund fuer Screenreader. Bis 24.09. Ausklappliste + „Öffnen“ (Steve/WCAG 3.2.2) — mit Links entfaellt
     // das Problem, dass Pfeiltasten auf der Liste schon wechseln. Gleiche Funktion fuer alle Ansichten.
+    function ansichtNamen() {
+        return { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Abschlussprüfung') };
+    }
     function ansichtWahlHtml(project, aktuell) {
         if (!(istWordDateityp(project) || istPdfDateityp(project)) || window.GUEST_MODE) return '';
-        const namen = { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Abschlussprüfung') };
+        const namen = ansichtNamen();
         const knoepfe = ansichtenFuer(project).map(function (k) {
             const grund = ansichtGesperrtWeil(project, k);
             if (grund) {
@@ -327,9 +330,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function mitProjektKopf(project) {
         return !window.GUEST_MODE && (istPdfDateityp(project) || istWordDateityp(project));
     }
+    // Die STATION steht vorne in der H1 und im Seitentitel (Steve 24.09.2026): nach dem Laden oder einem Wechsel hoert man
+    // zuerst, wo man ist („Abschlussprüfung – Projekt: …“), ohne erst die Knoepfe abzusuchen (WCAG 2.4.2 Seitentitel,
+    // 2.4.6 Ueberschriften). Der Seitentitel behaelt den Zusatz der Grundseite („InkluDocs“, auf Staging „(Testumgebung)“).
+    const _basisTitel = document.title;
     function projektKopfHtml(project, ansicht, titel, zusatz) {
+        const station = ansichtNamen()[ansicht] || '';
+        const projekt = t('Projekt: {name}', { name: titel });
+        document.title = (station ? station + ' – ' : '') + projekt + ' · ' + _basisTitel;
         return '<div class="card projekt-kopf">'
-            + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(titel) }) + '</h1>'
+            + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + (station ? escHtml(station) + ' – ' : '') + t('Projekt: {name}', { name: escHtml(titel) }) + '</h1>'
             + dateitypIconHtml(project) + '</div>'
             + '<div class="card-actions">' + ansichtWahlHtml(project, ansicht) + '</div>'
             + (zusatz || '')
@@ -817,6 +827,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     async function showProject(projectId) {
+        if (window.vorlesenStopp) vorlesenStopp();   // Vorlesen endet mit der Ansicht (Pruefbericht 24.09.2026)
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         if (window.Uebersetzen && Uebersetzen.pollStoppen) Uebersetzen.pollStoppen();   // Polling der Uebersetzungs-Ansicht endet mit ihr (Review 2, Befund 2)
         if (window.Dokument && Dokument.pollStoppen) Dokument.pollStoppen();          // dito Ansicht „Dokument“ (22.09.2026)
@@ -861,7 +872,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         // PDF-Projekt, Station „Abschlussprüfung“ (24.09.2026): fertige Datei prüfen und herunterladen (frontend/abschluss.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'abschluss') {
-            if (window.vorlesenStopp) vorlesenStopp();
             return Abschluss.showProject(projectId);
         }
         // PDF-Projekt, Station „Quickinfos“ (22.09.2026): dieselbe Ansicht wie das Formular-Werkzeug (formular.js).
@@ -1393,7 +1403,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             setTimeout(ende, 1200);
         });
     }
+    let vorleseLauf = 0;   // jeder Start zaehlt hoch; alte Aeusserungen (auch ihre spaeten onerror nach cancel) sind dann verwaist
     function vorlesenStopp() {
+        vorleseLauf++;
         if (window.speechSynthesis) window.speechSynthesis.cancel();
         document.querySelectorAll('.tts-btn[aria-pressed="true"]').forEach(function (b) {
             b.setAttribute('aria-pressed', 'false');
@@ -1409,30 +1421,38 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         if (btn && btn.getAttribute('aria-pressed') === 'true') { vorlesenStopp(); return; }
         vorlesenStopp();
-        const teile = String(text || '').split(/\n+|(?<=[.!?:])\s+/).map(function (x) { return x.trim(); }).filter(Boolean);
+        const lauf = vorleseLauf;
+        // Saetze trennen ohne Lookbehind (Safari < 16.4 kennt ihn nicht — ein Lookbehind im Skript legte dort die ganze App lahm)
+        const teile = String(text || '').replace(/([.!?:])\s+/g, '$1\n').split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean);
         if (!teile.length) { announce(t('Kein Text zum Vorlesen vorhanden.')); return; }
-        const kennung = (code || 'de').slice(0, 2).toLowerCase();
-        const stimme = (await lokaleStimmen()).find(function (v) { return v.localService && v.lang && v.lang.toLowerCase().indexOf(kennung) === 0; });
-        if (!stimme) {
-            announce(t('Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor.'));
-            return;
-        }
+        const zuruecksetzen = function () {
+            if (lauf !== vorleseLauf || !btn) return;
+            btn.setAttribute('aria-pressed', 'false');
+            btn.textContent = btn.dataset.label || t('Anhören');
+        };
+        // Zustand VOR dem Warten auf die Stimmen setzen: ein zweiter Druck in der Wartezeit stoppt, statt doppelt zu starten
         if (btn) {
             btn.dataset.label = label || btn.textContent;
             btn.setAttribute('aria-pressed', 'true');
             btn.textContent = t('Stopp');
         }
+        const kennung = (code || 'de').slice(0, 2).toLowerCase();
+        const stimme = (await lokaleStimmen()).find(function (v) { return v.localService && v.lang && v.lang.toLowerCase().indexOf(kennung) === 0; });
+        if (lauf !== vorleseLauf) return;   // inzwischen gestoppt, andere Seite oder neuer Start
+        if (!stimme) {
+            zuruecksetzen();
+            announce(t('Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor.'));
+            return;
+        }
         teile.forEach(function (teil, i) {
             const u = new SpeechSynthesisUtterance(teil);
             u.voice = stimme;
             u.lang = stimme.lang;
-            if (i === teile.length - 1) {
-                u.onend = function () { if (btn) { btn.setAttribute('aria-pressed', 'false'); btn.textContent = btn.dataset.label; } };
-            }
-            u.onerror = function () { if (btn) { btn.setAttribute('aria-pressed', 'false'); btn.textContent = btn.dataset.label; } };
+            if (i === teile.length - 1) u.onend = zuruecksetzen;
+            u.onerror = zuruecksetzen;
             synth.speak(u);
         });
-        announce(t('Wird vorgelesen.'));
+        // keine zusaetzliche Ansage: der Knopf meldet selbst „Stopp, gedrueckt“, sonst sprechen drei Stimmen durcheinander
     }
     window.vorlesen = vorlesen;
     window.vorlesenStopp = vorlesenStopp;

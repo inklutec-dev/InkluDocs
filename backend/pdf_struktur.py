@@ -76,12 +76,25 @@ def lesen(pdf_pfad: str, arbeitsordner: str, erneuern: bool = False) -> dict:
             pass
     if not verfuegbar():
         raise StrukturFehler("Die Strukturlesung ist auf diesem Server nicht eingerichtet")
-    tmp = cache + ".tmp"
+    # eindeutige Temp-Datei je Lauf (Pruefbericht 24.09.2026): zwei gleichzeitige Lesungen derselben PDF schrieben
+    # sonst in dieselbe .tmp und ersetzten sich gegenseitig
+    import tempfile
+    fd, tmp = tempfile.mkstemp(prefix=os.path.basename(pdf_pfad) + ".", suffix=".struktur.tmp", dir=arbeitsordner)
+    os.close(fd)
     cmd = [sys.executable, str(_SCRIPT), "-i", pdf_pfad, "-o", tmp]
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=_TIMEOUT_SECONDS, cwd=str(_SCRIPT_DIR))
     except subprocess.TimeoutExpired:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
         raise StrukturFehler("Die Strukturlesung hat zu lange gedauert")
+    if r.returncode != 0 or not os.path.getsize(tmp):
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
     if r.returncode == 3:
         raise StrukturFehler("Die PDF hat keinen Strukturbaum (keine Tags)")
     if r.returncode != 0 or not os.path.isfile(tmp):
