@@ -160,7 +160,7 @@ with sync_playwright() as p:
     axe(pg, "Ansicht Dokument nach dem Lauf")
 
     print("== B2. Hoerprobe und Strukturansicht (22.09.) ==")
-    check("Link „Strukturansicht öffnen“ nach dem Tagging", pg.locator("section.dok-karte a:has-text('Strukturansicht öffnen')").count() == 1)
+    check("Strukturansicht-Link in der Dokument-Karte ausgeblendet (Steve 24.09.; gibt es in der Abschlussprüfung)", pg.locator("section.dok-karte a[id^=dok_struktur_]").count() == 0)
     check("Klappe „Hörprobe lesen“ vorhanden", pg.locator("details.dok-hoerprobe > summary").count() == 1)
     pg.click("details.dok-hoerprobe > summary")
     hp = ""
@@ -172,68 +172,11 @@ with sync_playwright() as p:
     check("Hörprobe geladen: Sprache, Seiten, Zusammenfassung, Grafik", all(k in hp for k in ("Sprache", "Seiten", "Zusammenfassung", "Grafik")), hp[:300])
     check("Hörprobe nennt die Seiten in Lesereihenfolge", "Seite 1" in hp and "Seite 2" in hp, hp[:300])
     axe(pg, "Ansicht Dokument mit offener Hörprobe")
-    pg.click("section.dok-karte a:has-text('Strukturansicht öffnen')")
-    pg.wait_for_selector("h1#strukturTitel", timeout=30000)
-    pg.wait_for_timeout(500)
-    check("Strukturansicht: Adresse /struktur/<projekt>/<dokument>", f"/struktur/{pid}/" in pg.url, pg.url)
-    check("Strukturansicht: H1 mit Dokumentname", pg.locator("h1#strukturTitel").inner_text().startswith("Strukturansicht: klicktest_roh.pdf"), pg.locator("h1#strukturTitel").inner_text())
-    check("Strukturansicht: Inhalt mit Absaetzen und Grafik", pg.locator("#strukturInhalt p").count() >= 3 and pg.locator("#strukturInhalt figure").count() >= 1, pg.locator("#strukturInhalt p").count())
-    check("Strukturansicht: genau eine H1, Hörprobe als H2", pg.locator("h1").count() == 1 and pg.locator("h2#strukturHoerprobe").count() == 1)
-    check("Strukturansicht: kein Skript-Text im Inhalt", "<script" not in pg.locator("#strukturInhalt").inner_html().lower())
-    axe(pg, "Strukturansicht")
-    pg.click("#strukturZurueck")
-    pg.wait_for_selector("section.dok-karte", timeout=15000)
-    pg.wait_for_timeout(800)
-    check("Zurück zum Projekt fuehrt in die Ansicht Dokument", pg.locator("section.dok-karte").count() == 1 and "ansicht=dokument" in pg.url, pg.url)
 
-    print("== B3. Automatische Pruefung (Schritt 5, 22.09.) ==")
-    check("Klappe heisst „KI-basierte Prüfung“ (Punkt 11)", pg.locator("details.dok-pruefung > summary").count() == 1 and pg.locator("details.dok-pruefung > summary").inner_text().startswith("KI-basierte Prüfung"), pg.locator("details.dok-pruefung > summary").inner_text() if pg.locator("details.dok-pruefung > summary").count() else "")
-    pg.click("details.dok-pruefung > summary")
-    pg.wait_for_timeout(300)
-    kn = pg.locator("button[id^=dok_pruef_]")
-    check("Knopf „Prüfung starten“ mit Seiten und Credits", kn.count() == 1 and "2 Seiten, 4 Credits" in kn.first.inner_text(), kn.first.inner_text() if kn.count() else "")
-    kn.first.click()
-    pg.wait_for_timeout(1500)
-    st = pg.locator("output[id^=dok_pruef_status_]").first.inner_text()
-    check("Statuszeile „Prüfung läuft“ und Fokus darauf", "Prüfung läuft" in st and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_pruef_status_"), st)
-    fertig = False
-    for _ in range(90):
-        pg.wait_for_timeout(2000)
-        if pg.locator("#dkLaufMeldung:not([hidden])").count() and "Prüfung" in pg.locator("#dkLaufMeldungText").inner_text():
-            fertig = True
-            break
-    meld = pg.locator("#dkLaufMeldungText").inner_text() if fertig else ""
-    check("Laufmeldung „Prüfung … fertig“", fertig and "fertig" in meld, meld)
-    check("Klappe bleibt offen, Bericht sichtbar", pg.locator("details.dok-pruefung[open]").count() == 1 and ("Befunde" in pg.locator("details.dok-pruefung").inner_text()), pg.locator("details.dok-pruefung").inner_text()[:300])
-    check("Knopf heisst jetzt „Erneut prüfen“", pg.locator("button[id^=dok_pruef_]").first.inner_text().startswith("Erneut prüfen"))
-    print("   Bericht:", pg.locator("details.dok-pruefung").inner_text()[:600].replace("\n", " | "))
-    axe(pg, "Ansicht Dokument mit Prüfbericht")
-    # Korrektur (Stufe 2): nur, wenn Befunde mit Doppelbeleg da sind (Modellurteil, nicht garantiert)
-    if pg.locator("button[id^=dok_korr_]").count():
-        print("== B4. Korrektur mit Doppelbeleg ==")
-        kn = pg.locator("button[id^=dok_korr_]").first
-        check("Knopf „n Befunde korrigieren“ nennt kostenlos", "kostenlos" in kn.inner_text(), kn.inner_text())
-        check("Zweiter Knopf „Korrigieren und erneut prüfen“ mit Credits", pg.locator("button[id^=dok_korr2_]").count() == 1 and "Credits" in pg.locator("button[id^=dok_korr2_]").first.inner_text())
-        kn.click()
-        fertig = False
-        for _ in range(30):
-            pg.wait_for_timeout(2000)
-            if pg.locator("#dkLaufMeldung:not([hidden])").count() and "Korrektur" in pg.locator("#dkLaufMeldungText").inner_text():
-                fertig = True
-                break
-        check("Laufmeldung „Korrektur … fertig: n Änderungen“", fertig and "Änderungen" in pg.locator("#dkLaufMeldungText").inner_text(), pg.locator("#dkLaufMeldungText").inner_text() if fertig else "")
-        txt = pg.locator("details.dok-pruefung").inner_text()
-        check("Korrektur-Block mit Änderungen, Hinweis „von vor der Korrektur“, Rückgängig-Knopf", "Korrektur vom" in txt and "vor der Korrektur" in txt and pg.locator("button[id^=dok_korr_undo_]").count() == 1, txt[-400:])
-        axe(pg, "Ansicht Dokument nach Korrektur")
-        pg.click("button[id^=dok_korr_undo_]")
-        pg.wait_for_timeout(2500)
-        check("Rückgängig: Meldung und Knopf zum Korrigieren wieder da", "rückgängig" in (pg.locator("#dkLaufMeldungText").inner_text() if pg.locator("#dkLaufMeldung:not([hidden])").count() else "").lower() and pg.locator("button[id^=dok_korr_]").count() >= 1, pg.locator("details.dok-pruefung").inner_text()[-300:])
-        if pg.locator("#dkLaufMeldung:not([hidden]) button").count():
-            pg.click("#dkLaufMeldung button")
-    else:
-        print("   (keine Befunde mit Doppelbeleg in diesem Lauf — Korrektur-Teil uebersprungen)")
-    if pg.locator("#dkLaufMeldung:not([hidden]) button").count():
-        pg.click("#dkLaufMeldung button")
+    print("== B3. KI-basierte Pruefung ausgeblendet (Steve 24.09.) ==")
+    check("Keine Klappe „KI-basierte Prüfung“ und kein Prüfen-Knopf in der Dokument-Karte", pg.locator("details.dok-pruefung").count() == 0 and pg.locator("button[id^=dok_pruef_]").count() == 0)
+    urt = pg.locator("p.dok-urteil").first.inner_text() if pg.locator("p.dok-urteil").count() else ""
+    check("Urteil fordert keine KI-Prüfung an", "KI-Prüfung" not in urt, urt)
 
     print("== C. Wechsel zur Ansicht Alt-Texte und zurueck ==")
     pg.select_option("#ansichtSelect", "alttexte")
@@ -319,6 +262,8 @@ with sync_playwright() as p:
     pg.click("a[id^=ab_struktur_]")
     pg.wait_for_selector("h1#strukturTitel", timeout=30000)
     check("Mit eigenem Screenreader prüfen: Strukturansicht der fertigen Datei", "(fertige Datei)" in pg.locator("h1#strukturTitel").inner_text() and "quelle=abschluss" in pg.url, pg.locator("h1#strukturTitel").inner_text())
+    check("Strukturansicht: genau eine H1, Hörprobe als H2, Inhalt mit Absätzen, kein Skript-Text", pg.locator("h1").count() == 1 and pg.locator("h2#strukturHoerprobe").count() == 1 and pg.locator("#strukturInhalt p").count() >= 3 and "<script" not in pg.locator("#strukturInhalt").inner_html().lower())
+    axe(pg, "Strukturansicht der fertigen Datei")
     pg.click("#strukturZurueck"); pg.wait_for_selector("section.ab-karte", timeout=15000)
     check("Zurück führt in die Abschlussprüfung", "ansicht=abschluss" in pg.url)
     # Alt-Text aendern -> Pruefdatei nicht mehr aktuell

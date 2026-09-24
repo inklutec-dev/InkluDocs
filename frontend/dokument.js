@@ -31,6 +31,13 @@
 (function () {
     'use strict';
 
+    // AUSGEBLENDET (Steve 24.09.2026, nicht geloescht): Strukturansicht-Link und KI-basierte Pruefung in der Dokument-
+    // Karte. Die Strukturansicht der fertigen Datei gibt es in der Abschlusspruefung („Mit eigenem Screenreader pruefen“);
+    // die KI-Pruefung soll spaeter im Hintergrund laufen und im Tagging-Preis stecken statt per Knopf. Zum Wieder-
+    // einblenden den Schalter auf true setzen.
+    const ZEIGE_STRUKTURANSICHT = false;
+    const ZEIGE_KI_PRUEFUNG = false;
+
     let zustandProjekt = null;
     let aktuelleDaten = null;
     let pollTimer = null;
@@ -258,7 +265,7 @@
         return s;
     }
     function pruefungHtml(project, d) {
-        if (d.getaggt !== true) return '';
+        if (!ZEIGE_KI_PRUEFUNG || d.getaggt !== true) return '';
         const tg = d.tagging || {};
         const pr = tg.pruefung || {};
         const busy = tg.laeuft || pr.laeuft || !!(project.kette && project.kette.laeuft);
@@ -318,6 +325,10 @@
         else if (u.stufe === 'neu_taggen') { text = t('Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen.'); cls = 'badge-warn'; }
         else if (u.stufe === 'unvollstaendig') { text = t('Struktur unvollständig: {n} von {g} Textzeilen haben kein Element. Bitte die Hörprobe prüfen.', { n: u.zeilen_ohne, g: u.zeilen_gesamt }); cls = 'badge-warn'; }
         else if (u.stufe === 'in_ordnung') { text = t('In Ordnung: Struktur geprüft, nichts zu tun. Export möglich.'); cls = 'badge-ok'; }
+        else if (!ZEIGE_KI_PRUEFUNG && (u.stufe === 'verbesserungen' || u.stufe === 'pruefung_empfohlen')) {
+            // KI-Pruefung ausgeblendet: nur das technische Ergebnis, keine Aufforderung zu einem Knopf, den es nicht gibt
+            text = tech.charAt(0).toUpperCase() + tech.slice(1) + '.'; cls = u.technisch === false ? 'badge-warn' : 'badge-muted';
+        }
         else if (u.stufe === 'verbesserungen') { text = (u.ki_hoch != null ? t('Verbesserungen möglich: {n} sichere Befunde, {tech}.', { n: u.ki_hoch, tech: tech }) : t('Verbesserungen möglich: {tech}. KI-Prüfung starten.', { tech: tech })); cls = 'badge-warn'; }
         else if (u.stufe === 'pruefung_empfohlen') { text = t('{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt.', { tech: tech.charAt(0).toUpperCase() + tech.slice(1) }); cls = 'badge-muted'; }
         return '<p class="dok-urteil" id="dok_urteil_' + d.id + '"><span class="badge ' + cls + '">' + t('Urteil') + '</span> ' + text + '</p>';
@@ -371,7 +382,7 @@
             +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
             // Herunterladen wandert in die Station „Abschlussprüfung“ (Steve 24.09.2026): dort sieht und hört man die fertige
             // Datei, bevor man sie holt. Hier nur der Hinweis, wohin (Ansichts-Wahl im Kopf).
-            +   (d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
+            +   (ZEIGE_STRUKTURANSICHT && d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</div>'
