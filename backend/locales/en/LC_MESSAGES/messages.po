@@ -7832,3 +7832,253 @@ msgstr "PDF project"
 
 msgid "Word-Projekt"
 msgstr "Word project"
+
+#: Abschlussprüfung + Ansicht Dokument (24.09.2026)
+msgid "Noch nicht getaggt"
+msgstr "Not tagged yet"
+
+msgid "Noch keine Prüfdatei"
+msgstr "No check file yet"
+
+msgid "Prüfdatei nicht mehr aktuell"
+msgstr "Check file out of date"
+
+msgid "{n} Problemstellen"
+msgstr "{n} problem spots"
+
+msgid "Keine Problemstellen gefunden"
+msgstr "No problem spots found"
+
+msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Dokument“ barrierefrei."
+msgstr "This document is not tagged yet. First make it accessible in the “Document” view."
+
+msgid "Prüfdatei"
+msgstr "Check file"
+
+msgid "erstellt am {zeit}"
+msgstr "created on {zeit}"
+
+msgid "noch nicht erstellt"
+msgstr "not created yet"
+
+msgid "aktuell"
+msgstr "up to date"
+
+msgid "nicht mehr aktuell — seitdem wurden Alt-Texte, Quickinfos oder die Datei geändert"
+msgstr "out of date — alt texts, tooltips or the file have changed since"
+
+msgid "bestanden"
+msgstr "passed"
+
+msgid "nicht möglich (Prüfdienst nicht erreichbar)"
+msgstr "not possible (checking service unavailable)"
+
+msgid "Problemstellen"
+msgstr "Problem spots"
+
+msgid "Prüfdatei erstellen"
+msgstr "Create check file"
+
+msgid "Prüfdatei neu erstellen"
+msgstr "Recreate check file"
+
+msgid "Mit eigenem Screenreader prüfen"
+msgstr "Check with your own screen reader"
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du herunterlädst. Das Erstellen der Prüfdatei ist kostenlos; Credits kostet erst das Herunterladen."
+msgstr "The finished file is checked — exactly the PDF you download. Creating the check file is free; only downloading costs credits."
+
+msgid "Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos."
+msgstr "Create the check file: it is exactly the PDF you download, with structure, alt texts and tooltips. This is free."
+
+msgid "Prüfdatei wird erstellt …"
+msgstr "Creating check file …"
+
+msgid "Seiten {n}"
+msgstr "Pages {n}"
+
+msgid "Anzeigen"
+msgstr "Show"
+
+msgid "Ganzes Dokument ({n} Seiten)"
+msgstr "Whole document ({n} pages)"
+
+msgid "Nur Problemstellen ({n})"
+msgstr "Problem spots only ({n})"
+
+msgid "Problemstellen ({n})"
+msgstr "Problem spots ({n})"
+
+msgid "Keine Problemstellen gefunden: PDF/UA-Prüfung, Struktur und Vollständigkeit sind ohne Befund."
+msgstr "No problem spots found: PDF/UA check, structure and completeness show no findings."
+
+msgid "Zur Seite {n}"
+msgstr "Go to page {n}"
+
+msgid "Keine Seite mit Problemstellen."
+msgstr "No page with problem spots."
+
+msgid "Die Hörprobe ist leer."
+msgstr "The listening sample is empty."
+
+msgid "Seite {n} von {m}"
+msgstr "Page {n} of {m}"
+
+msgid "Vorherige Seite"
+msgstr "Previous page"
+
+msgid "Gehe zu Seite"
+msgstr "Go to page"
+
+msgid "Nächste Seite"
+msgstr "Next page"
+
+msgid "Seitenbild von Seite {n}"
+msgstr "Image of page {n}"
+
+msgid "Problemstellen auf dieser Seite"
+msgstr "Problem spots on this page"
+
+msgid "Problem {n}"
+msgstr "Problem {n}"
+
+msgid "Seite vorlesen"
+msgstr "Read page aloud"
+
+msgid "Hörprobe: so bekommt ein Screenreader diese Seite"
+msgstr "Listening sample: what a screen reader gets from this page"
+
+msgid "Hörprobe von Seite {n}"
+msgstr "Listening sample of page {n}"
+
+msgid "Auf dieser Seite liest ein Screenreader nichts vor."
+msgstr "A screen reader reads nothing on this page."
+
+msgid "Die Prüfung konnte nicht geladen werden."
+msgstr "The check could not be loaded."
+
+msgid "Nur Problemstellen: {n} Seiten."
+msgstr "Problem spots only: {n} pages."
+
+msgid "Ganzes Dokument: {n} Seiten."
+msgstr "Whole document: {n} pages."
+
+msgid "Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern."
+msgstr "Creating check file … This can take a minute for large files."
+
+msgid "Prüfdatei wird erstellt."
+msgstr "Creating check file."
+
+msgid "Die Prüfdatei konnte nicht erstellt werden: {grund}"
+msgstr "The check file could not be created: {grund}"
+
+msgid "Prüfdatei erstellt."
+msgstr "Check file created."
+
+msgid "{n} Problemstellen gefunden."
+msgstr "{n} problem spots found."
+
+msgid "Keine Problemstellen gefunden."
+msgstr "No problem spots found."
+
+msgid "Alle Dokumente herunterladen"
+msgstr "Download all documents"
+
+msgid "als ZIP, mit Alt-Texten und Quickinfos"
+msgstr "as ZIP, with alt texts and tooltips"
+
+msgid "Hier prüfst du das Ergebnis, bevor du es herunterlädst: Problemstellen, Seitenbild und Hörprobe der fertigen Datei."
+msgstr "Check the result here before downloading it: problem spots, page image and listening sample of the finished file."
+
+msgid "Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“."
+msgstr "No document uploaded yet. You can do that in the “Document” view."
+
+msgid "Alle Befunde in einer Liste, technische Prüfung (PDF/UA) und KI-Prüfung, nach Seiten sortiert: {n}."
+msgstr "All findings in one list, technical check (PDF/UA) and AI check, sorted by page: {n}."
+
+msgid "KI-Prüfung"
+msgstr "AI check"
+
+msgid "Befunde als CSV herunterladen"
+msgstr "Download findings as CSV"
+
+msgid "technisch in Ordnung (PDF/UA)"
+msgstr "technically fine (PDF/UA)"
+
+msgid "technisch mit Befunden (PDF/UA)"
+msgstr "technical findings (PDF/UA)"
+
+msgid "technische Prüfung fehlt"
+msgstr "technical check missing"
+
+msgid "Keine Struktur: Die PDF muss barrierefrei gemacht werden."
+msgstr "No structure: the PDF needs to be made accessible."
+
+msgid "Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen."
+msgstr "Structure unusable (hardly any elements or no headings): re-tagging recommended."
+
+msgid "Struktur unvollständig: {n} von {g} Textzeilen haben kein Element. Bitte die Hörprobe prüfen."
+msgstr "Structure incomplete: {n} of {g} text lines have no element. Please check the listening sample."
+
+msgid "In Ordnung: Struktur geprüft, nichts zu tun. Export möglich."
+msgstr "Fine: structure checked, nothing to do. Export possible."
+
+msgid "Verbesserungen möglich: {n} sichere Befunde, {tech}."
+msgstr "Improvements possible: {n} certain findings, {tech}."
+
+msgid "Verbesserungen möglich: {tech}. KI-Prüfung starten."
+msgstr "Improvements possible: {tech}. Start the AI check."
+
+msgid "{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt."
+msgstr "{tech}. The AI check is still missing; it shows whether the structure matches the page image."
+
+msgid "Urteil"
+msgstr "Verdict"
+
+msgid "Prüfen und herunterladen: in der Ansicht „Abschlussprüfung“."
+msgstr "Check and download: in the “Final check” view."
+
+msgid "Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet."
+msgstr "Making accessible … page {a} of {b} assigned."
+
+msgid "Abschlussprüfung"
+msgstr "Final check"
+
+msgid "Ansicht Abschlussprüfung geöffnet."
+msgstr "Final check view opened."
+
+msgid "Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor."
+msgstr "No voice for this language is installed on this device. For privacy reasons we do not read aloud through an online speech service."
+
+msgid "Leere Überschrift (Ebene {n}): Ein Screenreader liest „Überschrift, leer“."
+msgstr "Empty heading (level {n}): a screen reader reads “heading, empty”."
+
+msgid "Überschriften-Ebene springt von {a} auf {b}: „{t}“."
+msgstr "Heading level jumps from {a} to {b}: “{t}”."
+
+msgid "Grafik ohne Alt-Text."
+msgstr "Graphic without alt text."
+
+msgid "Tabelle ohne Kopfzellen: Ein Screenreader kann die Spalten nicht benennen."
+msgstr "Table without header cells: a screen reader cannot name the columns."
+
+msgid "Formularfeld „{n}“ ohne Quickinfo."
+msgstr "Form field “{n}” without tooltip."
+
+msgid "Vollständigkeit"
+msgstr "Completeness"
+
+msgid "Sichtbarer Text fehlt vermutlich in der Vorlesung: „{t}“."
+msgstr "Visible text is probably missing from what is read aloud: “{t}”."
+
+msgid "(Sicherheit: {s})"
+msgstr "(certainty: {s})"
+
+msgid "{name} (fertige Datei)"
+msgstr "{name} (finished file)"
+
+msgid "hoch"
+msgstr "high"
+
+msgid "{n} Grafiken ohne Alt-Text."
+msgstr "{n} graphics without alt text."

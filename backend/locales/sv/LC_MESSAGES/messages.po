@@ -7394,3 +7394,253 @@ msgstr "PDF-projekt"
 
 msgid "Word-Projekt"
 msgstr "Word-projekt"
+
+#: Abschlussprüfung + Ansicht Dokument (24.09.2026)
+msgid "Noch nicht getaggt"
+msgstr "Ännu inte taggad"
+
+msgid "Noch keine Prüfdatei"
+msgstr "Ingen kontrollfil ännu"
+
+msgid "Prüfdatei nicht mehr aktuell"
+msgstr "Kontrollfilen är inte längre aktuell"
+
+msgid "{n} Problemstellen"
+msgstr "{n} problemställen"
+
+msgid "Keine Problemstellen gefunden"
+msgstr "Inga problemställen hittades"
+
+msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Dokument“ barrierefrei."
+msgstr "Dokumentet är ännu inte taggat. Gör det först tillgängligt i vyn ”Dokument”."
+
+msgid "Prüfdatei"
+msgstr "Kontrollfil"
+
+msgid "erstellt am {zeit}"
+msgstr "skapad {zeit}"
+
+msgid "noch nicht erstellt"
+msgstr "inte skapad ännu"
+
+msgid "aktuell"
+msgstr "aktuell"
+
+msgid "nicht mehr aktuell — seitdem wurden Alt-Texte, Quickinfos oder die Datei geändert"
+msgstr "inte längre aktuell — alt-texter, snabbinfo eller filen har ändrats sedan dess"
+
+msgid "bestanden"
+msgstr "godkänd"
+
+msgid "nicht möglich (Prüfdienst nicht erreichbar)"
+msgstr "inte möjlig (kontrolltjänsten kan inte nås)"
+
+msgid "Problemstellen"
+msgstr "Problemställen"
+
+msgid "Prüfdatei erstellen"
+msgstr "Skapa kontrollfil"
+
+msgid "Prüfdatei neu erstellen"
+msgstr "Skapa kontrollfil på nytt"
+
+msgid "Mit eigenem Screenreader prüfen"
+msgstr "Kontrollera med din egen skärmläsare"
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du herunterlädst. Das Erstellen der Prüfdatei ist kostenlos; Credits kostet erst das Herunterladen."
+msgstr "Det är den färdiga filen som kontrolleras — exakt den PDF du laddar ner. Att skapa kontrollfilen är gratis; bara nedladdningen kostar krediter."
+
+msgid "Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos."
+msgstr "Skapa kontrollfilen: den är exakt den PDF du laddar ner, med struktur, alt-texter och snabbinfo. Det är gratis."
+
+msgid "Prüfdatei wird erstellt …"
+msgstr "Kontrollfilen skapas …"
+
+msgid "Seiten {n}"
+msgstr "Sidor {n}"
+
+msgid "Anzeigen"
+msgstr "Visa"
+
+msgid "Ganzes Dokument ({n} Seiten)"
+msgstr "Hela dokumentet ({n} sidor)"
+
+msgid "Nur Problemstellen ({n})"
+msgstr "Endast problemställen ({n})"
+
+msgid "Problemstellen ({n})"
+msgstr "Problemställen ({n})"
+
+msgid "Keine Problemstellen gefunden: PDF/UA-Prüfung, Struktur und Vollständigkeit sind ohne Befund."
+msgstr "Inga problemställen hittades: PDF/UA-kontroll, struktur och fullständighet är utan anmärkning."
+
+msgid "Zur Seite {n}"
+msgstr "Till sidan {n}"
+
+msgid "Keine Seite mit Problemstellen."
+msgstr "Ingen sida med problemställen."
+
+msgid "Die Hörprobe ist leer."
+msgstr "Lyssningsprovet är tomt."
+
+msgid "Seite {n} von {m}"
+msgstr "Sida {n} av {m}"
+
+msgid "Vorherige Seite"
+msgstr "Föregående sida"
+
+msgid "Gehe zu Seite"
+msgstr "Gå till sida"
+
+msgid "Nächste Seite"
+msgstr "Nästa sida"
+
+msgid "Seitenbild von Seite {n}"
+msgstr "Bild av sida {n}"
+
+msgid "Problemstellen auf dieser Seite"
+msgstr "Problemställen på den här sidan"
+
+msgid "Problem {n}"
+msgstr "Problem {n}"
+
+msgid "Seite vorlesen"
+msgstr "Läs upp sidan"
+
+msgid "Hörprobe: so bekommt ein Screenreader diese Seite"
+msgstr "Lyssningsprov: så här får en skärmläsare den här sidan"
+
+msgid "Hörprobe von Seite {n}"
+msgstr "Lyssningsprov för sida {n}"
+
+msgid "Auf dieser Seite liest ein Screenreader nichts vor."
+msgstr "En skärmläsare läser inget på den här sidan."
+
+msgid "Die Prüfung konnte nicht geladen werden."
+msgstr "Kontrollen kunde inte laddas."
+
+msgid "Nur Problemstellen: {n} Seiten."
+msgstr "Endast problemställen: {n} sidor."
+
+msgid "Ganzes Dokument: {n} Seiten."
+msgstr "Hela dokumentet: {n} sidor."
+
+msgid "Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern."
+msgstr "Kontrollfilen skapas … Det kan ta en minut för stora filer."
+
+msgid "Prüfdatei wird erstellt."
+msgstr "Kontrollfilen skapas."
+
+msgid "Die Prüfdatei konnte nicht erstellt werden: {grund}"
+msgstr "Kontrollfilen kunde inte skapas: {grund}"
+
+msgid "Prüfdatei erstellt."
+msgstr "Kontrollfil skapad."
+
+msgid "{n} Problemstellen gefunden."
+msgstr "{n} problemställen hittades."
+
+msgid "Keine Problemstellen gefunden."
+msgstr "Inga problemställen hittades."
+
+msgid "Alle Dokumente herunterladen"
+msgstr "Ladda ner alla dokument"
+
+msgid "als ZIP, mit Alt-Texten und Quickinfos"
+msgstr "som ZIP, med alt-texter och snabbinfo"
+
+msgid "Hier prüfst du das Ergebnis, bevor du es herunterlädst: Problemstellen, Seitenbild und Hörprobe der fertigen Datei."
+msgstr "Här kontrollerar du resultatet innan du laddar ner det: problemställen, sidbild och lyssningsprov av den färdiga filen."
+
+msgid "Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“."
+msgstr "Inget dokument uppladdat ännu. Det gör du i vyn ”Dokument”."
+
+msgid "Alle Befunde in einer Liste, technische Prüfung (PDF/UA) und KI-Prüfung, nach Seiten sortiert: {n}."
+msgstr "Alla anmärkningar i en lista, teknisk kontroll (PDF/UA) och AI-kontroll, sorterade efter sida: {n}."
+
+msgid "KI-Prüfung"
+msgstr "AI-kontroll"
+
+msgid "Befunde als CSV herunterladen"
+msgstr "Ladda ner anmärkningar som CSV"
+
+msgid "technisch in Ordnung (PDF/UA)"
+msgstr "tekniskt i ordning (PDF/UA)"
+
+msgid "technisch mit Befunden (PDF/UA)"
+msgstr "tekniska anmärkningar (PDF/UA)"
+
+msgid "technische Prüfung fehlt"
+msgstr "teknisk kontroll saknas"
+
+msgid "Keine Struktur: Die PDF muss barrierefrei gemacht werden."
+msgstr "Ingen struktur: PDF:en måste göras tillgänglig."
+
+msgid "Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen."
+msgstr "Strukturen är oanvändbar (nästan inga element eller inga rubriker): ny taggning rekommenderas."
+
+msgid "Struktur unvollständig: {n} von {g} Textzeilen haben kein Element. Bitte die Hörprobe prüfen."
+msgstr "Strukturen är ofullständig: {n} av {g} textrader saknar element. Kontrollera lyssningsprovet."
+
+msgid "In Ordnung: Struktur geprüft, nichts zu tun. Export möglich."
+msgstr "I ordning: strukturen är kontrollerad, inget att göra. Export möjlig."
+
+msgid "Verbesserungen möglich: {n} sichere Befunde, {tech}."
+msgstr "Förbättringar möjliga: {n} säkra anmärkningar, {tech}."
+
+msgid "Verbesserungen möglich: {tech}. KI-Prüfung starten."
+msgstr "Förbättringar möjliga: {tech}. Starta AI-kontrollen."
+
+msgid "{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt."
+msgstr "{tech}. AI-kontrollen saknas fortfarande; den visar om strukturen passar sidbilden."
+
+msgid "Urteil"
+msgstr "Bedömning"
+
+msgid "Prüfen und herunterladen: in der Ansicht „Abschlussprüfung“."
+msgstr "Kontrollera och ladda ner: i vyn ”Slutkontroll”."
+
+msgid "Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet."
+msgstr "Görs tillgänglig … sida {a} av {b} tilldelad."
+
+msgid "Abschlussprüfung"
+msgstr "Slutkontroll"
+
+msgid "Ansicht Abschlussprüfung geöffnet."
+msgstr "Vyn Slutkontroll har öppnats."
+
+msgid "Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor."
+msgstr "Ingen röst för det här språket är installerad på enheten. Av integritetsskäl läser vi inte upp via en taltjänst på internet."
+
+msgid "Leere Überschrift (Ebene {n}): Ein Screenreader liest „Überschrift, leer“."
+msgstr "Tom rubrik (nivå {n}): en skärmläsare läser ”rubrik, tom”."
+
+msgid "Überschriften-Ebene springt von {a} auf {b}: „{t}“."
+msgstr "Rubriknivån hoppar från {a} till {b}: ”{t}”."
+
+msgid "Grafik ohne Alt-Text."
+msgstr "Grafik utan alt-text."
+
+msgid "Tabelle ohne Kopfzellen: Ein Screenreader kann die Spalten nicht benennen."
+msgstr "Tabell utan rubrikceller: en skärmläsare kan inte namnge kolumnerna."
+
+msgid "Formularfeld „{n}“ ohne Quickinfo."
+msgstr "Formulärfält ”{n}” utan snabbinfo."
+
+msgid "Vollständigkeit"
+msgstr "Fullständighet"
+
+msgid "Sichtbarer Text fehlt vermutlich in der Vorlesung: „{t}“."
+msgstr "Synlig text saknas troligen i uppläsningen: ”{t}”."
+
+msgid "(Sicherheit: {s})"
+msgstr "(säkerhet: {s})"
+
+msgid "{name} (fertige Datei)"
+msgstr "{name} (färdig fil)"
+
+msgid "hoch"
+msgstr "hög"
+
+msgid "{n} Grafiken ohne Alt-Text."
+msgstr "{n} grafiker utan alt-text."

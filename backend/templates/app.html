@@ -37,6 +37,24 @@
       .dok-klappe[open] > summary { margin-bottom: 0.75rem; }
       .dok-meta { list-style: none; margin: 0 0 0.6rem; padding: 0; font-size: 0.92rem; line-height: 1.5; }
       .dok-meta li { margin: 0; }
+      /* Station „Abschlussprüfung“ (24.09.2026): Problemliste, Seitenansicht (Seitenbild + Hörprobe nebeneinander,
+         schmal untereinander), Problemstellen mit Rahmen UND Zeichen „!“ (nicht nur Farbe, WCAG 1.4.1). */
+      .ab-problemliste { margin: 0.3rem 0 0.8rem; padding-left: 1.4rem; font-size: 0.92rem; line-height: 1.5; }
+      .ab-problemliste li { margin: 0.25rem 0; }
+      .ab-marke { display: inline-block; min-width: 1.3em; text-align: center; font-weight: 700; color: #fff; background: #b45309; border-radius: 50%; }
+      .ab-seitennav { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.4rem 0 0.8rem; }
+      .ab-seitennav select { padding: 0.35rem; border: 1px solid var(--border, #ccc); border-radius: 4px; }
+      .ab-seite-inhalt { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 1rem; align-items: start; }
+      @media (max-width: 760px) { .ab-seite-inhalt { grid-template-columns: 1fr; } }
+      .ab-seitenbild { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 4px; background: #fff; }
+      .ab-seite-probleme { border: 2px solid #b45309; border-left-width: 6px; border-radius: 6px; padding: 0.4rem 0.7rem; margin-bottom: 0.6rem; font-size: 0.92rem; }
+      .ab-seite-probleme ul { margin: 0.2rem 0 0; padding-left: 1.1rem; }
+      .ab-hoerprobe-titel { margin: 0.4rem 0; font-size: 1rem; }
+      .ab-hoerprobe { font-size: 0.92rem; }
+      .ab-kopf { margin-top: 0.6rem; }
+      .ab-problemklappe > summary { cursor: pointer; margin: 0.6rem 0 0.2rem; }
+      .ab-problemklappe > summary:focus-visible { outline: 2px solid var(--focus, #c75000); outline-offset: 2px; }
+      .ab-inline { display: inline; margin: 0; font-size: 1rem; }
     </style>
 {% if guest_mode %}
 {# Gast-Modus (Freigabe-Link): Flags VOR dashboard.js und Seiten-JS setzen.
@@ -103,6 +121,7 @@
 <script src="/static/formular.js?v={{ asset_version }}"></script>
 <script src="/static/uebersetzen.js?v={{ asset_version }}"></script>
 <script src="/static/dokument.js?v={{ asset_version }}"></script>
+<script src="/static/abschluss.js?v={{ asset_version }}"></script>
 <script>
 // Upload-Limit vom Server (eine Quelle: MAX_UPLOAD_SIZE in main.py) — fuer
 // Groessen-Hinweis und Fehlertext im Upload-Bereich (Julia-Feedback 02.07.2026).
@@ -229,7 +248,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Word „alttexte“, Eingang „uebersetzen“ startet in der Uebersetzung.
     // Alle Stationen des Dateityps — immer dieselbe Liste fuer jedes Projekt dieses Typs (Steve 22.09.2026).
     function ansichtenFuer(project) {
-        if (istPdfDateityp(project)) return ['dokument', 'alttexte', 'quickinfos'];
+        if (istPdfDateityp(project)) return ['dokument', 'alttexte', 'quickinfos', 'abschluss'];   // Abschlussprüfung: 24.09.2026
         if (istWordDateityp(project)) return ['alttexte', 'uebersetzung'];
         return ['alttexte'];
     }
@@ -255,7 +274,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // jedem Schritt einen Seitenwechsel. Gleiche Funktion fuer beide Ansichten (uebersetzen.js ruft sie auch).
     function ansichtWahlHtml(project, aktuell) {
         if (!(istWordDateityp(project) || istPdfDateityp(project)) || window.GUEST_MODE) return '';
-        const namen = { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos') };
+        const namen = { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Abschlussprüfung') };
         // Alle Stationen stehen in der Liste; nicht verfuegbare sind ausgegraut und nennen den Grund im Namen
         // (Screenreader lesen „nicht verfügbar“ bei disabled mit, der Grund steht als Text dabei).
         const optionen = ansichtenFuer(project).map(k => [k, namen[k], ansichtGesperrtWeil(project, k)]);
@@ -320,7 +339,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // sonst landet VoiceOver nach dem Wechsel auf „Alt-Texte“ auf dem Seitenanfang.
         const h1 = document.getElementById('projectName');
         if (h1) h1.focus();
-        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : t('Ansicht Alt-Texte geöffnet.'))));
+        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Abschlussprüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.')))));
     }
     window.wechsleAnsicht = wechsleAnsicht;
     let currentProjectFuerAnsicht = null;
@@ -813,6 +832,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // PDF-Projekt, Ansicht „Dokument“ (22.09.2026): Drehscheibe fuer Tagging, Bericht, Download (frontend/dokument.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'dokument') {
             return Dokument.showProject(projectId);
+        }
+        // PDF-Projekt, Station „Abschlussprüfung“ (24.09.2026): fertige Datei prüfen und herunterladen (frontend/abschluss.js).
+        if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'abschluss') {
+            if (window.vorlesenStopp) vorlesenStopp();
+            return Abschluss.showProject(projectId);
         }
         // PDF-Projekt, Station „Quickinfos“ (22.09.2026): dieselbe Ansicht wie das Formular-Werkzeug (formular.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'quickinfos') {
@@ -1327,45 +1351,76 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     document.getElementById('docDeleteCancel').addEventListener('click', () => document.getElementById('docDeleteDialog').close());
     document.getElementById('docDeleteConfirm').addEventListener('click', _confirmDocDelete);
 
-    // Vorlese-Funktion (Browser SpeechSynthesis): liest Alt-Text + (falls da) Langbeschreibung
-    // des Bildes in deutscher Stimme. Liest den AKTUELLEN Feld-Inhalt (inkl. haendischer Edits).
-    // Start/Stopp ueber denselben Knopf (aria-pressed), Escape stoppt, nur eins gleichzeitig.
-    function speakAltText(imgId, btn) {
+    // VORLESEN (gemeinsam fuer Alt-Texte und Abschlusspruefung, 24.09.2026): Sprachausgabe des Browsers mit einer
+    // Stimme, die AUF DEM GERAET laeuft (voice.localService) — Chrome bietet auch Google-Stimmen an, die den Text
+    // ueber das Netz schicken; die nehmen wir aus Datenschutzgruenden nie. Ohne lokale Stimme fuer die Sprache:
+    // Hinweis statt Vorlesen. Start/Stopp ueber denselben Knopf (aria-pressed), Escape stoppt, nur eins gleichzeitig.
+    // Lange Texte zeilenweise (sonst bricht Chrome lange Aeusserungen ab).
+    function lokaleStimmen() {
+        return new Promise(function (fertig) {
+            const synth = window.speechSynthesis;
+            const jetzt = (synth && synth.getVoices()) || [];
+            if (jetzt.length || !synth) { fertig(jetzt); return; }
+            let erledigt = false;
+            const ende = function () { if (!erledigt) { erledigt = true; fertig(synth.getVoices() || []); } };
+            synth.addEventListener('voiceschanged', ende, { once: true });
+            setTimeout(ende, 1200);
+        });
+    }
+    function vorlesenStopp() {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        document.querySelectorAll('.tts-btn[aria-pressed="true"]').forEach(function (b) {
+            b.setAttribute('aria-pressed', 'false');
+            b.textContent = b.dataset.label || t('Anhören');
+        });
+    }
+    async function vorlesen(text, code, btn, label) {
         const synth = window.speechSynthesis;
         if (!synth) { announce(t('Sprachausgabe wird in diesem Browser nicht unterstützt.')); return; }
         if (!window._ttsEscBound) {
             window._ttsEscBound = true;
-            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { window.speechSynthesis.cancel(); } });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { vorlesenStopp(); } });
         }
-        if (btn.getAttribute('aria-pressed') === 'true') {
-            synth.cancel();
-            btn.setAttribute('aria-pressed', 'false');
-            btn.textContent = t('Anhören');
+        if (btn && btn.getAttribute('aria-pressed') === 'true') { vorlesenStopp(); return; }
+        vorlesenStopp();
+        const teile = String(text || '').split(/\n+|(?<=[.!?:])\s+/).map(function (x) { return x.trim(); }).filter(Boolean);
+        if (!teile.length) { announce(t('Kein Text zum Vorlesen vorhanden.')); return; }
+        const kennung = (code || 'de').slice(0, 2).toLowerCase();
+        const stimme = (await lokaleStimmen()).find(function (v) { return v.localService && v.lang && v.lang.toLowerCase().indexOf(kennung) === 0; });
+        if (!stimme) {
+            announce(t('Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor.'));
             return;
         }
-        synth.cancel();
+        if (btn) {
+            btn.dataset.label = label || btn.textContent;
+            btn.setAttribute('aria-pressed', 'true');
+            btn.textContent = t('Stopp');
+        }
+        teile.forEach(function (teil, i) {
+            const u = new SpeechSynthesisUtterance(teil);
+            u.voice = stimme;
+            u.lang = stimme.lang;
+            if (i === teile.length - 1) {
+                u.onend = function () { if (btn) { btn.setAttribute('aria-pressed', 'false'); btn.textContent = btn.dataset.label; } };
+            }
+            u.onerror = function () { if (btn) { btn.setAttribute('aria-pressed', 'false'); btn.textContent = btn.dataset.label; } };
+            synth.speak(u);
+        });
+        announce(t('Wird vorgelesen.'));
+    }
+    window.vorlesen = vorlesen;
+    window.vorlesenStopp = vorlesenStopp;
+
+    // Alt-Text + (falls da) Langbeschreibung des Bildes, AKTUELLER Feld-Inhalt (inkl. haendischer Edits). Die Stimme
+    // folgt der GENERIERUNGSSPRACHE des Bildes (03.07.2026): ein daenischer Alt-Text mit deutscher Stimme waere
+    // Kauderwelsch; Altbestand ohne gen_language faellt auf Deutsch zurueck.
+    function speakAltText(imgId, btn) {
         const altEl = document.getElementById('alttext_' + imgId);
         const langEl = document.getElementById('langtext_' + imgId);
         let text = (altEl ? altEl.value : '').trim();
         const lang = langEl ? langEl.value.trim() : '';
         if (lang) { text += (text ? '. ' : '') + lang; }
-        if (!text) { announce(t('Kein Text zum Vorlesen vorhanden.')); return; }
-        document.querySelectorAll('.tts-btn[aria-pressed="true"]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); b.textContent = t('Anhören'); });
-        const u = new SpeechSynthesisUtterance(text);
-        // Vorlese-Stimme folgt der GENERIERUNGSSPRACHE des Bildes (03.07.2026):
-        // ein daenischer Alt-Text mit deutscher Stimme waere Kauderwelsch.
-        // Altbestand ohne gen_language faellt auf Deutsch zurueck.
-        const ttsTags = { de: 'de-DE', en: 'en-US', da: 'da-DK', fr: 'fr-FR', es: 'es-ES', sv: 'sv-SE' };
-        const ttsCode = (btn.dataset.lang || 'de');
-        u.lang = ttsTags[ttsCode] || 'de-DE';
-        const voice = (synth.getVoices() || []).find(function (v) { return v.lang && v.lang.toLowerCase().indexOf(ttsCode) === 0; });
-        if (voice) { u.voice = voice; }
-        btn.setAttribute('aria-pressed', 'true');
-        btn.textContent = t('Stopp');
-        u.onend = function () { btn.setAttribute('aria-pressed', 'false'); btn.textContent = t('Anhören'); };
-        u.onerror = function () { btn.setAttribute('aria-pressed', 'false'); btn.textContent = t('Anhören'); };
-        synth.speak(u);
-        announce(t('Wird vorgelesen.'));
+        vorlesen(text, btn.dataset.lang || 'de', btn, t('Anhören'));
     }
 
     // ─── Rücksprache-Funktion ausgeblendet (Korb C, Steve 17.07.2026) ───

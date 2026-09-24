@@ -7835,3 +7835,253 @@ msgstr "PDF-Projekt"
 
 msgid "Word-Projekt"
 msgstr "Word-Projekt"
+
+#: Abschlussprüfung + Ansicht Dokument (24.09.2026)
+msgid "Noch nicht getaggt"
+msgstr "Noch nicht getaggt"
+
+msgid "Noch keine Prüfdatei"
+msgstr "Noch keine Prüfdatei"
+
+msgid "Prüfdatei nicht mehr aktuell"
+msgstr "Prüfdatei nicht mehr aktuell"
+
+msgid "{n} Problemstellen"
+msgstr "{n} Problemstellen"
+
+msgid "Keine Problemstellen gefunden"
+msgstr "Keine Problemstellen gefunden"
+
+msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Dokument“ barrierefrei."
+msgstr "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Dokument“ barrierefrei."
+
+msgid "Prüfdatei"
+msgstr "Prüfdatei"
+
+msgid "erstellt am {zeit}"
+msgstr "erstellt am {zeit}"
+
+msgid "noch nicht erstellt"
+msgstr "noch nicht erstellt"
+
+msgid "aktuell"
+msgstr "aktuell"
+
+msgid "nicht mehr aktuell — seitdem wurden Alt-Texte, Quickinfos oder die Datei geändert"
+msgstr "nicht mehr aktuell — seitdem wurden Alt-Texte, Quickinfos oder die Datei geändert"
+
+msgid "bestanden"
+msgstr "bestanden"
+
+msgid "nicht möglich (Prüfdienst nicht erreichbar)"
+msgstr "nicht möglich (Prüfdienst nicht erreichbar)"
+
+msgid "Problemstellen"
+msgstr "Problemstellen"
+
+msgid "Prüfdatei erstellen"
+msgstr "Prüfdatei erstellen"
+
+msgid "Prüfdatei neu erstellen"
+msgstr "Prüfdatei neu erstellen"
+
+msgid "Mit eigenem Screenreader prüfen"
+msgstr "Mit eigenem Screenreader prüfen"
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du herunterlädst. Das Erstellen der Prüfdatei ist kostenlos; Credits kostet erst das Herunterladen."
+msgstr "Geprüft wird die fertige Datei, genau die PDF, die du herunterlädst. Das Erstellen der Prüfdatei ist kostenlos; Credits kostet erst das Herunterladen."
+
+msgid "Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos."
+msgstr "Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos."
+
+msgid "Prüfdatei wird erstellt …"
+msgstr "Prüfdatei wird erstellt …"
+
+msgid "Seiten {n}"
+msgstr "Seiten {n}"
+
+msgid "Anzeigen"
+msgstr "Anzeigen"
+
+msgid "Ganzes Dokument ({n} Seiten)"
+msgstr "Ganzes Dokument ({n} Seiten)"
+
+msgid "Nur Problemstellen ({n})"
+msgstr "Nur Problemstellen ({n})"
+
+msgid "Problemstellen ({n})"
+msgstr "Problemstellen ({n})"
+
+msgid "Keine Problemstellen gefunden: PDF/UA-Prüfung, Struktur und Vollständigkeit sind ohne Befund."
+msgstr "Keine Problemstellen gefunden: PDF/UA-Prüfung, Struktur und Vollständigkeit sind ohne Befund."
+
+msgid "Zur Seite {n}"
+msgstr "Zur Seite {n}"
+
+msgid "Keine Seite mit Problemstellen."
+msgstr "Keine Seite mit Problemstellen."
+
+msgid "Die Hörprobe ist leer."
+msgstr "Die Hörprobe ist leer."
+
+msgid "Seite {n} von {m}"
+msgstr "Seite {n} von {m}"
+
+msgid "Vorherige Seite"
+msgstr "Vorherige Seite"
+
+msgid "Gehe zu Seite"
+msgstr "Gehe zu Seite"
+
+msgid "Nächste Seite"
+msgstr "Nächste Seite"
+
+msgid "Seitenbild von Seite {n}"
+msgstr "Seitenbild von Seite {n}"
+
+msgid "Problemstellen auf dieser Seite"
+msgstr "Problemstellen auf dieser Seite"
+
+msgid "Problem {n}"
+msgstr "Problem {n}"
+
+msgid "Seite vorlesen"
+msgstr "Seite vorlesen"
+
+msgid "Hörprobe: so bekommt ein Screenreader diese Seite"
+msgstr "Hörprobe: so bekommt ein Screenreader diese Seite"
+
+msgid "Hörprobe von Seite {n}"
+msgstr "Hörprobe von Seite {n}"
+
+msgid "Auf dieser Seite liest ein Screenreader nichts vor."
+msgstr "Auf dieser Seite liest ein Screenreader nichts vor."
+
+msgid "Die Prüfung konnte nicht geladen werden."
+msgstr "Die Prüfung konnte nicht geladen werden."
+
+msgid "Nur Problemstellen: {n} Seiten."
+msgstr "Nur Problemstellen: {n} Seiten."
+
+msgid "Ganzes Dokument: {n} Seiten."
+msgstr "Ganzes Dokument: {n} Seiten."
+
+msgid "Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern."
+msgstr "Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern."
+
+msgid "Prüfdatei wird erstellt."
+msgstr "Prüfdatei wird erstellt."
+
+msgid "Die Prüfdatei konnte nicht erstellt werden: {grund}"
+msgstr "Die Prüfdatei konnte nicht erstellt werden: {grund}"
+
+msgid "Prüfdatei erstellt."
+msgstr "Prüfdatei erstellt."
+
+msgid "{n} Problemstellen gefunden."
+msgstr "{n} Problemstellen gefunden."
+
+msgid "Keine Problemstellen gefunden."
+msgstr "Keine Problemstellen gefunden."
+
+msgid "Alle Dokumente herunterladen"
+msgstr "Alle Dokumente herunterladen"
+
+msgid "als ZIP, mit Alt-Texten und Quickinfos"
+msgstr "als ZIP, mit Alt-Texten und Quickinfos"
+
+msgid "Hier prüfst du das Ergebnis, bevor du es herunterlädst: Problemstellen, Seitenbild und Hörprobe der fertigen Datei."
+msgstr "Hier prüfst du das Ergebnis, bevor du es herunterlädst: Problemstellen, Seitenbild und Hörprobe der fertigen Datei."
+
+msgid "Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“."
+msgstr "Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“."
+
+msgid "Alle Befunde in einer Liste, technische Prüfung (PDF/UA) und KI-Prüfung, nach Seiten sortiert: {n}."
+msgstr "Alle Befunde in einer Liste, technische Prüfung (PDF/UA) und KI-Prüfung, nach Seiten sortiert: {n}."
+
+msgid "KI-Prüfung"
+msgstr "KI-Prüfung"
+
+msgid "Befunde als CSV herunterladen"
+msgstr "Befunde als CSV herunterladen"
+
+msgid "technisch in Ordnung (PDF/UA)"
+msgstr "technisch in Ordnung (PDF/UA)"
+
+msgid "technisch mit Befunden (PDF/UA)"
+msgstr "technisch mit Befunden (PDF/UA)"
+
+msgid "technische Prüfung fehlt"
+msgstr "technische Prüfung fehlt"
+
+msgid "Keine Struktur: Die PDF muss barrierefrei gemacht werden."
+msgstr "Keine Struktur: Die PDF muss barrierefrei gemacht werden."
+
+msgid "Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen."
+msgstr "Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen."
+
+msgid "Struktur unvollständig: {n} von {g} Textzeilen haben kein Element. Bitte die Hörprobe prüfen."
+msgstr "Struktur unvollständig: {n} von {g} Textzeilen haben kein Element. Bitte die Hörprobe prüfen."
+
+msgid "In Ordnung: Struktur geprüft, nichts zu tun. Export möglich."
+msgstr "In Ordnung: Struktur geprüft, nichts zu tun. Export möglich."
+
+msgid "Verbesserungen möglich: {n} sichere Befunde, {tech}."
+msgstr "Verbesserungen möglich: {n} sichere Befunde, {tech}."
+
+msgid "Verbesserungen möglich: {tech}. KI-Prüfung starten."
+msgstr "Verbesserungen möglich: {tech}. KI-Prüfung starten."
+
+msgid "{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt."
+msgstr "{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt."
+
+msgid "Urteil"
+msgstr "Urteil"
+
+msgid "Prüfen und herunterladen: in der Ansicht „Abschlussprüfung“."
+msgstr "Prüfen und herunterladen: in der Ansicht „Abschlussprüfung“."
+
+msgid "Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet."
+msgstr "Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet."
+
+msgid "Abschlussprüfung"
+msgstr "Abschlussprüfung"
+
+msgid "Ansicht Abschlussprüfung geöffnet."
+msgstr "Ansicht Abschlussprüfung geöffnet."
+
+msgid "Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor."
+msgstr "Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor."
+
+msgid "Leere Überschrift (Ebene {n}): Ein Screenreader liest „Überschrift, leer“."
+msgstr "Leere Überschrift (Ebene {n}): Ein Screenreader liest „Überschrift, leer“."
+
+msgid "Überschriften-Ebene springt von {a} auf {b}: „{t}“."
+msgstr "Überschriften-Ebene springt von {a} auf {b}: „{t}“."
+
+msgid "Grafik ohne Alt-Text."
+msgstr "Grafik ohne Alt-Text."
+
+msgid "Tabelle ohne Kopfzellen: Ein Screenreader kann die Spalten nicht benennen."
+msgstr "Tabelle ohne Kopfzellen: Ein Screenreader kann die Spalten nicht benennen."
+
+msgid "Formularfeld „{n}“ ohne Quickinfo."
+msgstr "Formularfeld „{n}“ ohne Quickinfo."
+
+msgid "Vollständigkeit"
+msgstr "Vollständigkeit"
+
+msgid "Sichtbarer Text fehlt vermutlich in der Vorlesung: „{t}“."
+msgstr "Sichtbarer Text fehlt vermutlich in der Vorlesung: „{t}“."
+
+msgid "(Sicherheit: {s})"
+msgstr "(Sicherheit: {s})"
+
+msgid "{name} (fertige Datei)"
+msgstr "{name} (fertige Datei)"
+
+msgid "hoch"
+msgstr "hoch"
+
+msgid "{n} Grafiken ohne Alt-Text."
+msgstr "{n} Grafiken ohne Alt-Text."

@@ -7832,3 +7832,253 @@ msgstr "Projet PDF"
 
 msgid "Word-Projekt"
 msgstr "Projet Word"
+
+#: Abschlussprüfung + Ansicht Dokument (24.09.2026)
+msgid "Noch nicht getaggt"
+msgstr "Pas encore balisé"
+
+msgid "Noch keine Prüfdatei"
+msgstr "Pas encore de fichier de contrôle"
+
+msgid "Prüfdatei nicht mehr aktuell"
+msgstr "Fichier de contrôle obsolète"
+
+msgid "{n} Problemstellen"
+msgstr "{n} points problématiques"
+
+msgid "Keine Problemstellen gefunden"
+msgstr "Aucun point problématique trouvé"
+
+msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Dokument“ barrierefrei."
+msgstr "Ce document n’est pas encore balisé. Rendez-le d’abord accessible dans la vue « Document »."
+
+msgid "Prüfdatei"
+msgstr "Fichier de contrôle"
+
+msgid "erstellt am {zeit}"
+msgstr "créé le {zeit}"
+
+msgid "noch nicht erstellt"
+msgstr "pas encore créé"
+
+msgid "aktuell"
+msgstr "à jour"
+
+msgid "nicht mehr aktuell — seitdem wurden Alt-Texte, Quickinfos oder die Datei geändert"
+msgstr "obsolète — les textes alternatifs, les infobulles ou le fichier ont changé depuis"
+
+msgid "bestanden"
+msgstr "réussie"
+
+msgid "nicht möglich (Prüfdienst nicht erreichbar)"
+msgstr "impossible (service de vérification indisponible)"
+
+msgid "Problemstellen"
+msgstr "Points problématiques"
+
+msgid "Prüfdatei erstellen"
+msgstr "Créer le fichier de contrôle"
+
+msgid "Prüfdatei neu erstellen"
+msgstr "Recréer le fichier de contrôle"
+
+msgid "Mit eigenem Screenreader prüfen"
+msgstr "Vérifier avec votre propre lecteur d’écran"
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du herunterlädst. Das Erstellen der Prüfdatei ist kostenlos; Credits kostet erst das Herunterladen."
+msgstr "C’est le fichier final qui est vérifié, exactement le PDF que vous téléchargez. La création du fichier de contrôle est gratuite ; seul le téléchargement coûte des crédits."
+
+msgid "Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos."
+msgstr "Créez le fichier de contrôle : c’est exactement le PDF que vous téléchargez, avec structure, textes alternatifs et infobulles. C’est gratuit."
+
+msgid "Prüfdatei wird erstellt …"
+msgstr "Création du fichier de contrôle …"
+
+msgid "Seiten {n}"
+msgstr "Pages {n}"
+
+msgid "Anzeigen"
+msgstr "Afficher"
+
+msgid "Ganzes Dokument ({n} Seiten)"
+msgstr "Document entier ({n} pages)"
+
+msgid "Nur Problemstellen ({n})"
+msgstr "Points problématiques uniquement ({n})"
+
+msgid "Problemstellen ({n})"
+msgstr "Points problématiques ({n})"
+
+msgid "Keine Problemstellen gefunden: PDF/UA-Prüfung, Struktur und Vollständigkeit sind ohne Befund."
+msgstr "Aucun point problématique : la vérification PDF/UA, la structure et l’exhaustivité sont sans constat."
+
+msgid "Zur Seite {n}"
+msgstr "Aller à la page {n}"
+
+msgid "Keine Seite mit Problemstellen."
+msgstr "Aucune page avec des points problématiques."
+
+msgid "Die Hörprobe ist leer."
+msgstr "L’aperçu audio est vide."
+
+msgid "Seite {n} von {m}"
+msgstr "Page {n} sur {m}"
+
+msgid "Vorherige Seite"
+msgstr "Page précédente"
+
+msgid "Gehe zu Seite"
+msgstr "Aller à la page"
+
+msgid "Nächste Seite"
+msgstr "Page suivante"
+
+msgid "Seitenbild von Seite {n}"
+msgstr "Image de la page {n}"
+
+msgid "Problemstellen auf dieser Seite"
+msgstr "Points problématiques sur cette page"
+
+msgid "Problem {n}"
+msgstr "Problème {n}"
+
+msgid "Seite vorlesen"
+msgstr "Lire la page à voix haute"
+
+msgid "Hörprobe: so bekommt ein Screenreader diese Seite"
+msgstr "Aperçu audio : ce qu’un lecteur d’écran reçoit de cette page"
+
+msgid "Hörprobe von Seite {n}"
+msgstr "Aperçu audio de la page {n}"
+
+msgid "Auf dieser Seite liest ein Screenreader nichts vor."
+msgstr "Un lecteur d’écran ne lit rien sur cette page."
+
+msgid "Die Prüfung konnte nicht geladen werden."
+msgstr "La vérification n’a pas pu être chargée."
+
+msgid "Nur Problemstellen: {n} Seiten."
+msgstr "Points problématiques uniquement : {n} pages."
+
+msgid "Ganzes Dokument: {n} Seiten."
+msgstr "Document entier : {n} pages."
+
+msgid "Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern."
+msgstr "Création du fichier de contrôle … Cela peut prendre une minute pour les gros fichiers."
+
+msgid "Prüfdatei wird erstellt."
+msgstr "Création du fichier de contrôle."
+
+msgid "Die Prüfdatei konnte nicht erstellt werden: {grund}"
+msgstr "Le fichier de contrôle n’a pas pu être créé : {grund}"
+
+msgid "Prüfdatei erstellt."
+msgstr "Fichier de contrôle créé."
+
+msgid "{n} Problemstellen gefunden."
+msgstr "{n} points problématiques trouvés."
+
+msgid "Keine Problemstellen gefunden."
+msgstr "Aucun point problématique trouvé."
+
+msgid "Alle Dokumente herunterladen"
+msgstr "Télécharger tous les documents"
+
+msgid "als ZIP, mit Alt-Texten und Quickinfos"
+msgstr "en ZIP, avec textes alternatifs et infobulles"
+
+msgid "Hier prüfst du das Ergebnis, bevor du es herunterlädst: Problemstellen, Seitenbild und Hörprobe der fertigen Datei."
+msgstr "Vérifiez ici le résultat avant de le télécharger : points problématiques, image de page et aperçu audio du fichier final."
+
+msgid "Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“."
+msgstr "Aucun document téléversé. Vous pouvez le faire dans la vue « Document »."
+
+msgid "Alle Befunde in einer Liste, technische Prüfung (PDF/UA) und KI-Prüfung, nach Seiten sortiert: {n}."
+msgstr "Tous les constats dans une liste, vérification technique (PDF/UA) et vérification par IA, triés par page : {n}."
+
+msgid "KI-Prüfung"
+msgstr "Vérification par IA"
+
+msgid "Befunde als CSV herunterladen"
+msgstr "Télécharger les constats en CSV"
+
+msgid "technisch in Ordnung (PDF/UA)"
+msgstr "techniquement correct (PDF/UA)"
+
+msgid "technisch mit Befunden (PDF/UA)"
+msgstr "constats techniques (PDF/UA)"
+
+msgid "technische Prüfung fehlt"
+msgstr "vérification technique manquante"
+
+msgid "Keine Struktur: Die PDF muss barrierefrei gemacht werden."
+msgstr "Aucune structure : le PDF doit être rendu accessible."
+
+msgid "Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen."
+msgstr "Structure inutilisable (presque aucun élément ou aucun titre) : nouveau balisage recommandé."
+
+msgid "Struktur unvollständig: {n} von {g} Textzeilen haben kein Element. Bitte die Hörprobe prüfen."
+msgstr "Structure incomplète : {n} lignes de texte sur {g} n’ont pas d’élément. Veuillez vérifier l’aperçu audio."
+
+msgid "In Ordnung: Struktur geprüft, nichts zu tun. Export möglich."
+msgstr "Correct : structure vérifiée, rien à faire. Export possible."
+
+msgid "Verbesserungen möglich: {n} sichere Befunde, {tech}."
+msgstr "Améliorations possibles : {n} constats certains, {tech}."
+
+msgid "Verbesserungen möglich: {tech}. KI-Prüfung starten."
+msgstr "Améliorations possibles : {tech}. Lancez la vérification par IA."
+
+msgid "{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt."
+msgstr "{tech}. La vérification par IA manque encore ; elle montre si la structure correspond à l’image de la page."
+
+msgid "Urteil"
+msgstr "Verdict"
+
+msgid "Prüfen und herunterladen: in der Ansicht „Abschlussprüfung“."
+msgstr "Vérifier et télécharger : dans la vue « Contrôle final »."
+
+msgid "Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet."
+msgstr "Mise en accessibilité … page {a} sur {b} attribuée."
+
+msgid "Abschlussprüfung"
+msgstr "Contrôle final"
+
+msgid "Ansicht Abschlussprüfung geöffnet."
+msgstr "Vue Contrôle final ouverte."
+
+msgid "Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor."
+msgstr "Aucune voix pour cette langue n’est installée sur cet appareil. Pour des raisons de confidentialité, nous ne lisons pas via un service vocal en ligne."
+
+msgid "Leere Überschrift (Ebene {n}): Ein Screenreader liest „Überschrift, leer“."
+msgstr "Titre vide (niveau {n}) : un lecteur d’écran lit « titre, vide »."
+
+msgid "Überschriften-Ebene springt von {a} auf {b}: „{t}“."
+msgstr "Le niveau de titre passe de {a} à {b} : « {t} »."
+
+msgid "Grafik ohne Alt-Text."
+msgstr "Graphique sans texte alternatif."
+
+msgid "Tabelle ohne Kopfzellen: Ein Screenreader kann die Spalten nicht benennen."
+msgstr "Tableau sans cellules d’en-tête : un lecteur d’écran ne peut pas nommer les colonnes."
+
+msgid "Formularfeld „{n}“ ohne Quickinfo."
+msgstr "Champ de formulaire « {n} » sans infobulle."
+
+msgid "Vollständigkeit"
+msgstr "Exhaustivité"
+
+msgid "Sichtbarer Text fehlt vermutlich in der Vorlesung: „{t}“."
+msgstr "Un texte visible manque probablement à la lecture : « {t} »."
+
+msgid "(Sicherheit: {s})"
+msgstr "(certitude : {s})"
+
+msgid "{name} (fertige Datei)"
+msgstr "{name} (fichier final)"
+
+msgid "hoch"
+msgstr "élevée"
+
+msgid "{n} Grafiken ohne Alt-Text."
+msgstr "{n} graphiques sans texte alternatif."

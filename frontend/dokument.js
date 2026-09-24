@@ -1,5 +1,7 @@
 /* =============================================================================
  * dokument.js — Ansicht „Dokument“ eines PDF-Projekts (PDF-Tagging, 22.09.2026)
+ * I18N: alle sichtbaren Texte über t() (window.I18N), Kataloge backend/locales, geprüft von scripts/check_i18n.py
+ *       (seit 24.09.2026 — vorher erfasste der Check diese Datei nicht, die Texte blieben in allen Sprachen deutsch).
  * =============================================================================
  * Steve + Michael Karbe + Joerg Heine, Fable 5.1. Seit dem Testumbau (18.09.2026) ist ein
  * Projekt ein Dateityp mit Ansichten. Ein PDF-Projekt hat die Ansichten „Dokument“ (diese
@@ -367,12 +369,13 @@
             // Keine Knoepfe „Alt-Texte bearbeiten“/„Quickinfos bearbeiten“ mehr (Michael Karbe, Mail 22.09.2026,
             // Punkt 3: zu viele Knoepfe) — dafuer ist die Ansichts-Wahl im Projektkopf da.
             +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
-            // „PDF herunterladen“ statt „Fertige PDF herunterladen“ (Michael Karbe, Mail 22.09.2026, Punkt 5)
-            +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="Dokument.exportieren(' + project.id + ', ' + d.id + ')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
+            // Herunterladen wandert in die Station „Abschlussprüfung“ (Steve 24.09.2026): dort sieht und hört man die fertige
+            // Datei, bevor man sie holt. Hier nur der Hinweis, wohin (Ansichts-Wahl im Kopf).
             +   (d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</div>'
+            + (d.getaggt === true && !busy ? '<p class="feld-hinweis">' + t('Prüfen und herunterladen: in der Ansicht „Abschlussprüfung“.') + '</p>' : '')
             + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
             + berichtHtml(d)
             + hoerprobeHtml(project, d)

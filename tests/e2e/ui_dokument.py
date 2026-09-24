@@ -86,7 +86,7 @@ with sync_playwright() as p:
     check("H1 Projekt vorhanden", pg.locator("h1#projectName").count() == 1)
     check("Neues PDF-Projekt startet ohne ?ansicht in der Ansicht Dokument (Steve 22.09.)", pg.locator("#dokumenteHeading").count() == 1)
     opts = pg.locator("#ansichtSelect option").all_text_contents()
-    check("Ansichts-Wahl: „Dokument“ ganz oben, dann „Alt-Texte“, „Quickinfos“ ausgegraut (keine Felder)", [o.strip() for o in opts][:2] == ["Dokument", "Alt-Texte"] and len(opts) == 3 and "nicht verfügbar" in opts[2] and pg.locator("#ansichtSelect option[value=quickinfos]").get_attribute("disabled") is not None, opts)
+    check("Ansichts-Wahl: „Dokument“ ganz oben, dann „Alt-Texte“, „Quickinfos“ ausgegraut (keine Felder), zuletzt „Abschlussprüfung“", [o.strip() for o in opts][:2] == ["Dokument", "Alt-Texte"] and len(opts) == 4 and "nicht verfügbar" in opts[2] and opts[3].strip() == "Abschlussprüfung" and pg.locator("#ansichtSelect option[value=quickinfos]").get_attribute("disabled") is not None, opts)
     check("Ansicht Dokument ist gewaehlt", pg.locator("#ansichtSelect").input_value() == "dokument")
     check("Knopf „Öffnen“ vorhanden (kein Wechsel per Pfeiltaste, WCAG 3.2.2)", pg.locator("#ansichtOeffnen").count() == 1)
     # Projektkopf nach Michael Karbe (Mails 21.09./22.09.2026): Name + PDF-Symbol + Ansichts-Wahl in EINEM Feld,
@@ -146,7 +146,8 @@ with sync_playwright() as p:
     h3 = pg.locator("section.dok-karte h3").first.inner_text()
     check("Badge jetzt „Getaggt …“", "Getaggt" in h3, h3)
     check("Knopf heisst jetzt „Neu taggen“", pg.locator("button[id^=dok_tag_]").first.inner_text().startswith("Neu taggen"))
-    check("Knopf heisst „PDF herunterladen“ (Punkt 5)", pg.locator("button[id^=dok_export_]").count() == 1 and pg.locator("button[id^=dok_export_]").first.inner_text().startswith("PDF herunterladen") and "Fertige" not in pg.locator("button[id^=dok_export_]").first.inner_text())
+    # Herunterladen ist seit 24.09.2026 in der Station „Abschlussprüfung“ (Abschnitt C2b); hier nur der Hinweis dorthin
+    check("Kein Herunterladen-Knopf mehr in der Dokument-Karte, Hinweis auf die Abschlussprüfung", pg.locator("button[id^=dok_export_]").count() == 0 and "Abschlussprüfung" in pg.locator("section.dok-karte").first.inner_text())
     pg.click("details.dok-bericht > summary")
     pg.wait_for_timeout(300)
     ber = pg.locator("details.dok-bericht").first.inner_text()
@@ -154,19 +155,6 @@ with sync_playwright() as p:
     check("Bericht ohne „In Ordnung“-Zeilen (Punkt 6)", "In Ordnung –" not in ber, ber[-400:])
     dl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
     check("Beschreibungsliste nach dem Lauf: Sprache de-DE, 1 Bild", "de-DE" in dl and "1 Bilder" in dl, dl)
-    with pg.expect_download(timeout=60000) as dl_info:
-        pg.click("button[id^=dok_export_]")
-    dl = dl_info.value
-    pfad = dl.path()
-    check("Fertige PDF heruntergeladen (Datei beginnt mit %PDF)", pfad is not None and open(pfad, "rb").read(5) == b"%PDF-", dl.suggested_filename)
-    pg.wait_for_timeout(2500)
-    st = pg.locator("output.dok-status").first.inner_text()
-    check("Statuszeile nennt Download und Ablage", "Heruntergeladen" in st and "Ablage" in st, st)
-    check("Ablage-Knopf im Kopf zeigt einen Eintrag", "Ablage (1)" in (pg.locator("#ausgabenTab").inner_text() if pg.locator("#ausgabenTab").count() else ""), pg.locator("#ausgabenTab").count())
-    r = pg.request.get(B + f"/api/ausgaben?projekt={pid}")
-    eintraege = r.json().get("ausgaben", []) if r.ok else []
-    check("Ablage-Eintrag art pdf mit Datei und Bericht", len(eintraege) == 1 and eintraege[0].get("art") == "pdf" and eintraege[0].get("datei_verfuegbar") is True, eintraege[:1])
-    # Nach dem Export wurde die Ansicht neu gezeichnet; die Laufmeldung des Taggings ist dann schon zu.
     if pg.locator("#dkLaufMeldung:not([hidden]) button").count():
         pg.click("#dkLaufMeldung button")
     axe(pg, "Ansicht Dokument nach dem Lauf")
@@ -293,6 +281,69 @@ with sync_playwright() as p:
     axe(pg, "Dialog Komplett barrierefrei machen")
     pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
     check("Escape schliesst die Rueckfrage, Fokus auf dem Knopf", not pg.locator("#dkKetteDialog[open]").count() and pg.evaluate("document.activeElement && document.activeElement.id") == "dkKetteBtn")
+
+    print("== C2b. Station „Abschlussprüfung“ (24.09.2026) ==")
+    opts = [o.strip() for o in pg.locator("#ansichtSelect option").all_text_contents()]
+    check("Ansichts-Wahl nennt „Abschlussprüfung“ als letzte Station", opts[-1] == "Abschlussprüfung", opts)
+    pg.select_option("#ansichtSelect", "abschluss"); pg.click("#ansichtOeffnen")
+    pg.wait_for_selector("section.ab-karte", timeout=15000); pg.wait_for_timeout(800)
+    check("Adresse ansicht=abschluss, Kopf mit PDF-Symbol, eine Karte offen", "ansicht=abschluss" in pg.url and pg.locator(".projekt-kopf img.projekt-dateityp").count() == 1 and pg.locator("details.ab-klappe[open]").count() == 1)
+    check("Karte: „Noch keine Prüfdatei“, Knopf „Prüfdatei erstellen“ (kostenlos), noch kein Herunterladen", "Noch keine Prüfdatei" in pg.locator("section.ab-karte h3").inner_text() and pg.locator("button[id^=ab_erstellen_]").count() == 1 and "kostenlos" in pg.locator("button[id^=ab_erstellen_]").inner_text() and pg.locator("button[id^=ab_export_]").count() == 0)
+    check("Kein Upload-Feld in der Abschlussprüfung", pg.locator("#projUpload").count() == 0)
+    axe(pg, "Abschlussprüfung vor der Prüfdatei")
+    pg.click("button[id^=ab_erstellen_]")
+    for _ in range(60):
+        pg.wait_for_timeout(1500)
+        if "Prüfdatei erstellt" in (pg.locator("output[id^=ab_status_]").first.inner_text() if pg.locator("output[id^=ab_status_]").count() else ""):
+            break
+    st = pg.locator("output[id^=ab_status_]").first.inner_text()
+    check("Prüfdatei erstellt, Statuszeile mit Fokus", "Prüfdatei erstellt" in st and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("ab_status_"), st)
+    meta = pg.locator("section.ab-karte ul.dok-meta").first.inner_text()
+    check("Stand: Prüfdatei erstellt am …, aktuell, PDF/UA-Prüfung, Problemstellen", all(k in meta for k in ("Prüfdatei: erstellt am", "Stand: aktuell", "PDF/UA-Prüfung: ", "Problemstellen: ")), meta)
+    pg.wait_for_selector("section.ab-seite", timeout=15000)
+    check("Filter „Ganzes Dokument“ / „Nur Problemstellen“ als Radiogruppe mit Legende", pg.locator("fieldset.ab-filter legend").inner_text().strip() == "Anzeigen" and pg.locator("fieldset.ab-filter input[type=radio]").count() == 2)
+    check("Überschrift „Problemstellen (n)“ und Seitenansicht „Seite 1 von 2“", pg.locator("h4[id^=ab_probleme_]").count() == 1 and pg.locator("h4[id^=ab_seite_heading_]").inner_text().startswith("Seite 1 von 2"), pg.locator("h4[id^=ab_seite_heading_]").inner_text() if pg.locator("h4[id^=ab_seite_heading_]").count() else "")
+    pg.wait_for_timeout(1500)
+    check("Seitenbild geladen, mit Alt-Text", pg.evaluate("(() => { const i = document.querySelector('img.ab-seitenbild'); return !!(i && i.complete && i.naturalWidth > 0 && i.alt.startsWith('Seitenbild von Seite 1')); })()"))
+    hp = pg.locator(".ab-hoerprobe").first.inner_text()
+    check("Hörprobe der Seite 1 aus der fertigen Datei", "Überschrift" in hp or "Absatz" in hp, hp[:200])
+    check("Knopf „Seite vorlesen“ (aria-pressed)", pg.locator("button[id^=ab_vorlesen_]").get_attribute("aria-pressed") == "false")
+    pg.click("button[id^=ab_vorlesen_]"); pg.wait_for_timeout(1500)
+    check("Vorlesen ohne Stimme auf dem Geraet: kein Absturz, Knopf bleibt bedienbar", pg.locator("button[id^=ab_vorlesen_]").count() == 1 and not fehler_js, fehler_js[:2])
+    pg.click("section.ab-seite button:has-text('Nächste Seite')"); pg.wait_for_timeout(600)
+    check("Nächste Seite: „Seite 2 von 2“, Fokus auf der Seitenüberschrift", pg.locator("h4[id^=ab_seite_heading_]").inner_text().startswith("Seite 2 von 2") and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("ab_seite_heading_"))
+    pg.check("fieldset.ab-filter input[value=probleme]"); pg.wait_for_timeout(500)
+    n_prob = pg.locator("ol.ab-problemliste > li").count()
+    check("Filter „Nur Problemstellen“ zeigt nur Seiten mit Problemen (oder den Leerhinweis)", (n_prob == 0 and "Keine Seite mit Problemstellen" in pg.locator("div.ab-detail").inner_text()) or (n_prob > 0 and pg.locator("section.ab-seite").count() == 1), n_prob)
+    axe(pg, "Abschlussprüfung mit Prüfdatei")
+    pg.click("a[id^=ab_struktur_]")
+    pg.wait_for_selector("h1#strukturTitel", timeout=30000)
+    check("Mit eigenem Screenreader prüfen: Strukturansicht der fertigen Datei", "(fertige Datei)" in pg.locator("h1#strukturTitel").inner_text() and "quelle=abschluss" in pg.url, pg.locator("h1#strukturTitel").inner_text())
+    pg.click("#strukturZurueck"); pg.wait_for_selector("section.ab-karte", timeout=15000)
+    check("Zurück führt in die Abschlussprüfung", "ansicht=abschluss" in pg.url)
+    # Alt-Text aendern -> Pruefdatei nicht mehr aktuell
+    bilder = pg.request.get(B + f"/api/projects/{pid}").json().get("images") or []
+    if bilder:
+        pg.request.post(B + f"/api/images/{bilder[0]['id']}/alt-text", data={"alt_text": "Geänderter Alt-Text " + time.strftime("%H%M%S")})
+        pg.goto(B + f"/app?projekt={pid}&ansicht=abschluss", wait_until="networkidle"); pg.wait_for_timeout(1200)
+        check("Nach Alt-Text-Änderung: „Prüfdatei nicht mehr aktuell“, Neu-erstellen-Knopf ist Hauptknopf", "nicht mehr aktuell" in pg.locator("section.ab-karte h3").inner_text() and "btn-primary" in (pg.locator("button[id^=ab_erstellen_]").get_attribute("class") or ""), pg.locator("section.ab-karte h3").inner_text())
+    with pg.expect_download(timeout=90000) as dl_info:
+        pg.click("button[id^=ab_export_]")
+    dl = dl_info.value
+    pfad = dl.path()
+    check("PDF aus der Abschlussprüfung heruntergeladen (%PDF)", pfad is not None and open(pfad, "rb").read(5) == b"%PDF-", dl.suggested_filename)
+    pg.wait_for_timeout(2500)
+    st = pg.locator("output[id^=ab_status_]").first.inner_text()
+    check("Statuszeile nennt Download und Ablage", "Heruntergeladen" in st and "Ablage" in st, st)
+    check("Ablage-Knopf zeigt einen Eintrag", "Ablage (1)" in (pg.locator("#ausgabenTab").inner_text() if pg.locator("#ausgabenTab").count() else ""))
+    r = pg.request.get(B + f"/api/ausgaben?projekt={pid}")
+    eintraege = r.json().get("ausgaben", []) if r.ok else []
+    check("Ablage-Eintrag art pdf mit Datei", len(eintraege) == 1 and eintraege[0].get("art") == "pdf" and eintraege[0].get("datei_verfuegbar") is True, eintraege[:1])
+    doc_id = pg.request.get(B + f"/api/projects/{pid}/abschluss").json()["documents"][0]["id"]
+    check("Seitenbild ausserhalb des Bereichs: 404", pg.request.get(B + f"/api/projects/{pid}/documents/{doc_id}/abschluss/seite/99").status == 404)
+    check("Abschlussprüfung fremdes Projekt: 404", pg.request.get(B + "/api/projects/999999/abschluss").status == 404)
+    check("Ansicht „abschluss“ lässt sich am Projekt merken", pg.request.post(B + f"/api/projects/{pid}/ansicht", data={"ansicht": "abschluss"}).ok)
+    pg.request.post(B + f"/api/projects/{pid}/ansicht", data={"ansicht": "dokument"})
 
     print("== C3. Zweite PDF: Karten zum Aufklappen (Michael Karbe, PS 24.09.2026) ==")
     pg.goto(B + f"/app?projekt={pid}&ansicht=dokument", wait_until="networkidle"); pg.wait_for_timeout(1000)

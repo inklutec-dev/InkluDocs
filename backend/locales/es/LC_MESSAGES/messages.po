@@ -7832,3 +7832,253 @@ msgstr "Proyecto PDF"
 
 msgid "Word-Projekt"
 msgstr "Proyecto Word"
+
+#: Abschlussprüfung + Ansicht Dokument (24.09.2026)
+msgid "Noch nicht getaggt"
+msgstr "Aún sin etiquetar"
+
+msgid "Noch keine Prüfdatei"
+msgstr "Aún no hay archivo de revisión"
+
+msgid "Prüfdatei nicht mehr aktuell"
+msgstr "Archivo de revisión desactualizado"
+
+msgid "{n} Problemstellen"
+msgstr "{n} puntos problemáticos"
+
+msgid "Keine Problemstellen gefunden"
+msgstr "No se encontraron puntos problemáticos"
+
+msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Dokument“ barrierefrei."
+msgstr "Este documento aún no está etiquetado. Hazlo primero accesible en la vista «Documento»."
+
+msgid "Prüfdatei"
+msgstr "Archivo de revisión"
+
+msgid "erstellt am {zeit}"
+msgstr "creado el {zeit}"
+
+msgid "noch nicht erstellt"
+msgstr "aún no creado"
+
+msgid "aktuell"
+msgstr "actualizado"
+
+msgid "nicht mehr aktuell — seitdem wurden Alt-Texte, Quickinfos oder die Datei geändert"
+msgstr "desactualizado — desde entonces cambiaron textos alternativos, información sobre herramientas o el archivo"
+
+msgid "bestanden"
+msgstr "superada"
+
+msgid "nicht möglich (Prüfdienst nicht erreichbar)"
+msgstr "no es posible (servicio de revisión no disponible)"
+
+msgid "Problemstellen"
+msgstr "Puntos problemáticos"
+
+msgid "Prüfdatei erstellen"
+msgstr "Crear archivo de revisión"
+
+msgid "Prüfdatei neu erstellen"
+msgstr "Volver a crear el archivo de revisión"
+
+msgid "Mit eigenem Screenreader prüfen"
+msgstr "Revisar con tu propio lector de pantalla"
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du herunterlädst. Das Erstellen der Prüfdatei ist kostenlos; Credits kostet erst das Herunterladen."
+msgstr "Se revisa el archivo final, exactamente el PDF que descargas. Crear el archivo de revisión es gratis; solo la descarga cuesta créditos."
+
+msgid "Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos."
+msgstr "Crea el archivo de revisión: es exactamente el PDF que descargas, con estructura, textos alternativos e información sobre herramientas. Es gratis."
+
+msgid "Prüfdatei wird erstellt …"
+msgstr "Creando el archivo de revisión …"
+
+msgid "Seiten {n}"
+msgstr "Páginas {n}"
+
+msgid "Anzeigen"
+msgstr "Mostrar"
+
+msgid "Ganzes Dokument ({n} Seiten)"
+msgstr "Documento completo ({n} páginas)"
+
+msgid "Nur Problemstellen ({n})"
+msgstr "Solo puntos problemáticos ({n})"
+
+msgid "Problemstellen ({n})"
+msgstr "Puntos problemáticos ({n})"
+
+msgid "Keine Problemstellen gefunden: PDF/UA-Prüfung, Struktur und Vollständigkeit sind ohne Befund."
+msgstr "No se encontraron puntos problemáticos: la revisión PDF/UA, la estructura y la integridad no presentan hallazgos."
+
+msgid "Zur Seite {n}"
+msgstr "Ir a la página {n}"
+
+msgid "Keine Seite mit Problemstellen."
+msgstr "Ninguna página con puntos problemáticos."
+
+msgid "Die Hörprobe ist leer."
+msgstr "La muestra de audio está vacía."
+
+msgid "Seite {n} von {m}"
+msgstr "Página {n} de {m}"
+
+msgid "Vorherige Seite"
+msgstr "Página anterior"
+
+msgid "Gehe zu Seite"
+msgstr "Ir a la página"
+
+msgid "Nächste Seite"
+msgstr "Página siguiente"
+
+msgid "Seitenbild von Seite {n}"
+msgstr "Imagen de la página {n}"
+
+msgid "Problemstellen auf dieser Seite"
+msgstr "Puntos problemáticos en esta página"
+
+msgid "Problem {n}"
+msgstr "Problema {n}"
+
+msgid "Seite vorlesen"
+msgstr "Leer la página en voz alta"
+
+msgid "Hörprobe: so bekommt ein Screenreader diese Seite"
+msgstr "Muestra de audio: así recibe un lector de pantalla esta página"
+
+msgid "Hörprobe von Seite {n}"
+msgstr "Muestra de audio de la página {n}"
+
+msgid "Auf dieser Seite liest ein Screenreader nichts vor."
+msgstr "Un lector de pantalla no lee nada en esta página."
+
+msgid "Die Prüfung konnte nicht geladen werden."
+msgstr "No se pudo cargar la revisión."
+
+msgid "Nur Problemstellen: {n} Seiten."
+msgstr "Solo puntos problemáticos: {n} páginas."
+
+msgid "Ganzes Dokument: {n} Seiten."
+msgstr "Documento completo: {n} páginas."
+
+msgid "Prüfdatei wird erstellt … Das kann bei großen Dateien eine Minute dauern."
+msgstr "Creando el archivo de revisión … Puede tardar un minuto en archivos grandes."
+
+msgid "Prüfdatei wird erstellt."
+msgstr "Creando el archivo de revisión."
+
+msgid "Die Prüfdatei konnte nicht erstellt werden: {grund}"
+msgstr "No se pudo crear el archivo de revisión: {grund}"
+
+msgid "Prüfdatei erstellt."
+msgstr "Archivo de revisión creado."
+
+msgid "{n} Problemstellen gefunden."
+msgstr "Se encontraron {n} puntos problemáticos."
+
+msgid "Keine Problemstellen gefunden."
+msgstr "No se encontraron puntos problemáticos."
+
+msgid "Alle Dokumente herunterladen"
+msgstr "Descargar todos los documentos"
+
+msgid "als ZIP, mit Alt-Texten und Quickinfos"
+msgstr "como ZIP, con textos alternativos e información sobre herramientas"
+
+msgid "Hier prüfst du das Ergebnis, bevor du es herunterlädst: Problemstellen, Seitenbild und Hörprobe der fertigen Datei."
+msgstr "Aquí revisas el resultado antes de descargarlo: puntos problemáticos, imagen de página y muestra de audio del archivo final."
+
+msgid "Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“."
+msgstr "Aún no se ha subido ningún documento. Puedes hacerlo en la vista «Documento»."
+
+msgid "Alle Befunde in einer Liste, technische Prüfung (PDF/UA) und KI-Prüfung, nach Seiten sortiert: {n}."
+msgstr "Todos los hallazgos en una lista, revisión técnica (PDF/UA) y revisión con IA, ordenados por página: {n}."
+
+msgid "KI-Prüfung"
+msgstr "Revisión con IA"
+
+msgid "Befunde als CSV herunterladen"
+msgstr "Descargar hallazgos como CSV"
+
+msgid "technisch in Ordnung (PDF/UA)"
+msgstr "técnicamente correcto (PDF/UA)"
+
+msgid "technisch mit Befunden (PDF/UA)"
+msgstr "hallazgos técnicos (PDF/UA)"
+
+msgid "technische Prüfung fehlt"
+msgstr "falta la revisión técnica"
+
+msgid "Keine Struktur: Die PDF muss barrierefrei gemacht werden."
+msgstr "Sin estructura: el PDF debe hacerse accesible."
+
+msgid "Struktur unbrauchbar (kaum Elemente oder keine Überschriften): Neu taggen empfohlen."
+msgstr "Estructura inutilizable (casi sin elementos o sin encabezados): se recomienda volver a etiquetar."
+
+msgid "Struktur unvollständig: {n} von {g} Textzeilen haben kein Element. Bitte die Hörprobe prüfen."
+msgstr "Estructura incompleta: {n} de {g} líneas de texto no tienen elemento. Revisa la muestra de audio."
+
+msgid "In Ordnung: Struktur geprüft, nichts zu tun. Export möglich."
+msgstr "Correcto: estructura revisada, nada que hacer. Exportación posible."
+
+msgid "Verbesserungen möglich: {n} sichere Befunde, {tech}."
+msgstr "Mejoras posibles: {n} hallazgos seguros, {tech}."
+
+msgid "Verbesserungen möglich: {tech}. KI-Prüfung starten."
+msgstr "Mejoras posibles: {tech}. Inicia la revisión con IA."
+
+msgid "{tech}. Die KI-Prüfung fehlt noch, sie zeigt, ob die Struktur zum Seitenbild passt."
+msgstr "{tech}. Aún falta la revisión con IA; muestra si la estructura coincide con la imagen de la página."
+
+msgid "Urteil"
+msgstr "Veredicto"
+
+msgid "Prüfen und herunterladen: in der Ansicht „Abschlussprüfung“."
+msgstr "Revisar y descargar: en la vista «Revisión final»."
+
+msgid "Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet."
+msgstr "Haciendo accesible … página {a} de {b} asignada."
+
+msgid "Abschlussprüfung"
+msgstr "Revisión final"
+
+msgid "Ansicht Abschlussprüfung geöffnet."
+msgstr "Vista Revisión final abierta."
+
+msgid "Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor."
+msgstr "No hay ninguna voz para este idioma instalada en este dispositivo. Por motivos de privacidad no leemos en voz alta mediante un servicio de voz en internet."
+
+msgid "Leere Überschrift (Ebene {n}): Ein Screenreader liest „Überschrift, leer“."
+msgstr "Encabezado vacío (nivel {n}): un lector de pantalla lee «encabezado, vacío»."
+
+msgid "Überschriften-Ebene springt von {a} auf {b}: „{t}“."
+msgstr "El nivel de encabezado salta de {a} a {b}: «{t}»."
+
+msgid "Grafik ohne Alt-Text."
+msgstr "Gráfico sin texto alternativo."
+
+msgid "Tabelle ohne Kopfzellen: Ein Screenreader kann die Spalten nicht benennen."
+msgstr "Tabla sin celdas de encabezado: un lector de pantalla no puede nombrar las columnas."
+
+msgid "Formularfeld „{n}“ ohne Quickinfo."
+msgstr "Campo de formulario «{n}» sin información sobre herramientas."
+
+msgid "Vollständigkeit"
+msgstr "Integridad"
+
+msgid "Sichtbarer Text fehlt vermutlich in der Vorlesung: „{t}“."
+msgstr "Probablemente falta texto visible en la lectura: «{t}»."
+
+msgid "(Sicherheit: {s})"
+msgstr "(certeza: {s})"
+
+msgid "{name} (fertige Datei)"
+msgstr "{name} (archivo final)"
+
+msgid "hoch"
+msgstr "alta"
+
+msgid "{n} Grafiken ohne Alt-Text."
+msgstr "{n} gráficos sin texto alternativo."

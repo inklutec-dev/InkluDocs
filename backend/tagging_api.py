@@ -457,7 +457,7 @@ def felder_quickinfos(conn, document_id: int) -> dict:
 
 
 def struktur_daten(project_id: int, document_id: int, user_id: int, ui_lang: str, erneuern: bool = False,
-                   mit_html: bool = False) -> dict:
+                   mit_html: bool = False, pfad: Optional[str] = None) -> dict:
     """Strukturlesung (pdf_struktur, eigenes PDFix-Skript) + Hoerprobe (+ HTML fuer die Seite /struktur).
     Synchron, laeuft im Executor. 404 ueber _projekt_und_dokument, wenn das Dokument nicht dem Nutzer gehoert."""
     conn = _d.get_db()
@@ -472,7 +472,10 @@ def struktur_daten(project_id: int, document_id: int, user_id: int, ui_lang: str
     if doc.get("getaggt") is False or doc.get("getaggt") == 0:
         aussen.update({"verfuegbar": False, "grund": _("Die PDF hat noch keine Tags. Erst „Barrierefrei machen“ ausführen.")})
         return aussen
-    pfad = doc.get("original_path") or ""
+    # pfad: Pruefdatei der Abschlusspruefung (main.struktur_seite, ?quelle=abschluss) statt der Arbeitsdatei
+    if pfad:
+        aussen["name"] = _("{name} (fertige Datei)").format(name=name)
+    pfad = pfad or doc.get("original_path") or ""
     try:
         struktur = pdf_struktur.lesen(pfad, os.path.dirname(pfad), erneuern=erneuern)
     except pdf_struktur.StrukturFehler as e:

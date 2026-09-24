@@ -447,3 +447,38 @@ Strategie dazu. Michael besorgt eine Vollversion von PDFix für die Tests. Spät
   unverändert im Feld „Funktionen und Einstellungen“.
 - Tests: `tests/e2e/ui_dokument.py` (Kopf, Symbol, Felder, Klappen mit zwei Dateien, Punkte 2–11, axe),
   `ui_pdf_quickinfos.py`, `ui_uebersetzen.py` angepasst.
+
+## Station „Abschlussprüfung“ (24.09.2026, Steves Go; Name vorläufig)
+
+Letzte Ansicht eines PDF-Projekts nach Dokument (hochladen, taggen), Alt-Texte und Quickinfos (bearbeiten):
+die **fertige Datei** anschauen, anhören, Probleme finden, herunterladen. Geprüft wird immer genau die PDF, die der
+Kunde bekommt (derselbe Bau wie der Export, `main._build_pdf_for_document`: Struktur + Alt-Texte + Quickinfos).
+
+- **Ansicht:** `abschluss` (app.html `ansichtenFuer`, main.py `ANSICHTEN_JE_TYP`), Oberfläche `frontend/abschluss.js`,
+  Aufbau wie die Ansicht „Dokument“ (Projektkopf, Feld „Funktionen und Einstellungen“, Karten zum Aufklappen).
+- **Prüfdatei:** `POST /api/projects/{id}/documents/{doc}/abschluss` baut sie **kostenlos** und ohne Ablage-Eintrag
+  nach `RESULTS_DIR/<user>/<projekt>/_abschluss/doc<id>.pdf` (+ `.json` mit Stand, Fingerabdruck, veraPDF-Rohbericht,
+  fehlenden Zeilen; Logik `backend/abschluss.py`). 409, solange ein Bau für das Dokument läuft; 422 bei ungetaggter PDF.
+  Der **Fingerabdruck** (Arbeitsdatei, Alt-Texte wie beim Export, Quickinfos) zeigt „nicht mehr aktuell“, sobald sich
+  danach etwas ändert. Credits und Ablage-Eintrag kommen wie bisher erst mit „PDF herunterladen“ (`/export`).
+- **Lesen:** `GET /api/projects/{id}/abschluss` (Karten), `GET …/documents/{doc}/abschluss` (Problemliste + Hörprobe
+  nach Seiten, Sprache), `GET …/abschluss/seite/{n}` (Seitenbild 80 dpi, gecacht). Strukturansicht der Prüfdatei:
+  `/struktur/{id}/{doc}?quelle=abschluss` (Pfad nur aus `abschluss.pfade`, nie aus der Anfrage).
+- **Problemstellen** (eine Liste, nach Seite, nummeriert): PDF/UA (veraPDF der fertigen Datei, Klartext), Struktur
+  (leere Überschriften, Ebenensprünge, Grafiken ohne Alt-Text, Tabellen ohne Kopfzellen, Formularfelder ohne
+  Quickinfo), Vollständigkeit (sichtbare Zeilen ohne Entsprechung im Baum; 60 % der Wörter; wiederholte Kopf-/Fußtexte
+  und Seitenzahlen ausgenommen; höchstens 12 je Seite), KI-basierte Prüfung (Befunde hoch/mittel der letzten Prüfung).
+- **Seitenweise:** Filter „Ganzes Dokument“ / „Nur Problemstellen“ (Radiogruppe), Seite x von n mit Vor/Zurück und
+  „Gehe zu Seite“ (Seiten mit Problemen sind in der Auswahl benannt), Seitenbild + Hörprobe der Seite nebeneinander
+  (schmal untereinander), Problemstellen der Seite im Kasten mit Rahmen und Zeichen „!“ (nicht nur Farbe).
+- **Vorlesen:** gemeinsame Funktion `vorlesen()` in app.html (auch „Anhören“ bei den Alt-Texten): nur auf Knopfdruck,
+  nur Stimmen mit `localService` (Chromes Google-Stimmen schicken Text ins Netz — die nehmen wir nie), zeilenweise,
+  Escape stoppt. Ohne lokale Stimme: Hinweis statt Vorlesen.
+- **Herunterladen** ist aus der Dokument-Karte hierher umgezogen: je Dokument „PDF herunterladen“, bei mehreren
+  getaggten Dokumenten „Alle Dokumente herunterladen“ (ZIP). Die Dokument-Karte nennt nur noch den Weg.
+- **Übersetzungen:** `abschluss.js` und `dokument.js` tragen den Marker `I18N` und laufen damit durch
+  `scripts/check_i18n.py`; die Texte der Dokumentansicht fehlten bis 24.09. in allen Katalogen (blieben deutsch).
+- **Grenzen / nächste Stufen:** keine Markierung der Problemstelle im Seitenbild (braucht die Lage je Element aus
+  `Struktur_Export.py`), Vollständigkeit im PDFix-Testmodus verrauscht (Wasserzeichen, ersetzte Zeichen), Word folgt,
+  echter Screenreader (NVDA-Server) später.
+- Tests: `tests/e2e/ui_dokument.py` Abschnitt C2b.
