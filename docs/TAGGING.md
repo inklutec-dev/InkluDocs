@@ -408,3 +408,42 @@ Messung (gleiche Gemini-Zuordnung, nur Schreibweg geändert): Mannheimer 96 → 
 - **Ganzseitige Karten/Diagramme:** Eine Gruppe über `PDF_STRUKTUR_HINTERGRUND_ANTEIL` (60 %) der Seite gilt nur dann als Hintergrund, wenn sie aus weniger als `MIN_ZEICHNUNGEN_GROSSE_GRAFIK` (40) komplexen Zeichnungen besteht. Hofor S. 11 (Versorgungskarte): vorher rund 50 Ortsnamen als lose Absätze, jetzt zwei Karten-Figures.
 - **Überlappende Überschriften:** Rollen, deren Rahmen sich überschneiden (Hofor-Titel: „Årsrapport“ im Glyphenrahmen der 242-pt-Ziffern „2025“), legt `Struktur_Schreiben.py` als initiale Elemente an, kleinste zuerst — sonst verschmolz PDFix beide und eine Überschrift ging verloren. Das Stilprofil gibt überlappenden Überschriften derselben Seite dieselbe Ebene, damit die Folge nicht von der Lesereihenfolge abhängt (vorher 2, 1, 3 = Sprung).
 - Messung danach (gleiche Gemini-Zuordnung): Mannheimer, Infografik, Ritterturnier unverändert; Hofor 1 Vektorkarte, 14 Grafiken, 23 Überschriften; alle vier ohne Ebenensprung. Tests: `test_ganzseitige_karte_bleibt_grafik`, `test_ueberlappende_ueberschriften_gleiche_ebene`.
+
+## 24.09.2026: Zurück auf Make Accessible, Oberfläche nach Michaels Liste (Steves Go)
+
+**Richtung (Michael Karbe, WhatsApp 24.09.2026 10:10–10:27, Steve einverstanden):** Erst den ganzen Prozess mit
+Jörgs Make Accessible sauber aufsetzen, inklusive Oberfläche; die KI kommt in einem zweiten Schritt mit klarer
+Strategie dazu. Michael besorgt eine Vollversion von PDFix für die Tests. Später: Probe-Tagging im Testmodus
+(ohne Lizenz, mit Wasserzeichen), bezahlt wird erst der Lauf mit Lizenz (derselbe Aufruf mit Lizenznummer).
+
+- **Staging:** `PDF_TAGGING_WEG=pdfix` in `.env.staging` (vorher `struktur`). Der Weg „Struktur zuerst“ bleibt im Code
+  und ist mit dem Schalter jederzeit wieder da; nichts gelöscht.
+- **Versuch 24.09. (nicht im Produkt):** vier Wege am selben Dokument (Ritterturnier, Mannheimer-Antrag, Rechnung) mit
+  demselben Maßstab: A Make Accessible, B Struktur zuerst, C „PDFix erkennt, KI korrigiert nur Rollen“, D PDFix-Docling
+  (Docker-Paket `pdfix/pdf-accessibility-docling:v1.2.21`, läuft ohne Lizenz im Testmodus, ~7–13 s je Seite ohne GPU).
+  Skript und Ergebnisse auf dem Server unter `/home/claude/versuch-0924/`. Grundlage für den zweiten Schritt.
+
+**Oberfläche (Michaels Mails 21.09. „Anpassung Ansichten“ und 22.09. „Feedback“, PS 24.09.):**
+
+- **Projektkopf in allen Ansichten von PDF- und Word-Projekten** (`app.html` `projektKopfHtml`, `funktionenKarteHtml`,
+  genutzt von `dokument.js`, `formular.js`, `uebersetzen.js`): Projektname (H1) und Ansichts-Wahl in EINEM Feld, rechts
+  auf Höhe des Namens das rote PDF- bzw. blaue Word-Symbol (Alt „PDF-Projekt“/„Word-Projekt“) statt der Statusanzeige
+  (Punkt 9). Darunter ein eigenes Feld „Funktionen und Einstellungen“ (H2) mit den Knöpfen für das ganze Projekt und
+  Kontext/Sprache/Prompts; ohne Inhalt entfällt es. Gäste, Grafik-, Web- und eigenständige Formular-Projekte behalten
+  den bisherigen Kopf.
+- **Hochladen nur in der Ansicht „Dokument“** (Punkt 8): `uploadBlockHtml` liefert in den Ansichten Alt-Texte und
+  Quickinfos eines PDF-Projekts nichts.
+- **Dokument-Karten zum Aufklappen** (PS 24.09.): `<details class="dok-klappe">`, H3 im `summary`. Ein Dokument: offen;
+  mehrere: zu, außer der Nutzer hat eine geöffnet oder dort läuft etwas. Nach dem Hochladen klappt die neue Karte auf,
+  der Fokus steht auf ihrem Schalter. Gemerkt wird nur echte Bedienung (Chromes „toggle“ beim Zeichnen zählt nicht).
+- **Dokumentinfo je Zeile „Stand: Getaggt“, „Seiten: 15“** (Punkt 2) als Liste ohne Aufzählungszeichen in Schrift und
+  Größe des Berichts (0,92rem, Punkt 4).
+- **Keine Wechsel-Knöpfe „Alt-Texte bearbeiten“ und „Quickinfos bearbeiten“** auf der Karte (Punkt 3; Quickinfos
+  aus demselben Grund mit entfernt) — gewechselt wird über die Ansichts-Wahl.
+- **„PDF herunterladen“** statt „Fertige PDF herunterladen“ (Punkt 5), **„KI-basierte Prüfung“** statt „Automatische
+  Prüfung“ (Punkt 11, auch in Chatbot-Texten und Fehlermeldungen), **Tagging-Bericht ohne „In Ordnung“-Zeilen** (Punkt 6).
+- **Offen, mit Michael zu klären:** Punkt 1 (Knöpfe „Komplett barrierefrei machen“ und „Ablage“ in der Dokumentansicht —
+  lässt sich als „nur diese beiden“ oder als „diese beiden weglassen, mehrere PDF später“ lesen). Bis dahin stehen beide
+  unverändert im Feld „Funktionen und Einstellungen“.
+- Tests: `tests/e2e/ui_dokument.py` (Kopf, Symbol, Felder, Klappen mit zwei Dateien, Punkte 2–11, axe),
+  `ui_pdf_quickinfos.py`, `ui_uebersetzen.py` angepasst.

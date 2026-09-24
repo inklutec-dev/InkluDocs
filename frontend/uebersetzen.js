@@ -273,17 +273,22 @@
         // Keine Statuszeile unter dem Projektnamen (Michael Karbe Punkt 4, Steve 01.09.2026 — wie bei
         // Word und PDF): die Zahlen stehen am Dokument, in der Rueckfrage und im Herunterladen-Dialog.
         // Nur ein Hinweis vom Server (fehlgeschlagene Segmentierung, Lauf-Hinweise) erscheint hier.
+        const knoepfe = ue.length
+            ? (!busy ? '<button class="btn btn-primary" id="uStartBtn" onclick="Uebersetzen.laufOeffnen()">' + ico('sparkle') + t('Übersetzen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
+              + (fertig && !busy ? '<button class="btn btn-primary" id="uExportOpenBtn" onclick="Uebersetzen.exportOeffnen()">' + ico('download') + (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen')) + '</button>' : '')
+            : '';
+        const dialoge = ue.length ? laufDialogHtml(project) + exportDialogHtml(project) : '';
+        const infoHtml = '<div class="card-info" id="projectHeadInfo" data-info="' + escHtml(info) + '"></div>' + serverHinweis;
+        // Projektkopf wie in allen Ansichten (Michael Karbe, Mails 21.09. und 22.09.2026): Name + Word-Symbol +
+        // Ansichts-Wahl in einem Feld, die Knoepfe im eigenen Feld darunter; Dialoge ausserhalb der Felder.
+        if (typeof mitProjektKopf === 'function' && mitProjektKopf(project)) {
+            return projektKopfHtml(project, 'uebersetzung', title, infoHtml) + funktionenKarteHtml(knoepfe) + dialoge;
+        }
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
             + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
-            + '<div class="card-info" id="projectHeadInfo" data-info="' + escHtml(info) + '"></div>' + serverHinweis
-            + (ue.length ? ''
-                + '<div class="card-actions">'
-                +   (!busy ? '<button class="btn btn-primary" id="uStartBtn" onclick="Uebersetzen.laufOeffnen()">' + ico('sparkle') + t('Übersetzen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
-                +   (fertig && !busy ? '<button class="btn btn-primary" id="uExportOpenBtn" onclick="Uebersetzen.exportOeffnen()">' + ico('download') + (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen')) + '</button>' : '')
-                +   laufDialogHtml(project)
-                +   exportDialogHtml(project)
-                + '</div>' : '')
+            + infoHtml
+            + (ue.length ? '<div class="card-actions">' + knoepfe + dialoge + '</div>' : '')
             // Ansichts-Wahl (Testumbau 18.09.2026): dieselbe Zeile und dieselbe Stelle wie in der Alt-Text-Ansicht
             // (NACH den Hauptknoepfen, Review 2, Befund 15 — gleiche Tab-Reihenfolge in beiden Ansichten).
             + (typeof ansichtWahlHtml === 'function' ? '<div class="card-actions">' + ansichtWahlHtml(project, 'uebersetzung') + '</div>' : '')

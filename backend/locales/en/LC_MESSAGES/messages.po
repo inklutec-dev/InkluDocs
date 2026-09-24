@@ -7819,3 +7819,16 @@ msgstr "The correction of “{name}” failed: {grund}"
 #: Korrektur PDF (22.09.2026)
 msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
 msgstr "Correction of “{name}” finished: {n} changes."
+
+#: Projektkopf + Dokumentansicht nach Michael Karbes Liste (24.09.2026)
+msgid "Funktionen und Einstellungen"
+msgstr "Functions and settings"
+
+msgid "KI-basierte Prüfung"
+msgstr "AI-based check"
+
+msgid "PDF-Projekt"
+msgstr "PDF project"
+
+msgid "Word-Projekt"
+msgstr "Word project"

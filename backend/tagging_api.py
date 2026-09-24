@@ -979,7 +979,7 @@ def build_router(deps: Deps) -> APIRouter:
             zu_pruefen = min(seiten, pdf_pruefung.MAX_SEITEN)
             pruefung = _d.billing.aktion_pruefung(user["id"], AKTION_PRUEFUNG, zu_pruefen)
             if not pruefung["erlaubt"]:
-                raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(pruefung, "Die automatische Prüfung"))
+                raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(pruefung, "Die KI-basierte Prüfung"))
             if _d.tageslimit_wache:
                 tl = _d.tageslimit_wache(user)
                 if tl:
@@ -1009,7 +1009,7 @@ def build_router(deps: Deps) -> APIRouter:
                 raise HTTPException(status_code=503, detail="Die Korrektur ist auf diesem Server nicht eingerichtet")
             pb = _pruef_bericht(doc)
             if doc.get("pruefung_status") != STATUS_FERTIG or not pb.get("befunde"):
-                raise HTTPException(status_code=400, detail="Erst die automatische Prüfung ausführen")
+                raise HTTPException(status_code=400, detail="Erst die KI-basierte Prüfung ausführen")
             if pb.get("korrigiert_am"):
                 raise HTTPException(status_code=409, detail="Dieser Prüfbericht wurde schon korrigiert. Erst erneut prüfen.")
             if not any(b.get("auto") for b in pb["befunde"]):

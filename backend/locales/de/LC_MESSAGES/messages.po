@@ -7822,3 +7822,16 @@ msgstr "Die Korrektur von „{name}“ ist fehlgeschlagen: {grund}"
 #: Korrektur PDF (22.09.2026)
 msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
 msgstr "Korrektur von „{name}“ fertig: {n} Änderungen."
+
+#: Projektkopf + Dokumentansicht nach Michael Karbes Liste (24.09.2026)
+msgid "Funktionen und Einstellungen"
+msgstr "Funktionen und Einstellungen"
+
+msgid "KI-basierte Prüfung"
+msgstr "KI-basierte Prüfung"
+
+msgid "PDF-Projekt"
+msgstr "PDF-Projekt"
+
+msgid "Word-Projekt"
+msgstr "Word-Projekt"

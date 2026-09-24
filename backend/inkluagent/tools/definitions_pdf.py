@@ -57,7 +57,7 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
     {
         "name": "pruefung_starten",
         "description": (
-            "Automatische Prüfung eines getaggten Dokuments: ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags "
+            "KI-basierte Prüfung eines getaggten Dokuments: ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags "
             "und meldet nur belegbare Abweichungen (Überschrift als Listenpunkt, falsche Ebene, Tabelle ohne Kopfzeile, "
             "Alt-Text passt nicht zum Bild, sichtbarer Text ohne Tag). Kostet Credits je Seite. ZWEI SCHRITTE wie "
             "barrierefrei_machen (erst ohne bestaetigt: Preis nennen, fragen; dann bestaetigt=true). Läuft im Hintergrund; "

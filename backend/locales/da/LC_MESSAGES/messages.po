@@ -7511,3 +7511,16 @@ msgstr "Rettelsen af „{name}“ mislykkedes: {grund}"
 #: Korrektur PDF (22.09.2026)
 msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
 msgstr "Rettelse af „{name}“ færdig: {n} ændringer."
+
+#: Projektkopf + Dokumentansicht nach Michael Karbes Liste (24.09.2026)
+msgid "Funktionen und Einstellungen"
+msgstr "Funktioner og indstillinger"
+
+msgid "KI-basierte Prüfung"
+msgstr "AI-baseret kontrol"
+
+msgid "PDF-Projekt"
+msgstr "PDF-projekt"
+
+msgid "Word-Projekt"
+msgstr "Word-projekt"

@@ -23,6 +23,20 @@
       .export-kopf { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.6rem; }
       .export-kopf h2 { margin: 0 !important; }
       .export-doc-icon { flex: none; height: 1.25rem; width: auto; display: block; }
+      /* Projektkopf (Michael Karbe, Mails 21.09. und 22.09.2026): rechts auf Hoehe des Projektnamens das Dateityp-
+         Symbol statt der Statusanzeige, in der Schrifthoehe der H1 (1,5rem); die Ansichts-Wahl direkt darunter im
+         selben Feld; Knoepfe und Einstellungen im eigenen Feld „Funktionen und Einstellungen“ darunter. */
+      .projekt-kopf .card-header { margin-bottom: 0; flex-wrap: nowrap; }
+      .projekt-dateityp { flex: none; height: 1.5rem; width: auto; display: block; }
+      .projekt-kopf .ansicht-wahl { margin-top: 0.75rem !important; }
+      .projekt-kopf .card-info:not([hidden]) { margin: 0.6rem 0 0; }
+      /* Ansicht „Dokument“: jede Datei zum Aufklappen (Michael Karbe, PS 24.09.2026); Dokumentinfo je Zeile
+         „Stand: Getaggt“ in Schrift und Groesse des Berichts darunter (Mail 22.09.2026, Punkte 2 und 4). */
+      .dok-klappe > summary { cursor: pointer; padding: 0.2rem 0; }
+      .dok-klappe > summary:focus-visible { outline: 2px solid var(--focus, #c75000); outline-offset: 2px; }
+      .dok-klappe[open] > summary { margin-bottom: 0.75rem; }
+      .dok-meta { list-style: none; margin: 0 0 0.6rem; padding: 0; font-size: 0.92rem; line-height: 1.5; }
+      .dok-meta li { margin: 0; }
     </style>
 {% if guest_mode %}
 {# Gast-Modus (Freigabe-Link): Flags VOR dashboard.js und Seiten-JS setzen.
@@ -253,6 +267,38 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             + '<button type="button" class="btn btn-secondary btn-small" id="ansichtOeffnen" onclick="wechsleAnsicht(' + project.id + ')">' + t('Öffnen') + '</button></div>';
     }
     window.ansichtWahlHtml = ansichtWahlHtml;
+    // PROJEKTKOPF (Michael Karbe, Mails 21.09. und 22.09.2026, Punkt 9): Projektname und Ansichts-Wahl
+    // stehen zusammen in EINEM Feld ganz oben; rechts auf Hoehe des Namens das rote PDF- bzw. blaue
+    // Word-Symbol statt der Statusanzeige (Dokumente koennen verschiedene Stati haben). Die Knoepfe fuer
+    // das ganze Projekt und die Einstellungen (Kontext, Sprache, Prompts) folgen in einem eigenen Feld
+    // darunter (funktionenKarteHtml). Gilt fuer alle Ansichten von PDF- und Word-Projekten.
+    function dateitypIconHtml(project) {
+        const art = istPdfDateityp(project) ? 'pdf' : (istWordDateityp(project) ? 'word' : '');
+        if (!art) return '';
+        return '<img class="projekt-dateityp" src="/static/icon-' + art + '.png" alt="'
+            + (art === 'pdf' ? t('PDF-Projekt') : t('Word-Projekt')) + '" width="256" height="256">';
+    }
+    function mitProjektKopf(project) {
+        return !window.GUEST_MODE && (istPdfDateityp(project) || istWordDateityp(project));
+    }
+    function projektKopfHtml(project, ansicht, titel, zusatz) {
+        return '<div class="card projekt-kopf">'
+            + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(titel) }) + '</h1>'
+            + dateitypIconHtml(project) + '</div>'
+            + '<div class="card-actions">' + ansichtWahlHtml(project, ansicht) + '</div>'
+            + (zusatz || '')
+            + '</div>';
+    }
+    // Leeres Feld (nur Kommentare/Leerraum) entfaellt ganz, damit keine Ueberschrift ohne Inhalt steht.
+    function funktionenKarteHtml(inhalt) {
+        if (!inhalt || !inhalt.replace(/<!--[\s\S]*?-->/g, '').trim()) return '';
+        return '<section class="card projekt-funktionen"><h2 class="section-title">' + t('Funktionen und Einstellungen') + '</h2>'
+            + '<div class="card-actions">' + inhalt + '</div></section>';
+    }
+    window.dateitypIconHtml = dateitypIconHtml;
+    window.mitProjektKopf = mitProjektKopf;
+    window.projektKopfHtml = projektKopfHtml;
+    window.funktionenKarteHtml = funktionenKarteHtml;
     async function wechsleAnsicht(projectId) {
         const sel = document.getElementById('ansichtSelect');
         const ziel = sel ? sel.value : 'alttexte';
@@ -317,8 +363,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // „Daraus werden die Bilder extrahiert“; in der Ansicht „Dokument“ geht es um das ganze Dokument.
         let tool = project.tool;
         if (tool === 'word' && aktuelleAnsicht(project) === 'uebersetzung') tool = 'uebersetzen';
-        const inDokument = tool === 'pdf' && aktuelleAnsicht(project) === 'dokument';
-        const inQuickinfos = tool === 'pdf' && aktuelleAnsicht(project) === 'quickinfos';
+        // Hochladen nur in der Ansicht „Dokument“ (Michael Karbe, Mail 22.09.2026, Punkt 8): die Ansichten
+        // Alt-Texte und Quickinfos eines PDF-Projekts zeigen kein Upload-Feld mehr. PDF-Projekte haben den
+        // Dateityp ab dem Anlegen (project_type 'pdf'), die Ansicht „Dokument“ ist also immer erreichbar.
+        if (tool === 'pdf' && istPdfDateityp(project) && aktuelleAnsicht(project) !== 'dokument') return '';
+        const inDokument = tool === 'pdf' && istPdfDateityp(project);
         if (tool === 'pdf') {
             // Multi-Datei Phase 1 (08.06.2026, Steve): PDF hinzufügen-Knopf bleibt
             // immer sichtbar — analog zum URL-Feld beim Web-Werkzeug. Damit kann der
@@ -328,9 +377,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const heading = hasExisting ? t('Weitere PDF hinzufügen') : t('PDF hinzufügen');
             // Julia-Feedback 02.07.2026: maximale Dateigroesse direkt am Upload-Feld.
             const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
-            const hint = inQuickinfos
-                ? t('Wähle ein PDF-Formular oder ziehe es hierher. Die Felder werden gelesen und bekommen Quickinfos; Bilder bekommen Alt-Texte.') + sizeHint
-                : inDokument
+            const hint = inDokument
                 ? (hasExisting
                     ? t('Du kannst jederzeit weitere PDF hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte bleiben erhalten.') + sizeHint
                     : t('Wähle ein PDF-Dokument oder ziehe es hierher. Danach kannst du es barrierefrei machen (Tagging) und Alt-Texte erzeugen.') + sizeHint)
@@ -637,8 +684,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 const dokHead = (data && data.document_id) ? document.getElementById('dok_heading_' + data.document_id) : null;
                 const docHead = (data && data.document_id) ? document.getElementById('doc_heading_' + data.document_id) : null;
                 if (dokHead) {
-                    // Ansicht „Dokument“: die H3 der neuen Karte ist direkt fokussierbar.
-                    dokHead.setAttribute('tabindex', '-1'); dokHead.focus();
+                    // Ansicht „Dokument“: Karten sind seit 24.09.2026 aufklappbar (<details>, H3 im summary).
+                    // Die neue Karte aufklappen und den Fokus auf ihren Schalter legen — so steht der Nutzer
+                    // direkt beim neuen Dokument, auch wenn die anderen Karten zu sind.
+                    const klappe = dokHead.closest('details');
+                    if (klappe) klappe.open = true;
+                    const sum = dokHead.closest('summary');
+                    if (sum) sum.focus(); else { dokHead.setAttribute('tabindex', '-1'); dokHead.focus(); }
                 } else if (docHead) {
                     // h2 in summary ist nicht fokussierbar — Fokus auf die summary legen.
                     const sum = docHead.closest('summary');
@@ -792,19 +844,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Stop in der natuerlichen Reihenfolge zu stoeren. Saubere Hierarchie:
         // H1=Projektname, H2=Upload-Section/Dokument/Export-Panel, H3=Seite,
         // H4=Bild — wird weiter unten konsistent ausgespielt (siehe renderImages).
-        main.innerHTML = `
-            <div class="card">
-                <div class="card-header">
-                    <h1 id="projectName" class="card-name" tabindex="-1">${t('Projekt: {name}', { name: escHtml(headTitle) })}</h1>
-                    <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
-                </div>
-                <!-- Korb C (Steve 17.07.2026): die fruehere Gast-Rollenzeile
-                     „Du prüfst dieses Projekt als …" unter der H1 ist entfallen. -->
-                <!-- Statuszeile „n von m Bildern generiert | Extraktion: …" ausgeblendet (Michael Karbe
-                     Punkt 4, Steve 01.09.2026): die Zahl steht in der Rueckfrage und in der Herunterladen-
-                     Zusammenfassung. Element bleibt (updateProjectHeader schreibt hinein), nur unsichtbar. -->
-                <div class="card-info" id="projectHeadInfo" hidden>${headInfo}</div>
-                <div class="card-actions">
+        // Knoepfe und Einstellungen fuer das ganze Projekt. PDF-/Word-Projekte (Besitzer): eigenes Feld
+        // „Funktionen und Einstellungen“ unter dem Projektkopf (Michael Karbe, Mail 21.09.2026); Gaeste,
+        // Grafik- und Web-Projekte behalten den bisherigen Kopf mit allem in einem Feld.
+        const aktionenHtml = `
                     ${!window.GUEST_MODE && images.length > 0 && project.status !== 'processing' && project.status !== 'extracting' ? '<button class="btn btn-primary" id="generateBtn" onclick="startGeneration(' + project.id + ')">' + icon('sparkle') + t('Alt-Texte generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? shareDialogHtml(project) : ''}
                     ${window.GUEST_MODE && images.length > 0 ? `
@@ -885,7 +928,6 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             </label>
                         </div>
                     ` : ''}
-                    ${ansichtWahlHtml(project, 'alttexte')}
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                             <label for="altLangSelect" style="font-weight:600;">${t('Sprache der Alt-Texte')}</label>
@@ -905,8 +947,25 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             </select>
                         </div>
                     ` : ''}
+        `;
+        // Statuszeile „n von m Bildern generiert | Extraktion: …" ausgeblendet (Michael Karbe Punkt 4, Steve
+        // 01.09.2026): die Zahl steht in der Rueckfrage und in der Herunterladen-Zusammenfassung. Element bleibt
+        // (updateProjectHeader schreibt hinein), nur unsichtbar. Korb C (Steve 17.07.2026): die fruehere
+        // Gast-Rollenzeile „Du prüfst dieses Projekt als …" unter der H1 ist entfallen.
+        const headInfoHtml = `<div class="card-info" id="projectHeadInfo" hidden>${headInfo}</div>`;
+        const kopfHtml = mitProjektKopf(project)
+            ? projektKopfHtml(project, 'alttexte', headTitle, headInfoHtml) + funktionenKarteHtml(aktionenHtml)
+            : `<div class="card">
+                <div class="card-header">
+                    <h1 id="projectName" class="card-name" tabindex="-1">${t('Projekt: {name}', { name: escHtml(headTitle) })}</h1>
+                    <span class="badge ${badge.cls}" id="projectStatusBadge">${badge.label}</span>
                 </div>
-            </div>
+                ${headInfoHtml}
+                <div class="card-actions">${aktionenHtml}</div>
+            </div>`;
+
+        main.innerHTML = `
+            ${kopfHtml}
             ${window.GUEST_MODE ? '' : uploadBlockHtml(project)}
             ${project.status === 'processing' && project.lauf_art === 'uebersetzung' ? `
                 <!-- Uebersetzung laeuft (Testumbau 18.09.2026): Fortschritt und Abbrechen gehoeren zur Ansicht Uebersetzung. -->

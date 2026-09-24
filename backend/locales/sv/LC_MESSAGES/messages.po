@@ -7381,3 +7381,16 @@ msgstr "Rättningen av ”{name}” misslyckades: {grund}"
 #: Korrektur PDF (22.09.2026)
 msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
 msgstr "Rättning av ”{name}” klar: {n} ändringar."
+
+#: Projektkopf + Dokumentansicht nach Michael Karbes Liste (24.09.2026)
+msgid "Funktionen und Einstellungen"
+msgstr "Funktioner och inställningar"
+
+msgid "KI-basierte Prüfung"
+msgstr "AI-baserad kontroll"
+
+msgid "PDF-Projekt"
+msgstr "PDF-projekt"
+
+msgid "Word-Projekt"
+msgstr "Word-projekt"

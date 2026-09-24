@@ -459,20 +459,20 @@
         // Die sichtbare Lauf-Statusmeldung steht seit 09.09.2026 unter dem Upload-Feld, dort wo
         // waehrend des Laufs die Fortschrittskarte stand (laufMeldungHtml, Michael Karbe/Steve).
         const laufMeldungHtml = '';
-        return '<div class="card">'
-            + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
-            + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
-            + '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>' + abbruchKnopf + laufMeldungHtml
-            // Gast: nur Abschluss/Beenden + Filter „Nur offene Felder" — keine KI, keine
-            // Stammdaten, kein Export, keine Sprach-/Prompt-Einstellungen.
-            + (gast() && felder.length ? ''
-                + '<div class="card-actions">' + abschlussHtml()
+        // Projektkopf (Michael Karbe, Mails 21.09. und 22.09.2026): bei PDF-Projekten wie in allen Ansichten
+        // Name + Dateityp-Symbol + Ansichts-Wahl in einem Feld, die Knoepfe und Einstellungen in einem eigenen
+        // Feld darunter (app.html projektKopfHtml/funktionenKarteHtml). Eigenstaendige Formular-Projekte und
+        // Gaeste behalten den bisherigen Kopf mit Status-Badge.
+        const infoHtml = '<div class="card-info" id="projectHeadInfo"' + (gast() ? '' : ' data-docs="' + docs.length + '" data-stammdaten="' + (data.stammdaten_anzahl || 0) + '"') + '>' + info + '</div>' + abbruchKnopf + laufMeldungHtml;
+        // Gast: nur Abschluss/Beenden + Filter „Nur offene Felder" — keine KI, keine
+        // Stammdaten, kein Export, keine Sprach-/Prompt-Einstellungen.
+        const gastAktionen = (gast() && felder.length ? ''
+                + abschlussHtml()
                 +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:1.2rem;flex-wrap:wrap;"><label for="fNurOffene" class="context-toggle" style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">'
                 +     '<span style="font-weight:600;">' + t('Nur offene Felder anzeigen') + '</span>'
                 +     '<input type="checkbox" id="fNurOffene"' + (nurOffene ? ' checked' : '') + ' onchange="Formular.filter(this.checked)" style="width:1.2rem;height:1.2rem;"></label></div>'
-                + '</div>' : '')
-            + (!gast() && felder.length ? ''
-                + '<div class="card-actions">'
+                : '');
+        const besitzerAktionen = (!gast() && felder.length ? ''
                 // EIN Knopf „Quickinfos generieren" (Michael Karbe 01.09.2026, wie „Alt-Texte generieren" bei
                 // PDF und Word). Seit 09.09.2026 (Michael Karbe) nimmt er IMMER alle benannten Felder — auch
                 // Texte aus der PDF, aus Stammdaten, von der KI und von Hand; Anzahl, Preis und Guthaben
@@ -516,10 +516,17 @@
                 +   '<div style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
                 +     '<label for="ownPromptSelect" style="font-weight:600;">' + t('Gespeicherte Prompts') + '</label>'
                 +     '<select id="ownPromptSelect" onchange="setPromptSetting(' + project.id + ', this.value)" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;"><option value="">' + t('Kein eigener Prompt') + '</option></select></div>'
-                + '</div>' : '')
-            
-            // Ansichts-Wahl (22.09.2026): bei PDF-Projekten die Stationen Dokument / Alt-Texte / Quickinfos;
-            // fuer eigenstaendige Formular-Projekte (pdfform) liefert ansichtWahlHtml() leer.
+                : '');
+        if (!gast() && typeof mitProjektKopf === 'function' && mitProjektKopf(project)) {
+            return projektKopfHtml(project, 'quickinfos', title, infoHtml) + funktionenKarteHtml(besitzerAktionen);
+        }
+        return '<div class="card">'
+            + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: escHtml(title) }) + '</h1>'
+            + '<span class="badge ' + badgeCls + '" id="projectStatusBadge">' + badge + '</span></div>'
+            + infoHtml
+            + (gastAktionen ? '<div class="card-actions">' + gastAktionen + '</div>' : '')
+            + (besitzerAktionen ? '<div class="card-actions">' + besitzerAktionen + '</div>' : '')
+            // Ansichts-Wahl (22.09.2026): fuer eigenstaendige Formular-Projekte (pdfform) liefert ansichtWahlHtml() leer.
             + (!gast() && typeof ansichtWahlHtml === 'function' ? '<div class="card-actions">' + ansichtWahlHtml(project, 'quickinfos') + '</div>' : '')
             + '</div>';
     }

@@ -35,7 +35,9 @@
     let laufZielDoc = null;
     let laufAktiv = false;
     let offeneBerichte = new Set();
-    let offenePruefungen = new Set();   // Automatische Pruefung: Klappen, die offen bleiben sollen
+    let offenePruefungen = new Set();   // KI-basierte Pruefung: Klappen, die offen bleiben sollen
+    let offeneDokumente = new Set();    // Dokument-Klappen (Michael Karbe, PS 24.09.2026), bleiben beim Neuzeichnen offen
+    let geschlosseneDokumente = new Set();   // ... bzw. zu, wenn der Nutzer sie zugeklappt hat
 
     function ico(name) { return (typeof icon === 'function') ? icon(name) : ''; }
     function esc(s) { return (typeof escHtml === 'function') ? escHtml(s == null ? '' : String(s)) : String(s == null ? '' : s); }
@@ -93,9 +95,10 @@
         let pruef = '';
         const v = b.verapdf;
         if (v) {
-            pruef = '<h4>' + t('PDF/UA-Prüfung') + '</h4><p>' + esc(v.zusammenfassung || (v.bestanden ? t('Bestanden.') : t('Mit Hinweisen.'))) + '</p><ul>'
-                + (v.punkte || []).map(p => '<li>' + (p.status === 'befund' ? t('Hinweis') : t('In Ordnung')) + ' – ' + esc(p.bereich) + ': ' + esc(p.text) + '</li>').join('')
-                + '</ul>';
+            // Nur Probleme, keine „In Ordnung“-Zeilen (Michael Karbe, Mail 22.09.2026, Punkt 6 — wie im Einheitsbericht)
+            const befunde = (v.punkte || []).filter(p => p.status === 'befund');
+            pruef = '<h4>' + t('PDF/UA-Prüfung') + '</h4><p>' + esc(v.zusammenfassung || (v.bestanden ? t('Bestanden.') : t('Mit Hinweisen.'))) + '</p>'
+                + (befunde.length ? '<ul>' + befunde.map(p => '<li>' + t('Hinweis') + ' – ' + esc(p.bereich) + ': ' + esc(p.text) + '</li>').join('') + '</ul>' : '');
         } else if (tg.status === 'fertig') {
             pruef = '<p>' + t('Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar).') + '</p>';
         }
@@ -261,8 +264,9 @@
         const knopf = pr.status === 'fertig' ? t('Erneut prüfen') : t('Prüfung starten');
         const offen = offenePruefungen.has(d.id) || pr.laeuft;
         return '<details class="page-text-details dok-pruefung" data-doc="' + d.id + '"' + (offen ? ' open' : '') + '>'
-            + '<summary>' + t('Automatische Prüfung') + (pr.status === 'fertig' && pr.bericht && pr.bericht.befunde ? ' (' + t('{n} Befunde', { n: pr.bericht.befunde.length }) + ')' : '') + '</summary>'
-            + '<div class="page-text-content" role="region" aria-label="' + t('Automatische Prüfung') + '" tabindex="0">'
+            // Name „KI-basierte Prüfung“ (Michael Karbe, Mail 22.09.2026, Punkt 11)
+            + '<summary>' + t('KI-basierte Prüfung') + (pr.status === 'fertig' && pr.bericht && pr.bericht.befunde ? ' (' + t('{n} Befunde', { n: pr.bericht.befunde.length }) + ')' : '') + '</summary>'
+            + '<div class="page-text-content" role="region" aria-label="' + t('KI-basierte Prüfung') + '" tabindex="0">'
             + '<p>' + t('Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag.') + '</p>'
             + (!busy && pr.seiten ? '<p><button type="button" class="btn btn-secondary" id="dok_pruef_' + d.id + '" onclick="Dokument.pruefungStarten(' + project.id + ', ' + d.id + ')">' + ico('sparkle') + knopf + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: pr.seiten, c: pr.preis || 0 }) + '</span></button></p>' : '')
             + '<output id="dok_pruef_status_' + d.id + '" class="dok-status" style="display:block;" tabindex="-1">' + (pr.laeuft ? t('Prüfung läuft … Seite {a} von {b}.', { a: pr.seite || 0, b: pr.seiten || 0 }) : '') + '</output>'
@@ -317,7 +321,22 @@
         return '<p class="dok-urteil" id="dok_urteil_' + d.id + '"><span class="badge ' + cls + '">' + t('Urteil') + '</span> ' + text + '</p>';
     }
 
-    function karteHtml(project, d, pos) {
+    // Dokumentinfo je Zeile „Bezeichnung: Wert“ (Michael Karbe, Mail 22.09.2026, Punkte 2 und 4): eine Liste
+    // ohne Aufzaehlungszeichen in derselben Schrift und Groesse wie der Bericht darunter.
+    function metaZeile(bez, wert, id) {
+        return '<li>' + bez + ': <span' + (id ? ' id="' + id + '"' : '') + '>' + wert + '</span></li>';
+    }
+    // Jede Datei ist eine aufklappbare Karte (Michael Karbe, PS 24.09.2026: „Wenn man mehrere PDF hat, dann muss
+    // man immer scrollen“). Natives <details>, die Ueberschrift ist der Schalter (wie die Dokument-Klappen der
+    // Alt-Text-Ansicht). Ein einzelnes Dokument ist offen; bei mehreren sind alle zu, ausser der Nutzer hat eine
+    // geoeffnet oder dort laeuft gerade etwas.
+    function karteOffen(d, anzahl) {
+        const tg = d.tagging || {};
+        if (tg.laeuft || (tg.pruefung && tg.pruefung.laeuft)) return true;
+        if (geschlosseneDokumente.has(d.id)) return false;
+        return anzahl <= 1 || offeneDokumente.has(d.id);
+    }
+    function karteHtml(project, d, pos, anzahl) {
         const name = esc(docDisplayName(d));
         const tg = d.tagging || {};
         const busy = project.status === 'processing' || project.status === 'extracting' || tg.laeuft || !!(project.kette && project.kette.laeuft);
@@ -328,26 +347,28 @@
         const bilderZeile = (d.total_images || 0)
             ? t('{n} Bilder, {m} mit Alt-Text', { n: d.total_images, m: tg.hat_alt_texte || 0 })
             : t('keine Bilder gefunden');
-        return '<section class="card dok-karte" id="dok_karte_' + d.id + '" aria-labelledby="dok_heading_' + d.id + '">'
+        return '<section class="card dok-karte" id="dok_karte_' + d.id + '">'
+            + '<details class="dok-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
+            + '<summary><h3 id="dok_heading_' + d.id + '" class="doc-heading">' + t('Dokument {n}: {name}', { n: pos, name: name }) + ' <span class="badge ' + standKlasse(d) + '" id="dok_badge_' + d.id + '">' + standText(d) + '</span></h3></summary>'
             + '<div class="ausgabe-karte">'
             + (seiten ? '<img class="ausgabe-vorschau" src="/api/projects/' + project.id + '/documents/' + d.id + '/vorschau" alt="' + t('Vorschau der ersten Seite von {name}', { name: name }) + '" loading="lazy">' : '')
             + '<div class="ausgabe-text">'
-            + '<h3 id="dok_heading_' + d.id + '" class="doc-heading">' + t('Dokument {n}: {name}', { n: pos, name: name }) + ' <span class="badge ' + standKlasse(d) + '" id="dok_badge_' + d.id + '">' + standText(d) + '</span></h3>'
-            + '<dl class="dok-meta">'
-            +   '<dt>' + t('Stand') + '</dt><dd id="dok_stand_' + d.id + '">' + standText(d) + '</dd>'
-            +   '<dt>' + t('Seiten') + '</dt><dd>' + esc(seiten || '?') + '</dd>'
-            +   '<dt>' + t('Sprache') + '</dt><dd>' + esc((d.struktur && d.struktur.lang) || t('nicht gesetzt')) + '</dd>'
-            +   '<dt>' + t('Struktur') + '</dt><dd>' + esc(strukturText(d.struktur)) + '</dd>'
-            +   '<dt>' + t('Bilder') + '</dt><dd>' + bilderZeile + '</dd>'
-            +   ((d.felder || 0) > 0 ? '<dt>' + t('Formularfelder') + '</dt><dd>' + t('{n} Felder', { n: d.felder }) + '</dd>' : '')
-            + '</dl>'
+            + '<ul class="dok-meta">'
+            +   metaZeile(t('Stand'), standText(d), 'dok_stand_' + d.id)
+            +   metaZeile(t('Seiten'), esc(seiten || '?'))
+            +   metaZeile(t('Sprache'), esc((d.struktur && d.struktur.lang) || t('nicht gesetzt')))
+            +   metaZeile(t('Struktur'), esc(strukturText(d.struktur)))
+            +   metaZeile(t('Bilder'), bilderZeile)
+            +   ((d.felder || 0) > 0 ? metaZeile(t('Formularfelder'), t('{n} Felder', { n: d.felder })) : '')
+            + '</ul>'
             + urteilHtml(project, d, tg, busy)
             + (tg.modus === 'testmodus' && !tg.laeuft ? '<p class="feld-hinweis">' + t('Das Tagging läuft im Testmodus von PDFix, bis die Freischaltung in der Lizenz vorliegt.') + '</p>' : '')
             + '<div class="ausgabe-aktionen">'
+            // Keine Knoepfe „Alt-Texte bearbeiten“/„Quickinfos bearbeiten“ mehr (Michael Karbe, Mail 22.09.2026,
+            // Punkt 3: zu viele Knoepfe) — dafuer ist die Ansichts-Wahl im Projektkopf da.
             +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
-            +   ((d.total_images || 0) > 0 ? '<button type="button" class="btn btn-secondary" onclick="Dokument.zurAnsicht(' + project.id + ', \'alttexte\')">' + t('Alt-Texte bearbeiten') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
-            +   ((d.felder || 0) > 0 ? '<button type="button" class="btn btn-secondary" onclick="Dokument.zurAnsicht(' + project.id + ', \'quickinfos\')">' + t('Quickinfos bearbeiten') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
-            +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="Dokument.exportieren(' + project.id + ', ' + d.id + ')">' + ico('download') + t('Fertige PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
+            // „PDF herunterladen“ statt „Fertige PDF herunterladen“ (Michael Karbe, Mail 22.09.2026, Punkt 5)
+            +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="Dokument.exportieren(' + project.id + ', ' + d.id + ')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
             +   (d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
@@ -356,7 +377,7 @@
             + berichtHtml(d)
             + hoerprobeHtml(project, d)
             + pruefungHtml(project, d)
-            + '</div></div></section>';
+            + '</div></div></details></section>';
     }
 
     // ─── Kopf ───
@@ -375,18 +396,24 @@
         else if (!docs.length) { badge = t('Neu'); cls = 'badge-ready'; }
         else if (docs.every(d => d.getaggt === true)) { badge = t('Alle Dokumente getaggt'); cls = 'badge-done'; }
         else { badge = t('Bereit'); cls = 'badge-ready'; }
+        // Knoepfe fuer das ganze Projekt im eigenen Feld unter dem Kopf (Michael Karbe, Mail 21.09.2026).
+        // Kette (22.09.2026, Steve + Michael): ein Knopf fuer alle Stationen — Tagging, Alt-Texte, Quickinfos.
+        const aktionen = (docs.length && !busy ? '<button class="btn btn-primary" id="dkKetteBtn" onclick="Dokument.ketteOeffnen(' + project.id + ')">' + ico('sparkle') + t('Komplett barrierefrei machen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
+            + ((data.ausgaben_anzahl || 0) > 0 ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : '');
+        // Projektkopf wie in allen Ansichten (app.html projektKopfHtml): Name + Dateityp-Symbol + Ansichts-Wahl;
+        // die Laufstatus-Anzeige oben rechts entfaellt (Michael Karbe, Mail 22.09.2026, Punkt 9), der Stand
+        // steht an jedem Dokument. Die beiden Dialoge liegen ausserhalb der Felder (werden per showModal geoeffnet).
+        if (typeof projektKopfHtml === 'function') {
+            return projektKopfHtml(project, 'dokument', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
+                + funktionenKarteHtml(aktionen)
+                + laufDialogHtml(project)
+                + ketteDialogHtml(project);
+        }
         return '<div class="card">'
             + '<div class="card-header"><h1 id="projectName" class="card-name" tabindex="-1">' + t('Projekt: {name}', { name: esc(title) }) + '</h1>'
             + '<span class="badge ' + cls + '" id="projectStatusBadge">' + badge + '</span></div>'
             + '<div class="card-info" id="projectHeadInfo" hidden></div>'
-            + '<div class="card-actions">'
-            // Kette (22.09.2026, Steve + Michael): ein Knopf fuer alle Stationen — Tagging, Alt-Texte, Quickinfos.
-            +   (docs.length && !busy ? '<button class="btn btn-primary" id="dkKetteBtn" onclick="Dokument.ketteOeffnen(' + project.id + ')">' + ico('sparkle') + t('Komplett barrierefrei machen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
-            +   ((data.ausgaben_anzahl || 0) > 0 ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : '')
-            +   laufDialogHtml(project)
-            +   ketteDialogHtml(project)
-            + '</div>'
-            + (typeof ansichtWahlHtml === 'function' ? '<div class="card-actions">' + ansichtWahlHtml(project, 'dokument') + '</div>' : '')
+            + '<div class="card-actions">' + aktionen + laufDialogHtml(project) + ketteDialogHtml(project) + '</div>'
             + '</div>';
     }
 
@@ -682,7 +709,7 @@
         const data = await res.json();
         const project = data.project;
         aktuelleDaten = data;
-        if (zustandProjekt !== projectId) { offeneBerichte = new Set(); offenePruefungen = new Set(); zustandProjekt = projectId; }
+        if (zustandProjekt !== projectId) { offeneBerichte = new Set(); offenePruefungen = new Set(); offeneDokumente = new Set(); geschlosseneDokumente = new Set(); zustandProjekt = projectId; }
         const docs = data.documents || [];
         main.innerHTML = kopfHtml(project, data)
             + uploadBlockHtml(project)
@@ -690,8 +717,22 @@
             + laufMeldungHtml()
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
             + (docs.length ? '' : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen.') + '</p>')
-            + '<div id="dokListe">' + docs.map((d, i) => karteHtml(project, d, i + 1)).join('') + '</div>'
+            + '<div id="dokListe">' + docs.map((d, i) => karteHtml(project, d, i + 1, docs.length)).join('') + '</div>'
             + (typeof inkluagentSectionHtml === 'function' ? inkluagentSectionHtml(projectId) : '');
+        // Nur echte Bedienung merken: Chrome feuert fuer jede offen gezeichnete Klappe einmal „toggle“ ohne
+        // Zustandswechsel — das ist keine Nutzerentscheidung und darf eine Karte nicht dauerhaft offen halten.
+        document.querySelectorAll('details.dok-klappe').forEach(el => {
+            const gezeichnetOffen = el.open;
+            let erstesEreignis = true;
+            el.addEventListener('toggle', () => {
+                const echt = !(erstesEreignis && el.open === gezeichnetOffen);
+                erstesEreignis = false;
+                if (!echt) return;
+                const k = Number(el.dataset.doc);
+                if (el.open) { offeneDokumente.add(k); geschlosseneDokumente.delete(k); }
+                else { offeneDokumente.delete(k); geschlosseneDokumente.add(k); }
+            });
+        });
         document.querySelectorAll('details.dok-bericht').forEach(el => el.addEventListener('toggle', () => {
             const k = Number(el.dataset.doc);
             if (el.open) offeneBerichte.add(k); else offeneBerichte.delete(k);

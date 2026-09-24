@@ -367,7 +367,7 @@ def pruefung_starten(project_id: int, user_id: int, document_id: Optional[int] =
                 "erlaubt": bool(st.get("erlaubt")), "fehlend": st.get("fehlend"), "schon_geprueft": st.get("status") == "fertig"}
     grund = _freigabe(user_id, project_id, "pruefung", doc["id"], int(st.get("preis") or 0), bool(st.get("erlaubt")), bestaetigt, turn)
     if grund == "rueckfrage":
-        return {"ok": True, "result": _rueckfrage(vorschau, "die automatische Prüfung")}
+        return {"ok": True, "result": _rueckfrage(vorschau, "die KI-basierte Prüfung")}
     if grund:
         vorschau["hinweis"] = grund
         vorschau["rueckfrage_noetig"] = True
@@ -395,7 +395,7 @@ def pruefung_starten(project_id: int, user_id: int, document_id: Optional[int] =
 
 def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[int] = None, bestaetigt: bool = False,
                            turn=None) -> dict[str, Any]:
-    """Fertige PDF (Struktur + Alt-Texte + Quickinfos) — derselbe Export wie „Fertige PDF herunterladen“:
+    """Fertige PDF (Struktur + Alt-Texte + Quickinfos) — derselbe Export wie „PDF herunterladen“:
     Download-Knopf unter der Antwort UND Eintrag in der Ablage. Kostet Credits (Export-Staffel)."""
     m = _main()
     conn = _get_db()
@@ -548,7 +548,7 @@ def korrektur_anwenden(project_id: int, user_id: int, document_id: Optional[int]
         conn.close()
     ko = st.get("korrektur") or {}
     if st.get("status") != "fertig":
-        return {"ok": False, "error": "Erst die automatische Prüfung ausführen (pruefung_starten)"}
+        return {"ok": False, "error": "Erst die KI-basierte Prüfung ausführen (pruefung_starten)"}
     if ko.get("korrigiert_am"):
         return {"ok": False, "error": "Dieser Prüfbericht wurde schon korrigiert. Erst erneut prüfen (pruefung_starten), dann ggf. wieder korrigieren."}
     if not ko.get("auto_befunde"):

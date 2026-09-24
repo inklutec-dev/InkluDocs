@@ -67,11 +67,11 @@ Die sechs Bausteine:
 - Chatbot: `tools/pdf.py` (hoerprobe_lesen)
 - Tests und Doku: `tests/test_pdf_struktur.py`, `tests/e2e/verify_struktur.py`, `docs/TAGGING.md`
 
-## Automatische Prüfung (PDF, Schritt 5)
+## KI-basierte Prüfung (PDF, Schritt 5; bis 24.09.2026 „Automatische Prüfung“)
 
 - Kern: `backend/pdf_pruefung.py` (Modell an EINER Stelle: `MODELL`)
 - Endpunkte: in `tagging_api.py` (`…/pruefung`) — bekommt einen eigenen Router, sobald die Korrektur dazukommt
-- Oberfläche: `frontend/dokument.js` (Klappe „Automatische Prüfung“)
+- Oberfläche: `frontend/dokument.js` (Klappe „KI-basierte Prüfung“)
 - Prompt und Schema: `prompts/builders/pdf_pruefung.py`, `schemas/pdf_pruefung.py`
 - Chatbot: `tools/pdf.py` (pruefung_starten, pruefbericht_lesen)
 - Tests und Doku: `tests/test_pdf_pruefung.py`, `tests/e2e/verify_pruefung.py`, `docs/TAGGING.md`
@@ -80,7 +80,7 @@ Die sechs Bausteine:
 
 - Kern: `backend/pdf_messung.py` (Messwerte), `backend/pdf_korrektur.py`, `backend/pdfix_scripts/Korrektur_Anwenden.py`
 - Endpunkte: in `tagging_api.py` (`…/korrektur`, `…/korrektur/rueckgaengig`)
-- Oberfläche: `frontend/dokument.js` (Korrektur-Block in der Klappe „Automatische Prüfung“)
+- Oberfläche: `frontend/dokument.js` (Korrektur-Block in der Klappe „KI-basierte Prüfung“)
 - Prompt und Schema: keine (Doppelbeleg ist deterministisch: `pdf_pruefung.doppelbeleg`, `ebenen_aus_groesse`)
 - Chatbot: `tools/pdf.py` (korrektur_anwenden, korrektur_rueckgaengig)
 - Tests und Doku: `tests/test_pdf_messung.py`, `tests/e2e/verify_korrektur.py`, `docs/TAGGING.md`

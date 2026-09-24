@@ -7819,3 +7819,16 @@ msgstr "La corrección de «{name}» ha fallado: {grund}"
 #: Korrektur PDF (22.09.2026)
 msgid "Korrektur von „{name}“ fertig: {n} Änderungen."
 msgstr "Corrección de «{name}» terminada: {n} cambios."
+
+#: Projektkopf + Dokumentansicht nach Michael Karbes Liste (24.09.2026)
+msgid "Funktionen und Einstellungen"
+msgstr "Funciones y ajustes"
+
+msgid "KI-basierte Prüfung"
+msgstr "Comprobación con IA"
+
+msgid "PDF-Projekt"
+msgstr "Proyecto PDF"
+
+msgid "Word-Projekt"
+msgstr "Proyecto Word"
