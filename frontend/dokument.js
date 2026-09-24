@@ -36,7 +36,10 @@
     // die KI-Pruefung soll spaeter im Hintergrund laufen und im Tagging-Preis stecken statt per Knopf. Zum Wieder-
     // einblenden den Schalter auf true setzen.
     const ZEIGE_STRUKTURANSICHT = false;
-    const ZEIGE_KI_PRUEFUNG = false;
+    // KI-basierte Pruefung wieder sichtbar, als „experimentell“ gekennzeichnet (Michael Karbe, 24.09.2026: „drin lassen,
+    // wir arbeiten noch daran“). Das Urteil bleibt aus (Feedback 24.09.2026, Punkt 6: Anwender bilden sich ihr Urteil).
+    const ZEIGE_KI_PRUEFUNG = true;
+    const ZEIGE_URTEIL = false;
 
     let zustandProjekt = null;
     let aktuelleDaten = null;
@@ -56,12 +59,9 @@
         const tg = d.tagging || {};
         if (tg.laeuft) return t('Wird barrierefrei gemacht …');
         if (tg.status === 'fehler') return t('Letzter Lauf fehlgeschlagen');
-        const v = tg.bericht && tg.bericht.verapdf;
-        if (tg.status === 'fertig' && v && v.bestanden) return t('Getaggt, PDF/UA-Prüfung bestanden');
-        if (tg.status === 'fertig' && v && v.bestanden === false) return t('Getaggt, PDF/UA-Prüfung mit Hinweisen');
-        if (tg.status === 'fertig') return t('Getaggt');
-        if (d.getaggt === true) return t('Getaggt (vom Ersteller)');
-        if (d.getaggt === false) return t('Ungetaggt');
+        // Nur „Getaggt“ / „Nicht getaggt“ (Michael Karbe, Feedback 24.09.2026, Punkt 4) — das PDF/UA-Ergebnis steht im Bericht
+        if (tg.status === 'fertig' || d.getaggt === true) return t('Getaggt');
+        if (d.getaggt === false) return t('Nicht getaggt');
         return t('Unbekannt');
     }
     function standKlasse(d) {
@@ -90,24 +90,21 @@
         if (tg.status === 'fehler') {
             zeilen.push('<li>' + t('Fehler: {grund}', { grund: esc(b.fehler || t('unbekannt')) }) + (b.zeit ? ' (' + esc(b.zeit) + ')' : '') + '</li>');
         } else {
-            zeilen.push('<li>' + t('Getaggt am {zeit} in {s} Sekunden, {n} Seiten.', { zeit: esc(b.zeit || ''), s: esc(b.dauer_s != null ? b.dauer_s : '?'), n: esc(b.seiten || d.seiten || '?') }) + '</li>');
-            if (b.sprache) {
-                const q = b.sprache.quelle === 'erkannt' ? t('aus dem Text erkannt') : (b.sprache.quelle === 'dokument' ? t('aus dem Dokument übernommen') : t('Projektsprache angenommen'));
-                zeilen.push('<li>' + t('Dokumentsprache {lang} ({quelle}).', { lang: esc(b.sprache.lang), quelle: q }) + '</li>');
-            }
-            if (b.nachher) zeilen.push('<li>' + t('Struktur: {s}', { s: esc(strukturText(b.nachher)) }) + (b.vorher && b.vorher.elemente ? ' ' + t('Vorher: {s}', { s: esc(strukturText(b.vorher)) }) : '') + '</li>');
-            if (b.nachher && b.nachher.titel) zeilen.push('<li>' + t('Dokumenttitel: {titel}', { titel: esc(b.nachher.titel) }) + '</li>');
-            if (b.bilder) zeilen.push('<li>' + t('{n} Bilder über die Struktur gefunden, {u} Alt-Texte aus dem vorherigen Stand übernommen.', { n: esc(b.bilder.nachher), u: esc(b.bilder.uebernommen) }) + '</li>');
+            // Ohne Dokumentinfos (Sprache, Struktur, Titel stehen schon oben an der Karte — Michael Karbe, Feedback
+            // 24.09.2026, Punkt 9) und ohne Testmodus-Hinweis (Punkt 7).
+            zeilen.push('<li>' + t('Getaggt am {zeit} in {s} Sekunden.', { zeit: esc(b.zeit || ''), s: esc(b.dauer_s != null ? b.dauer_s : '?') }) + '</li>');
+            if (b.bilder && b.bilder.uebernommen) zeilen.push('<li>' + t('{u} Alt-Texte aus dem vorherigen Stand übernommen.', { u: esc(b.bilder.uebernommen) }) + '</li>');
             (b.hinweise || []).forEach(h => zeilen.push('<li>' + esc(h) + '</li>'));
-            if (b.testmodus) zeilen.push('<li>' + t('Testmodus: Die Datei trägt „Trial version of PDFix SDK“ als Hersteller, solange das Tagging nicht in der Lizenz freigeschaltet ist.') + '</li>');
         }
         let pruef = '';
         const v = b.verapdf;
         if (v) {
-            // Nur Probleme, keine „In Ordnung“-Zeilen (Michael Karbe, Mail 22.09.2026, Punkt 6 — wie im Einheitsbericht)
-            const befunde = (v.punkte || []).filter(p => p.status === 'befund');
-            pruef = '<h4>' + t('PDF/UA-Prüfung') + '</h4><p>' + esc(v.zusammenfassung || (v.bestanden ? t('Bestanden.') : t('Mit Hinweisen.'))) + '</p>'
-                + (befunde.length ? '<ul>' + befunde.map(p => '<li>' + t('Hinweis') + ' – ' + esc(p.bereich) + ': ' + esc(p.text) + '</li>').join('') + '</ul>' : '');
+            // Nur Fehler, keine „In Ordnung“-Zeilen (Mail 22.09.2026, Punkt 6), ohne das Wort „Hinweis“ und je verletztem
+            // Pruefpunkt eine Zeile (Feedback 24.09.2026, Punkte 10-12; aeltere Berichte ohne "einzeln": ein Absatz je Bereich)
+            const befunde = [];
+            (v.punkte || []).filter(p => p.status === 'befund').forEach(p => (p.einzeln || [{ text: p.text }]).forEach(e => befunde.push(esc(p.bereich) + ': ' + esc(e.text))));
+            pruef = '<h4>' + t('PDF/UA-Prüfung') + '</h4>'
+                + (befunde.length ? '<ul>' + befunde.map(x => '<li>' + x + '</li>').join('') + '</ul>' : '<p>' + t('Bestanden.') + '</p>');
         } else if (tg.status === 'fertig') {
             pruef = '<p>' + t('Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar).') + '</p>';
         }
@@ -274,8 +271,9 @@
         const offen = offenePruefungen.has(d.id) || pr.laeuft;
         return '<details class="page-text-details dok-pruefung" data-doc="' + d.id + '"' + (offen ? ' open' : '') + '>'
             // Name „KI-basierte Prüfung“ (Michael Karbe, Mail 22.09.2026, Punkt 11)
-            + '<summary>' + t('KI-basierte Prüfung') + (pr.status === 'fertig' && pr.bericht && pr.bericht.befunde ? ' (' + t('{n} Befunde', { n: pr.bericht.befunde.length }) + ')' : '') + '</summary>'
+            + '<summary>' + t('KI-basierte Prüfung (experimentell)') + (pr.status === 'fertig' && pr.bericht && pr.bericht.befunde ? ' (' + t('{n} Befunde', { n: pr.bericht.befunde.length }) + ')' : '') + '</summary>'
             + '<div class="page-text-content" role="region" aria-label="' + t('KI-basierte Prüfung') + '" tabindex="0">'
+            + '<p><strong>' + t('Experimentell:') + '</strong> ' + t('Wir arbeiten noch an dieser Prüfung. Die Befunde können unvollständig oder falsch sein.') + '</p>'
             + '<p>' + t('Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag.') + '</p>'
             + (!busy && pr.seiten ? '<p><button type="button" class="btn btn-secondary" id="dok_pruef_' + d.id + '" onclick="Dokument.pruefungStarten(' + project.id + ', ' + d.id + ')">' + ico('sparkle') + knopf + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: pr.seiten, c: pr.preis || 0 }) + '</span></button></p>' : '')
             + '<output id="dok_pruef_status_' + d.id + '" class="dok-status" style="display:block;" tabindex="-1">' + (pr.laeuft ? t('Prüfung läuft … Seite {a} von {b}.', { a: pr.seite || 0, b: pr.seiten || 0 }) : '') + '</output>'
@@ -318,7 +316,7 @@
     // GESAMTURTEIL (23.09.2026, Steve): ein Satz je Dokument, was zu tun ist — statt veraPDF und KI-Befunde selbst zu deuten.
     function urteilHtml(project, d, tg, busy) {
         const u = tg.urteil;
-        if (!u || u.stufe === 'laeuft') return '';
+        if (!ZEIGE_URTEIL || !u || u.stufe === 'laeuft') return '';
         const tech = u.technisch === true ? t('technisch in Ordnung (PDF/UA)') : (u.technisch === false ? t('technisch mit Befunden (PDF/UA)') : t('technische Prüfung fehlt'));
         let text = '', cls = 'badge-muted';
         if (u.stufe === 'ungetaggt') { text = t('Keine Struktur: Die PDF muss barrierefrei gemacht werden.'); cls = 'badge-warn'; }
@@ -367,7 +365,13 @@
             + (seiten ? '<img class="ausgabe-vorschau" src="/api/projects/' + project.id + '/documents/' + d.id + '/vorschau" alt="' + t('Vorschau der ersten Seite von {name}', { name: name }) + '" loading="lazy">' : '')
             + '<div class="ausgabe-text">'
             + '<ul class="dok-meta">'
+            // Reihenfolge nach Michael Karbe (Feedback 24.09.2026, Punkte 2, 3, 5): Titel, Anwendung, Erstellt mit, Stand,
+            // PDF-Standard, dann die Zahlen
+            +   metaZeile(t('Titel'), esc((d.struktur && d.struktur.titel) || (d.meta && d.meta.titel) || t('kein Titel')))
+            +   metaZeile(t('Anwendung'), esc((d.meta && d.meta.anwendung) || t('nicht angegeben')))
+            +   metaZeile(t('Erstellt mit'), esc((d.meta && d.meta.erstellt_mit) || t('nicht angegeben')))
             +   metaZeile(t('Stand'), standText(d), 'dok_stand_' + d.id)
+            +   metaZeile(t('PDF-Standard'), esc(((d.meta && d.meta.standard) || []).join(', ') || t('keiner')))
             +   metaZeile(t('Seiten'), esc(seiten || '?'))
             +   metaZeile(t('Sprache'), esc((d.struktur && d.struktur.lang) || t('nicht gesetzt')))
             +   metaZeile(t('Struktur'), esc(strukturText(d.struktur)))
@@ -375,7 +379,6 @@
             +   ((d.felder || 0) > 0 ? metaZeile(t('Formularfelder'), t('{n} Felder', { n: d.felder })) : '')
             + '</ul>'
             + urteilHtml(project, d, tg, busy)
-            + (tg.modus === 'testmodus' && !tg.laeuft ? '<p class="feld-hinweis">' + t('Das Tagging läuft im Testmodus von PDFix, bis die Freischaltung in der Lizenz vorliegt.') + '</p>' : '')
             + '<div class="ausgabe-aktionen">'
             // Keine Knoepfe „Alt-Texte bearbeiten“/„Quickinfos bearbeiten“ mehr (Michael Karbe, Mail 22.09.2026,
             // Punkt 3: zu viele Knoepfe) — dafuer ist die Ansichts-Wahl im Projektkopf da.
@@ -412,7 +415,10 @@
         else { badge = t('Bereit'); cls = 'badge-ready'; }
         // Knoepfe fuer das ganze Projekt im eigenen Feld unter dem Kopf (Michael Karbe, Mail 21.09.2026).
         // Kette (22.09.2026, Steve + Michael): ein Knopf fuer alle Stationen — Tagging, Alt-Texte, Quickinfos.
-        const aktionen = (docs.length && !busy ? '<button class="btn btn-primary" id="dkKetteBtn" onclick="Dokument.ketteOeffnen(' + project.id + ')">' + ico('sparkle') + t('Komplett barrierefrei machen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
+        // Feld „Funktionen und Einstellungen“ mit „Komplett barrierefrei machen“ und „Ablage“ entfaellt (Michael Karbe,
+        // Feedback 24.09.2026, Punkt 1: erst einzelne PDF; zur Ablage kommt man ueber das Dashboard). Code bleibt fuer spaeter.
+        const ZEIGE_PROJEKT_KNOEPFE = false;
+        const aktionen = !ZEIGE_PROJEKT_KNOEPFE ? '' : (docs.length && !busy ? '<button class="btn btn-primary" id="dkKetteBtn" onclick="Dokument.ketteOeffnen(' + project.id + ')">' + ico('sparkle') + t('Komplett barrierefrei machen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
             + ((data.ausgaben_anzahl || 0) > 0 ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : '');
         // Projektkopf wie in allen Ansichten (app.html projektKopfHtml): Name + Dateityp-Symbol + Ansichts-Wahl;
         // die Laufstatus-Anzeige oben rechts entfaellt (Michael Karbe, Mail 22.09.2026, Punkt 9), der Stand
@@ -675,9 +681,7 @@
 
     // ─── Ansicht wechseln (Knopf „Alt-Texte bearbeiten“) ───
     function zurAnsicht(projectId, ziel) {
-        const sel = document.getElementById('ansichtSelect');
-        if (sel) sel.value = ziel;
-        if (typeof wechsleAnsicht === 'function') wechsleAnsicht(projectId);
+        if (typeof wechsleAnsicht === 'function') wechsleAnsicht(projectId, ziel);
     }
 
     // ─── Laufmeldung (wie Alt-Texte/Uebersetzung) ───

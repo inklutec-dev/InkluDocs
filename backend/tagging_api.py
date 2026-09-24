@@ -188,9 +188,12 @@ def einheitsbericht(doc: dict, pruef_bericht: dict) -> dict:
     for p in v.get("punkte") or []:
         if p.get("status") != "befund":
             continue
-        eintraege.append({"quelle": "pdfua", "seiten": list(p.get("seiten") or []), "bereich": p.get("bereich") or "",
-                          "element": "", "text": p.get("text") or "", "vorschlag": "", "sicherheit": "",
-                          "auto": False, "regeln": list(p.get("regeln") or [])})
+        # Je verletztem Pruefpunkt eine Zeile (Michael Karbe, Feedback 24.09.2026, Punkt 12); aeltere Berichte
+        # ohne "einzeln" behalten den zusammengefassten Absatz.
+        for e in (p.get("einzeln") or [{"text": p.get("text") or "", "seiten": list(p.get("seiten") or [])}]):
+            eintraege.append({"quelle": "pdfua", "seiten": list(e.get("seiten") or []), "bereich": p.get("bereich") or "",
+                              "element": "", "text": e.get("text") or "", "vorschlag": "", "sicherheit": "",
+                              "auto": False, "regeln": list(p.get("regeln") or [])})
     for f in pruef_bericht.get("befunde") or []:
         element = (f.get("typ") or "")
         if f.get("text"):
@@ -413,6 +416,37 @@ def _struktur(doc: dict) -> dict:
         return {}
 
 
+def _metadaten(doc: dict) -> dict:
+    """Dokumentinfos fuer die Karte (Michael Karbe, Feedback 24.09.2026, Punkte 2, 3, 5): Titel und PDF-Standard aus der
+    Arbeitsdatei (nach dem Taggen gesetzt), Anwendung (Creator) und „Erstellt mit“ (Producer) aus der hochgeladenen
+    Originaldatei — nach dem Taggen traegt sich sonst PDFix selbst ein."""
+    import re
+    out = {"titel": "", "anwendung": "", "erstellt_mit": "", "standard": []}
+    try:
+        import fitz
+        quelle = doc.get("roh_path") or doc.get("original_path") or ""
+        if quelle and os.path.isfile(quelle):
+            with fitz.open(quelle) as d:
+                m = d.metadata or {}
+                out["anwendung"] = (m.get("creator") or "").strip()[:160]
+                out["erstellt_mit"] = (m.get("producer") or "").strip()[:160]
+        arbeit = doc.get("original_path") or ""
+        if arbeit and os.path.isfile(arbeit):
+            with fitz.open(arbeit) as d:
+                out["titel"] = ((d.metadata or {}).get("title") or "").strip()[:300]
+                xmp = d.get_xml_metadata() or ""
+            ua = re.search(r"pdfuaid:part(?:>|=[\"'])\s*(\d)", xmp)
+            pa = re.search(r"pdfaid:part(?:>|=[\"'])\s*(\d)", xmp)
+            konf = re.search(r"pdfaid:conformance(?:>|=[\"'])\s*([A-Za-z])", xmp)
+            if ua:
+                out["standard"].append(f"PDF/UA-{ua.group(1)}")
+            if pa:
+                out["standard"].append(f"PDF/A-{pa.group(1)}{konf.group(1).lower() if konf else ''}")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[tagging] Metadaten fuer Dokument %s nicht lesbar: %r", doc.get("id"), e)
+    return out
+
+
 _PROJEKT_FELDER = ("id", "name", "filename", "status", "tool", "project_type", "total_images", "processed_images",
                    "alt_language", "use_context", "prompt_id", "created_at", "updated_at", "lauf_hinweis", "letzte_ansicht")
 
@@ -430,6 +464,7 @@ def dokument_ansicht(conn, project: dict, user_id: int) -> dict:
         eintrag["felder"] = int(conn.execute("SELECT COUNT(*) FROM formularfelder WHERE document_id = ?", (d["id"],)).fetchone()[0] or 0)
         eintrag["seiten"] = _seiten(d)
         eintrag["struktur"] = _struktur(d)
+        eintrag["meta"] = _metadaten(d)
         eintrag["tagging"] = stand_mit_urteil(conn, project, d, user_id, eintrag["struktur"])
         aussen.append(eintrag)
     projekt_aussen = {k: project.get(k) for k in _PROJEKT_FELDER}

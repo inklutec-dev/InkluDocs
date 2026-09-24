@@ -8082,3 +8082,40 @@ msgstr "élevée"
 
 msgid "{n} Grafiken ohne Alt-Text."
 msgstr "{n} graphiques sans texte alternatif."
+
+#: Dokumentansicht nach Michaels Feedback 24.09.2026
+msgid "Anwendung"
+msgstr "Application"
+
+msgid "Erstellt mit"
+msgstr "Produit avec"
+
+msgid "Experimentell:"
+msgstr "Expérimental :"
+
+msgid "Getaggt am {zeit} in {s} Sekunden."
+msgstr "Balisé le {zeit} en {s} secondes."
+
+msgid "KI-basierte Prüfung (experimentell)"
+msgstr "Vérification par IA (expérimentale)"
+
+msgid "Nicht getaggt"
+msgstr "Non balisé"
+
+msgid "PDF-Standard"
+msgstr "Norme PDF"
+
+msgid "Wir arbeiten noch an dieser Prüfung. Die Befunde können unvollständig oder falsch sein."
+msgstr "Nous travaillons encore sur cette vérification. Les constats peuvent être incomplets ou erronés."
+
+msgid "kein Titel"
+msgstr "aucun titre"
+
+msgid "keiner"
+msgstr "aucune"
+
+msgid "nicht angegeben"
+msgstr "non indiqué"
+
+msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
+msgstr "{u} textes alternatifs repris de la version précédente."

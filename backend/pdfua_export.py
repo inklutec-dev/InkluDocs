@@ -311,6 +311,28 @@ def _bereich(clause: str, bereiche, _):
     return "7.x", _("Weitere Prüfpunkte"), _("Weitere technische Anforderungen sind erfüllt.")
 
 
+def _einzeln(regeln: list, regeln_kt: dict, _: Callable[[str], str]) -> list:
+    """Je verletztem Pruefpunkt EINE Zeile (Michael Karbe, Feedback 24.09.2026, Punkte 11 und 12): bekannte Regeln in
+    unserem Klartext, unbekannte mit dem Originaltext von veraPDF OHNE die Einleitung „Ein technischer Prüfpunkt ist
+    nicht erfüllt (…)“; „(n-mal)“ und Seiten je Punkt. Gleiche Saetze (zwei Link-Regeln) werden zusammengelegt.
+    [{"text", "seiten"}] — der zusammengefasste Absatz "text" des Bereichs bleibt fuer die anderen Anzeigen."""
+    je_satz: dict = {}
+    for r in regeln:
+        s = regeln_kt.get((str(r.get("clause")), r.get("test")))
+        if not s:
+            s = " ".join(str(r.get("description") or _("ohne Beschreibung")).split())[:240].rstrip(".")
+        n = int(r.get("failed") or 0)
+        e = je_satz.setdefault(s, {"n": 0, "seiten": set()})
+        e["n"] += n
+        e["seiten"].update(int(x) for x in (r.get("pages") or []) if str(x).isdigit())
+    out = []
+    for s, e in je_satz.items():
+        t = s + ((" " + _("({n}-mal)").format(n=e["n"])) if e["n"] > 1 else "")
+        seiten = sorted(e["seiten"])
+        out.append({"text": t + _seiten_text(seiten, _), "seiten": seiten})
+    return out
+
+
 def _seiten_text(seiten: list, _: Callable[[str], str]) -> str:
     """„ (Seite 15)“ / „ (Seiten 3, 15)“ — leer, wenn veraPDF keine Seite nennt (23.09.2026, Michaels Punkt 7)."""
     if not seiten:
@@ -348,6 +370,7 @@ def klartext(verapdf: dict, _: Callable[[str], str] = _identitaet) -> dict:
             continue
         saetze = []
         seiten: set = set()
+        einzeln = _einzeln(betroffen, regeln_kt, _)
         for r in betroffen:
             s = regeln_kt.get((str(r.get("clause")), r.get("test")))
             n = int(r.get("failed") or 0)
@@ -362,7 +385,7 @@ def klartext(verapdf: dict, _: Callable[[str], str] = _identitaet) -> dict:
             if s not in saetze:      # gleiche Aussage nur einmal (Michaels Punkt 7, 23.09.2026)
                 saetze.append(s)
         text = " ".join(saetze) + _seiten_text(sorted(seiten), _)
-        punkte.append({"bereich": name, "status": "befund", "text": text, "seiten": sorted(seiten),
+        punkte.append({"bereich": name, "status": "befund", "text": text, "seiten": sorted(seiten), "einzeln": einzeln,
                        "regeln": [f"{r.get('clause')}-{r.get('test')}" for r in betroffen]})
     rest = [r for p, rs in je_bereich.items() for r in rs if p == "7.x"]
     if rest:
@@ -370,6 +393,7 @@ def klartext(verapdf: dict, _: Callable[[str], str] = _identitaet) -> dict:
         punkte.append({"bereich": _("Weitere Prüfpunkte"), "status": "befund",
                        "text": (_("{n} weitere technische Prüfpunkte sind nicht erfüllt: {beschreibung}.").format(n=len(rest), beschreibung=beschr)
                                 if len(rest) > 1 else _("Ein weiterer technischer Prüfpunkt ist nicht erfüllt: {beschreibung}.").format(beschreibung=beschr)),
+                       "einzeln": _einzeln(rest, regeln_kt, _),
                        "regeln": [f"{r.get('clause')}-{r.get('test')}" for r in rest]})
     return {"bestanden": bestanden, "profil": (verapdf or {}).get("profile") or "PDF/UA-1",
             "regeln_fehlgeschlagen": len(regeln), "punkte": punkte}

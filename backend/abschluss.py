@@ -181,9 +181,11 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
     for p in ((meta.get("verapdf") or {}).get("punkte") or []):
         if p.get("status") != "befund":
             continue
-        seiten = [int(s) for s in (p.get("seiten") or []) if str(s).isdigit()]
-        out.append({"seite": (seiten[0] if seiten else 0), "seiten": seiten, "art": "technisch",
-                    "quelle": _("PDF/UA-Prüfung"), "text": f"{p.get('bereich', '')}: {p.get('text', '')}".strip(": ")})
+        # je verletztem Pruefpunkt eine Zeile (pdfua_export._einzeln, Michael Karbe 24.09.2026, Punkt 12)
+        for e in (p.get("einzeln") or [{"text": p.get("text") or "", "seiten": p.get("seiten") or []}]):
+            seiten = [int(x) for x in (e.get("seiten") or []) if str(x).isdigit()]
+            out.append({"seite": (seiten[0] if seiten else 0), "seiten": seiten, "art": "technisch",
+                        "quelle": _("PDF/UA-Prüfung"), "text": f"{p.get('bereich', '')}: {e.get('text', '')}".strip(": ")})
     if struktur:
         for p in struktur_probleme(struktur, _, quickinfos):
             p.update({"seiten": [p["seite"]] if p["seite"] else [], "quelle": _("Struktur")})

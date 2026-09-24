@@ -59,7 +59,7 @@ with sync_playwright() as p:
     check("Chatbot (InkluAgent) auch in der Uebersetzungs-Ansicht (Steve 18.09.)", pg.locator(".inkluagent-section").count() == 1 and pg.locator("#inkluagentToggle").count() == 1)
     # Seit 24.09.2026 (Michael Karbe, Mail 21.09.2026): Ansichts-Wahl direkt unter dem Projektnamen, VOR den
     # Knoepfen, in allen Ansichten gleich; die Knoepfe stehen im Feld „Funktionen und Einstellungen“.
-    check("Ansichts-Wahl VOR den Hauptknoepfen, Knoepfe im Feld „Funktionen und Einstellungen“", pg.evaluate("(() => { const a = document.getElementById('uStartBtn'), b = document.getElementById('ansichtSelect'); return !!(a && b) && !!(b.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING); })()") and pg.locator("section.projekt-funktionen #uStartBtn").count() == 1)
+    check("Ansichts-Wahl VOR den Hauptknoepfen, Knoepfe im Feld „Funktionen und Einstellungen“", pg.evaluate("(() => { const a = document.getElementById('uStartBtn'), b = document.querySelector('.ansicht-knoepfe'); return !!(a && b) && !!(b.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING); })()") and pg.locator("section.projekt-funktionen #uStartBtn").count() == 1)
     check("Keine leere Live-Region #ansichtStatus mehr (Review 2, Befund 9)", pg.locator("#ansichtStatus").count() == 0)
     fs = pg.locator("fieldset#segFilterFieldset")
     check("Filter als eigene Karte 'Absätze filtern' mit Fieldset, Legende, 3 Chips mit Zaehler, Statuszeile", pg.locator("#segFilterBar h2").inner_text().strip() == "Absätze filtern" and fs.locator("legend").inner_text().strip() == "Nach Übersetzungsstand filtern" and fs.locator("label.filter-chip").count() == 3 and "(" in fs.locator("label.filter-chip").first.inner_text() and "angezeigt" in pg.locator("#segFilterStatus").inner_text(), (fs.locator("label.filter-chip").first.inner_text(), pg.locator("#segFilterStatus").inner_text()))
@@ -147,15 +147,13 @@ with sync_playwright() as p:
         pg.set_input_files("#projUpload", BILDDOC); pg.wait_for_timeout(12000)
         pg.goto(B + f"/app?projekt={PID}&ansicht=uebersetzung"); pg.wait_for_timeout(3500)
     check("Zweites Dokument (mit Bildern) im Projekt", pg.locator("h2.doc-heading").count() >= 2, pg.locator("h2.doc-heading").count())
-    sel = pg.locator("#ansichtSelect")
-    check("Ansichts-Wahl: Ausklappliste mit Label + Knopf Oeffnen, aktuell Uebersetzung", sel.count() == 1 and pg.locator("label[for=ansichtSelect]").inner_text().strip() == "Ansicht" and sel.input_value() == "uebersetzung" and pg.locator("#ansichtOeffnen").count() == 1, sel.input_value() if sel.count() else "")
-    pg.select_option("#ansichtSelect", "alttexte"); pg.wait_for_timeout(300)
-    check("Pfeil/Auswahl allein wechselt NICHT (WCAG 3.2.2)", pg.locator("#segFilterBar").count() == 1)
-    pg.locator("#ansichtOeffnen").click(); pg.wait_for_timeout(2500)
+    # Ansichts-Knoepfe (Michael Karbe, Feedback 24.09.2026, Punkt 8): Titel „Ansicht:“, aktuelle mit aria-current
+    check("Ansichts-Knöpfe mit Titel „Ansicht:“, aktuell Übersetzung", pg.locator(".ansicht-titel").inner_text().strip() == "Ansicht:" and pg.locator(".ansicht-knoepfe a[aria-current=page]").get_attribute("data-ansicht") == "uebersetzung" and pg.locator(".ansicht-knoepfe a").count() == 2)
+    pg.click(".ansicht-knoepfe a[data-ansicht=alttexte]"); pg.wait_for_timeout(2500)
     check("Fokus nach dem Wechsel auf der H1 der neuen Ansicht (Review 2, Befund 6)", pg.evaluate("document.activeElement && document.activeElement.id") == "projectName", pg.evaluate("document.activeElement && document.activeElement.id"))
     check("Oeffnen wechselt zur Alt-Text-Ansicht (Bilder filtern, Sprache der Alt-Texte, Adresse ?ansicht=alttexte)", pg.locator("#imageFilterBar").count() == 1 and pg.locator("#altLangSelect").count() == 1 and "ansicht=alttexte" in pg.url and pg.locator("#segFilterBar").count() == 0, (pg.url, pg.locator("#imageFilterBar").count(), pg.locator("#altLangSelect").count()))
     check("Alt-Text-Ansicht unveraendert: Bilderkarten, Filterkarte, Upload-Block, Chatbot", pg.locator("section.image-review").count() >= 1 and pg.locator("#projUploadZone").count() == 1 and pg.locator(".inkluagent-section").count() == 1)
-    check("Alt-Text-Ansicht hat dieselbe Ansichts-Wahl", pg.locator("#ansichtSelect").count() == 1 and pg.locator("#ansichtSelect").input_value() == "alttexte")
+    check("Alt-Text-Ansicht hat dieselben Ansichts-Knöpfe", pg.locator(".ansicht-knoepfe a").count() == 2 and pg.locator(".ansicht-knoepfe a[aria-current=page]").get_attribute("data-ansicht") == "alttexte")
     pg.locator(".card-actions button:has-text('Herunterladen')").first.click(); pg.wait_for_timeout(1500)
     check("Herunterladen-Dialog der Alt-Text-Ansicht bietet „Als Word, Englisch (Großbritannien)“", pg.locator("#exportUebersetzungBtn").count() == 1 and "Großbritannien" in pg.locator("#exportUebersetzungBtn").inner_text(), pg.locator("#exportUebersetzungBtn").inner_text() if pg.locator("#exportUebersetzungBtn").count() else "")
     axe(pg, "Alt-Text-Ansicht mit Export-Dialog")

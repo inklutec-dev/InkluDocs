@@ -8082,3 +8082,40 @@ msgstr "alta"
 
 msgid "{n} Grafiken ohne Alt-Text."
 msgstr "{n} gráficos sin texto alternativo."
+
+#: Dokumentansicht nach Michaels Feedback 24.09.2026
+msgid "Anwendung"
+msgstr "Aplicación"
+
+msgid "Erstellt mit"
+msgstr "Creado con"
+
+msgid "Experimentell:"
+msgstr "Experimental:"
+
+msgid "Getaggt am {zeit} in {s} Sekunden."
+msgstr "Etiquetado el {zeit} en {s} segundos."
+
+msgid "KI-basierte Prüfung (experimentell)"
+msgstr "Comprobación con IA (experimental)"
+
+msgid "Nicht getaggt"
+msgstr "Sin etiquetar"
+
+msgid "PDF-Standard"
+msgstr "Estándar PDF"
+
+msgid "Wir arbeiten noch an dieser Prüfung. Die Befunde können unvollständig oder falsch sein."
+msgstr "Seguimos trabajando en esta comprobación. Los hallazgos pueden estar incompletos o ser incorrectos."
+
+msgid "kein Titel"
+msgstr "sin título"
+
+msgid "keiner"
+msgstr "ninguno"
+
+msgid "nicht angegeben"
+msgstr "no indicado"
+
+msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
+msgstr "{u} textos alternativos conservados de la versión anterior."

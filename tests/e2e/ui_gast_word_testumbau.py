@@ -18,7 +18,7 @@ with sync_playwright() as p:
     pg.fill("#gateEmail", GMAIL); pg.click("#gateForm button[type=submit]")
     pg.wait_for_selector("#imageFilterBar", timeout=15000); pg.wait_for_timeout(1500)
     check("Gast: Alt-Text-Pruefung mit Bilderkarten", pg.locator("section.image-review").count() >= 1, pg.locator("section.image-review").count())
-    check("Gast: KEINE Ansichts-Wahl (kein #ansichtSelect, kein Knopf Oeffnen)", pg.locator("#ansichtSelect").count() == 0 and pg.locator("#ansichtOeffnen").count() == 0)
+    check("Gast: KEINE Ansichts-Wahl (keine Ansichts-Knöpfe)", pg.locator(".ansicht-knoepfe").count() == 0 and pg.locator("#ansichtSelect").count() == 0)
     check("Gast: KEINE Uebersetzungs-Ansicht trotz ?ansicht=uebersetzung", pg.locator("#segFilterBar").count() == 0 and pg.locator("textarea.seg-ziel").count() == 0)
     r = pg.request.get(f"{B}/api/projects/{PID}/uebersetzung?leicht=1")
     check("Gast: Uebersetzungs-API ohne Login gesperrt (401/403)", r.status in (401, 403), r.status)

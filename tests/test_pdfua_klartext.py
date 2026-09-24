@@ -168,6 +168,24 @@ class SeitenUndDoppelungenTest(unittest.TestCase):
         self.assertEqual(d["Bilder und Grafiken"]["text"], "Ein Bild hat keinen Alternativtext.")
         self.assertEqual(d["Bilder und Grafiken"]["seiten"], [])
 
+    def test_einzeln_je_regel_ohne_einleitung(self):
+        # Michael Karbe, Feedback 24.09.2026, Punkte 11/12: je Pruefpunkt eine Zeile, Originaltext ohne Einleitung
+        k = pdfua_export.klartext({"compliant": False, "rules": [
+            {"clause": "7.21.4.1", "test": 1, "description": "The font programs for all fonts used for rendering within a conforming file shall be embedded within that file, as defined in ISO 32000-1:2008, 9.9", "failed": 2, "pages": [1, 2]},
+            {"clause": "7.21.3.2", "test": 1, "description": "Glyph widths must be consistent.", "failed": 1, "pages": [2]},
+            {"clause": "7.18.5", "test": 1, "description": "Links shall be tagged", "failed": 1, "pages": [15]},
+            {"clause": "7.18.5", "test": 2, "description": "Links shall contain", "failed": 1, "pages": [15]},
+            {"clause": "7.18.1", "test": 2, "description": "annot", "failed": 1, "pages": [15]}]})
+        d = {p["bereich"]: p for p in k["punkte"]}
+        schrift = d["Schriften"]["einzeln"]
+        self.assertEqual(len(schrift), 2)
+        self.assertEqual(schrift[0]["text"], "The font programs for all fonts used for rendering within a conforming file shall be embedded within that file, as defined in ISO 32000-1:2008, 9.9 (2-mal) (Seiten 1, 2)")
+        self.assertTrue(all("technischer Prüfpunkt" not in e["text"] for e in schrift))
+        links = d["Formularfelder und Verknüpfungen"]["einzeln"]
+        self.assertEqual(len(links), 2)   # zwei gleiche Saetze („keine Beschreibung“) zusammengelegt
+        self.assertEqual(sum("keine Beschreibung" in e["text"] for e in links), 1)
+        self.assertIn("(2-mal)", [e for e in links if "keine Beschreibung" in e["text"]][0]["text"])
+
 
 if __name__ == "__main__":
     unittest.main()

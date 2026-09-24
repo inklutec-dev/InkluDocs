@@ -29,6 +29,17 @@
       .projekt-kopf .card-header { margin-bottom: 0; flex-wrap: nowrap; }
       .projekt-dateityp { flex: none; height: 1.5rem; width: auto; display: block; }
       .projekt-kopf .ansicht-wahl { margin-top: 0.75rem !important; }
+      /* Ansichts-Knoepfe (Michael Karbe, Feedback 24.09.2026, Punkt 8): aktuelle dunkel, andere hell, ausgegraut = nicht verfuegbar */
+      .ansicht-wahl { flex-basis: 100%; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.6rem; }
+      .ansicht-titel { font-weight: 600; }
+      .ansicht-knoepfe { list-style: none; margin: 0; padding: 0; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+      .ansicht-knoepfe a.btn { display: inline-block; text-decoration: none; }
+      .ansicht-knoepfe a.btn-primary { color: #fff; }
+      .ansicht-knoepfe a.btn:hover, .ansicht-knoepfe a.btn:focus-visible { text-decoration: underline; }
+      .ansicht-knoepfe a.btn:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
+      /* nicht verfuegbar: gestrichelter Rahmen + dunkelgraue Schrift (#4b5563 auf Hellgrau = 7:1), NICHT per opacity — die
+         senkte den Kontrast unter 4,5:1 (axe color-contrast, Klicktest 24.09.2026) */
+      .ansicht-aus { cursor: not-allowed; display: inline-block; color: #4b5563 !important; background: #f3f4f6 !important; border: 2px dashed #9ca3af !important; font-weight: 500; }
       .projekt-kopf .card-info:not([hidden]) { margin: 0.6rem 0 0; }
       /* Ansicht „Dokument“: jede Datei zum Aufklappen (Michael Karbe, PS 24.09.2026); Dokumentinfo je Zeile
          „Stand: Getaggt“ in Schrift und Groesse des Berichts darunter (Mail 22.09.2026, Punkte 2 und 4). */
@@ -269,22 +280,38 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (istPdfDateityp(project)) return 'dokument';
         return project && project.tool === 'uebersetzen' ? 'uebersetzung' : 'alttexte';
     }
-    // Die Zeile „Ansicht" im Projektkopf: Ausklappliste wie „Sprache der Alt-Texte" plus Knopf „Oeffnen".
-    // Der Knopf ist Absicht (Steve/WCAG 3.2.2): Pfeiltasten auf der geschlossenen Liste feuern sonst bei
-    // jedem Schritt einen Seitenwechsel. Gleiche Funktion fuer beide Ansichten (uebersetzen.js ruft sie auch).
+    // ANSICHTS-WAHL als Knoepfe (Michael Karbe, Feedback 24.09.2026, Punkt 8): je Ansicht ein Link in Knopf-Optik,
+    // die aktuelle dunkel (btn-primary, aria-current="page"), die anderen hell — ein Klick wechselt. Semantisch LINKS
+    // (Wechsel der Ansicht = Navigation, eigene Adresse ?ansicht=…, Browser-Zurueck geht); JS faengt den Klick ab und
+    // wechselt ohne Neuladen. Nicht verfuegbare Ansichten (Quickinfos ohne Felder) sind kein Link, sondern ausgegrauter
+    // Text mit dem Grund fuer Screenreader. Bis 24.09. Ausklappliste + „Öffnen“ (Steve/WCAG 3.2.2) — mit Links entfaellt
+    // das Problem, dass Pfeiltasten auf der Liste schon wechseln. Gleiche Funktion fuer alle Ansichten.
     function ansichtWahlHtml(project, aktuell) {
         if (!(istWordDateityp(project) || istPdfDateityp(project)) || window.GUEST_MODE) return '';
         const namen = { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Abschlussprüfung') };
-        // Alle Stationen stehen in der Liste; nicht verfuegbare sind ausgegraut und nennen den Grund im Namen
-        // (Screenreader lesen „nicht verfügbar“ bei disabled mit, der Grund steht als Text dabei).
-        const optionen = ansichtenFuer(project).map(k => [k, namen[k], ansichtGesperrtWeil(project, k)]);
-        return '<div class="ansicht-wahl" style="flex-basis:100%;margin-top:0.6rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
-            + '<label for="ansichtSelect" style="font-weight:600;">' + t('Ansicht') + '</label>'
-            + '<select id="ansichtSelect" style="padding:0.4rem;border:1px solid var(--border,#ccc);border-radius:4px;font-size:0.9rem;">'
-            + optionen.map(([k, l, grund]) => '<option value="' + k + '"' + (k === aktuell ? ' selected' : '') + (grund ? ' disabled' : '') + '>' + l + (grund ? ' (' + t('nicht verfügbar: {grund}', { grund: grund }) + ')' : '') + '</option>').join('')
-            + '</select>'
-            + '<button type="button" class="btn btn-secondary btn-small" id="ansichtOeffnen" onclick="wechsleAnsicht(' + project.id + ')">' + t('Öffnen') + '</button></div>';
+        const knoepfe = ansichtenFuer(project).map(function (k) {
+            const grund = ansichtGesperrtWeil(project, k);
+            if (grund) {
+                return '<li><span class="btn btn-secondary ansicht-aus" data-ansicht="' + k + '">' + namen[k]
+                    + '<span class="visually-hidden"> (' + t('nicht verfügbar: {grund}', { grund: grund }) + ')</span></span></li>';
+            }
+            const href = '/app?projekt=' + encodeURIComponent(project.id) + '&ansicht=' + k;
+            return '<li><a class="btn ' + (k === aktuell ? 'btn-primary' : 'btn-secondary') + '" data-ansicht="' + k + '" href="' + href + '"'
+                + (k === aktuell ? ' aria-current="page"' : '')
+                + ' onclick="return ansichtKlick(event, ' + project.id + ', \'' + k + '\')">' + namen[k] + '</a></li>';
+        }).join('');
+        return '<div class="ansicht-wahl"><span class="ansicht-titel" id="ansichtTitel">' + t('Ansicht') + ':</span>'
+            + '<ul class="ansicht-knoepfe" aria-labelledby="ansichtTitel">' + knoepfe + '</ul></div>';
     }
+    // Klick auf einen Ansichts-Knopf: normaler Klick wechselt ohne Neuladen; mit Strg/Cmd/Umschalt/Mittelklick bleibt
+    // das Link-Verhalten (neuer Tab/neues Fenster).
+    function ansichtKlick(ev, projectId, ziel) {
+        if (ev && (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey || ev.button === 1)) return true;
+        if (ev) ev.preventDefault();
+        wechsleAnsicht(projectId, ziel);
+        return false;
+    }
+    window.ansichtKlick = ansichtKlick;
     window.ansichtWahlHtml = ansichtWahlHtml;
     // PROJEKTKOPF (Michael Karbe, Mails 21.09. und 22.09.2026, Punkt 9): Projektname und Ansichts-Wahl
     // stehen zusammen in EINEM Feld ganz oben; rechts auf Hoehe des Namens das rote PDF- bzw. blaue
@@ -318,9 +345,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     window.mitProjektKopf = mitProjektKopf;
     window.projektKopfHtml = projektKopfHtml;
     window.funktionenKarteHtml = funktionenKarteHtml;
-    async function wechsleAnsicht(projectId) {
-        const sel = document.getElementById('ansichtSelect');
-        const ziel = sel ? sel.value : 'alttexte';
+    async function wechsleAnsicht(projectId, zielAnsicht) {
+        const ziel = zielAnsicht || 'alttexte';
         const grund = ansichtGesperrtWeil(currentProjectFuerAnsicht || {}, ziel);
         if (grund) { announce(t('Diese Ansicht ist nicht verfügbar: {grund}', { grund: grund })); return; }
         if (ziel === aktuelleAnsicht(currentProjectFuerAnsicht || {})) { announce(t('Diese Ansicht ist schon geöffnet.')); return; }

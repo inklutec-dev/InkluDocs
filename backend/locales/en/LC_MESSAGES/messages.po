@@ -8082,3 +8082,40 @@ msgstr "high"
 
 msgid "{n} Grafiken ohne Alt-Text."
 msgstr "{n} graphics without alt text."
+
+#: Dokumentansicht nach Michaels Feedback 24.09.2026
+msgid "Anwendung"
+msgstr "Application"
+
+msgid "Erstellt mit"
+msgstr "Produced with"
+
+msgid "Experimentell:"
+msgstr "Experimental:"
+
+msgid "Getaggt am {zeit} in {s} Sekunden."
+msgstr "Tagged on {zeit} in {s} seconds."
+
+msgid "KI-basierte Prüfung (experimentell)"
+msgstr "AI-based check (experimental)"
+
+msgid "Nicht getaggt"
+msgstr "Not tagged"
+
+msgid "PDF-Standard"
+msgstr "PDF standard"
+
+msgid "Wir arbeiten noch an dieser Prüfung. Die Befunde können unvollständig oder falsch sein."
+msgstr "We are still working on this check. The findings may be incomplete or wrong."
+
+msgid "kein Titel"
+msgstr "no title"
+
+msgid "keiner"
+msgstr "none"
+
+msgid "nicht angegeben"
+msgstr "not specified"
+
+msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
+msgstr "{u} alt texts carried over from the previous version."

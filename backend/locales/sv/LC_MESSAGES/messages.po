@@ -7644,3 +7644,40 @@ msgstr "hög"
 
 msgid "{n} Grafiken ohne Alt-Text."
 msgstr "{n} grafiker utan alt-text."
+
+#: Dokumentansicht nach Michaels Feedback 24.09.2026
+msgid "Anwendung"
+msgstr "Program"
+
+msgid "Erstellt mit"
+msgstr "Skapad med"
+
+msgid "Experimentell:"
+msgstr "Experimentell:"
+
+msgid "Getaggt am {zeit} in {s} Sekunden."
+msgstr "Taggad {zeit} på {s} sekunder."
+
+msgid "KI-basierte Prüfung (experimentell)"
+msgstr "AI-baserad kontroll (experimentell)"
+
+msgid "Nicht getaggt"
+msgstr "Inte taggad"
+
+msgid "PDF-Standard"
+msgstr "PDF-standard"
+
+msgid "Wir arbeiten noch an dieser Prüfung. Die Befunde können unvollständig oder falsch sein."
+msgstr "Vi arbetar fortfarande med den här kontrollen. Anmärkningarna kan vara ofullständiga eller felaktiga."
+
+msgid "kein Titel"
+msgstr "ingen titel"
+
+msgid "keiner"
+msgstr "ingen"
+
+msgid "nicht angegeben"
+msgstr "inte angivet"
+
+msgid "{u} Alt-Texte aus dem vorherigen Stand übernommen."
+msgstr "{u} alt-texter överförda från föregående version."

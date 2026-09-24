@@ -482,3 +482,29 @@ Kunde bekommt (derselbe Bau wie der Export, `main._build_pdf_for_document`: Stru
   `Struktur_Export.py`), Vollständigkeit im PDFix-Testmodus verrauscht (Wasserzeichen, ersetzte Zeichen), Word folgt,
   echter Screenreader (NVDA-Server) später.
 - Tests: `tests/e2e/ui_dokument.py` Abschnitt C2b.
+
+## Michaels Feedback 24.09.2026 (Mail „Feedback 24.09.2026 - 1“) — umgesetzt auf Staging
+
+1. Dokumentansicht ohne Feld „Funktionen und Einstellungen“ (kein „Komplett barrierefrei machen“, keine Ablage; Schalter
+   `ZEIGE_PROJEKT_KNOEPFE` in dokument.js, Code bleibt). Klärt Punkt 1 der Mail vom 22.09.
+2.–5. Dokumentinfos in dieser Reihenfolge: **Titel** (Tag-Statistik, sonst Metadaten), **Anwendung** (Creator) und
+   **Erstellt mit** (Producer) aus der **hochgeladenen Originaldatei** (nach dem Taggen stünde dort PDFix), **Stand** nur
+   „Getaggt“/„Nicht getaggt“, **PDF-Standard** aus den XMP-Metadaten der Arbeitsdatei (PDF/UA-n, PDF/A-n…), dann Seiten,
+   Sprache, Struktur, Bilder, Formularfelder (`tagging_api._metadaten`, Feld `meta` in `dokument-ansicht`).
+6. Kein Urteil an der Karte (`ZEIGE_URTEIL`).
+7. Kein Testmodus-Hinweis (Karte und Bericht).
+8. Ansichts-Wahl als Knöpfe (app.html `ansichtWahlHtml`): Links mit eigener Adresse, aktuelle Ansicht dunkel
+   (`btn-primary`, `aria-current="page"`), die anderen hell, ein Klick wechselt ohne Neuladen (`ansichtKlick`), Strg/Cmd-Klick
+   öffnet einen neuen Tab; nicht verfügbare Ansicht (Quickinfos ohne Felder) ausgegraut mit Grund für Screenreader.
+   Ersetzt Ausklappliste + „Öffnen“ in allen Ansichten von PDF- und Word-Projekten.
+9. Bericht ohne Dokumentinfos (nur Zeit, übernommene Alt-Texte, Hinweise, PDF/UA-Fehler).
+10.–12. PDF/UA: nur Fehler, ohne „Hinweis“, **je verletztem Prüfpunkt eine Zeile** (`pdfua_export._einzeln`, Feld
+   `einzeln` je Bereich): bekannte Regeln im Klartext, unbekannte mit dem Originaltext von veraPDF ohne Einleitung,
+   „(n-mal)“ und Seiten je Punkt. Gilt auch im Einheitsbericht (CSV) und in der Abschlussprüfung. Berichte von vor dem
+   24.09. haben noch kein `einzeln` → ein Absatz je Bereich.
+13. Strukturansicht „als HTML wie PAC“: offen, mit Michael klären (die Strukturansicht ist schon HTML; Knopf in der
+   Dokument-Karte ausgeblendet, `ZEIGE_STRUKTURANSICHT`; in der Abschlussprüfung „Mit eigenem Screenreader prüfen“).
+
+KI-basierte Prüfung: wieder sichtbar als „KI-basierte Prüfung (experimentell)“ mit Hinweis „Wir arbeiten noch an dieser
+Prüfung …“ (Michael 24.09.). Tests: ui_dokument, ui_pdf_quickinfos, ui_uebersetzen, ui_gast_word_testumbau angepasst,
+tests/test_pdfua_klartext.py (neu: `test_einzeln_je_regel_ohne_einleitung`).
