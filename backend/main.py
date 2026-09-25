@@ -427,9 +427,23 @@ def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Nicht angemeldet")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return {"id": int(payload["sub"]), "email": payload["email"], "is_admin": payload.get("is_admin", 0)}
-    except JWTError:
+        uid = int(payload["sub"])
+    except (JWTError, KeyError, TypeError, ValueError):
         raise HTTPException(status_code=401, detail="Token ungueltig")
+    # SPERRE SOFORT WIRKSAM (Steve 25.09.2026): Vorher pruefte nur die Anmeldung is_active —
+    # wer beim Sperren schon angemeldet war, arbeitete mit seinem Token bis zu 24 Stunden
+    # weiter; ebenso ein geloeschtes Konto. Jetzt bei JEDER Anfrage: ein kleiner Primaer-
+    # schluessel-Zugriff.
+    conn = get_db()
+    try:
+        zeile = conn.execute("SELECT is_active FROM users WHERE id = ?", (uid,)).fetchone()
+    finally:
+        conn.close()
+    if not zeile:
+        raise HTTPException(status_code=401, detail="Konto nicht gefunden")
+    if not zeile["is_active"]:
+        raise HTTPException(status_code=401, detail="Konto gesperrt")
+    return {"id": uid, "email": payload.get("email", ""), "is_admin": payload.get("is_admin", 0)}
 
 
 def get_optional_user(request: Request) -> Optional[dict]:
@@ -4421,6 +4435,22 @@ async def admin_buchung_korrigieren(buchung_id: int, request: Request,
         raise HTTPException(status_code=400, detail=str(e))
     return {"ok": True, "buchung": neu,
             "message": f"Buchung berichtigt: {neu['weg_text']}, {neu['betrag_text']}."}
+
+
+@app.post("/api/admin/buchungen/{buchung_id}/storno")
+async def admin_buchung_stornieren(buchung_id: int, request: Request,
+                                   user: dict = Depends(require_full_admin)):
+    """Eine Hand-Gutschrift stornieren: noch nicht verbrauchte Credits zuruecknehmen, Buchung
+    aus dem Umsatz nehmen, mit Grund (Steve 25.09.2026). Stripe-Kaeufe und Abos ausgenommen."""
+    data = await request.json()
+    try:
+        neu = umsatz.storniere(buchung_id, grund=data.get("grund") or "", admin=_admin_person(user))
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "buchung": neu,
+            "message": f"Gutschrift storniert: {umsatz.zahl_text(neu['zurueckgenommen'])} Credits zurückgenommen."}
 
 
 # ─── API Key Management ─────────────────────────────────────
@@ -10556,12 +10586,11 @@ async def reset_page(request: Request):
 def _serve_protected_page(request: Request, filename: str):
     """Liefert eine login-geschuetzte HTML-Seite aus dem frontend-Verzeichnis.
     Leitet zu / um, wenn kein gueltiges Login-Cookie vorliegt."""
-    token = request.cookies.get("token")
-    if not token:
-        return RedirectResponse("/login")
+    # Seit 25.09.2026 ueber get_current_user: gesperrte oder geloeschte Konten landen gleich
+    # auf der Anmeldung statt auf einer Seitenhuelle, deren Daten dann 401 liefern.
     try:
-        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
+        get_current_user(request)
+    except HTTPException:
         return RedirectResponse("/login")
     html = open(f"/app/frontend/{filename}").read()
     if "staging" in BASE_URL:
@@ -10588,12 +10617,11 @@ def resolve_ui_language(request: Request) -> str:
 def _render_protected_template(request: Request, template_name: str, **extra):
     """Wie _serve_protected_page, aber rendert ein Jinja2-Template mit
     Sprach-Aufloesung. Fuer bereits auf i18n migrierte, eingeloggte Seiten."""
-    token = request.cookies.get("token")
-    if not token:
-        return RedirectResponse("/login")
+    # Seit 25.09.2026 ueber get_current_user: gesperrte oder geloeschte Konten landen gleich
+    # auf der Anmeldung statt auf einer Seitenhuelle, deren Daten dann 401 liefern.
     try:
-        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
+        get_current_user(request)
+    except HTTPException:
         return RedirectResponse("/login")
     lang = resolve_ui_language(request)
     return templates.TemplateResponse(

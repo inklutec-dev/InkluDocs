@@ -6,7 +6,7 @@
 {# VERWALTUNG — API (25.09.2026, Steve): nur die Konten, die überhaupt einen API-Schlüssel
    angelegt haben, der neueste Schlüssel zuerst — mit Nutzung von heute und dem Tageslimit.
    Ein Werkzeug für den Bedarfsfall („toll, sie zu haben, wenn man sie braucht“). #}
-<h1>{{ _('API') }}</h1>
+<h1>{{ _('Verwaltung') }}: {{ _('API') }}</h1>
 {% include "_verwaltung_nav.html" %}
 <p class="dash-sub">{{ _('Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag.').replace('{standard}', api_limit_standard|string) }}</p>
 

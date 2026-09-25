@@ -60,7 +60,7 @@ SEITEN = [
     ("/verwaltung/kunden", "Kunden"),
     ("/verwaltung/umsatz", "Umsatz"),
     ("/verwaltung/api", "API"),
-    ("/verwaltung/einstellungen", "Einstellungen der Verwaltung"),
+    ("/verwaltung/einstellungen", "Verwaltung Einstellungen"),
     ("/datensicherheit", "Datensicherheit"),
     ("/impressum-app", "Impressum"),
     ("/nutzungsbedingungen-app", "Nutzungsbedingungen"),

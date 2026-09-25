@@ -8281,3 +8281,55 @@ msgstr "Tillbaka"
 
 msgid "Zurück zur Kundenliste"
 msgstr "Tillbaka till kundlistan"
+
+# Verwaltung: Stornieren, Sperren (25.09.2026)
+msgid "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
+msgstr "{name} kan sedan inte längre logga in, loggas ut direkt och API-nycklarna slutar fungera. Krediter, projekt och bokningar finns kvar; upplåsning återställer allt."
+
+msgid "1 Kunde"
+msgstr "1 kund"
+
+msgid "Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard."
+msgstr "Obs: Den här kunden har ett löpande abonnemang via Stripe. Spärrning säger inte upp det — Stripe fortsätter att debitera. Säg upp det i Stripe-instrumentpanelen."
+
+msgid "Bitte kurz den Grund für das Stornieren angeben."
+msgstr "Ange kort orsaken till makuleringen."
+
+msgid "Das Stornieren hat nicht geklappt."
+msgstr "Makuleringen fungerade inte."
+
+msgid "Grund für das Stornieren"
+msgstr "Orsak till makuleringen"
+
+msgid "Gutschrift stornieren"
+msgstr "Makulera kreditering"
+
+msgid "Gutschrift storniert."
+msgstr "Krediteringen har makulerats."
+
+msgid "Gutschrift vom {datum} stornieren"
+msgstr "Makulera krediteringen från {datum}"
+
+msgid "Ja, sperren"
+msgstr "Ja, spärra"
+
+msgid "Ja, stornieren"
+msgstr "Ja, makulera"
+
+msgid "Konto sperren?"
+msgstr "Spärra kontot?"
+
+msgid "Kunde {name}"
+msgstr "Kund {name}"
+
+msgid "Stornieren"
+msgstr "Makulera"
+
+msgid "storniert, zählt nicht zum Umsatz"
+msgstr "makulerad, räknas inte som omsättning"
+
+msgid "Suche „{text}“"
+msgstr "Sökning ”{text}”"
+
+msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
+msgstr "De {rest} av {menge} krediter som ännu inte har använts dras tillbaka. Redan använda krediter förblir förbrukade. Bokningen syns fortfarande men räknas inte längre som omsättning."

@@ -136,10 +136,11 @@
     else teile.push(t('Verkauf auf Rechnung, {betrag}', { betrag: euro(b.betrag_cent) }));
     if (b.status === 'ausstehend') teile.push(t('Lastschrift noch ausstehend'));
     if (b.status === 'rueckgelaufen') teile.push(t('Lastschrift zurückgegangen, zählt nicht zum Umsatz'));
+    if (b.status === 'storniert') teile.push(t('storniert, zählt nicht zum Umsatz'));
     if (b.rechnungsnummer) teile.push(t('Rechnung {nummer}', { nummer: b.rechnungsnummer }));
     if (b.notiz) teile.push(b.notiz);
     if (b.gebucht_von) teile.push(t('eingetragen von {name}', { name: b.gebucht_von }));
-    if (b.korrigiert) teile.push(t('berichtigt'));
+    if (b.korrigiert && b.status !== 'storniert') teile.push(t('berichtigt'));
     return teile.join(' · ');
   }
 
@@ -191,6 +192,71 @@
     });
   }
 
+  // ── Dialog „Gutschrift stornieren“ (Kundenseite + Umsatz-Seite) ────────
+  let _storno = null;
+  function kannStornieren(b) {
+    return b.weg !== 'stripe' && b.art === 'paket' && b.status !== 'storniert';
+  }
+  function kannBerichtigen(b) {
+    return b.weg !== 'stripe' && b.status !== 'storniert';
+  }
+  function stornoOeffnen(b, danach) {
+    const dlg = byId('stornoDialog');
+    if (!dlg) return;
+    _storno = { b: b, danach: danach };
+    byId('stornoFuer').textContent = buchungText(b, true);
+    const rest = (b.paket_rest === null || b.paket_rest === undefined) ? 0 : b.paket_rest;
+    byId('stornoFolgen').textContent = t('Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz.',
+      { rest: zahl(rest), menge: zahl(b.credits) });
+    byId('stornoGrund').value = '';
+    byId('stornoFehler').textContent = '';
+    dlg.showModal();
+    byId('stornoGrund').focus();
+  }
+  function stornoEinrichten() {
+    const dlg = byId('stornoDialog');
+    if (!dlg) return;
+    byId('stornoAbbrechen').addEventListener('click', () => dlg.close());
+    let laeuft = false;
+    byId('stornoForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (laeuft) return;
+      const fehler = byId('stornoFehler');
+      fehler.textContent = '';
+      const grund = byId('stornoGrund').value.trim();
+      if (grund.length < 3) { fehler.textContent = t('Bitte kurz den Grund für das Stornieren angeben.'); byId('stornoGrund').focus(); return; }
+      laeuft = true;
+      const r = await sendeJson('/api/admin/buchungen/' + _storno.b.id + '/storno', 'POST', { grund: grund });
+      laeuft = false;
+      if (!r.ok) { fehler.textContent = r.daten.detail || t('Das Stornieren hat nicht geklappt.'); return; }
+      dlg.close();
+      announce(r.daten.message || t('Gutschrift storniert.'));
+      if (_storno.danach) _storno.danach();
+    });
+  }
+
+  // Knöpfe „Berichtigen“ und „Stornieren“ an eine Buchungszeile hängen (nur Voll-Admins).
+  function buchungKnoepfe(li, b, danach) {
+    if (!istVollAdmin()) return;
+    const datum = datumZeit(b.gebucht_am);
+    if (kannBerichtigen(b)) {
+      const k = el('button', 'btn btn-secondary btn-small', t('Berichtigen'));
+      k.type = 'button';
+      k.setAttribute('aria-label', t('Buchung vom {datum} berichtigen', { datum: datum }));
+      k.addEventListener('click', () => korrekturOeffnen(b, danach));
+      li.appendChild(document.createTextNode(' '));
+      li.appendChild(k);
+    }
+    if (kannStornieren(b)) {
+      const k = el('button', 'btn btn-delete btn-small', t('Stornieren'));
+      k.type = 'button';
+      k.setAttribute('aria-label', t('Gutschrift vom {datum} stornieren', { datum: datum }));
+      k.addEventListener('click', () => stornoOeffnen(b, danach));
+      li.appendChild(document.createTextNode(' '));
+      li.appendChild(k);
+    }
+  }
+
   // ── Dialog „API-Tageslimit ändern“ (Kundenseite + API-Seite) ───────────
   let _limit = null;
   function limitOeffnen(konto, danach) {
@@ -233,11 +299,13 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     korrekturEinrichten();
+    stornoEinrichten();
     limitEinrichten();
   });
 
   window.Verwaltung = {
     PLAN_NAMEN, datumLang, datumZeit, monatLang, euro, euroFeld, zahl, el, zeile, leer,
     ladeJson, sendeJson, istVollAdmin, planText, buchungText, korrekturOeffnen, limitOeffnen,
+    buchungKnoepfe, zaehltZumUmsatz: (b) => b.weg !== 'bonus' && (b.status === 'ok' || b.status === 'ausstehend'),
   };
 })();

@@ -34,6 +34,23 @@
   </form>
 </dialog>
 
+<dialog id="stornoDialog" class="app-dialog" aria-labelledby="stornoTitel">
+  <h2 id="stornoTitel">{{ _('Gutschrift stornieren') }}</h2>
+  <p id="stornoFuer"></p>
+  <p id="stornoFolgen"></p>
+  <form id="stornoForm" novalidate>
+    <div class="dash-field">
+      <label for="stornoGrund">{{ _('Grund für das Stornieren') }}</label>
+      <input type="text" id="stornoGrund" class="dash-input" maxlength="200" autocomplete="off" required>
+    </div>
+    <p id="stornoFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="stornoAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-danger">{{ _('Ja, stornieren') }}</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="limitDialog" class="app-dialog" aria-labelledby="limitTitel">
   <h2 id="limitTitel">{{ _('API-Tageslimit ändern') }}</h2>
   <p id="limitFuer"></p>

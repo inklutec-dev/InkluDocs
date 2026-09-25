@@ -261,3 +261,5 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .app-dialog select.dash-input, .app-dialog input.dash-input { max-width: 100%; }
 /* display:flex darf das hidden-Attribut nicht aushebeln (Blättern bei nur einer Seite, Download vor dem Laden). */
 .verwaltung-seiten[hidden], .verwaltung-download[hidden], .verwaltung-suche[hidden] { display: none; }
+.verwaltung-warnung { border-left: 4px solid #a94200; background: #fff4ec; padding: .6rem .8rem; font-weight: 600; }
+.verwaltung-warnung[hidden] { display: none; }

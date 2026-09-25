@@ -8719,3 +8719,55 @@ msgstr "Back"
 
 msgid "Zurück zur Kundenliste"
 msgstr "Back to the customer list"
+
+# Verwaltung: Stornieren, Sperren (25.09.2026)
+msgid "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
+msgstr "{name} will no longer be able to log in, will be logged out immediately, and the API keys will stop working. Credits, projects and bookings are kept; unblocking restores everything."
+
+msgid "1 Kunde"
+msgstr "1 customer"
+
+msgid "Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard."
+msgstr "Attention: this customer has an active Stripe subscription. Blocking does not cancel it — Stripe keeps charging. Cancel it in the Stripe dashboard."
+
+msgid "Bitte kurz den Grund für das Stornieren angeben."
+msgstr "Please briefly state the reason for cancelling."
+
+msgid "Das Stornieren hat nicht geklappt."
+msgstr "Cancelling did not work."
+
+msgid "Grund für das Stornieren"
+msgstr "Reason for cancelling"
+
+msgid "Gutschrift stornieren"
+msgstr "Cancel credit"
+
+msgid "Gutschrift storniert."
+msgstr "Credit cancelled."
+
+msgid "Gutschrift vom {datum} stornieren"
+msgstr "Cancel credit of {datum}"
+
+msgid "Ja, sperren"
+msgstr "Yes, block"
+
+msgid "Ja, stornieren"
+msgstr "Yes, cancel"
+
+msgid "Konto sperren?"
+msgstr "Block account?"
+
+msgid "Kunde {name}"
+msgstr "Customer {name}"
+
+msgid "Stornieren"
+msgstr "Cancel"
+
+msgid "storniert, zählt nicht zum Umsatz"
+msgstr "cancelled, not counted as revenue"
+
+msgid "Suche „{text}“"
+msgstr "Search “{text}”"
+
+msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
+msgstr "The {rest} of {menge} credits not yet used will be taken back. Credits already used stay used. The booking remains visible but no longer counts as revenue."

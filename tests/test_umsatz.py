@@ -152,6 +152,37 @@ class TestBuchen(unittest.TestCase):
             umsatz.korrigiere(stripe_b["id"], weg="bonus", betrag_cent=0, rechnungsnummer="",
                               grund="geht nicht", admin={"display_name": "A"})
 
+    def test_5b_stornieren(self):
+        pid = billing.schenke_credits(self.kunde["id"], 250, notiz="storno-test", quelle="rechnung",
+                                      verfall_monate=None,
+                                      buchung={"konto": self.kunde, "weg": "rechnung", "betrag_cent": 1000,
+                                               "notiz": "storno-test"})
+        conn = database.get_db()
+        conn.execute("UPDATE quota_pakete SET verbleibend = 40 WHERE id = ?", (pid,))   # 210 verbraucht
+        conn.commit()
+        conn.close()
+        vorher = umsatz.kennzahlen()["gesamt_cent"]
+        b = [x for x in self._buchungen() if x["notiz"] == "storno-test"][0]
+        self.assertEqual(b["paket_rest"], 40)
+        neu = umsatz.storniere(b["id"], grund="falsche Menge", admin={"display_name": "Testadmin Umsatz"})
+        self.assertEqual((neu["status"], neu["zurueckgenommen"]), ("storniert", 40))
+        self.assertIn("40 von 250 Credits zurückgenommen", neu["korrektur_notiz"])
+        self.assertEqual(umsatz.kennzahlen()["gesamt_cent"], vorher - 1000)
+        conn = database.get_db()
+        self.assertEqual(conn.execute("SELECT verbleibend FROM quota_pakete WHERE id = ?", (pid,)).fetchone()[0], 0)
+        conn.close()
+        for falsch in ({"grund": "x"},):
+            with self.assertRaises(ValueError):
+                umsatz.storniere(b["id"], admin={"display_name": "A"}, **falsch)
+        with self.assertRaises(ValueError):   # schon storniert
+            umsatz.storniere(b["id"], grund="nochmal", admin={"display_name": "A"})
+        with self.assertRaises(ValueError):   # stornierte Buchung nicht berichtigen
+            umsatz.korrigiere(b["id"], weg="bonus", betrag_cent=0, rechnungsnummer="", grund="geht nicht",
+                              admin={"display_name": "A"})
+        stripe_b = [x for x in self._buchungen() if x["weg"] == "stripe"][0]
+        with self.assertRaises(ValueError):
+            umsatz.storniere(stripe_b["id"], grund="Stripe", admin={"display_name": "A"})
+
     def test_6_export(self):
         feind = _konto("feind@example.invalid", "=HYPERLINK(\"http://x\")")
         umsatz.buche_einzeln(konto=feind, art="paket", weg="rechnung", credits=500, betrag_cent=2000,
@@ -247,6 +278,33 @@ class TestEndpunkte(unittest.TestCase):
         self.assertEqual((abo["plan"], abo["laufzeit_monate"], abo["betrag_cent"]), ("single", 6, 5970))
         # Free (Abo beenden) bucht nichts und braucht keine Art.
         self.assertEqual(self.c_voll.post(url, json={"plan": "free"}).status_code, 200)
+
+    def test_sperre_wirkt_sofort(self):
+        gesperrt = _konto("gesperrt.ep@example.invalid", "Gesperrt Sofort")
+        from fastapi.testclient import TestClient
+        c = TestClient(self.main.app)
+        c.cookies.set("token", self.main.create_token(gesperrt["id"], gesperrt["email"], 0))
+        self.assertEqual(c.get("/api/me").status_code, 200)
+        self.assertEqual(self.c_voll.post(f"/api/admin/users/{gesperrt['id']}/toggle-active").status_code, 200)
+        self.assertEqual(c.get("/api/me").status_code, 401)
+        r = c.get("/dashboard", follow_redirects=False)
+        self.assertEqual((r.status_code, r.headers.get("location")), (307, "/login"))
+        self.c_voll.post(f"/api/admin/users/{gesperrt['id']}/toggle-active")
+        self.assertEqual(c.get("/api/me").status_code, 200)
+        database.delete_user_data(gesperrt["id"])
+        self.assertEqual(c.get("/api/me").status_code, 401)   # geloeschtes Konto: Token wertlos
+
+    def test_storno_endpunkt(self):
+        self.c_voll.post(f"/api/admin/users/{self.kunde['id']}/pakete",
+                         json={"groesse": 50, "art": "bonus", "notiz": "ep-storno"})
+        b = [x for x in self.c_voll.get(f"/api/admin/kunden/{self.kunde['id']}/buchungen").json()["buchungen"]
+             if x["notiz"] == "ep-storno"][0]
+        self.assertEqual(self.c_sicht.post(f"/api/admin/buchungen/{b['id']}/storno", json={"grund": "nein"}).status_code, 403)
+        self.assertEqual(self.c_voll.post(f"/api/admin/buchungen/{b['id']}/storno", json={}).status_code, 400)
+        r = self.c_voll.post(f"/api/admin/buchungen/{b['id']}/storno", json={"grund": "Fehlbuchung"})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertIn("50 Credits zurückgenommen", r.json()["message"])
+        self.assertEqual(self.c_voll.post("/api/admin/buchungen/999999/storno", json={"grund": "gibtsnicht"}).status_code, 404)
 
     def test_kundenliste(self):
         d = self.c_voll.get("/api/admin/kunden", params={"q": "kunde.ep"}).json()

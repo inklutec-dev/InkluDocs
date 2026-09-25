@@ -8411,3 +8411,55 @@ msgstr "Tilbage"
 
 msgid "Zurück zur Kundenliste"
 msgstr "Tilbage til kundelisten"
+
+# Verwaltung: Stornieren, Sperren (25.09.2026)
+msgid "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
+msgstr "{name} kan derefter ikke længere logge ind, bliver logget ud med det samme, og API-nøglerne holder op med at virke. Credits, projekter og posteringer bevares; ophævelse af spærringen gendanner alt."
+
+msgid "1 Kunde"
+msgstr "1 kunde"
+
+msgid "Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard."
+msgstr "Bemærk: Denne kunde har et løbende abonnement via Stripe. Spærring opsiger det ikke — Stripe trækker fortsat betaling. Opsig det i Stripe-dashboardet."
+
+msgid "Bitte kurz den Grund für das Stornieren angeben."
+msgstr "Angiv venligst kort årsagen til annulleringen."
+
+msgid "Das Stornieren hat nicht geklappt."
+msgstr "Annulleringen lykkedes ikke."
+
+msgid "Grund für das Stornieren"
+msgstr "Årsag til annulleringen"
+
+msgid "Gutschrift stornieren"
+msgstr "Annullér kreditering"
+
+msgid "Gutschrift storniert."
+msgstr "Krediteringen er annulleret."
+
+msgid "Gutschrift vom {datum} stornieren"
+msgstr "Annullér krediteringen fra {datum}"
+
+msgid "Ja, sperren"
+msgstr "Ja, spær"
+
+msgid "Ja, stornieren"
+msgstr "Ja, annullér"
+
+msgid "Konto sperren?"
+msgstr "Spær konto?"
+
+msgid "Kunde {name}"
+msgstr "Kunde {name}"
+
+msgid "Stornieren"
+msgstr "Annullér"
+
+msgid "storniert, zählt nicht zum Umsatz"
+msgstr "annulleret, tæller ikke med i omsætningen"
+
+msgid "Suche „{text}“"
+msgstr "Søgning „{text}“"
+
+msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
+msgstr "De {rest} af {menge} credits, der endnu ikke er brugt, trækkes tilbage. Allerede brugte credits forbliver brugt. Posteringen forbliver synlig, men tæller ikke længere med i omsætningen."

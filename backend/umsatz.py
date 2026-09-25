@@ -34,7 +34,7 @@ log = logging.getLogger("umsatz")
 ZONE = ZoneInfo("Europe/Berlin")
 ARTEN = ("paket", "abo")
 WEGE = ("stripe", "rechnung", "bonus")
-STATUS = ("ok", "ausstehend", "rueckgelaufen")
+STATUS = ("ok", "ausstehend", "rueckgelaufen", "storniert")
 
 # Bonus-Gutschriften ueber dieser Menge brauchen eine ausdrueckliche Bestaetigung
 # (Steve 25.09.2026: „wie kann man das trotzdem irgendwie eingrenzen?“).
@@ -50,7 +50,7 @@ _ZAEHLT = "weg != 'bonus' AND status IN ('ok', 'ausstehend')"
 WEG_TEXT = {"stripe": "Stripe", "rechnung": "Rechnung", "bonus": "Bonus (kostenlos)"}
 ART_TEXT = {"paket": "Credit-Paket", "abo": "Abo"}
 STATUS_TEXT = {"ok": "", "ausstehend": "Lastschrift ausstehend",
-               "rueckgelaufen": "Rücklastschrift"}
+               "rueckgelaufen": "Rücklastschrift", "storniert": "storniert"}
 PLAN_TEXT = {"single": "Single", "team": "Team", "enterprise": "Enterprise"}
 
 _BETRAG = re.compile(r"^\d{1,6}(?:[.,]\d{1,2})?$")
@@ -249,6 +249,8 @@ def korrigiere(buchung_id: int, *, weg: str, betrag_cent: int, rechnungsnummer: 
         alt = dict(alt)
         if alt["weg"] == "stripe":
             raise ValueError("Stripe-Buchungen lassen sich nicht ändern — dort gilt, was Stripe abgerechnet hat")
+        if alt["status"] == "storniert":
+            raise ValueError("Eine stornierte Buchung lässt sich nicht mehr berichtigen")
         stempel = jetzt_lokal().strftime("%d.%m.%Y %H:%M")
         vorher = f"{WEG_TEXT[alt['weg']]}, {cent_text(alt['betrag_cent'])}"
         nachher = f"{WEG_TEXT[weg]}, {cent_text(betrag_cent)}"
@@ -271,6 +273,53 @@ def korrigiere(buchung_id: int, *, weg: str, betrag_cent: int, rechnungsnummer: 
         conn.commit()
         neu = conn.execute("SELECT * FROM buchungen WHERE id = ?", (buchung_id,)).fetchone()
         return darstellen(dict(neu))
+    finally:
+        conn.close()
+
+
+def storniere(buchung_id: int, *, grund: str, admin: dict) -> dict:
+    """Eine von Hand eingetragene Credit-Gutschrift stornieren (Steve 25.09.2026: Fehlbuchungen
+    wie „2.500 statt 250“ muessen rueckgaengig zu machen sein).
+
+    Zurueckgenommen werden nur die NOCH NICHT verbrauchten Credits des Pakets — verbrauchte
+    bleiben verbraucht. Die Buchung bleibt sichtbar, steht auf 'storniert' und zaehlt nicht
+    mehr zum Umsatz; Grund, Name, Zeit und die zurueckgenommene Menge stehen im Protokoll.
+    Stripe-Kaeufe sind ausgenommen (Rueckerstattung laeuft ueber Stripe), Abos ebenfalls
+    (dort den Plan ueber „Abo zuweisen oder aendern“ setzen und die Buchung berichtigen)."""
+    grund = (grund or "").strip()
+    if len(grund) < 3:
+        raise ValueError("Bitte kurz den Grund für das Stornieren angeben")
+    conn = get_db()
+    try:
+        alt = conn.execute("SELECT * FROM buchungen WHERE id = ?", (buchung_id,)).fetchone()
+        if not alt:
+            raise LookupError("Buchung nicht gefunden")
+        alt = dict(alt)
+        if alt["weg"] == "stripe":
+            raise ValueError("Stripe-Käufe werden über Stripe erstattet, nicht hier storniert")
+        if alt["art"] != "paket":
+            raise ValueError("Nur Credit-Gutschriften lassen sich stornieren — ein Abo über „Abo zuweisen oder ändern“ anpassen")
+        if alt["status"] == "storniert":
+            raise ValueError("Diese Buchung ist schon storniert")
+        zurueck = 0
+        if alt.get("paket_id"):
+            row = conn.execute("SELECT verbleibend FROM quota_pakete WHERE id = ?", (alt["paket_id"],)).fetchone()
+            if row:
+                zurueck = int(row["verbleibend"] or 0)
+                # Bedingt auf den gelesenen Stand: ein gleichzeitiger Verbrauch darf nicht verloren gehen.
+                if not conn.execute("UPDATE quota_pakete SET verbleibend = 0 WHERE id = ? AND verbleibend = ?",
+                                    (alt["paket_id"], zurueck)).rowcount:
+                    raise ValueError("Das Guthaben hat sich gerade geändert — bitte noch einmal versuchen")
+        stempel = jetzt_lokal().strftime("%d.%m.%Y %H:%M")
+        zeile = (f"{stempel} {admin.get('display_name') or '?'}: storniert, {zahl_text(zurueck)} von "
+                 f"{zahl_text(alt['credits'])} Credits zurückgenommen ({grund[:200]})")
+        protokoll = ((alt.get("korrektur_notiz") or "") + "\n" + zeile).strip()[-4000:]
+        conn.execute("UPDATE buchungen SET status = 'storniert', korrigiert_von_name = ?, "
+                     "korrigiert_am = datetime('now'), korrektur_notiz = ? WHERE id = ?",
+                     ((admin.get("display_name") or "")[:200], protokoll, buchung_id))
+        conn.commit()
+        neu = dict(conn.execute("SELECT * FROM buchungen WHERE id = ?", (buchung_id,)).fetchone())
+        return {**darstellen(neu), "zurueckgenommen": zurueck}
     finally:
         conn.close()
 
@@ -299,6 +348,7 @@ def darstellen(row: dict) -> dict:
         "gebucht_von": row.get("gebucht_von_name") or ("Stripe (automatisch)" if row["weg"] == "stripe" else ""),
         "korrigiert": bool(row.get("korrigiert_am")),
         "korrektur_notiz": row.get("korrektur_notiz") or "",
+        "paket_rest": row.get("paket_rest"),
     }
 
 
@@ -386,19 +436,20 @@ def liste(jahr: int = None, monat: int = None, auswahl: str = "alle", konto_id: 
     bedingungen, werte = [], []
     if jahr:
         von, bis = zeitraum(int(jahr), int(monat) if monat else None)
-        bedingungen.append("gebucht_am >= ? AND gebucht_am < ?")
+        bedingungen.append("b.gebucht_am >= ? AND b.gebucht_am < ?")
         werte += [von, bis]
     if konto_id is not None:
-        bedingungen.append("konto_user_id = ?")
+        bedingungen.append("b.konto_user_id = ?")
         werte.append(int(konto_id))
     if auswahl == "verkauf":
-        bedingungen.append("weg != 'bonus'")
+        bedingungen.append("b.weg != 'bonus'")
     elif auswahl == "bonus":
-        bedingungen.append("weg = 'bonus'")
-    sql = "SELECT * FROM buchungen"
+        bedingungen.append("b.weg = 'bonus'")
+    sql = ("SELECT b.*, p.verbleibend AS paket_rest FROM buchungen b "
+           "LEFT JOIN quota_pakete p ON p.id = b.paket_id")
     if bedingungen:
         sql += " WHERE " + " AND ".join(bedingungen)
-    sql += " ORDER BY gebucht_am DESC, id DESC"
+    sql += " ORDER BY b.gebucht_am DESC, b.id DESC"
     conn = get_db()
     try:
         return [darstellen(dict(r)) for r in conn.execute(sql, werte).fetchall()]

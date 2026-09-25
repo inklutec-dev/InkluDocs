@@ -8722,3 +8722,55 @@ msgstr "Zurück"
 
 msgid "Zurück zur Kundenliste"
 msgstr "Zurück zur Kundenliste"
+
+# Verwaltung: Stornieren, Sperren (25.09.2026)
+msgid "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
+msgstr "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
+
+msgid "1 Kunde"
+msgstr "1 Kunde"
+
+msgid "Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard."
+msgstr "Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard."
+
+msgid "Bitte kurz den Grund für das Stornieren angeben."
+msgstr "Bitte kurz den Grund für das Stornieren angeben."
+
+msgid "Das Stornieren hat nicht geklappt."
+msgstr "Das Stornieren hat nicht geklappt."
+
+msgid "Grund für das Stornieren"
+msgstr "Grund für das Stornieren"
+
+msgid "Gutschrift stornieren"
+msgstr "Gutschrift stornieren"
+
+msgid "Gutschrift storniert."
+msgstr "Gutschrift storniert."
+
+msgid "Gutschrift vom {datum} stornieren"
+msgstr "Gutschrift vom {datum} stornieren"
+
+msgid "Ja, sperren"
+msgstr "Ja, sperren"
+
+msgid "Ja, stornieren"
+msgstr "Ja, stornieren"
+
+msgid "Konto sperren?"
+msgstr "Konto sperren?"
+
+msgid "Kunde {name}"
+msgstr "Kunde {name}"
+
+msgid "Stornieren"
+msgstr "Stornieren"
+
+msgid "storniert, zählt nicht zum Umsatz"
+msgstr "storniert, zählt nicht zum Umsatz"
+
+msgid "Suche „{text}“"
+msgstr "Suche „{text}“"
+
+msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
+msgstr "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."

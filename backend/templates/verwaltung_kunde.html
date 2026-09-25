@@ -7,7 +7,7 @@
    Alles zu einem Kunden an einem Ort, alle Aktionen von hier aus — die E-Mail muss nirgends
    mehr abgetippt werden. Reihenfolge: Überblick, Käufe und Gutschriften, API, Nutzung,
    ganz unten getrennt Konto verwalten (Sperren, Passwort, Löschen). #}
-<h1 id="kundeTitel">{{ _('Kunde') }}</h1>
+<h1 id="kundeTitel">{{ _('Verwaltung') }}: {{ _('Kunde') }}</h1>
 {% include "_verwaltung_nav.html" %}
 <p><a href="/verwaltung/kunden" id="zurListe">{{ _('Zurück zur Kundenliste') }}</a></p>
 
@@ -175,6 +175,16 @@
   </form>
 </dialog>
 
+<dialog id="sperrDialog" class="app-dialog" aria-labelledby="sperrTitel">
+  <h2 id="sperrTitel">{{ _('Konto sperren?') }}</h2>
+  <p id="sperrText"></p>
+  <p id="sperrStripe" class="verwaltung-warnung" hidden>{{ _('Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard.') }}</p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="sperrAbbrechen">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="sperrJa">{{ _('Ja, sperren') }}</button>
+  </div>
+</dialog>
+
 <dialog id="loeschDialog" class="app-dialog" aria-labelledby="loeschTitel">
   <h2 id="loeschTitel">{{ _('Konto wirklich löschen?') }}</h2>
   <p id="loeschText"></p>
@@ -236,8 +246,8 @@
     if (!d) return;
     konto = d; apiDaten = a ? a.api : null;
     const name = d.konto.name || d.konto.email;
-    byId('kundeTitel').textContent = t('Kunde: {name}', { name: name });
-    document.title = t('Kunde: {name}', { name: name }) + ' · ' + t('Verwaltung') + ' · InkluDocs';
+    byId('kundeTitel').textContent = t('Verwaltung') + ': ' + t('Kunde {name}', { name: name });
+    document.title = t('Kunde {name}', { name: name }) + ' · ' + t('Verwaltung') + ' · InkluDocs';
     ziel.innerHTML = '';
     ziel.setAttribute('aria-busy', 'false');
     const voll = V.istVollAdmin();
@@ -279,18 +289,12 @@
     if (!b) sec.appendChild(V.el('p', 'dash-empty', t('Die Buchungen konnten nicht geladen werden.')));
     else if (!buchungen.length) sec.appendChild(V.el('p', 'dash-empty', t('Noch keine Käufe oder Gutschriften.')));
     else {
-      const umsatzCent = buchungen.filter((x) => x.weg !== 'bonus' && x.status !== 'rueckgelaufen')
-        .reduce((s, x) => s + x.betrag_cent, 0);
+      const umsatzCent = buchungen.filter(V.zaehltZumUmsatz).reduce((s, x) => s + x.betrag_cent, 0);
       V.zeile(sec, t('Umsatz mit diesem Kunden insgesamt'), V.euro(umsatzCent));
       const ul = V.el('ul', 'verwaltung-liste');
       buchungen.forEach((x) => {
         const li = V.el('li', 'verwaltung-zeile', V.buchungText(x, false));
-        if (voll && x.weg !== 'stripe') {
-          const k = knopf(t('Berichtigen'), () => V.korrekturOeffnen(x, laden), 'btn-secondary btn-small');
-          k.setAttribute('aria-label', t('Buchung vom {datum} berichtigen', { datum: V.datumZeit(x.gebucht_am) }));
-          li.appendChild(document.createTextNode(' '));
-          li.appendChild(k);
-        }
+        V.buchungKnoepfe(li, x, laden);
         ul.appendChild(li);
       });
       sec.appendChild(ul);
@@ -346,7 +350,7 @@
     if (voll && !selbst) {
       sec = abschnitt(ziel, t('Konto verwalten'), 'h-konto');
       const akt = V.el('div', 'dash-actions');
-      akt.appendChild(knopf(d.konto.aktiv ? t('Konto sperren') : t('Konto entsperren'), sperren));
+      akt.appendChild(knopf(d.konto.aktiv ? t('Konto sperren') : t('Konto entsperren'), d.konto.aktiv ? sperrOeffnen : sperren));
       akt.appendChild(knopf(t('Passwort zurücksetzen'), pwOeffnen));
       akt.appendChild(knopf(t('Konto löschen'), loeschOeffnen, 'btn-delete'));
       sec.appendChild(akt);
@@ -558,6 +562,18 @@
   });
 
   // ── Konto verwalten ───────────────────────────────────────────────────
+  // Sperren mit Rückfrage (Steve 25.09.2026): sagt, was passiert — und warnt, wenn ein
+  // Stripe-Abo weiterläuft (Sperren kündigt es NICHT; das ist eine bewusste Entscheidung).
+  function sperrOeffnen() {
+    const name = konto.konto.name || konto.konto.email;
+    byId('sperrText').textContent = t('{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her.', { name: name });
+    const stripeAbo = konto.abo.plan !== 'free' && konto.abo.quelle === 'stripe' && konto.abo.auto_verlaengerung;
+    byId('sperrStripe').hidden = !stripeAbo;
+    byId('sperrDialog').showModal();
+  }
+  byId('sperrAbbrechen').addEventListener('click', () => byId('sperrDialog').close());
+  byId('sperrJa').addEventListener('click', async () => { byId('sperrDialog').close(); await sperren(); });
+
   async function sperren() {
     const r = await V.sendeJson('/api/admin/users/' + ID + '/toggle-active', 'POST');
     if (!r.ok) { announce(r.daten.detail || t('Fehler')); return; }

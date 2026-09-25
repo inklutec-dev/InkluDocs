@@ -8719,3 +8719,55 @@ msgstr "Retour"
 
 msgid "Zurück zur Kundenliste"
 msgstr "Retour à la liste des clients"
+
+# Verwaltung: Stornieren, Sperren (25.09.2026)
+msgid "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
+msgstr "{name} ne pourra plus se connecter, sera déconnecté immédiatement et les clés API ne fonctionneront plus. Les crédits, projets et écritures sont conservés ; le déblocage rétablit tout."
+
+msgid "1 Kunde"
+msgstr "1 client"
+
+msgid "Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard."
+msgstr "Attention : ce client a un abonnement Stripe en cours. Le blocage ne le résilie pas — Stripe continue de prélever. Résiliez-le dans le tableau de bord Stripe."
+
+msgid "Bitte kurz den Grund für das Stornieren angeben."
+msgstr "Veuillez indiquer brièvement la raison de l’annulation."
+
+msgid "Das Stornieren hat nicht geklappt."
+msgstr "L’annulation n’a pas abouti."
+
+msgid "Grund für das Stornieren"
+msgstr "Raison de l’annulation"
+
+msgid "Gutschrift stornieren"
+msgstr "Annuler le crédit"
+
+msgid "Gutschrift storniert."
+msgstr "Crédit annulé."
+
+msgid "Gutschrift vom {datum} stornieren"
+msgstr "Annuler le crédit du {datum}"
+
+msgid "Ja, sperren"
+msgstr "Oui, bloquer"
+
+msgid "Ja, stornieren"
+msgstr "Oui, annuler"
+
+msgid "Konto sperren?"
+msgstr "Bloquer le compte ?"
+
+msgid "Kunde {name}"
+msgstr "Client {name}"
+
+msgid "Stornieren"
+msgstr "Annuler"
+
+msgid "storniert, zählt nicht zum Umsatz"
+msgstr "annulé, non compté dans le chiffre d’affaires"
+
+msgid "Suche „{text}“"
+msgstr "Recherche « {text} »"
+
+msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
+msgstr "Les {rest} crédits non encore utilisés sur {menge} seront repris. Les crédits déjà utilisés restent consommés. L’écriture reste visible mais ne compte plus dans le chiffre d’affaires."

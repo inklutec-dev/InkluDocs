@@ -137,3 +137,22 @@ mussten ins Kulanz-Feld — Jens' Kauf (25.09.) landete als Geschenk, der Bonus 
 
 `tests/test_umsatz.py` (18, Wegwerf-Datenbank, inkl. Rechte und Endpunkte),
 `tests/e2e/ui_verwaltung.py` (Klicktest mit axe, nur Staging), `tests/e2e/ui_smoke.py` (Seiten).
+
+
+## Nachtrag 25.09.2026 abends: Stornieren, Sperre, Überschriften
+
+- **Stornieren** (`POST /api/admin/buchungen/{id}/storno` `{grund}`, nur Voll-Admins): für von Hand
+  eingetragene Credit-Gutschriften (Verkauf oder Bonus). Nimmt nur die noch NICHT verbrauchten
+  Credits des Pakets zurück (bedingtes Update gegen gleichzeitigen Verbrauch), setzt die Buchung auf
+  `storniert` (zählt nicht mehr zum Umsatz), Protokoll mit Name, Zeit, Grund und Menge. Stripe-Käufe
+  (Erstattung über Stripe) und Abos (über „Abo zuweisen oder ändern“) ausgenommen. Stornierte
+  Buchungen lassen sich nicht mehr berichtigen.
+- **Sperre wirkt sofort**: `get_current_user` prüft bei jeder Anfrage `users.is_active` (vorher nur
+  beim Anmelden — ein offenes Login lief bis zu 24 Stunden weiter; gelöschte Konten ebenso). Seiten
+  gesperrter/gelöschter Konten leiten zur Anmeldung. Sperren fragt nach und warnt bei laufendem
+  Stripe-Abo (Sperren kündigt es nicht).
+- **Überschriften**: „Verwaltung: Kunden“, „Verwaltung: Umsatz“, „Verwaltung: API“, „Verwaltung:
+  Einstellungen“, „Verwaltung: Kunde <Name>“. Die Kundenliste nennt die Auswahl („Alle Kunden: 9
+  Kunden“, „Suche „Jens“: 1 Kunde“).
+- `verify_aktionspreise_402.py` startet die Enforcement-Instanz (Port 8099) selbst und braucht kein
+  Passwort mehr (Token über `main.create_token`).

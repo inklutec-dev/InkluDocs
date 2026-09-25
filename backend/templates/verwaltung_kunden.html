@@ -7,7 +7,8 @@
    langen Liste. Je Kunde EINE Zeile mit einem Link auf seine Seite — keine Überschrift je
    Kunde, keine Tabelle. Suchbegriff, Filter und Seite stehen in der Adresse, damit „Zurück“
    von einer Kundenseite genau hierher führt. #}
-<h1>{{ _('Kunden') }}</h1>
+{# Steve 25.09.2026: Bereich vorne, damit Menüpunkt „Verwaltung“ und Überschrift zusammenpassen. #}
+<h1>{{ _('Verwaltung') }}: {{ _('Kunden') }}</h1>
 {% include "_verwaltung_nav.html" %}
 
 <form id="kundenSuche" class="verwaltung-suche" role="search" novalidate>
@@ -126,10 +127,15 @@
     ziel.innerHTML = '';
     ziel.setAttribute('aria-busy', 'false');
     const suche = !!zustand.q || zustand.filter !== 'alle';
+    // Die Überschrift nennt immer, WAS gezeigt wird (Steve 25.09.2026: „9 Kunden“ allein
+    // ließ offen, ob das alle sind): „Alle Kunden: 9“, „Neu in diesem Monat: 2“, „Suche „Jens“: 1“.
+    const opt = byId('suchFilter').options[byId('suchFilter').selectedIndex];
+    let auswahl = opt ? opt.textContent : '';
+    if (zustand.q) auswahl = t('Suche „{text}“', { text: zustand.q }) + (zustand.filter !== 'alle' ? ', ' + auswahl : '');
     let kopf;
-    if (!d.gesamt) kopf = suche ? t('Keine Kunden gefunden') : t('Noch keine Kunden');
-    else if (d.seiten > 1) kopf = t('{n} Kunden, Seite {seite} von {seiten}', { n: V.zahl(d.gesamt), seite: d.seite, seiten: d.seiten });
-    else kopf = t('{n} Kunden', { n: V.zahl(d.gesamt) });
+    if (!d.gesamt) kopf = auswahl + ': ' + (suche ? t('Keine Kunden gefunden') : t('Noch keine Kunden'));
+    else if (d.seiten > 1) kopf = auswahl + ': ' + t('{n} Kunden, Seite {seite} von {seiten}', { n: V.zahl(d.gesamt), seite: d.seite, seiten: d.seiten });
+    else kopf = auswahl + ': ' + (d.gesamt === 1 ? t('1 Kunde') : t('{n} Kunden', { n: V.zahl(d.gesamt) }));
     byId('kundenStatus').textContent = kopf;
     if (d.gesamt) {
       const ul = V.el('ul', 'verwaltung-liste');

@@ -86,8 +86,8 @@ with sync_playwright() as p:
           pg.locator(".app-nav a[aria-current=page]").inner_text().strip() == "Verwaltung")
     check("Bereichs-Navigation: „Kunden“ ist aktuelle Seite",
           pg.locator(".verwaltung-nav a[aria-current=page]").inner_text().strip() == "Kunden")
-    check("Genau eine H1 „Kunden“", pg.locator("h1").count() == 1 and pg.locator("h1").inner_text() == "Kunden")
-    check("Kundenliste zeigt Anzahl", re.search(r"\d+ Kunden", pg.locator("#kundenStatus").inner_text()) is not None,
+    check("Genau eine H1 „Verwaltung: Kunden“", pg.locator("h1").count() == 1 and pg.locator("h1").inner_text() == "Verwaltung: Kunden")
+    check("Kundenliste nennt Auswahl und Anzahl", re.match(r"Alle Kunden: \d+ Kunden", pg.locator("#kundenStatus").inner_text()) is not None,
           pg.locator("#kundenStatus").inner_text())
     check("Kunden als Links, keine Überschrift je Kunde",
           pg.locator("#kundenListe a").count() > 0 and pg.locator("#kundenListe h3, #kundenListe h2").count() == 0)
@@ -105,14 +105,15 @@ with sync_playwright() as p:
     # Suche
     pg.fill("#suchText", "verwaltung-test-" + stempel)
     pg.click("#kundenSuche button[type=submit]")
-    pg.wait_for_function("() => document.querySelector('#kundenStatus').textContent.trim() === '1 Kunden'", timeout=10000)
+    pg.wait_for_function("() => document.querySelector('#kundenStatus').textContent.trim().endsWith(': 1 Kunde')", timeout=10000)
+    check("Überschrift nennt die Suche", pg.locator("#kundenStatus").inner_text().startswith("Suche „verwaltung-test-"), pg.locator("#kundenStatus").inner_text())
     check("Suche findet genau das Testkonto", pg.locator("#kundenListe li").count() == 1)
     check("Suche steht in der Adresse", "q=verwaltung-test-" in pg.url, pg.url)
     pg.click("#kundenListe li a")
     pg.wait_for_selector("#h-ueberblick", timeout=10000)
     kunde_url = pg.url
     kid = int(kunde_url.rstrip("/").split("/")[-1])
-    check("Kundenseite: H1 mit Namen", pg.locator("h1").inner_text() == "Kunde: Verwaltung Testkunde")
+    check("Kundenseite: H1 mit Bereich und Namen", pg.locator("h1").inner_text() == "Verwaltung: Kunde Verwaltung Testkunde", pg.locator("h1").inner_text())
     check("Kundenseite: Zurück führt zur Suche", "q=verwaltung-test-" in (pg.locator("#zurListe").get_attribute("href") or ""))
     check("Kundenseite: noch keine Buchungen", "Noch keine Käufe oder Gutschriften" in pg.locator("main").inner_text())
     axe(pg, "Kundenseite")
@@ -174,6 +175,43 @@ with sync_playwright() as p:
     check("Berichtigt: Verkauf 24,00 € mit Vermerk",
           "Verkauf auf Rechnung, 24,00" in text and "berichtigt" in text, text[:800])
     check("Umsatz mit diesem Kunden jetzt 111,50 €", "insgesamt: 111,50" in text)
+
+    # Stornieren: Bonus 100, dann zurücknehmen
+    pg.click("text=Credits gutschreiben")
+    pg.select_option("#gsArt", "bonus")
+    pg.select_option("#gsMenge", "frei")
+    pg.fill("#gsFrei", "100")
+    pg.fill("#gsGrund", "Klicktest Storno")
+    pg.click("#gsForm button[type=submit]")
+    pg.click("#gsBuchen")
+    pg.wait_for_function("() => !document.querySelector('#gsDialog').open", timeout=10000)
+    pg.wait_for_timeout(600)
+    zeile = pg.locator("#kundeInhalt li", has_text="Klicktest Storno")
+    zeile.locator("button", has_text="Stornieren").click()
+    check("Storno-Dialog nennt die zurückgenommenen Credits",
+          "100 von 100 Credits" in pg.locator("#stornoFolgen").inner_text(), pg.locator("#stornoFolgen").inner_text())
+    axe(pg, "Storno-Dialog")
+    pg.click("#stornoForm button[type=submit]")
+    check("Storno ohne Grund: Fehlermeldung", "Grund" in pg.locator("#stornoFehler").inner_text())
+    pg.fill("#stornoGrund", "Klicktest falsche Menge")
+    pg.click("#stornoForm button[type=submit]")
+    pg.wait_for_function("() => !document.querySelector('#stornoDialog').open", timeout=10000)
+    pg.wait_for_timeout(600)
+    zeile = pg.locator("#kundeInhalt li", has_text="Klicktest Storno")
+    check("Storniert, kein Knopf mehr an der Buchung",
+          "storniert, zählt nicht zum Umsatz" in zeile.inner_text() and zeile.locator("button").count() == 0, zeile.inner_text())
+    check("Umsatz unverändert 111,50 € (Bonus zählte nie)", "insgesamt: 111,50" in pg.locator("main").inner_text())
+
+    # Sperren mit Rückfrage, dann wieder entsperren
+    pg.click("text=Konto sperren")
+    check("Sperr-Rückfrage erklärt die Folgen", "nicht mehr anmelden" in pg.locator("#sperrText").inner_text())
+    axe(pg, "Sperr-Dialog")
+    pg.click("#sperrJa")
+    pg.wait_for_selector("text=Konto entsperren", timeout=10000)
+    check("Status: gesperrt", "Status: gesperrt" in pg.locator("main").inner_text())
+    pg.click("text=Konto entsperren")
+    pg.wait_for_selector("text=Konto sperren", timeout=10000)
+    check("Wieder aktiv", "Status: aktiv" in pg.locator("main").inner_text())
 
     # Abo auf Rechnung
     pg.click("text=Abo zuweisen oder ändern")

@@ -8719,3 +8719,55 @@ msgstr "Atrás"
 
 msgid "Zurück zur Kundenliste"
 msgstr "Volver a la lista de clientes"
+
+# Verwaltung: Stornieren, Sperren (25.09.2026)
+msgid "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
+msgstr "{name} ya no podrá iniciar sesión, se cerrará su sesión de inmediato y las claves de API dejarán de funcionar. Los créditos, proyectos y reservas se conservan; al desbloquear se restablece todo."
+
+msgid "1 Kunde"
+msgstr "1 cliente"
+
+msgid "Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard."
+msgstr "Atención: este cliente tiene una suscripción activa en Stripe. Bloquear no la cancela: Stripe sigue cobrando. Cancélela en el panel de Stripe."
+
+msgid "Bitte kurz den Grund für das Stornieren angeben."
+msgstr "Indique brevemente el motivo de la anulación."
+
+msgid "Das Stornieren hat nicht geklappt."
+msgstr "La anulación no ha funcionado."
+
+msgid "Grund für das Stornieren"
+msgstr "Motivo de la anulación"
+
+msgid "Gutschrift stornieren"
+msgstr "Anular el abono"
+
+msgid "Gutschrift storniert."
+msgstr "Abono anulado."
+
+msgid "Gutschrift vom {datum} stornieren"
+msgstr "Anular el abono del {datum}"
+
+msgid "Ja, sperren"
+msgstr "Sí, bloquear"
+
+msgid "Ja, stornieren"
+msgstr "Sí, anular"
+
+msgid "Konto sperren?"
+msgstr "¿Bloquear la cuenta?"
+
+msgid "Kunde {name}"
+msgstr "Cliente {name}"
+
+msgid "Stornieren"
+msgstr "Anular"
+
+msgid "storniert, zählt nicht zum Umsatz"
+msgstr "anulado, no cuenta como facturación"
+
+msgid "Suche „{text}“"
+msgstr "Búsqueda «{text}»"
+
+msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
+msgstr "Se retirarán los {rest} de {menge} créditos aún no utilizados. Los créditos ya usados siguen consumidos. La reserva sigue visible, pero ya no cuenta como facturación."

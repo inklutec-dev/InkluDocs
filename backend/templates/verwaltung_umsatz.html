@@ -8,7 +8,7 @@
    die Monate des Jahres und die einzelnen Buchungen — je Buchung EINE Zeile. Stripe bucht
    sich selbst ein, Rechnungen kommen über „Credits gutschreiben“ bzw. „Abo zuweisen“.
    Herunterladen als Excel oder CSV für genau die gewählte Auswahl. #}
-<h1>{{ _('Umsatz') }}</h1>
+<h1>{{ _('Verwaltung') }}: {{ _('Umsatz') }}</h1>
 {% include "_verwaltung_nav.html" %}
 
 <section class="verwaltung-bereich" aria-labelledby="h-blick">
@@ -167,7 +167,6 @@
       V.zeile(ziel, t('Umsatz im Zeitraum'), V.euro(d.summe_cent));
       if (d.bonus_credits) V.zeile(ziel, t('Verschenkt im Zeitraum'), t('{credits} Credits', { credits: V.zahl(d.bonus_credits) }));
       const ul = V.el('ul', 'verwaltung-liste');
-      const voll = V.istVollAdmin();
       d.buchungen.forEach((b) => {
         const li = V.el('li', 'verwaltung-zeile');
         const teile = V.buchungText(b, true).split(' · ');
@@ -181,14 +180,7 @@
           li.appendChild(document.createTextNode(teile[1]));
         }
         li.appendChild(document.createTextNode(' · ' + teile.slice(2).join(' · ')));
-        if (voll && b.weg !== 'stripe') {
-          const k = V.el('button', 'btn btn-secondary btn-small', t('Berichtigen'));
-          k.type = 'button';
-          k.setAttribute('aria-label', t('Buchung vom {datum} berichtigen', { datum: V.datumZeit(b.gebucht_am) }));
-          k.addEventListener('click', () => V.korrekturOeffnen(b, () => laden(false)));
-          li.appendChild(document.createTextNode(' '));
-          li.appendChild(k);
-        }
+        V.buchungKnoepfe(li, b, () => laden(false));
         ul.appendChild(li);
       });
       ziel.appendChild(ul);
