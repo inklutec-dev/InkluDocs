@@ -9215,6 +9215,24 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
 
 # ─── Public API ──────────────────────────────────────────────
 
+# Einheitliches Fehlerformat (25.09.2026): Die Anleitung verspricht fuer die ganze API v1
+# {"error": {"code", "message", "status"}, "detail": "..."} plus Kopfzeile X-API-Version. Die
+# Dokument-Endpunkte (api_dokumente_v1) formen ihre Fehler selbst; die aelteren Einzelbild-Endpunkte
+# /api/v1/alt-text lieferten nur FastAPIs {"detail": "..."}. "detail" bleibt als Text erhalten —
+# bestehende Anbindungen (z. B. InkluEdit), die detail lesen, laufen unveraendert weiter.
+from fastapi.exception_handlers import http_exception_handler as _standard_http_fehler  # noqa: E402
+from starlette.exceptions import HTTPException as _StarletteHTTPException  # noqa: E402
+
+
+@app.exception_handler(_StarletteHTTPException)
+async def _http_fehler(request: Request, exc: _StarletteHTTPException):
+    if request.url.path.startswith("/api/v1/alt-text"):
+        antwort = api_dokumente_v1._aus_http_exception(exc)
+        antwort.headers["X-API-Version"] = api_dokumente_v1.API_VERSION
+        return antwort
+    return await _standard_http_fehler(request, exc)
+
+
 @app.post("/api/v1/alt-text")
 async def api_generate_alt_text(request: Request):
     """Public API endpoint for alt-text generation. Requires X-API-Key header.
@@ -9244,9 +9262,14 @@ async def api_generate_alt_text(request: Request):
     # (greift erst bei ABO_ENFORCEMENT=on; maschinenlesbares Fehlerformat folgt in Etappe 4).
     _wache = billing.aktion_pruefung(api_user["id"], "bild_generierung")
     if not _wache["erlaubt"]:
-        raise HTTPException(status_code=429, detail=(
-            f"Nicht genügend Credits: ein Alt-Text kostet {_wache['preis']} Credits, verfügbar sind "
-            f"{0 if _wache['verfuegbar'] is None else _wache['verfuegbar']}. Bitte Credits nachbuchen oder den Plan wechseln."))
+        _verfuegbar = 0 if _wache['verfuegbar'] is None else _wache['verfuegbar']
+        # Code credits_fehlen wie bei den Dokumenten (Status bleibt 429, so dokumentiert).
+        raise HTTPException(status_code=429, detail={
+            "code": "credits_fehlen",
+            "text": (f"Nicht genügend Credits: ein Alt-Text kostet {_wache['preis']} Credits, verfügbar sind "
+                     f"{_verfuegbar}. Bitte Credits nachbuchen oder den Plan wechseln."),
+            "preis": _wache["preis"], "verfuegbar": _verfuegbar,
+            "fehlend": max(0, int(_wache["preis"]) - int(_verfuegbar or 0))})
 
     content_type = request.headers.get("content-type", "")
     context_text = ""
@@ -9401,6 +9424,7 @@ async def api_generate_alt_text(request: Request):
                 "X-DailyLimit-Limit": str(tageslimit),
                 "X-DailyLimit-Used": str(daily_used + 1),
                 "X-DailyLimit-Remaining": str(max(0, daily_remaining - 1)),
+                "X-API-Version": api_dokumente_v1.API_VERSION,
             }
         )
     except HTTPException:
@@ -9436,7 +9460,7 @@ async def api_get_alt_text(result_id: str, request: Request):
         "konfidenz": result["konfidenz"],
         "created_at": result["created_at"],
         "updated_at": result["updated_at"],
-    })
+    }, headers={"X-API-Version": api_dokumente_v1.API_VERSION})
 
 
 @app.patch("/api/v1/alt-text/{result_id}")
@@ -9481,7 +9505,7 @@ async def api_update_alt_text(result_id: str, request: Request):
         "langbeschreibung": updated["langbeschreibung"],
         "bildtyp": updated["bildtyp"],
         "updated_at": updated["updated_at"],
-    })
+    }, headers={"X-API-Version": api_dokumente_v1.API_VERSION})
 
 
 @app.get("/api/api-usage-stats")

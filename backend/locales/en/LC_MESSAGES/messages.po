@@ -8007,3 +8007,22 @@ msgstr "Cancel credit"
 msgid "Prüfung"
 msgstr "Review"
 
+msgid "Generieren starten: Die KI beschreibt alle offenen Einträge im Hintergrund. Status abfragen, bis „done“."
+msgstr "Start generation: the AI describes all open items in the background. Poll the status until “done”."
+
+msgid "Sammellauf starten: ohne Angabe nur offene Einträge (scope=open), mit scope=all alle; optional nur document_id. Antwort 202, oder 200, wenn nichts offen ist."
+msgstr "Start a batch run: by default only open items (scope=open), with scope=all every item; optionally only document_id. Response 202, or 200 if nothing is open."
+
+msgid "Optional als JSON: document_id (nur ein Dokument) und filename (Dateiname der Ausgabe)."
+msgstr "Optional JSON body: document_id (only one document) and filename (name of the output file)."
+
+msgid "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify; optional guest_name und message)."
+msgstr "Create a review link for our review view (guest_email, role kunde or lektorat, notify; optional guest_name and message)."
+
+#, python-brace-format
+msgid "Je Konto: {n} generierte Texte pro Tag, App und API zusammen, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+msgstr "Per account: {n} generated texts per day, app and API combined, regardless of the number of keys (reset at midnight UTC). For higher volumes talk to us; the quota can be adjusted per account."
+
+msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+msgstr "If the AI cannot describe an image, the entry keeps status failed, the error field states the reason in plain language (for example “AI service overloaded (429)” or “The image file could not be read”), and counts.failed on the document counts it. If a whole run ends early (credits, daily limit, cancellation), the reason is in run_note on the document. Temporary AI service hiccups are retried by InkluDocs itself with waiting time before an entry counts as failed."
+

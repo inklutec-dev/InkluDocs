@@ -75,7 +75,7 @@
              "preis": 25, "verfuegbar": 3, "fehlend": 22 },
   "detail": "…"
 }{% endraw %}</code></pre>
-  <p>{{ _('Codes') }}: <code>unauthorized</code>, <code>not_found</code>, <code>bad_request</code>, <code>unsupported_media_type</code>, <code>payload_too_large</code>, <code>conflict</code>, <code>payment_required</code>, <code>credits_fehlen</code>, <code>rate_limited</code>, <code>unprocessable</code>, <code>upstream_error</code>, <code>unavailable</code>, <code>internal_error</code>.</p>
+  <p>{{ _('Codes') }}: <code>unauthorized</code>, <code>not_found</code>, <code>bad_request</code>, <code>unsupported_media_type</code>, <code>payload_too_large</code>, <code>conflict</code>, <code>payment_required</code>, <code>credits_fehlen</code>, <code>rate_limited</code>, <code>unprocessable</code>, <code>upstream_error</code>, <code>unavailable</code>, <code>timeout</code>, <code>internal_error</code>.</p>
   <h3>{{ _('Aufbewahrung') }}</h3>
   <p>{{ _('Dokumente bleiben in deinem Konto, bis du sie löschst (in der App oder per API), genau wie Projekte in der App. Ergebnisse der Einzelbild-Schnittstelle bleiben mit ihrer result_id abrufbar, solange der Schlüssel besteht; wird ein Schlüssel gelöscht, gehen sein Verbrauchsprotokoll und seine Einzelbild-Ergebnisse mit.') }}</p>
 </section>
@@ -111,7 +111,7 @@
   <ol>
     <li>{{ _('Dokument anlegen: Datei oder Adresse schicken, Antwort ist eine id und der Status „extracting“ (oder gleich „ready“).') }}</li>
     <li>{{ _('Status abfragen, bis „ready“: Jetzt sind die Einträge bekannt, counts.items sagt, wie viele.') }}</li>
-    <li>{{ _('Generieren starten: Die KI beschreibt alle Einträge im Hintergrund. Status abfragen, bis „done“.') }}</li>
+    <li>{{ _('Generieren starten: Die KI beschreibt alle offenen Einträge im Hintergrund. Status abfragen, bis „done“.') }}</li>
     <li>{{ _('Einträge lesen und bei Bedarf korrigieren, oder einen Freigabe-Link für unsere Prüfansicht erzeugen.') }}</li>
     <li>{{ _('Exportieren: barrierefreie PDF, Word mit Alt-Texten, PDF/UA aus Word, oder die Textliste als Excel, CSV oder JSON.') }}</li>
   </ol>
@@ -123,14 +123,14 @@
       <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents</code></td><td>{{ _('Dokument anlegen: Datei (multipart, Feld file) oder JSON mit url. Antwort 202 (wird extrahiert) oder 201 (schon bereit).') }}</td></tr>
       <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents</code></td><td>{{ _('Eigene Dokumente auflisten (limit, offset).') }}</td></tr>
       <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}</code></td><td>{{ _('Status, Zähler, Fortschritt, Hinweis zum letzten Lauf.') }}</td></tr>
-      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/generate</code></td><td>{{ _('Sammellauf starten (alle Einträge, optional nur document_id). Antwort 202.') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/generate</code></td><td>{{ _('Sammellauf starten: ohne Angabe nur offene Einträge (scope=open), mit scope=all alle; optional nur document_id. Antwort 202, oder 200, wenn nichts offen ist.') }}</td></tr>
       <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/generate/cancel</code></td><td>{{ _('Laufenden Sammellauf nach dem aktuellen Eintrag beenden.') }}</td></tr>
       <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/items</code></td><td>{{ _('Alle Einträge mit Texten, Status und Bild-Adresse.') }}</td></tr>
       <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/items/{item_id}/file</code></td><td>{{ _('Die Bilddatei eines Eintrags, zum Anzeigen in deinem Produkt.') }}</td></tr>
       <tr><td><span class="badge b-patch">PATCH</span><code>/api/v1/documents/{id}/items/{item_id}</code></td><td>{{ _('Text von Hand setzen: alt_text und/oder langbeschreibung (Bilder) bzw. quickinfo (Felder). Ein leerer Text heißt bewusst leer.') }}</td></tr>
       <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/items/{item_id}/generate</code></td><td>{{ _('Einen Eintrag neu beschreiben lassen (optional image_type).') }} {{ _('Nimmt auch language, use_context, prompt_id oder prompt an; sie gelten danach für das ganze Dokument.') }}</td></tr>
-      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/export/{format}</code></td><td>{{ _('Export: pdf, docx, pdfua, xlsx, csv, json; für Formulare formular und formular_csv. Antwort ist die Datei; bei pdfua ein Bericht mit download_url.') }}</td></tr>
-      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/review-link</code></td><td>{{ _('Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify).') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/export/{format}</code></td><td>{{ _('Export: pdf, docx, pdfua, xlsx, csv, json; für Formulare formular und formular_csv. Antwort ist die Datei; bei pdfua ein Bericht mit download_url.') }} {{ _('Optional als JSON: document_id (nur ein Dokument) und filename (Dateiname der Ausgabe).') }}</td></tr>
+      <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/review-link</code></td><td>{{ _('Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify; optional guest_name und message).') }}</td></tr>
       <tr><td><span class="badge b-get">GET</span><code>/api/v1/documents/{id}/review-links</code></td><td>{{ _('Freigaben des Dokuments auflisten.') }}</td></tr>
       <tr><td><span class="badge b-post">POST</span><code>/api/v1/documents/{id}/review-links/revoke</code></td><td>{{ _('Freigabe zurückziehen (token).') }}</td></tr>
       <tr><td><span class="badge b-delete">DELETE</span><code>/api/v1/documents/{id}</code></td><td>{{ _('Dokument samt Dateien und Texten löschen.') }}</td></tr>
@@ -179,12 +179,12 @@
   "status": "done", "text_status": "mit_text",
   "alt_text": "…", "alt_text_ki": "…", "alt_text_edited": null,
   "langbeschreibung": "…", "bildtyp": "foto", "konfidenz": "hoch",
-  "needs_review": false, "file_url": "…/items/5031/file"
+  "needs_review": false, "error": null, "file_url": "…/items/5031/file"
 }{% endraw %}</code></pre>
   <p>{{ _('alt_text ist der sichtbare Text (eigener Text vor KI-Text vor Quelltext), alt_text_ki der letzte KI-Vorschlag, alt_text_edited der von Hand gesetzte Text (null = nie angefasst, leer = bewusst geleert). needs_review markiert Vorschläge, die die KI selbst als unsicher einstuft. Bei Formularen heißen die Felder quickinfo, quickinfo_ki, quickinfo_original.') }}</p>
   <p>{{ _('GET …/items lässt sich filtern: ?status=failed (auch pending, generating, done) und ?text_status=offen (auch mit_text, dekorativ). count zählt die gelieferten, total alle Einträge.') }}</p>
   <h3 id="h-failed">{{ _('Fehlgeschlagene Einträge') }}</h3>
-  <p>{{ _('Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in lauf_hinweis am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt.') }}</p>
+  <p>{{ _('Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt.') }}</p>
   <p>{{ _('error kann auch bei status done stehen: Dann ist ein erneuter Versuch gescheitert, der vorhandene Text ist geblieben und needs_review ist gesetzt.') }}</p>
   <p>{{ _('So holst du Fehlschläge nach: POST …/generate ohne scope (oder scope=open) beschreibt nur die offenen Einträge, fertige bleiben unberührt und kosten nichts. Einzelne Einträge: POST …/items/{item_id}/generate. Credits fallen nur für Einträge an, die einen Text bekommen haben. Erst wenn nichts mehr offen ist, nimmt scope=all wieder alle Einträge.') }}</p>
   <pre tabindex="0"><code>{% raw %}GET /api/v1/documents/812/items?status=failed
@@ -229,7 +229,7 @@ POST /api/v1/documents/812/generate  {"scope": "all", "language": "en"}   → al
   <h2 id="h-limits">{{ _('Rate-Limits') }}</h2>
   <ul>
     <li>{{ _('Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter.').format(minute=limit_minute, tag=limit_tag, lesen=limit_lesen) }}</li>
-    <li>{{ _('Je Konto: {n} generierte Texte pro Tag über die API, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen.').format(n=tageslimit) }}</li>
+    <li>{{ _('Je Konto: {n} generierte Texte pro Tag, App und API zusammen, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen.').format(n=tageslimit) }}</li>
   </ul>
   <p>{{ _('Die verbleibenden Anfragen stehen in den Kopfzeilen X-RateLimit-Remaining-Minute und X-RateLimit-Remaining-Day; bei Überschreitung kommt HTTP 429 mit Retry-After.') }}</p>
 </section>

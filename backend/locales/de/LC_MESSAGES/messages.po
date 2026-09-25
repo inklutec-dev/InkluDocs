@@ -8010,3 +8010,22 @@ msgstr "Gutschrift stornieren"
 msgid "Prüfung"
 msgstr "Prüfung"
 
+msgid "Generieren starten: Die KI beschreibt alle offenen Einträge im Hintergrund. Status abfragen, bis „done“."
+msgstr "Generieren starten: Die KI beschreibt alle offenen Einträge im Hintergrund. Status abfragen, bis „done“."
+
+msgid "Sammellauf starten: ohne Angabe nur offene Einträge (scope=open), mit scope=all alle; optional nur document_id. Antwort 202, oder 200, wenn nichts offen ist."
+msgstr "Sammellauf starten: ohne Angabe nur offene Einträge (scope=open), mit scope=all alle; optional nur document_id. Antwort 202, oder 200, wenn nichts offen ist."
+
+msgid "Optional als JSON: document_id (nur ein Dokument) und filename (Dateiname der Ausgabe)."
+msgstr "Optional als JSON: document_id (nur ein Dokument) und filename (Dateiname der Ausgabe)."
+
+msgid "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify; optional guest_name und message)."
+msgstr "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify; optional guest_name und message)."
+
+#, python-brace-format
+msgid "Je Konto: {n} generierte Texte pro Tag, App und API zusammen, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+msgstr "Je Konto: {n} generierte Texte pro Tag, App und API zusammen, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+
+msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+msgstr "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+

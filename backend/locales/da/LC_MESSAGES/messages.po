@@ -7706,3 +7706,22 @@ msgstr "Annullér kreditering"
 msgid "Prüfung"
 msgstr "Kontrol"
 
+msgid "Generieren starten: Die KI beschreibt alle offenen Einträge im Hintergrund. Status abfragen, bis „done“."
+msgstr "Start genereringen: AI’en beskriver alle åbne poster i baggrunden. Spørg til status, indtil „done“."
+
+msgid "Sammellauf starten: ohne Angabe nur offene Einträge (scope=open), mit scope=all alle; optional nur document_id. Antwort 202, oder 200, wenn nichts offen ist."
+msgstr "Start en samlet kørsel: som standard kun åbne poster (scope=open), med scope=all alle poster; valgfrit kun document_id. Svar 202, eller 200 hvis intet er åbent."
+
+msgid "Optional als JSON: document_id (nur ein Dokument) und filename (Dateiname der Ausgabe)."
+msgstr "Valgfrit som JSON: document_id (kun ét dokument) og filename (filnavn på resultatet)."
+
+msgid "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify; optional guest_name und message)."
+msgstr "Opret et gennemsynslink til vores gennemsynsvisning (guest_email, role kunde eller lektorat, notify; valgfrit guest_name og message)."
+
+#, python-brace-format
+msgid "Je Konto: {n} generierte Texte pro Tag, App und API zusammen, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+msgstr "Pr. konto: {n} genererede tekster pr. dag, app og API tilsammen, uanset antal nøgler (nulstilles ved midnat UTC). Ved større mængder så kontakt os; kvoten kan tilpasses pr. konto."
+
+msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+msgstr "Kan AI’en ikke beskrive et billede, beholder posten status failed, feltet error angiver årsagen i almindeligt sprog (for eksempel „AI-tjeneste overbelastet (429)“ eller „Billedfilen kunne ikke læses“), og counts.failed på dokumentet tæller den med. Slutter en hel kørsel tidligere (kreditter, dagsgrænse, afbrydelse), står årsagen i run_note på dokumentet. Midlertidige forstyrrelser hos AI-tjenesten gentager InkluDocs selv med ventetid, før en post regnes som failed."
+

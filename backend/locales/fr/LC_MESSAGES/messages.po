@@ -8009,3 +8009,22 @@ msgstr "Annuler le crédit"
 msgid "Prüfung"
 msgstr "Contrôle"
 
+msgid "Generieren starten: Die KI beschreibt alle offenen Einträge im Hintergrund. Status abfragen, bis „done“."
+msgstr "Lancer la génération : l’IA décrit toutes les entrées ouvertes en arrière-plan. Interrogez le statut jusqu’à « done »."
+
+msgid "Sammellauf starten: ohne Angabe nur offene Einträge (scope=open), mit scope=all alle; optional nur document_id. Antwort 202, oder 200, wenn nichts offen ist."
+msgstr "Lancer un traitement groupé : par défaut uniquement les entrées ouvertes (scope=open), avec scope=all toutes les entrées ; en option uniquement document_id. Réponse 202, ou 200 si rien n’est ouvert."
+
+msgid "Optional als JSON: document_id (nur ein Dokument) und filename (Dateiname der Ausgabe)."
+msgstr "Corps JSON facultatif : document_id (un seul document) et filename (nom du fichier produit)."
+
+msgid "Freigabe-Link für unsere Prüfansicht anlegen (guest_email, role kunde oder lektorat, notify; optional guest_name und message)."
+msgstr "Créer un lien de relecture vers notre vue de relecture (guest_email, role kunde ou lektorat, notify ; en option guest_name et message)."
+
+#, python-brace-format
+msgid "Je Konto: {n} generierte Texte pro Tag, App und API zusammen, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
+msgstr "Par compte : {n} textes générés par jour, application et API confondues, quel que soit le nombre de clés (remise à zéro à minuit UTC). Pour des volumes supérieurs, contactez-nous ; le quota s’ajuste par compte."
+
+msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+msgstr "Si l’IA ne peut pas décrire une image, l’entrée garde le statut failed, le champ error indique la raison en langage courant (par exemple « service IA surchargé (429) » ou « Le fichier image n’a pas pu être lu »), et counts.failed sur le document le comptabilise. Si tout un traitement s’arrête plus tôt (crédits, limite journalière, annulation), la raison se trouve dans run_note sur le document. Les perturbations passagères du service IA sont réessayées par InkluDocs avec un délai avant qu’une entrée ne soit considérée comme failed."
+
