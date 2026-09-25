@@ -11,24 +11,21 @@
 <h1>{{ _('Verwaltung') }}: {{ _('Kunden') }}</h1>
 {% include "_verwaltung_nav.html" %}
 
-<form id="kundenSuche" class="verwaltung-suche" role="search" novalidate>
+{# Michael Karbe 25.09.2026 (14:38): Suchfeld ohne Hinweistext, darunter die Auswahl „Abo“ mit
+   Alle Kunden / Free / Single / Team / Enterprise, alles untereinander. #}
+<form id="kundenSuche" class="verwaltung-suche-stapel" role="search" novalidate>
   <div class="dash-field">
     <label for="suchText">{{ _('Kunden suchen') }}</label>
-    <input type="search" id="suchText" class="dash-input" autocomplete="off" maxlength="100" aria-describedby="suchHinweis">
-    <p class="dash-sub" id="suchHinweis">{{ _('Name, E-Mail oder Teamname — ein Teil genügt.') }}</p>
+    <input type="search" id="suchText" class="dash-input" autocomplete="off" maxlength="100">
   </div>
   <div class="dash-field">
-    <label for="suchFilter">{{ _('Anzeigen') }}</label>
+    <label for="suchFilter">{{ _('Abo') }}</label>
     <select id="suchFilter" class="dash-input">
       <option value="alle">{{ _('Alle Kunden') }}</option>
-      <option value="abo">{{ _('Mit Abo') }}</option>
-      <option value="team">{{ _('Team und Enterprise') }}</option>
-      <option value="rechnung">{{ _('Abo auf Rechnung') }}</option>
-      <option value="stripe">{{ _('Abo über Stripe') }}</option>
-      <option value="kaeufer">{{ _('Mit Käufen') }}</option>
-      <option value="neu">{{ _('Neu in diesem Monat') }}</option>
-      <option value="gesperrt">{{ _('Gesperrt') }}</option>
-      <option value="admins">{{ _('Administratoren') }}</option>
+      <option value="free">Free</option>
+      <option value="single">Single</option>
+      <option value="team">Team</option>
+      <option value="enterprise">Enterprise</option>
     </select>
   </div>
   <button type="submit" class="btn btn-primary">{{ _('Suchen') }}</button>

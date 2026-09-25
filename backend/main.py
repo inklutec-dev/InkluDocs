@@ -4259,7 +4259,7 @@ async def admin_setze_api_limit(user_id: int, request: Request,
 # Filter, 25 je Seite), eine Seite je Kunde, /verwaltung/umsatz und /verwaltung/api.
 # Bei 1.000 Kunden bleibt es dieselbe Seite — nur mit mehr Seitenzahlen.
 
-KUNDEN_FILTER = ("alle", "abo", "team", "rechnung", "stripe", "kaeufer", "neu", "gesperrt", "admins")
+KUNDEN_FILTER = ("alle", "free", "single", "team", "enterprise")   # Michael 25.09.2026: nach Abo-Art
 KUNDEN_JE_SEITE = 25
 
 
@@ -4271,14 +4271,6 @@ async def admin_kunden_liste(q: str = "", filter: str = "alle", seite: int = 1,
         raise HTTPException(status_code=400, detail="Unbekannter Filter")
     q = (q or "").strip().lower()[:100]
     alle = list_all_users()
-    conn = get_db()
-    try:
-        kaeufer = {r[0] for r in conn.execute(
-            "SELECT DISTINCT konto_user_id FROM buchungen WHERE weg != 'bonus' "
-            "AND konto_user_id IS NOT NULL").fetchall()}
-    finally:
-        conn.close()
-    monat_start = umsatz.zeitraum(umsatz.jetzt_lokal().year, umsatz.jetzt_lokal().month)[0]
     treffer = []
     for u in alle:
         plan = billing.effektiver_plan(u)
@@ -4286,22 +4278,8 @@ async def admin_kunden_liste(q: str = "", filter: str = "alle", seite: int = 1,
                 and q not in (u.get("email") or "").lower() \
                 and q not in (u.get("team_name") or "").lower():
             continue
-        if filter == "abo" and plan == "free":
-            continue
-        # Team und Enterprise: die zahlenden Inhaber (Mitglieder haben selbst keinen Team-Plan).
-        if filter == "team" and plan not in billing.PLAN_SITZE:
-            continue
-        if filter == "rechnung" and not (plan != "free" and u.get("plan_quelle") == "rechnung"):
-            continue
-        if filter == "stripe" and not (plan != "free" and u.get("plan_quelle") == "stripe"):
-            continue
-        if filter == "kaeufer" and u["id"] not in kaeufer:
-            continue
-        if filter == "neu" and (u.get("created_at") or "") < monat_start:
-            continue
-        if filter == "gesperrt" and u.get("is_active"):
-            continue
-        if filter == "admins" and not u.get("is_admin"):
+        # Filter = effektiver Plan (abgelaufene Abos zaehlen als Free).
+        if filter != "alle" and plan != filter:
             continue
         treffer.append((u, plan))
     # Zuletzt aktive zuerst; nie Angemeldete nach Anlagedatum dahinter.
