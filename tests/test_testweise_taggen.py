@@ -210,6 +210,14 @@ class TestEndpunkte(unittest.TestCase):
         stand = self.c.get(f"/api/projects/{self.pid}/documents/{self.did}/tagging").json()["test"]
         self.assertFalse(stand.get("hoerprobe_moeglich"))
 
+    def test_5_api_doku_basisadresse(self):
+        """Die API-Anleitung nennt die Adresse, unter der sie aufgerufen wird (nur bekannte Hosts), nie einen fremden Host."""
+        r = self.c.get("/api/v1/docs", headers={"host": "inkludocs.de"})
+        self.assertIn("https://inkludocs.de/api/v1/documents", r.text)
+        self.assertNotIn("inkludocs.inklutec.de/api/v1/documents", r.text)
+        r = self.c.get("/api/v1/docs", headers={"host": "boese.example"})
+        self.assertNotIn("boese.example", r.text)
+
     def test_4_loeschen_raeumt_auf(self):
         ordner, pdf, meta = self.ta.test_pfade(self.uid, self.pid, self.did)
         ab_ordner = os.path.join(self.main.RESULTS_DIR, str(self.uid), str(self.pid), "_abschluss")
