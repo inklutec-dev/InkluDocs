@@ -9496,6 +9496,23 @@ async def api_keys_stats(user: dict = Depends(get_current_user)):
 
 # ─── API Documentation ──────────────────────────────────────
 
+# Oeffentliche Adresse der API in der Anleitung (25.09.2026): BASE_URL steht auf Prod noch auf der alten Adresse
+# inkludocs.inklutec.de, die mit 301 auf inkludocs.de umleitet — ein POST aus den Beispielen kaeme dort nicht an
+# (Clients folgen 301 als GET oder gar nicht). Darum: die Adresse, unter der die Anleitung aufgerufen wurde, aber NUR
+# aus dieser Liste (kein fremder Host-Header in der Doku); sonst API_BASE_URL bzw. BASE_URL.
+_API_DOKU_HOSTS = {"inkludocs.de", "staging.inkludocs.inklutec.de", "demo.inkludocs.de"}
+
+
+def _api_basis(request: Request) -> str:
+    fest = (os.environ.get("API_BASE_URL") or "").strip().rstrip("/")
+    if fest:
+        return fest
+    host = (request.headers.get("host") or "").split(":")[0].strip().lower()
+    if host in _API_DOKU_HOSTS:
+        return f"https://{host}"
+    return BASE_URL.rstrip("/")
+
+
 @app.get("/api/v1/docs", response_class=HTMLResponse)
 async def api_docs(request: Request):
     """Oeffentliche API-Dokumentation (WCAG 2.2 AA). Seit 17.09.2026 ein Jinja-Template im
@@ -9503,7 +9520,7 @@ async def api_docs(request: Request):
     HTML-Zeichenkette hier in main.py). Zahlen kommen aus billing/Konstanten, nie aus dem Text."""
     ctx = template_context(request, resolve_ui_language(request), is_staging="staging" in BASE_URL)
     ctx.update({
-        "base_url": BASE_URL.rstrip("/"),
+        "base_url": _api_basis(request),
         "preis_alt": billing.AKTIONS_PREISE["bild_generierung"],
         "preis_qi": billing.AKTIONS_PREISE["quickinfo_generierung"],
         "preis_export": billing.AKTIONS_PREISE["pdf_export"],

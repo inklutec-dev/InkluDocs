@@ -2,12 +2,18 @@
 # Claude-Erstuebersetzung 03.07.2026 — Muttersprachler-QA offen.
 msgid ""
 msgstr ""
-"Project-Id-Version: InkluDocs\n"
+"Project-Id-Version:  InkluDocs\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-09-25 16:19+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: da\n"
+"Language-Team: da <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Generated-By: Babel 2.18.0\n"
 
 msgid "Anmeldung"
 msgstr "Log ind"
@@ -156,6 +162,7 @@ msgstr "Hej"
 msgid "Willkommen"
 msgstr "Velkommen"
 
+#, python-brace-format
 msgid "Heute {used} von {limit} Bildern genutzt – noch {remaining} übrig."
 msgstr "I dag er {used} af {limit} billeder brugt – {remaining} tilbage."
 
@@ -216,12 +223,14 @@ msgstr "Ingen projekter endnu. Opret dit første via ”Opret nyt projekt”."
 msgid "Unbenanntes Projekt"
 msgstr "Unavngivet projekt"
 
+#, python-brace-format
 msgid "{tool} · angelegt am {datum}"
 msgstr "{tool} · oprettet den {datum}"
 
 msgid "Alle Projekte anzeigen"
 msgstr "Vis alle projekter"
 
+#, python-brace-format
 msgid "{n} aktuelle Projekte geladen."
 msgstr "{n} seneste projekter indlæst."
 
@@ -231,15 +240,18 @@ msgstr "Ingen nyheder i øjeblikket."
 msgid "Frühere Neuigkeiten"
 msgstr "Tidligere nyheder"
 
+#, python-brace-format
 msgid "Neuigkeiten ({n})"
 msgstr "Nyheder ({n})"
 
 msgid "Du bist auf dem aktuellen Stand"
 msgstr "Du er helt opdateret"
 
+#, python-brace-format
 msgid "Kunde: {namen}"
 msgstr "Kunde: {namen}"
 
+#, python-brace-format
 msgid "Zu prüfen: {offen} · Zu überarbeiten: {ueberarbeiten} · Freigegeben: {freigegeben} (von {gesamt})"
 msgstr "Til gennemsyn: {offen} · Til revision: {ueberarbeiten} · Godkendt: {freigegeben} (af {gesamt})"
 
@@ -255,12 +267,14 @@ msgstr "Nyt projektnavn:"
 msgid "Bitte einen Namen eingeben."
 msgstr "Indtast venligst et navn."
 
+#, python-brace-format
 msgid "Projekt umbenannt in {name}"
 msgstr "Projektet er omdøbt til {name}"
 
 msgid "Umbenennen fehlgeschlagen."
 msgstr "Omdøbning mislykkedes."
 
+#, python-brace-format
 msgid "Projekt „{name}“ und alle zugehörigen Daten wirklich löschen?"
 msgstr "Vil du virkelig slette projektet ”{name}” og alle tilhørende data?"
 
@@ -270,6 +284,7 @@ msgstr "Projekt slettet"
 msgid "Löschen fehlgeschlagen."
 msgstr "Sletning mislykkedes."
 
+#, python-brace-format
 msgid "{n} Projekte geladen."
 msgstr "{n} projekter indlæst."
 
@@ -297,6 +312,7 @@ msgstr "Vil du hellere prøve først?"
 msgid "InkluDocs ohne Anmeldung testen"
 msgstr "Prøv InkluDocs uden tilmelding"
 
+#, python-brace-format
 msgid "Angemeldet als: {name} ({email})"
 msgstr "Logget ind som: {name} ({email})"
 
@@ -315,15 +331,18 @@ msgstr "Adgangskoden er blevet ændret"
 msgid "Noch keine API-Schlüssel vorhanden."
 msgstr "Ingen API-nøgler endnu."
 
+#, python-brace-format
 msgid "Erstellt: {datum}"
 msgstr "Oprettet: {datum}"
 
+#, python-brace-format
 msgid "Zuletzt verwendet: {datum}"
 msgstr "Senest brugt: {datum}"
 
 msgid "Bearbeiten"
 msgstr "Rediger"
 
+#, python-brace-format
 msgid "Schlüssel bearbeiten: {name}"
 msgstr "Rediger nøgle: {name}"
 
@@ -339,12 +358,14 @@ msgstr "Slet nøgle"
 msgid "Abbrechen"
 msgstr "Annuller"
 
+#, python-brace-format
 msgid "Bearbeitung für {name} geöffnet."
 msgstr "Redigering af {name} åbnet."
 
 msgid "Bearbeitung geschlossen."
 msgstr "Redigering lukket."
 
+#, python-brace-format
 msgid "Name geändert zu: {name}"
 msgstr "Navn ændret til: {name}"
 
@@ -381,6 +402,7 @@ msgstr "API-nøglen er kopieret til udklipsholderen."
 msgid "Schlüssel markiert. Bitte mit Befehl-C kopieren."
 msgstr "Nøglen er markeret. Kopiér den med Kommando-C."
 
+#, python-brace-format
 msgid "API-Schlüssel „{name}“ wirklich löschen? Anwendungen, die diesen Schlüssel verwenden, verlieren sofort den Zugriff."
 msgstr "Vil du virkelig slette API-nøglen ”{name}”? Programmer, der bruger denne nøgle, mister straks adgangen."
 
@@ -471,30 +493,37 @@ msgstr "Scanner siden, vent venligst …"
 msgid "Die Seite konnte nicht gescannt werden."
 msgstr "Siden kunne ikke scannes."
 
+#, python-brace-format
 msgid "{n} Bilder von der Seite geladen."
 msgstr "{n} billeder indlæst fra siden."
 
+#, python-brace-format
 msgid "Fehler: {msg}"
 msgstr "Fejl: {msg}"
 
+#, python-brace-format
 msgid "Datei {i} von {n} wird hochgeladen..."
 msgstr "Uploader fil {i} af {n}..."
 
 msgid "Wird hochgeladen..."
 msgstr "Uploader..."
 
+#, python-brace-format
 msgid "{name} wird hochgeladen"
 msgstr "Uploader {name}"
 
 msgid "Upload fehlgeschlagen"
 msgstr "Upload mislykkedes"
 
+#, python-brace-format
 msgid "Fehler beim Upload: {msg}"
 msgstr "Fejl ved upload: {msg}"
 
+#, python-brace-format
 msgid "PDF hinzugefuegt als Dokument {d}. {a} neue Bilder. Insgesamt {gesamt} Bilder im Projekt."
 msgstr "PDF tilføjet som dokument {d}. {a} nye billeder. I alt {gesamt} billeder i projektet."
 
+#, python-brace-format
 msgid "{n} Bilder im Projekt."
 msgstr "{n} billeder i projektet."
 
@@ -519,15 +548,19 @@ msgstr "Delvist behandlet"
 msgid "Bereit zur Verarbeitung"
 msgstr "Klar til behandling"
 
+#, python-brace-format
 msgid "Extraktion: {m}"
 msgstr "Udtrækning: {m}"
 
+#, python-brace-format
 msgid "{done} von {total} Bildern generiert"
 msgstr "{done} af {total} billeder genereret"
 
+#, python-brace-format
 msgid "Fortschritt: {p} Prozent"
 msgstr "Fremskridt: {p} procent"
 
+#, python-brace-format
 msgid "Bild {i} von {n} wird verarbeitet."
 msgstr "Behandler billede {i} af {n}."
 
@@ -594,7 +627,6 @@ msgstr "Filnavn (valgfrit)"
 msgid "Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt."
 msgstr "Lad feltet stå tomt for at bruge standardnavnet. Filendelsen tilføjes automatisk."
 
-
 msgid "Als Excel"
 msgstr "Som Excel"
 
@@ -610,6 +642,7 @@ msgstr "Som PDF (beta)"
 msgid "KI-Kontext aus dem Dokument verwenden"
 msgstr "Brug AI-kontekst fra dokumentet"
 
+#, python-brace-format
 msgid "Bilder ({n})"
 msgstr "Billeder ({n})"
 
@@ -619,17 +652,18 @@ msgstr "Alle alternative tekster er genereret."
 msgid "Fehler bei der Verarbeitung."
 msgstr "Fejl under behandlingen."
 
-
-
+#, python-brace-format
 msgid "Dokument {n}: {name}"
 msgstr "Dokument {n}: {name}"
 
 msgid "dieses Dokument"
 msgstr "dette dokument"
 
+#, python-brace-format
 msgid "Möchtest du das Dokument „{name}\" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen."
 msgstr "Vil du virkelig slette dokumentet ”{name}” med 1 billede? Dette kan ikke fortrydes."
 
+#, python-brace-format
 msgid "Möchtest du das Dokument „{name}\" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen."
 msgstr "Vil du virkelig slette dokumentet ”{name}” med {n} billeder? Dette kan ikke fortrydes."
 
@@ -666,6 +700,7 @@ msgstr "Godkendt"
 msgid "Änderung gewünscht"
 msgstr "Ændring ønsket"
 
+#, python-brace-format
 msgid "Status gesetzt: {s}"
 msgstr "Status sat: {s}"
 
@@ -693,15 +728,18 @@ msgstr "Sender invitation …"
 msgid "Fehler beim Erstellen der Freigabe."
 msgstr "Fejl ved oprettelse af delingen."
 
+#, python-brace-format
 msgid "Die Einladung wurde an {email} gesendet."
 msgstr "Invitationen er sendt til {email}."
 
+#, python-brace-format
 msgid "Einladung an {email} gesendet."
 msgstr "Invitation sendt til {email}."
 
 msgid "Freigabe erstellt"
 msgstr "Deling oprettet"
 
+#, python-brace-format
 msgid "Die E-Mail konnte nicht versendet werden. Bitte kopiere den Einladungslink und sende ihn selbst an {email}."
 msgstr "E-mailen kunne ikke sendes. Kopiér invitationslinket, og send det selv til {email}."
 
@@ -717,6 +755,7 @@ msgstr "Opretter link …"
 msgid "Link erstellt"
 msgstr "Link oprettet"
 
+#, python-brace-format
 msgid "Sie können diesen Einladungslink jetzt selbst an {email} verschicken. Der Gast muss beim Öffnen genau diese E-Mail-Adresse bestätigen."
 msgstr "Du kan nu selv sende dette invitationslink til {email}. Gæsten skal bekræfte netop denne e-mailadresse ved åbning."
 
@@ -765,12 +804,15 @@ msgstr "Netværksfejl ved skift af AI-kontekst."
 msgid "Keine Bilder gefunden."
 msgstr "Ingen billeder fundet."
 
+#, python-brace-format
 msgid "Bild {n}, Seite {p}"
 msgstr "Billede {n}, side {p}"
 
+#, python-brace-format
 msgid "Bild {n}"
 msgstr "Billede {n}"
 
+#, python-brace-format
 msgid "Konfidenz: {k}"
 msgstr "Konfidens: {k}"
 
@@ -780,6 +822,7 @@ msgstr "med kontekst"
 msgid "ohne Kontext"
 msgstr "uden kontekst"
 
+#, python-brace-format
 msgid "Prüfstatus: {s}"
 msgstr "Gennemsynsstatus: {s}"
 
@@ -804,6 +847,7 @@ msgstr "Der opstod en fejl under genereringen. Klik på ”Generér” for at pr
 msgid "Extrahiertes Bild"
 msgstr "Udtrukket billede"
 
+#, python-brace-format
 msgid "von Seite {p}"
 msgstr "fra side {p}"
 
@@ -879,6 +923,7 @@ msgstr "Lang beskrivelse (valgfrit)"
 msgid "1 Bild"
 msgstr "1 billede"
 
+#, python-brace-format
 msgid "{n} Bilder"
 msgstr "{n} billeder"
 
@@ -888,6 +933,7 @@ msgstr "Vis sidevisning"
 msgid "Seitentext anzeigen"
 msgstr "Vis sidetekst"
 
+#, python-brace-format
 msgid "Seite {n}"
 msgstr "Side {n}"
 
@@ -897,6 +943,7 @@ msgstr "billede"
 msgid "Bilder"
 msgstr "billeder"
 
+#, python-brace-format
 msgid "– Dokument „{name}\""
 msgstr "– dokument ”{name}”"
 
@@ -906,9 +953,11 @@ msgstr "Tak!"
 msgid "Danke – wird geprüft"
 msgstr "Tak – bliver gennemgået"
 
+#, python-brace-format
 msgid "Feedback: {l} als gut bewertet"
 msgstr "Feedback: {l} vurderet som god"
 
+#, python-brace-format
 msgid "Feedback: {l} als verbesserungswürdig bewertet"
 msgstr "Feedback: {l} vurderet som til forbedring"
 
@@ -960,6 +1009,7 @@ msgstr "Ingen lang beskrivelse tilgængelig"
 msgid "Tageslimit erreicht. Das Limit wird um Mitternacht zurückgesetzt."
 msgstr "Dagsgrænsen er nået. Grænsen nulstilles ved midnat."
 
+#, python-brace-format
 msgid "Tageslimit erreicht ({n} Bilder pro Tag). Das Limit wird um Mitternacht (UTC) zurückgesetzt."
 msgstr "Dagsgrænsen er nået ({n} billeder pr. dag). Grænsen nulstilles ved midnat (UTC)."
 
@@ -972,9 +1022,11 @@ msgstr "Genereringen af alternative tekster starter."
 msgid "Wird exportiert..."
 msgstr "Eksporterer..."
 
+#, python-brace-format
 msgid "{f} wird exportiert..."
 msgstr "Eksporterer {f}..."
 
+#, python-brace-format
 msgid "{name} wurde heruntergeladen."
 msgstr "{name} er downloadet."
 
@@ -993,9 +1045,11 @@ msgstr "Eksport annulleret."
 msgid "Tageslimit erreicht"
 msgstr "Dagsgrænsen er nået"
 
+#, python-brace-format
 msgid "Noch {n} Bilder heute"
 msgstr "{n} billeder tilbage i dag"
 
+#, python-brace-format
 msgid "{u}/{l} Bilder heute"
 msgstr "{u}/{l} billeder i dag"
 
@@ -1044,6 +1098,7 @@ msgstr "(tomt svar)"
 msgid "InkluAgent hat 1 Alt-Text aktualisiert."
 msgstr "InkluAgent har opdateret 1 alternativ tekst."
 
+#, python-brace-format
 msgid "InkluAgent hat {n} Alt-Texte aktualisiert."
 msgstr "InkluAgent har opdateret {n} alternative tekster."
 
@@ -1083,6 +1138,7 @@ msgstr "Adgangskoderne stemmer ikke overens."
 msgid "Fast geschafft!"
 msgstr "Næsten færdig!"
 
+#, python-brace-format
 msgid "Wir haben eine Bestätigungsmail an {email} gesendet."
 msgstr "Vi har sendt en bekræftelsesmail til {email}."
 
@@ -1206,6 +1262,7 @@ msgstr "Spær"
 msgid "Entsperren"
 msgstr "Fjern spærring"
 
+#, python-brace-format
 msgid "Neues Passwort für {email} (mind. 8 Zeichen):"
 msgstr "Ny adgangskode til {email} (mindst 8 tegn):"
 
@@ -1224,12 +1281,14 @@ msgstr "Adgangskoden er nulstillet."
 msgid "Fehler beim Zurücksetzen."
 msgstr "Fejl ved nulstilling."
 
+#, python-brace-format
 msgid "Benutzer \"{email}\" und ALLE Daten unwiderruflich löschen? (DSGVO-Löschung)"
 msgstr "Vil du uigenkaldeligt slette brugeren \"{email}\" og ALLE data? (GDPR-sletning)"
 
 msgid "Benutzer gelöscht"
 msgstr "Bruger slettet"
 
+#, python-brace-format
 msgid "Benutzer erstellt: {name}"
 msgstr "Bruger oprettet: {name}"
 
@@ -1257,6 +1316,7 @@ msgstr "Rettighedsniveau ændret"
 msgid "Fehler beim Ändern der Rechte-Stufe."
 msgstr "Fejl ved ændring af rettighedsniveau."
 
+#, python-brace-format
 msgid "Admin-Rechte von \"{name}\" entziehen? Das Konto bleibt als normaler Nutzer bestehen."
 msgstr "Vil du fjerne administratorrettighederne fra \"{name}\"? Kontoen består som almindelig bruger."
 
@@ -1272,503 +1332,530 @@ msgstr "Indtast venligst en e-mail."
 msgid "Fehler beim Hinzufügen."
 msgstr "Fejl ved tilføjelse."
 
+#, python-brace-format
 msgid "Vorhandene Benutzer ({n})"
 msgstr "Eksisterende brugere ({n})"
 
+#, python-brace-format
 msgid "Administratoren ({n})"
 msgstr "Administratorer ({n})"
 
+#, python-brace-format
 msgid "{n} Benutzer geladen."
 msgstr "{n} brugere indlæst."
 
+#, python-brace-format
 msgid "{n} Administratoren geladen."
 msgstr "{n} administratorer indlæst."
 
-#: Ausgabesprache (03.07.2026)
+#: (03.07.2026) Ausgabesprache
 msgid "Sprache der Alt-Texte"
 msgstr "Sprog for de alternative tekster"
 
-#: Ausgabesprache (03.07.2026)
+#: (03.07.2026) Ausgabesprache
+#, python-brace-format
 msgid "Sprache der Alt-Texte auf {s} umgestellt. Gilt für alles, was ab jetzt generiert wird."
 msgstr "Sproget for de alternative tekster er skiftet til {s}. Gælder for alt, der genereres fra nu af."
 
-#: Ausgabesprache (03.07.2026)
+#: (03.07.2026) Ausgabesprache
 msgid "Umstellen der Alt-Text-Sprache fehlgeschlagen."
 msgstr "Skift af sprog for de alternative tekster mislykkedes."
 
-#: Ausgabesprache (03.07.2026)
+#: (03.07.2026) Ausgabesprache
 msgid "Netzwerkfehler beim Umstellen der Sprache."
 msgstr "Netværksfejl ved skift af sprog."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "InkluDocs: E-Mail-Adresse bestätigen"
 msgstr "InkluDocs: Bekræft din e-mailadresse"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Willkommen bei InkluDocs"
 msgstr "Velkommen til InkluDocs"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "vielen Dank für Ihre Registrierung bei InkluDocs – dem KI-gestützten Alt-Text-Generator für barrierefreie Dokumente und Bilder."
 msgstr "tak for din registrering hos InkluDocs – den AI-baserede generator til alternative tekster for tilgængelige dokumenter og billeder."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "E-Mail-Adresse bestätigen"
 msgstr "Bekræft e-mailadresse"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Bitte klicken Sie auf den folgenden Link, um Ihr Konto zu aktivieren:"
 msgstr "Klik på følgende link for at aktivere din konto:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Oder kopieren Sie diesen Link:"
 msgstr "Eller kopiér dette link:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Der Link ist 24 Stunden gültig."
 msgstr "Linket er gyldigt i 24 timer."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "So funktioniert InkluDocs"
 msgstr "Sådan fungerer InkluDocs"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Nachdem Sie Ihre E-Mail-Adresse bestätigt haben:"
 msgstr "Når du har bekræftet din e-mailadresse:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "Melden Sie sich auf {url} an."
 msgstr "Log ind på {url}."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Laden Sie ein PDF oder Bilder hoch oder geben Sie eine Website-Adresse ein."
 msgstr "Upload en PDF eller billeder, eller indtast en webadresse."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Klicken Sie auf „Alt-Texte generieren“."
 msgstr "Klik på ”Generér alternative tekster”."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Bearbeiten Sie die Alt-Texte bei Bedarf und exportieren Sie sie."
 msgstr "Rediger de alternative tekster efter behov, og eksportér dem."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "Bei Fragen wenden Sie sich gerne an {mail}."
 msgstr "Har du spørgsmål, er du velkommen til at kontakte {mail}."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "InkluDocs ist ein Produkt von INKLUTEC – support@inkludocs.de"
 msgstr "InkluDocs er et produkt fra INKLUTEC – support@inkludocs.de"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "InkluDocs – E-Mail bestätigen"
 msgstr "InkluDocs – bekræft e-mail"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "hier ist Ihr neuer Bestätigungslink:"
 msgstr "her er dit nye bekræftelseslink:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "du hast angefordert, deine InkluDocs E-Mail-Adresse auf {email} zu ändern."
 msgstr "du har anmodet om at ændre din InkluDocs-e-mailadresse til {email}."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Oder kopiere diesen Link:"
 msgstr "Eller kopiér dette link:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Der Link ist 1 Stunde gültig. Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail."
 msgstr "Linket er gyldigt i 1 time. Hvis du ikke har anmodet om denne ændring, kan du ignorere denne e-mail."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "InkluDocs: Passwort zurücksetzen"
 msgstr "InkluDocs: Nulstil adgangskode"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "du hast eine Passwort-Zurücksetzung für dein InkluDocs-Konto angefordert."
 msgstr "du har anmodet om nulstilling af adgangskoden til din InkluDocs-konto."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Passwort jetzt zurücksetzen"
 msgstr "Nulstil adgangskoden nu"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Der Link ist 1 Stunde gültig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren."
 msgstr "Linket er gyldigt i 1 time. Hvis du ikke har anmodet om dette, kan du ignorere denne e-mail."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Ein InkluDocs-Nutzer"
 msgstr "En InkluDocs-bruger"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "Hallo {name},"
 msgstr "Hej {name},"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Hallo,"
 msgstr "Hej,"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "{name} möchte Sie bitten, die Alt-Texte für das Projekt „{projekt}“ zu prüfen."
 msgstr "{name} vil gerne bede dig gennemgå de alternative tekster for projektet ”{projekt}”."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Bitte öffnen Sie diesen Link und bestätigen Sie Ihre E-Mail-Adresse:"
 msgstr "Åbn dette link, og bekræft din e-mailadresse:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Eingeladen von:"
 msgstr "Inviteret af:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "Bitte Alt-Texte prüfen: {projekt}"
 msgstr "Gennemgå venligst alternative tekster: {projekt}"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "{gast} hat die Prüfung für das Projekt „{projekt}“ abgeschlossen."
 msgstr "{gast} har afsluttet gennemsynet af projektet ”{projekt}”."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Ergebnis:"
 msgstr "Resultat:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "{f} freigegeben, {z} zu überarbeiten, {o} offen."
 msgstr "{f} godkendt, {z} til revision, {o} åbne."
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Nachricht:"
 msgstr "Besked:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Anmerkungen:"
 msgstr "Bemærkninger:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
 msgid "Im Werkzeug ansehen:"
 msgstr "Se i værktøjet:"
 
-#: E-Mails (03.07.2026)
+#: (03.07.2026) E-Mails
+#, python-brace-format
 msgid "InkluDocs: Prüfung abgeschlossen ({projekt})"
 msgstr "InkluDocs: Gennemsyn afsluttet ({projekt})"
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "Ungültiger Bestätigungslink."
 msgstr "Ugyldigt bekræftelseslink."
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "Dieser Bestätigungslink ist ungültig oder abgelaufen."
 msgstr "Dette bekræftelseslink er ugyldigt eller udløbet."
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "E-Mail-Adresse erfolgreich bestätigt!"
 msgstr "E-mailadressen er bekræftet!"
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "Ihr Konto ist jetzt aktiv. Sie können sich jetzt anmelden."
 msgstr "Din konto er nu aktiv. Du kan logge ind nu."
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "Jetzt anmelden"
 msgstr "Log ind nu"
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "E-Mail bestätigt"
 msgstr "E-mail bekræftet"
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
+#, python-brace-format
 msgid "Bitte fordere in den {einstellungen} einen neuen Link an."
 msgstr "Anmod om et nyt link under {einstellungen}."
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
+#, python-brace-format
 msgid "Deine E-Mail-Adresse wurde erfolgreich auf {email} geändert."
 msgstr "Din e-mailadresse er ændret til {email}."
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "Du wirst in 3 Sekunden weitergeleitet."
 msgstr "Du bliver viderestillet om 3 sekunder."
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "Jetzt zur App"
 msgstr "Gå til appen nu"
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "Die Registrierung ist derzeit geschlossen."
 msgstr "Registrering er i øjeblikket lukket."
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
+#, python-brace-format
 msgid "InkluDocs befindet sich in der geschlossenen Beta-Phase. Wenn du einen Testzugang erhalten möchtest, schreib bitte eine E-Mail an {mail}."
 msgstr "InkluDocs er i lukket betafase. Hvis du vil have en testadgang, så send en e-mail til {mail}."
 
-#: Bestaetigungsseiten (03.07.2026)
+#: (03.07.2026) Bestaetigungsseiten
 msgid "Registrierung geschlossen"
 msgstr "Registrering lukket"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Zum Inhalt springen"
 msgstr "Spring til indhold"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "InkluDocs – kostenlos testen"
 msgstr "InkluDocs – prøv gratis"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "InkluDocs kostenlos testen"
 msgstr "Prøv InkluDocs gratis"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Lade ein Bild hoch und erhalte in Sekunden einen barrierefreien Alternativtext und eine Langbeschreibung – ganz ohne Anmeldung."
 msgstr "Upload et billede, og få på få sekunder en tilgængelig alternativ tekst og en lang beskrivelse – helt uden tilmelding."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Dein Bild wird nur für deine Sitzung gespeichert, nicht dauerhaft, und spätestens nach einer Stunde automatisch gelöscht. Mit „Löschen\" entfernst du es sofort."
 msgstr "Dit billede gemmes kun i din session, ikke permanent, og slettes automatisk senest efter en time. Med ”Slet” fjerner du det med det samme."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bild auswählen"
 msgstr "Vælg et billede"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bild hierher ziehen oder auswählen"
 msgstr "Træk et billede hertil, eller vælg et"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "JPG, PNG, GIF oder WebP. PDFs gibt es im vollen Werkzeug nach Anmeldung."
 msgstr "JPG, PNG, GIF eller WebP. PDF'er findes i det fulde værktøj efter tilmelding."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Ergebnis"
 msgstr "Resultat"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Alternativtext generieren"
 msgstr "Generér alternativ tekst"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Alternativtext"
 msgstr "Alternativ tekst"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Alternativtext kopieren"
 msgstr "Kopiér alternativ tekst"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Langbeschreibung kopieren"
 msgstr "Kopiér lang beskrivelse"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Mit dem Assistenten verfeinern"
 msgstr "Finpuds med assistenten"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bitte zum Beispiel „mach den Text kürzer\" oder stelle Fragen zu Barrierefreiheit (BITV/WCAG)."
 msgstr "Bed for eksempel om ”gør teksten kortere”, eller stil spørgsmål om tilgængelighed (BITV/WCAG)."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Nachricht an den Assistenten"
 msgstr "Besked til assistenten"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Nachricht an den Assistenten …"
 msgstr "Besked til assistenten …"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Gefällt dir das Ergebnis? Für ganze Dokumente und den fertig getaggten Export geht es mit einem Konto weiter."
 msgstr "Kan du lide resultatet? Med en konto kan du fortsætte med hele dokumenter og færdigtagget eksport."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Anmelden oder registrieren"
 msgstr "Log ind eller opret konto"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bild und Ergebnis löschen"
 msgstr "Slet billede og resultat"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Mehr braucht ein Konto"
 msgstr "Mere kræver en konto"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bild und Ergebnis löschen?"
 msgstr "Slet billede og resultat?"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Möchtest du das Bild und das Ergebnis wirklich löschen? Das lässt sich nicht rückgängig machen."
 msgstr "Vil du virkelig slette billedet og resultatet? Det kan ikke fortrydes."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Eine Quelle, kein Doppeltext: Der Inhalt kommt von der öffentlichen Seite."
 msgstr "Én kilde, ingen dobbelt tekst: Indholdet kommer fra den offentlige side."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Öffentliche Seite öffnen"
 msgstr "Åbn den offentlige side"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Inhalt wird geladen …"
 msgstr "Indholdet indlæses …"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Datenschutzerklärung"
 msgstr "Privatlivspolitik"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
+#, python-brace-format
 msgid "Noch {bilder_frei} von {bilder_tag} kostenlosen Analysen heute · {chat_frei} von {chat_tag} Chat-Nachrichten."
 msgstr "I dag: {bilder_frei} af {bilder_tag} gratis analyser tilbage · {chat_frei} af {chat_tag} chatbeskeder."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Deine kostenlosen Analysen für heute sind aufgebraucht."
 msgstr "Dine gratis analyser for i dag er brugt op."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Kostenloses Kontingent aufgebraucht."
 msgstr "Gratis kvote brugt op."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bitte ein Bild im Format JPG, PNG, GIF oder WebP wählen."
 msgstr "Vælg venligst et billede i formatet JPG, PNG, GIF eller WebP."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Vorschau deines ausgewählten Bildes"
 msgstr "Forhåndsvisning af dit valgte billede"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bild ausgewählt. Auf „Alternativtext generieren\" klicken, um die Analyse zu starten."
 msgstr "Billede valgt. Klik på ”Generér alternativ tekst” for at starte analysen."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Generiere …"
 msgstr "Genererer …"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bild wird analysiert …"
 msgstr "Billedet analyseres …"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bild wird hochgeladen und analysiert. Das dauert ein paar Sekunden."
 msgstr "Billedet uploades og analyseres. Det tager et par sekunder."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Es ist ein Fehler aufgetreten. Bitte erneut versuchen."
 msgstr "Der opstod en fejl. Prøv venligst igen."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Upload fehlgeschlagen."
 msgstr "Upload mislykkedes."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Analyse fehlgeschlagen"
 msgstr "Analyse mislykkedes"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Analyse fehlgeschlagen."
 msgstr "Analyse mislykkedes."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Die Analyse ist fehlgeschlagen. Bitte versuche es noch einmal."
 msgstr "Analysen mislykkedes. Prøv venligst igen."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Vorschau deines hochgeladenen Bildes"
 msgstr "Forhåndsvisning af dit uploadede billede"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
+#, python-brace-format
 msgid "Typ: {typ}"
 msgstr "Type: {typ}"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
+#, python-brace-format
 msgid "Konfidenz: {wert}"
 msgstr "Konfidens: {wert}"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Analyse fertig. Alternativtext und Langbeschreibung stehen bereit."
 msgstr "Analysen er færdig. Alternativ tekst og lang beskrivelse er klar."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Text"
 msgstr "Tekst"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
+#, python-brace-format
 msgid "{was} kopiert."
 msgstr "{was} kopieret."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Kopiert ✓"
 msgstr "Kopieret ✓"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bitte mit Strg+C kopieren."
 msgstr "Kopiér venligst med Ctrl+C."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bild und Ergebnis wurden gelöscht. Du kannst ein neues Bild hochladen."
 msgstr "Billede og resultat er slettet. Du kan uploade et nyt billede."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Assistent denkt nach …"
 msgstr "Assistenten tænker …"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Entschuldigung, das hat nicht geklappt."
 msgstr "Beklager, det virkede ikke."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Antwort des Assistenten ist da."
 msgstr "Assistentens svar er klar."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Demo testen"
 msgstr "Prøv demoen"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
+#, python-brace-format
 msgid "{was} konnte nicht geladen werden ({fehler}). Bitte die öffentliche Seite aufrufen:"
 msgstr "{was} kunne ikke indlæses ({fehler}). Åbn venligst den offentlige side:"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Bitte ein Bild hochladen (JPG, PNG, GIF, WebP …). PDFs gibt es im vollen Werkzeug nach Anmeldung."
 msgstr "Upload venligst et billede (JPG, PNG, GIF, WebP …). PDF'er findes i det fulde værktøj efter tilmelding."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
+#, python-brace-format
 msgid "Datei zu groß. Maximum: {mb} MB"
 msgstr "Filen er for stor. Maksimum: {mb} MB"
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
 msgid "Die Demo ist heute stark gefragt — das Tageskontingent ist erreicht. Bitte morgen wieder probieren oder gleich kostenlos registrieren."
 msgstr "Demoen er meget efterspurgt i dag — dagskvoten er nået. Prøv igen i morgen, eller opret en gratis konto med det samme."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
+#, python-brace-format
 msgid "Deine {n} kostenlosen Analysen für heute sind aufgebraucht. Für unbegrenzte Bilder, ganze PDFs und den fertig getaggten Export: kostenlos registrieren."
 msgstr "Dine {n} gratis analyser for i dag er brugt op. For ubegrænsede billeder, hele PDF'er og færdigtagget eksport: opret en gratis konto."
 
-#: Demo-Seiten i18n (04.07.2026)
+#: (04.07.2026) Demo-Seiten i18n
+#, python-brace-format
 msgid "Du hast die {n} kostenlosen Chat-Nachrichten für heute genutzt. Für unbegrenztes Verfeinern: kostenlos registrieren."
 msgstr "Du har brugt dine {n} gratis chatbeskeder for i dag. For ubegrænset finpudsning: opret en gratis konto."
 
-#: Upload-Fix Julia-Feedback (04.07.2026)
+#: (04.07.2026) Julia-Feedback Upload-Fix
+#, python-brace-format
 msgid "Maximal {mb} MB pro Datei."
 msgstr "Maksimalt {mb} MB pr. fil."
 
-#: Upload-Fix Julia-Feedback (04.07.2026)
+#: (04.07.2026) Julia-Feedback Upload-Fix
 msgid "Verbindung unterbrochen – prüfe, ob die Datei trotzdem angekommen ist …"
 msgstr "Forbindelsen blev afbrudt – kontrollerer, om filen alligevel er ankommet …"
 
-#: Upload-Fix Julia-Feedback (04.07.2026)
+#: (04.07.2026) Julia-Feedback Upload-Fix
 msgid "Der Upload war trotz Verbindungsfehler erfolgreich. Die Datei ist angekommen."
 msgstr "Uploaden lykkedes trods forbindelsesfejlen. Filen er ankommet."
 
-#: Upload-Fix Julia-Feedback (04.07.2026)
+#: (04.07.2026) Julia-Feedback Upload-Fix
+#, python-brace-format
 msgid "Verbindungsfehler beim Upload. Die Datei ist bisher nicht angekommen. Bitte prüfe deine Internetverbindung und versuche es erneut. Bei sehr großen PDFs kann die Verarbeitung länger dauern – lade die Seite dann in ein bis zwei Minuten neu und prüfe die Dokumentliste. Maximal {mb} MB pro Datei."
 msgstr "Forbindelsesfejl under upload. Filen er endnu ikke ankommet. Kontrollér din internetforbindelse, og prøv igen. Ved meget store PDF'er kan behandlingen tage længere tid – genindlæs i så fald siden om et til to minutter, og tjek dokumentlisten. Maksimalt {mb} MB pr. fil."
 
-#: Async-Upload (04.07.2026)
+#: (04.07.2026) Async-Upload
 msgid "Die PDF wird verarbeitet – Bilder werden extrahiert …"
 msgstr "PDF'en behandles – billeder udtrækkes …"
 
-#: Async-Upload (04.07.2026)
+#: (04.07.2026) Async-Upload
 msgid "Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
 msgstr "Behandlingen af PDF'en mislykkedes. Prøv venligst igen med filen."
 
-#: Async-Upload (04.07.2026)
+#: (04.07.2026) Async-Upload
 msgid "Die Verarbeitung dauert ungewöhnlich lange. Bitte lade die Seite später neu und prüfe die Dokumentliste."
 msgstr "Behandlingen tager usædvanligt lang tid. Genindlæs venligst siden senere, og tjek dokumentlisten."
 
@@ -1844,6 +1931,7 @@ msgstr "Gem ændringer"
 msgid "Bearbeitung abgebrochen. Formular ist wieder leer."
 msgstr "Redigering annulleret. Formularen er tom igen."
 
+#, python-brace-format
 msgid "Prompt {name} zum Bearbeiten geladen. Die Felder stehen oben im Formular."
 msgstr "Prompt {name} indlæst til redigering. Felterne står i formularen ovenfor."
 
@@ -1856,6 +1944,7 @@ msgstr "Ingen egen prompt"
 msgid "Prompts verwalten"
 msgstr "Administrér prompts"
 
+#, python-brace-format
 msgid "Eigener Prompt umgestellt: {name}. Gilt für alles, was ab jetzt generiert wird."
 msgstr "Egen prompt ændret: {name}. Gælder for alt, der genereres fra nu af."
 
@@ -1874,6 +1963,7 @@ msgstr "Ingen prompts gemt endnu. Opret din første via knappen nedenfor."
 msgid "oder Datei hierher ziehen"
 msgstr "eller træk en fil hertil"
 
+#, python-brace-format
 msgid "Du kannst jederzeit weitere PDF mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
 msgstr "Du kan til enhver tid uploade flere PDF'er på op til {mb} MB. De tilføjes i listen nedenfor; eksisterende alternative tekster bevares."
 
@@ -1913,12 +2003,14 @@ msgstr "Korrekturlæsning"
 msgid "Gespeichert."
 msgstr "Gemt."
 
+#, python-brace-format
 msgid "Lektorat: {s}"
 msgstr "Korrekturlæsning: {s}"
 
 msgid "Die Rolle bestimmt die Beschriftung der Prüf-Knöpfe; das Lektorat kann Bilder zusätzlich zur Rücksprache mit dem Kunden markieren."
 msgstr "Rollen bestemmer knappernes tekster; korrekturlæsningen kan desuden markere billeder til afstemning med kunden."
 
+#, python-brace-format
 msgid "{f} freigegeben, {z} zu überarbeiten, {r} Rücksprache, {b} in Bearbeitung, {o} offen."
 msgstr "{f} godkendt, {z} til revision, {r} afstemning, {b} i gang, {o} åbne."
 
@@ -1930,7 +2022,6 @@ msgstr "Sidetekst"
 
 # Rollen-Workflow Etappe 2 (13.07.2026): Teilen-Dialog-GUI, Rolle
 # "Herausgeber", Filterleiste, Besitzer-Badges pro Rolle.
-
 msgid "Zur Prüfung einladen"
 msgstr "Inviter til gennemsyn"
 
@@ -1961,6 +2052,7 @@ msgstr "Afklar med udgiveren"
 msgid "Anmerkung des Gastes anzeigen"
 msgstr "Vis gæstens bemærkning"
 
+#, python-brace-format
 msgid "Herausgeber: {s}"
 msgstr "Udgiver: {s}"
 
@@ -1982,40 +2074,45 @@ msgstr "Uden alternativ tekst"
 msgid "Alle"
 msgstr "Alle"
 
+#, python-brace-format
 msgid "Alle {n} Bilder angezeigt."
 msgstr "Alle {n} billeder vises."
 
+#, python-brace-format
 msgid "{n} von {m} Bildern angezeigt."
 msgstr "{n} af {m} billeder vises."
 
 # ── Gastzugang-Rollen Etappe 3: Ruecksprache-Block (15.07.2026) ──
-
 msgid "1 Bild zur Rücksprache markiert"
 msgstr "1 billede markeret til afstemning"
 
+#, python-brace-format
 msgid "{n} Bilder zur Rücksprache markiert"
 msgstr "{n} billeder markeret til afstemning"
 
 msgid "1 Bild zur Rücksprache markiert:"
 msgstr "1 billede markeret til afstemning:"
 
+#, python-brace-format
 msgid "{n} Bilder zur Rücksprache markiert:"
 msgstr "{n} billeder markeret til afstemning:"
 
 msgid "Diese Liste wird dem Ersteller automatisch mit übermittelt:"
 msgstr "Denne liste sendes automatisk med til opretteren:"
 
+#, python-brace-format
 msgid "Dokument „{name}\", {bild}"
 msgstr "Dokument »{name}«, {bild}"
 
 msgid "Anmerkung:"
 msgstr "Bemærkning:"
 
+#, python-brace-format
 msgid "Zur Rücksprache (Lektorat): {n}"
 msgstr "Til afstemning (korrekturlæsning): {n}"
 
 # ── Karbe Optik-Punkte 12.07. (umgesetzt 15.07.2026) ──
-
+#, python-brace-format
 msgid "Kategorie: {typ}"
 msgstr "Kategori: {typ}"
 
@@ -2025,6 +2122,7 @@ msgstr "Kontekst: ja"
 msgid "Kontext: Nein"
 msgstr "Kontekst: nej"
 
+#, python-brace-format
 msgid "Kategorie {name}"
 msgstr "Kategori {name}"
 
@@ -2035,7 +2133,7 @@ msgid "Beschreibung:"
 msgstr "Beskrivelse:"
 
 # ── Gastzugang-Rollen Etappe 4: Nachrichten-Verlauf pro Bild (15.07.2026) ──
-
+#, python-brace-format
 msgid "Nachrichten ({n})"
 msgstr "Beskeder ({n})"
 
@@ -2057,12 +2155,15 @@ msgstr "Skriv først en besked."
 msgid "Ersteller"
 msgstr "Opretter"
 
+#, python-brace-format
 msgid "Nachrichten: {n}"
 msgstr "Beskeder: {n}"
 
+#, python-brace-format
 msgid "InkluDocs: Neue Nachricht im Projekt „{projekt}\""
 msgstr "InkluDocs: ny besked i projektet »{projekt}«"
 
+#, python-brace-format
 msgid "{absender} hat eine neue Nachricht zu {bild} im Projekt „{projekt}\" geschrieben:"
 msgstr "{absender} har skrevet en ny besked om {bild} i projektet »{projekt}«:"
 
@@ -2070,73 +2171,89 @@ msgid "einem Bild"
 msgstr "et billede"
 
 # ── Geteilte-Projekte-Kasten + Gast-Rollenzeile (15.07.2026) ──
-
 msgid "Geteilte Projekte"
 msgstr "Delte projekter"
 
+#, python-brace-format
 msgid "Geteilte Projekte – Neues in {n} Projekten"
 msgstr "Delte projekter – nyt i {n} projekter"
 
+#, python-brace-format
 msgid "Prüfung abgeschlossen am {datum}"
 msgstr "Gennemgang afsluttet den {datum}"
 
 msgid "Prüfung abgeschlossen"
 msgstr "Gennemgang afsluttet"
 
+#, python-brace-format
 msgid "{rolle}: abgeschlossen"
 msgstr "{rolle}: afsluttet"
 
+#, python-brace-format
 msgid "{rolle}: in Prüfung"
 msgstr "{rolle}: under gennemgang"
 
 msgid "In Prüfung"
 msgstr "Under gennemgang"
 
+#, python-brace-format
 msgid "{n} neue Nachrichten"
 msgstr "{n} nye beskeder"
 
+#, python-brace-format
 msgid "{n} Prüfstatus-Änderungen"
 msgstr "{n} ændringer i gennemgangsstatus"
 
+#, python-brace-format
 msgid "{n} Prüfungen abgeschlossen"
 msgstr "{n} gennemgange afsluttet"
 
 msgid "Neu seit deinem letzten Besuch:"
 msgstr "Nyt siden dit sidste besøg:"
 
+#, python-brace-format
 msgid "Du prüfst dieses Projekt als {rolle}."
 msgstr "Du gennemgår dette projekt som {rolle}."
 
+#, python-brace-format
 msgid "Du schließt die Prüfung als {rolle} ab."
 msgstr "Du afslutter gennemgangen som {rolle}."
 
 msgid "Geteilte Projekte – Neues in einem Projekt"
 msgstr "Delte projekter – nyt i ét projekt"
 
+#, python-brace-format
 msgid "{rolle}: {wer} — abgeschlossen am {datum} um {zeit}"
 msgstr "{rolle}: {wer} — afsluttet den {datum} kl. {zeit}"
 
+#, python-brace-format
 msgid "{rolle}: {wer} — in Prüfung, eingeladen am {datum}"
 msgstr "{rolle}: {wer} — under gennemgang, inviteret den {datum}"
 
 msgid "Zurzeit keine geteilten Projekte."
 msgstr "Ingen delte projekter i øjeblikket."
 
+#, python-brace-format
 msgid "{n} geteilte Projekte geladen."
 msgstr "{n} delte projekter indlæst."
 
+#, python-brace-format
 msgid "{rolle}: {wer} — in Prüfung seit {datum}"
 msgstr "{rolle}: {wer} — under gennemgang siden {datum}"
 
+#, python-brace-format
 msgid "{rolle}: {wer} — eingeladen am {datum}, noch nicht begonnen"
 msgstr "{rolle}: {wer} — inviteret den {datum}, endnu ikke begyndt"
 
+#, python-brace-format
 msgid "dazu {n} frühere Einladungen"
 msgstr "derudover {n} tidligere invitationer"
 
+#, python-brace-format
 msgid "Projekt abgeschlossen am {datum}"
 msgstr "Projekt afsluttet den {datum}"
 
+#, python-brace-format
 msgid "{n} Bilder ohne Prüfurteil"
 msgstr "{n} billeder uden bedømmelse"
 
@@ -2165,15 +2282,19 @@ msgstr "Udgiver godkendt"
 msgid "Herausgeber Änderung"
 msgstr "Udgiver ændring"
 
+#, python-brace-format
 msgid "Credits diesen Monat: {verbraucht} von {verfuegbar} verbraucht — {rest} verfügbar."
 msgstr "Credits denne måned: {verbraucht} af {verfuegbar} brugt — {rest} tilgængelige."
 
+#, python-brace-format
 msgid "Davon sind {uebertrag} Credits aus dem Vormonat übernommen."
 msgstr "Heraf er {uebertrag} Credits overført fra sidste måned."
 
+#, python-brace-format
 msgid "Credits diesen Monat: {verbraucht} verbraucht (unbegrenzter Plan)."
 msgstr "Credits denne måned: {verbraucht} brugt (ubegrænset plan)."
 
+#, python-brace-format
 msgid "Zusatz-Credits: {anzahl} verfügbar."
 msgstr "Ekstra credits: {anzahl} tilgængelige."
 
@@ -2186,9 +2307,11 @@ msgstr "Abonnement og forbrug"
 msgid "Plan und Verbrauch"
 msgstr "Plan og forbrug"
 
+#, python-brace-format
 msgid "Dein Plan: {plan}"
 msgstr "Din plan: {plan}"
 
+#, python-brace-format
 msgid "Du bist Teil des Teams von {inhaber}. Ihr teilt euch einen gemeinsamen Credit-Topf."
 msgstr "Du er en del af {inhaber}s team. I deler en fælles Credit-pulje."
 
@@ -2204,18 +2327,21 @@ msgstr "Forbrugsdata er ikke tilgængelige i øjeblikket."
 msgid "Team-Mitglieder"
 msgstr "Teammedlemmer"
 
+#, python-brace-format
 msgid "diesen Monat: {anzahl} Credits"
 msgstr "denne måned: {anzahl} Credits"
 
 msgid "Entfernen"
 msgstr "Fjern"
 
+#, python-brace-format
 msgid "{name} aus dem Team entfernen"
 msgstr "Fjern {name} fra teamet"
 
 msgid "Team-Mitglied entfernen?"
 msgstr "Fjern teammedlem?"
 
+#, python-brace-format
 msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person verliert den Zugriff auf den gemeinsamen Credit-Topf."
 msgstr "Skal „{name}“ virkelig fjernes fra teamet? Personen mister adgangen til den fælles Credit-pulje."
 
@@ -2228,6 +2354,7 @@ msgstr "E-mailadresse på det nye medlem"
 msgid "Einladen"
 msgstr "Inviter"
 
+#, python-brace-format
 msgid "Mitglied eingeladen: {email}"
 msgstr "Medlem inviteret: {email}"
 
@@ -2250,6 +2377,7 @@ msgid "Abo & Verbrauch öffnen"
 msgstr "Åbn Abonnement og forbrug"
 
 # Team-Einladung mit Zustimmung (Review-Befund 1/15, 31.07.2026)
+#, python-brace-format
 msgid "Einladung versandt an {email}."
 msgstr "Invitation sendt til {email}."
 
@@ -2280,12 +2408,14 @@ msgstr "Du er nu medlem af teamet hos"
 msgid "Ihr teilt euch ein gemeinsames Credit-Kontingent."
 msgstr "I deler et fælles Credit-kontingent."
 
+#, python-brace-format
 msgid "Betreiber-Konto: unbegrenzte Credits. Diesen Monat verbraucht: {verbraucht}."
 msgstr "Operatørkonto: ubegrænsede credits. Brugt denne måned: {verbraucht}."
 
 msgid "Dein Konto: Betreiber (unbegrenzt)"
 msgstr "Din konto: operatør (ubegrænset)"
 
+#, python-brace-format
 msgid "Diesen Monat verbraucht: {verbraucht} Credits."
 msgstr "Brugt denne måned: {verbraucht} credits."
 
@@ -2296,7 +2426,6 @@ msgid "(Inhaber)"
 msgstr "(ejer)"
 
 # Unterseiten E-Mail & Passwort / API-Schluessel (31.07.2026)
-
 msgid "E-Mail & Passwort"
 msgstr "E-mail og adgangskode"
 
@@ -2339,189 +2468,206 @@ msgstr "Du administrerer dine nøgler til programmeringsgrænsefladen (API) på 
 msgid "API-Schlüssel öffnen"
 msgstr "Åbn API-nøgler"
 
+#, python-brace-format
 msgid "Bestätigungslink an {email} gesendet. Bitte prüfe dein Postfach."
 msgstr "Bekræftelseslink sendt til {email}. Tjek venligst din indbakke."
 
 msgid "API-Schlüssel löschen?"
 msgstr "Slet API-nøgle?"
 
+#, python-brace-format
 msgid "Der Schlüssel „{name}“ wird sofort gelöscht und ist dauerhaft ungültig. Anwendungen, die ihn verwenden, verlieren augenblicklich den Zugriff."
 msgstr "Nøglen „{name}“ slettes med det samme og bliver permanent ugyldig. Programmer, der bruger den, mister adgangen med det samme."
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
 msgid "Lizenzschlüssel"
 msgstr "Licensnøgle"
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
 msgid "Dein Unternehmen hat einen Lizenzschlüssel? Aktiviere ihn hier, um den gemeinsamen Credit-Topf zu nutzen."
 msgstr "Har din virksomhed en licensnøgle? Aktivér den her for at bruge den fælles kreditpulje."
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
 msgid "Aktivieren"
 msgstr "Aktivér"
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
 msgid "Mitglieder treten mit dem Lizenzschlüssel eures Unternehmens bei."
 msgstr "Medlemmer tilslutter sig med jeres virksomheds licensnøgle."
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
 msgid "Firmenlizenz"
 msgstr "Virksomhedslicens"
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
+#, python-brace-format
 msgid "Firmenlizenz für {domain} — gültig bis {datum}."
 msgstr "Virksomhedslicens for {domain} — gyldig til {datum}."
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
+#, python-brace-format
 msgid "Euer Lizenzschlüssel: {key}"
 msgstr "Jeres licensnøgle: {key}"
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
+#, python-brace-format
 msgid "Gib den Schlüssel an Kollegen mit einer {domain}-Adresse weiter. Jede Aktivierung tritt dem gemeinsamen Credit-Topf bei."
 msgstr "Giv nøglen videre til kolleger med en {domain}-adresse. Hver aktivering tilslutter sig den fælles kreditpulje."
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
 msgid "Lizenz aktiviert — dein Konto ist jetzt Inhaber des Firmen-Topfs."
 msgstr "Licens aktiveret — din konto er nu indehaver af virksomhedens kreditpulje."
 
-#: Lizenzschluessel 04.08.2026
+#: 04.08.2026 Lizenzschluessel
 msgid "Beitritt bestätigt — du nutzt jetzt den gemeinsamen Credit-Topf deines Unternehmens."
 msgstr "Tilslutning bekræftet — du bruger nu din virksomheds fælles kreditpulje."
 
-#: Domain-Buendelung 04.08.2026
+#: 04.08.2026 Domain-Buendelung
+#, python-brace-format
 msgid "Das Free-Kontingent gilt gemeinsam für alle Konten der Domain {domain}."
 msgstr "Free-kontingentet deles af alle konti på domænet {domain}."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Neuen Lizenzschlüssel erzeugen"
 msgstr "Opret en ny licensnøgle"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Ohne Domain bindet sich der Schlüssel bei der ersten Aktivierung an die Firmen-Adresse des Kunden. Gründer-Tarif: Laufzeit 3 Monate."
 msgstr "Uden domæne bindes nøglen til kundens virksomhedsadresse ved første aktivering. Grundlægger-tarif: 3 måneders løbetid."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Firmen-Domain (optional, z. B. firma.de)"
 msgstr "Virksomhedsdomæne (valgfrit, f.eks. firma.dk)"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Laufzeit in Monaten"
 msgstr "Løbetid i måneder"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Notiz (z. B. Firmenname, Rechnungsnummer)"
 msgstr "Note (f.eks. firmanavn, fakturanummer)"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Schlüssel erzeugen"
 msgstr "Opret nøgle"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Lizenzschlüssel konnten nicht geladen werden."
 msgstr "Licensnøglerne kunne ikke indlæses."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "Lizenzschlüssel ({n})"
 msgstr "Licensnøgler ({n})"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Noch keine Lizenzschlüssel erzeugt."
 msgstr "Der er endnu ikke oprettet licensnøgler."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Noch nicht aktiviert"
 msgstr "Endnu ikke aktiveret"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "Domain: {domain}"
 msgstr "Domæne: {domain}"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "Inhaber: {email}"
 msgstr "Indehaver: {email}"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "Abgelaufen am {datum}"
 msgstr "Udløbet den {datum}"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "Gültig bis {datum}"
 msgstr "Gyldig til {datum}"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "{n} Nutzer"
 msgstr "{n} brugere"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "Neuer Schlüssel: {key}"
 msgstr "Ny nøgle: {key}"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Schlüssel wurde erzeugt."
 msgstr "Nøglen blev oprettet."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Preise"
 msgstr "Priser"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet 1 Credit, der Export der fertigen PDF 5 Credits. Alle Preise zzgl. USt."
 msgstr "Én valuta til alt: credits. En alternativ tekst koster 1 credit, eksport af den færdige PDF 5 credits. Alle priser er ekskl. moms."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Kostenlos starten"
 msgstr "Start gratis"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "{n} Credits im Monat — voller Funktionsumfang, keine Zahlungsdaten nötig."
 msgstr "{n} credits om måneden — fuld funktionalitet, ingen betalingsoplysninger nødvendige."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Bei Firmen-Adressen gilt das kostenlose Volumen gemeinsam für alle Konten derselben Domain."
 msgstr "For virksomhedsadresser deles det gratis volumen af alle konti på samme domæne."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Ein Lizenzschlüssel pro Unternehmen — beliebig viele Mitarbeiter teilen sich einen gemeinsamen Credit-Topf."
 msgstr "Én licensnøgle pr. virksomhed — et vilkårligt antal medarbejdere deler en fælles kreditpulje."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "{preis} € pro Monat, darin {credits} Credits enthalten."
 msgstr "{preis} € om måneden, inklusive {credits} credits."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "Mindestlaufzeit {monate} Monate, Abrechnung {halbjahr} € pro Halbjahr."
 msgstr "Mindste løbetid {monate} måneder, fakturering {halbjahr} € pr. halvår."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Der Schlüssel ist an die E-Mail-Domain deines Unternehmens gebunden — niemand Fremdes kann ihn benutzen."
 msgstr "Nøglen er bundet til din virksomheds e-maildomæne — ingen udefra kan bruge den."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Zusatzpakete"
 msgstr "Tillægspakker"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht, solange deine Lizenz läuft — die monatlichen Credits kommen immer obendrauf."
 msgstr "Hvis de månedlige credits ikke rækker: køb blot flere. Købte credits udløber ikke, så længe din licens er aktiv — de månedlige credits kommer altid oveni."
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
+#, python-brace-format
 msgid "{n} Credits für {preis} €"
 msgstr "{n} credits for {preis} €"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "So bestellst du"
 msgstr "Sådan bestiller du"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
 msgstr "Onlinebetaling er ved at blive indbygget. Indtil da er en e-mail nok til"
 
-#: Lizenz-Admin+Preisseite 04.08.2026
+#: 04.08.2026 Lizenz-Admin+Preisseite
 msgid "du erhältst eine Rechnung und deinen Lizenzschlüssel, der sofort funktioniert."
 msgstr "du modtager en faktura og din licensnøgle, som virker med det samme."
 
-# ── Neues Abomodell (06.08.2026): Single/Team/Enterprise, Kontext-Umschalter ──
-
+# ── Neues Abomodell (06.08.2026): Single/Team/Enterprise, Kontext-Umschalter
+# ──
 msgid "12 Monate"
 msgstr "12 måneder"
 
@@ -2546,15 +2692,18 @@ msgstr "Tildel abonnement"
 msgid "Abo zuweisen (Rechnungsweg)"
 msgstr "Tildel abonnement (faktura)"
 
+#, python-brace-format
 msgid "Alle Abos werden fest für {laufzeiten} Monate gebucht — keine monatliche Abbuchung."
 msgstr "Alle abonnementer tegnes fast for {laufzeiten} måneder — ingen månedlig betaling."
 
 msgid "Aus welchem Guthaben möchtest du arbeiten? Die Wahl gilt für alles, was Credits kostet."
 msgstr "Hvilken saldo vil du arbejde fra? Valget gælder for alt, der koster credits."
 
+#, python-brace-format
 msgid "Bis zu {n} Nutzer (inklusive Inhaber) arbeiten aus einem gemeinsamen Credit-Topf — einladen geht bequem per E-Mail aus der App."
 msgstr "Op til {n} brugere (inklusive ejeren) arbejder fra en fælles credit-pulje — invitationer sendes nemt via e-mail fra appen."
 
+#, python-brace-format
 msgid "Bis zu {n} Nutzer (inklusive Inhaber) teilen sich den gemeinsamen Credit-Topf."
 msgstr "Op til {n} brugere (inklusive ejeren) deler den fælles credit-pulje."
 
@@ -2564,12 +2713,14 @@ msgstr "Credits er blevet tilføjet."
 msgid "Dein Abo"
 msgstr "Dit abonnement"
 
+#, python-brace-format
 msgid "Dein Abo läuft noch bis {datum} normal weiter und endet dann, statt sich zu verlängern. Deine Projekte und Daten bleiben erhalten."
 msgstr "Dit abonnement fortsætter normalt indtil {datum} og slutter derefter i stedet for at blive fornyet. Dine projekter og data bevares."
 
 msgid "Dein Team"
 msgstr "Dit team"
 
+#, python-brace-format
 msgid "Dein eigener Plan: {plan}"
 msgstr "Din egen plan: {plan}"
 
@@ -2579,12 +2730,14 @@ msgstr "Opsigelsen er trukket tilbage — dit abonnement fornys automatisk igen.
 msgid "Die Person bekommt eine E-Mail und bestätigt den Beitritt selbst. Hat sie noch kein Konto, legt die Einladung eines an."
 msgstr "Personen modtager en e-mail og bekræfter selv sin deltagelse. Har personen endnu ingen konto, opretter invitationen en."
 
+#, python-brace-format
 msgid "Du arbeitest gerade aus dem gemeinsamen Guthaben: {team} (Plan {plan})."
 msgstr "Du arbejder i øjeblikket fra den fælles saldo: {team} (plan {plan})."
 
 msgid "Du arbeitest jetzt aus deinem eigenen Guthaben."
 msgstr "Du arbejder nu fra din egen saldo."
 
+#, python-brace-format
 msgid "Du arbeitest jetzt aus dem Guthaben: {team}."
 msgstr "Du arbejder nu fra saldoen: {team}."
 
@@ -2600,9 +2753,11 @@ msgstr "Ved bestillinger på faktura: find kontoen via e-mail, angiv plan og lø
 msgid "Für eine Person — das Abo gehört fest zu deinem Konto."
 msgstr "Til én person — abonnementet er knyttet til din konto."
 
+#, python-brace-format
 msgid "Gekündigt — läuft noch bis {datum}, danach wechselt dein Konto auf Free."
 msgstr "Opsagt — løber indtil {datum}, derefter skifter din konto til Free."
 
+#, python-brace-format
 msgid "Gekündigt. Dein Abo läuft bis {datum} und endet dann."
 msgstr "Opsagt. Dit abonnement løber indtil {datum} og slutter derefter."
 
@@ -2621,12 +2776,14 @@ msgstr "Fortryd opsigelse"
 msgid "Laufzeit"
 msgstr "Løbetid"
 
+#, python-brace-format
 msgid "Laufzeit: {monate} Monate, verlängert sich am {datum} automatisch."
 msgstr "Løbetid: {monate} måneder, fornys automatisk den {datum}."
 
 msgid "Laufzeiten"
 msgstr "Løbetider"
 
+#, python-brace-format
 msgid "Mein eigenes Guthaben (Plan {plan})"
 msgstr "Min egen saldo (plan {plan})"
 
@@ -2651,12 +2808,15 @@ msgstr "Plan"
 msgid "Plan buchen, wechseln oder Credits nachbuchen: Die Online-Zahlung wird gerade eingebaut. Bis dahin genügt eine E-Mail an"
 msgstr "Bestil eller skift plan, eller køb flere credits: online-betaling er ved at blive bygget. Indtil da er en e-mail nok til"
 
+#, python-brace-format
 msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Guthaben und wird per E-Mail informiert."
 msgstr "Skal “{name}” virkelig fjernes fra teamet? Personen arbejder derefter igen fra sin egen saldo og informeres via e-mail."
 
+#, python-brace-format
 msgid "Team von {inhaber}"
 msgstr "Team af {inhaber}"
 
+#, python-brace-format
 msgid "Team „{name}“ von {inhaber}"
 msgstr "Team “{name}” af {inhaber}"
 
@@ -2669,6 +2829,7 @@ msgstr "Teamnavn gemt."
 msgid "Teamnamen speichern"
 msgstr "Gem teamnavn"
 
+#, python-brace-format
 msgid "Verlängert sich am {datum} automatisch."
 msgstr "Fornys automatisk den {datum}."
 
@@ -2684,20 +2845,22 @@ msgstr "Opsig til udgangen af perioden"
 msgid "Zusatz-Credits gutschreiben (Rechnungsweg)"
 msgstr "Tilføj ekstra credits (faktura)"
 
+#, python-brace-format
 msgid "diesen Monat aus dem Team-Topf: {anzahl} Credits"
 msgstr "denne måned fra team-puljen: {anzahl} credits"
 
 msgid "du erhältst eine Rechnung, und dein Abo wird sofort freigeschaltet."
 msgstr "du modtager en faktura, og dit abonnement aktiveres med det samme."
 
+#, python-brace-format
 msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber)."
 msgstr "{belegt} af {max} pladser optaget (inklusive dig som ejer)."
 
+#, python-brace-format
 msgid "{preis} € pro Monat, darin {credits} Credits enthalten — Mengenrabatt bereits eingerechnet."
 msgstr "{preis} € pr. måned, inklusive {credits} credits — mængderabat allerede indregnet."
 
 # ── Review-Fixes Abomodell (06.08.2026 abends) ──
-
 msgid "Benutzerliste konnte nicht geladen werden. Bitte erneut versuchen."
 msgstr "Brugerlisten kunne ikke indlæses. Prøv igen."
 
@@ -2705,7 +2868,6 @@ msgid "Pakete: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Das Paket landet a
 msgstr "Pakker: 100 = 20 €, 500 = 87,50 €, 1000 = 150 €. Pakken lander på præcis denne konto — for team-saldi angives team-ejerens e-mail. Den udløber først ved opsigelse; for konti uden aktivt abonnement efter 12 måneder."
 
 # ── Stripe-Buchungsstrecke (06.08.2026 nachts) ──
-
 msgid "Abo buchen"
 msgstr "Bestil abonnement"
 
@@ -2715,6 +2877,7 @@ msgstr "Betalingen sker på den sikre Stripe-side (SEPA-betaling, kort eller App
 msgid "Die Zahlung wurde abgebrochen. Es wurde nichts gebucht."
 msgstr "Betalingen blev afbrudt. Intet blev bestilt."
 
+#, python-brace-format
 msgid "Gesamtpreis: {summe} € für {monate} Monate."
 msgstr "Samlet pris: {summe} € for {monate} måneder."
 
@@ -2740,12 +2903,11 @@ msgid "Zusatz-Credits kaufen"
 msgstr "Køb ekstra credits"
 
 # ── §19-UStG-Satz Preisseite (07.08.2026, Steves OK) ──
-
 # ── Planwechsel + Team-Fluss (07.08.2026 nach Michael-Meeting) ──
-
 msgid "Alle Mitglieder verlieren sofort den Zugriff auf das gemeinsame Guthaben und arbeiten wieder mit ihrem eigenen. Sie werden per E-Mail informiert. Konten und Projekte bleiben unverändert. Dein Abo läuft normal weiter — du nutzt die Credits dann allein."
 msgstr "Alle medlemmer mister straks adgang til den fælles saldo og arbejder igen fra deres egen. De informeres via e-mail. Konti og projekter forbliver uændrede. Dit abonnement fortsætter som normalt — du bruger så krediterne alene."
 
+#, python-brace-format
 msgid "Dein Team: {name}"
 msgstr "Dit team: {name}"
 
@@ -2755,12 +2917,15 @@ msgstr "Du har allerede denne plan."
 msgid "Du hast ein Abo mit mehreren Plätzen. Gib deinem Team zuerst einen Namen — danach kannst du Mitglieder einladen."
 msgstr "Dit abonnement indeholder flere pladser. Giv først dit team et navn — derefter kan du invitere medlemmer."
 
+#, python-brace-format
 msgid "Herabstufung: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt, danach gilt der neue Plan für {summe} € pro {monate} Monate."
 msgstr "Nedgradering: planlagt til udgangen af perioden. Indtil {datum} forbliver alt som nu; derefter gælder den nye plan til {summe} € pr. {monate} måneder."
 
+#, python-brace-format
 msgid "Hinweis: {team} endet am {datum}. Danach arbeitest du wieder mit deinem eigenen Guthaben."
 msgstr "Bemærk: {team} slutter den {datum}. Derefter arbejder du igen fra din egen saldo."
 
+#, python-brace-format
 msgid "Höherstufung: gilt sofort. Was du für den laufenden Zeitraum schon bezahlt hast, wird angerechnet — du zahlst nur die Differenz. Neuer Preis: {summe} € für {monate} Monate."
 msgstr "Opgradering: gælder straks. Det, du allerede har betalt for den nuværende periode, modregnes — du betaler kun differencen. Ny pris: {summe} € for {monate} måneder."
 
@@ -2803,6 +2968,7 @@ msgstr "Fortryd planlagt skift"
 msgid "Wechsel anfordern"
 msgstr "Anmod om skift"
 
+#, python-brace-format
 msgid "Wechsel vorgemerkt: Ab {datum} gilt der Plan {plan}."
 msgstr "Skift planlagt: fra {datum} gælder planen {plan}."
 
@@ -2819,27 +2985,29 @@ msgid "Wird umgestellt ..."
 msgstr "Ændrer …"
 
 # ── Review-Fixes Planwechsel (07.08.2026 abends) ──
-
+#, python-brace-format
 msgid "Kürzere Laufzeit: wird zum Laufzeitende vorgemerkt. Bis {datum} bleibt alles wie jetzt."
 msgstr "Kortere løbetid: planlagt til udgangen af perioden. Indtil {datum} forbliver alt som nu."
 
+#, python-brace-format
 msgid "Längere Laufzeit: gilt sofort. Bereits bezahlte Zeit bleibt dir erhalten. Neuer Preis: {summe} € für {monate} Monate."
 msgstr "Længere løbetid: gælder straks. Allerede betalt tid bevares. Ny pris: {summe} € for {monate} måneder."
 
 # ── Upgrade-Logik neue Laufzeit + Actino-Rechnungsweg (07.08.2026) ──
-
 msgid ", dein Abo wird dann für dich freigeschaltet."
 msgstr " — dit abonnement bliver derefter aktiveret for dig."
 
 msgid "Du möchtest lieber auf Rechnung bestellen? Das geht über unseren Partner Actino Software:"
 msgstr "Vil du hellere bestille mod faktura? Det går via vores partner Actino Software:"
 
+#, python-brace-format
 msgid "Höherstufung: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit deines bisherigen Plans wird angerechnet. Die vollen Credits stehen sofort bereit."
 msgstr "Opgradering: gælder straks. En ny løbetid på {monate} måneder starter til {summe} €; allerede betalt tid på din tidligere plan modregnes. De fulde credits er tilgængelige med det samme."
 
 msgid "Lieber auf Rechnung bestellen? Unser Partner Actino Software wickelt Bestellungen auf Rechnung ab — schreib einfach an"
 msgstr "Vil du hellere bestille mod faktura? Vores partner Actino Software håndterer fakturabestillinger — skriv blot til"
 
+#, python-brace-format
 msgid "Längere Laufzeit: gilt sofort. Es startet eine neue Laufzeit über {monate} Monate zum Preis von {summe} €; bereits bezahlte Zeit wird angerechnet."
 msgstr "Længere løbetid: gælder straks. En ny løbetid på {monate} måneder starter til {summe} €; allerede betalt tid modregnes."
 
@@ -2865,6 +3033,7 @@ msgstr "Ja, slet kontoen"
 msgid "Alle deine Projekte, Dokumente und Alt-Texte werden unwiderruflich gelöscht. Das lässt sich nicht rückgängig machen."
 msgstr "Alle dine projekter, dokumenter og alt-tekster slettes permanent. Det kan ikke fortrydes."
 
+#, python-brace-format
 msgid "Dein laufendes Abo ({plan}, bezahlt bis {datum}) wird dabei beendet — eine Erstattung für die Restzeit gibt es nicht."
 msgstr "Dit igangværende abonnement ({plan}, betalt til {datum}) afsluttes — den resterende tid refunderes ikke."
 
@@ -2950,6 +3119,7 @@ msgstr "Når du er logget ind, kan du gøre det direkte: under „Abonnement og 
 msgid "Deine Bestellung"
 msgstr "Din bestilling"
 
+#, python-brace-format
 msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Danach verlängert sich das Abo automatisch um {monate} Monate, solange du nicht kündigst — kündbar jederzeit zum Laufzeitende."
 msgstr "Løbetid {monate} måneder, betales forud. Derefter forlænges abonnementet automatisk med {monate} måneder, medmindre du opsiger — kan opsiges når som helst til periodens udløb."
 
@@ -2981,6 +3151,7 @@ msgstr "Team"
 msgid "Report"
 msgstr "Rapport"
 
+#, python-brace-format
 msgid "Report: {name}"
 msgstr "Rapport: {name}"
 
@@ -2990,6 +3161,7 @@ msgstr "Luk rapporten"
 msgid "Report geschlossen."
 msgstr "Rapporten er lukket."
 
+#, python-brace-format
 msgid "Report für {name} geladen."
 msgstr "Rapport for {name} er indlæst."
 
@@ -3002,24 +3174,30 @@ msgstr "Administrer abonnement"
 msgid "Credits gutschreiben"
 msgstr "Tilskriv credits"
 
+#, python-brace-format
 msgid "Plan-Formular für {name} ausgefüllt."
 msgstr "Abonnementsformularen er udfyldt for {name}."
 
+#, python-brace-format
 msgid "Credit-Formular für {name} ausgefüllt."
 msgstr "Credit-formularen er udfyldt for {name}."
 
+#, python-brace-format
 msgid "Plan: {plan}"
 msgstr "Abonnement: {plan}"
 
+#, python-brace-format
 msgid "verlängert sich am {datum}"
 msgstr "fornyes den {datum}"
 
+#, python-brace-format
 msgid "gekündigt zum {datum}"
 msgstr "opsagt pr. {datum}"
 
 msgid "gekündigt zum Laufzeitende"
 msgstr "opsagt ved periodens udløb"
 
+#, python-brace-format
 msgid "{monate} Monate"
 msgstr "{monate} måneder"
 
@@ -3035,12 +3213,15 @@ msgstr "Stripe"
 msgid "Rechnung"
 msgstr "Faktura"
 
+#, python-brace-format
 msgid "Team „{name}“ mit {n} Mitgliedern"
 msgstr "Teamet „{name}“ med {n} medlemmer"
 
+#, python-brace-format
 msgid "Team-Mitglieder ({n})"
 msgstr "Teammedlemmer ({n})"
 
+#, python-brace-format
 msgid "Arbeitet außerdem im Team von: {liste}"
 msgstr "Arbejder desuden i teamet hos: {liste}"
 
@@ -3071,6 +3252,7 @@ msgstr "Bestilt via"
 msgid "Preis"
 msgstr "Pris"
 
+#, python-brace-format
 msgid "{preis} € im Monat, {summe} € für die Laufzeit"
 msgstr "{preis} € om måneden, {summe} € for perioden"
 
@@ -3119,42 +3301,50 @@ msgstr "aldrig"
 msgid "Geschätzte KI-Kosten"
 msgstr "Anslåede AI-omkostninger"
 
+#, python-brace-format
 msgid "{betrag} € (grobe Schätzung, {satz} € je Credit)"
 msgstr "{betrag} € (groft skøn, {satz} € pr. credit)"
 
 msgid "Verbrauch je Monat"
 msgstr "Forbrug pr. måned"
 
+#, python-brace-format
 msgid "{monat}: {topf} Credits, davon {selbst} selbst erzeugt — geschätzt {kosten} €"
 msgstr "{monat}: {topf} credits, heraf {selbst} genereret selv — anslået {kosten} €"
 
 msgid "Gutgeschriebene Pakete"
 msgstr "Tilskrevne pakker"
 
+#, python-brace-format
 msgid "{groesse} Credits vom {datum}, davon {rest} übrig ({quelle})"
 msgstr "{groesse} credits fra {datum}, {rest} tilbage ({quelle})"
 
+#, python-brace-format
 msgid "Für: {email}"
 msgstr "For: {email}"
 
+#, python-brace-format
 msgid "Passwort für {email} wurde zurückgesetzt."
 msgstr "Adgangskoden for {email} er nulstillet."
 
 msgid "Benutzer wirklich löschen?"
 msgstr "Vil du virkelig slette denne bruger?"
 
+#, python-brace-format
 msgid "Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen."
 msgstr "Kontoen {email} og ALLE tilhørende data slettes permanent (GDPR-sletning). Det kan ikke fortrydes."
 
 msgid "Ja, löschen"
 msgstr "Ja, slet"
 
+#, python-brace-format
 msgid "Benutzer {email} wurde gelöscht."
 msgstr "Brugeren {email} er slettet."
 
 msgid "Admin-Rechte entziehen?"
 msgstr "Fjern administratorrettigheder?"
 
+#, python-brace-format
 msgid "{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen."
 msgstr "{name} mister administratorrettighederne. Kontoen består som almindelig bruger."
 
@@ -3202,15 +3392,19 @@ msgstr "Fælles forbrug findes i abonnementerne Team (5 pladser) og Enterprise (
 msgid "Betreiber-Konten nutzen InkluDocs ohne Abo und ohne Begrenzung. Ein Team brauchst du dafür nicht."
 msgstr "Operatørkonti bruger InkluDocs uden abonnement og uden begrænsning. Det kræver ikke et team."
 
+#, python-brace-format
 msgid "Team „{name}“ wurde erstellt. Du kommst gleich zurück zur Abo-Seite."
 msgstr "Teamet „{name}“ er oprettet. Du sendes straks tilbage til abonnementssiden."
 
+#, python-brace-format
 msgid "Dein Team: {name} — {belegt} von {max} Plätzen belegt, {frei} frei."
 msgstr "Dit team: {name} — {belegt} af {max} pladser optaget, {frei} ledige."
 
+#, python-brace-format
 msgid "{belegt} von {max} Plätzen belegt (inklusive dir als Inhaber) — {frei} frei."
 msgstr "{belegt} af {max} pladser optaget (dig som ejer medregnet) — {frei} ledige."
 
+#, python-brace-format
 msgid "Soll „{name}“ wirklich aus dem Team entfernt werden? Die Person arbeitet danach wieder mit ihrem eigenen Tarif und wird per E-Mail informiert. Der Platz wird sofort frei."
 msgstr "Vil du virkelig fjerne „{name}“ fra teamet? Personen arbejder derefter igen med sit eget abonnement og får besked via e-mail. Pladsen bliver ledig med det samme."
 
@@ -3253,6 +3447,7 @@ msgstr "Kulance"
 msgid "Arbeits-Kontext"
 msgstr "Arbejdskontekst"
 
+#, python-brace-format
 msgid "Team „{team}“ von {inhaber} — die Zahlen unten gelten für diesen Team-Topf, nicht für das eigene Abo."
 msgstr "Team “{team}” hos {inhaber} — tallene nedenfor gælder denne team-pulje, ikke det egne abonnement."
 
@@ -3263,9 +3458,11 @@ msgstr "Arbejder også i teamet hos"
 msgid "Verbrauch nach Topf im laufenden Monat"
 msgstr "Forbrug pr. pulje i den løbende måned"
 
+#, python-brace-format
 msgid "Eigenes Abo ({plan}): {credits} Credits"
 msgstr "Eget abonnement ({plan}): {credits} credits"
 
+#, python-brace-format
 msgid "Team „{team}“ von {inhaber}: {credits} Credits"
 msgstr "Team “{team}” hos {inhaber}: {credits} credits"
 
@@ -3273,9 +3470,11 @@ msgstr "Team “{team}” hos {inhaber}: {credits} credits"
 msgid "Verbrauch nach Topf"
 msgstr "Forbrug pr. pulje"
 
+#, python-brace-format
 msgid "Eigenes Abo ({plan}): diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} €"
 msgstr "Eget abonnement ({plan}): {monat} credits denne måned, {gesamt} i alt — anslåede AI-omkostninger {kosten} €"
 
+#, python-brace-format
 msgid "Team „{team}“ von {inhaber}: diesen Monat {monat} Credits, insgesamt {gesamt} — geschätzte KI-Kosten {kosten} € (zählen beim Konto des Team-Inhabers)"
 msgstr "Team “{team}” hos {inhaber}: {monat} credits denne måned, {gesamt} i alt — anslåede AI-omkostninger {kosten} € (tælles på teamejerens konto)"
 
@@ -3304,139 +3503,154 @@ msgstr "Dagsgrænsen skal være et helt tal mellem 0 og 1000000."
 msgid "API-Tageslimit"
 msgstr "API-dagsgrænse"
 
+#, python-brace-format
 msgid "{limit} Bilder pro Tag (Standard)"
 msgstr "{limit} billeder pr. dag (standard)"
 
+#, python-brace-format
 msgid "{limit} Bilder pro Tag (individuell festgelegt)"
 msgstr "{limit} billeder pr. dag (individuelt fastsat)"
 
+#, python-brace-format
 msgid "API-Limit {limit}/Tag"
 msgstr "API-grænse {limit}/dag"
 
+#, python-brace-format
 msgid "Der Standard ist aktuell {standard} Bilder pro Tag."
 msgstr "Den aktuelle standard er {standard} billeder pr. dag."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
+#, python-brace-format
 msgid "Webseite {n}: {name}"
 msgstr "Webside {n}: {name}"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
+#, python-brace-format
 msgid "Bild {n}: {name}"
 msgstr "Billede {n}: {name}"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Webseite im neuen Tab öffnen"
 msgstr "Åbn websiden i en ny fane"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "(externer Link)"
 msgstr "(eksternt link)"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Webseite löschen?"
 msgstr "Slet webside?"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Webseite umbenennen"
 msgstr "Omdøb webside"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Neuer Name der Webseite"
 msgstr "Websidens nye navn"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Leer lassen, um wieder den Seitentitel zu verwenden. Der Name erscheint auch im Export-Dateinamen."
 msgstr "Lad feltet stå tomt for at bruge sidens titel igen. Navnet indgår også i eksportfilens navn."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "diese Webseite"
 msgstr "denne webside"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Webseite gelöscht."
 msgstr "Webside slettet."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Webseite umbenannt."
 msgstr "Webside omdøbt."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
+#, python-brace-format
 msgid "Möchtest du die Webseite „{name}\" mit 1 Bild wirklich löschen? Das lässt sich nicht rückgängig machen."
 msgstr "Vil du virkelig slette websiden ”{name}” med 1 billede? Dette kan ikke fortrydes."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
+#, python-brace-format
 msgid "Möchtest du die Webseite „{name}\" mit {n} Bildern wirklich löschen? Das lässt sich nicht rückgängig machen."
 msgstr "Vil du virkelig slette websiden ”{name}” med {n} billeder? Dette kan ikke fortrydes."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
+#, python-brace-format
 msgid "– Webseite „{name}\""
 msgstr "– webside ”{name}”"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
+#, python-brace-format
 msgid "Webseite „{name}\", {bild}"
 msgstr "Webside »{name}«, {bild}"
 
-#: multi-datei-phase2 (14.08.2026)
-
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Bild löschen?"
 msgstr "Slet billede?"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Bild löschen"
 msgstr "Slet billede"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Bild umbenennen"
 msgstr "Omdøb billede"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Neuer Name des Bildes"
 msgstr "Billedets nye navn"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Leer lassen, um wieder den ursprünglichen Dateinamen zu verwenden."
 msgstr "Lad feltet stå tomt for at bruge det oprindelige filnavn igen."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "dieses Bild"
 msgstr "dette billede"
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Bild gelöscht."
 msgstr "Billede slettet."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
 msgid "Bild umbenannt."
 msgstr "Billede omdøbt."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
+#, python-brace-format
 msgid "Möchtest du das Bild „{name}\" wirklich löschen? Das lässt sich nicht rückgängig machen."
 msgstr "Vil du virkelig slette billedet ”{name}”? Dette kan ikke fortrydes."
 
-#: multi-datei-phase2 (14.08.2026)
+#: (14.08.2026) multi-datei-phase2
+#, python-brace-format
 msgid "– Bild „{name}\""
 msgstr "– billede ”{name}”"
 
-#: export-summary (18.08.2026, Fable 5)
+#: (18.08.2026, 5) Fable export-summary
 msgid "Bilder werden geprüft …"
 msgstr "Kontrollerer billeder …"
 
 msgid "Monatsabo (monatlich kündbar)"
 msgstr "Månedsabonnement (kan opsiges hver måned)"
 
+#, python-brace-format
 msgid "Gesamtpreis: {summe} € pro Monat, monatlich kündbar."
 msgstr "Samlet pris: {summe} € pr. måned, kan opsiges månedligt."
 
+#, python-brace-format
 msgid "Monatsabo: {summe} € werden jeweils für einen Monat im Voraus abgebucht. Das Abo verlängert sich monatlich und ist jederzeit zum Ende des laufenden Monats kündbar."
 msgstr "Månedsabonnement: {summe} € opkræves forud for én måned ad gangen. Abonnementet fornys månedligt og kan til enhver tid opsiges med virkning fra udgangen af den løbende måned."
 
+#, python-brace-format
 msgid "Monatsabo — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar."
 msgstr "Månedsabonnement — fornys den {datum} med endnu en måned, kan opsiges når som helst."
 
+#, python-brace-format
 msgid "Ohne Bindung: {preis} € pro Monat im Monatsabo, jederzeit kündbar."
 msgstr "Uden binding: {preis} € pr. måned i månedsabonnementet, kan opsiges når som helst."
 
+#, python-brace-format
 msgid "Jede Bezahlstufe gibt es als Monatsabo (jederzeit kündbar) oder günstiger mit fester Laufzeit von {laufzeiten} Monaten."
 msgstr "Hvert betalt abonnement fås som månedsabonnement (kan opsiges når som helst) eller billigere med en fast løbetid på {laufzeiten} måneder."
 
@@ -3476,12 +3690,15 @@ msgstr "Erklæring"
 msgid "Dein Vertrag ist jünger als 14 Tage und du möchtest ihn widerrufen? Dann nutze die Widerrufsfunktion:"
 msgstr "Er din aftale under 14 dage gammel, og vil du fortryde? Så brug fortrydelsesfunktionen:"
 
+#, python-brace-format
 msgid "Treue-Monatsabo: {preis} € pro Monat — verlängert sich am {datum} um einen weiteren Monat, jederzeit kündbar."
 msgstr "Loyalitets-månedsabonnement: {preis} € pr. måned — fornys den {datum} med endnu en måned, kan opsiges når som helst."
 
+#, python-brace-format
 msgid "Laufzeit: {monate} Monate bis {datum}. Danach läuft dein Abo als Monatsabo zur Treuekondition weiter — {preis} € pro Monat, jederzeit monatlich kündbar."
 msgstr "Løbetid: {monate} måneder indtil {datum}. Derefter fortsætter dit abonnement som månedsabonnement til loyalitetsprisen — {preis} € pr. måned, kan opsiges månedligt."
 
+#, python-brace-format
 msgid "Laufzeit {monate} Monate, im Voraus zu zahlen. Wenn du nicht zum Laufzeitende kündigst, läuft das Abo danach als Monatsabo zur Treuekondition weiter: {treue} € pro Monat, jederzeit monatlich kündbar."
 msgstr "Løbetid på {monate} måneder, betales forud. Hvis du ikke opsiger inden løbetidens udløb, fortsætter abonnementet derefter som månedsabonnement til loyalitetsprisen: {treue} € pr. måned, kan opsiges månedligt."
 
@@ -3512,6 +3729,7 @@ msgstr "Vigtigt: Med automatisk fornyelse kun for erhvervskunder (B2B). Booker e
 msgid "Wenn die monatlichen Credits nicht reichen: einfach nachkaufen. Gekaufte Credits verfallen nicht — auch nach dem Ende eines Abos kannst du sie aufbrauchen. Die monatlichen Credits kommen immer obendrauf; mehr Nutzer im Team erhöhen das Kontingent nicht, mehr Credits gibt es über die Pakete."
 msgstr "Hvis de månedlige credits ikke rækker: køb blot flere. Købte credits udløber ikke — du kan bruge dem, også efter et abonnement er slut. De månedlige credits kommer altid oveni; flere brugere i teamet øger ikke kontingentet, flere credits fås via pakkerne."
 
+#, python-brace-format
 msgid "Bei Fragen wende dich gerne an {mail}."
 msgstr "Har du spørgsmål, så skriv til {mail}."
 
@@ -3521,6 +3739,7 @@ msgstr "tak for din registrering hos InkluDocs – dit AI-værktøj til tilgæng
 msgid "Bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren:"
 msgstr "Bekræft venligst din e-mailadresse for at aktivere din konto:"
 
+#, python-brace-format
 msgid "Melde dich auf {url} an."
 msgstr "Log ind på {url}."
 
@@ -3651,7 +3870,6 @@ msgid "Einzelheiten in der Datenschutzerklärung"
 msgstr "Detaljer i privatlivspolitikken"
 
 # Word-Werkzeug (26.08.2026)
-
 msgid "Word-Datei hinzufügen"
 msgstr "Tilføj Word-fil"
 
@@ -3664,6 +3882,7 @@ msgstr "Vælg Word-fil"
 msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Daraus werden die Bilder extrahiert."
 msgstr "Vælg et Word-dokument (.docx), eller træk det hertil. Billederne udtrækkes derfra."
 
+#, python-brace-format
 msgid "Du kannst jederzeit weitere Word-Dateien mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten."
 msgstr "Du kan når som helst uploade flere Word-filer på maks. {mb} MB. De indsættes i listen nedenfor; eksisterende alt-tekster bevares."
 
@@ -3673,18 +3892,22 @@ msgstr "Word-filen behandles – billeder udtrækkes …"
 msgid "Die Verarbeitung der Word-Datei ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
 msgstr "Behandlingen af Word-filen mislykkedes. Prøv venligst filen igen."
 
+#, python-brace-format
 msgid "Abschnitt {n}"
 msgstr "Afsnit {n}"
 
+#, python-brace-format
 msgid "Bild {n}, Abschnitt {p}"
 msgstr "Billede {n}, afsnit {p}"
 
+#, python-brace-format
 msgid "aus Abschnitt {p}"
 msgstr "fra afsnit {p}"
 
 msgid "1 Element ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)"
 msgstr "1 element uden alternativ tekst (understøttes endnu ikke)"
 
+#, python-brace-format
 msgid "{n} Elemente ohne Alt-Text (in dieser Ausbaustufe nicht unterstützt)"
 msgstr "{n} elementer uden alternativ tekst (understøttes endnu ikke)"
 
@@ -3706,12 +3929,14 @@ msgstr "Figur"
 msgid "Gruppe"
 msgstr "Gruppe"
 
+#, python-brace-format
 msgid "Vektorgrafik ({fmt})"
 msgstr "Vektorgrafik ({fmt})"
 
 msgid "Verknüpftes Bild (nicht in der Datei)"
 msgstr "Linket billede (ikke i filen)"
 
+#, python-brace-format
 msgid "Eingebettetes Objekt ({fmt})"
 msgstr "Indlejret objekt ({fmt})"
 
@@ -3730,10 +3955,12 @@ msgstr "Sidefod"
 msgid "Tabelle"
 msgstr "Tabel"
 
-# QUICKINFO-WERKZEUG (27.08.2026): Formular-Ansicht (frontend/formular.js, app.html)
+# QUICKINFO-WERKZEUG (27.08.2026): Formular-Ansicht (frontend/formular.js,
+# app.html)
 msgid "1 Quickinfo aus Stammdaten übernommen."
 msgstr "1 hjælpetekst overtaget fra stamdata."
 
+#, python-brace-format
 msgid "Abschnitt: {g}"
 msgstr "Afsnit: {g}"
 
@@ -3755,12 +3982,12 @@ msgstr "Radioknap"
 msgid "Auswahlliste"
 msgstr "Rulleliste"
 
+#, python-brace-format
 msgid "Beschriftung im Formular: {b}"
 msgstr "Etiket i formularen: {b}"
 
 msgid "Das Formular wird verarbeitet – Felder werden gelesen …"
 msgstr "Formularen behandles – felter læses …"
-
 
 msgid "Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut."
 msgstr "Behandlingen af formularen mislykkedes. Prøv igen med filen."
@@ -3768,6 +3995,7 @@ msgstr "Behandlingen af formularen mislykkedes. Prøv igen med filen."
 msgid "Du kannst jederzeit weitere PDF-Formulare hochladen. Sie werden in der Liste unten eingefügt; bereits eingetragene Quickinfos bleiben erhalten."
 msgstr "Du kan altid uploade flere PDF-formularer. De tilføjes til listen nedenfor; allerede indtastede hjælpetekster bevares."
 
+#, python-brace-format
 msgid "Erscheint auf den Seiten {s}"
 msgstr "Vises på siderne {s}"
 
@@ -3777,21 +4005,26 @@ msgstr "Eksporterer …"
 msgid "Feld"
 msgstr "Felt"
 
+#, python-brace-format
 msgid "Feld Nr. {n} ({art}) hat keinen Feldnamen und kann nicht beschrieben werden."
 msgstr "Felt nr. {n} ({art}) har intet feltnavn og kan ikke beskrives."
 
+#, python-brace-format
 msgid "Feld {n}, {art}"
 msgstr "Felt {n}, {art}"
 
+#, python-brace-format
 msgid "Feld {n}, {art}, Seite {p}"
 msgstr "Felt {n}, {art}, side {p}"
 
+#, python-brace-format
 msgid "Feld „{name}“ ({art}) hat keine sichtbare Darstellung auf einer Seite."
 msgstr "Feltet “{name}” ({art}) har ingen synlig visning på en side."
 
 msgid "Formular gelesen."
 msgstr "Formular læst."
 
+#, python-brace-format
 msgid "Formular hinzugefügt als Dokument {d}."
 msgstr "Formular tilføjet som dokument {d}."
 
@@ -3843,6 +4076,7 @@ msgstr "Kun åbne felter vises."
 msgid "Ohne Seite"
 msgstr "Uden side"
 
+#, python-brace-format
 msgid "Optionen: {o}"
 msgstr "Valgmuligheder: {o}"
 
@@ -3864,6 +4098,7 @@ msgstr "Hjælpetekst"
 msgid "Quickinfo auf das Original zurückgesetzt."
 msgstr "Hjælpetekst nulstillet til originalen."
 
+#, python-brace-format
 msgid "Quickinfo aus Stammdaten übernommen: {q}"
 msgstr "Hjælpetekst overtaget fra stamdata: {q}"
 
@@ -3882,6 +4117,7 @@ msgstr "Anvend stamdata på åbne felter"
 msgid "Stammdaten konnten nicht angewendet werden."
 msgstr "Stamdata kunne ikke anvendes."
 
+#, python-brace-format
 msgid "Technischer Feldname: {n}"
 msgstr "Teknisk feltnavn: {n}"
 
@@ -3894,6 +4130,7 @@ msgstr "Forbindelsesfejl under lagring."
 msgid "Vollständig"
 msgstr "Fuldstændig"
 
+#, python-brace-format
 msgid "Vorschlag aus deinen Stammdaten: {q}"
 msgstr "Forslag fra dine stamdata: {q}"
 
@@ -3936,24 +4173,31 @@ msgstr "manuelt"
 msgid "vorhanden (aus der PDF)"
 msgstr "findes (fra PDF’en)"
 
+#, python-brace-format
 msgid "{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert."
 msgstr "{b} af {n} felter har en hjælpetekst. Felter uden hjælpetekst forbliver uændrede i PDF’en."
 
+#, python-brace-format
 msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo. Stammdaten: {s} Einträge."
 msgstr "{n} felter i {d} dokumenter, {o} uden hjælpetekst. Stamdata: {s} poster."
 
+#, python-brace-format
 msgid "{n} Felder werden nur als „ohne Bezeichnung“ vorgelesen. So hört sich das Formular gerade an:"
 msgstr "{n} felter læses kun som “uden betegnelse”. Sådan lyder formularen lige nu:"
 
+#, python-brace-format
 msgid "{n} Felder, {o} offen"
 msgstr "{n} felter, {o} åbne"
 
+#, python-brace-format
 msgid "{n} Hinweise zu diesem Formular"
 msgstr "{n} bemærkninger til denne formular"
 
+#, python-brace-format
 msgid "{n} Hinweise: {w}"
 msgstr "{n} bemærkninger: {w}"
 
+#, python-brace-format
 msgid "{n} Quickinfos aus Stammdaten übernommen."
 msgstr "{n} hjælpetekster overtaget fra stamdata."
 
@@ -3997,9 +4241,11 @@ msgstr "Post slettet."
 msgid "Eintrag gespeichert."
 msgstr "Post gemt."
 
+#, python-brace-format
 msgid "Eintrag {name} zum Bearbeiten geladen. Die Felder stehen unten im Formular."
 msgstr "Post {name} indlæst til redigering. Felterne står i formularen nedenfor."
 
+#, python-brace-format
 msgid "Eintrag „{name}“ wirklich löschen? Bereits eingetragene Quickinfos in Projekten bleiben erhalten."
 msgstr "Vil du virkelig slette posten “{name}”? Hjælpetekster, der allerede er indtastet i projekter, bevares."
 
@@ -4012,6 +4258,7 @@ msgstr "Filtrerer listen efter etiket, feltnavn eller hjælpetekst."
 msgid "Gespeicherte Stammdaten"
 msgstr "Gemte stamdata"
 
+#, python-brace-format
 msgid "Herkunft: {h}"
 msgstr "Oprindelse: {h}"
 
@@ -4048,6 +4295,7 @@ msgstr "Siger, hvad der skal indtastes, med gruppe og format, f.eks. “Ansøger
 msgid "So, wie der Text neben dem Feld im Formular steht, z. B. „Vorname“ oder „Geburtsdatum (TT.MM.JJJJ)“. Beschriftung oder Feldname ist Pflicht."
 msgstr "Som teksten står ved siden af feltet i formularen, f.eks. “Fornavn” eller “Fødselsdato (DD.MM.ÅÅÅÅ)”. Etiket eller feltnavn er obligatorisk."
 
+#, python-brace-format
 msgid "Sprache: {s}"
 msgstr "Sprog: {s}"
 
@@ -4063,22 +4311,27 @@ msgstr "importeret fra CSV"
 msgid "aus einem Formular übernommen"
 msgstr "overtaget fra en formular"
 
+#, python-brace-format
 msgid "{n} Einträge importiert, {s} übersprungen."
 msgstr "{n} poster importeret, {s} sprunget over."
 
+#, python-brace-format
 msgid "{n} Einträge."
 msgstr "{n} poster."
 
+#, python-brace-format
 msgid "{n} von {m} Einträgen passen zur Suche."
 msgstr "{n} af {m} poster matcher søgningen."
 
+#, python-brace-format
 msgid "{n}-mal verwendet"
 msgstr "brugt {n} gange"
 
 msgid "„Beliebig“ passt auf jede Feldart mit dieser Beschriftung."
 msgstr "“Vilkårlig” passer til enhver felttype med denne etiket."
 
-# QUICKINFO-WERKZEUG (27.08.2026): Review-Runde (Loeschdialog Formular, namenlose Felder)
+# QUICKINFO-WERKZEUG (27.08.2026): Review-Runde (Loeschdialog Formular,
+# namenlose Felder)
 msgid "Dieses Feld hat keinen Feldnamen. Eine Quickinfo kann dafür nicht in die PDF geschrieben werden."
 msgstr "Dette felt har intet feltnavn. Der kan ikke skrives en hjælpetekst til PDF’en for det."
 
@@ -4094,9 +4347,11 @@ msgstr "Formular omdøbt."
 msgid "Formular umbenennen"
 msgstr "Omdøb formular"
 
+#, python-brace-format
 msgid "Möchtest du das Formular „{name}\" mit 1 Feld wirklich löschen? Das lässt sich nicht rückgängig machen."
 msgstr "Vil du virkelig slette formularen “{name}” med 1 felt? Dette kan ikke fortrydes."
 
+#, python-brace-format
 msgid "Möchtest du das Formular „{name}\" mit {n} Feldern wirklich löschen? Das lässt sich nicht rückgängig machen."
 msgstr "Vil du virkelig slette formularen “{name}” med {n} felter? Dette kan ikke fortrydes."
 
@@ -4106,24 +4361,29 @@ msgstr "Nyt navn på formularen"
 msgid "dieses Formular"
 msgstr "denne formular"
 
+#, python-brace-format
 msgid "– Formular „{name}“"
 msgstr "– formular “{name}”"
 
+#, python-brace-format
 msgid "Beleg: „{b}“"
 msgstr "Belæg: “{b}”"
 
 msgid "Generieren fehlgeschlagen."
 msgstr "Generering mislykkedes."
 
+#, python-brace-format
 msgid "Generierung abgeschlossen: {n} Quickinfos neu."
 msgstr "Generering afsluttet: {n} nye hjælpetekster."
 
+#, python-brace-format
 msgid "Hinweise: {w}"
 msgstr "Bemærkninger: {w}"
 
 msgid "KI generiert"
 msgstr "AI genererer"
 
+#, python-brace-format
 msgid "KI-Vorschlag, {s}"
 msgstr "AI-forslag, {s}"
 
@@ -4136,6 +4396,7 @@ msgstr "Vis kun usikre AI-forslag"
 msgid "Nur unsichere KI-Vorschläge werden angezeigt."
 msgstr "Kun usikre AI-forslag vises."
 
+#, python-brace-format
 msgid "Quickinfo generiert, {s}: {q}"
 msgstr "Hjælpetekst genereret, {s}: {q}"
 
@@ -4154,10 +4415,11 @@ msgstr "sikker"
 msgid "unsicher"
 msgstr "usikker"
 
+#, python-brace-format
 msgid "{u} KI-Vorschläge unsicher."
 msgstr "{u} AI-forslag usikre."
 
-
+#, python-brace-format
 msgid "Bitte Quickinfos prüfen: {projekt}"
 msgstr "Gennemgå venligst værktøjstips: {projekt}"
 
@@ -4173,9 +4435,11 @@ msgstr "Værktøjstips: "
 msgid "vom Gast bearbeitet"
 msgstr "redigeret af gæsten"
 
+#, python-brace-format
 msgid "{name} möchte Sie bitten, die Quickinfos für das Formular „{projekt}“ zu prüfen."
 msgstr "{name} beder dig gennemgå værktøjstipsene for formularen »{projekt}«."
 
+#, python-brace-format
 msgid "{n} Felder in {d} Dokumenten, {o} ohne Quickinfo."
 msgstr "{n} felter i {d} dokumenter, {o} uden værktøjstip."
 
@@ -4188,6 +4452,7 @@ msgstr "f.eks. 'forkort felt 3' eller 'generér et værktøjstip til felt 5'"
 msgid "InkluAgent hat 1 Quickinfo aktualisiert."
 msgstr "InkluAgent har opdateret 1 værktøjstip."
 
+#, python-brace-format
 msgid "InkluAgent hat {n} Quickinfos aktualisiert."
 msgstr "InkluAgent har opdateret {n} værktøjstips."
 
@@ -4236,40 +4501,44 @@ msgstr "Søg i stamdata"
 msgid "Ohne Werkzeug (aus dem Gesprächsverlauf)"
 msgstr "Uden værktøj (fra samtalen)"
 
+#, python-brace-format
 msgid "Geprüft mit: {w}"
 msgstr "Kontrolleret med: {w}"
 
+#, python-brace-format
 msgid "Ruft gerade auf: {w}"
 msgstr "Kalder nu: {w}"
 
 msgid "Alle neu generieren"
 msgstr "Generér alle igen"
 
-
-
-
-
 msgid "KI-Vorschlag übernehmen"
 msgstr "Brug KI-forslag"
 
+#, python-brace-format
 msgid "KI-Vorschlag erzeugt, {s}: „{q}“ – dein Text bleibt. Übernehmen über den Knopf „KI-Vorschlag übernehmen“."
 msgstr "KI-forslag oprettet, {s}: »{q}« – din tekst bliver. Brug det med knappen »Brug KI-forslag«."
 
+#, python-brace-format
 msgid "KI-Vorschlag übernommen: {q}"
 msgstr "KI-forslag brugt: {q}"
 
 msgid "im Chat bestätigt"
 msgstr "bekræftet i chatten"
 
+#, python-brace-format
 msgid "{n} Alt-Texte neu generieren, {c} Credits"
 msgstr "Generér {n} alt-tekster igen, {c} credits"
 
+#, python-brace-format
 msgid "Dieser Export kostet {p} Credits."
 msgstr "Denne eksport koster {p} credits."
 
+#, python-brace-format
 msgid "Dieser Export kostet {p} Credits. Du hast {v}."
 msgstr "Denne eksport koster {p} credits. Du har {v}."
 
+#, python-brace-format
 msgid "Der Export würde {p} Credits benötigen, du verfügst derzeit über {v} Credits. Du kannst die notwendigen Credits jederzeit als Paket zusätzlich zu deinem Abo erwerben."
 msgstr "Denne eksport ville kræve {p} credits; du har i øjeblikket {v} credits. Du kan til enhver tid købe de nødvendige credits som en pakke ud over dit abonnement."
 
@@ -4279,6 +4548,7 @@ msgstr "Ikke nok credits"
 msgid "Zu Abo & Verbrauch"
 msgstr "Til Abonnement & forbrug"
 
+#, python-brace-format
 msgid "Feld {n}, {name}, {art}"
 msgstr "Felt {n}, {name}, {art}"
 
@@ -4294,454 +4564,495 @@ msgstr "Anvend stamdata på alle felter"
 msgid "Texte von Hand, vom Gast und aus dem Chat bleiben unverändert."
 msgstr "Tekster skrevet i hånden, af gæsten eller i chatten forbliver uændrede."
 
+#, python-brace-format
 msgid "Feldname {name}"
 msgstr "feltnavn {name}"
 
+#, python-brace-format
 msgid "– Dokument „{name}“"
 msgstr "– dokument »{name}«"
 
 msgid "Ganzes Projekt herunterladen"
 msgstr "Download hele projektet"
 
+#, python-brace-format
 msgid "Ganzes Projekt herunterladen ({n} Dokumente)"
 msgstr "Download hele projektet ({n} dokumenter)"
 
+#, python-brace-format
 msgid "Dokument „{name}“ herunterladen"
 msgstr "Download dokumentet „{name}“"
 
+#, python-brace-format
 msgid "Du hast die {n} Chat-Nachrichten für heute genutzt. Morgen geht es weiter."
 msgstr "Du har brugt dagens {n} chatbeskeder. Det fortsætter i morgen."
 
-#: Aktionspreise 29.08.2026
+#: 29.08.2026 Aktionspreise
+#, python-brace-format
 msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit je Formularfeld. Der Export der fertigen Datei kostet {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder (PDF, Word) beziehungsweise plus {feld} Credit je angefangene {schritt} Felder (Formular); Tabellen-Exporte (CSV, Excel, JSON) kosten {tab} Credits. Mit dem InkluAgent reden ist kostenlos; ändert er einen Alt-Text, kostet das {alt} Credits, eine Quickinfo {qi} Credit. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
 msgstr "Én valuta til alt: credits. En alt-tekst koster {alt} credits, en feltbeskrivelse {qi} credit pr. formularfelt. Eksport af den færdige fil koster {exp} credits plus {bild} credits pr. påbegyndte {schritt} billeder (PDF, Word) eller plus {feld} credit pr. påbegyndte {schritt} felter (formularer); tabeleksporter (CSV, Excel, JSON) koster {tab} credits. At tale med InkluAgent er gratis; ændrer den en alt-tekst, koster det {alt} credits, en feltbeskrivelse {qi} credit. Alle priser er slutpriser — der beregnes ingen moms i henhold til § 19 UStG."
 
-#: Aktionspreise 29.08.2026
+#: 29.08.2026 Aktionspreise
 msgid "Das reicht für kleine Dokumente; wer größere Formulare oder viele Bilder bearbeitet, braucht ein Abo oder ein Credit-Paket."
 msgstr "Det rækker til små dokumenter; den, der arbejder med større formularer eller mange billeder, har brug for et abonnement eller en credit-pakke."
 
-#: Aktionspreise 29.08.2026
+#: 29.08.2026 Aktionspreise
+#, python-brace-format
 msgid "Leistung: {credits} Credits pro Monat für bis zu {plaetze} Personen (du eingerechnet). Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
 msgstr "Ydelse: {credits} credits pr. måned til op til {plaetze} personer (inklusive dig). En alt-tekst koster {alt} credits, en feltbeskrivelse {qi} credit."
 
-#: Aktionspreise 29.08.2026
+#: 29.08.2026 Aktionspreise
+#, python-brace-format
 msgid "Leistung: {credits} Credits pro Monat. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
 msgstr "Ydelse: {credits} credits pr. måned. En alt-tekst koster {alt} credits, en feltbeskrivelse {qi} credit."
 
-#: Aktionspreise 29.08.2026
+#: 29.08.2026 Aktionspreise
+#, python-brace-format
 msgid "Die Alternativtexte können zusätzlich als CSV, Excel oder JSON exportiert werden ({p} Credits)."
 msgstr "Alternativteksterne kan desuden eksporteres som CSV, Excel eller JSON ({p} credits)."
 
-#: Aktionspreise 29.08.2026
+#: 29.08.2026 Aktionspreise
+#, python-brace-format
 msgid "Die Feldliste als CSV kostet {p} Credits."
 msgstr "Feltlisten som CSV koster {p} credits."
 
-#: Barrierefreie PDF 29.08.2026
+#: 29.08.2026 Barrierefreie PDF
 msgid "Ergebnis der Umwandlung"
 msgstr "Resultat af konverteringen"
 
-#: Barrierefreie PDF 29.08.2026
+#: 29.08.2026 Barrierefreie PDF
 msgid "Wird in PDF umgewandelt und geprüft, das dauert einen Moment …"
 msgstr "Konverterer til PDF og kontrollerer, det tager et øjeblik …"
 
-#: Barrierefreie PDF 29.08.2026
+#: 29.08.2026 Barrierefreie PDF
 msgid "Die Umwandlung ist fehlgeschlagen."
 msgstr "Konverteringen mislykkedes."
 
-#: Barrierefreie PDF 29.08.2026
+#: 29.08.2026 Barrierefreie PDF
 msgid "in Ordnung"
 msgstr "i orden"
 
-#: Barrierefreie PDF 29.08.2026
+#: 29.08.2026 Barrierefreie PDF
 msgid "PDF herunterladen"
 msgstr "Download PDF"
 
-#: Barrierefreie PDF 29.08.2026
+#: 29.08.2026 Barrierefreie PDF
 msgid "Die Datei konnte nicht geladen werden."
 msgstr "Filen kunne ikke hentes."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Hörprobe und Prüfbericht"
 msgstr "Lytteprøve og kontrolrapport"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Prüfbericht des Word-Dokuments"
 msgstr "Kontrolrapport for Word-dokumentet"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Hörprobe: so liest ein Screenreader das Dokument"
 msgstr "Lytteprøve: sådan læser en skærmlæser dokumentet"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Wird geprüft …"
 msgstr "Kontrollerer …"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Die Prüfung ist fehlgeschlagen."
 msgstr "Kontrollen mislykkedes."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Keine Auffälligkeiten im Word-Dokument."
 msgstr "Ingen bemærkninger til Word-dokumentet."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "{n} Hinweise zum Word-Dokument, Details im Prüfbericht."
 msgstr "{n} bemærkninger til Word-dokumentet, detaljer i kontrolrapporten."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Struktur und Lesereihenfolge"
 msgstr "Struktur og læserækkefølge"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Der Inhalt ist als Struktur ausgezeichnet, ein Screenreader kann ihn in der richtigen Reihenfolge lesen."
 msgstr "Indholdet er mærket som struktur; en skærmlæser kan læse det i den rigtige rækkefølge."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Text und Sprache"
 msgstr "Tekst og sprog"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Text ist als Text hinterlegt und die Sprache des Dokuments ist gesetzt, damit die Sprachausgabe richtig ausspricht."
 msgstr "Tekst er gemt som tekst, og dokumentets sprog er sat, så oplæsningen udtaler korrekt."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Bilder und Grafiken"
 msgstr "Billeder og grafik"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Jedes Bild hat einen Alternativtext oder ist als Schmuckbild markiert."
 msgstr "Hvert billede har en alternativ tekst eller er markeret som dekorativt."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Überschriften"
 msgstr "Overskrifter"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Überschriften sind als Überschriften ausgezeichnet und in sinnvoller Reihenfolge."
 msgstr "Overskrifter er mærket som overskrifter og i fornuftig rækkefølge."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Tabellen"
 msgstr "Tabeller"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Tabellen haben Kopfzellen, damit Zellen einer Spalte zugeordnet werden können."
 msgstr "Tabeller har overskriftsceller, så celler kan knyttes til en kolonne."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Listen"
 msgstr "Lister"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Listen sind als Listen ausgezeichnet."
 msgstr "Lister er mærket som lister."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Formeln"
 msgstr "Formler"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Mathematische Formeln sind mit einem Alternativtext versehen."
 msgstr "Matematiske formler har en alternativ tekst."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Fußnoten und Anmerkungen"
 msgstr "Fodnoter og noter"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Fußnoten und Anmerkungen sind zugänglich verknüpft."
 msgstr "Fodnoter og noter er tilgængeligt forbundet."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Optionale Inhalte"
 msgstr "Valgfrit indhold"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Ein- und ausblendbare Inhalte sind benannt."
 msgstr "Indhold, der kan vises eller skjules, er navngivet."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Eingebettete Dateien"
 msgstr "Indlejrede filer"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Eingebettete Dateien sind beschrieben."
 msgstr "Indlejrede filer er beskrevet."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Schriften"
 msgstr "Skrifttyper"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Schriften sind eingebettet, damit Text überall gleich erscheint und vorgelesen werden kann."
 msgstr "Skrifttyper er indlejret, så tekst ser ens ud overalt og kan læses op."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Wiedergabe"
 msgstr "Afspilning"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Multimedia-Inhalte sind zugänglich."
 msgstr "Multimedieindhold er tilgængeligt."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Formularfelder und Verknüpfungen"
 msgstr "Formularfelter og links"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Formularfelder und Links haben eine Beschreibung."
 msgstr "Formularfelter og links har en beskrivelse."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Metadaten"
 msgstr "Metadata"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Das Dokument nennt sich selbst als PDF/UA."
 msgstr "Dokumentet erklærer sig som PDF/UA."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Weitere Prüfpunkte"
 msgstr "Øvrige kontrolpunkter"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Weitere technische Anforderungen sind erfüllt."
 msgstr "Øvrige tekniske krav er opfyldt."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Das Dokument ist nicht als getaggte PDF gekennzeichnet."
 msgstr "Dokumentet er ikke markeret som tagget PDF."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Die Struktur beginnt nicht mit einem Dokument-Element."
 msgstr "Strukturen begynder ikke med et dokument-element."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Es gibt Inhalte, die weder als Struktur noch als Schmuck markiert sind — Screenreader können sie überspringen oder unpassend lesen."
 msgstr "Noget indhold er hverken markeret som struktur eller pynt — skærmlæsere kan springe det over eller læse det forkert."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Ein Dokumenttitel fehlt im Dokument."
 msgstr "Dokumentet mangler en titel."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Der Dokumenttitel fehlt in den Metadaten."
 msgstr "Dokumenttitlen mangler i metadata."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Die PDF ist nicht so eingestellt, dass der Titel statt des Dateinamens angezeigt wird."
 msgstr "PDF’en er ikke sat til at vise titlen i stedet for filnavnet."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Die Sprache des Dokuments ist nicht gesetzt."
 msgstr "Dokumentets sprog er ikke sat."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Ein Bild hat keinen Alternativtext."
 msgstr "Et billede har ingen alternativ tekst."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Der Alternativtext eines Bildes ist ein Platzhalter."
 msgstr "Et billedes alternative tekst er en pladsholder."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."
 msgstr "Overskriftsniveauerne er ikke sammenhængende (for eksempel niveau 1 efterfulgt af niveau 3)."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Eine Tabelle hat keine Kopfzellen."
 msgstr "En tabel har ingen overskriftsceller."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."
 msgstr "Celler i en tabel er ikke knyttet til deres overskriftsceller."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Eine Schrift ist nicht eingebettet."
 msgstr "En skrifttype er ikke indlejret."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Ein Formularfeld oder ein Link hat keine Beschreibung."
 msgstr "Et formularfelt eller et link har ingen beskrivelse."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Ein Link hat keinen beschreibenden Text."
 msgstr "Et link har ingen beskrivende tekst."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "({n}-mal)"
 msgstr "({n} gange)"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})"
 msgstr "Et teknisk kontrolpunkt er ikke opfyldt ({beschreibung})"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "ohne Beschreibung"
 msgstr "uden beskrivelse"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "{n} weitere technische Prüfpunkte sind nicht erfüllt: {beschreibung}."
 msgstr "{n} yderligere tekniske kontrolpunkter er ikke opfyldt: {beschreibung}."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Ein weiterer technischer Prüfpunkt ist nicht erfüllt: {beschreibung}."
 msgstr "Et yderligere teknisk kontrolpunkt er ikke opfyldt: {beschreibung}."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Deine PDF ist fertig und hat die Prüfung auf PDF/UA bestanden."
 msgstr "Din PDF er klar og har bestået PDF/UA-kontrollen."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Deine PDF ist fertig. Die Prüfung meldet einen Bereich mit Hinweisen, den du dir ansehen solltest."
 msgstr "Din PDF er klar. Kontrollen melder ét område med bemærkninger, du bør se på."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Deine PDF ist fertig. Die Prüfung meldet {n} Bereiche mit Hinweisen, die du dir ansehen solltest."
 msgstr "Din PDF er klar. Kontrollen melder {n} områder med bemærkninger, du bør se på."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "{n} von {m} Dokumenten haben die Prüfung auf PDF/UA bestanden."
 msgstr "{n} af {m} dokumenter har bestået PDF/UA-kontrollen."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Die Umwandlung ist fehlgeschlagen: {grund}"
 msgstr "Konverteringen mislykkedes: {grund}"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Dokumenttitel: {t}"
 msgstr "Dokumenttitel: {t}"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Dokumenttitel: fehlt"
 msgstr "Dokumenttitel: mangler"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Sprache: nicht gesetzt"
 msgstr "Sprog: ikke sat"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Schmuckbild (wird nicht vorgelesen)"
 msgstr "Dekorativt billede (læses ikke op)"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Bild: {alt}"
 msgstr "Billede: {alt}"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Bild ohne Beschreibung — ein Screenreader sagt nur „Grafik“"
 msgstr "Billede uden beskrivelse — en skærmlæser siger kun „grafik“"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "… (Hörprobe gekürzt)"
 msgstr "… (lytteprøve forkortet)"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Leere Überschrift (Ebene {n})"
 msgstr "Tom overskrift (niveau {n})"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Titel: {t}"
 msgstr "Titel: {t}"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Überschrift Ebene {n}: {t}"
 msgstr "Overskrift niveau {n}: {t}"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Listenpunkt: {t}"
 msgstr "Listepunkt: {t}"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Absatz: {t}"
 msgstr "Afsnit: {t}"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Tabelle mit {r} Zeilen und {c} Spalten"
 msgstr "Tabel med {r} rækker og {c} kolonner"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid ", Kopfzeile: {k}"
 msgstr ", overskriftsrække: {k}"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid ", ohne Kopfzeile"
 msgstr ", uden overskriftsrække"
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Der Dokumenttitel ist gesetzt."
 msgstr "Dokumenttitlen er sat."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt sonst nur den Dateinamen als Namen."
 msgstr "Dokumenttitlen mangler (Filer → Oplysninger → Titel). Ellers får PDF’en kun filnavnet som navn."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Die Dokumentsprache ist gesetzt ({s})."
 msgstr "Dokumentsproget er sat ({s})."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Die Dokumentsprache ist nicht gesetzt. Screenreader wählen dann eine falsche Aussprache."
 msgstr "Dokumentsproget er ikke sat. Skærmlæsere vælger så en forkert udtale."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Das Dokument nutzt keine Überschriften-Formatvorlagen. Ohne Überschriften kann niemand im Dokument springen."
 msgstr "Dokumentet bruger ingen overskriftstypografier. Uden overskrifter kan ingen springe rundt i dokumentet."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Die erste Überschrift hat Ebene {n} statt 1."
 msgstr "Den første overskrift har niveau {n} i stedet for 1."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "{n}-mal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
 msgstr "Overskriftsniveauet springer {n} gange (for eksempel fra 1 til 3)."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Einmal springt die Überschriften-Ebene (zum Beispiel von 1 auf 3)."
 msgstr "Overskriftsniveauet springer én gang (for eksempel fra 1 til 3)."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "{n} Überschriften sind leer."
 msgstr "{n} overskrifter er tomme."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
 msgid "Eine Überschrift ist leer."
 msgstr "En overskrift er tom."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "{n} Überschriften in sauberer Reihenfolge."
 msgstr "{n} overskrifter i ren rækkefølge."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "{n} von {m} Tabellen haben keine als Kopfzeile markierte erste Zeile (Tabellentools → Kopfzeile wiederholen)."
 msgstr "{n} af {m} tabeller har ingen første række markeret som overskriftsrække (Tabelværktøjer → Gentag overskriftsrækker)."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Alle {n} Tabellen haben eine Kopfzeile."
 msgstr "Alle {n} tabeller har en overskriftsrække."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "{n} von {m} Bildern haben keinen Alternativtext — in InkluDocs generieren oder als Schmuckbild markieren."
 msgstr "{n} af {m} billeder har ingen alternativ tekst — generér i InkluDocs eller markér som dekorative."
 
-#: Barrierefreie PDF Stufe 2, 29.08.2026
+#: 2, 29.08.2026 Barrierefreie PDF Stufe
+#, python-brace-format
 msgid "Alle {n} Bilder haben einen Alternativtext oder sind Schmuckbilder."
 msgstr "Alle {n} billeder har en alternativ tekst eller er dekorative."
 
-# Lauf-Hinweis (Steve 31.08.2026): vorzeitiges Ende eines Sammellaufs hoerbar machen.
+# Lauf-Hinweis (Steve 31.08.2026): vorzeitiges Ende eines Sammellaufs hoerbar
+# machen.
+#, python-brace-format
 msgid "Tageslimit erreicht: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Daglig grænse nået: {i} billeder blev behandlet, {n} mangler."
 
+#, python-brace-format
 msgid "Das Guthaben reichte nicht für alle: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Der var ikke credits nok til dem alle: {i} billeder blev behandlet, {n} mangler."
 
 # Ueber-uns-Saetze (31.08.2026)
+#, python-format
 msgid "Mehr über Steve und seine Arbeit findest du auf %(site)s und auf %(li)s."
 msgstr "Læs mere om Steve og hans arbejde på %(site)s og på %(li)s."
 
 msgid "Steves LinkedIn-Profil"
 msgstr "Steves LinkedIn-profil"
 
+#, python-format
 msgid "Mehr über Michael und die Actino Software GmbH findest du auf %(site)s und auf %(li)s."
 msgstr "Læs mere om Michael og Actino Software GmbH på %(site)s og på %(li)s."
 
@@ -4757,7 +5068,6 @@ msgstr "Vil du hellere bestille på faktura? Så skriv til"
 
 msgid "— du erhältst eine Rechnung, und wir schalten dein Abo frei."
 msgstr "– du får en faktura, og vi aktiverer dit abonnement."
-
 
 #. Neuigkeiten-Eintrag 31.08.2026 (Abo-Start)
 msgid "InkluDocs geht in den regulären Betrieb: Alles wird jetzt in Credits abgerechnet — ein Alt-Text kostet 5, eine Quickinfo 1. Free hat 50 Credits im Monat, mehr gibt es mit Single, Team oder Enterprise und als Paket; gekaufte Credits verfallen nie. Als Dank fürs Testen sind dir 250 Credits geschenkt. Einzelheiten unter „Abo & Verbrauch“."
@@ -4777,14 +5087,17 @@ msgid "Du nutzt den kostenlosen Free-Plan. Ein Abo mit mehr Credits buchst du gl
 msgstr "Du bruger den gratis Free-plan. Et abonnement med flere credits bestiller du lige her nedenfor — online eller mod faktura."
 
 #. Plan-Liste ohne Preis (31.08.2026)
+#, python-brace-format
 msgid "{plan} — {credits} Credits im Monat, ein Konto"
 msgstr "{plan} — {credits} credits om måneden, én konto"
 
 #. Plan-Liste ohne Preis (31.08.2026)
+#, python-brace-format
 msgid "{plan} — {credits} Credits im Monat, bis {plaetze} Personen"
 msgstr "{plan} — {credits} credits om måneden, op til {plaetze} personer"
 
 #. Plan-Liste ohne Preis (31.08.2026)
+#, python-brace-format
 msgid "Gesamtpreis: {summe} € für {monate} Monate — {rate} € pro Monat."
 msgstr "Samlet pris: {summe} € for {monate} måneder — {rate} € pr. måned."
 
@@ -4801,6 +5114,7 @@ msgid "Ganzes Projekt"
 msgstr "Hele projektet"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
+#, python-brace-format
 msgid "Ganzes Projekt, {n} Dokumente"
 msgstr "Hele projektet, {n} dokumenter"
 
@@ -4809,6 +5123,7 @@ msgid "Nur dieses Dokument"
 msgstr "Kun dette dokument"
 
 #. Rueckfrage vor dem Generieren (31.08.2026)
+#, python-brace-format
 msgid "Dein Guthaben reicht nicht: {f} Credits fehlen."
 msgstr "Din saldo er ikke nok: der mangler {f} credits."
 
@@ -4829,18 +5144,22 @@ msgid "– ganzes Projekt"
 msgstr "– hele projektet"
 
 #. Teil-Lauf statt Sperre (31.08.2026)
+#, python-brace-format
 msgid "Du hast {v} Credits — es reicht für {m} von {n} Bildern, danach hört der Lauf auf."
 msgstr "Du har {v} credits — det rækker til {m} af {n} billeder; derefter stopper kørslen."
 
 #. Teil-Lauf statt Sperre (31.08.2026)
+#, python-brace-format
 msgid "Dein Guthaben reicht nicht: Ein Alt-Text kostet {p} Credits, du hast {v}."
 msgstr "Din saldo er ikke nok: en alternativ tekst koster {p} credits, du har {v}."
 
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
+#, python-brace-format
 msgid "Du hast {v} Credits — es reicht für {m} von {n} Feldern, danach hört der Lauf auf."
 msgstr "Du har {v} credits — det rækker til {m} af {n} felter; derefter stopper kørslen."
 
 #. Teil-Lauf statt Sperre, Quickinfos (01.09.2026)
+#, python-brace-format
 msgid "Dein Guthaben reicht nicht: Eine Quickinfo kostet {p} Credits, du hast {v}."
 msgstr "Din saldo er ikke nok: en hjælpetekst koster {p} credits, du har {v}."
 
@@ -4853,6 +5172,7 @@ msgid "1 Bild ist vom Autor als dekorativ gekennzeichnet und bleibt außen vor."
 msgstr "1 billede er markeret som dekorativt af forfatteren og springes over."
 
 #. Autor-dekorativ, Mehrzahl (01.09.2026)
+#, python-brace-format
 msgid "{n} Bilder sind vom Autor als dekorativ gekennzeichnet und bleiben außen vor."
 msgstr "{n} billeder er markeret som dekorative af forfatteren og springes over."
 
@@ -4869,10 +5189,12 @@ msgid "Der Export läuft bereits."
 msgstr "Eksporten kører allerede."
 
 #. Meldung nach dem Download (Steve 01.09.2026)
+#, python-brace-format
 msgid "Heruntergeladen: „{name}“ ({c} Credits abgebucht)."
 msgstr "Downloadet: „{name}“ ({c} credits trukket)."
 
 #. Meldung nach dem Download ohne Preis (01.09.2026)
+#, python-brace-format
 msgid "Heruntergeladen: „{name}“."
 msgstr "Downloadet: „{name}“."
 
@@ -4881,22 +5203,27 @@ msgid "Du findest die Datei bei deinen Downloads."
 msgstr "Du finder filen under dine downloads."
 
 #. Projektkopf (Michael Karbe Punkt 4, 01.09.2026)
+#, python-brace-format
 msgid "Projekt: {name}"
 msgstr "Projekt: {name}"
 
 #. Herunterladen-Zusammenfassung (Michael Karbe 01.09.2026)
+#, python-brace-format
 msgid "Alle {n} Bilder haben einen Text{dek}."
 msgstr "Alle {n} billeder har en tekst{dek}."
 
 #. Herunterladen-Zusammenfassung, Einzahl (01.09.2026)
+#, python-brace-format
 msgid "{b} von {n} Bildern haben einen Text, 1 hat keinen{dek}."
 msgstr "{b} af {n} billeder har en tekst, 1 har ingen{dek}."
 
 #. Herunterladen-Zusammenfassung (01.09.2026)
+#, python-brace-format
 msgid "{b} von {n} Bildern haben einen Text, {o} haben keinen{dek}."
 msgstr "{b} af {n} billeder har en tekst, {o} har ingen{dek}."
 
 #. Herunterladen-Zusammenfassung: dekorativ (01.09.2026)
+#, python-brace-format
 msgid ", {n} als dekorativ gekennzeichnet"
 msgstr ", {n} markeret som dekorative"
 
@@ -4909,24 +5236,28 @@ msgid "Vorheriger Text wiederhergestellt."
 msgstr "Forrige tekst gendannet."
 
 #. Rueckfrage: eigene Texte (01.09.2026)
-#. Rueckfrage: eigene Texte (01.09.2026)
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+#, python-brace-format
 msgid "Das Dokument beinhaltet insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
 msgstr "Dokumentet indeholder i alt {n} billeder; oprettelsen af de alternative tekster kræver {c} credits."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+#, python-brace-format
 msgid "Das Dokument beinhaltet 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
 msgstr "Dokumentet indeholder 1 billede; oprettelsen af den alternative tekst kræver {c} credits."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+#, python-brace-format
 msgid "Die Dokumente des Projekts beinhalten insgesamt {n} Bilder, die Erstellung der Alt-Texte benötigt {c} Credits."
 msgstr "Projektets dokumenter indeholder i alt {n} billeder; oprettelsen af de alternative tekster kræver {c} credits."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+#, python-brace-format
 msgid "Die Dokumente des Projekts beinhalten 1 Bild, die Erstellung des Alt-Texts benötigt {c} Credits."
 msgstr "Projektets dokumenter indeholder 1 billede; oprettelsen af den alternative tekst kræver {c} credits."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+#, python-brace-format
 msgid "Dein Konto verfügt derzeit über ein Guthaben von {v} Credits."
 msgstr "Din konto har i øjeblikket en saldo på {v} credits."
 
@@ -4951,10 +5282,10 @@ msgid "Es läuft gerade keine Generierung."
 msgstr "Der kører ingen generering lige nu."
 
 #. Rueckfrage/Abbruch nach Michael Karbe (01.09.2026)
+#, python-brace-format
 msgid "Die Generierung wurde abgebrochen: {i} Bilder wurden bearbeitet, {n} blieben offen."
 msgstr "Genereringen blev afbrudt: {i} billeder blev behandlet, {n} forblev åbne."
 
-#. Rueckfrage nach Abbruch (Steve 01.09.2026)
 #. Rueckfrage nach Abbruch (Steve 01.09.2026)
 #. Neu generieren: Bild/Datei nicht mehr vorhanden (01.09.2026)
 msgid "Bild nicht mehr vorhanden"
@@ -4965,6 +5296,7 @@ msgid "Dieses Bild gibt es nicht mehr. Bitte lade die Seite neu."
 msgstr "Dette billede findes ikke længere. Genindlæs venligst siden."
 
 # Sichtbare Abbruch-Meldung Quickinfos (Michael Karbe Punkt 2, 02.09.2026)
+#, python-brace-format
 msgid "Die Generierung wurde abgebrochen: {n} Quickinfos wurden erstellt."
 msgstr "Genereringen blev afbrudt: {n} hjælpetekster blev oprettet."
 
@@ -4978,7 +5310,6 @@ msgstr "Generér alternativtekster med AI, kontrollér dem selv og eksportér so
 msgid "Ein Inhalt. Viele Menschen. Gleiche Chancen."
 msgstr "Ét indhold. Mange mennesker. Lige muligheder."
 
-
 msgid "Wir machen Informationen barrierefrei nutzbar, unabhängig von Fähigkeiten, Geräten und Situationen."
 msgstr "Vi gør information tilgængelig for alle, uanset evner, enheder og situationer."
 
@@ -4991,12 +5322,12 @@ msgstr "Oplev det selv uden login"
 msgid "Die Demo läuft ganz ohne Konto."
 msgstr "Demoen kører helt uden konto."
 
+#, python-brace-format
 msgid "{n} Credits im Monat, ohne Zahlungsdaten."
 msgstr "{n} credits om måneden, uden betalingsoplysninger."
 
 msgid "Du hast schon ein Konto."
 msgstr "Du har allerede en konto."
-
 
 msgid "Drei Werkzeuge, ein Ziel: barrierefreie Dokumente"
 msgstr "Tre værktøjer, ét mål: tilgængelige dokumenter"
@@ -5100,15 +5431,19 @@ msgstr "Og alle andre: selvstændige, små virksomheder, foreninger og privatper
 msgid "Klein anfangen, fair bezahlen"
 msgstr "Start småt, betal fair"
 
+#, python-brace-format
 msgid "Eine Währung für alles: Credits. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit."
 msgstr "Én valuta til alt: credits. En alternativtekst koster {alt} credits, et værktøjstip {qi} credit."
 
+#, python-brace-format
 msgid "Kostenlos: {n} Credits im Monat, voller Funktionsumfang, keine Zahlungsdaten."
 msgstr "Gratis: {n} credits om måneden, fuld funktionalitet, ingen betalingsoplysninger."
 
+#, python-brace-format
 msgid "Credit-Pakete ab {preis} Euro, ohne Abo."
 msgstr "Credit-pakker fra {preis} euro, uden abonnement."
 
+#, python-brace-format
 msgid "Abos Single, Team und Enterprise ab {preis} Euro im Monat, für Teams mit gemeinsamem Guthaben."
 msgstr "Abonnementer Single, Team og Enterprise fra {preis} euro om måneden, med fælles saldo til teams."
 
@@ -5145,6 +5480,7 @@ msgstr "Ofte stillede spørgsmål"
 msgid "Was ist ein Credit?"
 msgstr "Hvad er en credit?"
 
+#, python-brace-format
 msgid "Credits sind die Währung in InkluDocs. Ein Alt-Text kostet {alt} Credits, eine Quickinfo {qi} Credit, ein Export je nach Umfang ein paar Credits mehr. Kostenlose Konten bekommen jeden Monat {n} Credits."
 msgstr "Credits er valutaen i InkluDocs. En alternativtekst koster {alt} credits, et værktøjstip {qi} credit, en eksport nogle få credits mere alt efter omfang. Gratis konti får {n} credits hver måned."
 
@@ -5217,17 +5553,17 @@ msgstr "Brugerfladen findes på tysk, engelsk, fransk, spansk, dansk og svensk. 
 msgid "Kostenloses Konto erstellen"
 msgstr "Opret en gratis konto"
 
+#, python-brace-format
 msgid "Startklar in einer Minute: {n} Credits im Monat, keine Zahlungsdaten. Danach bestätigst du nur noch deine E-Mail-Adresse."
 msgstr "Klar på et minut: {n} credits om måneden, ingen betalingsoplysninger. Bagefter bekræfter du kun din e-mailadresse."
 
 msgid "Willkommen zurück. Melde dich an und mach da weiter, wo du aufgehört hast."
 msgstr "Velkommen tilbage. Log ind, og fortsæt, hvor du slap."
 
-
-
 msgid "Illustration: Ein Dokument mit Bildplatzhalter bekommt automatisch einen KI-Alt-Text; links drei Kacheln für PDF/UA, Word und Formular, rechts unten ein Siegel „Barrierefrei, WCAG konform“."
 msgstr "Illustration: Et dokument med en billedpladsholder får automatisk en AI-genereret alternativtekst; til venstre tre felter for PDF/UA, Word og formularer, nederst til højre et segl med „Tilgængelig, WCAG-konform“."
 
+#, python-brace-format
 msgid "Alt-Texte per KI für {a}barrierefreie{e} PDF-, Word- und Formulardokumente"
 msgstr "AI-alternativtekster til {a}tilgængelige{e} PDF-, Word- og formulardokumenter"
 
@@ -5248,6 +5584,7 @@ msgid "Keine Felder – nichts zu generieren."
 msgstr "Ingen felter – intet at generere."
 
 #. Quickinfos generieren = alle Felder (Michael Karbe 09.09.2026)
+#, python-brace-format
 msgid "Generierung gestartet für {n} Felder. Vorhandene Quickinfos werden ersetzt."
 msgstr "Generering startet for {n} felter. Eksisterende værktøjstips erstattes."
 
@@ -5256,6 +5593,7 @@ msgid "Abbruch angefordert – der Lauf endet sofort, die gerade laufende Seite 
 msgstr "Afbrydelse anmodet – kørslen stopper straks; den igangværende side kasseres."
 
 #. Fortschrittskarte Formular (Michael Karbe 09.09.2026)
+#, python-brace-format
 msgid "Seite {i} von {n} wird bearbeitet, {m} Quickinfos fertig."
 msgstr "Side {i} af {n} behandles, {m} værktøjstips færdige."
 
@@ -5280,14 +5618,17 @@ msgid "Auftragsverarbeitungsvertrag als PDF (Fassung 1.1 vom 9. September 2026)"
 msgstr "Databehandleraftale som PDF (version 1.1 af 9. september 2026)"
 
 #. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+#, python-brace-format
 msgid "Es wird 1 Quickinfo generiert. Das benötigt {c} Credits."
 msgstr "Der genereres 1 værktøjstip. Det kræver {c} credits."
 
 #. Rueckfrage Quickinfos, Wortlaut Michael Karbe 09.09.2026
+#, python-brace-format
 msgid "Es werden {n} Quickinfos generiert. Das benötigt {c} Credits."
 msgstr "Der genereres {n} værktøjstips. Det kræver {c} credits."
 
-# Meine Ausgaben (11.09.2026): Regal fuer fertige Umwandlungen, Reiter im Projektkopf, Dashboard
+# Meine Ausgaben (11.09.2026): Regal fuer fertige Umwandlungen, Reiter im
+# Projektkopf, Dashboard
 msgid "Alle Ausgaben anzeigen"
 msgstr "Vis alle udgivelser"
 
@@ -5297,12 +5638,14 @@ msgstr "Alle projekter"
 msgid "Ausgabe gelöscht."
 msgstr "Udgivelse slettet."
 
+#, python-brace-format
 msgid "Ausgaben ({n})"
 msgstr "Udgivelser ({n})"
 
 msgid "Ausgaben konnten nicht geladen werden. Bitte später erneut versuchen."
 msgstr "Udgivelserne kunne ikke indlæses. Prøv igen senere."
 
+#, python-brace-format
 msgid "Ausgaben: {name}"
 msgstr "Udgivelser: {name}"
 
@@ -5315,6 +5658,7 @@ msgstr "Læs rapport"
 msgid "Datei nicht mehr verfügbar (Aufbewahrungsfrist abgelaufen), der Bericht bleibt."
 msgstr "Filen er ikke længere tilgængelig (opbevaringsfristen er udløbet), rapporten bliver."
 
+#, python-brace-format
 msgid "Datei verfügbar bis {datum}"
 msgstr "Fil tilgængelig indtil {datum}"
 
@@ -5324,6 +5668,7 @@ msgstr "Dette projekt har endnu ingen udgivelser. Konvertér det til en tilgæng
 msgid "Dokumente"
 msgstr "Dokumenter"
 
+#, python-brace-format
 msgid "Fertige Umwandlungen mit Bericht und Download. Dateien bleiben {n} Tage verfügbar, der Bericht bleibt beim Projekt."
 msgstr "Færdige konverteringer med rapport og download. Filer er tilgængelige i {n} dage, rapporten bliver ved projektet."
 
@@ -5339,6 +5684,7 @@ msgstr "Seneste udgivelser"
 msgid "Noch keine Ausgaben. Wandle ein Word-Projekt über „Herunterladen“ in eine barrierefreie PDF um, dann erscheint das Ergebnis hier."
 msgstr "Ingen udgivelser endnu. Konvertér et Word-projekt til en tilgængelig PDF via „Download“, så vises resultatet her."
 
+#, python-brace-format
 msgid "PDF und Bericht liegen jetzt unter „Meine Ausgaben“. Die Datei bleibt dort {n} Tage verfügbar, der Bericht bleibt beim Projekt."
 msgstr "PDF og rapport ligger nu under „Mine udgivelser“. Filen er tilgængelig der i {n} dage, rapporten bliver ved projektet."
 
@@ -5354,9 +5700,11 @@ msgstr "Kontrol: bestået"
 msgid "Prüfung: ein Bereich mit Hinweisen"
 msgstr "Kontrol: ét område med bemærkninger"
 
+#, python-brace-format
 msgid "Prüfung: {n} Bereiche mit Hinweisen"
 msgstr "Kontrol: {n} områder med bemærkninger"
 
+#, python-brace-format
 msgid "Vorschau der ersten Seite von {name}"
 msgstr "Forhåndsvisning af første side af {name}"
 
@@ -5372,18 +5720,23 @@ msgstr "Til mine udgivelser"
 msgid "Zum Projekt"
 msgstr "Til projektet"
 
+#, python-brace-format
 msgid "{dokument} — {datum}, {zeit}"
 msgstr "{dokument} — {datum}, {zeit}"
 
+#, python-brace-format
 msgid "{name} ({n})"
 msgstr "{name} ({n})"
 
+#, python-brace-format
 msgid "{n} Ausgaben geladen."
 msgstr "{n} udgivelser indlæst."
 
+#, python-brace-format
 msgid "{projekt} · {art} · {datum}"
 msgstr "{projekt} · {art} · {datum}"
 
+#, python-brace-format
 msgid "{projekt} – alle Dokumente"
 msgstr "{projekt} – alle dokumenter"
 
@@ -5392,7 +5745,6 @@ msgstr "via chatbotten"
 
 msgid "Barrierefreie PDF (PDF/UA)"
 msgstr "Tilgængelig PDF (PDF/UA)"
-
 
 # Meine Ausgaben Schritt 2 (11.09.2026): Chatbot-Werkzeuge, Word-Ausgaben
 msgid "Word-Prüfbericht"
@@ -5413,26 +5765,30 @@ msgstr "Word med alt-tekster"
 msgid "Word-Prüfbericht: keine Auffälligkeiten"
 msgstr "Word-kontrolrapport: ingen bemærkninger"
 
+#, python-brace-format
 msgid "Word-Prüfbericht: {n} Hinweise"
 msgstr "Word-kontrolrapport: {n} bemærkninger"
 
+#, python-brace-format
 msgid "Word-Datei mit {n} Alt-Texten erzeugt."
 msgstr "Word-fil oprettet med {n} alt-tekster."
 
 msgid "Struktur-Lektor"
 msgstr "Strukturlæser"
 
-
-# Michaels Testrunde 11.09.2026: Titel aus Inhalt, Sprach-Abgleich, Link-Beschreibungen, Bilder im Textkoerper
+# Michaels Testrunde 11.09.2026: Titel aus Inhalt, Sprach-Abgleich,
+# Link-Beschreibungen, Bilder im Textkoerper
 msgid "Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments."
 msgstr "Tabelstrukturen er teknisk i orden. Om første række er markeret som kolonneoverskrift, står i Word-dokumentets kontrolrapport."
 
 msgid "Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."
 msgstr "Et link har ingen beskrivelse — en skærmlæser siger kun „link“."
 
+#, python-brace-format
 msgid "Es fehlt ein Dokumenttitel (Datei → Informationen → Titel). Die PDF bekommt ersatzweise „{t}“ als Titel."
 msgstr "Dokumenttitlen mangler (Filer → Oplysninger → Titel). PDF’en får i stedet „{t}“ som titel."
 
+#, python-brace-format
 msgid "Die Dokumentsprache ist auf {s} gesetzt, der Text wirkt aber {name} — Screenreader würden ihn falsch aussprechen (Überprüfen → Sprache)."
 msgstr "Dokumentsproget er sat til {s}, men teksten ser ud til at være {name} — skærmlæsere ville udtale den forkert (Gennemse → Sprog)."
 
@@ -5454,17 +5810,19 @@ msgstr "spansk"
 msgid "Schwedisch"
 msgstr "svensk"
 
+#, python-brace-format
 msgid "{n} von {m} Bildern im Textkörper haben keinen Alternativtext (Kopf- und Fußzeilen nicht mitgezählt) — in InkluDocs generieren oder als Schmuckbild markieren."
 msgstr "{n} af {m} billeder i brødteksten har ingen alternativ tekst (sidehoved og sidefod ikke talt med) — generér i InkluDocs eller markér som dekorative."
 
+#, python-brace-format
 msgid "Alle {n} Bilder im Textkörper haben einen Alternativtext oder sind Schmuckbilder (Kopf- und Fußzeilen nicht mitgezählt)."
 msgstr "Alle {n} billeder i brødteksten har alternativ tekst eller er dekorative (sidehoved og sidefod ikke talt med)."
-
 
 # Startseite 2. Fassung (Michael Karbe 10.09.2026, abgestimmt 11.09.2026)
 msgid "Alt-Texte per KI, Word zu PDF/UA und Quickinfos für Formulare. Selbst prüfen, dann exportieren. Für Behörden, Verlage und Agenturen. Kostenlos starten."
 msgstr "AI-alternativtekster, Word til PDF/UA og hjælpetekster til formularer. Tjek selv, eksportér derefter. For myndigheder, forlag og bureauer. Start gratis."
 
+#, python-brace-format
 msgid "{a}Barrierefreie{e} Dokumente. Automatisiert."
 msgstr "{a}Tilgængelige{e} dokumenter. Automatiseret."
 
@@ -5717,6 +6075,7 @@ msgstr "API"
 msgid "Für die automatisierte Dokumentenverarbeitung und die Integration in bestehende Anwendungen. Den Zugang richten wir gemeinsam ein, sprich uns über das Kontaktformular an."
 msgstr "Til automatiseret dokumentbehandling og integration i eksisterende applikationer. Adgangen sætter vi op sammen med dig – kontakt os via kontaktformularen."
 
+#, python-brace-format
 msgid "Abos Single, Team und Enterprise ab {preis} Euro im Monat bei Jahreslaufzeit, für Teams mit gemeinsamem Guthaben."
 msgstr "Abonnementer Single, Team og Enterprise fra {preis} euro om måneden ved årlig binding, til teams med fælles saldo."
 
@@ -5795,8 +6154,8 @@ msgstr "Start med dine egne dokumenter, og find ud af, hvor meget af arbejdet me
 msgid "Vorführung vereinbaren"
 msgstr "Aftal en fremvisning"
 
-
-# Meine Ablage (Besprechung 11.09.2026): Umbenennung, nur Befunde, unbegrenzt, ueberlebt Projekt-Loeschen
+# Meine Ablage (Besprechung 11.09.2026): Umbenennung, nur Befunde, unbegrenzt,
+# ueberlebt Projekt-Loeschen
 msgid "Meine Ablage"
 msgstr "Mit arkiv"
 
@@ -5809,6 +6168,7 @@ msgstr "Ingen fund i Word-dokumentet."
 msgid "Ein Befund im Word-Dokument."
 msgstr "Ét fund i Word-dokumentet."
 
+#, python-brace-format
 msgid "{n} Befunde im Word-Dokument."
 msgstr "{n} fund i Word-dokumentet."
 
@@ -5818,6 +6178,7 @@ msgstr "PDF/UA bestået, ingen fund."
 msgid "Ein Bereich mit Befunden."
 msgstr "Ét område med fund."
 
+#, python-brace-format
 msgid "{n} Bereiche mit Befunden."
 msgstr "{n} områder med fund."
 
@@ -5833,15 +6194,18 @@ msgstr "Fund i PDF’en:"
 msgid "Befunde im Word-Dokument:"
 msgstr "Fund i Word-dokumentet:"
 
+#, python-brace-format
 msgid "{art}: {dokument} — {datum}, {zeit}"
 msgstr "{art}: {dokument} — {datum}, {zeit}"
 
+#, python-brace-format
 msgid "{projekt} (Projekt gelöscht)"
 msgstr "{projekt} (projekt slettet)"
 
 msgid "Datei nicht mehr vorhanden, der Bericht bleibt."
 msgstr "Filen findes ikke længere, rapporten bliver."
 
+#, python-brace-format
 msgid "Ablage: {name}"
 msgstr "Arkiv: {name}"
 
@@ -5854,6 +6218,7 @@ msgstr "Arkivet er stadig tomt. Konvertér et Word-projekt til en tilgængelig P
 msgid "Die Ablage konnte nicht geladen werden. Bitte später erneut versuchen."
 msgstr "Arkivet kunne ikke indlæses. Prøv igen senere."
 
+#, python-brace-format
 msgid "{n} Einträge geladen."
 msgstr "{n} poster indlæst."
 
@@ -5863,6 +6228,7 @@ msgstr "Nyt i arkivet"
 msgid "Ablage öffnen"
 msgstr "Åbn arkivet"
 
+#, python-brace-format
 msgid "Ablage ({n})"
 msgstr "Arkiv ({n})"
 
@@ -5878,11 +6244,9 @@ msgstr "Arkiv"
 msgid "Eintrag lesen"
 msgstr "Læs post"
 
-
 # Fusszeilen-Hinweis (11.09.2026): Chat-Assistent auf Gemini
 msgid " Hosting bei Hetzner Online (Falkenstein, Deutschland). Bildbeschreibungen, Quickinfos und der Chat-Assistent nutzen das Modell Gemini von Google über Google Vertex AI. Google ist vertraglich als Auftragsverarbeiter gebunden und nutzt deine Inhalte nicht zum Training. Einzelheiten in unserer Datenschutzerklärung."
 msgstr " Hosting hos Hetzner Online (Falkenstein, Tyskland). Billedbeskrivelser, værktøjstips og chat-assistenten bruger Googles Gemini-model via Google Vertex AI. Google er kontraktligt bundet som databehandler og bruger ikke dit indhold til træning. Detaljer i vores privatlivspolitik."
-
 
 # Preisseite: Preise je Aktion (Michael Karbe, WhatsApp 12.09.2026)
 msgid "Eine Währung für alles: Credits. Vor jeder Aktion zeigt InkluDocs, was sie kostet. Alle Preise sind Endpreise — gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
@@ -5891,21 +6255,27 @@ msgstr "Én valuta til alt: credits. Før hver handling viser InkluDocs, hvad de
 msgid "Was eine Aktion kostet"
 msgstr "Hvad en handling koster"
 
+#, python-brace-format
 msgid "Alt-Text: {alt} Credits je Bild — egal ob im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert."
 msgstr "Alt-tekst: {alt} credits pr. billede — uanset om det sker samlet, enkeltvis, via API’et eller når InkluAgent ændrer en alt-tekst."
 
+#, python-brace-format
 msgid "Quickinfo: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert."
 msgstr "Quickinfo: {qi} credit pr. formularfelt — også når InkluAgent ændrer en quickinfo."
 
+#, python-brace-format
 msgid "Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
 msgstr "Download som PDF eller Word: {exp} credits plus {bild} credits pr. påbegyndte {schritt} billeder. Eksempel: en PDF med 26 billeder koster {beispiel} credits."
 
+#, python-brace-format
 msgid "Word in barrierefreie PDF umwandeln: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder — wie das Herunterladen als PDF."
 msgstr "Konvertér Word til tilgængelig PDF: {exp} credits plus {bild} credits pr. påbegyndte {schritt} billeder — som download som PDF."
 
+#, python-brace-format
 msgid "Herunterladen als Formular-PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
 msgstr "Download som formular-PDF: {exp} credits plus {feld} credit pr. påbegyndte {schritt} felter."
 
+#, python-brace-format
 msgid "Tabelle herunterladen (CSV, Excel, JSON): {tab} Credits je Datei."
 msgstr "Download tabel (CSV, Excel, JSON): {tab} credits pr. fil."
 
@@ -5915,19 +6285,23 @@ msgstr "At tale med InkluAgent: gratis."
 msgid "Die App nennt den Preis vor jeder Aktion noch einmal, bevor Credits abgebucht werden."
 msgstr "Appen nævner prisen igen før hver handling, før der trækkes credits."
 
-
+#, python-brace-format
 msgid "Alt-Text per KI: {alt} Credits je Bild — im Sammellauf, einzeln, über die API oder wenn der InkluAgent einen Alt-Text ändert. Eingabe von Hand: kostenlos."
 msgstr "Alt-tekst via AI: {alt} credits pr. billede — samlet, enkeltvis, via API’et eller når InkluAgent ændrer en alt-tekst. Manuel indtastning: gratis."
 
+#, python-brace-format
 msgid "Quickinfo per KI: {qi} Credit je Formularfeld — auch wenn der InkluAgent eine Quickinfo ändert. Eingabe von Hand: kostenlos."
 msgstr "Quickinfo via AI: {qi} credit pr. formularfelt — også når InkluAgent ændrer en quickinfo. Manuel indtastning: gratis."
 
+#, python-brace-format
 msgid "Übernahme der Alt-Texte in das Dokument und Herunterladen als PDF oder Word: {exp} Credits plus {bild} Credits je angefangene {schritt} Bilder. Beispiel: eine PDF mit 26 Bildern kostet {beispiel} Credits."
 msgstr "Overførsel af alt-teksterne til dokumentet og download som PDF eller Word: {exp} credits plus {bild} credits pr. påbegyndte {schritt} billeder. Eksempel: en PDF med 26 billeder koster {beispiel} credits."
 
+#, python-brace-format
 msgid "Übernahme der Quickinfos in das Formular und Herunterladen als PDF: {exp} Credits plus {feld} Credit je angefangene {schritt} Felder."
 msgstr "Overførsel af quickinfoerne til formularen og download som PDF: {exp} credits plus {feld} credit pr. påbegyndte {schritt} felter."
 
+#, python-brace-format
 msgid "Tabelle mit Alt-Texten oder Quickinfos erzeugen und herunterladen (CSV, JSON, Excel — Excel mit Bildern): {tab} Credits je Datei."
 msgstr "Opret og download en tabel med alt-tekster eller quickinfoer (CSV, JSON, Excel — Excel med billeder): {tab} credits pr. fil."
 
@@ -5943,9 +6317,11 @@ msgstr "Læs kontrolrapport"
 msgid "Alt-Texte herunterladen"
 msgstr "Download alt-tekster"
 
+#, python-brace-format
 msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits."
 msgstr "Eksport som CSV, Excel eller JSON koster {p} credits."
 
+#, python-brace-format
 msgid "Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}."
 msgstr "Eksport som CSV, Excel eller JSON koster {p} credits. Du har {v}."
 
@@ -5979,12 +6355,14 @@ msgstr "Mislykket"
 msgid "Nach Bearbeitungsstand filtern"
 msgstr "Filtrer efter behandlingsstatus"
 
+#, python-brace-format
 msgid "{done} von {total} Alt-Texten generiert."
 msgstr "{done} af {total} alternative tekster genereret."
 
 msgid "Ein Bild ist fehlgeschlagen."
 msgstr "Ét billede mislykkedes."
 
+#, python-brace-format
 msgid "{n} Bilder sind fehlgeschlagen."
 msgstr "{n} billeder mislykkedes."
 
@@ -6276,9 +6654,11 @@ msgstr "Hastighedsgrænse eller dagsgrænse nået (header Retry-After); på enke
 msgid "Interner Fehler, Umwandler nicht erreichbar oder Zeitüberschreitung."
 msgstr "Intern fejl, konverter utilgængelig eller timeout."
 
+#, python-brace-format
 msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen nicht mit, damit du in Ruhe abfragen kannst."
 msgstr "Pr. nøgle: {minute} skrivende forespørgsler pr. minut og {tag} pr. dag (glidende vindue). Læsende kald som status og poster tæller ikke med, så du kan spørge i ro og mag."
 
+#, python-brace-format
 msgid "Je Konto: {n} generierte Texte pro Tag über die API, unabhängig von der Zahl der Schlüssel (Reset um Mitternacht UTC). Für höhere Mengen sprich uns an, das Kontingent lässt sich je Konto anpassen."
 msgstr "Pr. konto: {n} genererede tekster pr. dag via API’en, uanset antal nøgler (nulstilles ved midnat UTC). Ved større mængder så kontakt os; kvoten kan tilpasses pr. konto."
 
@@ -6288,15 +6668,19 @@ msgstr "De resterende forespørgsler står i headerne X-RateLimit-Remaining-Minu
 msgid "Die API zieht aus demselben Credit-Guthaben wie die App, zu denselben Preisen. Abgerechnet wird nur, was gelungen ist: Fehlschläge, Abbrüche und Treffer im Zwischenspeicher kosten nichts. Lesen, Status, Korrigieren und Freigabe-Links sind kostenlos."
 msgstr "API’en trækker på samme credit-saldo som appen, til samme priser. Der afregnes kun for det, der lykkes: fejl, afbrydelser og cache-træf koster intet. Læsning, status, rettelser og gennemsynslinks er gratis."
 
+#, python-brace-format
 msgid "Alt-Text je Bild (Einzelbild oder im Dokument): {n} Credits."
 msgstr "Alternativ tekst pr. billede (enkeltbillede eller i dokument): {n} credits."
 
+#, python-brace-format
 msgid "Quickinfo je Formularfeld: {n} Credit."
 msgstr "Quickinfo pr. formularfelt: {n} credit."
 
+#, python-brace-format
 msgid "Dokument-Export (pdf, docx, pdfua, formular): {grund} Credits plus {staffel} je angefangene {schritt} Einträge."
 msgstr "Dokumenteksport (pdf, docx, pdfua, formular): {grund} credits plus {staffel} pr. påbegyndte {schritt} poster."
 
+#, python-brace-format
 msgid "Textliste (xlsx, csv, json, formular_csv): {n} Credits je Export."
 msgstr "Tekstliste (xlsx, csv, json, formular_csv): {n} credits pr. eksport."
 
@@ -6345,24 +6729,30 @@ msgstr "Seneste kald"
 msgid "noch keiner"
 msgstr "ingen endnu"
 
+#, python-brace-format
 msgid "Aufrufe: {n}"
 msgstr "Kald: {n}"
 
+#, python-brace-format
 msgid "heute {n}"
 msgstr "i dag {n}"
 
+#, python-brace-format
 msgid "Dokumente: {n}"
 msgstr "Dokumenter: {n}"
 
+#, python-brace-format
 msgid "Credits: {n}"
 msgstr "Credits: {n}"
 
+#, python-brace-format
 msgid "Fehlerquote: {p} %"
 msgstr "Fejlrate: {p} %"
 
 msgid "Zur API-Dokumentation"
 msgstr "Til API-dokumentationen"
 
+#, python-brace-format
 msgid "{n} Aufrufe in diesem Monat über {k} Schlüssel."
 msgstr "{n} kald denne måned via {k} nøgler."
 
@@ -6372,22 +6762,27 @@ msgstr "Administrér nøgler"
 msgid "Mit API-Schlüsseln binden andere Anwendungen InkluDocs an: Einzelbilder und ganze Dokumente. Die Anleitung steht in der API-Dokumentation."
 msgstr "Med API-nøgler kobler andre programmer sig på InkluDocs: enkeltbilleder og hele dokumenter. Vejledningen står i API-dokumentationen."
 
+#, python-brace-format
 msgid "Ein Aufruf in diesem Monat über {k} Schlüssel."
 msgstr "Ét kald denne måned via {k} nøgler."
 
+#, python-brace-format
 msgid "Je Schlüssel: {minute} schreibende Anfragen pro Minute und {tag} pro Tag (gleitendes Fenster). Lesende Aufrufe wie Status und Einträge zählen dort nicht mit, haben aber eine eigene Grenze von {lesen} pro Minute; eine Abfrage alle fünf Sekunden bleibt weit darunter."
 msgstr "Pr. nøgle: {minute} skrivende forespørgsler pr. minut og {tag} pr. dag (glidende vindue). Læsende kald som status og poster tæller ikke med der, men har deres egen grænse på {lesen} pr. minut; en forespørgsel hvert femte sekund ligger langt under."
 
 msgid "Nach Freigabestatus filtern"
 msgstr "Filtrer efter godkendelsesstatus"
 
+#, python-brace-format
 msgid "Feld {n}: {art}, {name}"
 msgstr "Felt {n}: {art}, {name}"
 
+#, python-brace-format
 msgid "Feld {n}: {art}"
 msgstr "Felt {n}: {art}"
 
 # Verwaltung: Kunden, Umsatz, API (25.09.2026)
+#, python-brace-format
 msgid "({belegt} von {sitze} Plätzen belegt)"
 msgstr "({belegt} af {sitze} pladser optaget)"
 
@@ -6409,9 +6804,11 @@ msgstr "Abonnementet er gemt."
 msgid "Abo zuweisen oder ändern"
 msgstr "Tildel eller ændr abonnement"
 
+#, python-brace-format
 msgid "Abo {plan}"
 msgstr "Abonnement {plan}"
 
+#, python-brace-format
 msgid "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
 msgstr "Gem abonnementet {plan} i {monate} måneder for {name} uden at postere noget?"
 
@@ -6442,6 +6839,7 @@ msgstr "Prøv en anden stavemåde eller „Alle kunder“."
 msgid "Anzeigen"
 msgstr "Vis"
 
+#, python-brace-format
 msgid "Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf."
 msgstr "Arbejder lige nu i teamet „{team}“ hos {inhaber} — saldoen ovenfor gælder for denne teampulje."
 
@@ -6490,6 +6888,7 @@ msgstr "Vælg venligst typen: salg på faktura eller bonus."
 msgid "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
 msgstr "Vælg typen: salg på faktura, uden beregning eller kun ændre indstillinger."
 
+#, python-brace-format
 msgid "Bitte eine Zahl eintragen. Für den Standard {standard} eintragen, 0 sperrt die API."
 msgstr "Indtast venligst et tal. Indtast {standard} for standarden; 0 spærrer API’en."
 
@@ -6520,18 +6919,22 @@ msgstr "Posteringen er rettet."
 msgid "Buchung stornieren"
 msgstr "Annullér postering"
 
+#, python-brace-format
 msgid "Buchung vom {datum} berichtigen"
 msgstr "Ret posteringen fra {datum}"
 
+#, python-brace-format
 msgid "Buchung vom {datum} stornieren"
 msgstr "Annullér posteringen fra {datum}"
 
 msgid "Buchungen"
 msgstr "Posteringer"
 
+#, python-brace-format
 msgid "Buchungen im ganzen Jahr {jahr} ({n})"
 msgstr "Posteringer i hele året {jahr} ({n})"
 
+#, python-brace-format
 msgid "Buchungen {zeitraum} ({n})"
 msgstr "Posteringer {zeitraum} ({n})"
 
@@ -6541,6 +6944,7 @@ msgstr "Credits brugt i alt"
 msgid "Das Abo konnte nicht gespeichert werden."
 msgstr "Abonnementet kunne ikke gemmes."
 
+#, python-brace-format
 msgid "Das Abo von {name} beenden und auf Free setzen?"
 msgstr "Afslut abonnementet for {name} og skift til Free?"
 
@@ -6556,6 +6960,7 @@ msgstr "Grænsen kunne ikke gemmes."
 msgid "Das Stornieren hat nicht geklappt."
 msgstr "Annulleringen lykkedes ikke."
 
+#, python-brace-format
 msgid "Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag."
 msgstr "Dagsgrænsen bremser kun løbsk brug af API’en. Abonnementssaldoen gælder altid derudover. Standard: {standard} billeder pr. dag."
 
@@ -6568,6 +6973,7 @@ msgstr "Kunden får en bekræftelse pr. e-mail."
 msgid "Der Kunde bekommt seine Zugangsdaten per E-Mail."
 msgstr "Kunden får sine adgangsoplysninger pr. e-mail."
 
+#, python-brace-format
 msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
 msgstr "Standarden er {standard} billeder pr. dag — indtast præcis dette tal for at vende tilbage til standarden. Abonnementssaldoen gælder altid derudover."
 
@@ -6616,9 +7022,11 @@ msgstr "Det forlænges ikke automatisk."
 msgid "Free"
 msgstr "Free"
 
+#, python-brace-format
 msgid "Für: {name} ({email})"
 msgstr "Til: {name} ({email})"
 
+#, python-brace-format
 msgid "Ganzes Jahr {jahr}"
 msgstr "Hele året {jahr}"
 
@@ -6652,6 +7060,7 @@ msgstr "Der er ingen posteringer i denne periode."
 msgid "Ja, gutschreiben"
 msgstr "Ja, kreditér"
 
+#, python-brace-format
 msgid "Ja, ich möchte bewusst mehr als {grenze} Credits verschenken."
 msgstr "Ja, jeg vil bevidst give mere end {grenze} credits væk."
 
@@ -6664,6 +7073,7 @@ msgstr "Ja, spær"
 msgid "Ja, stornieren"
 msgstr "Ja, annullér"
 
+#, python-brace-format
 msgid "Jahr {jahr}"
 msgstr "År {jahr}"
 
@@ -6676,6 +7086,7 @@ msgstr "Ingen forbindelse til serveren. Prøv igen."
 msgid "Konten mit API-Schlüssel"
 msgstr "Konti med API-nøgle"
 
+#, python-brace-format
 msgid "Konten mit API-Schlüssel ({n})"
 msgstr "Konti med API-nøgle ({n})"
 
@@ -6700,6 +7111,7 @@ msgstr "Administrer konto"
 msgid "Kunde"
 msgstr "Kunde"
 
+#, python-brace-format
 msgid "Kunde {name}"
 msgstr "Kunde {name}"
 
@@ -6709,9 +7121,11 @@ msgstr "Kunder"
 msgid "Kunden suchen"
 msgstr "Søg kunder"
 
+#, python-brace-format
 msgid "Kundenseite von {name} geladen."
 msgstr "Kundesiden for {name} er indlæst."
 
+#, python-brace-format
 msgid "Käufe und Gutschriften ({n})"
 msgstr "Køb og krediteringer ({n})"
 
@@ -6724,6 +7138,7 @@ msgstr "Direkte debitering returneret, tæller ikke med i omsætningen"
 msgid "Lastschriften noch unterwegs"
 msgstr "Direkte debiteringer stadig undervejs"
 
+#, python-brace-format
 msgid "Limit von {name} ändern"
 msgstr "Ændr grænsen for {name}"
 
@@ -6778,6 +7193,7 @@ msgstr "Uden beregning"
 msgid "Projekte insgesamt"
 msgstr "Projekter i alt"
 
+#, python-brace-format
 msgid "Rechnung {nummer}"
 msgstr "Faktura {nummer}"
 
@@ -6790,12 +7206,14 @@ msgstr "Fakturabeløb i euro for hele løbetiden"
 msgid "Rechnungsnummer (optional)"
 msgstr "Fakturanummer (valgfrit)"
 
+#, python-brace-format
 msgid "Rechnungsnummer: {nummer}."
 msgstr "Fakturanummer: {nummer}."
 
 msgid "Schlüssel"
 msgstr "Nøgler"
 
+#, python-brace-format
 msgid "Seite {seite} von {seiten}"
 msgstr "side {seite} af {seiten}"
 
@@ -6814,6 +7232,7 @@ msgstr "Annullér"
 msgid "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
 msgstr "Stripe-køb og Stripe-abonnementer vises automatisk, så snart Stripe bekræfter betalingen. Salg på faktura registreres via „Kreditér credits“ eller „Tildel abonnement“ på kundesiden."
 
+#, python-brace-format
 msgid "Suche „{text}“"
 msgstr "Søgning „{text}“"
 
@@ -6826,6 +7245,7 @@ msgstr "Team (500 credits, op til 5 personer)"
 msgid "Team und Enterprise"
 msgstr "Team og Enterprise"
 
+#, python-brace-format
 msgid "Team „{team}“ von {inhaber}"
 msgstr "Team „{team}“ hos {inhaber}"
 
@@ -6841,6 +7261,7 @@ msgstr "Omsætning i perioden"
 msgid "Umsatz mit diesem Kunden insgesamt"
 msgstr "Samlet omsætning med denne kunde"
 
+#, python-brace-format
 msgid "Umsatz {monat}: {betrag}"
 msgstr "Omsætning {monat}: {betrag}"
 
@@ -6856,9 +7277,11 @@ msgstr "Brugt i denne måned"
 msgid "Verkauf auf Rechnung"
 msgstr "Salg på faktura"
 
+#, python-brace-format
 msgid "Verkauf auf Rechnung, {betrag}"
 msgstr "salg på faktura, {betrag}"
 
+#, python-brace-format
 msgid "Verschenkt in {monat}"
 msgstr "Givet væk i {monat}"
 
@@ -6895,6 +7318,7 @@ msgstr "Tilbage"
 msgid "Zurück zur Kundenliste"
 msgstr "Tilbage til kundelisten"
 
+#, python-brace-format
 msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
 msgstr "De {rest} af {menge} credits, der endnu ikke er brugt, trækkes tilbage. Allerede brugte credits forbliver brugt. Posteringen forbliver synlig, men tæller ikke længere med i omsætningen."
 
@@ -6904,9 +7328,11 @@ msgstr "aktiv"
 msgid "berichtigt"
 msgstr "rettet"
 
+#, python-brace-format
 msgid "diesen Monat {monat} Credits, insgesamt {gesamt}"
 msgstr "denne måned {monat} credits, i alt {gesamt}"
 
+#, python-brace-format
 msgid "eingetragen von {name}"
 msgstr "registreret af {name}"
 
@@ -6916,6 +7342,7 @@ msgstr "slettet konto"
 msgid "gesperrt"
 msgstr "spærret"
 
+#, python-brace-format
 msgid "heute {n} von {limit} Bildern"
 msgstr "i dag {n} af {limit} billeder"
 
@@ -6928,6 +7355,7 @@ msgstr "individuel grænse"
 msgid "keiner angelegt"
 msgstr "ingen oprettet"
 
+#, python-brace-format
 msgid "neuester vom {datum}"
 msgstr "nyeste fra {datum}"
 
@@ -6949,68 +7377,332 @@ msgstr "uden beregning"
 msgid "storniert, zählt nicht zum Umsatz"
 msgstr "annulleret, tæller ikke med i omsætningen"
 
+#, python-brace-format
 msgid "verschenkt: {credits} Credits"
 msgstr "givet væk: {credits} credits"
 
+#, python-brace-format
 msgid "zuletzt benutzt am {datum}"
 msgstr "senest brugt {datum}"
 
+#, python-brace-format
 msgid "{betrag} (grobe Schätzung, {satz} Cent je Credit)"
 msgstr "{betrag} (groft skøn, {satz} cent pr. credit)"
 
+#, python-brace-format
 msgid "{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen"
 msgstr "{gesamt} credits til rådighed: {monat} fra månedskvoten, {pakete} fra ekstrapakker"
 
+#, python-brace-format
 msgid "{limit} Bilder pro Tag"
 msgstr "{limit} billeder pr. dag"
 
+#, python-brace-format
 msgid "{menge} Credits"
 msgstr "{menge} credits"
 
+#, python-brace-format
 msgid "{menge} Credits (Paketpreis {betrag})"
 msgstr "{menge} credits (pakkepris {betrag})"
 
+#, python-brace-format
 msgid "{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?"
 msgstr "Give {name} {menge} credits som bonus (gratis, gyldige i 12 måneder)?"
 
+#, python-brace-format
 msgid "{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?"
 msgstr "Kreditér {menge} credits til {name} som salg på faktura for {betrag}?"
 
+#, python-brace-format
 msgid "{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}"
 msgstr "{monat}: {credits} credits, anslåede AI-omkostninger {kosten}"
 
+#, python-brace-format
 msgid "{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?"
 msgstr "{name} får abonnementet {plan} i {monate} måneder som salg på faktura for {betrag}. Gem?"
 
+#, python-brace-format
 msgid "{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?"
 msgstr "{name} får abonnementet {plan} i {monate} måneder uden beregning. Gem?"
 
+#, python-brace-format
 msgid "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
 msgstr "{name} kan derefter ikke længere logge ind, bliver logget ud med det samme, og API-nøglerne holder op med at virke. Credits, projekter og posteringer bevares; ophævelse af spærringen gendanner alt."
 
+#, python-brace-format
 msgid "{n} Bonus-Gutschriften, zusammen {credits} Credits"
 msgstr "{n} bonusser, i alt {credits} credits"
 
+#, python-brace-format
 msgid "{n} Kunden"
 msgstr "{n} kunder"
 
+#, python-brace-format
 msgid "{n} Kunden, Seite {seite} von {seiten}"
 msgstr "{n} kunder, side {seite} af {seiten}"
 
+#, python-brace-format
 msgid "{n} Schlüssel, davon {aktiv} aktiv"
 msgstr "{n} nøgler, heraf {aktiv} aktive"
 
+#, python-brace-format
 msgid "{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}"
 msgstr "{n} oprettet, heraf {aktiv} aktive — senest brugt: {wann}"
 
+#, python-brace-format
 msgid "{plan} auf Rechnung"
 msgstr "{plan} på faktura"
 
+#, python-brace-format
 msgid "{plan} über Stripe"
 msgstr "{plan} via Stripe"
 
 msgid "Überblick"
 msgstr "Overblik"
 
+#, python-brace-format
 msgid "über Stripe, {betrag}"
 msgstr "via Stripe, {betrag}"
+
+msgid "Absatz"
+msgstr "Afsnit"
+
+msgid "Bereit"
+msgstr "Klar"
+
+msgid "Dokumenttitel"
+msgstr "Dokumenttitel"
+
+msgid "Titel"
+msgstr "Titel"
+
+msgid "Überschrift"
+msgstr "Overskrift"
+
+msgid "Übersetzung"
+msgstr "Oversættelse"
+
+msgid "Die Antwort nennt scope, queued_items (wie viele Einträge der Lauf anfasst) und settings (was gesetzt wurde). Gibt es bei scope=open nichts Offenes, kommt 200 mit started=false und einem Hinweis; nichts wird berechnet."
+msgstr "Svaret angiver scope, queued_items (hvor mange poster kørslen berører) og settings (hvad der blev sat). Er der intet åbent ved scope=open, får du 200 med started=false og et hint; intet beregnes."
+
+msgid "Eigener Prompt als Text (bis 4.000 Zeichen). Er wird als gespeicherter Prompt in der Kategorie „API“ angelegt und wie in der App zusätzlich zu unseren Regeln an die KI gegeben."
+msgstr "Din egen prompt som tekst (op til 4.000 tegn). Den gemmes som en gemt prompt i kategorien „API“ og gives til AI’en ud over vores regler, som i appen."
+
+msgid "Ein in InkluDocs gespeicherter eigener Prompt des Kontos (Meine Prompts). 0 hebt den Prompt auf."
+msgstr "En gemt prompt for kontoen i InkluDocs (Mine prompts). 0 fjerner prompten."
+
+msgid "Fehlgeschlagene Einträge"
+msgstr "Fejlede poster"
+
+msgid "GET …/items lässt sich filtern: ?status=failed (auch pending, generating, done) und ?text_status=offen (auch mit_text, dekorativ). count zählt die gelieferten, total alle Einträge."
+msgstr "GET …/items kan filtreres: ?status=failed (også pending, generating, done) og ?text_status=offen (også mit_text, dekorativ). count tæller de leverede, total alle poster."
+
+#, python-brace-format
+msgid "Grund: {g}"
+msgstr "Årsag: {g}"
+
+msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in lauf_hinweis am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
+msgstr "Kan AI’en ikke beskrive et billede, beholder posten status failed, feltet error angiver årsagen i almindeligt sprog (for eksempel „AI-tjeneste overbelastet (429)“ eller „Billedfilen kunne ikke læses“), og counts.failed på dokumentet tæller den med. Slutter en hel kørsel tidligere (kreditter, dagsgrænse, afbrydelse), står årsagen i lauf_hinweis på dokumentet. Midlertidige forstyrrelser hos AI-tjenesten gentager InkluDocs selv med ventetid, før en post regnes som failed."
+
+msgid "Nur ein Dokument des Projekts."
+msgstr "Kun ét dokument i projektet."
+
+msgid "POST …/generate nimmt dieselben Einstellungen je Lauf an: language, use_context, prompt_id oder prompt (sie gelten ab diesem Lauf für das Dokument), dazu document_id und scope."
+msgstr "POST …/generate tager de samme indstillinger pr. kørsel: language, use_context, prompt_id eller prompt (de gælder for dokumentet fra denne kørsel), plus document_id og scope."
+
+msgid "Parameter beim Start"
+msgstr "Parametre ved start"
+
+msgid "Parameter beim Start der Generierung"
+msgstr "Parametre ved start af generering"
+
+#, python-brace-format
+msgid "So holst du Fehlschläge nach: POST …/generate ohne scope (oder scope=open) beschreibt nur die offenen Einträge, fertige bleiben unberührt und kosten nichts. Einzelne Einträge: POST …/items/{item_id}/generate. Credits fallen nur für Einträge an, die einen Text bekommen haben. Erst wenn nichts mehr offen ist, nimmt scope=all wieder alle Einträge."
+msgstr "Sådan indhenter du fejl: POST …/generate uden scope (eller scope=open) beskriver kun de åbne poster; færdige forbliver urørte og koster intet. Enkelte poster: POST …/items/{item_id}/generate. Kreditter opkræves kun for poster, der har fået en tekst. Først når intet længere er åbent, tager scope=all igen alle poster."
+
+msgid "open (Standard): nur Einträge ohne fertigen Text, also nie generierte und fehlgeschlagene. all: alle Einträge neu beschreiben, vorhandene Texte werden ersetzt und jeder Eintrag kostet erneut. Formulare kennen nur all."
+msgstr "open (standard): kun poster uden færdig tekst, altså aldrig genererede og fejlede. all: beskriv alle poster på ny, eksisterende tekster erstattes og hver post koster igen. Formularer kender kun all."
+
+msgid "Original"
+msgstr "Original"
+
+msgid "Der letzte neue Versuch ist fehlgeschlagen, der vorhandene Text bleibt."
+msgstr "Det seneste nye forsøg mislykkedes; den eksisterende tekst bevares."
+
+msgid "Einträge mit eigenem Text (alt_text_edited) fasst open nie an; ein per PATCH gesetzter Text macht auch einen fehlgeschlagenen Eintrag fertig. Bei Formularen muss scope=all ausdrücklich mitgegeben werden, sonst 400."
+msgstr "open rører aldrig poster med egen tekst (alt_text_edited); en tekst sat via PATCH gør også en fejlet post færdig. Ved formularer skal scope=all angives udtrykkeligt, ellers 400."
+
+msgid "Nimmt auch language, use_context, prompt_id oder prompt an; sie gelten danach für das ganze Dokument."
+msgstr "Tager også language, use_context, prompt_id eller prompt; de gælder derefter for hele dokumentet."
+
+msgid "error kann auch bei status done stehen: Dann ist ein erneuter Versuch gescheitert, der vorhandene Text ist geblieben und needs_review ist gesetzt."
+msgstr "error kan også stå ved status done: så mislykkedes et nyt forsøg, den eksisterende tekst blev bevaret og needs_review er sat."
+
+msgid "Alt-Texte"
+msgstr "Alternative tekster"
+
+msgid "Ansicht"
+msgstr "Visning"
+
+#: (22.09.2026) Ansicht Dokument PDF-Tagging
+msgid "Dokument"
+msgstr "Dokument"
+
+#: (22.09.2026) Ansicht Dokument PDF-Tagging
+msgid "Unbekannt"
+msgstr "Ukendt"
+
+#: (22.09.2026) Ansicht Dokument PDF-Tagging
+#, python-brace-format
+msgid "{n} Elemente"
+msgstr "{n} elementer"
+
+#: (22.09.2026) Ansicht Dokument PDF-Tagging
+msgid "unbekannt"
+msgstr "ukendt"
+
+#: (22.09.2026) Ansicht Dokument PDF-Tagging
+msgid "Stand"
+msgstr "Status"
+
+#: (22.09.2026) Ansicht Dokument PDF-Tagging
+msgid "Seiten"
+msgstr "Sider"
+
+#: (22.09.2026) Ansicht Dokument PDF-Tagging
+msgid "Struktur"
+msgstr "Struktur"
+
+#: (22.09.2026) PDF-Projekt Quickinfos Station im
+msgid "Quickinfos"
+msgstr "Quickinfos"
+
+#: (22.09.2026) PDF-Projekt Quickinfos Station im
+msgid "Formularfelder"
+msgstr "Formularfelter"
+
+#: (22.09.2026) PDF-Projekt Quickinfos Station im
+#, python-brace-format
+msgid "{n} Felder"
+msgstr "{n} felter"
+
+#: (22.09.2026) Kette Komplett barrierefrei machen
+msgid "wartet"
+msgstr "venter"
+
+#: (22.09.2026) Kette Komplett barrierefrei machen
+msgid "fertig"
+msgstr "færdig"
+
+#: (22.09.2026) Kette Komplett barrierefrei machen
+msgid "fehlgeschlagen"
+msgstr "mislykkedes"
+
+#: (22.09.2026) + Hoerprobe PDF Strukturlesung
+msgid "Elemente"
+msgstr "Elementer"
+
+#: (22.09.2026) + Hoerprobe PDF Strukturlesung
+msgid "Zusammenfassung"
+msgstr "Sammenfatning"
+
+#: (22.09.2026) + Hoerprobe PDF Strukturlesung
+msgid "ohne Namen"
+msgstr "uden navn"
+
+#: (22.09.2026) + Hoerprobe PDF Strukturlesung
+msgid "Grafik"
+msgstr "Grafik"
+
+#: (22.09.2026) + Hoerprobe PDF Strukturlesung
+msgid "ohne Alt-Text"
+msgstr "uden alt-tekst"
+
+#: (22.09.2026) + Hoerprobe PDF Strukturlesung
+msgid "Formularfeld"
+msgstr "Formularfelt"
+
+#: (22.09.2026) + Hoerprobe PDF Strukturlesung
+msgid "Link"
+msgstr "Link"
+
+#: (22.09.2026) Automatische PDF Pruefung
+msgid "Rolle"
+msgstr "Rolle"
+
+#: (22.09.2026) Automatische PDF Pruefung
+msgid "Ebene"
+msgstr "Niveau"
+
+#: (22.09.2026) Automatische PDF Pruefung
+msgid "Reihenfolge"
+msgstr "Rækkefølge"
+
+#: (22.09.2026) Automatische PDF Pruefung
+msgid "Fehlt"
+msgstr "Mangler"
+
+#: (22.09.2026) Automatische PDF Pruefung
+#, python-brace-format
+msgid "{n} Befunde"
+msgstr "{n} fund"
+
+#: (22.09.2026) Korrektur PDF
+msgid "kostenlos"
+msgstr "gratis"
+
+#: (22.09.2026) Korrektur PDF
+#, python-brace-format
+msgid "{c} Credits"
+msgstr "{c} credits"
+
+#: (22.09.2026) Korrektur PDF
+msgid "nicht gefunden"
+msgstr "ikke fundet"
+
+msgid "PDF-Projekt"
+msgstr "PDF-projekt"
+
+msgid "Word-Projekt"
+msgstr "Word-projekt"
+
+msgid "aktuell"
+msgstr "aktuel"
+
+msgid "bestanden"
+msgstr "bestået"
+
+msgid "Urteil"
+msgstr "Vurdering"
+
+msgid "hoch"
+msgstr "høj"
+
+#: 24.09.2026 Dokumentansicht Feedback Michaels nach
+msgid "Anwendung"
+msgstr "Program"
+
+msgid "kein Titel"
+msgstr "ingen titel"
+
+msgid "keiner"
+msgstr "ingen"
+
+msgid "Jahr"
+msgstr "År"
+
+msgid "Monat"
+msgstr "Måned"
+
+msgid "Monate"
+msgstr "Måneder"
+
+msgid "nichts"
+msgstr "intet"
+
+msgid "Gutschrift stornieren"
+msgstr "Annullér kreditering"
+
+msgid "Prüfung"
+msgstr "Kontrol"
+
