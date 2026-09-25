@@ -144,15 +144,16 @@ try:
     guthaben_auf(0)
     asyncio.run(main._process_project(PID, uid, force=True, ki_neu_ids=kandidaten))
     nachher = zustand()
-    check("Nach Abbruch: alle vier Kandidaten stehen wieder auf done",
-          [s for _, s, _, _ in nachher] == ["done"] * 4, nachher)
+    # Korrektur 25.09.2026 (Steve): nur Bilder MIT Text oder Schmuckbilder gehen auf done zurueck
+    check("Nach Abbruch: die drei mit Text/Schmuck stehen wieder auf done",
+          [s for _, s, _, _ in nachher[:3]] == ["done"] * 3, nachher)
     check("Nach Abbruch: auch das dekorative Bild ohne Text ist gerettet", nachher[2][1] == "done", nachher[2])
-    check("Nach Abbruch: die nie generierte Luecke steht ebenfalls auf done (Teil der Rettungsmenge seit 01.09.)", nachher[3][1] == "done", nachher[3])
+    check("Nach Abbruch: die nie generierte Luecke bleibt „Noch nicht generiert“ (pending), NICHT fertig", nachher[3][1] == "pending", nachher[3])
     check("Nach Abbruch: kein Alt-Text veraendert",
           [t for _, _, t, _ in nachher] == [t for _, _, t, _ in vorher], (vorher, nachher))
     p = con.execute("SELECT status, processed_images FROM projects WHERE id=?", (PID,)).fetchone()
     check("Nach Abbruch: Projektstatus done (kein Dauer-409)", p["status"] == "done", dict(p))
-    check("Nach Abbruch: Zaehler frisch gezaehlt = 4", p["processed_images"] == 4, dict(p))
+    check("Nach Abbruch: Zaehler frisch gezaehlt = 3 (die Luecke zaehlt nicht als fertig)", p["processed_images"] == 3, dict(p))
 
     # --- 4. Abbruch VON AUSSEN (Container-Neustart): Notaufraeumen muss greifen
     con.execute("UPDATE images SET status='pending' WHERE id IN (%s)" % ",".join("?" * len(kandidaten)),
@@ -182,8 +183,14 @@ try:
     check("Hilfsfunktion mit leerer Menge aendert nichts", zustand() == stand)
     main._ki_neu_zurueck(con, kandidaten)
     check("Hilfsfunktion laesst fertige Bilder in Ruhe (wiederholbar)", zustand() == stand)
-    check("Hilfsfunktion: die frueher offene Luecke bleibt done (gehoert seit 01.09. zur Rettungsmenge)",
+    check("Hilfsfunktion: die nie generierte Luecke bleibt pending (Korrektur 25.09.2026)",
+          con.execute("SELECT status FROM images WHERE id=?", (vorher[3][0],)).fetchone()["status"] == "pending")
+    # Bewusst geleertes Feld (Hand-Aenderung, alt_text_edited = '') gilt als Entscheidung und geht auf done zurueck
+    con.execute("UPDATE images SET status='pending', alt_text_edited='' WHERE id=?", (vorher[3][0],)); con.commit()
+    main._ki_neu_zurueck(con, {vorher[3][0]})
+    check("Hilfsfunktion: bewusst geleertes Feld (Hand-Aenderung) geht auf done zurueck",
           con.execute("SELECT status FROM images WHERE id=?", (vorher[3][0],)).fetchone()["status"] == "done")
+    con.execute("UPDATE images SET status='pending', alt_text_edited=NULL WHERE id=?", (vorher[3][0],)); con.commit()
 
     # --- 5b. Reihenfolge der Wachen: Tageslimit muss VOR dem Guthaben greifen
     alt_limit = con.execute("SELECT api_tageslimit FROM users WHERE id=?", (uid,)).fetchone()["api_tageslimit"]
