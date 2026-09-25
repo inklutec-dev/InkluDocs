@@ -196,3 +196,5 @@ mussten ins Kulanz-Feld — Jens' Kauf (25.09.) landete als Geschenk, der Bonus 
 - **Meldung schließen**: Knopf neben der Meldung (Fokus danach auf die H1); jede nächste Aktion (Knopf) räumt die alte Meldung weg. Kein Zeitablauf (WCAG 2.2.1, Screenreader).
 
 - **Michael 25.09.2026**: Kundenliste nur Name · E-Mail · Abo; Umsatz zeigt den (aktuellen) Kundennamen statt E-Mail, keine Stripe-Vermerke „Neue Buchung/Planwechsel“ mehr; kein Stornieren-Knopf in der Umsatzübersicht (nur auf der Kundenseite). Stornieren bewegt kein Geld — Stripe-Erstattung im Stripe-Dashboard, Rechnung per Gutschrift von Actino.
+
+- **Michael 25.09.2026 (14:38)**: Kundensuche untereinander (Suchfeld ohne Hinweis, darunter Auswahl „Abo“: Alle Kunden, Free, Single, Team, Enterprise — effektiver Plan, darunter „Suchen“).

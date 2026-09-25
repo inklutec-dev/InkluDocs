@@ -265,3 +265,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .verwaltung-meldung[hidden] { display: none; }
 .verwaltung-meldung p { margin: 0; flex: 1 1 18rem; }
 .verwaltung-meldung p:focus { outline: 2px solid #a94200; outline-offset: 2px; }
+
+/* Kundensuche untereinander (Michael 25.09.2026): Suchfeld, darunter „Abo“, darunter der Knopf. */
+.verwaltung-suche-stapel { max-width: 30rem; margin-bottom: 1rem; }
+.verwaltung-suche-stapel .dash-field { margin-bottom: .9rem; }
