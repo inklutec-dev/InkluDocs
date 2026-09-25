@@ -247,17 +247,18 @@ with sync_playwright() as p:
     r = pg.request.get(BASE + pg.locator("#dlCsv").get_attribute("href"))
     check("CSV-Download: 200, enthält Testkunde", r.status == 200 and "Verwaltung Testkunde" in r.body().decode("utf-8-sig"))
     axe(pg, "Umsatz")
-    pg.select_option("#wahlMonat", "")
-    pg.select_option("#wahlAuswahl", "bonus")
+    optionen = pg.locator("#wahlZeitraum option").all_inner_texts()
+    check("Zeitraum-Liste: Jahr zuerst, jede Option mit Betrag",
+          optionen and optionen[0].startswith("Ganzes Jahr") and all("€" in o for o in optionen), optionen[:4])
+    check("Keine getrennten Felder Jahr/Monat und keine Monatsliste mehr",
+          pg.locator("#wahlJahr, #wahlMonat, #umsatzMonate").count() == 0)
+    pg.select_option("#wahlZeitraum", index=0)
     pg.click("#zeitraumForm button[type=submit]")
     pg.wait_for_timeout(800)
-    check("Auswahl „Nur Bonus“ + ganzes Jahr: Überschrift passt",
-          "nur Bonus" in pg.locator("#h-buchungen").inner_text(), pg.locator("#h-buchungen").inner_text())
+    check("Ganzes Jahr: Überschrift passt",
+          "ganzen Jahr" in pg.locator("#h-buchungen").inner_text(), pg.locator("#h-buchungen").inner_text())
     check("Nach „Anzeigen“: Fokus auf den Buchungen", fokus_id(pg) == "h-buchungen", fokus_id(pg))
-    knopf = pg.locator("#umsatzMonate button").first
-    knopf.click()
-    pg.wait_for_timeout(800)
-    check("Monats-Knopf zeigt den Monat", "monat=" in pg.url, pg.url)
+    check("Jahres-Download in der Adresse", "monat=" not in (pg.locator("#dlExcel").get_attribute("href") or ""))
 
     # API und Einstellungen
     pg.goto(f"{BASE}/verwaltung/api", wait_until="networkidle")

@@ -186,3 +186,6 @@ mussten ins Kulanz-Feld — Jens' Kauf (25.09.) landete als Geschenk, der Bonus 
 - **App-weit**: Dialoge stehen mittig (globaler Rand-Reset hob die Browser-Mitte auf), lange Dialoge
   scrollen; die Fußzeilen-Links brechen auf dem Handy um (vorher geschützte Leerzeichen auf beiden
   Seiten des Trenners, Seite 660 statt 390 Pixel breit).
+
+- **Umsatzhistorie (2. Fassung)**: unter den Kacheln EIN Abschnitt mit EINER Auswahlliste „Zeitraum“ (je Jahr „Ganzes Jahr“, darunter Monate mit Buchungen, jeweils mit Betrag; bis zur ersten Buchung zurück; laufender Monat immer drin). Monatsliste und Felder Jahr/Monat entfallen.
+- **Zahlenfelder als Textfeld** (inputmode numeric): VoiceOver las type=number als „Stepper“ mit Prozentwerten. Das API-Limit gilt je Konto (alle Schlüssel zusammen), der Dialog sagt das.

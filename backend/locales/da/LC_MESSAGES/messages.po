@@ -8526,3 +8526,19 @@ msgstr "Posteringen forbliver synlig, men tæller ikke længere med i omsætning
 
 msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
 msgstr "Pengene refunderer du i Stripe-dashboardet — her rettes kun posteringen."
+
+# Verwaltung: Umsatzhistorie (25.09.2026)
+msgid "Umsatzhistorie"
+msgstr "Omsætningshistorik"
+
+msgid "Zeitraum"
+msgstr "Periode"
+
+msgid "Ganzes Jahr {jahr}"
+msgstr "Hele året {jahr}"
+
+msgid "Buchungen im ganzen Jahr {jahr} ({n})"
+msgstr "Posteringer i hele året {jahr} ({n})"
+
+msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
+msgstr "Grænsen gælder for hele kontoen, altså for alle API-nøgler tilsammen."

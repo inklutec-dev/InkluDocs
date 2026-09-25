@@ -3,10 +3,12 @@
 {% block title %}{{ _('Umsatz') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
 
 {% block main %}
-{# VERWALTUNG — UMSATZ (25.09.2026, Steve; aufgeräumt am selben Abend: „zu unaufgeräumt“).
-   Reihenfolge: vier Zahlen — die Monate mit Buchungen — die Buchungen eines Zeitraums, und
-   GENAU DORT die Zeitraum-Wahl (sie steuert nur diese Liste) samt Download. 25 Buchungen je
-   Seite. Die Erklärung, was zählt, steht aufklappbar am Ende statt als Satz unter den Zahlen. #}
+{# VERWALTUNG — UMSATZ (Steve 25.09.2026, zweite Fassung: „aufgeräumter“).
+   Oben vier Kacheln mit dem AKTUELLEN Stand (heute, laufender Monat, Jahr, gesamt) — ohne Auswahl.
+   Darunter EIN Abschnitt „Umsatzhistorie“ mit EINER Auswahlliste „Zeitraum“: je Jahr „Ganzes Jahr“,
+   darunter die Monate mit Buchungen, jeweils mit Betrag (mit den Pfeiltasten durchhörbar), bis zur
+   ersten Buchung zurück. Dann die Buchungen des Zeitraums, 25 je Seite, und der Download.
+   Die frühere Monatsliste und die getrennten Felder Jahr/Monat sind entfallen. #}
 <h1>{{ _('Verwaltung') }}: {{ _('Umsatz') }}</h1>
 {% include "_verwaltung_nav.html" %}
 
@@ -15,32 +17,16 @@
   <div id="umsatzZahlen" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
 </section>
 
-<section class="dash-card verwaltung-karte" aria-labelledby="h-monate">
-  <h2 id="h-monate">{{ _('Monate') }}</h2>
-  <div id="umsatzMonate"></div>
-</section>
-
-<section class="dash-card verwaltung-karte" aria-labelledby="h-buchungen">
-  <h2 id="h-buchungen" tabindex="-1">{{ _('Buchungen') }}</h2>
-  <form id="zeitraumForm" class="verwaltung-suche" novalidate aria-label="{{ _('Zeitraum wählen') }}">
+<section class="dash-card verwaltung-karte" aria-labelledby="h-historie">
+  <h2 id="h-historie">{{ _('Umsatzhistorie') }}</h2>
+  <form id="zeitraumForm" class="verwaltung-suche" novalidate>
     <div class="dash-field">
-      <label for="wahlJahr">{{ _('Jahr') }}</label>
-      <select id="wahlJahr" class="dash-input"></select>
-    </div>
-    <div class="dash-field">
-      <label for="wahlMonat">{{ _('Monat') }}</label>
-      <select id="wahlMonat" class="dash-input"></select>
-    </div>
-    <div class="dash-field">
-      <label for="wahlAuswahl">{{ _('Buchungen') }}</label>
-      <select id="wahlAuswahl" class="dash-input">
-        <option value="alle">{{ _('Alle Buchungen') }}</option>
-        <option value="verkauf">{{ _('Nur Verkäufe') }}</option>
-        <option value="bonus">{{ _('Nur Bonus') }}</option>
-      </select>
+      <label for="wahlZeitraum">{{ _('Zeitraum') }}</label>
+      <select id="wahlZeitraum" class="dash-input"></select>
     </div>
     <button type="submit" class="btn btn-primary">{{ _('Anzeigen') }}</button>
   </form>
+  <h3 id="h-buchungen" tabindex="-1" class="verwaltung-unterkopf">{{ _('Buchungen') }}</h3>
   <div id="umsatzBuchungen"></div>
   <nav class="verwaltung-seiten" id="buchungSeiten" aria-label="{{ _('Seiten der Buchungsliste') }}" hidden>
     <button type="button" class="btn btn-secondary" id="bSeiteZurueck">{{ _('Vorherige Seite') }}</button>
@@ -119,55 +105,17 @@
     if (k.ausstehend_cent) V.zeile(ziel, t('Lastschriften noch unterwegs'), V.euro(k.ausstehend_cent));
   }
 
-  function auswahlListen(d) {
-    const j = byId('wahlJahr');
-    j.innerHTML = '';
-    d.jahre.forEach((jahr) => { const o = V.el('option', null, String(jahr)); o.value = String(jahr); j.appendChild(o); });
-    j.value = String(d.jahr);
-    const m = byId('wahlMonat');
-    m.innerHTML = '';
-    const ganz = V.el('option', null, t('Ganzes Jahr')); ganz.value = ''; m.appendChild(ganz);
-    for (let i = 1; i <= 12; i++) {
-      const o = V.el('option', null, V.monatLang(d.jahr + '-' + String(i).padStart(2, '0')));
-      o.value = String(i);
-      m.appendChild(o);
-    }
-    m.value = d.monat ? String(d.monat) : '';
-    byId('wahlAuswahl').value = d.auswahl;
-  }
-
-  function monate(d) {
-    const ziel = byId('umsatzMonate');
-    ziel.innerHTML = '';
-    byId('h-monate').textContent = t('Monate im Jahr {jahr}', { jahr: d.jahr });
-    // Nur Monate, in denen etwas gebucht wurde — keine Reihe mit 0,00 €.
-    const mitBuchung = d.monate.filter((m) => m.gesamt_cent || m.anzahl || m.bonus_credits);
-    if (!mitBuchung.length) { ziel.appendChild(V.el('p', 'dash-empty', t('In diesem Jahr gibt es noch keine Buchungen.'))); return; }
-    const ul = V.el('ul', 'verwaltung-liste');
-    mitBuchung.forEach((m) => {
-      const li = V.el('li', 'verwaltung-zeile');
-      // Der Monatsname ist ein Knopf: zeigt die Buchungen dieses Monats.
-      const k = V.el('button', 'verwaltung-textknopf', V.monatLang(m.monat));
-      k.type = 'button';
-      k.setAttribute('aria-label', t('{monat} anzeigen', { monat: V.monatLang(m.monat) }));
-      k.addEventListener('click', () => {
-        wahl.jahr = parseInt(m.monat.slice(0, 4), 10);
-        wahl.monat = parseInt(m.monat.slice(5, 7), 10);
-        laden(true);
-      });
-      li.appendChild(k);
-      let text = ': ' + V.euro(m.gesamt_cent);
-      const wege = [];
-      if (m.stripe_cent) wege.push(t('Stripe {betrag}', { betrag: V.euro(m.stripe_cent) }));
-      if (m.rechnung_cent) wege.push(t('Rechnung {betrag}', { betrag: V.euro(m.rechnung_cent) }));
-      if (wege.length > 1) text += ' (' + wege.join(', ') + ')';
-      else if (wege.length === 1) text += ' (' + (m.stripe_cent ? t('über Stripe') : t('auf Rechnung')) + ')';
-      text += ' · ' + (m.anzahl === 1 ? t('1 Verkauf') : t('{n} Verkäufe', { n: m.anzahl }));
-      if (m.bonus_credits) text += ' · ' + t('{credits} Credits verschenkt', { credits: V.zahl(m.bonus_credits) });
-      li.appendChild(document.createTextNode(text));
-      ul.appendChild(li);
+  function zeitraumListe(d) {
+    const sel = byId('wahlZeitraum');
+    sel.innerHTML = '';
+    d.zeitraeume.forEach((z) => {
+      const name = z.monat ? V.monatLang(z.jahr + '-' + String(z.monat).padStart(2, '0'))
+                           : t('Ganzes Jahr {jahr}', { jahr: z.jahr });
+      const o = V.el('option', null, name + ': ' + V.euro(z.umsatz_cent));
+      o.value = z.jahr + (z.monat ? '-' + z.monat : '');
+      sel.appendChild(o);
     });
-    ziel.appendChild(ul);
+    sel.value = d.jahr + (d.monat ? '-' + d.monat : '');
   }
 
   function buchungen(d) {
@@ -178,6 +126,7 @@
     const seiten = Math.max(1, Math.ceil(n / JE_SEITE));
     bSeite = Math.min(Math.max(1, bSeite), seiten);
     let kopf = t('Buchungen {zeitraum} ({n})', { zeitraum: zeitraumText(), n: n }) + auswahlText;
+    if (!wahl.monat) kopf = t('Buchungen im ganzen Jahr {jahr} ({n})', { jahr: wahl.jahr, n: n }) + auswahlText;
     if (seiten > 1) kopf += ', ' + t('Seite {seite} von {seiten}', { seite: bSeite, seiten: seiten });
     byId('h-buchungen').textContent = kopf;
     if (!n) {
@@ -232,8 +181,7 @@
     if (fokus) bSeite = 1;
     history.replaceState(null, '', window.location.pathname + (abfrage().toString() ? '?' + abfrage().toString() : ''));
     zahlen(d.kennzahlen);
-    auswahlListen(d);
-    monate(d);
+    zeitraumListe(d);
     buchungen(d);
     if (fokus) byId('h-buchungen').focus();
     if (ersterLauf) {
@@ -246,9 +194,9 @@
 
   byId('zeitraumForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    wahl.jahr = parseInt(byId('wahlJahr').value, 10) || null;
-    wahl.monat = parseInt(byId('wahlMonat').value, 10) || null;
-    wahl.auswahl = byId('wahlAuswahl').value;
+    const teile = byId('wahlZeitraum').value.split('-');
+    wahl.jahr = parseInt(teile[0], 10) || null;
+    wahl.monat = parseInt(teile[1] || '', 10) || null;
     laden(true);
   });
 

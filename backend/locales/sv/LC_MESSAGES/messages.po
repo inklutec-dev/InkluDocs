@@ -8396,3 +8396,19 @@ msgstr "Bokningen syns fortfarande men räknas inte längre som omsättning. Kun
 
 msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
 msgstr "Pengarna återbetalar du i Stripe-instrumentpanelen — här rättas bara bokningen."
+
+# Verwaltung: Umsatzhistorie (25.09.2026)
+msgid "Umsatzhistorie"
+msgstr "Omsättningshistorik"
+
+msgid "Zeitraum"
+msgstr "Period"
+
+msgid "Ganzes Jahr {jahr}"
+msgstr "Hela året {jahr}"
+
+msgid "Buchungen im ganzen Jahr {jahr} ({n})"
+msgstr "Bokningar under hela året {jahr} ({n})"
+
+msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
+msgstr "Gränsen gäller för hela kontot, alltså för alla API-nycklar tillsammans."

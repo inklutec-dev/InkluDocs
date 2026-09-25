@@ -270,3 +270,4 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .verwaltung-zurueck { margin: 0 0 1rem; }
 .verwaltung-zurueck a { color: #a94200; font-weight: 600; text-decoration: underline; }
 .verwaltung-karte h2 + .verwaltung-suche { margin-top: .75rem; }
+.verwaltung-unterkopf { font-size: 1.1rem; margin: 1.25rem 0 .5rem; }

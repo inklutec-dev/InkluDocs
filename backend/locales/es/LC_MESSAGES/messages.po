@@ -8834,3 +8834,19 @@ msgstr "La reserva sigue visible, pero ya no cuenta como facturación. El plan d
 
 msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
 msgstr "El dinero se reembolsa en el panel de Stripe; aquí solo se corrige la reserva."
+
+# Verwaltung: Umsatzhistorie (25.09.2026)
+msgid "Umsatzhistorie"
+msgstr "Historial de facturación"
+
+msgid "Zeitraum"
+msgstr "Periodo"
+
+msgid "Ganzes Jahr {jahr}"
+msgstr "Año completo {jahr}"
+
+msgid "Buchungen im ganzen Jahr {jahr} ({n})"
+msgstr "Reservas de todo el año {jahr} ({n})"
+
+msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
+msgstr "El límite se aplica a toda la cuenta, es decir, a todas las claves de API juntas."

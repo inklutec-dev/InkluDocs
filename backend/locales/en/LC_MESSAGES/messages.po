@@ -8834,3 +8834,19 @@ msgstr "The booking remains visible but no longer counts as revenue. The custome
 
 msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
 msgstr "You refund the money in the Stripe dashboard — here only the booking is corrected."
+
+# Verwaltung: Umsatzhistorie (25.09.2026)
+msgid "Umsatzhistorie"
+msgstr "Revenue history"
+
+msgid "Zeitraum"
+msgstr "Period"
+
+msgid "Ganzes Jahr {jahr}"
+msgstr "Whole year {jahr}"
+
+msgid "Buchungen im ganzen Jahr {jahr} ({n})"
+msgstr "Bookings in the whole year {jahr} ({n})"
+
+msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
+msgstr "The limit applies to the whole account, i.e. to all API keys together."

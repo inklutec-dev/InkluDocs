@@ -436,6 +436,11 @@ class TestEndpunkte(unittest.TestCase):
         d = self.c_voll.get("/api/admin/umsatz").json()
         jetzt = datetime.now(ZONE)
         self.assertEqual((d["jahr"], d["monat"]), (jetzt.year, jetzt.month))
+        z = d["zeitraeume"]
+        self.assertEqual((z[0]["jahr"], z[0]["monat"]), (jetzt.year, None))          # Jahr zuerst
+        self.assertIn({"jahr": jetzt.year, "monat": jetzt.month,
+                       "umsatz_cent": umsatz.kennzahlen()["monat_cent"]}, z)          # laufender Monat mit Betrag
+        self.assertEqual(z[0]["umsatz_cent"], umsatz.kennzahlen()["jahr_cent"])
         self.assertEqual(self.c_voll.get("/api/admin/umsatz", params={"jahr": 1999}).status_code, 400)
         self.assertEqual(self.c_voll.get("/api/admin/umsatz", params={"jahr": jetzt.year, "monat": 13}).status_code, 400)
         r = self.c_voll.get("/api/admin/umsatz/export", params={"format": "xlsx", "jahr": jetzt.year})

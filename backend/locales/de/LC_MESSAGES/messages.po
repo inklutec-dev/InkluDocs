@@ -8837,3 +8837,19 @@ msgstr "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan
 
 msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
 msgstr "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
+
+# Verwaltung: Umsatzhistorie (25.09.2026)
+msgid "Umsatzhistorie"
+msgstr "Umsatzhistorie"
+
+msgid "Zeitraum"
+msgstr "Zeitraum"
+
+msgid "Ganzes Jahr {jahr}"
+msgstr "Ganzes Jahr {jahr}"
+
+msgid "Buchungen im ganzen Jahr {jahr} ({n})"
+msgstr "Buchungen im ganzen Jahr {jahr} ({n})"
+
+msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
+msgstr "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."

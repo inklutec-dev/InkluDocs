@@ -4426,6 +4426,7 @@ async def admin_umsatz(jahr: str = None, monat: str = None, auswahl: str = "alle
                 if b["weg"] != "bonus" and b["status"] in ("ok", "ausstehend"))
     return {"kennzahlen": umsatz.kennzahlen(), "jahre": jahre, "jahr": jahr, "monat": monat,
             "auswahl": auswahl, "monate": umsatz.monatsuebersicht(jahr),
+            "zeitraeume": umsatz.zeitraeume(),
             "buchungen": buchungen, "summe_cent": summe,
             "bonus_credits": sum(b["credits"] for b in buchungen if b["weg"] == "bonus")}
 

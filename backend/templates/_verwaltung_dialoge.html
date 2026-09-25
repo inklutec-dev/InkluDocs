@@ -57,10 +57,13 @@
 <dialog id="limitDialog" class="app-dialog" aria-labelledby="limitTitel">
   <h2 id="limitTitel">{{ _('API-Tageslimit ändern') }}</h2>
   <p id="limitFuer"></p>
+  <p class="dash-sub">{{ _('Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen.') }}</p>
   <form id="limitForm" novalidate>
     <div class="dash-field">
       <label for="limitWert">{{ _('Bilder pro Tag (0 sperrt die API, leer = Standard)') }}</label>
-      <input type="number" id="limitWert" class="dash-input" min="0" max="1000000" step="1" autocomplete="off" aria-describedby="limitHinweis">
+      {# Textfeld statt type="number" (Steve 25.09.2026): VoiceOver liest Zahlenfelder als „Stepper“
+         mit Prozentwerten (100 von 0–1.000.000 = „0,01 %“). inputmode öffnet am Handy die Zifferntastatur. #}
+      <input type="text" id="limitWert" class="dash-input" inputmode="numeric" autocomplete="off" maxlength="7" aria-describedby="limitHinweis">
       <p class="dash-sub" id="limitHinweis">{{ _('Der Standard ist aktuell {standard} Bilder pro Tag. Das Abo-Guthaben gilt immer zusätzlich — diese Bremse schützt nur vor Amok-Läufen.').replace('{standard}', api_limit_standard|string) }}</p>
     </div>
     <p id="limitFehler" role="alert" class="verwaltung-fehler"></p>

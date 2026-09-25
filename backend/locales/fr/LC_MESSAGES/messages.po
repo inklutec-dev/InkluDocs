@@ -8834,3 +8834,19 @@ msgstr "L’écriture reste visible mais ne compte plus dans le chiffre d’affa
 
 msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
 msgstr "Le remboursement se fait dans le tableau de bord Stripe — ici, seule l’écriture est corrigée."
+
+# Verwaltung: Umsatzhistorie (25.09.2026)
+msgid "Umsatzhistorie"
+msgstr "Historique du chiffre d’affaires"
+
+msgid "Zeitraum"
+msgstr "Période"
+
+msgid "Ganzes Jahr {jahr}"
+msgstr "Année entière {jahr}"
+
+msgid "Buchungen im ganzen Jahr {jahr} ({n})"
+msgstr "Écritures de toute l’année {jahr} ({n})"
+
+msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
+msgstr "La limite s’applique à tout le compte, donc à toutes les clés API ensemble."

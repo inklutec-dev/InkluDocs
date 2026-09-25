@@ -435,6 +435,27 @@ def monatsuebersicht(jahr: int) -> list:
     return out
 
 
+def zeitraeume() -> list:
+    """Die Auswahlliste „Zeitraum“ der Umsatzhistorie (Steve 25.09.2026): je Jahr (neuestes
+    zuerst) ein Eintrag „Ganzes Jahr“, darunter die Monate mit Buchungen, neuester zuerst —
+    jeweils mit Umsatz. Der laufende Monat steht immer drin (er ist die Vorauswahl), auch ohne
+    Buchung. Reicht zurueck bis zur allerersten Buchung."""
+    jetzt = jetzt_lokal()
+    aktuell = f"{jetzt.year:04d}-{jetzt.month:02d}"
+    out = []
+    conn = get_db()
+    try:
+        for jahr in jahre():
+            von, bis = zeitraum(jahr)
+            out.append({"jahr": jahr, "monat": None, "umsatz_cent": _summe(conn, von, bis)})
+            for m in monatsuebersicht(jahr):
+                if m["anzahl"] or m["bonus_credits"] or m["gesamt_cent"] or m["monat"] == aktuell:
+                    out.append({"jahr": jahr, "monat": int(m["monat"][5:7]), "umsatz_cent": m["gesamt_cent"]})
+    finally:
+        conn.close()
+    return out
+
+
 def liste(jahr: int = None, monat: int = None, auswahl: str = "alle", konto_id: int = None) -> list:
     """Buchungen eines Jahres/Monats (oder eines Kontos), neueste zuerst.
     auswahl: 'alle' | 'verkauf' (Stripe + Rechnung) | 'bonus'."""
