@@ -245,6 +245,10 @@ with sync_playwright() as p:
     check("Limit gespeichert: Meldung sichtbar und fokussiert",
           fokus_id(pg) == "verwaltungMeldung" and "1.000 Bilder pro Tag" in pg.locator("#verwaltungMeldung").inner_text(),
           (fokus_id(pg), pg.locator("#verwaltungMeldung").inner_text()))
+    pg.click("#verwaltungMeldungZu")
+    check("„Meldung schließen“: weg, Fokus auf der Hauptüberschrift",
+          not pg.locator("#verwaltungMeldungBox").is_visible()
+          and pg.evaluate("() => document.activeElement.tagName") == "H1")
 
     # Umsatz-Seite
     pg.goto(f"{BASE}/verwaltung/umsatz", wait_until="networkidle")

@@ -8860,3 +8860,6 @@ msgstr "Please enter a number. Enter {standard} for the default; 0 blocks the AP
 
 msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
 msgstr "The default is {standard} images per day — enter exactly this number to return to the default. The subscription balance always applies in addition."
+
+msgid "Meldung schließen"
+msgstr "Close message"

@@ -192,3 +192,5 @@ mussten ins Kulanz-Feld — Jens' Kauf (25.09.) landete als Geschenk, der Bonus 
 
 - **Meldungszeile** (`#verwaltungMeldung` in `_verwaltung_nav.html`): nach jeder Aktion sichtbar oben, Fokus dorthin (VoiceOver liest sicher vor; reine Live-Region ging bei gleichzeitigem Fokuswechsel unter). Fehler rot, Erfolg grün.
 - **API-Limit**: leeres Feld = Fehlermeldung (keine versteckte Bedeutung mehr); Standard = genau die Standardzahl eintragen; 0 sperrt die API. Meldung nennt Name und neuen Wert.
+
+- **Meldung schließen**: Knopf neben der Meldung (Fokus danach auf die H1); jede nächste Aktion (Knopf) räumt die alte Meldung weg. Kein Zeitablauf (WCAG 2.2.1, Screenreader).

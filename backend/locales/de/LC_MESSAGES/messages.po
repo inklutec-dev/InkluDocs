@@ -8863,3 +8863,6 @@ msgstr "Bitte eine Zahl eintragen. Für den Standard {standard} eintragen, 0 spe
 
 msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
 msgstr "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
+
+msgid "Meldung schließen"
+msgstr "Meldung schließen"

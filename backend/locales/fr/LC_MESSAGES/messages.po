@@ -8860,3 +8860,6 @@ msgstr "Veuillez saisir un nombre. Saisissez {standard} pour la valeur par défa
 
 msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
 msgstr "La valeur par défaut est de {standard} images par jour — saisissez exactement ce nombre pour y revenir. Le solde de l’abonnement s’applique toujours en plus."
+
+msgid "Meldung schließen"
+msgstr "Fermer le message"

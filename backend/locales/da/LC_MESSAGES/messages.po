@@ -8552,3 +8552,6 @@ msgstr "Indtast venligst et tal. Indtast {standard} for standarden; 0 spærrer A
 
 msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
 msgstr "Standarden er {standard} billeder pr. dag — indtast præcis dette tal for at vende tilbage til standarden. Abonnementssaldoen gælder altid derudover."
+
+msgid "Meldung schließen"
+msgstr "Luk meddelelse"

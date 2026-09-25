@@ -8422,3 +8422,6 @@ msgstr "Ange ett tal. Ange {standard} för standard; 0 spärrar API:et."
 
 msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
 msgstr "Standard är {standard} bilder per dag — ange exakt detta tal för att återgå till standard. Abonnemangssaldot gäller alltid dessutom."
+
+msgid "Meldung schließen"
+msgstr "Stäng meddelandet"

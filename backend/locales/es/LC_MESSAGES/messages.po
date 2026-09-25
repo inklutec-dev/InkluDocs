@@ -8860,3 +8860,6 @@ msgstr "Introduzca un número. Para el estándar, introduzca {standard}; 0 bloqu
 
 msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
 msgstr "El estándar es {standard} imágenes al día: introduzca exactamente este número para volver al estándar. El saldo de la suscripción se aplica siempre además."
+
+msgid "Meldung schließen"
+msgstr "Cerrar el mensaje"

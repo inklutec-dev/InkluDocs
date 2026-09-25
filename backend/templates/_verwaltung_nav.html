@@ -11,4 +11,9 @@
 {# Meldungszeile (Steve 25.09.2026: „ich sehe keine Meldung“): Nach jeder Aktion steht hier sichtbar,
    was passiert ist, und der Fokus springt hierher — VoiceOver liest sie so sicher vor (eine reine
    Live-Region-Ansage ging unter, wenn gleichzeitig der Fokus wechselte). #}
-<p id="verwaltungMeldung" class="verwaltung-meldung" tabindex="-1" hidden></p>
+{# Sie verschwindet NICHT nach Zeit (wer mit Screenreader woanders liest, verpasste sie sonst),
+   sondern mit „Meldung schließen“ oder sobald die nächste Aktion beginnt. #}
+<div id="verwaltungMeldungBox" class="verwaltung-meldung" hidden>
+  <p id="verwaltungMeldung" tabindex="-1"></p>
+  <button type="button" class="btn btn-secondary btn-small" id="verwaltungMeldungZu">{{ _('Meldung schließen') }}</button>
+</div>

@@ -173,12 +173,33 @@
 
   // Sichtbare Meldung oben auf der Seite, Fokus dorthin (liest VoiceOver sicher vor).
   function meldung(text, istFehler) {
+    const box = byId('verwaltungMeldungBox');
     const p = byId('verwaltungMeldung');
-    if (!p) { announce(text); return; }
+    if (!box || !p) { announce(text); return; }
     p.textContent = text;
-    p.classList.toggle('verwaltung-meldung-fehler', !!istFehler);
-    p.hidden = false;
+    box.classList.toggle('verwaltung-meldung-fehler', !!istFehler);
+    box.hidden = false;
     p.focus();
+  }
+
+  function meldungWeg() {
+    const box = byId('verwaltungMeldungBox');
+    if (box && !box.hidden) box.hidden = true;
+  }
+
+  function meldungEinrichten() {
+    const zu = byId('verwaltungMeldungZu');
+    if (!zu) return;
+    zu.addEventListener('click', () => {
+      meldungWeg();
+      const h1 = document.querySelector('main h1');
+      if (h1) { h1.setAttribute('tabindex', '-1'); h1.focus(); }
+    });
+    // Die nächste Aktion (jeder andere Knopf) räumt die alte Meldung weg — nie eine veraltete Meldung.
+    document.addEventListener('click', (e) => {
+      const ziel = e.target.closest && e.target.closest('button, a.btn');
+      if (ziel && !ziel.closest('#verwaltungMeldungBox')) meldungWeg();
+    }, true);
   }
 
   // Bonus-Schwelle (wie beim Gutschreiben) — steht am Dialog, damit jede Seite sie kennt.
@@ -364,6 +385,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    meldungEinrichten();
     korrekturEinrichten();
     stornoEinrichten();
     limitEinrichten();
