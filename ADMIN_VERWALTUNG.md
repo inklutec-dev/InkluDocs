@@ -189,3 +189,6 @@ mussten ins Kulanz-Feld — Jens' Kauf (25.09.) landete als Geschenk, der Bonus 
 
 - **Umsatzhistorie (2. Fassung)**: unter den Kacheln EIN Abschnitt mit EINER Auswahlliste „Zeitraum“ (je Jahr „Ganzes Jahr“, darunter Monate mit Buchungen, jeweils mit Betrag; bis zur ersten Buchung zurück; laufender Monat immer drin). Monatsliste und Felder Jahr/Monat entfallen.
 - **Zahlenfelder als Textfeld** (inputmode numeric): VoiceOver las type=number als „Stepper“ mit Prozentwerten. Das API-Limit gilt je Konto (alle Schlüssel zusammen), der Dialog sagt das.
+
+- **Meldungszeile** (`#verwaltungMeldung` in `_verwaltung_nav.html`): nach jeder Aktion sichtbar oben, Fokus dorthin (VoiceOver liest sicher vor; reine Live-Region ging bei gleichzeitigem Fokuswechsel unter). Fehler rot, Erfolg grün.
+- **API-Limit**: leeres Feld = Fehlermeldung (keine versteckte Bedeutung mehr); Standard = genau die Standardzahl eintragen; 0 sperrt die API. Meldung nennt Name und neuen Wert.

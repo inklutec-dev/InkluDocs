@@ -237,7 +237,7 @@
   }
 
   // ── Laden und Aufbauen ────────────────────────────────────────────────
-  async function laden() {
+  async function laden(still) {
     const ziel = byId('kundeInhalt');
     const [d, b, a] = await Promise.all([
       V.ladeJson('/api/admin/users/' + ID + '/report', ziel),
@@ -321,7 +321,7 @@
       const ul = V.el('ul', 'verwaltung-liste');
       buchungen.forEach((x) => {
         const li = V.el('li', 'verwaltung-zeile', V.buchungText(x, false));
-        V.buchungKnoepfe(li, x, laden, 'h-buchungen');
+        V.buchungKnoepfe(li, x, () => laden(true));
         ul.appendChild(li);
       });
       sec.appendChild(ul);
@@ -338,7 +338,7 @@
       V.zeile(sec, t('Heute'), t('{n} Bilder', { n: V.zahl(apiDaten.heute) }));
       if (voll) {
         const akt = V.el('div', 'dash-actions');
-        akt.appendChild(knopf(t('Limit ändern'), () => V.limitOeffnen({ id: ID, name: d.konto.name, email: d.konto.email, limit: apiDaten.limit }, laden, 'h-api')));
+        akt.appendChild(knopf(t('Limit ändern'), () => V.limitOeffnen({ id: ID, name: d.konto.name, email: d.konto.email, limit: apiDaten.limit }, () => laden(true))));
         sec.appendChild(akt);
       }
     }
@@ -376,7 +376,7 @@
       akt.appendChild(knopf(t('Konto löschen'), loeschOeffnen, 'btn-delete'));
       sec.appendChild(akt);
     }
-    announce(t('Kundenseite von {name} geladen.', { name: name }));
+    if (!still) announce(t('Kundenseite von {name} geladen.', { name: name }));
   }
 
   // ── Credits gutschreiben ──────────────────────────────────────────────
@@ -483,9 +483,8 @@
     gsLaeuft = false;
     if (!r.ok) { fehler.textContent = r.daten.detail || t('Die Gutschrift konnte nicht gespeichert werden.'); return; }
     byId('gsDialog').close();
-    await laden();
-    announce(r.daten.message || t('Credits wurden gutgeschrieben.'));
-    const h = byId('h-buchungen'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+    await laden(true);
+    V.meldung(r.daten.message || t('Credits wurden gutgeschrieben.'));
   });
 
   // ── Abo zuweisen oder ändern ──────────────────────────────────────────
@@ -579,9 +578,8 @@
     aboLaeuft = false;
     if (!r.ok) { byId('aboFehler2').textContent = r.daten.detail || t('Das Abo konnte nicht gespeichert werden.'); return; }
     byId('aboDialog').close();
-    await laden();
-    announce(r.daten.message || t('Abo wurde gespeichert.'));
-    const h = byId('h-ueberblick'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+    await laden(true);
+    V.meldung(r.daten.message || t('Abo wurde gespeichert.'));
   });
 
   // ── Konto verwalten ───────────────────────────────────────────────────
@@ -599,10 +597,9 @@
 
   async function sperren() {
     const r = await V.sendeJson('/api/admin/users/' + ID + '/toggle-active', 'POST');
-    if (!r.ok) { announce(r.daten.detail || t('Fehler')); return; }
-    await laden();
-    announce(r.daten.is_active ? t('Konto entsperrt.') : t('Konto gesperrt.'));
-    const h = byId('h-konto'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+    if (!r.ok) { V.meldung(r.daten.detail || t('Fehler'), true); return; }
+    await laden(true);
+    V.meldung(r.daten.is_active ? t('Konto entsperrt.') : t('Konto gesperrt.'));
   }
   function pwOeffnen() {
     byId('pwForm').reset();
@@ -622,7 +619,7 @@
     const r = await V.sendeJson('/api/admin/users/' + ID + '/reset-password', 'POST', { new_password: pw });
     if (!r.ok) { fehler.textContent = r.daten.detail || t('Fehler beim Zurücksetzen.'); return; }
     byId('pwDialog').close();
-    announce(t('Passwort für {email} wurde zurückgesetzt.', { email: konto.konto.email }));
+    V.meldung(t('Passwort für {email} wurde zurückgesetzt.', { email: konto.konto.email }));
   });
   function loeschOeffnen() {
     byId('loeschText').textContent = t('Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen.', { email: konto.konto.email });
@@ -632,7 +629,7 @@
   byId('loeschJa').addEventListener('click', async () => {
     const r = await V.sendeJson('/api/admin/users/' + ID, 'DELETE');
     byId('loeschDialog').close();
-    if (!r.ok) { announce(r.daten.detail || t('Fehler beim Löschen.')); return; }
+    if (!r.ok) { V.meldung(r.daten.detail || t('Fehler beim Löschen.'), true); return; }
     window.location.href = byId('zurListe').getAttribute('href') || '/verwaltung/kunden';
   });
 

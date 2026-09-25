@@ -148,7 +148,7 @@
           li.appendChild(document.createTextNode(teile[1]));
         }
         li.appendChild(document.createTextNode(' · ' + teile.slice(2).join(' · ')));
-        V.buchungKnoepfe(li, b, () => laden(false), 'h-buchungen');
+        V.buchungKnoepfe(li, b, () => laden(false, true));
         ul.appendChild(li);
       });
       ziel.appendChild(ul);
@@ -173,7 +173,7 @@
   byId('bSeiteZurueck').addEventListener('click', () => blaettern(-1));
   byId('bSeiteVor').addEventListener('click', () => blaettern(1));
 
-  async function laden(fokus) {
+  async function laden(fokus, still) {
     const d = await V.ladeJson('/api/admin/umsatz?' + abfrage().toString(), byId('umsatzZahlen'));
     if (!d) return;
     wahl.jahr = d.jahr; wahl.monat = d.monat; wahl.auswahl = d.auswahl;
@@ -187,7 +187,7 @@
     if (ersterLauf) {
       ersterLauf = false;
       announce(t('Umsatz {monat}: {betrag}', { monat: V.monatLang(d.kennzahlen.monat), betrag: V.euro(d.kennzahlen.monat_cent) }));
-    } else {
+    } else if (!still) {
       announce(byId('h-buchungen').textContent);
     }
   }

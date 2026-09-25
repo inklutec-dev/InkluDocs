@@ -8853,3 +8853,13 @@ msgstr "Buchungen im ganzen Jahr {jahr} ({n})"
 
 msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
 msgstr "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
+
+# Verwaltung: Limit-Feld (25.09.2026)
+msgid "Bilder pro Tag (0 sperrt die API)"
+msgstr "Bilder pro Tag (0 sperrt die API)"
+
+msgid "Bitte eine Zahl eintragen. Für den Standard {standard} eintragen, 0 sperrt die API."
+msgstr "Bitte eine Zahl eintragen. Für den Standard {standard} eintragen, 0 sperrt die API."
+
+msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
+msgstr "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."

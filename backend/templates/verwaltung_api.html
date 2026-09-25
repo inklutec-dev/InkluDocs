@@ -56,7 +56,7 @@
         const b = V.el('button', 'btn btn-secondary btn-small', t('Limit ändern'));
         b.type = 'button';
         b.setAttribute('aria-label', t('Limit von {name} ändern', { name: k.name || k.email }));
-        b.addEventListener('click', () => V.limitOeffnen(k, laden, 'h-apikonten'));
+        b.addEventListener('click', () => V.limitOeffnen(k, laden));
         li.appendChild(b);
       }
       ul.appendChild(li);

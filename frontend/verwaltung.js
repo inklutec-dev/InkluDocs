@@ -166,11 +166,19 @@
   // Nach einer Aktion: ERST neu laden, DANN ansagen und den Fokus auf die Abschnitts-
   // Überschrift setzen. Umgekehrt überschrieb das Neuladen die Ansage, und der Fokus fiel
   // auf <body>, weil der auslösende Knopf beim Neuaufbau verschwand (Prüfbericht 25.09.2026).
-  async function abschliessen(danach, meldung, fokusId) {
+  async function abschliessen(danach, text) {
     if (danach) await danach();
-    const h = fokusId && byId(fokusId);
-    if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
-    announce(meldung);
+    meldung(text);
+  }
+
+  // Sichtbare Meldung oben auf der Seite, Fokus dorthin (liest VoiceOver sicher vor).
+  function meldung(text, istFehler) {
+    const p = byId('verwaltungMeldung');
+    if (!p) { announce(text); return; }
+    p.textContent = text;
+    p.classList.toggle('verwaltung-meldung-fehler', !!istFehler);
+    p.hidden = false;
+    p.focus();
   }
 
   // Bonus-Schwelle (wie beim Gutschreiben) — steht am Dialog, damit jede Seite sie kennt.
@@ -234,7 +242,7 @@
       laeuft = false;
       if (!r.ok) { fehler.textContent = r.daten.detail || t('Die Korrektur konnte nicht gespeichert werden.'); return; }
       dlg.close();
-      await abschliessen(_korrektur.danach, r.daten.message || t('Buchung berichtigt.'), _korrektur.fokus);
+      await abschliessen(_korrektur.danach, r.daten.message || t('Buchung berichtigt.'));
     });
   }
 
@@ -280,7 +288,7 @@
       laeuft = false;
       if (!r.ok) { fehler.textContent = r.daten.detail || t('Das Stornieren hat nicht geklappt.'); return; }
       dlg.close();
-      await abschliessen(_storno.danach, r.daten.message || t('Gutschrift storniert.'), _storno.fokus);
+      await abschliessen(_storno.danach, r.daten.message || t('Gutschrift storniert.'));
     });
   }
 
@@ -330,7 +338,13 @@
       fehler.textContent = '';
       const roh = byId('limitWert').value.trim();
       let limit = null;
-      if (roh !== '') {
+      // Leeres Feld = Fehler, keine versteckte Bedeutung (Steve 25.09.2026).
+      if (roh === '') {
+        fehler.textContent = t('Bitte eine Zahl eintragen. Für den Standard {standard} eintragen, 0 sperrt die API.', { standard: zahl(window.API_LIMIT_STANDARD) });
+        byId('limitWert').focus();
+        return;
+      }
+      {
         limit = parseInt(roh, 10);
         if (!Number.isInteger(limit) || String(limit) !== roh || limit < 0 || limit > 1000000) {
           fehler.textContent = t('Das Tageslimit muss eine ganze Zahl von 0 bis 1000000 sein.');
@@ -345,7 +359,7 @@
       laeuft = false;
       if (!r.ok) { fehler.textContent = r.daten.detail || t('Das Limit konnte nicht gespeichert werden.'); return; }
       dlg.close();
-      await abschliessen(_limit.danach, r.daten.message || t('Gespeichert.'), _limit.fokus);
+      await abschliessen(_limit.danach, r.daten.message || t('Gespeichert.'));
     });
   }
 
@@ -356,7 +370,7 @@
   });
 
   window.Verwaltung = {
-    PLAN_NAMEN, datumLang, datumZeit, monatLang, euro, euroFeld, zahl, el, zeile, leer,
+    PLAN_NAMEN, meldung, datumLang, datumZeit, monatLang, euro, euroFeld, zahl, el, zeile, leer,
     ladeJson, sendeJson, istVollAdmin, planText, buchungText, buchungTeile, datumKurz, korrekturOeffnen, limitOeffnen,
     buchungKnoepfe, zaehltZumUmsatz: (b) => b.weg !== 'bonus' && (b.status === 'ok' || b.status === 'ausstehend'),
   };

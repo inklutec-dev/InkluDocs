@@ -8412,3 +8412,13 @@ msgstr "Bokningar under hela året {jahr} ({n})"
 
 msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
 msgstr "Gränsen gäller för hela kontot, alltså för alla API-nycklar tillsammans."
+
+# Verwaltung: Limit-Feld (25.09.2026)
+msgid "Bilder pro Tag (0 sperrt die API)"
+msgstr "Bilder per dag (0 spärrar API:et)"
+
+msgid "Bitte eine Zahl eintragen. Für den Standard {standard} eintragen, 0 sperrt die API."
+msgstr "Ange ett tal. Ange {standard} för standard; 0 spärrar API:et."
+
+msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
+msgstr "Standard är {standard} bilder per dag — ange exakt detta tal för att återgå till standard. Abonnemangssaldot gäller alltid dessutom."

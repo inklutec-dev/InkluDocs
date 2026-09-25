@@ -95,16 +95,16 @@
 
   async function stufeSetzen(id, stufe) {
     const r = await V.sendeJson('/api/admin/admins/' + id, 'PUT', { level: stufe });
-    announce(r.ok ? (r.daten.message || t('Rechte-Stufe geändert')) : (r.daten.detail || t('Fehler beim Ändern der Rechte-Stufe.')));
-    if (r.ok) laden();
+    if (r.ok) await laden();
+    V.meldung(r.ok ? (r.daten.message || t('Rechte-Stufe geändert')) : (r.daten.detail || t('Fehler beim Ändern der Rechte-Stufe.')), !r.ok);
   }
 
   byId('entzugAbbrechen').addEventListener('click', () => byId('entzugDialog').close());
   byId('entzugJa').addEventListener('click', async () => {
     const r = await V.sendeJson('/api/admin/admins/' + entzugZiel.id, 'DELETE');
     byId('entzugDialog').close();
-    announce(r.ok ? (r.daten.message || t('Admin-Rechte entzogen')) : (r.daten.detail || t('Fehler beim Entziehen der Rechte.')));
-    if (r.ok) laden();
+    if (r.ok) await laden();
+    V.meldung(r.ok ? (r.daten.message || t('Admin-Rechte entzogen')) : (r.daten.detail || t('Fehler beim Entziehen der Rechte.')), !r.ok);
   });
 
   byId('adminNeuForm').addEventListener('submit', async (e) => {
@@ -117,8 +117,8 @@
     const r = await V.sendeJson('/api/admin/admins', 'POST', { email: email, level: stufe });
     if (!r.ok) { fehler.textContent = r.daten.detail || t('Fehler beim Hinzufügen.'); return; }
     byId('adminNeuForm').reset();
-    announce(r.daten.message || t('Gespeichert.'));
-    laden();
+    await laden();
+    V.meldung(r.daten.message || t('Gespeichert.'));
   });
 
   (async function start() {

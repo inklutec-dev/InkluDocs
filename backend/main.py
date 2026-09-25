@@ -4246,12 +4246,15 @@ async def admin_setze_api_limit(user_id: int, request: Request,
         conn.commit()
     finally:
         conn.close()
+    name = ziel.get("display_name") or ziel["email"]
     if limit is None:
-        text = f"Standard ({DAILY_IMAGE_LIMIT} Bilder pro Tag)"
+        text = f"Standard, {umsatz.zahl_text(DAILY_IMAGE_LIMIT)} Bilder pro Tag"
+    elif limit == 0:
+        text = "0 — die API ist für dieses Konto gesperrt"
     else:
-        text = f"{limit} Bilder pro Tag"
+        text = f"{umsatz.zahl_text(limit)} Bilder pro Tag"
     return {"ok": True, "api_tageslimit": limit,
-            "message": f"API-Tageslimit fuer {ziel['email']}: {text}"}
+            "message": f"API-Tageslimit für {name} gespeichert: {text}."}
 
 
 # ─── VERWALTUNG: Kunden, Umsatz, API (25.09.2026, Steve) ───────────────────

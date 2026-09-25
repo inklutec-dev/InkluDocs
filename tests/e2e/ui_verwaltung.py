@@ -134,6 +134,7 @@ with sync_playwright() as p:
     pg.fill("#gsNummer", "RE-TEST-1")
     pg.click("#gsForm button[type=submit]")
     satz = pg.locator("#gsSatz").inner_text()
+    check("Mengenfeld ist ein Textfeld, kein Zahlen-Stepper", pg.get_attribute("#gsFrei", "type") == "text")
     check("Bestätigungssatz nennt Menge, Art und Betrag",
           "2.500 Credits" in satz and "Verkauf auf Rechnung" in satz and "87,50" in satz, satz)
     check("Fokus auf dem Bestätigungssatz", fokus_id(pg) == "gsSatz", fokus_id(pg))
@@ -230,10 +231,20 @@ with sync_playwright() as p:
     check("Überblick: Single auf Rechnung", "Single auf Rechnung" in text)
     check("Abo-Buchung erscheint", "Abo Single, 6 Monate" in text and "59,70" in text)
 
-    # Limit-Dialog
+    # Limit-Dialog: Textfeld (kein Stepper), leeres Feld = Fehlermeldung, Erfolg sichtbar mit Fokus
     pg.click("text=Limit ändern")
     axe(pg, "Limit-Dialog")
-    pg.keyboard.press("Escape")
+    check("Limit-Feld ist ein Textfeld, kein Zahlen-Stepper", pg.get_attribute("#limitWert", "type") == "text")
+    pg.fill("#limitWert", "")
+    pg.click("#limitForm button[type=submit]")
+    check("Leeres Limit: Fehlermeldung im Dialog", "Bitte eine Zahl eintragen" in pg.locator("#limitFehler").inner_text())
+    pg.fill("#limitWert", "1000")
+    pg.click("#limitForm button[type=submit]")
+    pg.wait_for_function("() => !document.querySelector('#limitDialog').open", timeout=10000)
+    pg.wait_for_timeout(500)
+    check("Limit gespeichert: Meldung sichtbar und fokussiert",
+          fokus_id(pg) == "verwaltungMeldung" and "1.000 Bilder pro Tag" in pg.locator("#verwaltungMeldung").inner_text(),
+          (fokus_id(pg), pg.locator("#verwaltungMeldung").inner_text()))
 
     # Umsatz-Seite
     pg.goto(f"{BASE}/verwaltung/umsatz", wait_until="networkidle")

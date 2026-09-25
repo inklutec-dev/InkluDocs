@@ -8850,3 +8850,13 @@ msgstr "Reservas de todo el año {jahr} ({n})"
 
 msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
 msgstr "El límite se aplica a toda la cuenta, es decir, a todas las claves de API juntas."
+
+# Verwaltung: Limit-Feld (25.09.2026)
+msgid "Bilder pro Tag (0 sperrt die API)"
+msgstr "Imágenes al día (0 bloquea la API)"
+
+msgid "Bitte eine Zahl eintragen. Für den Standard {standard} eintragen, 0 sperrt die API."
+msgstr "Introduzca un número. Para el estándar, introduzca {standard}; 0 bloquea la API."
+
+msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
+msgstr "El estándar es {standard} imágenes al día: introduzca exactamente este número para volver al estándar. El saldo de la suscripción se aplica siempre además."
