@@ -6486,12 +6486,15 @@ async def generate_vorschau(project_id: int, request: Request,
 
 
 def _ki_neu_zurueck(conn, ids: set, project_id: Optional[int] = None) -> None:
-    """Stellt stehengebliebene Kandidaten eines Sammellaufs wieder auf 'done' (Steve 30.08.2026).
+    """Stellt stehengebliebene Kandidaten eines Sammellaufs wieder auf 'done' (Steve 30.08.2026) —
+    ABER NUR, wenn das Bild etwas zu zeigen hat (Korrektur 25.09.2026, Steve).
 
-    Seit 01.09.2026 (ein Modus, alle Bilder) enthaelt die Rettungsmenge auch nie generierte
-    Bilder: Die stehen nach Abbruch/Guthaben/Tageslimit ebenfalls auf 'done' — mit leerem Feld,
-    Knopf „Neu generieren", in der Zusammenfassung „ohne Text"; der naechste Sammellauf nimmt
-    ohnehin wieder alle Bilder (Michael Karbe, 02.09.2026). Der Absatz darunter beschreibt die urspruengliche Lage.
+    Seit 01.09.2026 (ein Modus, alle Bilder) enthaelt die Rettungsmenge auch nie generierte Bilder. Bis
+    25.09. gingen die nach Abbruch/Guthaben/Tageslimit ebenfalls auf 'done' — mit leerem Feld. In der
+    Liste standen sie damit als „fertig“, obwohl nie ein Alt-Text erzeugt wurde (Prod 24.09.2026, Projekte
+    439 und 443: 199 Bilder; der Export war richtig, die Anzeige nicht). Jetzt gilt: zurueck auf 'done' nur
+    mit KI-Text, eigenem (auch bewusst geleertem) Text, Text aus der Quelle oder als Schmuckbild; alles
+    andere bleibt 'pending' („Noch nicht generiert“) und wird beim naechsten Lauf erzeugt.
 
     Der Start-Endpunkt setzt fuer „n neu generieren" fertige Bilder auf 'pending', damit der
     vorhandene Sammellauf sie aufgreift. Bricht der Lauf ab (Guthaben, Tageslimit) oder
@@ -6503,7 +6506,9 @@ def _ki_neu_zurueck(conn, ids: set, project_id: Optional[int] = None) -> None:
     if not ids:
         return
     marken = ",".join("?" * len(ids))
-    conn.execute("UPDATE images SET status = 'done' WHERE id IN (%s) AND status = 'pending'" % marken,
+    conn.execute("UPDATE images SET status = 'done' WHERE id IN (%s) AND status = 'pending'"
+                 " AND (COALESCE(TRIM(alt_text), '') <> '' OR alt_text_edited IS NOT NULL"
+                 "      OR COALESCE(TRIM(original_alt), '') <> '' OR image_type = 'dekorativ')" % marken,
                  list(ids))
     conn.commit()
 
