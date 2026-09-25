@@ -152,7 +152,9 @@
     if (b.status === 'rueckgelaufen') teile.push(t('Lastschrift zurückgegangen, zählt nicht zum Umsatz'));
     if (b.status === 'storniert') teile.push(t('storniert, zählt nicht zum Umsatz'));
     if (b.rechnungsnummer) teile.push(t('Rechnung {nummer}', { nummer: b.rechnungsnummer }));
-    if (b.notiz) teile.push(b.notiz);
+    // Stripe-Vermerke („Neue Buchung“, „Planwechsel“) zeigen wir nicht (Michael 25.09.2026: nur Platz);
+    // Notizen von Hand-Buchungen bleiben.
+    if (b.notiz && b.weg !== 'stripe') teile.push(b.notiz);
     // Bei Stripe sagt „über Stripe“ schon alles; „eingetragen von“ nur bei Hand-Buchungen.
     if (b.gebucht_von && b.weg !== 'stripe') teile.push(t('eingetragen von {name}', { name: b.gebucht_von }));
     if (b.korrigiert && b.status !== 'storniert') teile.push(t('berichtigt'));
@@ -314,22 +316,23 @@
   }
 
   // Knöpfe „Berichtigen“ und „Stornieren“ an eine Buchungszeile hängen (nur Voll-Admins).
-  function buchungKnoepfe(li, b, danach, fokusId) {
+  // ohneStorno: Umsatz-Seite (Michael 25.09.2026) — reine Übersicht, Stornieren nur auf der Kundenseite.
+  function buchungKnoepfe(li, b, danach, ohneStorno) {
     if (!istVollAdmin()) return;
     const datum = datumZeit(b.gebucht_am);
     if (kannBerichtigen(b)) {
       const k = el('button', 'btn btn-secondary btn-small', t('Berichtigen'));
       k.type = 'button';
       k.setAttribute('aria-label', t('Buchung vom {datum} berichtigen', { datum: datum }));
-      k.addEventListener('click', () => korrekturOeffnen(b, danach, fokusId));
+      k.addEventListener('click', () => korrekturOeffnen(b, danach));
       li.appendChild(document.createTextNode(' '));
       li.appendChild(k);
     }
-    if (kannStornieren(b)) {
+    if (kannStornieren(b) && !ohneStorno) {
       const k = el('button', 'btn btn-delete btn-small', t('Stornieren'));
       k.type = 'button';
       k.setAttribute('aria-label', t('Buchung vom {datum} stornieren', { datum: datum }));
-      k.addEventListener('click', () => stornoOeffnen(b, danach, fokusId));
+      k.addEventListener('click', () => stornoOeffnen(b, danach));
       li.appendChild(document.createTextNode(' '));
       li.appendChild(k);
     }

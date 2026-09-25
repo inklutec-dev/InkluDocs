@@ -3392,10 +3392,7 @@ async def stripe_webhook(request: Request):
                                           "email": obj.get("customer_email") or ""},
                         art="abo", weg="stripe", plan=neuer_plan, laufzeit=neue_laufzeit,
                         betrag_cent=int(obj.get("amount_paid") or 0),
-                        stripe_ref=obj.get("id") or None, von_name="Stripe (automatisch)",
-                        notiz={"subscription_create": "Neue Buchung",
-                               "subscription_cycle": "Verlängerung",
-                               "subscription_update": "Planwechsel"}.get(grund, ""))
+                        stripe_ref=obj.get("id") or None, von_name="Stripe (automatisch)")
                 if row:
                     ziel = get_user_by_id(row["id"])
                     if ziel and neuer_plan and neuer_plan in billing.PLAN_KONTINGENTE:
@@ -4266,17 +4263,6 @@ KUNDEN_FILTER = ("alle", "abo", "team", "rechnung", "stripe", "kaeufer", "neu", 
 KUNDEN_JE_SEITE = 25
 
 
-def _guthaben_text_daten(uid: int) -> dict:
-    """Verfuegbare Credits eines Kontos (Monats-Rest + Pakete); None = unbegrenzt."""
-    try:
-        z = billing.pruefe_kontingent(uid)
-    except Exception:
-        return {"verfuegbar": None, "fehler": True}
-    if z.get("rest") is None:
-        return {"verfuegbar": None}
-    return {"verfuegbar": int(z.get("rest") or 0) + int(z.get("pakete_rest") or 0)}
-
-
 @app.get("/api/admin/kunden")
 async def admin_kunden_liste(q: str = "", filter: str = "alle", seite: int = 1,
                              user: dict = Depends(require_admin)):
@@ -4333,7 +4319,6 @@ async def admin_kunden_liste(q: str = "", filter: str = "alle", seite: int = 1,
             "team_name": u.get("team_name") or "",
             "aktiv": bool(u.get("is_active")), "admin": bool(u.get("is_admin")),
             "zuletzt": umsatz.lokal(u.get("last_login"))[:10] or None,   # UTC -> deutsche Zeit
-            **_guthaben_text_daten(u["id"]),
         })
     return {"kunden": kunden, "gesamt": gesamt, "alle": len(alle), "seite": seite,
             "seiten": seiten, "je_seite": KUNDEN_JE_SEITE}

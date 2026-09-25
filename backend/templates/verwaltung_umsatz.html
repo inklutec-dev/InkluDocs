@@ -148,7 +148,7 @@
           li.appendChild(document.createTextNode(teile[1]));
         }
         li.appendChild(document.createTextNode(' · ' + teile.slice(2).join(' · ')));
-        V.buchungKnoepfe(li, b, () => laden(false, true));
+        V.buchungKnoepfe(li, b, () => laden(false, true), true);
         ul.appendChild(li);
       });
       ziel.appendChild(ul);

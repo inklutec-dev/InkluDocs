@@ -106,13 +106,9 @@
     const a = V.el('a', null, k.name || k.email);
     a.href = '/verwaltung/kunden/' + k.id;
     li.appendChild(a);
+    // Michael Karbe 25.09.2026: „Name - E-Mail - Abo. Dies reicht. Wer mehr Infos braucht klickt
+    // auf den Namen.“ Gesperrte Konten findet der Filter „Gesperrt“.
     const teile = [k.email, V.planText(k.plan, k.plan_quelle)];
-    if (k.team_name) teile.push(t('Team „{name}“', { name: k.team_name }));
-    if (k.verfuegbar === null || k.verfuegbar === undefined) teile.push(t('Guthaben unbegrenzt'));
-    else teile.push(t('{menge} Credits verfügbar', { menge: V.zahl(k.verfuegbar) }));
-    teile.push(k.zuletzt ? t('zuletzt angemeldet am {datum}', { datum: V.datumLang(k.zuletzt) }) : t('noch nie angemeldet'));
-    if (!k.aktiv) teile.push(t('gesperrt'));
-    if (k.admin) teile.push(t('Administrator'));
     li.appendChild(V.el('span', 'verwaltung-meta', ' · ' + teile.join(' · ')));
     return li;
   }

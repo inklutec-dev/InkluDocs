@@ -139,8 +139,6 @@ def main() -> int:
             if a.ausfuehren:
                 umsatz.buche(conn, konto=konto, art="abo", weg="stripe", plan=plan, laufzeit=laufzeit,
                              betrag_cent=betrag, stripe_ref=inv["id"], von_name="Stripe (automatisch)",
-                             notiz={"subscription_create": "Neue Buchung", "subscription_cycle": "Verlängerung",
-                                    "subscription_update": "Planwechsel"}.get(inv.get("billing_reason") or "", ""),
                              gebucht_am=wann)
     elif not stripe_zahlung.AKTIV:
         print("Stripe nicht eingerichtet — Abo-Rechnungen uebersprungen.")

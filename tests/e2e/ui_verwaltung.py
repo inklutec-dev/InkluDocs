@@ -89,6 +89,8 @@ with sync_playwright() as p:
     check("Genau eine H1 „Verwaltung: Kunden“", pg.locator("h1").count() == 1 and pg.locator("h1").inner_text() == "Verwaltung: Kunden")
     check("Kundenliste nennt Auswahl und Anzahl", re.match(r"Alle Kunden: \d+ Kunden", pg.locator("#kundenStatus").inner_text()) is not None,
           pg.locator("#kundenStatus").inner_text())
+    zeile1 = pg.locator("#kundenListe li").first.inner_text()
+    check("Kundenzeile: nur Name, E-Mail, Abo (Michael)", zeile1.count(" · ") == 2 and "Credits" not in zeile1, zeile1)
     check("Kunden als Links, keine Überschrift je Kunde",
           pg.locator("#kundenListe a").count() > 0 and pg.locator("#kundenListe h3, #kundenListe h2").count() == 0)
     axe(pg, "Kundenliste")
@@ -256,6 +258,11 @@ with sync_playwright() as p:
     check("Umsatz: vier Kennzahlen", pg.locator(".umsatz-zahl").count() == 4)
     check("Umsatz: Testbuchungen im laufenden Monat", "Verwaltung Testkunde" in pg.locator("#umsatzBuchungen").inner_text())
     check("Umsatz: Kundenname ist Link", pg.locator("#umsatzBuchungen a", has_text="Verwaltung Testkunde").count() >= 1)
+    check("Umsatz: kein Stornieren-Knopf (nur auf der Kundenseite)",
+          pg.locator("#umsatzBuchungen button", has_text="Stornieren").count() == 0)
+    check("Umsatz: keine Stripe-Vermerke „Neue Buchung“/„Planwechsel“",
+          "Neue Buchung" not in pg.locator("#umsatzBuchungen").inner_text()
+          and "Planwechsel" not in pg.locator("#umsatzBuchungen").inner_text())
     href = pg.locator("#dlExcel").get_attribute("href")
     r = pg.request.get(BASE + href)
     check("Excel-Download: 200 und XLSX", r.status == 200 and r.body()[:2] == b"PK", (r.status, href))

@@ -337,7 +337,7 @@ def darstellen(row: dict) -> dict:
         "id": row["id"],
         "gebucht_am": lokal(row["gebucht_am"]),
         "konto_user_id": row.get("konto_user_id"),
-        "kunde_name": row.get("kunde_name") or "",
+        "kunde_name": row.get("anzeige_name") or row.get("kunde_name") or "",
         "kunde_email": row.get("kunde_email") or "",
         "art": row["art"], "art_text": ART_TEXT.get(row["art"], row["art"]),
         "weg": row["weg"], "weg_text": WEG_TEXT.get(row["weg"], row["weg"]),
@@ -471,8 +471,12 @@ def liste(jahr: int = None, monat: int = None, auswahl: str = "alle", konto_id: 
         bedingungen.append("b.weg != 'bonus'")
     elif auswahl == "bonus":
         bedingungen.append("b.weg = 'bonus'")
-    sql = ("SELECT b.*, p.verbleibend AS paket_rest FROM buchungen b "
-           "LEFT JOIN quota_pakete p ON p.id = b.paket_id")
+    # Anzeigename: der AKTUELLE Name des Kontos (Michael 25.09.2026: Namen statt E-Mail), sonst die
+    # Momentaufnahme der Buchung (geloeschtes Konto), sonst die E-Mail.
+    sql = ("SELECT b.*, p.verbleibend AS paket_rest, "
+           "COALESCE(NULLIF(TRIM(u.display_name), ''), NULLIF(TRIM(b.kunde_name), ''), b.kunde_email) AS anzeige_name "
+           "FROM buchungen b LEFT JOIN quota_pakete p ON p.id = b.paket_id "
+           "LEFT JOIN users u ON u.id = b.konto_user_id")
     if bedingungen:
         sql += " WHERE " + " AND ".join(bedingungen)
     sql += " ORDER BY b.gebucht_am DESC, b.id DESC"
