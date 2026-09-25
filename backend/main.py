@@ -109,6 +109,10 @@ TOKEN_EXPIRE_HOURS = 24
 UPLOAD_DIR = "/app/data/uploads"
 RESULTS_DIR = "/app/data/results"
 BASE_URL = os.environ.get("BASE_URL", "https://inkludocs.inklutec.de")
+# Oeffentliche Adresse der API (25.09.2026): Links in API-Antworten (links.self, file_url, download_url) und die
+# Anleitung. Auf Prod steht BASE_URL noch auf der alten Adresse (Mails, Stripe, Google-Login haengen daran), die
+# mit 301 auf inkludocs.de umleitet; API-Clients sollen die neue Adresse direkt bekommen. Prod: API_BASE_URL setzen.
+API_BASE_URL = (os.environ.get("API_BASE_URL") or BASE_URL).strip().rstrip("/")
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
 
 # SMTP configuration for email sending
@@ -9386,7 +9390,7 @@ app.include_router(api_dokumente_v1.build_router(api_dokumente_v1.Deps(
     alt_text_languages=ALT_TEXT_LANGUAGES,
     tool_project_type=TOOL_PROJECT_TYPE,
     is_valid_tool_key=is_valid_tool_key,
-    base_url=BASE_URL.rstrip("/"),
+    base_url=API_BASE_URL,
 )))
 
 
@@ -10054,9 +10058,8 @@ _API_DOKU_HOSTS = {"inkludocs.de", "staging.inkludocs.inklutec.de", "demo.inklud
 
 
 def _api_basis(request: Request) -> str:
-    fest = (os.environ.get("API_BASE_URL") or "").strip().rstrip("/")
-    if fest:
-        return fest
+    if os.environ.get("API_BASE_URL"):
+        return API_BASE_URL
     host = (request.headers.get("host") or "").split(":")[0].strip().lower()
     if host in _API_DOKU_HOSTS:
         return f"https://{host}"
