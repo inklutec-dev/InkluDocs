@@ -128,6 +128,35 @@ with sync_playwright() as p:
           and pg.evaluate("getComputedStyle(document.querySelector('.dok-werkbank')).borderTopStyle") == "solid")
     axe(pg, "Ansicht Dokument vor dem Lauf")
 
+    print("== A2. Testweise taggen (Mail - 2, Punkt 3): kostenlos, Testmodus, Original bleibt ==")
+    kn = pg.locator("button[id^=dok_test_]")
+    check("Knopf „Testweise taggen“ (kostenlos, im Testmodus)", kn.count() == 1 and "kostenlos, im Testmodus" in kn.first.inner_text(), kn.first.inner_text() if kn.count() else "")
+    guthaben_vorher = pg.request.get(B + "/api/me").json().get("abo", {})
+    kn.first.click()
+    pg.wait_for_timeout(1200)
+    check("Statuszeile „Testlauf gestartet“ mit Fokus", "Testlauf gestartet" in pg.locator("output[id^=dok_status_]").first.inner_text() and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_status_"))
+    fertig = False
+    for _ in range(90):
+        pg.wait_for_timeout(2000)
+        if pg.locator("section.dok-karte .dok-ergebnis").count():
+            fertig = True
+            break
+    meld = pg.locator("section.dok-karte .dok-ergebnis p").first.inner_text() if fertig else ""
+    check("Ergebnis des Testlaufs in der Karte, Fokus darauf", fertig and meld.startswith("Testlauf vom") and "Elemente" in meld and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_ergebnis_text_"), meld)
+    check("Dokument bleibt „Nicht getaggt“ (Original unverändert)", "Nicht getaggt" in pg.locator("section.dok-karte h3").first.inner_text())
+    check("Kein Herunterladen der Testfassung", pg.locator("button[id^=dok_export_]").count() == 0 and pg.locator("section.dok-karte a[href*='test']").count() == 0)
+    pg.click("section.dok-karte .dok-ergebnis button"); pg.wait_for_timeout(300)
+    pg.click("details.dok-test > summary")
+    hp = ""
+    for _ in range(20):
+        pg.wait_for_timeout(1000)
+        hp = pg.locator("details.dok-test .dok-test-hoerprobe").inner_text() if pg.locator("details.dok-test .dok-test-hoerprobe").count() else ""
+        if hp and "wird geladen" not in hp:
+            break
+    check("Klappe „Ergebnis des Testlaufs“ mit Hörprobe der Testfassung", "Zusammenfassung" in hp and "Seite 1" in hp, hp[:200])
+    check("Testlauf kostet nichts", pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht") == guthaben_vorher.get("verbraucht"))
+    axe(pg, "Ansicht Dokument mit Ergebnis des Testlaufs")
+
     print("== B. Rueckfrage und Lauf ==")
     pg.click("button[id^=dok_tag_]")
     pg.wait_for_selector("#dkLaufDialog[open]", timeout=5000)
@@ -169,7 +198,9 @@ with sync_playwright() as p:
     mt = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
     check("Dokumentinfos: Titel, Anwendung, Erstellt mit, Stand: Getaggt, PDF-Standard (Punkte 2-5)", all(k in mt for k in ("Titel: ", "Anwendung: ", "Erstellt mit: ", "Stand: Getaggt", "PDF-Standard: ")) and mt.index("Titel:") < mt.index("Anwendung:") < mt.index("Erstellt mit:") < mt.index("Stand:"), mt)
     check("PDF-Standard nach dem Tagging: PDF/UA-1", "PDF-Standard: PDF/UA-1" in mt, mt)
-    check("Kein Testmodus-Hinweis an der Karte (Punkt 7)", "Testmodus" not in pg.locator("section.dok-karte").first.inner_text())
+    # Punkt 7 (Feedback 24.09.) meint das echte Tagging: kein Testmodus-Hinweis in Dokumentinfos und Bericht. Der Knopf
+    # „Testweise taggen“ und sein Ergebnis nennen den Testmodus bewusst (Mail - 2, Punkt 3).
+    check("Kein Testmodus-Hinweis in Dokumentinfos und Bericht (Punkt 7)", "Testmodus" not in pg.locator("section.dok-karte ul.dok-meta").first.inner_text() and "Testmodus" not in pg.locator("section.dok-karte details.dok-bericht").first.inner_text())
     check("Bericht ohne „In Ordnung“-Zeilen (Punkt 6)", "In Ordnung –" not in ber, ber[-400:])
     dl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
     check("Beschreibungsliste nach dem Lauf: Sprache de-DE, 1 Bild", "de-DE" in dl and "1 Bilder" in dl, dl)

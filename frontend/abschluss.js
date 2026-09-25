@@ -160,10 +160,12 @@
         s += '<details class="ab-problemklappe" data-doc="' + d.id + '"' + (z.listeOffen ? ' open' : '') + ' ontoggle="Abschluss.listeGeklappt(' + d.id + ', this.open)">'
             + '<summary><h4 id="ab_probleme_' + d.id + '" class="ab-inline">' + t('Problemstellen ({n})', { n: probleme.length }) + '</h4></summary>'
             + '<ol class="ab-problemliste">' + probleme.map(p => '<li class="ab-problem">' + problemText(p)
-            + (p.seite ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '</button>' : '') + '</li>').join('') + '</ol></details>';
+            + (p.seite && seiten.includes(p.seite) ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '</button>' : '') + '</li>').join('') + '</ol></details>';
         if (!seiten.length) {
-            // Probleme ohne Seitenangabe (z. B. das ganze Dokument betreffend): keine Seitenansicht
-            s += '<p>' + t('Keine der Problemstellen gehört zu einer bestimmten Seite.') + '</p>';
+            const sf = d.pruefdatei && d.pruefdatei.struktur_fehler;
+            // Strukturlesung gescheitert: keine Hoerprobe, also keine Seitenansicht — das sagen statt stiller Knoepfe
+            s += '<p>' + (sf ? t('Die Seitenansicht ist nicht verfügbar: {grund}', { grund: esc(sf) })
+                             : t('Keine der Problemstellen gehört zu einer bestimmten Seite.')) + '</p>';
             return s;
         }
         const idx = seiten.indexOf(z.seite);
@@ -281,38 +283,45 @@
     }
 
     // ─── Ansicht ───
-    // KI-basierte Pruefung laeuft (aus dieser Ansicht gestartet): nur die Statuszeile fortschreiben, kein Neuaufbau
-    // (Fokus bleibt); am Ende einmal neu zeichnen, die Problemliste frisch laden und das Ergebnis in die Statuszeile.
+    // KI-basierte Pruefung/Korrektur laeuft: nur die Statuszeile fortschreiben, kein Neuaufbau (Fokus bleibt). Das ENDE
+    // erkennt showProject selbst (kiBeobachtet: was beim letzten Zeichnen lief) — so geht keine Ansage verloren, auch
+    // wenn gleichzeitig eine Pruefdatei gebaut wird oder neu gezeichnet wurde (Pruefbericht 25.09.2026). kiArt merkt je
+    // Dokument, ob eine Pruefung und/oder eine Korrektur lief — danach richtet sich die Ansage.
     let kiTimer = null;
-    function kiPollStoppen() { if (kiTimer) { clearTimeout(kiTimer); kiTimer = null; } }
+    let kiGen = 0;                 // Generation: eine neue Schleife macht alle alten wirkungslos
+    let kiBeobachtet = new Set();
+    const kiArt = {};              // docId -> { pruef: bool, korr: bool }
+    function kiPollStoppen() { kiGen++; if (kiTimer) { clearTimeout(kiTimer); kiTimer = null; } }
     function kiLaeuft(dk) {
         const pr = dk && dk.tagging && dk.tagging.pruefung;
         return !!(pr && (pr.laeuft || (pr.korrektur && pr.korrektur.laeuft)));
     }
+    function kiArtMerken(dk) {
+        const pr = (dk && dk.tagging && dk.tagging.pruefung) || {};
+        const a = kiArt[dk.id] || (kiArt[dk.id] = { pruef: false, korr: false });
+        if (pr.laeuft) a.pruef = true;
+        if (pr.korrektur && pr.korrektur.laeuft) a.korr = true;
+    }
     function kiPollStarten(projectId) {
         kiPollStoppen();
-        const laufend = Object.keys(dokDaten).map(Number).filter(k => kiLaeuft(dokDaten[k]));
-        if (!laufend.length) return;
+        if (!kiBeobachtet.size) return;
+        const gen = kiGen;
         const tick = async () => {
             kiTimer = null;
-            if (zustandProjekt !== projectId || !document.getElementById('abListe')) return;   // Ansicht gewechselt
+            if (gen !== kiGen || zustandProjekt !== projectId || !document.getElementById('abListe')) return;
             try {
                 const r = await fetch('/api/projects/' + projectId + '/dokument-ansicht', { credentials: 'same-origin' });
+                if (gen !== kiGen) return;
                 if (!r.ok) { kiTimer = setTimeout(tick, 2500); return; }
                 const d2 = await r.json();
-                if (zustandProjekt !== projectId || !document.getElementById('abListe')) return;
-                const fertig = (d2.documents || []).filter(x => laufend.includes(x.id) && !kiLaeuft(x));
-                if (fertig.length) {
-                    fertig.forEach(x => { delete details[x.id]; offeneDokumente.add(x.id); geschlosseneDokumente.delete(x.id); });
-                    await showProject(projectId, true);
-                    const x = fertig[0];
-                    const korr = x.tagging && x.tagging.pruefung && x.tagging.pruefung.korrektur && x.tagging.pruefung.korrektur.bericht && x.tagging.pruefung.korrektur.bericht.zeit;
-                    const text = fertig.map(y => Dokument.pruefAbschlussText(y)).join(' ');
-                    const out = document.getElementById('dok_pruef_status_' + x.id);
-                    if (out) { out.textContent = korr ? Dokument.korrAbschlussText(x) : text; out.focus(); } else { announce(text); }
+                if (gen !== kiGen || zustandProjekt !== projectId || !document.getElementById('abListe')) return;
+                const docs2 = d2.documents || [];
+                docs2.filter(kiLaeuft).forEach(kiArtMerken);
+                if ([...kiBeobachtet].some(k => { const x = docs2.find(y => y.id === k); return !x || !kiLaeuft(x); })) {
+                    await showProject(projectId, true);   // meldet das Ende selbst
                     return;
                 }
-                (d2.documents || []).forEach(x => {
+                docs2.forEach(x => {
                     const pr = x.tagging && x.tagging.pruefung;
                     const out = document.getElementById('dok_pruef_status_' + x.id);
                     if (pr && pr.laeuft && out) {
@@ -321,7 +330,7 @@
                     }
                 });
                 kiTimer = setTimeout(tick, 2500);
-            } catch (e) { kiTimer = setTimeout(tick, 2500); }
+            } catch (e) { if (gen === kiGen) kiTimer = setTimeout(tick, 2500); }
         };
         kiTimer = setTimeout(tick, 2500);
     }
@@ -344,6 +353,11 @@
         dokDaten = {};
         dokProjekt = dokJson ? dokJson.project : null;
         ((dokJson && dokJson.documents) || []).forEach(x => { dokDaten[x.id] = x; });
+        // KI-Laeufe, die beim letzten Zeichnen liefen und jetzt fertig sind: Problemliste frisch laden, Ende melden
+        const kiFertig = [...kiBeobachtet].filter(k => dokDaten[k] && !kiLaeuft(dokDaten[k]));
+        kiFertig.forEach(k => { delete details[k]; offeneDokumente.add(k); geschlosseneDokumente.delete(k); });
+        kiBeobachtet = new Set(Object.values(dokDaten).filter(kiLaeuft).map(x => x.id));
+        Object.values(dokDaten).filter(kiLaeuft).forEach(kiArtMerken);
         const project = data.project;
         if (zustandProjekt !== projectId) {
             offeneDokumente = new Set(); geschlosseneDokumente = new Set(); zustandProjekt = projectId;
@@ -383,15 +397,26 @@
         });
         const h1 = document.getElementById('projectName');
         if (h1 && !erneut) h1.focus();
-        // Laeuft ein Bau (auch aus einem anderen Tab), die Ansicht nachziehen, bis er fertig ist
+        // Ende der KI-Pruefung/Korrektur melden: Text nach dem, was lief (Pruefung gewinnt — bei „Korrigieren und erneut
+        // pruefen“ ist die Nachpruefung das Ergebnis), Fokus auf die Statuszeile des KI-Abschnitts
+        if (kiFertig.length && window.Dokument) {
+            const texte = kiFertig.map(k => {
+                const a = kiArt[k] || {};
+                delete kiArt[k];
+                return a.pruef || !a.korr ? Dokument.pruefAbschlussText(dokDaten[k]) : Dokument.korrAbschlussText(dokDaten[k]);
+            });
+            const out = document.getElementById('dok_pruef_status_' + kiFertig[0]);
+            if (out) { out.textContent = texte.join(' '); out.focus(); } else { announce(texte.join(' ')); }
+        }
+        // Laeuft ein Bau (auch aus einem anderen Tab), die Ansicht nachziehen, bis er fertig ist; die KI-Nachfrage
+        // laeuft unabhaengig davon (Generation schuetzt vor doppelten Schleifen)
         if (docs.some(d => d.laeuft)) {
             pollTimer = setTimeout(() => {
                 pollTimer = null;
                 if (document.getElementById('abListe')) showProject(projectId, true);
             }, 3000);
-        } else {
-            kiPollStarten(projectId);
         }
+        kiPollStarten(projectId);
     }
 
     function listeGeklappt(docId, offen) { zustand(docId).listeOffen = !!offen; }

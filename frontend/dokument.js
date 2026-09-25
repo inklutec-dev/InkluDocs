@@ -306,7 +306,7 @@
         if (pr.status !== 'fertig') return '';
         const n = (b.befunde || []).length;
         return '<p>' + (n
-            ? t('Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen.', { zeit: esc(b.zeit || ''), n: n })
+            ? t('Letzte Prüfung am {zeit}: {n} Befunde. Sie erscheinen in der Liste der Problemstellen der Prüfdatei.', { zeit: esc(b.zeit || ''), n: n })
             : t('Letzte Prüfung am {zeit}: keine Befunde.', { zeit: esc(b.zeit || '') })) + '</p>';
     }
     async function pruefungStarten(projectId, docId) {
@@ -416,6 +416,8 @@
             // Keine Knoepfe „Alt-Texte bearbeiten“/„Quickinfos bearbeiten“ mehr (Michael Karbe, Mail 22.09.2026,
             // Punkt 3: zu viele Knoepfe) — dafuer ist die Ansichts-Wahl im Projektkopf da.
             +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
+            // TESTWEISE TAGGEN (Michael Karbe, Feedback 24.09.2026 - 2, Punkt 3): kostenlos, Testmodus, das Original bleibt
+            +   (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
             // „PDF herunterladen“ wieder hier (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 4; die Station „Prüfung“
             // lädt nichts mehr herunter, Punkt 6). Derselbe Export wie bisher: Alt-Texte + Quickinfos, Ablage-Eintrag.
             +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="Dokument.herunterladen(' + project.id + ', ' + d.id + ')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
@@ -426,10 +428,85 @@
             + (d.getaggt === true && !busy ? '<p class="feld-hinweis">' + t('Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“.') + '</p>' : '')
             + ergebnisHtml(d)
             + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
+            + testHtml(project, d)
             + berichtHtml(d)
             + hoerprobeHtml(project, d)
             + pruefungHtml(project, d)
             + '</div></details></section>';
+    }
+
+    // ─── Testweise taggen (25.09.2026): Ergebnis des letzten Testlaufs als Klappe; die Testfassung ist nicht
+    // herunterladbar (Steve), das Dokument bleibt unverändert (tagging_api._test_sync).
+    function testText(te) {
+        if (te.fehler) return t('Der Testlauf ist fehlgeschlagen: {grund}', { grund: te.fehler });
+        let s = t('Testlauf vom {zeit}: {struktur}.', { zeit: te.zeit || '', struktur: strukturText(te.struktur) });
+        if (te.verapdf && te.verapdf.zusammenfassung) s += ' ' + te.verapdf.zusammenfassung;
+        return s;
+    }
+    function testHtml(project, d) {
+        const te = (d.tagging && d.tagging.test) || {};
+        if (te.laeuft) return '<p class="feld-hinweis" id="dok_test_laeuft_' + d.id + '">' + t('Testlauf läuft … Das Original bleibt unverändert.') + '</p>';
+        if (!te.zeit) return '';
+        return '<details class="page-text-details dok-test" data-doc="' + d.id + '" data-projekt="' + project.id + '">'
+            + '<summary>' + t('Ergebnis des Testlaufs') + '</summary>'
+            + '<div class="page-text-content" role="region" aria-label="' + t('Ergebnis des Testlaufs') + '" tabindex="0">'
+            + '<p>' + esc(testText(te)) + '</p>'
+            + '<p class="feld-hinweis">' + t('Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen.') + '</p>'
+            + (te.hoerprobe_moeglich ? '<h4>' + t('Hörprobe der Testfassung') + '</h4><div class="ausgabe-hoerprobe dok-test-hoerprobe" role="region" aria-label="' + t('Hörprobe der Testfassung') + '" tabindex="0" id="dok_test_hp_' + d.id + '"><p>' + t('Hörprobe wird geladen …') + '</p></div>' : '')
+            + '</div></details>';
+    }
+    async function testHoerprobeLaden(el) {
+        if (el.dataset.geladen) return;
+        const box = el.querySelector('.dok-test-hoerprobe');
+        if (!box) return;
+        el.dataset.geladen = '1';
+        try {
+            const r = await fetch('/api/projects/' + el.dataset.projekt + '/documents/' + el.dataset.doc + '/tagging/test/hoerprobe', { credentials: 'same-origin' });
+            const j = r.ok ? await r.json() : null;
+            if (!j || !j.verfuegbar) { box.innerHTML = '<p>' + esc((j && j.grund) || t('Die Hörprobe konnte nicht geladen werden.')) + '</p>'; delete el.dataset.geladen; return; }
+            box.innerHTML = (j.hoerprobe || []).map(z => '<p>' + esc(z) + '</p>').join('');
+        } catch (e) {
+            box.innerHTML = '<p>' + t('Die Hörprobe konnte nicht geladen werden.') + '</p>';
+            delete el.dataset.geladen;
+        }
+    }
+    let testStartLaeuft = false;
+    async function testStarten(projectId, docId) {
+        if (testStartLaeuft) return;
+        testStartLaeuft = true;
+        const knopf = document.getElementById('dok_test_' + docId);
+        if (knopf) knopf.disabled = true;
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/tagging/test', { method: 'POST', credentials: 'same-origin' });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                const out = document.getElementById('dok_status_' + docId);
+                const grund = (j.detail && (j.detail.text || j.detail)) || t('Der Testlauf konnte nicht gestartet werden.');
+                if (out) { out.textContent = typeof grund === 'string' ? grund : t('Der Testlauf konnte nicht gestartet werden.'); out.focus(); }
+                if (knopf) knopf.disabled = false;
+                return;
+            }
+            delete ergebnisMeldung[docId];
+            offeneDokumente.add(docId); geschlosseneDokumente.delete(docId);
+            await showProject(projectId, true);
+            // Schon fertig (schneller Fehlschlag, z. B. Quelldatei fehlt)? Dann gleich das Ergebnis statt „gestartet“
+            const dd = ((aktuelleDaten && aktuelleDaten.documents) || []).find(x => x.id === docId);
+            const te = (dd && dd.tagging && dd.tagging.test) || {};
+            if (!te.laeuft && te.zeit) {
+                ergebnisMeldung[docId] = { text: testText(te), fehler: !!te.fehler };
+                await showProject(projectId, true);
+                const ziel = document.getElementById('dok_ergebnis_text_' + docId);
+                if (ziel) ziel.focus();
+                return;
+            }
+            const out = document.getElementById('dok_status_' + docId);
+            if (out) { out.textContent = t('Testlauf gestartet. Er kostet nichts; das Original bleibt unverändert.'); out.focus(); }
+        } catch (e) {
+            if (knopf) knopf.disabled = false;
+            announce(t('Verbindungsfehler.'));
+        } finally {
+            testStartLaeuft = false;
+        }
     }
 
     // Ergebnis des Laufs in der Karte (grün bei Erfolg, rot bei Fehler, immer mit Text — nicht nur Farbe).
@@ -591,7 +668,7 @@
             announce(t('Das Tagging läuft. Du wirst benachrichtigt, sobald es fertig ist.'));
             await showProject(projectId, true);
             const out = document.getElementById('dok_status_' + docId);
-            if (out) out.focus && out.setAttribute('tabindex', '-1');
+            if (out) out.focus();   // war: out.focus && … — rief focus() nie auf (Pruefbericht 25.09.2026)
         } catch (e) {
             if (status) status.textContent = t('Verbindungsfehler.');
             if (ok) ok.disabled = false;
@@ -803,10 +880,12 @@
         const h1 = document.getElementById('projectName');
         if (h1 && !erneut) h1.focus();
         const laufende = docs.filter(d => d.tagging && d.tagging.laeuft).map(d => d.id);
+        const testende = docs.filter(d => d.tagging && d.tagging.test && d.tagging.test.laeuft).map(d => d.id);
         const pruefende = docs.filter(d => d.tagging && d.tagging.pruefung && d.tagging.pruefung.laeuft).map(d => d.id);
         const korrigierende = docs.filter(d => d.tagging && d.tagging.pruefung && d.tagging.pruefung.korrektur && d.tagging.pruefung.korrektur.laeuft).map(d => d.id);
         const ketteLief = !!(project.kette && project.kette.laeuft);
-        if (laufende.length || pruefende.length || korrigierende.length || ketteLief || project.status === 'extracting' || project.status === 'processing') {
+        document.querySelectorAll('details.dok-test').forEach(el => el.addEventListener('toggle', () => { if (el.open) testHoerprobeLaden(el); }));
+        if (laufende.length || testende.length || pruefende.length || korrigierende.length || ketteLief || project.status === 'extracting' || project.status === 'processing') {
             const tick = async () => {
                 if (zustandProjekt !== projectId) return;
                 if (!document.getElementById('dokListe')) { pollStoppen(); return; }   // Ansicht gewechselt
@@ -814,7 +893,8 @@
                     const r = await fetch('/api/projects/' + projectId + '/dokument-ansicht');
                     if (!r.ok) { pollTimer = setTimeout(tick, 2500); return; }
                     const d2 = await r.json();
-                    if (zustandProjekt !== projectId) return;
+                    // nach dem Warten erneut: Ansicht gewechselt? Dann nichts zeichnen (sonst holte der Poll „Dokument“ zurueck)
+                    if (zustandProjekt !== projectId || !document.getElementById('dokListe')) { pollStoppen(); return; }
                     // Kette: waehrend des Laufs nur die Statuskarte fortschreiben (kein Neuaufbau, Fokus bleibt);
                     // am Ende einmal neu zeichnen und die Zusammenfassung melden.
                     if (ketteLief) {
@@ -824,18 +904,34 @@
                         zeigeMeldung(t('Komplett barrierefrei machen ist fertig.') + ' ' + (k2.zusammenfassung || ''));
                         return;
                     }
-                    // Automatische Pruefung: Fortschritt in der Statuszeile, am Ende neu zeichnen + melden
-                    // Korrektur fertig: neu zeichnen und melden (laeuft danach die Nachpruefung, uebernimmt der neue Poll)
-                    const korrFertig = (d2.documents || []).filter(x => korrigierende.includes(x.id) && !(x.tagging && x.tagging.pruefung && x.tagging.pruefung.korrektur && x.tagging.pruefung.korrektur.laeuft));
-                    if (korrFertig.length) {
+                    // Alles sammeln, was in diesem Takt fertig wurde — dann EINMAL neu zeichnen (Pruefbericht 25.09.2026:
+                    // vorher meldete nur der erste Zweig, die anderen Ergebnisse gingen verloren).
+                    const docs2 = d2.documents || [];
+                    const korrFertig = docs2.filter(x => korrigierende.includes(x.id) && !(x.tagging && x.tagging.pruefung && x.tagging.pruefung.korrektur && x.tagging.pruefung.korrektur.laeuft));
+                    const pruefFertig = docs2.filter(x => pruefende.includes(x.id) && !(x.tagging && x.tagging.pruefung && x.tagging.pruefung.laeuft));
+                    const testFertig = docs2.filter(x => testende.includes(x.id) && !(x.tagging && x.tagging.test && x.tagging.test.laeuft));
+                    const fertigGeworden = docs2.filter(x => laufende.includes(x.id) && !(x.tagging && x.tagging.laeuft));
+                    const jetzt = docs2.filter(x => x.tagging && x.tagging.laeuft).map(x => x.id);
+                    const statusWechsel = d2.project.status !== project.status;
+                    if (korrFertig.length || pruefFertig.length || testFertig.length || fertigGeworden.length || (statusWechsel && !jetzt.length)) {
+                        testFertig.forEach(x => {
+                            const te = (x.tagging && x.tagging.test) || {};
+                            ergebnisMeldung[x.id] = te.zeit ? { text: testText(te), fehler: !!te.fehler }
+                                                            : { text: t('Der Testlauf wurde abgebrochen. Bitte starte ihn erneut.'), fehler: true };
+                            offeneDokumente.add(x.id); geschlosseneDokumente.delete(x.id);
+                        });
+                        // Tagging gewinnt vor dem Testlauf desselben Dokuments (neuerer, wichtigerer Stand)
+                        fertigGeworden.forEach(x => {
+                            ergebnisMeldung[x.id] = { text: abschlussText(x), fehler: !!(x.tagging && x.tagging.status === 'fehler') };
+                            offeneDokumente.add(x.id); geschlosseneDokumente.delete(x.id);
+                        });
+                        const texte = korrFertig.map(korrAbschlussText).concat(pruefFertig.map(pruefAbschlussText));
                         await showProject(projectId, true);
-                        zeigeMeldung(korrFertig.map(korrAbschlussText).join(' '));
-                        return;
-                    }
-                    const pruefFertig = (d2.documents || []).filter(x => pruefende.includes(x.id) && !(x.tagging && x.tagging.pruefung && x.tagging.pruefung.laeuft));
-                    if (pruefFertig.length) {
-                        await showProject(projectId, true);
-                        zeigeMeldung(pruefFertig.map(pruefAbschlussText).join(' '));
+                        const erster = fertigGeworden.concat(testFertig)[0];
+                        const ziel = erster ? document.getElementById('dok_ergebnis_text_' + erster.id) : null;
+                        if (ziel) ziel.focus();
+                        if (texte.length) { if (ziel) announce(texte.join(' ')); else zeigeMeldung(texte.join(' ')); }
+                        else if (!erster && project.status === 'extracting' && d2.project.status !== 'extracting') announce(t('Dokument gelesen.'));
                         return;
                     }
                     (d2.documents || []).forEach(x => {
@@ -846,24 +942,6 @@
                             if (out.textContent !== txt) out.textContent = txt;
                         }
                     });
-                    const jetzt = (d2.documents || []).filter(x => x.tagging && x.tagging.laeuft).map(x => x.id);
-                    const fertigGeworden = (d2.documents || []).filter(x => laufende.includes(x.id) && !(x.tagging && x.tagging.laeuft));
-                    const statusWechsel = d2.project.status !== project.status;
-                    if (fertigGeworden.length || (statusWechsel && !jetzt.length)) {
-                        // Ergebnis IN der Karte unter dem Dokument, Fokus dorthin (Feedback 24.09.2026 - 2, Punkt 2)
-                        fertigGeworden.forEach(x => {
-                            ergebnisMeldung[x.id] = { text: abschlussText(x), fehler: !!(x.tagging && x.tagging.status === 'fehler') };
-                            offeneDokumente.add(x.id); geschlosseneDokumente.delete(x.id);
-                        });
-                        await showProject(projectId, true);
-                        if (fertigGeworden.length) {
-                            const ziel = document.getElementById('dok_ergebnis_text_' + fertigGeworden[0].id);
-                            if (ziel) ziel.focus(); else announce(fertigGeworden.map(abschlussText).join(' '));
-                        } else if (project.status === 'extracting' && d2.project.status !== 'extracting') {
-                            announce(t('Dokument gelesen.'));
-                        }
-                        return;
-                    }
                     pollTimer = setTimeout(tick, 2500);
                 } catch (e) { pollTimer = setTimeout(tick, 2500); }
             };
@@ -884,6 +962,6 @@
     }
     window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, meldungSchliessen, pollStoppen,
                         ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig,
-                        herunterladen, ergebnisSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden,
+                        herunterladen, ergebnisSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden, testStarten,
                         pruefAbschlussText, korrAbschlussText };
 })();

@@ -8903,3 +8903,50 @@ msgstr "Problem page {i} of {n}: page {s}"
 
 msgid "Prüfung"
 msgstr "Review"
+
+# PDF: Testweise taggen (25.09.2026)
+msgid "Der Testlauf ist fehlgeschlagen: {grund}"
+msgstr "The test run failed: {grund}"
+
+msgid "Der Testlauf konnte nicht gestartet werden."
+msgstr "The test run could not be started."
+
+msgid "Der Testlauf wurde abgebrochen. Bitte starte ihn erneut."
+msgstr "The test run was interrupted. Please start it again."
+
+msgid "Der Testlauf zeigt, wie das Tagging ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "The test run shows what the tagging would look like. It costs nothing and does not change the document. The test version carries the PDFix trial-mode note and cannot be downloaded."
+
+msgid "Ergebnis des Testlaufs"
+msgstr "Result of the test run"
+
+msgid "Hörprobe der Testfassung"
+msgstr "Listening sample of the test version"
+
+msgid "kostenlos, im Testmodus"
+msgstr "free of charge, in trial mode"
+
+msgid "Testlauf gestartet. Er kostet nichts; das Original bleibt unverändert."
+msgstr "Test run started. It costs nothing; the original remains unchanged."
+
+msgid "Testlauf läuft … Das Original bleibt unverändert."
+msgstr "Test run in progress … The original remains unchanged."
+
+msgid "Testlauf vom {zeit}: {struktur}."
+msgstr "Test run of {zeit}: {struktur}."
+
+msgid "Testweise taggen"
+msgstr "Tag as a test"
+
+msgid "Es gibt noch keine Testfassung."
+msgstr "There is no test version yet."
+
+# PDF: Prüfbericht 25.09.2026
+msgid "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "The test run shows what tagging with PDFix would look like. It costs nothing and does not change the document. The test version carries the PDFix trial-mode note and cannot be downloaded."
+
+msgid "Die Seitenansicht ist nicht verfügbar: {grund}"
+msgstr "The page view is not available: {grund}"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie erscheinen in der Liste der Problemstellen der Prüfdatei."
+msgstr "Last check on {zeit}: {n} findings. They appear in the list of problems of the review file."

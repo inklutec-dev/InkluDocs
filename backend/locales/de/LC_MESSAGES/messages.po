@@ -8906,3 +8906,50 @@ msgstr "Problemseite {i} von {n}: Seite {s}"
 
 msgid "Prüfung"
 msgstr "Prüfung"
+
+# PDF: Testweise taggen (25.09.2026)
+msgid "Der Testlauf ist fehlgeschlagen: {grund}"
+msgstr "Der Testlauf ist fehlgeschlagen: {grund}"
+
+msgid "Der Testlauf konnte nicht gestartet werden."
+msgstr "Der Testlauf konnte nicht gestartet werden."
+
+msgid "Der Testlauf wurde abgebrochen. Bitte starte ihn erneut."
+msgstr "Der Testlauf wurde abgebrochen. Bitte starte ihn erneut."
+
+msgid "Der Testlauf zeigt, wie das Tagging ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "Der Testlauf zeigt, wie das Tagging ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+
+msgid "Ergebnis des Testlaufs"
+msgstr "Ergebnis des Testlaufs"
+
+msgid "Hörprobe der Testfassung"
+msgstr "Hörprobe der Testfassung"
+
+msgid "kostenlos, im Testmodus"
+msgstr "kostenlos, im Testmodus"
+
+msgid "Testlauf gestartet. Er kostet nichts; das Original bleibt unverändert."
+msgstr "Testlauf gestartet. Er kostet nichts; das Original bleibt unverändert."
+
+msgid "Testlauf läuft … Das Original bleibt unverändert."
+msgstr "Testlauf läuft … Das Original bleibt unverändert."
+
+msgid "Testlauf vom {zeit}: {struktur}."
+msgstr "Testlauf vom {zeit}: {struktur}."
+
+msgid "Testweise taggen"
+msgstr "Testweise taggen"
+
+msgid "Es gibt noch keine Testfassung."
+msgstr "Es gibt noch keine Testfassung."
+
+# PDF: Prüfbericht 25.09.2026
+msgid "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+
+msgid "Die Seitenansicht ist nicht verfügbar: {grund}"
+msgstr "Die Seitenansicht ist nicht verfügbar: {grund}"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie erscheinen in der Liste der Problemstellen der Prüfdatei."
+msgstr "Letzte Prüfung am {zeit}: {n} Befunde. Sie erscheinen in der Liste der Problemstellen der Prüfdatei."

@@ -36,7 +36,7 @@ with sync_playwright() as p:
     check("Karte nennt Formularfelder (12)", "Formularfelder: 12 Felder" in dl, dl)
     # Keine Wechsel-Knoepfe auf der Karte (Michael Karbe, Mail 22.09.2026, Punkt 3): gewechselt wird ueber die Ansichts-Wahl
     check("Kein Knopf „Quickinfos bearbeiten“ auf der Karte", pg.locator("section.dok-karte button:has-text('Quickinfos bearbeiten')").count() == 0)
-    check("Ansichts-Knöpfe: alle vier Stationen als Links (mit Abschlussprüfung)", [x.strip() for x in pg.locator(".ansicht-knoepfe a[data-ansicht]").all_inner_texts()] == ["Dokument", "Alt-Texte", "Quickinfos", "Abschlussprüfung"] and pg.locator(".ansicht-knoepfe .ansicht-aus").count() == 0, pg.locator(".ansicht-knoepfe [data-ansicht]").all_inner_texts())
+    check("Ansichts-Knöpfe: alle vier Stationen als Links (mit Prüfung)", [x.strip() for x in pg.locator(".ansicht-knoepfe a[data-ansicht]").all_inner_texts()] == ["Dokument", "Alt-Texte", "Quickinfos", "Prüfung"] and pg.locator(".ansicht-knoepfe .ansicht-aus").count() == 0, pg.locator(".ansicht-knoepfe [data-ansicht]").all_inner_texts())
     axe(pg, "Dokument-Ansicht mit Formular")
     pg.click(".ansicht-knoepfe a[data-ansicht=quickinfos]")
     pg.wait_for_selector("#feldListe", timeout=20000); pg.wait_for_timeout(1000)

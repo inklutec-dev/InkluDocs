@@ -8465,3 +8465,50 @@ msgstr "Problemsida {i} av {n}: sida {s}"
 
 msgid "Prüfung"
 msgstr "Granskning"
+
+# PDF: Testweise taggen (25.09.2026)
+msgid "Der Testlauf ist fehlgeschlagen: {grund}"
+msgstr "Testkörningen misslyckades: {grund}"
+
+msgid "Der Testlauf konnte nicht gestartet werden."
+msgstr "Testkörningen kunde inte startas."
+
+msgid "Der Testlauf wurde abgebrochen. Bitte starte ihn erneut."
+msgstr "Testkörningen avbröts. Starta den igen."
+
+msgid "Der Testlauf zeigt, wie das Tagging ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "Testkörningen visar hur taggningen skulle bli. Den kostar ingenting och ändrar inte dokumentet. Testversionen har PDFix-testlägets märkning och kan inte laddas ner."
+
+msgid "Ergebnis des Testlaufs"
+msgstr "Resultat av testkörningen"
+
+msgid "Hörprobe der Testfassung"
+msgstr "Lyssningsprov av testversionen"
+
+msgid "kostenlos, im Testmodus"
+msgstr "kostnadsfritt, i testläge"
+
+msgid "Testlauf gestartet. Er kostet nichts; das Original bleibt unverändert."
+msgstr "Testkörningen har startat. Den kostar ingenting; originalet förblir oförändrat."
+
+msgid "Testlauf läuft … Das Original bleibt unverändert."
+msgstr "Testkörningen pågår … Originalet förblir oförändrat."
+
+msgid "Testlauf vom {zeit}: {struktur}."
+msgstr "Testkörning från {zeit}: {struktur}."
+
+msgid "Testweise taggen"
+msgstr "Tagga som test"
+
+msgid "Es gibt noch keine Testfassung."
+msgstr "Det finns ingen testversion ännu."
+
+# PDF: Prüfbericht 25.09.2026
+msgid "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "Testkörningen visar hur taggningen med PDFix skulle bli. Den kostar ingenting och ändrar inte dokumentet. Testversionen har PDFix-testlägets märkning och kan inte laddas ner."
+
+msgid "Die Seitenansicht ist nicht verfügbar: {grund}"
+msgstr "Sidvyn är inte tillgänglig: {grund}"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie erscheinen in der Liste der Problemstellen der Prüfdatei."
+msgstr "Senaste granskning {zeit}: {n} fynd. De visas i listan över problem i granskningsfilen."

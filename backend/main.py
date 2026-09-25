@@ -6435,6 +6435,17 @@ def _dokument_loeschen_sync(user_id: int, project_id: int, document_id: int) -> 
     doc_dir = os.path.join(RESULTS_DIR, str(user_id), str(project_id), f"doc{doc['doc_index']}")
     if os.path.isdir(doc_dir):
         shutil.rmtree(doc_dir, ignore_errors=True)
+    # Pruefdatei der Station „Prüfung“ und Testfassung aus „Testweise taggen“ (25.09.2026) — beide blieben sonst
+    # nach dem Loeschen des Dokuments liegen. Pfade nur aus Zahlen (abschluss.pfade / tagging_api.test_pfade).
+    import glob as _glob_ab
+    for _ordner, _muster in ((os.path.join(RESULTS_DIR, str(user_id), str(project_id), "_abschluss"), f"doc{int(document_id)}[._]*"),
+                             (os.path.join(RESULTS_DIR, str(user_id), str(project_id), "_testweise"), f"doc{int(document_id)}[._]*")):
+        for p in _glob_ab.glob(os.path.join(_ordner, _muster)):
+            if os.path.isfile(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
     src_pdf = doc.get("original_path") or ""
     # Tagging (22.09.2026): original_path zeigt nach dem Tagging auf die getaggte Fassung, roh_path auf die
     # Kundendatei; daneben liegen Nebendateien der Strukturlesung und Pruefung (<pdf>.struktur.json,

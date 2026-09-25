@@ -8595,3 +8595,50 @@ msgstr "Problemside {i} af {n}: side {s}"
 
 msgid "Prüfung"
 msgstr "Kontrol"
+
+# PDF: Testweise taggen (25.09.2026)
+msgid "Der Testlauf ist fehlgeschlagen: {grund}"
+msgstr "Testkørslen mislykkedes: {grund}"
+
+msgid "Der Testlauf konnte nicht gestartet werden."
+msgstr "Testkørslen kunne ikke startes."
+
+msgid "Der Testlauf wurde abgebrochen. Bitte starte ihn erneut."
+msgstr "Testkørslen blev afbrudt. Start den venligst igen."
+
+msgid "Der Testlauf zeigt, wie das Tagging ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "Testkørslen viser, hvordan taggingen ville blive. Den koster intet og ændrer ikke dokumentet. Testversionen bærer PDFix-testtilstandens mærke og kan ikke downloades."
+
+msgid "Ergebnis des Testlaufs"
+msgstr "Resultat af testkørslen"
+
+msgid "Hörprobe der Testfassung"
+msgstr "Lytteprøve af testversionen"
+
+msgid "kostenlos, im Testmodus"
+msgstr "gratis, i testtilstand"
+
+msgid "Testlauf gestartet. Er kostet nichts; das Original bleibt unverändert."
+msgstr "Testkørslen er startet. Den koster intet; originalen forbliver uændret."
+
+msgid "Testlauf läuft … Das Original bleibt unverändert."
+msgstr "Testkørslen kører … Originalen forbliver uændret."
+
+msgid "Testlauf vom {zeit}: {struktur}."
+msgstr "Testkørsel fra {zeit}: {struktur}."
+
+msgid "Testweise taggen"
+msgstr "Tag som test"
+
+msgid "Es gibt noch keine Testfassung."
+msgstr "Der er endnu ingen testversion."
+
+# PDF: Prüfbericht 25.09.2026
+msgid "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "Testkørslen viser, hvordan taggingen med PDFix ville blive. Den koster intet og ændrer ikke dokumentet. Testversionen bærer PDFix-testtilstandens mærke og kan ikke downloades."
+
+msgid "Die Seitenansicht ist nicht verfügbar: {grund}"
+msgstr "Sidevisningen er ikke tilgængelig: {grund}"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie erscheinen in der Liste der Problemstellen der Prüfdatei."
+msgstr "Seneste kontrol {zeit}: {n} fund. De vises på listen over problemer i kontrolfilen."

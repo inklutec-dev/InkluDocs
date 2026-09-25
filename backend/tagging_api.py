@@ -12,6 +12,11 @@ Neu-Taggen erlaubt“):
   GET  /api/projects/{id}/documents/{doc}/tagging        Stand: Status, Bericht, Preis, Guthaben
   POST /api/projects/{id}/documents/{doc}/tagging        Lauf starten (Credits je Seite, Wache vorher)
   GET  /api/projects/{id}/documents/{doc}/tagging/datei  getaggtes PDF herunterladen
+  POST /api/projects/{id}/documents/{doc}/tagging/test   TESTWEISE TAGGEN (25.09.2026, Michael Karbe, Feedback
+       24.09.2026 - 2, Punkt 3): kostenlos, IMMER im PDFix-Testmodus, aus der Originaldatei in eine eigene
+       Testfassung (results/<user>/<projekt>/_testweise/doc<id>_testweise.pdf). Das Dokument selbst (Arbeitsdatei,
+       Bilder, Alt-Texte, Stand) bleibt unberuehrt; die Testfassung ist NICHT herunterladbar (Steve 25.09.).
+  GET  /api/projects/{id}/documents/{doc}/tagging/test/hoerprobe   Hoerprobe der Testfassung
   - nur Besitzer, nur Projekte mit project_type pdf (Werkzeuge pdf + formular), nie im Gastweg
   - waehrend des Laufs steht das Projekt auf status 'extracting' (Generierung und Export warten,
     wie beim Upload); danach 'extracted'
@@ -23,6 +28,7 @@ Kein Eintrag in der Demo (dort gibt es keine Projekte mit Konto).
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures as _cf
 import json
 import logging
 import os
@@ -79,6 +85,16 @@ _upload_pruefung_sperre = threading.Lock()  # document_id -> {"seit": ts}  (Korr
 # Pruefen-und-Markieren laeuft deshalb atomar unter einer Sperre — sonst koennten zwei Starts denselben
 # Lauf doppelt anstossen und doppelt abrechnen.
 _start_lock = threading.Lock()
+# Testweise taggen: hoechstens ein Testlauf je Dokument und je Nutzer gleichzeitig (PDFix-Lauf ist rechenintensiv).
+# Kostenlos — darum eigene Bremsen (Pruefbericht 25.09.2026): eigener kleiner Executor (belegt nie den gemeinsamen,
+# ueber den Hoerprobe, Vorschau, Struktur und Pruefung laufen), hoechstens TEST_GLEICHZEITIG Laeufe insgesamt und
+# hoechstens TEST_JE_TAG Laeufe je Konto und Tag.
+_test_laeuft: dict[int, dict] = {}   # document_id -> {"seit": ts, "user_id": id}
+_test_nutzer: dict[int, int] = {}    # user_id -> document_id
+TEST_GLEICHZEITIG = int(os.environ.get("TESTWEISE_GLEICHZEITIG", "2"))
+TEST_JE_TAG = int(os.environ.get("TESTWEISE_JE_TAG", "20"))
+_test_zaehler: dict[int, tuple] = {}   # user_id -> (Datum, Anzahl)
+_test_executor = _cf.ThreadPoolExecutor(max_workers=max(1, TEST_GLEICHZEITIG), thread_name_prefix="testweise")
 
 
 def tagging_markieren(conn, project_id: int, document_id: int) -> bool:
@@ -112,6 +128,121 @@ def pruefung_markieren(conn, document_id: int, zu_pruefen: int) -> bool:
 
 def _user():
     return _d.get_current_user
+
+
+def test_pfade(user_id: int, project_id: int, document_id: int) -> tuple[str, str, str]:
+    """Ordner, Testfassung und Bericht eines Testlaufs — nur aus Zahlen gebildet, nie aus Anfragedaten."""
+    ordner = os.path.join(_d.results_dir, str(int(user_id)), str(int(project_id)), "_testweise")
+    return ordner, os.path.join(ordner, f"doc{int(document_id)}_testweise.pdf"), os.path.join(ordner, f"doc{int(document_id)}.json")
+
+
+def test_stand(user_id: int, project_id: int, document_id: int) -> dict:
+    """Stand des letzten Testlaufs fuer die Karte: laeuft, Zeit, Struktur der Testfassung, PDF/UA-Ergebnis, Fehler."""
+    _o, pdf, meta = test_pfade(user_id, project_id, document_id)
+    stand_ = {"laeuft": document_id in _test_laeuft}
+    try:
+        with open(meta, encoding="utf-8") as f:
+            b = json.load(f)
+        if isinstance(b, dict):
+            stand_.update({k: b.get(k) for k in ("zeit", "dauer_s", "seiten", "struktur", "verapdf", "fehler")})
+            stand_["hoerprobe_moeglich"] = bool(not b.get("fehler") and os.path.isfile(pdf))
+    except (OSError, ValueError):
+        pass
+    return stand_
+
+
+def _dokument_gibt_es(document_id: int) -> bool:
+    conn = _d.get_db()
+    try:
+        return conn.execute("SELECT 1 FROM documents WHERE id = ?", (document_id,)).fetchone() is not None
+    finally:
+        conn.close()
+
+
+def _test_dateien_weg(ordner: str, document_id: int) -> None:
+    """Testfassung, Bericht und Struktur-Cache eines Dokuments entfernen (nur diese Dateien, nur im Ordner)."""
+    import glob
+    for p in glob.glob(os.path.join(ordner, f"doc{int(document_id)}[._]*")):
+        try:
+            if os.path.isfile(p):
+                os.remove(p)
+        except OSError:
+            pass
+
+
+def _test_sync(project_id: int, document_id: int, user_id: int, sprache_vorgabe: str, ui_lang: str) -> None:
+    """Testlauf (im eigenen Executor): Originaldatei -> PDFix im Testmodus -> veraPDF -> Bericht. Schreibt NUR in den
+    eigenen Ordner _testweise; keine Credits, keine Aenderung an Dokument, Bildern oder Projektstatus. Alles steht im
+    try, damit die Sperren im finally IMMER freigegeben werden."""
+    ordner = ziel = meta = tmp = ""
+    bericht: dict = {}
+    try:
+        ordner, ziel, meta = test_pfade(user_id, project_id, document_id)
+        tmp = ziel + f".{int(time.time())}.tmp.pdf"
+        uebers = _d.get_gettext(ui_lang) if (_d.get_gettext and ui_lang) else None
+        conn = _d.get_db()
+        try:
+            doc = dict(conn.execute("SELECT * FROM documents WHERE id = ?", (document_id,)).fetchone())
+        finally:
+            conn.close()
+        quelle = doc.get("roh_path") or doc["original_path"]   # immer die unveraenderte Kundendatei
+        os.makedirs(ordner, exist_ok=True)
+        roh = pdf_tagging.taggen(quelle, tmp, sprache_vorgabe, arbeitsordner=ordner, testmodus=True)
+        # Gegenprobe: die Datei MUSS den Testmodus tragen (Hersteller „Trial version of PDFix SDK“). Sonst waere ein
+        # kostenloser Lauf ein lizenzierter — dann verwerfen statt ausliefern (Pruefbericht 25.09.2026).
+        if not roh.get("testmodus"):
+            log.warning("[testweise] Dokument %s: Ergebnis traegt keinen Testmodus-Vermerk — verworfen", document_id)
+            raise pdf_tagging.TaggingFehler("Der Testlauf konnte nicht im Testmodus ausgeführt werden")
+        v = pdf_tagging.verapdf(tmp, uebers)
+        if not _dokument_gibt_es(document_id):   # waehrend des Laufs geloescht: nichts liegen lassen
+            raise _DokumentWeg()
+        os.replace(tmp, ziel)
+        bericht = {
+            "zeit": roh.get("zeit"), "dauer_s": roh.get("dauer_s"), "seiten": roh.get("seiten"),
+            "struktur": {k: (roh.get("nachher") or {}).get(k) for k in ("elemente", "ueberschriften", "listen", "tabellen", "bilder", "absaetze", "lang", "titel")},
+            "verapdf": ({"zusammenfassung": v.get("zusammenfassung", ""), "bestanden": v.get("bestanden")} if v else None),
+        }
+        log.info("[testweise] Dokument %s: %s Seiten, %s Elemente, %ss", document_id, bericht["seiten"],
+                 bericht["struktur"].get("elemente"), bericht["dauer_s"])
+    except _DokumentWeg:
+        bericht = None
+    except Exception as e:  # noqa: BLE001
+        bekannt = isinstance(e, pdf_tagging.TaggingFehler)
+        if not bekannt:
+            log.exception("[testweise] Dokument %s fehlgeschlagen", document_id)
+        bericht = {"fehler": (str(e) if bekannt else "Unerwarteter Fehler beim Testlauf"), "zeit": time.strftime("%Y-%m-%d %H:%M:%S")}
+    finally:
+        try:
+            if tmp and os.path.isfile(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass
+        try:
+            if bericht is None or not _dokument_gibt_es(document_id):
+                if ordner:
+                    _test_dateien_weg(ordner, document_id)
+            elif meta:
+                if bericht.get("fehler"):
+                    # alte Testfassung gehoert nicht mehr zum Stand — sonst lieferte die Hoerprobe die alte
+                    _test_dateien_weg(ordner, document_id)
+                os.makedirs(ordner, exist_ok=True)
+                with open(meta + ".tmp", "w", encoding="utf-8") as f:
+                    json.dump(bericht, f, ensure_ascii=False)
+                os.replace(meta + ".tmp", meta)
+        except Exception as e:  # noqa: BLE001
+            log.warning("[testweise] Bericht fuer Dokument %s nicht geschrieben: %r", document_id, e)
+        test_freigeben(user_id, document_id)
+
+
+class _DokumentWeg(Exception):
+    """Das Dokument wurde waehrend des Testlaufs geloescht."""
+
+
+def test_freigeben(user_id: int, document_id: int) -> None:
+    with _start_lock:
+        _test_laeuft.pop(document_id, None)
+        if _test_nutzer.get(user_id) == document_id:
+            _test_nutzer.pop(user_id, None)
 
 
 def _projekt_und_dokument(conn, project_id: int, document_id: int, user_id: int) -> tuple[dict, dict]:
@@ -398,6 +529,10 @@ def stand(conn, project: dict, doc: dict, user_id: int) -> dict:
         "bericht": _bericht(doc),
         "projekt_status": project.get("status"),
         "pruefung": pruefung_stand(conn, doc, user_id, seiten),
+        "test": test_stand(user_id, project["id"], doc["id"]),
+        # Der Testlauf zeigt das reine PDFix-Tagging. Ist der KI-Weg „Struktur zuerst“ aktiv, taggt der echte Lauf
+        # anders — dann gibt es keinen Testlauf, der etwas Falsches versprechen wuerde (Pruefbericht 25.09.2026).
+        "test_moeglich": not pdf_struktur_tagging.aktiv(),
     }
 
 
@@ -934,6 +1069,72 @@ def build_router(deps: Deps) -> APIRouter:
         loop.run_in_executor(None, _lauf_sync, project_id, document_id, user["id"], int(pruefung["preis"]), sprache, status_vorher, ui_lang)
         return {"gestartet": True, "document_id": document_id, "seiten": seiten, "preis": int(pruefung["preis"]),
                 "modus": pdf_tagging.lizenz_modus()}
+
+    @router.post("/api/projects/{project_id}/documents/{document_id}/tagging/test")
+    async def test_starten(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):
+        """Testweise taggen: kostenlos, Testmodus, eigene Testfassung — das Dokument bleibt unveraendert."""
+        if not pdf_tagging.verfuegbar():
+            raise HTTPException(status_code=503, detail="PDF-Tagging ist auf diesem Server nicht eingerichtet")
+        if pdf_struktur_tagging.aktiv():
+            raise HTTPException(status_code=400, detail="Der Testlauf gibt es nur für das PDFix-Tagging")
+        conn = _d.get_db()
+        try:
+            project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+        finally:
+            conn.close()
+        seiten = _seiten(doc)
+        if seiten <= 0:
+            raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")
+        if seiten > pdf_tagging.MAX_SEITEN:
+            raise HTTPException(status_code=400, detail=f"Das Tagging ist auf {pdf_tagging.MAX_SEITEN} Seiten begrenzt")
+        heute = time.strftime("%Y-%m-%d")
+        with _start_lock:
+            if document_id in _test_laeuft:
+                raise HTTPException(status_code=409, detail="Der Testlauf für dieses Dokument läuft bereits")
+            if user["id"] in _test_nutzer:
+                raise HTTPException(status_code=429, detail="Es läuft schon ein Testlauf. Bitte warte, bis er fertig ist.")
+            if len(_test_laeuft) >= TEST_GLEICHZEITIG:
+                raise HTTPException(status_code=429, detail="Gerade laufen viele Testläufe. Bitte versuche es in ein paar Minuten erneut.")
+            tag, anzahl = _test_zaehler.get(user["id"], ("", 0))
+            anzahl = anzahl if tag == heute else 0
+            if anzahl >= TEST_JE_TAG:
+                raise HTTPException(status_code=429, detail=f"Heute sind schon {TEST_JE_TAG} Testläufe gelaufen. Morgen geht es weiter.")
+            _test_zaehler[user["id"]] = (heute, anzahl + 1)
+            _test_laeuft[document_id] = {"seit": time.time(), "user_id": user["id"]}
+            _test_nutzer[user["id"]] = document_id
+        try:
+            sprache = (project.get("alt_language") or user.get("language") or "de")
+            ui_lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else ""
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(_test_executor, _test_sync, project_id, document_id, user["id"], sprache, ui_lang)
+        except Exception:
+            test_freigeben(user["id"], document_id)   # sonst haengt die Sperre bis zum Neustart
+            raise
+        return {"gestartet": True, "document_id": document_id, "seiten": seiten, "preis": 0}
+
+    @router.get("/api/projects/{project_id}/documents/{document_id}/tagging/test/hoerprobe")
+    async def test_hoerprobe(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):
+        """Hoerprobe der Testfassung (Zeilen in Lesereihenfolge); nur Besitzer."""
+        conn = _d.get_db()
+        try:
+            _projekt_und_dokument(conn, project_id, document_id, user["id"])
+            quickinfos = felder_quickinfos(conn, document_id)
+        finally:
+            conn.close()
+        lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else "de"
+        _ = _d.get_gettext(lang) if _d.get_gettext else (lambda s: s)
+        ordner, pdf, _m = test_pfade(user["id"], project_id, document_id)
+        if not os.path.isfile(pdf):
+            return {"verfuegbar": False, "grund": _("Es gibt noch keine Testfassung.")}
+
+        def lesen():
+            try:
+                struktur = pdf_struktur.lesen(pdf, ordner)
+            except pdf_struktur.StrukturFehler as e:
+                return {"verfuegbar": False, "grund": _(str(e))}
+            return {"verfuegbar": True, "hoerprobe": pdf_struktur.hoerprobe(struktur, _, quickinfos)}
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, lesen)
 
     @router.get("/api/projects/{project_id}/dokument-ansicht")
     async def ansicht(project_id: int, user: dict = Depends(_user())):

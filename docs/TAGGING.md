@@ -526,3 +526,47 @@ Ansichtswechsel, keine Doppel-Ansagen (Status-`output` mit Fokus statt zusätzli
 Baus, Einzahl „1 Problemstelle“, Hinweis bei nicht aktueller Prüfdatei, Seitenzahl nicht doppelt, toter Code entfernt
 (`Dokument.exportieren`, `Dokument.zurAnsicht`, Kopf-Rückfall), `t()` ersetzt Platzhalter per Funktion (`$&` in Namen).
 Station in H1 und Seitentitel („Abschlussprüfung – Projekt: …“, Steve 24.09.2026).
+
+## Michaels Mails „Feedback 24.09.2026 - 2“ und „- 3“ (umgesetzt 25.09.2026, Staging)
+
+**Ansicht „Dokument“ (frontend/dokument.js)** — die Werkbank:
+- Stand-Abzeichen rechtsbündig in der Überschriftszeile (`.dok-kopfzeile`, inline-flex, Aufklapp-Dreieck bleibt).
+- Oben Vorschau + Dokumentinfos, darunter eine Linie über die volle Breite (`.dok-werkbank`), darunter linksbündig
+  die Knöpfe: Barrierefrei machen / Neu taggen, **Testweise taggen**, **PDF herunterladen** (wieder hier), Umbenennen,
+  Löschen. Mehrere getaggte Dokumente: „Alle Dokumente herunterladen“ (ZIP) unter „Dokumente (n)“.
+- Ergebnis eines Laufs (Tagging, Testlauf) farbig IN der Karte unter dem Dokument (`.dok-ergebnis`, grün/rot, immer
+  mit Text), Fokus dorthin, „Meldung schließen“; gilt bis zum nächsten Lauf.
+- KI-basierte Prüfung nicht mehr hier (ZEIGE_KI_PRUEFUNG=false).
+
+**Testweise taggen** (tagging_api.py, `POST …/tagging/test`, `GET …/tagging/test/hoerprobe`):
+- Kostenlos, IMMER PDFix-Testmodus (`pdf_tagging.taggen(testmodus=True)` setzt PDFIX_TAGGING_LIZENZ=off für den
+  Subprozess), immer aus der unveränderten Kundendatei (roh_path bzw. original_path), immer der PDFix-Weg (keine KI).
+- Schreibt nur nach `results/<user>/<projekt>/_testweise/doc<id>_testweise.pdf` + `doc<id>.json` (Pfade nur aus
+  Zahlen). Dokument, Arbeitsdatei, Bilder, Alt-Texte, Projektstatus bleiben unberührt; keine Credits.
+- Kein Download-Weg für die Testfassung (Steve 25.09.; Michael wird gefragt, ggf. später).
+- Höchstens ein Testlauf je Dokument (409) und je Nutzer (429) gleichzeitig; Stand in `stand()["test"]`.
+- Ergebnis als Klappe „Ergebnis des Testlaufs“: Struktur, PDF/UA-Zusammenfassung, Hörprobe der Testfassung.
+
+**Ansichts-Knöpfe (app.html)**: „Ansicht:“ nur noch für Screenreader (visually-hidden, bleibt Name der Liste);
+nicht verfügbare Ansicht mit durchgezogenem statt gestricheltem Rahmen.
+
+**Station „Prüfung“** (vorher „Abschlussprüfung“; intern weiter `abschluss`, frontend/abschluss.js):
+- Kein Herunterladen mehr (nur noch in „Dokument“), kein „!“ vor den Problemen.
+- Kein Filter mehr: die Seitenansicht zeigt nur Problemseiten („Problemseite 1 von n: Seite x“); ohne Probleme keine
+  Seitenansicht. „Vorherige Seite“ und „Nächste Seite“ nebeneinander, danach „Gehe zu Seite“.
+- Sprache und Zusammenfassung oben bei den Infos (`#ab_kopf_<id>`), Linie über der Seitenansicht.
+- KI-basierte Prüfung als Abschnitt mit Knopf (`Dokument.kiBlockHtml`, kompakt, Korrektur inklusive); die Befunde
+  stehen in der Problemliste. Die Ansicht holt dafür zusätzlich `/dokument-ansicht` und fragt während des Laufs nach
+  (nur Statuszeile, kein Neuaufbau).
+- Vorlesen (`vorlesenTeile` in app.html): Ansage („Überschrift Ebene 2“) in der Kontosprache, Inhalt in der
+  Dokumentsprache, wenn dafür eine Stimme auf dem Gerät ist, sonst Kontosprache; der Inhalt der Hörprobe trägt
+  `lang` der Dokumentsprache (Screenreader schalten selbst um).
+
+**App-weit**: beim Löschen eines Dokuments werden jetzt auch Prüfdatei (`_abschluss/doc<id>…`) und Testfassung
+(`_testweise/doc<id>…`) entfernt — vorher blieben sie liegen.
+
+**Offen**: Punkt 14 (Screenreader-/Strukturansicht zurück in „Dokument“) — Michael schickt einen Vorschlag;
+Herunterladen der Testfassung — Steve fragt Michael.
+
+Tests: `tests/test_testweise_taggen.py` (Testmodus erzwungen, Dokument unverändert, Doppelstart, fremd, kein Download,
+Aufräumen), `tests/e2e/ui_dokument.py` (128 Prüfungen inkl. echtem Testlauf, Tagging, Prüfdatei, KI-Prüfung, axe).

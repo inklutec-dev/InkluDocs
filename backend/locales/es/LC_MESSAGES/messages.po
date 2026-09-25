@@ -8903,3 +8903,50 @@ msgstr "Página con problemas {i} de {n}: página {s}"
 
 msgid "Prüfung"
 msgstr "Revisión"
+
+# PDF: Testweise taggen (25.09.2026)
+msgid "Der Testlauf ist fehlgeschlagen: {grund}"
+msgstr "La prueba ha fallado: {grund}"
+
+msgid "Der Testlauf konnte nicht gestartet werden."
+msgstr "No se pudo iniciar la prueba."
+
+msgid "Der Testlauf wurde abgebrochen. Bitte starte ihn erneut."
+msgstr "La prueba se ha interrumpido. Iníciela de nuevo."
+
+msgid "Der Testlauf zeigt, wie das Tagging ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "La prueba muestra cómo quedaría el etiquetado. No cuesta nada y no cambia el documento. La versión de prueba lleva la marca del modo de prueba de PDFix y no se puede descargar."
+
+msgid "Ergebnis des Testlaufs"
+msgstr "Resultado de la prueba"
+
+msgid "Hörprobe der Testfassung"
+msgstr "Prueba de escucha de la versión de prueba"
+
+msgid "kostenlos, im Testmodus"
+msgstr "gratis, en modo de prueba"
+
+msgid "Testlauf gestartet. Er kostet nichts; das Original bleibt unverändert."
+msgstr "Prueba iniciada. No cuesta nada; el original no cambia."
+
+msgid "Testlauf läuft … Das Original bleibt unverändert."
+msgstr "Prueba en curso … El original no cambia."
+
+msgid "Testlauf vom {zeit}: {struktur}."
+msgstr "Prueba del {zeit}: {struktur}."
+
+msgid "Testweise taggen"
+msgstr "Etiquetar de prueba"
+
+msgid "Es gibt noch keine Testfassung."
+msgstr "Todavía no hay una versión de prueba."
+
+# PDF: Prüfbericht 25.09.2026
+msgid "Der Testlauf zeigt, wie das Tagging mit PDFix ausfallen würde. Er kostet nichts und ändert das Dokument nicht. Die Testfassung trägt den Vermerk des PDFix-Testmodus und lässt sich nicht herunterladen."
+msgstr "La prueba muestra cómo quedaría el etiquetado con PDFix. No cuesta nada y no cambia el documento. La versión de prueba lleva la marca del modo de prueba de PDFix y no se puede descargar."
+
+msgid "Die Seitenansicht ist nicht verfügbar: {grund}"
+msgstr "La vista de página no está disponible: {grund}"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie erscheinen in der Liste der Problemstellen der Prüfdatei."
+msgstr "Última revisión el {zeit}: {n} hallazgos. Aparecen en la lista de problemas del archivo de revisión."

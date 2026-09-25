@@ -271,9 +271,12 @@ def _grund_aus_ausgabe(stdout: str, stderr: str) -> str:
     return "PDFix hat die Aktion abgebrochen"
 
 
-def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner: Optional[str] = None) -> dict:
+def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner: Optional[str] = None,
+           testmodus: bool = False) -> dict:
     """Fuehrt die Aktion aus und liefert den Bericht. Wirft TaggingFehler mit nutzertauglichem Grund.
-    pdf_out wird nur bei Erfolg geschrieben (das Skript speichert am Ende, bei Abbruch nicht)."""
+    pdf_out wird nur bei Erfolg geschrieben (das Skript speichert am Ende, bei Abbruch nicht).
+    testmodus=True (25.09.2026, „Testweise taggen“): Lizenz ausdruecklich AUS, egal was PDFIX_TAGGING_LIZENZ sagt —
+    das SDK taggt dann im Testmodus (Wasserzeichen/„Trial version“ als Hersteller)."""
     if not verfuegbar():
         raise TaggingFehler("PDF-Tagging ist auf diesem Server nicht eingerichtet")
     if not os.path.isfile(pdf_in):
@@ -292,9 +295,13 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
     konfig_pfad = os.path.join(arbeitsordner, "_make_accessible_konfig.json")
     konfig = konfig_erzeugen(sprache["lang"], sprache["overwrite"], konfig_pfad)
     cmd = [sys.executable, str(_SCRIPT), "-i", pdf_in, "-o", pdf_out, "-k", konfig_pfad]
-    log.info("PDFix-Tagging aufrufen (%s, %d Seiten, Sprache %s)", lizenz_modus(), seiten, sprache["lang"])
+    umgebung = os.environ.copy()
+    if testmodus:
+        umgebung["PDFIX_TAGGING_LIZENZ"] = "off"   # inkludocs_betrieb.lizenz_fuer_tagging aktiviert dann nichts
+    modus = "testmodus" if testmodus else lizenz_modus()
+    log.info("PDFix-Tagging aufrufen (%s, %d Seiten, Sprache %s)", modus, seiten, sprache["lang"])
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=_TIMEOUT_SECONDS, cwd=str(_SCRIPT_DIR))
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=_TIMEOUT_SECONDS, cwd=str(_SCRIPT_DIR), env=umgebung)
     except subprocess.TimeoutExpired:
         raise TaggingFehler(f"Das Tagging hat zu lange gedauert (Zeitlimit {_TIMEOUT_SECONDS} s)")
     finally:
@@ -313,7 +320,7 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
         "zeit": time.strftime("%Y-%m-%d %H:%M:%S"),
         "dauer_s": round(time.time() - t0, 1),
         "seiten": seiten,
-        "modus": lizenz_modus(),
+        "modus": modus,
         "testmodus": nachher["testmodus"],
         "sprache": sprache,
         "konfig": konfig,
