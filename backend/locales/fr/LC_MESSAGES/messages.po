@@ -8869,3 +8869,37 @@ msgstr "Projets au total"
 
 msgid "Bilder insgesamt"
 msgstr "Images au total"
+
+# PDF: Michaels Mails 24.09. - 2/- 3 (25.09.2026)
+msgid "Ansicht Prüfung geöffnet."
+msgstr "Vue Contrôle ouverte."
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos."
+msgstr "C’est le fichier final qui est contrôlé — exactement le PDF que vous téléchargez dans la vue « Document ». La création du fichier de contrôle est gratuite."
+
+msgid "Hier prüfst du das Ergebnis: Problemstellen, Seitenbild und Hörprobe der fertigen Datei. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Ici, vous contrôlez le résultat : problèmes, image de page et écoute du fichier final. Le téléchargement se fait dans la vue « Document »."
+
+msgid "Keine der Problemstellen gehört zu einer bestimmten Seite."
+msgstr "Aucun des problèmes ne concerne une page précise."
+
+msgid "KI-Prüfung erneut starten"
+msgstr "Relancer le contrôle IA"
+
+msgid "KI-Prüfung starten"
+msgstr "Lancer le contrôle IA"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen."
+msgstr "Dernier contrôle le {zeit} : {n} constats. Ils figurent dans la liste des problèmes."
+
+msgid "Letzte Prüfung am {zeit}: keine Befunde."
+msgstr "Dernier contrôle le {zeit} : aucun constat."
+
+msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“."
+msgstr "Trouver les problèmes, voir et écouter les pages : dans la vue « Contrôle »."
+
+msgid "Problemseite {i} von {n}: Seite {s}"
+msgstr "Page à problème {i} sur {n} : page {s}"
+
+msgid "Prüfung"
+msgstr "Contrôle"

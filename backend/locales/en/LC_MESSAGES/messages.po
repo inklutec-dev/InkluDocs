@@ -8869,3 +8869,37 @@ msgstr "Projects in total"
 
 msgid "Bilder insgesamt"
 msgstr "Images in total"
+
+# PDF: Michaels Mails 24.09. - 2/- 3 (25.09.2026)
+msgid "Ansicht Prüfung geöffnet."
+msgstr "Review view opened."
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos."
+msgstr "The finished file is checked — exactly the PDF you download in the “Document” view. Creating the review file is free of charge."
+
+msgid "Hier prüfst du das Ergebnis: Problemstellen, Seitenbild und Hörprobe der fertigen Datei. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Here you review the result: problems, page image and listening sample of the finished file. Downloading is done in the “Document” view."
+
+msgid "Keine der Problemstellen gehört zu einer bestimmten Seite."
+msgstr "None of the problems belongs to a specific page."
+
+msgid "KI-Prüfung erneut starten"
+msgstr "Run AI check again"
+
+msgid "KI-Prüfung starten"
+msgstr "Start AI check"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen."
+msgstr "Last check on {zeit}: {n} findings. They are in the list of problems."
+
+msgid "Letzte Prüfung am {zeit}: keine Befunde."
+msgstr "Last check on {zeit}: no findings."
+
+msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“."
+msgstr "Find problems, view and listen to pages: in the “Review” view."
+
+msgid "Problemseite {i} von {n}: Seite {s}"
+msgstr "Problem page {i} of {n}: page {s}"
+
+msgid "Prüfung"
+msgstr "Review"

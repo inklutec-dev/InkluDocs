@@ -37,9 +37,9 @@
       .ansicht-knoepfe a.btn-primary { color: #fff; }
       .ansicht-knoepfe a.btn:hover, .ansicht-knoepfe a.btn:focus-visible { text-decoration: underline; }
       .ansicht-knoepfe a.btn:focus-visible { outline: 3px solid var(--focus, #c75000); outline-offset: 2px; }
-      /* nicht verfuegbar: gestrichelter Rahmen + dunkelgraue Schrift (#4b5563 auf Hellgrau = 7:1), NICHT per opacity — die
-         senkte den Kontrast unter 4,5:1 (axe color-contrast, Klicktest 24.09.2026) */
-      .ansicht-aus { cursor: not-allowed; display: inline-block; color: #4b5563 !important; background: #f3f4f6 !important; border: 2px dashed #9ca3af !important; font-weight: 500; }
+      /* nicht verfuegbar: durchgezogener grauer Rahmen (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 2; vorher gestrichelt)
+         + dunkelgraue Schrift (#4b5563 auf Hellgrau = 7:1), NICHT per opacity — die senkte den Kontrast unter 4,5:1 */
+      .ansicht-aus { cursor: not-allowed; display: inline-block; color: #4b5563 !important; background: #f3f4f6 !important; border: 2px solid #9ca3af !important; font-weight: 500; }
       .projekt-kopf .card-info:not([hidden]) { margin: 0.6rem 0 0; }
       /* Ansicht „Dokument“: jede Datei zum Aufklappen (Michael Karbe, PS 24.09.2026); Dokumentinfo je Zeile
          „Stand: Getaggt“ in Schrift und Groesse des Berichts darunter (Mail 22.09.2026, Punkte 2 und 4). */
@@ -48,11 +48,28 @@
       .dok-klappe[open] > summary { margin-bottom: 0.75rem; }
       .dok-meta { list-style: none; margin: 0 0 0.6rem; padding: 0; font-size: 0.92rem; line-height: 1.5; }
       .dok-meta li { margin: 0; }
+      /* Ueberschriftszeile der Karte: Name links, Stand-Abzeichen rechtsbuendig (Feedback 24.09.2026 - 2, Punkt 1).
+         inline-flex, damit das Aufklapp-Dreieck des <summary> erhalten bleibt. */
+      .dok-kopfzeile { display: inline-flex !important; align-items: center; justify-content: space-between; gap: 0.75rem;
+                       width: calc(100% - 1.6rem); vertical-align: middle; flex-wrap: wrap; }
+      .dok-kopfzeile .badge { margin-left: auto; }
+      /* Unter Vorschau + Dokumentinfos eine Linie ueber die volle Breite, darunter die Knoepfe linksbuendig
+         (Feedback 24.09.2026 - 3, Punkt 3). */
+      .dok-werkbank { border-top: 1px solid #9ca3af; margin-top: 0.9rem; padding-top: 0.2rem; }
+      /* Ergebnis des Laufs in der Karte (Feedback 24.09.2026 - 2, Punkt 2): gruen bzw. rot, immer mit Text */
+      .dok-ergebnis { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; justify-content: space-between;
+                      margin: 0.8rem 0; padding: 0.7rem 1rem; border-left: 4px solid #15803d; background: #f0fdf4; color: #14532d;
+                      border-radius: 0 6px 6px 0; font-weight: 600; }
+      .dok-ergebnis p { margin: 0; flex: 1 1 18rem; }
+      .dok-ergebnis p:focus { outline: 2px solid var(--focus, #c75000); outline-offset: 2px; }
+      .dok-ergebnis-fehler { border-left-color: #b91c1c; background: #fef2f2; color: #7f1d1d; }
       /* Station „Abschlussprüfung“ (24.09.2026): Problemliste, Seitenansicht (Seitenbild + Hörprobe nebeneinander,
          schmal untereinander), Problemstellen mit Rahmen UND Zeichen „!“ (nicht nur Farbe, WCAG 1.4.1). */
       .ab-problemliste { margin: 0.3rem 0 0.8rem; padding-left: 1.4rem; font-size: 0.92rem; line-height: 1.5; }
       .ab-problemliste li { margin: 0.25rem 0; }
-      .ab-marke { display: inline-block; min-width: 1.3em; text-align: center; font-weight: 700; color: #fff; background: #b45309; border-radius: 50%; }
+      /* Kein „!“ mehr vor den Problemen (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 7). Linie ueber der seitenweisen
+         Anzeige (Punkt 11). */
+      .ab-seite { border-top: 1px solid #9ca3af; margin-top: 1rem; padding-top: 0.6rem; }
       .ab-seitennav { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.4rem 0 0.8rem; }
       .ab-seitennav select { padding: 0.35rem; border: 1px solid var(--border, #ccc); border-radius: 4px; }
       .ab-seite-inhalt { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 1rem; align-items: start; }
@@ -66,6 +83,10 @@
       .ab-problemklappe > summary { cursor: pointer; margin: 0.6rem 0 0.2rem; }
       .ab-problemklappe > summary:focus-visible { outline: 2px solid var(--focus, #c75000); outline-offset: 2px; }
       .ab-inline { display: inline; margin: 0; font-size: 1rem; }
+      /* KI-basierte Pruefung als eigener Abschnitt in der Station „Prüfung“ (Feedback 24.09.2026 - 3, Punkt 13) */
+      .ab-ki { border-top: 1px solid #9ca3af; margin-top: 1rem; padding-top: 0.6rem; }
+      .ab-ki h4 { margin: 0 0 0.4rem; font-size: 1rem; }
+      .ab-seitenwahl { display: inline-flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
     </style>
 {% if guest_mode %}
 {# Gast-Modus (Freigabe-Link): Flags VOR dashboard.js und Seiten-JS setzen.
@@ -287,7 +308,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Text mit dem Grund fuer Screenreader. Bis 24.09. Ausklappliste + „Öffnen“ (Steve/WCAG 3.2.2) — mit Links entfaellt
     // das Problem, dass Pfeiltasten auf der Liste schon wechseln. Gleiche Funktion fuer alle Ansichten.
     function ansichtNamen() {
-        return { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Abschlussprüfung') };
+        // „Prüfung“ statt „Abschlussprüfung“ (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 5); intern bleibt der Schluessel 'abschluss'
+        return { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Prüfung') };
     }
     function ansichtWahlHtml(project, aktuell) {
         if (!(istWordDateityp(project) || istPdfDateityp(project)) || window.GUEST_MODE) return '';
@@ -303,7 +325,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + (k === aktuell ? ' aria-current="page"' : '')
                 + ' onclick="return ansichtKlick(event, ' + project.id + ', \'' + k + '\')">' + namen[k] + '</a></li>';
         }).join('');
-        return '<div class="ansicht-wahl"><span class="ansicht-titel" id="ansichtTitel">' + t('Ansicht') + ':</span>'
+        // „Ansicht:“ sichtbar weg, für Screenreader bleibt es der Name der Knopfliste (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 1)
+        return '<div class="ansicht-wahl"><span class="ansicht-titel visually-hidden" id="ansichtTitel">' + t('Ansicht') + ':</span>'
             + '<ul class="ansicht-knoepfe" aria-labelledby="ansichtTitel">' + knoepfe + '</ul></div>';
     }
     // Klick auf einen Ansichts-Knopf: normaler Klick wechselt ohne Neuladen; mit Strg/Cmd/Umschalt/Mittelklick bleibt
@@ -375,7 +398,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // sonst landet VoiceOver nach dem Wechsel auf „Alt-Texte“ auf dem Seitenanfang.
         const h1 = document.getElementById('projectName');
         if (h1) h1.focus();
-        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Abschlussprüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.')))));
+        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Prüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.')))));
     }
     window.wechsleAnsicht = wechsleAnsicht;
     let currentProjectFuerAnsicht = null;
@@ -1454,7 +1477,61 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         });
         // keine zusaetzliche Ansage: der Knopf meldet selbst „Stopp, gedrueckt“, sonst sprechen drei Stimmen durcheinander
     }
+    // HÖRPROBE MIT ZWEI SPRACHEN (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 9: „klang englisch“; Steve 25.09.2026):
+    // wie ein echter Screenreader — die Ansage („Überschrift Ebene 2“) in der Sprache der Oberfläche/des Kontos, der
+    // Inhalt in der Sprache des Dokuments, wenn dafür eine Stimme AUF DEM GERÄT da ist; sonst auch der Inhalt in der
+    // Kontosprache. teile: [{ text, lang }] — lang leer = Kontosprache. Nur lokale Stimmen (Datenschutz, wie oben).
+    async function vorlesenTeile(teile, btn, label) {
+        const synth = window.speechSynthesis;
+        if (!synth) { announce(t('Sprachausgabe wird in diesem Browser nicht unterstützt.')); return; }
+        if (!window._ttsEscBound) {
+            window._ttsEscBound = true;
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { vorlesenStopp(); } });
+        }
+        if (btn && btn.getAttribute('aria-pressed') === 'true') { vorlesenStopp(); return; }
+        vorlesenStopp();
+        const lauf = vorleseLauf;
+        const stuecke = [];
+        (teile || []).forEach(function (tl) {
+            String((tl && tl.text) || '').replace(/([.!?:])\s+/g, '$1\n').split(/\n+/).forEach(function (x) {
+                x = x.trim();
+                if (x) stuecke.push({ text: x, lang: (tl.lang || '').slice(0, 2).toLowerCase() });
+            });
+        });
+        if (!stuecke.length) { announce(t('Kein Text zum Vorlesen vorhanden.')); return; }
+        const zuruecksetzen = function () {
+            if (lauf !== vorleseLauf || !btn) return;
+            btn.setAttribute('aria-pressed', 'false');
+            btn.textContent = btn.dataset.label || t('Anhören');
+        };
+        if (btn) {
+            btn.dataset.label = label || btn.textContent;
+            btn.setAttribute('aria-pressed', 'true');
+            btn.textContent = t('Stopp');
+        }
+        const stimmen = await lokaleStimmen();
+        if (lauf !== vorleseLauf) return;
+        const finde = function (code) {
+            return code ? stimmen.find(function (v) { return v.localService && v.lang && v.lang.toLowerCase().indexOf(code) === 0; }) : null;
+        };
+        const kontoStimme = finde((window.LANG || 'de').slice(0, 2).toLowerCase());
+        const plan = stuecke.map(function (s) { return { text: s.text, stimme: finde(s.lang) || kontoStimme }; });
+        if (plan.some(function (p) { return !p.stimme; })) {
+            zuruecksetzen();
+            announce(t('Auf diesem Gerät ist keine Stimme für diese Sprache installiert. Aus Datenschutzgründen lesen wir nicht über einen Sprachdienst im Internet vor.'));
+            return;
+        }
+        plan.forEach(function (p, i) {
+            const u = new SpeechSynthesisUtterance(p.text);
+            u.voice = p.stimme;
+            u.lang = p.stimme.lang;
+            if (i === plan.length - 1) u.onend = zuruecksetzen;
+            u.onerror = zuruecksetzen;
+            synth.speak(u);
+        });
+    }
     window.vorlesen = vorlesen;
+    window.vorlesenTeile = vorlesenTeile;
     window.vorlesenStopp = vorlesenStopp;
 
     // Alt-Text + (falls da) Langbeschreibung des Bildes, AKTUELLER Feld-Inhalt (inkl. haendischer Edits). Die Stimme

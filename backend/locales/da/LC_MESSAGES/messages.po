@@ -8561,3 +8561,37 @@ msgstr "Projekter i alt"
 
 msgid "Bilder insgesamt"
 msgstr "Billeder i alt"
+
+# PDF: Michaels Mails 24.09. - 2/- 3 (25.09.2026)
+msgid "Ansicht Prüfung geöffnet."
+msgstr "Visningen Kontrol er åbnet."
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos."
+msgstr "Den færdige fil kontrolleres — præcis den PDF, du downloader i visningen „Dokument“. Det er gratis at oprette kontrolfilen."
+
+msgid "Hier prüfst du das Ergebnis: Problemstellen, Seitenbild und Hörprobe der fertigen Datei. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Her kontrollerer du resultatet: problemer, sidebillede og lytteprøve af den færdige fil. Download sker i visningen „Dokument“."
+
+msgid "Keine der Problemstellen gehört zu einer bestimmten Seite."
+msgstr "Ingen af problemerne hører til en bestemt side."
+
+msgid "KI-Prüfung erneut starten"
+msgstr "Start AI-kontrollen igen"
+
+msgid "KI-Prüfung starten"
+msgstr "Start AI-kontrol"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen."
+msgstr "Seneste kontrol {zeit}: {n} fund. De står på listen over problemer."
+
+msgid "Letzte Prüfung am {zeit}: keine Befunde."
+msgstr "Seneste kontrol {zeit}: ingen fund."
+
+msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“."
+msgstr "Find problemer, se og lyt til sider: i visningen „Kontrol“."
+
+msgid "Problemseite {i} von {n}: Seite {s}"
+msgstr "Problemside {i} af {n}: side {s}"
+
+msgid "Prüfung"
+msgstr "Kontrol"

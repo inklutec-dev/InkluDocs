@@ -12,9 +12,10 @@
  * „Dokument“ ist die Drehscheibe fuer alles, was die ganze Datei betrifft (Michael 21.09.:
  * „eine Ansicht vergleichbar der Ablage“): je Datei eine Karte mit Vorschau der ersten Seite,
  * Stand (ungetaggt / getaggt / PDF/UA geprueft), Sprache, Seiten, Struktur, und den Knoepfen
- * „Barrierefrei machen“ (PDFix-Tagging, tagging_api.py), „Alt-Texte bearbeiten“ (Ansicht
- * wechseln), „Getaggte PDF herunterladen“, „Umbenennen“, „Loeschen“. Der Bericht des letzten
- * Laufs liegt als Klappe unter der Karte.
+ * „Barrierefrei machen“ (PDFix-Tagging, tagging_api.py), „PDF herunterladen“, „Umbenennen“,
+ * „Loeschen“. Der Bericht des letzten Laufs liegt als Klappe unter der Karte. Seit 25.09.2026
+ * (Michael Karbe, Feedback 24.09.2026 - 2 und - 3): Knoepfe unter einer Linie ueber die volle
+ * Breite, Ergebnis des Laufs farbig IN der Karte, KI-basierte Pruefung in der Station „Prüfung“.
  *
  * FORM fuer Screenreader: H1 Projekt, H2 „PDF hinzufuegen“ (Upload), H2 „Dokumente (n)“,
  * je Datei eine H3; darunter eine Beschreibungsliste (dl), native Knoepfe, ein <output> je
@@ -36,9 +37,10 @@
     // die KI-Pruefung soll spaeter im Hintergrund laufen und im Tagging-Preis stecken statt per Knopf. Zum Wieder-
     // einblenden den Schalter auf true setzen.
     const ZEIGE_STRUKTURANSICHT = false;
-    // KI-basierte Pruefung wieder sichtbar, als „experimentell“ gekennzeichnet (Michael Karbe, 24.09.2026: „drin lassen,
-    // wir arbeiten noch daran“). Das Urteil bleibt aus (Feedback 24.09.2026, Punkt 6: Anwender bilden sich ihr Urteil).
-    const ZEIGE_KI_PRUEFUNG = true;
+    // KI-basierte Pruefung: seit 25.09.2026 NICHT mehr in „Dokument“, sondern als Knopf in der Station „Prüfung“
+    // (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 13). Der Block kommt weiter von hier (kiBlockHtml), die Prüfung
+    // zeichnet ihn kompakt. Das Urteil bleibt aus (Feedback 24.09.2026, Punkt 6: Anwender bilden sich ihr Urteil).
+    const ZEIGE_KI_PRUEFUNG = false;
     const ZEIGE_URTEIL = false;
     // Kette „Komplett barrierefrei machen“ und Ablage-Knopf im Kopf (Feedback 24.09.2026, Punkt 1: vorerst aus)
     const ZEIGE_PROJEKT_KNOEPFE = false;
@@ -52,6 +54,12 @@
     let offenePruefungen = new Set();   // KI-basierte Pruefung: Klappen, die offen bleiben sollen
     let offeneDokumente = new Set();    // Dokument-Klappen (Michael Karbe, PS 24.09.2026), bleiben beim Neuzeichnen offen
     let geschlosseneDokumente = new Set();   // ... bzw. zu, wenn der Nutzer sie zugeklappt hat
+    // Ergebnis des letzten Laufs je Dokument, IN der Karte unter dem Dokument (Michael Karbe, Feedback 24.09.2026 - 2,
+    // Punkt 2): farbig, mit Fokus, bleibt bis „Meldung schließen“ oder zum nächsten Lauf. docId -> {text, fehler}
+    const ergebnisMeldung = {};
+    // Wer nach einer KI-Pruefung/Korrektur neu zeichnet: die Ansicht, die den Block gerade zeigt (seit 25.09.2026 die
+    // Station „Prüfung“, abschluss.js setzt das ueber Dokument.setNeuLaden).
+    let neuLaden = (pid) => showProject(pid, true);
 
     function ico(name) { return (typeof icon === 'function') ? icon(name) : ''; }
     function esc(s) { return (typeof escHtml === 'function') ? escHtml(s == null ? '' : String(s)) : String(s == null ? '' : s); }
@@ -193,7 +201,7 @@
                 return;
             }
             offenePruefungen.add(docId);
-            await showProject(projectId, true);
+            await neuLaden(projectId);
             announce(erneut ? t('Korrektur gestartet, danach folgt die Prüfung.') : t('Korrektur gestartet.'));
         } catch (e) {
             announce(t('Die Korrektur konnte nicht gestartet werden: {grund}', { grund: String(e) }));
@@ -208,8 +216,11 @@
             const j = await r.json().catch(() => ({}));
             if (!r.ok) { announce(t('Rückgängig nicht möglich: {grund}', { grund: (j.detail && (j.detail.text || j.detail)) || t('unbekannter Fehler') })); if (k) k.disabled = false; return; }
             offenePruefungen.add(docId);
-            await showProject(projectId, true);
-            zeigeMeldung(t('Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder.'));
+            await neuLaden(projectId);
+            // Meldung in der Statuszeile des KI-Blocks — die gibt es in jeder Ansicht, die den Block zeigt
+            const out = document.getElementById('dok_pruef_status_' + docId);
+            const text = t('Die Korrektur wurde rückgängig gemacht. Der Prüfbericht gilt wieder.');
+            if (out) { out.textContent = text; out.focus(); } else { zeigeMeldung(text); }
         } catch (e) {
             announce(t('Rückgängig nicht möglich: {grund}', { grund: String(e) }));
             if (k) k.disabled = false;
@@ -263,25 +274,40 @@
         s += '<p class="feld-hinweis">' + t('Die Prüfung ändert nichts an der Datei. Sie ersetzt keinen Test mit einem echten Screenreader.') + '</p>';
         return s;
     }
-    function pruefungHtml(project, d) {
-        if (!ZEIGE_KI_PRUEFUNG || d.getaggt !== true) return '';
+    // kompakt (Station „Prüfung“): ohne Befundliste — die Befunde stehen dort schon in der Liste der Problemstellen.
+    function pruefungHtml(project, d, kompakt) {
+        if ((!ZEIGE_KI_PRUEFUNG && !kompakt) || d.getaggt !== true) return '';
         const tg = d.tagging || {};
         const pr = tg.pruefung || {};
         const busy = tg.laeuft || pr.laeuft || !!(project.kette && project.kette.laeuft);
         const vh = t('– Dokument „{name}“', { name: esc(docDisplayName(d)) });
-        const knopf = pr.status === 'fertig' ? t('Erneut prüfen') : t('Prüfung starten');
+        const knopf = pr.status === 'fertig' ? t('KI-Prüfung erneut starten') : t('KI-Prüfung starten');
         const offen = offenePruefungen.has(d.id) || pr.laeuft;
-        return '<details class="page-text-details dok-pruefung" data-doc="' + d.id + '"' + (offen ? ' open' : '') + '>'
-            // Name „KI-basierte Prüfung“ (Michael Karbe, Mail 22.09.2026, Punkt 11)
-            + '<summary>' + t('KI-basierte Prüfung (experimentell)') + (pr.status === 'fertig' && pr.bericht && pr.bericht.befunde ? ' (' + t('{n} Befunde', { n: pr.bericht.befunde.length }) + ')' : '') + '</summary>'
-            + '<div class="page-text-content" role="region" aria-label="' + t('KI-basierte Prüfung') + '" tabindex="0">'
+        // Station „Prüfung“ (kompakt, Michael Karbe, Feedback 24.09.2026 - 3, Punkt 13): ein Abschnitt mit Knopf, keine Klappe
+        const auf = kompakt
+            ? '<section class="ab-ki" aria-labelledby="ab_ki_heading_' + d.id + '"><h4 id="ab_ki_heading_' + d.id + '">' + t('KI-basierte Prüfung (experimentell)') + '</h4><div>'
+            : '<details class="page-text-details dok-pruefung" data-doc="' + d.id + '"' + (offen ? ' open' : '') + '>'
+              // Name „KI-basierte Prüfung“ (Michael Karbe, Mail 22.09.2026, Punkt 11)
+              + '<summary>' + t('KI-basierte Prüfung (experimentell)') + (pr.status === 'fertig' && pr.bericht && pr.bericht.befunde ? ' (' + t('{n} Befunde', { n: pr.bericht.befunde.length }) + ')' : '') + '</summary>'
+              + '<div class="page-text-content" role="region" aria-label="' + t('KI-basierte Prüfung') + '" tabindex="0">';
+        const zu = kompakt ? '</div></section>' : '</div></details>';
+        return auf
             + '<p><strong>' + t('Experimentell:') + '</strong> ' + t('Wir arbeiten noch an dieser Prüfung. Die Befunde können unvollständig oder falsch sein.') + '</p>'
             + '<p>' + t('Ein KI-Modell vergleicht je Seite das Seitenbild mit den Tags und meldet nur, was es sicher belegen kann: Überschriften als Listenpunkte, falsche Ebenen, Tabellen ohne Kopfzeile, Alt-Texte, die nicht zum Bild passen, sichtbarer Text ohne Tag.') + '</p>'
             + (!busy && pr.seiten ? '<p><button type="button" class="btn btn-secondary" id="dok_pruef_' + d.id + '" onclick="Dokument.pruefungStarten(' + project.id + ', ' + d.id + ')">' + ico('sparkle') + knopf + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: pr.seiten, c: pr.preis || 0 }) + '</span></button></p>' : '')
             + '<output id="dok_pruef_status_' + d.id + '" class="dok-status" style="display:block;" tabindex="-1">' + (pr.laeuft ? t('Prüfung läuft … Seite {a} von {b}.', { a: pr.seite || 0, b: pr.seiten || 0 }) : '') + '</output>'
-            + pruefBerichtHtml(Object.assign({ projectId: project.id, docId: d.id }, pr))
+            + (kompakt ? pruefKurzHtml(pr) : pruefBerichtHtml(Object.assign({ projectId: project.id, docId: d.id }, pr)))
             + korrekturHtml(project, d, pr)
-            + '</div></details>';
+            + zu;
+    }
+    function pruefKurzHtml(pr) {
+        const b = pr.bericht || {};
+        if (pr.status === 'fehler') return '<p class="feld-hinweis">' + t('Fehler: {grund}', { grund: esc(b.fehler || t('unbekannt')) }) + '</p>';
+        if (pr.status !== 'fertig') return '';
+        const n = (b.befunde || []).length;
+        return '<p>' + (n
+            ? t('Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen.', { zeit: esc(b.zeit || ''), n: n })
+            : t('Letzte Prüfung am {zeit}: keine Befunde.', { zeit: esc(b.zeit || '') })) + '</p>';
     }
     async function pruefungStarten(projectId, docId) {
         const knopf = document.getElementById('dok_pruef_' + docId);
@@ -297,7 +323,7 @@
                 return;
             }
             offenePruefungen.add(docId);
-            await showProject(projectId, true);
+            await neuLaden(projectId);
             const out = document.getElementById('dok_pruef_status_' + docId);
             if (out) out.focus();
             announce(t('Prüfung gestartet, {n} Seiten.', { n: j.seiten || 0 }));
@@ -360,9 +386,12 @@
         const bilderZeile = (d.total_images || 0)
             ? t('{n} Bilder, {m} mit Alt-Text', { n: d.total_images, m: tg.hat_alt_texte || 0 })
             : t('keine Bilder gefunden');
+        // Aufbau nach Michael Karbe (Feedback 24.09.2026 - 3, Punkt 3): oben Vorschau + Dokumentinfos, darunter eine
+        // Linie über die volle Breite, darunter linksbündig die Knöpfe (nicht mehr neben dem Vorschaubild). Das Stand-
+        // Abzeichen steht rechtsbündig in der Überschriftszeile (Feedback 24.09.2026 - 2, Punkt 1).
         return '<section class="card dok-karte" id="dok_karte_' + d.id + '">'
             + '<details class="dok-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
-            + '<summary><h3 id="dok_heading_' + d.id + '" class="doc-heading">' + t('Dokument {n}: {name}', { n: pos, name: name }) + ' <span class="badge ' + standKlasse(d) + '" id="dok_badge_' + d.id + '">' + standText(d) + '</span></h3></summary>'
+            + '<summary><h3 id="dok_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: name }) + '</span> <span class="badge ' + standKlasse(d) + '" id="dok_badge_' + d.id + '">' + standText(d) + '</span></h3></summary>'
             + '<div class="ausgabe-karte">'
             + (seiten ? '<img class="ausgabe-vorschau" src="/api/projects/' + project.id + '/documents/' + d.id + '/vorschau" alt="' + t('Vorschau der ersten Seite von {name}', { name: name }) + '" loading="lazy">' : '')
             + '<div class="ausgabe-text">'
@@ -381,22 +410,94 @@
             +   ((d.felder || 0) > 0 ? metaZeile(t('Formularfelder'), t('{n} Felder', { n: d.felder })) : '')
             + '</ul>'
             + urteilHtml(project, d, tg, busy)
+            + '</div></div>'
+            + '<div class="dok-werkbank">'
             + '<div class="ausgabe-aktionen">'
             // Keine Knoepfe „Alt-Texte bearbeiten“/„Quickinfos bearbeiten“ mehr (Michael Karbe, Mail 22.09.2026,
             // Punkt 3: zu viele Knoepfe) — dafuer ist die Ansichts-Wahl im Projektkopf da.
             +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
-            // Herunterladen wandert in die Station „Abschlussprüfung“ (Steve 24.09.2026): dort sieht und hört man die fertige
-            // Datei, bevor man sie holt. Hier nur der Hinweis, wohin (Ansichts-Wahl im Kopf).
+            // „PDF herunterladen“ wieder hier (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 4; die Station „Prüfung“
+            // lädt nichts mehr herunter, Punkt 6). Derselbe Export wie bisher: Alt-Texte + Quickinfos, Ablage-Eintrag.
+            +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="Dokument.herunterladen(' + project.id + ', ' + d.id + ')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
             +   (ZEIGE_STRUKTURANSICHT && d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</div>'
-            + (d.getaggt === true && !busy ? '<p class="feld-hinweis">' + t('Prüfen und herunterladen: in der Ansicht „Abschlussprüfung“.') + '</p>' : '')
-            + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
+            + (d.getaggt === true && !busy ? '<p class="feld-hinweis">' + t('Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“.') + '</p>' : '')
+            + ergebnisHtml(d)
+            + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
             + berichtHtml(d)
             + hoerprobeHtml(project, d)
             + pruefungHtml(project, d)
-            + '</div></div></details></section>';
+            + '</div></details></section>';
+    }
+
+    // Ergebnis des Laufs in der Karte (grün bei Erfolg, rot bei Fehler, immer mit Text — nicht nur Farbe).
+    function ergebnisHtml(d) {
+        const m = ergebnisMeldung[d.id];
+        if (!m) return '';
+        return '<div class="dok-ergebnis' + (m.fehler ? ' dok-ergebnis-fehler' : '') + '" id="dok_ergebnis_' + d.id + '">'
+            + '<p id="dok_ergebnis_text_' + d.id + '" tabindex="-1">' + esc(m.text) + '</p>'
+            + '<button type="button" class="btn btn-secondary btn-small" onclick="Dokument.ergebnisSchliessen(' + d.id + ')">' + t('Meldung schließen') + '</button></div>';
+    }
+    function ergebnisSchliessen(docId) {
+        delete ergebnisMeldung[docId];
+        const box = document.getElementById('dok_ergebnis_' + docId);
+        if (box) box.remove();
+        const h = document.querySelector('#dok_karte_' + docId + ' summary');
+        if (h) h.focus();
+    }
+
+    // ─── Herunterladen (wieder in „Dokument“, 25.09.2026) ───
+    async function herunterladenAntwort(res, out) {
+        if (res.status === 402) {
+            const e = await res.json().catch(() => ({}));
+            if (out) out.textContent = '';
+            if (typeof zeigeCreditsMeldung === 'function') zeigeCreditsMeldung(e.detail); else announce((e.detail && e.detail.text) || t('Dafür reicht das Guthaben nicht.'));
+            return null;
+        }
+        if (!res.ok) {
+            const e = await res.json().catch(() => ({}));
+            const m = (e.detail && (e.detail.text || e.detail)) || t('Fehler beim Export.');
+            if (out) { out.textContent = typeof m === 'string' ? m : t('Fehler beim Export.'); out.focus(); }
+            return null;
+        }
+        const blob = await res.blob();
+        const cd = res.headers.get('Content-Disposition') || '';
+        const mStar = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+        const m = mStar || /filename="?([^";]+)"?/i.exec(cd);
+        let nm = null;
+        if (m) { try { nm = decodeURIComponent(m[1]); } catch (e) { nm = m[1]; } }
+        nm = nm || 'inkludocs.pdf';
+        if (typeof downloadBlob === 'function') downloadBlob(blob, nm);
+        let ansage = t('Heruntergeladen: „{name}“.', { name: nm }) + ' ' + t('Die Datei liegt auch in deiner Ablage.');
+        const credits = res.headers.get('X-Export-Credits');
+        if (credits) ansage += ' ' + t('{c} Credits verbraucht.', { c: credits });
+        return ansage;
+    }
+    let exportLaeuft = false;
+    async function herunterladen(projectId, docId) {
+        if (exportLaeuft) return;
+        const out = document.getElementById(docId ? 'dok_status_' + docId : 'dkAlleStatus');
+        const btn = document.getElementById(docId ? 'dok_export_' + docId : 'dkAlleBtn');
+        exportLaeuft = true;
+        if (btn) btn.disabled = true;
+        if (out) out.textContent = t('Wird exportiert...'); else announce(t('Export läuft …'));
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(docId ? { document_id: docId } : {}) });
+            const ansage = await herunterladenAntwort(res, out);
+            if (ansage) {
+                await showProject(projectId, true);
+                const o2 = document.getElementById(docId ? 'dok_status_' + docId : 'dkAlleStatus');
+                if (o2) { o2.textContent = ansage; o2.focus(); } else { announce(ansage); }
+            }
+        } catch (e) {
+            if (out) out.textContent = t('Verbindungsfehler.');
+        } finally {
+            exportLaeuft = false;
+            const b2 = document.getElementById(docId ? 'dok_export_' + docId : 'dkAlleBtn');
+            if (b2) b2.disabled = false;
+        }
     }
 
     // ─── Kopf ───
@@ -468,6 +569,7 @@
         const status = document.getElementById('dkLaufStatus');
         const ok = document.getElementById('dkLaufOk');
         laufAktiv = true;
+        delete ergebnisMeldung[docId];   // die Meldung des letzten Laufs gilt nicht mehr
         if (ok) ok.disabled = true;
         if (status) status.textContent = t('Wird gestartet …');
         try {
@@ -657,12 +759,20 @@
         aktuelleDaten = data;
         if (zustandProjekt !== projectId) { offeneBerichte = new Set(); offenePruefungen = new Set(); offeneDokumente = new Set(); geschlosseneDokumente = new Set(); zustandProjekt = projectId; }
         const docs = data.documents || [];
+        neuLaden = (pid) => showProject(pid, true);   // diese Ansicht zeichnet nach Aktionen selbst neu
+        // Mehrere Dokumente, alle getaggt: alles auf einmal als ZIP (bis 25.09.2026 in der Abschlusspruefung)
+        const alleGetaggt = docs.length > 1 && docs.every(d => d.getaggt === true && !(d.tagging && d.tagging.laeuft));
+        const alleKnopf = alleGetaggt
+            ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="Dokument.herunterladen(' + project.id + ', 0)">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> ' + t('als ZIP, mit Alt-Texten und Quickinfos') + '</span></button>'
+              + '<output id="dkAlleStatus" class="dok-status" tabindex="-1" style="flex-basis:100%;"></output></p>'
+            : '';
         main.innerHTML = kopfHtml(project, data)
             + uploadBlockHtml(project)
             + ketteKarteHtml(project)
             + laufMeldungHtml()
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
             + (docs.length ? '' : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen.') + '</p>')
+            + alleKnopf
             + '<div id="dokListe">' + docs.map((d, i) => karteHtml(project, d, i + 1, docs.length)).join('') + '</div>'
             + (typeof inkluagentSectionHtml === 'function' ? inkluagentSectionHtml(projectId) : '');
         // Nur echte Bedienung merken: Chrome feuert fuer jede offen gezeichnete Klappe einmal „toggle“ ohne
@@ -740,9 +850,15 @@
                     const fertigGeworden = (d2.documents || []).filter(x => laufende.includes(x.id) && !(x.tagging && x.tagging.laeuft));
                     const statusWechsel = d2.project.status !== project.status;
                     if (fertigGeworden.length || (statusWechsel && !jetzt.length)) {
+                        // Ergebnis IN der Karte unter dem Dokument, Fokus dorthin (Feedback 24.09.2026 - 2, Punkt 2)
+                        fertigGeworden.forEach(x => {
+                            ergebnisMeldung[x.id] = { text: abschlussText(x), fehler: !!(x.tagging && x.tagging.status === 'fehler') };
+                            offeneDokumente.add(x.id); geschlosseneDokumente.delete(x.id);
+                        });
                         await showProject(projectId, true);
                         if (fertigGeworden.length) {
-                            zeigeMeldung(fertigGeworden.map(abschlussText).join(' '));
+                            const ziel = document.getElementById('dok_ergebnis_text_' + fertigGeworden[0].id);
+                            if (ziel) ziel.focus(); else announce(fertigGeworden.map(abschlussText).join(' '));
                         } else if (project.status === 'extracting' && d2.project.status !== 'extracting') {
                             announce(t('Dokument gelesen.'));
                         }
@@ -755,8 +871,19 @@
         }
     }
 
-    // exportieren/zurAnsicht entfielen am 24.09.2026: Herunterladen macht die Abschlusspruefung (abschluss.js), der
-    // Ansichtswechsel laeuft ueber die Ansichts-Knoepfe (app.html ansichtWahlHtml).
+    // Herunterladen seit 25.09.2026 wieder hier (herunterladen); der Ansichtswechsel laeuft ueber die Ansichts-Knoepfe
+    // (app.html ansichtWahlHtml).
+    // Fuer die Station „Prüfung“ (abschluss.js): der KI-Block kompakt, wer danach neu zeichnet, die Abschlusstexte.
+    function kiBlockHtml(project, d) { return pruefungHtml(project, d, true); }
+    function setNeuLaden(fn) { neuLaden = fn; }
+    function kiKlappenBinden() {
+        document.querySelectorAll('details.dok-pruefung').forEach(el => el.addEventListener('toggle', () => {
+            const k = Number(el.dataset.doc);
+            if (el.open) offenePruefungen.add(k); else offenePruefungen.delete(k);
+        }));
+    }
     window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, meldungSchliessen, pollStoppen,
-                        ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig };
+                        ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig,
+                        herunterladen, ergebnisSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden,
+                        pruefAbschlussText, korrAbschlussText };
 })();

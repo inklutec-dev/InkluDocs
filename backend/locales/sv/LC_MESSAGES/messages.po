@@ -8431,3 +8431,37 @@ msgstr "Projekt totalt"
 
 msgid "Bilder insgesamt"
 msgstr "Bilder totalt"
+
+# PDF: Michaels Mails 24.09. - 2/- 3 (25.09.2026)
+msgid "Ansicht Prüfung geöffnet."
+msgstr "Vyn Granskning har öppnats."
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos."
+msgstr "Den färdiga filen granskas — exakt den PDF du laddar ner i vyn ”Dokument”. Det är kostnadsfritt att skapa granskningsfilen."
+
+msgid "Hier prüfst du das Ergebnis: Problemstellen, Seitenbild und Hörprobe der fertigen Datei. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Här granskar du resultatet: problem, sidbild och lyssningsprov för den färdiga filen. Nedladdning sker i vyn ”Dokument”."
+
+msgid "Keine der Problemstellen gehört zu einer bestimmten Seite."
+msgstr "Inget av problemen hör till en viss sida."
+
+msgid "KI-Prüfung erneut starten"
+msgstr "Starta AI-granskningen igen"
+
+msgid "KI-Prüfung starten"
+msgstr "Starta AI-granskning"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen."
+msgstr "Senaste granskning {zeit}: {n} fynd. De finns i listan över problem."
+
+msgid "Letzte Prüfung am {zeit}: keine Befunde."
+msgstr "Senaste granskning {zeit}: inga fynd."
+
+msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“."
+msgstr "Hitta problem, visa och lyssna på sidor: i vyn ”Granskning”."
+
+msgid "Problemseite {i} von {n}: Seite {s}"
+msgstr "Problemsida {i} av {n}: sida {s}"
+
+msgid "Prüfung"
+msgstr "Granskning"

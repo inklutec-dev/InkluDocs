@@ -8869,3 +8869,37 @@ msgstr "Proyectos en total"
 
 msgid "Bilder insgesamt"
 msgstr "Imágenes en total"
+
+# PDF: Michaels Mails 24.09. - 2/- 3 (25.09.2026)
+msgid "Ansicht Prüfung geöffnet."
+msgstr "Vista Revisión abierta."
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos."
+msgstr "Se revisa el archivo final, exactamente el PDF que descarga en la vista «Documento». Crear el archivo de revisión es gratis."
+
+msgid "Hier prüfst du das Ergebnis: Problemstellen, Seitenbild und Hörprobe der fertigen Datei. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Aquí revisa el resultado: problemas, imagen de la página y prueba de escucha del archivo final. La descarga se hace en la vista «Documento»."
+
+msgid "Keine der Problemstellen gehört zu einer bestimmten Seite."
+msgstr "Ninguno de los problemas corresponde a una página concreta."
+
+msgid "KI-Prüfung erneut starten"
+msgstr "Volver a iniciar la revisión con IA"
+
+msgid "KI-Prüfung starten"
+msgstr "Iniciar la revisión con IA"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen."
+msgstr "Última revisión el {zeit}: {n} hallazgos. Están en la lista de problemas."
+
+msgid "Letzte Prüfung am {zeit}: keine Befunde."
+msgstr "Última revisión el {zeit}: sin hallazgos."
+
+msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“."
+msgstr "Encontrar problemas, ver y escuchar páginas: en la vista «Revisión»."
+
+msgid "Problemseite {i} von {n}: Seite {s}"
+msgstr "Página con problemas {i} de {n}: página {s}"
+
+msgid "Prüfung"
+msgstr "Revisión"

@@ -8872,3 +8872,37 @@ msgstr "Projekte insgesamt"
 
 msgid "Bilder insgesamt"
 msgstr "Bilder insgesamt"
+
+# PDF: Michaels Mails 24.09. - 2/- 3 (25.09.2026)
+msgid "Ansicht Prüfung geöffnet."
+msgstr "Ansicht Prüfung geöffnet."
+
+msgid "Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos."
+msgstr "Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos."
+
+msgid "Hier prüfst du das Ergebnis: Problemstellen, Seitenbild und Hörprobe der fertigen Datei. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Hier prüfst du das Ergebnis: Problemstellen, Seitenbild und Hörprobe der fertigen Datei. Heruntergeladen wird in der Ansicht „Dokument“."
+
+msgid "Keine der Problemstellen gehört zu einer bestimmten Seite."
+msgstr "Keine der Problemstellen gehört zu einer bestimmten Seite."
+
+msgid "KI-Prüfung erneut starten"
+msgstr "KI-Prüfung erneut starten"
+
+msgid "KI-Prüfung starten"
+msgstr "KI-Prüfung starten"
+
+msgid "Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen."
+msgstr "Letzte Prüfung am {zeit}: {n} Befunde. Sie stehen in der Liste der Problemstellen."
+
+msgid "Letzte Prüfung am {zeit}: keine Befunde."
+msgstr "Letzte Prüfung am {zeit}: keine Befunde."
+
+msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“."
+msgstr "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“."
+
+msgid "Problemseite {i} von {n}: Seite {s}"
+msgstr "Problemseite {i} von {n}: Seite {s}"
+
+msgid "Prüfung"
+msgstr "Prüfung"
