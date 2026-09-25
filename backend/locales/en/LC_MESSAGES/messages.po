@@ -8771,3 +8771,66 @@ msgstr "Search “{text}”"
 
 msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
 msgstr "The {rest} of {menge} credits not yet used will be taken back. Credits already used stay used. The booking remains visible but no longer counts as revenue."
+
+# Verwaltung: Teams (25.09.2026)
+msgid "Team und Enterprise"
+msgstr "Team and Enterprise"
+
+msgid "({belegt} von {sitze} Plätzen belegt)"
+msgstr "({belegt} of {sitze} seats taken)"
+
+msgid "noch niemand eingeladen"
+msgstr "no one invited yet"
+
+# Verwaltung: Umsatz aufgeräumt (25.09.2026)
+msgid "1 Verkauf"
+msgstr "1 sale"
+
+msgid "In diesem Jahr gibt es noch keine Buchungen."
+msgstr "There are no bookings in this year yet."
+
+msgid "Rechnung {betrag}"
+msgstr "invoice {betrag}"
+
+msgid "Seite {seite} von {seiten}"
+msgstr "page {seite} of {seiten}"
+
+msgid "Seiten der Buchungsliste"
+msgstr "Pages of the booking list"
+
+msgid "Stripe {betrag}"
+msgstr "Stripe {betrag}"
+
+msgid "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
+msgstr "Stripe purchases and Stripe subscriptions appear automatically as soon as Stripe confirms the payment. Sales on invoice are entered via “Credit credits” or “Assign subscription” on the customer page."
+
+msgid "verschenkt: {credits} Credits"
+msgstr "given away: {credits} credits"
+
+msgid "Was zählt zum Umsatz?"
+msgstr "What counts as revenue?"
+
+msgid "1 Monat"
+msgstr "1 month"
+
+# Verwaltung: Prüfbericht (25.09.2026)
+msgid "Nur Einstellungen ändern, nichts buchen"
+msgstr "Only change settings, book nothing"
+
+msgid "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
+msgstr "Save the {plan} subscription for {monate} months for {name} without booking anything?"
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
+msgstr "Please choose the type: sale on invoice, free of charge or only change settings."
+
+msgid "Buchung stornieren"
+msgstr "Cancel booking"
+
+msgid "Buchung vom {datum} stornieren"
+msgstr "Cancel booking of {datum}"
+
+msgid "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen."
+msgstr "The booking remains visible but no longer counts as revenue. The customer’s plan stays unchanged — adjust it via “Assign or change subscription” if needed."
+
+msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
+msgstr "You refund the money in the Stripe dashboard — here only the booking is corrected."

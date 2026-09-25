@@ -8333,3 +8333,66 @@ msgstr "Sökning ”{text}”"
 
 msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
 msgstr "De {rest} av {menge} krediter som ännu inte har använts dras tillbaka. Redan använda krediter förblir förbrukade. Bokningen syns fortfarande men räknas inte längre som omsättning."
+
+# Verwaltung: Teams (25.09.2026)
+msgid "Team und Enterprise"
+msgstr "Team och Enterprise"
+
+msgid "({belegt} von {sitze} Plätzen belegt)"
+msgstr "({belegt} av {sitze} platser upptagna)"
+
+msgid "noch niemand eingeladen"
+msgstr "ingen inbjuden ännu"
+
+# Verwaltung: Umsatz aufgeräumt (25.09.2026)
+msgid "1 Verkauf"
+msgstr "1 försäljning"
+
+msgid "In diesem Jahr gibt es noch keine Buchungen."
+msgstr "Det finns ännu inga bokningar i år."
+
+msgid "Rechnung {betrag}"
+msgstr "faktura {betrag}"
+
+msgid "Seite {seite} von {seiten}"
+msgstr "sida {seite} av {seiten}"
+
+msgid "Seiten der Buchungsliste"
+msgstr "Sidor i bokningslistan"
+
+msgid "Stripe {betrag}"
+msgstr "Stripe {betrag}"
+
+msgid "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
+msgstr "Stripe-köp och Stripe-abonnemang visas automatiskt så snart Stripe bekräftar betalningen. Försäljning mot faktura registreras via ”Kreditera krediter” eller ”Tilldela abonnemang” på kundsidan."
+
+msgid "verschenkt: {credits} Credits"
+msgstr "bortskänkt: {credits} krediter"
+
+msgid "Was zählt zum Umsatz?"
+msgstr "Vad räknas som omsättning?"
+
+msgid "1 Monat"
+msgstr "1 månad"
+
+# Verwaltung: Prüfbericht (25.09.2026)
+msgid "Nur Einstellungen ändern, nichts buchen"
+msgstr "Ändra bara inställningar, inget bokförs"
+
+msgid "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
+msgstr "Spara abonnemanget {plan} i {monate} månader för {name} utan att boka något?"
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
+msgstr "Välj typ: försäljning mot faktura, utan debitering eller bara ändra inställningar."
+
+msgid "Buchung stornieren"
+msgstr "Makulera bokning"
+
+msgid "Buchung vom {datum} stornieren"
+msgstr "Makulera bokningen från {datum}"
+
+msgid "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen."
+msgstr "Bokningen syns fortfarande men räknas inte längre som omsättning. Kundens plan är oförändrad — justera den vid behov via ”Tilldela eller ändra abonnemang”."
+
+msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
+msgstr "Pengarna återbetalar du i Stripe-instrumentpanelen — här rättas bara bokningen."

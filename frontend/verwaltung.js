@@ -29,6 +29,19 @@
     return datumLang(iso) + (uhr ? ', ' + uhr : '');
   }
 
+  function datumKurz(iso) {
+    // '2026-09-25 09:59' -> '25. September, 09:59' (Jahr steht schon in der Überschrift).
+    if (!iso) return '';
+    const p = String(iso).slice(0, 10).split('-');
+    const uhr = String(iso).slice(11, 16);
+    let tag;
+    try {
+      tag = new Intl.DateTimeFormat(window.LANG || 'de', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+        .format(new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])));
+    } catch (e) { tag = p[2] + '.' + p[1] + '.'; }
+    return tag + (uhr ? ', ' + uhr : '');
+  }
+
   function monatLang(ym) {
     const p = String(ym).split('-');
     if (p.length < 2) return String(ym);
@@ -118,15 +131,16 @@
     return name;
   }
 
-  // Eine Buchung als ein Satz (Kundenseite und Umsatz-Seite gleich formuliert).
-  function buchungText(b, mitKunde) {
+  // Eine Buchung als Teile in fester Reihenfolge: Datum, (Kunde), was, Betrag und Weg, Zusätze.
+  // kurz = Datum ohne Jahr (Umsatz-Seite: das Jahr steht in der Überschrift).
+  function buchungTeile(b, mitKunde, kurz) {
     const teile = [];
-    teile.push(datumZeit(b.gebucht_am));
+    teile.push(kurz ? datumKurz(b.gebucht_am) : datumZeit(b.gebucht_am));
     if (mitKunde) teile.push(b.kunde_name || b.kunde_email || t('gelöschtes Konto'));
     let was;
     if (b.art === 'abo') {
       was = t('Abo {plan}', { plan: PLAN_NAMEN[b.plan] || b.plan || '' }).trim();
-      if (b.laufzeit_monate) was += ', ' + t('{monate} Monate', { monate: b.laufzeit_monate });
+      if (b.laufzeit_monate) was += ', ' + (b.laufzeit_monate === 1 ? t('1 Monat') : t('{monate} Monate', { monate: b.laufzeit_monate }));
     } else {
       was = t('{menge} Credits', { menge: zahl(b.credits) });
     }
@@ -139,18 +153,40 @@
     if (b.status === 'storniert') teile.push(t('storniert, zählt nicht zum Umsatz'));
     if (b.rechnungsnummer) teile.push(t('Rechnung {nummer}', { nummer: b.rechnungsnummer }));
     if (b.notiz) teile.push(b.notiz);
-    if (b.gebucht_von) teile.push(t('eingetragen von {name}', { name: b.gebucht_von }));
+    // Bei Stripe sagt „über Stripe“ schon alles; „eingetragen von“ nur bei Hand-Buchungen.
+    if (b.gebucht_von && b.weg !== 'stripe') teile.push(t('eingetragen von {name}', { name: b.gebucht_von }));
     if (b.korrigiert && b.status !== 'storniert') teile.push(t('berichtigt'));
-    return teile.join(' · ');
+    return teile;
+  }
+
+  function buchungText(b, mitKunde, kurz) {
+    return buchungTeile(b, mitKunde, kurz).join(' · ');
+  }
+
+  // Nach einer Aktion: ERST neu laden, DANN ansagen und den Fokus auf die Abschnitts-
+  // Überschrift setzen. Umgekehrt überschrieb das Neuladen die Ansage, und der Fokus fiel
+  // auf <body>, weil der auslösende Knopf beim Neuaufbau verschwand (Prüfbericht 25.09.2026).
+  async function abschliessen(danach, meldung, fokusId) {
+    if (danach) await danach();
+    const h = fokusId && byId(fokusId);
+    if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+    announce(meldung);
+  }
+
+  // Bonus-Schwelle (wie beim Gutschreiben) — steht am Dialog, damit jede Seite sie kennt.
+  function bonusGrenze() {
+    const dlg = byId('korrekturDialog');
+    return dlg ? parseInt(dlg.getAttribute('data-bonus-grenze') || '500', 10) : 500;
   }
 
   // ── Dialog „Buchung berichtigen“ (Kundenseite + Umsatz-Seite) ──────────
   let _korrektur = null;
-  function korrekturOeffnen(b, danach) {
+  function korrekturOeffnen(b, danach, fokusId) {
     const dlg = byId('korrekturDialog');
     if (!dlg) return;
-    _korrektur = { b: b, danach: danach };
+    _korrektur = { b: b, danach: danach, fokus: fokusId };
     byId('korrekturFuer').textContent = buchungText(b, true);
+    byId('korrekturGross').checked = false;
     byId('korrekturArt').value = b.weg === 'bonus' ? 'bonus' : 'verkauf';
     byId('korrekturBetrag').value = b.weg === 'bonus' ? '' : euroFeld(b.betrag_cent);
     byId('korrekturNummer').value = b.rechnungsnummer || '';
@@ -163,14 +199,19 @@
   function korrekturArtWechsel() {
     const verkauf = byId('korrekturArt').value === 'verkauf';
     byId('korrekturVerkauf').hidden = !verkauf;
+    const gross = !verkauf && _korrektur && _korrektur.b.weg !== 'bonus' && _korrektur.b.credits > bonusGrenze();
+    byId('korrekturGrossFeld').hidden = !gross;
+    byId('korrekturGrossText').textContent = t('Ja, ich möchte bewusst mehr als {grenze} Credits verschenken.', { grenze: zahl(bonusGrenze()) });
   }
   function korrekturEinrichten() {
     const dlg = byId('korrekturDialog');
     if (!dlg) return;
     byId('korrekturArt').addEventListener('change', korrekturArtWechsel);
     byId('korrekturAbbrechen').addEventListener('click', () => dlg.close());
+    let laeuft = false;
     byId('korrekturForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (laeuft) return;
       const fehler = byId('korrekturFehler');
       fehler.textContent = '';
       const art = byId('korrekturArt').value;
@@ -181,33 +222,42 @@
       if (grund.length < 3) {
         fehler.textContent = t('Bitte kurz den Grund der Korrektur angeben.'); byId('korrekturGrund').focus(); return;
       }
+      if (!byId('korrekturGrossFeld').hidden && !byId('korrekturGross').checked) {
+        fehler.textContent = t('Bitte das Häkchen setzen, um den großen Bonus zu bestätigen.'); byId('korrekturGross').focus(); return;
+      }
+      laeuft = true;
       const r = await sendeJson('/api/admin/buchungen/' + _korrektur.b.id + '/korrektur', 'POST', {
         art: art, betrag: byId('korrekturBetrag').value.trim(),
         rechnungsnummer: byId('korrekturNummer').value.trim(), grund: grund,
+        bestaetigt_gross: byId('korrekturGross').checked,
       });
+      laeuft = false;
       if (!r.ok) { fehler.textContent = r.daten.detail || t('Die Korrektur konnte nicht gespeichert werden.'); return; }
       dlg.close();
-      announce(r.daten.message || t('Buchung berichtigt.'));
-      if (_korrektur.danach) _korrektur.danach();
+      await abschliessen(_korrektur.danach, r.daten.message || t('Buchung berichtigt.'), _korrektur.fokus);
     });
   }
 
   // ── Dialog „Gutschrift stornieren“ (Kundenseite + Umsatz-Seite) ────────
   let _storno = null;
   function kannStornieren(b) {
-    return b.weg !== 'stripe' && b.art === 'paket' && b.status !== 'storniert';
+    return b.status !== 'storniert';
   }
   function kannBerichtigen(b) {
     return b.weg !== 'stripe' && b.status !== 'storniert';
   }
-  function stornoOeffnen(b, danach) {
+  function stornoOeffnen(b, danach, fokusId) {
     const dlg = byId('stornoDialog');
     if (!dlg) return;
-    _storno = { b: b, danach: danach };
+    _storno = { b: b, danach: danach, fokus: fokusId };
     byId('stornoFuer').textContent = buchungText(b, true);
     const rest = (b.paket_rest === null || b.paket_rest === undefined) ? 0 : b.paket_rest;
-    byId('stornoFolgen').textContent = t('Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz.',
-      { rest: zahl(rest), menge: zahl(b.credits) });
+    let folgen = b.art === 'abo'
+      ? t('Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen.')
+      : t('Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz.',
+        { rest: zahl(rest), menge: zahl(b.credits) });
+    if (b.weg === 'stripe') folgen += ' ' + t('Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt.');
+    byId('stornoFolgen').textContent = folgen;
     byId('stornoGrund').value = '';
     byId('stornoFehler').textContent = '';
     dlg.showModal();
@@ -230,28 +280,27 @@
       laeuft = false;
       if (!r.ok) { fehler.textContent = r.daten.detail || t('Das Stornieren hat nicht geklappt.'); return; }
       dlg.close();
-      announce(r.daten.message || t('Gutschrift storniert.'));
-      if (_storno.danach) _storno.danach();
+      await abschliessen(_storno.danach, r.daten.message || t('Gutschrift storniert.'), _storno.fokus);
     });
   }
 
   // Knöpfe „Berichtigen“ und „Stornieren“ an eine Buchungszeile hängen (nur Voll-Admins).
-  function buchungKnoepfe(li, b, danach) {
+  function buchungKnoepfe(li, b, danach, fokusId) {
     if (!istVollAdmin()) return;
     const datum = datumZeit(b.gebucht_am);
     if (kannBerichtigen(b)) {
       const k = el('button', 'btn btn-secondary btn-small', t('Berichtigen'));
       k.type = 'button';
       k.setAttribute('aria-label', t('Buchung vom {datum} berichtigen', { datum: datum }));
-      k.addEventListener('click', () => korrekturOeffnen(b, danach));
+      k.addEventListener('click', () => korrekturOeffnen(b, danach, fokusId));
       li.appendChild(document.createTextNode(' '));
       li.appendChild(k);
     }
     if (kannStornieren(b)) {
       const k = el('button', 'btn btn-delete btn-small', t('Stornieren'));
       k.type = 'button';
-      k.setAttribute('aria-label', t('Gutschrift vom {datum} stornieren', { datum: datum }));
-      k.addEventListener('click', () => stornoOeffnen(b, danach));
+      k.setAttribute('aria-label', t('Buchung vom {datum} stornieren', { datum: datum }));
+      k.addEventListener('click', () => stornoOeffnen(b, danach, fokusId));
       li.appendChild(document.createTextNode(' '));
       li.appendChild(k);
     }
@@ -259,10 +308,10 @@
 
   // ── Dialog „API-Tageslimit ändern“ (Kundenseite + API-Seite) ───────────
   let _limit = null;
-  function limitOeffnen(konto, danach) {
+  function limitOeffnen(konto, danach, fokusId) {
     const dlg = byId('limitDialog');
     if (!dlg) return;
-    _limit = { konto: konto, danach: danach };
+    _limit = { konto: konto, danach: danach, fokus: fokusId };
     byId('limitFuer').textContent = t('Für: {name} ({email})', { name: konto.name, email: konto.email });
     byId('limitWert').value = String(konto.limit);
     byId('limitFehler').textContent = '';
@@ -273,8 +322,10 @@
     const dlg = byId('limitDialog');
     if (!dlg) return;
     byId('limitAbbrechen').addEventListener('click', () => dlg.close());
+    let laeuft = false;
     byId('limitForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (laeuft) return;
       const fehler = byId('limitFehler');
       fehler.textContent = '';
       const roh = byId('limitWert').value.trim();
@@ -289,11 +340,12 @@
         // Genau der Standard = Standard, kein eigener Eintrag (Steve 11.08.2026).
         if (limit === window.API_LIMIT_STANDARD) limit = null;
       }
+      laeuft = true;
       const r = await sendeJson('/api/admin/users/' + _limit.konto.id + '/api-limit', 'POST', { limit: limit });
+      laeuft = false;
       if (!r.ok) { fehler.textContent = r.daten.detail || t('Das Limit konnte nicht gespeichert werden.'); return; }
       dlg.close();
-      announce(r.daten.message || t('Gespeichert.'));
-      if (_limit.danach) _limit.danach();
+      await abschliessen(_limit.danach, r.daten.message || t('Gespeichert.'), _limit.fokus);
     });
   }
 
@@ -305,7 +357,7 @@
 
   window.Verwaltung = {
     PLAN_NAMEN, datumLang, datumZeit, monatLang, euro, euroFeld, zahl, el, zeile, leer,
-    ladeJson, sendeJson, istVollAdmin, planText, buchungText, korrekturOeffnen, limitOeffnen,
+    ladeJson, sendeJson, istVollAdmin, planText, buchungText, buchungTeile, datumKurz, korrekturOeffnen, limitOeffnen,
     buchungKnoepfe, zaehltZumUmsatz: (b) => b.weg !== 'bonus' && (b.status === 'ok' || b.status === 'ausstehend'),
   };
 })();

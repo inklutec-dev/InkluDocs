@@ -330,7 +330,9 @@ function renderLegalLinks() {
     const wrap = document.createElement('div');
     wrap.className = 'dash-legal-links';
     LEGAL_LINKS.forEach((it, i) => {
-      if (i > 0) wrap.appendChild(document.createTextNode(' · '));
+      // '\u00a0· ': Punkt bleibt am vorigen Link, danach darf umbrochen werden (25.09.2026 — mit
+      // geschütztem Leerzeichen auf beiden Seiten ragte die Zeile auf dem Handy über den Rand).
+      if (i > 0) wrap.appendChild(document.createTextNode('\u00a0· '));
       const a = document.createElement('a');
       a.href = (istAnonym() && it.oeffentlich) ? it.oeffentlich : it.href;
       a.textContent = it.label;

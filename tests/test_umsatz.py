@@ -179,12 +179,41 @@ class TestBuchen(unittest.TestCase):
         with self.assertRaises(ValueError):   # stornierte Buchung nicht berichtigen
             umsatz.korrigiere(b["id"], weg="bonus", betrag_cent=0, rechnungsnummer="", grund="geht nicht",
                               admin={"display_name": "A"})
-        stripe_b = [x for x in self._buchungen() if x["weg"] == "stripe"][0]
+
+    def test_5c_stripe_doppelt_und_erstattet(self):
+        pid = billing.schenke_credits(self.kunde["id"], 500, quelle="stripe", verfall_monate=None,
+                                      buchung={"konto": self.kunde, "weg": "stripe", "betrag_cent": 2000,
+                                               "stripe_ref": "cs_test_webhook_doppelt"})
+        self.assertIsNotNone(pid)
+        conn = database.get_db()
+        vorher = conn.execute("SELECT COUNT(*) FROM quota_pakete").fetchone()[0]
+        conn.close()
+        zweit = billing.schenke_credits(self.kunde["id"], 500, quelle="stripe", verfall_monate=None,
+                                        buchung={"konto": self.kunde, "weg": "stripe", "betrag_cent": 2000,
+                                                 "stripe_ref": "cs_test_webhook_doppelt"})
+        conn = database.get_db()
+        nachher = conn.execute("SELECT COUNT(*) FROM quota_pakete").fetchone()[0]
+        conn.close()
+        self.assertIsNone(zweit)
+        self.assertEqual(nachher, vorher, "wiederholter Webhook darf kein zweites Paket anlegen")
+        b = [x for x in self._buchungen() if x["weg"] == "stripe" and x["paket_rest"] == 500][0]
+        neu = umsatz.storniere(b["id"], grund="in Stripe erstattet", admin={"display_name": "A"})
+        self.assertEqual((neu["status"], neu["zurueckgenommen"]), ("storniert", 500))
+
+    def test_5d_grosser_bonus_beim_berichtigen(self):
+        billing.schenke_credits(self.kunde["id"], 5000, quelle="rechnung", verfall_monate=None,
+                                buchung={"konto": self.kunde, "weg": "rechnung", "betrag_cent": 15000,
+                                         "notiz": "gross-verkauf"})
+        b = [x for x in self._buchungen() if x["notiz"] == "gross-verkauf"][0]
         with self.assertRaises(ValueError):
-            umsatz.storniere(stripe_b["id"], grund="Stripe", admin={"display_name": "A"})
+            umsatz.korrigiere(b["id"], weg="bonus", betrag_cent=0, rechnungsnummer="", grund="Geschenk",
+                              admin={"display_name": "A"})
+        neu = umsatz.korrigiere(b["id"], weg="bonus", betrag_cent=0, rechnungsnummer="", grund="Geschenk",
+                                admin={"display_name": "A"}, bestaetigt_gross=True)
+        self.assertEqual(neu["weg"], "bonus")
 
     def test_6_export(self):
-        feind = _konto("feind@example.invalid", "=HYPERLINK(\"http://x\")")
+        feind = _konto("feind@example.invalid", "=HYPERLINK(\"http://x\")\x07")
         umsatz.buche_einzeln(konto=feind, art="paket", weg="rechnung", credits=500, betrag_cent=2000,
                              notiz="+SUMME(A1)")
         jetzt = datetime.now(ZONE)
@@ -305,6 +334,83 @@ class TestEndpunkte(unittest.TestCase):
         self.assertEqual(r.status_code, 200, r.text)
         self.assertIn("50 Credits zurückgenommen", r.json()["message"])
         self.assertEqual(self.c_voll.post("/api/admin/buchungen/999999/storno", json={"grund": "gibtsnicht"}).status_code, 404)
+
+    def test_verlaengerung_nur_bei_rechnungs_abo(self):
+        heute = datetime.utcnow().strftime("%Y-%m-%d")
+        ergebnis = {}
+        for quelle in ("rechnung", None):
+            k = _konto(f"verl-{quelle}@example.invalid", f"Verlaengerung {quelle}")
+            conn = database.get_db()
+            conn.execute("UPDATE users SET plan = 'single', plan_quelle = ?, plan_laufzeit_monate = 3, "
+                         "auto_verlaengerung = 1, plan_gueltig_bis = date('now', '-1 day') WHERE id = ?",
+                         (quelle, k["id"]))
+            conn.commit()
+            zeile = dict(conn.execute(
+                "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, plan_quelle, "
+                "stripe_subscription_id, geplanter_plan, geplante_laufzeit, geplant_ab, "
+                "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung FROM users WHERE id = ?", (k["id"],)).fetchone())
+            conn.close()
+            self.main._abo_konto_pruefen(zeile, heute)
+            ergebnis[quelle] = umsatz.liste(konto_id=k["id"])
+        self.assertEqual(len(ergebnis["rechnung"]), 1)
+        b = ergebnis["rechnung"][0]
+        self.assertEqual((b["art"], b["weg"], b["plan"], b["betrag_cent"], b["gebucht_von"]),
+                         ("abo", "rechnung", "single", 2985, "System (automatische Verlängerung)"))
+        self.assertEqual(ergebnis[None], [])   # ohne Quelle (Testkonten): kein Umsatz
+
+    def test_verlaengerung_uebernimmt_sonderpreis(self):
+        heute = datetime.utcnow().strftime("%Y-%m-%d")
+        k = _konto("sonderpreis@example.invalid", "Sonderpreis")
+        r = self.c_voll.post(f"/api/admin/users/{k['id']}/plan",
+                             json={"plan": "single", "laufzeit_monate": 3, "art": "verkauf", "betrag": "25,00"})
+        self.assertEqual(r.status_code, 200, r.text)
+        conn = database.get_db()
+        conn.execute("UPDATE users SET plan_gueltig_bis = date('now', '-1 day') WHERE id = ?", (k["id"],))
+        conn.commit()
+        zeile = dict(conn.execute(
+            "SELECT id, email, display_name, plan, plan_gueltig_bis, plan_laufzeit_monate, plan_quelle, "
+            "stripe_subscription_id, geplanter_plan, geplante_laufzeit, geplant_ab, "
+            "COALESCE(auto_verlaengerung, 1) AS auto_verlaengerung FROM users WHERE id = ?", (k["id"],)).fetchone())
+        conn.close()
+        self.main._abo_konto_pruefen(zeile, heute)
+        b = umsatz.liste(konto_id=k["id"])
+        self.assertEqual([x["betrag_cent"] for x in b], [2500, 2500])
+
+    def test_abo_nur_einstellungen(self):
+        k = _konto("nur-einst@example.invalid", "Nur Einstellungen")
+        url = f"/api/admin/users/{k['id']}/plan"
+        self.c_voll.post(url, json={"plan": "single", "laufzeit_monate": 6, "art": "verkauf", "betrag": "59,70"})
+        r = self.c_voll.post(url, json={"plan": "single", "laufzeit_monate": 6, "art": "keine",
+                                        "auto_verlaengerung": False})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(len(umsatz.liste(konto_id=k["id"])), 1)
+        self.assertFalse(database.get_user_by_id(k["id"])["auto_verlaengerung"])
+
+    def test_herabgestufter_admin_verliert_zugriff_sofort(self):
+        a = _konto("ex-admin@example.invalid", "Ex Admin", admin=1, stufe="view")
+        from fastapi.testclient import TestClient
+        c = TestClient(self.main.app)
+        c.cookies.set("token", self.main.create_token(a["id"], a["email"], 1))
+        self.assertEqual(c.get("/api/admin/umsatz").status_code, 200)
+        database.set_user_admin(a["id"], 0)
+        self.assertEqual(c.get("/api/admin/umsatz").status_code, 403)
+
+    def test_team_filter_und_mitglieder(self):
+        inhaber = _konto("team-inhaber@example.invalid", "Team Inhaber")
+        mitglied = _konto("team-mitglied@example.invalid", "Team Mitglied")
+        conn = database.get_db()
+        conn.execute("UPDATE users SET plan = 'team', plan_gueltig_bis = date('now', '+30 days'), "
+                     "team_name = 'Testteam' WHERE id = ?", (inhaber["id"],))
+        conn.execute("INSERT INTO team_mitgliedschaften (inhaber_id, mitglied_id) VALUES (?, ?)",
+                     (inhaber["id"], mitglied["id"]))
+        conn.commit()
+        conn.close()
+        d = self.c_voll.get("/api/admin/kunden", params={"filter": "team"}).json()
+        self.assertEqual([k["email"] for k in d["kunden"]], ["team-inhaber@example.invalid"])
+        r = self.c_voll.get(f"/api/admin/users/{inhaber['id']}/report").json()
+        self.assertEqual([m["id"] for m in r["team"]["mitglieder"]], [mitglied["id"]])
+        r = self.c_voll.get(f"/api/admin/users/{mitglied['id']}/report").json()
+        self.assertEqual(r["team"]["mitglied_in"][0]["inhaber_id"], inhaber["id"])
 
     def test_kundenliste(self):
         d = self.c_voll.get("/api/admin/kunden", params={"q": "kunde.ep"}).json()

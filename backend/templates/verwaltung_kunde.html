@@ -9,7 +9,7 @@
    ganz unten getrennt Konto verwalten (Sperren, Passwort, Löschen). #}
 <h1 id="kundeTitel">{{ _('Verwaltung') }}: {{ _('Kunde') }}</h1>
 {% include "_verwaltung_nav.html" %}
-<p><a href="/verwaltung/kunden" id="zurListe">{{ _('Zurück zur Kundenliste') }}</a></p>
+<p class="verwaltung-zurueck"><a href="/verwaltung/kunden" id="zurListe">{{ _('Zurück zur Kundenliste') }}</a></p>
 
 <div id="kundeInhalt" aria-busy="true">
   <p class="dash-sub">{{ _('Wird geladen …') }}</p>
@@ -119,6 +119,7 @@
             <option value="">{{ _('Bitte wählen') }}</option>
             <option value="verkauf">{{ _('Verkauf auf Rechnung') }}</option>
             <option value="ohne">{{ _('Ohne Berechnung') }}</option>
+            <option value="keine">{{ _('Nur Einstellungen ändern, nichts buchen') }}</option>
           </select>
         </div>
         <div id="aboVerkauf" hidden>
@@ -269,8 +270,34 @@
       }
     }
     V.zeile(sec, t('Abo'), plan);
-    if (d.abo.team_name) V.zeile(sec, t('Team'), d.abo.team_name + (d.team.mitglieder.length ? ' — ' + t('{n} Mitglieder', { n: d.team.mitglieder.length }) : ''));
-    if (d.team.mitglied_in.length) V.zeile(sec, t('Arbeitet außerdem im Team von'), d.team.mitglied_in.map((x) => x.team_name || x.inhaber).join(', '));
+    // Teams (Steve 25.09.2026): Mitglieder und Inhaber direkt im Überblick, jeweils als Link —
+    // so springt man zwischen Inhaber und Team, ohne etwas aufzuklappen.
+    if (d.abo.team_name || d.team.mitglieder.length) {
+      const sitze = d.abo.sitze_inklusive ? ' ' + t('({belegt} von {sitze} Plätzen belegt)', { belegt: d.team.mitglieder.length + 1, sitze: d.abo.sitze_inklusive }) : '';
+      V.zeile(sec, t('Team'), (d.abo.team_name || '—') + sitze);
+      if (d.team.mitglieder.length) {
+        const p = V.el('p', 'dash-report-zeile', t('Mitglieder') + ': ');
+        d.team.mitglieder.forEach((m, i) => {
+          if (i) p.appendChild(document.createTextNode(', '));
+          const a = V.el('a', null, m.display_name || m.email);
+          a.href = '/verwaltung/kunden/' + m.id;
+          p.appendChild(a);
+        });
+        sec.appendChild(p);
+      } else {
+        V.zeile(sec, t('Mitglieder'), t('noch niemand eingeladen'));
+      }
+    }
+    if (d.team.mitglied_in.length) {
+      const p = V.el('p', 'dash-report-zeile', t('Arbeitet außerdem im Team von') + ': ');
+      d.team.mitglied_in.forEach((x, i) => {
+        if (i) p.appendChild(document.createTextNode(', '));
+        const a = V.el('a', null, x.inhaber + (x.team_name ? ' (' + x.team_name + ')' : ''));
+        a.href = '/verwaltung/kunden/' + x.inhaber_id;
+        p.appendChild(a);
+      });
+      sec.appendChild(p);
+    }
     const g = d.guthaben;
     if (g.rest === null || g.rest === undefined) V.zeile(sec, t('Guthaben'), t('unbegrenzt'));
     else V.zeile(sec, t('Guthaben'), t('{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen',
@@ -294,7 +321,7 @@
       const ul = V.el('ul', 'verwaltung-liste');
       buchungen.forEach((x) => {
         const li = V.el('li', 'verwaltung-zeile', V.buchungText(x, false));
-        V.buchungKnoepfe(li, x, laden);
+        V.buchungKnoepfe(li, x, laden, 'h-buchungen');
         ul.appendChild(li);
       });
       sec.appendChild(ul);
@@ -311,7 +338,7 @@
       V.zeile(sec, t('Heute'), t('{n} Bilder', { n: V.zahl(apiDaten.heute) }));
       if (voll) {
         const akt = V.el('div', 'dash-actions');
-        akt.appendChild(knopf(t('Limit ändern'), () => V.limitOeffnen({ id: ID, name: d.konto.name, email: d.konto.email, limit: apiDaten.limit }, laden)));
+        akt.appendChild(knopf(t('Limit ändern'), () => V.limitOeffnen({ id: ID, name: d.konto.name, email: d.konto.email, limit: apiDaten.limit }, laden, 'h-api')));
         sec.appendChild(akt);
       }
     }
@@ -336,12 +363,6 @@
       const ul = V.el('ul', 'verwaltung-liste');
       d.nutzung.verlauf.forEach((m) => ul.appendChild(V.el('li', 'verwaltung-zeile',
         t('{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}', { monat: V.monatLang(m.monat), credits: V.zahl(m.topf), kosten: V.euro(Math.round(m.kosten_geschaetzt * 100)) }))));
-      details.appendChild(ul);
-    }
-    if (d.team.mitglieder.length) {
-      details.appendChild(V.el('h3', null, t('Team-Mitglieder ({n})', { n: d.team.mitglieder.length })));
-      const ul = V.el('ul', 'verwaltung-liste');
-      d.team.mitglieder.forEach((m) => ul.appendChild(V.el('li', 'verwaltung-zeile', m.display_name + ' (' + m.email + ')')));
       details.appendChild(ul);
     }
     sec.appendChild(details);
@@ -516,7 +537,7 @@
       const art = byId('aboArt').value;
       const planName = V.PLAN_NAMEN[plan];
       const monate = byId('aboLaufzeit').value;
-      if (!art) { fehler.textContent = t('Bitte die Art wählen: Verkauf auf Rechnung oder ohne Berechnung.'); byId('aboArt').focus(); return; }
+      if (!art) { fehler.textContent = t('Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern.'); byId('aboArt').focus(); return; }
       if (art === 'verkauf') {
         const betrag = byId('aboBetrag').value.trim();
         if (!/^\d{1,6}([.,]\d{1,2})?$/.test(betrag) || parseFloat(betrag.replace(',', '.')) <= 0) {
@@ -524,9 +545,11 @@
         }
         satz = t('{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?',
           { name: name, plan: planName, monate: monate, betrag: V.euro(Math.round(parseFloat(betrag.replace(',', '.')) * 100)) });
-      } else {
+      } else if (art === 'ohne') {
         if (byId('aboGrund').value.trim().length < 3) { fehler.textContent = t('Bitte kurz den Grund angeben.'); byId('aboGrund').focus(); return; }
         satz = t('{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?', { name: name, plan: planName, monate: monate });
+      } else {
+        satz = t('Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?', { name: name, plan: planName, monate: monate });
       }
       satz += ' ' + (byId('aboAutoVerl').checked ? t('Es verlängert sich automatisch.') : t('Es verlängert sich nicht automatisch.'));
     }
@@ -547,7 +570,7 @@
       if (daten.art === 'verkauf') {
         daten.betrag = byId('aboBetrag').value.trim();
         daten.rechnungsnummer = byId('aboNummer').value.trim();
-      } else {
+      } else if (daten.art === 'ohne') {
         daten.notiz = byId('aboGrund').value.trim();
       }
     }

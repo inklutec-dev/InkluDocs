@@ -8774,3 +8774,66 @@ msgstr "Suche „{text}“"
 
 msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
 msgstr "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
+
+# Verwaltung: Teams (25.09.2026)
+msgid "Team und Enterprise"
+msgstr "Team und Enterprise"
+
+msgid "({belegt} von {sitze} Plätzen belegt)"
+msgstr "({belegt} von {sitze} Plätzen belegt)"
+
+msgid "noch niemand eingeladen"
+msgstr "noch niemand eingeladen"
+
+# Verwaltung: Umsatz aufgeräumt (25.09.2026)
+msgid "1 Verkauf"
+msgstr "1 Verkauf"
+
+msgid "In diesem Jahr gibt es noch keine Buchungen."
+msgstr "In diesem Jahr gibt es noch keine Buchungen."
+
+msgid "Rechnung {betrag}"
+msgstr "Rechnung {betrag}"
+
+msgid "Seite {seite} von {seiten}"
+msgstr "Seite {seite} von {seiten}"
+
+msgid "Seiten der Buchungsliste"
+msgstr "Seiten der Buchungsliste"
+
+msgid "Stripe {betrag}"
+msgstr "Stripe {betrag}"
+
+msgid "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
+msgstr "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
+
+msgid "verschenkt: {credits} Credits"
+msgstr "verschenkt: {credits} Credits"
+
+msgid "Was zählt zum Umsatz?"
+msgstr "Was zählt zum Umsatz?"
+
+msgid "1 Monat"
+msgstr "1 Monat"
+
+# Verwaltung: Prüfbericht (25.09.2026)
+msgid "Nur Einstellungen ändern, nichts buchen"
+msgstr "Nur Einstellungen ändern, nichts buchen"
+
+msgid "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
+msgstr "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
+msgstr "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
+
+msgid "Buchung stornieren"
+msgstr "Buchung stornieren"
+
+msgid "Buchung vom {datum} stornieren"
+msgstr "Buchung vom {datum} stornieren"
+
+msgid "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen."
+msgstr "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen."
+
+msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
+msgstr "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."

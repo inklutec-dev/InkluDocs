@@ -3,22 +3,26 @@
 {% block title %}{{ _('Umsatz') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
 
 {% block main %}
-{# VERWALTUNG — UMSATZ (25.09.2026, Steve): oben vier Zahlen (heute, Monat, Jahr, gesamt),
-   darunter die Zeitraum-Wahl als native Auswahllisten (Pfeiltasten, keine Eigenbau-Liste),
-   die Monate des Jahres und die einzelnen Buchungen — je Buchung EINE Zeile. Stripe bucht
-   sich selbst ein, Rechnungen kommen über „Credits gutschreiben“ bzw. „Abo zuweisen“.
-   Herunterladen als Excel oder CSV für genau die gewählte Auswahl. #}
+{# VERWALTUNG — UMSATZ (25.09.2026, Steve; aufgeräumt am selben Abend: „zu unaufgeräumt“).
+   Reihenfolge: vier Zahlen — die Monate mit Buchungen — die Buchungen eines Zeitraums, und
+   GENAU DORT die Zeitraum-Wahl (sie steuert nur diese Liste) samt Download. 25 Buchungen je
+   Seite. Die Erklärung, was zählt, steht aufklappbar am Ende statt als Satz unter den Zahlen. #}
 <h1>{{ _('Verwaltung') }}: {{ _('Umsatz') }}</h1>
 {% include "_verwaltung_nav.html" %}
 
 <section class="verwaltung-bereich" aria-labelledby="h-blick">
-  <h2 id="h-blick">{{ _('Auf einen Blick') }}</h2>
+  <h2 id="h-blick" class="sr-only">{{ _('Auf einen Blick') }}</h2>
   <div id="umsatzZahlen" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
 </section>
 
-<section class="dash-card verwaltung-karte" aria-labelledby="h-zeitraum">
-  <h2 id="h-zeitraum">{{ _('Zeitraum wählen') }}</h2>
-  <form id="zeitraumForm" class="verwaltung-suche" novalidate>
+<section class="dash-card verwaltung-karte" aria-labelledby="h-monate">
+  <h2 id="h-monate">{{ _('Monate') }}</h2>
+  <div id="umsatzMonate"></div>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-buchungen">
+  <h2 id="h-buchungen" tabindex="-1">{{ _('Buchungen') }}</h2>
+  <form id="zeitraumForm" class="verwaltung-suche" novalidate aria-label="{{ _('Zeitraum wählen') }}">
     <div class="dash-field">
       <label for="wahlJahr">{{ _('Jahr') }}</label>
       <select id="wahlJahr" class="dash-input"></select>
@@ -37,21 +41,22 @@
     </div>
     <button type="submit" class="btn btn-primary">{{ _('Anzeigen') }}</button>
   </form>
-</section>
-
-<section class="dash-card verwaltung-karte" aria-labelledby="h-monate">
-  <h2 id="h-monate">{{ _('Monate') }}</h2>
-  <div id="umsatzMonate"></div>
-</section>
-
-<section class="dash-card verwaltung-karte" aria-labelledby="h-buchungen">
-  <h2 id="h-buchungen" tabindex="-1">{{ _('Buchungen') }}</h2>
   <div id="umsatzBuchungen"></div>
+  <nav class="verwaltung-seiten" id="buchungSeiten" aria-label="{{ _('Seiten der Buchungsliste') }}" hidden>
+    <button type="button" class="btn btn-secondary" id="bSeiteZurueck">{{ _('Vorherige Seite') }}</button>
+    <button type="button" class="btn btn-secondary" id="bSeiteVor">{{ _('Nächste Seite') }}</button>
+  </nav>
   <p class="verwaltung-download" id="umsatzDownload" hidden>
     <a class="btn btn-secondary" id="dlExcel" href="#" download>{{ _('Als Excel herunterladen') }}</a>
     <a class="btn btn-secondary" id="dlCsv" href="#" download>{{ _('Als CSV herunterladen') }}</a>
   </p>
 </section>
+
+<details class="verwaltung-klappe verwaltung-hinweis">
+  <summary>{{ _('Was zählt zum Umsatz?') }}</summary>
+  <p>{{ _('Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit.') }}</p>
+  <p>{{ _('Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite.') }}</p>
+</details>
 {% endblock %}
 
 {% block dialogs %}
@@ -66,7 +71,10 @@
 (function () {
   const V = window.Verwaltung;
   const wahl = { jahr: null, monat: null, auswahl: 'alle' };
+  const JE_SEITE = 25;
   let ersterLauf = true;
+  let daten = null;
+  let bSeite = 1;
 
   function ausAdresse() {
     const p = new URLSearchParams(window.location.search);
@@ -105,10 +113,10 @@
       ul.appendChild(li);
     });
     ziel.appendChild(ul);
-    V.zeile(ziel, t('Verschenkt in {monat}', { monat: V.monatLang(k.monat) }),
-      k.bonus_anzahl_monat ? t('{n} Bonus-Gutschriften, zusammen {credits} Credits', { n: k.bonus_anzahl_monat, credits: V.zahl(k.bonus_credits_monat) }) : t('nichts'));
+    // Zusatzzeilen nur, wenn es etwas zu sagen gibt.
+    if (k.bonus_anzahl_monat) V.zeile(ziel, t('Verschenkt in {monat}', { monat: V.monatLang(k.monat) }),
+      t('{n} Bonus-Gutschriften, zusammen {credits} Credits', { n: k.bonus_anzahl_monat, credits: V.zahl(k.bonus_credits_monat) }));
     if (k.ausstehend_cent) V.zeile(ziel, t('Lastschriften noch unterwegs'), V.euro(k.ausstehend_cent));
-    ziel.appendChild(V.el('p', 'dash-sub', t('Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit.')));
   }
 
   function auswahlListen(d) {
@@ -132,9 +140,11 @@
     const ziel = byId('umsatzMonate');
     ziel.innerHTML = '';
     byId('h-monate').textContent = t('Monate im Jahr {jahr}', { jahr: d.jahr });
-    if (!d.monate.length) { ziel.appendChild(V.el('p', 'dash-empty', t('Für dieses Jahr gibt es noch keine Monate.'))); return; }
+    // Nur Monate, in denen etwas gebucht wurde — keine Reihe mit 0,00 €.
+    const mitBuchung = d.monate.filter((m) => m.gesamt_cent || m.anzahl || m.bonus_credits);
+    if (!mitBuchung.length) { ziel.appendChild(V.el('p', 'dash-empty', t('In diesem Jahr gibt es noch keine Buchungen.'))); return; }
     const ul = V.el('ul', 'verwaltung-liste');
-    d.monate.forEach((m) => {
+    mitBuchung.forEach((m) => {
       const li = V.el('li', 'verwaltung-zeile');
       // Der Monatsname ist ein Knopf: zeigt die Buchungen dieses Monats.
       const k = V.el('button', 'verwaltung-textknopf', V.monatLang(m.monat));
@@ -147,8 +157,12 @@
       });
       li.appendChild(k);
       let text = ': ' + V.euro(m.gesamt_cent);
-      if (m.gesamt_cent) text += ' (' + t('Stripe {stripe}, Rechnung {rechnung}', { stripe: V.euro(m.stripe_cent), rechnung: V.euro(m.rechnung_cent) }) + ')';
-      text += ' · ' + t('{n} Verkäufe', { n: m.anzahl });
+      const wege = [];
+      if (m.stripe_cent) wege.push(t('Stripe {betrag}', { betrag: V.euro(m.stripe_cent) }));
+      if (m.rechnung_cent) wege.push(t('Rechnung {betrag}', { betrag: V.euro(m.rechnung_cent) }));
+      if (wege.length > 1) text += ' (' + wege.join(', ') + ')';
+      else if (wege.length === 1) text += ' (' + (m.stripe_cent ? t('über Stripe') : t('auf Rechnung')) + ')';
+      text += ' · ' + (m.anzahl === 1 ? t('1 Verkauf') : t('{n} Verkäufe', { n: m.anzahl }));
       if (m.bonus_credits) text += ' · ' + t('{credits} Credits verschenkt', { credits: V.zahl(m.bonus_credits) });
       li.appendChild(document.createTextNode(text));
       ul.appendChild(li);
@@ -160,16 +174,21 @@
     const ziel = byId('umsatzBuchungen');
     ziel.innerHTML = '';
     const auswahlText = { alle: '', verkauf: ' — ' + t('nur Verkäufe'), bonus: ' — ' + t('nur Bonus') }[d.auswahl];
-    byId('h-buchungen').textContent = t('Buchungen {zeitraum} ({n})', { zeitraum: zeitraumText(), n: d.buchungen.length }) + auswahlText;
-    if (!d.buchungen.length) {
+    const n = d.buchungen.length;
+    const seiten = Math.max(1, Math.ceil(n / JE_SEITE));
+    bSeite = Math.min(Math.max(1, bSeite), seiten);
+    let kopf = t('Buchungen {zeitraum} ({n})', { zeitraum: zeitraumText(), n: n }) + auswahlText;
+    if (seiten > 1) kopf += ', ' + t('Seite {seite} von {seiten}', { seite: bSeite, seiten: seiten });
+    byId('h-buchungen').textContent = kopf;
+    if (!n) {
       ziel.appendChild(V.el('p', 'dash-empty', t('In diesem Zeitraum gibt es keine Buchungen.')));
     } else {
-      V.zeile(ziel, t('Umsatz im Zeitraum'), V.euro(d.summe_cent));
-      if (d.bonus_credits) V.zeile(ziel, t('Verschenkt im Zeitraum'), t('{credits} Credits', { credits: V.zahl(d.bonus_credits) }));
+      V.zeile(ziel, t('Umsatz im Zeitraum'), V.euro(d.summe_cent) +
+        (d.bonus_credits ? ' · ' + t('verschenkt: {credits} Credits', { credits: V.zahl(d.bonus_credits) }) : ''));
       const ul = V.el('ul', 'verwaltung-liste');
-      d.buchungen.forEach((b) => {
+      d.buchungen.slice((bSeite - 1) * JE_SEITE, bSeite * JE_SEITE).forEach((b) => {
         const li = V.el('li', 'verwaltung-zeile');
-        const teile = V.buchungText(b, true).split(' · ');
+        const teile = V.buchungTeile(b, true, true);
         // Der Kundenname wird zum Link auf die Kundenseite (solange das Konto existiert).
         li.appendChild(document.createTextNode(teile[0] + ' · '));
         if (b.konto_user_id) {
@@ -180,23 +199,37 @@
           li.appendChild(document.createTextNode(teile[1]));
         }
         li.appendChild(document.createTextNode(' · ' + teile.slice(2).join(' · ')));
-        V.buchungKnoepfe(li, b, () => laden(false));
+        V.buchungKnoepfe(li, b, () => laden(false), 'h-buchungen');
         ul.appendChild(li);
       });
       ziel.appendChild(ul);
     }
+    byId('buchungSeiten').hidden = seiten <= 1;
+    byId('bSeiteZurueck').disabled = bSeite <= 1;
+    byId('bSeiteVor').disabled = bSeite >= seiten;
     const p = abfrage();
     p.set('format', 'xlsx');
     byId('dlExcel').href = '/api/admin/umsatz/export?' + p.toString();
     p.set('format', 'csv');
     byId('dlCsv').href = '/api/admin/umsatz/export?' + p.toString();
-    byId('umsatzDownload').hidden = false;
+    byId('umsatzDownload').hidden = !n;
   }
+
+  function blaettern(richtung) {
+    bSeite += richtung;
+    buchungen(daten);
+    byId('h-buchungen').focus();
+    announce(byId('h-buchungen').textContent);
+  }
+  byId('bSeiteZurueck').addEventListener('click', () => blaettern(-1));
+  byId('bSeiteVor').addEventListener('click', () => blaettern(1));
 
   async function laden(fokus) {
     const d = await V.ladeJson('/api/admin/umsatz?' + abfrage().toString(), byId('umsatzZahlen'));
     if (!d) return;
     wahl.jahr = d.jahr; wahl.monat = d.monat; wahl.auswahl = d.auswahl;
+    daten = d;
+    if (fokus) bSeite = 1;
     history.replaceState(null, '', window.location.pathname + (abfrage().toString() ? '?' + abfrage().toString() : ''));
     zahlen(d.kennzahlen);
     auswahlListen(d);

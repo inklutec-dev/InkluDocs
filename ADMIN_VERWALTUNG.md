@@ -156,3 +156,33 @@ mussten ins Kulanz-Feld — Jens' Kauf (25.09.) landete als Geschenk, der Bonus 
   Kunden“, „Suche „Jens“: 1 Kunde“).
 - `verify_aktionspreise_402.py` startet die Enforcement-Instanz (Port 8099) selbst und braucht kein
   Passwort mehr (Token über `main.create_token`).
+
+
+## Nachtrag 25.09.2026 spät: Teams, aufgeräumter Umsatz, unabhängige Prüfung
+
+- **Teams**: Filter „Team und Enterprise“ (zahlende Inhaber, `billing.PLAN_SITZE`). Kundenseite des
+  Inhabers: Team-Name, belegte Plätze, Mitglieder als Links; beim Mitglied der Inhaber als Link.
+  Das Geld eines Team-Abos steht immer beim Inhaber.
+- **Auto-Verlängerung** bucht nur bei ausdrücklichem `plan_quelle='rechnung'` (Testkonten ohne Quelle
+  erzeugen keinen Umsatz), übernimmt einen Sonderpreis der letzten gleichen Abo-Buchung, alle
+  Perioden in einem Savepoint.
+- **Umsatz-Seite aufgeräumt**: vier Kacheln, nur Monate mit Buchungen, Zeitraum-Wahl und Download
+  direkt an der Buchungsliste, 25 Buchungen je Seite, Erklärung „Was zählt zum Umsatz?“ als Klappe.
+  Buchungszeilen: Datum (ohne Jahr), Kunde, was, Betrag; „eingetragen von“ nur bei Hand-Buchungen.
+- **Abo zuweisen**: dritte Art „Nur Einstellungen ändern, nichts buchen“ — gleicher Plan und gleiche
+  Laufzeit behalten das Laufzeitende, keine Bestätigungs-Mail, Herkunft (Stripe/Rechnung) bleibt.
+- **Stornieren** jetzt für alle Buchungen: Pakete (unverbrauchte Credits zurück), Abos (nur Umsatz,
+  Plan bleibt), Stripe (nach Erstattung im Stripe-Dashboard; das Geld erstattet nur Stripe).
+  Automatische Verarbeitung von Stripe-Erstattungen (`charge.refunded`) ist noch offen.
+- **Wiederholter Stripe-Webhook** beim Paketkauf legt kein zweites Paket mehr an (Paket und Buchung
+  in einer Transaktion, `schenke_credits` liefert dann `None`). Vorher waren doppelte Credits möglich.
+- **Rechte frisch**: `get_current_user` liefert `is_admin` aus der Datenbank — ein herabgestufter
+  Admin verliert Umsatz und Kundendaten sofort, nicht erst nach Token-Ablauf.
+- **Barrierefreiheit**: Nach Berichtigen/Stornieren/Limit erst neu laden, dann ansagen, dann Fokus
+  auf die Abschnitts-Überschrift. Doppelklick-Schutz in allen Dialogen. Großer Bonus auch beim
+  Berichtigen nur mit Häkchen.
+- **Zeiten**: „zuletzt angemeldet“, „zuletzt benutzt“, „zuletzt aktiv“ in deutscher Zeit.
+- **Export**: Steuerzeichen werden entfernt (openpyxl brach sonst ab).
+- **App-weit**: Dialoge stehen mittig (globaler Rand-Reset hob die Browser-Mitte auf), lange Dialoge
+  scrollen; die Fußzeilen-Links brechen auf dem Handy um (vorher geschützte Leerzeichen auf beiden
+  Seiten des Trenners, Seite 660 statt 390 Pixel breit).

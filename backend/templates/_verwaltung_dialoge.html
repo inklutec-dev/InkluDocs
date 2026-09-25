@@ -1,6 +1,6 @@
 {# Gemeinsame Dialoge der Verwaltung (25.09.2026): Buchung berichtigen, API-Limit ändern.
    Native <dialog> (Fokusfang, Escape, inerter Hintergrund); die Logik steht in verwaltung.js. #}
-<dialog id="korrekturDialog" class="app-dialog" aria-labelledby="korrekturTitel">
+<dialog id="korrekturDialog" class="app-dialog" aria-labelledby="korrekturTitel" data-bonus-grenze="{{ verwaltung_preise.bonus_grenze }}">
   <h2 id="korrekturTitel">{{ _('Buchung berichtigen') }}</h2>
   <p id="korrekturFuer"></p>
   <p class="dash-sub">{{ _('Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt.') }}</p>
@@ -26,6 +26,9 @@
       <label for="korrekturGrund">{{ _('Grund der Korrektur') }}</label>
       <input type="text" id="korrekturGrund" class="dash-input" maxlength="200" autocomplete="off" required>
     </div>
+    <div class="dash-field" id="korrekturGrossFeld" hidden>
+      <label><input type="checkbox" id="korrekturGross"> <span id="korrekturGrossText"></span></label>
+    </div>
     <p id="korrekturFehler" role="alert" class="verwaltung-fehler"></p>
     <div class="dialog-actions">
       <button type="button" class="btn btn-secondary" id="korrekturAbbrechen">{{ _('Abbrechen') }}</button>
@@ -35,7 +38,7 @@
 </dialog>
 
 <dialog id="stornoDialog" class="app-dialog" aria-labelledby="stornoTitel">
-  <h2 id="stornoTitel">{{ _('Gutschrift stornieren') }}</h2>
+  <h2 id="stornoTitel">{{ _('Buchung stornieren') }}</h2>
   <p id="stornoFuer"></p>
   <p id="stornoFolgen"></p>
   <form id="stornoForm" novalidate>

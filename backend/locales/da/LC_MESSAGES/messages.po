@@ -8463,3 +8463,66 @@ msgstr "Søgning „{text}“"
 
 msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
 msgstr "De {rest} af {menge} credits, der endnu ikke er brugt, trækkes tilbage. Allerede brugte credits forbliver brugt. Posteringen forbliver synlig, men tæller ikke længere med i omsætningen."
+
+# Verwaltung: Teams (25.09.2026)
+msgid "Team und Enterprise"
+msgstr "Team og Enterprise"
+
+msgid "({belegt} von {sitze} Plätzen belegt)"
+msgstr "({belegt} af {sitze} pladser optaget)"
+
+msgid "noch niemand eingeladen"
+msgstr "ingen inviteret endnu"
+
+# Verwaltung: Umsatz aufgeräumt (25.09.2026)
+msgid "1 Verkauf"
+msgstr "1 salg"
+
+msgid "In diesem Jahr gibt es noch keine Buchungen."
+msgstr "Der er endnu ingen posteringer i dette år."
+
+msgid "Rechnung {betrag}"
+msgstr "faktura {betrag}"
+
+msgid "Seite {seite} von {seiten}"
+msgstr "side {seite} af {seiten}"
+
+msgid "Seiten der Buchungsliste"
+msgstr "Sider i posteringslisten"
+
+msgid "Stripe {betrag}"
+msgstr "Stripe {betrag}"
+
+msgid "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
+msgstr "Stripe-køb og Stripe-abonnementer vises automatisk, så snart Stripe bekræfter betalingen. Salg på faktura registreres via „Kreditér credits“ eller „Tildel abonnement“ på kundesiden."
+
+msgid "verschenkt: {credits} Credits"
+msgstr "givet væk: {credits} credits"
+
+msgid "Was zählt zum Umsatz?"
+msgstr "Hvad tæller med i omsætningen?"
+
+msgid "1 Monat"
+msgstr "1 måned"
+
+# Verwaltung: Prüfbericht (25.09.2026)
+msgid "Nur Einstellungen ändern, nichts buchen"
+msgstr "Kun ændre indstillinger, intet posteres"
+
+msgid "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
+msgstr "Gem abonnementet {plan} i {monate} måneder for {name} uden at postere noget?"
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
+msgstr "Vælg typen: salg på faktura, uden beregning eller kun ændre indstillinger."
+
+msgid "Buchung stornieren"
+msgstr "Annullér postering"
+
+msgid "Buchung vom {datum} stornieren"
+msgstr "Annullér posteringen fra {datum}"
+
+msgid "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen."
+msgstr "Posteringen forbliver synlig, men tæller ikke længere med i omsætningen. Kundens plan forbliver uændret — tilpas den om nødvendigt via „Tildel eller ændr abonnement“."
+
+msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
+msgstr "Pengene refunderer du i Stripe-dashboardet — her rettes kun posteringen."

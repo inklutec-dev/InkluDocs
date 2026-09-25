@@ -936,7 +936,8 @@ def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "a
     buchung (25.09.2026, Umsatz): Stichwoerter fuer umsatz.buche — Paket und Umsatz-
     Buchung entstehen dann in DERSELBEN Transaktion (kein Paket ohne Buchung und umgekehrt).
 
-    Rueckgabe: id der neuen quota_pakete-Zeile.
+    Rueckgabe: id der neuen quota_pakete-Zeile — oder None, wenn die Buchung eine schon
+    gebuchte stripe_ref traegt (wiederholter Webhook; dann entsteht auch kein Paket).
     """
     menge = int(menge)
     if menge <= 0:
@@ -959,7 +960,10 @@ def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "a
         paket_id = int(cursor.lastrowid)
         if buchung:
             import umsatz
-            umsatz.buche(conn, art="paket", credits=menge, paket_id=paket_id, **buchung)
+            if umsatz.buche(conn, art="paket", credits=menge, paket_id=paket_id, **buchung) is None:
+                # Dieselbe Stripe-Session war schon gebucht (Webhook wiederholt): KEIN zweites Paket.
+                conn.rollback()
+                return None
         conn.commit()
         return paket_id
     finally:

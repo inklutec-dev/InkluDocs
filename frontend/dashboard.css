@@ -263,3 +263,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .verwaltung-seiten[hidden], .verwaltung-download[hidden], .verwaltung-suche[hidden] { display: none; }
 .verwaltung-warnung { border-left: 4px solid #a94200; background: #fff4ec; padding: .6rem .8rem; font-weight: 600; }
 .verwaltung-warnung[hidden] { display: none; }
+/* Links in Verwaltungs-Karten (Team-Mitglieder, Inhaber): gleiche Farbe wie die Listen-Links. */
+.verwaltung-karte a:not(.btn) { color: #a94200; font-weight: 700; text-decoration: underline; }
+.verwaltung-hinweis { max-width: 64rem; margin: .25rem 0 1.25rem; }
+.verwaltung-hinweis p { margin: .4rem 0; line-height: 1.55; }
+.verwaltung-zurueck { margin: 0 0 1rem; }
+.verwaltung-zurueck a { color: #a94200; font-weight: 600; text-decoration: underline; }
+.verwaltung-karte h2 + .verwaltung-suche { margin-top: .75rem; }

@@ -8771,3 +8771,66 @@ msgstr "Recherche « {text} »"
 
 msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
 msgstr "Les {rest} crédits non encore utilisés sur {menge} seront repris. Les crédits déjà utilisés restent consommés. L’écriture reste visible mais ne compte plus dans le chiffre d’affaires."
+
+# Verwaltung: Teams (25.09.2026)
+msgid "Team und Enterprise"
+msgstr "Team et Enterprise"
+
+msgid "({belegt} von {sitze} Plätzen belegt)"
+msgstr "({belegt} places occupées sur {sitze})"
+
+msgid "noch niemand eingeladen"
+msgstr "personne n’a encore été invité"
+
+# Verwaltung: Umsatz aufgeräumt (25.09.2026)
+msgid "1 Verkauf"
+msgstr "1 vente"
+
+msgid "In diesem Jahr gibt es noch keine Buchungen."
+msgstr "Aucune écriture pour cette année pour l’instant."
+
+msgid "Rechnung {betrag}"
+msgstr "facture {betrag}"
+
+msgid "Seite {seite} von {seiten}"
+msgstr "page {seite} sur {seiten}"
+
+msgid "Seiten der Buchungsliste"
+msgstr "Pages de la liste des écritures"
+
+msgid "Stripe {betrag}"
+msgstr "Stripe {betrag}"
+
+msgid "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
+msgstr "Les achats et abonnements Stripe apparaissent automatiquement dès que Stripe confirme le paiement. Les ventes sur facture sont saisies via « Créditer des crédits » ou « Attribuer un abonnement » sur la page client."
+
+msgid "verschenkt: {credits} Credits"
+msgstr "offerts : {credits} crédits"
+
+msgid "Was zählt zum Umsatz?"
+msgstr "Qu’est-ce qui compte dans le chiffre d’affaires ?"
+
+msgid "1 Monat"
+msgstr "1 mois"
+
+# Verwaltung: Prüfbericht (25.09.2026)
+msgid "Nur Einstellungen ändern, nichts buchen"
+msgstr "Modifier seulement les paramètres, ne rien comptabiliser"
+
+msgid "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
+msgstr "Enregistrer l’abonnement {plan} pour {monate} mois pour {name} sans rien comptabiliser ?"
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
+msgstr "Veuillez choisir le type : vente sur facture, sans facturation ou modifier seulement les paramètres."
+
+msgid "Buchung stornieren"
+msgstr "Annuler l’écriture"
+
+msgid "Buchung vom {datum} stornieren"
+msgstr "Annuler l’écriture du {datum}"
+
+msgid "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen."
+msgstr "L’écriture reste visible mais ne compte plus dans le chiffre d’affaires. Le plan du client reste inchangé — l’ajuster si besoin via « Attribuer ou modifier l’abonnement »."
+
+msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
+msgstr "Le remboursement se fait dans le tableau de bord Stripe — ici, seule l’écriture est corrigée."

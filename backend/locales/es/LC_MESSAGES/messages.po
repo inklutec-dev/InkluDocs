@@ -8771,3 +8771,66 @@ msgstr "Búsqueda «{text}»"
 
 msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
 msgstr "Se retirarán los {rest} de {menge} créditos aún no utilizados. Los créditos ya usados siguen consumidos. La reserva sigue visible, pero ya no cuenta como facturación."
+
+# Verwaltung: Teams (25.09.2026)
+msgid "Team und Enterprise"
+msgstr "Team y Enterprise"
+
+msgid "({belegt} von {sitze} Plätzen belegt)"
+msgstr "({belegt} de {sitze} plazas ocupadas)"
+
+msgid "noch niemand eingeladen"
+msgstr "todavía no se ha invitado a nadie"
+
+# Verwaltung: Umsatz aufgeräumt (25.09.2026)
+msgid "1 Verkauf"
+msgstr "1 venta"
+
+msgid "In diesem Jahr gibt es noch keine Buchungen."
+msgstr "Todavía no hay reservas este año."
+
+msgid "Rechnung {betrag}"
+msgstr "factura {betrag}"
+
+msgid "Seite {seite} von {seiten}"
+msgstr "página {seite} de {seiten}"
+
+msgid "Seiten der Buchungsliste"
+msgstr "Páginas de la lista de reservas"
+
+msgid "Stripe {betrag}"
+msgstr "Stripe {betrag}"
+
+msgid "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
+msgstr "Las compras y suscripciones de Stripe aparecen solas en cuanto Stripe confirma el pago. Las ventas con factura se registran con «Abonar créditos» o «Asignar suscripción» en la página del cliente."
+
+msgid "verschenkt: {credits} Credits"
+msgstr "regalados: {credits} créditos"
+
+msgid "Was zählt zum Umsatz?"
+msgstr "¿Qué cuenta como facturación?"
+
+msgid "1 Monat"
+msgstr "1 mes"
+
+# Verwaltung: Prüfbericht (25.09.2026)
+msgid "Nur Einstellungen ändern, nichts buchen"
+msgstr "Solo cambiar los ajustes, sin registrar nada"
+
+msgid "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
+msgstr "¿Guardar la suscripción {plan} de {monate} meses para {name} sin registrar nada?"
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
+msgstr "Elija el tipo: venta con factura, sin cargo o solo cambiar los ajustes."
+
+msgid "Buchung stornieren"
+msgstr "Anular la reserva"
+
+msgid "Buchung vom {datum} stornieren"
+msgstr "Anular la reserva del {datum}"
+
+msgid "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen."
+msgstr "La reserva sigue visible, pero ya no cuenta como facturación. El plan del cliente no cambia; ajústelo si es necesario con «Asignar o cambiar la suscripción»."
+
+msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
+msgstr "El dinero se reembolsa en el panel de Stripe; aquí solo se corrige la reserva."

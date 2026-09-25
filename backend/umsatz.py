@@ -225,7 +225,7 @@ def letzte_abo_buchung(konto_id: int):
 
 
 def korrigiere(buchung_id: int, *, weg: str, betrag_cent: int, rechnungsnummer: str,
-               grund: str, admin: dict) -> dict:
+               grund: str, admin: dict, bestaetigt_gross: bool = False) -> dict:
     """Eine von Hand eingetragene Buchung berichtigen (Verkauf <-> Bonus, Betrag, Nummer).
 
     Stripe-Buchungen sind gesperrt — dort ist Stripe die Wahrheit. Die Credits bleiben
@@ -251,6 +251,10 @@ def korrigiere(buchung_id: int, *, weg: str, betrag_cent: int, rechnungsnummer: 
             raise ValueError("Stripe-Buchungen lassen sich nicht ändern — dort gilt, was Stripe abgerechnet hat")
         if alt["status"] == "storniert":
             raise ValueError("Eine stornierte Buchung lässt sich nicht mehr berichtigen")
+        # Dieselbe Schwelle wie beim Gutschreiben: ein grosser Verkauf wird nicht still zum Geschenk.
+        if (weg == "bonus" and alt["weg"] != "bonus" and int(alt["credits"] or 0) > BONUS_GRENZE
+                and not bestaetigt_gross):
+            raise ValueError(f"Ein Bonus über {BONUS_GRENZE} Credits muss ausdrücklich bestätigt werden")
         stempel = jetzt_lokal().strftime("%d.%m.%Y %H:%M")
         vorher = f"{WEG_TEXT[alt['weg']]}, {cent_text(alt['betrag_cent'])}"
         nachher = f"{WEG_TEXT[weg]}, {cent_text(betrag_cent)}"
@@ -284,8 +288,10 @@ def storniere(buchung_id: int, *, grund: str, admin: dict) -> dict:
     Zurueckgenommen werden nur die NOCH NICHT verbrauchten Credits des Pakets — verbrauchte
     bleiben verbraucht. Die Buchung bleibt sichtbar, steht auf 'storniert' und zaehlt nicht
     mehr zum Umsatz; Grund, Name, Zeit und die zurueckgenommene Menge stehen im Protokoll.
-    Stripe-Kaeufe sind ausgenommen (Rueckerstattung laeuft ueber Stripe), Abos ebenfalls
-    (dort den Plan ueber „Abo zuweisen oder aendern“ setzen und die Buchung berichtigen)."""
+    Auch fuer Stripe (Pruefbericht 25.09.2026): nach einer Erstattung im Stripe-Dashboard wird
+    die Buchung hier storniert, sonst bliebe der Umsatz zu hoch. Das Geld selbst erstattet
+    NUR Stripe. Bei Abos aendert das Stornieren nur den Umsatz, nicht den Plan (den ueber
+    „Abo zuweisen oder aendern“ setzen)."""
     grund = (grund or "").strip()
     if len(grund) < 3:
         raise ValueError("Bitte kurz den Grund für das Stornieren angeben")
@@ -295,14 +301,10 @@ def storniere(buchung_id: int, *, grund: str, admin: dict) -> dict:
         if not alt:
             raise LookupError("Buchung nicht gefunden")
         alt = dict(alt)
-        if alt["weg"] == "stripe":
-            raise ValueError("Stripe-Käufe werden über Stripe erstattet, nicht hier storniert")
-        if alt["art"] != "paket":
-            raise ValueError("Nur Credit-Gutschriften lassen sich stornieren — ein Abo über „Abo zuweisen oder ändern“ anpassen")
         if alt["status"] == "storniert":
             raise ValueError("Diese Buchung ist schon storniert")
         zurueck = 0
-        if alt.get("paket_id"):
+        if alt["art"] == "paket" and alt.get("paket_id"):
             row = conn.execute("SELECT verbleibend FROM quota_pakete WHERE id = ?", (alt["paket_id"],)).fetchone()
             if row:
                 zurueck = int(row["verbleibend"] or 0)
@@ -311,8 +313,11 @@ def storniere(buchung_id: int, *, grund: str, admin: dict) -> dict:
                                     (alt["paket_id"], zurueck)).rowcount:
                     raise ValueError("Das Guthaben hat sich gerade geändert — bitte noch einmal versuchen")
         stempel = jetzt_lokal().strftime("%d.%m.%Y %H:%M")
-        zeile = (f"{stempel} {admin.get('display_name') or '?'}: storniert, {zahl_text(zurueck)} von "
-                 f"{zahl_text(alt['credits'])} Credits zurückgenommen ({grund[:200]})")
+        if alt["art"] == "paket":
+            zeile = (f"{stempel} {admin.get('display_name') or '?'}: storniert, {zahl_text(zurueck)} von "
+                     f"{zahl_text(alt['credits'])} Credits zurückgenommen ({grund[:200]})")
+        else:
+            zeile = f"{stempel} {admin.get('display_name') or '?'}: storniert, Plan unverändert ({grund[:200]})"
         protokoll = ((alt.get("korrektur_notiz") or "") + "\n" + zeile).strip()[-4000:]
         conn.execute("UPDATE buchungen SET status = 'storniert', korrigiert_von_name = ?, "
                      "korrigiert_am = datetime('now'), korrektur_notiz = ? WHERE id = ?",
@@ -463,11 +468,17 @@ SPALTEN = ["Datum", "Kunde", "E-Mail", "Art", "Weg", "Credits", "Plan", "Laufzei
            "Betrag (EUR)", "Rechnungsnummer", "Status", "Notiz", "Eingetragen von", "Korrekturen"]
 
 
+_STEUERZEICHEN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
 def _sicher(wert):
     """Formel-Einschleusung verhindern (CSV/Excel-Injection): Ein Kundenname wie
-    '=HYPERLINK(...)' darf beim Oeffnen im Tabellenprogramm nie als Formel laufen."""
-    if isinstance(wert, str) and wert[:1] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + wert
+    '=HYPERLINK(...)' darf beim Oeffnen im Tabellenprogramm nie als Formel laufen.
+    Steuerzeichen fliegen raus — openpyxl bricht sonst den ganzen Export ab."""
+    if isinstance(wert, str):
+        wert = _STEUERZEICHEN.sub("", wert)
+        if wert[:1] in ("=", "+", "-", "@", "\t", "\r"):
+            return "'" + wert
     return wert
 
 

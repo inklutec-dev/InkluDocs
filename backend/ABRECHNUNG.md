@@ -44,7 +44,7 @@ Stripe-Abos (Rechnungskunden stellt der Admin um, siehe unten):
 - Konten ohne Stripe-Vertrag koennen NICHT selbst wechseln (sonst waere
   „Enterprise gratis" ein API-Aufruf) — der Endpunkt lehnt mit 400 ab, die
   Oberflaeche zeigt den Bereich gar nicht. Umgestellt wird ueber
-  /benutzer -> „Abo zuweisen".
+  Verwaltung -> Kundenseite -> „Abo zuweisen oder ändern" (seit 25.09.2026; Art Pflicht, Umsatz-Buchung).
 - Auf der Abo-Seite steht der Weg zum Partner: sales@actino.de
   (mailto-Link mit Betreff „InkluDocs-Anfrage").
 
