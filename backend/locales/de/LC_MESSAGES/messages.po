@@ -8866,3 +8866,9 @@ msgstr "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintrage
 
 msgid "Meldung schließen"
 msgstr "Meldung schließen"
+
+msgid "Projekte insgesamt"
+msgstr "Projekte insgesamt"
+
+msgid "Bilder insgesamt"
+msgstr "Bilder insgesamt"

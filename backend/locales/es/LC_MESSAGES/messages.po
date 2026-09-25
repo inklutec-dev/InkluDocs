@@ -8863,3 +8863,9 @@ msgstr "El estándar es {standard} imágenes al día: introduzca exactamente est
 
 msgid "Meldung schließen"
 msgstr "Cerrar el mensaje"
+
+msgid "Projekte insgesamt"
+msgstr "Proyectos en total"
+
+msgid "Bilder insgesamt"
+msgstr "Imágenes en total"

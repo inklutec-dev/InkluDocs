@@ -8555,3 +8555,9 @@ msgstr "Standarden er {standard} billeder pr. dag — indtast præcis dette tal 
 
 msgid "Meldung schließen"
 msgstr "Luk meddelelse"
+
+msgid "Projekte insgesamt"
+msgstr "Projekter i alt"
+
+msgid "Bilder insgesamt"
+msgstr "Billeder i alt"

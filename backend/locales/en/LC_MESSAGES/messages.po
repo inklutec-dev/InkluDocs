@@ -8863,3 +8863,9 @@ msgstr "The default is {standard} images per day — enter exactly this number t
 
 msgid "Meldung schließen"
 msgstr "Close message"
+
+msgid "Projekte insgesamt"
+msgstr "Projects in total"
+
+msgid "Bilder insgesamt"
+msgstr "Images in total"

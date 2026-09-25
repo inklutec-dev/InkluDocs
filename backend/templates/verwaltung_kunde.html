@@ -345,10 +345,10 @@
 
     // 4. Nutzung — Kernzahlen sichtbar, Einzelheiten aufklappbar.
     sec = abschnitt(ziel, t('Nutzung'), 'h-nutzung');
-    V.zeile(sec, t('Projekte'), V.zahl(d.nutzung.projekte));
-    V.zeile(sec, t('Bilder'), V.zahl(d.nutzung.bilder));
+    V.zeile(sec, t('Projekte insgesamt'), V.zahl(d.nutzung.projekte));
+    V.zeile(sec, t('Bilder insgesamt'), V.zahl(d.nutzung.bilder));
     V.zeile(sec, t('Credits verbraucht, insgesamt'), V.zahl(d.nutzung.selbst_gesamt !== undefined ? d.nutzung.selbst_gesamt : d.nutzung.credits_gesamt));
-    V.zeile(sec, t('Geschätzte KI-Kosten dieses Kontos'), t('{betrag} (grobe Schätzung, {satz} Cent je Credit)', { betrag: V.euro(Math.round(d.kosten.gesamt_geschaetzt_eur * 100)), satz: (d.kosten.satz_pro_credit_eur * 100).toFixed(1).replace('.', ',') }));
+    V.zeile(sec, t('Geschätzte KI-Kosten dieses Kontos'), t('{betrag} (grobe Schätzung, {satz} Cent je Credit)', { betrag: V.euro(Math.round(d.kosten.gesamt_geschaetzt_eur * 100)), satz: new Intl.NumberFormat(window.LANG || 'de', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(d.kosten.satz_pro_credit_eur * 100) }));
     const details = V.el('details', 'verwaltung-klappe');
     details.appendChild(V.el('summary', null, t('Verbrauch im Detail')));
     V.zeile(details, t('Monatskontingent'), g.kontingent === null ? t('unbegrenzt') : V.zahl(g.kontingent));

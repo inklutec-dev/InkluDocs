@@ -8425,3 +8425,9 @@ msgstr "Standard är {standard} bilder per dag — ange exakt detta tal för att
 
 msgid "Meldung schließen"
 msgstr "Stäng meddelandet"
+
+msgid "Projekte insgesamt"
+msgstr "Projekt totalt"
+
+msgid "Bilder insgesamt"
+msgstr "Bilder totalt"
