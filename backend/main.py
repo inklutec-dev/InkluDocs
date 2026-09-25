@@ -28,6 +28,7 @@ import absender  # Sicherheitspaket 04.08.2026: echte Besucher-IP hinter dem Pro
 import billing  # Abo-/Credit-System Etappe 1: zentrale Verbrauchs-Zaehlung (backend/ABRECHNUNG.md)
 import demo as demo_mod  # Demo-Modus (oeffentliche Kostprobe ohne Anmeldung) — nur aktiv bei DEMO_MODE=on
 import stripe_zahlung  # Online-Zahlung (06.08.2026): inert ohne STRIPE_SECRET_KEY
+import umsatz  # Umsatz-Buchungen mit Betrag (25.09.2026): Stripe automatisch, Rechnung ueber die Verwaltung
 
 # Abo-System (06.08.2026): Fehler in Mail-/Tageslauf-Pfaden landen im Log,
 # nie beim Nutzer — gleiche Nie-Crashen-Philosophie wie billing.
@@ -422,9 +423,25 @@ def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Nicht angemeldet")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return {"id": int(payload["sub"]), "email": payload["email"], "is_admin": payload.get("is_admin", 0)}
-    except JWTError:
+        uid = int(payload["sub"])
+    except (JWTError, KeyError, TypeError, ValueError):
         raise HTTPException(status_code=401, detail="Token ungueltig")
+    # SPERRE SOFORT WIRKSAM (Steve 25.09.2026): Vorher pruefte nur die Anmeldung is_active —
+    # wer beim Sperren schon angemeldet war, arbeitete mit seinem Token bis zu 24 Stunden
+    # weiter; ebenso ein geloeschtes Konto. Jetzt bei JEDER Anfrage: ein kleiner Primaer-
+    # schluessel-Zugriff.
+    conn = get_db()
+    try:
+        zeile = conn.execute("SELECT is_active, is_admin FROM users WHERE id = ?", (uid,)).fetchone()
+    finally:
+        conn.close()
+    if not zeile:
+        raise HTTPException(status_code=401, detail="Konto nicht gefunden")
+    if not zeile["is_active"]:
+        raise HTTPException(status_code=401, detail="Konto gesperrt")
+    # is_admin ebenfalls frisch (Pruefbericht 25.09.2026): ein herabgestufter Admin sah sonst
+    # Umsatz und Kundendaten bis zum Ablauf seines Tokens weiter.
+    return {"id": uid, "email": payload.get("email", ""), "is_admin": int(zeile["is_admin"] or 0)}
 
 
 def get_optional_user(request: Request) -> Optional[dict]:
@@ -1376,7 +1393,7 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
             "FROM quota_pakete WHERE user_id = ? ORDER BY erstellt_am DESC LIMIT 20",
             (user_id,)).fetchall()]
         mitglieder = [dict(r) for r in conn.execute(
-            "SELECT u.display_name, u.email FROM team_mitgliedschaften m "
+            "SELECT u.id, u.display_name, u.email FROM team_mitgliedschaften m "
             "JOIN users u ON u.id = m.mitglied_id WHERE m.inhaber_id = ? "
             "ORDER BY u.display_name", (user_id,)).fetchall()]
         teams = [dict(r) for r in conn.execute(
@@ -1479,7 +1496,7 @@ async def admin_kunden_report(user_id: int, monate: int = 12,
         "nutzung": {
             "projekte": projekte, "bilder": bilder, "api_aufrufe": api_aufrufe,
             "credits_gesamt": gesamt, "selbst_gesamt": selbst_gesamt,
-            "letzte_aktion": letzte_aktion,
+            "letzte_aktion": umsatz.lokal(letzte_aktion) or None,   # deutsche Zeit (25.09.2026)
             "verlauf": verlauf,
         },
         "kosten": {
@@ -1695,12 +1712,54 @@ async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(re
     if plan != "free" and laufzeit is None and gueltig_bis is None:
         raise HTTPException(status_code=400,
                             detail="Bezahl-Plaene brauchen eine Laufzeit (3, 6 oder 12 Monate)")
+    # Umsatz (25.09.2026): Ein Bezahl-Plan wird entweder VERKAUFT (Betrag Pflicht, vorbelegt
+    # mit dem Listenpreis) oder OHNE BERECHNUNG vergeben (Grund Pflicht) — beides landet als
+    # Buchung im Umsatz, nur der Verkauf zaehlt zum Betrag. Free (Abo beenden) bucht nichts.
+    abo_buchung = None
+    art = ""
+    if plan != "free":
+        art = str(data.get("art") or "").strip()
+        notiz = str(data.get("notiz") or "").strip()[:500]
+        if art == "verkauf":
+            try:
+                betrag_cent = umsatz.euro_zu_cent(data.get("betrag"))
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+            if betrag_cent <= 0:
+                raise HTTPException(status_code=400, detail="Ein Verkauf braucht einen Betrag über 0 €.")
+            abo_buchung = {"weg": "rechnung", "betrag_cent": betrag_cent,
+                           "rechnungsnummer": str(data.get("rechnungsnummer") or ""), "notiz": notiz}
+        elif art == "ohne":
+            if len(notiz) < 3:
+                raise HTTPException(status_code=400, detail="Bitte kurz den Grund angeben, warum das Abo ohne Berechnung läuft.")
+            abo_buchung = {"weg": "bonus", "betrag_cent": 0, "notiz": notiz}
+        elif art == "keine":
+            # Nur Einstellungen aendern (Verlaengerung an/aus, Plan berichtigen) — keine Buchung,
+            # sonst stuende ein bereits berechnetes Abo doppelt im Umsatz (Pruefbericht 25.09.2026).
+            abo_buchung = None
+        else:
+            raise HTTPException(status_code=400,
+                                detail="Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern.")
     target = get_user_by_id(user_id)
     if not target:
         raise HTTPException(status_code=404, detail="User nicht gefunden")
+    nur_einstellungen = (art == "keine")
+    if (nur_einstellungen and gueltig_bis is None and target.get("plan") == plan
+            and int(target.get("plan_laufzeit_monate") or 0) == int(laufzeit or 0)
+            and target.get("plan_gueltig_bis")):
+        # Gleicher Plan, gleiche Laufzeit: das bezahlte Laufzeitende bleibt, wie es ist —
+        # sonst verlaengerte schon das Abschalten der Verlaengerung die Laufzeit ab heute.
+        gueltig_bis = str(target["plan_gueltig_bis"])[:10]
     gueltig_bis, geloest, ueberbelegt = _setze_plan_kern(
         user_id, target, plan, laufzeit, gueltig_bis, auto_verlaengerung,
-        quelle="rechnung")
+        # Bei reinen Einstellungen bleibt die Herkunft (ein Stripe-Abo wird nicht zum Rechnungs-Abo).
+        quelle=(target.get("plan_quelle") or "rechnung") if nur_einstellungen else "rechnung")
+    if abo_buchung:
+        # Nach dem Plan-Wechsel, eigene Transaktion: Scheitert die Buchung, ist der Plan
+        # trotzdem gesetzt (der Kunde hat bezahlt) — die Meldung sagt dann, dass sie fehlt.
+        if umsatz.buche_einzeln(konto=target, art="abo", plan=plan, laufzeit=laufzeit,
+                                von=_admin_person(user), **abo_buchung) is None:
+            abo_buchung = "fehlt"
     # Review-Befund 9: Rechnungskunden duerfen nicht schlechter stehen als
     # Stripe-Kunden — steigt das Kontingent, startet es auch hier frisch.
     if (billing.PLAN_KONTINGENTE.get(plan, 0)
@@ -1708,7 +1767,7 @@ async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(re
         billing.starte_kontingent_neu(user_id)
     # Bestaetigungs-Mail an den Kunden — gleicher Text wie spaeter beim
     # Online-Kauf: er sieht sofort, was gebucht wurde und bis wann es laeuft.
-    if plan != "free":
+    if plan != "free" and not nur_einstellungen:
         try:
             _sende_plan_bestaetigung(target, plan, gueltig_bis, laufzeit, auto_verlaengerung)
         except Exception:
@@ -1716,6 +1775,11 @@ async def admin_set_plan(user_id: int, request: Request, user: dict = Depends(re
     msg = f"Plan von {target['email']} ist jetzt '{plan}'"
     if gueltig_bis:
         msg += f" (gueltig bis {str(gueltig_bis)[:10]})"
+    if abo_buchung == "fehlt":
+        msg += " – ACHTUNG: Die Umsatz-Buchung konnte nicht gespeichert werden, bitte melden"
+    elif abo_buchung:
+        msg += (" – im Umsatz gebucht: " + ("Verkauf auf Rechnung, " + umsatz.cent_text(abo_buchung["betrag_cent"])
+                                           if abo_buchung["weg"] == "rechnung" else "ohne Berechnung"))
     if geloest:
         msg += f" – {geloest} Team-Mitgliedschaften wurden gelöst"
     if ueberbelegt:
@@ -3191,8 +3255,19 @@ async def stripe_webhook(request: Request):
                 # das Paket wiederfindet und auf 0 setzt (Rueckläufer-Regel unten).
                 ausstehend = (obj.get("payment_status") == "unpaid")
                 notiz = f"Stripe-Kauf {obj.get('id') or ''}" + (" (Lastschrift ausstehend)" if ausstehend else "")
-                billing.schenke_credits(user_id, groesse, notiz=notiz.strip(),
-                                        quelle="stripe", verfall_monate=None)
+                # Umsatz (25.09.2026): Paket und Buchung in EINER Transaktion, die Session-ID ist
+                # eindeutig. Schickt Stripe dasselbe Ereignis erneut, bucht buche() nichts — dann
+                # gibt es auch keine zweiten Credits (vorher: doppelte Gutschrift moeglich).
+                paket_id = billing.schenke_credits(
+                    user_id, groesse, notiz=notiz.strip(), quelle="stripe", verfall_monate=None,
+                    buchung={"konto": target, "weg": "stripe",
+                             "betrag_cent": int(obj.get("amount_total") or 0),
+                             "status": "ausstehend" if ausstehend else "ok",
+                             "stripe_ref": obj.get("id") or None, "von_name": "Stripe (automatisch)"})
+                if paket_id is None:
+                    logger.warning("Stripe-Webhook: Session %s schon verbucht — keine zweite Gutschrift",
+                                   obj.get("id"))
+                    return {"ok": True}
                 _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Stripe-Paketkauf: {target['email']}",
                           "Credit-Paket gekauft",
                           [f"{html.escape(target['email'])} hat {groesse} Zusatz-Credits über "
@@ -3213,6 +3288,7 @@ async def stripe_webhook(request: Request):
                     conn.commit()
                 finally:
                     conn.close()
+                umsatz.setze_status(obj.get("id") or "", "ok")
                 was = "Abo" if obj.get("mode") == "subscription" else f"Credit-Paket ({meta.get('idoc_paket') or '?'} Credits)"
                 _abo_mail(NOTIFICATION_EMAIL, f"InkluDocs Lastschrift eingegangen: {target['email']}",
                           "Lastschrift eingegangen",
@@ -3229,6 +3305,7 @@ async def stripe_webhook(request: Request):
                 logger.warning("Stripe-Webhook: unbekanntes Konto in %s", typ)
                 return {"ok": True}
             sid = obj.get("id") or "cs_none"
+            umsatz.setze_status(sid, "rueckgelaufen")
             conn = get_db()
             try:
                 if obj.get("mode") == "subscription":
@@ -3294,8 +3371,24 @@ async def stripe_webhook(request: Request):
                 try:
                     row = conn.execute("SELECT id FROM users WHERE stripe_subscription_id = ?",
                                        (sub_id,)).fetchone()
+                    # Umsatz: Die ERSTE Abo-Rechnung kann vor checkout.session.completed
+                    # eintreffen (dann steht die Subscription noch nicht am Konto) — fuer die
+                    # Buchung reicht die Stripe-Kundennummer.
+                    konto_row = row or (conn.execute(
+                        "SELECT id FROM users WHERE stripe_customer_id = ?",
+                        (obj.get("customer"),)).fetchone() if obj.get("customer") else None)
                 finally:
                     conn.close()
+                # Umsatz (25.09.2026): jede bezahlte Abo-Rechnung mit dem eingezogenen Betrag.
+                # stripe_ref = Rechnungs-ID, eindeutig — ein wiederholter Webhook bucht nichts doppelt.
+                if int(obj.get("amount_paid") or 0) > 0:
+                    konto_b = get_user_by_id(konto_row["id"]) if konto_row else None
+                    umsatz.buche_einzeln(
+                        konto=konto_b or {"display_name": obj.get("customer_name") or "",
+                                          "email": obj.get("customer_email") or ""},
+                        art="abo", weg="stripe", plan=neuer_plan, laufzeit=neue_laufzeit,
+                        betrag_cent=int(obj.get("amount_paid") or 0),
+                        stripe_ref=obj.get("id") or None, von_name="Stripe (automatisch)")
                 if row:
                     ziel = get_user_by_id(row["id"])
                     if ziel and neuer_plan and neuer_plan in billing.PLAN_KONTINGENTE:
@@ -3969,11 +4062,46 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
         conn = get_db()
         try:
             neues = ablauf
+            perioden = 0
             while neues < heute:
                 neues = conn.execute("SELECT date(?, ?)",
                                      (neues, f"+{int(laufzeit)} months")).fetchone()[0]
-            conn.execute("UPDATE users SET plan_gueltig_bis = ? WHERE id = ? AND plan_gueltig_bis = ?",
-                         (neues, k["id"], k["plan_gueltig_bis"]))
+                perioden += 1
+            verlaengert = conn.execute(
+                "UPDATE users SET plan_gueltig_bis = ? WHERE id = ? AND plan_gueltig_bis = ?",
+                (neues, k["id"], k["plan_gueltig_bis"])).rowcount
+            # Umsatz (25.09.2026): Die automatische Verlaengerung eines Rechnungs-Abos ist
+            # ein Verkauf zum Listenpreis (die Rechnung folgt, Betreiber werden erinnert) —
+            # in DERSELBEN Transaktion und nur, wenn DIESER Lauf verlaengert hat. Lief das
+            # Abo bisher ohne Berechnung, bleibt es auch in der Verlaengerung kostenlos.
+            # Nur AUSDRUECKLICHE Rechnungs-Abos (plan_quelle='rechnung'): Konten ohne Quelle
+            # (von Tests oder frueher direkt gesetzt) haben nie bezahlt und duerfen keinen
+            # Umsatz erzeugen (Steve 25.09.2026).
+            if verlaengert and perioden and k.get("plan_quelle") == "rechnung":
+                # Savepoint: alle Perioden oder keine (Pruefbericht 25.09.2026).
+                conn.execute("SAVEPOINT verlaengerung")
+                try:
+                    vorher = conn.execute(
+                        "SELECT weg, plan, laufzeit_monate, betrag_cent FROM buchungen "
+                        "WHERE konto_user_id = ? AND art = 'abo' AND status != 'storniert' "
+                        "ORDER BY gebucht_am DESC, id DESC LIMIT 1", (k["id"],)).fetchone()
+                    gratis = bool(vorher and vorher["weg"] == "bonus")
+                    # Sonderpreis uebernehmen, wenn die letzte Buchung genau dieses Abo war.
+                    preis = umsatz.abo_preis_cent(k["plan"], int(laufzeit))
+                    if (vorher and vorher["weg"] == "rechnung" and vorher["plan"] == k["plan"]
+                            and int(vorher["laufzeit_monate"] or 0) == int(laufzeit)):
+                        preis = int(vorher["betrag_cent"])
+                    for _ in range(perioden):
+                        umsatz.buche(conn, konto=k, art="abo", weg="bonus" if gratis else "rechnung",
+                                     plan=k["plan"], laufzeit=int(laufzeit),
+                                     betrag_cent=0 if gratis else preis,
+                                     notiz=f"Automatische Verlängerung bis {neues}",
+                                     von_name="System (automatische Verlängerung)")
+                    conn.execute("RELEASE SAVEPOINT verlaengerung")
+                except Exception:
+                    conn.execute("ROLLBACK TO SAVEPOINT verlaengerung")
+                    conn.execute("RELEASE SAVEPOINT verlaengerung")
+                    logger.exception("Umsatz-Buchung der Verlaengerung fehlgeschlagen (%s)", k["id"])
             conn.commit()
         finally:
             conn.close()
@@ -4008,62 +4136,73 @@ def _abo_konto_pruefen(k: dict, heute: str) -> None:
                    "jederzeit wieder ein Abo."])
 
 
+def _admin_person(user: dict) -> dict:
+    """Wer bucht: das Login-Token kennt nur id/E-Mail — der Name fuer „eingetragen von“
+    kommt frisch aus der Datenbank (Umsatz, 25.09.2026)."""
+    frisch = get_user_by_id(user["id"]) or {}
+    return {"id": user["id"], "display_name": frisch.get("display_name") or user.get("email") or ""}
+
+
 @app.post("/api/admin/users/{user_id}/pakete")
 async def admin_paket_anlegen(user_id: int, request: Request,
                               user: dict = Depends(require_full_admin)):
-    """Admin: Zusatz-Credit-Paket fuer ein Konto anlegen (Rechnungsweg).
+    """Admin: Credits gutschreiben — als VERKAUF AUF RECHNUNG oder als BONUS (25.09.2026).
 
-    Punkt 4 (04.08.2026): Preise laut billing.PAKET_PREISE (500/2500/5000, seit 28.08.2026);
-    andere Groessen sind fuer Kulanz erlaubt. verfall='kuendigung' (Vorgabe,
-    Michaels Regel: Credits verfallen erst mit der Kuendigung) oder eine
-    Monats-Zahl fuer klassische Datums-Pakete.
+    Seit dem Umsatz-Umbau muss die Art ausdruecklich gewaehlt werden (Steve: „dass man es
+    auswaehlen muss“). Anlass: Das alte Formular bot noch die Groessen von vor dem 28.08.
+    (100/500/1000) an; wer 2.500 Credits verkaufte, musste sie ins Kulanz-Feld tippen — und
+    der Verkauf landete als Geschenk, der Bonus als Rechnung.
+
+    art='verkauf': betrag (EUR, Pflicht), rechnungsnummer (optional). Das Paket verfaellt nie
+                   (gekauft = gekauft, wie beim Stripe-Kauf, Steves Regel 24.08.2026).
+    art='bonus':   grund (Pflicht). Verfaellt nach 12 Monaten. Ueber umsatz.BONUS_GRENZE
+                   Credits nur mit bestaetigt_gross=true.
+    Paket und Umsatz-Buchung entstehen in EINER Transaktion; eingetragen wird, wer bucht.
     """
     data = await request.json()
     try:
         groesse = int(data.get("groesse") or 0)
     except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="groesse muss eine Zahl sein")
+        raise HTTPException(status_code=400, detail="Die Menge muss eine ganze Zahl sein.")
     if not 1 <= groesse <= 100000:
-        raise HTTPException(status_code=400, detail="groesse muss zwischen 1 und 100000 liegen")
-    verfall = data.get("verfall", "kuendigung")
-    if verfall == "kuendigung":
-        verfall_monate = None
-    else:
-        try:
-            verfall_monate = int(verfall)
-        except (TypeError, ValueError):
-            raise HTTPException(status_code=400,
-                                detail="verfall muss 'kuendigung' oder eine Monats-Zahl sein")
-        if not 1 <= verfall_monate <= 120:
-            raise HTTPException(status_code=400, detail="verfall (Monate) muss zwischen 1 und 120 liegen")
-    quelle = data.get("quelle", "rechnung")
-    if quelle not in ("rechnung", "admin"):
-        raise HTTPException(status_code=400, detail="quelle muss 'rechnung' oder 'admin' sein")
-    notiz = (data.get("notiz") or "").strip()[:500]
+        raise HTTPException(status_code=400, detail="Die Menge muss zwischen 1 und 100.000 Credits liegen.")
+    art = (data.get("art") or "").strip()
+    if art not in ("verkauf", "bonus"):
+        raise HTTPException(status_code=400,
+                            detail="Bitte die Art wählen: Verkauf auf Rechnung oder Bonus (kostenlos).")
+    notiz = str(data.get("notiz") or "").strip()[:500]
     target = get_user_by_id(user_id)
     if not target:
-        raise HTTPException(status_code=404, detail="User nicht gefunden")
-    # Review-Befund K1 (06.08.): Das Paket gehoert IMMER genau dem Konto, das
-    # der Admin angegeben hat — NICHT dem fluechtigen Arbeits-Kontext
-    # (aktiver_topf ist jederzeit umschaltbar; die Gutschrift eines Kaeufers
-    # darf nie beim fremden Team-Inhaber landen, nur weil der Kaeufer gerade
-    # dort arbeitet). Team-Pakete legt der Admin direkt auf die E-Mail des
-    # Team-Inhabers.
-    konto_id = target["id"]
-    # Review-Befund K4: Kuendigungs-Pakete (verfaellt_am NULL) sind nur bei
-    # aktivem Bezahl-Plan nutzbar — fuer ein effektiv freies Konto waeren die
-    # Credits unsichtbar. Kulanz/Free bekommt automatisch ein Datums-Paket.
-    hinweis = ""
-    if verfall_monate is None and billing.effektiver_plan(target) == "free":
-        verfall_monate = 12
-        hinweis = " (Konto ohne aktives Abo: Paket verfaellt in 12 Monaten statt bei Kuendigung)"
-    paket_id = billing.schenke_credits(konto_id, groesse, notiz=notiz,
-                                       quelle=quelle, verfall_monate=verfall_monate)
-    preis = billing.PAKET_PREISE.get(groesse)
-    return {"ok": True, "paket_id": paket_id, "konto_user_id": konto_id,
-            "groesse": groesse, "preis_eur": preis,
-            "verfall": "kuendigung" if verfall_monate is None else f"{verfall_monate} Monate",
-            "message": f"Paket ({groesse} Credits) fuer {target['email']} angelegt{hinweis}"}
+        raise HTTPException(status_code=404, detail="Konto nicht gefunden.")
+    # Review-Befund K1 (06.08.): Das Paket gehoert IMMER genau dem Konto, das der Admin
+    # angegeben hat — nie dem fluechtigen Arbeits-Kontext (aktiver_topf). Team-Pakete legt
+    # der Admin direkt beim Team-Inhaber an.
+    if art == "verkauf":
+        try:
+            betrag_cent = umsatz.euro_zu_cent(data.get("betrag"))
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        if betrag_cent <= 0:
+            raise HTTPException(status_code=400, detail="Ein Verkauf braucht einen Betrag über 0 €.")
+        buchung = {"konto": target, "weg": "rechnung", "betrag_cent": betrag_cent,
+                   "rechnungsnummer": str(data.get("rechnungsnummer") or ""), "notiz": notiz, "von": _admin_person(user)}
+        paket_id = billing.schenke_credits(target["id"], groesse, notiz=notiz, quelle="rechnung",
+                                           verfall_monate=None, buchung=buchung)
+        text = (f"{umsatz.zahl_text(groesse)} Credits für {target['display_name']} gutgeschrieben: "
+                f"Verkauf auf Rechnung, {umsatz.cent_text(betrag_cent)}.")
+    else:
+        if len(notiz) < 3:
+            raise HTTPException(status_code=400, detail="Bitte kurz den Grund für den Bonus angeben.")
+        if groesse > umsatz.BONUS_GRENZE and data.get("bestaetigt_gross") is not True:
+            raise HTTPException(status_code=400,
+                                detail=f"Ein Bonus über {umsatz.BONUS_GRENZE} Credits muss ausdrücklich bestätigt werden.")
+        buchung = {"konto": target, "weg": "bonus", "betrag_cent": 0, "notiz": notiz, "von": _admin_person(user)}
+        paket_id = billing.schenke_credits(target["id"], groesse, notiz=notiz, quelle="admin",
+                                           verfall_monate=12, buchung=buchung)
+        text = (f"{umsatz.zahl_text(groesse)} Credits für {target['display_name']} gutgeschrieben: "
+                "Bonus (kostenlos), gültig 12 Monate.")
+    return {"ok": True, "paket_id": paket_id, "konto_user_id": target["id"],
+            "groesse": groesse, "message": text}
 
 
 @app.post("/api/admin/users/{user_id}/api-limit")
@@ -4100,12 +4239,242 @@ async def admin_setze_api_limit(user_id: int, request: Request,
         conn.commit()
     finally:
         conn.close()
+    name = ziel.get("display_name") or ziel["email"]
     if limit is None:
-        text = f"Standard ({DAILY_IMAGE_LIMIT} Bilder pro Tag)"
+        text = f"Standard, {umsatz.zahl_text(DAILY_IMAGE_LIMIT)} Bilder pro Tag"
+    elif limit == 0:
+        text = "0 — die API ist für dieses Konto gesperrt"
     else:
-        text = f"{limit} Bilder pro Tag"
+        text = f"{umsatz.zahl_text(limit)} Bilder pro Tag"
     return {"ok": True, "api_tageslimit": limit,
-            "message": f"API-Tageslimit fuer {ziel['email']}: {text}"}
+            "message": f"API-Tageslimit für {name} gespeichert: {text}."}
+
+
+# ─── VERWALTUNG: Kunden, Umsatz, API (25.09.2026, Steve) ───────────────────
+# Die fruehere eine lange Seite /benutzer ist aufgeteilt in /verwaltung/kunden (Suche,
+# Filter, 25 je Seite), eine Seite je Kunde, /verwaltung/umsatz und /verwaltung/api.
+# Bei 1.000 Kunden bleibt es dieselbe Seite — nur mit mehr Seitenzahlen.
+
+KUNDEN_FILTER = ("alle", "abo", "team", "rechnung", "stripe", "kaeufer", "neu", "gesperrt", "admins")
+KUNDEN_JE_SEITE = 25
+
+
+@app.get("/api/admin/kunden")
+async def admin_kunden_liste(q: str = "", filter: str = "alle", seite: int = 1,
+                             user: dict = Depends(require_admin)):
+    """Kundenliste mit Suche, Filter und Seiten (25 je Seite), zuletzt aktive zuerst."""
+    if filter not in KUNDEN_FILTER:
+        raise HTTPException(status_code=400, detail="Unbekannter Filter")
+    q = (q or "").strip().lower()[:100]
+    alle = list_all_users()
+    conn = get_db()
+    try:
+        kaeufer = {r[0] for r in conn.execute(
+            "SELECT DISTINCT konto_user_id FROM buchungen WHERE weg != 'bonus' "
+            "AND konto_user_id IS NOT NULL").fetchall()}
+    finally:
+        conn.close()
+    monat_start = umsatz.zeitraum(umsatz.jetzt_lokal().year, umsatz.jetzt_lokal().month)[0]
+    treffer = []
+    for u in alle:
+        plan = billing.effektiver_plan(u)
+        if q and q not in (u.get("display_name") or "").lower() \
+                and q not in (u.get("email") or "").lower() \
+                and q not in (u.get("team_name") or "").lower():
+            continue
+        if filter == "abo" and plan == "free":
+            continue
+        # Team und Enterprise: die zahlenden Inhaber (Mitglieder haben selbst keinen Team-Plan).
+        if filter == "team" and plan not in billing.PLAN_SITZE:
+            continue
+        if filter == "rechnung" and not (plan != "free" and u.get("plan_quelle") == "rechnung"):
+            continue
+        if filter == "stripe" and not (plan != "free" and u.get("plan_quelle") == "stripe"):
+            continue
+        if filter == "kaeufer" and u["id"] not in kaeufer:
+            continue
+        if filter == "neu" and (u.get("created_at") or "") < monat_start:
+            continue
+        if filter == "gesperrt" and u.get("is_active"):
+            continue
+        if filter == "admins" and not u.get("is_admin"):
+            continue
+        treffer.append((u, plan))
+    # Zuletzt aktive zuerst; nie Angemeldete nach Anlagedatum dahinter.
+    treffer.sort(key=lambda t: ((t[0].get("last_login") or ""), (t[0].get("created_at") or "")),
+                 reverse=True)
+    gesamt = len(treffer)
+    seiten = max(1, -(-gesamt // KUNDEN_JE_SEITE))
+    seite = min(max(1, int(seite or 1)), seiten)
+    ausschnitt = treffer[(seite - 1) * KUNDEN_JE_SEITE: seite * KUNDEN_JE_SEITE]
+    kunden = []
+    for u, plan in ausschnitt:
+        kunden.append({
+            "id": u["id"], "name": u.get("display_name") or "", "email": u.get("email") or "",
+            "plan": plan, "plan_quelle": u.get("plan_quelle") if plan != "free" else None,
+            "team_name": u.get("team_name") or "",
+            "aktiv": bool(u.get("is_active")), "admin": bool(u.get("is_admin")),
+            "zuletzt": umsatz.lokal(u.get("last_login"))[:10] or None,   # UTC -> deutsche Zeit
+        })
+    return {"kunden": kunden, "gesamt": gesamt, "alle": len(alle), "seite": seite,
+            "seiten": seiten, "je_seite": KUNDEN_JE_SEITE}
+
+
+@app.get("/api/admin/kunden/{user_id}/buchungen")
+async def admin_kunde_buchungen(user_id: int, user: dict = Depends(require_admin)):
+    """Kaeufe und Gutschriften eines Kontos, neueste zuerst."""
+    if not get_user_by_id(user_id):
+        raise HTTPException(status_code=404, detail="Konto nicht gefunden")
+    return {"buchungen": umsatz.liste(konto_id=user_id)}
+
+
+def _api_konto_daten(conn, uid: int, zeile: dict) -> dict:
+    """API-Schluessel und Tageslimit eines Kontos fuer Kundenseite und API-Seite."""
+    schluessel = conn.execute(
+        "SELECT COUNT(*) AS n, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS aktiv, "
+        "MIN(created_at) AS erster, MAX(created_at) AS neuester, MAX(last_used) AS zuletzt "
+        "FROM api_keys WHERE user_id = ?", (uid,)).fetchone()
+    return {
+        "schluessel": int(schluessel["n"] or 0),
+        "schluessel_aktiv": int(schluessel["aktiv"] or 0),
+        "erster_schluessel": (schluessel["erster"] or "")[:10] or None,
+        "neuester_schluessel": (schluessel["neuester"] or "")[:10] or None,
+        "zuletzt_benutzt": umsatz.lokal(schluessel["zuletzt"]) or None,   # UTC -> deutsche Zeit
+        "limit": effektives_api_tageslimit(zeile),
+        "limit_individuell": zeile.get("api_tageslimit") is not None,
+        "heute": max(get_daily_image_count(uid), billing.tagesverbrauch_ki(uid)),
+        "aufrufe_gesamt": int(conn.execute("SELECT COUNT(*) FROM api_usage WHERE user_id = ?",
+                                           (uid,)).fetchone()[0]),
+    }
+
+
+@app.get("/api/admin/kunden/{user_id}/api")
+async def admin_kunde_api(user_id: int, user: dict = Depends(require_admin)):
+    ziel = get_user_by_id(user_id)
+    if not ziel:
+        raise HTTPException(status_code=404, detail="Konto nicht gefunden")
+    conn = get_db()
+    try:
+        return {"api": _api_konto_daten(conn, user_id, ziel), "standard": DAILY_IMAGE_LIMIT}
+    finally:
+        conn.close()
+
+
+@app.get("/api/admin/api-konten")
+async def admin_api_konten(user: dict = Depends(require_admin)):
+    """Nur Konten, die einen API-Schluessel angelegt haben — neuester Schluessel zuerst."""
+    conn = get_db()
+    try:
+        ids = [r[0] for r in conn.execute(
+            "SELECT user_id FROM api_keys GROUP BY user_id ORDER BY MAX(created_at) DESC").fetchall()]
+        out = []
+        for uid in ids:
+            ziel = get_user_by_id(uid)
+            if not ziel:
+                continue
+            out.append({"id": uid, "name": ziel.get("display_name") or "",
+                        "email": ziel.get("email") or "",
+                        **_api_konto_daten(conn, uid, ziel)})
+    finally:
+        conn.close()
+    return {"konten": out, "standard": DAILY_IMAGE_LIMIT}
+
+
+def _umsatz_auswahl(jahr, monat, auswahl):
+    """Gemeinsame Pruefung fuer Anzeige und Export."""
+    jahre = umsatz.jahre()
+    if jahr in (None, "") and monat in (None, ""):
+        # Ohne Angabe: der laufende Monat (deutsche Zeit).
+        jetzt = umsatz.jetzt_lokal()
+        return jetzt.year, jetzt.month, auswahl if auswahl in ("alle", "verkauf", "bonus") else "alle", jahre
+    try:
+        jahr = int(jahr) if jahr not in (None, "") else jahre[0]
+        monat = int(monat) if monat not in (None, "", "0") else None
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Jahr und Monat müssen Zahlen sein")
+    if jahr not in jahre or (monat is not None and not 1 <= monat <= 12):
+        raise HTTPException(status_code=400, detail="Diesen Zeitraum gibt es nicht")
+    if auswahl not in ("alle", "verkauf", "bonus"):
+        raise HTTPException(status_code=400, detail="Unbekannte Auswahl")
+    return jahr, monat, auswahl, jahre
+
+
+@app.get("/api/admin/umsatz")
+async def admin_umsatz(jahr: str = None, monat: str = None, auswahl: str = "alle",
+                       user: dict = Depends(require_admin)):
+    """Kennzahlen (heute, Monat, Jahr, gesamt), Monatsuebersicht des Jahres und die
+    Buchungen des gewaehlten Zeitraums."""
+    jahr, monat, auswahl, jahre = _umsatz_auswahl(jahr, monat, auswahl)
+    buchungen = umsatz.liste(jahr, monat, auswahl)
+    summe = sum(b["betrag_cent"] for b in buchungen
+                if b["weg"] != "bonus" and b["status"] in ("ok", "ausstehend"))
+    return {"kennzahlen": umsatz.kennzahlen(), "jahre": jahre, "jahr": jahr, "monat": monat,
+            "auswahl": auswahl, "monate": umsatz.monatsuebersicht(jahr),
+            "zeitraeume": umsatz.zeitraeume(),
+            "buchungen": buchungen, "summe_cent": summe,
+            "bonus_credits": sum(b["credits"] for b in buchungen if b["weg"] == "bonus")}
+
+
+@app.get("/api/admin/umsatz/export")
+async def admin_umsatz_export(format: str = "xlsx", jahr: str = None, monat: str = None,
+                              auswahl: str = "alle", user: dict = Depends(require_admin)):
+    """Die gewaehlten Buchungen als Excel- oder CSV-Datei (fuer Steuerberater und Actino)."""
+    from fastapi import Response
+    if format not in ("xlsx", "csv"):
+        raise HTTPException(status_code=400, detail="Format muss xlsx oder csv sein")
+    jahr, monat, auswahl, _j = _umsatz_auswahl(jahr, monat, auswahl)
+    buchungen = umsatz.liste(jahr, monat, auswahl)
+    zeit = f"{jahr}-{monat:02d}" if monat else str(jahr)
+    name = f"InkluDocs-Umsatz-{zeit}" + ("" if auswahl == "alle" else f"-{auswahl}")
+    if format == "csv":
+        inhalt, media = umsatz.export_csv(buchungen), "text/csv; charset=utf-8"
+    else:
+        inhalt = umsatz.export_xlsx(buchungen, zeit)
+        media = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return Response(content=inhalt, media_type=media,
+                    headers={"Content-Disposition": f'attachment; filename="{name}.{format}"',
+                             "Cache-Control": "no-store"})
+
+
+@app.post("/api/admin/buchungen/{buchung_id}/korrektur")
+async def admin_buchung_korrigieren(buchung_id: int, request: Request,
+                                    user: dict = Depends(require_full_admin)):
+    """Eine Hand-Buchung berichtigen (Verkauf <-> Bonus, Betrag, Rechnungsnummer), mit Grund.
+    Die Credits bleiben unveraendert; die Korrektur steht mit Name und Zeit an der Buchung."""
+    data = await request.json()
+    weg = {"verkauf": "rechnung", "bonus": "bonus"}.get((data.get("art") or "").strip())
+    if not weg:
+        raise HTTPException(status_code=400, detail="Bitte die Art wählen: Verkauf auf Rechnung oder Bonus.")
+    try:
+        betrag_cent = umsatz.euro_zu_cent(data.get("betrag")) if weg == "rechnung" else 0
+        neu = umsatz.korrigiere(buchung_id, weg=weg, betrag_cent=betrag_cent,
+                                rechnungsnummer=str(data.get("rechnungsnummer") or ""),
+                                grund=str(data.get("grund") or ""), admin=_admin_person(user),
+                                bestaetigt_gross=data.get("bestaetigt_gross") is True)
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "buchung": neu,
+            "message": f"Buchung berichtigt: {neu['weg_text']}, {neu['betrag_text']}."}
+
+
+@app.post("/api/admin/buchungen/{buchung_id}/storno")
+async def admin_buchung_stornieren(buchung_id: int, request: Request,
+                                   user: dict = Depends(require_full_admin)):
+    """Eine Hand-Gutschrift stornieren: noch nicht verbrauchte Credits zuruecknehmen, Buchung
+    aus dem Umsatz nehmen, mit Grund (Steve 25.09.2026). Stripe-Kaeufe und Abos ausgenommen."""
+    data = await request.json()
+    try:
+        neu = umsatz.storniere(buchung_id, grund=str(data.get("grund") or ""), admin=_admin_person(user))
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    text = ("Buchung storniert, sie zählt nicht mehr zum Umsatz."
+            if neu["art"] == "abo" else
+            f"Storniert: {umsatz.zahl_text(neu['zurueckgenommen'])} Credits zurückgenommen.")
+    return {"ok": True, "buchung": neu, "message": text}
 
 
 # ─── API Key Management ─────────────────────────────────────
@@ -9657,12 +10026,11 @@ async def reset_page(request: Request):
 def _serve_protected_page(request: Request, filename: str):
     """Liefert eine login-geschuetzte HTML-Seite aus dem frontend-Verzeichnis.
     Leitet zu / um, wenn kein gueltiges Login-Cookie vorliegt."""
-    token = request.cookies.get("token")
-    if not token:
-        return RedirectResponse("/login")
+    # Seit 25.09.2026 ueber get_current_user: gesperrte oder geloeschte Konten landen gleich
+    # auf der Anmeldung statt auf einer Seitenhuelle, deren Daten dann 401 liefern.
     try:
-        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
+        get_current_user(request)
+    except HTTPException:
         return RedirectResponse("/login")
     html = open(f"/app/frontend/{filename}").read()
     if "staging" in BASE_URL:
@@ -9689,12 +10057,11 @@ def resolve_ui_language(request: Request) -> str:
 def _render_protected_template(request: Request, template_name: str, **extra):
     """Wie _serve_protected_page, aber rendert ein Jinja2-Template mit
     Sprach-Aufloesung. Fuer bereits auf i18n migrierte, eingeloggte Seiten."""
-    token = request.cookies.get("token")
-    if not token:
-        return RedirectResponse("/login")
+    # Seit 25.09.2026 ueber get_current_user: gesperrte oder geloeschte Konten landen gleich
+    # auf der Anmeldung statt auf einer Seitenhuelle, deren Daten dann 401 liefern.
     try:
-        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
+        get_current_user(request)
+    except HTTPException:
         return RedirectResponse("/login")
     lang = resolve_ui_language(request)
     return templates.TemplateResponse(
@@ -9800,20 +10167,61 @@ async def stammdaten_page(request: Request):
     return _render_protected_template(request, "stammdaten.html")
 
 
+# VERWALTUNG (25.09.2026, Steve): vier Unterseiten statt einer langen Seite. Die alten
+# Adressen leiten weiter, damit Lesezeichen und Links in alten Mails funktionieren.
+# Die Rechtepruefung machen die Daten-Endpunkte (/api/admin/...); ohne Rechte zeigen die
+# Seiten nur die Kein-Zugriff-Meldung.
+
+def _verwaltung_seite(request: Request, vorlage: str, bereich: str, **extra):
+    return _render_protected_template(
+        request, vorlage, verwaltung_bereich=bereich, api_limit_standard=DAILY_IMAGE_LIMIT,
+        verwaltung_preise={
+            "pakete": {str(k): int(round(v * 100)) for k, v in billing.PAKET_PREISE.items()},
+            "abo": {p: {str(m): umsatz.abo_preis_cent(p, m) for m in billing.PLAN_LAUFZEITEN_RECHNUNG}
+                    for p in billing.PLAN_PREISE_EUR},
+            "cent_je_credit": umsatz.CENT_JE_CREDIT_VORSCHLAG,
+            "bonus_grenze": umsatz.BONUS_GRENZE,
+        }, **extra)
+
+
+@app.get("/verwaltung", response_class=HTMLResponse)
+async def verwaltung_start(request: Request):
+    return RedirectResponse("/verwaltung/kunden", status_code=302)
+
+
+@app.get("/verwaltung/kunden", response_class=HTMLResponse)
+async def verwaltung_kunden(request: Request):
+    return _verwaltung_seite(request, "verwaltung_kunden.html", "kunden")
+
+
+@app.get("/verwaltung/kunden/{user_id}", response_class=HTMLResponse)
+async def verwaltung_kunde(user_id: int, request: Request):
+    return _verwaltung_seite(request, "verwaltung_kunde.html", "kunden", kunde_id=user_id)
+
+
+@app.get("/verwaltung/umsatz", response_class=HTMLResponse)
+async def verwaltung_umsatz(request: Request):
+    return _verwaltung_seite(request, "verwaltung_umsatz.html", "umsatz")
+
+
+@app.get("/verwaltung/api", response_class=HTMLResponse)
+async def verwaltung_api(request: Request):
+    return _verwaltung_seite(request, "verwaltung_api.html", "api")
+
+
+@app.get("/verwaltung/einstellungen", response_class=HTMLResponse)
+async def verwaltung_einstellungen(request: Request):
+    return _verwaltung_seite(request, "verwaltung_einstellungen.html", "einstellungen")
+
+
 @app.get("/benutzer", response_class=HTMLResponse)
 async def users_page(request: Request):
-    # api_limit_standard: aktueller Standard der Missbrauchsbremse — auf
-    # Staging per ENV 5000, auf Prod 100. Die Seite zeigt ihn im Limit-Feld.
-    return _render_protected_template(request, "benutzer.html",
-                                      api_limit_standard=DAILY_IMAGE_LIMIT)
+    return RedirectResponse("/verwaltung/kunden", status_code=301)
 
 
 @app.get("/benutzer/report/{user_id}", response_class=HTMLResponse)
 async def user_report_page(user_id: int, request: Request):
-    # Eigene Report-Seite je Kunde (11.08.2026, Steve). Die Rechtepruefung
-    # macht der Daten-Endpunkt /api/admin/users/<id>/report — die Seite
-    # selbst zeigt ohne Rechte nur die Kein-Zugriff-Meldung.
-    return _render_protected_template(request, "benutzer_report.html")
+    return RedirectResponse(f"/verwaltung/kunden/{int(user_id)}", status_code=301)
 
 
 @app.get("/datensicherheit", response_class=HTMLResponse)

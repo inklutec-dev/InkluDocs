@@ -1,0 +1,644 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Kunde') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# VERWALTUNG — EINE SEITE JE KUNDE (25.09.2026, Steve; ersetzt den Report vom 11.08.2026).
+   Alles zu einem Kunden an einem Ort, alle Aktionen von hier aus — die E-Mail muss nirgends
+   mehr abgetippt werden. Reihenfolge: Überblick, Käufe und Gutschriften, API, Nutzung,
+   ganz unten getrennt Konto verwalten (Sperren, Passwort, Löschen). #}
+<h1 id="kundeTitel">{{ _('Verwaltung') }}: {{ _('Kunde') }}</h1>
+{% include "_verwaltung_nav.html" %}
+<p class="verwaltung-zurueck"><a href="/verwaltung/kunden" id="zurListe">{{ _('Zurück zur Kundenliste') }}</a></p>
+
+<div id="kundeInhalt" aria-busy="true">
+  <p class="dash-sub">{{ _('Wird geladen …') }}</p>
+</div>
+{% endblock %}
+
+{% block dialogs %}
+{% include "_verwaltung_dialoge.html" %}
+
+{# Credits gutschreiben: zwei Schritte in einem Dialog — Eingabe, dann ein Bestätigungssatz.
+   Die Art ist Pflicht und hat KEINE Vorauswahl (Steve 25.09.2026: „dass man es auswählen muss“). #}
+<dialog id="gsDialog" class="app-dialog" aria-labelledby="gsTitel">
+  <h2 id="gsTitel">{{ _('Credits gutschreiben') }}</h2>
+  <p id="gsFuer"></p>
+  <form id="gsForm" novalidate>
+    <div id="gsEingabe">
+      <div class="dash-field">
+        <label for="gsArt">{{ _('Art der Gutschrift') }}</label>
+        <select id="gsArt" class="dash-input" required>
+          <option value="">{{ _('Bitte wählen') }}</option>
+          <option value="verkauf">{{ _('Verkauf auf Rechnung') }}</option>
+          <option value="bonus">{{ _('Bonus (kostenlos)') }}</option>
+        </select>
+      </div>
+      <div class="dash-field">
+        <label for="gsMenge">{{ _('Menge') }}</label>
+        <select id="gsMenge" class="dash-input"></select>
+      </div>
+      <div class="dash-field" id="gsFreiFeld" hidden>
+        <label for="gsFrei">{{ _('Menge in Credits (1 bis 100.000)') }}</label>
+        <input type="text" id="gsFrei" class="dash-input" inputmode="numeric" autocomplete="off" maxlength="6">
+      </div>
+      <div id="gsVerkauf" hidden>
+        <div class="dash-field">
+          <label for="gsBetrag">{{ _('Rechnungsbetrag in Euro') }}</label>
+          <input type="text" id="gsBetrag" class="dash-input" inputmode="decimal" autocomplete="off" aria-describedby="gsBetragHinweis">
+          <p class="dash-sub" id="gsBetragHinweis">{{ _('Vorbelegt mit dem Listenpreis, bei freien Mengen 4 Cent je Credit. Bei einem Sonderpreis einfach überschreiben.') }}</p>
+        </div>
+        <div class="dash-field">
+          <label for="gsNummer">{{ _('Rechnungsnummer (optional)') }}</label>
+          <input type="text" id="gsNummer" class="dash-input" maxlength="100" autocomplete="off">
+        </div>
+        <div class="dash-field">
+          <label for="gsNotiz">{{ _('Notiz (optional)') }}</label>
+          <input type="text" id="gsNotiz" class="dash-input" maxlength="500" autocomplete="off">
+        </div>
+      </div>
+      <div id="gsBonus" hidden>
+        <div class="dash-field">
+          <label for="gsGrund">{{ _('Grund für den Bonus') }}</label>
+          <input type="text" id="gsGrund" class="dash-input" maxlength="500" autocomplete="off" aria-describedby="gsGrundHinweis">
+          <p class="dash-sub" id="gsGrundHinweis">{{ _('Zum Beispiel: Dankeschön fürs Testen. Ein Bonus gilt 12 Monate und zählt nicht zum Umsatz.') }}</p>
+        </div>
+      </div>
+      <p id="gsFehler" role="alert" class="verwaltung-fehler"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="gsAbbrechen">{{ _('Abbrechen') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Weiter') }}</button>
+      </div>
+    </div>
+    <div id="gsPruefen" hidden>
+      <p id="gsSatz" class="verwaltung-bestaetigung" tabindex="-1"></p>
+      <div class="dash-field" id="gsGrossFeld" hidden>
+        <label><input type="checkbox" id="gsGross"> <span id="gsGrossText"></span></label>
+      </div>
+      <p id="gsFehler2" role="alert" class="verwaltung-fehler"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="gsZurueck">{{ _('Zurück') }}</button>
+        <button type="button" class="btn btn-primary" id="gsBuchen">{{ _('Ja, gutschreiben') }}</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+{# Abo zuweisen oder ändern (Rechnungsweg). Wie die Gutschrift: Art ohne Vorauswahl,
+   Betrag mit Listenpreis vorbelegt, Bestätigungssatz vor dem Speichern. #}
+<dialog id="aboDialog" class="app-dialog" aria-labelledby="aboTitel">
+  <h2 id="aboTitel">{{ _('Abo zuweisen oder ändern') }}</h2>
+  <p id="aboFuer"></p>
+  <form id="aboForm" novalidate>
+    <div id="aboEingabe">
+      <div class="dash-field">
+        <label for="aboPlan">{{ _('Plan') }}</label>
+        <select id="aboPlan" class="dash-input">
+          <option value="single">Single (250 Credits)</option>
+          <option value="team">{{ _('Team (500 Credits, bis 5 Personen)') }}</option>
+          <option value="enterprise">{{ _('Enterprise (1.375 Credits, bis 25 Personen)') }}</option>
+          <option value="free">{{ _('Free (Abo beenden)') }}</option>
+        </select>
+      </div>
+      <div id="aboBezahlt">
+        <div class="dash-field">
+          <label for="aboLaufzeit">{{ _('Laufzeit') }}</label>
+          <select id="aboLaufzeit" class="dash-input">
+            <option value="3">{{ _('3 Monate') }}</option>
+            <option value="6" selected>{{ _('6 Monate') }}</option>
+            <option value="12">{{ _('12 Monate') }}</option>
+          </select>
+        </div>
+        <div class="dash-field">
+          <label><input type="checkbox" id="aboAutoVerl" checked> {{ _('Verlängert sich automatisch (Kunde kann jederzeit kündigen)') }}</label>
+          <p class="dash-sub">{{ _('Automatische Verlängerung nur für Unternehmer (B2B). Bei Verbrauchern das Häkchen entfernen.') }}</p>
+        </div>
+        <div class="dash-field">
+          <label for="aboArt">{{ _('Art') }}</label>
+          <select id="aboArt" class="dash-input">
+            <option value="">{{ _('Bitte wählen') }}</option>
+            <option value="verkauf">{{ _('Verkauf auf Rechnung') }}</option>
+            <option value="ohne">{{ _('Ohne Berechnung') }}</option>
+            <option value="keine">{{ _('Nur Einstellungen ändern, nichts buchen') }}</option>
+          </select>
+        </div>
+        <div id="aboVerkauf" hidden>
+          <div class="dash-field">
+            <label for="aboBetrag">{{ _('Rechnungsbetrag in Euro für die ganze Laufzeit') }}</label>
+            <input type="text" id="aboBetrag" class="dash-input" inputmode="decimal" autocomplete="off" aria-describedby="aboBetragHinweis">
+            <p class="dash-sub" id="aboBetragHinweis">{{ _('Vorbelegt mit dem Listenpreis (Monatspreis mal Laufzeit). Bei einem Sonderpreis einfach überschreiben.') }}</p>
+          </div>
+          <div class="dash-field">
+            <label for="aboNummer">{{ _('Rechnungsnummer (optional)') }}</label>
+            <input type="text" id="aboNummer" class="dash-input" maxlength="100" autocomplete="off">
+          </div>
+        </div>
+        <div class="dash-field" id="aboOhne" hidden>
+          <label for="aboGrund">{{ _('Grund, warum das Abo ohne Berechnung läuft') }}</label>
+          <input type="text" id="aboGrund" class="dash-input" maxlength="500" autocomplete="off">
+        </div>
+      </div>
+      <p id="aboFehler" role="alert" class="verwaltung-fehler"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="aboAbbrechen">{{ _('Abbrechen') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Weiter') }}</button>
+      </div>
+    </div>
+    <div id="aboPruefen" hidden>
+      <p id="aboSatz" class="verwaltung-bestaetigung" tabindex="-1"></p>
+      <p class="dash-sub">{{ _('Der Kunde bekommt eine Bestätigung per E-Mail.') }}</p>
+      <p id="aboFehler2" role="alert" class="verwaltung-fehler"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="aboZurueck">{{ _('Zurück') }}</button>
+        <button type="button" class="btn btn-primary" id="aboSpeichern">{{ _('Ja, speichern') }}</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="pwDialog" class="app-dialog" aria-labelledby="pwTitel">
+  <h2 id="pwTitel">{{ _('Passwort zurücksetzen') }}</h2>
+  <p id="pwFuer"></p>
+  <form id="pwForm" novalidate>
+    <div class="dash-field">
+      <label for="pwNeu">{{ _('Neues Passwort (mind. 8 Zeichen)') }}</label>
+      <input type="password" id="pwNeu" class="dash-input" required minlength="8" autocomplete="new-password">
+    </div>
+    <div class="dash-field">
+      <label for="pwNeu2">{{ _('Passwort wiederholen') }}</label>
+      <input type="password" id="pwNeu2" class="dash-input" required minlength="8" autocomplete="new-password">
+    </div>
+    <p id="pwFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="pwAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Passwort setzen') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="sperrDialog" class="app-dialog" aria-labelledby="sperrTitel">
+  <h2 id="sperrTitel">{{ _('Konto sperren?') }}</h2>
+  <p id="sperrText"></p>
+  <p id="sperrStripe" class="verwaltung-warnung" hidden>{{ _('Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard.') }}</p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="sperrAbbrechen">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="sperrJa">{{ _('Ja, sperren') }}</button>
+  </div>
+</dialog>
+
+<dialog id="loeschDialog" class="app-dialog" aria-labelledby="loeschTitel">
+  <h2 id="loeschTitel">{{ _('Konto wirklich löschen?') }}</h2>
+  <p id="loeschText"></p>
+  <p class="dash-sub">{{ _('Die Buchungen im Umsatz bleiben als Geschäftsunterlagen erhalten.') }}</p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="loeschAbbrechen">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="loeschJa">{{ _('Ja, löschen') }}</button>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block page_script %}
+<script>
+  window.API_LIMIT_STANDARD = {{ api_limit_standard|int }};
+  window.VERWALTUNG_PREISE = {{ verwaltung_preise|tojson }};
+  window.KUNDE_ID = {{ kunde_id|int }};
+</script>
+<script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script>
+{% raw %}
+(function () {
+  const V = window.Verwaltung;
+  const PREISE = window.VERWALTUNG_PREISE;
+  const ID = window.KUNDE_ID;
+  let konto = null;      // Report-Daten (/api/admin/users/<id>/report)
+  let apiDaten = null;
+
+  // Zurück führt zur zuletzt gezeigten Kundenliste (Suche, Filter, Seite).
+  try {
+    const liste = sessionStorage.getItem('verwaltungKundenListe');
+    if (liste && liste.indexOf('/verwaltung/kunden') === 0) byId('zurListe').href = liste;
+  } catch (e) { /* privat */ }
+
+  function abschnitt(ziel, titel, id) {
+    const sec = V.el('section', 'dash-card verwaltung-karte');
+    const h2 = V.el('h2', null, titel);
+    h2.id = id;
+    sec.setAttribute('aria-labelledby', id);
+    sec.appendChild(h2);
+    ziel.appendChild(sec);
+    return sec;
+  }
+
+  function knopf(text, klick, klasse) {
+    const b = V.el('button', 'btn ' + (klasse || 'btn-secondary'), text);
+    b.type = 'button';
+    b.addEventListener('click', klick);
+    return b;
+  }
+
+  // ── Laden und Aufbauen ────────────────────────────────────────────────
+  async function laden(still) {
+    const ziel = byId('kundeInhalt');
+    const [d, b, a] = await Promise.all([
+      V.ladeJson('/api/admin/users/' + ID + '/report', ziel),
+      V.ladeJson('/api/admin/kunden/' + ID + '/buchungen', null),
+      V.ladeJson('/api/admin/kunden/' + ID + '/api', null),
+    ]);
+    if (!d) return;
+    konto = d; apiDaten = a ? a.api : null;
+    const name = d.konto.name || d.konto.email;
+    byId('kundeTitel').textContent = t('Verwaltung') + ': ' + t('Kunde {name}', { name: name });
+    document.title = t('Kunde {name}', { name: name }) + ' · ' + t('Verwaltung') + ' · InkluDocs';
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+    const voll = V.istVollAdmin();
+    const selbst = typeof currentUser !== 'undefined' && currentUser && currentUser.id === d.konto.id;
+
+    // 1. Überblick
+    let sec = abschnitt(ziel, t('Überblick'), 'h-ueberblick');
+    V.zeile(sec, t('E-Mail'), d.konto.email);
+    V.zeile(sec, t('Status'), (d.konto.aktiv ? t('aktiv') : t('gesperrt')) + (d.konto.ist_betreiber ? ', ' + t('Administrator') : ''));
+    V.zeile(sec, t('Angelegt am'), V.datumLang(d.konto.angelegt_am));
+    V.zeile(sec, t('Zuletzt aktiv'), d.nutzung.letzte_aktion ? V.datumZeit(d.nutzung.letzte_aktion) : t('noch nie'));
+    let plan = V.planText(d.abo.plan, d.abo.quelle);
+    if (d.abo.plan !== 'free') {
+      if (d.abo.laufzeit_monate) plan += ', ' + t('{monate} Monate', { monate: d.abo.laufzeit_monate });
+      if (d.abo.gueltig_bis) {
+        plan += ', ' + (d.abo.auto_verlaengerung
+          ? t('verlängert sich am {datum}', { datum: V.datumLang(d.abo.gueltig_bis) })
+          : t('gekündigt zum {datum}', { datum: V.datumLang(d.abo.gueltig_bis) }));
+      }
+    }
+    V.zeile(sec, t('Abo'), plan);
+    // Teams (Steve 25.09.2026): Mitglieder und Inhaber direkt im Überblick, jeweils als Link —
+    // so springt man zwischen Inhaber und Team, ohne etwas aufzuklappen.
+    if (d.abo.team_name || d.team.mitglieder.length) {
+      const sitze = d.abo.sitze_inklusive ? ' ' + t('({belegt} von {sitze} Plätzen belegt)', { belegt: d.team.mitglieder.length + 1, sitze: d.abo.sitze_inklusive }) : '';
+      V.zeile(sec, t('Team'), (d.abo.team_name || '—') + sitze);
+      if (d.team.mitglieder.length) {
+        const p = V.el('p', 'dash-report-zeile', t('Mitglieder') + ': ');
+        d.team.mitglieder.forEach((m, i) => {
+          if (i) p.appendChild(document.createTextNode(', '));
+          const a = V.el('a', null, m.display_name || m.email);
+          a.href = '/verwaltung/kunden/' + m.id;
+          p.appendChild(a);
+        });
+        sec.appendChild(p);
+      } else {
+        V.zeile(sec, t('Mitglieder'), t('noch niemand eingeladen'));
+      }
+    }
+    if (d.team.mitglied_in.length) {
+      const p = V.el('p', 'dash-report-zeile', t('Arbeitet außerdem im Team von') + ': ');
+      d.team.mitglied_in.forEach((x, i) => {
+        if (i) p.appendChild(document.createTextNode(', '));
+        const a = V.el('a', null, x.inhaber + (x.team_name ? ' (' + x.team_name + ')' : ''));
+        a.href = '/verwaltung/kunden/' + x.inhaber_id;
+        p.appendChild(a);
+      });
+      sec.appendChild(p);
+    }
+    const g = d.guthaben;
+    if (g.rest === null || g.rest === undefined) V.zeile(sec, t('Guthaben'), t('unbegrenzt'));
+    else V.zeile(sec, t('Guthaben'), t('{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen',
+      { gesamt: V.zahl((g.rest || 0) + (g.pakete_rest || 0)), monat: V.zahl(g.rest || 0), pakete: V.zahl(g.pakete_rest || 0) }));
+    if (g.topf_fremd) V.zeile(sec, t('Hinweis'), t('Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf.', { team: g.topf_fremd.team_name || '—', inhaber: g.topf_fremd.inhaber }));
+    if (voll) {
+      const akt = V.el('div', 'dash-actions');
+      akt.appendChild(knopf(t('Credits gutschreiben'), gsOeffnen, 'btn-primary'));
+      akt.appendChild(knopf(t('Abo zuweisen oder ändern'), aboOeffnen));
+      sec.appendChild(akt);
+    }
+
+    // 2. Käufe und Gutschriften
+    const buchungen = b ? b.buchungen : [];
+    sec = abschnitt(ziel, t('Käufe und Gutschriften ({n})', { n: buchungen.length }), 'h-buchungen');
+    if (!b) sec.appendChild(V.el('p', 'dash-empty', t('Die Buchungen konnten nicht geladen werden.')));
+    else if (!buchungen.length) sec.appendChild(V.el('p', 'dash-empty', t('Noch keine Käufe oder Gutschriften.')));
+    else {
+      const umsatzCent = buchungen.filter(V.zaehltZumUmsatz).reduce((s, x) => s + x.betrag_cent, 0);
+      V.zeile(sec, t('Umsatz mit diesem Kunden insgesamt'), V.euro(umsatzCent));
+      const ul = V.el('ul', 'verwaltung-liste');
+      buchungen.forEach((x) => {
+        const li = V.el('li', 'verwaltung-zeile', V.buchungText(x, false));
+        V.buchungKnoepfe(li, x, () => laden(true));
+        ul.appendChild(li);
+      });
+      sec.appendChild(ul);
+    }
+
+    // 3. API
+    sec = abschnitt(ziel, t('API'), 'h-api');
+    if (!apiDaten) sec.appendChild(V.el('p', 'dash-empty', t('Die API-Daten konnten nicht geladen werden.')));
+    else {
+      V.zeile(sec, t('Schlüssel'), apiDaten.schluessel
+        ? t('{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}', { n: apiDaten.schluessel, aktiv: apiDaten.schluessel_aktiv, wann: apiDaten.zuletzt_benutzt ? V.datumZeit(apiDaten.zuletzt_benutzt) : t('noch nie') })
+        : t('keiner angelegt'));
+      V.zeile(sec, t('Tageslimit'), t('{limit} Bilder pro Tag', { limit: V.zahl(apiDaten.limit) }) + ' (' + (apiDaten.limit_individuell ? t('individuell festgelegt') : t('Standard')) + ')');
+      V.zeile(sec, t('Heute'), t('{n} Bilder', { n: V.zahl(apiDaten.heute) }));
+      if (voll) {
+        const akt = V.el('div', 'dash-actions');
+        akt.appendChild(knopf(t('Limit ändern'), () => V.limitOeffnen({ id: ID, name: d.konto.name, email: d.konto.email, limit: apiDaten.limit }, () => laden(true))));
+        sec.appendChild(akt);
+      }
+    }
+
+    // 4. Nutzung — Kernzahlen sichtbar, Einzelheiten aufklappbar.
+    sec = abschnitt(ziel, t('Nutzung'), 'h-nutzung');
+    V.zeile(sec, t('Projekte insgesamt'), V.zahl(d.nutzung.projekte));
+    V.zeile(sec, t('Bilder insgesamt'), V.zahl(d.nutzung.bilder));
+    V.zeile(sec, t('Credits verbraucht, insgesamt'), V.zahl(d.nutzung.selbst_gesamt !== undefined ? d.nutzung.selbst_gesamt : d.nutzung.credits_gesamt));
+    V.zeile(sec, t('Geschätzte KI-Kosten dieses Kontos'), t('{betrag} (grobe Schätzung, {satz} Cent je Credit)', { betrag: V.euro(Math.round(d.kosten.gesamt_geschaetzt_eur * 100)), satz: new Intl.NumberFormat(window.LANG || 'de', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(d.kosten.satz_pro_credit_eur * 100) }));
+    const details = V.el('details', 'verwaltung-klappe');
+    details.appendChild(V.el('summary', null, t('Verbrauch im Detail')));
+    V.zeile(details, t('Monatskontingent'), g.kontingent === null ? t('unbegrenzt') : V.zahl(g.kontingent));
+    V.zeile(details, t('Übertrag aus dem Vormonat'), V.zahl(g.uebertrag));
+    V.zeile(details, t('Verbraucht in diesem Monat'), V.zahl(g.verbraucht_monat));
+    (g.verbrauch_nach_topf || []).forEach((tp) => {
+      V.zeile(details, tp.eigen ? t('Eigener Topf') : t('Team „{team}“ von {inhaber}', { team: tp.team_name || '—', inhaber: tp.inhaber }),
+        t('diesen Monat {monat} Credits, insgesamt {gesamt}', { monat: V.zahl(tp.monat), gesamt: V.zahl(tp.gesamt) }));
+    });
+    if (d.nutzung.verlauf.length) {
+      details.appendChild(V.el('h3', null, t('Verbrauch je Monat')));
+      const ul = V.el('ul', 'verwaltung-liste');
+      d.nutzung.verlauf.forEach((m) => ul.appendChild(V.el('li', 'verwaltung-zeile',
+        t('{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}', { monat: V.monatLang(m.monat), credits: V.zahl(m.topf), kosten: V.euro(Math.round(m.kosten_geschaetzt * 100)) }))));
+      details.appendChild(ul);
+    }
+    sec.appendChild(details);
+
+    // 5. Konto verwalten — ganz unten und getrennt.
+    if (voll && !selbst) {
+      sec = abschnitt(ziel, t('Konto verwalten'), 'h-konto');
+      const akt = V.el('div', 'dash-actions');
+      akt.appendChild(knopf(d.konto.aktiv ? t('Konto sperren') : t('Konto entsperren'), d.konto.aktiv ? sperrOeffnen : sperren));
+      akt.appendChild(knopf(t('Passwort zurücksetzen'), pwOeffnen));
+      akt.appendChild(knopf(t('Konto löschen'), loeschOeffnen, 'btn-delete'));
+      sec.appendChild(akt);
+    }
+    if (!still) announce(t('Kundenseite von {name} geladen.', { name: name }));
+  }
+
+  // ── Credits gutschreiben ──────────────────────────────────────────────
+  let gsBetragGeaendert = false;
+  function gsMenge() {
+    const w = byId('gsMenge').value;
+    if (w !== 'frei') return parseInt(w, 10);
+    const roh = byId('gsFrei').value.trim();
+    const n = parseInt(roh, 10);
+    return (Number.isInteger(n) && String(n) === roh) ? n : NaN;
+  }
+  function gsVorschlag() {
+    if (gsBetragGeaendert) return;
+    const n = gsMenge();
+    if (!Number.isInteger(n) || n < 1) { byId('gsBetrag').value = ''; return; }
+    const fest = PREISE.pakete[String(n)];
+    byId('gsBetrag').value = V.euroFeld(fest !== undefined ? fest : n * PREISE.cent_je_credit);
+  }
+  function gsAnsicht() {
+    const art = byId('gsArt').value;
+    byId('gsVerkauf').hidden = art !== 'verkauf';
+    byId('gsBonus').hidden = art !== 'bonus';
+    byId('gsFreiFeld').hidden = byId('gsMenge').value !== 'frei';
+  }
+  function gsOeffnen() {
+    const sel = byId('gsMenge');
+    sel.innerHTML = '';
+    Object.keys(PREISE.pakete).map(Number).sort((x, y) => x - y).forEach((n) => {
+      const o = V.el('option', null, t('{menge} Credits (Paketpreis {betrag})', { menge: V.zahl(n), betrag: V.euro(PREISE.pakete[String(n)]) }));
+      o.value = String(n);
+      sel.appendChild(o);
+    });
+    const frei = V.el('option', null, t('Andere Menge'));
+    frei.value = 'frei';
+    sel.appendChild(frei);
+    byId('gsForm').reset();
+    gsBetragGeaendert = false;
+    byId('gsFuer').textContent = t('Für: {name} ({email})', { name: konto.konto.name, email: konto.konto.email });
+    ['gsFehler', 'gsFehler2'].forEach((i) => { byId(i).textContent = ''; });
+    byId('gsEingabe').hidden = false; byId('gsPruefen').hidden = true;
+    gsVorschlag(); gsAnsicht();
+    byId('gsDialog').showModal();
+    byId('gsArt').focus();
+  }
+  byId('gsArt').addEventListener('change', () => { gsAnsicht(); gsVorschlag(); });
+  byId('gsMenge').addEventListener('change', () => { gsAnsicht(); gsVorschlag(); });
+  byId('gsFrei').addEventListener('input', gsVorschlag);
+  byId('gsBetrag').addEventListener('input', () => { gsBetragGeaendert = true; });
+  byId('gsAbbrechen').addEventListener('click', () => byId('gsDialog').close());
+  byId('gsZurueck').addEventListener('click', () => {
+    byId('gsPruefen').hidden = true; byId('gsEingabe').hidden = false; byId('gsArt').focus();
+  });
+  byId('gsForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fehler = byId('gsFehler');
+    fehler.textContent = '';
+    const art = byId('gsArt').value;
+    const n = gsMenge();
+    if (!art) { fehler.textContent = t('Bitte die Art wählen: Verkauf auf Rechnung oder Bonus.'); byId('gsArt').focus(); return; }
+    if (!Number.isInteger(n) || n < 1 || n > 100000) { fehler.textContent = t('Die Menge muss eine ganze Zahl von 1 bis 100.000 sein.'); (byId('gsMenge').value === 'frei' ? byId('gsFrei') : byId('gsMenge')).focus(); return; }
+    let satz;
+    const name = konto.konto.name || konto.konto.email;
+    if (art === 'verkauf') {
+      const betrag = byId('gsBetrag').value.trim();
+      if (!/^\d{1,6}([.,]\d{1,2})?$/.test(betrag) || parseFloat(betrag.replace(',', '.')) <= 0) {
+        fehler.textContent = t('Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50.'); byId('gsBetrag').focus(); return;
+      }
+      const cent = Math.round(parseFloat(betrag.replace(',', '.')) * 100);
+      satz = t('{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?', { menge: V.zahl(n), name: name, betrag: V.euro(cent) });
+      if (byId('gsNummer').value.trim()) satz += ' ' + t('Rechnungsnummer: {nummer}.', { nummer: byId('gsNummer').value.trim() });
+    } else {
+      if (byId('gsGrund').value.trim().length < 3) { fehler.textContent = t('Bitte kurz den Grund für den Bonus angeben.'); byId('gsGrund').focus(); return; }
+      satz = t('{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?', { menge: V.zahl(n), name: name });
+    }
+    const gross = art === 'bonus' && n > PREISE.bonus_grenze;
+    byId('gsGrossFeld').hidden = !gross;
+    byId('gsGross').checked = false;
+    byId('gsGrossText').textContent = t('Ja, ich möchte bewusst mehr als {grenze} Credits verschenken.', { grenze: V.zahl(PREISE.bonus_grenze) });
+    byId('gsSatz').textContent = satz;
+    byId('gsFehler2').textContent = '';
+    byId('gsEingabe').hidden = true; byId('gsPruefen').hidden = false;
+    byId('gsSatz').focus();
+  });
+  let gsLaeuft = false;
+  byId('gsBuchen').addEventListener('click', async () => {
+    if (gsLaeuft) return;
+    const fehler = byId('gsFehler2');
+    fehler.textContent = '';
+    const art = byId('gsArt').value;
+    if (!byId('gsGrossFeld').hidden && !byId('gsGross').checked) {
+      fehler.textContent = t('Bitte das Häkchen setzen, um den großen Bonus zu bestätigen.'); byId('gsGross').focus(); return;
+    }
+    const daten = { groesse: gsMenge(), art: art };
+    if (art === 'verkauf') {
+      daten.betrag = byId('gsBetrag').value.trim();
+      daten.rechnungsnummer = byId('gsNummer').value.trim();
+      daten.notiz = byId('gsNotiz').value.trim();
+    } else {
+      daten.notiz = byId('gsGrund').value.trim();
+      daten.bestaetigt_gross = byId('gsGross').checked;
+    }
+    gsLaeuft = true;
+    const r = await V.sendeJson('/api/admin/users/' + ID + '/pakete', 'POST', daten);
+    gsLaeuft = false;
+    if (!r.ok) { fehler.textContent = r.daten.detail || t('Die Gutschrift konnte nicht gespeichert werden.'); return; }
+    byId('gsDialog').close();
+    await laden(true);
+    V.meldung(r.daten.message || t('Credits wurden gutgeschrieben.'));
+  });
+
+  // ── Abo zuweisen oder ändern ──────────────────────────────────────────
+  let aboBetragGeaendert = false;
+  function aboAnsicht() {
+    const bezahlt = byId('aboPlan').value !== 'free';
+    byId('aboBezahlt').hidden = !bezahlt;
+    byId('aboVerkauf').hidden = !bezahlt || byId('aboArt').value !== 'verkauf';
+    byId('aboOhne').hidden = !bezahlt || byId('aboArt').value !== 'ohne';
+  }
+  function aboVorschlag() {
+    if (aboBetragGeaendert) return;
+    const p = PREISE.abo[byId('aboPlan').value];
+    const cent = p ? p[byId('aboLaufzeit').value] : undefined;
+    byId('aboBetrag').value = cent !== undefined ? V.euroFeld(cent) : '';
+  }
+  function aboOeffnen() {
+    byId('aboForm').reset();
+    aboBetragGeaendert = false;
+    const a = konto.abo;
+    if (a.plan && a.plan !== 'free') byId('aboPlan').value = a.plan;
+    if (a.laufzeit_monate && [3, 6, 12].indexOf(a.laufzeit_monate) >= 0) byId('aboLaufzeit').value = String(a.laufzeit_monate);
+    byId('aboAutoVerl').checked = a.plan === 'free' ? true : a.auto_verlaengerung !== false;
+    byId('aboFuer').textContent = t('Für: {name} ({email})', { name: konto.konto.name, email: konto.konto.email });
+    ['aboFehler', 'aboFehler2'].forEach((i) => { byId(i).textContent = ''; });
+    byId('aboEingabe').hidden = false; byId('aboPruefen').hidden = true;
+    aboVorschlag(); aboAnsicht();
+    byId('aboDialog').showModal();
+    byId('aboPlan').focus();
+  }
+  byId('aboPlan').addEventListener('change', () => { aboAnsicht(); aboVorschlag(); });
+  byId('aboLaufzeit').addEventListener('change', aboVorschlag);
+  byId('aboArt').addEventListener('change', aboAnsicht);
+  byId('aboBetrag').addEventListener('input', () => { aboBetragGeaendert = true; });
+  byId('aboAbbrechen').addEventListener('click', () => byId('aboDialog').close());
+  byId('aboZurueck').addEventListener('click', () => {
+    byId('aboPruefen').hidden = true; byId('aboEingabe').hidden = false; byId('aboPlan').focus();
+  });
+  byId('aboForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fehler = byId('aboFehler');
+    fehler.textContent = '';
+    const plan = byId('aboPlan').value;
+    const name = konto.konto.name || konto.konto.email;
+    let satz;
+    if (plan === 'free') {
+      satz = t('Das Abo von {name} beenden und auf Free setzen?', { name: name });
+    } else {
+      const art = byId('aboArt').value;
+      const planName = V.PLAN_NAMEN[plan];
+      const monate = byId('aboLaufzeit').value;
+      if (!art) { fehler.textContent = t('Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern.'); byId('aboArt').focus(); return; }
+      if (art === 'verkauf') {
+        const betrag = byId('aboBetrag').value.trim();
+        if (!/^\d{1,6}([.,]\d{1,2})?$/.test(betrag) || parseFloat(betrag.replace(',', '.')) <= 0) {
+          fehler.textContent = t('Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50.'); byId('aboBetrag').focus(); return;
+        }
+        satz = t('{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?',
+          { name: name, plan: planName, monate: monate, betrag: V.euro(Math.round(parseFloat(betrag.replace(',', '.')) * 100)) });
+      } else if (art === 'ohne') {
+        if (byId('aboGrund').value.trim().length < 3) { fehler.textContent = t('Bitte kurz den Grund angeben.'); byId('aboGrund').focus(); return; }
+        satz = t('{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?', { name: name, plan: planName, monate: monate });
+      } else {
+        satz = t('Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?', { name: name, plan: planName, monate: monate });
+      }
+      satz += ' ' + (byId('aboAutoVerl').checked ? t('Es verlängert sich automatisch.') : t('Es verlängert sich nicht automatisch.'));
+    }
+    byId('aboSatz').textContent = satz;
+    byId('aboFehler2').textContent = '';
+    byId('aboEingabe').hidden = true; byId('aboPruefen').hidden = false;
+    byId('aboSatz').focus();
+  });
+  let aboLaeuft = false;
+  byId('aboSpeichern').addEventListener('click', async () => {
+    if (aboLaeuft) return;
+    const plan = byId('aboPlan').value;
+    const daten = { plan: plan };
+    if (plan !== 'free') {
+      daten.laufzeit_monate = parseInt(byId('aboLaufzeit').value, 10);
+      daten.auto_verlaengerung = byId('aboAutoVerl').checked;
+      daten.art = byId('aboArt').value;
+      if (daten.art === 'verkauf') {
+        daten.betrag = byId('aboBetrag').value.trim();
+        daten.rechnungsnummer = byId('aboNummer').value.trim();
+      } else if (daten.art === 'ohne') {
+        daten.notiz = byId('aboGrund').value.trim();
+      }
+    }
+    aboLaeuft = true;
+    const r = await V.sendeJson('/api/admin/users/' + ID + '/plan', 'POST', daten);
+    aboLaeuft = false;
+    if (!r.ok) { byId('aboFehler2').textContent = r.daten.detail || t('Das Abo konnte nicht gespeichert werden.'); return; }
+    byId('aboDialog').close();
+    await laden(true);
+    V.meldung(r.daten.message || t('Abo wurde gespeichert.'));
+  });
+
+  // ── Konto verwalten ───────────────────────────────────────────────────
+  // Sperren mit Rückfrage (Steve 25.09.2026): sagt, was passiert — und warnt, wenn ein
+  // Stripe-Abo weiterläuft (Sperren kündigt es NICHT; das ist eine bewusste Entscheidung).
+  function sperrOeffnen() {
+    const name = konto.konto.name || konto.konto.email;
+    byId('sperrText').textContent = t('{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her.', { name: name });
+    const stripeAbo = konto.abo.plan !== 'free' && konto.abo.quelle === 'stripe' && konto.abo.auto_verlaengerung;
+    byId('sperrStripe').hidden = !stripeAbo;
+    byId('sperrDialog').showModal();
+  }
+  byId('sperrAbbrechen').addEventListener('click', () => byId('sperrDialog').close());
+  byId('sperrJa').addEventListener('click', async () => { byId('sperrDialog').close(); await sperren(); });
+
+  async function sperren() {
+    const r = await V.sendeJson('/api/admin/users/' + ID + '/toggle-active', 'POST');
+    if (!r.ok) { V.meldung(r.daten.detail || t('Fehler'), true); return; }
+    await laden(true);
+    V.meldung(r.daten.is_active ? t('Konto entsperrt.') : t('Konto gesperrt.'));
+  }
+  function pwOeffnen() {
+    byId('pwForm').reset();
+    byId('pwFehler').textContent = '';
+    byId('pwFuer').textContent = t('Für: {email}', { email: konto.konto.email });
+    byId('pwDialog').showModal();
+    byId('pwNeu').focus();
+  }
+  byId('pwAbbrechen').addEventListener('click', () => byId('pwDialog').close());
+  byId('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fehler = byId('pwFehler');
+    fehler.textContent = '';
+    const pw = byId('pwNeu').value;
+    if (pw.length < 8) { fehler.textContent = t('Passwort muss mindestens 8 Zeichen haben.'); byId('pwNeu').focus(); return; }
+    if (pw !== byId('pwNeu2').value) { fehler.textContent = t('Passwörter stimmen nicht überein.'); byId('pwNeu2').focus(); return; }
+    const r = await V.sendeJson('/api/admin/users/' + ID + '/reset-password', 'POST', { new_password: pw });
+    if (!r.ok) { fehler.textContent = r.daten.detail || t('Fehler beim Zurücksetzen.'); return; }
+    byId('pwDialog').close();
+    V.meldung(t('Passwort für {email} wurde zurückgesetzt.', { email: konto.konto.email }));
+  });
+  function loeschOeffnen() {
+    byId('loeschText').textContent = t('Das Konto {email} und ALLE zugehörigen Daten werden unwiderruflich gelöscht (DSGVO-Löschung). Das lässt sich nicht rückgängig machen.', { email: konto.konto.email });
+    byId('loeschDialog').showModal();
+  }
+  byId('loeschAbbrechen').addEventListener('click', () => byId('loeschDialog').close());
+  byId('loeschJa').addEventListener('click', async () => {
+    const r = await V.sendeJson('/api/admin/users/' + ID, 'DELETE');
+    byId('loeschDialog').close();
+    if (!r.ok) { V.meldung(r.daten.detail || t('Fehler beim Löschen.'), true); return; }
+    window.location.href = byId('zurListe').getAttribute('href') || '/verwaltung/kunden';
+  });
+
+  (async function start() {
+    await loadCurrentUser();
+    await laden();
+  })();
+})();
+{% endraw %}
+</script>
+<script src="/static/pwtoggle.js?v={{ asset_version }}" defer></script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Kunden') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# VERWALTUNG — KUNDEN (25.09.2026, Steve): Suche, Filter und 25 Kunden je Seite statt einer
+   langen Liste. Je Kunde EINE Zeile mit einem Link auf seine Seite — keine Überschrift je
+   Kunde, keine Tabelle. Suchbegriff, Filter und Seite stehen in der Adresse, damit „Zurück“
+   von einer Kundenseite genau hierher führt. #}
+{# Steve 25.09.2026: Bereich vorne, damit Menüpunkt „Verwaltung“ und Überschrift zusammenpassen. #}
+<h1>{{ _('Verwaltung') }}: {{ _('Kunden') }}</h1>
+{% include "_verwaltung_nav.html" %}
+
+<form id="kundenSuche" class="verwaltung-suche" role="search" novalidate>
+  <div class="dash-field">
+    <label for="suchText">{{ _('Kunden suchen') }}</label>
+    <input type="search" id="suchText" class="dash-input" autocomplete="off" maxlength="100" aria-describedby="suchHinweis">
+    <p class="dash-sub" id="suchHinweis">{{ _('Name, E-Mail oder Teamname — ein Teil genügt.') }}</p>
+  </div>
+  <div class="dash-field">
+    <label for="suchFilter">{{ _('Anzeigen') }}</label>
+    <select id="suchFilter" class="dash-input">
+      <option value="alle">{{ _('Alle Kunden') }}</option>
+      <option value="abo">{{ _('Mit Abo') }}</option>
+      <option value="team">{{ _('Team und Enterprise') }}</option>
+      <option value="rechnung">{{ _('Abo auf Rechnung') }}</option>
+      <option value="stripe">{{ _('Abo über Stripe') }}</option>
+      <option value="kaeufer">{{ _('Mit Käufen') }}</option>
+      <option value="neu">{{ _('Neu in diesem Monat') }}</option>
+      <option value="gesperrt">{{ _('Gesperrt') }}</option>
+      <option value="admins">{{ _('Administratoren') }}</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">{{ _('Suchen') }}</button>
+</form>
+
+<section aria-labelledby="kundenStatus" class="verwaltung-bereich">
+  <h2 id="kundenStatus" tabindex="-1">{{ _('Kunden') }}</h2>
+  <div id="kundenListe" aria-busy="true">
+    <p class="dash-sub">{{ _('Wird geladen …') }}</p>
+  </div>
+  <nav class="verwaltung-seiten" id="kundenSeiten" aria-label="{{ _('Seiten der Kundenliste') }}" hidden>
+    <button type="button" class="btn btn-secondary" id="seiteZurueck">{{ _('Vorherige Seite') }}</button>
+    <button type="button" class="btn btn-secondary" id="seiteVor">{{ _('Nächste Seite') }}</button>
+  </nav>
+</section>
+
+<details class="dash-card verwaltung-klappe" id="neuerKundeKlappe" hidden>
+  <summary>{{ _('Neuen Kunden anlegen') }}</summary>
+  <form id="neuerKundeForm" novalidate>
+    <div class="dash-field">
+      <label for="neuName">{{ _('Name') }}</label>
+      <input type="text" id="neuName" class="dash-input" required maxlength="100" autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="neuEmail">{{ _('E-Mail') }}</label>
+      <input type="email" id="neuEmail" class="dash-input" required autocomplete="off">
+    </div>
+    <div class="dash-field">
+      <label for="neuPw">{{ _('Passwort (mind. 8 Zeichen)') }}</label>
+      <input type="password" id="neuPw" class="dash-input" required minlength="8" autocomplete="new-password">
+    </div>
+    <div class="dash-field">
+      <label for="neuPw2">{{ _('Passwort wiederholen') }}</label>
+      <input type="password" id="neuPw2" class="dash-input" required minlength="8" autocomplete="new-password">
+    </div>
+    <p class="dash-sub">{{ _('Der Kunde bekommt seine Zugangsdaten per E-Mail.') }}</p>
+    <p id="neuFehler" role="alert" class="verwaltung-fehler"></p>
+    <button type="submit" class="btn btn-primary">{{ _('Anlegen') }}</button>
+  </form>
+  <p id="neuErgebnis" role="status"></p>
+</details>
+{% endblock %}
+
+{% block page_script %}
+<script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script>
+{% raw %}
+(function () {
+  const V = window.Verwaltung;
+  const zustand = { q: '', filter: 'alle', seite: 1, seiten: 1 };
+
+  function ausAdresse() {
+    const p = new URLSearchParams(window.location.search);
+    zustand.q = (p.get('q') || '').slice(0, 100);
+    const f = p.get('filter') || 'alle';
+    zustand.filter = Array.from(byId('suchFilter').options).some((o) => o.value === f) ? f : 'alle';
+    zustand.seite = Math.max(1, parseInt(p.get('seite') || '1', 10) || 1);
+    byId('suchText').value = zustand.q;
+    byId('suchFilter').value = zustand.filter;
+  }
+
+  function inAdresse() {
+    const p = new URLSearchParams();
+    if (zustand.q) p.set('q', zustand.q);
+    if (zustand.filter !== 'alle') p.set('filter', zustand.filter);
+    if (zustand.seite > 1) p.set('seite', String(zustand.seite));
+    const neu = window.location.pathname + (p.toString() ? '?' + p.toString() : '');
+    history.replaceState(null, '', neu);
+    // Die Kundenseite führt mit „Zurück zur Kundenliste“ genau hierher zurück.
+    try { sessionStorage.setItem('verwaltungKundenListe', neu); } catch (e) { /* privat */ }
+  }
+
+  function kundeZeile(k) {
+    const li = V.el('li', 'verwaltung-zeile');
+    const a = V.el('a', null, k.name || k.email);
+    a.href = '/verwaltung/kunden/' + k.id;
+    li.appendChild(a);
+    // Michael Karbe 25.09.2026: „Name - E-Mail - Abo. Dies reicht. Wer mehr Infos braucht klickt
+    // auf den Namen.“ Gesperrte Konten findet der Filter „Gesperrt“.
+    const teile = [k.email, V.planText(k.plan, k.plan_quelle)];
+    li.appendChild(V.el('span', 'verwaltung-meta', ' · ' + teile.join(' · ')));
+    return li;
+  }
+
+  async function laden(fokus) {
+    const ziel = byId('kundenListe');
+    ziel.setAttribute('aria-busy', 'true');
+    const p = new URLSearchParams({ q: zustand.q, filter: zustand.filter, seite: String(zustand.seite) });
+    const d = await V.ladeJson('/api/admin/kunden?' + p.toString(), ziel);
+    if (!d) { byId('kundenSeiten').hidden = true; return; }
+    zustand.seite = d.seite; zustand.seiten = d.seiten;
+    inAdresse();
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+    const suche = !!zustand.q || zustand.filter !== 'alle';
+    // Die Überschrift nennt immer, WAS gezeigt wird (Steve 25.09.2026: „9 Kunden“ allein
+    // ließ offen, ob das alle sind): „Alle Kunden: 9“, „Neu in diesem Monat: 2“, „Suche „Jens“: 1“.
+    const opt = byId('suchFilter').options[byId('suchFilter').selectedIndex];
+    let auswahl = opt ? opt.textContent : '';
+    if (zustand.q) auswahl = t('Suche „{text}“', { text: zustand.q }) + (zustand.filter !== 'alle' ? ', ' + auswahl : '');
+    let kopf;
+    if (!d.gesamt) kopf = auswahl + ': ' + (suche ? t('Keine Kunden gefunden') : t('Noch keine Kunden'));
+    else if (d.seiten > 1) kopf = auswahl + ': ' + t('{n} Kunden, Seite {seite} von {seiten}', { n: V.zahl(d.gesamt), seite: d.seite, seiten: d.seiten });
+    else kopf = auswahl + ': ' + (d.gesamt === 1 ? t('1 Kunde') : t('{n} Kunden', { n: V.zahl(d.gesamt) }));
+    byId('kundenStatus').textContent = kopf;
+    if (d.gesamt) {
+      const ul = V.el('ul', 'verwaltung-liste');
+      d.kunden.forEach((k) => ul.appendChild(kundeZeile(k)));
+      ziel.appendChild(ul);
+    } else if (suche) {
+      ziel.appendChild(V.el('p', 'dash-empty', t('Andere Schreibweise oder „Alle Kunden“ versuchen.')));
+    }
+    byId('kundenSeiten').hidden = d.seiten <= 1;
+    byId('seiteZurueck').disabled = d.seite <= 1;
+    byId('seiteVor').disabled = d.seite >= d.seiten;
+    if (fokus) byId('kundenStatus').focus();
+    announce(kopf);
+  }
+
+  byId('kundenSuche').addEventListener('submit', (e) => {
+    e.preventDefault();
+    zustand.q = byId('suchText').value.trim().slice(0, 100);
+    zustand.filter = byId('suchFilter').value;
+    zustand.seite = 1;
+    laden(false);
+  });
+  byId('seiteZurueck').addEventListener('click', () => { if (zustand.seite > 1) { zustand.seite -= 1; laden(true); } });
+  byId('seiteVor').addEventListener('click', () => { if (zustand.seite < zustand.seiten) { zustand.seite += 1; laden(true); } });
+
+  byId('neuerKundeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fehler = byId('neuFehler');
+    const ergebnis = byId('neuErgebnis');
+    fehler.textContent = ''; ergebnis.textContent = '';
+    const name = byId('neuName').value.trim();
+    const email = byId('neuEmail').value.trim();
+    const pw = byId('neuPw').value;
+    if (!name || !email || !pw) { fehler.textContent = t('Bitte alle Felder ausfüllen.'); return; }
+    if (pw.length < 8) { fehler.textContent = t('Passwort muss mindestens 8 Zeichen haben.'); byId('neuPw').focus(); return; }
+    if (pw !== byId('neuPw2').value) { fehler.textContent = t('Passwörter stimmen nicht überein.'); byId('neuPw2').focus(); return; }
+    const r = await V.sendeJson('/api/admin/users/create', 'POST', { display_name: name, email: email, password: pw });
+    if (!r.ok) { fehler.textContent = r.daten.detail || t('Fehler beim Erstellen.'); return; }
+    byId('neuerKundeForm').reset();
+    ergebnis.textContent = '';
+    ergebnis.appendChild(document.createTextNode((r.daten.message || t('Benutzer erstellt: {name}', { name: name })) + ' '));
+    if (r.daten.user_id) {
+      const a = V.el('a', null, t('Zur Kundenseite'));
+      a.href = '/verwaltung/kunden/' + r.daten.user_id;
+      ergebnis.appendChild(a);
+    }
+    laden(false);
+  });
+
+  (async function start() {
+    await loadCurrentUser();
+    if (V.istVollAdmin()) byId('neuerKundeKlappe').hidden = false;
+    ausAdresse();
+    await laden(false);
+  })();
+})();
+{% endraw %}
+</script>
+<script src="/static/pwtoggle.js?v={{ asset_version }}" defer></script>
+{% endblock %}

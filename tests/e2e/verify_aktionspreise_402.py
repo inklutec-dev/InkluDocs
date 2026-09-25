@@ -1,9 +1,12 @@
 """Aktionspreise 29.08.2026 — echter 402-Weg mit ABO_ENFORCEMENT=on.
 Laeuft IM Staging-Container gegen eine zweite uvicorn-Instanz (Port 8099, ABO_ENFORCEMENT=on),
-damit das laufende Staging (Enforcement aus) unberuehrt bleibt. Test-Konto: steve.weidel@gmail.com
+damit das laufende Staging (Enforcement aus) unberuehrt bleibt. Seit 25.09.2026 startet der Test
+diese Instanz selbst (und beendet sie am Ende) und meldet sich ohne Passwort an: Ist TEST_PW nicht
+gesetzt, stellt er das Login-Token mit dem Server-Schluessel selbst aus (main.create_token).
+    docker exec inkludocs-staging python3 /app/tests/e2e/verify_aktionspreise_402.py Test-Konto: steve.weidel@gmail.com
 (Free, von Steve fuer Tests freigegeben). Synthetische Verbrauchs-Zeilen werden am Ende geloescht.
 """
-import os, sys, sqlite3, httpx, time
+import os, sys, sqlite3, httpx, time, subprocess, atexit
 
 BASE = "http://127.0.0.1:8099"
 MAIL, PW = "steve.weidel@gmail.com", os.environ.get("TEST_PW", "")
@@ -46,16 +49,39 @@ def setze_verfuegbar(ziel):
     return v
 
 
+if os.environ.get("SCAN_ERLAUBE_LOOPBACK") != "1":
+    sys.exit("ABBRUCH: Das ist kein Staging-Container (SCAN_ERLAUBE_LOOPBACK != 1).")
+
 c = httpx.Client(base_url=BASE, timeout=60)
-for _ in range(30):
+
+
+def _erreichbar():
     try:
-        if c.get("/").status_code < 500:
-            break
+        return c.get("/").status_code < 500
     except Exception:
-        time.sleep(1)
-r = c.post("/api/login", json={"email": MAIL, "password": PW})
-check("Login am Enforcement-Server", r.status_code == 200, r.text[:120])
-tok = r.cookies.get("token")
+        return False
+
+
+if not _erreichbar():
+    # Zweite Instanz mit Enforcement starten — nur fuer diesen Test, danach wieder beenden.
+    _server = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8099"],
+        cwd="/app", env={**os.environ, "ABO_ENFORCEMENT": "on"},
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    atexit.register(_server.terminate)
+for _ in range(60):
+    if _erreichbar():
+        break
+    time.sleep(1)
+check("Enforcement-Server erreichbar", _erreichbar())
+if PW:
+    r = c.post("/api/login", json={"email": MAIL, "password": PW})
+    check("Login am Enforcement-Server", r.status_code == 200, r.text[:120])
+    tok = r.cookies.get("token")
+else:
+    import main as _main  # gleicher Server-Schluessel wie die zweite Instanz (/app/data/.secret_key)
+    tok = _main.create_token(uid, MAIL, 0)
+    check("Token ohne Passwort ausgestellt", bool(tok))
 if tok:
     c.headers["Cookie"] = "token=" + tok
 

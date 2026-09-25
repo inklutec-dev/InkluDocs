@@ -911,7 +911,7 @@ def ist_freemail_domain(domain: str) -> bool:
 
 
 def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "admin",
-                    verfall_monate=12) -> int:
+                    verfall_monate=12, buchung: dict = None) -> int:
     """Legt ein Zusatz-Credit-Paket fuer ein Abrechnungs-Konto an.
 
     verfall_monate: Zahl = Datums-Verfall (Alt-Modell/Kulanz-Geschenke, 12
@@ -923,7 +923,11 @@ def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "a
     'stripe'. Wirft bei ungueltiger Menge einen ValueError — diese Funktion
     laeuft NICHT im Generierungspfad, darf also streng sein.
 
-    Rueckgabe: id der neuen quota_pakete-Zeile.
+    buchung (25.09.2026, Umsatz): Stichwoerter fuer umsatz.buche — Paket und Umsatz-
+    Buchung entstehen dann in DERSELBEN Transaktion (kein Paket ohne Buchung und umgekehrt).
+
+    Rueckgabe: id der neuen quota_pakete-Zeile — oder None, wenn die Buchung eine schon
+    gebuchte stripe_ref traegt (wiederholter Webhook; dann entsteht auch kein Paket).
     """
     menge = int(menge)
     if menge <= 0:
@@ -943,7 +947,14 @@ def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "a
                 (int(konto_id), menge, menge, quelle, notiz or "",
                  f"+{int(verfall_monate)} months"),
             )
+        paket_id = int(cursor.lastrowid)
+        if buchung:
+            import umsatz
+            if umsatz.buche(conn, art="paket", credits=menge, paket_id=paket_id, **buchung) is None:
+                # Dieselbe Stripe-Session war schon gebucht (Webhook wiederholt): KEIN zweites Paket.
+                conn.rollback()
+                return None
         conn.commit()
-        return int(cursor.lastrowid)
+        return paket_id
     finally:
         conn.close()

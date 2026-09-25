@@ -57,7 +57,10 @@ SEITEN = [
     ("/prompts", "Meine Prompts"),
     ("/stammdaten", "Meine Stammdaten"),
     ("/geteilte-projekte", "Geteilte Projekte"),
-    ("/benutzer", "Benutzerverwaltung"),
+    ("/verwaltung/kunden", "Kunden"),
+    ("/verwaltung/umsatz", "Umsatz"),
+    ("/verwaltung/api", "API"),
+    ("/verwaltung/einstellungen", "Verwaltung Einstellungen"),
     ("/datensicherheit", "Datensicherheit"),
     ("/impressum-app", "Impressum"),
     ("/nutzungsbedingungen-app", "Nutzungsbedingungen"),
@@ -110,8 +113,8 @@ with sync_playwright() as p:
         return !!(d.is_admin || (d.user && d.user.is_admin));
     }""")
     if not ist_admin:
-        SEITEN[:] = [(p, n) for p, n in SEITEN if p != "/benutzer"]
-        print("Konto ist kein Admin — Benutzerverwaltung uebersprungen")
+        SEITEN[:] = [(p, n) for p, n in SEITEN if not p.startswith("/verwaltung")]
+        print("Konto ist kein Admin — Verwaltung uebersprungen")
 
     # /app ohne Projekt leitet planmaessig aufs Dashboard. Die Projektansicht ist
     # aber die wichtigste Seite der App — deshalb mit einem echten Projekt pruefen.

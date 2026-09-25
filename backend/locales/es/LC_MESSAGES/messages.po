@@ -6694,3 +6694,631 @@ msgstr "Campo {n}: {art}, {name}"
 
 msgid "Feld {n}: {art}"
 msgstr "Campo {n}: {art}"
+
+# Verwaltung: Kunden, Umsatz, API (25.09.2026)
+msgid "({belegt} von {sitze} Plätzen belegt)"
+msgstr "({belegt} de {sitze} plazas ocupadas)"
+
+msgid "1 Kunde"
+msgstr "1 cliente"
+
+msgid "1 Monat"
+msgstr "1 mes"
+
+msgid "API-Tageslimit ändern"
+msgstr "Cambiar el límite diario de la API"
+
+msgid "Abo auf Rechnung"
+msgstr "Suscripción con factura"
+
+msgid "Abo wurde gespeichert."
+msgstr "Suscripción guardada."
+
+msgid "Abo zuweisen oder ändern"
+msgstr "Asignar o cambiar la suscripción"
+
+msgid "Abo {plan}"
+msgstr "Suscripción {plan}"
+
+msgid "Abo {plan} für {monate} Monate bei {name} speichern, ohne etwas zu buchen?"
+msgstr "¿Guardar la suscripción {plan} de {monate} meses para {name} sin registrar nada?"
+
+msgid "Abo über Stripe"
+msgstr "Suscripción a través de Stripe"
+
+msgid "Achtung: Dieser Kunde hat ein laufendes Abo über Stripe. Sperren kündigt es nicht — Stripe bucht weiter ab. Kündigen im Stripe-Dashboard."
+msgstr "Atención: este cliente tiene una suscripción activa en Stripe. Bloquear no la cancela: Stripe sigue cobrando. Cancélela en el panel de Stripe."
+
+msgid "Administrator"
+msgstr "Administrador"
+
+msgid "Alle Kunden"
+msgstr "Todos los clientes"
+
+msgid "Als CSV herunterladen"
+msgstr "Descargar como CSV"
+
+msgid "Als Excel herunterladen"
+msgstr "Descargar como Excel"
+
+msgid "Andere Menge"
+msgstr "Otra cantidad"
+
+msgid "Andere Schreibweise oder „Alle Kunden“ versuchen."
+msgstr "Pruebe otra grafía o «Todos los clientes»."
+
+msgid "Anzeigen"
+msgstr "Mostrar"
+
+msgid "Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf."
+msgstr "Trabaja actualmente en el equipo «{team}» de {inhaber}: el saldo de arriba corresponde a ese fondo de equipo."
+
+msgid "Art"
+msgstr "Tipo"
+
+msgid "Art der Buchung"
+msgstr "Tipo de reserva"
+
+msgid "Art der Gutschrift"
+msgstr "Tipo de abono"
+
+msgid "Auf einen Blick"
+msgstr "De un vistazo"
+
+msgid "Automatische Verlängerung nur für Unternehmer (B2B). Bei Verbrauchern das Häkchen entfernen."
+msgstr "Renovación automática solo para empresas (B2B). Desmarque la casilla para consumidores."
+
+msgid "Bereiche der Verwaltung"
+msgstr "Secciones de la administración"
+
+msgid "Berichtigen"
+msgstr "Corregir"
+
+msgid "Bilder insgesamt"
+msgstr "Imágenes en total"
+
+msgid "Bilder pro Tag (0 sperrt die API)"
+msgstr "Imágenes al día (0 bloquea la API)"
+
+msgid "Bisher hat niemand einen API-Schlüssel angelegt."
+msgstr "Nadie ha creado todavía una clave de API."
+
+msgid "Bitte das Häkchen setzen, um den großen Bonus zu bestätigen."
+msgstr "Marque la casilla para confirmar la bonificación grande."
+
+msgid "Bitte den Betrag eintragen."
+msgstr "Introduzca el importe."
+
+msgid "Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50."
+msgstr "Introduzca el importe de la factura como número, por ejemplo 87,50."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder Bonus."
+msgstr "Elija el tipo: venta con factura o bonificación."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung, ohne Berechnung oder nur Einstellungen ändern."
+msgstr "Elija el tipo: venta con factura, sin cargo o solo cambiar los ajustes."
+
+msgid "Bitte eine Zahl eintragen. Für den Standard {standard} eintragen, 0 sperrt die API."
+msgstr "Introduzca un número. Para el estándar, introduzca {standard}; 0 bloquea la API."
+
+msgid "Bitte kurz den Grund angeben."
+msgstr "Indique brevemente el motivo."
+
+msgid "Bitte kurz den Grund der Korrektur angeben."
+msgstr "Indique brevemente el motivo de la corrección."
+
+msgid "Bitte kurz den Grund für das Stornieren angeben."
+msgstr "Indique brevemente el motivo de la anulación."
+
+msgid "Bitte kurz den Grund für den Bonus angeben."
+msgstr "Indique brevemente el motivo de la bonificación."
+
+msgid "Bitte wählen"
+msgstr "Elija una opción"
+
+msgid "Bonus (kostenlos)"
+msgstr "Bonificación (gratis)"
+
+msgid "Buchung berichtigen"
+msgstr "Corregir la reserva"
+
+msgid "Buchung berichtigt."
+msgstr "Reserva corregida."
+
+msgid "Buchung stornieren"
+msgstr "Anular la reserva"
+
+msgid "Buchung vom {datum} berichtigen"
+msgstr "Corregir la reserva del {datum}"
+
+msgid "Buchung vom {datum} stornieren"
+msgstr "Anular la reserva del {datum}"
+
+msgid "Buchungen"
+msgstr "Reservas"
+
+msgid "Buchungen im ganzen Jahr {jahr} ({n})"
+msgstr "Reservas de todo el año {jahr} ({n})"
+
+msgid "Buchungen {zeitraum} ({n})"
+msgstr "Reservas {zeitraum} ({n})"
+
+msgid "Credits verbraucht, insgesamt"
+msgstr "Créditos consumidos, en total"
+
+msgid "Das Abo konnte nicht gespeichert werden."
+msgstr "No se pudo guardar la suscripción."
+
+msgid "Das Abo von {name} beenden und auf Free setzen?"
+msgstr "¿Finalizar la suscripción de {name} y pasar a Free?"
+
+msgid "Das Geld erstattest du im Stripe-Dashboard — hier wird nur die Buchung berichtigt."
+msgstr "El dinero se reembolsa en el panel de Stripe; aquí solo se corrige la reserva."
+
+msgid "Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen."
+msgstr "El límite se aplica a toda la cuenta, es decir, a todas las claves de API juntas."
+
+msgid "Das Limit konnte nicht gespeichert werden."
+msgstr "No se pudo guardar el límite."
+
+msgid "Das Stornieren hat nicht geklappt."
+msgstr "La anulación no ha funcionado."
+
+msgid "Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag."
+msgstr "El límite diario solo frena usos desbocados de la API. El saldo de la suscripción se aplica siempre además. Estándar: {standard} imágenes al día."
+
+msgid "Das bist du selbst."
+msgstr "Es usted."
+
+msgid "Der Kunde bekommt eine Bestätigung per E-Mail."
+msgstr "El cliente recibe una confirmación por correo electrónico."
+
+msgid "Der Kunde bekommt seine Zugangsdaten per E-Mail."
+msgstr "El cliente recibe sus datos de acceso por correo electrónico."
+
+msgid "Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich."
+msgstr "El estándar es {standard} imágenes al día: introduzca exactamente este número para volver al estándar. El saldo de la suscripción se aplica siempre además."
+
+msgid "Die API-Daten konnten nicht geladen werden."
+msgstr "No se pudieron cargar los datos de la API."
+
+msgid "Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz. Der Plan des Kunden bleibt unverändert — ihn bei Bedarf über „Abo zuweisen oder ändern“ anpassen."
+msgstr "La reserva sigue visible, pero ya no cuenta como facturación. El plan del cliente no cambia; ajústelo si es necesario con «Asignar o cambiar la suscripción»."
+
+msgid "Die Buchungen im Umsatz bleiben als Geschäftsunterlagen erhalten."
+msgstr "Las reservas de la facturación se conservan como documentos comerciales."
+
+msgid "Die Buchungen konnten nicht geladen werden."
+msgstr "No se pudieron cargar las reservas."
+
+msgid "Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt."
+msgstr "Los créditos no cambian. La corrección se anota en la reserva con su nombre, la hora y el motivo."
+
+msgid "Die Daten konnten nicht geladen werden. Bitte die Seite neu laden."
+msgstr "No se pudieron cargar los datos. Vuelva a cargar la página."
+
+msgid "Die Gutschrift konnte nicht gespeichert werden."
+msgstr "No se pudo guardar el abono."
+
+msgid "Die Korrektur konnte nicht gespeichert werden."
+msgstr "No se pudo guardar la corrección."
+
+msgid "Die Menge muss eine ganze Zahl von 1 bis 100.000 sein."
+msgstr "La cantidad debe ser un número entero de 1 a 100.000."
+
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst unter „Kunden“ anlegen)."
+msgstr "La persona debe tener ya una cuenta (si no, créela primero en «Clientes»)."
+
+msgid "Eigener Topf"
+msgstr "Fondo propio"
+
+msgid "Enterprise (1.375 Credits, bis 25 Personen)"
+msgstr "Enterprise (1.375 créditos, hasta 25 personas)"
+
+msgid "Es verlängert sich automatisch."
+msgstr "Se renueva automáticamente."
+
+msgid "Es verlängert sich nicht automatisch."
+msgstr "No se renueva automáticamente."
+
+msgid "Free"
+msgstr "Free"
+
+msgid "Für: {name} ({email})"
+msgstr "Para: {name} ({email})"
+
+msgid "Ganzes Jahr {jahr}"
+msgstr "Año completo {jahr}"
+
+msgid "Gesamt seit Start"
+msgstr "Total desde el inicio"
+
+msgid "Grund der Korrektur"
+msgstr "Motivo de la corrección"
+
+msgid "Grund für das Stornieren"
+msgstr "Motivo de la anulación"
+
+msgid "Grund für den Bonus"
+msgstr "Motivo de la bonificación"
+
+msgid "Grund, warum das Abo ohne Berechnung läuft"
+msgstr "Motivo por el que la suscripción es sin cargo"
+
+msgid "Guthaben"
+msgstr "Saldo"
+
+msgid "Gutschrift storniert."
+msgstr "Abono anulado."
+
+msgid "Heute"
+msgstr "Hoy"
+
+msgid "In diesem Zeitraum gibt es keine Buchungen."
+msgstr "No hay reservas en este periodo."
+
+msgid "Ja, gutschreiben"
+msgstr "Sí, abonar"
+
+msgid "Ja, ich möchte bewusst mehr als {grenze} Credits verschenken."
+msgstr "Sí, quiero regalar deliberadamente más de {grenze} créditos."
+
+msgid "Ja, speichern"
+msgstr "Sí, guardar"
+
+msgid "Ja, sperren"
+msgstr "Sí, bloquear"
+
+msgid "Ja, stornieren"
+msgstr "Sí, anular"
+
+msgid "Jahr {jahr}"
+msgstr "Año {jahr}"
+
+msgid "Keine Kunden gefunden"
+msgstr "No se encontraron clientes"
+
+msgid "Keine Verbindung zum Server. Bitte erneut versuchen."
+msgstr "Sin conexión con el servidor. Inténtelo de nuevo."
+
+msgid "Konten mit API-Schlüssel"
+msgstr "Cuentas con clave de API"
+
+msgid "Konten mit API-Schlüssel ({n})"
+msgstr "Cuentas con clave de API ({n})"
+
+msgid "Konto entsperren"
+msgstr "Desbloquear la cuenta"
+
+msgid "Konto entsperrt."
+msgstr "Cuenta desbloqueada."
+
+msgid "Konto gesperrt."
+msgstr "Cuenta bloqueada."
+
+msgid "Konto sperren"
+msgstr "Bloquear la cuenta"
+
+msgid "Konto sperren?"
+msgstr "¿Bloquear la cuenta?"
+
+msgid "Konto verwalten"
+msgstr "Gestionar la cuenta"
+
+msgid "Kunde"
+msgstr "Cliente"
+
+msgid "Kunde {name}"
+msgstr "Cliente {name}"
+
+msgid "Kunden"
+msgstr "Clientes"
+
+msgid "Kunden suchen"
+msgstr "Buscar clientes"
+
+msgid "Kundenseite von {name} geladen."
+msgstr "Página del cliente {name} cargada."
+
+msgid "Käufe und Gutschriften ({n})"
+msgstr "Compras y abonos ({n})"
+
+msgid "Lastschrift noch ausstehend"
+msgstr "Domiciliación aún pendiente"
+
+msgid "Lastschrift zurückgegangen, zählt nicht zum Umsatz"
+msgstr "Domiciliación devuelta, no cuenta como facturación"
+
+msgid "Lastschriften noch unterwegs"
+msgstr "Domiciliaciones aún en curso"
+
+msgid "Limit von {name} ändern"
+msgstr "Cambiar el límite de {name}"
+
+msgid "Limit ändern"
+msgstr "Cambiar el límite"
+
+msgid "Meldung schließen"
+msgstr "Cerrar el mensaje"
+
+msgid "Menge"
+msgstr "Cantidad"
+
+msgid "Menge in Credits (1 bis 100.000)"
+msgstr "Cantidad en créditos (1 a 100.000)"
+
+msgid "Mit Abo"
+msgstr "Con suscripción"
+
+msgid "Mit Käufen"
+msgstr "Con compras"
+
+msgid "Name, E-Mail oder Teamname — ein Teil genügt."
+msgstr "Nombre, correo electrónico o nombre del equipo: basta con una parte."
+
+msgid "Neu in diesem Monat"
+msgstr "Nuevos este mes"
+
+msgid "Neuen Kunden anlegen"
+msgstr "Crear nuevo cliente"
+
+msgid "Noch keine Kunden"
+msgstr "Todavía no hay clientes"
+
+msgid "Noch keine Käufe oder Gutschriften."
+msgstr "Todavía no hay compras ni abonos."
+
+msgid "Notiz (optional)"
+msgstr "Nota (opcional)"
+
+msgid "Nur Einstellungen ändern, nichts buchen"
+msgstr "Solo cambiar los ajustes, sin registrar nada"
+
+msgid "Nutzung"
+msgstr "Uso"
+
+msgid "Nächste Seite"
+msgstr "Página siguiente"
+
+msgid "Ohne Berechnung"
+msgstr "Sin cargo"
+
+msgid "Projekte insgesamt"
+msgstr "Proyectos en total"
+
+msgid "Rechnung {nummer}"
+msgstr "Factura {nummer}"
+
+msgid "Rechnungsbetrag in Euro"
+msgstr "Importe de la factura en euros"
+
+msgid "Rechnungsbetrag in Euro für die ganze Laufzeit"
+msgstr "Importe de la factura en euros para todo el periodo"
+
+msgid "Rechnungsnummer (optional)"
+msgstr "Número de factura (opcional)"
+
+msgid "Rechnungsnummer: {nummer}."
+msgstr "Número de factura: {nummer}."
+
+msgid "Schlüssel"
+msgstr "Claves"
+
+msgid "Seite {seite} von {seiten}"
+msgstr "página {seite} de {seiten}"
+
+msgid "Seiten der Buchungsliste"
+msgstr "Páginas de la lista de reservas"
+
+msgid "Seiten der Kundenliste"
+msgstr "Páginas de la lista de clientes"
+
+msgid "Standard"
+msgstr "Estándar"
+
+msgid "Stornieren"
+msgstr "Anular"
+
+msgid "Stripe-Käufe und Stripe-Abos erscheinen von selbst, sobald Stripe die Zahlung bestätigt. Verkäufe auf Rechnung kommen über „Credits gutschreiben“ oder „Abo zuweisen“ auf der Kundenseite."
+msgstr "Las compras y suscripciones de Stripe aparecen solas en cuanto Stripe confirma el pago. Las ventas con factura se registran con «Abonar créditos» o «Asignar suscripción» en la página del cliente."
+
+msgid "Suche „{text}“"
+msgstr "Búsqueda «{text}»"
+
+msgid "Tageslimit"
+msgstr "Límite diario"
+
+msgid "Team (500 Credits, bis 5 Personen)"
+msgstr "Team (500 créditos, hasta 5 personas)"
+
+msgid "Team und Enterprise"
+msgstr "Team y Enterprise"
+
+msgid "Team „{team}“ von {inhaber}"
+msgstr "Equipo «{team}» de {inhaber}"
+
+msgid "Umsatz"
+msgstr "Facturación"
+
+msgid "Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit."
+msgstr "Facturación = compras en Stripe y facturas tal como las paga el cliente. Las bonificaciones y las domiciliaciones devueltas no cuentan."
+
+msgid "Umsatz im Zeitraum"
+msgstr "Facturación en el periodo"
+
+msgid "Umsatz mit diesem Kunden insgesamt"
+msgstr "Facturación total con este cliente"
+
+msgid "Umsatz {monat}: {betrag}"
+msgstr "Facturación {monat}: {betrag}"
+
+msgid "Umsatzhistorie"
+msgstr "Historial de facturación"
+
+msgid "Verbrauch im Detail"
+msgstr "Consumo en detalle"
+
+msgid "Verbraucht in diesem Monat"
+msgstr "Consumido este mes"
+
+msgid "Verkauf auf Rechnung"
+msgstr "Venta con factura"
+
+msgid "Verkauf auf Rechnung, {betrag}"
+msgstr "venta con factura, {betrag}"
+
+msgid "Verschenkt in {monat}"
+msgstr "Regalado en {monat}"
+
+msgid "Verwaltung"
+msgstr "Administración"
+
+msgid "Vorbelegt mit dem Listenpreis (Monatspreis mal Laufzeit). Bei einem Sonderpreis einfach überschreiben."
+msgstr "Rellenado con el precio de lista (precio mensual por la duración). Para un precio especial, basta con sobrescribirlo."
+
+msgid "Vorbelegt mit dem Listenpreis, bei freien Mengen 4 Cent je Credit. Bei einem Sonderpreis einfach überschreiben."
+msgstr "Rellenado con el precio de lista, 4 céntimos por crédito para otras cantidades. Para un precio especial, basta con sobrescribirlo."
+
+msgid "Vorherige Seite"
+msgstr "Página anterior"
+
+msgid "Was zählt zum Umsatz?"
+msgstr "¿Qué cuenta como facturación?"
+
+msgid "Weiter"
+msgstr "Continuar"
+
+msgid "Zeitraum"
+msgstr "Periodo"
+
+msgid "Zum Beispiel: Dankeschön fürs Testen. Ein Bonus gilt 12 Monate und zählt nicht zum Umsatz."
+msgstr "Por ejemplo: gracias por las pruebas. Una bonificación vale 12 meses y no cuenta como facturación."
+
+msgid "Zur Kundenseite"
+msgstr "Ir a la página del cliente"
+
+msgid "Zurück"
+msgstr "Atrás"
+
+msgid "Zurück zur Kundenliste"
+msgstr "Volver a la lista de clientes"
+
+msgid "Zurückgenommen werden die noch nicht verbrauchten {rest} von {menge} Credits. Bereits verbrauchte Credits bleiben verbraucht. Die Buchung bleibt sichtbar, zählt aber nicht mehr zum Umsatz."
+msgstr "Se retirarán los {rest} de {menge} créditos aún no utilizados. Los créditos ya usados siguen consumidos. La reserva sigue visible, pero ya no cuenta como facturación."
+
+msgid "aktiv"
+msgstr "activo"
+
+msgid "berichtigt"
+msgstr "corregido"
+
+msgid "diesen Monat {monat} Credits, insgesamt {gesamt}"
+msgstr "este mes {monat} créditos, {gesamt} en total"
+
+msgid "eingetragen von {name}"
+msgstr "registrado por {name}"
+
+msgid "gelöschtes Konto"
+msgstr "cuenta eliminada"
+
+msgid "gesperrt"
+msgstr "bloqueado"
+
+msgid "heute {n} von {limit} Bildern"
+msgstr "hoy {n} de {limit} imágenes"
+
+msgid "individuell festgelegt"
+msgstr "fijado individualmente"
+
+msgid "individuelles Limit"
+msgstr "límite individual"
+
+msgid "keiner angelegt"
+msgstr "ninguna creada"
+
+msgid "neuester vom {datum}"
+msgstr "la más reciente del {datum}"
+
+msgid "noch nie benutzt"
+msgstr "nunca usada"
+
+msgid "noch niemand eingeladen"
+msgstr "todavía no se ha invitado a nadie"
+
+msgid "nur Bonus"
+msgstr "solo bonificaciones"
+
+msgid "nur Verkäufe"
+msgstr "solo ventas"
+
+msgid "ohne Berechnung"
+msgstr "sin cargo"
+
+msgid "storniert, zählt nicht zum Umsatz"
+msgstr "anulado, no cuenta como facturación"
+
+msgid "verschenkt: {credits} Credits"
+msgstr "regalados: {credits} créditos"
+
+msgid "zuletzt benutzt am {datum}"
+msgstr "último uso el {datum}"
+
+msgid "{betrag} (grobe Schätzung, {satz} Cent je Credit)"
+msgstr "{betrag} (estimación aproximada, {satz} céntimos por crédito)"
+
+msgid "{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen"
+msgstr "{gesamt} créditos disponibles: {monat} del contingente mensual, {pakete} de paquetes adicionales"
+
+msgid "{limit} Bilder pro Tag"
+msgstr "{limit} imágenes al día"
+
+msgid "{menge} Credits"
+msgstr "{menge} créditos"
+
+msgid "{menge} Credits (Paketpreis {betrag})"
+msgstr "{menge} créditos (precio del paquete {betrag})"
+
+msgid "{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?"
+msgstr "¿Regalar {menge} créditos a {name} como bonificación (gratis, válidos 12 meses)?"
+
+msgid "{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?"
+msgstr "¿Abonar {menge} créditos a {name} como venta con factura por {betrag}?"
+
+msgid "{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}"
+msgstr "{monat}: {credits} créditos, costes de IA estimados {kosten}"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?"
+msgstr "{name} recibe la suscripción {plan} durante {monate} meses como venta con factura por {betrag}. ¿Guardar?"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?"
+msgstr "{name} recibe la suscripción {plan} durante {monate} meses sin cargo. ¿Guardar?"
+
+msgid "{name} kann sich danach nicht mehr anmelden, ist sofort abgemeldet, und die API-Schlüssel funktionieren nicht mehr. Credits, Projekte und Buchungen bleiben erhalten; Entsperren stellt alles wieder her."
+msgstr "{name} ya no podrá iniciar sesión, se cerrará su sesión de inmediato y las claves de API dejarán de funcionar. Los créditos, proyectos y reservas se conservan; al desbloquear se restablece todo."
+
+msgid "{n} Bonus-Gutschriften, zusammen {credits} Credits"
+msgstr "{n} bonificaciones, {credits} créditos en total"
+
+msgid "{n} Kunden"
+msgstr "{n} clientes"
+
+msgid "{n} Kunden, Seite {seite} von {seiten}"
+msgstr "{n} clientes, página {seite} de {seiten}"
+
+msgid "{n} Schlüssel, davon {aktiv} aktiv"
+msgstr "{n} claves, {aktiv} activas"
+
+msgid "{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}"
+msgstr "{n} creadas, {aktiv} activas — último uso: {wann}"
+
+msgid "{plan} auf Rechnung"
+msgstr "{plan} con factura"
+
+msgid "{plan} über Stripe"
+msgstr "{plan} a través de Stripe"
+
+msgid "Überblick"
+msgstr "Resumen"
+
+msgid "über Stripe, {betrag}"
+msgstr "a través de Stripe, {betrag}"

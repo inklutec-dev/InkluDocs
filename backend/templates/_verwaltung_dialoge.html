@@ -1,0 +1,75 @@
+{# Gemeinsame Dialoge der Verwaltung (25.09.2026): Buchung berichtigen, API-Limit ändern.
+   Native <dialog> (Fokusfang, Escape, inerter Hintergrund); die Logik steht in verwaltung.js. #}
+<dialog id="korrekturDialog" class="app-dialog" aria-labelledby="korrekturTitel" data-bonus-grenze="{{ verwaltung_preise.bonus_grenze }}">
+  <h2 id="korrekturTitel">{{ _('Buchung berichtigen') }}</h2>
+  <p id="korrekturFuer"></p>
+  <p class="dash-sub">{{ _('Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt.') }}</p>
+  <form id="korrekturForm" novalidate>
+    <div class="dash-field">
+      <label for="korrekturArt">{{ _('Art der Buchung') }}</label>
+      <select id="korrekturArt" class="dash-input">
+        <option value="verkauf">{{ _('Verkauf auf Rechnung') }}</option>
+        <option value="bonus">{{ _('Bonus (kostenlos)') }}</option>
+      </select>
+    </div>
+    <div id="korrekturVerkauf">
+      <div class="dash-field">
+        <label for="korrekturBetrag">{{ _('Rechnungsbetrag in Euro') }}</label>
+        <input type="text" id="korrekturBetrag" class="dash-input" inputmode="decimal" autocomplete="off">
+      </div>
+      <div class="dash-field">
+        <label for="korrekturNummer">{{ _('Rechnungsnummer (optional)') }}</label>
+        <input type="text" id="korrekturNummer" class="dash-input" maxlength="100" autocomplete="off">
+      </div>
+    </div>
+    <div class="dash-field">
+      <label for="korrekturGrund">{{ _('Grund der Korrektur') }}</label>
+      <input type="text" id="korrekturGrund" class="dash-input" maxlength="200" autocomplete="off" required>
+    </div>
+    <div class="dash-field" id="korrekturGrossFeld" hidden>
+      <label><input type="checkbox" id="korrekturGross"> <span id="korrekturGrossText"></span></label>
+    </div>
+    <p id="korrekturFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="korrekturAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Berichtigen') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="stornoDialog" class="app-dialog" aria-labelledby="stornoTitel">
+  <h2 id="stornoTitel">{{ _('Buchung stornieren') }}</h2>
+  <p id="stornoFuer"></p>
+  <p id="stornoFolgen"></p>
+  <form id="stornoForm" novalidate>
+    <div class="dash-field">
+      <label for="stornoGrund">{{ _('Grund für das Stornieren') }}</label>
+      <input type="text" id="stornoGrund" class="dash-input" maxlength="200" autocomplete="off" required>
+    </div>
+    <p id="stornoFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="stornoAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-danger">{{ _('Ja, stornieren') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="limitDialog" class="app-dialog" aria-labelledby="limitTitel">
+  <h2 id="limitTitel">{{ _('API-Tageslimit ändern') }}</h2>
+  <p id="limitFuer"></p>
+  <p class="dash-sub">{{ _('Das Limit gilt für das ganze Konto, also für alle API-Schlüssel zusammen.') }}</p>
+  <form id="limitForm" novalidate>
+    <div class="dash-field">
+      <label for="limitWert">{{ _('Bilder pro Tag (0 sperrt die API)') }}</label>
+      {# Textfeld statt type="number" (Steve 25.09.2026): VoiceOver liest Zahlenfelder als „Stepper“
+         mit Prozentwerten (100 von 0–1.000.000 = „0,01 %“). inputmode öffnet am Handy die Zifferntastatur. #}
+      <input type="text" id="limitWert" class="dash-input" inputmode="numeric" autocomplete="off" maxlength="7" aria-describedby="limitHinweis">
+      <p class="dash-sub" id="limitHinweis">{{ _('Der Standard ist {standard} Bilder pro Tag — genau diese Zahl eintragen, um zum Standard zurückzukehren. Das Abo-Guthaben gilt immer zusätzlich.').replace('{standard}', api_limit_standard|string) }}</p>
+    </div>
+    <p id="limitFehler" role="alert" class="verwaltung-fehler"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="limitAbbrechen">{{ _('Abbrechen') }}</button>
+      <button type="submit" class="btn btn-primary">{{ _('Limit speichern') }}</button>
+    </div>
+  </form>
+</dialog>

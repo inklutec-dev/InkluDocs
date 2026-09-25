@@ -636,6 +636,11 @@ input[type="file"] {
 /* ── Native Dialoge (<dialog> + showModal), 10.06.2026 ────────────────────
    Fokusfalle, Escape und Modal-Semantik kommen vom Element selbst — kein ARIA. */
 .app-dialog {
+    /* margin:auto (25.09.2026): der globale Reset „* { margin: 0 }“ hob die Browser-Mitte auf —
+       alle Dialoge klebten oben links. max-height + overflow: lange Dialoge scrollen auf dem Handy. */
+    margin: auto;
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
     border: 1px solid var(--border, #ccc);
     border-radius: 12px;
     padding: 1.5rem;

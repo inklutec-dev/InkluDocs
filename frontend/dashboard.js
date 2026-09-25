@@ -182,7 +182,9 @@ const NAV_ITEMS = [
   // (base_oeffentlich.html) und zeigen Eingeloggten diese Seitenleiste.
   { href: '/kontakt', label: t('Kontakt') },
   { href: '/ueber-uns', label: t('Über uns') },
-  { href: '/benutzer', label: t('Benutzerverwaltung'), admin: true },
+  // 25.09.2026 (Steve): „Verwaltung“ mit den Unterseiten Kunden, Umsatz, API, Einstellungen —
+  // der Eintrag bleibt auf allen /verwaltung/…-Seiten als aktuelle Seite markiert.
+  { href: '/verwaltung/kunden', label: t('Verwaltung'), admin: true, bereich: '/verwaltung' },
 ];
 
 // Navigation der oeffentlichen Seiten fuer Besucher OHNE Anmeldung
@@ -262,7 +264,9 @@ function renderSidebar() {
     const a = document.createElement('a');
     a.href = it.href;
     a.textContent = it.label;
-    if (path === it.href) a.setAttribute('aria-current', 'page');
+    if (path === it.href || (it.bereich && (path === it.bereich || path.startsWith(it.bereich + '/')))) {
+      a.setAttribute('aria-current', 'page');
+    }
     li.appendChild(a);
     ul.appendChild(li);
   });
@@ -325,7 +329,9 @@ function renderLegalLinks() {
     const wrap = document.createElement('div');
     wrap.className = 'dash-legal-links';
     LEGAL_LINKS.forEach((it, i) => {
-      if (i > 0) wrap.appendChild(document.createTextNode(' · '));
+      // '\u00a0· ': Punkt bleibt am vorigen Link, danach darf umbrochen werden (25.09.2026 — mit
+      // geschütztem Leerzeichen auf beiden Seiten ragte die Zeile auf dem Handy über den Rand).
+      if (i > 0) wrap.appendChild(document.createTextNode('\u00a0· '));
       const a = document.createElement('a');
       a.href = (istAnonym() && it.oeffentlich) ? it.oeffentlich : it.href;
       a.textContent = it.label;
