@@ -1,6 +1,6 @@
 services:
   inkludocs:
-    image: inkludocs:v4-20260918-verwaltung1
+    image: inkludocs:v4-20260918-api1
     container_name: inkludocs
     restart: unless-stopped
     # 15.09.2026 (Steve, nach dem Vorfall vom 14.09.): Logs ins System-Journal — sie ueberleben den
@@ -24,6 +24,8 @@ services:
       # Production-spezifisch
       - SECRET_KEY=${SECRET_KEY:-inkludocs-production-key-2025}
       - BASE_URL=https://inkludocs.inklutec.de
+      # 25.09.2026: oeffentliche API-Adresse (Links in API-Antworten + Anleitung); BASE_URL bleibt fuer Mails, Stripe, Login
+      - API_BASE_URL=https://inkludocs.de
       - REGISTRATION_ENABLED=true
       - NOTIFICATION_EMAIL=${NOTIFICATION_EMAIL:-support@inklutec.de}
       # SMTP
