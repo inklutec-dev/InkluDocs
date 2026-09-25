@@ -224,3 +224,40 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .struktur-leer { color:#555; font-style:italic; }
 .ausgaben-filter { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin:0 0 1.2rem; }
 .ausgaben-filter select { padding:.4rem; border:1px solid var(--border); border-radius:4px; font-size:.95rem; }
+
+/* VERWALTUNG (25.09.2026, Steve): Kunden, Kundenseite, Umsatz, API, Einstellungen.
+   Kompakte Zeilen statt Karten je Eintrag (25 Kunden je Seite), Kennzahlen als Kacheln,
+   Such- und Zeitraum-Formulare nebeneinander, solange Platz ist. */
+.verwaltung-nav { margin-bottom: 1rem; }
+.verwaltung-bereich { margin: 0 0 1.25rem; max-width: 64rem; }
+.verwaltung-karte { max-width: 64rem; }
+.verwaltung-suche { display: flex; flex-wrap: wrap; gap: 0 1rem; align-items: flex-end; margin-bottom: 1rem; }
+.verwaltung-suche .dash-field { flex: 1 1 14rem; margin-bottom: .75rem; }
+.verwaltung-suche > .btn { margin-bottom: .75rem; }
+.verwaltung-liste { list-style: none; padding: 0; margin: .5rem 0 0; border-top: 1px solid var(--border); }
+.verwaltung-zeile { padding: .55rem .25rem; border-bottom: 1px solid var(--border); line-height: 1.5; overflow-wrap: anywhere; }
+/* #a94200 statt #c75000: auf dem grauen Seitenhintergrund reichte das hellere Orange nicht für 4,5:1 (axe 25.09.). */
+.verwaltung-zeile a { color: #a94200; font-weight: 700; text-decoration: underline; }
+.verwaltung-zeile a:hover, .verwaltung-zeile a:focus { text-decoration-thickness: 2px; }
+.verwaltung-zeile .btn-small { margin-left: .25rem; vertical-align: baseline; }
+.verwaltung-meta { color: var(--text); }
+.verwaltung-seiten { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .9rem; }
+.verwaltung-seiten .btn[disabled] { opacity: 1; background: #f1f1f1; color: #595959; border-color: #767676; cursor: not-allowed; }
+.verwaltung-klappe { margin-top: 1rem; }
+.verwaltung-klappe > summary { cursor: pointer; font-weight: 700; padding: .2rem 0; }
+.verwaltung-klappe[open] > summary { margin-bottom: .75rem; }
+.verwaltung-karte .dash-actions { margin-top: .9rem; }
+.verwaltung-fehler { color: var(--error); font-weight: 600; margin: .25rem 0 .5rem; }
+.verwaltung-fehler:empty { display: none; }
+.verwaltung-bestaetigung { font-size: 1.05rem; font-weight: 600; line-height: 1.5; margin: .25rem 0 1rem; }
+.verwaltung-download { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+.verwaltung-textknopf { background: none; border: none; padding: 0; font: inherit; font-weight: 700; color: #a94200; text-decoration: underline; cursor: pointer; }
+.verwaltung-textknopf:hover, .verwaltung-textknopf:focus { text-decoration-thickness: 2px; }
+.verwaltung-textknopf:focus-visible { outline: 2px solid #c75000; outline-offset: 2px; }
+.umsatz-zahlen { list-style: none; padding: 0; margin: 0 0 .75rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; max-width: 64rem; }
+.umsatz-zahl { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: .8rem 1rem; }
+.umsatz-zahl-was { display: block; font-weight: 600; }
+.umsatz-zahl-wert { display: block; font-size: 1.6rem; font-weight: 700; margin-top: .15rem; }
+.app-dialog select.dash-input, .app-dialog input.dash-input { max-width: 100%; }
+/* display:flex darf das hidden-Attribut nicht aushebeln (Blättern bei nur einer Seite, Download vor dem Laden). */
+.verwaltung-seiten[hidden], .verwaltung-download[hidden], .verwaltung-suche[hidden] { display: none; }

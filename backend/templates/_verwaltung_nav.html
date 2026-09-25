@@ -1,0 +1,10 @@
+{# VERWALTUNG (25.09.2026, Steve): die vier Bereiche als Links, der aktuelle mit
+   aria-current="page" — dasselbe Muster wie die Ansichts-Knöpfe im Projekt (.proj-tabs). #}
+<nav class="proj-tabs verwaltung-nav" aria-label="{{ _('Bereiche der Verwaltung') }}">
+  <ul>
+    <li><a href="/verwaltung/kunden"{% if verwaltung_bereich == 'kunden' %} aria-current="page"{% endif %}>{{ _('Kunden') }}</a></li>
+    <li><a href="/verwaltung/umsatz"{% if verwaltung_bereich == 'umsatz' %} aria-current="page"{% endif %}>{{ _('Umsatz') }}</a></li>
+    <li><a href="/verwaltung/api"{% if verwaltung_bereich == 'api' %} aria-current="page"{% endif %}>{{ _('API') }}</a></li>
+    <li><a href="/verwaltung/einstellungen"{% if verwaltung_bereich == 'einstellungen' %} aria-current="page"{% endif %}>{{ _('Einstellungen') }}</a></li>
+  </ul>
+</nav>

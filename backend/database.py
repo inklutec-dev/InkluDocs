@@ -632,6 +632,45 @@ def init_db():
     # Hoechstwert aus allen Kandidaten (alte ausgaben-/ablage-Zeilen, hoechste vorhandene id). Idempotent.
     _ablage_zaehler_reparieren(conn)
 
+    # UMSATZ (25.09.2026, Steve): Jede Buchung, die Geld bringt oder Credits verschenkt, als
+    # eigene Zeile — Stripe-Kaeufe und -Abos automatisch, Rechnungsbuchungen ueber die
+    # Verwaltung. Vorher stand nirgends ein Euro-Betrag (quota_pakete kennt nur Menge + Notiz).
+    #   art  'paket' | 'abo'           weg  'stripe' | 'rechnung' | 'bonus' (kostenlos)
+    #   status 'ok' | 'ausstehend' (SEPA-Lastschrift unterwegs) | 'rueckgelaufen'
+    # Buchungen UEBERLEBEN das Loeschen des Kontos (Aufbewahrungspflicht fuer Geschaefts-
+    # unterlagen): konto_user_id wird dann NULL, Name und E-Mail bleiben als Momentaufnahme.
+    # stripe_ref (Session- bzw. Rechnungs-ID) ist eindeutig: Stripe wiederholt Webhooks.
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS buchungen (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            konto_user_id INTEGER,
+            kunde_name TEXT NOT NULL DEFAULT '',
+            kunde_email TEXT NOT NULL DEFAULT '',
+            art TEXT NOT NULL,
+            weg TEXT NOT NULL,
+            credits INTEGER NOT NULL DEFAULT 0,
+            plan TEXT,
+            laufzeit_monate INTEGER,
+            betrag_cent INTEGER NOT NULL DEFAULT 0,
+            rechnungsnummer TEXT NOT NULL DEFAULT '',
+            notiz TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'ok',
+            paket_id INTEGER,
+            stripe_ref TEXT,
+            gebucht_von_id INTEGER,
+            gebucht_von_name TEXT NOT NULL DEFAULT '',
+            korrigiert_von_name TEXT NOT NULL DEFAULT '',
+            korrigiert_am TEXT,
+            korrektur_notiz TEXT NOT NULL DEFAULT '',
+            gebucht_am TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_buchungen_zeit ON buchungen(gebucht_am)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_buchungen_konto ON buchungen(konto_user_id, gebucht_am)")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_buchungen_stripe ON buchungen(stripe_ref) "
+                 "WHERE stripe_ref IS NOT NULL")
+    conn.commit()
+
     # Backward-compatible migrations using ALTER TABLE with try/except
     _migrate_columns(conn)
 
@@ -1206,6 +1245,12 @@ def delete_user_data(user_id: int):
                  (user_id, user_id))
     conn.execute("DELETE FROM paket_abbuchungen WHERE konto_user_id = ?", (user_id,))
     conn.execute("DELETE FROM quota_pakete WHERE user_id = ?", (user_id,))
+    # Umsatz-Buchungen (25.09.2026) sind Geschaeftsunterlagen mit Aufbewahrungspflicht
+    # (HGB/AO, DSGVO Art. 17 Abs. 3 b): NICHT loeschen, nur vom Konto loesen. Name und
+    # E-Mail stehen als Momentaufnahme in der Buchung; der Paket-Verweis faellt weg.
+    conn.execute("UPDATE buchungen SET konto_user_id = NULL, paket_id = NULL "
+                 "WHERE konto_user_id = ?", (user_id,))
+    conn.execute("UPDATE buchungen SET gebucht_von_id = NULL WHERE gebucht_von_id = ?", (user_id,))
     # Review-Befund 4 (31.07.2026) / Abomodell 06.08.2026: Wird ein TEAM-
     # INHABER geloescht, duerfen keine baumelnden Mitgliedschaften bleiben —
     # billing wuerde sonst gegen ein nicht existentes Konto rechnen. Beide

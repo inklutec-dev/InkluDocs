@@ -278,3 +278,8 @@ Unverändert gilt: Verbucht wird ausschließlich nach echtem Erfolg. Ein geschei
 (except-Zweig) und ein Cache-Treffer kosten nichts; bei Exporten wird erst die Datei gebaut
 und dann verbucht. Vor jedem einzelnen Bild prüft die Wache, ob das Guthaben den vollen Preis
 deckt — nicht nur einmal am Lauf-Start.
+
+
+## Umsatz-Buchungen (25.09.2026)
+
+Jeder Kauf und jede Gutschrift steht mit Betrag in der Tabelle `buchungen` (backend/umsatz.py). Einzelheiten, Wege und Regeln: ADMIN_VERWALTUNG.md, Abschnitt „VERWALTUNG NEU“.

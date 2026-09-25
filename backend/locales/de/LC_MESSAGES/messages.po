@@ -8144,3 +8144,581 @@ msgstr "Die Prüfdatei ist schon aktuell."
 
 msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
 msgstr "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
+
+
+# Verwaltung: Kunden, Umsatz, API (25.09.2026)
+msgid "{betrag} (grobe Schätzung, {satz} Cent je Credit)"
+msgstr "{betrag} (grobe Schätzung, {satz} Cent je Credit)"
+
+msgid "{credits} Credits"
+msgstr "{credits} Credits"
+
+msgid "{credits} Credits verschenkt"
+msgstr "{credits} Credits verschenkt"
+
+msgid "{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen"
+msgstr "{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen"
+
+msgid "{limit} Bilder pro Tag"
+msgstr "{limit} Bilder pro Tag"
+
+msgid "{menge} Credits"
+msgstr "{menge} Credits"
+
+msgid "{menge} Credits (Paketpreis {betrag})"
+msgstr "{menge} Credits (Paketpreis {betrag})"
+
+msgid "{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?"
+msgstr "{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?"
+
+msgid "{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?"
+msgstr "{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?"
+
+msgid "{menge} Credits verfügbar"
+msgstr "{menge} Credits verfügbar"
+
+msgid "{monat} anzeigen"
+msgstr "{monat} anzeigen"
+
+msgid "{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}"
+msgstr "{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}"
+
+msgid "{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}"
+msgstr "{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}"
+
+msgid "{n} Bonus-Gutschriften, zusammen {credits} Credits"
+msgstr "{n} Bonus-Gutschriften, zusammen {credits} Credits"
+
+msgid "{n} Kunden"
+msgstr "{n} Kunden"
+
+msgid "{n} Kunden, Seite {seite} von {seiten}"
+msgstr "{n} Kunden, Seite {seite} von {seiten}"
+
+msgid "{n} Mitglieder"
+msgstr "{n} Mitglieder"
+
+msgid "{n} Schlüssel, davon {aktiv} aktiv"
+msgstr "{n} Schlüssel, davon {aktiv} aktiv"
+
+msgid "{n} Verkäufe"
+msgstr "{n} Verkäufe"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?"
+msgstr "{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?"
+msgstr "{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?"
+
+msgid "{plan} auf Rechnung"
+msgstr "{plan} auf Rechnung"
+
+msgid "{plan} über Stripe"
+msgstr "{plan} über Stripe"
+
+msgid "Abo {plan}"
+msgstr "Abo {plan}"
+
+msgid "Abo auf Rechnung"
+msgstr "Abo auf Rechnung"
+
+msgid "Abo über Stripe"
+msgstr "Abo über Stripe"
+
+msgid "Abo wurde gespeichert."
+msgstr "Abo wurde gespeichert."
+
+msgid "Abo zuweisen oder ändern"
+msgstr "Abo zuweisen oder ändern"
+
+msgid "Administrator"
+msgstr "Administrator"
+
+msgid "aktiv"
+msgstr "aktiv"
+
+msgid "Alle Buchungen"
+msgstr "Alle Buchungen"
+
+msgid "Alle Kunden"
+msgstr "Alle Kunden"
+
+msgid "Als CSV herunterladen"
+msgstr "Als CSV herunterladen"
+
+msgid "Als Excel herunterladen"
+msgstr "Als Excel herunterladen"
+
+msgid "Andere Menge"
+msgstr "Andere Menge"
+
+msgid "Andere Schreibweise oder „Alle Kunden“ versuchen."
+msgstr "Andere Schreibweise oder „Alle Kunden“ versuchen."
+
+msgid "API-Tageslimit ändern"
+msgstr "API-Tageslimit ändern"
+
+msgid "Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf."
+msgstr "Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf."
+
+msgid "Art"
+msgstr "Art"
+
+msgid "Art der Buchung"
+msgstr "Art der Buchung"
+
+msgid "Art der Gutschrift"
+msgstr "Art der Gutschrift"
+
+msgid "Auf einen Blick"
+msgstr "Auf einen Blick"
+
+msgid "Automatische Verlängerung nur für Unternehmer (B2B). Bei Verbrauchern das Häkchen entfernen."
+msgstr "Automatische Verlängerung nur für Unternehmer (B2B). Bei Verbrauchern das Häkchen entfernen."
+
+msgid "Bereiche der Verwaltung"
+msgstr "Bereiche der Verwaltung"
+
+msgid "Berichtigen"
+msgstr "Berichtigen"
+
+msgid "berichtigt"
+msgstr "berichtigt"
+
+msgid "Bilder pro Tag (0 sperrt die API, leer = Standard)"
+msgstr "Bilder pro Tag (0 sperrt die API, leer = Standard)"
+
+msgid "Bisher hat niemand einen API-Schlüssel angelegt."
+msgstr "Bisher hat niemand einen API-Schlüssel angelegt."
+
+msgid "Bitte das Häkchen setzen, um den großen Bonus zu bestätigen."
+msgstr "Bitte das Häkchen setzen, um den großen Bonus zu bestätigen."
+
+msgid "Bitte den Betrag eintragen."
+msgstr "Bitte den Betrag eintragen."
+
+msgid "Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50."
+msgstr "Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder Bonus."
+msgstr "Bitte die Art wählen: Verkauf auf Rechnung oder Bonus."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder ohne Berechnung."
+msgstr "Bitte die Art wählen: Verkauf auf Rechnung oder ohne Berechnung."
+
+msgid "Bitte kurz den Grund angeben."
+msgstr "Bitte kurz den Grund angeben."
+
+msgid "Bitte kurz den Grund der Korrektur angeben."
+msgstr "Bitte kurz den Grund der Korrektur angeben."
+
+msgid "Bitte kurz den Grund für den Bonus angeben."
+msgstr "Bitte kurz den Grund für den Bonus angeben."
+
+msgid "Bitte wählen"
+msgstr "Bitte wählen"
+
+msgid "Bonus (kostenlos)"
+msgstr "Bonus (kostenlos)"
+
+msgid "Buchung berichtigen"
+msgstr "Buchung berichtigen"
+
+msgid "Buchung berichtigt."
+msgstr "Buchung berichtigt."
+
+msgid "Buchung vom {datum} berichtigen"
+msgstr "Buchung vom {datum} berichtigen"
+
+msgid "Buchungen"
+msgstr "Buchungen"
+
+msgid "Buchungen {zeitraum} ({n})"
+msgstr "Buchungen {zeitraum} ({n})"
+
+msgid "Credits verbraucht, insgesamt"
+msgstr "Credits verbraucht, insgesamt"
+
+msgid "Das Abo konnte nicht gespeichert werden."
+msgstr "Das Abo konnte nicht gespeichert werden."
+
+msgid "Das Abo von {name} beenden und auf Free setzen?"
+msgstr "Das Abo von {name} beenden und auf Free setzen?"
+
+msgid "Das bist du selbst."
+msgstr "Das bist du selbst."
+
+msgid "Das Limit konnte nicht gespeichert werden."
+msgstr "Das Limit konnte nicht gespeichert werden."
+
+msgid "Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag."
+msgstr "Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag."
+
+msgid "Der Kunde bekommt eine Bestätigung per E-Mail."
+msgstr "Der Kunde bekommt eine Bestätigung per E-Mail."
+
+msgid "Der Kunde bekommt seine Zugangsdaten per E-Mail."
+msgstr "Der Kunde bekommt seine Zugangsdaten per E-Mail."
+
+msgid "Der Standard ist aktuell {standard} Bilder pro Tag. Das Abo-Guthaben gilt immer zusätzlich — diese Bremse schützt nur vor Amok-Läufen."
+msgstr "Der Standard ist aktuell {standard} Bilder pro Tag. Das Abo-Guthaben gilt immer zusätzlich — diese Bremse schützt nur vor Amok-Läufen."
+
+msgid "Die API-Daten konnten nicht geladen werden."
+msgstr "Die API-Daten konnten nicht geladen werden."
+
+msgid "Die Buchungen im Umsatz bleiben als Geschäftsunterlagen erhalten."
+msgstr "Die Buchungen im Umsatz bleiben als Geschäftsunterlagen erhalten."
+
+msgid "Die Buchungen konnten nicht geladen werden."
+msgstr "Die Buchungen konnten nicht geladen werden."
+
+msgid "Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt."
+msgstr "Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt."
+
+msgid "Die Daten konnten nicht geladen werden. Bitte die Seite neu laden."
+msgstr "Die Daten konnten nicht geladen werden. Bitte die Seite neu laden."
+
+msgid "Die Gutschrift konnte nicht gespeichert werden."
+msgstr "Die Gutschrift konnte nicht gespeichert werden."
+
+msgid "Die Korrektur konnte nicht gespeichert werden."
+msgstr "Die Korrektur konnte nicht gespeichert werden."
+
+msgid "Die Menge muss eine ganze Zahl von 1 bis 100.000 sein."
+msgstr "Die Menge muss eine ganze Zahl von 1 bis 100.000 sein."
+
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst unter „Kunden“ anlegen)."
+msgstr "Die Person muss bereits ein Konto haben (sonst zuerst unter „Kunden“ anlegen)."
+
+msgid "diesen Monat {monat} Credits, insgesamt {gesamt}"
+msgstr "diesen Monat {monat} Credits, insgesamt {gesamt}"
+
+msgid "Eigener Topf"
+msgstr "Eigener Topf"
+
+msgid "eingetragen von {name}"
+msgstr "eingetragen von {name}"
+
+msgid "Einstellungen der Verwaltung"
+msgstr "Einstellungen der Verwaltung"
+
+msgid "Enterprise (1.375 Credits, bis 25 Personen)"
+msgstr "Enterprise (1.375 Credits, bis 25 Personen)"
+
+msgid "Es verlängert sich automatisch."
+msgstr "Es verlängert sich automatisch."
+
+msgid "Es verlängert sich nicht automatisch."
+msgstr "Es verlängert sich nicht automatisch."
+
+msgid "Free"
+msgstr "Free"
+
+msgid "Für dieses Jahr gibt es noch keine Monate."
+msgstr "Für dieses Jahr gibt es noch keine Monate."
+
+msgid "Für: {name} ({email})"
+msgstr "Für: {name} ({email})"
+
+msgid "Ganzes Jahr"
+msgstr "Ganzes Jahr"
+
+msgid "gelöschtes Konto"
+msgstr "gelöschtes Konto"
+
+msgid "Gesamt seit Start"
+msgstr "Gesamt seit Start"
+
+msgid "gesperrt"
+msgstr "gesperrt"
+
+msgid "Grund der Korrektur"
+msgstr "Grund der Korrektur"
+
+msgid "Grund für den Bonus"
+msgstr "Grund für den Bonus"
+
+msgid "Grund, warum das Abo ohne Berechnung läuft"
+msgstr "Grund, warum das Abo ohne Berechnung läuft"
+
+msgid "Guthaben"
+msgstr "Guthaben"
+
+msgid "Guthaben unbegrenzt"
+msgstr "Guthaben unbegrenzt"
+
+msgid "Heute"
+msgstr "Heute"
+
+msgid "heute {n} von {limit} Bildern"
+msgstr "heute {n} von {limit} Bildern"
+
+msgid "In diesem Zeitraum gibt es keine Buchungen."
+msgstr "In diesem Zeitraum gibt es keine Buchungen."
+
+msgid "individuell festgelegt"
+msgstr "individuell festgelegt"
+
+msgid "individuelles Limit"
+msgstr "individuelles Limit"
+
+msgid "Ja, gutschreiben"
+msgstr "Ja, gutschreiben"
+
+msgid "Ja, ich möchte bewusst mehr als {grenze} Credits verschenken."
+msgstr "Ja, ich möchte bewusst mehr als {grenze} Credits verschenken."
+
+msgid "Ja, speichern"
+msgstr "Ja, speichern"
+
+msgid "Jahr"
+msgstr "Jahr"
+
+msgid "Jahr {jahr}"
+msgstr "Jahr {jahr}"
+
+msgid "Käufe und Gutschriften ({n})"
+msgstr "Käufe und Gutschriften ({n})"
+
+msgid "Keine Kunden gefunden"
+msgstr "Keine Kunden gefunden"
+
+msgid "Keine Verbindung zum Server. Bitte erneut versuchen."
+msgstr "Keine Verbindung zum Server. Bitte erneut versuchen."
+
+msgid "keiner angelegt"
+msgstr "keiner angelegt"
+
+msgid "Konten mit API-Schlüssel"
+msgstr "Konten mit API-Schlüssel"
+
+msgid "Konten mit API-Schlüssel ({n})"
+msgstr "Konten mit API-Schlüssel ({n})"
+
+msgid "Konto entsperren"
+msgstr "Konto entsperren"
+
+msgid "Konto entsperrt."
+msgstr "Konto entsperrt."
+
+msgid "Konto gesperrt."
+msgstr "Konto gesperrt."
+
+msgid "Konto sperren"
+msgstr "Konto sperren"
+
+msgid "Konto verwalten"
+msgstr "Konto verwalten"
+
+msgid "Kunde"
+msgstr "Kunde"
+
+msgid "Kunde: {name}"
+msgstr "Kunde: {name}"
+
+msgid "Kunden"
+msgstr "Kunden"
+
+msgid "Kunden suchen"
+msgstr "Kunden suchen"
+
+msgid "Kundenseite von {name} geladen."
+msgstr "Kundenseite von {name} geladen."
+
+msgid "Lastschrift noch ausstehend"
+msgstr "Lastschrift noch ausstehend"
+
+msgid "Lastschrift zurückgegangen, zählt nicht zum Umsatz"
+msgstr "Lastschrift zurückgegangen, zählt nicht zum Umsatz"
+
+msgid "Lastschriften noch unterwegs"
+msgstr "Lastschriften noch unterwegs"
+
+msgid "Limit ändern"
+msgstr "Limit ändern"
+
+msgid "Limit von {name} ändern"
+msgstr "Limit von {name} ändern"
+
+msgid "Menge"
+msgstr "Menge"
+
+msgid "Menge in Credits (1 bis 100.000)"
+msgstr "Menge in Credits (1 bis 100.000)"
+
+msgid "Mit Abo"
+msgstr "Mit Abo"
+
+msgid "Mit Käufen"
+msgstr "Mit Käufen"
+
+msgid "Monat"
+msgstr "Monat"
+
+msgid "Monate"
+msgstr "Monate"
+
+msgid "Monate im Jahr {jahr}"
+msgstr "Monate im Jahr {jahr}"
+
+msgid "Name, E-Mail oder Teamname — ein Teil genügt."
+msgstr "Name, E-Mail oder Teamname — ein Teil genügt."
+
+msgid "Neu in diesem Monat"
+msgstr "Neu in diesem Monat"
+
+msgid "Neuen Kunden anlegen"
+msgstr "Neuen Kunden anlegen"
+
+msgid "neuester vom {datum}"
+msgstr "neuester vom {datum}"
+
+msgid "nichts"
+msgstr "nichts"
+
+msgid "Noch keine Käufe oder Gutschriften."
+msgstr "Noch keine Käufe oder Gutschriften."
+
+msgid "Noch keine Kunden"
+msgstr "Noch keine Kunden"
+
+msgid "noch nie angemeldet"
+msgstr "noch nie angemeldet"
+
+msgid "noch nie benutzt"
+msgstr "noch nie benutzt"
+
+msgid "Notiz (optional)"
+msgstr "Notiz (optional)"
+
+msgid "nur Bonus"
+msgstr "nur Bonus"
+
+msgid "Nur Bonus"
+msgstr "Nur Bonus"
+
+msgid "nur Verkäufe"
+msgstr "nur Verkäufe"
+
+msgid "Nur Verkäufe"
+msgstr "Nur Verkäufe"
+
+msgid "Nutzung"
+msgstr "Nutzung"
+
+msgid "ohne Berechnung"
+msgstr "ohne Berechnung"
+
+msgid "Ohne Berechnung"
+msgstr "Ohne Berechnung"
+
+msgid "Rechnung {nummer}"
+msgstr "Rechnung {nummer}"
+
+msgid "Rechnungsbetrag in Euro"
+msgstr "Rechnungsbetrag in Euro"
+
+msgid "Rechnungsbetrag in Euro für die ganze Laufzeit"
+msgstr "Rechnungsbetrag in Euro für die ganze Laufzeit"
+
+msgid "Rechnungsnummer (optional)"
+msgstr "Rechnungsnummer (optional)"
+
+msgid "Rechnungsnummer: {nummer}."
+msgstr "Rechnungsnummer: {nummer}."
+
+msgid "Schlüssel"
+msgstr "Schlüssel"
+
+msgid "Seiten der Kundenliste"
+msgstr "Seiten der Kundenliste"
+
+msgid "Standard"
+msgstr "Standard"
+
+msgid "Stripe {stripe}, Rechnung {rechnung}"
+msgstr "Stripe {stripe}, Rechnung {rechnung}"
+
+msgid "Tageslimit"
+msgstr "Tageslimit"
+
+msgid "Team (500 Credits, bis 5 Personen)"
+msgstr "Team (500 Credits, bis 5 Personen)"
+
+msgid "Team „{name}“"
+msgstr "Team „{name}“"
+
+msgid "Team „{team}“ von {inhaber}"
+msgstr "Team „{team}“ von {inhaber}"
+
+msgid "über Stripe, {betrag}"
+msgstr "über Stripe, {betrag}"
+
+msgid "Überblick"
+msgstr "Überblick"
+
+msgid "Umsatz"
+msgstr "Umsatz"
+
+msgid "Umsatz {monat}: {betrag}"
+msgstr "Umsatz {monat}: {betrag}"
+
+msgid "Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit."
+msgstr "Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit."
+
+msgid "Umsatz im Zeitraum"
+msgstr "Umsatz im Zeitraum"
+
+msgid "Umsatz mit diesem Kunden insgesamt"
+msgstr "Umsatz mit diesem Kunden insgesamt"
+
+msgid "Verbrauch im Detail"
+msgstr "Verbrauch im Detail"
+
+msgid "Verbraucht in diesem Monat"
+msgstr "Verbraucht in diesem Monat"
+
+msgid "Verkauf auf Rechnung"
+msgstr "Verkauf auf Rechnung"
+
+msgid "Verkauf auf Rechnung, {betrag}"
+msgstr "Verkauf auf Rechnung, {betrag}"
+
+msgid "Verschenkt im Zeitraum"
+msgstr "Verschenkt im Zeitraum"
+
+msgid "Verschenkt in {monat}"
+msgstr "Verschenkt in {monat}"
+
+msgid "Verwaltung"
+msgstr "Verwaltung"
+
+msgid "Vorbelegt mit dem Listenpreis (Monatspreis mal Laufzeit). Bei einem Sonderpreis einfach überschreiben."
+msgstr "Vorbelegt mit dem Listenpreis (Monatspreis mal Laufzeit). Bei einem Sonderpreis einfach überschreiben."
+
+msgid "Vorbelegt mit dem Listenpreis, bei freien Mengen 4 Cent je Credit. Bei einem Sonderpreis einfach überschreiben."
+msgstr "Vorbelegt mit dem Listenpreis, bei freien Mengen 4 Cent je Credit. Bei einem Sonderpreis einfach überschreiben."
+
+msgid "Weiter"
+msgstr "Weiter"
+
+msgid "Zeitraum wählen"
+msgstr "Zeitraum wählen"
+
+msgid "zuletzt angemeldet am {datum}"
+msgstr "zuletzt angemeldet am {datum}"
+
+msgid "zuletzt benutzt am {datum}"
+msgstr "zuletzt benutzt am {datum}"
+
+msgid "Zum Beispiel: Dankeschön fürs Testen. Ein Bonus gilt 12 Monate und zählt nicht zum Umsatz."
+msgstr "Zum Beispiel: Dankeschön fürs Testen. Ein Bonus gilt 12 Monate und zählt nicht zum Umsatz."
+
+msgid "Zur Kundenseite"
+msgstr "Zur Kundenseite"
+
+msgid "Zurück"
+msgstr "Zurück"
+
+msgid "Zurück zur Kundenliste"
+msgstr "Zurück zur Kundenliste"

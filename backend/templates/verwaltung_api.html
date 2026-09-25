@@ -1,0 +1,74 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('API') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# VERWALTUNG — API (25.09.2026, Steve): nur die Konten, die überhaupt einen API-Schlüssel
+   angelegt haben, der neueste Schlüssel zuerst — mit Nutzung von heute und dem Tageslimit.
+   Ein Werkzeug für den Bedarfsfall („toll, sie zu haben, wenn man sie braucht“). #}
+<h1>{{ _('API') }}</h1>
+{% include "_verwaltung_nav.html" %}
+<p class="dash-sub">{{ _('Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag.').replace('{standard}', api_limit_standard|string) }}</p>
+
+<section class="verwaltung-bereich" aria-labelledby="h-apikonten">
+  <h2 id="h-apikonten" tabindex="-1">{{ _('Konten mit API-Schlüssel') }}</h2>
+  <div id="apiKonten" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+</section>
+{% endblock %}
+
+{% block dialogs %}
+{% include "_verwaltung_dialoge.html" %}
+{% endblock %}
+
+{% block page_script %}
+<script>window.API_LIMIT_STANDARD = {{ api_limit_standard|int }};</script>
+<script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script>
+{% raw %}
+(function () {
+  const V = window.Verwaltung;
+
+  async function laden() {
+    const ziel = byId('apiKonten');
+    const d = await V.ladeJson('/api/admin/api-konten', ziel);
+    if (!d) return;
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+    byId('h-apikonten').textContent = t('Konten mit API-Schlüssel ({n})', { n: d.konten.length });
+    if (!d.konten.length) {
+      ziel.appendChild(V.el('p', 'dash-empty', t('Bisher hat niemand einen API-Schlüssel angelegt.')));
+      return;
+    }
+    const voll = V.istVollAdmin();
+    const ul = V.el('ul', 'verwaltung-liste');
+    d.konten.forEach((k) => {
+      const li = V.el('li', 'verwaltung-zeile');
+      const a = V.el('a', null, k.name || k.email);
+      a.href = '/verwaltung/kunden/' + k.id;
+      li.appendChild(a);
+      const teile = [k.email,
+        t('{n} Schlüssel, davon {aktiv} aktiv', { n: k.schluessel, aktiv: k.schluessel_aktiv }),
+        t('neuester vom {datum}', { datum: V.datumLang(k.neuester_schluessel) }),
+        k.zuletzt_benutzt ? t('zuletzt benutzt am {datum}', { datum: V.datumZeit(k.zuletzt_benutzt) }) : t('noch nie benutzt'),
+        t('heute {n} von {limit} Bildern', { n: V.zahl(k.heute), limit: V.zahl(k.limit) }) + (k.limit_individuell ? ' (' + t('individuelles Limit') + ')' : '')];
+      li.appendChild(document.createTextNode(' · ' + teile.join(' · ') + ' '));
+      if (voll) {
+        const b = V.el('button', 'btn btn-secondary btn-small', t('Limit ändern'));
+        b.type = 'button';
+        b.setAttribute('aria-label', t('Limit von {name} ändern', { name: k.name || k.email }));
+        b.addEventListener('click', () => V.limitOeffnen(k, laden));
+        li.appendChild(b);
+      }
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+  }
+
+  (async function start() {
+    await loadCurrentUser();
+    await laden();
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}

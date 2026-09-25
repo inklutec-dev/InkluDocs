@@ -41,8 +41,11 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 # alten aus dem Cache (sonst z.B. gemischte Sprachen durch alte dashboard.js).
 # formular.js seit 09.09.2026 dabei: Michael Karbe sah nach einem Staging-Neubau noch das alte
 # Formular-Skript aus dem Browser-Cache, weil sich der Hash ohne diese Datei nicht aenderte.
+# 25.09.2026: dokument.js und abschluss.js fehlten — dieselbe Falle wie bei formular.js
+# (nach einem Neubau lief im Browser noch das alte Skript); verwaltung.js ist neu.
 _ASSET_FILES = ("style.css", "dashboard.css", "dashboard.js", "pwtoggle.js", "start.css",
-                "demo.css", "demo.js", "demo-shell.js", "formular.js", "uebersetzen.js")
+                "demo.css", "demo.js", "demo-shell.js", "formular.js", "uebersetzen.js",
+                "dokument.js", "abschluss.js", "verwaltung.js")
 
 
 def _compute_asset_version() -> str:

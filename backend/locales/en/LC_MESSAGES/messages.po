@@ -8141,3 +8141,581 @@ msgstr "The check file is already up to date."
 
 msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
 msgstr "Completeness could not be checked. Please go through the listening sample yourself."
+
+
+# Verwaltung: Kunden, Umsatz, API (25.09.2026)
+msgid "{betrag} (grobe Schätzung, {satz} Cent je Credit)"
+msgstr "{betrag} (rough estimate, {satz} cents per credit)"
+
+msgid "{credits} Credits"
+msgstr "{credits} credits"
+
+msgid "{credits} Credits verschenkt"
+msgstr "{credits} credits given away"
+
+msgid "{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen"
+msgstr "{gesamt} credits available: {monat} from the monthly allowance, {pakete} from add-on packages"
+
+msgid "{limit} Bilder pro Tag"
+msgstr "{limit} images per day"
+
+msgid "{menge} Credits"
+msgstr "{menge} credits"
+
+msgid "{menge} Credits (Paketpreis {betrag})"
+msgstr "{menge} credits (package price {betrag})"
+
+msgid "{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?"
+msgstr "Give {menge} credits to {name} as a bonus (free of charge, valid for 12 months)?"
+
+msgid "{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?"
+msgstr "Credit {menge} credits to {name} as a sale on invoice for {betrag}?"
+
+msgid "{menge} Credits verfügbar"
+msgstr "{menge} credits available"
+
+msgid "{monat} anzeigen"
+msgstr "Show {monat}"
+
+msgid "{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}"
+msgstr "{monat}: {credits} credits, estimated AI costs {kosten}"
+
+msgid "{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}"
+msgstr "{n} created, {aktiv} of them active — last used: {wann}"
+
+msgid "{n} Bonus-Gutschriften, zusammen {credits} Credits"
+msgstr "{n} bonus credits given, {credits} credits in total"
+
+msgid "{n} Kunden"
+msgstr "{n} customers"
+
+msgid "{n} Kunden, Seite {seite} von {seiten}"
+msgstr "{n} customers, page {seite} of {seiten}"
+
+msgid "{n} Mitglieder"
+msgstr "{n} members"
+
+msgid "{n} Schlüssel, davon {aktiv} aktiv"
+msgstr "{n} keys, {aktiv} of them active"
+
+msgid "{n} Verkäufe"
+msgstr "{n} sales"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?"
+msgstr "{name} gets the {plan} subscription for {monate} months as a sale on invoice for {betrag}. Save?"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?"
+msgstr "{name} gets the {plan} subscription for {monate} months free of charge. Save?"
+
+msgid "{plan} auf Rechnung"
+msgstr "{plan} on invoice"
+
+msgid "{plan} über Stripe"
+msgstr "{plan} via Stripe"
+
+msgid "Abo {plan}"
+msgstr "{plan} subscription"
+
+msgid "Abo auf Rechnung"
+msgstr "Subscription on invoice"
+
+msgid "Abo über Stripe"
+msgstr "Subscription via Stripe"
+
+msgid "Abo wurde gespeichert."
+msgstr "Subscription saved."
+
+msgid "Abo zuweisen oder ändern"
+msgstr "Assign or change subscription"
+
+msgid "Administrator"
+msgstr "Administrator"
+
+msgid "aktiv"
+msgstr "active"
+
+msgid "Alle Buchungen"
+msgstr "All bookings"
+
+msgid "Alle Kunden"
+msgstr "All customers"
+
+msgid "Als CSV herunterladen"
+msgstr "Download as CSV"
+
+msgid "Als Excel herunterladen"
+msgstr "Download as Excel"
+
+msgid "Andere Menge"
+msgstr "Other amount"
+
+msgid "Andere Schreibweise oder „Alle Kunden“ versuchen."
+msgstr "Try a different spelling or “All customers”."
+
+msgid "API-Tageslimit ändern"
+msgstr "Change API daily limit"
+
+msgid "Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf."
+msgstr "Currently working in the team “{team}” of {inhaber} — the balance above applies to this team pool."
+
+msgid "Art"
+msgstr "Type"
+
+msgid "Art der Buchung"
+msgstr "Type of booking"
+
+msgid "Art der Gutschrift"
+msgstr "Type of credit"
+
+msgid "Auf einen Blick"
+msgstr "At a glance"
+
+msgid "Automatische Verlängerung nur für Unternehmer (B2B). Bei Verbrauchern das Häkchen entfernen."
+msgstr "Automatic renewal only for businesses (B2B). Untick the box for consumers."
+
+msgid "Bereiche der Verwaltung"
+msgstr "Administration sections"
+
+msgid "Berichtigen"
+msgstr "Correct"
+
+msgid "berichtigt"
+msgstr "corrected"
+
+msgid "Bilder pro Tag (0 sperrt die API, leer = Standard)"
+msgstr "Images per day (0 blocks the API, empty = default)"
+
+msgid "Bisher hat niemand einen API-Schlüssel angelegt."
+msgstr "No one has created an API key yet."
+
+msgid "Bitte das Häkchen setzen, um den großen Bonus zu bestätigen."
+msgstr "Please tick the box to confirm the large bonus."
+
+msgid "Bitte den Betrag eintragen."
+msgstr "Please enter the amount."
+
+msgid "Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50."
+msgstr "Please enter the invoice amount as a number, for example 87.50."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder Bonus."
+msgstr "Please choose the type: sale on invoice or bonus."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder ohne Berechnung."
+msgstr "Please choose the type: sale on invoice or free of charge."
+
+msgid "Bitte kurz den Grund angeben."
+msgstr "Please briefly state the reason."
+
+msgid "Bitte kurz den Grund der Korrektur angeben."
+msgstr "Please briefly state the reason for the correction."
+
+msgid "Bitte kurz den Grund für den Bonus angeben."
+msgstr "Please briefly state the reason for the bonus."
+
+msgid "Bitte wählen"
+msgstr "Please choose"
+
+msgid "Bonus (kostenlos)"
+msgstr "Bonus (free of charge)"
+
+msgid "Buchung berichtigen"
+msgstr "Correct booking"
+
+msgid "Buchung berichtigt."
+msgstr "Booking corrected."
+
+msgid "Buchung vom {datum} berichtigen"
+msgstr "Correct booking of {datum}"
+
+msgid "Buchungen"
+msgstr "Bookings"
+
+msgid "Buchungen {zeitraum} ({n})"
+msgstr "Bookings {zeitraum} ({n})"
+
+msgid "Credits verbraucht, insgesamt"
+msgstr "Credits used, total"
+
+msgid "Das Abo konnte nicht gespeichert werden."
+msgstr "The subscription could not be saved."
+
+msgid "Das Abo von {name} beenden und auf Free setzen?"
+msgstr "End the subscription of {name} and switch to Free?"
+
+msgid "Das bist du selbst."
+msgstr "That is you."
+
+msgid "Das Limit konnte nicht gespeichert werden."
+msgstr "The limit could not be saved."
+
+msgid "Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag."
+msgstr "The daily limit only stops runaway API usage. The subscription balance always applies in addition. Default: {standard} images per day."
+
+msgid "Der Kunde bekommt eine Bestätigung per E-Mail."
+msgstr "The customer receives a confirmation by email."
+
+msgid "Der Kunde bekommt seine Zugangsdaten per E-Mail."
+msgstr "The customer receives their login details by email."
+
+msgid "Der Standard ist aktuell {standard} Bilder pro Tag. Das Abo-Guthaben gilt immer zusätzlich — diese Bremse schützt nur vor Amok-Läufen."
+msgstr "The default is currently {standard} images per day. The subscription balance always applies in addition — this brake only protects against runaway usage."
+
+msgid "Die API-Daten konnten nicht geladen werden."
+msgstr "The API data could not be loaded."
+
+msgid "Die Buchungen im Umsatz bleiben als Geschäftsunterlagen erhalten."
+msgstr "The bookings in the revenue overview are kept as business records."
+
+msgid "Die Buchungen konnten nicht geladen werden."
+msgstr "The bookings could not be loaded."
+
+msgid "Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt."
+msgstr "The credits remain unchanged. The correction is noted on the booking with your name, the time and the reason."
+
+msgid "Die Daten konnten nicht geladen werden. Bitte die Seite neu laden."
+msgstr "The data could not be loaded. Please reload the page."
+
+msgid "Die Gutschrift konnte nicht gespeichert werden."
+msgstr "The credit could not be saved."
+
+msgid "Die Korrektur konnte nicht gespeichert werden."
+msgstr "The correction could not be saved."
+
+msgid "Die Menge muss eine ganze Zahl von 1 bis 100.000 sein."
+msgstr "The amount must be a whole number from 1 to 100,000."
+
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst unter „Kunden“ anlegen)."
+msgstr "The person must already have an account (otherwise create one under “Customers” first)."
+
+msgid "diesen Monat {monat} Credits, insgesamt {gesamt}"
+msgstr "this month {monat} credits, {gesamt} in total"
+
+msgid "Eigener Topf"
+msgstr "Own pool"
+
+msgid "eingetragen von {name}"
+msgstr "entered by {name}"
+
+msgid "Einstellungen der Verwaltung"
+msgstr "Administration settings"
+
+msgid "Enterprise (1.375 Credits, bis 25 Personen)"
+msgstr "Enterprise (1,375 credits, up to 25 people)"
+
+msgid "Es verlängert sich automatisch."
+msgstr "It renews automatically."
+
+msgid "Es verlängert sich nicht automatisch."
+msgstr "It does not renew automatically."
+
+msgid "Free"
+msgstr "Free"
+
+msgid "Für dieses Jahr gibt es noch keine Monate."
+msgstr "There are no months for this year yet."
+
+msgid "Für: {name} ({email})"
+msgstr "For: {name} ({email})"
+
+msgid "Ganzes Jahr"
+msgstr "Whole year"
+
+msgid "gelöschtes Konto"
+msgstr "deleted account"
+
+msgid "Gesamt seit Start"
+msgstr "Total since launch"
+
+msgid "gesperrt"
+msgstr "blocked"
+
+msgid "Grund der Korrektur"
+msgstr "Reason for the correction"
+
+msgid "Grund für den Bonus"
+msgstr "Reason for the bonus"
+
+msgid "Grund, warum das Abo ohne Berechnung läuft"
+msgstr "Reason why the subscription is free of charge"
+
+msgid "Guthaben"
+msgstr "Balance"
+
+msgid "Guthaben unbegrenzt"
+msgstr "Unlimited balance"
+
+msgid "Heute"
+msgstr "Today"
+
+msgid "heute {n} von {limit} Bildern"
+msgstr "today {n} of {limit} images"
+
+msgid "In diesem Zeitraum gibt es keine Buchungen."
+msgstr "There are no bookings in this period."
+
+msgid "individuell festgelegt"
+msgstr "set individually"
+
+msgid "individuelles Limit"
+msgstr "individual limit"
+
+msgid "Ja, gutschreiben"
+msgstr "Yes, credit"
+
+msgid "Ja, ich möchte bewusst mehr als {grenze} Credits verschenken."
+msgstr "Yes, I deliberately want to give away more than {grenze} credits."
+
+msgid "Ja, speichern"
+msgstr "Yes, save"
+
+msgid "Jahr"
+msgstr "Year"
+
+msgid "Jahr {jahr}"
+msgstr "Year {jahr}"
+
+msgid "Käufe und Gutschriften ({n})"
+msgstr "Purchases and credits ({n})"
+
+msgid "Keine Kunden gefunden"
+msgstr "No customers found"
+
+msgid "Keine Verbindung zum Server. Bitte erneut versuchen."
+msgstr "No connection to the server. Please try again."
+
+msgid "keiner angelegt"
+msgstr "none created"
+
+msgid "Konten mit API-Schlüssel"
+msgstr "Accounts with an API key"
+
+msgid "Konten mit API-Schlüssel ({n})"
+msgstr "Accounts with an API key ({n})"
+
+msgid "Konto entsperren"
+msgstr "Unblock account"
+
+msgid "Konto entsperrt."
+msgstr "Account unblocked."
+
+msgid "Konto gesperrt."
+msgstr "Account blocked."
+
+msgid "Konto sperren"
+msgstr "Block account"
+
+msgid "Konto verwalten"
+msgstr "Manage account"
+
+msgid "Kunde"
+msgstr "Customer"
+
+msgid "Kunde: {name}"
+msgstr "Customer: {name}"
+
+msgid "Kunden"
+msgstr "Customers"
+
+msgid "Kunden suchen"
+msgstr "Search customers"
+
+msgid "Kundenseite von {name} geladen."
+msgstr "Customer page of {name} loaded."
+
+msgid "Lastschrift noch ausstehend"
+msgstr "Direct debit still pending"
+
+msgid "Lastschrift zurückgegangen, zählt nicht zum Umsatz"
+msgstr "Direct debit returned, not counted as revenue"
+
+msgid "Lastschriften noch unterwegs"
+msgstr "Direct debits still in progress"
+
+msgid "Limit ändern"
+msgstr "Change limit"
+
+msgid "Limit von {name} ändern"
+msgstr "Change limit of {name}"
+
+msgid "Menge"
+msgstr "Amount"
+
+msgid "Menge in Credits (1 bis 100.000)"
+msgstr "Amount in credits (1 to 100,000)"
+
+msgid "Mit Abo"
+msgstr "With subscription"
+
+msgid "Mit Käufen"
+msgstr "With purchases"
+
+msgid "Monat"
+msgstr "Month"
+
+msgid "Monate"
+msgstr "Months"
+
+msgid "Monate im Jahr {jahr}"
+msgstr "Months in {jahr}"
+
+msgid "Name, E-Mail oder Teamname — ein Teil genügt."
+msgstr "Name, email or team name — part of it is enough."
+
+msgid "Neu in diesem Monat"
+msgstr "New this month"
+
+msgid "Neuen Kunden anlegen"
+msgstr "Create new customer"
+
+msgid "neuester vom {datum}"
+msgstr "newest from {datum}"
+
+msgid "nichts"
+msgstr "nothing"
+
+msgid "Noch keine Käufe oder Gutschriften."
+msgstr "No purchases or credits yet."
+
+msgid "Noch keine Kunden"
+msgstr "No customers yet"
+
+msgid "noch nie angemeldet"
+msgstr "never logged in"
+
+msgid "noch nie benutzt"
+msgstr "never used"
+
+msgid "Notiz (optional)"
+msgstr "Note (optional)"
+
+msgid "nur Bonus"
+msgstr "bonus only"
+
+msgid "Nur Bonus"
+msgstr "Bonus only"
+
+msgid "nur Verkäufe"
+msgstr "sales only"
+
+msgid "Nur Verkäufe"
+msgstr "Sales only"
+
+msgid "Nutzung"
+msgstr "Usage"
+
+msgid "ohne Berechnung"
+msgstr "free of charge"
+
+msgid "Ohne Berechnung"
+msgstr "Free of charge"
+
+msgid "Rechnung {nummer}"
+msgstr "Invoice {nummer}"
+
+msgid "Rechnungsbetrag in Euro"
+msgstr "Invoice amount in euros"
+
+msgid "Rechnungsbetrag in Euro für die ganze Laufzeit"
+msgstr "Invoice amount in euros for the whole term"
+
+msgid "Rechnungsnummer (optional)"
+msgstr "Invoice number (optional)"
+
+msgid "Rechnungsnummer: {nummer}."
+msgstr "Invoice number: {nummer}."
+
+msgid "Schlüssel"
+msgstr "Keys"
+
+msgid "Seiten der Kundenliste"
+msgstr "Pages of the customer list"
+
+msgid "Standard"
+msgstr "Default"
+
+msgid "Stripe {stripe}, Rechnung {rechnung}"
+msgstr "Stripe {stripe}, invoice {rechnung}"
+
+msgid "Tageslimit"
+msgstr "Daily limit"
+
+msgid "Team (500 Credits, bis 5 Personen)"
+msgstr "Team (500 credits, up to 5 people)"
+
+msgid "Team „{name}“"
+msgstr "Team “{name}”"
+
+msgid "Team „{team}“ von {inhaber}"
+msgstr "Team “{team}” of {inhaber}"
+
+msgid "über Stripe, {betrag}"
+msgstr "via Stripe, {betrag}"
+
+msgid "Überblick"
+msgstr "Overview"
+
+msgid "Umsatz"
+msgstr "Revenue"
+
+msgid "Umsatz {monat}: {betrag}"
+msgstr "Revenue {monat}: {betrag}"
+
+msgid "Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit."
+msgstr "Revenue = Stripe purchases and invoices as paid by the customer. Bonus credits and returned direct debits are not counted."
+
+msgid "Umsatz im Zeitraum"
+msgstr "Revenue in the period"
+
+msgid "Umsatz mit diesem Kunden insgesamt"
+msgstr "Total revenue with this customer"
+
+msgid "Verbrauch im Detail"
+msgstr "Usage in detail"
+
+msgid "Verbraucht in diesem Monat"
+msgstr "Used this month"
+
+msgid "Verkauf auf Rechnung"
+msgstr "Sale on invoice"
+
+msgid "Verkauf auf Rechnung, {betrag}"
+msgstr "sale on invoice, {betrag}"
+
+msgid "Verschenkt im Zeitraum"
+msgstr "Given away in the period"
+
+msgid "Verschenkt in {monat}"
+msgstr "Given away in {monat}"
+
+msgid "Verwaltung"
+msgstr "Administration"
+
+msgid "Vorbelegt mit dem Listenpreis (Monatspreis mal Laufzeit). Bei einem Sonderpreis einfach überschreiben."
+msgstr "Pre-filled with the list price (monthly price times term). For a special price, simply overwrite it."
+
+msgid "Vorbelegt mit dem Listenpreis, bei freien Mengen 4 Cent je Credit. Bei einem Sonderpreis einfach überschreiben."
+msgstr "Pre-filled with the list price, 4 cents per credit for other amounts. For a special price, simply overwrite it."
+
+msgid "Weiter"
+msgstr "Continue"
+
+msgid "Zeitraum wählen"
+msgstr "Choose period"
+
+msgid "zuletzt angemeldet am {datum}"
+msgstr "last logged in on {datum}"
+
+msgid "zuletzt benutzt am {datum}"
+msgstr "last used on {datum}"
+
+msgid "Zum Beispiel: Dankeschön fürs Testen. Ein Bonus gilt 12 Monate und zählt nicht zum Umsatz."
+msgstr "For example: thank you for testing. A bonus is valid for 12 months and does not count as revenue."
+
+msgid "Zur Kundenseite"
+msgstr "To the customer page"
+
+msgid "Zurück"
+msgstr "Back"
+
+msgid "Zurück zur Kundenliste"
+msgstr "Back to the customer list"

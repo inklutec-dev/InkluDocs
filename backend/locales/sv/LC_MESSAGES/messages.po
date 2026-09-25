@@ -7703,3 +7703,581 @@ msgstr "Kontrollfilen är redan aktuell."
 
 msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
 msgstr "Fullständigheten kunde inte kontrolleras. Gå själv igenom lyssningsprovet."
+
+
+# Verwaltung: Kunden, Umsatz, API (25.09.2026)
+msgid "{betrag} (grobe Schätzung, {satz} Cent je Credit)"
+msgstr "{betrag} (grov uppskattning, {satz} cent per kredit)"
+
+msgid "{credits} Credits"
+msgstr "{credits} krediter"
+
+msgid "{credits} Credits verschenkt"
+msgstr "{credits} krediter bortskänkta"
+
+msgid "{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen"
+msgstr "{gesamt} krediter tillgängliga: {monat} från månadskvoten, {pakete} från tilläggspaket"
+
+msgid "{limit} Bilder pro Tag"
+msgstr "{limit} bilder per dag"
+
+msgid "{menge} Credits"
+msgstr "{menge} krediter"
+
+msgid "{menge} Credits (Paketpreis {betrag})"
+msgstr "{menge} krediter (paketpris {betrag})"
+
+msgid "{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?"
+msgstr "Ge {name} {menge} krediter som bonus (kostnadsfritt, giltiga i 12 månader)?"
+
+msgid "{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?"
+msgstr "Kreditera {name} {menge} krediter som försäljning mot faktura på {betrag}?"
+
+msgid "{menge} Credits verfügbar"
+msgstr "{menge} krediter tillgängliga"
+
+msgid "{monat} anzeigen"
+msgstr "Visa {monat}"
+
+msgid "{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}"
+msgstr "{monat}: {credits} krediter, uppskattade AI-kostnader {kosten}"
+
+msgid "{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}"
+msgstr "{n} skapade, varav {aktiv} aktiva — senast använd: {wann}"
+
+msgid "{n} Bonus-Gutschriften, zusammen {credits} Credits"
+msgstr "{n} bonusar, totalt {credits} krediter"
+
+msgid "{n} Kunden"
+msgstr "{n} kunder"
+
+msgid "{n} Kunden, Seite {seite} von {seiten}"
+msgstr "{n} kunder, sida {seite} av {seiten}"
+
+msgid "{n} Mitglieder"
+msgstr "{n} medlemmar"
+
+msgid "{n} Schlüssel, davon {aktiv} aktiv"
+msgstr "{n} nycklar, varav {aktiv} aktiva"
+
+msgid "{n} Verkäufe"
+msgstr "{n} försäljningar"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?"
+msgstr "{name} får abonnemanget {plan} i {monate} månader som försäljning mot faktura på {betrag}. Spara?"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?"
+msgstr "{name} får abonnemanget {plan} i {monate} månader utan debitering. Spara?"
+
+msgid "{plan} auf Rechnung"
+msgstr "{plan} mot faktura"
+
+msgid "{plan} über Stripe"
+msgstr "{plan} via Stripe"
+
+msgid "Abo {plan}"
+msgstr "Abonnemang {plan}"
+
+msgid "Abo auf Rechnung"
+msgstr "Abonnemang mot faktura"
+
+msgid "Abo über Stripe"
+msgstr "Abonnemang via Stripe"
+
+msgid "Abo wurde gespeichert."
+msgstr "Abonnemanget har sparats."
+
+msgid "Abo zuweisen oder ändern"
+msgstr "Tilldela eller ändra abonnemang"
+
+msgid "Administrator"
+msgstr "Administratör"
+
+msgid "aktiv"
+msgstr "aktiv"
+
+msgid "Alle Buchungen"
+msgstr "Alla bokningar"
+
+msgid "Alle Kunden"
+msgstr "Alla kunder"
+
+msgid "Als CSV herunterladen"
+msgstr "Ladda ner som CSV"
+
+msgid "Als Excel herunterladen"
+msgstr "Ladda ner som Excel"
+
+msgid "Andere Menge"
+msgstr "Annan mängd"
+
+msgid "Andere Schreibweise oder „Alle Kunden“ versuchen."
+msgstr "Prova en annan stavning eller ”Alla kunder”."
+
+msgid "API-Tageslimit ändern"
+msgstr "Ändra API-dagsgräns"
+
+msgid "Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf."
+msgstr "Arbetar just nu i teamet ”{team}” hos {inhaber} — saldot ovan gäller för den teampotten."
+
+msgid "Art"
+msgstr "Typ"
+
+msgid "Art der Buchung"
+msgstr "Typ av bokning"
+
+msgid "Art der Gutschrift"
+msgstr "Typ av kreditering"
+
+msgid "Auf einen Blick"
+msgstr "I korthet"
+
+msgid "Automatische Verlängerung nur für Unternehmer (B2B). Bei Verbrauchern das Häkchen entfernen."
+msgstr "Automatisk förlängning endast för företag (B2B). Avmarkera rutan för konsumenter."
+
+msgid "Bereiche der Verwaltung"
+msgstr "Administrationens delar"
+
+msgid "Berichtigen"
+msgstr "Rätta"
+
+msgid "berichtigt"
+msgstr "rättad"
+
+msgid "Bilder pro Tag (0 sperrt die API, leer = Standard)"
+msgstr "Bilder per dag (0 spärrar API:et, tomt = standard)"
+
+msgid "Bisher hat niemand einen API-Schlüssel angelegt."
+msgstr "Ingen har skapat en API-nyckel ännu."
+
+msgid "Bitte das Häkchen setzen, um den großen Bonus zu bestätigen."
+msgstr "Markera rutan för att bekräfta den stora bonusen."
+
+msgid "Bitte den Betrag eintragen."
+msgstr "Ange beloppet."
+
+msgid "Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50."
+msgstr "Ange fakturabeloppet som ett tal, till exempel 87,50."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder Bonus."
+msgstr "Välj typ: försäljning mot faktura eller bonus."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder ohne Berechnung."
+msgstr "Välj typ: försäljning mot faktura eller utan debitering."
+
+msgid "Bitte kurz den Grund angeben."
+msgstr "Ange kort orsaken."
+
+msgid "Bitte kurz den Grund der Korrektur angeben."
+msgstr "Ange kort orsaken till rättelsen."
+
+msgid "Bitte kurz den Grund für den Bonus angeben."
+msgstr "Ange kort orsaken till bonusen."
+
+msgid "Bitte wählen"
+msgstr "Välj"
+
+msgid "Bonus (kostenlos)"
+msgstr "Bonus (kostnadsfri)"
+
+msgid "Buchung berichtigen"
+msgstr "Rätta bokning"
+
+msgid "Buchung berichtigt."
+msgstr "Bokningen har rättats."
+
+msgid "Buchung vom {datum} berichtigen"
+msgstr "Rätta bokningen från {datum}"
+
+msgid "Buchungen"
+msgstr "Bokningar"
+
+msgid "Buchungen {zeitraum} ({n})"
+msgstr "Bokningar {zeitraum} ({n})"
+
+msgid "Credits verbraucht, insgesamt"
+msgstr "Förbrukade krediter totalt"
+
+msgid "Das Abo konnte nicht gespeichert werden."
+msgstr "Abonnemanget kunde inte sparas."
+
+msgid "Das Abo von {name} beenden und auf Free setzen?"
+msgstr "Avsluta abonnemanget för {name} och byta till Free?"
+
+msgid "Das bist du selbst."
+msgstr "Det är du själv."
+
+msgid "Das Limit konnte nicht gespeichert werden."
+msgstr "Gränsen kunde inte sparas."
+
+msgid "Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag."
+msgstr "Dagsgränsen stoppar bara skenande API-användning. Abonnemangssaldot gäller alltid dessutom. Standard: {standard} bilder per dag."
+
+msgid "Der Kunde bekommt eine Bestätigung per E-Mail."
+msgstr "Kunden får en bekräftelse via e-post."
+
+msgid "Der Kunde bekommt seine Zugangsdaten per E-Mail."
+msgstr "Kunden får sina inloggningsuppgifter via e-post."
+
+msgid "Der Standard ist aktuell {standard} Bilder pro Tag. Das Abo-Guthaben gilt immer zusätzlich — diese Bremse schützt nur vor Amok-Läufen."
+msgstr "Standard är för närvarande {standard} bilder per dag. Abonnemangssaldot gäller alltid dessutom — den här bromsen skyddar bara mot skenande användning."
+
+msgid "Die API-Daten konnten nicht geladen werden."
+msgstr "API-data kunde inte läsas in."
+
+msgid "Die Buchungen im Umsatz bleiben als Geschäftsunterlagen erhalten."
+msgstr "Bokningarna i omsättningen sparas som affärshandlingar."
+
+msgid "Die Buchungen konnten nicht geladen werden."
+msgstr "Bokningarna kunde inte läsas in."
+
+msgid "Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt."
+msgstr "Krediterna förblir oförändrade. Rättelsen noteras på bokningen med ditt namn, tiden och orsaken."
+
+msgid "Die Daten konnten nicht geladen werden. Bitte die Seite neu laden."
+msgstr "Data kunde inte läsas in. Ladda om sidan."
+
+msgid "Die Gutschrift konnte nicht gespeichert werden."
+msgstr "Krediteringen kunde inte sparas."
+
+msgid "Die Korrektur konnte nicht gespeichert werden."
+msgstr "Rättelsen kunde inte sparas."
+
+msgid "Die Menge muss eine ganze Zahl von 1 bis 100.000 sein."
+msgstr "Mängden måste vara ett heltal från 1 till 100 000."
+
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst unter „Kunden“ anlegen)."
+msgstr "Personen måste redan ha ett konto (annars skapa det först under ”Kunder”)."
+
+msgid "diesen Monat {monat} Credits, insgesamt {gesamt}"
+msgstr "denna månad {monat} krediter, totalt {gesamt}"
+
+msgid "Eigener Topf"
+msgstr "Egen pott"
+
+msgid "eingetragen von {name}"
+msgstr "registrerad av {name}"
+
+msgid "Einstellungen der Verwaltung"
+msgstr "Administrationens inställningar"
+
+msgid "Enterprise (1.375 Credits, bis 25 Personen)"
+msgstr "Enterprise (1 375 krediter, upp till 25 personer)"
+
+msgid "Es verlängert sich automatisch."
+msgstr "Det förlängs automatiskt."
+
+msgid "Es verlängert sich nicht automatisch."
+msgstr "Det förlängs inte automatiskt."
+
+msgid "Free"
+msgstr "Free"
+
+msgid "Für dieses Jahr gibt es noch keine Monate."
+msgstr "Det finns ännu inga månader för det här året."
+
+msgid "Für: {name} ({email})"
+msgstr "För: {name} ({email})"
+
+msgid "Ganzes Jahr"
+msgstr "Hela året"
+
+msgid "gelöschtes Konto"
+msgstr "raderat konto"
+
+msgid "Gesamt seit Start"
+msgstr "Totalt sedan start"
+
+msgid "gesperrt"
+msgstr "spärrad"
+
+msgid "Grund der Korrektur"
+msgstr "Orsak till rättelsen"
+
+msgid "Grund für den Bonus"
+msgstr "Orsak till bonusen"
+
+msgid "Grund, warum das Abo ohne Berechnung läuft"
+msgstr "Orsak till att abonnemanget är utan debitering"
+
+msgid "Guthaben"
+msgstr "Saldo"
+
+msgid "Guthaben unbegrenzt"
+msgstr "Obegränsat saldo"
+
+msgid "Heute"
+msgstr "I dag"
+
+msgid "heute {n} von {limit} Bildern"
+msgstr "i dag {n} av {limit} bilder"
+
+msgid "In diesem Zeitraum gibt es keine Buchungen."
+msgstr "Det finns inga bokningar under den här perioden."
+
+msgid "individuell festgelegt"
+msgstr "individuellt inställt"
+
+msgid "individuelles Limit"
+msgstr "individuell gräns"
+
+msgid "Ja, gutschreiben"
+msgstr "Ja, kreditera"
+
+msgid "Ja, ich möchte bewusst mehr als {grenze} Credits verschenken."
+msgstr "Ja, jag vill medvetet skänka bort mer än {grenze} krediter."
+
+msgid "Ja, speichern"
+msgstr "Ja, spara"
+
+msgid "Jahr"
+msgstr "År"
+
+msgid "Jahr {jahr}"
+msgstr "År {jahr}"
+
+msgid "Käufe und Gutschriften ({n})"
+msgstr "Köp och krediteringar ({n})"
+
+msgid "Keine Kunden gefunden"
+msgstr "Inga kunder hittades"
+
+msgid "Keine Verbindung zum Server. Bitte erneut versuchen."
+msgstr "Ingen anslutning till servern. Försök igen."
+
+msgid "keiner angelegt"
+msgstr "ingen skapad"
+
+msgid "Konten mit API-Schlüssel"
+msgstr "Konton med API-nyckel"
+
+msgid "Konten mit API-Schlüssel ({n})"
+msgstr "Konton med API-nyckel ({n})"
+
+msgid "Konto entsperren"
+msgstr "Lås upp kontot"
+
+msgid "Konto entsperrt."
+msgstr "Kontot har låsts upp."
+
+msgid "Konto gesperrt."
+msgstr "Kontot har spärrats."
+
+msgid "Konto sperren"
+msgstr "Spärra kontot"
+
+msgid "Konto verwalten"
+msgstr "Hantera kontot"
+
+msgid "Kunde"
+msgstr "Kund"
+
+msgid "Kunde: {name}"
+msgstr "Kund: {name}"
+
+msgid "Kunden"
+msgstr "Kunder"
+
+msgid "Kunden suchen"
+msgstr "Sök kunder"
+
+msgid "Kundenseite von {name} geladen."
+msgstr "Kundsidan för {name} har lästs in."
+
+msgid "Lastschrift noch ausstehend"
+msgstr "Autogiro väntar fortfarande"
+
+msgid "Lastschrift zurückgegangen, zählt nicht zum Umsatz"
+msgstr "Autogiro returnerat, räknas inte som omsättning"
+
+msgid "Lastschriften noch unterwegs"
+msgstr "Autogireringar fortfarande på väg"
+
+msgid "Limit ändern"
+msgstr "Ändra gräns"
+
+msgid "Limit von {name} ändern"
+msgstr "Ändra gränsen för {name}"
+
+msgid "Menge"
+msgstr "Mängd"
+
+msgid "Menge in Credits (1 bis 100.000)"
+msgstr "Mängd i krediter (1 till 100 000)"
+
+msgid "Mit Abo"
+msgstr "Med abonnemang"
+
+msgid "Mit Käufen"
+msgstr "Med köp"
+
+msgid "Monat"
+msgstr "Månad"
+
+msgid "Monate"
+msgstr "Månader"
+
+msgid "Monate im Jahr {jahr}"
+msgstr "Månader under {jahr}"
+
+msgid "Name, E-Mail oder Teamname — ein Teil genügt."
+msgstr "Namn, e-post eller teamnamn — en del räcker."
+
+msgid "Neu in diesem Monat"
+msgstr "Nya denna månad"
+
+msgid "Neuen Kunden anlegen"
+msgstr "Skapa ny kund"
+
+msgid "neuester vom {datum}"
+msgstr "nyaste från {datum}"
+
+msgid "nichts"
+msgstr "inget"
+
+msgid "Noch keine Käufe oder Gutschriften."
+msgstr "Inga köp eller krediteringar ännu."
+
+msgid "Noch keine Kunden"
+msgstr "Inga kunder ännu"
+
+msgid "noch nie angemeldet"
+msgstr "aldrig inloggad"
+
+msgid "noch nie benutzt"
+msgstr "aldrig använd"
+
+msgid "Notiz (optional)"
+msgstr "Anteckning (valfri)"
+
+msgid "nur Bonus"
+msgstr "endast bonus"
+
+msgid "Nur Bonus"
+msgstr "Endast bonus"
+
+msgid "nur Verkäufe"
+msgstr "endast försäljningar"
+
+msgid "Nur Verkäufe"
+msgstr "Endast försäljningar"
+
+msgid "Nutzung"
+msgstr "Användning"
+
+msgid "ohne Berechnung"
+msgstr "utan debitering"
+
+msgid "Ohne Berechnung"
+msgstr "Utan debitering"
+
+msgid "Rechnung {nummer}"
+msgstr "Faktura {nummer}"
+
+msgid "Rechnungsbetrag in Euro"
+msgstr "Fakturabelopp i euro"
+
+msgid "Rechnungsbetrag in Euro für die ganze Laufzeit"
+msgstr "Fakturabelopp i euro för hela löptiden"
+
+msgid "Rechnungsnummer (optional)"
+msgstr "Fakturanummer (valfritt)"
+
+msgid "Rechnungsnummer: {nummer}."
+msgstr "Fakturanummer: {nummer}."
+
+msgid "Schlüssel"
+msgstr "Nycklar"
+
+msgid "Seiten der Kundenliste"
+msgstr "Sidor i kundlistan"
+
+msgid "Standard"
+msgstr "Standard"
+
+msgid "Stripe {stripe}, Rechnung {rechnung}"
+msgstr "Stripe {stripe}, faktura {rechnung}"
+
+msgid "Tageslimit"
+msgstr "Dagsgräns"
+
+msgid "Team (500 Credits, bis 5 Personen)"
+msgstr "Team (500 krediter, upp till 5 personer)"
+
+msgid "Team „{name}“"
+msgstr "Team ”{name}”"
+
+msgid "Team „{team}“ von {inhaber}"
+msgstr "Team ”{team}” hos {inhaber}"
+
+msgid "über Stripe, {betrag}"
+msgstr "via Stripe, {betrag}"
+
+msgid "Überblick"
+msgstr "Översikt"
+
+msgid "Umsatz"
+msgstr "Omsättning"
+
+msgid "Umsatz {monat}: {betrag}"
+msgstr "Omsättning {monat}: {betrag}"
+
+msgid "Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit."
+msgstr "Omsättning = Stripe-köp och fakturor så som kunden betalar dem. Bonusar och returnerade autogireringar räknas inte."
+
+msgid "Umsatz im Zeitraum"
+msgstr "Omsättning under perioden"
+
+msgid "Umsatz mit diesem Kunden insgesamt"
+msgstr "Total omsättning med den här kunden"
+
+msgid "Verbrauch im Detail"
+msgstr "Förbrukning i detalj"
+
+msgid "Verbraucht in diesem Monat"
+msgstr "Förbrukat denna månad"
+
+msgid "Verkauf auf Rechnung"
+msgstr "Försäljning mot faktura"
+
+msgid "Verkauf auf Rechnung, {betrag}"
+msgstr "försäljning mot faktura, {betrag}"
+
+msgid "Verschenkt im Zeitraum"
+msgstr "Bortskänkt under perioden"
+
+msgid "Verschenkt in {monat}"
+msgstr "Bortskänkt i {monat}"
+
+msgid "Verwaltung"
+msgstr "Administration"
+
+msgid "Vorbelegt mit dem Listenpreis (Monatspreis mal Laufzeit). Bei einem Sonderpreis einfach überschreiben."
+msgstr "Förifyllt med listpriset (månadspris gånger löptid). Vid ett specialpris skriver du bara över det."
+
+msgid "Vorbelegt mit dem Listenpreis, bei freien Mengen 4 Cent je Credit. Bei einem Sonderpreis einfach überschreiben."
+msgstr "Förifyllt med listpriset, 4 cent per kredit för andra mängder. Vid ett specialpris skriver du bara över det."
+
+msgid "Weiter"
+msgstr "Fortsätt"
+
+msgid "Zeitraum wählen"
+msgstr "Välj period"
+
+msgid "zuletzt angemeldet am {datum}"
+msgstr "senast inloggad {datum}"
+
+msgid "zuletzt benutzt am {datum}"
+msgstr "senast använd {datum}"
+
+msgid "Zum Beispiel: Dankeschön fürs Testen. Ein Bonus gilt 12 Monate und zählt nicht zum Umsatz."
+msgstr "Till exempel: tack för testet. En bonus gäller i 12 månader och räknas inte som omsättning."
+
+msgid "Zur Kundenseite"
+msgstr "Till kundsidan"
+
+msgid "Zurück"
+msgstr "Tillbaka"
+
+msgid "Zurück zur Kundenliste"
+msgstr "Tillbaka till kundlistan"

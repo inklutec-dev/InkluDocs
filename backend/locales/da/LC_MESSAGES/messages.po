@@ -7833,3 +7833,581 @@ msgstr "Kontrolfilen er allerede aktuel."
 
 msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
 msgstr "Fuldstændigheden kunne ikke kontrolleres. Gennemgå selv lytteprøven."
+
+
+# Verwaltung: Kunden, Umsatz, API (25.09.2026)
+msgid "{betrag} (grobe Schätzung, {satz} Cent je Credit)"
+msgstr "{betrag} (groft skøn, {satz} cent pr. credit)"
+
+msgid "{credits} Credits"
+msgstr "{credits} credits"
+
+msgid "{credits} Credits verschenkt"
+msgstr "{credits} credits givet væk"
+
+msgid "{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen"
+msgstr "{gesamt} credits til rådighed: {monat} fra månedskvoten, {pakete} fra ekstrapakker"
+
+msgid "{limit} Bilder pro Tag"
+msgstr "{limit} billeder pr. dag"
+
+msgid "{menge} Credits"
+msgstr "{menge} credits"
+
+msgid "{menge} Credits (Paketpreis {betrag})"
+msgstr "{menge} credits (pakkepris {betrag})"
+
+msgid "{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?"
+msgstr "Give {name} {menge} credits som bonus (gratis, gyldige i 12 måneder)?"
+
+msgid "{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?"
+msgstr "Kreditér {menge} credits til {name} som salg på faktura for {betrag}?"
+
+msgid "{menge} Credits verfügbar"
+msgstr "{menge} credits til rådighed"
+
+msgid "{monat} anzeigen"
+msgstr "Vis {monat}"
+
+msgid "{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}"
+msgstr "{monat}: {credits} credits, anslåede AI-omkostninger {kosten}"
+
+msgid "{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}"
+msgstr "{n} oprettet, heraf {aktiv} aktive — senest brugt: {wann}"
+
+msgid "{n} Bonus-Gutschriften, zusammen {credits} Credits"
+msgstr "{n} bonusser, i alt {credits} credits"
+
+msgid "{n} Kunden"
+msgstr "{n} kunder"
+
+msgid "{n} Kunden, Seite {seite} von {seiten}"
+msgstr "{n} kunder, side {seite} af {seiten}"
+
+msgid "{n} Mitglieder"
+msgstr "{n} medlemmer"
+
+msgid "{n} Schlüssel, davon {aktiv} aktiv"
+msgstr "{n} nøgler, heraf {aktiv} aktive"
+
+msgid "{n} Verkäufe"
+msgstr "{n} salg"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?"
+msgstr "{name} får abonnementet {plan} i {monate} måneder som salg på faktura for {betrag}. Gem?"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?"
+msgstr "{name} får abonnementet {plan} i {monate} måneder uden beregning. Gem?"
+
+msgid "{plan} auf Rechnung"
+msgstr "{plan} på faktura"
+
+msgid "{plan} über Stripe"
+msgstr "{plan} via Stripe"
+
+msgid "Abo {plan}"
+msgstr "Abonnement {plan}"
+
+msgid "Abo auf Rechnung"
+msgstr "Abonnement på faktura"
+
+msgid "Abo über Stripe"
+msgstr "Abonnement via Stripe"
+
+msgid "Abo wurde gespeichert."
+msgstr "Abonnementet er gemt."
+
+msgid "Abo zuweisen oder ändern"
+msgstr "Tildel eller ændr abonnement"
+
+msgid "Administrator"
+msgstr "Administrator"
+
+msgid "aktiv"
+msgstr "aktiv"
+
+msgid "Alle Buchungen"
+msgstr "Alle posteringer"
+
+msgid "Alle Kunden"
+msgstr "Alle kunder"
+
+msgid "Als CSV herunterladen"
+msgstr "Download som CSV"
+
+msgid "Als Excel herunterladen"
+msgstr "Download som Excel"
+
+msgid "Andere Menge"
+msgstr "Anden mængde"
+
+msgid "Andere Schreibweise oder „Alle Kunden“ versuchen."
+msgstr "Prøv en anden stavemåde eller „Alle kunder“."
+
+msgid "API-Tageslimit ändern"
+msgstr "Ændr API-dagsgrænse"
+
+msgid "Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf."
+msgstr "Arbejder lige nu i teamet „{team}“ hos {inhaber} — saldoen ovenfor gælder for denne teampulje."
+
+msgid "Art"
+msgstr "Type"
+
+msgid "Art der Buchung"
+msgstr "Type af postering"
+
+msgid "Art der Gutschrift"
+msgstr "Type af kreditering"
+
+msgid "Auf einen Blick"
+msgstr "Overblik"
+
+msgid "Automatische Verlängerung nur für Unternehmer (B2B). Bei Verbrauchern das Häkchen entfernen."
+msgstr "Automatisk forlængelse kun for erhvervskunder (B2B). Fjern fluebenet for forbrugere."
+
+msgid "Bereiche der Verwaltung"
+msgstr "Administrationens områder"
+
+msgid "Berichtigen"
+msgstr "Ret"
+
+msgid "berichtigt"
+msgstr "rettet"
+
+msgid "Bilder pro Tag (0 sperrt die API, leer = Standard)"
+msgstr "Billeder pr. dag (0 spærrer API’en, tom = standard)"
+
+msgid "Bisher hat niemand einen API-Schlüssel angelegt."
+msgstr "Ingen har oprettet en API-nøgle endnu."
+
+msgid "Bitte das Häkchen setzen, um den großen Bonus zu bestätigen."
+msgstr "Sæt venligst flueben for at bekræfte den store bonus."
+
+msgid "Bitte den Betrag eintragen."
+msgstr "Indtast venligst beløbet."
+
+msgid "Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50."
+msgstr "Indtast fakturabeløbet som et tal, for eksempel 87,50."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder Bonus."
+msgstr "Vælg venligst typen: salg på faktura eller bonus."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder ohne Berechnung."
+msgstr "Vælg venligst typen: salg på faktura eller uden beregning."
+
+msgid "Bitte kurz den Grund angeben."
+msgstr "Angiv venligst kort årsagen."
+
+msgid "Bitte kurz den Grund der Korrektur angeben."
+msgstr "Angiv venligst kort årsagen til rettelsen."
+
+msgid "Bitte kurz den Grund für den Bonus angeben."
+msgstr "Angiv venligst kort årsagen til bonussen."
+
+msgid "Bitte wählen"
+msgstr "Vælg venligst"
+
+msgid "Bonus (kostenlos)"
+msgstr "Bonus (gratis)"
+
+msgid "Buchung berichtigen"
+msgstr "Ret postering"
+
+msgid "Buchung berichtigt."
+msgstr "Posteringen er rettet."
+
+msgid "Buchung vom {datum} berichtigen"
+msgstr "Ret posteringen fra {datum}"
+
+msgid "Buchungen"
+msgstr "Posteringer"
+
+msgid "Buchungen {zeitraum} ({n})"
+msgstr "Posteringer {zeitraum} ({n})"
+
+msgid "Credits verbraucht, insgesamt"
+msgstr "Credits brugt i alt"
+
+msgid "Das Abo konnte nicht gespeichert werden."
+msgstr "Abonnementet kunne ikke gemmes."
+
+msgid "Das Abo von {name} beenden und auf Free setzen?"
+msgstr "Afslut abonnementet for {name} og skift til Free?"
+
+msgid "Das bist du selbst."
+msgstr "Det er dig selv."
+
+msgid "Das Limit konnte nicht gespeichert werden."
+msgstr "Grænsen kunne ikke gemmes."
+
+msgid "Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag."
+msgstr "Dagsgrænsen bremser kun løbsk brug af API’en. Abonnementssaldoen gælder altid derudover. Standard: {standard} billeder pr. dag."
+
+msgid "Der Kunde bekommt eine Bestätigung per E-Mail."
+msgstr "Kunden får en bekræftelse pr. e-mail."
+
+msgid "Der Kunde bekommt seine Zugangsdaten per E-Mail."
+msgstr "Kunden får sine adgangsoplysninger pr. e-mail."
+
+msgid "Der Standard ist aktuell {standard} Bilder pro Tag. Das Abo-Guthaben gilt immer zusätzlich — diese Bremse schützt nur vor Amok-Läufen."
+msgstr "Standarden er i øjeblikket {standard} billeder pr. dag. Abonnementssaldoen gælder altid derudover — denne bremse beskytter kun mod løbsk brug."
+
+msgid "Die API-Daten konnten nicht geladen werden."
+msgstr "API-dataene kunne ikke indlæses."
+
+msgid "Die Buchungen im Umsatz bleiben als Geschäftsunterlagen erhalten."
+msgstr "Posteringerne i omsætningen bevares som forretningsbilag."
+
+msgid "Die Buchungen konnten nicht geladen werden."
+msgstr "Posteringerne kunne ikke indlæses."
+
+msgid "Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt."
+msgstr "Credits forbliver uændrede. Rettelsen noteres på posteringen med dit navn, tidspunktet og årsagen."
+
+msgid "Die Daten konnten nicht geladen werden. Bitte die Seite neu laden."
+msgstr "Dataene kunne ikke indlæses. Genindlæs venligst siden."
+
+msgid "Die Gutschrift konnte nicht gespeichert werden."
+msgstr "Krediteringen kunne ikke gemmes."
+
+msgid "Die Korrektur konnte nicht gespeichert werden."
+msgstr "Rettelsen kunne ikke gemmes."
+
+msgid "Die Menge muss eine ganze Zahl von 1 bis 100.000 sein."
+msgstr "Mængden skal være et helt tal fra 1 til 100.000."
+
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst unter „Kunden“ anlegen)."
+msgstr "Personen skal allerede have en konto (ellers opret den først under „Kunder“)."
+
+msgid "diesen Monat {monat} Credits, insgesamt {gesamt}"
+msgstr "denne måned {monat} credits, i alt {gesamt}"
+
+msgid "Eigener Topf"
+msgstr "Egen pulje"
+
+msgid "eingetragen von {name}"
+msgstr "registreret af {name}"
+
+msgid "Einstellungen der Verwaltung"
+msgstr "Administrationens indstillinger"
+
+msgid "Enterprise (1.375 Credits, bis 25 Personen)"
+msgstr "Enterprise (1.375 credits, op til 25 personer)"
+
+msgid "Es verlängert sich automatisch."
+msgstr "Det forlænges automatisk."
+
+msgid "Es verlängert sich nicht automatisch."
+msgstr "Det forlænges ikke automatisk."
+
+msgid "Free"
+msgstr "Free"
+
+msgid "Für dieses Jahr gibt es noch keine Monate."
+msgstr "Der er endnu ingen måneder for dette år."
+
+msgid "Für: {name} ({email})"
+msgstr "Til: {name} ({email})"
+
+msgid "Ganzes Jahr"
+msgstr "Hele året"
+
+msgid "gelöschtes Konto"
+msgstr "slettet konto"
+
+msgid "Gesamt seit Start"
+msgstr "I alt siden start"
+
+msgid "gesperrt"
+msgstr "spærret"
+
+msgid "Grund der Korrektur"
+msgstr "Årsag til rettelsen"
+
+msgid "Grund für den Bonus"
+msgstr "Årsag til bonussen"
+
+msgid "Grund, warum das Abo ohne Berechnung läuft"
+msgstr "Årsag til, at abonnementet kører uden beregning"
+
+msgid "Guthaben"
+msgstr "Saldo"
+
+msgid "Guthaben unbegrenzt"
+msgstr "Ubegrænset saldo"
+
+msgid "Heute"
+msgstr "I dag"
+
+msgid "heute {n} von {limit} Bildern"
+msgstr "i dag {n} af {limit} billeder"
+
+msgid "In diesem Zeitraum gibt es keine Buchungen."
+msgstr "Der er ingen posteringer i denne periode."
+
+msgid "individuell festgelegt"
+msgstr "fastsat individuelt"
+
+msgid "individuelles Limit"
+msgstr "individuel grænse"
+
+msgid "Ja, gutschreiben"
+msgstr "Ja, kreditér"
+
+msgid "Ja, ich möchte bewusst mehr als {grenze} Credits verschenken."
+msgstr "Ja, jeg vil bevidst give mere end {grenze} credits væk."
+
+msgid "Ja, speichern"
+msgstr "Ja, gem"
+
+msgid "Jahr"
+msgstr "År"
+
+msgid "Jahr {jahr}"
+msgstr "År {jahr}"
+
+msgid "Käufe und Gutschriften ({n})"
+msgstr "Køb og krediteringer ({n})"
+
+msgid "Keine Kunden gefunden"
+msgstr "Ingen kunder fundet"
+
+msgid "Keine Verbindung zum Server. Bitte erneut versuchen."
+msgstr "Ingen forbindelse til serveren. Prøv igen."
+
+msgid "keiner angelegt"
+msgstr "ingen oprettet"
+
+msgid "Konten mit API-Schlüssel"
+msgstr "Konti med API-nøgle"
+
+msgid "Konten mit API-Schlüssel ({n})"
+msgstr "Konti med API-nøgle ({n})"
+
+msgid "Konto entsperren"
+msgstr "Ophæv spærring af konto"
+
+msgid "Konto entsperrt."
+msgstr "Kontoen er ikke længere spærret."
+
+msgid "Konto gesperrt."
+msgstr "Kontoen er spærret."
+
+msgid "Konto sperren"
+msgstr "Spær konto"
+
+msgid "Konto verwalten"
+msgstr "Administrer konto"
+
+msgid "Kunde"
+msgstr "Kunde"
+
+msgid "Kunde: {name}"
+msgstr "Kunde: {name}"
+
+msgid "Kunden"
+msgstr "Kunder"
+
+msgid "Kunden suchen"
+msgstr "Søg kunder"
+
+msgid "Kundenseite von {name} geladen."
+msgstr "Kundesiden for {name} er indlæst."
+
+msgid "Lastschrift noch ausstehend"
+msgstr "Direkte debitering afventer stadig"
+
+msgid "Lastschrift zurückgegangen, zählt nicht zum Umsatz"
+msgstr "Direkte debitering returneret, tæller ikke med i omsætningen"
+
+msgid "Lastschriften noch unterwegs"
+msgstr "Direkte debiteringer stadig undervejs"
+
+msgid "Limit ändern"
+msgstr "Ændr grænse"
+
+msgid "Limit von {name} ändern"
+msgstr "Ændr grænsen for {name}"
+
+msgid "Menge"
+msgstr "Mængde"
+
+msgid "Menge in Credits (1 bis 100.000)"
+msgstr "Mængde i credits (1 til 100.000)"
+
+msgid "Mit Abo"
+msgstr "Med abonnement"
+
+msgid "Mit Käufen"
+msgstr "Med køb"
+
+msgid "Monat"
+msgstr "Måned"
+
+msgid "Monate"
+msgstr "Måneder"
+
+msgid "Monate im Jahr {jahr}"
+msgstr "Måneder i {jahr}"
+
+msgid "Name, E-Mail oder Teamname — ein Teil genügt."
+msgstr "Navn, e-mail eller teamnavn — en del er nok."
+
+msgid "Neu in diesem Monat"
+msgstr "Nye i denne måned"
+
+msgid "Neuen Kunden anlegen"
+msgstr "Opret ny kunde"
+
+msgid "neuester vom {datum}"
+msgstr "nyeste fra {datum}"
+
+msgid "nichts"
+msgstr "intet"
+
+msgid "Noch keine Käufe oder Gutschriften."
+msgstr "Endnu ingen køb eller krediteringer."
+
+msgid "Noch keine Kunden"
+msgstr "Endnu ingen kunder"
+
+msgid "noch nie angemeldet"
+msgstr "aldrig logget ind"
+
+msgid "noch nie benutzt"
+msgstr "aldrig brugt"
+
+msgid "Notiz (optional)"
+msgstr "Note (valgfri)"
+
+msgid "nur Bonus"
+msgstr "kun bonus"
+
+msgid "Nur Bonus"
+msgstr "Kun bonus"
+
+msgid "nur Verkäufe"
+msgstr "kun salg"
+
+msgid "Nur Verkäufe"
+msgstr "Kun salg"
+
+msgid "Nutzung"
+msgstr "Forbrug"
+
+msgid "ohne Berechnung"
+msgstr "uden beregning"
+
+msgid "Ohne Berechnung"
+msgstr "Uden beregning"
+
+msgid "Rechnung {nummer}"
+msgstr "Faktura {nummer}"
+
+msgid "Rechnungsbetrag in Euro"
+msgstr "Fakturabeløb i euro"
+
+msgid "Rechnungsbetrag in Euro für die ganze Laufzeit"
+msgstr "Fakturabeløb i euro for hele løbetiden"
+
+msgid "Rechnungsnummer (optional)"
+msgstr "Fakturanummer (valgfrit)"
+
+msgid "Rechnungsnummer: {nummer}."
+msgstr "Fakturanummer: {nummer}."
+
+msgid "Schlüssel"
+msgstr "Nøgler"
+
+msgid "Seiten der Kundenliste"
+msgstr "Sider i kundelisten"
+
+msgid "Standard"
+msgstr "Standard"
+
+msgid "Stripe {stripe}, Rechnung {rechnung}"
+msgstr "Stripe {stripe}, faktura {rechnung}"
+
+msgid "Tageslimit"
+msgstr "Dagsgrænse"
+
+msgid "Team (500 Credits, bis 5 Personen)"
+msgstr "Team (500 credits, op til 5 personer)"
+
+msgid "Team „{name}“"
+msgstr "Team „{name}“"
+
+msgid "Team „{team}“ von {inhaber}"
+msgstr "Team „{team}“ hos {inhaber}"
+
+msgid "über Stripe, {betrag}"
+msgstr "via Stripe, {betrag}"
+
+msgid "Überblick"
+msgstr "Overblik"
+
+msgid "Umsatz"
+msgstr "Omsætning"
+
+msgid "Umsatz {monat}: {betrag}"
+msgstr "Omsætning {monat}: {betrag}"
+
+msgid "Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit."
+msgstr "Omsætning = Stripe-køb og fakturaer, som kunden betaler dem. Bonusser og returnerede direkte debiteringer tæller ikke med."
+
+msgid "Umsatz im Zeitraum"
+msgstr "Omsætning i perioden"
+
+msgid "Umsatz mit diesem Kunden insgesamt"
+msgstr "Samlet omsætning med denne kunde"
+
+msgid "Verbrauch im Detail"
+msgstr "Forbrug i detaljer"
+
+msgid "Verbraucht in diesem Monat"
+msgstr "Brugt i denne måned"
+
+msgid "Verkauf auf Rechnung"
+msgstr "Salg på faktura"
+
+msgid "Verkauf auf Rechnung, {betrag}"
+msgstr "salg på faktura, {betrag}"
+
+msgid "Verschenkt im Zeitraum"
+msgstr "Givet væk i perioden"
+
+msgid "Verschenkt in {monat}"
+msgstr "Givet væk i {monat}"
+
+msgid "Verwaltung"
+msgstr "Administration"
+
+msgid "Vorbelegt mit dem Listenpreis (Monatspreis mal Laufzeit). Bei einem Sonderpreis einfach überschreiben."
+msgstr "Udfyldt med listeprisen (månedspris gange løbetid). Ved en særpris skal du blot overskrive den."
+
+msgid "Vorbelegt mit dem Listenpreis, bei freien Mengen 4 Cent je Credit. Bei einem Sonderpreis einfach überschreiben."
+msgstr "Udfyldt med listeprisen, 4 cent pr. credit ved andre mængder. Ved en særpris skal du blot overskrive den."
+
+msgid "Weiter"
+msgstr "Fortsæt"
+
+msgid "Zeitraum wählen"
+msgstr "Vælg periode"
+
+msgid "zuletzt angemeldet am {datum}"
+msgstr "senest logget ind {datum}"
+
+msgid "zuletzt benutzt am {datum}"
+msgstr "senest brugt {datum}"
+
+msgid "Zum Beispiel: Dankeschön fürs Testen. Ein Bonus gilt 12 Monate und zählt nicht zum Umsatz."
+msgstr "For eksempel: tak for testen. En bonus gælder i 12 måneder og tæller ikke med i omsætningen."
+
+msgid "Zur Kundenseite"
+msgstr "Til kundesiden"
+
+msgid "Zurück"
+msgstr "Tilbage"
+
+msgid "Zurück zur Kundenliste"
+msgstr "Tilbage til kundelisten"

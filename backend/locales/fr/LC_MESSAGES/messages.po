@@ -8141,3 +8141,581 @@ msgstr "Le fichier de contrôle est déjà à jour."
 
 msgid "Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen."
 msgstr "L’exhaustivité n’a pas pu être vérifiée. Veuillez parcourir vous-même l’aperçu audio."
+
+
+# Verwaltung: Kunden, Umsatz, API (25.09.2026)
+msgid "{betrag} (grobe Schätzung, {satz} Cent je Credit)"
+msgstr "{betrag} (estimation approximative, {satz} centimes par crédit)"
+
+msgid "{credits} Credits"
+msgstr "{credits} crédits"
+
+msgid "{credits} Credits verschenkt"
+msgstr "{credits} crédits offerts"
+
+msgid "{gesamt} Credits verfügbar: {monat} aus dem Monatskontingent, {pakete} aus Zusatz-Paketen"
+msgstr "{gesamt} crédits disponibles : {monat} du contingent mensuel, {pakete} des packs supplémentaires"
+
+msgid "{limit} Bilder pro Tag"
+msgstr "{limit} images par jour"
+
+msgid "{menge} Credits"
+msgstr "{menge} crédits"
+
+msgid "{menge} Credits (Paketpreis {betrag})"
+msgstr "{menge} crédits (prix du pack {betrag})"
+
+msgid "{menge} Credits für {name} als Bonus verschenken (kostenlos, gültig 12 Monate)?"
+msgstr "Offrir {menge} crédits à {name} en bonus (gratuit, valable 12 mois) ?"
+
+msgid "{menge} Credits für {name} als Verkauf auf Rechnung über {betrag} gutschreiben?"
+msgstr "Créditer {menge} crédits à {name} comme vente sur facture de {betrag} ?"
+
+msgid "{menge} Credits verfügbar"
+msgstr "{menge} crédits disponibles"
+
+msgid "{monat} anzeigen"
+msgstr "Afficher {monat}"
+
+msgid "{monat}: {credits} Credits, geschätzte KI-Kosten {kosten}"
+msgstr "{monat} : {credits} crédits, coûts IA estimés {kosten}"
+
+msgid "{n} angelegt, davon {aktiv} aktiv — zuletzt benutzt: {wann}"
+msgstr "{n} créées, dont {aktiv} actives — dernière utilisation : {wann}"
+
+msgid "{n} Bonus-Gutschriften, zusammen {credits} Credits"
+msgstr "{n} bonus accordés, {credits} crédits au total"
+
+msgid "{n} Kunden"
+msgstr "{n} clients"
+
+msgid "{n} Kunden, Seite {seite} von {seiten}"
+msgstr "{n} clients, page {seite} sur {seiten}"
+
+msgid "{n} Mitglieder"
+msgstr "{n} membres"
+
+msgid "{n} Schlüssel, davon {aktiv} aktiv"
+msgstr "{n} clés, dont {aktiv} actives"
+
+msgid "{n} Verkäufe"
+msgstr "{n} ventes"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate als Verkauf auf Rechnung über {betrag}. Speichern?"
+msgstr "{name} reçoit l’abonnement {plan} pour {monate} mois comme vente sur facture de {betrag}. Enregistrer ?"
+
+msgid "{name} bekommt das Abo {plan} für {monate} Monate ohne Berechnung. Speichern?"
+msgstr "{name} reçoit l’abonnement {plan} pour {monate} mois sans facturation. Enregistrer ?"
+
+msgid "{plan} auf Rechnung"
+msgstr "{plan} sur facture"
+
+msgid "{plan} über Stripe"
+msgstr "{plan} via Stripe"
+
+msgid "Abo {plan}"
+msgstr "Abonnement {plan}"
+
+msgid "Abo auf Rechnung"
+msgstr "Abonnement sur facture"
+
+msgid "Abo über Stripe"
+msgstr "Abonnement via Stripe"
+
+msgid "Abo wurde gespeichert."
+msgstr "Abonnement enregistré."
+
+msgid "Abo zuweisen oder ändern"
+msgstr "Attribuer ou modifier l’abonnement"
+
+msgid "Administrator"
+msgstr "Administrateur"
+
+msgid "aktiv"
+msgstr "actif"
+
+msgid "Alle Buchungen"
+msgstr "Toutes les écritures"
+
+msgid "Alle Kunden"
+msgstr "Tous les clients"
+
+msgid "Als CSV herunterladen"
+msgstr "Télécharger en CSV"
+
+msgid "Als Excel herunterladen"
+msgstr "Télécharger en Excel"
+
+msgid "Andere Menge"
+msgstr "Autre quantité"
+
+msgid "Andere Schreibweise oder „Alle Kunden“ versuchen."
+msgstr "Essayez une autre orthographe ou « Tous les clients »."
+
+msgid "API-Tageslimit ändern"
+msgstr "Modifier la limite quotidienne de l’API"
+
+msgid "Arbeitet gerade im Team „{team}“ von {inhaber} — das Guthaben oben gilt für diesen Team-Topf."
+msgstr "Travaille actuellement dans l’équipe « {team} » de {inhaber} — le solde ci-dessus concerne ce pot d’équipe."
+
+msgid "Art"
+msgstr "Type"
+
+msgid "Art der Buchung"
+msgstr "Type d’écriture"
+
+msgid "Art der Gutschrift"
+msgstr "Type de crédit"
+
+msgid "Auf einen Blick"
+msgstr "En un coup d’œil"
+
+msgid "Automatische Verlängerung nur für Unternehmer (B2B). Bei Verbrauchern das Häkchen entfernen."
+msgstr "Renouvellement automatique uniquement pour les entreprises (B2B). Décochez la case pour les consommateurs."
+
+msgid "Bereiche der Verwaltung"
+msgstr "Sections de l’administration"
+
+msgid "Berichtigen"
+msgstr "Corriger"
+
+msgid "berichtigt"
+msgstr "corrigé"
+
+msgid "Bilder pro Tag (0 sperrt die API, leer = Standard)"
+msgstr "Images par jour (0 bloque l’API, vide = valeur par défaut)"
+
+msgid "Bisher hat niemand einen API-Schlüssel angelegt."
+msgstr "Personne n’a encore créé de clé API."
+
+msgid "Bitte das Häkchen setzen, um den großen Bonus zu bestätigen."
+msgstr "Veuillez cocher la case pour confirmer le bonus important."
+
+msgid "Bitte den Betrag eintragen."
+msgstr "Veuillez saisir le montant."
+
+msgid "Bitte den Rechnungsbetrag als Zahl eintragen, zum Beispiel 87,50."
+msgstr "Veuillez saisir le montant de la facture sous forme de nombre, par exemple 87,50."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder Bonus."
+msgstr "Veuillez choisir le type : vente sur facture ou bonus."
+
+msgid "Bitte die Art wählen: Verkauf auf Rechnung oder ohne Berechnung."
+msgstr "Veuillez choisir le type : vente sur facture ou sans facturation."
+
+msgid "Bitte kurz den Grund angeben."
+msgstr "Veuillez indiquer brièvement la raison."
+
+msgid "Bitte kurz den Grund der Korrektur angeben."
+msgstr "Veuillez indiquer brièvement la raison de la correction."
+
+msgid "Bitte kurz den Grund für den Bonus angeben."
+msgstr "Veuillez indiquer brièvement la raison du bonus."
+
+msgid "Bitte wählen"
+msgstr "Veuillez choisir"
+
+msgid "Bonus (kostenlos)"
+msgstr "Bonus (gratuit)"
+
+msgid "Buchung berichtigen"
+msgstr "Corriger l’écriture"
+
+msgid "Buchung berichtigt."
+msgstr "Écriture corrigée."
+
+msgid "Buchung vom {datum} berichtigen"
+msgstr "Corriger l’écriture du {datum}"
+
+msgid "Buchungen"
+msgstr "Écritures"
+
+msgid "Buchungen {zeitraum} ({n})"
+msgstr "Écritures {zeitraum} ({n})"
+
+msgid "Credits verbraucht, insgesamt"
+msgstr "Crédits consommés, au total"
+
+msgid "Das Abo konnte nicht gespeichert werden."
+msgstr "L’abonnement n’a pas pu être enregistré."
+
+msgid "Das Abo von {name} beenden und auf Free setzen?"
+msgstr "Mettre fin à l’abonnement de {name} et passer à Free ?"
+
+msgid "Das bist du selbst."
+msgstr "C’est vous."
+
+msgid "Das Limit konnte nicht gespeichert werden."
+msgstr "La limite n’a pas pu être enregistrée."
+
+msgid "Das Tageslimit bremst nur Amok-Läufe über die API. Das Abo-Guthaben gilt immer zusätzlich. Standard: {standard} Bilder pro Tag."
+msgstr "La limite quotidienne ne freine que les emballements via l’API. Le solde de l’abonnement s’applique toujours en plus. Par défaut : {standard} images par jour."
+
+msgid "Der Kunde bekommt eine Bestätigung per E-Mail."
+msgstr "Le client reçoit une confirmation par e-mail."
+
+msgid "Der Kunde bekommt seine Zugangsdaten per E-Mail."
+msgstr "Le client reçoit ses identifiants par e-mail."
+
+msgid "Der Standard ist aktuell {standard} Bilder pro Tag. Das Abo-Guthaben gilt immer zusätzlich — diese Bremse schützt nur vor Amok-Läufen."
+msgstr "La valeur par défaut est actuellement de {standard} images par jour. Le solde de l’abonnement s’applique toujours en plus — ce frein protège seulement contre les emballements."
+
+msgid "Die API-Daten konnten nicht geladen werden."
+msgstr "Les données API n’ont pas pu être chargées."
+
+msgid "Die Buchungen im Umsatz bleiben als Geschäftsunterlagen erhalten."
+msgstr "Les écritures du chiffre d’affaires sont conservées comme documents commerciaux."
+
+msgid "Die Buchungen konnten nicht geladen werden."
+msgstr "Les écritures n’ont pas pu être chargées."
+
+msgid "Die Credits bleiben unverändert. Die Korrektur wird mit deinem Namen, der Zeit und dem Grund an der Buchung vermerkt."
+msgstr "Les crédits restent inchangés. La correction est consignée sur l’écriture avec votre nom, l’heure et la raison."
+
+msgid "Die Daten konnten nicht geladen werden. Bitte die Seite neu laden."
+msgstr "Les données n’ont pas pu être chargées. Veuillez recharger la page."
+
+msgid "Die Gutschrift konnte nicht gespeichert werden."
+msgstr "Le crédit n’a pas pu être enregistré."
+
+msgid "Die Korrektur konnte nicht gespeichert werden."
+msgstr "La correction n’a pas pu être enregistrée."
+
+msgid "Die Menge muss eine ganze Zahl von 1 bis 100.000 sein."
+msgstr "La quantité doit être un nombre entier de 1 à 100 000."
+
+msgid "Die Person muss bereits ein Konto haben (sonst zuerst unter „Kunden“ anlegen)."
+msgstr "La personne doit déjà avoir un compte (sinon, le créer d’abord sous « Clients »)."
+
+msgid "diesen Monat {monat} Credits, insgesamt {gesamt}"
+msgstr "ce mois-ci {monat} crédits, {gesamt} au total"
+
+msgid "Eigener Topf"
+msgstr "Pot propre"
+
+msgid "eingetragen von {name}"
+msgstr "saisi par {name}"
+
+msgid "Einstellungen der Verwaltung"
+msgstr "Paramètres de l’administration"
+
+msgid "Enterprise (1.375 Credits, bis 25 Personen)"
+msgstr "Enterprise (1 375 crédits, jusqu’à 25 personnes)"
+
+msgid "Es verlängert sich automatisch."
+msgstr "Il se renouvelle automatiquement."
+
+msgid "Es verlängert sich nicht automatisch."
+msgstr "Il ne se renouvelle pas automatiquement."
+
+msgid "Free"
+msgstr "Free"
+
+msgid "Für dieses Jahr gibt es noch keine Monate."
+msgstr "Il n’y a pas encore de mois pour cette année."
+
+msgid "Für: {name} ({email})"
+msgstr "Pour : {name} ({email})"
+
+msgid "Ganzes Jahr"
+msgstr "Année entière"
+
+msgid "gelöschtes Konto"
+msgstr "compte supprimé"
+
+msgid "Gesamt seit Start"
+msgstr "Total depuis le lancement"
+
+msgid "gesperrt"
+msgstr "bloqué"
+
+msgid "Grund der Korrektur"
+msgstr "Raison de la correction"
+
+msgid "Grund für den Bonus"
+msgstr "Raison du bonus"
+
+msgid "Grund, warum das Abo ohne Berechnung läuft"
+msgstr "Raison pour laquelle l’abonnement est sans facturation"
+
+msgid "Guthaben"
+msgstr "Solde"
+
+msgid "Guthaben unbegrenzt"
+msgstr "Solde illimité"
+
+msgid "Heute"
+msgstr "Aujourd’hui"
+
+msgid "heute {n} von {limit} Bildern"
+msgstr "aujourd’hui {n} sur {limit} images"
+
+msgid "In diesem Zeitraum gibt es keine Buchungen."
+msgstr "Aucune écriture pour cette période."
+
+msgid "individuell festgelegt"
+msgstr "défini individuellement"
+
+msgid "individuelles Limit"
+msgstr "limite individuelle"
+
+msgid "Ja, gutschreiben"
+msgstr "Oui, créditer"
+
+msgid "Ja, ich möchte bewusst mehr als {grenze} Credits verschenken."
+msgstr "Oui, je veux délibérément offrir plus de {grenze} crédits."
+
+msgid "Ja, speichern"
+msgstr "Oui, enregistrer"
+
+msgid "Jahr"
+msgstr "Année"
+
+msgid "Jahr {jahr}"
+msgstr "Année {jahr}"
+
+msgid "Käufe und Gutschriften ({n})"
+msgstr "Achats et crédits ({n})"
+
+msgid "Keine Kunden gefunden"
+msgstr "Aucun client trouvé"
+
+msgid "Keine Verbindung zum Server. Bitte erneut versuchen."
+msgstr "Pas de connexion au serveur. Veuillez réessayer."
+
+msgid "keiner angelegt"
+msgstr "aucune créée"
+
+msgid "Konten mit API-Schlüssel"
+msgstr "Comptes avec clé API"
+
+msgid "Konten mit API-Schlüssel ({n})"
+msgstr "Comptes avec clé API ({n})"
+
+msgid "Konto entsperren"
+msgstr "Débloquer le compte"
+
+msgid "Konto entsperrt."
+msgstr "Compte débloqué."
+
+msgid "Konto gesperrt."
+msgstr "Compte bloqué."
+
+msgid "Konto sperren"
+msgstr "Bloquer le compte"
+
+msgid "Konto verwalten"
+msgstr "Gérer le compte"
+
+msgid "Kunde"
+msgstr "Client"
+
+msgid "Kunde: {name}"
+msgstr "Client : {name}"
+
+msgid "Kunden"
+msgstr "Clients"
+
+msgid "Kunden suchen"
+msgstr "Rechercher des clients"
+
+msgid "Kundenseite von {name} geladen."
+msgstr "Page client de {name} chargée."
+
+msgid "Lastschrift noch ausstehend"
+msgstr "Prélèvement encore en attente"
+
+msgid "Lastschrift zurückgegangen, zählt nicht zum Umsatz"
+msgstr "Prélèvement rejeté, non compté dans le chiffre d’affaires"
+
+msgid "Lastschriften noch unterwegs"
+msgstr "Prélèvements encore en cours"
+
+msgid "Limit ändern"
+msgstr "Modifier la limite"
+
+msgid "Limit von {name} ändern"
+msgstr "Modifier la limite de {name}"
+
+msgid "Menge"
+msgstr "Quantité"
+
+msgid "Menge in Credits (1 bis 100.000)"
+msgstr "Quantité en crédits (1 à 100 000)"
+
+msgid "Mit Abo"
+msgstr "Avec abonnement"
+
+msgid "Mit Käufen"
+msgstr "Avec achats"
+
+msgid "Monat"
+msgstr "Mois"
+
+msgid "Monate"
+msgstr "Mois"
+
+msgid "Monate im Jahr {jahr}"
+msgstr "Mois de l’année {jahr}"
+
+msgid "Name, E-Mail oder Teamname — ein Teil genügt."
+msgstr "Nom, e-mail ou nom d’équipe — une partie suffit."
+
+msgid "Neu in diesem Monat"
+msgstr "Nouveaux ce mois-ci"
+
+msgid "Neuen Kunden anlegen"
+msgstr "Créer un nouveau client"
+
+msgid "neuester vom {datum}"
+msgstr "la plus récente du {datum}"
+
+msgid "nichts"
+msgstr "rien"
+
+msgid "Noch keine Käufe oder Gutschriften."
+msgstr "Aucun achat ni crédit pour l’instant."
+
+msgid "Noch keine Kunden"
+msgstr "Pas encore de clients"
+
+msgid "noch nie angemeldet"
+msgstr "jamais connecté"
+
+msgid "noch nie benutzt"
+msgstr "jamais utilisée"
+
+msgid "Notiz (optional)"
+msgstr "Note (facultatif)"
+
+msgid "nur Bonus"
+msgstr "bonus uniquement"
+
+msgid "Nur Bonus"
+msgstr "Bonus uniquement"
+
+msgid "nur Verkäufe"
+msgstr "ventes uniquement"
+
+msgid "Nur Verkäufe"
+msgstr "Ventes uniquement"
+
+msgid "Nutzung"
+msgstr "Utilisation"
+
+msgid "ohne Berechnung"
+msgstr "sans facturation"
+
+msgid "Ohne Berechnung"
+msgstr "Sans facturation"
+
+msgid "Rechnung {nummer}"
+msgstr "Facture {nummer}"
+
+msgid "Rechnungsbetrag in Euro"
+msgstr "Montant de la facture en euros"
+
+msgid "Rechnungsbetrag in Euro für die ganze Laufzeit"
+msgstr "Montant de la facture en euros pour toute la durée"
+
+msgid "Rechnungsnummer (optional)"
+msgstr "Numéro de facture (facultatif)"
+
+msgid "Rechnungsnummer: {nummer}."
+msgstr "Numéro de facture : {nummer}."
+
+msgid "Schlüssel"
+msgstr "Clés"
+
+msgid "Seiten der Kundenliste"
+msgstr "Pages de la liste des clients"
+
+msgid "Standard"
+msgstr "Par défaut"
+
+msgid "Stripe {stripe}, Rechnung {rechnung}"
+msgstr "Stripe {stripe}, facture {rechnung}"
+
+msgid "Tageslimit"
+msgstr "Limite quotidienne"
+
+msgid "Team (500 Credits, bis 5 Personen)"
+msgstr "Team (500 crédits, jusqu’à 5 personnes)"
+
+msgid "Team „{name}“"
+msgstr "Équipe « {name} »"
+
+msgid "Team „{team}“ von {inhaber}"
+msgstr "Équipe « {team} » de {inhaber}"
+
+msgid "über Stripe, {betrag}"
+msgstr "via Stripe, {betrag}"
+
+msgid "Überblick"
+msgstr "Vue d’ensemble"
+
+msgid "Umsatz"
+msgstr "Chiffre d’affaires"
+
+msgid "Umsatz {monat}: {betrag}"
+msgstr "Chiffre d’affaires {monat} : {betrag}"
+
+msgid "Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit."
+msgstr "Chiffre d’affaires = achats Stripe et factures tels que payés par le client. Les bonus et les prélèvements rejetés ne sont pas comptés."
+
+msgid "Umsatz im Zeitraum"
+msgstr "Chiffre d’affaires sur la période"
+
+msgid "Umsatz mit diesem Kunden insgesamt"
+msgstr "Chiffre d’affaires total avec ce client"
+
+msgid "Verbrauch im Detail"
+msgstr "Consommation en détail"
+
+msgid "Verbraucht in diesem Monat"
+msgstr "Consommé ce mois-ci"
+
+msgid "Verkauf auf Rechnung"
+msgstr "Vente sur facture"
+
+msgid "Verkauf auf Rechnung, {betrag}"
+msgstr "vente sur facture, {betrag}"
+
+msgid "Verschenkt im Zeitraum"
+msgstr "Offert sur la période"
+
+msgid "Verschenkt in {monat}"
+msgstr "Offert en {monat}"
+
+msgid "Verwaltung"
+msgstr "Administration"
+
+msgid "Vorbelegt mit dem Listenpreis (Monatspreis mal Laufzeit). Bei einem Sonderpreis einfach überschreiben."
+msgstr "Prérempli avec le prix catalogue (prix mensuel multiplié par la durée). Pour un prix spécial, il suffit de le remplacer."
+
+msgid "Vorbelegt mit dem Listenpreis, bei freien Mengen 4 Cent je Credit. Bei einem Sonderpreis einfach überschreiben."
+msgstr "Prérempli avec le prix catalogue, 4 centimes par crédit pour les autres quantités. Pour un prix spécial, il suffit de le remplacer."
+
+msgid "Weiter"
+msgstr "Continuer"
+
+msgid "Zeitraum wählen"
+msgstr "Choisir la période"
+
+msgid "zuletzt angemeldet am {datum}"
+msgstr "dernière connexion le {datum}"
+
+msgid "zuletzt benutzt am {datum}"
+msgstr "dernière utilisation le {datum}"
+
+msgid "Zum Beispiel: Dankeschön fürs Testen. Ein Bonus gilt 12 Monate und zählt nicht zum Umsatz."
+msgstr "Par exemple : merci pour les tests. Un bonus est valable 12 mois et ne compte pas dans le chiffre d’affaires."
+
+msgid "Zur Kundenseite"
+msgstr "Vers la page client"
+
+msgid "Zurück"
+msgstr "Retour"
+
+msgid "Zurück zur Kundenliste"
+msgstr "Retour à la liste des clients"

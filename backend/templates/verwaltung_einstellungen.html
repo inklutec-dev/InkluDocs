@@ -1,0 +1,132 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Einstellungen') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# VERWALTUNG — EINSTELLUNGEN (25.09.2026): die Administratoren und „Admin hinzufügen“
+   (Stand 14.06.2026, ADMIN_VERWALTUNG.md) — unverändert, nur auf eigener Seite. #}
+<h1>{{ _('Einstellungen der Verwaltung') }}</h1>
+{% include "_verwaltung_nav.html" %}
+
+<section class="verwaltung-bereich" aria-labelledby="h-admins">
+  <h2 id="h-admins">{{ _('Administratoren') }}</h2>
+  <div id="adminListe" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-adminneu" id="adminNeuBereich" hidden>
+  <h2 id="h-adminneu">{{ _('Admin hinzufügen') }}</h2>
+  <p class="dash-sub">{{ _('Die Person muss bereits ein Konto haben (sonst zuerst unter „Kunden“ anlegen).') }}</p>
+  <form id="adminNeuForm" novalidate>
+    <div class="dash-field">
+      <label for="adminEmail">{{ _('E-Mail des bestehenden Kontos') }}</label>
+      <input type="email" id="adminEmail" class="dash-input" required autocomplete="off">
+    </div>
+    <fieldset class="dash-field">
+      <legend>{{ _('Rechte-Stufe') }}</legend>
+      <label><input type="radio" name="adminStufe" value="full" checked> {{ _('Voll-Admin – alle Rechte') }}</label><br>
+      <label><input type="radio" name="adminStufe" value="view"> {{ _('Nur-Einsicht – sieht Nutzer, ändert nichts') }}</label>
+    </fieldset>
+    <p id="adminFehler" role="alert" class="verwaltung-fehler"></p>
+    <button type="submit" class="btn btn-primary">{{ _('Zum Admin machen') }}</button>
+  </form>
+</section>
+{% endblock %}
+
+{% block dialogs %}
+<dialog id="entzugDialog" class="app-dialog" aria-labelledby="entzugTitel">
+  <h2 id="entzugTitel">{{ _('Admin-Rechte entziehen?') }}</h2>
+  <p id="entzugText"></p>
+  <div class="dialog-actions">
+    <button type="button" autofocus class="btn btn-secondary" id="entzugAbbrechen">{{ _('Abbrechen') }}</button>
+    <button type="button" class="btn btn-danger" id="entzugJa">{{ _('Ja, Rechte entziehen') }}</button>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block page_script %}
+<script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script>
+{% raw %}
+(function () {
+  const V = window.Verwaltung;
+  let entzugZiel = null;
+
+  async function laden() {
+    const ziel = byId('adminListe');
+    const d = await V.ladeJson('/api/admin/admins', ziel);
+    if (!d) return;
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+    const admins = d.admins || [];
+    byId('h-admins').textContent = t('Administratoren ({n})', { n: admins.length });
+    const voll = V.istVollAdmin();
+    const ul = V.el('ul', 'verwaltung-liste');
+    admins.forEach((a) => {
+      const li = V.el('li', 'verwaltung-zeile');
+      const link = V.el('a', null, a.display_name);
+      link.href = '/verwaltung/kunden/' + a.id;
+      li.appendChild(link);
+      const stufe = a.admin_level === 'view' ? t('Nur-Einsicht') : t('Voll-Admin');
+      li.appendChild(document.createTextNode(' · ' + a.email + ' · ' + stufe + (a.is_active ? '' : ' · ' + t('gesperrt')) + ' '));
+      if (currentUser && a.id === currentUser.id) {
+        li.appendChild(V.el('span', 'verwaltung-meta', t('Das bist du selbst.')));
+      } else if (voll) {
+        const b = V.el('button', 'btn btn-secondary btn-small',
+          a.admin_level === 'full' ? t('Auf Nur-Einsicht setzen') : t('Auf Voll-Admin setzen'));
+        b.type = 'button';
+        b.setAttribute('aria-label', (a.admin_level === 'full' ? t('Auf Nur-Einsicht setzen') : t('Auf Voll-Admin setzen')) + ': ' + a.display_name);
+        b.addEventListener('click', () => stufeSetzen(a.id, a.admin_level === 'full' ? 'view' : 'full'));
+        const e = V.el('button', 'btn btn-delete btn-small', t('Admin-Rechte entziehen'));
+        e.type = 'button';
+        e.setAttribute('aria-label', t('Admin-Rechte entziehen') + ': ' + a.display_name);
+        e.addEventListener('click', () => {
+          entzugZiel = a;
+          byId('entzugText').textContent = t('{name} verliert die Admin-Rechte. Das Konto bleibt als normaler Nutzer bestehen.', { name: a.display_name });
+          byId('entzugDialog').showModal();
+        });
+        li.appendChild(b);
+        li.appendChild(document.createTextNode(' '));
+        li.appendChild(e);
+      }
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+  }
+
+  async function stufeSetzen(id, stufe) {
+    const r = await V.sendeJson('/api/admin/admins/' + id, 'PUT', { level: stufe });
+    announce(r.ok ? (r.daten.message || t('Rechte-Stufe geändert')) : (r.daten.detail || t('Fehler beim Ändern der Rechte-Stufe.')));
+    if (r.ok) laden();
+  }
+
+  byId('entzugAbbrechen').addEventListener('click', () => byId('entzugDialog').close());
+  byId('entzugJa').addEventListener('click', async () => {
+    const r = await V.sendeJson('/api/admin/admins/' + entzugZiel.id, 'DELETE');
+    byId('entzugDialog').close();
+    announce(r.ok ? (r.daten.message || t('Admin-Rechte entzogen')) : (r.daten.detail || t('Fehler beim Entziehen der Rechte.')));
+    if (r.ok) laden();
+  });
+
+  byId('adminNeuForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fehler = byId('adminFehler');
+    fehler.textContent = '';
+    const email = byId('adminEmail').value.trim();
+    const stufe = (document.querySelector('input[name="adminStufe"]:checked') || {}).value || 'full';
+    if (!email) { fehler.textContent = t('Bitte eine E-Mail eingeben.'); byId('adminEmail').focus(); return; }
+    const r = await V.sendeJson('/api/admin/admins', 'POST', { email: email, level: stufe });
+    if (!r.ok) { fehler.textContent = r.daten.detail || t('Fehler beim Hinzufügen.'); return; }
+    byId('adminNeuForm').reset();
+    announce(r.daten.message || t('Gespeichert.'));
+    laden();
+  });
+
+  (async function start() {
+    await loadCurrentUser();
+    if (V.istVollAdmin()) byId('adminNeuBereich').hidden = false;
+    await laden();
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}

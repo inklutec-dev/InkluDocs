@@ -921,7 +921,7 @@ def ist_freemail_domain(domain: str) -> bool:
 
 
 def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "admin",
-                    verfall_monate=12) -> int:
+                    verfall_monate=12, buchung: dict = None) -> int:
     """Legt ein Zusatz-Credit-Paket fuer ein Abrechnungs-Konto an.
 
     verfall_monate: Zahl = Datums-Verfall (Alt-Modell/Kulanz-Geschenke, 12
@@ -932,6 +932,9 @@ def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "a
     'admin' (Geschenk/Kulanz), 'rechnung' (Kauf ueber Actino) oder spaeter
     'stripe'. Wirft bei ungueltiger Menge einen ValueError — diese Funktion
     laeuft NICHT im Generierungspfad, darf also streng sein.
+
+    buchung (25.09.2026, Umsatz): Stichwoerter fuer umsatz.buche — Paket und Umsatz-
+    Buchung entstehen dann in DERSELBEN Transaktion (kein Paket ohne Buchung und umgekehrt).
 
     Rueckgabe: id der neuen quota_pakete-Zeile.
     """
@@ -953,7 +956,11 @@ def schenke_credits(konto_id: int, menge: int, notiz: str = "", quelle: str = "a
                 (int(konto_id), menge, menge, quelle, notiz or "",
                  f"+{int(verfall_monate)} months"),
             )
+        paket_id = int(cursor.lastrowid)
+        if buchung:
+            import umsatz
+            umsatz.buche(conn, art="paket", credits=menge, paket_id=paket_id, **buchung)
         conn.commit()
-        return int(cursor.lastrowid)
+        return paket_id
     finally:
         conn.close()

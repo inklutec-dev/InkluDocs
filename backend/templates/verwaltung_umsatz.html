@@ -1,0 +1,238 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ _('Umsatz') }} · {{ _('Verwaltung') }} · InkluDocs{% endblock %}
+
+{% block main %}
+{# VERWALTUNG — UMSATZ (25.09.2026, Steve): oben vier Zahlen (heute, Monat, Jahr, gesamt),
+   darunter die Zeitraum-Wahl als native Auswahllisten (Pfeiltasten, keine Eigenbau-Liste),
+   die Monate des Jahres und die einzelnen Buchungen — je Buchung EINE Zeile. Stripe bucht
+   sich selbst ein, Rechnungen kommen über „Credits gutschreiben“ bzw. „Abo zuweisen“.
+   Herunterladen als Excel oder CSV für genau die gewählte Auswahl. #}
+<h1>{{ _('Umsatz') }}</h1>
+{% include "_verwaltung_nav.html" %}
+
+<section class="verwaltung-bereich" aria-labelledby="h-blick">
+  <h2 id="h-blick">{{ _('Auf einen Blick') }}</h2>
+  <div id="umsatzZahlen" aria-busy="true"><p class="dash-sub">{{ _('Wird geladen …') }}</p></div>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-zeitraum">
+  <h2 id="h-zeitraum">{{ _('Zeitraum wählen') }}</h2>
+  <form id="zeitraumForm" class="verwaltung-suche" novalidate>
+    <div class="dash-field">
+      <label for="wahlJahr">{{ _('Jahr') }}</label>
+      <select id="wahlJahr" class="dash-input"></select>
+    </div>
+    <div class="dash-field">
+      <label for="wahlMonat">{{ _('Monat') }}</label>
+      <select id="wahlMonat" class="dash-input"></select>
+    </div>
+    <div class="dash-field">
+      <label for="wahlAuswahl">{{ _('Buchungen') }}</label>
+      <select id="wahlAuswahl" class="dash-input">
+        <option value="alle">{{ _('Alle Buchungen') }}</option>
+        <option value="verkauf">{{ _('Nur Verkäufe') }}</option>
+        <option value="bonus">{{ _('Nur Bonus') }}</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">{{ _('Anzeigen') }}</button>
+  </form>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-monate">
+  <h2 id="h-monate">{{ _('Monate') }}</h2>
+  <div id="umsatzMonate"></div>
+</section>
+
+<section class="dash-card verwaltung-karte" aria-labelledby="h-buchungen">
+  <h2 id="h-buchungen" tabindex="-1">{{ _('Buchungen') }}</h2>
+  <div id="umsatzBuchungen"></div>
+  <p class="verwaltung-download" id="umsatzDownload" hidden>
+    <a class="btn btn-secondary" id="dlExcel" href="#" download>{{ _('Als Excel herunterladen') }}</a>
+    <a class="btn btn-secondary" id="dlCsv" href="#" download>{{ _('Als CSV herunterladen') }}</a>
+  </p>
+</section>
+{% endblock %}
+
+{% block dialogs %}
+{% include "_verwaltung_dialoge.html" %}
+{% endblock %}
+
+{% block page_script %}
+<script>window.API_LIMIT_STANDARD = {{ api_limit_standard|int }};</script>
+<script src="/static/verwaltung.js?v={{ asset_version }}"></script>
+<script>
+{% raw %}
+(function () {
+  const V = window.Verwaltung;
+  const wahl = { jahr: null, monat: null, auswahl: 'alle' };
+  let ersterLauf = true;
+
+  function ausAdresse() {
+    const p = new URLSearchParams(window.location.search);
+    const j = parseInt(p.get('jahr') || '', 10);
+    const m = parseInt(p.get('monat') || '', 10);
+    wahl.jahr = Number.isInteger(j) ? j : null;
+    wahl.monat = (Number.isInteger(m) && m >= 1 && m <= 12) ? m : null;
+    const a = p.get('auswahl');
+    wahl.auswahl = (a === 'verkauf' || a === 'bonus') ? a : 'alle';
+  }
+
+  function abfrage() {
+    const p = new URLSearchParams();
+    if (wahl.jahr) p.set('jahr', String(wahl.jahr));
+    if (wahl.monat) p.set('monat', String(wahl.monat));
+    if (wahl.auswahl !== 'alle') p.set('auswahl', wahl.auswahl);
+    return p;
+  }
+
+  function zeitraumText() {
+    return wahl.monat ? V.monatLang(wahl.jahr + '-' + String(wahl.monat).padStart(2, '0')) : String(wahl.jahr);
+  }
+
+  function zahlen(k) {
+    const ziel = byId('umsatzZahlen');
+    ziel.innerHTML = '';
+    ziel.setAttribute('aria-busy', 'false');
+    const ul = V.el('ul', 'umsatz-zahlen');
+    [[t('Heute'), k.heute_cent],
+     [V.monatLang(k.monat), k.monat_cent],
+     [t('Jahr {jahr}', { jahr: k.jahr }), k.jahr_cent],
+     [t('Gesamt seit Start'), k.gesamt_cent]].forEach(([was, cent]) => {
+      const li = V.el('li', 'umsatz-zahl');
+      li.appendChild(V.el('span', 'umsatz-zahl-was', was + ': '));
+      li.appendChild(V.el('span', 'umsatz-zahl-wert', V.euro(cent)));
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+    V.zeile(ziel, t('Verschenkt in {monat}', { monat: V.monatLang(k.monat) }),
+      k.bonus_anzahl_monat ? t('{n} Bonus-Gutschriften, zusammen {credits} Credits', { n: k.bonus_anzahl_monat, credits: V.zahl(k.bonus_credits_monat) }) : t('nichts'));
+    if (k.ausstehend_cent) V.zeile(ziel, t('Lastschriften noch unterwegs'), V.euro(k.ausstehend_cent));
+    ziel.appendChild(V.el('p', 'dash-sub', t('Umsatz = Stripe-Käufe und Rechnungen, wie sie der Kunde zahlt. Bonus-Gutschriften und zurückgegangene Lastschriften zählen nicht mit.')));
+  }
+
+  function auswahlListen(d) {
+    const j = byId('wahlJahr');
+    j.innerHTML = '';
+    d.jahre.forEach((jahr) => { const o = V.el('option', null, String(jahr)); o.value = String(jahr); j.appendChild(o); });
+    j.value = String(d.jahr);
+    const m = byId('wahlMonat');
+    m.innerHTML = '';
+    const ganz = V.el('option', null, t('Ganzes Jahr')); ganz.value = ''; m.appendChild(ganz);
+    for (let i = 1; i <= 12; i++) {
+      const o = V.el('option', null, V.monatLang(d.jahr + '-' + String(i).padStart(2, '0')));
+      o.value = String(i);
+      m.appendChild(o);
+    }
+    m.value = d.monat ? String(d.monat) : '';
+    byId('wahlAuswahl').value = d.auswahl;
+  }
+
+  function monate(d) {
+    const ziel = byId('umsatzMonate');
+    ziel.innerHTML = '';
+    byId('h-monate').textContent = t('Monate im Jahr {jahr}', { jahr: d.jahr });
+    if (!d.monate.length) { ziel.appendChild(V.el('p', 'dash-empty', t('Für dieses Jahr gibt es noch keine Monate.'))); return; }
+    const ul = V.el('ul', 'verwaltung-liste');
+    d.monate.forEach((m) => {
+      const li = V.el('li', 'verwaltung-zeile');
+      // Der Monatsname ist ein Knopf: zeigt die Buchungen dieses Monats.
+      const k = V.el('button', 'verwaltung-textknopf', V.monatLang(m.monat));
+      k.type = 'button';
+      k.setAttribute('aria-label', t('{monat} anzeigen', { monat: V.monatLang(m.monat) }));
+      k.addEventListener('click', () => {
+        wahl.jahr = parseInt(m.monat.slice(0, 4), 10);
+        wahl.monat = parseInt(m.monat.slice(5, 7), 10);
+        laden(true);
+      });
+      li.appendChild(k);
+      let text = ': ' + V.euro(m.gesamt_cent);
+      if (m.gesamt_cent) text += ' (' + t('Stripe {stripe}, Rechnung {rechnung}', { stripe: V.euro(m.stripe_cent), rechnung: V.euro(m.rechnung_cent) }) + ')';
+      text += ' · ' + t('{n} Verkäufe', { n: m.anzahl });
+      if (m.bonus_credits) text += ' · ' + t('{credits} Credits verschenkt', { credits: V.zahl(m.bonus_credits) });
+      li.appendChild(document.createTextNode(text));
+      ul.appendChild(li);
+    });
+    ziel.appendChild(ul);
+  }
+
+  function buchungen(d) {
+    const ziel = byId('umsatzBuchungen');
+    ziel.innerHTML = '';
+    const auswahlText = { alle: '', verkauf: ' — ' + t('nur Verkäufe'), bonus: ' — ' + t('nur Bonus') }[d.auswahl];
+    byId('h-buchungen').textContent = t('Buchungen {zeitraum} ({n})', { zeitraum: zeitraumText(), n: d.buchungen.length }) + auswahlText;
+    if (!d.buchungen.length) {
+      ziel.appendChild(V.el('p', 'dash-empty', t('In diesem Zeitraum gibt es keine Buchungen.')));
+    } else {
+      V.zeile(ziel, t('Umsatz im Zeitraum'), V.euro(d.summe_cent));
+      if (d.bonus_credits) V.zeile(ziel, t('Verschenkt im Zeitraum'), t('{credits} Credits', { credits: V.zahl(d.bonus_credits) }));
+      const ul = V.el('ul', 'verwaltung-liste');
+      const voll = V.istVollAdmin();
+      d.buchungen.forEach((b) => {
+        const li = V.el('li', 'verwaltung-zeile');
+        const teile = V.buchungText(b, true).split(' · ');
+        // Der Kundenname wird zum Link auf die Kundenseite (solange das Konto existiert).
+        li.appendChild(document.createTextNode(teile[0] + ' · '));
+        if (b.konto_user_id) {
+          const a = V.el('a', null, teile[1]);
+          a.href = '/verwaltung/kunden/' + b.konto_user_id;
+          li.appendChild(a);
+        } else {
+          li.appendChild(document.createTextNode(teile[1]));
+        }
+        li.appendChild(document.createTextNode(' · ' + teile.slice(2).join(' · ')));
+        if (voll && b.weg !== 'stripe') {
+          const k = V.el('button', 'btn btn-secondary btn-small', t('Berichtigen'));
+          k.type = 'button';
+          k.setAttribute('aria-label', t('Buchung vom {datum} berichtigen', { datum: V.datumZeit(b.gebucht_am) }));
+          k.addEventListener('click', () => V.korrekturOeffnen(b, () => laden(false)));
+          li.appendChild(document.createTextNode(' '));
+          li.appendChild(k);
+        }
+        ul.appendChild(li);
+      });
+      ziel.appendChild(ul);
+    }
+    const p = abfrage();
+    p.set('format', 'xlsx');
+    byId('dlExcel').href = '/api/admin/umsatz/export?' + p.toString();
+    p.set('format', 'csv');
+    byId('dlCsv').href = '/api/admin/umsatz/export?' + p.toString();
+    byId('umsatzDownload').hidden = false;
+  }
+
+  async function laden(fokus) {
+    const d = await V.ladeJson('/api/admin/umsatz?' + abfrage().toString(), byId('umsatzZahlen'));
+    if (!d) return;
+    wahl.jahr = d.jahr; wahl.monat = d.monat; wahl.auswahl = d.auswahl;
+    history.replaceState(null, '', window.location.pathname + (abfrage().toString() ? '?' + abfrage().toString() : ''));
+    zahlen(d.kennzahlen);
+    auswahlListen(d);
+    monate(d);
+    buchungen(d);
+    if (fokus) byId('h-buchungen').focus();
+    if (ersterLauf) {
+      ersterLauf = false;
+      announce(t('Umsatz {monat}: {betrag}', { monat: V.monatLang(d.kennzahlen.monat), betrag: V.euro(d.kennzahlen.monat_cent) }));
+    } else {
+      announce(byId('h-buchungen').textContent);
+    }
+  }
+
+  byId('zeitraumForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    wahl.jahr = parseInt(byId('wahlJahr').value, 10) || null;
+    wahl.monat = parseInt(byId('wahlMonat').value, 10) || null;
+    wahl.auswahl = byId('wahlAuswahl').value;
+    laden(true);
+  });
+
+  (async function start() {
+    await loadCurrentUser();
+    ausAdresse();   // ohne Angabe in der Adresse wählt der Server den laufenden Monat
+    await laden(false);
+  })();
+})();
+{% endraw %}
+</script>
+{% endblock %}

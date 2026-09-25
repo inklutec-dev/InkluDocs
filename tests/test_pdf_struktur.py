@@ -127,7 +127,7 @@ class LesenTest(unittest.TestCase):
                 f.write(b"%PDF-1.4 fake")
             cache = os.path.join(d, "a.pdf.struktur.json")
             with open(cache, "w", encoding="utf-8") as f:
-                json.dump({"info": {"seiten": 1}, "elemente": []}, f)
+                json.dump({"info": {"seiten": 1, "version": pdf_struktur.STRUKTUR_VERSION}, "elemente": []}, f)
             os.utime(cache, (time.time() + 5, time.time() + 5))
             self.assertEqual(pdf_struktur.lesen(pdf, d)["info"]["seiten"], 1)
 
