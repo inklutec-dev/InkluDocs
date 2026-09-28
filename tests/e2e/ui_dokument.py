@@ -208,13 +208,33 @@ with sync_playwright() as p:
     pg.click("section.dok-karte .dok-ergebnis button")
     pg.wait_for_timeout(300)
     check("„Meldung schließen“: weg, Fokus auf dem Schalter der Karte", pg.locator(".dok-ergebnis").count() == 0 and pg.evaluate("document.activeElement && document.activeElement.tagName") == "SUMMARY")
+    # Feedback 28.09.2026 - 1, Punkt 4: „PDF herunterladen“ öffnet dieselbe Rückfrage wie früher in „Alt-Texte“ — nur mit der PDF
+    pg.click("button[id^=dok_export_]")
+    pg.wait_for_timeout(1500)
+    check("„PDF herunterladen“ öffnet den Herunterladen-Dialog (modal)", pg.locator("#exportPanel").evaluate("d => d.open") is True)
+    check("Dialog-Überschrift „PDF herunterladen“", pg.locator("#exportPanelHeading").inner_text().strip() == "PDF herunterladen", pg.locator("#exportPanelHeading").inner_text())
+    sichtbar = [b.inner_text().strip() for b in pg.locator("#exportPanel button").all() if b.is_visible()]
+    check("Im Dialog nur „Als PDF“ und „Abbrechen“ (keine Tabellen, die gibt es in „Alt-Texte“)", sichtbar == ["Als PDF", "Abbrechen"], sichtbar)
+    for _ in range(20):
+        zs = pg.locator("#exportSummary").inner_text()
+        if "Credits" in zs:
+            break
+        pg.wait_for_timeout(500)
+    check("Zusammenfassung nennt Bilder mit Text und Preis, nicht die Tabellen-Exporte", "Text" in zs and "Credits" in zs and "CSV" not in zs, zs)
+    check("Fokus liegt im Dialog", pg.evaluate("document.getElementById('exportPanel').contains(document.activeElement)"))
+    axe(pg, "Herunterladen-Dialog in der Ansicht Dokument")
     with pg.expect_download(timeout=90000) as dl_info:
-        pg.click("button[id^=dok_export_]")
+        pg.click("#exportPdfBtn")
     pfad = dl_info.value.path()
     check("PDF aus der Ansicht Dokument heruntergeladen (%PDF)", pfad is not None and open(pfad, "rb").read(5) == b"%PDF-", dl_info.value.suggested_filename)
     pg.wait_for_timeout(2500)
-    st = pg.locator("output[id^=dok_status_]").first.inner_text()
-    check("Statuszeile nennt Download und Ablage, Fokus darauf", "Heruntergeladen" in st and "Ablage" in st and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_status_"), st)
+    st = pg.locator("#exportStatus").inner_text()
+    check("Statuszeile im Dialog nennt den Download, Fokus darauf", "Heruntergeladen" in st and pg.evaluate("document.activeElement && document.activeElement.id") == "exportStatus", st)
+    check("Abbrechen heißt jetzt „Zurück zum Projekt“", pg.locator("#exportCancelBtn").inner_text().strip() == "Zurück zum Projekt")
+    axe(pg, "Herunterladen-Dialog nach dem Download")
+    pg.click("#exportCancelBtn")
+    pg.wait_for_timeout(500)
+    check("Dialog zu, Fokus zurück auf „PDF herunterladen“", pg.locator("#exportPanel").evaluate("d => d.open") is False and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_export_"))
     r = pg.request.get(B + f"/api/ausgaben?projekt={pid}")
     eintraege = r.json().get("ausgaben", []) if r.ok else []
     check("Ablage-Eintrag art pdf mit Datei", len(eintraege) == 1 and eintraege[0].get("art") == "pdf" and eintraege[0].get("datei_verfuegbar") is True, eintraege[:1])
@@ -250,6 +270,24 @@ with sync_playwright() as p:
     check("Alt-Text-Ansicht: gleicher Projektkopf mit PDF-Symbol, ohne Statusanzeige", pg.locator(".projekt-kopf img.projekt-dateityp").count() == 1 and pg.locator("#projectStatusBadge").count() == 0)
     check("Alt-Text-Ansicht: „Alt-Texte generieren“ und Einstellungen im Feld „Funktionen und Einstellungen“", pg.locator("section.projekt-funktionen #generateBtn").count() == 1 and pg.locator("section.projekt-funktionen #altLangSelect").count() == 1 and pg.locator("section.projekt-funktionen #useContextToggle").count() == 1)
     axe(pg, "Ansicht Alt-Texte mit neuem Kopf")
+    # Feedback 28.09.2026 - 1, Punkte 1-3: in „Alt-Texte“ kein Umbenennen/Löschen und keine PDF; eigener Knopf für die Textliste
+    da = pg.locator(".doc-block .doc-actions").first
+    check("Alt-Texte: am Dokument kein Umbenennen/Löschen, dafür Generieren + „Alt-Texte herunterladen“ (Punkt 1, 2)", da.locator("button:has-text('Umbenennen')").count() == 0 and da.locator("button:has-text('Löschen')").count() == 0 and "Alt-Texte generieren" in da.inner_text() and "Alt-Texte herunterladen" in da.inner_text(), da.inner_text())
+    check("Alt-Texte: Projektknopf heißt „Alt-Texte herunterladen“", pg.locator("#exportOpenBtn").inner_text().split("\n")[0].strip() == "Alt-Texte herunterladen", pg.locator("#exportOpenBtn").inner_text())
+    pg.click("#exportOpenBtn")
+    pg.wait_for_timeout(1500)
+    sichtbar = [b.inner_text().strip() for b in pg.locator("#exportPanel button").all() if b.is_visible()]
+    check("Alt-Texte-Dialog: nur Excel, JSON, CSV — keine PDF (Punkt 3)", sichtbar == ["Als Excel", "Als JSON", "Als CSV", "Abbrechen"] and pg.locator("#exportPanelHeading").inner_text().strip() == "Alt-Texte herunterladen", (sichtbar, pg.locator("#exportPanelHeading").inner_text()))
+    for _ in range(20):
+        zs = pg.locator("#exportSummary").inner_text()
+        if "Credits" in zs:
+            break
+        pg.wait_for_timeout(500)
+    check("Alt-Texte-Dialog: Preis der Textliste, kein PDF-Preis", "CSV" in zs and "Dieser Export kostet" not in zs, zs)
+    axe(pg, "Herunterladen-Dialog in der Ansicht Alt-Texte")
+    pg.keyboard.press("Escape")
+    pg.wait_for_timeout(400)
+    check("Escape schließt, Fokus zurück auf den Knopf", pg.locator("#exportPanel").evaluate("d => d.open") is False and pg.evaluate("document.activeElement && document.activeElement.id") == "exportOpenBtn")
     pg.go_back()
     pg.wait_for_selector("section.dok-karte", timeout=15000)
     check("Browser-Zurueck fuehrt zur Ansicht Dokument", pg.locator("section.dok-karte").count() == 1 and "ansicht=dokument" in pg.url)

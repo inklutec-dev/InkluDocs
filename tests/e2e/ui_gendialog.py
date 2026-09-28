@@ -93,8 +93,9 @@ with sync_playwright() as p:
           gen and all(n == "Alt-Texte generieren" for n in gen), str(gen))
     check("kein Preis und keine Anzahl auf den Knoepfen",
           not any("Credits" in n or n[:1].isdigit() for n in gen + dl), str(gen + dl))
+    # PDF-Projekte seit 28.09.2026 (Michael Karbe, Feedback 28.09.2026 - 1): „Alt-Texte herunterladen“ statt „Herunterladen“
     check("Herunterladen ohne den Zusatz Ganzes Projekt",
-          all(n == "Herunterladen" for n in dl), str(dl))
+          all(n in ("Herunterladen", "Alt-Texte herunterladen") for n in dl), str(dl))
 
     print("== B. Dialog oeffnen ==")
     page.locator("button:has-text('Alt-Texte generieren')").first.click()

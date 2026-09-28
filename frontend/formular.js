@@ -67,6 +67,9 @@
     let projektStatus = '';
     let exportZielDoc = null;     // Dokument-ID fuer den Export vom Knopf am Dokument, null = ganzes Projekt
     let aktuelleDocs = [];
+    // Quickinfos als Ansicht eines PDF-Projekts (nicht eigenstaendiges Formular-Projekt): Umbenennen und Loeschen gibt es
+    // dort nur in der Ansicht „Dokument“ (Michael Karbe, Feedback 28.09.2026 - 1, Punkt 1).
+    let imPdfProjekt = false;
     let nurOffene = false;
     let nurUnsichere = false;
 
@@ -394,8 +397,8 @@
             // (Michael Karbe) nimmt der Knopf IMMER alle benannten Felder des Dokuments, wie bei den Alt-Texten.
             +   (docBenannt && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + ico('sparkle') + t('Quickinfos generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   (felder.length ? '<button type="button" class="doc-action-btn" onclick="Formular.exportOeffnen(' + docKey + ')">' + ico('download') + t('Herunterladen') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
-            +   '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-            +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            +   (imPdfProjekt ? '' : '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>')
             + '</span>') + '</div>';
     }
 
@@ -960,6 +963,7 @@
         const project = data.project;
         projektStatus = project.status || '';
         aktuelleDocs = data.documents || [];
+        imPdfProjekt = typeof istPdfDateityp === 'function' && istPdfDateityp(project);
         inReview = !gast() && !!data.in_review;
         if (gast() && data.role) window.SHARE_ROLE = data.role;
         if (zustandProjekt !== projectId) { offeneDocs = new Set(); offeneSeiten = new Set(); zustandProjekt = projectId; }

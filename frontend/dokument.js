@@ -419,8 +419,9 @@
             // TESTWEISE TAGGEN (Michael Karbe, Feedback 24.09.2026 - 2, Punkt 3): kostenlos, Testmodus, das Original bleibt
             +   (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
             // „PDF herunterladen“ wieder hier (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 4; die Station „Prüfung“
-            // lädt nichts mehr herunter, Punkt 6). Derselbe Export wie bisher: Alt-Texte + Quickinfos, Ablage-Eintrag.
-            +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="Dokument.herunterladen(' + project.id + ', ' + d.id + ')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
+            // lädt nichts mehr herunter, Punkt 6). Seit 28.09.2026 (Feedback 28.09.2026 - 1, Punkte 3 und 4) NUR hier und mit
+            // derselben Rückfrage wie früher in „Alt-Texte“ (app.html exportDialogHtml/openExportPanel, Modus 'pdf').
+            +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
             +   (ZEIGE_STRUKTURANSICHT && d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
@@ -525,57 +526,8 @@
         if (h) h.focus();
     }
 
-    // ─── Herunterladen (wieder in „Dokument“, 25.09.2026) ───
-    async function herunterladenAntwort(res, out) {
-        if (res.status === 402) {
-            const e = await res.json().catch(() => ({}));
-            if (out) out.textContent = '';
-            if (typeof zeigeCreditsMeldung === 'function') zeigeCreditsMeldung(e.detail); else announce((e.detail && e.detail.text) || t('Dafür reicht das Guthaben nicht.'));
-            return null;
-        }
-        if (!res.ok) {
-            const e = await res.json().catch(() => ({}));
-            const m = (e.detail && (e.detail.text || e.detail)) || t('Fehler beim Export.');
-            if (out) { out.textContent = typeof m === 'string' ? m : t('Fehler beim Export.'); out.focus(); }
-            return null;
-        }
-        const blob = await res.blob();
-        const cd = res.headers.get('Content-Disposition') || '';
-        const mStar = /filename\*=UTF-8''([^;]+)/i.exec(cd);
-        const m = mStar || /filename="?([^";]+)"?/i.exec(cd);
-        let nm = null;
-        if (m) { try { nm = decodeURIComponent(m[1]); } catch (e) { nm = m[1]; } }
-        nm = nm || 'inkludocs.pdf';
-        if (typeof downloadBlob === 'function') downloadBlob(blob, nm);
-        let ansage = t('Heruntergeladen: „{name}“.', { name: nm }) + ' ' + t('Die Datei liegt auch in deiner Ablage.');
-        const credits = res.headers.get('X-Export-Credits');
-        if (credits) ansage += ' ' + t('{c} Credits verbraucht.', { c: credits });
-        return ansage;
-    }
-    let exportLaeuft = false;
-    async function herunterladen(projectId, docId) {
-        if (exportLaeuft) return;
-        const out = document.getElementById(docId ? 'dok_status_' + docId : 'dkAlleStatus');
-        const btn = document.getElementById(docId ? 'dok_export_' + docId : 'dkAlleBtn');
-        exportLaeuft = true;
-        if (btn) btn.disabled = true;
-        if (out) out.textContent = t('Wird exportiert...'); else announce(t('Export läuft …'));
-        try {
-            const res = await fetch('/api/projects/' + projectId + '/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(docId ? { document_id: docId } : {}) });
-            const ansage = await herunterladenAntwort(res, out);
-            if (ansage) {
-                await showProject(projectId, true);
-                const o2 = document.getElementById(docId ? 'dok_status_' + docId : 'dkAlleStatus');
-                if (o2) { o2.textContent = ansage; o2.focus(); } else { announce(ansage); }
-            }
-        } catch (e) {
-            if (out) out.textContent = t('Verbindungsfehler.');
-        } finally {
-            exportLaeuft = false;
-            const b2 = document.getElementById(docId ? 'dok_export_' + docId : 'dkAlleBtn');
-            if (b2) b2.disabled = false;
-        }
-    }
+    // ─── Herunterladen: seit 28.09.2026 ueber den Dialog aus app.html (openExportPanel, Modus 'pdf') statt direkt
+    // (Michael Karbe, Feedback 28.09.2026 - 1, Punkt 4). Meldung, Fokus und Doppelklick-Schutz macht der Dialog (doExport).
 
     // ─── Kopf ───
     // Projektkopf wie in allen Ansichten (app.html projektKopfHtml): Name + Dateityp-Symbol + Ansichts-Knoepfe; keine
@@ -592,6 +544,8 @@
         return projektKopfHtml(project, 'dokument', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
             + funktionenKarteHtml(aktionen)
             + laufDialogHtml(project)
+            // Herunterladen-Dialog (Feedback 28.09.2026 - 1, Punkt 4): derselbe wie in „Alt-Texte“, hier nur mit der PDF.
+            + (docs.some(d => d.getaggt === true) && typeof exportDialogHtml === 'function' ? exportDialogHtml(project) : '')
             + (ZEIGE_PROJEKT_KNOEPFE ? ketteDialogHtml(project) : '');
     }
 
@@ -837,11 +791,12 @@
         if (zustandProjekt !== projectId) { offeneBerichte = new Set(); offenePruefungen = new Set(); offeneDokumente = new Set(); geschlosseneDokumente = new Set(); zustandProjekt = projectId; }
         const docs = data.documents || [];
         neuLaden = (pid) => showProject(pid, true);   // diese Ansicht zeichnet nach Aktionen selbst neu
+        if (typeof exportKontextSetzen === 'function') exportKontextSetzen(docs, project.project_type);
         // Mehrere Dokumente, alle getaggt: alles auf einmal als ZIP (bis 25.09.2026 in der Abschlusspruefung)
         const alleGetaggt = docs.length > 1 && docs.every(d => d.getaggt === true && !(d.tagging && d.tagging.laeuft));
         const alleKnopf = alleGetaggt
-            ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="Dokument.herunterladen(' + project.id + ', 0)">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> ' + t('als ZIP, mit Alt-Texten und Quickinfos') + '</span></button>'
-              + '<output id="dkAlleStatus" class="dok-status" tabindex="-1" style="flex-basis:100%;"></output></p>'
+            ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="openExportPanel(' + project.id + ', 0, \'pdf\')">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> ' + t('als ZIP, mit Alt-Texten und Quickinfos') + '</span></button>'
+              + '</p>'
             : '';
         main.innerHTML = kopfHtml(project, data)
             + uploadBlockHtml(project)
@@ -889,6 +844,9 @@
             const tick = async () => {
                 if (zustandProjekt !== projectId) return;
                 if (!document.getElementById('dokListe')) { pollStoppen(); return; }   // Ansicht gewechselt
+                // Offener Herunterladen-Dialog: nicht neu zeichnen (das raeumte den Dialog mitten im Export weg), spaeter weiter.
+                const dlg = document.getElementById('exportPanel');
+                if (dlg && dlg.open) { pollTimer = setTimeout(tick, 2500); return; }
                 try {
                     const r = await fetch('/api/projects/' + projectId + '/dokument-ansicht');
                     if (!r.ok) { pollTimer = setTimeout(tick, 2500); return; }
@@ -949,7 +907,7 @@
         }
     }
 
-    // Herunterladen seit 25.09.2026 wieder hier (herunterladen); der Ansichtswechsel laeuft ueber die Ansichts-Knoepfe
+    // Herunterladen ueber den Dialog aus app.html (openExportPanel); der Ansichtswechsel laeuft ueber die Ansichts-Knoepfe
     // (app.html ansichtWahlHtml).
     // Fuer die Station „Prüfung“ (abschluss.js): der KI-Block kompakt, wer danach neu zeichnet, die Abschlusstexte.
     function kiBlockHtml(project, d) { return pruefungHtml(project, d, true); }
@@ -962,6 +920,6 @@
     }
     window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, meldungSchliessen, pollStoppen,
                         ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig,
-                        herunterladen, ergebnisSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden, testStarten,
+                        ergebnisSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden, testStarten,
                         pruefAbschlussText, korrAbschlussText };
 })();

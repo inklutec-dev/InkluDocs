@@ -45,6 +45,8 @@ with sync_playwright() as p:
     check("Quickinfo-Ansicht: kein Upload-Feld (Michael Karbe, Punkt 8: Hochladen nur in der Ansicht Dokument)", pg.locator("#projUploadZone").count() == 0 and pg.locator("#projUpload").count() == 0)
     check("Knopf „Quickinfos generieren“ im Feld „Funktionen und Einstellungen“", pg.locator("section.projekt-funktionen #fGenAllBtn").count() == 1)
     check("Quickinfo-Ansicht: Projektkopf mit PDF-Symbol + Ansichts-Wahl, ohne Statusanzeige", pg.locator(".projekt-kopf img.projekt-dateityp").count() == 1 and pg.locator(".projekt-kopf .ansicht-knoepfe").count() == 1 and pg.locator("#projectStatusBadge").count() == 0)
+    qa = pg.locator(".doc-block .doc-actions").first
+    check("Quickinfo-Ansicht: am Dokument kein Umbenennen/Löschen (Feedback 28.09.2026 - 1, Punkt 1)", qa.locator("button:has-text('Umbenennen')").count() == 0 and qa.locator("button:has-text('Löschen')").count() == 0 and "Quickinfos generieren" in qa.inner_text(), qa.inner_text())
     axe(pg, "Quickinfo-Ansicht im PDF-Projekt")
     pg.goto(B + f"/app?projekt={pid}", wait_until="networkidle"); pg.wait_for_timeout(1000)
     check("Ohne ?ansicht: gemerkte Ansicht Quickinfos", pg.locator("#feldListe").count() == 1)

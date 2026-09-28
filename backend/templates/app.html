@@ -963,44 +963,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </dialog>
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
-                        <button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${t('– ganzes Projekt')}</span></button>
+                        <!-- PDF-Projekte (Michael Karbe, Feedback 28.09.2026 - 1, Punkte 2 und 3): hier nur noch die Alt-Texte als
+                             Tabelle — eigener Knopf „Alt-Texte herunterladen“; die PDF selbst gibt es in der Ansicht „Dokument“. -->
+                        ${istPdfDateityp(project)
+                            ? '<button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(' + project.id + ', 0, \'tabellen\')">' + icon('download') + t('Alt-Texte herunterladen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>'
+                            : `<button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${t('– ganzes Projekt')}</span></button>`}
                         <!-- Meine Ausgaben (Steve/Michael 11.09.2026 Besprechung): kein Reiter mehr im Projektkopf, sondern ein
                              Link in Knopf-Optik direkt rechts neben „Herunterladen“ — fuehrt ins Regal, gefiltert auf dieses Projekt. -->
                         ${(project.project_type === 'docx' || (data.ausgaben_anzahl || 0) > 0) ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : ''}
-                        <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
-                            <div class="export-kopf">
-                                <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
-                                ${exportDocIconHtml(exportDocKuerzel(project))}
-                            </div>
-                            <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
-                            <div class="form-group" style="margin-bottom:0.8rem;">
-                                <!-- Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld. -->
-                                <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">${t('Dateiname (optional)')}</label>
-                                <input type="text" id="exportFilename" autocomplete="off" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
-                                <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">${t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.')}</p>
-                            </div>
-                            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'xlsx')">${t('Als Excel')}</button>
-                                <button class="btn btn-primary" onclick="doExport(${project.id}, 'json')">${t('Als JSON')}</button>
-                                <button class="btn btn-secondary" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
-                                ${project.project_type === 'pdf' ? '<button class="btn btn-secondary" id="exportPdfBtn" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF') + '</button>' : ''}
-                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word') + '</button>' : ''}
-                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln') + '</button>' : ''}
-                                ${project.project_type === 'docx' ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
-                                <span id="exportUebersetzungSlot"></span>
-                            </div>
-                            ${project.project_type === 'pdf' ? '<p id="exportPdfHinweis" hidden style="margin:0.5rem 0 0 0;color:var(--text-muted);font-size:0.9rem;">' + t('Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit.') + '</p>' : ''}
-                            <!-- Michael Karbe (Mail 12.09.2026, Punkt 7): im Word-Dialog eine Trennlinie unter der Knopfreihe,
-                                 damit Ergebnis und Pruefbericht sichtbar abgesetzt sind. Nur Word-Projekte haben die Umwandlung. -->
-                            ${project.project_type === 'docx' ? '<hr class="export-trenner" aria-hidden="true">' : ''}
-                            <output id="exportStatus" style="display:block;margin-top:0.5rem;"></output>
-                            <div id="pdfuaResult" role="region" aria-label="${t('Ergebnis der Umwandlung')}" aria-live="polite" style="margin-top:0.6rem;"></div>
-                            <!-- Fusszeile des Dialogs (Michael Karbe, Mail 12.09.2026): „Abbrechen“ steht unten rechts;
-                                 nach einer Umwandlung kommt „Zur Ablage“ direkt links daneben (doPdfua haengt den Link hier ein). -->
-                            <div id="exportFooter" style="margin-top:0.8rem;display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
-                                <button class="btn btn-secondary" id="exportCancelBtn" onclick="closeExportPanel()">${t('Abbrechen')}</button>
-                            </div>
-                        </dialog>
+                        ${exportDialogHtml(project)}
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <div style="flex-basis:100%;margin-top:0.6rem;">
@@ -2934,7 +2905,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </summary>
                         ${innerBlocks}
                     </details>
-                    ${!window.GUEST_MODE ? `<span class="doc-actions">
+                    ${!window.GUEST_MODE && istPdfDateityp(project) ? `<span class="doc-actions">
+                        ${docGenBtn}
+                        ${totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey}, 'tabellen')">${icon('download')}${t('Alt-Texte herunterladen')}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
+                    </span>` : ''}
+                    ${/* PDF-Projekte (Michael Karbe, Feedback 28.09.2026 - 1, Punkte 1-3): Umbenennen, Loeschen und die PDF nur
+                         noch in der Ansicht „Dokument“; hier bleiben Generieren und die Alt-Texte als Tabelle. Word, Web und
+                         Bilder unveraendert (Steve 28.09.2026: die anderen Werkzeuge ziehen spaeter nach). */ ''}
+                    ${!window.GUEST_MODE && !istPdfDateityp(project) ? `<span class="doc-actions">
                         ${docGenBtn}
                         ${totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
                         <button type="button" class="doc-action-btn" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">${icon('pencil')}${t('Umbenennen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
@@ -3554,7 +3532,73 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
-    function openExportPanel(projectId, docId) {
+    // HERUNTERLADEN-DIALOG als eigene Funktion (Michael Karbe, Feedback 28.09.2026 - 1, Punkt 4): dieselbe Rueckfrage in den
+    // Ansichten „Alt-Texte“ und „Dokument“ (dokument.js haengt ihn in seinen Kopf). Welche Knoepfe sichtbar sind, entscheidet
+    // openExportPanel() ueber den Modus; der Aufbau (Zusammenfassung mit Preis, Dateiname, Statuszeile mit Fokus, Abbrechen
+    // bzw. „Zurück zum Projekt“) ist fuer alle gleich.
+    function exportDialogHtml(project) {
+        const pdf = project.project_type === 'pdf';
+        const docx = project.project_type === 'docx';
+        return `
+                        <dialog id="exportPanel" class="invite-dialog" aria-labelledby="exportPanelHeading">
+                            <div class="export-kopf">
+                                <h2 id="exportPanelHeading" style="margin:0 0 0.6rem 0;">${t('Export-Optionen')}</h2>
+                                ${exportDocIconHtml(exportDocKuerzel(project))}
+                            </div>
+                            <div id="exportSummary" role="status" aria-live="polite" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;"></div>
+                            <div class="form-group" style="margin-bottom:0.8rem;">
+                                <!-- Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld. -->
+                                <label for="exportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">${t('Dateiname (optional)')}</label>
+                                <input type="text" id="exportFilename" autocomplete="off" aria-describedby="exportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">
+                                <p id="exportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">${t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.')}</p>
+                            </div>
+                            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                                <button class="btn btn-primary" data-art="tabelle" onclick="doExport(${project.id}, 'xlsx')">${t('Als Excel')}</button>
+                                <button class="btn btn-primary" data-art="tabelle" onclick="doExport(${project.id}, 'json')">${t('Als JSON')}</button>
+                                <button class="btn btn-secondary" data-art="tabelle" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
+                                ${pdf ? '<button class="btn btn-secondary" id="exportPdfBtn" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF') + '</button>' : ''}
+                                ${docx ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word') + '</button>' : ''}
+                                ${docx ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln') + '</button>' : ''}
+                                ${docx ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
+                                <span id="exportUebersetzungSlot"></span>
+                            </div>
+                            ${pdf ? '<p id="exportPdfHinweis" hidden style="margin:0.5rem 0 0 0;color:var(--text-muted);font-size:0.9rem;">' + t('Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit.') + '</p>' : ''}
+                            <!-- Michael Karbe (Mail 12.09.2026, Punkt 7): im Word-Dialog eine Trennlinie unter der Knopfreihe,
+                                 damit Ergebnis und Pruefbericht sichtbar abgesetzt sind. Nur Word-Projekte haben die Umwandlung. -->
+                            ${docx ? '<hr class="export-trenner" aria-hidden="true">' : ''}
+                            <output id="exportStatus" style="display:block;margin-top:0.5rem;"></output>
+                            <div id="pdfuaResult" role="region" aria-label="${t('Ergebnis der Umwandlung')}" aria-live="polite" style="margin-top:0.6rem;"></div>
+                            <!-- Fusszeile des Dialogs (Michael Karbe, Mail 12.09.2026): „Abbrechen“ steht unten rechts;
+                                 nach einer Umwandlung kommt „Zur Ablage“ direkt links daneben (doPdfua haengt den Link hier ein). -->
+                            <div id="exportFooter" style="margin-top:0.8rem;display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
+                                <button class="btn btn-secondary" id="exportCancelBtn" onclick="closeExportPanel()">${t('Abbrechen')}</button>
+                            </div>
+                        </dialog>`;
+    }
+    window.exportDialogHtml = exportDialogHtml;
+    // Die Ansicht „Dokument“ (dokument.js) zeichnet selbst — sie meldet hier ihre Dokumente und den Dateityp, damit Ueber-
+    // schrift und Zusammenfassung des Dialogs stimmen (sonst stuenden dort die Werte der zuletzt gezeigten Alt-Texte-Ansicht).
+    function exportKontextSetzen(docs, projectType) {
+        currentRenderDocs = docs || [];
+        currentRenderProjectType = projectType || '';
+    }
+    window.exportKontextSetzen = exportKontextSetzen;
+
+    // Modus des Dialogs (Michael Karbe, Feedback 28.09.2026 - 1, Punkte 2-4, nur PDF-Projekte):
+    //   'tabellen' = Ansicht „Alt-Texte“: nur die Alt-Texte als Excel, JSON, CSV — keine PDF (die gibt es in „Dokument“);
+    //   'pdf'      = Ansicht „Dokument“: nur die PDF (mit Alt-Texten und Quickinfos) — die Textlisten gibt es in „Alt-Texte“;
+    //   ''         = alles wie bisher (Word, Bilder, Web).
+    let exportModus = '';
+    function openExportPanel(projectId, docId, modus) {
+        exportModus = modus || '';
+        const panelM = document.getElementById('exportPanel');
+        if (panelM) {
+            panelM.querySelectorAll('button[data-art="tabelle"]').forEach(b => { b.hidden = exportModus === 'pdf'; });
+            const pdfBtnM = document.getElementById('exportPdfBtn');
+            if (pdfBtnM) pdfBtnM.hidden = exportModus === 'tabellen';
+            const pdfHinweisM = document.getElementById('exportPdfHinweis');
+            if (pdfHinweisM) pdfHinweisM.hidden = true;
+        }
         // docId (28.08.2026): vom Knopf am Dokument aus — dieses Dokument vorausgewaehlt, Auswahl bleibt aenderbar.
         // 18.08.2026 (Fable 5): echtes modales <dialog> statt Inline-Bereich.
         // showModal() liefert Fokusfalle, Escape-zum-Schliessen und inerten
@@ -3590,7 +3634,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // dort steht kein Dateiname. Historie: 01.09. Dokumentname (f9e344e), 09.09. Beta weg.
             // Bilder- und Web-Projekte liefern nur die Alt-Texte als Tabelle (kein Dokument) — Michael 14.09.2026, Punkt 6.
             const nurTabellen = !(currentRenderProjectType === 'pdf' || currentRenderProjectType === 'docx');
-            head.textContent = (!doc && docs.length > 1)
+            if (exportModus === 'tabellen') head.textContent = t('Alt-Texte herunterladen');
+            else if (exportModus === 'pdf') head.textContent = (!doc && docs.length > 1) ? t('Alle Dokumente herunterladen') : t('PDF herunterladen');
+            else head.textContent = (!doc && docs.length > 1)
                 ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: docs.length })
                 : (nurTabellen ? t('Alt-Texte herunterladen') : t('Dokument / Alt-Texte herunterladen'));
         }
@@ -3619,10 +3665,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             if (!res.ok) { region.textContent = ''; return; }
             const d = await res.json();
             // PDF ohne Tags (Michael Karbe 15.09.2026): Knopf weg, Satz hin — der Server entscheidet (pdf_moeglich).
+            // In der Ansicht „Alt-Texte“ (Modus 'tabellen') gibt es keine PDF — dort bleiben Knopf und Satz weg.
             const pdfBtn = document.getElementById('exportPdfBtn');
             const pdfHinweis = document.getElementById('exportPdfHinweis');
-            if (pdfBtn) pdfBtn.hidden = (d.pdf_moeglich === false);
-            if (pdfHinweis) pdfHinweis.hidden = !(d.pdf_moeglich === false);
+            if (pdfBtn) pdfBtn.hidden = exportModus === 'tabellen' || (d.pdf_moeglich === false);
+            if (pdfHinweis) pdfHinweis.hidden = exportModus === 'tabellen' || !(d.pdf_moeglich === false);
             // Drei Gruende statt zwei (Steve 01.09.2026, gehoert: „3 noch nicht generiert“, obwohl
             // alles generiert war): dekorativ ERKANNT (KI oder Autor), bewusst geleert, nicht generiert.
             // Michael Karbe 01.09.2026: nur „mit Text / ohne Text / dekorativ" — keine Gruende. Was der
@@ -3643,8 +3690,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // als würde die Datei selbst als Tabelle exportiert.
             // Bilder- und Web-Projekte haben nur Tabellen-Exporte (Michael Karbe 14.09.2026, Punkt 6): vorher stand hier
             // der PDF-Preis („Dieser Export kostet 30 Credits“) und „zusätzlich als CSV“, obwohl es keine PDF gibt.
-            const nurTabellen = !(currentRenderProjectType === 'pdf' || currentRenderProjectType === 'docx');
-            if (nurTabellen) {
+            const nurTabellen = exportModus === 'tabellen' || !(currentRenderProjectType === 'pdf' || currentRenderProjectType === 'docx');
+            if (exportModus === 'pdf') {
+                // Ansicht „Dokument“: nur die PDF, darum nur ihr Preis (die Textlisten gibt es in „Alt-Texte“).
+                if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
+            } else if (nurTabellen) {
                 if (typeof d.preis_tabelle === 'number') msg += ' ' + ((d.verfuegbar === null || d.verfuegbar === undefined)
                     ? t('Der Export als CSV, Excel oder JSON kostet {p} Credits.', { p: d.preis_tabelle })
                     : t('Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}.', { p: d.preis_tabelle, v: d.verfuegbar }));
