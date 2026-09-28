@@ -8418,6 +8418,9 @@ def _abschluss_dokument(project: dict, unit: dict, user_id: int, _, voll: bool) 
         "aktuell": meta.get("fingerabdruck") == st["fingerabdruck"],
         "verapdf_moeglich": verapdf_kt is not None,
         "bestanden": bool(verapdf_kt and verapdf_kt.get("bestanden")),
+        # Zahlen aus veraPDF selbst (Michael Karbe 28.09.2026: „Prüfung basiert nicht auf veraPDF?“ — sichtbar machen)
+        "pruefpunkte_erfuellt": (meta.get("verapdf_roh") or {}).get("passed_checks"),
+        "pruefpunkte_verletzt": (meta.get("verapdf_roh") or {}).get("failed_checks"),
         "vollstaendigkeit_geprueft": meta.get("vollstaendigkeit_geprueft", True),
         "hinweise": meta.get("warnungen") or [],
         "anzahl_probleme": None,

@@ -56,6 +56,16 @@
         if (geschlosseneDokumente.has(d.id)) return false;
         return anzahl <= 1 || offeneDokumente.has(d.id);
     }
+    function zahl(n) {
+        try { return new Intl.NumberFormat(document.documentElement.lang || undefined).format(n); } catch (e) { return String(n); }
+    }
+    function normText(p) {
+        if (!p.verapdf_moeglich) return t('nicht möglich (Prüfdienst nicht erreichbar)');
+        const ok = typeof p.pruefpunkte_erfuellt === 'number' ? p.pruefpunkte_erfuellt : null;
+        const fehler = typeof p.pruefpunkte_verletzt === 'number' ? p.pruefpunkte_verletzt : null;
+        if (p.bestanden) return ok !== null ? t('bestanden, {n} Prüfpunkte erfüllt', { n: zahl(ok) }) : t('bestanden');
+        return fehler !== null ? t('nicht bestanden, {n} Prüfpunkte verletzt', { n: zahl(fehler) }) : t('mit Hinweisen');
+    }
     function karteHtml(project, d, pos, anzahl) {
         const nm = esc(name(d));
         const vh = t('– Dokument „{name}“', { name: nm });
@@ -68,7 +78,9 @@
                 + metaZeile(t('Seiten'), esc(d.seiten || '?'))
                 + metaZeile(t('Prüfdatei'), p ? t('erstellt am {zeit}', { zeit: esc(p.erstellt_am || '') }) : t('noch nicht erstellt'))
                 + (p ? metaZeile(t('Stand'), p.aktuell ? t('aktuell') : t('nicht mehr aktuell — seitdem wurden Alt-Texte, Quickinfos oder die Datei geändert')) : '')
-                + (p ? metaZeile(t('PDF/UA-Prüfung'), p.verapdf_moeglich ? (p.bestanden ? t('bestanden') : t('mit Hinweisen')) : t('nicht möglich (Prüfdienst nicht erreichbar)')) : '')
+                // Norm-Pruefung ausdruecklich als veraPDF, mit dessen Zahlen (Michael Karbe 28.09.2026: „Die aktuelle Prüfung scheint
+                // nicht auf veraPDF zu basieren“ — sie tat es, nur stand es nirgends); darunter, was InkluDocs zusaetzlich prueft.
+                + (p ? metaZeile(t('Norm-Prüfung PDF/UA-1 (veraPDF)'), normText(p)) : '')
                 + (p && p.anzahl_probleme != null ? metaZeile(t('Problemstellen'), esc(p.anzahl_probleme)) : '')
                 + (p && p.vollstaendigkeit_geprueft === false ? metaZeile(t('Vollständigkeit'), t('nicht geprüft')) : '')
                 + '</ul>';
@@ -91,7 +103,8 @@
             + meta
             // Sprache und Zusammenfassung oben bei den Infos (Punkt 10); gefuellt, sobald die Details geladen sind
             + '<ul class="dok-meta ab-kopf" id="ab_kopf_' + d.id + '">' + (details[d.id] ? kopfZeilenHtml(details[d.id]) : '') + '</ul>'
-            + (p ? '<p class="feld-hinweis">' + t('Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos.') + '</p>'
+            + (p ? '<p class="feld-hinweis">' + t('Zusätzlich prüft InkluDocs, was veraPDF nicht beurteilen kann: Struktur (zum Beispiel Überschriften-Ebenen und Tabellenköpfe), Vollständigkeit des vorgelesenen Textes und auf Wunsch die KI-basierte Prüfung. Diese Hinweise stehen bei den Problemstellen, jeweils mit ihrer Quelle.') + '</p>'
+                 + '<p class="feld-hinweis">' + t('Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos.') + '</p>'
                  : (d.getaggt ? '<p class="feld-hinweis">' + t('Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos.') + '</p>' : ''))
             + (p && !p.aktuell ? '<p class="feld-hinweis"><strong>' + t('Die Prüfdatei ist nicht mehr aktuell.') + '</strong> ' + t('Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst.') + '</p>' : '')
             + aktionen
@@ -153,7 +166,7 @@
         // damit die Seitenansicht erreichbar bleibt; Zustand bleibt beim Blaettern.
         if (!probleme.length) {
             s += '<h4 id="ab_probleme_' + d.id + '">' + t('Problemstellen ({n})', { n: 0 }) + '</h4>'
-                + '<p>' + t('Keine Problemstellen gefunden: PDF/UA-Prüfung, Struktur und Vollständigkeit sind ohne Befund.') + '</p>';
+                + '<p>' + t('Keine Problemstellen gefunden: veraPDF (PDF/UA-1), Struktur und Vollständigkeit sind ohne Befund.') + '</p>';
             return s;
         }
         if (z.listeOffen === undefined) z.listeOffen = probleme.length <= 10;

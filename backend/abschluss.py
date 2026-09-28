@@ -32,7 +32,7 @@ from typing import Callable, Optional
 # und alle anderen Buchstaben zaehlen mit (Pruefbericht 24.09.2026).
 _WORT = re.compile(r"[^\W\d_]{3,}|\d{3,}")
 # Version des Pruefdatei-Baus: steigt, wenn sich der Bau aendert — alte Pruefdateien gelten dann als nicht aktuell.
-ABSCHLUSS_VERSION = 2
+ABSCHLUSS_VERSION = 3   # 3: Strukturlesung mit Leerzeichen-Korrektur (28.09.2026) — alte Pruefdateien gelten als nicht aktuell
 _NUR_ZAHL = re.compile(r"^[\s\d\W]{1,8}$")
 VOLLSTAENDIG_ANTEIL = 0.6
 MAX_FEHLEND_JE_SEITE = 12
@@ -194,7 +194,7 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
         for e in (p.get("einzeln") or [{"text": p.get("text") or "", "seiten": p.get("seiten") or []}]):
             seiten = [int(x) for x in (e.get("seiten") or []) if str(x).isdigit()]
             out.append({"seite": (seiten[0] if seiten else 0), "seiten": seiten, "art": "technisch",
-                        "quelle": _("PDF/UA-Prüfung"), "text": f"{p.get('bereich', '')}: {e.get('text', '')}".strip(": ")})
+                        "quelle": _("veraPDF (PDF/UA-1)"), "text": f"{p.get('bereich', '')}: {e.get('text', '')}".strip(": ")})
     if struktur:
         for p in struktur_probleme(struktur, _, quickinfos):
             p.update({"seiten": [p["seite"]] if p["seite"] else [], "quelle": _("Struktur")})

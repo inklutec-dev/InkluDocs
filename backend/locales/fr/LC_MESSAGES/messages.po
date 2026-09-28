@@ -9570,3 +9570,23 @@ msgstr "Par compte : {n} textes générés par jour, application et API confondu
 msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
 msgstr "Si l’IA ne peut pas décrire une image, l’entrée garde le statut failed, le champ error indique la raison en langage courant (par exemple « service IA surchargé (429) » ou « Le fichier image n’a pas pu être lu »), et counts.failed sur le document le comptabilise. Si tout un traitement s’arrête plus tôt (crédits, limite journalière, annulation), la raison se trouve dans run_note sur le document. Les perturbations passagères du service IA sont réessayées par InkluDocs avec un délai avant qu’une entrée ne soit considérée comme failed."
 
+msgid "veraPDF (PDF/UA-1)"
+msgstr "veraPDF (PDF/UA-1)"
+
+msgid "Norm-Prüfung PDF/UA-1 (veraPDF)"
+msgstr "Contrôle de norme PDF/UA-1 (veraPDF)"
+
+#, python-brace-format
+msgid "bestanden, {n} Prüfpunkte erfüllt"
+msgstr "réussi, {n} points de contrôle respectés"
+
+#, python-brace-format
+msgid "nicht bestanden, {n} Prüfpunkte verletzt"
+msgstr "échoué, {n} points de contrôle non respectés"
+
+msgid "Zusätzlich prüft InkluDocs, was veraPDF nicht beurteilen kann: Struktur (zum Beispiel Überschriften-Ebenen und Tabellenköpfe), Vollständigkeit des vorgelesenen Textes und auf Wunsch die KI-basierte Prüfung. Diese Hinweise stehen bei den Problemstellen, jeweils mit ihrer Quelle."
+msgstr "InkluDocs vérifie en plus ce que veraPDF ne peut pas évaluer : la structure (par exemple les niveaux de titres et les en-têtes de tableau), l’exhaustivité du texte lu à voix haute et, sur demande, le contrôle basé sur l’IA. Ces remarques figurent avec les problèmes, chacune avec sa source."
+
+msgid "Keine Problemstellen gefunden: veraPDF (PDF/UA-1), Struktur und Vollständigkeit sind ohne Befund."
+msgstr "Aucun problème trouvé : veraPDF (PDF/UA-1), la structure et l’exhaustivité sont sans constat."
+

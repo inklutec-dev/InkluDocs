@@ -9138,3 +9138,23 @@ msgstr "Per konto: {n} genererade texter per dag, appen och API:et tillsammans, 
 msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
 msgstr "Kan AI:n inte beskriva en bild behåller posten status failed, fältet error anger orsaken på vanligt språk (till exempel ”AI-tjänsten överbelastad (429)” eller ”Bildfilen kunde inte läsas”), och counts.failed på dokumentet räknar den. Avslutas en hel körning tidigare (krediter, dagsgräns, avbrott) står orsaken i run_note på dokumentet. Tillfälliga störningar hos AI-tjänsten försöker InkluDocs själv igen med väntetid innan en post räknas som failed."
 
+msgid "veraPDF (PDF/UA-1)"
+msgstr "veraPDF (PDF/UA-1)"
+
+msgid "Norm-Prüfung PDF/UA-1 (veraPDF)"
+msgstr "Normkontroll PDF/UA-1 (veraPDF)"
+
+#, python-brace-format
+msgid "bestanden, {n} Prüfpunkte erfüllt"
+msgstr "godkänd, {n} kontrollpunkter uppfyllda"
+
+#, python-brace-format
+msgid "nicht bestanden, {n} Prüfpunkte verletzt"
+msgstr "inte godkänd, {n} kontrollpunkter överträdda"
+
+msgid "Zusätzlich prüft InkluDocs, was veraPDF nicht beurteilen kann: Struktur (zum Beispiel Überschriften-Ebenen und Tabellenköpfe), Vollständigkeit des vorgelesenen Textes und auf Wunsch die KI-basierte Prüfung. Diese Hinweise stehen bei den Problemstellen, jeweils mit ihrer Quelle."
+msgstr "Dessutom kontrollerar InkluDocs det som veraPDF inte kan bedöma: struktur (till exempel rubriknivåer och tabellrubriker), fullständigheten i den upplästa texten och vid behov den AI-baserade kontrollen. Dessa anmärkningar står vid problemställena, var och en med sin källa."
+
+msgid "Keine Problemstellen gefunden: veraPDF (PDF/UA-1), Struktur und Vollständigkeit sind ohne Befund."
+msgstr "Inga problemställen hittades: veraPDF (PDF/UA-1), struktur och fullständighet är utan anmärkning."
+

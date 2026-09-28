@@ -35,7 +35,7 @@ _SCRIPT_DIR = Path(__file__).parent / "pdfix_scripts"
 _SCRIPT = _SCRIPT_DIR / "Struktur_Export.py"
 _TIMEOUT_SECONDS = int(os.environ.get("PDFIX_STRUKTUR_TIMEOUT", "180"))
 MAX_ZEILE = 400
-STRUKTUR_VERSION = 2   # Cache-Version: 2 = mit Objektnummern (obj) je Element; aeltere Caches werden neu gelesen
+STRUKTUR_VERSION = 3   # Cache-Version: 2 = mit Objektnummern (obj) je Element; 3 = Leerzeichen-Korrektur 28.09.2026 (Struktur_Export); aeltere Caches werden neu gelesen
 
 
 class StrukturFehler(Exception):

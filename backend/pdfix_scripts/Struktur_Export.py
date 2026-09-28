@@ -37,6 +37,7 @@ _page_cache: dict = {}
 _page_objects_cache: dict = {}
 _doc = None
 _tree = None
+_pfad = ""   # Pfad der PDF (fuer die Worterkennung mit PyMuPDF)
 
 
 def _sauber(s):
@@ -64,14 +65,107 @@ def _page_text_objects(page_num):
                 if obj.GetObjectType() == kPdsPageText:
                     mcid = obj.GetMcid()
                     if mcid != -1:
-                        objs.append((mcid, _sauber(obj.GetText())))   # auch " " (Worttrenner bei Einzelzeichen-PDFs)
+                        objs.append((mcid, _sauber(obj.GetText()), _lage(obj)))   # auch " " (Worttrenner bei Einzelzeichen-PDFs)
         except Exception as e:  # noqa: BLE001
             print(f"WARNUNG: Seite {page_num + 1} nicht lesbar: {e}", file=sys.stderr)
         _page_objects_cache[page_num] = objs
     return objs
 
 
-def _append_fragment(out, frag, letzte_laenge=0, leerzeichen_objekte=False):
+def _lage(obj):
+    """Umriss eines Textstuecks (links, unten, rechts, oben) in Seitenkoordinaten, None wenn nicht lesbar."""
+    try:
+        bb = obj.GetBBox()
+        l, b, r, t = float(bb.left), float(bb.bottom), float(bb.right), float(bb.top)
+    except Exception:  # noqa: BLE001
+        return None
+    if r <= l or t <= b:
+        return None
+    return (l, b, r, t)
+
+
+# Leerzeichen auf Seiten mit Leerzeichen-Objekten (28.09.2026, Michael Karbe: „Prüfung basiert nicht auf veraPDF?“).
+# Die Seitenregel (seit 22.09.) verband auf solchen Seiten ALLE Textstuecke ohne Leerzeichen — gedacht fuer Browser-Druck,
+# wo Woerter in Bruchstuecken kommen und die Worttrenner als eigene " "-Objekte. Stand irgendwo auf der Seite ein
+# solches Objekt, klebte auch alles andere: aus den Diagramm-Beschriftungen „Förderung“ / „für“ / „Plug-In-Hybride“
+# wurde „FörderungfürPlug-In-Hybride“; die Vollstaendigkeitspruefung meldete den Text als fehlend, die Hoerprobe las
+# ihn zusammengezogen. Die Datei selbst war richtig (veraPDF bestanden).
+# Jetzt entscheidet auf solchen Seiten die WORTERKENNUNG von PyMuPDF (rechnet mit den echten Zeichenbreiten, dieselbe
+# Quelle wie die Vollstaendigkeitspruefung): zwei Stuecke werden nur verbunden, wenn das Ende des einen und der Anfang
+# des anderen im selben Wort liegen. PDFix' Umrisse allein reichen dafuer nicht (Glyphen-Umriss statt Laufweite: im
+# Versuch wurden Browser-Druck-Woerter zerrissen, „Ve rt ra g“). Ohne PyMuPDF/Lage: grobe Regel (andere Zeile oder
+# grosse Luecke = Leerzeichen). Seiten OHNE Leerzeichen-Objekte: unveraendert.
+GROSSE_LUECKE = 0.8   # Anteil der Zeilenhoehe (Rueckfall)
+_fitz_doc = None
+_fitz_versucht = False
+_woerter_cache: dict = {}
+
+
+def _gleiche_zeile(a, b):
+    hoehe = min(a[3] - a[1], b[3] - b[1])
+    ueberlapp = min(a[3], b[3]) - max(a[1], b[1])
+    return hoehe > 0 and ueberlapp >= 0.5 * hoehe
+
+
+def _woerter(page_num):
+    """[(x0, y0, x1, y1)] der Woerter einer Seite in PDF-Koordinaten (y nach oben), None ohne PyMuPDF."""
+    global _fitz_doc, _fitz_versucht
+    if page_num in _woerter_cache:
+        return _woerter_cache[page_num]
+    erg = None
+    try:
+        if not _fitz_versucht:
+            _fitz_versucht = True
+            import fitz  # noqa: F401  PyMuPDF
+            _fitz_doc = fitz.open(_pfad)
+        if _fitz_doc is not None:
+            import fitz
+            seite = _fitz_doc[page_num]
+            zurueck = ~seite.transformation_matrix   # MuPDF-Koordinaten -> PDF-Koordinaten
+            erg = []
+            for w in seite.get_text("words"):
+                r = fitz.Rect(w[:4]) * zurueck
+                erg.append((r.x0, r.y0, r.x1, r.y1))
+    except Exception as e:  # noqa: BLE001
+        print(f"WARNUNG: Worterkennung Seite {page_num + 1} nicht moeglich: {e}", file=sys.stderr)
+        erg = None
+    _woerter_cache[page_num] = erg
+    return erg
+
+
+def _selbes_wort(page_num, vorher, jetzt):
+    """True/False nach PyMuPDF-Woertern; None, wenn das nicht zu entscheiden ist."""
+    woerter = _woerter(page_num)
+    if woerter is None or not vorher or not jetzt:
+        return None
+    ende = (vorher[2] - 0.2 * min(vorher[2] - vorher[0], 2.0), (vorher[1] + vorher[3]) / 2)
+    anfang = (jetzt[0] + 0.2 * min(jetzt[2] - jetzt[0], 2.0), (jetzt[1] + jetzt[3]) / 2)
+    tol = 0.5
+
+    def drin(pkt, w):
+        return w[0] - tol <= pkt[0] <= w[2] + tol and w[1] - tol <= pkt[1] <= w[3] + tol
+    wa = [w for w in woerter if drin(ende, w)]
+    if not wa:
+        return None
+    return any(drin(anfang, w) for w in wa)
+
+
+def _getrennt(page_num, vorher, jetzt):
+    """True = Leerzeichen setzen (nur fuer Seiten mit Leerzeichen-Objekten gebraucht)."""
+    if not vorher or not jetzt:
+        return False
+    wort = _selbes_wort(page_num, vorher, jetzt)
+    if wort is not None:
+        return not wort
+    if not _gleiche_zeile(vorher, jetzt):
+        return True
+    if jetzt[0] < vorher[0]:
+        return True
+    hoehe = min(vorher[3] - vorher[1], jetzt[3] - jetzt[1])
+    return (jetzt[0] - vorher[2]) >= GROSSE_LUECKE * hoehe
+
+
+def _append_fragment(out, frag, letzte_laenge=0, leerzeichen_objekte=False, getrennt=False):
     """Fragmente verketten. Manche Erzeuger (z. B. Browser-Druck) legen jeden Buchstaben als eigenes
     Textobjekt ab und Leerzeichen als eigene Objekte — dann werden Einzelzeichen OHNE Leerzeichen
     angehaengt und die Leerzeichen-Objekte als Worttrenner uebernommen; sonst wie im Alt-Text-Export."""
@@ -88,7 +182,7 @@ def _append_fragment(out, frag, letzte_laenge=0, leerzeichen_objekte=False):
     # Seite mit eigenen Leerzeichen-Objekten (Browser-Druck u. a.): Textobjekte sind Bruchstuecke von
     # Woertern, die Worttrenner kommen als " " — deshalb ohne Leerzeichen anhaengen.
     if leerzeichen_objekte:
-        return out + frag
+        return out + " " + frag if getrennt else out + frag
     if len(frag) == 1 and letzte_laenge == 1:
         return out + frag
     return out + " " + frag
@@ -123,11 +217,14 @@ def _text(elem, deep=False, max_text=600):
     for p in seiten:
         wanted = {m for pp, m in paare if pp == p}
         objekte = _page_text_objects(p)
-        leer = any(t == " " for _m, t in objekte)
-        for mcid, text in objekte:
+        leer = any(t == " " for _m, t, _l in objekte)
+        vorher = None
+        for mcid, text, lage in objekte:
             if mcid in wanted and text:
-                out = _append_fragment(out, text, letzte, leer)
+                out = _append_fragment(out, text, letzte, leer, _getrennt(p, vorher, lage) if leer else False)
                 letzte = len(text)
+                if text.strip():
+                    vorher = lage
     out = " ".join(out.replace("\xad", "").split())
     if max_text and len(out) > max_text:
         out = out[:max_text].rstrip() + " …"
@@ -240,7 +337,7 @@ def _walk(elem, tiefe, pfad, out, max_text, zaehler, im_text=False):
 
 
 def main():
-    global _doc, _tree
+    global _doc, _tree, _pfad
     ap = argparse.ArgumentParser(description="Strukturlesung einer getaggten PDF (InkluDocs)")
     ap.add_argument("-i", "--input", required=True)
     ap.add_argument("-o", "--output", required=True)
@@ -251,6 +348,7 @@ def main():
     if pdfix is None:
         raise SystemExit("Pdfix Initialization fail")
     betrieb.lizenz_aktivieren(pdfix)
+    _pfad = args.input
     _doc = pdfix.OpenDoc(args.input, "")
     if _doc is None:
         sys.exit(betrieb.pdf_nicht_geoeffnet(pdfix))
@@ -289,7 +387,7 @@ def main():
                 t = z["id"].count(".") + 1
                 spalten = max(spalten, sum(1 for f in nach if f["id"].startswith(z["id"] + ".") and f["id"].count(".") == t and f["typ"] in ("TH", "TD")))
             e["zeilen"], e["spalten"] = len(zeilen), spalten
-        info = {"seiten": _doc.GetNumPages(), "elemente": len(out), "dauer_s": round(time.time() - t0, 2), "version": 2}
+        info = {"seiten": _doc.GetNumPages(), "elemente": len(out), "dauer_s": round(time.time() - t0, 2), "version": 3}
         try:
             info["lang"] = _sauber(_doc.GetLang() or "")
         except Exception:  # noqa: BLE001

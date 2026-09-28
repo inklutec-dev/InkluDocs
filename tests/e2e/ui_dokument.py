@@ -7,6 +7,7 @@ Dialog, keine Skriptfehler. Legt sein Projekt selbst an und loescht es (ausser -
 Aufruf: /home/claude/.venv-pw/bin/python ui_dokument.py [--behalten]
 Braucht INKLUDOCS_E2E_MAIL / INKLUDOCS_E2E_PW (Testkonto auf Staging)."""
 import os
+import re
 import sys
 import time
 from playwright.sync_api import sync_playwright
@@ -340,7 +341,9 @@ with sync_playwright() as p:
     st = pg.locator("output[id^=ab_status_]").first.inner_text()
     check("Prüfdatei erstellt, Statuszeile mit Fokus", "Prüfdatei erstellt" in st and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("ab_status_"), st)
     meta = pg.locator("section.ab-karte ul.dok-meta").first.inner_text()
-    check("Stand: Prüfdatei erstellt am …, aktuell, PDF/UA-Prüfung, Problemstellen", all(k in meta for k in ("Prüfdatei: erstellt am", "Stand: aktuell", "PDF/UA-Prüfung: ", "Problemstellen: ")), meta)
+    check("Stand: Prüfdatei erstellt am …, aktuell, Norm-Prüfung (veraPDF), Problemstellen", all(k in meta for k in ("Prüfdatei: erstellt am", "Stand: aktuell", "Norm-Prüfung PDF/UA-1 (veraPDF): ", "Problemstellen: ")), meta)
+    check("veraPDF nennt Ergebnis mit Zahl der Prüfpunkte (Michael Karbe 28.09.2026)", re.search(r"Norm-Prüfung PDF/UA-1 \(veraPDF\): (bestanden, [\d.]+ Prüfpunkte erfüllt|nicht bestanden, [\d.]+ Prüfpunkte verletzt)", meta) is not None, meta)
+    check("Hinweis: was InkluDocs zusätzlich prüft", "Zusätzlich prüft InkluDocs" in pg.locator("section.ab-karte").first.inner_text())
     pg.wait_for_timeout(1500)
     kopf = pg.locator("ul[id^=ab_kopf_]").first.inner_text()
     check("Sprache und Zusammenfassung oben bei den Infos (Punkt 10)", "Sprache" in kopf and "Zusammenfassung" in kopf, kopf)

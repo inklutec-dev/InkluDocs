@@ -9267,3 +9267,23 @@ msgstr "Pr. konto: {n} genererede tekster pr. dag, app og API tilsammen, uanset 
 msgid "Kann die KI ein Bild nicht beschreiben, bleibt der Eintrag mit status failed stehen, das Feld error nennt den Grund in Alltagssprache (zum Beispiel „KI-Dienst überlastet (429)“ oder „Die Bilddatei konnte nicht gelesen werden“), und counts.failed am Dokument zählt mit. Endet ein ganzer Lauf früher (Guthaben, Tageslimit, Abbruch), steht der Grund in run_note am Dokument. Vorübergehende Störungen beim KI-Dienst wiederholt InkluDocs schon selbst mit Wartezeit, bevor ein Eintrag als failed gilt."
 msgstr "Kan AI’en ikke beskrive et billede, beholder posten status failed, feltet error angiver årsagen i almindeligt sprog (for eksempel „AI-tjeneste overbelastet (429)“ eller „Billedfilen kunne ikke læses“), og counts.failed på dokumentet tæller den med. Slutter en hel kørsel tidligere (kreditter, dagsgrænse, afbrydelse), står årsagen i run_note på dokumentet. Midlertidige forstyrrelser hos AI-tjenesten gentager InkluDocs selv med ventetid, før en post regnes som failed."
 
+msgid "veraPDF (PDF/UA-1)"
+msgstr "veraPDF (PDF/UA-1)"
+
+msgid "Norm-Prüfung PDF/UA-1 (veraPDF)"
+msgstr "Normkontrol PDF/UA-1 (veraPDF)"
+
+#, python-brace-format
+msgid "bestanden, {n} Prüfpunkte erfüllt"
+msgstr "bestået, {n} kontrolpunkter opfyldt"
+
+#, python-brace-format
+msgid "nicht bestanden, {n} Prüfpunkte verletzt"
+msgstr "ikke bestået, {n} kontrolpunkter overtrådt"
+
+msgid "Zusätzlich prüft InkluDocs, was veraPDF nicht beurteilen kann: Struktur (zum Beispiel Überschriften-Ebenen und Tabellenköpfe), Vollständigkeit des vorgelesenen Textes und auf Wunsch die KI-basierte Prüfung. Diese Hinweise stehen bei den Problemstellen, jeweils mit ihrer Quelle."
+msgstr "Derudover kontrollerer InkluDocs det, som veraPDF ikke kan vurdere: struktur (for eksempel overskriftsniveauer og tabeloverskrifter), fuldstændigheden af den oplæste tekst og efter ønske den AI-baserede kontrol. Disse bemærkninger står ved problemstederne, hver med sin kilde."
+
+msgid "Keine Problemstellen gefunden: veraPDF (PDF/UA-1), Struktur und Vollständigkeit sind ohne Befund."
+msgstr "Ingen problemsteder fundet: veraPDF (PDF/UA-1), struktur og fuldstændighed er uden fund."
+
