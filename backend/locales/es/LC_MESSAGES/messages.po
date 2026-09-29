@@ -9668,3 +9668,34 @@ msgstr "Descargar información sobre herramientas"
 msgid "{b} von {n} Feldern haben eine Quickinfo."
 msgstr "{b} de {n} campos tienen información sobre herramientas."
 
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1; beim ZIP die Anzahl unveränderter Dokumente) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste."
+msgstr "Estado: uploaded, extracting, ready, generating, done, error. with_text y without_text siguen la misma regla que el diálogo de descarga de la aplicación: cuenta si el campo contiene texto, sea de la IA, a mano o de la fuente. Las imágenes decorativas no tienen texto y no cuentan como abiertas. En los PDF, tagged indica si el archivo tiene etiquetas; Sin etiquetas, la exportación a PDF no escribe textos alternativos: el archivo se devuelve sin cambios y sin coste (cabecera X-Export-Unveraendert: 1; en un ZIP, el número de documentos sin cambios) o, si hay información sobre herramientas, solo con ella. Los textos alternativos están entonces disponibles como lista."
+
+msgid "Prüfung nicht möglich"
+msgstr "Comprobación no posible"
+
+msgid "Die Prüfung mit veraPDF war nicht möglich, weil der Prüfdienst nicht erreichbar war. Das ist kein Ergebnis über dein Dokument. Erstelle die Prüfdatei bitte später neu."
+msgstr "La comprobación con veraPDF no fue posible porque el servicio no estaba disponible. No es un resultado sobre tu documento. Vuelve a crear el archivo de comprobación más tarde."
+
+msgid "Die Prüfung mit veraPDF war nicht möglich (Prüfdienst nicht erreichbar). Bitte später neu erstellen."
+msgstr "La comprobación con veraPDF no fue posible (servicio no disponible). Vuelve a crearla más tarde."
+
+msgid "Wird berechnet …"
+msgstr "Calculando …"
+
+msgid "ohne Tags: unverändert und kostenlos"
+msgstr "sin etiquetas: sin cambios y gratis"
+
+msgid "als ZIP; Dokumente ohne Tags bekommen keine Alt-Texte"
+msgstr "como ZIP; los documentos sin etiquetas no reciben textos alternativos"
+
+msgid "Vorgelesener Text"
+msgstr "Texto leído"
+
+msgid "Hörprobe geladen, 1 Zeile."
+msgstr "Muestra de audio cargada, 1 línea."
+
+#, python-brace-format
+msgid "Hörprobe geladen, {n} Zeilen."
+msgstr "Muestra de audio cargada, {n} líneas."
+

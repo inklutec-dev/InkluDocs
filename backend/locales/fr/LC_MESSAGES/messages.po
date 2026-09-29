@@ -9668,3 +9668,34 @@ msgstr "Télécharger les infobulles"
 msgid "{b} von {n} Feldern haben eine Quickinfo."
 msgstr "{b} champs sur {n} ont une infobulle."
 
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1; beim ZIP die Anzahl unveränderter Dokumente) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste."
+msgstr "Statut : uploaded, extracting, ready, generating, done, error. with_text et without_text suivent la même règle que la boîte de téléchargement de l’application : ce qui compte, c’est si le champ contient un texte, qu’il vienne de l’IA, de la main ou de la source. Les images décoratives n’ont pas de texte et ne comptent pas comme ouvertes. Pour les PDF, tagged indique si le fichier est balisé ; Sans balises, l’export PDF n’écrit pas de textes alternatifs : le fichier revient inchangé et gratuitement (en-tête X-Export-Unveraendert: 1 ; pour un ZIP, le nombre de documents inchangés) ou, s’il y a des infobulles, uniquement avec les infobulles. Les textes alternatifs sont alors disponibles sous forme de liste."
+
+msgid "Prüfung nicht möglich"
+msgstr "Contrôle impossible"
+
+msgid "Die Prüfung mit veraPDF war nicht möglich, weil der Prüfdienst nicht erreichbar war. Das ist kein Ergebnis über dein Dokument. Erstelle die Prüfdatei bitte später neu."
+msgstr "Le contrôle avec veraPDF n’a pas été possible, car le service de contrôle était injoignable. Ce n’est pas un résultat sur ton document. Recrée le fichier de contrôle plus tard."
+
+msgid "Die Prüfung mit veraPDF war nicht möglich (Prüfdienst nicht erreichbar). Bitte später neu erstellen."
+msgstr "Le contrôle avec veraPDF n’a pas été possible (service injoignable). Recrée-le plus tard."
+
+msgid "Wird berechnet …"
+msgstr "Calcul en cours …"
+
+msgid "ohne Tags: unverändert und kostenlos"
+msgstr "sans balises : inchangé et gratuit"
+
+msgid "als ZIP; Dokumente ohne Tags bekommen keine Alt-Texte"
+msgstr "en ZIP ; les documents sans balises ne reçoivent pas de textes alternatifs"
+
+msgid "Vorgelesener Text"
+msgstr "Texte lu"
+
+msgid "Hörprobe geladen, 1 Zeile."
+msgstr "Écoute chargée, 1 ligne."
+
+#, python-brace-format
+msgid "Hörprobe geladen, {n} Zeilen."
+msgstr "Écoute chargée, {n} lignes."
+

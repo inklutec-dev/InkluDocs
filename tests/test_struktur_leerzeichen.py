@@ -23,7 +23,9 @@ class Leerzeichen(unittest.TestCase):
     def setUp(self):
         # Seite 0: Woerter „Förderung“ (Zeile 1), „für“ und „Plug-In-Hybride“ (Zeile 2), „Vertrag“ (Zeile 3, aus 3 Stücken)
         se._woerter_cache.clear()
-        se._woerter_cache[0] = [(10, 100, 60, 110), (10, 85, 25, 95), (30, 85, 90, 95), (10, 70, 50, 80)]
+        se._unterkanten_cache.clear()
+        # wie _woerter sie liefert: nach Unterkante sortiert (bisect in _selbes_wort)
+        se._woerter_cache[0] = sorted([(10, 100, 60, 110), (10, 85, 25, 95), (30, 85, 90, 95), (10, 70, 50, 80)], key=lambda w: w[1])
 
     def test_andere_zeile_bekommt_leerzeichen(self):
         self.assertTrue(se._getrennt(0, (10, 100, 60, 110), (10, 85, 25, 95)))

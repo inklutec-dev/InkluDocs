@@ -121,16 +121,32 @@ def _woerter(page_num):
         if _fitz_doc is not None:
             import fitz
             seite = _fitz_doc[page_num]
+            # Gedrehte Seiten (/Rotate): nur im Speicher auf 0 drehen, sonst fehlt in der Umrechnung der Ursprung von
+            # MediaBox/CropBox (Review 29.09.2026); gespeichert wird nichts.
+            if seite.rotation:
+                seite.set_rotation(0)
             zurueck = ~seite.transformation_matrix   # MuPDF-Koordinaten -> PDF-Koordinaten
             erg = []
             for w in seite.get_text("words"):
                 r = fitz.Rect(w[:4]) * zurueck
-                erg.append((r.x0, r.y0, r.x1, r.y1))
+                erg.append((r.x0, min(r.y0, r.y1), r.x1, max(r.y0, r.y1)))
+            erg.sort(key=lambda w: w[1])   # nach Unterkante, fuer die Suche mit bisect (_selbes_wort)
     except Exception as e:  # noqa: BLE001
         print(f"WARNUNG: Worterkennung Seite {page_num + 1} nicht moeglich: {e}", file=sys.stderr)
         erg = None
     _woerter_cache[page_num] = erg
     return erg
+
+
+_unterkanten_cache: dict = {}
+
+
+def _unterkanten(page_num, woerter):
+    u = _unterkanten_cache.get(page_num)
+    if u is None or len(u) != len(woerter):
+        u = [w[1] for w in woerter]
+        _unterkanten_cache[page_num] = u
+    return u
 
 
 def _selbes_wort(page_num, vorher, jetzt):
@@ -144,7 +160,13 @@ def _selbes_wort(page_num, vorher, jetzt):
 
     def drin(pkt, w):
         return w[0] - tol <= pkt[0] <= w[2] + tol and w[1] - tol <= pkt[1] <= w[3] + tol
-    wa = [w for w in woerter if drin(ende, w)]
+    # nur Woerter, deren Unterkante nicht ueber dem Punkt liegt, und hoechstens eine grosse Zeilenhoehe darunter (bisect statt
+    # alle Woerter der Seite je Stueck; Review 29.09.2026)
+    import bisect
+    unterkanten = _unterkanten(page_num, woerter)
+    hi = bisect.bisect_right(unterkanten, ende[1] + tol)
+    lo = bisect.bisect_left(unterkanten, ende[1] - 200.0)
+    wa = [w for w in woerter[lo:hi] if drin(ende, w)]
     if not wa:
         return None
     return any(drin(anfang, w) for w in wa)
@@ -221,7 +243,7 @@ def _text(elem, deep=False, max_text=600):
         vorher = None
         for mcid, text, lage in objekte:
             if mcid in wanted and text:
-                out = _append_fragment(out, text, letzte, leer, _getrennt(p, vorher, lage) if leer else False)
+                out = _append_fragment(out, text, letzte, leer, _getrennt(p, vorher, lage) if (leer and text != " ") else False)
                 letzte = len(text)
                 if text.strip():
                     vorher = lage

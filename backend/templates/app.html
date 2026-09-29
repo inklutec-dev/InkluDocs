@@ -108,7 +108,7 @@
          Multi-Datei Phase 2 (14.08.2026): dieselben zwei Dialoge bedienen jetzt
          drei Arten (PDF-Dokument, Webseite, Einzelbild) — Titel/Label/Hinweis
          werden beim Oeffnen passend zur Art gesetzt (siehe _kindTexte). -->
-    <dialog id="docDeleteDialog" class="app-dialog">
+    <dialog id="docDeleteDialog" class="app-dialog" aria-labelledby="docDeleteTitle" aria-describedby="docDeleteBody">
         <h2 id="docDeleteTitle">{{ _('Dokument löschen?') }}</h2>
         <p id="docDeleteBody"></p>
         <div class="dialog-actions">
@@ -133,7 +133,7 @@
             <button type="button" class="btn btn-primary" id="genConfirmOk">{{ _('Generieren') }}</button>
         </div>
     </dialog>
-    <dialog id="docRenameDialog" class="app-dialog">
+    <dialog id="docRenameDialog" class="app-dialog" aria-labelledby="docRenameTitle" aria-describedby="docRenameHint">
         <form id="docRenameForm">
             <h2 id="docRenameTitle">{{ _('Dokument umbenennen') }}</h2>
             <label for="docRenameInput" id="docRenameLabel">{{ _('Neuer Name des Dokuments') }}</label>
@@ -775,7 +775,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 } else if (docHead) {
                     // h2 in summary ist nicht fokussierbar — Fokus auf die summary legen.
                     const sum = docHead.closest('summary');
-                    if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); }
+                    if (sum) sum.focus();   // nativ fokussierbar, kein tabindex (29.09.2026)
                 } else {
                     const h = document.getElementById('bilderHeading');
                     if (h) h.focus();
@@ -1262,10 +1262,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // null gesetzt, weil das Ziel nicht mehr existiert.
     function _moveFocusAfterDocChange() {
         const prefix = _docActionKind === 'img' ? 'img_heading_' : 'doc_heading_';
-        const head = _docActionId ? document.getElementById(prefix + _docActionId) : null;
+        // Karten der Ansichten „Dokument“/„Tagging“ heissen dok_heading_ (A11y-Review 29.09.2026: sonst landete der Fokus oben)
+        const head = _docActionId ? (document.getElementById(prefix + _docActionId) || document.getElementById('dok_heading_' + _docActionId)) : null;
         const sum = head ? head.closest('summary') : null;
-        if (sum) { sum.setAttribute('tabindex', '-1'); sum.focus(); return; }
-        const h = document.getElementById('bilderHeading');
+        if (sum) { sum.focus(); return; }   // nativ fokussierbar; tabindex=-1 nahm es aus der Tab-Reihenfolge (29.09.2026)
+        const h = document.getElementById('bilderHeading') || document.getElementById('dokumenteHeading');
         if (h) h.focus();
     }
 
@@ -3570,7 +3571,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                  damit Ergebnis und Pruefbericht sichtbar abgesetzt sind. Nur Word-Projekte haben die Umwandlung. -->
                             ${docx ? '<hr class="export-trenner" aria-hidden="true">' : ''}
                             <output id="exportStatus" style="display:block;margin-top:0.5rem;"></output>
-                            <div id="pdfuaResult" role="region" aria-label="${t('Ergebnis der Umwandlung')}" aria-live="polite" style="margin-top:0.6rem;"></div>
+                            ${docx ? '<div id="pdfuaResult" role="region" aria-label="' + t('Ergebnis der Umwandlung') + '" aria-live="polite" style="margin-top:0.6rem;"></div>' : ''}
                             <!-- Fusszeile des Dialogs (Michael Karbe, Mail 12.09.2026): „Abbrechen“ steht unten rechts;
                                  nach einer Umwandlung kommt „Zur Ablage“ direkt links daneben (doPdfua haengt den Link hier ein). -->
                             <div id="exportFooter" style="margin-top:0.8rem;display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
@@ -3655,15 +3656,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         } else {
             panel.setAttribute('open', '');
         }
-        loadExportSummary(projectId);
-        announce(t('Export-Optionen geöffnet.'));
+        loadExportSummary(projectId);   // Dialog-Überschrift + Zusammenfassung (role=status) sagen genug; announce() ausserhalb des Modals verpufft
     }
 
     async function loadExportSummary(projectId) {
         const region = document.getElementById('exportSummary');
         if (!region) return;
         const scope = readExportScope();
-        region.textContent = t('Bilder werden geprüft …');
+        region.textContent = t('Wird berechnet …');
         try {
             const body = {};
             if (!scope.all && scope.document_id) body.document_id = scope.document_id;
@@ -3691,16 +3691,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             // alles generiert war): dekorativ ERKANNT (KI oder Autor), bewusst geleert, nicht generiert.
             // Michael Karbe 01.09.2026: nur „mit Text / ohne Text / dekorativ" — keine Gruende. Was der
             // Kunde im Browser sieht, kommt in die Datei; leere Felder bleiben in der Datei leer.
-            const dekTeil = d.dekorativ ? t(', {n} als dekorativ gekennzeichnet', { n: d.dekorativ }) : '';
-            const ohne = typeof d.ohne_text === 'number' ? d.ohne_text : d.uebersprungen;
-            const mit = typeof d.mit_text === 'number' ? d.mit_text : d.beschrieben;
+            // Im PDF-Dialog zählen nur die Bilder getaggter Dokumente — nur dort landen Alt-Texte (Review 29.09.2026)
+            const zb = (exportModus === 'pdf' && d.pdf_bilder) ? d.pdf_bilder : d;
+            const dekTeil = zb.dekorativ ? t(', {n} als dekorativ gekennzeichnet', { n: zb.dekorativ }) : '';
+            const ohne = typeof zb.ohne_text === 'number' ? zb.ohne_text : zb.uebersprungen;
+            const mit = typeof zb.mit_text === 'number' ? zb.mit_text : zb.beschrieben;
             let msg;
             if (ohne === 0) {
-                msg = t('Alle {n} Bilder haben einen Text{dek}.', { n: d.total, dek: dekTeil });
+                msg = t('Alle {n} Bilder haben einen Text{dek}.', { n: zb.total, dek: dekTeil });
             } else if (ohne === 1) {
-                msg = t('{b} von {n} Bildern haben einen Text, 1 hat keinen{dek}.', { b: mit, n: d.total, dek: dekTeil });
+                msg = t('{b} von {n} Bildern haben einen Text, 1 hat keinen{dek}.', { b: mit, n: zb.total, dek: dekTeil });
             } else {
-                msg = t('{b} von {n} Bildern haben einen Text, {o} haben keinen{dek}.', { b: mit, n: d.total, o: ohne, dek: dekTeil });
+                msg = t('{b} von {n} Bildern haben einen Text, {o} haben keinen{dek}.', { b: mit, n: zb.total, o: ohne, dek: dekTeil });
             }
             // Export-Staffel (28.08.2026): Preis und Guthaben vor dem Export ansagen.
             // CSV/JSON als Zusatzangebot formuliert (Steve 01.09.2026): „Tabellen-Exporte kosten“ klang bei PDF/Word so,
@@ -3723,8 +3725,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
                 if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Die Alternativtexte können zusätzlich als CSV, Excel oder JSON exportiert werden ({p} Credits).', { p: d.preis_tabelle });
             }
-            region.textContent = msg;
-            announce(msg);
+            region.textContent = msg;   // role=status im Dialog; announce() ausserhalb des Modals verpufft (A11y-Review 29.09.2026)
         } catch (e) {
             region.textContent = '';
         }
@@ -3941,16 +3942,17 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const aktivInhalt = aktiv ? aktiv.innerHTML : '';
         knoepfe.forEach(b => { b.disabled = true; });
         if (aktiv) aktiv.textContent = t('Wird exportiert...');
+        // Der gedrueckte Knopf ist jetzt gesperrt, der Fokus faellt sonst auf die Seite (A11y-Review 29.09.2026): gleich auf
+        // die Statuszeile setzen — sie sagt „Wird exportiert …“ und danach das Ergebnis oder den Fehler.
+        const statusEl = document.getElementById('exportStatus');
+        if (statusEl) { statusEl.setAttribute('tabindex', '-1'); statusEl.focus(); }
         try {
             await _doExport(projectId, format);
         } finally {
             _exportLaeuft = false;
             knoepfe.forEach(b => { b.disabled = false; });
             if (aktiv) aktiv.innerHTML = aktivInhalt;
-            if (_exportFertig) {
-                const statusEl = document.getElementById('exportStatus');
-                if (statusEl) statusEl.focus();
-            }
+            if (statusEl && (_exportFertig || !panel || !panel.contains(document.activeElement) || document.activeElement === statusEl)) statusEl.focus();
         }
     }
 

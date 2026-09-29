@@ -30,6 +30,7 @@
     const details = {};     // docId -> volle Daten (Probleme, Hörprobe)
     const laedt = new Set();   // docIds, deren Details gerade geladen werden (kein doppelter Abruf)
     let pollTimer = null;      // solange eine Prüfdatei gebaut wird (auch aus einem anderen Tab)
+    let pollGen = 0;           // jede Abfrage-Schleife hat ihre Nummer; eine neue Zeichnung beendet die alte
     const ansicht = {};     // docId -> { seite: n, listeOffen }
     let dokDaten = {};      // docId -> Dokument aus /dokument-ansicht (Stand der KI-Pruefung fuer den KI-Block)
     let dokProjekt = null;
@@ -45,11 +46,14 @@
         if (!p) return t('Noch keine Prüfdatei');
         if (!p.aktuell) return t('Prüfdatei nicht mehr aktuell');
         if (p.anzahl_probleme == null) return t('Prüfdatei wird erstellt …');
+        // Ohne veraPDF gibt es (seit „nur veraPDF“) nichts, was Probleme melden könnte — nie „Keine Problemstellen“ zeigen
+        if (!p.eigene_pruefungen && p.verapdf_moeglich === false) return t('Prüfung nicht möglich');
         const n = p.anzahl_probleme || 0;
         return n ? anzahlProbleme(n) : t('Keine Problemstellen gefunden');
     }
     function standKlasse(d) {
         if (!d.getaggt || !d.pruefdatei || !d.pruefdatei.aktuell) return 'badge-ready';
+        if (!d.pruefdatei.eigene_pruefungen && d.pruefdatei.verapdf_moeglich === false) return 'badge-ready';
         return (d.pruefdatei.anzahl_probleme || 0) ? 'badge-processing' : 'badge-done';
     }
     function metaZeile(bez, wert) { return '<li>' + bez + ': <span>' + wert + '</span></li>'; }
@@ -170,6 +174,12 @@
         let s = '';
         // Problemliste: nummeriert, mit Sprung zur Seite, ohne „!“ (Punkt 7). Lange Listen (mehr als 10) zugeklappt,
         // damit die Seitenansicht erreichbar bleibt; Zustand bleibt beim Blaettern.
+        const ohneVerapdf = d.pruefdatei && !d.pruefdatei.eigene_pruefungen && d.pruefdatei.verapdf_moeglich === false;
+        if (ohneVerapdf) {
+            s += '<h4 id="ab_probleme_' + d.id + '">' + t('Prüfung nicht möglich') + '</h4>'
+                + '<p>' + t('Die Prüfung mit veraPDF war nicht möglich, weil der Prüfdienst nicht erreichbar war. Das ist kein Ergebnis über dein Dokument. Erstelle die Prüfdatei bitte später neu.') + '</p>';
+            return s;
+        }
         if (!probleme.length) {
             s += '<h4 id="ab_probleme_' + d.id + '">' + t('Problemstellen ({n})', { n: 0 }) + '</h4>'
                 + '<p>' + t('Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1.') + '</p>';
@@ -291,8 +301,11 @@
             await showProject(projectId, true);
             const o2 = document.getElementById('ab_status_' + docId);
             const n = (j.probleme || []).length;
+            const pd = j.pruefdatei || {};
             const text = (j.neu_gebaut === false ? t('Die Prüfdatei ist schon aktuell.') : t('Prüfdatei erstellt.')) + ' '
-                + (n ? (n === 1 ? t('1 Problemstelle gefunden.') : t('{n} Problemstellen gefunden.', { n: n })) : t('Keine Problemstellen gefunden.'));
+                + ((!pd.eigene_pruefungen && pd.verapdf_moeglich === false)
+                    ? t('Die Prüfung mit veraPDF war nicht möglich (Prüfdienst nicht erreichbar). Bitte später neu erstellen.')
+                    : (n ? (n === 1 ? t('1 Problemstelle gefunden.') : t('{n} Problemstellen gefunden.', { n: n })) : t('Keine Problemstellen gefunden.')));
             // Die Statuszeile ist ein <output> (Live-Region) und bekommt den Fokus — keine zusaetzliche announce()
             if (o2) { o2.textContent = text; o2.focus(); } else { announce(text); }
         } catch (e) {
@@ -357,6 +370,7 @@
     async function showProject(projectId, erneut) {
         projectId = Number(projectId);   // Adresse liefert Text, Knoepfe eine Zahl — ohne das ging der Zustand verloren
         if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+        pollGen++;
         kiPollStoppen();
         if (typeof vorlesenStopp === 'function') vorlesenStopp();
         const main = document.getElementById('main');
@@ -429,11 +443,25 @@
         }
         // Laeuft ein Bau (auch aus einem anderen Tab), die Ansicht nachziehen, bis er fertig ist; die KI-Nachfrage
         // laeuft unabhaengig davon (Generation schuetzt vor doppelten Schleifen)
+        // Nur den Stand abfragen und erst nach dem Bau neu zeichnen — vorher wurde alle 3 s alles neu gezeichnet und
+        // VoiceOver verlor die Position (A11y-Review 29.09.2026); danach Fokus erhalten.
         if (docs.some(d => d.laeuft)) {
-            pollTimer = setTimeout(() => {
+            const gen = ++pollGen;
+            const warte = async () => {
                 pollTimer = null;
-                if (document.getElementById('abListe')) showProject(projectId, true);
-            }, 3000);
+                if (gen !== pollGen || !document.getElementById('abListe')) return;
+                try {
+                    const r = await fetch('/api/projects/' + projectId + '/abschluss', { credentials: 'same-origin' });
+                    const j = r.ok ? await r.json() : null;
+                    if (gen !== pollGen || !document.getElementById('abListe')) return;
+                    if (!j || (j.documents || []).some(x => x.laeuft)) { pollTimer = setTimeout(warte, 3000); return; }
+                } catch (e) { if (gen === pollGen) pollTimer = setTimeout(warte, 3000); return; }
+                const a = document.activeElement, fokusId = a && a !== document.body ? a.id : '';
+                await showProject(projectId, true);
+                const el = fokusId ? document.getElementById(fokusId) : null;
+                if (el) el.focus();
+            };
+            pollTimer = setTimeout(warte, 3000);
         }
         kiPollStarten(projectId);
     }

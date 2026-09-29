@@ -49,7 +49,8 @@ with sync_playwright() as p:
     check("Quickinfo-Ansicht: am Dokument kein Umbenennen/Löschen (Feedback 28.09.2026 - 1, Punkt 1)", qa.locator("button:has-text('Umbenennen')").count() == 0 and qa.locator("button:has-text('Löschen')").count() == 0 and "Quickinfos generieren" in qa.inner_text(), qa.inner_text())
     axe(pg, "Quickinfo-Ansicht im PDF-Projekt")
     # Feedback 20260928 - 2, Punkt 4: in „Quickinfos“ nur die Feldliste, die PDF in „Dokument“
-    check("Knopf „Quickinfos herunterladen“ (Projekt)", pg.locator("#fExportOpenBtn").inner_text().strip() == "Quickinfos herunterladen", pg.locator("#fExportOpenBtn").inner_text())
+    kn_txt = pg.locator("#fExportOpenBtn").text_content() or ""
+    check("Knopf „Quickinfos herunterladen“ (Projekt), für Screenreader „– ganzes Projekt“", kn_txt.strip().startswith("Quickinfos herunterladen") and "ganzes Projekt" in kn_txt, kn_txt)
     pg.click("#fExportOpenBtn"); pg.wait_for_timeout(800)
     sicht = [b.inner_text().strip() for b in pg.locator("#fExportPanel button").all() if b.is_visible()]
     check("Dialog „Quickinfos herunterladen“: nur CSV (Feldliste) und Abbrechen, keine PDF", pg.locator("#fExportHeading").inner_text().strip() == "Quickinfos herunterladen" and sicht == ["Als CSV (Feldliste)", "Abbrechen"], (pg.locator("#fExportHeading").inner_text(), sicht))

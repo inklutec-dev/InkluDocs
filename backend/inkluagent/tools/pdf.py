@@ -408,9 +408,15 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
         conn.close()
     try:
         units = m._load_pdf_export_units(project, user_id, doc["id"])
-        m._ungetaggte_pruefen(units)
     except HTTPException as e:
         return _fehler(e)
+    # Ohne Tags (seit 29.09.2026, Michael Karbe, Feedback 20260928 - 2, Punkt 5): kein Fehler mehr, aber auch kein
+    # Export über den Chat — die Datei bliebe unverändert bzw. bekäme nur Quickinfos; das holt man in „Dokument“.
+    if not m._pdf_export_plan(user_id, units)["getaggt"]:
+        return {"ok": False, "error": ("Diese PDF hat keine Tags, deshalb lassen sich keine Alt-Texte hineinschreiben. "
+                                       "In der Ansicht „Dokument“ gibt es sie mit „PDF herunterladen“: unverändert und kostenlos, "
+                                       "oder mit vorhandenen Quickinfos. Für eine PDF mit Alt-Texten sie zuerst in der Ansicht "
+                                       "„Tagging“ barrierefrei machen.")}
     anzahl = sum(len(u["images"]) for u in units)
     p = m.billing.export_pruefung(user_id, anzahl, "pdf")
     vorschau = {"dokument": _name(doc), "bilder": anzahl, "preis": p.get("preis"), "verfuegbar": p.get("verfuegbar"),

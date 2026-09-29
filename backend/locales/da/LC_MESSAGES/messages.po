@@ -9365,3 +9365,34 @@ msgstr "Download værktøjstip"
 msgid "{b} von {n} Feldern haben eine Quickinfo."
 msgstr "{b} af {n} felter har et værktøjstip."
 
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1; beim ZIP die Anzahl unveränderter Dokumente) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste."
+msgstr "Status: uploaded, extracting, ready, generating, done, error. with_text og without_text følger samme regel som appens download-dialog: det tæller, om feltet indeholder tekst, uanset om den er fra AI’en, manuel eller fra kilden. Dekorative billeder har ingen tekst og tæller ikke som åbne. Ved PDF’er siger tagged, om filen har tags; Uden tags skriver PDF-eksporten ingen alternative tekster: filen kommer uændret og gratis tilbage (header X-Export-Unveraendert: 1; ved ZIP antallet af uændrede dokumenter) eller, hvis der er værktøjstip, kun med værktøjstippene. De alternative tekster findes så som tekstliste."
+
+msgid "Prüfung nicht möglich"
+msgstr "Kontrol ikke mulig"
+
+msgid "Die Prüfung mit veraPDF war nicht möglich, weil der Prüfdienst nicht erreichbar war. Das ist kein Ergebnis über dein Dokument. Erstelle die Prüfdatei bitte später neu."
+msgstr "Kontrollen med veraPDF var ikke mulig, fordi kontroltjenesten ikke kunne nås. Det er ikke et resultat om dit dokument. Opret kontrolfilen igen senere."
+
+msgid "Die Prüfung mit veraPDF war nicht möglich (Prüfdienst nicht erreichbar). Bitte später neu erstellen."
+msgstr "Kontrollen med veraPDF var ikke mulig (tjenesten kunne ikke nås). Opret den igen senere."
+
+msgid "Wird berechnet …"
+msgstr "Beregner …"
+
+msgid "ohne Tags: unverändert und kostenlos"
+msgstr "uden tags: uændret og gratis"
+
+msgid "als ZIP; Dokumente ohne Tags bekommen keine Alt-Texte"
+msgstr "som ZIP; dokumenter uden tags får ingen alternative tekster"
+
+msgid "Vorgelesener Text"
+msgstr "Oplæst tekst"
+
+msgid "Hörprobe geladen, 1 Zeile."
+msgstr "Lytteprøve indlæst, 1 linje."
+
+#, python-brace-format
+msgid "Hörprobe geladen, {n} Zeilen."
+msgstr "Lytteprøve indlæst, {n} linjer."
+

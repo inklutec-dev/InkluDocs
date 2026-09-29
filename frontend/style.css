@@ -982,6 +982,7 @@ input[type="file"] {
 }
 .inkluagent-toggle::before {
     content: '\25B6';
+    content: '\25B6' / '';   /* Dreieck nur zur Zier: nicht im Namen von Knopf/Ueberschrift (A11y-Review 29.09.2026); alte Browser nehmen die Zeile davor */
     display: inline-block;
     margin-right: 0.5rem;
     transition: transform 0.2s;

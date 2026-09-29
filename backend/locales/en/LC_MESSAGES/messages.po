@@ -9666,3 +9666,34 @@ msgstr "Download tooltips"
 msgid "{b} von {n} Feldern haben eine Quickinfo."
 msgstr "{b} of {n} fields have a tooltip."
 
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1; beim ZIP die Anzahl unveränderter Dokumente) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste."
+msgstr "Status: uploaded, extracting, ready, generating, done, error. with_text and without_text follow the same rule as the app’s download dialog: what counts is whether the field contains text, whether from the AI, by hand or from the source. Decorative images have no text and do not count as open. For PDFs, tagged says whether the file has tags; Without tags the PDF export writes no alt texts: the file comes back unchanged and free of charge (header X-Export-Unveraendert: 1; for a ZIP, the number of unchanged documents) or, if there are tooltips, with the tooltips only. The alt texts are then available as a text list."
+
+msgid "Prüfung nicht möglich"
+msgstr "Check not possible"
+
+msgid "Die Prüfung mit veraPDF war nicht möglich, weil der Prüfdienst nicht erreichbar war. Das ist kein Ergebnis über dein Dokument. Erstelle die Prüfdatei bitte später neu."
+msgstr "The veraPDF check was not possible because the checking service could not be reached. This is not a result about your document. Please create the check file again later."
+
+msgid "Die Prüfung mit veraPDF war nicht möglich (Prüfdienst nicht erreichbar). Bitte später neu erstellen."
+msgstr "The veraPDF check was not possible (checking service unreachable). Please create it again later."
+
+msgid "Wird berechnet …"
+msgstr "Calculating …"
+
+msgid "ohne Tags: unverändert und kostenlos"
+msgstr "without tags: unchanged and free of charge"
+
+msgid "als ZIP; Dokumente ohne Tags bekommen keine Alt-Texte"
+msgstr "as ZIP; documents without tags get no alt texts"
+
+msgid "Vorgelesener Text"
+msgstr "Text read aloud"
+
+msgid "Hörprobe geladen, 1 Zeile."
+msgstr "Listening sample loaded, 1 line."
+
+#, python-brace-format
+msgid "Hörprobe geladen, {n} Zeilen."
+msgstr "Listening sample loaded, {n} lines."
+

@@ -380,7 +380,7 @@
             + Array.from(seiten.entries()).sort((a, b) => a[0] - b[0]).map(([p, fs]) => seiteHtml(docKey, p, fs, treffer)).join('');
         const offen = felder.filter(f => !(f.quickinfo && f.quickinfo.trim())).length;
         const meta = '(' + t('{n} Felder, {o} offen', { n: felder.length, o: offen }) + ')';
-        const vh = t('– Formular „{name}“', { name: name });
+        const vh = imPdfProjekt ? t('– Dokument „{name}“', { name: name }) : t('– Formular „{name}“', { name: name });   // im PDF-Projekt wie in den anderen Ansichten
         const docBenannt = felder.filter(f => !istNamenlos(f)).length;
         const docKi = felder.filter(f => f.quelle === 'ki' && !istNamenlos(f));
         const docKiSeiten = new Set(docKi.filter(f => f.page_number > 0).map(f => f.page_number)).size;
@@ -482,7 +482,7 @@
                 // nennt die Rueckfrage vor dem Start. Historie: bis 08.09. nur Luecken bzw. nur KI-Texte.
                 +   (benannt && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + ico('sparkle') + t('Quickinfos generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
                 // Im PDF-Projekt nur die Quickinfos als Liste (Michael Karbe, Feedback 20260928 - 2, Punkt 4) — die PDF gibt es in „Dokument“
-                +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + ico('download') + (imPdfProjekt ? t('Quickinfos herunterladen') : (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen'))) + '</button>'
+                +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + ico('download') + (imPdfProjekt ? t('Quickinfos herunterladen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span>' : (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen'))) + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf alle Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
                 // Gast-Ansicht (28.08.2026): Einladung wie bei Bild-Projekten — Knopf + Dialog aus app.html.
@@ -862,8 +862,7 @@
                     : t('Dokument / Quickinfos herunterladen'));
         }
         if (typeof panel.showModal === 'function') panel.showModal(); else panel.setAttribute('open', '');
-        announce(t('Export-Optionen geöffnet.'));
-        exportPreisLaden();
+        exportPreisLaden();   // Überschrift + Zusammenfassung sagen genug; announce() ausserhalb des Modals verpufft (29.09.2026)
     }
 
     // Export-Staffel (28.08.2026): Preis und Guthaben fuer den gewaehlten Umfang in die Zusammenfassung.

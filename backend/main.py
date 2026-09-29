@@ -8079,6 +8079,8 @@ def _pdf_ohne_tags(unit: dict, output_dir: str, creator: Optional[str], mit_quic
             info.setdefault("warnings", []).append("Die Quickinfos konnten nicht in die PDF geschrieben werden.")
         if info["quickinfos"].get("warnungen"):
             info.setdefault("warnings", []).extend(info["quickinfos"]["warnungen"])
+        if int(info["quickinfos"].get("geschrieben") or 0) == 0:
+            shutil.copyfile(quelle, output_path)   # nichts geschrieben: wirklich das Original (der Schreiber speichert sonst neu)
     info["unveraendert"] = int(info["quickinfos"].get("geschrieben") or 0) == 0
     return output_path, info
 
@@ -8385,7 +8387,9 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     total_images = 0
     unveraendert_n = 0
     quickinfos_geschrieben = 0
-    erster_getaggter = True
+    # Ablage-Eintraege ERST nach dem Bau aller Dateien und nach der Verbuchung (Review 29.09.2026): sonst lag ein fertiges
+    # Dokument kostenlos in der Ablage, wenn ein spaeteres Dokument scheiterte (Abbruch ohne Verbuchung).
+    ablage_nachher: list = []
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         # Nummerierung nach Anzeige-Position (1..N), passend zur „Dokument N"-
         # Anzeige im Frontend — NICHT nach doc_index, der nach Loeschungen Luecken
@@ -8402,10 +8406,7 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
             else:
                 out_path, info = _build_pdf_for_document(unit, output_dir, creator=_creator)
                 zf.write(out_path, arcname=inner)
-                # Ablage (22.09.2026): je getaggtem Dokument ein Eintrag (der Preis steht am ersten, die anderen tragen 0).
-                await asyncio.get_running_loop().run_in_executor(
-                    None, _pdf_in_ablage, user["id"], project, unit, out_path, inner, (_preis if erster_getaggter else 0), "knopf")
-                erster_getaggter = False
+                ablage_nachher.append((unit, out_path, inner))
             total_tagged += int(info.get("tagged", 0) or 0)
             total_images += int(info.get("total", 0) or 0)
             for w in info.get("warnings", []) or []:
@@ -8431,6 +8432,10 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
     if preis_qi:
         billing.verbuche(user["id"], "export", aktion="formular_export", credits=preis_qi)
+    # Ablage (22.09.2026): je getaggtem Dokument ein Eintrag, der Preis steht am ersten, die anderen tragen 0.
+    for i, (unit, out_path, inner) in enumerate(ablage_nachher):
+        await asyncio.get_running_loop().run_in_executor(
+            None, _pdf_in_ablage, user["id"], project, unit, out_path, inner, (_preis if i == 0 else 0), "knopf")
     return response
 
 
@@ -8548,7 +8553,9 @@ def _abschluss_bauen(project: dict, user_id: int, document_id: int) -> bool:
     if tagging_api._seiten(unit["doc"]) > tagging_api.pdf_tagging.MAX_SEITEN:
         raise HTTPException(status_code=400, detail=f"Die PDF hat mehr als {tagging_api.pdf_tagging.MAX_SEITEN} Seiten")
     st = _abschluss_stand(project, unit, user_id)
-    if st["meta"] and st["meta"].get("fingerabdruck") == st["fingerabdruck"]:
+    # Nicht neu bauen, wenn die Pruefdatei zum Stand passt — ausser veraPDF fehlte beim letzten Bau (Pruefdienst weg): dann
+    # wuerde „Prüfdatei neu erstellen“ sonst nie wieder pruefen (Review 29.09.2026).
+    if st["meta"] and st["meta"].get("fingerabdruck") == st["fingerabdruck"] and st["meta"].get("verapdf_roh") is not None:
         return False
     os.makedirs(st["ordner"], exist_ok=True)
     bau = os.path.join(st["ordner"], f"_bau_{int(document_id)}")
@@ -9791,7 +9798,7 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
     document_id, _name = await _read_export_options(request)
     conn = get_db()
     projekt = conn.execute(
-        "SELECT id, tool, project_type FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])   # voll: _load_pdf_export_units braucht original_path
     ).fetchone()
     if not projekt:
         conn.close()
@@ -9845,6 +9852,14 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         else:
             offen += 1
     p = plan["pruefung"] if plan else billing.export_pruefung(user["id"], total, _export_art(dict(projekt)))
+    pdf_zahlen = None
+    if plan:
+        g_ids = {u["doc"].get("id") for u in plan["getaggt"]}
+        g_bilder = [dict(r) for r in rows if dict(r).get("document_id") in g_ids]
+        g_aus = [_exportable_alt_text(b) for b in g_bilder]
+        pdf_zahlen = {"total": len(g_bilder), "dekorativ": sum(1 for a in g_aus if a == "dekorativ"),
+                      "mit_text": sum(1 for a in g_aus if a and a != "dekorativ" and a.strip())}
+        pdf_zahlen["ohne_text"] = pdf_zahlen["total"] - pdf_zahlen["dekorativ"] - pdf_zahlen["mit_text"]
     return JSONResponse(content={
         "total": total,
         "beschrieben": beschrieben,
@@ -9863,6 +9878,8 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         "dokumente_getaggt": len(plan["getaggt"]) if plan else None,
         "dokumente_quickinfos": len(plan["mit_qi"]) if plan else None,
         "dokumente_unveraendert": len(plan["unveraendert"]) if plan else None,
+        # Bilderzahlen nur der getaggten Dokumente (PDF-Dialog; Review 29.09.2026: ungetaggte bekommen keine Alt-Texte)
+        "pdf_bilder": pdf_zahlen,
     })
 
 

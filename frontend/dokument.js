@@ -124,7 +124,7 @@
             pruef = '<p>' + t('Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar).') + '</p>';
         }
         return '<details class="page-text-details dok-bericht" data-doc="' + d.id + '"' + (offeneBerichte.has(d.id) ? ' open' : '') + '>'
-            + '<summary>' + t('Bericht lesen') + '</summary>'
+            + '<summary>' + t('Bericht lesen') + '<span class="visually-hidden"> ' + t('– Dokument „{name}“', { name: esc(docDisplayName(d)) }) + '</span></summary>'
             + '<div class="page-text-content" role="region" aria-label="' + t('Bericht zum Tagging') + '" tabindex="0"><ul>' + zeilen.join('') + '</ul>' + pruef + '</div></details>';
     }
 
@@ -395,13 +395,14 @@
             // Herunterladen mit derselben Rückfrage wie in „Alt-Texte“ (app.html openExportPanel, Modus 'pdf')
             knoepfe = hoerprobeKnopf
                 // auch OHNE Tags (Feedback 20260928 - 2, Punkt 5): dann unverändert bzw. nur mit Quickinfos, der Dialog sagt es vorher
-                + (!busy && seiten ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + (d.getaggt === true ? t('mit Alt-Texten und Quickinfos, kommt in die Ablage') : t('ohne Tags: ohne Alt-Texte, mit vorhandenen Quickinfos')) + '</span></button>' : '')
+                + (!busy && seiten ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + (d.getaggt === true ? t('mit Alt-Texten und Quickinfos, kommt in die Ablage') : ((d.felder || 0) > 0 ? t('ohne Tags: ohne Alt-Texte, mit vorhandenen Quickinfos') : t('ohne Tags: unverändert und kostenlos'))) + '</span></button>' : '')
                 + '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
                 + '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>';
         }
         return '<section class="card dok-karte" id="dok_karte_' + d.id + '">'
             + '<details class="dok-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
-            + '<summary><h3 id="dok_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: name }) + '</span> <span class="badge ' + standKlasse(d) + '" id="dok_badge_' + d.id + '">' + standText(d) + '</span></h3></summary>'
+            // „, Stand:“ nur für Screenreader: sonst klang das Abzeichen wie ein Teil des Dateinamens (A11y-Review 29.09.2026)
+            + '<summary><h3 id="dok_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: name }) + '<span class="visually-hidden">, ' + t('Stand') + ':</span></span> <span class="badge ' + standKlasse(d) + '" id="dok_badge_' + d.id + '">' + standText(d) + '</span></h3></summary>'
             + '<div class="ausgabe-karte">'
             + (seiten ? '<img class="ausgabe-vorschau" src="/api/projects/' + project.id + '/documents/' + d.id + '/vorschau" alt="' + t('Vorschau der ersten Seite von {name}', { name: name }) + '" loading="lazy">' : '')
             + '<div class="ausgabe-text"><ul class="dok-meta">' + meta + '</ul>'
@@ -423,10 +424,13 @@
     // ─── Hörprobe als Dialog (Feedback 20260928 - 2, Punkte 1 und 6: Knopf „Hörprobe“ in „Dokument“ und „Tagging“; unter den
     // Knöpfen steht nichts mehr). Natives <dialog> (Fokusfang, Escape), Inhalt = was ein Screenreader aus den Tags bekommt.
     function hoerprobeDialogHtml() {
-        return '<dialog id="dkHoerprobeDialog" class="app-dialog" aria-labelledby="dkHpHeading">'
+        // Name = Überschrift, Beschreibung = Hinweis; die Region heißt anders als der Dialog (sonst dreimal dieselbe Ansage)
+        // und der Ladestand kommt als Statuszeile im Dialog (A11y-Review 29.09.2026).
+        return '<dialog id="dkHoerprobeDialog" class="app-dialog" aria-labelledby="dkHpHeading" aria-describedby="dkHpHinweis">'
             + '<h2 id="dkHpHeading">' + t('Hörprobe') + '</h2>'
-            + '<p class="dialog-hint">' + t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>'
-            + '<div class="ausgabe-hoerprobe" id="dkHpInhalt" role="region" aria-labelledby="dkHpHeading" tabindex="0" style="max-height:24rem;overflow:auto;"></div>'
+            + '<p class="dialog-hint" id="dkHpHinweis">' + t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>'
+            + '<p id="dkHpStatus" role="status" class="visually-hidden"></p>'
+            + '<div class="ausgabe-hoerprobe" id="dkHpInhalt" role="region" aria-label="' + t('Vorgelesener Text') + '" tabindex="0" style="max-height:24rem;overflow:auto;"></div>'
             + '<div class="dialog-actions"><button type="button" class="btn btn-secondary" id="dkHpZu" onclick="Dokument.hoerprobeSchliessen()">' + t('Schließen') + '</button></div>'
             + '</dialog>';
     }
@@ -438,20 +442,40 @@
         const d = ((aktuelleDaten && aktuelleDaten.documents) || []).find(x => x.id === docId);
         if (!dlg || !box) return;
         hoerprobeDoc = docId;
+        const status = document.getElementById('dkHpStatus');
         if (kopf) kopf.textContent = t('Hörprobe: {name}', { name: d ? docDisplayName(d) : '' });
+        if (status) status.textContent = '';
         box.innerHTML = '<p>' + t('Hörprobe wird geladen …') + '</p>';
         dlg.showModal();
+        // Inhalt in der Dokumentsprache (lang am Inhalt, wie in der Barrierefreiheitsprüfung): VoiceOver liest ihn dann mit der
+        // Stimme, die auch ein echter Screenreader nähme — die Ansage („Überschrift Ebene 1“) bleibt in der Oberflächensprache.
+        const roh = String((d && d.struktur && d.struktur.lang) || '').trim();
+        const lang = /^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(roh) ? roh : '';
+        const zeile = z => {
+            const i = String(z).indexOf(': ');
+            if (i <= 0) return '<p>' + esc(z) + '</p>';
+            return '<p>' + esc(z.slice(0, i)) + ': <span' + (lang ? ' lang="' + esc(lang) + '"' : '') + '>' + esc(z.slice(i + 2)) + '</span></p>';
+        };
+        let meldung;
         try {
             const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/struktur', { credentials: 'same-origin' });
             const j = r.ok ? await r.json() : null;
-            if (hoerprobeDoc !== docId) return;
-            box.innerHTML = (!j || !j.verfuegbar)
-                ? '<p>' + esc((j && j.grund) || t('Die Hörprobe konnte nicht geladen werden.')) + '</p>'
-                : ((j.hoerprobe || []).map(z => '<p>' + esc(z) + '</p>').join('') || '<p>' + t('Kein Text zum Vorlesen vorhanden.') + '</p>');
+            if (hoerprobeDoc !== docId || !dlg.open) return;
+            if (!j || !j.verfuegbar) {
+                meldung = (j && j.grund) || t('Die Hörprobe konnte nicht geladen werden.');
+                box.innerHTML = '<p>' + esc(meldung) + '</p>';
+            } else {
+                const zeilen = j.hoerprobe || [];
+                box.innerHTML = zeilen.map(zeile).join('') || '<p>' + t('Kein Text zum Vorlesen vorhanden.') + '</p>';
+                meldung = zeilen.length === 1 ? t('Hörprobe geladen, 1 Zeile.') : t('Hörprobe geladen, {n} Zeilen.', { n: zeilen.length });
+            }
         } catch (e) {
-            box.innerHTML = '<p>' + t('Die Hörprobe konnte nicht geladen werden.') + '</p>';
+            meldung = t('Die Hörprobe konnte nicht geladen werden.');
+            box.innerHTML = '<p>' + esc(meldung) + '</p>';
         }
-        if (dlg.open) box.focus();
+        if (!dlg.open) return;
+        if (status) status.textContent = meldung;
+        if (document.activeElement !== box) box.focus();
     }
     function hoerprobeSchliessen() {
         const dlg = document.getElementById('dkHoerprobeDialog');
@@ -608,6 +632,8 @@
         if (summary) summary.textContent = satz;
         if (status) status.textContent = '';
         if (ok) { ok.disabled = !tg.erlaubt; ok.textContent = tg.status === 'fertig' ? t('Neu taggen') : t('Tagging starten'); }
+        const kopf = document.getElementById('dkLaufHeading');
+        if (kopf) kopf.textContent = tg.status === 'fertig' ? t('Neu taggen') : t('Barrierefrei machen');   // wie der Knopf (A11y-Review 29.09.2026)
         if (!tg.erlaubt && status) status.textContent = t('Dafür reicht das Guthaben nicht: {c} Credits nötig, {v} vorhanden.', { c: tg.preis || 0, v: tg.verfuegbar_credits == null ? 0 : tg.verfuegbar_credits });
         dlg.showModal();
         const cancel = document.getElementById('dkLaufCancel');
@@ -791,6 +817,21 @@
 
     function pollStoppen() { if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; } }
 
+    // Fokus über einen Neuaufbau retten (A11y-Review 29.09.2026): Element mit id, sonst das summary einer Karte.
+    function fokusMerken() {
+        const a = document.activeElement;
+        if (!a || a === document.body) return null;
+        if (a.id) return { id: a.id };
+        const det = a.tagName === 'SUMMARY' ? a.closest('details[data-doc]') : null;
+        return det ? { karte: det.dataset.doc, klasse: det.classList.contains('dok-klappe') ? 'dok-klappe' : '' } : null;
+    }
+    function fokusWiederherstellen(f) {
+        if (!f) return;
+        let el = f.id ? document.getElementById(f.id) : null;
+        if (!el && f.karte) el = document.querySelector('details' + (f.klasse ? '.' + f.klasse : '') + '[data-doc="' + CSS.escape(String(f.karte)) + '"] > summary');
+        if (el && document.activeElement !== el) el.focus();   // summary ist nativ fokussierbar — kein tabindex (sonst nicht mehr per Tab erreichbar)
+    }
+
     function abschlussText(d) {
         const tg = d.tagging || {};
         const b = tg.bericht || {};
@@ -821,7 +862,7 @@
         // Mehrere Dokumente, alle getaggt: alles auf einmal als ZIP (bis 25.09.2026 in der Abschlusspruefung)
         const alleGetaggt = modus === 'dokument' && docs.length > 1 && docs.every(d => !(d.tagging && d.tagging.laeuft));   // seit 29.09. auch ungetaggte
         const alleKnopf = alleGetaggt
-            ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="openExportPanel(' + project.id + ', 0, \'pdf\')">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> ' + t('als ZIP, mit Alt-Texten und Quickinfos') + '</span></button>'
+            ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="openExportPanel(' + project.id + ', 0, \'pdf\')">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> ' + (docs.every(d => d.getaggt === true) ? t('als ZIP, mit Alt-Texten und Quickinfos') : t('als ZIP; Dokumente ohne Tags bekommen keine Alt-Texte')) + '</span></button>'
               + '</p>'
             : '';
         main.innerHTML = kopfHtml(project, data)
@@ -879,6 +920,9 @@
                     const d2 = await r.json();
                     // nach dem Warten erneut: Ansicht gewechselt? Dann nichts zeichnen (sonst holte der Poll „Dokument“ zurueck)
                     if (zustandProjekt !== projectId || !document.getElementById('dokListe')) { pollStoppen(); return; }
+                    // … oder inzwischen ein Dialog geöffnet? Dann nicht wegzeichnen (Review 29.09.2026: Prüfung vor UND nach dem Abruf)
+                    const dlg2 = document.getElementById('exportPanel'), hp2 = document.getElementById('dkHoerprobeDialog');
+                    if ((dlg2 && dlg2.open) || (hp2 && hp2.open)) { pollTimer = setTimeout(tick, 2500); return; }
                     // Kette: waehrend des Laufs nur die Statuskarte fortschreiben (kein Neuaufbau, Fokus bleibt);
                     // am Ende einmal neu zeichnen und die Zusammenfassung melden.
                     if (ketteLief) {
@@ -910,6 +954,7 @@
                             offeneDokumente.add(x.id); geschlosseneDokumente.delete(x.id);
                         });
                         const texte = korrFertig.map(korrAbschlussText).concat(pruefFertig.map(pruefAbschlussText));
+                        const fokus = fokusMerken();
                         await showProject(projectId, true);
                         const erster = fertigGeworden.concat(testFertig)[0];
                         const ziel = erster ? document.getElementById('dok_ergebnis_text_' + erster.id) : null;
@@ -917,6 +962,7 @@
                         else if (erster && ergebnisMeldung[erster.id]) zeigeMeldung(ergebnisMeldung[erster.id].text);   // Ansicht „Dokument“
                         if (texte.length) { if (ziel) announce(texte.join(' ')); else zeigeMeldung(texte.join(' ')); }
                         else if (!erster && project.status === 'extracting' && d2.project.status !== 'extracting') announce(t('Dokument gelesen.'));
+                        if (!erster) fokusWiederherstellen(fokus);   // Neuaufbau ohne eigenes Fokusziel: Position behalten (A11y-Review)
                         return;
                     }
                     (d2.documents || []).forEach(x => {
