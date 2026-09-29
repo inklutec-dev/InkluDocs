@@ -281,7 +281,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Word „alttexte“, Eingang „uebersetzen“ startet in der Uebersetzung.
     // Alle Stationen des Dateityps — immer dieselbe Liste fuer jedes Projekt dieses Typs (Steve 22.09.2026).
     function ansichtenFuer(project) {
-        if (istPdfDateityp(project)) return ['dokument', 'alttexte', 'quickinfos', 'abschluss'];   // Abschlussprüfung: 24.09.2026
+        // Reihenfolge wie man arbeitet: hochladen, taggen, beschreiben, prüfen (Tagging: Michael Karbe, Feedback 20260928 - 2)
+        if (istPdfDateityp(project)) return ['dokument', 'tagging', 'alttexte', 'quickinfos', 'abschluss'];
         if (istWordDateityp(project)) return ['alttexte', 'uebersetzung'];
         return ['alttexte'];
     }
@@ -311,7 +312,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     function ansichtNamen() {
         // „Barrierefreiheitsprüfung“ (Michael Karbe, Feedback 20260928 - 2, Punkt 3; vorher „Prüfung“, davor „Abschlussprüfung“);
         // intern bleibt der Schluessel 'abschluss'
-        return { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Barrierefreiheitsprüfung') };
+        return { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Barrierefreiheitsprüfung'), tagging: t('Tagging') };
     }
     function ansichtWahlHtml(project, aktuell) {
         if (!(istWordDateityp(project) || istPdfDateityp(project)) || window.GUEST_MODE) return '';
@@ -400,7 +401,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // sonst landet VoiceOver nach dem Wechsel auf „Alt-Texte“ auf dem Seitenanfang.
         const h1 = document.getElementById('projectName');
         if (h1) h1.focus();
-        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Barrierefreiheitsprüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.')))));
+        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : ziel === 'tagging' ? t('Ansicht Tagging geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Barrierefreiheitsprüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.')))));
     }
     window.wechsleAnsicht = wechsleAnsicht;
     let currentProjectFuerAnsicht = null;
@@ -891,9 +892,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (project && istWordDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'uebersetzung') {
             return Uebersetzen.showProject(projectId);
         }
-        // PDF-Projekt, Ansicht „Dokument“ (22.09.2026): Drehscheibe fuer Tagging, Bericht, Download (frontend/dokument.js).
-        if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'dokument') {
-            return Dokument.showProject(projectId);
+        // PDF-Projekt, Ansichten „Dokument“ (Dateiverwaltung) und „Tagging“ (seit 29.09.2026, Michael Karbe, Feedback
+        // 20260928 - 2): beide zeichnet frontend/dokument.js, je in ihrer Betriebsart.
+        if (project && istPdfDateityp(project) && !window.GUEST_MODE && (aktuelleAnsicht(project) === 'dokument' || aktuelleAnsicht(project) === 'tagging')) {
+            return Dokument.showProject(projectId, false, aktuelleAnsicht(project));
         }
         // PDF-Projekt, Station „Abschlussprüfung“ (24.09.2026): fertige Datei prüfen und herunterladen (frontend/abschluss.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'abschluss') {

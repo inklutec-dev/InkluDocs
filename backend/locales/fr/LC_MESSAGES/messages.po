@@ -4335,7 +4335,7 @@ msgid "Hinweise"
 msgstr "Remarques"
 
 msgid "Hörprobe"
-msgstr "Écoute témoin"
+msgstr "Écoute"
 
 msgid "Hörprobe: so liest ein Screenreader das Formular"
 msgstr "Écoute témoin : comment un lecteur d’écran lit le formulaire"
@@ -9618,4 +9618,20 @@ msgstr "Ici, tu contrôles le fichier final avec veraPDF : problèmes, image de 
 
 msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Barrierefreiheitsprüfung“."
 msgstr "Trouver les problèmes, voir et écouter les pages : dans la vue « Contrôle d’accessibilité »."
+
+msgid "Tagging"
+msgstr "Balisage"
+
+msgid "Ansicht Tagging geöffnet."
+msgstr "Vue Balisage ouverte."
+
+#, python-brace-format
+msgid "Hörprobe: {name}"
+msgstr "Écoute : {name}"
+
+msgid "So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis."
+msgstr "Voici comment un lecteur d’écran lit les balises de ce document, dans l’ordre de lecture. Ce n’est pas un résultat de contrôle."
+
+msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei."
+msgstr "Ce document n’est pas encore balisé. Rends-le d’abord accessible dans la vue « Balisage »."
 

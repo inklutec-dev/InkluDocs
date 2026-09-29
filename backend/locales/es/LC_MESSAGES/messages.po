@@ -9619,3 +9619,19 @@ msgstr "Aquí compruebas el archivo final con veraPDF: problemas, imagen de la p
 msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Barrierefreiheitsprüfung“."
 msgstr "Encontrar problemas, ver y escuchar páginas: en la vista «Comprobación de accesibilidad»."
 
+msgid "Tagging"
+msgstr "Etiquetado"
+
+msgid "Ansicht Tagging geöffnet."
+msgstr "Vista Etiquetado abierta."
+
+#, python-brace-format
+msgid "Hörprobe: {name}"
+msgstr "Muestra de audio: {name}"
+
+msgid "So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis."
+msgstr "Así lee un lector de pantalla las etiquetas de este documento, en orden de lectura. No es un resultado de la comprobación."
+
+msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei."
+msgstr "Este documento aún no está etiquetado. Primero hazlo accesible en la vista «Etiquetado»."
+

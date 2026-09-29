@@ -88,7 +88,7 @@ with sync_playwright() as p:
     check("Neues PDF-Projekt startet ohne ?ansicht in der Ansicht Dokument (Steve 22.09.)", pg.locator("#dokumenteHeading").count() == 1)
     # Ansichts-Wahl als Knoepfe (Michael Karbe, Feedback 24.09.2026, Punkt 8): Links, aktuelle mit aria-current
     opts = [x.strip() for x in pg.locator(".ansicht-knoepfe [data-ansicht]").all_inner_texts()]
-    check("Ansichts-Knöpfe: Dokument, Alt-Texte, Quickinfos (ausgegraut, keine Felder), Prüfung", [o.split("(")[0].strip() for o in opts] == ["Dokument", "Alt-Texte", "Quickinfos", "Barrierefreiheitsprüfung"] and pg.locator(".ansicht-knoepfe .ansicht-aus[data-ansicht=quickinfos]").count() == 1 and pg.locator(".ansicht-knoepfe a[data-ansicht=quickinfos]").count() == 0, opts)
+    check("Ansichts-Knöpfe: Dokument, Tagging, Alt-Texte, Quickinfos (ausgegraut, keine Felder), Barrierefreiheitsprüfung", [o.split("(")[0].strip() for o in opts] == ["Dokument", "Tagging", "Alt-Texte", "Quickinfos", "Barrierefreiheitsprüfung"] and pg.locator(".ansicht-knoepfe .ansicht-aus[data-ansicht=quickinfos]").count() == 1 and pg.locator(".ansicht-knoepfe a[data-ansicht=quickinfos]").count() == 0, opts)
     # Michael Karbe, Feedback 24.09.2026 - 3: „Ansicht:“ nur für Screenreader (1), nicht verfügbar mit durchgezogener Linie (2)
     check("„Ansicht:“ sichtbar weg, für Screenreader Name der Knopfliste", "visually-hidden" in (pg.locator("#ansichtTitel").get_attribute("class") or "") and pg.locator("ul.ansicht-knoepfe[aria-labelledby=ansichtTitel]").count() == 1)
     check("Nicht verfügbare Ansicht mit durchgezogener Linie", pg.evaluate("getComputedStyle(document.querySelector('.ansicht-aus')).borderTopStyle") == "solid")
@@ -115,19 +115,34 @@ with sync_playwright() as p:
     check("Fokus nach dem Upload auf dem Schalter der Dokument-Karte (H3 im summary)", pg.evaluate("!!(document.activeElement && document.activeElement.tagName === 'SUMMARY' && document.activeElement.querySelector('[id^=dok_heading_]'))"), pg.evaluate("document.activeElement && document.activeElement.outerHTML.slice(0,120)"))
     check("Einzelnes Dokument: Karte ist aufgeklappt", pg.locator("section.dok-karte details.dok-klappe[open]").count() == 1)
     dl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
-    check("Dokumentinfo je Zeile mit Doppelpunkt (Punkt 2): Stand: …, Seiten: 2, Sprache, Struktur, Bilder", all(k in dl for k in ("Stand: ", "Seiten: 2", "Sprache: ", "Struktur: ", "Bilder: ")), dl)
+    check("Dokument = Metadaten (Feedback 20260928 - 2, Punkt 1): Stand, Seiten: 2, Sprache — ohne Struktur und Bilder (Punkt 7)", all(k in dl for k in ("Stand: ", "Seiten: 2", "Sprache: ")) and "Struktur: " not in dl and "Bilder: " not in dl, dl)
     fs = pg.evaluate("() => [getComputedStyle(document.querySelector('ul.dok-meta')).fontSize, getComputedStyle(document.querySelector('ul.dok-meta')).fontFamily]")
     check("Dokumentinfo in Schrift und Groesse des Berichts (Punkt 4)", fs[0] == pg.evaluate("() => { const d = document.createElement('div'); d.className = 'page-text-content'; document.body.appendChild(d); const f = getComputedStyle(d).fontSize; d.remove(); return f; }"), fs)
     check("Dokumentansicht ohne Feld „Funktionen und Einstellungen“ (Feedback 24.09., Punkt 1)", pg.locator("section.projekt-funktionen").count() == 0)
     check("Vorschaubild mit Alt-Text", pg.locator("section.dok-karte img.ausgabe-vorschau").first.get_attribute("alt").startswith("Vorschau der ersten Seite"))
+    check("Dokument: kein Tagging (Barrierefrei machen, Testweise taggen gibt es in „Tagging“)", pg.locator("button[id^=dok_tag_]").count() == 0 and pg.locator("button[id^=dok_test_]").count() == 0)
+    check("Kein Knopf „Alt-Texte bearbeiten“; Umbenennen / Löschen da", pg.locator("section.dok-karte button:has-text('Alt-Texte bearbeiten')").count() == 0 and pg.locator("section.dok-karte button:has-text('Umbenennen')").count() == 1 and pg.locator("section.dok-karte button:has-text('Löschen')").count() == 1)
+    check("Ungetaggt: noch kein „PDF herunterladen“ und keine Hörprobe", pg.locator("button[id^=dok_export_]").count() == 0 and pg.locator("button[id^=dok_hp_]").count() == 0)
+    check("Knöpfe unter der Linie, darunter nichts weiter (Punkt 2)",
+          pg.locator("section.dok-karte .ausgabe-text button").count() == 0
+          and pg.evaluate("getComputedStyle(document.querySelector('.dok-werkbank')).borderTopStyle") == "solid"
+          and pg.evaluate("document.querySelector('.dok-werkbank').children.length") == 1)
+    axe(pg, "Ansicht Dokument vor dem Lauf")
+
+    print("== A1. Ansicht Tagging (Feedback 20260928 - 2, Punkte 1, 6, 7) ==")
+    pg.click(".ansicht-knoepfe a[data-ansicht=tagging]")
+    # beide Ansichten haben Dokument-Karten: auf die H1 der neuen Ansicht warten (der Wechsel wartet bewusst ~1 s aufs Speichern)
+    pg.wait_for_function("() => (document.getElementById('projectName') || {}).textContent.startsWith('Tagging')", timeout=15000); pg.wait_for_timeout(500)
+    check("Adresse ansicht=tagging, H1 „Tagging – Projekt: …“, Knopf aktuell", "ansicht=tagging" in pg.url and pg.locator("h1#projectName").inner_text().startswith("Tagging – Projekt: ") and pg.locator(".ansicht-knoepfe a[aria-current=page]").get_attribute("data-ansicht") == "tagging", pg.locator("h1#projectName").inner_text())
+    check("Tagging: kein Upload-Feld (Hochladen nur in „Dokument“)", pg.locator("#projUpload").count() == 0)
+    tl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
+    check("Tagging-Karte zeigt Struktur und Bilder, keine Metadaten (Punkt 7)", "Struktur: " in tl and "Bilder: " in tl and "Titel: " not in tl and "Anwendung: " not in tl, tl)
     check("Knopf „Barrierefrei machen“ mit Seiten und Credits im Namen", pg.locator("button[id^=dok_tag_]").count() == 1 and "2 Seiten, 2 Credits" in pg.locator("button[id^=dok_tag_]").first.inner_text())
-    check("Kein Knopf „Alt-Texte bearbeiten“ mehr (Punkt 3); Umbenennen / Löschen da", pg.locator("section.dok-karte button:has-text('Alt-Texte bearbeiten')").count() == 0 and pg.locator("section.dok-karte button:has-text('Umbenennen')").count() == 1 and pg.locator("section.dok-karte button:has-text('Löschen')").count() == 1)
-    check("Noch kein Knopf „PDF herunterladen“ (ungetaggt)", pg.locator("button[id^=dok_export_]").count() == 0)
+    check("Tagging: keine Dateiknöpfe (Umbenennen, Löschen, Herunterladen)", pg.locator("section.dok-karte button:has-text('Umbenennen')").count() == 0 and pg.locator("section.dok-karte button:has-text('Löschen')").count() == 0 and pg.locator("button[id^=dok_export_]").count() == 0)
     check("Knöpfe unter einer Linie über die volle Breite, nicht neben dem Vorschaubild (Mail - 3, Punkt 3)",
           pg.locator("section.dok-karte .dok-werkbank .ausgabe-aktionen button[id^=dok_tag_]").count() == 1
-          and pg.locator("section.dok-karte .ausgabe-text button").count() == 0
-          and pg.evaluate("getComputedStyle(document.querySelector('.dok-werkbank')).borderTopStyle") == "solid")
-    axe(pg, "Ansicht Dokument vor dem Lauf")
+          and pg.locator("section.dok-karte .ausgabe-text button").count() == 0)
+    axe(pg, "Ansicht Tagging vor dem Lauf")
 
     print("== A2. Testweise taggen (Mail - 2, Punkt 3): kostenlos, Testmodus, Original bleibt ==")
     kn = pg.locator("button[id^=dok_test_]")
@@ -156,7 +171,7 @@ with sync_playwright() as p:
             break
     check("Klappe „Ergebnis des Testlaufs“ mit Hörprobe der Testfassung", "Zusammenfassung" in hp and "Seite 1" in hp, hp[:200])
     check("Testlauf kostet nichts", pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht") == guthaben_vorher.get("verbraucht"))
-    axe(pg, "Ansicht Dokument mit Ergebnis des Testlaufs")
+    axe(pg, "Ansicht Tagging mit Ergebnis des Testlaufs")
 
     print("== B. Rueckfrage und Lauf ==")
     pg.click("button[id^=dok_tag_]")
@@ -190,25 +205,46 @@ with sync_playwright() as p:
     h3 = pg.locator("section.dok-karte h3").first.inner_text()
     check("Badge jetzt „Getaggt …“", "Getaggt" in h3, h3)
     check("Knopf heisst jetzt „Neu taggen“", pg.locator("button[id^=dok_tag_]").first.inner_text().startswith("Neu taggen"))
-    # Herunterladen wieder in „Dokument“ (Mail - 3, Punkt 4); Hinweis auf die Station „Prüfung“
-    check("Knopf „PDF herunterladen“ in der Dokument-Karte, Hinweis auf „Barrierefreiheitsprüfung“", pg.locator("button[id^=dok_export_]").count() == 1 and "Ansicht „Barrierefreiheitsprüfung“" in pg.locator("section.dok-karte").first.inner_text())
+    check("Tagging: kein „PDF herunterladen“ (das gibt es in „Dokument“), Knopf „Hörprobe“ da", pg.locator("button[id^=dok_export_]").count() == 0 and pg.locator("button[id^=dok_hp_]").count() == 1)
     pg.click("details.dok-bericht > summary")
     pg.wait_for_timeout(300)
     ber = pg.locator("details.dok-bericht").first.inner_text()
     check("Bericht: Zeit + PDF/UA-Prüfung, ohne Dokumentinfos und ohne „Hinweis“ (Punkte 9, 10)", "Getaggt am" in ber and "PDF/UA" in ber and "Dokumentsprache" not in ber and "Struktur:" not in ber and "Hinweis –" not in ber, ber[:300])
-    mt = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
-    check("Dokumentinfos: Titel, Anwendung, Erstellt mit, Stand: Getaggt, PDF-Standard (Punkte 2-5)", all(k in mt for k in ("Titel: ", "Anwendung: ", "Erstellt mit: ", "Stand: Getaggt", "PDF-Standard: ")) and mt.index("Titel:") < mt.index("Anwendung:") < mt.index("Erstellt mit:") < mt.index("Stand:"), mt)
-    check("PDF-Standard nach dem Tagging: PDF/UA-1", "PDF-Standard: PDF/UA-1" in mt, mt)
-    # Punkt 7 (Feedback 24.09.) meint das echte Tagging: kein Testmodus-Hinweis in Dokumentinfos und Bericht. Der Knopf
-    # „Testweise taggen“ und sein Ergebnis nennen den Testmodus bewusst (Mail - 2, Punkt 3).
-    check("Kein Testmodus-Hinweis in Dokumentinfos und Bericht (Punkt 7)", "Testmodus" not in pg.locator("section.dok-karte ul.dok-meta").first.inner_text() and "Testmodus" not in pg.locator("section.dok-karte details.dok-bericht").first.inner_text())
+    check("Kein Testmodus-Hinweis im Bericht (Punkt 7)", "Testmodus" not in ber)
     check("Bericht ohne „In Ordnung“-Zeilen (Punkt 6)", "In Ordnung –" not in ber, ber[-400:])
-    dl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
-    check("Beschreibungsliste nach dem Lauf: Sprache de-DE, 1 Bild", "de-DE" in dl and "1 Bilder" in dl, dl)
-    axe(pg, "Ansicht Dokument nach dem Lauf (mit Ergebnis)")
+    tl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
+    check("Tagging-Karte nach dem Lauf: Struktur und 1 Bild", "1 Bilder" in tl and "Struktur: " in tl, tl)
+    axe(pg, "Ansicht Tagging nach dem Lauf (mit Ergebnis)")
     pg.click("section.dok-karte .dok-ergebnis button")
     pg.wait_for_timeout(300)
     check("„Meldung schließen“: weg, Fokus auf dem Schalter der Karte", pg.locator(".dok-ergebnis").count() == 0 and pg.evaluate("document.activeElement && document.activeElement.tagName") == "SUMMARY")
+
+    print("== B1. Hörprobe als Dialog (Punkte 1 und 6) ==")
+    pg.click("button[id^=dok_hp_]")
+    pg.wait_for_selector("#dkHoerprobeDialog[open]", timeout=5000)
+    hp = ""
+    for _ in range(20):
+        pg.wait_for_timeout(1000)
+        hp = pg.locator("#dkHpInhalt").inner_text()
+        if "wird geladen" not in hp:
+            break
+    check("Hörprobe-Dialog: Sprache, Seiten, Zusammenfassung, Grafik, Seiten in Lesereihenfolge", all(k in hp for k in ("Sprache", "Seiten", "Zusammenfassung", "Grafik", "Seite 1", "Seite 2")), hp[:300])
+    check("Hörprobe-Dialog: Überschrift mit Dokumentname, Fokus im Dialog", "klicktest_roh.pdf" in pg.locator("#dkHpHeading").inner_text() and pg.evaluate("document.getElementById('dkHoerprobeDialog').contains(document.activeElement)"))
+    axe(pg, "Hörprobe-Dialog")
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(400)
+    check("Escape schließt, Fokus zurück auf „Hörprobe“", not pg.locator("#dkHoerprobeDialog[open]").count() and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_hp_"))
+
+    print("== B1b. Ansicht Dokument nach dem Lauf: Metadaten, Knöpfe Hörprobe / Herunterladen / Umbenennen / Löschen ==")
+    pg.click(".ansicht-knoepfe a[data-ansicht=dokument]")
+    pg.wait_for_function("() => (document.getElementById('projectName') || {}).textContent.startsWith('Dokument')", timeout=15000); pg.wait_for_timeout(500)
+    mt = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()
+    check("Dokumentinfos: Titel, Anwendung, Erstellt mit, Stand: Getaggt, PDF-Standard (Punkte 2-5)", all(k in mt for k in ("Titel: ", "Anwendung: ", "Erstellt mit: ", "Stand: Getaggt", "PDF-Standard: ")) and mt.index("Titel:") < mt.index("Anwendung:") < mt.index("Erstellt mit:") < mt.index("Stand:"), mt)
+    check("PDF-Standard nach dem Tagging: PDF/UA-1, Sprache de-DE", "PDF-Standard: PDF/UA-1" in mt and "de-DE" in mt, mt)
+    check("Kein Testmodus-Hinweis in den Dokumentinfos (Punkt 7)", "Testmodus" not in mt)
+    kn = [x.split("\n")[0].strip() for x in pg.locator("section.dok-karte .dok-werkbank .ausgabe-aktionen button").all_inner_texts()]
+    check("Knöpfe genau: Hörprobe, PDF herunterladen, Umbenennen, Löschen (Punkt 1)", kn == ["Hörprobe", "PDF herunterladen", "Umbenennen", "Löschen"], kn)
+    check("Unter den Knöpfen nichts weiter: kein Ergebnis, kein Bericht, kein Testlauf, kein Hinweis (Punkt 2)", pg.evaluate("document.querySelector('.dok-werkbank').children.length") == 1 and pg.locator("section.dok-karte details.dok-bericht, section.dok-karte details.dok-test, section.dok-karte .dok-ergebnis").count() == 0)
+    axe(pg, "Ansicht Dokument nach dem Lauf")
     # Feedback 28.09.2026 - 1, Punkt 4: „PDF herunterladen“ öffnet dieselbe Rückfrage wie früher in „Alt-Texte“ — nur mit der PDF
     pg.click("button[id^=dok_export_]")
     pg.wait_for_timeout(1500)
@@ -240,19 +276,8 @@ with sync_playwright() as p:
     eintraege = r.json().get("ausgaben", []) if r.ok else []
     check("Ablage-Eintrag art pdf mit Datei", len(eintraege) == 1 and eintraege[0].get("art") == "pdf" and eintraege[0].get("datei_verfuegbar") is True, eintraege[:1])
 
-    print("== B2. Hoerprobe und Strukturansicht (22.09.) ==")
-    check("Strukturansicht-Link in der Dokument-Karte ausgeblendet (Steve 24.09.; gibt es in der Abschlussprüfung)", pg.locator("section.dok-karte a[id^=dok_struktur_]").count() == 0)
-    check("Klappe „Hörprobe lesen“ vorhanden", pg.locator("details.dok-hoerprobe > summary").count() == 1)
-    pg.click("details.dok-hoerprobe > summary")
-    hp = ""
-    for _ in range(20):
-        pg.wait_for_timeout(1000)
-        hp = pg.locator("details.dok-hoerprobe .ausgabe-hoerprobe").inner_text()
-        if "wird geladen" not in hp:
-            break
-    check("Hörprobe geladen: Sprache, Seiten, Zusammenfassung, Grafik", all(k in hp for k in ("Sprache", "Seiten", "Zusammenfassung", "Grafik")), hp[:300])
-    check("Hörprobe nennt die Seiten in Lesereihenfolge", "Seite 1" in hp and "Seite 2" in hp, hp[:300])
-    axe(pg, "Ansicht Dokument mit offener Hörprobe")
+    print("== B2. Strukturansicht-Link ausgeblendet (22.09.) ==")
+    check("Strukturansicht-Link in der Dokument-Karte ausgeblendet (Steve 24.09.; gibt es in der Prüfung)", pg.locator("section.dok-karte a[id^=dok_struktur_]").count() == 0)
 
     print("== B3. KI-basierte Pruefung nicht mehr in „Dokument“ (Mail - 3, Punkt 13) ==")
     check("Keine KI-Prüfung in der Dokument-Karte", pg.locator("details.dok-pruefung").count() == 0 and pg.locator("button[id^=dok_pruef_]").count() == 0)

@@ -9620,3 +9620,19 @@ msgstr "Hier prüfst du die fertige Datei mit veraPDF: Problemstellen, dazu Seit
 msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Barrierefreiheitsprüfung“."
 msgstr "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Barrierefreiheitsprüfung“."
 
+msgid "Tagging"
+msgstr "Tagging"
+
+msgid "Ansicht Tagging geöffnet."
+msgstr "Ansicht Tagging geöffnet."
+
+#, python-brace-format
+msgid "Hörprobe: {name}"
+msgstr "Hörprobe: {name}"
+
+msgid "So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis."
+msgstr "So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis."
+
+msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei."
+msgstr "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei."
+

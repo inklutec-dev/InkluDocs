@@ -47,6 +47,11 @@
 
     let zustandProjekt = null;
     let aktuelleDaten = null;
+    // BETRIEBSART (Michael Karbe, Feedback 20260928 - 2, Punkte 1, 6, 7): dieselbe Datei zeichnet zwei Ansichten eines
+    // PDF-Projekts — 'dokument' = reine Dateiverwaltung (Metadaten; Hörprobe, Herunterladen, Umbenennen, Löschen) und
+    // 'tagging' = Barrierefrei machen, Testweise taggen, Hörprobe (Struktur und Bilder in der Karte, Bericht, Testlauf).
+    // Beide teilen Datenquelle, Rückfrage, Fortschritt und Abschlussmeldung, damit nichts doppelt gepflegt wird.
+    let modus = 'dokument';
     let pollTimer = null;
     let laufZielDoc = null;
     let laufAktiv = false;
@@ -126,31 +131,7 @@
     // ─── Hoerprobe (22.09.2026): Zeilen in Lesereihenfolge aus den Tags, erst beim Aufklappen geladen
     // (eigenes PDFix-Skript pdfix_scripts/Struktur_Export.py, Modul pdf_struktur.py). Die Strukturansicht
     // ist eine eigene Seite (/struktur/<projekt>/<dokument>), damit Ueberschriftensprünge durch die PDF gehen.
-    function hoerprobeHtml(project, d) {
-        if (d.getaggt !== true) return '';
-        return '<details class="page-text-details dok-hoerprobe" data-doc="' + d.id + '" data-projekt="' + project.id + '">'
-            + '<summary>' + t('Hörprobe lesen') + '</summary>'
-            + '<div class="page-text-content ausgabe-hoerprobe" role="region" aria-label="' + t('Hörprobe – was ein Screenreader aus den Tags bekommt') + '" tabindex="0" id="dok_hoerprobe_' + d.id + '"><p>' + t('Hörprobe wird geladen …') + '</p></div></details>';
-    }
-
-    async function hoerprobeLaden(el) {
-        if (el.dataset.geladen) return;
-        el.dataset.geladen = '1';
-        const box = el.querySelector('.ausgabe-hoerprobe');
-        try {
-            const r = await fetch('/api/projects/' + el.dataset.projekt + '/documents/' + el.dataset.doc + '/struktur', { credentials: 'same-origin' });
-            const j = r.ok ? await r.json() : null;
-            if (!j || !j.verfuegbar) {
-                box.innerHTML = '<p>' + esc((j && j.grund) || t('Die Hörprobe konnte nicht geladen werden.')) + '</p>';
-                delete el.dataset.geladen;
-                return;
-            }
-            box.innerHTML = (j.hoerprobe || []).map(z => '<p>' + esc(z) + '</p>').join('');
-        } catch (e) {
-            box.innerHTML = '<p>' + t('Die Hörprobe konnte nicht geladen werden.') + '</p>';
-            delete el.dataset.geladen;
-        }
-    }
+    // Hörprobe: seit 29.09.2026 als Dialog über den Knopf „Hörprobe“ (hoerprobeOeffnen), nicht mehr als Klappe in der Karte.
 
     // ─── Automatische Pruefung (Schritt 5, erste Fassung, 22.09.2026): ein KI-Modell vergleicht je Seite
     // Seitenbild und Tags und meldet nur Befunde mit Beleg und Sicherheit. Aendert nichts an der Datei.
@@ -380,60 +361,102 @@
         const tg = d.tagging || {};
         const busy = project.status === 'processing' || project.status === 'extracting' || tg.laeuft || !!(project.kette && project.kette.laeuft);
         const vh = t('– Dokument „{name}“', { name: name });
-        const preis = tg.preis || 0;
         const seiten = d.seiten || tg.seiten || 0;
-        const knopfText = tg.status === 'fertig' ? t('Neu taggen') : t('Barrierefrei machen');
-        const bilderZeile = (d.total_images || 0)
-            ? t('{n} Bilder, {m} mit Alt-Text', { n: d.total_images, m: tg.hat_alt_texte || 0 })
-            : t('keine Bilder gefunden');
-        // Aufbau nach Michael Karbe (Feedback 24.09.2026 - 3, Punkt 3): oben Vorschau + Dokumentinfos, darunter eine
-        // Linie über die volle Breite, darunter linksbündig die Knöpfe (nicht mehr neben dem Vorschaubild). Das Stand-
-        // Abzeichen steht rechtsbündig in der Überschriftszeile (Feedback 24.09.2026 - 2, Punkt 1).
+        const imTagging = modus === 'tagging';
+        // Kopfzeile, Vorschau und Linie wie bisher (Michael Karbe, Feedback 24.09.2026 - 2 und - 3); die Infos darunter
+        // je Ansicht: „Dokument“ = Metadaten, „Tagging“ = Struktur und Bilder (Feedback 20260928 - 2, Punkt 7).
+        const meta = imTagging
+            ? metaZeile(t('Struktur'), esc(strukturText(d.struktur)))
+              + metaZeile(t('Bilder'), (d.total_images || 0) ? t('{n} Bilder, {m} mit Alt-Text', { n: d.total_images, m: tg.hat_alt_texte || 0 }) : t('keine Bilder gefunden'))
+            // Reihenfolge nach Michael Karbe (Feedback 24.09.2026, Punkte 2, 3, 5): Titel, Anwendung, Erstellt mit, Stand,
+            // PDF-Standard, dann Seiten und Sprache
+            : metaZeile(t('Titel'), esc((d.struktur && d.struktur.titel) || (d.meta && d.meta.titel) || t('kein Titel')))
+              + metaZeile(t('Anwendung'), esc((d.meta && d.meta.anwendung) || t('nicht angegeben')))
+              + metaZeile(t('Erstellt mit'), esc((d.meta && d.meta.erstellt_mit) || t('nicht angegeben')))
+              + metaZeile(t('Stand'), standText(d), 'dok_stand_' + d.id)
+              + metaZeile(t('PDF-Standard'), esc(((d.meta && d.meta.standard) || []).join(', ') || t('keiner')))
+              + metaZeile(t('Seiten'), esc(seiten || '?'))
+              + metaZeile(t('Sprache'), esc((d.struktur && d.struktur.lang) || t('nicht gesetzt')))
+              + ((d.felder || 0) > 0 ? metaZeile(t('Formularfelder'), t('{n} Felder', { n: d.felder })) : '');
+        const hoerprobeKnopf = d.getaggt === true && !busy
+            ? '<button type="button" class="btn btn-secondary" id="dok_hp_' + d.id + '" onclick="Dokument.hoerprobeOeffnen(' + project.id + ', ' + d.id + ')">' + t('Hörprobe') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            : '';
+        let knoepfe;
+        if (imTagging) {
+            const preis = tg.preis || 0;
+            const knopfText = tg.status === 'fertig' ? t('Neu taggen') : t('Barrierefrei machen');
+            knoepfe = (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
+                // TESTWEISE TAGGEN (Michael Karbe, Feedback 24.09.2026 - 2, Punkt 3): kostenlos, Testmodus, das Original bleibt
+                + (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
+                + hoerprobeKnopf
+                + (ZEIGE_STRUKTURANSICHT && d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '');
+        } else {
+            // „Dokument“ = Dateiverwaltung (Feedback 20260928 - 2, Punkt 1): Hörprobe, Herunterladen, Umbenennen, Löschen —
+            // Herunterladen mit derselben Rückfrage wie in „Alt-Texte“ (app.html openExportPanel, Modus 'pdf')
+            knoepfe = hoerprobeKnopf
+                + (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
+                + '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+                + '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>';
+        }
         return '<section class="card dok-karte" id="dok_karte_' + d.id + '">'
             + '<details class="dok-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
             + '<summary><h3 id="dok_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: name }) + '</span> <span class="badge ' + standKlasse(d) + '" id="dok_badge_' + d.id + '">' + standText(d) + '</span></h3></summary>'
             + '<div class="ausgabe-karte">'
             + (seiten ? '<img class="ausgabe-vorschau" src="/api/projects/' + project.id + '/documents/' + d.id + '/vorschau" alt="' + t('Vorschau der ersten Seite von {name}', { name: name }) + '" loading="lazy">' : '')
-            + '<div class="ausgabe-text">'
-            + '<ul class="dok-meta">'
-            // Reihenfolge nach Michael Karbe (Feedback 24.09.2026, Punkte 2, 3, 5): Titel, Anwendung, Erstellt mit, Stand,
-            // PDF-Standard, dann die Zahlen
-            +   metaZeile(t('Titel'), esc((d.struktur && d.struktur.titel) || (d.meta && d.meta.titel) || t('kein Titel')))
-            +   metaZeile(t('Anwendung'), esc((d.meta && d.meta.anwendung) || t('nicht angegeben')))
-            +   metaZeile(t('Erstellt mit'), esc((d.meta && d.meta.erstellt_mit) || t('nicht angegeben')))
-            +   metaZeile(t('Stand'), standText(d), 'dok_stand_' + d.id)
-            +   metaZeile(t('PDF-Standard'), esc(((d.meta && d.meta.standard) || []).join(', ') || t('keiner')))
-            +   metaZeile(t('Seiten'), esc(seiten || '?'))
-            +   metaZeile(t('Sprache'), esc((d.struktur && d.struktur.lang) || t('nicht gesetzt')))
-            +   metaZeile(t('Struktur'), esc(strukturText(d.struktur)))
-            +   metaZeile(t('Bilder'), bilderZeile)
-            +   ((d.felder || 0) > 0 ? metaZeile(t('Formularfelder'), t('{n} Felder', { n: d.felder })) : '')
-            + '</ul>'
-            + urteilHtml(project, d, tg, busy)
+            + '<div class="ausgabe-text"><ul class="dok-meta">' + meta + '</ul>'
+            + (imTagging ? urteilHtml(project, d, tg, busy) : '')
             + '</div></div>'
-            + '<div class="dok-werkbank">'
-            + '<div class="ausgabe-aktionen">'
-            // Keine Knoepfe „Alt-Texte bearbeiten“/„Quickinfos bearbeiten“ mehr (Michael Karbe, Mail 22.09.2026,
-            // Punkt 3: zu viele Knoepfe) — dafuer ist die Ansichts-Wahl im Projektkopf da.
-            +   (!busy && tg.verfuegbar && seiten ? '<button type="button" class="btn btn-primary" id="dok_tag_' + d.id + '" onclick="Dokument.laufOeffnen(' + d.id + ')">' + ico('sparkle') + knopfText + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: seiten, c: preis }) + '</span></button>' : '')
-            // TESTWEISE TAGGEN (Michael Karbe, Feedback 24.09.2026 - 2, Punkt 3): kostenlos, Testmodus, das Original bleibt
-            +   (!busy && tg.verfuegbar && tg.test_moeglich !== false && seiten && !(tg.test && tg.test.laeuft) ? '<button type="button" class="btn btn-secondary" id="dok_test_' + d.id + '" onclick="Dokument.testStarten(' + project.id + ', ' + d.id + ')">' + t('Testweise taggen') + '<span class="visually-hidden"> ' + vh + ', ' + t('kostenlos, im Testmodus') + '</span></button>' : '')
-            // „PDF herunterladen“ wieder hier (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 4; die Station „Prüfung“
-            // lädt nichts mehr herunter, Punkt 6). Seit 28.09.2026 (Feedback 28.09.2026 - 1, Punkte 3 und 4) NUR hier und mit
-            // derselben Rückfrage wie früher in „Alt-Texte“ (app.html exportDialogHtml/openExportPanel, Modus 'pdf').
-            +   (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
-            +   (ZEIGE_STRUKTURANSICHT && d.getaggt === true ? '<a class="btn btn-secondary" id="dok_struktur_' + d.id + '" href="/struktur/' + project.id + '/' + d.id + '">' + t('Strukturansicht öffnen') + '<span class="visually-hidden"> ' + vh + '</span></a>' : '')
-            +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-            +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-            + '</div>'
-            + (d.getaggt === true && !busy ? '<p class="feld-hinweis">' + t('Probleme finden, Seiten ansehen und anhören: in der Ansicht „Barrierefreiheitsprüfung“.') + '</p>' : '')
-            + ergebnisHtml(d)
-            + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
-            + testHtml(project, d)
-            + berichtHtml(d)
-            + hoerprobeHtml(project, d)
-            + pruefungHtml(project, d)
+            + '<div class="dok-werkbank"><div class="ausgabe-aktionen">' + knoepfe + '</div>'
+            // Unter den Knöpfen in „Dokument“ nichts weiter (Feedback 20260928 - 2, Punkt 2); Ergebnis, Laufstatus, Testlauf
+            // und Bericht gehören zum Tagging.
+            + (imTagging
+                ? ergebnisHtml(d)
+                  + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
+                  + testHtml(project, d)
+                  + berichtHtml(d)
+                  + pruefungHtml(project, d)
+                : '')
             + '</div></details></section>';
+    }
+
+    // ─── Hörprobe als Dialog (Feedback 20260928 - 2, Punkte 1 und 6: Knopf „Hörprobe“ in „Dokument“ und „Tagging“; unter den
+    // Knöpfen steht nichts mehr). Natives <dialog> (Fokusfang, Escape), Inhalt = was ein Screenreader aus den Tags bekommt.
+    function hoerprobeDialogHtml() {
+        return '<dialog id="dkHoerprobeDialog" class="app-dialog" aria-labelledby="dkHpHeading">'
+            + '<h2 id="dkHpHeading">' + t('Hörprobe') + '</h2>'
+            + '<p class="dialog-hint">' + t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>'
+            + '<div class="ausgabe-hoerprobe" id="dkHpInhalt" role="region" aria-labelledby="dkHpHeading" tabindex="0" style="max-height:24rem;overflow:auto;"></div>'
+            + '<div class="dialog-actions"><button type="button" class="btn btn-secondary" id="dkHpZu" onclick="Dokument.hoerprobeSchliessen()">' + t('Schließen') + '</button></div>'
+            + '</dialog>';
+    }
+    let hoerprobeDoc = null;
+    async function hoerprobeOeffnen(projectId, docId) {
+        const dlg = document.getElementById('dkHoerprobeDialog');
+        const box = document.getElementById('dkHpInhalt');
+        const kopf = document.getElementById('dkHpHeading');
+        const d = ((aktuelleDaten && aktuelleDaten.documents) || []).find(x => x.id === docId);
+        if (!dlg || !box) return;
+        hoerprobeDoc = docId;
+        if (kopf) kopf.textContent = t('Hörprobe: {name}', { name: d ? docDisplayName(d) : '' });
+        box.innerHTML = '<p>' + t('Hörprobe wird geladen …') + '</p>';
+        dlg.showModal();
+        try {
+            const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/struktur', { credentials: 'same-origin' });
+            const j = r.ok ? await r.json() : null;
+            if (hoerprobeDoc !== docId) return;
+            box.innerHTML = (!j || !j.verfuegbar)
+                ? '<p>' + esc((j && j.grund) || t('Die Hörprobe konnte nicht geladen werden.')) + '</p>'
+                : ((j.hoerprobe || []).map(z => '<p>' + esc(z) + '</p>').join('') || '<p>' + t('Kein Text zum Vorlesen vorhanden.') + '</p>');
+        } catch (e) {
+            box.innerHTML = '<p>' + t('Die Hörprobe konnte nicht geladen werden.') + '</p>';
+        }
+        if (dlg.open) box.focus();
+    }
+    function hoerprobeSchliessen() {
+        const dlg = document.getElementById('dkHoerprobeDialog');
+        if (dlg && dlg.open) dlg.close();
+        const btn = hoerprobeDoc ? document.getElementById('dok_hp_' + hoerprobeDoc) : null;
+        if (btn) btn.focus();
     }
 
     // ─── Testweise taggen (25.09.2026): Ergebnis des letzten Testlaufs als Klappe; die Testfassung ist nicht
@@ -541,11 +564,12 @@
         const busy = docs.some(d => d.tagging && d.tagging.laeuft) || !!kette.laeuft || project.status === 'extracting' || project.status === 'processing';
         const aktionen = !ZEIGE_PROJEKT_KNOEPFE ? '' : (docs.length && !busy ? '<button class="btn btn-primary" id="dkKetteBtn" onclick="Dokument.ketteOeffnen(' + project.id + ')">' + ico('sparkle') + t('Komplett barrierefrei machen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
             + ((data.ausgaben_anzahl || 0) > 0 ? '<a class="btn btn-secondary" id="ausgabenTab" href="/ablage?projekt=' + project.id + '">' + t('Ablage ({n})', { n: data.ausgaben_anzahl || 0 }) + '</a>' : '');
-        return projektKopfHtml(project, 'dokument', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
-            + funktionenKarteHtml(aktionen)
-            + laufDialogHtml(project)
+        return projektKopfHtml(project, modus, title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
+            + funktionenKarteHtml(modus === 'dokument' ? aktionen : '')
+            + (modus === 'tagging' ? laufDialogHtml(project) : '')
+            + hoerprobeDialogHtml()
             // Herunterladen-Dialog (Feedback 28.09.2026 - 1, Punkt 4): derselbe wie in „Alt-Texte“, hier nur mit der PDF.
-            + (docs.some(d => d.getaggt === true) && typeof exportDialogHtml === 'function' ? exportDialogHtml(project) : '')
+            + (modus === 'dokument' && docs.some(d => d.getaggt === true) && typeof exportDialogHtml === 'function' ? exportDialogHtml(project) : '')
             + (ZEIGE_PROJEKT_KNOEPFE ? ketteDialogHtml(project) : '');
     }
 
@@ -778,7 +802,8 @@
         return s;
     }
 
-    async function showProject(projectId, erneut) {
+    async function showProject(projectId, erneut, neuerModus) {
+        if (neuerModus === 'dokument' || neuerModus === 'tagging') modus = neuerModus;
         projectId = Number(projectId);   // Adresse liefert Text, Knoepfe eine Zahl — ohne das ging der Klapp-Zustand verloren
         pollStoppen();
         const main = document.getElementById('main');
@@ -793,7 +818,7 @@
         neuLaden = (pid) => showProject(pid, true);   // diese Ansicht zeichnet nach Aktionen selbst neu
         if (typeof exportKontextSetzen === 'function') exportKontextSetzen(docs, project.project_type);
         // Mehrere Dokumente, alle getaggt: alles auf einmal als ZIP (bis 25.09.2026 in der Abschlusspruefung)
-        const alleGetaggt = docs.length > 1 && docs.every(d => d.getaggt === true && !(d.tagging && d.tagging.laeuft));
+        const alleGetaggt = modus === 'dokument' && docs.length > 1 && docs.every(d => d.getaggt === true && !(d.tagging && d.tagging.laeuft));
         const alleKnopf = alleGetaggt
             ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="openExportPanel(' + project.id + ', 0, \'pdf\')">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> ' + t('als ZIP, mit Alt-Texten und Quickinfos') + '</span></button>'
               + '</p>'
@@ -825,7 +850,6 @@
             const k = Number(el.dataset.doc);
             if (el.open) offeneBerichte.add(k); else offeneBerichte.delete(k);
         }));
-        document.querySelectorAll('details.dok-hoerprobe').forEach(el => el.addEventListener('toggle', () => { if (el.open) hoerprobeLaden(el); }));
         document.querySelectorAll('details.dok-pruefung').forEach(el => el.addEventListener('toggle', () => {
             const k = Number(el.dataset.doc);
             if (el.open) offenePruefungen.add(k); else offenePruefungen.delete(k);
@@ -846,7 +870,8 @@
                 if (!document.getElementById('dokListe')) { pollStoppen(); return; }   // Ansicht gewechselt
                 // Offener Herunterladen-Dialog: nicht neu zeichnen (das raeumte den Dialog mitten im Export weg), spaeter weiter.
                 const dlg = document.getElementById('exportPanel');
-                if (dlg && dlg.open) { pollTimer = setTimeout(tick, 2500); return; }
+                const hp = document.getElementById('dkHoerprobeDialog');
+                if ((dlg && dlg.open) || (hp && hp.open)) { pollTimer = setTimeout(tick, 2500); return; }
                 try {
                     const r = await fetch('/api/projects/' + projectId + '/dokument-ansicht');
                     if (!r.ok) { pollTimer = setTimeout(tick, 2500); return; }
@@ -888,6 +913,7 @@
                         const erster = fertigGeworden.concat(testFertig)[0];
                         const ziel = erster ? document.getElementById('dok_ergebnis_text_' + erster.id) : null;
                         if (ziel) ziel.focus();
+                        else if (erster && ergebnisMeldung[erster.id]) zeigeMeldung(ergebnisMeldung[erster.id].text);   // Ansicht „Dokument“
                         if (texte.length) { if (ziel) announce(texte.join(' ')); else zeigeMeldung(texte.join(' ')); }
                         else if (!erster && project.status === 'extracting' && d2.project.status !== 'extracting') announce(t('Dokument gelesen.'));
                         return;
@@ -920,6 +946,6 @@
     }
     window.Dokument = { showProject, laufOeffnen, laufSchliessen, laufStarten, meldungSchliessen, pollStoppen,
                         ketteOeffnen, ketteSchliessen, ketteStarten, pruefungStarten, korrekturStarten, korrekturRueckgaengig,
-                        ergebnisSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden, testStarten,
+                        ergebnisSchliessen, hoerprobeOeffnen, hoerprobeSchliessen, kiBlockHtml, setNeuLaden, kiKlappenBinden, testStarten,
                         pruefAbschlussText, korrAbschlussText };
 })();

@@ -4887,7 +4887,7 @@ async def set_prompt_setting(project_id: int, request: Request, user: dict = Dep
 # ANSICHTEN (22.09.2026, Steve): Der Wechsel ueber die Ansichts-Wahl merkt sich die Ansicht am Projekt;
 # beim naechsten Oeffnen ohne ?ansicht startet das Projekt dort (auf jedem Geraet). Erlaubte Werte je
 # Dateityp wie in app.html aktuelleAnsicht(): PDF dokument|alttexte|quickinfos|abschluss, Word alttexte|uebersetzung.
-ANSICHTEN_JE_TYP = {"pdf": ("dokument", "alttexte", "quickinfos", "abschluss"), "docx": ("alttexte", "uebersetzung")}
+ANSICHTEN_JE_TYP = {"pdf": ("dokument", "tagging", "alttexte", "quickinfos", "abschluss"), "docx": ("alttexte", "uebersetzung")}
 
 
 @app.post("/api/projects/{project_id}/ansicht")

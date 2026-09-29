@@ -76,7 +76,7 @@
         const p = d.pruefdatei;
         let meta = '';
         if (!d.getaggt) {
-            meta = '<p class="feld-hinweis">' + t('Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Dokument“ barrierefrei.') + '</p>';
+            meta = '<p class="feld-hinweis">' + t('Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei.') + '</p>';
         } else {
             meta = '<ul class="dok-meta">'
                 + metaZeile(t('Seiten'), esc(d.seiten || '?'))
