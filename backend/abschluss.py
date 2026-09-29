@@ -35,6 +35,13 @@ _WORT = re.compile(r"[^\W\d_]{3,}|\d{3,}")
 ABSCHLUSS_VERSION = 3   # 3: Strukturlesung mit Leerzeichen-Korrektur (28.09.2026) — alte Pruefdateien gelten als nicht aktuell
 _NUR_ZAHL = re.compile(r"^[\s\d\W]{1,8}$")
 VOLLSTAENDIG_ANTEIL = 0.6
+# NUR veraPDF (Michael Karbe, Feedback 20260928 - 2, Punkte 8 und 9): „für den Beginn auf die Prüffunktionen von veraPDF
+# beschränken. Der Anwender bekommt dann das gleiche Resultat wie bei einer lokalen Prüfung … jede falsche Meldung
+# vermeiden“; KI-Prüfung ausblenden. Die EIGENEN Prüfungen (Struktur, Vollständigkeit, KI) bleiben im Code, werden aber
+# nicht gezeigt — Anlass war der Fehlalarm vom 28.09. (Vollständigkeit). Wieder einschalten nur, wenn sie verlässlich sind
+# (Steve 29.09.: „wichtig ist, dass das Ergebnis am Ende wirklich korrekt ist“; evtl. ganz neu, Vorlage: veraPDF-
+# „PDF4WCAG Human Checks“ von Dual Lab, Michaels Mail 29.09.).
+EIGENE_PRUEFUNGEN = False
 MAX_FEHLEND_JE_SEITE = 12
 
 
@@ -183,7 +190,7 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
                              _: Callable[[str], str] = _identitaet, quickinfos: Optional[dict] = None) -> list[dict]:
     """Eine Liste, nach Seite sortiert: {seite, seiten, art, quelle, text}."""
     out = []
-    if meta.get("vollstaendigkeit_geprueft") is False:
+    if EIGENE_PRUEFUNGEN and meta.get("vollstaendigkeit_geprueft") is False:
         # ehrlich sagen, dass ein Teil der Pruefung nicht lief — sonst sieht „keine fehlenden Zeilen“ wie ein Ergebnis aus
         out.append({"seite": 0, "seiten": [], "art": "hinweis", "quelle": _("Vollständigkeit"),
                     "text": _("Die Vollständigkeit konnte nicht geprüft werden. Bitte die Hörprobe selbst durchgehen.")})
@@ -193,8 +200,17 @@ def probleme_zusammenstellen(meta: dict, struktur: Optional[dict], ki_befunde: l
         # je verletztem Pruefpunkt eine Zeile (pdfua_export._einzeln, Michael Karbe 24.09.2026, Punkt 12)
         for e in (p.get("einzeln") or [{"text": p.get("text") or "", "seiten": p.get("seiten") or []}]):
             seiten = [int(x) for x in (e.get("seiten") or []) if str(x).isdigit()]
-            out.append({"seite": (seiten[0] if seiten else 0), "seiten": seiten, "art": "technisch",
-                        "quelle": _("veraPDF (PDF/UA-1)"), "text": f"{p.get('bereich', '')}: {e.get('text', '')}".strip(": ")})
+            # Regelnummer von veraPDF dazu (Michael 28.09.2026: vergleichbar mit einer lokalen Pruefung)
+            regeln = e.get("regeln") or []
+            ref = ((" " + (_("(veraPDF-Regel {r})") if len(regeln) == 1 else _("(veraPDF-Regeln {r})")).format(r=", ".join(regeln)))
+                   if regeln else "")
+            out.append({"seite": (seiten[0] if seiten else 0), "seiten": seiten, "art": "technisch", "regeln": regeln,
+                        "quelle": _("veraPDF (PDF/UA-1)"), "text": (f"{p.get('bereich', '')}: {e.get('text', '')}".strip(": ") + ref)})
+    if not EIGENE_PRUEFUNGEN:
+        out.sort(key=lambda p: (p["seite"] or 10 ** 6, p["art"]))
+        for i, p in enumerate(out, 1):
+            p["nr"] = i
+        return out
     if struktur:
         for p in struktur_probleme(struktur, _, quickinfos):
             p.update({"seiten": [p["seite"]] if p["seite"] else [], "quelle": _("Struktur")})

@@ -88,7 +88,7 @@ with sync_playwright() as p:
     check("Neues PDF-Projekt startet ohne ?ansicht in der Ansicht Dokument (Steve 22.09.)", pg.locator("#dokumenteHeading").count() == 1)
     # Ansichts-Wahl als Knoepfe (Michael Karbe, Feedback 24.09.2026, Punkt 8): Links, aktuelle mit aria-current
     opts = [x.strip() for x in pg.locator(".ansicht-knoepfe [data-ansicht]").all_inner_texts()]
-    check("Ansichts-Knöpfe: Dokument, Alt-Texte, Quickinfos (ausgegraut, keine Felder), Prüfung", [o.split("(")[0].strip() for o in opts] == ["Dokument", "Alt-Texte", "Quickinfos", "Prüfung"] and pg.locator(".ansicht-knoepfe .ansicht-aus[data-ansicht=quickinfos]").count() == 1 and pg.locator(".ansicht-knoepfe a[data-ansicht=quickinfos]").count() == 0, opts)
+    check("Ansichts-Knöpfe: Dokument, Alt-Texte, Quickinfos (ausgegraut, keine Felder), Prüfung", [o.split("(")[0].strip() for o in opts] == ["Dokument", "Alt-Texte", "Quickinfos", "Barrierefreiheitsprüfung"] and pg.locator(".ansicht-knoepfe .ansicht-aus[data-ansicht=quickinfos]").count() == 1 and pg.locator(".ansicht-knoepfe a[data-ansicht=quickinfos]").count() == 0, opts)
     # Michael Karbe, Feedback 24.09.2026 - 3: „Ansicht:“ nur für Screenreader (1), nicht verfügbar mit durchgezogener Linie (2)
     check("„Ansicht:“ sichtbar weg, für Screenreader Name der Knopfliste", "visually-hidden" in (pg.locator("#ansichtTitel").get_attribute("class") or "") and pg.locator("ul.ansicht-knoepfe[aria-labelledby=ansichtTitel]").count() == 1)
     check("Nicht verfügbare Ansicht mit durchgezogener Linie", pg.evaluate("getComputedStyle(document.querySelector('.ansicht-aus')).borderTopStyle") == "solid")
@@ -191,7 +191,7 @@ with sync_playwright() as p:
     check("Badge jetzt „Getaggt …“", "Getaggt" in h3, h3)
     check("Knopf heisst jetzt „Neu taggen“", pg.locator("button[id^=dok_tag_]").first.inner_text().startswith("Neu taggen"))
     # Herunterladen wieder in „Dokument“ (Mail - 3, Punkt 4); Hinweis auf die Station „Prüfung“
-    check("Knopf „PDF herunterladen“ in der Dokument-Karte, Hinweis auf „Prüfung“", pg.locator("button[id^=dok_export_]").count() == 1 and "Ansicht „Prüfung“" in pg.locator("section.dok-karte").first.inner_text())
+    check("Knopf „PDF herunterladen“ in der Dokument-Karte, Hinweis auf „Barrierefreiheitsprüfung“", pg.locator("button[id^=dok_export_]").count() == 1 and "Ansicht „Barrierefreiheitsprüfung“" in pg.locator("section.dok-karte").first.inner_text())
     pg.click("details.dok-bericht > summary")
     pg.wait_for_timeout(300)
     ber = pg.locator("details.dok-bericht").first.inner_text()
@@ -322,16 +322,16 @@ with sync_playwright() as p:
         pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
         check("Escape schliesst die Rueckfrage, Fokus auf dem Knopf", not pg.locator("#dkKetteDialog[open]").count() and pg.evaluate("document.activeElement && document.activeElement.id") == "dkKetteBtn")
 
-    print("== C2b. Station „Prüfung“ (24.09.2026, umgebaut 25.09. nach Michaels Mail - 3) ==")
+    print("== C2b. Station „Barrierefreiheitsprüfung“ (nur veraPDF, Michaels Feedback 20260928 - 2) ==")
     opts = [x.strip() for x in pg.locator(".ansicht-knoepfe [data-ansicht]").all_inner_texts()]
-    check("Ansichts-Knöpfe nennen „Prüfung“ als letzte Station (Punkt 5)", opts[-1] == "Prüfung", opts)
+    check("Ansichts-Knöpfe nennen „Barrierefreiheitsprüfung“ als letzte Station (Punkt 3)", opts[-1] == "Barrierefreiheitsprüfung", opts)
     pg.click(".ansicht-knoepfe a[data-ansicht=abschluss]")
     pg.wait_for_selector("section.ab-karte", timeout=15000); pg.wait_for_timeout(800)
-    check("H1 nennt die Station „Prüfung“", pg.locator("h1#projectName").inner_text().startswith("Prüfung – Projekt: "), pg.locator("h1#projectName").inner_text())
+    check("H1 nennt die Station „Barrierefreiheitsprüfung“", pg.locator("h1#projectName").inner_text().startswith("Barrierefreiheitsprüfung – Projekt: "), pg.locator("h1#projectName").inner_text())
     check("Adresse ansicht=abschluss, Kopf mit PDF-Symbol, eine Karte offen", "ansicht=abschluss" in pg.url and pg.locator(".projekt-kopf img.projekt-dateityp").count() == 1 and pg.locator("details.ab-klappe[open]").count() == 1)
     check("Karte: „Noch keine Prüfdatei“, Knopf „Prüfdatei erstellen“ (kostenlos)", "Noch keine Prüfdatei" in pg.locator("section.ab-karte h3").inner_text() and pg.locator("button[id^=ab_erstellen_]").count() == 1 and "kostenlos" in pg.locator("button[id^=ab_erstellen_]").inner_text())
     check("Kein Herunterladen in der Prüfung (Punkt 6), kein Upload-Feld", pg.locator("button[id^=ab_export_]").count() == 0 and pg.locator("#abAlleBtn").count() == 0 and "PDF herunterladen" not in pg.locator("main").inner_text() and pg.locator("#projUpload").count() == 0)
-    check("KI-basierte Prüfung als Abschnitt mit Knopf (Punkt 13)", pg.locator("section.ab-ki h4").count() == 1 and "KI-basierte Prüfung (experimentell)" in pg.locator("section.ab-ki h4").inner_text() and pg.locator("section.ab-ki button[id^=dok_pruef_]").count() == 1 and "2 Seiten, 4 Credits" in pg.locator("section.ab-ki button[id^=dok_pruef_]").inner_text())
+    check("Keine KI-basierte Prüfung (ausgeblendet, Punkt 9)", pg.locator("section.ab-ki").count() == 0 and pg.locator("button[id^=dok_pruef_]").count() == 0 and "KI-basierte" not in pg.locator("main").inner_text())
     axe(pg, "Prüfung vor der Prüfdatei")
     pg.click("button[id^=ab_erstellen_]")
     for _ in range(60):
@@ -343,10 +343,12 @@ with sync_playwright() as p:
     meta = pg.locator("section.ab-karte ul.dok-meta").first.inner_text()
     check("Stand: Prüfdatei erstellt am …, aktuell, Norm-Prüfung (veraPDF), Problemstellen", all(k in meta for k in ("Prüfdatei: erstellt am", "Stand: aktuell", "Norm-Prüfung PDF/UA-1 (veraPDF): ", "Problemstellen: ")), meta)
     check("veraPDF nennt Ergebnis mit Zahl der Prüfpunkte (Michael Karbe 28.09.2026)", re.search(r"Norm-Prüfung PDF/UA-1 \(veraPDF\): (bestanden, [\d.]+ Prüfpunkte erfüllt|nicht bestanden, [\d.]+ Prüfpunkte verletzt)", meta) is not None, meta)
-    check("Hinweis: was InkluDocs zusätzlich prüft", "Zusätzlich prüft InkluDocs" in pg.locator("section.ab-karte").first.inner_text())
+    karte = pg.locator("section.ab-karte").first.inner_text()
+    check("Hinweis: geprüft wird mit veraPDF, jede Problemstelle nennt die Regelnummer", "Geprüft wird mit veraPDF" in karte and "Zusätzlich prüft InkluDocs" not in karte, karte[:400])
     pg.wait_for_timeout(1500)
-    kopf = pg.locator("ul[id^=ab_kopf_]").first.inner_text()
-    check("Sprache und Zusammenfassung oben bei den Infos (Punkt 10)", "Sprache" in kopf and "Zusammenfassung" in kopf, kopf)
+    check("Keine Sprache/Zusammenfassung in der Prüfung (Punkt 10)", pg.locator("ul[id^=ab_kopf_]").count() == 0)
+    probleme = pg.locator("ol.ab-problemliste > li").all_inner_texts()
+    check("Nur veraPDF-Befunde, jeder mit Regelnummer (Punkt 8)", all("veraPDF (PDF/UA-1)" in x and "veraPDF-Regel" in x for x in probleme) and not any(q in " ".join(probleme) for q in ("Vollständigkeit:", "Struktur:", "KI-basierte")), probleme[:4])
     check("Kein Filter „Ganzes Dokument / Nur Problemstellen“ mehr (Punkt 12)", pg.locator("fieldset.ab-filter").count() == 0)
     check("Kein „!“ vor den Problemen (Punkt 7)", pg.locator(".ab-marke").count() == 0)
     n_prob = pg.locator("ol.ab-problemliste > li").count()
@@ -368,37 +370,8 @@ with sync_playwright() as p:
         check("Ohne Probleme: Hinweis „Keine Problemstellen gefunden“, keine Seitenansicht", "Keine Problemstellen gefunden" in pg.locator("div.ab-detail").inner_text() and pg.locator("section.ab-seite").count() == 0)
     axe(pg, "Prüfung mit Prüfdatei")
 
-    print("== C2c. KI-basierte Pruefung in der Station „Prüfung“ ==")
-    kn = pg.locator("section.ab-ki button[id^=dok_pruef_]")
-    kn.first.click()
-    pg.wait_for_timeout(1500)
-    st = pg.locator("output[id^=dok_pruef_status_]").first.inner_text()
-    check("Statuszeile „Prüfung läuft“ und Fokus darauf", "Prüfung läuft" in st and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_pruef_status_"), st)
-    fertig = False
-    for _ in range(90):
-        pg.wait_for_timeout(2000)
-        if "fertig" in (pg.locator("output[id^=dok_pruef_status_]").first.inner_text() if pg.locator("output[id^=dok_pruef_status_]").count() else ""):
-            fertig = True
-            break
-    st = pg.locator("output[id^=dok_pruef_status_]").first.inner_text() if fertig else ""
-    check("Statuszeile „Prüfung … fertig“ mit Fokus", fertig and str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_pruef_status_"), st)
-    check("Kurzfassung statt zweiter Befundliste, Knopf „KI-Prüfung erneut starten“", "Letzte Prüfung am" in pg.locator("section.ab-ki").inner_text() and pg.locator("section.ab-ki ol.dok-befunde").count() == 0 and pg.locator("section.ab-ki button[id^=dok_pruef_]").first.inner_text().startswith("KI-Prüfung erneut starten"), pg.locator("section.ab-ki").inner_text()[:300])
-    axe(pg, "Prüfung nach der KI-Prüfung")
-    if pg.locator("button[id^=dok_korr_]").count():
-        print("== C2d. Korrektur mit Doppelbeleg (in der Prüfung) ==")
-        pg.locator("button[id^=dok_korr_]").first.click()
-        fertig = False
-        for _ in range(30):
-            pg.wait_for_timeout(2000)
-            if "Korrektur" in (pg.locator("output[id^=dok_pruef_status_]").first.inner_text() if pg.locator("output[id^=dok_pruef_status_]").count() else "") and pg.locator("button[id^=dok_korr_undo_]").count():
-                fertig = True
-                break
-        check("Korrektur fertig, Rückgängig-Knopf da", fertig, pg.locator("section.ab-ki").inner_text()[-300:])
-        if fertig:
-            pg.click("button[id^=dok_korr_undo_]"); pg.wait_for_timeout(2500)
-            check("Rückgängig: Meldung in der Statuszeile", "rückgängig" in pg.locator("output[id^=dok_pruef_status_]").first.inner_text().lower())
-    else:
-        print("   (keine Befunde mit Doppelbeleg in diesem Lauf — Korrektur-Teil uebersprungen)")
+    # C2c/C2d (KI-Pruefung und Korrektur in der Station) entfallen, solange die KI-Pruefung ausgeblendet ist
+    # (Michael Karbe, Feedback 20260928 - 2, Punkt 9; Schalter ZEIGE_KI in frontend/abschluss.js).
     pg.click("a[id^=ab_struktur_]")
     pg.wait_for_selector("h1#strukturTitel", timeout=30000)
     check("Mit eigenem Screenreader prüfen: Strukturansicht der fertigen Datei", "(fertige Datei)" in pg.locator("h1#strukturTitel").inner_text() and "quelle=abschluss" in pg.url, pg.locator("h1#strukturTitel").inner_text())

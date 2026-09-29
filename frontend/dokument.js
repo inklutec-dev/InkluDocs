@@ -426,7 +426,7 @@
             +   '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             + '</div>'
-            + (d.getaggt === true && !busy ? '<p class="feld-hinweis">' + t('Probleme finden, Seiten ansehen und anhören: in der Ansicht „Prüfung“.') + '</p>' : '')
+            + (d.getaggt === true && !busy ? '<p class="feld-hinweis">' + t('Probleme finden, Seiten ansehen und anhören: in der Ansicht „Barrierefreiheitsprüfung“.') + '</p>' : '')
             + ergebnisHtml(d)
             + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
             + testHtml(project, d)

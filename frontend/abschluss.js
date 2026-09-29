@@ -19,6 +19,10 @@
  */
 (function () {
     'use strict';
+    // Schalter (Michael Karbe, Feedback 20260928 - 2): KI-Pruefung (Punkt 9) und Sprache/Zusammenfassung (Punkt 10) aus;
+    // der Code bleibt, damit beides spaeter wieder eingeschaltet werden kann.
+    const ZEIGE_KI = false;
+    const ZEIGE_KOPF = false;
 
     let zustandProjekt = null;
     let offeneDokumente = new Set();
@@ -82,7 +86,7 @@
                 // nicht auf veraPDF zu basieren“ — sie tat es, nur stand es nirgends); darunter, was InkluDocs zusaetzlich prueft.
                 + (p ? metaZeile(t('Norm-Prüfung PDF/UA-1 (veraPDF)'), normText(p)) : '')
                 + (p && p.anzahl_probleme != null ? metaZeile(t('Problemstellen'), esc(p.anzahl_probleme)) : '')
-                + (p && p.vollstaendigkeit_geprueft === false ? metaZeile(t('Vollständigkeit'), t('nicht geprüft')) : '')
+                + (p && p.eigene_pruefungen && p.vollstaendigkeit_geprueft === false ? metaZeile(t('Vollständigkeit'), t('nicht geprüft')) : '')
                 + '</ul>';
         }
         const erstellenText = !p ? t('Prüfdatei erstellen') : t('Prüfdatei neu erstellen');
@@ -95,15 +99,17 @@
               + '</div>'
             : '';
         const dk = dokDaten[d.id];
-        const ki = (dk && dokProjekt && window.Dokument && typeof Dokument.kiBlockHtml === 'function') ? Dokument.kiBlockHtml(dokProjekt, dk) : '';
+        // KI-basierte Pruefung ausgeblendet (Michael Karbe, Feedback 20260928 - 2, Punkt 9): ZEIGE_KI = true holt sie zurueck
+        const ki = (ZEIGE_KI && dk && dokProjekt && window.Dokument && typeof Dokument.kiBlockHtml === 'function') ? Dokument.kiBlockHtml(dokProjekt, dk) : '';
         return '<section class="card dok-karte ab-karte" id="ab_karte_' + d.id + '">'
             + '<details class="dok-klappe ab-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
             + '<summary><h3 id="ab_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: nm }) + '</span> <span class="badge ' + standKlasse(d) + '" id="ab_badge_' + d.id + '">' + esc(standText(d)) + '</span></h3></summary>'
             + '<div class="ab-inhalt">'
             + meta
             // Sprache und Zusammenfassung oben bei den Infos (Punkt 10); gefuellt, sobald die Details geladen sind
-            + '<ul class="dok-meta ab-kopf" id="ab_kopf_' + d.id + '">' + (details[d.id] ? kopfZeilenHtml(details[d.id]) : '') + '</ul>'
-            + (p ? '<p class="feld-hinweis">' + t('Zusätzlich prüft InkluDocs, was veraPDF nicht beurteilen kann: Struktur (zum Beispiel Überschriften-Ebenen und Tabellenköpfe), Vollständigkeit des vorgelesenen Textes und auf Wunsch die KI-basierte Prüfung. Diese Hinweise stehen bei den Problemstellen, jeweils mit ihrer Quelle.') + '</p>'
+            // Sprache und Zusammenfassung stehen schon unter „Dokument“ (Michael Karbe, Feedback 20260928 - 2, Punkt 10): ZEIGE_KOPF
+            + (ZEIGE_KOPF ? '<ul class="dok-meta ab-kopf" id="ab_kopf_' + d.id + '">' + (details[d.id] ? kopfZeilenHtml(details[d.id]) : '') + '</ul>' : '')
+            + (p ? '<p class="feld-hinweis">' + t('Geprüft wird mit veraPDF gegen PDF/UA-1, demselben Werkzeug wie bei einer Prüfung auf dem eigenen Rechner. Jede Problemstelle nennt die Regelnummer von veraPDF.') + '</p>'
                  + '<p class="feld-hinweis">' + t('Geprüft wird die fertige Datei, genau die PDF, die du in der Ansicht „Dokument“ herunterlädst. Das Erstellen der Prüfdatei ist kostenlos.') + '</p>'
                  : (d.getaggt ? '<p class="feld-hinweis">' + t('Erstelle die Prüfdatei: Sie ist genau die PDF, die du herunterlädst, mit Struktur, Alt-Texten und Quickinfos. Das ist kostenlos.') + '</p>' : ''))
             + (p && !p.aktuell ? '<p class="feld-hinweis"><strong>' + t('Die Prüfdatei ist nicht mehr aktuell.') + '</strong> ' + t('Erstelle sie neu, damit du genau die Datei prüfst, die du herunterlädst.') + '</p>' : '')
@@ -166,7 +172,7 @@
         // damit die Seitenansicht erreichbar bleibt; Zustand bleibt beim Blaettern.
         if (!probleme.length) {
             s += '<h4 id="ab_probleme_' + d.id + '">' + t('Problemstellen ({n})', { n: 0 }) + '</h4>'
-                + '<p>' + t('Keine Problemstellen gefunden: veraPDF (PDF/UA-1), Struktur und Vollständigkeit sind ohne Befund.') + '</p>';
+                + '<p>' + t('Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1.') + '</p>';
             return s;
         }
         if (z.listeOffen === undefined) z.listeOffen = probleme.length <= 10;
@@ -200,7 +206,7 @@
             + '<div class="ab-seite-text">'
             + '<div class="ab-seite-probleme"><p><strong>' + t('Problemstellen auf dieser Seite') + '</strong></p><ul>' + pSeite.map(p => '<li>' + t('Problem {n}', { n: p.nr }) + ': ' + esc(p.quelle) + ': ' + esc(p.text) + '</li>').join('') + '</ul></div>'
             + '<p><button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_vorlesen_' + d.id + '" aria-pressed="false" onclick="Abschluss.vorlesenSeite(' + d.id + ', this)">' + t('Seite vorlesen') + '</button></p>'
-            + '<h5 class="ab-hoerprobe-titel">' + t('Hörprobe: so bekommt ein Screenreader diese Seite') + '</h5>'
+            + '<h5 class="ab-hoerprobe-titel">' + t('Hörprobe: so liest ein Screenreader die Tags dieser Seite vor (kein Prüfergebnis)') + '</h5>'
             + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von Seite {n}', { n: z.seite }) + '" tabindex="0">'
             + (seiteDaten.zeilen.length ? seiteDaten.zeilen.map(zl => zeileHtml(zl, lang)).join('') : '<p>' + t('Auf dieser Seite liest ein Screenreader nichts vor.') + '</p>')
             + '</div></div></div></section>';
@@ -212,7 +218,7 @@
         if (!box || !details[docId]) return;
         box.innerHTML = detailHtml({ id: projectId }, details[docId]);
         const kopf = document.getElementById('ab_kopf_' + docId);
-        if (kopf) kopf.innerHTML = kopfZeilenHtml(details[docId]);
+        if (kopf && ZEIGE_KOPF) kopf.innerHTML = kopfZeilenHtml(details[docId]);
         if (fokus) { const h = document.getElementById(fokus); if (h) h.focus(); }
     }
     async function detailLaden(projectId, docId) {
@@ -384,7 +390,7 @@
         const title = (project.name && project.name.trim()) ? project.name : project.filename;
         main.innerHTML = projektKopfHtml(project, 'abschluss', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
             + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
-            + (docs.length ? '<p class="feld-hinweis">' + t('Hier prüfst du das Ergebnis: Problemstellen, Seitenbild und Hörprobe der fertigen Datei. Heruntergeladen wird in der Ansicht „Dokument“.') + '</p>'
+            + (docs.length ? '<p class="feld-hinweis">' + t('Hier prüfst du die fertige Datei mit veraPDF: Problemstellen, dazu Seitenbild und Hörprobe. Heruntergeladen wird in der Ansicht „Dokument“.') + '</p>'
                            : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
             + '<div id="abListe">' + docs.map((d, i) => karteHtml(project, d, i + 1, docs.length)).join('') + '</div>';
         if (window.Dokument && typeof Dokument.kiKlappenBinden === 'function') Dokument.kiKlappenBinden();

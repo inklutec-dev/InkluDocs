@@ -9588,3 +9588,32 @@ msgstr "In addition, InkluDocs checks what veraPDF cannot judge: structure (for 
 msgid "Keine Problemstellen gefunden: veraPDF (PDF/UA-1), Struktur und Vollständigkeit sind ohne Befund."
 msgstr "No problem areas found: veraPDF (PDF/UA-1), structure and completeness show no findings."
 
+msgid "Barrierefreiheitsprüfung"
+msgstr "Accessibility check"
+
+msgid "Ansicht Barrierefreiheitsprüfung geöffnet."
+msgstr "Accessibility check view opened."
+
+#, python-brace-format
+msgid "(veraPDF-Regel {r})"
+msgstr "(veraPDF rule {r})"
+
+#, python-brace-format
+msgid "(veraPDF-Regeln {r})"
+msgstr "(veraPDF rules {r})"
+
+msgid "Geprüft wird mit veraPDF gegen PDF/UA-1, demselben Werkzeug wie bei einer Prüfung auf dem eigenen Rechner. Jede Problemstelle nennt die Regelnummer von veraPDF."
+msgstr "The check uses veraPDF against PDF/UA-1, the same tool as a check on your own computer. Each problem area names the veraPDF rule number."
+
+msgid "Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1."
+msgstr "No problem areas found: veraPDF reports no violation of PDF/UA-1."
+
+msgid "Hörprobe: so liest ein Screenreader die Tags dieser Seite vor (kein Prüfergebnis)"
+msgstr "Listening sample: how a screen reader reads the tags of this page (not a check result)"
+
+msgid "Hier prüfst du die fertige Datei mit veraPDF: Problemstellen, dazu Seitenbild und Hörprobe. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Here you check the finished file with veraPDF: problem areas, plus page image and listening sample. Downloading happens in the “Document” view."
+
+msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Barrierefreiheitsprüfung“."
+msgstr "Find problems, view and listen to pages: in the “Accessibility check” view."
+

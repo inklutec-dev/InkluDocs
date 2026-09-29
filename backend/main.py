@@ -8422,6 +8422,7 @@ def _abschluss_dokument(project: dict, unit: dict, user_id: int, _, voll: bool) 
         "pruefpunkte_erfuellt": (meta.get("verapdf_roh") or {}).get("passed_checks"),
         "pruefpunkte_verletzt": (meta.get("verapdf_roh") or {}).get("failed_checks"),
         "vollstaendigkeit_geprueft": meta.get("vollstaendigkeit_geprueft", True),
+        "eigene_pruefungen": abschluss.EIGENE_PRUEFUNGEN,   # aus: nur veraPDF (Michael Karbe, Feedback 20260928 - 2, Punkt 8)
         "hinweise": meta.get("warnungen") or [],
         "anzahl_probleme": None,
     }

@@ -9287,3 +9287,32 @@ msgstr "Derudover kontrollerer InkluDocs det, som veraPDF ikke kan vurdere: stru
 msgid "Keine Problemstellen gefunden: veraPDF (PDF/UA-1), Struktur und Vollständigkeit sind ohne Befund."
 msgstr "Ingen problemsteder fundet: veraPDF (PDF/UA-1), struktur og fuldstændighed er uden fund."
 
+msgid "Barrierefreiheitsprüfung"
+msgstr "Tilgængelighedskontrol"
+
+msgid "Ansicht Barrierefreiheitsprüfung geöffnet."
+msgstr "Visningen Tilgængelighedskontrol er åbnet."
+
+#, python-brace-format
+msgid "(veraPDF-Regel {r})"
+msgstr "(veraPDF-regel {r})"
+
+#, python-brace-format
+msgid "(veraPDF-Regeln {r})"
+msgstr "(veraPDF-regler {r})"
+
+msgid "Geprüft wird mit veraPDF gegen PDF/UA-1, demselben Werkzeug wie bei einer Prüfung auf dem eigenen Rechner. Jede Problemstelle nennt die Regelnummer von veraPDF."
+msgstr "Kontrollen bruger veraPDF mod PDF/UA-1, det samme værktøj som ved en kontrol på din egen computer. Hvert problemsted nævner veraPDF-regelnummeret."
+
+msgid "Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1."
+msgstr "Ingen problemsteder fundet: veraPDF melder ingen overtrædelse af PDF/UA-1."
+
+msgid "Hörprobe: so liest ein Screenreader die Tags dieser Seite vor (kein Prüfergebnis)"
+msgstr "Lytteprøve: sådan læser en skærmlæser sidens tags op (ikke et kontrolresultat)"
+
+msgid "Hier prüfst du die fertige Datei mit veraPDF: Problemstellen, dazu Seitenbild und Hörprobe. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Her kontrollerer du den færdige fil med veraPDF: problemsteder samt sidebillede og lytteprøve. Der downloades i visningen „Dokument“."
+
+msgid "Probleme finden, Seiten ansehen und anhören: in der Ansicht „Barrierefreiheitsprüfung“."
+msgstr "Find problemer, se og lyt til sider: i visningen „Tilgængelighedskontrol“."
+

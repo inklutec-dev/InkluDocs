@@ -309,8 +309,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     // Text mit dem Grund fuer Screenreader. Bis 24.09. Ausklappliste + „Öffnen“ (Steve/WCAG 3.2.2) — mit Links entfaellt
     // das Problem, dass Pfeiltasten auf der Liste schon wechseln. Gleiche Funktion fuer alle Ansichten.
     function ansichtNamen() {
-        // „Prüfung“ statt „Abschlussprüfung“ (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 5); intern bleibt der Schluessel 'abschluss'
-        return { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Prüfung') };
+        // „Barrierefreiheitsprüfung“ (Michael Karbe, Feedback 20260928 - 2, Punkt 3; vorher „Prüfung“, davor „Abschlussprüfung“);
+        // intern bleibt der Schluessel 'abschluss'
+        return { dokument: t('Dokument'), alttexte: t('Alt-Texte'), uebersetzung: t('Übersetzung'), quickinfos: t('Quickinfos'), abschluss: t('Barrierefreiheitsprüfung') };
     }
     function ansichtWahlHtml(project, aktuell) {
         if (!(istWordDateityp(project) || istPdfDateityp(project)) || window.GUEST_MODE) return '';
@@ -399,7 +400,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // sonst landet VoiceOver nach dem Wechsel auf „Alt-Texte“ auf dem Seitenanfang.
         const h1 = document.getElementById('projectName');
         if (h1) h1.focus();
-        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Prüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.')))));
+        announce(ziel === 'uebersetzung' ? t('Ansicht Übersetzung geöffnet.') : (ziel === 'dokument' ? t('Ansicht Dokument geöffnet.') : (ziel === 'quickinfos' ? t('Ansicht Quickinfos geöffnet.') : (ziel === 'abschluss' ? t('Ansicht Barrierefreiheitsprüfung geöffnet.') : t('Ansicht Alt-Texte geöffnet.')))));
     }
     window.wechsleAnsicht = wechsleAnsicht;
     let currentProjectFuerAnsicht = null;
