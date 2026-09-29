@@ -104,7 +104,8 @@ with sync_playwright() as p:
     hint = pg.locator("#projUploadHint").inner_text()
     check("Upload-Hinweis spricht vom Dokument, nicht von Bildern", "barrierefrei" in hint and "Bilder extrahiert" not in hint, hint)
     check("H2 Dokumente (0) + Leerhinweis", "Dokumente (0)" in pg.locator("#dokumenteHeading").inner_text() and pg.locator("text=Noch kein Dokument hochgeladen.").count() == 1)
-    pg.set_input_files("#projUpload", {"name": "klicktest_roh.pdf", "mimeType": "application/pdf", "buffer": testpdf()})
+    roh_bytes = testpdf()
+    pg.set_input_files("#projUpload", {"name": "klicktest_roh.pdf", "mimeType": "application/pdf", "buffer": roh_bytes})
     pg.wait_for_selector("section.dok-karte", timeout=60000)
     pg.wait_for_timeout(1500)
     check("Nach dem Upload: eine Dokument-Karte", pg.locator("section.dok-karte").count() == 1)
@@ -122,7 +123,29 @@ with sync_playwright() as p:
     check("Vorschaubild mit Alt-Text", pg.locator("section.dok-karte img.ausgabe-vorschau").first.get_attribute("alt").startswith("Vorschau der ersten Seite"))
     check("Dokument: kein Tagging (Barrierefrei machen, Testweise taggen gibt es in „Tagging“)", pg.locator("button[id^=dok_tag_]").count() == 0 and pg.locator("button[id^=dok_test_]").count() == 0)
     check("Kein Knopf „Alt-Texte bearbeiten“; Umbenennen / Löschen da", pg.locator("section.dok-karte button:has-text('Alt-Texte bearbeiten')").count() == 0 and pg.locator("section.dok-karte button:has-text('Umbenennen')").count() == 1 and pg.locator("section.dok-karte button:has-text('Löschen')").count() == 1)
-    check("Ungetaggt: noch kein „PDF herunterladen“ und keine Hörprobe", pg.locator("button[id^=dok_export_]").count() == 0 and pg.locator("button[id^=dok_hp_]").count() == 0)
+    check("Ungetaggt: keine Hörprobe, aber „PDF herunterladen“ (Feedback 20260928 - 2, Punkt 5)", pg.locator("button[id^=dok_hp_]").count() == 0 and pg.locator("button[id^=dok_export_]").count() == 1)
+    kn0 = [x.split("\n")[0].strip() for x in pg.locator("section.dok-karte .dok-werkbank .ausgabe-aktionen button").all_inner_texts()]
+    check("Ungetaggt: Knöpfe PDF herunterladen, Umbenennen, Löschen", kn0 == ["PDF herunterladen", "Umbenennen", "Löschen"], kn0)
+    verbraucht0 = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
+    pg.click("button[id^=dok_export_]"); pg.wait_for_timeout(800)
+    for _ in range(20):
+        zs = pg.locator("#exportSummary").inner_text()
+        if "Credits" in zs or "unverändert" in zs:
+            break
+        pg.wait_for_timeout(500)
+    check("Dialog sagt vorher: keine Tags, unverändert, keine Credits (Punkt 5)", "keine Tags" in zs and "unverändert" in zs and "keine Credits" in zs, zs)
+    check("Hinweis nicht doppelt", pg.locator("#exportPdfHinweis").is_hidden())
+    axe(pg, "Herunterladen-Dialog, ungetaggte PDF")
+    with pg.expect_download(timeout=90000) as dl0:
+        pg.click("#exportPdfBtn")
+    pfad0 = dl0.value.path()
+    check("Ungetaggte PDF kommt byte-gleich zurück", pfad0 is not None and open(pfad0, "rb").read() == roh_bytes)
+    pg.wait_for_timeout(1500)
+    st0 = pg.locator("#exportStatus").inner_text()
+    check("Meldung: unverändert, keine Credits; Fokus auf der Meldung", "unverändert" in st0 and "keine Credits" in st0 and "abgebucht" not in st0 and pg.evaluate("document.activeElement && document.activeElement.id") == "exportStatus", st0)
+    check("Keine Credits verbraucht", pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht") == verbraucht0)
+    check("Kein Ablage-Eintrag für die unveränderte Datei", len((pg.request.get(B + f"/api/ausgaben?projekt={pid}").json() or {}).get("ausgaben", [])) == 0)
+    pg.click("#exportCancelBtn"); pg.wait_for_timeout(400)
     check("Knöpfe unter der Linie, darunter nichts weiter (Punkt 2)",
           pg.locator("section.dok-karte .ausgabe-text button").count() == 0
           and pg.evaluate("getComputedStyle(document.querySelector('.dok-werkbank')).borderTopStyle") == "solid"

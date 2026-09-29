@@ -172,7 +172,7 @@
   "documents": [ { "id": 901, "filename": "heft.pdf", "items": 48, "tagged": true } ],
   "review_links": 0
 }{% endraw %}</code></pre>
-  <p>{{ _('Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat; ohne Tags gibt es keinen PDF-Export, nur Textlisten.') }}</p>
+  <p>{{ _('Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste.') }}</p>
   <h3>{{ _('Einträge') }}</h3>
   <pre tabindex="0"><code>{% raw %}{
   "id": 5031, "type": "image", "page": 3, "index": 7,

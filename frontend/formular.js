@@ -396,7 +396,7 @@
             // und PDF — Anzahl und Preis nennt die Rueckfrage, nicht der Knopf. Seit 09.09.2026
             // (Michael Karbe) nimmt der Knopf IMMER alle benannten Felder des Dokuments, wie bei den Alt-Texten.
             +   (docBenannt && !docBusy ? '<button type="button" class="doc-action-btn" onclick="Formular.alleGenerieren(' + zustandProjekt + ', ' + docKey + ')">' + ico('sparkle') + t('Quickinfos generieren') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
-            +   (felder.length ? '<button type="button" class="doc-action-btn" onclick="Formular.exportOeffnen(' + docKey + ')">' + ico('download') + t('Herunterladen') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
+            +   (felder.length ? '<button type="button" class="doc-action-btn" onclick="Formular.exportOeffnen(' + docKey + ')">' + ico('download') + (imPdfProjekt ? t('Quickinfos herunterladen') : t('Herunterladen')) + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             +   (imPdfProjekt ? '' : '<button type="button" class="doc-action-btn" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
             +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="formdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + felder.length + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>')
             + '</span>') + '</div>';
@@ -481,7 +481,8 @@
                 // Texte aus der PDF, aus Stammdaten, von der KI und von Hand; Anzahl, Preis und Guthaben
                 // nennt die Rueckfrage vor dem Start. Historie: bis 08.09. nur Luecken bzw. nur KI-Texte.
                 +   (benannt && project.status !== 'processing' ? '<button class="btn btn-primary" id="fGenAllBtn" onclick="Formular.alleGenerieren(' + project.id + ')">' + ico('sparkle') + t('Quickinfos generieren') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
-                +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + ico('download') + (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen')) + '</button>'
+                // Im PDF-Projekt nur die Quickinfos als Liste (Michael Karbe, Feedback 20260928 - 2, Punkt 4) — die PDF gibt es in „Dokument“
+                +   '<button class="btn btn-primary" id="fExportOpenBtn" onclick="Formular.exportOeffnen()">' + ico('download') + (imPdfProjekt ? t('Quickinfos herunterladen') : (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen'))) + '</button>'
                 +   '<button class="btn btn-secondary" id="fStammdatenBtn" onclick="Formular.stammdatenAnwenden(' + project.id + ')">' + t('Stammdaten auf alle Felder anwenden') + '</button>'
                 +   '<a class="btn btn-secondary" href="/stammdaten">' + t('Meine Stammdaten öffnen') + '</a>'
                 // Gast-Ansicht (28.08.2026): Einladung wie bei Bild-Projekten — Knopf + Dialog aus app.html.
@@ -491,14 +492,14 @@
                 +     '<div class="export-kopf"><h2 id="fExportHeading" style="margin:0 0 0.6rem 0;">' + t('Export-Optionen') + '</h2>'
                 +       (typeof exportDocIconHtml === 'function' ? exportDocIconHtml('formular') : '') + '</div>'
                 // Michael Karbe (Mail 14.09.2026, Punkt 5): Infotext in derselben grauen Box wie im Bilder-Dialog (#exportSummary).
-                +     '<div id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;">' + t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length }) + '</div>'
+                +     '<div id="fExportSummary" role="status" style="margin:0 0 0.8rem 0;padding:0.6rem 0.8rem;border-radius:6px;background:var(--bg-muted,#f3f4f6);border:1px solid var(--border);font-size:0.95rem;">' + (imPdfProjekt ? t('{b} von {n} Feldern haben eine Quickinfo.', { b: felder.length - offen, n: felder.length }) : t('{b} von {n} Feldern haben eine Quickinfo. Felder ohne Quickinfo bleiben in der PDF unverändert.', { b: felder.length - offen, n: felder.length })) + '</div>'
                 // Michael Karbe (Mail 12.09.2026, Punkt 6): 3 Punkte mehr Luft zwischen Label und Feld (wie app.html).
                 +     '<div class="form-group" style="margin-bottom:0.8rem;"><label for="fExportFilename" style="display:block;font-weight:600;margin-bottom:calc(0.3rem + 3pt);">' + t('Dateiname (optional)') + '</label>'
                 +       '<input type="text" id="fExportFilename" autocomplete="off" aria-describedby="fExportFilenameHint" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.95rem;">'
                 // Michael Karbe (Mail 14.09.2026, Punkt 2): derselbe Hinweis wie im Bilder-Dialog, was bei leerem Feld passiert.
                 +       '<p id="fExportFilenameHint" style="margin:0.3rem 0 0 0;color:var(--text-muted);font-size:0.85rem;">' + t('Leer lassen, um den Vorgabe-Namen zu übernehmen. Die Dateiendung wird automatisch angehängt.') + '</p></div>'
                 +     '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">'
-                +       '<button class="btn btn-primary" onclick="Formular.exportieren(' + project.id + ', \'formular\')">' + t('Als PDF mit Quickinfos') + '</button>'
+                +       (imPdfProjekt ? '' : '<button class="btn btn-primary" onclick="Formular.exportieren(' + project.id + ', \'formular\')">' + t('Als PDF mit Quickinfos') + '</button>')
                 +       '<button class="btn btn-secondary" onclick="Formular.exportieren(' + project.id + ', \'formular_csv\')">' + t('Als CSV (Feldliste)') + '</button>'
                 +       '<button class="btn btn-secondary" id="fExportCancelBtn" onclick="Formular.exportSchliessen()">' + t('Abbrechen') + '</button>'
                 +     '</div><output id="fExportStatus" style="display:block;margin-top:0.5rem;"></output>'
@@ -855,9 +856,10 @@
             // Seit 14.09.2026 (Michael Karbe, Mail 12.09., Punkt 5) ohne Dokumentname: „Dokument / Quickinfos
             // herunterladen" — der Dialog bietet das Formular als PDF und die Quickinfos als Feldliste.
             // Bei mehreren Dokumenten im Projekt bleibt die Anzahl stehen (kein Dateiname). Wie app.html.
-            head.textContent = (!docId && (aktuelleDocs || []).length > 1)
-                ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: aktuelleDocs.length })
-                : t('Dokument / Quickinfos herunterladen');
+            head.textContent = imPdfProjekt ? t('Quickinfos herunterladen')
+                : ((!docId && (aktuelleDocs || []).length > 1)
+                    ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: aktuelleDocs.length })
+                    : t('Dokument / Quickinfos herunterladen'));
         }
         if (typeof panel.showModal === 'function') panel.showModal(); else panel.setAttribute('open', '');
         announce(t('Export-Optionen geöffnet.'));
@@ -875,7 +877,8 @@
             if (!res.ok) return;
             const d = await res.json();
             const basis = el.dataset.basis || el.textContent; el.dataset.basis = basis;
-            el.textContent = basis + ' ' + (typeof exportPreisText === 'function' ? exportPreisText(d.preis, d.verfuegbar) : '')
+            // im PDF-Projekt gibt es hier nur die Feldliste — also nur ihr Preis
+            el.textContent = basis + (imPdfProjekt ? '' : ' ' + (typeof exportPreisText === 'function' ? exportPreisText(d.preis, d.verfuegbar) : ''))
                 + (typeof d.preis_tabelle === 'number' ? ' ' + t('Die Feldliste als CSV kostet {p} Credits.', { p: d.preis_tabelle }) : '');
         } catch (e) { /* Preis ist Komfort, kein Blocker */ }
     }

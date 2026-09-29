@@ -48,6 +48,30 @@ with sync_playwright() as p:
     qa = pg.locator(".doc-block .doc-actions").first
     check("Quickinfo-Ansicht: am Dokument kein Umbenennen/Löschen (Feedback 28.09.2026 - 1, Punkt 1)", qa.locator("button:has-text('Umbenennen')").count() == 0 and qa.locator("button:has-text('Löschen')").count() == 0 and "Quickinfos generieren" in qa.inner_text(), qa.inner_text())
     axe(pg, "Quickinfo-Ansicht im PDF-Projekt")
+    # Feedback 20260928 - 2, Punkt 4: in „Quickinfos“ nur die Feldliste, die PDF in „Dokument“
+    check("Knopf „Quickinfos herunterladen“ (Projekt)", pg.locator("#fExportOpenBtn").inner_text().strip() == "Quickinfos herunterladen", pg.locator("#fExportOpenBtn").inner_text())
+    pg.click("#fExportOpenBtn"); pg.wait_for_timeout(800)
+    sicht = [b.inner_text().strip() for b in pg.locator("#fExportPanel button").all() if b.is_visible()]
+    check("Dialog „Quickinfos herunterladen“: nur CSV (Feldliste) und Abbrechen, keine PDF", pg.locator("#fExportHeading").inner_text().strip() == "Quickinfos herunterladen" and sicht == ["Als CSV (Feldliste)", "Abbrechen"], (pg.locator("#fExportHeading").inner_text(), sicht))
+    axe(pg, "Quickinfos-Dialog im PDF-Projekt")
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(400)
+    # ungetaggte Formular-PDF MIT Quickinfo: in „Dokument“ gibt es die PDF mit den Quickinfos (Punkt 5)
+    felder = pg.request.get(B + f"/api/projects/{pid}/felder").json().get("felder") or []
+    if felder:
+        pg.request.patch(B + f"/api/felder/{felder[0]['id']}", data={"quickinfo": "Fiktive Quickinfo für den Klicktest"})
+    pg.goto(B + f"/app?projekt={pid}&ansicht=dokument", wait_until="networkidle"); pg.wait_for_timeout(1200)
+    pg.click("button[id^=dok_export_]"); pg.wait_for_timeout(800)
+    for _ in range(20):
+        zs = pg.locator("#exportSummary").inner_text()
+        if "Credits" in zs:
+            break
+        pg.wait_for_timeout(500)
+    hin = pg.locator("#exportPdfHinweis").inner_text() if pg.locator("#exportPdfHinweis").is_visible() else ""
+    check("Dokument, ungetaggt mit Quickinfos: Hinweis „bekommt die Quickinfos, aber keine Alt-Texte“ + Preis", "Quickinfos" in hin and "keine Alt-Texte" in hin and "Credits" in zs, (zs, hin))
+    doc_id = int(pg.locator("button[id^=dok_export_]").first.get_attribute("id").split("_")[-1])
+    r = pg.request.post(B + f"/api/projects/{pid}/export", data={"document_id": doc_id})
+    check("Export ungetaggt mit Quickinfos: PDF mit Quickinfos, nicht unverändert, Credits berechnet", r.ok and r.body()[:5] == b"%PDF-" and r.headers.get("x-export-unveraendert") == "0" and int(r.headers.get("x-export-quickinfos") or 0) >= 1 and int(r.headers.get("x-export-credits") or 0) > 0, (r.status, {k: v for k, v in r.headers.items() if k.startswith("x-export")}))
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
     pg.goto(B + f"/app?projekt={pid}", wait_until="networkidle"); pg.wait_for_timeout(1000)
     check("Ohne ?ansicht: gemerkte Ansicht Quickinfos", pg.locator("#feldListe").count() == 1)
     pg.click(".ansicht-knoepfe a[data-ansicht=alttexte]"); pg.wait_for_selector("#bilderHeading", timeout=15000); pg.wait_for_timeout(500)

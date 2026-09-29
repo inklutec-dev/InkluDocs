@@ -394,7 +394,8 @@
             // „Dokument“ = Dateiverwaltung (Feedback 20260928 - 2, Punkt 1): Hörprobe, Herunterladen, Umbenennen, Löschen —
             // Herunterladen mit derselben Rückfrage wie in „Alt-Texte“ (app.html openExportPanel, Modus 'pdf')
             knoepfe = hoerprobeKnopf
-                + (d.getaggt === true && !busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('mit Alt-Texten und Quickinfos, kommt in die Ablage') + '</span></button>' : '')
+                // auch OHNE Tags (Feedback 20260928 - 2, Punkt 5): dann unverändert bzw. nur mit Quickinfos, der Dialog sagt es vorher
+                + (!busy && seiten ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'pdf\')">' + ico('download') + t('PDF herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + (d.getaggt === true ? t('mit Alt-Texten und Quickinfos, kommt in die Ablage') : t('ohne Tags: ohne Alt-Texte, mit vorhandenen Quickinfos')) + '</span></button>' : '')
                 + '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
                 + '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (d.total_images || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>';
         }
@@ -569,7 +570,7 @@
             + (modus === 'tagging' ? laufDialogHtml(project) : '')
             + hoerprobeDialogHtml()
             // Herunterladen-Dialog (Feedback 28.09.2026 - 1, Punkt 4): derselbe wie in „Alt-Texte“, hier nur mit der PDF.
-            + (modus === 'dokument' && docs.some(d => d.getaggt === true) && typeof exportDialogHtml === 'function' ? exportDialogHtml(project) : '')
+            + (modus === 'dokument' && docs.length && typeof exportDialogHtml === 'function' ? exportDialogHtml(project) : '')
             + (ZEIGE_PROJEKT_KNOEPFE ? ketteDialogHtml(project) : '');
     }
 
@@ -818,7 +819,7 @@
         neuLaden = (pid) => showProject(pid, true);   // diese Ansicht zeichnet nach Aktionen selbst neu
         if (typeof exportKontextSetzen === 'function') exportKontextSetzen(docs, project.project_type);
         // Mehrere Dokumente, alle getaggt: alles auf einmal als ZIP (bis 25.09.2026 in der Abschlusspruefung)
-        const alleGetaggt = modus === 'dokument' && docs.length > 1 && docs.every(d => d.getaggt === true && !(d.tagging && d.tagging.laeuft));
+        const alleGetaggt = modus === 'dokument' && docs.length > 1 && docs.every(d => !(d.tagging && d.tagging.laeuft));   // seit 29.09. auch ungetaggte
         const alleKnopf = alleGetaggt
             ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="openExportPanel(' + project.id + ', 0, \'pdf\')">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> ' + t('als ZIP, mit Alt-Texten und Quickinfos') + '</span></button>'
               + '</p>'

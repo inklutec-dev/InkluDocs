@@ -282,6 +282,12 @@ def _pruefung(user_id: int, preis: int) -> dict:
             "fehlend": 0 if erlaubt else int(preis) - int(verf or 0)}
 
 
+def preis_pruefung(user_id: int, preis: int) -> dict:
+    """Guthaben fuer einen schon berechneten Gesamtpreis pruefen (29.09.2026: PDF-Export mit gemischten Dokumenten —
+    getaggt = PDF-Staffel, ungetaggt mit Quickinfos = Formular-Staffel, unveraendert = 0)."""
+    return _pruefung(user_id, preis)
+
+
 def export_pruefung(user_id: int, anzahl: int, art: str = "pdf") -> dict:
     """Preis + Guthaben + Entscheidung fuer einen Datei-Export.
     {"anzahl", "art", "preis", "verfuegbar" (None = unbegrenzt), "erlaubt", "fehlend"}"""

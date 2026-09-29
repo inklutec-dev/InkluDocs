@@ -8025,12 +8025,62 @@ UNGETAGGT_HINWEIS = ("Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an
                      "Excel, CSV und JSON bereit.")
 
 
-def _ungetaggte_pruefen(units: list) -> None:
-    """PDF-Export nur fuer getaggte PDFs (Michael Karbe 15.09.2026): sonst 422 mit Begruendung."""
-    ohne = [u["doc"] for u in units if not _dokument_getaggt(u["doc"])]
-    if ohne:
-        namen = ", ".join(_doc_label(d) for d in ohne)
-        raise HTTPException(status_code=422, detail=f"{UNGETAGGT_HINWEIS} Betroffen: {namen}.")
+def _pdf_export_plan(user_id: int, units: list) -> dict:
+    """PDF-Export je Dokument (Michael Karbe, Feedback 20260928 - 2, Punkt 5: „Das Tagging ist für Alt-Texte nur eine
+    Empfehlung … Die PDF herunterladen … sollte aber vorhanden sein … Meldung, dass sich die PDF nicht verändert hat und
+    wir in dem Fall keine Credits berechnen“). Bis dahin: ungetaggt = 422 (15.09.2026, _ungetaggte_pruefen).
+      getaggt              -> Export wie bisher (Alt-Texte + Quickinfos), PDF-Staffel ueber die Bilder;
+      ungetaggt, Quickinfos -> Original + Quickinfos (brauchen keine Tags), Formular-Staffel ueber die Felder —
+                              dasselbe Ergebnis und derselbe Preis wie „Als PDF mit Quickinfos“ im Formular-Werkzeug;
+      ungetaggt, sonst     -> Original UNVERAENDERT, 0 Credits.
+    Dieselbe Planung fuer Export und Zusammenfassung im Dialog (Anzeige = Abrechnung)."""
+    getaggt, mit_qi, unveraendert = [], [], []
+    conn = get_db()
+    try:
+        for u in units:
+            if _dokument_getaggt(u["doc"]):
+                getaggt.append(u)
+                continue
+            felder = conn.execute("SELECT quickinfo FROM formularfelder WHERE document_id = ?", (u["doc"].get("id"),)).fetchall() \
+                if u["doc"].get("id") is not None else []
+            if any((f["quickinfo"] or "").strip() for f in felder):
+                mit_qi.append((u, len(felder)))
+            else:
+                unveraendert.append(u)
+    finally:
+        conn.close()
+    preis_pdf = billing.export_preis(sum(len(u["images"]) for u in getaggt), "pdf") if getaggt else 0
+    preis_qi = billing.export_preis(sum(n for _u, n in mit_qi), "formular") if mit_qi else 0
+    return {"getaggt": getaggt, "mit_qi": [u for u, _n in mit_qi], "unveraendert": unveraendert,
+            "preis_pdf": preis_pdf, "preis_qi": preis_qi,
+            "pruefung": billing.preis_pruefung(user_id, preis_pdf + preis_qi)}
+
+
+def _pdf_ohne_tags(unit: dict, output_dir: str, creator: Optional[str], mit_quickinfos: bool) -> tuple[str, dict]:
+    """Ungetaggte PDF fuer den Download: das Original, bei Quickinfos mit Quickinfos (formular_export). Alt-Texte
+    kommen nicht hinein (ohne Tags kein verlaesslicher Ort, UNGETAGGT_HINWEIS). Kein Titel/Sprache-Abschluss: die
+    Datei soll bleiben, wie der Kunde sie hochgeladen hat. info["unveraendert"] = nichts geschrieben."""
+    doc = unit["doc"]
+    quelle = doc.get("original_path") or ""
+    if not os.path.isfile(quelle):
+        raise HTTPException(status_code=404, detail="Die Originaldatei dieses Dokuments fehlt")
+    os.makedirs(output_dir, exist_ok=True)
+    base = doc.get("original_filename") or f"dokument_{doc.get('doc_index', 1)}.pdf"
+    output_path = os.path.join(output_dir, f"inkludocs_{_safe_filename_component(base, base)}")
+    shutil.copyfile(quelle, output_path)
+    info: dict = {"method": "ohne_tags", "tagged": 0, "total": 0, "quickinfos": {"geschrieben": 0}}
+    if mit_quickinfos:
+        try:
+            info["quickinfos"] = _quickinfos_in_export(doc, output_path, creator)
+        except Exception as e:  # noqa: BLE001 — dann eben das Original, ohne Credits
+            print(f"WARNUNG: Quickinfos in ungetaggter PDF nicht geschrieben ({output_path}): {e}")
+            shutil.copyfile(quelle, output_path)
+            info["quickinfos"] = {"geschrieben": 0}
+            info.setdefault("warnings", []).append("Die Quickinfos konnten nicht in die PDF geschrieben werden.")
+        if info["quickinfos"].get("warnungen"):
+            info.setdefault("warnings", []).extend(info["quickinfos"]["warnungen"])
+    info["unveraendert"] = int(info["quickinfos"].get("geschrieben") or 0) == 0
+    return output_path, info
 
 
 def _quickinfos_in_export(doc: dict, output_path: str, creator: Optional[str]) -> dict:
@@ -8263,14 +8313,38 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     conn.close()
 
     units = _load_pdf_export_units(project, user["id"], document_id)
-    _ungetaggte_pruefen(units)   # PDF ohne Tags: kein PDF-Download (15.09.2026)
     output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
     _creator = _pdf_creator_fuer(user["id"])   # Ersteller aus dem Konto (14.09.2026)
 
-    # Export-Staffel (Michael 28.08.2026): 5 Credits + 1 je angefangene 10 Bilder, fuer ALLE
-    # Konten (Free hat 10 Credits); reicht das Guthaben nicht, kein Export (402 + Zahlen).
-    _preis = _export_vorpruefung(user["id"], sum(len(u["images"]) for u in units), "pdf")
+    # Export-Staffel (Michael 28.08.2026) je Dokument-Art (_pdf_export_plan, 29.09.2026): getaggt = PDF-Staffel,
+    # ungetaggt mit Quickinfos = Formular-Staffel, unveraendert = 0; reicht das Guthaben nicht: 402 mit den Zahlen.
+    plan = _pdf_export_plan(user["id"], units)
+    if not plan["pruefung"]["erlaubt"]:
+        raise HTTPException(status_code=402, detail=billing.credits_fehlen_detail(plan["pruefung"], "Der Export"))
+    _preis = plan["preis_pdf"]
+    getaggt_ids = {id(u) for u in plan["getaggt"]}
+    mit_qi_ids = {id(u) for u in plan["mit_qi"]}
+
+    if (document_id is not None or len(units) == 1) and id(units[0]) not in getaggt_ids:
+        # Ungetaggte Einzeldatei (29.09.2026): Original bzw. Original + Quickinfos, keine Ablage (kein InkluDocs-Ergebnis
+        # mit Struktur). Credits nur, wenn wirklich Quickinfos geschrieben wurden.
+        unit = units[0]
+        output_path, info = await asyncio.get_running_loop().run_in_executor(
+            None, _pdf_ohne_tags, unit, output_dir, _creator, id(unit) in mit_qi_ids)
+        preis_qi = 0 if info["unveraendert"] else plan["preis_qi"]
+        headers = {"X-Export-Credits": str(preis_qi), "X-Export-Method": str(info["method"]),
+                   "X-Export-Tagged": "0", "X-Export-Total": "0",
+                   "X-Export-Quickinfos": str(int(info["quickinfos"].get("geschrieben") or 0)),
+                   "X-Export-Unveraendert": "1" if info["unveraendert"] else "0"}
+        if info.get("warnings"):
+            headers["X-Export-Warnings"] = _warnings_header(info["warnings"])
+        download_base = custom_name or _doc_label(unit["doc"])
+        response = FileResponse(output_path, filename=f"inkludocs_{download_base}.pdf", media_type="application/pdf",
+                                headers=headers)
+        if preis_qi:
+            billing.verbuche(user["id"], "export", aktion="formular_export", credits=preis_qi)
+        return response
 
     if document_id is not None or len(units) == 1:
         # Einzelne Datei zurueckgeben (direkter Download, kein ZIP).
@@ -8309,28 +8383,43 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
     aggregated_warnings: list[str] = []
     total_tagged = 0
     total_images = 0
+    unveraendert_n = 0
+    quickinfos_geschrieben = 0
+    erster_getaggter = True
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         # Nummerierung nach Anzeige-Position (1..N), passend zur „Dokument N"-
         # Anzeige im Frontend — NICHT nach doc_index, der nach Loeschungen Luecken
         # haben kann.
         for pos, unit in enumerate(units, start=1):
-            out_path, info = _build_pdf_for_document(unit, output_dir, creator=_creator)
             inner = f"{pos:02d}_{_doc_label(unit['doc'])}.pdf"
-            zf.write(out_path, arcname=inner)
-            # Ablage (22.09.2026): je Dokument ein Eintrag (der Preis steht am ersten, die anderen tragen 0).
-            await asyncio.get_running_loop().run_in_executor(
-                None, _pdf_in_ablage, user["id"], project, unit, out_path, inner, (_preis if pos == 1 else 0), "knopf")
+            if id(unit) not in getaggt_ids:
+                # ungetaggt (29.09.2026): Original bzw. mit Quickinfos, keine Ablage
+                out_path, info = await asyncio.get_running_loop().run_in_executor(
+                    None, _pdf_ohne_tags, unit, output_dir, _creator, id(unit) in mit_qi_ids)
+                zf.write(out_path, arcname=inner)
+                unveraendert_n += 1 if info["unveraendert"] else 0
+                quickinfos_geschrieben += int(info["quickinfos"].get("geschrieben") or 0)
+            else:
+                out_path, info = _build_pdf_for_document(unit, output_dir, creator=_creator)
+                zf.write(out_path, arcname=inner)
+                # Ablage (22.09.2026): je getaggtem Dokument ein Eintrag (der Preis steht am ersten, die anderen tragen 0).
+                await asyncio.get_running_loop().run_in_executor(
+                    None, _pdf_in_ablage, user["id"], project, unit, out_path, inner, (_preis if erster_getaggter else 0), "knopf")
+                erster_getaggter = False
             total_tagged += int(info.get("tagged", 0) or 0)
             total_images += int(info.get("total", 0) or 0)
             for w in info.get("warnings", []) or []:
                 aggregated_warnings.append(f"[{inner}] {w}")
+    preis_qi = plan["preis_qi"] if quickinfos_geschrieben else 0
     headers = {
         "X-Export-Tagged": str(total_tagged),
         "X-Export-Total": str(total_images),
+        "X-Export-Unveraendert": str(unveraendert_n),
+        "X-Export-Quickinfos": str(quickinfos_geschrieben),
     }
     if aggregated_warnings:
         headers["X-Export-Warnings"] = _warnings_header(aggregated_warnings)
-    headers["X-Export-Credits"] = str(_preis)
+    headers["X-Export-Credits"] = str(_preis + preis_qi)
     # Ein Export-Vorgang = Grundpreis + Staffel ueber ALLE Bilder des ZIPs; nur nach erfolgreichem Bau der Antwort.
     response = FileResponse(
         zip_path,
@@ -8338,7 +8427,10 @@ async def export_pdf(project_id: int, request: Request, user: dict = Depends(get
         media_type="application/zip",
         headers=headers,
     )
-    billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
+    if _preis:
+        billing.verbuche(user["id"], "export", aktion="pdf_export", credits=_preis)
+    if preis_qi:
+        billing.verbuche(user["id"], "export", aktion="formular_export", credits=preis_qi)
     return response
 
 
@@ -9704,14 +9796,17 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
     if not projekt:
         conn.close()
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    # PDF ohne Tags (15.09.2026): der Dialog blendet den PDF-Knopf aus, wenn ein betroffenes Dokument keine Tags hat.
+    # PDF ohne Tags: seit 29.09.2026 KEIN Ausblenden mehr (Feedback 20260928 - 2, Punkt 5) — die Zusammenfassung nennt,
+    # was mit ungetaggten Dokumenten passiert (unveraendert bzw. nur Quickinfos) und den Preis aus derselben Planung
+    # wie der Export (_pdf_export_plan). pdf_moeglich bleibt fuer aeltere Aufrufer immer True.
     pdf_moeglich, pdf_grund = True, ""
+    plan = None
     if projekt["project_type"] == "pdf":
-        dq = "SELECT * FROM documents WHERE project_id = ?" + (" AND id = ?" if document_id is not None else "")
-        dargs = (project_id, document_id) if document_id is not None else (project_id,)
-        ohne = [dict(d) for d in conn.execute(dq, dargs).fetchall() if not _dokument_getaggt(dict(d))]
-        if ohne:
-            pdf_moeglich, pdf_grund = False, "ungetaggt"
+        conn.close()
+        plan = _pdf_export_plan(user["id"], _load_pdf_export_units(dict(projekt), user["id"], document_id))
+        conn = get_db()
+        if plan["mit_qi"] or plan["unveraendert"]:
+            pdf_grund = "ungetaggt"
     if document_id is not None:
         rows = conn.execute(
             "SELECT * FROM images WHERE project_id = ? AND document_id = ?",
@@ -9749,7 +9844,7 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
             geleert += 1
         else:
             offen += 1
-    p = billing.export_pruefung(user["id"], total, _export_art(dict(projekt)))
+    p = plan["pruefung"] if plan else billing.export_pruefung(user["id"], total, _export_art(dict(projekt)))
     return JSONResponse(content={
         "total": total,
         "beschrieben": beschrieben,
@@ -9764,6 +9859,10 @@ async def export_summary(project_id: int, request: Request, user: dict = Depends
         # Tabellen-Exporte (CSV/JSON) kosten einen festen Preis — fuer die Ansage im Dialog.
         "preis_tabelle": billing.AKTIONS_PREISE["csv_export"],
         "pdf_moeglich": pdf_moeglich, "pdf_grund": pdf_grund,
+        # je Dokument-Art (nur PDF-Projekte): wie viele getaggt / ungetaggt mit Quickinfos / unveraendert
+        "dokumente_getaggt": len(plan["getaggt"]) if plan else None,
+        "dokumente_quickinfos": len(plan["mit_qi"]) if plan else None,
+        "dokumente_unveraendert": len(plan["unveraendert"]) if plan else None,
     })
 
 

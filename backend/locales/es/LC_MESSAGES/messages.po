@@ -9635,3 +9635,36 @@ msgstr "Así lee un lector de pantalla las etiquetas de este documento, en orden
 msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei."
 msgstr "Este documento aún no está etiquetado. Primero hazlo accesible en la vista «Etiquetado»."
 
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste."
+msgstr "Estado: uploaded, extracting, ready, generating, done, error. with_text y without_text siguen la misma regla que el diálogo de descarga de la aplicación: cuenta si el campo contiene texto, sea de la IA, a mano o de la fuente. Las imágenes decorativas no tienen texto y no cuentan como abiertas. En los PDF, tagged indica si el archivo tiene etiquetas; Sin etiquetas, la exportación a PDF no escribe textos alternativos: el archivo se devuelve sin cambios y sin coste (cabecera X-Export-Unveraendert: 1) o, si hay información sobre herramientas, solo con ella. Los textos alternativos están entonces disponibles como lista."
+
+msgid "ohne Tags: ohne Alt-Texte, mit vorhandenen Quickinfos"
+msgstr "sin etiquetas: sin textos alternativos, con la información sobre herramientas existente"
+
+msgid "Diese PDF hat keine Tags. Alt-Texte lassen sich deshalb nicht in die Datei schreiben; du findest sie als Liste in der Ansicht „Alt-Texte“. Du bekommst die PDF unverändert zurück, dafür berechnen wir keine Credits."
+msgstr "Este PDF no tiene etiquetas. Por eso los textos alternativos no se pueden escribir en el archivo; los encontrarás como lista en la vista «Textos alternativos». Recibes el PDF sin cambios y no cobramos créditos por ello."
+
+msgid "Diese PDF hat keine Tags. Sie bekommt die Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“."
+msgstr "Este PDF no tiene etiquetas. Recibe la información sobre herramientas, pero no los textos alternativos; los encontrarás como lista en la vista «Textos alternativos»."
+
+#, python-brace-format
+msgid "{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur vorhandene Quickinfos; Dokumente ohne Quickinfos bleiben unverändert und kosten nichts."
+msgstr "{n} documentos no tienen etiquetas. No reciben textos alternativos, solo la información sobre herramientas existente; los documentos sin ella quedan sin cambios y no cuestan nada."
+
+msgid "Die PDF ist unverändert, weil sie keine Tags hat. Es wurden keine Credits berechnet."
+msgstr "El PDF no ha cambiado porque no tiene etiquetas. No se han cobrado créditos."
+
+msgid "1 Dokument ohne Tags ist unverändert enthalten, dafür wurden keine Credits berechnet."
+msgstr "Se incluye 1 documento sin etiquetas sin cambios; no se han cobrado créditos por él."
+
+#, python-brace-format
+msgid "{n} Dokumente ohne Tags sind unverändert enthalten, dafür wurden keine Credits berechnet."
+msgstr "Se incluyen {n} documentos sin etiquetas sin cambios; no se han cobrado créditos por ellos."
+
+msgid "Quickinfos herunterladen"
+msgstr "Descargar información sobre herramientas"
+
+#, python-brace-format
+msgid "{b} von {n} Feldern haben eine Quickinfo."
+msgstr "{b} de {n} campos tienen información sobre herramientas."
+

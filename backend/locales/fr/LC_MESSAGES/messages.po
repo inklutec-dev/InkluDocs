@@ -9635,3 +9635,36 @@ msgstr "Voici comment un lecteur d’écran lit les balises de ce document, dans
 msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei."
 msgstr "Ce document n’est pas encore balisé. Rends-le d’abord accessible dans la vue « Balisage »."
 
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste."
+msgstr "Statut : uploaded, extracting, ready, generating, done, error. with_text et without_text suivent la même règle que la boîte de téléchargement de l’application : ce qui compte, c’est si le champ contient un texte, qu’il vienne de l’IA, de la main ou de la source. Les images décoratives n’ont pas de texte et ne comptent pas comme ouvertes. Pour les PDF, tagged indique si le fichier est balisé ; Sans balises, l’export PDF n’écrit pas de textes alternatifs : le fichier revient inchangé et gratuitement (en-tête X-Export-Unveraendert: 1) ou, s’il y a des infobulles, uniquement avec les infobulles. Les textes alternatifs sont alors disponibles sous forme de liste."
+
+msgid "ohne Tags: ohne Alt-Texte, mit vorhandenen Quickinfos"
+msgstr "sans balises : sans textes alternatifs, avec les infobulles existantes"
+
+msgid "Diese PDF hat keine Tags. Alt-Texte lassen sich deshalb nicht in die Datei schreiben; du findest sie als Liste in der Ansicht „Alt-Texte“. Du bekommst die PDF unverändert zurück, dafür berechnen wir keine Credits."
+msgstr "Ce PDF n’a pas de balises. Les textes alternatifs ne peuvent donc pas être écrits dans le fichier ; tu les trouves sous forme de liste dans la vue « Textes alternatifs ». Tu récupères le PDF inchangé, sans que nous facturions de crédits."
+
+msgid "Diese PDF hat keine Tags. Sie bekommt die Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“."
+msgstr "Ce PDF n’a pas de balises. Il reçoit les infobulles mais pas de textes alternatifs ; tu trouves les textes alternatifs sous forme de liste dans la vue « Textes alternatifs »."
+
+#, python-brace-format
+msgid "{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur vorhandene Quickinfos; Dokumente ohne Quickinfos bleiben unverändert und kosten nichts."
+msgstr "{n} documents n’ont pas de balises. Ils ne reçoivent pas de textes alternatifs, seulement les infobulles existantes ; les documents sans infobulles restent inchangés et ne coûtent rien."
+
+msgid "Die PDF ist unverändert, weil sie keine Tags hat. Es wurden keine Credits berechnet."
+msgstr "Le PDF est inchangé car il n’a pas de balises. Aucun crédit n’a été facturé."
+
+msgid "1 Dokument ohne Tags ist unverändert enthalten, dafür wurden keine Credits berechnet."
+msgstr "1 document sans balises est inclus inchangé ; aucun crédit n’a été facturé pour lui."
+
+#, python-brace-format
+msgid "{n} Dokumente ohne Tags sind unverändert enthalten, dafür wurden keine Credits berechnet."
+msgstr "{n} documents sans balises sont inclus inchangés ; aucun crédit n’a été facturé pour eux."
+
+msgid "Quickinfos herunterladen"
+msgstr "Télécharger les infobulles"
+
+#, python-brace-format
+msgid "{b} von {n} Feldern haben eine Quickinfo."
+msgstr "{b} champs sur {n} ont une infobulle."
+

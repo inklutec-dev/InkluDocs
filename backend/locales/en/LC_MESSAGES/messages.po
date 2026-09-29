@@ -9633,3 +9633,36 @@ msgstr "This is how a screen reader reads the tags of this document, in reading 
 msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei."
 msgstr "This document is not tagged yet. First make it accessible in the “Tagging” view."
 
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste."
+msgstr "Status: uploaded, extracting, ready, generating, done, error. with_text and without_text follow the same rule as the app’s download dialog: what counts is whether the field contains text, whether from the AI, by hand or from the source. Decorative images have no text and do not count as open. For PDFs, tagged says whether the file has tags; Without tags the PDF export writes no alt texts: the file comes back unchanged and free of charge (header X-Export-Unveraendert: 1) or, if there are tooltips, with the tooltips only. The alt texts are then available as a text list."
+
+msgid "ohne Tags: ohne Alt-Texte, mit vorhandenen Quickinfos"
+msgstr "without tags: no alt texts, with existing tooltips"
+
+msgid "Diese PDF hat keine Tags. Alt-Texte lassen sich deshalb nicht in die Datei schreiben; du findest sie als Liste in der Ansicht „Alt-Texte“. Du bekommst die PDF unverändert zurück, dafür berechnen wir keine Credits."
+msgstr "This PDF has no tags. Alt texts therefore cannot be written into the file; you will find them as a list in the “Alt texts” view. You get the PDF back unchanged, and we do not charge any credits for it."
+
+msgid "Diese PDF hat keine Tags. Sie bekommt die Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“."
+msgstr "This PDF has no tags. It gets the tooltips but no alt texts; you will find the alt texts as a list in the “Alt texts” view."
+
+#, python-brace-format
+msgid "{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur vorhandene Quickinfos; Dokumente ohne Quickinfos bleiben unverändert und kosten nichts."
+msgstr "{n} documents have no tags. They get no alt texts, only existing tooltips; documents without tooltips stay unchanged and cost nothing."
+
+msgid "Die PDF ist unverändert, weil sie keine Tags hat. Es wurden keine Credits berechnet."
+msgstr "The PDF is unchanged because it has no tags. No credits were charged."
+
+msgid "1 Dokument ohne Tags ist unverändert enthalten, dafür wurden keine Credits berechnet."
+msgstr "1 document without tags is included unchanged; no credits were charged for it."
+
+#, python-brace-format
+msgid "{n} Dokumente ohne Tags sind unverändert enthalten, dafür wurden keine Credits berechnet."
+msgstr "{n} documents without tags are included unchanged; no credits were charged for them."
+
+msgid "Quickinfos herunterladen"
+msgstr "Download tooltips"
+
+#, python-brace-format
+msgid "{b} von {n} Feldern haben eine Quickinfo."
+msgstr "{b} of {n} fields have a tooltip."
+

@@ -9203,3 +9203,36 @@ msgstr "Så läser en skärmläsare upp dokumentets taggar, i läsordning. Det �
 msgid "Dieses Dokument ist noch nicht getaggt. Mache es zuerst in der Ansicht „Tagging“ barrierefrei."
 msgstr "Det här dokumentet är ännu inte taggat. Gör det först tillgängligt i vyn ”Taggning”."
 
+msgid "Status: uploaded, extracting, ready, generating, done, error. with_text und without_text folgen derselben Regel wie der Herunterladen-Dialog der App: Zählt, ob im Feld Text steht, egal ob von der KI, von Hand oder aus der Quelle. Dekorative Bilder haben keinen Text und gelten nicht als offen. tagged sagt bei PDFs, ob die Datei Tags hat. Ohne Tags schreibt der PDF-Export keine Alt-Texte: Die Datei kommt unverändert und kostenlos zurück (Kopfzeile X-Export-Unveraendert: 1) oder, wenn es Quickinfos gibt, nur mit den Quickinfos. Die Alt-Texte gibt es dann als Textliste."
+msgstr "Status: uploaded, extracting, ready, generating, done, error. with_text och without_text följer samma regel som appens nedladdningsdialog: det som räknas är om fältet innehåller text, oavsett om den kommer från AI:n, för hand eller från källan. Dekorativa bilder har ingen text och räknas inte som öppna. För PDF säger tagged om filen har taggar; Utan taggar skriver PDF-exporten inga alternativtexter: filen kommer tillbaka oförändrad och kostnadsfritt (rubrik X-Export-Unveraendert: 1) eller, om det finns verktygstips, bara med verktygstipsen. Alternativtexterna finns då som textlista."
+
+msgid "ohne Tags: ohne Alt-Texte, mit vorhandenen Quickinfos"
+msgstr "utan taggar: utan alternativtexter, med befintliga verktygstips"
+
+msgid "Diese PDF hat keine Tags. Alt-Texte lassen sich deshalb nicht in die Datei schreiben; du findest sie als Liste in der Ansicht „Alt-Texte“. Du bekommst die PDF unverändert zurück, dafür berechnen wir keine Credits."
+msgstr "Den här PDF:en har inga taggar. Alternativtexter kan därför inte skrivas in i filen; du hittar dem som lista i vyn ”Alt-texter”. Du får tillbaka PDF:en oförändrad och vi drar inga krediter för det."
+
+msgid "Diese PDF hat keine Tags. Sie bekommt die Quickinfos, aber keine Alt-Texte; die Alt-Texte findest du als Liste in der Ansicht „Alt-Texte“."
+msgstr "Den här PDF:en har inga taggar. Den får verktygstipsen men inga alternativtexter; dem hittar du som lista i vyn ”Alt-texter”."
+
+#, python-brace-format
+msgid "{n} Dokumente haben keine Tags. Sie bekommen keine Alt-Texte, nur vorhandene Quickinfos; Dokumente ohne Quickinfos bleiben unverändert und kosten nichts."
+msgstr "{n} dokument har inga taggar. De får inga alternativtexter, bara befintliga verktygstips; dokument utan verktygstips förblir oförändrade och kostar ingenting."
+
+msgid "Die PDF ist unverändert, weil sie keine Tags hat. Es wurden keine Credits berechnet."
+msgstr "PDF:en är oförändrad eftersom den saknar taggar. Inga krediter drogs."
+
+msgid "1 Dokument ohne Tags ist unverändert enthalten, dafür wurden keine Credits berechnet."
+msgstr "1 dokument utan taggar ingår oförändrat; inga krediter drogs för det."
+
+#, python-brace-format
+msgid "{n} Dokumente ohne Tags sind unverändert enthalten, dafür wurden keine Credits berechnet."
+msgstr "{n} dokument utan taggar ingår oförändrade; inga krediter drogs för dem."
+
+msgid "Quickinfos herunterladen"
+msgstr "Ladda ned verktygstips"
+
+#, python-brace-format
+msgid "{b} von {n} Feldern haben eine Quickinfo."
+msgstr "{b} av {n} fält har ett verktygstips."
+
