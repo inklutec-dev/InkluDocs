@@ -28,6 +28,8 @@ Kein Eintrag in der Demo (dort gibt es keine Projekte mit Konto).
 from __future__ import annotations
 
 import asyncio
+
+import funktionen   # Funktionsschalter (30.09.2026)
 import concurrent.futures as _cf
 import json
 import logging
@@ -443,6 +445,21 @@ def quelle_getaggt(doc: dict) -> bool:
         roh = doc.get("original_path") or ""
     from pdf_export import pdf_hat_tags
     return bool(roh) and pdf_hat_tags(roh)
+
+
+def lesbar_grund(doc: dict, _=None) -> Optional[str]:
+    """Kann PDFix die Quelle lesen? None = ja, sonst ein verstaendlicher Grund — VOR Preis und Lauf (Audit 30.09.2026, NIEDRIG
+    6: eine abgeschnittene PDF zeigte 120 Seiten und 2.400 Credits, das Tagging scheiterte dann an pikepdf mit „Unerwarteter
+    Fehler“). Neue Uploads prueft main.pdf_vorpruefung schon; das hier faengt aeltere Dokumente ab."""
+    _ = _ or (lambda s: s)
+    quelle = doc.get("roh_path") or doc.get("original_path") or ""
+    try:
+        import pikepdf
+        with pikepdf.open(quelle) as p:
+            len(p.pages)
+    except Exception:  # noqa: BLE001
+        return _("Die PDF ist beschädigt oder unvollständig (zum Beispiel ein abgebrochener Download). Bitte lade die Datei noch einmal herunter und dann hoch.")
+    return None
 
 
 def schon_getaggt_text(_=None) -> str:
@@ -1066,6 +1083,54 @@ def haengende_laeufe_zuruecksetzen() -> None:
 # Router
 # ---------------------------------------------------------------------------
 
+
+def test_starten_fuer(project_id: int, document_id: int, user: dict, ui_lang: str = "", _t=None) -> dict:
+    """„Testweise taggen“ starten — fuer den Knopf (POST …/tagging/test) und den Chatbot (testweise_taggen) derselbe Weg
+    mit denselben Sperren und Grenzen (30.09.2026). user: {"id", "language"}."""
+    if not pdf_tagging.verfuegbar():
+        raise HTTPException(status_code=503, detail="PDF-Tagging ist auf diesem Server nicht eingerichtet")
+    if pdf_struktur_tagging.aktiv():
+        raise HTTPException(status_code=400, detail="Der Testlauf gibt es nur für das PDFix-Tagging")
+    conn = _d.get_db()
+    try:
+        project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
+    finally:
+        conn.close()
+    if quelle_getaggt(doc):
+        # auch der Testlauf taggte eine schon getaggte Datei nicht neu, er zeigte nur das Wasserzeichen (30.09.2026)
+        raise HTTPException(status_code=409, detail={"code": "schon_getaggt", "text": schon_getaggt_text(_t)})
+    seiten = _seiten(doc)
+    if seiten <= 0:
+        raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")
+    if seiten > pdf_tagging.MAX_SEITEN:
+        raise HTTPException(status_code=400, detail=f"Das Tagging ist auf {pdf_tagging.MAX_SEITEN} Seiten begrenzt")
+    _grund = lesbar_grund(doc, _t)
+    if _grund:
+        raise HTTPException(status_code=400, detail=_grund)
+    heute = time.strftime("%Y-%m-%d")
+    with _start_lock:
+        if document_id in _test_laeuft:
+            raise HTTPException(status_code=409, detail="Der Testlauf für dieses Dokument läuft bereits")
+        if user["id"] in _test_nutzer:
+            raise HTTPException(status_code=429, detail="Es läuft schon ein Testlauf. Bitte warte, bis er fertig ist.")
+        if len(_test_laeuft) >= TEST_GLEICHZEITIG:
+            raise HTTPException(status_code=429, detail="Gerade laufen viele Testläufe. Bitte versuche es in ein paar Minuten erneut.")
+        tag, anzahl = _test_zaehler.get(user["id"], ("", 0))
+        anzahl = anzahl if tag == heute else 0
+        if anzahl >= TEST_JE_TAG:
+            raise HTTPException(status_code=429, detail=f"Heute sind schon {TEST_JE_TAG} Testläufe gelaufen. Morgen geht es weiter.")
+        _test_zaehler[user["id"]] = (heute, anzahl + 1)
+        _test_laeuft[document_id] = {"seit": time.time(), "user_id": user["id"]}
+        _test_nutzer[user["id"]] = document_id
+    try:
+        sprache = (project.get("alt_language") or user.get("language") or "de")
+        _test_executor.submit(_test_sync, project_id, document_id, user["id"], sprache, ui_lang)
+    except Exception:
+        test_freigeben(user["id"], document_id)   # sonst haengt die Sperre bis zum Neustart
+        raise
+    return {"gestartet": True, "document_id": document_id, "seiten": seiten, "preis": 0}
+
+
 def build_router(deps: Deps) -> APIRouter:
     global _d
     _d = deps
@@ -1107,6 +1172,9 @@ def build_router(deps: Deps) -> APIRouter:
                 raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")
             if seiten > pdf_tagging.MAX_SEITEN:
                 raise HTTPException(status_code=400, detail=f"Das Tagging ist auf {pdf_tagging.MAX_SEITEN} Seiten begrenzt")
+            _grund = lesbar_grund(doc, _d.get_gettext(_d.resolve_ui_language(request)) if (_d.get_gettext and _d.resolve_ui_language) else None)
+            if _grund:
+                raise HTTPException(status_code=400, detail=_grund)
             pruefung = _d.billing.aktion_pruefung(user["id"], AKTION, seiten)
             if not pruefung["erlaubt"]:
                 raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(pruefung, "Das Tagging"))
@@ -1125,48 +1193,9 @@ def build_router(deps: Deps) -> APIRouter:
     @router.post("/api/projects/{project_id}/documents/{document_id}/tagging/test")
     async def test_starten(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):
         """Testweise taggen: kostenlos, Testmodus, eigene Testfassung — das Dokument bleibt unveraendert."""
-        if not pdf_tagging.verfuegbar():
-            raise HTTPException(status_code=503, detail="PDF-Tagging ist auf diesem Server nicht eingerichtet")
-        if pdf_struktur_tagging.aktiv():
-            raise HTTPException(status_code=400, detail="Der Testlauf gibt es nur für das PDFix-Tagging")
-        conn = _d.get_db()
-        try:
-            project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
-        finally:
-            conn.close()
-        if quelle_getaggt(doc):
-            # auch der Testlauf taggte eine schon getaggte Datei nicht neu, er zeigte nur das Wasserzeichen (30.09.2026)
-            _t = _d.get_gettext(_d.resolve_ui_language(request)) if (_d.get_gettext and _d.resolve_ui_language) else None
-            raise HTTPException(status_code=409, detail={"code": "schon_getaggt", "text": schon_getaggt_text(_t)})
-        seiten = _seiten(doc)
-        if seiten <= 0:
-            raise HTTPException(status_code=400, detail="Die PDF konnte nicht gelesen werden")
-        if seiten > pdf_tagging.MAX_SEITEN:
-            raise HTTPException(status_code=400, detail=f"Das Tagging ist auf {pdf_tagging.MAX_SEITEN} Seiten begrenzt")
-        heute = time.strftime("%Y-%m-%d")
-        with _start_lock:
-            if document_id in _test_laeuft:
-                raise HTTPException(status_code=409, detail="Der Testlauf für dieses Dokument läuft bereits")
-            if user["id"] in _test_nutzer:
-                raise HTTPException(status_code=429, detail="Es läuft schon ein Testlauf. Bitte warte, bis er fertig ist.")
-            if len(_test_laeuft) >= TEST_GLEICHZEITIG:
-                raise HTTPException(status_code=429, detail="Gerade laufen viele Testläufe. Bitte versuche es in ein paar Minuten erneut.")
-            tag, anzahl = _test_zaehler.get(user["id"], ("", 0))
-            anzahl = anzahl if tag == heute else 0
-            if anzahl >= TEST_JE_TAG:
-                raise HTTPException(status_code=429, detail=f"Heute sind schon {TEST_JE_TAG} Testläufe gelaufen. Morgen geht es weiter.")
-            _test_zaehler[user["id"]] = (heute, anzahl + 1)
-            _test_laeuft[document_id] = {"seit": time.time(), "user_id": user["id"]}
-            _test_nutzer[user["id"]] = document_id
-        try:
-            sprache = (project.get("alt_language") or user.get("language") or "de")
-            ui_lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else ""
-            loop = asyncio.get_running_loop()
-            loop.run_in_executor(_test_executor, _test_sync, project_id, document_id, user["id"], sprache, ui_lang)
-        except Exception:
-            test_freigeben(user["id"], document_id)   # sonst haengt die Sperre bis zum Neustart
-            raise
-        return {"gestartet": True, "document_id": document_id, "seiten": seiten, "preis": 0}
+        _t = _d.get_gettext(_d.resolve_ui_language(request)) if (_d.get_gettext and _d.resolve_ui_language) else None
+        ui_lang = _d.resolve_ui_language(request) if _d.resolve_ui_language else ""
+        return test_starten_fuer(project_id, document_id, user, ui_lang, _t)
 
     @router.get("/api/projects/{project_id}/documents/{document_id}/tagging/test/hoerprobe")
     async def test_hoerprobe(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):
@@ -1251,6 +1280,7 @@ def build_router(deps: Deps) -> APIRouter:
     @router.get("/api/projects/{project_id}/documents/{document_id}/pruefung/befunde.csv")
     async def befunde_csv(project_id: int, document_id: int, user: dict = Depends(_user())):
         """Gemeinsame Befundliste (PDF/UA + KI) als CSV zum Weiterarbeiten mit eigenen Werkzeugen (23.09.2026)."""
+        funktionen.endpunkt_frei("KI_PRUEFUNG")   # Schalter in funktionen.py (Oberflaeche + Chatbot + Endpunkt)
         conn = _d.get_db()
         try:
             _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
@@ -1268,6 +1298,7 @@ def build_router(deps: Deps) -> APIRouter:
         """AUTOMATISCHE PRUEFUNG starten (Schritt 5, 22.09.2026): nur getaggte Dokumente, nicht waehrend
         Tagging oder laufender Pruefung, Guthaben-Wache (402), Tageslimit (429). Laeuft im Executor;
         die Karte fragt den Stand ueber dokument-ansicht ab."""
+        funktionen.endpunkt_frei("KI_PRUEFUNG")   # Schalter in funktionen.py (Oberflaeche + Chatbot + Endpunkt)
         conn = _d.get_db()
         try:
             _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])
@@ -1301,6 +1332,7 @@ def build_router(deps: Deps) -> APIRouter:
     async def korrektur_starten(project_id: int, document_id: int, request: Request, user: dict = Depends(_user())):
         """KORREKTUR der Befunde mit Doppelbeleg (Stufe 2, 22.09.2026). Kostenlos (mechanisch). Body
         {"erneut_pruefen": true} haengt die bezahlte Nachpruefung an (Preis wie Pruefung, 402 bei Guthaben)."""
+        funktionen.endpunkt_frei("KORREKTUR")   # Schalter in funktionen.py (Oberflaeche + Chatbot + Endpunkt)
         try:
             data = await request.json()
         except Exception:  # noqa: BLE001
@@ -1347,6 +1379,7 @@ def build_router(deps: Deps) -> APIRouter:
     async def korrektur_rueckgaengig(project_id: int, document_id: int, user: dict = Depends(_user())):
         """Rueckweg: Sicherung von vor der letzten Korrektur wiederherstellen; Korrektur-Bericht und die
         Markierung im Pruefbericht werden entfernt (der Pruefbericht gilt dann wieder)."""
+        funktionen.endpunkt_frei("KORREKTUR")   # Schalter in funktionen.py (Oberflaeche + Chatbot + Endpunkt)
         conn = _d.get_db()
         try:
             _project, doc = _projekt_und_dokument(conn, project_id, document_id, user["id"])

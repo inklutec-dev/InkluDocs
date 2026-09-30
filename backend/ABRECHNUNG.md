@@ -284,6 +284,14 @@ Tests: `tests/test_herunterladen_genutzt.py` (atomarer Anspruch, Teilbuchung, Bu
 Tests: `tests/test_herunterladen_genutzt.py` (AblageUndBaustand, verlorener Anspruch 409), `tests/test_chat_hoerprobe.py`,
 `tests/e2e/verify_michael_0930.py` Abschnitte J und K, `tests/e2e/ablage_probe.py` (im Container).
 
+### Drosselung nach Bauten (Nachpruefung 2, 30.09.2026)
+
+`_export_drossel(user, bauten)`: gezaehlt werden die Dokumente, die wirklich gebaut werden (ein ZIP je Dokument, ein Neubau
+nach Umbenennen zaehlt, eine Datei aus der Ablage nicht) — hoechstens 20 je 5 Minuten; ein einzelnes grosses ZIP geht bei
+leerem Zeitfenster. Betreiberkonten ausgenommen. Die Sperre (ein Download je Nutzer) bleibt `_export_belegen`. Liegengebliebene
+dl_-Ordner raeumt jeder Download ueber alle Projekte des Kontos und der Start ueber alle Konten auf. Der Chatbot liefert bei
+voller Ablage, ohne Tags und fuer ZIPs ueber einen Download-Knopf (`sofort_download_ablegen`).
+
 ## AKTIONSPREISE (Michael Karbe, bestaetigt 29.08.2026 — gebaut 29.08.2026)
 
 Eine Preisquelle: `billing.AKTIONS_PREISE` (je Vorgang), `billing.EXPORT_ARTEN` +

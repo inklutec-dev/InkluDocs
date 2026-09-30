@@ -640,3 +640,33 @@ werden an Wortgrenzen in Teile zerlegt („(Fortsetzung) …“), nichts wird ab
 Nicht geändert (Entscheidung Steve offen): Michaels Satz „Anzeige der Problemstellen im Prüfbericht.“ (6); „Neu taggen“ für
 schon getaggte PDFs (N3). Tests: `tests/e2e/ui_michael_0930.py`, `ui_dokument.py`, `ui_word_ansichten.py`,
 `verify_michael_0930.py`.
+
+## Audit veraPDF-Weg (30.09.2026) — behoben auf Staging
+
+**Klartext der veraPDF-Regeln** (`pdfua_export._bereiche`, `_regeln_klartext`): gegen das Regelwerk PDFUA-1.xml der
+veraPDF-Version des Konverters (1.31.163) richtiggestellt. Vorher falsch: 7.1-1/-2 (Artefakt in/um getaggtem Inhalt), 7.1-8
+(Metadaten-Bereich fehlt), 7.2-3 (Tabellenaufbau, nicht Sprache — die Sprache ist 7.2-34), 7.5-1 (Datenzellen ohne
+Kopfzuordnung), 7.16-1 (Verschlüsselung, nicht Schrift; Bereich „Sicherheit“), 7.18.1-2 (jede Anmerkung, nicht nur Links),
+Bereich 7.20 (XObjects, nicht Metadaten). Tote Einträge raus (7.3-2, 7.4-1, 7.18-1, 7.18-5, 7.21-1, Bereiche 7.6, 7.17); neu
+5-1, 6.2-1 (unter Struktur), 7.1-11, 7.18.1-3, 7.21.4.1-1. Gleiche Sätze werden nicht mehr addiert (vorher „32-mal“ bei 16
+Links). Test: `tests/test_pdfua_klartext.py` RegelwerkTest gegen `tests/fixtures/verapdf_pdfua1_regeln.json` (Auszug des
+Regelwerks; bei neuer veraPDF-Version neu ziehen). Prod-Hotfix vorbereitet: /home/claude/hotfix-klartext-0930/.
+
+**veraPDF nach dem Taggen ist ein Zwischenstand:** Tagging-Bericht „PDF/UA-Prüfung direkt nach dem Taggen“ mit Hinweis und
+Link auf die Barrierefreiheitsprüfung (fertige Datei); Ergebnis-Satz `pdf_tagging.zwischenstand_satz` statt „Deine PDF ist
+fertig …“ (Karte, Testlauf, Chatbot `dokument_stand.pdfua_pruefung_nach_tagging`).
+
+**Fehlertexte:** `main.pdf_vorpruefung` beim Upload (keine PDF, Passwort, beschädigt/abgeschnitten — vorher 200 und
+später „Verarbeitung fehlgeschlagen“); `tagging_api.lesbar_grund` vor Preis und Lauf; UNGETAGGT_HINWEIS nennt den Download
+in „Dokument“.
+
+**Aufsatz auf Joergs Make Accessible** (Kommentar in pdf_tagging.py richtiggestellt): 5 von 37 Schritten entfallen — die vier
+„Set Alt (Figure/Formula …)“ und „Set Annotation Contents (Auto-generated)“; Letzteres schaltet auch den Feldnamen-Rückfall
+für Formularfelder ab (technische Feldnamen als Quickinfo). Ob der zurückkommen soll, klärt Michael (nicht geändert).
+
+**Drift-Test** (`tests/test_pdfix_skript_drift.py`): Formular_Import_Quickinfo.py gegen Heines Formulare_Import_03.py
+(jede Originalzeile bleibt außer den dokumentierten Anpassungen, Aufsatz per Prüfsumme festgehalten); AltTag_Import_CSV.py und
+AltTag_Export_CSV_PNG.py per Prüfsumme, weil Heines Originale fehlen.
+
+**Abgeschaltet und im Chatbot nicht mehr erreichbar:** KI-Prüfung, Korrektur (auch als Endpunkt 404), siehe
+docs/INKLUAGENT.md „Chatbot = Oberfläche“. Korrektur_Anwenden.py (eigenes Skript) ohne „Artifact“.

@@ -16,6 +16,8 @@ from . import altext as altext_tools
 from . import search as search_tools
 from . import ausgaben as ausgaben_tools
 from . import pdf as pdf_tools   # PDF-Werkzeuge (Werkzeugsatz nach Dateiart, 22.09.2026)
+from . import oberflaeche as oberflaeche_tools   # alles, was die Oberflaeche kann (30.09.2026)
+import funktionen   # Funktionsschalter: was die Oberflaeche ausblendet, fuehrt auch der Chatbot nicht aus
 
 
 TOOL_DEFINITIONS: list[dict] = [
@@ -217,7 +219,8 @@ class ToolExecutor:
 
     def execute(self, name: str, args: dict) -> dict[str, Any]:
         try:
-            handler = self._handlers().get(name)
+            # ausgeblendete Funktion (funktionen.py) = kein Werkzeug, auch wenn das Modell den Namen kennt
+            handler = self._handlers().get(name) if funktionen.werkzeug_erlaubt(name) else None
             if not handler:
                 return {"ok": False, "error": f"Unbekanntes Tool: {name}"}
             return handler(args)
@@ -259,6 +262,12 @@ class ToolExecutor:
                 "exportiere_uebersetzung": lambda _a: ausgaben_tools.exportiere_uebersetzung(p, u),
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
+                # wie die Oberflaeche (30.09.2026): Umbenennen/Loeschen/Sprache in „Dokument“ bzw. „Alt-Texte“, Alt-Texte
+                # herunterladen, Sammellauf, Einstellungen, Ablage-Eintrag loeschen
+                "dokument_umbenennen": lambda a: pdf_tools.dokument_umbenennen(p, u, _doc(a), str(a.get("name") or "")),
+                "dokument_loeschen": lambda a: pdf_tools.dokument_loeschen(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                "alt_sprache_setzen": lambda a: pdf_tools.alt_sprache_setzen(p, u, str(a.get("sprache") or "")),
+                **self._oberflaeche_gemeinsam(_doc),
             })
         if self.pdf:
             # Werkzeugsatz nach Dateiart (22.09.2026): EIN Gespraech je PDF-Projekt ueber alle drei Stationen —
@@ -284,5 +293,29 @@ class ToolExecutor:
                 "korrektur_rueckgaengig": lambda a: pdf_tools.korrektur_rueckgaengig(p, u, _doc(a)),
                 "liste_ausgaben": lambda _a: ausgaben_tools.liste_ausgaben(p, u),
                 "lies_ausgabe": lambda a: ausgaben_tools.lies_ausgabe(p, u, int(a["ausgabe_id"]), str(a.get("teil") or "bericht")),
+                # wie die Oberflaeche (30.09.2026)
+                "testweise_taggen": lambda a: oberflaeche_tools.testweise_taggen(p, u, _doc(a)),
+                "pruefdatei_erstellen": lambda a: oberflaeche_tools.pruefdatei_erstellen(p, u, _doc(a)),
+                "pruefdatei_lesen": lambda a: oberflaeche_tools.pruefdatei_lesen(p, u, _doc(a), teil=str(a.get("teil") or "probleme"),
+                                                                                 von=int(a.get("von") or 1), anzahl=int(a.get("anzahl") or 80)),
+                "exportiere_quickinfos": lambda a: oberflaeche_tools.exportiere_quickinfos(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                "quickinfos_generieren": lambda a: oberflaeche_tools.quickinfos_generieren(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+                "stammdaten_anwenden": lambda _a: oberflaeche_tools.stammdaten_anwenden(p, u),
+                **self._oberflaeche_gemeinsam(_doc),
             })
+            handlers["exportiere_fertige_pdf"] = lambda a: pdf_tools.exportiere_fertige_pdf(
+                p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self, alle=bool(a.get("alle", False)))
         return handlers
+
+    def _oberflaeche_gemeinsam(self, _doc) -> dict[str, Callable[[dict], dict]]:
+        """Werkzeuge der Oberflaeche, die PDF- und Word-Projekte gleich haben (30.09.2026)."""
+        p, u = self.project_id, self.user_id
+        return {
+            "exportiere_alt_texte": lambda a: oberflaeche_tools.exportiere_alt_texte(p, u, str(a.get("format") or "csv"), _doc(a),
+                                                                                     bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+            "alt_texte_generieren": lambda a: oberflaeche_tools.alt_texte_generieren(p, u, _doc(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+            "ki_kontext_setzen": lambda a: oberflaeche_tools.ki_kontext_setzen(p, u, bool(a.get("an"))),
+            "eigener_prompt": lambda a: oberflaeche_tools.eigener_prompt(p, u, (int(a["prompt_id"]) if a.get("prompt_id") is not None else None),
+                                                                         auflisten=bool(a.get("auflisten", False))),
+            "ausgabe_loeschen": lambda a: oberflaeche_tools.ausgabe_loeschen(p, u, int(a["ausgabe_id"]), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+        }

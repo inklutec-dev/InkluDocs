@@ -61,6 +61,7 @@ from pdf_processor import extract_images_from_pdf, generate_alt_text, generate_a
 # WORD-WERKZEUG (26.08.2026): .docx lesen (Bilder + Kontext) und Alt-Texte zurueckschreiben
 from docx_processor import extract_images_from_docx, extract_docx, validiere_docx, DocxFehler
 import docx_export
+import funktionen   # Funktionsschalter fuer Oberflaeche, Chatbot und Endpunkte (30.09.2026)
 import pdfua_export
 import docx_hoerprobe
 import docx_ansicht   # Word-Ansichten „Dokument“ und „Barrierefreiheitsprüfung“ (30.09.2026)
@@ -330,11 +331,31 @@ API_RATE_LIMIT_MINUTE = 60
 API_RATE_LIMIT_DAY = 1000
 
 
+_HAUPT_LOOP: Optional[asyncio.AbstractEventLoop] = None
+
+
+def im_hauptloop(coro) -> None:
+    """Eine Hintergrund-Aufgabe (Sammellauf) aus einem Thread heraus auf der Ereignisschleife des Servers starten — so
+    startet ein Chatbot-Werkzeug denselben Lauf wie der Knopf (asyncio.create_task im Endpunkt), 30.09.2026."""
+    if _HAUPT_LOOP is None:
+        coro.close()
+        raise HTTPException(status_code=503, detail="Der Server ist noch nicht bereit")
+    asyncio.run_coroutine_threadsafe(coro, _HAUPT_LOOP)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _HAUPT_LOOP
+    _HAUPT_LOOP = asyncio.get_running_loop()
     init_db()
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(RESULTS_DIR, exist_ok=True)
+    try:   # liegengebliebene Download-Ordner aller Konten (Absturz mitten im Bau), Nachpruefung 2 vom 30.09.2026
+        _n = _export_anfragen_aufraeumen(os.path.join(RESULTS_DIR, "*", "*", "_export", "dl_*"))
+        if _n:
+            print(f"[export] {_n} liegengebliebene Download-Ordner geloescht")
+    except Exception as _e:  # noqa: BLE001
+        print(f"[export] Aufraeumen beim Start fehlgeschlagen: {_e}")
     # Clean up stale API temp files from previous runs/crashes
     api_tmp = os.path.join(UPLOAD_DIR, "api_tmp")
     if os.path.exists(api_tmp):
@@ -4582,18 +4603,19 @@ async def set_context_setting(project_id: int, request: Request, user: dict = De
     NEU generierte Bilder; bestehende bleiben, bis man sie neu generiert.
     """
     data = await request.json()
-    use_ctx = 1 if data.get("use_context") else 0
+    return {"ok": True, "use_context": _ki_kontext_setzen(project_id, user["id"], bool(data.get("use_context")))}
+
+
+def _ki_kontext_setzen(project_id: int, user_id: int, an: bool) -> bool:
+    """Schalter „KI-Kontext aus dem Dokument verwenden“ — Knopf und Chatbot (ki_kontext_setzen), 30.09.2026."""
     conn = get_db()
-    cur = conn.execute(
-        "UPDATE projects SET use_context = ? WHERE id = ? AND user_id = ?",
-        (use_ctx, project_id, user["id"])
-    )
+    cur = conn.execute("UPDATE projects SET use_context = ? WHERE id = ? AND user_id = ?", (1 if an else 0, project_id, user_id))
     conn.commit()
     affected = cur.rowcount
     conn.close()
     if not affected:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    return {"ok": True, "use_context": bool(use_ctx)}
+    return bool(an)
 
 
 ALT_TEXT_LANGUAGES = ("de", "en", "da", "fr", "es", "sv")
@@ -4858,7 +4880,11 @@ async def set_prompt_setting(project_id: int, request: Request, user: dict = Dep
     prompt_id null/leer = kein eigener Prompt (Standardverhalten).
     """
     data = await request.json()
-    raw = data.get("prompt_id")
+    return {"ok": True, "prompt_id": _prompt_setzen(project_id, user["id"], data.get("prompt_id"))}
+
+
+def _prompt_setzen(project_id: int, user_id: int, raw) -> Optional[int]:
+    """Auswahl „Gespeicherte Prompts“ — Knopf und Chatbot (eigener_prompt), 30.09.2026. None/leer = kein eigener Prompt."""
     prompt_id = None
     if raw not in (None, "", 0, "0"):
         try:
@@ -4869,21 +4895,21 @@ async def set_prompt_setting(project_id: int, request: Request, user: dict = Dep
     if prompt_id is not None:
         owned = conn.execute(
             "SELECT 1 FROM user_prompts WHERE id = ? AND user_id = ?",
-            (prompt_id, user["id"])
+            (prompt_id, user_id)
         ).fetchone()
         if not owned:
             conn.close()
             raise HTTPException(status_code=404, detail="Prompt nicht gefunden")
     cur = conn.execute(
         "UPDATE projects SET prompt_id = ? WHERE id = ? AND user_id = ?",
-        (prompt_id, project_id, user["id"])
+        (prompt_id, project_id, user_id)
     )
     conn.commit()
     affected = cur.rowcount
     conn.close()
     if not affected:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
-    return {"ok": True, "prompt_id": prompt_id}
+    return prompt_id
 
 
 # ANSICHTEN (22.09.2026, Steve): Der Wechsel ueber die Ansichts-Wahl merkt sich die Ansicht am Projekt;
@@ -4936,9 +4962,45 @@ async def list_tools(user: dict = Depends(get_current_user)):
     }
 
 
+def pdf_vorpruefung(pfad: str, _=None) -> Optional[str]:
+    """Kann InkluDocs diese PDF verarbeiten? None = ja, sonst ein verstaendlicher Grund (Audit 30.09.2026, NIEDRIG 6):
+    vorher antwortete der Upload 200, die Verarbeitung scheiterte im Hintergrund, und die Oberflaeche sagte nur
+    „Die Verarbeitung der PDF ist fehlgeschlagen“ — bei Passwort, Nicht-PDF und abgeschnittenen Dateien. Eine
+    abgeschnittene Datei reparierte PyMuPDF sogar (120 Seiten, 2.400 Credits Preis), und das Tagging scheiterte erst an
+    pikepdf. Jetzt wird vorher geprueft: PDF-Kopf, Passwort, PyMuPDF und pikepdf muessen die Datei oeffnen."""
+    _ = _ or (lambda s: s)
+    try:
+        with open(pfad, "rb") as f:
+            kopf = f.read(1024)
+    except OSError:
+        return _("Die Datei konnte nicht gelesen werden.")
+    if b"%PDF-" not in kopf:
+        return _("Die Datei ist keine PDF (sie hat nur die Endung .pdf). Bitte wähle die PDF-Datei aus.")
+    try:
+        import fitz
+        with fitz.open(pfad) as d:
+            if d.needs_pass:
+                return _("Die PDF ist mit einem Passwort geschützt. Bitte entferne das Passwort und lade die Datei noch einmal hoch.")
+            if d.page_count < 1:
+                return _("Die PDF hat keine Seiten.")
+    except Exception:  # noqa: BLE001
+        return _("Die PDF ist beschädigt und kann nicht gelesen werden. Bitte erzeuge oder lade die Datei neu.")
+    try:
+        import pikepdf
+        with pikepdf.open(pfad) as p:
+            len(p.pages)
+    except pikepdf.PasswordError:
+        return _("Die PDF ist mit einem Passwort geschützt. Bitte entferne das Passwort und lade die Datei noch einmal hoch.")
+    except Exception:  # noqa: BLE001
+        return _("Die PDF ist beschädigt oder unvollständig (zum Beispiel ein abgebrochener Download). Bitte lade die Datei noch einmal herunter und dann hoch.")
+    return None
+
+
 @app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...), project_id: int = Form(None), user: dict = Depends(get_current_user)):
-    """Upload a PDF or image file(s). Accepts PDF, JPG, JPEG, PNG, GIF, SVG, WEBP."""
+async def upload_file(file: UploadFile = File(...), project_id: int = Form(None),
+                      user: dict = Depends(get_current_user), request: Request = None):
+    """Upload a PDF or image file(s). Accepts PDF, JPG, JPEG, PNG, GIF, SVG, WEBP.
+    request ist optional: die oeffentliche API v1 ruft diese Route direkt auf (api_dokumente_v1._documents_create)."""
     filename = file.filename or "unknown"
     ext = os.path.splitext(filename)[1].lower()
 
@@ -5021,6 +5083,14 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
             raise HTTPException(status_code=400, detail=str(e))
         return await formular_api.handle_upload(file_path, filename, user, project_id)
     if is_pdf:
+        _sprache = resolve_ui_language(request) if request is not None else ((user or {}).get("language") or "de")
+        grund = await asyncio.get_running_loop().run_in_executor(None, pdf_vorpruefung, file_path, get_gettext(_sprache))
+        if grund:
+            try:
+                os.unlink(file_path)
+            except OSError:
+                pass
+            raise HTTPException(status_code=400, detail=grund)
         return await _handle_pdf_upload(file_path, filename, user, project_id)
     elif is_docx:
         # Vorpruefung im Request (Zip, Grenzen, echtes DOCX ohne Makros), damit der
@@ -6761,6 +6831,18 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
         _body = await request.json()
     except Exception:
         _body = {}
+    erg = _generierung_vorbereiten(project_id, user, _body if isinstance(_body, dict) else {})
+    ids = erg.pop("_ids", None)
+    if erg.pop("_lauf", None):
+        asyncio.create_task(_process_project(project_id, user["id"], force=True,
+                                             document_id=erg["document_id"], ki_neu_ids=ids))
+    return erg
+
+
+def _generierung_vorbereiten(project_id: int, user: dict, _body: dict) -> dict:
+    """Kern von „Alt-Texte generieren“ (Pruefungen, Auswahl, Status setzen) — fuer den Knopf (POST generate) und den
+    Chatbot (alt_texte_generieren) derselbe Weg (30.09.2026). Den Lauf startet der Aufrufer: der Endpunkt mit
+    asyncio.create_task, der Chatbot mit im_hauptloop. "_lauf"/"_ids" sind nur fuer den Aufrufer."""
     modus = "ki_neu" if isinstance(_body, dict) and _body.get("modus") == "ki_neu" else "luecken"
     # Je Dokument (Michael/Steve 28.08.2026): optional nur EIN Dokument des Projekts.
     try:
@@ -6847,10 +6929,8 @@ async def generate_alt_texts(project_id: int, request: Request, user: dict = Dep
     conn.close()
 
     # force=True: Cache umgehen — jeder Sammellauf beschreibt neu und kostet (Michael Karbe 01.09.2026).
-    asyncio.create_task(_process_project(project_id, user["id"], force=True,
-                                         document_id=document_id, ki_neu_ids=ki_neu_ids))
     return {"ok": True, "gestartet": True, "modus": modus, "anzahl": anzahl_ki, "document_id": document_id,
-            "message": "Alt-Text-Generierung gestartet"}
+            "message": "Alt-Text-Generierung gestartet", "_lauf": True, "_ids": ki_neu_ids}
 
 
 # Abbruch eines laufenden Sammellaufs (Michael Karbe 01.09.2026: „Der Erstellungsprozess kann bei
@@ -6958,8 +7038,13 @@ async def generate_vorschau(project_id: int, request: Request,
         data = await request.json()
     except Exception:
         data = {}
-    if not isinstance(data, dict):
-        data = {}
+    return _generierung_vorschau_daten(project_id, user["id"], data if isinstance(data, dict) else {})
+
+
+def _generierung_vorschau_daten(project_id: int, user_id: int, data: dict) -> dict:
+    """Kern der Rueckfrage vor „Alt-Texte generieren“ — fuer den Knopf (generate/vorschau) und den Chatbot
+    (alt_texte_generieren) dieselbe Zahl und derselbe Preis (30.09.2026)."""
+    user = {"id": user_id}
     modus = "ki_neu" if data.get("modus") == "ki_neu" else "luecken"
     document_id = data.get("document_id")
 
@@ -7404,7 +7489,9 @@ async def update_alt_text(image_id: int, request: Request, user: dict = Depends(
 @app.post("/api/images/{image_id}/alt-text/zurueck")
 async def alt_text_zurueckholen(image_id: int, user: dict = Depends(get_current_user)):
     """Sicherheitsnetz (01.09.2026): den eigenen Text zurueckholen, den der letzte
-    Sammellauf ueberschrieben hat (alt_text_vorher). Der KI-Text bleibt in seinem Fach."""
+    Sammellauf ueberschrieben hat (alt_text_vorher). Der KI-Text bleibt in seinem Fach.
+    Hinter dem Schalter funktionen.TEXT_ZURUECK (in der Oberflaeche nie eingeblendet, 30.09.2026)."""
+    funktionen.endpunkt_frei("TEXT_ZURUECK")
     conn = get_db()
     img = conn.execute(
         """SELECT i.id, i.alt_text_vorher FROM images i JOIN projects p ON i.project_id = p.id
@@ -8024,9 +8111,9 @@ def _dokument_getaggt(doc: dict) -> bool:
     return wert
 
 
-UNGETAGGT_HINWEIS = ("Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte fuer Screenreader "
-                     "verlaesslich landen; deshalb bieten wir dafuer keinen PDF-Download an. Die Alt-Texte stehen als "
-                     "Excel, CSV und JSON bereit.")
+# Prüfdatei einer ungetaggten PDF (Audit 30.09.2026, NIEDRIG 6: der alte Satz sagte „keinen PDF-Download“ — seit 29.09. gibt es ihn)
+UNGETAGGT_HINWEIS = ("Diese PDF hat keine Tags. Eine Prüfdatei gibt es erst nach dem Tagging (Ansicht „Tagging“). "
+                     "Herunterladen kannst du sie in der Ansicht „Dokument“: unverändert oder mit deinen bearbeiteten Quickinfos.")
 
 
 def _norm_text(s) -> str:
@@ -8495,25 +8582,34 @@ EXPORT_DROSSEL_SEKUNDEN = int(os.environ.get("EXPORT_DROSSEL_SEKUNDEN", "300"))
 
 
 def _export_belegen(user_id: int) -> str:
-    """Sperre + Drosselung fuer das PDF-Herunterladen eines Nutzers. '' = belegt (am Ende _export_freigeben),
-    sonst Grund: 'laeuft' oder 'drossel'."""
-    # Betreiberkonten (Admin) sind von der Drosselung ausgenommen (Testlaeufe, Support); die Sperre gilt fuer alle.
-    try:
-        betreiber = billing._ist_admin(user_id)
-    except Exception:  # noqa: BLE001
-        betreiber = False
+    """Sperre fuer das PDF-Herunterladen eines Nutzers. '' = belegt (am Ende _export_freigeben), sonst 'laeuft'.
+    Die Drosselung zaehlt seit der zweiten Nachpruefung (30.09.2026) die BAUTEN, nicht die Anfragen — _export_drossel."""
     with _export_sperre:
         if user_id in _export_nutzer:
             return "laeuft"
-        jetzt = time.time()
-        zeiten = [t for t in _export_zeiten.get(user_id, []) if jetzt - t < EXPORT_DROSSEL_SEKUNDEN]
-        if len(zeiten) >= EXPORT_DROSSEL_ANZAHL and not betreiber:
-            _export_zeiten[user_id] = zeiten
-            return "drossel"
-        zeiten.append(jetzt)
-        _export_zeiten[user_id] = zeiten
         _export_nutzer.add(user_id)
         return ""
+
+
+def _export_drossel(user_id: int, bauten: int) -> None:
+    """Drosselung nach Bauten (Nachpruefung 2, 30.09.2026): ein ZIP zaehlt je Dokument, das neu gebaut wird, ein Neubau
+    nach dem Umbenennen zaehlt, eine Datei aus der Ablage nicht. Hoechstens EXPORT_DROSSEL_ANZAHL Bauten je
+    EXPORT_DROSSEL_SEKUNDEN; ein einzelnes grosses ZIP geht, wenn im Zeitfenster noch nichts gebaut wurde. Betreiberkonten
+    (Admin) sind ausgenommen. Zu viel: 429 (Text „sehr oft heruntergeladen“), sonst werden die Bauten vorgemerkt."""
+    if bauten <= 0:
+        return
+    try:
+        if billing._ist_admin(user_id):
+            return
+    except Exception:  # noqa: BLE001
+        pass
+    with _export_sperre:
+        jetzt = time.time()
+        zeiten = [t for t in _export_zeiten.get(user_id, []) if jetzt - t < EXPORT_DROSSEL_SEKUNDEN]
+        if zeiten and len(zeiten) + bauten > EXPORT_DROSSEL_ANZAHL:
+            _export_zeiten[user_id] = zeiten
+            raise HTTPException(status_code=429, detail=_export_belegt_text("drossel"))
+        _export_zeiten[user_id] = zeiten + [jetzt] * bauten
 
 
 def _export_freigeben(user_id: int) -> None:
@@ -8613,17 +8709,27 @@ def _ablage_ersetzbare(user_id: int, doc_id) -> list:
 EXPORT_ANFRAGE_AUFBEWAHREN = 3600
 
 
+def _export_anfragen_aufraeumen(muster: str) -> int:
+    """Liegengebliebene dl_-Ordner (aelter als EXPORT_ANFRAGE_AUFBEWAHREN) loeschen. muster: glob ueber _export-Ordner.
+    Seit der zweiten Nachpruefung (30.09.2026) unabhaengig vom Projekt: je Download ueber alle Projekte des Kontos und beim
+    Start ueber alle Konten (vorher nur, wenn im selben Projekt wieder ein Download lief)."""
+    import glob as _glob
+    jetzt, n = time.time(), 0
+    for p in _glob.glob(muster):
+        try:
+            if os.path.basename(p).startswith("dl_") and os.path.isdir(p) and jetzt - os.path.getmtime(p) > EXPORT_ANFRAGE_AUFBEWAHREN:
+                shutil.rmtree(p, ignore_errors=True)
+                n += 1
+        except OSError:
+            pass
+    return n
+
+
 def _export_anfrage_anlegen(wurzel: str) -> str:
     import tempfile as _tempfile
     os.makedirs(wurzel, exist_ok=True)
-    jetzt = time.time()
-    try:
-        for n in os.listdir(wurzel):
-            p = os.path.join(wurzel, n)
-            if n.startswith("dl_") and os.path.isdir(p) and jetzt - os.path.getmtime(p) > EXPORT_ANFRAGE_AUFBEWAHREN:
-                shutil.rmtree(p, ignore_errors=True)
-    except OSError:
-        pass
+    # alle Projekte dieses Kontos (wurzel = RESULTS_DIR/<user>/<projekt>/_export)
+    _export_anfragen_aufraeumen(os.path.join(os.path.dirname(os.path.dirname(wurzel)), "*", "_export", "dl_*"))
     return _tempfile.mkdtemp(prefix="dl_", dir=wurzel)
 
 
@@ -8668,6 +8774,14 @@ def _pdf_export_sync(user_id: int, project: dict, document_id: Optional[int], cu
     getaggt_ids = {id(u) for u in plan["getaggt"]}
     mit_qi_ids = {id(u) for u in plan["mit_qi"]}
     je = plan["je_dokument"]
+    # Welche getaggten Dokumente muessen wirklich gebaut werden (nicht aus der Ablage)? Das zaehlt fuer die Drosselung.
+    vorab: dict = {}
+    for u in plan["getaggt"]:
+        d = je.get(u["doc"].get("id")) or {}
+        stand = _bau_stand(u, _creator)
+        treffer = (_ablage_datei_fuer(user_id, u["doc"].get("id"), stand) if (not d.get("alt") and not d.get("qi")) else None)
+        vorab[id(u)] = (stand, treffer)
+    _export_drossel(user_id, sum(1 for st, tr in vorab.values() if not tr))
     anfrage = _export_anfrage_anlegen(wurzel)
     hinweise: list = []   # eigene Hinweise dieser Anfrage (Ablage voll), uebersetzt
 
@@ -8687,13 +8801,10 @@ def _pdf_export_sync(user_id: int, project: dict, document_id: Optional[int], cu
         dort liegt (kein Neubau, kein neuer Eintrag); sonst bauen, im eigenen Ordner dieses Dokuments und dieser Anfrage.
         Rueckgabe (pfad, info, bau_stand, ablage_id). Ein unvollstaendiger Bau (Quickinfos oder Abschluss nicht geschrieben)
         bekommt keinen bau_stand und wird nie aus der Ablage wiederverwendet."""
-        d = je.get(u["doc"].get("id")) or {}
-        stand = _bau_stand(u, _creator)
-        if not d.get("alt") and not d.get("qi"):
-            alt = _ablage_datei_fuer(user_id, u["doc"].get("id"), stand)
-            if alt:
-                return alt["datei_pfad"], {"method": "ablage", "aus_ablage": True,
-                                           "quickinfos": {"geschrieben": len(u.get("quickinfos") or {})}}, stand, alt["id"]
+        stand, alt = vorab.get(id(u)) or (_bau_stand(u, _creator), None)
+        if alt and os.path.isfile(alt["datei_pfad"]):
+            return alt["datei_pfad"], {"method": "ablage", "aus_ablage": True,
+                                       "quickinfos": {"geschrieben": len(u.get("quickinfos") or {})}}, stand, alt["id"]
         pfad, info = _build_pdf_for_document(u, _dok_dir(u), custom_title=custom_name, creator=_creator)
         return pfad, info, ("" if info.get("bau_unvollstaendig") else stand), None
 
@@ -9024,6 +9135,24 @@ async def abschluss_dokument(project_id: int, document_id: int, request: Request
     return await loop.run_in_executor(None, _abschluss_dokument, project, units[0], user["id"], _, True)
 
 
+def _abschluss_erstellen_sync(project: dict, user_id: int, document_id: int) -> bool:
+    """„Prüfdatei erstellen“ mit derselben Sperre fuer Knopf und Chatbot (pruefdatei_erstellen, 30.09.2026): nur ein Bau je
+    Dokument (409) und je Nutzer (429) gleichzeitig. True = neu gebaut."""
+    with _abschluss_lock:
+        if document_id in _abschluss_laeuft:
+            raise HTTPException(status_code=409, detail="Die Prüfdatei wird gerade erstellt")
+        if user_id in _abschluss_nutzer:
+            raise HTTPException(status_code=429, detail="Es wird schon eine Prüfdatei erstellt. Bitte warte, bis sie fertig ist.")
+        _abschluss_laeuft.add(document_id)
+        _abschluss_nutzer[user_id] = document_id
+    try:
+        return _abschluss_bauen(project, user_id, document_id)
+    finally:
+        with _abschluss_lock:
+            _abschluss_laeuft.discard(document_id)
+            _abschluss_nutzer.pop(user_id, None)
+
+
 @app.post("/api/projects/{project_id}/documents/{document_id}/abschluss")
 async def abschluss_erstellen(project_id: int, document_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Pruefdatei (neu) erstellen: kostenlos, ohne Ablage-Eintrag. Nur ein Bau je Dokument (409) und je Nutzer (429)
@@ -9032,20 +9161,13 @@ async def abschluss_erstellen(project_id: int, document_id: int, request: Reques
     if not _abschluss_dokument_gehoert(project_id, document_id):
         raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
     _ = get_gettext(resolve_ui_language(request))
-    with _abschluss_lock:
-        if document_id in _abschluss_laeuft:
-            raise HTTPException(status_code=409, detail="Die Prüfdatei wird gerade erstellt")
-        if user["id"] in _abschluss_nutzer:
-            raise HTTPException(status_code=429, detail="Es wird schon eine Prüfdatei erstellt. Bitte warte, bis sie fertig ist.")
-        _abschluss_laeuft.add(document_id)
-        _abschluss_nutzer[user["id"]] = document_id
     loop = asyncio.get_running_loop()
     try:
-        neu = await loop.run_in_executor(_abschluss_executor, _abschluss_bauen, project, user["id"], document_id)
-    finally:
-        with _abschluss_lock:
-            _abschluss_laeuft.discard(document_id)
-            _abschluss_nutzer.pop(user["id"], None)
+        neu = await loop.run_in_executor(_abschluss_executor, _abschluss_erstellen_sync, project, user["id"], document_id)
+    except HTTPException as e:
+        if isinstance(e.detail, str):
+            e.detail = _(e.detail)   # eigene Texte (ungetaggt, laeuft schon) in der Sprache der Oberflaeche
+        raise
     units = await loop.run_in_executor(None, _load_pdf_export_units, project, user["id"], document_id)
     aussen = await loop.run_in_executor(None, _abschluss_dokument, project, units[0], user["id"], _, True)
     aussen["neu_gebaut"] = bool(neu)
@@ -10125,9 +10247,27 @@ def _build_xlsx_bytes(unit: dict) -> bytes:
 async def _table_export_dispatch(project_id: int, request: Request, user: dict, fmt: str):
     """Gemeinsamer Code fuer JSON/CSV/XLSX-Export (Excel 28.08.2026 entfernt, am 02.09.2026 auf Kundenwunsch zurueck)."""
     document_id, custom_name = await _read_export_options(request)
+    erg = _tabellen_export_bauen(project_id, user["id"], fmt, document_id, custom_name)
+    if "pfad" in erg:
+        response = FileResponse(erg["pfad"], filename=erg["dateiname"], media_type=erg["media"],
+                                headers={"X-Export-Credits": str(erg["preis"])})
+    else:
+        response = StreamingResponse(io.BytesIO(erg["daten"]), media_type=erg["media"],
+                                     headers={"Content-Disposition": _content_disposition(erg["dateiname"]),
+                                              "X-Export-Credits": str(erg["preis"])})
+    # Antwort zuerst bauen, dann verbuchen (nur erfolgreiche Exporte kosten).
+    billing.verbuche(user["id"], "export", aktion=erg["aktion"], credits=erg["preis"])
+    return response
+
+
+def _tabellen_export_bauen(project_id: int, user_id: int, fmt: str, document_id: Optional[int],
+                           custom_name: Optional[str]) -> dict:
+    """Alt-Texte als Tabelle (JSON/CSV/XLSX) bauen — fuer den Knopf und den Chatbot (exportiere_alt_texte) derselbe Weg
+    (30.09.2026). Prueft Projekt und Guthaben (402), bucht NICHT. Rueckgabe {"daten" | "pfad", "dateiname", "media",
+    "preis", "aktion"}."""
     conn = get_db()
     project = conn.execute(
-        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])
+        "SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)
     ).fetchone()
     if not project:
         conn.close()
@@ -10137,7 +10277,7 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
 
     # Aktionspreise (29.08.2026): Tabellen-Exporte kosten einen festen Preis (10 Credits);
     # reicht das Guthaben nicht, 402 mit beiden Zahlen — kein Export.
-    _aktion, _preis = _tabellen_export_vorpruefung(user["id"], fmt)
+    _aktion, _preis = _tabellen_export_vorpruefung(user_id, fmt)
 
     units = _load_export_units_for_table(project, document_id)
     project_name = project.get("name") or project.get("filename") or "Projekt"
@@ -10159,21 +10299,13 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
 
     if document_id is not None or len(units) == 1:
         unit = units[0]
-        data = single(unit)
         base = custom_name or _doc_label(unit["doc"])
-        response = StreamingResponse(
-            io.BytesIO(data),
-            media_type=media,
-            headers={"Content-Disposition": _content_disposition(f"inkludocs_{base}{suffix}"),
-                     "X-Export-Credits": str(_preis)}
-        )
-        # Antwort zuerst bauen, dann verbuchen (nur erfolgreiche Exporte kosten).
-        billing.verbuche(user["id"], "export", aktion=_aktion, credits=_preis)
-        return response
+        return {"daten": single(unit), "dateiname": f"inkludocs_{base}{suffix}", "media": media,
+                "preis": _preis, "aktion": _aktion}
 
     # Mehrere Dokumente -> ZIP
     zip_base = custom_name or _safe_filename_component(project_name)
-    output_dir = os.path.join(RESULTS_DIR, str(user["id"]), str(project["id"]), "_export")
+    output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project["id"]), "_export")
     os.makedirs(output_dir, exist_ok=True)
     zip_path = os.path.join(output_dir, f"{zip_base}_alle_{fmt}.zip")
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -10181,14 +10313,26 @@ async def _table_export_dispatch(project_id: int, request: Request, user: dict, 
         for pos, unit in enumerate(units, start=1):
             inner = f"{pos:02d}_{_doc_label(unit['doc'])}{suffix}"
             zf.writestr(inner, single(unit))
-    response = FileResponse(
-        zip_path,
-        filename=f"{zip_base}_alle_{fmt}.zip",
-        media_type="application/zip",
-        headers={"X-Export-Credits": str(_preis)},
-    )
-    billing.verbuche(user["id"], "export", aktion=_aktion, credits=_preis)
-    return response
+    return {"pfad": zip_path, "dateiname": f"{zip_base}_alle_{fmt}.zip", "media": "application/zip",
+            "preis": _preis, "aktion": _aktion}
+
+
+def sofort_download_ablegen(user_id: int, project_id: int, dateiname: str, media: str, pfad: Optional[str] = None,
+                            daten: Optional[bytes] = None) -> str:
+    """Datei fuer einen Download-Knopf unter einer Chatbot-Antwort bereitlegen (derselbe Token-Weg wie „Als Word“ im
+    Chatbot und der PDF/UA-Sofortdownload: GET /api/projects/{id}/export/pdfua/{token}). Rueckgabe: download_url."""
+    output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project_id), "_export")
+    os.makedirs(output_dir, exist_ok=True)
+    token = _secrets.token_hex(12)
+    ziel = os.path.join(output_dir, f"bot_{token}{os.path.splitext(dateiname)[1] or '.bin'}")
+    if pfad is not None:
+        shutil.copyfile(pfad, ziel)
+    else:
+        with open(ziel, "wb") as f:
+            f.write(daten or b"")
+    with open(os.path.join(output_dir, f"pdfua_{token}.json"), "w", encoding="utf-8") as f:
+        json.dump({"dateiname": dateiname, "pfad": ziel, "media": media}, f)
+    return f"/api/projects/{int(project_id)}/export/pdfua/{token}"
 
 
 @app.post("/api/projects/{project_id}/export/json")
@@ -11582,7 +11726,8 @@ async def app_page(request: Request):
     # (eine Quelle, Julia-Feedback 02.07.2026).
     return _render_protected_template(request, "app.html",
                                       max_upload_mb=MAX_UPLOAD_SIZE // (1024 * 1024),
-                                      credit_preise=billing.preise_fuer_frontend())
+                                      credit_preise=billing.preise_fuer_frontend(),
+                                      funktionen=funktionen.fuer_oberflaeche())
 
 
 # ============================================================

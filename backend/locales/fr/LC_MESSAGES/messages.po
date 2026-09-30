@@ -9958,3 +9958,134 @@ msgstr "Tes archives sont pleines (au maximum {n} entrées, {mb} Mo au total). C
 
 msgid "Dieser Stand wurde gleichzeitig anders abgerechnet, oder die Buchung ist fehlgeschlagen. Es wurde nichts berechnet und nichts geliefert. Bitte lade die PDF noch einmal herunter."
 msgstr "Cette version a été facturée autrement au même moment, ou la réservation a échoué. Rien n’a été facturé ni livré. Télécharge le PDF à nouveau."
+
+msgid "PDF/UA-Kennzeichnung"
+msgstr "Identification PDF/UA"
+
+msgid "Das Dokument nennt sich in seinen Metadaten selbst als PDF/UA."
+msgstr "Le document s’identifie comme PDF/UA dans ses métadonnées."
+
+msgid "Sprache und Aufbau von Tabellen und Listen"
+msgstr "Langue et structure des tableaux et des listes"
+
+msgid "Die Sprache ist bestimmt, und Tabellen, Listen und Inhaltsverzeichnisse sind richtig aufgebaut."
+msgstr "La langue est déterminée, et les tableaux, listes et tables des matières sont correctement structurés."
+
+msgid "Die Zellen der Tabellen sind ihren Kopfzellen zugeordnet."
+msgstr "Les cellules des tableaux sont associées à leurs cellules d’en-tête."
+
+msgid "Fußnoten und Endnoten"
+msgstr "Notes de bas de page et notes de fin"
+
+msgid "Fußnoten und Endnoten haben eine eindeutige Kennung."
+msgstr "Les notes de bas de page et de fin ont un identifiant unique."
+
+msgid "Sicherheit"
+msgstr "Sécurité"
+
+msgid "Eine Verschlüsselung lässt Hilfsmittel wie Screenreader an den Text."
+msgstr "Un éventuel chiffrement laisse les aides techniques comme les lecteurs d’écran accéder au texte."
+
+msgid "Anmerkungen, Formularfelder und Links"
+msgstr "Annotations, champs de formulaire et liens"
+
+msgid "Anmerkungen, Formularfelder und Links sind ausgezeichnet und beschrieben."
+msgstr "Les annotations, champs de formulaire et liens sont balisés et décrits."
+
+msgid "Eingebettete Inhaltsblöcke (XObjects)"
+msgstr "Blocs de contenu intégrés (XObjects)"
+
+msgid "Eingebettete Inhaltsblöcke sind in die Struktur eingebunden."
+msgstr "Les blocs de contenu intégrés font partie de la structure."
+
+msgid "Die PDF nennt sich in ihren Metadaten nicht als PDF/UA-Dokument."
+msgstr "Le PDF ne s’identifie pas comme document PDF/UA dans ses métadonnées."
+
+msgid "Inhalt, der als Schmuck (Artefakt) markiert ist, steht innerhalb von ausgezeichnetem Inhalt."
+msgstr "Du contenu marqué comme décoration (artefact) se trouve à l’intérieur de contenu balisé."
+
+msgid "Ausgezeichneter Inhalt steht innerhalb eines als Schmuck (Artefakt) markierten Bereichs — ein Screenreader überliest ihn."
+msgstr "Du contenu balisé se trouve dans une zone marquée comme décoration (artefact) — un lecteur d’écran l’ignore."
+
+msgid "Der Metadaten-Bereich (XMP) fehlt im Dokument."
+msgstr "Le flux de métadonnées (XMP) manque dans le document."
+
+msgid "Die PDF hat keinen Strukturbaum (keine Tags)."
+msgstr "Le PDF n’a pas d’arborescence de structure (pas de balises)."
+
+msgid "Eine Tabelle enthält Elemente, die dort nicht stehen dürfen (erlaubt sind nur Zeilen, Kopf-, Rumpf- und Fußbereich und eine Beschriftung)."
+msgstr "Un tableau contient des éléments qui n’y sont pas autorisés (seuls les lignes, l’en-tête, le corps, le pied et une légende sont autorisés)."
+
+msgid "Datenzellen einer Tabelle lassen sich keiner Kopfzelle zuordnen (den Kopfzellen fehlt die Angabe, ob sie für die Zeile oder die Spalte gelten)."
+msgstr "Des cellules de données d’un tableau ne peuvent être associées à aucune cellule d’en-tête (les en-têtes n’indiquent pas s’ils valent pour la ligne ou la colonne)."
+
+msgid "Datenzellen einer Tabelle verweisen auf Kopfzellen, die es nicht gibt."
+msgstr "Des cellules de données d’un tableau renvoient à des cellules d’en-tête qui n’existent pas."
+
+msgid "Die PDF ist verschlüsselt und erlaubt Hilfsmitteln wie Screenreadern nicht, den Text zu lesen."
+msgstr "Le PDF est chiffré et n’autorise pas les aides techniques comme les lecteurs d’écran à lire le texte."
+
+msgid "Eine Anmerkung (zum Beispiel ein Kommentar oder ein Link) hat keine Beschreibung."
+msgstr "Une annotation (par exemple un commentaire ou un lien) n’a pas de description."
+
+msgid "Ein Formularfeld hat keine Beschreibung (Quickinfo) — ein Screenreader nennt nur die Art des Feldes."
+msgstr "Un champ de formulaire n’a pas de description (infobulle) — un lecteur d’écran n’annonce que le type de champ."
+
+msgid "PDF/UA-Prüfung direkt nach dem Taggen"
+msgstr "Contrôle PDF/UA juste après le balisage"
+
+#, python-brace-format
+msgid "Das ist der Stand direkt nach dem Taggen, vor Alt-Texten und Quickinfos. Die fertige Datei prüfst du in der {pruefung}."
+msgstr "C’est l’état juste après le balisage, avant les textes alternatifs et les infobulles. Tu contrôles le fichier final dans le {pruefung}."
+
+msgid "PDF/UA-Prüfung der Testfassung: bestanden."
+msgstr "Contrôle PDF/UA de la version de test : réussi."
+
+msgid "PDF/UA-Prüfung der Testfassung: nicht bestanden."
+msgstr "Contrôle PDF/UA de la version de test : échoué."
+
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen ist bestanden (vor Alt-Texten und Quickinfos)."
+msgstr "Le contrôle PDF/UA juste après le balisage est réussi (avant les textes alternatifs et les infobulles)."
+
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen meldet 1 Problemstelle (vor Alt-Texten und Quickinfos)."
+msgstr "Le contrôle PDF/UA juste après le balisage signale 1 problème (avant les textes alternatifs et les infobulles)."
+
+#, python-brace-format
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen meldet {n} Problemstellen (vor Alt-Texten und Quickinfos)."
+msgstr "Le contrôle PDF/UA juste après le balisage signale {n} problèmes (avant les textes alternatifs et les infobulles)."
+
+msgid "Die fertige Datei prüfst du in der Barrierefreiheitsprüfung."
+msgstr "Tu contrôles le fichier final dans le contrôle d’accessibilité."
+
+msgid "Die PDF/UA-Prüfung nach dem Taggen war nicht möglich."
+msgstr "Le contrôle PDF/UA après le balisage n’a pas été possible."
+
+msgid "Excel herunterladen"
+msgstr "Télécharger Excel"
+
+msgid "JSON herunterladen"
+msgstr "Télécharger JSON"
+
+msgid "Die Datei konnte nicht gelesen werden."
+msgstr "Le fichier n’a pas pu être lu."
+
+msgid "Die Datei ist keine PDF (sie hat nur die Endung .pdf). Bitte wähle die PDF-Datei aus."
+msgstr "Le fichier n’est pas un PDF (il a seulement l’extension .pdf). Choisis le fichier PDF."
+
+msgid "Die PDF ist mit einem Passwort geschützt. Bitte entferne das Passwort und lade die Datei noch einmal hoch."
+msgstr "Le PDF est protégé par un mot de passe. Supprime le mot de passe et téléverse à nouveau le fichier."
+
+msgid "Die PDF hat keine Seiten."
+msgstr "Le PDF n’a aucune page."
+
+msgid "Die PDF ist beschädigt und kann nicht gelesen werden. Bitte erzeuge oder lade die Datei neu."
+msgstr "Le PDF est endommagé et ne peut pas être lu. Crée ou télécharge à nouveau le fichier."
+
+msgid "Die PDF ist beschädigt oder unvollständig (zum Beispiel ein abgebrochener Download). Bitte lade die Datei noch einmal herunter und dann hoch."
+msgstr "Le PDF est endommagé ou incomplet (par exemple un téléchargement interrompu). Télécharge à nouveau le fichier, puis téléverse-le."
+
+msgid "Diese PDF hat keine Tags. Eine Prüfdatei gibt es erst nach dem Tagging (Ansicht „Tagging“). Herunterladen kannst du sie in der Ansicht „Dokument“: unverändert oder mit deinen bearbeiteten Quickinfos."
+msgstr "Ce PDF n’a pas de balises. Un fichier de contrôle n’existe qu’après le balisage (vue « Balisage »). Tu peux le télécharger dans la vue « Document » : inchangé ou avec tes infobulles modifiées."
+
+msgid "Der Preis hat sich seit der Rückfrage geändert. Bitte noch einmal fragen."
+msgstr "Le prix a changé depuis la question de confirmation. Pose la question à nouveau."

@@ -27,6 +27,7 @@ from typing import Any, Optional
 
 from fastapi import HTTPException
 
+import funktionen   # Funktionsschalter (30.09.2026): was die Oberflaeche ausblendet, blendet auch der Chatbot aus
 from . import ausgaben as _ausg
 
 log = logging.getLogger(__name__)
@@ -83,12 +84,14 @@ def _get_db():
     return importlib.import_module("database").get_db()
 
 
-def _projekt(conn, project_id: int, user_id: int) -> dict:
+def _projekt(conn, project_id: int, user_id: int, jede_art: bool = False) -> dict:
+    """Projekt des Nutzers; jede_art=True fuer Werkzeuge, die es auch in Word- und Formular-Projekten gibt (Umbenennen,
+    Loeschen, Sprache — wie die Oberflaeche, 30.09.2026)."""
     row = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user_id)).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
     project = dict(row)
-    if project.get("project_type") != "pdf":
+    if project.get("project_type") != "pdf" and not jede_art:
         raise HTTPException(status_code=400, detail="Diese Werkzeuge gibt es nur für PDF-Projekte")
     return project
 
@@ -129,7 +132,9 @@ def _stand_text(d: dict, tg: dict) -> str:
         return "letzter Tagging-Lauf fehlgeschlagen"
     v = (tg.get("bericht") or {}).get("verapdf") or {}
     if tg.get("status") == "fertig":
-        return "getaggt, PDF/UA-Prüfung " + ("bestanden" if v.get("bestanden") else ("mit Hinweisen" if v else "nicht möglich"))
+        # Stand direkt nach dem Taggen, nicht die fertige Datei (Audit 30.09.2026, MITTEL 4)
+        return ("getaggt; PDF/UA-Prüfung direkt nach dem Taggen (vor Alt-Texten und Quickinfos) "
+                + ("bestanden" if v.get("bestanden") else ("mit Problemstellen" if v else "nicht möglich")))
     if d.get("getaggt") in (True, 1):
         return "getaggt (vom Ersteller)"
     if d.get("getaggt") in (False, 0):
@@ -143,7 +148,7 @@ def _stand_text(d: dict, tg: dict) -> str:
 
 def dokument_stand(project_id: int, user_id: int, document_id: Optional[int] = None) -> dict[str, Any]:
     """Stand aller (oder eines) Dokumente: Seiten, Tags, Sprache, Struktur, Bilder mit Alt-Text, Felder mit
-    Quickinfo, Pruefung, laufende Kette. Immer der erste Schritt des Bots im PDF-Projekt."""
+    Quickinfo, Testlauf (und, wenn eingeschaltet, KI-Pruefung und Kette). Immer der erste Schritt des Bots im PDF-Projekt."""
     conn = _get_db()
     try:
         project = _projekt(conn, project_id, user_id)
@@ -171,22 +176,35 @@ def dokument_stand(project_id: int, user_id: int, document_id: Optional[int] = N
             "bilder": d.get("total_images") or 0, "bilder_mit_alt_text": tg.get("hat_alt_texte") or 0,
             "felder": d.get("felder") or 0, "felder_mit_quickinfo": int(felder_mit.get(d["id"]) or 0),
             "tagging_preis_credits": tg.get("preis"), "tagging_modus": tg.get("modus"),
-            "pdfua_pruefung": ((tg.get("bericht") or {}).get("verapdf") or {}).get("zusammenfassung"),
-            "pruefung": {
+            # nicht der eingefrorene Satz aus dem Bericht („Deine PDF ist fertig …“): Zwischenstand nach dem Taggen
+            "pdfua_pruefung_nach_tagging": (_tagging().pdf_tagging.zwischenstand_satz((tg.get("bericht") or {}).get("verapdf"))
+                                            if tg.get("status") == "fertig" else None),
+            # Testlauf („Testweise taggen“, 30.09.2026 auch im Chatbot): Stand des letzten Laufs, die Testfassung ist nicht
+            # herunterladbar, das Dokument bleibt unveraendert
+            "testlauf": ({"laeuft": bool((tg.get("test") or {}).get("laeuft")), "zeit": (tg.get("test") or {}).get("zeit"),
+                          "struktur": (tg.get("test") or {}).get("struktur"),
+                          "pdfua_bestanden": ((tg.get("test") or {}).get("verapdf") or {}).get("bestanden"),
+                          "fehler": (tg.get("test") or {}).get("fehler")} if tg.get("test") else None),
+            # KI-basierte Pruefung nur, wenn sie eingeschaltet ist (funktionen.KI_PRUEFUNG, wie in der Oberflaeche)
+            **({"pruefung": {
                 "status": pr.get("status") or "nicht gelaufen", "laeuft": pr.get("laeuft"),
                 "seite": pr.get("seite"), "seiten": pr.get("seiten"), "preis_credits": pr.get("preis"),
                 "befunde": len(pb.get("befunde") or []) if pr.get("status") == "fertig" else None,
                 "anzahl": pb.get("anzahl") if pr.get("status") == "fertig" else None,
                 "fehler": pb.get("fehler") if pr.get("status") == "fehler" else None,
-            },
+            }} if funktionen.KI_PRUEFUNG else {}),
         })
     p = daten.get("project") or {}
     kette = p.get("kette") or {}
     return {"ok": True, "result": {
         "projekt": {"id": project_id, "name": p.get("name"), "status": p.get("status"), "ausgaben_in_ablage": daten.get("ausgaben_anzahl")},
         "dokumente": docs,
-        "kette": ({"laeuft": bool(kette.get("laeuft")), "zusammenfassung": kette.get("zusammenfassung") or _kette().zusammenfassung(kette)} if kette else None),
-        "hinweis": ("Sprich Dokumente mit ihrem Namen an, nutze document_id nur in Werkzeugaufrufen. Tagging-Modus "
+        "kette": ({"laeuft": bool(kette.get("laeuft")), "zusammenfassung": kette.get("zusammenfassung") or _kette().zusammenfassung(kette)}
+                  if (kette and funktionen.KETTE) else None),
+        "hinweis": ("Sprich Dokumente mit ihrem Namen an, nutze document_id nur in Werkzeugaufrufen. "
+                    "pdfua_pruefung_nach_tagging ist der Stand direkt nach dem Taggen, VOR Alt-Texten und Quickinfos — nie "
+                    "als Ergebnis der fertigen Datei ausgeben; die fertige Datei prüft die Barrierefreiheitsprüfung "
+                    "(pruefdatei_erstellen, pruefdatei_lesen). Tagging-Modus "
                     "„testmodus“ heißt: die Datei trägt den Hersteller „Trial version of PDFix SDK“, bis die Lizenz "
                     "freigeschaltet ist — sag das nur, wenn der Nutzer nach dem Hersteller oder der Lizenz fragt."),
     }}
@@ -332,6 +350,9 @@ def barrierefrei_machen(project_id: int, user_id: int, document_id: Optional[int
     if st.get("quelle_getaggt"):
         # schon getaggt (30.09.2026): PDFix taggt nicht neu — kein Lauf, keine Credits
         return {"ok": False, "error": t.schon_getaggt_text()}
+    grund_lesbar = t.lesbar_grund(doc)   # beschaedigte Quelle: vor dem Preis sagen (Audit 30.09.2026)
+    if grund_lesbar:
+        return {"ok": False, "error": grund_lesbar}
     vorschau = {"dokument": _name(doc), "seiten": st["seiten"], "preis": st.get("preis"), "verfuegbar": st.get("verfuegbar_credits"),
                 "erlaubt": bool(st.get("erlaubt")), "fehlend": st.get("fehlend"), "schon_getaggt": doc.get("getaggt") in (True, 1)}
     grund = _freigabe(user_id, project_id, "tagging", doc["id"], int(st.get("preis") or 0), bool(st.get("erlaubt")), bestaetigt, turn)
@@ -441,41 +462,41 @@ def pruefung_starten(project_id: int, user_id: int, document_id: Optional[int] =
 
 
 def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[int] = None, bestaetigt: bool = False,
-                           turn=None) -> dict[str, Any]:
-    """Fertige PDF (Struktur + Alt-Texte + Quickinfos) — derselbe Export wie „PDF herunterladen“:
-    Download-Knopf unter der Antwort UND Eintrag in der Ablage. Kostet Credits (Export-Staffel)."""
+                           turn=None, alle: bool = False) -> dict[str, Any]:
+    """„PDF herunterladen“ — derselbe Export wie der Knopf (main._pdf_export_sync): getaggt mit Struktur, Alt-Texten und
+    Quickinfos (Eintrag in der Ablage), ungetaggt unveraendert bzw. mit bearbeiteten Quickinfos, alle=True alle Dokumente
+    als ZIP („Alle Dokumente herunterladen“). Download-Knopf unter der Antwort. Kostet nur, was bearbeitet wurde."""
     m = _main()
     conn = _get_db()
     try:
         project = _projekt(conn, project_id, user_id)
-        doc = _dokument(conn, project_id, document_id)
+        doc = None if alle else _dokument(conn, project_id, document_id)
     except HTTPException as e:
         return _fehler(e)
     finally:
         conn.close()
     try:
-        units = m._load_pdf_export_units(project, user_id, doc["id"])
+        units = m._load_pdf_export_units(project, user_id, None if alle else doc["id"])
     except HTTPException as e:
         return _fehler(e)
-    # Ohne Tags (seit 29.09.2026, Michael Karbe, Feedback 20260928 - 2, Punkt 5): kein Fehler mehr, aber auch kein
-    # Export über den Chat — die Datei bliebe unverändert bzw. bekäme nur Quickinfos; das holt man in „Dokument“.
-    plan = m._pdf_export_plan(user_id, units)
-    if not plan["getaggt"]:
-        return {"ok": False, "error": ("Diese PDF hat keine Tags, deshalb lassen sich keine Alt-Texte hineinschreiben. "
-                                       "In der Ansicht „Dokument“ gibt es sie mit „PDF herunterladen“: unverändert und kostenlos, "
-                                       "oder mit bearbeiteten Quickinfos. Für eine PDF mit Alt-Texten sie zuerst in der Ansicht "
-                                       "„Tagging“ barrierefrei machen.")}
-    anzahl = sum(len(u["images"]) for u in units)
     # Derselbe Preis wie „PDF herunterladen“ (Michael Karbe, Feedback 202609230 - 1, Punkt 12): nur bearbeitete Alt-Texte
     # und Quickinfos kosten, das Tagging nie beim Herunterladen, ein schon bezahlter Stand nicht noch einmal.
+    plan = m._pdf_export_plan(user_id, units)
+    anzahl = sum(len(u["images"]) for u in units)
     p = plan["pruefung"]
-    vorschau = {"dokument": _name(doc), "bilder": anzahl, "alt_texte_bearbeitet": plan["alt_bearbeitet"],
-                "quickinfos_bearbeitet": plan["qi_bearbeitet"], "schon_bezahlt": bool(plan["schon_bezahlt"]),
+    vorschau = {"dokument": (_name(doc) if doc else "alle Dokumente (ZIP)"), "dokumente": len(units), "bilder": anzahl,
+                "getaggt": len(plan["getaggt"]), "ohne_tags": len(units) - len(plan["getaggt"]),
+                "alt_texte_bearbeitet": plan["alt_bearbeitet"], "quickinfos_bearbeitet": plan["qi_bearbeitet"],
+                "schon_bezahlt": bool(plan["schon_bezahlt"]),
                 "preis": p.get("preis"), "verfuegbar": p.get("verfuegbar"),
                 "erlaubt": bool(p.get("erlaubt")), "fehlend": p.get("fehlend")}
-    grund = _freigabe(user_id, project_id, "pdf_export", doc["id"], int(p.get("preis") or 0), bool(p.get("erlaubt")), bestaetigt, turn)
+    if not plan["getaggt"]:
+        vorschau["hinweis_ohne_tags"] = ("Ohne Tags: die PDF kommt unverändert (kostenlos) bzw. mit den bearbeiteten "
+                                         "Quickinfos; Alt-Texte haben ohne Tags keinen Ort. Für Alt-Texte erst taggen.")
+    grund = _freigabe(user_id, project_id, "pdf_export", (None if alle else doc["id"]), int(p.get("preis") or 0),
+                      bool(p.get("erlaubt")), bestaetigt, turn)
     if grund == "rueckfrage":
-        return {"ok": True, "result": _rueckfrage(vorschau, "den Export der fertigen PDF")}
+        return {"ok": True, "result": _rueckfrage(vorschau, "das Herunterladen" + (" aller Dokumente" if alle else ""))}
     if grund:
         vorschau["hinweis"] = grund
         vorschau["rueckfrage_noetig"] = True
@@ -491,7 +512,7 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
     except Exception:  # noqa: BLE001
         uebersetzer = None
     try:
-        erg = m._pdf_export_sync(user_id, project, doc["id"], None, "bot", int(p.get("preis") or 0), uebersetzer)
+        erg = m._pdf_export_sync(user_id, project, (None if alle else doc["id"]), None, "bot", int(p.get("preis") or 0), uebersetzer)
     except HTTPException as e:
         return _fehler(e)
     except Exception as e:  # noqa: BLE001
@@ -499,31 +520,37 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
         return {"ok": False, "error": f"Der Export ist fehlgeschlagen: {e}"}
     finally:
         m._export_freigeben(user_id)
-    # Der Chatbot liefert ueber die Ablage (Kopie); der Bauordner dieser Anfrage wird nicht mehr gebraucht
-    m._export_anfrage_weg(erg.get("anfrage_dir"))
     h = erg.get("headers") or {}
-    ausgabe_id = (erg.get("ausgabe_ids") or [None])[0]
+    ist_zip = erg.get("media") == "application/zip"
+    ausgabe_id = None if ist_zip else (erg.get("ausgabe_ids") or [None])[0]
     dateiname = erg["dateiname"]
+    try:
+        # Datei ohne Ablage-Eintrag (ZIP, ungetaggt, Ablage voll): Download-Knopf ueber denselben Token-Weg wie „Als Word“
+        # im Chatbot (Nachpruefung 30.09.2026: bei voller Ablage bekam der Chatbot sonst gar keine Datei).
+        download_url = (f"/api/ausgaben/{ausgabe_id}/datei" if ausgabe_id else
+                        m.sofort_download_ablegen(user_id, project_id, dateiname, erg["media"], pfad=erg["pfad"]))
+    finally:
+        m._export_anfrage_weg(erg.get("anfrage_dir"))
     try:
         warnungen = json.loads(h.get("X-Export-Warnings") or "[]")
     except ValueError:
         warnungen = []
-    info = {"total": h.get("X-Export-Total"), "tagged": h.get("X-Export-Tagged"), "warnings": warnungen}
-    p = dict(p, preis=int(erg.get("preis") or 0))
-    r = {"ausgabe_id": ausgabe_id, "dateiname": dateiname, "media": "application/pdf"}
     result = {
-        "ausgabe_id": ausgabe_id, "dateiname": dateiname, "preis": p.get("preis"),
-        "bilder": info.get("total"), "bilder_mit_alt_text": info.get("tagged"), "warnungen": info.get("warnings") or [],
-        "download_url": (f"/api/ausgaben/{ausgabe_id}/datei" if ausgabe_id else None),
+        "ausgabe_id": ausgabe_id, "dateiname": dateiname, "preis": int(erg.get("preis") or 0),
+        "bilder": h.get("X-Export-Total"), "bilder_mit_alt_text": h.get("X-Export-Tagged"),
+        "unveraendert_ohne_tags": h.get("X-Export-Unveraendert"), "warnungen": warnungen,
+        "download_url": download_url,
         "ausgaben_url": (f"/ablage?projekt={project_id}#ausgabe-{ausgabe_id}" if ausgabe_id else None),
-        "hinweis": ("Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen; die Datei liegt außerdem in "
-                    "der Ablage mit Bericht. Sag in einem Satz, was drin ist (Struktur, Alt-Texte, Quickinfos) und ob "
-                    "es Warnungen gab."),
+        "hinweis": ("Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen"
+                    + ("; die Datei liegt außerdem in der Ablage mit Bericht." if ausgabe_id else
+                       " (nicht in der Ablage: ZIP, PDF ohne Tags oder volle Ablage — dann steht es in den Warnungen).")
+                    + " Sag in einem Satz, was drin ist (Struktur, Alt-Texte, Quickinfos; ohne Tags: unverändert), was es "
+                      "gekostet hat und ob es Warnungen gab."),
     }
-    out = {"ok": True, "result": result}
-    if ausgabe_id:
-        out["anhang"] = _ausg._anhang("pdf", r, project_id)
-    return out
+    anhang = ({**_ausg._anhang("pdf", {"ausgabe_id": ausgabe_id, "dateiname": dateiname, "media": "application/pdf"}, project_id)}
+              if ausgabe_id else
+              {"art": "pdf", "dateiname": dateiname, "download_url": download_url, "label": ("zip" if ist_zip else "pdf")})
+    return {"ok": True, "result": result, "anhang": anhang}
 
 
 # ---------------------------------------------------------------------------
@@ -537,7 +564,7 @@ def dokument_umbenennen(project_id: int, user_id: int, document_id: Optional[int
         return {"ok": False, "error": "Der Anzeigename darf höchstens 200 Zeichen haben"}
     conn = _get_db()
     try:
-        _projekt(conn, project_id, user_id)
+        _projekt(conn, project_id, user_id, jede_art=True)
         doc = _dokument(conn, project_id, document_id)
         conn.execute("UPDATE documents SET display_name = ? WHERE id = ? AND project_id = ?", (name or None, doc["id"], project_id))
         conn.commit()
@@ -555,7 +582,7 @@ def dokument_loeschen(project_id: int, user_id: int, document_id: Optional[int],
     bestaetigt (Rueckfrage), Ja in eigener Nachricht, dann bestaetigt=true."""
     conn = _get_db()
     try:
-        _projekt(conn, project_id, user_id)
+        _projekt(conn, project_id, user_id, jede_art=True)
         doc = _dokument(conn, project_id, document_id)
         bilder = conn.execute("SELECT COUNT(*) FROM images WHERE document_id = ?", (doc["id"],)).fetchone()[0]
         felder = conn.execute("SELECT COUNT(*) FROM formularfelder WHERE document_id = ?", (doc["id"],)).fetchone()[0]
@@ -592,7 +619,7 @@ def alt_sprache_setzen(project_id: int, user_id: int, sprache: str) -> dict[str,
         return {"ok": False, "error": "Unbekannte Sprache. Möglich: " + ", ".join(sorted(m.ALT_TEXT_LANGUAGES))}
     conn = _get_db()
     try:
-        project = _projekt(conn, project_id, user_id)
+        project = _projekt(conn, project_id, user_id, jede_art=True)
         conn.execute("UPDATE projects SET alt_language = ? WHERE id = ? AND user_id = ?", (lang, project_id, user_id))
         conn.commit()
     except HTTPException as e:

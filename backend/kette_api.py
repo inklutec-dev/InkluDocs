@@ -18,6 +18,8 @@ Nur Besitzer, nur PDF-Projekte (Werkzeug pdf), nie im Gastweg.
 from __future__ import annotations
 
 import asyncio
+
+import funktionen   # Funktionsschalter (30.09.2026)
 import threading
 import json
 import logging
@@ -342,6 +344,7 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.get("/api/projects/{project_id}/kette")
     async def lesen(project_id: int, user: dict = Depends(_user())):
+        funktionen.endpunkt_frei("KETTE")   # Schalter in funktionen.py (Oberflaeche + Chatbot + Endpunkt)
         conn = _d.get_db()
         try:
             project = _projekt(conn, project_id, user["id"])
@@ -351,6 +354,7 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.post("/api/projects/{project_id}/kette")
     async def starten(project_id: int, request: Request, user: dict = Depends(_user())):
+        funktionen.endpunkt_frei("KETTE")   # Schalter in funktionen.py (Oberflaeche + Chatbot + Endpunkt)
         conn = _d.get_db()
         try:
             project = _projekt(conn, project_id, user["id"])

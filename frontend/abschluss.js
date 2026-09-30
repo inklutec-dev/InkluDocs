@@ -24,7 +24,8 @@
     'use strict';
     // Schalter (Michael Karbe, Feedback 20260928 - 2): KI-Pruefung (Punkt 9) und Sprache/Zusammenfassung (Punkt 10) aus;
     // der Code bleibt, damit beides spaeter wieder eingeschaltet werden kann.
-    const ZEIGE_KI = false;
+    // KI-Pruefung aus EINEM Ort (backend/funktionen.py, window.FUNKTIONEN, 30.09.2026)
+    const ZEIGE_KI = !!(window.FUNKTIONEN || {}).ki_pruefung;
     const ZEIGE_KOPF = false;
 
     let zustandProjekt = null;

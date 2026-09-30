@@ -225,6 +225,10 @@ with sync_playwright() as p:
     meld = pg.locator("section.dok-karte .dok-ergebnis p").first.inner_text() if fertig else ""
     # Mail - 2, Punkt 2: Ergebnis UNTER dem Dokument in der Karte, farbig, mit Fokus
     check("Ergebnis in der Karte, nennt Struktur", fertig and "getaggt" in meld and "Elemente" in meld, meld)
+    # Audit veraPDF 30.09.2026 (MITTEL 4): veraPDF nach dem Taggen ist ein Zwischenstand, nicht „Deine PDF ist fertig“
+    check("Ergebnis nennt die PDF/UA-Prüfung als Stand direkt nach dem Taggen (vor Alt-Texten und Quickinfos), nicht „fertig“",
+          "direkt nach dem Taggen" in meld and "vor Alt-Texten und Quickinfos" in meld and "Deine PDF ist fertig" not in meld
+          and "Barrierefreiheitsprüfung" in meld, meld)
     vb_nach = pg.request.get(B + "/api/me").json().get("abo", {}).get("verbraucht")
     check("Tagging hat genau 40 Credits gebucht (2 Seiten × 20)", isinstance(vb_nach, int) and isinstance(verbraucht_vor_tagging, int) and vb_nach - verbraucht_vor_tagging == 40, (verbraucht_vor_tagging, vb_nach))
     check("Fokus auf dem Ergebnis in der Karte", str(pg.evaluate("document.activeElement && document.activeElement.id")).startswith("dok_ergebnis_text_"))
@@ -238,6 +242,10 @@ with sync_playwright() as p:
     pg.wait_for_timeout(300)
     ber = pg.locator("details.dok-bericht").first.inner_text()
     check("Bericht: Zeit + PDF/UA-Prüfung, ohne Dokumentinfos und ohne „Hinweis“ (Punkte 9, 10)", "Getaggt am" in ber and "PDF/UA" in ber and "Dokumentsprache" not in ber and "Struktur:" not in ber and "Hinweis –" not in ber, ber[:300])
+    check("Bericht: Überschrift „PDF/UA-Prüfung direkt nach dem Taggen“ und Link zur Barrierefreiheitsprüfung für die fertige Datei",
+          pg.locator("details.dok-bericht h4").first.inner_text().strip() == "PDF/UA-Prüfung direkt nach dem Taggen"
+          and "vor Alt-Texten und Quickinfos" in ber
+          and "ansicht=abschluss" in (pg.locator("details.dok-bericht p a").first.get_attribute("href") or ""), ber[-300:])
     check("Kein Testmodus-Hinweis im Bericht (Punkt 7)", "Testmodus" not in ber)
     check("Bericht ohne „In Ordnung“-Zeilen (Punkt 6)", "In Ordnung –" not in ber, ber[-400:])
     tl = pg.locator("section.dok-karte ul.dok-meta").first.inner_text()

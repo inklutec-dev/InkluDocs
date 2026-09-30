@@ -740,6 +740,114 @@ async def _generiere_projekt(project_id: int, user_id: int, document_id: Optiona
 
 # --------------------------------------------------------------------------- Router
 
+
+def _export_einheiten(conn, project: dict, document_id: Optional[int]) -> list[dict]:
+    docs = [dict(d) for d in conn.execute("SELECT * FROM documents WHERE project_id = ? ORDER BY doc_index",
+                                          (project["id"],)).fetchall()]
+    if document_id is not None:
+        docs = [d for d in docs if d["id"] == document_id]
+        if not docs:
+            raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+    einheiten = []
+    for d in docs:
+        felder = [dict(r) for r in conn.execute(
+            "SELECT * FROM formularfelder WHERE document_id = ? ORDER BY feld_index", (d["id"],)).fetchall()]
+        einheiten.append({"doc": d, "felder": felder})
+    return einheiten
+
+
+# ---- Gemeinsame Kerne fuer Knopf und Chatbot (30.09.2026, Steve: „alles, was man händisch macht, soll über den
+# InkluAgent gehen“ — derselbe Weg, dieselben Preise, dieselben Sperren; die Endpunkte unten rufen genau diese Funktionen)
+
+def quickinfos_vorschau_daten(project_id: int, user_id: int, document_id: Optional[int]) -> dict:
+    """Rueckfrage vor „Quickinfos generieren“: Anzahl, Preis, Guthaben (aendert nichts)."""
+    modus = "alle"
+    conn = _d.get_db()
+    try:
+        _projekt_des_nutzers(conn, project_id, user_id)
+        if document_id is not None and not conn.execute(
+                "SELECT 1 FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id)).fetchone():
+            raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
+        anzahl = _generier_kandidaten(conn, project_id, modus, document_id)
+        dokumente = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0]
+    finally:
+        conn.close()
+    p = _d.billing.aktion_pruefung(user_id, "quickinfo_generierung", anzahl)
+    je = _d.billing.aktion_preis("quickinfo_generierung", 1) or 1
+    verf = p["verfuegbar"]
+    machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
+    return {"modus": modus, "anzahl": anzahl, "document_id": document_id, "dokumente": dokumente,
+            "preis": p["preis"], "preis_je": je, "verfuegbar": verf, "fehlend": p["fehlend"],
+            "machbar": machbar, "erlaubt": bool(anzahl) and (verf is None or machbar >= 1)}
+
+
+def quickinfos_vorbereiten(project_id: int, user: dict, document_id: Optional[int]) -> dict:
+    """„Quickinfos generieren“: Pruefungen, Auswahl, Status. Den Lauf (_generiere_projekt) startet der Aufrufer — der
+    Endpunkt mit asyncio.create_task, der Chatbot auf der Ereignisschleife des Servers (main.im_hauptloop)."""
+    modus = "alle"
+    conn = _d.get_db()
+    try:
+        project = _projekt_des_nutzers(conn, project_id, user["id"])
+        if project.get("status") in ("extracting", "processing"):
+            raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
+        # Aktionspreise (29.08.2026): mindestens ein Feld muss bezahlbar sein, sonst 402 mit Zahlen.
+        wache = _d.billing.aktion_pruefung(user["id"], "quickinfo_generierung")
+        if not wache["erlaubt"]:
+            raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Das Generieren"))
+        # Tageslimit (Luecke 3, 29.08.2026): auch Quickinfo-Laeufe zaehlen.
+        tl = _d.tageslimit_wache(user) if _d.tageslimit_wache else None
+        if tl:
+            raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
+        offen = _generier_kandidaten(conn, project_id, modus, document_id)
+        if not offen:
+            return {"ok": True, "gestartet": False, "offen": 0, "modus": modus}
+        conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    _generierung[project_id] = {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []}
+    return {"ok": True, "gestartet": True, "offen": offen, "modus": modus}
+
+
+def stammdaten_auf_felder(project_id: int, user_id: int, nur_offene: bool = True) -> int:
+    """„Stammdaten auf alle Felder anwenden“: Rueckgabe = Zahl der uebernommenen Quickinfos (kostenlos)."""
+    conn = _d.get_db()
+    try:
+        project = _projekt_des_nutzers(conn, project_id, user_id)
+        felder = [dict(r) for r in conn.execute("SELECT * FROM formularfelder WHERE project_id = ?", (project_id,)).fetchall()]
+        anzahl = _stammdaten_anwenden(conn, project, felder, nur_offene=nur_offene)
+        conn.commit()
+    finally:
+        conn.close()
+    return anzahl
+
+
+def quickinfo_csv_bauen(project_id: int, user_id: int, document_id: Optional[int], custom_name: Optional[str]) -> tuple:
+    """„Quickinfos herunterladen“ als CSV (Feldliste, Spalten 1-5 wie Heines Format, danach unsere Zusatzspalten, ohne
+    Feldwerte). Prueft Guthaben (402), bucht NICHT. Rueckgabe (inhalt, dateiname, preis)."""
+    conn = _d.get_db()
+    try:
+        project = _projekt_des_nutzers(conn, project_id, user_id)
+        einheiten = _export_einheiten(conn, project, document_id)
+    finally:
+        conn.close()
+    wache = _d.billing.aktion_pruefung(user_id, "formular_csv_export")
+    if not wache["erlaubt"]:
+        raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Der Export"))
+    cs = _d.csv_safe   # Formel-Injection-Schutz: Feldnamen/Texte stammen aus fremden PDFs
+    buf = io.StringIO()
+    w = csv.writer(buf, delimiter=";")
+    w.writerow(["Nummer", "Name", "Quickinfo", "Type-Nr", "Type", "Seite", "Dokument", "Beschriftung", "Abschnitt", "Pflicht", "Quelle"])
+    typ_nr = {"unbekannt": 0, "button": 1, "radio": 2, "checkbox": 3, "text": 4, "dropdown": 5, "liste": 6, "signatur": 7}
+    for einheit in einheiten:
+        label = _d.doc_label(einheit["doc"])
+        for f in einheit["felder"]:
+            w.writerow([f["feld_index"], cs(f["feld_name"]), cs(f["quickinfo"] or ""), typ_nr.get(f["feld_art"], 0), f["feld_art"],
+                        f["page_number"] or "", cs(label), cs(f["beschriftung"] or ""), cs(f["gruppe"] or ""),
+                        1 if f["pflicht"] else 0, f["quelle"] or ""])
+    base = custom_name or _d.safe_filename_component(project.get("name") or "formular")
+    return "\ufeff" + buf.getvalue(), f"{base}_quickinfos.csv", wache["preis"]
+
 def build_router(deps: Deps) -> APIRouter:
     global _d
     _d = deps
@@ -907,15 +1015,7 @@ def build_router(deps: Deps) -> APIRouter:
         except Exception:
             data = {}
         nur_offene = bool(data.get("nur_offene", True)) if isinstance(data, dict) else True
-        conn = _d.get_db()
-        try:
-            project = _projekt_des_nutzers(conn, project_id, user["id"])
-            felder = [dict(r) for r in conn.execute("SELECT * FROM formularfelder WHERE project_id = ?", (project_id,)).fetchall()]
-            anzahl = _stammdaten_anwenden(conn, project, felder, nur_offene=nur_offene)
-            conn.commit()
-        finally:
-            conn.close()
-        return {"ok": True, "uebernommen": anzahl}
+        return {"ok": True, "uebernommen": stammdaten_auf_felder(project_id, user["id"], nur_offene)}
 
     # ---- Stufe 2: KI-Vorschlaege
     @router.post("/api/projects/{project_id}/quickinfos/generieren")
@@ -938,29 +1038,10 @@ def build_router(deps: Deps) -> APIRouter:
             document_id = int(document_id) if document_id is not None else None
         except (TypeError, ValueError):
             raise HTTPException(status_code=400, detail="document_id ungueltig")
-        conn = _d.get_db()
-        try:
-            project = _projekt_des_nutzers(conn, project_id, user["id"])
-            if project.get("status") in ("extracting", "processing"):
-                raise HTTPException(status_code=409, detail="Für dieses Projekt läuft gerade eine Verarbeitung")
-            # Aktionspreise (29.08.2026): mindestens ein Feld muss bezahlbar sein, sonst 402 mit Zahlen.
-            wache = _d.billing.aktion_pruefung(user["id"], "quickinfo_generierung")
-            if not wache["erlaubt"]:
-                raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Das Generieren"))
-            # Tageslimit (Luecke 3, 29.08.2026): auch Quickinfo-Laeufe zaehlen.
-            tl = _d.tageslimit_wache(user) if _d.tageslimit_wache else None
-            if tl:
-                raise HTTPException(status_code=429, detail=_d.tageslimit_text(tl))
-            offen = _generier_kandidaten(conn, project_id, modus, document_id)
-            if not offen:
-                return {"ok": True, "gestartet": False, "offen": 0, "modus": modus}
-            conn.execute("UPDATE projects SET status = 'processing' WHERE id = ?", (project_id,))
-            conn.commit()
-        finally:
-            conn.close()
-        _generierung[project_id] = {"laeuft": True, "seiten_gesamt": 0, "seiten_fertig": 0, "felder_neu": 0, "fehler": []}
-        asyncio.create_task(_generiere_projekt(project_id, user["id"], document_id, modus))
-        return {"ok": True, "gestartet": True, "offen": offen, "modus": modus}
+        erg = quickinfos_vorbereiten(project_id, user, document_id)
+        if erg.get("gestartet"):
+            asyncio.create_task(_generiere_projekt(project_id, user["id"], document_id, erg["modus"]))
+        return erg
 
     @router.post("/api/projects/{project_id}/quickinfos/abbrechen")
     async def quickinfos_abbrechen(project_id: int, user: dict = Depends(_user)):
@@ -1004,23 +1085,7 @@ def build_router(deps: Deps) -> APIRouter:
             document_id = int(document_id) if document_id is not None else None
         except (TypeError, ValueError):
             raise HTTPException(status_code=400, detail="document_id ungueltig")
-        conn = _d.get_db()
-        try:
-            _projekt_des_nutzers(conn, project_id, user["id"])
-            if document_id is not None and not conn.execute(
-                    "SELECT 1 FROM documents WHERE id = ? AND project_id = ?", (document_id, project_id)).fetchone():
-                raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
-            anzahl = _generier_kandidaten(conn, project_id, modus, document_id)
-            dokumente = conn.execute("SELECT COUNT(*) FROM documents WHERE project_id = ?", (project_id,)).fetchone()[0]
-        finally:
-            conn.close()
-        p = _d.billing.aktion_pruefung(user["id"], "quickinfo_generierung", anzahl)
-        je = _d.billing.aktion_preis("quickinfo_generierung", 1) or 1
-        verf = p["verfuegbar"]
-        machbar = anzahl if verf is None else min(anzahl, int(verf) // je)
-        return {"modus": modus, "anzahl": anzahl, "document_id": document_id, "dokumente": dokumente,
-                "preis": p["preis"], "preis_je": je, "verfuegbar": verf, "fehlend": p["fehlend"],
-                "machbar": machbar, "erlaubt": bool(anzahl) and (verf is None or machbar >= 1)}
+        return quickinfos_vorschau_daten(project_id, user["id"], document_id)
 
     @router.post("/api/felder/{feld_id}/generieren")
     async def feld_generieren(feld_id: int, user: dict = Depends(_user)):
@@ -1273,20 +1338,7 @@ def build_router(deps: Deps) -> APIRouter:
             conn.close()
         return {"ok": True, "review_status": status, "comment": comment, "role": role}
 
-    # ---- Export
-    def _export_einheiten(conn, project: dict, document_id: Optional[int]) -> list[dict]:
-        docs = [dict(d) for d in conn.execute("SELECT * FROM documents WHERE project_id = ? ORDER BY doc_index",
-                                              (project["id"],)).fetchall()]
-        if document_id is not None:
-            docs = [d for d in docs if d["id"] == document_id]
-            if not docs:
-                raise HTTPException(status_code=404, detail="Dokument nicht gefunden")
-        einheiten = []
-        for d in docs:
-            felder = [dict(r) for r in conn.execute(
-                "SELECT * FROM formularfelder WHERE document_id = ? ORDER BY feld_index", (d["id"],)).fetchall()]
-            einheiten.append({"doc": d, "felder": felder})
-        return einheiten
+    # ---- Export (_export_einheiten liegt seit 30.09.2026 auf Modulebene, fuer den Chatbot)
 
     def _pdf_fuer_dokument(einheit: dict, output_dir: str, custom_title: Optional[str],
                            creator: Optional[str] = None) -> tuple[str, dict]:
@@ -1408,32 +1460,12 @@ def build_router(deps: Deps) -> APIRouter:
         Zusatzspalten. Ohne Feldwerte. Seit 29.08.2026 kostenpflichtig
         (AKTIONS_PREISE formular_csv_export, fester Preis je Vorgang)."""
         document_id, custom_name = await _d.read_export_options(request)
-        conn = _d.get_db()
-        try:
-            project = _projekt_des_nutzers(conn, project_id, user["id"])
-            einheiten = _export_einheiten(conn, project, document_id)
-        finally:
-            conn.close()
-        wache = _d.billing.aktion_pruefung(user["id"], "formular_csv_export")
-        if not wache["erlaubt"]:
-            raise HTTPException(status_code=402, detail=_d.billing.credits_fehlen_detail(wache, "Der Export"))
-        cs = _d.csv_safe   # Formel-Injection-Schutz: Feldnamen/Texte stammen aus fremden PDFs
-        buf = io.StringIO()
-        w = csv.writer(buf, delimiter=";")
-        w.writerow(["Nummer", "Name", "Quickinfo", "Type-Nr", "Type", "Seite", "Dokument", "Beschriftung", "Abschnitt", "Pflicht", "Quelle"])
-        typ_nr = {"unbekannt": 0, "button": 1, "radio": 2, "checkbox": 3, "text": 4, "dropdown": 5, "liste": 6, "signatur": 7}
-        for einheit in einheiten:
-            label = _d.doc_label(einheit["doc"])
-            for f in einheit["felder"]:
-                w.writerow([f["feld_index"], cs(f["feld_name"]), cs(f["quickinfo"] or ""), typ_nr.get(f["feld_art"], 0), f["feld_art"],
-                            f["page_number"] or "", cs(label), cs(f["beschriftung"] or ""), cs(f["gruppe"] or ""),
-                            1 if f["pflicht"] else 0, f["quelle"] or ""])
-        base = custom_name or _d.safe_filename_component(project.get("name") or "formular")
-        response = Response(content="﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
-                            headers={"Content-Disposition": _content_disposition(f"{base}_quickinfos.csv"),
-                                     "X-Export-Credits": str(wache["preis"])})
+        inhalt, dateiname, preis = quickinfo_csv_bauen(project_id, user["id"], document_id, custom_name)
+        response = Response(content=inhalt, media_type="text/csv; charset=utf-8",
+                            headers={"Content-Disposition": _content_disposition(dateiname),
+                                     "X-Export-Credits": str(preis)})
         # Antwort zuerst bauen, dann verbuchen.
-        _d.billing.verbuche(user["id"], "export", aktion="formular_csv_export", credits=wache["preis"])
+        _d.billing.verbuche(user["id"], "export", aktion="formular_csv_export", credits=preis)
         return response
 
     # ---- Stammdaten-Bibliothek

@@ -41,7 +41,8 @@ VOLLSTAENDIG_ANTEIL = 0.6
 # nicht gezeigt — Anlass war der Fehlalarm vom 28.09. (Vollständigkeit). Wieder einschalten nur, wenn sie verlässlich sind
 # (Steve 29.09.: „wichtig ist, dass das Ergebnis am Ende wirklich korrekt ist“; evtl. ganz neu, Vorlage: veraPDF-
 # „PDF4WCAG Human Checks“ von Dual Lab, Michaels Mail 29.09.).
-EIGENE_PRUEFUNGEN = False
+import funktionen as _funktionen   # seit 30.09.2026 EIN Ort fuer Oberflaeche, Chatbot und Endpunkte
+EIGENE_PRUEFUNGEN = _funktionen.EIGENE_PRUEFUNGEN
 MAX_FEHLEND_JE_SEITE = 12
 
 

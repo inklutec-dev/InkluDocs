@@ -129,12 +129,17 @@ class ToolExecutorFormular:
     """Dispatcher fuer den Formular-Werkzeugsatz — project_id/user_id aus dem Sitzungskontext."""
 
     def __init__(self, project_id: int, user_id: int) -> None:
+        import uuid
         self.project_id = project_id
         self.user_id = user_id
+        # Rueckfrage vor kostenpflichtigen Werkzeugen (wie ToolExecutor, 30.09.2026): Angebot und Zustimmung je Nachricht
+        self.turn_id = uuid.uuid4().hex
+        self.kostenpflichtig = 0
 
     def execute(self, name: str, args: dict) -> dict[str, Any]:
         try:
-            handler = self._handlers().get(name)
+            import funktionen
+            handler = self._handlers().get(name) if funktionen.werkzeug_erlaubt(name) else None
             if not handler:
                 return {"ok": False, "error": f"Unbekanntes Werkzeug: {name}"}
             return handler(args)
@@ -155,6 +160,21 @@ class ToolExecutorFormular:
             "search_master_data": lambda a: formular_tools.search_master_data(str(a.get("query", "")), p, u,
                                                                               feld_art=str(a.get("feld_art", "") or "")),
             "save_to_master_data": lambda a: formular_tools.save_to_master_data(int(a["feld_id"]), p, u),
+            # wie die Oberflaeche des Quickinfo-Werkzeugs (30.09.2026)
+            "exportiere_quickinfos": lambda a: _ob().exportiere_quickinfos(p, u, _dok(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+            "quickinfos_generieren": lambda a: _ob().quickinfos_generieren(p, u, _dok(a), bestaetigt=bool(a.get("bestaetigt", False)), turn=self),
+            "stammdaten_anwenden": lambda _a: _ob().stammdaten_anwenden(p, u),
+            "eigener_prompt": lambda a: _ob().eigener_prompt(p, u, (int(a["prompt_id"]) if a.get("prompt_id") is not None else None),
+                                                             auflisten=bool(a.get("auflisten", False))),
             "tavily_search": lambda a: search_tools.tavily_search(
                 str(a["query"]), max_results=int(a.get("max_results", 5)), include_domains=a.get("include_domains")),
         }
+
+
+def _ob():
+    from . import oberflaeche
+    return oberflaeche
+
+
+def _dok(a: dict):
+    return int(a["document_id"]) if a.get("document_id") not in (None, "", 0) else None

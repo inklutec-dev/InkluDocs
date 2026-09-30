@@ -253,49 +253,58 @@ def alt_nachtragen(pdf_bytes: bytes, alts: list[Optional[str]]) -> tuple[bytes, 
 
 # Bereiche nach Klausel-Praefix von ISO 14289-1 (PDF/UA-1). Reihenfolge = Anzeige.
 # Texte als Funktionen von _, damit gettext greift.
+# Geprueft gegen das Regelwerk PDFUA-1.xml der veraPDF-Version des Konverters (1.31.163, Audit 30.09.2026): jeder Bereich hat
+# Regeln in veraPDF, jeder Satz passt zur Regelbeschreibung (tests/test_pdfua_klartext.py, RegelwerkTest, Auszug des
+# Regelwerks in tests/fixtures/verapdf_pdfua1_regeln.json). Vorher (29.08.–30.09.2026) standen falsche Saetze an 7.1-1, 7.1-2,
+# 7.1-8, 7.2-3, 7.5-1, 7.16-1, 7.18.1-2, falsche Bereiche 7.16/7.20 und tote Eintraege (7.3-2, 7.4-1, 7.18-1, 7.18-5, 7.21-1,
+# Bereiche 7.6, 7.17). Bei einer neuen veraPDF-Version: Auszug neu ziehen und den Test laufen lassen.
 def _bereiche(_):
     return [
+        ("5", _("PDF/UA-Kennzeichnung"), _("Das Dokument nennt sich in seinen Metadaten selbst als PDF/UA.")),
         ("7.1", _("Struktur und Lesereihenfolge"), _("Der Inhalt ist als Struktur ausgezeichnet, ein Screenreader kann ihn in der richtigen Reihenfolge lesen.")),
-        ("7.2", _("Text und Sprache"), _("Text ist als Text hinterlegt und die Sprache des Dokuments ist gesetzt, damit die Sprachausgabe richtig ausspricht.")),
+        ("7.2", _("Sprache und Aufbau von Tabellen und Listen"), _("Die Sprache ist bestimmt, und Tabellen, Listen und Inhaltsverzeichnisse sind richtig aufgebaut.")),
         ("7.3", _("Bilder und Grafiken"), _("Jedes Bild hat einen Alternativtext oder ist als Schmuckbild markiert.")),
         ("7.4", _("Überschriften"), _("Überschriften sind als Überschriften ausgezeichnet und in sinnvoller Reihenfolge.")),
         ("7.5", _("Tabellen"), _("Die Tabellenstruktur ist technisch in Ordnung. Ob die erste Zeile als Kopfzeile markiert ist, steht im Prüfbericht des Word-Dokuments.")),
-        ("7.6", _("Listen"), _("Listen sind als Listen ausgezeichnet.")),
         ("7.7", _("Formeln"), _("Mathematische Formeln sind mit einem Alternativtext versehen.")),
-        ("7.9", _("Fußnoten und Anmerkungen"), _("Fußnoten und Anmerkungen sind zugänglich verknüpft.")),
+        ("7.9", _("Fußnoten und Endnoten"), _("Fußnoten und Endnoten haben eine eindeutige Kennung.")),
         ("7.10", _("Optionale Inhalte"), _("Ein- und ausblendbare Inhalte sind benannt.")),
         ("7.11", _("Eingebettete Dateien"), _("Eingebettete Dateien sind beschrieben.")),
-        ("7.16", _("Schriften"), _("Schriften sind eingebettet, damit Text überall gleich erscheint und vorgelesen werden kann.")),
-        ("7.17", _("Wiedergabe"), _("Multimedia-Inhalte sind zugänglich.")),
-        ("7.18", _("Formularfelder und Verknüpfungen"), _("Formularfelder und Links haben eine Beschreibung.")),
-        ("7.20", _("Metadaten"), _("Das Dokument nennt sich selbst als PDF/UA.")),
+        ("7.16", _("Sicherheit"), _("Eine Verschlüsselung lässt Hilfsmittel wie Screenreader an den Text.")),
+        ("7.18", _("Anmerkungen, Formularfelder und Links"), _("Anmerkungen, Formularfelder und Links sind ausgezeichnet und beschrieben.")),
+        ("7.20", _("Eingebettete Inhaltsblöcke (XObjects)"), _("Eingebettete Inhaltsblöcke sind in die Struktur eingebunden.")),
         ("7.21", _("Schriften"), _("Schriften sind eingebettet, damit Text überall gleich erscheint und vorgelesen werden kann.")),
     ]
 
 
+# Klauseln, die inhaltlich zu einem anderen Bereich gehoeren: 6.2-1 (MarkInfo /Marked) ist die Kennzeichnung als getaggte PDF.
+_BEREICH_ZUORDNUNG = {"6.2": "7.1"}
+
+
 def _regeln_klartext(_):
     return {
-        ("7.1", 1): _("Das Dokument ist nicht als getaggte PDF gekennzeichnet."),
-        ("7.1", 2): _("Die Struktur beginnt nicht mit einem Dokument-Element."),
+        ("5", 1): _("Die PDF nennt sich in ihren Metadaten nicht als PDF/UA-Dokument."),
+        ("6.2", 1): _("Das Dokument ist nicht als getaggte PDF gekennzeichnet."),
+        ("7.1", 1): _("Inhalt, der als Schmuck (Artefakt) markiert ist, steht innerhalb von ausgezeichnetem Inhalt."),
+        ("7.1", 2): _("Ausgezeichneter Inhalt steht innerhalb eines als Schmuck (Artefakt) markierten Bereichs — ein Screenreader überliest ihn."),
         ("7.1", 3): _("Es gibt Inhalte, die weder als Struktur noch als Schmuck markiert sind — Screenreader können sie überspringen oder unpassend lesen."),
-        ("7.1", 8): _("Ein Dokumenttitel fehlt im Dokument."),
+        ("7.1", 8): _("Der Metadaten-Bereich (XMP) fehlt im Dokument."),
         ("7.1", 9): _("Der Dokumenttitel fehlt in den Metadaten."),
         ("7.1", 10): _("Die PDF ist nicht so eingestellt, dass der Titel statt des Dateinamens angezeigt wird."),
-        ("7.2", 3): _("Die Sprache des Dokuments ist nicht gesetzt."),
+        ("7.1", 11): _("Die PDF hat keinen Strukturbaum (keine Tags)."),
+        ("7.2", 3): _("Eine Tabelle enthält Elemente, die dort nicht stehen dürfen (erlaubt sind nur Zeilen, Kopf-, Rumpf- und Fußbereich und eine Beschriftung)."),
+        ("7.2", 34): _("Die Sprache des Dokuments ist nicht gesetzt."),
         ("7.3", 1): _("Ein Bild hat keinen Alternativtext."),
-        ("7.3", 2): _("Der Alternativtext eines Bildes ist ein Platzhalter."),
-        ("7.4", 1): _("Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."),
         # veraPDF meldet die Ueberschriften-Regel unter Klausel 7.4.2 (Michael Karbe 11.09.2026, vorher roher englischer Text)
         ("7.4.2", 1): _("Die Überschriften-Ebenen sind nicht durchgehend (zum Beispiel Ebene 1 gefolgt von Ebene 3)."),
-        ("7.18.1", 2): _("Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."),
+        ("7.5", 1): _("Datenzellen einer Tabelle lassen sich keiner Kopfzelle zuordnen (den Kopfzellen fehlt die Angabe, ob sie für die Zeile oder die Spalte gelten)."),
+        ("7.5", 2): _("Datenzellen einer Tabelle verweisen auf Kopfzellen, die es nicht gibt."),
+        ("7.16", 1): _("Die PDF ist verschlüsselt und erlaubt Hilfsmitteln wie Screenreadern nicht, den Text zu lesen."),
+        ("7.18.1", 2): _("Eine Anmerkung (zum Beispiel ein Kommentar oder ein Link) hat keine Beschreibung."),
+        ("7.18.1", 3): _("Ein Formularfeld hat keine Beschreibung (Quickinfo) — ein Screenreader nennt nur die Art des Feldes."),
         ("7.18.5", 1): _("Ein Link ist nicht als Link getaggt — ein Screenreader überliest ihn."),
         ("7.18.5", 2): _("Ein Link hat keine Beschreibung — ein Screenreader liest nur „Link“."),
-        ("7.5", 1): _("Eine Tabelle hat keine Kopfzellen."),
-        ("7.5", 2): _("Zellen einer Tabelle sind nicht ihren Kopfzellen zugeordnet."),
-        ("7.16", 1): _("Eine Schrift ist nicht eingebettet."),
-        ("7.18", 1): _("Ein Formularfeld oder ein Link hat keine Beschreibung."),
-        ("7.18", 5): _("Ein Link hat keinen beschreibenden Text."),
-        ("7.21", 1): _("Eine Schrift ist nicht eingebettet."),
+        ("7.21.4.1", 1): _("Eine Schrift ist nicht eingebettet."),
     }
 
 
@@ -305,6 +314,9 @@ REGELN_KLARTEXT = _regeln_klartext(_identitaet)
 
 
 def _bereich(clause: str, bereiche, _):
+    for von, nach in _BEREICH_ZUORDNUNG.items():
+        if clause == von or clause.startswith(von + "."):
+            clause = nach
     for praefix, name, gut in bereiche:
         if clause == praefix or clause.startswith(praefix + "."):
             return praefix, name, gut
@@ -314,7 +326,9 @@ def _bereich(clause: str, bereiche, _):
 def _einzeln(regeln: list, regeln_kt: dict, _: Callable[[str], str]) -> list:
     """Je verletztem Pruefpunkt EINE Zeile (Michael Karbe, Feedback 24.09.2026, Punkte 11 und 12): bekannte Regeln in
     unserem Klartext, unbekannte mit dem Originaltext von veraPDF OHNE die Einleitung „Ein technischer Prüfpunkt ist
-    nicht erfüllt (…)“; „(n-mal)“ und Seiten je Punkt. Gleiche Saetze (zwei Link-Regeln) werden zusammengelegt.
+    nicht erfüllt (…)“; „(n-mal)“ und Seiten je Punkt. Gleiche Saetze werden zusammengelegt — die Zahl wird dabei NICHT
+    addiert (Audit 30.09.2026: 16 Links, die zwei Regeln verletzen, hiessen „32-mal“), sondern die groesste Zahl einer Regel
+    genommen: gleiche Aussage = dieselben Stellen.
     [{"text", "seiten"}] — der zusammengefasste Absatz "text" des Bereichs bleibt fuer die anderen Anzeigen."""
     je_satz: dict = {}
     for r in regeln:
@@ -324,7 +338,7 @@ def _einzeln(regeln: list, regeln_kt: dict, _: Callable[[str], str]) -> list:
             s = " ".join(str(r.get("description") or _("ohne Beschreibung")).split())[:240].rstrip(".")
         n = int(r.get("failed") or 0)
         e = je_satz.setdefault(s, {"n": 0, "seiten": set(), "regeln": [], "uebersetzt": uebersetzt})
-        e["n"] += n
+        e["n"] = max(e["n"], n)
         e["regeln"].append(f"{r.get('clause')}-{r.get('test')}")
         e["seiten"].update(int(x) for x in (r.get("pages") or []) if str(x).isdigit())
     out = []
@@ -366,9 +380,7 @@ def klartext(verapdf: dict, _: Callable[[str], str] = _identitaet) -> dict:
     # Kernbereiche immer nennen (auch wenn in Ordnung), die anderen nur bei Befund.
     immer = {"7.1", "7.2", "7.3", "7.4", "7.5"}
     for praefix, name, gut in bereiche:
-        if praefix == "7.21":   # gleicher Bereich wie 7.16, nicht doppelt zeigen
-            continue
-        betroffen = je_bereich.get(praefix, []) + (je_bereich.get("7.21", []) if praefix == "7.16" else [])
+        betroffen = je_bereich.get(praefix, [])
         if not betroffen and praefix not in immer:
             continue
         if not betroffen:
@@ -421,8 +433,8 @@ _NS = {"cp": "http://schemas.openxmlformats.org/package/2006/metadata/core-prope
 
 def dokumenttitel_setzen(docx_path: str, titel: str, sprache: Optional[str] = None) -> bool:
     """Titel (und Sprache) in docProps/core.xml schreiben, falls leer — LibreOffice
-    uebernimmt den Titel in die PDF-Metadaten (PDF/UA 7.1-8/-9) und die Sprache in
-    den Dokumentkatalog (7.2-3). Ohne python-docx: Zip + lxml, nur dieser eine
+    uebernimmt den Titel in die PDF-Metadaten (PDF/UA 7.1-9) und die Sprache in
+    den Dokumentkatalog (7.2-34). Ohne python-docx: Zip + lxml, nur dieser eine
     Teil wird ersetzt, alles andere bleibt byte-gleich. True = etwas geaendert."""
     import shutil
     import tempfile

@@ -170,3 +170,48 @@ der Optik) und Vorschlag: Überschrift ohne Vorlage, getippte Liste, Leerabsätz
 Großbuchstaben, manuelle Umbrüche, Linktext ohne Ziel, Layout-/verschachtelte Tabelle,
 keine Überschriften. Kein KI-Aufruf im Werkzeug; das Modell ordnet ein und formuliert.
 Umbau (Formatvorlagen zuweisen) ist die nächste Stufe. Test: `tests/test_docx_struktur.py`.
+
+## Chatbot = Oberfläche (30.09.2026, Steves Grundsatz)
+
+„Alles, was man händisch macht, soll über den InkluAgent gehen“ — und umgekehrt bietet der InkluAgent nichts an, was die
+Oberfläche nicht anbietet.
+
+**Ein Schalter je Funktion:** `backend/funktionen.py`. Ein Wert dort steuert die Oberfläche (`window.FUNKTIONEN` in
+app.html, gelesen von dokument.js, abschluss.js und app.html), die Chatbot-Werkzeuge (`agent_loop._werkzeugsatz` lässt sie
+weg, der ToolExecutor führt sie nicht aus, `system_pdf()`/`system_agent()` nennen sie nicht) und die Endpunkte (404, solange
+aus). Heute aus: KI_PRUEFUNG, KORREKTUR, KETTE, TEXT_ZURUECK, EIGENE_PRUEFUNGEN, URTEIL, STRUKTURANSICHT.
+
+**Neue Werkzeuge** (`inkluagent/tools/oberflaeche.py`, Beschreibungen `definitions_oberflaeche.py`): jedes ruft DENSELBEN
+Kern wie der Knopf — testweise_taggen (`tagging_api.test_starten_fuer`), pruefdatei_erstellen / pruefdatei_lesen
+(`main._abschluss_erstellen_sync`, `_abschluss_dokument`), exportiere_alt_texte (`main._tabellen_export_bauen`),
+exportiere_quickinfos (`formular_api.quickinfo_csv_bauen`), alt_texte_generieren (`main._generierung_vorschau_daten`,
+`_generierung_vorbereiten`, Lauf über `main.im_hauptloop`), quickinfos_generieren (`formular_api.quickinfos_vorschau_daten`,
+`quickinfos_vorbereiten`), stammdaten_anwenden, ki_kontext_setzen, eigener_prompt (`main._ki_kontext_setzen`,
+`_prompt_setzen`), ausgabe_loeschen (`main._ablage_eintrag_weg`); exportiere_fertige_pdf kann jetzt auch PDFs ohne Tags und
+mit alle=true alle Dokumente als ZIP. Dateien kommen als Download-Knopf unter der Antwort (`main.sofort_download_ablegen`,
+Token-Weg wie „Als Word“). Kostenpflichtige und unumkehrbare Schritte: Angebot → Ja in einer eigenen Nachricht →
+Ausführung (`pdf._freigabe`), dieselben Preise, Sperren und Drosselung wie der Knopf.
+
+**Bestandsaufnahme** (vorhanden / fehlt / nur im Chatbot):
+- PDF, Dokument: Hörprobe, PDF herunterladen (auch ohne Tags, alle als ZIP), Umbenennen, Löschen — vorhanden. Hochladen —
+  fehlt bewusst (der Chat nimmt keine Dateien an).
+- PDF, Tagging: Barrierefrei machen, Testweise taggen (neu), Hörprobe, Bericht (dokument_stand) — vorhanden.
+- PDF/Word, Alt-Texte: je Bild generieren, bearbeiten, Langbeschreibung, Sprache — vorhanden; Alt-Texte generieren für alle,
+  Alt-Texte herunterladen, KI-Kontext, gespeicherter Prompt — neu. Fehlt: Generierung abbrechen, Bewertung (Daumen),
+  Freigeben/Einladen (verschickt E-Mails an Dritte — nur über den Knopf), Nachrichten an Gäste.
+- PDF, Quickinfos: je Feld bearbeiten, generieren, zurück auf Original, in Stammdaten übernehmen — vorhanden; alle
+  generieren, herunterladen (CSV), Stammdaten anwenden — neu. Fehlt: Generierung abbrechen, „KI-Vorschlag übernehmen“.
+- PDF, Barrierefreiheitsprüfung: Prüfdatei erstellen, Problemstellen und Hörprobe der fertigen Datei vorlesen — neu. Die
+  Seitenansicht (Bild) gibt es nur in der Oberfläche; der Chat nennt die Seiten.
+- Word: Prüfbericht und Hörprobe, Als Word, In barrierefreie PDF umwandeln, Übersetzen, Übersetzung herunterladen —
+  vorhanden; Umbenennen, Löschen, Sprache, Alt-Texte für alle, Alt-Texte herunterladen, KI-Kontext, Prompt — neu. Fehlt:
+  Übersetzung abbrechen, Übersetzung je Absatz von Hand ändern.
+- Altes Formular-Projekt: Feld-Werkzeuge vorhanden; alle generieren, CSV, Stammdaten anwenden, Prompt — neu; „Als PDF mit
+  Quickinfos“ fehlt (Projektart wird nicht mehr angelegt).
+- Ablage: Liste, Lesen, Herunterladen — vorhanden; Löschen — neu.
+- Nur im Chatbot und jetzt ausgeblendet: KI-Prüfung, Korrektur, „Komplett barrierefrei machen“, revert_alt_text (Hand-Text
+  verwerfen). Nur im Chatbot und bleibt: tavily_search (Recherche, ändert nichts), Lesehilfen (view_image, view_field,
+  get_image_metadata).
+
+Tests: `tests/test_chatbot_oberflaeche.py` (ausgeblendet = nirgends erreichbar, ein Schalter steuert alles, jedes Werkzeug
+hat eine Ausführung, Rückfrage), `tests/e2e/chatbot_werkzeuge_probe.py` (jedes neue Werkzeug im Container gegen echte Daten).

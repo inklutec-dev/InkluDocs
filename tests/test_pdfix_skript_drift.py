@@ -67,6 +67,39 @@ class DriftTest(unittest.TestCase):
             self.assertTrue(any(pflicht in z for z in markiert), pflicht)
         self.assertEqual(sum(1 for z in nach_kopf if z.startswith(ORIGINAL_MARKER)), 1)
 
+    def test_formular_import_heines_zeilen_bleiben(self):
+        """Audit 30.09.2026 (NIEDRIG 8): Formular_Import_Quickinfo.py folgt nicht dem Markierungsschema (aelter als die Regel
+        vom 17.09.), die mechanische Rekonstruktion geht nicht. Ersatz: jede Code-Zeile von Heines Formulare_Import_03.py steht
+        unveraendert in der Betriebsfassung — ausser genau den dokumentierten Anpassungen (ENTER-Abfrage, Windows-Pfadlogik
+        fuer die CSV, Speichern). Und die zugefuegten Zeilen sind festgehalten: jede Aenderung am Aufsatz faellt hier auf."""
+        import hashlib
+
+        def code(pfad):
+            with open(os.path.join(SKRIPTE, pfad), encoding="utf-8") as f:
+                return [z.strip() for z in f.read().split("\n") if z.strip() and not z.strip().startswith("#")]
+        original, betrieb = code("original_heine/Formulare_Import_03.py"), code("Formular_Import_Quickinfo.py")
+        fehlt = [z for z in original if z not in set(betrieb)]
+        self.assertEqual(fehlt, [
+            'input("Drücke ENTER, um fortzufahren...")', "global filename", 'path = Path(""+args.input)', "filename = path.name",
+            'pfad3 = Path(""+args.input).parent', "global filename2", "filename2 = path.stem", "global pfad5",
+            'pfad5 = str(pfad3)+"\\\\"+filename2', 'pfadcsv = pfad5+"_formulararray.csv"', "doc.Save(args.output, kSaveFull)"],
+            "Heines Logik in Formular_Import_Quickinfo.py geaendert?")
+        dazu = sorted(set(z for z in betrieb if z not in set(original)))
+        self.assertEqual(hashlib.sha256("\n".join(dazu).encode("utf-8")).hexdigest(),
+                         "524170f2ad2866edc3f70fda200253bd61043d4ff010f30ff2ab8dd96a383ab0",
+                         "Betriebsaufsatz von Formular_Import_Quickinfo.py geaendert — bewusst? Dann Pruefsumme hier nachziehen.")
+
+    def test_alttag_skripte_festgehalten(self):
+        """AltTag_Import_CSV.py und AltTag_Export_CSV_PNG.py: Heines Originale liegen NICHT unter original_heine (Audit 30.09.2026),
+        ein Vergleich ist nicht moeglich. Bis sie da sind, ist die Fassung per Pruefsumme festgehalten."""
+        import hashlib
+        for name, soll in (("AltTag_Import_CSV.py", "c74cc2c7c23ced8d203134dade789a6934cc2877f07321c48d620d3a51b87f59"),
+                           ("AltTag_Export_CSV_PNG.py", "cb08f48ce95afabfa327ec850704409bf5fd0835d93592fff4d69cf9f053ee4c")):
+            with open(os.path.join(SKRIPTE, name), "rb") as f:
+                self.assertEqual(hashlib.sha256(f.read()).hexdigest(), soll, f"{name} geaendert — bewusst? Dann Pruefsumme nachziehen.")
+        self.assertFalse(os.path.exists(os.path.join(SKRIPTE, "original_heine", "AltTag_Import_CSV.py")),
+                         "Original ist jetzt da: bitte echten Drift-Vergleich wie bei Make_Accessible einbauen")
+
     def test_betriebshelfer(self):
         import sys
         sys.path.insert(0, SKRIPTE)

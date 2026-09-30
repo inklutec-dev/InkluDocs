@@ -97,7 +97,9 @@ class TestMichael(unittest.TestCase):
         ]})
         texte = {pt["bereich"]: pt["text"] for pt in k["punkte"]}
         self.assertIn("Ebenen sind nicht durchgehend", texte["Überschriften"])
-        self.assertIn("Ein Link hat keine Beschreibung", texte["Formularfelder und Verknüpfungen"])
+        # Bereich seit 30.09.2026 „Anmerkungen, Formularfelder und Links“ (Audit veraPDF: 7.18.1-2 gilt fuer alle Anmerkungen)
+        self.assertIn("Ein Link hat keine Beschreibung", texte["Anmerkungen, Formularfelder und Links"])
+        self.assertIn("Eine Anmerkung (zum Beispiel ein Kommentar oder ein Link) hat keine Beschreibung.", texte["Anmerkungen, Formularfelder und Links"])
         self.assertNotIn("technischer Prüfpunkt", texte["Überschriften"])
         self.assertIn("Prüfbericht des Word-Dokuments", texte["Tabellen"])
 

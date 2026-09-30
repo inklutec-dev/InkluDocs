@@ -7,8 +7,8 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
         "name": "dokument_stand",
         "description": (
             "Stand der Dokumente dieses PDF-Projekts: Seiten, getaggt oder nicht, Sprache, Struktur (Überschriften, "
-            "Listen, Tabellen, Bilder), Bilder mit Alt-Text, Felder mit Quickinfo, PDF/UA-Prüfung, Stand der "
-            "automatischen Prüfung, laufende Kette, Einträge in der Ablage. Kostenlos. Immer der erste Schritt, wenn "
+            "Listen, Tabellen, Bilder), Bilder mit Alt-Text, Felder mit Quickinfo, PDF/UA-Prüfung direkt nach dem Taggen "
+            "(Zwischenstand vor Alt-Texten und Quickinfos), letzter Testlauf, Einträge in der Ablage. Kostenlos. Immer der erste Schritt, wenn "
             "der Nutzer etwas zum Dokument will oder nach einem Lauf fragt. Ohne document_id alle Dokumente."
         ),
         "input_schema": {"type": "object", "properties": {
@@ -83,13 +83,15 @@ TOOL_DEFINITIONS_PDF: list[dict] = [
     {
         "name": "exportiere_fertige_pdf",
         "description": (
-            "Fertige PDF eines getaggten Dokuments mit Struktur, Alt-Texten und Quickinfos: Download-Knopf unter deiner "
-            "Antwort und Eintrag in der Ablage (mit Bericht). Kostet nur, was in InkluDocs bearbeitet wurde (Alt-Texte per KI oder "
-            "von Hand, Quickinfos); ohne Bearbeitung oder bei schon bezahltem Stand 0 Credits, das Tagging nie. ZWEI SCHRITTE "
-            "wie barrierefrei_machen. Nur für getaggte Dokumente."
+            "„PDF herunterladen“ wie der Knopf: getaggt mit Struktur, Alt-Texten und Quickinfos (Download-Knopf unter deiner "
+            "Antwort und Eintrag in der Ablage mit Bericht); ohne Tags unverändert bzw. mit bearbeiteten Quickinfos; alle=true "
+            "alle Dokumente als ZIP („Alle Dokumente herunterladen“). Kostet nur, was in InkluDocs bearbeitet wurde (Alt-Texte "
+            "per KI oder von Hand, Quickinfos); ohne Bearbeitung oder bei schon bezahltem Stand 0 Credits, das Tagging nie. "
+            "ZWEI SCHRITTE wie barrierefrei_machen."
         ),
         "input_schema": {"type": "object", "properties": {
             "document_id": {"type": "integer", "description": "Optional bei einem Dokument."},
+            "alle": {"type": "boolean", "description": "true = alle Dokumente als ZIP. Standard false."},
             "bestaetigt": {"type": "boolean", "description": "true NUR nach ausdrücklichem Ja des Nutzers zum genannten Preis. Standard false."},
         }, "required": []},
     },

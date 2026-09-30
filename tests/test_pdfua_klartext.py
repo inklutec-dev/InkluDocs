@@ -19,8 +19,8 @@ class TestKlartext(unittest.TestCase):
         self.assertTrue(k["bestanden"])
         self.assertEqual(k["regeln_fehlgeschlagen"], 0)
         bereiche = [p["bereich"] for p in k["punkte"]]
-        self.assertEqual(bereiche, ["Struktur und Lesereihenfolge", "Text und Sprache", "Bilder und Grafiken",
-                                    "Überschriften", "Tabellen"])
+        self.assertEqual(bereiche, ["Struktur und Lesereihenfolge", "Sprache und Aufbau von Tabellen und Listen",
+                                    "Bilder und Grafiken", "Überschriften", "Tabellen"])
         self.assertTrue(all(p["status"] == "ok" for p in k["punkte"]))
         self.assertIn("bestanden", pdfua_export.zusammenfassung(k))
 
@@ -42,7 +42,7 @@ class TestKlartext(unittest.TestCase):
         self.assertEqual(d["Bilder und Grafiken"]["status"], "befund")
         self.assertIn("(2-mal)", d["Bilder und Grafiken"]["text"])
         self.assertEqual(d["Schriften"]["status"], "befund")       # 7.21 laeuft unter Schriften
-        self.assertEqual(d["Text und Sprache"]["status"], "ok")   # Kernbereich ohne Befund bleibt sichtbar
+        self.assertEqual(d["Sprache und Aufbau von Tabellen und Listen"]["status"], "ok")   # Kernbereich ohne Befund bleibt sichtbar
         self.assertEqual(d["Überschriften"]["status"], "ok")
         self.assertIn("Weitere Prüfpunkte", d)
         self.assertIn("Irgendwas Exotisches", d["Weitere Prüfpunkte"]["text"])
@@ -155,11 +155,12 @@ class SeitenUndDoppelungenTest(unittest.TestCase):
             {"clause": "7.18.1", "test": 2, "description": "annot", "failed": 1, "pages": [15]},
             {"clause": "7.3", "test": 1, "description": "x", "failed": 2, "pages": [3, 10]}]})
         d = {p["bereich"]: p for p in k["punkte"]}
-        t = d["Formularfelder und Verknüpfungen"]["text"]
+        t = d["Anmerkungen, Formularfelder und Links"]["text"]
         self.assertEqual(t.count("Ein Link hat keine Beschreibung"), 1)
+        self.assertIn("Eine Anmerkung (zum Beispiel ein Kommentar oder ein Link) hat keine Beschreibung.", t)   # 7.18.1-2
         self.assertIn("nicht als Link getaggt", t)
         self.assertTrue(t.endswith("(Seite 15)"), t)
-        self.assertEqual(d["Formularfelder und Verknüpfungen"]["seiten"], [15])
+        self.assertEqual(d["Anmerkungen, Formularfelder und Links"]["seiten"], [15])
         self.assertTrue(d["Bilder und Grafiken"]["text"].endswith("(Seiten 3, 10)"))
 
     def test_ohne_seiten_kein_zusatz(self):
@@ -179,12 +180,117 @@ class SeitenUndDoppelungenTest(unittest.TestCase):
         d = {p["bereich"]: p for p in k["punkte"]}
         schrift = d["Schriften"]["einzeln"]
         self.assertEqual(len(schrift), 2)
-        self.assertEqual(schrift[0]["text"], "The font programs for all fonts used for rendering within a conforming file shall be embedded within that file, as defined in ISO 32000-1:2008, 9.9 (2-mal) (Seiten 1, 2)")
+        self.assertEqual(schrift[0]["text"], "Eine Schrift ist nicht eingebettet. (2-mal) (Seiten 1, 2)")   # 7.21.4.1-1 seit 30.09.
+        self.assertEqual(schrift[1]["text"], "Glyph widths must be consistent (Seite 2)")                     # unbekannt: Originaltext
         self.assertTrue(all("technischer Prüfpunkt" not in e["text"] for e in schrift))
-        links = d["Formularfelder und Verknüpfungen"]["einzeln"]
-        self.assertEqual(len(links), 2)   # zwei gleiche Saetze („keine Beschreibung“) zusammengelegt
-        self.assertEqual(sum("keine Beschreibung" in e["text"] for e in links), 1)
-        self.assertIn("(2-mal)", [e for e in links if "keine Beschreibung" in e["text"]][0]["text"])
+        links = d["Anmerkungen, Formularfelder und Links"]["einzeln"]
+        self.assertEqual(len(links), 3)   # je Regel ein eigener Satz (7.18.1-2 gilt fuer alle Anmerkungen)
+        self.assertEqual(sum("Ein Link hat keine Beschreibung" in e["text"] for e in links), 1)
+
+
+
+class RegelwerkTest(unittest.TestCase):
+    """Audit 30.09.2026 (MITTEL 2): jeder Klartext-Satz passt zu SEINER Regel im Regelwerk PDFUA-1.xml der veraPDF-Version des
+    Konverters (Auszug tests/fixtures/verapdf_pdfua1_regeln.json), keine toten Eintraege, keine toten Bereiche, und
+    zusammengelegte Regeln werden nicht addiert. Neue Eintraege brauchen einen Beleg hier (englische Stichworte aus der
+    Regelbeschreibung, deutsche aus unserem Satz)."""
+
+    BELEGE = {
+        ("5", 1): (["PDF/UA", "Identification"], ["PDF/UA"]),
+        ("6.2", 1): (["MarkInfo", "Marked"], ["getaggte PDF"]),
+        ("7.1", 1): (["marked as Artifact", "inside tagged content"], ["Artefakt", "innerhalb von ausgezeichnetem"]),
+        ("7.1", 2): (["Tagged content", "inside content marked as Artifact"], ["Ausgezeichneter Inhalt", "Artefakt"]),
+        ("7.1", 3): (["marked as Artifact or tagged as real content"], ["weder als Struktur noch als Schmuck"]),
+        ("7.1", 8): (["Metadata key", "metadata stream"], ["Metadaten"]),
+        ("7.1", 9): (["dc:title"], ["Dokumenttitel", "Metadaten"]),
+        ("7.1", 10): (["DisplayDocTitle"], ["Titel statt des Dateinamens"]),
+        ("7.1", 11): (["StructTreeRoot"], ["Strukturbaum"]),
+        ("7.2", 3): (["Table element may contain only TR"], ["Tabelle"]),
+        ("7.2", 34): (["Natural language for text in page content"], ["Sprache"]),
+        ("7.3", 1): (["Figure", "alternative"], ["Bild", "Alternativtext"]),
+        ("7.4.2", 1): (["heading"], ["Überschriften"]),
+        ("7.5", 1): (["TH", "Scope", "Headers"], ["Kopfzelle", "Zeile oder die Spalte"]),
+        ("7.5", 2): (["undefined Header"], ["Kopfzellen, die es nicht gibt"]),
+        ("7.16", 1): (["encrypted", "10th bit"], ["verschlüsselt"]),
+        ("7.18.1", 2): (["An annotation (except Widget", "Contents"], ["Anmerkung", "Beschreibung"]),
+        ("7.18.1", 3): (["form field", "TU key"], ["Formularfeld", "Beschreibung"]),
+        ("7.18.5", 1): (["Links shall be tagged"], ["Link", "getaggt"]),
+        ("7.18.5", 2): (["Links shall contain an alternate description"], ["Link", "Beschreibung"]),
+        ("7.21.4.1", 1): (["font", "embedded"], ["Schrift", "eingebettet"]),
+    }
+    BEREICH_BELEGE = {
+        "5": (["PDF/UA"], ["PDF/UA"]), "7.1": (["Artifact"], ["Struktur"]), "7.2": (["Table", "Natural language"], ["Sprache", "Tabellen"]),
+        "7.3": (["Figure"], ["Bild"]), "7.4": (["heading"], ["Überschriften"]), "7.5": (["Scope"], ["Tabelle"]),
+        "7.7": (["mathematical"], ["Formeln"]), "7.9": (["Note"], ["Fußnoten"]), "7.10": (["optional content"], ["Ein- und ausblendbare"]),
+        "7.11": (["embedded file"], ["Eingebettete Dateien"]), "7.16": (["encrypted"], ["Verschlüsselung"]),
+        "7.18": (["annotation", "form field", "Links"], ["Anmerkungen", "Formularfelder", "Links"]),
+        "7.20": (["XObject"], ["Inhaltsblöcke"]), "7.21": (["font"], ["Schriften"]),
+    }
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        with open(os.path.join(HERE, "fixtures", "verapdf_pdfua1_regeln.json"), encoding="utf-8") as f:
+            cls.regelwerk = {(r["clause"], r["test"]): r for r in json.load(f)["regeln"]}
+
+    def test_jeder_satz_passt_zur_regel(self):
+        kt = pdfua_export.REGELN_KLARTEXT
+        self.assertEqual(set(kt), set(self.BELEGE), "Jeder Klartext-Eintrag braucht einen Beleg im Test (und umgekehrt)")
+        for regel, satz in kt.items():
+            with self.subTest(regel=regel):
+                self.assertIn(regel, self.regelwerk, f"{regel}: diese Regel gibt es in veraPDF nicht (toter Eintrag)")
+                r = self.regelwerk[regel]
+                englisch = (r["description"] + " " + r["message"]).lower()
+                en, de = self.BELEGE[regel]
+                for w in en:
+                    self.assertIn(w.lower(), englisch, f"{regel}: Beleg „{w}“ steht nicht in der Regelbeschreibung")
+                for w in de:
+                    self.assertIn(w, satz, f"{regel}: Satz „{satz}“ nennt „{w}“ nicht")
+
+    def test_bereiche_haben_regeln_und_passen(self):
+        praefixe = [b[0] for b in pdfua_export.BEREICHE]
+        self.assertEqual(set(praefixe), set(self.BEREICH_BELEGE))
+        for praefix, name, gut in pdfua_export.BEREICHE:
+            with self.subTest(bereich=praefix):
+                regeln = [r for (c, _t), r in self.regelwerk.items() if c == praefix or c.startswith(praefix + ".")]
+                self.assertTrue(regeln, f"Bereich {praefix}: keine Regel in veraPDF (toter Bereich)")
+                englisch = " ".join(r["description"] + " " + r["message"] for r in regeln).lower()
+                en, de = self.BEREICH_BELEGE[praefix]
+                for w in en:
+                    self.assertIn(w.lower(), englisch)
+                for w in de:
+                    self.assertIn(w, name + " " + gut)
+        self.assertNotIn("7.17", praefixe)
+        self.assertNotIn("7.6", praefixe)
+
+    def test_audit_faelle(self):
+        """Die im Audit belegten Falschzuordnungen: jetzt der richtige Satz."""
+        kt = pdfua_export.REGELN_KLARTEXT
+        self.assertIn("Tabelle", kt[("7.2", 3)])
+        self.assertNotIn("Sprache", kt[("7.2", 3)])
+        self.assertIn("Sprache", kt[("7.2", 34)])
+        self.assertIn("verschlüsselt", kt[("7.16", 1)])
+        self.assertNotIn("Link hat keine", kt[("7.18.1", 2)])
+        k = pdfua_export.klartext({"compliant": False, "rules": [{"clause": "7.16", "test": 1, "description": "x", "failed": 1},
+                                                                 {"clause": "7.20", "test": 2, "description": "Form XObject", "failed": 1},
+                                                                 {"clause": "6.2", "test": 1, "description": "MarkInfo", "failed": 1}]})
+        d = {p["bereich"]: p for p in k["punkte"]}
+        self.assertEqual(d["Sicherheit"]["status"], "befund")
+        self.assertEqual(d["Eingebettete Inhaltsblöcke (XObjects)"]["status"], "befund")
+        self.assertIn("nicht als getaggte PDF gekennzeichnet", d["Struktur und Lesereihenfolge"]["text"])   # 6.2-1 unter Struktur
+
+    def test_zusammengelegt_nicht_addiert(self):
+        """16 Links verletzen zwei Regeln: nie „32-mal“ — je Regel ein Satz mit 16, gleiche Saetze mit der groessten Zahl."""
+        k = pdfua_export.klartext({"compliant": False, "rules": [
+            {"clause": "7.18.1", "test": 2, "description": "annot", "failed": 16, "pages": [1]},
+            {"clause": "7.18.5", "test": 2, "description": "links", "failed": 16, "pages": [1]}]})
+        einzeln = [p for p in k["punkte"] if p["bereich"] == "Anmerkungen, Formularfelder und Links"][0]["einzeln"]
+        self.assertEqual(len(einzeln), 2)
+        self.assertTrue(all(e["mal"] == "(16-mal)" for e in einzeln), einzeln)
+        self.assertFalse(any("32" in e["text"] for e in einzeln))
+        gleich = pdfua_export._einzeln([{"clause": "9.9", "test": 1, "failed": 16}, {"clause": "9.9", "test": 2, "failed": 7}],
+                                       {("9.9", 1): "Gleicher Satz.", ("9.9", 2): "Gleicher Satz."}, lambda s: s)
+        self.assertEqual((len(gleich), gleich[0]["mal"], gleich[0]["regeln"]), (1, "(16-mal)", ["9.9-1", "9.9-2"]))
 
 
 if __name__ == "__main__":

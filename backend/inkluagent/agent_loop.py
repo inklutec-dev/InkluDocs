@@ -29,7 +29,11 @@ from .providers.bedrock import BedrockProvider, BedrockProviderError
 from .tools.definitions import TOOL_DEFINITIONS, ToolExecutor
 from .tools.definitions_formular import TOOL_DEFINITIONS_FORMULAR, ToolExecutorFormular
 from .tools.definitions_pdf import TOOL_DEFINITIONS_PDF   # PDF-Projekte (22.09.2026)
-from .prompts.system_pdf import SYSTEM_PDF
+from .tools.definitions_oberflaeche import (TOOL_DEFINITIONS_OBERFLAECHE_PDF, TOOL_DEFINITIONS_OBERFLAECHE_WORD,
+                                            TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR)   # alles, was die Oberflaeche kann (30.09.2026)
+from .prompts.system_pdf import system_pdf
+from .prompts.system_agent import system_agent
+import funktionen   # Funktionsschalter: ausgeblendet in der Oberflaeche = ausgeblendet im Chatbot (30.09.2026)
 from .prompts.system_agent import SYSTEM_AGENT
 from .prompts.system_ausgaben import SYSTEM_AUSGABEN
 from .tools.definitions import TOOL_DEFINITIONS_WORD
@@ -65,25 +69,40 @@ def _ist_formular(project: dict) -> bool:
 
 
 def _werkzeugsatz(project: dict, project_id: int, user_id: int):
-    """(tool_definitions, executor, system_prompt) fuer dieses Projekt."""
+    """(tool_definitions, executor, system_prompt) fuer dieses Projekt. Seit 30.09.2026 (Steve: der Chatbot kann alles, was
+    die Oberflaeche kann, und nichts, was sie nicht anbietet): Werkzeuge hinter einem ausgeschalteten Schalter
+    (funktionen.py) fehlen hier, der Executor fuehrt sie nicht aus, und die Systemprompts nennen sie nicht."""
+    defs, executor, system = _werkzeugsatz_roh(project, project_id, user_id)
+    namen = set()
+    eindeutig = []
+    for d in funktionen.werkzeuge_filtern(defs):
+        if d["name"] not in namen:     # ein Werkzeug nur einmal (Word + Oberflaeche teilen sich Namen)
+            namen.add(d["name"])
+            eindeutig.append(d)
+    return eindeutig, executor, system
+
+
+def _werkzeugsatz_roh(project: dict, project_id: int, user_id: int):
     if _ist_formular(project):
-        return TOOL_DEFINITIONS_FORMULAR, ToolExecutorFormular(project_id=project_id, user_id=user_id), SYSTEM_FORMULAR
+        return (TOOL_DEFINITIONS_FORMULAR + TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR,
+                ToolExecutorFormular(project_id=project_id, user_id=user_id), SYSTEM_FORMULAR)
     # Word-Projekte (11.09.2026, Meine Ausgaben Schritt 2): Bild-Werkzeuge + Pruefen/Umwandeln/Word-Export/Regal.
     if (project or {}).get("project_type") == "docx":
-        return (TOOL_DEFINITIONS + TOOL_DEFINITIONS_WORD,
+        doku = [d for d in TOOL_DEFINITIONS_PDF if d["name"] in ("dokument_umbenennen", "dokument_loeschen", "alt_sprache_setzen")]
+        return (TOOL_DEFINITIONS + TOOL_DEFINITIONS_WORD + doku + TOOL_DEFINITIONS_OBERFLAECHE_WORD,
                 ToolExecutor(project_id=project_id, user_id=user_id, word=True),
-                SYSTEM_AGENT + "\n\n" + SYSTEM_AUSGABEN)
-    # PDF-Projekte (Werkzeugsatz nach Dateiart, 22.09.2026, Michael 18.09. + Steve): EIN Satz fuer alle drei
-    # Stationen — Bild-Werkzeuge + Feld-Werkzeuge (Quickinfos) + PDF-Werkzeuge (Tagging, Kette, Hoerprobe,
-    # Pruefung, fertige PDF). Alte Formular-Projekte (tool formular) behalten ihren Satz.
+                system_agent() + "\n\n" + SYSTEM_AUSGABEN)
+    # PDF-Projekte (Werkzeugsatz nach Dateiart, 22.09.2026, Michael 18.09. + Steve): EIN Satz fuer alle Stationen —
+    # Bild-Werkzeuge + Feld-Werkzeuge (Quickinfos) + PDF-Werkzeuge + Werkzeuge der Oberflaeche.
+    # Alte Formular-Projekte (tool formular) behalten ihren Satz.
     if (project or {}).get("project_type") == "pdf" and (project or {}).get("tool") == "pdf":
         bekannt = {d["name"] for d in TOOL_DEFINITIONS}
         felder = [d for d in TOOL_DEFINITIONS_FORMULAR if d["name"] not in bekannt]
         ablage = [d for d in TOOL_DEFINITIONS_WORD if d["name"] in ("liste_ausgaben", "lies_ausgabe")]
-        return (TOOL_DEFINITIONS + felder + TOOL_DEFINITIONS_PDF + ablage,
+        return (TOOL_DEFINITIONS + felder + TOOL_DEFINITIONS_PDF + ablage + TOOL_DEFINITIONS_OBERFLAECHE_PDF,
                 ToolExecutor(project_id=project_id, user_id=user_id, pdf=True),
-                SYSTEM_AGENT + "\n\n" + SYSTEM_PDF)
-    return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id), SYSTEM_AGENT
+                system_agent() + "\n\n" + system_pdf())
+    return TOOL_DEFINITIONS, ToolExecutor(project_id=project_id, user_id=user_id), system_agent()
 
 
 def _formular_summary(project_id: int, user_id: int) -> str:

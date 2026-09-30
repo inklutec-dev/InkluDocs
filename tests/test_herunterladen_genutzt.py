@@ -323,25 +323,32 @@ class Bremse(unittest.TestCase):
         cls.m = main
 
     def test_sperre_und_drossel(self):
+        """Sperre je Nutzer; Drosselung nach BAUTEN (Nachpruefung 2, 30.09.2026): ein ZIP zaehlt je gebautem Dokument, ein
+        einzelnes grosses ZIP geht bei leerem Zeitfenster, Betreiberkonten sind ausgenommen."""
+        from fastapi import HTTPException
         m = self.m
-        uid = 987654321
-        m._export_zeiten.pop(uid, None)
+        uid, uid2 = 987654321, 987654322
+        for u in (uid, uid2):
+            m._export_zeiten.pop(u, None)
         self.assertEqual(m._export_belegen(uid), "")
         self.assertEqual(m._export_belegen(uid), "laeuft")
         m._export_freigeben(uid)
-        with mock.patch.object(m, "EXPORT_DROSSEL_ANZAHL", 3):
-            m._export_zeiten[uid] = []
+        with mock.patch.object(m, "EXPORT_DROSSEL_ANZAHL", 3), mock.patch.object(m.billing, "_ist_admin", return_value=False):
             for _ in range(3):
-                self.assertEqual(m._export_belegen(uid), "")
-                m._export_freigeben(uid)
-            self.assertEqual(m._export_belegen(uid), "drossel")
+                m._export_drossel(uid, 1)
+            with self.assertRaises(HTTPException) as cm:
+                m._export_drossel(uid, 1)
+            self.assertEqual(cm.exception.status_code, 429)
+            self.assertIn("Minuten", cm.exception.detail)
+            m._export_drossel(uid, 0)                         # nichts gebaut (alles aus der Ablage): zaehlt nicht
+            m._export_drossel(uid2, 10)                       # ein grosses ZIP bei leerem Zeitfenster geht
+            with self.assertRaises(HTTPException):
+                m._export_drossel(uid2, 1)                    # danach ist das Fenster voll
         with mock.patch.object(m, "EXPORT_DROSSEL_ANZAHL", 1), mock.patch.object(m.billing, "_ist_admin", return_value=True):
-            m._export_zeiten[uid] = []
-            for _ in range(3):   # Betreiberkonto: keine Drosselung, die Sperre gilt weiter
-                self.assertEqual(m._export_belegen(uid), "")
-                self.assertEqual(m._export_belegen(uid), "laeuft")
-                m._export_freigeben(uid)
-        m._export_zeiten.pop(uid, None)
+            for _ in range(5):                                # Betreiberkonto: keine Drosselung
+                m._export_drossel(uid, 3)
+        for u in (uid, uid2):
+            m._export_zeiten.pop(u, None)
         self.assertIn("warte", m._export_belegt_text("laeuft"))
         self.assertIn("Minuten", m._export_belegt_text("drossel"))
 

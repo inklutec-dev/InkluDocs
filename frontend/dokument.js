@@ -45,14 +45,18 @@
     // Karte. Die Strukturansicht der fertigen Datei gibt es in der Abschlusspruefung („Mit eigenem Screenreader pruefen“);
     // die KI-Pruefung soll spaeter im Hintergrund laufen und im Tagging-Preis stecken statt per Knopf. Zum Wieder-
     // einblenden den Schalter auf true setzen.
-    const ZEIGE_STRUKTURANSICHT = false;
+    // Seit 30.09.2026 aus EINEM Ort: backend/funktionen.py (window.FUNKTIONEN) — derselbe Schalter blendet die Funktion
+    // auch im Chatbot und in den Endpunkten aus.
+    const F = window.FUNKTIONEN || {};
+    const ZEIGE_STRUKTURANSICHT = !!F.strukturansicht;
     // KI-basierte Pruefung: seit 25.09.2026 NICHT mehr in „Dokument“, sondern als Knopf in der Station „Prüfung“
     // (Michael Karbe, Feedback 24.09.2026 - 3, Punkt 13). Der Block kommt weiter von hier (kiBlockHtml), die Prüfung
     // zeichnet ihn kompakt. Das Urteil bleibt aus (Feedback 24.09.2026, Punkt 6: Anwender bilden sich ihr Urteil).
-    const ZEIGE_KI_PRUEFUNG = false;
-    const ZEIGE_URTEIL = false;
+    const ZEIGE_KI_PRUEFUNG = !!F.ki_pruefung;
+    const ZEIGE_KORREKTUR = !!F.korrektur;
+    const ZEIGE_URTEIL = !!F.urteil;
     // Kette „Komplett barrierefrei machen“ und Ablage-Knopf im Kopf (Feedback 24.09.2026, Punkt 1: vorerst aus)
-    const ZEIGE_PROJEKT_KNOEPFE = false;
+    const ZEIGE_PROJEKT_KNOEPFE = !!F.kette;
 
     let zustandProjekt = null;
     let aktuelleDaten = null;
@@ -112,7 +116,7 @@
     }
 
     // ─── Karte je Dokument ───
-    function berichtHtml(d) {
+    function berichtHtml(d, project) {
         const tg = d.tagging || {};
         const b = tg.bericht || {};
         if (!tg.status || tg.status === 'laeuft') return '';
@@ -133,7 +137,10 @@
             // Pruefpunkt eine Zeile (Feedback 24.09.2026, Punkte 10-12; aeltere Berichte ohne "einzeln": ein Absatz je Bereich)
             const befunde = [];
             (v.punkte || []).filter(p => p.status === 'befund').forEach(p => (p.einzeln || [{ text: p.text }]).forEach(e => befunde.push(esc(p.bereich) + ': ' + esc(e.text))));
-            pruef = '<h4>' + t('PDF/UA-Prüfung') + '</h4>'
+            // Stand direkt nach dem Taggen (Audit 30.09.2026, MITTEL 4): nicht die fertige Datei — die prüft die
+            // Barrierefreiheitsprüfung (mit Alt-Texten, Quickinfos und Titel). Vorher hieß beides „PDF/UA-Prüfung“.
+            pruef = '<h4>' + t('PDF/UA-Prüfung direkt nach dem Taggen') + '</h4>'
+                + '<p>' + t('Das ist der Stand direkt nach dem Taggen, vor Alt-Texten und Quickinfos. Die fertige Datei prüfst du in der {pruefung}.', { pruefung: project ? ansichtLink(project, 'abschluss') : t('Barrierefreiheitsprüfung') }) + '</p>'
                 + (befunde.length ? '<ul>' + befunde.map(x => '<li>' + x + '</li>').join('') + '</ul>' : '<p>' + t('Bestanden.') + '</p>');
         } else if (tg.status === 'fertig') {
             pruef = '<p>' + t('Die PDF/UA-Prüfung war nicht möglich (Prüfdienst nicht erreichbar).') + '</p>';
@@ -293,7 +300,7 @@
             + (!busy && pr.seiten ? '<p><button type="button" class="btn btn-secondary" id="dok_pruef_' + d.id + '" onclick="Dokument.pruefungStarten(' + project.id + ', ' + d.id + ')">' + ico('sparkle') + knopf + '<span class="visually-hidden"> ' + vh + ', ' + t('{n} Seiten, {c} Credits', { n: pr.seiten, c: pr.preis || 0 }) + '</span></button></p>' : '')
             + '<output id="dok_pruef_status_' + d.id + '" class="dok-status" style="display:block;" tabindex="-1">' + (pr.laeuft ? t('Prüfung läuft … Seite {a} von {b}.', { a: pr.seite || 0, b: pr.seiten || 0 }) : '') + '</output>'
             + (kompakt ? pruefKurzHtml(pr) : pruefBerichtHtml(Object.assign({ projectId: project.id, docId: d.id }, pr)))
-            + korrekturHtml(project, d, pr)
+            + (ZEIGE_KORREKTUR ? korrekturHtml(project, d, pr) : '')   // eigener Schalter funktionen.KORREKTUR (30.09.2026)
             + zu;
     }
     function pruefKurzHtml(pr) {
@@ -484,7 +491,7 @@
                 ? ergebnisHtml(d)
                   + '<output id="dok_status_' + d.id + '" class="dok-status" style="display:block;margin-top:0.5rem;" tabindex="-1">' + (tg.laeuft ? (tg.fortschritt && tg.fortschritt.seiten ? t('Wird barrierefrei gemacht … Seite {a} von {b} zugeordnet.', { a: tg.fortschritt.seite || 0, b: tg.fortschritt.seiten }) : t('Wird barrierefrei gemacht … Das kann bei großen Dateien einige Minuten dauern.')) : '') + '</output>'
                   + testHtml(project, d)
-                  + berichtHtml(d)
+                  + berichtHtml(d, project)
                   + pruefungHtml(project, d)
                 : '')
             + '</div></details></section>';
@@ -600,7 +607,8 @@
     function testText(te) {
         if (te.fehler) return t('Der Testlauf ist fehlgeschlagen: {grund}', { grund: te.fehler });
         let s = t('Testlauf vom {zeit}: {struktur}.', { zeit: te.zeit || '', struktur: strukturText(te.struktur) });
-        if (te.verapdf && te.verapdf.zusammenfassung) s += ' ' + te.verapdf.zusammenfassung;
+        // nicht „Deine PDF ist fertig …“ (Audit 30.09.2026): die Testfassung ist ein Zwischenstand
+        if (te.verapdf) s += ' ' + (te.verapdf.bestanden ? t('PDF/UA-Prüfung der Testfassung: bestanden.') : t('PDF/UA-Prüfung der Testfassung: nicht bestanden.'));
         return s;
     }
     function testHtml(project, d) {
@@ -947,6 +955,15 @@
         if (el && document.activeElement !== el) el.focus();   // summary ist nativ fokussierbar — kein tabindex (sonst nicht mehr per Tab erreichbar)
     }
 
+    // Ergebnis von veraPDF nach dem Taggen in einem Satz — ausdrücklich als Zwischenstand (Audit 30.09.2026, MITTEL 4; vorher
+    // „Deine PDF ist fertig und hat die Prüfung auf PDF/UA bestanden“, obwohl Alt-Texte und Quickinfos noch fehlen).
+    function taggingPruefSatz(v) {
+        const n = (v.punkte || []).filter(p => p.status === 'befund').reduce((a, p) => a + ((p.einzeln || [p]).length), 0);
+        const satz = v.bestanden ? t('Die PDF/UA-Prüfung direkt nach dem Taggen ist bestanden (vor Alt-Texten und Quickinfos).')
+            : (n === 1 ? t('Die PDF/UA-Prüfung direkt nach dem Taggen meldet 1 Problemstelle (vor Alt-Texten und Quickinfos).')
+                : t('Die PDF/UA-Prüfung direkt nach dem Taggen meldet {n} Problemstellen (vor Alt-Texten und Quickinfos).', { n: n || v.regeln_fehlgeschlagen || 0 }));
+        return satz + ' ' + t('Die fertige Datei prüfst du in der Barrierefreiheitsprüfung.');
+    }
     function abschlussText(d) {
         const tg = d.tagging || {};
         const b = tg.bericht || {};
@@ -954,7 +971,7 @@
         if (tg.status === 'fehler') return t('Das Tagging von „{name}“ ist fehlgeschlagen: {grund}', { name: name, grund: b.fehler || t('unbekannter Fehler') });
         const v = b.verapdf;
         let s = t('„{name}“ ist getaggt: {struktur}.', { name: name, struktur: strukturText(b.nachher) });
-        if (v) s += ' ' + (v.zusammenfassung || '');
+        if (v) s += ' ' + taggingPruefSatz(v);
         if (b.bilder && b.bilder.nachher) s += ' ' + t('{n} Bilder gefunden, {u} Alt-Texte übernommen.', { n: b.bilder.nachher, u: b.bilder.uebernommen || 0 });
         return s;
     }

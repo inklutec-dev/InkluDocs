@@ -184,6 +184,8 @@
 {# QUICKINFO-WERKZEUG (27.08.2026): eigene Projektansicht fuer Formular-Projekte,
    getrennt von der Bild-/Alt-Text-Ansicht unten (siehe showProject-Weiche). #}
 <script>window.CREDIT_PREISE = {{ credit_preise|default({})|tojson }};</script>
+{# Funktionsschalter (backend/funktionen.py, 30.09.2026): EIN Ort je Funktion fuer Oberflaeche, Chatbot und Endpunkte #}
+<script>window.FUNKTIONEN = {{ funktionen|default({})|tojson }};</script>
 <script src="/static/formular.js?v={{ asset_version }}"></script>
 <script src="/static/uebersetzen.js?v={{ asset_version }}"></script>
 <script src="/static/dokument.js?v={{ asset_version }}"></script>
@@ -2804,7 +2806,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         <button class="btn btn-secondary btn-small" onclick="regenerateImage(${projectId}, ${img.id})" id="regen_btn_${img.id}" data-status="${img.status === 'done' ? 'done' : 'pending'}">${img.status === 'done' ? t('Neu generieren') : t('Generieren')}</button>
 
                         ${showLang && complexTypes.includes(img.image_type) && !hasLang ? '<button class="btn btn-secondary btn-small" onclick="generateLongDesc(' + projectId + ', ' + img.id + ')" id="longdesc_btn_' + img.id + '">' + t('Langbeschreibung (optional)') + '</button>' : ''}
-                        ${''/* „Vorherigen Text zurückholen" (Sicherheitsnetz) ist AUSGEBLENDET (Steve 01.09.2026: erst mal nicht, weniger Knoepfe). Backend + alt_text_vorher bleiben; zum Einschalten: window.VORHER_KNOPF = true. */}${!window.GUEST_MODE && window.VORHER_KNOPF && img.alt_text_vorher != null ? '<button class="btn btn-secondary btn-small" id="vorher_btn_' + img.id + '" onclick="vorherigenTextZurueck(' + img.id + ')">' + t('Vorherigen Text zurückholen') + '</button>' : ''}
+                        ${''/* „Vorherigen Text zurückholen" (Sicherheitsnetz) ist AUSGEBLENDET (Steve 01.09.2026: erst mal nicht, weniger Knoepfe). Backend + alt_text_vorher bleiben; zum Einschalten: funktionen.TEXT_ZURUECK = True (backend/funktionen.py, gilt auch fuer Chatbot und Endpunkt). */}${!window.GUEST_MODE && (window.FUNKTIONEN || {}).text_zurueck && img.alt_text_vorher != null ? '<button class="btn btn-secondary btn-small" id="vorher_btn_' + img.id + '" onclick="vorherigenTextZurueck(' + img.id + ')">' + t('Vorherigen Text zurückholen') + '</button>' : ''}
                         <span id="regen_status_${img.id}" role="status" aria-live="polite" style="font-size:0.85rem;"></span>
                     </div>
                 ` : ''}
@@ -4356,7 +4358,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             dl.className = 'btn btn-primary';
             dl.href = a.download_url;
             dl.setAttribute('download', a.dateiname || '');
-            dl.textContent = a.label === 'zip' ? t('ZIP herunterladen') : (a.art === 'docx' ? t('Word herunterladen') : t('PDF herunterladen'));
+            // Seit 30.09.2026 auch Tabellen aus dem Chatbot (Alt-Texte / Quickinfos herunterladen)
+            const beschriftung = { zip: t('ZIP herunterladen'), csv: t('CSV herunterladen'), xlsx: t('Excel herunterladen'), json: t('JSON herunterladen') };
+            dl.textContent = beschriftung[a.label] || (a.art === 'docx' ? t('Word herunterladen') : t('PDF herunterladen'));
             box.appendChild(dl);
             if (a.ausgaben_url) {
                 const zu = document.createElement('a');

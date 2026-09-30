@@ -10,12 +10,21 @@ Voreinstellung liegt unveraendert unter pdfix_scripts/make_accessible_pdfix_defa
      "en-US" ein (nur wenn keine Sprache gesetzt ist). Wir erkennen die Sprache aus dem
      Text (dieselbe Erkennung wie im Word-Pruefbericht) und setzen sie; steht im Dokument
      eine andere Sprache als der Text nahelegt, wird sie ersetzt (Hinweis im Bericht).
-  2. Keine Alt-Texte von PDFix: Die Teilschritte "Set Alt" fuer Figure/Formula kopieren
-     Bildunterschriften in den Alt-Text oder schreiben das feste Wort "Decorative" hinein.
-     Beides wuerde unsere Alt-Texte verdraengen — die schreibt InkluDocs ueber die
-     Ansicht "Alt-Texte" (Export ueber AltTag_Import_CSV). Ebenso entfaellt der
-     "Decorative"-Rueckfall fuer Anmerkungen. Formularfelder (Set Alt fuer Form aus dem
-     zugehoerigen Inhalt) bleiben.
+  2. Fuenf der 37 Teilschritte entfallen (_ENTFAELLT; richtiggestellt nach dem Audit vom 30.09.2026):
+     - die vier "Set Alt (Figure/Formula: …)": sie schreiben Bildunterschrift, Nachbartext ("Ort, Datum", "A") oder
+       das feste Wort "Decorative" als Alt-Text in Bilder und Formeln — das wuerde unsere Alt-Texte verdraengen, die
+       InkluDocs ueber die Ansicht "Alt-Texte" schreibt (Export ueber AltTag_Import_CSV);
+     - "Set Annotation Contents (Auto-generated)" (alt_type 3): er schreibt in ALLE Anmerkungen einen erzeugten Text,
+       auch in Formularfelder. Laut Messung im Audit (11 Dateien, Joergs Original gegen diesen Aufsatz) ist das bei
+       Formularfeldern der technische Feldname als Quickinfo (z. B. "Antrag_VGV_Vermittleradresse", bei einem Antrag
+       407 von 407 Feldern) und bei Notizen "Text annotation". Dieser Feldnamen-Rueckfall ist damit AUCH abgeschaltet.
+     Es bleiben: "Set Annotation Contents (BBox text)" und "(Action destination)" (Text unter der Anmerkung bzw. ihr
+     Ziel, mit "Decorative" als Rueckfall) und "Set Alt (Form: From associated content)" (Beschriftung aus dem Tag).
+     Folge: veraPDF meldet bei uns gegenueber Joergs Original zusaetzlich nur 7.3-1, 7.18.1-2 und 7.18.1-3 — Luecken, die
+     InkluDocs mit echten Alt-Texten und Quickinfos schliesst; Joergs Automatik fuellt sie mit Platzhaltern, die veraPDF
+     genuegen, einem Screenreader-Nutzer aber nicht. Ob bei Formularen ohne Quickinfo-Station der Feldname als Rueckfall
+     zurueckkommen soll, klaert Michael Karbe (bewusst nicht geaendert).
+  3. Zusaetzlich "Create Web Links" vor "Tag Annotations" (siehe konfig_erzeugen).
 
 Lizenz (Stand 22.09.2026): Der Teilschritt add_tags ist in der Actino-Lizenz NICHT
 freigeschaltet — mit aktivierter Lizenz bricht die Aktion bei ungetaggten PDFs ab
@@ -330,6 +339,23 @@ def taggen(pdf_in: str, pdf_out: str, sprache_vorgabe: str = "de", arbeitsordner
     }
 
 
+def zwischenstand_satz(v: Optional[dict], _=None) -> str:
+    """veraPDF direkt nach dem Taggen in einem Satz — ausdruecklich als Zwischenstand vor Alt-Texten und Quickinfos (Audit
+    30.09.2026, MITTEL 4). Vorher stand hier pdfua_export.zusammenfassung („Deine PDF ist fertig und hat die Prüfung auf
+    PDF/UA bestanden“) — nicht wahr: die fertige Datei prueft erst die Barrierefreiheitsprüfung."""
+    _ = _ or (lambda s: s)
+    if not v:
+        return _("Die PDF/UA-Prüfung nach dem Taggen war nicht möglich.")
+    n = sum(len(p.get("einzeln") or [p]) for p in (v.get("punkte") or []) if p.get("status") == "befund") or int(v.get("regeln_fehlgeschlagen") or 0)
+    if v.get("bestanden"):
+        satz = _("Die PDF/UA-Prüfung direkt nach dem Taggen ist bestanden (vor Alt-Texten und Quickinfos).")
+    elif n == 1:
+        satz = _("Die PDF/UA-Prüfung direkt nach dem Taggen meldet 1 Problemstelle (vor Alt-Texten und Quickinfos).")
+    else:
+        satz = _("Die PDF/UA-Prüfung direkt nach dem Taggen meldet {n} Problemstellen (vor Alt-Texten und Quickinfos).").format(n=n)
+    return satz + " " + _("Die fertige Datei prüfst du in der Barrierefreiheitsprüfung.")
+
+
 def verapdf(pdf_pfad: str, _=None) -> Optional[dict]:
     """PDF/UA-1-Pruefung ueber den Konverter-Dienst (veraPDF); None, wenn nicht pruefbar
     (kein Befund — ein Ausfall des Pruefdienstes sperrt das Tagging nicht)."""
@@ -343,7 +369,7 @@ def verapdf(pdf_pfad: str, _=None) -> Optional[dict]:
         klar = pdfua_export.klartext(rep, uebers)
         return {"bestanden": bool(klar.get("bestanden")), "profil": klar.get("profil"),
                 "regeln_fehlgeschlagen": int(klar.get("regeln_fehlgeschlagen") or 0),
-                "punkte": klar.get("punkte") or [], "zusammenfassung": pdfua_export.zusammenfassung(klar, uebers)}
+                "punkte": klar.get("punkte") or [], "zusammenfassung": zwischenstand_satz(klar, uebers)}
     except Exception as e:  # noqa: BLE001
         log.warning("veraPDF nach Tagging nicht moeglich: %r", e)
         return None

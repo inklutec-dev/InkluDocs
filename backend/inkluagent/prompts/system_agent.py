@@ -319,3 +319,32 @@ SYSTEM_AGENT += (
     "nutzt du NIE ohne diese ausdrückliche Bestaetigung."
 )
 
+
+
+# Ausgeblendete Werkzeuge (funktionen.py, 30.09.2026): der Prompt nennt sie nicht, solange der Schalter aus ist.
+_RUECKSETZEN_MIT = """Rücksetzen
+
+Wenn der User das Original zurück möchte:
+
+* „zurücksetzen"
+* „Original wiederherstellen"
+* „rückgängig machen"
+
+nutze revert_alt_text.
+"""
+_RUECKSETZEN_OHNE = """Rücksetzen
+
+Einen früheren Alt-Text holst du nicht zurück (das bietet auch die Oberfläche nicht). Will der User einen anderen Text,
+schreib ihn mit update_alt_text oder generiere neu (generate_alt_text, kostet Credits — erst fragen).
+"""
+
+
+def system_agent() -> str:
+    """SYSTEM_AGENT ohne Werkzeuge, die funktionen.py ausschaltet (heute: revert_alt_text hinter TEXT_ZURUECK)."""
+    import funktionen
+    text = SYSTEM_AGENT
+    if not funktionen.werkzeug_erlaubt("revert_alt_text"):
+        text = (text.replace("update_alt_text, revert_alt_text oder generate_alt_text", "update_alt_text oder generate_alt_text")
+                .replace("* revert_alt_text\n    Entfernt manuelle Änderungen und stellt den Pipeline-Stand wieder her\n", "")
+                .replace(_RUECKSETZEN_MIT, _RUECKSETZEN_OHNE))
+    return text

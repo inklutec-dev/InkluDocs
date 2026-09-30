@@ -9958,3 +9958,134 @@ msgstr "Tu archivo está lleno (como máximo {n} entradas, {mb} MB en total). Es
 
 msgid "Dieser Stand wurde gleichzeitig anders abgerechnet, oder die Buchung ist fehlgeschlagen. Es wurde nichts berechnet und nichts geliefert. Bitte lade die PDF noch einmal herunter."
 msgstr "Esta versión se facturó de otra forma al mismo tiempo, o el cargo ha fallado. No se ha cobrado ni entregado nada. Vuelve a descargar el PDF."
+
+msgid "PDF/UA-Kennzeichnung"
+msgstr "Identificación PDF/UA"
+
+msgid "Das Dokument nennt sich in seinen Metadaten selbst als PDF/UA."
+msgstr "El documento se identifica como PDF/UA en sus metadatos."
+
+msgid "Sprache und Aufbau von Tabellen und Listen"
+msgstr "Idioma y estructura de tablas y listas"
+
+msgid "Die Sprache ist bestimmt, und Tabellen, Listen und Inhaltsverzeichnisse sind richtig aufgebaut."
+msgstr "El idioma está determinado y las tablas, listas e índices están bien estructurados."
+
+msgid "Die Zellen der Tabellen sind ihren Kopfzellen zugeordnet."
+msgstr "Las celdas de las tablas están asignadas a sus celdas de encabezado."
+
+msgid "Fußnoten und Endnoten"
+msgstr "Notas al pie y notas finales"
+
+msgid "Fußnoten und Endnoten haben eine eindeutige Kennung."
+msgstr "Las notas al pie y las notas finales tienen un identificador único."
+
+msgid "Sicherheit"
+msgstr "Seguridad"
+
+msgid "Eine Verschlüsselung lässt Hilfsmittel wie Screenreader an den Text."
+msgstr "Un posible cifrado deja que las ayudas técnicas como los lectores de pantalla accedan al texto."
+
+msgid "Anmerkungen, Formularfelder und Links"
+msgstr "Anotaciones, campos de formulario y enlaces"
+
+msgid "Anmerkungen, Formularfelder und Links sind ausgezeichnet und beschrieben."
+msgstr "Las anotaciones, los campos de formulario y los enlaces están etiquetados y descritos."
+
+msgid "Eingebettete Inhaltsblöcke (XObjects)"
+msgstr "Bloques de contenido incrustados (XObjects)"
+
+msgid "Eingebettete Inhaltsblöcke sind in die Struktur eingebunden."
+msgstr "Los bloques de contenido incrustados forman parte de la estructura."
+
+msgid "Die PDF nennt sich in ihren Metadaten nicht als PDF/UA-Dokument."
+msgstr "El PDF no se identifica como documento PDF/UA en sus metadatos."
+
+msgid "Inhalt, der als Schmuck (Artefakt) markiert ist, steht innerhalb von ausgezeichnetem Inhalt."
+msgstr "Hay contenido marcado como decoración (artefacto) dentro de contenido etiquetado."
+
+msgid "Ausgezeichneter Inhalt steht innerhalb eines als Schmuck (Artefakt) markierten Bereichs — ein Screenreader überliest ihn."
+msgstr "Hay contenido etiquetado dentro de una zona marcada como decoración (artefacto): un lector de pantalla lo omite."
+
+msgid "Der Metadaten-Bereich (XMP) fehlt im Dokument."
+msgstr "Falta el flujo de metadatos (XMP) en el documento."
+
+msgid "Die PDF hat keinen Strukturbaum (keine Tags)."
+msgstr "El PDF no tiene árbol de estructura (sin etiquetas)."
+
+msgid "Eine Tabelle enthält Elemente, die dort nicht stehen dürfen (erlaubt sind nur Zeilen, Kopf-, Rumpf- und Fußbereich und eine Beschriftung)."
+msgstr "Una tabla contiene elementos que no están permitidos allí (solo se permiten filas, encabezado, cuerpo, pie y una leyenda)."
+
+msgid "Datenzellen einer Tabelle lassen sich keiner Kopfzelle zuordnen (den Kopfzellen fehlt die Angabe, ob sie für die Zeile oder die Spalte gelten)."
+msgstr "Las celdas de datos de una tabla no se pueden asignar a ninguna celda de encabezado (los encabezados no indican si valen para la fila o la columna)."
+
+msgid "Datenzellen einer Tabelle verweisen auf Kopfzellen, die es nicht gibt."
+msgstr "Las celdas de datos de una tabla remiten a celdas de encabezado que no existen."
+
+msgid "Die PDF ist verschlüsselt und erlaubt Hilfsmitteln wie Screenreadern nicht, den Text zu lesen."
+msgstr "El PDF está cifrado y no permite que las ayudas técnicas como los lectores de pantalla lean el texto."
+
+msgid "Eine Anmerkung (zum Beispiel ein Kommentar oder ein Link) hat keine Beschreibung."
+msgstr "Una anotación (por ejemplo un comentario o un enlace) no tiene descripción."
+
+msgid "Ein Formularfeld hat keine Beschreibung (Quickinfo) — ein Screenreader nennt nur die Art des Feldes."
+msgstr "Un campo de formulario no tiene descripción (información sobre herramientas): un lector de pantalla solo anuncia el tipo de campo."
+
+msgid "PDF/UA-Prüfung direkt nach dem Taggen"
+msgstr "Comprobación PDF/UA justo después del etiquetado"
+
+#, python-brace-format
+msgid "Das ist der Stand direkt nach dem Taggen, vor Alt-Texten und Quickinfos. Die fertige Datei prüfst du in der {pruefung}."
+msgstr "Es el estado justo después del etiquetado, antes de los textos alternativos y la información sobre herramientas. El archivo final lo compruebas en la {pruefung}."
+
+msgid "PDF/UA-Prüfung der Testfassung: bestanden."
+msgstr "Comprobación PDF/UA de la versión de prueba: superada."
+
+msgid "PDF/UA-Prüfung der Testfassung: nicht bestanden."
+msgstr "Comprobación PDF/UA de la versión de prueba: no superada."
+
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen ist bestanden (vor Alt-Texten und Quickinfos)."
+msgstr "La comprobación PDF/UA justo después del etiquetado se ha superado (antes de los textos alternativos y la información sobre herramientas)."
+
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen meldet 1 Problemstelle (vor Alt-Texten und Quickinfos)."
+msgstr "La comprobación PDF/UA justo después del etiquetado indica 1 problema (antes de los textos alternativos y la información sobre herramientas)."
+
+#, python-brace-format
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen meldet {n} Problemstellen (vor Alt-Texten und Quickinfos)."
+msgstr "La comprobación PDF/UA justo después del etiquetado indica {n} problemas (antes de los textos alternativos y la información sobre herramientas)."
+
+msgid "Die fertige Datei prüfst du in der Barrierefreiheitsprüfung."
+msgstr "El archivo final lo compruebas en la comprobación de accesibilidad."
+
+msgid "Die PDF/UA-Prüfung nach dem Taggen war nicht möglich."
+msgstr "La comprobación PDF/UA después del etiquetado no fue posible."
+
+msgid "Excel herunterladen"
+msgstr "Descargar Excel"
+
+msgid "JSON herunterladen"
+msgstr "Descargar JSON"
+
+msgid "Die Datei konnte nicht gelesen werden."
+msgstr "No se ha podido leer el archivo."
+
+msgid "Die Datei ist keine PDF (sie hat nur die Endung .pdf). Bitte wähle die PDF-Datei aus."
+msgstr "El archivo no es un PDF (solo tiene la extensión .pdf). Elige el archivo PDF."
+
+msgid "Die PDF ist mit einem Passwort geschützt. Bitte entferne das Passwort und lade die Datei noch einmal hoch."
+msgstr "El PDF está protegido con contraseña. Elimina la contraseña y vuelve a subir el archivo."
+
+msgid "Die PDF hat keine Seiten."
+msgstr "El PDF no tiene páginas."
+
+msgid "Die PDF ist beschädigt und kann nicht gelesen werden. Bitte erzeuge oder lade die Datei neu."
+msgstr "El PDF está dañado y no se puede leer. Vuelve a crear o descargar el archivo."
+
+msgid "Die PDF ist beschädigt oder unvollständig (zum Beispiel ein abgebrochener Download). Bitte lade die Datei noch einmal herunter und dann hoch."
+msgstr "El PDF está dañado o incompleto (por ejemplo, una descarga interrumpida). Vuelve a descargar el archivo y súbelo después."
+
+msgid "Diese PDF hat keine Tags. Eine Prüfdatei gibt es erst nach dem Tagging (Ansicht „Tagging“). Herunterladen kannst du sie in der Ansicht „Dokument“: unverändert oder mit deinen bearbeiteten Quickinfos."
+msgstr "Este PDF no tiene etiquetas. Un archivo de comprobación solo existe después del etiquetado (vista «Etiquetado»). Puedes descargarlo en la vista «Documento»: sin cambios o con tu información sobre herramientas editada."
+
+msgid "Der Preis hat sich seit der Rückfrage geändert. Bitte noch einmal fragen."
+msgstr "El precio ha cambiado desde la pregunta de confirmación. Vuelve a preguntar."

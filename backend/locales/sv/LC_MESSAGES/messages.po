@@ -9526,3 +9526,134 @@ msgstr "Ditt arkiv är fullt (högst {n} poster, totalt {mb} MB). Den här PDF:e
 
 msgid "Dieser Stand wurde gleichzeitig anders abgerechnet, oder die Buchung ist fehlgeschlagen. Es wurde nichts berechnet und nichts geliefert. Bitte lade die PDF noch einmal herunter."
 msgstr "Den här versionen debiterades samtidigt på annat sätt, eller så misslyckades bokningen. Ingenting har debiterats eller levererats. Ladda ner PDF:en igen."
+
+msgid "PDF/UA-Kennzeichnung"
+msgstr "PDF/UA-identifiering"
+
+msgid "Das Dokument nennt sich in seinen Metadaten selbst als PDF/UA."
+msgstr "Dokumentet anger sig självt som PDF/UA i sina metadata."
+
+msgid "Sprache und Aufbau von Tabellen und Listen"
+msgstr "Språk och uppbyggnad av tabeller och listor"
+
+msgid "Die Sprache ist bestimmt, und Tabellen, Listen und Inhaltsverzeichnisse sind richtig aufgebaut."
+msgstr "Språket är fastställt, och tabeller, listor och innehållsförteckningar är korrekt uppbyggda."
+
+msgid "Die Zellen der Tabellen sind ihren Kopfzellen zugeordnet."
+msgstr "Tabellernas celler är kopplade till sina rubrikceller."
+
+msgid "Fußnoten und Endnoten"
+msgstr "Fotnoter och slutnoter"
+
+msgid "Fußnoten und Endnoten haben eine eindeutige Kennung."
+msgstr "Fotnoter och slutnoter har en entydig identifierare."
+
+msgid "Sicherheit"
+msgstr "Säkerhet"
+
+msgid "Eine Verschlüsselung lässt Hilfsmittel wie Screenreader an den Text."
+msgstr "En eventuell kryptering ger hjälpmedel som skärmläsare tillgång till texten."
+
+msgid "Anmerkungen, Formularfelder und Links"
+msgstr "Anteckningar, formulärfält och länkar"
+
+msgid "Anmerkungen, Formularfelder und Links sind ausgezeichnet und beschrieben."
+msgstr "Anteckningar, formulärfält och länkar är taggade och beskrivna."
+
+msgid "Eingebettete Inhaltsblöcke (XObjects)"
+msgstr "Inbäddade innehållsblock (XObjects)"
+
+msgid "Eingebettete Inhaltsblöcke sind in die Struktur eingebunden."
+msgstr "Inbäddade innehållsblock ingår i strukturen."
+
+msgid "Die PDF nennt sich in ihren Metadaten nicht als PDF/UA-Dokument."
+msgstr "PDF:en anger sig inte som PDF/UA-dokument i sina metadata."
+
+msgid "Inhalt, der als Schmuck (Artefakt) markiert ist, steht innerhalb von ausgezeichnetem Inhalt."
+msgstr "Innehåll som är markerat som utsmyckning (artefakt) står inuti taggat innehåll."
+
+msgid "Ausgezeichneter Inhalt steht innerhalb eines als Schmuck (Artefakt) markierten Bereichs — ein Screenreader überliest ihn."
+msgstr "Taggat innehåll står inuti ett område som är markerat som utsmyckning (artefakt) — en skärmläsare hoppar över det."
+
+msgid "Der Metadaten-Bereich (XMP) fehlt im Dokument."
+msgstr "Metadataområdet (XMP) saknas i dokumentet."
+
+msgid "Die PDF hat keinen Strukturbaum (keine Tags)."
+msgstr "PDF:en har inget strukturträd (inga taggar)."
+
+msgid "Eine Tabelle enthält Elemente, die dort nicht stehen dürfen (erlaubt sind nur Zeilen, Kopf-, Rumpf- und Fußbereich und eine Beschriftung)."
+msgstr "En tabell innehåller element som inte får stå där (bara rader, huvud-, brödtext- och fotområde och en bildtext är tillåtna)."
+
+msgid "Datenzellen einer Tabelle lassen sich keiner Kopfzelle zuordnen (den Kopfzellen fehlt die Angabe, ob sie für die Zeile oder die Spalte gelten)."
+msgstr "Datacellerna i en tabell kan inte kopplas till någon rubrikcell (rubrikcellerna anger inte om de gäller raden eller kolumnen)."
+
+msgid "Datenzellen einer Tabelle verweisen auf Kopfzellen, die es nicht gibt."
+msgstr "Datacellerna i en tabell hänvisar till rubrikceller som inte finns."
+
+msgid "Die PDF ist verschlüsselt und erlaubt Hilfsmitteln wie Screenreadern nicht, den Text zu lesen."
+msgstr "PDF:en är krypterad och tillåter inte hjälpmedel som skärmläsare att läsa texten."
+
+msgid "Eine Anmerkung (zum Beispiel ein Kommentar oder ein Link) hat keine Beschreibung."
+msgstr "En anteckning (till exempel en kommentar eller en länk) har ingen beskrivning."
+
+msgid "Ein Formularfeld hat keine Beschreibung (Quickinfo) — ein Screenreader nennt nur die Art des Feldes."
+msgstr "Ett formulärfält har ingen beskrivning (verktygstips) — en skärmläsare nämner bara fälttypen."
+
+msgid "PDF/UA-Prüfung direkt nach dem Taggen"
+msgstr "PDF/UA-kontroll direkt efter taggningen"
+
+#, python-brace-format
+msgid "Das ist der Stand direkt nach dem Taggen, vor Alt-Texten und Quickinfos. Die fertige Datei prüfst du in der {pruefung}."
+msgstr "Det är läget direkt efter taggningen, före alt-texter och verktygstips. Den färdiga filen kontrollerar du i {pruefung}."
+
+msgid "PDF/UA-Prüfung der Testfassung: bestanden."
+msgstr "PDF/UA-kontroll av testversionen: godkänd."
+
+msgid "PDF/UA-Prüfung der Testfassung: nicht bestanden."
+msgstr "PDF/UA-kontroll av testversionen: inte godkänd."
+
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen ist bestanden (vor Alt-Texten und Quickinfos)."
+msgstr "PDF/UA-kontrollen direkt efter taggningen är godkänd (före alt-texter och verktygstips)."
+
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen meldet 1 Problemstelle (vor Alt-Texten und Quickinfos)."
+msgstr "PDF/UA-kontrollen direkt efter taggningen rapporterar 1 problem (före alt-texter och verktygstips)."
+
+#, python-brace-format
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen meldet {n} Problemstellen (vor Alt-Texten und Quickinfos)."
+msgstr "PDF/UA-kontrollen direkt efter taggningen rapporterar {n} problem (före alt-texter och verktygstips)."
+
+msgid "Die fertige Datei prüfst du in der Barrierefreiheitsprüfung."
+msgstr "Den färdiga filen kontrollerar du i tillgänglighetskontrollen."
+
+msgid "Die PDF/UA-Prüfung nach dem Taggen war nicht möglich."
+msgstr "PDF/UA-kontrollen efter taggningen var inte möjlig."
+
+msgid "Excel herunterladen"
+msgstr "Ladda ner Excel"
+
+msgid "JSON herunterladen"
+msgstr "Ladda ner JSON"
+
+msgid "Die Datei konnte nicht gelesen werden."
+msgstr "Filen kunde inte läsas."
+
+msgid "Die Datei ist keine PDF (sie hat nur die Endung .pdf). Bitte wähle die PDF-Datei aus."
+msgstr "Filen är inte en PDF (den har bara filändelsen .pdf). Välj PDF-filen."
+
+msgid "Die PDF ist mit einem Passwort geschützt. Bitte entferne das Passwort und lade die Datei noch einmal hoch."
+msgstr "PDF:en är skyddad med ett lösenord. Ta bort lösenordet och ladda upp filen igen."
+
+msgid "Die PDF hat keine Seiten."
+msgstr "PDF:en har inga sidor."
+
+msgid "Die PDF ist beschädigt und kann nicht gelesen werden. Bitte erzeuge oder lade die Datei neu."
+msgstr "PDF:en är skadad och kan inte läsas. Skapa eller ladda ner filen igen."
+
+msgid "Die PDF ist beschädigt oder unvollständig (zum Beispiel ein abgebrochener Download). Bitte lade die Datei noch einmal herunter und dann hoch."
+msgstr "PDF:en är skadad eller ofullständig (till exempel en avbruten nedladdning). Ladda ner filen igen och ladda sedan upp den."
+
+msgid "Diese PDF hat keine Tags. Eine Prüfdatei gibt es erst nach dem Tagging (Ansicht „Tagging“). Herunterladen kannst du sie in der Ansicht „Dokument“: unverändert oder mit deinen bearbeiteten Quickinfos."
+msgstr "Den här PDF:en har inga taggar. En kontrollfil finns först efter taggningen (vyn ”Taggning”). Du kan ladda ner den i vyn ”Dokument”: oförändrad eller med dina redigerade verktygstips."
+
+msgid "Der Preis hat sich seit der Rückfrage geändert. Bitte noch einmal fragen."
+msgstr "Priset har ändrats sedan bekräftelsefrågan. Fråga igen."

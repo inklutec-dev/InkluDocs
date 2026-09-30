@@ -20,7 +20,10 @@ from pdfixsdk import *  # noqa: F401,F403
 
 import inkludocs_betrieb as betrieb
 
-_ERLAUBT = {"P", "H", "H1", "H2", "H3", "H4", "H5", "H6", "TH", "TD", "L", "LI", "Figure", "Caption", "Artifact"}
+# „Artifact“ entfernt (30.09.2026, Notiz vom 23.09.): SetType("Artifact") erzeugt nur einen unsinnigen Strukturtyp — ein
+# Artefakt ist kein Tag (Element entfernen + Inhalt als Artefakt markieren waere ein eigener PDFix-Befehl). Eigenes Skript
+# von InkluDocs, kein Heine-Code. Die Korrektur ist ohnehin abgeschaltet (funktionen.KORREKTUR).
+_ERLAUBT = {"P", "H", "H1", "H2", "H3", "H4", "H5", "H6", "TH", "TD", "L", "LI", "Figure", "Caption"}
 
 
 def _sammeln(tree, elem, out):

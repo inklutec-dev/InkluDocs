@@ -9956,3 +9956,134 @@ msgstr "Your archive is full (at most {n} entries, {mb} MB in total). This PDF w
 
 msgid "Dieser Stand wurde gleichzeitig anders abgerechnet, oder die Buchung ist fehlgeschlagen. Es wurde nichts berechnet und nichts geliefert. Bitte lade die PDF noch einmal herunter."
 msgstr "This version was billed differently at the same time, or the booking failed. Nothing was charged and nothing was delivered. Please download the PDF again."
+
+msgid "PDF/UA-Kennzeichnung"
+msgstr "PDF/UA identification"
+
+msgid "Das Dokument nennt sich in seinen Metadaten selbst als PDF/UA."
+msgstr "The document identifies itself as PDF/UA in its metadata."
+
+msgid "Sprache und Aufbau von Tabellen und Listen"
+msgstr "Language and structure of tables and lists"
+
+msgid "Die Sprache ist bestimmt, und Tabellen, Listen und Inhaltsverzeichnisse sind richtig aufgebaut."
+msgstr "The language is determined, and tables, lists and tables of contents are structured correctly."
+
+msgid "Die Zellen der Tabellen sind ihren Kopfzellen zugeordnet."
+msgstr "The table cells are assigned to their header cells."
+
+msgid "Fußnoten und Endnoten"
+msgstr "Footnotes and endnotes"
+
+msgid "Fußnoten und Endnoten haben eine eindeutige Kennung."
+msgstr "Footnotes and endnotes have a unique identifier."
+
+msgid "Sicherheit"
+msgstr "Security"
+
+msgid "Eine Verschlüsselung lässt Hilfsmittel wie Screenreader an den Text."
+msgstr "Any encryption lets assistive technology such as screen readers access the text."
+
+msgid "Anmerkungen, Formularfelder und Links"
+msgstr "Annotations, form fields and links"
+
+msgid "Anmerkungen, Formularfelder und Links sind ausgezeichnet und beschrieben."
+msgstr "Annotations, form fields and links are tagged and described."
+
+msgid "Eingebettete Inhaltsblöcke (XObjects)"
+msgstr "Embedded content blocks (XObjects)"
+
+msgid "Eingebettete Inhaltsblöcke sind in die Struktur eingebunden."
+msgstr "Embedded content blocks are part of the structure."
+
+msgid "Die PDF nennt sich in ihren Metadaten nicht als PDF/UA-Dokument."
+msgstr "The PDF does not identify itself as a PDF/UA document in its metadata."
+
+msgid "Inhalt, der als Schmuck (Artefakt) markiert ist, steht innerhalb von ausgezeichnetem Inhalt."
+msgstr "Content marked as decoration (artifact) is inside tagged content."
+
+msgid "Ausgezeichneter Inhalt steht innerhalb eines als Schmuck (Artefakt) markierten Bereichs — ein Screenreader überliest ihn."
+msgstr "Tagged content is inside an area marked as decoration (artifact) — a screen reader skips it."
+
+msgid "Der Metadaten-Bereich (XMP) fehlt im Dokument."
+msgstr "The metadata stream (XMP) is missing from the document."
+
+msgid "Die PDF hat keinen Strukturbaum (keine Tags)."
+msgstr "The PDF has no structure tree (no tags)."
+
+msgid "Eine Tabelle enthält Elemente, die dort nicht stehen dürfen (erlaubt sind nur Zeilen, Kopf-, Rumpf- und Fußbereich und eine Beschriftung)."
+msgstr "A table contains elements that are not allowed there (only rows, header, body and footer sections and one caption are allowed)."
+
+msgid "Datenzellen einer Tabelle lassen sich keiner Kopfzelle zuordnen (den Kopfzellen fehlt die Angabe, ob sie für die Zeile oder die Spalte gelten)."
+msgstr "Data cells of a table cannot be assigned to a header cell (the header cells do not state whether they apply to the row or the column)."
+
+msgid "Datenzellen einer Tabelle verweisen auf Kopfzellen, die es nicht gibt."
+msgstr "Data cells of a table refer to header cells that do not exist."
+
+msgid "Die PDF ist verschlüsselt und erlaubt Hilfsmitteln wie Screenreadern nicht, den Text zu lesen."
+msgstr "The PDF is encrypted and does not allow assistive technology such as screen readers to read the text."
+
+msgid "Eine Anmerkung (zum Beispiel ein Kommentar oder ein Link) hat keine Beschreibung."
+msgstr "An annotation (for example a comment or a link) has no description."
+
+msgid "Ein Formularfeld hat keine Beschreibung (Quickinfo) — ein Screenreader nennt nur die Art des Feldes."
+msgstr "A form field has no description (tooltip) — a screen reader only announces the type of field."
+
+msgid "PDF/UA-Prüfung direkt nach dem Taggen"
+msgstr "PDF/UA check right after tagging"
+
+#, python-brace-format
+msgid "Das ist der Stand direkt nach dem Taggen, vor Alt-Texten und Quickinfos. Die fertige Datei prüfst du in der {pruefung}."
+msgstr "This is the state right after tagging, before alt texts and tooltips. You check the finished file in the {pruefung}."
+
+msgid "PDF/UA-Prüfung der Testfassung: bestanden."
+msgstr "PDF/UA check of the test version: passed."
+
+msgid "PDF/UA-Prüfung der Testfassung: nicht bestanden."
+msgstr "PDF/UA check of the test version: not passed."
+
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen ist bestanden (vor Alt-Texten und Quickinfos)."
+msgstr "The PDF/UA check right after tagging passed (before alt texts and tooltips)."
+
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen meldet 1 Problemstelle (vor Alt-Texten und Quickinfos)."
+msgstr "The PDF/UA check right after tagging reports 1 problem (before alt texts and tooltips)."
+
+#, python-brace-format
+msgid "Die PDF/UA-Prüfung direkt nach dem Taggen meldet {n} Problemstellen (vor Alt-Texten und Quickinfos)."
+msgstr "The PDF/UA check right after tagging reports {n} problems (before alt texts and tooltips)."
+
+msgid "Die fertige Datei prüfst du in der Barrierefreiheitsprüfung."
+msgstr "You check the finished file in the accessibility check."
+
+msgid "Die PDF/UA-Prüfung nach dem Taggen war nicht möglich."
+msgstr "The PDF/UA check after tagging was not possible."
+
+msgid "Excel herunterladen"
+msgstr "Download Excel"
+
+msgid "JSON herunterladen"
+msgstr "Download JSON"
+
+msgid "Die Datei konnte nicht gelesen werden."
+msgstr "The file could not be read."
+
+msgid "Die Datei ist keine PDF (sie hat nur die Endung .pdf). Bitte wähle die PDF-Datei aus."
+msgstr "The file is not a PDF (it only has the .pdf extension). Please choose the PDF file."
+
+msgid "Die PDF ist mit einem Passwort geschützt. Bitte entferne das Passwort und lade die Datei noch einmal hoch."
+msgstr "The PDF is protected with a password. Please remove the password and upload the file again."
+
+msgid "Die PDF hat keine Seiten."
+msgstr "The PDF has no pages."
+
+msgid "Die PDF ist beschädigt und kann nicht gelesen werden. Bitte erzeuge oder lade die Datei neu."
+msgstr "The PDF is damaged and cannot be read. Please create or download the file again."
+
+msgid "Die PDF ist beschädigt oder unvollständig (zum Beispiel ein abgebrochener Download). Bitte lade die Datei noch einmal herunter und dann hoch."
+msgstr "The PDF is damaged or incomplete (for example an interrupted download). Please download the file again and then upload it."
+
+msgid "Diese PDF hat keine Tags. Eine Prüfdatei gibt es erst nach dem Tagging (Ansicht „Tagging“). Herunterladen kannst du sie in der Ansicht „Dokument“: unverändert oder mit deinen bearbeiteten Quickinfos."
+msgstr "This PDF has no tags. A check file is only available after tagging (“Tagging” view). You can download it in the “Document” view: unchanged or with your edited tooltips."
+
+msgid "Der Preis hat sich seit der Rückfrage geändert. Bitte noch einmal fragen."
+msgstr "The price has changed since the confirmation question. Please ask again."
