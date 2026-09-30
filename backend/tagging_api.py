@@ -73,6 +73,7 @@ class Deps:
     ausgaben_anzahl: Callable = None           # (project_id) -> int (Zaehler „Ablage (n)“ im Projektkopf)
     tageslimit_wache: Callable = None          # (user) -> None | {"limit", "genutzt"}  (Automatische Pruefung = KI-Aktion)
     tageslimit_text: Callable = None           # (tl) -> str
+    word_ansicht: Callable = None              # (project, user_id) -> dict: Word-Projekt in /dokument-ansicht (30.09.2026)
 
 
 _d: Optional[Deps] = None
@@ -1138,18 +1139,26 @@ def build_router(deps: Deps) -> APIRouter:
 
     @router.get("/api/projects/{project_id}/dokument-ansicht")
     async def ansicht(project_id: int, user: dict = Depends(_user())):
-        """Datenquelle der Ansicht „Dokument“ (nur Besitzer, nur PDF-Projekte)."""
+        """Datenquelle der Ansicht „Dokument“ (nur Besitzer). PDF-Projekte: dokument_ansicht (hier). Word-Projekte seit
+        30.09.2026 ueber dieselbe Adresse, Daten aus main._word_dokument_ansicht (Dokumentinfos ohne KI, letzte
+        barrierefreie PDF) — im Executor, weil sie die Word-Dateien liest."""
         conn = _d.get_db()
         try:
             project = conn.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (project_id, user["id"])).fetchone()
             if not project:
                 raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
             project = dict(project)
+            if project.get("project_type") == "docx" and _d.word_ansicht:
+                conn.close()
+                conn = None
+                loop = asyncio.get_running_loop()
+                return await loop.run_in_executor(None, _d.word_ansicht, project, user["id"])
             if project.get("project_type") not in TAGGING_PROJEKTE or project.get("tool") not in TAGGING_WERKZEUGE:
                 raise HTTPException(status_code=400, detail="Die Ansicht Dokument gibt es nur für PDF-Projekte")
             return dokument_ansicht(conn, project, user["id"])
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
 
     @router.get("/api/projects/{project_id}/documents/{document_id}/vorschau")
     async def vorschau(project_id: int, document_id: int, user: dict = Depends(_user())):

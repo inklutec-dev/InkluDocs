@@ -578,3 +578,40 @@ Offen, nicht aus diesen Commits: Guthaben-Prüfung und Buchung liegen bei allen 
 auseinander (zwei parallele Exporte am Guthabenrand könnten ins Minus buchen); `delete_project`
 löscht `chat_messages` nicht; bei `ABLAGE_WORD=on` zieht der Knopf-Export den Ablage-Zähler nicht
 nach und die Hörprobe-Analyse läuft synchron. Tests: `tests/test_ablage_review.py` (14).
+
+## Ansichten wie bei PDF: Dokument, Alt-Texte, Übersetzung, Barrierefreiheitsprüfung (30.09.2026, Steves Go)
+
+Steve: „Word soll die gleiche Ansicht wie PDF bekommen, auch mit der Dokumentenverwaltung.“ Ein Word-Projekt
+(`project_type` `docx`, Eingang `word` oder `uebersetzen`) hat seitdem dieselbe Bedienlogik wie ein PDF-Projekt:
+Projektkopf mit Name, blauem Word-Symbol und den Ansichts-Knöpfen (Links mit `aria-current`, `?ansicht=`,
+Zurück im Browser geht), je Ansicht eine Seite. Startansicht ist „Dokument“ (Eingang `uebersetzen`: „Übersetzung“),
+die zuletzt gewählte merkt sich das Projekt (`POST /api/projects/{id}/ansicht`, `ANSICHTEN_JE_TYP["docx"]`).
+Gäste sehen weiter nur die Alt-Texte (keine neuen Endpunkte unter `/api/freigabe`).
+
+- **Dokument** = reine Dateiverwaltung, gezeichnet von `frontend/dokument.js` (Word-Zweig `wordKarteHtml`, derselbe Kopf,
+  dieselbe Karte `<details>` mit H3 im summary, dieselbe Knopfleiste unter der Linie). Hochladen gibt es nur hier.
+  Dokumentinfos je Zeile „Bezeichnung: Wert“ aus der Word-Datei, ohne KI (`backend/docx_ansicht.py`): Titel und
+  Sprache (wie Hörprobe/Prüfbericht, `docx_hoerprobe`), Anwendung (`docProps/app.xml`), Seiten nur wenn belegbar
+  (Word-Seitenmarken `lastRenderedPageBreak`; sonst die Angabe in `app.xml`, aber nur bei Dateien mit rsid-Bearbeitungs-
+  spuren — python-docx-Dateien tragen dort eine falsche „1“), Zahl der Überschriften und Tabellen, Bilder mit Alt-Text
+  (Zählweise wie der Export, `_exportable_alt_text`). Kein Stand-Abzeichen (kein Tagging), kein Vorschaubild.
+  Knöpfe: Hörprobe (Dialog, Word-Datei mit den Alt-Texten aus InkluDocs über `POST …/export/pdfua/vorschau`, kostenlos),
+  Herunterladen (derselbe Dialog wie überall, Modus `word`: „Als Word“, „In barrierefreie PDF umwandeln“, bei
+  vorhandener Übersetzung „Als Word, <Sprache>“), Umbenennen, Löschen. Bei mehreren Dokumenten „Alle Dokumente
+  herunterladen“ (ZIP). Datenquelle: `GET /api/projects/{id}/dokument-ansicht` — dieselbe Adresse wie bei PDF;
+  `tagging_api` verzweigt nach dem Dateityp auf `main._word_dokument_ansicht` (Deps-Feld `word_ansicht`), der PDF-Weg
+  ist unverändert.
+- **Alt-Texte** wie bisher, aber ohne Upload, Umbenennen, Löschen und Datei-Download: oben und je Dokument
+  „Alt-Texte herunterladen“ (Dialog-Modus `tabellen`: Excel, JSON, CSV), wie bei PDF (Michael, 28.09.2026).
+- **Übersetzung** wie bisher, ohne Upload, Umbenennen und Löschen; der Knopf heißt jetzt „Übersetzung herunterladen“
+  (wie „Alt-Texte herunterladen“), die übersetzte Datei gibt es zusätzlich im Dialog der Ansicht „Dokument“.
+- **Barrierefreiheitsprüfung** (`frontend/abschluss.js`, `showWordProject`), ohne KI: je Dokument eine Karte mit
+  Abzeichen (Zahl der Befunde), (1) Prüfbericht der Word-Datei mit den Alt-Texten aus InkluDocs (`docx_hoerprobe`,
+  feste Regeln — früher Knopf „Hörprobe und Prüfbericht“ im Herunterladen-Dialog), (2) Norm-Prüfung der letzten
+  barrierefreien PDF (veraPDF-Ergebnis aus der Ablage, je Prüfpunkt eine Zeile mit Regelnummer wie bei PDF; „nicht mehr
+  aktuell“, wenn sich Alt-Texte, Dokumentname oder Alt-Text-Sprache seitdem geändert haben — Fingerabdruck
+  `docx_ansicht.fingerabdruck`, beim Umwandeln im Ablage-Bericht gespeichert zusammen mit `document_id`; Einträge
+  von vor dem 30.09. haben keinen, dort steht „Stand: nicht bekannt“), (3) Hörprobe zum Lesen und Vorlesen (Stimme
+  auf dem Gerät, Inhalt mit `lang` der Dokumentsprache). Keine neuen KI-Prüfungen, kein Herunterladen hier.
+- Chatbot: unverändert derselbe Word-Werkzeugsatz in jeder Ansicht (`agent_loop` wählt nach Dateityp).
+- Tests: `tests/test_docx_ansicht.py` (Unit), `tests/e2e/ui_word_ansichten.py` (Klicktest aller vier Ansichten).

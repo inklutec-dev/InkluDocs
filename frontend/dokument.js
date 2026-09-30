@@ -23,6 +23,15 @@
  * als natives <dialog> wie #genConfirmDialog (Fokusfang, Escape, Abbrechen links / Start rechts).
  * Ansagen nur bei Zustandswechseln (Start, fertig, Fehler), nicht bei jedem Tick.
  *
+ * WORD-PROJEKTE (30.09.2026, Steve: „Word soll die gleiche Ansicht wie PDF bekommen, auch mit der Dokumentenverwaltung“):
+ * dieselbe Datei zeichnet auch die Ansicht „Dokument“ eines Word-Projekts — gleicher Kopf, gleiche Karte (<details>, H3 im
+ * summary), gleiche Knopfleiste unter der Linie, gleiche Dialoge (Hörprobe, Herunterladen, Umbenennen, Löschen). Nur die
+ * Dokumentinfos kommen aus der Word-Datei (Titel, Anwendung, Seiten falls bekannt, Sprache, Überschriften, Tabellen,
+ * Bilder; backend/docx_ansicht.py, ohne KI), und „Herunterladen“ öffnet den Dialog im Modus 'word' (Word-Datei,
+ * barrierefreie PDF, Übersetzung). Die Hörprobe liest die Word-Datei mit den Alt-Texten aus InkluDocs
+ * (POST …/export/pdfua/vorschau, kostenlos). Datenquelle bleibt GET /api/projects/{id}/dokument-ansicht (Weiche nach
+ * Dateityp im Backend). Tagging gibt es bei Word nicht.
+ *
  * Gemeinsame Helfer aus app.html/dashboard.js: t(), announce(), escHtml(), uploadBlockHtml(),
  * setupProjectDropzone(), docDisplayName(), openDocRename(), openDocDelete(), icon(),
  * ansichtWahlHtml(), inkluagentSectionHtml(), inkluagentInit(), zeigeCreditsMeldung().
@@ -52,6 +61,7 @@
     // 'tagging' = Barrierefrei machen, Testweise taggen, Hörprobe (Struktur und Bilder in der Karte, Bericht, Testlauf).
     // Beide teilen Datenquelle, Rückfrage, Fortschritt und Abschlussmeldung, damit nichts doppelt gepflegt wird.
     let modus = 'dokument';
+    let istWord = false;   // Word-Projekt (project_type 'docx'): Ansicht „Dokument“ mit Word-Karten (30.09.2026)
     let pollTimer = null;
     let laufZielDoc = null;
     let laufAktiv = false;
@@ -356,7 +366,44 @@
         if (geschlosseneDokumente.has(d.id)) return false;
         return anzahl <= 1 || offeneDokumente.has(d.id);
     }
+    // ─── Karte eines WORD-Dokuments (30.09.2026): Aufbau wie die PDF-Karte in „Dokument“ — Überschrift als Schalter, darunter
+    // die Dokumentinfos je Zeile „Bezeichnung: Wert“, eine Linie, darunter Hörprobe, Herunterladen, Umbenennen, Löschen und
+    // sonst nichts (Michael Karbe, Feedback 20260928 - 2, Punkte 1 und 2). Kein Stand-Abzeichen: Word kennt kein Tagging.
+    // Kein Vorschaubild: für Word gibt es ohne Umwandlung keine Seitenansicht.
+    function wordKarteHtml(project, d, pos, anzahl) {
+        const name = esc(docDisplayName(d));
+        const vh = t('– Dokument „{name}“', { name: name });
+        const busy = project.status === 'processing' || project.status === 'extracting';
+        const info = d.info || {};
+        const b = d.bilder || {};
+        const bilderText = (b.gesamt || 0)
+            ? t('{n} Bilder, {m} mit Alt-Text', { n: b.gesamt, m: b.mit_text || 0 }) + (b.dekorativ ? t(', {n} als dekorativ gekennzeichnet', { n: b.dekorativ }) : '')
+            : t('keine Bilder gefunden');
+        const meta = info.lesbar === false
+            ? '<li>' + t('Die Dokumentinfos konnten nicht aus der Word-Datei gelesen werden.') + '</li>' + metaZeile(t('Bilder'), esc(bilderText))
+            // Reihenfolge wie bei PDF (Titel, Anwendung, Seiten, Sprache), danach der Aufbau; Seiten nur, wenn Word sie belegt
+            : metaZeile(t('Titel'), esc(info.titel || t('kein Titel')))
+              + metaZeile(t('Anwendung'), esc(info.anwendung || t('nicht angegeben')))
+              + (info.seiten ? metaZeile(t('Seiten'), esc(info.seiten)) : '')
+              + metaZeile(t('Sprache'), esc(info.sprache || t('nicht gesetzt')))
+              + metaZeile(t('Überschriften'), esc(info.ueberschriften || 0))
+              + metaZeile(t('Tabellen'), esc(info.tabellen || 0))
+              + metaZeile(t('Bilder'), esc(bilderText));
+        const knoepfe = '<button type="button" class="btn btn-secondary" id="dok_hp_' + d.id + '" onclick="Dokument.hoerprobeOeffnen(' + project.id + ', ' + d.id + ')">' + t('Hörprobe') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            // Herunterladen mit derselben Rückfrage wie bei PDF (app.html openExportPanel), Modus 'word': Word-Datei oder barrierefreie PDF
+            + (!busy ? '<button type="button" class="btn btn-secondary" id="dok_export_' + d.id + '" onclick="openExportPanel(' + project.id + ', ' + d.id + ', \'word\')">' + ico('download') + t('Herunterladen') + '<span class="visually-hidden"> ' + vh + ', ' + t('als Word-Datei oder barrierefreie PDF') + '</span></button>' : '')
+            + '<button type="button" class="doc-action-btn" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            + '<button type="button" class="doc-action-btn doc-action-danger" data-kind="doc" data-doc-id="' + d.id + '" data-doc-name="' + name + '" data-doc-count="' + (b.gesamt || 0) + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>';
+        return '<section class="card dok-karte" id="dok_karte_' + d.id + '">'
+            + '<details class="dok-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
+            + '<summary><h3 id="dok_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: name }) + '</span></h3></summary>'
+            + '<div class="ausgabe-karte"><div class="ausgabe-text"><ul class="dok-meta">' + meta + '</ul></div></div>'
+            + '<div class="dok-werkbank"><div class="ausgabe-aktionen">' + knoepfe + '</div></div>'
+            + '</details></section>';
+    }
+
     function karteHtml(project, d, pos, anzahl) {
+        if (istWord) return wordKarteHtml(project, d, pos, anzahl);
         const name = esc(docDisplayName(d));
         const tg = d.tagging || {};
         const busy = project.status === 'processing' || project.status === 'extracting' || tg.laeuft || !!(project.kette && project.kette.laeuft);
@@ -428,7 +475,10 @@
         // und der Ladestand kommt als Statuszeile im Dialog (A11y-Review 29.09.2026).
         return '<dialog id="dkHoerprobeDialog" class="app-dialog" aria-labelledby="dkHpHeading" aria-describedby="dkHpHinweis">'
             + '<h2 id="dkHpHeading">' + t('Hörprobe') + '</h2>'
-            + '<p class="dialog-hint" id="dkHpHinweis">' + t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>'
+            // Word hat keine Tags: gelesen wird die Word-Datei mit den Alt-Texten aus InkluDocs (30.09.2026)
+            + '<p class="dialog-hint" id="dkHpHinweis">' + (istWord
+                ? t('So liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor, in Lesereihenfolge. Das ist kein Prüfergebnis.')
+                : t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.')) + '</p>'
             + '<p id="dkHpStatus" role="status" class="visually-hidden"></p>'
             + '<div class="ausgabe-hoerprobe" id="dkHpInhalt" role="region" aria-label="' + t('Vorgelesener Text') + '" tabindex="0" style="max-height:24rem;overflow:auto;"></div>'
             + '<div class="dialog-actions"><button type="button" class="btn btn-secondary" id="dkHpZu" onclick="Dokument.hoerprobeSchliessen()">' + t('Schließen') + '</button></div>'
@@ -449,7 +499,7 @@
         dlg.showModal();
         // Inhalt in der Dokumentsprache (lang am Inhalt, wie in der Barrierefreiheitsprüfung): VoiceOver liest ihn dann mit der
         // Stimme, die auch ein echter Screenreader nähme — die Ansage („Überschrift Ebene 1“) bleibt in der Oberflächensprache.
-        const roh = String((d && d.struktur && d.struktur.lang) || '').trim();
+        const roh = String((d && ((d.struktur && d.struktur.lang) || (d.info && d.info.sprache))) || '').trim();
         const lang = /^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(roh) ? roh : '';
         const zeile = z => {
             const i = String(z).indexOf(': ');
@@ -458,8 +508,19 @@
         };
         let meldung;
         try {
-            const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/struktur', { credentials: 'same-origin' });
-            const j = r.ok ? await r.json() : null;
+            let j;
+            if (istWord) {
+                // Word (30.09.2026): Hörprobe der Word-Datei mit den Alt-Texten aus InkluDocs — derselbe kostenlose Weg wie
+                // früher „Hörprobe und Prüfbericht“ im Herunterladen-Dialog (main._pdfua_vorschau_sync, docx_hoerprobe)
+                const r = await fetch('/api/projects/' + projectId + '/export/pdfua/vorschau', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document_id: docId }) });
+                const w = await r.json().catch(() => null);
+                const dok = r.ok && w ? (w.dokumente || [])[0] : null;
+                j = dok ? { verfuegbar: true, hoerprobe: dok.hoerprobe || [] }
+                        : { verfuegbar: false, grund: (w && typeof w.detail === 'string' && w.detail) || '' };
+            } else {
+                const r = await fetch('/api/projects/' + projectId + '/documents/' + docId + '/struktur', { credentials: 'same-origin' });
+                j = r.ok ? await r.json() : null;
+            }
             if (hoerprobeDoc !== docId || !dlg.open) return;
             if (!j || !j.verfuegbar) {
                 meldung = (j && j.grund) || t('Die Hörprobe konnte nicht geladen werden.');
@@ -855,14 +916,19 @@
         const data = await res.json();
         const project = data.project;
         aktuelleDaten = data;
+        istWord = project.project_type === 'docx';
+        if (istWord) modus = 'dokument';   // Word kennt nur die Dateiverwaltung, kein Tagging
         if (zustandProjekt !== projectId) { offeneBerichte = new Set(); offenePruefungen = new Set(); offeneDokumente = new Set(); geschlosseneDokumente = new Set(); zustandProjekt = projectId; }
         const docs = data.documents || [];
         neuLaden = (pid) => showProject(pid, true);   // diese Ansicht zeichnet nach Aktionen selbst neu
         if (typeof exportKontextSetzen === 'function') exportKontextSetzen(docs, project.project_type);
         // Mehrere Dokumente, alle getaggt: alles auf einmal als ZIP (bis 25.09.2026 in der Abschlusspruefung)
         const alleGetaggt = modus === 'dokument' && docs.length > 1 && docs.every(d => !(d.tagging && d.tagging.laeuft));   // seit 29.09. auch ungetaggte
-        const alleKnopf = alleGetaggt
-            ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="openExportPanel(' + project.id + ', 0, \'pdf\')">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> ' + (docs.every(d => d.getaggt === true) ? t('als ZIP, mit Alt-Texten und Quickinfos') : t('als ZIP; Dokumente ohne Tags bekommen keine Alt-Texte')) + '</span></button>'
+        const wordBusy = istWord && (project.status === 'processing' || project.status === 'extracting');
+        const alleKnopf = (alleGetaggt && !wordBusy)
+            ? '<p class="ausgabe-aktionen"><button type="button" class="btn btn-secondary" id="dkAlleBtn" onclick="openExportPanel(' + project.id + ', 0, \'' + (istWord ? 'word' : 'pdf') + '\')">' + ico('download') + t('Alle Dokumente herunterladen') + '<span class="visually-hidden"> '
+              + (istWord ? t('als ZIP, als Word-Dateien oder barrierefreie PDF')
+                         : (docs.every(d => d.getaggt === true) ? t('als ZIP, mit Alt-Texten und Quickinfos') : t('als ZIP; Dokumente ohne Tags bekommen keine Alt-Texte'))) + '</span></button>'
               + '</p>'
             : '';
         main.innerHTML = kopfHtml(project, data)

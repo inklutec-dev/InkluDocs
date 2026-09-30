@@ -14,6 +14,9 @@
  * nebeneinander (Punkt 8). Vorlesen: Ansage in der Kontosprache, Inhalt in der Dokumentsprache (Punkt 9, app.html
  * vorlesenTeile), nur mit Stimmen auf dem Gerät — der Dokumenttext geht an keinen Sprachdienst im Netz.
  *
+ * WORD-PROJEKTE (30.09.2026): dieselbe Ansicht („Barrierefreiheitsprüfung“) mit eigenem Zweig showWordProject am Dateiende —
+ * Prüfbericht und Hörprobe der Word-Datei ohne KI, dazu das veraPDF-Ergebnis der letzten barrierefreien PDF aus der Ablage.
+ *
  * Gemeinsame Helfer aus app.html/dashboard.js/dokument.js: t(), announce(), escHtml(), icon(), docDisplayName(),
  * projektKopfHtml(), vorlesenTeile(), vorlesenStopp(), Dokument.kiBlockHtml() und Dokument.setNeuLaden().
  */
@@ -471,5 +474,160 @@
 
     function listeGeklappt(docId, offen) { zustand(docId).listeOffen = !!offen; }
 
-    window.Abschluss = { showProject, erstellen, zurSeite, blaettern, vorlesenSeite, listeGeklappt };
+    // ═══ WORD-PROJEKT (30.09.2026, Steve: „Word soll die gleiche Ansicht wie PDF bekommen“) ═══════════════════════════════
+    // „Barrierefreiheitsprüfung“ eines Word-Projekts, OHNE KI: je Dokument (1) der regelbasierte Prüfbericht der Word-Datei
+    // mit den Alt-Texten aus InkluDocs (docx_hoerprobe: Titel, Sprache, Überschriften, Tabellenköpfe, Bilder ohne Alt-Text),
+    // (2) das veraPDF-Ergebnis der letzten barrierefreien PDF aus der Ablage — mit Regelnummern wie bei PDF und dem Hinweis,
+    // wenn die PDF nicht mehr zum heutigen Stand passt —, (3) die Hörprobe. Gleiche Karte wie bei PDF (<details>, H3 im
+    // summary, Abzeichen rechts); keine Prüfdatei, kein Seitenbild (Word hat ohne Umwandlung keine Seiten), kein Herunterladen
+    // (das macht „Dokument“). Daten: GET …/dokument-ansicht (Word-Zweig) und POST …/export/pdfua/vorschau (kostenlos).
+    let wordVorschau = {};   // docId -> {pruefbericht, hoerprobe} bzw. null, wenn die Prüfung nicht möglich war
+    let wordHoerprobeOffen = new Set();
+
+    function befundAnzahlText(n) {
+        return n === 0 ? t('Keine Befunde') : (n === 1 ? t('1 Befund') : t('{n} Befunde', { n: n }));
+    }
+    function datumZeit(s) {
+        // DB-Zeitstempel (UTC, „JJJJ-MM-TT HH:MM:SS“) -> Datum in der Oberflächensprache + lokale Uhrzeit (wie die Ablage)
+        const d = String(s || '');
+        if (d.length < 16) return d;
+        const dt = new Date(Date.UTC(+d.substring(0, 4), +d.substring(5, 7) - 1, +d.substring(8, 10), +d.substring(11, 13), +d.substring(14, 16)));
+        const p = n => String(n).padStart(2, '0');
+        const datum = (typeof formatDate === 'function') ? formatDate(dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate())) : d.substring(0, 10);
+        return datum + ', ' + p(dt.getHours()) + ':' + p(dt.getMinutes());
+    }
+    // veraPDF-Befunde der PDF, je verletztem Prüfpunkt eine Zeile mit Regelnummer (wie abschluss.probleme_zusammenstellen bei PDF)
+    function veraPdfZeilen(p) {
+        const out = [];
+        (p.punkte || []).forEach(pk => {
+            const einzeln = (pk.einzeln && pk.einzeln.length) ? pk.einzeln : [{ text: pk.text || '', regeln: [] }];
+            einzeln.forEach(e => {
+                const regeln = e.regeln || [];
+                const ref = regeln.length ? ' ' + (regeln.length === 1 ? t('(veraPDF-Regel {r})', { r: regeln.join(', ') }) : t('(veraPDF-Regeln {r})', { r: regeln.join(', ') })) : '';
+                out.push((pk.bereich ? pk.bereich + ': ' : '') + (e.text || '') + ref);
+            });
+        });
+        return out;
+    }
+    function wordKarteHtml(project, d, pos, anzahl) {
+        const nm = esc(name(d));
+        const vd = wordVorschau[d.id];
+        const befunde = vd ? (vd.pruefbericht || []).filter(b => b.status !== 'ok') : null;
+        const p = d.pdfua || null;
+        const pdfZeilen = p ? veraPdfZeilen(p) : [];
+        // Abzeichen: Befunde des Prüfberichts + Problemstellen der PDF, solange sie nicht nachweislich veraltet ist
+        const zahl = befunde ? befunde.length + (p && p.aktuell !== false ? pdfZeilen.length : 0) : null;
+        const badgeText = zahl === null ? t('Prüfung nicht möglich') : befundAnzahlText(zahl);
+        const badgeKlasse = zahl === null ? 'badge-ready' : (zahl ? 'badge-processing' : 'badge-done');
+        const stand = !p ? '' : (p.aktuell === true ? t('aktuell')
+            : (p.aktuell === false ? t('nicht mehr aktuell — seitdem wurden Alt-Texte oder der Dokumentname geändert') : t('nicht bekannt')));
+        const meta = '<ul class="dok-meta">'
+            + metaZeile(t('Prüfbericht des Word-Dokuments'), befunde ? esc(befundAnzahlText(befunde.length)) : t('nicht möglich'))
+            + metaZeile(t('Barrierefreie PDF'), p ? t('erstellt am {zeit}', { zeit: esc(datumZeit(p.erstellt_am)) }) : t('noch nicht erstellt'))
+            + (p ? metaZeile(t('Stand'), esc(stand)) : '')
+            + (p ? metaZeile(t('Norm-Prüfung PDF/UA-1 (veraPDF)'), p.bestanden ? t('bestanden') : t('nicht bestanden, {n} Regeln verletzt', { n: p.regeln_verletzt || pdfZeilen.length })) : '')
+            + '</ul>';
+        // (1) Prüfbericht
+        let s = '<h4 id="ab_wpb_' + d.id + '">' + t('Prüfbericht des Word-Dokuments') + '</h4>';
+        if (!befunde) s += '<p>' + t('Der Prüfbericht konnte nicht erstellt werden. Bitte lade die Ansicht später neu.') + '</p>';
+        else if (!befunde.length) s += '<p>' + t('Keine Befunde im Word-Dokument.') + '</p>';
+        else s += '<ol class="ab-problemliste">' + befunde.map(b => '<li>' + esc(b.text) + '</li>').join('') + '</ol>';
+        // (2) veraPDF der letzten barrierefreien PDF
+        s += '<h4 id="ab_wpdf_' + d.id + '">' + t('Norm-Prüfung der barrierefreien PDF (veraPDF)') + '</h4>';
+        if (!p) {
+            s += '<p>' + t('Für dieses Dokument gibt es noch keine barrierefreie PDF. Du erstellst sie in der Ansicht „Dokument“ über „Herunterladen“; danach steht hier das Ergebnis von veraPDF.') + '</p>';
+        } else {
+            if (p.aktuell === false) s += '<p><strong>' + t('Die barrierefreie PDF ist nicht mehr aktuell.') + '</strong> ' + t('Erstelle sie in der Ansicht „Dokument“ neu, damit das Ergebnis zu deinem heutigen Stand passt.') + '</p>';
+            s += pdfZeilen.length
+                ? '<ol class="ab-problemliste">' + pdfZeilen.map(z => '<li>' + esc(z) + '</li>').join('') + '</ol>'
+                : '<p>' + t('Keine Problemstellen gefunden: veraPDF meldet keinen Verstoß gegen PDF/UA-1.') + '</p>'
+                  + '<p>' + t('Wichtig: veraPDF prüft, ob die Struktur technisch den Regeln entspricht. Ob sie inhaltlich stimmt, prüft veraPDF nicht, zum Beispiel ob Überschriften wirklich als Überschriften getaggt sind oder ob ein Alt-Text zum Bild passt. Das hörst du am besten in der Hörprobe.') + '</p>';
+        }
+        // (3) Hörprobe: Inhalt in der Dokumentsprache (lang), Ansage in der Oberflächensprache — wie bei PDF
+        const hp = vd ? (vd.hoerprobe || []) : [];
+        const lang = dokSprache({ sprache: (d.info && d.info.sprache) || '' });
+        s += '<h4 id="ab_whp_' + d.id + '">' + t('Hörprobe') + '</h4>'
+            + '<p class="feld-hinweis">' + t('So liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>';
+        if (hp.length) {
+            s += '<p><button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_wvorlesen_' + d.id + '" aria-pressed="false" onclick="Abschluss.wordVorlesen(' + d.id + ', this)">' + t('Hörprobe vorlesen') + '</button></p>'
+                + '<details class="ab-problemklappe ab-whp" data-doc="' + d.id + '"' + (wordHoerprobeOffen.has(d.id) ? ' open' : '') + '><summary>' + t('Hörprobe lesen') + '</summary>'
+                + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Vorgelesener Text') + '" tabindex="0">'
+                + hp.map(zl => zeileHtml(zl, lang)).join('') + '</div></details>';
+        } else if (vd) {
+            s += '<p>' + t('Kein Text zum Vorlesen vorhanden.') + '</p>';
+        }
+        return '<section class="card dok-karte ab-karte" id="ab_karte_' + d.id + '">'
+            + '<details class="dok-klappe ab-klappe" data-doc="' + d.id + '"' + (karteOffen(d, anzahl) ? ' open' : '') + '>'
+            + '<summary><h3 id="ab_heading_' + d.id + '" class="doc-heading dok-kopfzeile"><span>' + t('Dokument {n}: {name}', { n: pos, name: nm }) + '<span class="visually-hidden">, ' + t('Ergebnis') + ':</span></span> <span class="badge ' + badgeKlasse + '" id="ab_badge_' + d.id + '">' + esc(badgeText) + '</span></h3></summary>'
+            + '<div class="ab-inhalt">' + meta
+            + '<p class="feld-hinweis">' + t('Geprüft wird die Word-Datei mit den Alt-Texten aus InkluDocs, genau die Datei, die du in der Ansicht „Dokument“ herunterlädst. Die Prüfung arbeitet mit festen Regeln, ohne KI, und kostet nichts.') + '</p>'
+            + s + '</div></details></section>';
+    }
+    function wordVorlesen(docId, btn) {
+        const vd = wordVorschau[docId];
+        if (!vd || typeof vorlesenTeile !== 'function') return;
+        const d = (dokDaten[docId] || {});
+        const lang = dokSprache({ sprache: (d.info && d.info.sprache) || '' });
+        const teile = [];
+        (vd.hoerprobe || []).forEach(zl => {
+            const zt = zeilenTeile(zl);
+            teile.push({ text: zt.ansage + (zt.inhalt ? ':' : '.'), lang: '' });
+            if (zt.inhalt) teile.push({ text: zt.inhalt + '.', lang: lang });
+        });
+        vorlesenTeile(teile, btn, t('Hörprobe vorlesen'));
+    }
+    async function showWordProject(projectId, erneut) {
+        projectId = Number(projectId);
+        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+        pollGen++;
+        kiPollStoppen();
+        if (typeof vorlesenStopp === 'function') vorlesenStopp();
+        const main = document.getElementById('main');
+        const res = await fetch('/api/projects/' + projectId + '/dokument-ansicht', { credentials: 'same-origin' });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        if (!res.ok) { main.innerHTML = '<div class="card"><p>' + t('Projekt konnte nicht geladen werden.') + '</p></div>'; return; }
+        const data = await res.json();
+        const project = data.project;
+        const docs = data.documents || [];
+        if (zustandProjekt !== projectId) {
+            offeneDokumente = new Set(); geschlosseneDokumente = new Set(); wordHoerprobeOffen = new Set(); zustandProjekt = projectId;
+        }
+        dokDaten = {};
+        docs.forEach(x => { dokDaten[x.id] = x; });
+        // Prüfbericht + Hörprobe aller Dokumente in einem Aufruf (kostenlos, ändert nichts); ohne Dokumente kein Aufruf
+        wordVorschau = {};
+        if (docs.length) {
+            try {
+                const r = await fetch('/api/projects/' + projectId + '/export/pdfua/vorschau', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                const j = r.ok ? await r.json() : null;
+                ((j && j.dokumente) || []).forEach(x => { if (x.document_id != null) wordVorschau[x.document_id] = x; });
+            } catch (e) { /* Karten zeigen „Prüfung nicht möglich“ */ }
+        }
+        const title = (project.name && project.name.trim()) ? project.name : project.filename;
+        main.innerHTML = projektKopfHtml(project, 'abschluss', title, '<div class="card-info" id="projectHeadInfo" hidden></div>')
+            + '<h2 class="section-title" id="dokumenteHeading" tabindex="-1" style="margin-top:1.5rem">' + t('Dokumente ({n})', { n: docs.length }) + '</h2>'
+            + (docs.length ? '<p class="feld-hinweis">' + t('Hier prüfst du jedes Word-Dokument ohne KI: den Prüfbericht mit festen Regeln und die Hörprobe. Hast du schon eine barrierefreie PDF erstellt, steht hier auch ihr Ergebnis von veraPDF. Heruntergeladen wird in der Ansicht „Dokument“.') + '</p>'
+                           : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
+            + '<div id="abListe">' + docs.map((d, i) => wordKarteHtml(project, d, i + 1, docs.length)).join('') + '</div>';
+        document.querySelectorAll('details.ab-klappe').forEach(el => {
+            const gezeichnetOffen = el.open;
+            let erstesEreignis = true;
+            el.addEventListener('toggle', () => {
+                const echt = !(erstesEreignis && el.open === gezeichnetOffen);
+                erstesEreignis = false;
+                if (!echt) return;
+                const k = Number(el.dataset.doc);
+                if (el.open) { offeneDokumente.add(k); geschlosseneDokumente.delete(k); }
+                else { offeneDokumente.delete(k); geschlosseneDokumente.add(k); if (typeof vorlesenStopp === 'function') vorlesenStopp(); }
+            });
+        });
+        document.querySelectorAll('details.ab-whp').forEach(el => el.addEventListener('toggle', () => {
+            const k = Number(el.dataset.doc);
+            if (el.open) wordHoerprobeOffen.add(k); else wordHoerprobeOffen.delete(k);
+        }));
+        const h1 = document.getElementById('projectName');
+        if (h1 && !erneut) h1.focus();
+    }
+
+    window.Abschluss = { showProject, erstellen, zurSeite, blaettern, vorlesenSeite, listeGeklappt, showWordProject, wordVorlesen };
 })();

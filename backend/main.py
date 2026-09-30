@@ -62,6 +62,7 @@ from docx_processor import extract_images_from_docx, extract_docx, validiere_doc
 import docx_export
 import pdfua_export
 import docx_hoerprobe
+import docx_ansicht   # Word-Ansichten „Dokument“ und „Barrierefreiheitsprüfung“ (30.09.2026)
 import secrets as _secrets
 # QUICKINFO-WERKZEUG (27.08.2026): PDF-Formularfelder lesen/schreiben, eigener Router
 import formular_api
@@ -4886,8 +4887,10 @@ async def set_prompt_setting(project_id: int, request: Request, user: dict = Dep
 
 # ANSICHTEN (22.09.2026, Steve): Der Wechsel ueber die Ansichts-Wahl merkt sich die Ansicht am Projekt;
 # beim naechsten Oeffnen ohne ?ansicht startet das Projekt dort (auf jedem Geraet). Erlaubte Werte je
-# Dateityp wie in app.html aktuelleAnsicht(): PDF dokument|alttexte|quickinfos|abschluss, Word alttexte|uebersetzung.
-ANSICHTEN_JE_TYP = {"pdf": ("dokument", "tagging", "alttexte", "quickinfos", "abschluss"), "docx": ("alttexte", "uebersetzung")}
+# Dateityp wie in app.html ansichtenFuer(): PDF dokument|tagging|alttexte|quickinfos|abschluss, Word seit 30.09.2026
+# dieselbe Ordnung wie PDF (Steve: „Word soll die gleiche Ansicht wie PDF bekommen“): dokument|alttexte|uebersetzung|abschluss.
+ANSICHTEN_JE_TYP = {"pdf": ("dokument", "tagging", "alttexte", "quickinfos", "abschluss"),
+                    "docx": ("dokument", "alttexte", "uebersetzung", "abschluss")}
 
 
 @app.post("/api/projects/{project_id}/ansicht")
@@ -8826,6 +8829,50 @@ def _pdfua_projekt_laden(project_id: int, user_id: int, meldung: str = "Die Umwa
     return project
 
 
+def _word_fingerabdruck(unit: dict, sprache: str) -> str:
+    """Was die barrierefreie PDF eines Word-Dokuments bestimmt (exportierte Alt-Texte, Dokumentname, Sprache) als
+    Pruefsumme — dieselbe Rechnung beim Umwandeln und in der Ansicht (docx_ansicht.fingerabdruck)."""
+    alt = {(img.get("docx_anker") or f"id{img.get('id')}"): _exportable_alt_text(img) for img in unit.get("images") or []}
+    return docx_ansicht.fingerabdruck(alt, (unit.get("doc") or {}).get("display_name") or "", sprache)
+
+
+def _word_dokument_ansicht(project: dict, user_id: int) -> dict:
+    """Datenquelle der Word-Ansichten „Dokument“ und „Barrierefreiheitsprüfung“ (30.09.2026) — gleicher Endpunkt wie PDF
+    (GET /api/projects/{id}/dokument-ansicht, tagging_api verzweigt nach dem Dateityp), eigene Felder: je Dokument
+    Dokumentinfos aus der Word-Datei (docx_ansicht.dokumentinfo, ohne KI), Bilderzahlen wie im Export (_exportable_alt_text)
+    und das Ergebnis der letzten barrierefreien PDF aus der Ablage. Keine Serverpfade nach aussen. Synchron (Executor)."""
+    sprache = project.get("alt_language") or "de"
+    conn = get_db()
+    try:
+        docs = [dict(r) for r in conn.execute(
+            "SELECT * FROM documents WHERE project_id = ? ORDER BY doc_index", (project["id"],)).fetchall()]
+        bilder = {}
+        for d in docs:
+            bilder[d["id"]] = [dict(i) for i in conn.execute(
+                "SELECT * FROM images WHERE document_id = ? ORDER BY page_number, image_index", (d["id"],)).fetchall()]
+        ablage_zeilen = [dict(r) for r in conn.execute(
+            "SELECT id, document_id, created_at, bericht FROM ablage WHERE project_id = ? AND user_id = ? AND art = 'pdfua' "
+            "AND projekt_geloescht = 0 ORDER BY id DESC LIMIT 200", (project["id"], user_id)).fetchall()]
+    finally:
+        conn.close()
+    fps = {d["id"]: _word_fingerabdruck({"doc": d, "images": bilder[d["id"]]}, sprache) for d in docs}
+    pdfua = docx_ansicht.pdfua_je_dokument(ablage_zeilen, docs, _doc_label, fps)
+    aussen = []
+    for d in docs:
+        eintrag = {k: d.get(k) for k in ("id", "doc_index", "original_filename", "display_name", "total_images",
+                                          "extraction_method", "created_at")}
+        texte = [_exportable_alt_text(i) for i in bilder[d["id"]]]
+        eintrag["bilder"] = {"gesamt": len(texte),
+                             "dekorativ": sum(1 for a in texte if a == "dekorativ"),
+                             "mit_text": sum(1 for a in texte if a and a != "dekorativ" and a.strip())}
+        eintrag["info"] = docx_ansicht.dokumentinfo(d.get("original_path") or "")
+        eintrag["pdfua"] = pdfua.get(d["id"])
+        aussen.append(eintrag)
+    projekt_aussen = {k: project.get(k) for k in tagging_api._PROJEKT_FELDER}
+    projekt_aussen["dokumente"] = len(docs)
+    return {"project": projekt_aussen, "documents": aussen, "ausgaben_anzahl": _ausgaben_anzahl(project["id"])}
+
+
 def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int], custom_name: Optional[str],
                           ui_lang: str, ausloeser: str = "knopf") -> dict:
     """Kern der Umwandlung, SYNCHRON (laeuft im Executor): Word mit Alt-Texten bauen ->
@@ -8883,7 +8930,11 @@ def _pdfua_umwandeln_sync(project: dict, user_id: int, document_id: Optional[int
         pdf_name = (f"{pos:02d}_{_safe_filename_component(label)}.pdf" if len(units) > 1
                     else f"inkludocs_{_safe_filename_component(label)}.pdf")
         pdfs.append((pdf_name, pdf_bytes))
-        ergebnisse.append({"dokument": label, "bilder": info["total"], "alt_texte": info["tagged"],
+        # document_id + Fingerabdruck (30.09.2026): die Word-Ansicht „Barrierefreiheitsprüfung“ ordnet das veraPDF-Ergebnis
+        # dem Dokument zu (auch im ZIP fuer das ganze Projekt) und erkennt, ob die PDF noch zum heutigen Stand passt.
+        ergebnisse.append({"dokument": label, "document_id": unit["doc"].get("id"),
+                           "fingerabdruck": _word_fingerabdruck(unit, sprache),
+                           "bilder": info["total"], "alt_texte": info["tagged"],
                            "warnungen": info.get("warnings") or [], "pruefung": pruefung,
                            "nachbearbeitung": nach, "hoerprobe": analyse.get("hoerprobe") or [],
                            "pruefbericht": analyse.get("pruefbericht") or [],
@@ -9458,6 +9509,7 @@ app.include_router(tagging_api.build_router(tagging_api.Deps(
     ausgaben_anzahl=lambda pid: _ausgaben_anzahl(pid),
     tageslimit_wache=tageslimit_wache,
     tageslimit_text=tageslimit_text,
+    word_ansicht=_word_dokument_ansicht,   # Word-Projekte: dieselbe Adresse /dokument-ansicht (30.09.2026)
 )))
 
 # ─── KETTE „Komplett barrierefrei machen“ (22.09.2026): Tagging -> Alt-Texte -> Quickinfos in einem Lauf ─────

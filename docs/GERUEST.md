@@ -35,10 +35,10 @@ Die sechs Bausteine:
 
 - Kern: `backend/docx_hoerprobe.py`, `backend/docx_export.py`, `backend/pdfua_export.py`, `backend/docx_struktur.py`
 - Endpunkte: `backend/main.py` Abschnitt Word-Export / PDF/UA (`_pdfua_umwandeln_sync`, `_word_export_ausgabe_sync`)
-- Oberfläche: `backend/templates/app.html` (Word-Ansicht „Alt-Texte“ mit Export-Bereich), `backend/templates/ablage.html`
+- Oberfläche: seit 30.09.2026 dieselben Ansichten wie PDF — `frontend/dokument.js` (Ansicht „Dokument“, Word-Karten), `backend/templates/app.html` (Ansicht „Alt-Texte“, Herunterladen-Dialog Modus `word`/`tabellen`), `frontend/abschluss.js` („Barrierefreiheitsprüfung“, `showWordProject`), `backend/templates/ablage.html`; Daten der Ansichten `backend/docx_ansicht.py`
 - Prompt und Schema: keine Modellaufrufe (Regeln und Konverter)
 - Chatbot: `tools/ausgaben.py`, `tools/definitions_word.py`, `prompts/system_ausgaben.py`
-- Tests und Doku: `tests/e2e/verify_pdfua.py`, `verify_ablage.py`, `ui_ausgaben.py`, `verify_chat_ausgaben.py`, `docs/ABLAGE.md`, `docs/WORD.md`
+- Tests und Doku: `tests/test_docx_ansicht.py`, `tests/e2e/verify_pdfua.py`, `verify_ablage.py`, `ui_ausgaben.py`, `ui_word_ansichten.py`, `verify_chat_ausgaben.py`, `docs/ABLAGE.md`, `docs/WORD.md`
 
 ## Übersetzen (Word)
 

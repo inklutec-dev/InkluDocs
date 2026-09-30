@@ -9704,3 +9704,67 @@ msgstr "Important : veraPDF vérifie si la structure respecte techniquement les 
 
 msgid "veraPDF prüft die technische Struktur, nicht ob sie inhaltlich stimmt."
 msgstr "veraPDF vérifie la structure technique, pas si son contenu est juste."
+
+msgid "1 Befund"
+msgstr "1 constat"
+
+msgid "Keine Befunde"
+msgstr "Aucun constat"
+
+msgid "Der Prüfbericht konnte nicht erstellt werden. Bitte lade die Ansicht später neu."
+msgstr "Le rapport de vérification n’a pas pu être établi. Veuillez recharger la vue plus tard."
+
+msgid "Die Dokumentinfos konnten nicht aus der Word-Datei gelesen werden."
+msgstr "Les informations du document n’ont pas pu être lues dans le fichier Word."
+
+msgid "Die barrierefreie PDF ist nicht mehr aktuell."
+msgstr "Le PDF accessible n’est plus à jour."
+
+msgid "Dokument herunterladen"
+msgstr "Télécharger le document"
+
+msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte und Übersetzungen bleiben erhalten."
+msgstr "Vous pouvez téléverser d’autres fichiers Word à tout moment. Chaque fichier reçoit sa propre carte dans la liste ci-dessous ; les textes alternatifs et traductions existants sont conservés."
+
+msgid "Erstelle sie in der Ansicht „Dokument“ neu, damit das Ergebnis zu deinem heutigen Stand passt."
+msgstr "Recréez-le dans la vue « Document » pour que le résultat corresponde à votre état actuel."
+
+msgid "Für dieses Dokument gibt es noch keine barrierefreie PDF. Du erstellst sie in der Ansicht „Dokument“ über „Herunterladen“; danach steht hier das Ergebnis von veraPDF."
+msgstr "Il n’existe pas encore de PDF accessible pour ce document. Vous le créez dans la vue « Document » via « Télécharger » ; le résultat de veraPDF s’affiche ensuite ici."
+
+msgid "Geprüft wird die Word-Datei mit den Alt-Texten aus InkluDocs, genau die Datei, die du in der Ansicht „Dokument“ herunterlädst. Die Prüfung arbeitet mit festen Regeln, ohne KI, und kostet nichts."
+msgstr "Est vérifié le fichier Word avec les textes alternatifs d’InkluDocs, exactement le fichier que vous téléchargez dans la vue « Document ». La vérification applique des règles fixes, sans IA, et est gratuite."
+
+msgid "Hier prüfst du jedes Word-Dokument ohne KI: den Prüfbericht mit festen Regeln und die Hörprobe. Hast du schon eine barrierefreie PDF erstellt, steht hier auch ihr Ergebnis von veraPDF. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Ici, vous vérifiez chaque document Word sans IA : le rapport de vérification selon des règles fixes et l’écoute. Si vous avez déjà créé un PDF accessible, son résultat veraPDF s’affiche aussi ici. Le téléchargement se fait dans la vue « Document »."
+
+msgid "Hörprobe vorlesen"
+msgstr "Lire l’écoute à voix haute"
+
+msgid "Norm-Prüfung der barrierefreien PDF (veraPDF)"
+msgstr "Contrôle de norme du PDF accessible (veraPDF)"
+
+msgid "So liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor, in Lesereihenfolge. Das ist kein Prüfergebnis."
+msgstr "Voici comment un lecteur d’écran lit ce document Word avec les textes alternatifs d’InkluDocs, dans l’ordre de lecture. Ce n’est pas un résultat de vérification."
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Danach kannst du Alt-Texte erzeugen, das Dokument übersetzen und es als Word-Datei oder barrierefreie PDF herunterladen."
+msgstr "Choisissez un document Word (.docx) ou faites-le glisser ici. Vous pourrez ensuite créer des textes alternatifs, traduire le document et le télécharger en fichier Word ou en PDF accessible."
+
+msgid "als Word-Datei oder barrierefreie PDF"
+msgstr "en fichier Word ou en PDF accessible"
+
+msgid "als ZIP, als Word-Dateien oder barrierefreie PDF"
+msgstr "en ZIP, en fichiers Word ou en PDF accessibles"
+
+msgid "nicht bekannt"
+msgstr "inconnu"
+
+#, python-brace-format
+msgid "nicht bestanden, {n} Regeln verletzt"
+msgstr "échoué, {n} règles non respectées"
+
+msgid "nicht mehr aktuell — seitdem wurden Alt-Texte oder der Dokumentname geändert"
+msgstr "plus à jour — des textes alternatifs ou le nom du document ont changé depuis"
+
+msgid "nicht möglich"
+msgstr "impossible"

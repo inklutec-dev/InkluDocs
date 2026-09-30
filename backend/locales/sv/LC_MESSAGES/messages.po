@@ -9272,3 +9272,67 @@ msgstr "Viktigt: veraPDF kontrollerar om strukturen tekniskt följer reglerna. D
 
 msgid "veraPDF prüft die technische Struktur, nicht ob sie inhaltlich stimmt."
 msgstr "veraPDF kontrollerar den tekniska strukturen, inte om innehållet stämmer."
+
+msgid "1 Befund"
+msgstr "1 fynd"
+
+msgid "Keine Befunde"
+msgstr "Inga fynd"
+
+msgid "Der Prüfbericht konnte nicht erstellt werden. Bitte lade die Ansicht später neu."
+msgstr "Kontrollrapporten kunde inte skapas. Ladda om vyn senare."
+
+msgid "Die Dokumentinfos konnten nicht aus der Word-Datei gelesen werden."
+msgstr "Dokumentinformationen kunde inte läsas från Word-filen."
+
+msgid "Die barrierefreie PDF ist nicht mehr aktuell."
+msgstr "Den tillgängliga PDF:en är inte längre aktuell."
+
+msgid "Dokument herunterladen"
+msgstr "Ladda ned dokument"
+
+msgid "Du kannst jederzeit weitere Word-Dateien hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte und Übersetzungen bleiben erhalten."
+msgstr "Du kan när som helst ladda upp fler Word-filer. Varje fil får ett eget kort i listan nedan; befintliga alt-texter och översättningar behålls."
+
+msgid "Erstelle sie in der Ansicht „Dokument“ neu, damit das Ergebnis zu deinem heutigen Stand passt."
+msgstr "Skapa den på nytt i vyn ”Dokument” så att resultatet stämmer med ditt nuvarande läge."
+
+msgid "Für dieses Dokument gibt es noch keine barrierefreie PDF. Du erstellst sie in der Ansicht „Dokument“ über „Herunterladen“; danach steht hier das Ergebnis von veraPDF."
+msgstr "Det finns ännu ingen tillgänglig PDF för det här dokumentet. Du skapar den i vyn ”Dokument” via ”Ladda ned”; därefter visas resultatet från veraPDF här."
+
+msgid "Geprüft wird die Word-Datei mit den Alt-Texten aus InkluDocs, genau die Datei, die du in der Ansicht „Dokument“ herunterlädst. Die Prüfung arbeitet mit festen Regeln, ohne KI, und kostet nichts."
+msgstr "Det som kontrolleras är Word-filen med alt-texterna från InkluDocs, exakt den fil du laddar ned i vyn ”Dokument”. Kontrollen arbetar med fasta regler, utan AI, och kostar ingenting."
+
+msgid "Hier prüfst du jedes Word-Dokument ohne KI: den Prüfbericht mit festen Regeln und die Hörprobe. Hast du schon eine barrierefreie PDF erstellt, steht hier auch ihr Ergebnis von veraPDF. Heruntergeladen wird in der Ansicht „Dokument“."
+msgstr "Här kontrollerar du varje Word-dokument utan AI: kontrollrapporten med fasta regler och lyssningsprovet. Har du redan skapat en tillgänglig PDF visas även dess resultat från veraPDF här. Nedladdning görs i vyn ”Dokument”."
+
+msgid "Hörprobe vorlesen"
+msgstr "Läs upp lyssningsprovet"
+
+msgid "Norm-Prüfung der barrierefreien PDF (veraPDF)"
+msgstr "Normkontroll av den tillgängliga PDF:en (veraPDF)"
+
+msgid "So liest ein Screenreader dieses Word-Dokument mit den Alt-Texten aus InkluDocs vor, in Lesereihenfolge. Das ist kein Prüfergebnis."
+msgstr "Så här läser en skärmläsare upp det här Word-dokumentet med alt-texterna från InkluDocs, i läsordning. Det är inget kontrollresultat."
+
+msgid "Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Danach kannst du Alt-Texte erzeugen, das Dokument übersetzen und es als Word-Datei oder barrierefreie PDF herunterladen."
+msgstr "Välj ett Word-dokument (.docx) eller dra hit det. Därefter kan du skapa alt-texter, översätta dokumentet och ladda ned det som Word-fil eller tillgänglig PDF."
+
+msgid "als Word-Datei oder barrierefreie PDF"
+msgstr "som Word-fil eller tillgänglig PDF"
+
+msgid "als ZIP, als Word-Dateien oder barrierefreie PDF"
+msgstr "som ZIP, som Word-filer eller tillgängliga PDF:er"
+
+msgid "nicht bekannt"
+msgstr "okänt"
+
+#, python-brace-format
+msgid "nicht bestanden, {n} Regeln verletzt"
+msgstr "ej godkänd, {n} regler överträdda"
+
+msgid "nicht mehr aktuell — seitdem wurden Alt-Texte oder der Dokumentname geändert"
+msgstr "inte längre aktuell — alt-texter eller dokumentnamnet har ändrats sedan dess"
+
+msgid "nicht möglich"
+msgstr "inte möjligt"

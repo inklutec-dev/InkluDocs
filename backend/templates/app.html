@@ -277,13 +277,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         return !!(project && project.tool === 'pdf' && project.project_type === 'pdf');
     }
     // Ansicht: 1. aus der Adresse (?ansicht=), 2. die am Projekt gemerkte (projects.letzte_ansicht, gesetzt bei
-    // jedem Wechsel ueber die Ansichts-Wahl), 3. Startansicht des Dateityps — PDF „dokument“ (Steve 22.09.2026),
-    // Word „alttexte“, Eingang „uebersetzen“ startet in der Uebersetzung.
+    // jedem Wechsel ueber die Ansichts-Wahl), 3. Startansicht des Dateityps — PDF und Word „dokument“ (Steve 22.09.2026
+    // fuer PDF, 30.09.2026 fuer Word), Eingang „uebersetzen“ startet in der Uebersetzung.
     // Alle Stationen des Dateityps — immer dieselbe Liste fuer jedes Projekt dieses Typs (Steve 22.09.2026).
     function ansichtenFuer(project) {
         // Reihenfolge wie man arbeitet: hochladen, taggen, beschreiben, prüfen (Tagging: Michael Karbe, Feedback 20260928 - 2)
         if (istPdfDateityp(project)) return ['dokument', 'tagging', 'alttexte', 'quickinfos', 'abschluss'];
-        if (istWordDateityp(project)) return ['alttexte', 'uebersetzung'];
+        // Word wie PDF (Steve 30.09.2026: „Word soll die gleiche Ansicht wie PDF bekommen, auch mit der Dokumentenverwaltung“):
+        // Dokument = Dateiverwaltung (dokument.js), Alt-Texte (hier), Übersetzung (uebersetzen.js), Barrierefreiheitsprüfung
+        // = Prüfbericht, Hörprobe und veraPDF-Ergebnis der letzten barrierefreien PDF, ohne KI (abschluss.js).
+        if (istWordDateityp(project)) return ['dokument', 'alttexte', 'uebersetzung', 'abschluss'];
         return ['alttexte'];
     }
     // Warum eine Station gerade nicht waehlbar ist ('' = verfuegbar). Quickinfos brauchen Formularfelder.
@@ -301,7 +304,13 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         const gemerkt = project && project.letzte_ansicht;
         if (gemerkt && erlaubt.includes(gemerkt)) return gemerkt;
         if (istPdfDateityp(project)) return 'dokument';
-        return project && project.tool === 'uebersetzen' ? 'uebersetzung' : 'alttexte';
+        if (istWordDateityp(project)) return project.tool === 'uebersetzen' ? 'uebersetzung' : 'dokument';
+        return 'alttexte';
+    }
+    // Dateitypen mit Dateiverwaltung in der Ansicht „Dokument“ (PDF seit 22.09., Word seit 30.09.2026): dort wird hochgeladen,
+    // umbenannt, geloescht und die Datei heruntergeladen; die anderen Ansichten zeigen nur ihren Inhalt.
+    function mitDokumentAnsicht(project) {
+        return istPdfDateityp(project) || istWordDateityp(project);
     }
     // ANSICHTS-WAHL als Knoepfe (Michael Karbe, Feedback 24.09.2026, Punkt 8): je Ansicht ein Link in Knopf-Optik,
     // die aktuelle dunkel (btn-primary, aria-current="page"), die anderen hell — ein Klick wechselt. Semantisch LINKS
@@ -443,7 +452,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // Wortlaut je ANSICHT (Steve 22.09.2026): in der Uebersetzungs-Ansicht eines Word-Projekts stand noch
         // „Daraus werden die Bilder extrahiert“; in der Ansicht „Dokument“ geht es um das ganze Dokument.
         let tool = project.tool;
-        if (tool === 'word' && aktuelleAnsicht(project) === 'uebersetzung') tool = 'uebersetzen';
+        // Word-Projekte (Eingang „word“ oder „uebersetzen“): Hochladen seit 30.09.2026 nur in der Ansicht „Dokument“, wie bei
+        // PDF (Steve: „Word soll die gleiche Ansicht wie PDF bekommen, auch mit der Dokumentenverwaltung“).
+        if (istWordDateityp(project)) {
+            if (aktuelleAnsicht(project) !== 'dokument') return '';
+            tool = 'word';
+        }
         // Hochladen nur in der Ansicht „Dokument“ (Michael Karbe, Mail 22.09.2026, Punkt 8): die Ansichten
         // Alt-Texte und Quickinfos eines PDF-Projekts zeigen kein Upload-Feld mehr. PDF-Projekte haben den
         // Dateityp ab dem Anlegen (project_type 'pdf'), die Ansicht „Dokument“ ist also immer erreichbar.
@@ -475,13 +489,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
         if (tool === 'word') {
-            // WORD-WERKZEUG (26.08.2026): gleicher Block wie PDF, nur .docx.
-            const hasExisting = project.total_images > 0;
+            // WORD-WERKZEUG (26.08.2026): gleicher Block wie PDF, nur .docx. Seit 30.09.2026 nur in der Ansicht „Dokument“,
+            // Wortlaut wie dort bei PDF: es geht um das ganze Dokument, nicht nur um die Bilder. „Schon etwas da“ zaehlt die
+            // Dokumente (die Datenquelle der Ansicht liefert project.dokumente) — ein Word-Dokument ohne Bilder zaehlt mit.
+            const hasExisting = (project.dokumente || 0) > 0 || project.total_images > 0;
             const heading = hasExisting ? t('Weitere Word-Datei hinzufügen') : t('Word-Datei hinzufügen');
             const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
             const hint = hasExisting
-                ? t('Du kannst jederzeit weitere Word-Dateien mit max. {mb} MB uploaden. Sie werden in der Liste unten eingefügt; bereits vorhandene Alt-Texte bleiben erhalten.', { mb: window.MAX_UPLOAD_MB || 50 })
-                : t('Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Daraus werden die Bilder extrahiert.') + sizeHint;
+                ? t('Du kannst jederzeit weitere Word-Dateien hochladen. Jede Datei bekommt eine eigene Karte in der Liste unten; vorhandene Alt-Texte und Übersetzungen bleiben erhalten.') + sizeHint
+                : t('Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Danach kannst du Alt-Texte erzeugen, das Dokument übersetzen und es als Word-Datei oder barrierefreie PDF herunterladen.') + sizeHint;
             return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
                 + '<div class="dropzone-inner">'
                 + '<input type="file" id="projUpload" accept=".docx" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
@@ -491,23 +507,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 + '<p id="projUploadHint" class="feld-hinweis">' + hint + '</p>'
                 + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
         }
-        if (tool === 'uebersetzen') {
-            // UEBERSETZEN-WERKZEUG (18.09.2026): gleicher Block wie Word, Wortlaut Uebersetzung.
-            const hasExisting = project.status !== 'neu' && !!(project.hat_original || project.original_path);
-            const heading = hasExisting ? t('Weitere Word-Datei hinzufügen') : t('Word-Datei hinzufügen');
-            const sizeHint = ' ' + t('Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
-            const hint = hasExisting
-                ? t('Du kannst jederzeit weitere Word-Dateien hochladen. Sie werden in der Liste unten eingefügt; bereits übersetzte Absätze bleiben erhalten.') + sizeHint
-                : t('Wähle ein Word-Dokument (.docx) oder ziehe es hierher. Der Text wird absatzweise gelesen; Formatierung und Struktur bleiben beim Übersetzen unverändert.') + sizeHint;
-            return '<section class="card proj-dropzone" id="projUploadZone" aria-labelledby="addHeading"><h2 id="addHeading" class="section-title">' + heading + '</h2>'
-                + '<div class="dropzone-inner">'
-                + '<input type="file" id="projUpload" accept=".docx" aria-describedby="projUploadHint" onchange="uploadInProject(event, ' + project.id + ')">'
-                + '<label for="projUpload" class="upload-btn">' + t('Word-Datei auswählen') + '</label>'
-                + '<p class="dropzone-or">' + t('oder Datei hierher ziehen') + '</p>'
-                + '</div>'
-                + '<p id="projUploadHint" class="feld-hinweis">' + hint + '</p>'
-                + '<p id="projUploadStatus" role="status" aria-live="polite" style="margin-top:0.5rem;font-weight:600;"></p></section>';
-        }
+        // (Eigener Block fuer die Uebersetzungs-Ansicht bis 30.09.2026 entfernt: Word-Projekte laden nur noch in „Dokument“ hoch.)
         if (tool === 'formular') {
             // QUICKINFO-WERKZEUG (27.08.2026): gleicher Block wie PDF, Wortlaut Formular.
             const hasExisting = project.status !== 'neu' && !!(project.hat_original || project.original_path);
@@ -679,8 +679,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     // Word: Ansage je Ansicht (Testumbau 18.09.2026) — in der Uebersetzungs-Ansicht geht es um Absaetze.
                     const inUebersetzung = data.project_type === 'docx' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'uebersetzung';
                     const inDokument = data.project_type === 'pdf' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'dokument';
+                    // Word in der Ansicht „Dokument“ (30.09.2026): es geht um die ganze Datei, nicht nur um die Bilder
+                    const inWordDokument = data.project_type === 'docx' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'dokument';
                     const inQuickinfos = data.project_type === 'pdf' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'quickinfos';
-                    const wartetext = inUebersetzung
+                    const wartetext = (inUebersetzung || inWordDokument)
                         ? t('Die Word-Datei wird gelesen …')
                         : inDokument
                         ? t('Die PDF wird gelesen …')
@@ -743,7 +745,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 // dass ein neues Dokument unten angelegt wurde. Nach einer
                 // Nachpruefungs-Rettung gibt es keine Server-Antwort (data=null) —
                 // die Erfolgs-Ansage kam dann schon aus dem Rettungspfad.
-                if (data && data.project_type === 'docx' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'uebersetzung') {
+                if (data && data.project_type === 'docx' && ['uebersetzung', 'dokument'].includes(aktuelleAnsicht(currentProjectFuerAnsicht || {}))) {
+                    // Uebersetzung und (seit 30.09.2026) Dokument: die Karte bzw. Ansicht nennt die Zahlen selbst.
                     // Uebersetzungs-Ansicht: Zahlen liest die Ansicht selbst aus (Absaetze statt Bilder).
                     announce(data.appended ? t('Dokument hinzugefügt als Dokument {d}.', { d: data.doc_index }) : t('Dokument gelesen.'));
                 } else if (data && data.project_type === 'pdf' && aktuelleAnsicht(currentProjectFuerAnsicht || {}) === 'dokument') {
@@ -887,8 +890,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         // TESTUMBAU „Projekt = Dateityp, Faehigkeiten = Ansichten" (Steve 18.09.2026): Ein Word-Projekt
         // (Eingang „word" oder „uebersetzen") hat die Ansichten „Alt-Texte" (diese Datei) und
-        // „Uebersetzung" (frontend/uebersetzen.js). Welche offen ist, steht in der Adresse
-        // (?ansicht=uebersetzung); ohne Angabe die Startansicht des Eingangs. Zurueck im Browser geht.
+        // „Uebersetzung" (frontend/uebersetzen.js), seit 30.09.2026 zusaetzlich „Dokument“ und „Barrierefreiheitsprüfung“
+        // wie ein PDF-Projekt (siehe unten). Welche offen ist, steht in der Adresse (?ansicht=…); ohne Angabe die gemerkte
+        // bzw. die Startansicht des Eingangs. Zurueck im Browser geht.
         if (project && istWordDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'uebersetzung') {
             return Uebersetzen.showProject(projectId);
         }
@@ -897,9 +901,18 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && (aktuelleAnsicht(project) === 'dokument' || aktuelleAnsicht(project) === 'tagging')) {
             return Dokument.showProject(projectId, false, aktuelleAnsicht(project));
         }
+        // Word-Projekt, Ansicht „Dokument“ (30.09.2026): dieselbe Dateiverwaltung wie PDF, gezeichnet von dokument.js.
+        if (project && istWordDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'dokument') {
+            return Dokument.showProject(projectId, false, 'dokument');
+        }
         // PDF-Projekt, Station „Abschlussprüfung“ (24.09.2026): fertige Datei prüfen und herunterladen (frontend/abschluss.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'abschluss') {
             return Abschluss.showProject(projectId);
+        }
+        // Word-Projekt, „Barrierefreiheitsprüfung“ (30.09.2026): Prüfbericht und Hörprobe ohne KI, veraPDF-Ergebnis der letzten
+        // barrierefreien PDF (frontend/abschluss.js, eigener Zweig).
+        if (project && istWordDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'abschluss') {
+            return Abschluss.showWordProject(projectId);
         }
         // PDF-Projekt, Station „Quickinfos“ (22.09.2026): dieselbe Ansicht wie das Formular-Werkzeug (formular.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'quickinfos') {
@@ -967,8 +980,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     ` : ''}
                     ${!window.GUEST_MODE && images.length > 0 ? `
                         <!-- PDF-Projekte (Michael Karbe, Feedback 28.09.2026 - 1, Punkte 2 und 3): hier nur noch die Alt-Texte als
-                             Tabelle — eigener Knopf „Alt-Texte herunterladen“; die PDF selbst gibt es in der Ansicht „Dokument“. -->
-                        ${istPdfDateityp(project)
+                             Tabelle — eigener Knopf „Alt-Texte herunterladen“; die PDF selbst gibt es in der Ansicht „Dokument“.
+                             Word-Projekte seit 30.09.2026 genauso: die Word-Datei und die barrierefreie PDF gibt es in „Dokument“. -->
+                        ${mitDokumentAnsicht(project)
                             ? '<button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(' + project.id + ', 0, \'tabellen\')">' + icon('download') + t('Alt-Texte herunterladen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>'
                             : `<button class="btn btn-primary" id="exportOpenBtn" onclick="openExportPanel(${project.id})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${t('– ganzes Projekt')}</span></button>`}
                         <!-- Meine Ausgaben (Steve/Michael 11.09.2026 Besprechung): kein Reiter mehr im Projektkopf, sondern ein
@@ -2909,14 +2923,14 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                         </summary>
                         ${innerBlocks}
                     </details>
-                    ${!window.GUEST_MODE && istPdfDateityp(project) ? `<span class="doc-actions">
+                    ${!window.GUEST_MODE && mitDokumentAnsicht(project) ? `<span class="doc-actions">
                         ${docGenBtn}
                         ${totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey}, 'tabellen')">${icon('download')}${t('Alt-Texte herunterladen')}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
                     </span>` : ''}
                     ${/* PDF-Projekte (Michael Karbe, Feedback 28.09.2026 - 1, Punkte 1-3): Umbenennen, Loeschen und die PDF nur
-                         noch in der Ansicht „Dokument“; hier bleiben Generieren und die Alt-Texte als Tabelle. Word, Web und
-                         Bilder unveraendert (Steve 28.09.2026: die anderen Werkzeuge ziehen spaeter nach). */ ''}
-                    ${!window.GUEST_MODE && !istPdfDateityp(project) ? `<span class="doc-actions">
+                         noch in der Ansicht „Dokument“; hier bleiben Generieren und die Alt-Texte als Tabelle. Word seit 30.09.2026
+                         genauso (Steve: gleiche Ansicht wie PDF). Web und Bilder unveraendert. */ ''}
+                    ${!window.GUEST_MODE && !mitDokumentAnsicht(project) ? `<span class="doc-actions">
                         ${docGenBtn}
                         ${totalImgs > 0 ? `<button type="button" class="doc-action-btn" onclick="openExportPanel(${projectId}, ${docKey})">${icon('download')}${herunterladenName(project)}<span class="visually-hidden"> ${vhSuffix}</span></button>` : ''}
                         <button type="button" class="doc-action-btn" data-kind="${isWebDoc ? 'web' : 'doc'}" data-doc-id="${docKey}" data-doc-name="${labelName}" onclick="openDocRename(event)">${icon('pencil')}${t('Umbenennen')}<span class="visually-hidden"> ${vhSuffix}</span></button>
@@ -3477,6 +3491,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         if (!slot) return;
         slot.innerHTML = '';
         if (!istWordDateityp(currentProjectFuerAnsicht || {})) return;
+        if (exportModus === 'tabellen') return;   // die Übersetzung ist eine Datei — die gibt es in „Dokument“ (30.09.2026)
         try {
             // Mit vorausgewaehltem Dokument zaehlt nur dieses Dokument (Review 2, Befund 11).
             const r = await fetch('/api/projects/' + projectId + '/uebersetzung?leicht=1' + (docId ? '&document_id=' + encodeURIComponent(docId) : ''));
@@ -3561,15 +3576,16 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                 <button class="btn btn-primary" data-art="tabelle" onclick="doExport(${project.id}, 'json')">${t('Als JSON')}</button>
                                 <button class="btn btn-secondary" data-art="tabelle" onclick="doExport(${project.id}, 'csv')">${t('Als CSV')}</button>
                                 ${pdf ? '<button class="btn btn-secondary" id="exportPdfBtn" onclick="doExport(' + project.id + ', \'pdf\')">' + t('Als PDF') + '</button>' : ''}
-                                ${docx ? '<button class="btn btn-secondary" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word') + '</button>' : ''}
-                                ${docx ? '<button class="btn btn-secondary" id="pdfuaBtn" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln') + '</button>' : ''}
-                                ${docx ? '<button class="btn btn-secondary" id="pdfuaVorschauBtn" onclick="doPdfuaVorschau(' + project.id + ')">' + t('Hörprobe und Prüfbericht') + '</button>' : ''}
+                                ${/* Word (30.09.2026): Word-Datei und barrierefreie PDF gehoeren zur Ansicht „Dokument“ (Modus 'word');
+                                     „Hörprobe und Prüfbericht“ ist aus dem Dialog in die Ansicht „Barrierefreiheitsprüfung“ gewandert. */ ''}
+                                ${docx ? '<button class="btn btn-secondary" id="exportDocxBtn" data-art="word" onclick="doExport(' + project.id + ', \'docx\')">' + t('Als Word') + '</button>' : ''}
+                                ${docx ? '<button class="btn btn-secondary" id="pdfuaBtn" data-art="word" onclick="doPdfua(' + project.id + ')">' + icon('sparkle') + t('In barrierefreie PDF umwandeln') + '</button>' : ''}
                                 <span id="exportUebersetzungSlot"></span>
                             </div>
                             ${pdf ? '<p id="exportPdfHinweis" hidden style="margin:0.5rem 0 0 0;color:var(--text-muted);font-size:0.9rem;">' + t('Diese PDF hat keine Tags. Ohne Tags gibt es keinen Ort, an dem Alt-Texte für Screenreader verlässlich landen, deshalb gibt es dafür keinen PDF-Download. Die Alt-Texte stehen als Excel, CSV und JSON bereit.') + '</p>' : ''}
                             <!-- Michael Karbe (Mail 12.09.2026, Punkt 7): im Word-Dialog eine Trennlinie unter der Knopfreihe,
                                  damit Ergebnis und Pruefbericht sichtbar abgesetzt sind. Nur Word-Projekte haben die Umwandlung. -->
-                            ${docx ? '<hr class="export-trenner" aria-hidden="true">' : ''}
+                            ${docx ? '<hr class="export-trenner" id="exportWordTrenner" aria-hidden="true">' : ''}
                             <output id="exportStatus" style="display:block;margin-top:0.5rem;"></output>
                             ${docx ? '<div id="pdfuaResult" role="region" aria-label="' + t('Ergebnis der Umwandlung') + '" aria-live="polite" style="margin-top:0.6rem;"></div>' : ''}
                             <!-- Fusszeile des Dialogs (Michael Karbe, Mail 12.09.2026): „Abbrechen“ steht unten rechts;
@@ -3588,10 +3604,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
     window.exportKontextSetzen = exportKontextSetzen;
 
-    // Modus des Dialogs (Michael Karbe, Feedback 28.09.2026 - 1, Punkte 2-4, nur PDF-Projekte):
-    //   'tabellen' = Ansicht „Alt-Texte“: nur die Alt-Texte als Excel, JSON, CSV — keine PDF (die gibt es in „Dokument“);
-    //   'pdf'      = Ansicht „Dokument“: nur die PDF (mit Alt-Texten und Quickinfos) — die Textlisten gibt es in „Alt-Texte“;
-    //   ''         = alles wie bisher (Word, Bilder, Web).
+    // Modus des Dialogs (Michael Karbe, Feedback 28.09.2026 - 1, Punkte 2-4; Word seit 30.09.2026 genauso):
+    //   'tabellen' = Ansicht „Alt-Texte“ (PDF und Word): nur die Alt-Texte als Excel, JSON, CSV — die Datei gibt es in „Dokument“;
+    //   'pdf'      = Ansicht „Dokument“ eines PDF-Projekts: nur die PDF (mit Alt-Texten und Quickinfos);
+    //   'word'     = Ansicht „Dokument“ eines Word-Projekts: die Word-Datei, die barrierefreie PDF und, falls vorhanden,
+    //                die Übersetzung als Word — die Textlisten gibt es in „Alt-Texte“;
+    //   ''         = alles wie bisher (Bilder, Web).
     let exportModus = '';
     // Satz für ungetaggte Dokumente im PDF-Dialog (29.09.2026): unverändert und kostenlos, oder nur mit Quickinfos.
     function ohneTagsSatz(d) {
@@ -3604,7 +3622,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         exportModus = modus || '';
         const panelM = document.getElementById('exportPanel');
         if (panelM) {
-            panelM.querySelectorAll('button[data-art="tabelle"]').forEach(b => { b.hidden = exportModus === 'pdf'; });
+            panelM.querySelectorAll('button[data-art="tabelle"]').forEach(b => { b.hidden = exportModus === 'pdf' || exportModus === 'word'; });
+            // Word-Datei und barrierefreie PDF nur in „Dokument“ (30.09.2026), nicht im Alt-Texte-Dialog
+            panelM.querySelectorAll('button[data-art="word"]').forEach(b => { b.hidden = exportModus === 'tabellen'; });
+            const trennerM = document.getElementById('exportWordTrenner');
+            if (trennerM) trennerM.hidden = exportModus === 'tabellen';
             const pdfBtnM = document.getElementById('exportPdfBtn');
             if (pdfBtnM) pdfBtnM.hidden = exportModus === 'tabellen';
             const pdfHinweisM = document.getElementById('exportPdfHinweis');
@@ -3647,6 +3669,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             const nurTabellen = !(currentRenderProjectType === 'pdf' || currentRenderProjectType === 'docx');
             if (exportModus === 'tabellen') head.textContent = t('Alt-Texte herunterladen');
             else if (exportModus === 'pdf') head.textContent = (!doc && docs.length > 1) ? t('Alle Dokumente herunterladen') : t('PDF herunterladen');
+            else if (exportModus === 'word') head.textContent = (!doc && docs.length > 1) ? t('Alle Dokumente herunterladen') : t('Dokument herunterladen');
             else head.textContent = (!doc && docs.length > 1)
                 ? t('Ganzes Projekt herunterladen ({n} Dokumente)', { n: docs.length })
                 : (nurTabellen ? t('Alt-Texte herunterladen') : t('Dokument / Alt-Texte herunterladen'));
@@ -3723,7 +3746,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                     : t('Der Export als CSV, Excel oder JSON kostet {p} Credits. Du hast {v}.', { p: d.preis_tabelle, v: d.verfuegbar }));
             } else {
                 if (typeof d.preis === 'number') msg += ' ' + exportPreisText(d.preis, d.verfuegbar);
-                if (typeof d.preis_tabelle === 'number') msg += ' ' + t('Die Alternativtexte können zusätzlich als CSV, Excel oder JSON exportiert werden ({p} Credits).', { p: d.preis_tabelle });
+                // Word in „Dokument“ (Modus 'word', 30.09.2026): die Textlisten gibt es hier nicht, also auch keinen Satz dazu
+                if (exportModus !== 'word' && typeof d.preis_tabelle === 'number') msg += ' ' + t('Die Alternativtexte können zusätzlich als CSV, Excel oder JSON exportiert werden ({p} Credits).', { p: d.preis_tabelle });
             }
             region.textContent = msg;   // role=status im Dialog; announce() ausserhalb des Modals verpufft (A11y-Review 29.09.2026)
         } catch (e) {
@@ -3825,34 +3849,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
         return html;
     }
-    async function doPdfuaVorschau(projectId) {
-        const box = document.getElementById('pdfuaResult');
-        const btn = document.getElementById('pdfuaVorschauBtn');
-        const scope = readExportScope();
-        const body = {};
-        if (!scope.all && scope.document_id) body.document_id = scope.document_id;
-        if (btn) btn.disabled = true;
-        if (box) box.textContent = t('Wird geprüft …');
-        try {
-            const res = await fetch('/api/projects/' + projectId + '/export/pdfua/vorschau', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            const d = await res.json().catch(() => ({}));
-            if (!res.ok) { const m = (d && typeof d.detail === 'string') ? d.detail : t('Die Prüfung ist fehlgeschlagen.'); if (box) box.textContent = m; announce(m); return; }
-            let html = '';
-            let hinweise = 0;
-            (d.dokumente || []).forEach(dok => {
-                if ((d.dokumente || []).length > 1) html += '<h3 style="font-size:0.95rem;margin:0.6rem 0 0.2rem;">' + escHtml(dok.dokument) + '</h3>';
-                hinweise += (dok.pruefbericht || []).filter(b => b.status !== 'ok').length;
-                html += pdfuaAnalyseHtml(dok);
-            });
-            const satz = hinweise === 0 ? t('Keine Befunde im Word-Dokument.') : (hinweise === 1 ? t('Ein Befund im Word-Dokument.') : t('{n} Befunde im Word-Dokument.', { n: hinweise }));
-            if (box) { box.innerHTML = '<p style="margin:0 0 0.4rem;"><strong>' + escHtml(satz) + '</strong></p>' + html; const s = box.querySelector('details summary'); if (s) s.focus(); }
-            announce(satz);
-        } catch (e) {
-            if (box) box.textContent = t('Verbindungsfehler.');
-        } finally {
-            if (btn) btn.disabled = false;
-        }
-    }
+    // „Hörprobe und Prüfbericht“ (doPdfuaVorschau) stand bis 30.09.2026 im Herunterladen-Dialog; seitdem zeigt die Ansicht
+    // „Barrierefreiheitsprüfung“ eines Word-Projekts beides (abschluss.js showWordProject, gleicher Endpunkt .../export/pdfua/vorschau).
     async function ladePdfua(projectId, token, name) {
         const res = await fetch('/api/projects/' + projectId + '/export/pdfua/' + encodeURIComponent(token));
         if (!res.ok) { announce(t('Die Datei konnte nicht geladen werden.')); return; }

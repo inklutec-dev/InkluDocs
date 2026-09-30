@@ -6,6 +6,9 @@
  * project_type "docx"); die Ansicht „Alt-Texte“ liegt in app.html. Gewechselt wird ueber die
  * Zeile „Ansicht“ im Projektkopf (app.html: ansichtWahlHtml/wechsleAnsicht, ?ansicht=…).
  * Es ist immer nur EINE Ansicht sichtbar — keine Doppel-Listen („überladen“, Steve).
+ * Seit 30.09.2026 hat ein Word-Projekt dieselben Ansichten wie ein PDF-Projekt (Dokument, Alt-Texte, Übersetzung,
+ * Barrierefreiheitsprüfung): Hochladen, Umbenennen, Löschen und die Word-Datei selbst gibt es nur noch in „Dokument“;
+ * hier bleiben Übersetzen und „Übersetzung herunterladen“ (wie „Alt-Texte herunterladen“ in der Ansicht Alt-Texte).
  * Beide Ansichten teilen sich projects.status; welcher Lauf gerade laeuft, sagt
  * project.lauf_art ('uebersetzung' | 'alttexte' | null), und jede Ansicht reagiert nur auf ihren.
  *
@@ -169,9 +172,9 @@
             + '</details>'
             + '<span class="doc-actions">'
             +   (ue.length && !busy ? '<button type="button" class="doc-action-btn" onclick="Uebersetzen.laufOeffnen(' + docKey + ')">' + ico('sparkle') + t('Übersetzen') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
-            +   (ue.some(istFertig) && !busy ? '<button type="button" class="doc-action-btn" onclick="Uebersetzen.exportOeffnen(' + docKey + ')">' + ico('download') + t('Herunterladen') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
-            +   '<button type="button" class="doc-action-btn" data-kind="uebdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" onclick="openDocRename(event)">' + ico('pencil') + t('Umbenennen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
-            +   '<button type="button" class="doc-action-btn doc-action-danger" data-kind="uebdoc" data-doc-id="' + docKey + '" data-doc-name="' + name + '" data-doc-count="' + ue.length + '" onclick="openDocDelete(event)">' + ico('trash') + t('Löschen') + '<span class="visually-hidden"> ' + vh + '</span></button>'
+            // „Übersetzung herunterladen“ (30.09.2026): wie „Alt-Texte herunterladen“ in der Ansicht Alt-Texte — die Word-Datei
+            // selbst, Umbenennen und Löschen gibt es seitdem nur in der Ansicht „Dokument“ (wie bei PDF).
+            +   (ue.some(istFertig) && !busy ? '<button type="button" class="doc-action-btn" onclick="Uebersetzen.exportOeffnen(' + docKey + ')">' + ico('download') + t('Übersetzung herunterladen') + '<span class="visually-hidden"> ' + vh + '</span></button>' : '')
             + '</span></div>';
     }
 
@@ -275,7 +278,7 @@
         // Nur ein Hinweis vom Server (fehlgeschlagene Segmentierung, Lauf-Hinweise) erscheint hier.
         const knoepfe = ue.length
             ? (!busy ? '<button class="btn btn-primary" id="uStartBtn" onclick="Uebersetzen.laufOeffnen()">' + ico('sparkle') + t('Übersetzen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
-              + (fertig && !busy ? '<button class="btn btn-primary" id="uExportOpenBtn" onclick="Uebersetzen.exportOeffnen()">' + ico('download') + (docs.length > 1 ? t('Ganzes Projekt herunterladen') : t('Herunterladen')) + '</button>' : '')
+              + (fertig && !busy ? '<button class="btn btn-primary" id="uExportOpenBtn" onclick="Uebersetzen.exportOeffnen()">' + ico('download') + t('Übersetzung herunterladen') + '<span class="visually-hidden"> ' + t('– ganzes Projekt') + '</span></button>' : '')
             : '';
         const dialoge = ue.length ? laufDialogHtml(project) + exportDialogHtml(project) : '';
         const infoHtml = '<div class="card-info" id="projectHeadInfo" data-info="' + escHtml(info) + '"></div>' + serverHinweis;
@@ -610,6 +613,8 @@
             + filterKarteHtml()
             + fortschrittKarteHtml(project, data)
             + laufMeldungHtml()
+            // Hochladen nur in der Ansicht „Dokument“ (30.09.2026) — ohne Dokument sagt die Ansicht, wo es geht (wie die Prüfung)
+            + (aktuelleDocs.length ? '' : '<p class="feld-hinweis">' + t('Noch kein Dokument hochgeladen. Das geht in der Ansicht „Dokument“.') + '</p>')
             + '<div id="segListe">' + docsHtml + '</div>'
             + (typeof inkluagentSectionHtml === 'function' ? inkluagentSectionHtml(projectId) : '');
         bindAutosave();

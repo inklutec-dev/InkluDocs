@@ -2,7 +2,9 @@
 """Klicktest Uebersetzen-Werkzeug (18.09.2026): Werkzeugauswahl, Ansicht (Kopf, Dokument/
 Abschnitt/Absatz-Struktur, Original + Uebersetzung, Filter-Radiogruppe, Uebersetzen-Dialog
 mit Rueckfrage, Export-Dialog), Tastaturweg, axe in beiden Dialogen. Muster: ui_formular.py.
-Aufruf: /home/claude/.venv-pw/bin/python ui_uebersetzen.py <projekt-id>   (Projekt mit fertiger Uebersetzung)"""
+Aufruf: /home/claude/.venv-pw/bin/python ui_uebersetzen.py <projekt-id>   (Projekt mit fertiger Uebersetzung)
+Seit 30.09.2026 (Word-Ansichten wie PDF): Hochladen, Umbenennen, Loeschen und die Word-Datei nur in der Ansicht „Dokument“;
+die Uebersetzung behaelt „Übersetzung herunterladen“; vier Ansichts-Knoepfe."""
 import os
 import sys
 from playwright.sync_api import sync_playwright
@@ -51,11 +53,11 @@ with sync_playwright() as p:
     check("Keine Statuszeile unter dem Projektnamen (Michael Punkt 4, wie Word)", pg.locator("#projectHeadInfo").inner_text().strip() == "")
     # Projektkopf nach Michael Karbe (Mails 21.09./22.09.2026): blaues Word-Symbol statt Statusanzeige
     check("Word-Symbol mit Alt-Text „Word-Projekt“, keine Statusanzeige", pg.locator(".projekt-kopf img.projekt-dateityp").count() == 1 and pg.locator(".projekt-kopf img.projekt-dateityp").get_attribute("alt") == "Word-Projekt" and pg.locator("#projectStatusBadge").count() == 0)
-    check("Upload-Block: Weitere Word-Datei hinzufuegen", pg.locator("#addHeading").inner_text().strip() == "Weitere Word-Datei hinzufügen", pg.locator("#addHeading").inner_text())
-    check("Dateiauswahl akzeptiert .docx", pg.locator("#projUpload").get_attribute("accept") == ".docx")
+    check("Kein Upload-Feld in der Übersetzung (Hochladen nur in „Dokument“, 30.09.2026)", pg.locator("#projUpload").count() == 0 and pg.locator("#addHeading").count() == 0)
+    check("Kein Umbenennen/Löschen am Dokument (nur in „Dokument“, 30.09.2026)", pg.locator(".doc-actions button:has-text('Umbenennen')").count() == 0 and pg.locator(".doc-actions button:has-text('Löschen')").count() == 0)
     check("Kein 'Bilder' und kein 'Alt-Texte generieren' in der Ansicht", "Alt-Texte generieren" not in main.inner_text() and "Bilder filtern" not in main.inner_text())
     ca_text = " ".join(pg.locator(".card-actions").all_inner_texts())
-    check("Knoepfe: Uebersetzen + Herunterladen", "Übersetzen" in ca_text and "Herunterladen" in ca_text, ca_text[:200])
+    check("Knoepfe: Uebersetzen + „Übersetzung herunterladen“", "Übersetzen" in ca_text and "Übersetzung herunterladen" in ca_text, ca_text[:200])
     check("Chatbot (InkluAgent) auch in der Uebersetzungs-Ansicht (Steve 18.09.)", pg.locator(".inkluagent-section").count() == 1 and pg.locator("#inkluagentToggle").count() == 1)
     # Seit 24.09.2026 (Michael Karbe, Mail 21.09.2026): Ansichts-Wahl direkt unter dem Projektnamen, VOR den
     # Knoepfen, in allen Ansichten gleich; die Knoepfe stehen im Feld „Funktionen und Einstellungen“.
@@ -144,22 +146,30 @@ with sync_playwright() as p:
     # Fuer die Alt-Text-Ansicht braucht das Projekt ein Dokument MIT Bildern: fiktives Testdokument dazuladen.
     BILDDOC = os.environ.get("INKLUDOCS_E2E_BILDDOC", "/home/claude/work/repo/tests/fixtures/testdokument_inkludocs.docx")
     if pg.locator("h2.doc-heading").count() < 2 and os.path.isfile(BILDDOC):
+        # Hochladen nur in der Ansicht „Dokument“ (30.09.2026)
+        pg.goto(B + f"/app?projekt={PID}&ansicht=dokument"); pg.wait_for_timeout(3000)
         pg.set_input_files("#projUpload", BILDDOC); pg.wait_for_timeout(12000)
         pg.goto(B + f"/app?projekt={PID}&ansicht=uebersetzung"); pg.wait_for_timeout(3500)
     check("Zweites Dokument (mit Bildern) im Projekt", pg.locator("h2.doc-heading").count() >= 2, pg.locator("h2.doc-heading").count())
     # Ansichts-Knoepfe (Michael Karbe, Feedback 24.09.2026, Punkt 8): Titel „Ansicht:“, aktuelle mit aria-current
-    check("Ansichts-Knöpfe mit Titel „Ansicht:“, aktuell Übersetzung", pg.locator(".ansicht-titel").inner_text().strip() == "Ansicht:" and pg.locator(".ansicht-knoepfe a[aria-current=page]").get_attribute("data-ansicht") == "uebersetzung" and pg.locator(".ansicht-knoepfe a").count() == 2)
+    check("Ansichts-Knöpfe mit Titel „Ansicht:“, aktuell Übersetzung", pg.locator(".ansicht-titel").inner_text().strip() == "Ansicht:" and pg.locator(".ansicht-knoepfe a[aria-current=page]").get_attribute("data-ansicht") == "uebersetzung" and pg.locator(".ansicht-knoepfe a").count() == 4)
     pg.click(".ansicht-knoepfe a[data-ansicht=alttexte]"); pg.wait_for_timeout(2500)
     check("Fokus nach dem Wechsel auf der H1 der neuen Ansicht (Review 2, Befund 6)", pg.evaluate("document.activeElement && document.activeElement.id") == "projectName", pg.evaluate("document.activeElement && document.activeElement.id"))
     check("Oeffnen wechselt zur Alt-Text-Ansicht (Bilder filtern, Sprache der Alt-Texte, Adresse ?ansicht=alttexte)", pg.locator("#imageFilterBar").count() == 1 and pg.locator("#altLangSelect").count() == 1 and "ansicht=alttexte" in pg.url and pg.locator("#segFilterBar").count() == 0, (pg.url, pg.locator("#imageFilterBar").count(), pg.locator("#altLangSelect").count()))
-    check("Alt-Text-Ansicht unveraendert: Bilderkarten, Filterkarte, Upload-Block, Chatbot", pg.locator("section.image-review").count() >= 1 and pg.locator("#projUploadZone").count() == 1 and pg.locator(".inkluagent-section").count() == 1)
-    check("Alt-Text-Ansicht hat dieselben Ansichts-Knöpfe", pg.locator(".ansicht-knoepfe a").count() == 2 and pg.locator(".ansicht-knoepfe a[aria-current=page]").get_attribute("data-ansicht") == "alttexte")
-    pg.locator(".card-actions button:has-text('Herunterladen')").first.click(); pg.wait_for_timeout(1500)
-    check("Herunterladen-Dialog der Alt-Text-Ansicht bietet „Als Word, Englisch (Großbritannien)“", pg.locator("#exportUebersetzungBtn").count() == 1 and "Großbritannien" in pg.locator("#exportUebersetzungBtn").inner_text(), pg.locator("#exportUebersetzungBtn").inner_text() if pg.locator("#exportUebersetzungBtn").count() else "")
+    check("Alt-Text-Ansicht: Bilderkarten, Filterkarte, Chatbot — kein Upload-Block mehr (30.09.2026)", pg.locator("section.image-review").count() >= 1 and pg.locator("#projUploadZone").count() == 0 and pg.locator(".inkluagent-section").count() == 1)
+    check("Alt-Text-Ansicht hat dieselben Ansichts-Knöpfe", pg.locator(".ansicht-knoepfe a").count() == 4 and pg.locator(".ansicht-knoepfe a[aria-current=page]").get_attribute("data-ansicht") == "alttexte")
+    pg.locator(".card-actions button:has-text('Alt-Texte herunterladen')").first.click(); pg.wait_for_timeout(1500)
+    check("„Alt-Texte herunterladen“ bietet nur die Listen, keine übersetzte Word-Datei (die gibt es in „Dokument“)", pg.locator("#exportUebersetzungBtn").count() == 0 and pg.locator("#exportPanelHeading").inner_text().strip() == "Alt-Texte herunterladen")
     axe(pg, "Alt-Text-Ansicht mit Export-Dialog")
     pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
     pg.go_back(); pg.wait_for_timeout(2500)
     check("Browser Zurueck fuehrt in die Uebersetzungs-Ansicht", pg.locator("#segFilterBar").count() == 1, pg.url)
+    # Übersetzte Word-Datei im Herunterladen-Dialog der Ansicht „Dokument“ (30.09.2026, vorher Alt-Texte)
+    pg.goto(B + f"/app?projekt={PID}&ansicht=dokument"); pg.wait_for_timeout(3000)
+    pg.locator("#dkAlleBtn").click(); pg.wait_for_timeout(1500)
+    check("Herunterladen-Dialog in „Dokument“ bietet „Als Word, Englisch (Großbritannien)“", pg.locator("#exportUebersetzungBtn").count() == 1 and "Großbritannien" in pg.locator("#exportUebersetzungBtn").inner_text(), pg.locator("#exportUebersetzungBtn").inner_text() if pg.locator("#exportUebersetzungBtn").count() else "")
+    axe(pg, "Dokument-Ansicht mit Herunterladen-Dialog")
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
     if pg.locator("#segFilterBar").count() == 0:
         pg.goto(B + f"/app?projekt={PID}&ansicht=uebersetzung"); pg.wait_for_timeout(3000)
     # Ganzprojekt-Export mit einem nicht uebersetzten Dokument: Download laeuft, das Dokument wird ausgelassen und benannt.
