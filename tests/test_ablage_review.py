@@ -31,6 +31,8 @@ class TestFreigabe(unittest.TestCase):
 
     def setUp(self):
         ausgaben._ANGEBOTE.clear()
+        ausgaben._LETZTES.clear()
+        ausgaben._NACH_ID.clear()
         self.preis = 40
         self.erlaubt = True
         m = types.SimpleNamespace()
@@ -77,9 +79,19 @@ class TestFreigabe(unittest.TestCase):
         t1 = _Turn()
         self.frei(False, t1); self.frei(False, t1, art="docx")
         t2 = _Turn()
-        self.assertIsNone(self.frei(True, t2))
-        v = self.frei(True, t2, art="docx")
+        self.assertIsNone(self.frei(True, t2, art="docx"))   # das zuletzt genannte Angebot
+        v = self.frei(True, t2)
         self.assertIsNotNone(v); self.assertIn("Mehr als eine je", v["hinweis"])
+
+    def test_ja_gilt_nur_fuer_das_letzte_angebot(self):
+        # Pruefung 3 (Entwicklung N1): ein getipptes Ja bindet an das zuletzt vom Server gespeicherte Angebot
+        t1 = _Turn()
+        self.frei(False, t1); self.frei(False, t1, art="docx")
+        t2 = _Turn()
+        v = self.frei(True, t2)
+        self.assertIsNotNone(v); self.assertIn("nicht das zuletzt genannte Angebot", v["hinweis"])
+        self.assertEqual(t2.kostenpflichtig, 0)
+        self.assertIn((3, 7, "pdfua", None), ausgaben._ANGEBOTE, "aelteres Angebot bleibt fuer die Karte")
 
     def test_preisaenderung_bricht_ab(self):
         t1 = _Turn(); self.frei(False, t1)

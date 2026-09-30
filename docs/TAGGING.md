@@ -670,3 +670,19 @@ AltTag_Export_CSV_PNG.py per Prüfsumme, weil Heines Originale fehlen.
 
 **Abgeschaltet und im Chatbot nicht mehr erreichbar:** KI-Prüfung, Korrektur (auch als Endpunkt 404), siehe
 docs/INKLUAGENT.md „Chatbot = Oberfläche“. Korrektur_Anwenden.py (eigenes Skript) ohne „Artifact“.
+
+## Prüfung 3 (30.09.2026) — Nachträge auf Staging
+
+**Klartext:** 7.11-Bereichssatz „Eingebettete Dateien haben einen Dateinamen.“ (auch im Prod-Hotfix). Lange Sätze werden nicht
+mehr still abgeschnitten: `pdfua_export._gekuerzt` schneidet an einer Wortgrenze und setzt „ …“; die Problemliste (`einzeln`)
+kürzt gar nicht mehr.
+
+**Tagging-Bericht:** Befundzeilen über `dokument.js befundZeile`: nicht übersetzte veraPDF-Sätze mit `lang="en"`, dazu Seiten
+und Regelnummer („(Regel 7.1-3)“, Einzahl/Mehrzahl); Dauer mit Dezimalzeichen der Sprache. Zusammenfassung der Struktur mit
+Einzahl/Mehrzahl (`pdf_struktur`). Barrierefreiheitsprüfung: Bereichsnamen und „Zur Seite 1 (Problem n, „Dokument“)“ tragen
+den Dokumentnamen und sind über mehrere Dokumente eindeutig.
+
+**Chatbot:** testweise_taggen wartet bis zu 150 s auf das Ende des Testlaufs und meldet das Ergebnis im Chat.
+
+**Upload:** `main.pdf_vorpruefung` gilt jetzt auch in alten Formular-Projekten (vor `validiere_formular`). Ein Upload-Fehler wird
+einmal angesagt (Statuszeile; `announce()` nur ohne Statuszeile).

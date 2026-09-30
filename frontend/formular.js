@@ -948,7 +948,7 @@
                 ? t('Heruntergeladen: „{name}“ ({c} Credits abgebucht).', { name: serverName || fallback, c: credits })
                 : t('Heruntergeladen: „{name}“.', { name: serverName || fallback });
             ansage += ' ' + t('Du findest die Datei bei deinen Downloads.');   // Browser-Grenze: Ort unbekannt (Steve 01.09.2026)
-            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
+            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + (w.length === 1 ? t('1 Hinweis: {w}', { w: w[0] }) : t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') })); } catch (e) { /* nur Anzeige */ } }
             if (statusEl) { statusEl.textContent = ansage; statusEl.setAttribute('tabindex', '-1'); }
             announce(ansage);
             exportFertig = true;

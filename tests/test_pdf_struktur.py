@@ -45,7 +45,7 @@ class HoerprobeTest(unittest.TestCase):
         z = pdf_struktur.hoerprobe(_fixture(), felder_quickinfos={"vorname": "Vorname eingeben"})
         self.assertEqual(z[0], "Sprache: Deutsch (de-DE)")   # Name (Kürzel), Steve 30.09.2026
         self.assertEqual(z[1], "Seiten: 2")
-        self.assertTrue(z[2].startswith("Zusammenfassung: 1 Überschriften, 1 Listen, 1 Tabellen, 2 Grafiken (1 ohne Alt-Text), 2 Formularfelder."), z[2])
+        self.assertTrue(z[2].startswith("Zusammenfassung: 1 Überschrift, 1 Liste, 1 Tabelle, 2 Grafiken (1 ohne Alt-Text), 2 Formularfelder."), z[2])
         # Feld in einer Zelle: eigene Zeile direkt nach der Zeile der Tabelle (Lesereihenfolge)
         self.assertEqual(z[z.index("Zeile: Miete | 500 <b>EUR</b>") + 1], "Formularfeld betrag: Betrag in Euro")
         self.assertIn("— Seite 1 —", z)

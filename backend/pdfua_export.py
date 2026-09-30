@@ -269,7 +269,7 @@ def _bereiche(_):
         ("7.7", _("Formeln"), _("Mathematische Formeln sind mit einem Alternativtext versehen.")),
         ("7.9", _("Fußnoten und Endnoten"), _("Fußnoten und Endnoten haben eine eindeutige Kennung.")),
         ("7.10", _("Optionale Inhalte"), _("Ein- und ausblendbare Inhalte sind benannt.")),
-        ("7.11", _("Eingebettete Dateien"), _("Eingebettete Dateien sind beschrieben.")),
+        ("7.11", _("Eingebettete Dateien"), _("Eingebettete Dateien haben einen Dateinamen.")),
         ("7.16", _("Sicherheit"), _("Eine Verschlüsselung lässt Hilfsmittel wie Screenreader an den Text.")),
         ("7.18", _("Anmerkungen, Formularfelder und Links"), _("Anmerkungen, Formularfelder und Links sind ausgezeichnet und beschrieben.")),
         ("7.20", _("Eingebettete Inhaltsblöcke (XObjects)"), _("Eingebettete Inhaltsblöcke sind in die Struktur eingebunden.")),
@@ -335,7 +335,8 @@ def _einzeln(regeln: list, regeln_kt: dict, _: Callable[[str], str]) -> list:
         s = regeln_kt.get((str(r.get("clause")), r.get("test")))
         uebersetzt = bool(s)
         if not s:
-            s = " ".join(str(r.get("description") or _("ohne Beschreibung")).split())[:240].rstrip(".")
+            # ganz, nicht still nach 240 Zeichen abgeschnitten (Pruefung 3 Barrierefreiheit, N2)
+            s = " ".join(str(r.get("description") or _("ohne Beschreibung")).split()).rstrip(".")
         n = int(r.get("failed") or 0)
         e = je_satz.setdefault(s, {"n": 0, "seiten": set(), "regeln": [], "uebersetzt": uebersetzt})
         e["n"] = max(e["n"], n)
@@ -351,6 +352,14 @@ def _einzeln(regeln: list, regeln_kt: dict, _: Callable[[str], str]) -> list:
                     "satz": s, "mal": (_("({n}-mal)").format(n=e["n"]) if e["n"] > 1 else ""),
                     "lang": ("" if e["uebersetzt"] else "en")})
     return out
+
+
+def _gekuerzt(text: str, n: int) -> str:
+    """Kuerzen nur mit hoerbarem Zeichen: an einer Wortgrenze und mit „…“ (Pruefung 3, N2 — vorher still abgeschnitten)."""
+    t = " ".join(str(text or "").split())
+    if len(t) <= n:
+        return t
+    return t[:n].rsplit(" ", 1)[0].rstrip(" ,;:") + " …"
 
 
 def _seiten_text(seiten: list, _: Callable[[str], str]) -> str:
@@ -398,7 +407,7 @@ def klartext(verapdf: dict, _: Callable[[str], str] = _identitaet) -> dict:
                     s = s + " " + _("({n}-mal)").format(n=n)
             else:
                 s = (_("Ein technischer Prüfpunkt ist nicht erfüllt ({beschreibung})").format(
-                    beschreibung=(r.get("description") or _("ohne Beschreibung"))[:160])
+                    beschreibung=_gekuerzt(r.get("description") or _("ohne Beschreibung"), 160))
                     + (" " + _("({n}-mal)").format(n=n) if n > 1 else "") + ".")
             if s not in saetze:      # gleiche Aussage nur einmal (Michaels Punkt 7, 23.09.2026)
                 saetze.append(s)
@@ -407,7 +416,7 @@ def klartext(verapdf: dict, _: Callable[[str], str] = _identitaet) -> dict:
                        "regeln": [f"{r.get('clause')}-{r.get('test')}" for r in betroffen]})
     rest = [r for p, rs in je_bereich.items() for r in rs if p == "7.x"]
     if rest:
-        beschr = "; ".join((r.get("description") or f"Regel {r.get('clause')}-{r.get('test')}")[:120] for r in rest)
+        beschr = "; ".join(_gekuerzt(r.get("description") or f"Regel {r.get('clause')}-{r.get('test')}", 120) for r in rest)
         punkte.append({"bereich": _("Weitere Prüfpunkte"), "status": "befund",
                        "text": (_("{n} weitere technische Prüfpunkte sind nicht erfüllt: {beschreibung}.").format(n=len(rest), beschreibung=beschr)
                                 if len(rest) > 1 else _("Ein weiterer technischer Prüfpunkt ist nicht erfüllt: {beschreibung}.").format(beschreibung=beschr)),

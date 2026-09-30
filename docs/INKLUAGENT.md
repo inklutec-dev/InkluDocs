@@ -101,9 +101,12 @@ application/x-ndjson` je Werkzeugaufruf eine Zeile `{"type":"tool","name":…}`
 (Callback `on_tool` im Agent-Loop) und am Ende `{"type":"reply", …,
 "werkzeuge":[…]}`; ohne den Header bleibt die JSON-Antwort. Die Oberfläche
 zeigt während des Laufs „Ruft gerade auf: Feld-Details“ (Status-Zeile,
-aria-live) und unter jeder Antwort „Geprüft mit: Feldliste, Feld-Details“
+aria-live) und unter jeder Antwort „Genutzt: Feldliste, Feld-Details“
 bzw. „Ohne Werkzeug (aus dem Gesprächsverlauf)“; die Liste wird je Antwort in
-`chat_messages.werkzeuge` gespeichert und im Verlauf wieder angezeigt.
+`chat_messages.werkzeuge` gespeichert und im Verlauf wieder angezeigt. Die
+Anzeigenamen kommen vom Server (`inkluagent/tools/namen.py`, übersetzt in 6
+Sprachen, `window.WERKZEUG_NAMEN`); ein Werkzeug ohne Namen lässt
+`test_chatbot_oberflaeche.Werkzeugnamen` scheitern (seit 30.09.2026).
 Passend dazu die gemeinsame Prompt-Regel „Prüfen heißt aufrufen“
 (`system_gemeinsam.PRUEFEN`): Prüf-/Bewertungsfragen lösen im selben Turn
 einen Werkzeugaufruf aus; ohne Aufruf sagt der Agent, dass er aus dem
@@ -215,3 +218,20 @@ Ausführung (`pdf._freigabe`), dieselben Preise, Sperren und Drosselung wie der 
 
 Tests: `tests/test_chatbot_oberflaeche.py` (ausgeblendet = nirgends erreichbar, ein Schalter steuert alles, jedes Werkzeug
 hat eine Ausführung, Rückfrage), `tests/e2e/chatbot_werkzeuge_probe.py` (jedes neue Werkzeug im Container gegen echte Daten).
+
+**Bestätigung an das Angebot gebunden (Prüfung 3, 30.09.2026):** Legt ein Werkzeug ein Angebot ab (`ausgaben._angebot_merken`:
+Kennung, Preis, Nachricht, Zeit), hängt `ausgaben.karte_anhaengen` eine Karte unter die Antwort: Überschrift „Bestätigung
+nötig“, der Text kommt vom SERVER (Aktion, Ziel, Preis bzw. „lässt sich nicht rückgängig machen“), Knopf „<Aktion>
+bestätigen“, Statuszeile. Das Angebot merkt sich Werkzeug und Argumente; der Knopf ruft `POST
+/api/projects/{id}/chat/bestaetigen` mit der Kennung und führt GENAU dieses Angebot aus (fremdes Projekt, verbraucht,
+abgelaufen: 404 „Diese Bestätigung gilt nicht mehr“). Ein getipptes „Ja“ geht weiter, aber nur für das zuletzt gespeicherte
+Angebot (`ausgaben._LETZTES`); zu einem älteren Angebot lehnt der Server ab. Downloads für 0 Credits laufen ohne Rückfrage.
+Tests: `tests/test_ablage_review.py`, `test_chatbot_oberflaeche.BestaetigungGebunden`, `tests/e2e/bestaetigung_probe.py`.
+
+**Live-Regionen im Chat:** das Protokoll ist `role="log" aria-live="off"` — beim Neuzeichnen (Ansichtswechsel, Chat zu/auf,
+Neuladen) wird der Verlauf nicht angesagt. Eine neue Antwort bekommt den Fokus und wird dadurch vollständig vorgelesen
+(zusätzlich live wäre doppelt); die eigene Nachricht wird nicht wiederholt. Download-Knöpfe tragen den Dateinamen. Test:
+`tests/e2e/ui_chat_barrierefrei.py` (Mitschnitt aller Live-Regionen).
+
+**Aufräumen:** Sofort-Downloads (`_export/bot_*`, `word_*`, `pdfua_*.json`) werden nach `EXPORT_TOKEN_AUFBEWAHREN` (24 h)
+gelöscht — beim Start, bei jedem neuen Sofort-Download und bei jeder Export-Anfrage.

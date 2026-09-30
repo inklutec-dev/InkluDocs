@@ -222,7 +222,7 @@ class RegelwerkTest(unittest.TestCase):
         "5": (["PDF/UA"], ["PDF/UA"]), "7.1": (["Artifact"], ["Struktur"]), "7.2": (["Table", "Natural language"], ["Sprache", "Tabellen"]),
         "7.3": (["Figure"], ["Bild"]), "7.4": (["heading"], ["Überschriften"]), "7.5": (["Scope"], ["Tabelle"]),
         "7.7": (["mathematical"], ["Formeln"]), "7.9": (["Note"], ["Fußnoten"]), "7.10": (["optional content"], ["Ein- und ausblendbare"]),
-        "7.11": (["embedded file"], ["Eingebettete Dateien"]), "7.16": (["encrypted"], ["Verschlüsselung"]),
+        "7.11": (["embedded file", "UF keys"], ["Dateinamen"]), "7.16": (["encrypted"], ["Verschlüsselung"]),
         "7.18": (["annotation", "form field", "Links"], ["Anmerkungen", "Formularfelder", "Links"]),
         "7.20": (["XObject"], ["Inhaltsblöcke"]), "7.21": (["font"], ["Schriften"]),
     }
@@ -278,6 +278,14 @@ class RegelwerkTest(unittest.TestCase):
         self.assertEqual(d["Sicherheit"]["status"], "befund")
         self.assertEqual(d["Eingebettete Inhaltsblöcke (XObjects)"]["status"], "befund")
         self.assertIn("nicht als getaggte PDF gekennzeichnet", d["Struktur und Lesereihenfolge"]["text"])   # 6.2-1 unter Struktur
+
+    def test_lange_saetze_nicht_still_gekuerzt(self):
+        """Pruefung 3 (N2): ein langer englischer Regelsatz steht in der Zeile ganz; der Absatz kuerzt nur mit „…“."""
+        lang = "Embedded fonts shall define all glyphs referenced for rendering " * 8
+        k = pdfua_export.klartext({"compliant": False, "rules": [{"clause": "7.21.4.2", "test": 2, "description": lang, "failed": 1}]})
+        p = [x for x in k["punkte"] if x["bereich"] == "Schriften"][0]
+        self.assertEqual(p["einzeln"][0]["satz"], " ".join(lang.split()).rstrip("."))
+        self.assertIn(" …", p["text"])
 
     def test_zusammengelegt_nicht_addiert(self):
         """16 Links verletzen zwei Regeln: nie „32-mal“ — je Regel ein Satz mit 16, gleiche Saetze mit der groessten Zahl."""

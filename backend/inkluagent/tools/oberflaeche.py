@@ -20,6 +20,7 @@ from . import pdf as _pdf
 log = logging.getLogger(__name__)
 
 _FORMATE = {"csv": "CSV", "xlsx": "Excel", "json": "JSON"}
+TESTLAUF_WARTEN_S = 150   # so lange wartet testweise_taggen auf das Ende, bevor es „laeuft noch“ meldet
 
 
 def _main():
@@ -73,10 +74,21 @@ def testweise_taggen(project_id: int, user_id: int, document_id: Optional[int] =
         r = t.test_starten_fuer(project_id, doc["id"], {"id": user_id, "language": lang}, lang, _uebersetzer(user_id))
     except HTTPException as e:
         return _fehler(e)
-    return {"ok": True, "result": dict(r, dokument=_pdf._name(doc), hinweis=(
-        "Der Testlauf läuft im Hintergrund (kostenlos). Das Dokument bleibt unverändert; die Testfassung ist nicht zum "
-        "Herunterladen. Das Ergebnis steht in der Ansicht „Tagging“ und in dokument_stand (Feld testlauf). Behaupte nicht, "
-        "er sei fertig."))}
+    # Auf das Ende warten (Pruefung 3 Barrierefreiheit, N6: der Chat meldete das Ende nicht von selbst) — ein Testlauf
+    # dauert meist unter einer Minute; laeuft er laenger, sagt die Antwort, dass er noch laeuft.
+    import time as _time
+    ende = _time.time() + TESTLAUF_WARTEN_S
+    while doc["id"] in t._test_laeuft and _time.time() < ende:
+        _time.sleep(2)
+    if doc["id"] in t._test_laeuft:
+        return {"ok": True, "result": dict(r, dokument=_pdf._name(doc), fertig=False, hinweis=(
+            "Der Testlauf läuft noch (kostenlos). Das Dokument bleibt unverändert; die Testfassung ist nicht zum Herunterladen. "
+            "Sag das; das Ergebnis steht gleich in der Ansicht „Tagging“ und in dokument_stand (Feld testlauf)."))}
+    st = _pdf.dokument_stand(project_id, user_id, doc["id"])
+    testlauf = (((st.get("result") or {}).get("dokumente") or [{}])[0]).get("testlauf") if st.get("ok") else None
+    return {"ok": True, "result": dict(r, dokument=_pdf._name(doc), fertig=True, testlauf=testlauf, hinweis=(
+        "Der Testlauf ist fertig (kostenlos, das Dokument bleibt unverändert, die Testfassung ist nicht zum Herunterladen). "
+        "Nenne die Struktur und ob die PDF/UA-Prüfung der Testfassung bestanden ist; bei einem Fehler den Grund."))}
 
 
 # ---------------------------------------------------------------------------
@@ -208,9 +220,11 @@ def exportiere_alt_texte(project_id: int, user_id: int, format: str = "csv", doc
     m.billing.verbuche(user_id, "export", aktion=erg["aktion"], credits=erg["preis"])
     ist_zip = erg["media"] == "application/zip"
     return {"ok": True, "result": {"dateiname": erg["dateiname"], "preis": erg["preis"], "download_url": url,
-                                   "hinweis": "Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen. Nenne Format und Preis."},
+                                   "hinweis": ("Der Nutzer sieht unter deiner Antwort einen Knopf zum Herunterladen. Nenne Format und "
+                                               "Preis" + (f"; bei mehreren Dokumenten ist es ein ZIP mit je einer {_FORMATE[fmt]}-Datei "
+                                                          "pro Dokument — sag das." if ist_zip else "."))},
             "anhang": {"art": ("zip" if ist_zip else fmt), "dateiname": erg["dateiname"], "download_url": url,
-                       "label": ("zip" if ist_zip else fmt)}}
+                       "label": ("zip" if ist_zip else fmt), "format": fmt}}
 
 
 def exportiere_quickinfos(project_id: int, user_id: int, document_id: Optional[int] = None, bestaetigt: bool = False,
@@ -375,7 +389,8 @@ def ausgabe_loeschen(project_id: int, user_id: int, ausgabe_id: int, bestaetigt:
     if grund == "rueckfrage":
         return {"ok": True, "result": dict(vorschau, rueckfrage_noetig=True, hinweis=(
             "Löschen ist unumkehrbar: Datei, Prüfbericht und Hörprobe dieses Eintrags sind danach weg. Sag das und frage. "
-            "Erst nach ausdrücklichem Ja in einer eigenen Nachricht erneut mit bestaetigt=true aufrufen."))}
+            "Unter deiner Antwort steht eine Karte mit genau diesem Angebot und einem Knopf zum Bestätigen; ein getipptes Ja "
+            "gilt nur für dieses letzte Angebot (dann erneut mit bestaetigt=true aufrufen)."))}
     if grund:
         return {"ok": True, "result": dict(vorschau, rueckfrage_noetig=True, hinweis=grund)}
     m._ablage_eintrag_weg(user_id, row)

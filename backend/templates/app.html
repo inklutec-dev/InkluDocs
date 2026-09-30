@@ -97,6 +97,11 @@
       .einstellung-zeile { min-width: 0; max-width: 100%; }
       .einstellung-zeile select { min-width: 0; max-width: 100%; }
       .feld-review h4, .feld-review label, .doc-heading, .card-name { overflow-wrap: anywhere; }
+      /* Bestaetigungs-Karte im Chat (Pruefung 3, 30.09.2026): Text und Knopf vom Server */
+      .inkluagent-bestaetigung { flex-basis: 100%; border: 1px solid #9ca3af; border-radius: 6px; padding: 0.6rem 0.8rem; background: var(--bg-muted, #f3f4f6); }
+      .inkluagent-bestaetigung h4 { margin: 0 0 0.3rem; font-size: 1rem; }
+      .inkluagent-bestaetigung p { margin: 0 0 0.5rem; }
+      .inkluagent-bestaetigung-status:empty { margin: 0; }
       /* Hörprobe des ganzen Dokuments in der Prüfung, sichtbare Vorlese-Meldung (Prüfung 30.09.2026, Punkt 1) */
       .ab-dok-hoerprobe { border-top: 1px solid #9ca3af; margin-top: 1rem; padding-top: 0.6rem; }
       .ab-dok-hoerprobe h4 { margin: 0 0 0.4rem; font-size: 1rem; }
@@ -186,6 +191,8 @@
 <script>window.CREDIT_PREISE = {{ credit_preise|default({})|tojson }};</script>
 {# Funktionsschalter (backend/funktionen.py, 30.09.2026): EIN Ort je Funktion fuer Oberflaeche, Chatbot und Endpunkte #}
 <script>window.FUNKTIONEN = {{ funktionen|default({})|tojson }};</script>
+{# Anzeigenamen der Chatbot-Werkzeuge vom Server (inkluagent/tools/namen.py, Pruefung 3, M1) #}
+<script>window.WERKZEUG_NAMEN = {{ werkzeug_namen|default({})|tojson }};</script>
 <script src="/static/formular.js?v={{ asset_version }}"></script>
 <script src="/static/uebersetzen.js?v={{ asset_version }}"></script>
 <script src="/static/dokument.js?v={{ asset_version }}"></script>
@@ -712,8 +719,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         let before = await projectSnapshot(projectId);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            if (status) status.textContent = files.length > 1 ? t('Datei {i} von {n} wird hochgeladen...', { i: i + 1, n: files.length }) : t('Wird hochgeladen...');
-            announce(t('{name} wird hochgeladen', { name: file.name }));
+            // EINE Ansage je Schritt (Pruefung 3 Barrierefreiheit, M2): die Statuszeile (role=status) — kein zusaetzliches announce(),
+            // sonst kamen Fehler doppelt und dazwischen „… wird hochgeladen“ aus der zweiten Live-Region.
+            if (status) status.textContent = files.length > 1 ? t('Datei {i} von {n} wird hochgeladen...', { i: i + 1, n: files.length }) : t('{name} wird hochgeladen', { name: file.name });
+            else announce(t('{name} wird hochgeladen', { name: file.name }));
             const fd = new FormData();
             fd.append('file', file);
             fd.append('project_id', projectId);
@@ -723,7 +732,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 data = await res.json();
                 if (!res.ok) {
                     if (status) status.textContent = t('Fehler: {msg}', { msg: data.detail || t('Upload fehlgeschlagen') });
-                    announce(t('Fehler beim Upload: {msg}', { msg: data.detail || '' }));
+                    else announce(t('Fehler beim Upload: {msg}', { msg: data.detail || '' }));
                     return;
                 }
                 if (data.status === 'extracting' && data.document_id) {
@@ -747,7 +756,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                             ? t('Das Formular wird verarbeitet – Felder werden gelesen …')
                             : t('Die PDF wird verarbeitet – Bilder werden extrahiert …'));
                     if (status) status.textContent = wartetext;
-                    announce(wartetext);
+                    else announce(wartetext);
                     const ergebnis = await waitForExtraction(projectId, data.document_id);
                     if (!ergebnis.ok) {
                         const meldung = ergebnis.timeout
@@ -758,7 +767,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                                     ? t('Die Verarbeitung des Formulars ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')
                                     : t('Die Verarbeitung der PDF ist fehlgeschlagen. Bitte versuche es mit der Datei erneut.')));
                         if (status) status.textContent = meldung;
-                        announce(meldung);
+                        else announce(meldung);
                         return;
                     }
                     if (status) status.textContent = '';
@@ -777,7 +786,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 if (!angekommen) {
                     const meldung = t('Verbindungsfehler beim Upload. Die Datei ist bisher nicht angekommen. Bitte prüfe deine Internetverbindung und versuche es erneut. Bei sehr großen PDFs kann die Verarbeitung länger dauern – lade die Seite dann in ein bis zwei Minuten neu und prüfe die Dokumentliste. Maximal {mb} MB pro Datei.', { mb: window.MAX_UPLOAD_MB || 50 });
                     if (status) status.textContent = meldung;
-                    announce(meldung);
+                    else announce(meldung);
                     return;
                 }
                 // Datei ist trotz Verbindungsfehler angekommen — normal weitermachen.
@@ -3615,7 +3624,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             downloadBlob(blob, serverName || 'uebersetzung.docx');
             let ansage = t('Heruntergeladen: „{name}“.', { name: serverName || 'uebersetzung.docx' }) + ' ' + t('Du findest die Datei bei deinen Downloads.');
             const warn = res.headers.get('X-Export-Warnings');
-            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
+            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + (w.length === 1 ? t('1 Hinweis: {w}', { w: w[0] }) : t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') })); } catch (e) { /* nur Anzeige */ } }
             if (statusEl) { statusEl.textContent = ansage; statusEl.setAttribute('tabindex', '-1'); }
             announce(ansage);
             _exportFertig = true;
@@ -4118,7 +4127,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 // Hinweise des Exports (Titel-Rueckfall, Warnungen des Schreibwegs, Export-Abnahme) — bis 15.09.2026
                 // kamen sie nur im Formular-Dialog an, hier wurden sie verworfen.
                 const warn = res.headers.get('X-Export-Warnings');
-                if (warn) { try { const w = JSON.parse(warn); if (w.length) fertig += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
+                if (warn) { try { const w = JSON.parse(warn); if (w.length) fertig += ' ' + (w.length === 1 ? t('1 Hinweis: {w}', { w: w[0] }) : t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') })); } catch (e) { /* nur Anzeige */ } }
                 // Meldung in den Dialog schreiben und fokussierbar machen (Steve 01.09.2026). Diese Zeile war im
                 // Commit b9b21a8 (15.09.2026, Export-Abnahme Teil 2) versehentlich entfallen: Statuszeile blieb auf
                 // „Wird exportiert...“ und der Fokus fand die Meldung nicht — Regressionslauf ui_word.py 18.09.2026.
@@ -4230,7 +4239,11 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             +   '<div id="inkluagentPanel" class="inkluagent-panel" hidden>'
             // tabindex=0 (11.09.2026, axe scrollable-region-focusable): der Verlauf wird bei vielen
             // Nachrichten scrollbar und muss dann per Tastatur erreichbar sein (WCAG 2.1.1).
-            +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="polite" aria-label="' + t('Chat-Verlauf') + '" tabindex="0"></div>'
+            // aria-live="off" (Pruefung 3 Barrierefreiheit, H1/N1): role=log ist sonst von selbst „polite“ — beim Neuzeichnen
+            // (Ansichtswechsel, Neuladen, Auf/Zu) wurde der ganze Verlauf erneut angesagt, jede neue Antwort doppelt (Live-Region
+            // UND Fokus) und die eigene Nachricht als Echo. Jetzt sagt nichts im Verlauf von selbst etwas an: die neue Antwort
+            // bekommt den Fokus (der Screenreader liest sie vollständig), Warten und Fehler meldet die Statuszeile.
+            +     '<div id="inkluagentLog" class="inkluagent-log" role="log" aria-live="off" aria-label="' + t('Chat-Verlauf') + '" tabindex="0"></div>'
             +     '<form id="inkluagentForm" class="inkluagent-form">'
             +       '<label for="inkluagentInput" class="visually-hidden">' + t('Nachricht an den InkluAgent') + '</label>'
             +       '<textarea id="inkluagentInput" rows="2" maxlength="5000" '
@@ -4323,27 +4336,46 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
-    // Werkzeug-Transparenz (Steve 28.08.2026): deutsche Namen der Agenten-Werkzeuge fuer die
-    // Live-Zeile „Ruft gerade auf: …“ und die Zeile „Geprüft mit: …“ unter jeder Antwort.
+    // Werkzeug-Transparenz (Steve 28.08.2026): Namen der Agenten-Werkzeuge fuer die Live-Zeile „Ruft gerade auf: …“ und die
+    // Zeile „Genutzt: …“ unter jeder Antwort. Seit Pruefung 3 (30.09.2026, M1) kommen ALLE Namen vom Server
+    // (window.WERKZEUG_NAMEN, inkluagent/tools/namen.py, 6 Sprachen) — nie ein roher Name wie „dokument_stand“.
     function inkluagentWerkzeugLabel(name) {
-        const map = {
-            list_project_images: t('Bilderliste'), get_image_metadata: t('Bild-Details'), view_image: t('Bild ansehen'),
-            generate_alt_text: t('Alt-Text-Pipeline'), update_alt_text: t('Alt-Text speichern'), revert_alt_text: t('Alt-Text zurücksetzen'),
-            tavily_search: t('Websuche'),
-            list_form_fields: t('Feldliste'), get_field_details: t('Feld-Details'), view_field: t('Feld ansehen'),
-            generate_quickinfo: t('Feld-Pass'), update_quickinfo: t('Quickinfo speichern'), revert_quickinfo: t('Quickinfo zurücksetzen'),
-            search_master_data: t('Stammdaten suchen'), save_to_master_data: t('In Stammdaten übernehmen'),
-            pruefe_word_dokument: t('Word-Prüfbericht'), konvertiere_zu_pdfua: t('In barrierefreie PDF umwandeln'),
-            exportiere_word: t('Word exportieren'), liste_ausgaben: t('Ablage'), lies_ausgabe: t('Eintrag lesen'),
-            analysiere_word_struktur: t('Struktur-Lektor')
-        };
-        return map[name] || name;
+        const map = window.WERKZEUG_NAMEN || {};
+        return map[name] || t('Werkzeug');
     }
     function inkluagentWerkzeugText(werkzeuge) {
         if (!Array.isArray(werkzeuge)) return '';
         if (!werkzeuge.length) return t('Ohne Werkzeug (aus dem Gesprächsverlauf)');
         const namen = []; werkzeuge.forEach(w => { const l = inkluagentWerkzeugLabel(w); if (namen.indexOf(l) < 0) namen.push(l); });
-        return t('Geprüft mit: {w}', { w: namen.join(', ') });
+        return t('Genutzt: {w}', { w: namen.join(', ') });
+    }
+
+    // Bestaetigungs-Karte (Pruefung 3, Entwicklung N1): Text und Knopf kommen vom SERVER; der Knopf fuehrt genau das gespeicherte
+    // Angebot aus (POST /chat/bestaetigen mit seiner Kennung). Ergebnis als neue Antwort mit Fokus; Fehler in der Statuszeile der Karte.
+    async function inkluagentBestaetigen(angebotId, btn, statusEl) {
+        const projectId = window._inkluagentProjectId;
+        if (!projectId || !btn) return;
+        btn.disabled = true;
+        if (statusEl) statusEl.textContent = t('Wird ausgeführt …');
+        try {
+            const res = await fetch('/api/projects/' + projectId + '/chat/bestaetigen', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ angebot_id: angebotId }) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                btn.disabled = false;
+                if (statusEl) statusEl.textContent = (data && typeof data.detail === 'string') ? data.detail : t('Fehler. Bitte erneut versuchen.');
+                return;
+            }
+            if (statusEl) statusEl.textContent = '';
+            btn.remove();
+            const el = inkluagentAppendMessage('assistant', data.reply || '', data.werkzeuge || [], data.anhang || []);
+            const log = document.getElementById('inkluagentLog');
+            if (log) log.scrollTop = log.scrollHeight;
+            if (el) el.focus();
+        } catch (e) {
+            btn.disabled = false;
+            if (statusEl) statusEl.textContent = t('Verbindungsfehler. Bitte erneut versuchen.');
+        }
     }
 
     // Meine Ausgaben (11.09.2026): Download-Knopf + Link ins Regal unter einer Bot-Antwort, wenn der Bot
@@ -4353,14 +4385,42 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         box.className = 'inkluagent-message-anhang';
         box.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-top:0.5rem;';
         (anhang || []).forEach(a => {
+            if (a && a.art === 'bestaetigung' && a.angebot_id) {
+                const karte = document.createElement('div');
+                karte.className = 'inkluagent-bestaetigung';
+                const h = document.createElement('h4');
+                h.textContent = a.titel || t('Bestätigung nötig');
+                const p = document.createElement('p');
+                p.textContent = a.text || '';
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'btn btn-primary';
+                b.textContent = a.knopf || t('Bestätigen');
+                const st = document.createElement('p');
+                st.className = 'inkluagent-bestaetigung-status';
+                st.setAttribute('role', 'status');
+                b.addEventListener('click', () => inkluagentBestaetigen(a.angebot_id, b, st));
+                karte.appendChild(h); karte.appendChild(p); karte.appendChild(b); karte.appendChild(st);
+                box.appendChild(karte);
+                return;
+            }
             if (!a || !a.download_url) return;
             const dl = document.createElement('a');
             dl.className = 'btn btn-primary';
             dl.href = a.download_url;
             dl.setAttribute('download', a.dateiname || '');
-            // Seit 30.09.2026 auch Tabellen aus dem Chatbot (Alt-Texte / Quickinfos herunterladen)
-            const beschriftung = { zip: t('ZIP herunterladen'), csv: t('CSV herunterladen'), xlsx: t('Excel herunterladen'), json: t('JSON herunterladen') };
+            // Seit 30.09.2026 auch Tabellen aus dem Chatbot (Alt-Texte / Quickinfos herunterladen); ein ZIP aus Tabellen sagt, was drin
+            // ist, und jeder Knopf traegt den Dateinamen (Pruefung 3, N6 — im Verlauf standen sonst gleichnamige Knoepfe)
+            const formate = { csv: 'CSV', xlsx: 'Excel', json: 'JSON' };
+            const beschriftung = { zip: (a.format && formate[a.format]) ? t('ZIP mit {f}-Dateien herunterladen', { f: formate[a.format] }) : t('ZIP herunterladen'),
+                                   csv: t('CSV herunterladen'), xlsx: t('Excel herunterladen'), json: t('JSON herunterladen') };
             dl.textContent = beschriftung[a.label] || (a.art === 'docx' ? t('Word herunterladen') : t('PDF herunterladen'));
+            if (a.dateiname) {
+                const name = document.createElement('span');
+                name.className = 'visually-hidden';
+                name.textContent = ' – ' + a.dateiname;
+                dl.appendChild(name);
+            }
             box.appendChild(dl);
             if (a.ausgaben_url) {
                 const zu = document.createElement('a');

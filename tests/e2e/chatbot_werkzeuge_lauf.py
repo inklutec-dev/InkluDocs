@@ -121,6 +121,38 @@ try:
         check(f"{name}: 400 mit Grund „{erwartet}“, nichts angelegt", r.status_code == 400 and erwartet in str(detail), (r.status_code, detail))
     n = len(s.get(B + f"/api/projects/{pid}/dokument-ansicht", timeout=120).json()["documents"])
     check("keine Dokument-Leichen", n == 3, n)
+
+    print("== Upload in ein altes Formular-Projekt: dieselbe Vorprüfung (Prüfung 3, Entwicklung N5) ==")
+    fr = s.post(B + "/api/projects", json={"name": "Formular alt 30.09. (Test)", "tool": "formular"}, timeout=30)
+    fpid = (fr.json() or {}).get("project_id") if fr.ok else None
+    check("altes Formular-Projekt anlegbar (Test)", fpid, (fr.status_code, fr.text[:200]))
+    if fpid:
+        projekte.append(fpid)
+        for name, daten, erwartet in (("keine.pdf", b"Das ist nur Text, keine PDF.\n" * 20, "keine PDF"),
+                                      ("passwort.pdf", buf.getvalue(), "Passwort"),
+                                      ("abgeschnitten.pdf", ganz[: len(ganz) // 2], "beschädigt")):
+            r = s.post(B + "/api/upload", data={"project_id": str(fpid)}, files={"file": (name, daten, "application/pdf")}, timeout=120)
+            detail = (r.json() or {}).get("detail") if r.headers.get("content-type", "").startswith("application/json") else r.text
+            check(f"Formular-Projekt, {name}: 400 mit Grund „{erwartet}“", r.status_code == 400 and erwartet in str(detail), (r.status_code, detail))
+    print("== Bestätigungs-Karte: Zustimmung an das konkrete Angebot gebunden (Prüfung 3, Entwicklung N1) ==")
+    # zweite getaggte PDF: dieselbe Datei zweimal ersetzt nur den Ablage-Eintrag, zwei Einträge brauchen zwei Dokumente
+    hoch(pid, "zweite.pdf", open(os.path.join(K, "synth_getaggt.pdf"), "rb").read())
+    zweite = {d["original_filename"]: d["id"] for d in s.get(B + f"/api/projects/{pid}/dokument-ansicht", timeout=120).json()["documents"]}.get("zweite.pdf")
+    check("zweite getaggte PDF hochgeladen", zweite, zweite)
+    subprocess.run(["sudo", "-n", "bash", "-c", "cat /home/openclaw/.openclaw/workspace/InkluDocs/tests/e2e/bestaetigung_probe.py > /tmp/bp.py && "
+                    "docker cp /tmp/bp.py inkludocs-staging:/tmp/bestaetigung_probe.py"], check=True)
+    r = subprocess.run(["sudo", "-n", "docker", "exec", "-w", "/app", "inkludocs-staging", "python3", "/tmp/bestaetigung_probe.py",
+                        str(pid), str(uid), str(act), str(zweite or act), str(wpid)], capture_output=True, text=True, timeout=600)
+    zeilen = [z for z in r.stdout.splitlines() if z.startswith(("  OK", "  FEHLT", "Ergebnis"))]
+    print("\n".join(zeilen))
+    for z in zeilen:
+        if z.startswith("  OK"):
+            ok += 1
+        elif z.startswith("  FEHLT"):
+            fehler += 1
+    if not any(z.startswith("Ergebnis") for z in zeilen):
+        fehler += 1
+        print("  FEHLT Bestätigungs-Probe lief nicht zu Ende --", r.stderr[-1500:])
 finally:
     for p in projekte:
         for e in (s.get(B + f"/api/ausgaben?projekt={p}", timeout=60).json().get("ausgaben") or []):

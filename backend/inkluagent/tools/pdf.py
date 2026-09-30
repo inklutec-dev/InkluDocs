@@ -299,7 +299,9 @@ def _rueckfrage(vorschau: dict, was: str) -> dict:
     v = dict(vorschau)
     v["rueckfrage_noetig"] = True
     v["hinweis"] = ((f"Nenne dem Nutzer den Preis für {was} in Credits (und das Guthaben, wenn nicht unbegrenzt) und frage, "
-                     "ob du starten sollst. Erst nach ausdrücklichem Ja erneut mit bestaetigt=true aufrufen.")
+                     "ob du starten sollst. Unter deiner Antwort zeigt die Oberfläche eine Karte mit genau diesem Angebot und "
+                     "einem Knopf zum Bestätigen. Schreibt der Nutzer stattdessen „Ja“, rufe erneut mit bestaetigt=true auf — "
+                     "das gilt nur für dieses zuletzt genannte Angebot.")
                     if v.get("erlaubt") else
                     f"Das Guthaben reicht für {was} nicht. Sag dem Nutzer Preis und Guthaben und verweise auf Abo & Verbrauch.")
     return v
@@ -493,8 +495,11 @@ def exportiere_fertige_pdf(project_id: int, user_id: int, document_id: Optional[
     if not plan["getaggt"]:
         vorschau["hinweis_ohne_tags"] = ("Ohne Tags: die PDF kommt unverändert (kostenlos) bzw. mit den bearbeiteten "
                                          "Quickinfos; Alt-Texte haben ohne Tags keinen Ort. Für Alt-Texte erst taggen.")
-    grund = _freigabe(user_id, project_id, "pdf_export", (None if alle else doc["id"]), int(p.get("preis") or 0),
-                      bool(p.get("erlaubt")), bestaetigt, turn)
+    # Kostenlos (nichts bearbeitet, Stand bezahlt, ohne Tags): keine Rueckfrage — wie der Knopf, der bei 0 Credits auch
+    # gleich laedt (Pruefung 3 Barrierefreiheit, N6: der Chat fragte vor jedem 0-Credit-Download nach)
+    grund = (None if int(p.get("preis") or 0) == 0 and p.get("erlaubt") else
+             _freigabe(user_id, project_id, "pdf_export", (None if alle else doc["id"]), int(p.get("preis") or 0),
+                       bool(p.get("erlaubt")), bestaetigt, turn))
     if grund == "rueckfrage":
         return {"ok": True, "result": _rueckfrage(vorschau, "das Herunterladen" + (" aller Dokumente" if alle else ""))}
     if grund:
@@ -595,8 +600,9 @@ def dokument_loeschen(project_id: int, user_id: int, document_id: Optional[int],
     if grund == "rueckfrage":
         vorschau.update({"rueckfrage_noetig": True, "hinweis": (
             "Löschen ist unumkehrbar: Dokument, Bilder mit Alt-Texten, Felder mit Quickinfos und Dateien sind danach weg "
-            "(Einträge in der Ablage bleiben). Sag dem Nutzer, was gelöscht würde, und frage. Erst nach ausdrücklichem Ja "
-            "in einer eigenen Nachricht erneut mit bestaetigt=true aufrufen.")})
+            "(Einträge in der Ablage bleiben). Sag dem Nutzer, was gelöscht würde, und frage. Unter deiner Antwort steht eine "
+            "Karte mit genau diesem Angebot und einem Knopf zum Bestätigen; ein getipptes Ja gilt nur für dieses letzte Angebot "
+            "(dann erneut mit bestaetigt=true aufrufen).")})
         return {"ok": True, "result": vorschau}
     if grund:
         vorschau.update({"rueckfrage_noetig": True, "hinweis": grund})

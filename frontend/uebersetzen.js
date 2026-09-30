@@ -493,7 +493,7 @@
             downloadBlob(blob, serverName || fallback);
             let ansage = t('Heruntergeladen: „{name}“.', { name: serverName || fallback }) + ' ' + t('Du findest die Datei bei deinen Downloads.');
             const warn = res.headers.get('X-Export-Warnings');
-            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') }); } catch (e) { /* nur Anzeige */ } }
+            if (warn) { try { const w = JSON.parse(warn); if (w.length) ansage += ' ' + (w.length === 1 ? t('1 Hinweis: {w}', { w: w[0] }) : t('{n} Hinweise: {w}', { n: w.length, w: w.join(' ') })); } catch (e) { /* nur Anzeige */ } }
             if (statusEl) statusEl.textContent = ansage;
             announce(ansage);
             exportFertig = true;

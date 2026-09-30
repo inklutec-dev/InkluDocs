@@ -10087,3 +10087,168 @@ msgstr "This PDF has no tags. A check file is only available after tagging (“T
 
 msgid "Der Preis hat sich seit der Rückfrage geändert. Bitte noch einmal fragen."
 msgstr "The price has changed since the confirmation question. Please ask again."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“ für {p} Credits."
+msgstr "{aktion}: “{ziel}” for {p} credits."
+
+#, python-brace-format
+msgid "{aktion} für {p} Credits."
+msgstr "{aktion} for {p} credits."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“. Das lässt sich nicht rückgängig machen."
+msgstr "{aktion}: “{ziel}”. This cannot be undone."
+
+#, python-brace-format
+msgid "{aktion}. Das lässt sich nicht rückgängig machen."
+msgstr "{aktion}. This cannot be undone."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“, kostenlos."
+msgstr "{aktion}: “{ziel}”, free of charge."
+
+#, python-brace-format
+msgid "{aktion}, kostenlos."
+msgstr "{aktion}, free of charge."
+
+msgid "Bestätigung nötig"
+msgstr "Confirmation needed"
+
+#, python-brace-format
+msgid "{aktion} bestätigen"
+msgstr "Confirm: {aktion}"
+
+msgid "Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu."
+msgstr "This confirmation is no longer valid. Please ask again in the chat."
+
+msgid "Diese Funktion gibt es hier nicht."
+msgstr "This function is not available here."
+
+#, python-brace-format
+msgid "Bestätigt und ausgeführt: {text}"
+msgstr "Confirmed and done: {text}"
+
+#, python-brace-format
+msgid "Nicht ausgeführt: {grund}"
+msgstr "Not done: {grund}"
+
+msgid "unbekannter Grund"
+msgstr "unknown reason"
+
+#, python-brace-format
+msgid "Bestätigt über den Knopf: {text}"
+msgstr "Confirmed with the button: {text}"
+
+msgid "Wird ausgeführt …"
+msgstr "Running …"
+
+msgid "Fehler. Bitte erneut versuchen."
+msgstr "Error. Please try again."
+
+#, python-brace-format
+msgid "Genutzt: {w}"
+msgstr "Used: {w}"
+
+msgid "Alt-Text generieren"
+msgstr "Generate alt text"
+
+msgid "Quickinfo generieren"
+msgstr "Generate tooltip"
+
+msgid "Dokumentstand"
+msgstr "Document status"
+
+msgid "Bericht der KI-basierten Prüfung"
+msgstr "Report of the AI-based check"
+
+msgid "Korrektur"
+msgstr "Correction"
+
+msgid "Korrektur rückgängig"
+msgstr "Undo correction"
+
+msgid "Dokument löschen"
+msgstr "Delete document"
+
+msgid "Stand der Übersetzung"
+msgstr "Translation status"
+
+msgid "Ablage-Eintrag lesen"
+msgstr "Read archive entry"
+
+msgid "Ergebnis der Barrierefreiheitsprüfung"
+msgstr "Result of the accessibility check"
+
+msgid "Stammdaten anwenden"
+msgstr "Apply master data"
+
+msgid "KI-Kontext"
+msgstr "AI context"
+
+msgid "Ablage-Eintrag löschen"
+msgstr "Delete archive entry"
+
+msgid "Eingebettete Dateien haben einen Dateinamen."
+msgstr "Embedded files have a file name."
+
+#, python-brace-format
+msgid "1 Grafik ({o} ohne Alt-Text)"
+msgstr "1 graphic ({o} without alt text)"
+
+#, python-brace-format
+msgid "{n} Grafiken ({o} ohne Alt-Text)"
+msgstr "{n} graphics ({o} without alt text)"
+
+msgid "1 Formularfeld"
+msgstr "1 form field"
+
+#, python-brace-format
+msgid "{n} Formularfelder"
+msgstr "{n} form fields"
+
+#, python-brace-format
+msgid "Zusammenfassung: {teile}."
+msgstr "Summary: {teile}."
+
+#, python-brace-format
+msgid "1 Hinweis: {w}"
+msgstr "1 note: {w}"
+
+#, python-brace-format
+msgid "Getaggt am {zeit} in 1 Sekunde."
+msgstr "Tagged on {zeit} in 1 second."
+
+msgid "1 Bild gefunden"
+msgstr "1 image found"
+
+#, python-brace-format
+msgid "{n} Bilder gefunden"
+msgstr "{n} images found"
+
+msgid "1 Alt-Text übernommen"
+msgstr "1 alt text kept"
+
+#, python-brace-format
+msgid "{u} Alt-Texte übernommen"
+msgstr "{u} alt texts kept"
+
+#, python-brace-format
+msgid "(Problem {n}, „{name}“)"
+msgstr "(problem {n}, “{name}”)"
+
+#, python-brace-format
+msgid "Hörprobe von Seite {n} – „{name}“"
+msgstr "Listening sample of page {n} – “{name}”"
+
+#, python-brace-format
+msgid "ZIP mit {f}-Dateien herunterladen"
+msgstr "Download ZIP with {f} files"
+
+#, python-brace-format
+msgid "(Seite {s})"
+msgstr "(page {s})"
+
+#, python-brace-format
+msgid "(Seiten {s})"
+msgstr "(pages {s})"

@@ -75,3 +75,23 @@ class Ungetaggt(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExportTokensAufraeumen(unittest.TestCase):
+    """Pruefung 3 (Entwicklung N2): Sofort-Downloads (bot_*, word_*, pdfua_*.json) in _export werden nach der Frist geloescht,
+    frische bleiben, andere Dateien und dl_-Ordner fasst die Funktion nicht an."""
+
+    def test_nur_alte_token_dateien(self):
+        with tempfile.TemporaryDirectory() as d:
+            exp = os.path.join(d, "7", "11", "_export")
+            os.makedirs(os.path.join(exp, "dl_abc"))
+            namen = ["bot_alt.csv", "word_alt.docx", "pdfua_alt.json", "bot_neu.zip", "pdfua_neu.json", "anderes_alt.json", "pdfua_alt.pdf"]
+            for n in namen:
+                open(os.path.join(exp, n), "w").write("x")
+            alt = main.time.time() - main.EXPORT_TOKEN_AUFBEWAHREN - 60
+            for n in namen:
+                if "_alt" in n:
+                    os.utime(os.path.join(exp, n), (alt, alt))
+            n = main._export_tokens_aufraeumen(os.path.join(d, "*", "*", "_export"))
+            self.assertEqual(n, 3)
+            self.assertEqual(sorted(os.listdir(exp)), sorted(["dl_abc", "bot_neu.zip", "pdfua_neu.json", "anderes_alt.json", "pdfua_alt.pdf"]))

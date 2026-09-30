@@ -221,7 +221,7 @@ with sync_playwright() as p:
         if pg.locator(".inkluagent-message.assistant").count() >= 1 and not st: break
     check("Live-Zeile 'Ruft gerade auf' erschien", any(x.startswith("Ruft gerade auf") for x in gesehen), gesehen)
     ant = pg.locator(".inkluagent-message.assistant").last
-    check("Antwort mit Werkzeugzeile 'Geprüft mit'", ant.locator(".inkluagent-message-tools").count() == 1 and "Geprüft mit" in ant.locator(".inkluagent-message-tools").inner_text(), ant.locator(".inkluagent-message-tools").inner_text() if ant.locator(".inkluagent-message-tools").count() else "fehlt")
+    check("Antwort mit Werkzeugzeile 'Genutzt' (seit Pruefung 3, vorher 'Geprüft mit')", ant.locator(".inkluagent-message-tools").count() == 1 and "Genutzt:" in ant.locator(".inkluagent-message-tools").inner_text(), ant.locator(".inkluagent-message-tools").inner_text() if ant.locator(".inkluagent-message-tools").count() else "fehlt")
     check("Fokus auf der Antwort", pg.evaluate("document.activeElement && document.activeElement.classList.contains('inkluagent-message')"))
     pg.reload(); pg.wait_for_timeout(3000)
     check("Werkzeugzeile auch im geladenen Verlauf", pg.locator(".inkluagent-message.assistant .inkluagent-message-tools").count() >= 1)

@@ -163,3 +163,107 @@ class Freigabe(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Werkzeugnamen(unittest.TestCase):
+    """Pruefung 3 (Barrierefreiheit M1): jedes Werkzeug hat einen Anzeigenamen vom Server, in allen 6 Katalogen."""
+
+    def test_jedes_werkzeug_hat_einen_namen(self):
+        from inkluagent.tools import namen
+        from inkluagent.tools.definitions import TOOL_DEFINITIONS, TOOL_DEFINITIONS_WORD
+        from inkluagent.tools.definitions_formular import TOOL_DEFINITIONS_FORMULAR
+        from inkluagent.tools.definitions_oberflaeche import (TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR, TOOL_DEFINITIONS_OBERFLAECHE_PDF,
+                                                              TOOL_DEFINITIONS_OBERFLAECHE_WORD)
+        from inkluagent.tools.definitions_pdf import TOOL_DEFINITIONS_PDF
+        alle = {d["name"] for liste in (TOOL_DEFINITIONS, TOOL_DEFINITIONS_WORD, TOOL_DEFINITIONS_FORMULAR, TOOL_DEFINITIONS_PDF,
+                                        TOOL_DEFINITIONS_OBERFLAECHE_PDF, TOOL_DEFINITIONS_OBERFLAECHE_WORD,
+                                        TOOL_DEFINITIONS_OBERFLAECHE_FORMULAR) for d in liste}
+        fehlt = sorted(alle - set(namen.WERKZEUG_NAMEN))
+        self.assertEqual(fehlt, [], "Werkzeug ohne Anzeigenamen (inkluagent/tools/namen.py)")
+        for w in alle:
+            self.assertNotIn("_", namen.werkzeug_name(w))
+        self.assertEqual(namen.werkzeug_name("gibt_es_nicht"), "Werkzeug")
+
+    def test_namen_in_allen_katalogen(self):
+        import re
+        from inkluagent.tools import namen
+        basis = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(funktionen.__file__))), "backend", "locales")
+        if not os.path.isdir(basis):
+            basis = os.path.join(os.path.dirname(os.path.abspath(funktionen.__file__)), "locales")
+        for sprache in ("de", "en", "fr", "es", "da", "sv"):
+            with open(os.path.join(basis, sprache, "LC_MESSAGES", "messages.po"), encoding="utf-8") as f:
+                ids = set(re.findall(r'^msgid "(.*)"$', f.read(), re.M))
+            for w, label in namen.WERKZEUG_NAMEN.items():
+                with self.subTest(sprache=sprache, werkzeug=w):
+                    self.assertIn(label, ids)
+
+
+class BestaetigungGebunden(unittest.TestCase):
+    """Pruefung 3 (Entwicklung N1): die Zustimmung gilt fuer GENAU das gespeicherte Angebot. Ein getipptes Ja loest nur das
+    zuletzt gemachte Angebot aus; die Karte traegt den Text des Servers und fuehrt die gespeicherten Argumente aus."""
+
+    def setUp(self):
+        from inkluagent.tools import ausgaben, oberflaeche
+        self.ausgaben, self.oberflaeche = ausgaben, oberflaeche
+        ausgaben._ANGEBOTE.clear()
+        ausgaben._LETZTES.clear()
+        ausgaben._NACH_ID.clear()
+        self.geloescht = []
+        m = mock.MagicMock()
+        m._ausgabe_row.side_effect = lambda uid, aid: {"id": aid, "project_id": 1, "user_id": uid}
+        m._ausgabe_dict.side_effect = lambda r: {"id": r["id"], "dateiname": f"eintrag_{r['id']}.pdf", "art_label": "PDF", "created_at": "", "preis": 0}
+        m._ablage_eintrag_weg.side_effect = lambda uid, r: self.geloescht.append(r["id"])
+        m.get_gettext.return_value = (lambda s: s)
+        self.patches = [mock.patch.object(oberflaeche, "_main", return_value=m), mock.patch.object(ausgaben, "_main", return_value=m),
+                        mock.patch.object(ausgaben, "_ui_lang", return_value="de")]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self.patches:
+            p.stop()
+
+    def ex(self):
+        from inkluagent.tools.definitions import ToolExecutor
+        return ToolExecutor(project_id=1, user_id=7, pdf=True)
+
+    def test_karte_mit_servertext(self):
+        r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})
+        karte = r.get("anhang") or {}
+        self.assertEqual(karte.get("art"), "bestaetigung")
+        self.assertIn("„eintrag_11.pdf“", karte["text"])
+        self.assertIn("nicht rückgängig", karte["text"])
+        self.assertEqual(karte["knopf"], "Ablage-Eintrag löschen bestätigen")
+        k, a = self.ausgaben.angebot_nach_id(karte["angebot_id"])
+        self.assertEqual((a["werkzeug"], a["args"]), ("ausgabe_loeschen", {"ausgabe_id": 11}))
+        self.assertEqual(self.geloescht, [])
+
+    def test_zustimmung_fuer_anderes_ziel_als_angeboten_wird_abgelehnt(self):
+        """Manipuliert: Angebot (und Karte) fuer Eintrag 11, das Modell ruft mit bestaetigt fuer Eintrag 12 auf."""
+        karte = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})["anhang"]
+        r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 12, "bestaetigt": True})
+        self.assertTrue(r["result"].get("rueckfrage_noetig"))
+        self.assertEqual(self.geloescht, [])
+        self.assertIsNotNone(self.ausgaben.angebot_nach_id(karte["angebot_id"]), "Angebot fuer 11 bleibt fuer die Karte")
+
+    def test_ja_nur_fuer_das_letzte_angebot_und_karte_fuehrt_das_gespeicherte_aus(self):
+        """Manipuliert: das Modell legt ein Angebot fuer Eintrag 11 ab, schildert dem Nutzer aber Eintrag 12 und legt dafuer ein
+        zweites Angebot ab. Ein „Ja“ fuer 11 wird abgelehnt (nicht das letzte); die Karte zu 11 loescht genau 11."""
+        a11 = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})["anhang"]["angebot_id"]
+        self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 12})
+        r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11, "bestaetigt": True})
+        self.assertTrue(r["result"].get("rueckfrage_noetig"))
+        self.assertIn("nicht das zuletzt genannte Angebot", r["result"]["hinweis"])
+        self.assertEqual(self.geloescht, [])
+        # Karte (wie POST /chat/bestaetigen): genau das gespeicherte Angebot, mit seinen Argumenten
+        k, a = self.ausgaben.angebot_nach_id(a11)
+        self.ausgaben._LETZTES[(7, 1)] = a11
+        r = self.ex().execute(a["werkzeug"], dict(a["args"], bestaetigt=True))
+        self.assertTrue(r["ok"] and r["result"].get("geloescht"))
+        self.assertEqual(self.geloescht, [11])
+        # verbraucht: dieselbe Karte ein zweites Mal geht nicht
+        self.assertIsNone(self.ausgaben.angebot_nach_id(a11))
+        # ein Ja zum (letzten) Angebot 12 in einer spaeteren Nachricht geht weiter
+        self.ausgaben._LETZTES[(7, 1)] = self.ausgaben._ANGEBOTE[(7, 1, "ablage_loeschen", 12)]["id"]
+        r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 12, "bestaetigt": True})
+        self.assertEqual(self.geloescht, [11, 12])

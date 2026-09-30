@@ -352,6 +352,7 @@ async def lifespan(app: FastAPI):
     os.makedirs(RESULTS_DIR, exist_ok=True)
     try:   # liegengebliebene Download-Ordner aller Konten (Absturz mitten im Bau), Nachpruefung 2 vom 30.09.2026
         _n = _export_anfragen_aufraeumen(os.path.join(RESULTS_DIR, "*", "*", "_export", "dl_*"))
+        _n += _export_tokens_aufraeumen(os.path.join(RESULTS_DIR, "*", "*", "_export"))   # Pruefung 3, N2
         if _n:
             print(f"[export] {_n} liegengebliebene Download-Ordner geloescht")
     except Exception as _e:  # noqa: BLE001
@@ -5073,6 +5074,15 @@ async def upload_file(file: UploadFile = File(...), project_id: int = Form(None)
         # QUICKINFO-WERKZEUG (27.08.2026): PDF in einem Formular-Projekt geht den
         # Formularweg (Felder statt Bilder). Vorpruefung im Request, damit der
         # Nutzer eine klare Meldung bekommt (kein Formular, Passwort, zu gross).
+        # Dieselbe Vorpruefung wie beim PDF-Projekt (Pruefung 3, Entwicklung N5): keine PDF, Passwort, beschaedigt
+        _sprache = resolve_ui_language(request) if request is not None else ((user or {}).get("language") or "de")
+        grund = await asyncio.get_running_loop().run_in_executor(None, pdf_vorpruefung, file_path, get_gettext(_sprache))
+        if grund:
+            try:
+                os.unlink(file_path)
+            except OSError:
+                pass
+            raise HTTPException(status_code=400, detail=grund)
         try:
             validiere_formular(file_path)
         except FormularFehler as e:
@@ -8725,11 +8735,36 @@ def _export_anfragen_aufraeumen(muster: str) -> int:
     return n
 
 
+# Sofort-Downloads (Chatbot-Knoepfe bot_*, Word aus dem Chatbot word_*, Token-Metadateien pdfua_*.json) liegen im _export-Ordner
+# des Projekts; nach dieser Frist werden sie geloescht (Pruefung 3, Entwicklung N2 — vorher nur beim Loeschen des Projekts).
+# Ablage-Dateien liegen woanders (results/<user>/_ablage) und bleiben.
+EXPORT_TOKEN_AUFBEWAHREN = int(os.environ.get("EXPORT_TOKEN_AUFBEWAHREN", str(24 * 3600)))
+_EXPORT_TOKEN_MUSTER = ("bot_*", "word_*", "pdfua_*.json")
+
+
+def _export_tokens_aufraeumen(export_ordner_muster: str) -> int:
+    """Alte Sofort-Download-Dateien in den _export-Ordnern loeschen (export_ordner_muster: glob auf _export-Ordner)."""
+    import glob as _glob
+    jetzt, n = time.time(), 0
+    for ordner in _glob.glob(export_ordner_muster):
+        for muster in _EXPORT_TOKEN_MUSTER:
+            for p in _glob.glob(os.path.join(ordner, muster)):
+                try:
+                    if os.path.isfile(p) and jetzt - os.path.getmtime(p) > EXPORT_TOKEN_AUFBEWAHREN:
+                        os.remove(p)
+                        n += 1
+                except OSError:
+                    pass
+    return n
+
+
 def _export_anfrage_anlegen(wurzel: str) -> str:
     import tempfile as _tempfile
     os.makedirs(wurzel, exist_ok=True)
     # alle Projekte dieses Kontos (wurzel = RESULTS_DIR/<user>/<projekt>/_export)
-    _export_anfragen_aufraeumen(os.path.join(os.path.dirname(os.path.dirname(wurzel)), "*", "_export", "dl_*"))
+    konto = os.path.dirname(os.path.dirname(wurzel))
+    _export_anfragen_aufraeumen(os.path.join(konto, "*", "_export", "dl_*"))
+    _export_tokens_aufraeumen(os.path.join(konto, "*", "_export"))
     return _tempfile.mkdtemp(prefix="dl_", dir=wurzel)
 
 
@@ -10323,6 +10358,7 @@ def sofort_download_ablegen(user_id: int, project_id: int, dateiname: str, media
     Chatbot und der PDF/UA-Sofortdownload: GET /api/projects/{id}/export/pdfua/{token}). Rueckgabe: download_url."""
     output_dir = os.path.join(RESULTS_DIR, str(user_id), str(project_id), "_export")
     os.makedirs(output_dir, exist_ok=True)
+    _export_tokens_aufraeumen(os.path.join(RESULTS_DIR, str(user_id), "*", "_export"))
     token = _secrets.token_hex(12)
     ziel = os.path.join(output_dir, f"bot_{token}{os.path.splitext(dateiname)[1] or '.bin'}")
     if pfad is not None:
@@ -10901,6 +10937,58 @@ async def chat_get_history(project_id: int, user: dict = Depends(get_current_use
     _require_project_owned(project_id, user["id"])
     from inkluagent import storage
     return {"messages": storage.get_history(project_id)}
+
+
+@app.post("/api/projects/{project_id}/chat/bestaetigen")
+async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depends(get_current_user)):
+    """Bestaetigungs-Karte unter einer Chatbot-Antwort (Pruefung 3, 30.09.2026, Entwicklung N1): fuehrt GENAU das Angebot aus,
+    das der Server gespeichert hat (Werkzeug, Argumente, Preis) — nicht das, was das Modell dem Nutzer schildert. Die Karte
+    zeigt den Angebotstext des Servers; der Knopf schickt nur die Kennung. Speichert die Bestaetigung und das Ergebnis im
+    Verlauf, damit das Gespraech weiss, was passiert ist."""
+    _require_inkluagent()
+    _require_project_owned(project_id, user["id"])
+    try:
+        data = await request.json()
+    except Exception:  # noqa: BLE001
+        data = {}
+    _ = get_gettext(resolve_ui_language(request))
+    from inkluagent import storage
+    from inkluagent.tools import ausgaben as _ag
+    angebot_id = str((data or {}).get("angebot_id") or "")
+    treffer = _ag.angebot_nach_id(angebot_id)
+    if (not treffer or treffer[0][0] != user["id"] or treffer[0][1] != project_id or not treffer[1].get("werkzeug")):
+        raise HTTPException(status_code=404, detail=_("Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu."))
+    _schluessel, angebot = treffer
+
+    def _ausfuehren() -> dict:
+        from inkluagent.agent_loop import _werkzeugsatz
+        conn = get_db()
+        try:
+            project = dict(conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone())
+        finally:
+            conn.close()
+        defs, executor, _system = _werkzeugsatz(project, project_id, user["id"])
+        if angebot["werkzeug"] not in {d["name"] for d in defs}:
+            return {"ok": False, "error": _("Diese Funktion gibt es hier nicht.")}
+        _ag._LETZTES[(user["id"], project_id)] = angebot_id   # ausdrueckliche Wahl genau dieses Angebots
+        return executor.execute(angebot["werkzeug"], dict(angebot.get("args") or {}, bestaetigt=True))
+
+    r = await asyncio.get_running_loop().run_in_executor(None, _ausfuehren)
+    anhang = r.pop("anhang", None) if isinstance(r, dict) else None
+    res = (r or {}).get("result") or {}
+    if r.get("ok") and not res.get("rueckfrage_noetig"):
+        antwort = _("Bestätigt und ausgeführt: {text}").format(text=angebot.get("text") or "")
+        anhaenge = [anhang] if (anhang and anhang.get("art") != "bestaetigung") else []
+    else:
+        antwort = _("Nicht ausgeführt: {grund}").format(grund=(r.get("error") or res.get("hinweis") or _("unbekannter Grund")))
+        anhaenge = []
+
+    def _speichern():
+        storage.append_message(project_id, "user", _("Bestätigt über den Knopf: {text}").format(text=angebot.get("text") or ""))
+        storage.append_message(project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
+    await asyncio.get_running_loop().run_in_executor(None, _speichern)
+    return {"ok": bool(r.get("ok")) and not res.get("rueckfrage_noetig"), "reply": antwort, "anhang": anhaenge,
+            "werkzeuge": [angebot["werkzeug"]]}
 
 
 @app.post("/api/projects/{project_id}/chat")
@@ -11724,10 +11812,12 @@ async def app_page(request: Request):
     # Staging-Titel und Cache-Busting kommen aus base_app.html.
     # max_upload_mb: Upload-Limit fuer Hinweis/Fehlertext im Upload-Bereich
     # (eine Quelle, Julia-Feedback 02.07.2026).
+    from inkluagent.tools import namen as _werkzeug_namen
     return _render_protected_template(request, "app.html",
                                       max_upload_mb=MAX_UPLOAD_SIZE // (1024 * 1024),
                                       credit_preise=billing.preise_fuer_frontend(),
-                                      funktionen=funktionen.fuer_oberflaeche())
+                                      funktionen=funktionen.fuer_oberflaeche(),
+                                      werkzeug_namen=_werkzeug_namen.fuer_oberflaeche(get_gettext(resolve_ui_language(request))))
 
 
 # ============================================================

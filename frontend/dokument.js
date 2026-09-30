@@ -116,6 +116,14 @@
     }
 
     // ─── Karte je Dokument ───
+    function befundZeile(e) {
+        if (!e.satz) return esc(e.text || '');
+        const seiten = e.seiten || [];
+        const seitenText = seiten.length === 1 ? ' ' + t('(Seite {s})', { s: seiten[0] }) : (seiten.length ? ' ' + t('(Seiten {s})', { s: seiten.join(', ') }) : '');
+        const regeln = e.regeln || [];
+        const ref = regeln.length ? ' ' + (regeln.length === 1 ? t('(Regel {r})', { r: regeln[0] }) : t('(Regeln {r})', { r: regeln.join(', ') })) : '';
+        return (e.lang ? '<span lang="' + esc(e.lang) + '">' + esc(e.satz) + '</span>' : esc(e.satz)) + (e.mal ? ' ' + esc(e.mal) : '') + esc(seitenText) + esc(ref);
+    }
     function berichtHtml(d, project) {
         const tg = d.tagging || {};
         const b = tg.bericht || {};
@@ -126,7 +134,10 @@
         } else {
             // Ohne Dokumentinfos (Sprache, Struktur, Titel stehen schon oben an der Karte — Michael Karbe, Feedback
             // 24.09.2026, Punkt 9) und ohne Testmodus-Hinweis (Punkt 7).
-            zeilen.push('<li>' + t('Getaggt am {zeit} in {s} Sekunden.', { zeit: esc(b.zeit || ''), s: esc(b.dauer_s != null ? b.dauer_s : '?') }) + '</li>');
+            // Dezimaltrennzeichen der Oberflaechensprache (Pruefung 3, N4: „0.2 Sekunden“ las VoiceOver als „null Punkt zwei“)
+            const dauer = b.dauer_s != null ? new Intl.NumberFormat(window.LANG || 'de', { maximumFractionDigits: 1 }).format(Number(b.dauer_s)) : '?';
+            zeilen.push('<li>' + (Number(b.dauer_s) === 1 ? t('Getaggt am {zeit} in 1 Sekunde.', { zeit: esc(b.zeit || '') })
+                : t('Getaggt am {zeit} in {s} Sekunden.', { zeit: esc(b.zeit || ''), s: esc(dauer) })) + '</li>');
             if (b.bilder && b.bilder.uebernommen) zeilen.push('<li>' + t('{u} Alt-Texte aus dem vorherigen Stand übernommen.', { u: esc(b.bilder.uebernommen) }) + '</li>');
             (b.hinweise || []).forEach(h => zeilen.push('<li>' + esc(h) + '</li>'));
         }
@@ -136,7 +147,8 @@
             // Nur Fehler, keine „In Ordnung“-Zeilen (Mail 22.09.2026, Punkt 6), ohne das Wort „Hinweis“ und je verletztem
             // Pruefpunkt eine Zeile (Feedback 24.09.2026, Punkte 10-12; aeltere Berichte ohne "einzeln": ein Absatz je Bereich)
             const befunde = [];
-            (v.punkte || []).filter(p => p.status === 'befund').forEach(p => (p.einzeln || [{ text: p.text }]).forEach(e => befunde.push(esc(p.bereich) + ': ' + esc(e.text))));
+            // wie die Problemzeilen der Prüfung (Pruefung 3, N3): englische veraPDF-Sätze mit lang="en", Seiten und Regelnummer
+            (v.punkte || []).filter(p => p.status === 'befund').forEach(p => (p.einzeln || [{ text: p.text }]).forEach(e => befunde.push(esc(p.bereich) + ': ' + befundZeile(e))));
             // Stand direkt nach dem Taggen (Audit 30.09.2026, MITTEL 4): nicht die fertige Datei — die prüft die
             // Barrierefreiheitsprüfung (mit Alt-Texten, Quickinfos und Titel). Vorher hieß beides „PDF/UA-Prüfung“.
             pruef = '<h4>' + t('PDF/UA-Prüfung direkt nach dem Taggen') + '</h4>'
@@ -972,7 +984,12 @@
         const v = b.verapdf;
         let s = t('„{name}“ ist getaggt: {struktur}.', { name: name, struktur: strukturText(b.nachher) });
         if (v) s += ' ' + taggingPruefSatz(v);
-        if (b.bilder && b.bilder.nachher) s += ' ' + t('{n} Bilder gefunden, {u} Alt-Texte übernommen.', { n: b.bilder.nachher, u: b.bilder.uebernommen || 0 });
+        if (b.bilder && b.bilder.nachher) {
+            // Einzahl (Pruefung 3, N4: „1 Bilder gefunden“)
+            const n = b.bilder.nachher, u = b.bilder.uebernommen || 0;
+            s += ' ' + (n === 1 ? t('1 Bild gefunden') : t('{n} Bilder gefunden', { n: n })) + ', '
+                + (u === 1 ? t('1 Alt-Text übernommen') : t('{u} Alt-Texte übernommen', { u: u })) + '.';
+        }
         return s;
     }
 

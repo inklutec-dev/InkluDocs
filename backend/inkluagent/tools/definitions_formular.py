@@ -139,10 +139,12 @@ class ToolExecutorFormular:
     def execute(self, name: str, args: dict) -> dict[str, Any]:
         try:
             import funktionen
+            from . import ausgaben as _ausg
             handler = self._handlers().get(name) if funktionen.werkzeug_erlaubt(name) else None
             if not handler:
                 return {"ok": False, "error": f"Unbekanntes Werkzeug: {name}"}
-            return handler(args)
+            vorher = _ausg._LETZTES.get((self.user_id, self.project_id))
+            return _ausg.karte_anhaengen(handler(args), name, args, self.user_id, self.project_id, vorher)
         except Exception as e:
             return {"ok": False, "error": f"Werkzeug-Ausfuehrung crashte: {e}"}
 

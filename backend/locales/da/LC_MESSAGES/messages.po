@@ -9786,3 +9786,168 @@ msgstr "Denne PDF har ingen tags. En kontrolfil findes først efter tagging (vis
 
 msgid "Der Preis hat sich seit der Rückfrage geändert. Bitte noch einmal fragen."
 msgstr "Prisen har ændret sig siden bekræftelsesspørgsmålet. Spørg igen."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“ für {p} Credits."
+msgstr "{aktion}: „{ziel}“ for {p} credits."
+
+#, python-brace-format
+msgid "{aktion} für {p} Credits."
+msgstr "{aktion} for {p} credits."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“. Das lässt sich nicht rückgängig machen."
+msgstr "{aktion}: „{ziel}“. Det kan ikke fortrydes."
+
+#, python-brace-format
+msgid "{aktion}. Das lässt sich nicht rückgängig machen."
+msgstr "{aktion}. Det kan ikke fortrydes."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“, kostenlos."
+msgstr "{aktion}: „{ziel}“, gratis."
+
+#, python-brace-format
+msgid "{aktion}, kostenlos."
+msgstr "{aktion}, gratis."
+
+msgid "Bestätigung nötig"
+msgstr "Bekræftelse nødvendig"
+
+#, python-brace-format
+msgid "{aktion} bestätigen"
+msgstr "Bekræft: {aktion}"
+
+msgid "Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu."
+msgstr "Denne bekræftelse gælder ikke længere. Spørg igen i chatten."
+
+msgid "Diese Funktion gibt es hier nicht."
+msgstr "Denne funktion findes ikke her."
+
+#, python-brace-format
+msgid "Bestätigt und ausgeführt: {text}"
+msgstr "Bekræftet og udført: {text}"
+
+#, python-brace-format
+msgid "Nicht ausgeführt: {grund}"
+msgstr "Ikke udført: {grund}"
+
+msgid "unbekannter Grund"
+msgstr "ukendt årsag"
+
+#, python-brace-format
+msgid "Bestätigt über den Knopf: {text}"
+msgstr "Bekræftet med knappen: {text}"
+
+msgid "Wird ausgeführt …"
+msgstr "Udføres …"
+
+msgid "Fehler. Bitte erneut versuchen."
+msgstr "Fejl. Prøv igen."
+
+#, python-brace-format
+msgid "Genutzt: {w}"
+msgstr "Brugt: {w}"
+
+msgid "Alt-Text generieren"
+msgstr "Generér alt-tekst"
+
+msgid "Quickinfo generieren"
+msgstr "Generér værktøjstip"
+
+msgid "Dokumentstand"
+msgstr "Dokumentstatus"
+
+msgid "Bericht der KI-basierten Prüfung"
+msgstr "Rapport fra den AI-baserede kontrol"
+
+msgid "Korrektur"
+msgstr "Rettelse"
+
+msgid "Korrektur rückgängig"
+msgstr "Fortryd rettelse"
+
+msgid "Dokument löschen"
+msgstr "Slet dokument"
+
+msgid "Stand der Übersetzung"
+msgstr "Oversættelsens status"
+
+msgid "Ablage-Eintrag lesen"
+msgstr "Læs post i arkivet"
+
+msgid "Ergebnis der Barrierefreiheitsprüfung"
+msgstr "Resultat af tilgængelighedskontrollen"
+
+msgid "Stammdaten anwenden"
+msgstr "Anvend stamdata"
+
+msgid "KI-Kontext"
+msgstr "AI-kontekst"
+
+msgid "Ablage-Eintrag löschen"
+msgstr "Slet post i arkivet"
+
+msgid "Eingebettete Dateien haben einen Dateinamen."
+msgstr "Indlejrede filer har et filnavn."
+
+#, python-brace-format
+msgid "1 Grafik ({o} ohne Alt-Text)"
+msgstr "1 grafik ({o} uden alt-tekst)"
+
+#, python-brace-format
+msgid "{n} Grafiken ({o} ohne Alt-Text)"
+msgstr "{n} grafikker ({o} uden alt-tekst)"
+
+msgid "1 Formularfeld"
+msgstr "1 formularfelt"
+
+#, python-brace-format
+msgid "{n} Formularfelder"
+msgstr "{n} formularfelter"
+
+#, python-brace-format
+msgid "Zusammenfassung: {teile}."
+msgstr "Oversigt: {teile}."
+
+#, python-brace-format
+msgid "1 Hinweis: {w}"
+msgstr "1 bemærkning: {w}"
+
+#, python-brace-format
+msgid "Getaggt am {zeit} in 1 Sekunde."
+msgstr "Tagget den {zeit} på 1 sekund."
+
+msgid "1 Bild gefunden"
+msgstr "1 billede fundet"
+
+#, python-brace-format
+msgid "{n} Bilder gefunden"
+msgstr "{n} billeder fundet"
+
+msgid "1 Alt-Text übernommen"
+msgstr "1 alt-tekst overtaget"
+
+#, python-brace-format
+msgid "{u} Alt-Texte übernommen"
+msgstr "{u} alt-tekster overtaget"
+
+#, python-brace-format
+msgid "(Problem {n}, „{name}“)"
+msgstr "(problem {n}, „{name}“)"
+
+#, python-brace-format
+msgid "Hörprobe von Seite {n} – „{name}“"
+msgstr "Lytteprøve af side {n} – „{name}“"
+
+#, python-brace-format
+msgid "ZIP mit {f}-Dateien herunterladen"
+msgstr "Download ZIP med {f}-filer"
+
+#, python-brace-format
+msgid "(Seite {s})"
+msgstr "(side {s})"
+
+#, python-brace-format
+msgid "(Seiten {s})"
+msgstr "(sider {s})"

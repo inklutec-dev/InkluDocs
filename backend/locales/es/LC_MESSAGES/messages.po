@@ -10089,3 +10089,168 @@ msgstr "Este PDF no tiene etiquetas. Un archivo de comprobación solo existe des
 
 msgid "Der Preis hat sich seit der Rückfrage geändert. Bitte noch einmal fragen."
 msgstr "El precio ha cambiado desde la pregunta de confirmación. Vuelve a preguntar."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“ für {p} Credits."
+msgstr "{aktion}: «{ziel}» por {p} créditos."
+
+#, python-brace-format
+msgid "{aktion} für {p} Credits."
+msgstr "{aktion} por {p} créditos."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“. Das lässt sich nicht rückgängig machen."
+msgstr "{aktion}: «{ziel}». No se puede deshacer."
+
+#, python-brace-format
+msgid "{aktion}. Das lässt sich nicht rückgängig machen."
+msgstr "{aktion}. No se puede deshacer."
+
+#, python-brace-format
+msgid "{aktion}: „{ziel}“, kostenlos."
+msgstr "{aktion}: «{ziel}», gratis."
+
+#, python-brace-format
+msgid "{aktion}, kostenlos."
+msgstr "{aktion}, gratis."
+
+msgid "Bestätigung nötig"
+msgstr "Se necesita confirmación"
+
+#, python-brace-format
+msgid "{aktion} bestätigen"
+msgstr "Confirmar: {aktion}"
+
+msgid "Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu."
+msgstr "Esta confirmación ya no es válida. Vuelve a preguntar en el chat."
+
+msgid "Diese Funktion gibt es hier nicht."
+msgstr "Esta función no está disponible aquí."
+
+#, python-brace-format
+msgid "Bestätigt und ausgeführt: {text}"
+msgstr "Confirmado y hecho: {text}"
+
+#, python-brace-format
+msgid "Nicht ausgeführt: {grund}"
+msgstr "No realizado: {grund}"
+
+msgid "unbekannter Grund"
+msgstr "motivo desconocido"
+
+#, python-brace-format
+msgid "Bestätigt über den Knopf: {text}"
+msgstr "Confirmado con el botón: {text}"
+
+msgid "Wird ausgeführt …"
+msgstr "Ejecutando …"
+
+msgid "Fehler. Bitte erneut versuchen."
+msgstr "Error. Vuelve a intentarlo."
+
+#, python-brace-format
+msgid "Genutzt: {w}"
+msgstr "Usado: {w}"
+
+msgid "Alt-Text generieren"
+msgstr "Generar texto alternativo"
+
+msgid "Quickinfo generieren"
+msgstr "Generar información sobre herramientas"
+
+msgid "Dokumentstand"
+msgstr "Estado del documento"
+
+msgid "Bericht der KI-basierten Prüfung"
+msgstr "Informe de la comprobación basada en IA"
+
+msgid "Korrektur"
+msgstr "Corrección"
+
+msgid "Korrektur rückgängig"
+msgstr "Deshacer la corrección"
+
+msgid "Dokument löschen"
+msgstr "Eliminar documento"
+
+msgid "Stand der Übersetzung"
+msgstr "Estado de la traducción"
+
+msgid "Ablage-Eintrag lesen"
+msgstr "Leer entrada del archivo"
+
+msgid "Ergebnis der Barrierefreiheitsprüfung"
+msgstr "Resultado de la comprobación de accesibilidad"
+
+msgid "Stammdaten anwenden"
+msgstr "Aplicar datos maestros"
+
+msgid "KI-Kontext"
+msgstr "Contexto de IA"
+
+msgid "Ablage-Eintrag löschen"
+msgstr "Eliminar entrada del archivo"
+
+msgid "Eingebettete Dateien haben einen Dateinamen."
+msgstr "Los archivos incrustados tienen un nombre de archivo."
+
+#, python-brace-format
+msgid "1 Grafik ({o} ohne Alt-Text)"
+msgstr "1 gráfico ({o} sin texto alternativo)"
+
+#, python-brace-format
+msgid "{n} Grafiken ({o} ohne Alt-Text)"
+msgstr "{n} gráficos ({o} sin texto alternativo)"
+
+msgid "1 Formularfeld"
+msgstr "1 campo de formulario"
+
+#, python-brace-format
+msgid "{n} Formularfelder"
+msgstr "{n} campos de formulario"
+
+#, python-brace-format
+msgid "Zusammenfassung: {teile}."
+msgstr "Resumen: {teile}."
+
+#, python-brace-format
+msgid "1 Hinweis: {w}"
+msgstr "1 aviso: {w}"
+
+#, python-brace-format
+msgid "Getaggt am {zeit} in 1 Sekunde."
+msgstr "Etiquetado el {zeit} en 1 segundo."
+
+msgid "1 Bild gefunden"
+msgstr "1 imagen encontrada"
+
+#, python-brace-format
+msgid "{n} Bilder gefunden"
+msgstr "{n} imágenes encontradas"
+
+msgid "1 Alt-Text übernommen"
+msgstr "1 texto alternativo conservado"
+
+#, python-brace-format
+msgid "{u} Alt-Texte übernommen"
+msgstr "{u} textos alternativos conservados"
+
+#, python-brace-format
+msgid "(Problem {n}, „{name}“)"
+msgstr "(problema {n}, «{name}»)"
+
+#, python-brace-format
+msgid "Hörprobe von Seite {n} – „{name}“"
+msgstr "Muestra de audio de la página {n} – «{name}»"
+
+#, python-brace-format
+msgid "ZIP mit {f}-Dateien herunterladen"
+msgstr "Descargar ZIP con archivos {f}"
+
+#, python-brace-format
+msgid "(Seite {s})"
+msgstr "(página {s})"
+
+#, python-brace-format
+msgid "(Seiten {s})"
+msgstr "(páginas {s})"

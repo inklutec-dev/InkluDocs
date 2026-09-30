@@ -119,20 +119,23 @@ m, daten = datei_zum_token(r2["anhang"]["download_url"]) if r2.get("ok") else ({
 check("Quickinfos CSV: Rückfrage, dann Feldliste, 10 Credits", r1["result"]["rueckfrage_noetig"] and r2["ok"]
       and "Nummer;Name;Quickinfo" in daten.decode("utf-8", "replace") and gebucht_seit(e0) == 10, (r1, r2, gebucht_seit(e0)))
 e0 = letzte()
-r1, r2 = zwei(PID, "exportiere_fertige_pdf", {"document_id": ROH})
-m, daten = datei_zum_token(r2["result"]["download_url"]) if r2.get("ok") else ({}, b"")
-check("PDF ohne Tags über den Chat: unverändert, 0 Credits, Download-Knopf (keine Ablage)", r2["ok"] and r2["result"]["ausgabe_id"] is None
+# 0 Credits: keine Rueckfrage, gleich die Datei (Pruefung 3, N6)
+r2 = ex(PID).execute("exportiere_fertige_pdf", {"document_id": ROH})
+m, daten = datei_zum_token(r2["result"]["download_url"]) if r2.get("ok") and r2["result"].get("download_url") else ({}, b"")
+check("PDF ohne Tags über den Chat: ohne Rückfrage, unverändert, 0 Credits, Download-Knopf (keine Ablage)", r2["ok"]
+      and not r2["result"].get("rueckfrage_noetig") and r2["result"]["ausgabe_id"] is None
       and r2["result"]["unveraendert_ohne_tags"] == "1" and daten[:5] == b"%PDF-" and gebucht_seit(e0) == 0, r2)
-r1, r2 = zwei(PID, "exportiere_fertige_pdf", {"alle": True})
-m, daten = datei_zum_token(r2["result"]["download_url"]) if r2.get("ok") else ({}, b"")
-check("Alle Dokumente als ZIP über den Chat", r2["ok"] and r2["anhang"]["label"] == "zip" and daten[:2] == b"PK", r2)
-r1, r2 = zwei(PID, "exportiere_fertige_pdf", {"document_id": ACT})
+r2 = ex(PID).execute("exportiere_fertige_pdf", {"alle": True})
+m, daten = datei_zum_token(r2["result"]["download_url"]) if r2.get("ok") and r2["result"].get("download_url") else ({}, b"")
+check("Alle Dokumente als ZIP über den Chat (0 Credits, ohne Rückfrage)", r2["ok"] and r2["anhang"]["label"] == "zip" and daten[:2] == b"PK", r2)
+r2 = ex(PID).execute("exportiere_fertige_pdf", {"document_id": ACT})
 aid = (r2.get("result") or {}).get("ausgabe_id")
 check("getaggte PDF: Eintrag in der Ablage", r2["ok"] and aid, r2)
 
 print("== Ablage: ausgabe_loeschen ==")
 r1, r2 = zwei(PID, "ausgabe_loeschen", {"ausgabe_id": aid})
-check("Löschen: erst Rückfrage, nach dem Ja weg", r1["result"].get("rueckfrage_noetig") and r2["ok"] and r2["result"]["geloescht"]
+check("Löschen: erst Rückfrage mit Karte (Servertext), nach dem Ja weg", r1["result"].get("rueckfrage_noetig")
+      and (r1.get("anhang") or {}).get("art") == "bestaetigung" and r2["ok"] and r2["result"]["geloescht"]
       and not sql("SELECT 1 FROM ablage WHERE id = ?", aid), (r1, r2))
 r = ex(PID).execute("ausgabe_loeschen", {"ausgabe_id": 999999999, "bestaetigt": True})
 check("fremder/unbekannter Eintrag: Fehler", not r["ok"], r)

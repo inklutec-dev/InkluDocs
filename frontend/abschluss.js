@@ -203,7 +203,8 @@
             zeilen += '<p>' + esc(t('— Seite {n} —', { n: sd.seite })) + '</p>'
                 + (sd.zeilen.length ? sd.zeilen.map(zl => zeileHtml(zl, lang)).join('') : '<p>' + t('Auf dieser Seite liest ein Screenreader nichts vor.') + '</p>');
         });
-        return '<section class="ab-dok-hoerprobe" aria-labelledby="ab_dhp_heading_' + d.id + '">'
+        // Bereichsname je Dokument eindeutig (Pruefung 3, N5): „Hörprobe – Dokument „…““
+        return '<section class="ab-dok-hoerprobe" aria-labelledby="ab_dhp_heading_' + d.id + ' ab_dname_' + d.id + '">'
             + '<h4 id="ab_dhp_heading_' + d.id + '">' + t('Hörprobe') + '</h4>'
             + '<p class="feld-hinweis">' + t('So liest ein Screenreader die Tags dieses Dokuments vor, in Lesereihenfolge. Das ist kein Prüfergebnis.') + '</p>'
             // Name je Dokument über aria-labelledby (wie bei Word): vorlesenTeile ersetzt den Knopftext beim Start/Stopp
@@ -269,7 +270,7 @@
             + '<summary><h4 id="ab_probleme_' + d.id + '" class="ab-inline">' + t('Problemstellen ({n})', { n: probleme.length }) + '</h4></summary>'
             + '<ol class="ab-problemliste">' + probleme.map(p => '<li class="ab-problem">' + problemText(p)
             // Knopfname eindeutig je Problemstelle (Punkt 7: zweimal „Zur Seite 1“ in der Knopfliste)
-            + (p.seite && seiten.includes(p.seite) ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '<span class="visually-hidden"> ' + t('(Problem {n})', { n: p.nr }) + '</span></button>' : '') + '</li>').join('') + '</ol></details>';
+            + (p.seite && seiten.includes(p.seite) ? ' <button type="button" class="btn btn-secondary btn-small" onclick="Abschluss.zurSeite(' + project.id + ', ' + d.id + ', ' + p.seite + ')">' + t('Zur Seite {n}', { n: p.seite }) + '<span class="visually-hidden"> ' + t('(Problem {n}, „{name}“)', { n: p.nr, name: esc(name(d)) }) + '</span></button>' : '') + '</li>').join('') + '</ol></details>';
         if (!seiten.length) {
             const sf = d.pruefdatei && d.pruefdatei.struktur_fehler;
             // Strukturlesung gescheitert: keine Hoerprobe, also keine Seitenansicht — das sagen statt stiller Knoepfe. Der Satz
@@ -298,7 +299,7 @@
             + '<p><button type="button" class="btn btn-secondary btn-small tts-btn" id="ab_vorlesen_' + d.id + '" aria-pressed="false" onclick="Abschluss.vorlesenSeite(' + d.id + ', this)">' + t('Seite vorlesen') + '</button></p>'
             + '<p class="ab-vorlese-status" id="ab_svstatus_' + d.id + '" role="status"></p>'
             + '<h5 class="ab-hoerprobe-titel">' + t('Hörprobe: so liest ein Screenreader die Tags dieser Seite vor (kein Prüfergebnis)') + '</h5>'
-            + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von Seite {n}', { n: z.seite }) + '" tabindex="0">'
+            + '<div class="ausgabe-hoerprobe ab-hoerprobe" role="region" aria-label="' + t('Hörprobe von Seite {n} – „{name}“', { n: z.seite, name: esc(name(d)) }) + '" tabindex="0">'
             + (seiteDaten.zeilen.length ? seiteDaten.zeilen.map(zl => zeileHtml(zl, lang)).join('') : '<p>' + t('Auf dieser Seite liest ein Screenreader nichts vor.') + '</p>')
             + '</div></div></div></section>';
         return s;

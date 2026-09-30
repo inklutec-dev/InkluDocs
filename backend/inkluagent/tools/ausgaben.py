@@ -48,13 +48,36 @@ def _db_path() -> str:
 _ANGEBOTE: dict[tuple, dict] = {}
 _ANGEBOT_GUELTIG_S = 15 * 60
 _KOSTENPFLICHTIG_JE_TURN = 1
+# Zustimmung an die konkrete Aktion gebunden (Pruefung 3, 30.09.2026, Entwicklung N1): jedes Angebot hat eine Kennung; der
+# Server merkt sich je Nutzer und Projekt das ZULETZT gemachte Angebot. Ein getipptes „Ja“ (bestaetigt=true vom Modell) loest
+# nur dieses aus; die Oberflaeche zeigt den Angebotstext des SERVERS als Karte mit eigenem Bestaetigungsknopf, der genau das
+# gespeicherte Angebot (Werkzeug, Argumente, Preis) ausfuehrt — nicht das, was das Modell dem Nutzer vielleicht schildert.
+_LETZTES: dict[tuple, str] = {}          # (user_id, project_id) -> Angebots-Kennung
+_NACH_ID: dict[str, tuple] = {}          # Angebots-Kennung -> Schluessel in _ANGEBOTE
 
 
-def _angebot_merken(schluessel: tuple, preis: int, turn_id: str) -> None:
+def _angebot_merken(schluessel: tuple, preis: int, turn_id: str) -> str:
     jetzt = time.time()
     for k in [k for k, a in _ANGEBOTE.items() if jetzt - a["zeit"] > _ANGEBOT_GUELTIG_S]:
+        _NACH_ID.pop(_ANGEBOTE[k].get("id"), None)
         _ANGEBOTE.pop(k, None)
-    _ANGEBOTE[schluessel] = {"preis": int(preis or 0), "turn": turn_id, "zeit": jetzt}
+    alt = _ANGEBOTE.get(schluessel)
+    if alt:
+        _NACH_ID.pop(alt.get("id"), None)
+    angebot_id = uuid.uuid4().hex
+    _ANGEBOTE[schluessel] = {"preis": int(preis or 0), "turn": turn_id, "zeit": jetzt, "id": angebot_id}
+    _NACH_ID[angebot_id] = schluessel
+    _LETZTES[(schluessel[0], schluessel[1])] = angebot_id
+    return angebot_id
+
+
+def angebot_nach_id(angebot_id: str) -> Optional[tuple]:
+    """(Schluessel, Angebot) zu einer Kennung, solange es gilt."""
+    k = _NACH_ID.get(angebot_id or "")
+    a = _ANGEBOTE.get(k) if k else None
+    if not a or time.time() - a["zeit"] > _ANGEBOT_GUELTIG_S:
+        return None
+    return k, a
 
 
 def _angebot_einloesen(schluessel: tuple, preis: int, turn_id: str) -> Optional[str]:
@@ -64,14 +87,62 @@ def _angebot_einloesen(schluessel: tuple, preis: int, turn_id: str) -> Optional[
         _ANGEBOTE.pop(schluessel, None)
         return ("Es liegt kein gueltiges Angebot vor: erst OHNE bestaetigt aufrufen, dem Nutzer Preis und Guthaben "
                 "nennen und auf sein Ja warten.")
+    if _LETZTES.get((schluessel[0], schluessel[1])) != a.get("id"):
+        return ("Das ist nicht das zuletzt genannte Angebot. Ein Ja gilt nur für das letzte Angebot: frage für diese Aktion "
+                "neu (ohne bestaetigt) oder lass den Nutzer die Karte unter deiner Antwort bestätigen.")
     if a["turn"] == turn_id:
         return ("Die Zustimmung muss vom Nutzer in einer eigenen, spaeteren Nachricht kommen — nicht in derselben "
                 "Nachricht wie die Preisauskunft. Nenne den Preis und warte auf sein Ja.")
     if a["preis"] != int(preis or 0):
         _ANGEBOTE.pop(schluessel, None)
+        _NACH_ID.pop(a.get("id"), None)
         return "Der Preis hat sich seit der Auskunft geaendert. Nenne dem Nutzer den neuen Preis und frage erneut."
     _ANGEBOTE.pop(schluessel, None)
+    _NACH_ID.pop(a.get("id"), None)
     return None
+
+
+# Karte unter der Antwort (Pruefung 3): Text und Knopf vom SERVER, nicht vom Modell
+_UNUMKEHRBAR = ("ausgabe_loeschen", "dokument_loeschen")
+
+
+def karte_anhaengen(result: dict, werkzeug: str, args: dict, user_id: int, project_id: int, vorher_id: Optional[str]) -> dict:
+    """Hat dieser Werkzeugaufruf ein NEUES Angebot abgelegt, haengt der Server eine Bestaetigungs-Karte an (anhang): Aktion,
+    Ziel und Preis aus dem gespeicherten Angebot und dem Werkzeug-Ergebnis, Knopf „<Aktion> bestätigen“. Das Angebot merkt
+    sich Werkzeug und Argumente — der Knopf fuehrt genau das aus (main: POST /api/projects/{id}/chat/bestaetigen)."""
+    angebot_id = _LETZTES.get((int(user_id), int(project_id)))
+    if not angebot_id or angebot_id == vorher_id or not isinstance(result, dict) or not result.get("ok"):
+        return result
+    treffer = angebot_nach_id(angebot_id)
+    if not treffer:
+        return result
+    _k, a = treffer
+    a["werkzeug"] = werkzeug
+    a["args"] = {k: v for k, v in (args or {}).items() if k != "bestaetigt"}
+    r = result.get("result") or {}
+    try:
+        from .namen import werkzeug_name
+        _ = _main().get_gettext(_ui_lang(user_id))
+    except Exception:  # noqa: BLE001
+        werkzeug_name, _ = (lambda n, u=None: n), (lambda s: s)
+    aktion = werkzeug_name(werkzeug, _)
+    ziel = r.get("dokument") or r.get("dateiname") or ""
+    preis = int(a.get("preis") or 0)
+    if preis:
+        text = (_("{aktion}: „{ziel}“ für {p} Credits.").format(aktion=aktion, ziel=ziel, p=preis) if ziel
+                else _("{aktion} für {p} Credits.").format(aktion=aktion, p=preis))
+    elif werkzeug in _UNUMKEHRBAR:
+        text = (_("{aktion}: „{ziel}“. Das lässt sich nicht rückgängig machen.").format(aktion=aktion, ziel=ziel) if ziel
+                else _("{aktion}. Das lässt sich nicht rückgängig machen.").format(aktion=aktion))
+    else:
+        text = (_("{aktion}: „{ziel}“, kostenlos.").format(aktion=aktion, ziel=ziel) if ziel
+                else _("{aktion}, kostenlos.").format(aktion=aktion))
+    a["text"] = text
+    karte = {"art": "bestaetigung", "angebot_id": angebot_id, "titel": _("Bestätigung nötig"), "text": text,
+             "knopf": _("{aktion} bestätigen").format(aktion=aktion)}
+    if not result.get("anhang"):
+        result["anhang"] = karte
+    return result
 
 
 def _turn_id(turn) -> str:
@@ -193,7 +264,9 @@ def _kosten_vorschau(m, project: dict, user_id: int, document_id: Optional[int],
         "erlaubt": bool(p.get("erlaubt")), "fehlend": p.get("fehlend"),
         "dokumente": len(units), "bilder": anzahl,
         "hinweis": ("Nenne dem Nutzer den Preis in Credits (und das Guthaben, wenn nicht unbegrenzt) und frage, "
-                    "ob du fortfahren sollst. Erst nach ausdruecklichem Ja erneut mit bestaetigt=true aufrufen."
+                    "ob du fortfahren sollst. Unter deiner Antwort steht eine Karte mit genau diesem Angebot und einem Knopf "
+                    "zum Bestaetigen. Schreibt der Nutzer „Ja“, erneut mit bestaetigt=true aufrufen (gilt nur fuer dieses "
+                    "zuletzt genannte Angebot)."
                     if p.get("erlaubt") else
                     "Das Guthaben reicht nicht. Sag dem Nutzer Preis und Guthaben und verweise auf Abo & Verbrauch."),
     }

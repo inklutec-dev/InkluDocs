@@ -249,8 +249,15 @@ def hoerprobe(struktur: dict, _: Callable[[str], str] = _identitaet, felder_quic
         else:
             zeilen.append(_("{typ}: {t}").format(typ=typ, t=_kurz(text)) if text else _("{typ} (ohne Text)").format(typ=typ))
         zeilen.extend(marken)
-    zusammen = _("Zusammenfassung: {u} Überschriften, {l} Listen, {t} Tabellen, {b} Grafiken ({o} ohne Alt-Text), {f} Formularfelder.").format(
-        u=n_ueberschriften, l=n_listen, t=n_tabellen, b=n_bilder, o=n_bilder_ohne, f=n_felder)
+    # Einzahl bei 1 (Pruefung 3 Barrierefreiheit, N4: „1 Grafiken“)
+    teile = [
+        _("1 Überschrift") if n_ueberschriften == 1 else _("{n} Überschriften").format(n=n_ueberschriften),
+        _("1 Liste") if n_listen == 1 else _("{n} Listen").format(n=n_listen),
+        _("1 Tabelle") if n_tabellen == 1 else _("{n} Tabellen").format(n=n_tabellen),
+        (_("1 Grafik ({o} ohne Alt-Text)") if n_bilder == 1 else _("{n} Grafiken ({o} ohne Alt-Text)")).format(n=n_bilder, o=n_bilder_ohne),
+        _("1 Formularfeld") if n_felder == 1 else _("{n} Formularfelder").format(n=n_felder),
+    ]
+    zusammen = _("Zusammenfassung: {teile}.").format(teile=", ".join(teile))
     zeilen.insert(2, zusammen)
     return zeilen
 

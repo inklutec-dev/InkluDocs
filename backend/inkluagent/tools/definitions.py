@@ -223,7 +223,9 @@ class ToolExecutor:
             handler = self._handlers().get(name) if funktionen.werkzeug_erlaubt(name) else None
             if not handler:
                 return {"ok": False, "error": f"Unbekanntes Tool: {name}"}
-            return handler(args)
+            vorher = ausgaben_tools._LETZTES.get((self.user_id, self.project_id))
+            # neues Angebot -> Bestaetigungs-Karte mit dem Text des SERVERS (Pruefung 3, Entwicklung N1)
+            return ausgaben_tools.karte_anhaengen(handler(args), name, args, self.user_id, self.project_id, vorher)
         except Exception as e:
             return {"ok": False, "error": f"Tool-Ausführung crashte: {e}"}
 
