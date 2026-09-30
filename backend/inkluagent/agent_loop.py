@@ -314,6 +314,13 @@ def run_agent(
                     "uebernommen": r.get("uebernommen", True),
                 })
 
+            # Pruefung 4 (M2/M3): Zustand verbrauchter Karten und „Ansicht nachziehen“ gehen an die Oberflaeche, nicht ans Modell
+            if isinstance(result, dict):
+                for k in (result.pop("karten", None) or []):
+                    actions_log.append(dict({"type": "karte"}, **k))
+                if result.pop("aktualisieren", False):
+                    actions_log.append({"type": "ansicht_aktualisieren"})
+
             # anhang-Sonderfall (konvertiere_zu_pdfua / exportiere_word, 11.09.2026): Download-Knopf fuer die
             # Oberflaeche — aus dem tool_result nehmen (das Modell braucht ihn nicht), an die Antwort haengen.
             anhang = result.pop("anhang", None) if isinstance(result, dict) else None

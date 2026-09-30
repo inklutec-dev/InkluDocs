@@ -224,8 +224,13 @@ class ToolExecutor:
             if not handler:
                 return {"ok": False, "error": f"Unbekanntes Tool: {name}"}
             vorher = ausgaben_tools._LETZTES.get((self.user_id, self.project_id))
-            # neues Angebot -> Bestaetigungs-Karte mit dem Text des SERVERS (Pruefung 3, Entwicklung N1)
-            return ausgaben_tools.karte_anhaengen(handler(args), name, args, self.user_id, self.project_id, vorher)
+            try:
+                ergebnis = handler(args)
+            except Exception as e:  # noqa: BLE001
+                ergebnis = {"ok": False, "error": f"Tool-Ausführung crashte: {e}"}
+            # neues Angebot -> Bestaetigungs-Karte mit dem Text des SERVERS (Pruefung 3, Entwicklung N1); verbrauchte Karten
+            # -> „Erledigt“, Ansicht nachziehen, Download-Frist (Pruefung 4)
+            return ausgaben_tools.nachbereiten(ergebnis, name, args, self.user_id, self.project_id, vorher)
         except Exception as e:
             return {"ok": False, "error": f"Tool-Ausführung crashte: {e}"}
 

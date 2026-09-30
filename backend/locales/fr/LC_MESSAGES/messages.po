@@ -10254,3 +10254,47 @@ msgstr "(page {s})"
 #, python-brace-format
 msgid "(Seiten {s})"
 msgstr "(pages {s})"
+
+#, python-brace-format
+msgid "Alt-Texte als {format} herunterladen"
+msgstr "Télécharger les textes alternatifs en {format}"
+
+msgid "Quickinfos als CSV herunterladen"
+msgstr "Télécharger les infobulles en CSV"
+
+#, python-brace-format
+msgid "{p} Credits"
+msgstr "{p} crédits"
+
+#, python-brace-format
+msgid "„{ziel}“ ist gelöscht."
+msgstr "« {ziel} » a été supprimé."
+
+msgid "Erledigt"
+msgstr "Terminé"
+
+msgid "Nicht mehr gültig"
+msgstr "N’est plus valable"
+
+msgid "Schon bestätigt."
+msgstr "Déjà confirmé."
+
+msgid "Der Preis hat sich geändert. Bitte frag im Chat neu."
+msgstr "Le prix a changé. Redemande dans le chat."
+
+#, python-brace-format
+msgid "Erledigt: {text}"
+msgstr "Terminé : {text}"
+
+msgid ", neue Antwort"
+msgstr ", nouvelle réponse"
+
+msgid "Antwort vom InkluAgent ist da."
+msgstr "L’InkluAgent a répondu."
+
+#, python-brace-format
+msgid "Download von „{name}“ abgelaufen (Links gelten 24 Stunden). Bitte im Chat neu anfordern."
+msgstr "Le téléchargement de « {name} » a expiré (les liens sont valables 24 heures). Redemande-le dans le chat."
+
+msgid "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."
+msgstr "Les liens de téléchargement (download_url) sont valables au moins 24 heures ; le champ gueltig_bis indique cette échéance (UTC). Récupère le fichier avant."

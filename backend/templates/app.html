@@ -101,6 +101,10 @@
       .inkluagent-bestaetigung { flex-basis: 100%; border: 1px solid #9ca3af; border-radius: 6px; padding: 0.6rem 0.8rem; background: var(--bg-muted, #f3f4f6); }
       .inkluagent-bestaetigung h4 { margin: 0 0 0.3rem; font-size: 1rem; }
       .inkluagent-bestaetigung p { margin: 0 0 0.5rem; }
+      /* Pruefung 4 (M1/M3): Hinweis „neue Antwort“ am Chat-Knopf; gesperrter Karten-Knopf behaelt den Fokus (aria-disabled) */
+      .inkluagent-neu { font-weight: normal; }
+      .inkluagent-bestaetigung button[aria-disabled="true"] { background: #e5e7eb; color: #374151; border-color: #9ca3af; cursor: not-allowed; }
+      .inkluagent-bestaetigung[data-zustand="erledigt"], .inkluagent-bestaetigung[data-zustand="abgelaufen"] { background: transparent; }
       .inkluagent-bestaetigung-status:empty { margin: 0; }
       /* Hörprobe des ganzen Dokuments in der Prüfung, sichtbare Vorlese-Meldung (Prüfung 30.09.2026, Punkt 1) */
       .ab-dok-hoerprobe { border-top: 1px solid #9ca3af; margin-top: 1rem; padding-top: 0.6rem; }
@@ -917,7 +921,9 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         } catch (err) { /* still — Kopf-Update ist Komfort, kein Show-Stopper */ }
     }
 
-    async function showProject(projectId) {
+    // erneut (Pruefung 4, M2): stilles Nachziehen nach einer Chat-Aktion — die Unteransichten setzen dann keinen Fokus auf die H1.
+    async function showProject(projectId, erneut) {
+        erneut = erneut === true;
         if (window.vorlesenStopp) vorlesenStopp();   // Vorlesen endet mit der Ansicht (Pruefbericht 24.09.2026)
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         if (window.Uebersetzen && Uebersetzen.pollStoppen) Uebersetzen.pollStoppen();   // Polling der Uebersetzungs-Ansicht endet mit ihr (Review 2, Befund 2)
@@ -948,7 +954,7 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // 28.08.2026: dieselbe Ansicht im Gast-Modus (Token statt Projekt-ID).
         if (project && (project.tool === 'formular' || project.project_type === 'pdfform')) {
             if (window.GUEST_MODE) window.SHARE_ROLE = data.role || 'kunde';
-            return Formular.showProject(window.GUEST_MODE ? window.SHARE_TOKEN : projectId);
+            return Formular.showProject(window.GUEST_MODE ? window.SHARE_TOKEN : projectId, erneut);
         }
         // TESTUMBAU „Projekt = Dateityp, Faehigkeiten = Ansichten" (Steve 18.09.2026): Ein Word-Projekt
         // (Eingang „word" oder „uebersetzen") hat die Ansichten „Alt-Texte" (diese Datei) und
@@ -956,29 +962,29 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         // wie ein PDF-Projekt (siehe unten). Welche offen ist, steht in der Adresse (?ansicht=…); ohne Angabe die gemerkte
         // bzw. die Startansicht des Eingangs. Zurueck im Browser geht.
         if (project && istWordDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'uebersetzung') {
-            return Uebersetzen.showProject(projectId);
+            return Uebersetzen.showProject(projectId, erneut);
         }
         // PDF-Projekt, Ansichten „Dokument“ (Dateiverwaltung) und „Tagging“ (seit 29.09.2026, Michael Karbe, Feedback
         // 20260928 - 2): beide zeichnet frontend/dokument.js, je in ihrer Betriebsart.
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && (aktuelleAnsicht(project) === 'dokument' || aktuelleAnsicht(project) === 'tagging')) {
-            return Dokument.showProject(projectId, false, aktuelleAnsicht(project));
+            return Dokument.showProject(projectId, erneut, aktuelleAnsicht(project));
         }
         // Word-Projekt, Ansicht „Dokument“ (30.09.2026): dieselbe Dateiverwaltung wie PDF, gezeichnet von dokument.js.
         if (project && istWordDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'dokument') {
-            return Dokument.showProject(projectId, false, 'dokument');
+            return Dokument.showProject(projectId, erneut, 'dokument');
         }
         // PDF-Projekt, Station „Abschlussprüfung“ (24.09.2026): fertige Datei prüfen und herunterladen (frontend/abschluss.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'abschluss') {
-            return Abschluss.showProject(projectId);
+            return Abschluss.showProject(projectId, erneut);
         }
         // Word-Projekt, „Barrierefreiheitsprüfung“ (30.09.2026): Prüfbericht und Hörprobe ohne KI, veraPDF-Ergebnis der letzten
         // barrierefreien PDF (frontend/abschluss.js, eigener Zweig).
         if (project && istWordDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'abschluss') {
-            return Abschluss.showWordProject(projectId);
+            return Abschluss.showWordProject(projectId, erneut);
         }
         // PDF-Projekt, Station „Quickinfos“ (22.09.2026): dieselbe Ansicht wie das Formular-Werkzeug (formular.js).
         if (project && istPdfDateityp(project) && !window.GUEST_MODE && aktuelleAnsicht(project) === 'quickinfos') {
-            return Formular.showProject(projectId);
+            return Formular.showProject(projectId, erneut);
         }
         const images = data.images;
         const documents = data.documents || [];
@@ -4259,7 +4265,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             + '</section>';
     }
 
-    async function inkluagentInit(projectId) {
+    function inkluagentInit(projectId) {
+        const p = inkluagentInitLaden(projectId);
+        window._inkluagentBereit = p;
+        return p;
+    }
+    async function inkluagentInitLaden(projectId) {
         window._inkluagentProjectId = projectId;
         const toggle = document.getElementById('inkluagentToggle');
         const input = document.getElementById('inkluagentInput');
@@ -4283,8 +4294,10 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 }
             });
         }
-        const wasOpen = localStorage.getItem('inkluagent.panel.' + projectId) === 'open';
+        let wasOpen = false;
+        try { wasOpen = localStorage.getItem('inkluagent.panel.' + projectId) === 'open'; } catch (e) {}
         if (wasOpen) await inkluagentOpen(projectId, false);
+        else if (window._inkluagentNeu != null && String(window._inkluagentNeu) === String(projectId)) inkluagentNeuMarkieren(true);
     }
 
     async function inkluagentOpen(projectId, focusInput) {
@@ -4297,8 +4310,12 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         toggle.textContent = t('Chatbot');
         panel.hidden = false;
         try { localStorage.setItem('inkluagent.panel.' + projectId, 'open'); } catch (e) {}
+        const neu = window._inkluagentNeu != null && String(window._inkluagentNeu) === String(projectId);
+        inkluagentNeuMarkieren(false);
         await inkluagentLoadHistory(projectId);
-        if (focusInput && input) input.focus();
+        const letzte = neu ? inkluagentLetzteAntwort() : null;
+        if (focusInput && letzte) letzte.focus();
+        else if (focusInput && input) input.focus();
     }
 
     function inkluagentClose() {
@@ -4336,6 +4353,118 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         }
     }
 
+    // Pruefung 4 (Barrierefreiheit M1): eine neue Antwort holt den Fokus nur, wenn er noch im Chat liegt (oder nirgends) —
+    // wer inzwischen woanders liest oder tippt, bleibt dort und hoert nur „Antwort vom InkluAgent ist da.“ (allgemeine
+    // Ansage-Region); bei zugeklapptem Chat traegt der Knopf „Chatbot, neue Antwort“, bis man ihn oeffnet (dann Fokus auf die
+    // Antwort). Wer im Eingabefeld des Chats schon weiterschreibt, behaelt es.
+    function inkluagentIstEingabe(el) {
+        if (!el) return false;
+        if (el.isContentEditable || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return true;
+        return el.tagName === 'INPUT' && ['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'image'].indexOf((el.type || '').toLowerCase()) < 0;
+    }
+    function inkluagentFokusImChat() {
+        const panel = document.getElementById('inkluagentPanel');
+        if (!panel || panel.hidden) return false;
+        const ae = document.activeElement;
+        if (!ae || ae === document.body || ae === document.documentElement) return true;
+        const sec = panel.closest('.inkluagent-section') || panel;
+        if (!sec.contains(ae)) return false;
+        return !(ae.id === 'inkluagentInput' && (ae.value || '').trim());
+    }
+    function inkluagentLetzteAntwort() {
+        const alle = document.querySelectorAll('#inkluagentLog .inkluagent-message.assistant');
+        return alle.length ? alle[alle.length - 1] : null;
+    }
+    function inkluagentNeuMarkieren(an) {
+        const toggle = document.getElementById('inkluagentToggle');
+        if (!an) window._inkluagentNeu = null;
+        if (!toggle) return;
+        let m = toggle.querySelector('.inkluagent-neu');
+        if (an && !m) {
+            m = document.createElement('span');
+            m.className = 'inkluagent-neu';
+            m.textContent = t(', neue Antwort');
+            toggle.appendChild(m);
+        } else if (!an && m) {
+            m.remove();
+        }
+    }
+    // fokussieren: vorher (VOR dem Nachziehen) mit inkluagentFokusImChat() bestimmt
+    function inkluagentAntwortMelden(el, fokussieren) {
+        if (fokussieren && el) { el.focus(); return true; }
+        announce(t('Antwort vom InkluAgent ist da.'));
+        const panel = document.getElementById('inkluagentPanel');
+        if (!panel || panel.hidden) { window._inkluagentNeu = window._inkluagentProjectId; inkluagentNeuMarkieren(true); }
+        return false;
+    }
+    // Karte auf ihren neuen Zustand stellen (Pruefung 4, M3): „Erledigt“ bzw. „Nicht mehr gültig“. Hat ihr Knopf gerade den
+    // Fokus, bleibt er stehen (aria-disabled), sonst faellt er weg.
+    function inkluagentKarteSetzen(angebotId, felder) {
+        if (!angebotId || !felder || !felder.zustand) return;
+        document.querySelectorAll('.inkluagent-bestaetigung[data-angebot-id="' + CSS.escape(angebotId) + '"]').forEach(k => {
+            k.dataset.zustand = felder.zustand;
+            const h = k.querySelector('h4'); if (h && felder.titel) h.textContent = felder.titel;
+            const p = k.querySelector('.inkluagent-bestaetigung-text'); if (p && felder.text) p.textContent = felder.text;
+            const b = k.querySelector('button');
+            if (b) {
+                if (document.activeElement === b) { b.setAttribute('aria-disabled', 'true'); b.dataset.gesperrt = '1'; }
+                else b.remove();
+            }
+        });
+    }
+    // Pruefung 4 (M2): nach Chat-Aktionen, die den Projektzustand aendern, die offene Ansicht still nachziehen (Dokument weg,
+    // Zaehler, Tagging-Stand …). Der Chat wird dabei aus dem gespeicherten Verlauf neu gezeichnet (Karten mit Zustand vom Server),
+    // ein angefangener Chat-Text bleibt. Liegt der Fokus in der Ansicht, kommt er auf dasselbe Element zurueck (gleiche id); tippt
+    // jemand gerade in einem Feld der Ansicht, wartet das Nachziehen, bis er es verlaesst — sonst ginge Getipptes verloren.
+    let _inkluagentNachziehenWartet = false;
+    async function inkluagentAnsichtNachziehen(projectId) {
+        if (typeof showProject !== 'function' || !projectId) return false;
+        const ae = document.activeElement;
+        const sec = document.querySelector('.inkluagent-section');
+        const imChat = !!(sec && ae && sec.contains(ae));
+        if (ae && !imChat && inkluagentIstEingabe(ae)) {
+            if (!_inkluagentNachziehenWartet) {
+                _inkluagentNachziehenWartet = true;
+                ae.addEventListener('focusout', () => setTimeout(() => { _inkluagentNachziehenWartet = false; inkluagentAnsichtNachziehen(projectId); }, 900), { once: true });
+            }
+            return false;
+        }
+        const warWo = (ae && ae !== document.body && !imChat) ? inkluagentFokusMerken(ae) : null;
+        const entwurfEl = document.getElementById('inkluagentInput');
+        const entwurf = entwurfEl ? entwurfEl.value : '';
+        await showProject(projectId, true);
+        try { await window._inkluagentBereit; } catch (e) {}
+        const neuEl = document.getElementById('inkluagentInput');
+        if (neuEl && entwurf && !neuEl.value) neuEl.value = entwurf;
+        if (warWo) {
+            const el = inkluagentFokusFinden(warWo) || document.getElementById('projectName');
+            if (el) el.focus();
+        }
+        return true;
+    }
+    // Stelle des Fokus ueber ein Neuzeichnen hinweg: id, sonst Elementart + Text + Position unter gleichen
+    function inkluagentFokusMerken(el) {
+        if (el.id) return { id: el.id };
+        const text = (el.textContent || '').trim();
+        const gleiche = Array.from(document.querySelectorAll(el.tagName)).filter(x => (x.textContent || '').trim() === text);
+        return { tag: el.tagName, text: text, i: gleiche.indexOf(el) };
+    }
+    function inkluagentFokusFinden(m) {
+        if (m.id) return document.getElementById(m.id);
+        const gleiche = Array.from(document.querySelectorAll(m.tag)).filter(x => (x.textContent || '').trim() === m.text);
+        return gleiche[Math.max(0, m.i)] || null;
+    }
+    // Aktionen einer Antwort (Chat oder Karte): Karten-Zustaende setzen; true = Ansicht nachziehen
+    function inkluagentAktionenKarten(actions) {
+        let nachziehen = false;
+        (actions || []).forEach(a => {
+            if (!a) return;
+            if (a.type === 'karte') inkluagentKarteSetzen(a.angebot_id, a);
+            if (a.type === 'ansicht_aktualisieren') nachziehen = true;
+        });
+        return nachziehen;
+    }
+
     // Werkzeug-Transparenz (Steve 28.08.2026): Namen der Agenten-Werkzeuge fuer die Live-Zeile „Ruft gerade auf: …“ und die
     // Zeile „Genutzt: …“ unter jeder Antwort. Seit Pruefung 3 (30.09.2026, M1) kommen ALLE Namen vom Server
     // (window.WERKZEUG_NAMEN, inkluagent/tools/namen.py, 6 Sprachen) — nie ein roher Name wie „dokument_stand“.
@@ -4351,29 +4480,40 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
     }
 
     // Bestaetigungs-Karte (Pruefung 3, Entwicklung N1): Text und Knopf kommen vom SERVER; der Knopf fuehrt genau das gespeicherte
-    // Angebot aus (POST /chat/bestaetigen mit seiner Kennung). Ergebnis als neue Antwort mit Fokus; Fehler in der Statuszeile der Karte.
+    // Angebot aus (POST /chat/bestaetigen mit seiner Kennung). Pruefung 4 (M3): waehrend der Anfrage aria-disabled statt disabled
+    // (der Fokus bleibt auf dem Knopf), danach traegt die Karte ihren Zustand („Erledigt“ / „Nicht mehr gültig“); Fehler stehen
+    // in ihrer Statuszeile. Das Ergebnis kommt als neue Antwort — Fokus nach der Regel oben (M1).
     async function inkluagentBestaetigen(angebotId, btn, statusEl) {
         const projectId = window._inkluagentProjectId;
-        if (!projectId || !btn) return;
-        btn.disabled = true;
+        if (!projectId || !btn || btn.getAttribute('aria-disabled') === 'true') return;
+        btn.setAttribute('aria-disabled', 'true');
         if (statusEl) statusEl.textContent = t('Wird ausgeführt …');
         try {
             const res = await fetch('/api/projects/' + projectId + '/chat/bestaetigen', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ angebot_id: angebotId }) });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                btn.disabled = false;
                 if (statusEl) statusEl.textContent = (data && typeof data.detail === 'string') ? data.detail : t('Fehler. Bitte erneut versuchen.');
+                if (data && data.karte) inkluagentKarteSetzen(angebotId, data.karte);
+                else btn.removeAttribute('aria-disabled');
+                if (data && inkluagentAktionenKarten(data.actions)) await inkluagentAnsichtNachziehen(projectId);
                 return;
             }
             if (statusEl) statusEl.textContent = '';
-            btn.remove();
+            const fokussieren = inkluagentFokusImChat();
             const el = inkluagentAppendMessage('assistant', data.reply || '', data.werkzeuge || [], data.anhang || []);
+            if (data.karte) inkluagentKarteSetzen(angebotId, data.karte);
+            const nachziehen = inkluagentAktionenKarten(data.actions);
             const log = document.getElementById('inkluagentLog');
             if (log) log.scrollTop = log.scrollHeight;
-            if (el) el.focus();
+            if (nachziehen && await inkluagentAnsichtNachziehen(projectId)) {
+                inkluagentAntwortMelden(inkluagentLetzteAntwort(), fokussieren);
+            } else {
+                inkluagentAntwortMelden(el, fokussieren);
+            }
+            if (btn.isConnected && document.activeElement !== btn) btn.remove();
         } catch (e) {
-            btn.disabled = false;
+            btn.removeAttribute('aria-disabled');
             if (statusEl) statusEl.textContent = t('Verbindungsfehler. Bitte erneut versuchen.');
         }
     }
@@ -4386,25 +4526,40 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         box.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-top:0.5rem;';
         (anhang || []).forEach(a => {
             if (a && a.art === 'bestaetigung' && a.angebot_id) {
+                const offen = !a.zustand || a.zustand === 'offen';
                 const karte = document.createElement('div');
                 karte.className = 'inkluagent-bestaetigung';
+                karte.dataset.angebotId = a.angebot_id;
+                karte.dataset.zustand = offen ? 'offen' : a.zustand;
                 const h = document.createElement('h4');
                 h.textContent = a.titel || t('Bestätigung nötig');
                 const p = document.createElement('p');
+                p.className = 'inkluagent-bestaetigung-text';
                 p.textContent = a.text || '';
-                const b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'btn btn-primary';
-                b.textContent = a.knopf || t('Bestätigen');
-                const st = document.createElement('p');
-                st.className = 'inkluagent-bestaetigung-status';
-                st.setAttribute('role', 'status');
-                b.addEventListener('click', () => inkluagentBestaetigen(a.angebot_id, b, st));
-                karte.appendChild(h); karte.appendChild(p); karte.appendChild(b); karte.appendChild(st);
+                karte.appendChild(h); karte.appendChild(p);
+                // Erledigte und veraltete Karten ohne Knopf: bei der Ueberschriften-Navigation keine offene Frage mehr
+                if (offen) {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'btn btn-primary';
+                    b.textContent = a.knopf || t('Bestätigen');
+                    const st = document.createElement('p');
+                    st.className = 'inkluagent-bestaetigung-status';
+                    st.setAttribute('role', 'status');
+                    b.addEventListener('click', () => inkluagentBestaetigen(a.angebot_id, b, st));
+                    karte.appendChild(b); karte.appendChild(st);
+                }
                 box.appendChild(karte);
                 return;
             }
             if (!a || !a.download_url) return;
+            if (a.gueltig_bis && Date.parse(a.gueltig_bis) < Date.now()) {
+                const weg = document.createElement('p');
+                weg.className = 'feld-hinweis';
+                weg.textContent = t('Download von „{name}“ abgelaufen (Links gelten 24 Stunden). Bitte im Chat neu anfordern.', { name: a.dateiname || '' });
+                box.appendChild(weg);
+                return;
+            }
             const dl = document.createElement('a');
             dl.className = 'btn btn-primary';
             dl.href = a.download_url;
@@ -4476,6 +4631,8 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
         status.textContent = text || '';
         if (isError) status.setAttribute('data-state', 'error');
         else status.removeAttribute('data-state');
+        // Pruefung 4 (M1): die Statuszeile liegt im Chat — ist er zu oder der Fokus woanders, hoert man sie nicht
+        if (isError && text && !inkluagentFokusImChat()) announce(text);
     }
 
     async function inkluagentSend() {
@@ -4538,12 +4695,15 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
                 data = await res.json();
             }
             if (!data) { inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true); return; }
+            // Fokusregel (Pruefung 4, M1) VOR allem anderen bestimmen: liegt der Fokus noch im Chat?
+            const fokussieren = inkluagentFokusImChat();
             const antwortEl = inkluagentAppendMessage('assistant', data.reply || t('(leere Antwort)'), Array.isArray(data.werkzeuge) ? data.werkzeuge : genutzt, data.anhang);
             log.scrollTop = log.scrollHeight;
             inkluagentSetStatus('', false);
+            let nachziehen = inkluagentAktionenKarten(data.actions);
             // Fokus auf die Antwort statt zurueck ins Eingabefeld: der Screenreader liest sie
             // vollstaendig und von vorn; Tab fuehrt danach zum Eingabefeld.
-            if (antwortEl) { window._inkluagentFokusAntwort = true; antwortEl.focus(); }
+            window._inkluagentFokusAntwort = true;
             // Refresh-Actions vom Chatbot: pro Bild Textarea-Wert live setzen.
             // Wenn Bild nicht im DOM (z.B. noch nicht gerendert), Fallback auf Full-Reload.
             const refreshActions = (data.actions || []).filter(a => a && a.type === 'refresh_image');
@@ -4572,14 +4732,20 @@ window.MAX_UPLOAD_MB = {{ max_upload_mb|default(50) }};
             }
             // Formular-Projekte (28.08.2026): refresh_feld-Aktionen setzt formular.js selbst um.
             if (window.Formular && typeof Formular.chatAktionen === 'function') Formular.chatAktionen(data.actions || []);
-            if (needsFullReload && typeof showProject === 'function') {
-                setTimeout(() => showProject(projectId), 800);
+            // Ansicht nachziehen (Pruefung 4, M2) — auch, wenn ein Bild noch nicht im DOM war (frueher: showProject nach 800 ms,
+            // Fokus ging dabei verloren). Danach bekommt die neue Antwort den Fokus, wenn er vorher im Chat lag.
+            if ((nachziehen || needsFullReload) && await inkluagentAnsichtNachziehen(projectId)) {
+                inkluagentAntwortMelden(inkluagentLetzteAntwort(), fokussieren);
+            } else {
+                inkluagentAntwortMelden(antwortEl, fokussieren);
             }
         } catch (e) {
             inkluagentSetStatus(t('Verbindungsfehler. Bitte erneut versuchen.'), true);
         } finally {
             sendBtn.disabled = false;
-            if (window._inkluagentFokusAntwort) { window._inkluagentFokusAntwort = false; } else { input.focus(); }
+            // Zurueck ins Eingabefeld nur, wenn der Fokus im Chat war (Fehlerfall) — nie aus einer anderen Stelle heraus
+            if (window._inkluagentFokusAntwort) { window._inkluagentFokusAntwort = false; }
+            else if (inkluagentFokusImChat() && document.activeElement !== input) { input.focus(); }
         }
     }
 

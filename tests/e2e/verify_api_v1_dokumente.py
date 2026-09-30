@@ -122,6 +122,8 @@ with httpx.Client(base_url=B, timeout=180) as c:
     check("Export docx: Word-Datei", r.status_code == 200 and "wordprocessingml" in r.headers.get("content-type", ""), (r.status_code, r.headers.get("content-type")))
     r = c.post(f"/api/v1/documents/{wid}/export/pdfua", headers=H)
     check("Export pdfua: JSON mit Bericht + download_url", r.status_code == 200 and r.json().get("download_url", "").startswith(B + "/api/v1/documents/") and "bestanden" in r.json(), r.text[:300])
+    check("Export pdfua: gueltig_bis (ISO, UTC, etwa 24 Stunden) — Prüfung 4", r.status_code == 200
+          and __import__("re").match(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$", r.json().get("gueltig_bis") or ""), r.text[:300])
     if r.status_code == 200:
         r2 = c.get(r.json()["download_url"].replace(B, ""), headers=H)
         check("PDF/UA-Download ueber v1", r2.status_code == 200 and r2.headers.get("content-type", "").startswith("application/pdf"), (r2.status_code, r2.headers.get("content-type")))

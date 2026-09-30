@@ -144,7 +144,11 @@ class ToolExecutorFormular:
             if not handler:
                 return {"ok": False, "error": f"Unbekanntes Werkzeug: {name}"}
             vorher = _ausg._LETZTES.get((self.user_id, self.project_id))
-            return _ausg.karte_anhaengen(handler(args), name, args, self.user_id, self.project_id, vorher)
+            try:
+                ergebnis = handler(args)
+            except Exception as e:  # noqa: BLE001
+                ergebnis = {"ok": False, "error": f"Werkzeug-Ausfuehrung crashte: {e}"}
+            return _ausg.nachbereiten(ergebnis, name, args, self.user_id, self.project_id, vorher)
         except Exception as e:
             return {"ok": False, "error": f"Werkzeug-Ausfuehrung crashte: {e}"}
 

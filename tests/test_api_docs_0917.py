@@ -46,5 +46,15 @@ class ApiDokuTest(unittest.TestCase):
             self.assertIn(f'<h2 id="h-intro">{intro}</h2>', r.text, lang)
 
 
+    def test_download_links_gelten_24_stunden_in_allen_sprachen(self):
+        """Pruefung 4 (Entwicklung 1): die Doku sagt, wie lange download_url gilt, und nennt das Feld gueltig_bis."""
+        erwartet = {"de": "mindestens 24 Stunden", "en": "at least 24 hours", "fr": "au moins 24 heures",
+                    "es": "al menos 24 horas", "da": "mindst 24 timer", "sv": "minst 24 timmar"}
+        for lang, satz in erwartet.items():
+            t = self.c.get("/api/v1/docs", headers={"Accept-Language": lang}).text
+            self.assertIn(satz, t, lang)
+            self.assertIn("gueltig_bis", t, lang)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -80,3 +80,32 @@ def clear_history(project_id: int) -> int:
         return cursor.rowcount
     finally:
         conn.close()
+
+
+def karte_aktualisieren(project_id: int, angebot_id: str, felder: dict) -> int:
+    """Bestaetigungs-Karte im gespeicherten Verlauf auf ihren neuen Zustand stellen (Pruefung 4, M3: „Erledigt“ oder „Nicht
+    mehr gültig“), damit sie nach dem Neuladen nicht wieder als offene Frage mit Knopf erscheint. Rueckgabe: geaenderte Zeilen."""
+    if not angebot_id:
+        return 0
+    conn = get_db()
+    try:
+        rows = conn.execute("SELECT id, anhang FROM chat_messages WHERE project_id = ? AND anhang LIKE ?",
+                            (project_id, f"%{angebot_id}%")).fetchall()
+        n = 0
+        for r in rows:
+            try:
+                liste = json.loads(r["anhang"]) or []
+            except ValueError:
+                continue
+            geaendert = False
+            for a in liste:
+                if isinstance(a, dict) and a.get("art") == "bestaetigung" and a.get("angebot_id") == angebot_id:
+                    a.update(felder)
+                    geaendert = True
+            if geaendert:
+                conn.execute("UPDATE chat_messages SET anhang = ? WHERE id = ?", (json.dumps(liste, ensure_ascii=False), r["id"]))
+                n += 1
+        conn.commit()
+        return n
+    finally:
+        conn.close()

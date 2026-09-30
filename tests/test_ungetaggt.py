@@ -95,3 +95,26 @@ class ExportTokensAufraeumen(unittest.TestCase):
             n = main._export_tokens_aufraeumen(os.path.join(d, "*", "*", "_export"))
             self.assertEqual(n, 3)
             self.assertEqual(sorted(os.listdir(exp)), sorted(["dl_abc", "bot_neu.zip", "pdfua_neu.json", "anderes_alt.json", "pdfua_alt.pdf"]))
+
+    def test_ablage_links_bleiben_und_frist_nur_ohne_ablage(self):
+        """Pruefung 4 (Entwicklung 1): Metadateien, die in die Ablage zeigen, bleiben; gueltig_bis nur fuer Links ohne Ablage."""
+        import json as _json
+        with tempfile.TemporaryDirectory() as d:
+            exp = os.path.join(d, "7", "11", "_export")
+            abl = os.path.join(d, "7", "_ablage")
+            os.makedirs(exp)
+            os.makedirs(abl)
+            open(os.path.join(abl, "pdfua_" + "a" * 24 + ".pdf"), "w").write("x")
+            open(os.path.join(exp, "bot_" + "b" * 24 + ".csv"), "w").write("x")
+            _json.dump({"pfad": os.path.join(abl, "pdfua_" + "a" * 24 + ".pdf")}, open(os.path.join(exp, "pdfua_" + "a" * 24 + ".json"), "w"))
+            _json.dump({"pfad": os.path.join(exp, "bot_" + "b" * 24 + ".csv")}, open(os.path.join(exp, "pdfua_" + "b" * 24 + ".json"), "w"))
+            with mock.patch.object(main, "RESULTS_DIR", d):
+                self.assertIsNone(main.token_gueltig_bis(7, "/api/projects/11/export/pdfua/" + "a" * 24))
+                bis = main.token_gueltig_bis(7, "/api/projects/11/export/pdfua/" + "b" * 24)
+                self.assertRegex(bis or "", r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+                self.assertIsNone(main.token_gueltig_bis(7, "/api/ausgaben/5/datei"))
+            alt = main.time.time() - main.EXPORT_TOKEN_AUFBEWAHREN - 60
+            for n in os.listdir(exp):
+                os.utime(os.path.join(exp, n), (alt, alt))
+            self.assertEqual(main._export_tokens_aufraeumen(os.path.join(d, "*", "*", "_export")), 2)
+            self.assertEqual(os.listdir(exp), ["pdfua_" + "a" * 24 + ".json"])

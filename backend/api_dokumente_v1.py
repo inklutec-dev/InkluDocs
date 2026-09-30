@@ -51,6 +51,7 @@ Whitelists; Dateigroesse/-typ prueft /api/upload; Download-Token der PDF/UA prue
 """
 from __future__ import annotations
 
+import importlib
 import logging
 import os
 import re
@@ -825,6 +826,12 @@ async def _documents_export(user: dict, request: Request, project_id: int, fmt: 
         inhalt = _json_von(erg)
         token = inhalt.get("token")
         inhalt["download_url"] = f"{_d.base_url}/api/v1/documents/{project_id}/export/pdfua/{token}"
+        # Pruefung 4 (Entwicklung 1): der Link gilt mindestens bis gueltig_bis (24 Stunden, wie alle Download-Links); die
+        # PDF/UA-Datei liegt ausserdem in der Ablage des Kontos, ihr Link verfaellt erst mit dem Ablage-Eintrag.
+        try:
+            inhalt["gueltig_bis"] = importlib.import_module("main").gueltig_bis_text()
+        except Exception:  # noqa: BLE001
+            inhalt["gueltig_bis"] = None
         inhalt.pop("ausgaben_anzahl", None)
         # Interne Felder der Word-Ansichten (30.09.2026) nicht nach aussen: document_id ist die Unterdokument-Kennung der
         # App (nicht die Dokument-ID dieser API), fingerabdruck nur fuer die Anzeige „aktuell / nicht mehr aktuell“.

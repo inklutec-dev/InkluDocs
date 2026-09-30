@@ -7,7 +7,9 @@ Aufruf (im Container): python3 /tmp/chatbot_werkzeuge_probe.py <pdf-projekt> <us
 Rahmen (Projekte anlegen, danach loeschen): chatbot_werkzeuge_lauf.py. Kostet Credits des Testkontos (Exporte, 1 Alt-Text,
 Quickinfos eines Formulars) und wenige KI-Aufrufe."""
 import asyncio
+import datetime
 import json
+import re
 import os
 import sys
 import threading
@@ -108,6 +110,10 @@ check("Alt-Texte CSV: erst Preis und Rückfrage", r1["ok"] and r1["result"]["rue
 m, daten = datei_zum_token(r2["anhang"]["download_url"]) if r2.get("ok") else ({}, b"")
 check("nach dem Ja: CSV als Download-Knopf, 10 Credits gebucht", r2["ok"] and r2["anhang"]["label"] == "csv" and daten[:1] and gebucht_seit(e0) == 10,
       (r2, gebucht_seit(e0)))
+bis = (r2.get("anhang") or {}).get("gueltig_bis") or ""
+check("Download ohne Ablage trägt gueltig_bis (etwa 24 Stunden), auch im Ergebnis fürs Modell (Prüfung 4)",
+      bool(re.match(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$", bis)) and r2["result"].get("gueltig_bis") == bis
+      and 23 * 3600 < (datetime.datetime.strptime(bis, "%Y-%m-%dT%H:%M:%SZ") - datetime.datetime.utcnow()).total_seconds() <= 24 * 3600, (bis, r2.get("result")))
 e0 = letzte()
 r1, r2 = zwei(PID, "exportiere_alt_texte", {"format": "xlsx"})
 m, daten = datei_zum_token(r2["anhang"]["download_url"]) if r2.get("ok") else ({}, b"")
@@ -130,7 +136,7 @@ m, daten = datei_zum_token(r2["result"]["download_url"]) if r2.get("ok") and r2[
 check("Alle Dokumente als ZIP über den Chat (0 Credits, ohne Rückfrage)", r2["ok"] and r2["anhang"]["label"] == "zip" and daten[:2] == b"PK", r2)
 r2 = ex(PID).execute("exportiere_fertige_pdf", {"document_id": ACT})
 aid = (r2.get("result") or {}).get("ausgabe_id")
-check("getaggte PDF: Eintrag in der Ablage", r2["ok"] and aid, r2)
+check("getaggte PDF: Eintrag in der Ablage, Link ohne Frist (kein gueltig_bis)", r2["ok"] and aid and not (r2.get("anhang") or {}).get("gueltig_bis"), r2)
 
 print("== Ablage: ausgabe_loeschen ==")
 r1, r2 = zwei(PID, "ausgabe_loeschen", {"ausgabe_id": aid})

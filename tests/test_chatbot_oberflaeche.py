@@ -198,9 +198,8 @@ class Werkzeugnamen(unittest.TestCase):
                     self.assertIn(label, ids)
 
 
-class BestaetigungGebunden(unittest.TestCase):
-    """Pruefung 3 (Entwicklung N1): die Zustimmung gilt fuer GENAU das gespeicherte Angebot. Ein getipptes Ja loest nur das
-    zuletzt gemachte Angebot aus; die Karte traegt den Text des Servers und fuehrt die gespeicherten Argumente aus."""
+class _KartenBasis(unittest.TestCase):
+    """Gemeinsamer Aufbau: Ablage-Eintraege als Attrappe, Zustand der Angebote leer."""
 
     def setUp(self):
         from inkluagent.tools import ausgaben, oberflaeche
@@ -208,14 +207,18 @@ class BestaetigungGebunden(unittest.TestCase):
         ausgaben._ANGEBOTE.clear()
         ausgaben._LETZTES.clear()
         ausgaben._NACH_ID.clear()
+        ausgaben._ERLEDIGT.clear()
+        ausgaben._VERBRAUCHT.clear()
         self.geloescht = []
+        self.gespeichert = []
         m = mock.MagicMock()
         m._ausgabe_row.side_effect = lambda uid, aid: {"id": aid, "project_id": 1, "user_id": uid}
         m._ausgabe_dict.side_effect = lambda r: {"id": r["id"], "dateiname": f"eintrag_{r['id']}.pdf", "art_label": "PDF", "created_at": "", "preis": 0}
         m._ablage_eintrag_weg.side_effect = lambda uid, r: self.geloescht.append(r["id"])
         m.get_gettext.return_value = (lambda s: s)
         self.patches = [mock.patch.object(oberflaeche, "_main", return_value=m), mock.patch.object(ausgaben, "_main", return_value=m),
-                        mock.patch.object(ausgaben, "_ui_lang", return_value="de")]
+                        mock.patch.object(ausgaben, "_ui_lang", return_value="de"),
+                        mock.patch.object(ausgaben, "_karte_speichern", side_effect=lambda pid, aid, f: self.gespeichert.append((aid, dict(f))))]
         for p in self.patches:
             p.start()
 
@@ -227,13 +230,18 @@ class BestaetigungGebunden(unittest.TestCase):
         from inkluagent.tools.definitions import ToolExecutor
         return ToolExecutor(project_id=1, user_id=7, pdf=True)
 
+
+class BestaetigungGebunden(_KartenBasis):
+    """Pruefung 3 (Entwicklung N1): die Zustimmung gilt fuer GENAU das gespeicherte Angebot. Ein getipptes Ja loest nur das
+    zuletzt gemachte Angebot aus; die Karte traegt den Text des Servers und fuehrt die gespeicherten Argumente aus."""
+
     def test_karte_mit_servertext(self):
         r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})
         karte = r.get("anhang") or {}
         self.assertEqual(karte.get("art"), "bestaetigung")
         self.assertIn("„eintrag_11.pdf“", karte["text"])
         self.assertIn("nicht rückgängig", karte["text"])
-        self.assertEqual(karte["knopf"], "Ablage-Eintrag löschen bestätigen")
+        self.assertEqual(karte["knopf"], "Ablage-Eintrag löschen („eintrag_11.pdf“) bestätigen")   # Pruefung 4: Ziel im Knopf
         k, a = self.ausgaben.angebot_nach_id(karte["angebot_id"])
         self.assertEqual((a["werkzeug"], a["args"]), ("ausgabe_loeschen", {"ausgabe_id": 11}))
         self.assertEqual(self.geloescht, [])
@@ -267,3 +275,81 @@ class BestaetigungGebunden(unittest.TestCase):
         self.ausgaben._LETZTES[(7, 1)] = self.ausgaben._ANGEBOTE[(7, 1, "ablage_loeschen", 12)]["id"]
         r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 12, "bestaetigt": True})
         self.assertEqual(self.geloescht, [11, 12])
+
+
+class KarteZustand(_KartenBasis):
+    """Pruefung 4 (30.09.2026): Karte nach der Ausfuehrung „Erledigt“ (gespeichert + Aktion), veraltete Karten „Nicht mehr
+    gültig“, Doppelklick belegt das Angebot nur einmal, Einloesen unter einer Sperre, Knopf nennt Format/Ziel/Preis."""
+
+    def test_ja_verbraucht_karte_wird_erledigt_und_ansicht_nachgezogen(self):
+        aid = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})["anhang"]["angebot_id"]
+        r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11, "bestaetigt": True})
+        self.assertEqual(self.geloescht, [11])
+        self.assertEqual(r.get("karten"), [{"zustand": "erledigt", "titel": "Erledigt", "text": "„eintrag_11.pdf“ ist gelöscht.", "angebot_id": aid}])
+        self.assertTrue(r.get("aktualisieren"))
+        self.assertEqual(self.gespeichert, [(aid, {"zustand": "erledigt", "titel": "Erledigt", "text": "„eintrag_11.pdf“ ist gelöscht."})])
+        self.assertEqual(self.ausgaben.angebot_reservieren(aid, 7, 1), (None, "erledigt"))   # spaeterer Klick: „Schon bestätigt.“
+
+    def test_ersetztes_angebot_macht_alte_karte_ungueltig(self):
+        alt = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})["anhang"]["angebot_id"]
+        r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})
+        self.assertNotEqual(r["anhang"]["angebot_id"], alt)
+        self.assertEqual([(k["angebot_id"], k["zustand"]) for k in r.get("karten") or []], [(alt, "abgelaufen")])
+        self.assertFalse(r.get("aktualisieren"), "nur ein Angebot, nichts geaendert")
+
+    def test_doppelklick_belegt_nur_einmal(self):
+        aid = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})["anhang"]["angebot_id"]
+        t1, g1 = self.ausgaben.angebot_reservieren(aid, 7, 1)
+        t2, g2 = self.ausgaben.angebot_reservieren(aid, 7, 1)
+        self.assertTrue(t1 and g1 == "")
+        self.assertEqual((t2, g2), (None, "erledigt"))
+        # waehrend der Knopf ausfuehrt, loest ein getipptes Ja dasselbe Angebot NICHT aus
+        r = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11, "bestaetigt": True})
+        self.assertTrue(r["result"].get("rueckfrage_noetig"))
+        self.assertEqual(self.geloescht, [])
+        r = self.ausgaben.karte_ausfuehren(aid, "ausgabe_loeschen", {"ausgabe_id": 11}, self.ex())
+        self.assertTrue(r["ok"] and r["result"].get("geloescht"))
+        self.assertEqual(self.geloescht, [11])
+        self.assertEqual(self.ausgaben.angebot_reservieren(aid, 7, 1), (None, "erledigt"))
+        self.assertEqual(self.ausgaben.angebot_reservieren("0" * 32, 7, 1), (None, "ungueltig"))
+        self.assertEqual(self.ausgaben.angebot_reservieren(aid, 7, 2), (None, "ungueltig"), "fremdes Projekt")
+
+    def test_einloesen_unter_sperre_genau_einmal(self):
+        import threading
+        schluessel = (7, 1, "pdfua", None)
+        self.ausgaben._angebot_merken(schluessel, 10, "turn-a")
+        ergebnisse = []
+        start = threading.Barrier(8)
+
+        def los():
+            start.wait()
+            ergebnisse.append(self.ausgaben._angebot_einloesen(schluessel, 10, "turn-b"))
+        th = [threading.Thread(target=los) for _ in range(8)]
+        [t.start() for t in th]
+        [t.join() for t in th]
+        self.assertEqual(sum(1 for e in ergebnisse if e is None), 1)
+
+    def test_verlauf_zeigt_veraltete_karten_ohne_knopf(self):
+        offen = self.ex().execute("ausgabe_loeschen", {"ausgabe_id": 11})["anhang"]
+        msgs = [{"role": "assistant", "anhang": [dict(offen)]},
+                {"role": "assistant", "anhang": [{"art": "bestaetigung", "angebot_id": "a" * 32, "titel": "Bestätigung nötig", "text": "x"}]},
+                {"role": "assistant", "anhang": [{"art": "bestaetigung", "angebot_id": "b" * 32, "zustand": "erledigt", "titel": "Erledigt", "text": "y"}]}]
+        self.ausgaben.karten_im_verlauf(msgs, lambda s: s)
+        self.assertEqual([m["anhang"][0]["zustand"] for m in msgs], ["offen", "abgelaufen", "erledigt"])
+        self.assertEqual(msgs[1]["anhang"][0]["titel"], "Nicht mehr gültig")
+
+    def test_knopf_nennt_format_ziel_und_preis(self):
+        b = self.ausgaben._beschreibung
+        self.assertEqual(b("exportiere_alt_texte", {"format": "xlsx"}, "Alt-Texte herunterladen", "", 10, lambda s: s),
+                         "Alt-Texte als Excel herunterladen (10 Credits)")
+        self.assertEqual(b("exportiere_alt_texte", {"format": "csv"}, "Alt-Texte herunterladen", "actino.pdf", 10, lambda s: s),
+                         "Alt-Texte als CSV herunterladen („actino.pdf“, 10 Credits)")
+        self.assertEqual(b("dokument_loeschen", {}, "Dokument löschen", "roh.pdf", 0, lambda s: s), "Dokument löschen („roh.pdf“)")
+
+    def test_ansicht_nachziehen_fuer_alle_aendernden_werkzeuge_mit_namen(self):
+        from inkluagent.tools import namen
+        self.assertFalse(self.ausgaben.AENDERT_ANSICHT - set(namen.WERKZEUG_NAMEN), "unbekannte Werkzeugnamen")
+        for w in ("dokument_loeschen", "dokument_umbenennen", "alt_sprache_setzen", "barrierefrei_machen", "testweise_taggen",
+                  "pruefdatei_erstellen", "alt_texte_generieren", "quickinfos_generieren", "stammdaten_anwenden", "ausgabe_loeschen"):
+            self.assertIn(w, self.ausgaben.AENDERT_ANSICHT)
+

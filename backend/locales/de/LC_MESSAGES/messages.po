@@ -10255,3 +10255,47 @@ msgstr "(Seite {s})"
 #, python-brace-format
 msgid "(Seiten {s})"
 msgstr "(Seiten {s})"
+
+#, python-brace-format
+msgid "Alt-Texte als {format} herunterladen"
+msgstr "Alt-Texte als {format} herunterladen"
+
+msgid "Quickinfos als CSV herunterladen"
+msgstr "Quickinfos als CSV herunterladen"
+
+#, python-brace-format
+msgid "{p} Credits"
+msgstr "{p} Credits"
+
+#, python-brace-format
+msgid "„{ziel}“ ist gelöscht."
+msgstr "„{ziel}“ ist gelöscht."
+
+msgid "Erledigt"
+msgstr "Erledigt"
+
+msgid "Nicht mehr gültig"
+msgstr "Nicht mehr gültig"
+
+msgid "Schon bestätigt."
+msgstr "Schon bestätigt."
+
+msgid "Der Preis hat sich geändert. Bitte frag im Chat neu."
+msgstr "Der Preis hat sich geändert. Bitte frag im Chat neu."
+
+#, python-brace-format
+msgid "Erledigt: {text}"
+msgstr "Erledigt: {text}"
+
+msgid ", neue Antwort"
+msgstr ", neue Antwort"
+
+msgid "Antwort vom InkluAgent ist da."
+msgstr "Antwort vom InkluAgent ist da."
+
+#, python-brace-format
+msgid "Download von „{name}“ abgelaufen (Links gelten 24 Stunden). Bitte im Chat neu anfordern."
+msgstr "Download von „{name}“ abgelaufen (Links gelten 24 Stunden). Bitte im Chat neu anfordern."
+
+msgid "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."
+msgstr "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."

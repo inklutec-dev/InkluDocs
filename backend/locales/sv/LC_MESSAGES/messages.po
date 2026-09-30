@@ -9822,3 +9822,47 @@ msgstr "(sida {s})"
 #, python-brace-format
 msgid "(Seiten {s})"
 msgstr "(sidor {s})"
+
+#, python-brace-format
+msgid "Alt-Texte als {format} herunterladen"
+msgstr "Ladda ner alt-texter som {format}"
+
+msgid "Quickinfos als CSV herunterladen"
+msgstr "Ladda ned verktygstips som CSV"
+
+#, python-brace-format
+msgid "{p} Credits"
+msgstr "{p} credits"
+
+#, python-brace-format
+msgid "„{ziel}“ ist gelöscht."
+msgstr "”{ziel}” är borttagen."
+
+msgid "Erledigt"
+msgstr "Klart"
+
+msgid "Nicht mehr gültig"
+msgstr "Inte längre giltig"
+
+msgid "Schon bestätigt."
+msgstr "Redan bekräftat."
+
+msgid "Der Preis hat sich geändert. Bitte frag im Chat neu."
+msgstr "Priset har ändrats. Fråga igen i chatten."
+
+#, python-brace-format
+msgid "Erledigt: {text}"
+msgstr "Klart: {text}"
+
+msgid ", neue Antwort"
+msgstr ", nytt svar"
+
+msgid "Antwort vom InkluAgent ist da."
+msgstr "InkluAgent har svarat."
+
+#, python-brace-format
+msgid "Download von „{name}“ abgelaufen (Links gelten 24 Stunden). Bitte im Chat neu anfordern."
+msgstr "Nedladdningen av ”{name}” har gått ut (länkar gäller i 24 timmar). Be om den igen i chatten."
+
+msgid "Download-Links (download_url) gelten mindestens 24 Stunden; das Feld gueltig_bis nennt diese Frist (UTC). Ruf die Datei bis dahin ab."
+msgstr "Nedladdningslänkar (download_url) gäller i minst 24 timmar; fältet gueltig_bis anger tidsfristen (UTC). Hämta filen före dess."

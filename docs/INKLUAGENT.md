@@ -235,3 +235,23 @@ Neuladen) wird der Verlauf nicht angesagt. Eine neue Antwort bekommt den Fokus u
 
 **Aufräumen:** Sofort-Downloads (`_export/bot_*`, `word_*`, `pdfua_*.json`) werden nach `EXPORT_TOKEN_AUFBEWAHREN` (24 h)
 gelöscht — beim Start, bei jedem neuen Sofort-Download und bei jeder Export-Anfrage.
+
+**Prüfung 4 (30.09.2026, spät):**
+- Fokus nur im Chat: eine neue Antwort bekommt den Fokus nur, wenn er noch im Chat liegt (oder nirgends) und niemand im
+  Chat-Feld weiterschreibt (`inkluagentFokusImChat`). Sonst sagt die allgemeine Ansage-Region „Antwort vom InkluAgent ist da.“;
+  bei zugeklapptem Chat heißt der Knopf „Chatbot, neue Antwort“, beim Öffnen bekommt die Antwort den Fokus. Das Eingabefeld
+  bekommt den Fokus nur zurück, wenn er im Chat war.
+- Ansicht nachziehen: Werkzeuge, die den Projektzustand ändern (`ausgaben.AENDERT_ANSICHT`), melden `ansicht_aktualisieren` in
+  `actions`; die Oberfläche zeichnet die offene Ansicht still neu (`showProject(id, true)`, kein Fokus auf die H1), der Chat
+  kommt aus dem gespeicherten Verlauf, ein angefangener Chat-Text bleibt, der Fokus kommt auf dieselbe Stelle zurück. Tippt
+  jemand in einem Feld der Ansicht, wartet das Nachziehen, bis er es verlässt.
+- Karten-Zustand: nach der Ausführung (Knopf oder getipptes Ja) steht die Karte auf „Erledigt“ (gespeichert in
+  `chat_messages.anhang`, `storage.karte_aktualisieren`, und als Aktion `karte`); ersetzte, abgelaufene oder nach einem Neustart
+  unbekannte Angebote zeigt der Verlauf als „Nicht mehr gültig“ ohne Knopf (`ausgaben.karten_im_verlauf`). Der Knopf ist während
+  der Anfrage `aria-disabled` (Fokus bleibt). Knopfnamen nennen Format, Ziel und Preis („Alt-Texte als Excel herunterladen
+  (10 Credits) bestätigen“), die Ergebnisantwort lautet „Erledigt: …“ ohne den Angebotstext.
+- Einlösen unter `ausgaben._SPERRE`; der Knopf belegt sein Angebot vorher (`angebot_reservieren`). Ein zweiter Klick bekommt
+  409 „Schon bestätigt.“ und schreibt nichts in den Verlauf; abgelehnte Klicks bekommen Sätze für Menschen (Preis geändert,
+  Guthaben, „gilt nicht mehr“), nie die Anweisung an das Modell.
+- Download-Links ohne Ablage tragen `gueltig_bis` (24 h); nach Ablauf zeigt der Verlauf „Download … abgelaufen“ statt eines toten
+  Links. Token-Metadateien, die in die Ablage zeigen, bleiben (siehe docs/API.md).

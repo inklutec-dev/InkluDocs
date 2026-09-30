@@ -26,6 +26,7 @@ from __future__ import annotations
 import importlib
 import logging
 import sqlite3
+import threading
 import time
 import uuid
 from typing import Any, Optional
@@ -54,16 +55,43 @@ _KOSTENPFLICHTIG_JE_TURN = 1
 # gespeicherte Angebot (Werkzeug, Argumente, Preis) ausfuehrt — nicht das, was das Modell dem Nutzer vielleicht schildert.
 _LETZTES: dict[tuple, str] = {}          # (user_id, project_id) -> Angebots-Kennung
 _NACH_ID: dict[str, tuple] = {}          # Angebots-Kennung -> Schluessel in _ANGEBOTE
+# Pruefung 4 (30.09.2026, Entwicklung 2/3, Barrierefreiheit M3): Einloesen unter einer Sperre (genau ein Verbrauch), der Knopf
+# der Karte belegt sein Angebot vorher (ein Doppelklick bekommt „Schon bestätigt.“ und schreibt nichts in den Verlauf), und
+# ausgefuehrte Angebote bleiben bekannt, damit ihre Karte „Erledigt“ zeigt statt „gilt nicht mehr“.
+_SPERRE = threading.RLock()
+_ERLEDIGT: dict[str, tuple] = {}         # Kennung -> (user_id, project_id, zeit, Kartenfelder)
+_ERLEDIGT_BEHALTEN_S = 24 * 3600
+_VERBRAUCHT: dict[tuple, list] = {}      # (user_id, project_id) -> [(Kennung, Angebot)] im laufenden Aufruf verbraucht
+_KARTE = threading.local()               # Kennung, deren Knopf gerade in diesem Faden ausfuehrt
+
+# Gruende einer abgelehnten Zustimmung: Text fuer das Modell (Anweisung) und Kennwort fuer die Karte (eigener Satz fuer Menschen)
+_G_KEIN = ("Es liegt kein gueltiges Angebot vor: erst OHNE bestaetigt aufrufen, dem Nutzer Preis und Guthaben "
+           "nennen und auf sein Ja warten.")
+_G_LETZTES = ("Das ist nicht das zuletzt genannte Angebot. Ein Ja gilt nur für das letzte Angebot: frage für diese Aktion "
+              "neu (ohne bestaetigt) oder lass den Nutzer die Karte unter deiner Antwort bestätigen.")
+_G_TURN = ("Die Zustimmung muss vom Nutzer in einer eigenen, spaeteren Nachricht kommen — nicht in derselben "
+           "Nachricht wie die Preisauskunft. Nenne den Preis und warte auf sein Ja.")
+_G_PREIS = "Der Preis hat sich seit der Auskunft geaendert. Nenne dem Nutzer den neuen Preis und frage erneut."
+_GRUND_KENNWORT = {_G_KEIN: "angebot", _G_LETZTES: "letztes", _G_TURN: "nachricht", _G_PREIS: "preis"}
 
 
 def _angebot_merken(schluessel: tuple, preis: int, turn_id: str) -> str:
+    with _SPERRE:
+        return _angebot_merken_ungesperrt(schluessel, preis, turn_id)
+
+
+def _angebot_merken_ungesperrt(schluessel: tuple, preis: int, turn_id: str) -> str:
     jetzt = time.time()
+    for k in [k for k, e in _ERLEDIGT.items() if jetzt - e[2] > _ERLEDIGT_BEHALTEN_S]:
+        _ERLEDIGT.pop(k, None)
     for k in [k for k, a in _ANGEBOTE.items() if jetzt - a["zeit"] > _ANGEBOT_GUELTIG_S]:
         _NACH_ID.pop(_ANGEBOTE[k].get("id"), None)
         _ANGEBOTE.pop(k, None)
     alt = _ANGEBOTE.get(schluessel)
     if alt:
         _NACH_ID.pop(alt.get("id"), None)
+        if alt.get("werkzeug"):   # hatte eine Karte: die ist jetzt veraltet
+            _VERBRAUCHT.setdefault((schluessel[0], schluessel[1]), []).append((alt.get("id"), alt, None))
     angebot_id = uuid.uuid4().hex
     _ANGEBOTE[schluessel] = {"preis": int(preis or 0), "turn": turn_id, "zeit": jetzt, "id": angebot_id}
     _NACH_ID[angebot_id] = schluessel
@@ -81,25 +109,66 @@ def angebot_nach_id(angebot_id: str) -> Optional[tuple]:
 
 
 def _angebot_einloesen(schluessel: tuple, preis: int, turn_id: str) -> Optional[str]:
-    """None = Zustimmung gueltig (Angebot wird verbraucht). Sonst der Grund, warum nicht."""
-    a = _ANGEBOTE.get(schluessel)
-    if not a or time.time() - a["zeit"] > _ANGEBOT_GUELTIG_S:
-        _ANGEBOTE.pop(schluessel, None)
-        return ("Es liegt kein gueltiges Angebot vor: erst OHNE bestaetigt aufrufen, dem Nutzer Preis und Guthaben "
-                "nennen und auf sein Ja warten.")
-    if _LETZTES.get((schluessel[0], schluessel[1])) != a.get("id"):
-        return ("Das ist nicht das zuletzt genannte Angebot. Ein Ja gilt nur für das letzte Angebot: frage für diese Aktion "
-                "neu (ohne bestaetigt) oder lass den Nutzer die Karte unter deiner Antwort bestätigen.")
-    if a["turn"] == turn_id:
-        return ("Die Zustimmung muss vom Nutzer in einer eigenen, spaeteren Nachricht kommen — nicht in derselben "
-                "Nachricht wie die Preisauskunft. Nenne den Preis und warte auf sein Ja.")
-    if a["preis"] != int(preis or 0):
+    """None = Zustimmung gueltig (Angebot wird verbraucht). Sonst der Grund, warum nicht. Unter der Sperre: Pruefen und
+    Verbrauchen sind ein Schritt, zwei gleichzeitige Zustimmungen fuehren hoechstens eine aus (Pruefung 4, Entwicklung 3)."""
+    with _SPERRE:
+        a = _ANGEBOTE.get(schluessel)
+        if not a or time.time() - a["zeit"] > _ANGEBOT_GUELTIG_S:
+            _ANGEBOTE.pop(schluessel, None)
+            return _G_KEIN
+        if a.get("in_arbeit") and getattr(_KARTE, "id", None) != a.get("id"):
+            return _G_KEIN          # der Knopf der Karte fuehrt dieses Angebot gerade aus
+        if _LETZTES.get((schluessel[0], schluessel[1])) != a.get("id"):
+            return _G_LETZTES
+        if a["turn"] == turn_id:
+            return _G_TURN
+        if a["preis"] != int(preis or 0):
+            _ANGEBOTE.pop(schluessel, None)
+            _NACH_ID.pop(a.get("id"), None)
+            _VERBRAUCHT.setdefault((schluessel[0], schluessel[1]), []).append((a.get("id"), a, False))
+            return _G_PREIS
         _ANGEBOTE.pop(schluessel, None)
         _NACH_ID.pop(a.get("id"), None)
-        return "Der Preis hat sich seit der Auskunft geaendert. Nenne dem Nutzer den neuen Preis und frage erneut."
-    _ANGEBOTE.pop(schluessel, None)
-    _NACH_ID.pop(a.get("id"), None)
-    return None
+        _VERBRAUCHT.setdefault((schluessel[0], schluessel[1]), []).append((a.get("id"), a, True))
+        return None
+
+
+def angebot_reservieren(angebot_id: str, user_id: int, project_id: int) -> tuple:
+    """Knopf der Karte: das Angebot fuer genau EINEN Klick belegen. Rueckgabe (treffer, grund) mit grund '' (belegt),
+    'erledigt' (schon ausgefuehrt oder laeuft gerade) oder 'ungueltig' (abgelaufen, unbekannt, fremd)."""
+    with _SPERRE:
+        e = _ERLEDIGT.get(angebot_id or "")
+        if e and e[0] == int(user_id) and e[1] == int(project_id):
+            return None, "erledigt"
+        t = angebot_nach_id(angebot_id)
+        if not t or t[0][0] != int(user_id) or t[0][1] != int(project_id) or not t[1].get("werkzeug"):
+            return None, "ungueltig"
+        if t[1].get("in_arbeit"):
+            return None, "erledigt"
+        t[1]["in_arbeit"] = True
+        return t, ""
+
+
+def angebot_loslassen(angebot_id: str) -> None:
+    """Nach dem Klick: steht das Angebot noch (nicht verbraucht, z. B. Werkzeug hier nicht verfuegbar), wieder frei geben."""
+    with _SPERRE:
+        t = angebot_nach_id(angebot_id)
+        if t:
+            t[1].pop("in_arbeit", None)
+
+
+def erledigte_karte(angebot_id: str, user_id: int, project_id: int) -> Optional[dict]:
+    e = _ERLEDIGT.get(angebot_id or "")
+    return e[3] if e and e[0] == int(user_id) and e[1] == int(project_id) else None
+
+
+def karte_ausfuehren(angebot_id: str, werkzeug: str, args: dict, executor) -> dict:
+    """Fuehrt das belegte Angebot aus (Faden des Aufrufers): nur DIESES Angebot darf sein belegtes Angebot einloesen."""
+    _KARTE.id = angebot_id
+    try:
+        return executor.execute(werkzeug, dict(args or {}, bestaetigt=True))
+    finally:
+        _KARTE.id = None
 
 
 # Karte unter der Antwort (Pruefung 3): Text und Knopf vom SERVER, nicht vom Modell
@@ -128,6 +197,7 @@ def karte_anhaengen(result: dict, werkzeug: str, args: dict, user_id: int, proje
     aktion = werkzeug_name(werkzeug, _)
     ziel = r.get("dokument") or r.get("dateiname") or ""
     preis = int(a.get("preis") or 0)
+    beschreibung = _beschreibung(werkzeug, a["args"], aktion, ziel, preis, _)
     if preis:
         text = (_("{aktion}: „{ziel}“ für {p} Credits.").format(aktion=aktion, ziel=ziel, p=preis) if ziel
                 else _("{aktion} für {p} Credits.").format(aktion=aktion, p=preis))
@@ -138,11 +208,112 @@ def karte_anhaengen(result: dict, werkzeug: str, args: dict, user_id: int, proje
         text = (_("{aktion}: „{ziel}“, kostenlos.").format(aktion=aktion, ziel=ziel) if ziel
                 else _("{aktion}, kostenlos.").format(aktion=aktion))
     a["text"] = text
+    a["beschreibung"] = beschreibung
+    a["erledigt_text"] = (_("„{ziel}“ ist gelöscht.").format(ziel=ziel) if (werkzeug in _UNUMKEHRBAR and ziel)
+                          else beschreibung + ".")
+    a["titel_erledigt"], a["titel_abgelaufen"] = _("Erledigt"), _("Nicht mehr gültig")
+    # Knopf nennt, was genau passiert (Pruefung 4, NIEDRIG 2): „Alt-Texte als Excel herunterladen (10 Credits) bestätigen“
     karte = {"art": "bestaetigung", "angebot_id": angebot_id, "titel": _("Bestätigung nötig"), "text": text,
-             "knopf": _("{aktion} bestätigen").format(aktion=aktion)}
+             "knopf": _("{aktion} bestätigen").format(aktion=beschreibung), "zustand": "offen"}
     if not result.get("anhang"):
         result["anhang"] = karte
     return result
+
+
+_FORMATE = {"csv": "CSV", "xlsx": "Excel", "json": "JSON"}
+
+
+def _beschreibung(werkzeug: str, args: dict, aktion: str, ziel: str, preis: int, _) -> str:
+    """Was der Knopf ausfuehrt, in einem Stueck: Aktion (mit Format), Ziel, Preis."""
+    fmt = _FORMATE.get(str((args or {}).get("format") or "").lower())
+    if werkzeug == "exportiere_alt_texte" and fmt:
+        kern = _("Alt-Texte als {format} herunterladen").format(format=fmt)
+    elif werkzeug == "exportiere_quickinfos":
+        kern = _("Quickinfos als CSV herunterladen")
+    else:
+        kern = aktion
+    teile = (["„" + ziel + "“"] if ziel else []) + ([_("{p} Credits").format(p=preis)] if preis else [])
+    return kern + (" (" + ", ".join(teile) + ")" if teile else "")
+
+
+def _kartenfelder(a: dict, zustand: str) -> dict:
+    if zustand == "erledigt":
+        return {"zustand": "erledigt", "titel": a.get("titel_erledigt") or "Erledigt", "text": a.get("erledigt_text") or a.get("text") or ""}
+    return {"zustand": "abgelaufen", "titel": a.get("titel_abgelaufen") or "Nicht mehr gültig", "text": a.get("text") or ""}
+
+
+def _karte_speichern(project_id: int, angebot_id: str, felder: dict) -> None:
+    """Zustand der Karte im gespeicherten Verlauf festhalten (ueberlebt Neuladen und Neustart)."""
+    try:
+        from inkluagent import storage
+        storage.karte_aktualisieren(int(project_id), angebot_id, felder)
+    except Exception:  # noqa: BLE001 — ohne Datenbank (Unit-Tests) bleibt es beim Zustand im Speicher
+        log.debug("Karte %s: Zustand nicht gespeichert", angebot_id, exc_info=True)
+
+
+# Werkzeuge, nach denen die offene Ansicht nachgezogen wird (Pruefung 4, M2). Nicht dabei: Alt-Text/Quickinfo je Bild oder
+# Feld — die setzt die Oberflaeche schon selbst ein (refresh_image / refresh_feld), ohne die Ansicht neu zu zeichnen.
+AENDERT_ANSICHT = frozenset({
+    "barrierefrei_machen", "komplett_barrierefrei_machen", "pruefung_starten", "korrektur_anwenden", "korrektur_rueckgaengig",
+    "dokument_umbenennen", "dokument_loeschen", "alt_sprache_setzen", "konvertiere_zu_pdfua", "exportiere_fertige_pdf",
+    "exportiere_word", "uebersetze_dokument", "exportiere_uebersetzung", "testweise_taggen", "pruefdatei_erstellen",
+    "exportiere_alt_texte", "exportiere_quickinfos", "alt_texte_generieren", "quickinfos_generieren", "stammdaten_anwenden",
+    "ki_kontext_setzen", "eigener_prompt", "ausgabe_loeschen", "save_to_master_data",
+})
+
+
+def nachbereiten(result: dict, werkzeug: str, args: dict, user_id: int, project_id: int, vorher_id: Optional[str]) -> dict:
+    """Nach JEDEM Werkzeugaufruf (ToolExecutor): Karte fuer ein neues Angebot anhaengen; Karten verbrauchter oder ersetzter
+    Angebote auf „Erledigt“ bzw. „Nicht mehr gültig“ stellen (gespeichert + als Aktion an die Oberflaeche); melden, ob die
+    offene Ansicht nachgezogen werden muss; Download-Links mit Frist (gueltig_bis) kennzeichnen."""
+    result = karte_anhaengen(result, werkzeug, args, user_id, project_id, vorher_id)
+    with _SPERRE:
+        verbraucht = _VERBRAUCHT.pop((int(user_id), int(project_id)), [])
+    if not isinstance(result, dict):
+        return result
+    erfolg = bool(result.get("ok")) and not (result.get("result") or {}).get("rueckfrage_noetig")
+    karten = []
+    for aid, a, eingeloest in verbraucht:
+        zustand = "erledigt" if (eingeloest and erfolg) else "abgelaufen"
+        felder = _kartenfelder(a, zustand)
+        if zustand == "erledigt":
+            with _SPERRE:
+                _ERLEDIGT[aid] = (int(user_id), int(project_id), time.time(), felder)
+        _karte_speichern(project_id, aid, felder)
+        karten.append(dict(felder, angebot_id=aid))
+    if karten:
+        result["karten"] = karten
+    if erfolg and werkzeug in AENDERT_ANSICHT and not (werkzeug == "eigener_prompt" and (args or {}).get("auflisten")):
+        result["aktualisieren"] = True
+    anh = result.get("anhang")
+    if isinstance(anh, dict) and anh.get("download_url"):
+        try:
+            bis = _main().token_gueltig_bis(int(user_id), anh["download_url"])
+        except Exception:  # noqa: BLE001
+            bis = None
+        if bis:
+            anh["gueltig_bis"] = bis
+            if isinstance(result.get("result"), dict):
+                result["result"]["gueltig_bis"] = bis
+    return result
+
+
+def karten_im_verlauf(messages: list, _) -> list:
+    """GET /chat/history: offene Karten, deren Angebot nicht mehr gilt (abgelaufen, ersetzt, Neustart), als „Nicht mehr
+    gültig“ zeigen — ohne Knopf. Erledigte stehen schon so im gespeicherten Verlauf."""
+    for nachricht in messages or []:
+        for a in (nachricht.get("anhang") or []):
+            if not (isinstance(a, dict) and a.get("art") == "bestaetigung") or a.get("zustand") in ("erledigt", "abgelaufen"):
+                continue
+            if angebot_nach_id(a.get("angebot_id")):
+                a["zustand"] = "offen"
+                continue
+            e = _ERLEDIGT.get(a.get("angebot_id") or "")
+            if e:
+                a.update(e[3])
+            else:
+                a.update({"zustand": "abgelaufen", "titel": _("Nicht mehr gültig")})
+    return messages
 
 
 def _turn_id(turn) -> str:
@@ -164,12 +335,15 @@ def _freigabe(m, project: dict, user_id: int, document_id: Optional[int], art: s
         vorschau["hinweis"] = ("In dieser Nachricht wurde schon eine kostenpflichtige Aktion ausgefuehrt. Mehr als eine je "
                                "Nachricht laesst der Server nicht zu — sag dem Nutzer, was erledigt ist, und frage fuer "
                                "das Weitere neu.")
+        vorschau["grund"] = "je_nachricht"
         return vorschau
     if not vorschau.get("erlaubt"):
+        vorschau["grund"] = "guthaben"
         return vorschau
     grund = _angebot_einloesen(schluessel, vorschau.get("preis") or 0, tid)
     if grund:
         vorschau["hinweis"] = grund
+        vorschau["grund"] = _GRUND_KENNWORT.get(grund, "angebot")
         return vorschau
     if turn is not None and hasattr(turn, "kostenpflichtig"):
         turn.kostenpflichtig += 1

@@ -8742,8 +8742,21 @@ EXPORT_TOKEN_AUFBEWAHREN = int(os.environ.get("EXPORT_TOKEN_AUFBEWAHREN", str(24
 _EXPORT_TOKEN_MUSTER = ("bot_*", "word_*", "pdfua_*.json")
 
 
+def _token_zeigt_in_ablage(meta_pfad: str) -> bool:
+    """Token-Metadatei, deren Datei in der Ablage liegt (Umwandlung nach PDF/UA): der Link lebt so lange wie der Eintrag —
+    _ablage_eintrag_weg loescht die Metadatei mit (Pruefung 4, Entwicklung 1)."""
+    try:
+        with open(meta_pfad, encoding="utf-8") as f:
+            ziel = (json.load(f) or {}).get("pfad") or ""
+    except (OSError, ValueError):
+        return False
+    teile = os.path.normpath(ziel).split(os.sep)
+    return "_ablage" in teile and os.path.isfile(ziel)
+
+
 def _export_tokens_aufraeumen(export_ordner_muster: str) -> int:
-    """Alte Sofort-Download-Dateien in den _export-Ordnern loeschen (export_ordner_muster: glob auf _export-Ordner)."""
+    """Alte Sofort-Download-Dateien in den _export-Ordnern loeschen (export_ordner_muster: glob auf _export-Ordner).
+    Bleibt: Metadateien, die auf eine Datei in der Ablage zeigen."""
     import glob as _glob
     jetzt, n = time.time(), 0
     for ordner in _glob.glob(export_ordner_muster):
@@ -8751,11 +8764,36 @@ def _export_tokens_aufraeumen(export_ordner_muster: str) -> int:
             for p in _glob.glob(os.path.join(ordner, muster)):
                 try:
                     if os.path.isfile(p) and jetzt - os.path.getmtime(p) > EXPORT_TOKEN_AUFBEWAHREN:
+                        if muster == "pdfua_*.json" and _token_zeigt_in_ablage(p):
+                            continue
                         os.remove(p)
                         n += 1
                 except OSError:
                     pass
     return n
+
+
+def gueltig_bis_text(sekunden: Optional[int] = None) -> str:
+    """Ende der zugesagten Gueltigkeit eines Download-Links, ISO 8601 in UTC („…Z“)."""
+    from datetime import timezone as _tz
+    return (datetime.now(_tz.utc) + timedelta(seconds=EXPORT_TOKEN_AUFBEWAHREN if sekunden is None else sekunden)
+            ).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def token_gueltig_bis(user_id: int, download_url: str) -> Optional[str]:
+    """Fuer einen Token-Link (/api/projects/{id}/export/pdfua/{token}) ohne Ablage-Datei: bis wann er gilt. Sonst None
+    (Ablage-Links /api/ausgaben/… und Umwandlungen in der Ablage verfallen nicht nach der Frist)."""
+    m = re.match(r"^/api/projects/(\d+)/export/pdfua/([0-9a-f]{16,64})$", download_url or "")
+    if not m:
+        return None
+    meta = os.path.join(RESULTS_DIR, str(int(user_id)), m.group(1), "_export", f"pdfua_{m.group(2)}.json")
+    if not os.path.isfile(meta) or _token_zeigt_in_ablage(meta):
+        return None
+    try:
+        rest = EXPORT_TOKEN_AUFBEWAHREN - (time.time() - os.path.getmtime(meta))
+    except OSError:
+        return None
+    return gueltig_bis_text(max(0, int(rest)))
 
 
 def _export_anfrage_anlegen(wurzel: str) -> str:
@@ -10932,19 +10970,23 @@ def _require_project_owned(project_id: int, user_id: int):
 
 
 @app.get("/api/projects/{project_id}/chat/history")
-async def chat_get_history(project_id: int, user: dict = Depends(get_current_user)):
+async def chat_get_history(project_id: int, request: Request, user: dict = Depends(get_current_user)):
     _require_inkluagent()
     _require_project_owned(project_id, user["id"])
     from inkluagent import storage
-    return {"messages": storage.get_history(project_id)}
+    from inkluagent.tools import ausgaben as _ag
+    # Karten, deren Angebot nicht mehr gilt, ohne Knopf als „Nicht mehr gültig“ (Pruefung 4, M3)
+    return {"messages": _ag.karten_im_verlauf(storage.get_history(project_id), get_gettext(resolve_ui_language(request)))}
 
 
 @app.post("/api/projects/{project_id}/chat/bestaetigen")
 async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depends(get_current_user)):
     """Bestaetigungs-Karte unter einer Chatbot-Antwort (Pruefung 3, 30.09.2026, Entwicklung N1): fuehrt GENAU das Angebot aus,
     das der Server gespeichert hat (Werkzeug, Argumente, Preis) — nicht das, was das Modell dem Nutzer schildert. Die Karte
-    zeigt den Angebotstext des Servers; der Knopf schickt nur die Kennung. Speichert die Bestaetigung und das Ergebnis im
-    Verlauf, damit das Gespraech weiss, was passiert ist."""
+    zeigt den Angebotstext des Servers; der Knopf schickt nur die Kennung.
+    Pruefung 4: der Klick belegt das Angebot atomar (Doppelklick -> 409 „Schon bestätigt.“), abgelehnte Klicks schreiben
+    nichts in den Verlauf und bekommen einen Satz fuer Menschen (keine Anweisung an das Modell); nur eine Ausfuehrung landet
+    im Verlauf. Die Antwort traegt den neuen Zustand der Karte und ob die Ansicht nachgezogen werden muss (actions)."""
     _require_inkluagent()
     _require_project_owned(project_id, user["id"])
     try:
@@ -10955,9 +10997,14 @@ async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depen
     from inkluagent import storage
     from inkluagent.tools import ausgaben as _ag
     angebot_id = str((data or {}).get("angebot_id") or "")
-    treffer = _ag.angebot_nach_id(angebot_id)
-    if (not treffer or treffer[0][0] != user["id"] or treffer[0][1] != project_id or not treffer[1].get("werkzeug")):
-        raise HTTPException(status_code=404, detail=_("Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu."))
+    treffer, grund = _ag.angebot_reservieren(angebot_id, user["id"], project_id)
+    if not treffer:
+        if grund == "erledigt":
+            felder = _ag.erledigte_karte(angebot_id, user["id"], project_id)
+            return JSONResponse(status_code=409, content={"detail": _("Schon bestätigt."), "karte": felder})
+        abgelaufen = {"zustand": "abgelaufen", "titel": _("Nicht mehr gültig")}
+        return JSONResponse(status_code=404, content={"detail": _("Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu."),
+                                                      "karte": abgelaufen})
     _schluessel, angebot = treffer
 
     def _ausfuehren() -> dict:
@@ -10971,24 +11018,43 @@ async def chat_bestaetigen(project_id: int, request: Request, user: dict = Depen
         if angebot["werkzeug"] not in {d["name"] for d in defs}:
             return {"ok": False, "error": _("Diese Funktion gibt es hier nicht.")}
         _ag._LETZTES[(user["id"], project_id)] = angebot_id   # ausdrueckliche Wahl genau dieses Angebots
-        return executor.execute(angebot["werkzeug"], dict(angebot.get("args") or {}, bestaetigt=True))
+        return _ag.karte_ausfuehren(angebot_id, angebot["werkzeug"], angebot.get("args") or {}, executor)
 
-    r = await asyncio.get_running_loop().run_in_executor(None, _ausfuehren)
-    anhang = r.pop("anhang", None) if isinstance(r, dict) else None
-    res = (r or {}).get("result") or {}
-    if r.get("ok") and not res.get("rueckfrage_noetig"):
-        antwort = _("Bestätigt und ausgeführt: {text}").format(text=angebot.get("text") or "")
-        anhaenge = [anhang] if (anhang and anhang.get("art") != "bestaetigung") else []
-    else:
-        antwort = _("Nicht ausgeführt: {grund}").format(grund=(r.get("error") or res.get("hinweis") or _("unbekannter Grund")))
-        anhaenge = []
+    try:
+        r = await asyncio.get_running_loop().run_in_executor(None, _ausfuehren)
+    finally:
+        _ag.angebot_loslassen(angebot_id)
+    r = r if isinstance(r, dict) else {}
+    anhang = r.pop("anhang", None)
+    karten = r.pop("karten", None) or []
+    actions = [dict({"type": "karte"}, **k) for k in karten]
+    if r.pop("aktualisieren", False):
+        actions.append({"type": "ansicht_aktualisieren"})
+    karte = next((k for k in karten if k.get("angebot_id") == angebot_id), None)
+    res = r.get("result") or {}
+    if not (r.get("ok") and not res.get("rueckfrage_noetig")):
+        g = res.get("grund") or _ag._GRUND_KENNWORT.get(res.get("hinweis") or "")
+        if res.get("erlaubt") is False:
+            g = "guthaben"
+        if g == "preis":
+            text = _("Der Preis hat sich geändert. Bitte frag im Chat neu.")
+        elif g == "guthaben":
+            text = _("Dein Guthaben reicht nicht: {f} Credits fehlen.").format(f=res.get("fehlend") or 0)
+        elif r.get("error"):
+            text = _("Nicht ausgeführt: {grund}").format(grund=r["error"])
+        else:
+            text = _("Diese Bestätigung gilt nicht mehr. Bitte frag im Chat neu.")
+        return JSONResponse(status_code=409, content={"detail": text, "karte": karte, "actions": actions})
+    antwort = _("Erledigt: {text}").format(text=angebot.get("erledigt_text") or angebot.get("text") or "")
+    anhaenge = [anhang] if (anhang and anhang.get("art") != "bestaetigung") else []
 
     def _speichern():
-        storage.append_message(project_id, "user", _("Bestätigt über den Knopf: {text}").format(text=angebot.get("text") or ""))
+        storage.append_message(project_id, "user", _("Bestätigt über den Knopf: {text}").format(
+            text=angebot.get("beschreibung") or angebot.get("text") or ""))
         storage.append_message(project_id, "assistant", antwort, werkzeuge=[angebot["werkzeug"]], anhang=anhaenge or None)
     await asyncio.get_running_loop().run_in_executor(None, _speichern)
-    return {"ok": bool(r.get("ok")) and not res.get("rueckfrage_noetig"), "reply": antwort, "anhang": anhaenge,
-            "werkzeuge": [angebot["werkzeug"]]}
+    return {"ok": True, "reply": antwort, "anhang": anhaenge, "werkzeuge": [angebot["werkzeug"]], "karte": karte,
+            "actions": actions}
 
 
 @app.post("/api/projects/{project_id}/chat")

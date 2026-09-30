@@ -47,6 +47,14 @@ wie Status-Polling nicht, sonst bläht es Statistik und Tabelle auf), Grundlage 
 `GET /api/api-keys/stats`). Exporte lassen sich keinem Schlüssel zuordnen; die Kachel nennt
 deshalb nur Bild-Credits der über den Schlüssel angelegten Dokumente.
 
+## Download-Links (30.09.2026)
+
+`download_url` (heute nur bei `export/pdfua`) gilt mindestens 24 Stunden (`EXPORT_TOKEN_AUFBEWAHREN`); die Antwort nennt die
+Frist in `gueltig_bis` (ISO 8601, UTC), die Doku sagt es in sechs Sprachen. Die PDF/UA-Datei liegt zusätzlich in der Ablage des
+Kontos: Ihre Token-Metadatei (`_export/pdfua_<token>.json`, zeigt in `_ablage`) räumt `_export_tokens_aufraeumen` nicht ab, der
+Link lebt also so lange wie der Ablage-Eintrag. Sofort-Downloads des Chatbots ohne Ablage (`bot_*`, `word_*`) verfallen nach der
+Frist; ihr Knopf im Chat-Verlauf trägt `gueltig_bis` und zeigt danach „Download … abgelaufen“ statt eines toten Links.
+
 ## Sicherheit
 
 Keine Pfade von außen; Item-IDs werden gegen das Dokument geprüft; Werkzeug und Sprache sind
